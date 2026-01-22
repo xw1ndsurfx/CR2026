@@ -19,6 +19,7 @@ public partial class LabeledSlider : Base, ISmartAutoSizeToContents, INumericInp
     private bool _autoSizeToContentHeight;
     private bool _autoSizeToContentWidthOnChildResize;
     private bool _autoSizeToContentHeightOnChildResize;
+    private bool _updatingRange;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="LabeledSlider" /> class.
@@ -75,8 +76,22 @@ public partial class LabeledSlider : Base, ISmartAutoSizeToContents, INumericInp
 
         _sliderValue.TextChanged += (sender, _) =>
         {
+            if (_updatingRange)
+            {
+                return;
+            }
+
             var newValue = _sliderValue.Value / _scale;
-            var clampedValue = Math.Clamp(newValue, Minimum, Maximum);
+
+            // Extra sécurité : si range invalide, on ne clamp pas.
+            var min = Minimum;
+            var max = Maximum;
+            if (min > max)
+            {
+                (min, max) = (max, min);
+            }
+
+            var clampedValue = Math.Clamp(newValue, min, max);
             if (!clampedValue.Equals(newValue))
             {
                 _sliderValue.Value = clampedValue;
@@ -87,12 +102,10 @@ public partial class LabeledSlider : Base, ISmartAutoSizeToContents, INumericInp
 
             ValueChanged?.Invoke(
                 sender,
-                new ValueChangedEventArgs<double>
-                {
-                    Value = clampedValue,
-                }
+                new ValueChangedEventArgs<double> { Value = clampedValue }
             );
         };
+
 
         AutoSizeToContentHeight = true;
         KeyboardInputEnabled = true;
@@ -378,7 +391,31 @@ public partial class LabeledSlider : Base, ISmartAutoSizeToContents, INumericInp
         SizeToChildren(resizeX: AutoSizeToContentWidthOnChildResize, resizeY: AutoSizeToContentHeightOnChildResize);
     }
 
-    public void SetRange(double min, double max) => (Minimum, Maximum) = (min, max);
+    public void SetRange(double min, double max)
+    {
+        if (min > max)
+        {
+            (min, max) = (max, min);
+        }
+
+        _updatingRange = true;
+        try
+        {
+            // IMPORTANT : setter le Maximum en premier réduit aussi les risques
+            // si l'ancien Minimum est plus grand que le nouveau Maximum.
+            Maximum = max;
+            Minimum = min;
+
+            // Clamp la valeur courante dans le nouveau range (évite d'autres soucis)
+            var value = Value;
+            if (value < min) Value = min;
+            else if (value > max) Value = max;
+        }
+        finally
+        {
+            _updatingRange = false;
+        }
+    }
 
     public bool AutoSizeToContents
     {

@@ -102,8 +102,36 @@ internal partial class IntersectGame : Game
         Globals.ContentManager = new MonoContentManager();
         Globals.Database = new JsonDatabase();
 
-        // Load configuration.
         Globals.Database.LoadPreferences();
+
+        // Default WorldZoom (x4) si prefs absentes / invalides
+        if (Globals.Database.WorldZoom <= 1f) // force 4 même si c'était 1
+        {
+            Globals.Database.WorldZoom = 4f;
+            Globals.Database.SavePreferences();
+        }
+
+        ApplicationContext.CurrentContext.Logger.LogInformation(
+    "Before clamp: WorldZoom={Zoom}, min={Min}, max={Max}",
+    Globals.Database.WorldZoom,
+    Intersect.Client.Core.Graphics.MinimumWorldScale,
+    Intersect.Client.Core.Graphics.MaximumWorldScale
+);
+
+        // Clamp large safe (avant Options)
+        Globals.Database.WorldZoom = Intersect.Client.Utilities.MathHelper.Clamp(
+            Globals.Database.WorldZoom,
+            0.25f,
+            16f
+        );
+
+        ApplicationContext.CurrentContext.Logger.LogInformation(
+    "After clamp: WorldZoom={Zoom}",
+    Globals.Database.WorldZoom
+);
+
+
+        // (ne pas SavePreferences ici)
 
         Window.IsBorderless = Context.StartupOptions.BorderlessWindow;
 
@@ -189,6 +217,28 @@ internal partial class IntersectGame : Game
             MainMenu.SetNetworkStatus(connectionEventArgs.NetworkStatus, resetStatusCheck: true);
 
         Main.Start(Context);
+
+        var min = Intersect.Client.Core.Graphics.MinimumWorldScale;
+        var max = Intersect.Client.Core.Graphics.MaximumWorldScale;
+
+        if (min > max) (min, max) = (max, min);
+
+        // Si la config est invalide (ex: max=1) => on fallback sur une plage raisonnable
+        if (max <= 1f)
+        {
+            ApplicationContext.CurrentContext.Logger.LogWarning(
+                "Invalid world scale limits from Options. min={Min} max={Max}. Falling back to 1..16",
+                min, max
+            );
+            min = 1f;
+            max = 16f;
+        }
+
+        Globals.Database.WorldZoom = Intersect.Client.Utilities.MathHelper.Clamp(
+            Globals.Database.WorldZoom,
+            min,
+            max
+        );
 
         mInitialized = true;
 

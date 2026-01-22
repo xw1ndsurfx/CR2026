@@ -826,7 +826,6 @@ public partial class SettingsWindow : Window
             UpdateWorldScaleControls();
         }
     }
-
     private void UpdateWorldScaleControls()
     {
         if (!Options.IsLoaded)
@@ -839,22 +838,57 @@ public partial class SettingsWindow : Window
         _worldScale.IsDisabled = false;
         _worldScale.SetToolTipText(null);
 
-        var worldScaleNotches = new double[] { 1, 2, 4 }.Select(n => n * Graphics.MinimumWorldScale).ToList();
-        while (worldScaleNotches.Last() < Graphics.MaximumWorldScale)
+        var minScale = (double)Intersect.Client.Core.Graphics.MinimumWorldScale;
+        var maxScale = (double)Intersect.Client.Core.Graphics.MaximumWorldScale;
+
+        // Sécurité: si config invalide, on swap
+        if (minScale > maxScale)
+        {
+            (minScale, maxScale) = (maxScale, minScale);
+        }
+
+        // Générer des notches: puissances de 2 entre minScale et maxScale
+        var worldScaleNotches = new List<double>();
+
+        // Option A: si tu veux que les notches soient strictement basées sur minScale (x2,x4, etc)
+        worldScaleNotches.Add(minScale);
+        while (worldScaleNotches.Last() * 2 <= maxScale)
         {
             worldScaleNotches.Add(worldScaleNotches.Last() * 2);
         }
 
-        Globals.Database.WorldZoom = (float)MathHelper.Clamp(
+        // Sécurité (au cas où maxScale == minScale)
+        worldScaleNotches = worldScaleNotches.Distinct().OrderBy(x => x).ToList();
+
+        var minNotch = worldScaleNotches.First();
+        var maxNotch = worldScaleNotches.Last();
+
+        if (minNotch >= maxNotch)
+        {
+            ApplicationContext.CurrentContext.Logger.LogWarning(
+                "Invalid world scale range. minScale={MinScale} maxScale={MaxScale} minNotch={MinNotch} maxNotch={MaxNotch}",
+                minScale, maxScale, minNotch, maxNotch
+            );
+
+            _worldScale.IsHidden = true;
+            _worldScale.SetToolTipText("World scale range invalid.");
+            return;
+        }
+
+        // Clamp seulement pour l'UI (ne pas écrire dans Globals.Database ici)
+        var clampedZoom = MathHelper.Clamp(
             Globals.Database.WorldZoom,
-            worldScaleNotches.Min(),
-            worldScaleNotches.Max()
+            (float)minNotch,
+            (float)maxNotch
         );
 
-        _worldScale.SetRange(worldScaleNotches.Min(), worldScaleNotches.Max());
+        // Ordre important
+        _worldScale.SetRange(minNotch, maxNotch);
         _worldScale.Notches = worldScaleNotches.ToArray();
-        _worldScale.Value = Globals.Database.WorldZoom;
+        _worldScale.Value = clampedZoom;   // <-- UNE SEULE fois, et jamais Globals.Database.WorldZoom ici
+
     }
+
 
     void InterfaceSettings_Clicked(Base sender, MouseButtonState arguments)
     {
