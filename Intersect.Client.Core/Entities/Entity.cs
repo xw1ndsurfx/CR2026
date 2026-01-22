@@ -1294,7 +1294,7 @@ public partial class Entity : IEntity
         var srcRectangle = new FloatRect(frame * frameWidth, spriteRow * frameHeight, frameWidth, frameHeight);
         var destRectangle = new FloatRect(
             (int)Math.Ceiling(Origin.X - frameWidth / 2f),
-            (int)Math.Ceiling(Origin.Y - frameHeight),
+            (int)Math.Ceiling(Origin.Y - frameHeight) +32,
             srcRectangle.Width,
             srcRectangle.Height
         );
@@ -1538,7 +1538,7 @@ public partial class Entity : IEntity
         var srcRectangle = new FloatRect(frame * frameWidth, spriteRow * frameHeight, frameWidth, frameHeight);
         var destRectangle = new FloatRect(
             (int)Math.Ceiling(Center.X - frameWidth / 2f),
-            (int)Math.Ceiling(Center.Y - frameHeight / 2f),
+            (int)Math.Ceiling(Center.Y - frameHeight / 2f) +32,
             srcRectangle.Width,
             srcRectangle.Height
         );
@@ -1734,7 +1734,7 @@ public partial class Entity : IEntity
             return 0f;
         }
 
-        var y = GetTop() - 8;
+        var y = GetTop() + 0;
 
         //Need room for HP bar if not an event.
         if (this is not Event && ShouldDrawHpBar)
@@ -1933,6 +1933,9 @@ public partial class Entity : IEntity
         }
 
         y += boundingTeture.Height / 2;
+
+        // ⬇️ Descendre la barre de 32 pixels
+        y += 32;
 
         if (hpBackground != null)
         {

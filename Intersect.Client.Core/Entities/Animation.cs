@@ -158,6 +158,8 @@ public partial class Animation : IAnimation
             }
         }
 
+        const int SpriteYOffset = -16;
+
         if (!upper && mShowLower && mZDimension < 1 || !upper && mShowLower && mZDimension > 0)
         {
             //Draw Lower
@@ -179,7 +181,7 @@ public partial class Animation : IAnimation
                             frameWidth, frameHeight
                         ),
                         new FloatRect(
-                            mRenderX - frameWidth / 2, mRenderY - frameHeight / 2, frameWidth, frameHeight
+                            mRenderX - frameWidth / 2, mRenderY - frameHeight / 2 + SpriteYOffset, frameWidth, frameHeight
                         ), Color.White, null, GameBlendModes.None, null, rotationDegrees
                     );
                 }
@@ -220,7 +222,7 @@ public partial class Animation : IAnimation
                             frameWidth, frameHeight
                         ),
                         new FloatRect(
-                            mRenderX - frameWidth / 2, mRenderY - frameHeight / 2, frameWidth, frameHeight
+                            mRenderX - frameWidth / 2, mRenderY - frameHeight / 2 + SpriteYOffset, frameWidth, frameHeight
                         ), Color.White, null, GameBlendModes.None, null, rotationDegrees
                     );
                 }
