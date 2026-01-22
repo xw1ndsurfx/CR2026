@@ -1,5 +1,6 @@
 using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
+using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
 using Intersect.Client.General;
@@ -7,6 +8,7 @@ using Intersect.Client.Interface.Shared;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
 using Intersect.Enums;
+using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
@@ -39,6 +41,31 @@ public partial class QuestsWindow
     private readonly Button mQuitButton;
 
     private QuestDescriptor mSelectedQuest;
+
+    //QuestHud
+    private RichLabel mQuestTaskHudLabel;
+    private Label mQuestTaskHudTemplate;
+    private Guid _lastHudQuestId = Guid.Empty;
+    private Guid _lastHudTaskId = Guid.Empty;
+    private int _lastHudProgress = -1;
+    private string _lastHudText = "";
+    private Label mQuestTaskHudTemplateGreen;
+    private Base mQuestTaskHudPanel;
+
+    public void DisposeHud()
+    {
+        mQuestTaskHudLabel = null;
+        mQuestTaskHudTemplate = null;
+        mQuestTaskHudTemplateGreen = null;
+
+        mQuestTaskHudPanel?.Dispose();
+        mQuestTaskHudPanel = null;
+
+        _lastHudQuestId = Guid.Empty;
+        _lastHudTaskId = Guid.Empty;
+        _lastHudProgress = -1;
+        _lastHudText = "";
+    }
 
     //Init
     public QuestsWindow(Canvas gameCanvas)
@@ -74,6 +101,76 @@ public partial class QuestsWindow
         // Override stupid decisions in the JSON
         _questList.IsDisabled = false;
         _questList.IsVisibleInTree = true;
+
+        // === HUD Quête CONSTRUCTEUR ===
+
+        // 0) Panel conteneur (créé UNE SEULE FOIS)
+        mQuestTaskHudPanel = new Base(gameCanvas)
+        {
+            Width = 400,
+            Height = 200,
+        };
+
+        // (Optionnel debug) pour voir la zone du HUD
+        // mQuestTaskHudPanel.ShouldDrawBackground = true;
+        // mQuestTaskHudPanel.BackgroundColor = new Color(120, 0, 0, 0);
+
+        // 1) Positionne le panel
+        mQuestTaskHudPanel.SetBounds(
+            gameCanvas.Width - mQuestTaskHudPanel.Width - 20,
+            20,
+            mQuestTaskHudPanel.Width,
+            mQuestTaskHudPanel.Height
+        );
+
+        // 2) RichLabel dans le panel (UNE SEULE FOIS)
+        mQuestTaskHudLabel = new RichLabel(mQuestTaskHudPanel)
+        {
+            Dock = Pos.Fill
+        };
+
+        // évite que ça capte des clics
+        mQuestTaskHudPanel.MouseInputEnabled = false;
+        mQuestTaskHudLabel.MouseInputEnabled = false;
+
+        // 3) Templates (UNE SEULE FOIS)
+        mQuestTaskHudTemplate = new Label(null)
+        {
+            TextColor = Color.White,
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? mQuestDescTemplateLabel.Font,
+            Width = mQuestTaskHudPanel.Width
+        };
+
+        mQuestTaskHudTemplateGreen = new Label(null)
+        {
+            TextColor = Color.ForestGreen,
+            Font = mQuestTaskHudTemplate.Font,
+            Width = mQuestTaskHudPanel.Width
+        };
+
+        // 4) au-dessus
+        mQuestTaskHudPanel.BringToFront();
+
+    }
+
+    private string WrapText(string text, int maxLineLength)
+    {
+        var words = text.Split(' ');
+        var line = "";
+        var result = "";
+
+        foreach (var word in words)
+        {
+            if ((line + word).Length > maxLineLength)
+            {
+                result += line.TrimEnd() + "\n";
+                line = "";
+            }
+            line += word + " ";
+        }
+
+        result += line.TrimEnd();
+        return result;
     }
 
     private void _quitButton_Clicked(Base sender, MouseButtonState arguments)
@@ -117,6 +214,11 @@ public partial class QuestsWindow
             return;
         }
 
+        if (mQuestsWindow.IsHidden || Globals.Me == null)
+        {
+            return;
+        }
+
         UpdateInternal(shouldUpdateList);
     }
 
@@ -128,50 +230,91 @@ public partial class QuestsWindow
             UpdateSelectedQuest();
         }
 
-        if (mQuestsWindow.IsHidden)
+        // --- HUD Quête ---
+        if (mQuestTaskHudPanel == null || mQuestTaskHudLabel == null ||
+            mQuestTaskHudTemplate == null || mQuestTaskHudTemplateGreen == null ||
+            Globals.Me == null)
         {
             return;
         }
 
-        if (mSelectedQuest != null)
+        // Reposition si résolution/canvas change
+        var parentWidth = mQuestTaskHudPanel.Parent?.Width ?? 0;
+        if (parentWidth > 0)
         {
-            if (Globals.Me.QuestProgress.ContainsKey(mSelectedQuest.Id))
+            var desiredX = parentWidth - mQuestTaskHudPanel.Width - 20;
+            if (mQuestTaskHudPanel.X != desiredX)
             {
-                if (Globals.Me.QuestProgress[mSelectedQuest.Id].Completed &&
-                    Globals.Me.QuestProgress[mSelectedQuest.Id].TaskId == Guid.Empty)
-                {
-                    //Completed
-                    if (!mSelectedQuest.LogAfterComplete)
-                    {
-                        mSelectedQuest = null;
-                        UpdateSelectedQuest();
-                    }
-
-                    return;
-                }
-                else
-                {
-                    if (Globals.Me.QuestProgress[mSelectedQuest.Id].TaskId == Guid.Empty)
-                    {
-                        //Not Started
-                        if (!mSelectedQuest.LogBeforeOffer)
-                        {
-                            mSelectedQuest = null;
-                            UpdateSelectedQuest();
-                        }
-                    }
-
-                    return;
-                }
-            }
-
-            if (!mSelectedQuest.LogBeforeOffer)
-            {
-                mSelectedQuest = null;
-                UpdateSelectedQuest();
+                mQuestTaskHudPanel.SetBounds(desiredX, 20, mQuestTaskHudPanel.Width, mQuestTaskHudPanel.Height);
             }
         }
+
+        // ✅ resync templates à chaque frame (coût négligeable)
+        mQuestTaskHudTemplate.Width = mQuestTaskHudPanel.Width;
+        mQuestTaskHudTemplateGreen.Width = mQuestTaskHudPanel.Width;
+
+
+        mQuestTaskHudPanel.BringToFront();
+
+        // Pas de quête sélectionnée/progrès → clear une fois
+        if (mSelectedQuest == null || !Globals.Me.QuestProgress.ContainsKey(mSelectedQuest.Id))
+        {
+            if (_lastHudQuestId != Guid.Empty)
+            {
+                mQuestTaskHudLabel.ClearText();
+                _lastHudQuestId = Guid.Empty;
+                _lastHudTaskId = Guid.Empty;
+                _lastHudProgress = -1;
+                _lastHudText = "";
+            }
+            return;
+        }
+
+        var playerQuest = Globals.Me.QuestProgress[mSelectedQuest.Id];
+        var currentTask = mSelectedQuest.Tasks.FirstOrDefault(t => t.Id == playerQuest.TaskId);
+        if (currentTask == null) return;
+
+        var mainText = currentTask.Description ?? "";
+
+        // clamp anti-gros textes
+        if (mainText.Length > 800)
+            mainText = mainText.Substring(0, 800) + "...";
+
+        string progressText = "";
+        if (currentTask.Objective == QuestObjective.KillNpcs)
+            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {NPCDescriptor.GetName(currentTask.TargetId)}";
+        else if (currentTask.Objective == QuestObjective.GatherItems)
+            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {ItemDescriptor.GetName(currentTask.TargetId)}";
+
+        // cache
+        if (_lastHudQuestId == mSelectedQuest.Id &&
+            _lastHudTaskId == currentTask.Id &&
+            _lastHudProgress == playerQuest.TaskProgress &&
+            _lastHudText == mainText)
+        {
+            return;
+        }
+
+        _lastHudQuestId = mSelectedQuest.Id;
+        _lastHudTaskId = currentTask.Id;
+        _lastHudProgress = playerQuest.TaskProgress;
+        _lastHudText = mainText;
+
+        // rebuild
+        mQuestTaskHudLabel.ClearText();
+        mQuestTaskHudLabel.AddText(mainText, mQuestTaskHudTemplate);
+
+        if (!string.IsNullOrEmpty(progressText))
+        {
+            mQuestTaskHudLabel.AddLineBreak();
+            mQuestTaskHudLabel.AddText(progressText, mQuestTaskHudTemplateGreen);
+        }
+
+        mQuestTaskHudLabel.Invalidate();
+        mQuestTaskHudPanel.Invalidate();
+
     }
+
 
     private void UpdateQuestList()
     {
@@ -461,6 +604,14 @@ public partial class QuestsWindow
     {
         mQuestsWindow.IsHidden = true;
         mSelectedQuest = null;
+
+        // Optionnel : vider le HUD quand on cache
+        mQuestTaskHudLabel?.ClearText();
+        _lastHudQuestId = Guid.Empty;
+        _lastHudTaskId = Guid.Empty;
+        _lastHudProgress = -1;
+        _lastHudText = "";
+
     }
 
 }
