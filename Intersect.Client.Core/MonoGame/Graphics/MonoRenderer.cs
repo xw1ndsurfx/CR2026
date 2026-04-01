@@ -853,9 +853,9 @@ internal partial class MonoRenderer : GameRenderer
     {
         var allowedResolutions = new[]
             {
-                new Resolution(800),
-                new Resolution(1024, 768),
-                new Resolution(1024, 720),
+                //new Resolution(800),
+                //new Resolution(1024, 768),
+                //new Resolution(1024, 720),
                 new Resolution(1280, 720),
                 new Resolution(1280, 768),
                 new Resolution(1280, 1024),
@@ -869,7 +869,7 @@ internal partial class MonoRenderer : GameRenderer
             }.Concat(
                 _graphicsDevice.Adapter.SupportedDisplayModes
                     .Select(displayMode => new Resolution(displayMode.Width, displayMode.Height))
-                    .Where(resolution => resolution is { X: >= 800, Y: >= 480 })
+                    .Where(resolution => resolution is { X: >= 1280, Y: >= 720 })
             )
             .Distinct()
             .Order()

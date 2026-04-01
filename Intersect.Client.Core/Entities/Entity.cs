@@ -1703,6 +1703,9 @@ public partial class Entity : IEntity
         var x = (int)Math.Ceiling(Origin.X);
         var y = GetLabelLocation(LabelType.Name);
 
+        // Décaler le nom vers le bas de 32 pixels
+        y += 38;
+
         if (backgroundColor != Color.Transparent)
         {
             Graphics.DrawGameTexture(
@@ -1736,10 +1739,14 @@ public partial class Entity : IEntity
 
         var y = GetTop() + 0;
 
+        y -= 16;
+
         //Need room for HP bar if not an event.
         if (this is not Event && ShouldDrawHpBar)
         {
             y -= GetBoundingHpBarTexture().Height + 2;
+            // Décaler le nom vers le bas de 6 pixels
+            y -= 6;
         }
 
         switch (type)
@@ -1758,7 +1765,9 @@ public partial class Entity : IEntity
                     Graphics.EntityNameFontSize,
                     1
                 );
-                y -= headerSize.Y + 2;
+                y -= headerSize.Y + -6;
+                // Décaler le nom vers le bas de 10 pixels
+                y += 10;
                 break;
 
             case LabelType.Footer:
@@ -1774,6 +1783,8 @@ public partial class Entity : IEntity
                     1
                 );
                 y -= footerSize.Y - 6;
+                // Décaler le nom vers le bas de 56 pixels
+                y += 50;
                 break;
 
             case LabelType.Name:
@@ -1785,10 +1796,13 @@ public partial class Entity : IEntity
                     1
                 );
                 y -= nameSize.Y + (string.IsNullOrEmpty(FooterLabel.Text) ? -6 : 2);
+
                 break;
 
             case LabelType.ChatBubble:
                 y = GetLabelLocation(LabelType.Guild) - 2;
+                // Décaler le nom vers le bas de 48 pixels
+                y += 48;
                 break;
 
             case LabelType.Guild:
@@ -1816,6 +1830,8 @@ public partial class Entity : IEntity
                         1
                     );
                     y -= 2 + guildSize.Y;
+                    // Décaler le nom vers le bas de 56 pixels
+                    y += 64;
                 }
 
                 break;
@@ -1935,7 +1951,7 @@ public partial class Entity : IEntity
         y += boundingTeture.Height / 2;
 
         // ⬇️ Descendre la barre de 32 pixels
-        y += 32;
+        y += 128;
 
         if (hpBackground != null)
         {
