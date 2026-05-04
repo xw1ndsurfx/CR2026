@@ -50,6 +50,9 @@ public partial class MenuContainer : Panel
     private readonly ImagePanel _escapeMenuButtonContainer;
     private readonly Button _escapeMenuButton;
 
+    private readonly ImagePanel _menuToggleButtonContainer;
+    private readonly Button _menuToggleButton;
+
     private readonly MapItemWindow _mapItemWindow;
 
     public MenuContainer(Canvas gameCanvas) : base(parent: gameCanvas, name: nameof(MenuContainer))
@@ -211,6 +214,27 @@ public partial class MenuContainer : Panel
         _escapeMenuButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "menuicon_hovered.png");
         _escapeMenuButton.SetToolTipText(text: Strings.GameMenu.Menu);
         _escapeMenuButton.Clicked += EscapeMenuButtonClicked;
+
+        _menuToggleButtonContainer = new ImagePanel(parent: gameCanvas, name: nameof(_menuToggleButtonContainer))
+        {
+            Dock = Pos.None,
+            Alignment = [Alignments.Bottom, Alignments.Left],
+            AlignmentPadding = new Padding { Bottom = 4, Left = 4 },
+            MaximumSize = new Point(x: 36, y: 36),
+            MinimumSize = new Point(x: 36, y: 36),
+            Padding = new Padding(size: 2),
+            Size = new Point(x: 36, y: 36),
+            TextureFilename = "menuitem.png",
+        };
+        _menuToggleButton = new Button(parent: _menuToggleButtonContainer, name: nameof(_menuToggleButton), disableText: true)
+        {
+            Alignment = [Alignments.Center],
+            Size = new Point(x: 32, y: 32),
+        };
+        _menuToggleButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Toggle.png");
+        _menuToggleButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Toggle_down.png");
+        _menuToggleButton.SetToolTipText(text: "Show / Hide menu");
+        _menuToggleButton.Clicked += MenuToggleButton_Clicked;
 
         var x = 0;
         foreach (var child in Children)
@@ -486,5 +510,41 @@ public partial class MenuContainer : Panel
     private void CharacterButton_Clicked(Base sender, MouseButtonState arguments)
     {
         ToggleCharacterWindow();
+    }
+
+    private void MenuToggleButton_Clicked(Base sender, MouseButtonState arguments)
+    {
+        // Détecte s'il y a au moins un enfant (hors bouton de toggling) visible
+        var anyVisible = false;
+        foreach (var child in Children)
+        {
+            if (child == _menuToggleButtonContainer)
+            {
+                continue;
+            }
+
+            if (!child.IsHidden)
+            {
+                anyVisible = true;
+                break;
+            }
+        }
+
+        // Si au moins un est visible -> on cache tous ; sinon on affiche tous
+        var setHidden = anyVisible;
+        foreach (var child in Children)
+        {
+            if (child == _menuToggleButtonContainer)
+            {
+                // le conteneur du bouton de toggling doit rester visible
+                child.IsHidden = false;
+                continue;
+            }
+
+            child.IsHidden = setHidden;
+        }
+
+        // Assure que le conteneur du bouton reste visible (sécurité)
+        _menuToggleButtonContainer.IsHidden = false;
     }
 }
