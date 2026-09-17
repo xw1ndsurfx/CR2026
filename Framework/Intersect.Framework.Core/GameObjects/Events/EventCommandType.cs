@@ -136,4 +136,7 @@ public enum EventCommandType
     CastSpellOn,
 
     Fade,
+
+    // Mini-games: append new commands to preserve existing serialized values.
+    StartMiniGame,
 }
