@@ -26,7 +26,11 @@ foreach (var test in tests)
     try { test.Run(); Console.WriteLine("PASS " + test.Name); }
     catch (Exception error) { ++failures; Console.Error.WriteLine("FAIL " + test.Name + ": " + error); }
 }
-Console.WriteLine($"{tests.Length - failures}/{tests.Length} tests passed");
+Console.WriteLine($"{tests.Length - failures}/{tests.Length} core tests passed");
+// Run concurrent tests from Main, not a module/static initializer whose loader lock
+// prevents worker threads from entering code in this assembly until initialization ends.
+try { RegistrySmokeTests.RunAll(); }
+catch (Exception error) { ++failures; Console.Error.WriteLine(error); }
 Environment.ExitCode = failures == 0 ? 0 : 1;
 
 static DateTimeOffset Now() => DateTimeOffset.FromUnixTimeSeconds(1_800_000_000);

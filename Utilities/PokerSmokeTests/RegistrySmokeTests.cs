@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Intersect.Server.MiniGames.Poker;
 
 internal static class RegistrySmokeTests
@@ -18,7 +17,7 @@ internal static class RegistrySmokeTests
         catch (Exception ex) { throw new InvalidOperationException("FAILED registry: " + name, ex); }
     }
 
-    [ModuleInitializer]
+    // Called explicitly from Program.Main, after the module's initialization has finished.
     internal static void RunAll()
     {
         Run("shared identity and idempotent event activation", () =>
@@ -152,7 +151,7 @@ internal static class RegistrySmokeTests
                     Ok(r.Leave(p.Session, Now));
                     return Ok(r.Join(p, "new", "Alice", rules)).TableInstanceId;
                 });
-                Assert(work.Wait(TimeSpan.FromSeconds(3)), "Presence callback held registry lock");
+                Assert(work.Wait(TimeSpan.FromSeconds(3)), "Concurrent join/leave did not complete outside the registry lock");
                 replacement = work.Result;
                 return false; // Stale observation about the old membership.
             });
