@@ -20,7 +20,9 @@ internal sealed class PokerRequestGuard(Guid tableId, Guid viewId)
             _windowStart = monotonicMs;
             _requests = 0;
         }
-        if (_requests >= 8) return false;
+        // Closing the local UI must not leave an online ghost seat after a burst.
+        // Leave still validates view/table/request ID and immediately destroys the view.
+        if (_requests >= 8 && packet.Kind != PokerRequestKind.Leave) return false;
         ++_requests;
         _lastRequest = packet.RequestId;
         return true;

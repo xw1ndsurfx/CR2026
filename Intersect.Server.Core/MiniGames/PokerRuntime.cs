@@ -30,7 +30,7 @@ internal static class PokerRuntime
         public PokerRequestGuard Guard;
     }
     private sealed record Delivery(View View, PokerStatePacket Packet);
-    internal static readonly PokerTableRegistry Tables = new();
+    private static readonly PokerTableRegistry Tables = new();
     private static readonly object Gate = new();
     private static readonly Dictionary<PokerSession, View> Views = new();
     private static long _sequence;
@@ -172,11 +172,25 @@ internal static class PokerRuntime
         if (Interlocked.Exchange(ref _sweeping, 1) != 0) return;
         try
         {
+            View[] observedViews;
+            lock (Gate) observedViews = Views.Values.ToArray();
             // May inspect player locks, therefore deliberately OUTSIDE Gate.
-            Tables.Tick(DateTimeOffset.UtcNow, Player.IsPokerPresenceCurrent);
+            var observations = observedViews.Select(view =>
+                (View: view, Present: Player.IsPokerPresenceCurrent(view.Presence))).ToArray();
             List<Delivery> output = [];
             lock (Gate)
             {
+                // A new/replaced view must not inherit a stale offline observation. The
+                // Tick callback below only reads this cache and never takes player locks.
+                var presenceCache = observations.Where(observation =>
+                        Views.TryGetValue(observation.View.Presence.Session, out var current) &&
+                        ReferenceEquals(current, observation.View))
+                    .ToDictionary(observation => observation.View.Presence, observation => observation.Present);
+                // Serialize ALL table mutations and their sequence assignment together.
+                // A timer cannot otherwise slip between an action result and its broadcast,
+                // assigning a newer wire sequence to the older action snapshot.
+                Tables.Tick(DateTimeOffset.UtcNow,
+                    presence => !presenceCache.TryGetValue(presence, out var present) || present);
                 foreach (var view in Views.Values.ToArray())
                 {
                     if (Tables.Snapshot(view.Presence, view.TableId).Error == PokerRegistryError.None) continue;
