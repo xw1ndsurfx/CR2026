@@ -148,8 +148,9 @@ internal sealed class MiniGameCommandDialog : Form
         var picker = new ComboBox
         {
             Name = "TableCurrency", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill,
-            DropDownWidth = 590, AutoCompleteMode = AutoCompleteMode.SuggestAppend,
-            AutoCompleteSource = AutoCompleteSource.ListItems,
+            // DropDownList requires ListItems before enabling autocomplete.
+            DropDownWidth = 590, AutoCompleteSource = AutoCompleteSource.ListItems,
+            AutoCompleteMode = AutoCompleteMode.SuggestAppend,
         };
         picker.Items.Add(new CurrencyChoice(Guid.Empty, "None / Test chips (no inventory)"));
         foreach (var item in MiniGameCurrency.CompatibleItems(ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>()))
