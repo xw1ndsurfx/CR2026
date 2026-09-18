@@ -10,6 +10,11 @@ using Newtonsoft.Json;
 
 internal static class CosmeticVictoryTests
 {
+    private static void Check(bool condition, string message)
+    {
+        if (!condition) throw new InvalidOperationException(message);
+    }
+
     [ModuleInitializer]
     internal static void Run()
     {
