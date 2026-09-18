@@ -355,6 +355,7 @@ public partial class GameInterface : MutableInterface
         mMapItemWindow.Update();
         AnnouncementWindow?.Update();
         mPictureWindow?.Update();
+        UpdatePoker();
 
         var questDescriptorId = Globals.QuestOffers.FirstOrDefault();
         if (questDescriptorId == default)
@@ -576,7 +577,7 @@ public partial class GameInterface : MutableInterface
 
     public bool CloseAllWindows()
     {
-        var closedWindows = false;
+        var closedWindows = ClosePokerWindow();
         if (_bagWindow != null && _bagWindow.IsVisibleInTree)
         {
             CloseBagWindow();
@@ -625,6 +626,7 @@ public partial class GameInterface : MutableInterface
     //Dispose
     public void Dispose()
     {
+        DisposePoker();
         CloseBagWindow();
         CloseBank();
         CloseCraftingTable();

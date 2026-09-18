@@ -2,23 +2,19 @@ name: Poker event integration builds
 on:
   push:
     branches: ['feature/poker-minigame-core']
-    paths:
-      - 'Framework/Intersect.Framework.Core/GameObjects/Events/**'
-      - 'Intersect.Server.Core/MiniGames/**'
-      - 'Intersect.Server.Core/Entities/*MiniGames.cs'
-      - 'Intersect.Server.Core/Entities/Events/*MiniGames.cs'
-      - 'Intersect.Editor/Forms/Editors/Events/**'
-      - '.github/workflows/poker-integration-build.yml'
   pull_request:
     paths:
-      - 'Framework/Intersect.Framework.Core/GameObjects/Events/**'
-      - 'Intersect.Server.Core/MiniGames/**'
-      - 'Intersect.Server.Core/Entities/*MiniGames.cs'
-      - 'Intersect.Server.Core/Entities/Events/*MiniGames.cs'
+      - 'Framework/Intersect.Framework.Core/**'
+      - 'Intersect.Server.Core/**'
+      - 'Intersect.Client.Core/**'
       - 'Intersect.Editor/Forms/Editors/Events/**'
+      - 'Utilities/PokerNetworkTests/**'
       - '.github/workflows/poker-integration-build.yml'
 permissions:
   contents: read
+concurrency:
+  group: poker-integration-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     name: build-${{ matrix.target }}
@@ -30,6 +26,10 @@ jobs:
         include:
           - target: server-core
             project: Intersect.Server.Core/Intersect.Server.Core.csproj
+          - target: server
+            project: Intersect.Server/Intersect.Server.csproj
+          - target: client
+            project: Intersect.Client/Intersect.Client.csproj
           - target: editor
             project: Intersect.Editor/Intersect.Editor.csproj
     steps:
@@ -42,3 +42,18 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Compile actual engine project and dependencies
         run: dotnet build "${{ matrix.project }}" --configuration Debug --nologo
+  protocol-tests:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Poker core and registry checks
+        run: dotnet run --project Utilities/PokerSmokeTests/Intersect.PokerSmokeTests.csproj --configuration Release
+      - name: Serialized protocol and two-client model checks
+        run: dotnet run --project Utilities/PokerNetworkTests/Intersect.PokerNetworkTests.csproj --configuration Release

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>nullable</WarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Framework/Intersect.Framework.Core/Intersect.Framework.Core.csproj" />
+    <Compile Include="../../Intersect.Server.Core/MiniGames/Poker/*.cs" Link="Poker/%(Filename)%(Extension)" />
+    <Compile Include="../../Intersect.Server.Core/MiniGames/PokerTransport.cs" Link="PokerTransport.cs" />
+    <Compile Include="../../Intersect.Client.Core/MiniGames/PokerClientModel.cs" Link="PokerClientModel.cs" />
+  </ItemGroup>
+</Project>
