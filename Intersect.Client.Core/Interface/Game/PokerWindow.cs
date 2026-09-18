@@ -5,12 +5,13 @@ using Intersect.Client.Localization;
 using Intersect.Client.MiniGames;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Network.Packets.MiniGames;
+using Rectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
 
 namespace Intersect.Client.Interface.Game;
 
-/// <summary>A borderless, canvas-sized 2D table scene. No WindowControl or OS-style title bar.</summary>
+/// <summary>Borderless, canvas-sized 2D table. Gameplay and progression stay on the server.</summary>
 internal sealed class PokerWindow : Base
 {
     private sealed record Placement(Base Control, int X, int Y, int W, int H, int Font = 0, bool Local = false);
@@ -39,14 +40,13 @@ internal sealed class PokerWindow : Base
     public PokerWindow(Canvas canvas, Action<PokerRequestKind, long> send) : base(canvas, nameof(PokerWindow))
     {
         _canvas = canvas; _send = send;
-        ShouldDrawBackground = false;
-        MouseInputEnabled = true; KeyboardInputEnabled = false;
+        ShouldDrawBackground = false; MouseInputEnabled = true; KeyboardInputEnabled = false;
         _layout = new PokerSceneLayout(Math.Max(1, canvas.Width), Math.Max(1, canvas.Height));
         _content = new Base(this, "PokerContent") { ShouldDrawBackground = false, MouseInputEnabled = false };
         _table = Label("Table", 18, 12, 342, 30, 18);
         _turn = Label("Turn", 18, 46, 340, 30);
-        _pot = Label("Pot", 410, 240, 230, 32, 22);
-        _stage = Label("Stage", 410, 270, 230, 28);
+        _pot = Label("Pot", 410, 251, 230, 28, 22);
+        _stage = Label("Stage", 410, 279, 230, 24);
         for (var i = 0; i < 6; ++i)
         {
             var center = PokerSceneLayout.Center(i);
@@ -58,8 +58,8 @@ internal sealed class PokerWindow : Base
         for (var i = 0; i < 5; ++i) _board[i] = Label("Board" + i, 334 + i * 66, 310, 62, 40, 22);
         _ownCards = Label("MyCards", 404, 460, 206, 30, 18);
         for (var i = 0; i < 3; ++i) _feed[i] = Label("DecisionFeed" + i, 695, 12 + i * 26, 290, 26);
-        _payouts = Label("Payouts", 330, 369, 345, 28);
-        _levelUp = Label("LevelUp", 328, 399, 344, 30, 18);
+        _payouts = Label("Payouts", 330, 374, 345, 28);
+        _levelUp = Label("LevelUp", 328, 400, 344, 30, 18);
         Label("RaiseTotal", 52, 594, 192, 30).Text = Strings.Poker.RaiseTotal;
         _amount = new TextBox(_content, "RaiseAmount") { Font = Skin.DefaultFont, FontSize = 12, Text = "20" };
         Place(_amount, 250, 592, 130, 32, 12);
@@ -77,20 +77,19 @@ internal sealed class PokerWindow : Base
         Button("Refresh", Strings.Poker.Refresh, 643, 634, 112, () => Send(PokerRequestKind.Refresh));
         Button("Leave", Strings.Poker.Leave, 767, 634, 181, () => ExitRequested = true);
         _experience = Label("Experience", 52, 678, 640, 28);
+        _backTray = new PokerFlatPanel(_content, "BackPicker") { IsHidden = true };
+        Place(_backTray, 168, 398, 664, 150);
         _back = Button("CardBack", Strings.PokerScene.Back.ToString(1), 710, 676, 238, () =>
         { _backTray.IsHidden = !_backTray.IsHidden; if (!_backTray.IsHidden) _backTray.BringToFront(); });
         _backStatus = Label("CardBackStatus", 710, 710, 238, 26);
         Label("TestOnly", 52, 742, 895, 26).Text = Strings.PokerScene.TestProgress;
-        _backTray = new PokerFlatPanel(_content, "BackPicker") { IsHidden = true };
-        Place(_backTray, 168, 398, 664, 150);
         for (var i = 0; i < 6; ++i)
         {
             var id = i;
             var b = new Button(_backTray, "BackChoice" + i)
             { Font = Skin.DefaultFont, FontSize = 12, Text = Strings.PokerScene.BackLevel.ToString(i + 1, MiniGameProgression.BackLevel(i)) };
             Place(b, 8 + i * 108, 103, 106, 34, 12, local: true);
-            b.Clicked += (_, _) => SelectBack(id);
-            _backs[i] = b;
+            b.Clicked += (_, _) => SelectBack(id); _backs[i] = b;
         }
         _art = new PokerTableArt(_content, _backTray, _board);
         _victory = new PokerScreenEffect(canvas);
@@ -140,28 +139,24 @@ internal sealed class PokerWindow : Base
             _names[slot].Text = Short(name, 22);
             _stacks[slot].Text = seat == null ? "" : Strings.Poker.Stack.ToString(seat.Chips, seat.StreetBet);
             _seatCards[slot].Text = seat == null ? "" : seat.Leaving ? Strings.Poker.Leaving : seat.Folded ? Strings.Poker.Folded :
-                seat.AllIn ? Strings.Poker.AllIn : !seat.InHand ? Strings.Poker.Waiting :
-                seat.Seat == state.DealerSeat ? "(B)" : "";
+                seat.AllIn ? Strings.Poker.AllIn : !seat.InHand ? Strings.Poker.Waiting : seat.Seat == state.DealerSeat ? "(B)" : "";
             var decision = seat == null ? null : state.Decisions.LastOrDefault(d => d.PlayerId == seat.PlayerId);
             _decisions[slot].Text = decision == null ? "" : Describe(decision);
-            _names[slot].SetTextColor(seat?.Seat == state.ActingSeat ? Gold : Color.White, ControlState.Normal);
-            _decisions[slot].SetTextColor(decision?.Action == "wins" ? Gold : Color.White, ControlState.Normal);
+            _names[slot].TextColorOverride = seat?.Seat == state.ActingSeat ? Gold : Color.White;
+            _decisions[slot].TextColorOverride = decision?.Action == "wins" ? Gold : Color.White;
         }
         for (var i = 0; i < 5; ++i) _board[i].Text = i < state.Board.Length ? "[" + Card(state.Board[i]) + "]" : "";
-        _ownCards.Text = Cards(state.MyCards);
-        _ownCards.IsHidden = _art.HasOwnImages;
+        _ownCards.Text = Cards(state.MyCards); _ownCards.IsHidden = _art.HasOwnImages;
         var recent = state.Decisions.TakeLast(3).ToArray();
-        for (var i = 0; i < 3; ++i)
-            _feed[i].Text = i < recent.Length ? Short(recent[i].Name + ": " + Describe(recent[i]), 40) : "";
+        for (var i = 0; i < 3; ++i) _feed[i].Text = i < recent.Length ? Short(recent[i].Name + ": " + Describe(recent[i]), 40) : "";
         _payouts.Text = state.NetWin > 0 ? Strings.PokerScene.Net.ToString(state.NetWin) : "";
-        _back.Text = Strings.PokerScene.Back.ToString(_selectedBack + 1);
-        _back.IsDisabled = model.Pending || me.Leaving;
+        _back.Text = Strings.PokerScene.Back.ToString(_selectedBack + 1); _back.IsDisabled = model.Pending || me.Leaving;
         _backStatus.Text = me.SelectedCardBackId != me.CardBackId ? Strings.PokerCosmetics.NextHand :
             _art.SelectedBackMissing ? Strings.PokerCosmetics.MissingArt : Strings.PokerCosmetics.Selected;
         for (var i = 0; i < 6; ++i)
         {
             _backs[i].IsDisabled = model.Pending || !MiniGameProgression.IsUnlocked(i, state.Experience);
-            _backs[i].SetTextColor(i == _selectedBack ? Gold : Color.White, ControlState.Normal);
+            _backs[i].TextColorOverride = _backs[i].IsDisabled ? new Color(130, 130, 130) : i == _selectedBack ? Gold : Color.White;
         }
         var level = MiniGameProgression.Level(state.Experience);
         var baseXp = MiniGameProgression.ExperienceAtLevel(level);
@@ -170,8 +165,7 @@ internal sealed class PokerWindow : Base
         _experience.Text = level == MiniGameProgression.MaximumLevel ? Strings.PokerScene.Mastered.ToString(level) :
             Strings.PokerScene.Progress.ToString(level, state.Experience - baseXp, toNext);
         if (_lastLevel > 0 && level > _lastLevel) _levelUpUntil = Environment.TickCount64 + 5000;
-        _lastLevel = level;
-        _levelUp.Text = Environment.TickCount64 < _levelUpUntil ? Strings.PokerScene.LevelUp.ToString(level) : "";
+        _lastLevel = level; _levelUp.Text = Environment.TickCount64 < _levelUpUntil ? Strings.PokerScene.LevelUp.ToString(level) : "";
         if (model.Victories.Observe(model.Current.TableInstanceId, me.PlayerId, state.HandId,
                 state.Stage == PokerStage.Finished, state.NetWin)) _victory.Play(state.VictoryAnimationId);
         _victory.Update();
@@ -197,7 +191,7 @@ internal sealed class PokerWindow : Base
     private static readonly Color Gold = new(231, 194, 112);
     protected override void Render(SkinBase skin)
     {
-        // All fallback artwork is original procedural 2D drawing, replaceable by optional PNGs.
+        // Original procedural fallback. Optional character illustrations replace the simple pawns.
         var r = skin.Renderer;
         r.DrawColor = new Color(205, 9, 14, 17); r.DrawFilledRect(new Rectangle(0, 0, Width, Height));
         Fill(r, new Color(24, 17, 14), 36, 581, 928, 151);
@@ -206,7 +200,6 @@ internal sealed class PokerWindow : Base
         Ellipse(r, new Color(117, 75, 41), 189, 166, 622, 334);
         Ellipse(r, new Color(174, 122, 66), 198, 174, 604, 316);
         Ellipse(r, new Color(67, 44, 30), 208, 184, 584, 296);
-        // A few short planks stay within the ellipse and do not obscure the cards.
         for (var y = 224; y < 455; y += 38) Fill(r, new Color(82, 55, 37), 280, y, 440, 2);
         for (var slot = 0; slot < 6; ++slot)
         {
@@ -216,9 +209,7 @@ internal sealed class PokerWindow : Base
             Fill(r, new Color(117, 78, 43), c.X - 25, c.Y - 12, 50, 34);
             if (seat == null) continue;
             if (seat.Seat == _state!.ActingSeat)
-            {
                 for (var row = 0; row < 8; ++row) Fill(r, Gold, c.X - row, c.Y - 48 + row, row * 2 + 1, 1);
-            }
             if (!_art.HasPortrait(slot))
             {
                 var coat = slot % 2 == 0 ? new Color(47, 75, 85) : new Color(98, 55, 51);
@@ -235,7 +226,11 @@ internal sealed class PokerWindow : Base
         Fill(r, Gold, 53, 713, (int)(616 * Math.Clamp(_xpFraction, 0, 1)), 10);
     }
     private void Fill(RendererBase r, Color color, int x, int y, int w, int h)
-    { if (w < 1 || h < 1) return; r.DrawColor = color; r.DrawFilledRect(_layout.Rect(x, y, w, h)); }
+    {
+        if (w < 1 || h < 1) return;
+        var b = _layout.Rect(x, y, w, h); r.DrawColor = color;
+        r.DrawFilledRect(new Rectangle(b.X, b.Y, b.Width, b.Height));
+    }
     private void Ellipse(RendererBase r, Color color, int x, int y, int w, int h)
     {
         for (var row = 0; row < h; row += 3)
@@ -275,8 +270,7 @@ internal sealed class PokerWindow : Base
     private Label Label(string name, int x, int y, int w, int h, int font = 12)
     {
         var label = new Label(_content, name) { AutoSizeToContents = false, Font = Skin.DefaultFont, FontSize = font,
-            MouseInputEnabled = false, KeyboardInputEnabled = false };
-        label.SetTextColor(Color.White, ControlState.Normal);
+            MouseInputEnabled = false, KeyboardInputEnabled = false, TextColorOverride = Color.White };
         Place(label, x, y, w, h, font); return label;
     }
     private Button Button(string name, string text, int x, int y, int w, Action action)
@@ -289,8 +283,5 @@ internal sealed class PokerWindow : Base
 internal sealed class PokerFlatPanel(Base parent, string name) : Base(parent, name)
 {
     protected override void Render(SkinBase skin)
-    {
-        skin.Renderer.DrawColor = new Color(31, 24, 22);
-        skin.Renderer.DrawFilledRect(RenderBounds);
-    }
+    { skin.Renderer.DrawColor = new Color(31, 24, 22); skin.Renderer.DrawFilledRect(RenderBounds); }
 }

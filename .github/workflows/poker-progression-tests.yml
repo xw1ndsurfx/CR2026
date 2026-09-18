@@ -1,0 +1,41 @@
+name: Poker persistent progression tests
+on:
+  push:
+    branches: [feature/poker-minigame-core]
+    paths:
+      - 'Framework/Intersect.Framework.Core/MiniGames/**'
+      - 'Intersect.Server.Core/MiniGames/**'
+      - 'Utilities/PokerProgressTests/**'
+      - 'Utilities/PokerCi/**'
+      - '.github/workflows/poker-progression-tests.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Framework/Intersect.Framework.Core/MiniGames/**'
+      - 'Intersect.Server.Core/MiniGames/**'
+      - 'Utilities/PokerProgressTests/**'
+      - 'Utilities/PokerCi/**'
+      - '.github/workflows/poker-progression-tests.yml'
+permissions:
+  contents: read
+jobs:
+  persistence:
+    runs-on: windows-latest
+    outputs:
+      result: ${{ steps.tests.outputs.summary }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Real SQLite transactions, restart, replay and fault injection
+        id: tests
+        shell: pwsh
+        run: ./Utilities/PokerCi/run.ps1 -Project Utilities/PokerProgressTests/Intersect.PokerProgressTests.csproj -Mode run -Configuration Release
+  result:
+    if: always()
+    needs: persistence
+    runs-on: ubuntu-latest
+    name: 'Persistence: ${{ needs.persistence.outputs.result }}'
+    steps:
+      - run: echo 'Diagnostic headline only. The persistence job preserves failing exit codes.'

@@ -9,7 +9,7 @@ using Intersect.Network.Packets.MiniGames;
 
 namespace Intersect.Client.Interface.Game;
 
-/// <summary>Art adapter for the 2D scene. Faces and locked backs never alter the server game.</summary>
+/// <summary>Art adapter for the 2D scene. Cards and unlocks remain server-owned.</summary>
 internal sealed class PokerTableArt
 {
     private readonly Dictionary<string, IGameTexture?> _cache = new(StringComparer.Ordinal);
@@ -76,10 +76,7 @@ internal sealed class PokerTableArt
                 if (slot != 0 && seat is { InHand: true, Folded: false })
                 {
                     if (i < seat.RevealedCards.Length)
-                    {
-                        texture = Card(seat.RevealedCards[i]);
-                        text = PokerCardAssets.FileNameFor(seat.RevealedCards[i])![..2];
-                    }
+                    { texture = Card(seat.RevealedCards[i]); text = PokerCardAssets.FileNameFor(seat.RevealedCards[i])![..2]; }
                     else { texture = Back(seat.CardBackId); text = "[??]"; }
                 }
                 var rect = layout.Rect(position.X + i * 58, position.Y, 52, 70);
@@ -138,7 +135,7 @@ internal sealed class PokerTableArt
     }
     private static ImagePanel Image(Base parent, string name) => new(parent, name)
     { MouseInputEnabled = false, KeyboardInputEnabled = false, ShouldDrawBackground = false, IsHidden = true };
-    private static void Fit(ImagePanel image, IGameTexture? texture, Rectangle bounds)
+    private static void Fit(ImagePanel image, IGameTexture? texture, PokerSceneRect bounds)
     {
         image.Texture = texture;
         image.IsHidden = texture == null || texture.Width < 1 || texture.Height < 1;
