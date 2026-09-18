@@ -4,7 +4,6 @@ namespace Intersect.Client.Localization;
 
 public static partial class Strings
 {
-    // Automatically included by the existing client_strings.json loader/saver.
     public static class Poker
     {
         public static LocalizedString Title = "Poker - test chips";
@@ -29,6 +28,12 @@ public static partial class Strings
         public static LocalizedString YourTurn = "Your turn - {00}s";
         public static LocalizedString OtherTurn = "Waiting for another player - {00}s";
         public static LocalizedString NeedPlayers = "At least two funded players are needed. Press Start hand when ready.";
+        public static LocalizedString Ready = "Press Start hand when ready.";
+        public static LocalizedString AutomaticNext = "The next hand starts automatically after a short pause.";
+        public static LocalizedString NoChips = "No test chips left. Leave and rejoin to test again.";
+        public static LocalizedString DealerName = "Dealer";
+        public static LocalizedString NpcSuffix = " [NPC]";
+        public static LocalizedString ArtLegend = "C = clubs, D = diamonds, H = hearts, S = spades. (B) = rotating betting button.";
         public static LocalizedString Pending = "Waiting for the server...";
         public static LocalizedString TestOnly = "Temporary test chips only. No game currency, items or rewards.";
         public static LocalizedString Legend = "Cards: C = clubs, D = diamonds, H = hearts, S = spades. D beside a name = dealer.";

@@ -18,7 +18,6 @@ public sealed partial class PokerPlayerState
     [Key(6)] public bool Folded { get; set; }
     [Key(7)] public bool AllIn { get; set; }
     [Key(8)] public bool Leaving { get; set; }
-    // Empty except for a non-folded participant at a contested showdown.
     [Key(9)] public int[] RevealedCards { get; set; } = [];
 }
 
@@ -49,6 +48,11 @@ public sealed partial class PokerTableState
     [Key(13)] public int[] MyCards { get; set; } = [];
     [Key(14)] public PokerPlayerState[] Seats { get; set; } = [];
     [Key(15)] public PokerAwardState[] Payouts { get; set; } = [];
+    // Presentation only. The server remains authoritative; no new client mutation fields.
+    [Key(16)] public Guid[] NpcIds { get; set; } = [];
+    [Key(17)] public Guid DealerNpcId { get; set; }
+    [Key(18)] public bool AutoStart { get; set; }
+    [Key(19)] public Guid DealAnimationId { get; set; }
 
     public bool HasValidShape() => HandId >= 0 && Revision >= 0 &&
         Stage is >= PokerStage.Waiting and <= PokerStage.Finished &&
@@ -59,7 +63,10 @@ public sealed partial class PokerTableState
             s.Name is { Length: >= 1 and <= 32 } && s.Chips >= 0 && s.StreetBet >= 0 && ValidCards(s.RevealedCards, 2)) &&
         Seats.Select(s => s.Seat).Distinct().Count() == Seats.Length &&
         Seats.Select(s => s.PlayerId).Distinct().Count() == Seats.Length &&
-        Payouts is { Length: <= 36 } && Payouts.All(p => p != null && p.PlayerId != Guid.Empty && p.Chips >= 0);
+        Payouts is { Length: <= 36 } && Payouts.All(p => p != null && p.PlayerId != Guid.Empty && p.Chips >= 0) &&
+        NpcIds is { Length: <= 5 } && NpcIds.Distinct().Count() == NpcIds.Length &&
+        NpcIds.All(id => Seats.Any(s => s.PlayerId == id)) &&
+        (DealerNpcId == Guid.Empty || NpcIds.Contains(DealerNpcId));
 
     private static bool ValidCards(int[]? cards, int maximum) => cards != null &&
         cards.Length <= maximum && cards.All(c => c is >= 0 and < 52) && cards.Distinct().Count() == cards.Length;

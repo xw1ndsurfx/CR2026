@@ -52,7 +52,8 @@ internal static class PokerRuntime
             {
                 result = Tables.Join(presence, command.TableId, player.Name,
                     new PokerRules(command.MaxPlayers, command.StartingChips, command.SmallBlind,
-                        command.BigBlind, command.TurnSeconds));
+                        command.BigBlind, command.TurnSeconds),
+                    new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart, command.DealAnimationId));
                 if (result.Error != PokerRegistryError.None) return result;
                 // A new UI token on EVERY event activation invalidates queued requests from an old
                 // window, even when a table survives a leave/rejoin. Joining never resets chips.
@@ -103,7 +104,6 @@ internal static class PokerRuntime
                 var now = DateTimeOffset.UtcNow;
                 if (packet.Kind == PokerRequestKind.Leave)
                 {
-                    // Guard binds even Leave to THIS window and THIS table instance.
                     Tables.Leave(presence.Session, now);
                     Views.Remove(presence.Session);
                     Collect(output);
@@ -124,8 +124,6 @@ internal static class PokerRuntime
                     }
                     else
                     {
-                        // Queue the acknowledgement LAST so coalescing cannot lose it behind
-                        // the requester's unsolicited broadcast of the same revision.
                         Queue(output, view, result.Snapshot, packet.RequestId, error: code);
                     }
                 }
@@ -149,7 +147,8 @@ internal static class PokerRuntime
         TableInstanceId = view.TableId, ViewId = view.Id, PlayerId = view.Presence.Session.PlayerId,
         Sequence = ++_sequence, RequestId = requestId, Closed = closed, ErrorCode = error,
         TableName = view.TableName, ServerUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-        State = snapshot == null ? null : PokerTransport.Project(snapshot),
+        State = snapshot == null ? null : PokerPresentationTransport.Project(snapshot,
+            Tables.Presentation(view.Presence, view.TableId)),
     }));
 
     private static void Send(List<Delivery> output)
@@ -157,7 +156,6 @@ internal static class PokerRuntime
         foreach (var delivery in output)
         {
             var view = delivery.View;
-            // Send to the captured connection, never resolve a new login by player ID.
             if (!ReferenceEquals(view.Client.Entity, view.Player) || view.Player.LoginTime != view.LoginStamp) continue;
             try { view.Client.Send(delivery.Packet); }
             catch (Exception exception)
@@ -174,21 +172,16 @@ internal static class PokerRuntime
         {
             View[] observedViews;
             lock (Gate) observedViews = Views.Values.ToArray();
-            // May inspect player locks, therefore deliberately OUTSIDE Gate.
             var observations = observedViews.Select(view =>
                 (View: view, Present: Player.IsPokerPresenceCurrent(view.Presence))).ToArray();
             List<Delivery> output = [];
             lock (Gate)
             {
-                // A new/replaced view must not inherit a stale offline observation. The
-                // Tick callback below only reads this cache and never takes player locks.
                 var presenceCache = observations.Where(observation =>
                         Views.TryGetValue(observation.View.Presence.Session, out var current) &&
                         ReferenceEquals(current, observation.View))
                     .ToDictionary(observation => observation.View.Presence, observation => observation.Present);
-                // Serialize ALL table mutations and their sequence assignment together.
-                // A timer cannot otherwise slip between an action result and its broadcast,
-                // assigning a newer wire sequence to the older action snapshot.
+                // All mutations and sequence assignment stay serialized, including NPC actions.
                 Tables.Tick(DateTimeOffset.UtcNow,
                     presence => !presenceCache.TryGetValue(presence, out var present) || present);
                 foreach (var view in Views.Values.ToArray())

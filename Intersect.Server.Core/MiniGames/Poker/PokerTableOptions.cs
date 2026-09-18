@@ -1,0 +1,53 @@
+using System;
+using System.Linq;
+using System.Security.Cryptography;
+
+namespace Intersect.Server.MiniGames.Poker;
+
+/// <summary>Optional, backwards-compatible settings for volatile test-chip tables.</summary>
+public sealed record PokerTableOptions(
+    bool DealerPlays = false, int NpcPlayers = 0, bool AutoStart = false, Guid DealAnimationId = default)
+{
+    public bool IsValid(int seats) => NpcPlayers >= 0 && NpcPlayers <= 5 &&
+        NpcPlayers + (DealerPlays ? 1 : 0) < seats;
+}
+
+public sealed record PokerPresentation(Guid[] NpcIds, Guid DealerNpcId, bool AutoStart, Guid DealAnimationId)
+{
+    public static PokerPresentation Empty => new(Array.Empty<Guid>(), Guid.Empty, false, Guid.Empty);
+}
+
+/// <summary>
+/// A deliberately modest NPC policy. Input is only the NPC's recipient-specific snapshot;
+/// no table object, deck or other player's private hand is reachable by this policy.
+/// </summary>
+public static class PokerNpcPolicy
+{
+    public static (PokerAction Action, long Amount) Choose(PokerSnapshot view, Guid npcId, long bigBlind) =>
+        Choose(view, npcId, bigBlind, RandomNumberGenerator.GetInt32(100));
+
+    internal static (PokerAction Action, long Amount) Choose(PokerSnapshot view, Guid npcId, long bigBlind, int roll)
+    {
+        var me = view.Seats.Single(s => s.PlayerId == npcId);
+        var strength = 10;
+        if (view.MyCards.Length == 2)
+        {
+            var a = view.MyCards[0] % 13 + 2;
+            var b = view.MyCards[1] % 13 + 2;
+            strength = a == b ? 55 + a : Math.Min(a, b) >= 11 ? 45 : Math.Max(a, b) >= 12 ? 30 : 15;
+            if (view.Board.Length > 0)
+            {
+                var ranks = view.Board.Concat(view.MyCards).Select(c => c % 13 + 2).ToArray();
+                var matches = Math.Max(ranks.Count(r => r == a), ranks.Count(r => r == b));
+                strength = matches >= 3 ? 80 : matches == 2 ? 60 : Math.Min(strength, 25);
+            }
+        }
+        if (view.CanRaise && strength >= 45 && roll < 20 && view.MaximumRaiseTo > view.CurrentBet)
+            return (PokerAction.RaiseTo, Math.Min(view.MinimumRaiseTo, view.MaximumRaiseTo));
+        if (view.ToCall == 0) return (PokerAction.Check, 0);
+        var inexpensive = view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 20);
+        var affordablePair = strength >= 55 && view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 2);
+        return inexpensive && roll < 85 || affordablePair || roll < 8
+            ? (PokerAction.Call, 0) : (PokerAction.Fold, 0);
+    }
+}
