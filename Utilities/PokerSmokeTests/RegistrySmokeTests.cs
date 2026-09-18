@@ -28,8 +28,9 @@ internal static class RegistrySmokeTests
             var y = Ok(r.Join(b, "tavern-1", "Bob", rules));
             var again = Ok(r.Join(a, "tavern-1", "Alice", rules));
             Assert(x.TableInstanceId == y.TableInstanceId && again.TableInstanceId == x.TableInstanceId);
-            Assert(r.TableCount == 1 && r.MemberCount == 2 && again.Snapshot!.Seats.Length == 2);
-            Assert(again.Snapshot.Seats.Single(s => s.PlayerId == a.Session.PlayerId).Chips == 1000);
+            var snapshot = again.Snapshot ?? throw new InvalidOperationException("Successful join has no snapshot");
+            Assert(r.TableCount == 1 && r.MemberCount == 2 && snapshot.Seats.Length == 2);
+            Assert(snapshot.Seats.Single(s => s.PlayerId == a.Session.PlayerId).Chips == 1000);
         });
         Run("map, instance and table-name isolation", () =>
         {
