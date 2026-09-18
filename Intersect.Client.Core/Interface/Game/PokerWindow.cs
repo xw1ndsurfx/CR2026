@@ -38,6 +38,7 @@ internal sealed class PokerWindow : WindowControl
     private int _selectedBack;
     private long _lastMinimum = -1;
     private string _localError = string.Empty;
+    private bool _destroyed;
     public bool ExitRequested { get; private set; }
 
     public PokerWindow(Canvas canvas, Action<PokerRequestKind, long> send)
@@ -101,7 +102,7 @@ internal sealed class PokerWindow : WindowControl
 
     public void Update(PokerClientModel model)
     {
-        if (model.Current?.State is not { } state) return;
+        if (_destroyed || model.Current?.State is not { } state) return;
         _state = state;
         var me = state.Seats.First(s => s.PlayerId == model.Current.PlayerId);
         var playing = state.Stage is >= PokerStage.PreFlop and <= PokerStage.River;
@@ -167,7 +168,17 @@ internal sealed class PokerWindow : WindowControl
         Send(PokerRequestKind.RaiseTo, value);
     }
     private void Send(PokerRequestKind kind, long amount = 0) { _localError = ""; _send(kind, amount); }
-    public void Destroy() { _victory.Dispose(); Interface.FocusComponents.Remove(_amount); Hide(); Dispose(); }
+    public void Destroy()
+    {
+        if (_destroyed) return;
+        _destroyed = true;
+        _victory.Dispose();
+        Interface.FocusComponents.Remove(_amount);
+        Hide();
+        // Gwen disposal does not detach the control. Do not leave a disposed root in Canvas.
+        Parent?.RemoveChild(this, false);
+        Dispose();
+    }
     private static string Short(string value, int length) => value.Length <= length ? value : value[..(length - 3)] + "...";
     private static string Card(int value) => value is >= 0 and < 52 ? "23456789TJQKA"[value % 13].ToString() + "CDHS"[value / 13] : "--";
     private static string Cards(int[] cards) => cards.Length == 0 ? "[--] [--]" : string.Join(" ", cards.Select(c => "[" + Card(c) + "]"));

@@ -16,6 +16,7 @@ internal sealed class PokerScreenEffect : IDisposable
     private readonly Canvas _canvas;
     private readonly Layer[] _layers;
     private long _started;
+    private bool _disposed;
 
     public PokerScreenEffect(Canvas canvas)
     {
@@ -33,6 +34,7 @@ internal sealed class PokerScreenEffect : IDisposable
 
     public void Play(Guid id)
     {
+        if (_disposed) return;
         foreach (var layer in _layers) { layer.Frames = 0; layer.Image.IsHidden = true; }
         if (id == Guid.Empty || AnimationDescriptor.Get(id) is not { } animation) return;
         Configure(_layers[0], animation.Lower);
@@ -55,6 +57,7 @@ internal sealed class PokerScreenEffect : IDisposable
 
     public void Update()
     {
+        if (_disposed) return;
         var elapsed = Math.Max(0, Environment.TickCount64 - _started);
         foreach (var layer in _layers)
         {
@@ -75,6 +78,14 @@ internal sealed class PokerScreenEffect : IDisposable
 
     public void Dispose()
     {
-        foreach (var layer in _layers) layer.Image.Dispose();
+        if (_disposed) return;
+        _disposed = true;
+        foreach (var layer in _layers)
+        {
+            // Gwen Base.Dispose does not detach itself. Remove the owned root overlay first
+            // so later canvas teardown cannot dispose the same control for a second time.
+            layer.Image.Parent?.RemoveChild(layer.Image, false);
+            layer.Image.Dispose();
+        }
     }
 }

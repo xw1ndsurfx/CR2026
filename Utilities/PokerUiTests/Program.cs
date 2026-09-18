@@ -22,7 +22,8 @@ Run("Control without a font reproduces the unmeasured text defect", () =>
     using var renderer = new MetricsRenderer();
     using var skin = new TestSkin(renderer);
     using var canvas = new Canvas(skin);
-    using var label = new Label(canvas) { AutoSizeToContents = false, Size = new Point(300, 30), Text = "Poker caption" };
+    // The parent owns this label. Base.Dispose throws on double disposal and does not detach.
+    var label = new Label(canvas) { AutoSizeToContents = false, Size = new Point(300, 30), Text = "Poker caption" };
     var element = (Text)textField.GetValue(label)!;
     textLayout.Invoke(element, [skin]);
     var expected = renderer.MeasureText(skin.DefaultFont, label.FontSize, label.Text);
@@ -78,6 +79,9 @@ foreach (var size in new[] { new Point(858, 658), new Point(800, 600), new Point
         }
         Check(Intersect.Client.Interface.Interface.FocusComponents.Count == 0, "Amount input leaked in focus registry.");
         Check(!canvas.Children.Any(c => c.Name.StartsWith("PokerVictory")), "Victory overlay leaked after close.");
+        Check(!canvas.Children.Contains(window), "Disposed poker window remained attached to canvas.");
+        // Closing twice must not throw or re-attach anything.
+        pokerType.GetMethod("Destroy")!.Invoke(window, null);
     });
 }
 
@@ -87,7 +91,13 @@ Environment.ExitCode = failures == 0 ? 0 : 1;
 void Run(string name, Action action)
 {
     try { action(); ++passed; Console.WriteLine("PASS UI: " + name); }
-    catch (Exception ex) { ++failures; Console.Error.WriteLine("FAIL UI: " + name + "\n" + ex); }
+    catch (Exception ex)
+    {
+        ++failures;
+        var root = ex.GetBaseException();
+        Console.Error.WriteLine($"{root.GetType().Name}: {name}: {root.Message}");
+        Console.Error.WriteLine("FAIL UI: " + name + "\n" + ex);
+    }
 }
 static void Check(bool condition, string message)
 {
