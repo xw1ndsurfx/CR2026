@@ -10,11 +10,19 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 var tests = new (string Name, Action Test)[]
 {
-    ("Packets are discoverable by the engine registry", () =>
+    ("Packets are discoverable and use the engine startup envelope registry", () =>
     {
         var registry = new PacketTypeRegistry(NullLogger.Instance, typeof(IntersectPacket).Assembly);
         Check(registry.TryRegisterBuiltIn(), "Registry initialization");
         Check(registry.IsRegistered(typeof(PokerRequestPacket)) && registry.IsRegistered(typeof(PokerStatePacket)), "Missing built-in packets");
+        // Mirror ApplicationContext<TContext,TStartupOptions>.Start after service bootstrap:
+        // discovery alone is not enough; the envelope registry is populated separately.
+        PackedIntersectPacket.AddKnownTypes(registry.Types);
+        Check(PackedIntersectPacket.KnownTypes.TryGetValue(typeof(PokerRequestPacket), out var requestKey) &&
+            PackedIntersectPacket.KnownKeys[requestKey] == typeof(PokerRequestPacket), "Request envelope registration");
+        Check(PackedIntersectPacket.KnownTypes.TryGetValue(typeof(PokerStatePacket), out var stateKey) &&
+            PackedIntersectPacket.KnownKeys[stateKey] == typeof(PokerStatePacket), "State envelope registration");
+        Check(requestKey != stateKey, "Packet keys collide");
         Check(Enum.GetValues<PokerPhase>().Select(p => (int)p).SequenceEqual(Enum.GetValues<PokerStage>().Select(p => (int)p)), "Stage wire mapping");
     }),
     ("Malformed requests and client-owned authority fields are rejected", () =>
