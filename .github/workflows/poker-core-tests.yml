@@ -1,0 +1,29 @@
+name: Poker core smoke tests
+on:
+  pull_request:
+    paths:
+      - 'Intersect.Server/MiniGames/Poker/**'
+      - 'Utilities/PokerSmokeTests/**'
+      - '.github/workflows/poker-core-tests.yml'
+  push:
+    branches: ['feature/poker-minigame-core']
+    paths:
+      - 'Intersect.Server/MiniGames/Poker/**'
+      - 'Utilities/PokerSmokeTests/**'
+      - '.github/workflows/poker-core-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  poker-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Compile and run independent poker core checks
+        run: dotnet run --project Utilities/PokerSmokeTests/Intersect.PokerSmokeTests.csproj --configuration Release
