@@ -1,4 +1,4 @@
-﻿namespace Intersect.Framework.Core.GameObjects.Events;
+namespace Intersect.Framework.Core.GameObjects.Events;
 
 public enum EventCommandType
 {
@@ -136,4 +136,8 @@ public enum EventCommandType
     CastSpellOn,
 
     Fade,
+
+    // CR2026 mini-games: reserved range; never renumber existing serialized commands.
+    StartMiniGame = 1000,
+    LeaveMiniGame = 1001,
 }

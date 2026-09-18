@@ -1,98 +1,117 @@
-# Poker mini-game - milestone 1: server core
+# Poker mini-game - milestone 2: event commands and shared server lobbies
 
 ## Status
 
-This is a development milestone, NOT a playable client feature. No existing event,
-network handler, inventory, currency, database schema, or client window is changed.
-There is no Start Mini-Game command in the editor yet.
+Development branch only. The poker core, event command editor and shared lobby registry
+are implemented. **There is still no playable poker window or client action packet.**
+Activating an event joins/rejoins a server lobby and displays a development chat message.
+It does NOT start a hand, debit currency, freeze movement or wait for a client response.
+Do not merge/deploy this milestone as a complete player-facing mini-game.
 
-Implemented in `Intersect.Server/MiniGames/Poker`:
+## Configure an event
 
-- A lock-protected 2-6-seat no-limit Texas hold'em state machine.
-- Cryptographic deck shuffle; best-five-of-seven evaluation, wheel straights and kickers.
-- Heads-up blind/action order, four betting rounds and the big-blind option.
-- Fold, check, call and raise-to, including all-ins and short-raise reopening rules.
-- Main/side pots, unmatched-chip refunds, ties and clockwise odd-chip allocation.
-- Per-recipient defensive snapshots; opponents' hole cards stay out of snapshots until
-  a contested showdown. A fold win does not reveal the winner's cards.
-- Hand/revision validation, action deadlines, late joining, and departure auto-check/fold.
+Build the editor and server from the same feature branch. In the event command selector:
 
-All chips are temporary TEST CHIPS. Leaving removes that seat's balance; restarting the
-server would lose all tables. There is no conversion to Aureons, Royal Diamonds, items,
-real money, or rewards. Do not connect the current implementation to a persistent economy.
-This is original code, not copied game code/assets or a verified reproduction of TLOPO's
-specific poker variant, payouts, presentation, or progression.
+1. Open `Mini-Games > Start Mini-Game...`.
+2. Select Poker and enter a case-sensitive Table ID, for example `tavern-1`.
+3. Choose 2-6 seats, starting test chips, small/big blinds and a 5-300 second turn timeout.
+4. Save the command and the event. Cancel does not insert or modify a command.
+5. Use an interaction/action-button trigger, not an autorun loop.
 
-## Run the independent checks
+Players using the same Table ID on the SAME map and map instance share a table, including
+when different event objects refer to that ID. Separate maps/instances never share it.
+Use different Table IDs for separate tables on one map. All events for one table must use
+identical settings: a conflict is rejected rather than reconfiguring a running table.
+Table IDs accept 1-64 ASCII letters, digits, hyphens and underscores, without spaces.
 
-From the repository root, with the .NET 8 SDK:
+`Mini-Games > Leave Mini-Game` leaves the current lobby. Commands are intentionally
+non-blocking, with no success/cancel branches in this milestone. They must not be wrapped
+in Hold Player without an explicit release. The current editor labels/status messages are
+English development text; integration with the localization catalog remains to be done.
+
+The serialized command enum uses reserved values 1000/1001. Existing values are unchanged.
+DefaultValue annotations preserve nonzero defaults under IgnoreAndPopulate serialization.
+The event editor, printer and server dispatcher are extended through separate partial files.
+
+## Core and registry
+
+Core files now live in `Intersect.Server.Core/MiniGames/Poker` (same namespace as milestone 1).
+They moved from the executable project because event execution lives in Server.Core;
+this avoids a circular project reference. The core evaluator/table logic itself is unchanged.
+
+Core rules: 2-6-seat no-limit Texas hold'em; cryptographic shuffle; best-five-of-seven hands;
+heads-up blind order; check/call/raise-to/fold; all-ins, side pots, uncalled refunds, ties and
+clockwise odd-chip allocation. Private cards remain recipient-specific until a contested
+showdown. A fold win does not reveal the winner's cards.
+
+`PokerTableRegistry` provides:
+
+- One seat per player, authenticated login-session tokens and idempotent event activation.
+- Shared tables keyed by map ID, map instance ID and Table ID, with a fresh table-instance
+  GUID on recreation to reject delayed actions targeting an old table.
+- Validated settings, fixed table capacity, and rejection of conflicting event settings.
+- Session/location/table/hand/revision checks on reads and actions.
+- Recipient-specific detached updates, never a broadcast containing every private hand.
+- Automatic leave on logout, replacement login, map/instance change, death or disposal.
+- Retention of departing active-hand seats until settlement, including all-in eligibility;
+  late arrivals wait for the next hand and can leave immediately.
+- A bounded registry (1024 tables by default), empty-table cleanup and regular server ticks.
+
+Presence callbacks execute outside the registry lock. The subsequent sweep checks membership
+object identity, so a stale observation cannot evict a newly joined replacement membership.
+The runtime adapter reads online Player identity and LoginTime under EntityLock. Its timer
+runs at one-second intervals after first use, never performs network sends while locked,
+and catches/logs sweep errors without terminating the process.
+
+All balances are temporary TEST CHIPS. Leaving finally discards that seat's balance;
+rejoining can intentionally grant a fresh test stack. Restarting loses all tables.
+No Aureons, Royal Diamonds, inventory items, real money or rewards are involved.
+Persistent stakes require a transactional ledger and crash recovery before they are enabled.
+This is original code, not copied TLOPO game code/assets or a verified reproduction of its
+specific variant, presentation, progression or payouts.
+
+## Validation
+
+With the .NET 8 SDK, from the repository root:
 
 ```sh
+git submodule update --init --recursive
 dotnet run --project Utilities/PokerSmokeTests/Intersect.PokerSmokeTests.csproj --configuration Release
 ```
 
-The executable links the actual core source files and has no external NuGet test packages,
-server database, game assets, Windows editor, or network-key dependency. Its local
-`Directory.Build.props` deliberately isolates it from the engine's build customizations.
-A nonzero exit code means failure. The 17 named test groups include 250 deterministic
-simulated hands checking termination, chip conservation and card privacy.
+The standalone executable links the actual evaluator, table and registry sources. It has
+17 original core test groups (including 250 simulated hands) plus 18 registry groups.
+Registry checks cover table identity, session isolation, capacity, repeated/concurrent joins,
+private snapshots, stale requests, late joins, departures, cleanup and sweep/join races.
+A nonzero exit code is failure. No game database or external test framework is required.
 
-The `Poker core smoke tests` workflow runs the same command for this branch and relevant PRs.
-The authoring environment had no .NET compiler: added tests are not by themselves evidence
-of passing results. Read the workflow result, or run the command above, before merging.
-A successful standalone check is NOT a full-engine build or a live multiplayer test.
+On Windows, build the real engine projects with dependencies:
 
-## API contract for the next milestone
-
-Create ONE `PokerTable` per table identity on the SERVER, not one table per player:
-
-```csharp
-var table = new PokerTable(new PokerRules(MaxPlayers: 6));
-table.Join(authenticatedPlayerId, playerName);
-var snapshot = table.Snapshot(authenticatedPlayerId);
-// Broadcast a SEPARATE snapshot to each seated recipient.
+```sh
+dotnet build Intersect.Server.Core/Intersect.Server.Core.csproj --configuration Debug
+dotnet build Intersect.Editor/Intersect.Editor.csproj --configuration Debug
 ```
 
-`StartHand` is a separate, explicit operation available to a seated player when at least two
-funded players are present. No hand starts or resets just because a player joins.
-`RaiseTo` specifies the TOTAL street wager, not the added amount. An all-in call uses `Call`;
-an all-in raise uses `RaiseTo` with `MaximumRaiseTo`. `CanRaise` is recipient-specific;
-`MinimumRaiseTo` can exceed a short stack's maximum, in which case only that all-in raise
-is legal. Fold/check/call ignore the amount parameter.
+The `Poker core smoke tests` and `Poker event integration builds` workflows run these checks.
+Added tests are not evidence of success: consult the workflow result for the exact commit.
+A standalone success is not a full engine build. Compilation is not a two-client playtest.
 
-`Act` must receive the hand ID and revision from the recipient's latest snapshot. On a
-stale/invalid action, send a fresh snapshot rather than retrying the old command blindly.
-A timeout encountered during `Act` may advance the table and return `StaleState`.
+## Next acceptance gates
 
-Call `Tick(serverTime)` regularly, including when no packets arrive. Use only server-owned
-time and authenticated player identity; neither may come from client-supplied payloads.
-No user-facing endpoint is provided by this milestone.
+1. Network: action/state/close packets, per-recipient transmission, resync/reconnect,
+   rate limits, and session/location validation immediately before accepting an action.
+   Keep table settings and login tokens server-owned. Never serialize PokerTable/deck.
+2. Client: a localized window with seats, own cards, board, pot and legal actions, plus
+   explicit Start Hand and Leave. Closing/disconnect must release the UI and request leave.
+3. Gameplay policy: table interaction range, combat restrictions, event continuation,
+   localization and optional event outcome branches. Do not freeze a player without cleanup.
+4. Full validation: compile client/server/editor together, then use two REAL clients for
+   join, full hand, simultaneous actions, timeout, warp, disconnect and leave/rejoin.
+5. Presentation/economy: agree the desired TLOPO-inspired variant, create original artwork,
+   and implement transactional debit/refund/settlement and crash recovery before real stakes.
 
-`Leave` during a hand retains a participant's seat until settlement, and auto-checks or
-folds when action reaches them. An all-in player remains eligible. Keep the membership
-reserved during that period, then remove it after settlement. New arrivals wait for the
-next hand. A zero-stack seat can explicitly leave and rejoin for fresh TEST chips.
-
-Snapshots contain only detached arrays/records. The table object, deck, deterministic
-constructor, and custom-stack Join overload must never be exposed to clients or serialized.
-The latter two are internal test seams only. `Payouts` lists each pot/refund separately;
-`IsRefund` distinguishes returned uncalled chips from a won pot. Sum entries as needed.
-At settlement, `Pot` becomes zero and stacks already include the payouts.
-
-## Remaining milestones / acceptance gates
-
-1. Event + server integration: append a serialized `StartMiniGame` command without changing
-   existing enum values; add its editor configuration, type mapping and execution handler.
-   Add an authenticated session registry keyed by (map ID, instance ID, table key), enforce
-   one membership per player, map/range/combat rules, disconnect/warp cleanup and regular
-   ticks. Define event blocking/release and success/cancel branches explicitly.
-2. Network + client: register action and recipient-state packets, handle resync/reconnect,
-   rate-limit actions, add a localized Poker window with seats, board, own cards and controls.
-   Never send a shared snapshot containing everybody's private cards.
-3. Full validation: build client/server/editor together and run two REAL clients through
-   joining, a full hand, simultaneous actions, timeout, disconnect and leave/rejoin.
-4. Presentation and economy: agree on the desired TLOPO-inspired variant and original
-   artwork/animations. Persistent stakes need transactional debit/refund/settlement,
-   crash recovery, replay-safe ledger entries and abuse tests before any game currency.
-
-Do not merge/deploy this milestone as if the complete mini-game were available to players.
+API notes: StartHand is explicit and revision-checked; joins never start/reset a hand.
+RaiseTo is the TOTAL street wager. Use Call for an all-in call. On stale state, send a fresh
+snapshot instead of replaying the old action. Payouts distinguish won pots from refunds;
+settlement already updates stacks and clears Pot. The deterministic deck constructor and
+custom-stack Join overload remain internal test seams, not network options.

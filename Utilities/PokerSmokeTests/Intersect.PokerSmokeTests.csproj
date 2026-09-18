@@ -7,6 +7,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../Intersect.Server/MiniGames/Poker/*.cs" Link="Poker/%(Filename)%(Extension)" />
+    <Compile Include="../../Intersect.Server.Core/MiniGames/Poker/*.cs" Link="Poker/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>
