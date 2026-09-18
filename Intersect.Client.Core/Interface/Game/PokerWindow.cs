@@ -71,7 +71,12 @@ internal sealed class PokerWindow : WindowControl
         _ownCards = MakeLabel(content, "MyCards", 8, 364, 712, 30);
         _ownCards.FontSize = 18;
         MakeLabel(content, "RaiseTotal", 8, 402, 172, 26).Text = Strings.Poker.RaiseTotal;
-        _amount = new TextBox(content, "RaiseAmount") { Text = "20" };
+        _amount = new TextBox(content, "RaiseAmount")
+        {
+            Font = content.Skin.DefaultFont,
+            FontSize = 12,
+            Text = "20",
+        };
         Place(_amount, 184, 402, 126, 26);
         Interface.FocusComponents.Add(_amount);
         _minimum = MakeButton(content, "Minimum", Strings.Poker.Minimum, 316, 402, 108,
@@ -150,13 +155,25 @@ internal sealed class PokerWindow : WindowControl
     { control.Dock = Pos.None; control.X = x; control.Y = y; control.Size = new Point(width, height); }
     private static Label MakeLabel(Base parent, string name, int x, int y, int width, int height)
     {
-        var label = new Label(parent, name) { AutoSizeToContents = false, FontSize = 12 };
+        // Text.Render falls back to the skin font, but Text.SizeToContents requires an explicit
+        // Font. Setting only FontSize leaves the internal text at 10x10 and clips every caption.
+        var label = new Label(parent, name)
+        {
+            AutoSizeToContents = false,
+            Font = parent.Skin.DefaultFont,
+            FontSize = 12,
+        };
         Place(label, x, y, width, height);
         return label;
     }
     private static Button MakeButton(Base parent, string name, string text, int x, int y, int width, Action action)
     {
-        var button = new Button(parent, name) { Text = text };
+        var button = new Button(parent, name)
+        {
+            Font = parent.Skin.DefaultFont,
+            FontSize = 12,
+            Text = text,
+        };
         Place(button, x, y, width, 28);
         button.Clicked += (_, _) => action();
         return button;

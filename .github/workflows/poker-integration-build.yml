@@ -7,8 +7,10 @@ on:
       - 'Framework/Intersect.Framework.Core/**'
       - 'Intersect.Server.Core/**'
       - 'Intersect.Client.Core/**'
+      - 'Intersect.Client.Framework/**'
       - 'Intersect.Editor/Forms/Editors/Events/**'
       - 'Utilities/PokerNetworkTests/**'
+      - 'Utilities/PokerUiTests/**'
       - '.github/workflows/poker-integration-build.yml'
 permissions:
   contents: read
@@ -42,6 +44,9 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Compile actual engine project and dependencies
         run: dotnet build "${{ matrix.project }}" --configuration Debug --nologo
+      - name: Poker UI font measurement regression checks
+        if: matrix.target == 'client'
+        run: dotnet run --project Utilities/PokerUiTests/Intersect.PokerUiTests.csproj --configuration Debug
   protocol-tests:
     runs-on: windows-latest
     timeout-minutes: 15
