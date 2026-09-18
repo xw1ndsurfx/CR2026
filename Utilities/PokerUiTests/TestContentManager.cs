@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 
@@ -8,7 +7,7 @@ using Intersect.Client.Framework.File_Management;
 // not change PokerWindow, Titlebar, Text, or their production initialization paths.
 internal static class TestContentBootstrap
 {
-    [ModuleInitializer]
+    [System.Runtime.CompilerServices.ModuleInitializer]
     internal static void Initialize() => _ = new TestContentManager();
 }
 
