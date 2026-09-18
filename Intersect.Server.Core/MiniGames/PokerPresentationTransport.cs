@@ -7,12 +7,19 @@ public static class PokerPresentationTransport
 {
     public static PokerTableState Project(PokerSnapshot snapshot, PokerPresentation presentation)
     {
-        // Reuse the existing recipient-specific projection; never expose the deck or a bot's hand.
         var state = PokerTransport.Project(snapshot);
         state.NpcIds = presentation.NpcIds.ToArray();
         state.DealerNpcId = presentation.DealerNpcId;
         state.AutoStart = presentation.AutoStart;
         state.DealAnimationId = presentation.DealAnimationId;
+        state.NetWin = presentation.NetWin;
+        state.VictoryAnimationId = presentation.VictoryAnimationId;
+        foreach (var seat in state.Seats)
+        {
+            var back = presentation.CardBacks.FirstOrDefault(b => b.PlayerId == seat.PlayerId);
+            seat.CardBackId = back?.CurrentId ?? 0;
+            seat.SelectedCardBackId = back?.SelectedId ?? 0;
+        }
         return state;
     }
 }

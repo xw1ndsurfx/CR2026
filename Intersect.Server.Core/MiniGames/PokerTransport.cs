@@ -20,8 +20,6 @@ internal sealed class PokerRequestGuard(Guid tableId, Guid viewId)
             _windowStart = monotonicMs;
             _requests = 0;
         }
-        // Closing the local UI must not leave an online ghost seat after a burst.
-        // Leave still validates view/table/request ID and immediately destroys the view.
         if (_requests >= 8 && packet.Kind != PokerRequestKind.Leave) return false;
         ++_requests;
         _lastRequest = packet.RequestId;
@@ -56,11 +54,11 @@ internal static class PokerTransport
     {
         PokerRequestKind.Refresh => tables.Snapshot(presence, packet.TableInstanceId),
         PokerRequestKind.StartHand => tables.StartHand(presence, packet.TableInstanceId, packet.Revision, now),
+        PokerRequestKind.SelectCardBack => tables.SelectCardBack(presence, packet.TableInstanceId, packet.CardBackId),
         PokerRequestKind.Fold => tables.Act(presence, packet.TableInstanceId, packet.HandId, packet.Revision, PokerAction.Fold, 0, now),
         PokerRequestKind.Check => tables.Act(presence, packet.TableInstanceId, packet.HandId, packet.Revision, PokerAction.Check, 0, now),
         PokerRequestKind.Call => tables.Act(presence, packet.TableInstanceId, packet.HandId, packet.Revision, PokerAction.Call, 0, now),
         PokerRequestKind.RaiseTo => tables.Act(presence, packet.TableInstanceId, packet.HandId, packet.Revision, PokerAction.RaiseTo, packet.RaiseTo, now),
-        // Leave is routed separately, only after view/table/session authorization.
         _ => new(PokerRegistryError.PokerRejected, Detail: PokerError.IllegalAction),
     };
 }

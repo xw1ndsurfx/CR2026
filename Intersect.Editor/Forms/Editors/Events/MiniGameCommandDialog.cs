@@ -6,7 +6,7 @@ using DrawingColor = System.Drawing.Color;
 
 namespace Intersect.Editor.Forms.Editors.Events;
 
-/// <summary>Edits a detached draft; the command changes only after a valid Save.</summary>
+/// <summary>Edits a detached draft; Cancel never changes the event command.</summary>
 internal sealed class MiniGameCommandDialog : Form
 {
     private sealed record AnimationChoice(Guid Id, string Name)
@@ -22,24 +22,24 @@ internal sealed class MiniGameCommandDialog : Form
         MaximizeBox = MinimizeBox = false;
         ShowInTaskbar = false;
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(580, 650);
+        ClientSize = new Size(620, 650);
         BackColor = DrawingColor.FromArgb(45, 45, 48);
         ForeColor = DrawingColor.Gainsboro;
         var layout = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 13,
+            Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 16,
             AutoScroll = true,
         };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 44));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 56));
-        for (var row = 0; row < 13; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var row = 0; row < 16; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         Controls.Add(layout);
         var hint = new Label
         {
-            AutoSize = true, MaximumSize = new Size(530, 0), Margin = new Padding(3, 3, 3, 14),
+            AutoSize = true, MaximumSize = new Size(560, 0), Margin = new Padding(3, 3, 3, 14),
             Text = "Same map instance + Table ID = shared table. Use identical settings on all access events. " +
-                "The dealer is an opponent; the betting button still rotates. Other NPCs yield seats between hands. " +
-                "TEST CHIPS ONLY: no Aureons are taken or paid. The selected animation plays in the poker window.",
+                "TEST CHIPS ONLY: no Aureons are taken or paid. Global wins announce human NET profit, not refunds. " +
+                "Victory effects are visible only on the winning player's screen while their poker window is open.",
         };
         layout.Controls.Add(hint, 0, 0);
         layout.SetColumnSpan(hint, 2);
@@ -55,18 +55,12 @@ internal sealed class MiniGameCommandDialog : Form
         var dealer = new CheckBox { Text = "Dealer / Croupier", Checked = command.DealerPlays, AutoSize = true };
         var npcs = Number(command.NpcPlayers, 0, 5);
         var automatic = new CheckBox { Text = "Next hand after 5 seconds", Checked = command.AutoStart, AutoSize = true };
-        var animation = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
-        animation.Items.Add(new AnimationChoice(Guid.Empty, "None / Aucune"));
-        foreach (var item in AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>()
-                     .OrderBy(a => a.Name, StringComparer.OrdinalIgnoreCase))
-            animation.Items.Add(new AnimationChoice(item.Id, item.Name));
-        var selected = animation.Items.Cast<AnimationChoice>().FirstOrDefault(a => a.Id == command.DealAnimationId);
-        if (selected == null)
-        {
-            selected = new AnimationChoice(command.DealAnimationId, "Missing animation: " + command.DealAnimationId);
-            animation.Items.Add(selected); // Do not silently replace a deleted asset on Cancel/Save.
-        }
-        animation.SelectedItem = selected;
+        var animation = AnimationPicker(command.DealAnimationId);
+        var victory = AnimationPicker(command.VictoryAnimationId);
+        var announce = new CheckBox { Text = "Name + positive net win", Checked = command.AnnounceWins, AutoSize = true };
+        var backs = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
+        backs.Items.AddRange(new object[] { "Classic (back.png)", "Royal (back_royal.png)", "Pirate (back_pirate.png)", "Halloween (back_halloween.png)" });
+        backs.SelectedIndex = Math.Clamp(command.NpcCardBackId, 0, 3);
         void LimitNpcs()
         {
             var maximum = seats.Value - 1 - (dealer.Checked ? 1 : 0);
@@ -87,6 +81,9 @@ internal sealed class MiniGameCommandDialog : Form
         AddRow(layout, 9, "Other NPC opponents", npcs);
         AddRow(layout, 10, "Automatic hands", automatic);
         AddRow(layout, 11, "Dealing animation", animation);
+        AddRow(layout, 12, "Announce wins in GLOBAL chat", announce);
+        AddRow(layout, 13, "Victory animation (winner only)", victory);
+        AddRow(layout, 14, "Dealer / NPC card back", backs);
         var buttons = new FlowLayoutPanel
         {
             AutoSize = true, Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft,
@@ -96,7 +93,7 @@ internal sealed class MiniGameCommandDialog : Form
         var save = new Button { Text = "Save", AutoSize = true };
         buttons.Controls.Add(cancel);
         buttons.Controls.Add(save);
-        layout.Controls.Add(buttons, 0, 12);
+        layout.Controls.Add(buttons, 0, 15);
         layout.SetColumnSpan(buttons, 2);
         AcceptButton = save;
         CancelButton = cancel;
@@ -109,13 +106,13 @@ internal sealed class MiniGameCommandDialog : Form
                 BigBlind = (long)big.Value, TurnSeconds = (int)seconds.Value,
                 DealerPlays = dealer.Checked, NpcPlayers = (int)npcs.Value, AutoStart = automatic.Checked,
                 DealAnimationId = ((AnimationChoice)animation.SelectedItem!).Id,
+                AnnounceWins = announce.Checked, VictoryAnimationId = ((AnimationChoice)victory.SelectedItem!).Id,
+                NpcCardBackId = backs.SelectedIndex,
             };
             if (!draft.HasValidSettings())
             {
-                MessageBox.Show(this,
-                    "Use a Table ID of 1-64 letters, digits, hyphens or underscores. Starting chips must cover " +
-                    "the big blind, and the big blind must cover the small blind. Reserve at least one human seat.",
-                    "Invalid poker table", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, "Use a valid Table ID and blinds. Starting chips must cover the big blind. " +
+                    "Reserve at least one human seat.", "Invalid poker table", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             command.Game = draft.Game;
@@ -129,11 +126,30 @@ internal sealed class MiniGameCommandDialog : Form
             command.NpcPlayers = draft.NpcPlayers;
             command.AutoStart = draft.AutoStart;
             command.DealAnimationId = draft.DealAnimationId;
+            command.AnnounceWins = draft.AnnounceWins;
+            command.VictoryAnimationId = draft.VictoryAnimationId;
+            command.NpcCardBackId = draft.NpcCardBackId;
             DialogResult = DialogResult.OK;
             Close();
         };
     }
 
+    private static ComboBox AnimationPicker(Guid id)
+    {
+        var picker = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
+        picker.Items.Add(new AnimationChoice(Guid.Empty, "None / Aucune"));
+        foreach (var item in AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>()
+                     .OrderBy(a => a.Name, StringComparer.OrdinalIgnoreCase))
+            picker.Items.Add(new AnimationChoice(item.Id, item.Name));
+        var selected = picker.Items.Cast<AnimationChoice>().FirstOrDefault(a => a.Id == id);
+        if (selected == null)
+        {
+            selected = new AnimationChoice(id, "Missing animation: " + id);
+            picker.Items.Add(selected);
+        }
+        picker.SelectedItem = selected;
+        return picker;
+    }
     private static NumericUpDown Number(long value, long minimum, long maximum) => new()
     {
         Minimum = minimum, Maximum = maximum, Value = Math.Clamp(value, minimum, maximum),

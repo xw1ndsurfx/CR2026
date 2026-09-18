@@ -11,10 +11,8 @@ using Microsoft.Extensions.Logging;
 namespace Intersect.Server.MiniGames;
 
 /// <summary>
-/// Authenticated event/network adapter. Lock order: caller's EntityLock, runtime gate,
-/// registry/table locks. Timer presence reads happen before the runtime gate is acquired.
-/// Network sends never run under the runtime or registry gate; sequence numbers handle reordering.
-/// No persistent currency, inventory, rewards, or database state is touched.
+/// Lock order: caller EntityLock, runtime gate, registry/table. Sends run outside these gates.
+/// All balances are still temporary test chips; no inventory, currency or database writes.
 /// </summary>
 internal static class PokerRuntime
 {
@@ -29,7 +27,7 @@ internal static class PokerRuntime
         public Guid Id = Guid.NewGuid();
         public PokerRequestGuard Guard;
     }
-    private sealed record Delivery(View View, PokerStatePacket Packet);
+    private sealed record Delivery(View? View, PokerStatePacket? Packet, PokerWinNotice? Win = null);
     private static readonly PokerTableRegistry Tables = new();
     private static readonly object Gate = new();
     private static readonly Dictionary<PokerSession, View> Views = new();
@@ -53,10 +51,9 @@ internal static class PokerRuntime
                 result = Tables.Join(presence, command.TableId, player.Name,
                     new PokerRules(command.MaxPlayers, command.StartingChips, command.SmallBlind,
                         command.BigBlind, command.TurnSeconds),
-                    new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart, command.DealAnimationId));
+                    new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
+                        command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId));
                 if (result.Error != PokerRegistryError.None) return result;
-                // A new UI token on EVERY event activation invalidates queued requests from an old
-                // window, even when a table survives a leave/rejoin. Joining never resets chips.
                 var view = new View
                 {
                     Player = player, Client = client, Presence = presence, TableId = result.TableInstanceId,
@@ -122,10 +119,7 @@ internal static class PokerRuntime
                         Queue(output, view, null, packet.RequestId, true, code);
                         Collect(output);
                     }
-                    else
-                    {
-                        Queue(output, view, result.Snapshot, packet.RequestId, error: code);
-                    }
+                    else Queue(output, view, result.Snapshot, packet.RequestId, error: code);
                 }
             }
         }
@@ -139,9 +133,13 @@ internal static class PokerRuntime
             if (Views.TryGetValue(update.Recipient, out var view) && view.TableId == update.TableInstanceId)
                 Queue(output, view, update.Snapshot);
         }
+        // Drain once under Gate, but perform the global network sends outside Gate.
+        // Refresh, rejected actions and UI reopen cannot generate another completed-hand notice.
+        foreach (var win in Tables.CollectWins())
+            if (win.AnnounceGlobally && win.NetChips > 0) output.Add(new(null, null, win));
     }
 
-    private static void Queue(List<Delivery> output, View view, PokerSnapshot snapshot,
+    private static void Queue(List<Delivery> output, View view, PokerSnapshot? snapshot,
         long requestId = 0, bool closed = false, string error = "") => output.Add(new(view, new PokerStatePacket
     {
         TableInstanceId = view.TableId, ViewId = view.Id, PlayerId = view.Presence.Session.PlayerId,
@@ -155,12 +153,22 @@ internal static class PokerRuntime
     {
         foreach (var delivery in output)
         {
-            var view = delivery.View;
-            if (!ReferenceEquals(view.Client.Entity, view.Player) || view.Player.LoginTime != view.LoginStamp) continue;
-            try { view.Client.Send(delivery.Packet); }
+            try
+            {
+                if (delivery.Win is { } win)
+                {
+                    var name = new string(win.PlayerName.Where(c => !char.IsControl(c)).ToArray());
+                    PacketSender.SendGlobalMsg(Localization.Strings.Poker.NetWin.ToString(name, win.NetChips), Color.White);
+                    continue;
+                }
+                if (delivery.View is not { } view || delivery.Packet is not { } packet) continue;
+                if (!ReferenceEquals(view.Client.Entity, view.Player) || view.Player.LoginTime != view.LoginStamp) continue;
+                view.Client.Send(packet);
+            }
             catch (Exception exception)
             {
-                ApplicationContext.Context.Value?.Logger.LogWarning(exception, "Poker state delivery failed");
+                // Do not retry a global announcement on the next sweep (duplicate/spam risk).
+                ApplicationContext.Context.Value?.Logger.LogWarning(exception, "Poker delivery failed");
             }
         }
     }
@@ -181,7 +189,6 @@ internal static class PokerRuntime
                         Views.TryGetValue(observation.View.Presence.Session, out var current) &&
                         ReferenceEquals(current, observation.View))
                     .ToDictionary(observation => observation.View.Presence, observation => observation.Present);
-                // All mutations and sequence assignment stay serialized, including NPC actions.
                 Tables.Tick(DateTimeOffset.UtcNow,
                     presence => !presenceCache.TryGetValue(presence, out var present) || present);
                 foreach (var view in Views.Values.ToArray())

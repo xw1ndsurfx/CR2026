@@ -5,13 +5,12 @@ using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.ControlInternal;
 using Intersect.Client.Interface.Game;
 using Intersect.Network.Packets.MiniGames;
+using Console = System.Console;
 using ControlBase = Intersect.Client.Framework.Gwen.Control.Base;
 using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 
-// Exercise the actual PokerWindow and Gwen text layout without a GPU, game assets, network,
-// or copied production classes. Synthetic font metrics are deliberate: this is a regression
-// for missing font assignment / unmeasured text, NOT a visual or real-font acceptance test.
+// Synthetic metrics, real PokerWindow/Gwen. This is not a real-font or GPU acceptance test.
 var pokerType = typeof(GameInterface).Assembly.GetType("Intersect.Client.Interface.Game.PokerWindow", true)!;
 var textLayout = typeof(Text).GetMethod("Layout", BindingFlags.Instance | BindingFlags.NonPublic)!;
 var textField = typeof(Label).GetField("_textElement", BindingFlags.Instance | BindingFlags.NonPublic)!;
@@ -46,8 +45,8 @@ foreach (var size in new[] { new Point(858, 658), new Point(800, 600), new Point
         {
             var content = Descendants(window).Single(c => c.Name == "PokerContent");
             var labels = Descendants(content).OfType<Label>().ToArray();
-            Check(labels.Length >= 40, "Missing poker controls in test traversal.");
-            Check(labels.OfType<Button>().Count() == 9, "Not all action buttons were covered.");
+            Check(labels.Length >= 42, "Missing poker controls in test traversal.");
+            Check(labels.OfType<Button>().Count() == 10, "Not all betting/cosmetic buttons were covered.");
             Check(labels.OfType<TextBox>().Count() == 1, "Amount input was not covered.");
             foreach (var label in labels)
             {
@@ -70,12 +69,15 @@ foreach (var size in new[] { new Point(858, 658), new Point(800, 600), new Point
             textLayout.Invoke(callText, [skin]);
             Check(callText.Height > 10, "Disabled button lost text measurement.");
             Check(window.Width <= size.X && window.Height <= size.Y, "Window exceeds canvas.");
+            var overlays = canvas.Children.Where(c => c.Name.StartsWith("PokerVictory")).ToArray();
+            Check(overlays.Length == 2 && overlays.All(c => !c.MouseInputEnabled && !c.KeyboardInputEnabled), "Victory overlay captures input");
         }
         finally
         {
             pokerType.GetMethod("Destroy")!.Invoke(window, null);
         }
         Check(Intersect.Client.Interface.Interface.FocusComponents.Count == 0, "Amount input leaked in focus registry.");
+        Check(!canvas.Children.Any(c => c.Name.StartsWith("PokerVictory")), "Victory overlay leaked after close.");
     });
 }
 

@@ -6,15 +6,27 @@ namespace Intersect.Server.MiniGames.Poker;
 
 /// <summary>Optional, backwards-compatible settings for volatile test-chip tables.</summary>
 public sealed record PokerTableOptions(
-    bool DealerPlays = false, int NpcPlayers = 0, bool AutoStart = false, Guid DealAnimationId = default)
+    bool DealerPlays = false, int NpcPlayers = 0, bool AutoStart = false, Guid DealAnimationId = default,
+    bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0)
 {
     public bool IsValid(int seats) => NpcPlayers >= 0 && NpcPlayers <= 5 &&
-        NpcPlayers + (DealerPlays ? 1 : 0) < seats;
+        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId);
 }
 
+public sealed record PokerSeatBack(Guid PlayerId, int CurrentId, int SelectedId);
 public sealed record PokerPresentation(Guid[] NpcIds, Guid DealerNpcId, bool AutoStart, Guid DealAnimationId)
 {
+    public PokerSeatBack[] CardBacks { get; init; } = Array.Empty<PokerSeatBack>();
+    // These two fields belong only to the receiving human, never another participant.
+    public long NetWin { get; init; }
+    public Guid VictoryAnimationId { get; init; }
     public static PokerPresentation Empty => new(Array.Empty<Guid>(), Guid.Empty, false, Guid.Empty);
+}
+
+/// <summary>A small server-owned cosmetic catalog; never a file path or user upload.</summary>
+public static class PokerBackCatalog
+{
+    public static bool IsValid(int id) => id >= 0 && id <= 3;
 }
 
 /// <summary>

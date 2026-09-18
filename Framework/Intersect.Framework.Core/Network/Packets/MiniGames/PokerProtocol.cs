@@ -2,9 +2,9 @@ using MessagePack;
 
 namespace Intersect.Network.Packets.MiniGames;
 
-// Wire values are explicit. Never serialize a server PokerTable or its deck.
+// Append explicit wire values; never serialize a PokerTable, deck or arbitrary asset path.
 public enum PokerStage { Waiting = 0, PreFlop = 1, Flop = 2, Turn = 3, River = 4, Finished = 5 }
-public enum PokerRequestKind { Refresh = 0, StartHand = 1, Fold = 2, Check = 3, Call = 4, RaiseTo = 5, Leave = 6 }
+public enum PokerRequestKind { Refresh = 0, StartHand = 1, Fold = 2, Check = 3, Call = 4, RaiseTo = 5, Leave = 6, SelectCardBack = 7 }
 
 [MessagePackObject]
 public sealed partial class PokerPlayerState
@@ -19,6 +19,8 @@ public sealed partial class PokerPlayerState
     [Key(7)] public bool AllIn { get; set; }
     [Key(8)] public bool Leaving { get; set; }
     [Key(9)] public int[] RevealedCards { get; set; } = [];
+    [Key(10)] public int CardBackId { get; set; }
+    [Key(11)] public int SelectedCardBackId { get; set; }
 }
 
 [MessagePackObject]
@@ -48,19 +50,24 @@ public sealed partial class PokerTableState
     [Key(13)] public int[] MyCards { get; set; } = [];
     [Key(14)] public PokerPlayerState[] Seats { get; set; } = [];
     [Key(15)] public PokerAwardState[] Payouts { get; set; } = [];
-    // Presentation only. The server remains authoritative; no new client mutation fields.
     [Key(16)] public Guid[] NpcIds { get; set; } = [];
     [Key(17)] public Guid DealerNpcId { get; set; }
     [Key(18)] public bool AutoStart { get; set; }
     [Key(19)] public Guid DealAnimationId { get; set; }
+    // Recipient-specific net profit, never the pot including the winner's own stake.
+    [Key(20)] public long NetWin { get; set; }
+    [Key(21)] public Guid VictoryAnimationId { get; set; }
 
     public bool HasValidShape() => HandId >= 0 && Revision >= 0 &&
         Stage is >= PokerStage.Waiting and <= PokerStage.Finished &&
         DealerSeat is >= -1 and < 6 && ActingSeat is >= -1 and < 6 &&
         Pot >= 0 && CurrentBet >= 0 && ToCall >= 0 && MinimumRaiseTo >= 0 && MaximumRaiseTo >= 0 &&
+        NetWin >= 0 && (NetWin == 0 || Stage == PokerStage.Finished) &&
+        (VictoryAnimationId == Guid.Empty || NetWin > 0) &&
         ValidCards(Board, 5) && ValidCards(MyCards, 2) && Seats is { Length: >= 1 and <= 6 } &&
         Seats.All(s => s != null && s.Seat is >= 0 and < 6 && s.PlayerId != Guid.Empty &&
-            s.Name is { Length: >= 1 and <= 32 } && s.Chips >= 0 && s.StreetBet >= 0 && ValidCards(s.RevealedCards, 2)) &&
+            s.Name is { Length: >= 1 and <= 32 } && s.Chips >= 0 && s.StreetBet >= 0 && ValidCards(s.RevealedCards, 2) &&
+            s.CardBackId is >= 0 and <= 3 && s.SelectedCardBackId is >= 0 and <= 3) &&
         Seats.Select(s => s.Seat).Distinct().Count() == Seats.Length &&
         Seats.Select(s => s.PlayerId).Distinct().Count() == Seats.Length &&
         Payouts is { Length: <= 36 } && Payouts.All(p => p != null && p.PlayerId != Guid.Empty && p.Chips >= 0) &&

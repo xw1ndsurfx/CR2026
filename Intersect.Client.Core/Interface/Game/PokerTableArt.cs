@@ -8,28 +8,24 @@ using Intersect.Network.Packets.MiniGames;
 
 namespace Intersect.Client.Interface.Game;
 
-/// <summary>
-/// Optional artwork loaded through the normal client content manager. Missing artwork does
-/// not stop play. All card identities originate from recipient-specific, validated state.
-/// </summary>
+/// <summary>Optional fixed assets; all card identities and back IDs come from the server.</summary>
 internal sealed class PokerTableArt
 {
     private readonly Dictionary<string, IGameTexture?> _cards = new(StringComparer.Ordinal);
     private readonly ImagePanel[] _board = new ImagePanel[5];
     private readonly ImagePanel[] _own = new ImagePanel[2];
     private readonly ImagePanel[,] _seats = new ImagePanel[6, 2];
+    private readonly ImagePanel _preview;
     private readonly Label[] _boardLabels;
     private readonly PokerDealTracker _deals = new();
     private readonly Effect[] _effects;
     private long _started;
+    public bool SelectedBackMissing { get; private set; }
 
     private sealed class Effect
     {
         public required ImagePanel Image;
-        public int Columns;
-        public int Rows;
-        public int Count;
-        public int Speed;
+        public int Columns, Rows, Count, Speed;
     }
 
     public PokerTableArt(Base parent, Label[] boardLabels)
@@ -39,7 +35,7 @@ internal sealed class PokerTableArt
         for (var i = 0; i < 2; ++i) _own[i] = Image(parent, "PokerOwnArt" + i);
         for (var seat = 0; seat < 6; ++seat)
             for (var i = 0; i < 2; ++i) _seats[seat, i] = Image(parent, $"PokerSeatArt{seat}_{i}");
-        // Lower then upper, matching the editor's animation layers. Never capture mouse input.
+        _preview = Image(parent, "PokerBackPreview");
         _effects = [new() { Image = Image(parent, "PokerDealLower") }, new() { Image = Image(parent, "PokerDealUpper") }];
     }
 
@@ -63,17 +59,21 @@ internal sealed class PokerTableArt
                 if (seat is { InHand: true, Folded: false })
                 {
                     var visible = seat.PlayerId == player ? state.MyCards : seat.RevealedCards;
-                    texture = i < visible.Length ? Card(visible[i]) : Lookup(PokerCardAssets.Back);
+                    texture = i < visible.Length ? Card(visible[i]) : Back(seat.CardBackId);
                 }
                 Fit(_seats[seatIndex, i], texture, 8 + seatIndex % 3 * 240 + 176 + i * 25,
                     (seatIndex < 3 ? 72 : 282) + 45, 22, 30);
             }
         }
+        var selected = state.Seats.First(s => s.PlayerId == player).SelectedCardBackId;
+        SelectedBackMissing = Lookup(PokerCardAssets.BackFileName(selected)) == null;
+        Fit(_preview, Back(selected), 340, 558, 48, 64);
         if (_deals.Observe(table, state.HandId, state.Board.Length)) BeginAnimation(state.DealAnimationId);
         AdvanceAnimation();
     }
 
     private IGameTexture? Card(int card) => PokerCardAssets.FileNameFor(card) is { } file ? Lookup(file) : null;
+    private IGameTexture? Back(int id) => Lookup(PokerCardAssets.BackFileName(id)) ?? Lookup(PokerCardAssets.Back);
     private IGameTexture? Lookup(string file)
     {
         if (!_cards.TryGetValue(file, out var texture))
@@ -112,7 +112,6 @@ internal sealed class PokerTableArt
         var elapsed = Math.Max(0, Environment.TickCount64 - _started);
         foreach (var effect in _effects)
         {
-            // One visual pass per distribution, capped at 8 seconds. No gameplay/audio/light side effects.
             var frame = effect.Speed > 0 ? elapsed / effect.Speed : long.MaxValue;
             if (effect.Count == 0 || frame >= effect.Count || elapsed >= 8000 || effect.Image.Texture is not { } texture)
             { effect.Image.IsHidden = true; continue; }

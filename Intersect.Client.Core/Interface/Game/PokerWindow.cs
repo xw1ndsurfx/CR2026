@@ -8,7 +8,7 @@ using Intersect.Network.Packets.MiniGames;
 
 namespace Intersect.Client.Interface.Game;
 
-/// <summary>Server-driven poker window with optional original artwork and a text fallback.</summary>
+/// <summary>Server-driven poker window, cosmetic picker and winner-only screen overlay.</summary>
 internal sealed class PokerWindow : WindowControl
 {
     private readonly Action<PokerRequestKind, long> _send;
@@ -18,11 +18,14 @@ internal sealed class PokerWindow : WindowControl
     private readonly Label _ownCards;
     private readonly Label _error;
     private readonly Label _payouts;
+    private readonly Label _backStatus;
     private readonly Label[] _names = new Label[6];
     private readonly Label[] _stacks = new Label[6];
     private readonly Label[] _seatCards = new Label[6];
     private readonly Label[] _board = new Label[5];
     private readonly PokerTableArt _art;
+    private readonly PokerScreenEffect _victory;
+    private readonly Button _back;
     private readonly Button _start;
     private readonly Button _fold;
     private readonly Button _check;
@@ -32,6 +35,7 @@ internal sealed class PokerWindow : WindowControl
     private readonly Button _minimum;
     private readonly TextBox _amount;
     private PokerTableState? _state;
+    private int _selectedBack;
     private long _lastMinimum = -1;
     private string _localError = string.Empty;
     public bool ExitRequested { get; private set; }
@@ -42,7 +46,7 @@ internal sealed class PokerWindow : WindowControl
         _send = send;
         IsResizable = false;
         DeleteOnClose = false;
-        Size = new Point(Math.Max(320, Math.Min(760, canvas.Width - 20)), Math.Max(240, Math.Min(620, canvas.Height - 20)));
+        Size = new Point(Math.Max(320, Math.Min(760, canvas.Width - 20)), Math.Max(240, Math.Min(680, canvas.Height - 20)));
         X = Math.Max(0, (canvas.Width - Width) / 2);
         Y = Math.Max(0, (canvas.Height - Height) / 2);
         SetTextColor(Color.White, ControlState.Active);
@@ -50,7 +54,7 @@ internal sealed class PokerWindow : WindowControl
         Closed += (_, _) => ExitRequested = true;
         var scroll = new ScrollControl(this, "PokerScroll")
         { Dock = Pos.Fill, OverflowX = OverflowBehavior.Auto, OverflowY = OverflowBehavior.Auto };
-        var content = new Base(scroll, "PokerContent") { Size = new Point(728, 578), Dock = Pos.None };
+        var content = new Base(scroll, "PokerContent") { Size = new Point(728, 650), Dock = Pos.None };
         _table = MakeLabel(content, "Table", 8, 6, 712, 24);
         _turn = MakeLabel(content, "Turn", 8, 32, 712, 24);
         for (var i = 0; i < 6; ++i)
@@ -86,9 +90,13 @@ internal sealed class PokerWindow : WindowControl
         MakeButton(content, "Leave", Strings.Poker.Leave, 608, 470, 112, () => ExitRequested = true);
         _payouts = MakeLabel(content, "Payouts", 8, 506, 712, 22);
         _error = MakeLabel(content, "Error", 8, 528, 712, 22);
-        MakeLabel(content, "TestOnly", 8, 554, 712, 22).Text = Strings.Poker.TestOnly;
+        _back = MakeButton(content, "CardBack", Strings.PokerCosmetics.ChangeBack.ToString(Strings.PokerCosmetics.Backs[0]),
+            8, 562, 318, () => Send(PokerRequestKind.SelectCardBack, (_selectedBack + 1) % 4));
+        _backStatus = MakeLabel(content, "CardBackStatus", 8, 596, 320, 24);
+        MakeLabel(content, "TestOnly", 8, 626, 712, 22).Text = Strings.Poker.TestOnly;
         MakeLabel(content, "Legend", 8, 250, 712, 24).Text = Strings.Poker.ArtLegend;
         _art = new PokerTableArt(content, _board);
+        _victory = new PokerScreenEffect(canvas);
     }
 
     public void Update(PokerClientModel model)
@@ -123,6 +131,15 @@ internal sealed class PokerWindow : WindowControl
         for (var i = 0; i < _board.Length; ++i) _board[i].Text = i < state.Board.Length ? "[" + Card(state.Board[i]) + "]" : "[--]";
         _ownCards.Text = Strings.Poker.OwnCards.ToString(Cards(state.MyCards));
         _art.Update(state, model.Current.PlayerId, model.Current.TableInstanceId);
+        _selectedBack = me.SelectedCardBackId;
+        _back.Text = Strings.PokerCosmetics.ChangeBack.ToString(Strings.PokerCosmetics.Backs[_selectedBack]);
+        _back.IsDisabled = model.Pending || me.Leaving;
+        _backStatus.Text = me.SelectedCardBackId != me.CardBackId ? Strings.PokerCosmetics.NextHand :
+            _art.SelectedBackMissing ? Strings.PokerCosmetics.MissingArt : Strings.PokerCosmetics.Selected;
+        if (model.Victories.Observe(model.Current.TableInstanceId, model.Current.PlayerId, state.HandId,
+                state.Stage == PokerStage.Finished, state.NetWin))
+            _victory.Play(state.VictoryAnimationId);
+        _victory.Update();
         _start.IsDisabled = model.Pending || playing || me.Leaving || me.Chips == 0 || !opponents;
         _fold.IsDisabled = !enabled;
         _check.IsDisabled = !enabled || state.ToCall != 0;
@@ -137,7 +154,8 @@ internal sealed class PokerWindow : WindowControl
         }
         var awards = state.Payouts.Where(p => !p.IsRefund).GroupBy(p => p.PlayerId).Select(g =>
             (state.Seats.FirstOrDefault(s => s.PlayerId == g.Key)?.Name ?? "Player") + " +" + g.Sum(p => p.Chips));
-        _payouts.Text = state.Payouts.Length == 0 ? "" : Strings.Poker.Paid.ToString(Short(string.Join(" | ", awards), 110));
+        _payouts.Text = state.Payouts.Length == 0 ? "" : Strings.Poker.Paid.ToString(Short(string.Join(" | ", awards), 72)) +
+            (state.NetWin > 0 ? " | " + Strings.PokerCosmetics.NetWin.ToString(state.NetWin) : "");
         _error.Text = !string.IsNullOrEmpty(_localError) ? _localError : string.IsNullOrEmpty(model.ErrorCode) ? "" :
             Strings.Poker.Errors.TryGetValue(model.ErrorCode, out var message) ? message.ToString() : Strings.Poker.Rejected.ToString(model.ErrorCode);
     }
@@ -149,7 +167,7 @@ internal sealed class PokerWindow : WindowControl
         Send(PokerRequestKind.RaiseTo, value);
     }
     private void Send(PokerRequestKind kind, long amount = 0) { _localError = ""; _send(kind, amount); }
-    public void Destroy() { Interface.FocusComponents.Remove(_amount); Hide(); Dispose(); }
+    public void Destroy() { _victory.Dispose(); Interface.FocusComponents.Remove(_amount); Hide(); Dispose(); }
     private static string Short(string value, int length) => value.Length <= length ? value : value[..(length - 3)] + "...";
     private static string Card(int value) => value is >= 0 and < 52 ? "23456789TJQKA"[value % 13].ToString() + "CDHS"[value / 13] : "--";
     private static string Cards(int[] cards) => cards.Length == 0 ? "[--] [--]" : string.Join(" ", cards.Select(c => "[" + Card(c) + "]"));
@@ -157,7 +175,6 @@ internal sealed class PokerWindow : WindowControl
     { control.Dock = Pos.None; control.X = x; control.Y = y; control.Size = new Point(width, height); }
     private static Label MakeLabel(Base parent, string name, int x, int y, int width, int height)
     {
-        // An explicit font is required by Gwen's text measurement, even when rendering has a fallback.
         var label = new Label(parent, name) { AutoSizeToContents = false, Font = parent.Skin.DefaultFont, FontSize = 12 };
         Place(label, x, y, width, height);
         return label;

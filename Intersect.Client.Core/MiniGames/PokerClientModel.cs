@@ -11,6 +11,7 @@ internal sealed class PokerClientModel
     public long LastSequence { get; private set; }
     public bool Pending => _pendingRequest > 0;
     public string ErrorCode { get; private set; } = string.Empty;
+    public PokerVictoryTracker Victories { get; } = new();
     private Guid _dismissedView;
     private long _nextRequest;
     private long _pendingRequest;
@@ -20,7 +21,6 @@ internal sealed class PokerClientModel
     public bool Apply(PokerStatePacket packet, Guid playerId, long monotonicMs)
     {
         if (!packet.IsValid || packet.PlayerId != playerId) return false;
-        // A delayed acknowledgement may clear its matching request, but never roll back state.
         if (Current?.ViewId == packet.ViewId && _pendingRequest > 0 && packet.RequestId >= _pendingRequest)
         {
             _pendingRequest = 0;
@@ -51,13 +51,15 @@ internal sealed class PokerClientModel
     public PokerRequestPacket? Request(PokerRequestKind kind, long monotonicMs, long amount = 0)
     {
         if (Current?.State is not { } state) return null;
+        if (kind == PokerRequestKind.SelectCardBack && (amount < 0 || amount > 3)) return null;
         if (Pending && kind != PokerRequestKind.Leave &&
             !(kind == PokerRequestKind.Refresh && monotonicMs - _sentAt >= 5000)) return null;
         var request = new PokerRequestPacket
         {
             TableInstanceId = Current.TableInstanceId, ViewId = Current.ViewId,
             RequestId = ++_nextRequest, HandId = state.HandId, Revision = state.Revision,
-            Kind = kind, RaiseTo = amount,
+            Kind = kind, RaiseTo = kind == PokerRequestKind.SelectCardBack ? 0 : amount,
+            CardBackId = kind == PokerRequestKind.SelectCardBack ? (int)amount : 0,
         };
         _pendingRequest = request.RequestId;
         _sentAt = monotonicMs;
@@ -65,7 +67,6 @@ internal sealed class PokerClientModel
         return request;
     }
 
-    // Never retransmit a bet after a timeout. Ask for state instead.
     public bool NeedsRefresh(long monotonicMs) => Current != null &&
         (Pending ? monotonicMs - _sentAt >= 5000 : monotonicMs - _receivedAt >= 10000);
 

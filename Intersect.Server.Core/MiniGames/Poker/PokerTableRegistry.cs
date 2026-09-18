@@ -33,6 +33,7 @@ public sealed partial class PokerTableRegistry
         public required PokerRules Rules;
         public required PokerTable Table;
         public PokerTableOptions Options = new();
+        public readonly Extras Extras = new();
         public readonly HashSet<Guid> Players = new();
         public readonly Dictionary<Guid, string> Npcs = new();
         public Guid DealerNpcId;
@@ -88,14 +89,12 @@ public sealed partial class PokerTableRegistry
                 if (current.Leaving) return new(PokerRegistryError.Leaving);
                 if (current.Entry.Key != key) return new(PokerRegistryError.AlreadyAtAnotherTable);
                 if (current.Entry.Rules != rules || current.Entry.Options != options) return new(PokerRegistryError.RulesConflict);
-                return View(current); // No second seat or extra starting chips.
+                return View(current);
             }
             var exists = _tables.TryGetValue(key, out var entry);
             if (exists && (entry!.Rules != rules || entry.Options != options)) return new(PokerRegistryError.RulesConflict);
             if (!exists && _tables.Count >= _maximumTables) return new(PokerRegistryError.Capacity);
             entry ??= new Entry { Key = key, Rules = rules, Table = candidate, Options = options };
-            // A regular NPC may yield a full seat only BETWEEN hands. The croupier stays.
-            // Validate the human identity/name first, so a rejected join cannot evict an NPC.
             if (exists && !entry.Npcs.ContainsKey(caller.Session.PlayerId))
                 MakeRoomForHuman(entry, DateTimeOffset.UtcNow);
             var error = entry.Table.Join(caller.Session.PlayerId, playerName);
@@ -124,8 +123,7 @@ public sealed partial class PokerTableRegistry
         {
             if (Find(caller, tableInstanceId, out var member) != PokerRegistryError.None)
                 return PokerPresentation.Empty;
-            var e = member!.Entry;
-            return new(e.Npcs.Keys.ToArray(), e.DealerNpcId, e.Options.AutoStart, e.Options.DealAnimationId);
+            return Present(member!.Entry, caller.Session.PlayerId);
         }
     }
 
@@ -142,7 +140,7 @@ public sealed partial class PokerTableRegistry
             if (state.Seats.Single(s => s.PlayerId == caller.Session.PlayerId).Chips <= 0)
                 return Rejected(member, PokerError.NotSeated);
             PrepareOpponents(entry, now, refill: true);
-            var result = entry.Table.StartHand(caller.Session.PlayerId, now);
+            var result = StartTrackedHand(entry, caller.Session.PlayerId, now);
             if (result == PokerError.None) entry.NextHandAt = null;
             Cleanup(entry, now);
             return result == PokerError.None ? View(member) : Rejected(member, result);
@@ -204,7 +202,6 @@ public sealed partial class PokerTableRegistry
         lock (_gate) return _members.Values.Select(m => m.Presence).ToArray();
     }
 
-    /// <summary>Detached per-human recipient views, only after a revision changes.</summary>
     public PokerDelivery[] CollectUpdates()
     {
         lock (_gate)
@@ -239,7 +236,7 @@ public sealed partial class PokerTableRegistry
         member.Entry.Id, member.Entry.Table.Snapshot(member.Presence.Session.PlayerId));
     private static PokerRegistryResult Rejected(Membership member, PokerError error) =>
         View(member) with { Error = PokerRegistryError.PokerRejected, Detail = error };
-    private static bool Playing(PokerPhase phase) => phase is >= PokerPhase.PreFlop and <= PokerPhase.River;
+    private static bool Playing(PokerPhase phase) => phase is >= PokerPhase.PreFlop && phase <= PokerPhase.River;
     private static PokerSnapshot Current(Entry entry) => entry.Table.Snapshot(entry.Players.First());
 
     private void Leave(Membership member, DateTimeOffset now)
@@ -251,12 +248,14 @@ public sealed partial class PokerTableRegistry
         var retained = Playing(before.Phase) && before.Seats.Single(s => s.PlayerId == id).InHand;
         member.Leaving = true;
         entry.Table.Leave(id, now);
+        if (retained) CaptureCompleted(entry);
         if (!retained) Remove(member);
         Cleanup(entry, now);
     }
     private void Cleanup(Entry entry, DateTimeOffset now)
     {
         if (entry.Players.Count == 0) return;
+        CaptureCompleted(entry);
         if (Playing(Current(entry).Phase)) return;
         foreach (var id in entry.Players.ToArray())
         {
@@ -268,8 +267,12 @@ public sealed partial class PokerTableRegistry
     }
     private void Remove(Membership member)
     {
-        _members.Remove(member.Presence.Session.PlayerId);
-        member.Entry.Players.Remove(member.Presence.Session.PlayerId);
+        var id = member.Presence.Session.PlayerId;
+        _members.Remove(id);
+        member.Entry.Players.Remove(id);
+        member.Entry.Extras.SelectedBacks.Remove(id);
+        member.Entry.Extras.HandBacks.Remove(id);
+        member.Entry.Extras.EligibleHumans.Remove(id);
         if (member.Entry.Players.Count == 0) _tables.Remove(member.Entry.Key);
     }
 }

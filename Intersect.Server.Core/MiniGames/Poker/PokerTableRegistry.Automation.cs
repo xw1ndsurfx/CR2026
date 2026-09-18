@@ -44,7 +44,7 @@ public sealed partial class PokerTableRegistry
             AddNpc(entry, name, dealer: false);
         }
         if (!refill) return;
-        // TEST MODE ONLY. Refill broke NPCs between hands. Never refill a human or persistent wallet.
+        // TEST MODE ONLY. Never refill a human or a persistent wallet.
         foreach (var seat in Current(entry).Seats.Where(s => s.Chips == 0 && entry.Npcs.ContainsKey(s.PlayerId)).ToArray())
         {
             var dealer = seat.PlayerId == entry.DealerNpcId;
@@ -66,8 +66,6 @@ public sealed partial class PokerTableRegistry
                 entry.NextHandAt = null;
                 return;
             }
-            // Configured guests can have all yielded their seats to humans. Recreate them at
-            // the next hand if a human subsequently leaves; do not strand the remaining human.
             if (!entry.Options.DealerPlays && entry.Options.NpcPlayers == 0 &&
                 state.Seats.Count(s => !s.Leaving && s.Chips > 0) < 2)
             {
@@ -77,7 +75,7 @@ public sealed partial class PokerTableRegistry
             entry.NextHandAt ??= now.AddSeconds(5);
             if (now < entry.NextHandAt.Value) return;
             PrepareOpponents(entry, now, refill: true);
-            entry.Table.StartHand(human.PlayerId, now);
+            StartTrackedHand(entry, human.PlayerId, now);
             entry.NextHandAt = null;
             return;
         }
@@ -96,7 +94,6 @@ public sealed partial class PokerTableRegistry
             return;
         }
         if (now < entry.NpcDue) return;
-        // Only this recipient's private cards reach the NPC policy. Never pass a human view.
         var npcView = entry.Table.Snapshot(actor.PlayerId);
         var decision = PokerNpcPolicy.Choose(npcView, actor.PlayerId, entry.Rules.BigBlind);
         var result = entry.Table.Act(actor.PlayerId, npcView.HandId, npcView.Revision,

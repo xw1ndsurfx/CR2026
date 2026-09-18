@@ -15,12 +15,16 @@ public sealed class StartMiniGameCommand : EventCommand
     [DefaultValue(5L)] public long SmallBlind { get; set; } = 5;
     [DefaultValue(10L)] public long BigBlind { get; set; } = 10;
     [DefaultValue(30)] public int TurnSeconds { get; set; } = 30;
-    // Explicit defaults preserve existing events under IgnoreAndPopulate serialization.
     [DefaultValue(false)] public bool DealerPlays { get; set; }
     [DefaultValue(0)] public int NpcPlayers { get; set; }
     [DefaultValue(false)] public bool AutoStart { get; set; }
     [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")]
     public Guid DealAnimationId { get; set; }
+    // Opt-in for existing events: old tables must not unexpectedly broadcast winnings.
+    [DefaultValue(false)] public bool AnnounceWins { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")]
+    public Guid VictoryAnimationId { get; set; }
+    [DefaultValue(0)] public int NpcCardBackId { get; set; }
 
     public bool HasValidSettings() => Game == MiniGameType.Poker &&
         !string.IsNullOrEmpty(TableId) && TableId.Length <= 64 &&
@@ -29,5 +33,5 @@ public sealed class StartMiniGameCommand : EventCommand
         MaxPlayers is >= 2 and <= 6 && SmallBlind >= 1 && BigBlind >= SmallBlind &&
         BigBlind <= 1_000_000_000 && StartingChips >= BigBlind && StartingChips <= 1_000_000_000 &&
         TurnSeconds is >= 5 and <= 300 && NpcPlayers is >= 0 and <= 5 &&
-        NpcPlayers + (DealerPlays ? 1 : 0) < MaxPlayers;
+        NpcPlayers + (DealerPlays ? 1 : 0) < MaxPlayers && NpcCardBackId is >= 0 and <= 3;
 }
