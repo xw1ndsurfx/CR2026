@@ -7,6 +7,7 @@ using Intersect.Client.Interface.Game;
 using Intersect.Client.MiniGames;
 using Intersect.Network.Packets.MiniGames;
 using Newtonsoft.Json;
+using Console = System.Console;
 using ControlBase = Intersect.Client.Framework.Gwen.Control.Base;
 using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
 
