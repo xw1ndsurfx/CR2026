@@ -222,8 +222,13 @@ internal sealed class PokerWindow : Base
             }
         }
         for (var i = 0; i < 5; ++i) Fill(r, new Color(42, 29, 24), 332 + i * 66, 301, 58, 76);
-        Fill(r, new Color(18, 22, 23), 52, 712, 618, 12);
-        Fill(r, Gold, 53, 713, (int)(616 * Math.Clamp(_xpFraction, 0, 1)), 10);
+        // Green experience bar. Keep a visible track even when this level starts at 0 XP.
+        // The same scene transform keeps the bar aligned when the canvas is resized.
+        var experienceWidth = (int)(616 * Math.Clamp(_xpFraction, 0, 1));
+        Fill(r, new Color(45, 99, 61), 52, 710, 618, 18);
+        Fill(r, new Color(15, 30, 20), 53, 711, 616, 16);
+        Fill(r, new Color(46, 196, 90), 53, 711, experienceWidth, 16);
+        Fill(r, new Color(106, 222, 135), 53, 711, experienceWidth, 3);
     }
     private void Fill(RendererBase r, Color color, int x, int y, int w, int h)
     {

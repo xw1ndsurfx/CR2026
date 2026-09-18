@@ -5,7 +5,11 @@ namespace Intersect.Framework.Core.GameObjects.Events.Commands;
 
 public enum MiniGameType { Poker = 0 }
 
-/// <summary>Joins a shared server table. Balances remain temporary test chips.</summary>
+/// <summary>
+/// Configures a shared server table. An empty currency ID selects the existing test-chip mode.
+/// Inventory currency selection is persisted for the upcoming accounting integration; it must
+/// never silently fall back to test chips or convert existing test balances into inventory items.
+/// </summary>
 public sealed class StartMiniGameCommand : EventCommand
 {
     public override EventCommandType Type => EventCommandType.StartMiniGame;
@@ -25,6 +29,10 @@ public sealed class StartMiniGameCommand : EventCommand
     [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")]
     public Guid VictoryAnimationId { get; set; }
     [DefaultValue(0)] public int NpcCardBackId { get; set; }
+
+    /// <summary>The created item's stable ID, never its list index or display name.</summary>
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")]
+    public Guid CurrencyItemId { get; set; }
 
     public bool HasValidSettings() => Game == MiniGameType.Poker &&
         !string.IsNullOrEmpty(TableId) && TableId.Length <= 64 &&
