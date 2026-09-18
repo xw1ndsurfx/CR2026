@@ -13,6 +13,7 @@ public enum PokerRegistryError
 {
     None, InvalidPresence, InvalidTableName, InvalidRules, NotSeated, SessionChanged,
     WrongLocation, WrongTable, AlreadyAtAnotherTable, Leaving, RulesConflict, Capacity, PokerRejected,
+    CardBackLocked, ProgressionUnavailable,
 }
 public sealed record PokerRegistryResult(
     PokerRegistryError Error, Guid TableInstanceId = default,
@@ -20,9 +21,8 @@ public sealed record PokerRegistryResult(
 public sealed record PokerDelivery(PokerSession Recipient, Guid TableInstanceId, PokerSnapshot Snapshot);
 
 /// <summary>
-/// Process-local, test-chip registry. Serializes membership, NPCs and human actions.
-/// NPC IDs are never registered as authenticated memberships or sent network packets.
-/// No external callbacks or network sends run while the registry lock is held.
+/// Process-local test-chip tables with independent persistent mini-game progression.
+/// Lock order: registry, table/store. No player or network callback under this gate.
 /// </summary>
 public sealed partial class PokerTableRegistry
 {
@@ -94,6 +94,8 @@ public sealed partial class PokerTableRegistry
             var exists = _tables.TryGetValue(key, out var entry);
             if (exists && (entry!.Rules != rules || entry.Options != options)) return new(PokerRegistryError.RulesConflict);
             if (!exists && _tables.Count >= _maximumTables) return new(PokerRegistryError.Capacity);
+            // Fail closed BEFORE taking a seat; an unreadable profile must not become level 1.
+            if (!TryLoadProgress(caller.Session.PlayerId, out var profile)) return new(PokerRegistryError.ProgressionUnavailable);
             entry ??= new Entry { Key = key, Rules = rules, Table = candidate, Options = options };
             if (exists && !entry.Npcs.ContainsKey(caller.Session.PlayerId))
                 MakeRoomForHuman(entry, DateTimeOffset.UtcNow);
@@ -103,6 +105,8 @@ public sealed partial class PokerTableRegistry
             var member = new Membership { Presence = caller, Entry = entry };
             _members.Add(caller.Session.PlayerId, member);
             entry.Players.Add(caller.Session.PlayerId);
+            entry.Extras.Profiles[caller.Session.PlayerId] = profile;
+            entry.Extras.SelectedBacks[caller.Session.PlayerId] = profile.SelectedBack;
             PrepareOpponents(entry, DateTimeOffset.UtcNow, refill: false);
             return View(member);
         }
@@ -137,6 +141,7 @@ public sealed partial class PokerTableRegistry
             var state = entry.Table.Snapshot(caller.Session.PlayerId);
             if (state.Revision != revision) return Rejected(member, PokerError.StaleState);
             if (Playing(state.Phase)) return Rejected(member, PokerError.HandInProgress);
+            if (HasPendingExperience(entry)) return View(member) with { Error = PokerRegistryError.ProgressionUnavailable };
             if (state.Seats.Single(s => s.PlayerId == caller.Session.PlayerId).Chips <= 0)
                 return Rejected(member, PokerError.NotSeated);
             PrepareOpponents(entry, now, refill: true);
@@ -155,7 +160,7 @@ public sealed partial class PokerTableRegistry
             var error = Find(caller, tableInstanceId, out var member);
             if (error != PokerRegistryError.None) return new(error);
             var entry = member!.Entry;
-            var result = entry.Table.Act(caller.Session.PlayerId, handId, revision, action, raiseTo, now);
+            var result = ActTracked(entry, caller.Session.PlayerId, handId, revision, action, raiseTo, now);
             Cleanup(entry, now);
             return result == PokerError.None ? View(member) : Rejected(member, result);
         }
@@ -182,6 +187,7 @@ public sealed partial class PokerTableRegistry
         var absent = observed.Where(m => !isPresent(m.Presence)).ToArray();
         lock (_gate)
         {
+            ProcessExperience(now);
             foreach (var member in absent)
             {
                 if (_members.TryGetValue(member.Presence.Session.PlayerId, out var current) &&
@@ -189,7 +195,7 @@ public sealed partial class PokerTableRegistry
             }
             foreach (var entry in _tables.Values.ToArray())
             {
-                entry.Table.Tick(now);
+                TickTracked(entry, now);
                 Cleanup(entry, now);
                 if (entry.Players.Count > 0) AdvanceAutomation(entry, now);
                 Cleanup(entry, now);
@@ -245,10 +251,16 @@ public sealed partial class PokerTableRegistry
         var entry = member.Entry;
         var id = member.Presence.Session.PlayerId;
         var before = entry.Table.Snapshot(id);
-        var retained = Playing(before.Phase) && before.Seats.Single(s => s.PlayerId == id).InHand;
+        var seat = before.Seats.Single(s => s.PlayerId == id);
+        var retained = Playing(before.Phase) && seat.InHand;
         member.Leaving = true;
         entry.Table.Leave(id, now);
-        if (retained) CaptureCompleted(entry);
+        Decision(entry, seat, "leave");
+        if (retained)
+        {
+            AdditionalFolds(entry, before, entry.Table.Snapshot(id), Guid.Empty);
+            CaptureCompleted(entry);
+        }
         if (!retained) Remove(member);
         Cleanup(entry, now);
     }
@@ -273,6 +285,7 @@ public sealed partial class PokerTableRegistry
         member.Entry.Extras.SelectedBacks.Remove(id);
         member.Entry.Extras.HandBacks.Remove(id);
         member.Entry.Extras.EligibleHumans.Remove(id);
+        member.Entry.Extras.Profiles.Remove(id);
         if (member.Entry.Players.Count == 0) _tables.Remove(member.Entry.Key);
     }
 }

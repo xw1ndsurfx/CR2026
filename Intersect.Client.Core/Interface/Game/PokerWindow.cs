@@ -3,149 +3,181 @@ using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Localization;
 using Intersect.Client.MiniGames;
-using Intersect.Framework.Core;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Network.Packets.MiniGames;
+using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
+using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
 
 namespace Intersect.Client.Interface.Game;
 
-/// <summary>Server-driven poker window, cosmetic picker and winner-only screen overlay.</summary>
-internal sealed class PokerWindow : WindowControl
+/// <summary>A borderless, canvas-sized 2D table scene. No WindowControl or OS-style title bar.</summary>
+internal sealed class PokerWindow : Base
 {
+    private sealed record Placement(Base Control, int X, int Y, int W, int H, int Font = 0, bool Local = false);
+    private readonly Canvas _canvas;
+    private readonly Base _content;
+    private readonly List<Placement> _placements = [];
     private readonly Action<PokerRequestKind, long> _send;
-    private readonly Label _table;
-    private readonly Label _turn;
-    private readonly Label _stage;
-    private readonly Label _ownCards;
-    private readonly Label _error;
-    private readonly Label _payouts;
-    private readonly Label _backStatus;
-    private readonly Label[] _names = new Label[6];
-    private readonly Label[] _stacks = new Label[6];
-    private readonly Label[] _seatCards = new Label[6];
-    private readonly Label[] _board = new Label[5];
+    private readonly Label _table, _turn, _stage, _pot, _ownCards, _error, _payouts, _backStatus, _experience, _levelUp;
+    private readonly Label[] _names = new Label[6], _stacks = new Label[6], _seatCards = new Label[6], _decisions = new Label[6];
+    private readonly Label[] _board = new Label[5], _feed = new Label[3];
+    private readonly Button _start, _fold, _check, _call, _raise, _allIn, _minimum, _back;
+    private readonly Button[] _backs = new Button[6];
+    private readonly TextBox _amount;
+    private readonly PokerFlatPanel _backTray;
     private readonly PokerTableArt _art;
     private readonly PokerScreenEffect _victory;
-    private readonly Button _back;
-    private readonly Button _start;
-    private readonly Button _fold;
-    private readonly Button _check;
-    private readonly Button _call;
-    private readonly Button _raise;
-    private readonly Button _allIn;
-    private readonly Button _minimum;
-    private readonly TextBox _amount;
+    private PokerSceneLayout _layout;
     private PokerTableState? _state;
-    private int _selectedBack;
-    private long _lastMinimum = -1;
+    private int _localSeat, _selectedBack, _lastLevel = -1;
+    private long _lastMinimum = -1, _levelUpUntil;
+    private float _xpFraction;
     private string _localError = string.Empty;
     private bool _destroyed;
     public bool ExitRequested { get; private set; }
 
-    public PokerWindow(Canvas canvas, Action<PokerRequestKind, long> send)
-        : base(canvas, Strings.Poker.Title, false, nameof(PokerWindow))
+    public PokerWindow(Canvas canvas, Action<PokerRequestKind, long> send) : base(canvas, nameof(PokerWindow))
     {
-        _send = send;
-        IsResizable = false;
-        DeleteOnClose = false;
-        Size = new Point(Math.Max(320, Math.Min(760, canvas.Width - 20)), Math.Max(240, Math.Min(680, canvas.Height - 20)));
-        X = Math.Max(0, (canvas.Width - Width) / 2);
-        Y = Math.Max(0, (canvas.Height - Height) / 2);
-        SetTextColor(Color.White, ControlState.Active);
-        SetTextColor(Color.White, ControlState.Inactive);
-        Closed += (_, _) => ExitRequested = true;
-        var scroll = new ScrollControl(this, "PokerScroll")
-        { Dock = Pos.Fill, OverflowX = OverflowBehavior.Auto, OverflowY = OverflowBehavior.Auto };
-        var content = new Base(scroll, "PokerContent") { Size = new Point(728, 650), Dock = Pos.None };
-        _table = MakeLabel(content, "Table", 8, 6, 712, 24);
-        _turn = MakeLabel(content, "Turn", 8, 32, 712, 24);
+        _canvas = canvas; _send = send;
+        ShouldDrawBackground = false;
+        MouseInputEnabled = true; KeyboardInputEnabled = false;
+        _layout = new PokerSceneLayout(Math.Max(1, canvas.Width), Math.Max(1, canvas.Height));
+        _content = new Base(this, "PokerContent") { ShouldDrawBackground = false, MouseInputEnabled = false };
+        _table = Label("Table", 18, 12, 342, 30, 18);
+        _turn = Label("Turn", 18, 46, 340, 30);
+        _pot = Label("Pot", 410, 240, 230, 32, 22);
+        _stage = Label("Stage", 410, 270, 230, 28);
         for (var i = 0; i < 6; ++i)
         {
-            var x = 8 + (i % 3) * 240;
-            var y = i < 3 ? 72 : 282;
-            _names[i] = MakeLabel(content, "SeatName" + i, x, y, 232, 22);
-            _stacks[i] = MakeLabel(content, "SeatStack" + i, x, y + 24, 232, 22);
-            _seatCards[i] = MakeLabel(content, "SeatCards" + i, x, y + 48, 170, 22);
+            var center = PokerSceneLayout.Center(i);
+            _names[i] = Label("SeatName" + i, center.X - 94, center.Y + 32, 188, 24);
+            _stacks[i] = Label("SeatStack" + i, center.X - 94, center.Y + 56, 188, 24);
+            _seatCards[i] = Label("SeatCards" + i, center.X - 94, center.Y + 80, 188, 24);
+            _decisions[i] = Label("SeatDecision" + i, center.X - 94, center.Y - 65, 200, 28);
         }
-        _stage = MakeLabel(content, "Stage", 248, 154, 232, 24);
-        for (var i = 0; i < 5; ++i)
-        {
-            _board[i] = MakeLabel(content, "Board" + i, 150 + i * 86, 194, 82, 46);
-            _board[i].FontSize = 22;
-        }
-        _ownCards = MakeLabel(content, "MyCards", 8, 374, 420, 30);
-        _ownCards.FontSize = 18;
-        MakeLabel(content, "RaiseTotal", 8, 432, 172, 26).Text = Strings.Poker.RaiseTotal;
-        _amount = new TextBox(content, "RaiseAmount") { Font = content.Skin.DefaultFont, FontSize = 12, Text = "20" };
-        Place(_amount, 184, 432, 126, 26);
+        for (var i = 0; i < 5; ++i) _board[i] = Label("Board" + i, 334 + i * 66, 310, 62, 40, 22);
+        _ownCards = Label("MyCards", 404, 460, 206, 30, 18);
+        for (var i = 0; i < 3; ++i) _feed[i] = Label("DecisionFeed" + i, 695, 12 + i * 26, 290, 26);
+        _payouts = Label("Payouts", 330, 369, 345, 28);
+        _levelUp = Label("LevelUp", 328, 399, 344, 30, 18);
+        Label("RaiseTotal", 52, 594, 192, 30).Text = Strings.Poker.RaiseTotal;
+        _amount = new TextBox(_content, "RaiseAmount") { Font = Skin.DefaultFont, FontSize = 12, Text = "20" };
+        Place(_amount, 250, 592, 130, 32, 12);
         Interface.FocusComponents.Add(_amount);
-        _minimum = MakeButton(content, "Minimum", Strings.Poker.Minimum, 316, 432, 108,
+        _minimum = Button("Minimum", Strings.Poker.Minimum, 392, 592, 110,
             () => _amount.Text = Math.Min(_state?.MinimumRaiseTo ?? 0, _state?.MaximumRaiseTo ?? 0).ToString(CultureInfo.InvariantCulture));
-        _raise = MakeButton(content, "Raise", Strings.Poker.Raise, 430, 432, 142, Raise);
-        _start = MakeButton(content, "Start", Strings.Poker.Start, 8, 470, 116, () => Send(PokerRequestKind.StartHand));
-        _fold = MakeButton(content, "Fold", Strings.Poker.Fold, 130, 470, 80, () => Send(PokerRequestKind.Fold));
-        _check = MakeButton(content, "Check", Strings.Poker.Check, 216, 470, 80, () => Send(PokerRequestKind.Check));
-        _call = MakeButton(content, "Call", "Call", 302, 470, 104, () => Send(PokerRequestKind.Call));
-        _allIn = MakeButton(content, "AllIn", Strings.Poker.AllIn, 412, 470, 92,
+        _raise = Button("Raise", Strings.Poker.Raise, 514, 592, 150, Raise);
+        _error = Label("Error", 676, 590, 275, 34);
+        _start = Button("Start", Strings.Poker.Start, 52, 634, 115, () => Send(PokerRequestKind.StartHand));
+        _fold = Button("Fold", Strings.Poker.Fold, 179, 634, 92, () => Send(PokerRequestKind.Fold));
+        _check = Button("Check", Strings.Poker.Check, 283, 634, 92, () => Send(PokerRequestKind.Check));
+        _call = Button("Call", "Call", 387, 634, 122, () => Send(PokerRequestKind.Call));
+        _allIn = Button("AllIn", Strings.Poker.AllIn, 521, 634, 110,
             () => Send(_state?.CanRaise == true ? PokerRequestKind.RaiseTo : PokerRequestKind.Call, _state?.MaximumRaiseTo ?? 0));
-        MakeButton(content, "Refresh", Strings.Poker.Refresh, 510, 470, 92, () => Send(PokerRequestKind.Refresh));
-        MakeButton(content, "Leave", Strings.Poker.Leave, 608, 470, 112, () => ExitRequested = true);
-        _payouts = MakeLabel(content, "Payouts", 8, 506, 712, 22);
-        _error = MakeLabel(content, "Error", 8, 528, 712, 22);
-        _back = MakeButton(content, "CardBack", Strings.PokerCosmetics.ChangeBack.ToString(Strings.PokerCosmetics.Backs[0]),
-            8, 562, 318, () => Send(PokerRequestKind.SelectCardBack, (_selectedBack + 1) % 4));
-        _backStatus = MakeLabel(content, "CardBackStatus", 8, 596, 320, 24);
-        MakeLabel(content, "TestOnly", 8, 626, 712, 22).Text = Strings.Poker.TestOnly;
-        MakeLabel(content, "Legend", 8, 250, 712, 24).Text = Strings.Poker.ArtLegend;
-        _art = new PokerTableArt(content, _board);
+        Button("Refresh", Strings.Poker.Refresh, 643, 634, 112, () => Send(PokerRequestKind.Refresh));
+        Button("Leave", Strings.Poker.Leave, 767, 634, 181, () => ExitRequested = true);
+        _experience = Label("Experience", 52, 678, 640, 28);
+        _back = Button("CardBack", Strings.PokerScene.Back.ToString(1), 710, 676, 238, () =>
+        { _backTray.IsHidden = !_backTray.IsHidden; if (!_backTray.IsHidden) _backTray.BringToFront(); });
+        _backStatus = Label("CardBackStatus", 710, 710, 238, 26);
+        Label("TestOnly", 52, 742, 895, 26).Text = Strings.PokerScene.TestProgress;
+        _backTray = new PokerFlatPanel(_content, "BackPicker") { IsHidden = true };
+        Place(_backTray, 168, 398, 664, 150);
+        for (var i = 0; i < 6; ++i)
+        {
+            var id = i;
+            var b = new Button(_backTray, "BackChoice" + i)
+            { Font = Skin.DefaultFont, FontSize = 12, Text = Strings.PokerScene.BackLevel.ToString(i + 1, MiniGameProgression.BackLevel(i)) };
+            Place(b, 8 + i * 108, 103, 106, 34, 12, local: true);
+            b.Clicked += (_, _) => SelectBack(id);
+            _backs[i] = b;
+        }
+        _art = new PokerTableArt(_content, _backTray, _board);
         _victory = new PokerScreenEffect(canvas);
+        ResizeToCanvas();
+    }
+
+    public void ResizeToCanvas()
+    {
+        if (_destroyed) return;
+        SetBounds(0, 0, Math.Max(1, _canvas.Width), Math.Max(1, _canvas.Height));
+        _content.SetBounds(0, 0, Width, Height);
+        _layout = new PokerSceneLayout(Width, Height);
+        foreach (var p in _placements)
+        {
+            var r = p.Local ? _layout.LocalRect(p.X, p.Y, p.W, p.H) : _layout.Rect(p.X, p.Y, p.W, p.H);
+            p.Control.SetBounds(r.X, r.Y, r.Width, r.Height);
+            if (p.Control is Label label && p.Font > 0) label.FontSize = _layout.FontSize(p.Font);
+        }
     }
 
     public void Update(PokerClientModel model)
     {
         if (_destroyed || model.Current?.State is not { } state) return;
+        if (Width != _canvas.Width || Height != _canvas.Height) ResizeToCanvas();
         _state = state;
         var me = state.Seats.First(s => s.PlayerId == model.Current.PlayerId);
+        _localSeat = me.Seat; _selectedBack = me.SelectedCardBackId;
         var playing = state.Stage is >= PokerStage.PreFlop and <= PokerStage.River;
         var turn = playing && state.ActingSeat == me.Seat && !me.Leaving && !me.Folded && !me.AllIn;
         var enabled = turn && !model.Pending;
         var opponents = state.Seats.Any(s => s.PlayerId != me.PlayerId && !s.Leaving &&
             (s.Chips > 0 || state.NpcIds.Contains(s.PlayerId)));
-        _table.Text = Strings.Poker.TableInfo.ToString(model.Current.TableName, state.HandId, state.Pot);
+        _table.Text = Strings.PokerScene.Title.ToString(model.Current.TableName, state.HandId);
+        _pot.Text = Strings.PokerScene.Pot.ToString(state.Pot);
         _stage.Text = Strings.Poker.Stages[(int)state.Stage];
-        _turn.Text = model.Pending ? Strings.Poker.Pending : playing
+        _turn.Text = state.ProgressPending ? Strings.PokerScene.Saving : model.Pending ? Strings.Poker.Pending : playing
             ? (turn ? Strings.Poker.YourTurn : Strings.Poker.OtherTurn).ToString(model.SecondsRemaining(Environment.TickCount64))
             : me.Chips == 0 ? Strings.Poker.NoChips : !opponents ? Strings.Poker.NeedPlayers :
                 state.AutoStart ? Strings.Poker.AutomaticNext : Strings.Poker.Ready;
-        for (var i = 0; i < 6; ++i)
+        _art.Update(state, me.PlayerId, model.Current.TableInstanceId, _layout);
+        for (var slot = 0; slot < 6; ++slot)
         {
-            var seat = state.Seats.FirstOrDefault(s => s.Seat == i);
-            var name = seat != null && seat.PlayerId == state.DealerNpcId ? Strings.Poker.DealerName.ToString() : seat?.Name ?? "";
-            _names[i].Text = seat == null ? Strings.Poker.EmptySeat.ToString(i + 1) :
-                (state.ActingSeat == i ? "> " : "") + Short(name, 18) +
-                (state.NpcIds.Contains(seat.PlayerId) ? Strings.Poker.NpcSuffix.ToString() : "") +
-                (state.DealerSeat == i ? " (B)" : "");
-            _stacks[i].Text = seat == null ? "" : Strings.Poker.Stack.ToString(seat.Chips, seat.StreetBet);
-            _seatCards[i].Text = seat == null ? "" : seat.Leaving ? Strings.Poker.Leaving :
-                seat.Folded ? Strings.Poker.Folded : seat.RevealedCards.Length > 0 ? Cards(seat.RevealedCards) :
-                seat.AllIn ? Strings.Poker.AllIn : seat.InHand ? "[??] [??]" : Strings.Poker.Waiting;
+            var seat = state.Seats.FirstOrDefault(s => PokerSceneLayout.Slot(s.Seat, me.Seat) == slot);
+            var name = seat == null ? Strings.Poker.EmptySeat.ToString(slot + 1) : seat.PlayerId == state.DealerNpcId
+                ? Strings.PokerScene.Dealer.ToString(seat.Name) : seat.PlayerId == me.PlayerId
+                ? Strings.PokerScene.You.ToString(seat.Name) : seat.Name;
+            _names[slot].Text = Short(name, 22);
+            _stacks[slot].Text = seat == null ? "" : Strings.Poker.Stack.ToString(seat.Chips, seat.StreetBet);
+            _seatCards[slot].Text = seat == null ? "" : seat.Leaving ? Strings.Poker.Leaving : seat.Folded ? Strings.Poker.Folded :
+                seat.AllIn ? Strings.Poker.AllIn : !seat.InHand ? Strings.Poker.Waiting :
+                seat.Seat == state.DealerSeat ? "(B)" : "";
+            var decision = seat == null ? null : state.Decisions.LastOrDefault(d => d.PlayerId == seat.PlayerId);
+            _decisions[slot].Text = decision == null ? "" : Describe(decision);
+            _names[slot].SetTextColor(seat?.Seat == state.ActingSeat ? Gold : Color.White, ControlState.Normal);
+            _decisions[slot].SetTextColor(decision?.Action == "wins" ? Gold : Color.White, ControlState.Normal);
         }
-        for (var i = 0; i < _board.Length; ++i) _board[i].Text = i < state.Board.Length ? "[" + Card(state.Board[i]) + "]" : "[--]";
-        _ownCards.Text = Strings.Poker.OwnCards.ToString(Cards(state.MyCards));
-        _art.Update(state, model.Current.PlayerId, model.Current.TableInstanceId);
-        _selectedBack = me.SelectedCardBackId;
-        _back.Text = Strings.PokerCosmetics.ChangeBack.ToString(Strings.PokerCosmetics.Backs[_selectedBack]);
+        for (var i = 0; i < 5; ++i) _board[i].Text = i < state.Board.Length ? "[" + Card(state.Board[i]) + "]" : "";
+        _ownCards.Text = Cards(state.MyCards);
+        _ownCards.IsHidden = _art.HasOwnImages;
+        var recent = state.Decisions.TakeLast(3).ToArray();
+        for (var i = 0; i < 3; ++i)
+            _feed[i].Text = i < recent.Length ? Short(recent[i].Name + ": " + Describe(recent[i]), 40) : "";
+        _payouts.Text = state.NetWin > 0 ? Strings.PokerScene.Net.ToString(state.NetWin) : "";
+        _back.Text = Strings.PokerScene.Back.ToString(_selectedBack + 1);
         _back.IsDisabled = model.Pending || me.Leaving;
         _backStatus.Text = me.SelectedCardBackId != me.CardBackId ? Strings.PokerCosmetics.NextHand :
             _art.SelectedBackMissing ? Strings.PokerCosmetics.MissingArt : Strings.PokerCosmetics.Selected;
-        if (model.Victories.Observe(model.Current.TableInstanceId, model.Current.PlayerId, state.HandId,
-                state.Stage == PokerStage.Finished, state.NetWin))
-            _victory.Play(state.VictoryAnimationId);
+        for (var i = 0; i < 6; ++i)
+        {
+            _backs[i].IsDisabled = model.Pending || !MiniGameProgression.IsUnlocked(i, state.Experience);
+            _backs[i].SetTextColor(i == _selectedBack ? Gold : Color.White, ControlState.Normal);
+        }
+        var level = MiniGameProgression.Level(state.Experience);
+        var baseXp = MiniGameProgression.ExperienceAtLevel(level);
+        var toNext = level < MiniGameProgression.MaximumLevel ? MiniGameProgression.ExperienceAtLevel(level + 1) - baseXp : 1;
+        _xpFraction = level == MiniGameProgression.MaximumLevel ? 1 : (state.Experience - baseXp) / (float)toNext;
+        _experience.Text = level == MiniGameProgression.MaximumLevel ? Strings.PokerScene.Mastered.ToString(level) :
+            Strings.PokerScene.Progress.ToString(level, state.Experience - baseXp, toNext);
+        if (_lastLevel > 0 && level > _lastLevel) _levelUpUntil = Environment.TickCount64 + 5000;
+        _lastLevel = level;
+        _levelUp.Text = Environment.TickCount64 < _levelUpUntil ? Strings.PokerScene.LevelUp.ToString(level) : "";
+        if (model.Victories.Observe(model.Current.TableInstanceId, me.PlayerId, state.HandId,
+                state.Stage == PokerStage.Finished, state.NetWin)) _victory.Play(state.VictoryAnimationId);
         _victory.Update();
-        _start.IsDisabled = model.Pending || playing || me.Leaving || me.Chips == 0 || !opponents;
-        _fold.IsDisabled = !enabled;
-        _check.IsDisabled = !enabled || state.ToCall != 0;
-        _call.IsDisabled = !enabled || state.ToCall == 0;
-        _call.Text = Strings.Poker.Call.ToString(state.ToCall);
+        _start.IsDisabled = model.Pending || playing || me.Leaving || me.Chips == 0 || !opponents || state.ProgressPending;
+        _fold.IsDisabled = !enabled; _check.IsDisabled = !enabled || state.ToCall != 0;
+        _call.IsDisabled = !enabled || state.ToCall == 0; _call.Text = Strings.Poker.Call.ToString(state.ToCall);
         _raise.IsDisabled = _minimum.IsDisabled = _amount.IsDisabled = !enabled || !state.CanRaise;
         _allIn.IsDisabled = !enabled || !(state.CanRaise || state.ToCall > 0 && state.ToCall == me.Chips);
         if (_lastMinimum != state.MinimumRaiseTo && !_amount.HasFocus)
@@ -153,14 +185,75 @@ internal sealed class PokerWindow : WindowControl
             _lastMinimum = state.MinimumRaiseTo;
             _amount.Text = Math.Min(state.MinimumRaiseTo, state.MaximumRaiseTo).ToString(CultureInfo.InvariantCulture);
         }
-        var awards = state.Payouts.Where(p => !p.IsRefund).GroupBy(p => p.PlayerId).Select(g =>
-            (state.Seats.FirstOrDefault(s => s.PlayerId == g.Key)?.Name ?? "Player") + " +" + g.Sum(p => p.Chips));
-        _payouts.Text = state.Payouts.Length == 0 ? "" : Strings.Poker.Paid.ToString(Short(string.Join(" | ", awards), 72)) +
-            (state.NetWin > 0 ? " | " + Strings.PokerCosmetics.NetWin.ToString(state.NetWin) : "");
-        _error.Text = !string.IsNullOrEmpty(_localError) ? _localError : string.IsNullOrEmpty(model.ErrorCode) ? "" :
-            Strings.Poker.Errors.TryGetValue(model.ErrorCode, out var message) ? message.ToString() : Strings.Poker.Rejected.ToString(model.ErrorCode);
+        _error.Text = !string.IsNullOrEmpty(_localError) ? _localError : model.ErrorCode switch
+        {
+            "" => "", "ProgressionUnavailable" => Strings.PokerScene.ProgressError,
+            "CardBackLocked" => "Card back locked",
+            _ => Strings.Poker.Errors.TryGetValue(model.ErrorCode, out var message) ? message.ToString() : Strings.Poker.Rejected.ToString(model.ErrorCode),
+        };
+        if (!_backTray.IsHidden) _backTray.BringToFront();
     }
 
+    private static readonly Color Gold = new(231, 194, 112);
+    protected override void Render(SkinBase skin)
+    {
+        // All fallback artwork is original procedural 2D drawing, replaceable by optional PNGs.
+        var r = skin.Renderer;
+        r.DrawColor = new Color(205, 9, 14, 17); r.DrawFilledRect(new Rectangle(0, 0, Width, Height));
+        Fill(r, new Color(24, 17, 14), 36, 581, 928, 151);
+        Fill(r, new Color(125, 92, 48), 36, 581, 928, 2);
+        Ellipse(r, new Color(25, 17, 14), 185, 174, 630, 340);
+        Ellipse(r, new Color(117, 75, 41), 189, 166, 622, 334);
+        Ellipse(r, new Color(174, 122, 66), 198, 174, 604, 316);
+        Ellipse(r, new Color(67, 44, 30), 208, 184, 584, 296);
+        // A few short planks stay within the ellipse and do not obscure the cards.
+        for (var y = 224; y < 455; y += 38) Fill(r, new Color(82, 55, 37), 280, y, 440, 2);
+        for (var slot = 0; slot < 6; ++slot)
+        {
+            var c = PokerSceneLayout.Center(slot);
+            var seat = _state?.Seats.FirstOrDefault(s => PokerSceneLayout.Slot(s.Seat, _localSeat) == slot);
+            Fill(r, new Color(42, 28, 22), c.X - 30, c.Y - 18, 60, 48);
+            Fill(r, new Color(117, 78, 43), c.X - 25, c.Y - 12, 50, 34);
+            if (seat == null) continue;
+            if (seat.Seat == _state!.ActingSeat)
+            {
+                for (var row = 0; row < 8; ++row) Fill(r, Gold, c.X - row, c.Y - 48 + row, row * 2 + 1, 1);
+            }
+            if (!_art.HasPortrait(slot))
+            {
+                var coat = slot % 2 == 0 ? new Color(47, 75, 85) : new Color(98, 55, 51);
+                Fill(r, new Color(30, 25, 25), c.X - 22, c.Y + 6, 44, 20);
+                Fill(r, coat, c.X - 21, c.Y - 10, 42, 29);
+                Fill(r, new Color(205, 169, 132), c.X - 26, c.Y - 3, 10, 13);
+                Fill(r, new Color(205, 169, 132), c.X + 16, c.Y - 3, 10, 13);
+                Fill(r, new Color(205, 169, 132), c.X - 11, c.Y - 33, 22, 25);
+                Fill(r, new Color(52, 37, 32), c.X - 13, c.Y - 37, 26, 10);
+            }
+        }
+        for (var i = 0; i < 5; ++i) Fill(r, new Color(42, 29, 24), 332 + i * 66, 301, 58, 76);
+        Fill(r, new Color(18, 22, 23), 52, 712, 618, 12);
+        Fill(r, Gold, 53, 713, (int)(616 * Math.Clamp(_xpFraction, 0, 1)), 10);
+    }
+    private void Fill(RendererBase r, Color color, int x, int y, int w, int h)
+    { if (w < 1 || h < 1) return; r.DrawColor = color; r.DrawFilledRect(_layout.Rect(x, y, w, h)); }
+    private void Ellipse(RendererBase r, Color color, int x, int y, int w, int h)
+    {
+        for (var row = 0; row < h; row += 3)
+        {
+            var t = (row + 1.5f - h / 2f) / (h / 2f);
+            var half = (int)(w / 2f * Math.Sqrt(Math.Max(0, 1 - t * t)));
+            Fill(r, color, x + w / 2 - half, y + row, half * 2, Math.Min(3, h - row));
+        }
+    }
+    private static string Describe(PokerDecisionState decision) => Strings.PokerScene.Actions.TryGetValue(decision.Action, out var text)
+        ? text.ToString(decision.Amount) + (decision.Automatic ? " *" : "") : "";
+    private void SelectBack(int id)
+    {
+        if (_state == null) return;
+        if (!MiniGameProgression.IsUnlocked(id, _state.Experience))
+        { _localError = Strings.PokerScene.Locked.ToString(MiniGameProgression.BackLevel(id)); return; }
+        Send(PokerRequestKind.SelectCardBack, id); _backTray.IsHidden = true;
+    }
     private void Raise()
     {
         if (!long.TryParse(_amount.Text, NumberStyles.None, CultureInfo.InvariantCulture, out var value) || value <= 0)
@@ -171,30 +264,33 @@ internal sealed class PokerWindow : WindowControl
     public void Destroy()
     {
         if (_destroyed) return;
-        _destroyed = true;
-        _victory.Dispose();
-        Interface.FocusComponents.Remove(_amount);
-        Hide();
-        // Gwen disposal does not detach the control. Do not leave a disposed root in Canvas.
-        Parent?.RemoveChild(this, false);
-        Dispose();
+        _destroyed = true; _victory.Dispose(); Interface.FocusComponents.Remove(_amount);
+        Hide(); Parent?.RemoveChild(this, false); Dispose();
     }
-    private static string Short(string value, int length) => value.Length <= length ? value : value[..(length - 3)] + "...";
+    private static string Short(string value, int max) => value.Length <= max ? value : value[..(max - 3)] + "...";
     private static string Card(int value) => value is >= 0 and < 52 ? "23456789TJQKA"[value % 13].ToString() + "CDHS"[value / 13] : "--";
-    private static string Cards(int[] cards) => cards.Length == 0 ? "[--] [--]" : string.Join(" ", cards.Select(c => "[" + Card(c) + "]"));
-    private static void Place(Base control, int x, int y, int width, int height)
-    { control.Dock = Pos.None; control.X = x; control.Y = y; control.Size = new Point(width, height); }
-    private static Label MakeLabel(Base parent, string name, int x, int y, int width, int height)
+    private static string Cards(int[] cards) => string.Join(" ", cards.Select(c => "[" + Card(c) + "]"));
+    private void Place(Base control, int x, int y, int w, int h, int font = 0, bool local = false)
+    { control.Dock = Pos.None; _placements.Add(new(control, x, y, w, h, font, local)); }
+    private Label Label(string name, int x, int y, int w, int h, int font = 12)
     {
-        var label = new Label(parent, name) { AutoSizeToContents = false, Font = parent.Skin.DefaultFont, FontSize = 12 };
-        Place(label, x, y, width, height);
-        return label;
+        var label = new Label(_content, name) { AutoSizeToContents = false, Font = Skin.DefaultFont, FontSize = font,
+            MouseInputEnabled = false, KeyboardInputEnabled = false };
+        label.SetTextColor(Color.White, ControlState.Normal);
+        Place(label, x, y, w, h, font); return label;
     }
-    private static Button MakeButton(Base parent, string name, string text, int x, int y, int width, Action action)
+    private Button Button(string name, string text, int x, int y, int w, Action action)
     {
-        var button = new Button(parent, name) { Font = parent.Skin.DefaultFont, FontSize = 12, Text = text };
-        Place(button, x, y, width, 28);
-        button.Clicked += (_, _) => action();
-        return button;
+        var button = new Button(_content, name) { Font = Skin.DefaultFont, FontSize = 12, Text = text };
+        Place(button, x, y, w, 32, 12); button.Clicked += (_, _) => action(); return button;
+    }
+}
+
+internal sealed class PokerFlatPanel(Base parent, string name) : Base(parent, name)
+{
+    protected override void Render(SkinBase skin)
+    {
+        skin.Renderer.DrawColor = new Color(31, 24, 22);
+        skin.Renderer.DrawFilledRect(RenderBounds);
     }
 }

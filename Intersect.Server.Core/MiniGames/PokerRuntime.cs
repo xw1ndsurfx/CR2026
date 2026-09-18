@@ -5,14 +5,15 @@ using Intersect.Network.Packets.MiniGames;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
 using Intersect.Server.MiniGames.Poker;
+using Intersect.Server.MiniGames.Progression;
 using Intersect.Server.Networking;
 using Microsoft.Extensions.Logging;
 
 namespace Intersect.Server.MiniGames;
 
 /// <summary>
-/// Lock order: caller EntityLock, runtime gate, registry/table. Sends run outside these gates.
-/// All balances are still temporary test chips; no inventory, currency or database writes.
+/// Lock order: caller EntityLock, runtime gate, registry/table/store. Sends run outside these gates.
+/// Balances are temporary test chips. Only isolated mini-game XP and cosmetics are persistent.
 /// </summary>
 internal static class PokerRuntime
 {
@@ -28,10 +29,13 @@ internal static class PokerRuntime
         public PokerRequestGuard Guard;
     }
     private sealed record Delivery(View? View, PokerStatePacket? Packet, PokerWinNotice? Win = null);
-    private static readonly PokerTableRegistry Tables = new();
+    // Never mix progress farmed with refillable test chips into a future live-money profile store.
+    private static readonly PokerTableRegistry Tables = new(new SqliteMiniGameProgressStore(
+        Path.Combine("resources", "minigames-test.db")));
     private static readonly object Gate = new();
     private static readonly Dictionary<PokerSession, View> Views = new();
     private static long _sequence;
+    private static long _lastProgressLog;
     private static int _sweeping;
     private static readonly System.Threading.Timer SweepTimer = new(
         Sweep, null, TimeSpan.FromMilliseconds(250), TimeSpan.FromMilliseconds(250));
@@ -133,8 +137,6 @@ internal static class PokerRuntime
             if (Views.TryGetValue(update.Recipient, out var view) && view.TableId == update.TableInstanceId)
                 Queue(output, view, update.Snapshot);
         }
-        // Drain once under Gate, but perform the global network sends outside Gate.
-        // Refresh, rejected actions and UI reopen cannot generate another completed-hand notice.
         foreach (var win in Tables.CollectWins())
             if (win.AnnounceGlobally && win.NetChips > 0) output.Add(new(null, null, win));
     }
@@ -166,10 +168,7 @@ internal static class PokerRuntime
                 view.Client.Send(packet);
             }
             catch (Exception exception)
-            {
-                // Do not retry a global announcement on the next sweep (duplicate/spam risk).
-                ApplicationContext.Context.Value?.Logger.LogWarning(exception, "Poker delivery failed");
-            }
+            { ApplicationContext.Context.Value?.Logger.LogWarning(exception, "Poker delivery failed"); }
         }
     }
 
@@ -200,11 +199,15 @@ internal static class PokerRuntime
                 Collect(output);
             }
             Send(output);
+            if (Tables.ProgressionFailure is { } failure && Environment.TickCount64 - _lastProgressLog > 30_000)
+            {
+                _lastProgressLog = Environment.TickCount64;
+                ApplicationContext.Context.Value?.Logger.LogError(failure,
+                    "Mini-game progression unavailable; pending XP is retained in memory and affected tables wait");
+            }
         }
         catch (Exception exception)
-        {
-            ApplicationContext.Context.Value?.Logger.LogError(exception, "Poker runtime sweep failed");
-        }
+        { ApplicationContext.Context.Value?.Logger.LogError(exception, "Poker runtime sweep failed"); }
         finally { Volatile.Write(ref _sweeping, 0); }
     }
 }

@@ -14,6 +14,11 @@ public static class PokerPresentationTransport
         state.DealAnimationId = presentation.DealAnimationId;
         state.NetWin = presentation.NetWin;
         state.VictoryAnimationId = presentation.VictoryAnimationId;
+        state.Experience = presentation.Experience;
+        state.Wins = presentation.Wins;
+        state.ProgressPending = presentation.ProgressPending;
+        state.Decisions = presentation.Decisions.Select(d => new PokerDecisionState
+        { Sequence = d.Sequence, PlayerId = d.PlayerId, Name = d.Name, Action = d.Action, Amount = d.Amount, Automatic = d.Automatic }).ToArray();
         foreach (var seat in state.Seats)
         {
             var back = presentation.CardBacks.FirstOrDefault(b => b.PlayerId == seat.PlayerId);

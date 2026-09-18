@@ -1,18 +1,17 @@
+using Intersect.Framework.Core.MiniGames;
+
 namespace Intersect.Client.MiniGames;
 
-/// <summary>Fixed basenames in resources/misc; never accepts an asset path from a packet.</summary>
+/// <summary>Fixed asset basenames; no server or user-supplied filesystem path.</summary>
 public static class PokerCardAssets
 {
-    public const string Back = "back.png";
+    public const string Back = "B1.png";
+    public const string LegacyBack = "back.png";
     public static string? FileNameFor(int card) => card is >= 0 and < 52
         ? "23456789TJQKA"[card % 13].ToString() + "CDHS"[card / 13] + ".png" : null;
-    public static string BackFileName(int id) => id switch
-    {
-        1 => "back_royal.png", 2 => "back_pirate.png", 3 => "back_halloween.png", _ => Back,
-    };
+    public static string BackFileName(int id) => MiniGameProgression.IsBack(id) ? $"B{id + 1}.png" : Back;
 }
 
-/// <summary>Tracks observed deals, not packet arrivals. Refresh/reopen must not replay a deal.</summary>
 public sealed class PokerDealTracker
 {
     private Guid _table;
@@ -22,10 +21,7 @@ public sealed class PokerDealTracker
     {
         if (table == Guid.Empty || hand < 0 || board < 0 || board > 5) return false;
         if (table != _table || _hand < 0)
-        {
-            _table = table; _hand = hand; _board = board;
-            return false;
-        }
+        { _table = table; _hand = hand; _board = board; return false; }
         if (hand < _hand || hand == _hand && board < _board) return false;
         var changed = hand > 0 && (hand > _hand || board > _board);
         _hand = hand; _board = board;
@@ -33,11 +29,7 @@ public sealed class PokerDealTracker
     }
 }
 
-/// <summary>
-/// Owned by the client model, not the disposable poker window. A first view of an already
-/// finished hand is historical, not a fresh win. Refresh, reopening and old packets do not
-/// replay an effect. Only server-projected positive net profit can trigger it.
-/// </summary>
+/// <summary>Model-owned replay protection, independent of the disposable scene.</summary>
 public sealed class PokerVictoryTracker
 {
     private readonly Dictionary<Guid, long> _completed = new();

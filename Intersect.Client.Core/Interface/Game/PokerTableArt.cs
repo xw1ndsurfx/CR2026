@@ -4,110 +4,122 @@ using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.MiniGames;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Network.Packets.MiniGames;
 
 namespace Intersect.Client.Interface.Game;
 
-/// <summary>Optional fixed assets; all card identities and back IDs come from the server.</summary>
+/// <summary>Art adapter for the 2D scene. Faces and locked backs never alter the server game.</summary>
 internal sealed class PokerTableArt
 {
-    private readonly Dictionary<string, IGameTexture?> _cards = new(StringComparer.Ordinal);
-    private readonly ImagePanel[] _board = new ImagePanel[5];
-    private readonly ImagePanel[] _own = new ImagePanel[2];
+    private readonly Dictionary<string, IGameTexture?> _cache = new(StringComparer.Ordinal);
+    private readonly ImagePanel[] _board = new ImagePanel[5], _own = new ImagePanel[2], _portraits = new ImagePanel[6], _choices = new ImagePanel[6];
     private readonly ImagePanel[,] _seats = new ImagePanel[6, 2];
-    private readonly ImagePanel _preview;
+    private readonly Label[,] _fallback = new Label[6, 2];
     private readonly Label[] _boardLabels;
     private readonly PokerDealTracker _deals = new();
     private readonly Effect[] _effects;
     private long _started;
+    private sealed class Effect { public required ImagePanel Image; public int Columns, Rows, Count, Speed; }
     public bool SelectedBackMissing { get; private set; }
+    public bool HasOwnImages { get; private set; }
+    public bool HasPortrait(int slot) => !_portraits[slot].IsHidden;
 
-    private sealed class Effect
-    {
-        public required ImagePanel Image;
-        public int Columns, Rows, Count, Speed;
-    }
-
-    public PokerTableArt(Base parent, Label[] boardLabels)
+    public PokerTableArt(Base parent, Base backTray, Label[] boardLabels)
     {
         _boardLabels = boardLabels;
         for (var i = 0; i < 5; ++i) _board[i] = Image(parent, "PokerBoardArt" + i);
         for (var i = 0; i < 2; ++i) _own[i] = Image(parent, "PokerOwnArt" + i);
-        for (var seat = 0; seat < 6; ++seat)
-            for (var i = 0; i < 2; ++i) _seats[seat, i] = Image(parent, $"PokerSeatArt{seat}_{i}");
-        _preview = Image(parent, "PokerBackPreview");
+        for (var slot = 0; slot < 6; ++slot)
+        {
+            _portraits[slot] = Image(parent, "PokerPortrait" + slot);
+            _choices[slot] = Image(backTray, "PokerBackPreview" + slot);
+            for (var card = 0; card < 2; ++card)
+            {
+                _seats[slot, card] = Image(parent, $"PokerSeatArt{slot}_{card}");
+                _fallback[slot, card] = new Label(parent, $"PokerSeatFallback{slot}_{card}")
+                { AutoSizeToContents = false, Font = parent.Skin.DefaultFont, FontSize = 12, MouseInputEnabled = false, IsHidden = true };
+            }
+        }
         _effects = [new() { Image = Image(parent, "PokerDealLower") }, new() { Image = Image(parent, "PokerDealUpper") }];
     }
-
-    public void Update(PokerTableState state, Guid player, Guid table)
+    public void Update(PokerTableState state, Guid player, Guid table, PokerSceneLayout layout)
     {
+        var me = state.Seats.First(s => s.PlayerId == player);
         for (var i = 0; i < 5; ++i)
         {
             var texture = i < state.Board.Length ? Card(state.Board[i]) : null;
-            Fit(_board[i], texture, 166 + i * 86, 182, 48, 64);
+            Fit(_board[i], texture, layout.Rect(335 + i * 66, 304, 52, 70));
             _boardLabels[i].IsHidden = texture != null;
         }
+        var own = PokerSceneLayout.Cards(0);
+        HasOwnImages = state.MyCards.Length == 2;
         for (var i = 0; i < 2; ++i)
-            Fit(_own[i], i < state.MyCards.Length ? Card(state.MyCards[i]) : null,
-                440 + i * 58, 358, 48, 64);
-        for (var seatIndex = 0; seatIndex < 6; ++seatIndex)
         {
-            var seat = state.Seats.FirstOrDefault(s => s.Seat == seatIndex);
+            var texture = i < state.MyCards.Length ? Card(state.MyCards[i]) : null;
+            Fit(_own[i], texture, layout.Rect(own.X + i * 58, own.Y, 52, 70));
+            HasOwnImages &= texture != null;
+        }
+        for (var slot = 0; slot < 6; ++slot)
+        {
+            var seat = state.Seats.FirstOrDefault(s => PokerSceneLayout.Slot(s.Seat, me.Seat) == slot);
+            var center = PokerSceneLayout.Center(slot);
+            var portrait = seat == null ? null : state.NpcIds.Contains(seat.PlayerId)
+                ? Lookup(PokerTableTheme.PortraitFile(PokerTableTheme.Portrait(seat.Name, seat.PlayerId == state.DealerNpcId)))
+                : Lookup("poker_player.png");
+            Fit(_portraits[slot], portrait, layout.Rect(center.X - 32, center.Y - 42, 64, 74));
+            var position = PokerSceneLayout.Cards(slot);
             for (var i = 0; i < 2; ++i)
             {
                 IGameTexture? texture = null;
-                if (seat is { InHand: true, Folded: false })
+                var text = "";
+                if (slot != 0 && seat is { InHand: true, Folded: false })
                 {
-                    var visible = seat.PlayerId == player ? state.MyCards : seat.RevealedCards;
-                    texture = i < visible.Length ? Card(visible[i]) : Back(seat.CardBackId);
+                    if (i < seat.RevealedCards.Length)
+                    {
+                        texture = Card(seat.RevealedCards[i]);
+                        text = PokerCardAssets.FileNameFor(seat.RevealedCards[i])![..2];
+                    }
+                    else { texture = Back(seat.CardBackId); text = "[??]"; }
                 }
-                Fit(_seats[seatIndex, i], texture, 8 + seatIndex % 3 * 240 + 176 + i * 25,
-                    (seatIndex < 3 ? 72 : 282) + 45, 22, 30);
+                var rect = layout.Rect(position.X + i * 58, position.Y, 52, 70);
+                Fit(_seats[slot, i], texture, rect);
+                var label = _fallback[slot, i];
+                label.Text = text; label.IsHidden = texture != null || text.Length == 0;
+                label.FontSize = layout.FontSize(12);
+                label.SetBounds(rect.X, rect.Y + rect.Height / 3, rect.Width, Math.Max(18, rect.Height / 2));
             }
+            Fit(_choices[slot], Back(slot), layout.LocalRect(36 + slot * 108, 15, 48, 74));
         }
-        var selected = state.Seats.First(s => s.PlayerId == player).SelectedCardBackId;
-        SelectedBackMissing = Lookup(PokerCardAssets.BackFileName(selected)) == null;
-        Fit(_preview, Back(selected), 340, 558, 48, 64);
+        SelectedBackMissing = Lookup(PokerCardAssets.BackFileName(me.SelectedCardBackId)) == null;
         if (_deals.Observe(table, state.HandId, state.Board.Length)) BeginAnimation(state.DealAnimationId);
-        AdvanceAnimation();
+        AdvanceAnimation(layout);
     }
-
-    private IGameTexture? Card(int card) => PokerCardAssets.FileNameFor(card) is { } file ? Lookup(file) : null;
-    private IGameTexture? Back(int id) => Lookup(PokerCardAssets.BackFileName(id)) ?? Lookup(PokerCardAssets.Back);
+    private IGameTexture? Card(int value) => PokerCardAssets.FileNameFor(value) is { } file ? Lookup(file) : null;
+    private IGameTexture? Back(int id) => Lookup(PokerCardAssets.BackFileName(id)) ?? Lookup(PokerCardAssets.Back) ?? Lookup(PokerCardAssets.LegacyBack);
     private IGameTexture? Lookup(string file)
     {
-        if (!_cards.TryGetValue(file, out var texture))
-        {
-            texture = GameContentManager.Current?.GetTexture(TextureType.Misc, file);
-            _cards.Add(file, texture);
-        }
-        return texture;
+        if (!_cache.TryGetValue(file, out var result))
+        { result = GameContentManager.Current?.GetTexture(TextureType.Misc, file); _cache.Add(file, result); }
+        return result;
     }
-
     private void BeginAnimation(Guid id)
     {
         foreach (var effect in _effects) { effect.Count = 0; effect.Image.IsHidden = true; }
         if (id == Guid.Empty || AnimationDescriptor.Get(id) is not { } animation) return;
-        Configure(_effects[0], animation.Lower);
-        Configure(_effects[1], animation.Upper);
+        Configure(_effects[0], animation.Lower); Configure(_effects[1], animation.Upper);
         _started = Environment.TickCount64;
     }
-
     private static void Configure(Effect effect, AnimationLayer? layer)
     {
-        if (layer == null || string.IsNullOrWhiteSpace(layer.Sprite) || layer.XFrames < 1 ||
-            layer.XFrames > 128 || layer.YFrames < 1 || layer.YFrames > 128 || layer.FrameCount < 1) return;
+        if (layer == null || string.IsNullOrWhiteSpace(layer.Sprite) || layer.XFrames is < 1 or > 128 ||
+            layer.YFrames is < 1 or > 128 || layer.FrameCount < 1) return;
         var texture = GameContentManager.Current?.GetTexture(TextureType.Animation, layer.Sprite);
         if (texture == null || texture.Width < layer.XFrames || texture.Height < layer.YFrames) return;
-        effect.Image.Texture = texture;
-        effect.Columns = layer.XFrames;
-        effect.Rows = layer.YFrames;
-        effect.Count = Math.Min(layer.FrameCount, layer.XFrames * layer.YFrames);
-        effect.Speed = Math.Clamp(layer.FrameSpeed, 10, 1000);
-        effect.Image.SetBounds(272, 152, 184, 112);
+        effect.Image.Texture = texture; effect.Columns = layer.XFrames; effect.Rows = layer.YFrames;
+        effect.Count = Math.Min(layer.FrameCount, layer.XFrames * layer.YFrames); effect.Speed = Math.Clamp(layer.FrameSpeed, 10, 1000);
     }
-
-    private void AdvanceAnimation()
+    private void AdvanceAnimation(PokerSceneLayout layout)
     {
         var elapsed = Math.Max(0, Environment.TickCount64 - _started);
         foreach (var effect in _effects)
@@ -115,24 +127,25 @@ internal sealed class PokerTableArt
             var frame = effect.Speed > 0 ? elapsed / effect.Speed : long.MaxValue;
             if (effect.Count == 0 || frame >= effect.Count || elapsed >= 8000 || effect.Image.Texture is not { } texture)
             { effect.Image.IsHidden = true; continue; }
-            effect.Image.SetTextureRect((int)(frame % effect.Columns) * (texture.Width / effect.Columns),
-                (int)(frame / effect.Columns) * (texture.Height / effect.Rows),
-                texture.Width / effect.Columns, texture.Height / effect.Rows);
+            var w = texture.Width / effect.Columns; var h = texture.Height / effect.Rows;
+            effect.Image.SetTextureRect((int)(frame % effect.Columns) * w, (int)(frame / effect.Columns) * h, w, h);
+            var bounds = layout.Rect(360, 255, 280, 135);
+            var scale = Math.Min(bounds.Width / (float)w, bounds.Height / (float)h);
+            var width = Math.Max(1, (int)(w * scale)); var height = Math.Max(1, (int)(h * scale));
+            effect.Image.SetBounds(bounds.X + (bounds.Width - width) / 2, bounds.Y + (bounds.Height - height) / 2, width, height);
             effect.Image.IsHidden = false;
         }
     }
-
     private static ImagePanel Image(Base parent, string name) => new(parent, name)
     { MouseInputEnabled = false, KeyboardInputEnabled = false, ShouldDrawBackground = false, IsHidden = true };
-
-    private static void Fit(ImagePanel image, IGameTexture? texture, int x, int y, int width, int height)
+    private static void Fit(ImagePanel image, IGameTexture? texture, Rectangle bounds)
     {
         image.Texture = texture;
         image.IsHidden = texture == null || texture.Width < 1 || texture.Height < 1;
         if (image.IsHidden || texture == null) return;
-        var scale = Math.Min(width / (float)texture.Width, height / (float)texture.Height);
-        var w = Math.Max(1, (int)(texture.Width * scale));
-        var h = Math.Max(1, (int)(texture.Height * scale));
-        image.SetBounds(x + (width - w) / 2, y + (height - h) / 2, w, h);
+        image.ResetUVs();
+        var scale = Math.Min(bounds.Width / (float)texture.Width, bounds.Height / (float)texture.Height);
+        var w = Math.Max(1, (int)(texture.Width * scale)); var h = Math.Max(1, (int)(texture.Height * scale));
+        image.SetBounds(bounds.X + (bounds.Width - w) / 2, bounds.Y + (bounds.Height - h) / 2, w, h);
     }
 }

@@ -1,12 +1,12 @@
 #nullable enable
 using System;
 using System.Linq;
+using Intersect.Framework.Core.MiniGames;
 
 namespace Intersect.Server.MiniGames.Poker;
 
 public sealed partial class PokerTableRegistry
 {
-    // All helpers execute under _gate. They never call a player, network or asset callback.
     private static void MakeRoomForHuman(Entry entry, DateTimeOffset now)
     {
         var state = Current(entry);
@@ -33,14 +33,14 @@ public sealed partial class PokerTableRegistry
     {
         if (Playing(Current(entry).Phase)) return;
         if (entry.Options.DealerPlays && entry.DealerNpcId == Guid.Empty)
-            AddNpc(entry, "Dealer", dealer: true);
+            AddNpc(entry, PokerTableTheme.DealerName, dealer: true);
         var desiredOthers = Math.Min(entry.Options.NpcPlayers,
             entry.Rules.MaxPlayers - entry.Players.Count - (entry.Options.DealerPlays ? 1 : 0));
         while (entry.Npcs.Keys.Count(id => id != entry.DealerNpcId) > desiredOthers)
             RemoveNpc(entry, entry.Npcs.Keys.First(id => id != entry.DealerNpcId), now);
         while (entry.Npcs.Keys.Count(id => id != entry.DealerNpcId) < desiredOthers)
         {
-            var name = Enumerable.Range(1, 5).Select(i => "Guest " + i).First(n => !entry.Npcs.ContainsValue(n));
+            var name = Enumerable.Range(1, 5).Select(PokerTableTheme.GuestName).First(n => !entry.Npcs.ContainsValue(n));
             AddNpc(entry, name, dealer: false);
         }
         if (!refill) return;
@@ -61,7 +61,7 @@ public sealed partial class PokerTableRegistry
             entry.NpcSeat = -1;
             var human = state.Seats.FirstOrDefault(s => entry.Players.Contains(s.PlayerId) &&
                 !_members[s.PlayerId].Leaving && !s.Leaving && s.Chips > 0);
-            if (!entry.Options.AutoStart || human == null)
+            if (!entry.Options.AutoStart || human == null || HasPendingExperience(entry))
             {
                 entry.NextHandAt = null;
                 return;
@@ -96,12 +96,12 @@ public sealed partial class PokerTableRegistry
         if (now < entry.NpcDue) return;
         var npcView = entry.Table.Snapshot(actor.PlayerId);
         var decision = PokerNpcPolicy.Choose(npcView, actor.PlayerId, entry.Rules.BigBlind);
-        var result = entry.Table.Act(actor.PlayerId, npcView.HandId, npcView.Revision,
+        var result = ActTracked(entry, actor.PlayerId, npcView.HandId, npcView.Revision,
             decision.Action, decision.Amount, now);
         if (result == PokerError.IllegalAction || result == PokerError.InvalidAmount)
         {
             npcView = entry.Table.Snapshot(actor.PlayerId);
-            entry.Table.Act(actor.PlayerId, npcView.HandId, npcView.Revision,
+            ActTracked(entry, actor.PlayerId, npcView.HandId, npcView.Revision,
                 npcView.ToCall == 0 ? PokerAction.Check : PokerAction.Fold, 0, now);
         }
         entry.NpcSeat = -1;

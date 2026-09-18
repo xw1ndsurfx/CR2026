@@ -1,17 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <WarningsAsErrors>nullable</WarningsAsErrors>
+    <OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><WarningsAsErrors>nullable</WarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../Framework/Intersect.Framework.Core/Intersect.Framework.Core.csproj" />
     <Compile Include="../../Intersect.Server.Core/MiniGames/Poker/*.cs" Link="Poker/%(Filename)%(Extension)" />
+    <Compile Include="../../Intersect.Server.Core/MiniGames/Progression/MiniGameProgressStore.cs" Link="MiniGameProgressStore.cs" />
     <Compile Include="../../Intersect.Server.Core/MiniGames/PokerTransport.cs" Link="PokerTransport.cs" />
     <Compile Include="../../Intersect.Server.Core/MiniGames/PokerPresentationTransport.cs" Link="PokerPresentationTransport.cs" />
     <Compile Include="../../Intersect.Client.Core/MiniGames/PokerClientModel.cs" Link="PokerClientModel.cs" />
     <Compile Include="../../Intersect.Client.Core/MiniGames/PokerPresentationModel.cs" Link="PokerPresentationModel.cs" />
+    <Compile Include="../../Intersect.Client.Core/MiniGames/PokerSceneLayout.cs" Link="PokerSceneLayout.cs" />
   </ItemGroup>
 </Project>

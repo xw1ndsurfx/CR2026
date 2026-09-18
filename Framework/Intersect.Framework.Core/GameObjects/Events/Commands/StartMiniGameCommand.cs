@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Intersect.Framework.Core.MiniGames;
 
 namespace Intersect.Framework.Core.GameObjects.Events.Commands;
 
@@ -20,7 +21,6 @@ public sealed class StartMiniGameCommand : EventCommand
     [DefaultValue(false)] public bool AutoStart { get; set; }
     [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")]
     public Guid DealAnimationId { get; set; }
-    // Opt-in for existing events: old tables must not unexpectedly broadcast winnings.
     [DefaultValue(false)] public bool AnnounceWins { get; set; }
     [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")]
     public Guid VictoryAnimationId { get; set; }
@@ -33,5 +33,5 @@ public sealed class StartMiniGameCommand : EventCommand
         MaxPlayers is >= 2 and <= 6 && SmallBlind >= 1 && BigBlind >= SmallBlind &&
         BigBlind <= 1_000_000_000 && StartingChips >= BigBlind && StartingChips <= 1_000_000_000 &&
         TurnSeconds is >= 5 and <= 300 && NpcPlayers is >= 0 and <= 5 &&
-        NpcPlayers + (DealerPlays ? 1 : 0) < MaxPlayers && NpcCardBackId is >= 0 and <= 3;
+        NpcPlayers + (DealerPlays ? 1 : 0) < MaxPlayers && MiniGameProgression.IsBack(NpcCardBackId);
 }

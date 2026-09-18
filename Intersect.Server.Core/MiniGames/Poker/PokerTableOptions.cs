@@ -1,10 +1,10 @@
 using System;
 using System.Linq;
 using System.Security.Cryptography;
+using Intersect.Framework.Core.MiniGames;
 
 namespace Intersect.Server.MiniGames.Poker;
 
-/// <summary>Optional, backwards-compatible settings for volatile test-chip tables.</summary>
 public sealed record PokerTableOptions(
     bool DealerPlays = false, int NpcPlayers = 0, bool AutoStart = false, Guid DealAnimationId = default,
     bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0)
@@ -17,22 +17,22 @@ public sealed record PokerSeatBack(Guid PlayerId, int CurrentId, int SelectedId)
 public sealed record PokerPresentation(Guid[] NpcIds, Guid DealerNpcId, bool AutoStart, Guid DealAnimationId)
 {
     public PokerSeatBack[] CardBacks { get; init; } = Array.Empty<PokerSeatBack>();
-    // These two fields belong only to the receiving human, never another participant.
     public long NetWin { get; init; }
     public Guid VictoryAnimationId { get; init; }
+    public long Experience { get; init; }
+    public long Wins { get; init; }
+    public bool ProgressPending { get; init; }
+    public PokerPublicDecision[] Decisions { get; init; } = Array.Empty<PokerPublicDecision>();
     public static PokerPresentation Empty => new(Array.Empty<Guid>(), Guid.Empty, false, Guid.Empty);
 }
 
-/// <summary>A small server-owned cosmetic catalog; never a file path or user upload.</summary>
+/// <summary>IDs 0..5 map to artist files B1.png..B6.png. Human unlocks are server-checked.</summary>
 public static class PokerBackCatalog
 {
-    public static bool IsValid(int id) => id >= 0 && id <= 3;
+    public static bool IsValid(int id) => MiniGameProgression.IsBack(id);
 }
 
-/// <summary>
-/// A deliberately modest NPC policy. Input is only the NPC's recipient-specific snapshot;
-/// no table object, deck or other player's private hand is reachable by this policy.
-/// </summary>
+/// <summary>Only the NPC's own recipient-specific snapshot reaches this policy.</summary>
 public static class PokerNpcPolicy
 {
     public static (PokerAction Action, long Amount) Choose(PokerSnapshot view, Guid npcId, long bigBlind) =>
