@@ -1,0 +1,30 @@
+name: Poker currency selector tests
+on:
+  push:
+    branches: ['feature/poker-minigame-core']
+  pull_request:
+    paths:
+      - 'Framework/Intersect.Framework.Core/**'
+      - 'Intersect.Editor/Forms/Editors/Events/**'
+      - 'Utilities/PokerEditorTests/**'
+      - '.github/workflows/poker-editor-tests.yml'
+permissions:
+  contents: read
+concurrency:
+  group: poker-editor-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  editor-currency:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Real event dialog selection, save, cancel and missing IDs
+        shell: pwsh
+        run: ./Utilities/PokerCi/run.ps1 -Project Utilities/PokerEditorTests/Intersect.PokerEditorTests.csproj -Configuration Release

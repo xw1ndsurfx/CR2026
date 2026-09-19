@@ -1,0 +1,93 @@
+name: Poker event integration builds
+on:
+  push:
+    branches: ['feature/poker-minigame-core']
+  pull_request:
+    paths:
+      - 'Framework/Intersect.Framework.Core/**'
+      - 'Intersect.Server.Core/**'
+      - 'Intersect.Client.Core/**'
+      - 'Intersect.Client.Framework/**'
+      - 'Intersect.Editor/Forms/Editors/Events/**'
+      - 'Utilities/Poker*/**'
+      - '.github/workflows/poker-integration-build.yml'
+permissions:
+  contents: read
+concurrency:
+  group: poker-integration-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    name: build-${{ matrix.target }}
+    runs-on: windows-latest
+    timeout-minutes: 15
+    outputs:
+      client: ${{ steps.compile.outputs.client }}
+      ui: ${{ steps.ui.outputs.summary }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: server-core
+            project: Intersect.Server.Core/Intersect.Server.Core.csproj
+          - target: server
+            project: Intersect.Server/Intersect.Server.csproj
+          - target: client
+            project: Intersect.Client/Intersect.Client.csproj
+          - target: editor
+            project: Intersect.Editor/Intersect.Editor.csproj
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Compile actual engine project and dependencies
+        id: compile
+        shell: pwsh
+        run: |
+          $key = if ('${{ matrix.target }}' -eq 'client') { 'client' } else { 'summary' }
+          ./Utilities/PokerCi/run.ps1 -Mode build -Project '${{ matrix.project }}' -SummaryKey $key
+      - name: Poker UI font measurement regression checks
+        id: ui
+        if: matrix.target == 'client'
+        shell: pwsh
+        run: ./Utilities/PokerCi/run.ps1 -Project Utilities/PokerUiTests/Intersect.PokerUiTests.csproj
+  protocol-tests:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    outputs:
+      core: ${{ steps.core.outputs.summary }}
+      protocol: ${{ steps.protocol.outputs.summary }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Poker core, registry and NPC automation checks
+        id: core
+        shell: pwsh
+        run: ./Utilities/PokerCi/run.ps1 -Project Utilities/PokerSmokeTests/Intersect.PokerSmokeTests.csproj -Configuration Release
+      - name: Serialized protocol, presentation and two-client model checks
+        id: protocol
+        shell: pwsh
+        run: ./Utilities/PokerCi/run.ps1 -Project Utilities/PokerNetworkTests/Intersect.PokerNetworkTests.csproj -Configuration Release
+  client-diagnostics:
+    name: 'Client build: ${{ needs.build.outputs.client }} | UI: ${{ needs.build.outputs.ui }}'
+    needs: build
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Diagnostic headline only. The build and test jobs retain their original exit codes.'
+  protocol-diagnostics:
+    name: 'Core: ${{ needs.protocol-tests.outputs.core }} | Protocol: ${{ needs.protocol-tests.outputs.protocol }}'
+    needs: protocol-tests
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Diagnostic headline only. Detailed exceptions and test counts are in the test job logs.'
