@@ -15,14 +15,10 @@ public static partial class CommandProcessing
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
         if (player == null) return;
-        // Configuration must not masquerade as inventory-backed play. In particular, never
-        // give StartingChips for free under the name of an item selected by the event author.
-        if (command.CurrencyItemId != Guid.Empty)
+        if (command.CurrencyItemId != Guid.Empty && !MiniGameCurrency.IsCompatible(ItemDescriptor.Get(command.CurrencyItemId)))
         {
-            var message = MiniGameCurrency.IsCompatible(ItemDescriptor.Get(command.CurrencyItemId))
-                ? "Inventory currency is configured, but buy-in and refunds are not enabled yet. No items were taken."
-                : "The configured currency item is missing or incompatible. No items were taken.";
-            PacketSender.SendChatMsg(player, "[Mini-game] " + message, ChatMessageType.Local, Color.White);
+            PacketSender.SendChatMsg(player, "[Poker] The configured currency item is missing or incompatible. No items were taken.",
+                ChatMessageType.Error, Color.White);
             return;
         }
         var result = PokerRuntime.Join(player, command);
@@ -30,13 +26,10 @@ public static partial class CommandProcessing
             PacketSender.SendChatMsg(player,
                 $"[Mini-game] Unable to join: {(result.Detail != PokerError.None ? result.Detail.ToString() : result.Error.ToString())}.",
                 ChatMessageType.Local, Color.White);
-        // Non-blocking: the Poker window owns its lifetime. Events can explicitly leave it.
     }
-
     private static void ProcessCommand(LeaveMiniGameCommand command, Player player, Event instance,
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
-        if (player == null) return;
-        PokerRuntime.Leave(player);
+        if (player != null) PokerRuntime.Leave(player);
     }
 }

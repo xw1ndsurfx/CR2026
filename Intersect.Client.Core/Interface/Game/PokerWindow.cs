@@ -12,7 +12,7 @@ using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
 namespace Intersect.Client.Interface.Game;
 
 /// <summary>Borderless, canvas-sized 2D table. Gameplay and progression stay on the server.</summary>
-internal sealed class PokerWindow : Base
+internal sealed partial class PokerWindow : Base
 {
     private sealed record Placement(Base Control, int X, int Y, int W, int H, int Font = 0, bool Local = false);
     private readonly Canvas _canvas;
@@ -95,7 +95,6 @@ internal sealed class PokerWindow : Base
         _victory = new PokerScreenEffect(canvas);
         ResizeToCanvas();
     }
-
     public void ResizeToCanvas()
     {
         if (_destroyed) return;
@@ -109,7 +108,6 @@ internal sealed class PokerWindow : Base
             if (p.Control is Label label && p.Font > 0) label.FontSize = _layout.FontSize(p.Font);
         }
     }
-
     public void Update(PokerClientModel model)
     {
         if (_destroyed || model.Current?.State is not { } state) return;
@@ -185,13 +183,12 @@ internal sealed class PokerWindow : Base
             "CardBackLocked" => "Card back locked",
             _ => Strings.Poker.Errors.TryGetValue(model.ErrorCode, out var message) ? message.ToString() : Strings.Poker.Rejected.ToString(model.ErrorCode),
         };
+        UpdateCurrency(state, me);
         if (!_backTray.IsHidden) _backTray.BringToFront();
     }
-
     private static readonly Color Gold = new(231, 194, 112);
     protected override void Render(SkinBase skin)
     {
-        // Original procedural fallback. Optional character illustrations replace the simple pawns.
         var r = skin.Renderer;
         r.DrawColor = new Color(205, 9, 14, 17); r.DrawFilledRect(new Rectangle(0, 0, Width, Height));
         Fill(r, new Color(24, 17, 14), 36, 581, 928, 151);
@@ -200,7 +197,7 @@ internal sealed class PokerWindow : Base
         Ellipse(r, new Color(117, 75, 41), 189, 166, 622, 334);
         Ellipse(r, new Color(174, 122, 66), 198, 174, 604, 316);
         Ellipse(r, new Color(67, 44, 30), 208, 184, 584, 296);
-        for (var y = 224; y < 455; y += 38) Fill(r, new Color(82, 55, 37), 280, y, 440, 2);
+        for (var y = 224; y < 455; y += 38) Fill(r, new Color(78, 52, 34), 290, y, 420, 2);
         for (var slot = 0; slot < 6; ++slot)
         {
             var c = PokerSceneLayout.Center(slot);
@@ -222,8 +219,6 @@ internal sealed class PokerWindow : Base
             }
         }
         for (var i = 0; i < 5; ++i) Fill(r, new Color(42, 29, 24), 332 + i * 66, 301, 58, 76);
-        // Green experience bar. Keep a visible track even when this level starts at 0 XP.
-        // The same scene transform keeps the bar aligned when the canvas is resized.
         var experienceWidth = (int)(616 * Math.Clamp(_xpFraction, 0, 1));
         Fill(r, new Color(45, 99, 61), 52, 710, 618, 18);
         Fill(r, new Color(15, 30, 20), 53, 711, 616, 16);
@@ -284,7 +279,6 @@ internal sealed class PokerWindow : Base
         Place(button, x, y, w, 32, 12); button.Clicked += (_, _) => action(); return button;
     }
 }
-
 internal sealed class PokerFlatPanel(Base parent, string name) : Base(parent, name)
 {
     protected override void Render(SkinBase skin)

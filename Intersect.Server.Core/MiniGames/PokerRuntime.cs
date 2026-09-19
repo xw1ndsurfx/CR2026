@@ -4,6 +4,7 @@ using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.MiniGames;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
+using Intersect.Server.MiniGames.Currency;
 using Intersect.Server.MiniGames.Poker;
 using Intersect.Server.MiniGames.Progression;
 using Intersect.Server.Networking;
@@ -11,10 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Intersect.Server.MiniGames;
 
-/// <summary>
-/// Lock order: caller EntityLock, runtime gate, registry/table/store. Sends run outside these gates.
-/// Balances are temporary test chips. Only isolated mini-game XP and cosmetics are persistent.
-/// </summary>
+/// <summary>Routes funded tables separately from the original test-chip registry.</summary>
 internal static class PokerRuntime
 {
     private sealed class View
@@ -29,12 +27,12 @@ internal static class PokerRuntime
         public PokerRequestGuard Guard;
     }
     private sealed record Delivery(View? View, PokerStatePacket? Packet, PokerWinNotice? Win = null);
-    // Never mix progress farmed with refillable test chips into a future live-money profile store.
     private static readonly PokerTableRegistry Tables = new(new SqliteMiniGameProgressStore(
         Path.Combine("resources", "minigames-test.db")));
     private static readonly object Gate = new();
     private static readonly Dictionary<PokerSession, View> Views = new();
     private static long _sequence;
+    internal static long NextSequence() => Interlocked.Increment(ref _sequence);
     private static long _lastProgressLog;
     private static int _sweeping;
     private static readonly System.Threading.Timer SweepTimer = new(
@@ -48,6 +46,14 @@ internal static class PokerRuntime
         PokerRegistryResult result;
         lock (player.EntityLock)
         {
+            if (command.CurrencyItemId != Guid.Empty)
+            {
+                lock (Gate)
+                    if (Tables.Memberships().Any(m => m.Session.PlayerId == player.Id))
+                        return new(PokerRegistryError.AlreadyAtAnotherTable);
+                return PokerCurrencyRuntime.Join(player, command);
+            }
+            if (PokerCurrencyRuntime.Contains(player.Id)) return new(PokerRegistryError.AlreadyAtAnotherTable);
             if (player.Client is not { IsEditor: false } client ||
                 !player.TryCapturePokerPresence(out var presence)) return new(PokerRegistryError.InvalidPresence);
             lock (Gate)
@@ -65,16 +71,14 @@ internal static class PokerRuntime
                 };
                 view.Guard = new PokerRequestGuard(view.TableId, view.Id);
                 Views[presence.Session] = view;
-                Collect(output);
-                Queue(output, view, result.Snapshot);
+                Collect(output); Queue(output, view, result.Snapshot);
             }
         }
-        Send(output);
-        return result;
+        Send(output); return result;
     }
-
     internal static PokerRegistryResult Leave(Player player)
     {
+        if (PokerCurrencyRuntime.Leave(player, out var funded)) return funded;
         List<Delivery> output = [];
         PokerRegistryResult result;
         lock (player.EntityLock)
@@ -87,13 +91,12 @@ internal static class PokerRuntime
                 Collect(output);
             }
         }
-        Send(output);
-        return result;
+        Send(output); return result;
     }
-
     internal static void Handle(Client client, PokerRequestPacket packet)
     {
         if (client.IsEditor || client.Entity is not { } player || !packet.IsValid) return;
+        if (PokerCurrencyRuntime.Handle(client, packet)) return;
         List<Delivery> output = [];
         lock (player.EntityLock)
         {
@@ -105,10 +108,8 @@ internal static class PokerRuntime
                 var now = DateTimeOffset.UtcNow;
                 if (packet.Kind == PokerRequestKind.Leave)
                 {
-                    Tables.Leave(presence.Session, now);
-                    Views.Remove(presence.Session);
-                    Collect(output);
-                    Queue(output, view, null, packet.RequestId, closed: true);
+                    Tables.Leave(presence.Session, now); Views.Remove(presence.Session);
+                    Collect(output); Queue(output, view, null, packet.RequestId, closed: true);
                 }
                 else
                 {
@@ -118,10 +119,8 @@ internal static class PokerRuntime
                         result.Error != PokerRegistryError.None ? result.Error.ToString() : string.Empty;
                     if (result.Snapshot == null)
                     {
-                        Tables.Leave(presence.Session, now);
-                        Views.Remove(presence.Session);
-                        Queue(output, view, null, packet.RequestId, true, code);
-                        Collect(output);
+                        Tables.Leave(presence.Session, now); Views.Remove(presence.Session);
+                        Queue(output, view, null, packet.RequestId, true, code); Collect(output);
                     }
                     else Queue(output, view, result.Snapshot, packet.RequestId, error: code);
                 }
@@ -129,28 +128,23 @@ internal static class PokerRuntime
         }
         Send(output);
     }
-
     private static void Collect(List<Delivery> output)
     {
         foreach (var update in Tables.CollectUpdates())
-        {
             if (Views.TryGetValue(update.Recipient, out var view) && view.TableId == update.TableInstanceId)
                 Queue(output, view, update.Snapshot);
-        }
         foreach (var win in Tables.CollectWins())
             if (win.AnnounceGlobally && win.NetChips > 0) output.Add(new(null, null, win));
     }
-
     private static void Queue(List<Delivery> output, View view, PokerSnapshot? snapshot,
         long requestId = 0, bool closed = false, string error = "") => output.Add(new(view, new PokerStatePacket
     {
         TableInstanceId = view.TableId, ViewId = view.Id, PlayerId = view.Presence.Session.PlayerId,
-        Sequence = ++_sequence, RequestId = requestId, Closed = closed, ErrorCode = error,
+        Sequence = NextSequence(), RequestId = requestId, Closed = closed, ErrorCode = error,
         TableName = view.TableName, ServerUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
         State = snapshot == null ? null : PokerPresentationTransport.Project(snapshot,
             Tables.Presentation(view.Presence, view.TableId)),
     }));
-
     private static void Send(List<Delivery> output)
     {
         foreach (var delivery in output)
@@ -167,16 +161,15 @@ internal static class PokerRuntime
                 if (!ReferenceEquals(view.Client.Entity, view.Player) || view.Player.LoginTime != view.LoginStamp) continue;
                 view.Client.Send(packet);
             }
-            catch (Exception exception)
-            { ApplicationContext.Context.Value?.Logger.LogWarning(exception, "Poker delivery failed"); }
+            catch (Exception exception) { ApplicationContext.Context.Value?.Logger.LogWarning(exception, "Poker delivery failed"); }
         }
     }
-
     private static void Sweep(object state)
     {
         if (Interlocked.Exchange(ref _sweeping, 1) != 0) return;
         try
         {
+            PokerCurrencyRuntime.Sweep();
             View[] observedViews;
             lock (Gate) observedViews = Views.Values.ToArray();
             var observations = observedViews.Select(view =>
@@ -185,16 +178,13 @@ internal static class PokerRuntime
             lock (Gate)
             {
                 var presenceCache = observations.Where(observation =>
-                        Views.TryGetValue(observation.View.Presence.Session, out var current) &&
-                        ReferenceEquals(current, observation.View))
+                        Views.TryGetValue(observation.View.Presence.Session, out var current) && ReferenceEquals(current, observation.View))
                     .ToDictionary(observation => observation.View.Presence, observation => observation.Present);
-                Tables.Tick(DateTimeOffset.UtcNow,
-                    presence => !presenceCache.TryGetValue(presence, out var present) || present);
+                Tables.Tick(DateTimeOffset.UtcNow, presence => !presenceCache.TryGetValue(presence, out var present) || present);
                 foreach (var view in Views.Values.ToArray())
                 {
                     if (Tables.Snapshot(view.Presence, view.TableId).Error == PokerRegistryError.None) continue;
-                    Views.Remove(view.Presence.Session);
-                    Queue(output, view, null, closed: true, error: "TableClosed");
+                    Views.Remove(view.Presence.Session); Queue(output, view, null, closed: true, error: "TableClosed");
                 }
                 Collect(output);
             }
@@ -202,12 +192,10 @@ internal static class PokerRuntime
             if (Tables.ProgressionFailure is { } failure && Environment.TickCount64 - _lastProgressLog > 30_000)
             {
                 _lastProgressLog = Environment.TickCount64;
-                ApplicationContext.Context.Value?.Logger.LogError(failure,
-                    "Mini-game progression unavailable; pending XP is retained in memory and affected tables wait");
+                ApplicationContext.Context.Value?.Logger.LogError(failure, "Mini-game test progression unavailable; affected tables wait");
             }
         }
-        catch (Exception exception)
-        { ApplicationContext.Context.Value?.Logger.LogError(exception, "Poker runtime sweep failed"); }
+        catch (Exception exception) { ApplicationContext.Context.Value?.Logger.LogError(exception, "Poker runtime sweep failed"); }
         finally { Volatile.Write(ref _sweeping, 0); }
     }
 }

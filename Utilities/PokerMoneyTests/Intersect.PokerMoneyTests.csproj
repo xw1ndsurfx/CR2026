@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><WarningsAsErrors>nullable</WarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Intersect.Server.Core/MiniGames/Poker/*.cs" Link="Poker/%(Filename)%(Extension)" />
+    <Compile Include="../../Intersect.Server.Core/MiniGames/Progression/MiniGameProgressStore.cs" Link="MiniGameProgressStore.cs" />
+    <Compile Include="../../Intersect.Server.Core/MiniGames/Currency/PokerMoneyLedger.cs" Link="PokerMoneyLedger.cs" />
+    <Compile Include="../../Intersect.Server.Core/MiniGames/Currency/PokerFundedTable.cs" Link="PokerFundedTable.cs" />
+    <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/*.cs" Link="Shared/%(Filename)%(Extension)" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.11" />
+  </ItemGroup>
+</Project>
