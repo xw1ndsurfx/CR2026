@@ -8,6 +8,7 @@ on:
       - 'Intersect.Server.Core/Database/PlayerData/User.Poker.cs'
       - 'Intersect.Server.Core/Entities/Player.PokerCurrency.cs'
       - 'Utilities/PokerMoneyTests/**'
+      - 'Utilities/PokerInventoryTests/**'
       - '.github/workflows/poker-money-tests.yml'
 permissions:
   contents: read
@@ -25,6 +26,20 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-      - name: Atomic inventory, escrow, restart and funded tables
+      - name: Atomic escrow, restart and funded tables
         shell: pwsh
         run: ./Utilities/PokerCi/run.ps1 -Project Utilities/PokerMoneyTests/Intersect.PokerMoneyTests.csproj -Configuration Release
+  inventory:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Actual PlayerContext and InventorySlot transaction checks
+        shell: pwsh
+        run: ./Utilities/PokerCi/run.ps1 -Project Utilities/PokerInventoryTests/Intersect.PokerInventoryTests.csproj -Configuration Release

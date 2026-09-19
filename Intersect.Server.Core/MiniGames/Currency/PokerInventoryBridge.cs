@@ -13,11 +13,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Intersect.Server.MiniGames.Currency;
 
-/// <summary>
-/// The only funded-poker code that changes inventory. Lock order is EntityLock ->
-/// User.PokerSaveGate -> runtime -> ledger. Live slots change only AFTER commit resolves.
-/// No bank, bag, equipment, item price, trade flag or test balance is used as a wallet.
-/// </summary>
+/// <summary>EntityLock -> actual User.Save lock -> runtime -> ledger. Live slots update after commit.</summary>
 internal static class PokerInventoryBridge
 {
     private sealed record Change(InventorySlot Slot, Item Value);
@@ -25,7 +21,6 @@ internal static class PokerInventoryBridge
     private static PokerMoneyLedger? _ledger;
     private static long _lastError;
     private static readonly Dictionary<Guid, long> RefundNotices = new();
-
     internal static PokerMoneyLedger Ledger
     {
         get
@@ -36,12 +31,10 @@ internal static class PokerInventoryBridge
                 using var context = DbInterface.CreatePlayerContext(readOnly: false);
                 if (context.Database.GetDbConnection() is not SqliteConnection connection)
                     throw new NotSupportedException("Funded poker currently requires the SQLite player database. No items were taken.");
-                _ledger = new PokerMoneyLedger(connection.ConnectionString);
-                return _ledger;
+                return _ledger = new PokerMoneyLedger(connection.ConnectionString);
             }
         }
     }
-
     internal static MoneySeat BuyIn(Player player, Guid seat, Guid table, Guid currency, string house, long amount)
     {
         if (player.User == null) throw new MoneyRuleException("No authenticated account.");
@@ -50,14 +43,16 @@ internal static class PokerInventoryBridge
         {
             var item = ItemDescriptor.Get(currency);
             if (!MiniGameCurrency.IsCompatible(item)) throw new MoneyRuleException("The table currency is missing or incompatible.");
-            var changes = DebitPlan(player, currency, amount);
-            var result = Ledger.OpenHuman(seat, table, player.Id, currency, house, amount,
-                (connection, transaction) => SavePlan(player, changes, connection, transaction));
-            Apply(changes);
-            return result;
+            List<Change> changes = [];
+            var result = Ledger.OpenHuman(seat, table, player.Id, currency, house, amount, (connection, transaction) =>
+            {
+                // A replay never recomputes or applies a second debit to the live inventory.
+                changes = DebitPlan(player, currency, amount);
+                SavePlan(player, changes, connection, transaction);
+            });
+            Apply(changes); return result;
         }
     }
-
     private static List<Change> DebitPlan(Player player, Guid currency, long amount)
     {
         var changes = new List<Change>(); var remaining = amount;
@@ -73,7 +68,6 @@ internal static class PokerInventoryBridge
         if (remaining != 0) throw new MoneyRuleException($"Not enough {ItemDescriptor.GetName(currency)} in inventory. Buy-in: {amount}.");
         return changes;
     }
-
     private static List<Change> CreditPlan(Player player, Guid currency, long amount)
     {
         var item = ItemDescriptor.Get(currency);
@@ -98,29 +92,15 @@ internal static class PokerInventoryBridge
         if (remaining != 0) throw new MoneyRuleException("Refund waiting: make room in your inventory. Nothing has been dropped or lost.");
         return changes;
     }
-
     private static void SavePlan(Player player, IReadOnlyList<Change> changes, SqliteConnection connection, SqliteTransaction transaction)
     {
-        using var context = DbInterface.CreatePlayerContext(readOnly: false);
-        context.Database.SetDbConnection(connection, contextOwnsConnection: false);
-        using var enlistment = context.Database.UseTransaction(transaction);
-        foreach (var change in changes)
-        {
-            // Load a detached-from-live tracked copy. Do not attach/save the player's graph.
-            var persisted = context.Player_Items.SingleOrDefault(s => s.Id == change.Slot.Id && s.PlayerId == player.Id)
-                ?? throw new MoneyRuleException("An inventory slot is not saved yet; try again after the next save.");
-            persisted.Set(change.Value);
-        }
-        context.SaveChanges(); // Still uncommitted: ledger will commit inventory + receipt together.
+        using var context = DbInterface.CreatePlayerContext(readOnly: false, queryTrackingBehavior: QueryTrackingBehavior.TrackAll);
+        PokerInventoryWriter.Write(context, connection, transaction, player.Id, changes.ToDictionary(c => c.Slot.Id, c => c.Value));
     }
     private static void Apply(IEnumerable<Change> changes)
     { foreach (var change in changes) change.Slot.Set(change.Value); }
-
     internal static void NotifyInventory(Player player)
-    {
-        try { if (player.Client != null) PacketSender.SendInventory(player); }
-        catch (Exception error) { Log(error); }
-    }
+    { try { if (player.Client != null) PacketSender.SendInventory(player); } catch (Exception error) { Log(error); } }
     internal static void Recover(Player player)
     {
         if (player.User == null || player.Client is not { IsEditor: false }) return;
@@ -129,20 +109,19 @@ internal static class PokerInventoryBridge
         lock (player.User.PokerSaveGate)
         {
             if (!player.IsOnline || player.Client == null || player.IsSaving) return;
+            // EntityLock prevents an in-flight admission for this same character. A failed
+            // admission without any runtime owner must not strand a committed buy-in.
+            if (!PokerCurrencyRuntime.Contains(player.Id)) Ledger.ReleaseOrphanHuman(player.Id);
             foreach (var refund in Ledger.Refunds(player.Id))
             {
                 try
                 {
                     List<Change> changes = [];
                     Ledger.Cashout(refund, (connection, transaction) =>
-                    {
-                        changes = CreditPlan(player, refund.Currency, refund.Amount);
-                        SavePlan(player, changes, connection, transaction);
-                    });
+                    { changes = CreditPlan(player, refund.Currency, refund.Amount); SavePlan(player, changes, connection, transaction); });
                     Apply(changes); changed |= changes.Count > 0;
                     if (refund.Amount > 0) PacketSender.SendChatMsg(player,
-                        $"[Poker] Returned {refund.Amount} {ItemDescriptor.GetName(refund.Currency)} to your inventory.",
-                        ChatMessageType.Inventory, Color.White);
+                        $"[Poker] Returned {refund.Amount} {ItemDescriptor.GetName(refund.Currency)} to your inventory.", ChatMessageType.Inventory, Color.White);
                 }
                 catch (MoneyRuleException error)
                 {
@@ -164,7 +143,6 @@ internal static class PokerInventoryBridge
         var now = Environment.TickCount64;
         if (now - Interlocked.Read(ref _lastError) < 30_000) return;
         Interlocked.Exchange(ref _lastError, now);
-        ApplicationContext.Context.Value?.Logger.LogError(error,
-            "Funded poker unavailable. Escrow is retained; do not delete the PokerMoney tables or player database.");
+        ApplicationContext.Context.Value?.Logger.LogError(error, "Funded poker unavailable. Escrow is retained; do not delete the PokerMoney tables or player database.");
     }
 }
