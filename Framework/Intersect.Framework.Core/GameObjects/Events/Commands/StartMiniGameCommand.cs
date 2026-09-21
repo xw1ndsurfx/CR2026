@@ -52,6 +52,7 @@ public sealed class StartMiniGameCommand : EventCommand
     [DefaultValue(0L)] public long NpcReserve { get; set; }
     /// <summary>Explicit system-funded mode: NPC buy-ins are replenished as needed and can create currency.</summary>
     [DefaultValue(false)] public bool UnlimitedNpcBankroll { get; set; }
+    public PokerLevelReward[] LevelRewards { get; set; } = [];
 
     public PokerSoundSet CreateSoundSet() => new(
         DealSound ?? "", CheckSound ?? "", CallSound ?? "", RaiseSound ?? "", FoldSound ?? "",
@@ -60,6 +61,8 @@ public sealed class StartMiniGameCommand : EventCommand
     public PokerAnimationSet CreateAnimationSet() => new(
         DealAnimationId, CheckAnimationId, CallAnimationId, RaiseAnimationId, FoldAnimationId, AllInAnimationId,
         VictoryAnimationId, LoseAnimationId, LevelUpAnimationId, JoinAnimationId, LeaveAnimationId);
+
+    public PokerLevelRewardSet CreateLevelRewardSet() => new(LevelRewards ?? []);
 
     public bool HasValidSettings() => Game == MiniGameType.Poker &&
         !string.IsNullOrEmpty(TableId) && TableId.Length <= 64 &&
@@ -70,5 +73,5 @@ public sealed class StartMiniGameCommand : EventCommand
         NpcReserve is >= 0 and <= 1_000_000_000 &&
         TurnSeconds is >= 5 and <= 300 && NpcPlayers is >= 0 and <= 5 &&
         NpcPlayers + (DealerPlays ? 1 : 0) < MaxPlayers && MiniGameProgression.IsBack(NpcCardBackId) &&
-        CreateSoundSet().IsValid;
+        CreateSoundSet().IsValid && CreateLevelRewardSet().IsValid;
 }

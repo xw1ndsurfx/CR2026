@@ -2,6 +2,7 @@ using System.Windows.Forms;
 using Intersect.Editor.Forms.Editors.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.MiniGames;
 using Newtonsoft.Json;
 
 internal static class Program
@@ -42,7 +43,7 @@ internal static class Program
                     CheckAnimationId = Guid.NewGuid(), CallAnimationId = Guid.NewGuid(), RaiseAnimationId = Guid.NewGuid(),
                     FoldAnimationId = Guid.NewGuid(), AllInAnimationId = Guid.NewGuid(), LoseAnimationId = Guid.NewGuid(),
                     LevelUpAnimationId = Guid.NewGuid(), JoinAnimationId = Guid.NewGuid(), LeaveAnimationId = Guid.NewGuid(),
-                    UnlimitedNpcBankroll = true };
+                    UnlimitedNpcBankroll = true, LevelRewards = [new PokerLevelReward(5, equipment.Id, 2)] };
                 var expected = JsonConvert.DeserializeObject<StartMiniGameCommand>(JsonConvert.SerializeObject(command))!;
                 expected.CurrencyItemId = other.Id;
                 using var dialog = new MiniGameCommandDialog(command);

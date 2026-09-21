@@ -9,6 +9,7 @@ namespace Intersect.Server.MiniGames.Poker;
 
 public sealed record PokerWinNotice(PokerSession Recipient, Guid TableInstanceId, long HandId,
     string PlayerName, long NetChips, bool AnnounceGlobally);
+public sealed record PokerLevelRewardNotice(PokerSession Recipient, Guid TableInstanceId, int Level, PokerLevelReward[] Rewards);
 
 public sealed partial class PokerTableRegistry
 {
@@ -23,6 +24,7 @@ public sealed partial class PokerTableRegistry
         public long DecisionSequence;
     }
     private readonly Queue<PokerWinNotice> _wins = new();
+    private readonly Queue<PokerLevelRewardNotice> _levelRewards = new();
 
     public PokerRegistryResult SelectCardBack(PokerPresence caller, Guid tableId, int backId)
     {
@@ -61,6 +63,16 @@ public sealed partial class PokerTableRegistry
         {
             var notices = _wins.ToArray();
             _wins.Clear();
+            return notices;
+        }
+    }
+
+    public PokerLevelRewardNotice[] CollectLevelRewards()
+    {
+        lock (_gate)
+        {
+            var notices = _levelRewards.ToArray();
+            _levelRewards.Clear();
             return notices;
         }
     }

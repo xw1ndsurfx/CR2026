@@ -14,6 +14,8 @@ internal sealed class MiniGameCommandDialog : Form
     private sealed record AnimationChoice(Guid Id, string Name) { public override string ToString() => Name; }
     private sealed record CurrencyChoice(Guid Id, string Name) { public override string ToString() => Name; }
     private sealed record SoundChoice(string File, string Name) { public override string ToString() => Name; }
+    private sealed record RewardItemChoice(Guid Id, string Name) { public override string ToString() => Name; }
+    private sealed record RewardListChoice(PokerLevelReward Reward, string Name) { public override string ToString() => Name; }
     public MiniGameCommandDialog(StartMiniGameCommand command)
     {
         Text = "Start Mini-Game - Poker"; StartPosition = FormStartPosition.CenterParent;
@@ -22,9 +24,9 @@ internal sealed class MiniGameCommandDialog : Form
         ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
         MinimumSize = new Size(580, 420);
         BackColor = DrawingColor.FromArgb(45, 45, 48); ForeColor = DrawingColor.Gainsboro;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 39, AutoScroll = true };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 40, AutoScroll = true };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
-        for (var row = 0; row < 39; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var row = 0; row < 40; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(12, 8, 12, 8) };
         Controls.Add(layout); Controls.Add(buttons);
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
@@ -86,19 +88,60 @@ internal sealed class MiniGameCommandDialog : Form
         AddRow(layout, 13, "Announce wins in GLOBAL chat", announce); AddRow(layout, 14, "Victory animation (winner only)", victory);
         AddRow(layout, 15, "Dealer / NPC card back", backs); AddRow(layout, 16, "Initial NPC reserve (one-time seed)", reserve);
         AddRow(layout, 17, "Unlimited NPC bankroll", unlimitedNpcBankroll);
-        AddRow(layout, 38, "Sound - Deal", dealSound); AddRow(layout, 38, "Sound - Check", checkSound);
-        AddRow(layout, 38, "Sound - Call", callSound); AddRow(layout, 38, "Sound - Raise", raiseSound);
-        AddRow(layout, 38, "Sound - Fold", foldSound); AddRow(layout, 38, "Sound - All-in", allInSound);
-        AddRow(layout, 38, "Sound - Win", winSound); AddRow(layout, 38, "Sound - Lose", loseSound);
-        AddRow(layout, 38, "Sound - Level Up", levelUpSound); AddRow(layout, 38, "Sound - Join table", joinSound);
-        AddRow(layout, 38, "Sound - Leave table", leaveSound);
-        AddRow(layout, 38, "Animation - Check", checkAnimation); AddRow(layout, 38, "Animation - Call", callAnimation);
-        AddRow(layout, 38, "Animation - Raise", raiseAnimation); AddRow(layout, 38, "Animation - Fold", foldAnimation);
-        AddRow(layout, 38, "Animation - All-in", allInAnimation); AddRow(layout, 38, "Animation - Lose", loseAnimation);
-        AddRow(layout, 38, "Animation - Level Up", levelUpAnimation); AddRow(layout, 38, "Animation - Join table", joinAnimation);
-        AddRow(layout, 38, "Animation - Leave table", leaveAnimation);
+        AddRow(layout, 18, "Sound - Deal", dealSound); AddRow(layout, 19, "Sound - Check", checkSound);
+        AddRow(layout, 20, "Sound - Call", callSound); AddRow(layout, 21, "Sound - Raise", raiseSound);
+        AddRow(layout, 22, "Sound - Fold", foldSound); AddRow(layout, 23, "Sound - All-in", allInSound);
+        AddRow(layout, 24, "Sound - Win", winSound); AddRow(layout, 25, "Sound - Lose", loseSound);
+        AddRow(layout, 26, "Sound - Level Up", levelUpSound); AddRow(layout, 27, "Sound - Join table", joinSound);
+        AddRow(layout, 28, "Sound - Leave table", leaveSound);
+        AddRow(layout, 29, "Animation - Check", checkAnimation); AddRow(layout, 30, "Animation - Call", callAnimation);
+        AddRow(layout, 31, "Animation - Raise", raiseAnimation); AddRow(layout, 32, "Animation - Fold", foldAnimation);
+        AddRow(layout, 33, "Animation - All-in", allInAnimation); AddRow(layout, 34, "Animation - Lose", loseAnimation);
+        AddRow(layout, 35, "Animation - Level Up", levelUpAnimation); AddRow(layout, 36, "Animation - Join table", joinAnimation);
+        AddRow(layout, 37, "Animation - Leave table", leaveAnimation);
         var status = new Label { Name = "CurrencyStatus", AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 12, 3, 12) };
         layout.Controls.Add(status, 0, 38); layout.SetColumnSpan(status, 2);
+
+        var rewardDraft = (command.LevelRewards ?? []).ToList();
+        var rewardList = new ListBox { Name = "LevelRewards", Width = 360, Height = 110 };
+        var rewardLevel = new ComboBox { Name = "RewardLevel", DropDownStyle = ComboBoxStyle.DropDownList, Width = 70 };
+        for (var level = 2; level <= MiniGameProgression.MaximumLevel; ++level) rewardLevel.Items.Add(level);
+        rewardLevel.SelectedIndex = 0;
+        var rewardItem = RewardItemPicker(Guid.Empty);
+        rewardItem.Name = "RewardItem"; rewardItem.Width = 270;
+        var rewardQuantity = Number(1, 1, 1_000_000_000); rewardQuantity.Name = "RewardQuantity"; rewardQuantity.Width = 100;
+        void RefreshRewards()
+        {
+            rewardList.Items.Clear();
+            foreach (var reward in rewardDraft.OrderBy(r => r.Level).ThenBy(r => ItemDescriptor.GetName(r.ItemId)))
+            {
+                var name = ItemDescriptor.Get(r.ItemId)?.Name ?? ("Missing item " + reward.ItemId);
+                rewardList.Items.Add(new RewardListChoice(reward, $"Level {reward.Level}: {reward.Quantity:N0} x {name}"));
+            }
+        }
+        var addReward = new Button { Name = "AddLevelReward", Text = "Add reward", AutoSize = true };
+        addReward.Click += (_, _) =>
+        {
+            var itemId = (rewardItem.SelectedItem as RewardItemChoice)?.Id ?? Guid.Empty;
+            if (itemId == Guid.Empty) return;
+            var reward = new PokerLevelReward((int)rewardLevel.SelectedItem!, itemId, (int)rewardQuantity.Value);
+            if (reward.IsValid && !rewardDraft.Contains(reward)) rewardDraft.Add(reward);
+            RefreshRewards();
+        };
+        var removeReward = new Button { Name = "RemoveLevelReward", Text = "Remove selected", AutoSize = true };
+        removeReward.Click += (_, _) =>
+        {
+            if (rewardList.SelectedItem is RewardListChoice choice) rewardDraft.Remove(choice.Reward);
+            RefreshRewards();
+        };
+        var rewardControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true, FlowDirection = FlowDirection.LeftToRight };
+        rewardControls.Controls.Add(new Label { Text = "Level", AutoSize = true, Margin = new Padding(3, 8, 3, 3) });
+        rewardControls.Controls.Add(rewardLevel); rewardControls.Controls.Add(rewardItem); rewardControls.Controls.Add(rewardQuantity);
+        rewardControls.Controls.Add(addReward); rewardControls.Controls.Add(removeReward);
+        var rewardPanel = new FlowLayoutPanel { Name = "LevelRewardPanel", AutoSize = true, WrapContents = false,
+            FlowDirection = FlowDirection.TopDown, Dock = DockStyle.Fill };
+        rewardPanel.Controls.Add(rewardList); rewardPanel.Controls.Add(rewardControls); RefreshRewards();
+        AddRow(layout, 39, "Poker level rewards", rewardPanel);
         void ShowCurrencyStatus()
         {
             var id = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
@@ -162,6 +205,7 @@ internal sealed class MiniGameCommandDialog : Form
                 LevelUpAnimationId = ((AnimationChoice)levelUpAnimation.SelectedItem!).Id,
                 JoinAnimationId = ((AnimationChoice)joinAnimation.SelectedItem!).Id,
                 LeaveAnimationId = ((AnimationChoice)leaveAnimation.SelectedItem!).Id,
+                LevelRewards = rewardDraft.ToArray(),
             };
             if (!draft.HasValidSettings())
             {
@@ -184,6 +228,7 @@ internal sealed class MiniGameCommandDialog : Form
             command.AllInAnimationId = draft.AllInAnimationId; command.LoseAnimationId = draft.LoseAnimationId;
             command.LevelUpAnimationId = draft.LevelUpAnimationId; command.JoinAnimationId = draft.JoinAnimationId;
             command.LeaveAnimationId = draft.LeaveAnimationId;
+            command.LevelRewards = draft.LevelRewards.ToArray();
             DialogResult = DialogResult.OK; Close();
         };
     }
@@ -198,6 +243,17 @@ internal sealed class MiniGameCommandDialog : Form
         if (selected == null) { selected = new CurrencyChoice(id, "Missing / incompatible item: " + id); picker.Items.Add(selected); }
         picker.SelectedItem = selected; return picker;
     }
+    private static ComboBox RewardItemPicker(Guid id)
+    {
+        var picker = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, DropDownWidth = 420 };
+        picker.Items.Add(new RewardItemChoice(Guid.Empty, "Choose reward item..."));
+        foreach (var item in ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().OrderBy(i => i.Name, StringComparer.OrdinalIgnoreCase))
+            picker.Items.Add(new RewardItemChoice(item.Id, string.IsNullOrWhiteSpace(item.Folder) ? item.Name : $"[{item.Folder}] / {item.Name}"));
+        var selected = picker.Items.Cast<RewardItemChoice>().FirstOrDefault(choice => choice.Id == id) ?? (RewardItemChoice)picker.Items[0]!;
+        picker.SelectedItem = selected;
+        return picker;
+    }
+
     private static ComboBox SoundPicker(string name, string? file)
     {
         file ??= "";

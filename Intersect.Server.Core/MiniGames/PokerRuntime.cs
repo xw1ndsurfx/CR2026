@@ -26,7 +26,7 @@ internal static class PokerRuntime
         public Guid Id = Guid.NewGuid();
         public PokerRequestGuard Guard;
     }
-    private sealed record Delivery(View? View, PokerStatePacket? Packet, PokerWinNotice? Win = null);
+    private sealed record Delivery(View? View, PokerStatePacket? Packet, PokerWinNotice? Win = null, PokerLevelRewardNotice? LevelReward = null);
     private static readonly PokerTableRegistry Tables = new(new SqliteMiniGameProgressStore(
         Path.Combine("resources", "minigames-test.db")));
     private static readonly object Gate = new();
@@ -41,7 +41,8 @@ internal static class PokerRuntime
     internal static PokerRegistryResult Join(Player player, StartMiniGameCommand command)
     {
         _ = SweepTimer;
-        if (!command.HasValidSettings()) return new(PokerRegistryError.InvalidRules);
+        if (!command.HasValidSettings() || !PokerLevelRewardRuntime.DefinitionsExist(command.LevelRewards))
+            return new(PokerRegistryError.InvalidRules);
         List<Delivery> output = [];
         PokerRegistryResult result;
         lock (player.EntityLock)
@@ -63,7 +64,8 @@ internal static class PokerRuntime
                         command.BigBlind, command.TurnSeconds),
                     new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
                         command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId,
-                        command.CreateSoundSet(), command.CreateAnimationSet(), command.UnlimitedNpcBankroll));
+                        command.CreateSoundSet(), command.CreateAnimationSet(), command.UnlimitedNpcBankroll,
+                        command.CreateLevelRewardSet()));
                 if (result.Error != PokerRegistryError.None) return result;
                 var view = new View
                 {
@@ -136,6 +138,9 @@ internal static class PokerRuntime
                 Queue(output, view, update.Snapshot);
         foreach (var win in Tables.CollectWins())
             if (win.AnnounceGlobally && win.NetChips > 0) output.Add(new(null, null, win));
+        foreach (var reward in Tables.CollectLevelRewards())
+            if (Views.TryGetValue(reward.Recipient, out var rewardView) && rewardView.TableId == reward.TableInstanceId)
+                output.Add(new(rewardView, null, LevelReward: reward));
     }
     private static void Queue(List<Delivery> output, View view, PokerSnapshot? snapshot,
         long requestId = 0, bool closed = false, string error = "") => output.Add(new(view, new PokerStatePacket
@@ -156,6 +161,12 @@ internal static class PokerRuntime
                 {
                     var name = new string(win.PlayerName.Where(c => !char.IsControl(c)).ToArray());
                     PacketSender.SendGlobalMsg(Localization.Strings.Poker.NetWin.ToString(name, win.NetChips), Color.White);
+                    continue;
+                }
+                if (delivery.LevelReward is { } reward && delivery.View is { } rewardView)
+                {
+                    if (ReferenceEquals(rewardView.Client.Entity, rewardView.Player) && rewardView.Player.LoginTime == rewardView.LoginStamp)
+                        PokerLevelRewardRuntime.Grant(rewardView.Player, reward.Level, reward.Rewards);
                     continue;
                 }
                 if (delivery.View is not { } view || delivery.Packet is not { } packet) continue;
