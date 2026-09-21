@@ -75,20 +75,20 @@ public sealed partial class PokerTableState
     [Key(23)] public long Wins { get; set; }
     [Key(24)] public bool ProgressPending { get; set; }
     [Key(25)] public PokerDecisionState[] Decisions { get; set; } = [];
-    [Key(26)] public Guid CheckAnimationId { get; set; }
-    [Key(27)] public Guid CallAnimationId { get; set; }
-    [Key(28)] public Guid RaiseAnimationId { get; set; }
-    [Key(29)] public Guid FoldAnimationId { get; set; }
-    [Key(30)] public Guid AllInAnimationId { get; set; }
-    [Key(31)] public Guid LevelUpAnimationId { get; set; }
-    [Key(32)] public string DealSound { get; set; } = string.Empty;
-    [Key(33)] public string CheckSound { get; set; } = string.Empty;
-    [Key(34)] public string CallSound { get; set; } = string.Empty;
-    [Key(35)] public string RaiseSound { get; set; } = string.Empty;
-    [Key(36)] public string FoldSound { get; set; } = string.Empty;
-    [Key(37)] public string AllInSound { get; set; } = string.Empty;
-    [Key(38)] public string WinSound { get; set; } = string.Empty;
-    [Key(39)] public string LevelUpSound { get; set; } = string.Empty;
+    [Key(28)] public Guid CheckAnimationId { get; set; }
+    [Key(29)] public Guid CallAnimationId { get; set; }
+    [Key(30)] public Guid RaiseAnimationId { get; set; }
+    [Key(31)] public Guid FoldAnimationId { get; set; }
+    [Key(32)] public Guid AllInAnimationId { get; set; }
+    [Key(33)] public Guid LevelUpAnimationId { get; set; }
+    [Key(34)] public string DealSound { get; set; } = string.Empty;
+    [Key(35)] public string CheckSound { get; set; } = string.Empty;
+    [Key(36)] public string CallSound { get; set; } = string.Empty;
+    [Key(37)] public string RaiseSound { get; set; } = string.Empty;
+    [Key(38)] public string FoldSound { get; set; } = string.Empty;
+    [Key(39)] public string AllInSound { get; set; } = string.Empty;
+    [Key(40)] public string WinSound { get; set; } = string.Empty;
+    [Key(41)] public string LevelUpSound { get; set; } = string.Empty;
 
     public bool HasValidShape() => HandId >= 0 && Revision >= 0 &&
         Stage is >= PokerStage.Waiting and <= PokerStage.Finished &&
