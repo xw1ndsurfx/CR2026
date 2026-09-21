@@ -81,6 +81,25 @@ public static class PokerNpcPolicy
         if (view.CanRaise && strength >= 45 && roll < 20 && view.MaximumRaiseTo > view.CurrentBet)
             return (PokerAction.RaiseTo, Math.Min(view.MinimumRaiseTo, view.MaximumRaiseTo));
         if (view.ToCall == 0) return (PokerAction.Check, 0);
+
+        // Do not rig cards against an all-in. Instead, make NPCs defend intelligently so a
+        // human cannot farm folds by shoving every hand. Strong and medium holdings call
+        // considerably more often when the requested call represents a large fraction of
+        // the NPC stack.
+        var shovePressure = view.ToCall >= Math.Max(bigBlind * 4, me.Chips * 2 / 3);
+        if (shovePressure)
+        {
+            var callChance = strength switch
+            {
+                >= 80 => 95,
+                >= 60 => 82,
+                >= 45 => 58,
+                >= 30 => 28,
+                _ => 8,
+            };
+            return roll < callChance ? (PokerAction.Call, 0) : (PokerAction.Fold, 0);
+        }
+
         var inexpensive = view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 20);
         var affordablePair = strength >= 55 && view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 2);
         return inexpensive && roll < 85 || affordablePair || roll < 8
