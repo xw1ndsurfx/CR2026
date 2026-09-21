@@ -163,14 +163,15 @@ public partial class ShopWindow : Window
                 var ownedCurrency = Globals.Me?.GetQuantityOfItemInInventory(offer.CostItemId) ?? 0;
                 var canAfford = offer.CostItemQuantity < 1 || ownedCurrency >= offer.CostItemQuantity;
 
+                var shopSlotIndex = slot;
                 var row = ShopProductRow.Buy(
                     _buyContainer,
-                    slot,
+                    shopSlotIndex,
                     item,
                     offer.CostItemQuantity,
                     currencyName,
                     canAfford,
-                    () => Globals.Me?.TryBuyItem(slot)
+                    () => Globals.Me?.TryBuyItem(shopSlotIndex)
                 );
                 row.Dock = Pos.Top;
                 ++count;
