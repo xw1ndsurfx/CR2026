@@ -1,7 +1,9 @@
 #nullable enable
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.MiniGames;
 using Intersect.Network.Packets.Server;

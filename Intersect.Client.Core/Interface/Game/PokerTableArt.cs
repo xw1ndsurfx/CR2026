@@ -1,3 +1,4 @@
+using Intersect.Client.Core;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Graphics;
@@ -89,7 +90,7 @@ internal sealed class PokerTableArt
             Fit(_choices[slot], Back(slot), layout.LocalRect(36 + slot * 108, 15, 48, 74));
         }
         SelectedBackMissing = Lookup(PokerCardAssets.BackFileName(me.SelectedCardBackId)) == null;
-        if (_deals.Observe(table, state.HandId, state.Board.Length)) BeginAnimation(state.DealAnimationId);
+        if (_deals.Observe(table, state.HandId, state.Board.Length)) BeginAnimation(state.DealAnimationId, state.DealSound);
         AdvanceAnimation(layout);
     }
     private IGameTexture? Card(int value) => PokerCardAssets.FileNameFor(value) is { } file ? Lookup(file) : null;
@@ -100,10 +101,13 @@ internal sealed class PokerTableArt
         { result = GameContentManager.Current?.GetTexture(TextureType.Misc, file); _cache.Add(file, result); }
         return result;
     }
-    private void BeginAnimation(Guid id)
+    private void BeginAnimation(Guid id, string? fallbackSound)
     {
         foreach (var effect in _effects) { effect.Count = 0; effect.Image.IsHidden = true; }
-        if (id == Guid.Empty || AnimationDescriptor.Get(id) is not { } animation) return;
+        var animation = id == Guid.Empty ? null : AnimationDescriptor.Get(id);
+        var sound = !string.IsNullOrWhiteSpace(animation?.Sound) ? animation.Sound : fallbackSound;
+        if (!string.IsNullOrWhiteSpace(sound)) Audio.AddGameSound(sound, false);
+        if (animation == null) return;
         Configure(_effects[0], animation.Lower); Configure(_effects[1], animation.Upper);
         _started = Environment.TickCount64;
     }

@@ -7,6 +7,8 @@ using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.GameObjects;
 using Microsoft.Extensions.Logging;
+using DrawingColor = System.Drawing.Color;
+using DrawingPoint = System.Drawing.Point;
 
 
 namespace Intersect.Editor.Forms.Editors.Quest;
@@ -79,14 +81,14 @@ public partial class QuestTaskEditor : UserControl
     {
         _pokerGroup = new DarkUI.Controls.DarkGroupBox
         {
-            Text = "Poker objective", Location = new Point(10, 110), Size = new Size(236, 83),
-            BackColor = Color.FromArgb(45, 45, 48), ForeColor = Color.Gainsboro, Visible = false
+            Text = "Poker objective", Location = new DrawingPoint(10, 110), Size = new Size(236, 83),
+            BackColor = DrawingColor.FromArgb(45, 45, 48), ForeColor = DrawingColor.Gainsboro, Visible = false
         };
-        _pokerQuantityLabel = new Label { Text = "Target:", AutoSize = true, Location = new Point(8, 32) };
+        _pokerQuantityLabel = new Label { Text = "Target:", AutoSize = true, Location = new DrawingPoint(8, 32) };
         _pokerQuantity = new DarkUI.Controls.DarkNumericUpDown
         {
-            Location = new Point(103, 29), Size = new Size(116, 20), Minimum = 1, Maximum = 1000000000,
-            Value = 1, BackColor = Color.FromArgb(69, 73, 74), ForeColor = Color.Gainsboro
+            Location = new DrawingPoint(103, 29), Size = new Size(116, 20), Minimum = 1, Maximum = 1000000000,
+            Value = 1, BackColor = DrawingColor.FromArgb(69, 73, 74), ForeColor = DrawingColor.Gainsboro
         };
         _pokerGroup.Controls.Add(_pokerQuantityLabel);
         _pokerGroup.Controls.Add(_pokerQuantity);

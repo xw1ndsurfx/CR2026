@@ -1,8 +1,8 @@
 using System.Drawing;
 using System.Windows.Forms;
-using Intersect.Editor.Content;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.MiniGames;
+using DrawingColor = System.Drawing.Color;
 
 namespace Intersect.Editor.Forms.Editors.Events;
 
@@ -23,7 +23,7 @@ internal sealed class PokerEffectsDialog : Form
         ShowInTaskbar = false;
         ClientSize = new Size(760, 610);
         MinimumSize = new Size(650, 480);
-        BackColor = Color.FromArgb(45,45,48); ForeColor = Color.Gainsboro;
+        BackColor = DrawingColor.FromArgb(45,45,48); ForeColor = DrawingColor.Gainsboro;
 
         var root = new TableLayoutPanel { Dock=DockStyle.Fill, Padding=new Padding(12), ColumnCount=3, AutoScroll=true };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22));
@@ -88,7 +88,13 @@ internal sealed class PokerEffectsDialog : Form
     {
         var box=new ComboBox { DropDownStyle=ComboBoxStyle.DropDownList, Dock=DockStyle.Fill };
         box.Items.Add("");
-        foreach(var s in GameContentManager.SmartSortedSoundNames ?? Array.Empty<string>()) box.Items.Add(s);
+        var directory = Path.Combine("resources", "sounds");
+        if (Directory.Exists(directory))
+            foreach (var s in Directory.EnumerateFiles(directory)
+                         .Where(file => file.EndsWith(".wav", StringComparison.OrdinalIgnoreCase))
+                         .Select(Path.GetFileName).Where(name => !string.IsNullOrEmpty(name))
+                         .OrderBy(name => name, StringComparer.OrdinalIgnoreCase))
+                box.Items.Add(s!);
         if(!string.IsNullOrEmpty(value) && !box.Items.Contains(value)) box.Items.Add(value);
         box.SelectedItem=box.Items.Contains(value) ? value : ""; return box;
     }
