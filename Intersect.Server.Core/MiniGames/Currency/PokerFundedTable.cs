@@ -10,6 +10,7 @@ namespace Intersect.Server.MiniGames.Currency;
 
 internal sealed record FundedWin(Guid Player, string Name, long Amount);
 internal sealed record FundedLevelReward(Guid Player, int Level, PokerLevelReward[] Rewards);
+internal sealed record FundedLevelNotice(Guid Player, int Level);
 internal sealed record FundedQuestUpdate(Guid Player, PokerQuestUpdate Update);
 
 /// <summary>The tested hold'em engine owns the rules; this adapter owns funded hand checkpoints.</summary>
@@ -39,6 +40,7 @@ internal sealed class PokerFundedTable
     private readonly List<PokerPublicDecision> _decisions = new();
     private readonly Queue<FundedWin> _wins = new();
     private readonly Queue<FundedLevelReward> _levelRewards = new();
+    private readonly Queue<FundedLevelNotice> _levels = new();
     private readonly Queue<FundedQuestUpdate> _questUpdates = new();
     private readonly Queue<string> _npcChat = new();
     private readonly Dictionary<Guid, long> _net = new();
@@ -212,6 +214,7 @@ internal sealed class PokerFundedTable
                 var afterProfile = profiles[seat.PlayerId];
                 if (afterProfile.Level > beforeProfile.Level)
                 {
+                    _levels.Enqueue(new(seat.PlayerId, afterProfile.Level));
                     var rewards = Options.EffectiveLevelRewards
                         .Where(r => r.Level > beforeProfile.Level && r.Level <= afterProfile.Level).ToArray();
                     if (rewards.Length > 0) _levelRewards.Enqueue(new(seat.PlayerId, afterProfile.Level, rewards));
@@ -266,23 +269,8 @@ internal sealed class PokerFundedTable
         if (_decisions.Count > 12) _decisions.RemoveAt(0);
         if (member.Escrow.Npc)
         {
-            var currency = CurrencyName;
-            var suffix = automatic ? " (auto)" : "";
-            var text = action switch
-            {
-                "deal" => $"[Poker] {member.Name}: deals.{suffix}",
-                "fold" => $"[Poker] {member.Name}: folds.{suffix}",
-                "check" => $"[Poker] {member.Name}: checks.{suffix}",
-                "call" => amount > 0
-                    ? $"[Poker] {member.Name}: calls {amount} {currency}.{suffix}"
-                    : $"[Poker] {member.Name}: calls.{suffix}",
-                "raise" => $"[Poker] {member.Name}: raises to {amount} {currency}.{suffix}",
-                "leave" => $"[Poker] {member.Name}: leaves the table.{suffix}",
-                "wins" => $"[Poker] {member.Name} wins {amount} {currency}.",
-                _ => $"[Poker] {member.Name}: {action}.{suffix}",
-            };
-            _npcChat.Enqueue(text);
-            while (_npcChat.Count > 24) _npcChat.Dequeue();
+            _npcChat.Enqueue(PokerNotificationText.NpcAction(member.Name, action, amount, CurrencyName, automatic));
+            while (_npcChat.Count > PokerNotificationText.MaximumQueuedMessages) _npcChat.Dequeue();
         }
         ++Version;
     }
@@ -294,5 +282,6 @@ internal sealed class PokerFundedTable
     }
     public FundedWin[] CollectWins() { var wins = _wins.ToArray(); _wins.Clear(); return wins; }
     public FundedLevelReward[] CollectLevelRewards() { var rewards = _levelRewards.ToArray(); _levelRewards.Clear(); return rewards; }
+    public FundedLevelNotice[] CollectLevels() { var levels = _levels.ToArray(); _levels.Clear(); return levels; }
     public FundedQuestUpdate[] CollectQuestUpdates() { var updates = _questUpdates.ToArray(); _questUpdates.Clear(); return updates; }
 }

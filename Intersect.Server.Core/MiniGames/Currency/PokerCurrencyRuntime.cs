@@ -30,7 +30,7 @@ internal static class PokerCurrencyRuntime
         public void Renew() { Id = Guid.NewGuid(); Guard = new PokerRequestGuard(Table.Id, Id); Closed = false; Published = -1; }
     }
     private sealed record Delivery(View? View, PokerStatePacket? Packet, string? Announcement = null, string? LocalMessage = null,
-        FundedLevelReward? LevelReward = null, FundedQuestUpdate? Quest = null);
+        FundedLevelReward? LevelReward = null, FundedLevelNotice? Level = null, FundedQuestUpdate? Quest = null);
     private static readonly object Gate = new();
     private static readonly Dictionary<PokerTableKey, PokerFundedTable> Tables = new();
     private static readonly Dictionary<Guid, View> Views = new();
@@ -227,11 +227,14 @@ internal static class PokerCurrencyRuntime
                 if (!pair.Value.Options.AnnounceWins) continue;
                 var name = new string(win.Name.Where(c => !char.IsControl(c)).ToArray());
                 var currency = new string(ItemDescriptor.GetName(pair.Value.Currency).Where(c => !char.IsControl(c)).ToArray());
-                output.Add(new(null, null, $"[Poker] {name} wins {win.Amount} {currency} (net gain)."));
+                output.Add(new(null, null, PokerNotificationText.GlobalWin(name, win.Amount, currency)));
             }
             foreach (var reward in pair.Value.CollectLevelRewards())
                 if (Views.TryGetValue(reward.Player, out var rewardView) && !rewardView.Closed && ReferenceEquals(rewardView.Table, pair.Value))
                     output.Add(new(rewardView, null, LevelReward: reward));
+            foreach (var level in pair.Value.CollectLevels())
+                if (Views.TryGetValue(level.Player, out var levelView) && !levelView.Closed && ReferenceEquals(levelView.Table, pair.Value))
+                    output.Add(new(levelView, null, Level: level));
             foreach (var quest in pair.Value.CollectQuestUpdates())
                 if (Views.TryGetValue(quest.Player, out var questView) && !questView.Closed && ReferenceEquals(questView.Table, pair.Value))
                     output.Add(new(questView, null, Quest: quest));
@@ -265,6 +268,10 @@ internal static class PokerCurrencyRuntime
                 else if (delivery.LevelReward is { } reward && delivery.View is { } rewardView &&
                     ReferenceEquals(rewardView.Client.Entity, rewardView.Player) && rewardView.Player.LoginTime == rewardView.Login)
                     PokerLevelRewardRuntime.Grant(rewardView.Player, reward.Level, reward.Rewards);
+                else if (delivery.Level is { } level && delivery.View is { } levelView &&
+                    ReferenceEquals(levelView.Client.Entity, levelView.Player) && levelView.Player.LoginTime == levelView.Login)
+                    PacketSender.SendChatMsg(levelView.Player, PokerNotificationText.LevelUp(level.Level),
+                        ChatMessageType.Notice, Color.White);
                 else if (delivery.Quest is { } quest && delivery.View is { } questView &&
                     ReferenceEquals(questView.Client.Entity, questView.Player) && questView.Player.LoginTime == questView.Login)
                     questView.Player.UpdatePokerQuestTasks(quest.Update);

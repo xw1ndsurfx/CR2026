@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.Linq;
+using Intersect.Framework.Core.MiniGames;
 
 namespace Intersect.Server.MiniGames.Poker;
 
@@ -13,6 +14,12 @@ public sealed partial class PokerTableRegistry
     {
         entry.Extras.Decisions.Add(new(++entry.Extras.DecisionSequence, seat.PlayerId, seat.Name, action, amount, automatic));
         if (entry.Extras.Decisions.Count > 12) entry.Extras.Decisions.RemoveAt(0);
+        if (entry.Npcs.ContainsKey(seat.PlayerId))
+        {
+            entry.Extras.NpcChat.Enqueue(PokerNotificationText.NpcAction(seat.Name, action, amount, "chips", automatic));
+            while (entry.Extras.NpcChat.Count > PokerNotificationText.MaximumQueuedMessages)
+                entry.Extras.NpcChat.Dequeue();
+        }
         entry.PublishedRevision = -1;
     }
     private static void AdditionalFolds(Entry entry, PokerSnapshot before, PokerSnapshot after, Guid primary)

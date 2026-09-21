@@ -10,6 +10,8 @@ namespace Intersect.Server.MiniGames.Poker;
 public sealed record PokerWinNotice(PokerSession Recipient, Guid TableInstanceId, long HandId,
     string PlayerName, long NetChips, bool AnnounceGlobally);
 public sealed record PokerLevelRewardNotice(PokerSession Recipient, Guid TableInstanceId, int Level, PokerLevelReward[] Rewards);
+public sealed record PokerLevelNotice(PokerSession Recipient, Guid TableInstanceId, int Level);
+public sealed record PokerLocalNotice(PokerSession Recipient, Guid TableInstanceId, string Text);
 public sealed record PokerQuestNotice(PokerSession Recipient, Guid TableInstanceId, PokerQuestUpdate Update);
 
 public sealed partial class PokerTableRegistry
@@ -22,10 +24,12 @@ public sealed partial class PokerTableRegistry
         public readonly HashSet<Guid> EligibleHumans = new();
         public readonly Dictionary<Guid, MiniGameProgress> Profiles = new();
         public readonly List<PokerPublicDecision> Decisions = new();
+        public readonly Queue<string> NpcChat = new();
         public long DecisionSequence;
     }
     private readonly Queue<PokerWinNotice> _wins = new();
     private readonly Queue<PokerLevelRewardNotice> _levelRewards = new();
+    private readonly Queue<PokerLevelNotice> _levels = new();
     private readonly Queue<PokerQuestNotice> _questUpdates = new();
 
     public PokerRegistryResult SelectCardBack(PokerPresence caller, Guid tableId, int backId)
@@ -76,6 +80,35 @@ public sealed partial class PokerTableRegistry
             var notices = _levelRewards.ToArray();
             _levelRewards.Clear();
             return notices;
+        }
+    }
+
+    public PokerLevelNotice[] CollectLevels()
+    {
+        lock (_gate)
+        {
+            var notices = _levels.ToArray();
+            _levels.Clear();
+            return notices;
+        }
+    }
+
+    public PokerLocalNotice[] CollectNpcChat()
+    {
+        lock (_gate)
+        {
+            var notices = new List<PokerLocalNotice>();
+            foreach (var entry in _tables.Values)
+            {
+                if (entry.Extras.NpcChat.Count == 0) continue;
+                var messages = entry.Extras.NpcChat.ToArray();
+                entry.Extras.NpcChat.Clear();
+                foreach (var playerId in entry.Players)
+                    if (_members.TryGetValue(playerId, out var member))
+                        foreach (var message in messages)
+                            notices.Add(new(member.Presence.Session, entry.Id, message));
+            }
+            return notices.ToArray();
         }
     }
 
