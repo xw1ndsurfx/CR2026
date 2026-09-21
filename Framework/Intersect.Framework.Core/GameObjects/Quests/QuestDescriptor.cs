@@ -239,6 +239,17 @@ public partial class QuestTaskDescriptor
                 );
 
                 break;
+            case QuestObjective.PokerWinAmount:
+                taskString = TargetId == Guid.Empty
+                    ? $"Win {Quantity:N0} in poker. {Description}"
+                    : $"Win {Quantity:N0} {ItemDescriptor.GetName(TargetId)} in poker. {Description}";
+                break;
+            case QuestObjective.PokerWinHands:
+                taskString = $"Win {Quantity:N0} poker hand(s). {Description}";
+                break;
+            case QuestObjective.PokerReachLevel:
+                taskString = $"Reach poker level {Quantity}. {Description}";
+                break;
         }
 
         return taskString;

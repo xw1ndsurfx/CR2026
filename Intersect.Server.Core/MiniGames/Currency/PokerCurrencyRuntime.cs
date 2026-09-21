@@ -27,7 +27,7 @@ internal static class PokerCurrencyRuntime
         public bool Closed;
         public void Renew() { Id = Guid.NewGuid(); Guard = new PokerRequestGuard(Table.Id, Id); Closed = false; Published = -1; }
     }
-    private sealed record Delivery(View? View, PokerStatePacket? Packet, string? Announcement = null, string? LocalMessage = null);
+    private sealed record Delivery(View? View, PokerStatePacket? Packet, string? Announcement = null, string? LocalMessage = null, FundedWin? Win = null);
     private static readonly object Gate = new();
     private static readonly Dictionary<PokerTableKey, PokerFundedTable> Tables = new();
     private static readonly Dictionary<Guid, View> Views = new();
@@ -47,8 +47,7 @@ internal static class PokerCurrencyRuntime
                 if (player.Client is not { IsEditor: false } client || !player.TryCapturePokerPresence(out var presence))
                     return new(PokerRegistryError.InvalidPresence);
                 var rules = new PokerRules(command.MaxPlayers, command.StartingChips, command.SmallBlind, command.BigBlind, command.TurnSeconds);
-                var options = new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
-                    command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId);
+                var options = PokerCommandOptions.Build(command);
                 var key = new PokerTableKey(presence.MapId, presence.MapInstanceId, command.TableId);
                 var money = PokerInventoryBridge.Ledger;
                 lock (Gate)
@@ -208,10 +207,14 @@ internal static class PokerCurrencyRuntime
                     output.Add(new(view, null, LocalMessage: message));
             foreach (var win in pair.Value.CollectWins())
             {
-                if (!pair.Value.Options.AnnounceWins) continue;
-                var name = new string(win.Name.Where(c => !char.IsControl(c)).ToArray());
-                var currency = new string(ItemDescriptor.GetName(pair.Value.Currency).Where(c => !char.IsControl(c)).ToArray());
-                output.Add(new(null, null, $"[Poker] {name} wins {win.Amount} {currency} (net gain)."));
+                if (Views.TryGetValue(win.Player, out var winner) && !winner.Closed)
+                    output.Add(new(winner, null, Win: win));
+                if (pair.Value.Options.AnnounceWins)
+                {
+                    var name = new string(win.Name.Where(c => !char.IsControl(c)).ToArray());
+                    var currency = new string(ItemDescriptor.GetName(pair.Value.Currency).Where(c => !char.IsControl(c)).ToArray());
+                    output.Add(new(null, null, $"[Poker] {name} wins {win.Amount} {currency} (net gain)."));
+                }
             }
             if (pair.Value.IsEmpty) Tables.Remove(pair.Key);
         }
@@ -239,7 +242,23 @@ internal static class PokerCurrencyRuntime
         {
             try
             {
-                if (delivery.Announcement is { } text) PacketSender.SendGlobalMsg(text, Color.White);
+                if (delivery.Win is { } win && delivery.View is { } winnerView &&
+                    ReferenceEquals(winnerView.Client.Entity, winnerView.Player) && winnerView.Player.LoginTime == winnerView.Login)
+                {
+                    winnerView.Player.UpdatePokerQuestTasks(win.Amount, win.NewLevel, win.Currency);
+                    if (win.NewLevel > win.OldLevel && win.RewardItemId != Guid.Empty && win.RewardQuantity > 0)
+                    {
+                        var levels = win.NewLevel - win.OldLevel;
+                        var amount = checked(win.RewardQuantity * levels);
+                        if (winnerView.Player.TryGiveItem(win.RewardItemId, amount, ItemHandling.Normal, bankOverflow: true))
+                            PacketSender.SendChatMsg(winnerView.Player,
+                                $"[Poker] Level reward: {amount} {ItemDescriptor.GetName(win.RewardItemId)}.", ChatMessageType.Inventory, Color.White);
+                        else
+                            PacketSender.SendChatMsg(winnerView.Player,
+                                $"[Poker] Level reward could not be delivered. Make inventory or bank room and contact staff.", ChatMessageType.Error, Color.White);
+                    }
+                }
+                else if (delivery.Announcement is { } text) PacketSender.SendGlobalMsg(text, Color.White);
                 else if (delivery.LocalMessage is { } local && delivery.View is { } localView &&
                     ReferenceEquals(localView.Client.Entity, localView.Player) && localView.Player.LoginTime == localView.Login)
                     PacketSender.SendChatMsg(localView.Player, local, ChatMessageType.Local, Color.White);

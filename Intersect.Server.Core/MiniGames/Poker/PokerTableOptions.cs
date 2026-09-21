@@ -81,12 +81,29 @@ public static class PokerNpcPolicy
                 strength = matches >= 3 ? 80 : matches == 2 ? 60 : Math.Min(strength, 25);
             }
         }
-        if (view.CanRaise && strength >= 45 && roll < 20 && view.MaximumRaiseTo > view.CurrentBet)
+        if (view.Board.Length + view.MyCards.Length >= 5)
+        {
+            var category = PokerCards.Category(PokerCards.Evaluate(view.Board.Concat(view.MyCards)));
+            strength = Math.Max(strength, 20 + (int)category * 10);
+        }
+        var facingShove = view.ToCall > 0 && (view.ToCall >= me.Chips ||
+            view.ToCall >= Math.Max(bigBlind * 8, me.Chips * 3 / 5));
+        if (facingShove)
+        {
+            // Do not rig cards. Make reckless human shoves less profitable by allowing NPCs
+            // to continue only with ranges that are strong enough to justify a large call.
+            if (strength >= 90 || strength >= 75 && roll < 80 || strength >= 65 && roll < 35)
+                return (PokerAction.Call, 0);
+            return (PokerAction.Fold, 0);
+        }
+        if (view.CanRaise && strength >= 82 && roll < 18 && view.MaximumRaiseTo > view.CurrentBet)
+            return (PokerAction.RaiseTo, view.MaximumRaiseTo);
+        if (view.CanRaise && strength >= 45 && roll < 24 && view.MaximumRaiseTo > view.CurrentBet)
             return (PokerAction.RaiseTo, Math.Min(view.MinimumRaiseTo, view.MaximumRaiseTo));
         if (view.ToCall == 0) return (PokerAction.Check, 0);
         var inexpensive = view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 20);
         var affordablePair = strength >= 55 && view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 2);
-        return inexpensive && roll < 85 || affordablePair || roll < 8
+        return inexpensive && roll < 80 || affordablePair || strength >= 70 || roll < 5
             ? (PokerAction.Call, 0) : (PokerAction.Fold, 0);
     }
 }
