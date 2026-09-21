@@ -285,6 +285,25 @@ public partial class QuestsWindow
             progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {NPCDescriptor.GetName(currentTask.TargetId)}";
         else if (currentTask.Objective == QuestObjective.GatherItems)
             progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {ItemDescriptor.GetName(currentTask.TargetId)}";
+        else if (currentTask.Objective == QuestObjective.MiniGameWins)
+        {
+            if (string.IsNullOrWhiteSpace(mainText))
+                mainText = $"Win {currentTask.Quantity} {currentTask.MiniGameKey} game(s).";
+            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} wins";
+        }
+        else if (currentTask.Objective == QuestObjective.MiniGameWinnings)
+        {
+            var currencyName = currentTask.TargetId == Guid.Empty ? "currency" : ItemDescriptor.GetName(currentTask.TargetId);
+            if (string.IsNullOrWhiteSpace(mainText))
+                mainText = $"Win {currentTask.Quantity} {currencyName} net in {currentTask.MiniGameKey}.";
+            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {currencyName} net";
+        }
+        else if (currentTask.Objective == QuestObjective.MiniGameLevel)
+        {
+            if (string.IsNullOrWhiteSpace(mainText))
+                mainText = $"Reach {currentTask.MiniGameKey} level {currentTask.Quantity}.";
+            progressText = $"{currentTask.MiniGameKey} level {playerQuest.TaskProgress} / {currentTask.Quantity}";
+        }
 
         // cache
         if (_lastHudQuestId == mSelectedQuest.Id &&
