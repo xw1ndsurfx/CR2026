@@ -18,8 +18,6 @@ public partial class ShopWindow : Window
 {
     private readonly ScrollControl _buyContainer;
     private readonly ScrollControl _sellContainer;
-    private readonly ShopScrollRail _buyScrollRail;
-    private readonly ShopScrollRail _sellScrollRail;
     private readonly Label _buyHeader;
     private readonly Label _sellHeader;
     private readonly Label _buyEmpty;
@@ -75,9 +73,6 @@ public partial class ShopWindow : Window
             AutoHideBars = false,
         };
 
-        _buyScrollRail = new ShopScrollRail(this, "BuyScrollRail", _buyContainer);
-        _sellScrollRail = new ShopScrollRail(this, "SellScrollRail", _sellContainer);
-
         _buyEmpty = EmptyLabel("BuyEmpty", Strings.Shop.NoItemsForSale.ToString());
         _sellEmpty = EmptyLabel("SellEmpty", Strings.Shop.NoItemsToSell.ToString());
         _hint = new Label(this, "ShopHint")
@@ -101,15 +96,10 @@ public partial class ShopWindow : Window
         _search.SetBounds(24, 18, 732, 30);
         _buyHeader.SetBounds(24, 56, 350, 28);
         _sellHeader.SetBounds(406, 56, 350, 28);
-        _buyContainer.SetBounds(24, 90, 330, 468);
-        _sellContainer.SetBounds(406, 90, 330, 468);
-        _buyScrollRail.SetBounds(362, 90, 10, 468);
-        _sellScrollRail.SetBounds(744, 90, 10, 468);
-
-        // The Shop uses explicit rails because dynamically-created Gwen scrollbars
-        // are not reliably visible with every textured UI skin.
-        _buyContainer.VerticalScrollBar.IsHidden = true;
-        _sellContainer.VerticalScrollBar.IsHidden = true;
+        _buyContainer.SetBounds(24, 90, 350, 468);
+        _sellContainer.SetBounds(406, 90, 350, 468);
+        ConfigureNativeScrollbar(_buyContainer);
+        ConfigureNativeScrollbar(_sellContainer);
         _buyEmpty.SetBounds(38, 112, 300, 50);
         _sellEmpty.SetBounds(420, 112, 300, 50);
         _hint.SetBounds(24, 570, 732, 28);
@@ -233,14 +223,45 @@ public partial class ShopWindow : Window
     {
         const int rowHeight = 76;
         var contentHeight = Math.Max(container.Height + 1, rowCount * rowHeight);
-        container.SetInnerSize(Math.Max(1, container.Width), contentHeight);
-        container.VerticalScrollBar.IsHidden = true;
+        container.SetInnerSize(Math.Max(1, container.Width - container.VerticalScrollBar.Width), contentHeight);
+        container.VerticalScrollBar.IsHidden = false;
         container.VerticalScrollBar.IsVisibleInTree = true;
         container.VerticalScrollBar.IsDisabled = false;
+        container.VerticalScrollBar.ShouldDrawBackground = true;
+        container.VerticalScrollBar.BringToFront();
         container.VerticalScrollBar.SetScrollAmount(
             Math.Clamp(container.VerticalScrollBar.ScrollAmount, 0f, 1f),
             forceUpdate: true
         );
+    }
+
+    private static void ConfigureNativeScrollbar(ScrollControl container)
+    {
+        var bar = container.VerticalScrollBar;
+        bar.Width = 15;
+        bar.Dock = Pos.Right;
+        bar.IsHidden = false;
+        bar.IsVisibleInTree = true;
+        bar.IsDisabled = false;
+        bar.ShouldDrawBackground = true;
+
+        var up = bar.GetScrollBarButton(Pos.Top);
+        if (up != null)
+        {
+            up.IsHidden = false;
+            up.IsDisabled = false;
+            up.ShouldDrawBackground = true;
+        }
+
+        var down = bar.GetScrollBarButton(Pos.Bottom);
+        if (down != null)
+        {
+            down.IsHidden = false;
+            down.IsDisabled = false;
+            down.ShouldDrawBackground = true;
+        }
+
+        bar.BringToFront();
     }
 
     private bool MatchesSearch(string itemName)
