@@ -1,5 +1,6 @@
 using Intersect.Client.MiniGames;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Blackjack;
 using Intersect.Network;
 using Intersect.Network.Packets.Client;
