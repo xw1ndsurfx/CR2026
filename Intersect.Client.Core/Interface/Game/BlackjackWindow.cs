@@ -39,7 +39,7 @@ internal sealed class BlackjackWindow : Base
         _status=Label("BlackjackTurn",24,46,940,30,14);
         Label("BlackjackDealer",408,81,260,27,18).Text="Marlow - Dealer";
         _bank=Label("BlackjackBank",380,109,360,26);
-        _dealer=new(this,"BlackjackDealerCards");_dealerTotal=Label("BlackjackDealerTotal",404,211,270,26,14);
+        _dealer=new(this,"BlackjackDealerCards");_dealerTotal=Label("BlackjackDealerTotal",380,211,340,26,14);
         _rules=Label("BlackjackRules",324,248,360,76);
         _result=Label("BlackjackResult",314,334,380,62,16);
         for(var i=0;i<6;i++)_portraits[i]=new ImagePanel(this,"BlackjackPortrait"+i){ShouldDrawBackground=false,MouseInputEnabled=false,IsHidden=true};
@@ -52,7 +52,7 @@ internal sealed class BlackjackWindow : Base
             for(var h=0;h<2;h++)
             {
                 _cards[slot,h]=new(this,$"BlackjackHand{slot}_{h}");
-                _totals[slot,h]=Label($"BlackjackTotal{slot}_{h}",x+h*w/2,y+128,w/2,28);
+                _totals[slot,h]=Label($"BlackjackTotal{slot}_{h}",x+h*w/2,y+(slot==0?138:128),w/2,28);
             }
         }
         Label("BlackjackBetLabel",40,582,112,28).Text="Wager (even)";
@@ -68,10 +68,10 @@ internal sealed class BlackjackWindow : Base
         Button("BlackjackRefresh","Refresh",608,626,128,()=>Send(BlackjackRequestKind.Refresh));
         Button("BlackjackLeave","Leave table",750,626,214,()=>ExitRequested=true);
         _xp=Label("BlackjackExperience",40,675,570,28,14);
+        _tray=new PokerFlatPanel(this,"BlackjackBackPicker"){IsHidden=true};Place(_tray,174,244,652,164);
         _backToggle=Button("BlackjackBacks","Card backs",620,675,160,()=>{_tray.IsHidden=!_tray.IsHidden;});
         _backStatus=Label("BlackjackBackStatus",620,711,342,30);
         Label("BlackjackNotice",40,744,922,27).Text="Blackjack has its own XP and levels. Leaving after the deal stands; it does not cancel the wager.";
-        _tray=new PokerFlatPanel(this,"BlackjackBackPicker"){IsHidden=true};Place(_tray,174,244,652,164);
         for(var i=0;i<6;i++)
         {
             var id=i;
@@ -83,7 +83,7 @@ internal sealed class BlackjackWindow : Base
         _dealEffect=new PokerScreenEffect(canvas);_victory=new PokerScreenEffect(canvas);ResizeToCanvas();
     }
     private static (int X,int Y,int W) Panel(int slot)=>slot switch
-    {0=>(280,410,440),1=>(42,299,246),2=>(42,116,246),3=>(712,116,246),_=>(712,299,246)};
+    {0=>(280,400,440),1=>(42,299,246),2=>(42,116,246),3=>(712,116,246),_=>(712,299,246)};
     public void ResizeToCanvas()
     {
         if(_destroyed)return;SetBounds(0,0,Math.Max(1,_canvas.Width),Math.Max(1,_canvas.Height));_layout=new(Width,Height);
@@ -103,16 +103,18 @@ internal sealed class BlackjackWindow : Base
         _status.Text=s.Pending?"Saving balances - please wait":model.Pending?"Waiting for server":s.Stage switch
         {
             BlackjackStage.Waiting=>s.AutoStart?"Next betting window opens automatically":"Press Start round to open betting",
-            BlackjackStage.Betting=>$"Place an even wager: {s.MinimumBet} - {s.MaximumBet} | {model.Seconds(now)}s",
+            BlackjackStage.Betting=>s.CanBet?$"Place an even wager: {s.MinimumBet} - {s.MaximumBet} | {model.Seconds(now)}s":
+                $"Betting closes in {model.Seconds(now)}s | Waiting for other participants",
             BlackjackStage.Players=>s.ActingSeat==me.Seat?$"Your turn - hand {s.ActingHand+1} | {model.Seconds(now)}s":
                 $"{s.Seats.FirstOrDefault(p=>p.Seat==s.ActingSeat)?.Name}'s turn | {model.Seconds(now)}s",
-            BlackjackStage.Dealer=>"Marlow reveals and plays the dealer hand",
+            BlackjackStage.Dealer=>s.DealerTotal<17 || s.DealerTotal==17 && s.DealerSoft && s.HitSoft17?"Marlow: Hit":"Marlow: Stand / settle",
             _=>s.AutoStart?"Round finished - next betting window shortly":"Round finished",
         };
         _bank.Text=$"Dealer bankroll: {s.Bank} {currency}";
         _rules.Text=$"Natural BLACKJACK pays 3:2\nOther wins 1:1 | {(s.HitSoft17?"Dealer hits soft 17":"Dealer stands on all 17")}\nOne split | No insurance or surrender";
         _dealer.Update(s.DealerCards,s.DealerHoleHidden,s.DealerBackId,_layout,394,137,220,70);
-        _dealerTotal.Text=s.DealerCards.Length==0?"":s.DealerHoleHidden?$"Showing {s.DealerTotal} + hidden card":$"Total: {s.DealerTotal}";
+        _dealerTotal.Text=s.DealerCards.Length==0?"":s.DealerHoleHidden?$"Showing {s.DealerTotal} + hidden card":
+            $"Total: {s.DealerTotal}"+(s.DealerTotal>21?" - BUST":s.DealerCards.Length==2 && s.DealerTotal==21?" - BLACKJACK":"");
         BlackjackCardStrip.Fit(_portraits[5],_dealer.Texture("poker_dealer.png"),_layout.Rect(360,81,40,48));
         for(var slot=0;slot<5;slot++)
         {
@@ -136,8 +138,8 @@ internal sealed class BlackjackWindow : Base
         _result.Text=s.Stage==BlackjackStage.Finished && !s.Pending?(net>0?$"You win +{net} {currency}":net<0?$"You lose {-net} {currency}":"Push / no wager") : "";
         _start.IsDisabled=model.Pending || s.Pending || busy || me.Leaving || me.Chips<s.MinimumBet;
         _bet.IsDisabled=_amount.IsDisabled=model.Pending || s.Pending || !s.CanBet;
-        _hit.IsDisabled=model.Pending || !s.CanHit;_stand.IsDisabled=model.Pending || !s.CanStand;
-        _double.IsDisabled=model.Pending || !s.CanDouble;_split.IsDisabled=model.Pending || !s.CanSplit;
+        _hit.IsDisabled=model.Pending || s.Pending || !s.CanHit;_stand.IsDisabled=model.Pending || s.Pending || !s.CanStand;
+        _double.IsDisabled=model.Pending || s.Pending || !s.CanDouble;_split.IsDisabled=model.Pending || s.Pending || !s.CanSplit;
         if(!_amount.HasFocus && long.TryParse(_amount.Text,out var current) && current<s.MinimumBet)_amount.Text=s.MinimumBet.ToString(CultureInfo.InvariantCulture);
         var level=MiniGameProgression.Level(s.Experience);var baseXp=MiniGameProgression.ExperienceAtLevel(level);
         var required=level<MiniGameProgression.MaximumLevel?MiniGameProgression.ExperienceAtLevel(level+1)-baseXp:1;
@@ -165,11 +167,11 @@ internal sealed class BlackjackWindow : Base
         Ellipse(skin,new Color(121,76,39),130,97,740,456);Ellipse(skin,new Color(37,91,59),147,114,706,423);
         foreach(var slot in Enumerable.Range(0,5))
         {
-            var(x,y,w)=Panel(slot);Fill(skin,new Color(25,36,30),x-6,y-7,w+12,167);
+            var(x,y,w)=Panel(slot);Fill(skin,new Color(25,36,30),x-6,y-7,w+12,slot==0?177:167);
             var p=_state?.Seats.FirstOrDefault(s=>(s.Seat-_localSeat+5)%5==slot);
             if(p!=null && _portraits[slot].IsHidden)
             {Fill(skin,new Color(174,140,105),x+9,y+2,17,18);Fill(skin,new Color(82,71,50),x+2,y+22,31,22);}
-            if(p?.Seat==_state?.ActingSeat)Fill(skin,Gold,x-6,y-7,w+12,2);
+            if(p!=null && p.Seat==_state?.ActingSeat)Fill(skin,Gold,x-6,y-7,w+12,2);
         }
         Fill(skin,new Color(21,29,25),24,570,952,164);
         Fill(skin,new Color(76,135,89),40,708,550,18);Fill(skin,new Color(14,32,21),41,709,548,16);
