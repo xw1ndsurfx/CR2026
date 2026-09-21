@@ -76,6 +76,19 @@ Test("NPC funds are finite and shared across instances", f=>
     var s=f.Money.OpenNpc(Guid.NewGuid(),f.TableId,f.Currency,"same-house",100,100)!;Check(f.Money.HouseAvailable("same-house")==0,"Loan not debited");
     Check(f.Money.OpenNpc(Guid.NewGuid(),Guid.NewGuid(),f.Currency,"same-house",999999,100)==null,"Reseed");f.Money.Release(s.Id);Check(f.Money.HouseAvailable("same-house")==100,"Loan not returned");
 });
+Test("Unlimited NPC bankroll never runs out and never credits a finite house", f=>
+{
+    for(var i=0;i<12;++i)
+    {
+        var s=f.Money.OpenNpc(Guid.NewGuid(),f.TableId,f.Currency,"infinite-house",0,100,true);
+        Check(s!=null && s.Amount==100,"Unlimited NPC was not funded");
+        f.Money.Release(s.Id);
+    }
+    Check(f.Money.HouseAvailable("infinite-house")==0,"Unlimited NPC polluted a finite house reserve");
+    f.Restart();
+    var again=f.Money.OpenNpc(Guid.NewGuid(),Guid.NewGuid(),f.Currency,"infinite-house",0,100,true);
+    Check(again!=null,"Unlimited NPC stopped after restart");
+});
 Test("Human wins deplete the house without free NPC refills", f=>
 {
     var a=f.Buy(f.A,100);var s=f.Money.OpenNpc(Guid.NewGuid(),f.TableId,f.Currency,"finite",100,100)!;

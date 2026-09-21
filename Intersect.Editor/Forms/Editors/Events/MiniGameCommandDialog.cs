@@ -94,8 +94,10 @@ internal sealed class MiniGameCommandDialog : Form
                 : $"Selected item: {item.Name}. ID: {id}.\n" +
                     "FUNDED mode (SQLite player database): the buy-in is removed from inventory once. " +
                     "The remaining balance is returned after leaving and settling the hand. Full inventory refunds wait safely. " +
-                    "NPC reserve creates an authorized house budget ONCE per map + Table ID + currency, shared across instances. " +
-                    "Reopening, restarting or editing this number does not refill an existing house. Zero means no initial NPC funds. " +
+                    (unlimitedNpcs.Checked
+                        ? "NPC bankroll is UNLIMITED: NPC opponents are always funded and their losses can create new currency. "
+                        : "NPC reserve creates an authorized house budget ONCE per map + Table ID + currency, shared across instances. " +
+                          "Reopening, restarting or editing this number does not refill an existing house. Zero means no initial NPC funds. ") +
                     "Funded XP is separate from test XP. Back up the entire player database before enabling.";
         }
         currency.SelectedIndexChanged += (_, _) => ShowCurrencyStatus(); unlimitedNpcs.CheckedChanged += (_, _) => ShowCurrencyStatus(); ShowCurrencyStatus();
@@ -110,6 +112,8 @@ internal sealed class MiniGameCommandDialog : Form
                 MessageBox.Show(this, "The selected item is missing or incompatible. Select a Currency or another stackable item.",
                     "Invalid table currency", MessageBoxButtons.OK, MessageBoxIcon.Warning); return;
             }
+            effectsDraft.Animations[PokerEffectKind.Deal] = ((AnimationChoice)animation.SelectedItem!).Id;
+            effectsDraft.Animations[PokerEffectKind.Victory] = ((AnimationChoice)victory.SelectedItem!).Id;
             var draft = new StartMiniGameCommand
             {
                 Game = MiniGameType.Poker, TableId = table.Text, MaxPlayers = (int)seats.Value, CurrencyItemId = selected,
