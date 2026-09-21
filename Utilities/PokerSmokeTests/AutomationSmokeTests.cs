@@ -6,6 +6,13 @@ internal static class AutomationSmokeTests
     private static readonly DateTimeOffset Now = DateTimeOffset.FromUnixTimeSeconds(1_800_000_000);
     private static PokerPresence Person(Guid map) => new(new(Guid.NewGuid(), Guid.NewGuid()), map, Guid.Empty);
     private static void Check(bool ok, string message) { if (!ok) throw new InvalidOperationException(message); }
+    private static int[] Cards(string cards) => cards.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(card =>
+    {
+        var rank = "23456789TJQKA".IndexOf(card[0]);
+        var suit = "CDHS".IndexOf(card[1]);
+        if (rank < 0 || suit < 0 || card.Length != 2) throw new InvalidOperationException("Bad test card");
+        return suit * 13 + rank;
+    }).ToArray();
     private static PokerSnapshot State(PokerTableRegistry registry, PokerPresence person, Guid id) =>
         registry.Snapshot(person, id).Snapshot ?? throw new InvalidOperationException("Missing snapshot");
 

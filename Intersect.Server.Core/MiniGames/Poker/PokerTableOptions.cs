@@ -105,15 +105,15 @@ public static class PokerNpcPolicy
         if (view.Board.Length == 0)
         {
             if (a == b) return Math.Clamp(38 + high * 4, 46, 94);
-            var score = 8 + high * 3 + low;
-            if (suited) score += 7;
+            var preflopScore = 8 + high * 3 + low;
+            if (suited) preflopScore += 7;
             var gap = high - low;
-            if (gap <= 1) score += 8;
-            else if (gap == 2) score += 4;
-            if (high == 14) score += 7;
-            if (high >= 13 && low >= 10) score += 8;
-            if (low <= 5 && gap >= 5) score -= 8;
-            return Math.Clamp(score, 8, 88);
+            if (gap <= 1) preflopScore += 8;
+            else if (gap == 2) preflopScore += 4;
+            if (high == 14) preflopScore += 7;
+            if (high >= 13 && low >= 10) preflopScore += 8;
+            if (low <= 5 && gap >= 5) preflopScore -= 8;
+            return Math.Clamp(preflopScore, 8, 88);
         }
 
         var known = view.MyCards.Concat(view.Board).ToArray();
