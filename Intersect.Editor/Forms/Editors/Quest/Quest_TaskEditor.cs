@@ -1,6 +1,7 @@
 ﻿using Intersect.Editor.Forms.Editors.Events;
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
+using DarkUI.Controls;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.NPCs;
@@ -22,6 +23,9 @@ public partial class QuestTaskEditor : UserControl
     private QuestDescriptor mMyQuest;
 
     private QuestTaskDescriptor mMyTask;
+    private DarkGroupBox mMiniGameGroup;
+    private DarkComboBox mMiniGame;
+    private DarkNumericUpDown mMiniGameTarget;
 
     public QuestTaskEditor(QuestDescriptor refQuest, QuestTaskDescriptor refTask)
     {
@@ -46,6 +50,7 @@ public partial class QuestTaskEditor : UserControl
 
         mEventBackup = mMyTask?.EditingEvent?.JsonData;
         InitLocalization();
+        SetupMiniGameEditor();
         cmbTaskType.SelectedIndex = mMyTask == null ? -1 : (int) mMyTask.Objective;
         txtStartDesc.Text = mMyTask?.Description;
         UpdateFormElements();
@@ -61,7 +66,12 @@ public partial class QuestTaskEditor : UserControl
             case 2: //Kill NPCS
                 cmbNpc.SelectedIndex = NPCDescriptor.ListIndex(mMyTask?.TargetId ?? Guid.Empty);
                 nudNpcQuantity.Value = mMyTask?.Quantity ?? 0;
-
+                break;
+            case 3:
+            case 4:
+            case 5:
+                mMiniGame.SelectedIndex = 0;
+                mMiniGameTarget.Value = Math.Clamp(mMyTask?.Quantity ?? 1, 1, 1_000_000_000);
                 break;
         }
     }
@@ -76,6 +86,9 @@ public partial class QuestTaskEditor : UserControl
         {
             cmbTaskType.Items.Add(Strings.TaskEditor.types[i]);
         }
+        cmbTaskType.Items.Add("Mini-game: win amount");
+        cmbTaskType.Items.Add("Mini-game: win rounds");
+        cmbTaskType.Items.Add("Mini-game: reach level");
 
         lblDesc.Text = Strings.TaskEditor.desc;
 
@@ -94,10 +107,32 @@ public partial class QuestTaskEditor : UserControl
         btnCancel.Text = Strings.TaskEditor.cancel;
     }
 
+    private void SetupMiniGameEditor()
+    {
+        mMiniGameGroup = new DarkGroupBox
+        {
+            Text = "Mini-game objective", Location = grpGatherItems.Location, Size = grpGatherItems.Size,
+            BackColor = grpGatherItems.BackColor, ForeColor = grpGatherItems.ForeColor, BorderColor = grpGatherItems.BorderColor,
+        };
+        var gameLabel = new Label { Text = "Mini-game:", AutoSize = true, Location = new Point(8, 24) };
+        mMiniGame = new DarkComboBox { Location = new Point(103, 20), Size = new Size(116, 21), DropDownStyle = ComboBoxStyle.DropDownList };
+        mMiniGame.Items.Add("Poker"); mMiniGame.SelectedIndex = 0;
+        var targetLabel = new Label { Text = "Target:", AutoSize = true, Location = new Point(8, 57) };
+        mMiniGameTarget = new DarkNumericUpDown
+        {
+            Location = new Point(103, 53), Size = new Size(116, 20), Minimum = 1, Maximum = 1_000_000_000, Value = 1,
+            BackColor = nudItemAmount.BackColor, ForeColor = nudItemAmount.ForeColor,
+        };
+        mMiniGameGroup.Controls.Add(gameLabel); mMiniGameGroup.Controls.Add(mMiniGame);
+        mMiniGameGroup.Controls.Add(targetLabel); mMiniGameGroup.Controls.Add(mMiniGameTarget);
+        grpEditor.Controls.Add(mMiniGameGroup);
+    }
+
     private void UpdateFormElements()
     {
         grpGatherItems.Hide();
         grpKillNpcs.Hide();
+        mMiniGameGroup?.Hide();
         switch (cmbTaskType.SelectedIndex)
         {
             case 0: //Event Driven
@@ -118,13 +153,13 @@ public partial class QuestTaskEditor : UserControl
                 grpKillNpcs.Show();
                 cmbNpc.Items.Clear();
                 cmbNpc.Items.AddRange(NPCDescriptor.Names);
-                if (cmbNpc.Items.Count > 0)
-                {
-                    cmbNpc.SelectedIndex = 0;
-                }
-
+                if (cmbNpc.Items.Count > 0) cmbNpc.SelectedIndex = 0;
                 nudNpcQuantity.Value = 1;
-
+                break;
+            case 3:
+            case 4:
+            case 5:
+                mMiniGameGroup.Show();
                 break;
         }
     }
@@ -148,7 +183,13 @@ public partial class QuestTaskEditor : UserControl
             case QuestObjective.KillNpcs: //Kill Npcs
                 mMyTask.TargetId = NPCDescriptor.IdFromList(cmbNpc.SelectedIndex);
                 mMyTask.Quantity = (int) nudNpcQuantity.Value;
-
+                break;
+            case QuestObjective.MiniGameWinAmount:
+            case QuestObjective.MiniGameWinRounds:
+            case QuestObjective.MiniGameReachLevel:
+                mMyTask.TargetId = Guid.Empty;
+                mMyTask.MiniGameKey = "poker";
+                mMyTask.Quantity = (int)mMiniGameTarget.Value;
                 break;
         }
 

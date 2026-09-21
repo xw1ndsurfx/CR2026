@@ -8,7 +8,7 @@ namespace Intersect.Server.MiniGames.Poker;
 public sealed record PokerTableOptions(
     bool DealerPlays = false, int NpcPlayers = 0, bool AutoStart = false, Guid DealAnimationId = default,
     bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0,
-    bool UnlimitedNpcReserve = false, PokerEffects? Effects = null)
+    bool UnlimitedNpcReserve = false, PokerEffects? Effects = null, Guid LevelUpRewardEventId = default)
 {
     public bool IsValid(int seats) => NpcPlayers >= 0 && NpcPlayers <= 5 &&
         NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId) &&

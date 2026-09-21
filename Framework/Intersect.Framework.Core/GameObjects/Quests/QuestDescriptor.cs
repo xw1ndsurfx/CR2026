@@ -210,6 +210,8 @@ public partial class QuestTaskDescriptor
 
     public Guid TargetId { get; set; }
 
+    public string MiniGameKey { get; set; } = "poker";
+
     public int Quantity { get; set; }
 
     public string Description { get; set; } = string.Empty;
@@ -238,6 +240,15 @@ public partial class QuestTaskDescriptor
                     Description
                 );
 
+                break;
+            case QuestObjective.MiniGameWinAmount:
+                taskString = $"{Description} ({MiniGameKey}: win {Quantity})";
+                break;
+            case QuestObjective.MiniGameWinRounds:
+                taskString = $"{Description} ({MiniGameKey}: win {Quantity} round(s))";
+                break;
+            case QuestObjective.MiniGameReachLevel:
+                taskString = $"{Description} ({MiniGameKey}: reach level {Quantity})";
                 break;
         }
 

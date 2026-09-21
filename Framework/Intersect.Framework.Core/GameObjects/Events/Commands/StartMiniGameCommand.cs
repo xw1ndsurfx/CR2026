@@ -32,6 +32,8 @@ public sealed class StartMiniGameCommand : EventCommand
     [DefaultValue(0L)] public long NpcReserve { get; set; }
     [DefaultValue(false)] public bool UnlimitedNpcReserve { get; set; }
     public PokerEffects Effects { get; set; } = new();
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")]
+    public Guid LevelUpRewardEventId { get; set; }
 
     public bool HasValidSettings() => Game == MiniGameType.Poker &&
         !string.IsNullOrEmpty(TableId) && TableId.Length <= 64 &&

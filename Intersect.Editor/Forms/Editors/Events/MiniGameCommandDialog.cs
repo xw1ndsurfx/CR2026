@@ -2,6 +2,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using Intersect.Editor.Content;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
@@ -23,9 +24,9 @@ internal sealed class MiniGameCommandDialog : Form
         ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
         MinimumSize = new Size(580, 420);
         BackColor = DrawingColor.FromArgb(45, 45, 48); ForeColor = DrawingColor.Gainsboro;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 29, AutoScroll = true };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 30, AutoScroll = true };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
-        for (var row = 0; row < 29; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var row = 0; row < 30; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(12, 8, 12, 8) };
         Controls.Add(layout); Controls.Add(buttons);
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
@@ -57,6 +58,7 @@ internal sealed class MiniGameCommandDialog : Form
         var winSound = SoundPicker(fx.Get(PokerEffectKind.Win).Sound);
         var loseFx = EffectPicker(fx.Get(PokerEffectKind.Lose));
         var levelFx = EffectPicker(fx.Get(PokerEffectKind.LevelUp));
+        var levelReward = CommonEventPicker(command.LevelUpRewardEventId);
         var announce = new CheckBox { Text = "Human name + positive net win", Checked = command.AnnounceWins, AutoSize = true };
         var backs = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
         for (var id = 0; id < MiniGameProgression.BackCount; ++id) backs.Items.Add($"B{id + 1} (B{id + 1}.png)");
@@ -86,8 +88,9 @@ internal sealed class MiniGameCommandDialog : Form
         AddRow(layout, 24, "Winner sound", winSound);
         AddRow(layout, 25, "Lose animation + sound", loseFx);
         AddRow(layout, 26, "Level-up animation + sound", levelFx);
+        AddRow(layout, 27, "Level-up reward Common Event", levelReward);
         var status = new Label { Name = "CurrencyStatus", AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 12, 3, 12) };
-        layout.Controls.Add(status, 0, 27); layout.SetColumnSpan(status, 2);
+        layout.Controls.Add(status, 0, 28); layout.SetColumnSpan(status, 2);
         void ShowCurrencyStatus()
         {
             var id = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
@@ -140,6 +143,7 @@ internal sealed class MiniGameCommandDialog : Form
                     Fold: SelectedEffect(foldFx), AllIn: SelectedEffect(allInFx),
                     Win: new PokerEffect(default, SelectedSound(winSound)),
                     Lose: SelectedEffect(loseFx), LevelUp: SelectedEffect(levelFx)),
+                LevelUpRewardEventId = SelectedCommonEvent(levelReward),
             };
             if (!draft.HasValidSettings())
             {
@@ -152,7 +156,7 @@ internal sealed class MiniGameCommandDialog : Form
             command.TurnSeconds = draft.TurnSeconds; command.DealerPlays = draft.DealerPlays; command.NpcPlayers = draft.NpcPlayers;
             command.AutoStart = draft.AutoStart; command.DealAnimationId = draft.DealAnimationId; command.AnnounceWins = draft.AnnounceWins;
             command.VictoryAnimationId = draft.VictoryAnimationId; command.NpcCardBackId = draft.NpcCardBackId;
-            command.Effects = draft.Effects;
+            command.Effects = draft.Effects; command.LevelUpRewardEventId = draft.LevelUpRewardEventId;
             DialogResult = DialogResult.OK; Close();
         };
     }
@@ -177,6 +181,16 @@ internal sealed class MiniGameCommandDialog : Form
         if (selected == null) { selected = new AnimationChoice(id, "Missing animation: " + id); picker.Items.Add(selected); }
         picker.SelectedItem = selected; return picker;
     }
+    private sealed record CommonEventChoice(Guid Id, string Name) { public override string ToString() => Name; }
+    private static ComboBox CommonEventPicker(Guid selected)
+    {
+        var picker = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
+        picker.Items.Add(new CommonEventChoice(Guid.Empty, "None / Aucun"));
+        foreach (var pair in EventDescriptor.ItemPairs) picker.Items.Add(new CommonEventChoice(pair.Key, pair.Value));
+        picker.SelectedItem = picker.Items.Cast<CommonEventChoice>().FirstOrDefault(x => x.Id == selected) ?? picker.Items[0];
+        return picker;
+    }
+    private static Guid SelectedCommonEvent(ComboBox picker) => (picker.SelectedItem as CommonEventChoice)?.Id ?? Guid.Empty;
     private static ComboBox SoundPicker(string? selected)
     {
         var picker = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };

@@ -12,7 +12,7 @@ using Microsoft.Data.Sqlite;
 namespace Intersect.Server.MiniGames.Currency;
 
 public sealed record MoneySeat(Guid Id, Guid Table, Guid Character, Guid Currency, string House, long Amount, bool Npc, int Status);
-public sealed record MoneyWin(Guid Character, long Net);
+public sealed record MoneyWin(Guid Character, long Net, long OldExperience, long NewExperience);
 public sealed class MoneyRuleException(string message) : Exception(message);
 
 /// <summary>
@@ -252,7 +252,12 @@ public sealed class PokerMoneyLedger : IDisposable
             {
                 var amount = closing[s.Id]; Exec(c, tx, "UPDATE PokerMoneySeats SET Amount=$p1 WHERE Id=$p0", Id(s.Id), amount);
                 if (!s.Npc && amount > s.Amount)
-                { WriteProfile(c, tx, s.Character, ReadProfile(c, tx, s.Character).WithWin()); wins.Add(new(s.Character, amount - s.Amount)); }
+                {
+                    var before = ReadProfile(c, tx, s.Character);
+                    var after = before.WithWin();
+                    WriteProfile(c, tx, s.Character, after);
+                    wins.Add(new(s.Character, amount - s.Amount, before.Experience, after.Experience));
+                }
             }
             Exec(c, tx, "INSERT INTO PokerMoneyHands VALUES($p0,$p1,$p2,$p3)", Id(table), hand, fingerprint, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             Fault?.Invoke("before-settlement-commit"); return wins.ToArray();

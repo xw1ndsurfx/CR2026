@@ -8,7 +8,7 @@ using Intersect.Server.MiniGames.Progression;
 
 namespace Intersect.Server.MiniGames.Currency;
 
-internal sealed record FundedWin(Guid Player, string Name, long Amount);
+internal sealed record FundedWin(Guid Player, string Name, long Amount, long OldExperience, long NewExperience);
 
 /// <summary>The tested hold'em engine owns the rules; this adapter owns funded hand checkpoints.</summary>
 internal sealed class PokerFundedTable
@@ -194,7 +194,8 @@ internal sealed class PokerFundedTable
     {
         if (IsEmpty) return; var state = Current;
         if (state.Phase != PokerPhase.Finished || state.HandId <= _settledHand) return;
-        _money.Settle(Id, state.HandId, state.Seats.ToDictionary(s => _members[s.PlayerId].Escrow.Id, s => s.Chips));
+        var settledWins = _money.Settle(Id, state.HandId, state.Seats.ToDictionary(s => _members[s.PlayerId].Escrow.Id, s => s.Chips))
+            .ToDictionary(w => w.Character);
         var profiles = Humans.ToDictionary(id => id, id => _money.Profile(id));
         foreach (var seat in state.Seats)
         {
@@ -203,7 +204,8 @@ internal sealed class PokerFundedTable
             if (!member.Escrow.Npc) member.Profile = profiles[seat.PlayerId];
             if (net <= 0) continue;
             _net[seat.PlayerId] = net; Decision(seat.PlayerId, "wins", net);
-            if (!member.Escrow.Npc) _wins.Enqueue(new(seat.PlayerId, seat.Name, net));
+            if (!member.Escrow.Npc && settledWins.TryGetValue(seat.PlayerId, out var settled))
+                _wins.Enqueue(new(seat.PlayerId, seat.Name, net, settled.OldExperience, settled.NewExperience));
         }
         _settledHand = state.HandId; ++Version;
     }
