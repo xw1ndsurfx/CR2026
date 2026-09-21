@@ -22,7 +22,7 @@ internal sealed class ShopScrollRail : Base
         MouseInputEnabled = true;
         KeyboardInputEnabled = false;
         ShouldDrawBackground = false;
-        Width = 14;
+        Width = 10;
     }
 
     protected override void Render(SkinBase skin)
@@ -30,16 +30,17 @@ internal sealed class ShopScrollRail : Base
         base.Render(skin);
         var renderer = skin.Renderer;
 
-        Fill(renderer, new Color(18, 22, 26, 235), 0, 0, Width, Height);
-        Fill(renderer, new Color(62, 68, 74, 255), 1, 1, Width - 2, Height - 2);
+        // Match the inventory scroller: narrow charcoal rail with a muted grey thumb.
+        Fill(renderer, new Color(20, 20, 20, 235), 0, 0, Width, Height);
+        Fill(renderer, new Color(45, 45, 45, 255), 1, 1, Width - 2, Height - 2);
 
         var thumbHeight = ThumbHeight();
         var travel = Math.Max(0, Height - thumbHeight);
         var thumbY = (int)Math.Round(travel * Math.Clamp(_target.VerticalScrollBar.ScrollAmount, 0f, 1f));
 
         var thumbColor = _dragging || IsHovered
-            ? new Color(165, 190, 210, 255)
-            : new Color(120, 145, 165, 255);
+            ? new Color(180, 180, 180, 255)
+            : new Color(125, 125, 125, 255);
 
         Fill(renderer, thumbColor, 2, thumbY + 2, Width - 4, Math.Max(8, thumbHeight - 4));
     }
