@@ -178,6 +178,7 @@ public partial class ShopWindow : Window
             }
         }
 
+        FinalizeScroll(_buyContainer, count);
         _buyEmpty.IsHidden = count != 0;
         _buyEmpty.BringToFront();
     }
@@ -215,8 +216,24 @@ public partial class ShopWindow : Window
             }
         }
 
+        FinalizeScroll(_sellContainer, count);
         _sellEmpty.IsHidden = count != 0;
         _sellEmpty.BringToFront();
+    }
+
+    private static void FinalizeScroll(ScrollControl container, int rowCount)
+    {
+        const int rowHeight = 76;
+        var contentHeight = Math.Max(container.Height + 1, rowCount * rowHeight);
+        container.SetInnerSize(Math.Max(1, container.Width - container.VerticalScrollBar.Width), contentHeight);
+        container.VerticalScrollBar.IsHidden = false;
+        container.VerticalScrollBar.IsVisibleInTree = true;
+        container.VerticalScrollBar.IsDisabled = false;
+        container.VerticalScrollBar.BringToFront();
+        container.VerticalScrollBar.SetScrollAmount(
+            Math.Clamp(container.VerticalScrollBar.ScrollAmount, 0f, 1f),
+            forceUpdate: true
+        );
     }
 
     private bool MatchesSearch(string itemName)
