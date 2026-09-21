@@ -93,6 +93,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - suite: core
+            project: Utilities/PokerSmokeTests/Intersect.PokerSmokeTests.csproj
+          - suite: network
+            project: Utilities/PokerNetworkTests/Intersect.PokerNetworkTests.csproj
+          - suite: money
+            project: Utilities/PokerMoneyTests/Intersect.PokerMoneyTests.csproj
+          - suite: ui
+            project: Utilities/PokerUiTests/Intersect.PokerUiTests.csproj
           - suite: editor
             project: Utilities/PokerEditorTests/Intersect.PokerEditorTests.csproj
           - suite: inventory
