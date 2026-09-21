@@ -1,6 +1,10 @@
 using System.Windows.Forms;
 using Intersect.Editor.Forms.Editors.Events;
+using Intersect.Editor.Forms.Editors.Quest;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
+using Intersect.Framework.Core.GameObjects.Quests;
+using Intersect.GameObjects;
 using Newtonsoft.Json;
 internal static class Program
 {
@@ -36,6 +40,23 @@ internal static class Program
             Check(Get<NumericUpDown>(d,"BlackjackMinimumBet").Enabled && Get<NumericUpDown>(d,"BlackjackMaximumBet").Enabled,"blackjack wagers disabled");
             var speed=Get<ComboBox>(d,"ProceduralAnimationSpeed");
             Check(speed.Items.Cast<object>().Select(x=>x.ToString()).SequenceEqual(new[]{"Off","Fast","Normal","Cinematic"}),"motion presets");
+        });
+        Test("Quest task editor exposes Blackjack objectives and level cap",()=>
+        {
+            var quest=new QuestDescriptor(Guid.NewGuid());
+            var task=new QuestTaskDescriptor(Guid.NewGuid())
+            {
+                Objective=QuestObjective.BlackjackReachLevel,Quantity=7,
+                EditingEvent=new EventDescriptor(Guid.NewGuid(),Guid.Empty,0,0,false)
+            };
+            using var editor=new QuestTaskEditor(quest,task);
+            var types=Get<ComboBox>(editor,"cmbTaskType");
+            Check(types.Items.Cast<object>().Any(x=>x?.ToString()=="Blackjack - Win hands"),"win hands missing");
+            Check(types.Items.Cast<object>().Any(x=>x?.ToString()=="Blackjack - Win net amount"),"win amount missing");
+            Check(types.Items.Cast<object>().Any(x=>x?.ToString()=="Blackjack - Reach level"),"reach level missing");
+            Check(types.Items.Cast<object>().Any(x=>x?.ToString()=="Blackjack - Play hands"),"play hands missing");
+            Check(types.SelectedIndex==(int)QuestObjective.BlackjackReachLevel,"selected objective");
+            Check(Get<NumericUpDown>(editor,"nudItemAmount").Maximum==25 && Get<NumericUpDown>(editor,"nudItemAmount").Value==7,"level control");
         });
         Console.WriteLine($"{passed}/{passed+failed} blackjack editor groups passed.");Environment.ExitCode=failed==0?0:1;
     }
