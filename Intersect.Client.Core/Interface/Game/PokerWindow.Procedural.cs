@@ -1,4 +1,5 @@
 using Intersect.Client.Framework.Graphics;
+using Intersect.Client.MiniGames;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Network.Packets.MiniGames;
 using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
