@@ -5,6 +5,7 @@ using Intersect.Network.Packets.MiniGames;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
 using Intersect.Server.MiniGames.Currency;
+using Intersect.Server.MiniGames.Blackjack;
 using Intersect.Server.MiniGames.Poker;
 using Intersect.Server.MiniGames.Progression;
 using Intersect.Server.Networking;
@@ -33,6 +34,11 @@ internal static class PokerRuntime
     private static readonly Dictionary<PokerSession, View> Views = new();
     private static long _sequence;
     internal static long NextSequence() => Interlocked.Increment(ref _sequence);
+    internal static bool HasSeat(Guid player)
+    {
+        if(PokerCurrencyRuntime.Contains(player))return true;
+        lock(Gate)return Tables.Memberships().Any(m=>m.Session.PlayerId==player);
+    }
     private static long _lastProgressLog;
     private static int _sweeping;
     private static readonly System.Threading.Timer SweepTimer = new(
@@ -41,11 +47,12 @@ internal static class PokerRuntime
     internal static PokerRegistryResult Join(Player player, StartMiniGameCommand command)
     {
         _ = SweepTimer;
-        if (!command.HasValidSettings()) return new(PokerRegistryError.InvalidRules);
+        if (command.Game != MiniGameType.Poker || !command.HasValidSettings()) return new(PokerRegistryError.InvalidRules);
         List<Delivery> output = [];
         PokerRegistryResult result;
         lock (player.EntityLock)
         {
+            if(BlackjackRuntime.Contains(player.Id))return new(PokerRegistryError.AlreadyAtAnotherTable);
             if (command.CurrencyItemId != Guid.Empty)
             {
                 lock (Gate)
@@ -169,6 +176,7 @@ internal static class PokerRuntime
         if (Interlocked.Exchange(ref _sweeping, 1) != 0) return;
         try
         {
+            BlackjackRuntime.Sweep();
             PokerCurrencyRuntime.Sweep();
             View[] observedViews;
             lock (Gate) observedViews = Views.Values.ToArray();

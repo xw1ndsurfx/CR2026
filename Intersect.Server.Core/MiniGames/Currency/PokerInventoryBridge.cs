@@ -6,6 +6,7 @@ using Intersect.Framework.Core.MiniGames;
 using Intersect.Server.Database;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Entities;
+using Intersect.Server.MiniGames.Blackjack;
 using Intersect.Server.Networking;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +31,7 @@ internal static class PokerInventoryBridge
                 if (_ledger != null) return _ledger;
                 using var context = DbInterface.CreatePlayerContext(readOnly: false);
                 if (context.Database.GetDbConnection() is not SqliteConnection connection)
-                    throw new NotSupportedException("Funded poker currently requires the SQLite player database. No items were taken.");
+                    throw new NotSupportedException("Funded mini-games currently require the SQLite player database. No items were taken.");
                 return _ledger = new PokerMoneyLedger(connection.ConnectionString);
             }
         }
@@ -45,15 +46,12 @@ internal static class PokerInventoryBridge
             if (!MiniGameCurrency.IsCompatible(item)) throw new MoneyRuleException("The table currency is missing or incompatible.");
             var money = Ledger;
             List<Change> changes = [];
-            // A player may have moved/split a stack since autosave. Persist the WHOLE
-            // account graph first, not just the debit destination: otherwise the old
-            // source slot could survive a crash alongside the escrow. A skipped or
-            // failed save must never be treated as a successful checkpoint.
+            // Save prior stack moves under the account gate before beginning the separate
+            // atomic inventory/escrow transfer; an old saved source must not survive a move.
             var result = PokerInventoryCheckpoint.Run(
                 () => user.Save(force: true),
                 () => money.OpenHuman(seat, table, player.Id, currency, house, amount, (connection, transaction) =>
                 {
-                    // A replay never recomputes or applies a second debit to the live inventory.
                     changes = DebitPlan(player, currency, amount);
                     SavePlan(player, changes, connection, transaction);
                 }));
@@ -117,16 +115,14 @@ internal static class PokerInventoryBridge
         lock (user.PokerSaveGate)
         {
             if (!player.IsOnline || player.Client == null || player.IsSaving) return;
-            // EntityLock prevents an in-flight admission for this same character. A failed
-            // admission without any runtime owner must not strand a committed buy-in.
-            if (!PokerCurrencyRuntime.Contains(player.Id)) Ledger.ReleaseOrphanHuman(player.Id);
+            // Both runtimes share escrow. Never orphan a live blackjack membership.
+            if (!PokerCurrencyRuntime.Contains(player.Id) && !BlackjackRuntime.Contains(player.Id)) Ledger.ReleaseOrphanHuman(player.Id);
             foreach (var refund in Ledger.Refunds(player.Id))
             {
+                var game = refund.House.StartsWith("blackjack:", StringComparison.Ordinal) ? "Blackjack" : "Poker";
                 try
                 {
                     List<Change> changes = [];
-                    // The same checkpoint is required before crediting a moved stack.
-                    // No forced account save is performed by sweeps with no pending refund.
                     PokerInventoryCheckpoint.Run(() => user.Save(force: true), () =>
                     {
                         Ledger.Cashout(refund, (connection, transaction) =>
@@ -138,7 +134,7 @@ internal static class PokerInventoryBridge
                     });
                     Apply(changes); changed |= changes.Count > 0;
                     if (refund.Amount > 0) PacketSender.SendChatMsg(player,
-                        $"[Poker] Returned {refund.Amount} {ItemDescriptor.GetName(refund.Currency)} to your inventory.", ChatMessageType.Inventory, Color.White);
+                        $"[{game}] Returned {refund.Amount} {ItemDescriptor.GetName(refund.Currency)} to your inventory.", ChatMessageType.Inventory, Color.White);
                 }
                 catch (MoneyRuleException error)
                 {
@@ -147,7 +143,7 @@ internal static class PokerInventoryBridge
                         if (Environment.TickCount64 - RefundNotices.GetValueOrDefault(player.Id, -60_000) >= 60_000)
                         {
                             RefundNotices[player.Id] = Environment.TickCount64;
-                            PacketSender.SendChatMsg(player, "[Poker] " + error.Message, ChatMessageType.Inventory, Color.White);
+                            PacketSender.SendChatMsg(player, $"[{game}] " + error.Message, ChatMessageType.Inventory, Color.White);
                         }
                     }
                 }
@@ -160,6 +156,6 @@ internal static class PokerInventoryBridge
         var now = Environment.TickCount64;
         if (now - Interlocked.Read(ref _lastError) < 30_000) return;
         Interlocked.Exchange(ref _lastError, now);
-        ApplicationContext.Context.Value?.Logger.LogError(error, "Funded poker unavailable. Escrow is retained; do not delete the PokerMoney tables or player database.");
+        ApplicationContext.Context.Value?.Logger.LogError(error, "Funded mini-game unavailable. Escrow is retained; do not delete the PokerMoney tables or player database.");
     }
 }
