@@ -34,6 +34,11 @@ internal static class PokerCurrencyRuntime
     private static readonly Dictionary<Guid, View> Views = new();
     private static long _refundAt;
     internal static bool Contains(Guid player) { lock (Gate) return Views.ContainsKey(player); }
+    internal static int Level(Guid player)
+    {
+        try { return MiniGameProgression.Level(PokerInventoryBridge.Ledger.Profile(player).Experience); }
+        catch { return 1; }
+    }
 
     internal static PokerRegistryResult Join(Player player, StartMiniGameCommand command)
     {
@@ -218,6 +223,8 @@ internal static class PokerCurrencyRuntime
             }
             foreach (var win in pair.Value.CollectWins())
             {
+                if (Views.TryGetValue(win.Player, out var questView) && !questView.Closed && ReferenceEquals(questView.Table, pair.Value))
+                    questView.Player.UpdatePokerQuestTasks(win.Amount, win.Level);
                 if (!pair.Value.Options.AnnounceWins) continue;
                 var name = new string(win.Name.Where(c => !char.IsControl(c)).ToArray());
                 var currency = new string(ItemDescriptor.GetName(pair.Value.Currency).Where(c => !char.IsControl(c)).ToArray());

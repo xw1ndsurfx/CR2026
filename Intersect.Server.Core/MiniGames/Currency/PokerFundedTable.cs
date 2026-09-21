@@ -8,7 +8,7 @@ using Intersect.Server.MiniGames.Progression;
 
 namespace Intersect.Server.MiniGames.Currency;
 
-internal sealed record FundedWin(Guid Player, string Name, long Amount);
+internal sealed record FundedWin(Guid Player, string Name, long Amount, int Level);
 internal sealed record FundedLevelUp(Guid Player, string Name, int Level);
 
 /// <summary>The tested hold'em engine owns the rules; this adapter owns funded hand checkpoints.</summary>
@@ -213,7 +213,7 @@ internal sealed class PokerFundedTable
             }
             if (net <= 0) continue;
             _net[seat.PlayerId] = net; Decision(seat.PlayerId, "wins", net);
-            if (!member.Escrow.Npc) _wins.Enqueue(new(seat.PlayerId, seat.Name, net));
+            if (!member.Escrow.Npc) _wins.Enqueue(new(seat.PlayerId, seat.Name, net, MiniGameProgression.Level(member.Profile.Experience)));
         }
         _settledHand = state.HandId; ++Version;
     }

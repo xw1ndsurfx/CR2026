@@ -239,6 +239,11 @@ public partial class QuestTaskDescriptor
                 );
 
                 break;
+            case QuestObjective.PokerWins:
+            case QuestObjective.PokerNetWinnings:
+            case QuestObjective.PokerLevel:
+                taskString = descriptions[(int)Objective].ToString(Quantity, Description);
+                break;
         }
 
         return taskString;
