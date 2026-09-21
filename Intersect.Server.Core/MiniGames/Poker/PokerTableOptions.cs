@@ -13,15 +13,18 @@ public sealed record PokerEffectSlot(Guid AnimationId = default, string Sound = 
 public sealed record PokerEffectOptions(
     PokerEffectSlot Join, PokerEffectSlot Deal, PokerEffectSlot Check, PokerEffectSlot Call,
     PokerEffectSlot Raise, PokerEffectSlot Fold, PokerEffectSlot AllIn, PokerEffectSlot Victory,
-    PokerEffectSlot LevelUp)
+    PokerEffectSlot LevelUp, PokerEffectSlot Leave, PokerEffectSlot YourTurn, PokerEffectSlot Flop,
+    PokerEffectSlot Turn, PokerEffectSlot River)
 {
-    public static PokerEffectOptions Empty => new(new(), new(), new(), new(), new(), new(), new(), new(), new());
+    public static PokerEffectOptions Empty => new(new(), new(), new(), new(), new(), new(), new(), new(), new(), new(), new(), new(), new(), new());
     public PokerEffectSlot Get(PokerEffectKind kind) => kind switch
     {
         PokerEffectKind.Join => Join, PokerEffectKind.Deal => Deal, PokerEffectKind.Check => Check,
         PokerEffectKind.Call => Call, PokerEffectKind.Raise => Raise, PokerEffectKind.Fold => Fold,
         PokerEffectKind.AllIn => AllIn, PokerEffectKind.Victory => Victory,
-        PokerEffectKind.LevelUp => LevelUp, _ => new(),
+        PokerEffectKind.LevelUp => LevelUp, PokerEffectKind.Leave => Leave,
+        PokerEffectKind.YourTurn => YourTurn, PokerEffectKind.Flop => Flop, PokerEffectKind.Turn => Turn,
+        PokerEffectKind.River => River, _ => new(),
     };
     public bool IsValid => Enum.GetValues<PokerEffectKind>().All(kind => Get(kind).IsValid);
 }

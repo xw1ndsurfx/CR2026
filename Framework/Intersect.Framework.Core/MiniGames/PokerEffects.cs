@@ -11,10 +11,15 @@ public enum PokerEffectKind
     AllIn = 6,
     Victory = 7,
     LevelUp = 8,
+    Leave = 9,
+    YourTurn = 10,
+    Flop = 11,
+    Turn = 12,
+    River = 13,
 }
 
 public static class PokerEffects
 {
-    public const int Count = 9;
+    public const int Count = 14;
     public static bool IsValid(PokerEffectKind kind) => (int)kind >= 0 && (int)kind < Count;
 }

@@ -22,6 +22,11 @@ internal sealed class PokerEffectsDraft
         d.Set(PokerEffectKind.AllIn, c.AllInAnimationId, c.AllInSound);
         d.Set(PokerEffectKind.Victory, c.VictoryAnimationId, c.VictorySound);
         d.Set(PokerEffectKind.LevelUp, c.LevelUpAnimationId, c.LevelUpSound);
+        d.Set(PokerEffectKind.Leave, c.LeaveAnimationId, c.LeaveSound);
+        d.Set(PokerEffectKind.YourTurn, c.YourTurnAnimationId, c.YourTurnSound);
+        d.Set(PokerEffectKind.Flop, c.FlopAnimationId, c.FlopSound);
+        d.Set(PokerEffectKind.Turn, c.TurnAnimationId, c.TurnSound);
+        d.Set(PokerEffectKind.River, c.RiverAnimationId, c.RiverSound);
         return d;
     }
     private void Set(PokerEffectKind k, Guid a, string? s) { Animations[k] = a; Sounds[k] = s ?? string.Empty; }
@@ -36,6 +41,11 @@ internal sealed class PokerEffectsDraft
         c.AllInAnimationId=Animations[PokerEffectKind.AllIn]; c.AllInSound=Sounds[PokerEffectKind.AllIn];
         c.VictoryAnimationId=Animations[PokerEffectKind.Victory]; c.VictorySound=Sounds[PokerEffectKind.Victory];
         c.LevelUpAnimationId=Animations[PokerEffectKind.LevelUp]; c.LevelUpSound=Sounds[PokerEffectKind.LevelUp];
+        c.LeaveAnimationId=Animations[PokerEffectKind.Leave]; c.LeaveSound=Sounds[PokerEffectKind.Leave];
+        c.YourTurnAnimationId=Animations[PokerEffectKind.YourTurn]; c.YourTurnSound=Sounds[PokerEffectKind.YourTurn];
+        c.FlopAnimationId=Animations[PokerEffectKind.Flop]; c.FlopSound=Sounds[PokerEffectKind.Flop];
+        c.TurnAnimationId=Animations[PokerEffectKind.Turn]; c.TurnSound=Sounds[PokerEffectKind.Turn];
+        c.RiverAnimationId=Animations[PokerEffectKind.River]; c.RiverSound=Sounds[PokerEffectKind.River];
     }
 }
 
@@ -64,7 +74,9 @@ internal sealed class PokerEffectsDialog : Form
         buttons.Controls.Add(cancel);buttons.Controls.Add(save);Controls.Add(grid);Controls.Add(buttons);CancelButton=cancel;AcceptButton=save;
         save.Click+=(_,_)=>{foreach(var kind in Enum.GetValues<PokerEffectKind>()){draft.Animations[kind]=((Choice)_animations[kind].SelectedItem!).Id;draft.Sounds[kind]=_sounds[kind].Text=="None"?"":_sounds[kind].Text;}DialogResult=DialogResult.OK;Close();};
     }
-    private static string Label(PokerEffectKind k)=>k switch{PokerEffectKind.Join=>"Join table",PokerEffectKind.Deal=>"Deal cards",PokerEffectKind.Check=>"Check",PokerEffectKind.Call=>"Call",PokerEffectKind.Raise=>"Raise",PokerEffectKind.Fold=>"Fold",PokerEffectKind.AllIn=>"All-in",PokerEffectKind.Victory=>"Victory (winner)",PokerEffectKind.LevelUp=>"Poker level up",_=>k.ToString()};
+    private static string Label(PokerEffectKind k)=>k switch{PokerEffectKind.Join=>"Join table",PokerEffectKind.Deal=>"Deal cards",PokerEffectKind.Check=>"Check",PokerEffectKind.Call=>"Call",PokerEffectKind.Raise=>"Raise",PokerEffectKind.Fold=>"Fold",PokerEffectKind.AllIn=>"All-in",PokerEffectKind.Victory=>"Victory (winner)",PokerEffectKind.LevelUp=>"Poker level up",
+        PokerEffectKind.Leave=>"Leave table",PokerEffectKind.YourTurn=>"Your turn",PokerEffectKind.Flop=>"Flop revealed",
+        PokerEffectKind.Turn=>"Turn revealed",PokerEffectKind.River=>"River revealed",_=>k.ToString()};
     private static ComboBox AnimationPicker(Guid id){var p=new ComboBox{DropDownStyle=ComboBoxStyle.DropDownList,Dock=DockStyle.Fill};p.Items.Add(new Choice(Guid.Empty,"None"));foreach(var a in AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().OrderBy(a=>a.Name,StringComparer.OrdinalIgnoreCase))p.Items.Add(new Choice(a.Id,a.Name));var s=p.Items.Cast<Choice>().FirstOrDefault(x=>x.Id==id)??new Choice(id,"Missing: "+id);if(!p.Items.Contains(s))p.Items.Add(s);p.SelectedItem=s;return p;}
     private static ComboBox SoundPicker(string value)
     {

@@ -30,8 +30,9 @@ internal sealed partial class PokerWindow : Base
     private readonly PokerScreenEffect _victory;
     private PokerSceneLayout _layout;
     private PokerTableState? _state;
-    private int _localSeat, _selectedBack, _lastLevel = -1;
-    private long _lastMinimum = -1, _levelUpUntil, _lastEffectDecision;
+    private int _localSeat, _selectedBack, _lastLevel = -1, _lastBoardCount;
+    private long _lastMinimum = -1, _levelUpUntil, _lastEffectDecision, _lastEffectHand = -1;
+    private bool _wasOurTurn;
     private Guid _effectTable;
     private bool _joinEffectPlayed;
     private float _xpFraction;
@@ -167,10 +168,17 @@ internal sealed partial class PokerWindow : Base
         if (_effectTable != model.Current.TableInstanceId)
         {
             _effectTable = model.Current.TableInstanceId; _joinEffectPlayed = false; _lastEffectDecision = 0;
+            _lastEffectHand = -1; _lastBoardCount = 0; _wasOurTurn = false;
         }
         if (!_joinEffectPlayed)
         {
             _joinEffectPlayed = true; PlayEffect(state, PokerEffectKind.Join);
+        }
+        if (_lastEffectHand != state.HandId)
+        {
+            _lastEffectHand = state.HandId;
+            _lastBoardCount = state.Board.Length;
+            _wasOurTurn = false;
         }
         foreach (var decision in state.Decisions.Where(d => d.Sequence > _lastEffectDecision).OrderBy(d => d.Sequence))
         {
@@ -178,10 +186,19 @@ internal sealed partial class PokerWindow : Base
             {
                 "check" => PokerEffectKind.Check, "call" => PokerEffectKind.Call,
                 "raise" => PokerEffectKind.Raise, "allin" => PokerEffectKind.AllIn,
-                "fold" => PokerEffectKind.Fold, _ => (PokerEffectKind?)null,
+                "fold" => PokerEffectKind.Fold, "leave" => PokerEffectKind.Leave, _ => (PokerEffectKind?)null,
             };
             if (kind.HasValue) PlayEffect(state, kind.Value);
             _lastEffectDecision = Math.Max(_lastEffectDecision, decision.Sequence);
+        }
+        if (!_wasOurTurn && turn) PlayEffect(state, PokerEffectKind.YourTurn);
+        _wasOurTurn = turn;
+        if (state.Board.Length > _lastBoardCount)
+        {
+            if (_lastBoardCount < 3 && state.Board.Length >= 3) PlayEffect(state, PokerEffectKind.Flop);
+            if (_lastBoardCount < 4 && state.Board.Length >= 4) PlayEffect(state, PokerEffectKind.Turn);
+            if (_lastBoardCount < 5 && state.Board.Length >= 5) PlayEffect(state, PokerEffectKind.River);
+            _lastBoardCount = state.Board.Length;
         }
         if (_lastLevel > 0 && level > _lastLevel)
         {
