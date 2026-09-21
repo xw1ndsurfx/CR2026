@@ -5,6 +5,7 @@ using Intersect.Client.Localization;
 using Intersect.Client.MiniGames;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Network.Packets.MiniGames;
+using ClientAudio = Intersect.Client.Core.Audio;
 using Rectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
@@ -27,11 +28,11 @@ internal sealed partial class PokerWindow : Base
     private readonly TextBox _amount;
     private readonly PokerFlatPanel _backTray;
     private readonly PokerTableArt _art;
-    private readonly PokerScreenEffect _victory;
+    private readonly PokerScreenEffect _victory, _actionEffect, _levelEffect;
     private PokerSceneLayout _layout;
     private PokerTableState? _state;
     private int _localSeat, _selectedBack, _lastLevel = -1;
-    private long _lastMinimum = -1, _levelUpUntil;
+    private long _lastMinimum = -1, _levelUpUntil, _lastDecisionSequence = -1, _lastResultHand = -1;
     private float _xpFraction;
     private string _localError = string.Empty;
     private bool _destroyed;
@@ -93,6 +94,8 @@ internal sealed partial class PokerWindow : Base
         }
         _art = new PokerTableArt(_content, _backTray, _board);
         _victory = new PokerScreenEffect(canvas);
+        _actionEffect = new PokerScreenEffect(canvas);
+        _levelEffect = new PokerScreenEffect(canvas);
         ResizeToCanvas();
     }
     public void ResizeToCanvas()
@@ -148,6 +151,7 @@ internal sealed partial class PokerWindow : Base
         var recent = state.Decisions.TakeLast(3).ToArray();
         for (var i = 0; i < 3; ++i) _feed[i].Text = i < recent.Length ? Short(recent[i].Name + ": " + Describe(recent[i]), 40) : "";
         _payouts.Text = state.NetWin > 0 ? Strings.PokerScene.Net.ToString(state.NetWin) : "";
+        UpdateActionEffects(state);
         _back.Text = Strings.PokerScene.Back.ToString(_selectedBack + 1); _back.IsDisabled = model.Pending || me.Leaving;
         _backStatus.Text = me.SelectedCardBackId != me.CardBackId ? Strings.PokerCosmetics.NextHand :
             _art.SelectedBackMissing ? Strings.PokerCosmetics.MissingArt : Strings.PokerCosmetics.Selected;
@@ -162,11 +166,30 @@ internal sealed partial class PokerWindow : Base
         _xpFraction = level == MiniGameProgression.MaximumLevel ? 1 : (state.Experience - baseXp) / (float)toNext;
         _experience.Text = level == MiniGameProgression.MaximumLevel ? Strings.PokerScene.Mastered.ToString(level) :
             Strings.PokerScene.Progress.ToString(level, state.Experience - baseXp, toNext);
-        if (_lastLevel > 0 && level > _lastLevel) _levelUpUntil = Environment.TickCount64 + 5000;
+        if (_lastLevel > 0 && level > _lastLevel)
+        {
+            _levelUpUntil = Environment.TickCount64 + 5000;
+            _levelEffect.Play(state.Effects.LevelUpAnimationId);
+            PlaySound(state.Effects.LevelUpSound);
+        }
         _lastLevel = level; _levelUp.Text = Environment.TickCount64 < _levelUpUntil ? Strings.PokerScene.LevelUp.ToString(level) : "";
-        if (model.Victories.Observe(model.Current.TableInstanceId, me.PlayerId, state.HandId,
-                state.Stage == PokerStage.Finished, state.NetWin)) _victory.Play(state.VictoryAnimationId);
-        _victory.Update();
+        var won = model.Victories.Observe(model.Current.TableInstanceId, me.PlayerId, state.HandId,
+            state.Stage == PokerStage.Finished, state.NetWin);
+        if (won)
+        {
+            _victory.Play(state.Effects.WinAnimationId != Guid.Empty ? state.Effects.WinAnimationId : state.VictoryAnimationId);
+            PlaySound(state.Effects.WinSound);
+        }
+        if (state.Stage == PokerStage.Finished && state.HandId != _lastResultHand)
+        {
+            if (_lastResultHand >= 0 && !won && state.Payouts.Length > 0)
+            {
+                _victory.Play(state.Effects.LoseAnimationId);
+                PlaySound(state.Effects.LoseSound);
+            }
+            _lastResultHand = state.HandId;
+        }
+        _victory.Update(); _actionEffect.Update(); _levelEffect.Update();
         _start.IsDisabled = model.Pending || playing || me.Leaving || me.Chips == 0 || !opponents || state.ProgressPending;
         _fold.IsDisabled = !enabled; _check.IsDisabled = !enabled || state.ToCall != 0;
         _call.IsDisabled = !enabled || state.ToCall == 0; _call.Text = Strings.Poker.Call.ToString(state.ToCall);
@@ -240,6 +263,34 @@ internal sealed partial class PokerWindow : Base
             Fill(r, color, x + w / 2 - half, y + row, half * 2, Math.Min(3, h - row));
         }
     }
+    private void UpdateActionEffects(PokerTableState state)
+    {
+        var latest = state.Decisions.Length == 0 ? 0 : state.Decisions.Max(d => d.Sequence);
+        if (_lastDecisionSequence < 0) { _lastDecisionSequence = latest; return; }
+        foreach (var decision in state.Decisions.Where(d => d.Sequence > _lastDecisionSequence).OrderBy(d => d.Sequence))
+        {
+            var fx = state.Effects;
+            var effect = decision.Action switch
+            {
+                // Deal visuals are rendered on the table by PokerTableArt; only play the optional
+                // extra deal sound here so the selected animation is not drawn twice.
+                "deal" => (Guid.Empty, fx.DealSound),
+                "check" => (fx.CheckAnimationId, fx.CheckSound),
+                "call" => (fx.CallAnimationId, fx.CallSound),
+                "raise" => (fx.RaiseAnimationId, fx.RaiseSound),
+                "allin" => (fx.AllInAnimationId, fx.AllInSound),
+                "fold" => (fx.FoldAnimationId, fx.FoldSound),
+                _ => (Guid.Empty, string.Empty),
+            };
+            if (effect.Item1 != Guid.Empty) _actionEffect.Play(effect.Item1);
+            PlaySound(effect.Item2);
+        }
+        _lastDecisionSequence = Math.Max(_lastDecisionSequence, latest);
+    }
+    private static void PlaySound(string? file)
+    {
+        if (!string.IsNullOrWhiteSpace(file)) ClientAudio.AddGameSound(file, false);
+    }
     private static string Describe(PokerDecisionState decision) => Strings.PokerScene.Actions.TryGetValue(decision.Action, out var text)
         ? text.ToString(decision.Amount) + (decision.Automatic ? " *" : "") : "";
     private void SelectBack(int id)
@@ -259,7 +310,7 @@ internal sealed partial class PokerWindow : Base
     public void Destroy()
     {
         if (_destroyed) return;
-        _destroyed = true; _victory.Dispose(); Interface.FocusComponents.Remove(_amount);
+        _destroyed = true; _victory.Dispose(); _actionEffect.Dispose(); _levelEffect.Dispose(); Interface.FocusComponents.Remove(_amount);
         Hide(); Parent?.RemoveChild(this, false); Dispose();
     }
     private static string Short(string value, int max) => value.Length <= max ? value : value[..(max - 3)] + "...";

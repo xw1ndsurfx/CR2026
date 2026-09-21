@@ -212,6 +212,9 @@ public partial class QuestTaskDescriptor
 
     public int Quantity { get; set; }
 
+    /// <summary>Stable mini-game key used by mini-game quest objectives. Currently "poker".</summary>
+    public string MiniGameKey { get; set; } = "poker";
+
     public string Description { get; set; } = string.Empty;
 
     public string GetTaskString(Dictionary<int, LocalizedString> descriptions)
@@ -238,6 +241,22 @@ public partial class QuestTaskDescriptor
                     Description
                 );
 
+                break;
+            case QuestObjective.MiniGameWins:
+                taskString = string.IsNullOrWhiteSpace(Description)
+                    ? $"Win {Quantity} {MiniGameKey} game(s)."
+                    : Description;
+                break;
+            case QuestObjective.MiniGameWinnings:
+                var currency = TargetId == Guid.Empty ? "currency" : ItemDescriptor.GetName(TargetId);
+                taskString = string.IsNullOrWhiteSpace(Description)
+                    ? $"Win {Quantity} {currency} net in {MiniGameKey}."
+                    : Description;
+                break;
+            case QuestObjective.MiniGameLevel:
+                taskString = string.IsNullOrWhiteSpace(Description)
+                    ? $"Reach {MiniGameKey} level {Quantity}."
+                    : Description;
                 break;
         }
 

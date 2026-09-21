@@ -1,6 +1,8 @@
 using System.Drawing;
 using System.Windows.Forms;
+using Intersect.Editor.Content;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
@@ -13,6 +15,7 @@ internal sealed class MiniGameCommandDialog : Form
 {
     private sealed record AnimationChoice(Guid Id, string Name) { public override string ToString() => Name; }
     private sealed record CurrencyChoice(Guid Id, string Name) { public override string ToString() => Name; }
+    private sealed record EventChoice(Guid Id, string Name) { public override string ToString() => Name; }
     public MiniGameCommandDialog(StartMiniGameCommand command)
     {
         Text = "Start Mini-Game - Poker"; StartPosition = FormStartPosition.CenterParent;
@@ -21,9 +24,9 @@ internal sealed class MiniGameCommandDialog : Form
         ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
         MinimumSize = new Size(580, 420);
         BackColor = DrawingColor.FromArgb(45, 45, 48); ForeColor = DrawingColor.Gainsboro;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 18, AutoScroll = true };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 36, AutoScroll = true };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
-        for (var row = 0; row < 18; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var row = 0; row < 36; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(12, 8, 12, 8) };
         Controls.Add(layout); Controls.Add(buttons);
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
@@ -43,7 +46,17 @@ internal sealed class MiniGameCommandDialog : Form
         var dealer = new CheckBox { Text = "Marlow / Croupier", Checked = command.DealerPlays, AutoSize = true };
         var npcs = Number(command.NpcPlayers, 0, 5);
         var automatic = new CheckBox { Text = "Next hand after 5 seconds", Checked = command.AutoStart, AutoSize = true };
-        var animation = AnimationPicker(command.DealAnimationId); var victory = AnimationPicker(command.VictoryAnimationId);
+        var unlimitedNpc = new CheckBox { Text = "Unlimited NPC bankroll (house auto-refills)", Checked = command.UnlimitedNpcReserve, AutoSize = true };
+        var animation = AnimationPicker(command.DealAnimationId); var dealSound = SoundPicker(command.DealSound);
+        var checkAnimation = AnimationPicker(command.CheckAnimationId); var checkSound = SoundPicker(command.CheckSound);
+        var callAnimation = AnimationPicker(command.CallAnimationId); var callSound = SoundPicker(command.CallSound);
+        var raiseAnimation = AnimationPicker(command.RaiseAnimationId); var raiseSound = SoundPicker(command.RaiseSound);
+        var foldAnimation = AnimationPicker(command.FoldAnimationId); var foldSound = SoundPicker(command.FoldSound);
+        var allInAnimation = AnimationPicker(command.AllInAnimationId); var allInSound = SoundPicker(command.AllInSound);
+        var victory = AnimationPicker(command.VictoryAnimationId); var victorySound = SoundPicker(command.VictorySound);
+        var loseAnimation = AnimationPicker(command.LoseAnimationId); var loseSound = SoundPicker(command.LoseSound);
+        var levelAnimation = AnimationPicker(command.LevelUpAnimationId); var levelSound = SoundPicker(command.LevelUpSound);
+        var levelReward = EventPicker(command.LevelUpRewardEventId);
         var announce = new CheckBox { Text = "Human name + positive net win", Checked = command.AnnounceWins, AutoSize = true };
         var backs = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
         for (var id = 0; id < MiniGameProgression.BackCount; ++id) backs.Items.Add($"B{id + 1} (B{id + 1}.png)");
@@ -60,15 +73,26 @@ internal sealed class MiniGameCommandDialog : Form
         var chipsLabel = AddRow(layout, 5, "Starting test chips", chips);
         AddRow(layout, 6, "Small blind", small); AddRow(layout, 7, "Big blind", big); AddRow(layout, 8, "Turn timeout (seconds)", seconds);
         AddRow(layout, 9, "Dealer plays and deals", dealer); AddRow(layout, 10, "Other NPC opponents", npcs);
-        AddRow(layout, 11, "Automatic hands", automatic); AddRow(layout, 12, "Dealing animation", animation);
-        AddRow(layout, 13, "Announce wins in GLOBAL chat", announce); AddRow(layout, 14, "Victory animation (winner only)", victory);
-        AddRow(layout, 15, "Dealer / NPC card back", backs); AddRow(layout, 16, "Initial NPC reserve (one-time seed)", reserve);
+        AddRow(layout, 11, "Automatic hands", automatic); AddRow(layout, 12, "Dealer / NPC card back", backs);
+        AddRow(layout, 13, "NPC bankroll", unlimitedNpc); AddRow(layout, 14, "Initial NPC reserve (one-time seed)", reserve);
+        AddRow(layout, 15, "Announce wins in GLOBAL chat", announce);
+        AddRow(layout, 16, "Deal animation", animation); AddRow(layout, 17, "Deal sound", dealSound);
+        AddRow(layout, 18, "Check animation", checkAnimation); AddRow(layout, 19, "Check sound", checkSound);
+        AddRow(layout, 20, "Call animation", callAnimation); AddRow(layout, 21, "Call sound", callSound);
+        AddRow(layout, 22, "Raise animation", raiseAnimation); AddRow(layout, 23, "Raise sound", raiseSound);
+        AddRow(layout, 24, "Fold animation", foldAnimation); AddRow(layout, 25, "Fold sound", foldSound);
+        AddRow(layout, 26, "ALL-IN animation", allInAnimation); AddRow(layout, 27, "ALL-IN sound", allInSound);
+        AddRow(layout, 28, "Win animation (winner only)", victory); AddRow(layout, 29, "Win sound (winner only)", victorySound);
+        AddRow(layout, 30, "Lose animation (local player)", loseAnimation); AddRow(layout, 31, "Lose sound (local player)", loseSound);
+        AddRow(layout, 32, "Level-up animation", levelAnimation); AddRow(layout, 33, "Level-up sound", levelSound);
+        AddRow(layout, 34, "Level-up reward common event", levelReward);
         var status = new Label { Name = "CurrencyStatus", AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 12, 3, 12) };
-        layout.Controls.Add(status, 0, 17); layout.SetColumnSpan(status, 2);
+        layout.Controls.Add(status, 0, 35); layout.SetColumnSpan(status, 2);
         void ShowCurrencyStatus()
         {
             var id = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
-            reserve.Enabled = id != Guid.Empty;
+            unlimitedNpc.Enabled = id != Guid.Empty;
+            reserve.Enabled = id != Guid.Empty && !unlimitedNpc.Checked;
             if (id == Guid.Empty)
             {
                 chipsLabel.Text = "Starting test chips"; status.ForeColor = DrawingColor.Gainsboro;
@@ -82,11 +106,15 @@ internal sealed class MiniGameCommandDialog : Form
                 : $"Selected item: {item.Name}. ID: {id}.\n" +
                     "FUNDED mode (SQLite player database): the buy-in is removed from inventory once. " +
                     "The remaining balance is returned after leaving and settling the hand. Full inventory refunds wait safely. " +
-                    "NPC reserve creates an authorized house budget ONCE per map + Table ID + currency, shared across instances. " +
-                    "Reopening, restarting or editing this number does not refill an existing house. Zero means no initial NPC funds. " +
+                    (unlimitedNpc.Checked
+                        ? "NPC bankroll is UNLIMITED: the house auto-refills only enough for NPC buy-ins. "
+                        : "NPC reserve creates an authorized house budget ONCE per map + Table ID + currency, shared across instances. " +
+                          "Reopening, restarting or editing this number does not refill an existing house. Zero means no initial NPC funds. ") +
                     "Funded XP is separate from test XP. Back up the entire player database before enabling.";
         }
-        currency.SelectedIndexChanged += (_, _) => ShowCurrencyStatus(); ShowCurrencyStatus();
+        currency.SelectedIndexChanged += (_, _) => ShowCurrencyStatus();
+        unlimitedNpc.CheckedChanged += (_, _) => ShowCurrencyStatus();
+        ShowCurrencyStatus();
         var cancel = new Button { Name = "Cancel", Text = "Cancel", AutoSize = true, DialogResult = DialogResult.Cancel };
         var save = new Button { Name = "Save", Text = "Save", AutoSize = true };
         buttons.Controls.Add(cancel); buttons.Controls.Add(save); AcceptButton = save; CancelButton = cancel;
@@ -102,10 +130,21 @@ internal sealed class MiniGameCommandDialog : Form
             {
                 Game = MiniGameType.Poker, TableId = table.Text, MaxPlayers = (int)seats.Value, CurrencyItemId = selected,
                 StartingChips = (long)chips.Value, NpcReserve = (long)reserve.Value,
+                UnlimitedNpcReserve = selected != Guid.Empty && unlimitedNpc.Checked,
                 SmallBlind = (long)small.Value, BigBlind = (long)big.Value, TurnSeconds = (int)seconds.Value,
                 DealerPlays = dealer.Checked, NpcPlayers = (int)npcs.Value, AutoStart = automatic.Checked,
-                DealAnimationId = ((AnimationChoice)animation.SelectedItem!).Id, AnnounceWins = announce.Checked,
-                VictoryAnimationId = ((AnimationChoice)victory.SelectedItem!).Id, NpcCardBackId = backs.SelectedIndex,
+                DealAnimationId = ((AnimationChoice)animation.SelectedItem!).Id, DealSound = SelectedSound(dealSound),
+                CheckAnimationId = ((AnimationChoice)checkAnimation.SelectedItem!).Id, CheckSound = SelectedSound(checkSound),
+                CallAnimationId = ((AnimationChoice)callAnimation.SelectedItem!).Id, CallSound = SelectedSound(callSound),
+                RaiseAnimationId = ((AnimationChoice)raiseAnimation.SelectedItem!).Id, RaiseSound = SelectedSound(raiseSound),
+                FoldAnimationId = ((AnimationChoice)foldAnimation.SelectedItem!).Id, FoldSound = SelectedSound(foldSound),
+                AllInAnimationId = ((AnimationChoice)allInAnimation.SelectedItem!).Id, AllInSound = SelectedSound(allInSound),
+                AnnounceWins = announce.Checked,
+                VictoryAnimationId = ((AnimationChoice)victory.SelectedItem!).Id, VictorySound = SelectedSound(victorySound),
+                LoseAnimationId = ((AnimationChoice)loseAnimation.SelectedItem!).Id, LoseSound = SelectedSound(loseSound),
+                LevelUpAnimationId = ((AnimationChoice)levelAnimation.SelectedItem!).Id, LevelUpSound = SelectedSound(levelSound),
+                LevelUpRewardEventId = ((EventChoice)levelReward.SelectedItem!).Id,
+                NpcCardBackId = backs.SelectedIndex,
             };
             if (!draft.HasValidSettings())
             {
@@ -113,11 +152,19 @@ internal sealed class MiniGameCommandDialog : Form
                     "Invalid poker table", MessageBoxButtons.OK, MessageBoxIcon.Warning); return;
             }
             command.Game = draft.Game; command.TableId = draft.TableId; command.MaxPlayers = draft.MaxPlayers;
-            command.CurrencyItemId = draft.CurrencyItemId; command.NpcReserve = draft.NpcReserve;
+            command.CurrencyItemId = draft.CurrencyItemId; command.NpcReserve = draft.NpcReserve; command.UnlimitedNpcReserve = draft.UnlimitedNpcReserve;
             command.StartingChips = draft.StartingChips; command.SmallBlind = draft.SmallBlind; command.BigBlind = draft.BigBlind;
             command.TurnSeconds = draft.TurnSeconds; command.DealerPlays = draft.DealerPlays; command.NpcPlayers = draft.NpcPlayers;
-            command.AutoStart = draft.AutoStart; command.DealAnimationId = draft.DealAnimationId; command.AnnounceWins = draft.AnnounceWins;
-            command.VictoryAnimationId = draft.VictoryAnimationId; command.NpcCardBackId = draft.NpcCardBackId;
+            command.AutoStart = draft.AutoStart; command.DealAnimationId = draft.DealAnimationId; command.DealSound = draft.DealSound;
+            command.CheckAnimationId = draft.CheckAnimationId; command.CheckSound = draft.CheckSound;
+            command.CallAnimationId = draft.CallAnimationId; command.CallSound = draft.CallSound;
+            command.RaiseAnimationId = draft.RaiseAnimationId; command.RaiseSound = draft.RaiseSound;
+            command.FoldAnimationId = draft.FoldAnimationId; command.FoldSound = draft.FoldSound;
+            command.AllInAnimationId = draft.AllInAnimationId; command.AllInSound = draft.AllInSound;
+            command.AnnounceWins = draft.AnnounceWins; command.VictoryAnimationId = draft.VictoryAnimationId; command.VictorySound = draft.VictorySound;
+            command.LoseAnimationId = draft.LoseAnimationId; command.LoseSound = draft.LoseSound;
+            command.LevelUpAnimationId = draft.LevelUpAnimationId; command.LevelUpSound = draft.LevelUpSound;
+            command.LevelUpRewardEventId = draft.LevelUpRewardEventId; command.NpcCardBackId = draft.NpcCardBackId;
             DialogResult = DialogResult.OK; Close();
         };
     }
@@ -140,6 +187,26 @@ internal sealed class MiniGameCommandDialog : Form
             picker.Items.Add(new AnimationChoice(item.Id, item.Name));
         var selected = picker.Items.Cast<AnimationChoice>().FirstOrDefault(a => a.Id == id);
         if (selected == null) { selected = new AnimationChoice(id, "Missing animation: " + id); picker.Items.Add(selected); }
+        picker.SelectedItem = selected; return picker;
+    }
+    private static ComboBox SoundPicker(string? file)
+    {
+        var picker = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill, DropDownWidth = 420 };
+        picker.Items.Add("None / Aucun");
+        foreach (var sound in GameContentManager.SmartSortedSoundNames ?? Array.Empty<string>()) picker.Items.Add(sound);
+        var index = string.IsNullOrWhiteSpace(file) ? 0 : picker.Items.IndexOf(file);
+        if (index < 0) { picker.Items.Add(file!); index = picker.Items.Count - 1; }
+        picker.SelectedIndex = index; return picker;
+    }
+    private static string SelectedSound(ComboBox picker) => picker.SelectedIndex <= 0 ? string.Empty : picker.SelectedItem?.ToString() ?? string.Empty;
+    private static ComboBox EventPicker(Guid id)
+    {
+        var picker = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill, DropDownWidth = 520 };
+        picker.Items.Add(new EventChoice(Guid.Empty, "None / Aucun"));
+        foreach (var evt in EventDescriptor.Lookup.Values.OfType<EventDescriptor>().Where(e => e.CommonEvent).OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase))
+            picker.Items.Add(new EventChoice(evt.Id, evt.Name));
+        var selected = picker.Items.Cast<EventChoice>().FirstOrDefault(e => e.Id == id);
+        if (selected == null) { selected = new EventChoice(id, "Missing common event: " + id); picker.Items.Add(selected); }
         picker.SelectedItem = selected; return picker;
     }
     private static NumericUpDown Number(long value, long minimum, long maximum) => new()

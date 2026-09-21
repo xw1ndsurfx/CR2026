@@ -62,7 +62,15 @@ internal static class PokerRuntime
                     new PokerRules(command.MaxPlayers, command.StartingChips, command.SmallBlind,
                         command.BigBlind, command.TurnSeconds),
                     new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
-                        command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId));
+                        command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId,
+                        command.UnlimitedNpcReserve,
+                        command.DealSound, command.CheckAnimationId, command.CheckSound,
+                        command.CallAnimationId, command.CallSound,
+                        command.RaiseAnimationId, command.RaiseSound,
+                        command.FoldAnimationId, command.FoldSound,
+                        command.AllInAnimationId, command.AllInSound,
+                        command.VictorySound, command.LoseAnimationId, command.LoseSound,
+                        command.LevelUpAnimationId, command.LevelUpSound, command.LevelUpRewardEventId));
                 if (result.Error != PokerRegistryError.None) return result;
                 var view = new View
                 {

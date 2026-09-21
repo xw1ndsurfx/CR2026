@@ -1,6 +1,8 @@
 #nullable enable
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.MiniGames;
@@ -27,7 +29,7 @@ internal static class PokerCurrencyRuntime
         public bool Closed;
         public void Renew() { Id = Guid.NewGuid(); Guard = new PokerRequestGuard(Table.Id, Id); Closed = false; Published = -1; }
     }
-    private sealed record Delivery(View? View, PokerStatePacket? Packet, string? Announcement = null, string? LocalMessage = null);
+    private sealed record Delivery(View? View, PokerStatePacket? Packet, string? Announcement = null, string? LocalMessage = null, FundedWin? Progress = null);
     private static readonly object Gate = new();
     private static readonly Dictionary<PokerTableKey, PokerFundedTable> Tables = new();
     private static readonly Dictionary<Guid, View> Views = new();
@@ -48,7 +50,15 @@ internal static class PokerCurrencyRuntime
                     return new(PokerRegistryError.InvalidPresence);
                 var rules = new PokerRules(command.MaxPlayers, command.StartingChips, command.SmallBlind, command.BigBlind, command.TurnSeconds);
                 var options = new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
-                    command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId);
+                        command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId,
+                        command.UnlimitedNpcReserve,
+                        command.DealSound, command.CheckAnimationId, command.CheckSound,
+                        command.CallAnimationId, command.CallSound,
+                        command.RaiseAnimationId, command.RaiseSound,
+                        command.FoldAnimationId, command.FoldSound,
+                        command.AllInAnimationId, command.AllInSound,
+                        command.VictorySound, command.LoseAnimationId, command.LoseSound,
+                        command.LevelUpAnimationId, command.LevelUpSound, command.LevelUpRewardEventId);
                 var key = new PokerTableKey(presence.MapId, presence.MapInstanceId, command.TableId);
                 var money = PokerInventoryBridge.Ledger;
                 lock (Gate)
@@ -208,10 +218,14 @@ internal static class PokerCurrencyRuntime
                     output.Add(new(view, null, LocalMessage: message));
             foreach (var win in pair.Value.CollectWins())
             {
-                if (!pair.Value.Options.AnnounceWins) continue;
-                var name = new string(win.Name.Where(c => !char.IsControl(c)).ToArray());
-                var currency = new string(ItemDescriptor.GetName(pair.Value.Currency).Where(c => !char.IsControl(c)).ToArray());
-                output.Add(new(null, null, $"[Poker] {name} wins {win.Amount} {currency} (net gain)."));
+                if (Views.TryGetValue(win.Player, out var winnerView) && !winnerView.Closed && ReferenceEquals(winnerView.Table, pair.Value))
+                    output.Add(new(winnerView, null, Progress: win));
+                if (pair.Value.Options.AnnounceWins)
+                {
+                    var name = new string(win.Name.Where(c => !char.IsControl(c)).ToArray());
+                    var currency = new string(ItemDescriptor.GetName(pair.Value.Currency).Where(c => !char.IsControl(c)).ToArray());
+                    output.Add(new(null, null, $"[Poker] {name} wins {win.Amount} {currency} (net gain)."));
+                }
             }
             if (pair.Value.IsEmpty) Tables.Remove(pair.Key);
         }
@@ -239,7 +253,15 @@ internal static class PokerCurrencyRuntime
         {
             try
             {
-                if (delivery.Announcement is { } text) PacketSender.SendGlobalMsg(text, Color.White);
+                if (delivery.Progress is { } progress && delivery.View is { } progressView &&
+                    ReferenceEquals(progressView.Client.Entity, progressView.Player) && progressView.Player.LoginTime == progressView.Login)
+                {
+                    progressView.Player.UpdateMiniGameQuestTasks(MiniGameProgression.Poker, progress.Amount, progress.Level, progressView.Table.Currency);
+                    if (progress.Level > progress.PreviousLevel && progress.LevelUpRewardEventId != Guid.Empty &&
+                        EventDescriptor.Get(progress.LevelUpRewardEventId) is { CommonEvent: true } rewardEvent)
+                        progressView.Player.EnqueueStartCommonEvent(rewardEvent);
+                }
+                else if (delivery.Announcement is { } text) PacketSender.SendGlobalMsg(text, Color.White);
                 else if (delivery.LocalMessage is { } local && delivery.View is { } localView &&
                     ReferenceEquals(localView.Client.Entity, localView.Player) && localView.Player.LoginTime == localView.Login)
                     PacketSender.SendChatMsg(localView.Player, local, ChatMessageType.Local, Color.White);

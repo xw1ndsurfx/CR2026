@@ -6,6 +6,7 @@ using Intersect.Client.MiniGames;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Network.Packets.MiniGames;
+using ClientAudio = Intersect.Client.Core.Audio;
 
 namespace Intersect.Client.Interface.Game;
 
@@ -104,6 +105,7 @@ internal sealed class PokerTableArt
     {
         foreach (var effect in _effects) { effect.Count = 0; effect.Image.IsHidden = true; }
         if (id == Guid.Empty || AnimationDescriptor.Get(id) is not { } animation) return;
+        if (!string.IsNullOrWhiteSpace(animation.Sound)) ClientAudio.AddGameSound(animation.Sound, false);
         Configure(_effects[0], animation.Lower); Configure(_effects[1], animation.Upper);
         _started = Environment.TickCount64;
     }

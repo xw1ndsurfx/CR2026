@@ -285,6 +285,25 @@ public partial class QuestsWindow
             progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {NPCDescriptor.GetName(currentTask.TargetId)}";
         else if (currentTask.Objective == QuestObjective.GatherItems)
             progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {ItemDescriptor.GetName(currentTask.TargetId)}";
+        else if (currentTask.Objective == QuestObjective.MiniGameWins)
+        {
+            if (string.IsNullOrWhiteSpace(mainText))
+                mainText = $"Win {currentTask.Quantity} {currentTask.MiniGameKey} game(s).";
+            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} wins";
+        }
+        else if (currentTask.Objective == QuestObjective.MiniGameWinnings)
+        {
+            var currencyName = currentTask.TargetId == Guid.Empty ? "currency" : ItemDescriptor.GetName(currentTask.TargetId);
+            if (string.IsNullOrWhiteSpace(mainText))
+                mainText = $"Win {currentTask.Quantity} {currencyName} net in {currentTask.MiniGameKey}.";
+            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {currencyName} net";
+        }
+        else if (currentTask.Objective == QuestObjective.MiniGameLevel)
+        {
+            if (string.IsNullOrWhiteSpace(mainText))
+                mainText = $"Reach {currentTask.MiniGameKey} level {currentTask.Quantity}.";
+            progressText = $"{currentTask.MiniGameKey} level {playerQuest.TaskProgress} / {currentTask.Quantity}";
+        }
 
         // cache
         if (_lastHudQuestId == mSelectedQuest.Id &&
@@ -528,6 +547,30 @@ public partial class QuestsWindow
                                         mSelectedQuest.Tasks[i].Quantity,
                                         NPCDescriptor.GetName(mSelectedQuest.Tasks[i].TargetId)
                                     ), mQuestDescTemplateLabel
+                                );
+                            }
+                            else if (mSelectedQuest.Tasks[i].Objective == QuestObjective.MiniGameWins)
+                            {
+                                mQuestDescLabel.AddText(
+                                    $"{Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress} / {mSelectedQuest.Tasks[i].Quantity} {mSelectedQuest.Tasks[i].MiniGameKey} wins",
+                                    mQuestDescTemplateLabel
+                                );
+                            }
+                            else if (mSelectedQuest.Tasks[i].Objective == QuestObjective.MiniGameWinnings)
+                            {
+                                var currencyName = mSelectedQuest.Tasks[i].TargetId == Guid.Empty
+                                    ? "currency"
+                                    : ItemDescriptor.GetName(mSelectedQuest.Tasks[i].TargetId);
+                                mQuestDescLabel.AddText(
+                                    $"{Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress} / {mSelectedQuest.Tasks[i].Quantity} {currencyName} net",
+                                    mQuestDescTemplateLabel
+                                );
+                            }
+                            else if (mSelectedQuest.Tasks[i].Objective == QuestObjective.MiniGameLevel)
+                            {
+                                mQuestDescLabel.AddText(
+                                    $"{mSelectedQuest.Tasks[i].MiniGameKey} level {Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress} / {mSelectedQuest.Tasks[i].Quantity}",
+                                    mQuestDescTemplateLabel
                                 );
                             }
                         }

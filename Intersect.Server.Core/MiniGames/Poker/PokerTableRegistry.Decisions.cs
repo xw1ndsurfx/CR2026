@@ -33,7 +33,10 @@ public sealed partial class PokerTableRegistry
         {
             if (result == PokerError.None)
             {
-                var kind = action switch { PokerAction.Fold => "fold", PokerAction.Check => "check", PokerAction.Call => "call", _ => "raise" };
+                var afterActor = after.Seats.FirstOrDefault(s => s.PlayerId == actor.PlayerId);
+                var kind = afterActor?.AllIn == true && !actor.AllIn
+                    ? "allin"
+                    : action switch { PokerAction.Fold => "fold", PokerAction.Check => "check", PokerAction.Call => "call", _ => "raise" };
                 Decision(entry, actor, kind, action == PokerAction.RaiseTo ? raiseTo : action == PokerAction.Call ? before.ToCall : 0);
             }
             else if (result == PokerError.StaleState && now >= before.Deadline)

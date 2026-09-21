@@ -138,6 +138,21 @@ internal static class AutomationSmokeTests
             var decision = PokerNpcPolicy.Choose(view, npc, 10, 90);
             Check(table.Act(npc, view.HandId, view.Revision, decision.Action, decision.Amount, Now) == PokerError.None, "Policy made illegal move");
         });
+        Test("NPCs defend all-ins by hand strength without changing the deck", () =>
+        {
+            var npc=Guid.NewGuid();var human=Guid.NewGuid();
+            PokerSnapshot View(int[] cards)=>new(1,1,PokerPhase.PreFlop,0,1,20,10,800,20,1000,false,
+                Now.AddSeconds(30),Array.Empty<int>(),cards,
+                new[]{new PokerSeatView(0,human,"Human",200,10,10,true,false,false,false,Array.Empty<int>()),
+                    new PokerSeatView(1,npc,"NPC",1000,10,10,true,false,false,false,Array.Empty<int>())},
+                Array.Empty<PokerPayout>());
+            var strong=View(new[]{12,25}); // pocket aces
+            var weak=View(new[]{0,1});
+            var strongCalls=Enumerable.Range(0,100).Count(roll=>PokerNpcPolicy.Choose(strong,npc,10,roll).Action==PokerAction.Call);
+            var weakCalls=Enumerable.Range(0,100).Count(roll=>PokerNpcPolicy.Choose(weak,npc,10,roll).Action==PokerAction.Call);
+            Check(strongCalls>=80 && weakCalls<=15 && strongCalls>weakCalls*5,"Shove defense ignores hand strength");
+            Check(strong.MyCards.SequenceEqual(new[]{12,25}) && weak.MyCards.SequenceEqual(new[]{0,1}),"Policy mutated cards");
+        });
         Test("Five automatic hands preserve chips and private-card boundaries", () =>
         {
             var r = new PokerTableRegistry(); var p = Person(Guid.NewGuid());
