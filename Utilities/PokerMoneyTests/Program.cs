@@ -96,7 +96,7 @@ Test("Unlimited house refills after a human wins its entire NPC stake", f=>
     Check(f.Money.HouseAvailable("infinite-loss")==0,"Empty NPC escrow unexpectedly refunded");
     var replacement=f.Money.OpenNpc(Guid.NewGuid(),Guid.NewGuid(),f.Currency,"infinite-loss",0,100,true);
     Check(replacement!=null && replacement.Npc && replacement.Amount==100,"Unlimited house did not replenish a lost stake");
-    f.RefundAll(f.A);Check(f.Balance(f.A)==450,"Human win was not preserved");
+    f.Pay(a);Check(f.Balance(f.A)==450,"Human win was not preserved");
 });
 Test("Funded table creates configured NPCs with zero reserve when unlimited mode is enabled", f=>
 {
