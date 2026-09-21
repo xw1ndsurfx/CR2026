@@ -1,4 +1,6 @@
 using System.Runtime.CompilerServices;
+using Intersect.Framework.Core.GameObjects.Quests;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Server.MiniGames.Poker;
 using Intersect.Server.MiniGames.Progression;
 

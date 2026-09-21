@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Intersect.Framework.Core.MiniGames;
-using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Server.MiniGames.Poker;
 using Intersect.Server.MiniGames.Progression;
 

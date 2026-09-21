@@ -1,9 +1,6 @@
-namespace Intersect.Framework.Core.GameObjects.Quests;
+using Intersect.Framework.Core.MiniGames;
 
-public readonly record struct PokerQuestUpdate(bool PlayedHand, long NetWin, int PokerLevel)
-{
-    public bool WonHand => PlayedHand && NetWin > 0;
-}
+namespace Intersect.Framework.Core.GameObjects.Quests;
 
 public static class PokerQuestProgress
 {
