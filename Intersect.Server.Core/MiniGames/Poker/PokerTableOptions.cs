@@ -7,10 +7,13 @@ namespace Intersect.Server.MiniGames.Poker;
 
 public sealed record PokerTableOptions(
     bool DealerPlays = false, int NpcPlayers = 0, bool AutoStart = false, Guid DealAnimationId = default,
-    bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0)
+    bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0,
+    bool UnlimitedNpcBankroll = false, PokerEffectSettings? Effects = null, Guid LevelUpEventId = default)
 {
+    public PokerEffectSettings EffectiveEffects => Effects ?? PokerEffectSettings.Empty;
     public bool IsValid(int seats) => NpcPlayers >= 0 && NpcPlayers <= 5 &&
-        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId);
+        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId) &&
+        EffectiveEffects.IsValid();
 }
 
 public sealed record PokerSeatBack(Guid PlayerId, int CurrentId, int SelectedId);
@@ -57,6 +60,15 @@ public static class PokerNpcPolicy
         if (view.CanRaise && strength >= 45 && roll < 20 && view.MaximumRaiseTo > view.CurrentBet)
             return (PokerAction.RaiseTo, Math.Min(view.MinimumRaiseTo, view.MaximumRaiseTo));
         if (view.ToCall == 0) return (PokerAction.Check, 0);
+
+        var opponentAllIn = view.Seats.Any(s => s.PlayerId != npcId && s.InHand && !s.Folded && s.AllIn && s.StreetBet == view.CurrentBet);
+        if (opponentAllIn)
+        {
+            var cheapAllIn = view.ToCall <= Math.Max(bigBlind * 3, me.Chips / 10);
+            var strongEnough = strength >= 60 || strength >= 45 && cheapAllIn;
+            return strongEnough || roll < 4 ? (PokerAction.Call, 0) : (PokerAction.Fold, 0);
+        }
+
         var inexpensive = view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 20);
         var affordablePair = strength >= 55 && view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 2);
         return inexpensive && roll < 85 || affordablePair || roll < 8
