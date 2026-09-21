@@ -1,3 +1,5 @@
+using Intersect.Framework.Core.GameObjects.Quests;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Blackjack;
 using Intersect.Server.MiniGames.Blackjack;
 
@@ -32,4 +34,18 @@ Test("Leaving during betting cancels only the unstarted wager",()=>{var(t,p)=Tab
 Test("Two players independently face one dealer",()=>{var t=new BlackjackTable(new BlackjackRules(2,100,2,100,5),10000,()=>Deck("TC","9H","9D","8C","7H","8S"));var a=Guid.NewGuid();var b=Guid.NewGuid();t.Join(a,"Alice",100);t.Join(b,"Bob",100);t.Begin(t.Revision,now);Bet(t,a);Bet(t,b);Check(t.Snapshot(a).ActingSeat==0,"turn order");Check(t.Act(b,t.HandId,t.Revision,BlackjackAction.Hit,now)==BlackjackError.NotYourTurn,"out of turn");Act(t,a,BlackjackAction.Stand);Act(t,b,BlackjackAction.Stand);for(var i=1;i<10;i++)t.Tick(now.AddSeconds(i));var s=t.Snapshot(a);Check(s.Seats[0].Chips==110 && s.Seats[1].Chips==90 && t.Bank==10000,"independent settlement");});
 Test("Snapshots are detached and never mutate authority",()=>{var(t,p)=Table(new[]{"5C","9D","6H","8S"});Bet(t,p);var s=t.Snapshot(p);s.DealerCards[0]=51;s.Seats[0].Hands[0].Cards[0]=51;Check(t.Snapshot(p).DealerCards[0]==C("9D") && t.Snapshot(p).Seats[0].Hands[0].Cards[0]==C("5C"),"alias");});
 Test("Random shoes conserve balances for complete rounds",()=>{for(var game=0;game<200;game++){var t=new BlackjackTable(new BlackjackRules(5,100,2,100,5),100000);var ids=Enumerable.Range(0,5).Select(_=>Guid.NewGuid()).ToArray();foreach(var p in ids)t.Join(p,"Player",100);t.Begin(t.Revision,now);foreach(var p in ids)Bet(t,p);for(var i=1;i<=100 && t.Stage!=BlackjackStage.Finished;i++){var s=t.Snapshot(ids[0]);if(s.Stage==BlackjackStage.Players){var p=s.Seats.Single(x=>x.Seat==s.ActingSeat).PlayerId;var v=t.Snapshot(p);var total=v.Seats.Single(x=>x.PlayerId==p).Hands[v.ActingHand].Total;Act(t,p,total<17?BlackjackAction.Hit:BlackjackAction.Stand);}else t.Tick(now.AddSeconds(i*6));}Check(t.Stage==BlackjackStage.Finished && t.Snapshot(ids[0]).Seats.Sum(s=>s.Chips)+t.Bank==100500,"random conservation");}});
+Test("Blackjack quest objectives progress only from authoritative updates",()=>
+{
+    var win=new BlackjackQuestUpdate(true,25,5);
+    Check(BlackjackQuestProgress.Apply(QuestObjective.BlackjackWinHands,0,3,win)==1,"win hands");
+    Check(BlackjackQuestProgress.Apply(QuestObjective.BlackjackWinAmount,0,100,win)==25,"win amount");
+    Check(BlackjackQuestProgress.Apply(QuestObjective.BlackjackReachLevel,0,10,win)==5,"reach level");
+    Check(BlackjackQuestProgress.Apply(QuestObjective.BlackjackPlayHands,0,3,win)==1,"play hands");
+    var loss=new BlackjackQuestUpdate(true,-10,5);
+    Check(BlackjackQuestProgress.Apply(QuestObjective.BlackjackWinHands,1,3,loss)==1,"loss counted as win");
+    Check(BlackjackQuestProgress.Apply(QuestObjective.BlackjackWinAmount,25,100,loss)==25,"loss reduced win amount");
+    Check(BlackjackQuestProgress.Apply(QuestObjective.BlackjackPlayHands,1,3,loss)==2,"loss did not count as played");
+    var join=new BlackjackQuestUpdate(false,0,12);
+    Check(BlackjackQuestProgress.Apply(QuestObjective.BlackjackReachLevel,0,10,join)==10,"join level sync");
+});
 Console.WriteLine($"{passed}/{passed+failed} blackjack engine groups passed.");Environment.ExitCode=failed==0?0:1;
