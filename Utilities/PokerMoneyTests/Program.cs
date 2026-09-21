@@ -82,6 +82,16 @@ Test("Human wins deplete the house without free NPC refills", f=>
     f.Money.Settle(f.TableId,1,new Dictionary<Guid,long>{{a.Id,200},{s.Id,0}});f.Money.Release(s.Id);f.Restart();
     Check(f.Money.OpenNpc(Guid.NewGuid(),Guid.NewGuid(),f.Currency,"finite",100000,100)==null,"Free refill");f.RefundAll(f.A);Check(f.Balance(f.A)==450,"Win cash-out");
 });
+Test("Unlimited NPC bankroll refills only the house after a bust", f=>
+{
+    var a=f.Buy(f.A,100);var npc=f.Money.OpenNpc(Guid.NewGuid(),f.TableId,f.Currency,"unlimited",0,100,true)!;
+    Check(npc!=null && f.Money.HouseAvailable("unlimited")==0,"Unlimited NPC was not funded");
+    f.Money.Settle(f.TableId,1,new Dictionary<Guid,long>{{a.Id,200},{npc.Id,0}});
+    f.Money.Release(npc.Id);Check(f.Money.HouseAvailable("unlimited")==0,"Busted NPC created a refund");
+    var replacement=f.Money.OpenNpc(Guid.NewGuid(),Guid.NewGuid(),f.Currency,"unlimited",0,100,true);
+    Check(replacement!=null && replacement.Amount==100 && f.Money.HouseAvailable("unlimited")==0,"Unlimited house did not re-fund opponent");
+    Check(f.Balance(f.A)==250,"Unlimited NPC bankroll touched player inventory");
+});
 Test("NPC loans return once on recovery", f=>
 {f.Money.OpenNpc(Guid.NewGuid(),f.TableId,f.Currency,"house",1000,100);f.Restart();Check(f.Money.HouseAvailable("house")==1000,"Loan lost");f.Restart();Check(f.Money.HouseAvailable("house")==1000,"Double return");});
 Test("A zero initial reserve does not consume the future seed", f=>
