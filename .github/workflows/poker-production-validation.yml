@@ -1,0 +1,97 @@
+name: Poker production validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Framework/Intersect.Framework.Core/**'
+      - 'Intersect.Server.Core/**'
+      - 'Intersect.Client.Core/**'
+      - 'Intersect.Client.Framework/**'
+      - 'Intersect.Editor/**'
+      - 'Utilities/Poker*/**'
+      - 'Documentation/MiniGames/**'
+      - '.github/workflows/poker-*.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: poker-production-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  functional-tests:
+    name: functional-${{ matrix.suite }}
+    runs-on: windows-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: core
+            project: Utilities/PokerSmokeTests/Intersect.PokerSmokeTests.csproj
+          - suite: network
+            project: Utilities/PokerNetworkTests/Intersect.PokerNetworkTests.csproj
+          - suite: progression
+            project: Utilities/PokerProgressTests/Intersect.PokerProgressTests.csproj
+          - suite: money
+            project: Utilities/PokerMoneyTests/Intersect.PokerMoneyTests.csproj
+          - suite: inventory
+            project: Utilities/PokerInventoryTests/Intersect.PokerInventoryTests.csproj
+          - suite: ui
+            project: Utilities/PokerUiTests/Intersect.PokerUiTests.csproj
+          - suite: editor
+            project: Utilities/PokerEditorTests/Intersect.PokerEditorTests.csproj
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Run ${{ matrix.suite }} validation
+        shell: pwsh
+        run: ./Utilities/PokerCi/run.ps1 -Project '${{ matrix.project }}' -Configuration Release
+
+  engine-builds:
+    name: build-${{ matrix.target }}
+    runs-on: windows-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: server-core
+            project: Intersect.Server.Core/Intersect.Server.Core.csproj
+          - target: server
+            project: Intersect.Server/Intersect.Server.csproj
+          - target: client
+            project: Intersect.Client/Intersect.Client.csproj
+          - target: editor
+            project: Intersect.Editor/Intersect.Editor.csproj
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build ${{ matrix.target }}
+        shell: pwsh
+        run: ./Utilities/PokerCi/run.ps1 -Mode build -Project '${{ matrix.project }}'
+
+  production-gate:
+    name: Poker production gate
+    if: always()
+    needs: [functional-tests, engine-builds]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all validation jobs
+        shell: bash
+        run: |
+          test "${{ needs.functional-tests.result }}" = "success"
+          test "${{ needs.engine-builds.result }}" = "success"
