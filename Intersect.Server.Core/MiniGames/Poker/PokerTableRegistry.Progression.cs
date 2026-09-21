@@ -60,6 +60,8 @@ public sealed partial class PokerTableRegistry
                             .Where(r => r.Level > before.Level && r.Level <= profile.Level).ToArray();
                         if (rewards.Length > 0)
                             _levelRewards.Enqueue(new(member.Presence.Session, member.Entry.Id, profile.Level, rewards));
+                        _questUpdates.Enqueue(new(member.Presence.Session, member.Entry.Id,
+                            new PokerQuestUpdate(false, 0, profile.Level)));
                     }
                 }
                 _pendingExperience.Remove(award);

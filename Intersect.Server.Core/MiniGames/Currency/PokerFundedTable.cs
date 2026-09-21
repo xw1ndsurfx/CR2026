@@ -10,6 +10,7 @@ namespace Intersect.Server.MiniGames.Currency;
 
 internal sealed record FundedWin(Guid Player, string Name, long Amount);
 internal sealed record FundedLevelReward(Guid Player, int Level, PokerLevelReward[] Rewards);
+internal sealed record FundedQuestUpdate(Guid Player, PokerQuestUpdate Update);
 
 /// <summary>The tested hold'em engine owns the rules; this adapter owns funded hand checkpoints.</summary>
 internal sealed class PokerFundedTable
@@ -38,6 +39,7 @@ internal sealed class PokerFundedTable
     private readonly List<PokerPublicDecision> _decisions = new();
     private readonly Queue<FundedWin> _wins = new();
     private readonly Queue<FundedLevelReward> _levelRewards = new();
+    private readonly Queue<FundedQuestUpdate> _questUpdates = new();
     private readonly Queue<string> _npcChat = new();
     private readonly Dictionary<Guid, long> _net = new();
     private long _decisionId, _settledHand, _npcRevision = -1;
@@ -214,6 +216,8 @@ internal sealed class PokerFundedTable
                         .Where(r => r.Level > beforeProfile.Level && r.Level <= afterProfile.Level).ToArray();
                     if (rewards.Length > 0) _levelRewards.Enqueue(new(seat.PlayerId, afterProfile.Level, rewards));
                 }
+                _questUpdates.Enqueue(new(seat.PlayerId,
+                    new PokerQuestUpdate(true, Math.Max(0, net), afterProfile.Level)));
             }
             if (net <= 0) continue;
             _net[seat.PlayerId] = net; Decision(seat.PlayerId, "wins", net);
@@ -290,4 +294,5 @@ internal sealed class PokerFundedTable
     }
     public FundedWin[] CollectWins() { var wins = _wins.ToArray(); _wins.Clear(); return wins; }
     public FundedLevelReward[] CollectLevelRewards() { var rewards = _levelRewards.ToArray(); _levelRewards.Clear(); return rewards; }
+    public FundedQuestUpdate[] CollectQuestUpdates() { var updates = _questUpdates.ToArray(); _questUpdates.Clear(); return updates; }
 }

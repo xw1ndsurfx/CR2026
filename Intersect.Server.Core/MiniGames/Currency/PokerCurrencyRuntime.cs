@@ -1,7 +1,9 @@
 #nullable enable
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
+using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.MiniGames;
 using Intersect.Network.Packets.Server;
@@ -28,7 +30,7 @@ internal static class PokerCurrencyRuntime
         public void Renew() { Id = Guid.NewGuid(); Guard = new PokerRequestGuard(Table.Id, Id); Closed = false; Published = -1; }
     }
     private sealed record Delivery(View? View, PokerStatePacket? Packet, string? Announcement = null, string? LocalMessage = null,
-        FundedLevelReward? LevelReward = null);
+        FundedLevelReward? LevelReward = null, FundedQuestUpdate? Quest = null);
     private static readonly object Gate = new();
     private static readonly Dictionary<PokerTableKey, PokerFundedTable> Tables = new();
     private static readonly Dictionary<Guid, View> Views = new();
@@ -99,6 +101,16 @@ internal static class PokerCurrencyRuntime
         }
         if (inventoryChanged) PokerInventoryBridge.NotifyInventory(player);
         Send(output);
+        if (result.Error == PokerRegistryError.None)
+        {
+            View? joined;
+            lock (Gate) Views.TryGetValue(player.Id, out joined);
+            if (joined != null)
+            {
+                var experience = joined.Table.Presentation(player.Id).Experience;
+                player.UpdatePokerQuestTasks(new PokerQuestUpdate(false, 0, MiniGameProgression.Level(experience)));
+            }
+        }
         return result;
     }
 
@@ -220,6 +232,9 @@ internal static class PokerCurrencyRuntime
             foreach (var reward in pair.Value.CollectLevelRewards())
                 if (Views.TryGetValue(reward.Player, out var rewardView) && !rewardView.Closed && ReferenceEquals(rewardView.Table, pair.Value))
                     output.Add(new(rewardView, null, LevelReward: reward));
+            foreach (var quest in pair.Value.CollectQuestUpdates())
+                if (Views.TryGetValue(quest.Player, out var questView) && !questView.Closed && ReferenceEquals(questView.Table, pair.Value))
+                    output.Add(new(questView, null, Quest: quest));
             if (pair.Value.IsEmpty) Tables.Remove(pair.Key);
         }
     }
@@ -250,6 +265,9 @@ internal static class PokerCurrencyRuntime
                 else if (delivery.LevelReward is { } reward && delivery.View is { } rewardView &&
                     ReferenceEquals(rewardView.Client.Entity, rewardView.Player) && rewardView.Player.LoginTime == rewardView.Login)
                     PokerLevelRewardRuntime.Grant(rewardView.Player, reward.Level, reward.Rewards);
+                else if (delivery.Quest is { } quest && delivery.View is { } questView &&
+                    ReferenceEquals(questView.Client.Entity, questView.Player) && questView.Player.LoginTime == questView.Login)
+                    questView.Player.UpdatePokerQuestTasks(quest.Update);
                 else if (delivery.LocalMessage is { } local && delivery.View is { } localView &&
                     ReferenceEquals(localView.Client.Entity, localView.Player) && localView.Player.LoginTime == localView.Login)
                     PacketSender.SendChatMsg(localView.Player, local, ChatMessageType.Local, Color.White);

@@ -1,4 +1,6 @@
 using System.Runtime.CompilerServices;
+using Intersect.Framework.Core.GameObjects.Quests;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Server.MiniGames.Poker;
 using Intersect.Server.MiniGames.Progression;
 
@@ -33,6 +35,20 @@ internal static class ExtrasSmokeTests
             }),
             ("Silent table still exposes winner privately without requesting global chat", () =>
             { var f = new Fixture(announce: false); f.Start(); f.FoldActor(); Check(!f.Tables.CollectWins().Single().AnnounceGlobally, "Opt-in ignored"); }),
+            ("Poker quest progress distinguishes play, wins, net amount and level", () =>
+            {
+                var win = new PokerQuestUpdate(true, 125, 7);
+                Check(PokerQuestProgress.Apply(QuestObjective.PokerPlayHands, 2, 10, win) == 3, "Played hands");
+                Check(PokerQuestProgress.Apply(QuestObjective.PokerWinHands, 2, 10, win) == 3, "Won hands");
+                Check(PokerQuestProgress.Apply(QuestObjective.PokerWinAmount, 40, 500, win) == 165, "Net amount");
+                Check(PokerQuestProgress.Apply(QuestObjective.PokerReachLevel, 4, 10, win) == 7, "Poker level");
+                var loss = new PokerQuestUpdate(true, 0, 7);
+                Check(PokerQuestProgress.Apply(QuestObjective.PokerWinHands, 2, 10, loss) == 2, "Loss counted as win");
+                Check(PokerQuestProgress.Apply(QuestObjective.PokerPlayHands, 2, 10, loss) == 3, "Loss did not count as played");
+                var sync = new PokerQuestUpdate(false, 0, 12);
+                Check(PokerQuestProgress.Apply(QuestObjective.PokerReachLevel, 0, 10, sync) == 10, "Level sync did not clamp target");
+                Check(PokerQuestProgress.Apply(QuestObjective.PokerPlayHands, 2, 10, sync) == 2, "Join sync counted a hand");
+            }),
             ("Unlocked backs apply immediately without changing betting state", () =>
             {
                 var f = new Fixture(unlocked: true);

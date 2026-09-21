@@ -285,6 +285,14 @@ public partial class QuestsWindow
             progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {NPCDescriptor.GetName(currentTask.TargetId)}";
         else if (currentTask.Objective == QuestObjective.GatherItems)
             progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {ItemDescriptor.GetName(currentTask.TargetId)}";
+        else if (currentTask.Objective == QuestObjective.PokerWinHands)
+            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} Poker hands won";
+        else if (currentTask.Objective == QuestObjective.PokerWinAmount)
+            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} net Poker winnings";
+        else if (currentTask.Objective == QuestObjective.PokerReachLevel)
+            progressText = $"Poker level {playerQuest.TaskProgress} / {currentTask.Quantity}";
+        else if (currentTask.Objective == QuestObjective.PokerPlayHands)
+            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} Poker hands played";
 
         // cache
         if (_lastHudQuestId == mSelectedQuest.Id &&
@@ -529,6 +537,21 @@ public partial class QuestsWindow
                                         NPCDescriptor.GetName(mSelectedQuest.Tasks[i].TargetId)
                                     ), mQuestDescTemplateLabel
                                 );
+                            }
+                            else if (mSelectedQuest.Tasks[i].Objective is QuestObjective.PokerWinHands or QuestObjective.PokerWinAmount or
+                                     QuestObjective.PokerReachLevel or QuestObjective.PokerPlayHands)
+                            {
+                                var progress = Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress;
+                                var quantity = mSelectedQuest.Tasks[i].Quantity;
+                                var text = mSelectedQuest.Tasks[i].Objective switch
+                                {
+                                    QuestObjective.PokerWinHands => $"{progress} / {quantity} Poker hands won",
+                                    QuestObjective.PokerWinAmount => $"{progress} / {quantity} net Poker winnings",
+                                    QuestObjective.PokerReachLevel => $"Poker level {progress} / {quantity}",
+                                    QuestObjective.PokerPlayHands => $"{progress} / {quantity} Poker hands played",
+                                    _ => string.Empty,
+                                };
+                                mQuestDescLabel.AddText(text, mQuestDescTemplateLabel);
                             }
                         }
                     }

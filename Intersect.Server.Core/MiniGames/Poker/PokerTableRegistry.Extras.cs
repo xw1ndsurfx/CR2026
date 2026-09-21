@@ -10,6 +10,7 @@ namespace Intersect.Server.MiniGames.Poker;
 public sealed record PokerWinNotice(PokerSession Recipient, Guid TableInstanceId, long HandId,
     string PlayerName, long NetChips, bool AnnounceGlobally);
 public sealed record PokerLevelRewardNotice(PokerSession Recipient, Guid TableInstanceId, int Level, PokerLevelReward[] Rewards);
+public sealed record PokerQuestNotice(PokerSession Recipient, Guid TableInstanceId, PokerQuestUpdate Update);
 
 public sealed partial class PokerTableRegistry
 {
@@ -25,6 +26,7 @@ public sealed partial class PokerTableRegistry
     }
     private readonly Queue<PokerWinNotice> _wins = new();
     private readonly Queue<PokerLevelRewardNotice> _levelRewards = new();
+    private readonly Queue<PokerQuestNotice> _questUpdates = new();
 
     public PokerRegistryResult SelectCardBack(PokerPresence caller, Guid tableId, int backId)
     {
@@ -77,6 +79,16 @@ public sealed partial class PokerTableRegistry
         }
     }
 
+    public PokerQuestNotice[] CollectQuestUpdates()
+    {
+        lock (_gate)
+        {
+            var notices = _questUpdates.ToArray();
+            _questUpdates.Clear();
+            return notices;
+        }
+    }
+
     private static int SelectedBack(Entry entry, Guid player) => entry.Npcs.ContainsKey(player)
         ? entry.Options.NpcCardBackId : entry.Extras.SelectedBacks.GetValueOrDefault(player);
 
@@ -107,7 +119,11 @@ public sealed partial class PokerTableRegistry
     {
         if (entry.Players.Count == 0) return;
         var state = Current(entry);
-        foreach (var win in entry.Extras.Ledger.Complete(state))
+        var alreadyFinished = entry.Extras.Ledger.IsFinished;
+        var wins = entry.Extras.Ledger.Complete(state);
+        if (alreadyFinished || !entry.Extras.Ledger.IsFinished) return;
+
+        foreach (var win in wins)
         {
             var seat = state.Seats.First(s => s.PlayerId == win.PlayerId);
             Decision(entry, seat, "wins", win.Chips);
@@ -117,7 +133,15 @@ public sealed partial class PokerTableRegistry
                 win.Name, win.Chips, entry.Options.AnnounceWins));
             QueueExperience(entry, win.PlayerId, state.HandId);
         }
+
         ProcessExperience(DateTimeOffset.UtcNow);
+        foreach (var player in entry.Extras.EligibleHumans)
+        {
+            if (!_members.TryGetValue(player, out var member)) continue;
+            var net = wins.FirstOrDefault(w => w.PlayerId == player)?.Chips ?? 0;
+            var level = entry.Extras.Profiles.GetValueOrDefault(player)?.Level ?? 1;
+            _questUpdates.Enqueue(new(member.Presence.Session, entry.Id, new PokerQuestUpdate(true, net, level)));
+        }
     }
 
     private PokerPresentation Present(Entry entry, Guid player)

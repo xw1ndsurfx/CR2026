@@ -7,4 +7,12 @@ public enum QuestObjective
     GatherItems,
 
     KillNpcs,
+
+    PokerWinHands,
+
+    PokerWinAmount,
+
+    PokerReachLevel,
+
+    PokerPlayHands,
 }
