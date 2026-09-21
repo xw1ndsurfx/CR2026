@@ -90,13 +90,18 @@ public static class PokerNpcPolicy
             view.ToCall >= Math.Max(bigBlind * 8, me.Chips * 3 / 5));
         if (facingShove)
         {
-            // Do not rig cards. Make reckless human shoves less profitable by allowing NPCs
-            // to continue only with ranges that are strong enough to justify a large call.
-            if (strength >= 90 || strength >= 75 && roll < 80 || strength >= 65 && roll < 35)
+            // Never rig the deck. Instead, defend shoves using hand strength and pot odds so
+            // repeated blind all-ins are not an easy way to steal every pot from the bots.
+            var potAfterCall = Math.Max(1L, view.Pot + view.ToCall);
+            var pricePercent = (int)Math.Clamp(view.ToCall * 100L / potAfterCall, 0, 100);
+            var threshold = 45 + Math.Min(25, pricePercent / 2);
+            if (strength >= threshold + 15 ||
+                strength >= threshold && roll < 78 ||
+                strength >= threshold - 10 && roll < 28)
                 return (PokerAction.Call, 0);
             return (PokerAction.Fold, 0);
         }
-        if (view.CanRaise && strength >= 82 && roll < 18 && view.MaximumRaiseTo > view.CurrentBet)
+        if (view.CanRaise && strength >= 88 && roll < 32 && view.MaximumRaiseTo > view.CurrentBet)
             return (PokerAction.RaiseTo, view.MaximumRaiseTo);
         if (view.CanRaise && strength >= 45 && roll < 24 && view.MaximumRaiseTo > view.CurrentBet)
             return (PokerAction.RaiseTo, Math.Min(view.MinimumRaiseTo, view.MaximumRaiseTo));
