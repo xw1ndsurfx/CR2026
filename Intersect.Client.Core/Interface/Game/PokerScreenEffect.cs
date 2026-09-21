@@ -1,3 +1,4 @@
+using Intersect.Client.Core;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen.Control;
@@ -37,6 +38,7 @@ internal sealed class PokerScreenEffect : IDisposable
         if (_disposed) return;
         foreach (var layer in _layers) { layer.Frames = 0; layer.Image.IsHidden = true; }
         if (id == Guid.Empty || AnimationDescriptor.Get(id) is not { } animation) return;
+        if (!string.IsNullOrWhiteSpace(animation.Sound)) Audio.AddGameSound(animation.Sound, false);
         Configure(_layers[0], animation.Lower);
         Configure(_layers[1], animation.Upper);
         _started = Environment.TickCount64;

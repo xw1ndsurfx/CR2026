@@ -52,7 +52,8 @@ internal sealed class PokerFundedTable
         _money = money; Key = key; Currency = currency; Rules = rules; Options = options; Reserve = reserve;
         CurrencyName = string.IsNullOrWhiteSpace(currencyName) ? "currency" : currencyName;
         _table = new PokerTable(rules);
-        House = key.MapId.ToString("N") + ":" + key.Name + ":" + currency.ToString("N");
+        House = (options.UnlimitedNpcFunds ? "unlimited:" : "finite:") +
+            key.MapId.ToString("N") + ":" + key.Name + ":" + currency.ToString("N");
     }
     public bool Contains(Guid player) => _members.ContainsKey(player);
     public bool Leaving(Guid player) => _members.TryGetValue(player, out var m) && m.Leaving;
@@ -87,6 +88,15 @@ internal sealed class PokerFundedTable
                 s.InHand ? _members[s.PlayerId].HandBack : Back(s.PlayerId), Back(s.PlayerId))).ToArray(),
             NetWin = net, VictoryAnimationId = net > 0 ? Options.VictoryAnimationId : Guid.Empty,
             Experience = profile.Experience, Wins = profile.Wins, ProgressPending = Pending, Decisions = _decisions.ToArray(),
+            CheckAnimationId = Options.CheckAnimationId, CallAnimationId = Options.CallAnimationId,
+            RaiseAnimationId = Options.RaiseAnimationId, FoldAnimationId = Options.FoldAnimationId,
+            AllInAnimationId = Options.AllInAnimationId, ShowdownAnimationId = Options.ShowdownAnimationId,
+            TurnAnimationId = Options.TurnAnimationId, DefeatAnimationId = Options.DefeatAnimationId,
+            LeaveAnimationId = Options.LeaveAnimationId,
+            DealSound = Options.DealSound, CheckSound = Options.CheckSound, CallSound = Options.CallSound,
+            RaiseSound = Options.RaiseSound, FoldSound = Options.FoldSound, AllInSound = Options.AllInSound,
+            ShowdownSound = Options.ShowdownSound, TurnSound = Options.TurnSound,
+            VictorySound = Options.VictorySound, DefeatSound = Options.DefeatSound, LeaveSound = Options.LeaveSound,
         };
     }
     private int Back(Guid player) => _members[player].Escrow.Npc ? Options.NpcCardBackId : _members[player].Profile.SelectedBack;
@@ -120,9 +130,14 @@ internal sealed class PokerFundedTable
             var actor = before.Seats.FirstOrDefault(s => s.Seat == before.ActingSeat);
             if (actor != null)
             {
-                if (result == PokerError.None) Decision(actor.PlayerId,
-                    action switch { PokerAction.Fold => "fold", PokerAction.Check => "check", PokerAction.Call => "call", _ => "raise" },
-                    action == PokerAction.RaiseTo ? amount : action == PokerAction.Call ? before.ToCall : 0);
+                if (result == PokerError.None)
+                {
+                    var allIn = action == PokerAction.RaiseTo && amount >= before.MaximumRaiseTo ||
+                        action == PokerAction.Call && before.ToCall >= actor.Chips;
+                    Decision(actor.PlayerId,
+                        allIn ? "allin" : action switch { PokerAction.Fold => "fold", PokerAction.Check => "check", PokerAction.Call => "call", _ => "raise" },
+                        action == PokerAction.RaiseTo ? amount : action == PokerAction.Call ? before.ToCall : 0);
+                }
                 else if (now >= before.Deadline) Decision(actor.PlayerId, actor.StreetBet >= before.CurrentBet ? "check" : "fold", automatic: true);
             }
             AdditionalFolds(before, actor?.PlayerId ?? Guid.Empty); ++Version;
@@ -227,7 +242,7 @@ internal sealed class PokerFundedTable
     }
     private bool AddNpc(string name, bool dealer)
     {
-        var escrow = _money.OpenNpc(Guid.NewGuid(), Id, Currency, House, Reserve, Rules.StartingChips); if (escrow == null) return false;
+        var escrow = _money.OpenNpc(Guid.NewGuid(), Id, Currency, House, Reserve, Rules.StartingChips, Options.UnlimitedNpcFunds); if (escrow == null) return false;
         var error = _table.Join(escrow.Id, name, escrow.Amount);
         if (error != PokerError.None) { _money.Release(escrow.Id); throw new MoneyRuleException("NPC admission failed: " + error); }
         _members.Add(escrow.Id, new Member(escrow, name) { HandBack = Options.NpcCardBackId });

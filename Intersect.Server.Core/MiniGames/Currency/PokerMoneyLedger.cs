@@ -155,7 +155,7 @@ public sealed class PokerMoneyLedger : IDisposable
         { InsertSeat(c, tx, expected); debit(c, tx); Receipt(c, tx, Id(seat) + ":in", character, currency, amount, kind); });
         return expected;
     }
-    public MoneySeat? OpenNpc(Guid seat, Guid table, Guid currency, string house, long seed, long stake)
+    public MoneySeat? OpenNpc(Guid seat, Guid table, Guid currency, string house, long seed, long stake, bool unlimited = false)
     {
         Required(seat); Required(table); Required(currency); Amount(seed); Amount(stake);
         if (stake == 0 || string.IsNullOrWhiteSpace(house) || house.Length > 200) throw new MoneyRuleException("Invalid NPC funding.");
@@ -167,6 +167,12 @@ public sealed class PokerMoneyLedger : IDisposable
                 if (!existing.Npc || existing.Status != 0 || existing.Table != table || existing.Currency != currency || existing.House != house)
                     throw new MoneyRuleException("NPC admission receipt mismatch.");
                 return existing;
+            }
+            if (unlimited)
+            {
+                var infinite = new MoneySeat(seat, table, Guid.Empty, currency, house, stake, true, 0);
+                InsertSeat(c, tx, infinite);
+                return infinite;
             }
             var previous = Scalar(c, tx, "SELECT Available FROM PokerMoneyHouses WHERE House=$p0 AND Currency=$p1", house, Id(currency));
             if (previous == null && seed == 0) return null;
@@ -183,8 +189,14 @@ public sealed class PokerMoneyLedger : IDisposable
     private static void ReturnNpc(SqliteConnection c, SqliteTransaction tx, MoneySeat s)
     {
         if (!s.Npc || s.Status == 2) return;
-        if (Exec(c, tx, "UPDATE PokerMoneyHouses SET Available=Available+$p1 WHERE House=$p0 AND Currency=$p2 AND Available<=$p3",
-            s.House, s.Amount, Id(s.Currency), MaximumBalance - s.Amount) != 1) throw new MoneyRuleException("Invalid house refund.");
+        var houseExists = Scalar(c, tx, "SELECT 1 FROM PokerMoneyHouses WHERE House=$p0 AND Currency=$p1",
+            s.House, Id(s.Currency)) != null;
+        if (houseExists && Exec(c, tx,
+                "UPDATE PokerMoneyHouses SET Available=Available+$p1 WHERE House=$p0 AND Currency=$p2 AND Available<=$p3",
+                s.House, s.Amount, Id(s.Currency), MaximumBalance - s.Amount) != 1)
+            throw new MoneyRuleException("Invalid house refund.");
+        // Unlimited NPC bankrolls intentionally mint/burn the NPC stake only.
+        // Any human winnings are therefore an explicit economy faucet chosen by the event designer.
         Exec(c, tx, "UPDATE PokerMoneySeats SET Status=2 WHERE Id=$p0", Id(s.Id));
     }
     public void Release(Guid seat) => Write((c, tx) =>
