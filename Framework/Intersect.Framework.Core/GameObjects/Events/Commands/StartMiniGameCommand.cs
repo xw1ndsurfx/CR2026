@@ -30,6 +30,31 @@ public sealed class StartMiniGameCommand : EventCommand
     public Guid CurrencyItemId { get; set; }
     /// <summary>One-time authorized house seed, shared across instances; reopening never reseeds it.</summary>
     [DefaultValue(0L)] public long NpcReserve { get; set; }
+    [DefaultValue(false)] public bool UnlimitedNpcReserve { get; set; }
+
+    // Optional audiovisual feedback. Animations may already include their own sound;
+    // the separate sound fields are useful for lightweight UI feedback.
+    [DefaultValue("")] public string DealSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid CheckAnimationId { get; set; }
+    [DefaultValue("")] public string CheckSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid CallAnimationId { get; set; }
+    [DefaultValue("")] public string CallSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid RaiseAnimationId { get; set; }
+    [DefaultValue("")] public string RaiseSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid FoldAnimationId { get; set; }
+    [DefaultValue("")] public string FoldSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid AllInAnimationId { get; set; }
+    [DefaultValue("")] public string AllInSound { get; set; } = string.Empty;
+    [DefaultValue("")] public string VictorySound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LoseAnimationId { get; set; }
+    [DefaultValue("")] public string LoseSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LevelUpAnimationId { get; set; }
+    [DefaultValue("")] public string LevelUpSound { get; set; } = string.Empty;
+
+    /// <summary>Optional common event queued once when a funded poker win increases the poker level.</summary>
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LevelUpRewardEventId { get; set; }
+
+    private static bool ValidSound(string? value) => value != null && value.Length <= 128 && !value.Any(char.IsControl);
 
     public bool HasValidSettings() => Game == MiniGameType.Poker &&
         !string.IsNullOrEmpty(TableId) && TableId.Length <= 64 &&
@@ -39,5 +64,8 @@ public sealed class StartMiniGameCommand : EventCommand
         BigBlind <= 1_000_000_000 && StartingChips >= BigBlind && StartingChips <= 1_000_000_000 &&
         NpcReserve is >= 0 and <= 1_000_000_000 &&
         TurnSeconds is >= 5 and <= 300 && NpcPlayers is >= 0 and <= 5 &&
-        NpcPlayers + (DealerPlays ? 1 : 0) < MaxPlayers && MiniGameProgression.IsBack(NpcCardBackId);
+        NpcPlayers + (DealerPlays ? 1 : 0) < MaxPlayers && MiniGameProgression.IsBack(NpcCardBackId) &&
+        ValidSound(DealSound) && ValidSound(CheckSound) && ValidSound(CallSound) && ValidSound(RaiseSound) &&
+        ValidSound(FoldSound) && ValidSound(AllInSound) && ValidSound(VictorySound) &&
+        ValidSound(LoseSound) && ValidSound(LevelUpSound);
 }
