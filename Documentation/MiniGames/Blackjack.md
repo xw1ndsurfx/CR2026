@@ -1,7 +1,7 @@
 # Blackjack for CR2026
 
 Blackjack is added alongside Poker in `Start Mini-Game`. Its dedicated development
-branch is `feature/blackjack-minigame`, based on the funded Poker implementation.
+branch is `feature/blackjack-part6-sync`, rebuilt on the completed Poker Part 11/11 baseline.
 It does not replace Poker and is not an automatic deployment to a live server.
 
 ## Event configuration
@@ -147,9 +147,13 @@ The borderless green-felt scene keeps the local human at the bottom. It shows
 the dealer's visible total, turn indicator, decisions, split hands, wagers,
 results, bankroll and green XP progress. The global chat optionally announces
 positive NET human wins using the selected item name; NPC results stay local.
-Dealing and winner-only animations use the existing visual screen effects,
-without sounds or lights; at most eight seconds, no repeated Refresh replay.
-The winner's scene must still be open to show the local victory effect.
+Existing event animations still support the configured deal and winner effects.
+Blackjack also uses the Poker Part 11/11 procedural motion settings: Off, Fast,
+Normal or Cinematic, with authoritative transitions for initial dealing, Hit,
+Double/Split chip movement, dealer reveal/draw, payouts, shuffle and the local
+winner pulse. The first snapshot after opening or reconnecting always snaps to
+the authoritative final positions, and Refresh never replays historical motion.
+The winner's scene must still be open to show local visual effects.
 
 ## Checks and manual acceptance
 
@@ -177,8 +181,8 @@ Useful commands from the repository root:
 
 ```powershell
 git fetch origin
-git switch feature/blackjack-minigame
-git pull --ff-only origin feature/blackjack-minigame
+git switch feature/blackjack-part6-sync
+git pull --ff-only origin feature/blackjack-part6-sync
 git submodule update --init --recursive
 
 dotnet build Intersect.Server/Intersect.Server.csproj --configuration Debug
