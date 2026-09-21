@@ -163,6 +163,7 @@ public partial class GameInterface : MutableInterface
         mQuestOfferWindow = new QuestOfferWindow(GameCanvas);
         mMapItemWindow = new MapItemWindow(GameCanvas);
         _minimapHud = new MinimapHud(GameCanvas);
+        _minimapHud.SendToBack();
     }
 
     //Chatbox
