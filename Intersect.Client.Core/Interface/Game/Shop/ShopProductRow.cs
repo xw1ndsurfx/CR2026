@@ -78,7 +78,7 @@ internal sealed class ShopProductRow : Base
         parent,
         "ShopBuy" + shopSlot,
         item,
-        canAfford ? "Available" : "Not enough currency",
+        canAfford ? Strings.Shop.Available.ToString() : Strings.Shop.NotEnoughCurrency.ToString(),
         Price(price, currency),
         Strings.Shop.BuyItem.ToString(),
         canAfford,
@@ -97,14 +97,14 @@ internal sealed class ShopProductRow : Base
         parent,
         "ShopSell" + inventorySlot,
         item,
-        $"Owned: {owned}",
+        Strings.Shop.Owned.ToString(owned),
         Price(price, currency),
         Strings.Shop.SellItem.ToString(),
         true,
         action
     );
 
-    private static string Price(int amount, string currency) => $"{Math.Max(0, amount)} {currency}";
+    private static string Price(int amount, string currency) => amount <= 0 ? Strings.Shop.Free.ToString() : $"{amount} {currency}";
 
     private Label Label(string name, int x, int y, int width, int height, int size, Color color)
     {
