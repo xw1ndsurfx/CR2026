@@ -18,6 +18,8 @@ public partial class ShopWindow : Window
 {
     private readonly ScrollControl _buyContainer;
     private readonly ScrollControl _sellContainer;
+    private readonly ShopScrollRail _buyScrollRail;
+    private readonly ShopScrollRail _sellScrollRail;
     private readonly Label _buyHeader;
     private readonly Label _sellHeader;
     private readonly Label _buyEmpty;
@@ -73,6 +75,9 @@ public partial class ShopWindow : Window
             AutoHideBars = false,
         };
 
+        _buyScrollRail = new ShopScrollRail(this, "BuyScrollRail", _buyContainer);
+        _sellScrollRail = new ShopScrollRail(this, "SellScrollRail", _sellContainer);
+
         _buyEmpty = EmptyLabel("BuyEmpty", Strings.Shop.NoItemsForSale.ToString());
         _sellEmpty = EmptyLabel("SellEmpty", Strings.Shop.NoItemsToSell.ToString());
         _hint = new Label(this, "ShopHint")
@@ -96,12 +101,15 @@ public partial class ShopWindow : Window
         _search.SetBounds(24, 18, 732, 30);
         _buyHeader.SetBounds(24, 56, 350, 28);
         _sellHeader.SetBounds(406, 56, 350, 28);
-        _buyContainer.SetBounds(24, 90, 350, 468);
-        _sellContainer.SetBounds(406, 90, 350, 468);
-        _buyContainer.VerticalScrollBar.Width = 16;
-        _sellContainer.VerticalScrollBar.Width = 16;
-        _buyContainer.VerticalScrollBar.IsHidden = false;
-        _sellContainer.VerticalScrollBar.IsHidden = false;
+        _buyContainer.SetBounds(24, 90, 330, 468);
+        _sellContainer.SetBounds(406, 90, 330, 468);
+        _buyScrollRail.SetBounds(358, 90, 14, 468);
+        _sellScrollRail.SetBounds(740, 90, 14, 468);
+
+        // The Shop uses explicit rails because dynamically-created Gwen scrollbars
+        // are not reliably visible with every textured UI skin.
+        _buyContainer.VerticalScrollBar.IsHidden = true;
+        _sellContainer.VerticalScrollBar.IsHidden = true;
         _buyEmpty.SetBounds(38, 112, 300, 50);
         _sellEmpty.SetBounds(420, 112, 300, 50);
         _hint.SetBounds(24, 570, 732, 28);
@@ -225,11 +233,10 @@ public partial class ShopWindow : Window
     {
         const int rowHeight = 76;
         var contentHeight = Math.Max(container.Height + 1, rowCount * rowHeight);
-        container.SetInnerSize(Math.Max(1, container.Width - container.VerticalScrollBar.Width), contentHeight);
-        container.VerticalScrollBar.IsHidden = false;
+        container.SetInnerSize(Math.Max(1, container.Width), contentHeight);
+        container.VerticalScrollBar.IsHidden = true;
         container.VerticalScrollBar.IsVisibleInTree = true;
         container.VerticalScrollBar.IsDisabled = false;
-        container.VerticalScrollBar.BringToFront();
         container.VerticalScrollBar.SetScrollAmount(
             Math.Clamp(container.VerticalScrollBar.ScrollAmount, 0f, 1f),
             forceUpdate: true
