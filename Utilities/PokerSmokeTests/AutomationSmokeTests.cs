@@ -138,6 +138,52 @@ internal static class AutomationSmokeTests
             var decision = PokerNpcPolicy.Choose(view, npc, 10, 90);
             Check(table.Act(npc, view.HandId, view.Revision, decision.Action, decision.Amount, Now) == PokerError.None, "Policy made illegal move");
         });
+        Test("NPC strength uses only own cards and board, with sensible preflop ordering", () =>
+        {
+            PokerSnapshot ViewWith(string hole, string board = "") => new(
+                1, 1, board.Length == 0 ? PokerPhase.PreFlop : PokerPhase.Flop, 0, 0,
+                100, 10, 10, 20, 1000, true, Now.AddSeconds(30),
+                Cards(board), Cards(hole),
+                [new(0, Guid.Parse("00000000-0000-0000-0000-000000000001"), "NPC", 990, 10, 10, true, false, false, false, [])], []);
+            var aces = PokerNpcPolicy.Strength(ViewWith("AC AD"));
+            var kings = PokerNpcPolicy.Strength(ViewWith("KC KD"));
+            var suitedBroadway = PokerNpcPolicy.Strength(ViewWith("AC KC"));
+            var trash = PokerNpcPolicy.Strength(ViewWith("2C 7D"));
+            Check(aces > kings && kings > suitedBroadway && suitedBroadway > trash, "Preflop ordering is not sensible");
+            Check(PokerNpcPolicy.Strength(ViewWith("AC AD", "AH 7S 2C")) > PokerNpcPolicy.Strength(ViewWith("AC KD", "QH 7S 2C")),
+                "Made hand strength not reflected");
+        });
+        Test("NPC defends credible hands against all-in pressure without seeing hidden cards", () =>
+        {
+            var npc = Guid.NewGuid(); var human = Guid.NewGuid();
+            PokerSnapshot Shove(string hole) => new(
+                1, 1, PokerPhase.PreFlop, 0, 0, 1500, 1000, 1000, 2000, 1000, false, Now.AddSeconds(30), [], Cards(hole),
+                [new(0, npc, "Marlow", 1000, 0, 0, true, false, false, false, []),
+                 new(1, human, "Human", 0, 1000, 1000, true, false, true, false, [])], []);
+            var premiumCalls = Enumerable.Range(0, 100).Count(roll => PokerNpcPolicy.Choose(Shove("AC AD"), npc, 10, roll).Action == PokerAction.Call);
+            var trashCalls = Enumerable.Range(0, 100).Count(roll => PokerNpcPolicy.Choose(Shove("2C 7D"), npc, 10, roll).Action == PokerAction.Call);
+            Check(premiumCalls >= 90, "Premium hand folds too often to all-in");
+            Check(trashCalls <= 15, "Trash hand calls all-in too often");
+            Check(premiumCalls > trashCalls * 5, "All-in defense does not distinguish hand quality");
+        });
+        Test("NPC reacts to pot odds and never needs opponent hole cards", () =>
+        {
+            var npc = Guid.NewGuid(); var human = Guid.NewGuid();
+            var seats = new[]
+            {
+                new PokerSeatView(0, npc, "Marlow", 900, 100, 100, true, false, false, false, []),
+                new PokerSeatView(1, human, "Human", 900, 200, 200, true, false, false, false, []),
+            };
+            var cheap = new PokerSnapshot(1, 1, PokerPhase.Flop, 0, 0, 900, 200, 100, 300, 1000, true,
+                Now.AddSeconds(30), Cards("2C 8D QH"), Cards("QC JS"), seats, []);
+            var expensive = cheap with { Pot = 200, ToCall = 700, CurrentBet = 800 };
+            var cheapCalls = Enumerable.Range(0, 100).Count(roll => PokerNpcPolicy.Choose(cheap, npc, 10, roll).Action != PokerAction.Fold);
+            var expensiveCalls = Enumerable.Range(0, 100).Count(roll => PokerNpcPolicy.Choose(expensive, npc, 10, roll).Action != PokerAction.Fold);
+            Check(cheapCalls > expensiveCalls, "Pot odds/stack pressure do not affect decisions");
+            var leaked = cheap with { Seats = seats.Select(s => s.PlayerId == human ? s with { RevealedCards = Cards("AS AD") } : s).ToArray() };
+            for (var roll = 0; roll < 100; ++roll)
+                Check(PokerNpcPolicy.Choose(cheap, npc, 10, roll) == PokerNpcPolicy.Choose(leaked, npc, 10, roll), "NPC read opponent hole cards");
+        });
         Test("Five automatic hands preserve chips and private-card boundaries", () =>
         {
             var r = new PokerTableRegistry(); var p = Person(Guid.NewGuid());
