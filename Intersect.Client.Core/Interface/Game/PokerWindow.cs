@@ -1,4 +1,5 @@
 using System.Globalization;
+using Intersect.Client.Core;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Localization;
@@ -31,7 +32,8 @@ internal sealed partial class PokerWindow : Base
     private PokerSceneLayout _layout;
     private PokerTableState? _state;
     private int _localSeat, _selectedBack, _lastLevel = -1;
-    private long _lastMinimum = -1, _levelUpUntil;
+    private long _lastMinimum = -1, _levelUpUntil, _lastDecisionSequence, _lastFinishedHand = -1;
+    private bool _cueBaseline, _wasTurn;
     private float _xpFraction;
     private string _localError = string.Empty;
     private bool _destroyed;
@@ -118,6 +120,28 @@ internal sealed partial class PokerWindow : Base
         var playing = state.Stage is >= PokerStage.PreFlop and <= PokerStage.River;
         var turn = playing && state.ActingSeat == me.Seat && !me.Leaving && !me.Folded && !me.AllIn;
         var enabled = turn && !model.Pending;
+        if (!_cueBaseline)
+        {
+            _lastDecisionSequence = state.Decisions.LastOrDefault()?.Sequence ?? 0;
+            _lastFinishedHand = state.Stage == PokerStage.Finished ? state.HandId : -1;
+            _wasTurn = turn; _cueBaseline = true;
+        }
+        else
+        {
+            foreach (var decision in state.Decisions.Where(d => d.Sequence > _lastDecisionSequence).OrderBy(d => d.Sequence))
+            {
+                PlayDecisionCue(state, decision);
+                _lastDecisionSequence = Math.Max(_lastDecisionSequence, decision.Sequence);
+            }
+            if (turn && !_wasTurn) PlayCue(state.TurnAnimationId, state.TurnSound);
+            _wasTurn = turn;
+        }
+        var newlyFinished = state.Stage == PokerStage.Finished && state.HandId != _lastFinishedHand;
+        if (newlyFinished)
+        {
+            _lastFinishedHand = state.HandId;
+            PlayCue(state.ShowdownAnimationId, state.ShowdownSound);
+        }
         var opponents = state.Seats.Any(s => s.PlayerId != me.PlayerId && !s.Leaving &&
             (s.Chips > 0 || state.NpcIds.Contains(s.PlayerId)));
         _table.Text = Strings.PokerScene.Title.ToString(model.Current.TableName, state.HandId);
@@ -164,8 +188,10 @@ internal sealed partial class PokerWindow : Base
             Strings.PokerScene.Progress.ToString(level, state.Experience - baseXp, toNext);
         if (_lastLevel > 0 && level > _lastLevel) _levelUpUntil = Environment.TickCount64 + 5000;
         _lastLevel = level; _levelUp.Text = Environment.TickCount64 < _levelUpUntil ? Strings.PokerScene.LevelUp.ToString(level) : "";
-        if (model.Victories.Observe(model.Current.TableInstanceId, me.PlayerId, state.HandId,
-                state.Stage == PokerStage.Finished, state.NetWin)) _victory.Play(state.VictoryAnimationId);
+        var won = model.Victories.Observe(model.Current.TableInstanceId, me.PlayerId, state.HandId,
+            state.Stage == PokerStage.Finished, state.NetWin);
+        if (won) PlayCue(state.VictoryAnimationId, state.VictorySound);
+        else if (newlyFinished && state.NetWin <= 0) PlayCue(state.DefeatAnimationId, state.DefeatSound);
         _victory.Update();
         _start.IsDisabled = model.Pending || playing || me.Leaving || me.Chips == 0 || !opponents || state.ProgressPending;
         _fold.IsDisabled = !enabled; _check.IsDisabled = !enabled || state.ToCall != 0;
@@ -185,6 +211,26 @@ internal sealed partial class PokerWindow : Base
         };
         UpdateCurrency(state, me);
         if (!_backTray.IsHidden) _backTray.BringToFront();
+    }
+    private void PlayDecisionCue(PokerTableState state, PokerDecisionState decision)
+    {
+        var cue = decision.Action switch
+        {
+            "deal" => (state.DealAnimationId, state.DealSound),
+            "check" => (state.CheckAnimationId, state.CheckSound),
+            "call" => (state.CallAnimationId, state.CallSound),
+            "raise" => (state.RaiseAnimationId, state.RaiseSound),
+            "allin" => (state.AllInAnimationId, state.AllInSound),
+            "fold" => (state.FoldAnimationId, state.FoldSound),
+            "leave" => (state.LeaveAnimationId, state.LeaveSound),
+            _ => (Guid.Empty, ""),
+        };
+        PlayCue(cue.Item1, cue.Item2);
+    }
+    private void PlayCue(Guid animation, string sound)
+    {
+        if (!string.IsNullOrWhiteSpace(sound)) Audio.AddGameSound(sound, false);
+        if (animation != Guid.Empty) _victory.Play(animation);
     }
     private static readonly Color Gold = new(231, 194, 112);
     protected override void Render(SkinBase skin)
@@ -240,8 +286,12 @@ internal sealed partial class PokerWindow : Base
             Fill(r, color, x + w / 2 - half, y + row, half * 2, Math.Min(3, h - row));
         }
     }
-    private static string Describe(PokerDecisionState decision) => Strings.PokerScene.Actions.TryGetValue(decision.Action, out var text)
-        ? text.ToString(decision.Amount) + (decision.Automatic ? " *" : "") : "";
+    private static string Describe(PokerDecisionState decision)
+    {
+        if (decision.Action == "allin") return "All-in " + decision.Amount + (decision.Automatic ? " *" : "");
+        return Strings.PokerScene.Actions.TryGetValue(decision.Action, out var text)
+            ? text.ToString(decision.Amount) + (decision.Automatic ? " *" : "") : "";
+    }
     private void SelectBack(int id)
     {
         if (_state == null) return;

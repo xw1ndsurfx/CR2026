@@ -48,7 +48,19 @@ internal static class PokerCurrencyRuntime
                     return new(PokerRegistryError.InvalidPresence);
                 var rules = new PokerRules(command.MaxPlayers, command.StartingChips, command.SmallBlind, command.BigBlind, command.TurnSeconds);
                 var options = new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
-                    command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId);
+                    command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId)
+                {
+                    UnlimitedNpcFunds = command.UnlimitedNpcFunds,
+                    CheckAnimationId = command.CheckAnimationId, CallAnimationId = command.CallAnimationId,
+                    RaiseAnimationId = command.RaiseAnimationId, FoldAnimationId = command.FoldAnimationId,
+                    AllInAnimationId = command.AllInAnimationId, ShowdownAnimationId = command.ShowdownAnimationId,
+                    TurnAnimationId = command.TurnAnimationId, DefeatAnimationId = command.DefeatAnimationId,
+                    LeaveAnimationId = command.LeaveAnimationId,
+                    DealSound = command.DealSound, CheckSound = command.CheckSound, CallSound = command.CallSound,
+                    RaiseSound = command.RaiseSound, FoldSound = command.FoldSound, AllInSound = command.AllInSound,
+                    ShowdownSound = command.ShowdownSound, TurnSound = command.TurnSound,
+                    VictorySound = command.VictorySound, DefeatSound = command.DefeatSound, LeaveSound = command.LeaveSound,
+                };
                 var key = new PokerTableKey(presence.MapId, presence.MapInstanceId, command.TableId);
                 var money = PokerInventoryBridge.Ledger;
                 lock (Gate)

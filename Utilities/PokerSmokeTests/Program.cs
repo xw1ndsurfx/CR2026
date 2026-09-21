@@ -19,6 +19,7 @@ var tests = new (string Name, Action Run)[]
     ("Short blind does not create a dry side pot", ShortBlind),
     ("Repeated hands rotate the dealer", RepeatedHands),
     ("Deterministic simulated games conserve every chip", Simulations),
+    ("NPCs defend large all-ins without rigging cards", NpcAllInPressure),
 };
 var failures = 0;
 foreach (var test in tests)
@@ -321,4 +322,22 @@ static void Simulations()
         }
         Check(moves <= 500 && Total(View(table)) == chips, "Simulation did not finish/conserve chips");
     }
+}
+
+static void NpcAllInPressure()
+{
+    var npc = Id(2);
+    PokerSnapshot ViewWith(int[] cards, long toCall, long chips, long pot = 600) => new(
+        1, 1, PokerPhase.PreFlop, 0, 1, pot, toCall, toCall, toCall * 2, chips, true,
+        Now().AddSeconds(30), [], cards,
+        [
+            new PokerSeatView(0, Id(1), "Human", 500, 0, 0, true, false, false, false, []),
+            new PokerSeatView(1, npc, "NPC", chips, 0, 0, true, false, false, false, []),
+        ], []);
+    Check(PokerNpcPolicy.Choose(ViewWith(Cards("AC AD"), 400, 1000), npc, 10, 99).Action == PokerAction.Call,
+        "Strong pair folded to a large shove");
+    Check(PokerNpcPolicy.Choose(ViewWith(Cards("2C 7D"), 400, 1000), npc, 10, 99).Action == PokerAction.Fold,
+        "Weak hand should still be allowed to fold");
+    Check(PokerNpcPolicy.Choose(ViewWith(Cards("KC QD"), 400, 1000), npc, 10, 20).Action == PokerAction.Call,
+        "Strong broadway should defend often enough to punish easy all-in bluffs");
 }
