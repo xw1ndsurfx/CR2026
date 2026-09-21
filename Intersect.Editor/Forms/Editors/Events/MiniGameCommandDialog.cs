@@ -115,7 +115,7 @@ internal sealed class MiniGameCommandDialog : Form
             rewardList.Items.Clear();
             foreach (var reward in rewardDraft.OrderBy(r => r.Level).ThenBy(r => ItemDescriptor.GetName(r.ItemId)))
             {
-                var name = ItemDescriptor.Get(r.ItemId)?.Name ?? ("Missing item " + reward.ItemId);
+                var name = ItemDescriptor.Get(reward.ItemId)?.Name ?? ("Missing item " + reward.ItemId);
                 rewardList.Items.Add(new RewardListChoice(reward, $"Level {reward.Level}: {reward.Quantity:N0} x {name}"));
             }
         }
