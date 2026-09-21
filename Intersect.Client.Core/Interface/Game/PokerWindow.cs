@@ -151,8 +151,7 @@ internal sealed partial class PokerWindow : Base
         for (var i = 0; i < 3; ++i) _feed[i].Text = i < recent.Length ? Short(recent[i].Name + ": " + Describe(recent[i]), 40) : "";
         _payouts.Text = state.NetWin > 0 ? Strings.PokerScene.Net.ToString(state.NetWin) : "";
         _back.Text = Strings.PokerScene.Back.ToString(_selectedBack + 1); _back.IsDisabled = model.Pending || me.Leaving;
-        _backStatus.Text = me.SelectedCardBackId != me.CardBackId ? Strings.PokerCosmetics.NextHand :
-            _art.SelectedBackMissing ? Strings.PokerCosmetics.MissingArt : Strings.PokerCosmetics.Selected;
+        _backStatus.Text = _art.SelectedBackMissing ? Strings.PokerCosmetics.MissingArt : Strings.PokerCosmetics.Selected;
         for (var i = 0; i < 6; ++i)
         {
             _backs[i].IsDisabled = model.Pending || !MiniGameProgression.IsUnlocked(i, state.Experience);
@@ -253,7 +252,9 @@ internal sealed partial class PokerWindow : Base
         if (_state == null) return;
         if (!MiniGameProgression.IsUnlocked(id, _state.Experience))
         { _localError = Strings.PokerScene.Locked.ToString(MiniGameProgression.BackLevel(id)); return; }
-        Send(PokerRequestKind.SelectCardBack, id); _backTray.IsHidden = true;
+        _selectedBack = id;
+        Send(PokerRequestKind.SelectCardBack, id);
+        _backTray.IsHidden = true;
     }
     private void Raise()
     {

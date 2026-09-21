@@ -83,8 +83,11 @@ internal sealed class PokerFundedTable
         var net = state.Phase == PokerPhase.Finished && state.HandId == _settledHand ? _net.GetValueOrDefault(player) : 0;
         return new(_members.Where(p => p.Value.Escrow.Npc).Select(p => p.Key).ToArray(), _dealer, Options.AutoStart, Options.DealAnimationId)
         {
-            CardBacks = state.Seats.Select(s => new PokerSeatBack(s.PlayerId,
-                s.InHand ? _members[s.PlayerId].HandBack : Back(s.PlayerId), Back(s.PlayerId))).ToArray(),
+            CardBacks = state.Seats.Select(s =>
+            {
+                var selected = Back(s.PlayerId);
+                return new PokerSeatBack(s.PlayerId, selected, selected);
+            }).ToArray(),
             NetWin = net, VictoryAnimationId = net > 0 ? Options.VictoryAnimationId : Guid.Empty,
             Experience = profile.Experience, Wins = profile.Wins, ProgressPending = Pending, Decisions = _decisions.ToArray(),
             Sounds = Options.EffectiveSounds,
@@ -95,7 +98,9 @@ internal sealed class PokerFundedTable
     public void SelectBack(Guid player, int back)
     {
         if (Pending || Leaving(player)) throw new MoneyRuleException("FundingPending");
-        _members[player].Profile = _money.SelectBack(player, back); ++Version;
+        _members[player].Profile = _money.SelectBack(player, back);
+        _members[player].HandBack = back;
+        ++Version;
     }
     public PokerError Start(Guid player, long revision, DateTimeOffset now)
     {

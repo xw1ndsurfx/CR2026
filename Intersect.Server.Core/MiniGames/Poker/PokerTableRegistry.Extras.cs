@@ -116,10 +116,13 @@ public sealed partial class PokerTableRegistry
         var profile = entry.Extras.Profiles.GetValueOrDefault(player) ?? new();
         return new(entry.Npcs.Keys.ToArray(), entry.DealerNpcId, entry.Options.AutoStart, entry.Options.DealAnimationId)
         {
-            CardBacks = state.Seats.Select(s => new PokerSeatBack(s.PlayerId,
-                state.HandId > 0 && s.InHand
-                    ? entry.Extras.HandBacks.GetValueOrDefault(s.PlayerId, SelectedBack(entry, s.PlayerId))
-                    : SelectedBack(entry, s.PlayerId), SelectedBack(entry, s.PlayerId))).ToArray(),
+            CardBacks = state.Seats.Select(s =>
+            {
+                var selected = SelectedBack(entry, s.PlayerId);
+                // Card backs are cosmetic only: apply a human's newly selected back immediately,
+                // even during the current hand. NPC backs still come from the event configuration.
+                return new PokerSeatBack(s.PlayerId, selected, selected);
+            }).ToArray(),
             NetWin = net,
             VictoryAnimationId = net > 0 ? entry.Options.VictoryAnimationId : Guid.Empty,
             Experience = profile.Experience,

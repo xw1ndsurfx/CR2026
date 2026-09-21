@@ -118,6 +118,32 @@ try
         Check(p.Experience == 30000 && p.Level == 25 && p.Wins == 1300 && p.IsValid, "Mastery cap invalid");
         store.SelectBack(a, "poker", 5); Check(store.Load(a, "poker").SelectedBack == 5, "B6 not unlocked");
     });
+    Run("Registry: selecting an unlocked card back applies immediately during the current hand", () =>
+    {
+        var store = new MemoryMiniGameProgressStore();
+        var map = Guid.NewGuid();
+        var aId = Guid.NewGuid();
+        var bId = Guid.NewGuid();
+        var receiptTable = Guid.NewGuid();
+        for (var hand = 1; hand <= 40; ++hand) store.AwardWin(aId, "poker", receiptTable, hand);
+        Check(store.Load(aId, "poker").Level == 5, "Fixture did not unlock B2");
+
+        var registry = new PokerTableRegistry(store);
+        var a = new PokerPresence(new(aId, Guid.NewGuid()), map, Guid.Empty);
+        var b = new PokerPresence(new(bId, Guid.NewGuid()), map, Guid.Empty);
+        var joined = registry.Join(a, "backs-now", "Alice", new PokerRules(2));
+        registry.Join(b, "backs-now", "Bob", new PokerRules(2));
+        var now = DateTimeOffset.UtcNow;
+        registry.StartHand(a, joined.TableInstanceId, registry.Snapshot(a, joined.TableInstanceId).Snapshot!.Revision, now);
+
+        var before = registry.Presentation(b, joined.TableInstanceId).CardBacks.Single(x => x.PlayerId == aId);
+        Check(before.CurrentId == 0 && before.SelectedId == 0, "Unexpected initial back");
+
+        var selected = registry.SelectCardBack(a, joined.TableInstanceId, 1);
+        Check(selected.Error == PokerRegistryError.None, "Unlocked B2 selection rejected");
+        var after = registry.Presentation(b, joined.TableInstanceId).CardBacks.Single(x => x.PlayerId == aId);
+        Check(after.CurrentId == 1 && after.SelectedId == 1, "Selected back did not apply during current hand");
+    });
     Run("Registry: unreadable profile never grants a temporary level-one seat", () =>
     {
         var store = new FaultStore { FailLoad = true }; var registry = new PokerTableRegistry(store);
