@@ -1,4 +1,5 @@
 using Intersect.Client.Core;
+using Intersect.Client.Entities;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -54,15 +55,15 @@ public partial class ShopWindow : Window
             OverflowY = OverflowBehavior.Scroll,
         };
 
-        _buyEmpty = EmptyLabel("BuyEmpty", "This shop has no items for sale.");
-        _sellEmpty = EmptyLabel("SellEmpty", "This shop is not buying anything from your inventory.");
+        _buyEmpty = EmptyLabel("BuyEmpty", Strings.Shop.NoItemsForSale.ToString());
+        _sellEmpty = EmptyLabel("SellEmpty", Strings.Shop.NoItemsToSell.ToString());
         _hint = new Label(this, "ShopHint")
         {
             AutoSizeToContents = false,
             Font = Skin.DefaultFont,
             FontSize = 10,
             TextColorOverride = new Color(190, 190, 190),
-            Text = "Prices and actions are shown directly. Double-click and right-click shortcuts still work in your inventory.",
+            Text = Strings.Shop.WindowHint,
         };
     }
 
@@ -133,7 +134,7 @@ public partial class ShopWindow : Window
 
                 var currencyName = ItemDescriptor.TryGet(offer.CostItemId, out var currency)
                     ? currency.Name
-                    : "currency";
+                    : Strings.Shop.CurrencyFallback.ToString();
                 var ownedCurrency = Globals.Me?.GetQuantityOfItemInInventory(offer.CostItemId) ?? 0;
                 var canAfford = offer.CostItemQuantity < 1 || ownedCurrency >= offer.CostItemQuantity;
 
@@ -214,7 +215,7 @@ public partial class ShopWindow : Window
         return true;
     }
 
-    private void PlayerOnInventoryUpdated(Entities.Player player, int slotIndex)
+    private void PlayerOnInventoryUpdated(Player player, int slotIndex)
     {
         if (player != Globals.Me || !_shopInitialized) return;
         RefreshBuyRows();
