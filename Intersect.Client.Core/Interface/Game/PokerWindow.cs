@@ -93,8 +93,8 @@ internal sealed partial class PokerWindow : Base
         }
         _art = new PokerTableArt(_content, _backTray, _board);
         _victory = new PokerScreenEffect(canvas);
-        _actionEffect = new PokerScreenEffect(canvas);
-        _levelEffect = new PokerScreenEffect(canvas);
+        _actionEffect = new PokerScreenEffect(canvas, "PokerAction");
+        _levelEffect = new PokerScreenEffect(canvas, "PokerLevel");
         ResizeToCanvas();
     }
     public void ResizeToCanvas()

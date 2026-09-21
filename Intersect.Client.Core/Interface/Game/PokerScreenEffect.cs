@@ -18,10 +18,10 @@ internal sealed class PokerScreenEffect : IDisposable
     private long _started;
     private bool _disposed;
 
-    public PokerScreenEffect(Canvas canvas)
+    public PokerScreenEffect(Canvas canvas, string namePrefix = "PokerVictory")
     {
         _canvas = canvas;
-        _layers = [Make("PokerVictoryLower"), Make("PokerVictoryUpper")];
+        _layers = [Make(namePrefix + "Lower"), Make(namePrefix + "Upper")];
         Layer Make(string name) => new()
         {
             Image = new ImagePanel(canvas, name)
