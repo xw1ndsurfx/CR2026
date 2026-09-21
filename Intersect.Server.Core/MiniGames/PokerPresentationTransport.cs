@@ -30,6 +30,15 @@ public static class PokerPresentationTransport
         state.LevelUpSound = presentation.Sounds.LevelUp;
         state.JoinSound = presentation.Sounds.Join;
         state.LeaveSound = presentation.Sounds.Leave;
+        state.CheckAnimationId = presentation.Animations.Check;
+        state.CallAnimationId = presentation.Animations.Call;
+        state.RaiseAnimationId = presentation.Animations.Raise;
+        state.FoldAnimationId = presentation.Animations.Fold;
+        state.AllInAnimationId = presentation.Animations.AllIn;
+        state.LoseAnimationId = presentation.Animations.Lose;
+        state.LevelUpAnimationId = presentation.Animations.LevelUp;
+        state.JoinAnimationId = presentation.Animations.Join;
+        state.LeaveAnimationId = presentation.Animations.Leave;
         foreach (var seat in state.Seats)
         {
             var back = presentation.CardBacks.FirstOrDefault(b => b.PlayerId == seat.PlayerId);

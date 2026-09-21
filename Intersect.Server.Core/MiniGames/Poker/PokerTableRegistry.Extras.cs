@@ -127,6 +127,7 @@ public sealed partial class PokerTableRegistry
             ProgressPending = HasPendingExperience(entry),
             Decisions = entry.Extras.Decisions.ToArray(),
             Sounds = entry.Options.EffectiveSounds,
+            Animations = entry.Options.EffectiveAnimations,
         };
     }
 }

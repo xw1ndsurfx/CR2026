@@ -27,7 +27,7 @@ internal sealed partial class PokerWindow : Base
     private readonly TextBox _amount;
     private readonly PokerFlatPanel _backTray;
     private readonly PokerTableArt _art;
-    private readonly PokerScreenEffect _victory;
+    private readonly PokerScreenEffect _victory, _actionEffect, _levelEffect;
     private PokerSceneLayout _layout;
     private PokerTableState? _state;
     private int _localSeat, _selectedBack, _lastLevel = -1;
@@ -93,6 +93,8 @@ internal sealed partial class PokerWindow : Base
         }
         _art = new PokerTableArt(_content, _backTray, _board);
         _victory = new PokerScreenEffect(canvas);
+        _actionEffect = new PokerScreenEffect(canvas, "PokerAction");
+        _levelEffect = new PokerScreenEffect(canvas, "PokerLevel");
         ResizeToCanvas();
     }
     public void ResizeToCanvas()
@@ -164,10 +166,13 @@ internal sealed partial class PokerWindow : Base
             Strings.PokerScene.Progress.ToString(level, state.Experience - baseXp, toNext);
         if (_lastLevel > 0 && level > _lastLevel) _levelUpUntil = Environment.TickCount64 + 5000;
         UpdateSounds(state, me, level);
+        UpdateAnimations(state, me, level);
         _lastLevel = level; _levelUp.Text = Environment.TickCount64 < _levelUpUntil ? Strings.PokerScene.LevelUp.ToString(level) : "";
         if (model.Victories.Observe(model.Current.TableInstanceId, me.PlayerId, state.HandId,
                 state.Stage == PokerStage.Finished, state.NetWin)) _victory.Play(state.VictoryAnimationId);
         _victory.Update();
+        _actionEffect.Update();
+        _levelEffect.Update();
         _start.IsDisabled = model.Pending || playing || me.Leaving || me.Chips == 0 || !opponents || state.ProgressPending;
         _fold.IsDisabled = !enabled; _check.IsDisabled = !enabled || state.ToCall != 0;
         _call.IsDisabled = !enabled || state.ToCall == 0; _call.Text = Strings.Poker.Call.ToString(state.ToCall);
@@ -260,7 +265,7 @@ internal sealed partial class PokerWindow : Base
     public void Destroy()
     {
         if (_destroyed) return;
-        _destroyed = true; _victory.Dispose(); Interface.FocusComponents.Remove(_amount);
+        _destroyed = true; _victory.Dispose(); _actionEffect.Dispose(); _levelEffect.Dispose(); Interface.FocusComponents.Remove(_amount);
         Hide(); Parent?.RemoveChild(this, false); Dispose();
     }
     private static string Short(string value, int max) => value.Length <= max ? value : value[..(max - 3)] + "...";

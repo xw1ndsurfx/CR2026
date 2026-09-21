@@ -59,6 +59,17 @@ var tests = new (string Name, Action Test)[]
         state.DealSound = new string('x', PokerSoundSet.MaximumFileLength + 1);
         Check(!packet.IsValid, "Oversized sound filename accepted");
     }),
+    ("Animation settings survive the wire", () =>
+    {
+        var f = new Fixture(); var packet = f.Packet(f.A);
+        var state = packet.State ?? throw new InvalidOperationException("Missing state");
+        state.CheckAnimationId = Guid.NewGuid(); state.CallAnimationId = Guid.NewGuid(); state.RaiseAnimationId = Guid.NewGuid();
+        state.FoldAnimationId = Guid.NewGuid(); state.AllInAnimationId = Guid.NewGuid(); state.LoseAnimationId = Guid.NewGuid();
+        state.LevelUpAnimationId = Guid.NewGuid(); state.JoinAnimationId = Guid.NewGuid(); state.LeaveAnimationId = Guid.NewGuid();
+        var copy = Wire(packet);
+        Check(copy.IsValid && copy.State?.AllInAnimationId == state.AllInAnimationId &&
+            copy.State.LevelUpAnimationId == state.LevelUpAnimationId, "Animation settings lost on wire");
+    }),
     ("Recipient snapshots survive engine serialization without opponent hole cards", () =>
     {
         var f = new Fixture(); f.Start();

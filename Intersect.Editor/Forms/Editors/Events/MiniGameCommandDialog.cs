@@ -22,9 +22,9 @@ internal sealed class MiniGameCommandDialog : Form
         ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
         MinimumSize = new Size(580, 420);
         BackColor = DrawingColor.FromArgb(45, 45, 48); ForeColor = DrawingColor.Gainsboro;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 29, AutoScroll = true };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 38, AutoScroll = true };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
-        for (var row = 0; row < 29; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var row = 0; row < 38; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(12, 8, 12, 8) };
         Controls.Add(layout); Controls.Add(buttons);
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
@@ -45,6 +45,11 @@ internal sealed class MiniGameCommandDialog : Form
         var npcs = Number(command.NpcPlayers, 0, 5);
         var automatic = new CheckBox { Text = "Next hand after 5 seconds", Checked = command.AutoStart, AutoSize = true };
         var animation = AnimationPicker(command.DealAnimationId); var victory = AnimationPicker(command.VictoryAnimationId);
+        var checkAnimation = AnimationPicker(command.CheckAnimationId); var callAnimation = AnimationPicker(command.CallAnimationId);
+        var raiseAnimation = AnimationPicker(command.RaiseAnimationId); var foldAnimation = AnimationPicker(command.FoldAnimationId);
+        var allInAnimation = AnimationPicker(command.AllInAnimationId); var loseAnimation = AnimationPicker(command.LoseAnimationId);
+        var levelUpAnimation = AnimationPicker(command.LevelUpAnimationId); var joinAnimation = AnimationPicker(command.JoinAnimationId);
+        var leaveAnimation = AnimationPicker(command.LeaveAnimationId);
         var dealSound = SoundPicker("DealSound", command.DealSound);
         var checkSound = SoundPicker("CheckSound", command.CheckSound);
         var callSound = SoundPicker("CallSound", command.CallSound);
@@ -81,8 +86,13 @@ internal sealed class MiniGameCommandDialog : Form
         AddRow(layout, 23, "Sound - Win", winSound); AddRow(layout, 24, "Sound - Lose", loseSound);
         AddRow(layout, 25, "Sound - Level Up", levelUpSound); AddRow(layout, 26, "Sound - Join table", joinSound);
         AddRow(layout, 27, "Sound - Leave table", leaveSound);
+        AddRow(layout, 28, "Animation - Check", checkAnimation); AddRow(layout, 29, "Animation - Call", callAnimation);
+        AddRow(layout, 30, "Animation - Raise", raiseAnimation); AddRow(layout, 31, "Animation - Fold", foldAnimation);
+        AddRow(layout, 32, "Animation - All-in", allInAnimation); AddRow(layout, 33, "Animation - Lose", loseAnimation);
+        AddRow(layout, 34, "Animation - Level Up", levelUpAnimation); AddRow(layout, 35, "Animation - Join table", joinAnimation);
+        AddRow(layout, 36, "Animation - Leave table", leaveAnimation);
         var status = new Label { Name = "CurrencyStatus", AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 12, 3, 12) };
-        layout.Controls.Add(status, 0, 28); layout.SetColumnSpan(status, 2);
+        layout.Controls.Add(status, 0, 37); layout.SetColumnSpan(status, 2);
         void ShowCurrencyStatus()
         {
             var id = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
@@ -130,6 +140,15 @@ internal sealed class MiniGameCommandDialog : Form
                 WinSound = ((SoundChoice)winSound.SelectedItem!).File, LoseSound = ((SoundChoice)loseSound.SelectedItem!).File,
                 LevelUpSound = ((SoundChoice)levelUpSound.SelectedItem!).File, JoinSound = ((SoundChoice)joinSound.SelectedItem!).File,
                 LeaveSound = ((SoundChoice)leaveSound.SelectedItem!).File,
+                CheckAnimationId = ((AnimationChoice)checkAnimation.SelectedItem!).Id,
+                CallAnimationId = ((AnimationChoice)callAnimation.SelectedItem!).Id,
+                RaiseAnimationId = ((AnimationChoice)raiseAnimation.SelectedItem!).Id,
+                FoldAnimationId = ((AnimationChoice)foldAnimation.SelectedItem!).Id,
+                AllInAnimationId = ((AnimationChoice)allInAnimation.SelectedItem!).Id,
+                LoseAnimationId = ((AnimationChoice)loseAnimation.SelectedItem!).Id,
+                LevelUpAnimationId = ((AnimationChoice)levelUpAnimation.SelectedItem!).Id,
+                JoinAnimationId = ((AnimationChoice)joinAnimation.SelectedItem!).Id,
+                LeaveAnimationId = ((AnimationChoice)leaveAnimation.SelectedItem!).Id,
             };
             if (!draft.HasValidSettings())
             {
@@ -146,6 +165,11 @@ internal sealed class MiniGameCommandDialog : Form
             command.RaiseSound = draft.RaiseSound; command.FoldSound = draft.FoldSound; command.AllInSound = draft.AllInSound;
             command.WinSound = draft.WinSound; command.LoseSound = draft.LoseSound; command.LevelUpSound = draft.LevelUpSound;
             command.JoinSound = draft.JoinSound; command.LeaveSound = draft.LeaveSound;
+            command.CheckAnimationId = draft.CheckAnimationId; command.CallAnimationId = draft.CallAnimationId;
+            command.RaiseAnimationId = draft.RaiseAnimationId; command.FoldAnimationId = draft.FoldAnimationId;
+            command.AllInAnimationId = draft.AllInAnimationId; command.LoseAnimationId = draft.LoseAnimationId;
+            command.LevelUpAnimationId = draft.LevelUpAnimationId; command.JoinAnimationId = draft.JoinAnimationId;
+            command.LeaveAnimationId = draft.LeaveAnimationId;
             DialogResult = DialogResult.OK; Close();
         };
     }

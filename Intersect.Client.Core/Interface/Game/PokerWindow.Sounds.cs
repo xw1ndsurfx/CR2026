@@ -61,6 +61,6 @@ internal sealed partial class PokerWindow
     private void RequestExit()
     {
         PlayPokerSound(_state?.LeaveSound);
-        ExitRequested = true;
+        BeginLeaveAnimation(_state?.LeaveAnimationId ?? Guid.Empty);
     }
 }
