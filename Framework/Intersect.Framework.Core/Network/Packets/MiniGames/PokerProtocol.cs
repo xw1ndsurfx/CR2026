@@ -85,7 +85,7 @@ public sealed partial class PokerTableState
     [Key(23)] public long Wins { get; set; }
     [Key(24)] public bool ProgressPending { get; set; }
     [Key(25)] public PokerDecisionState[] Decisions { get; set; } = [];
-    [Key(26)] public PokerEffectState[] Effects { get; set; } = [];
+    [Key(28)] public PokerEffectState[] Effects { get; set; } = [];
 
     public bool HasValidShape() => HandId >= 0 && Revision >= 0 &&
         Stage is >= PokerStage.Waiting and <= PokerStage.Finished &&
