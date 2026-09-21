@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Server.MiniGames.Poker;
 using Intersect.Server.MiniGames.Progression;
@@ -35,6 +36,7 @@ internal sealed class PokerFundedTable
     private readonly Dictionary<Guid, Member> _members = new();
     private readonly List<PokerPublicDecision> _decisions = new();
     private readonly Queue<FundedWin> _wins = new();
+    private readonly Queue<string> _npcChat = new();
     private readonly Dictionary<Guid, long> _net = new();
     private long _decisionId, _settledHand, _npcRevision = -1;
     private Guid _dealer;
@@ -232,8 +234,36 @@ internal sealed class PokerFundedTable
     }
     private void Decision(Guid player, string action, long amount = 0, bool automatic = false)
     {
-        _decisions.Add(new(++_decisionId, player, _members[player].Name, action, amount, automatic));
-        if (_decisions.Count > 12) _decisions.RemoveAt(0); ++Version;
+        var member = _members[player];
+        _decisions.Add(new(++_decisionId, player, member.Name, action, amount, automatic));
+        if (_decisions.Count > 12) _decisions.RemoveAt(0);
+        if (member.Escrow.Npc)
+        {
+            var currency = ItemDescriptor.GetName(Currency);
+            var suffix = automatic ? " (auto)" : "";
+            var text = action switch
+            {
+                "deal" => $"[Poker] {member.Name}: deals.{suffix}",
+                "fold" => $"[Poker] {member.Name}: folds.{suffix}",
+                "check" => $"[Poker] {member.Name}: checks.{suffix}",
+                "call" => amount > 0
+                    ? $"[Poker] {member.Name}: calls {amount} {currency}.{suffix}"
+                    : $"[Poker] {member.Name}: calls.{suffix}",
+                "raise" => $"[Poker] {member.Name}: raises to {amount} {currency}.{suffix}",
+                "leave" => $"[Poker] {member.Name}: leaves the table.{suffix}",
+                "wins" => $"[Poker] {member.Name} wins {amount} {currency}.",
+                _ => $"[Poker] {member.Name}: {action}.{suffix}",
+            };
+            _npcChat.Enqueue(text);
+            while (_npcChat.Count > 24) _npcChat.Dequeue();
+        }
+        ++Version;
+    }
+    public string[] CollectNpcChat()
+    {
+        var messages = _npcChat.ToArray();
+        _npcChat.Clear();
+        return messages;
     }
     public FundedWin[] CollectWins() { var wins = _wins.ToArray(); _wins.Clear(); return wins; }
 }

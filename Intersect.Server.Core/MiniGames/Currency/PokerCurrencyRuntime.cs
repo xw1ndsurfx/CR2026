@@ -27,7 +27,7 @@ internal static class PokerCurrencyRuntime
         public bool Closed;
         public void Renew() { Id = Guid.NewGuid(); Guard = new PokerRequestGuard(Table.Id, Id); Closed = false; Published = -1; }
     }
-    private sealed record Delivery(View? View, PokerStatePacket? Packet, string? Announcement = null);
+    private sealed record Delivery(View? View, PokerStatePacket? Packet, string? Announcement = null, string? LocalMessage = null);
     private static readonly object Gate = new();
     private static readonly Dictionary<PokerTableKey, PokerFundedTable> Tables = new();
     private static readonly Dictionary<Guid, View> Views = new();
@@ -203,6 +203,9 @@ internal static class PokerCurrencyRuntime
         }
         foreach (var pair in Tables.ToArray())
         {
+            foreach (var message in pair.Value.CollectNpcChat())
+                foreach (var view in Views.Values.Where(v => !v.Closed && ReferenceEquals(v.Table, pair.Value)))
+                    output.Add(new(view, null, LocalMessage: message));
             foreach (var win in pair.Value.CollectWins())
             {
                 if (!pair.Value.Options.AnnounceWins) continue;
@@ -237,6 +240,9 @@ internal static class PokerCurrencyRuntime
             try
             {
                 if (delivery.Announcement is { } text) PacketSender.SendGlobalMsg(text, Color.White);
+                else if (delivery.LocalMessage is { } local && delivery.View is { } localView &&
+                    ReferenceEquals(localView.Client.Entity, localView.Player) && localView.Player.LoginTime == localView.Login)
+                    PacketSender.SendChatMsg(localView.Player, local, ChatMessageType.Local, Color.White);
                 else if (delivery.View is { } v && delivery.Packet is { } p &&
                     ReferenceEquals(v.Client.Entity, v.Player) && v.Player.LoginTime == v.Login) v.Client.Send(p);
             }
