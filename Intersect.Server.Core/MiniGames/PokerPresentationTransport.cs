@@ -19,6 +19,17 @@ public static class PokerPresentationTransport
         state.ProgressPending = presentation.ProgressPending;
         state.Decisions = presentation.Decisions.Select(d => new PokerDecisionState
         { Sequence = d.Sequence, PlayerId = d.PlayerId, Name = d.Name, Action = d.Action, Amount = d.Amount, Automatic = d.Automatic }).ToArray();
+        state.DealSound = presentation.Sounds.Deal;
+        state.CheckSound = presentation.Sounds.Check;
+        state.CallSound = presentation.Sounds.Call;
+        state.RaiseSound = presentation.Sounds.Raise;
+        state.FoldSound = presentation.Sounds.Fold;
+        state.AllInSound = presentation.Sounds.AllIn;
+        state.WinSound = presentation.Sounds.Win;
+        state.LoseSound = presentation.Sounds.Lose;
+        state.LevelUpSound = presentation.Sounds.LevelUp;
+        state.JoinSound = presentation.Sounds.Join;
+        state.LeaveSound = presentation.Sounds.Leave;
         foreach (var seat in state.Seats)
         {
             var back = presentation.CardBacks.FirstOrDefault(b => b.PlayerId == seat.PlayerId);

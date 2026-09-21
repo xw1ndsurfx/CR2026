@@ -45,6 +45,19 @@ var tests = new (string Name, Action Test)[]
         Check(!packet.IsValid, "Oversized seat array accepted");
         state.Seats = []; Check(!packet.IsValid, "Empty live state accepted");
     }),
+    ("Sound settings survive the wire and reject malformed filenames", () =>
+    {
+        var f = new Fixture(); var packet = f.Packet(f.A);
+        var state = packet.State ?? throw new InvalidOperationException("Missing state");
+        state.DealSound = "deal.wav"; state.CheckSound = "check.wav"; state.CallSound = "call.wav";
+        state.RaiseSound = "raise.wav"; state.FoldSound = "fold.wav"; state.AllInSound = "allin.wav";
+        state.WinSound = "win.wav"; state.LoseSound = "lose.wav"; state.LevelUpSound = "level.wav";
+        state.JoinSound = "join.wav"; state.LeaveSound = "leave.wav";
+        var copy = Wire(packet);
+        Check(copy.IsValid && copy.State?.AllInSound == "allin.wav" && copy.State.LevelUpSound == "level.wav", "Sound settings lost on wire");
+        state.DealSound = new string('x', PokerSoundSet.MaximumFileLength + 1);
+        Check(!packet.IsValid, "Oversized sound filename accepted");
+    }),
     ("Recipient snapshots survive engine serialization without opponent hole cards", () =>
     {
         var f = new Fixture(); f.Start();

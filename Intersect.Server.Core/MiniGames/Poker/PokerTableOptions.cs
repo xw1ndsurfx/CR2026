@@ -7,10 +7,11 @@ namespace Intersect.Server.MiniGames.Poker;
 
 public sealed record PokerTableOptions(
     bool DealerPlays = false, int NpcPlayers = 0, bool AutoStart = false, Guid DealAnimationId = default,
-    bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0)
+    bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0, PokerSoundSet? Sounds = null)
 {
+    public PokerSoundSet EffectiveSounds => Sounds ?? PokerSoundSet.Empty;
     public bool IsValid(int seats) => NpcPlayers >= 0 && NpcPlayers <= 5 &&
-        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId);
+        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId) && EffectiveSounds.IsValid;
 }
 
 public sealed record PokerSeatBack(Guid PlayerId, int CurrentId, int SelectedId);
@@ -23,6 +24,7 @@ public sealed record PokerPresentation(Guid[] NpcIds, Guid DealerNpcId, bool Aut
     public long Wins { get; init; }
     public bool ProgressPending { get; init; }
     public PokerPublicDecision[] Decisions { get; init; } = Array.Empty<PokerPublicDecision>();
+    public PokerSoundSet Sounds { get; init; } = PokerSoundSet.Empty;
     public static PokerPresentation Empty => new(Array.Empty<Guid>(), Guid.Empty, false, Guid.Empty);
 }
 

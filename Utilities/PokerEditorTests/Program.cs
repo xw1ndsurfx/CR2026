@@ -35,7 +35,10 @@ internal static class Program
             {
                 var command = new StartMiniGameCommand { TableId = "save-test", StartingChips = 100, DealerPlays = true,
                     NpcPlayers = 1, AutoStart = true, AnnounceWins = true, DealAnimationId = Guid.NewGuid(),
-                    VictoryAnimationId = Guid.NewGuid(), NpcCardBackId = 3 };
+                    VictoryAnimationId = Guid.NewGuid(), NpcCardBackId = 3,
+                    DealSound = "deal.wav", CheckSound = "check.wav", CallSound = "call.wav", RaiseSound = "raise.wav",
+                    FoldSound = "fold.wav", AllInSound = "allin.wav", WinSound = "win.wav", LoseSound = "lose.wav",
+                    LevelUpSound = "level.wav", JoinSound = "join.wav", LeaveSound = "leave.wav" };
                 var expected = JsonConvert.DeserializeObject<StartMiniGameCommand>(JsonConvert.SerializeObject(command))!;
                 expected.CurrencyItemId = other.Id;
                 using var dialog = new MiniGameCommandDialog(command);
