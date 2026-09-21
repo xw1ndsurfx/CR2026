@@ -3,6 +3,7 @@ using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
+using Intersect.Framework.Core.MiniGames.Configuration;
 using Intersect.Server.MiniGames;
 using Intersect.Server.MiniGames.Poker;
 using Intersect.Server.Networking;
@@ -15,6 +16,12 @@ public static partial class CommandProcessing
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
         if (player == null) return;
+        if (!MiniGameCatalog.TryGet(command.Game, out _))
+        {
+            PacketSender.SendChatMsg(player, "[Mini-game] This mini-game type is not supported by this server build.",
+                ChatMessageType.Error, Color.White);
+            return;
+        }
         if (command.CurrencyItemId != Guid.Empty && !MiniGameCurrency.IsCompatible(ItemDescriptor.Get(command.CurrencyItemId)))
         {
             PacketSender.SendChatMsg(player, "[Poker] The configured currency item is missing or incompatible. No items were taken.",

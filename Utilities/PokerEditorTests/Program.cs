@@ -3,6 +3,7 @@ using Intersect.Editor.Forms.Editors.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
+using Intersect.Framework.Core.MiniGames.Configuration;
 using Newtonsoft.Json;
 
 internal static class Program
@@ -23,6 +24,25 @@ internal static class Program
         ItemDescriptor.Lookup[equipment.Id] = equipment;
         var tests = new (string Name, Action Run)[]
         {
+            ("Shared mini-game catalog exposes Poker without advertising unfinished games", () =>
+            {
+                Check(MiniGameCatalog.All.Count == 1);
+                var poker = MiniGameCatalog.Get(MiniGameType.Poker);
+                Check(poker.DisplayName.Contains("Poker", StringComparison.OrdinalIgnoreCase));
+                Check(poker.MinimumPlayers == 2 && poker.MaximumPlayers == 6);
+                Check(MiniGameCatalog.IsValidTableId("casino_table-1"));
+                Check(!MiniGameCatalog.IsValidTableId("casino table"));
+            }),
+            ("Editor summary reflects table identity and play mode", () =>
+            {
+                using var dialog = new MiniGameCommandDialog(new StartMiniGameCommand { TableId = "royal-table" });
+                dialog.Show(); Application.DoEvents();
+                var summary = Find<Label>(dialog, "ConfigurationSummary");
+                Check(summary.Text.Contains("royal-table") && summary.Text.Contains("TEST"));
+                Find<TextBox>(dialog, "TableId").Text = "bad table id";
+                Application.DoEvents();
+                Check(summary.Text.Contains("INVALID TABLE ID"));
+            }),
             ("Picker lists actual compatible objects and excludes equipment", () =>
             {
                 using var dialog = new MiniGameCommandDialog(new StartMiniGameCommand());

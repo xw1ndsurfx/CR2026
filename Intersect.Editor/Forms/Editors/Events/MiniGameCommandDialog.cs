@@ -4,6 +4,7 @@ using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
+using Intersect.Framework.Core.MiniGames.Configuration;
 using DrawingColor = System.Drawing.Color;
 
 namespace Intersect.Editor.Forms.Editors.Events;
@@ -16,6 +17,7 @@ internal sealed class MiniGameCommandDialog : Form
     private sealed record SoundChoice(string File, string Name) { public override string ToString() => Name; }
     private sealed record RewardItemChoice(Guid Id, string Name) { public override string ToString() => Name; }
     private sealed record RewardListChoice(PokerLevelReward Reward, string Name) { public override string ToString() => Name; }
+    private sealed record GameChoice(MiniGameType Type, string Name) { public override string ToString() => Name; }
     public MiniGameCommandDialog(StartMiniGameCommand command)
     {
         Text = "Start Mini-Game - Poker"; StartPosition = FormStartPosition.CenterParent;
@@ -24,9 +26,9 @@ internal sealed class MiniGameCommandDialog : Form
         ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
         MinimumSize = new Size(580, 420);
         BackColor = DrawingColor.FromArgb(45, 45, 48); ForeColor = DrawingColor.Gainsboro;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 40, AutoScroll = true };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 41, AutoScroll = true };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
-        for (var row = 0; row < 40; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var row = 0; row < 41; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(12, 8, 12, 8) };
         Controls.Add(layout); Controls.Add(buttons);
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
@@ -34,8 +36,10 @@ internal sealed class MiniGameCommandDialog : Form
                 "Marlow deals and plays. 25 XP per positive-net human win; B1-B6 unlock at levels 1/5/10/15/20/25. " +
                 "Show the buy-in amount in a confirmation event before this command." };
         layout.Controls.Add(hint, 0, 0); layout.SetColumnSpan(hint, 2);
-        var game = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
-        game.Items.Add("Poker - Texas hold'em"); game.SelectedIndex = 0;
+        var game = new ComboBox { Name = "MiniGameType", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
+        foreach (var definition in MiniGameCatalog.All)
+            game.Items.Add(new GameChoice(definition.Type, definition.DisplayName));
+        game.SelectedItem = game.Items.Cast<GameChoice>().FirstOrDefault(choice => choice.Type == command.Game) ?? game.Items[0];
         var table = new TextBox { Name = "TableId", Text = command.TableId ?? "", MaxLength = 64, Dock = DockStyle.Fill };
         var seats = Number(command.MaxPlayers, 2, 6);
         var currency = CurrencyPicker(command.CurrencyItemId);
@@ -101,6 +105,9 @@ internal sealed class MiniGameCommandDialog : Form
         AddRow(layout, 37, "Animation - Leave table", leaveAnimation);
         var status = new Label { Name = "CurrencyStatus", AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 12, 3, 12) };
         layout.Controls.Add(status, 0, 38); layout.SetColumnSpan(status, 2);
+        var summary = new Label { Name = "ConfigurationSummary", AutoSize = true, MaximumSize = new Size(590, 0),
+            Margin = new Padding(3, 3, 3, 12), ForeColor = DrawingColor.LightSkyBlue };
+        layout.Controls.Add(summary, 0, 39); layout.SetColumnSpan(summary, 2);
 
         var rewardDraft = (command.LevelRewards ?? []).ToList();
         var rewardList = new ListBox { Name = "LevelRewards", Width = 360, Height = 110 };
@@ -141,7 +148,23 @@ internal sealed class MiniGameCommandDialog : Form
         var rewardPanel = new FlowLayoutPanel { Name = "LevelRewardPanel", AutoSize = true, WrapContents = false,
             FlowDirection = FlowDirection.TopDown, Dock = DockStyle.Fill };
         rewardPanel.Controls.Add(rewardList); rewardPanel.Controls.Add(rewardControls); RefreshRewards();
-        AddRow(layout, 39, "Poker level rewards", rewardPanel);
+        AddRow(layout, 40, "Poker level rewards", rewardPanel);
+
+        void ShowSummary()
+        {
+            var selectedGame = (game.SelectedItem as GameChoice)?.Type ?? MiniGameType.Poker;
+            var definition = MiniGameCatalog.Get(selectedGame);
+            var humanSeats = Math.Max(1, (int)seats.Value - (int)npcs.Value - (dealer.Checked ? 1 : 0));
+            var funded = ((currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty) != Guid.Empty;
+            var tableValid = MiniGameCatalog.IsValidTableId(table.Text);
+            summary.ForeColor = tableValid ? DrawingColor.LightSkyBlue : DrawingColor.OrangeRed;
+            summary.Text = $"{definition.DisplayName} | Table: {(string.IsNullOrWhiteSpace(table.Text) ? "(missing)" : table.Text)} | " +
+                $"{seats.Value} seats ({humanSeats} human available, {npcs.Value + (dealer.Checked ? 1 : 0)} NPC) | " +
+                $"Blinds {small.Value}/{big.Value} | {(funded ? "FUNDED" : "TEST")} | " +
+                $"{(automatic.Checked ? "Auto hands" : "Manual start")}" +
+                (tableValid ? "" : " | INVALID TABLE ID");
+        }
+
         void ShowCurrencyStatus()
         {
             var id = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
@@ -167,9 +190,18 @@ internal sealed class MiniGameCommandDialog : Form
                           "Reopening, restarting or editing this number does not refill an existing house. Zero means no initial NPC funds. ") +
                     "Funded XP is separate from test XP. Back up the entire player database before enabling.";
         }
-        currency.SelectedIndexChanged += (_, _) => ShowCurrencyStatus();
+        currency.SelectedIndexChanged += (_, _) => { ShowCurrencyStatus(); ShowSummary(); };
         unlimitedNpcBankroll.CheckedChanged += (_, _) => ShowCurrencyStatus();
+        game.SelectedIndexChanged += (_, _) => ShowSummary();
+        table.TextChanged += (_, _) => ShowSummary();
+        seats.ValueChanged += (_, _) => ShowSummary();
+        npcs.ValueChanged += (_, _) => ShowSummary();
+        dealer.CheckedChanged += (_, _) => ShowSummary();
+        small.ValueChanged += (_, _) => ShowSummary();
+        big.ValueChanged += (_, _) => ShowSummary();
+        automatic.CheckedChanged += (_, _) => ShowSummary();
         ShowCurrencyStatus();
+        ShowSummary();
         var cancel = new Button { Name = "Cancel", Text = "Cancel", AutoSize = true, DialogResult = DialogResult.Cancel };
         var save = new Button { Name = "Save", Text = "Save", AutoSize = true };
         buttons.Controls.Add(cancel); buttons.Controls.Add(save); AcceptButton = save; CancelButton = cancel;
@@ -183,7 +215,7 @@ internal sealed class MiniGameCommandDialog : Form
             }
             var draft = new StartMiniGameCommand
             {
-                Game = MiniGameType.Poker, TableId = table.Text, MaxPlayers = (int)seats.Value, CurrencyItemId = selected,
+                Game = ((GameChoice)game.SelectedItem!).Type, TableId = table.Text, MaxPlayers = (int)seats.Value, CurrencyItemId = selected,
                 StartingChips = (long)chips.Value, NpcReserve = (long)reserve.Value,
                 UnlimitedNpcBankroll = unlimitedNpcBankroll.Checked,
                 SmallBlind = (long)small.Value, BigBlind = (long)big.Value, TurnSeconds = (int)seconds.Value,
@@ -209,8 +241,9 @@ internal sealed class MiniGameCommandDialog : Form
             };
             if (!draft.HasValidSettings())
             {
-                MessageBox.Show(this, "Use a valid Table ID and blinds. The starting amount must cover the big blind. Reserve one human seat.",
-                    "Invalid poker table", MessageBoxButtons.OK, MessageBoxIcon.Warning); return;
+                MessageBox.Show(this,
+                    "Check the highlighted summary. Use a valid Table ID, supported seat count and blinds; the starting amount must cover the big blind and at least one human seat must remain.",
+                    "Invalid mini-game configuration", MessageBoxButtons.OK, MessageBoxIcon.Warning); return;
             }
             command.Game = draft.Game; command.TableId = draft.TableId; command.MaxPlayers = draft.MaxPlayers;
             command.CurrencyItemId = draft.CurrencyItemId; command.NpcReserve = draft.NpcReserve;
