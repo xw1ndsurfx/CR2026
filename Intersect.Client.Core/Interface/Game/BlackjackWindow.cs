@@ -11,7 +11,7 @@ using Rectangle=Intersect.Client.Framework.GenericClasses.Rectangle;
 namespace Intersect.Client.Interface.Game;
 
 /// <summary>Borderless blackjack scene. Local player at the bottom; all gamblers face the dealer.</summary>
-internal sealed class BlackjackWindow : Base
+internal sealed partial class BlackjackWindow : Base
 {
     private sealed record Placement(Base Control,int X,int Y,int W,int H,int Font);
     private readonly Canvas _canvas;private readonly Action<BlackjackRequestKind,long> _send;
@@ -155,6 +155,7 @@ internal sealed class BlackjackWindow : Base
             BlackjackCardStrip.Fit(_backImages[i],_dealer.Back(i),_layout.LocalRect(32+i*108,22,48,74));
         }
         _error.Text=_localError.Length>0?_localError:model.ErrorCode;
+        UpdateProceduralMotions(s,me);
         if(!_tray.IsHidden)_tray.BringToFront();
         if(model.ObserveDeal())_dealEffect.Play(s.DealAnimationId);
         if(model.Victories.Observe(model.Current.TableInstanceId,me.PlayerId,s.HandId,s.Stage==BlackjackStage.Finished,s.NetWin))_victory.Play(s.VictoryAnimationId);
@@ -177,6 +178,7 @@ internal sealed class BlackjackWindow : Base
         Fill(skin,new Color(76,135,89),40,708,550,18);Fill(skin,new Color(14,32,21),41,709,548,16);
         var filled=(int)(546*Math.Clamp(_fraction,0,1));Fill(skin,new Color(46,190,83),42,710,filled,14);
         Fill(skin,new Color(102,230,128),42,710,filled,3);
+        RenderProceduralMotions(skin.Renderer);
     }
     private void Ellipse(SkinBase skin,Color color,int x,int y,int w,int h)
     {for(var row=0;row<h;row+=3){var t=(row+1.5f-h/2f)/(h/2f);var half=(int)(w/2f*Math.Sqrt(Math.Max(0,1-t*t)));Fill(skin,color,x+w/2-half,y+row,half*2,Math.Min(3,h-row));}}
