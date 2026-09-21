@@ -17,6 +17,7 @@ public sealed record BlackjackSettings(BlackjackRules Rules,int Npcs,bool Auto,G
     public PokerMotionSet MotionSettings => Motion ?? PokerMotionSet.Default;
 }
 public sealed record BlackjackWin(string Name,long Net);
+public sealed record BlackjackQuestNotice(Guid PlayerId, BlackjackQuestUpdate Update);
 
 /// <summary>Serialized by runtime gate. Financial callbacks never acquire any Player lock here.</summary>
 public sealed class BlackjackSessionTable
@@ -36,6 +37,7 @@ public sealed class BlackjackSessionTable
     private readonly Dictionary<Guid,MiniGameProgress> _profiles=new();
     private readonly Dictionary<Guid,int> _backs=new();
     private readonly Queue<BlackjackWin> _wins=new();
+    private readonly Queue<BlackjackQuestNotice> _quests=new();
     private long _version,_settled;
     private DateTimeOffset? _next;
     private DateTimeOffset _npcAt,_retry;
@@ -148,7 +150,13 @@ public sealed class BlackjackSessionTable
         }
         // Reload before publishing success, including after a retry of an already committed receipt.
         foreach(var id in _profiles.Keys.ToArray())_profiles[id]=Profile(id);
-        foreach(var seat in state.Seats.Where(s=>!s.Npc && s.Hands.Sum(h=>h.Net)>0))_wins.Enqueue(new(seat.Name,seat.Hands.Sum(h=>h.Net)));
+        foreach(var seat in state.Seats.Where(s=>!s.Npc))
+        {
+            var net=seat.Hands.Sum(h=>h.Net);
+            if(net>0)_wins.Enqueue(new(seat.Name,net));
+            _quests.Enqueue(new(seat.PlayerId,new BlackjackQuestUpdate(
+                seat.Hands.Length>0,net,MiniGameProgression.Level(_profiles[seat.PlayerId].Experience))));
+        }
         _settled=state.HandId;++_version;
     }
     public void Leave(Guid player,DateTimeOffset now)
@@ -203,6 +211,7 @@ public sealed class BlackjackSessionTable
         Complete();Cleanup();
     }
     public BlackjackWin[] CollectWins(){var r=_wins.ToArray();_wins.Clear();return r;}
+    public BlackjackQuestNotice[] CollectQuestUpdates(){var r=_quests.ToArray();_quests.Clear();return r;}
     public BlackjackTableState Project(Guid player)
     {
         var s=Core.Snapshot(player);var p=_profiles[player];
