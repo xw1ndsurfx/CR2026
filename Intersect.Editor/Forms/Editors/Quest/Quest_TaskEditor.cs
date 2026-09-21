@@ -61,7 +61,12 @@ public partial class QuestTaskEditor : UserControl
             case 2: //Kill NPCS
                 cmbNpc.SelectedIndex = NPCDescriptor.ListIndex(mMyTask?.TargetId ?? Guid.Empty);
                 nudNpcQuantity.Value = mMyTask?.Quantity ?? 0;
-
+                break;
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+                nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
                 break;
         }
     }
@@ -76,6 +81,10 @@ public partial class QuestTaskEditor : UserControl
         {
             cmbTaskType.Items.Add(Strings.TaskEditor.types[i]);
         }
+        cmbTaskType.Items.Add("Poker - Win hands");
+        cmbTaskType.Items.Add("Poker - Win net amount");
+        cmbTaskType.Items.Add("Poker - Reach level");
+        cmbTaskType.Items.Add("Poker - Play hands");
 
         lblDesc.Text = Strings.TaskEditor.desc;
 
@@ -98,6 +107,9 @@ public partial class QuestTaskEditor : UserControl
     {
         grpGatherItems.Hide();
         grpKillNpcs.Hide();
+        cmbItem.Show();
+        lblItem.Show();
+        lblItemQuantity.Text = Strings.TaskEditor.gatheramount;
         switch (cmbTaskType.SelectedIndex)
         {
             case 0: //Event Driven
@@ -122,9 +134,19 @@ public partial class QuestTaskEditor : UserControl
                 {
                     cmbNpc.SelectedIndex = 0;
                 }
-
                 nudNpcQuantity.Value = 1;
-
+                break;
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+                grpGatherItems.Show();
+                grpGatherItems.Text = cmbTaskType.SelectedItem?.ToString() ?? "Poker objective";
+                cmbItem.Hide();
+                lblItem.Hide();
+                lblItemQuantity.Text = cmbTaskType.SelectedIndex == 5 ? "Poker level:" : "Target:";
+                nudItemAmount.Maximum = cmbTaskType.SelectedIndex == 5 ? 25 : 1_000_000_000;
+                nudItemAmount.Value = 1;
                 break;
         }
     }
@@ -148,7 +170,13 @@ public partial class QuestTaskEditor : UserControl
             case QuestObjective.KillNpcs: //Kill Npcs
                 mMyTask.TargetId = NPCDescriptor.IdFromList(cmbNpc.SelectedIndex);
                 mMyTask.Quantity = (int) nudNpcQuantity.Value;
-
+                break;
+            case QuestObjective.PokerWinHands:
+            case QuestObjective.PokerWinAmount:
+            case QuestObjective.PokerReachLevel:
+            case QuestObjective.PokerPlayHands:
+                mMyTask.TargetId = Guid.Empty;
+                mMyTask.Quantity = (int) nudItemAmount.Value;
                 break;
         }
 

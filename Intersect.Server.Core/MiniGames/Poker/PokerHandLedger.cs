@@ -18,6 +18,7 @@ public sealed class PokerHandLedger
     private PokerNetWin[] _wins = Array.Empty<PokerNetWin>();
     private bool _finished;
     public long HandId { get; private set; } = -1;
+    public bool IsFinished => _finished;
 
     public void Begin(PokerSnapshot beforeBlinds, long handId)
     {

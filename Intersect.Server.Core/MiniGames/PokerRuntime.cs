@@ -1,5 +1,6 @@
 using Intersect.Core;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.MiniGames;
 using Intersect.Network.Packets.Server;
@@ -26,7 +27,8 @@ internal static class PokerRuntime
         public Guid Id = Guid.NewGuid();
         public PokerRequestGuard Guard;
     }
-    private sealed record Delivery(View? View, PokerStatePacket? Packet, PokerWinNotice? Win = null, PokerLevelRewardNotice? LevelReward = null);
+    private sealed record Delivery(View? View, PokerStatePacket? Packet, PokerWinNotice? Win = null,
+        PokerLevelRewardNotice? LevelReward = null, PokerQuestNotice? Quest = null);
     private static readonly PokerTableRegistry Tables = new(new SqliteMiniGameProgressStore(
         Path.Combine("resources", "minigames-test.db")));
     private static readonly object Gate = new();
@@ -77,7 +79,13 @@ internal static class PokerRuntime
                 Collect(output); Queue(output, view, result.Snapshot);
             }
         }
-        Send(output); return result;
+        Send(output);
+        if (result.Error == PokerRegistryError.None)
+        {
+            var level = Tables.Presentation(presence, result.TableInstanceId).Experience;
+            player.UpdatePokerQuestTasks(new PokerQuestUpdate(false, 0, MiniGameProgression.LevelForExperience(level)));
+        }
+        return result;
     }
     internal static PokerRegistryResult Leave(Player player)
     {
@@ -141,6 +149,9 @@ internal static class PokerRuntime
         foreach (var reward in Tables.CollectLevelRewards())
             if (Views.TryGetValue(reward.Recipient, out var rewardView) && rewardView.TableId == reward.TableInstanceId)
                 output.Add(new(rewardView, null, LevelReward: reward));
+        foreach (var quest in Tables.CollectQuestUpdates())
+            if (Views.TryGetValue(quest.Recipient, out var questView) && questView.TableId == quest.TableInstanceId)
+                output.Add(new(questView, null, Quest: quest));
     }
     private static void Queue(List<Delivery> output, View view, PokerSnapshot? snapshot,
         long requestId = 0, bool closed = false, string error = "") => output.Add(new(view, new PokerStatePacket
@@ -167,6 +178,12 @@ internal static class PokerRuntime
                 {
                     if (ReferenceEquals(rewardView.Client.Entity, rewardView.Player) && rewardView.Player.LoginTime == rewardView.LoginStamp)
                         PokerLevelRewardRuntime.Grant(rewardView.Player, reward.Level, reward.Rewards);
+                    continue;
+                }
+                if (delivery.Quest is { } quest && delivery.View is { } questView)
+                {
+                    if (ReferenceEquals(questView.Client.Entity, questView.Player) && questView.Player.LoginTime == questView.LoginStamp)
+                        questView.Player.UpdatePokerQuestTasks(quest.Update);
                     continue;
                 }
                 if (delivery.View is not { } view || delivery.Packet is not { } packet) continue;

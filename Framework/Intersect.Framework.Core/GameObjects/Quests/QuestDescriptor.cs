@@ -239,6 +239,18 @@ public partial class QuestTaskDescriptor
                 );
 
                 break;
+            case QuestObjective.PokerWinHands:
+                taskString = $"Win {Quantity} Poker hand(s). {Description}".Trim();
+                break;
+            case QuestObjective.PokerWinAmount:
+                taskString = $"Win {Quantity} net Poker currency. {Description}".Trim();
+                break;
+            case QuestObjective.PokerReachLevel:
+                taskString = $"Reach Poker level {Quantity}. {Description}".Trim();
+                break;
+            case QuestObjective.PokerPlayHands:
+                taskString = $"Play {Quantity} Poker hand(s). {Description}".Trim();
+                break;
         }
 
         return taskString;
