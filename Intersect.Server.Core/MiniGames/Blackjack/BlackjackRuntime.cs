@@ -49,7 +49,7 @@ internal static class BlackjackRuntime
                 var settings=new BlackjackSettings(new BlackjackRules(command.MaxPlayers-1,command.StartingChips,
                     command.BlackjackMinimumBet,command.BlackjackMaximumBet,command.TurnSeconds,command.BlackjackHitSoft17),
                     command.NpcPlayers,command.AutoStart,command.CurrencyItemId,command.NpcReserve,
-                    command.DealAnimationId,command.VictoryAnimationId,command.AnnounceWins,command.NpcCardBackId);
+                    command.DealAnimationId,command.VictoryAnimationId,command.AnnounceWins,command.NpcCardBackId,command.CreateMotionSet());
                 var key=new BlackjackKey(presence.MapId,presence.MapInstanceId,command.TableId);
                 var money=command.CurrencyItemId==Guid.Empty?null:PokerInventoryBridge.Ledger;
                 lock(Gate)
