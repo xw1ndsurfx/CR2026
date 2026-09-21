@@ -44,7 +44,7 @@ internal sealed class PokerEffectsDialog : Form
 
         var hint = new Label { AutoSize=true, MaximumSize=new Size(700,0),
             Text="Dealing and victory animations remain on the main Poker dialog. Action animations are local screen effects. " +
-                 "An Intersect animation can also contain its own sound; the optional WAV cue here is additive." };
+                 "If an Intersect animation contains its own sound, that sound is used. The optional WAV cue is the fallback when the animation has no sound." };
         root.Controls.Add(hint,0,9); root.SetColumnSpan(hint,3);
 
         var buttons = new FlowLayoutPanel { Dock=DockStyle.Bottom, AutoSize=true, FlowDirection=FlowDirection.RightToLeft, Padding=new Padding(8) };

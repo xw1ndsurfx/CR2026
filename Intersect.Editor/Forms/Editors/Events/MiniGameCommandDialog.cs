@@ -41,11 +41,11 @@ internal sealed class MiniGameCommandDialog : Form
         var currency = CurrencyPicker(command.CurrencyItemId);
         var chips = Number(command.StartingChips, 1, 1_000_000_000);
         var reserve = Number(command.NpcReserve, 0, 1_000_000_000); reserve.Name = "NpcReserve";
-        var unlimitedNpc = new CheckBox { Text = "Always refinance dealer / NPCs", Checked = command.UnlimitedNpcBankroll, AutoSize = true };
+        var unlimitedNpc = new CheckBox { Name = "UnlimitedNpcBankroll", Text = "Always refinance dealer / NPCs", Checked = command.UnlimitedNpcBankroll, AutoSize = true };
         var effectsDraft = command.Effects is null ? new PokerEffectSettings() : command.Effects with { };
-        var effectsButton = new Button { Text = "Sounds / animations...", AutoSize = true };
+        var effectsButton = new Button { Name = "PokerEffects", Text = "Sounds / animations...", AutoSize = true };
         effectsButton.Click += (_, _) => { using var fx = new PokerEffectsDialog(effectsDraft); fx.ShowDialog(this); };
-        var levelEvent = CommonEventPicker(command.LevelUpEventId);
+        var levelEvent = CommonEventPicker(command.LevelUpEventId); levelEvent.Name = "LevelUpEvent";
         var small = Number(command.SmallBlind, 1, 1_000_000_000); var big = Number(command.BigBlind, 1, 1_000_000_000);
         var seconds = Number(command.TurnSeconds, 5, 300);
         var dealer = new CheckBox { Text = "Marlow / Croupier", Checked = command.DealerPlays, AutoSize = true };

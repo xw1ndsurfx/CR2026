@@ -5,4 +5,4 @@
 - The Sounds / animations dialog exposes separate Check, Call, Raise/Bet, Fold, All-in and Level-up animations plus optional WAV files for Deal, Check, Call, Raise, Fold, All-in, Win and Level-up. Existing Deal/Victory animations remain on the main dialog.
 - Level-up reward common event points at an existing common event, allowing normal event commands to define rewards.
 
-Sound files come from resources/sounds. Animation sounds and explicit WAV cues are additive.
+Sound files come from resources/sounds. If a selected animation contains a sound, that sound takes priority. The explicit WAV cue is used as a fallback, preventing accidental double playback.
