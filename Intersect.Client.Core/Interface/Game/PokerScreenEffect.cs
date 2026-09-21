@@ -1,3 +1,4 @@
+using Intersect.Client.Core;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen.Control;
@@ -18,10 +19,11 @@ internal sealed class PokerScreenEffect : IDisposable
     private long _started;
     private bool _disposed;
 
-    public PokerScreenEffect(Canvas canvas)
+    public PokerScreenEffect(Canvas canvas, string name)
     {
         _canvas = canvas;
-        _layers = [Make("PokerVictoryLower"), Make("PokerVictoryUpper")];
+        name = string.IsNullOrWhiteSpace(name) ? "Effect" : name;
+        _layers = [Make("Poker" + name + "Lower"), Make("Poker" + name + "Upper")];
         Layer Make(string name) => new()
         {
             Image = new ImagePanel(canvas, name)
@@ -32,11 +34,14 @@ internal sealed class PokerScreenEffect : IDisposable
         };
     }
 
-    public void Play(Guid id)
+    public void Play(Guid id, string? fallbackSound = null)
     {
         if (_disposed) return;
         foreach (var layer in _layers) { layer.Frames = 0; layer.Image.IsHidden = true; }
-        if (id == Guid.Empty || AnimationDescriptor.Get(id) is not { } animation) return;
+        var animation = id == Guid.Empty ? null : AnimationDescriptor.Get(id);
+        var sound = !string.IsNullOrWhiteSpace(animation?.Sound) ? animation.Sound : fallbackSound;
+        if (!string.IsNullOrWhiteSpace(sound)) Audio.AddGameSound(sound, false);
+        if (animation == null) return;
         Configure(_layers[0], animation.Lower);
         Configure(_layers[1], animation.Upper);
         _started = Environment.TickCount64;

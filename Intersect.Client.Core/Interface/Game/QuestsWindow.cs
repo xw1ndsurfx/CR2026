@@ -285,6 +285,12 @@ public partial class QuestsWindow
             progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {NPCDescriptor.GetName(currentTask.TargetId)}";
         else if (currentTask.Objective == QuestObjective.GatherItems)
             progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {ItemDescriptor.GetName(currentTask.TargetId)}";
+        else if (currentTask.Objective == QuestObjective.PokerWins)
+            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} poker hands won";
+        else if (currentTask.Objective == QuestObjective.PokerNetWinnings)
+            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} net poker currency won";
+        else if (currentTask.Objective == QuestObjective.PokerLevel)
+            progressText = $"Poker level {playerQuest.TaskProgress} / {currentTask.Quantity}";
 
         // cache
         if (_lastHudQuestId == mSelectedQuest.Id &&
@@ -530,6 +536,15 @@ public partial class QuestsWindow
                                     ), mQuestDescTemplateLabel
                                 );
                             }
+                            else if (mSelectedQuest.Tasks[i].Objective == QuestObjective.PokerWins)
+                                mQuestDescLabel.AddText(Strings.QuestLog.TaskPokerWins.ToString(
+                                    Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress, mSelectedQuest.Tasks[i].Quantity), mQuestDescTemplateLabel);
+                            else if (mSelectedQuest.Tasks[i].Objective == QuestObjective.PokerNetWinnings)
+                                mQuestDescLabel.AddText(Strings.QuestLog.TaskPokerNet.ToString(
+                                    Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress, mSelectedQuest.Tasks[i].Quantity), mQuestDescTemplateLabel);
+                            else if (mSelectedQuest.Tasks[i].Objective == QuestObjective.PokerLevel)
+                                mQuestDescLabel.AddText(Strings.QuestLog.TaskPokerLevel.ToString(
+                                    Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress, mSelectedQuest.Tasks[i].Quantity), mQuestDescTemplateLabel);
                         }
                     }
 

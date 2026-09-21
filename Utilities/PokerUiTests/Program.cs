@@ -92,12 +92,15 @@ foreach (var size in new[] { new Point(858, 658), new Point(800, 600), new Point
             canvas.Size = new Point(Math.Max(640, size.X - 60), Math.Max(480, size.Y - 40));
             pokerType.GetMethod("ResizeToCanvas")!.Invoke(scene, null);
             Check(scene.Size == canvas.Size, "Runtime resize ignored");
-            var overlays = canvas.Children.Where(c => c.Name.StartsWith("PokerVictory")).ToArray();
-            Check(overlays.Length == 2 && overlays.All(c => !c.MouseInputEnabled && !c.KeyboardInputEnabled), "Victory overlay captures input");
+            var overlays = canvas.Children.Where(c => c.Name.StartsWith("PokerVictory") ||
+                c.Name.StartsWith("PokerAction") || c.Name.StartsWith("PokerLevel")).ToArray();
+            Check(overlays.Length == 6 && overlays.All(c => !c.MouseInputEnabled && !c.KeyboardInputEnabled),
+                "Poker effect overlay captures input");
         }
         finally { pokerType.GetMethod("Destroy")!.Invoke(scene, null); }
         Check(Intersect.Client.Interface.Interface.FocusComponents.Count == 0, "Wager input leaked");
-        Check(!canvas.Children.Any(c => c.Name.StartsWith("PokerVictory")) && !canvas.Children.Contains(scene), "Destroyed scene/overlay still attached");
+        Check(!canvas.Children.Any(c => c.Name.StartsWith("PokerVictory") || c.Name.StartsWith("PokerAction") ||
+            c.Name.StartsWith("PokerLevel")) && !canvas.Children.Contains(scene), "Destroyed scene/overlay still attached");
         pokerType.GetMethod("Destroy")!.Invoke(scene, null);
     });
 }

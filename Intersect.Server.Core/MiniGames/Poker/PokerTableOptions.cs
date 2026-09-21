@@ -7,10 +7,13 @@ namespace Intersect.Server.MiniGames.Poker;
 
 public sealed record PokerTableOptions(
     bool DealerPlays = false, int NpcPlayers = 0, bool AutoStart = false, Guid DealAnimationId = default,
-    bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0)
+    bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0,
+    bool UnlimitedNpcBankroll = false, PokerEffectSettings? Effects = null, Guid LevelUpEventId = default)
 {
+    public PokerEffectSettings EffectiveEffects => Effects ?? PokerEffectSettings.Empty;
     public bool IsValid(int seats) => NpcPlayers >= 0 && NpcPlayers <= 5 &&
-        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId);
+        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId) &&
+        EffectiveEffects.IsValid();
 }
 
 public sealed record PokerSeatBack(Guid PlayerId, int CurrentId, int SelectedId);
@@ -22,6 +25,7 @@ public sealed record PokerPresentation(Guid[] NpcIds, Guid DealerNpcId, bool Aut
     public long Experience { get; init; }
     public long Wins { get; init; }
     public bool ProgressPending { get; init; }
+    public PokerEffectSettings Effects { get; init; } = PokerEffectSettings.Empty;
     public PokerPublicDecision[] Decisions { get; init; } = Array.Empty<PokerPublicDecision>();
     public static PokerPresentation Empty => new(Array.Empty<Guid>(), Guid.Empty, false, Guid.Empty);
 }
@@ -57,6 +61,30 @@ public static class PokerNpcPolicy
         if (view.CanRaise && strength >= 45 && roll < 20 && view.MaximumRaiseTo > view.CurrentBet)
             return (PokerAction.RaiseTo, Math.Min(view.MinimumRaiseTo, view.MaximumRaiseTo));
         if (view.ToCall == 0) return (PokerAction.Check, 0);
+
+        var opponentAllIn = view.Seats.Any(s => s.PlayerId != npcId && s.InHand && !s.Folded && s.AllIn && s.StreetBet == view.CurrentBet);
+        if (opponentAllIn)
+        {
+            // Do not alter cards or showdown odds. Defend against repetitive shove/bluff play
+            // by varying the CALL threshold from the NPC's own hand, price and remaining stack.
+            var potAfterCall = Math.Max(1L, view.Pot + view.ToCall);
+            var pricePercent = (int)Math.Min(100, view.ToCall * 100L / potAfterCall);
+            var stackPercent = me.Chips <= 0 ? 100 : (int)Math.Min(100, view.ToCall * 100L / me.Chips);
+            var callChance = strength switch
+            {
+                >= 75 => 98,
+                >= 60 => 90,
+                >= 45 => 68,
+                >= 30 => 42,
+                _ => 18,
+            };
+            if (pricePercent <= 25) callChance += 12;
+            if (view.ToCall <= bigBlind * 3) callChance += 10;
+            if (stackPercent >= 75 && strength < 45) callChance -= 8;
+            callChance = Math.Clamp(callChance, 10, 99);
+            return roll < callChance ? (PokerAction.Call, 0) : (PokerAction.Fold, 0);
+        }
+
         var inexpensive = view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 20);
         var affordablePair = strength >= 55 && view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 2);
         return inexpensive && roll < 85 || affordablePair || roll < 8

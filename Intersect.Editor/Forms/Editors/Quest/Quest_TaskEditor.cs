@@ -7,6 +7,8 @@ using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.GameObjects;
 using Microsoft.Extensions.Logging;
+using DrawingColor = System.Drawing.Color;
+using DrawingPoint = System.Drawing.Point;
 
 
 namespace Intersect.Editor.Forms.Editors.Quest;
@@ -14,6 +16,9 @@ namespace Intersect.Editor.Forms.Editors.Quest;
 
 public partial class QuestTaskEditor : UserControl
 {
+    private DarkUI.Controls.DarkGroupBox _pokerGroup;
+    private DarkUI.Controls.DarkNumericUpDown _pokerQuantity;
+    private Label _pokerQuantityLabel;
 
     public bool Cancelled;
 
@@ -36,6 +41,7 @@ public partial class QuestTaskEditor : UserControl
         }
 
         InitializeComponent();
+        InitializePokerControls();
         mMyTask = refTask;
         mMyQuest = refQuest;
 
@@ -63,7 +69,44 @@ public partial class QuestTaskEditor : UserControl
                 nudNpcQuantity.Value = mMyTask?.Quantity ?? 0;
 
                 break;
+            case 3:
+            case 4:
+            case 5:
+                ConfigurePokerQuantity(cmbTaskType.SelectedIndex, mMyTask?.Quantity ?? 1);
+                break;
         }
+    }
+
+    private void InitializePokerControls()
+    {
+        _pokerGroup = new DarkUI.Controls.DarkGroupBox
+        {
+            Text = "Poker objective", Location = new DrawingPoint(10, 110), Size = new Size(236, 83),
+            BackColor = DrawingColor.FromArgb(45, 45, 48), ForeColor = DrawingColor.Gainsboro, Visible = false
+        };
+        _pokerQuantityLabel = new Label { Text = "Target:", AutoSize = true, Location = new DrawingPoint(8, 32) };
+        _pokerQuantity = new DarkUI.Controls.DarkNumericUpDown
+        {
+            Location = new DrawingPoint(103, 29), Size = new Size(116, 20), Minimum = 1, Maximum = 1000000000,
+            Value = 1, BackColor = DrawingColor.FromArgb(69, 73, 74), ForeColor = DrawingColor.Gainsboro
+        };
+        _pokerGroup.Controls.Add(_pokerQuantityLabel);
+        _pokerGroup.Controls.Add(_pokerQuantity);
+        grpEditor.Controls.Add(_pokerGroup);
+        _pokerGroup.BringToFront();
+    }
+
+    private void ConfigurePokerQuantity(int objectiveIndex, int value)
+    {
+        if (_pokerQuantity == null) return;
+        _pokerQuantity.Maximum = objectiveIndex == (int)QuestObjective.PokerLevel ? 25 : 1000000000;
+        _pokerQuantityLabel.Text = objectiveIndex switch
+        {
+            (int)QuestObjective.PokerWins => "Hands to win:",
+            (int)QuestObjective.PokerNetWinnings => "Net amount:",
+            _ => "Poker level:",
+        };
+        _pokerQuantity.Value = Math.Clamp(value, (int)_pokerQuantity.Minimum, (int)_pokerQuantity.Maximum);
     }
 
     private void InitLocalization()
@@ -98,6 +141,7 @@ public partial class QuestTaskEditor : UserControl
     {
         grpGatherItems.Hide();
         grpKillNpcs.Hide();
+        _pokerGroup?.Hide();
         switch (cmbTaskType.SelectedIndex)
         {
             case 0: //Event Driven
@@ -126,6 +170,12 @@ public partial class QuestTaskEditor : UserControl
                 nudNpcQuantity.Value = 1;
 
                 break;
+            case 3:
+            case 4:
+            case 5:
+                _pokerGroup.Show();
+                ConfigurePokerQuantity(cmbTaskType.SelectedIndex, 1);
+                break;
         }
     }
 
@@ -149,6 +199,12 @@ public partial class QuestTaskEditor : UserControl
                 mMyTask.TargetId = NPCDescriptor.IdFromList(cmbNpc.SelectedIndex);
                 mMyTask.Quantity = (int) nudNpcQuantity.Value;
 
+                break;
+            case QuestObjective.PokerWins:
+            case QuestObjective.PokerNetWinnings:
+            case QuestObjective.PokerLevel:
+                mMyTask.TargetId = Guid.Empty;
+                mMyTask.Quantity = (int)_pokerQuantity.Value;
                 break;
         }
 

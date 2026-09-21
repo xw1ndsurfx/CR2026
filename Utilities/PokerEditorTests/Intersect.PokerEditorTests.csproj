@@ -9,5 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="../../Framework/Intersect.Framework.Core/Intersect.Framework.Core.csproj" />
     <Compile Include="../../Intersect.Editor/Forms/Editors/Events/MiniGameCommandDialog.cs" Link="MiniGameCommandDialog.cs" />
+    <Compile Include="../../Intersect.Editor/Forms/Editors/Events/PokerEffectsDialog.cs" Link="PokerEffectsDialog.cs" />
   </ItemGroup>
 </Project>

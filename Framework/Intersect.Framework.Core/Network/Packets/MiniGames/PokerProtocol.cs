@@ -42,7 +42,7 @@ public sealed partial class PokerDecisionState
     [Key(5)] public bool Automatic { get; set; }
     [IgnoreMember] public bool IsValid => Sequence > 0 && PlayerId != Guid.Empty &&
         Name is { Length: >= 1 and <= 32 } && Amount >= 0 &&
-        Action is "deal" or "check" or "call" or "raise" or "fold" or "wins" or "leave";
+        Action is "deal" or "check" or "call" or "raise" or "allin" or "fold" or "wins" or "leave";
 }
 
 [MessagePackObject]
@@ -75,6 +75,20 @@ public sealed partial class PokerTableState
     [Key(23)] public long Wins { get; set; }
     [Key(24)] public bool ProgressPending { get; set; }
     [Key(25)] public PokerDecisionState[] Decisions { get; set; } = [];
+    [Key(28)] public Guid CheckAnimationId { get; set; }
+    [Key(29)] public Guid CallAnimationId { get; set; }
+    [Key(30)] public Guid RaiseAnimationId { get; set; }
+    [Key(31)] public Guid FoldAnimationId { get; set; }
+    [Key(32)] public Guid AllInAnimationId { get; set; }
+    [Key(33)] public Guid LevelUpAnimationId { get; set; }
+    [Key(34)] public string DealSound { get; set; } = string.Empty;
+    [Key(35)] public string CheckSound { get; set; } = string.Empty;
+    [Key(36)] public string CallSound { get; set; } = string.Empty;
+    [Key(37)] public string RaiseSound { get; set; } = string.Empty;
+    [Key(38)] public string FoldSound { get; set; } = string.Empty;
+    [Key(39)] public string AllInSound { get; set; } = string.Empty;
+    [Key(40)] public string WinSound { get; set; } = string.Empty;
+    [Key(41)] public string LevelUpSound { get; set; } = string.Empty;
 
     public bool HasValidShape() => HandId >= 0 && Revision >= 0 &&
         Stage is >= PokerStage.Waiting and <= PokerStage.Finished &&
@@ -94,8 +108,13 @@ public sealed partial class PokerTableState
         NpcIds.All(id => Seats.Any(s => s.PlayerId == id)) &&
         (DealerNpcId == Guid.Empty || NpcIds.Contains(DealerNpcId)) &&
         Decisions is { Length: <= 12 } && Decisions.All(d => d != null && d.IsValid) &&
-        Decisions.Select(d => d.Sequence).Distinct().Count() == Decisions.Length;
+        Decisions.Select(d => d.Sequence).Distinct().Count() == Decisions.Length &&
+        ValidSound(DealSound) && ValidSound(CheckSound) && ValidSound(CallSound) && ValidSound(RaiseSound) &&
+        ValidSound(FoldSound) && ValidSound(AllInSound) && ValidSound(WinSound) && ValidSound(LevelUpSound);
 
+    private static bool ValidSound(string? value) => string.IsNullOrEmpty(value) ||
+        value.Length <= 128 && !value.Contains('/') && !value.Contains('\\') && !value.Contains(':') &&
+        !value.Contains("..", StringComparison.Ordinal);
     private static bool ValidCards(int[]? cards, int maximum) => cards != null &&
         cards.Length <= maximum && cards.All(c => c is >= 0 and < 52) && cards.Distinct().Count() == cards.Length;
 }

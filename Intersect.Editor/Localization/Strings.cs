@@ -5551,6 +5551,9 @@ Tick timer saved in server config.json.";
             {0, @"Event Driven"},
             {1, @"Gather Item(s)"},
             {2, @"Kill NPC(s)"},
+            {3, @"Poker: Win hands"},
+            {4, @"Poker: Win net amount"},
+            {5, @"Poker: Reach level"},
         };
 
         public static Dictionary<int, LocalizedString> descriptions = new Dictionary<int, LocalizedString>
@@ -5558,6 +5561,9 @@ Tick timer saved in server config.json.";
             {0, @"Event Driven - {00}"},
             {1, @"Gather Items [{00} x{01}] - {02}"},
             {2, @"Kill Npc(s) [{00} x{01}] - {02}"},
+            {3, @"Poker: Win {00} hand(s) - {01}"},
+            {4, @"Poker: Win {00} net table currency - {01}"},
+            {5, @"Poker: Reach level {00} - {01}"},
         };
 
     }

@@ -1,11 +1,14 @@
 #nullable enable
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.MiniGames;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
+using Intersect.GameObjects;
 using Intersect.Server.MiniGames.Poker;
 using Intersect.Server.Networking;
 
@@ -33,6 +36,11 @@ internal static class PokerCurrencyRuntime
     private static readonly Dictionary<Guid, View> Views = new();
     private static long _refundAt;
     internal static bool Contains(Guid player) { lock (Gate) return Views.ContainsKey(player); }
+    internal static int Level(Guid player)
+    {
+        try { return MiniGameProgression.Level(PokerInventoryBridge.Ledger.Profile(player).Experience); }
+        catch { return 1; }
+    }
 
     internal static PokerRegistryResult Join(Player player, StartMiniGameCommand command)
     {
@@ -48,7 +56,8 @@ internal static class PokerCurrencyRuntime
                     return new(PokerRegistryError.InvalidPresence);
                 var rules = new PokerRules(command.MaxPlayers, command.StartingChips, command.SmallBlind, command.BigBlind, command.TurnSeconds);
                 var options = new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
-                    command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId);
+                    command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId,
+                    command.UnlimitedNpcBankroll, command.Effects, command.LevelUpEventId);
                 var key = new PokerTableKey(presence.MapId, presence.MapInstanceId, command.TableId);
                 var money = PokerInventoryBridge.Ledger;
                 lock (Gate)
@@ -206,8 +215,18 @@ internal static class PokerCurrencyRuntime
             foreach (var message in pair.Value.CollectNpcChat())
                 foreach (var view in Views.Values.Where(v => !v.Closed && ReferenceEquals(v.Table, pair.Value)))
                     output.Add(new(view, null, LocalMessage: message));
+            foreach (var levelUp in pair.Value.CollectLevelUps())
+            {
+                if (!Views.TryGetValue(levelUp.Player, out var levelView) || levelView.Closed || !ReferenceEquals(levelView.Table, pair.Value))
+                    continue;
+                output.Add(new(levelView, null, LocalMessage: $"[Poker] {levelUp.Name} reached poker level {levelUp.Level}!"));
+                if (pair.Value.Options.LevelUpEventId != Guid.Empty && EventDescriptor.Get(pair.Value.Options.LevelUpEventId) is { } reward)
+                    levelView.Player.EnqueueStartCommonEvent(reward);
+            }
             foreach (var win in pair.Value.CollectWins())
             {
+                if (Views.TryGetValue(win.Player, out var questView) && !questView.Closed && ReferenceEquals(questView.Table, pair.Value))
+                    questView.Player.UpdatePokerQuestTasks(win.Amount, win.Level);
                 if (!pair.Value.Options.AnnounceWins) continue;
                 var name = new string(win.Name.Where(c => !char.IsControl(c)).ToArray());
                 var currency = new string(ItemDescriptor.GetName(pair.Value.Currency).Where(c => !char.IsControl(c)).ToArray());

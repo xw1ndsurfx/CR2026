@@ -28,9 +28,18 @@ internal static class PresentationTests
         var legacy = JsonConvert.DeserializeObject<StartMiniGameCommand>("{}", settings)!;
         Check(legacy.HasValidSettings() && !legacy.DealerPlays && legacy.NpcPlayers == 0 && !legacy.AutoStart && legacy.DealAnimationId == Guid.Empty, "Legacy defaults");
         var animation = Guid.NewGuid();
-        var command = new StartMiniGameCommand { DealerPlays = true, NpcPlayers = 2, AutoStart = true, DealAnimationId = animation };
+        var effectAnimation = Guid.NewGuid(); var levelEvent = Guid.NewGuid();
+        var command = new StartMiniGameCommand
+        {
+            DealerPlays = true, NpcPlayers = 2, AutoStart = true, DealAnimationId = animation,
+            UnlimitedNpcBankroll = true, LevelUpEventId = levelEvent,
+            Effects = new PokerEffectSettings { AllInAnimationId = effectAnimation, AllInSound = "allin.wav", LevelUpSound = "level.wav" }
+        };
         var copy = JsonConvert.DeserializeObject<StartMiniGameCommand>(JsonConvert.SerializeObject(command, settings), settings)!;
-        Check(copy.HasValidSettings() && copy.DealerPlays && copy.NpcPlayers == 2 && copy.AutoStart && copy.DealAnimationId == animation, "Editor settings roundtrip");
+        Check(copy.HasValidSettings() && copy.DealerPlays && copy.NpcPlayers == 2 && copy.AutoStart &&
+            copy.DealAnimationId == animation && copy.UnlimitedNpcBankroll && copy.LevelUpEventId == levelEvent &&
+            copy.Effects.AllInAnimationId == effectAnimation && copy.Effects.AllInSound == "allin.wav" &&
+            copy.Effects.LevelUpSound == "level.wav", "Editor settings roundtrip");
         Console.WriteLine("PASS PRESENTATION: legacy and new event serialization");
         var registry = new PokerTableRegistry(); var person = new PokerPresence(new(Guid.NewGuid(), Guid.NewGuid()), Guid.NewGuid(), Guid.Empty);
         var joined = registry.Join(person, "wire", "Human", new(), new(true, 1, true, animation));

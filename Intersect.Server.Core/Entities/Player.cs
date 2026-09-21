@@ -6349,6 +6349,7 @@ public partial class Player : Entity
             );
 
             PacketSender.SendQuestsProgress(this);
+            RefreshPokerLevelQuestTasks();
         }
     }
 
@@ -6511,6 +6512,7 @@ public partial class Player : Entity
             }
         }
         UnequipInvalidItems();
+        RefreshPokerLevelQuestTasks();
     }
 
     public void CompleteQuest(Guid questId, bool skipCompletionEvent)
