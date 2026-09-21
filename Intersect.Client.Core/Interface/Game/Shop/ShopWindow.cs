@@ -23,6 +23,7 @@ public partial class ShopWindow : Window
     private readonly Label _buyEmpty;
     private readonly Label _sellEmpty;
     private readonly Label _hint;
+    private readonly TextBox _search;
     private bool _shopInitialized;
     private bool _inventorySubscribed;
 
@@ -39,20 +40,37 @@ public partial class ShopWindow : Window
         TitleLabel.FontSize = 14;
         TitleLabel.TextColorOverride = Color.White;
 
-        _buyHeader = Header("BuyHeader", Strings.Shop.BuyItem.ToString(), 24, 18, 350);
-        _sellHeader = Header("SellHeader", Strings.Shop.SellItem.ToString(), 406, 18, 350);
+        _search = new TextBox(this, "ShopSearch")
+        {
+            Font = Skin.DefaultFont,
+            FontSize = 11,
+            PlaceholderText = Strings.Shop.SearchPlaceholder.ToString(),
+            MaximumLength = 64,
+        };
+        _search.TextChanged += (_, _) =>
+        {
+            if (!_shopInitialized) return;
+            RefreshBuyRows();
+            RefreshSellRows();
+        };
+        Interface.FocusComponents.Add(_search);
+
+        _buyHeader = Header("BuyHeader", Strings.Shop.BuyItem.ToString(), 24, 56, 350);
+        _sellHeader = Header("SellHeader", Strings.Shop.SellItem.ToString(), 406, 56, 350);
 
         _buyContainer = new ScrollControl(this, "BuyList")
         {
             Dock = Pos.None,
             OverflowX = OverflowBehavior.Hidden,
             OverflowY = OverflowBehavior.Scroll,
+            AutoHideBars = false,
         };
         _sellContainer = new ScrollControl(this, "SellList")
         {
             Dock = Pos.None,
             OverflowX = OverflowBehavior.Hidden,
             OverflowY = OverflowBehavior.Scroll,
+            AutoHideBars = false,
         };
 
         _buyEmpty = EmptyLabel("BuyEmpty", Strings.Shop.NoItemsForSale.ToString());
@@ -73,15 +91,20 @@ public partial class ShopWindow : Window
         _shopInitialized = true;
 
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
-        SetSize(780, 590);
+        SetSize(780, 620);
 
-        _buyHeader.SetBounds(24, 18, 350, 28);
-        _sellHeader.SetBounds(406, 18, 350, 28);
-        _buyContainer.SetBounds(24, 52, 350, 474);
-        _sellContainer.SetBounds(406, 52, 350, 474);
-        _buyEmpty.SetBounds(38, 74, 320, 50);
-        _sellEmpty.SetBounds(420, 74, 320, 50);
-        _hint.SetBounds(24, 538, 732, 28);
+        _search.SetBounds(24, 18, 732, 30);
+        _buyHeader.SetBounds(24, 56, 350, 28);
+        _sellHeader.SetBounds(406, 56, 350, 28);
+        _buyContainer.SetBounds(24, 90, 350, 468);
+        _sellContainer.SetBounds(406, 90, 350, 468);
+        _buyContainer.VerticalScrollBar.Width = 16;
+        _sellContainer.VerticalScrollBar.Width = 16;
+        _buyContainer.VerticalScrollBar.IsHidden = false;
+        _sellContainer.VerticalScrollBar.IsHidden = false;
+        _buyEmpty.SetBounds(38, 112, 300, 50);
+        _sellEmpty.SetBounds(420, 112, 300, 50);
+        _hint.SetBounds(24, 570, 732, 28);
 
         RefreshBuyRows();
         RefreshSellRows();
@@ -92,6 +115,7 @@ public partial class ShopWindow : Window
             _inventorySubscribed = true;
             Disposed += (_, _) =>
             {
+                Interface.FocusComponents.Remove(_search);
                 if (_inventorySubscribed)
                 {
                     player.InventoryUpdated -= PlayerOnInventoryUpdated;
@@ -131,6 +155,7 @@ public partial class ShopWindow : Window
             {
                 var offer = shop.SellingItems[slot];
                 if (!ItemDescriptor.TryGet(offer.ItemId, out var item)) continue;
+                if (!MatchesSearch(item.Name)) continue;
 
                 var currencyName = ItemDescriptor.TryGet(offer.CostItemId, out var currency)
                     ? currency.Name
@@ -169,6 +194,7 @@ public partial class ShopWindow : Window
                 var inventory = player.Inventory[slot];
                 if (inventory == null || inventory.ItemId == Guid.Empty || firstSlots.ContainsKey(inventory.ItemId)) continue;
                 if (!ItemDescriptor.TryGet(inventory.ItemId, out var item) || !item.CanSell) continue;
+                if (!MatchesSearch(item.Name)) continue;
                 if (!TrySellOffer(shop, item, out var amount, out var currencyName)) continue;
 
                 firstSlots.Add(inventory.ItemId, slot);
@@ -190,6 +216,12 @@ public partial class ShopWindow : Window
 
         _sellEmpty.IsHidden = count != 0;
         _sellEmpty.BringToFront();
+    }
+
+    private bool MatchesSearch(string itemName)
+    {
+        var query = _search.Text?.Trim();
+        return string.IsNullOrWhiteSpace(query) || itemName.Contains(query, StringComparison.OrdinalIgnoreCase);
     }
 
     internal static bool TrySellOffer(ShopDescriptor shop, ItemDescriptor item, out int amount, out string currencyName)
