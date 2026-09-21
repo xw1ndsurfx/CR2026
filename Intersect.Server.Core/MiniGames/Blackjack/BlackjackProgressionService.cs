@@ -17,7 +17,7 @@ public sealed class BlackjackProgressionService
     }
 
     public MiniGameProgress Load(Guid character) =>
-        _store.Load(character, Framework.Core.MiniGames.MiniGameProgression.Blackjack);
+        _store.Load(character, global::Intersect.Framework.Core.MiniGames.MiniGameProgression.Blackjack);
 
     public MiniGameProgress AwardWin(Guid character, Guid tableInstance, long handId) =>
         _store.AwardWin(character, Framework.Core.MiniGames.MiniGameProgression.Blackjack, tableInstance, handId);
