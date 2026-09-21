@@ -27,7 +27,7 @@ internal static class BlackjackRuntime
         public bool Closed;public long Published=-1;
         public void Renew(){Id=Guid.NewGuid();Guard=new(Table.Id,Id);Closed=false;Published=-1;}
     }
-    private sealed record Delivery(View? View,BlackjackStatePacket? Packet,string? Announcement=null);
+    private sealed record Delivery(View? View,BlackjackStatePacket? Packet,string? Announcement=null,BlackjackQuestUpdate? Quest=null);
     private static readonly object Gate=new();
     private static readonly Dictionary<BlackjackKey,BlackjackSessionTable> Tables=new();
     private static readonly Dictionary<Guid,View> Views=new();
@@ -176,6 +176,9 @@ internal static class BlackjackRuntime
             foreach(var win in pair.Value.CollectWins())
                 if(pair.Value.Settings.Announce)output.Add(new(null,null,$"[Blackjack] {Clean(win.Name)} wins {win.Net} "+
                     (pair.Value.Settings.Currency==Guid.Empty?"test chips":Clean(ItemDescriptor.GetName(pair.Value.Settings.Currency)))+" (net gain)."));
+            foreach(var quest in pair.Value.CollectQuestUpdates())
+                if(Views.TryGetValue(quest.PlayerId,out var questView) && ReferenceEquals(questView.Table,pair.Value))
+                    output.Add(new(questView,null,Quest:quest.Update));
             if(pair.Value.Empty)Tables.Remove(pair.Key);
         }
     }
@@ -193,6 +196,9 @@ internal static class BlackjackRuntime
         try
         {
             if(d.Announcement!=null)PacketSender.SendGlobalMsg(d.Announcement,Color.White);
+            else if(d.Quest is {} quest && d.View is {} questView &&
+                ReferenceEquals(questView.Client.Entity,questView.Player) && questView.Player.LoginTime==questView.Login)
+                questView.Player.UpdateBlackjackQuestTasks(quest);
             else if(d.View is {} v && d.Packet is {} p && ReferenceEquals(v.Client.Entity,v.Player) && v.Player.LoginTime==v.Login)v.Client.Send(p);
         }
         catch(Exception error){PokerInventoryBridge.Log(error);}
