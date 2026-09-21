@@ -1,0 +1,125 @@
+name: Blackjack production validation
+
+on:
+  pull_request:
+    paths:
+      - 'Framework/Intersect.Framework.Core/**/*Blackjack*'
+      - 'Framework/Intersect.Framework.Core/**/Blackjack/**'
+      - 'Intersect.Server.Core/**/*Blackjack*'
+      - 'Intersect.Server.Core/**/Blackjack/**'
+      - 'Intersect.Client.Core/**/*Blackjack*'
+      - 'Intersect.Client.Core/**/Blackjack/**'
+      - 'Intersect.Editor/**'
+      - 'Utilities/Blackjack*/**'
+      - 'Utilities/PokerUiTests/BlackjackSceneTests.cs'
+      - 'Utilities/PokerEditorTests/Program.cs'
+      - 'Documentation/MiniGames/Blackjack.md'
+      - '.github/workflows/blackjack-*.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blackjack-production-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  blackjack-tests:
+    name: blackjack-${{ matrix.suite }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: engine
+            os: ubuntu-latest
+            project: Utilities/BlackjackTests/Intersect.BlackjackTests.csproj
+          - suite: integration
+            os: windows-latest
+            project: Utilities/BlackjackIntegrationTests/Intersect.BlackjackIntegrationTests.csproj
+          - suite: editor
+            os: windows-latest
+            project: Utilities/BlackjackEditorTests/Intersect.BlackjackEditorTests.csproj
+          - suite: ui
+            os: windows-latest
+            project: Utilities/PokerUiTests/Intersect.PokerUiTests.csproj
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Run ${{ matrix.suite }} validation
+        shell: pwsh
+        run: ./Utilities/PokerCi/run.ps1 -Project '${{ matrix.project }}' -Configuration Release
+
+  engine-builds:
+    name: build-${{ matrix.target }}
+    runs-on: windows-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: server-core
+            project: Intersect.Server.Core/Intersect.Server.Core.csproj
+          - target: server
+            project: Intersect.Server/Intersect.Server.csproj
+          - target: client
+            project: Intersect.Client/Intersect.Client.csproj
+          - target: editor
+            project: Intersect.Editor/Intersect.Editor.csproj
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build ${{ matrix.target }}
+        shell: pwsh
+        run: ./Utilities/PokerCi/run.ps1 -Mode build -Project '${{ matrix.project }}'
+
+  poker-regressions:
+    name: poker-regression-${{ matrix.suite }}
+    runs-on: windows-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: editor
+            project: Utilities/PokerEditorTests/Intersect.PokerEditorTests.csproj
+          - suite: inventory
+            project: Utilities/PokerInventoryTests/Intersect.PokerInventoryTests.csproj
+          - suite: progression
+            project: Utilities/PokerProgressTests/Intersect.PokerProgressTests.csproj
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Run Poker ${{ matrix.suite }} regression
+        shell: pwsh
+        run: ./Utilities/PokerCi/run.ps1 -Project '${{ matrix.project }}' -Configuration Release
+
+  release-gate:
+    name: Blackjack release gate
+    if: always()
+    needs: [blackjack-tests, engine-builds, poker-regressions]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all validation jobs
+        shell: bash
+        run: |
+          test "${{ needs.blackjack-tests.result }}" = "success"
+          test "${{ needs.engine-builds.result }}" = "success"
+          test "${{ needs.poker-regressions.result }}" = "success"
