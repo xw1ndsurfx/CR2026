@@ -37,19 +37,26 @@ internal static class PokerInventoryBridge
     }
     internal static MoneySeat BuyIn(Player player, Guid seat, Guid table, Guid currency, string house, long amount)
     {
-        if (player.User == null) throw new MoneyRuleException("No authenticated account.");
+        var user = player.User ?? throw new MoneyRuleException("No authenticated account.");
         lock (player.EntityLock)
-        lock (player.User.PokerSaveGate)
+        lock (user.PokerSaveGate)
         {
             var item = ItemDescriptor.Get(currency);
             if (!MiniGameCurrency.IsCompatible(item)) throw new MoneyRuleException("The table currency is missing or incompatible.");
+            var money = Ledger;
             List<Change> changes = [];
-            var result = Ledger.OpenHuman(seat, table, player.Id, currency, house, amount, (connection, transaction) =>
-            {
-                // A replay never recomputes or applies a second debit to the live inventory.
-                changes = DebitPlan(player, currency, amount);
-                SavePlan(player, changes, connection, transaction);
-            });
+            // A player may have moved/split a stack since autosave. Persist the WHOLE
+            // account graph first, not just the debit destination: otherwise the old
+            // source slot could survive a crash alongside the escrow. A skipped or
+            // failed save must never be treated as a successful checkpoint.
+            var result = PokerInventoryCheckpoint.Run(
+                () => user.Save(force: true),
+                () => money.OpenHuman(seat, table, player.Id, currency, house, amount, (connection, transaction) =>
+                {
+                    // A replay never recomputes or applies a second debit to the live inventory.
+                    changes = DebitPlan(player, currency, amount);
+                    SavePlan(player, changes, connection, transaction);
+                }));
             Apply(changes); return result;
         }
     }
@@ -103,10 +110,11 @@ internal static class PokerInventoryBridge
     { try { if (player.Client != null) PacketSender.SendInventory(player); } catch (Exception error) { Log(error); } }
     internal static void Recover(Player player)
     {
-        if (player.User == null || player.Client is not { IsEditor: false }) return;
+        var user = player.User;
+        if (user == null || player.Client is not { IsEditor: false }) return;
         var changed = false;
         lock (player.EntityLock)
-        lock (player.User.PokerSaveGate)
+        lock (user.PokerSaveGate)
         {
             if (!player.IsOnline || player.Client == null || player.IsSaving) return;
             // EntityLock prevents an in-flight admission for this same character. A failed
@@ -117,8 +125,17 @@ internal static class PokerInventoryBridge
                 try
                 {
                     List<Change> changes = [];
-                    Ledger.Cashout(refund, (connection, transaction) =>
-                    { changes = CreditPlan(player, refund.Currency, refund.Amount); SavePlan(player, changes, connection, transaction); });
+                    // The same checkpoint is required before crediting a moved stack.
+                    // No forced account save is performed by sweeps with no pending refund.
+                    PokerInventoryCheckpoint.Run(() => user.Save(force: true), () =>
+                    {
+                        Ledger.Cashout(refund, (connection, transaction) =>
+                        {
+                            changes = CreditPlan(player, refund.Currency, refund.Amount);
+                            SavePlan(player, changes, connection, transaction);
+                        });
+                        return true;
+                    });
                     Apply(changes); changed |= changes.Count > 0;
                     if (refund.Amount > 0) PacketSender.SendChatMsg(player,
                         $"[Poker] Returned {refund.Amount} {ItemDescriptor.GetName(refund.Currency)} to your inventory.", ChatMessageType.Inventory, Color.White);

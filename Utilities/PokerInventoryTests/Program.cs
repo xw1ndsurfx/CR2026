@@ -55,6 +55,69 @@ Test("A rolled-back cash-out leaves the claim available",f=>
     Throws(()=>f.Money.Cashout(claim,(c,t)=>{f.Write(c,t,f.Character,f.Slot,new Item(f.Currency,350));throw new IOException("failed refund");}));
     Check(f.Read(f.Slot).Quantity==250 && f.Money.Refunds(f.Character).Single().Amount==100,"Lost refund");
 });
+foreach(var rejectedSave in Enum.GetValues<UserSaveResult>().Where(r=>r!=UserSaveResult.Completed))
+{
+    Test("A "+rejectedSave+" account checkpoint never starts a transfer",f=>
+    {
+        var called=false;
+        Throws(()=>PokerInventoryCheckpoint.Run(()=>rejectedSave,()=>{called=true;return f.Buy(250);}));
+        Check(!called && f.CurrencyQuantity()==350 && f.Scalar("SELECT COUNT(*) FROM PokerMoneySeats")==0,"Unsaved account admitted");
+    });
+}
+Test("A throwing account checkpoint never starts a transfer",f=>
+{
+    var called=false;
+    Throws(()=>PokerInventoryCheckpoint.Run(()=>throw new IOException("account unavailable"),()=>{called=true;return f.Buy(250);}));
+    Check(!called && f.CurrencyQuantity()==350 && f.Scalar("SELECT COUNT(*) FROM PokerMoneySeats")==0,"Transfer followed failed checkpoint");
+});
+Test("Moving a stack before buy-in cannot leave its old saved source after restart",f=>
+{
+    var live=f.InventorySnapshot();live[f.Slot]=Item.None;live[f.EmptySlot]=new Item(f.Currency,350);
+    var checkpointed=false;
+    PokerInventoryCheckpoint.Run(()=>{var result=f.Checkpoint(live);checkpointed=true;return result;},()=>
+    {
+        Check(checkpointed,"Debit ran before account checkpoint");
+        return f.Money.OpenHuman(Guid.NewGuid(),f.Table,f.Character,f.Currency,"house",100,(c,t)=>
+            f.Write(c,t,f.Character,f.EmptySlot,new Item(f.Currency,250)));
+    });
+    f.Restart();
+    Check(f.Read(f.Slot).ItemId==Guid.Empty && f.Read(f.EmptySlot).Quantity==250,"Old moved stack survived");
+    Check(f.CurrencyQuantity()+f.Money.Refunds(f.Character).Sum(s=>s.Amount)==350,"Money duplicated across moved slots and escrow");
+    Check(f.Read(f.OtherSlot).Quantity==777,"Unrelated stack changed");
+});
+Test("Moving a stack before cash-out cannot duplicate the old position",f=>
+{
+    var seat=f.Buy(250);f.Money.Release(seat.Id);var claim=f.Money.Refunds(f.Character).Single();
+    var live=f.InventorySnapshot();live[f.Slot]=Item.None;live[f.EmptySlot]=new Item(f.Currency,250);
+    PokerInventoryCheckpoint.Run(()=>f.Checkpoint(live),()=>
+    {
+        f.Money.Cashout(claim,(c,t)=>f.Write(c,t,f.Character,f.EmptySlot,new Item(f.Currency,350)));
+        return true;
+    });
+    f.Restart();
+    Check(f.Read(f.Slot).ItemId==Guid.Empty && f.CurrencyQuantity()==350,"Moved-stack cash-out duplicated currency");
+    Check(f.Money.Refunds(f.Character).Length==0,"Cash-out receipt lost");
+});
+Test("A failed checkpoint leaves a refund available and its callback untouched",f=>
+{
+    var seat=f.Buy(250);f.Money.Release(seat.Id);var claim=f.Money.Refunds(f.Character).Single();var credited=false;
+    Throws(()=>PokerInventoryCheckpoint.Run(()=>UserSaveResult.DatabaseFailure,()=>
+    {
+        credited=true;f.Money.Cashout(claim,(c,t)=>f.Write(c,t,f.Character,f.Slot,new Item(f.Currency,350)));return true;
+    }));
+    f.Restart();
+    Check(!credited && f.CurrencyQuantity()==250 && f.Money.Refunds(f.Character).Single().Amount==100,"Failed checkpoint consumed the refund");
+});
+Test("A failed debit after checkpoint preserves the moved inventory without any escrow",f=>
+{
+    var live=f.InventorySnapshot();live[f.Slot]=Item.None;live[f.EmptySlot]=new Item(f.Currency,350);
+    Throws(()=>PokerInventoryCheckpoint.Run(()=>f.Checkpoint(live),()=>
+        f.Money.OpenHuman(Guid.NewGuid(),f.Table,f.Character,f.Currency,"house",100,(c,t)=>
+        {f.Write(c,t,f.Character,f.EmptySlot,new Item(f.Currency,250));throw new IOException("debit rollback");})));
+    f.Restart();
+    Check(f.Read(f.Slot).ItemId==Guid.Empty && f.Read(f.EmptySlot).Quantity==350,"Checkpoint or debit rollback lost the stack");
+    Check(f.CurrencyQuantity()==350 && f.Scalar("SELECT COUNT(*) FROM PokerMoneySeats")==0,"Failed debit left a funded seat");
+});
 Console.WriteLine($"{passed}/{passed+failed} real inventory groups passed.");Environment.ExitCode=failed==0?0:1;
 static void Check(bool v,string m){if(!v)throw new InvalidOperationException(m);}
 static void Throws(Action a){try{a();}catch{return;}throw new InvalidOperationException("Expected rejection");}
@@ -92,6 +155,22 @@ internal sealed class Fixture:IDisposable
     }
     public InventorySlot Read(Guid id)
     {using var c=Context();return c.Player_Items.IgnoreAutoIncludes().AsNoTracking().Single(s=>s.Id==id);}
+    public Dictionary<Guid,Item> InventorySnapshot()
+    {
+        using var c=Context();
+        return c.Player_Items.IgnoreAutoIncludes().AsNoTracking().Where(s=>s.PlayerId==Character).ToArray().ToDictionary(s=>s.Id,s=>s.Clone());
+    }
+    public long CurrencyQuantity()=>InventorySnapshot().Values.Where(s=>s.ItemId==Currency).Sum(s=>(long)s.Quantity);
+    // This fixture's save callback checkpoints real mapped inventory rows with the same
+    // DetectChanges/SaveChanges boundary. The runtime callback is the actual User.Save(force:true)
+    // and additionally saves the account graph. This fixture does not emulate authentication.
+    public UserSaveResult Checkpoint(IReadOnlyDictionary<Guid,Item> live)
+    {
+        using var c=Context();
+        foreach(var pair in live)
+            c.Player_Items.IgnoreAutoIncludes().AsTracking().Single(s=>s.Id==pair.Key && s.PlayerId==Character).Set(pair.Value);
+        c.ChangeTracker.DetectChanges();c.SaveChanges();return UserSaveResult.Completed;
+    }
     public MoneySeat Buy(int remaining,long amount=100)=>Money.OpenHuman(Guid.NewGuid(),Table,Character,Currency,"house",amount,
         (c,t)=>Write(c,t,Character,Slot,remaining==0?Item.None:new Item(Currency,remaining)));
     public void Write(SqliteConnection connection,SqliteTransaction transaction,Guid player,Guid id,Item value)
