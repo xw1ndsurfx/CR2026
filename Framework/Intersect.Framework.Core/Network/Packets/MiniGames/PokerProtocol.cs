@@ -75,26 +75,26 @@ public sealed partial class PokerTableState
     [Key(23)] public long Wins { get; set; }
     [Key(24)] public bool ProgressPending { get; set; }
     [Key(25)] public PokerDecisionState[] Decisions { get; set; } = [];
-    [Key(26)] public Guid CheckAnimationId { get; set; }
-    [Key(27)] public Guid CallAnimationId { get; set; }
-    [Key(28)] public Guid RaiseAnimationId { get; set; }
-    [Key(29)] public Guid FoldAnimationId { get; set; }
-    [Key(30)] public Guid AllInAnimationId { get; set; }
-    [Key(31)] public Guid ShowdownAnimationId { get; set; }
-    [Key(32)] public Guid TurnAnimationId { get; set; }
-    [Key(33)] public Guid DefeatAnimationId { get; set; }
-    [Key(34)] public Guid LeaveAnimationId { get; set; }
-    [Key(35)] public string DealSound { get; set; } = "";
-    [Key(36)] public string CheckSound { get; set; } = "";
-    [Key(37)] public string CallSound { get; set; } = "";
-    [Key(38)] public string RaiseSound { get; set; } = "";
-    [Key(39)] public string FoldSound { get; set; } = "";
-    [Key(40)] public string AllInSound { get; set; } = "";
-    [Key(41)] public string ShowdownSound { get; set; } = "";
-    [Key(42)] public string TurnSound { get; set; } = "";
-    [Key(43)] public string VictorySound { get; set; } = "";
-    [Key(44)] public string DefeatSound { get; set; } = "";
-    [Key(45)] public string LeaveSound { get; set; } = "";
+    [Key(28)] public Guid CheckAnimationId { get; set; }
+    [Key(29)] public Guid CallAnimationId { get; set; }
+    [Key(30)] public Guid RaiseAnimationId { get; set; }
+    [Key(31)] public Guid FoldAnimationId { get; set; }
+    [Key(32)] public Guid AllInAnimationId { get; set; }
+    [Key(33)] public Guid ShowdownAnimationId { get; set; }
+    [Key(34)] public Guid TurnAnimationId { get; set; }
+    [Key(35)] public Guid DefeatAnimationId { get; set; }
+    [Key(36)] public Guid LeaveAnimationId { get; set; }
+    [Key(37)] public string DealSound { get; set; } = "";
+    [Key(38)] public string CheckSound { get; set; } = "";
+    [Key(39)] public string CallSound { get; set; } = "";
+    [Key(40)] public string RaiseSound { get; set; } = "";
+    [Key(41)] public string FoldSound { get; set; } = "";
+    [Key(42)] public string AllInSound { get; set; } = "";
+    [Key(43)] public string ShowdownSound { get; set; } = "";
+    [Key(44)] public string TurnSound { get; set; } = "";
+    [Key(45)] public string VictorySound { get; set; } = "";
+    [Key(46)] public string DefeatSound { get; set; } = "";
+    [Key(47)] public string LeaveSound { get; set; } = "";
 
     public bool HasValidShape() => HandId >= 0 && Revision >= 0 &&
         Stage is >= PokerStage.Waiting and <= PokerStage.Finished &&
