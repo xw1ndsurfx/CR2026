@@ -3,7 +3,6 @@ using System.Windows.Forms;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
-using Intersect.Editor.Content;
 using Intersect.Framework.Core.MiniGames;
 using DrawingColor = System.Drawing.Color;
 

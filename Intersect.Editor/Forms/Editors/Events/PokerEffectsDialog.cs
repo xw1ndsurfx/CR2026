@@ -1,6 +1,5 @@
 using System.Drawing;
 using System.Windows.Forms;
-using Intersect.Editor.Content;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.MiniGames;
@@ -67,5 +66,23 @@ internal sealed class PokerEffectsDialog : Form
     }
     private static string Label(PokerEffectKind k)=>k switch{PokerEffectKind.Join=>"Join table",PokerEffectKind.Deal=>"Deal cards",PokerEffectKind.Check=>"Check",PokerEffectKind.Call=>"Call",PokerEffectKind.Raise=>"Raise",PokerEffectKind.Fold=>"Fold",PokerEffectKind.AllIn=>"All-in",PokerEffectKind.Victory=>"Victory (winner)",PokerEffectKind.LevelUp=>"Poker level up",_=>k.ToString()};
     private static ComboBox AnimationPicker(Guid id){var p=new ComboBox{DropDownStyle=ComboBoxStyle.DropDownList,Dock=DockStyle.Fill};p.Items.Add(new Choice(Guid.Empty,"None"));foreach(var a in AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().OrderBy(a=>a.Name,StringComparer.OrdinalIgnoreCase))p.Items.Add(new Choice(a.Id,a.Name));var s=p.Items.Cast<Choice>().FirstOrDefault(x=>x.Id==id)??new Choice(id,"Missing: "+id);if(!p.Items.Contains(s))p.Items.Add(s);p.SelectedItem=s;return p;}
-    private static ComboBox SoundPicker(string value){var p=new ComboBox{DropDownStyle=ComboBoxStyle.DropDownList,Dock=DockStyle.Fill,DropDownWidth=350};p.Items.Add("None");p.Items.AddRange(GameContentManager.SmartSortedSoundNames);p.SelectedItem=p.Items.Cast<object>().FirstOrDefault(x=>string.Equals(x.ToString(),value,StringComparison.OrdinalIgnoreCase))??"None";return p;}
+    private static ComboBox SoundPicker(string value)
+    {
+        var p = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill, DropDownWidth = 350 };
+        p.Items.Add("None");
+        var root = Path.Combine("resources", "sounds");
+        if (Directory.Exists(root))
+        {
+            var sounds = Directory.EnumerateFiles(root, "*.*", SearchOption.AllDirectories)
+                .Where(file => new[] { ".wav", ".ogg", ".mp3" }.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase))
+                .Select(file => Path.GetRelativePath(root, file).Replace('\\', '/'))
+                .OrderBy(file => file, StringComparer.OrdinalIgnoreCase)
+                .Cast<object>().ToArray();
+            p.Items.AddRange(sounds);
+        }
+        var selected = p.Items.Cast<object>().FirstOrDefault(x => string.Equals(x.ToString(), value, StringComparison.OrdinalIgnoreCase));
+        if (selected == null && !string.IsNullOrWhiteSpace(value)) { p.Items.Add(value); selected = value; }
+        p.SelectedItem = selected ?? "None";
+        return p;
+    }
 }

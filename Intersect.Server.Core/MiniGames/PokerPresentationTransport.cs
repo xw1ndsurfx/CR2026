@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Network.Packets.MiniGames;
 using Intersect.Server.MiniGames.Poker;
 
