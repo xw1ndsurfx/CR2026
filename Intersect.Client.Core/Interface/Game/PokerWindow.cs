@@ -166,6 +166,7 @@ internal sealed partial class PokerWindow : Base
         if (_lastLevel > 0 && level > _lastLevel) _levelUpUntil = Environment.TickCount64 + 5000;
         UpdateSounds(state, me, level);
         UpdateAnimations(state, me, level);
+        UpdateProceduralMotions(state, me);
         _lastLevel = level; _levelUp.Text = Environment.TickCount64 < _levelUpUntil ? Strings.PokerScene.LevelUp.ToString(level) : "";
         if (model.Victories.Observe(model.Current.TableInstanceId, me.PlayerId, state.HandId,
                 state.Stage == PokerStage.Finished, state.NetWin)) _victory.Play(state.VictoryAnimationId);
@@ -224,6 +225,7 @@ internal sealed partial class PokerWindow : Base
             }
         }
         for (var i = 0; i < 5; ++i) Fill(r, new Color(42, 29, 24), 332 + i * 66, 301, 58, 76);
+        RenderProceduralMotions(r);
         var experienceWidth = (int)(616 * Math.Clamp(_xpFraction, 0, 1));
         Fill(r, new Color(45, 99, 61), 52, 710, 618, 18);
         Fill(r, new Color(15, 30, 20), 53, 711, 616, 16);
