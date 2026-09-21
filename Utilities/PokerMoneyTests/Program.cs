@@ -83,8 +83,9 @@ Test("Unlimited NPC bankroll replenishes only NPC admissions", f=>
     Check(f.Money.HouseAvailable("infinite")==0,"Unexpected available balance after loan");
     f.Money.Release(first.Id);
     Check(f.Money.HouseAvailable("infinite")==100,"NPC loan did not return");
-    var second=f.Money.OpenNpc(Guid.NewGuid(),Guid.NewGuid(),f.Currency,"infinite",0,100,true)!;
-    Check(second!=null && f.Money.HouseAvailable("infinite")==0,"Returned house funds not reused");
+    var second=f.Money.OpenNpc(Guid.NewGuid(),Guid.NewGuid(),f.Currency,"infinite",0,100,true)
+        ?? throw new InvalidOperationException("Unlimited NPC admission failed");
+    Check(f.Money.HouseAvailable("infinite")==0,"Returned house funds not reused");
     Throws(()=>f.Money.Cashout(second,(_,_)=>throw new Exception("NPC inventory credit attempted")));
 });
 Test("Unlimited house refills after a human wins its entire NPC stake", f=>
