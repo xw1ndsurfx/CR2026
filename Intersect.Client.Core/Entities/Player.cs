@@ -796,8 +796,19 @@ public partial class Player : Entity, IPlayer
 
     public void TryBuyItem(int shopSlotIndex)
     {
-        //Confirm the purchase
-        var shopSlot = Globals.GameShop?.SellingItems[shopSlotIndex];
+        // Confirm the purchase. Never trust a UI callback index blindly.
+        var shop = Globals.GameShop;
+        if (shop == null || shopSlotIndex < 0 || shopSlotIndex >= shop.SellingItems.Count)
+        {
+            ApplicationContext.Context.Value?.Logger.LogWarning(
+                "Ignored invalid shop buy index {ShopSlotIndex} for shop {ShopName}.",
+                shopSlotIndex,
+                shop?.Name ?? "(none)"
+            );
+            return;
+        }
+
+        var shopSlot = shop.SellingItems[shopSlotIndex];
         if (shopSlot == default || !ItemDescriptor.TryGet(shopSlot.ItemId, out var itemDescriptor))
         {
             return;
