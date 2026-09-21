@@ -1,10 +1,11 @@
 using System.ComponentModel;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Configuration;
+using Intersect.Framework.Core.MiniGames.Blackjack;
 
 namespace Intersect.Framework.Core.GameObjects.Events.Commands;
 
-public enum MiniGameType { Poker = 0 }
+public enum MiniGameType { Poker = 0, Blackjack = 1 }
 
 /// <summary>Empty currency selects isolated test chips. A currency item selects inventory-backed play.</summary>
 public sealed class StartMiniGameCommand : EventCommand
@@ -53,6 +54,9 @@ public sealed class StartMiniGameCommand : EventCommand
     [DefaultValue(0L)] public long NpcReserve { get; set; }
     /// <summary>Explicit system-funded mode: NPC buy-ins are replenished as needed and can create currency.</summary>
     [DefaultValue(false)] public bool UnlimitedNpcBankroll { get; set; }
+    [DefaultValue(10L)] public long BlackjackMinimumBet { get; set; } = 10;
+    [DefaultValue(100L)] public long BlackjackMaximumBet { get; set; } = 100;
+    [DefaultValue(false)] public bool BlackjackHitSoft17 { get; set; }
     [DefaultValue(PokerMotionSpeed.Normal)] public PokerMotionSpeed ProceduralAnimationSpeed { get; set; } = PokerMotionSpeed.Normal;
     [DefaultValue(true)] public bool AnimateDealCards { get; set; } = true;
     [DefaultValue(true)] public bool AnimateBoardCards { get; set; } = true;
@@ -77,10 +81,19 @@ public sealed class StartMiniGameCommand : EventCommand
     public bool HasValidSettings() => MiniGameCatalog.TryGet(Game, out var definition) &&
         MiniGameCatalog.IsValidTableId(TableId) &&
         MaxPlayers >= definition.MinimumPlayers && MaxPlayers <= definition.MaximumPlayers &&
-        SmallBlind >= 1 && BigBlind >= SmallBlind &&
-        BigBlind <= 1_000_000_000 && StartingChips >= BigBlind && StartingChips <= 1_000_000_000 &&
+        StartingChips is >= 1 and <= 1_000_000_000 &&
         NpcReserve is >= 0 and <= 1_000_000_000 &&
         TurnSeconds is >= 5 and <= 300 && NpcPlayers is >= 0 and <= 5 &&
-        NpcPlayers + (DealerPlays ? 1 : 0) < MaxPlayers && MiniGameProgression.IsBack(NpcCardBackId) &&
-        CreateSoundSet().IsValid && CreateLevelRewardSet().IsValid && CreateMotionSet().IsValid;
+        MiniGameProgression.IsBack(NpcCardBackId) &&
+        CreateSoundSet().IsValid && CreateLevelRewardSet().IsValid && CreateMotionSet().IsValid &&
+        (Game switch
+        {
+            MiniGameType.Poker => SmallBlind >= 1 && BigBlind >= SmallBlind &&
+                BigBlind <= 1_000_000_000 && StartingChips >= BigBlind &&
+                NpcPlayers + (DealerPlays ? 1 : 0) < MaxPlayers,
+            MiniGameType.Blackjack => NpcPlayers < MaxPlayers - 1 &&
+                new BlackjackRules(MaxPlayers - 1, StartingChips, BlackjackMinimumBet, BlackjackMaximumBet,
+                    TurnSeconds, BlackjackHitSoft17).IsValid,
+            _ => false,
+        });
 }
