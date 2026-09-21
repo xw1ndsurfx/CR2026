@@ -141,7 +141,7 @@ internal static class AutomationSmokeTests
         Test("NPCs defend all-ins by hand strength without changing the deck", () =>
         {
             var npc=Guid.NewGuid();var human=Guid.NewGuid();
-            PokerSnapshot View(int[] cards)=>new(1,1,PokerPhase.PreFlop,0,1,20,10,800,20,1000,true,
+            PokerSnapshot View(int[] cards)=>new(1,1,PokerPhase.PreFlop,0,1,20,10,800,20,1000,false,
                 Now.AddSeconds(30),Array.Empty<int>(),cards,
                 new[]{new PokerSeatView(0,human,"Human",200,10,10,true,false,false,false,Array.Empty<int>()),
                     new PokerSeatView(1,npc,"NPC",1000,10,10,true,false,false,false,Array.Empty<int>())},
