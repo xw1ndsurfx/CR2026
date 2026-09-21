@@ -66,6 +66,10 @@ public partial class QuestTaskEditor : UserControl
             case 4:
             case 5:
             case 6:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
                 nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
                 break;
         }
@@ -85,6 +89,10 @@ public partial class QuestTaskEditor : UserControl
         cmbTaskType.Items.Add("Poker - Win net amount");
         cmbTaskType.Items.Add("Poker - Reach level");
         cmbTaskType.Items.Add("Poker - Play hands");
+        cmbTaskType.Items.Add("Blackjack - Win hands");
+        cmbTaskType.Items.Add("Blackjack - Win net amount");
+        cmbTaskType.Items.Add("Blackjack - Reach level");
+        cmbTaskType.Items.Add("Blackjack - Play hands");
 
         lblDesc.Text = Strings.TaskEditor.desc;
 
@@ -140,12 +148,17 @@ public partial class QuestTaskEditor : UserControl
             case 4:
             case 5:
             case 6:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
                 grpGatherItems.Show();
-                grpGatherItems.Text = cmbTaskType.SelectedItem?.ToString() ?? "Poker objective";
+                grpGatherItems.Text = cmbTaskType.SelectedItem?.ToString() ?? "Mini-game objective";
                 cmbItem.Hide();
                 lblItem.Hide();
-                lblItemQuantity.Text = cmbTaskType.SelectedIndex == 5 ? "Poker level:" : "Target:";
-                nudItemAmount.Maximum = cmbTaskType.SelectedIndex == 5 ? 25 : 1_000_000_000;
+                var isLevel = cmbTaskType.SelectedIndex is 5 or 9;
+                lblItemQuantity.Text = isLevel ? "Level:" : "Target:";
+                nudItemAmount.Maximum = isLevel ? 25 : 1_000_000_000;
                 nudItemAmount.Value = 1;
                 break;
         }
@@ -175,6 +188,10 @@ public partial class QuestTaskEditor : UserControl
             case QuestObjective.PokerWinAmount:
             case QuestObjective.PokerReachLevel:
             case QuestObjective.PokerPlayHands:
+            case QuestObjective.BlackjackWinHands:
+            case QuestObjective.BlackjackWinAmount:
+            case QuestObjective.BlackjackReachLevel:
+            case QuestObjective.BlackjackPlayHands:
                 mMyTask.TargetId = Guid.Empty;
                 mMyTask.Quantity = (int) nudItemAmount.Value;
                 break;
