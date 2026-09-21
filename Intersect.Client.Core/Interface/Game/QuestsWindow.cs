@@ -549,6 +549,30 @@ public partial class QuestsWindow
                                     ), mQuestDescTemplateLabel
                                 );
                             }
+                            else if (mSelectedQuest.Tasks[i].Objective == QuestObjective.MiniGameWins)
+                            {
+                                mQuestDescLabel.AddText(
+                                    $"{Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress} / {mSelectedQuest.Tasks[i].Quantity} {mSelectedQuest.Tasks[i].MiniGameKey} wins",
+                                    mQuestDescTemplateLabel
+                                );
+                            }
+                            else if (mSelectedQuest.Tasks[i].Objective == QuestObjective.MiniGameWinnings)
+                            {
+                                var currencyName = mSelectedQuest.Tasks[i].TargetId == Guid.Empty
+                                    ? "currency"
+                                    : ItemDescriptor.GetName(mSelectedQuest.Tasks[i].TargetId);
+                                mQuestDescLabel.AddText(
+                                    $"{Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress} / {mSelectedQuest.Tasks[i].Quantity} {currencyName} net",
+                                    mQuestDescTemplateLabel
+                                );
+                            }
+                            else if (mSelectedQuest.Tasks[i].Objective == QuestObjective.MiniGameLevel)
+                            {
+                                mQuestDescLabel.AddText(
+                                    $"{mSelectedQuest.Tasks[i].MiniGameKey} level {Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress} / {mSelectedQuest.Tasks[i].Quantity}",
+                                    mQuestDescTemplateLabel
+                                );
+                            }
                         }
                     }
 
