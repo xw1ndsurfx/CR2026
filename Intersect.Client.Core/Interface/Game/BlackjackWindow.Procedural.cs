@@ -143,7 +143,8 @@ internal sealed partial class BlackjackWindow
 
             var dealerAdded = state.DealerCards.Length > _motionDealerCards;
             var revealed = _motionDealerHidden && !state.DealerHoleHidden;
-            if (dealerAdded && settings.BoardCards)
+            var initialDealerCard = _motionStage == BlackjackStage.Betting && state.Stage == BlackjackStage.Players;
+            if (dealerAdded && (initialDealerCard ? settings.DealCards : settings.BoardCards))
             {
                 for (var i = _motionDealerCards; i < state.DealerCards.Length; ++i)
                     AddBlackjackMotion(BlackjackMotionKind.DealerCard,
