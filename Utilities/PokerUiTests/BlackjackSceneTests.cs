@@ -61,11 +61,11 @@ internal static class BlackjackSceneTests
                 state.Seats[0].Hands=[new(){Cards=[1,2],Total=7,Bet=10}];p.Sequence++;Update();
                 Check(motions.Count==0,"Off motion preset still animated");
                 state.ProceduralAnimationSpeed=PokerMotionSpeed.Cinematic;
-                state.Seats[0].Hands[0].Cards=[1,2,3];state.Seats[0].Hands[0].Total=9;p.Sequence++;Update();
+                state.Seats[0].Hands[0].Cards=[1,2,3];state.Seats[0].Hands[0].Total=12;p.Sequence++;Update();
                 Check(motions.Count>0,"Cinematic motion preset did not animate authoritative hit");
                 motions.Clear();
                 state.ProceduralAnimationSpeed=PokerMotionSpeed.Normal;
-                state.Seats[0].Hands[0].Cards=[1,2,3,4];state.Seats[0].Hands[0].Total=11;p.Sequence++;Update();
+                state.Seats[0].Hands[0].Cards=[1,2,3,4];state.Seats[0].Hands[0].Total=18;p.Sequence++;Update();
                 Check(motions.Count>0,"authoritative deal transition produced no procedural motion");
                 Check(!labels.Single(l=>l.Name=="BlackjackHit").IsDisabled && labels.Single(l=>l.Name=="BlackjackSplit").IsDisabled,"action availability");
                 Check(labels.Single(l=>l.Name=="BlackjackDealerTotal").Text.Contains("9 + hidden"),"dealer hole UI");
