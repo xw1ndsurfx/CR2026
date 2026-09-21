@@ -1,6 +1,7 @@
 #nullable enable
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.MiniGames;
@@ -48,7 +49,8 @@ internal static class PokerCurrencyRuntime
                     return new(PokerRegistryError.InvalidPresence);
                 var rules = new PokerRules(command.MaxPlayers, command.StartingChips, command.SmallBlind, command.BigBlind, command.TurnSeconds);
                 var options = new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
-                    command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId);
+                    command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId,
+                    command.UnlimitedNpcReserve, command.Effects ?? PokerEffects.Empty, command.LevelUpRewardEventId);
                 var key = new PokerTableKey(presence.MapId, presence.MapInstanceId, command.TableId);
                 var money = PokerInventoryBridge.Ledger;
                 lock (Gate)
@@ -208,6 +210,16 @@ internal static class PokerCurrencyRuntime
                     output.Add(new(view, null, LocalMessage: message));
             foreach (var win in pair.Value.CollectWins())
             {
+                var view = Views.Values.FirstOrDefault(v => !v.Closed && v.Player.Id == win.Player && ReferenceEquals(v.Table, pair.Value));
+                if (view != null)
+                {
+                    var oldLevel = MiniGameProgression.Level(win.OldExperience);
+                    var newLevel = MiniGameProgression.Level(win.NewExperience);
+                    view.Player.UpdateMiniGameQuestProgress(MiniGameProgression.Poker, win.Amount, newLevel);
+                    if (newLevel > oldLevel && pair.Value.Options.LevelUpRewardEventId != Guid.Empty &&
+                        EventDescriptor.Get(pair.Value.Options.LevelUpRewardEventId) is { CommonEvent: true } reward)
+                        for (var level = oldLevel + 1; level <= newLevel; ++level) view.Player.EnqueueStartCommonEvent(reward);
+                }
                 if (!pair.Value.Options.AnnounceWins) continue;
                 var name = new string(win.Name.Where(c => !char.IsControl(c)).ToArray());
                 var currency = new string(ItemDescriptor.GetName(pair.Value.Currency).Where(c => !char.IsControl(c)).ToArray());

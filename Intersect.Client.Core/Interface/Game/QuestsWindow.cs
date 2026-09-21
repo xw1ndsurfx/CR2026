@@ -285,6 +285,12 @@ public partial class QuestsWindow
             progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {NPCDescriptor.GetName(currentTask.TargetId)}";
         else if (currentTask.Objective == QuestObjective.GatherItems)
             progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {ItemDescriptor.GetName(currentTask.TargetId)}";
+        else if (currentTask.Objective == QuestObjective.MiniGameWinAmount)
+            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} won at Poker";
+        else if (currentTask.Objective == QuestObjective.MiniGameWinRounds)
+            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} Poker win(s)";
+        else if (currentTask.Objective == QuestObjective.MiniGameReachLevel)
+            progressText = $"Poker level {playerQuest.TaskProgress} / {currentTask.Quantity}";
 
         // cache
         if (_lastHudQuestId == mSelectedQuest.Id &&
@@ -528,6 +534,21 @@ public partial class QuestsWindow
                                         mSelectedQuest.Tasks[i].Quantity,
                                         NPCDescriptor.GetName(mSelectedQuest.Tasks[i].TargetId)
                                     ), mQuestDescTemplateLabel
+                                );
+                            }
+                            else if (mSelectedQuest.Tasks[i].Objective is QuestObjective.MiniGameWinAmount or
+                                     QuestObjective.MiniGameWinRounds or QuestObjective.MiniGameReachLevel)
+                            {
+                                var task = mSelectedQuest.Tasks[i];
+                                var label = task.Objective switch
+                                {
+                                    QuestObjective.MiniGameWinAmount => "Poker winnings",
+                                    QuestObjective.MiniGameWinRounds => "Poker wins",
+                                    _ => "Poker level",
+                                };
+                                mQuestDescLabel.AddText(
+                                    $"{label}: {Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress} / {task.Quantity}",
+                                    mQuestDescTemplateLabel
                                 );
                             }
                         }

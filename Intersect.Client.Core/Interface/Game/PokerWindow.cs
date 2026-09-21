@@ -1,4 +1,5 @@
 using System.Globalization;
+using Intersect.Client.Core;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Localization;
@@ -28,10 +29,12 @@ internal sealed partial class PokerWindow : Base
     private readonly PokerFlatPanel _backTray;
     private readonly PokerTableArt _art;
     private readonly PokerScreenEffect _victory;
+    private readonly PokerScreenEffect _actionEffect;
+    private readonly PokerScreenEffect _levelEffect;
     private PokerSceneLayout _layout;
     private PokerTableState? _state;
     private int _localSeat, _selectedBack, _lastLevel = -1;
-    private long _lastMinimum = -1, _levelUpUntil;
+    private long _lastMinimum = -1, _levelUpUntil, _lastDecisionSequence, _lastFinishedHand = -1;
     private float _xpFraction;
     private string _localError = string.Empty;
     private bool _destroyed;
@@ -93,6 +96,8 @@ internal sealed partial class PokerWindow : Base
         }
         _art = new PokerTableArt(_content, _backTray, _board);
         _victory = new PokerScreenEffect(canvas);
+        _actionEffect = new PokerScreenEffect(canvas);
+        _levelEffect = new PokerScreenEffect(canvas);
         ResizeToCanvas();
     }
     public void ResizeToCanvas()
@@ -114,6 +119,7 @@ internal sealed partial class PokerWindow : Base
         if (Width != _canvas.Width || Height != _canvas.Height) ResizeToCanvas();
         _state = state;
         var me = state.Seats.First(s => s.PlayerId == model.Current.PlayerId);
+        ObserveActionEffects(state);
         _localSeat = me.Seat; _selectedBack = me.SelectedCardBackId;
         var playing = state.Stage is >= PokerStage.PreFlop and <= PokerStage.River;
         var turn = playing && state.ActingSeat == me.Seat && !me.Leaving && !me.Folded && !me.AllIn;
@@ -162,11 +168,20 @@ internal sealed partial class PokerWindow : Base
         _xpFraction = level == MiniGameProgression.MaximumLevel ? 1 : (state.Experience - baseXp) / (float)toNext;
         _experience.Text = level == MiniGameProgression.MaximumLevel ? Strings.PokerScene.Mastered.ToString(level) :
             Strings.PokerScene.Progress.ToString(level, state.Experience - baseXp, toNext);
-        if (_lastLevel > 0 && level > _lastLevel) _levelUpUntil = Environment.TickCount64 + 5000;
+        if (_lastLevel > 0 && level > _lastLevel)
+        {
+            _levelUpUntil = Environment.TickCount64 + 5000;
+            PlayEffect(state, PokerEffectKind.LevelUp, _levelEffect);
+        }
         _lastLevel = level; _levelUp.Text = Environment.TickCount64 < _levelUpUntil ? Strings.PokerScene.LevelUp.ToString(level) : "";
+        if (state.Stage == PokerStage.Finished && state.HandId > _lastFinishedHand)
+        {
+            if (_lastFinishedHand >= 0 && state.NetWin <= 0) PlayEffect(state, PokerEffectKind.Lose, _actionEffect);
+            _lastFinishedHand = state.HandId;
+        }
         if (model.Victories.Observe(model.Current.TableInstanceId, me.PlayerId, state.HandId,
                 state.Stage == PokerStage.Finished, state.NetWin)) _victory.Play(state.VictoryAnimationId);
-        _victory.Update();
+        _victory.Update(); _actionEffect.Update(); _levelEffect.Update();
         _start.IsDisabled = model.Pending || playing || me.Leaving || me.Chips == 0 || !opponents || state.ProgressPending;
         _fold.IsDisabled = !enabled; _check.IsDisabled = !enabled || state.ToCall != 0;
         _call.IsDisabled = !enabled || state.ToCall == 0; _call.Text = Strings.Poker.Call.ToString(state.ToCall);
@@ -185,6 +200,29 @@ internal sealed partial class PokerWindow : Base
         };
         UpdateCurrency(state, me);
         if (!_backTray.IsHidden) _backTray.BringToFront();
+    }
+    private void ObserveActionEffects(PokerTableState state)
+    {
+        var latest = state.Decisions.OrderBy(d => d.Sequence).LastOrDefault();
+        if (latest == null) return;
+        if (_lastDecisionSequence == 0) { _lastDecisionSequence = latest.Sequence; return; }
+        if (latest.Sequence <= _lastDecisionSequence) return;
+        _lastDecisionSequence = latest.Sequence;
+        var kind = latest.Action switch
+        {
+            "deal" => PokerEffectKind.Deal, "check" => PokerEffectKind.Check, "call" => PokerEffectKind.Call,
+            "raise" => PokerEffectKind.Raise, "fold" => PokerEffectKind.Fold, "allin" => PokerEffectKind.AllIn,
+            "wins" => PokerEffectKind.Win, _ => (PokerEffectKind?)null,
+        };
+        if (kind.HasValue) PlayEffect(state, kind.Value, _actionEffect);
+    }
+    private static PokerEffectState? Effect(PokerTableState state, PokerEffectKind kind) =>
+        state.Effects?.FirstOrDefault(e => e.Kind == kind);
+    private static void PlayEffect(PokerTableState state, PokerEffectKind kind, PokerScreenEffect overlay)
+    {
+        var fx = Effect(state, kind); if (fx == null) return;
+        if (!string.IsNullOrWhiteSpace(fx.Sound)) Audio.AddGameSound(fx.Sound, false);
+        overlay.Play(fx.AnimationId);
     }
     private static readonly Color Gold = new(231, 194, 112);
     protected override void Render(SkinBase skin)
@@ -240,8 +278,9 @@ internal sealed partial class PokerWindow : Base
             Fill(r, color, x + w / 2 - half, y + row, half * 2, Math.Min(3, h - row));
         }
     }
-    private static string Describe(PokerDecisionState decision) => Strings.PokerScene.Actions.TryGetValue(decision.Action, out var text)
-        ? text.ToString(decision.Amount) + (decision.Automatic ? " *" : "") : "";
+    private static string Describe(PokerDecisionState decision) => decision.Action == "allin" ? "All-in" :
+        Strings.PokerScene.Actions.TryGetValue(decision.Action, out var text)
+            ? text.ToString(decision.Amount) + (decision.Automatic ? " *" : "") : "";
     private void SelectBack(int id)
     {
         if (_state == null) return;
@@ -259,7 +298,7 @@ internal sealed partial class PokerWindow : Base
     public void Destroy()
     {
         if (_destroyed) return;
-        _destroyed = true; _victory.Dispose(); Interface.FocusComponents.Remove(_amount);
+        _destroyed = true; _victory.Dispose(); _actionEffect.Dispose(); _levelEffect.Dispose(); Interface.FocusComponents.Remove(_amount);
         Hide(); Parent?.RemoveChild(this, false); Dispose();
     }
     private static string Short(string value, int max) => value.Length <= max ? value : value[..(max - 3)] + "...";

@@ -8,7 +8,7 @@ using Intersect.Server.MiniGames.Progression;
 
 namespace Intersect.Server.MiniGames.Currency;
 
-internal sealed record FundedWin(Guid Player, string Name, long Amount);
+internal sealed record FundedWin(Guid Player, string Name, long Amount, long OldExperience, long NewExperience);
 
 /// <summary>The tested hold'em engine owns the rules; this adapter owns funded hand checkpoints.</summary>
 internal sealed class PokerFundedTable
@@ -87,6 +87,7 @@ internal sealed class PokerFundedTable
                 s.InHand ? _members[s.PlayerId].HandBack : Back(s.PlayerId), Back(s.PlayerId))).ToArray(),
             NetWin = net, VictoryAnimationId = net > 0 ? Options.VictoryAnimationId : Guid.Empty,
             Experience = profile.Experience, Wins = profile.Wins, ProgressPending = Pending, Decisions = _decisions.ToArray(),
+            Effects = Options.Effects ?? PokerEffects.Empty,
         };
     }
     private int Back(Guid player) => _members[player].Escrow.Npc ? Options.NpcCardBackId : _members[player].Profile.SelectedBack;
@@ -115,14 +116,20 @@ internal sealed class PokerFundedTable
     {
         if (Pending) return PokerError.IllegalAction;
         var before = Snapshot(player); var result = _table.Act(player, hand, revision, action, amount, now);
-        if (Current.Revision != before.Revision)
+        var after = Current;
+        if (after.Revision != before.Revision)
         {
             var actor = before.Seats.FirstOrDefault(s => s.Seat == before.ActingSeat);
             if (actor != null)
             {
-                if (result == PokerError.None) Decision(actor.PlayerId,
-                    action switch { PokerAction.Fold => "fold", PokerAction.Check => "check", PokerAction.Call => "call", _ => "raise" },
-                    action == PokerAction.RaiseTo ? amount : action == PokerAction.Call ? before.ToCall : 0);
+                if (result == PokerError.None)
+                {
+                    var allIn = after.Seats.FirstOrDefault(s => s.PlayerId == actor.PlayerId)?.AllIn == true &&
+                        action is PokerAction.Call or PokerAction.RaiseTo;
+                    Decision(actor.PlayerId,
+                        allIn ? "allin" : action switch { PokerAction.Fold => "fold", PokerAction.Check => "check", PokerAction.Call => "call", _ => "raise" },
+                        action == PokerAction.RaiseTo ? amount : action == PokerAction.Call ? before.ToCall : 0);
+                }
                 else if (now >= before.Deadline) Decision(actor.PlayerId, actor.StreetBet >= before.CurrentBet ? "check" : "fold", automatic: true);
             }
             AdditionalFolds(before, actor?.PlayerId ?? Guid.Empty); ++Version;
@@ -187,7 +194,8 @@ internal sealed class PokerFundedTable
     {
         if (IsEmpty) return; var state = Current;
         if (state.Phase != PokerPhase.Finished || state.HandId <= _settledHand) return;
-        _money.Settle(Id, state.HandId, state.Seats.ToDictionary(s => _members[s.PlayerId].Escrow.Id, s => s.Chips));
+        var settledWins = _money.Settle(Id, state.HandId, state.Seats.ToDictionary(s => _members[s.PlayerId].Escrow.Id, s => s.Chips))
+            .ToDictionary(w => w.Character);
         var profiles = Humans.ToDictionary(id => id, id => _money.Profile(id));
         foreach (var seat in state.Seats)
         {
@@ -196,7 +204,8 @@ internal sealed class PokerFundedTable
             if (!member.Escrow.Npc) member.Profile = profiles[seat.PlayerId];
             if (net <= 0) continue;
             _net[seat.PlayerId] = net; Decision(seat.PlayerId, "wins", net);
-            if (!member.Escrow.Npc) _wins.Enqueue(new(seat.PlayerId, seat.Name, net));
+            if (!member.Escrow.Npc && settledWins.TryGetValue(seat.PlayerId, out var settled))
+                _wins.Enqueue(new(seat.PlayerId, seat.Name, net, settled.OldExperience, settled.NewExperience));
         }
         _settledHand = state.HandId; ++Version;
     }
@@ -227,7 +236,7 @@ internal sealed class PokerFundedTable
     }
     private bool AddNpc(string name, bool dealer)
     {
-        var escrow = _money.OpenNpc(Guid.NewGuid(), Id, Currency, House, Reserve, Rules.StartingChips); if (escrow == null) return false;
+        var escrow = _money.OpenNpc(Guid.NewGuid(), Id, Currency, House, Reserve, Rules.StartingChips, Options.UnlimitedNpcReserve); if (escrow == null) return false;
         var error = _table.Join(escrow.Id, name, escrow.Amount);
         if (error != PokerError.None) { _money.Release(escrow.Id); throw new MoneyRuleException("NPC admission failed: " + error); }
         _members.Add(escrow.Id, new Member(escrow, name) { HandBack = Options.NpcCardBackId });

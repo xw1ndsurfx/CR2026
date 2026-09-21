@@ -30,6 +30,10 @@ public sealed class StartMiniGameCommand : EventCommand
     public Guid CurrencyItemId { get; set; }
     /// <summary>One-time authorized house seed, shared across instances; reopening never reseeds it.</summary>
     [DefaultValue(0L)] public long NpcReserve { get; set; }
+    [DefaultValue(false)] public bool UnlimitedNpcReserve { get; set; }
+    public PokerEffects Effects { get; set; } = new();
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")]
+    public Guid LevelUpRewardEventId { get; set; }
 
     public bool HasValidSettings() => Game == MiniGameType.Poker &&
         !string.IsNullOrEmpty(TableId) && TableId.Length <= 64 &&
@@ -39,5 +43,6 @@ public sealed class StartMiniGameCommand : EventCommand
         BigBlind <= 1_000_000_000 && StartingChips >= BigBlind && StartingChips <= 1_000_000_000 &&
         NpcReserve is >= 0 and <= 1_000_000_000 &&
         TurnSeconds is >= 5 and <= 300 && NpcPlayers is >= 0 and <= 5 &&
-        NpcPlayers + (DealerPlays ? 1 : 0) < MaxPlayers && MiniGameProgression.IsBack(NpcCardBackId);
+        NpcPlayers + (DealerPlays ? 1 : 0) < MaxPlayers && MiniGameProgression.IsBack(NpcCardBackId) &&
+        (Effects ?? PokerEffects.Empty).IsValid;
 }
