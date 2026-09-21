@@ -42,7 +42,37 @@ public sealed partial class PokerDecisionState
     [Key(5)] public bool Automatic { get; set; }
     [IgnoreMember] public bool IsValid => Sequence > 0 && PlayerId != Guid.Empty &&
         Name is { Length: >= 1 and <= 32 } && Amount >= 0 &&
-        Action is "deal" or "check" or "call" or "raise" or "fold" or "wins" or "leave";
+        Action is "deal" or "check" or "call" or "raise" or "allin" or "fold" or "wins" or "leave";
+}
+
+
+[MessagePackObject]
+public sealed partial class PokerEffectsState
+{
+    [Key(0)] public Guid DealAnimationId { get; set; }
+    [Key(1)] public string DealSound { get; set; } = string.Empty;
+    [Key(2)] public Guid CheckAnimationId { get; set; }
+    [Key(3)] public string CheckSound { get; set; } = string.Empty;
+    [Key(4)] public Guid CallAnimationId { get; set; }
+    [Key(5)] public string CallSound { get; set; } = string.Empty;
+    [Key(6)] public Guid RaiseAnimationId { get; set; }
+    [Key(7)] public string RaiseSound { get; set; } = string.Empty;
+    [Key(8)] public Guid FoldAnimationId { get; set; }
+    [Key(9)] public string FoldSound { get; set; } = string.Empty;
+    [Key(10)] public Guid AllInAnimationId { get; set; }
+    [Key(11)] public string AllInSound { get; set; } = string.Empty;
+    [Key(12)] public Guid WinAnimationId { get; set; }
+    [Key(13)] public string WinSound { get; set; } = string.Empty;
+    [Key(14)] public Guid LoseAnimationId { get; set; }
+    [Key(15)] public string LoseSound { get; set; } = string.Empty;
+    [Key(16)] public Guid LevelUpAnimationId { get; set; }
+    [Key(17)] public string LevelUpSound { get; set; } = string.Empty;
+
+    [IgnoreMember] public bool IsValid => Valid(DealSound) && Valid(CheckSound) && Valid(CallSound) &&
+        Valid(RaiseSound) && Valid(FoldSound) && Valid(AllInSound) && Valid(WinSound) &&
+        Valid(LoseSound) && Valid(LevelUpSound);
+
+    private static bool Valid(string? value) => value != null && value.Length <= 128 && !value.Any(char.IsControl);
 }
 
 [MessagePackObject]
@@ -75,6 +105,7 @@ public sealed partial class PokerTableState
     [Key(23)] public long Wins { get; set; }
     [Key(24)] public bool ProgressPending { get; set; }
     [Key(25)] public PokerDecisionState[] Decisions { get; set; } = [];
+    [Key(26)] public PokerEffectsState Effects { get; set; } = new();
 
     public bool HasValidShape() => HandId >= 0 && Revision >= 0 &&
         Stage is >= PokerStage.Waiting and <= PokerStage.Finished &&
@@ -94,7 +125,8 @@ public sealed partial class PokerTableState
         NpcIds.All(id => Seats.Any(s => s.PlayerId == id)) &&
         (DealerNpcId == Guid.Empty || NpcIds.Contains(DealerNpcId)) &&
         Decisions is { Length: <= 12 } && Decisions.All(d => d != null && d.IsValid) &&
-        Decisions.Select(d => d.Sequence).Distinct().Count() == Decisions.Length;
+        Decisions.Select(d => d.Sequence).Distinct().Count() == Decisions.Length &&
+        Effects is { IsValid: true };
 
     private static bool ValidCards(int[]? cards, int maximum) => cards != null &&
         cards.Length <= maximum && cards.All(c => c is >= 0 and < 52) && cards.Distinct().Count() == cards.Length;
