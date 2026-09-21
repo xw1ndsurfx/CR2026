@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Windows.Forms;
+using DrawingColor = System.Drawing.Color;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.MiniGames;
@@ -57,7 +58,7 @@ internal sealed class PokerEffectsDialog : Form
     public PokerEffectsDialog(PokerEffectsDraft draft)
     {
         Text="Poker - action animations and sounds"; StartPosition=FormStartPosition.CenterParent;
-        ClientSize=new Size(760,500); MinimumSize=new Size(650,420); BackColor=Color.FromArgb(45,45,48); ForeColor=Color.Gainsboro;
+        ClientSize=new Size(760,500); MinimumSize=new Size(650,420); BackColor=DrawingColor.FromArgb(45,45,48); ForeColor=DrawingColor.Gainsboro;
         var grid=new TableLayoutPanel{Dock=DockStyle.Fill,Padding=new Padding(12),ColumnCount=3,RowCount=PokerEffects.Count+2,AutoScroll=true};
         grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,20));grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,40));grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,40));
         grid.Controls.Add(new Label{Text="Action",AutoSize=true},0,0);grid.Controls.Add(new Label{Text="Animation",AutoSize=true},1,0);
