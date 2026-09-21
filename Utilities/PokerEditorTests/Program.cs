@@ -63,7 +63,10 @@ internal static class Program
                     CheckAnimationId = Guid.NewGuid(), CallAnimationId = Guid.NewGuid(), RaiseAnimationId = Guid.NewGuid(),
                     FoldAnimationId = Guid.NewGuid(), AllInAnimationId = Guid.NewGuid(), LoseAnimationId = Guid.NewGuid(),
                     LevelUpAnimationId = Guid.NewGuid(), JoinAnimationId = Guid.NewGuid(), LeaveAnimationId = Guid.NewGuid(),
-                    UnlimitedNpcBankroll = true, LevelRewards = [new PokerLevelReward(5, equipment.Id, 2)] };
+                    UnlimitedNpcBankroll = true, ProceduralAnimationSpeed = PokerMotionSpeed.Cinematic,
+                    AnimateDealCards = false, AnimateBoardCards = true, AnimateChips = false,
+                    AnimateShowdown = true, AnimateShuffle = false, AnimateAllIn = true,
+                    LevelRewards = [new PokerLevelReward(5, equipment.Id, 2)] };
                 var expected = JsonConvert.DeserializeObject<StartMiniGameCommand>(JsonConvert.SerializeObject(command))!;
                 expected.CurrencyItemId = other.Id;
                 using var dialog = new MiniGameCommandDialog(command);

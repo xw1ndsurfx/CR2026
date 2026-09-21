@@ -71,7 +71,7 @@ internal static class PokerRuntime
                     new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
                         command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId,
                         command.CreateSoundSet(), command.CreateAnimationSet(), command.UnlimitedNpcBankroll,
-                        command.CreateLevelRewardSet()));
+                        command.CreateLevelRewardSet(), command.CreateMotionSet()));
                 if (result.Error != PokerRegistryError.None) return result;
                 var view = new View
                 {
