@@ -1,0 +1,291 @@
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Intersect.Server.MiniGames.Poker;
+
+// Supplied by the server adapter, never trusted from a client packet.
+public readonly record struct PokerSession(Guid PlayerId, Guid ConnectionId);
+public readonly record struct PokerPresence(PokerSession Session, Guid MapId, Guid MapInstanceId);
+public readonly record struct PokerTableKey(Guid MapId, Guid MapInstanceId, string Name);
+public enum PokerRegistryError
+{
+    None, InvalidPresence, InvalidTableName, InvalidRules, NotSeated, SessionChanged,
+    WrongLocation, WrongTable, AlreadyAtAnotherTable, Leaving, RulesConflict, Capacity, PokerRejected,
+    CardBackLocked, ProgressionUnavailable,
+}
+public sealed record PokerRegistryResult(
+    PokerRegistryError Error, Guid TableInstanceId = default,
+    PokerSnapshot? Snapshot = null, PokerError Detail = PokerError.None);
+public sealed record PokerDelivery(PokerSession Recipient, Guid TableInstanceId, PokerSnapshot Snapshot);
+
+/// <summary>
+/// Process-local test-chip tables with independent persistent mini-game progression.
+/// Lock order: registry, table/store. No player or network callback under this gate.
+/// </summary>
+public sealed partial class PokerTableRegistry
+{
+    private sealed class Entry
+    {
+        public Guid Id = Guid.NewGuid();
+        public required PokerTableKey Key;
+        public required PokerRules Rules;
+        public required PokerTable Table;
+        public PokerTableOptions Options = new();
+        public readonly Extras Extras = new();
+        public readonly HashSet<Guid> Players = new();
+        public readonly Dictionary<Guid, string> Npcs = new();
+        public Guid DealerNpcId;
+        public DateTimeOffset? NextHandAt;
+        public DateTimeOffset NpcDue;
+        public long NpcHand = -1;
+        public int NpcSeat = -1;
+        public long PublishedRevision = -1;
+    }
+    private sealed class Membership
+    {
+        public required PokerPresence Presence;
+        public required Entry Entry;
+        public bool Leaving;
+    }
+    private readonly object _gate = new();
+    private readonly int _maximumTables;
+    private readonly Dictionary<PokerTableKey, Entry> _tables = new();
+    private readonly Dictionary<Guid, Membership> _members = new();
+
+    public PokerTableRegistry(int maximumTables = 1024)
+    {
+        if (maximumTables < 1 || maximumTables > 100_000)
+            throw new ArgumentOutOfRangeException(nameof(maximumTables));
+        _maximumTables = maximumTables;
+    }
+    public int TableCount { get { lock (_gate) return _tables.Count; } }
+    public int MemberCount { get { lock (_gate) return _members.Count; } }
+
+    public static bool IsValidTableName(string? name) => !string.IsNullOrEmpty(name) &&
+        name.Length <= 64 && name.All(c => c is >= 'a' and <= 'z' or >= 'A' and <= 'Z' or
+            >= '0' and <= '9' or '-' or '_');
+
+    public PokerRegistryResult Join(PokerPresence caller, string tableName, string playerName, PokerRules rules,
+        PokerTableOptions? options = null)
+    {
+        if (caller.Session.PlayerId == Guid.Empty || caller.Session.ConnectionId == Guid.Empty || caller.MapId == Guid.Empty)
+            return new(PokerRegistryError.InvalidPresence);
+        if (!IsValidTableName(tableName)) return new(PokerRegistryError.InvalidTableName);
+        if (string.IsNullOrWhiteSpace(playerName) || playerName.Length > 32)
+            return new(PokerRegistryError.PokerRejected, Detail: PokerError.InvalidPlayer);
+        options ??= new PokerTableOptions();
+        PokerTable candidate;
+        try { candidate = new PokerTable(rules); }
+        catch (ArgumentException) { return new(PokerRegistryError.InvalidRules); }
+        if (!options.IsValid(rules.MaxPlayers)) return new(PokerRegistryError.InvalidRules);
+        var key = new PokerTableKey(caller.MapId, caller.MapInstanceId, tableName);
+        lock (_gate)
+        {
+            if (_members.TryGetValue(caller.Session.PlayerId, out var current))
+            {
+                if (current.Presence.Session != caller.Session) return new(PokerRegistryError.SessionChanged);
+                if (current.Leaving) return new(PokerRegistryError.Leaving);
+                if (current.Entry.Key != key) return new(PokerRegistryError.AlreadyAtAnotherTable);
+                if (current.Entry.Rules != rules || current.Entry.Options != options) return new(PokerRegistryError.RulesConflict);
+                return View(current);
+            }
+            var exists = _tables.TryGetValue(key, out var entry);
+            if (exists && (entry!.Rules != rules || entry.Options != options)) return new(PokerRegistryError.RulesConflict);
+            if (!exists && _tables.Count >= _maximumTables) return new(PokerRegistryError.Capacity);
+            // Fail closed BEFORE taking a seat; an unreadable profile must not become level 1.
+            if (!TryLoadProgress(caller.Session.PlayerId, out var profile)) return new(PokerRegistryError.ProgressionUnavailable);
+            entry ??= new Entry { Key = key, Rules = rules, Table = candidate, Options = options };
+            if (exists && !entry.Npcs.ContainsKey(caller.Session.PlayerId))
+                MakeRoomForHuman(entry, DateTimeOffset.UtcNow);
+            var error = entry.Table.Join(caller.Session.PlayerId, playerName);
+            if (error != PokerError.None) return new(PokerRegistryError.PokerRejected, Detail: error);
+            if (!exists) _tables.Add(key, entry);
+            var member = new Membership { Presence = caller, Entry = entry };
+            _members.Add(caller.Session.PlayerId, member);
+            entry.Players.Add(caller.Session.PlayerId);
+            entry.Extras.Profiles[caller.Session.PlayerId] = profile;
+            entry.Extras.SelectedBacks[caller.Session.PlayerId] = profile.SelectedBack;
+            PrepareOpponents(entry, DateTimeOffset.UtcNow, refill: false);
+            return View(member);
+        }
+    }
+
+    public PokerRegistryResult Snapshot(PokerPresence caller, Guid tableInstanceId)
+    {
+        lock (_gate)
+        {
+            var error = Find(caller, tableInstanceId, out var member);
+            return error == PokerRegistryError.None ? View(member!) : new(error);
+        }
+    }
+
+    public PokerPresentation Presentation(PokerPresence caller, Guid tableInstanceId)
+    {
+        lock (_gate)
+        {
+            if (Find(caller, tableInstanceId, out var member) != PokerRegistryError.None)
+                return PokerPresentation.Empty;
+            return Present(member!.Entry, caller.Session.PlayerId);
+        }
+    }
+
+    public PokerRegistryResult StartHand(PokerPresence caller, Guid tableInstanceId, long revision, DateTimeOffset now)
+    {
+        lock (_gate)
+        {
+            var error = Find(caller, tableInstanceId, out var member);
+            if (error != PokerRegistryError.None) return new(error);
+            var entry = member!.Entry;
+            var state = entry.Table.Snapshot(caller.Session.PlayerId);
+            if (state.Revision != revision) return Rejected(member, PokerError.StaleState);
+            if (Playing(state.Phase)) return Rejected(member, PokerError.HandInProgress);
+            if (HasPendingExperience(entry)) return View(member) with { Error = PokerRegistryError.ProgressionUnavailable };
+            if (state.Seats.Single(s => s.PlayerId == caller.Session.PlayerId).Chips <= 0)
+                return Rejected(member, PokerError.NotSeated);
+            PrepareOpponents(entry, now, refill: true);
+            var result = StartTrackedHand(entry, caller.Session.PlayerId, now);
+            if (result == PokerError.None) entry.NextHandAt = null;
+            Cleanup(entry, now);
+            return result == PokerError.None ? View(member) : Rejected(member, result);
+        }
+    }
+
+    public PokerRegistryResult Act(PokerPresence caller, Guid tableInstanceId, long handId, long revision,
+        PokerAction action, long raiseTo, DateTimeOffset now)
+    {
+        lock (_gate)
+        {
+            var error = Find(caller, tableInstanceId, out var member);
+            if (error != PokerRegistryError.None) return new(error);
+            var entry = member!.Entry;
+            var result = ActTracked(entry, caller.Session.PlayerId, handId, revision, action, raiseTo, now);
+            Cleanup(entry, now);
+            return result == PokerError.None ? View(member) : Rejected(member, result);
+        }
+    }
+
+    public PokerRegistryResult Leave(PokerSession caller, DateTimeOffset now)
+    {
+        lock (_gate)
+        {
+            if (!_members.TryGetValue(caller.PlayerId, out var member)) return new(PokerRegistryError.NotSeated);
+            if (member.Presence.Session != caller) return new(PokerRegistryError.SessionChanged);
+            var id = member.Entry.Id;
+            Leave(member, now);
+            return new(PokerRegistryError.None, id);
+        }
+    }
+
+    /// <summary>Observe presence outside the lock; apply it only to the same membership.</summary>
+    public void Tick(DateTimeOffset now, Func<PokerPresence, bool> isPresent)
+    {
+        ArgumentNullException.ThrowIfNull(isPresent);
+        Membership[] observed;
+        lock (_gate) observed = _members.Values.Where(m => !m.Leaving).ToArray();
+        var absent = observed.Where(m => !isPresent(m.Presence)).ToArray();
+        lock (_gate)
+        {
+            ProcessExperience(now);
+            foreach (var member in absent)
+            {
+                if (_members.TryGetValue(member.Presence.Session.PlayerId, out var current) &&
+                    ReferenceEquals(current, member)) Leave(member, now);
+            }
+            foreach (var entry in _tables.Values.ToArray())
+            {
+                TickTracked(entry, now);
+                Cleanup(entry, now);
+                if (entry.Players.Count > 0) AdvanceAutomation(entry, now);
+                Cleanup(entry, now);
+            }
+        }
+    }
+
+    public PokerPresence[] Memberships()
+    {
+        lock (_gate) return _members.Values.Select(m => m.Presence).ToArray();
+    }
+
+    public PokerDelivery[] CollectUpdates()
+    {
+        lock (_gate)
+        {
+            var updates = new List<PokerDelivery>();
+            foreach (var entry in _tables.Values)
+            {
+                var revision = Current(entry).Revision;
+                if (revision == entry.PublishedRevision) continue;
+                foreach (var id in entry.Players)
+                {
+                    var member = _members[id];
+                    if (!member.Leaving)
+                        updates.Add(new(member.Presence.Session, entry.Id, entry.Table.Snapshot(id)));
+                }
+                entry.PublishedRevision = revision;
+            }
+            return updates.ToArray();
+        }
+    }
+
+    private PokerRegistryError Find(PokerPresence caller, Guid tableId, out Membership? member)
+    {
+        if (!_members.TryGetValue(caller.Session.PlayerId, out member)) return PokerRegistryError.NotSeated;
+        if (member.Presence.Session != caller.Session) return PokerRegistryError.SessionChanged;
+        if (member.Leaving) return PokerRegistryError.Leaving;
+        if (member.Presence.MapId != caller.MapId || member.Presence.MapInstanceId != caller.MapInstanceId)
+            return PokerRegistryError.WrongLocation;
+        return member.Entry.Id == tableId ? PokerRegistryError.None : PokerRegistryError.WrongTable;
+    }
+    private static PokerRegistryResult View(Membership member) => new(PokerRegistryError.None,
+        member.Entry.Id, member.Entry.Table.Snapshot(member.Presence.Session.PlayerId));
+    private static PokerRegistryResult Rejected(Membership member, PokerError error) =>
+        View(member) with { Error = PokerRegistryError.PokerRejected, Detail = error };
+    private static bool Playing(PokerPhase phase) => phase is >= PokerPhase.PreFlop && phase <= PokerPhase.River;
+    private static PokerSnapshot Current(Entry entry) => entry.Table.Snapshot(entry.Players.First());
+
+    private void Leave(Membership member, DateTimeOffset now)
+    {
+        if (member.Leaving) return;
+        var entry = member.Entry;
+        var id = member.Presence.Session.PlayerId;
+        var before = entry.Table.Snapshot(id);
+        var seat = before.Seats.Single(s => s.PlayerId == id);
+        var retained = Playing(before.Phase) && seat.InHand;
+        member.Leaving = true;
+        entry.Table.Leave(id, now);
+        Decision(entry, seat, "leave");
+        if (retained)
+        {
+            AdditionalFolds(entry, before, entry.Table.Snapshot(id), Guid.Empty);
+            CaptureCompleted(entry);
+        }
+        if (!retained) Remove(member);
+        Cleanup(entry, now);
+    }
+    private void Cleanup(Entry entry, DateTimeOffset now)
+    {
+        if (entry.Players.Count == 0) return;
+        CaptureCompleted(entry);
+        if (Playing(Current(entry).Phase)) return;
+        foreach (var id in entry.Players.ToArray())
+        {
+            var member = _members[id];
+            if (!member.Leaving) continue;
+            entry.Table.Leave(id, now);
+            Remove(member);
+        }
+    }
+    private void Remove(Membership member)
+    {
+        var id = member.Presence.Session.PlayerId;
+        _members.Remove(id);
+        member.Entry.Players.Remove(id);
+        member.Entry.Extras.SelectedBacks.Remove(id);
+        member.Entry.Extras.HandBacks.Remove(id);
+        member.Entry.Extras.EligibleHumans.Remove(id);
+        member.Entry.Extras.Profiles.Remove(id);
+        if (member.Entry.Players.Count == 0) _tables.Remove(member.Entry.Key);
+    }
+}
