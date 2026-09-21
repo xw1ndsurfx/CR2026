@@ -15,4 +15,12 @@ public enum QuestObjective
     PokerReachLevel,
 
     PokerPlayHands,
+
+    BlackjackWinHands,
+
+    BlackjackWinAmount,
+
+    BlackjackReachLevel,
+
+    BlackjackPlayHands,
 }
