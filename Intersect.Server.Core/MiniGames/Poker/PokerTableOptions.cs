@@ -5,12 +5,38 @@ using Intersect.Framework.Core.MiniGames;
 
 namespace Intersect.Server.MiniGames.Poker;
 
+public sealed record PokerEffectSlot(Guid AnimationId = default, string Sound = "")
+{
+    public bool IsValid => Sound is { Length: <= 128 } && Sound.All(c => !char.IsControl(c));
+}
+
+public sealed record PokerEffectOptions(
+    PokerEffectSlot Join, PokerEffectSlot Deal, PokerEffectSlot Check, PokerEffectSlot Call,
+    PokerEffectSlot Raise, PokerEffectSlot Fold, PokerEffectSlot AllIn, PokerEffectSlot Victory,
+    PokerEffectSlot LevelUp)
+{
+    public static PokerEffectOptions Empty => new(new(), new(), new(), new(), new(), new(), new(), new(), new());
+    public PokerEffectSlot Get(PokerEffectKind kind) => kind switch
+    {
+        PokerEffectKind.Join => Join, PokerEffectKind.Deal => Deal, PokerEffectKind.Check => Check,
+        PokerEffectKind.Call => Call, PokerEffectKind.Raise => Raise, PokerEffectKind.Fold => Fold,
+        PokerEffectKind.AllIn => AllIn, PokerEffectKind.Victory => Victory,
+        PokerEffectKind.LevelUp => LevelUp, _ => new(),
+    };
+    public bool IsValid => Enum.GetValues<PokerEffectKind>().All(kind => Get(kind).IsValid);
+}
+
 public sealed record PokerTableOptions(
     bool DealerPlays = false, int NpcPlayers = 0, bool AutoStart = false, Guid DealAnimationId = default,
-    bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0)
+    bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0,
+    bool UnlimitedNpcBankroll = false, Guid LevelRewardItemId = default, int LevelRewardQuantity = 0,
+    PokerEffectOptions? Effects = null)
 {
+    public PokerEffectOptions EffectProfile => Effects ?? PokerEffectOptions.Empty;
     public bool IsValid(int seats) => NpcPlayers >= 0 && NpcPlayers <= 5 &&
-        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId);
+        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId) &&
+        LevelRewardQuantity is >= 0 and <= 1_000_000 &&
+        (LevelRewardItemId != Guid.Empty || LevelRewardQuantity == 0) && EffectProfile.IsValid;
 }
 
 public sealed record PokerSeatBack(Guid PlayerId, int CurrentId, int SelectedId);
@@ -23,6 +49,7 @@ public sealed record PokerPresentation(Guid[] NpcIds, Guid DealerNpcId, bool Aut
     public long Wins { get; init; }
     public bool ProgressPending { get; init; }
     public PokerPublicDecision[] Decisions { get; init; } = Array.Empty<PokerPublicDecision>();
+    public PokerEffectOptions Effects { get; init; } = PokerEffectOptions.Empty;
     public static PokerPresentation Empty => new(Array.Empty<Guid>(), Guid.Empty, false, Guid.Empty);
 }
 

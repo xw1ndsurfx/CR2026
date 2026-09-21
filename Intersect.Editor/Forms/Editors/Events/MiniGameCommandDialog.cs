@@ -3,6 +3,7 @@ using System.Windows.Forms;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Editor.Content;
 using Intersect.Framework.Core.MiniGames;
 using DrawingColor = System.Drawing.Color;
 
@@ -13,6 +14,7 @@ internal sealed class MiniGameCommandDialog : Form
 {
     private sealed record AnimationChoice(Guid Id, string Name) { public override string ToString() => Name; }
     private sealed record CurrencyChoice(Guid Id, string Name) { public override string ToString() => Name; }
+    private sealed record ItemChoice(Guid Id, string Name) { public override string ToString() => Name; }
     public MiniGameCommandDialog(StartMiniGameCommand command)
     {
         Text = "Start Mini-Game - Poker"; StartPosition = FormStartPosition.CenterParent;
@@ -21,9 +23,9 @@ internal sealed class MiniGameCommandDialog : Form
         ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
         MinimumSize = new Size(580, 420);
         BackColor = DrawingColor.FromArgb(45, 45, 48); ForeColor = DrawingColor.Gainsboro;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 18, AutoScroll = true };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 22, AutoScroll = true };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
-        for (var row = 0; row < 18; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var row = 0; row < 22; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(12, 8, 12, 8) };
         Controls.Add(layout); Controls.Add(buttons);
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
@@ -38,6 +40,8 @@ internal sealed class MiniGameCommandDialog : Form
         var currency = CurrencyPicker(command.CurrencyItemId);
         var chips = Number(command.StartingChips, 1, 1_000_000_000);
         var reserve = Number(command.NpcReserve, 0, 1_000_000_000); reserve.Name = "NpcReserve";
+        var unlimitedNpcs = new CheckBox { Text = "Unlimited house bankroll (NPCs never run out)", Checked = command.UnlimitedNpcBankroll, AutoSize = true };
+        var effectsDraft = PokerEffectsDraft.From(command);
         var small = Number(command.SmallBlind, 1, 1_000_000_000); var big = Number(command.BigBlind, 1, 1_000_000_000);
         var seconds = Number(command.TurnSeconds, 5, 300);
         var dealer = new CheckBox { Text = "Marlow / Croupier", Checked = command.DealerPlays, AutoSize = true };
@@ -63,12 +67,20 @@ internal sealed class MiniGameCommandDialog : Form
         AddRow(layout, 11, "Automatic hands", automatic); AddRow(layout, 12, "Dealing animation", animation);
         AddRow(layout, 13, "Announce wins in GLOBAL chat", announce); AddRow(layout, 14, "Victory animation (winner only)", victory);
         AddRow(layout, 15, "Dealer / NPC card back", backs); AddRow(layout, 16, "Initial NPC reserve (one-time seed)", reserve);
+        AddRow(layout, 17, "NPC bankroll mode", unlimitedNpcs);
+        var effectsButton = new Button { Text = "Configure action animations + sounds...", AutoSize = true };
+        effectsButton.Click += (_, _) => { using var editor = new PokerEffectsDialog(effectsDraft); editor.ShowDialog(this); };
+        AddRow(layout, 18, "Poker effects", effectsButton);
+        var rewardItem = ItemPicker(command.LevelRewardItemId);
+        var rewardQty = Number(command.LevelRewardQuantity, 0, 1_000_000);
+        AddRow(layout, 19, "Reward item on each poker level-up", rewardItem);
+        AddRow(layout, 20, "Reward quantity per level", rewardQty);
         var status = new Label { Name = "CurrencyStatus", AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 12, 3, 12) };
-        layout.Controls.Add(status, 0, 17); layout.SetColumnSpan(status, 2);
+        layout.Controls.Add(status, 0, 21); layout.SetColumnSpan(status, 2);
         void ShowCurrencyStatus()
         {
             var id = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
-            reserve.Enabled = id != Guid.Empty;
+            reserve.Enabled = id != Guid.Empty && !unlimitedNpcs.Checked;
             if (id == Guid.Empty)
             {
                 chipsLabel.Text = "Starting test chips"; status.ForeColor = DrawingColor.Gainsboro;
@@ -86,7 +98,7 @@ internal sealed class MiniGameCommandDialog : Form
                     "Reopening, restarting or editing this number does not refill an existing house. Zero means no initial NPC funds. " +
                     "Funded XP is separate from test XP. Back up the entire player database before enabling.";
         }
-        currency.SelectedIndexChanged += (_, _) => ShowCurrencyStatus(); ShowCurrencyStatus();
+        currency.SelectedIndexChanged += (_, _) => ShowCurrencyStatus(); unlimitedNpcs.CheckedChanged += (_, _) => ShowCurrencyStatus(); ShowCurrencyStatus();
         var cancel = new Button { Name = "Cancel", Text = "Cancel", AutoSize = true, DialogResult = DialogResult.Cancel };
         var save = new Button { Name = "Save", Text = "Save", AutoSize = true };
         buttons.Controls.Add(cancel); buttons.Controls.Add(save); AcceptButton = save; CancelButton = cancel;
@@ -101,11 +113,13 @@ internal sealed class MiniGameCommandDialog : Form
             var draft = new StartMiniGameCommand
             {
                 Game = MiniGameType.Poker, TableId = table.Text, MaxPlayers = (int)seats.Value, CurrencyItemId = selected,
-                StartingChips = (long)chips.Value, NpcReserve = (long)reserve.Value,
+                StartingChips = (long)chips.Value, NpcReserve = (long)reserve.Value, UnlimitedNpcBankroll = unlimitedNpcs.Checked,
                 SmallBlind = (long)small.Value, BigBlind = (long)big.Value, TurnSeconds = (int)seconds.Value,
                 DealerPlays = dealer.Checked, NpcPlayers = (int)npcs.Value, AutoStart = automatic.Checked,
                 DealAnimationId = ((AnimationChoice)animation.SelectedItem!).Id, AnnounceWins = announce.Checked,
                 VictoryAnimationId = ((AnimationChoice)victory.SelectedItem!).Id, NpcCardBackId = backs.SelectedIndex,
+                LevelRewardItemId = (rewardItem.SelectedItem as ItemChoice)?.Id ?? Guid.Empty,
+                LevelRewardQuantity = (int)rewardQty.Value,
             };
             if (!draft.HasValidSettings())
             {
@@ -118,6 +132,8 @@ internal sealed class MiniGameCommandDialog : Form
             command.TurnSeconds = draft.TurnSeconds; command.DealerPlays = draft.DealerPlays; command.NpcPlayers = draft.NpcPlayers;
             command.AutoStart = draft.AutoStart; command.DealAnimationId = draft.DealAnimationId; command.AnnounceWins = draft.AnnounceWins;
             command.VictoryAnimationId = draft.VictoryAnimationId; command.NpcCardBackId = draft.NpcCardBackId;
+            command.UnlimitedNpcBankroll = draft.UnlimitedNpcBankroll; command.LevelRewardItemId = draft.LevelRewardItemId;
+            command.LevelRewardQuantity = draft.LevelRewardQuantity; effectsDraft.ApplyTo(command);
             DialogResult = DialogResult.OK; Close();
         };
     }
@@ -130,6 +146,16 @@ internal sealed class MiniGameCommandDialog : Form
             picker.Items.Add(new CurrencyChoice(item.Id, MiniGameCurrency.DisplayName(item)));
         var selected = picker.Items.Cast<CurrencyChoice>().FirstOrDefault(choice => choice.Id == id);
         if (selected == null) { selected = new CurrencyChoice(id, "Missing / incompatible item: " + id); picker.Items.Add(selected); }
+        picker.SelectedItem = selected; return picker;
+    }
+    private static ComboBox ItemPicker(Guid id)
+    {
+        var picker = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill, DropDownWidth = 590 };
+        picker.Items.Add(new ItemChoice(Guid.Empty, "None"));
+        foreach (var item in ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().OrderBy(i => i.Name, StringComparer.OrdinalIgnoreCase))
+            picker.Items.Add(new ItemChoice(item.Id, string.IsNullOrWhiteSpace(item.Folder) ? item.Name : $"[{item.Folder}] / {item.Name}"));
+        var selected = picker.Items.Cast<ItemChoice>().FirstOrDefault(choice => choice.Id == id);
+        if (selected == null) { selected = new ItemChoice(id, "Missing item: " + id); picker.Items.Add(selected); }
         picker.SelectedItem = selected; return picker;
     }
     private static ComboBox AnimationPicker(Guid id)
