@@ -7,11 +7,34 @@ namespace Intersect.Server.MiniGames.Poker;
 
 public sealed record PokerTableOptions(
     bool DealerPlays = false, int NpcPlayers = 0, bool AutoStart = false, Guid DealAnimationId = default,
-    bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0)
+    bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0,
+    bool UnlimitedNpcReserve = false,
+    string DealSound = "", Guid CheckAnimationId = default, string CheckSound = "",
+    Guid CallAnimationId = default, string CallSound = "",
+    Guid RaiseAnimationId = default, string RaiseSound = "",
+    Guid FoldAnimationId = default, string FoldSound = "",
+    Guid AllInAnimationId = default, string AllInSound = "",
+    string VictorySound = "", Guid LoseAnimationId = default, string LoseSound = "",
+    Guid LevelUpAnimationId = default, string LevelUpSound = "", Guid LevelUpRewardEventId = default)
 {
+    private static bool ValidSound(string? value) => value != null && value.Length <= 128 && !value.Any(char.IsControl);
     public bool IsValid(int seats) => NpcPlayers >= 0 && NpcPlayers <= 5 &&
-        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId);
+        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId) &&
+        ValidSound(DealSound) && ValidSound(CheckSound) && ValidSound(CallSound) && ValidSound(RaiseSound) &&
+        ValidSound(FoldSound) && ValidSound(AllInSound) && ValidSound(VictorySound) &&
+        ValidSound(LoseSound) && ValidSound(LevelUpSound);
 }
+
+public sealed record PokerEffectPresentation(
+    Guid DealAnimationId = default, string DealSound = "",
+    Guid CheckAnimationId = default, string CheckSound = "",
+    Guid CallAnimationId = default, string CallSound = "",
+    Guid RaiseAnimationId = default, string RaiseSound = "",
+    Guid FoldAnimationId = default, string FoldSound = "",
+    Guid AllInAnimationId = default, string AllInSound = "",
+    Guid WinAnimationId = default, string WinSound = "",
+    Guid LoseAnimationId = default, string LoseSound = "",
+    Guid LevelUpAnimationId = default, string LevelUpSound = "");
 
 public sealed record PokerSeatBack(Guid PlayerId, int CurrentId, int SelectedId);
 public sealed record PokerPresentation(Guid[] NpcIds, Guid DealerNpcId, bool AutoStart, Guid DealAnimationId)
@@ -23,6 +46,7 @@ public sealed record PokerPresentation(Guid[] NpcIds, Guid DealerNpcId, bool Aut
     public long Wins { get; init; }
     public bool ProgressPending { get; init; }
     public PokerPublicDecision[] Decisions { get; init; } = Array.Empty<PokerPublicDecision>();
+    public PokerEffectPresentation Effects { get; init; } = new();
     public static PokerPresentation Empty => new(Array.Empty<Guid>(), Guid.Empty, false, Guid.Empty);
 }
 
