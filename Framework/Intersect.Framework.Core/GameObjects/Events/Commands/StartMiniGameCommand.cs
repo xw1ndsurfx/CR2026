@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Intersect.Framework.Core.MiniGames;
+using Intersect.Framework.Core.MiniGames.Configuration;
 
 namespace Intersect.Framework.Core.GameObjects.Events.Commands;
 
@@ -64,11 +65,10 @@ public sealed class StartMiniGameCommand : EventCommand
 
     public PokerLevelRewardSet CreateLevelRewardSet() => new(LevelRewards ?? []);
 
-    public bool HasValidSettings() => Game == MiniGameType.Poker &&
-        !string.IsNullOrEmpty(TableId) && TableId.Length <= 64 &&
-        TableId.All(c => c is >= 'a' and <= 'z' or >= 'A' and <= 'Z' or
-            >= '0' and <= '9' or '-' or '_') &&
-        MaxPlayers is >= 2 and <= 6 && SmallBlind >= 1 && BigBlind >= SmallBlind &&
+    public bool HasValidSettings() => MiniGameCatalog.TryGet(Game, out var definition) &&
+        MiniGameCatalog.IsValidTableId(TableId) &&
+        MaxPlayers >= definition.MinimumPlayers && MaxPlayers <= definition.MaximumPlayers &&
+        SmallBlind >= 1 && BigBlind >= SmallBlind &&
         BigBlind <= 1_000_000_000 && StartingChips >= BigBlind && StartingChips <= 1_000_000_000 &&
         NpcReserve is >= 0 and <= 1_000_000_000 &&
         TurnSeconds is >= 5 and <= 300 && NpcPlayers is >= 0 and <= 5 &&
