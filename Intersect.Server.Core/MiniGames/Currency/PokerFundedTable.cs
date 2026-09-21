@@ -52,8 +52,9 @@ internal sealed class PokerFundedTable
         _money = money; Key = key; Currency = currency; Rules = rules; Options = options; Reserve = reserve;
         CurrencyName = string.IsNullOrWhiteSpace(currencyName) ? "currency" : currencyName;
         _table = new PokerTable(rules);
-        House = (options.UnlimitedNpcFunds ? "unlimited:" : "finite:") +
-            key.MapId.ToString("N") + ":" + key.Name + ":" + currency.ToString("N");
+        var baseHouse = key.MapId.ToString("N") + ":" + key.Name + ":" + currency.ToString("N");
+        // Preserve the pre-existing finite house identity so production upgrades keep the same reserve.
+        House = options.UnlimitedNpcFunds ? "unlimited:" + baseHouse : baseHouse;
     }
     public bool Contains(Guid player) => _members.ContainsKey(player);
     public bool Leaving(Guid player) => _members.TryGetValue(player, out var m) && m.Leaving;

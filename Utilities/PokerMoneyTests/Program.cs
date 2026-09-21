@@ -71,6 +71,14 @@ Test("Concurrent repeated cash-outs credit only once", f=>
 });
 Test("Cash-out acknowledgement loss does not duplicate credit", f=>
 {var a=f.Buy(f.A,100);f.Money.Release(a.Id);f.Money.Fault=p=>{if(p=="after-commit")throw new IOException("ack");};f.RefundAll(f.A);f.Restart();f.RefundAll(f.A);Check(f.Balance(f.A)==350,"Duplicate credit");});
+Test("Unlimited NPC bankroll seats opponents even with a zero reserve", f=>
+{
+    var options=new PokerTableOptions(true,2,false){UnlimitedNpcFunds=true};
+    var t=f.NewTable(options,0);t.Join(f.Buy(f.A,100,t.Id,t.House),"Alice");var now=DateTimeOffset.UtcNow;t.Tick(now);
+    var s=t.Snapshot(f.A);Check(s.Seats.Length==4 && s.Seats.Any(x=>x.Name=="Marlow"),"Unlimited NPCs missing");
+    Check(f.Money.HouseAvailable(t.House)==0,"Unlimited mode unexpectedly created a finite reserve");
+    t.Leave(f.A,now);f.RefundAll(f.A);Check(t.IsEmpty && f.Balance(f.A)==350,"Unlimited NPC cleanup changed human money");
+});
 Test("NPC funds are finite and shared across instances", f=>
 {
     var s=f.Money.OpenNpc(Guid.NewGuid(),f.TableId,f.Currency,"same-house",100,100)!;Check(f.Money.HouseAvailable("same-house")==0,"Loan not debited");
