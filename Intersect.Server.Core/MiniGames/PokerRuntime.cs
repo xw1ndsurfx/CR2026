@@ -48,6 +48,7 @@ internal static class PokerRuntime
             return new(PokerRegistryError.InvalidRules);
         List<Delivery> output = [];
         PokerRegistryResult result;
+        var joinedPokerLevel = 1;
         lock (player.EntityLock)
         {
             if (command.CurrencyItemId != Guid.Empty)
@@ -77,15 +78,13 @@ internal static class PokerRuntime
                 };
                 view.Guard = new PokerRequestGuard(view.TableId, view.Id);
                 Views[presence.Session] = view;
+                joinedPokerLevel = MiniGameProgression.Level(Tables.Presentation(presence, result.TableInstanceId).Experience);
                 Collect(output); Queue(output, view, result.Snapshot);
             }
         }
         Send(output);
         if (result.Error == PokerRegistryError.None)
-        {
-            var level = Tables.Presentation(presence, result.TableInstanceId).Experience;
-            player.UpdatePokerQuestTasks(new PokerQuestUpdate(false, 0, MiniGameProgression.LevelForExperience(level)));
-        }
+            player.UpdatePokerQuestTasks(new PokerQuestUpdate(false, 0, joinedPokerLevel));
         return result;
     }
     internal static PokerRegistryResult Leave(Player player)

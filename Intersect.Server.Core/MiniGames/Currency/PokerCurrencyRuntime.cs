@@ -108,7 +108,7 @@ internal static class PokerCurrencyRuntime
             if (joined != null)
             {
                 var experience = joined.Table.Presentation(player.Id).Experience;
-                player.UpdatePokerQuestTasks(new PokerQuestUpdate(false, 0, MiniGameProgression.LevelForExperience(experience)));
+                player.UpdatePokerQuestTasks(new PokerQuestUpdate(false, 0, MiniGameProgression.Level(experience)));
             }
         }
         return result;
