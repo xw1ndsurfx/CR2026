@@ -24,7 +24,7 @@ public static partial class Strings
         public static Dictionary<string, LocalizedString> Actions = new()
         {
             ["deal"] = "Deals the cards", ["fold"] = "Folds", ["check"] = "Checks",
-            ["call"] = "Calls {00}", ["raise"] = "Raises to {00}", ["wins"] = "Wins +{00} net",
+            ["call"] = "Calls {00}", ["raise"] = "Raises to {00}", ["allin"] = "ALL-IN {00}", ["wins"] = "Wins +{00} net",
             ["leave"] = "Leaves the table",
         };
     }
