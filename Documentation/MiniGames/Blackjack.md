@@ -197,3 +197,38 @@ dotnet run --project Utilities/BlackjackEditorTests/Intersect.BlackjackEditorTes
 Use these Debug applications and all their matching DLLs, not old executables
 from a Release/publish folder. The branch includes the previous Poker changes;
 no merge of either draft PR into main is required for a development test.
+
+
+## Part 8/8 release gate
+
+Blackjack is ready to merge only when the dedicated `Blackjack production validation`
+workflow is green. That gate requires:
+
+- Blackjack engine rules tests.
+- Blackjack ledger, wire protocol and editor integration tests.
+- Real Gwen/UI regression coverage, including reconnect/Refresh motion behavior.
+- Real Server Core, Server, Client and Editor builds.
+- Poker editor, inventory and progression regression suites.
+
+Before merging to `main`, also perform the manual acceptance steps above on matching
+Debug builds from the same commit. Use a COPY of the player database for restart and
+disconnect testing. Do not treat a green automated gate as proof of a real two-client
+multiplayer session; the manual two-client check remains required.
+
+Recommended final sequence:
+
+```powershell
+git fetch origin
+git switch feature/blackjack-part8-release-gate
+git pull --ff-only origin feature/blackjack-part8-release-gate
+git submodule update --init --recursive
+
+dotnet build Intersect.Server/Intersect.Server.csproj --configuration Debug
+dotnet build Intersect.Client/Intersect.Client.csproj --configuration Debug
+dotnet build Intersect.Editor/Intersect.Editor.csproj --configuration Debug
+
+dotnet run --project Utilities/BlackjackTests/Intersect.BlackjackTests.csproj --configuration Release
+dotnet run --project Utilities/BlackjackIntegrationTests/Intersect.BlackjackIntegrationTests.csproj --configuration Release
+dotnet run --project Utilities/BlackjackEditorTests/Intersect.BlackjackEditorTests.csproj --configuration Release
+dotnet run --project Utilities/PokerUiTests/Intersect.PokerUiTests.csproj --configuration Release
+```
