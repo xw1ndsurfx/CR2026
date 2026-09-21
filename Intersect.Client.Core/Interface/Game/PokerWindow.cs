@@ -272,7 +272,9 @@ internal sealed partial class PokerWindow : Base
             var fx = state.Effects;
             var effect = decision.Action switch
             {
-                "deal" => (fx.DealAnimationId, fx.DealSound),
+                // Deal visuals are rendered on the table by PokerTableArt; only play the optional
+                // extra deal sound here so the selected animation is not drawn twice.
+                "deal" => (Guid.Empty, fx.DealSound),
                 "check" => (fx.CheckAnimationId, fx.CheckSound),
                 "call" => (fx.CallAnimationId, fx.CallSound),
                 "raise" => (fx.RaiseAnimationId, fx.RaiseSound),
