@@ -126,6 +126,16 @@ public sealed partial class PokerTableRegistry
             Wins = profile.Wins,
             ProgressPending = HasPendingExperience(entry),
             Decisions = entry.Extras.Decisions.ToArray(),
+            Effects = new PokerEffectPresentation(
+                entry.Options.DealAnimationId, entry.Options.DealSound,
+                entry.Options.CheckAnimationId, entry.Options.CheckSound,
+                entry.Options.CallAnimationId, entry.Options.CallSound,
+                entry.Options.RaiseAnimationId, entry.Options.RaiseSound,
+                entry.Options.FoldAnimationId, entry.Options.FoldSound,
+                entry.Options.AllInAnimationId, entry.Options.AllInSound,
+                entry.Options.VictoryAnimationId, entry.Options.VictorySound,
+                entry.Options.LoseAnimationId, entry.Options.LoseSound,
+                entry.Options.LevelUpAnimationId, entry.Options.LevelUpSound),
         };
     }
 }
