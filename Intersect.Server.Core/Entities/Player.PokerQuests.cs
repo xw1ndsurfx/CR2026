@@ -1,4 +1,5 @@
 using Intersect.Framework.Core.GameObjects.Quests;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.GameObjects;
 using Intersect.Server.Networking;
 
