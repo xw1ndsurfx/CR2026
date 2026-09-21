@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Server.MiniGames.Poker;
 using Intersect.Server.MiniGames.Progression;
@@ -29,6 +28,7 @@ internal sealed class PokerFundedTable
     public PokerRules Rules { get; }
     public PokerTableOptions Options { get; }
     public long Reserve { get; }
+    public string CurrencyName { get; }
     public bool Pending { get; private set; }
     public long Version { get; private set; }
     private readonly PokerMoneyLedger _money;
@@ -47,9 +47,10 @@ internal sealed class PokerFundedTable
     public bool IsEmpty => _members.Count == 0;
     private PokerSnapshot Current => _table.Snapshot(_members.Keys.First());
     private static bool Playing(PokerPhase phase) => phase is >= PokerPhase.PreFlop and <= PokerPhase.River;
-    public PokerFundedTable(PokerMoneyLedger money, PokerTableKey key, Guid currency, PokerRules rules, PokerTableOptions options, long reserve)
+    public PokerFundedTable(PokerMoneyLedger money, PokerTableKey key, Guid currency, PokerRules rules, PokerTableOptions options, long reserve, string? currencyName = null)
     {
         _money = money; Key = key; Currency = currency; Rules = rules; Options = options; Reserve = reserve;
+        CurrencyName = string.IsNullOrWhiteSpace(currencyName) ? "currency" : currencyName;
         _table = new PokerTable(rules);
         House = key.MapId.ToString("N") + ":" + key.Name + ":" + currency.ToString("N");
     }
@@ -239,7 +240,7 @@ internal sealed class PokerFundedTable
         if (_decisions.Count > 12) _decisions.RemoveAt(0);
         if (member.Escrow.Npc)
         {
-            var currency = ItemDescriptor.GetName(Currency);
+            var currency = CurrencyName;
             var suffix = automatic ? " (auto)" : "";
             var text = action switch
             {

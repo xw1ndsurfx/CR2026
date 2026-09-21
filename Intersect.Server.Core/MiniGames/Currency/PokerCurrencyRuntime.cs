@@ -67,7 +67,7 @@ internal static class PokerCurrencyRuntime
                     {
                         if (Tables.Count >= 1024 && !Tables.ContainsKey(key)) return new(PokerRegistryError.Capacity);
                         var table = Tables.GetValueOrDefault(key) ?? new PokerFundedTable(money, key,
-                            command.CurrencyItemId, rules, options, command.NpcReserve);
+                            command.CurrencyItemId, rules, options, command.NpcReserve, ItemDescriptor.GetName(command.CurrencyItemId));
                         if (table.Currency != command.CurrencyItemId || table.Rules != rules || table.Options != options ||
                             table.Reserve != command.NpcReserve) return new(PokerRegistryError.RulesConflict);
                         if (!table.CanJoin()) return new(PokerRegistryError.Capacity);
