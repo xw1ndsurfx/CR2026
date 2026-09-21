@@ -45,13 +45,13 @@ public partial class ShopWindow : Window
         _buyContainer = new ScrollControl(this, "BuyList")
         {
             Dock = Pos.None,
-            OverflowX = OverflowBehavior.Never,
+            OverflowX = OverflowBehavior.Hidden,
             OverflowY = OverflowBehavior.Scroll,
         };
         _sellContainer = new ScrollControl(this, "SellList")
         {
             Dock = Pos.None,
-            OverflowX = OverflowBehavior.Never,
+            OverflowX = OverflowBehavior.Hidden,
             OverflowY = OverflowBehavior.Scroll,
         };
 
@@ -164,7 +164,7 @@ public partial class ShopWindow : Window
         if (Globals.GameShop is { } shop && Globals.Me is { } player)
         {
             var firstSlots = new Dictionary<Guid, int>();
-            for (var slot = 0; slot < player.Inventory.Count; ++slot)
+            for (var slot = 0; slot < player.Inventory.Count(); ++slot)
             {
                 var inventory = player.Inventory[slot];
                 if (inventory == null || inventory.ItemId == Guid.Empty || firstSlots.ContainsKey(inventory.ItemId)) continue;
