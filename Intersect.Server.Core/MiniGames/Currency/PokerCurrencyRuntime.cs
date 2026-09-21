@@ -48,7 +48,15 @@ internal static class PokerCurrencyRuntime
                     return new(PokerRegistryError.InvalidPresence);
                 var rules = new PokerRules(command.MaxPlayers, command.StartingChips, command.SmallBlind, command.BigBlind, command.TurnSeconds);
                 var options = new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
-                    command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId);
+                        command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId,
+                        command.UnlimitedNpcReserve,
+                        command.DealSound, command.CheckAnimationId, command.CheckSound,
+                        command.CallAnimationId, command.CallSound,
+                        command.RaiseAnimationId, command.RaiseSound,
+                        command.FoldAnimationId, command.FoldSound,
+                        command.AllInAnimationId, command.AllInSound,
+                        command.VictorySound, command.LoseAnimationId, command.LoseSound,
+                        command.LevelUpAnimationId, command.LevelUpSound, command.LevelUpRewardEventId);
                 var key = new PokerTableKey(presence.MapId, presence.MapInstanceId, command.TableId);
                 var money = PokerInventoryBridge.Ledger;
                 lock (Gate)
