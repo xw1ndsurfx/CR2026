@@ -1,4 +1,5 @@
 using Intersect.Core;
+using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Framework.Core.MiniGames;
