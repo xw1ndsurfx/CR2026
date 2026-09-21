@@ -27,6 +27,16 @@ internal static class Program
         });
         Test("Blackjack event reopens as blackjack",()=>{var c=new StartMiniGameCommand{Game=MiniGameType.Blackjack,BlackjackMinimumBet=20,BlackjackMaximumBet=80};using var d=new MiniGameCommandDialog(c);
             Check(Get<ComboBox>(d,"MiniGameType").SelectedIndex==1 && Get<NumericUpDown>(d,"BlackjackMinimumBet").Value==20,"reopen");});
+        Test("Blackjack disables Poker-only unlimited funding and exposes motion presets",()=>
+        {
+            var c=new StartMiniGameCommand{Game=MiniGameType.Blackjack,UnlimitedNpcBankroll=true};
+            using var d=new MiniGameCommandDialog(c);d.Show();Application.DoEvents();
+            var unlimited=Get<CheckBox>(d,"UnlimitedNpcBankroll");
+            Check(!unlimited.Enabled && !unlimited.Checked,"unlimited funding remained active");
+            Check(Get<NumericUpDown>(d,"BlackjackMinimumBet").Enabled && Get<NumericUpDown>(d,"BlackjackMaximumBet").Enabled,"blackjack wagers disabled");
+            var speed=Get<ComboBox>(d,"ProceduralAnimationSpeed");
+            Check(speed.Items.Cast<object>().Select(x=>x.ToString()).SequenceEqual(new[]{"Off","Fast","Normal","Cinematic"}),"motion presets");
+        });
         Console.WriteLine($"{passed}/{passed+failed} blackjack editor groups passed.");Environment.ExitCode=failed==0?0:1;
     }
     private static T Get<T>(Control p,string name)where T:Control=>Children(p).OfType<T>().Single(c=>c.Name==name);

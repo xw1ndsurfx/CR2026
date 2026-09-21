@@ -1,5 +1,6 @@
 using Intersect.Client.MiniGames;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Blackjack;
 using Intersect.Network;
 using Intersect.Network.Packets.Client;
@@ -22,6 +23,20 @@ Test("Poker zero-value event remains compatible; blackjack settings validate ind
     Check(c.HasValidSettings(),"blackjack defaults");c.BlackjackMinimumBet=3;Check(!c.HasValidSettings(),"odd wager");
     c.BlackjackMinimumBet=10;c.NpcPlayers=5;Check(!c.HasValidSettings(),"dealer/human seats not reserved");
     c.NpcPlayers=4;Check(c.HasValidSettings(),"five players plus dealer");
+});
+Test("Blackjack motion settings survive command, session projection and wire shape",()=>
+{
+    var motion=new PokerMotionSet(PokerMotionSpeed.Cinematic,false,true,false,true,false,true);
+    var settings=new BlackjackSettings(new BlackjackRules(5,100,10,100,30),0,false,Guid.Empty,0,
+        Guid.Empty,Guid.Empty,false,0,motion);
+    var t=new BlackjackSessionTable(new(Guid.NewGuid(),Guid.Empty,"motion"),settings,null,new MemoryMiniGameProgressStore());
+    var player=Guid.NewGuid();t.Join(player,"Alice",new MiniGameProgress(),null);
+    var s=t.Project(player);
+    Check(s.ProceduralAnimationSpeed==PokerMotionSpeed.Cinematic,"speed");
+    Check(!s.AnimateDealCards && s.AnimateBoardCards && !s.AnimateChips && s.AnimateShowdown && !s.AnimateShuffle && s.AnimateAllIn,"flags");
+    Check(s.HasValidShape(),"shape");
+    var p=new BlackjackStatePacket{TableInstanceId=t.Id,ViewId=Guid.NewGuid(),PlayerId=player,Sequence=1,TableName="motion",State=s};
+    Check(p.IsValid,"packet");
 });
 Test("Actual inventory debit and refund share blackjack settlement escrow",()=>
 {
