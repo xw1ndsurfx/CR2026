@@ -1,5 +1,6 @@
 using Intersect.Client.Framework.Graphics;
 using Intersect.Framework.Core.MiniGames;
+using Intersect.Framework.Core.MiniGames.Blackjack;
 using Intersect.Network.Packets.MiniGames;
 using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
 using Rectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
