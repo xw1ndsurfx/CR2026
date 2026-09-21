@@ -64,6 +64,13 @@ public sealed partial class BlackjackTableState
     [Key(26)] public long NetWin {get;set;}
     [Key(27)] public int DealerBackId {get;set;}
     [Key(28)] public bool HitSoft17 {get;set;}
+    [Key(29)] public PokerMotionSpeed ProceduralAnimationSpeed {get;set;}=PokerMotionSpeed.Normal;
+    [Key(30)] public bool AnimateDealCards {get;set;}=true;
+    [Key(31)] public bool AnimateBoardCards {get;set;}=true;
+    [Key(32)] public bool AnimateChips {get;set;}=true;
+    [Key(33)] public bool AnimateShowdown {get;set;}=true;
+    [Key(34)] public bool AnimateShuffle {get;set;}=true;
+    [Key(35)] public bool AnimateAllIn {get;set;}=true;
     public bool HasValidShape()=>HandId>=0 && Revision>=0 && Stage is >=BlackjackStage.Waiting and <=BlackjackStage.Finished &&
         Bank is >=0 and <=BlackjackRules.MaximumBalance && ActingSeat is >=-1 and <5 && ActingHand is >=-1 and <2 &&
         CardsValid(DealerCards) && (!DealerHoleHidden || Stage==BlackjackStage.Players && DealerCards.Length==1) &&
@@ -71,6 +78,7 @@ public sealed partial class BlackjackTableState
         MinimumBet>=2 && MinimumBet%2==0 && MaximumBet>=0 && MaximumBet<=1_000_000_000 &&
         Experience is >=0 and <=MiniGameProgression.MaximumExperience && Wins>=0 &&
         NetWin>=0 && (NetWin==0 || Stage==BlackjackStage.Finished) && MiniGameProgression.IsBack(DealerBackId) &&
+        ProceduralAnimationSpeed is >=PokerMotionSpeed.Off and <=PokerMotionSpeed.Cinematic &&
         Seats is {Length:>=1 and <=5} && Seats.All(s=>s!=null && s.PlayerId!=Guid.Empty && s.Seat is >=0 and <5 &&
             s.Name is {Length:>=1 and <=32} && s.Chips is >=0 and <=BlackjackRules.MaximumBalance &&
             s.LastAction is {Length:<=96} && MiniGameProgression.IsBack(s.CardBackId) && MiniGameProgression.IsBack(s.SelectedBackId) &&
