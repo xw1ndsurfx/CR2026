@@ -14,6 +14,7 @@ internal sealed class PokerTableArt
 {
     private readonly Dictionary<string, IGameTexture?> _cache = new(StringComparer.Ordinal);
     private readonly ImagePanel[] _board = new ImagePanel[5], _own = new ImagePanel[2], _portraits = new ImagePanel[6], _choices = new ImagePanel[6];
+    private readonly ImagePanel _selectedBack;
     private readonly ImagePanel[,] _seats = new ImagePanel[6, 2];
     private readonly Label[,] _fallback = new Label[6, 2];
     private readonly Label[] _boardLabels;
@@ -41,6 +42,7 @@ internal sealed class PokerTableArt
                 { AutoSizeToContents = false, Font = parent.Skin.DefaultFont, FontSize = 12, MouseInputEnabled = false, IsHidden = true };
             }
         }
+        _selectedBack = Image(parent, "PokerSelectedBackPreview");
         _effects = [new() { Image = Image(parent, "PokerDealLower") }, new() { Image = Image(parent, "PokerDealUpper") }];
     }
     public void Update(PokerTableState state, Guid player, Guid table, PokerSceneLayout layout)
@@ -88,6 +90,8 @@ internal sealed class PokerTableArt
             }
             Fit(_choices[slot], Back(slot), layout.LocalRect(36 + slot * 108, 15, 48, 74));
         }
+        var selectedBack = Back(me.SelectedCardBackId);
+        Fit(_selectedBack, selectedBack, layout.Rect(662, 674, 38, 54));
         SelectedBackMissing = Lookup(PokerCardAssets.BackFileName(me.SelectedCardBackId)) == null;
         if (_deals.Observe(table, state.HandId, state.Board.Length)) BeginAnimation(state.DealAnimationId);
         AdvanceAnimation(layout);
