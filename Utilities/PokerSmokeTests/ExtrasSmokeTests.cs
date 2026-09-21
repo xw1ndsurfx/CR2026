@@ -33,17 +33,17 @@ internal static class ExtrasSmokeTests
             }),
             ("Silent table still exposes winner privately without requesting global chat", () =>
             { var f = new Fixture(announce: false); f.Start(); f.FoldActor(); Check(!f.Tables.CollectWins().Single().AnnounceGlobally, "Opt-in ignored"); }),
-            ("Unlocked backs are pinned during a hand and changes apply next hand", () =>
+            ("Unlocked backs apply immediately without changing betting state", () =>
             {
                 var f = new Fixture(unlocked: true);
                 Check(f.Tables.SelectCardBack(f.A, f.Id, 1).Error == PokerRegistryError.None, "Select failed");
                 f.Start(); var before = f.State(f.A);
                 Check(f.Tables.SelectCardBack(f.A, f.Id, 2).Error == PokerRegistryError.None, "Second choice failed");
                 var back = f.Tables.Presentation(f.B, f.Id).CardBacks.Single(s => s.PlayerId == f.A.Session.PlayerId);
-                Check(back.CurrentId == 1 && back.SelectedId == 2, "Live back changed");
+                Check(back.CurrentId == 2 && back.SelectedId == 2, "Live back did not update");
                 Check(f.State(f.A).Revision == before.Revision && f.State(f.A).Pot == before.Pot, "Cosmetic changed betting");
                 f.FoldActor(); f.Start();
-                Check(f.Tables.Presentation(f.B, f.Id).CardBacks.Single(s => s.PlayerId == f.A.Session.PlayerId).CurrentId == 2, "New back not applied");
+                Check(f.Tables.Presentation(f.B, f.Id).CardBacks.Single(s => s.PlayerId == f.A.Session.PlayerId).CurrentId == 2, "Saved back did not persist");
             }),
             ("Forged catalog, locked backs, sessions and tables are rejected", () =>
             {
