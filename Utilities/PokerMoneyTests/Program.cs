@@ -76,6 +76,35 @@ Test("NPC funds are finite and shared across instances", f=>
     var s=f.Money.OpenNpc(Guid.NewGuid(),f.TableId,f.Currency,"same-house",100,100)!;Check(f.Money.HouseAvailable("same-house")==0,"Loan not debited");
     Check(f.Money.OpenNpc(Guid.NewGuid(),Guid.NewGuid(),f.Currency,"same-house",999999,100)==null,"Reseed");f.Money.Release(s.Id);Check(f.Money.HouseAvailable("same-house")==100,"Loan not returned");
 });
+Test("Unlimited NPC bankroll replenishes only NPC admissions", f=>
+{
+    var first=f.Money.OpenNpc(Guid.NewGuid(),f.TableId,f.Currency,"infinite",0,100,true)!;
+    Check(first.Npc && first.Character==Guid.Empty && first.Amount==100,"Unlimited seat is not an NPC escrow");
+    Check(f.Money.HouseAvailable("infinite")==0,"Unexpected available balance after loan");
+    f.Money.Release(first.Id);
+    Check(f.Money.HouseAvailable("infinite")==100,"NPC loan did not return");
+    var second=f.Money.OpenNpc(Guid.NewGuid(),Guid.NewGuid(),f.Currency,"infinite",0,100,true)
+        ?? throw new InvalidOperationException("Unlimited NPC admission failed");
+    Check(f.Money.HouseAvailable("infinite")==0,"Returned house funds not reused");
+    Throws(()=>f.Money.Cashout(second,(_,_)=>throw new Exception("NPC inventory credit attempted")));
+});
+Test("Unlimited house refills after a human wins its entire NPC stake", f=>
+{
+    var a=f.Buy(f.A,100);var npc=f.Money.OpenNpc(Guid.NewGuid(),f.TableId,f.Currency,"infinite-loss",0,100,true)!;
+    f.Money.Settle(f.TableId,1,new Dictionary<Guid,long>{{a.Id,200},{npc.Id,0}});
+    f.Money.Release(npc.Id);
+    Check(f.Money.HouseAvailable("infinite-loss")==0,"Empty NPC escrow unexpectedly refunded");
+    var replacement=f.Money.OpenNpc(Guid.NewGuid(),Guid.NewGuid(),f.Currency,"infinite-loss",0,100,true);
+    Check(replacement!=null && replacement.Npc && replacement.Amount==100,"Unlimited house did not replenish a lost stake");
+    f.Pay(a);Check(f.Balance(f.A)==450,"Human win was not preserved");
+});
+Test("Funded table creates configured NPCs with zero reserve when unlimited mode is enabled", f=>
+{
+    var options=new PokerTableOptions(DealerPlays:true,NpcPlayers:2,UnlimitedNpcBankroll:true);
+    var t=f.NewTable(options,0);t.Join(f.Buy(f.A,100,t.Id,t.House),"Alice");t.Tick(DateTimeOffset.UtcNow);
+    var s=t.Snapshot(f.A);
+    Check(s.Seats.Length==4 && s.Seats.Count(x=>x.PlayerId!=f.A)==3 && s.Seats.Any(x=>x.Name=="Marlow"),"Unlimited NPC seats missing");
+});
 Test("Human wins deplete the house without free NPC refills", f=>
 {
     var a=f.Buy(f.A,100);var s=f.Money.OpenNpc(Guid.NewGuid(),f.TableId,f.Currency,"finite",100,100)!;

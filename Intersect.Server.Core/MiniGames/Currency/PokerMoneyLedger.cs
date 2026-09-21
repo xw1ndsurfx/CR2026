@@ -155,7 +155,7 @@ public sealed class PokerMoneyLedger : IDisposable
         { InsertSeat(c, tx, expected); debit(c, tx); Receipt(c, tx, Id(seat) + ":in", character, currency, amount, kind); });
         return expected;
     }
-    public MoneySeat? OpenNpc(Guid seat, Guid table, Guid currency, string house, long seed, long stake)
+    public MoneySeat? OpenNpc(Guid seat, Guid table, Guid currency, string house, long seed, long stake, bool unlimited = false)
     {
         Required(seat); Required(table); Required(currency); Amount(seed); Amount(stake);
         if (stake == 0 || string.IsNullOrWhiteSpace(house) || house.Length > 200) throw new MoneyRuleException("Invalid NPC funding.");
@@ -168,14 +168,29 @@ public sealed class PokerMoneyLedger : IDisposable
                     throw new MoneyRuleException("NPC admission receipt mismatch.");
                 return existing;
             }
+
             var previous = Scalar(c, tx, "SELECT Available FROM PokerMoneyHouses WHERE House=$p0 AND Currency=$p1", house, Id(currency));
-            if (previous == null && seed == 0) return null;
+            if (previous == null && seed == 0 && !unlimited) return null;
             Exec(c, tx, "INSERT INTO PokerMoneyHouses VALUES($p0,$p1,$p2,$p2) ON CONFLICT(House) DO NOTHING;", house, Id(currency), seed);
-            var available = Convert.ToInt64(Scalar(c, tx, "SELECT Available FROM PokerMoneyHouses WHERE House=$p0 AND Currency=$p1", house, Id(currency))
-                ?? throw new MoneyRuleException("Conflicting house currency."));
+
+            var availableObject = Scalar(c, tx, "SELECT Available FROM PokerMoneyHouses WHERE House=$p0 AND Currency=$p1", house, Id(currency))
+                ?? throw new MoneyRuleException("Conflicting house currency.");
+            var available = Convert.ToInt64(availableObject);
+            if (available < stake && unlimited)
+            {
+                var missing = stake - available;
+                var seeded = Convert.ToInt64(Scalar(c, tx, "SELECT Seed FROM PokerMoneyHouses WHERE House=$p0 AND Currency=$p1", house, Id(currency)) ?? 0L);
+                if (missing > MaximumBalance - available || missing > MaximumBalance - seeded)
+                    throw new MoneyRuleException("Unlimited NPC house reached the supported balance limit.");
+                if (Exec(c, tx, "UPDATE PokerMoneyHouses SET Seed=Seed+$p1,Available=Available+$p1 WHERE House=$p0 AND Currency=$p2",
+                    house, missing, Id(currency)) != 1) throw new MoneyRuleException("Unable to replenish NPC house.");
+                available += missing;
+            }
             if (available < stake) return null;
-            Exec(c, tx, "UPDATE PokerMoneyHouses SET Available=Available-$p1 WHERE House=$p0", house, stake);
-            var result = new MoneySeat(seat, table, Guid.Empty, currency, house, stake, true, 0); InsertSeat(c, tx, result); return result;
+            Exec(c, tx, "UPDATE PokerMoneyHouses SET Available=Available-$p1 WHERE House=$p0 AND Currency=$p2", house, stake, Id(currency));
+            var result = new MoneySeat(seat, table, Guid.Empty, currency, house, stake, true, 0);
+            InsertSeat(c, tx, result);
+            return result;
         });
     }
     public long HouseAvailable(string house)

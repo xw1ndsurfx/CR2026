@@ -41,13 +41,15 @@ internal static class Program
                     LevelUpSound = "level.wav", JoinSound = "join.wav", LeaveSound = "leave.wav",
                     CheckAnimationId = Guid.NewGuid(), CallAnimationId = Guid.NewGuid(), RaiseAnimationId = Guid.NewGuid(),
                     FoldAnimationId = Guid.NewGuid(), AllInAnimationId = Guid.NewGuid(), LoseAnimationId = Guid.NewGuid(),
-                    LevelUpAnimationId = Guid.NewGuid(), JoinAnimationId = Guid.NewGuid(), LeaveAnimationId = Guid.NewGuid() };
+                    LevelUpAnimationId = Guid.NewGuid(), JoinAnimationId = Guid.NewGuid(), LeaveAnimationId = Guid.NewGuid(),
+                    UnlimitedNpcBankroll = true };
                 var expected = JsonConvert.DeserializeObject<StartMiniGameCommand>(JsonConvert.SerializeObject(command))!;
                 expected.CurrencyItemId = other.Id;
                 using var dialog = new MiniGameCommandDialog(command);
                 dialog.Show(); Application.DoEvents();
                 var picker = Find<ComboBox>(dialog, "TableCurrency");
                 picker.SelectedItem = picker.Items.Cast<object>().Single(choice => ChoiceId(choice) == other.Id);
+                Find<CheckBox>(dialog, "UnlimitedNpcBankroll").Checked = true;
                 Check(command.CurrencyItemId == Guid.Empty);
                 Find<Button>(dialog, "Save").PerformClick();
                 Check(dialog.DialogResult == DialogResult.OK);

@@ -22,9 +22,9 @@ internal sealed class MiniGameCommandDialog : Form
         ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
         MinimumSize = new Size(580, 420);
         BackColor = DrawingColor.FromArgb(45, 45, 48); ForeColor = DrawingColor.Gainsboro;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 38, AutoScroll = true };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 39, AutoScroll = true };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
-        for (var row = 0; row < 38; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var row = 0; row < 39; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(12, 8, 12, 8) };
         Controls.Add(layout); Controls.Add(buttons);
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
@@ -39,6 +39,11 @@ internal sealed class MiniGameCommandDialog : Form
         var currency = CurrencyPicker(command.CurrencyItemId);
         var chips = Number(command.StartingChips, 1, 1_000_000_000);
         var reserve = Number(command.NpcReserve, 0, 1_000_000_000); reserve.Name = "NpcReserve";
+        var unlimitedNpcBankroll = new CheckBox
+        {
+            Name = "UnlimitedNpcBankroll", Text = "House / system-funded NPCs (unlimited)",
+            Checked = command.UnlimitedNpcBankroll, AutoSize = true
+        };
         var small = Number(command.SmallBlind, 1, 1_000_000_000); var big = Number(command.BigBlind, 1, 1_000_000_000);
         var seconds = Number(command.TurnSeconds, 5, 300);
         var dealer = new CheckBox { Text = "Marlow / Croupier", Checked = command.DealerPlays, AutoSize = true };
@@ -80,23 +85,25 @@ internal sealed class MiniGameCommandDialog : Form
         AddRow(layout, 11, "Automatic hands", automatic); AddRow(layout, 12, "Dealing animation", animation);
         AddRow(layout, 13, "Announce wins in GLOBAL chat", announce); AddRow(layout, 14, "Victory animation (winner only)", victory);
         AddRow(layout, 15, "Dealer / NPC card back", backs); AddRow(layout, 16, "Initial NPC reserve (one-time seed)", reserve);
-        AddRow(layout, 17, "Sound - Deal", dealSound); AddRow(layout, 18, "Sound - Check", checkSound);
-        AddRow(layout, 19, "Sound - Call", callSound); AddRow(layout, 20, "Sound - Raise", raiseSound);
-        AddRow(layout, 21, "Sound - Fold", foldSound); AddRow(layout, 22, "Sound - All-in", allInSound);
-        AddRow(layout, 23, "Sound - Win", winSound); AddRow(layout, 24, "Sound - Lose", loseSound);
-        AddRow(layout, 25, "Sound - Level Up", levelUpSound); AddRow(layout, 26, "Sound - Join table", joinSound);
-        AddRow(layout, 27, "Sound - Leave table", leaveSound);
-        AddRow(layout, 28, "Animation - Check", checkAnimation); AddRow(layout, 29, "Animation - Call", callAnimation);
-        AddRow(layout, 30, "Animation - Raise", raiseAnimation); AddRow(layout, 31, "Animation - Fold", foldAnimation);
-        AddRow(layout, 32, "Animation - All-in", allInAnimation); AddRow(layout, 33, "Animation - Lose", loseAnimation);
-        AddRow(layout, 34, "Animation - Level Up", levelUpAnimation); AddRow(layout, 35, "Animation - Join table", joinAnimation);
-        AddRow(layout, 36, "Animation - Leave table", leaveAnimation);
+        AddRow(layout, 17, "Unlimited NPC bankroll", unlimitedNpcBankroll);
+        AddRow(layout, 38, "Sound - Deal", dealSound); AddRow(layout, 38, "Sound - Check", checkSound);
+        AddRow(layout, 38, "Sound - Call", callSound); AddRow(layout, 38, "Sound - Raise", raiseSound);
+        AddRow(layout, 38, "Sound - Fold", foldSound); AddRow(layout, 38, "Sound - All-in", allInSound);
+        AddRow(layout, 38, "Sound - Win", winSound); AddRow(layout, 38, "Sound - Lose", loseSound);
+        AddRow(layout, 38, "Sound - Level Up", levelUpSound); AddRow(layout, 38, "Sound - Join table", joinSound);
+        AddRow(layout, 38, "Sound - Leave table", leaveSound);
+        AddRow(layout, 38, "Animation - Check", checkAnimation); AddRow(layout, 38, "Animation - Call", callAnimation);
+        AddRow(layout, 38, "Animation - Raise", raiseAnimation); AddRow(layout, 38, "Animation - Fold", foldAnimation);
+        AddRow(layout, 38, "Animation - All-in", allInAnimation); AddRow(layout, 38, "Animation - Lose", loseAnimation);
+        AddRow(layout, 38, "Animation - Level Up", levelUpAnimation); AddRow(layout, 38, "Animation - Join table", joinAnimation);
+        AddRow(layout, 38, "Animation - Leave table", leaveAnimation);
         var status = new Label { Name = "CurrencyStatus", AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 12, 3, 12) };
-        layout.Controls.Add(status, 0, 37); layout.SetColumnSpan(status, 2);
+        layout.Controls.Add(status, 0, 38); layout.SetColumnSpan(status, 2);
         void ShowCurrencyStatus()
         {
             var id = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
-            reserve.Enabled = id != Guid.Empty;
+            reserve.Enabled = id != Guid.Empty && !unlimitedNpcBankroll.Checked;
+            unlimitedNpcBankroll.Enabled = id != Guid.Empty;
             if (id == Guid.Empty)
             {
                 chipsLabel.Text = "Starting test chips"; status.ForeColor = DrawingColor.Gainsboro;
@@ -110,11 +117,16 @@ internal sealed class MiniGameCommandDialog : Form
                 : $"Selected item: {item.Name}. ID: {id}.\n" +
                     "FUNDED mode (SQLite player database): the buy-in is removed from inventory once. " +
                     "The remaining balance is returned after leaving and settling the hand. Full inventory refunds wait safely. " +
-                    "NPC reserve creates an authorized house budget ONCE per map + Table ID + currency, shared across instances. " +
-                    "Reopening, restarting or editing this number does not refill an existing house. Zero means no initial NPC funds. " +
+                    (unlimitedNpcBankroll.Checked
+                        ? "UNLIMITED NPC BANKROLL is enabled: the server creates only the missing NPC buy-in when the house cannot fund a seat. " +
+                          "This is an intentional currency faucet so NPC opponents never disappear for lack of house funds. "
+                        : "NPC reserve creates an authorized house budget ONCE per map + Table ID + currency, shared across instances. " +
+                          "Reopening, restarting or editing this number does not refill an existing house. Zero means no initial NPC funds. ") +
                     "Funded XP is separate from test XP. Back up the entire player database before enabling.";
         }
-        currency.SelectedIndexChanged += (_, _) => ShowCurrencyStatus(); ShowCurrencyStatus();
+        currency.SelectedIndexChanged += (_, _) => ShowCurrencyStatus();
+        unlimitedNpcBankroll.CheckedChanged += (_, _) => ShowCurrencyStatus();
+        ShowCurrencyStatus();
         var cancel = new Button { Name = "Cancel", Text = "Cancel", AutoSize = true, DialogResult = DialogResult.Cancel };
         var save = new Button { Name = "Save", Text = "Save", AutoSize = true };
         buttons.Controls.Add(cancel); buttons.Controls.Add(save); AcceptButton = save; CancelButton = cancel;
@@ -130,6 +142,7 @@ internal sealed class MiniGameCommandDialog : Form
             {
                 Game = MiniGameType.Poker, TableId = table.Text, MaxPlayers = (int)seats.Value, CurrencyItemId = selected,
                 StartingChips = (long)chips.Value, NpcReserve = (long)reserve.Value,
+                UnlimitedNpcBankroll = unlimitedNpcBankroll.Checked,
                 SmallBlind = (long)small.Value, BigBlind = (long)big.Value, TurnSeconds = (int)seconds.Value,
                 DealerPlays = dealer.Checked, NpcPlayers = (int)npcs.Value, AutoStart = automatic.Checked,
                 DealAnimationId = ((AnimationChoice)animation.SelectedItem!).Id, AnnounceWins = announce.Checked,
@@ -157,6 +170,7 @@ internal sealed class MiniGameCommandDialog : Form
             }
             command.Game = draft.Game; command.TableId = draft.TableId; command.MaxPlayers = draft.MaxPlayers;
             command.CurrencyItemId = draft.CurrencyItemId; command.NpcReserve = draft.NpcReserve;
+            command.UnlimitedNpcBankroll = draft.UnlimitedNpcBankroll;
             command.StartingChips = draft.StartingChips; command.SmallBlind = draft.SmallBlind; command.BigBlind = draft.BigBlind;
             command.TurnSeconds = draft.TurnSeconds; command.DealerPlays = draft.DealerPlays; command.NpcPlayers = draft.NpcPlayers;
             command.AutoStart = draft.AutoStart; command.DealAnimationId = draft.DealAnimationId; command.AnnounceWins = draft.AnnounceWins;

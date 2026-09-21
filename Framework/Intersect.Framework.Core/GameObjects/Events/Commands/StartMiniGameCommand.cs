@@ -50,6 +50,8 @@ public sealed class StartMiniGameCommand : EventCommand
     public Guid CurrencyItemId { get; set; }
     /// <summary>One-time authorized house seed, shared across instances; reopening never reseeds it.</summary>
     [DefaultValue(0L)] public long NpcReserve { get; set; }
+    /// <summary>Explicit system-funded mode: NPC buy-ins are replenished as needed and can create currency.</summary>
+    [DefaultValue(false)] public bool UnlimitedNpcBankroll { get; set; }
 
     public PokerSoundSet CreateSoundSet() => new(
         DealSound ?? "", CheckSound ?? "", CallSound ?? "", RaiseSound ?? "", FoldSound ?? "",
