@@ -1,0 +1,38 @@
+name: Blackjack tests
+on:
+  push:
+    branches: ['feature/blackjack-minigame']
+  pull_request:
+    paths: ['**/*Blackjack*', '**/Blackjack/**', 'Utilities/Blackjack*/**', '.github/workflows/blackjack-tests.yml']
+permissions:
+  contents: read
+concurrency:
+  group: blackjack-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet run --project Utilities/BlackjackTests/Intersect.BlackjackTests.csproj --configuration Release
+  ledger-and-wire:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - shell: pwsh
+        run: ./Utilities/PokerCi/run.ps1 -Project Utilities/BlackjackIntegrationTests/Intersect.BlackjackIntegrationTests.csproj -Configuration Release
+      - shell: pwsh
+        run: ./Utilities/PokerCi/run.ps1 -Project Utilities/BlackjackEditorTests/Intersect.BlackjackEditorTests.csproj -Configuration Release

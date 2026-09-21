@@ -24,12 +24,15 @@ internal static class Program
         ItemDescriptor.Lookup[equipment.Id] = equipment;
         var tests = new (string Name, Action Run)[]
         {
-            ("Shared mini-game catalog exposes Poker without advertising unfinished games", () =>
+            ("Shared mini-game catalog exposes the supported Poker and Blackjack games", () =>
             {
-                Check(MiniGameCatalog.All.Count == 1);
+                Check(MiniGameCatalog.All.Count == 2);
                 var poker = MiniGameCatalog.Get(MiniGameType.Poker);
+                var blackjack = MiniGameCatalog.Get(MiniGameType.Blackjack);
                 Check(poker.DisplayName.Contains("Poker", StringComparison.OrdinalIgnoreCase));
+                Check(blackjack.DisplayName.Contains("Blackjack", StringComparison.OrdinalIgnoreCase));
                 Check(poker.MinimumPlayers == 2 && poker.MaximumPlayers == 6);
+                Check(blackjack.MinimumPlayers == 2 && blackjack.MaximumPlayers == 6);
                 Check(MiniGameCatalog.IsValidTableId("casino_table-1"));
                 Check(!MiniGameCatalog.IsValidTableId("casino table"));
             }),

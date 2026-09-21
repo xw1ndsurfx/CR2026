@@ -20,7 +20,7 @@ public sealed class MoneyRuleException(string message) : Exception(message);
 /// Checkpoints represent completed hands. An unfinished hand is voided for everyone on restart.
 /// An OS lease prevents a second game-server process from recovering a live owner's tables.
 /// </summary>
-public sealed class PokerMoneyLedger : IDisposable
+public sealed partial class PokerMoneyLedger : IDisposable
 {
     public const long MaximumBalance = 1_000_000_000_000;
     private readonly object _gate = new();
