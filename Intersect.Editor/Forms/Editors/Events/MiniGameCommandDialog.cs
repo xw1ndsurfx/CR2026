@@ -53,7 +53,7 @@ internal sealed class MiniGameCommandDialog : Form
         var small = Number(command.SmallBlind, 1, 1_000_000_000); var big = Number(command.BigBlind, 1, 1_000_000_000);
         var seconds = Number(command.TurnSeconds, 5, 300);
         var dealer = new CheckBox { Text = "Marlow / Croupier", Checked = command.DealerPlays, AutoSize = true };
-        var npcs = Number(command.NpcPlayers, 0, 5);
+        var npcs = Number(command.NpcPlayers, 0, 5); npcs.Name = "NpcPlayers";
         var automatic = new CheckBox { Text = "Next hand after 5 seconds", Checked = command.AutoStart, AutoSize = true };
         var animation = AnimationPicker(command.DealAnimationId); var victory = AnimationPicker(command.VictoryAnimationId);
         var checkAnimation = AnimationPicker(command.CheckAnimationId); var callAnimation = AnimationPicker(command.CallAnimationId);
