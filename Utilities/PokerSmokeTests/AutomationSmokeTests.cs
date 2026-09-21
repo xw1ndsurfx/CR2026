@@ -207,7 +207,7 @@ internal static class AutomationSmokeTests
                 var me = s.Seats.Single(x => x.PlayerId == p.Session.PlayerId);
                 if (s.ActingSeat == me.Seat)
                     Check(r.Act(p, a.TableInstanceId, s.HandId, s.Revision,
-                        s.ToCall > 0 ? PokerAction.Call : PokerAction.Check, 0, now).Error == PokerRegistryError.None, "Human action rejected");
+                        s.ToCall > 0 ? PokerAction.Fold : PokerAction.Check, 0, now).Error == PokerRegistryError.None, "Human action rejected");
             }
             Check(finished.Count == 5, "Continuous table stalled");
         });
