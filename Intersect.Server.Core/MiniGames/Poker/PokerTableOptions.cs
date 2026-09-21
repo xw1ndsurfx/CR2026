@@ -9,8 +9,33 @@ public sealed record PokerTableOptions(
     bool DealerPlays = false, int NpcPlayers = 0, bool AutoStart = false, Guid DealAnimationId = default,
     bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0)
 {
+    public bool UnlimitedNpcFunds { get; init; }
+    public Guid CheckAnimationId { get; init; }
+    public Guid CallAnimationId { get; init; }
+    public Guid RaiseAnimationId { get; init; }
+    public Guid FoldAnimationId { get; init; }
+    public Guid AllInAnimationId { get; init; }
+    public Guid ShowdownAnimationId { get; init; }
+    public Guid TurnAnimationId { get; init; }
+    public Guid DefeatAnimationId { get; init; }
+    public Guid LeaveAnimationId { get; init; }
+    public string DealSound { get; init; } = "";
+    public string CheckSound { get; init; } = "";
+    public string CallSound { get; init; } = "";
+    public string RaiseSound { get; init; } = "";
+    public string FoldSound { get; init; } = "";
+    public string AllInSound { get; init; } = "";
+    public string ShowdownSound { get; init; } = "";
+    public string TurnSound { get; init; } = "";
+    public string VictorySound { get; init; } = "";
+    public string DefeatSound { get; init; } = "";
+    public string LeaveSound { get; init; } = "";
+    private static bool Sound(string value) => value != null && value.Length <= 128;
     public bool IsValid(int seats) => NpcPlayers >= 0 && NpcPlayers <= 5 &&
-        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId);
+        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId) &&
+        Sound(DealSound) && Sound(CheckSound) && Sound(CallSound) && Sound(RaiseSound) &&
+        Sound(FoldSound) && Sound(AllInSound) && Sound(ShowdownSound) && Sound(TurnSound) &&
+        Sound(VictorySound) && Sound(DefeatSound) && Sound(LeaveSound);
 }
 
 public sealed record PokerSeatBack(Guid PlayerId, int CurrentId, int SelectedId);
@@ -23,6 +48,26 @@ public sealed record PokerPresentation(Guid[] NpcIds, Guid DealerNpcId, bool Aut
     public long Wins { get; init; }
     public bool ProgressPending { get; init; }
     public PokerPublicDecision[] Decisions { get; init; } = Array.Empty<PokerPublicDecision>();
+    public Guid CheckAnimationId { get; init; }
+    public Guid CallAnimationId { get; init; }
+    public Guid RaiseAnimationId { get; init; }
+    public Guid FoldAnimationId { get; init; }
+    public Guid AllInAnimationId { get; init; }
+    public Guid ShowdownAnimationId { get; init; }
+    public Guid TurnAnimationId { get; init; }
+    public Guid DefeatAnimationId { get; init; }
+    public Guid LeaveAnimationId { get; init; }
+    public string DealSound { get; init; } = "";
+    public string CheckSound { get; init; } = "";
+    public string CallSound { get; init; } = "";
+    public string RaiseSound { get; init; } = "";
+    public string FoldSound { get; init; } = "";
+    public string AllInSound { get; init; } = "";
+    public string ShowdownSound { get; init; } = "";
+    public string TurnSound { get; init; } = "";
+    public string VictorySound { get; init; } = "";
+    public string DefeatSound { get; init; } = "";
+    public string LeaveSound { get; init; } = "";
     public static PokerPresentation Empty => new(Array.Empty<Guid>(), Guid.Empty, false, Guid.Empty);
 }
 
@@ -57,6 +102,17 @@ public static class PokerNpcPolicy
         if (view.CanRaise && strength >= 45 && roll < 20 && view.MaximumRaiseTo > view.CurrentBet)
             return (PokerAction.RaiseTo, Math.Min(view.MinimumRaiseTo, view.MaximumRaiseTo));
         if (view.ToCall == 0) return (PokerAction.Check, 0);
+
+        // Fairness rule: cards are never biased against an all-in. NPCs simply defend large shoves more intelligently.
+        var largePressure = view.ToCall >= Math.Max(bigBlind * 4, Math.Max(1, me.Chips) / 3);
+        var potOddsFriendly = view.ToCall <= Math.Max(bigBlind * 4, (view.Pot + view.ToCall) / 3);
+        if (largePressure)
+        {
+            if (strength >= 55) return (PokerAction.Call, 0);
+            if (strength >= 45 && roll < 75) return (PokerAction.Call, 0);
+            if (strength >= 30 && (potOddsFriendly ? roll < 55 : roll < 32)) return (PokerAction.Call, 0);
+            return roll < 12 ? (PokerAction.Call, 0) : (PokerAction.Fold, 0);
+        }
         var inexpensive = view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 20);
         var affordablePair = strength >= 55 && view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 2);
         return inexpensive && roll < 85 || affordablePair || roll < 8
