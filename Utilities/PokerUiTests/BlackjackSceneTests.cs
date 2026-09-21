@@ -52,9 +52,12 @@ internal static class BlackjackSceneTests
                 state.Stage=BlackjackStage.Betting;state.HandId=1;state.Revision=1;state.CanBet=true;p.Sequence++;
                 Update();Check(!labels.Single(l=>l.Name=="BlackjackBet").IsDisabled,"bet disabled");
                 type.GetMethod("Bet",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(scene,null);Check(sent.SequenceEqual(new[]{BlackjackRequestKind.Bet}),"bet callback");
+                var motions=(System.Collections.IList)type.GetField("_proceduralMotions",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(scene)!;
+                motions.Clear();p.Sequence++;Update();Check(motions.Count==0,"refresh replayed historical motion");
                 state.Stage=BlackjackStage.Players;state.DealerCards=[7];state.DealerTotal=9;state.DealerHoleHidden=true;
                 state.ActingSeat=3;state.ActingHand=0;state.CanBet=false;state.CanHit=state.CanStand=state.CanDouble=true;
                 state.Seats[0].Hands=[new(){Cards=[1,2],Total=7,Bet=10}];p.Sequence++;Update();
+                Check(motions.Count>0,"authoritative deal transition produced no procedural motion");
                 Check(!labels.Single(l=>l.Name=="BlackjackHit").IsDisabled && labels.Single(l=>l.Name=="BlackjackSplit").IsDisabled,"action availability");
                 Check(labels.Single(l=>l.Name=="BlackjackDealerTotal").Text.Contains("9 + hidden"),"dealer hole UI");
                 state.Experience=1000;p.Sequence++;Update();Check(!labels.Single(l=>l.Name=="BlackjackBack1").IsDisabled,"B2 not unlocked");
