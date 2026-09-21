@@ -8,12 +8,14 @@ namespace Intersect.Server.MiniGames.Poker;
 public sealed record PokerTableOptions(
     bool DealerPlays = false, int NpcPlayers = 0, bool AutoStart = false, Guid DealAnimationId = default,
     bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0, PokerSoundSet? Sounds = null,
-    PokerAnimationSet? Animations = null, bool UnlimitedNpcBankroll = false)
+    PokerAnimationSet? Animations = null, bool UnlimitedNpcBankroll = false, PokerLevelRewardSet? LevelRewards = null)
 {
     public PokerSoundSet EffectiveSounds => Sounds ?? PokerSoundSet.Empty;
     public PokerAnimationSet EffectiveAnimations => Animations ?? new(Deal: DealAnimationId, Win: VictoryAnimationId);
+    public PokerLevelReward[] EffectiveLevelRewards => (LevelRewards ?? PokerLevelRewardSet.Empty).Items;
     public bool IsValid(int seats) => NpcPlayers >= 0 && NpcPlayers <= 5 &&
-        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId) && EffectiveSounds.IsValid;
+        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId) &&
+        EffectiveSounds.IsValid && (LevelRewards ?? PokerLevelRewardSet.Empty).IsValid;
 }
 
 public sealed record PokerSeatBack(Guid PlayerId, int CurrentId, int SelectedId);

@@ -9,6 +9,7 @@ using Intersect.Server.MiniGames.Progression;
 namespace Intersect.Server.MiniGames.Currency;
 
 internal sealed record FundedWin(Guid Player, string Name, long Amount);
+internal sealed record FundedLevelReward(Guid Player, int Level, PokerLevelReward[] Rewards);
 
 /// <summary>The tested hold'em engine owns the rules; this adapter owns funded hand checkpoints.</summary>
 internal sealed class PokerFundedTable
@@ -36,6 +37,7 @@ internal sealed class PokerFundedTable
     private readonly Dictionary<Guid, Member> _members = new();
     private readonly List<PokerPublicDecision> _decisions = new();
     private readonly Queue<FundedWin> _wins = new();
+    private readonly Queue<FundedLevelReward> _levelRewards = new();
     private readonly Queue<string> _npcChat = new();
     private readonly Dictionary<Guid, long> _net = new();
     private long _decisionId, _settledHand, _npcRevision = -1;
@@ -194,6 +196,7 @@ internal sealed class PokerFundedTable
     {
         if (IsEmpty) return; var state = Current;
         if (state.Phase != PokerPhase.Finished || state.HandId <= _settledHand) return;
+        var previousProfiles = Humans.ToDictionary(id => id, id => _members[id].Profile);
         _money.Settle(Id, state.HandId, state.Seats.ToDictionary(s => _members[s.PlayerId].Escrow.Id, s => s.Chips));
         var profiles = Humans.ToDictionary(id => id, id => _money.Profile(id));
         foreach (var seat in state.Seats)
@@ -201,6 +204,17 @@ internal sealed class PokerFundedTable
             var member = _members[seat.PlayerId]; var net = seat.Chips - member.Escrow.Amount;
             member.Escrow = member.Escrow with { Amount = seat.Chips };
             if (!member.Escrow.Npc) member.Profile = profiles[seat.PlayerId];
+            if (!member.Escrow.Npc)
+            {
+                var beforeProfile = previousProfiles[seat.PlayerId];
+                var afterProfile = profiles[seat.PlayerId];
+                if (afterProfile.Level > beforeProfile.Level)
+                {
+                    var rewards = Options.EffectiveLevelRewards
+                        .Where(r => r.Level > beforeProfile.Level && r.Level <= afterProfile.Level).ToArray();
+                    if (rewards.Length > 0) _levelRewards.Enqueue(new(seat.PlayerId, afterProfile.Level, rewards));
+                }
+            }
             if (net <= 0) continue;
             _net[seat.PlayerId] = net; Decision(seat.PlayerId, "wins", net);
             if (!member.Escrow.Npc) _wins.Enqueue(new(seat.PlayerId, seat.Name, net));
@@ -275,4 +289,5 @@ internal sealed class PokerFundedTable
         return messages;
     }
     public FundedWin[] CollectWins() { var wins = _wins.ToArray(); _wins.Clear(); return wins; }
+    public FundedLevelReward[] CollectLevelRewards() { var rewards = _levelRewards.ToArray(); _levelRewards.Clear(); return rewards; }
 }

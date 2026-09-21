@@ -46,12 +46,21 @@ public sealed partial class PokerTableRegistry
         {
             try
             {
+                _members.TryGetValue(award.Player, out var member);
+                var before = member?.Entry.Extras.Profiles.GetValueOrDefault(award.Player) ?? _progression.Load(award.Player, MiniGameProgression.Poker);
                 var profile = _progression.AwardWin(award.Player, MiniGameProgression.Poker, award.Table, award.Hand);
                 if (!profile.IsValid) throw new InvalidOperationException("Invalid mini-game award result.");
-                if (_members.TryGetValue(award.Player, out var member))
+                if (member != null)
                 {
                     member.Entry.Extras.Profiles[award.Player] = profile;
                     member.Entry.PublishedRevision = -1;
+                    if (profile.Level > before.Level)
+                    {
+                        var rewards = member.Entry.Options.EffectiveLevelRewards
+                            .Where(r => r.Level > before.Level && r.Level <= profile.Level).ToArray();
+                        if (rewards.Length > 0)
+                            _levelRewards.Enqueue(new(member.Presence.Session, member.Entry.Id, profile.Level, rewards));
+                    }
                 }
                 _pendingExperience.Remove(award);
                 ProgressionFailure = null;

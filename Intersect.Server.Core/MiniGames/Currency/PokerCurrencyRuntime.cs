@@ -27,7 +27,8 @@ internal static class PokerCurrencyRuntime
         public bool Closed;
         public void Renew() { Id = Guid.NewGuid(); Guard = new PokerRequestGuard(Table.Id, Id); Closed = false; Published = -1; }
     }
-    private sealed record Delivery(View? View, PokerStatePacket? Packet, string? Announcement = null, string? LocalMessage = null);
+    private sealed record Delivery(View? View, PokerStatePacket? Packet, string? Announcement = null, string? LocalMessage = null,
+        FundedLevelReward? LevelReward = null);
     private static readonly object Gate = new();
     private static readonly Dictionary<PokerTableKey, PokerFundedTable> Tables = new();
     private static readonly Dictionary<Guid, View> Views = new();
@@ -36,7 +37,8 @@ internal static class PokerCurrencyRuntime
 
     internal static PokerRegistryResult Join(Player player, StartMiniGameCommand command)
     {
-        if (player.User == null || !command.HasValidSettings()) return new(PokerRegistryError.InvalidRules);
+        if (player.User == null || !command.HasValidSettings() || !PokerLevelRewardRuntime.DefinitionsExist(command.LevelRewards))
+            return new(PokerRegistryError.InvalidRules);
         List<Delivery> output = []; var inventoryChanged = false;
         PokerRegistryResult result;
         try
@@ -49,7 +51,8 @@ internal static class PokerCurrencyRuntime
                 var rules = new PokerRules(command.MaxPlayers, command.StartingChips, command.SmallBlind, command.BigBlind, command.TurnSeconds);
                 var options = new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
                     command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId,
-                    command.CreateSoundSet(), command.CreateAnimationSet(), command.UnlimitedNpcBankroll);
+                    command.CreateSoundSet(), command.CreateAnimationSet(), command.UnlimitedNpcBankroll,
+                    command.CreateLevelRewardSet());
                 var key = new PokerTableKey(presence.MapId, presence.MapInstanceId, command.TableId);
                 var money = PokerInventoryBridge.Ledger;
                 lock (Gate)
@@ -214,6 +217,9 @@ internal static class PokerCurrencyRuntime
                 var currency = new string(ItemDescriptor.GetName(pair.Value.Currency).Where(c => !char.IsControl(c)).ToArray());
                 output.Add(new(null, null, $"[Poker] {name} wins {win.Amount} {currency} (net gain)."));
             }
+            foreach (var reward in pair.Value.CollectLevelRewards())
+                if (Views.TryGetValue(reward.Player, out var rewardView) && !rewardView.Closed && ReferenceEquals(rewardView.Table, pair.Value))
+                    output.Add(new(rewardView, null, LevelReward: reward));
             if (pair.Value.IsEmpty) Tables.Remove(pair.Key);
         }
     }
@@ -241,6 +247,9 @@ internal static class PokerCurrencyRuntime
             try
             {
                 if (delivery.Announcement is { } text) PacketSender.SendGlobalMsg(text, Color.White);
+                else if (delivery.LevelReward is { } reward && delivery.View is { } rewardView &&
+                    ReferenceEquals(rewardView.Client.Entity, rewardView.Player) && rewardView.Player.LoginTime == rewardView.Login)
+                    PokerLevelRewardRuntime.Grant(rewardView.Player, reward.Level, reward.Rewards);
                 else if (delivery.LocalMessage is { } local && delivery.View is { } localView &&
                     ReferenceEquals(localView.Client.Entity, localView.Player) && localView.Player.LoginTime == localView.Login)
                     PacketSender.SendChatMsg(localView.Player, local, ChatMessageType.Local, Color.White);
