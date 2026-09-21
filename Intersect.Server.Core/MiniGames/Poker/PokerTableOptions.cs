@@ -46,25 +46,135 @@ public static class PokerNpcPolicy
     internal static (PokerAction Action, long Amount) Choose(PokerSnapshot view, Guid npcId, long bigBlind, int roll)
     {
         var me = view.Seats.Single(s => s.PlayerId == npcId);
-        var strength = 10;
-        if (view.MyCards.Length == 2)
+        var strength = Strength(view);
+        var opponents = Math.Max(1, view.Seats.Count(s => s.PlayerId != npcId && s.InHand && !s.Folded && !s.Leaving));
+        strength = Math.Max(0, strength - (opponents - 1) * 4);
+
+        if (view.ToCall == 0)
         {
-            var a = view.MyCards[0] % 13 + 2;
-            var b = view.MyCards[1] % 13 + 2;
-            strength = a == b ? 55 + a : Math.Min(a, b) >= 11 ? 45 : Math.Max(a, b) >= 12 ? 30 : 15;
-            if (view.Board.Length > 0)
+            if (view.CanRaise && view.MaximumRaiseTo > view.CurrentBet)
             {
-                var ranks = view.Board.Concat(view.MyCards).Select(c => c % 13 + 2).ToArray();
-                var matches = Math.Max(ranks.Count(r => r == a), ranks.Count(r => r == b));
-                strength = matches >= 3 ? 80 : matches == 2 ? 60 : Math.Min(strength, 25);
+                var premium = strength >= 78;
+                var strong = strength >= 64;
+                var bluff = strength >= 34 && roll < 7;
+                if (premium && roll < 52 || strong && roll < 24 || bluff)
+                    return (PokerAction.RaiseTo, RaiseTarget(view, me, bigBlind, strength, roll));
             }
+            return (PokerAction.Check, 0);
         }
-        if (view.CanRaise && strength >= 45 && roll < 20 && view.MaximumRaiseTo > view.CurrentBet)
-            return (PokerAction.RaiseTo, Math.Min(view.MinimumRaiseTo, view.MaximumRaiseTo));
-        if (view.ToCall == 0) return (PokerAction.Check, 0);
-        var inexpensive = view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 20);
-        var affordablePair = strength >= 55 && view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 2);
-        return inexpensive && roll < 85 || affordablePair || roll < 8
-            ? (PokerAction.Call, 0) : (PokerAction.Fold, 0);
+
+        var potAfterCall = Math.Max(1L, view.Pot + view.ToCall);
+        var potOdds = view.ToCall / (double)potAfterCall;
+        var stackPressure = view.ToCall / (double)Math.Max(1L, me.Chips);
+        var forcedAllIn = view.ToCall >= me.Chips;
+        var heavyPressure = forcedAllIn || stackPressure >= 0.55;
+
+        // Repeated blind shoves should not win simply because the old bots folded almost everything.
+        // The NPC still folds weak holdings; it just defends a realistic medium/strong range.
+        var threshold = heavyPressure
+            ? (view.Board.Length == 0 ? 50 : 56)
+            : (int)Math.Clamp(30 + potOdds * 55, 30, 66);
+
+        var margin = strength - threshold;
+        var callChance = margin switch
+        {
+            >= 25 => 98,
+            >= 15 => 92,
+            >= 8 => 82,
+            >= 2 => 68,
+            >= -5 => heavyPressure ? 34 : 48,
+            >= -12 => heavyPressure ? 14 : 24,
+            _ => heavyPressure ? 3 : 8,
+        };
+
+        if (view.CanRaise && !forcedAllIn && strength >= 72 && roll < Math.Min(45, 14 + Math.Max(0, strength - 65)))
+            return (PokerAction.RaiseTo, RaiseTarget(view, me, bigBlind, strength, roll));
+
+        return roll < callChance ? (PokerAction.Call, 0) : (PokerAction.Fold, 0);
     }
+
+    internal static int Strength(PokerSnapshot view)
+    {
+        if (view.MyCards.Length != 2) return 0;
+        var a = Rank(view.MyCards[0]);
+        var b = Rank(view.MyCards[1]);
+        var high = Math.Max(a, b);
+        var low = Math.Min(a, b);
+        var suited = Suit(view.MyCards[0]) == Suit(view.MyCards[1]);
+
+        if (view.Board.Length == 0)
+        {
+            if (a == b) return Math.Clamp(38 + high * 4, 46, 94);
+            var preflopScore = 8 + high * 3 + low;
+            if (suited) preflopScore += 7;
+            var gap = high - low;
+            if (gap <= 1) preflopScore += 8;
+            else if (gap == 2) preflopScore += 4;
+            if (high == 14) preflopScore += 7;
+            if (high >= 13 && low >= 10) preflopScore += 8;
+            if (low <= 5 && gap >= 5) preflopScore -= 8;
+            return Math.Clamp(preflopScore, 8, 88);
+        }
+
+        var known = view.MyCards.Concat(view.Board).ToArray();
+        var category = PokerCards.Category(PokerCards.Evaluate(known.Length >= 5 ? known : PadForEvaluation(known)));
+        var score = category switch
+        {
+            PokerHandCategory.HighCard => 22,
+            PokerHandCategory.OnePair => 47,
+            PokerHandCategory.TwoPair => 64,
+            PokerHandCategory.ThreeOfAKind => 74,
+            PokerHandCategory.Straight => 82,
+            PokerHandCategory.Flush => 86,
+            PokerHandCategory.FullHouse => 93,
+            PokerHandCategory.FourOfAKind => 98,
+            PokerHandCategory.StraightFlush => 100,
+            _ => 20,
+        };
+
+        score += Math.Max(0, high - 10);
+        score += DrawBonus(known);
+        return Math.Clamp(score, 0, 100);
+    }
+
+    private static long RaiseTarget(PokerSnapshot view, PokerSeatView me, long bigBlind, int strength, int roll)
+    {
+        var minimum = Math.Min(view.MinimumRaiseTo, view.MaximumRaiseTo);
+        if (minimum >= view.MaximumRaiseTo) return view.MaximumRaiseTo;
+        var stackTop = me.StreetBet + me.Chips;
+        if (strength >= 92 && (me.Chips <= bigBlind * 12 || roll < 18)) return view.MaximumRaiseTo;
+
+        var potRaise = view.CurrentBet + Math.Max(bigBlind * 2, view.Pot / (strength >= 80 ? 2 : 3));
+        var target = Math.Max(minimum, potRaise);
+        target = Math.Min(target, stackTop);
+        if (target < view.MinimumRaiseTo && stackTop >= view.MinimumRaiseTo) target = view.MinimumRaiseTo;
+        return Math.Clamp(target, minimum, view.MaximumRaiseTo);
+    }
+
+    private static int DrawBonus(int[] cards)
+    {
+        var bonus = 0;
+        var suits = cards.GroupBy(Suit).Select(g => g.Count()).DefaultIfEmpty().Max();
+        if (suits >= 4 && cards.Length < 7) bonus += 8;
+
+        var ranks = cards.Select(Rank).Distinct().ToHashSet();
+        if (ranks.Contains(14)) ranks.Add(1);
+        var bestWindow = 0;
+        for (var start = 1; start <= 10; ++start)
+            bestWindow = Math.Max(bestWindow, Enumerable.Range(start, 5).Count(ranks.Contains));
+        if (bestWindow >= 4 && cards.Length < 7) bonus += 7;
+        return bonus;
+    }
+
+    private static int[] PadForEvaluation(int[] known)
+    {
+        // Flop already supplies five cards with the NPC's two hole cards. This is a defensive fallback only.
+        var result = known.ToList();
+        for (var card = 0; result.Count < 5 && card < 52; ++card)
+            if (!result.Contains(card)) result.Add(card);
+        return result.ToArray();
+    }
+
+    private static int Rank(int card) => card % 13 + 2;
+    private static int Suit(int card) => card / 13;
 }
