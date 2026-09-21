@@ -29,6 +29,7 @@ public partial class QuestTaskEditor : UserControl
     private DarkUI.Controls.DarkComboBox mCmbMiniGame = null!;
     private DarkUI.Controls.DarkComboBox mCmbMiniGameCurrency = null!;
     private DarkUI.Controls.DarkNumericUpDown mNudMiniGameAmount = null!;
+    private Label mLblMiniGame = null!;
     private Label mLblMiniGameCurrency = null!;
 
     public QuestTaskEditor(QuestDescriptor refQuest, QuestTaskDescriptor refTask)
@@ -155,8 +156,11 @@ public partial class QuestTaskEditor : UserControl
             case 4:
             case 5:
                 mGrpMiniGame.Show();
-                mLblMiniGameCurrency.Visible = cmbTaskType.SelectedIndex == 4;
-                mCmbMiniGameCurrency.Visible = cmbTaskType.SelectedIndex == 4;
+                var winnings = cmbTaskType.SelectedIndex == 4;
+                mLblMiniGame.Visible = !winnings;
+                mCmbMiniGame.Visible = !winnings;
+                mLblMiniGameCurrency.Visible = winnings;
+                mCmbMiniGameCurrency.Visible = winnings;
                 if (mCmbMiniGame.SelectedIndex < 0) mCmbMiniGame.SelectedIndex = 0;
                 if (mCmbMiniGameCurrency.SelectedIndex < 0 && mCmbMiniGameCurrency.Items.Count > 0) mCmbMiniGameCurrency.SelectedIndex = 0;
                 if (mNudMiniGameAmount.Value < 1) mNudMiniGameAmount.Value = 1;
@@ -208,7 +212,7 @@ public partial class QuestTaskEditor : UserControl
             BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
             ForeColor = System.Drawing.Color.Gainsboro,
         };
-        var lblGame = new Label { Text = "Game:", AutoSize = true, Location = new System.Drawing.Point(7, 23) };
+        mLblMiniGame = new Label { Text = "Game:", AutoSize = true, Location = new System.Drawing.Point(7, 23) };
         mCmbMiniGame = new DarkUI.Controls.DarkComboBox
         {
             Location = new System.Drawing.Point(104, 19), Size = new System.Drawing.Size(116, 21),
@@ -235,7 +239,7 @@ public partial class QuestTaskEditor : UserControl
         }
         if (mCmbMiniGameCurrency.Items.Count > 0) mCmbMiniGameCurrency.SelectedIndex = 0;
 
-        mGrpMiniGame.Controls.Add(lblGame); mGrpMiniGame.Controls.Add(mCmbMiniGame);
+        mGrpMiniGame.Controls.Add(mLblMiniGame); mGrpMiniGame.Controls.Add(mCmbMiniGame);
         mGrpMiniGame.Controls.Add(lblAmount); mGrpMiniGame.Controls.Add(mNudMiniGameAmount);
         mGrpMiniGame.Controls.Add(mLblMiniGameCurrency); mGrpMiniGame.Controls.Add(mCmbMiniGameCurrency);
         grpEditor.Controls.Add(mGrpMiniGame);
