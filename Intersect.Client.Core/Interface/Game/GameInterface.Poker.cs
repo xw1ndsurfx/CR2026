@@ -27,6 +27,7 @@ public partial class GameInterface
 
     private void UpdatePoker()
     {
+        UpdateBlackjack();
         PokerStatePacket[] packets;
         lock (_pokerInboxLock) { packets = _pokerInbox.ToArray(); _pokerInbox.Clear(); }
         var now = Environment.TickCount64;
@@ -51,6 +52,7 @@ public partial class GameInterface
 
     private bool ClosePokerWindow()
     {
+        if (CloseBlackjackWindow()) return true;
         if (_pokerModel.Current == null && _pokerWindow == null) return false;
         SendPokerRequest(PokerRequestKind.Leave, 0);
         _pokerModel.Dismiss();
@@ -61,6 +63,7 @@ public partial class GameInterface
 
     private void DisposePoker()
     {
+        DisposeBlackjack();
         lock (_pokerInboxLock) { _pokerDisposed = true; _pokerInbox.Clear(); }
         _pokerModel.Dismiss();
         _pokerWindow?.Destroy();
