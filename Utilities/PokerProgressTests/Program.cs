@@ -9,6 +9,12 @@ Directory.CreateDirectory(root);
 var passed = 0; var failed = 0;
 try
 {
+    Run("Poker and Blackjack have distinct persistent progression keys", () =>
+    {
+        Check(MiniGameProgression.Poker == "poker", "Poker progression key changed");
+        Check(MiniGameProgression.Blackjack == "blackjack", "Blackjack progression key missing");
+        Check(MiniGameProgression.Poker != MiniGameProgression.Blackjack, "Mini-game progression keys collide");
+    });
     Run("All level thresholds and six unlock boundaries", () =>
     {
         for (var level = 1; level <= 25; ++level)
@@ -34,10 +40,15 @@ try
         Run(tag + ": character and mini-game isolation", () =>
         {
             var store = NewStore(tag + "-isolation"); var a = Guid.NewGuid(); var b = Guid.NewGuid(); var table = Guid.NewGuid();
-            store.AwardWin(a, "poker", table, 1);
-            Check(store.Load(a, "poker").Experience == 25 && store.Load(a, "blackjack").Experience == 0 && store.Load(b, "poker").Experience == 0, "Profile bleed");
-            store.AwardWin(a, "blackjack", table, 1);
-            Check(store.Load(a, "poker").Wins == 1 && store.Load(a, "blackjack").Wins == 1, "Receipt game key collision");
+            store.AwardWin(a, MiniGameProgression.Poker, table, 1);
+            Check(store.Load(a, MiniGameProgression.Poker).Experience == 25 &&
+                store.Load(a, MiniGameProgression.Blackjack).Experience == 0 &&
+                store.Load(b, MiniGameProgression.Poker).Experience == 0, "Profile bleed");
+            store.AwardWin(a, MiniGameProgression.Blackjack, table, 1);
+            var poker = store.Load(a, MiniGameProgression.Poker);
+            var blackjack = store.Load(a, MiniGameProgression.Blackjack);
+            Check(poker.Wins == 1 && blackjack.Wins == 1, "Receipt game key collision");
+            Check(poker.Level == 1 && blackjack.Level == 1, "Separate level calculation missing");
         });
         Run(tag + ": replayed wins remain idempotent", () =>
         {
@@ -69,6 +80,18 @@ try
             Check(store.Load(a, "poker").Experience == 0, "Invalid request gained XP");
         });
     }
+    Run("SQLite: Blackjack level survives restart independently from Poker", () =>
+    {
+        var path = Path.Combine(root, "blackjack-restart.db"); var a = Guid.NewGuid(); var table = Guid.NewGuid();
+        var store = new SqliteMiniGameProgressStore(path);
+        for (var hand = 1; hand <= 40; ++hand)
+            store.AwardWin(a, MiniGameProgression.Blackjack, table, hand);
+        store.AwardWin(a, MiniGameProgression.Poker, table, 1);
+        var reopened = new SqliteMiniGameProgressStore(path);
+        Check(reopened.Load(a, MiniGameProgression.Blackjack).Experience == 1000, "Blackjack XP did not persist");
+        Check(reopened.Load(a, MiniGameProgression.Blackjack).Level == 5, "Blackjack level did not persist");
+        Check(reopened.Load(a, MiniGameProgression.Poker).Experience == 25, "Poker progression was overwritten");
+    });
     Run("SQLite: XP, choice and receipts survive a new store instance", () =>
     {
         var path = Path.Combine(root, "restart.db"); var a = Guid.NewGuid(); var table = Guid.NewGuid();
