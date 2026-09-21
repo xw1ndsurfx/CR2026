@@ -53,6 +53,13 @@ public sealed class StartMiniGameCommand : EventCommand
     [DefaultValue(0L)] public long NpcReserve { get; set; }
     /// <summary>Explicit system-funded mode: NPC buy-ins are replenished as needed and can create currency.</summary>
     [DefaultValue(false)] public bool UnlimitedNpcBankroll { get; set; }
+    [DefaultValue(PokerMotionSpeed.Normal)] public PokerMotionSpeed ProceduralAnimationSpeed { get; set; } = PokerMotionSpeed.Normal;
+    [DefaultValue(true)] public bool AnimateDealCards { get; set; } = true;
+    [DefaultValue(true)] public bool AnimateBoardCards { get; set; } = true;
+    [DefaultValue(true)] public bool AnimateChips { get; set; } = true;
+    [DefaultValue(true)] public bool AnimateShowdown { get; set; } = true;
+    [DefaultValue(true)] public bool AnimateShuffle { get; set; } = true;
+    [DefaultValue(true)] public bool AnimateAllIn { get; set; } = true;
     public PokerLevelReward[] LevelRewards { get; set; } = [];
 
     public PokerSoundSet CreateSoundSet() => new(
@@ -64,6 +71,8 @@ public sealed class StartMiniGameCommand : EventCommand
         VictoryAnimationId, LoseAnimationId, LevelUpAnimationId, JoinAnimationId, LeaveAnimationId);
 
     public PokerLevelRewardSet CreateLevelRewardSet() => new(LevelRewards ?? []);
+    public PokerMotionSet CreateMotionSet() => new(ProceduralAnimationSpeed, AnimateDealCards, AnimateBoardCards,
+        AnimateChips, AnimateShowdown, AnimateShuffle, AnimateAllIn);
 
     public bool HasValidSettings() => MiniGameCatalog.TryGet(Game, out var definition) &&
         MiniGameCatalog.IsValidTableId(TableId) &&
@@ -73,5 +82,5 @@ public sealed class StartMiniGameCommand : EventCommand
         NpcReserve is >= 0 and <= 1_000_000_000 &&
         TurnSeconds is >= 5 and <= 300 && NpcPlayers is >= 0 and <= 5 &&
         NpcPlayers + (DealerPlays ? 1 : 0) < MaxPlayers && MiniGameProgression.IsBack(NpcCardBackId) &&
-        CreateSoundSet().IsValid && CreateLevelRewardSet().IsValid;
+        CreateSoundSet().IsValid && CreateLevelRewardSet().IsValid && CreateMotionSet().IsValid;
 }

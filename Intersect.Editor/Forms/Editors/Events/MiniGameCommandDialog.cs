@@ -26,9 +26,9 @@ internal sealed class MiniGameCommandDialog : Form
         ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
         MinimumSize = new Size(580, 420);
         BackColor = DrawingColor.FromArgb(45, 45, 48); ForeColor = DrawingColor.Gainsboro;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 41, AutoScroll = true };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 43, AutoScroll = true };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
-        for (var row = 0; row < 41; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var row = 0; row < 43; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(12, 8, 12, 8) };
         Controls.Add(layout); Controls.Add(buttons);
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
@@ -73,6 +73,22 @@ internal sealed class MiniGameCommandDialog : Form
         var joinSound = SoundPicker("JoinSound", command.JoinSound);
         var leaveSound = SoundPicker("LeaveSound", command.LeaveSound);
         var announce = new CheckBox { Text = "Human name + positive net win", Checked = command.AnnounceWins, AutoSize = true };
+        var motionSpeed = new ComboBox { Name = "ProceduralAnimationSpeed", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
+        motionSpeed.Items.AddRange(Enum.GetNames<PokerMotionSpeed>());
+        motionSpeed.SelectedItem = command.ProceduralAnimationSpeed.ToString();
+        var motionPanel = new FlowLayoutPanel { Name = "ProceduralAnimationOptions", AutoSize = true, WrapContents = true, Dock = DockStyle.Fill };
+        CheckBox Motion(string name, string text, bool value)
+        {
+            var box = new CheckBox { Name = name, Text = text, Checked = value, AutoSize = true };
+            motionPanel.Controls.Add(box);
+            return box;
+        }
+        var motionDeal = Motion("AnimateDealCards", "Deal cards", command.AnimateDealCards);
+        var motionBoard = Motion("AnimateBoardCards", "Flop / Turn / River", command.AnimateBoardCards);
+        var motionChips = Motion("AnimateChips", "Chips", command.AnimateChips);
+        var motionShowdown = Motion("AnimateShowdown", "Showdown", command.AnimateShowdown);
+        var motionShuffle = Motion("AnimateShuffle", "Shuffle / new hand", command.AnimateShuffle);
+        var motionAllIn = Motion("AnimateAllIn", "All-in emphasis", command.AnimateAllIn);
         var backs = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
         for (var id = 0; id < MiniGameProgression.BackCount; ++id) backs.Items.Add($"B{id + 1} (B{id + 1}.png)");
         backs.SelectedIndex = Math.Clamp(command.NpcCardBackId, 0, MiniGameProgression.BackCount - 1);
@@ -148,7 +164,9 @@ internal sealed class MiniGameCommandDialog : Form
         var rewardPanel = new FlowLayoutPanel { Name = "LevelRewardPanel", AutoSize = true, WrapContents = false,
             FlowDirection = FlowDirection.TopDown, Dock = DockStyle.Fill };
         rewardPanel.Controls.Add(rewardList); rewardPanel.Controls.Add(rewardControls); RefreshRewards();
-        AddRow(layout, 40, "Poker level rewards", rewardPanel);
+        AddRow(layout, 40, "Procedural animation speed", motionSpeed);
+        AddRow(layout, 41, "Procedural animation effects", motionPanel);
+        AddRow(layout, 42, "Poker level rewards", rewardPanel);
 
         void ShowSummary()
         {
@@ -237,6 +255,10 @@ internal sealed class MiniGameCommandDialog : Form
                 LevelUpAnimationId = ((AnimationChoice)levelUpAnimation.SelectedItem!).Id,
                 JoinAnimationId = ((AnimationChoice)joinAnimation.SelectedItem!).Id,
                 LeaveAnimationId = ((AnimationChoice)leaveAnimation.SelectedItem!).Id,
+                ProceduralAnimationSpeed = Enum.TryParse<PokerMotionSpeed>(motionSpeed.SelectedItem?.ToString(), out var parsedMotionSpeed)
+                    ? parsedMotionSpeed : PokerMotionSpeed.Normal,
+                AnimateDealCards = motionDeal.Checked, AnimateBoardCards = motionBoard.Checked, AnimateChips = motionChips.Checked,
+                AnimateShowdown = motionShowdown.Checked, AnimateShuffle = motionShuffle.Checked, AnimateAllIn = motionAllIn.Checked,
                 LevelRewards = rewardDraft.ToArray(),
             };
             if (!draft.HasValidSettings())
@@ -261,6 +283,10 @@ internal sealed class MiniGameCommandDialog : Form
             command.AllInAnimationId = draft.AllInAnimationId; command.LoseAnimationId = draft.LoseAnimationId;
             command.LevelUpAnimationId = draft.LevelUpAnimationId; command.JoinAnimationId = draft.JoinAnimationId;
             command.LeaveAnimationId = draft.LeaveAnimationId;
+            command.ProceduralAnimationSpeed = draft.ProceduralAnimationSpeed;
+            command.AnimateDealCards = draft.AnimateDealCards; command.AnimateBoardCards = draft.AnimateBoardCards;
+            command.AnimateChips = draft.AnimateChips; command.AnimateShowdown = draft.AnimateShowdown;
+            command.AnimateShuffle = draft.AnimateShuffle; command.AnimateAllIn = draft.AnimateAllIn;
             command.LevelRewards = draft.LevelRewards.ToArray();
             DialogResult = DialogResult.OK; Close();
         };

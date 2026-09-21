@@ -200,6 +200,7 @@ public sealed partial class PokerTableRegistry
             Decisions = entry.Extras.Decisions.ToArray(),
             Sounds = entry.Options.EffectiveSounds,
             Animations = entry.Options.EffectiveAnimations,
+            Motions = entry.Options.EffectiveMotions,
         };
     }
 }
