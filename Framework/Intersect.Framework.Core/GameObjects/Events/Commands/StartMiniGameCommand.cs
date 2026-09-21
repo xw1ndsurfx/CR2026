@@ -4,7 +4,7 @@ using Intersect.Framework.Core.MiniGames.Configuration;
 
 namespace Intersect.Framework.Core.GameObjects.Events.Commands;
 
-public enum MiniGameType { Poker = 0 }
+public enum MiniGameType { Poker = 0, Blackjack = 1 }
 
 /// <summary>Empty currency selects isolated test chips. A currency item selects inventory-backed play.</summary>
 public sealed class StartMiniGameCommand : EventCommand

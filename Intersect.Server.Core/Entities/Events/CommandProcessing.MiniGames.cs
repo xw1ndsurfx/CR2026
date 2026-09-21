@@ -18,8 +18,10 @@ public static partial class CommandProcessing
         if (player == null) return;
         if (!MiniGameCatalog.TryGet(command.Game, out _))
         {
-            PacketSender.SendChatMsg(player, "[Mini-game] This mini-game type is not supported by this server build.",
-                ChatMessageType.Error, Color.White);
+            var message = MiniGameCatalog.TryGetRegistered(command.Game, out var registered)
+                ? $"[{registered.DisplayName}] This mini-game is registered but its gameplay runtime is not enabled yet."
+                : "[Mini-game] This mini-game type is not supported by this server build.";
+            PacketSender.SendChatMsg(player, message, ChatMessageType.Error, Color.White);
             return;
         }
         if (command.CurrencyItemId != Guid.Empty && !MiniGameCurrency.IsCompatible(ItemDescriptor.Get(command.CurrencyItemId)))
