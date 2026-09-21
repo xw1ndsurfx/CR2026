@@ -1,6 +1,6 @@
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
-using Intersect.Client.Framework.Gwen.Skin;
+using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 using Intersect.Client.General;
 using Intersect.Client.Localization;
 using Intersect.Framework.Core.GameObjects.Items;
@@ -80,7 +80,7 @@ internal sealed class ShopProductRow : Base
         item,
         canAfford ? "Available" : "Not enough currency",
         Price(price, currency),
-        Strings.Shop.BuyItem,
+        Strings.Shop.BuyItem.ToString(),
         canAfford,
         action
     );
@@ -99,7 +99,7 @@ internal sealed class ShopProductRow : Base
         item,
         $"Owned: {owned}",
         Price(price, currency),
-        Strings.Shop.SellItem,
+        Strings.Shop.SellItem.ToString(),
         true,
         action
     );
@@ -120,7 +120,7 @@ internal sealed class ShopProductRow : Base
         return label;
     }
 
-    protected override void Render(Base skin)
+    protected override void Render(SkinBase skin)
     {
         skin.Renderer.DrawColor = new Color(34, 38, 42);
         skin.Renderer.DrawFilledRect(new Rectangle(0, 0, Width, Height - 1));
