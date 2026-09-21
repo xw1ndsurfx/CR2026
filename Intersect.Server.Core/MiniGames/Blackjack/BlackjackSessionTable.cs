@@ -44,7 +44,8 @@ public sealed class BlackjackSessionTable
     {
         if(!settings.Rules.IsValid || settings.Npcs<0 || settings.Npcs>=settings.Rules.MaxPlayers ||
             settings.Reserve is <0 or >1_000_000_000 || !MiniGameProgression.IsBack(settings.NpcBack) ||
-            (settings.Currency!=Guid.Empty)!=(money!=null)) throw new ArgumentException("Invalid blackjack settings.");
+            !settings.MotionSettings.IsValid || (settings.Currency!=Guid.Empty)!=(money!=null))
+            throw new ArgumentException("Invalid blackjack settings.");
         Key=key;Settings=settings;_money=money;_test=test;
         var bankroll=Math.Max(10000,settings.Rules.MaximumBet*4*settings.Rules.MaxPlayers);
         if(money!=null)
