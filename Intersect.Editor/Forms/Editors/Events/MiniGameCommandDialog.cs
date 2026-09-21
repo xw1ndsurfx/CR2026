@@ -108,7 +108,11 @@ internal sealed class MiniGameCommandDialog : Form
             var blackjack = IsBlackjack();
             small.Enabled = big.Enabled = dealer.Enabled = !blackjack;
             blackjackMinimum.Enabled = blackjackMaximum.Enabled = blackjackHitSoft17.Enabled = blackjack;
-            if (blackjack) dealer.Checked = false;
+            if (blackjack)
+            {
+                dealer.Checked = false;
+                unlimitedNpcBankroll.Checked = false;
+            }
             LimitNpcs();
         }
         seats.ValueChanged += (_, _) => LimitNpcs(); dealer.CheckedChanged += (_, _) => LimitNpcs(); LimitNpcs();
@@ -207,8 +211,9 @@ internal sealed class MiniGameCommandDialog : Form
         void ShowCurrencyStatus()
         {
             var id = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
+            var blackjack = IsBlackjack();
             reserve.Enabled = id != Guid.Empty && !unlimitedNpcBankroll.Checked;
-            unlimitedNpcBankroll.Enabled = id != Guid.Empty;
+            unlimitedNpcBankroll.Enabled = id != Guid.Empty && !blackjack;
             if (id == Guid.Empty)
             {
                 chipsLabel.Text = "Starting test chips"; status.ForeColor = DrawingColor.Gainsboro;
@@ -222,11 +227,13 @@ internal sealed class MiniGameCommandDialog : Form
                 : $"Selected item: {item.Name}. ID: {id}.\n" +
                     "FUNDED mode (SQLite player database): the buy-in is removed from inventory once. " +
                     "The remaining balance is returned after leaving and settling the hand. Full inventory refunds wait safely. " +
-                    (unlimitedNpcBankroll.Checked
-                        ? "UNLIMITED NPC BANKROLL is enabled: the server creates only the missing NPC buy-in when the house cannot fund a seat. " +
-                          "This is an intentional currency faucet so NPC opponents never disappear for lack of house funds. "
-                        : "NPC reserve creates an authorized house budget ONCE per map + Table ID + currency, shared across instances. " +
-                          "Reopening, restarting or editing this number does not refill an existing house. Zero means no initial NPC funds. ") +
+                    (blackjack
+                        ? "Blackjack always uses a finite house/dealer reserve; unlimited NPC funding is not enabled for this game. "
+                        : unlimitedNpcBankroll.Checked
+                            ? "UNLIMITED NPC BANKROLL is enabled: the server creates only the missing NPC buy-in when the house cannot fund a seat. " +
+                              "This is an intentional currency faucet so NPC opponents never disappear for lack of house funds. "
+                            : "NPC reserve creates an authorized house budget ONCE per map + Table ID + currency, shared across instances. " +
+                              "Reopening, restarting or editing this number does not refill an existing house. Zero means no initial NPC funds. ") +
                     "Funded XP is separate from test XP. Back up the entire player database before enabling.";
         }
         currency.SelectedIndexChanged += (_, _) => { ShowCurrencyStatus(); ShowSummary(); };
