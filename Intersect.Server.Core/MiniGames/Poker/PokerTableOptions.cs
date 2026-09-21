@@ -25,6 +25,7 @@ public sealed record PokerPresentation(Guid[] NpcIds, Guid DealerNpcId, bool Aut
     public long Experience { get; init; }
     public long Wins { get; init; }
     public bool ProgressPending { get; init; }
+    public PokerEffectSettings Effects { get; init; } = PokerEffectSettings.Empty;
     public PokerPublicDecision[] Decisions { get; init; } = Array.Empty<PokerPublicDecision>();
     public static PokerPresentation Empty => new(Array.Empty<Guid>(), Guid.Empty, false, Guid.Empty);
 }

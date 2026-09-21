@@ -6,6 +6,7 @@ using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.MiniGames;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
+using Intersect.GameObjects;
 using Intersect.Server.MiniGames.Poker;
 using Intersect.Server.Networking;
 
@@ -207,6 +208,14 @@ internal static class PokerCurrencyRuntime
             foreach (var message in pair.Value.CollectNpcChat())
                 foreach (var view in Views.Values.Where(v => !v.Closed && ReferenceEquals(v.Table, pair.Value)))
                     output.Add(new(view, null, LocalMessage: message));
+            foreach (var levelUp in pair.Value.CollectLevelUps())
+            {
+                if (!Views.TryGetValue(levelUp.Player, out var levelView) || levelView.Closed || !ReferenceEquals(levelView.Table, pair.Value))
+                    continue;
+                output.Add(new(levelView, null, LocalMessage: $"[Poker] {levelUp.Name} reached poker level {levelUp.Level}!"));
+                if (pair.Value.Options.LevelUpEventId != Guid.Empty && EventDescriptor.Get(pair.Value.Options.LevelUpEventId) is { } reward)
+                    levelView.Player.EnqueueStartCommonEvent(reward);
+            }
             foreach (var win in pair.Value.CollectWins())
             {
                 if (!pair.Value.Options.AnnounceWins) continue;
