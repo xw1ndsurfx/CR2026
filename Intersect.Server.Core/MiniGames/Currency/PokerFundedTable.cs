@@ -87,6 +87,7 @@ internal sealed class PokerFundedTable
                 s.InHand ? _members[s.PlayerId].HandBack : Back(s.PlayerId), Back(s.PlayerId))).ToArray(),
             NetWin = net, VictoryAnimationId = net > 0 ? Options.VictoryAnimationId : Guid.Empty,
             Experience = profile.Experience, Wins = profile.Wins, ProgressPending = Pending, Decisions = _decisions.ToArray(),
+            Effects = Options.Effects ?? PokerEffects.Empty,
         };
     }
     private int Back(Guid player) => _members[player].Escrow.Npc ? Options.NpcCardBackId : _members[player].Profile.SelectedBack;
@@ -227,7 +228,7 @@ internal sealed class PokerFundedTable
     }
     private bool AddNpc(string name, bool dealer)
     {
-        var escrow = _money.OpenNpc(Guid.NewGuid(), Id, Currency, House, Reserve, Rules.StartingChips); if (escrow == null) return false;
+        var escrow = _money.OpenNpc(Guid.NewGuid(), Id, Currency, House, Reserve, Rules.StartingChips, Options.UnlimitedNpcReserve); if (escrow == null) return false;
         var error = _table.Join(escrow.Id, name, escrow.Amount);
         if (error != PokerError.None) { _money.Release(escrow.Id); throw new MoneyRuleException("NPC admission failed: " + error); }
         _members.Add(escrow.Id, new Member(escrow, name) { HandBack = Options.NpcCardBackId });

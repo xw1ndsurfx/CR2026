@@ -46,6 +46,16 @@ public sealed partial class PokerDecisionState
 }
 
 [MessagePackObject]
+public sealed partial class PokerEffectState
+{
+    [Key(0)] public PokerEffectKind Kind { get; set; }
+    [Key(1)] public Guid AnimationId { get; set; }
+    [Key(2)] public string Sound { get; set; } = string.Empty;
+    [IgnoreMember] public bool IsValid => Kind is >= PokerEffectKind.Deal and <= PokerEffectKind.LevelUp &&
+        Sound is { Length: <= 128 } && !Sound.Contains('/') && !Sound.Contains('\\') && !Sound.Contains("..", StringComparison.Ordinal);
+}
+
+[MessagePackObject]
 public sealed partial class PokerTableState
 {
     [Key(0)] public long HandId { get; set; }
@@ -75,6 +85,7 @@ public sealed partial class PokerTableState
     [Key(23)] public long Wins { get; set; }
     [Key(24)] public bool ProgressPending { get; set; }
     [Key(25)] public PokerDecisionState[] Decisions { get; set; } = [];
+    [Key(26)] public PokerEffectState[] Effects { get; set; } = [];
 
     public bool HasValidShape() => HandId >= 0 && Revision >= 0 &&
         Stage is >= PokerStage.Waiting and <= PokerStage.Finished &&
@@ -94,7 +105,9 @@ public sealed partial class PokerTableState
         NpcIds.All(id => Seats.Any(s => s.PlayerId == id)) &&
         (DealerNpcId == Guid.Empty || NpcIds.Contains(DealerNpcId)) &&
         Decisions is { Length: <= 12 } && Decisions.All(d => d != null && d.IsValid) &&
-        Decisions.Select(d => d.Sequence).Distinct().Count() == Decisions.Length;
+        Decisions.Select(d => d.Sequence).Distinct().Count() == Decisions.Length &&
+        Effects is { Length: <= 9 } && Effects.All(e => e != null && e.IsValid) &&
+        Effects.Select(e => e.Kind).Distinct().Count() == Effects.Length;
 
     private static bool ValidCards(int[]? cards, int maximum) => cards != null &&
         cards.Length <= maximum && cards.All(c => c is >= 0 and < 52) && cards.Distinct().Count() == cards.Length;

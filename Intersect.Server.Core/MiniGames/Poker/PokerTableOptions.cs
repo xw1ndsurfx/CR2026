@@ -7,10 +7,12 @@ namespace Intersect.Server.MiniGames.Poker;
 
 public sealed record PokerTableOptions(
     bool DealerPlays = false, int NpcPlayers = 0, bool AutoStart = false, Guid DealAnimationId = default,
-    bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0)
+    bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0,
+    bool UnlimitedNpcReserve = false, PokerEffects? Effects = null)
 {
     public bool IsValid(int seats) => NpcPlayers >= 0 && NpcPlayers <= 5 &&
-        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId);
+        NpcPlayers + (DealerPlays ? 1 : 0) < seats && PokerBackCatalog.IsValid(NpcCardBackId) &&
+        (Effects ?? PokerEffects.Empty).IsValid;
 }
 
 public sealed record PokerSeatBack(Guid PlayerId, int CurrentId, int SelectedId);
@@ -23,6 +25,7 @@ public sealed record PokerPresentation(Guid[] NpcIds, Guid DealerNpcId, bool Aut
     public long Wins { get; init; }
     public bool ProgressPending { get; init; }
     public PokerPublicDecision[] Decisions { get; init; } = Array.Empty<PokerPublicDecision>();
+    public PokerEffects Effects { get; init; } = PokerEffects.Empty;
     public static PokerPresentation Empty => new(Array.Empty<Guid>(), Guid.Empty, false, Guid.Empty);
 }
 
@@ -57,9 +60,20 @@ public static class PokerNpcPolicy
         if (view.CanRaise && strength >= 45 && roll < 20 && view.MaximumRaiseTo > view.CurrentBet)
             return (PokerAction.RaiseTo, Math.Min(view.MinimumRaiseTo, view.MaximumRaiseTo));
         if (view.ToCall == 0) return (PokerAction.Check, 0);
+
+        // Do not rig the deck for all-ins. Make NPCs protect their stacks instead.
+        // A shove for most/all of an NPC's remaining chips now requires a genuinely
+        // strong hand and still has a fold chance, removing the old random hero-call.
+        var allInPressure = me.Chips > 0 && view.ToCall >= me.Chips;
+        var severePressure = me.Chips > 0 && view.ToCall * 2 >= me.Chips;
+        if (allInPressure)
+            return strength >= 80 && roll < 55 ? (PokerAction.Call, 0) : (PokerAction.Fold, 0);
+        if (severePressure)
+            return strength >= 65 && roll < 65 ? (PokerAction.Call, 0) : (PokerAction.Fold, 0);
+
         var inexpensive = view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 20);
         var affordablePair = strength >= 55 && view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 2);
-        return inexpensive && roll < 85 || affordablePair || roll < 8
+        return inexpensive && roll < 82 || affordablePair
             ? (PokerAction.Call, 0) : (PokerAction.Fold, 0);
     }
 }

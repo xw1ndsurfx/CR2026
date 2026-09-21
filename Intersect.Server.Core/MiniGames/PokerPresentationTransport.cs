@@ -19,6 +19,11 @@ public static class PokerPresentationTransport
         state.ProgressPending = presentation.ProgressPending;
         state.Decisions = presentation.Decisions.Select(d => new PokerDecisionState
         { Sequence = d.Sequence, PlayerId = d.PlayerId, Name = d.Name, Action = d.Action, Amount = d.Amount, Automatic = d.Automatic }).ToArray();
+        state.Effects = Enum.GetValues<PokerEffectKind>().Select(kind =>
+        {
+            var fx = presentation.Effects.Get(kind);
+            return new PokerEffectState { Kind = kind, AnimationId = fx.AnimationId, Sound = fx.Sound ?? string.Empty };
+        }).ToArray();
         foreach (var seat in state.Seats)
         {
             var back = presentation.CardBacks.FirstOrDefault(b => b.PlayerId == seat.PlayerId);

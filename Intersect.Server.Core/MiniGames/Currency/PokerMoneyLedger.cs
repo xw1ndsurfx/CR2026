@@ -45,7 +45,8 @@ public sealed class PokerMoneyLedger : IDisposable
             Exec(c, tx, """
                 CREATE TABLE IF NOT EXISTS PokerMoneyHouses (
                     House TEXT PRIMARY KEY, Currency TEXT NOT NULL,
-                    Seed INTEGER NOT NULL CHECK(Seed >= 0), Available INTEGER NOT NULL CHECK(Available >= 0));
+                    Seed INTEGER NOT NULL CHECK(Seed >= 0), Available INTEGER NOT NULL CHECK(Available >= 0),
+                    Unlimited INTEGER NOT NULL DEFAULT 0 CHECK(Unlimited IN (0,1)));
                 CREATE TABLE IF NOT EXISTS PokerMoneySeats (
                     Id TEXT PRIMARY KEY, TableId TEXT NOT NULL, CharacterId TEXT NOT NULL,
                     Currency TEXT NOT NULL, House TEXT NOT NULL, Boot TEXT NOT NULL,
@@ -66,6 +67,11 @@ public sealed class PokerMoneyLedger : IDisposable
                     Wins INTEGER NOT NULL CHECK(Wins >= 0), SelectedBack INTEGER NOT NULL CHECK(SelectedBack BETWEEN 0 AND 5),
                     PRIMARY KEY(CharacterId,Game));
                 """);
+            var hasUnlimited = false;
+            using (var column = Command(c, tx, "PRAGMA table_info(PokerMoneyHouses)"))
+            using (var reader = column.ExecuteReader())
+                while (reader.Read()) if (string.Equals(reader.GetString(1), "Unlimited", StringComparison.OrdinalIgnoreCase)) hasUnlimited = true;
+            if (!hasUnlimited) Exec(c, tx, "ALTER TABLE PokerMoneyHouses ADD COLUMN Unlimited INTEGER NOT NULL DEFAULT 0 CHECK(Unlimited IN (0,1));");
             foreach (var s in Seats(c, tx, "Status=0 AND Npc=1")) ReturnNpc(c, tx, s);
             Exec(c, tx, "UPDATE PokerMoneySeats SET Status=1 WHERE Status=0 AND Npc=0;");
             tx.Commit();
@@ -155,7 +161,7 @@ public sealed class PokerMoneyLedger : IDisposable
         { InsertSeat(c, tx, expected); debit(c, tx); Receipt(c, tx, Id(seat) + ":in", character, currency, amount, kind); });
         return expected;
     }
-    public MoneySeat? OpenNpc(Guid seat, Guid table, Guid currency, string house, long seed, long stake)
+    public MoneySeat? OpenNpc(Guid seat, Guid table, Guid currency, string house, long seed, long stake, bool unlimited = false)
     {
         Required(seat); Required(table); Required(currency); Amount(seed); Amount(stake);
         if (stake == 0 || string.IsNullOrWhiteSpace(house) || house.Length > 200) throw new MoneyRuleException("Invalid NPC funding.");
@@ -168,22 +174,39 @@ public sealed class PokerMoneyLedger : IDisposable
                     throw new MoneyRuleException("NPC admission receipt mismatch.");
                 return existing;
             }
-            var previous = Scalar(c, tx, "SELECT Available FROM PokerMoneyHouses WHERE House=$p0 AND Currency=$p1", house, Id(currency));
-            if (previous == null && seed == 0) return null;
-            Exec(c, tx, "INSERT INTO PokerMoneyHouses VALUES($p0,$p1,$p2,$p2) ON CONFLICT(House) DO NOTHING;", house, Id(currency), seed);
-            var available = Convert.ToInt64(Scalar(c, tx, "SELECT Available FROM PokerMoneyHouses WHERE House=$p0 AND Currency=$p1", house, Id(currency))
-                ?? throw new MoneyRuleException("Conflicting house currency."));
-            if (available < stake) return null;
-            Exec(c, tx, "UPDATE PokerMoneyHouses SET Available=Available-$p1 WHERE House=$p0", house, stake);
+            var mode = Scalar(c, tx, "SELECT Unlimited FROM PokerMoneyHouses WHERE House=$p0 AND Currency=$p1", house, Id(currency));
+            if (mode == null && !unlimited && seed == 0) return null;
+            Exec(c, tx, "INSERT INTO PokerMoneyHouses(House,Currency,Seed,Available,Unlimited) VALUES($p0,$p1,$p2,$p2,$p3) ON CONFLICT(House) DO NOTHING;",
+                house, Id(currency), seed, unlimited ? 1 : 0);
+            mode = Scalar(c, tx, "SELECT Unlimited FROM PokerMoneyHouses WHERE House=$p0 AND Currency=$p1", house, Id(currency))
+                ?? throw new MoneyRuleException("Conflicting house currency.");
+            if (Convert.ToInt64(mode) != (unlimited ? 1L : 0L))
+                throw new MoneyRuleException("NPC reserve mode changed. Use a new Table ID before switching finite/unlimited funding.");
+            if (!unlimited)
+            {
+                var available = Convert.ToInt64(Scalar(c, tx, "SELECT Available FROM PokerMoneyHouses WHERE House=$p0 AND Currency=$p1", house, Id(currency))
+                    ?? throw new MoneyRuleException("Conflicting house currency."));
+                if (available < stake) return null;
+                Exec(c, tx, "UPDATE PokerMoneyHouses SET Available=Available-$p1 WHERE House=$p0", house, stake);
+            }
             var result = new MoneySeat(seat, table, Guid.Empty, currency, house, stake, true, 0); InsertSeat(c, tx, result); return result;
         });
     }
     public long HouseAvailable(string house)
-    { lock (_gate) { using var c = Open(); return Convert.ToInt64(Scalar(c, null, "SELECT Available FROM PokerMoneyHouses WHERE House=$p0", house) ?? 0L); } }
+    {
+        lock (_gate)
+        {
+            using var c = Open();
+            var unlimited = Convert.ToInt64(Scalar(c, null, "SELECT Unlimited FROM PokerMoneyHouses WHERE House=$p0", house) ?? 0L) != 0;
+            return unlimited ? MaximumBalance : Convert.ToInt64(Scalar(c, null, "SELECT Available FROM PokerMoneyHouses WHERE House=$p0", house) ?? 0L);
+        }
+    }
     private static void ReturnNpc(SqliteConnection c, SqliteTransaction tx, MoneySeat s)
     {
         if (!s.Npc || s.Status == 2) return;
-        if (Exec(c, tx, "UPDATE PokerMoneyHouses SET Available=Available+$p1 WHERE House=$p0 AND Currency=$p2 AND Available<=$p3",
+        var unlimited = Convert.ToInt64(Scalar(c, tx, "SELECT Unlimited FROM PokerMoneyHouses WHERE House=$p0 AND Currency=$p1", s.House, Id(s.Currency))
+            ?? throw new MoneyRuleException("Invalid house refund.")) != 0;
+        if (!unlimited && Exec(c, tx, "UPDATE PokerMoneyHouses SET Available=Available+$p1 WHERE House=$p0 AND Currency=$p2 AND Available<=$p3",
             s.House, s.Amount, Id(s.Currency), MaximumBalance - s.Amount) != 1) throw new MoneyRuleException("Invalid house refund.");
         Exec(c, tx, "UPDATE PokerMoneySeats SET Status=2 WHERE Id=$p0", Id(s.Id));
     }
