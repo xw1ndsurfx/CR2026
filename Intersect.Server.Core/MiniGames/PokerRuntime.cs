@@ -63,7 +63,7 @@ internal static class PokerRuntime
                         command.BigBlind, command.TurnSeconds),
                     new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
                         command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId,
-                        command.CreateSoundSet()));
+                        command.CreateSoundSet(), command.CreateAnimationSet()));
                 if (result.Error != PokerRegistryError.None) return result;
                 var view = new View
                 {

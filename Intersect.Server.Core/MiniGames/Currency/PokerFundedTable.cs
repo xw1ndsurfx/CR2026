@@ -88,6 +88,7 @@ internal sealed class PokerFundedTable
             NetWin = net, VictoryAnimationId = net > 0 ? Options.VictoryAnimationId : Guid.Empty,
             Experience = profile.Experience, Wins = profile.Wins, ProgressPending = Pending, Decisions = _decisions.ToArray(),
             Sounds = Options.EffectiveSounds,
+            Animations = Options.EffectiveAnimations,
         };
     }
     private int Back(Guid player) => _members[player].Escrow.Npc ? Options.NpcCardBackId : _members[player].Profile.SelectedBack;

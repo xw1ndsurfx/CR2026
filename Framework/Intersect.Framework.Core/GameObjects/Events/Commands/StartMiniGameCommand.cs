@@ -24,6 +24,15 @@ public sealed class StartMiniGameCommand : EventCommand
     [DefaultValue(false)] public bool AnnounceWins { get; set; }
     [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")]
     public Guid VictoryAnimationId { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid CheckAnimationId { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid CallAnimationId { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid RaiseAnimationId { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid FoldAnimationId { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid AllInAnimationId { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LoseAnimationId { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LevelUpAnimationId { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid JoinAnimationId { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LeaveAnimationId { get; set; }
     [DefaultValue("")] public string DealSound { get; set; } = "";
     [DefaultValue("")] public string CheckSound { get; set; } = "";
     [DefaultValue("")] public string CallSound { get; set; } = "";
@@ -45,6 +54,10 @@ public sealed class StartMiniGameCommand : EventCommand
     public PokerSoundSet CreateSoundSet() => new(
         DealSound ?? "", CheckSound ?? "", CallSound ?? "", RaiseSound ?? "", FoldSound ?? "",
         AllInSound ?? "", WinSound ?? "", LoseSound ?? "", LevelUpSound ?? "", JoinSound ?? "", LeaveSound ?? "");
+
+    public PokerAnimationSet CreateAnimationSet() => new(
+        DealAnimationId, CheckAnimationId, CallAnimationId, RaiseAnimationId, FoldAnimationId, AllInAnimationId,
+        VictoryAnimationId, LoseAnimationId, LevelUpAnimationId, JoinAnimationId, LeaveAnimationId);
 
     public bool HasValidSettings() => Game == MiniGameType.Poker &&
         !string.IsNullOrEmpty(TableId) && TableId.Length <= 64 &&
