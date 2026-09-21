@@ -2556,6 +2556,9 @@ If you are sure you want to hand over your guild enter '\c{{#ff8080}}{02}\c{{}}'
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString CurrencyFallback = @"currency";
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString SearchPlaceholder = @"Search items...";
     }
 
     public partial struct SpellDescription
