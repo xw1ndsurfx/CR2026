@@ -19,6 +19,14 @@ var modelType = assembly.GetType("Intersect.Client.MiniGames.PokerClientModel", 
 var textLayout = typeof(Text).GetMethod("Layout", BindingFlags.Instance | BindingFlags.NonPublic)!;
 var textField = typeof(Label).GetField("_textElement", BindingFlags.Instance | BindingFlags.NonPublic)!;
 var failures = 0; var passed = 0;
+Run("PokerMotionSet speed presets remain deterministic", () =>
+{
+    var normal = new Intersect.Framework.Core.MiniGames.PokerMotionSet();
+    Check(normal.Duration(400) == 400 && normal.Enabled, "Normal motion duration");
+    Check((normal with { Speed = Intersect.Framework.Core.MiniGames.PokerMotionSpeed.Fast }).Duration(400) == 200, "Fast motion duration");
+    Check((normal with { Speed = Intersect.Framework.Core.MiniGames.PokerMotionSpeed.Cinematic }).Duration(400) == 800, "Cinematic motion duration");
+    Check(!(normal with { Speed = Intersect.Framework.Core.MiniGames.PokerMotionSpeed.Off }).Enabled, "Off motion still enabled");
+});
 Run("Missing font still reproduces the old tiny-text defect", () =>
 {
     using var renderer = new MetricsRenderer(); using var skin = new TestSkin(renderer); using var canvas = new Canvas(skin);

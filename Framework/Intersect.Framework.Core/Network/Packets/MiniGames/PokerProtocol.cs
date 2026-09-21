@@ -95,6 +95,7 @@ public sealed partial class PokerTableState
         (DealerNpcId == Guid.Empty || NpcIds.Contains(DealerNpcId)) &&
         Decisions is { Length: <= 12 } && Decisions.All(d => d != null && d.IsValid) &&
         Decisions.Select(d => d.Sequence).Distinct().Count() == Decisions.Length &&
+        ProceduralAnimationSpeed is >= PokerMotionSpeed.Off and <= PokerMotionSpeed.Cinematic &&
         ValidSound(DealSound) && ValidSound(CheckSound) && ValidSound(CallSound) && ValidSound(RaiseSound) &&
         ValidSound(FoldSound) && ValidSound(AllInSound) && ValidSound(WinSound) && ValidSound(LoseSound) &&
         ValidSound(LevelUpSound) && ValidSound(JoinSound) && ValidSound(LeaveSound);
