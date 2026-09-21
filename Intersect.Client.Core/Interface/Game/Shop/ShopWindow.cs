@@ -103,8 +103,8 @@ public partial class ShopWindow : Window
         _sellHeader.SetBounds(406, 56, 350, 28);
         _buyContainer.SetBounds(24, 90, 330, 468);
         _sellContainer.SetBounds(406, 90, 330, 468);
-        _buyScrollRail.SetBounds(358, 90, 14, 468);
-        _sellScrollRail.SetBounds(740, 90, 14, 468);
+        _buyScrollRail.SetBounds(362, 90, 10, 468);
+        _sellScrollRail.SetBounds(744, 90, 10, 468);
 
         // The Shop uses explicit rails because dynamically-created Gwen scrollbars
         // are not reliably visible with every textured UI skin.
