@@ -56,6 +56,7 @@ public sealed partial class PokerTableRegistry
                     member.Entry.PublishedRevision = -1;
                     if (profile.Level > before.Level)
                     {
+                        _levels.Enqueue(new(member.Presence.Session, member.Entry.Id, profile.Level));
                         var rewards = member.Entry.Options.EffectiveLevelRewards
                             .Where(r => r.Level > before.Level && r.Level <= profile.Level).ToArray();
                         if (rewards.Length > 0)

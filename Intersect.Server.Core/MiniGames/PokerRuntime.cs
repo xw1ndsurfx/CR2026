@@ -1,4 +1,5 @@
 using Intersect.Core;
+using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Framework.Core.MiniGames;
@@ -29,7 +30,8 @@ internal static class PokerRuntime
         public PokerRequestGuard Guard;
     }
     private sealed record Delivery(View? View, PokerStatePacket? Packet, PokerWinNotice? Win = null,
-        PokerLevelRewardNotice? LevelReward = null, PokerQuestNotice? Quest = null);
+        PokerLevelRewardNotice? LevelReward = null, PokerLevelNotice? Level = null,
+        PokerQuestNotice? Quest = null, string? LocalMessage = null);
     private static readonly PokerTableRegistry Tables = new(new SqliteMiniGameProgressStore(
         Path.Combine("resources", "minigames-test.db")));
     private static readonly object Gate = new();
@@ -149,6 +151,12 @@ internal static class PokerRuntime
         foreach (var reward in Tables.CollectLevelRewards())
             if (Views.TryGetValue(reward.Recipient, out var rewardView) && rewardView.TableId == reward.TableInstanceId)
                 output.Add(new(rewardView, null, LevelReward: reward));
+        foreach (var level in Tables.CollectLevels())
+            if (Views.TryGetValue(level.Recipient, out var levelView) && levelView.TableId == level.TableInstanceId)
+                output.Add(new(levelView, null, Level: level));
+        foreach (var local in Tables.CollectNpcChat())
+            if (Views.TryGetValue(local.Recipient, out var localView) && localView.TableId == local.TableInstanceId)
+                output.Add(new(localView, null, LocalMessage: local.Text));
         foreach (var quest in Tables.CollectQuestUpdates())
             if (Views.TryGetValue(quest.Recipient, out var questView) && questView.TableId == quest.TableInstanceId)
                 output.Add(new(questView, null, Quest: quest));
@@ -178,6 +186,19 @@ internal static class PokerRuntime
                 {
                     if (ReferenceEquals(rewardView.Client.Entity, rewardView.Player) && rewardView.Player.LoginTime == rewardView.LoginStamp)
                         PokerLevelRewardRuntime.Grant(rewardView.Player, reward.Level, reward.Rewards);
+                    continue;
+                }
+                if (delivery.Level is { } level && delivery.View is { } levelView)
+                {
+                    if (ReferenceEquals(levelView.Client.Entity, levelView.Player) && levelView.Player.LoginTime == levelView.LoginStamp)
+                        PacketSender.SendChatMsg(levelView.Player, PokerNotificationText.LevelUp(level.Level),
+                            ChatMessageType.Notice, Color.White);
+                    continue;
+                }
+                if (delivery.LocalMessage is { } local && delivery.View is { } localView)
+                {
+                    if (ReferenceEquals(localView.Client.Entity, localView.Player) && localView.Player.LoginTime == localView.LoginStamp)
+                        PacketSender.SendChatMsg(localView.Player, local, ChatMessageType.Local, Color.White);
                     continue;
                 }
                 if (delivery.Quest is { } quest && delivery.View is { } questView)

@@ -49,6 +49,14 @@ internal static class ExtrasSmokeTests
                 Check(PokerQuestProgress.Apply(QuestObjective.PokerReachLevel, 0, 10, sync) == 10, "Level sync did not clamp target");
                 Check(PokerQuestProgress.Apply(QuestObjective.PokerPlayHands, 2, 10, sync) == 2, "Join sync counted a hand");
             }),
+            ("Poker notification text sanitizes chat and distinguishes actions", () =>
+            {
+                Check(PokerNotificationText.NpcAction("Mar\nlow", "raise", 25, "Au\rreons", false) ==
+                    "[Poker] Marlow: raises to 25 Aureons.", "NPC raise text");
+                Check(PokerNotificationText.NpcAction("Marlow", "fold", 0, "chips", true).EndsWith("(auto)"), "Auto suffix missing");
+                Check(PokerNotificationText.LevelUp(5).Contains("level 5"), "Level-up text");
+                Check(PokerNotificationText.GlobalWin("Alice", 50, "Aureons").Contains("net gain"), "Global win text");
+            }),
             ("Unlocked backs apply immediately without changing betting state", () =>
             {
                 var f = new Fixture(unlocked: true);
@@ -107,6 +115,9 @@ internal static class ExtrasSmokeTests
                 var state = tables.Snapshot(a, id).Snapshot!;
                 tables.Act(a, id, state.HandId, state.Revision, PokerAction.Fold, 0, DateTimeOffset.UtcNow);
                 Check(tables.CollectWins().Length == 0, "NPC broadcast");
+                var local = tables.CollectNpcChat();
+                Check(local.Any(m => m.Recipient == a.Session && m.Text.Contains("Marlow") && m.Text.Contains("wins")), "NPC local win missing");
+                Check(tables.CollectNpcChat().Length == 0, "NPC local chat replayed");
                 var view = tables.Presentation(a, id);
                 Check(view.Decisions.Any(d => d.Name == "Marlow" && d.Action == "wins" && d.Amount == 5), "NPC result missing");
                 Check(view.Experience == 0, "NPC awarded human XP");

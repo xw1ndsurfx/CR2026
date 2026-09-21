@@ -31,7 +31,7 @@ internal static class PokerLevelRewardRuntime
             if (player.TryGiveItem(reward.ItemId, reward.Quantity, ItemHandling.Normal, bankOverflow: true))
             {
                 PacketSender.SendChatMsg(player,
-                    $"[Poker] Level {level} reward: {reward.Quantity:N0} x {item.Name}.",
+                    PokerNotificationText.Reward(level, reward.Quantity, item.Name),
                     ChatMessageType.Inventory, Color.White);
             }
             else
