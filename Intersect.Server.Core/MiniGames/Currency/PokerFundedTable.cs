@@ -229,7 +229,8 @@ internal sealed class PokerFundedTable
     }
     private bool AddNpc(string name, bool dealer)
     {
-        var escrow = _money.OpenNpc(Guid.NewGuid(), Id, Currency, House, Reserve, Rules.StartingChips); if (escrow == null) return false;
+        var escrow = _money.OpenNpc(Guid.NewGuid(), Id, Currency, House, Reserve, Rules.StartingChips, Options.UnlimitedNpcBankroll);
+        if (escrow == null) return false;
         var error = _table.Join(escrow.Id, name, escrow.Amount);
         if (error != PokerError.None) { _money.Release(escrow.Id); throw new MoneyRuleException("NPC admission failed: " + error); }
         _members.Add(escrow.Id, new Member(escrow, name) { HandBack = Options.NpcCardBackId });

@@ -49,7 +49,7 @@ internal static class PokerCurrencyRuntime
                 var rules = new PokerRules(command.MaxPlayers, command.StartingChips, command.SmallBlind, command.BigBlind, command.TurnSeconds);
                 var options = new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
                     command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId,
-                    command.CreateSoundSet(), command.CreateAnimationSet());
+                    command.CreateSoundSet(), command.CreateAnimationSet(), command.UnlimitedNpcBankroll);
                 var key = new PokerTableKey(presence.MapId, presence.MapInstanceId, command.TableId);
                 var money = PokerInventoryBridge.Ledger;
                 lock (Gate)

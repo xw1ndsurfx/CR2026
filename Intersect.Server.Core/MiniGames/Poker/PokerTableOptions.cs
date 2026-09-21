@@ -8,7 +8,7 @@ namespace Intersect.Server.MiniGames.Poker;
 public sealed record PokerTableOptions(
     bool DealerPlays = false, int NpcPlayers = 0, bool AutoStart = false, Guid DealAnimationId = default,
     bool AnnounceWins = false, Guid VictoryAnimationId = default, int NpcCardBackId = 0, PokerSoundSet? Sounds = null,
-    PokerAnimationSet? Animations = null)
+    PokerAnimationSet? Animations = null, bool UnlimitedNpcBankroll = false)
 {
     public PokerSoundSet EffectiveSounds => Sounds ?? PokerSoundSet.Empty;
     public PokerAnimationSet EffectiveAnimations => Animations ?? new(Deal: DealAnimationId, Win: VictoryAnimationId);
