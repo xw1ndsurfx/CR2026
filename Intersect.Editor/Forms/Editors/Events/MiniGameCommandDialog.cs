@@ -4,7 +4,6 @@ using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
-using EditorContentManager = Intersect.Editor.Content.GameContentManager;
 using DrawingColor = System.Drawing.Color;
 
 namespace Intersect.Editor.Forms.Editors.Events;
@@ -166,7 +165,11 @@ internal sealed class MiniGameCommandDialog : Form
         file ??= "";
         var picker = new ComboBox { Name = name, DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill, DropDownWidth = 420 };
         picker.Items.Add(new SoundChoice("", "None / Aucun"));
-        foreach (var sound in (EditorContentManager.SmartSortedSoundNames ?? Array.Empty<string>()).OrderBy(s => s, StringComparer.OrdinalIgnoreCase))
+        var soundDirectory = Path.Combine("resources", "sounds");
+        var sounds = Directory.Exists(soundDirectory)
+            ? Directory.GetFiles(soundDirectory, "*.wav").Select(Path.GetFileName).Where(s => !string.IsNullOrEmpty(s)).Cast<string>()
+            : Array.Empty<string>();
+        foreach (var sound in sounds.OrderBy(s => s, StringComparer.OrdinalIgnoreCase))
             picker.Items.Add(new SoundChoice(sound, sound));
         var selected = picker.Items.Cast<SoundChoice>().FirstOrDefault(s => string.Equals(s.File, file, StringComparison.OrdinalIgnoreCase));
         if (selected == null)

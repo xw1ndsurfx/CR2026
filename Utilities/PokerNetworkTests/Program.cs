@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Client.MiniGames;
 using Intersect.Network;
 using Intersect.Network.Packets.Client;
