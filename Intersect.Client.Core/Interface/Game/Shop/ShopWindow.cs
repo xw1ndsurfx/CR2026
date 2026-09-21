@@ -38,8 +38,8 @@ public partial class ShopWindow : Window
         TitleLabel.FontSize = 14;
         TitleLabel.TextColorOverride = Color.White;
 
-        _buyHeader = Header("BuyHeader", Strings.Shop.BuyItem, 24, 18, 350);
-        _sellHeader = Header("SellHeader", Strings.Shop.SellItem, 406, 18, 350);
+        _buyHeader = Header("BuyHeader", Strings.Shop.BuyItem.ToString(), 24, 18, 350);
+        _sellHeader = Header("SellHeader", Strings.Shop.SellItem.ToString(), 406, 18, 350);
 
         _buyContainer = new ScrollControl(this, "BuyList")
         {
@@ -163,7 +163,7 @@ public partial class ShopWindow : Window
         if (Globals.GameShop is { } shop && Globals.Me is { } player)
         {
             var firstSlots = new Dictionary<Guid, int>();
-            for (var slot = 0; slot < player.Inventory.Length; ++slot)
+            for (var slot = 0; slot < player.Inventory.Count; ++slot)
             {
                 var inventory = player.Inventory[slot];
                 if (inventory == null || inventory.ItemId == Guid.Empty || firstSlots.ContainsKey(inventory.ItemId)) continue;
