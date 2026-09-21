@@ -21,3 +21,18 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - run: dotnet run --project Utilities/BlackjackTests/Intersect.BlackjackTests.csproj --configuration Release
+  ledger-and-wire:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - shell: pwsh
+        run: ./Utilities/PokerCi/run.ps1 -Project Utilities/BlackjackIntegrationTests/Intersect.BlackjackIntegrationTests.csproj -Configuration Release
+      - shell: pwsh
+        run: ./Utilities/PokerCi/run.ps1 -Project Utilities/BlackjackEditorTests/Intersect.BlackjackEditorTests.csproj -Configuration Release

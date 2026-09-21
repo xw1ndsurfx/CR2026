@@ -76,7 +76,7 @@ public sealed partial class BlackjackTableState
             s.LastAction is {Length:<=96} && MiniGameProgression.IsBack(s.CardBackId) && MiniGameProgression.IsBack(s.SelectedBackId) &&
             s.Hands is {Length:<=2} && s.Hands.All(h=>h!=null && CardsValid(h.Cards) && h.Bet is >=0 and <=2_000_000_000 &&
                 h.Total==BlackjackValues.Count(h.Cards).Total && h.Soft==BlackjackValues.Count(h.Cards).Soft &&
-                h.Outcome is >=BlackjackOutcome.Pending and <=BlackjackOutcome.Blackjack && Math.Abs(h.Net)<=3_000_000_000L)) &&
+                h.Outcome is >=BlackjackOutcome.Pending and <=BlackjackOutcome.Blackjack && h.Net>=-3_000_000_000L && h.Net<=3_000_000_000L)) &&
         Seats.Select(s=>s.PlayerId).Distinct().Count()==Seats.Length && Seats.Select(s=>s.Seat).Distinct().Count()==Seats.Length;
     private static bool CardsValid(int[]? cards)=>cards is {Length:<=22} && cards.All(c=>c is >=0 and <52);
 }
