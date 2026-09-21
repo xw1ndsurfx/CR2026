@@ -12,7 +12,7 @@ namespace Intersect.Server.MiniGames.Blackjack;
 
 public sealed record BlackjackKey(Guid Map,Guid Instance,string Name);
 public sealed record BlackjackSettings(BlackjackRules Rules,int Npcs,bool Auto,Guid Currency,long Reserve,
-    Guid DealAnimation,Guid VictoryAnimation,bool Announce,int NpcBack);
+    Guid DealAnimation,Guid VictoryAnimation,bool Announce,int NpcBack,PokerMotionSet Motion);
 public sealed record BlackjackWin(string Name,long Net);
 
 /// <summary>Serialized by runtime gate. Financial callbacks never acquire any Player lock here.</summary>
@@ -218,6 +218,10 @@ public sealed class BlackjackSessionTable
             CurrencyItemId=Settings.Currency,Experience=p.Experience,Wins=p.Wins,Pending=Pending,AutoStart=Settings.Auto,
             DealAnimationId=Settings.DealAnimation,VictoryAnimationId=net>0?Settings.VictoryAnimation:Guid.Empty,NetWin=net,
             DealerBackId=Settings.NpcBack,HitSoft17=Settings.Rules.HitSoft17,
+            ProceduralAnimationSpeed=Settings.Motion.Speed,AnimateDealCards=Settings.Motion.DealCards,
+            AnimateBoardCards=Settings.Motion.BoardCards,AnimateChips=Settings.Motion.Chips,
+            AnimateShowdown=Settings.Motion.Showdown,AnimateShuffle=Settings.Motion.Shuffle,
+            AnimateAllIn=Settings.Motion.AllIn,
         };
     }
 }
