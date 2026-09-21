@@ -30,8 +30,11 @@ internal sealed partial class PokerWindow : Base
     private readonly PokerScreenEffect _victory;
     private PokerSceneLayout _layout;
     private PokerTableState? _state;
-    private int _localSeat, _selectedBack, _lastLevel = -1;
-    private long _lastMinimum = -1, _levelUpUntil;
+    private int _localSeat, _selectedBack, _lastLevel = -1, _lastBoardCount;
+    private long _lastMinimum = -1, _levelUpUntil, _lastEffectDecision, _lastEffectHand = -1;
+    private bool _wasOurTurn;
+    private Guid _effectTable;
+    private bool _joinEffectPlayed;
     private float _xpFraction;
     private string _localError = string.Empty;
     private bool _destroyed;
@@ -162,10 +165,49 @@ internal sealed partial class PokerWindow : Base
         _xpFraction = level == MiniGameProgression.MaximumLevel ? 1 : (state.Experience - baseXp) / (float)toNext;
         _experience.Text = level == MiniGameProgression.MaximumLevel ? Strings.PokerScene.Mastered.ToString(level) :
             Strings.PokerScene.Progress.ToString(level, state.Experience - baseXp, toNext);
-        if (_lastLevel > 0 && level > _lastLevel) _levelUpUntil = Environment.TickCount64 + 5000;
+        if (_effectTable != model.Current.TableInstanceId)
+        {
+            _effectTable = model.Current.TableInstanceId; _joinEffectPlayed = false; _lastEffectDecision = 0;
+            _lastEffectHand = -1; _lastBoardCount = 0; _wasOurTurn = false;
+        }
+        if (!_joinEffectPlayed)
+        {
+            _joinEffectPlayed = true; PlayEffect(state, PokerEffectKind.Join);
+        }
+        if (_lastEffectHand != state.HandId)
+        {
+            _lastEffectHand = state.HandId;
+            _lastBoardCount = state.Board.Length;
+            _wasOurTurn = false;
+        }
+        foreach (var decision in state.Decisions.Where(d => d.Sequence > _lastEffectDecision).OrderBy(d => d.Sequence))
+        {
+            var kind = decision.Action switch
+            {
+                "check" => PokerEffectKind.Check, "call" => PokerEffectKind.Call,
+                "raise" => PokerEffectKind.Raise, "allin" => PokerEffectKind.AllIn,
+                "fold" => PokerEffectKind.Fold, "leave" => PokerEffectKind.Leave, _ => (PokerEffectKind?)null,
+            };
+            if (kind.HasValue) PlayEffect(state, kind.Value);
+            _lastEffectDecision = Math.Max(_lastEffectDecision, decision.Sequence);
+        }
+        if (!_wasOurTurn && turn) PlayEffect(state, PokerEffectKind.YourTurn);
+        _wasOurTurn = turn;
+        if (state.Board.Length > _lastBoardCount)
+        {
+            if (_lastBoardCount < 3 && state.Board.Length >= 3) PlayEffect(state, PokerEffectKind.Flop);
+            if (_lastBoardCount < 4 && state.Board.Length >= 4) PlayEffect(state, PokerEffectKind.Turn);
+            if (_lastBoardCount < 5 && state.Board.Length >= 5) PlayEffect(state, PokerEffectKind.River);
+            _lastBoardCount = state.Board.Length;
+        }
+        if (_lastLevel > 0 && level > _lastLevel)
+        {
+            _levelUpUntil = Environment.TickCount64 + 5000;
+            PlayEffect(state, PokerEffectKind.LevelUp);
+        }
         _lastLevel = level; _levelUp.Text = Environment.TickCount64 < _levelUpUntil ? Strings.PokerScene.LevelUp.ToString(level) : "";
         if (model.Victories.Observe(model.Current.TableInstanceId, me.PlayerId, state.HandId,
-                state.Stage == PokerStage.Finished, state.NetWin)) _victory.Play(state.VictoryAnimationId);
+                state.Stage == PokerStage.Finished, state.NetWin)) PlayEffect(state, PokerEffectKind.Victory);
         _victory.Update();
         _start.IsDisabled = model.Pending || playing || me.Leaving || me.Chips == 0 || !opponents || state.ProgressPending;
         _fold.IsDisabled = !enabled; _check.IsDisabled = !enabled || state.ToCall != 0;
@@ -185,6 +227,12 @@ internal sealed partial class PokerWindow : Base
         };
         UpdateCurrency(state, me);
         if (!_backTray.IsHidden) _backTray.BringToFront();
+    }
+    private void PlayEffect(PokerTableState state, PokerEffectKind kind)
+    {
+        var effect = state.Effects.FirstOrDefault(e => e.Kind == kind);
+        if (effect != null) _victory.Play(effect.AnimationId, effect.Sound);
+        else if (kind == PokerEffectKind.Victory) _victory.Play(state.VictoryAnimationId);
     }
     private static readonly Color Gold = new(231, 194, 112);
     protected override void Render(SkinBase skin)

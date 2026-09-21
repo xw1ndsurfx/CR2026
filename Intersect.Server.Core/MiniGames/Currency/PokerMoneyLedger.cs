@@ -23,6 +23,7 @@ public sealed class MoneyRuleException(string message) : Exception(message);
 public sealed class PokerMoneyLedger : IDisposable
 {
     public const long MaximumBalance = 1_000_000_000_000;
+    private const string UnlimitedHousePrefix = "!unlimited!:";
     private readonly object _gate = new();
     private readonly string _connectionString;
     private readonly FileStream _lease;
@@ -155,18 +156,25 @@ public sealed class PokerMoneyLedger : IDisposable
         { InsertSeat(c, tx, expected); debit(c, tx); Receipt(c, tx, Id(seat) + ":in", character, currency, amount, kind); });
         return expected;
     }
-    public MoneySeat? OpenNpc(Guid seat, Guid table, Guid currency, string house, long seed, long stake)
+    public MoneySeat? OpenNpc(Guid seat, Guid table, Guid currency, string house, long seed, long stake, bool unlimited = false)
     {
         Required(seat); Required(table); Required(currency); Amount(seed); Amount(stake);
-        if (stake == 0 || string.IsNullOrWhiteSpace(house) || house.Length > 200) throw new MoneyRuleException("Invalid NPC funding.");
+        if (stake == 0 || string.IsNullOrWhiteSpace(house) || house.Length > 180) throw new MoneyRuleException("Invalid NPC funding.");
+        var seatHouse = unlimited ? UnlimitedHousePrefix + house : house;
         return Write<MoneySeat?>((c, tx) =>
         {
             var existing = Seats(c, tx, "Id=$p0", Id(seat)).SingleOrDefault();
             if (existing != null)
             {
-                if (!existing.Npc || existing.Status != 0 || existing.Table != table || existing.Currency != currency || existing.House != house)
+                if (!existing.Npc || existing.Status != 0 || existing.Table != table || existing.Currency != currency || existing.House != seatHouse)
                     throw new MoneyRuleException("NPC admission receipt mismatch.");
                 return existing;
+            }
+            if (unlimited)
+            {
+                var infinite = new MoneySeat(seat, table, Guid.Empty, currency, seatHouse, stake, true, 0);
+                InsertSeat(c, tx, infinite);
+                return infinite;
             }
             var previous = Scalar(c, tx, "SELECT Available FROM PokerMoneyHouses WHERE House=$p0 AND Currency=$p1", house, Id(currency));
             if (previous == null && seed == 0) return null;
@@ -183,6 +191,11 @@ public sealed class PokerMoneyLedger : IDisposable
     private static void ReturnNpc(SqliteConnection c, SqliteTransaction tx, MoneySeat s)
     {
         if (!s.Npc || s.Status == 2) return;
+        if (s.House.StartsWith(UnlimitedHousePrefix, StringComparison.Ordinal))
+        {
+            Exec(c, tx, "UPDATE PokerMoneySeats SET Status=2 WHERE Id=$p0", Id(s.Id));
+            return;
+        }
         if (Exec(c, tx, "UPDATE PokerMoneyHouses SET Available=Available+$p1 WHERE House=$p0 AND Currency=$p2 AND Available<=$p3",
             s.House, s.Amount, Id(s.Currency), MaximumBalance - s.Amount) != 1) throw new MoneyRuleException("Invalid house refund.");
         Exec(c, tx, "UPDATE PokerMoneySeats SET Status=2 WHERE Id=$p0", Id(s.Id));

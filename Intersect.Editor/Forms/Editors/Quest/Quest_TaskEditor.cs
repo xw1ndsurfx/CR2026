@@ -5,6 +5,7 @@ using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.GameObjects;
 using Microsoft.Extensions.Logging;
 
@@ -22,6 +23,7 @@ public partial class QuestTaskEditor : UserControl
     private QuestDescriptor mMyQuest;
 
     private QuestTaskDescriptor mMyTask;
+    private readonly List<(Guid Id, string Name)> _pokerCurrencies = new();
 
     public QuestTaskEditor(QuestDescriptor refQuest, QuestTaskDescriptor refTask)
     {
@@ -61,7 +63,15 @@ public partial class QuestTaskEditor : UserControl
             case 2: //Kill NPCS
                 cmbNpc.SelectedIndex = NPCDescriptor.ListIndex(mMyTask?.TargetId ?? Guid.Empty);
                 nudNpcQuantity.Value = mMyTask?.Quantity ?? 0;
-
+                break;
+            case 3: //Poker winnings
+                PreparePokerCurrencies();
+                cmbItem.SelectedIndex = Math.Max(0, _pokerCurrencies.FindIndex(x => x.Id == (mMyTask?.TargetId ?? Guid.Empty)));
+                nudItemAmount.Value = Math.Clamp(mMyTask?.Quantity ?? 1, 1, (int)nudItemAmount.Maximum);
+                break;
+            case 4: //Poker hands
+            case 5: //Poker level
+                nudItemAmount.Value = Math.Clamp(mMyTask?.Quantity ?? 1, 1, (int)nudItemAmount.Maximum);
                 break;
         }
     }
@@ -76,6 +86,9 @@ public partial class QuestTaskEditor : UserControl
         {
             cmbTaskType.Items.Add(Strings.TaskEditor.types[i]);
         }
+        cmbTaskType.Items.Add("Poker - Win amount");
+        cmbTaskType.Items.Add("Poker - Win hands");
+        cmbTaskType.Items.Add("Poker - Reach level");
 
         lblDesc.Text = Strings.TaskEditor.desc;
 
@@ -98,6 +111,11 @@ public partial class QuestTaskEditor : UserControl
     {
         grpGatherItems.Hide();
         grpKillNpcs.Hide();
+        cmbItem.Show(); lblItem.Show();
+        grpGatherItems.Text = Strings.TaskEditor.gatheritems;
+        lblItem.Text = Strings.TaskEditor.item;
+        lblItemQuantity.Text = Strings.TaskEditor.gatheramount;
+        nudItemAmount.Maximum = 100000;
         switch (cmbTaskType.SelectedIndex)
         {
             case 0: //Event Driven
@@ -118,15 +136,34 @@ public partial class QuestTaskEditor : UserControl
                 grpKillNpcs.Show();
                 cmbNpc.Items.Clear();
                 cmbNpc.Items.AddRange(NPCDescriptor.Names);
-                if (cmbNpc.Items.Count > 0)
-                {
-                    cmbNpc.SelectedIndex = 0;
-                }
-
+                if (cmbNpc.Items.Count > 0) cmbNpc.SelectedIndex = 0;
                 nudNpcQuantity.Value = 1;
-
+                break;
+            case 3:
+                grpGatherItems.Show(); grpGatherItems.Text = "Poker - Win amount";
+                lblItem.Text = "Currency:"; lblItemQuantity.Text = "Amount:";
+                nudItemAmount.Maximum = 1000000000; nudItemAmount.Value = 1; PreparePokerCurrencies();
+                break;
+            case 4:
+                grpGatherItems.Show(); grpGatherItems.Text = "Poker - Win hands";
+                cmbItem.Hide(); lblItem.Hide(); lblItemQuantity.Text = "Winning hands:";
+                nudItemAmount.Maximum = 100000; nudItemAmount.Value = 1;
+                break;
+            case 5:
+                grpGatherItems.Show(); grpGatherItems.Text = "Poker - Reach level";
+                cmbItem.Hide(); lblItem.Hide(); lblItemQuantity.Text = "Poker level:";
+                nudItemAmount.Maximum = MiniGameProgression.MaximumLevel; nudItemAmount.Value = 1;
                 break;
         }
+    }
+
+    private void PreparePokerCurrencies()
+    {
+        _pokerCurrencies.Clear(); _pokerCurrencies.Add((Guid.Empty, "Any poker currency"));
+        _pokerCurrencies.AddRange(MiniGameCurrency.CompatibleItems(ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>())
+            .Select(item => (item.Id, MiniGameCurrency.DisplayName(item))));
+        cmbItem.Items.Clear(); cmbItem.Items.AddRange(_pokerCurrencies.Select(x => (object)x.Name).ToArray());
+        if (cmbItem.Items.Count > 0 && cmbItem.SelectedIndex < 0) cmbItem.SelectedIndex = 0;
     }
 
     private void btnSave_Click(object sender, EventArgs e)
@@ -148,7 +185,16 @@ public partial class QuestTaskEditor : UserControl
             case QuestObjective.KillNpcs: //Kill Npcs
                 mMyTask.TargetId = NPCDescriptor.IdFromList(cmbNpc.SelectedIndex);
                 mMyTask.Quantity = (int) nudNpcQuantity.Value;
-
+                break;
+            case QuestObjective.PokerWinAmount:
+                mMyTask.TargetId = cmbItem.SelectedIndex >= 0 && cmbItem.SelectedIndex < _pokerCurrencies.Count
+                    ? _pokerCurrencies[cmbItem.SelectedIndex].Id : Guid.Empty;
+                mMyTask.Quantity = (int)nudItemAmount.Value;
+                break;
+            case QuestObjective.PokerWinHands:
+            case QuestObjective.PokerReachLevel:
+                mMyTask.TargetId = Guid.Empty;
+                mMyTask.Quantity = (int)nudItemAmount.Value;
                 break;
         }
 

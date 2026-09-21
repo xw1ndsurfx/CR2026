@@ -30,6 +30,35 @@ public sealed class StartMiniGameCommand : EventCommand
     public Guid CurrencyItemId { get; set; }
     /// <summary>One-time authorized house seed, shared across instances; reopening never reseeds it.</summary>
     [DefaultValue(0L)] public long NpcReserve { get; set; }
+    [DefaultValue(false)] public bool UnlimitedNpcBankroll { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid JoinAnimationId { get; set; }
+    [DefaultValue("")] public string JoinSound { get; set; } = string.Empty;
+    [DefaultValue("")] public string DealSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid CheckAnimationId { get; set; }
+    [DefaultValue("")] public string CheckSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid CallAnimationId { get; set; }
+    [DefaultValue("")] public string CallSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid RaiseAnimationId { get; set; }
+    [DefaultValue("")] public string RaiseSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid FoldAnimationId { get; set; }
+    [DefaultValue("")] public string FoldSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid AllInAnimationId { get; set; }
+    [DefaultValue("")] public string AllInSound { get; set; } = string.Empty;
+    [DefaultValue("")] public string VictorySound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LevelUpAnimationId { get; set; }
+    [DefaultValue("")] public string LevelUpSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LeaveAnimationId { get; set; }
+    [DefaultValue("")] public string LeaveSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid YourTurnAnimationId { get; set; }
+    [DefaultValue("")] public string YourTurnSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid FlopAnimationId { get; set; }
+    [DefaultValue("")] public string FlopSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid TurnAnimationId { get; set; }
+    [DefaultValue("")] public string TurnSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid RiverAnimationId { get; set; }
+    [DefaultValue("")] public string RiverSound { get; set; } = string.Empty;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LevelRewardItemId { get; set; }
+    [DefaultValue(0)] public int LevelRewardQuantity { get; set; }
 
     public bool HasValidSettings() => Game == MiniGameType.Poker &&
         !string.IsNullOrEmpty(TableId) && TableId.Length <= 64 &&
@@ -39,5 +68,13 @@ public sealed class StartMiniGameCommand : EventCommand
         BigBlind <= 1_000_000_000 && StartingChips >= BigBlind && StartingChips <= 1_000_000_000 &&
         NpcReserve is >= 0 and <= 1_000_000_000 &&
         TurnSeconds is >= 5 and <= 300 && NpcPlayers is >= 0 and <= 5 &&
-        NpcPlayers + (DealerPlays ? 1 : 0) < MaxPlayers && MiniGameProgression.IsBack(NpcCardBackId);
+        NpcPlayers + (DealerPlays ? 1 : 0) < MaxPlayers && MiniGameProgression.IsBack(NpcCardBackId) &&
+        LevelRewardQuantity is >= 0 and <= 1_000_000 &&
+        (LevelRewardItemId != Guid.Empty || LevelRewardQuantity == 0) &&
+        ValidSound(JoinSound) && ValidSound(DealSound) && ValidSound(CheckSound) && ValidSound(CallSound) &&
+        ValidSound(RaiseSound) && ValidSound(FoldSound) && ValidSound(AllInSound) &&
+        ValidSound(VictorySound) && ValidSound(LevelUpSound) && ValidSound(LeaveSound) &&
+        ValidSound(YourTurnSound) && ValidSound(FlopSound) && ValidSound(TurnSound) && ValidSound(RiverSound);
+
+    private static bool ValidSound(string? sound) => sound is null || sound.Length <= 128 && sound.All(c => !char.IsControl(c));
 }
