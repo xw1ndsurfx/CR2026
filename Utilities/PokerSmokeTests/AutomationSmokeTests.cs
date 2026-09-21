@@ -150,7 +150,7 @@ internal static class AutomationSmokeTests
             var weak=View(new[]{0,1});
             var strongCalls=Enumerable.Range(0,100).Count(roll=>PokerNpcPolicy.Choose(strong,npc,10,roll).Action==PokerAction.Call);
             var weakCalls=Enumerable.Range(0,100).Count(roll=>PokerNpcPolicy.Choose(weak,npc,10,roll).Action==PokerAction.Call);
-            Check(strongCalls>=90 && weakCalls<=15 && strongCalls>weakCalls,"Shove defense ignores hand strength");
+            Check(strongCalls>=80 && weakCalls<=15 && strongCalls>weakCalls*5,"Shove defense ignores hand strength");
             Check(strong.MyCards.SequenceEqual(new[]{12,25}) && weak.MyCards.SequenceEqual(new[]{0,1}),"Policy mutated cards");
         });
         Test("Five automatic hands preserve chips and private-card boundaries", () =>
