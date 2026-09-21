@@ -1,4 +1,8 @@
+using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Quests;
+using Intersect.GameObjects;
 using Intersect.Server.MiniGames.Poker;
+using Intersect.Server.Networking;
 
 namespace Intersect.Server.Entities;
 
@@ -28,4 +32,49 @@ public partial class Player
     internal static bool IsPokerPresenceCurrent(PokerPresence expected) =>
         OnlinePlayersById.TryGetValue(expected.Session.PlayerId, out var current) &&
         current.TryCapturePokerPresence(out var actual) && actual == expected;
+
+    /// <summary>
+    /// Advances mini-game quest tasks from authoritative funded results only.
+    /// Test-chip tables never call this method.
+    /// </summary>
+    internal void UpdateMiniGameQuestTasks(string game, long netWin, int currentLevel, Guid currencyItemId)
+    {
+        if (string.IsNullOrWhiteSpace(game) || netWin <= 0 || currentLevel < 1) return;
+        foreach (var questProgress in Quests.ToArray())
+        {
+            var quest = QuestDescriptor.Get(questProgress.QuestId);
+            if (quest == null || questProgress.TaskId == Guid.Empty) continue;
+            var task = quest.FindTask(questProgress.TaskId);
+            if (task == null || !string.Equals(task.MiniGameKey, game, StringComparison.OrdinalIgnoreCase)) continue;
+
+            var before = questProgress.TaskProgress;
+            switch (task.Objective)
+            {
+                case QuestObjective.MiniGameWins:
+                    questProgress.TaskProgress = before == int.MaxValue ? before : before + 1;
+                    break;
+                case QuestObjective.MiniGameWinnings:
+                    if (task.TargetId != Guid.Empty && task.TargetId != currencyItemId) continue;
+                    questProgress.TaskProgress = (int)Math.Min(int.MaxValue, Math.Max(0L, before) + netWin);
+                    break;
+                case QuestObjective.MiniGameLevel:
+                    questProgress.TaskProgress = Math.Max(before, currentLevel);
+                    break;
+                default:
+                    continue;
+            }
+
+            if (questProgress.TaskProgress >= Math.Max(1, task.Quantity))
+            {
+                CompleteQuestTask(questProgress.QuestId, questProgress.TaskId);
+            }
+            else if (questProgress.TaskProgress != before)
+            {
+                PacketSender.SendQuestsProgress(this);
+                PacketSender.SendChatMsg(this,
+                    $"[{game}] {quest.Name}: {questProgress.TaskProgress}/{Math.Max(1, task.Quantity)}",
+                    ChatMessageType.Quest);
+            }
+        }
+    }
 }
