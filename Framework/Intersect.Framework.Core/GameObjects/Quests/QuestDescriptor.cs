@@ -251,6 +251,18 @@ public partial class QuestTaskDescriptor
             case QuestObjective.PokerPlayHands:
                 taskString = $"Play {Quantity} Poker hand(s). {Description}".Trim();
                 break;
+            case QuestObjective.BlackjackWinHands:
+                taskString = $"Win {Quantity} Blackjack hand(s). {Description}".Trim();
+                break;
+            case QuestObjective.BlackjackWinAmount:
+                taskString = $"Win {Quantity} net Blackjack currency. {Description}".Trim();
+                break;
+            case QuestObjective.BlackjackReachLevel:
+                taskString = $"Reach Blackjack level {Quantity}. {Description}".Trim();
+                break;
+            case QuestObjective.BlackjackPlayHands:
+                taskString = $"Play {Quantity} Blackjack hand(s). {Description}".Trim();
+                break;
         }
 
         return taskString;
