@@ -204,8 +204,12 @@ internal sealed class MiniGameCommandDialog : Form
     {
         var picker = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill, DropDownWidth = 500 };
         picker.Items.Add(new SoundChoice("", "None / Aucun"));
-        foreach (var sound in Intersect.Editor.Content.ContentManager.SmartSortedSoundNames ?? Array.Empty<string>())
-            picker.Items.Add(new SoundChoice(sound, sound));
+        var soundDirectory = Path.Combine("resources", "sounds");
+        var sounds = Directory.Exists(soundDirectory)
+            ? Directory.GetFiles(soundDirectory, "*.wav").Select(Path.GetFileName).Where(name => !string.IsNullOrWhiteSpace(name))
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase).Cast<string>()
+            : Enumerable.Empty<string>();
+        foreach (var sound in sounds) picker.Items.Add(new SoundChoice(sound, sound));
         var selected = picker.Items.Cast<SoundChoice>().FirstOrDefault(s => string.Equals(s.File, file ?? "", StringComparison.OrdinalIgnoreCase));
         if (selected == null) { selected = new SoundChoice(file ?? "", "Missing sound: " + file); picker.Items.Add(selected); }
         picker.SelectedItem = selected; return picker;
@@ -219,7 +223,7 @@ internal sealed class MiniGameCommandDialog : Form
     }
     private static void AddSection(TableLayoutPanel layout, int row, string text)
     {
-        var label = new Label { Text = text, AutoSize = true, Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
+        var label = new Label { Text = text, AutoSize = true, Font = new Font(SystemFonts.MessageBoxFont!, FontStyle.Bold),
             ForeColor = DrawingColor.Gold, Margin = new Padding(3, 14, 3, 8) };
         layout.Controls.Add(label, 0, row); layout.SetColumnSpan(label, 2);
     }
