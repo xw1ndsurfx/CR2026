@@ -75,7 +75,7 @@ internal sealed partial class PokerWindow : Base
         _allIn = Button("AllIn", Strings.Poker.AllIn, 521, 634, 110,
             () => Send(_state?.CanRaise == true ? PokerRequestKind.RaiseTo : PokerRequestKind.Call, _state?.MaximumRaiseTo ?? 0));
         Button("Refresh", Strings.Poker.Refresh, 643, 634, 112, () => Send(PokerRequestKind.Refresh));
-        Button("Leave", Strings.Poker.Leave, 767, 634, 181, () => ExitRequested = true);
+        Button("Leave", Strings.Poker.Leave, 767, 634, 181, RequestExit);
         _experience = Label("Experience", 52, 678, 640, 28);
         _backTray = new PokerFlatPanel(_content, "BackPicker") { IsHidden = true };
         Place(_backTray, 168, 398, 664, 150);
@@ -163,6 +163,7 @@ internal sealed partial class PokerWindow : Base
         _experience.Text = level == MiniGameProgression.MaximumLevel ? Strings.PokerScene.Mastered.ToString(level) :
             Strings.PokerScene.Progress.ToString(level, state.Experience - baseXp, toNext);
         if (_lastLevel > 0 && level > _lastLevel) _levelUpUntil = Environment.TickCount64 + 5000;
+        UpdateSounds(state, me, level);
         _lastLevel = level; _levelUp.Text = Environment.TickCount64 < _levelUpUntil ? Strings.PokerScene.LevelUp.ToString(level) : "";
         if (model.Victories.Observe(model.Current.TableInstanceId, me.PlayerId, state.HandId,
                 state.Stage == PokerStage.Finished, state.NetWin)) _victory.Play(state.VictoryAnimationId);

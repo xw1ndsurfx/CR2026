@@ -94,7 +94,13 @@ public sealed partial class PokerTableState
         NpcIds.All(id => Seats.Any(s => s.PlayerId == id)) &&
         (DealerNpcId == Guid.Empty || NpcIds.Contains(DealerNpcId)) &&
         Decisions is { Length: <= 12 } && Decisions.All(d => d != null && d.IsValid) &&
-        Decisions.Select(d => d.Sequence).Distinct().Count() == Decisions.Length;
+        Decisions.Select(d => d.Sequence).Distinct().Count() == Decisions.Length &&
+        ValidSound(DealSound) && ValidSound(CheckSound) && ValidSound(CallSound) && ValidSound(RaiseSound) &&
+        ValidSound(FoldSound) && ValidSound(AllInSound) && ValidSound(WinSound) && ValidSound(LoseSound) &&
+        ValidSound(LevelUpSound) && ValidSound(JoinSound) && ValidSound(LeaveSound);
+
+    private static bool ValidSound(string? value) => value != null && value.Length <= PokerSoundSet.MaximumFileLength &&
+        value.All(c => !char.IsControl(c));
 
     private static bool ValidCards(int[]? cards, int maximum) => cards != null &&
         cards.Length <= maximum && cards.All(c => c is >= 0 and < 52) && cards.Distinct().Count() == cards.Length;
