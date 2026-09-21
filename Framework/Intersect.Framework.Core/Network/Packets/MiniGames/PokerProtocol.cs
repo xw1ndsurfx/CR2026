@@ -42,7 +42,7 @@ public sealed partial class PokerDecisionState
     [Key(5)] public bool Automatic { get; set; }
     [IgnoreMember] public bool IsValid => Sequence > 0 && PlayerId != Guid.Empty &&
         Name is { Length: >= 1 and <= 32 } && Amount >= 0 &&
-        Action is "deal" or "check" or "call" or "raise" or "fold" or "wins" or "leave";
+        Action is "deal" or "check" or "call" or "raise" or "fold" or "allin" or "wins" or "leave";
 }
 
 [MessagePackObject]

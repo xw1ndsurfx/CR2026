@@ -116,14 +116,20 @@ internal sealed class PokerFundedTable
     {
         if (Pending) return PokerError.IllegalAction;
         var before = Snapshot(player); var result = _table.Act(player, hand, revision, action, amount, now);
-        if (Current.Revision != before.Revision)
+        var after = Current;
+        if (after.Revision != before.Revision)
         {
             var actor = before.Seats.FirstOrDefault(s => s.Seat == before.ActingSeat);
             if (actor != null)
             {
-                if (result == PokerError.None) Decision(actor.PlayerId,
-                    action switch { PokerAction.Fold => "fold", PokerAction.Check => "check", PokerAction.Call => "call", _ => "raise" },
-                    action == PokerAction.RaiseTo ? amount : action == PokerAction.Call ? before.ToCall : 0);
+                if (result == PokerError.None)
+                {
+                    var allIn = after.Seats.FirstOrDefault(s => s.PlayerId == actor.PlayerId)?.AllIn == true &&
+                        action is PokerAction.Call or PokerAction.RaiseTo;
+                    Decision(actor.PlayerId,
+                        allIn ? "allin" : action switch { PokerAction.Fold => "fold", PokerAction.Check => "check", PokerAction.Call => "call", _ => "raise" },
+                        action == PokerAction.RaiseTo ? amount : action == PokerAction.Call ? before.ToCall : 0);
+                }
                 else if (now >= before.Deadline) Decision(actor.PlayerId, actor.StreetBet >= before.CurrentBet ? "check" : "fold", automatic: true);
             }
             AdditionalFolds(before, actor?.PlayerId ?? Guid.Empty); ++Version;
