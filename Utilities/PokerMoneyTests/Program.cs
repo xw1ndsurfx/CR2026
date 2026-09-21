@@ -82,7 +82,7 @@ Test("Unlimited NPC bankroll never runs out and never credits a finite house", f
     {
         var s=f.Money.OpenNpc(Guid.NewGuid(),f.TableId,f.Currency,"infinite-house",0,100,true);
         Check(s!=null && s.Amount==100,"Unlimited NPC was not funded");
-        f.Money.Release(s.Id);
+        f.Money.Release(s!.Id);
     }
     Check(f.Money.HouseAvailable("infinite-house")==0,"Unlimited NPC polluted a finite house reserve");
     f.Restart();
