@@ -65,9 +65,24 @@ public static class PokerNpcPolicy
         var opponentAllIn = view.Seats.Any(s => s.PlayerId != npcId && s.InHand && !s.Folded && s.AllIn && s.StreetBet == view.CurrentBet);
         if (opponentAllIn)
         {
-            var cheapAllIn = view.ToCall <= Math.Max(bigBlind * 3, me.Chips / 10);
-            var strongEnough = strength >= 60 || strength >= 45 && cheapAllIn;
-            return strongEnough || roll < 4 ? (PokerAction.Call, 0) : (PokerAction.Fold, 0);
+            // Do not alter cards or showdown odds. Defend against repetitive shove/bluff play
+            // by varying the CALL threshold from the NPC's own hand, price and remaining stack.
+            var potAfterCall = Math.Max(1L, view.Pot + view.ToCall);
+            var pricePercent = (int)Math.Min(100, view.ToCall * 100L / potAfterCall);
+            var stackPercent = me.Chips <= 0 ? 100 : (int)Math.Min(100, view.ToCall * 100L / me.Chips);
+            var callChance = strength switch
+            {
+                >= 75 => 98,
+                >= 60 => 90,
+                >= 45 => 68,
+                >= 30 => 42,
+                _ => 18,
+            };
+            if (pricePercent <= 25) callChance += 12;
+            if (view.ToCall <= bigBlind * 3) callChance += 10;
+            if (stackPercent >= 75 && strength < 45) callChance -= 8;
+            callChance = Math.Clamp(callChance, 10, 99);
+            return roll < callChance ? (PokerAction.Call, 0) : (PokerAction.Fold, 0);
         }
 
         var inexpensive = view.ToCall <= Math.Max(bigBlind * 2, me.Chips / 20);

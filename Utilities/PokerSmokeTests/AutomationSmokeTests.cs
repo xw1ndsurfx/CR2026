@@ -148,9 +148,11 @@ internal static class AutomationSmokeTests
                     new PokerSeatView(0, human, "Human", 0, 900, 1000, true, false, true, false, []),
                     new PokerSeatView(1, npc, "NPC", 990, 10, 10, true, false, false, false, [])
                 ], []);
-            var weak = PokerNpcPolicy.Choose(View([0, 18]), npc, 10, 50);
+            var weakFold = PokerNpcPolicy.Choose(View([0, 18]), npc, 10, 50);
+            var weakBluffCatch = PokerNpcPolicy.Choose(View([0, 18]), npc, 10, 5);
             var strong = PokerNpcPolicy.Choose(View([12, 25]), npc, 10, 50);
-            Check(weak.Action == PokerAction.Fold, "Weak NPC called an expensive all-in");
+            Check(weakFold.Action == PokerAction.Fold, "Weak NPC called too freely against an expensive all-in");
+            Check(weakBluffCatch.Action == PokerAction.Call, "Weak NPC never bluff-catches repetitive all-ins");
             Check(strong.Action == PokerAction.Call, "Strong NPC refused an all-in it should defend");
             var deck = PokerCards.ShuffleDeck();
             Check(deck.Length == 52 && deck.Distinct().Count() == 52 && deck.All(c => c is >= 0 and < 52),
