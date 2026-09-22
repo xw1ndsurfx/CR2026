@@ -37,6 +37,7 @@ internal sealed class MinimapHud : Base
     private readonly Label _west;
     private readonly Label _legend;
     private readonly Button _expandButton;
+    private readonly Button _worldMapButton;
     private bool _expanded;
 
     private int Radius => _expanded ? ExpandedRadius : CompactRadius;
@@ -44,7 +45,7 @@ internal sealed class MinimapHud : Base
     private int GridPixels => GridSize * Cell;
     private int GridX => (Width - GridPixels) / 2;
 
-    public MinimapHud(Base parent) : base(parent, "MinimapHud")
+    public MinimapHud(Base parent, Action openWorldMap) : base(parent, "MinimapHud")
     {
         SetSize(CompactWidth, CompactHeight);
         MouseInputEnabled = false;
@@ -73,8 +74,18 @@ internal sealed class MinimapHud : Base
             FontSize = 10,
             MouseInputEnabled = true,
         };
-        _expandButton.SetBounds(207, 5, 24, 22);
+        _expandButton.SetBounds(Width - 33, 5, 24, 22);
         _expandButton.Clicked += (_, _) => ToggleExpanded();
+
+        _worldMapButton = new Button(this, "WorldMapButton")
+        {
+            Text = "World Map",
+            Font = Skin.DefaultFont,
+            FontSize = 9,
+            MouseInputEnabled = true,
+        };
+        _worldMapButton.SetBounds(12, Height - 48, 92, 22);
+        _worldMapButton.Clicked += (_, _) => openWorldMap();
 
         UpdateLayout();
         Update();
@@ -112,7 +123,8 @@ internal sealed class MinimapHud : Base
         _mapName.SetBounds(12, 5, Width - 50, 22);
         _expandButton.SetBounds(Width - 33, 5, 24, 22);
         _coords.SetBounds(12, Height - 24, Width - 24, 18);
-        _legend.SetBounds(12, Height - 45, Width - 24, 18);
+        _legend.SetBounds(112, Height - 45, Width - 124, 18);
+        _worldMapButton.SetBounds(12, Height - 49, 92, 24);
 
         var gridX = GridX;
         var gridPixels = GridPixels;
