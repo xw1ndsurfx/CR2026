@@ -326,7 +326,7 @@ public partial class MenuContainer : Panel
         {
             var container = containers[index];
             container.Dock = Pos.None;
-            container.Margin = new Padding(size: 0);
+            container.Margin = Margin.Zero;
             container.Padding = new Padding(size: 0);
             container.MinimumSize = new Point(buttonWidth, buttonHeight);
             container.MaximumSize = new Point(buttonWidth, buttonHeight);
@@ -334,7 +334,7 @@ public partial class MenuContainer : Panel
 
             var button = buttons[index];
             button.Dock = Pos.None;
-            button.Margin = new Padding(size: 0);
+            button.Margin = Margin.Zero;
             button.SetBounds(0, 0, buttonWidth, buttonHeight);
         }
 
