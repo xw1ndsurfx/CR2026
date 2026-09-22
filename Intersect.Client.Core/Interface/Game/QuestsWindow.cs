@@ -14,6 +14,8 @@ using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.GameObjects;
 using Intersect.Utilities;
+using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
+using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 
 namespace Intersect.Client.Interface.Game;
 
@@ -45,18 +47,22 @@ public partial class QuestsWindow
     //QuestHud
     private RichLabel mQuestTaskHudLabel;
     private Label mQuestTaskHudTemplate;
+    private Label mQuestTaskHudHeader;
+    private Label mQuestTaskHudTitle;
+    private Label mQuestTaskHudProgressLabel;
     private Guid _lastHudQuestId = Guid.Empty;
     private Guid _lastHudTaskId = Guid.Empty;
     private int _lastHudProgress = -1;
     private string _lastHudText = "";
-    private Label mQuestTaskHudTemplateGreen;
-    private Base mQuestTaskHudPanel;
+    private QuestTrackerPanel mQuestTaskHudPanel;
 
     public void DisposeHud()
     {
         mQuestTaskHudLabel = null;
         mQuestTaskHudTemplate = null;
-        mQuestTaskHudTemplateGreen = null;
+        mQuestTaskHudHeader = null;
+        mQuestTaskHudTitle = null;
+        mQuestTaskHudProgressLabel = null;
 
         mQuestTaskHudPanel?.Dispose();
         mQuestTaskHudPanel = null;
@@ -102,53 +108,63 @@ public partial class QuestsWindow
         _questList.IsDisabled = false;
         _questList.IsVisibleInTree = true;
 
-        // === HUD Quête CONSTRUCTEUR ===
-
-        // 0) Panel conteneur (créé UNE SEULE FOIS)
-        mQuestTaskHudPanel = new Base(gameCanvas)
+        // === Quest Tracker HUD ===
+        // A compact RPG-style tracker that sits beside the minimap instead of on top of it.
+        mQuestTaskHudPanel = new QuestTrackerPanel(gameCanvas)
         {
-            Width = 400,
-            Height = 200,
+            Width = 340,
+            Height = 156,
+            IsHidden = true,
         };
+        mQuestTaskHudPanel.MouseInputEnabled = false;
 
-        // (Optionnel debug) pour voir la zone du HUD
-        // mQuestTaskHudPanel.ShouldDrawBackground = true;
-        // mQuestTaskHudPanel.BackgroundColor = new Color(120, 0, 0, 0);
+        mQuestTaskHudHeader = new Label(mQuestTaskHudPanel, "QuestTrackerHeader")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? mQuestDescTemplateLabel.Font,
+            FontSize = 9,
+            TextColorOverride = new Color(225, 190, 100, 255),
+            Text = Strings.QuestLog.CurrentTask,
+            TextAlign = Pos.Left | Pos.CenterV,
+            MouseInputEnabled = false,
+        };
+        mQuestTaskHudHeader.SetBounds(18, 9, 304, 18);
 
-        // 1) Positionne le panel
-        mQuestTaskHudPanel.SetBounds(
-            gameCanvas.Width - mQuestTaskHudPanel.Width - 20,
-            20,
-            mQuestTaskHudPanel.Width,
-            mQuestTaskHudPanel.Height
-        );
+        mQuestTaskHudTitle = new Label(mQuestTaskHudPanel, "QuestTrackerTitle")
+        {
+            AutoSizeToContents = false,
+            Font = mQuestTaskHudHeader.Font,
+            FontSize = 12,
+            TextColorOverride = Color.White,
+            TextAlign = Pos.Left | Pos.CenterV,
+            MouseInputEnabled = false,
+        };
+        mQuestTaskHudTitle.SetBounds(18, 27, 304, 24);
 
-        // 2) RichLabel dans le panel (UNE SEULE FOIS)
         mQuestTaskHudLabel = new RichLabel(mQuestTaskHudPanel)
         {
-            Dock = Pos.Fill
+            MouseInputEnabled = false,
         };
+        mQuestTaskHudLabel.SetBounds(18, 55, 304, 56);
 
-        // évite que ça capte des clics
-        mQuestTaskHudPanel.MouseInputEnabled = false;
-        mQuestTaskHudLabel.MouseInputEnabled = false;
+        mQuestTaskHudProgressLabel = new Label(mQuestTaskHudPanel, "QuestTrackerProgress")
+        {
+            AutoSizeToContents = false,
+            Font = mQuestTaskHudHeader.Font,
+            FontSize = 9,
+            TextColorOverride = new Color(120, 230, 145, 255),
+            TextAlign = Pos.Left | Pos.CenterV,
+            MouseInputEnabled = false,
+        };
+        mQuestTaskHudProgressLabel.SetBounds(18, 113, 304, 18);
 
-        // 3) Templates (UNE SEULE FOIS)
         mQuestTaskHudTemplate = new Label(null)
         {
-            TextColor = Color.White,
-            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? mQuestDescTemplateLabel.Font,
-            Width = mQuestTaskHudPanel.Width
+            TextColor = new Color(220, 225, 230, 255),
+            Font = mQuestTaskHudHeader.Font,
+            Width = 304,
         };
 
-        mQuestTaskHudTemplateGreen = new Label(null)
-        {
-            TextColor = Color.ForestGreen,
-            Font = mQuestTaskHudTemplate.Font,
-            Width = mQuestTaskHudPanel.Width
-        };
-
-        // 4) au-dessus
         mQuestTaskHudPanel.BringToFront();
 
     }
@@ -230,97 +246,259 @@ public partial class QuestsWindow
             UpdateSelectedQuest();
         }
 
-        // --- HUD Quête ---
-        if (mQuestTaskHudPanel == null || mQuestTaskHudLabel == null ||
-            mQuestTaskHudTemplate == null || mQuestTaskHudTemplateGreen == null ||
+        // --- Quest Tracker HUD ---
+        if (mQuestTaskHudPanel == null ||
+            mQuestTaskHudLabel == null ||
+            mQuestTaskHudTemplate == null ||
+            mQuestTaskHudTitle == null ||
+            mQuestTaskHudProgressLabel == null ||
             Globals.Me == null)
         {
             return;
         }
 
-        // Reposition si résolution/canvas change
-        var parentWidth = mQuestTaskHudPanel.Parent?.Width ?? 0;
-        if (parentWidth > 0)
-        {
-            var desiredX = parentWidth - mQuestTaskHudPanel.Width - 20;
-            if (mQuestTaskHudPanel.X != desiredX)
-            {
-                mQuestTaskHudPanel.SetBounds(desiredX, 20, mQuestTaskHudPanel.Width, mQuestTaskHudPanel.Height);
-            }
-        }
-
-        // ✅ resync templates à chaque frame (coût négligeable)
-        mQuestTaskHudTemplate.Width = mQuestTaskHudPanel.Width;
-        mQuestTaskHudTemplateGreen.Width = mQuestTaskHudPanel.Width;
-
-
+        UpdateQuestTrackerPosition();
         mQuestTaskHudPanel.BringToFront();
 
-        // Pas de quête sélectionnée/progrès → clear une fois
         if (mSelectedQuest == null || !Globals.Me.QuestProgress.ContainsKey(mSelectedQuest.Id))
         {
-            if (_lastHudQuestId != Guid.Empty)
-            {
-                mQuestTaskHudLabel.ClearText();
-                _lastHudQuestId = Guid.Empty;
-                _lastHudTaskId = Guid.Empty;
-                _lastHudProgress = -1;
-                _lastHudText = "";
-            }
+            HideQuestTracker();
             return;
         }
 
         var playerQuest = Globals.Me.QuestProgress[mSelectedQuest.Id];
         var currentTask = mSelectedQuest.Tasks.FirstOrDefault(t => t.Id == playerQuest.TaskId);
-        if (currentTask == null) return;
+        if (currentTask == null)
+        {
+            HideQuestTracker();
+            return;
+        }
 
-        var mainText = currentTask.Description ?? "";
+        var mainText = currentTask.Description ?? string.Empty;
+        if (mainText.Length > 600)
+        {
+            mainText = mainText[..600] + "...";
+        }
 
-        // clamp anti-gros textes
-        if (mainText.Length > 800)
-            mainText = mainText.Substring(0, 800) + "...";
+        mainText = WrapText(mainText, 46);
 
-        string progressText = "";
-        if (currentTask.Objective == QuestObjective.KillNpcs)
-            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {NPCDescriptor.GetName(currentTask.TargetId)}";
-        else if (currentTask.Objective == QuestObjective.GatherItems)
-            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} {ItemDescriptor.GetName(currentTask.TargetId)}";
-        else if (currentTask.Objective == QuestObjective.PokerWinHands)
-            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} Poker hands won";
-        else if (currentTask.Objective == QuestObjective.PokerWinAmount)
-            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} net Poker winnings";
-        else if (currentTask.Objective == QuestObjective.PokerReachLevel)
-            progressText = $"Poker level {playerQuest.TaskProgress} / {currentTask.Quantity}";
-        else if (currentTask.Objective == QuestObjective.PokerPlayHands)
-            progressText = $"{playerQuest.TaskProgress} / {currentTask.Quantity} Poker hands played";
+        var progressText = string.Empty;
+        var showProgressBar = currentTask.Quantity > 0;
+        var progressRatio = 0f;
 
-        // cache
+        if (showProgressBar)
+        {
+            progressRatio = Math.Clamp(
+                playerQuest.TaskProgress / (float)Math.Max(1, currentTask.Quantity),
+                0f,
+                1f
+            );
+        }
+
+        progressText = currentTask.Objective switch
+        {
+            QuestObjective.KillNpcs =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} {NPCDescriptor.GetName(currentTask.TargetId)}",
+            QuestObjective.GatherItems =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} {ItemDescriptor.GetName(currentTask.TargetId)}",
+            QuestObjective.PokerWinHands =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} Poker hands won",
+            QuestObjective.PokerWinAmount =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} net Poker winnings",
+            QuestObjective.PokerReachLevel =>
+                $"Poker level {playerQuest.TaskProgress} / {currentTask.Quantity}",
+            QuestObjective.PokerPlayHands =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} Poker hands played",
+            QuestObjective.BlackjackWinHands =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} Blackjack hands won",
+            QuestObjective.BlackjackWinAmount =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} net Blackjack winnings",
+            QuestObjective.BlackjackReachLevel =>
+                $"Blackjack level {playerQuest.TaskProgress} / {currentTask.Quantity}",
+            QuestObjective.BlackjackPlayHands =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} Blackjack hands played",
+            _ => string.Empty,
+        };
+
+        if (string.IsNullOrEmpty(progressText))
+        {
+            showProgressBar = false;
+        }
+
+        var hudTextKey = mainText + "\n" + progressText;
         if (_lastHudQuestId == mSelectedQuest.Id &&
             _lastHudTaskId == currentTask.Id &&
             _lastHudProgress == playerQuest.TaskProgress &&
-            _lastHudText == mainText)
+            _lastHudText == hudTextKey)
         {
+            mQuestTaskHudPanel.IsHidden = false;
             return;
         }
 
         _lastHudQuestId = mSelectedQuest.Id;
         _lastHudTaskId = currentTask.Id;
         _lastHudProgress = playerQuest.TaskProgress;
-        _lastHudText = mainText;
+        _lastHudText = hudTextKey;
 
-        // rebuild
+        mQuestTaskHudPanel.IsHidden = false;
+        mQuestTaskHudTitle.Text = mSelectedQuest.Name;
+        mQuestTaskHudProgressLabel.Text = progressText;
+        mQuestTaskHudProgressLabel.IsHidden = string.IsNullOrEmpty(progressText);
+
         mQuestTaskHudLabel.ClearText();
-        mQuestTaskHudLabel.AddText(mainText, mQuestTaskHudTemplate);
-
-        if (!string.IsNullOrEmpty(progressText))
+        if (!string.IsNullOrWhiteSpace(mainText))
         {
-            mQuestTaskHudLabel.AddLineBreak();
-            mQuestTaskHudLabel.AddText(progressText, mQuestTaskHudTemplateGreen);
+            mQuestTaskHudLabel.AddText(mainText, mQuestTaskHudTemplate);
         }
 
+        mQuestTaskHudPanel.ShowProgressBar = showProgressBar;
+        mQuestTaskHudPanel.ProgressRatio = progressRatio;
         mQuestTaskHudLabel.Invalidate();
         mQuestTaskHudPanel.Invalidate();
 
+
+    private void UpdateQuestTrackerPosition()
+    {
+        if (mQuestTaskHudPanel?.Parent == null)
+        {
+            return;
+        }
+
+        var parentWidth = mQuestTaskHudPanel.Parent.Width;
+        var parentHeight = mQuestTaskHudPanel.Parent.Height;
+
+        var desiredX = Math.Max(12, parentWidth - mQuestTaskHudPanel.Width - 20);
+        var desiredY = 20;
+
+        if (global::Intersect.Client.Interface.Interface.HasInGameUI)
+        {
+            var minimap = global::Intersect.Client.Interface.Interface.GameUi.MinimapHud;
+            if (minimap != null && !minimap.IsHidden)
+            {
+                desiredX = Math.Max(12, minimap.X - mQuestTaskHudPanel.Width - 14);
+                desiredY = Math.Max(12, minimap.Y + 8);
+            }
+        }
+
+        desiredY = Math.Min(
+            desiredY,
+            Math.Max(12, parentHeight - mQuestTaskHudPanel.Height - 12)
+        );
+
+        if (mQuestTaskHudPanel.X != desiredX || mQuestTaskHudPanel.Y != desiredY)
+        {
+            mQuestTaskHudPanel.SetBounds(
+                desiredX,
+                desiredY,
+                mQuestTaskHudPanel.Width,
+                mQuestTaskHudPanel.Height
+            );
+        }
+    }
+
+    private void HideQuestTracker()
+    {
+        if (mQuestTaskHudPanel != null)
+        {
+            mQuestTaskHudPanel.IsHidden = true;
+            mQuestTaskHudPanel.ShowProgressBar = false;
+        }
+
+        if (_lastHudQuestId == Guid.Empty)
+        {
+            return;
+        }
+
+        mQuestTaskHudLabel?.ClearText();
+        if (mQuestTaskHudTitle != null)
+        {
+            mQuestTaskHudTitle.Text = string.Empty;
+        }
+
+        if (mQuestTaskHudProgressLabel != null)
+        {
+            mQuestTaskHudProgressLabel.Text = string.Empty;
+        }
+
+        _lastHudQuestId = Guid.Empty;
+        _lastHudTaskId = Guid.Empty;
+        _lastHudProgress = -1;
+        _lastHudText = string.Empty;
+    }
+
+    private sealed class QuestTrackerPanel : Base
+    {
+        private float _progressRatio;
+
+        public QuestTrackerPanel(Base parent) : base(parent, "QuestTaskTracker")
+        {
+            MouseInputEnabled = false;
+            KeyboardInputEnabled = false;
+            ShouldDrawBackground = false;
+        }
+
+        public bool ShowProgressBar { get; set; }
+
+        public float ProgressRatio
+        {
+            get => _progressRatio;
+            set => _progressRatio = Math.Clamp(value, 0f, 1f);
+        }
+
+        protected override void Render(SkinBase skin)
+        {
+            base.Render(skin);
+            var renderer = skin.Renderer;
+
+            Fill(renderer, new Color(8, 12, 17, 232), 0, 0, Width, Height);
+            Fill(renderer, new Color(225, 180, 70, 255), 0, 0, 4, Height);
+            Outline(renderer, new Color(105, 118, 130, 220), 0, 0, Width, Height, 1);
+            Fill(renderer, new Color(55, 63, 72, 180), 14, 51, Width - 28, 1);
+
+            if (ShowProgressBar)
+            {
+                const int barX = 18;
+                var barY = Height - 15;
+                var barWidth = Width - 36;
+                const int barHeight = 6;
+
+                Fill(renderer, new Color(32, 39, 46, 255), barX, barY, barWidth, barHeight);
+                var fillWidth = (int)Math.Round(barWidth * ProgressRatio);
+                if (fillWidth > 0)
+                {
+                    Fill(renderer, new Color(95, 205, 125, 255), barX, barY, fillWidth, barHeight);
+                }
+
+                Outline(renderer, new Color(85, 95, 104, 255), barX, barY, barWidth, barHeight, 1);
+            }
+        }
+
+        private static void Outline(
+            RendererBase renderer,
+            Color color,
+            int x,
+            int y,
+            int width,
+            int height,
+            int thickness
+        )
+        {
+            Fill(renderer, color, x, y, width, thickness);
+            Fill(renderer, color, x, y + height - thickness, width, thickness);
+            Fill(renderer, color, x, y, thickness, height);
+            Fill(renderer, color, x + width - thickness, y, thickness, height);
+        }
+
+        private static void Fill(RendererBase renderer, Color color, int x, int y, int width, int height)
+        {
+            if (width <= 0 || height <= 0)
+            {
+                return;
+            }
+
+            renderer.DrawColor = color;
+            renderer.DrawFilledRect(new Rectangle(x, y, width, height));
+        }
     }
 
 
@@ -628,12 +806,7 @@ public partial class QuestsWindow
         mQuestsWindow.IsHidden = true;
         mSelectedQuest = null;
 
-        // Optionnel : vider le HUD quand on cache
-        mQuestTaskHudLabel?.ClearText();
-        _lastHudQuestId = Guid.Empty;
-        _lastHudTaskId = Guid.Empty;
-        _lastHudProgress = -1;
-        _lastHudText = "";
+        HideQuestTracker();
 
     }
 

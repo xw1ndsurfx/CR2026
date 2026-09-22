@@ -149,6 +149,8 @@ public partial class GameInterface : MutableInterface
 
     public MenuContainer GameMenu { get; private set; }
 
+    internal MinimapHud? MinimapHud => _minimapHud;
+
     public void InitGameGui()
     {
         mChatBox = new Chatbox(GameCanvas, this);
