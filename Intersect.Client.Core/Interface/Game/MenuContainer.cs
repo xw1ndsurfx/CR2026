@@ -144,21 +144,20 @@ public partial class MenuContainer : Panel
 
         _newsButtonContainer = new ImagePanel(parent: this, name: nameof(_newsButtonContainer))
         {
-            Dock = Pos.Left,
-            MaximumSize = new Point(x: 36, y: 36),
-            MinimumSize = new Point(x: 36, y: 36),
-            Padding = new Padding(size: 2),
-            Size = new Point(x: 36, y: 36),
-            TextureFilename = "menuitem.png",
+            Dock = Pos.Top,
+            MaximumSize = new Point(x: 71, y: 55),
+            MinimumSize = new Point(x: 71, y: 55),
+            Padding = new Padding(size: 0),
+            Size = new Point(x: 71, y: 55),
         };
-        _newsButton = new Button(parent: _newsButtonContainer, name: nameof(_newsButton))
+        _newsButton = new Button(parent: _newsButtonContainer, name: nameof(_newsButton), disableText: true)
         {
             Alignment = [Alignments.Center],
-            Size = new Point(x: 32, y: 32),
-            Text = "N",
-            Font = Skin.DefaultFont,
-            FontSize = 13,
+            Size = new Point(x: 71, y: 55),
         };
+        _newsButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_News.png");
+        _newsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_News_over.png");
+        _newsButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_News_down.png");
         _newsButton.SetToolTipText(text: "Corps Royaux News");
         _newsButton.Clicked += NewsButton_Clicked;
 
@@ -277,6 +276,7 @@ public partial class MenuContainer : Panel
             action: () =>
             {
                 LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer!.GetResolutionString());
+                ApplyCorpsRoyauxVerticalMenuLayout();
             }
         );
 
@@ -288,6 +288,65 @@ public partial class MenuContainer : Panel
         _questsWindow = new QuestsWindow(gameCanvas: gameCanvas);
         _mapItemWindow = new MapItemWindow(gameCanvas: gameCanvas);
         _guildWindow = new GuildWindow(gameCanvas: gameCanvas);
+    }
+
+    private void ApplyCorpsRoyauxVerticalMenuLayout()
+    {
+        const int buttonWidth = 71;
+        const int buttonHeight = 55;
+        const int buttonSpacing = 5;
+
+        var containers = new[]
+        {
+            _inventoryButtonContainer,
+            _spellsButtonContainer,
+            _characterButtonContainer,
+            _questsButtonContainer,
+            _newsButtonContainer,
+            _friendsButtonContainer,
+            _partyButtonContainer,
+            _guildButtonContainer,
+            _escapeMenuButtonContainer,
+        };
+
+        var buttons = new[]
+        {
+            _inventoryButton,
+            _spellsButton,
+            _characterButton,
+            _questsButton,
+            _newsButton,
+            _friendsButton,
+            _partyButton,
+            _guildButton,
+            _escapeMenuButton,
+        };
+
+        for (var index = 0; index < containers.Length; ++index)
+        {
+            var container = containers[index];
+            container.Dock = Pos.None;
+            container.Margin = new Padding(size: 0);
+            container.Padding = new Padding(size: 0);
+            container.MinimumSize = new Point(buttonWidth, buttonHeight);
+            container.MaximumSize = new Point(buttonWidth, buttonHeight);
+            container.SetBounds(0, index * (buttonHeight + buttonSpacing), buttonWidth, buttonHeight);
+
+            var button = buttons[index];
+            button.Dock = Pos.None;
+            button.Margin = new Padding(size: 0);
+            button.SetBounds(0, 0, buttonWidth, buttonHeight);
+        }
+
+        // The News button uses the dedicated Corps Royaux GUI art supplied with the client.
+        _newsButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_News.png");
+        _newsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_News_over.png");
+        _newsButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_News_down.png");
+
+        SetSize(
+            buttonWidth,
+            containers.Length * buttonHeight + (containers.Length - 1) * buttonSpacing
+        );
     }
 
     //Methods
