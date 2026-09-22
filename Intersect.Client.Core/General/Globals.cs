@@ -74,6 +74,9 @@ public static partial class Globals
     //Map/Chunk Array
     public static Guid[,]? MapGrid;
 
+    // Detailed map grid metadata shared with the in-game World Map.
+    public static string[,]? EditorMapGrid;
+
     public static long MapGridHeight;
 
     public static long MapGridWidth;
