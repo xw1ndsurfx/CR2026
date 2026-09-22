@@ -18,6 +18,8 @@ public partial class EventPage
 
     public Guid AnimationId { get; set; }
 
+    public bool ShowAnimationOnWorldMap { get; set; }
+
     public Dictionary<Guid, List<EventCommand>> CommandLists { get; set; } = new();
 
     public ConditionLists ConditionLists { get; set; } = new();

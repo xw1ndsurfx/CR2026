@@ -444,6 +444,11 @@ public partial class FrmEvent : Form
         CurrentPage.AnimationId = AnimationDescriptor.IdFromList(cmbAnimation.SelectedIndex - 1);
     }
 
+    private void chkWorldMapAnimation_CheckedChanged(object sender, EventArgs e)
+    {
+        CurrentPage.ShowAnimationOnWorldMap = chkWorldMapAnimation.Checked;
+    }
+
     private void chkIsGlobal_CheckedChanged(object sender, EventArgs e)
     {
         MyEvent.Global = chkIsGlobal.Checked;
@@ -1091,6 +1096,7 @@ public partial class FrmEvent : Form
         }
 
         cmbAnimation.SelectedIndex = AnimationDescriptor.ListIndex(CurrentPage.AnimationId) + 1;
+        chkWorldMapAnimation.Checked = CurrentPage.ShowAnimationOnWorldMap;
         chkHideName.Checked = Convert.ToBoolean(CurrentPage.HideName);
         chkDisableInspector.Checked = Convert.ToBoolean(CurrentPage.DisablePreview);
         chkDirectionFix.Checked = Convert.ToBoolean(CurrentPage.DirectionFix);

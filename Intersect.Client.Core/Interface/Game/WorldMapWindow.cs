@@ -11,6 +11,9 @@ using Intersect.Client.General;
 using Intersect.Client.Maps;
 using Intersect.Client.Networking;
 using Intersect.Configuration;
+using Intersect.Framework.Core;
+using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Mapping.Tilesets;
 using Intersect.Framework.Core.GameObjects.Maps;
 using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
@@ -282,7 +285,113 @@ internal sealed class WorldMapWindow : Window
                 }
             }
 
+            DrawWorldMapEventMarkers(renderer, grid, cellWidth, cellHeight);
             DrawPlayerMarker(renderer);
+        }
+
+        private void DrawWorldMapEventMarkers(RendererBase renderer, Guid[,] grid, int cellWidth, int cellHeight)
+        {
+            var mapWidth = Math.Max(1, Options.Instance.Map.MapWidth);
+            var mapHeight = Math.Max(1, Options.Instance.Map.MapHeight);
+
+            for (var gx = 0; gx < grid.GetLength(0); ++gx)
+            {
+                for (var gy = 0; gy < grid.GetLength(1); ++gy)
+                {
+                    var mapId = grid[gx, gy];
+                    if (mapId == Guid.Empty || MapInstance.Get(mapId) is not { IsLoaded: true } map)
+                    {
+                        continue;
+                    }
+
+                    foreach (var eventDescriptor in map.LocalEvents.Values)
+                    {
+                        var page = eventDescriptor.Pages?
+                            .LastOrDefault(candidate =>
+                                candidate.ShowAnimationOnWorldMap &&
+                                candidate.AnimationId != Guid.Empty
+                            );
+
+                        if (page == null ||
+                            !AnimationDescriptor.TryGet(page.AnimationId, out var animationDescriptor))
+                        {
+                            continue;
+                        }
+
+                        var localX = (eventDescriptor.SpawnX + 0.5f) / mapWidth;
+                        var localY = (eventDescriptor.SpawnY + 0.5f) / mapHeight;
+                        var markerX = (int)Math.Round(_panX + (gx + localX) * cellWidth);
+                        var markerY = (int)Math.Round(_panY + (gy + localY) * cellHeight);
+
+                        if (markerX < -64 || markerY < -64 || markerX > Width + 64 || markerY > Height + 64)
+                        {
+                            continue;
+                        }
+
+                        DrawAnimationLayerMarker(renderer, animationDescriptor.Lower, markerX, markerY);
+                        DrawAnimationLayerMarker(renderer, animationDescriptor.Upper, markerX, markerY);
+                    }
+                }
+            }
+        }
+
+        private void DrawAnimationLayerMarker(
+            RendererBase renderer,
+            AnimationLayer layer,
+            int markerX,
+            int markerY
+        )
+        {
+            if (layer == null ||
+                string.IsNullOrWhiteSpace(layer.Sprite) ||
+                layer.XFrames <= 0 ||
+                layer.YFrames <= 0)
+            {
+                return;
+            }
+
+            var texture = Globals.ContentManager.GetTexture(TextureType.Animation, layer.Sprite);
+            if (texture == null)
+            {
+                return;
+            }
+
+            var frameWidth = texture.Width / layer.XFrames;
+            var frameHeight = texture.Height / layer.YFrames;
+            if (frameWidth <= 0 || frameHeight <= 0)
+            {
+                return;
+            }
+
+            var realFrameCount = Math.Max(1, Math.Min(layer.FrameCount, layer.XFrames * layer.YFrames));
+            var frameSpeed = Math.Max(1, layer.FrameSpeed);
+            var frame = (int)((Timing.Global.Milliseconds / frameSpeed) % realFrameCount);
+            var frameX = frame % layer.XFrames;
+            var frameY = frame / layer.XFrames;
+
+            var markerHeight = Math.Clamp((int)Math.Round(30 * _zoom), 20, 52);
+            var markerWidth = Math.Max(12, (int)Math.Round(markerHeight * (frameWidth / (float)frameHeight)));
+
+            var u1 = frameX / (float)layer.XFrames;
+            var v1 = frameY / (float)layer.YFrames;
+            var u2 = (frameX + 1) / (float)layer.XFrames;
+            var v2 = (frameY + 1) / (float)layer.YFrames;
+
+            renderer.DrawColor = Color.White;
+            renderer.DrawTexturedRect(
+                texture,
+                new Rectangle(
+                    markerX - markerWidth / 2,
+                    markerY - markerHeight / 2,
+                    markerWidth,
+                    markerHeight
+                ),
+                Color.White,
+                u1,
+                v1,
+                u2,
+                v2
+            );
         }
 
         private IGameRenderTexture? GetValidPreview(Guid mapId, MapInstance? map)
