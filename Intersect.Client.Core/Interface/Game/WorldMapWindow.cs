@@ -306,14 +306,11 @@ internal sealed class WorldMapWindow : Window
 
                     foreach (var eventDescriptor in map.LocalEvents.Values)
                     {
-                        if (!eventDescriptor.ShowAnimationOnWorldMap &&
-                            !eventDescriptor.Pages.Any(candidate => candidate.ShowAnimationOnWorldMap))
-                        {
-                            continue;
-                        }
-
                         var page = eventDescriptor.Pages?
-                            .LastOrDefault(candidate => candidate.AnimationId != Guid.Empty);
+                            .LastOrDefault(candidate =>
+                                candidate.ShowAnimationOnWorldMap &&
+                                candidate.AnimationId != Guid.Empty
+                            );
 
                         if (page == null ||
                             !AnimationDescriptor.TryGet(page.AnimationId, out var animationDescriptor))
