@@ -221,9 +221,10 @@ public partial class GameInterface : MutableInterface
 
     public void ToggleWorldMap()
     {
-        if (_worldMapWindow == null || _worldMapWindow.IsDisposed)
+        if (_worldMapWindow == null)
         {
             _worldMapWindow = new WorldMapWindow(GameCanvas) { DeleteOnClose = true };
+            _worldMapWindow.Disposed += (_, _) => _worldMapWindow = null;
             _worldMapWindow.Show();
             return;
         }
@@ -627,6 +628,12 @@ public partial class GameInterface : MutableInterface
         if (_shopWindow is { IsVisibleInTree: true })
         {
             CloseShop();
+            closedWindows = true;
+        }
+
+        if (_worldMapWindow is { IsVisibleInTree: true })
+        {
+            _worldMapWindow.Hide();
             closedWindows = true;
         }
 
