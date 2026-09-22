@@ -43,7 +43,7 @@ internal sealed class MiniGameCommandDialog : Form
         var table = new TextBox { Name = "TableId", Text = command.TableId ?? "", MaxLength = 64, Dock = DockStyle.Fill };
         var seats = Number(command.MaxPlayers, 2, 6);
         var currency = CurrencyPicker(command.CurrencyItemId);
-        var chips = Number(command.StartingChips, 1, 1_000_000_000);
+        var chips = Number(command.StartingChips, 1, 1_000_000_000); chips.Name = "StartingChips";
         var reserve = Number(command.NpcReserve, 0, 1_000_000_000); reserve.Name = "NpcReserve";
         var unlimitedNpcBankroll = new CheckBox
         {
@@ -96,6 +96,40 @@ internal sealed class MiniGameCommandDialog : Form
         var blackjackMaximum = Number(command.BlackjackMaximumBet, 2, 1_000_000_000); blackjackMaximum.Name = "BlackjackMaximumBet"; blackjackMaximum.Increment = 2;
         var blackjackHitSoft17 = new CheckBox { Name = "BlackjackHitSoft17", Text = "Dealer hits soft 17 (H17)", Checked = command.BlackjackHitSoft17, AutoSize = true };
         bool IsBlackjack() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Blackjack;
+        var currencyModeFunded = command.CurrencyItemId != Guid.Empty;
+        long testChipsValue = command.CurrencyItemId == Guid.Empty ? command.StartingChips : 1000;
+        long fundedBuyInValue = command.CurrencyItemId != Guid.Empty ? command.StartingChips : 0;
+
+        long SuggestedFundedBuyIn()
+        {
+            if (!IsBlackjack()) return Math.Clamp(testChipsValue, 1, 1_000_000_000);
+            var minimum = (long)blackjackMinimum.Value;
+            var maximum = (long)blackjackMaximum.Value;
+            return Math.Clamp(Math.Max(maximum, minimum * 10), 1, 1_000_000_000);
+        }
+
+        void ChangeCurrencyMode()
+        {
+            var funded = ((currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty) != Guid.Empty;
+            if (funded == currencyModeFunded) return;
+
+            if (currencyModeFunded) fundedBuyInValue = (long)chips.Value;
+            else testChipsValue = (long)chips.Value;
+
+            currencyModeFunded = funded;
+            var next = funded
+                ? (fundedBuyInValue > 0 ? fundedBuyInValue : SuggestedFundedBuyIn())
+                : testChipsValue;
+            chips.Value = Math.Clamp(next, (long)chips.Minimum, (long)chips.Maximum);
+            if (funded && fundedBuyInValue == 0) fundedBuyInValue = (long)chips.Value;
+
+            if (funded && IsBlackjack())
+            {
+                var minimumReserve = Math.Clamp((long)blackjackMinimum.Value * 4, 0, 1_000_000_000);
+                if ((long)reserve.Value < minimumReserve) reserve.Value = minimumReserve;
+            }
+        }
+
         void LimitNpcs()
         {
             var maximum = seats.Value - 1 - (IsBlackjack() ? 1 : (dealer.Checked ? 1 : 0));
@@ -200,10 +234,11 @@ internal sealed class MiniGameCommandDialog : Form
             var rules = blackjack
                 ? $"Bet {blackjackMinimum.Value}-{blackjackMaximum.Value} | {(blackjackHitSoft17.Checked ? "H17" : "S17")}"
                 : $"Blinds {small.Value}/{big.Value}";
+            var funding = funded ? $"FUNDED buy-in {chips.Value:N0}" : $"TEST chips {chips.Value:N0}";
             summary.ForeColor = tableValid ? DrawingColor.LightSkyBlue : DrawingColor.OrangeRed;
             summary.Text = $"{definition.DisplayName} | Table: {(string.IsNullOrWhiteSpace(table.Text) ? "(missing)" : table.Text)} | " +
                 $"{seats.Value} seats ({humanSeats} human available, {npcs.Value + dealerSeats} NPC/dealer) | " +
-                $"{rules} | {(funded ? "FUNDED" : "TEST")} | " +
+                $"{rules} | {funding} | " +
                 $"{(automatic.Checked ? "Auto rounds" : "Manual start")}" +
                 (tableValid ? "" : " | INVALID TABLE ID");
         }
@@ -220,23 +255,50 @@ internal sealed class MiniGameCommandDialog : Form
                 status.Text = "TEST mode: no inventory items are taken or paid. Test XP stays in resources/minigames-test.db.";
                 return;
             }
-            chipsLabel.Text = "Buy-in (inventory item units)"; status.ForeColor = DrawingColor.Gold;
+
+            chipsLabel.Text = "Buy-in (inventory item units)";
             var item = ItemDescriptor.Get(id);
-            status.Text = !MiniGameCurrency.IsCompatible(item)
-                ? "The selected item is missing or is no longer a compatible stackable item. Choose another item or test chips."
-                : $"Selected item: {item.Name}. ID: {id}.\n" +
-                    "FUNDED mode (SQLite player database): the buy-in is removed from inventory once. " +
-                    "The remaining balance is returned after leaving and settling the hand. Full inventory refunds wait safely. " +
-                    (blackjack
-                        ? "Blackjack always uses a finite house/dealer reserve; unlimited NPC funding is not enabled for this game. "
-                        : unlimitedNpcBankroll.Checked
-                            ? "UNLIMITED NPC BANKROLL is enabled: the server creates only the missing NPC buy-in when the house cannot fund a seat. " +
-                              "This is an intentional currency faucet so NPC opponents never disappear for lack of house funds. "
-                            : "NPC reserve creates an authorized house budget ONCE per map + Table ID + currency, shared across instances. " +
-                              "Reopening, restarting or editing this number does not refill an existing house. Zero means no initial NPC funds. ") +
-                    "Funded XP is separate from test XP. Back up the entire player database before enabling.";
+            if (!MiniGameCurrency.IsCompatible(item))
+            {
+                status.ForeColor = DrawingColor.OrangeRed;
+                status.Text = "The selected item is missing or is no longer a compatible stackable item. Choose another item or test chips.";
+                return;
+            }
+
+            var itemName = ItemDescriptor.GetName(id);
+            status.ForeColor = DrawingColor.Gold;
+            status.Text = $"Selected item: {itemName}. ID: {id}.\n" +
+                $"FUNDED mode: entering the table removes exactly {chips.Value:N0} {itemName} from the player's main inventory as the buy-in. " +
+                "The remaining balance is returned after leaving and settling the hand. Full inventory refunds wait safely. " +
+                (blackjack
+                    ? "Blackjack uses a finite house/dealer reserve. "
+                    : unlimitedNpcBankroll.Checked
+                        ? "UNLIMITED NPC BANKROLL is enabled: the server creates only the missing NPC buy-in when the house cannot fund a seat. "
+                        : "NPC reserve creates an authorized house budget once per map + Table ID + currency. ") +
+                "Funded XP is separate from test XP.";
+
+            if (blackjack)
+            {
+                var minimumReserve = Math.Clamp((long)blackjackMinimum.Value * 4, 0, 1_000_000_000);
+                if ((long)reserve.Value < minimumReserve)
+                {
+                    status.ForeColor = DrawingColor.OrangeRed;
+                    status.Text += $"\nBlackjack house reserve is too low. Set Initial NPC reserve to at least {minimumReserve:N0} {itemName}.";
+                }
+                else
+                {
+                    status.Text += $"\nBlackjack house reserve: {reserve.Value:N0} {itemName}. Minimum required to open this table: {minimumReserve:N0}.";
+                }
+            }
         }
-        currency.SelectedIndexChanged += (_, _) => { ShowCurrencyStatus(); ShowSummary(); };
+        currency.SelectedIndexChanged += (_, _) => { ChangeCurrencyMode(); ShowCurrencyStatus(); ShowSummary(); };
+        chips.ValueChanged += (_, _) =>
+        {
+            if (currencyModeFunded) fundedBuyInValue = (long)chips.Value;
+            else testChipsValue = (long)chips.Value;
+            ShowCurrencyStatus(); ShowSummary();
+        };
+        reserve.ValueChanged += (_, _) => ShowCurrencyStatus();
         unlimitedNpcBankroll.CheckedChanged += (_, _) => ShowCurrencyStatus();
         game.SelectedIndexChanged += (_, _) => { UpdateGameUi(); ShowCurrencyStatus(); ShowSummary(); };
         table.TextChanged += (_, _) => ShowSummary();
@@ -246,8 +308,8 @@ internal sealed class MiniGameCommandDialog : Form
         small.ValueChanged += (_, _) => ShowSummary();
         big.ValueChanged += (_, _) => ShowSummary();
         automatic.CheckedChanged += (_, _) => ShowSummary();
-        blackjackMinimum.ValueChanged += (_, _) => ShowSummary();
-        blackjackMaximum.ValueChanged += (_, _) => ShowSummary();
+        blackjackMinimum.ValueChanged += (_, _) => { ShowCurrencyStatus(); ShowSummary(); };
+        blackjackMaximum.ValueChanged += (_, _) => { ShowCurrencyStatus(); ShowSummary(); };
         blackjackHitSoft17.CheckedChanged += (_, _) => ShowSummary();
         UpdateGameUi();
         ShowCurrencyStatus();

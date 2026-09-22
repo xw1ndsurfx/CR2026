@@ -70,7 +70,13 @@ internal static class PokerInventoryBridge
             if (next.Quantity == 0) next = Item.None;
             changes.Add(new(slot, next)); remaining -= count;
         }
-        if (remaining != 0) throw new MoneyRuleException($"Not enough {ItemDescriptor.GetName(currency)} in inventory. Buy-in: {amount}.");
+        if (remaining != 0)
+        {
+            var available = amount - remaining;
+            throw new MoneyRuleException(
+                $"Not enough {ItemDescriptor.GetName(currency)} in main inventory. Buy-in: {amount}. Available: {available}."
+            );
+        }
         return changes;
     }
     private static List<Change> CreditPlan(Player player, Guid currency, long amount)
