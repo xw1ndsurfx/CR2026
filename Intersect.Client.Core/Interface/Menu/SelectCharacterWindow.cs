@@ -402,7 +402,11 @@ public partial class SelectCharacterWindow : Window
             _ = paperdollContainer.SetSize(textureWidth, textureHeight);
 
             var centerX = (_preview.Width / 2) - (paperdollContainer.Width / 2);
-            var centerY = (_preview.Height / 2) - (paperdollContainer.Height / 2);
+            // The portrait background's visible medallion sits above the geometric
+            // center of the image panel. Lift every sprite/paperdoll layer together
+            // so the character is actually centered inside the circle.
+            const int portraitCenterYOffset = -24;
+            var centerY = (_preview.Height / 2) - (paperdollContainer.Height / 2) + portraitCenterYOffset;
             paperdollContainer.SetPosition(centerX, centerY);
 
             paperdollContainer.Show();
