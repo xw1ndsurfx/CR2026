@@ -1235,6 +1235,18 @@ public static partial class CommandProcessing
         callStack.Peek().WaitingForResponse = CommandInstance.EventResponse.Timer;
     }
 
+    //Open Corps Royaux News Command
+    private static void ProcessCommand(
+        OpenLogiklikNewsCommand command,
+        Player player,
+        Event instance,
+        CommandInstance stackInfo,
+        Stack<CommandInstance> callStack
+    )
+    {
+        PacketSender.SendOpenLogiklikNews(player);
+    }
+
     //Open Bank Command
     private static void ProcessCommand(
         OpenBankCommand command,
