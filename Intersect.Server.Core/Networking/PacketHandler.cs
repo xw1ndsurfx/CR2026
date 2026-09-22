@@ -734,6 +734,35 @@ internal sealed partial class PacketHandler
         }
     }
 
+    public void HandlePacket(Client client, RequestWorldMapPacket packet)
+    {
+        var player = client?.Entity;
+        if (player == null || !MapController.TryGet(player.MapId, out var playerMapController))
+        {
+            return;
+        }
+
+        var grid = DbInterface.GetGrid(playerMapController.MapGrid);
+        if (grid == null)
+        {
+            return;
+        }
+
+        // Always refresh marker metadata when the World Map is opened.
+        PacketSender.SendMapGrid(client, grid, clearKnownMaps: false);
+
+        // Bypass normal proximity/sent-map throttling and explicitly deliver every
+        // map in this connected grid. This is only done on explicit World Map open.
+        foreach (var mapId in grid.MapIds)
+        {
+            var mapPacket = PacketSender.GenerateMapPacket(client, mapId);
+            if (mapPacket != null)
+            {
+                client.Send(mapPacket);
+            }
+        }
+    }
+
     //NeedMapPacket
     public void HandlePacket(Client client, GetObjectData<MapDescriptor> packet)
     {

@@ -67,6 +67,7 @@ internal sealed class WorldMapWindow : Window
 
         SetSize(920, 680);
 
+        PacketSender.SendWorldMapRequest();
         RequestEntireWorldGrid();
         _mapCanvas.CenterOnPlayer();
     }

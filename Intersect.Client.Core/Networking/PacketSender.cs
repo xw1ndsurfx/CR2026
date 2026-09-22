@@ -79,6 +79,11 @@ public static partial class PacketSender
         MapInstance.UpdateMapRequestTime(validMapIds);
     }
 
+    public static void SendWorldMapRequest()
+    {
+        Network.SendPacket(new RequestWorldMapPacket());
+    }
+
     public static void SendNeedMapForGrid(MapInstance? mapInstance = default)
     {
         if (mapInstance == default && !MapInstance.TryGet(Globals.Me.MapId, out mapInstance))
