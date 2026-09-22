@@ -52,6 +52,8 @@ public partial class GameInterface : MutableInterface
 
     private MinimapHud _minimapHud;
 
+    private WorldMapWindow? _worldMapWindow;
+
     private SettingsWindow? _settingsWindow;
 
     private ItemDescriptionWindow? _itemDescriptionWindow;
@@ -162,7 +164,7 @@ public partial class GameInterface : MutableInterface
 
         mQuestOfferWindow = new QuestOfferWindow(GameCanvas);
         mMapItemWindow = new MapItemWindow(GameCanvas);
-        _minimapHud = new MinimapHud(GameCanvas);
+        _minimapHud = new MinimapHud(GameCanvas, ToggleWorldMap);
         _minimapHud.SendToBack();
     }
 
@@ -215,6 +217,21 @@ public partial class GameInterface : MutableInterface
         }
 
         return mAdminWindow.IsVisibleInParent;
+    }
+
+    public void ToggleWorldMap()
+    {
+        if (_worldMapWindow == null || _worldMapWindow.IsDisposed)
+        {
+            _worldMapWindow = new WorldMapWindow(GameCanvas) { DeleteOnClose = true };
+            _worldMapWindow.Show();
+            return;
+        }
+
+        if (_worldMapWindow.IsHidden)
+            _worldMapWindow.Show();
+        else
+            _worldMapWindow.Hide();
     }
 
     //Shop
@@ -637,6 +654,8 @@ public partial class GameInterface : MutableInterface
         CloseCraftingTable();
         CloseShop();
         CloseTrading();
+        _worldMapWindow?.Dispose();
+        _worldMapWindow = null;
         _minimapHud?.Dispose();
         GameCanvas.Dispose();
     }
