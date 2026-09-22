@@ -20,13 +20,13 @@ namespace Intersect.Client.Interface.Game;
 /// </summary>
 internal sealed class MinimapHud : Base
 {
-    private const int CompactWidth = 240;
-    private const int CompactHeight = 250;
-    private const int ExpandedWidth = 360;
-    private const int ExpandedHeight = 370;
+    private const int CompactWidth = 280;
+    private const int CompactHeight = 305;
+    private const int ExpandedWidth = 430;
+    private const int ExpandedHeight = 465;
     private const int CompactRadius = 8;
     private const int ExpandedRadius = 14;
-    private const int Cell = 10;
+    private const int Cell = 12;
     private const int GridY = 46;
 
     private readonly Label _mapName;
@@ -51,14 +51,20 @@ internal sealed class MinimapHud : Base
         KeyboardInputEnabled = false;
         ShouldDrawBackground = false;
 
-        _mapName = MakeLabel("MinimapMapName", 12, 5, 190, 22, 11);
-        _coords = MakeLabel("MinimapCoords", 12, 226, 216, 18, 9);
-        _north = MakeLabel("MinimapNorth", 104, 26, 32, 18, 10, "N");
-        _east = MakeLabel("MinimapEast", 208, 120, 22, 18, 10, "E");
-        _south = MakeLabel("MinimapSouth", 104, 211, 32, 18, 10, "S");
-        _west = MakeLabel("MinimapWest", 10, 120, 22, 18, 10, "W");
-        _legend = MakeLabel("MinimapLegend", 12, 246, 216, 18, 8, "Cyan: Party   Gold: Quest   Blue: Player");
+        _mapName = MakeLabel("MinimapMapName", 12, 5, 210, 24, 12);
+        _coords = MakeLabel("MinimapCoords", 12, 281, 256, 18, 10);
+        _north = MakeLabel("MinimapNorth", 124, 26, 32, 18, 12, "N");
+        _east = MakeLabel("MinimapEast", 248, 145, 22, 18, 12, "E");
+        _south = MakeLabel("MinimapSouth", 124, 255, 32, 18, 12, "S");
+        _west = MakeLabel("MinimapWest", 10, 145, 22, 18, 12, "W");
+        _legend = MakeLabel("MinimapLegend", 12, 420, 406, 18, 9, "Cyan: Party   Gold: Quest   Blue: Player");
         _legend.IsHidden = true;
+
+        var compassColor = new Color(255, 230, 140, 255);
+        _north.TextColorOverride = compassColor;
+        _east.TextColorOverride = compassColor;
+        _south.TextColorOverride = compassColor;
+        _west.TextColorOverride = compassColor;
 
         _expandButton = new Button(this, "MinimapExpand")
         {
@@ -139,9 +145,9 @@ internal sealed class MinimapHud : Base
         var gridX = GridX;
         var gridPixels = GridPixels;
 
-        Fill(renderer, new Color(12, 16, 20, 220), 0, 0, Width, Height);
-        Outline(renderer, new Color(105, 120, 135, 235), 0, 0, Width, Height, 2);
-        Fill(renderer, new Color(20, 28, 32, 235), gridX - 3, GridY - 3, gridPixels + 6, gridPixels + 6);
+        Fill(renderer, new Color(8, 12, 16, 245), 0, 0, Width, Height);
+        Outline(renderer, new Color(185, 205, 220, 255), 0, 0, Width, Height, 3);
+        Fill(renderer, new Color(18, 24, 30, 250), gridX - 4, GridY - 4, gridPixels + 8, gridPixels + 8);
 
         var attributes = map.Attributes;
         var width = attributes.GetLength(0);
@@ -164,12 +170,12 @@ internal sealed class MinimapHud : Base
             var attribute = attributes[mapX, mapY];
             var color = attribute?.Type switch
             {
-                MapAttributeType.Blocked => new Color(48, 50, 55, 255),
-                MapAttributeType.Warp => new Color(203, 159, 61, 255),
-                MapAttributeType.Resource => new Color(76, 127, 74, 255),
-                MapAttributeType.Item => new Color(82, 108, 145, 255),
-                MapAttributeType.NpcAvoid => new Color(103, 78, 62, 255),
-                _ => new Color(52, 78, 66, 255),
+                MapAttributeType.Blocked => new Color(65, 68, 74, 255),
+                MapAttributeType.Warp => new Color(235, 190, 70, 255),
+                MapAttributeType.Resource => new Color(90, 155, 88, 255),
+                MapAttributeType.Item => new Color(95, 130, 180, 255),
+                MapAttributeType.NpcAvoid => new Color(130, 92, 72, 255),
+                _ => new Color(70, 105, 88, 255),
             };
             Fill(renderer, color, x, y, Cell - 1, Cell - 1);
         }
@@ -197,9 +203,9 @@ internal sealed class MinimapHud : Base
                 questTargets.Contains(entity.Name ?? string.Empty);
 
             var color = isParty
-                ? new Color(64, 225, 235, 255)
+                ? new Color(80, 245, 255, 255)
                 : isQuestTarget
-                    ? new Color(255, 210, 64, 255)
+                    ? new Color(255, 220, 80, 255)
                     : entity.Type switch
                     {
                         EntityType.Player => new Color(82, 165, 236, 255),
@@ -208,7 +214,7 @@ internal sealed class MinimapHud : Base
                         _ => new Color(220, 110, 110, 255),
                     };
 
-            var size = isParty || isQuestTarget ? 6 : 4;
+            var size = isParty || isQuestTarget ? 8 : 6;
             Fill(renderer, color, x, y, size, size);
 
             if (isQuestTarget)
@@ -237,7 +243,8 @@ internal sealed class MinimapHud : Base
     {
         var cx = gridX + Radius * Cell + Cell / 2;
         var cy = GridY + Radius * Cell + Cell / 2;
-        Fill(renderer, new Color(245, 245, 245, 255), cx - 4, cy - 4, 8, 8);
+        Fill(renderer, new Color(255, 255, 255, 255), cx - 5, cy - 5, 10, 10);
+        Outline(renderer, new Color(40, 40, 40, 255), cx - 6, cy - 6, 12, 12, 1);
 
         var (dx, dy) = direction switch
         {
@@ -251,7 +258,7 @@ internal sealed class MinimapHud : Base
             Direction.DownRight => (6, 6),
             _ => (0, -7),
         };
-        Fill(renderer, new Color(80, 210, 255, 255), cx + dx - 2, cy + dy - 2, 5, 5);
+        Fill(renderer, new Color(90, 230, 255, 255), cx + dx - 3, cy + dy - 3, 6, 6);
     }
 
     private static void Outline(RendererBase renderer, Color color, int x, int y, int width, int height, int thickness)
