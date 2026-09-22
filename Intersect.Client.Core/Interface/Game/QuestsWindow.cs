@@ -51,6 +51,7 @@ public partial class QuestsWindow
     private Label mQuestTaskHudHeader;
     private Label mQuestTaskHudTitle;
     private Label mQuestTaskHudProgressLabel;
+    private ImagePanel mQuestTaskHudIcon;
     private Guid _lastHudQuestId = Guid.Empty;
     private Guid _lastHudTaskId = Guid.Empty;
     private int _lastHudProgress = -1;
@@ -64,6 +65,7 @@ public partial class QuestsWindow
         mQuestTaskHudHeader = null;
         mQuestTaskHudTitle = null;
         mQuestTaskHudProgressLabel = null;
+        mQuestTaskHudIcon = null;
 
         mQuestTaskHudPanel?.Dispose();
         mQuestTaskHudPanel = null;
@@ -110,60 +112,77 @@ public partial class QuestsWindow
         _questList.IsVisibleInTree = true;
 
         // === Quest Tracker HUD ===
-        // A compact RPG-style tracker that sits beside the minimap instead of on top of it.
+        // Reuse the default TargetBox visual language: same panel texture, same
+        // typography family, but with enough transparency to keep the map readable.
         mQuestTaskHudPanel = new QuestTrackerPanel(gameCanvas)
         {
-            Width = 340,
-            Height = 156,
+            Width = 360,
+            Height = 142,
             IsHidden = true,
+            TextureFilename = "target_window.png",
+            RenderColor = new Color(255, 255, 255, 218),
         };
         mQuestTaskHudPanel.MouseInputEnabled = false;
+
+        mQuestTaskHudIcon = new ImagePanel(mQuestTaskHudPanel, "QuestTrackerIcon")
+        {
+            TextureFilename = "questsicon.png",
+            MaintainAspectRatio = true,
+            MouseInputEnabled = false,
+            RenderColor = new Color(255, 255, 255, 245),
+        };
+        mQuestTaskHudIcon.SetBounds(23, 42, 36, 36);
+
+        var trackerFont = GameContentManager.Current.GetFont("sourcesansproblack") ??
+                          GameContentManager.Current.GetFont("sourcesanspro") ??
+                          mQuestDescTemplateLabel.Font;
 
         mQuestTaskHudHeader = new Label(mQuestTaskHudPanel, "QuestTrackerHeader")
         {
             AutoSizeToContents = false,
-            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? mQuestDescTemplateLabel.Font,
-            FontSize = 9,
-            TextColorOverride = new Color(225, 190, 100, 255),
-            Text = Strings.QuestLog.CurrentTask,
+            Font = trackerFont,
+            FontSize = 8,
+            TextColorOverride = new Color(226, 187, 116, 255),
+            Text = "CURRENT QUEST",
             TextAlign = Pos.Left | Pos.CenterV,
             MouseInputEnabled = false,
         };
-        mQuestTaskHudHeader.SetBounds(18, 9, 304, 18);
+        mQuestTaskHudHeader.SetBounds(92, 7, 248, 17);
 
         mQuestTaskHudTitle = new Label(mQuestTaskHudPanel, "QuestTrackerTitle")
         {
             AutoSizeToContents = false,
-            Font = mQuestTaskHudHeader.Font,
-            FontSize = 12,
-            TextColorOverride = Color.White,
+            Font = trackerFont,
+            FontSize = 11,
+            TextColorOverride = new Color(246, 241, 229, 255),
             TextAlign = Pos.Left | Pos.CenterV,
             MouseInputEnabled = false,
         };
-        mQuestTaskHudTitle.SetBounds(18, 27, 304, 24);
+        mQuestTaskHudTitle.SetBounds(92, 24, 248, 22);
 
         mQuestTaskHudLabel = new RichLabel(mQuestTaskHudPanel)
         {
             MouseInputEnabled = false,
         };
-        mQuestTaskHudLabel.SetBounds(18, 55, 304, 56);
+        mQuestTaskHudLabel.SetBounds(92, 49, 248, 52);
 
         mQuestTaskHudProgressLabel = new Label(mQuestTaskHudPanel, "QuestTrackerProgress")
         {
             AutoSizeToContents = false,
-            Font = mQuestTaskHudHeader.Font,
-            FontSize = 9,
-            TextColorOverride = new Color(120, 230, 145, 255),
+            Font = trackerFont,
+            FontSize = 8,
+            TextColorOverride = new Color(192, 223, 164, 255),
             TextAlign = Pos.Left | Pos.CenterV,
             MouseInputEnabled = false,
         };
-        mQuestTaskHudProgressLabel.SetBounds(18, 113, 304, 18);
+        mQuestTaskHudProgressLabel.SetBounds(92, 104, 248, 17);
 
         mQuestTaskHudTemplate = new Label(null)
         {
-            TextColor = new Color(220, 225, 230, 255),
-            Font = mQuestTaskHudHeader.Font,
-            Width = 304,
+            TextColor = new Color(229, 225, 214, 255),
+            Font = trackerFont,
+            FontSize = 8,
+            Width = 248,
         };
 
         mQuestTaskHudPanel.BringToFront();
@@ -281,7 +300,7 @@ public partial class QuestsWindow
             mainText = mainText[..600] + "...";
         }
 
-        mainText = WrapText(mainText, 46);
+        mainText = WrapText(mainText, 39);
 
         var progressText = string.Empty;
         var showProgressBar = currentTask.Quantity > 0;
@@ -427,7 +446,7 @@ public partial class QuestsWindow
         _lastHudText = string.Empty;
     }
 
-    private sealed class QuestTrackerPanel : Base
+    private sealed class QuestTrackerPanel : ImagePanel
     {
         private float _progressRatio;
 
@@ -435,7 +454,7 @@ public partial class QuestsWindow
         {
             MouseInputEnabled = false;
             KeyboardInputEnabled = false;
-            ShouldDrawBackground = false;
+            ShouldDrawBackground = true;
         }
 
         public bool ShowProgressBar { get; set; }
@@ -448,29 +467,32 @@ public partial class QuestsWindow
 
         protected override void Render(SkinBase skin)
         {
+            // First render target_window.png so this tracker belongs to the same GUI
+            // family as the selected NPC/player/event panel.
             base.Render(skin);
+
             var renderer = skin.Renderer;
 
-            Fill(renderer, new Color(8, 12, 17, 232), 0, 0, Width, Height);
-            Fill(renderer, new Color(225, 180, 70, 255), 0, 0, 4, Height);
-            Outline(renderer, new Color(105, 118, 130, 220), 0, 0, Width, Height, 1);
-            Fill(renderer, new Color(55, 63, 72, 180), 14, 51, Width - 28, 1);
+            // Subtle translucent backing behind the text improves readability without
+            // hiding the game world beneath the panel.
+            Fill(renderer, new Color(18, 13, 14, 76), 84, 30, Width - 94, Height - 40);
 
             if (ShowProgressBar)
             {
-                const int barX = 18;
-                var barY = Height - 15;
-                var barWidth = Width - 36;
-                const int barHeight = 6;
+                const int barX = 92;
+                var barY = Height - 13;
+                var barWidth = Width - 112;
+                const int barHeight = 5;
 
-                Fill(renderer, new Color(32, 39, 46, 255), barX, barY, barWidth, barHeight);
+                Fill(renderer, new Color(42, 31, 31, 205), barX, barY, barWidth, barHeight);
+
                 var fillWidth = (int)Math.Round(barWidth * ProgressRatio);
                 if (fillWidth > 0)
                 {
-                    Fill(renderer, new Color(95, 205, 125, 255), barX, barY, fillWidth, barHeight);
+                    Fill(renderer, new Color(119, 178, 93, 235), barX, barY, fillWidth, barHeight);
                 }
 
-                Outline(renderer, new Color(85, 95, 104, 255), barX, barY, barWidth, barHeight, 1);
+                Outline(renderer, new Color(155, 113, 92, 220), barX, barY, barWidth, barHeight, 1);
             }
         }
 
