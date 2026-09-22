@@ -253,7 +253,10 @@ internal sealed class WorldMapWindow : Window
 
         private IGameRenderTexture? BuildPreview(MapInstance map)
         {
-            if (CoreGraphics.Renderer == null || map.Layers == null || map.Autotiles?.Layers == null)
+            if (CoreGraphics.Renderer == null ||
+                !GameContentManager.Current.TilesetsLoaded ||
+                map.Layers == null ||
+                map.Autotiles?.Layers == null)
             {
                 return null;
             }
@@ -269,6 +272,8 @@ internal sealed class WorldMapWindow : Window
 
             var scaleX = previewWidth / (float)sourceWidth;
             var scaleY = previewHeight / (float)sourceHeight;
+            var drewAnyTile = false;
+            var missingReferencedTexture = false;
 
             foreach (var layerName in mapOptions.Layers.All)
             {
@@ -292,6 +297,7 @@ internal sealed class WorldMapWindow : Window
                         var texture = Globals.ContentManager.GetTexture(TextureType.Tileset, tileset.Name);
                         if (texture == null)
                         {
+                            missingReferencedTexture = true;
                             continue;
                         }
 
@@ -315,6 +321,7 @@ internal sealed class WorldMapWindow : Window
                                 mapOptions.TileWidth,
                                 mapOptions.TileHeight
                             );
+                            drewAnyTile = true;
                         }
                         else
                         {
@@ -326,12 +333,22 @@ internal sealed class WorldMapWindow : Window
                             );
                             var dst = new FloatRect(destX, destY, destW, destH);
                             CoreGraphics.DrawGameTexture(texture, src, dst, Color.White, preview);
+                            drewAnyTile = true;
                         }
                     }
                 }
             }
 
             preview.End();
+
+            // Do not permanently cache a black/partial preview that was generated before
+            // all referenced tilesets were ready. Returning null makes the canvas retry
+            // on a later frame, which removes the "shadowed map cell" effect.
+            if (!drewAnyTile || missingReferencedTexture)
+            {
+                preview.Dispose();
+                return null;
+            }
 
             if (_previews.Remove(map.Id, out var oldPreview))
             {
