@@ -451,16 +451,20 @@ internal sealed class WorldMapWindow : Window
             return true;
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            foreach (var preview in _previews.Values)
+            if (disposing)
             {
-                preview.Dispose();
+                foreach (var preview in _previews.Values)
+                {
+                    preview.Dispose();
+                }
+
+                _previews.Clear();
+                _previewRevisions.Clear();
             }
 
-            _previews.Clear();
-            _previewRevisions.Clear();
-            base.Dispose();
+            base.Dispose(disposing);
         }
 
         private static void Outline(
