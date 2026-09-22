@@ -236,7 +236,12 @@ internal sealed class MiniGameCommandDialog : Form
         rewardPanel.Controls.Add(rewardList); rewardPanel.Controls.Add(rewardControls); RefreshRewards();
         AddRow(layout, 40, "Procedural animation speed", motionSpeed);
         AddRow(layout, 41, "Procedural animation effects", motionPanel);
-        AddRow(layout, 42, "Poker level rewards", rewardPanel);
+        AddRow(layout, 42, "Level rewards", new Label
+        {
+            AutoSize = true,
+            MaximumSize = new Size(560, 0),
+            Text = "Configured globally in Game Editors > Reward Configuration Editor. All tables use the same rewards."
+        });
         AddRow(layout, 43, "Blackjack minimum bet (even)", blackjackMinimum);
         AddRow(layout, 44, "Blackjack maximum bet (even)", blackjackMaximum);
         AddRow(layout, 45, "Blackjack dealer rule", blackjackHitSoft17);
@@ -399,7 +404,8 @@ internal sealed class MiniGameCommandDialog : Form
             command.AnimateDealCards = draft.AnimateDealCards; command.AnimateBoardCards = draft.AnimateBoardCards;
             command.AnimateChips = draft.AnimateChips; command.AnimateShowdown = draft.AnimateShowdown;
             command.AnimateShuffle = draft.AnimateShuffle; command.AnimateAllIn = draft.AnimateAllIn;
-            command.LevelRewards = draft.LevelRewards.ToArray();
+            // Legacy table-specific rewards are intentionally cleared. Rewards are global now.
+            command.LevelRewards = [];
             DialogResult = DialogResult.OK; Close();
         };
     }

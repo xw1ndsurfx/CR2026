@@ -14,12 +14,16 @@ namespace Intersect.Server.MiniGames.Blackjack;
 
 public sealed record BlackjackKey(Guid Map,Guid Instance,string Name);
 public sealed record BlackjackSettings(BlackjackRules Rules,int Npcs,bool Auto,Guid Currency,long Reserve,
-    Guid DealAnimation,Guid VictoryAnimation,bool Announce,int NpcBack,PokerMotionSet? Motion=null)
+    Guid DealAnimation,Guid VictoryAnimation,bool Announce,int NpcBack,PokerMotionSet? Motion=null,
+    PokerLevelRewardSet? LevelRewards=null)
 {
     public PokerMotionSet MotionSettings => Motion ?? PokerMotionSet.Default;
+    public PokerLevelRewardSet RewardSettings => LevelRewards ?? PokerLevelRewardSet.Empty;
 }
 public sealed record BlackjackWin(string Name,long Net);
 public sealed record BlackjackQuestNotice(Guid PlayerId, BlackjackQuestUpdate Update);
+public sealed record BlackjackLevelRewardNotice(Guid PlayerId, int Level, PokerLevelReward[] Rewards);
+public sealed record BlackjackLevelNotice(Guid PlayerId, int Level);
 
 /// <summary>Serialized by runtime gate. Financial callbacks never acquire any Player lock here.</summary>
 public sealed class BlackjackSessionTable
@@ -57,6 +61,8 @@ public sealed class BlackjackSessionTable
     private readonly Dictionary<Guid,int> _backs=new();
     private readonly Queue<BlackjackWin> _wins=new();
     private readonly Queue<BlackjackQuestNotice> _quests=new();
+    private readonly Queue<BlackjackLevelRewardNotice> _levelRewards=new();
+    private readonly Queue<BlackjackLevelNotice> _levels=new();
     private long _version,_settled;
     private DateTimeOffset? _next;
     private DateTimeOffset _npcAt,_retry;
@@ -157,6 +163,7 @@ public sealed class BlackjackSessionTable
     {
         if(Core.Stage!=BlackjackStage.Finished || Core.HandId<=_settled)return;
         var state=Core.Snapshot(Guid.Empty);
+        var beforeProfiles=_profiles.ToDictionary(pair=>pair.Key,pair=>pair.Value);
         if(_money!=null)
         {
             var closing=state.Seats.ToDictionary(s=>_funds[s.PlayerId].Id,s=>s.Chips);
@@ -173,9 +180,18 @@ public sealed class BlackjackSessionTable
         foreach(var seat in state.Seats.Where(s=>!s.Npc))
         {
             var net=seat.Hands.Sum(h=>h.Net);
+            var before=beforeProfiles.GetValueOrDefault(seat.PlayerId) ?? new MiniGameProgress();
+            var after=_profiles[seat.PlayerId];
+            if(after.Level>before.Level)
+            {
+                _levels.Enqueue(new(seat.PlayerId,after.Level));
+                var rewards=Settings.RewardSettings.Items
+                    .Where(reward=>reward.Level>before.Level && reward.Level<=after.Level).ToArray();
+                if(rewards.Length>0)_levelRewards.Enqueue(new(seat.PlayerId,after.Level,rewards));
+            }
             if(net>0)_wins.Enqueue(new(seat.Name,net));
             _quests.Enqueue(new(seat.PlayerId,new BlackjackQuestUpdate(
-                seat.Hands.Length>0,net,MiniGameProgression.Level(_profiles[seat.PlayerId].Experience))));
+                seat.Hands.Length>0,net,MiniGameProgression.Level(after.Experience))));
         }
         _settled=state.HandId;++_version;
     }
@@ -232,6 +248,8 @@ public sealed class BlackjackSessionTable
     }
     public BlackjackWin[] CollectWins(){var r=_wins.ToArray();_wins.Clear();return r;}
     public BlackjackQuestNotice[] CollectQuestUpdates(){var r=_quests.ToArray();_quests.Clear();return r;}
+    public BlackjackLevelRewardNotice[] CollectLevelRewards(){var r=_levelRewards.ToArray();_levelRewards.Clear();return r;}
+    public BlackjackLevelNotice[] CollectLevels(){var r=_levels.ToArray();_levels.Clear();return r;}
     public BlackjackTableState Project(Guid player)
     {
         var s=Core.Snapshot(player);var p=_profiles[player];

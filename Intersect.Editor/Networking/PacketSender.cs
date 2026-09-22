@@ -171,6 +171,16 @@ public static partial class PacketSender
         Network.SendPacket(new SaveTimeDataPacket(timeJson));
     }
 
+    public static void SendRequestRewardConfiguration()
+    {
+        Network.SendPacket(new RequestRewardConfigurationPacket());
+    }
+
+    public static void SendSaveRewardConfiguration(string configurationJson)
+    {
+        Network.SendPacket(new SaveRewardConfigurationPacket(configurationJson));
+    }
+
     public static void SendNewTilesets(string[] tilesets)
     {
         Network.SendPacket(new AddTilesetsPacket(tilesets));

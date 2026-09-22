@@ -5,6 +5,7 @@ using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Maps;
 using Intersect.Enums;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -753,5 +754,14 @@ internal sealed partial class PacketHandler
     public void HandlePacket(IPacketSender packetSender, TimeDataPacket packet)
     {
         DaylightCycleDescriptor.Instance.LoadFromJson(packet.TimeJson);
+    }
+
+    public void HandlePacket(IPacketSender packetSender, RewardConfigurationPacket packet)
+    {
+        RewardConfiguration.Load(packet.ConfigurationJson);
+        if (packet.OpenEditor)
+        {
+            Globals.MainForm.BeginInvoke((Action)(() => Globals.MainForm.OpenRewardConfigurationEditor()));
+        }
     }
 }

@@ -27,7 +27,8 @@ internal static class BlackjackRuntime
         public bool Closed;public long Published=-1;
         public void Renew(){Id=Guid.NewGuid();Guard=new(Table.Id,Id);Closed=false;Published=-1;}
     }
-    private sealed record Delivery(View? View,BlackjackStatePacket? Packet,string? Announcement=null,BlackjackQuestUpdate? Quest=null);
+    private sealed record Delivery(View? View,BlackjackStatePacket? Packet,string? Announcement=null,
+        BlackjackQuestUpdate? Quest=null,BlackjackLevelRewardNotice? LevelReward=null,BlackjackLevelNotice? Level=null);
     private static readonly object Gate=new();
     private static readonly Dictionary<BlackjackKey,BlackjackSessionTable> Tables=new();
     private static readonly Dictionary<Guid,View> Views=new();
@@ -49,7 +50,8 @@ internal static class BlackjackRuntime
                 var settings=new BlackjackSettings(new BlackjackRules(command.MaxPlayers-1,command.StartingChips,
                     command.BlackjackMinimumBet,command.BlackjackMaximumBet,command.TurnSeconds,command.BlackjackHitSoft17),
                     command.NpcPlayers,command.AutoStart,command.CurrencyItemId,command.NpcReserve,
-                    command.DealAnimationId,command.VictoryAnimationId,command.AnnounceWins,command.NpcCardBackId,command.CreateMotionSet());
+                    command.DealAnimationId,command.VictoryAnimationId,command.AnnounceWins,command.NpcCardBackId,
+                    command.CreateMotionSet(),RewardConfigurationRuntime.Current.CreateBlackjackLevelRewardSet());
                 var key=new BlackjackKey(presence.MapId,presence.MapInstanceId,command.TableId);
                 var money=command.CurrencyItemId==Guid.Empty?null:PokerInventoryBridge.Ledger;
                 lock(Gate)
@@ -180,6 +182,12 @@ internal static class BlackjackRuntime
             foreach(var win in pair.Value.CollectWins())
                 if(pair.Value.Settings.Announce)output.Add(new(null,null,$"[Blackjack] {Clean(win.Name)} wins {win.Net} "+
                     (pair.Value.Settings.Currency==Guid.Empty?"test chips":Clean(ItemDescriptor.GetName(pair.Value.Settings.Currency)))+" (net gain)."));
+            foreach(var reward in pair.Value.CollectLevelRewards())
+                if(Views.TryGetValue(reward.PlayerId,out var rewardView) && ReferenceEquals(rewardView.Table,pair.Value))
+                    output.Add(new(rewardView,null,LevelReward:reward));
+            foreach(var level in pair.Value.CollectLevels())
+                if(Views.TryGetValue(level.PlayerId,out var levelView) && ReferenceEquals(levelView.Table,pair.Value))
+                    output.Add(new(levelView,null,Level:level));
             foreach(var quest in pair.Value.CollectQuestUpdates())
                 if(Views.TryGetValue(quest.PlayerId,out var questView) && ReferenceEquals(questView.Table,pair.Value))
                     output.Add(new(questView,null,Quest:quest.Update));
@@ -200,6 +208,12 @@ internal static class BlackjackRuntime
         try
         {
             if(d.Announcement!=null)PacketSender.SendGlobalMsg(d.Announcement,Color.White);
+            else if(d.LevelReward is {} reward && d.View is {} rewardView &&
+                ReferenceEquals(rewardView.Client.Entity,rewardView.Player) && rewardView.Player.LoginTime==rewardView.Login)
+                PokerLevelRewardRuntime.Grant(rewardView.Player,reward.Level,reward.Rewards);
+            else if(d.Level is {} level && d.View is {} levelView &&
+                ReferenceEquals(levelView.Client.Entity,levelView.Player) && levelView.Player.LoginTime==levelView.Login)
+                PacketSender.SendChatMsg(levelView.Player,PokerNotificationText.LevelUp(level.Level),ChatMessageType.Notice,Color.White);
             else if(d.Quest is {} quest && d.View is {} questView &&
                 ReferenceEquals(questView.Client.Entity,questView.Player) && questView.Player.LoginTime==questView.Login)
                 questView.Player.UpdateBlackjackQuestTasks(quest);

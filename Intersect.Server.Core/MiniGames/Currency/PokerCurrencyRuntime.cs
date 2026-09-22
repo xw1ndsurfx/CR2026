@@ -39,7 +39,8 @@ internal static class PokerCurrencyRuntime
 
     internal static PokerRegistryResult Join(Player player, StartMiniGameCommand command)
     {
-        if (player.User == null || !command.HasValidSettings() || !PokerLevelRewardRuntime.DefinitionsExist(command.LevelRewards))
+        var globalRewards = RewardConfigurationRuntime.Current.PokerLevelRewards;
+        if (player.User == null || !command.HasValidSettings() || !PokerLevelRewardRuntime.DefinitionsExist(globalRewards))
             return new(PokerRegistryError.InvalidRules);
         List<Delivery> output = []; var inventoryChanged = false;
         PokerRegistryResult result;
@@ -54,7 +55,7 @@ internal static class PokerCurrencyRuntime
                 var options = new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
                     command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId,
                     command.CreateSoundSet(), command.CreateAnimationSet(), command.UnlimitedNpcBankroll,
-                    command.CreateLevelRewardSet(), command.CreateMotionSet());
+                    new PokerLevelRewardSet(globalRewards), command.CreateMotionSet());
                 var key = new PokerTableKey(presence.MapId, presence.MapInstanceId, command.TableId);
                 var money = PokerInventoryBridge.Ledger;
                 lock (Gate)

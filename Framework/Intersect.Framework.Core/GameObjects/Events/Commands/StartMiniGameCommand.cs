@@ -85,7 +85,7 @@ public sealed class StartMiniGameCommand : EventCommand
         NpcReserve is >= 0 and <= 1_000_000_000 &&
         TurnSeconds is >= 5 and <= 300 && NpcPlayers is >= 0 and <= 5 &&
         MiniGameProgression.IsBack(NpcCardBackId) &&
-        CreateSoundSet().IsValid && CreateLevelRewardSet().IsValid && CreateMotionSet().IsValid &&
+        CreateSoundSet().IsValid && CreateMotionSet().IsValid &&
         (Game switch
         {
             MiniGameType.Poker => SmallBlind >= 1 && BigBlind >= SmallBlind &&

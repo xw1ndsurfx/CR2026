@@ -111,6 +111,7 @@ public partial class FrmMain : Form
         InitMapProperties();
         InitLocalization();
         InitExternalTools();
+        AddRewardConfigurationEditorMenu();
         Show();
 
         //Init Forms with RenderTargets
@@ -193,6 +194,30 @@ public partial class FrmMain : Form
         spellEditorToolStripMenuItem.Text = Strings.MainForm.spelleditor;
         variableEditorToolStripMenuItem.Text = Strings.MainForm.variableeditor;
         timeEditorToolStripMenuItem.Text = Strings.MainForm.timeeditor;
+    }
+
+    private void AddRewardConfigurationEditorMenu()
+    {
+        if (contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>().Any(item => item.Name == "rewardConfigurationEditorToolStripMenuItem"))
+        {
+            return;
+        }
+
+        var rewardEditor = new ToolStripMenuItem
+        {
+            Name = "rewardConfigurationEditorToolStripMenuItem",
+            Text = "Reward Configuration Editor",
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
+        };
+        rewardEditor.Click += (_, _) => PacketSender.SendRequestRewardConfiguration();
+        contentEditorsToolStripMenuItem.DropDownItems.Add(rewardEditor);
+    }
+
+    public void OpenRewardConfigurationEditor()
+    {
+        var editor = new FrmRewardConfiguration();
+        editor.Show();
+        editor.BringToFront();
     }
 
     private void InitLocalizationMenuTools()

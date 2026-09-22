@@ -1,0 +1,219 @@
+using DarkUI.Forms;
+using Intersect.Editor.Networking;
+using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.MiniGames;
+
+namespace Intersect.Editor.Forms.Editors;
+
+public sealed class FrmRewardConfiguration : DarkForm
+{
+    private sealed record ItemChoice(Guid Id, string Name)
+    {
+        public override string ToString() => Name;
+    }
+
+    private sealed record RewardChoice(PokerLevelReward Reward, string Text)
+    {
+        public override string ToString() => Text;
+    }
+
+    private sealed record DailyChoice(DailyRewardEntry Reward, string Text)
+    {
+        public override string ToString() => Text;
+    }
+
+    private readonly RewardConfiguration _working;
+    private readonly List<PokerLevelReward> _poker;
+    private readonly List<PokerLevelReward> _blackjack;
+    private readonly List<DailyRewardEntry> _daily;
+
+    private readonly NumericUpDown _cycleDays = new() { Minimum = 1, Maximum = RewardConfiguration.MaximumDailyCycleDays, Width = 80 };
+    private readonly ListBox _dailyList = new() { Dock = DockStyle.Fill };
+    private readonly NumericUpDown _dailyDay = new() { Minimum = 1, Maximum = RewardConfiguration.MaximumDailyCycleDays, Width = 70 };
+    private readonly ComboBox _dailyItem = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300 };
+    private readonly NumericUpDown _dailyQuantity = new() { Minimum = 1, Maximum = 1_000_000_000, Width = 110 };
+
+    private readonly ListBox _pokerList = new() { Dock = DockStyle.Fill };
+    private readonly ListBox _blackjackList = new() { Dock = DockStyle.Fill };
+
+    public FrmRewardConfiguration()
+    {
+        Text = "Reward Configuration";
+        StartPosition = FormStartPosition.CenterScreen;
+        Width = 760;
+        Height = 560;
+        MinimizeBox = false;
+        MaximizeBox = false;
+
+        _working = RewardConfiguration.FromJson(RewardConfiguration.Instance.ToJson());
+        _poker = (_working.PokerLevelRewards ?? []).ToList();
+        _blackjack = (_working.BlackjackLevelRewards ?? []).ToList();
+        _daily = (_working.DailyRewards ?? []).ToList();
+        _cycleDays.Value = _working.DailyCycleDays;
+
+        var tabs = new TabControl { Dock = DockStyle.Fill };
+        tabs.TabPages.Add(BuildDailyTab());
+        tabs.TabPages.Add(BuildLevelTab("Poker Level Rewards", _poker, _pokerList));
+        tabs.TabPages.Add(BuildLevelTab("Blackjack Level Rewards", _blackjack, _blackjackList));
+
+        var buttons = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Bottom,
+            Height = 48,
+            FlowDirection = FlowDirection.RightToLeft,
+            Padding = new Padding(8),
+        };
+        var cancel = new Button { Text = "Cancel", Width = 100 };
+        var save = new Button { Text = "Save", Width = 100 };
+        cancel.Click += (_, _) => Close();
+        save.Click += (_, _) => SaveConfiguration();
+        buttons.Controls.Add(cancel);
+        buttons.Controls.Add(save);
+
+        Controls.Add(tabs);
+        Controls.Add(buttons);
+        RefreshDaily();
+        RefreshLevels(_poker, _pokerList);
+        RefreshLevels(_blackjack, _blackjackList);
+    }
+
+    private TabPage BuildDailyTab()
+    {
+        var page = new TabPage("Daily Rewards");
+        var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(10) };
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+        var cycle = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill };
+        cycle.Controls.Add(new Label { Text = "Cycle days", AutoSize = true, Margin = new Padding(3, 8, 8, 3) });
+        cycle.Controls.Add(_cycleDays);
+        _cycleDays.ValueChanged += (_, _) =>
+        {
+            _dailyDay.Maximum = _cycleDays.Value;
+            _daily.RemoveAll(reward => reward.Day > (int)_cycleDays.Value);
+            RefreshDaily();
+        };
+
+        var controls = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, WrapContents = true };
+        controls.Controls.Add(new Label { Text = "Day", AutoSize = true, Margin = new Padding(3, 8, 3, 3) });
+        controls.Controls.Add(_dailyDay);
+        controls.Controls.Add(_dailyItem);
+        controls.Controls.Add(_dailyQuantity);
+        var add = new Button { Text = "Add reward", AutoSize = true };
+        var remove = new Button { Text = "Remove selected", AutoSize = true };
+        add.Click += (_, _) =>
+        {
+            if (_dailyItem.SelectedItem is not ItemChoice item || item.Id == Guid.Empty) return;
+            var reward = new DailyRewardEntry((int)_dailyDay.Value, item.Id, (int)_dailyQuantity.Value);
+            if (reward.IsValid((int)_cycleDays.Value) && !_daily.Contains(reward)) _daily.Add(reward);
+            RefreshDaily();
+        };
+        remove.Click += (_, _) =>
+        {
+            if (_dailyList.SelectedItem is DailyChoice choice) _daily.Remove(choice.Reward);
+            RefreshDaily();
+        };
+        controls.Controls.Add(add);
+        controls.Controls.Add(remove);
+
+        FillItems(_dailyItem);
+        _dailyDay.Maximum = _cycleDays.Value;
+        root.Controls.Add(cycle, 0, 0);
+        root.Controls.Add(_dailyList, 0, 1);
+        root.Controls.Add(controls, 0, 2);
+        page.Controls.Add(root);
+        return page;
+    }
+
+    private TabPage BuildLevelTab(string title, List<PokerLevelReward> rewards, ListBox list)
+    {
+        var page = new TabPage(title);
+        var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(10) };
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+        var level = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 70 };
+        for (var i = 2; i <= MiniGameProgression.MaximumLevel; ++i) level.Items.Add(i);
+        level.SelectedIndex = 0;
+        var item = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300 };
+        FillItems(item);
+        var quantity = new NumericUpDown { Minimum = 1, Maximum = 1_000_000_000, Width = 110 };
+        var controls = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, WrapContents = true };
+        controls.Controls.Add(new Label { Text = "Level", AutoSize = true, Margin = new Padding(3, 8, 3, 3) });
+        controls.Controls.Add(level);
+        controls.Controls.Add(item);
+        controls.Controls.Add(quantity);
+        var add = new Button { Text = "Add reward", AutoSize = true };
+        var remove = new Button { Text = "Remove selected", AutoSize = true };
+        add.Click += (_, _) =>
+        {
+            if (item.SelectedItem is not ItemChoice selected || selected.Id == Guid.Empty || level.SelectedItem is not int selectedLevel) return;
+            var reward = new PokerLevelReward(selectedLevel, selected.Id, (int)quantity.Value);
+            if (reward.IsValid && !rewards.Contains(reward)) rewards.Add(reward);
+            RefreshLevels(rewards, list);
+        };
+        remove.Click += (_, _) =>
+        {
+            if (list.SelectedItem is RewardChoice choice) rewards.Remove(choice.Reward);
+            RefreshLevels(rewards, list);
+        };
+        controls.Controls.Add(add);
+        controls.Controls.Add(remove);
+
+        root.Controls.Add(list, 0, 0);
+        root.Controls.Add(controls, 0, 1);
+        page.Controls.Add(root);
+        return page;
+    }
+
+    private static void FillItems(ComboBox picker)
+    {
+        picker.Items.Clear();
+        picker.Items.Add(new ItemChoice(Guid.Empty, "Choose reward item..."));
+        foreach (var item in ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase))
+        {
+            picker.Items.Add(new ItemChoice(item.Id,
+                string.IsNullOrWhiteSpace(item.Folder) ? item.Name : $"[{item.Folder}] / {item.Name}"));
+        }
+
+        picker.SelectedIndex = 0;
+    }
+
+    private void RefreshDaily()
+    {
+        _dailyList.Items.Clear();
+        foreach (var reward in _daily.OrderBy(reward => reward.Day).ThenBy(reward => ItemDescriptor.GetName(reward.ItemId)))
+        {
+            _dailyList.Items.Add(new DailyChoice(reward,
+                $"Day {reward.Day}: {reward.Quantity:N0} x {ItemDescriptor.GetName(reward.ItemId)}"));
+        }
+    }
+
+    private static void RefreshLevels(List<PokerLevelReward> rewards, ListBox list)
+    {
+        list.Items.Clear();
+        foreach (var reward in rewards.OrderBy(reward => reward.Level).ThenBy(reward => ItemDescriptor.GetName(reward.ItemId)))
+        {
+            list.Items.Add(new RewardChoice(reward,
+                $"Level {reward.Level}: {reward.Quantity:N0} x {ItemDescriptor.GetName(reward.ItemId)}"));
+        }
+    }
+
+    private void SaveConfiguration()
+    {
+        _working.DailyCycleDays = (int)_cycleDays.Value;
+        _working.DailyRewards = _daily.ToArray();
+        _working.PokerLevelRewards = _poker.ToArray();
+        _working.BlackjackLevelRewards = _blackjack.ToArray();
+        if (!_working.IsStructurallyValid)
+        {
+            MessageBox.Show(this, "The reward configuration is invalid.", "Rewards", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
+
+        PacketSender.SendSaveRewardConfiguration(_working.ToJson());
+        RewardConfiguration.Load(_working.ToJson());
+        Close();
+    }
+}

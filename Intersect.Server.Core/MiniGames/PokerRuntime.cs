@@ -52,7 +52,8 @@ internal static class PokerRuntime
     internal static PokerRegistryResult Join(Player player, StartMiniGameCommand command)
     {
         _ = SweepTimer;
-        if (!command.HasValidSettings() || !PokerLevelRewardRuntime.DefinitionsExist(command.LevelRewards))
+        var globalRewards = RewardConfigurationRuntime.Current.PokerLevelRewards;
+        if (!command.HasValidSettings() || !PokerLevelRewardRuntime.DefinitionsExist(globalRewards))
             return new(PokerRegistryError.InvalidRules);
         List<Delivery> output = [];
         PokerRegistryResult result;
@@ -78,7 +79,7 @@ internal static class PokerRuntime
                     new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
                         command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId,
                         command.CreateSoundSet(), command.CreateAnimationSet(), command.UnlimitedNpcBankroll,
-                        command.CreateLevelRewardSet(), command.CreateMotionSet()));
+                        new PokerLevelRewardSet(globalRewards), command.CreateMotionSet()));
                 if (result.Error != PokerRegistryError.None) return result;
                 var view = new View
                 {

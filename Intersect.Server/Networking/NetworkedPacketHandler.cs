@@ -1,3 +1,4 @@
+using Intersect.Server.MiniGames;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
@@ -1215,6 +1216,27 @@ internal sealed partial class NetworkedPacketHandler
             DbInterface.SaveTime();
             Time.Init();
             PacketSender.SendTimeBaseToAllEditors();
+        }
+
+        public void HandlePacket(Client client, Network.Packets.Editor.RequestRewardConfigurationPacket packet)
+        {
+            if (!client.IsEditor)
+            {
+                return;
+            }
+
+            client.Send(new Network.Packets.Server.RewardConfigurationPacket(RewardConfigurationRuntime.Json, openEditor: true));
+        }
+
+        public void HandlePacket(Client client, Network.Packets.Editor.SaveRewardConfigurationPacket packet)
+        {
+            if (!client.IsEditor)
+            {
+                return;
+            }
+
+            RewardConfigurationRuntime.Save(packet.ConfigurationJson);
+            client.Send(new Network.Packets.Server.RewardConfigurationPacket(RewardConfigurationRuntime.Json));
         }
 
         //AddTilesetsPacket
