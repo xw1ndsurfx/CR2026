@@ -404,8 +404,8 @@ internal sealed class MiniGameCommandDialog : Form
             command.AnimateDealCards = draft.AnimateDealCards; command.AnimateBoardCards = draft.AnimateBoardCards;
             command.AnimateChips = draft.AnimateChips; command.AnimateShowdown = draft.AnimateShowdown;
             command.AnimateShuffle = draft.AnimateShuffle; command.AnimateAllIn = draft.AnimateAllIn;
-            // Legacy table-specific rewards are intentionally cleared. Rewards are global now.
-            command.LevelRewards = [];
+            // Preserve legacy data for backwards compatibility; runtime rewards are global.
+            command.LevelRewards = draft.LevelRewards.ToArray();
             DialogResult = DialogResult.OK; Close();
         };
     }

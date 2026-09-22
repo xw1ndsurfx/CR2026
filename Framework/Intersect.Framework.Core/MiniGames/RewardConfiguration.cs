@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace Intersect.Framework.Core.MiniGames;
 
@@ -35,13 +35,19 @@ public sealed class RewardConfiguration
     public PokerLevelRewardSet CreatePokerLevelRewardSet() => new(PokerLevelRewards ?? []);
     public PokerLevelRewardSet CreateBlackjackLevelRewardSet() => new(BlackjackLevelRewards ?? []);
 
-    public string ToJson() => JsonConvert.SerializeObject(this, Formatting.None);
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = false,
+    };
+
+    public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
 
     public static RewardConfiguration FromJson(string? json)
     {
         var value = string.IsNullOrWhiteSpace(json)
             ? new RewardConfiguration()
-            : JsonConvert.DeserializeObject<RewardConfiguration>(json) ?? new RewardConfiguration();
+            : JsonSerializer.Deserialize<RewardConfiguration>(json, JsonOptions) ?? new RewardConfiguration();
 
         value.DailyRewards ??= [];
         value.PokerLevelRewards ??= [];

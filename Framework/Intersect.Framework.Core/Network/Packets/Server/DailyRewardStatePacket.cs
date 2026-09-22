@@ -2,7 +2,7 @@ using MessagePack;
 
 namespace Intersect.Network.Packets.Server;
 
-[MessagePackObject]
+[MessagePackObject(AllowPrivate = true)]
 public sealed class DailyRewardPacketEntry
 {
     [Key(0)] public int Day { get; set; }
@@ -10,7 +10,7 @@ public sealed class DailyRewardPacketEntry
     [Key(2)] public int Quantity { get; set; }
 }
 
-[MessagePackObject]
+[MessagePackObject(AllowPrivate = true)]
 public partial class DailyRewardStatePacket : IntersectPacket
 {
     [Key(0)] public int CycleDays { get; set; }

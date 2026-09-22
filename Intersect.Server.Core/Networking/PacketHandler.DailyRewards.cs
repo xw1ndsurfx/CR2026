@@ -3,7 +3,7 @@ using Intersect.Server.Rewards;
 
 namespace Intersect.Server.Networking;
 
-public partial class PacketHandler
+internal sealed partial class PacketHandler
 {
     public void HandlePacket(Client client, RequestDailyRewardStatePacket packet)
     {

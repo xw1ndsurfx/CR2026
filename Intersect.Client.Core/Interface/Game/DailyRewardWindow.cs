@@ -4,6 +4,7 @@ using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets.Server;
+using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 
 namespace Intersect.Client.Interface.Game;
 
@@ -75,6 +76,7 @@ internal sealed class DailyRewardWindow : Window
 
     private readonly Label _title;
     private readonly Label _status;
+    private bool _initialized;
     private readonly Panel _cards;
     private readonly Button _claim;
     private DailyRewardStatePacket? _state;
@@ -113,6 +115,12 @@ internal sealed class DailyRewardWindow : Window
         _claim.Clicked += (_, _) => Networking.PacketSender.SendClaimDailyReward();
 
         Hide();
+    }
+
+    protected override void EnsureInitialized()
+    {
+        if (_initialized) return;
+        _initialized = true;
     }
 
     public void Apply(DailyRewardStatePacket state)

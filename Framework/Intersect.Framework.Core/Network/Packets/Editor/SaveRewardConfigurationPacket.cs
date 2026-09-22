@@ -2,7 +2,7 @@ using MessagePack;
 
 namespace Intersect.Network.Packets.Editor;
 
-[MessagePackObject]
+[MessagePackObject(AllowPrivate = true)]
 public partial class SaveRewardConfigurationPacket : EditorPacket
 {
     public SaveRewardConfigurationPacket()
