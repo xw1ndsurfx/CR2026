@@ -27,7 +27,7 @@ internal sealed class LogiklikNewsWindow : Window
         Timeout = TimeSpan.FromSeconds(12),
     };
 
-    private readonly ListBox _newsList;
+    private readonly ScrollControl _newsList;
     private readonly Label _status;
     private readonly Label _detailTitle;
     private readonly Label _detailDate;
@@ -56,10 +56,10 @@ internal sealed class LogiklikNewsWindow : Window
         var header = new Label(this, "NewsHeader")
         {
             AutoSizeToContents = false,
-            Font = Skin.DefaultFont,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 14,
             Text = "Corps Royaux News",
-            TextColorOverride = new Color(238, 211, 136, 255),
+            TextColorOverride = Color.White,
             TextAlign = Pos.Left | Pos.CenterV,
         };
         header.SetBounds(20, 14, 540, 28);
@@ -70,7 +70,7 @@ internal sealed class LogiklikNewsWindow : Window
             Font = Skin.DefaultFont,
             FontSize = 9,
             Text = "Powered by Logiklik News • Category: CR",
-            TextColorOverride = new Color(160, 174, 186, 255),
+            TextColorOverride = new Color(210, 210, 210, 255),
             TextAlign = Pos.Left | Pos.CenterV,
         };
         subHeader.SetBounds(20, 40, 540, 20);
@@ -94,9 +94,13 @@ internal sealed class LogiklikNewsWindow : Window
         };
         _status.SetBounds(20, 65, 770, 20);
 
-        _newsList = new ListBox(this, "NewsList");
-        _newsList.EnableScroll(false, true);
-        _newsList.SetBounds(20, 92, 278, 440);
+        _newsList = new ScrollControl(this, "NewsList")
+        {
+            OverflowX = OverflowBehavior.Hidden,
+            OverflowY = OverflowBehavior.Scroll,
+            AutoHideBars = false,
+        };
+        _newsList.SetBounds(20, 92, 292, 440);
 
         _detailTitle = new Label(this, "NewsDetailTitle")
         {
@@ -113,7 +117,7 @@ internal sealed class LogiklikNewsWindow : Window
             AutoSizeToContents = false,
             Font = Skin.DefaultFont,
             FontSize = 9,
-            TextColorOverride = new Color(238, 211, 136, 255),
+            TextColorOverride = new Color(225, 190, 120, 255),
             TextAlign = Pos.Left | Pos.CenterV,
         };
         _detailDate.SetBounds(320, 134, 470, 20);
@@ -239,18 +243,40 @@ internal sealed class LogiklikNewsWindow : Window
     private void ApplyItems(List<NewsItem> items)
     {
         _items = items;
-        _newsList.RemoveAllRows();
+        _newsList.DeleteAllChildren();
 
+        var rowIndex = 0;
         foreach (var item in _items)
         {
-            var prefix = item.PublishedAt.HasValue
-                ? item.PublishedAt.Value.ToLocalTime().ToString("yyyy-MM-dd") + "  "
-                : string.Empty;
+            var date = item.PublishedAt.HasValue
+                ? item.PublishedAt.Value.ToLocalTime().ToString("yyyy-MM-dd")
+                : "Corps Royaux";
 
-            var row = _newsList.AddRow(prefix + item.Title);
-            row.UserData = item;
+            var title = item.Title.Length > 34 ? item.Title[..31] + "..." : item.Title;
+            var row = new Button(_newsList, "NewsRow" + rowIndex)
+            {
+                Dock = Pos.Top,
+                Height = 46,
+                Margin = new Margin(0, 0, 0, 5),
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 9,
+                Text = $"{date}  {title}",
+                TextColorOverride = Color.White,
+                UserData = item,
+            };
+            row.SetStateTexture(ComponentState.Normal, "control_button.png");
+            row.SetStateTexture(ComponentState.Hovered, "control_button_hovered.png");
+            row.SetStateTexture(ComponentState.Active, "control_button_clicked.png");
             row.Clicked += NewsRow_Clicked;
+            ++rowIndex;
         }
+
+        var contentHeight = Math.Max(_newsList.Height + 1, rowIndex * 51);
+        _newsList.SetInnerSize(Math.Max(1, _newsList.Width - 17), contentHeight);
+        _newsList.UpdateScrollBars();
+        _newsList.VerticalScrollBar.IsHidden = false;
+        _newsList.VerticalScrollBar.IsVisibleInTree = true;
+        _newsList.VerticalScrollBar.BringToFront();
 
         if (_items.Count == 0)
         {

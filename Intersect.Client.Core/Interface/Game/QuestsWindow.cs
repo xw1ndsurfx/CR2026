@@ -112,15 +112,13 @@ public partial class QuestsWindow
         _questList.IsVisibleInTree = true;
 
         // === Quest Tracker HUD ===
-        // Reuse the default TargetBox visual language: same panel texture, same
-        // typography family, but with enough transparency to keep the map readable.
+        // Small WorldMap-style window: dark translucent body, brown header,
+        // white/gold typography, and no purple accents.
         mQuestTaskHudPanel = new QuestTrackerPanel(gameCanvas)
         {
             Width = 360,
             Height = 142,
             IsHidden = true,
-            TextureFilename = "target_window.png",
-            RenderColor = new Color(255, 255, 255, 218),
         };
         mQuestTaskHudPanel.MouseInputEnabled = false;
 
@@ -142,7 +140,7 @@ public partial class QuestsWindow
             AutoSizeToContents = false,
             Font = trackerFont,
             FontSize = 8,
-            TextColorOverride = new Color(226, 187, 116, 255),
+            TextColorOverride = Color.White,
             Text = "CURRENT QUEST",
             TextAlign = Pos.Left | Pos.CenterV,
             MouseInputEnabled = false,
@@ -154,7 +152,7 @@ public partial class QuestsWindow
             AutoSizeToContents = false,
             Font = trackerFont,
             FontSize = 11,
-            TextColorOverride = new Color(246, 241, 229, 255),
+            TextColorOverride = new Color(244, 236, 219, 255),
             TextAlign = Pos.Left | Pos.CenterV,
             MouseInputEnabled = false,
         };
@@ -171,7 +169,7 @@ public partial class QuestsWindow
             AutoSizeToContents = false,
             Font = trackerFont,
             FontSize = 8,
-            TextColorOverride = new Color(192, 223, 164, 255),
+            TextColorOverride = new Color(170, 220, 145, 255),
             TextAlign = Pos.Left | Pos.CenterV,
             MouseInputEnabled = false,
         };
@@ -446,7 +444,7 @@ public partial class QuestsWindow
         _lastHudText = string.Empty;
     }
 
-    private sealed class QuestTrackerPanel : ImagePanel
+    private sealed class QuestTrackerPanel : Base
     {
         private float _progressRatio;
 
@@ -467,15 +465,14 @@ public partial class QuestsWindow
 
         protected override void Render(SkinBase skin)
         {
-            // First render target_window.png so this tracker belongs to the same GUI
-            // family as the selected NPC/player/event panel.
             base.Render(skin);
-
             var renderer = skin.Renderer;
 
-            // Subtle translucent backing behind the text improves readability without
-            // hiding the game world beneath the panel.
-            Fill(renderer, new Color(18, 13, 14, 76), 84, 30, Width - 94, Height - 40);
+            Fill(renderer, new Color(24, 14, 15, 220), 0, 0, Width, Height);
+            Fill(renderer, new Color(94, 60, 49, 242), 0, 0, Width, 30);
+            Fill(renderer, new Color(126, 82, 62, 255), 0, 29, Width, 1);
+            Outline(renderer, new Color(72, 43, 35, 255), 0, 0, Width, Height, 2);
+            Fill(renderer, new Color(12, 10, 10, 72), 82, 39, Width - 94, Height - 52);
 
             if (ShowProgressBar)
             {

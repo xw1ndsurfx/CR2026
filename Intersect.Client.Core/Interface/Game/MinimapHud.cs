@@ -19,7 +19,7 @@ namespace Intersect.Client.Interface.Game;
 /// Lightweight top-right RPG minimap/compass rendered entirely from client-known map data.
 /// Part 2 adds party/quest markers and a larger local-map mode.
 /// </summary>
-internal sealed class MinimapHud : ImagePanel
+internal sealed class MinimapHud : Base
 {
     private const int CompactWidth = 280;
     private const int CompactHeight = 315;
@@ -51,9 +51,7 @@ internal sealed class MinimapHud : ImagePanel
         SetSize(CompactWidth, CompactHeight);
         MouseInputEnabled = false;
         KeyboardInputEnabled = false;
-        ShouldDrawBackground = true;
-        TextureFilename = "entitybox.png";
-        RenderColor = new Color(255, 255, 255, 224);
+        ShouldDrawBackground = false;
 
         _mapName = MakeLabel("MinimapMapName", 12, 5, 210, 24, 12);
         _coords = MakeLabel("MinimapCoords", 12, 281, 256, 18, 10);
@@ -74,14 +72,14 @@ internal sealed class MinimapHud : ImagePanel
 
         var titleFont = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont;
         _mapName.Font = titleFont;
-        _mapName.TextColorOverride = new Color(246, 241, 229, 255);
+        _mapName.TextColorOverride = Color.White;
         _coords.Font = titleFont;
         _coords.FontSize = 9;
-        _coords.TextColorOverride = new Color(205, 190, 172, 255);
+        _coords.TextColorOverride = new Color(220, 220, 220, 255);
         _legend.Font = titleFont;
-        _legend.TextColorOverride = new Color(202, 190, 176, 255);
+        _legend.TextColorOverride = new Color(220, 220, 220, 255);
 
-        var compassColor = new Color(226, 187, 116, 255);
+        var compassColor = Color.White;
         _north.Font = titleFont;
         _east.Font = titleFont;
         _south.Font = titleFont;
@@ -189,11 +187,15 @@ internal sealed class MinimapHud : ImagePanel
         var gridX = GridX;
         var gridPixels = GridPixels;
 
-        // entitybox.png is rendered by ImagePanel/base.Render(). Add only a
-        // translucent map well so the minimap matches the TargetBox/quest tracker UI.
-        Fill(renderer, new Color(18, 13, 14, 122), gridX - 6, GridY - 6, gridPixels + 12, gridPixels + 12);
-        Outline(renderer, new Color(145, 99, 78, 220), gridX - 6, GridY - 6, gridPixels + 12, gridPixels + 12, 1);
-        Outline(renderer, new Color(62, 43, 40, 190), gridX - 3, GridY - 3, gridPixels + 6, gridPixels + 6, 1);
+        // Match the World Map window: brown title bar, dark translucent body,
+        // white typography and restrained bronze borders.
+        Fill(renderer, new Color(24, 14, 15, 226), 0, 0, Width, Height);
+        Fill(renderer, new Color(94, 60, 49, 246), 0, 0, Width, 32);
+        Fill(renderer, new Color(126, 82, 62, 255), 0, 31, Width, 1);
+        Outline(renderer, new Color(72, 43, 35, 255), 0, 0, Width, Height, 2);
+
+        Fill(renderer, new Color(20, 16, 17, 210), gridX - 6, GridY - 6, gridPixels + 12, gridPixels + 12);
+        Outline(renderer, new Color(126, 82, 62, 235), gridX - 6, GridY - 6, gridPixels + 12, gridPixels + 12, 1);
 
         var attributes = map.Attributes;
         var width = attributes.GetLength(0);
@@ -216,12 +218,12 @@ internal sealed class MinimapHud : ImagePanel
             var attribute = attributes[mapX, mapY];
             var color = attribute?.Type switch
             {
-                MapAttributeType.Blocked => new Color(72, 66, 64, 235),
-                MapAttributeType.Warp => new Color(194, 151, 70, 245),
-                MapAttributeType.Resource => new Color(93, 132, 83, 235),
-                MapAttributeType.Item => new Color(89, 112, 135, 235),
-                MapAttributeType.NpcAvoid => new Color(124, 86, 69, 235),
-                _ => new Color(72, 96, 76, 225),
+                MapAttributeType.Blocked => new Color(69, 58, 54, 235),
+                MapAttributeType.Warp => new Color(205, 164, 74, 245),
+                MapAttributeType.Resource => new Color(96, 132, 78, 235),
+                MapAttributeType.Item => new Color(96, 120, 134, 235),
+                MapAttributeType.NpcAvoid => new Color(128, 88, 68, 235),
+                _ => new Color(86, 112, 78, 230),
             };
             Fill(renderer, color, x, y, Cell - 1, Cell - 1);
         }
