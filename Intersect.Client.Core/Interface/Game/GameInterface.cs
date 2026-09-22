@@ -412,6 +412,7 @@ public partial class GameInterface : MutableInterface
         PlayerStatusWindow?.Update();
         mMapItemWindow.Update();
         _minimapHud?.Update();
+        _shopWindow?.Update();
         AnnouncementWindow?.Update();
         mPictureWindow?.Update();
         UpdatePoker();
@@ -697,9 +698,11 @@ public partial class GameInterface : MutableInterface
         CloseCraftingTable();
         CloseShop();
         CloseTrading();
-        _worldMapWindow?.Dispose();
+        // GameCanvas owns these controls and disposes its children. Disposing the
+        // minimap/world map here first leaves disposed children in the canvas tree,
+        // causing a second Dispose() during character-select/logout transitions.
         _worldMapWindow = null;
-        _minimapHud?.Dispose();
+        _minimapHud = null;
         GameCanvas.Dispose();
     }
 }

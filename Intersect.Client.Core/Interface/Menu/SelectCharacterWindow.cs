@@ -197,6 +197,26 @@ public partial class SelectCharacterWindow : Window
         SizeToChildren(recursive: true);
 
         LoadJsonUi(GameContentManager.UI.Menu, Graphics.Renderer?.GetResolutionString());
+
+        // Character preview: keep the familiar selector window, but present the
+        // selected character like an RPG profile card.
+        SetSize(Math.Max(680, Width), Math.Max(300, Height));
+        _previewContainer.Dock = Pos.None;
+        _previewContainer.SetBounds(55, 42, 185, 160);
+        _preview.SetBounds(0, 0, 185, 160);
+
+        _nameLabel.Dock = Pos.None;
+        _nameLabel.AutoSizeToContents = false;
+        _nameLabel.TextAlign = Pos.Left | Pos.CenterV;
+        _nameLabel.TextColorOverride = new Color(236, 210, 153, 255);
+        _nameLabel.SetBounds(260, 72, 350, 28);
+
+        _infoLabel.Dock = Pos.None;
+        _infoLabel.AutoSizeToContents = false;
+        _infoLabel.TextAlign = Pos.Left | Pos.Top;
+        _infoLabel.TextColorOverride = Color.White;
+        _infoLabel.SetBounds(260, 104, 350, 58);
+
         EnsureArrowsVisibility();
     }
 
@@ -261,30 +281,8 @@ public partial class SelectCharacterWindow : Window
         _buttonDelete.Show();
         _buttonNew.Hide();
 
-        var faceTexture = GameContentManager.Current.GetTexture(TextureType.Face, selectedPreviewMetadata.Face);
-        if (faceTexture != default)
-        {
-            var faceLayer = _renderLayers[0];
-            var scale = Math.Min(
-                _preview.InnerWidth / (double)faceTexture.Width,
-                _preview.InnerHeight / (double)faceTexture.Height
-            );
-            var faceTextureWidth = (int)(faceTexture.Width * scale);
-            var faceTextureHeight = (int)(faceTexture.Height * scale);
-            var x = (_preview.Width - faceTextureWidth) / 2;
-            var y = (_preview.Height - faceTextureHeight) / 2;
-            faceLayer.ResetUVs();
-            faceLayer.SetBounds(x, y, faceTextureWidth, faceTextureHeight);
-            faceLayer.Texture = faceTexture;
-            faceLayer.IsVisibleInTree = true;
-
-            foreach (var renderLayer in _renderLayers.Skip(1))
-            {
-                renderLayer.IsVisibleInTree = false;
-            }
-            return;
-        }
-
+        // Always render the actual character sprite + paperdolls here. A face image
+        // hid equipment/appearance changes and made different characters look stale.
         // we are rendering the player facing down, then we need to know the render order of the equipments
         for (var paperdollLayerIndex = 0; paperdollLayerIndex < Options.Instance.Equipment.Paperdoll.Down.Count; paperdollLayerIndex++)
         {

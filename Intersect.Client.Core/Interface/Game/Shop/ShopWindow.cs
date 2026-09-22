@@ -26,6 +26,7 @@ public partial class ShopWindow : Window
     private readonly TextBox _search;
     private bool _shopInitialized;
     private bool _inventorySubscribed;
+    private bool _refreshPending;
 
     public ShopWindow(Canvas gameCanvas) : base(gameCanvas, Globals.GameShop?.Name ?? Strings.Shop.Title, false, nameof(ShopWindow))
     {
@@ -223,16 +224,16 @@ public partial class ShopWindow : Window
     {
         const int rowHeight = 76;
         var contentHeight = Math.Max(container.Height + 1, rowCount * rowHeight);
-        container.SetInnerSize(Math.Max(1, container.Width - container.VerticalScrollBar.Width), contentHeight);
-        container.VerticalScrollBar.IsHidden = false;
-        container.VerticalScrollBar.IsVisibleInTree = true;
-        container.VerticalScrollBar.IsDisabled = false;
-        container.VerticalScrollBar.ShouldDrawBackground = true;
-        container.VerticalScrollBar.BringToFront();
-        container.VerticalScrollBar.SetScrollAmount(
-            Math.Clamp(container.VerticalScrollBar.ScrollAmount, 0f, 1f),
-            forceUpdate: true
-        );
+        container.SetInnerSize(Math.Max(1, container.Width - 17), contentHeight);
+        container.UpdateScrollBars();
+
+        var bar = container.VerticalScrollBar;
+        bar.IsHidden = false;
+        bar.IsVisibleInTree = true;
+        bar.IsDisabled = false;
+        bar.ShouldDrawBackground = true;
+        bar.BringToFront();
+        bar.SetScrollAmount(Math.Clamp(bar.ScrollAmount, 0f, 1f), forceUpdate: true);
     }
 
     private static void ConfigureNativeScrollbar(ScrollControl container)
@@ -240,6 +241,25 @@ public partial class ShopWindow : Window
         var bar = container.VerticalScrollBar;
         bar.Width = 15;
         bar.Dock = Pos.Right;
+        bar.SetBackgroundTemplate(
+            GameContentManager.Current.GetTexture(Framework.Content.TextureType.Gui, "scrollbarbg.png"),
+            "scrollbarbg.png"
+        );
+        bar.SetScrollBarImage(
+            GameContentManager.Current.GetTexture(Framework.Content.TextureType.Gui, "scrollbarnormal.png"),
+            "scrollbarnormal.png",
+            ComponentState.Normal
+        );
+        bar.SetScrollBarImage(
+            GameContentManager.Current.GetTexture(Framework.Content.TextureType.Gui, "scrollbarhover.png"),
+            "scrollbarhover.png",
+            ComponentState.Hovered
+        );
+        bar.SetScrollBarImage(
+            GameContentManager.Current.GetTexture(Framework.Content.TextureType.Gui, "scrollbarclicked.png"),
+            "scrollbarclicked.png",
+            ComponentState.Active
+        );
         bar.IsHidden = false;
         bar.IsVisibleInTree = true;
         bar.IsDisabled = false;
@@ -251,6 +271,9 @@ public partial class ShopWindow : Window
             up.IsHidden = false;
             up.IsDisabled = false;
             up.ShouldDrawBackground = true;
+            up.SetStateTexture(ComponentState.Normal, "uparrownormal.png");
+            up.SetStateTexture(ComponentState.Hovered, "uparrowhover.png");
+            up.SetStateTexture(ComponentState.Active, "uparrowclicked.png");
         }
 
         var down = bar.GetScrollBarButton(Pos.Bottom);
@@ -259,6 +282,9 @@ public partial class ShopWindow : Window
             down.IsHidden = false;
             down.IsDisabled = false;
             down.ShouldDrawBackground = true;
+            down.SetStateTexture(ComponentState.Normal, "downarrownormal.png");
+            down.SetStateTexture(ComponentState.Hovered, "downarrowhover.png");
+            down.SetStateTexture(ComponentState.Active, "downarrowclicked.png");
         }
 
         bar.BringToFront();
@@ -296,6 +322,20 @@ public partial class ShopWindow : Window
     private void PlayerOnInventoryUpdated(Player player, int slotIndex)
     {
         if (player != Globals.Me || !_shopInitialized) return;
+
+        // Rebuilding the shop hierarchy from inside a Buy/Sell click can dispose the
+        // button that is still dispatching the click. Refresh on the next UI update.
+        _refreshPending = true;
+    }
+
+    public void Update()
+    {
+        if (!_shopInitialized || !_refreshPending || IsHidden)
+        {
+            return;
+        }
+
+        _refreshPending = false;
         RefreshBuyRows();
         RefreshSellRows();
     }
