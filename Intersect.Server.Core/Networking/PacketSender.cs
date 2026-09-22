@@ -1682,6 +1682,12 @@ public static partial class PacketSender
         player.SendPacket(new StopSoundsPacket());
     }
 
+    //OpenLogiklikNewsPacket
+    public static void SendOpenLogiklikNews(Player player)
+    {
+        player.SendPacket(new OpenLogiklikNewsPacket());
+    }
+
     //ShowPicturePacket
     public static void SendShowPicture(Player player, string picture, int size, bool clickable, int hideTime, Guid eventId)
     {
