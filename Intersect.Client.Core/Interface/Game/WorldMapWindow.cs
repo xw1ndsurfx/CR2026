@@ -62,7 +62,6 @@ internal sealed class WorldMapWindow : Window
     {
         if (_initialized) return;
         _initialized = true;
-        base.EnsureInitialized();
         _mapCanvas.CenterOnPlayer();
     }
 
