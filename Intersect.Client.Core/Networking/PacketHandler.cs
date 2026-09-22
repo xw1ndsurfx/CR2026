@@ -2222,7 +2222,8 @@ internal sealed partial class PacketHandler
                     characterPacket.Face,
                     characterPacket.Level,
                     characterPacket.ClassName,
-                    characterPacket.Equipment
+                    characterPacket.Equipment,
+                    characterPacket.GuildName
                 )
             ),
         ];

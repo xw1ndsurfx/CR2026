@@ -1429,7 +1429,8 @@ public static partial class PacketSender
                     character.Face,
                     character.Level,
                     ClassDescriptor.GetName(character.ClassId),
-                    equipment
+                    equipment,
+                    character.Guild?.Name ?? string.Empty
                 )
             );
         }

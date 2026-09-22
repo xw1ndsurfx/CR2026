@@ -209,13 +209,13 @@ public partial class SelectCharacterWindow : Window
         _nameLabel.AutoSizeToContents = false;
         _nameLabel.TextAlign = Pos.Left | Pos.CenterV;
         _nameLabel.TextColorOverride = new Color(236, 210, 153, 255);
-        _nameLabel.SetBounds(260, 72, 350, 28);
+        _nameLabel.SetBounds(260, 58, 350, 28);
 
         _infoLabel.Dock = Pos.None;
         _infoLabel.AutoSizeToContents = false;
         _infoLabel.TextAlign = Pos.Left | Pos.Top;
         _infoLabel.TextColorOverride = Color.White;
-        _infoLabel.SetBounds(260, 104, 350, 58);
+        _infoLabel.SetBounds(260, 88, 350, 86);
 
         EnsureArrowsVisibility();
     }
@@ -271,11 +271,11 @@ public partial class SelectCharacterWindow : Window
             return;
         }
 
-        _nameLabel.Text = Strings.CharacterSelection.Name.ToString(selectedPreviewMetadata.Name);
-        _infoLabel.Text = Strings.CharacterSelection.Info.ToString(
-            selectedPreviewMetadata.Level,
-            selectedPreviewMetadata.Class
-        );
+        _nameLabel.Text = $"Name:  {selectedPreviewMetadata.Name}";
+        _infoLabel.Text =
+            $"Level:  {selectedPreviewMetadata.Level}\n" +
+            $"Class:  {selectedPreviewMetadata.Class}\n" +
+            $"Guild:  {(string.IsNullOrWhiteSpace(selectedPreviewMetadata.Guild) ? "-" : selectedPreviewMetadata.Guild)}";
 
         _buttonPlay.Show();
         _buttonDelete.Show();
