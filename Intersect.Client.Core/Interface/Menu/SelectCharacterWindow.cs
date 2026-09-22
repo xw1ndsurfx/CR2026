@@ -19,6 +19,12 @@ public partial class SelectCharacterWindow : Window
 
     private readonly Label _nameLabel;
     private readonly Label _infoLabel;
+    private readonly Label _levelCaptionLabel;
+    private readonly Label _levelValueLabel;
+    private readonly Label _classCaptionLabel;
+    private readonly Label _classValueLabel;
+    private readonly Label _guildCaptionLabel;
+    private readonly Label _guildValueLabel;
     private readonly ImagePanel _preview;
     private readonly Button _selectCharacterRightButton;
     private readonly Button _selectCharacterLeftButton;
@@ -171,6 +177,37 @@ public partial class SelectCharacterWindow : Window
             FontSize = 12,
         };
 
+        _levelCaptionLabel = new Label(_characterPreviewPanel, name: nameof(_levelCaptionLabel))
+        {
+            Font = _defaultFont,
+            FontSize = 12,
+        };
+        _levelValueLabel = new Label(_characterPreviewPanel, name: nameof(_levelValueLabel))
+        {
+            Font = _defaultFont,
+            FontSize = 12,
+        };
+        _classCaptionLabel = new Label(_characterPreviewPanel, name: nameof(_classCaptionLabel))
+        {
+            Font = _defaultFont,
+            FontSize = 12,
+        };
+        _classValueLabel = new Label(_characterPreviewPanel, name: nameof(_classValueLabel))
+        {
+            Font = _defaultFont,
+            FontSize = 12,
+        };
+        _guildCaptionLabel = new Label(_characterPreviewPanel, name: nameof(_guildCaptionLabel))
+        {
+            Font = _defaultFont,
+            FontSize = 12,
+        };
+        _guildValueLabel = new Label(_characterPreviewPanel, name: nameof(_guildValueLabel))
+        {
+            Font = _defaultFont,
+            FontSize = 12,
+        };
+
         _previewContainer = new Panel(_characterPreviewPanel, name: nameof(_previewContainer))
         {
             Dock = Pos.Fill,
@@ -198,25 +235,44 @@ public partial class SelectCharacterWindow : Window
 
         LoadJsonUi(GameContentManager.UI.Menu, Graphics.Renderer?.GetResolutionString());
 
-        // Compact RPG profile card inspired by the in-game character sheet:
-        // portrait on the left, gold field names, white values aligned in rows.
+        // Character sheet-style profile card. Gwen Label does not reliably render
+        // embedded newlines here, so every row is its own label/value pair.
         SetSize(Math.Max(680, Width), Math.Max(300, Height));
 
         _previewContainer.Dock = Pos.None;
         _previewContainer.SetBounds(78, 48, 112, 112);
         _preview.SetBounds(0, 0, 112, 112);
 
-        _infoLabel.Dock = Pos.None;
-        _infoLabel.AutoSizeToContents = false;
-        _infoLabel.TextAlign = Pos.Left | Pos.Top;
-        _infoLabel.TextColorOverride = new Color(236, 210, 153, 255);
-        _infoLabel.SetBounds(205, 58, 72, 104);
+        static void PlaceProfileLabel(Label label, int x, int y, int width, Color color)
+        {
+            label.Dock = Pos.None;
+            label.AutoSizeToContents = false;
+            label.TextAlign = Pos.Left | Pos.CenterV;
+            label.TextColorOverride = color;
+            label.SetBounds(x, y, width, 22);
+        }
 
-        _nameLabel.Dock = Pos.None;
-        _nameLabel.AutoSizeToContents = false;
-        _nameLabel.TextAlign = Pos.Left | Pos.Top;
-        _nameLabel.TextColorOverride = Color.White;
-        _nameLabel.SetBounds(278, 58, 285, 104);
+        var captionColor = new Color(236, 210, 153, 255);
+        const int captionX = 205;
+        const int valueX = 278;
+        const int captionWidth = 68;
+        const int valueWidth = 285;
+        const int firstRowY = 55;
+        const int rowGap = 24;
+
+        PlaceProfileLabel(_infoLabel, captionX, firstRowY, captionWidth, captionColor);
+        PlaceProfileLabel(_nameLabel, valueX, firstRowY, valueWidth, Color.White);
+        PlaceProfileLabel(_levelCaptionLabel, captionX, firstRowY + rowGap, captionWidth, captionColor);
+        PlaceProfileLabel(_levelValueLabel, valueX, firstRowY + rowGap, valueWidth, Color.White);
+        PlaceProfileLabel(_classCaptionLabel, captionX, firstRowY + rowGap * 2, captionWidth, captionColor);
+        PlaceProfileLabel(_classValueLabel, valueX, firstRowY + rowGap * 2, valueWidth, Color.White);
+        PlaceProfileLabel(_guildCaptionLabel, captionX, firstRowY + rowGap * 3, captionWidth, captionColor);
+        PlaceProfileLabel(_guildValueLabel, valueX, firstRowY + rowGap * 3, valueWidth, Color.White);
+
+        _infoLabel.Text = "Name:";
+        _levelCaptionLabel.Text = "Level:";
+        _classCaptionLabel.Text = "Class:";
+        _guildCaptionLabel.Text = "Guild:";
 
         EnsureArrowsVisibility();
     }
@@ -269,20 +325,23 @@ public partial class SelectCharacterWindow : Window
 
             _infoLabel.Text = Strings.CharacterSelection.Empty;
             _nameLabel.Text = string.Empty;
+            _levelCaptionLabel.Text = string.Empty;
+            _levelValueLabel.Text = string.Empty;
+            _classCaptionLabel.Text = string.Empty;
+            _classValueLabel.Text = string.Empty;
+            _guildCaptionLabel.Text = string.Empty;
+            _guildValueLabel.Text = string.Empty;
             return;
         }
 
-        _infoLabel.Text =
-            "Name:\n" +
-            "Level:\n" +
-            "Class:\n" +
-            "Guild:";
-
-        _nameLabel.Text =
-            $"{selectedPreviewMetadata.Name}\n" +
-            $"{selectedPreviewMetadata.Level}\n" +
-            $"{selectedPreviewMetadata.Class}\n" +
-            $"{(string.IsNullOrWhiteSpace(selectedPreviewMetadata.Guild) ? "-" : selectedPreviewMetadata.Guild)}";
+        _infoLabel.Text = "Name:";
+        _nameLabel.Text = selectedPreviewMetadata.Name;
+        _levelCaptionLabel.Text = "Level:";
+        _levelValueLabel.Text = selectedPreviewMetadata.Level.ToString();
+        _classCaptionLabel.Text = "Class:";
+        _classValueLabel.Text = selectedPreviewMetadata.Class;
+        _guildCaptionLabel.Text = "Guild:";
+        _guildValueLabel.Text = string.IsNullOrWhiteSpace(selectedPreviewMetadata.Guild) ? "-" : selectedPreviewMetadata.Guild;
 
         _buttonPlay.Show();
         _buttonDelete.Show();
