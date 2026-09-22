@@ -50,6 +50,8 @@ public partial class GameInterface : MutableInterface
 
     private MapItemWindow mMapItemWindow;
 
+    private MinimapHud _minimapHud;
+
     private SettingsWindow? _settingsWindow;
 
     private ItemDescriptionWindow? _itemDescriptionWindow;
@@ -160,6 +162,8 @@ public partial class GameInterface : MutableInterface
 
         mQuestOfferWindow = new QuestOfferWindow(GameCanvas);
         mMapItemWindow = new MapItemWindow(GameCanvas);
+        _minimapHud = new MinimapHud(GameCanvas);
+        _minimapHud.SendToBack();
     }
 
     //Chatbox
@@ -353,6 +357,7 @@ public partial class GameInterface : MutableInterface
         PlayerBox?.Update();
         PlayerStatusWindow?.Update();
         mMapItemWindow.Update();
+        _minimapHud?.Update();
         AnnouncementWindow?.Update();
         mPictureWindow?.Update();
         UpdatePoker();
@@ -632,6 +637,7 @@ public partial class GameInterface : MutableInterface
         CloseCraftingTable();
         CloseShop();
         CloseTrading();
+        _minimapHud?.Dispose();
         GameCanvas.Dispose();
     }
 }
