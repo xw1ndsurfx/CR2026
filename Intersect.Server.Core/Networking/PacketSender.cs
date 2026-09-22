@@ -1496,7 +1496,7 @@ public static partial class PacketSender
         }
         else
         {
-            client.Send(new MapGridPacket(grid.GetClientData(), null, clearKnownMaps));
+            client.Send(new MapGridPacket(grid.GetClientData(), grid.GetEditorData(), clearKnownMaps));
             if (clearKnownMaps)
             {
                 SendAreaPacket(client.Entity);
