@@ -35,6 +35,9 @@ public partial class MenuContainer : Panel
     private readonly Button _questsButton;
     private readonly QuestsWindow _questsWindow;
 
+    private readonly ImagePanel _newsButtonContainer;
+    private readonly Button _newsButton;
+
     private readonly ImagePanel _friendsButtonContainer;
     private readonly Button _friendsButton;
     private readonly FriendsWindow _friendsWindow;
@@ -138,6 +141,26 @@ public partial class MenuContainer : Panel
         _questsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "questsicon_hovered.png");
         _questsButton.SetToolTipText(text: Strings.GameMenu.Quest);
         _questsButton.Clicked += QuestBtn_Clicked;
+
+        _newsButtonContainer = new ImagePanel(parent: this, name: nameof(_newsButtonContainer))
+        {
+            Dock = Pos.Left,
+            MaximumSize = new Point(x: 36, y: 36),
+            MinimumSize = new Point(x: 36, y: 36),
+            Padding = new Padding(size: 2),
+            Size = new Point(x: 36, y: 36),
+            TextureFilename = "menuitem.png",
+        };
+        _newsButton = new Button(parent: _newsButtonContainer, name: nameof(_newsButton))
+        {
+            Alignment = [Alignments.Center],
+            Size = new Point(x: 32, y: 32),
+            Text = "N",
+            Font = Skin.DefaultFont,
+            FontSize = 13,
+        };
+        _newsButton.SetToolTipText(text: "Corps Royaux News");
+        _newsButton.Clicked += NewsButton_Clicked;
 
         _friendsButtonContainer = new ImagePanel(parent: this, name: nameof(_friendsButtonContainer))
         {
@@ -305,6 +328,7 @@ public partial class MenuContainer : Panel
         _questsWindow.Hide();
         _spellsWindow.Hide();
         _guildWindow.Hide();
+        Interface.GameUi.HideLogiklikNews();
     }
 
     public void ToggleCharacterWindow()
@@ -441,6 +465,8 @@ public partial class MenuContainer : Panel
         _partyWindow.Hide();
 
         _guildWindow.Hide();
+
+        Interface.GameUi.HideLogiklikNews();
     }
 
     public bool HasWindowsOpen()
@@ -451,7 +477,8 @@ public partial class MenuContainer : Panel
                           _questsWindow.IsVisible() ||
                           _spellsWindow.IsVisibleInTree ||
                           _partyWindow.IsVisible() ||
-                          _guildWindow.IsVisibleInTree;
+                          _guildWindow.IsVisibleInTree ||
+                          Interface.GameUi.IsLogiklikNewsVisible;
         return windowsOpen;
     }
 
@@ -495,6 +522,11 @@ public partial class MenuContainer : Panel
     private void QuestBtn_Clicked(Base sender, MouseButtonState arguments)
     {
         ToggleQuestsWindow();
+    }
+
+    private void NewsButton_Clicked(Base sender, MouseButtonState arguments)
+    {
+        Interface.GameUi.ToggleLogiklikNews();
     }
 
     private void InventoryButton_Clicked(Base sender, MouseButtonState arguments)
