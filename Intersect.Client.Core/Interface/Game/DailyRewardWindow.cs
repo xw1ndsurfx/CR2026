@@ -82,9 +82,8 @@ internal sealed class DailyRewardWindow : Window
     private readonly Button _claim;
     private DailyRewardStatePacket? _state;
 
-    public DailyRewardWindow(Canvas parent) : base(parent, "DailyRewardWindow")
+    public DailyRewardWindow(Canvas parent) : base(parent, "Daily Rewards", false, nameof(DailyRewardWindow))
     {
-        SetTitle("Daily Reward", false);
         SetSize(620, 420);
         Alignment = [Alignments.Center];
         DeleteOnClose = false;

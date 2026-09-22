@@ -169,7 +169,12 @@ internal sealed partial class PacketHandler
 
     public void HandlePacket(IPacketSender packetSender, DailyRewardStatePacket packet)
     {
-        Interface.GameUi?.UpdateDailyRewardState(packet);
+        if (!Intersect.Client.Interface.Interface.HasInGameUI)
+        {
+            return;
+        }
+
+        Intersect.Client.Interface.Interface.GameUi.UpdateDailyRewardState(packet);
     }
 
     //ConfigPacket
