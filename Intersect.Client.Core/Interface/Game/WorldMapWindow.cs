@@ -210,6 +210,10 @@ internal sealed class WorldMapWindow : Window
 
                     if (preview != null)
                     {
+                        // IntersectRenderer.DrawTexturedRect currently uses DrawColor instead of
+                        // the color argument, so force white here or the previous fill color tints
+                        // the entire map preview (the strong blue cast seen in-game).
+                        renderer.DrawColor = Color.White;
                         renderer.DrawTexturedRect(
                             preview,
                             new Rectangle(x, y, cellWidth + 1, cellHeight + 1),
@@ -222,6 +226,10 @@ internal sealed class WorldMapWindow : Window
                         // No GUIDs and no bright debug-blue cells.
                         Fill(renderer, new Color(18, 23, 27, 255), x, y, cellWidth + 1, cellHeight + 1);
                     }
+
+                    // Keep a very subtle editor-style cell boundary so adjacent maps remain
+                    // distinguishable without bringing back the old debug-grid appearance.
+                    Outline(renderer, new Color(86, 96, 104, 150), x, y, cellWidth, cellHeight, 1);
 
                     if (Globals.Me?.MapId == mapId)
                     {
