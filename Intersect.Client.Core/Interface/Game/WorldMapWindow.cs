@@ -105,6 +105,8 @@ internal sealed class WorldMapWindow : Window
     {
         private const int BaseCellWidth = 180;
         private const int PreviewWidth = 288;
+        private const int PreviewBuildsPerFrame = 4;
+        private const int ReRequestIntervalFrames = 120;
 
         private readonly Dictionary<Guid, IGameRenderTexture> _previews = [];
         private readonly Dictionary<Guid, int> _previewRevisions = [];
@@ -113,6 +115,7 @@ internal sealed class WorldMapWindow : Window
         private float _panX;
         private float _panY;
         private bool _dragging;
+        private int _requestRefreshCounter;
 
         public WorldMapCanvas(Base parent, string name) : base(parent, name)
         {
@@ -181,7 +184,41 @@ internal sealed class WorldMapWindow : Window
             var cellHeight = CellHeight;
             var gridWidth = grid.GetLength(0);
             var gridHeight = grid.GetLength(1);
-            var builtPreviewThisFrame = false;
+
+            // Keep asking for any maps that are still missing. SendNeedMap filters maps that
+            // are already loaded or already requested, so this is safe and lets the World Map
+            // recover if a distant map was not delivered on the first request.
+            if (++_requestRefreshCounter >= ReRequestIntervalFrames)
+            {
+                _requestRefreshCounter = 0;
+                RequestEntireWorldGrid();
+            }
+
+            // Build previews for the complete world grid, not only the cells currently inside
+            // the viewport. This makes every map ready when the user pans or zooms.
+            var previewsBuiltThisFrame = 0;
+            for (var preloadX = 0; preloadX < gridWidth && previewsBuiltThisFrame < PreviewBuildsPerFrame; ++preloadX)
+            {
+                for (var preloadY = 0; preloadY < gridHeight && previewsBuiltThisFrame < PreviewBuildsPerFrame; ++preloadY)
+                {
+                    var preloadId = grid[preloadX, preloadY];
+                    if (preloadId == Guid.Empty || _previews.ContainsKey(preloadId))
+                    {
+                        continue;
+                    }
+
+                    var preloadMap = MapInstance.Get(preloadId);
+                    if (preloadMap is not { IsLoaded: true })
+                    {
+                        continue;
+                    }
+
+                    if (BuildPreview(preloadMap) != null)
+                    {
+                        ++previewsBuiltThisFrame;
+                    }
+                }
+            }
 
             for (var gx = 0; gx < gridWidth; ++gx)
             {
@@ -203,10 +240,16 @@ internal sealed class WorldMapWindow : Window
                     var map = MapInstance.Get(mapId);
                     var preview = GetValidPreview(mapId, map);
 
-                    if (preview == null && map is { IsLoaded: true } && !builtPreviewThisFrame)
+                    // A visible cell gets priority if the preload budget has not been used up.
+                    if (preview == null &&
+                        map is { IsLoaded: true } &&
+                        previewsBuiltThisFrame < PreviewBuildsPerFrame)
                     {
                         preview = BuildPreview(map);
-                        builtPreviewThisFrame = preview != null;
+                        if (preview != null)
+                        {
+                            ++previewsBuiltThisFrame;
+                        }
                     }
 
                     if (preview != null)
