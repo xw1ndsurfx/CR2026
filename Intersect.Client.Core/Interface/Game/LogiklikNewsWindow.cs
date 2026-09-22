@@ -1,5 +1,10 @@
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
+using Intersect.Client.Framework.Content;
+using Intersect.Client.Framework.File_Management;
+using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
@@ -26,6 +31,8 @@ internal sealed class LogiklikNewsWindow : Window
     private readonly Label _status;
     private readonly Label _detailTitle;
     private readonly Label _detailDate;
+    private readonly ImagePanel _detailImage;
+    private readonly Label _imageStatus;
     private readonly ScrollControl _detailArea;
     private readonly RichLabel _detailLabel;
     private readonly Label _detailTemplate;
@@ -33,6 +40,7 @@ internal sealed class LogiklikNewsWindow : Window
 
     private bool _initialized;
     private bool _loading;
+    private int _imageLoadVersion;
     private DateTime _lastRefreshUtc = DateTime.MinValue;
     private List<NewsItem> _items = [];
 
@@ -110,8 +118,28 @@ internal sealed class LogiklikNewsWindow : Window
         };
         _detailDate.SetBounds(320, 134, 470, 20);
 
+        _detailImage = new ImagePanel(this, "NewsDetailImage")
+        {
+            IsHidden = true,
+            MaintainAspectRatio = true,
+            MouseInputEnabled = false,
+        };
+        _detailImage.SetBounds(320, 162, 470, 180);
+
+        _imageStatus = new Label(this, "NewsImageStatus")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 9,
+            TextColorOverride = new Color(160, 174, 186, 255),
+            TextAlign = Pos.Center,
+            IsHidden = true,
+            MouseInputEnabled = false,
+        };
+        _imageStatus.SetBounds(320, 162, 470, 180);
+
         _detailArea = new ScrollControl(this, "NewsDetailArea");
-        _detailArea.SetBounds(320, 162, 470, 370);
+        SetDetailAreaHasImage(false);
 
         _detailLabel = new RichLabel(_detailArea)
         {
@@ -256,12 +284,148 @@ internal sealed class LogiklikNewsWindow : Window
         _detailLabel.AddText(item.Summary, _detailTemplate);
         _detailLabel.SizeToChildren(false, true);
         _detailLabel.Invalidate();
+
+        _ = ShowArticleImageAsync(item);
+    }
+
+    private async Task ShowArticleImageAsync(NewsItem item)
+    {
+        var loadVersion = ++_imageLoadVersion;
+
+        if (item.ImageUrls.Count == 0)
+        {
+            RunOnMainThread(
+                () =>
+                {
+                    if (loadVersion != _imageLoadVersion)
+                    {
+                        return;
+                    }
+
+                    _detailImage.Texture = null;
+                    _detailImage.IsHidden = true;
+                    _imageStatus.IsHidden = true;
+                    SetDetailAreaHasImage(false);
+                }
+            );
+            return;
+        }
+
+        RunOnMainThread(
+            () =>
+            {
+                if (loadVersion != _imageLoadVersion)
+                {
+                    return;
+                }
+
+                _detailImage.Texture = null;
+                _detailImage.IsHidden = true;
+                _imageStatus.Text = "Loading image...";
+                _imageStatus.IsHidden = false;
+                SetDetailAreaHasImage(true);
+            }
+        );
+
+        foreach (var imageUrl in item.ImageUrls)
+        {
+            try
+            {
+                var bytes = await s_httpClient.GetByteArrayAsync(imageUrl).ConfigureAwait(false);
+                if (bytes.Length == 0 || loadVersion != _imageLoadVersion)
+                {
+                    continue;
+                }
+
+                var textureName = "logiklik-news-" +
+                                  Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(imageUrl)))
+                                      .ToLowerInvariant();
+
+                RunOnMainThread(
+                    () =>
+                    {
+                        if (loadVersion != _imageLoadVersion)
+                        {
+                            return;
+                        }
+
+                        try
+                        {
+                            var texture = GameContentManager.Current.Load<IGameTexture>(
+                                ContentType.Interface,
+                                textureName,
+                                () => new MemoryStream(bytes, writable: false)
+                            );
+
+                            _detailImage.Texture = texture;
+                            _detailImage.IsHidden = false;
+                            _imageStatus.IsHidden = true;
+                            SetDetailAreaHasImage(true);
+                            _detailImage.Invalidate();
+                        }
+                        catch
+                        {
+                            _detailImage.Texture = null;
+                        }
+                    }
+                );
+
+                return;
+            }
+            catch
+            {
+                // Try the next image URL exposed by the article.
+            }
+        }
+
+        RunOnMainThread(
+            () =>
+            {
+                if (loadVersion != _imageLoadVersion)
+                {
+                    return;
+                }
+
+                _detailImage.Texture = null;
+                _detailImage.IsHidden = true;
+                _imageStatus.Text = "Image unavailable";
+                _imageStatus.IsHidden = false;
+                SetDetailAreaHasImage(true);
+            }
+        );
+    }
+
+    private void SetDetailAreaHasImage(bool hasImage)
+    {
+        if (hasImage)
+        {
+            _detailArea.SetBounds(320, 350, 470, 182);
+        }
+        else
+        {
+            _detailArea.SetBounds(320, 162, 470, 370);
+        }
+
+        if (_detailTemplate != null)
+        {
+            _detailTemplate.Width = Math.Max(100, _detailArea.Width - _detailArea.VerticalScrollBar.Width - 8);
+        }
+
+        if (_detailLabel != null)
+        {
+            _detailLabel.Width = Math.Max(100, _detailArea.Width - _detailArea.VerticalScrollBar.Width - 8);
+        }
     }
 
     private void SetEmptyDetail(string text)
     {
+        ++_imageLoadVersion;
         _detailTitle.Text = string.Empty;
         _detailDate.Text = string.Empty;
+        _detailImage.Texture = null;
+        _detailImage.IsHidden = true;
+        _imageStatus.IsHidden = true;
+        SetDetailAreaHasImage(false);
         _detailLabel.ClearText();
         _detailLabel.AddText(text, _detailTemplate);
         _detailLabel.SizeToChildren(false, true);
@@ -288,9 +452,16 @@ internal sealed class LogiklikNewsWindow : Window
                 continue;
             }
 
-            var summary = CleanHtml(
-                ReadString(token, "description", "summary", "Summary", "contenu", "content")
+            var rawContent = ReadString(
+                token,
+                "description",
+                "summary",
+                "Summary",
+                "contenu",
+                "content"
             );
+            var summary = CleanHtml(rawContent);
+            var imageUrls = ExtractImageUrls(token, rawContent);
 
             var dateRaw = ReadString(token, "date_publication", "date", "Date", "published_at", "published");
             DateTimeOffset? publishedAt = null;
@@ -304,7 +475,8 @@ internal sealed class LogiklikNewsWindow : Window
                     WebUtility.HtmlDecode(title).Trim(),
                     summary,
                     ReadString(token, "lien", "link", "Link"),
-                    publishedAt
+                    publishedAt,
+                    imageUrls
                 )
             );
         }
@@ -385,6 +557,139 @@ internal sealed class LogiklikNewsWindow : Window
         return null;
     }
 
+    private static List<string> ExtractImageUrls(JToken token, string rawHtml)
+    {
+        var urls = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(rawHtml))
+        {
+            foreach (Match match in Regex.Matches(
+                         rawHtml,
+                         @"<img[^>]+src\s*=\s*[""'](?<src>[^""']+)[""']",
+                         RegexOptions.IgnoreCase
+                     ))
+            {
+                AddImageUrl(urls, match.Groups["src"].Value);
+            }
+        }
+
+        AddImagePropertyUrls(
+            token,
+            urls,
+            "image",
+            "image_url",
+            "imageUrl",
+            "image_path",
+            "image_src",
+            "imageSrc",
+            "thumbnail",
+            "thumbnail_url",
+            "featured_image",
+            "featuredImage",
+            "cover",
+            "cover_image",
+            "photo",
+            "picture",
+            "media",
+            "media_url",
+            "url_image"
+        );
+
+        return urls;
+    }
+
+    private static void AddImagePropertyUrls(JToken token, List<string> urls, params string[] names)
+    {
+        if (token is JObject obj)
+        {
+            foreach (var property in obj.Properties())
+            {
+                if (names.Any(name => string.Equals(name, property.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    AddImageToken(urls, property.Value);
+                }
+                else if (property.Value is JObject or JArray)
+                {
+                    AddImagePropertyUrls(property.Value, urls, names);
+                }
+            }
+
+            return;
+        }
+
+        if (token is JArray array)
+        {
+            foreach (var child in array)
+            {
+                AddImagePropertyUrls(child, urls, names);
+            }
+        }
+    }
+
+    private static void AddImageToken(List<string> urls, JToken token)
+    {
+        switch (token.Type)
+        {
+            case JTokenType.String:
+                AddImageUrl(urls, token.ToString());
+                break;
+
+            case JTokenType.Array:
+                foreach (var child in token.Children())
+                {
+                    AddImageToken(urls, child);
+                }
+
+                break;
+
+            case JTokenType.Object:
+                foreach (var property in token.Children<JProperty>())
+                {
+                    if (property.Name.Equals("url", StringComparison.OrdinalIgnoreCase) ||
+                        property.Name.Equals("src", StringComparison.OrdinalIgnoreCase) ||
+                        property.Name.Equals("path", StringComparison.OrdinalIgnoreCase))
+                    {
+                        AddImageToken(urls, property.Value);
+                    }
+                }
+
+                break;
+        }
+    }
+
+    private static void AddImageUrl(List<string> urls, string rawUrl)
+    {
+        var value = WebUtility.HtmlDecode(rawUrl ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(value) || value.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (value.StartsWith("//", StringComparison.Ordinal))
+        {
+            value = "https:" + value;
+        }
+        else if (value.StartsWith("/", StringComparison.Ordinal))
+        {
+            value = "https://logiklik.com" + value;
+        }
+        else if (!Uri.TryCreate(value, UriKind.Absolute, out _))
+        {
+            value = "https://logiklik.com/" + value.TrimStart('/');
+        }
+
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
+        {
+            return;
+        }
+
+        if (!urls.Contains(value, StringComparer.OrdinalIgnoreCase))
+        {
+            urls.Add(value);
+        }
+    }
+
     private static string CleanHtml(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -405,6 +710,7 @@ internal sealed class LogiklikNewsWindow : Window
         string Title,
         string Summary,
         string Link,
-        DateTimeOffset? PublishedAt
+        DateTimeOffset? PublishedAt,
+        List<string> ImageUrls
     );
 }
