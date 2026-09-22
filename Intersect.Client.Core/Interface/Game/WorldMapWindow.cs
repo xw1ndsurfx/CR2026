@@ -16,6 +16,7 @@ using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Mapping.Tilesets;
 using Intersect.Framework.Core.GameObjects.Maps;
+using Intersect.Network.Packets.Server;
 using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 using CoreGraphics = Intersect.Client.Core.Graphics;
