@@ -424,6 +424,16 @@ public static partial class PacketSender
         Network.SendPacket(new RequestFriendsPacket());
     }
 
+    public static void SendRequestDailyRewardState()
+    {
+        Network.SendPacket(new RequestDailyRewardStatePacket());
+    }
+
+    public static void SendClaimDailyReward()
+    {
+        Network.SendPacket(new ClaimDailyRewardPacket());
+    }
+
     public static void SendAddFriend(string name)
     {
         Network.SendPacket(new UpdateFriendsPacket(name, true));

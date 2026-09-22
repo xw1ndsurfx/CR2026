@@ -17,6 +17,7 @@ using Intersect.Client.Networking;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.GameObjects;
+using Intersect.Network.Packets.Server;
 using Microsoft.Extensions.Logging;
 
 namespace Intersect.Client.Interface.Game;
@@ -54,6 +55,7 @@ public partial class GameInterface : MutableInterface
 
     private WorldMapWindow? _worldMapWindow;
     private LogiklikNewsWindow? _logiklikNewsWindow;
+    private DailyRewardWindow? _dailyRewardWindow;
 
     private SettingsWindow? _settingsWindow;
 
@@ -169,6 +171,7 @@ public partial class GameInterface : MutableInterface
         mMapItemWindow = new MapItemWindow(GameCanvas);
         _minimapHud = new MinimapHud(GameCanvas, ToggleWorldMap);
         _minimapHud.SendToBack();
+        PacketSender.SendRequestDailyRewardState();
     }
 
     //Chatbox
@@ -271,6 +274,33 @@ public partial class GameInterface : MutableInterface
     public void HideLogiklikNews()
     {
         _logiklikNewsWindow?.Hide();
+    }
+
+    public bool IsDailyRewardVisible => _dailyRewardWindow is { IsHidden: false };
+
+    public void ToggleDailyReward()
+    {
+        _dailyRewardWindow ??= new DailyRewardWindow(GameCanvas);
+        if (_dailyRewardWindow.IsHidden)
+            _dailyRewardWindow.ShowAndRequest();
+        else
+            _dailyRewardWindow.Hide();
+    }
+
+    public void HideDailyReward()
+    {
+        _dailyRewardWindow?.Hide();
+    }
+
+    public void UpdateDailyRewardState(DailyRewardStatePacket packet)
+    {
+        _dailyRewardWindow ??= new DailyRewardWindow(GameCanvas);
+        _dailyRewardWindow.Apply(packet);
+        if (packet.CanClaim)
+        {
+            _dailyRewardWindow.Show();
+            _dailyRewardWindow.BringToFront();
+        }
     }
 
     //Shop
@@ -724,6 +754,7 @@ public partial class GameInterface : MutableInterface
         mTradingWindow = null;
         _worldMapWindow = null;
         _logiklikNewsWindow = null;
+        _dailyRewardWindow = null;
         _minimapHud = null;
 
         GameCanvas.Dispose();

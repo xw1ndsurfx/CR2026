@@ -38,6 +38,9 @@ public partial class MenuContainer : Panel
     private readonly ImagePanel _newsButtonContainer;
     private readonly Button _newsButton;
 
+    private readonly ImagePanel _dailyRewardButtonContainer;
+    private readonly Button _dailyRewardButton;
+
     private readonly ImagePanel _friendsButtonContainer;
     private readonly Button _friendsButton;
     private readonly FriendsWindow _friendsWindow;
@@ -160,6 +163,26 @@ public partial class MenuContainer : Panel
         _newsButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_News_down.png");
         _newsButton.SetToolTipText(text: "Corps Royaux News");
         _newsButton.Clicked += NewsButton_Clicked;
+
+        _dailyRewardButtonContainer = new ImagePanel(parent: this, name: nameof(_dailyRewardButtonContainer))
+        {
+            Dock = Pos.Top,
+            MaximumSize = new Point(x: 71, y: 55),
+            MinimumSize = new Point(x: 71, y: 55),
+            Padding = new Padding(size: 2),
+            Size = new Point(x: 71, y: 55),
+            TextureFilename = "menuitem.png",
+        };
+        _dailyRewardButton = new Button(parent: _dailyRewardButtonContainer, name: nameof(_dailyRewardButton))
+        {
+            Alignment = [Alignments.Center],
+            Size = new Point(x: 67, y: 51),
+            Text = "Daily",
+            TextColorOverride = new Color(a:255,r:236,g:210,b:153),
+            FontSize = 11,
+        };
+        _dailyRewardButton.SetToolTipText(text: "Daily Reward");
+        _dailyRewardButton.Clicked += DailyRewardButton_Clicked;
 
         _friendsButtonContainer = new ImagePanel(parent: this, name: nameof(_friendsButtonContainer))
         {
@@ -306,6 +329,7 @@ public partial class MenuContainer : Panel
             _characterButtonContainer,
             _questsButtonContainer,
             _newsButtonContainer,
+            _dailyRewardButtonContainer,
             _friendsButtonContainer,
             _partyButtonContainer,
             _guildButtonContainer,
@@ -319,6 +343,7 @@ public partial class MenuContainer : Panel
             _characterButton,
             _questsButton,
             _newsButton,
+            _dailyRewardButton,
             _friendsButton,
             _partyButton,
             _guildButton,
@@ -402,6 +427,7 @@ public partial class MenuContainer : Panel
         _spellsWindow.Hide();
         _guildWindow.Hide();
         Interface.GameUi.HideLogiklikNews();
+        Interface.GameUi.HideDailyReward();
     }
 
     public void ToggleCharacterWindow()
@@ -551,7 +577,8 @@ public partial class MenuContainer : Panel
                           _spellsWindow.IsVisibleInTree ||
                           _partyWindow.IsVisible() ||
                           _guildWindow.IsVisibleInTree ||
-                          Interface.GameUi.IsLogiklikNewsVisible;
+                          Interface.GameUi.IsLogiklikNewsVisible ||
+                          Interface.GameUi.IsDailyRewardVisible;
         return windowsOpen;
     }
 
@@ -600,6 +627,12 @@ public partial class MenuContainer : Panel
     private void NewsButton_Clicked(Base sender, MouseButtonState arguments)
     {
         Interface.GameUi.ToggleLogiklikNews();
+    }
+
+    private void DailyRewardButton_Clicked(Base sender, MouseButtonState arguments)
+    {
+        HideWindows();
+        Interface.GameUi.ToggleDailyReward();
     }
 
     private void InventoryButton_Clicked(Base sender, MouseButtonState arguments)

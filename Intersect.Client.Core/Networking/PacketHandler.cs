@@ -167,6 +167,11 @@ internal sealed partial class PacketHandler
         PingTime = Timing.Global.Milliseconds;
     }
 
+    public void HandlePacket(IPacketSender packetSender, DailyRewardStatePacket packet)
+    {
+        Interface.GameUi?.UpdateDailyRewardState(packet);
+    }
+
     //ConfigPacket
     public void HandlePacket(IPacketSender packetSender, ConfigPacket packet)
     {
