@@ -92,6 +92,8 @@ namespace Intersect.Editor.Forms.Editors.Events
             var questControlTreeNode = new TreeNode("Quest Control", new TreeNode[] { startQuestTreeNode, completeQuestTreeNode, endQuestTreeNode });
             var waitTreeNode = new TreeNode("Wait...");
             var etcTreeNode = new TreeNode("Etc", new TreeNode[] { waitTreeNode });
+            var openLogiklikNewsTreeNode = new TreeNode("Open Corps Royaux News");
+            var interfaceTreeNode = new TreeNode("Interface", new TreeNode[] { openLogiklikNewsTreeNode });
             var openBankTreeNode = new TreeNode("Open Bank");
             var openShopTreeNode = new TreeNode("Open Shop");
             var openCraftingStationTreeNode = new TreeNode("Open Crafting Station");
@@ -1013,6 +1015,11 @@ namespace Intersect.Editor.Forms.Editors.Events
             waitTreeNode.Text = "Wait...";
             etcTreeNode.Name = "etc";
             etcTreeNode.Text = "Etc";
+            openLogiklikNewsTreeNode.Name = "openlogikliknews";
+            openLogiklikNewsTreeNode.Tag = (int)EventCommandType.OpenLogiklikNews;
+            openLogiklikNewsTreeNode.Text = "Open Corps Royaux News";
+            interfaceTreeNode.Name = "interface";
+            interfaceTreeNode.Text = "Interface";
             openBankTreeNode.Name = "openbank";
             openBankTreeNode.Tag = (int)EventCommandType.OpenBank;
             openBankTreeNode.Text = "Open Bank";
@@ -1038,7 +1045,7 @@ namespace Intersect.Editor.Forms.Editors.Events
             setGuildBankSlotsTreeNode.Text = "Set Guild Bank Slots Count";
             guildsTreeNode.Name = "guilds";
             guildsTreeNode.Text = "Guilds";
-            lstCommands.Nodes.AddRange(new TreeNode[] { dialogueTreeNode, logicFlowTreeNode, playerControlTreeNode, movementTreeNode, specialEffectsTreeNode, questControlTreeNode, etcTreeNode, shopAndBankTreeNode, guildsTreeNode });
+            lstCommands.Nodes.AddRange(new TreeNode[] { dialogueTreeNode, logicFlowTreeNode, playerControlTreeNode, movementTreeNode, specialEffectsTreeNode, questControlTreeNode, interfaceTreeNode, etcTreeNode, shopAndBankTreeNode, guildsTreeNode });
             lstCommands.Size = new Size(500, 536);
             lstCommands.TabIndex = 2;
             lstCommands.NodeMouseDoubleClick += lstCommands_NodeMouseDoubleClick;
