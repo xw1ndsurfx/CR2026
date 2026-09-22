@@ -58,7 +58,15 @@ internal sealed class MinimapHud : Base
         _east = MakeLabel("MinimapEast", 248, 145, 22, 18, 12, "E");
         _south = MakeLabel("MinimapSouth", 124, 255, 32, 18, 12, "S");
         _west = MakeLabel("MinimapWest", 10, 145, 22, 18, 12, "W");
-        _legend = MakeLabel("MinimapLegend", 12, 420, 406, 18, 9, "Cyan: Party   Gold: Quest   Blue: Player");
+        _legend = MakeLabel(
+            "MinimapLegend",
+            12,
+            420,
+            406,
+            18,
+            9,
+            "Red: Enemy   Cyan: Party   Gold: Quest   Blue: Player"
+        );
         _legend.IsHidden = true;
 
         var compassColor = new Color(255, 230, 140, 255);
@@ -199,25 +207,65 @@ internal sealed class MinimapHud : Base
     private void DrawEntities(RendererBase renderer, MapInstance map, Player player, int gridX)
     {
         var questTargets = ActiveKillQuestTargetNames(player);
+        var drawnEntityIds = new HashSet<Guid>();
 
+        // Events/resources that belong to the current map instance.
         foreach (var entity in map.LocalEntities.Values)
         {
-            if (entity.Id == player.Id || entity.IsHidden) continue;
-            var dx = entity.X - player.X;
-            var dy = entity.Y - player.Y;
-            if (Math.Abs(dx) > Radius || Math.Abs(dy) > Radius) continue;
+            if (DrawEntityMarker(renderer, entity, player, gridX, questTargets))
+            {
+                drawnEntityIds.Add(entity.Id);
+            }
+        }
 
-            var x = gridX + (dx + Radius) * Cell + 2;
-            var y = GridY + (dy + Radius) * Cell + 2;
+        // NPCs/enemies are global entities in Intersect and are not stored in
+        // MapInstance.LocalEntities. Draw the NPCs that are on the player's map.
+        foreach (var entity in Globals.Entities.Values)
+        {
+            if (entity.Type != EntityType.GlobalEntity ||
+                entity.MapId != map.Id ||
+                drawnEntityIds.Contains(entity.Id))
+            {
+                continue;
+            }
 
-            var isParty = entity.Type == EntityType.Player && player.IsInMyParty(entity.Id);
-            var isQuestTarget = entity.Type == EntityType.GlobalEntity &&
-                questTargets.Contains(entity.Name ?? string.Empty);
+            DrawEntityMarker(renderer, entity, player, gridX, questTargets);
+        }
+    }
 
-            var color = isParty
-                ? new Color(80, 245, 255, 255)
-                : isQuestTarget
-                    ? new Color(255, 220, 80, 255)
+    private bool DrawEntityMarker(
+        RendererBase renderer,
+        Entity entity,
+        Player player,
+        int gridX,
+        HashSet<string> questTargets
+    )
+    {
+        if (entity.Id == player.Id || !entity.ShouldDraw)
+        {
+            return false;
+        }
+
+        var dx = entity.X - player.X;
+        var dy = entity.Y - player.Y;
+        if (Math.Abs(dx) > Radius || Math.Abs(dy) > Radius)
+        {
+            return false;
+        }
+
+        var x = gridX + (dx + Radius) * Cell + 2;
+        var y = GridY + (dy + Radius) * Cell + 2;
+
+        var isParty = entity.Type == EntityType.Player && player.IsInMyParty(entity.Id);
+        var isEnemy = entity.Type == EntityType.GlobalEntity;
+        var isQuestTarget = isEnemy && questTargets.Contains(entity.Name ?? string.Empty);
+
+        var color = isParty
+            ? new Color(80, 245, 255, 255)
+            : isQuestTarget
+                ? new Color(255, 220, 80, 255)
+                : isEnemy
+                    ? new Color(235, 70, 70, 255)
                     : entity.Type switch
                     {
                         EntityType.Player => new Color(82, 165, 236, 255),
@@ -226,12 +274,19 @@ internal sealed class MinimapHud : Base
                         _ => new Color(220, 110, 110, 255),
                     };
 
-            var size = isParty || isQuestTarget ? 8 : 6;
-            Fill(renderer, color, x, y, size, size);
+        var size = isParty || isQuestTarget || isEnemy ? 8 : 6;
+        Fill(renderer, color, x, y, size, size);
 
-            if (isQuestTarget)
-                Outline(renderer, new Color(255, 245, 180, 255), x - 1, y - 1, size + 2, size + 2, 1);
+        if (isQuestTarget)
+        {
+            Outline(renderer, new Color(255, 245, 180, 255), x - 1, y - 1, size + 2, size + 2, 1);
         }
+        else if (isEnemy)
+        {
+            Outline(renderer, new Color(120, 20, 20, 255), x - 1, y - 1, size + 2, size + 2, 1);
+        }
+
+        return true;
     }
 
     private static HashSet<string> ActiveKillQuestTargetNames(Player player)
