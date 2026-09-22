@@ -20,6 +20,8 @@ public sealed class RewardConfiguration
 
     public static RewardConfiguration Instance { get; private set; } = new();
 
+    public bool DailyRewardsEnabled { get; set; }
+    public bool ShowDailyRewardsOnLogin { get; set; } = true;
     public int DailyCycleDays { get; set; } = 7;
     public DailyRewardEntry[] DailyRewards { get; set; } = [];
     public PokerLevelReward[] PokerLevelRewards { get; set; } = [];
@@ -30,7 +32,9 @@ public sealed class RewardConfiguration
         (DailyRewards ?? []).Length <= MaximumDailyCycleDays * 8 &&
         (DailyRewards ?? []).All(reward => reward is { } && reward.IsValid(DailyCycleDays)) &&
         new PokerLevelRewardSet(PokerLevelRewards ?? []).IsValid &&
-        new PokerLevelRewardSet(BlackjackLevelRewards ?? []).IsValid;
+        new PokerLevelRewardSet(BlackjackLevelRewards ?? []).IsValid &&
+        (!DailyRewardsEnabled ||
+            Enumerable.Range(1, DailyCycleDays).All(day => (DailyRewards ?? []).Any(reward => reward.Day == day)));
 
     public PokerLevelRewardSet CreatePokerLevelRewardSet() => new(PokerLevelRewards ?? []);
     public PokerLevelRewardSet CreateBlackjackLevelRewardSet() => new(BlackjackLevelRewards ?? []);

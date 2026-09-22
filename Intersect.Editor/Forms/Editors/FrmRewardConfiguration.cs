@@ -27,6 +27,8 @@ public sealed class FrmRewardConfiguration : DarkForm
     private readonly List<PokerLevelReward> _blackjack;
     private readonly List<DailyRewardEntry> _daily;
 
+    private readonly CheckBox _dailyEnabled = new() { Text = "Enable Daily Rewards", AutoSize = true };
+    private readonly CheckBox _showOnLogin = new() { Text = "Open automatically when a reward is available", AutoSize = true };
     private readonly NumericUpDown _cycleDays = new() { Minimum = 1, Maximum = RewardConfiguration.MaximumDailyCycleDays, Width = 80 };
     private readonly ListBox _dailyList = new() { Dock = DockStyle.Fill };
     private readonly NumericUpDown _dailyDay = new() { Minimum = 1, Maximum = RewardConfiguration.MaximumDailyCycleDays, Width = 70 };
@@ -38,7 +40,7 @@ public sealed class FrmRewardConfiguration : DarkForm
 
     public FrmRewardConfiguration()
     {
-        Text = "Reward Configuration";
+        Text = "Daily & Level Rewards Editor";
         StartPosition = FormStartPosition.CenterScreen;
         Width = 760;
         Height = 560;
@@ -49,6 +51,8 @@ public sealed class FrmRewardConfiguration : DarkForm
         _poker = (_working.PokerLevelRewards ?? []).ToList();
         _blackjack = (_working.BlackjackLevelRewards ?? []).ToList();
         _daily = (_working.DailyRewards ?? []).ToList();
+        _dailyEnabled.Checked = _working.DailyRewardsEnabled;
+        _showOnLogin.Checked = _working.ShowDailyRewardsOnLogin;
         _cycleDays.Value = _working.DailyCycleDays;
 
         var tabs = new TabControl { Dock = DockStyle.Fill };
@@ -86,7 +90,9 @@ public sealed class FrmRewardConfiguration : DarkForm
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         var cycle = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill };
-        cycle.Controls.Add(new Label { Text = "Cycle days", AutoSize = true, Margin = new Padding(3, 8, 8, 3) });
+        cycle.Controls.Add(_dailyEnabled);
+        cycle.Controls.Add(_showOnLogin);
+        cycle.Controls.Add(new Label { Text = "Cycle days", AutoSize = true, Margin = new Padding(14, 8, 8, 3) });
         cycle.Controls.Add(_cycleDays);
         _cycleDays.ValueChanged += (_, _) =>
         {
@@ -202,13 +208,15 @@ public sealed class FrmRewardConfiguration : DarkForm
 
     private void SaveConfiguration()
     {
+        _working.DailyRewardsEnabled = _dailyEnabled.Checked;
+        _working.ShowDailyRewardsOnLogin = _showOnLogin.Checked;
         _working.DailyCycleDays = (int)_cycleDays.Value;
         _working.DailyRewards = _daily.ToArray();
         _working.PokerLevelRewards = _poker.ToArray();
         _working.BlackjackLevelRewards = _blackjack.ToArray();
         if (!_working.IsStructurallyValid)
         {
-            MessageBox.Show(this, "The reward configuration is invalid.", "Rewards", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(this, "The reward configuration is invalid. When Daily Rewards are enabled, every day in the cycle needs at least one reward.", "Rewards", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return;
         }
 

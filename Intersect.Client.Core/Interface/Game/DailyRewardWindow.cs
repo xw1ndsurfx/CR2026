@@ -4,6 +4,7 @@ using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets.Server;
+using Rectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 
 namespace Intersect.Client.Interface.Game;
@@ -77,7 +78,7 @@ internal sealed class DailyRewardWindow : Window
     private readonly Label _title;
     private readonly Label _status;
     private bool _initialized;
-    private readonly Panel _cards;
+    private readonly ScrollControl _cards;
     private readonly Button _claim;
     private DailyRewardStatePacket? _state;
 
@@ -107,7 +108,12 @@ internal sealed class DailyRewardWindow : Window
         };
         _status.SetBounds(20, 78, 580, 36);
 
-        _cards = new Panel(this, "Cards") { ShouldDrawBackground = false };
+        _cards = new ScrollControl(this, "Cards")
+        {
+            OverflowX = OverflowBehavior.Hidden,
+            OverflowY = OverflowBehavior.Scroll,
+            AutoHideBars = true,
+        };
         _cards.SetBounds(28, 120, 564, 230);
 
         _claim = new Button(this, "Claim") { Text = "Claim", FontSize = 16 };
@@ -126,7 +132,17 @@ internal sealed class DailyRewardWindow : Window
     public void Apply(DailyRewardStatePacket state)
     {
         _state = state;
-        _cards.DeleteAllChildren();
+        _cards.DeleteAll();
+
+        if (!state.Enabled)
+        {
+            _status.Text = string.IsNullOrWhiteSpace(state.Message) ? "Daily rewards are disabled." : state.Message;
+            _claim.IsDisabled = true;
+            _claim.Text = "Unavailable";
+            _cards.SetInnerSize(540, 100);
+            _cards.UpdateScrollBars();
+            return;
+        }
 
         var grouped = state.Rewards.GroupBy(reward => reward.Day)
             .ToDictionary(group => group.Key, group => group.ToArray());
@@ -138,12 +154,17 @@ internal sealed class DailyRewardWindow : Window
             var row = (day - 1) / 4;
             card.SetPosition(col * 140, row * 116);
 
-            var first = grouped.GetValueOrDefault(day)?.FirstOrDefault();
+            var entries = grouped.GetValueOrDefault(day) ?? [];
+            var first = entries.FirstOrDefault();
             var item = first == null ? null : ItemDescriptor.Get(first.ItemId);
             card.SetReward(item, first?.Quantity ?? 0,
                 active: state.CanClaim && state.CurrentDay == day,
-                claimed: state.ClaimedToday && state.CurrentDay == day);
+                claimed: state.ClaimedToday ? day <= state.CurrentDay : state.CurrentDay > 1 && day < state.CurrentDay);
         }
+
+        var rows = (int)Math.Ceiling(state.CycleDays / 4d);
+        _cards.SetInnerSize(544, Math.Max(230, 10 + rows * 116));
+        _cards.UpdateScrollBars();
 
         _status.Text = string.IsNullOrWhiteSpace(state.Message)
             ? state.CanClaim

@@ -52,8 +52,7 @@ internal static class PokerRuntime
     internal static PokerRegistryResult Join(Player player, StartMiniGameCommand command)
     {
         _ = SweepTimer;
-        var globalRewards = RewardConfigurationRuntime.Current.PokerLevelRewards;
-        if (!command.HasValidSettings() || !PokerLevelRewardRuntime.DefinitionsExist(globalRewards))
+        if (!command.HasValidSettings())
             return new(PokerRegistryError.InvalidRules);
         List<Delivery> output = [];
         PokerRegistryResult result;
@@ -79,7 +78,7 @@ internal static class PokerRuntime
                     new PokerTableOptions(command.DealerPlays, command.NpcPlayers, command.AutoStart,
                         command.DealAnimationId, command.AnnounceWins, command.VictoryAnimationId, command.NpcCardBackId,
                         command.CreateSoundSet(), command.CreateAnimationSet(), command.UnlimitedNpcBankroll,
-                        new PokerLevelRewardSet(globalRewards), command.CreateMotionSet()));
+                        PokerLevelRewardSet.Empty, command.CreateMotionSet()));
                 if (result.Error != PokerRegistryError.None) return result;
                 var view = new View
                 {
@@ -94,7 +93,10 @@ internal static class PokerRuntime
         }
         Send(output);
         if (result.Error == PokerRegistryError.None)
+        {
             player.UpdatePokerQuestTasks(new PokerQuestUpdate(false, 0, joinedPokerLevel));
+            RewardConfigurationRuntime.GrantPendingLevelRewards(player, MiniGameProgression.Poker, joinedPokerLevel);
+        }
         return result;
     }
     internal static PokerRegistryResult Leave(Player player)
@@ -193,7 +195,7 @@ internal static class PokerRuntime
                 if (delivery.LevelReward is { } reward && delivery.View is { } rewardView)
                 {
                     if (ReferenceEquals(rewardView.Client.Entity, rewardView.Player) && rewardView.Player.LoginTime == rewardView.LoginStamp)
-                        PokerLevelRewardRuntime.Grant(rewardView.Player, reward.Level, reward.Rewards);
+                        RewardConfigurationRuntime.GrantPendingLevelRewards(rewardView.Player, MiniGameProgression.Poker, reward.Level);
                     continue;
                 }
                 if (delivery.Level is { } level && delivery.View is { } levelView)
@@ -201,6 +203,7 @@ internal static class PokerRuntime
                     if (ReferenceEquals(levelView.Client.Entity, levelView.Player) && levelView.Player.LoginTime == levelView.LoginStamp)
                         PacketSender.SendChatMsg(levelView.Player, PokerNotificationText.LevelUp(level.Level),
                             ChatMessageType.Notice, Color.White);
+                        RewardConfigurationRuntime.GrantPendingLevelRewards(levelView.Player, MiniGameProgression.Poker, level.Level);
                     continue;
                 }
                 if (delivery.LocalMessage is { } local && delivery.View is { } localView)

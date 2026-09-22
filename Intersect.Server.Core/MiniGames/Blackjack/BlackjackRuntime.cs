@@ -51,7 +51,7 @@ internal static class BlackjackRuntime
                     command.BlackjackMinimumBet,command.BlackjackMaximumBet,command.TurnSeconds,command.BlackjackHitSoft17),
                     command.NpcPlayers,command.AutoStart,command.CurrencyItemId,command.NpcReserve,
                     command.DealAnimationId,command.VictoryAnimationId,command.AnnounceWins,command.NpcCardBackId,
-                    command.CreateMotionSet(),RewardConfigurationRuntime.Current.CreateBlackjackLevelRewardSet());
+                    command.CreateMotionSet(),PokerLevelRewardSet.Empty);
                 var key=new BlackjackKey(presence.MapId,presence.MapInstanceId,command.TableId);
                 var money=command.CurrencyItemId==Guid.Empty?null:PokerInventoryBridge.Ledger;
                 lock(Gate)
@@ -96,7 +96,10 @@ internal static class BlackjackRuntime
         if(changed)PokerInventoryBridge.NotifyInventory(player);
         Send(output);
         if(result.Error==PokerRegistryError.None)
+        {
             player.UpdateBlackjackQuestTasks(new BlackjackQuestUpdate(false,0,joinedBlackjackLevel));
+            RewardConfigurationRuntime.GrantPendingLevelRewards(player, MiniGameProgression.Blackjack, joinedBlackjackLevel);
+        }
         return result;
     }
     internal static bool Leave(Player player)
@@ -210,10 +213,13 @@ internal static class BlackjackRuntime
             if(d.Announcement!=null)PacketSender.SendGlobalMsg(d.Announcement,Color.White);
             else if(d.LevelReward is {} reward && d.View is {} rewardView &&
                 ReferenceEquals(rewardView.Client.Entity,rewardView.Player) && rewardView.Player.LoginTime==rewardView.Login)
-                PokerLevelRewardRuntime.Grant(rewardView.Player,reward.Level,reward.Rewards);
+                RewardConfigurationRuntime.GrantPendingLevelRewards(rewardView.Player,MiniGameProgression.Blackjack,reward.Level);
             else if(d.Level is {} level && d.View is {} levelView &&
                 ReferenceEquals(levelView.Client.Entity,levelView.Player) && levelView.Player.LoginTime==levelView.Login)
+            {
                 PacketSender.SendChatMsg(levelView.Player,PokerNotificationText.LevelUp(level.Level),ChatMessageType.Notice,Color.White);
+                RewardConfigurationRuntime.GrantPendingLevelRewards(levelView.Player,MiniGameProgression.Blackjack,level.Level);
+            }
             else if(d.Quest is {} quest && d.View is {} questView &&
                 ReferenceEquals(questView.Client.Entity,questView.Player) && questView.Player.LoginTime==questView.Login)
                 questView.Player.UpdateBlackjackQuestTasks(quest);

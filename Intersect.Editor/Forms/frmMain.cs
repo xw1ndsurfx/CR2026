@@ -206,7 +206,7 @@ public partial class FrmMain : Form
         var rewardEditor = new ToolStripMenuItem
         {
             Name = "rewardConfigurationEditorToolStripMenuItem",
-            Text = "Reward Configuration Editor",
+            Text = "Daily & Level Rewards Editor",
             ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
         };
         rewardEditor.Click += (_, _) => PacketSender.SendRequestRewardConfiguration();

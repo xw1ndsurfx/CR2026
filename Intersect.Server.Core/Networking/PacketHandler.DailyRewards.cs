@@ -8,7 +8,7 @@ internal sealed partial class PacketHandler
     public void HandlePacket(Client client, RequestDailyRewardStatePacket packet)
     {
         if (client.IsEditor || client.Entity is not { } player) return;
-        client.Send(DailyRewardRuntime.State(player));
+        client.Send(DailyRewardRuntime.State(player, autoOpen: packet.AutoOpen));
     }
 
     public void HandlePacket(Client client, ClaimDailyRewardPacket packet)

@@ -20,4 +20,7 @@ public partial class DailyRewardStatePacket : IntersectPacket
     [Key(4)] public long NextClaimUnixMs { get; set; }
     [Key(5)] public DailyRewardPacketEntry[] Rewards { get; set; } = [];
     [Key(6)] public string Message { get; set; } = "";
+    [Key(7)] public bool Enabled { get; set; }
+    [Key(8)] public bool AutoOpen { get; set; }
+    [Key(9)] public int LastClaimedDay { get; set; }
 }

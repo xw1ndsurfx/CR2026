@@ -171,7 +171,7 @@ public partial class GameInterface : MutableInterface
         mMapItemWindow = new MapItemWindow(GameCanvas);
         _minimapHud = new MinimapHud(GameCanvas, ToggleWorldMap);
         _minimapHud.SendToBack();
-        PacketSender.SendRequestDailyRewardState();
+        PacketSender.SendRequestDailyRewardState(autoOpen: true);
     }
 
     //Chatbox
@@ -296,8 +296,9 @@ public partial class GameInterface : MutableInterface
     {
         _dailyRewardWindow ??= new DailyRewardWindow(GameCanvas);
         _dailyRewardWindow.Apply(packet);
-        if (packet.CanClaim)
+        if (packet.AutoOpen && packet.CanClaim)
         {
+            GameMenu?.HideWindows();
             _dailyRewardWindow.Show();
             _dailyRewardWindow.BringToFront();
         }

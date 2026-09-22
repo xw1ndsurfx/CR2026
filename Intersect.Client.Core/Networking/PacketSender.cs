@@ -424,9 +424,9 @@ public static partial class PacketSender
         Network.SendPacket(new RequestFriendsPacket());
     }
 
-    public static void SendRequestDailyRewardState()
+    public static void SendRequestDailyRewardState(bool autoOpen = false)
     {
-        Network.SendPacket(new RequestDailyRewardStatePacket());
+        Network.SendPacket(new RequestDailyRewardStatePacket(autoOpen));
     }
 
     public static void SendClaimDailyReward()
