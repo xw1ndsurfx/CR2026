@@ -53,6 +53,7 @@ public partial class GameInterface : MutableInterface
     private MinimapHud _minimapHud;
 
     private WorldMapWindow? _worldMapWindow;
+    private LogiklikNewsWindow? _logiklikNewsWindow;
 
     private SettingsWindow? _settingsWindow;
 
@@ -235,6 +236,39 @@ public partial class GameInterface : MutableInterface
             _worldMapWindow.Show();
         else
             _worldMapWindow.Hide();
+    }
+
+
+    public bool IsLogiklikNewsVisible =>
+        _logiklikNewsWindow is { IsHidden: false };
+
+    public void OpenLogiklikNews()
+    {
+        GameMenu?.HideWindows();
+
+        if (_logiklikNewsWindow == null)
+        {
+            _logiklikNewsWindow = new LogiklikNewsWindow(GameCanvas) { DeleteOnClose = true };
+            _logiklikNewsWindow.Disposed += (_, _) => _logiklikNewsWindow = null;
+        }
+
+        _logiklikNewsWindow.ShowAndRefresh();
+    }
+
+    public void ToggleLogiklikNews()
+    {
+        if (_logiklikNewsWindow is { IsHidden: false })
+        {
+            _logiklikNewsWindow.Hide();
+            return;
+        }
+
+        OpenLogiklikNews();
+    }
+
+    public void HideLogiklikNews()
+    {
+        _logiklikNewsWindow?.Hide();
     }
 
     //Shop
