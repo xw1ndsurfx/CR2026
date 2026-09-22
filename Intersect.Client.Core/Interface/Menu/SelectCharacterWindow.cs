@@ -252,7 +252,8 @@ public partial class SelectCharacterWindow : Window
             label.SetBounds(x, y, width, 22);
         }
 
-        var captionColor = new Color(236, 210, 153, 255);
+        // Color uses ARGB ordering here. Keep CR accents warm gold/brown - never purple.
+        var captionColor = new Color(255, 236, 210, 153);
         const int captionX = 205;
         const int valueX = 278;
         const int captionWidth = 68;
