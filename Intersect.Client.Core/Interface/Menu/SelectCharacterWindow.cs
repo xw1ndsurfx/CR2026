@@ -422,9 +422,11 @@ public partial class SelectCharacterWindow : Window
             {
                 _renderLayers[i] = new ImagePanel(_preview)
                 {
-                    // Manual positioning in UpdateDisplay keeps every paperdoll layer
-                    // centered in the visible medallion rather than the full image panel.
+                    // This portrait uses exact coordinates. Do not let Gwen's layout
+                    // system re-center the sprite after UpdateDisplay positions it.
+                    Dock = Pos.None,
                     Alignment = [],
+                    RestrictToParent = false,
                 };
             }
         }
@@ -435,14 +437,25 @@ public partial class SelectCharacterWindow : Window
         }
 
         _selectedCharacterIndex = 0;
+
+        // Show/layout the window first. Calling UpdateDisplay before base.Show()
+        // let Gwen perform a later layout pass that moved the paperdoll layers back
+        // below the medallion. Position the portrait only after that layout pass.
+        base.Show();
         UpdateDisplay();
 
-        if (_buttonPlay.IsVisibleInParent)
-        {
-            PostLayout.Enqueue(button => button.Focus(), _buttonPlay);
-        }
+        PostLayout.Enqueue(
+            window =>
+            {
+                UpdateDisplay();
+                if (_buttonPlay.IsVisibleInParent)
+                {
+                    _buttonPlay.Focus();
+                }
+            },
+            this
+        );
 
-        base.Show();
         EnsureArrowsVisibility();
     }
 
