@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Blackjack;
 using Intersect.Network.Packets.MiniGames;
@@ -25,7 +27,24 @@ public sealed class BlackjackSessionTable
     public Guid Id {get;}=Guid.NewGuid();
     public BlackjackKey Key {get;}
     public BlackjackSettings Settings {get;}
-    public string House=>"blackjack:"+Key.Map.ToString("N")+":"+Key.Name+":"+Settings.Currency.ToString("N");
+    private long EffectiveReserve => Math.Max(
+        Settings.Reserve,
+        Math.Max(Settings.Rules.BuyIn, Settings.Rules.MaximumBet * 4L * Settings.Rules.MaxPlayers)
+    );
+
+    public string House
+    {
+        get
+        {
+            // A changed funding/rules configuration gets a distinct persistent dealer bank.
+            // This avoids reusing a legacy house that was seeded with only a few Aureons,
+            // while the same configuration still keeps its finite balance across sessions.
+            var config = $"{EffectiveReserve}:{Settings.Rules.BuyIn}:{Settings.Rules.MinimumBet}:" +
+                         $"{Settings.Rules.MaximumBet}:{Settings.Rules.MaxPlayers}";
+            var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(config)))[..12];
+            return "blackjack:"+Key.Map.ToString("N")+":"+Key.Name+":"+Settings.Currency.ToString("N")+":cfg:"+hash;
+        }
+    }
     public BlackjackTable Core {get;}
     public bool Pending {get;private set;}
     public long Version=>Core.Revision+_version;
@@ -53,9 +72,10 @@ public sealed class BlackjackSessionTable
         if(money!=null)
         {
             var available=money.HouseAvailable(House);
-            var stake=Math.Min(available>0?available:settings.Reserve,bankroll);
+            var effectiveReserve=EffectiveReserve;
+            var stake=Math.Min(available>0?available:effectiveReserve,bankroll);
             if(stake<settings.Rules.MinimumBet*4) throw new MoneyRuleException("BankTooLow");
-            _bank=money.OpenNpc(Guid.NewGuid(),Id,settings.Currency,House,settings.Reserve,stake)
+            _bank=money.OpenNpc(Guid.NewGuid(),Id,settings.Currency,House,effectiveReserve,stake)
                 ??throw new MoneyRuleException("BankTooLow");
             bankroll=_bank.Amount;
         }

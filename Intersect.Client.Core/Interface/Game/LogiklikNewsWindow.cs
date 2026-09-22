@@ -70,7 +70,7 @@ internal sealed class LogiklikNewsWindow : Window
             Font = Skin.DefaultFont,
             FontSize = 9,
             Text = "Powered by Logiklik News • Category: CR",
-            TextColorOverride = new Color(210, 210, 210, 255),
+            TextColorOverride = new Color(a: 255, r: 210, g: 210, b: 210),
             TextAlign = Pos.Left | Pos.CenterV,
         };
         subHeader.SetBounds(20, 40, 540, 20);
@@ -89,7 +89,7 @@ internal sealed class LogiklikNewsWindow : Window
             AutoSizeToContents = false,
             Font = Skin.DefaultFont,
             FontSize = 9,
-            TextColorOverride = new Color(190, 198, 205, 255),
+            TextColorOverride = new Color(a: 255, r: 190, g: 198, b: 205),
             TextAlign = Pos.Left | Pos.CenterV,
         };
         _status.SetBounds(20, 65, 770, 20);
@@ -117,7 +117,7 @@ internal sealed class LogiklikNewsWindow : Window
             AutoSizeToContents = false,
             Font = Skin.DefaultFont,
             FontSize = 9,
-            TextColorOverride = new Color(225, 190, 120, 255),
+            TextColorOverride = new Color(a: 255, r: 225, g: 190, b: 120),
             TextAlign = Pos.Left | Pos.CenterV,
         };
         _detailDate.SetBounds(320, 134, 470, 20);
@@ -135,7 +135,7 @@ internal sealed class LogiklikNewsWindow : Window
             AutoSizeToContents = false,
             Font = Skin.DefaultFont,
             FontSize = 9,
-            TextColorOverride = new Color(160, 174, 186, 255),
+            TextColorOverride = new Color(a: 255, r: 160, g: 174, b: 186),
             TextAlign = Pos.Center,
             IsHidden = true,
             MouseInputEnabled = false,
@@ -155,7 +155,7 @@ internal sealed class LogiklikNewsWindow : Window
         {
             Font = Skin.DefaultFont,
             FontSize = 10,
-            TextColor = new Color(225, 230, 234, 255),
+            TextColor = new Color(a: 255, r: 225, g: 230, b: 234),
             Width = 438,
         };
 
@@ -243,7 +243,7 @@ internal sealed class LogiklikNewsWindow : Window
     private void ApplyItems(List<NewsItem> items)
     {
         _items = items;
-        _newsList.DeleteAllChildren();
+        _newsList.DeleteAll();
 
         var rowIndex = 0;
         foreach (var item in _items)

@@ -248,8 +248,10 @@ public partial class GameInterface : MutableInterface
 
         if (_logiklikNewsWindow == null)
         {
-            _logiklikNewsWindow = new LogiklikNewsWindow(GameCanvas) { DeleteOnClose = true };
-            _logiklikNewsWindow.Disposed += (_, _) => _logiklikNewsWindow = null;
+            // Reuse the news window after the title-bar X is clicked.
+            // DeleteOnClose caused a delayed-dispose race where the cached reference
+            // could still point at the closing window on the next open request.
+            _logiklikNewsWindow = new LogiklikNewsWindow(GameCanvas) { DeleteOnClose = false };
         }
 
         _logiklikNewsWindow.ShowAndRefresh();

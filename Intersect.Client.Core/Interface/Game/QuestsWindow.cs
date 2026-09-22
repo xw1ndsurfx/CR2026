@@ -158,11 +158,19 @@ public partial class QuestsWindow
         };
         mQuestTaskHudTitle.SetBounds(92, 24, 248, 22);
 
-        mQuestTaskHudLabel = new RichLabel(mQuestTaskHudPanel)
+        var trackerTextPanel = new Panel(mQuestTaskHudPanel, "QuestTrackerTextPanel")
         {
+            ShouldDrawBackground = false,
             MouseInputEnabled = false,
         };
-        mQuestTaskHudLabel.SetBounds(92, 49, 248, 52);
+        trackerTextPanel.SetBounds(92, 49, 248, 58);
+
+        mQuestTaskHudLabel = new RichLabel(trackerTextPanel)
+        {
+            Dock = Pos.Fill,
+            MouseInputEnabled = false,
+        };
+        mQuestTaskHudLabel.SetBounds(0, 0, 248, 58);
 
         mQuestTaskHudProgressLabel = new Label(mQuestTaskHudPanel, "QuestTrackerProgress")
         {
@@ -298,7 +306,9 @@ public partial class QuestsWindow
             mainText = mainText[..600] + "...";
         }
 
-        mainText = WrapText(mainText, 39);
+        // Let RichLabel wrap against its fixed pixel width. Character-count wrapping
+        // made the control progressively shrink and eventually render one word per line.
+        mainText = mainText.Trim();
 
         var progressText = string.Empty;
         var showProgressBar = currentTask.Quantity > 0;
@@ -367,6 +377,7 @@ public partial class QuestsWindow
         if (!string.IsNullOrWhiteSpace(mainText))
         {
             mQuestTaskHudLabel.AddText(mainText, mQuestTaskHudTemplate);
+            mQuestTaskHudLabel.ForceImmediateRebuild();
         }
 
         mQuestTaskHudPanel.ShowProgressBar = showProgressBar;
