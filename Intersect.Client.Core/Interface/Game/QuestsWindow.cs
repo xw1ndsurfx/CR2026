@@ -355,7 +355,7 @@ public partial class QuestsWindow
         mQuestTaskHudPanel.ProgressRatio = progressRatio;
         mQuestTaskHudLabel.Invalidate();
         mQuestTaskHudPanel.Invalidate();
-
+    }
 
     private void UpdateQuestTrackerPosition()
     {
