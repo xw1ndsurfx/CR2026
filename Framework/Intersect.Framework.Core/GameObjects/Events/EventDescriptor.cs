@@ -73,8 +73,6 @@ public partial class EventDescriptor : DatabaseObject<EventDescriptor>, IFoldera
 
     public bool Global { get; set; }
 
-    public bool ShowAnimationOnWorldMap { get; set; }
-
     [JsonIgnore]
     [Column("Pages")]
     public string PagesJson
