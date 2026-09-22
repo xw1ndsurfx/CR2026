@@ -1211,6 +1211,11 @@ public static partial class CommandPrinter
         return Strings.EventCommandList.wait.ToString(command.Time);
     }
 
+    private static string GetCommandText(OpenLogiklikNewsCommand command, MapInstance map)
+    {
+        return "Open Corps Royaux News";
+    }
+
     private static string GetCommandText(OpenBankCommand command, MapInstance map)
     {
         return Strings.EventCommandList.openbank;
