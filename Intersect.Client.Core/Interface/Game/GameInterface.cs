@@ -695,16 +695,37 @@ public partial class GameInterface : MutableInterface
     public void Dispose()
     {
         DisposePoker();
-        CloseBagWindow();
-        CloseBank();
-        CloseCraftingTable();
-        CloseShop();
-        CloseTrading();
-        // GameCanvas owns these controls and disposes its children. Disposing the
-        // minimap/world map here first leaves disposed children in the canvas tree,
-        // causing a second Dispose() during character-select/logout transitions.
+
+        // GameCanvas is the lifetime owner for normal Gwen controls. During logout /
+        // character-select transitions, calling Close() or Dispose() on individual
+        // child windows here can queue/remove/dispose children and then immediately
+        // make GameCanvas dispose the same control tree a second time. ScrollControl
+        // children (notably VerticalScrollBar) and MinimapHud are especially strict
+        // about double-dispose and throw ObjectDisposedException.
+        //
+        // Reset gameplay state and notify the server, but let the canvas dispose its
+        // entire remaining UI tree exactly once.
+        Globals.GameShop = null;
+        Globals.InBank = false;
+        Globals.InBag = false;
+        Globals.InCraft = false;
+        Globals.InTrade = false;
+
+        PacketSender.SendCloseShop();
+        PacketSender.SendCloseBank();
+        PacketSender.SendCloseBag();
+        PacketSender.SendCloseCrafting();
+        PacketSender.SendDeclineTrade();
+
+        _shopWindow = null;
+        _bankWindow = null;
+        _bagWindow = null;
+        mCraftingWindow = null;
+        mTradingWindow = null;
         _worldMapWindow = null;
+        _logiklikNewsWindow = null;
         _minimapHud = null;
+
         GameCanvas.Dispose();
     }
 }
