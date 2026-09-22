@@ -198,24 +198,25 @@ public partial class SelectCharacterWindow : Window
 
         LoadJsonUi(GameContentManager.UI.Menu, Graphics.Renderer?.GetResolutionString());
 
-        // Character preview: keep the familiar selector window, but present the
-        // selected character like an RPG profile card.
+        // Compact RPG profile card inspired by the in-game character sheet:
+        // portrait on the left, gold field names, white values aligned in rows.
         SetSize(Math.Max(680, Width), Math.Max(300, Height));
-        _previewContainer.Dock = Pos.None;
-        _previewContainer.SetBounds(55, 42, 185, 160);
-        _preview.SetBounds(0, 0, 185, 160);
 
-        _nameLabel.Dock = Pos.None;
-        _nameLabel.AutoSizeToContents = false;
-        _nameLabel.TextAlign = Pos.Left | Pos.CenterV;
-        _nameLabel.TextColorOverride = new Color(236, 210, 153, 255);
-        _nameLabel.SetBounds(260, 58, 350, 28);
+        _previewContainer.Dock = Pos.None;
+        _previewContainer.SetBounds(78, 48, 112, 112);
+        _preview.SetBounds(0, 0, 112, 112);
 
         _infoLabel.Dock = Pos.None;
         _infoLabel.AutoSizeToContents = false;
         _infoLabel.TextAlign = Pos.Left | Pos.Top;
-        _infoLabel.TextColorOverride = Color.White;
-        _infoLabel.SetBounds(260, 88, 350, 86);
+        _infoLabel.TextColorOverride = new Color(236, 210, 153, 255);
+        _infoLabel.SetBounds(205, 58, 72, 104);
+
+        _nameLabel.Dock = Pos.None;
+        _nameLabel.AutoSizeToContents = false;
+        _nameLabel.TextAlign = Pos.Left | Pos.Top;
+        _nameLabel.TextColorOverride = Color.White;
+        _nameLabel.SetBounds(278, 58, 285, 104);
 
         EnsureArrowsVisibility();
     }
@@ -271,11 +272,17 @@ public partial class SelectCharacterWindow : Window
             return;
         }
 
-        _nameLabel.Text = $"Name:  {selectedPreviewMetadata.Name}";
         _infoLabel.Text =
-            $"Level:  {selectedPreviewMetadata.Level}\n" +
-            $"Class:  {selectedPreviewMetadata.Class}\n" +
-            $"Guild:  {(string.IsNullOrWhiteSpace(selectedPreviewMetadata.Guild) ? "-" : selectedPreviewMetadata.Guild)}";
+            "Name:\n" +
+            "Level:\n" +
+            "Class:\n" +
+            "Guild:";
+
+        _nameLabel.Text =
+            $"{selectedPreviewMetadata.Name}\n" +
+            $"{selectedPreviewMetadata.Level}\n" +
+            $"{selectedPreviewMetadata.Class}\n" +
+            $"{(string.IsNullOrWhiteSpace(selectedPreviewMetadata.Guild) ? "-" : selectedPreviewMetadata.Guild)}";
 
         _buttonPlay.Show();
         _buttonDelete.Show();
