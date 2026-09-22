@@ -970,11 +970,19 @@ public partial class FrmEvent : Form
 
         for (var i = 0; i < lstCommands.Nodes.Count; i++)
         {
-            lstCommands.Nodes[i].Text = Strings.EventCommands.commands[lstCommands.Nodes[i].Name];
-            for (var x = 0; x < lstCommands.Nodes[i].Nodes.Count; x++)
+            var parentNode = lstCommands.Nodes[i];
+            if (Strings.EventCommands.commands.TryGetValue(parentNode.Name, out var parentText))
             {
-                lstCommands.Nodes[i].Nodes[x].Text =
-                    Strings.EventCommands.commands[lstCommands.Nodes[i].Nodes[x].Name];
+                parentNode.Text = parentText;
+            }
+
+            for (var x = 0; x < parentNode.Nodes.Count; x++)
+            {
+                var childNode = parentNode.Nodes[x];
+                if (Strings.EventCommands.commands.TryGetValue(childNode.Name, out var childText))
+                {
+                    childNode.Text = childText;
+                }
             }
         }
     }
