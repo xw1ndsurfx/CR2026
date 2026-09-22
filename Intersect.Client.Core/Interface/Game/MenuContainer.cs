@@ -178,6 +178,7 @@ public partial class MenuContainer : Panel
             Alignment = [Alignments.Center],
             Size = new Point(x: 67, y: 51),
             Text = "Daily",
+            Font = Skin.DefaultFont,
             TextColorOverride = new Color(a:255,r:236,g:210,b:153),
             FontSize = 11,
         };
@@ -566,6 +567,7 @@ public partial class MenuContainer : Panel
         _guildWindow.Hide();
 
         Interface.GameUi.HideLogiklikNews();
+        Interface.GameUi.HideDailyReward();
     }
 
     public bool HasWindowsOpen()
@@ -631,7 +633,6 @@ public partial class MenuContainer : Panel
 
     private void DailyRewardButton_Clicked(Base sender, MouseButtonState arguments)
     {
-        HideWindows();
         Interface.GameUi.ToggleDailyReward();
     }
 

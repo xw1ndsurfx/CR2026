@@ -281,10 +281,14 @@ public partial class GameInterface : MutableInterface
     public void ToggleDailyReward()
     {
         _dailyRewardWindow ??= new DailyRewardWindow(GameCanvas);
-        if (_dailyRewardWindow.IsHidden)
-            _dailyRewardWindow.ShowAndRequest();
-        else
+        if (!_dailyRewardWindow.IsHidden)
+        {
             _dailyRewardWindow.Hide();
+            return;
+        }
+
+        GameMenu?.HideWindows();
+        _dailyRewardWindow.ShowAndRequest();
     }
 
     public void HideDailyReward()

@@ -21,10 +21,11 @@ internal sealed class DailyRewardWindow : Window
 
         public RewardCard(Base parent, int day) : base(parent, "DailyRewardCard" + day)
         {
-            SetSize(132, 112);
+            SetSize(132, 122);
             _day = new Label(this, "Day")
             {
                 AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
                 TextAlign = Pos.Center,
                 TextColorOverride = new Color(a:255,r:236,g:210,b:153),
                 FontSize = 12,
@@ -38,21 +39,43 @@ internal sealed class DailyRewardWindow : Window
             _reward = new Label(this, "Reward")
             {
                 AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
                 TextAlign = Pos.Center,
                 TextColorOverride = Color.White,
-                FontSize = 10,
+                FontSize = 9,
             };
-            _reward.SetBounds(6, 73, 120, 32);
+            _reward.SetBounds(6, 72, 120, 30);
         }
 
-        public void SetReward(ItemDescriptor? item, int quantity, bool active, bool claimed)
+        public void SetReward(ItemDescriptor? item, int quantity, int extraRewards, bool active, bool claimed)
         {
             _active = active;
             _claimed = claimed;
-            _reward.Text = item == null ? "No reward" : $"{quantity:N0} x {item.Name}";
+            _reward.Text = item == null
+                ? "No reward"
+                : $"{quantity:N0} x {item.Name}" + (extraRewards > 0 ? $"\n+ {extraRewards} more" : "");
             _icon.Texture = item == null || string.IsNullOrWhiteSpace(item.Icon)
                 ? null
                 : Globals.ContentManager.GetTexture(TextureType.Item, item.Icon);
+            if (item != null)
+            {
+                _icon.RenderColor = item.Color;
+            }
+
+            var state = new Label(this, "State")
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                TextAlign = Pos.Center,
+                FontSize = 8,
+                Text = active ? "AVAILABLE" : claimed ? "CLAIMED" : "LOCKED",
+                TextColorOverride = active
+                    ? new Color(a:255,r:255,g:225,b:125)
+                    : claimed
+                        ? new Color(a:255,r:150,g:190,b:125)
+                        : new Color(a:255,r:175,g:165,b:155),
+            };
+            state.SetBounds(6, 101, 120, 16);
         }
 
         protected override void Render(SkinBase skin)
@@ -91,19 +114,21 @@ internal sealed class DailyRewardWindow : Window
         _title = new Label(this, "Title")
         {
             AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             TextAlign = Pos.Center,
             TextColorOverride = new Color(a:255,r:236,g:210,b:153),
             FontSize = 22,
-            Text = "Daily Reward",
+            Text = "DAILY REWARDS",
         };
         _title.SetBounds(20, 38, 580, 38);
 
         _status = new Label(this, "Status")
         {
             AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
             TextAlign = Pos.Center,
             TextColorOverride = Color.White,
-            FontSize = 12,
+            FontSize = 11,
         };
         _status.SetBounds(20, 78, 580, 36);
 
@@ -115,7 +140,12 @@ internal sealed class DailyRewardWindow : Window
         };
         _cards.SetBounds(28, 120, 564, 230);
 
-        _claim = new Button(this, "Claim") { Text = "Claim", FontSize = 16 };
+        _claim = new Button(this, "Claim")
+        {
+            Text = "Claim",
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 14,
+        };
         _claim.SetBounds(225, 358, 170, 38);
         _claim.Clicked += (_, _) => Networking.PacketSender.SendClaimDailyReward();
 
@@ -135,10 +165,24 @@ internal sealed class DailyRewardWindow : Window
 
         if (!state.Enabled)
         {
-            _status.Text = string.IsNullOrWhiteSpace(state.Message) ? "Daily rewards are disabled." : state.Message;
+            _status.Text = string.IsNullOrWhiteSpace(state.Message)
+                ? "Daily rewards are disabled. Enable them in the Game Editor."
+                : state.Message;
+
+            var disabled = new Label(_cards, "DailyRewardsDisabled")
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 11,
+                Text = "Daily Rewards are currently disabled.\nEnable them in Content Editors > Daily & Level Rewards Editor.",
+                TextAlign = Pos.Center,
+                TextColorOverride = new Color(a:255,r:222,g:210,b:185),
+            };
+            disabled.SetBounds(20, 55, 500, 80);
+
             _claim.IsDisabled = true;
             _claim.Text = "Unavailable";
-            _cards.SetInnerSize(540, 100);
+            _cards.SetInnerSize(540, 190);
             _cards.UpdateScrollBars();
             return;
         }
@@ -151,18 +195,22 @@ internal sealed class DailyRewardWindow : Window
             var card = new RewardCard(_cards, day);
             var col = (day - 1) % 4;
             var row = (day - 1) / 4;
-            card.SetPosition(col * 140, row * 116);
+            card.SetPosition(col * 140, row * 126);
 
             var entries = grouped.GetValueOrDefault(day) ?? [];
             var first = entries.FirstOrDefault();
             var item = first == null ? null : ItemDescriptor.Get(first.ItemId);
-            card.SetReward(item, first?.Quantity ?? 0,
+            card.SetReward(
+                item,
+                first?.Quantity ?? 0,
+                Math.Max(0, entries.Length - 1),
                 active: state.CanClaim && state.CurrentDay == day,
-                claimed: state.ClaimedToday ? day <= state.CurrentDay : state.CurrentDay > 1 && day < state.CurrentDay);
+                claimed: state.ClaimedToday ? day <= state.CurrentDay : state.CurrentDay > 1 && day < state.CurrentDay
+            );
         }
 
         var rows = (int)Math.Ceiling(state.CycleDays / 4d);
-        _cards.SetInnerSize(544, Math.Max(230, 10 + rows * 116));
+        _cards.SetInnerSize(544, Math.Max(230, 10 + rows * 126));
         _cards.UpdateScrollBars();
 
         _status.Text = string.IsNullOrWhiteSpace(state.Message)

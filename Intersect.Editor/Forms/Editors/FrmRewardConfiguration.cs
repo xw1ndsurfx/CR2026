@@ -27,7 +27,7 @@ public sealed class FrmRewardConfiguration : DarkForm
     private readonly List<PokerLevelReward> _blackjack;
     private readonly List<DailyRewardEntry> _daily;
 
-    private readonly CheckBox _dailyEnabled = new() { Text = "Enable Daily Rewards", AutoSize = true };
+    private readonly CheckBox _dailyEnabled = new() { Text = "Enable Daily Rewards (required for in-game claims)", AutoSize = true };
     private readonly CheckBox _showOnLogin = new() { Text = "Open automatically when a reward is available", AutoSize = true };
     private readonly NumericUpDown _cycleDays = new() { Minimum = 1, Maximum = RewardConfiguration.MaximumDailyCycleDays, Width = 80 };
     private readonly ListBox _dailyList = new() { Dock = DockStyle.Fill };
