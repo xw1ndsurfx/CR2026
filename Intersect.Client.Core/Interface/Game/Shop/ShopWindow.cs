@@ -145,7 +145,7 @@ public partial class ShopWindow : Window
 
     private void RefreshBuyRows()
     {
-        _buyContainer.DeleteAllChildren();
+        _buyContainer.DeleteAll();
         var count = 0;
 
         if (Globals.GameShop is { } shop)
@@ -184,7 +184,7 @@ public partial class ShopWindow : Window
 
     private void RefreshSellRows()
     {
-        _sellContainer.DeleteAllChildren();
+        _sellContainer.DeleteAll();
         var count = 0;
 
         if (Globals.GameShop is { } shop && Globals.Me is { } player)

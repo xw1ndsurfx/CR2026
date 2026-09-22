@@ -75,9 +75,9 @@ internal sealed class MinimapHud : Base
         _mapName.TextColorOverride = Color.White;
         _coords.Font = titleFont;
         _coords.FontSize = 9;
-        _coords.TextColorOverride = new Color(220, 220, 220, 255);
+        _coords.TextColorOverride = new Color(a: 255, r: 220, g: 220, b: 220);
         _legend.Font = titleFont;
-        _legend.TextColorOverride = new Color(220, 220, 220, 255);
+        _legend.TextColorOverride = new Color(a: 255, r: 220, g: 220, b: 220);
 
         var compassColor = Color.White;
         _north.Font = titleFont;
@@ -100,7 +100,7 @@ internal sealed class MinimapHud : Base
         _expandButton.SetStateTexture(ComponentState.Normal, "control_button.png");
         _expandButton.SetStateTexture(ComponentState.Hovered, "control_button_hovered.png");
         _expandButton.SetStateTexture(ComponentState.Active, "control_button_clicked.png");
-        _expandButton.TextColorOverride = new Color(246, 241, 229, 255);
+        _expandButton.TextColorOverride = new Color(a: 255, r: 246, g: 241, b: 229);
         _expandButton.Clicked += (_, _) => ToggleExpanded();
 
         _worldMapButton = new Button(this, "WorldMapButton")
@@ -114,7 +114,7 @@ internal sealed class MinimapHud : Base
         _worldMapButton.SetStateTexture(ComponentState.Normal, "control_button.png");
         _worldMapButton.SetStateTexture(ComponentState.Hovered, "control_button_hovered.png");
         _worldMapButton.SetStateTexture(ComponentState.Active, "control_button_clicked.png");
-        _worldMapButton.TextColorOverride = new Color(246, 241, 229, 255);
+        _worldMapButton.TextColorOverride = new Color(a: 255, r: 246, g: 241, b: 229);
         _worldMapButton.Clicked += (_, _) => openWorldMap();
 
         UpdateLayout();
@@ -189,13 +189,13 @@ internal sealed class MinimapHud : Base
 
         // Match the World Map window: brown title bar, dark translucent body,
         // white typography and restrained bronze borders.
-        Fill(renderer, new Color(24, 14, 15, 226), 0, 0, Width, Height);
-        Fill(renderer, new Color(94, 60, 49, 246), 0, 0, Width, 32);
-        Fill(renderer, new Color(126, 82, 62, 255), 0, 31, Width, 1);
-        Outline(renderer, new Color(72, 43, 35, 255), 0, 0, Width, Height, 2);
+        Fill(renderer, new Color(a: 226, r: 24, g: 14, b: 15), 0, 0, Width, Height);
+        Fill(renderer, new Color(a: 246, r: 94, g: 60, b: 49), 0, 0, Width, 32);
+        Fill(renderer, new Color(a: 255, r: 126, g: 82, b: 62), 0, 31, Width, 1);
+        Outline(renderer, new Color(a: 255, r: 72, g: 43, b: 35), 0, 0, Width, Height, 2);
 
-        Fill(renderer, new Color(20, 16, 17, 210), gridX - 6, GridY - 6, gridPixels + 12, gridPixels + 12);
-        Outline(renderer, new Color(126, 82, 62, 235), gridX - 6, GridY - 6, gridPixels + 12, gridPixels + 12, 1);
+        Fill(renderer, new Color(a: 210, r: 20, g: 16, b: 17), gridX - 6, GridY - 6, gridPixels + 12, gridPixels + 12);
+        Outline(renderer, new Color(a: 235, r: 126, g: 82, b: 62), gridX - 6, GridY - 6, gridPixels + 12, gridPixels + 12, 1);
 
         var attributes = map.Attributes;
         var width = attributes.GetLength(0);
@@ -211,19 +211,19 @@ internal sealed class MinimapHud : Base
 
             if (mapX < 0 || mapY < 0 || mapX >= width || mapY >= height)
             {
-                Fill(renderer, new Color(28, 21, 22, 225), x, y, Cell - 1, Cell - 1);
+                Fill(renderer, new Color(a: 225, r: 28, g: 21, b: 22), x, y, Cell - 1, Cell - 1);
                 continue;
             }
 
             var attribute = attributes[mapX, mapY];
             var color = attribute?.Type switch
             {
-                MapAttributeType.Blocked => new Color(69, 58, 54, 235),
-                MapAttributeType.Warp => new Color(205, 164, 74, 245),
-                MapAttributeType.Resource => new Color(96, 132, 78, 235),
-                MapAttributeType.Item => new Color(96, 120, 134, 235),
-                MapAttributeType.NpcAvoid => new Color(128, 88, 68, 235),
-                _ => new Color(86, 112, 78, 230),
+                MapAttributeType.Blocked => new Color(a: 235, r: 69, g: 58, b: 54),
+                MapAttributeType.Warp => new Color(a: 245, r: 205, g: 164, b: 74),
+                MapAttributeType.Resource => new Color(a: 235, r: 96, g: 132, b: 78),
+                MapAttributeType.Item => new Color(a: 235, r: 96, g: 120, b: 134),
+                MapAttributeType.NpcAvoid => new Color(a: 235, r: 128, g: 88, b: 68),
+                _ => new Color(a: 230, r: 86, g: 112, b: 78),
             };
             Fill(renderer, color, x, y, Cell - 1, Cell - 1);
         }
@@ -289,17 +289,17 @@ internal sealed class MinimapHud : Base
         var isQuestTarget = isEnemy && questTargets.Contains(entity.Name ?? string.Empty);
 
         var color = isParty
-            ? new Color(80, 245, 255, 255)
+            ? new Color(a: 255, r: 80, g: 245, b: 255)
             : isQuestTarget
-                ? new Color(255, 220, 80, 255)
+                ? new Color(a: 255, r: 255, g: 220, b: 80)
                 : isEnemy
-                    ? new Color(235, 70, 70, 255)
+                    ? new Color(a: 255, r: 235, g: 70, b: 70)
                     : entity.Type switch
                     {
-                        EntityType.Player => new Color(82, 165, 236, 255),
-                        EntityType.Resource => new Color(106, 194, 100, 255),
-                        EntityType.Event => new Color(218, 184, 86, 255),
-                        _ => new Color(220, 110, 110, 255),
+                        EntityType.Player => new Color(a: 255, r: 82, g: 165, b: 236),
+                        EntityType.Resource => new Color(a: 255, r: 106, g: 194, b: 100),
+                        EntityType.Event => new Color(a: 255, r: 218, g: 184, b: 86),
+                        _ => new Color(a: 255, r: 220, g: 110, b: 110),
                     };
 
         var size = isParty || isQuestTarget || isEnemy ? 8 : 6;
@@ -307,11 +307,11 @@ internal sealed class MinimapHud : Base
 
         if (isQuestTarget)
         {
-            Outline(renderer, new Color(255, 245, 180, 255), x - 1, y - 1, size + 2, size + 2, 1);
+            Outline(renderer, new Color(a: 255, r: 255, g: 245, b: 180), x - 1, y - 1, size + 2, size + 2, 1);
         }
         else if (isEnemy)
         {
-            Outline(renderer, new Color(120, 20, 20, 255), x - 1, y - 1, size + 2, size + 2, 1);
+            Outline(renderer, new Color(a: 255, r: 120, g: 20, b: 20), x - 1, y - 1, size + 2, size + 2, 1);
         }
 
         return true;
@@ -338,8 +338,8 @@ internal sealed class MinimapHud : Base
     {
         var cx = gridX + Radius * Cell + Cell / 2;
         var cy = GridY + Radius * Cell + Cell / 2;
-        Fill(renderer, new Color(255, 255, 255, 255), cx - 5, cy - 5, 10, 10);
-        Outline(renderer, new Color(40, 40, 40, 255), cx - 6, cy - 6, 12, 12, 1);
+        Fill(renderer, new Color(a: 255, r: 255, g: 255, b: 255), cx - 5, cy - 5, 10, 10);
+        Outline(renderer, new Color(a: 255, r: 40, g: 40, b: 40), cx - 6, cy - 6, 12, 12, 1);
 
         var (dx, dy) = direction switch
         {
@@ -353,7 +353,7 @@ internal sealed class MinimapHud : Base
             Direction.DownRight => (6, 6),
             _ => (0, -7),
         };
-        Fill(renderer, new Color(90, 230, 255, 255), cx + dx - 3, cy + dy - 3, 6, 6);
+        Fill(renderer, new Color(a: 255, r: 90, g: 230, b: 255), cx + dx - 3, cy + dy - 3, 6, 6);
     }
 
     private static void Outline(RendererBase renderer, Color color, int x, int y, int width, int height, int thickness)

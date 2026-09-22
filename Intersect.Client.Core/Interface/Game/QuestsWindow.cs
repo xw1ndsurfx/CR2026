@@ -127,7 +127,7 @@ public partial class QuestsWindow
             TextureFilename = "questsicon.png",
             MaintainAspectRatio = true,
             MouseInputEnabled = false,
-            RenderColor = new Color(255, 255, 255, 245),
+            RenderColor = new Color(a: 245, r: 255, g: 255, b: 255),
         };
         mQuestTaskHudIcon.SetBounds(23, 42, 36, 36);
 
@@ -152,7 +152,7 @@ public partial class QuestsWindow
             AutoSizeToContents = false,
             Font = trackerFont,
             FontSize = 11,
-            TextColorOverride = new Color(244, 236, 219, 255),
+            TextColorOverride = new Color(a: 255, r: 244, g: 236, b: 219),
             TextAlign = Pos.Left | Pos.CenterV,
             MouseInputEnabled = false,
         };
@@ -169,7 +169,7 @@ public partial class QuestsWindow
             AutoSizeToContents = false,
             Font = trackerFont,
             FontSize = 8,
-            TextColorOverride = new Color(170, 220, 145, 255),
+            TextColorOverride = new Color(a: 255, r: 170, g: 220, b: 145),
             TextAlign = Pos.Left | Pos.CenterV,
             MouseInputEnabled = false,
         };
@@ -177,7 +177,7 @@ public partial class QuestsWindow
 
         mQuestTaskHudTemplate = new Label(null)
         {
-            TextColor = new Color(229, 225, 214, 255),
+            TextColor = new Color(a: 255, r: 229, g: 225, b: 214),
             Font = trackerFont,
             FontSize = 8,
             Width = 248,
@@ -468,11 +468,11 @@ public partial class QuestsWindow
             base.Render(skin);
             var renderer = skin.Renderer;
 
-            Fill(renderer, new Color(24, 14, 15, 220), 0, 0, Width, Height);
-            Fill(renderer, new Color(94, 60, 49, 242), 0, 0, Width, 30);
-            Fill(renderer, new Color(126, 82, 62, 255), 0, 29, Width, 1);
-            Outline(renderer, new Color(72, 43, 35, 255), 0, 0, Width, Height, 2);
-            Fill(renderer, new Color(12, 10, 10, 72), 82, 39, Width - 94, Height - 52);
+            Fill(renderer, new Color(a: 220, r: 24, g: 14, b: 15), 0, 0, Width, Height);
+            Fill(renderer, new Color(a: 242, r: 94, g: 60, b: 49), 0, 0, Width, 30);
+            Fill(renderer, new Color(a: 255, r: 126, g: 82, b: 62), 0, 29, Width, 1);
+            Outline(renderer, new Color(a: 255, r: 72, g: 43, b: 35), 0, 0, Width, Height, 2);
+            Fill(renderer, new Color(a: 72, r: 12, g: 10, b: 10), 82, 39, Width - 94, Height - 52);
 
             if (ShowProgressBar)
             {
@@ -481,15 +481,15 @@ public partial class QuestsWindow
                 var barWidth = Width - 112;
                 const int barHeight = 5;
 
-                Fill(renderer, new Color(42, 31, 31, 205), barX, barY, barWidth, barHeight);
+                Fill(renderer, new Color(a: 205, r: 42, g: 31, b: 31), barX, barY, barWidth, barHeight);
 
                 var fillWidth = (int)Math.Round(barWidth * ProgressRatio);
                 if (fillWidth > 0)
                 {
-                    Fill(renderer, new Color(119, 178, 93, 235), barX, barY, fillWidth, barHeight);
+                    Fill(renderer, new Color(a: 235, r: 119, g: 178, b: 93), barX, barY, fillWidth, barHeight);
                 }
 
-                Outline(renderer, new Color(155, 113, 92, 220), barX, barY, barWidth, barHeight, 1);
+                Outline(renderer, new Color(a: 220, r: 155, g: 113, b: 92), barX, barY, barWidth, barHeight, 1);
             }
         }
 

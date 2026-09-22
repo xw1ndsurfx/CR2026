@@ -108,6 +108,26 @@ internal sealed class MiniGameCommandDialog : Form
             return Math.Clamp(Math.Max(maximum, minimum * 10), 1, 1_000_000_000);
         }
 
+        long SuggestedBlackjackReserve()
+        {
+            var buyIn = (long)chips.Value;
+            var maximumBet = (long)blackjackMaximum.Value;
+            var seatCount = (long)seats.Value;
+            return Math.Clamp(Math.Max(buyIn, maximumBet * 4L * seatCount), 1, 1_000_000_000);
+        }
+
+        void EnsureBlackjackReserve()
+        {
+            var funded = ((currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty) != Guid.Empty;
+            if (!funded || !IsBlackjack()) return;
+
+            var suggested = SuggestedBlackjackReserve();
+            if ((long)reserve.Value < suggested)
+            {
+                reserve.Value = suggested;
+            }
+        }
+
         void ChangeCurrencyMode()
         {
             var funded = ((currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty) != Guid.Empty;
@@ -123,11 +143,7 @@ internal sealed class MiniGameCommandDialog : Form
             chips.Value = Math.Clamp(next, (long)chips.Minimum, (long)chips.Maximum);
             if (funded && fundedBuyInValue == 0) fundedBuyInValue = (long)chips.Value;
 
-            if (funded && IsBlackjack())
-            {
-                var minimumReserve = Math.Clamp((long)blackjackMinimum.Value * 4, 0, 1_000_000_000);
-                if ((long)reserve.Value < minimumReserve) reserve.Value = minimumReserve;
-            }
+            EnsureBlackjackReserve();
         }
 
         void LimitNpcs()
@@ -148,8 +164,11 @@ internal sealed class MiniGameCommandDialog : Form
                 unlimitedNpcBankroll.Checked = false;
             }
             LimitNpcs();
+            EnsureBlackjackReserve();
         }
-        seats.ValueChanged += (_, _) => LimitNpcs(); dealer.CheckedChanged += (_, _) => LimitNpcs(); LimitNpcs();
+        seats.ValueChanged += (_, _) => { LimitNpcs(); EnsureBlackjackReserve(); };
+        dealer.CheckedChanged += (_, _) => LimitNpcs();
+        LimitNpcs();
         AddRow(layout, 1, "Mini-game", game); AddRow(layout, 2, "Table ID (letters, digits, - or _)", table);
         AddRow(layout, 3, "Maximum seats (humans + NPCs)", seats); AddRow(layout, 4, "Table currency / Monnaie", currency);
         var chipsLabel = AddRow(layout, 5, "Starting test chips", chips);
@@ -157,7 +176,7 @@ internal sealed class MiniGameCommandDialog : Form
         AddRow(layout, 9, "Dealer plays and deals", dealer); AddRow(layout, 10, "Other NPC opponents", npcs);
         AddRow(layout, 11, "Automatic hands", automatic); AddRow(layout, 12, "Dealing animation", animation);
         AddRow(layout, 13, "Announce wins in GLOBAL chat", announce); AddRow(layout, 14, "Victory animation (winner only)", victory);
-        AddRow(layout, 15, "Dealer / NPC card back", backs); AddRow(layout, 16, "Initial NPC reserve (one-time seed)", reserve);
+        AddRow(layout, 15, "Dealer / NPC card back", backs); AddRow(layout, 16, "Dealer / NPC bank reserve", reserve);
         AddRow(layout, 17, "Unlimited NPC bankroll", unlimitedNpcBankroll);
         AddRow(layout, 18, "Sound - Deal", dealSound); AddRow(layout, 19, "Sound - Check", checkSound);
         AddRow(layout, 20, "Sound - Call", callSound); AddRow(layout, 21, "Sound - Raise", raiseSound);
@@ -247,6 +266,7 @@ internal sealed class MiniGameCommandDialog : Form
         {
             var id = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
             var blackjack = IsBlackjack();
+            EnsureBlackjackReserve();
             reserve.Enabled = id != Guid.Empty && !unlimitedNpcBankroll.Checked;
             unlimitedNpcBankroll.Enabled = id != Guid.Empty && !blackjack;
             if (id == Guid.Empty)
@@ -279,16 +299,9 @@ internal sealed class MiniGameCommandDialog : Form
 
             if (blackjack)
             {
-                var minimumReserve = Math.Clamp((long)blackjackMinimum.Value * 4, 0, 1_000_000_000);
-                if ((long)reserve.Value < minimumReserve)
-                {
-                    status.ForeColor = DrawingColor.OrangeRed;
-                    status.Text += $"\nBlackjack house reserve is too low. Set Initial NPC reserve to at least {minimumReserve:N0} {itemName}.";
-                }
-                else
-                {
-                    status.Text += $"\nBlackjack house reserve: {reserve.Value:N0} {itemName}. Minimum required to open this table: {minimumReserve:N0}.";
-                }
+                var suggestedReserve = SuggestedBlackjackReserve();
+                status.Text += $"\nBlackjack dealer bank: {reserve.Value:N0} {itemName}. " +
+                    $"The editor keeps this at or above {suggestedReserve:N0} so the dealer can cover the configured table.";
             }
         }
         currency.SelectedIndexChanged += (_, _) => { ChangeCurrencyMode(); ShowCurrencyStatus(); ShowSummary(); };
@@ -308,8 +321,8 @@ internal sealed class MiniGameCommandDialog : Form
         small.ValueChanged += (_, _) => ShowSummary();
         big.ValueChanged += (_, _) => ShowSummary();
         automatic.CheckedChanged += (_, _) => ShowSummary();
-        blackjackMinimum.ValueChanged += (_, _) => { ShowCurrencyStatus(); ShowSummary(); };
-        blackjackMaximum.ValueChanged += (_, _) => { ShowCurrencyStatus(); ShowSummary(); };
+        blackjackMinimum.ValueChanged += (_, _) => { EnsureBlackjackReserve(); ShowCurrencyStatus(); ShowSummary(); };
+        blackjackMaximum.ValueChanged += (_, _) => { EnsureBlackjackReserve(); ShowCurrencyStatus(); ShowSummary(); };
         blackjackHitSoft17.CheckedChanged += (_, _) => ShowSummary();
         UpdateGameUi();
         ShowCurrencyStatus();
@@ -319,6 +332,7 @@ internal sealed class MiniGameCommandDialog : Form
         buttons.Controls.Add(cancel); buttons.Controls.Add(save); AcceptButton = save; CancelButton = cancel;
         save.Click += (_, _) =>
         {
+            EnsureBlackjackReserve();
             var selected = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
             if (selected != Guid.Empty && !MiniGameCurrency.IsCompatible(ItemDescriptor.Get(selected)))
             {

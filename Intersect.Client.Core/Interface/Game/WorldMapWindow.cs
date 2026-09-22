@@ -184,7 +184,7 @@ internal sealed class WorldMapWindow : Window
             base.Render(skin);
             var renderer = skin.Renderer;
 
-            Fill(renderer, new Color(7, 10, 13, 252), 0, 0, Width, Height);
+            Fill(renderer, new Color(a: 252, r: 7, g: 10, b: 13), 0, 0, Width, Height);
 
             var grid = Globals.MapGrid;
             if (grid == null)
@@ -274,16 +274,16 @@ internal sealed class WorldMapWindow : Window
                     {
                         // Neutral placeholder while the server/map-preview cache catches up.
                         // No GUIDs and no bright debug-blue cells.
-                        Fill(renderer, new Color(18, 23, 27, 255), x, y, cellWidth + 1, cellHeight + 1);
+                        Fill(renderer, new Color(a: 255, r: 18, g: 23, b: 27), x, y, cellWidth + 1, cellHeight + 1);
                     }
 
                     // Keep a very subtle editor-style cell boundary so adjacent maps remain
                     // distinguishable without bringing back the old debug-grid appearance.
-                    Outline(renderer, new Color(86, 96, 104, 150), x, y, cellWidth, cellHeight, 1);
+                    Outline(renderer, new Color(a: 150, r: 86, g: 96, b: 104), x, y, cellWidth, cellHeight, 1);
 
                     if (Globals.Me?.MapId == mapId)
                     {
-                        Outline(renderer, new Color(255, 214, 92, 255), x, y, cellWidth, cellHeight, 2);
+                        Outline(renderer, new Color(a: 255, r: 255, g: 214, b: 92), x, y, cellWidth, cellHeight, 2);
                     }
                 }
             }
@@ -617,8 +617,8 @@ internal sealed class WorldMapWindow : Window
             var px = (int)Math.Round(_panX + (grid.X + localX) * CellWidth);
             var py = (int)Math.Round(_panY + (grid.Y + localY) * CellHeight);
 
-            Fill(renderer, new Color(255, 214, 92, 255), px - 6, py - 6, 12, 12);
-            Outline(renderer, new Color(35, 30, 18, 255), px - 7, py - 7, 14, 14, 2);
+            Fill(renderer, new Color(a: 255, r: 255, g: 214, b: 92), px - 6, py - 6, 12, 12);
+            Outline(renderer, new Color(a: 255, r: 35, g: 30, b: 18), px - 7, py - 7, 14, 14, 2);
         }
 
         protected override void OnMouseDown(MouseButton mouseButton, Point mousePosition, bool userAction = true)
