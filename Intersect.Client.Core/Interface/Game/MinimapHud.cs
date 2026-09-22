@@ -1,4 +1,5 @@
 using Intersect.Client.Entities;
+using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -18,16 +19,16 @@ namespace Intersect.Client.Interface.Game;
 /// Lightweight top-right RPG minimap/compass rendered entirely from client-known map data.
 /// Part 2 adds party/quest markers and a larger local-map mode.
 /// </summary>
-internal sealed class MinimapHud : Base
+internal sealed class MinimapHud : ImagePanel
 {
     private const int CompactWidth = 280;
-    private const int CompactHeight = 305;
+    private const int CompactHeight = 315;
     private const int ExpandedWidth = 430;
-    private const int ExpandedHeight = 465;
+    private const int ExpandedHeight = 475;
     private const int CompactRadius = 8;
     private const int ExpandedRadius = 14;
     private const int Cell = 12;
-    private const int GridY = 46;
+    private const int GridY = 52;
 
     private readonly Label _mapName;
     private readonly Label _coords;
@@ -50,7 +51,9 @@ internal sealed class MinimapHud : Base
         SetSize(CompactWidth, CompactHeight);
         MouseInputEnabled = false;
         KeyboardInputEnabled = false;
-        ShouldDrawBackground = false;
+        ShouldDrawBackground = true;
+        TextureFilename = "entitybox.png";
+        RenderColor = new Color(255, 255, 255, 224);
 
         _mapName = MakeLabel("MinimapMapName", 12, 5, 210, 24, 12);
         _coords = MakeLabel("MinimapCoords", 12, 281, 256, 18, 10);
@@ -69,7 +72,20 @@ internal sealed class MinimapHud : Base
         );
         _legend.IsHidden = true;
 
-        var compassColor = new Color(255, 230, 140, 255);
+        var titleFont = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont;
+        _mapName.Font = titleFont;
+        _mapName.TextColorOverride = new Color(246, 241, 229, 255);
+        _coords.Font = titleFont;
+        _coords.FontSize = 9;
+        _coords.TextColorOverride = new Color(205, 190, 172, 255);
+        _legend.Font = titleFont;
+        _legend.TextColorOverride = new Color(202, 190, 176, 255);
+
+        var compassColor = new Color(226, 187, 116, 255);
+        _north.Font = titleFont;
+        _east.Font = titleFont;
+        _south.Font = titleFont;
+        _west.Font = titleFont;
         _north.TextColorOverride = compassColor;
         _east.TextColorOverride = compassColor;
         _south.TextColorOverride = compassColor;
@@ -83,6 +99,10 @@ internal sealed class MinimapHud : Base
             MouseInputEnabled = true,
         };
         _expandButton.SetBounds(Width - 33, 5, 24, 22);
+        _expandButton.SetStateTexture(ComponentState.Normal, "control_button.png");
+        _expandButton.SetStateTexture(ComponentState.Hovered, "control_button_hovered.png");
+        _expandButton.SetStateTexture(ComponentState.Active, "control_button_clicked.png");
+        _expandButton.TextColorOverride = new Color(246, 241, 229, 255);
         _expandButton.Clicked += (_, _) => ToggleExpanded();
 
         _worldMapButton = new Button(this, "WorldMapButton")
@@ -93,6 +113,10 @@ internal sealed class MinimapHud : Base
             MouseInputEnabled = true,
         };
         _worldMapButton.SetBounds(12, Height - 48, 92, 22);
+        _worldMapButton.SetStateTexture(ComponentState.Normal, "control_button.png");
+        _worldMapButton.SetStateTexture(ComponentState.Hovered, "control_button_hovered.png");
+        _worldMapButton.SetStateTexture(ComponentState.Active, "control_button_clicked.png");
+        _worldMapButton.TextColorOverride = new Color(246, 241, 229, 255);
         _worldMapButton.Clicked += (_, _) => openWorldMap();
 
         UpdateLayout();
@@ -104,7 +128,7 @@ internal sealed class MinimapHud : Base
         var label = new Label(this, name)
         {
             AutoSizeToContents = false,
-            Font = Skin.DefaultFont,
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
             FontSize = size,
             TextColorOverride = Color.White,
             MouseInputEnabled = false,
@@ -128,11 +152,11 @@ internal sealed class MinimapHud : Base
 
     private void UpdateLayout()
     {
-        _mapName.SetBounds(12, 5, Width - 50, 22);
+        _mapName.SetBounds(14, 5, Width - 54, 22);
         _expandButton.SetBounds(Width - 33, 5, 24, 22);
-        _coords.SetBounds(12, Height - 24, Width - 24, 18);
-        _legend.SetBounds(112, Height - 45, Width - 124, 18);
-        _worldMapButton.SetBounds(12, Height - 49, 92, 24);
+        _coords.SetBounds(112, Height - 29, Width - 124, 18);
+        _legend.SetBounds(112, Height - 50, Width - 124, 18);
+        _worldMapButton.SetBounds(14, Height - 51, 90, 24);
 
         var gridX = GridX;
         var gridPixels = GridPixels;
@@ -165,9 +189,11 @@ internal sealed class MinimapHud : Base
         var gridX = GridX;
         var gridPixels = GridPixels;
 
-        Fill(renderer, new Color(8, 12, 16, 245), 0, 0, Width, Height);
-        Outline(renderer, new Color(185, 205, 220, 255), 0, 0, Width, Height, 3);
-        Fill(renderer, new Color(18, 24, 30, 250), gridX - 4, GridY - 4, gridPixels + 8, gridPixels + 8);
+        // entitybox.png is rendered by ImagePanel/base.Render(). Add only a
+        // translucent map well so the minimap matches the TargetBox/quest tracker UI.
+        Fill(renderer, new Color(18, 13, 14, 122), gridX - 6, GridY - 6, gridPixels + 12, gridPixels + 12);
+        Outline(renderer, new Color(145, 99, 78, 220), gridX - 6, GridY - 6, gridPixels + 12, gridPixels + 12, 1);
+        Outline(renderer, new Color(62, 43, 40, 190), gridX - 3, GridY - 3, gridPixels + 6, gridPixels + 6, 1);
 
         var attributes = map.Attributes;
         var width = attributes.GetLength(0);
@@ -183,19 +209,19 @@ internal sealed class MinimapHud : Base
 
             if (mapX < 0 || mapY < 0 || mapX >= width || mapY >= height)
             {
-                Fill(renderer, new Color(9, 11, 14, 255), x, y, Cell - 1, Cell - 1);
+                Fill(renderer, new Color(28, 21, 22, 225), x, y, Cell - 1, Cell - 1);
                 continue;
             }
 
             var attribute = attributes[mapX, mapY];
             var color = attribute?.Type switch
             {
-                MapAttributeType.Blocked => new Color(65, 68, 74, 255),
-                MapAttributeType.Warp => new Color(235, 190, 70, 255),
-                MapAttributeType.Resource => new Color(90, 155, 88, 255),
-                MapAttributeType.Item => new Color(95, 130, 180, 255),
-                MapAttributeType.NpcAvoid => new Color(130, 92, 72, 255),
-                _ => new Color(70, 105, 88, 255),
+                MapAttributeType.Blocked => new Color(72, 66, 64, 235),
+                MapAttributeType.Warp => new Color(194, 151, 70, 245),
+                MapAttributeType.Resource => new Color(93, 132, 83, 235),
+                MapAttributeType.Item => new Color(89, 112, 135, 235),
+                MapAttributeType.NpcAvoid => new Color(124, 86, 69, 235),
+                _ => new Color(72, 96, 76, 225),
             };
             Fill(renderer, color, x, y, Cell - 1, Cell - 1);
         }
