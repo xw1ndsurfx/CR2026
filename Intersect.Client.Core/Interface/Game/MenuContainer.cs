@@ -295,6 +295,9 @@ public partial class MenuContainer : Panel
         const int buttonWidth = 71;
         const int buttonHeight = 55;
         const int buttonSpacing = 5;
+        const int toggleGap = 5;
+
+        Padding = Padding.Zero;
 
         var containers = new[]
         {
@@ -347,6 +350,17 @@ public partial class MenuContainer : Panel
             buttonWidth,
             containers.Length * buttonHeight + (containers.Length - 1) * buttonSpacing
         );
+
+        // Keep Show / Hide beside the bottom Settings/Menu button. Adding News made
+        // the vertical stack taller, so the old fixed bottom-left position overlapped it.
+        _menuToggleButtonContainer.Dock = Pos.None;
+        _menuToggleButtonContainer.Alignment = [Alignments.Bottom, Alignments.Left];
+        _menuToggleButtonContainer.AlignmentPadding = new Padding
+        {
+            Left = buttonWidth + toggleGap,
+            Bottom = 4,
+        };
+        _menuToggleButtonContainer.Margin = Margin.Zero;
     }
 
     //Methods
