@@ -77,6 +77,8 @@ public static partial class Globals
     // Detailed map grid metadata shared with the in-game World Map.
     public static string[,]? EditorMapGrid;
 
+    public static WorldMapEventMarker[] WorldMapEventMarkers = [];
+
     public static long MapGridHeight;
 
     public static long MapGridWidth;

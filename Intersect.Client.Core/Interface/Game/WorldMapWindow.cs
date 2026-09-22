@@ -93,7 +93,17 @@ internal sealed class WorldMapWindow : Window
 
         if (ids.Count > 0)
         {
-            PacketSender.SendNeedMap(ids.ToArray());
+            // Request the full world in small packets. A single large GetObjectData packet
+            // can leave only the normal 3x3 gameplay area loaded on some transports.
+            const int batchSize = 8;
+            var allIds = ids.ToArray();
+            for (var offset = 0; offset < allIds.Length; offset += batchSize)
+            {
+                var count = Math.Min(batchSize, allIds.Length - offset);
+                var batch = new Guid[count];
+                Array.Copy(allIds, offset, batch, 0, count);
+                PacketSender.SendNeedMap(batch);
+            }
         }
     }
 
@@ -285,53 +295,37 @@ internal sealed class WorldMapWindow : Window
                 }
             }
 
-            DrawWorldMapEventMarkers(renderer, grid, cellWidth, cellHeight);
+            DrawWorldMapEventMarkers(renderer, cellWidth, cellHeight);
             DrawPlayerMarker(renderer);
         }
 
-        private void DrawWorldMapEventMarkers(RendererBase renderer, Guid[,] grid, int cellWidth, int cellHeight)
+        private void DrawWorldMapEventMarkers(RendererBase renderer, int cellWidth, int cellHeight)
         {
             var mapWidth = Math.Max(1, Options.Instance.Map.MapWidth);
             var mapHeight = Math.Max(1, Options.Instance.Map.MapHeight);
 
-            for (var gx = 0; gx < grid.GetLength(0); ++gx)
+            foreach (var marker in Globals.WorldMapEventMarkers)
             {
-                for (var gy = 0; gy < grid.GetLength(1); ++gy)
+                if (marker.MapId == Guid.Empty ||
+                    marker.AnimationId == Guid.Empty ||
+                    !Globals.GridMaps.TryGetValue(marker.MapId, out var gridPosition) ||
+                    !AnimationDescriptor.TryGet(marker.AnimationId, out var animationDescriptor))
                 {
-                    var mapId = grid[gx, gy];
-                    if (mapId == Guid.Empty || MapInstance.Get(mapId) is not { IsLoaded: true } map)
-                    {
-                        continue;
-                    }
-
-                    foreach (var eventDescriptor in map.LocalEvents.Values)
-                    {
-                        var page = eventDescriptor.Pages?
-                            .LastOrDefault(candidate =>
-                                candidate.ShowAnimationOnWorldMap &&
-                                candidate.AnimationId != Guid.Empty
-                            );
-
-                        if (page == null ||
-                            !AnimationDescriptor.TryGet(page.AnimationId, out var animationDescriptor))
-                        {
-                            continue;
-                        }
-
-                        var localX = (eventDescriptor.SpawnX + 0.5f) / mapWidth;
-                        var localY = (eventDescriptor.SpawnY + 0.5f) / mapHeight;
-                        var markerX = (int)Math.Round(_panX + (gx + localX) * cellWidth);
-                        var markerY = (int)Math.Round(_panY + (gy + localY) * cellHeight);
-
-                        if (markerX < -64 || markerY < -64 || markerX > Width + 64 || markerY > Height + 64)
-                        {
-                            continue;
-                        }
-
-                        DrawAnimationLayerMarker(renderer, animationDescriptor.Lower, markerX, markerY);
-                        DrawAnimationLayerMarker(renderer, animationDescriptor.Upper, markerX, markerY);
-                    }
+                    continue;
                 }
+
+                var localX = (marker.X + 0.5f) / mapWidth;
+                var localY = (marker.Y + 0.5f) / mapHeight;
+                var markerX = (int)Math.Round(_panX + (gridPosition.X + localX) * cellWidth);
+                var markerY = (int)Math.Round(_panY + (gridPosition.Y + localY) * cellHeight);
+
+                if (markerX < -64 || markerY < -64 || markerX > Width + 64 || markerY > Height + 64)
+                {
+                    continue;
+                }
+
+                DrawAnimationLayerMarker(renderer, animationDescriptor.Lower, markerX, markerY);
+                DrawAnimationLayerMarker(renderer, animationDescriptor.Upper, markerX, markerY);
             }
         }
 

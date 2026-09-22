@@ -1,5 +1,7 @@
 using System.Diagnostics.Contracts;
 using Intersect.Server.Database;
+using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Network.Packets.Server;
 using Newtonsoft.Json.Linq;
 
 namespace Intersect.Server.Maps;
@@ -176,4 +178,48 @@ public partial class MapGrid
     }
 
     public Guid[,] GetClientData() => MapIdGrid;
+
+    public WorldMapEventMarker[] GetWorldMapEventMarkers()
+    {
+        var markers = new List<WorldMapEventMarker>();
+
+        foreach (var mapId in MapIds)
+        {
+            if (!MapController.TryGet(mapId, out var map))
+            {
+                continue;
+            }
+
+            foreach (var eventId in map.EventIds)
+            {
+                if (!EventDescriptor.TryGet(eventId, out var eventDescriptor))
+                {
+                    continue;
+                }
+
+                var page = eventDescriptor.Pages?
+                    .LastOrDefault(candidate =>
+                        candidate.ShowAnimationOnWorldMap &&
+                        candidate.AnimationId != Guid.Empty
+                    );
+
+                if (page == null)
+                {
+                    continue;
+                }
+
+                markers.Add(
+                    new WorldMapEventMarker(
+                        eventDescriptor.Id,
+                        mapId,
+                        eventDescriptor.SpawnX,
+                        eventDescriptor.SpawnY,
+                        page.AnimationId
+                    )
+                );
+            }
+        }
+
+        return markers.ToArray();
+    }
 }

@@ -1492,11 +1492,25 @@ public static partial class PacketSender
 
         if (client.IsEditor)
         {
-            client.Send(new MapGridPacket(null, grid.GetEditorData(), clearKnownMaps));
+            client.Send(
+                new MapGridPacket(
+                    null,
+                    grid.GetEditorData(),
+                    clearKnownMaps,
+                    grid.GetWorldMapEventMarkers()
+                )
+            );
         }
         else
         {
-            client.Send(new MapGridPacket(grid.GetClientData(), grid.GetEditorData(), clearKnownMaps));
+            client.Send(
+                new MapGridPacket(
+                    grid.GetClientData(),
+                    grid.GetEditorData(),
+                    clearKnownMaps,
+                    grid.GetWorldMapEventMarkers()
+                )
+            );
             if (clearKnownMaps)
             {
                 SendAreaPacket(client.Entity);

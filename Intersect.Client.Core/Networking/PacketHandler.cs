@@ -1858,6 +1858,7 @@ internal sealed partial class PacketHandler
         Globals.MapGridWidth = packet.Grid.GetLength(0);
         Globals.MapGridHeight = packet.Grid.GetLength(1);
         Globals.EditorMapGrid = packet.EditorGrid;
+        Globals.WorldMapEventMarkers = packet.WorldMapEventMarkers ?? [];
         var clearKnownMaps = packet.ClearKnownMaps;
         Globals.MapGrid = new Guid[Globals.MapGridWidth, Globals.MapGridHeight];
         if (clearKnownMaps)
