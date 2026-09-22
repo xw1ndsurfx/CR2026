@@ -55,7 +55,15 @@ public static partial class PacketSender
     public static void SendNeedMap(params Guid[] mapIds)
     {
         var validMapIds = mapIds.Where(
-                mapId => mapId != default && !MapInstance.TryGet(mapId, out _) && MapInstance.MapNotRequested(mapId)
+                mapId =>
+                {
+                    if (mapId == default || !MapInstance.MapNotRequested(mapId))
+                    {
+                        return false;
+                    }
+
+                    return !MapInstance.TryGet(mapId, out var map) || !map.IsLoaded;
+                }
             )
             .ToArray();
         if (validMapIds.Length < 1)
