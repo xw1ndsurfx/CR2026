@@ -1497,7 +1497,7 @@ public static partial class PacketSender
                     null,
                     grid.GetEditorData(),
                     clearKnownMaps,
-                    grid.GetWorldMapEventMarkers()
+                    grid.GetWorldMapEventMarkers(client.Entity)
                 )
             );
         }
@@ -1508,7 +1508,7 @@ public static partial class PacketSender
                     grid.GetClientData(),
                     grid.GetEditorData(),
                     clearKnownMaps,
-                    grid.GetWorldMapEventMarkers()
+                    grid.GetWorldMapEventMarkers(client.Entity)
                 )
             );
             if (clearKnownMaps)

@@ -2,6 +2,8 @@ using System.Diagnostics.Contracts;
 using Intersect.Server.Database;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Network.Packets.Server;
+using Intersect.Server.Entities;
+using Intersect.Server.Entities.Events;
 using Newtonsoft.Json.Linq;
 
 namespace Intersect.Server.Maps;
@@ -179,9 +181,13 @@ public partial class MapGrid
 
     public Guid[,] GetClientData() => MapIdGrid;
 
-    public WorldMapEventMarker[] GetWorldMapEventMarkers()
+    public WorldMapEventMarker[] GetWorldMapEventMarkers(Player? player)
     {
         var markers = new List<WorldMapEventMarker>();
+        if (player == null)
+        {
+            return markers.ToArray();
+        }
 
         foreach (var mapId in MapIds)
         {
@@ -197,29 +203,58 @@ public partial class MapGrid
                     continue;
                 }
 
-                var page = eventDescriptor.Pages?
-                    .LastOrDefault(candidate =>
-                        candidate.ShowAnimationOnWorldMap &&
-                        candidate.AnimationId != Guid.Empty
-                    );
+                // Reuse the player's live event instance when possible so self-switches
+                // and other event-specific state match the page currently active in-game.
+                Event eventInstance;
+                if (!player.EventBaseIdLookup.TryGetValue(eventDescriptor.Id, out eventInstance) ||
+                    eventInstance.MapId != mapId)
+                {
+                    eventInstance = new Event(Guid.NewGuid(), map, player, eventDescriptor)
+                    {
+                        Global = eventDescriptor.Global,
+                        MapId = mapId,
+                        SpawnX = eventDescriptor.SpawnX,
+                        SpawnY = eventDescriptor.SpawnY,
+                    };
+                }
 
-                if (page == null)
+                EventPage? activePage = null;
+
+                // Intersect gives priority to the last page whose conditions pass.
+                // Mirror Event.Update() so the World Map marker follows the same page.
+                for (var pageIndex = eventDescriptor.Pages.Count - 1; pageIndex >= 0; --pageIndex)
+                {
+                    var candidate = eventDescriptor.Pages[pageIndex];
+                    if (Conditions.CanSpawnPage(candidate, player, eventInstance))
+                    {
+                        activePage = candidate;
+                        break;
+                    }
+                }
+
+                // Only the ACTIVE page controls the marker. If this page is not marked
+                // for the World Map, the event must not appear even if another page is.
+                if (activePage == null ||
+                    !activePage.ShowAnimationOnWorldMap ||
+                    activePage.AnimationId == Guid.Empty)
                 {
                     continue;
                 }
+
+                var markerX = eventInstance.PageInstance?.X ?? eventDescriptor.SpawnX;
+                var markerY = eventInstance.PageInstance?.Y ?? eventDescriptor.SpawnY;
 
                 markers.Add(
                     new WorldMapEventMarker(
                         eventDescriptor.Id,
                         mapId,
-                        eventDescriptor.SpawnX,
-                        eventDescriptor.SpawnY,
-                        page.AnimationId
+                        markerX,
+                        markerY,
+                        activePage.AnimationId
                     )
                 );
             }
         }
 
         return markers.ToArray();
-    }
-}
+    }}
