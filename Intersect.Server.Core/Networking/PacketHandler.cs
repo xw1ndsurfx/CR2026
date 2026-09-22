@@ -751,15 +751,23 @@ internal sealed partial class PacketHandler
         // Always refresh marker metadata when the World Map is opened.
         PacketSender.SendMapGrid(client, grid, clearKnownMaps: false);
 
-        // Bypass normal proximity/sent-map throttling and explicitly deliver every
-        // map in this connected grid. This is only done on explicit World Map open.
+        // Send dedicated World Map data instead of normal gameplay MapPackets.
+        // This keeps the complete grid independent from the normal 3x3 gameplay map lifecycle.
         foreach (var mapId in grid.MapIds)
         {
-            var mapPacket = PacketSender.GenerateMapPacket(client, mapId);
-            if (mapPacket != null)
+            if (!MapController.TryGet(mapId, out var map))
             {
-                client.Send(mapPacket);
+                continue;
             }
+
+            client.Send(
+                new WorldMapMapDataPacket(
+                    map.Id,
+                    map.JsonData,
+                    map.TileData,
+                    map.Revision
+                )
+            );
         }
     }
 

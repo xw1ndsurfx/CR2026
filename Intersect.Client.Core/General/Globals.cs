@@ -79,6 +79,8 @@ public static partial class Globals
 
     public static WorldMapEventMarker[] WorldMapEventMarkers = [];
 
+    public static readonly Dictionary<Guid, WorldMapMapDataPacket> WorldMapMapData = [];
+
     public static long MapGridHeight;
 
     public static long MapGridWidth;

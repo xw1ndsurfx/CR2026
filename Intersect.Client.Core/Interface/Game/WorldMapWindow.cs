@@ -68,7 +68,6 @@ internal sealed class WorldMapWindow : Window
         SetSize(920, 680);
 
         PacketSender.SendWorldMapRequest();
-        RequestEntireWorldGrid();
         _mapCanvas.CenterOnPlayer();
     }
 
@@ -205,7 +204,7 @@ internal sealed class WorldMapWindow : Window
             if (++_requestRefreshCounter >= ReRequestIntervalFrames)
             {
                 _requestRefreshCounter = 0;
-                RequestEntireWorldGrid();
+                PacketSender.SendWorldMapRequest();
             }
 
             // Build previews for the complete world grid, not only the cells currently inside
@@ -221,13 +220,7 @@ internal sealed class WorldMapWindow : Window
                         continue;
                     }
 
-                    var preloadMap = MapInstance.Get(preloadId);
-                    if (preloadMap is not { IsLoaded: true })
-                    {
-                        continue;
-                    }
-
-                    if (BuildPreview(preloadMap) != null)
+                    if (BuildPreviewForMap(preloadId) != null)
                     {
                         ++previewsBuiltThisFrame;
                     }
@@ -255,11 +248,9 @@ internal sealed class WorldMapWindow : Window
                     var preview = GetValidPreview(mapId, map);
 
                     // A visible cell gets priority if the preload budget has not been used up.
-                    if (preview == null &&
-                        map is { IsLoaded: true } &&
-                        previewsBuiltThisFrame < PreviewBuildsPerFrame)
+                    if (preview == null && previewsBuiltThisFrame < PreviewBuildsPerFrame)
                     {
-                        preview = BuildPreview(map);
+                        preview = BuildPreviewForMap(mapId);
                         if (preview != null)
                         {
                             ++previewsBuiltThisFrame;
@@ -405,6 +396,39 @@ internal sealed class WorldMapWindow : Window
             _previews.Remove(mapId);
             _previewRevisions.Remove(mapId);
             return null;
+        }
+
+        private IGameRenderTexture? BuildPreviewForMap(Guid mapId)
+        {
+            // Prefer the dedicated World Map source packet. It is not subject to the
+            // gameplay 3x3 map lifecycle and therefore remains available for every cell.
+            WorldMapMapDataPacket? sourcePacket = null;
+            lock (Globals.GameLock)
+            {
+                Globals.WorldMapMapData.TryGetValue(mapId, out sourcePacket);
+            }
+
+            if (sourcePacket != null &&
+                sourcePacket.TileData is { Length: > 0 } &&
+                !string.IsNullOrWhiteSpace(sourcePacket.Data))
+            {
+                var previewMap = new MapInstance(mapId);
+                previewMap.Load(sourcePacket.Data);
+                previewMap.LoadTileData(sourcePacket.TileData);
+                previewMap.Autotiles.InitAutotiles(previewMap.GenerateAutotileGrid());
+
+                var preview = BuildPreview(previewMap);
+                if (preview != null)
+                {
+                    _previewRevisions[mapId] = sourcePacket.Revision;
+                }
+
+                return preview;
+            }
+
+            // Fallback for the player's local area while the dedicated packets arrive.
+            var liveMap = MapInstance.Get(mapId);
+            return liveMap is { IsLoaded: true } ? BuildPreview(liveMap) : null;
         }
 
         private IGameRenderTexture? BuildPreview(MapInstance map)

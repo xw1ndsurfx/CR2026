@@ -347,6 +347,14 @@ internal sealed partial class PacketHandler
         Player.FetchNewMaps();
     }
 
+    public void HandlePacket(IPacketSender packetSender, WorldMapMapDataPacket packet)
+    {
+        lock (Globals.GameLock)
+        {
+            Globals.WorldMapMapData[packet.MapId] = packet;
+        }
+    }
+
     //PlayerEntityPacket
     public void HandlePacket(IPacketSender packetSender, PlayerEntityPacket packet)
     {
