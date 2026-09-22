@@ -787,11 +787,19 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         {
             entity.ClearAnimations();
         }
+
+        // Animations can dispose themselves when their final frame completes. They
+        // remain in LocalAnimations until the next update pass removes them, so a
+        // MapGrid refresh can encounter an already-disposed MapAnimation here.
         foreach (var anim in LocalAnimations)
         {
-            anim.Value?.Dispose();
+            if (anim.Value is { IsDisposed: false } animation)
+            {
+                animation.Dispose();
+            }
         }
-        LocalAnimations?.Clear();
+
+        LocalAnimations.Clear();
         ClearMapAttributes();
     }
 
@@ -1682,6 +1690,14 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
     //Dispose
     public void Dispose(bool prep = true, bool killentities = true)
     {
+        // Map-grid replacement and world-map loading can race with the normal stale-map
+        // cleanup path. Treat Dispose as idempotent so the same map cannot tear down its
+        // animation/entity graph twice.
+        if (IsDisposed)
+        {
+            return;
+        }
+
         IsDisposed = true;
 
         ApplicationContext.CurrentContext.Logger.LogDebug(
