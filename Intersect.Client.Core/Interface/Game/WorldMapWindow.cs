@@ -306,11 +306,14 @@ internal sealed class WorldMapWindow : Window
 
                     foreach (var eventDescriptor in map.LocalEvents.Values)
                     {
+                        if (!eventDescriptor.ShowAnimationOnWorldMap &&
+                            !eventDescriptor.Pages.Any(candidate => candidate.ShowAnimationOnWorldMap))
+                        {
+                            continue;
+                        }
+
                         var page = eventDescriptor.Pages?
-                            .LastOrDefault(candidate =>
-                                candidate.ShowAnimationOnWorldMap &&
-                                candidate.AnimationId != Guid.Empty
-                            );
+                            .LastOrDefault(candidate => candidate.AnimationId != Guid.Empty);
 
                         if (page == null ||
                             !AnimationDescriptor.TryGet(page.AnimationId, out var animationDescriptor))
@@ -434,7 +437,6 @@ internal sealed class WorldMapWindow : Window
             var scaleX = previewWidth / (float)sourceWidth;
             var scaleY = previewHeight / (float)sourceHeight;
             var drewAnyTile = false;
-            var missingReferencedTexture = false;
 
             foreach (var layerName in mapOptions.Layers.All)
             {
@@ -458,7 +460,8 @@ internal sealed class WorldMapWindow : Window
                         var texture = Globals.ContentManager.GetTexture(TextureType.Tileset, tileset.Name);
                         if (texture == null)
                         {
-                            missingReferencedTexture = true;
+                            // Keep rendering the rest of the map. One missing/legacy texture
+                            // should not turn the entire world-map cell black.
                             continue;
                         }
 
@@ -502,10 +505,9 @@ internal sealed class WorldMapWindow : Window
 
             preview.End();
 
-            // Do not permanently cache a black/partial preview that was generated before
-            // all referenced tilesets were ready. Returning null makes the canvas retry
-            // on a later frame, which removes the "shadowed map cell" effect.
-            if (!drewAnyTile || missingReferencedTexture)
+            // Cache any usable preview. A map may reference an old/missing texture on one
+            // layer; discarding the whole preview made otherwise valid maps appear black.
+            if (!drewAnyTile)
             {
                 preview.Dispose();
                 return null;
