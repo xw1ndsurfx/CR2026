@@ -2100,6 +2100,11 @@ internal sealed partial class PacketHandler
         }
     }
 
+    public void HandlePacket(IPacketSender packetSender, OpenLogiklikNewsPacket packet)
+    {
+        global::Intersect.Client.Interface.Interface.GameUi.OpenLogiklikNews();
+    }
+
     //PlayerDeathPacket
     public void HandlePacket(IPacketSender packetSender, PlayerDeathPacket packet)
     {
