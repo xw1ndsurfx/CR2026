@@ -760,6 +760,10 @@ public partial class FrmEvent : Form
                 tmpCommand = new ScreenFadeCommand();
 
                 break;
+            case EventCommandType.OpenLogiklikNews:
+                tmpCommand = new OpenLogiklikNewsCommand();
+
+                break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -1405,6 +1409,8 @@ public partial class FrmEvent : Form
             case EventCommandType.Fade:
                 cmdWindow = new EventCommand_ScreenFade((ScreenFadeCommand)command, this);
 
+                break;
+            case EventCommandType.OpenLogiklikNews:
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
