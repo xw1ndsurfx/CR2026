@@ -98,10 +98,8 @@ public partial class ShopWindow : Window
         _sellHeader.SetBounds(406, 56, 350, 28);
         _buyContainer.SetBounds(24, 90, 350, 468);
         _sellContainer.SetBounds(406, 90, 350, 468);
-        _buyContainer.VerticalScrollBar.Width = 16;
-        _sellContainer.VerticalScrollBar.Width = 16;
-        _buyContainer.VerticalScrollBar.IsHidden = false;
-        _sellContainer.VerticalScrollBar.IsHidden = false;
+        ConfigureNativeScrollbar(_buyContainer);
+        ConfigureNativeScrollbar(_sellContainer);
         _buyEmpty.SetBounds(38, 112, 300, 50);
         _sellEmpty.SetBounds(420, 112, 300, 50);
         _hint.SetBounds(24, 570, 732, 28);
@@ -229,11 +227,41 @@ public partial class ShopWindow : Window
         container.VerticalScrollBar.IsHidden = false;
         container.VerticalScrollBar.IsVisibleInTree = true;
         container.VerticalScrollBar.IsDisabled = false;
+        container.VerticalScrollBar.ShouldDrawBackground = true;
         container.VerticalScrollBar.BringToFront();
         container.VerticalScrollBar.SetScrollAmount(
             Math.Clamp(container.VerticalScrollBar.ScrollAmount, 0f, 1f),
             forceUpdate: true
         );
+    }
+
+    private static void ConfigureNativeScrollbar(ScrollControl container)
+    {
+        var bar = container.VerticalScrollBar;
+        bar.Width = 15;
+        bar.Dock = Pos.Right;
+        bar.IsHidden = false;
+        bar.IsVisibleInTree = true;
+        bar.IsDisabled = false;
+        bar.ShouldDrawBackground = true;
+
+        var up = bar.GetScrollBarButton(Pos.Top);
+        if (up != null)
+        {
+            up.IsHidden = false;
+            up.IsDisabled = false;
+            up.ShouldDrawBackground = true;
+        }
+
+        var down = bar.GetScrollBarButton(Pos.Bottom);
+        if (down != null)
+        {
+            down.IsHidden = false;
+            down.IsDisabled = false;
+            down.ShouldDrawBackground = true;
+        }
+
+        bar.BringToFront();
     }
 
     private bool MatchesSearch(string itemName)
