@@ -201,9 +201,13 @@ internal static class PokerRuntime
                 if (delivery.Level is { } level && delivery.View is { } levelView)
                 {
                     if (ReferenceEquals(levelView.Client.Entity, levelView.Player) && levelView.Player.LoginTime == levelView.LoginStamp)
+                    {
                         PacketSender.SendChatMsg(levelView.Player, PokerNotificationText.LevelUp(level.Level),
                             ChatMessageType.Notice, Color.White);
-                        RewardConfigurationRuntime.GrantPendingLevelRewards(levelView.Player, MiniGameProgression.Poker, level.Level);
+                        RewardConfigurationRuntime.GrantPendingLevelRewards(
+                            levelView.Player, MiniGameProgression.Poker, level.Level
+                        );
+                    }
                     continue;
                 }
                 if (delivery.LocalMessage is { } local && delivery.View is { } localView)

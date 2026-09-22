@@ -240,7 +240,7 @@ internal sealed class MiniGameCommandDialog : Form
         {
             AutoSize = true,
             MaximumSize = new Size(560, 0),
-            Text = "Configured globally in Game Editors > Reward Configuration Editor. All tables use the same rewards."
+            Text = "Configured globally in Content Editors > Daily & Level Rewards Editor. All tables use the same rewards."
         });
         AddRow(layout, 43, "Blackjack minimum bet (even)", blackjackMinimum);
         AddRow(layout, 44, "Blackjack maximum bet (even)", blackjackMaximum);

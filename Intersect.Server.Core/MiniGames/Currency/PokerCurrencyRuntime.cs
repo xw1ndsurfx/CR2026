@@ -272,9 +272,13 @@ internal static class PokerCurrencyRuntime
                     RewardConfigurationRuntime.GrantPendingLevelRewards(rewardView.Player, MiniGameProgression.Poker, reward.Level);
                 else if (delivery.Level is { } level && delivery.View is { } levelView &&
                     ReferenceEquals(levelView.Client.Entity, levelView.Player) && levelView.Player.LoginTime == levelView.Login)
+                {
                     PacketSender.SendChatMsg(levelView.Player, PokerNotificationText.LevelUp(level.Level),
                         ChatMessageType.Notice, Color.White);
-                    RewardConfigurationRuntime.GrantPendingLevelRewards(levelView.Player, MiniGameProgression.Poker, level.Level);
+                    RewardConfigurationRuntime.GrantPendingLevelRewards(
+                        levelView.Player, MiniGameProgression.Poker, level.Level
+                    );
+                }
                 else if (delivery.Quest is { } quest && delivery.View is { } questView &&
                     ReferenceEquals(questView.Client.Entity, questView.Player) && questView.Player.LoginTime == questView.Login)
                     questView.Player.UpdatePokerQuestTasks(quest.Update);
