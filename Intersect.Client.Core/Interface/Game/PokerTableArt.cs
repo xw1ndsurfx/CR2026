@@ -69,7 +69,7 @@ internal sealed class PokerTableArt
             var portrait = seat == null ? null : state.NpcIds.Contains(seat.PlayerId)
                 ? Lookup(PokerTableTheme.PortraitFile(PokerTableTheme.Portrait(seat.Name, seat.PlayerId == state.DealerNpcId)))
                 : Lookup("poker_player.png");
-            Fit(_portraits[slot], portrait, layout.Rect(center.X - 32, center.Y - 42, 64, 74));
+            Fit(_portraits[slot], portrait, layout.Rect(center.X - 28, center.Y - 37, 56, 64));
             var position = PokerSceneLayout.Cards(slot);
             for (var i = 0; i < 2; ++i)
             {
