@@ -91,6 +91,7 @@ internal sealed partial class PokerWindow : Base
             Place(b, 8 + i * 108, 103, 106, 34, 12, local: true);
             b.Clicked += (_, _) => SelectBack(id); _backs[i] = b;
         }
+        InitializeTableSkin();
         _art = new PokerTableArt(_content, _backTray, _board);
         _victory = new PokerScreenEffect(canvas);
         _actionEffect = new PokerScreenEffect(canvas, "PokerAction");
@@ -109,6 +110,7 @@ internal sealed partial class PokerWindow : Base
             p.Control.SetBounds(r.X, r.Y, r.Width, r.Height);
             if (p.Control is Label label && p.Font > 0) label.FontSize = _layout.FontSize(p.Font);
         }
+        LayoutTableSkin();
     }
     public void Update(PokerClientModel model)
     {
@@ -130,6 +132,7 @@ internal sealed partial class PokerWindow : Base
             : me.Chips == 0 ? Strings.Poker.NoChips : !opponents ? Strings.Poker.NeedPlayers :
                 state.AutoStart ? Strings.Poker.AutomaticNext : Strings.Poker.Ready;
         _art.Update(state, me.PlayerId, model.Current.TableInstanceId, _layout);
+        UpdateTableSkin(model, state, me);
         for (var slot = 0; slot < 6; ++slot)
         {
             var seat = state.Seats.FirstOrDefault(s => PokerSceneLayout.Slot(s.Seat, me.Seat) == slot);
