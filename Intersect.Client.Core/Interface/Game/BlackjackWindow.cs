@@ -80,6 +80,7 @@ internal sealed partial class BlackjackWindow : Base
             b.Clicked+=(_,_)=>{if(_state!=null && MiniGameProgression.IsUnlocked(id,_state.Experience)){Send(BlackjackRequestKind.SelectBack,id);_tray.IsHidden=true;}};
             _backButtons[i]=b;
         }
+        InitializeTableSkin();
         _dealEffect=new PokerScreenEffect(canvas);_victory=new PokerScreenEffect(canvas);ResizeToCanvas();
     }
     private static (int X,int Y,int W) Panel(int slot)=>slot switch
@@ -91,6 +92,7 @@ internal sealed partial class BlackjackWindow : Base
         {var r=_layout.Rect(p.X,p.Y,p.W,p.H);p.Control.SetBounds(r.X,r.Y,r.Width,r.Height);if(p.Control is Label l && p.Font>0)l.FontSize=_layout.FontSize(p.Font);}
         for(var i=0;i<6;i++)
         {var r=_layout.LocalRect(7+i*108,117,100,32);_backButtons[i].SetBounds(r.X,r.Y,r.Width,r.Height);_backButtons[i].FontSize=_layout.FontSize(12);}
+        LayoutTableSkin();
     }
     public void Update(BlackjackClientModel model)
     {
@@ -155,6 +157,7 @@ internal sealed partial class BlackjackWindow : Base
             BlackjackCardStrip.Fit(_backImages[i],_dealer.Back(i),_layout.LocalRect(32+i*108,22,48,74));
         }
         _error.Text=_localError.Length>0?_localError:model.ErrorCode;
+        UpdateTableSkin(model,s,me);
         UpdateProceduralMotions(s,me);
         if(!_tray.IsHidden)_tray.BringToFront();
         if(model.ObserveDeal())_dealEffect.Play(s.DealAnimationId);
