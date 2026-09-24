@@ -163,7 +163,7 @@ internal sealed partial class PokerWindow
         UpdateTableSkinTimer(playing && state.ActingSeat >= 0 && seconds > 0, seconds);
     }
 
-    private void UpdateTableSkinTimer(bool visible, int seconds)
+    private void UpdateTableSkinTimer(bool visible, long seconds)
     {
         SetTableSkinVisible(_timerSkin, visible);
 
