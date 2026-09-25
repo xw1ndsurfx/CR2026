@@ -22,7 +22,7 @@ internal sealed partial class PokerWindow : Base
     private readonly Label _table, _turn, _stage, _pot, _ownCards, _error, _payouts, _backStatus, _experience, _levelUp;
     private readonly Label[] _names = new Label[6], _stacks = new Label[6], _seatCards = new Label[6], _decisions = new Label[6];
     private readonly Label[] _board = new Label[5], _feed = new Label[3];
-    private readonly Button _start, _fold, _check, _call, _raise, _allIn, _minimum, _back;
+    private readonly Button _start, _fold, _check, _call, _raise, _allIn, _minimum, _refresh, _back;
     private readonly Button[] _backs = new Button[6];
     private readonly TextBox _amount;
     private readonly PokerFlatPanel _backTray;
@@ -74,7 +74,7 @@ internal sealed partial class PokerWindow : Base
         _call = Button("Call", "Call", 387, 634, 122, () => Send(PokerRequestKind.Call));
         _allIn = Button("AllIn", Strings.Poker.AllIn, 521, 634, 110,
             () => Send(_state?.CanRaise == true ? PokerRequestKind.RaiseTo : PokerRequestKind.Call, _state?.MaximumRaiseTo ?? 0));
-        Button("Refresh", Strings.Poker.Refresh, 643, 634, 112, () => Send(PokerRequestKind.Refresh));
+        _refresh = Button("Refresh", Strings.Poker.Refresh, 643, 634, 112, () => Send(PokerRequestKind.Refresh));
         Button("Leave", Strings.Poker.Leave, 767, 634, 181, RequestExit);
         _experience = Label("Experience", 52, 678, 640, 28);
         _backTray = new PokerFlatPanel(_content, "BackPicker") { IsHidden = true };
@@ -214,8 +214,15 @@ internal sealed partial class PokerWindow : Base
     {
         var r = skin.Renderer;
         r.DrawColor = new Color(205, 9, 14, 17); r.DrawFilledRect(new Rectangle(0, 0, Width, Height));
-        Fill(r, new Color(24, 17, 14), 36, 581, 928, 151);
-        Fill(r, new Color(125, 92, 48), 36, 581, 928, 2);
+        if (_tableSkin?.Texture != null)
+        {
+            RenderTableActionPanel(r);
+        }
+        else
+        {
+            Fill(r, new Color(24, 17, 14), 36, 581, 928, 151);
+            Fill(r, new Color(125, 92, 48), 36, 581, 928, 2);
+        }
         if (_tableSkin?.Texture == null)
         {
             Ellipse(r, new Color(25, 17, 14), 185, 174, 630, 340);
