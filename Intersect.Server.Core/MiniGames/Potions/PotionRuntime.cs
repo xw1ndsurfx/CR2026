@@ -165,10 +165,14 @@ internal static class PotionRuntime
                         break;
 
                     case PotionRequestKind.Restart:
-                        session.Puzzle.RestartBoard();
-                        session.RewardGranted = false;
-                        ++session.Revision;
-                        session.Status = "Board cleared. Recipe progress restarted.";
+                        if (session.Puzzle.Complete) error = "RecipeComplete";
+                        else
+                        {
+                            session.Puzzle.RestartBoard();
+                            session.RewardGranted = false;
+                            ++session.Revision;
+                            session.Status = "Board cleared. Recipe progress restarted.";
+                        }
                         break;
 
                     case PotionRequestKind.NextRecipe:
