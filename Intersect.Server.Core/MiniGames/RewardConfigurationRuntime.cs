@@ -1,6 +1,7 @@
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Server.Entities;
 using Intersect.Server.Networking;
@@ -45,7 +46,10 @@ internal static class RewardConfigurationRuntime
         LevelDefinitionsExist(configuration.PokerLevelRewards) &&
         LevelDefinitionsExist(configuration.BlackjackLevelRewards) &&
         configuration.DailyRewards.All(reward => ItemDescriptor.Get(reward.ItemId) != null) &&
-        configuration.PotionRecipes.All(recipe => ItemDescriptor.Get(recipe.OutputItemId) != null);
+        configuration.PotionRecipes.All(recipe =>
+            ItemDescriptor.Get(recipe.OutputItemId) != null &&
+            (recipe.UnlockPlayerVariableId == Guid.Empty ||
+             PlayerVariableDescriptor.Get(recipe.UnlockPlayerVariableId) is { DataType: VariableDataType.Boolean }));
 
     internal static void Save(string json)
     {
