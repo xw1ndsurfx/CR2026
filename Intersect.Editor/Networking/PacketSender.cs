@@ -181,6 +181,21 @@ public static partial class PacketSender
         Network.SendPacket(new SaveRewardConfigurationPacket(configurationJson));
     }
 
+    public static void SendRequestInvasionConfiguration()
+    {
+        Network.SendPacket(new RequestInvasionConfigurationPacket());
+    }
+
+    public static void SendSaveInvasionConfiguration(string configurationJson)
+    {
+        Network.SendPacket(new SaveInvasionConfigurationPacket(configurationJson));
+    }
+
+    public static void SendStartInvasionNow(Guid invasionId)
+    {
+        Network.SendPacket(new StartInvasionNowPacket(invasionId));
+    }
+
     public static void SendNewTilesets(string[] tilesets)
     {
         Network.SendPacket(new AddTilesetsPacket(tilesets));
