@@ -80,7 +80,11 @@ internal sealed partial class PokerWindow : Base
         _backTray = new PokerFlatPanel(_content, "BackPicker") { IsHidden = true };
         Place(_backTray, 168, 398, 664, 150);
         _back = Button("CardBack", Strings.PokerScene.Back.ToString(1), 710, 676, 238, () =>
-        { _backTray.IsHidden = !_backTray.IsHidden; if (!_backTray.IsHidden) _backTray.BringToFront(); });
+        {
+            if (_portraitTray != null) _portraitTray.IsHidden = true;
+            _backTray.IsHidden = !_backTray.IsHidden;
+            if (!_backTray.IsHidden) _backTray.BringToFront();
+        });
         _backStatus = Label("CardBackStatus", 710, 710, 238, 26);
         Label("TestOnly", 52, 742, 895, 26).Text = Strings.PokerScene.TestProgress;
         for (var i = 0; i < 6; ++i)
@@ -208,6 +212,7 @@ internal sealed partial class PokerWindow : Base
         };
         UpdateCurrency(state, me);
         if (!_backTray.IsHidden) _backTray.BringToFront();
+        if (_portraitTray is { IsHidden: false }) _portraitTray.BringToFront();
     }
     private static readonly Color Gold = new(231, 194, 112);
     protected override void Render(SkinBase skin)
