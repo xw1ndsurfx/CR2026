@@ -97,27 +97,29 @@ internal sealed partial class PokerWindow
         for (var slot = 0; slot < 6; ++slot)
         {
             var center = PokerSceneLayout.Center(slot);
-            SetTableSkinBounds(_portraitSkinFrames[slot], _layout.Rect(center.X - 34, center.Y - 43, 67, 75));
-            SetTableSkinBounds(_portraitSkinDetails[slot], _layout.Rect(center.X - 104, center.Y + 29, 208, 61));
-            SetTableSkinBounds(_portraitSkinActions[slot], _layout.Rect(center.X - 37, center.Y - 78, 74, 33));
-            SetTableSkinBounds(_portraitSkinCurrency[slot], _layout.Rect(center.X - 88, center.Y + 58, 18, 18));
+            var portraitY = slot == 3 ? 72 : center.Y - 43;
+            var detailsY = slot == 3 ? 112 : center.Y + 29;
+            SetTableSkinBounds(_portraitSkinFrames[slot], _layout.Rect(center.X - 34, portraitY, 67, 75));
+            SetTableSkinBounds(_portraitSkinDetails[slot], _layout.Rect(center.X - 104, detailsY, 208, 61));
+            SetTableSkinBounds(_portraitSkinActions[slot], _layout.Rect(center.X - 37, detailsY - 26, 74, 33));
+            SetTableSkinBounds(_portraitSkinCurrency[slot], _layout.Rect(center.X - 88, detailsY + 29, 18, 18));
 
-            var name = _layout.Rect(center.X - 98, center.Y + 31, 196, 20);
+            var name = _layout.Rect(center.X - 98, detailsY + 2, 196, 20);
             _names[slot].SetBounds(name.X, name.Y, name.Width, name.Height);
             _names[slot].FontSize = _layout.FontSize(10);
             _names[slot].TextAlign = Pos.Left | Pos.CenterV;
 
-            var stack = _layout.Rect(center.X - 98, center.Y + 51, 196, 18);
+            var stack = _layout.Rect(center.X - 98, detailsY + 22, 196, 18);
             _stacks[slot].SetBounds(stack.X, stack.Y, stack.Width, stack.Height);
             _stacks[slot].FontSize = _layout.FontSize(9);
             _stacks[slot].TextAlign = Pos.Left | Pos.CenterV;
 
-            var state = _layout.Rect(center.X - 98, center.Y + 69, 196, 18);
+            var state = _layout.Rect(center.X - 98, detailsY + 40, 196, 18);
             _seatCards[slot].SetBounds(state.X, state.Y, state.Width, state.Height);
             _seatCards[slot].FontSize = _layout.FontSize(9);
             _seatCards[slot].TextAlign = Pos.Left | Pos.CenterV;
 
-            var action = _layout.Rect(center.X - 37, center.Y - 77, 74, 30);
+            var action = _layout.Rect(center.X - 37, detailsY - 25, 74, 30);
             _decisions[slot].SetBounds(action.X, action.Y, action.Width, action.Height);
             _decisions[slot].FontSize = _layout.FontSize(9);
             _decisions[slot].TextAlign = Pos.Center;
@@ -186,10 +188,9 @@ internal sealed partial class PokerWindow
             SetTableSkinVisible(_portraitSkinFrames[slot], seat != null);
             SetTableSkinVisible(_portraitSkinDetails[slot], seat != null);
             SetTableSkinVisible(_portraitSkinCurrency[slot], seat != null);
-            var latestDecision = seat == null ? null : state.Decisions.LastOrDefault(decision => decision.PlayerId == seat.PlayerId);
             SetTableSkinVisible(
                 _portraitSkinActions[slot],
-                seat != null && (latestDecision != null || playing && seat.Seat == state.ActingSeat)
+                seat != null && playing && seat.Seat == state.ActingSeat
             );
         }
 
