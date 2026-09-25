@@ -474,7 +474,9 @@ internal sealed class PotionWindow : Base
             button.IsDisabled = _pending || !recipe.Unlocked;
             button.Text = recipe.Unlocked
                 ? $"Lv {recipe.RequiredLevel}  {recipe.Name}\n{recipe.OutputQuantity:N0} x {recipe.OutputItemName}   •   +{recipe.CompletionExperience} XP"
-                : $"[LOCKED - Lv {recipe.RequiredLevel}]  {recipe.Name}\n{recipe.OutputQuantity:N0} x {recipe.OutputItemName}";
+                : recipe.EventLocked && recipe.RequiredLevel <= (_state?.Level ?? 0)
+                    ? $"[LOCKED - EVENT]  {recipe.Name}\n{recipe.OutputQuantity:N0} x {recipe.OutputItemName}"
+                    : $"[LOCKED - Lv {recipe.RequiredLevel}]  {recipe.Name}\n{recipe.OutputQuantity:N0} x {recipe.OutputItemName}";
             button.TextColorOverride = recipe.Unlocked
                 ? Color.White
                 : new Color(255, 145, 125, 110);
@@ -815,6 +817,7 @@ internal sealed class PotionWindow : Base
         "NoUnlockedRecipe" => "No recipe is unlocked at your current Alchemy level.",
         "ChooseRecipe" => "Choose a recipe before brewing.",
         "RecipeLocked" => "That recipe requires a higher Alchemy level.",
+        "RecipeEventLocked" => "That recipe must be unlocked by an event first.",
         "RecipeNotFound" => "That recipe is no longer available.",
         "RecipeSelectionClosed" => "The recipe has already been selected for this run.",
         _ => value,
