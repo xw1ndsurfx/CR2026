@@ -401,6 +401,36 @@ internal sealed partial class BlackjackWindow
         );
     }
 
+    private void RenderLocalHandInfoBackground(RendererBase renderer)
+    {
+        if (_tableSkin?.Texture == null || _state == null)
+        {
+            return;
+        }
+
+        var me = _state.Seats.FirstOrDefault(seat => seat.Seat == _localSeat);
+        if (me == null || me.Hands.Length == 0)
+        {
+            return;
+        }
+
+        var split = me.Hands.Length > 1;
+        for (var hand = 0; hand < me.Hands.Length && hand < 2; ++hand)
+        {
+            var cardX = split ? 350 + hand * 155 : 420;
+            var cardW = split ? 140 : 160;
+            var infoX = split ? cardX : cardX - 15;
+            var infoW = split ? cardW : cardW + 30;
+            var bounds = _layout.Rect(infoX, 386, infoW, 32);
+
+            renderer.DrawColor = new Color(63, 38, 31);
+            renderer.DrawFilledRect(new Rectangle(bounds.X - 1, bounds.Y - 1, bounds.Width + 2, bounds.Height + 2));
+
+            renderer.DrawColor = new Color(20, 24, 22);
+            renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height));
+        }
+    }
+
     private IEnumerable<Button> TableActionButtons()
     {
         yield return _bet;
