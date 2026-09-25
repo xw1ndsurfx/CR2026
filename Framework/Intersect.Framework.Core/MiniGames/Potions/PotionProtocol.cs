@@ -15,7 +15,7 @@ public enum PotionRequestKind
 }
 
 [MessagePackObject]
-public sealed class PotionRequirementState
+public sealed partial class PotionRequirementState
 {
     [Key(0)] public int Family { get; set; }
     [Key(1)] public int Level { get; set; }
@@ -31,7 +31,7 @@ public sealed class PotionRequirementState
 }
 
 [MessagePackObject]
-public sealed class PotionSessionState
+public sealed partial class PotionSessionState
 {
     [Key(0)] public long Revision { get; set; }
     [Key(1)] public long RecipeRound { get; set; }
