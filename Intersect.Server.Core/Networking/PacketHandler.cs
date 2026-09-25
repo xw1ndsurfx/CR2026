@@ -765,6 +765,7 @@ internal sealed partial class PacketHandler
                     map.Id,
                     map.JsonData,
                     map.TileData,
+                    map.GetAttributeData(),
                     map.Revision
                 )
             );
