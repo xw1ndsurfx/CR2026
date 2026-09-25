@@ -75,9 +75,12 @@ public partial class QuestTaskEditor : UserControl
             case 11:
             case 13:
             case 14:
+            case 15:
+            case 16:
                 nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
                 break;
             case 12:
+            case 17:
                 cmbItem.SelectedIndex = PotionRecipeListIndex(mMyTask?.TargetId ?? Guid.Empty);
                 nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
                 break;
@@ -106,6 +109,9 @@ public partial class QuestTaskEditor : UserControl
         cmbTaskType.Items.Add("Potions - Brew specific recipe");
         cmbTaskType.Items.Add("Potions - Reach Alchemy level");
         cmbTaskType.Items.Add("Potions - Earn score");
+        cmbTaskType.Items.Add("Potions - Reach chain");
+        cmbTaskType.Items.Add("Potions - Brew with max occupied cells");
+        cmbTaskType.Items.Add("Potions - Brew specific recipe with minimum score");
 
         lblDesc.Text = Strings.TaskEditor.desc;
 
@@ -168,23 +174,38 @@ public partial class QuestTaskEditor : UserControl
             case 11:
             case 13:
             case 14:
+            case 15:
+            case 16:
                 grpGatherItems.Show();
                 grpGatherItems.Text = cmbTaskType.SelectedItem?.ToString() ?? "Mini-game objective";
                 cmbItem.Hide();
                 lblItem.Hide();
                 var isLevel = cmbTaskType.SelectedIndex is 5 or 9 or 13;
-                lblItemQuantity.Text = isLevel ? "Level:" : "Target:";
-                nudItemAmount.Maximum = isLevel ? MiniGameProgression.MaximumLevel : 1_000_000_000;
+                lblItemQuantity.Text = cmbTaskType.SelectedIndex switch
+                {
+                    15 => "Chain:",
+                    16 => "Max cells:",
+                    _ => isLevel ? "Level:" : "Target:",
+                };
+                nudItemAmount.Maximum = cmbTaskType.SelectedIndex == 16
+                    ? PotionPuzzle.Columns * PotionPuzzle.Rows
+                    : isLevel
+                        ? MiniGameProgression.MaximumLevel
+                        : 1_000_000_000;
                 nudItemAmount.Value = 1;
                 break;
 
             case 12:
+            case 17:
                 grpGatherItems.Show();
-                grpGatherItems.Text = cmbTaskType.SelectedItem?.ToString() ?? "Potions - Brew specific recipe";
+                grpGatherItems.Text = cmbTaskType.SelectedItem?.ToString() ??
+                                      (cmbTaskType.SelectedIndex == 17
+                                          ? "Potions - Brew specific recipe with minimum score"
+                                          : "Potions - Brew specific recipe");
                 cmbItem.Show();
                 lblItem.Show();
                 lblItem.Text = "Recipe:";
-                lblItemQuantity.Text = "Count:";
+                lblItemQuantity.Text = cmbTaskType.SelectedIndex == 17 ? "Min score:" : "Count:";
                 cmbItem.Items.Clear();
                 cmbItem.Items.AddRange(PotionRecipes().Select(recipe => recipe.Name).ToArray());
                 if (cmbItem.Items.Count > 0) cmbItem.SelectedIndex = 0;
@@ -228,12 +249,15 @@ public partial class QuestTaskEditor : UserControl
             case QuestObjective.PotionBrewRecipes:
             case QuestObjective.PotionReachLevel:
             case QuestObjective.PotionEarnScore:
+            case QuestObjective.PotionReachChain:
+            case QuestObjective.PotionBrewUnderOccupiedCells:
                 mMyTask.TargetId = Guid.Empty;
                 mMyTask.TargetName = string.Empty;
                 mMyTask.Quantity = (int) nudItemAmount.Value;
                 break;
 
             case QuestObjective.PotionBrewSpecificRecipe:
+            case QuestObjective.PotionBrewSpecificRecipeMinScore:
                 mMyTask.TargetId = PotionRecipeIdFromList(cmbItem.SelectedIndex);
                 mMyTask.TargetName = PotionRecipeNameFromList(cmbItem.SelectedIndex);
                 mMyTask.Quantity = (int) nudItemAmount.Value;
