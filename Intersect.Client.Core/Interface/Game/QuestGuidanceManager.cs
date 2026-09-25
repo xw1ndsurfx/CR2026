@@ -54,8 +54,37 @@ internal sealed class QuestGuidanceManager
                 (Globals.Me.Center.Y - view.Top) * zoom
             );
 
-            // Start guidance from the player's feet/lower body instead of the head.
-            var origin = player + new Vector2(0f, 24f * zoom);
+            var targetDeltaFromPlayer = target - player;
+            if (targetDeltaFromPlayer.LengthSquared() < 16f) return;
+
+            // Start the arrow outside the player's sprite on the side that faces the
+            // objective. This guarantees that the shaft never crosses the player.
+            var playerWidth = Math.Max(
+                Options.Instance.Map.TileWidth,
+                (int)Math.Ceiling(Globals.Me.WorldPos.Width)
+            ) * zoom;
+            var playerHeight = Math.Max(
+                Options.Instance.Map.TileHeight,
+                (int)Math.Ceiling(Globals.Me.WorldPos.Height)
+            ) * zoom;
+            var halfWidth = playerWidth / 2f;
+            var halfHeight = playerHeight / 2f;
+            var playerGap = Math.Max(10f, 10f * zoom);
+
+            Vector2 origin;
+            if (Math.Abs(targetDeltaFromPlayer.Y) >= Math.Abs(targetDeltaFromPlayer.X))
+            {
+                origin = targetDeltaFromPlayer.Y < 0
+                    ? player + new Vector2(0f, -halfHeight - playerGap)
+                    : player + new Vector2(0f, halfHeight + playerGap);
+            }
+            else
+            {
+                origin = targetDeltaFromPlayer.X < 0
+                    ? player + new Vector2(-halfWidth - playerGap, 0f)
+                    : player + new Vector2(halfWidth + playerGap, 0f);
+            }
+
             var delta = target - origin;
             if (delta.LengthSquared() < 16f) return;
 
@@ -197,7 +226,9 @@ internal sealed class QuestGuidanceManager
                 nearestArrowTarget.Y
             );
 
-        if (nearestArrowTarget != null && !SuppressOverlay)
+        if (nearestArrowTarget != null &&
+            !SuppressOverlay &&
+            (Globals.Database?.ShowQuestGuidanceArrow ?? true))
         {
             _arrow.HasTarget = true;
             _arrow.TargetWorld = nearestArrowTarget.Center;
