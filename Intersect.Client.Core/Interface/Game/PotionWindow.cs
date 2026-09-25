@@ -39,7 +39,7 @@ internal sealed class PotionWindow : Base
         protected override void OnMouseMoved(int x, int y, int dx, int dy)
         {
             base.OnMouseMoved(x, y, dx, dy);
-            var local = CanvasPosToLocal(new Intersect.Framework.Point(x, y));
+            var local = CanvasPosToLocal(new Intersect.Point(x, y));
             var column = Width <= 0
                 ? -1
                 : Math.Clamp(local.X * PotionPuzzle.Columns / Math.Max(1, Width), 0, PotionPuzzle.Columns - 1);
@@ -54,7 +54,7 @@ internal sealed class PotionWindow : Base
 
         protected override void OnMouseClicked(
             MouseButton mouseButton,
-            Intersect.Framework.Point mousePosition,
+            Intersect.Point mousePosition,
             bool userAction = true)
         {
             base.OnMouseClicked(mouseButton, mousePosition, userAction);
