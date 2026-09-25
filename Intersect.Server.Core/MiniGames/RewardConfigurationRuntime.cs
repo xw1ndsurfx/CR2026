@@ -44,7 +44,8 @@ internal static class RewardConfigurationRuntime
         configuration.IsStructurallyValid &&
         LevelDefinitionsExist(configuration.PokerLevelRewards) &&
         LevelDefinitionsExist(configuration.BlackjackLevelRewards) &&
-        configuration.DailyRewards.All(reward => ItemDescriptor.Get(reward.ItemId) != null);
+        configuration.DailyRewards.All(reward => ItemDescriptor.Get(reward.ItemId) != null) &&
+        configuration.PotionRecipes.All(recipe => ItemDescriptor.Get(recipe.OutputItemId) != null);
 
     internal static void Save(string json)
     {
