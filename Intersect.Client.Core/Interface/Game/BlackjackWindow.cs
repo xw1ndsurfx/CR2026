@@ -22,7 +22,7 @@ internal sealed partial class BlackjackWindow : Base
     private readonly BlackjackCardStrip[,] _cards=new BlackjackCardStrip[5,2];
     private readonly BlackjackCardStrip _dealer;
     private readonly ImagePanel[] _portraits=new ImagePanel[6],_backImages=new ImagePanel[6];
-    private readonly Button _start,_bet,_hit,_stand,_double,_split,_backToggle;
+    private readonly Button _start,_bet,_hit,_stand,_double,_split,_refresh,_backToggle;
     private readonly Button[] _backButtons=new Button[6];
     private readonly TextBox _amount;
     private readonly PokerFlatPanel _tray;
@@ -65,7 +65,7 @@ internal sealed partial class BlackjackWindow : Base
         _stand=Button("BlackjackStand","Stand",182,626,128,()=>Send(BlackjackRequestKind.Stand));
         _double=Button("BlackjackDouble","Double",324,626,128,()=>Send(BlackjackRequestKind.Double));
         _split=Button("BlackjackSplit","Split",466,626,128,()=>Send(BlackjackRequestKind.Split));
-        Button("BlackjackRefresh","Refresh",608,626,128,()=>Send(BlackjackRequestKind.Refresh));
+        _refresh=Button("BlackjackRefresh","Refresh",608,626,128,()=>Send(BlackjackRequestKind.Refresh));
         Button("BlackjackLeave","Leave table",750,626,214,()=>ExitRequested=true);
         _xp=Label("BlackjackExperience",40,675,570,28,14);
         _tray=new PokerFlatPanel(this,"BlackjackBackPicker"){IsHidden=true};Place(_tray,174,244,652,164);
@@ -198,7 +198,8 @@ internal sealed partial class BlackjackWindow : Base
                 if(p!=null && p.Seat==_state?.ActingSeat)Fill(skin,Gold,x-6,y-7,w+12,2);
             }
         }
-        Fill(skin,new Color(21,29,25),24,570,952,164);
+        if(_tableSkin?.Texture!=null)RenderTableActionPanel(skin.Renderer);
+        else Fill(skin,new Color(21,29,25),24,570,952,164);
         Fill(skin,new Color(76,135,89),40,708,550,18);Fill(skin,new Color(14,32,21),41,709,548,16);
         var filled=(int)(546*Math.Clamp(_fraction,0,1));Fill(skin,new Color(46,190,83),42,710,filled,14);
         Fill(skin,new Color(102,230,128),42,710,filled,3);
