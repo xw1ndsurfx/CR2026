@@ -84,16 +84,36 @@ internal sealed partial class BlackjackWindow
             SetTableSkinBounds(_portraitSkinDetails[slot], _layout.Rect(x + 39, y - 2, Math.Max(110, w - 39), 56));
             SetTableSkinBounds(_portraitSkinActions[slot], _layout.Rect(x - 8, y - 29, 58, 26));
             SetTableSkinBounds(_portraitSkinCurrency[slot], _layout.Rect(x + 47, y + 27, 18, 18));
+
+            var name = _layout.Rect(x + 45, y + 1, Math.Max(104, w - 50), 20);
+            _names[slot].SetBounds(name.X, name.Y, name.Width, name.Height);
+            _names[slot].FontSize = _layout.FontSize(10);
+            _names[slot].TextAlign = Pos.Left | Pos.CenterV;
+
+            var balance = _layout.Rect(x + 45, y + 23, Math.Max(104, w - 50), 20);
+            _balances[slot].SetBounds(balance.X, balance.Y, balance.Width, balance.Height);
+            _balances[slot].FontSize = _layout.FontSize(9);
+            _balances[slot].TextAlign = Pos.Left | Pos.CenterV;
+
+            var action = _layout.Rect(x - 8, y - 28, 58, 24);
+            _decisions[slot].SetBounds(action.X, action.Y, action.Width, action.Height);
+            _decisions[slot].FontSize = _layout.FontSize(8);
+            _decisions[slot].TextAlign = Pos.Center;
         }
 
-        SetTableSkinBounds(_portraitSkinFrames[5], _layout.Rect(356, 78, 48, 55));
-        SetTableSkinBounds(_portraitSkinDetails[5], _layout.Rect(406, 80, 208, 56));
-        SetTableSkinBounds(_portraitSkinActions[5], _layout.Rect(351, 50, 58, 26));
+        SetTableSkinBounds(_portraitSkinFrames[5], _layout.Rect(356, 78, 67, 75));
+        SetTableSkinBounds(_portraitSkinDetails[5], _layout.Rect(426, 83, 208, 61));
+        SetTableSkinBounds(_portraitSkinActions[5], _layout.Rect(352, 48, 74, 33));
+        if (_portraitSkinFrames[5] != null)
+        {
+            _portraitSkinFrames[5]!.TextureFilename = "table/portrait_1.png";
+        }
 
         if (_topSkin.Texture != null)
         {
-            var title = _layout.Rect(329, 19, 342, 24);
+            var title = _layout.Rect(324, 19, 352, 24);
             _title.SetBounds(title.X, title.Y, title.Width, title.Height);
+            _title.FontSize = _layout.FontSize(16);
             _title.TextAlign = Pos.Center;
 
             var status = _layout.Rect(300, 58, 400, 28);
@@ -131,7 +151,8 @@ internal sealed partial class BlackjackWindow
             SetTableSkinVisible(_portraitSkinCurrency[slot], seat != null);
             SetTableSkinVisible(
                 _portraitSkinActions[slot],
-                seat != null && state.Stage == BlackjackStage.Players && seat.Seat == state.ActingSeat
+                seat != null && (!string.IsNullOrWhiteSpace(seat.LastAction) ||
+                    state.Stage == BlackjackStage.Players && seat.Seat == state.ActingSeat)
             );
         }
 
