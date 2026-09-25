@@ -300,38 +300,38 @@ public partial class QuestTaskEditor : UserControl
         btnCancel.Top = 332;
 
         _guidanceGroup.Text = "Quest Guidance";
-        _guidanceGroup.ForeColor = Color.Gainsboro;
-        _guidanceGroup.BackColor = Color.FromArgb(45, 45, 48);
-        _guidanceGroup.Location = new Point(9, 200);
+        _guidanceGroup.ForeColor = System.Drawing.Color.Gainsboro;
+        _guidanceGroup.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+        _guidanceGroup.Location = new System.Drawing.Point(9, 200);
         _guidanceGroup.Size = new Size(236, 96);
 
         _guideAnimationLabel.Text = "Marker animation:";
         _guideAnimationLabel.AutoSize = true;
-        _guideAnimationLabel.Location = new Point(7, 22);
-        _guideAnimationLabel.ForeColor = Color.Gainsboro;
+        _guideAnimationLabel.Location = new System.Drawing.Point(7, 22);
+        _guideAnimationLabel.ForeColor = System.Drawing.Color.Gainsboro;
 
         _guideAnimation.DropDownStyle = ComboBoxStyle.DropDownList;
-        _guideAnimation.Location = new Point(104, 18);
+        _guideAnimation.Location = new System.Drawing.Point(104, 18);
         _guideAnimation.Size = new Size(116, 21);
         _guideAnimation.Items.Add("None");
         _guideAnimation.Items.AddRange(AnimationDescriptor.Names);
 
         _guideResourceLabel.Text = "Resource:";
         _guideResourceLabel.AutoSize = true;
-        _guideResourceLabel.Location = new Point(7, 49);
-        _guideResourceLabel.ForeColor = Color.Gainsboro;
+        _guideResourceLabel.Location = new System.Drawing.Point(7, 49);
+        _guideResourceLabel.ForeColor = System.Drawing.Color.Gainsboro;
 
         _guideResource.DropDownStyle = ComboBoxStyle.DropDownList;
-        _guideResource.Location = new Point(104, 45);
+        _guideResource.Location = new System.Drawing.Point(104, 45);
         _guideResource.Size = new Size(116, 21);
         _guideResource.Items.Add("None");
         _guideResource.Items.AddRange(ResourceDescriptor.Names);
 
         _showNavigationArrow.Text = "Show objective arrow";
         _showNavigationArrow.AutoSize = true;
-        _showNavigationArrow.Location = new Point(7, 72);
-        _showNavigationArrow.ForeColor = Color.Gainsboro;
-        _showNavigationArrow.BackColor = Color.Transparent;
+        _showNavigationArrow.Location = new System.Drawing.Point(7, 72);
+        _showNavigationArrow.ForeColor = System.Drawing.Color.Gainsboro;
+        _showNavigationArrow.BackColor = System.Drawing.Color.Transparent;
         _showNavigationArrow.Checked = true;
 
         _guidanceGroup.Controls.Add(_guideAnimationLabel);
