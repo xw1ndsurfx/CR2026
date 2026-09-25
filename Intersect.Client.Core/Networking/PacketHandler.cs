@@ -395,12 +395,14 @@ internal sealed partial class PacketHandler
         {
             en.Load(packet);
             en.Aggression = packet.Aggression;
+            en.NpcDescriptorId = packet.NpcId;
         }
         else
         {
             var entity = new Entity(packet.EntityId, packet, EntityType.GlobalEntity)
             {
                 Aggression = packet.Aggression,
+                NpcDescriptorId = packet.NpcId,
             };
             Globals.Entities.Add(entity.Id, entity);
         }
