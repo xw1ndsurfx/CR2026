@@ -149,17 +149,21 @@ internal sealed partial class BlackjackWindow : Base
                     var cardX=split?350+h*155:420;
                     var cardW=split?140:160;
                     _cards[slot,h].Update(hand?.Cards??[],false,p?.CardBackId??0,_layout,cardX,326,cardW,58,placeholder);
-                    var totalRect=_layout.Rect(cardX,388,cardW,24);
+                    var infoX=split?cardX:cardX-15;
+                    var infoW=split?cardW:cardW+30;
+                    var totalRect=_layout.Rect(infoX,386,infoW,32);
                     _totals[slot,h].SetBounds(totalRect.X,totalRect.Y,totalRect.Width,totalRect.Height);
-                    _totals[slot,h].FontSize=_layout.FontSize(10);
+                    _totals[slot,h].FontSize=_layout.FontSize(13);
                     _totals[slot,h].TextAlign=Pos.Center;
                 }
                 else
                 {
                     _cards[slot,h].Update(hand?.Cards??[],false,p?.CardBackId??0,_layout,x+h*w/2,y+76,w/2-8,48,placeholder);
                 }
-                _totals[slot,h].Text=hand==null?"":$"{hand.Total} | Bet {hand.Bet}"+(hand.Outcome==BlackjackOutcome.Pending?"":$" | {hand.Outcome}");
-                _totals[slot,h].TextColorOverride=p?.Seat==s.ActingSeat && h==s.ActingHand?Gold:Color.White;
+                _totals[slot,h].Text=hand==null?"":$"TOTAL {hand.Total}   •   BET {hand.Bet}"+(hand.Outcome==BlackjackOutcome.Pending?"":$"   •   {hand.Outcome}");
+                _totals[slot,h].TextColorOverride=p?.Seat==s.ActingSeat && h==s.ActingHand
+                    ?Gold
+                    :new Color(245,240,225);
             }
         }
         var net=me.Hands.Sum(h=>h.Net);
@@ -195,6 +199,7 @@ internal sealed partial class BlackjackWindow : Base
     {
         var r=skin.Renderer;r.DrawColor=new Color(240,14,19,17);r.DrawFilledRect(new Rectangle(0,0,Width,Height));
         RenderTableSkinBackground(r);
+        RenderLocalHandInfoBackground(r);
         if(_tableSkin?.Texture==null)
         {
             Ellipse(skin,new Color(121,76,39),130,97,740,456);Ellipse(skin,new Color(37,91,59),147,114,706,423);
