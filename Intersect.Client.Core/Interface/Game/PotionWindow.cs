@@ -74,6 +74,21 @@ internal sealed class PotionWindow : Base
         }
     }
 
+    private sealed class RecipePickerPanel(Base parent) : Base(parent, "PotionRecipePicker")
+    {
+        protected override void Render(SkinBase skin)
+        {
+            var renderer = skin.Renderer;
+            renderer.DrawColor = new Color(235, 20, 15, 12);
+            renderer.DrawFilledRect(RenderBounds);
+            renderer.DrawColor = new Color(145, 100, 55);
+            renderer.DrawFilledRect(new Rectangle(RenderBounds.X, RenderBounds.Y, RenderBounds.Width, 2));
+            renderer.DrawFilledRect(new Rectangle(RenderBounds.X, RenderBounds.Y + RenderBounds.Height - 2, RenderBounds.Width, 2));
+            renderer.DrawFilledRect(new Rectangle(RenderBounds.X, RenderBounds.Y, 2, RenderBounds.Height));
+            renderer.DrawFilledRect(new Rectangle(RenderBounds.X + RenderBounds.Width - 2, RenderBounds.Y, 2, RenderBounds.Height));
+        }
+    }
+
     private const int BoardX = 430;
     private const int BoardY = 140;
     private const int CellW = 52;
@@ -81,7 +96,7 @@ internal sealed class PotionWindow : Base
 
     private readonly Canvas _canvas;
     private readonly Base _content;
-    private readonly Action<PotionRequestKind, int> _send;
+    private readonly Action<PotionRequestKind, int, Guid> _send;
     private readonly List<Placement> _placements = [];
     private readonly Button[] _dropButtons = new Button[PotionPuzzle.Columns];
     private readonly PotionBoardInput _boardInput;
@@ -94,8 +109,15 @@ internal sealed class PotionWindow : Base
     private readonly Label _current;
     private readonly Label _next;
     private readonly Label _score;
+    private readonly Label _xpLabel;
     private readonly Label _status;
     private readonly Label _fx;
+    private readonly RecipePickerPanel _recipePicker;
+    private readonly Label _recipePickerTitle;
+    private readonly Label _recipePickerPage;
+    private readonly Button[] _recipeButtons = new Button[8];
+    private readonly Button _recipePrev;
+    private readonly Button _recipeNextPage;
     private readonly Button _swap;
     private readonly Button _nextRecipe;
     private readonly Button _restart;
@@ -112,10 +134,11 @@ internal sealed class PotionWindow : Base
     private bool _destroyed;
     private int _hoverColumn = -1;
     private double _previewColumn = -1;
+    private int _recipePage;
 
     public bool ExitRequested { get; private set; }
 
-    public PotionWindow(Canvas canvas, Action<PotionRequestKind, int> send) : base(canvas, nameof(PotionWindow))
+    public PotionWindow(Canvas canvas, Action<PotionRequestKind, int, Guid> send) : base(canvas, nameof(PotionWindow))
     {
         _canvas = canvas;
         _send = send;
