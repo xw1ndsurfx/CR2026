@@ -21,7 +21,10 @@ public partial class Player
                     QuestObjective.PotionBrewRecipes or
                     QuestObjective.PotionBrewSpecificRecipe or
                     QuestObjective.PotionReachLevel or
-                    QuestObjective.PotionEarnScore))
+                    QuestObjective.PotionEarnScore or
+                    QuestObjective.PotionReachChain or
+                    QuestObjective.PotionBrewUnderOccupiedCells or
+                    QuestObjective.PotionBrewSpecificRecipeMinScore))
                     continue;
 
                 var next = PotionQuestProgress.Apply(
