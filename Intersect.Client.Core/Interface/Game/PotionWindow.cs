@@ -34,7 +34,6 @@ internal sealed class PotionWindow : Base
             ShouldDrawBackground = false;
             MouseInputEnabled = true;
             KeyboardInputEnabled = false;
-            Cursor = Cursors.Hand;
         }
 
         protected override void OnMouseMoved(int x, int y, int dx, int dy)
@@ -326,9 +325,9 @@ internal sealed class PotionWindow : Base
             var pad = Math.Max(1, (int)(5 * (1d - progress)));
             renderer.DrawColor = new Color((byte)Math.Max(30, 210 - (int)(180 * progress)), 245, 218, 116);
             renderer.DrawFilledRect(new Rectangle(cell.X - pad, cell.Y - pad, cell.Width + pad * 2, 2));
-            renderer.DrawFilledRect(new Rectangle(cell.X - pad, cell.Bottom + pad - 2, cell.Width + pad * 2, 2));
+            renderer.DrawFilledRect(new Rectangle(cell.X - pad, cell.Y + cell.Height + pad - 2, cell.Width + pad * 2, 2));
             renderer.DrawFilledRect(new Rectangle(cell.X - pad, cell.Y - pad, 2, cell.Height + pad * 2));
-            renderer.DrawFilledRect(new Rectangle(cell.Right + pad - 2, cell.Y - pad, 2, cell.Height + pad * 2));
+            renderer.DrawFilledRect(new Rectangle(cell.X + cell.Width + pad - 2, cell.Y - pad, 2, cell.Height + pad * 2));
         }
     }
 
