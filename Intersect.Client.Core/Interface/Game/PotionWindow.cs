@@ -2,6 +2,7 @@ using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Input;
 using Intersect.Client.MiniGames;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Potions;
 using Rectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
 using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
