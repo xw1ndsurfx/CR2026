@@ -63,6 +63,16 @@ public partial class Npc : Entity
 
     public bool Despawnable;
 
+    // Scheduled invasion metadata. These NPCs still use normal combat/loot rules,
+    // but return to the configured invasion objective whenever they have no combat target.
+    public Guid InvasionSessionId { get; set; }
+    public Guid InvasionDefinitionId { get; set; }
+    public bool InvasionBoss { get; set; }
+    public Guid InvasionTargetMapId { get; set; }
+    public int InvasionTargetX { get; set; }
+    public int InvasionTargetY { get; set; }
+    public int InvasionObjectiveDamage { get; set; }
+
     //Moving
     public long LastRandomMove;
     private byte _randomMoveRange;
@@ -844,7 +854,9 @@ public partial class Npc : Entity
                     }
 
                     //TODO Clear Damage Map if out of combat (target is null and combat timer is to the point that regen has started)
-                    if (tempTarget != null && (Options.Instance.Npc.ResetIfCombatTimerExceeded && Timing.Global.Milliseconds > CombatTimer))
+                    if (InvasionSessionId == Guid.Empty &&
+                        tempTarget != null &&
+                        (Options.Instance.Npc.ResetIfCombatTimerExceeded && Timing.Global.Milliseconds > CombatTimer))
                     {
                         if (CheckForResetLocation(true))
                         {
@@ -904,6 +916,18 @@ public partial class Npc : Entity
                         // Check if attack on sight or have other npc's to target
                         TryFindNewTarget(timeMs);
                         tempTarget = Target;
+                    }
+
+                    // Invasion NPCs keep advancing on their configured objective whenever
+                    // they are not actively fighting a valid entity target.
+                    if (targetMap == Guid.Empty &&
+                        InvasionSessionId != Guid.Empty &&
+                        InvasionTargetMapId != Guid.Empty)
+                    {
+                        targetMap = InvasionTargetMapId;
+                        targetX = InvasionTargetX;
+                        targetY = InvasionTargetY;
+                        targetZ = 0;
                     }
 
                     if (targetMap != Guid.Empty)
