@@ -230,15 +230,26 @@ public partial class GameInterface : MutableInterface
         if (_worldMapWindow == null)
         {
             _worldMapWindow = new WorldMapWindow(GameCanvas) { DeleteOnClose = true };
-            _worldMapWindow.Disposed += (_, _) => _worldMapWindow = null;
+            _worldMapWindow.Disposed += (_, _) =>
+            {
+                _worldMapWindow = null;
+                SetQuestGuidanceOverlaySuppressed(false);
+            };
             _worldMapWindow.Show();
+            SetQuestGuidanceOverlaySuppressed(true);
             return;
         }
 
         if (_worldMapWindow.IsHidden)
+        {
             _worldMapWindow.Show();
+            SetQuestGuidanceOverlaySuppressed(true);
+        }
         else
+        {
             _worldMapWindow.Hide();
+            SetQuestGuidanceOverlaySuppressed(false);
+        }
     }
 
 
