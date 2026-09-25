@@ -56,6 +56,7 @@ public sealed class PotionSessionState
     [Key(20)] public string Status { get; set; } = string.Empty;
     [Key(21)] public int LastScoreGain { get; set; }
     [Key(22)] public int LastChain { get; set; }
+    [Key(23)] public int Orientation { get; set; }
 
     [IgnoreMember]
     public bool IsValid =>
@@ -81,7 +82,8 @@ public sealed class PotionSessionState
         RecipesCompleted >= 0 &&
         Status is { Length: <= 160 } &&
         LastScoreGain >= 0 &&
-        LastChain is >= 0 and <= 64;
+        LastChain is >= 0 and <= 64 &&
+        Orientation is >= 0 and <= 3;
 }
 
 public static class PotionStateEncoding
