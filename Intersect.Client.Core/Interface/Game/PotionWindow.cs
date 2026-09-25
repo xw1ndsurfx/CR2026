@@ -110,7 +110,7 @@ internal sealed class PotionWindow : Base
 
         _swap.IsDisabled = _pending || _state == null || _state.Complete || _state.GameOver;
         _nextRecipe.IsDisabled = _pending || _state is not { Complete: true };
-        _restart.IsDisabled = _pending || _state == null;
+        _restart.IsDisabled = _pending || _state == null || _state.Complete;
     }
 
     public void ResizeToCanvas()
