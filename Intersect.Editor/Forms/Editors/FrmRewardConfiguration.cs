@@ -1,6 +1,7 @@
 using DarkUI.Forms;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Potions;
 
@@ -245,10 +246,13 @@ public sealed class FrmRewardConfiguration : DarkForm
         {
             var requirements = string.Join(", ", recipe.Requirements.Select(requirement =>
                 $"{requirement.Needed}x {requirement.Family} L{requirement.Level}"));
+            var eventUnlock = recipe.UnlockPlayerVariableId == Guid.Empty
+                ? string.Empty
+                : $" | Event unlock: {PlayerVariableDescriptor.GetName(recipe.UnlockPlayerVariableId)}";
             _potionList.Items.Add(new PotionChoice(
                 recipe,
                 $"Lv {recipe.RequiredLevel} | {recipe.Name} -> {recipe.OutputQuantity:N0} x {ItemDescriptor.GetName(recipe.OutputItemId)} | " +
-                $"{recipe.CompletionExperience} XP | {requirements}"
+                $"{recipe.CompletionExperience} XP | {requirements}{eventUnlock}"
             ));
         }
     }
