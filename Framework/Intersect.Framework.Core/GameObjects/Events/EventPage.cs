@@ -57,4 +57,10 @@ public partial class EventPage
     public bool WalkingAnimation { get; set; } = true;
 
     public bool IgnoreNpcAvoids { get; set; }
+
+    public bool QuestArrowEnabled { get; set; }
+
+    public Guid QuestArrowQuestId { get; set; }
+
+    public Guid QuestArrowTaskId { get; set; }
 }
