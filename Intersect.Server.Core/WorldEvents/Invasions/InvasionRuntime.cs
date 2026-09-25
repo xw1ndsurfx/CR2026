@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core.WorldEvents.Invasions;
@@ -20,7 +21,7 @@ internal static class InvasionRuntime
         public int ObjectiveHealth { get; set; }
         public long NextWaveAtMs { get; set; }
         public long LastStatusAtMs { get; set; }
-        public HashSet<Guid> Participants { get; } = [];
+        public ConcurrentDictionary<Guid, byte> Participants { get; } = [];
         public Dictionary<Guid, Npc> ActiveNpcs { get; } = [];
         public Dictionary<Guid, long> NextObjectiveHitAt { get; } = [];
         public bool Completed { get; set; }
@@ -28,6 +29,7 @@ internal static class InvasionRuntime
 
     private static readonly object Gate = new();
     private static readonly Dictionary<Guid, Session> Sessions = [];
+    private static readonly ConcurrentDictionary<Guid, Session> SessionsById = [];
     private static readonly Dictionary<Guid, string> LastScheduleKeys = [];
     private static long _nextScheduleCheckAt;
 
@@ -45,7 +47,10 @@ internal static class InvasionRuntime
                 UpdateSession(session, nowMs);
 
             foreach (var finished in Sessions.Where(pair => pair.Value.Completed).Select(pair => pair.Key).ToArray())
-                Sessions.Remove(finished);
+            {
+                if (Sessions.Remove(finished, out var session))
+                    SessionsById.TryRemove(session.SessionId, out _);
+            }
         }
     }
 
@@ -82,11 +87,8 @@ internal static class InvasionRuntime
         if (player == null)
             return;
 
-        lock (Gate)
-        {
-            var session = Sessions.Values.FirstOrDefault(value => value.SessionId == npc.InvasionSessionId);
-            session?.Participants.Add(player.Id);
-        }
+        if (SessionsById.TryGetValue(npc.InvasionSessionId, out var session))
+            session.Participants.TryAdd(player.Id, 0);
     }
 
     private static void CheckSchedules(long nowMs)
@@ -120,6 +122,7 @@ internal static class InvasionRuntime
             NextWaveAtMs = nowMs + definition.Waves[0].DelaySeconds * 1_000L,
         };
         Sessions[definition.Id] = session;
+        SessionsById[session.SessionId] = session;
 
         var targetName = MapController.Get(definition.TargetMapId)?.Name ?? "the island";
         PacketSender.SendGlobalMsg($"[Invasion] {definition.Name} is attacking {targetName}! Defend the objective.");
@@ -290,7 +293,7 @@ internal static class InvasionRuntime
             PacketSender.SendGameAnnouncement($"INVASION LOST\n{session.Definition.Name}", 6_000);
         }
 
-        foreach (var playerId in session.Participants)
+        foreach (var playerId in session.Participants.Keys)
         {
             var player = Player.FindOnline(playerId);
             if (player == null)
