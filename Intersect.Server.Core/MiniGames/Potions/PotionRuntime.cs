@@ -32,6 +32,7 @@ internal static class PotionRuntime
         public long RecipeRound = 1;
         public long LastRequest;
         public bool RewardGranted;
+        public bool RecipeSelectionRequired = true;
         public PotionPairOrientation Orientation;
         public int LastScoreGain;
         public int LastChain;
@@ -131,7 +132,9 @@ internal static class PotionRuntime
             {
                 packet = Project(session, request.RequestId);
             }
-            else if (request.Kind != PotionRequestKind.Refresh && request.Revision != session.Revision)
+            else if (request.Kind != PotionRequestKind.Refresh &&
+                     request.Kind != PotionRequestKind.SelectRecipe &&
+                     request.Revision != session.Revision)
             {
                 session.LastRequest = request.RequestId;
                 packet = Project(session, request.RequestId, "StaleState");
@@ -148,7 +151,50 @@ internal static class PotionRuntime
                     case PotionRequestKind.Refresh:
                         break;
 
+                    case PotionRequestKind.SelectRecipe:
+                    {
+                        if (!session.RecipeSelectionRequired)
+                        {
+                            error = "RecipeSelectionClosed";
+                            break;
+                        }
+
+                        var selected = RewardConfigurationRuntime.Current.PotionRecipes
+                            .FirstOrDefault(recipe =>
+                                recipe.IsStructurallyValid &&
+                                recipe.Id == request.RecipeId);
+
+                        if (selected == null)
+                        {
+                            error = "RecipeNotFound";
+                            break;
+                        }
+
+                        if (selected.RequiredLevel > session.Progress.Level)
+                        {
+                            error = "RecipeLocked";
+                            break;
+                        }
+
+                        session.Recipe = selected;
+                        session.Puzzle = new PotionPuzzle(
+                            Random.Shared.Next(1, int.MaxValue),
+                            selected.ToPuzzleRecipe()
+                        );
+                        session.Orientation = PotionPairOrientation.Vertical;
+                        session.RewardGranted = false;
+                        session.RecipeSelectionRequired = false;
+                        ++session.Revision;
+                        session.Status = $"Selected {selected.Name}.";
+                        break;
+                    }
+
                     case PotionRequestKind.Drop:
+                        if (session.RecipeSelectionRequired)
+                        {
+                            error = "ChooseRecipe";
+                            break;
+                        }
                     {
                         var result = session.Puzzle.Drop(request.Column, session.Orientation);
                         if (!result.Success) error = result.Error;
@@ -168,13 +214,19 @@ internal static class PotionRuntime
                     }
 
                     case PotionRequestKind.Swap:
+                        if (session.RecipeSelectionRequired)
+                        {
+                            error = "ChooseRecipe";
+                            break;
+                        }
                         session.Orientation = (PotionPairOrientation)(((int)session.Orientation + 1) % 4);
                         ++session.Revision;
                         session.Status = "Pair rotated.";
                         break;
 
                     case PotionRequestKind.Restart:
-                        if (session.Puzzle.Complete) error = "RecipeComplete";
+                        if (session.RecipeSelectionRequired) error = "ChooseRecipe";
+                        else if (session.Puzzle.Complete) error = "RecipeComplete";
                         else
                         {
                             session.Puzzle.RestartBoard();
@@ -320,6 +372,22 @@ Send:
                 LastScoreGain = session.LastScoreGain,
                 LastChain = session.LastChain,
                 Orientation = (int)session.Orientation,
+                RecipeSelectionRequired = session.RecipeSelectionRequired,
+                RecipeChoices = RewardConfigurationRuntime.Current.PotionRecipes
+                    .Where(recipe => recipe.IsStructurallyValid)
+                    .OrderBy(recipe => recipe.RequiredLevel)
+                    .ThenBy(recipe => recipe.Name, StringComparer.OrdinalIgnoreCase)
+                    .Select(recipe => new PotionRecipeChoiceState
+                    {
+                        Id = recipe.Id,
+                        Name = recipe.Name,
+                        RequiredLevel = recipe.RequiredLevel,
+                        OutputItemName = ItemDescriptor.GetName(recipe.OutputItemId),
+                        OutputQuantity = recipe.OutputQuantity,
+                        CompletionExperience = recipe.CompletionExperience,
+                        Unlocked = recipe.RequiredLevel <= session.Progress.Level,
+                    })
+                    .ToArray(),
             },
         };
     }
