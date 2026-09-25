@@ -114,10 +114,10 @@ internal sealed partial class BlackjackWindow : Base
         };
         _bank.Text=$"Dealer bankroll: {s.Bank} {currency}";
         _rules.Text=$"Natural BLACKJACK pays 3:2\nOther wins 1:1 | {(s.HitSoft17?"Dealer hits soft 17":"Dealer stands on all 17")}\nOne split | No insurance or surrender";
-        _dealer.Update(s.DealerCards,s.DealerHoleHidden,s.DealerBackId,_layout,394,137,220,70);
+        _dealer.Update(s.DealerCards,s.DealerHoleHidden,s.DealerBackId,_layout,420,168,220,70);
         _dealerTotal.Text=s.DealerCards.Length==0?"":s.DealerHoleHidden?$"Showing {s.DealerTotal} + hidden card":
             $"Total: {s.DealerTotal}"+(s.DealerTotal>21?" - BUST":s.DealerCards.Length==2 && s.DealerTotal==21?" - BLACKJACK":"");
-        BlackjackCardStrip.Fit(_portraits[5],_dealer.Texture("poker_dealer.png"),_layout.Rect(360,81,40,48));
+        BlackjackCardStrip.Fit(_portraits[5],_dealer.Texture("poker_dealer.png"),_layout.Rect(392,110,54,61));
         for(var slot=0;slot<5;slot++)
         {
             var p=s.Seats.FirstOrDefault(p=>(p.Seat-me.Seat+5)%5==slot);var(x,y,w)=Panel(slot);
