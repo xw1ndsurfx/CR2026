@@ -186,6 +186,7 @@ internal sealed partial class BlackjackWindow : Base
     protected override void Render(SkinBase skin)
     {
         var r=skin.Renderer;r.DrawColor=new Color(240,14,19,17);r.DrawFilledRect(new Rectangle(0,0,Width,Height));
+        RenderTableSkinBackground(r);
         if(_tableSkin?.Texture==null)
         {
             Ellipse(skin,new Color(121,76,39),130,97,740,456);Ellipse(skin,new Color(37,91,59),147,114,706,423);
