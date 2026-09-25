@@ -6,6 +6,7 @@ using Intersect.Framework.Core.MiniGames.Potions;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
+using Intersect.Server.MiniGames;
 using Intersect.Server.MiniGames.Blackjack;
 using Intersect.Server.MiniGames.Poker;
 using Intersect.Server.MiniGames.Progression;
