@@ -69,7 +69,13 @@ internal sealed partial class BlackjackWindow : Base
         Button("BlackjackLeave","Leave table",750,626,214,()=>ExitRequested=true);
         _xp=Label("BlackjackExperience",40,675,570,28,14);
         _tray=new PokerFlatPanel(this,"BlackjackBackPicker"){IsHidden=true};Place(_tray,174,244,652,164);
-        _backToggle=Button("BlackjackBacks","Card backs",620,675,160,()=>{_tray.IsHidden=!_tray.IsHidden;});
+        _backToggle=Button("BlackjackBacks","Card backs",620,675,160,()=>
+        {
+            if(_portraitTray!=null)_portraitTray.IsHidden=true;
+            _tray.IsHidden=!_tray.IsHidden;
+            if(!_tray.IsHidden)_tray.BringToFront();
+        if(_portraitTray is {IsHidden:false})_portraitTray.BringToFront();
+        });
         _backStatus=Label("BlackjackBackStatus",620,711,342,30);
         Label("BlackjackNotice",40,744,922,27).Text="Blackjack has its own XP and levels. Leaving after the deal stands; it does not cancel the wager.";
         for(var i=0;i<6;i++)
@@ -128,7 +134,9 @@ internal sealed partial class BlackjackWindow : Base
             if(p!=null && s.Stage==BlackjackStage.Players && p.Seat==s.ActingSeat && string.IsNullOrWhiteSpace(_decisions[slot].Text))
                 _decisions[slot].Text=p.PlayerId==me.PlayerId?"TURN":"ACTING";
             _decisions[slot].IsHidden=_tableSkin?.Texture!=null && string.IsNullOrWhiteSpace(_decisions[slot].Text);
-            var portrait=p==null?null:p.Npc?_dealer.Texture(PokerTableTheme.PortraitFile(PokerTableTheme.Portrait(p.Name,false))):_dealer.Texture("poker_player.png");
+            var portrait=p==null?null:p.Npc
+                ?_dealer.Texture(PokerTableTheme.PortraitFile(PokerTableTheme.Portrait(p.Name,false)))
+                :p.PlayerId==me.PlayerId?TablePortraitPreference.SelectedTexture():_dealer.Texture("poker_player.png");
             var portraitRect=slot==0?_layout.Rect(365,405,56,64):_layout.Rect(x+2,y+2,56,64);
             BlackjackCardStrip.Fit(_portraits[slot],portrait,portraitRect);
             for(var h=0;h<2;h++)
