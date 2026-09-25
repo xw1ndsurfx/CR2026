@@ -162,8 +162,9 @@ internal sealed class PotionWindow : Base
         _requirements = Label("PotionRequirements", 65, 198, 315, 184, 14);
         _current = Label("PotionCurrent", 65, 395, 315, 54, 15);
         _next = Label("PotionNext", 65, 455, 315, 54, 13);
-        _score = Label("PotionScore", 65, 525, 315, 60, 14);
-        _status = Label("PotionStatus", 65, 595, 315, 68, 13);
+        _score = Label("PotionScore", 65, 525, 315, 34, 14);
+        _xpLabel = Label("PotionXpLabel", 65, 562, 315, 24, 12);
+        _status = Label("PotionStatus", 65, 614, 315, 50, 12);
 
         _fx = Label("PotionFx", BoardX, 280, PotionPuzzle.Columns * CellW, 46, 20);
         _fx.TextAlign = Pos.Center;
@@ -174,6 +175,67 @@ internal sealed class PotionWindow : Base
         _nextRecipe = Button("PotionNextRecipe", "Brew next", 215, 675, 165, () => Send(PotionRequestKind.NextRecipe));
         _restart = Button("PotionRestart", "Restart board", 65, 718, 140, () => Send(PotionRequestKind.Restart));
         Button("PotionExit", "Exit", 215, 718, 165, () => ExitRequested = true);
+
+        _recipePicker = new RecipePickerPanel(this)
+        {
+            IsHidden = true,
+            MouseInputEnabled = true,
+            KeyboardInputEnabled = false,
+        };
+        _recipePickerTitle = new Label(_recipePicker, "PotionRecipePickerTitle")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 18,
+            Text = "CHOOSE A RECIPE",
+            TextAlign = Pos.Center,
+            TextColorOverride = Color.White,
+        };
+        _recipePickerPage = new Label(_recipePicker, "PotionRecipePickerPage")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 11,
+            TextAlign = Pos.Center,
+            TextColorOverride = new Color(255, 220, 195, 145),
+        };
+
+        for (var i = 0; i < _recipeButtons.Length; ++i)
+        {
+            var slot = i;
+            var button = new Button(_recipePicker, "PotionRecipeChoice" + i)
+            {
+                Font = Skin.DefaultFont,
+                FontSize = 12,
+                Text = string.Empty,
+            };
+            button.Clicked += (_, _) => SelectRecipeSlot(slot);
+            _recipeButtons[i] = button;
+        }
+
+        _recipePrev = new Button(_recipePicker, "PotionRecipePrev")
+        {
+            Font = Skin.DefaultFont,
+            FontSize = 12,
+            Text = "< Previous",
+        };
+        _recipePrev.Clicked += (_, _) =>
+        {
+            if (_recipePage > 0) --_recipePage;
+            RefreshRecipePicker();
+        };
+
+        _recipeNextPage = new Button(_recipePicker, "PotionRecipeNext")
+        {
+            Font = Skin.DefaultFont,
+            FontSize = 12,
+            Text = "Next >",
+        };
+        _recipeNextPage.Clicked += (_, _) =>
+        {
+            ++_recipePage;
+            RefreshRecipePicker();
+        };
 
         for (var column = 0; column < PotionPuzzle.Columns; ++column)
         {
