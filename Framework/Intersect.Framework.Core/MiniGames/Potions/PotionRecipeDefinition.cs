@@ -13,7 +13,8 @@ public sealed record PotionRecipeDefinition(
     Guid OutputItemId,
     int OutputQuantity,
     int CompletionExperience,
-    PotionRequirement[] Requirements)
+    PotionRequirement[] Requirements,
+    Guid UnlockPlayerVariableId = default)
 {
     public bool IsStructurallyValid =>
         Id != Guid.Empty &&
