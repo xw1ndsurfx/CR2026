@@ -1704,6 +1704,7 @@ public partial class Npc : Entity
 
         var pkt = (NpcEntityPacket)packet;
         pkt.Aggression = GetAggression(forPlayer);
+        pkt.NpcId = Descriptor?.Id ?? Guid.Empty;
 
         return pkt;
     }
