@@ -1,6 +1,8 @@
 using System.Numerics;
 using Intersect.Client.Core;
 using Intersect.Client.Entities;
+using Intersect.Client.Entities.Events;
+using Intersect.Client.Maps;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
@@ -140,7 +142,7 @@ internal sealed class QuestGuidanceManager
             var task = quest.FindTask(progress.TaskId);
             if (task == null) continue;
 
-            foreach (var entity in MatchingEntities(task))
+            foreach (var entity in MatchingEntities(questId, task))
             {
                 if (task.GuideAnimationId != Guid.Empty)
                     desiredMarkers[entity.Id] = (task.Id, task.GuideAnimationId, entity);
@@ -173,7 +175,7 @@ internal sealed class QuestGuidanceManager
         }
     }
 
-    private static IEnumerable<Entity> MatchingEntities(QuestTaskDescriptor task)
+    private static IEnumerable<Entity> MatchingEntities(Guid questId, QuestTaskDescriptor task)
     {
         foreach (var entity in Globals.Entities.Values)
         {
@@ -202,6 +204,20 @@ internal sealed class QuestGuidanceManager
                 resource.Descriptor?.Id == task.GuideResourceId)
             {
                 yield return resource;
+            }
+        }
+
+        foreach (var map in MapInstance.Lookup.Values.OfType<MapInstance>())
+        {
+            foreach (var entity in map.LocalEntities.Values)
+            {
+                if (entity is not Event eventEntity ||
+                    !eventEntity.QuestArrowEnabled ||
+                    eventEntity.QuestArrowQuestId != questId ||
+                    eventEntity.QuestArrowTaskId != task.Id)
+                    continue;
+
+                yield return eventEntity;
             }
         }
     }
