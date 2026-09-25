@@ -5,6 +5,8 @@ using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.MiniGames;
 using Intersect.Framework.Core.MiniGames.Blackjack;
 using Intersect.Network.Packets.MiniGames;
+using Rectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
+using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
 
 namespace Intersect.Client.Interface.Game;
 
@@ -135,6 +137,54 @@ internal sealed partial class BlackjackWindow
             _status.TextAlign = Pos.Center;
         }
 
+        var skinnedActions = _tableSkin.Texture != null;
+        foreach (var button in TableActionButtons())
+        {
+            button.ShouldDrawBackground = !skinnedActions;
+        }
+
+        if (skinnedActions)
+        {
+            var wagerLabel = Children.OfType<Label>().FirstOrDefault(label => label.Name == "BlackjackBetLabel");
+            if (wagerLabel != null)
+            {
+                var bounds = _layout.Rect(40, 582, 100, 28);
+                wagerLabel.SetBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+                wagerLabel.FontSize = _layout.FontSize(10);
+            }
+
+            var amount = _layout.Rect(150, 580, 100, 32);
+            _amount.SetBounds(amount.X, amount.Y, amount.Width, amount.Height);
+            var bet = _layout.Rect(260, 580, 110, 32);
+            _bet.SetBounds(bet.X, bet.Y, bet.Width, bet.Height);
+            var start = _layout.Rect(380, 580, 120, 32);
+            _start.SetBounds(start.X, start.Y, start.Width, start.Height);
+
+            var error = _layout.Rect(510, 580, 120, 32);
+            _error.SetBounds(error.X, error.Y, error.Width, error.Height);
+            _error.FontSize = _layout.FontSize(9);
+
+            var hit = _layout.Rect(40, 626, 105, 32);
+            _hit.SetBounds(hit.X, hit.Y, hit.Width, hit.Height);
+            var stand = _layout.Rect(155, 626, 105, 32);
+            _stand.SetBounds(stand.X, stand.Y, stand.Width, stand.Height);
+            var doubleButton = _layout.Rect(270, 626, 105, 32);
+            _double.SetBounds(doubleButton.X, doubleButton.Y, doubleButton.Width, doubleButton.Height);
+            var split = _layout.Rect(385, 626, 105, 32);
+            _split.SetBounds(split.X, split.Y, split.Width, split.Height);
+            var refresh = _layout.Rect(500, 626, 120, 32);
+            _refresh.SetBounds(refresh.X, refresh.Y, refresh.Width, refresh.Height);
+
+            var xp = _layout.Rect(40, 675, 580, 28);
+            _xp.SetBounds(xp.X, xp.Y, xp.Width, xp.Height);
+
+            var notice = Children.OfType<Label>().FirstOrDefault(label => label.Name == "BlackjackNotice");
+            if (notice != null)
+            {
+                notice.IsHidden = true;
+            }
+        }
+
         if (_cardsSkinApplied)
         {
             var cards = _layout.Rect(660, 656, 96, 108);
@@ -223,6 +273,50 @@ internal sealed partial class BlackjackWindow
         var height = Math.Max(1, (int)Math.Round(full.Height * fraction));
         _timerFillSkin.SetBounds(full.X, full.Y + full.Height - height, full.Width, height);
         _timerFillSkin.IsHidden = false;
+    }
+
+    private IEnumerable<Button> TableActionButtons()
+    {
+        yield return _bet;
+        yield return _start;
+        yield return _hit;
+        yield return _stand;
+        yield return _double;
+        yield return _split;
+        yield return _refresh;
+    }
+
+    private void RenderTableActionPanel(RendererBase renderer)
+    {
+        var panel = _layout.Rect(24, 570, 620, 198);
+        renderer.DrawColor = new Color(20, 28, 24);
+        renderer.DrawFilledRect(new Rectangle(panel.X, panel.Y, panel.Width, panel.Height));
+
+        var top = _layout.Rect(24, 570, 620, 2);
+        renderer.DrawColor = new Color(145, 98, 53);
+        renderer.DrawFilledRect(new Rectangle(top.X, top.Y, top.Width, top.Height));
+
+        var divider = _layout.Rect(40, 668, 580, 1);
+        renderer.DrawColor = new Color(56, 77, 62);
+        renderer.DrawFilledRect(new Rectangle(divider.X, divider.Y, divider.Width, divider.Height));
+
+        foreach (var button in TableActionButtons())
+        {
+            DrawTableActionButton(renderer, button);
+        }
+    }
+
+    private static void DrawTableActionButton(RendererBase renderer, Button button)
+    {
+        var outer = new Rectangle(button.X - 1, button.Y - 1, button.Width + 2, button.Height + 2);
+        renderer.DrawColor = new Color(126, 84, 56);
+        renderer.DrawFilledRect(outer);
+
+        var inner = new Rectangle(button.X, button.Y, button.Width, button.Height);
+        renderer.DrawColor = button.IsDisabled
+            ? new Color(57, 30, 34)
+            : new Color(99, 66, 53);
+        renderer.DrawFilledRect(inner);
     }
 
     private static ImagePanel CreateTableSkinImage(Base parent, string name, string file)
