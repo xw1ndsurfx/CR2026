@@ -169,19 +169,17 @@ public partial class MenuContainer : Panel
             Dock = Pos.Top,
             MaximumSize = new Point(x: 71, y: 55),
             MinimumSize = new Point(x: 71, y: 55),
-            Padding = new Padding(size: 2),
+            Padding = new Padding(size: 0),
             Size = new Point(x: 71, y: 55),
-            TextureFilename = "menuitem.png",
         };
-        _dailyRewardButton = new Button(parent: _dailyRewardButtonContainer, name: nameof(_dailyRewardButton))
+        _dailyRewardButton = new Button(parent: _dailyRewardButtonContainer, name: nameof(_dailyRewardButton), disableText: true)
         {
             Alignment = [Alignments.Center],
-            Size = new Point(x: 67, y: 51),
-            Text = "Daily",
-            Font = Skin.DefaultFont,
-            TextColorOverride = new Color(a:255,r:236,g:210,b:153),
-            FontSize = 11,
+            Size = new Point(x: 71, y: 55),
         };
+        _dailyRewardButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Daily.png");
+        _dailyRewardButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Daily_over.png");
+        _dailyRewardButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_Daily_down.png");
         _dailyRewardButton.SetToolTipText(text: "Daily Reward");
         _dailyRewardButton.Clicked += DailyRewardButton_Clicked;
 
@@ -367,10 +365,15 @@ public partial class MenuContainer : Panel
             button.SetBounds(0, 0, buttonWidth, buttonHeight);
         }
 
-        // The News button uses the dedicated Corps Royaux GUI art supplied with the client.
+        // Dedicated Corps Royaux GUI art supplied with the client.
+        // Reapply after LoadJsonUi so layout overrides cannot replace the custom textures.
         _newsButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_News.png");
         _newsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_News_over.png");
         _newsButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_News_down.png");
+
+        _dailyRewardButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Daily.png");
+        _dailyRewardButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Daily_over.png");
+        _dailyRewardButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_Daily_down.png");
 
         SetSize(
             buttonWidth,
