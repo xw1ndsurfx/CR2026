@@ -1,5 +1,7 @@
 using DarkUI.Forms;
+using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Potions;
 
@@ -17,11 +19,17 @@ internal sealed class PotionRecipeDialog : DarkForm
         public override string ToString() => Text;
     }
 
+    private sealed record VariableChoice(Guid Id, string Name)
+    {
+        public override string ToString() => Name;
+    }
+
     private readonly TextBox _name = new() { Width = 300, MaxLength = 64 };
     private readonly NumericUpDown _level = new() { Minimum = 1, Maximum = MiniGameProgression.MaximumLevel, Width = 90 };
     private readonly ComboBox _outputItem = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 330 };
     private readonly NumericUpDown _quantity = new() { Minimum = 1, Maximum = 1_000_000_000, Width = 120 };
     private readonly NumericUpDown _xp = new() { Minimum = 1, Maximum = 5_000, Width = 120 };
+    private readonly ComboBox _unlockVariable = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 330 };
     private readonly ListBox _requirements = new() { Width = 500, Height = 150 };
     private readonly ComboBox _family = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 140 };
     private readonly ComboBox _tier = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120 };
@@ -35,7 +43,7 @@ internal sealed class PotionRecipeDialog : DarkForm
         Text = existing == null ? "Add Potion Recipe" : "Edit Potion Recipe";
         StartPosition = FormStartPosition.CenterParent;
         Width = 660;
-        Height = 540;
+        Height = 600;
         MinimizeBox = false;
         MaximizeBox = false;
 
@@ -45,6 +53,7 @@ internal sealed class PotionRecipeDialog : DarkForm
         _tier.SelectedIndex = 1;
 
         FillItems();
+        FillUnlockVariables();
         if (existing != null)
         {
             _name.Text = existing.Name;
@@ -54,6 +63,9 @@ internal sealed class PotionRecipeDialog : DarkForm
             _draft.AddRange(existing.Requirements ?? []);
             var selected = _outputItem.Items.Cast<ItemChoice>().FirstOrDefault(item => item.Id == existing.OutputItemId);
             if (selected != null) _outputItem.SelectedItem = selected;
+            var unlock = _unlockVariable.Items.Cast<VariableChoice>()
+                .FirstOrDefault(variable => variable.Id == existing.UnlockPlayerVariableId);
+            if (unlock != null) _unlockVariable.SelectedItem = unlock;
         }
         else
         {
@@ -62,10 +74,10 @@ internal sealed class PotionRecipeDialog : DarkForm
             _xp.Value = 25;
         }
 
-        var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 8, Padding = new Padding(12) };
+        var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 9, Padding = new Padding(12) };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 145));
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        for (var i = 0; i < 7; ++i) root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var i = 0; i < 8; ++i) root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
         AddRow(root, 0, "Recipe name", _name);
@@ -78,6 +90,7 @@ internal sealed class PotionRecipeDialog : DarkForm
         reward.Controls.Add(new Label { Text = "Completion XP", AutoSize = true, Margin = new Padding(14, 8, 3, 3) });
         reward.Controls.Add(_xp);
         AddRow(root, 3, "Reward", reward);
+        AddRow(root, 4, "Event unlock", _unlockVariable);
 
         var reqControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true };
         reqControls.Controls.Add(_family);
@@ -93,17 +106,17 @@ internal sealed class PotionRecipeDialog : DarkForm
         };
         reqControls.Controls.Add(add);
         reqControls.Controls.Add(remove);
-        AddRow(root, 4, "Requirement", reqControls);
-        AddRow(root, 5, "Requirements", _requirements);
+        AddRow(root, 5, "Requirement", reqControls);
+        AddRow(root, 6, "Requirements", _requirements);
 
         var help = new Label
         {
             AutoSize = true,
             MaximumSize = new Size(450, 0),
             Text = "Tier 1 = Shard, 2 = Extract, 3 = Essence, 4 = Soul. " +
-                   "When the board creates a matching ingredient, it is consumed by the recipe before returning to the board."
+                   "Optional Event unlock uses a BOOLEAN Player Variable. Set that variable to TRUE from any event or quest completion event to unlock the recipe for that character."
         };
-        AddRow(root, 6, "Rules", help);
+        AddRow(root, 7, "Rules", help);
 
         var buttons = new FlowLayoutPanel
         {
@@ -137,6 +150,24 @@ internal sealed class PotionRecipeDialog : DarkForm
             ));
         }
         _outputItem.SelectedIndex = 0;
+    }
+
+    private void FillUnlockVariables()
+    {
+        _unlockVariable.Items.Clear();
+        _unlockVariable.Items.Add(new VariableChoice(Guid.Empty, "No event unlock required"));
+        foreach (var variable in PlayerVariableDescriptor.Lookup.Values
+                     .OfType<PlayerVariableDescriptor>()
+                     .Where(variable => variable.DataType == VariableDataType.Boolean)
+                     .OrderBy(variable => variable.Name, StringComparer.OrdinalIgnoreCase))
+        {
+            _unlockVariable.Items.Add(new VariableChoice(
+                variable.Id,
+                string.IsNullOrWhiteSpace(variable.Folder) ? variable.Name : $"[{variable.Folder}] / {variable.Name}"
+            ));
+        }
+
+        _unlockVariable.SelectedIndex = 0;
     }
 
     private void AddRequirement()
@@ -175,7 +206,8 @@ internal sealed class PotionRecipeDialog : DarkForm
             item.Id,
             (int)_quantity.Value,
             (int)_xp.Value,
-            _draft.ToArray()
+            _draft.ToArray(),
+            (_unlockVariable.SelectedItem as VariableChoice)?.Id ?? Guid.Empty
         );
 
         if (!definition.IsStructurallyValid)
