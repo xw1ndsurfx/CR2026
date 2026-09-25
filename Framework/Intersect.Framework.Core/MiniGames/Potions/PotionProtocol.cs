@@ -54,6 +54,8 @@ public sealed class PotionSessionState
     [Key(18)] public bool Complete { get; set; }
     [Key(19)] public bool GameOver { get; set; }
     [Key(20)] public string Status { get; set; } = string.Empty;
+    [Key(21)] public int LastScoreGain { get; set; }
+    [Key(22)] public int LastChain { get; set; }
 
     [IgnoreMember]
     public bool IsValid =>
@@ -77,7 +79,9 @@ public sealed class PotionSessionState
         Experience is >= 0 and <= MiniGameProgression.MaximumExperience &&
         Level is >= 1 and <= MiniGameProgression.MaximumLevel &&
         RecipesCompleted >= 0 &&
-        Status is { Length: <= 160 };
+        Status is { Length: <= 160 } &&
+        LastScoreGain >= 0 &&
+        LastChain is >= 0 and <= 64;
 }
 
 public static class PotionStateEncoding
