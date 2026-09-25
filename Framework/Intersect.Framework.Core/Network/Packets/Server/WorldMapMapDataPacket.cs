@@ -9,6 +9,11 @@ public partial class WorldMapMapDataPacket : IntersectPacket
     {
     }
 
+    public WorldMapMapDataPacket(Guid mapId, string data, byte[] tileData, int revision)
+        : this(mapId, data, tileData, [], revision)
+    {
+    }
+
     public WorldMapMapDataPacket(
         Guid mapId,
         string data,
