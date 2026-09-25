@@ -33,6 +33,23 @@ public static class PotionQuestProgress
                 value += Math.Max(0, update.ScoreGained);
                 break;
 
+            case QuestObjective.PotionReachChain:
+                value = Math.Max(value, update.ChainAchieved);
+                break;
+
+            case QuestObjective.PotionBrewUnderOccupiedCells:
+                if (update.BrewedRecipe && update.OccupiedCells <= target)
+                    value = target;
+                break;
+
+            case QuestObjective.PotionBrewSpecificRecipeMinScore:
+                if (update.BrewedRecipe &&
+                    targetId != Guid.Empty &&
+                    update.RecipeId == targetId &&
+                    update.RecipeScore >= target)
+                    value = target;
+                break;
+
             default:
                 return current;
         }
