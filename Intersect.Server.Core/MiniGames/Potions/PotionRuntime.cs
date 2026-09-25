@@ -93,6 +93,8 @@ internal static class PotionRuntime
         }
 
         client.Send(packet);
+        if (packet.State != null)
+            player.UpdatePotionQuestTasks(new PotionQuestUpdate(false, Guid.Empty, packet.State.Level, 0));
         return true;
     }
 
@@ -121,6 +123,7 @@ internal static class PotionRuntime
 
         PotionStatePacket? packet;
         var notifyInventory = false;
+        PotionQuestUpdate? questUpdate = null;
         lock (Gate)
         {
             if (!Sessions.TryGetValue(player.Id, out var session) ||
@@ -203,6 +206,12 @@ internal static class PotionRuntime
                             ++session.Revision;
                             session.Orientation = PotionPairOrientation.Vertical;
                             session.LastScoreGain = result.ScoreGained;
+                            questUpdate = new PotionQuestUpdate(
+                                false,
+                                session.Recipe.Id,
+                                session.Progress.Level,
+                                result.ScoreGained
+                            );
                             session.LastChain = result.Merges.Length == 0 ? 0 : result.Merges.Max(merge => merge.Chain);
                             session.Status = result.RecipeCompleted
                                 ? "Potion complete. Reward ready."
@@ -296,6 +305,12 @@ internal static class PotionRuntime
                         );
                         session.RewardGranted = true;
                         session.Status = $"Brewed {session.Recipe.OutputQuantity:N0} x {item.Name} • +{session.Recipe.CompletionExperience} Alchemy XP";
+                        questUpdate = new PotionQuestUpdate(
+                            true,
+                            session.Recipe.Id,
+                            session.Progress.Level,
+                            questUpdate?.ScoreGained ?? 0
+                        );
                         notifyInventory = true;
                     }
                 }
@@ -305,6 +320,7 @@ internal static class PotionRuntime
         }
 
 Send:
+        if (questUpdate is { } update) player.UpdatePotionQuestTasks(update);
         if (notifyInventory) PacketSender.SendInventory(player);
         sessionSend(packet, client);
     }
