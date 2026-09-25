@@ -75,7 +75,7 @@ internal static class PotionRuntime
             if (packet == null)
             {
                 var progress = Progress.Load(player.Id, MiniGameProgression.Potions);
-                var recipe = ChooseRecipe(progress.Level, Guid.Empty);
+                var recipe = ChooseInitialRecipe(player, progress.Level);
                 if (recipe == null) return false;
 
                 var session = new Session
@@ -170,9 +170,9 @@ internal static class PotionRuntime
                             break;
                         }
 
-                        if (selected.RequiredLevel > session.Progress.Level)
+                        if (!IsRecipeUnlocked(session.Player, selected, session.Progress.Level))
                         {
-                            error = "RecipeLocked";
+                            error = selected.RequiredLevel > session.Progress.Level ? "RecipeLocked" : "RecipeEventLocked";
                             break;
                         }
 
@@ -242,7 +242,7 @@ internal static class PotionRuntime
                         else if (!session.RewardGranted) error = "RewardPending";
                         else
                         {
-                            var next = ChooseRecipe(session.Progress.Level, session.Recipe.Id);
+                            var next = ChooseRecipe(session.Player, session.Progress.Level, session.Recipe.Id);
                             if (next == null) error = "NoUnlockedRecipe";
                             else
                             {
@@ -309,20 +309,39 @@ Send:
         sessionSend(packet, client);
     }
 
-    private static PotionRecipeDefinition? ChooseRecipe(int level, Guid except)
+    private static PotionRecipeDefinition? ChooseInitialRecipe(Player player, int level)
+    {
+        var valid = RewardConfigurationRuntime.Current.PotionRecipes
+            .Where(recipe => recipe.IsStructurallyValid)
+            .OrderBy(recipe => recipe.RequiredLevel)
+            .ThenBy(recipe => recipe.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (valid.Length == 0) return null;
+        return valid.FirstOrDefault(recipe => IsRecipeUnlocked(player, recipe, level)) ?? valid[0];
+    }
+
+    private static PotionRecipeDefinition? ChooseRecipe(Player player, int level, Guid except)
     {
         var unlocked = RewardConfigurationRuntime.Current.PotionRecipes
-            .Where(recipe => recipe.IsStructurallyValid && recipe.RequiredLevel <= level && recipe.Id != except)
+            .Where(recipe => recipe.IsStructurallyValid && recipe.Id != except && IsRecipeUnlocked(player, recipe, level))
             .ToArray();
 
         if (unlocked.Length == 0 && except != Guid.Empty)
         {
             unlocked = RewardConfigurationRuntime.Current.PotionRecipes
-                .Where(recipe => recipe.IsStructurallyValid && recipe.RequiredLevel <= level)
+                .Where(recipe => recipe.IsStructurallyValid && IsRecipeUnlocked(player, recipe, level))
                 .ToArray();
         }
 
         return unlocked.Length == 0 ? null : unlocked[Random.Shared.Next(unlocked.Length)];
+    }
+
+    private static bool IsRecipeUnlocked(Player player, PotionRecipeDefinition recipe, int level)
+    {
+        if (recipe.RequiredLevel > level) return false;
+        if (recipe.UnlockPlayerVariableId == Guid.Empty) return true;
+        return player.GetVariableValue(recipe.UnlockPlayerVariableId).Boolean;
     }
 
     private static PotionStatePacket Project(Session session, long requestId, string error = "")
@@ -385,7 +404,9 @@ Send:
                         OutputItemName = ItemDescriptor.GetName(recipe.OutputItemId),
                         OutputQuantity = recipe.OutputQuantity,
                         CompletionExperience = recipe.CompletionExperience,
-                        Unlocked = recipe.RequiredLevel <= session.Progress.Level,
+                        Unlocked = IsRecipeUnlocked(session.Player, recipe, session.Progress.Level),
+                        EventLocked = recipe.UnlockPlayerVariableId != Guid.Empty &&
+                                      !session.Player.GetVariableValue(recipe.UnlockPlayerVariableId).Boolean,
                     })
                     .ToArray(),
             },
