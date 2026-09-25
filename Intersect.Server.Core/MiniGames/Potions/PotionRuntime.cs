@@ -36,6 +36,7 @@ internal static class PotionRuntime
         public PotionPairOrientation Orientation;
         public int LastScoreGain;
         public int LastChain;
+        public int RecipeStartScore;
         public string Status = "Move over a column, left-click to drop, right-click to rotate.";
     }
 
@@ -186,6 +187,7 @@ internal static class PotionRuntime
                         );
                         session.Orientation = PotionPairOrientation.Vertical;
                         session.RewardGranted = false;
+                        session.RecipeStartScore = 0;
                         session.RecipeSelectionRequired = false;
                         ++session.Revision;
                         session.Status = $"Selected {selected.Name}.";
@@ -206,13 +208,16 @@ internal static class PotionRuntime
                             ++session.Revision;
                             session.Orientation = PotionPairOrientation.Vertical;
                             session.LastScoreGain = result.ScoreGained;
+                            session.LastChain = result.Merges.Length == 0 ? 0 : result.Merges.Max(merge => merge.Chain);
                             questUpdate = new PotionQuestUpdate(
                                 false,
                                 session.Recipe.Id,
                                 session.Progress.Level,
-                                result.ScoreGained
+                                result.ScoreGained,
+                                session.LastChain,
+                                OccupiedCells(session.Puzzle),
+                                Math.Max(0, session.Puzzle.Score - session.RecipeStartScore)
                             );
-                            session.LastChain = result.Merges.Length == 0 ? 0 : result.Merges.Max(merge => merge.Chain);
                             session.Status = result.RecipeCompleted
                                 ? "Potion complete. Reward ready."
                                 : session.LastChain > 0
@@ -241,6 +246,7 @@ internal static class PotionRuntime
                             session.Puzzle.RestartBoard();
                             session.Orientation = PotionPairOrientation.Vertical;
                             session.RewardGranted = false;
+                            session.RecipeStartScore = 0;
                             ++session.Revision;
                             session.Status = "Board cleared. Recipe progress restarted.";
                         }
@@ -256,6 +262,7 @@ internal static class PotionRuntime
                             else
                             {
                                 session.Recipe = next;
+                                session.RecipeStartScore = session.Puzzle.Score;
                                 session.Puzzle.BeginNextRecipe(next.ToPuzzleRecipe());
                                 session.Orientation = PotionPairOrientation.Vertical;
                                 session.RewardGranted = false;
@@ -309,7 +316,10 @@ internal static class PotionRuntime
                             true,
                             session.Recipe.Id,
                             session.Progress.Level,
-                            questUpdate?.ScoreGained ?? 0
+                            questUpdate?.ScoreGained ?? 0,
+                            questUpdate?.ChainAchieved ?? session.LastChain,
+                            OccupiedCells(session.Puzzle),
+                            Math.Max(0, session.Puzzle.Score - session.RecipeStartScore)
                         );
                         notifyInventory = true;
                     }
@@ -323,6 +333,16 @@ Send:
         if (questUpdate is { } update) player.UpdatePotionQuestTasks(update);
         if (notifyInventory) PacketSender.SendInventory(player);
         sessionSend(packet, client);
+    }
+
+    private static int OccupiedCells(PotionPuzzle puzzle)
+    {
+        var occupied = 0;
+        for (var row = 0; row < PotionPuzzle.Rows; ++row)
+        for (var column = 0; column < PotionPuzzle.Columns; ++column)
+            if (puzzle.Get(column, row) != null)
+                ++occupied;
+        return occupied;
     }
 
     private static PotionRecipeDefinition? ChooseInitialRecipe(Player player, int level)
