@@ -4,6 +4,7 @@ using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Configuration;
+using Intersect.Network.Packets.Server;
 using Intersect.Server.MiniGames;
 using Intersect.Server.MiniGames.Blackjack;
 using Intersect.Server.MiniGames.Poker;
@@ -23,6 +24,17 @@ public static partial class CommandProcessing
                 ChatMessageType.Error, Color.White);
             return;
         }
+        if (command.Game == MiniGameType.Potions)
+        {
+            player.SendPacket(new PotionMiniGamePacket
+            {
+                SessionId = Guid.NewGuid(),
+                Seed = Random.Shared.Next(1, int.MaxValue),
+                Title = "Royal Alchemy",
+            });
+            return;
+        }
+
         if (command.CurrencyItemId != Guid.Empty && !MiniGameCurrency.IsCompatible(ItemDescriptor.Get(command.CurrencyItemId)))
         {
             PacketSender.SendChatMsg(player, "[Poker] The configured currency item is missing or incompatible. No items were taken.",
