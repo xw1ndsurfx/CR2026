@@ -32,7 +32,9 @@ internal static class PotionRuntime
         public long RecipeRound = 1;
         public long LastRequest;
         public bool RewardGranted;
-        public string Status = "Choose a column. Three or more touching matches merge upward.";
+        public int LastScoreGain;
+        public int LastChain;
+        public string Status = "Move over a column, left-click to drop, right-click to swap.";
     }
 
     private static readonly object Gate = new();
@@ -137,6 +139,8 @@ internal static class PotionRuntime
             {
                 session.LastRequest = request.RequestId;
                 var error = string.Empty;
+                session.LastScoreGain = 0;
+                session.LastChain = 0;
 
                 switch (request.Kind)
                 {
@@ -150,10 +154,12 @@ internal static class PotionRuntime
                         else
                         {
                             ++session.Revision;
+                            session.LastScoreGain = result.ScoreGained;
+                            session.LastChain = result.Merges.Length == 0 ? 0 : result.Merges.Max(merge => merge.Chain);
                             session.Status = result.RecipeCompleted
                                 ? "Potion complete. Reward ready."
-                                : result.Merges.Length > 0
-                                    ? $"Merge chain x{result.Merges.Max(merge => merge.Chain)} • +{result.ScoreGained} score"
+                                : session.LastChain > 0
+                                    ? $"Merge chain x{session.LastChain} • +{result.ScoreGained} score"
                                     : "Pair placed.";
                         }
                         break;
@@ -307,6 +313,8 @@ Send:
                 Complete = session.Puzzle.Complete,
                 GameOver = session.Puzzle.GameOver,
                 Status = session.Status,
+                LastScoreGain = session.LastScoreGain,
+                LastChain = session.LastChain,
             },
         };
     }
