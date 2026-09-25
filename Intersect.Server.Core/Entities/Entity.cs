@@ -22,6 +22,7 @@ using Intersect.Server.General;
 using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
+using Intersect.Server.WorldEvents.Invasions;
 using Intersect.Utilities;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -2204,6 +2205,7 @@ public abstract partial class Entity : IEntity
 
                     enemyNpc.LootMap.TryAdd(Id, true);
                     enemyNpc.LootMapCache = enemyNpc.LootMap.Keys.ToArray();
+                    InvasionRuntime.RegisterParticipant(enemyNpc, this);
                     enemyNpc.TryFindNewTarget(Timing.Global.Milliseconds, default, false, this);
                 }
 
