@@ -112,6 +112,7 @@ public partial class FrmMain : Form
         InitLocalization();
         InitExternalTools();
         AddRewardConfigurationEditorMenu();
+        AddWorldEventsEditorMenu();
         Show();
 
         //Init Forms with RenderTargets
@@ -216,6 +217,40 @@ public partial class FrmMain : Form
     public void OpenRewardConfigurationEditor()
     {
         var editor = new FrmRewardConfiguration();
+        editor.Show();
+        editor.BringToFront();
+    }
+
+    private void AddWorldEventsEditorMenu()
+    {
+        if (menuStrip.Items.Cast<ToolStripItem>().Any(item => item.Name == "worldEventsToolStripMenuItem"))
+            return;
+
+        var eventsMenu = new ToolStripMenuItem
+        {
+            Name = "worldEventsToolStripMenuItem",
+            Text = "Events",
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
+        };
+        var invasions = new ToolStripMenuItem
+        {
+            Name = "invasionEditorToolStripMenuItem",
+            Text = "Invasions...",
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
+        };
+        invasions.Click += (_, _) => PacketSender.SendRequestInvasionConfiguration();
+        eventsMenu.DropDownItems.Add(invasions);
+
+        var toolsIndex = menuStrip.Items.IndexOf(toolsToolStripMenuItem);
+        if (toolsIndex >= 0)
+            menuStrip.Items.Insert(toolsIndex, eventsMenu);
+        else
+            menuStrip.Items.Add(eventsMenu);
+    }
+
+    public void OpenInvasionEditor()
+    {
+        var editor = new FrmInvasionConfiguration();
         editor.Show();
         editor.BringToFront();
     }
