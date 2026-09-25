@@ -67,6 +67,11 @@ internal sealed partial class PokerWindow
             image?.SendToBack();
         }
 
+        foreach (var image in _portraitSkinActions)
+        {
+            image?.SendToBack();
+        }
+
         foreach (var image in _boardSkinSlots)
         {
             image?.SendToBack();
@@ -109,7 +114,7 @@ internal sealed partial class PokerWindow
             _names[slot].FontSize = _layout.FontSize(10);
             _names[slot].TextAlign = Pos.Left | Pos.CenterV;
 
-            var stack = _layout.Rect(center.X - 98, detailsY + 22, 196, 18);
+            var stack = _layout.Rect(center.X - 72, detailsY + 22, 170, 18);
             _stacks[slot].SetBounds(stack.X, stack.Y, stack.Width, stack.Height);
             _stacks[slot].FontSize = _layout.FontSize(9);
             _stacks[slot].TextAlign = Pos.Left | Pos.CenterV;
@@ -121,8 +126,9 @@ internal sealed partial class PokerWindow
 
             var action = _layout.Rect(center.X - 37, detailsY - 25, 74, 30);
             _decisions[slot].SetBounds(action.X, action.Y, action.Width, action.Height);
-            _decisions[slot].FontSize = _layout.FontSize(9);
+            _decisions[slot].FontSize = _layout.FontSize(8);
             _decisions[slot].TextAlign = Pos.Center;
+            _decisions[slot].BringToFront();
         }
 
         for (var i = 0; i < 5; ++i)
