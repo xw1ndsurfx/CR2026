@@ -51,7 +51,7 @@ internal sealed class PotionClientModel
         return true;
     }
 
-    public PotionRequestPacket? Request(PotionRequestKind kind, long now, int column = 0)
+    public PotionRequestPacket? Request(PotionRequestKind kind, long now, int column = 0, Guid recipeId = default)
     {
         if (Current?.State is not { } state) return null;
         if (Pending && kind != PotionRequestKind.Leave &&
@@ -65,6 +65,7 @@ internal sealed class PotionClientModel
             Revision = state.Revision,
             Kind = kind,
             Column = column,
+            RecipeId = recipeId,
         };
 
         if (!packet.IsValid) return null;
