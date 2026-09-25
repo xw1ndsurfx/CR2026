@@ -212,6 +212,12 @@ public partial class QuestTaskDescriptor
 
     public string TargetName { get; set; } = string.Empty;
 
+    public Guid GuideAnimationId { get; set; }
+
+    public Guid GuideResourceId { get; set; }
+
+    public bool ShowNavigationArrow { get; set; } = true;
+
     public int Quantity { get; set; }
 
     public string Description { get; set; } = string.Empty;
