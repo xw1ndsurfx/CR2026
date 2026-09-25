@@ -43,8 +43,14 @@ internal sealed class QuestGuidanceManager
                 (TargetWorld.Y - view.Top) * zoom
             );
 
-            var center = new Vector2(Width / 2f, Height / 2f);
-            var delta = target - center;
+            var player = new Vector2(
+                (Globals.Me.Center.X - view.Left) * zoom,
+                (Globals.Me.Center.Y - view.Top) * zoom
+            );
+
+            // Start guidance from the player's feet/lower body instead of the head.
+            var origin = player + new Vector2(0f, 24f * zoom);
+            var delta = target - origin;
             if (delta.LengthSquared() < 16f) return;
 
             var direction = Vector2.Normalize(delta);
@@ -69,15 +75,15 @@ internal sealed class QuestGuidanceManager
             {
                 var tx = Math.Abs(direction.X) < 0.001f
                     ? float.MaxValue
-                    : (direction.X > 0 ? maxX - center.X : margin - center.X) / direction.X;
+                    : (direction.X > 0 ? maxX - origin.X : margin - origin.X) / direction.X;
                 var ty = Math.Abs(direction.Y) < 0.001f
                     ? float.MaxValue
-                    : (direction.Y > 0 ? maxY - center.Y : margin - center.Y) / direction.Y;
+                    : (direction.Y > 0 ? maxY - origin.Y : margin - origin.Y) / direction.Y;
                 var distance = Math.Max(0, Math.Min(Math.Abs(tx), Math.Abs(ty)));
-                end = center + direction * distance;
+                end = origin + direction * distance;
             }
 
-            var start = center + direction * 42f;
+            var start = origin + direction * 16f;
             var shaftEnd = end - direction * 18f;
             var normal = new Vector2(-direction.Y, direction.X);
 
