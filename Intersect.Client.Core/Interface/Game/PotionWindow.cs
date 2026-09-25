@@ -425,7 +425,7 @@ internal sealed class PotionWindow : Base
         renderer.DrawFilledRect(new Rectangle(ix + icut, iy + ih - iband, Math.Max(1, iw - icut * 2), iband));
 
         // Glass highlight / tier pips.
-        renderer.DrawColor = new Color((byte)Math.Min(255, alpha), 245, 245, 228);
+        renderer.DrawColor = new Color(alpha, 245, 245, 228);
         renderer.DrawFilledRect(new Rectangle(ix + iw / 4, iy + ih / 5, Math.Max(2, iw / 6), Math.Max(2, ih / 10)));
 
         var pip = Math.Max(2, Math.Min(iw, ih) / 10);
