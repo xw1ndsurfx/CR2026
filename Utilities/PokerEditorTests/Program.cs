@@ -24,15 +24,18 @@ internal static class Program
         ItemDescriptor.Lookup[equipment.Id] = equipment;
         var tests = new (string Name, Action Run)[]
         {
-            ("Shared mini-game catalog exposes the supported Poker and Blackjack games", () =>
+            ("Shared mini-game catalog exposes Poker, Blackjack and Potions", () =>
             {
-                Check(MiniGameCatalog.All.Count == 2);
+                Check(MiniGameCatalog.All.Count == 3);
                 var poker = MiniGameCatalog.Get(MiniGameType.Poker);
                 var blackjack = MiniGameCatalog.Get(MiniGameType.Blackjack);
+                var potions = MiniGameCatalog.Get(MiniGameType.Potions);
                 Check(poker.DisplayName.Contains("Poker", StringComparison.OrdinalIgnoreCase));
                 Check(blackjack.DisplayName.Contains("Blackjack", StringComparison.OrdinalIgnoreCase));
+                Check(potions.DisplayName.Contains("Potions", StringComparison.OrdinalIgnoreCase));
                 Check(poker.MinimumPlayers == 2 && poker.MaximumPlayers == 6);
                 Check(blackjack.MinimumPlayers == 2 && blackjack.MaximumPlayers == 6);
+                Check(potions.MinimumPlayers == 1 && potions.MaximumPlayers == 6);
                 Check(MiniGameCatalog.IsValidTableId("casino_table-1"));
                 Check(!MiniGameCatalog.IsValidTableId("casino table"));
             }),
