@@ -6,6 +6,7 @@ using Intersect.Editor.Localization;
 using Intersect.Editor.Maps;
 using Intersect.Enums;
 using Intersect.Framework.Core.MiniGames;
+using Intersect.Framework.Core.WorldEvents.Invasions;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -762,6 +763,15 @@ internal sealed partial class PacketHandler
         if (packet.OpenEditor)
         {
             Globals.MainForm.BeginInvoke((Action)(() => Globals.MainForm.OpenRewardConfigurationEditor()));
+        }
+    }
+
+    public void HandlePacket(IPacketSender packetSender, InvasionConfigurationPacket packet)
+    {
+        InvasionConfiguration.Load(packet.ConfigurationJson);
+        if (packet.OpenEditor)
+        {
+            Globals.MainForm.BeginInvoke((Action)(() => Globals.MainForm.OpenInvasionEditor()));
         }
     }
 }
