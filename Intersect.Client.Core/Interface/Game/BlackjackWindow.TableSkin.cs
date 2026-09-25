@@ -16,7 +16,10 @@ internal sealed partial class BlackjackWindow
     private ImagePanel? _topSkin;
     private ImagePanel? _timerSkin;
     private ImagePanel? _timerFillSkin;
-    private ImagePanel? _portraitsSkinButton;
+    private Button? _portraitSkinButton;
+    private PokerFlatPanel? _portraitTray;
+    private readonly Button?[] _portraitChoiceButtons = new Button?[TablePortraitPreference.Count];
+    private readonly ImagePanel?[] _portraitChoiceImages = new ImagePanel?[TablePortraitPreference.Count];
     private Button? _leaveSkinButton;
     private bool _cardsSkinApplied;
     private bool _leaveSkinApplied;
@@ -32,7 +35,52 @@ internal sealed partial class BlackjackWindow
         _topSkin = CreateTableSkinImage(this, "BlackjackTopSkin", "panel_top.png");
         _timerSkin = CreateTableSkinImage(this, "BlackjackTimerSkin", "panel_timer.png");
         _timerFillSkin = CreateTableSkinImage(this, "BlackjackTimerFillSkin", "panel_timer_fill.png");
-        _portraitsSkinButton = CreateTableSkinImage(this, "BlackjackPortraitsSkinButton", "button_portraits.png");
+
+        _portraitSkinButton = new Button(this, "BlackjackPortraitsButton")
+        {
+            Font = Skin.DefaultFont,
+            FontSize = 10,
+            Text = string.Empty,
+        };
+        ApplyTableSkinButton(_portraitSkinButton, "button_portraits.png");
+        _portraitSkinButton.Clicked += (_, _) =>
+        {
+            _tray.IsHidden = true;
+            if (_portraitTray == null) return;
+            _portraitTray.IsHidden = !_portraitTray.IsHidden;
+            if (!_portraitTray.IsHidden)
+            {
+                RefreshPortraitPicker();
+                _portraitTray.BringToFront();
+            }
+        };
+
+        _portraitTray = new PokerFlatPanel(this, "BlackjackPortraitPicker") { IsHidden = true };
+        for (var i = 0; i < TablePortraitPreference.Count; ++i)
+        {
+            var id = i;
+            var choice = new Button(_portraitTray, "BlackjackPortraitChoice" + i)
+            {
+                Font = Skin.DefaultFont,
+                FontSize = 14,
+                Text = string.Empty,
+            };
+            ApplyTableSkinButton(choice, "portrait_0.png");
+            choice.Clicked += (_, _) =>
+            {
+                TablePortraitPreference.SelectedId = id;
+                RefreshPortraitPicker();
+                _portraitTray.IsHidden = true;
+            };
+            _portraitChoiceButtons[i] = choice;
+            _portraitChoiceImages[i] = new ImagePanel(_portraitTray, "BlackjackPortraitChoicePreview" + i)
+            {
+                ShouldDrawBackground = false,
+                MouseInputEnabled = false,
+                KeyboardInputEnabled = false,
+                Texture = TablePortraitPreference.Texture(i),
+            };
+        }
 
         for (var slot = 0; slot < 6; ++slot)
         {
@@ -89,7 +137,38 @@ internal sealed partial class BlackjackWindow
         SetTableSkinBounds(_topSkin, _layout.Rect(319, 12, 362, 48));
         SetTableSkinBounds(_timerSkin, _layout.Rect(926, 92, 54, 113));
         SetTableSkinBounds(_timerFillSkin, _layout.Rect(945, 113, 16, 82));
-        SetTableSkinBounds(_portraitsSkinButton, _layout.Rect(768, 656, 96, 108));
+
+        if (_portraitSkinButton != null)
+        {
+            var portraits = _layout.Rect(768, 656, 96, 108);
+            _portraitSkinButton.SetBounds(portraits.X, portraits.Y, portraits.Width, portraits.Height);
+        }
+
+        if (_portraitTray != null)
+        {
+            var tray = _layout.Rect(174, 244, 652, 164);
+            _portraitTray.SetBounds(tray.X, tray.Y, tray.Width, tray.Height);
+            for (var i = 0; i < TablePortraitPreference.Count; ++i)
+            {
+                var choice = _portraitChoiceButtons[i];
+                if (choice != null)
+                {
+                    var bounds = _layout.LocalRect(3 + i * 108, 16, 100, 136);
+                    choice.SetBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+                    choice.FontSize = _layout.FontSize(14);
+                }
+
+                var preview = _portraitChoiceImages[i];
+                if (preview != null)
+                {
+                    BlackjackCardStrip.Fit(
+                        preview,
+                        TablePortraitPreference.Texture(i),
+                        _layout.LocalRect(19 + i * 108, 29, 68, 82)
+                    );
+                }
+            }
+        }
 
         for (var slot = 0; slot < 5; ++slot)
         {
@@ -232,6 +311,7 @@ internal sealed partial class BlackjackWindow
 
     private void UpdateTableSkin(BlackjackClientModel model, BlackjackTableState state, BlackjackPlayerState me)
     {
+        RefreshPortraitPicker();
         var now = Environment.TickCount64;
         var timed = state.Stage is BlackjackStage.Betting or BlackjackStage.Players;
 
@@ -255,6 +335,25 @@ internal sealed partial class BlackjackWindow
 
         var seconds = timed ? Math.Max(0, model.Seconds(now)) : 0;
         UpdateTableSkinTimer(timed && seconds > 0, seconds);
+    }
+
+    private void RefreshPortraitPicker()
+    {
+        for (var i = 0; i < TablePortraitPreference.Count; ++i)
+        {
+            var button = _portraitChoiceButtons[i];
+            if (button != null)
+            {
+                button.Text = i == TablePortraitPreference.SelectedId ? "✓" : string.Empty;
+                button.TextColorOverride = i == TablePortraitPreference.SelectedId ? Gold : Color.White;
+            }
+
+            var preview = _portraitChoiceImages[i];
+            if (preview != null)
+            {
+                preview.Texture = TablePortraitPreference.Texture(i);
+            }
+        }
     }
 
     private void UpdateTableSkinTimer(bool visible, long seconds)
