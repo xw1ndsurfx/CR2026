@@ -16,7 +16,9 @@ using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Mapping.Tilesets;
 using Intersect.Framework.Core.GameObjects.Maps;
+using Intersect.Framework.Core.Serialization;
 using Intersect.Network.Packets.Server;
+using Newtonsoft.Json;
 using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 using CoreGraphics = Intersect.Client.Core.Graphics;
@@ -537,10 +539,10 @@ internal sealed class WorldMapWindow : Window
             }
 
             MapInstance? map = null;
-            if (sourcePacket != null && !string.IsNullOrWhiteSpace(sourcePacket.Data))
+            if (sourcePacket is { AttributeData.Length: > 0 } &&
+                !string.IsNullOrWhiteSpace(sourcePacket.Data))
             {
-                map = new MapInstance(mapId);
-                map.Load(sourcePacket.Data);
+                map = CreateDetachedWorldMapInstance(sourcePacket, loadTiles: false);
             }
             else if (liveMap is { IsLoaded: true })
             {
@@ -718,9 +720,7 @@ internal sealed class WorldMapWindow : Window
                 sourcePacket.TileData is { Length: > 0 } &&
                 !string.IsNullOrWhiteSpace(sourcePacket.Data))
             {
-                var previewMap = new MapInstance(mapId);
-                previewMap.Load(sourcePacket.Data);
-                previewMap.LoadTileData(sourcePacket.TileData);
+                var previewMap = CreateDetachedWorldMapInstance(sourcePacket, loadTiles: true);
                 previewMap.Autotiles.InitAutotiles(previewMap.GenerateAutotileGrid());
 
                 var preview = BuildPreview(previewMap);
