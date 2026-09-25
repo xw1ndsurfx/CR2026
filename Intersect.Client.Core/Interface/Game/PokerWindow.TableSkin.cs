@@ -4,6 +4,8 @@ using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.MiniGames;
 using Intersect.Network.Packets.MiniGames;
+using Rectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
+using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
 
 namespace Intersect.Client.Interface.Game;
 
@@ -97,7 +99,7 @@ internal sealed partial class PokerWindow
         SetTableSkinBounds(_topSkin, _layout.Rect(319, 10, 362, 48));
         SetTableSkinBounds(_timerSkin, _layout.Rect(926, 92, 54, 113));
         SetTableSkinBounds(_timerFillSkin, _layout.Rect(945, 113, 16, 82));
-        SetTableSkinBounds(_portraitsSkinButton, _layout.Rect(636, 656, 96, 108));
+        SetTableSkinBounds(_portraitsSkinButton, _layout.Rect(684, 656, 96, 108));
 
         for (var slot = 0; slot < 6; ++slot)
         {
@@ -153,19 +155,73 @@ internal sealed partial class PokerWindow
             _turn.TextAlign = Pos.Center;
         }
 
+        var skinnedActions = _tableSkin.Texture != null;
+        foreach (var button in TableActionButtons())
+        {
+            button.ShouldDrawBackground = !skinnedActions;
+        }
+
+        if (skinnedActions)
+        {
+            var raiseLabel = _content.Children.OfType<Label>().FirstOrDefault(label => label.Name == "RaiseTotal");
+            if (raiseLabel != null)
+            {
+                var bounds = _layout.Rect(52, 594, 136, 28);
+                raiseLabel.SetBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+                raiseLabel.FontSize = _layout.FontSize(10);
+            }
+
+            var amount = _layout.Rect(200, 592, 120, 32);
+            _amount.SetBounds(amount.X, amount.Y, amount.Width, amount.Height);
+
+            var minimum = _layout.Rect(330, 592, 100, 32);
+            _minimum.SetBounds(minimum.X, minimum.Y, minimum.Width, minimum.Height);
+
+            var raise = _layout.Rect(440, 592, 140, 32);
+            _raise.SetBounds(raise.X, raise.Y, raise.Width, raise.Height);
+
+            var error = _layout.Rect(52, 558, 610, 26);
+            _error.SetBounds(error.X, error.Y, error.Width, error.Height);
+            _error.FontSize = _layout.FontSize(10);
+
+            var start = _layout.Rect(52, 634, 100, 32);
+            _start.SetBounds(start.X, start.Y, start.Width, start.Height);
+            var fold = _layout.Rect(162, 634, 90, 32);
+            _fold.SetBounds(fold.X, fold.Y, fold.Width, fold.Height);
+            var check = _layout.Rect(262, 634, 90, 32);
+            _check.SetBounds(check.X, check.Y, check.Width, check.Height);
+            var call = _layout.Rect(362, 634, 100, 32);
+            _call.SetBounds(call.X, call.Y, call.Width, call.Height);
+            var allIn = _layout.Rect(472, 634, 90, 32);
+            _allIn.SetBounds(allIn.X, allIn.Y, allIn.Width, allIn.Height);
+            var refresh = _layout.Rect(572, 634, 90, 32);
+            _refresh.SetBounds(refresh.X, refresh.Y, refresh.Width, refresh.Height);
+
+            var experience = _layout.Rect(52, 678, 610, 28);
+            _experience.SetBounds(experience.X, experience.Y, experience.Width, experience.Height);
+
+            var footer = _content.Children.OfType<Label>().FirstOrDefault(label => label.Name == "TestOnly");
+            if (footer != null)
+            {
+                var footerBounds = _layout.Rect(52, 742, 610, 26);
+                footer.SetBounds(footerBounds.X, footerBounds.Y, footerBounds.Width, footerBounds.Height);
+                footer.FontSize = _layout.FontSize(9);
+            }
+        }
+
         if (_cardsSkinApplied)
         {
-            var cards = _layout.Rect(744, 656, 96, 108);
+            var cards = _layout.Rect(792, 656, 96, 108);
             _back.SetBounds(cards.X, cards.Y, cards.Width, cards.Height);
         }
 
         if (_leaveSkinApplied && _leaveSkinButton != null)
         {
-            var leave = _layout.Rect(852, 656, 96, 108);
+            var leave = _layout.Rect(900, 656, 96, 108);
             _leaveSkinButton.SetBounds(leave.X, leave.Y, leave.Width, leave.Height);
         }
 
-        var status = _layout.Rect(636, 742, 312, 26);
+        var status = _layout.Rect(684, 742, 312, 26);
         _backStatus.SetBounds(status.X, status.Y, status.Width, status.Height);
         _backStatus.TextAlign = Pos.Center;
         _backStatus.IsHidden = _tableSkin.Texture != null;
@@ -227,6 +283,51 @@ internal sealed partial class PokerWindow
         var height = Math.Max(1, (int)Math.Round(full.Height * fraction));
         _timerFillSkin.SetBounds(full.X, full.Y + full.Height - height, full.Width, height);
         _timerFillSkin.IsHidden = false;
+    }
+
+    private IEnumerable<Button> TableActionButtons()
+    {
+        yield return _minimum;
+        yield return _raise;
+        yield return _start;
+        yield return _fold;
+        yield return _check;
+        yield return _call;
+        yield return _allIn;
+        yield return _refresh;
+    }
+
+    private void RenderTableActionPanel(RendererBase renderer)
+    {
+        var panel = _layout.Rect(36, 581, 640, 187);
+        renderer.DrawColor = new Color(24, 17, 14);
+        renderer.DrawFilledRect(new Rectangle(panel.X, panel.Y, panel.Width, panel.Height));
+
+        var top = _layout.Rect(36, 581, 640, 2);
+        renderer.DrawColor = new Color(145, 98, 53);
+        renderer.DrawFilledRect(new Rectangle(top.X, top.Y, top.Width, top.Height));
+
+        var divider = _layout.Rect(52, 671, 610, 1);
+        renderer.DrawColor = new Color(76, 52, 40);
+        renderer.DrawFilledRect(new Rectangle(divider.X, divider.Y, divider.Width, divider.Height));
+
+        foreach (var button in TableActionButtons())
+        {
+            DrawTableActionButton(renderer, button);
+        }
+    }
+
+    private static void DrawTableActionButton(RendererBase renderer, Button button)
+    {
+        var outer = new Rectangle(button.X - 1, button.Y - 1, button.Width + 2, button.Height + 2);
+        renderer.DrawColor = new Color(126, 84, 56);
+        renderer.DrawFilledRect(outer);
+
+        var inner = new Rectangle(button.X, button.Y, button.Width, button.Height);
+        renderer.DrawColor = button.IsDisabled
+            ? new Color(57, 30, 34)
+            : new Color(99, 66, 53);
+        renderer.DrawFilledRect(inner);
     }
 
     private static ImagePanel CreateTableSkinImage(Base parent, string name, string file)
