@@ -25,6 +25,7 @@ public sealed partial class PotionRecipeChoiceState
     [Key(4)] public int OutputQuantity { get; set; }
     [Key(5)] public int CompletionExperience { get; set; }
     [Key(6)] public bool Unlocked { get; set; }
+    [Key(7)] public bool EventLocked { get; set; }
 
     [IgnoreMember]
     public bool IsValid =>
