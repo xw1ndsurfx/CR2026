@@ -136,7 +136,7 @@ internal sealed partial class PokerWindow : Base
         for (var slot = 0; slot < 6; ++slot)
         {
             var seat = state.Seats.FirstOrDefault(s => PokerSceneLayout.Slot(s.Seat, me.Seat) == slot);
-            var name = seat == null ? Strings.Poker.EmptySeat.ToString(slot + 1) : seat.PlayerId == state.DealerNpcId
+            var name = seat == null ? (_tableSkin?.Texture == null ? Strings.Poker.EmptySeat.ToString(slot + 1) : string.Empty) : seat.PlayerId == state.DealerNpcId
                 ? Strings.PokerScene.Dealer.ToString(seat.Name) : seat.PlayerId == me.PlayerId
                 ? Strings.PokerScene.You.ToString(seat.Name) : seat.Name;
             _names[slot].Text = Short(name, 22);
@@ -202,32 +202,35 @@ internal sealed partial class PokerWindow : Base
         r.DrawColor = new Color(205, 9, 14, 17); r.DrawFilledRect(new Rectangle(0, 0, Width, Height));
         Fill(r, new Color(24, 17, 14), 36, 581, 928, 151);
         Fill(r, new Color(125, 92, 48), 36, 581, 928, 2);
-        Ellipse(r, new Color(25, 17, 14), 185, 174, 630, 340);
-        Ellipse(r, new Color(117, 75, 41), 189, 166, 622, 334);
-        Ellipse(r, new Color(174, 122, 66), 198, 174, 604, 316);
-        Ellipse(r, new Color(67, 44, 30), 208, 184, 584, 296);
-        for (var y = 224; y < 455; y += 38) Fill(r, new Color(78, 52, 34), 290, y, 420, 2);
-        for (var slot = 0; slot < 6; ++slot)
+        if (_tableSkin?.Texture == null)
         {
-            var c = PokerSceneLayout.Center(slot);
-            var seat = _state?.Seats.FirstOrDefault(s => PokerSceneLayout.Slot(s.Seat, _localSeat) == slot);
-            Fill(r, new Color(42, 28, 22), c.X - 30, c.Y - 18, 60, 48);
-            Fill(r, new Color(117, 78, 43), c.X - 25, c.Y - 12, 50, 34);
-            if (seat == null) continue;
-            if (seat.Seat == _state!.ActingSeat)
-                for (var row = 0; row < 8; ++row) Fill(r, Gold, c.X - row, c.Y - 48 + row, row * 2 + 1, 1);
-            if (!_art.HasPortrait(slot))
+            Ellipse(r, new Color(25, 17, 14), 185, 174, 630, 340);
+            Ellipse(r, new Color(117, 75, 41), 189, 166, 622, 334);
+            Ellipse(r, new Color(174, 122, 66), 198, 174, 604, 316);
+            Ellipse(r, new Color(67, 44, 30), 208, 184, 584, 296);
+            for (var y = 224; y < 455; y += 38) Fill(r, new Color(78, 52, 34), 290, y, 420, 2);
+            for (var slot = 0; slot < 6; ++slot)
             {
-                var coat = slot % 2 == 0 ? new Color(47, 75, 85) : new Color(98, 55, 51);
-                Fill(r, new Color(30, 25, 25), c.X - 22, c.Y + 6, 44, 20);
-                Fill(r, coat, c.X - 21, c.Y - 10, 42, 29);
-                Fill(r, new Color(205, 169, 132), c.X - 26, c.Y - 3, 10, 13);
-                Fill(r, new Color(205, 169, 132), c.X + 16, c.Y - 3, 10, 13);
-                Fill(r, new Color(205, 169, 132), c.X - 11, c.Y - 33, 22, 25);
-                Fill(r, new Color(52, 37, 32), c.X - 13, c.Y - 37, 26, 10);
+                var c = PokerSceneLayout.Center(slot);
+                var seat = _state?.Seats.FirstOrDefault(s => PokerSceneLayout.Slot(s.Seat, _localSeat) == slot);
+                Fill(r, new Color(42, 28, 22), c.X - 30, c.Y - 18, 60, 48);
+                Fill(r, new Color(117, 78, 43), c.X - 25, c.Y - 12, 50, 34);
+                if (seat == null) continue;
+                if (seat.Seat == _state!.ActingSeat)
+                    for (var row = 0; row < 8; ++row) Fill(r, Gold, c.X - row, c.Y - 48 + row, row * 2 + 1, 1);
+                if (!_art.HasPortrait(slot))
+                {
+                    var coat = slot % 2 == 0 ? new Color(47, 75, 85) : new Color(98, 55, 51);
+                    Fill(r, new Color(30, 25, 25), c.X - 22, c.Y + 6, 44, 20);
+                    Fill(r, coat, c.X - 21, c.Y - 10, 42, 29);
+                    Fill(r, new Color(205, 169, 132), c.X - 26, c.Y - 3, 10, 13);
+                    Fill(r, new Color(205, 169, 132), c.X + 16, c.Y - 3, 10, 13);
+                    Fill(r, new Color(205, 169, 132), c.X - 11, c.Y - 33, 22, 25);
+                    Fill(r, new Color(52, 37, 32), c.X - 13, c.Y - 37, 26, 10);
+                }
             }
+            for (var i = 0; i < 5; ++i) Fill(r, new Color(42, 29, 24), 332 + i * 66, 301, 58, 76);
         }
-        for (var i = 0; i < 5; ++i) Fill(r, new Color(42, 29, 24), 332 + i * 66, 301, 58, 76);
         RenderProceduralMotions(r);
         var experienceWidth = (int)(616 * Math.Clamp(_xpFraction, 0, 1));
         Fill(r, new Color(45, 99, 61), 52, 710, 618, 18);
