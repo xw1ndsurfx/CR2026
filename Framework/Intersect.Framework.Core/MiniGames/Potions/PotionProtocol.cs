@@ -12,6 +12,28 @@ public enum PotionRequestKind
     NextRecipe = 3,
     Restart = 4,
     Leave = 5,
+    SelectRecipe = 6,
+}
+
+[MessagePackObject]
+public sealed partial class PotionRecipeChoiceState
+{
+    [Key(0)] public Guid Id { get; set; }
+    [Key(1)] public string Name { get; set; } = string.Empty;
+    [Key(2)] public int RequiredLevel { get; set; }
+    [Key(3)] public string OutputItemName { get; set; } = string.Empty;
+    [Key(4)] public int OutputQuantity { get; set; }
+    [Key(5)] public int CompletionExperience { get; set; }
+    [Key(6)] public bool Unlocked { get; set; }
+
+    [IgnoreMember]
+    public bool IsValid =>
+        Id != Guid.Empty &&
+        Name is { Length: >= 1 and <= 64 } &&
+        RequiredLevel is >= 1 and <= MiniGameProgression.MaximumLevel &&
+        OutputItemName is { Length: >= 1 and <= 128 } &&
+        OutputQuantity is >= 1 and <= 1_000_000_000 &&
+        CompletionExperience is >= 1 and <= 5_000;
 }
 
 [MessagePackObject]
@@ -57,6 +79,8 @@ public sealed partial class PotionSessionState
     [Key(21)] public int LastScoreGain { get; set; }
     [Key(22)] public int LastChain { get; set; }
     [Key(23)] public int Orientation { get; set; }
+    [Key(24)] public bool RecipeSelectionRequired { get; set; }
+    [Key(25)] public PotionRecipeChoiceState[] RecipeChoices { get; set; } = [];
 
     [IgnoreMember]
     public bool IsValid =>
@@ -83,7 +107,9 @@ public sealed partial class PotionSessionState
         Status is { Length: <= 160 } &&
         LastScoreGain >= 0 &&
         LastChain is >= 0 and <= 64 &&
-        Orientation is >= 0 and <= 3;
+        Orientation is >= 0 and <= 3 &&
+        RecipeChoices is { Length: > 0 and <= 128 } &&
+        RecipeChoices.All(choice => choice is { IsValid: true });
 }
 
 public static class PotionStateEncoding
