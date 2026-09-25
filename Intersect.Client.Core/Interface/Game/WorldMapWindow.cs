@@ -539,7 +539,7 @@ internal sealed class WorldMapWindow : Window
             }
 
             MapInstance? map = null;
-            if (sourcePacket is { AttributeData.Length: > 0 } &&
+            if (sourcePacket?.AttributeData is { Length: > 0 } &&
                 !string.IsNullOrWhiteSpace(sourcePacket.Data))
             {
                 map = CreateDetachedWorldMapInstance(sourcePacket, loadTiles: false);
@@ -704,6 +704,40 @@ internal sealed class WorldMapWindow : Window
             _previews.Remove(mapId);
             _previewRevisions.Remove(mapId);
             return null;
+        }
+
+        private static MapInstance CreateDetachedWorldMapInstance(
+            WorldMapMapDataPacket sourcePacket,
+            bool loadTiles
+        )
+        {
+            var map = new MapInstance(sourcePacket.MapId);
+            JsonConvert.PopulateObject(
+                sourcePacket.Data,
+                map,
+                new JsonSerializerSettings
+                {
+                    SerializationBinder = new IntersectTypeSerializationBinder(),
+                    ObjectCreationHandling = ObjectCreationHandling.Replace,
+                }
+            );
+
+            // Do not call MapInstance.Load() here. Load() subscribes the temporary map
+            // to the global MapLoaded event used by live gameplay maps. World-map preview
+            // objects must remain completely detached from that lifecycle.
+            map.Autotiles = new MapAutotiles(map);
+
+            if (sourcePacket.AttributeData is { Length: > 0 })
+            {
+                map.AttributeData = sourcePacket.AttributeData;
+            }
+
+            if (loadTiles && sourcePacket.TileData is { Length: > 0 })
+            {
+                map.LoadTileData(sourcePacket.TileData);
+            }
+
+            return map;
         }
 
         private IGameRenderTexture? BuildPreviewForMap(Guid mapId)
