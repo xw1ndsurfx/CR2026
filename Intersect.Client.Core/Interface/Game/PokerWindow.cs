@@ -214,6 +214,7 @@ internal sealed partial class PokerWindow : Base
     {
         var r = skin.Renderer;
         r.DrawColor = new Color(205, 9, 14, 17); r.DrawFilledRect(new Rectangle(0, 0, Width, Height));
+        RenderTableSkinBackground(r);
         if (_tableSkin?.Texture != null)
         {
             RenderTableActionPanel(r);
