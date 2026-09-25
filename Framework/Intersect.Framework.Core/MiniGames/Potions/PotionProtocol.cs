@@ -62,7 +62,7 @@ public sealed class PotionSessionState
         Revision >= 0 &&
         RecipeRound >= 1 &&
         Board is { Length: PotionPuzzle.Columns * PotionPuzzle.Rows } &&
-        Board.All(PotionStateEncoding.IsEncodedPiece) &&
+        Board.All(value => PotionStateEncoding.IsEncodedPiece(value)) &&
         PotionStateEncoding.IsEncodedPiece(CurrentFirst, allowEmpty: false) &&
         PotionStateEncoding.IsEncodedPiece(CurrentSecond, allowEmpty: false) &&
         PotionStateEncoding.IsEncodedPiece(NextFirst, allowEmpty: false) &&
