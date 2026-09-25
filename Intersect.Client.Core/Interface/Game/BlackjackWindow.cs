@@ -124,14 +124,32 @@ internal sealed partial class BlackjackWindow : Base
             _names[slot].Text=p==null?(_tableSkin?.Texture==null?"Empty seat":""):Short(p.Name+(p.PlayerId==me.PlayerId?" (you)":p.Npc?" [NPC]":""),27);
             _names[slot].TextColorOverride=p?.Seat==s.ActingSeat?Gold:Color.White;
             _balances[slot].Text=p==null?"":$"Balance: {p.Chips}";
-            _decisions[slot].Text=p==null?"":p.Leaving?"Leaving after settlement":Short(p.LastAction,35);
+            _decisions[slot].Text=p==null?"":p.Leaving?"Leaving":Short(p.LastAction,18);
+            if(p!=null && s.Stage==BlackjackStage.Players && p.Seat==s.ActingSeat && string.IsNullOrWhiteSpace(_decisions[slot].Text))
+                _decisions[slot].Text=p.PlayerId==me.PlayerId?"TURN":"ACTING";
+            _decisions[slot].IsHidden=_tableSkin?.Texture!=null && string.IsNullOrWhiteSpace(_decisions[slot].Text);
             var portrait=p==null?null:p.Npc?_dealer.Texture(PokerTableTheme.PortraitFile(PokerTableTheme.Portrait(p.Name,false))):_dealer.Texture("poker_player.png");
-            BlackjackCardStrip.Fit(_portraits[slot],portrait,_layout.Rect(x,y,36,46));
+            var portraitRect=slot==0?_layout.Rect(365,405,56,64):_layout.Rect(x+2,y+2,56,64);
+            BlackjackCardStrip.Fit(_portraits[slot],portrait,portraitRect);
             for(var h=0;h<2;h++)
             {
                 var hand=p!=null && p.Hands.Length>h?p.Hands[h]:null;
                 var placeholder=p!=null && h==0 && (hand==null || hand.Cards.Length==0);
-                _cards[slot,h].Update(hand?.Cards??[],false,p?.CardBackId??0,_layout,x+h*w/2,y+76,w/2-8,slot==0?58:48,placeholder);
+                if(slot==0)
+                {
+                    var split=p?.Hands.Length>1;
+                    var cardX=split?350+h*155:420;
+                    var cardW=split?140:160;
+                    _cards[slot,h].Update(hand?.Cards??[],false,p?.CardBackId??0,_layout,cardX,326,cardW,58,placeholder);
+                    var totalRect=_layout.Rect(cardX,388,cardW,24);
+                    _totals[slot,h].SetBounds(totalRect.X,totalRect.Y,totalRect.Width,totalRect.Height);
+                    _totals[slot,h].FontSize=_layout.FontSize(10);
+                    _totals[slot,h].TextAlign=Pos.Center;
+                }
+                else
+                {
+                    _cards[slot,h].Update(hand?.Cards??[],false,p?.CardBackId??0,_layout,x+h*w/2,y+76,w/2-8,48,placeholder);
+                }
                 _totals[slot,h].Text=hand==null?"":$"{hand.Total} | Bet {hand.Bet}"+(hand.Outcome==BlackjackOutcome.Pending?"":$" | {hand.Outcome}");
                 _totals[slot,h].TextColorOverride=p?.Seat==s.ActingSeat && h==s.ActingHand?Gold:Color.White;
             }
