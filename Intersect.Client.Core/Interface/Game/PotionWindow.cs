@@ -9,8 +9,8 @@ using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 namespace Intersect.Client.Interface.Game;
 
 /// <summary>
-/// First playable Royal Alchemy scene: 8x10 board, falling two-piece pairs,
-/// 3+ connected merges, recipe consumption and chain scoring.
+/// Server-authoritative Royal Alchemy scene. The client renders state and only requests
+/// drops, swaps, recipe changes and restart operations.
 /// </summary>
 internal sealed class PotionWindow : Base
 {
@@ -23,7 +23,7 @@ internal sealed class PotionWindow : Base
 
     private readonly Canvas _canvas;
     private readonly Base _content;
-    private readonly PotionPuzzle _puzzle;
+    private readonly Action<PotionRequestKind, int> _send;
     private readonly List<Placement> _placements = [];
     private readonly Button[] _dropButtons = new Button[PotionPuzzle.Columns];
 
@@ -39,14 +39,17 @@ internal sealed class PotionWindow : Base
     private readonly Button _restart;
 
     private PokerSceneLayout _layout;
+    private PotionSessionState? _state;
+    private string _error = string.Empty;
+    private bool _pending;
     private bool _destroyed;
 
     public bool ExitRequested { get; private set; }
 
-    public PotionWindow(Canvas canvas, int seed, string title) : base(canvas, nameof(PotionWindow))
+    public PotionWindow(Canvas canvas, Action<PotionRequestKind, int> send) : base(canvas, nameof(PotionWindow))
     {
         _canvas = canvas;
-        _puzzle = new PotionPuzzle(seed);
+        _send = send;
         _layout = new PokerSceneLayout(Math.Max(1, canvas.Width), Math.Max(1, canvas.Height));
 
         ShouldDrawBackground = false;
@@ -60,19 +63,19 @@ internal sealed class PotionWindow : Base
         };
 
         _title = Label("PotionTitle", 70, 30, 860, 42, 22);
-        _title.Text = string.IsNullOrWhiteSpace(title) ? "ROYAL ALCHEMY" : title.ToUpperInvariant();
+        _title.Text = "ROYAL ALCHEMY";
         _title.TextAlign = Pos.Center;
 
-        _recipe = Label("PotionRecipe", 65, 115, 315, 42, 18);
-        _requirements = Label("PotionRequirements", 65, 170, 315, 200, 14);
+        _recipe = Label("PotionRecipe", 65, 115, 315, 70, 18);
+        _requirements = Label("PotionRequirements", 65, 195, 315, 190, 14);
         _current = Label("PotionCurrent", 65, 395, 315, 54, 15);
         _next = Label("PotionNext", 65, 455, 315, 54, 13);
-        _score = Label("PotionScore", 65, 525, 315, 48, 14);
-        _status = Label("PotionStatus", 65, 585, 315, 70, 13);
+        _score = Label("PotionScore", 65, 525, 315, 60, 14);
+        _status = Label("PotionStatus", 65, 595, 315, 62, 13);
 
-        _swap = Button("PotionSwap", "Swap pair", 65, 675, 140, Swap);
-        _nextRecipe = Button("PotionNextRecipe", "Brew next", 215, 675, 165, NextRecipe);
-        _restart = Button("PotionRestart", "Restart board", 65, 718, 140, Restart);
+        _swap = Button("PotionSwap", "Swap pair", 65, 675, 140, () => Send(PotionRequestKind.Swap));
+        _nextRecipe = Button("PotionNextRecipe", "Brew next", 215, 675, 165, () => Send(PotionRequestKind.NextRecipe));
+        _restart = Button("PotionRestart", "Restart board", 65, 718, 140, () => Send(PotionRequestKind.Restart));
         Button("PotionExit", "Exit", 215, 718, 165, () => ExitRequested = true);
 
         for (var column = 0; column < PotionPuzzle.Columns; ++column)
@@ -84,12 +87,30 @@ internal sealed class PotionWindow : Base
                 BoardX + column * CellW + 2,
                 BoardY + PotionPuzzle.Rows * CellH + 18,
                 CellW - 5,
-                () => Drop(captured)
+                () => Send(PotionRequestKind.Drop, captured)
             );
         }
 
         ResizeToCanvas();
+    }
+
+    public void Update(PotionClientModel model)
+    {
+        if (_destroyed) return;
+        if (Width != _canvas.Width || Height != _canvas.Height) ResizeToCanvas();
+
+        _state = model.Current?.State;
+        _error = model.ErrorCode;
+        _pending = model.Pending;
         RefreshText();
+
+        for (var column = 0; column < _dropButtons.Length; ++column)
+            _dropButtons[column].IsDisabled =
+                _pending || _state == null || _state.Complete || _state.GameOver || EmptyCells(column) < 2;
+
+        _swap.IsDisabled = _pending || _state == null || _state.Complete || _state.GameOver;
+        _nextRecipe.IsDisabled = _pending || _state is not { Complete: true };
+        _restart.IsDisabled = _pending || _state == null;
     }
 
     public void ResizeToCanvas()
@@ -106,19 +127,6 @@ internal sealed class PotionWindow : Base
             if (placement.Control is Label label && placement.Font > 0)
                 label.FontSize = _layout.FontSize(placement.Font);
         }
-    }
-
-    public void Update()
-    {
-        if (_destroyed) return;
-        if (Width != _canvas.Width || Height != _canvas.Height) ResizeToCanvas();
-
-        for (var column = 0; column < _dropButtons.Length; ++column)
-            _dropButtons[column].IsDisabled = _puzzle.Complete || _puzzle.GameOver || _puzzle.EmptyCells(column) < 2;
-
-        _swap.IsDisabled = _puzzle.Complete || _puzzle.GameOver;
-        _nextRecipe.IsDisabled = !_puzzle.Complete;
-        _restart.IsDisabled = false;
     }
 
     protected override void Render(SkinBase skin)
@@ -151,7 +159,7 @@ internal sealed class PotionWindow : Base
             renderer.DrawFilledRect(new Rectangle(cell.X, cell.Y, cell.Width, 1));
             renderer.DrawFilledRect(new Rectangle(cell.X, cell.Y, 1, cell.Height));
 
-            if (_puzzle.Get(column, row) is { } piece)
+            if (PieceAt(column, row) is { } piece)
                 DrawPiece(renderer, cell, piece);
         }
     }
@@ -204,77 +212,80 @@ internal sealed class PotionWindow : Base
         }
     }
 
-    private void Drop(int column)
+    private PotionPiece? PieceAt(int column, int row)
     {
-        var result = _puzzle.Drop(column);
-        if (!result.Success)
+        if (_state?.Board is not { Length: PotionPuzzle.Columns * PotionPuzzle.Rows } board) return null;
+        var encoded = board[row * PotionPuzzle.Columns + column];
+        return encoded == 0 ? null : PotionStateEncoding.Decode(encoded);
+    }
+
+    private int EmptyCells(int column)
+    {
+        var count = 0;
+        for (var row = 0; row < PotionPuzzle.Rows; ++row)
+            if (PieceAt(column, row) == null) ++count;
+        return count;
+    }
+
+    private void Send(PotionRequestKind kind, int column = 0)
+    {
+        if (_pending) return;
+        _send(kind, column);
+    }
+
+    private void RefreshText()
+    {
+        if (_state == null)
         {
-            _status.Text = result.Error switch
-            {
-                "ColumnFull" => "That column needs room for both ingredients.",
-                "BoardFull" => "The cauldron board is full. Restart the board.",
-                _ => "This pair cannot be placed there.",
-            };
-            RefreshText(false);
+            _recipe.Text = "Waiting for Royal Alchemy...";
+            _requirements.Text = string.Empty;
+            _current.Text = string.Empty;
+            _next.Text = string.Empty;
+            _score.Text = string.Empty;
+            _status.Text = string.IsNullOrWhiteSpace(_error) ? "Connecting to the alchemy table..." : _error;
             return;
         }
 
-        if (result.RecipeCompleted)
-            _status.Text = $"Potion complete! +{result.ScoreGained} score. Brew the next recipe.";
-        else if (result.Merges.Length > 0)
-            _status.Text = $"Merge chain x{result.Merges.Max(merge => merge.Chain)} • +{result.ScoreGained} score";
-        else
-            _status.Text = "Pair placed. Build groups of 3 or more matching ingredients.";
-
-        RefreshText(false);
-    }
-
-    private void Swap()
-    {
-        _puzzle.SwapCurrent();
-        _status.Text = "Current pair reversed.";
-        RefreshText(false);
-    }
-
-    private void NextRecipe()
-    {
-        _puzzle.BeginNextRecipe();
-        _status.Text = "New recipe selected. Keep brewing on the same board.";
-        RefreshText(false);
-    }
-
-    private void Restart()
-    {
-        _puzzle.RestartBoard();
-        _status.Text = "Board cleared. Recipe progress restarted.";
-        RefreshText(false);
-    }
-
-    private void RefreshText(bool resetStatus = true)
-    {
-        _recipe.Text = _puzzle.Complete
-            ? $"✓ {_puzzle.Recipe.Name}"
-            : _puzzle.Recipe.Name;
+        _recipe.Text =
+            $"{(_state.Complete ? "✓ " : "")}{_state.RecipeName}\n" +
+            $"Requires Alchemy Lv {_state.RequiredLevel}\n" +
+            $"Reward: {_state.OutputQuantity:N0} x {_state.OutputItemName} (+{_state.CompletionExperience} XP)";
 
         _requirements.Text = string.Join(
             "\n\n",
-            _puzzle.Recipe.Requirements.Select((requirement, index) =>
+            _state.Requirements.Select(requirement =>
             {
-                var progress = _puzzle.Progress(index);
-                var done = progress >= requirement.Needed;
-                return $"{(done ? "✓" : "○")} {FamilyName(requirement.Family)} {LevelName(requirement.Level)}   {progress}/{requirement.Needed}";
+                var done = requirement.Progress >= requirement.Needed;
+                return $"{(done ? "✓" : "○")} {FamilyName((PotionFamily)requirement.Family)} {LevelName(requirement.Level)}   " +
+                       $"{requirement.Progress}/{requirement.Needed}";
             })
         );
 
-        _current.Text = $"CURRENT PAIR\n{PieceName(_puzzle.Current.First)}  +  {PieceName(_puzzle.Current.Second)}";
-        _next.Text = $"NEXT\n{PieceName(_puzzle.Next.First)}  +  {PieceName(_puzzle.Next.Second)}";
-        _score.Text = $"Score: {_puzzle.Score:N0}\nAlchemy XP: {_puzzle.Experience:N0}   Recipes: {_puzzle.RecipesCompleted}";
+        var currentFirst = PotionStateEncoding.Decode(_state.CurrentFirst);
+        var currentSecond = PotionStateEncoding.Decode(_state.CurrentSecond);
+        var nextFirst = PotionStateEncoding.Decode(_state.NextFirst);
+        var nextSecond = PotionStateEncoding.Decode(_state.NextSecond);
 
-        if (resetStatus)
-            _status.Text = "Choose a column. Three or more touching matches merge upward.";
+        _current.Text = $"CURRENT PAIR\n{PieceName(currentFirst)}  +  {PieceName(currentSecond)}";
+        _next.Text = $"NEXT\n{PieceName(nextFirst)}  +  {PieceName(nextSecond)}";
+        _score.Text =
+            $"Score: {_state.Score:N0}\nAlchemy Lv {_state.Level} | {_state.Experience:N0} XP | Brewed: {_state.RecipesCompleted:N0}";
 
-        Update();
+        _status.Text = !string.IsNullOrWhiteSpace(_error)
+            ? ErrorText(_error)
+            : _state.GameOver
+                ? "The board is full. Restart the board."
+                : _state.Status;
     }
+
+    private static string ErrorText(string value) => value switch
+    {
+        "ColumnFull" => "That column needs room for both ingredients.",
+        "StaleState" => "The board changed. State refreshed.",
+        "RewardStorageFull" => "Reward waiting: free inventory or bank space, then press Brew next again.",
+        "NoUnlockedRecipe" => "No recipe is unlocked at your current Alchemy level.",
+        _ => value,
+    };
 
     private static string PieceName(PotionPiece piece) => $"{FamilyName(piece.Family)} {LevelName(piece.Level)}";
 
