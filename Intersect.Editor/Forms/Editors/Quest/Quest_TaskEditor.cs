@@ -2,7 +2,9 @@
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Framework.Core.MiniGames;
@@ -25,6 +27,13 @@ public partial class QuestTaskEditor : UserControl
 
     private QuestTaskDescriptor mMyTask;
 
+    private readonly GroupBox _guidanceGroup = new();
+    private readonly ComboBox _guideAnimation = new();
+    private readonly ComboBox _guideResource = new();
+    private readonly Label _guideAnimationLabel = new();
+    private readonly Label _guideResourceLabel = new();
+    private readonly CheckBox _showNavigationArrow = new();
+
     public QuestTaskEditor(QuestDescriptor refQuest, QuestTaskDescriptor refTask)
     {
         if (refQuest == null)
@@ -38,6 +47,7 @@ public partial class QuestTaskEditor : UserControl
         }
 
         InitializeComponent();
+        InitializeGuidanceControls();
         mMyTask = refTask;
         mMyQuest = refQuest;
 
@@ -51,6 +61,7 @@ public partial class QuestTaskEditor : UserControl
         cmbTaskType.SelectedIndex = mMyTask == null ? -1 : (int) mMyTask.Objective;
         txtStartDesc.Text = mMyTask?.Description;
         UpdateFormElements();
+        LoadGuidanceControls();
         switch (cmbTaskType.SelectedIndex)
         {
             case 0: //Event Driven
@@ -134,6 +145,7 @@ public partial class QuestTaskEditor : UserControl
     {
         grpGatherItems.Hide();
         grpKillNpcs.Hide();
+        _guidanceGroup.Hide();
         cmbItem.Show();
         lblItem.Show();
         lblItemQuantity.Text = Strings.TaskEditor.gatheramount;
@@ -143,6 +155,9 @@ public partial class QuestTaskEditor : UserControl
                 break;
             case 1: //Gather Items
                 grpGatherItems.Show();
+                _guidanceGroup.Show();
+                _guideResourceLabel.Show();
+                _guideResource.Show();
                 cmbItem.Items.Clear();
                 cmbItem.Items.AddRange(ItemDescriptor.Names);
                 if (cmbItem.Items.Count > 0)
@@ -155,6 +170,9 @@ public partial class QuestTaskEditor : UserControl
                 break;
             case 2: //Kill Npcs
                 grpKillNpcs.Show();
+                _guidanceGroup.Show();
+                _guideResourceLabel.Hide();
+                _guideResource.Hide();
                 cmbNpc.Items.Clear();
                 cmbNpc.Items.AddRange(NPCDescriptor.Names);
                 if (cmbNpc.Items.Count > 0)
@@ -219,6 +237,12 @@ public partial class QuestTaskEditor : UserControl
     {
         mMyTask.Objective = (QuestObjective) cmbTaskType.SelectedIndex;
         mMyTask.Description = txtStartDesc.Text;
+        mMyTask.GuideAnimationId = AnimationIdFromGuideList(_guideAnimation.SelectedIndex);
+        mMyTask.ShowNavigationArrow = _showNavigationArrow.Checked;
+        mMyTask.GuideResourceId = mMyTask.Objective == QuestObjective.GatherItems
+            ? ResourceIdFromGuideList(_guideResource.SelectedIndex)
+            : Guid.Empty;
+
         switch (mMyTask.Objective)
         {
             case QuestObjective.EventDriven: //Event Driven
@@ -266,6 +290,77 @@ public partial class QuestTaskEditor : UserControl
 
         ParentForm.Close();
     }
+
+    private void InitializeGuidanceControls()
+    {
+        Size = new Size(255, 372);
+        grpEditor.Size = new Size(256, 366);
+        btnEditTaskEvent.Top = 303;
+        btnSave.Top = 332;
+        btnCancel.Top = 332;
+
+        _guidanceGroup.Text = "Quest Guidance";
+        _guidanceGroup.ForeColor = Color.Gainsboro;
+        _guidanceGroup.BackColor = Color.FromArgb(45, 45, 48);
+        _guidanceGroup.Location = new Point(9, 200);
+        _guidanceGroup.Size = new Size(236, 96);
+
+        _guideAnimationLabel.Text = "Marker animation:";
+        _guideAnimationLabel.AutoSize = true;
+        _guideAnimationLabel.Location = new Point(7, 22);
+        _guideAnimationLabel.ForeColor = Color.Gainsboro;
+
+        _guideAnimation.DropDownStyle = ComboBoxStyle.DropDownList;
+        _guideAnimation.Location = new Point(104, 18);
+        _guideAnimation.Size = new Size(116, 21);
+        _guideAnimation.Items.Add("None");
+        _guideAnimation.Items.AddRange(AnimationDescriptor.Names);
+
+        _guideResourceLabel.Text = "Resource:";
+        _guideResourceLabel.AutoSize = true;
+        _guideResourceLabel.Location = new Point(7, 49);
+        _guideResourceLabel.ForeColor = Color.Gainsboro;
+
+        _guideResource.DropDownStyle = ComboBoxStyle.DropDownList;
+        _guideResource.Location = new Point(104, 45);
+        _guideResource.Size = new Size(116, 21);
+        _guideResource.Items.Add("None");
+        _guideResource.Items.AddRange(ResourceDescriptor.Names);
+
+        _showNavigationArrow.Text = "Show objective arrow";
+        _showNavigationArrow.AutoSize = true;
+        _showNavigationArrow.Location = new Point(7, 72);
+        _showNavigationArrow.ForeColor = Color.Gainsboro;
+        _showNavigationArrow.BackColor = Color.Transparent;
+        _showNavigationArrow.Checked = true;
+
+        _guidanceGroup.Controls.Add(_guideAnimationLabel);
+        _guidanceGroup.Controls.Add(_guideAnimation);
+        _guidanceGroup.Controls.Add(_guideResourceLabel);
+        _guidanceGroup.Controls.Add(_guideResource);
+        _guidanceGroup.Controls.Add(_showNavigationArrow);
+        grpEditor.Controls.Add(_guidanceGroup);
+        _guidanceGroup.BringToFront();
+    }
+
+    private void LoadGuidanceControls()
+    {
+        _guideAnimation.SelectedIndex = GuideAnimationListIndex(mMyTask?.GuideAnimationId ?? Guid.Empty);
+        _guideResource.SelectedIndex = GuideResourceListIndex(mMyTask?.GuideResourceId ?? Guid.Empty);
+        _showNavigationArrow.Checked = mMyTask?.ShowNavigationArrow ?? true;
+    }
+
+    private static int GuideAnimationListIndex(Guid id) =>
+        id == Guid.Empty ? 0 : AnimationDescriptor.ListIndex(id) + 1;
+
+    private static Guid AnimationIdFromGuideList(int index) =>
+        index <= 0 ? Guid.Empty : AnimationDescriptor.IdFromList(index - 1);
+
+    private static int GuideResourceListIndex(Guid id) =>
+        id == Guid.Empty ? 0 : ResourceDescriptor.ListIndex(id) + 1;
+
+    private static Guid ResourceIdFromGuideList(int index) =>
+        index <= 0 ? Guid.Empty : ResourceDescriptor.IdFromList(index - 1);
 
     private static PotionRecipeDefinition[] PotionRecipes() =>
         (RewardConfiguration.Instance.PotionRecipes ?? [])
