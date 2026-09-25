@@ -58,6 +58,10 @@ internal sealed class InvasionResultWindow : Window
         Hide();
     }
 
+    protected override void EnsureInitialized()
+    {
+    }
+
     public void Apply(InvasionResultPacket result)
     {
         _headline.Text = result.Victory ? "ISLAND DEFENDED!" : "INVASION LOST";
