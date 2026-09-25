@@ -190,4 +190,6 @@ sealed class FaultStore : IMiniGameProgressStore
         if (ThrowAfterAward) { ThrowAfterAward = false; throw new IOException("test uncertain commit"); }
         return p;
     }
+    public MiniGameProgress AwardExperience(Guid id, string game, Guid group, long receipt, long experience) =>
+        _inner.AwardExperience(id, game, group, receipt, experience);
 }
