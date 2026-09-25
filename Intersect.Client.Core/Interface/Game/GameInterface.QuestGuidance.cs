@@ -4,12 +4,21 @@ public partial class GameInterface
 {
     private QuestGuidanceManager? _questGuidance;
 
-    private void UpdateQuestGuidance() =>
-        (_questGuidance ??= new QuestGuidanceManager(GameCanvas)).Update();
+    private void UpdateQuestGuidance()
+    {
+        var guidance = _questGuidance ??= new QuestGuidanceManager(GameCanvas);
+        guidance.SuppressOverlay =
+            (_worldMapWindow is { IsHidden: false }) ||
+            _pokerWindow != null ||
+            _blackjackWindow != null ||
+            _potionWindow != null;
+        guidance.Update();
+    }
 
     private void SetQuestGuidanceOverlaySuppressed(bool suppressed)
     {
-        (_questGuidance ??= new QuestGuidanceManager(GameCanvas)).SuppressOverlay = suppressed;
+        var guidance = _questGuidance ??= new QuestGuidanceManager(GameCanvas);
+        guidance.SuppressOverlay = suppressed;
     }
 
     private void DisposeQuestGuidance()
