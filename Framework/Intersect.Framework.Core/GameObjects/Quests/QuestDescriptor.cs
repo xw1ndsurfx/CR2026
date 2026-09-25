@@ -6,7 +6,6 @@ using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Framework.Core.Serialization;
-using Intersect.Framework.Core.MiniGames;
 using Intersect.Localization;
 using Intersect.Models;
 using Newtonsoft.Json;
@@ -211,6 +210,8 @@ public partial class QuestTaskDescriptor
 
     public Guid TargetId { get; set; }
 
+    public string TargetName { get; set; } = string.Empty;
+
     public int Quantity { get; set; }
 
     public string Description { get; set; } = string.Empty;
@@ -268,9 +269,7 @@ public partial class QuestTaskDescriptor
                 taskString = $"Brew {Quantity} potion recipe(s). {Description}".Trim();
                 break;
             case QuestObjective.PotionBrewSpecificRecipe:
-                var recipeName = RewardConfiguration.Instance.PotionRecipes
-                    .FirstOrDefault(recipe => recipe.Id == TargetId)?.Name ?? "potion recipe";
-                taskString = $"Brew {Quantity} x {recipeName}. {Description}".Trim();
+                taskString = $"Brew {Quantity} x {(string.IsNullOrWhiteSpace(TargetName) ? "potion recipe" : TargetName)}. {Description}".Trim();
                 break;
             case QuestObjective.PotionReachLevel:
                 taskString = $"Reach Alchemy level {Quantity}. {Description}".Trim();
