@@ -17,6 +17,14 @@ public readonly record struct PotionPair(PotionPiece First, PotionPiece Second)
     public PotionPair Swapped() => new(Second, First);
 }
 
+public enum PotionPairOrientation
+{
+    Vertical = 0,
+    Horizontal = 1,
+    VerticalReversed = 2,
+    HorizontalReversed = 3,
+}
+
 public readonly record struct PotionRequirement(PotionFamily Family, int Level, int Needed)
 {
     public bool IsValid => Level is >= 1 and <= 4 && Needed is >= 1 and <= 20 && Enum.IsDefined(Family);
@@ -90,15 +98,43 @@ public sealed class PotionPuzzle
         if (!Complete && !GameOver) Current = Current.Swapped();
     }
 
-    public PotionDropResult Drop(int column)
+    public PotionDropResult Drop(int column) => Drop(column, PotionPairOrientation.Vertical);
+
+    public PotionDropResult Drop(int column, PotionPairOrientation orientation)
     {
         if (Complete) return new(false, "RecipeComplete", [], 0, true);
         if (GameOver) return new(false, "BoardFull", [], 0, false);
         if (column is < 0 or >= Columns) return new(false, "InvalidColumn", [], 0, false);
-        if (EmptyCells(column) < 2) return new(false, "ColumnFull", [], 0, false);
+        if (!Enum.IsDefined(orientation)) return new(false, "InvalidOrientation", [], 0, false);
 
-        PlaceBottom(column, Current.First);
-        PlaceBottom(column, Current.Second);
+        switch (orientation)
+        {
+            case PotionPairOrientation.Vertical:
+                if (EmptyCells(column) < 2) return new(false, "ColumnFull", [], 0, false);
+                PlaceBottom(column, Current.First);
+                PlaceBottom(column, Current.Second);
+                break;
+
+            case PotionPairOrientation.VerticalReversed:
+                if (EmptyCells(column) < 2) return new(false, "ColumnFull", [], 0, false);
+                PlaceBottom(column, Current.Second);
+                PlaceBottom(column, Current.First);
+                break;
+
+            case PotionPairOrientation.Horizontal:
+                if (column >= Columns - 1 || EmptyCells(column) < 1 || EmptyCells(column + 1) < 1)
+                    return new(false, "HorizontalBlocked", [], 0, false);
+                PlaceBottom(column, Current.First);
+                PlaceBottom(column + 1, Current.Second);
+                break;
+
+            case PotionPairOrientation.HorizontalReversed:
+                if (column >= Columns - 1 || EmptyCells(column) < 1 || EmptyCells(column + 1) < 1)
+                    return new(false, "HorizontalBlocked", [], 0, false);
+                PlaceBottom(column, Current.Second);
+                PlaceBottom(column + 1, Current.First);
+                break;
+        }
 
         var merges = new List<PotionMerge>();
         var gained = Resolve(merges);
@@ -114,7 +150,7 @@ public sealed class PotionPuzzle
             Score += 100;
         }
 
-        GameOver = !Complete && Enumerable.Range(0, Columns).All(c => EmptyCells(c) < 2);
+        GameOver = !Complete && !HasAnyPlacement();
         return new(true, string.Empty, merges.ToArray(), gained + (Complete ? 100 : 0), Complete);
     }
 
@@ -126,7 +162,7 @@ public sealed class PotionPuzzle
         Recipe = recipe;
         _progress = new int[Recipe.Requirements.Length];
         Complete = false;
-        GameOver = Enumerable.Range(0, Columns).All(c => EmptyCells(c) < 2);
+        GameOver = !HasAnyPlacement();
     }
 
     public void RestartBoard()
@@ -138,6 +174,17 @@ public sealed class PotionPuzzle
         GameOver = false;
         Current = RollPair();
         Next = RollPair();
+    }
+
+    private bool HasAnyPlacement()
+    {
+        for (var column = 0; column < Columns; ++column)
+        {
+            if (EmptyCells(column) >= 2) return true;
+            if (column < Columns - 1 && EmptyCells(column) >= 1 && EmptyCells(column + 1) >= 1) return true;
+        }
+
+        return false;
     }
 
     private void PlaceBottom(int column, PotionPiece piece)
