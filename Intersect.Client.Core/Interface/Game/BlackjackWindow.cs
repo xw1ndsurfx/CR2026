@@ -121,7 +121,7 @@ internal sealed partial class BlackjackWindow : Base
         for(var slot=0;slot<5;slot++)
         {
             var p=s.Seats.FirstOrDefault(p=>(p.Seat-me.Seat+5)%5==slot);var(x,y,w)=Panel(slot);
-            _names[slot].Text=p==null?"Empty seat":Short(p.Name+(p.PlayerId==me.PlayerId?" (you)":p.Npc?" [NPC]":""),27);
+            _names[slot].Text=p==null?(_tableSkin?.Texture==null?"Empty seat":""):Short(p.Name+(p.PlayerId==me.PlayerId?" (you)":p.Npc?" [NPC]":""),27);
             _names[slot].TextColorOverride=p?.Seat==s.ActingSeat?Gold:Color.White;
             _balances[slot].Text=p==null?"":$"Balance: {p.Chips}";
             _decisions[slot].Text=p==null?"":p.Leaving?"Leaving after settlement":Short(p.LastAction,35);
@@ -168,14 +168,17 @@ internal sealed partial class BlackjackWindow : Base
     protected override void Render(SkinBase skin)
     {
         var r=skin.Renderer;r.DrawColor=new Color(240,14,19,17);r.DrawFilledRect(new Rectangle(0,0,Width,Height));
-        Ellipse(skin,new Color(121,76,39),130,97,740,456);Ellipse(skin,new Color(37,91,59),147,114,706,423);
-        foreach(var slot in Enumerable.Range(0,5))
+        if(_tableSkin?.Texture==null)
         {
-            var(x,y,w)=Panel(slot);Fill(skin,new Color(25,36,30),x-6,y-7,w+12,slot==0?177:167);
-            var p=_state?.Seats.FirstOrDefault(s=>(s.Seat-_localSeat+5)%5==slot);
-            if(p!=null && _portraits[slot].IsHidden)
-            {Fill(skin,new Color(174,140,105),x+9,y+2,17,18);Fill(skin,new Color(82,71,50),x+2,y+22,31,22);}
-            if(p!=null && p.Seat==_state?.ActingSeat)Fill(skin,Gold,x-6,y-7,w+12,2);
+            Ellipse(skin,new Color(121,76,39),130,97,740,456);Ellipse(skin,new Color(37,91,59),147,114,706,423);
+            foreach(var slot in Enumerable.Range(0,5))
+            {
+                var(x,y,w)=Panel(slot);Fill(skin,new Color(25,36,30),x-6,y-7,w+12,slot==0?177:167);
+                var p=_state?.Seats.FirstOrDefault(s=>(s.Seat-_localSeat+5)%5==slot);
+                if(p!=null && _portraits[slot].IsHidden)
+                {Fill(skin,new Color(174,140,105),x+9,y+2,17,18);Fill(skin,new Color(82,71,50),x+2,y+22,31,22);}
+                if(p!=null && p.Seat==_state?.ActingSeat)Fill(skin,Gold,x-6,y-7,w+12,2);
+            }
         }
         Fill(skin,new Color(21,29,25),24,570,952,164);
         Fill(skin,new Color(76,135,89),40,708,550,18);Fill(skin,new Color(14,32,21),41,709,548,16);
