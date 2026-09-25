@@ -215,6 +215,7 @@ internal sealed class PotionWindow : Base
         if (_destroyed) return;
 
         SetBounds(0, 0, Math.Max(1, _canvas.Width), Math.Max(1, _canvas.Height));
+        _content.SetBounds(0, 0, Width, Height);
         _layout = new PokerSceneLayout(Width, Height);
 
         foreach (var placement in _placements)
