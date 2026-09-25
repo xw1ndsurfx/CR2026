@@ -54,7 +54,7 @@ internal sealed class PotionWindow : Base
 
         protected override void OnMouseClicked(
             MouseButton mouseButton,
-            Intersect.Client.Framework.GenericClasses.Point mousePosition,
+            Intersect.Framework.Point mousePosition,
             bool userAction = true)
         {
             base.OnMouseClicked(mouseButton, mousePosition, userAction);
