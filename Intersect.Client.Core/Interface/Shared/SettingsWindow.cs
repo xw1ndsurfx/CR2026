@@ -44,6 +44,7 @@ public partial class SettingsWindow : Window
     private readonly LabeledCheckBox _showHealthAsPercentageCheckbox;
     private readonly LabeledCheckBox _showManaAsPercentageCheckbox;
     private readonly LabeledCheckBox _simplifiedEscapeMenu;
+    private readonly LabeledCheckBox _showQuestGuidanceArrowCheckbox;
 
     // Game Settings - Information
     private readonly TabButton _gameSettingsTabInformation;
@@ -227,6 +228,17 @@ public partial class SettingsWindow : Window
             Font = _defaultFont,
             FontSize = 12,
             Text = Strings.Settings.SimplifiedEscapeMenu,
+        };
+
+        _showQuestGuidanceArrowCheckbox = new LabeledCheckBox(
+            parent: _interfaceSettings,
+            name: nameof(_showQuestGuidanceArrowCheckbox)
+        )
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 12,
+            Text = Strings.Settings.ShowQuestGuidanceArrow,
         };
 
         // Game Settings - Typewriter Text
@@ -1008,6 +1020,7 @@ public partial class SettingsWindow : Window
         _showManaAsPercentageCheckbox.IsChecked = Globals.Database.ShowManaAsPercentage;
         _showExperienceAsPercentageCheckbox.IsChecked = Globals.Database.ShowExperienceAsPercentage;
         _simplifiedEscapeMenu.IsChecked = Globals.Database.SimplifiedEscapeMenu;
+        _showQuestGuidanceArrowCheckbox.IsChecked = Globals.Database.ShowQuestGuidanceArrow;
         _friendOverheadInfoCheckbox.IsChecked = Globals.Database.FriendOverheadInfo;
         _guildMemberOverheadInfoCheckbox.IsChecked = Globals.Database.GuildMemberOverheadInfo;
         _myOverheadInfoCheckbox.IsChecked = Globals.Database.MyOverheadInfo;
@@ -1189,6 +1202,7 @@ public partial class SettingsWindow : Window
         Globals.Database.ShowHealthAsPercentage = _showHealthAsPercentageCheckbox.IsChecked;
         Globals.Database.ShowManaAsPercentage = _showManaAsPercentageCheckbox.IsChecked;
         Globals.Database.SimplifiedEscapeMenu = _simplifiedEscapeMenu.IsChecked;
+        Globals.Database.ShowQuestGuidanceArrow = _showQuestGuidanceArrowCheckbox.IsChecked;
         Globals.Database.FriendOverheadInfo = _friendOverheadInfoCheckbox.IsChecked;
         Globals.Database.GuildMemberOverheadInfo = _guildMemberOverheadInfoCheckbox.IsChecked;
         Globals.Database.MyOverheadInfo = _myOverheadInfoCheckbox.IsChecked;
