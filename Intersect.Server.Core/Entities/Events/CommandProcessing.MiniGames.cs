@@ -8,6 +8,7 @@ using Intersect.Network.Packets.Server;
 using Intersect.Server.MiniGames;
 using Intersect.Server.MiniGames.Blackjack;
 using Intersect.Server.MiniGames.Poker;
+using Intersect.Server.MiniGames.Potions;
 using Intersect.Server.Networking;
 
 namespace Intersect.Server.Entities.Events;
@@ -26,12 +27,15 @@ public static partial class CommandProcessing
         }
         if (command.Game == MiniGameType.Potions)
         {
-            player.SendPacket(new PotionMiniGamePacket
+            if (!PotionRuntime.Join(player))
             {
-                SessionId = Guid.NewGuid(),
-                Seed = Random.Shared.Next(1, int.MaxValue),
-                Title = "Royal Alchemy",
-            });
+                PacketSender.SendChatMsg(
+                    player,
+                    "[Potions] Unable to start Royal Alchemy. Configure at least one recipe unlocked at level 1.",
+                    ChatMessageType.Error,
+                    Color.White
+                );
+            }
             return;
         }
 
@@ -53,6 +57,7 @@ public static partial class CommandProcessing
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
         if (player == null) return;
+        if (PotionRuntime.Leave(player)) return;
         if (!BlackjackRuntime.Leave(player)) PokerRuntime.Leave(player);
     }
 }
