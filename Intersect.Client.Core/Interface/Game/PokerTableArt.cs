@@ -91,7 +91,7 @@ internal sealed class PokerTableArt
             Fit(_choices[slot], Back(slot), layout.LocalRect(36 + slot * 108, 15, 48, 74));
         }
         var selectedBack = Back(me.SelectedCardBackId);
-        Fit(_selectedBack, selectedBack, layout.Rect(662, 674, 38, 54));
+        Fit(_selectedBack, selectedBack, layout.Rect(773, 674, 38, 54));
         SelectedBackMissing = Lookup(PokerCardAssets.BackFileName(me.SelectedCardBackId)) == null;
         if (_deals.Observe(table, state.HandId, state.Board.Length)) BeginAnimation(state.DealAnimationId);
         AdvanceAnimation(layout);
