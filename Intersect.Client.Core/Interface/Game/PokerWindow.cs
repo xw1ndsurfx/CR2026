@@ -145,6 +145,7 @@ internal sealed partial class PokerWindow : Base
                 seat.AllIn ? Strings.Poker.AllIn : !seat.InHand ? Strings.Poker.Waiting : seat.Seat == state.DealerSeat ? "(B)" : "";
             var decision = seat == null ? null : state.Decisions.LastOrDefault(d => d.PlayerId == seat.PlayerId);
             _decisions[slot].Text = decision == null ? "" : Describe(decision);
+            _decisions[slot].IsHidden = _tableSkin?.Texture != null;
             _names[slot].TextColorOverride = seat?.Seat == state.ActingSeat ? Gold : Color.White;
             _decisions[slot].TextColorOverride = decision?.Action == "wins" ? Gold : Color.White;
         }
@@ -153,7 +154,8 @@ internal sealed partial class PokerWindow : Base
         var recent = state.Decisions.TakeLast(3).ToArray();
         for (var i = 0; i < 3; ++i) _feed[i].Text = i < recent.Length ? Short(recent[i].Name + ": " + Describe(recent[i]), 40) : "";
         _payouts.Text = state.NetWin > 0 ? Strings.PokerScene.Net.ToString(state.NetWin) : "";
-        _back.Text = Strings.PokerScene.Back.ToString(_selectedBack + 1); _back.IsDisabled = model.Pending || me.Leaving;
+        _back.Text = _cardsSkinApplied ? string.Empty : Strings.PokerScene.Back.ToString(_selectedBack + 1);
+        _back.IsDisabled = model.Pending || me.Leaving;
         _backStatus.Text = _art.SelectedBackMissing ? Strings.PokerCosmetics.MissingArt : Strings.PokerCosmetics.Selected;
         for (var i = 0; i < 6; ++i)
         {
