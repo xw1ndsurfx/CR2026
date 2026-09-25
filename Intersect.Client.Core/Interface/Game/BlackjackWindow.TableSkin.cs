@@ -79,6 +79,13 @@ internal sealed partial class BlackjackWindow
         }
 
         SetTableSkinBounds(_tableSkin, _layout.Rect(120, 102, 760, 380));
+        if (_tableSkin.Texture != null)
+        {
+            // Render the table in BlackjackWindow.Render so the coded
+            // semi-3D card/chip motions remain visible above it.
+            _tableSkin.IsHidden = true;
+        }
+
         SetTableSkinBounds(_topSkin, _layout.Rect(319, 12, 362, 48));
         SetTableSkinBounds(_timerSkin, _layout.Rect(926, 92, 54, 113));
         SetTableSkinBounds(_timerFillSkin, _layout.Rect(945, 113, 16, 82));
@@ -273,6 +280,26 @@ internal sealed partial class BlackjackWindow
         var height = Math.Max(1, (int)Math.Round(full.Height * fraction));
         _timerFillSkin.SetBounds(full.X, full.Y + full.Height - height, full.Width, height);
         _timerFillSkin.IsHidden = false;
+    }
+
+    private void RenderTableSkinBackground(RendererBase renderer)
+    {
+        if (_tableSkin?.Texture is not { } texture)
+        {
+            return;
+        }
+
+        var bounds = _tableSkin.Bounds;
+        renderer.DrawColor = Color.White;
+        renderer.DrawTexturedRect(
+            texture,
+            new Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height),
+            Color.White,
+            0f,
+            0f,
+            1f,
+            1f
+        );
     }
 
     private IEnumerable<Button> TableActionButtons()
