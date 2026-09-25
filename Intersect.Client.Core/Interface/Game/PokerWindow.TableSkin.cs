@@ -96,6 +96,13 @@ internal sealed partial class PokerWindow
         }
 
         SetTableSkinBounds(_tableSkin, _layout.Rect(180, 72, 640, 512));
+        if (_tableSkin.Texture != null)
+        {
+            // The table is rendered by PokerWindow.Render so the procedural
+            // semi-3D motions can be drawn on top of it.
+            _tableSkin.IsHidden = true;
+        }
+
         SetTableSkinBounds(_topSkin, _layout.Rect(319, 10, 362, 48));
         SetTableSkinBounds(_timerSkin, _layout.Rect(926, 92, 54, 113));
         SetTableSkinBounds(_timerFillSkin, _layout.Rect(945, 113, 16, 82));
@@ -283,6 +290,26 @@ internal sealed partial class PokerWindow
         var height = Math.Max(1, (int)Math.Round(full.Height * fraction));
         _timerFillSkin.SetBounds(full.X, full.Y + full.Height - height, full.Width, height);
         _timerFillSkin.IsHidden = false;
+    }
+
+    private void RenderTableSkinBackground(RendererBase renderer)
+    {
+        if (_tableSkin?.Texture is not { } texture)
+        {
+            return;
+        }
+
+        var bounds = _tableSkin.Bounds;
+        renderer.DrawColor = Color.White;
+        renderer.DrawTexturedRect(
+            texture,
+            new Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height),
+            Color.White,
+            0f,
+            0f,
+            1f,
+            1f
+        );
     }
 
     private IEnumerable<Button> TableActionButtons()
