@@ -10,6 +10,9 @@ public static partial class CommandPrinter
     private static string GetCommandText(StartMiniGameCommand command, MapInstance map)
     {
         var game = MiniGameCatalog.TryGet(command.Game, out var definition) ? definition.DisplayName : command.Game.ToString();
+        if (command.Game == MiniGameType.Potions)
+            return $"Start {game}: 8x10 board | falling pairs | 3+ merge chains";
+
         var mode = command.CurrencyItemId == Guid.Empty
             ? $"{command.StartingChips} test chips"
             : $"Buy-in {command.StartingChips} {ItemDescriptor.GetName(command.CurrencyItemId)}";
