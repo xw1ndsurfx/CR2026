@@ -280,15 +280,20 @@ internal sealed class PotionWindow : Base
         _error = model.ErrorCode;
         _pending = model.Pending;
         RefreshText();
+        RefreshRecipePicker();
+
+        var selectingRecipe = _state?.RecipeSelectionRequired == true;
+        _recipePicker.IsHidden = !selectingRecipe;
+        if (selectingRecipe) _recipePicker.BringToFront();
 
         for (var column = 0; column < _dropButtons.Length; ++column)
             _dropButtons[column].IsDisabled =
-                _pending || _state == null || _state.Complete || _state.GameOver || EmptyCells(column) < 2;
+                selectingRecipe || _pending || _state == null || _state.Complete || _state.GameOver || EmptyCells(column) < 2;
 
-        _swap.IsDisabled = _pending || _state == null || _state.Complete || _state.GameOver;
-        _nextRecipe.IsDisabled = _pending || _state is not { Complete: true };
-        _restart.IsDisabled = _pending || _state == null || _state.Complete;
-        _boardInput.IsDisabled = _pending || _state == null || _state.Complete || _state.GameOver;
+        _swap.IsDisabled = selectingRecipe || _pending || _state == null || _state.Complete || _state.GameOver;
+        _nextRecipe.IsDisabled = selectingRecipe || _pending || _state is not { Complete: true };
+        _restart.IsDisabled = selectingRecipe || _pending || _state == null || _state.Complete;
+        _boardInput.IsDisabled = selectingRecipe || _pending || _state == null || _state.Complete || _state.GameOver;
 
         UpdatePreviewMotion();
         UpdateFx();
@@ -310,6 +315,30 @@ internal sealed class PotionWindow : Base
             if (placement.Control is Label label && placement.Font > 0)
                 label.FontSize = _layout.FontSize(placement.Font);
         }
+
+        var picker = _layout.Rect(190, 115, 620, 540);
+        _recipePicker.SetBounds(picker.X, picker.Y, picker.Width, picker.Height);
+
+        var pickerTitle = _layout.LocalRect(20, 18, 580, 38);
+        _recipePickerTitle.SetBounds(pickerTitle.X, pickerTitle.Y, pickerTitle.Width, pickerTitle.Height);
+        _recipePickerTitle.FontSize = _layout.FontSize(18);
+
+        for (var i = 0; i < _recipeButtons.Length; ++i)
+        {
+            var column = i % 2;
+            var row = i / 2;
+            var button = _layout.LocalRect(24 + column * 286, 72 + row * 92, 270, 78);
+            _recipeButtons[i].SetBounds(button.X, button.Y, button.Width, button.Height);
+            _recipeButtons[i].FontSize = _layout.FontSize(11);
+        }
+
+        var prev = _layout.LocalRect(24, 454, 130, 38);
+        _recipePrev.SetBounds(prev.X, prev.Y, prev.Width, prev.Height);
+        var page = _layout.LocalRect(165, 454, 290, 38);
+        _recipePickerPage.SetBounds(page.X, page.Y, page.Width, page.Height);
+        _recipePickerPage.FontSize = _layout.FontSize(11);
+        var next = _layout.LocalRect(466, 454, 130, 38);
+        _recipeNextPage.SetBounds(next.X, next.Y, next.Width, next.Height);
     }
 
     protected override void Render(SkinBase skin)
@@ -334,6 +363,8 @@ internal sealed class PotionWindow : Base
         var board = _layout.Rect(BoardX, BoardY, PotionPuzzle.Columns * CellW, PotionPuzzle.Rows * CellH);
         renderer.DrawColor = new Color(37, 67, 45);
         renderer.DrawFilledRect(new Rectangle(board.X, board.Y, board.Width, board.Height));
+
+        DrawExperienceBar(renderer);
 
         if (_hoverColumn >= 0 && _state is { Complete: false, GameOver: false } hoverState)
         {
@@ -369,6 +400,89 @@ internal sealed class PotionWindow : Base
         DrawPulses(renderer, now);
         DrawFallingPieces(renderer, now);
         DrawHoverPair(renderer);
+    }
+
+    private void DrawExperienceBar(RendererBase renderer)
+    {
+        if (_state == null) return;
+
+        var bounds = _layout.Rect(65, 589, 315, 14);
+        renderer.DrawColor = new Color(80, 145, 100, 55);
+        renderer.DrawFilledRect(new Rectangle(bounds.X - 1, bounds.Y - 1, bounds.Width + 2, bounds.Height + 2));
+
+        renderer.DrawColor = new Color(35, 18, 35, 25);
+        renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height));
+
+        double fraction;
+        if (_state.Level >= MiniGameProgression.MaximumLevel)
+        {
+            fraction = 1d;
+        }
+        else
+        {
+            var start = MiniGameProgression.ExperienceAtLevel(_state.Level);
+            var next = MiniGameProgression.ExperienceAtLevel(_state.Level + 1);
+            fraction = Math.Clamp((_state.Experience - start) / (double)Math.Max(1, next - start), 0d, 1d);
+        }
+
+        var fill = (int)Math.Round(bounds.Width * fraction);
+        if (fill > 0)
+        {
+            renderer.DrawColor = new Color(255, 56, 196, 91);
+            renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, fill, bounds.Height));
+        }
+    }
+
+    private void SelectRecipeSlot(int slot)
+    {
+        if (_state?.RecipeSelectionRequired != true || _pending) return;
+        var index = _recipePage * _recipeButtons.Length + slot;
+        if (index < 0 || index >= _state.RecipeChoices.Length) return;
+
+        var recipe = _state.RecipeChoices[index];
+        if (!recipe.Unlocked)
+        {
+            _status.Text = $"Requires Alchemy Lv {recipe.RequiredLevel}.";
+            return;
+        }
+
+        Send(PotionRequestKind.SelectRecipe, 0, recipe.Id);
+    }
+
+    private void RefreshRecipePicker()
+    {
+        var choices = _state?.RecipeChoices ?? [];
+        var pageCount = Math.Max(1, (choices.Length + _recipeButtons.Length - 1) / _recipeButtons.Length);
+        _recipePage = Math.Clamp(_recipePage, 0, pageCount - 1);
+
+        _recipePickerTitle.Text = _state == null
+            ? "CHOOSE A RECIPE"
+            : $"CHOOSE A RECIPE   •   ALCHEMY LV {_state.Level}";
+
+        for (var slot = 0; slot < _recipeButtons.Length; ++slot)
+        {
+            var button = _recipeButtons[slot];
+            var index = _recipePage * _recipeButtons.Length + slot;
+            if (index >= choices.Length)
+            {
+                button.IsHidden = true;
+                continue;
+            }
+
+            var recipe = choices[index];
+            button.IsHidden = false;
+            button.IsDisabled = _pending || !recipe.Unlocked;
+            button.Text = recipe.Unlocked
+                ? $"Lv {recipe.RequiredLevel}  {recipe.Name}\n{recipe.OutputQuantity:N0} x {recipe.OutputItemName}   •   +{recipe.CompletionExperience} XP"
+                : $"[LOCKED - Lv {recipe.RequiredLevel}]  {recipe.Name}\n{recipe.OutputQuantity:N0} x {recipe.OutputItemName}";
+            button.TextColorOverride = recipe.Unlocked
+                ? Color.White
+                : new Color(255, 145, 125, 110);
+        }
+
+        _recipePickerPage.Text = $"Page {_recipePage + 1} / {pageCount}";
+        _recipePrev.IsDisabled = _pending || _recipePage <= 0;
+        _recipeNextPage.IsDisabled = _pending || _recipePage >= pageCount - 1;
     }
 
     private void DrawPanel(RendererBase renderer, int x, int y, int width, int height, Color fill, Color border)
@@ -629,10 +743,10 @@ internal sealed class PotionWindow : Base
         return count;
     }
 
-    private void Send(PotionRequestKind kind, int column = 0)
+    private void Send(PotionRequestKind kind, int column = 0, Guid recipeId = default)
     {
         if (_pending) return;
-        _send(kind, column);
+        _send(kind, column, recipeId);
     }
 
     private void RefreshText()
@@ -644,6 +758,7 @@ internal sealed class PotionWindow : Base
             _current.Text = string.Empty;
             _next.Text = string.Empty;
             _score.Text = string.Empty;
+            _xpLabel.Text = string.Empty;
             _status.Text = string.IsNullOrWhiteSpace(_error) ? "Connecting to the alchemy table..." : _error;
             return;
         }
@@ -671,8 +786,17 @@ internal sealed class PotionWindow : Base
         var orientation = (PotionPairOrientation)_state.Orientation;
         _current.Text = $"CURRENT PAIR ({OrientationName(orientation)})\n{PieceName(currentFirst)}  +  {PieceName(currentSecond)}";
         _next.Text = $"NEXT\n{PieceName(nextFirst)}  +  {PieceName(nextSecond)}";
-        _score.Text =
-            $"Score: {_state.Score:N0}\nAlchemy Lv {_state.Level} | {_state.Experience:N0} XP | Brewed: {_state.RecipesCompleted:N0}";
+        _score.Text = $"Score: {_state.Score:N0}   |   Brewed: {_state.RecipesCompleted:N0}";
+
+        var levelStart = MiniGameProgression.ExperienceAtLevel(_state.Level);
+        var nextLevel = _state.Level >= MiniGameProgression.MaximumLevel
+            ? MiniGameProgression.MaximumExperience
+            : MiniGameProgression.ExperienceAtLevel(_state.Level + 1);
+        var levelXp = Math.Max(0, _state.Experience - levelStart);
+        var levelNeed = Math.Max(1, nextLevel - levelStart);
+        _xpLabel.Text = _state.Level >= MiniGameProgression.MaximumLevel
+            ? $"Alchemy Lv {_state.Level}   MAX LEVEL"
+            : $"Alchemy Lv {_state.Level}   {levelXp:N0} / {levelNeed:N0} XP";
 
         _status.Text = !string.IsNullOrWhiteSpace(_error)
             ? ErrorText(_error)
@@ -689,6 +813,10 @@ internal sealed class PotionWindow : Base
         "StaleState" => "The board changed. State refreshed.",
         "RewardStorageFull" => "Reward waiting: free inventory or bank space, then press Brew next again.",
         "NoUnlockedRecipe" => "No recipe is unlocked at your current Alchemy level.",
+        "ChooseRecipe" => "Choose a recipe before brewing.",
+        "RecipeLocked" => "That recipe requires a higher Alchemy level.",
+        "RecipeNotFound" => "That recipe is no longer available.",
+        "RecipeSelectionClosed" => "The recipe has already been selected for this run.",
         _ => value,
     };
 
