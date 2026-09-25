@@ -5,6 +5,8 @@ using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
+using Intersect.Framework.Core.MiniGames;
+using Intersect.Framework.Core.MiniGames.Potions;
 using Intersect.GameObjects;
 using Microsoft.Extensions.Logging;
 
@@ -70,6 +72,13 @@ public partial class QuestTaskEditor : UserControl
             case 8:
             case 9:
             case 10:
+            case 11:
+            case 13:
+            case 14:
+                nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
+                break;
+            case 12:
+                cmbItem.SelectedIndex = PotionRecipeListIndex(mMyTask?.TargetId ?? Guid.Empty);
                 nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
                 break;
         }
@@ -93,6 +102,10 @@ public partial class QuestTaskEditor : UserControl
         cmbTaskType.Items.Add("Blackjack - Win net amount");
         cmbTaskType.Items.Add("Blackjack - Reach level");
         cmbTaskType.Items.Add("Blackjack - Play hands");
+        cmbTaskType.Items.Add("Potions - Brew recipes");
+        cmbTaskType.Items.Add("Potions - Brew specific recipe");
+        cmbTaskType.Items.Add("Potions - Reach Alchemy level");
+        cmbTaskType.Items.Add("Potions - Earn score");
 
         lblDesc.Text = Strings.TaskEditor.desc;
 
@@ -152,13 +165,30 @@ public partial class QuestTaskEditor : UserControl
             case 8:
             case 9:
             case 10:
+            case 11:
+            case 13:
+            case 14:
                 grpGatherItems.Show();
                 grpGatherItems.Text = cmbTaskType.SelectedItem?.ToString() ?? "Mini-game objective";
                 cmbItem.Hide();
                 lblItem.Hide();
-                var isLevel = cmbTaskType.SelectedIndex is 5 or 9;
+                var isLevel = cmbTaskType.SelectedIndex is 5 or 9 or 13;
                 lblItemQuantity.Text = isLevel ? "Level:" : "Target:";
-                nudItemAmount.Maximum = isLevel ? 25 : 1_000_000_000;
+                nudItemAmount.Maximum = isLevel ? MiniGameProgression.MaximumLevel : 1_000_000_000;
+                nudItemAmount.Value = 1;
+                break;
+
+            case 12:
+                grpGatherItems.Show();
+                grpGatherItems.Text = cmbTaskType.SelectedItem?.ToString() ?? "Potions - Brew specific recipe";
+                cmbItem.Show();
+                lblItem.Show();
+                lblItem.Text = "Recipe:";
+                lblItemQuantity.Text = "Count:";
+                cmbItem.Items.Clear();
+                cmbItem.Items.AddRange(PotionRecipes().Select(recipe => recipe.Name).ToArray());
+                if (cmbItem.Items.Count > 0) cmbItem.SelectedIndex = 0;
+                nudItemAmount.Maximum = 1_000_000_000;
                 nudItemAmount.Value = 1;
                 break;
         }
@@ -192,12 +222,36 @@ public partial class QuestTaskEditor : UserControl
             case QuestObjective.BlackjackWinAmount:
             case QuestObjective.BlackjackReachLevel:
             case QuestObjective.BlackjackPlayHands:
+            case QuestObjective.PotionBrewRecipes:
+            case QuestObjective.PotionReachLevel:
+            case QuestObjective.PotionEarnScore:
                 mMyTask.TargetId = Guid.Empty;
+                mMyTask.Quantity = (int) nudItemAmount.Value;
+                break;
+
+            case QuestObjective.PotionBrewSpecificRecipe:
+                mMyTask.TargetId = PotionRecipeIdFromList(cmbItem.SelectedIndex);
                 mMyTask.Quantity = (int) nudItemAmount.Value;
                 break;
         }
 
         ParentForm.Close();
+    }
+
+    private static PotionRecipeDefinition[] PotionRecipes() =>
+        (RewardConfiguration.Instance.PotionRecipes ?? [])
+            .Where(recipe => recipe.IsStructurallyValid)
+            .OrderBy(recipe => recipe.RequiredLevel)
+            .ThenBy(recipe => recipe.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+    private static int PotionRecipeListIndex(Guid id) =>
+        Array.FindIndex(PotionRecipes(), recipe => recipe.Id == id);
+
+    private static Guid PotionRecipeIdFromList(int index)
+    {
+        var recipes = PotionRecipes();
+        return index >= 0 && index < recipes.Length ? recipes[index].Id : Guid.Empty;
     }
 
     private void btnCancel_Click(object sender, EventArgs e)
