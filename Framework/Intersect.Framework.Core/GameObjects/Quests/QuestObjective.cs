@@ -31,4 +31,10 @@ public enum QuestObjective
     PotionReachLevel,
 
     PotionEarnScore,
+
+    PotionReachChain,
+
+    PotionBrewUnderOccupiedCells,
+
+    PotionBrewSpecificRecipeMinScore,
 }
