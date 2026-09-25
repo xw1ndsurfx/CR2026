@@ -2,6 +2,7 @@ using DarkUI.Forms;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
+using Intersect.Framework.Core.MiniGames.Potions;
 
 namespace Intersect.Editor.Forms.Editors;
 
@@ -22,10 +23,16 @@ public sealed class FrmRewardConfiguration : DarkForm
         public override string ToString() => Text;
     }
 
+    private sealed record PotionChoice(PotionRecipeDefinition Recipe, string Text)
+    {
+        public override string ToString() => Text;
+    }
+
     private readonly RewardConfiguration _working;
     private readonly List<PokerLevelReward> _poker;
     private readonly List<PokerLevelReward> _blackjack;
     private readonly List<DailyRewardEntry> _daily;
+    private readonly List<PotionRecipeDefinition> _potions;
 
     private readonly CheckBox _dailyEnabled = new() { Text = "Enable Daily Rewards (required for in-game claims)", AutoSize = true };
     private readonly CheckBox _showOnLogin = new() { Text = "Open automatically when a reward is available", AutoSize = true };
@@ -37,6 +44,7 @@ public sealed class FrmRewardConfiguration : DarkForm
 
     private readonly ListBox _pokerList = new() { Dock = DockStyle.Fill };
     private readonly ListBox _blackjackList = new() { Dock = DockStyle.Fill };
+    private readonly ListBox _potionList = new() { Dock = DockStyle.Fill };
 
     public FrmRewardConfiguration()
     {
@@ -51,6 +59,7 @@ public sealed class FrmRewardConfiguration : DarkForm
         _poker = (_working.PokerLevelRewards ?? []).ToList();
         _blackjack = (_working.BlackjackLevelRewards ?? []).ToList();
         _daily = (_working.DailyRewards ?? []).ToList();
+        _potions = (_working.PotionRecipes ?? []).ToList();
         _dailyEnabled.Checked = _working.DailyRewardsEnabled;
         _showOnLogin.Checked = _working.ShowDailyRewardsOnLogin;
         _cycleDays.Value = _working.DailyCycleDays;
@@ -59,6 +68,7 @@ public sealed class FrmRewardConfiguration : DarkForm
         tabs.TabPages.Add(BuildDailyTab());
         tabs.TabPages.Add(BuildLevelTab("Poker Level Rewards", _poker, _pokerList));
         tabs.TabPages.Add(BuildLevelTab("Blackjack Level Rewards", _blackjack, _blackjackList));
+        tabs.TabPages.Add(BuildPotionTab());
 
         var buttons = new FlowLayoutPanel
         {
@@ -79,6 +89,7 @@ public sealed class FrmRewardConfiguration : DarkForm
         RefreshDaily();
         RefreshLevels(_poker, _pokerList);
         RefreshLevels(_blackjack, _blackjackList);
+        RefreshPotions();
     }
 
     private TabPage BuildDailyTab()
@@ -173,6 +184,75 @@ public sealed class FrmRewardConfiguration : DarkForm
         return page;
     }
 
+    private TabPage BuildPotionTab()
+    {
+        var page = new TabPage("Potion Recipes");
+        var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(10) };
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+        var controls = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, WrapContents = true };
+        var add = new Button { Text = "Add recipe", AutoSize = true };
+        var edit = new Button { Text = "Edit selected", AutoSize = true };
+        var remove = new Button { Text = "Remove selected", AutoSize = true };
+
+        add.Click += (_, _) =>
+        {
+            using var dialog = new PotionRecipeDialog();
+            if (dialog.ShowDialog(this) != DialogResult.OK || dialog.Result == null) return;
+            _potions.Add(dialog.Result);
+            RefreshPotions();
+        };
+        edit.Click += (_, _) =>
+        {
+            if (_potionList.SelectedItem is not PotionChoice choice) return;
+            using var dialog = new PotionRecipeDialog(choice.Recipe);
+            if (dialog.ShowDialog(this) != DialogResult.OK || dialog.Result == null) return;
+            var index = _potions.FindIndex(recipe => recipe.Id == choice.Recipe.Id);
+            if (index >= 0) _potions[index] = dialog.Result;
+            RefreshPotions();
+        };
+        remove.Click += (_, _) =>
+        {
+            if (_potionList.SelectedItem is PotionChoice choice) _potions.RemoveAll(recipe => recipe.Id == choice.Recipe.Id);
+            RefreshPotions();
+        };
+
+        controls.Controls.Add(add);
+        controls.Controls.Add(edit);
+        controls.Controls.Add(remove);
+
+        var hint = new Label
+        {
+            AutoSize = true,
+            MaximumSize = new Size(690, 0),
+            Text = "Royal Alchemy recipes are global. The server only offers recipes at or below the player's Alchemy level, " +
+                   "awards the configured XP, and gives the configured Intersect item when the recipe is completed."
+        };
+
+        root.Controls.Add(_potionList, 0, 0);
+        root.Controls.Add(controls, 0, 1);
+        root.Controls.Add(hint, 0, 2);
+        page.Controls.Add(root);
+        return page;
+    }
+
+    private void RefreshPotions()
+    {
+        _potionList.Items.Clear();
+        foreach (var recipe in _potions.OrderBy(recipe => recipe.RequiredLevel).ThenBy(recipe => recipe.Name, StringComparer.OrdinalIgnoreCase))
+        {
+            var requirements = string.Join(", ", recipe.Requirements.Select(requirement =>
+                $"{requirement.Needed}x {requirement.Family} L{requirement.Level}"));
+            _potionList.Items.Add(new PotionChoice(
+                recipe,
+                $"Lv {recipe.RequiredLevel} | {recipe.Name} -> {recipe.OutputQuantity:N0} x {ItemDescriptor.GetName(recipe.OutputItemId)} | " +
+                $"{recipe.CompletionExperience} XP | {requirements}"
+            ));
+        }
+    }
+
     private static void FillItems(ComboBox picker)
     {
         picker.Items.Clear();
@@ -214,6 +294,7 @@ public sealed class FrmRewardConfiguration : DarkForm
         _working.DailyRewards = _daily.ToArray();
         _working.PokerLevelRewards = _poker.ToArray();
         _working.BlackjackLevelRewards = _blackjack.ToArray();
+        _working.PotionRecipes = _potions.ToArray();
         if (!_working.IsStructurallyValid)
         {
             MessageBox.Show(this, "The reward configuration is invalid. When Daily Rewards are enabled, every day in the cycle needs at least one reward.", "Rewards", MessageBoxButtons.OK, MessageBoxIcon.Error);
