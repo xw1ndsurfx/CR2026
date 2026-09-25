@@ -32,6 +32,7 @@ internal static class PotionRuntime
         public long RecipeRound = 1;
         public long LastRequest;
         public bool RewardGranted;
+        public PotionPairOrientation Orientation;
         public int LastScoreGain;
         public int LastChain;
         public string Status = "Move over a column, left-click to drop, right-click to swap.";
@@ -149,11 +150,12 @@ internal static class PotionRuntime
 
                     case PotionRequestKind.Drop:
                     {
-                        var result = session.Puzzle.Drop(request.Column);
+                        var result = session.Puzzle.Drop(request.Column, session.Orientation);
                         if (!result.Success) error = result.Error;
                         else
                         {
                             ++session.Revision;
+                            session.Orientation = PotionPairOrientation.Vertical;
                             session.LastScoreGain = result.ScoreGained;
                             session.LastChain = result.Merges.Length == 0 ? 0 : result.Merges.Max(merge => merge.Chain);
                             session.Status = result.RecipeCompleted
@@ -166,9 +168,9 @@ internal static class PotionRuntime
                     }
 
                     case PotionRequestKind.Swap:
-                        session.Puzzle.SwapCurrent();
+                        session.Orientation = (PotionPairOrientation)(((int)session.Orientation + 1) % 4);
                         ++session.Revision;
-                        session.Status = "Current pair reversed.";
+                        session.Status = "Pair rotated.";
                         break;
 
                     case PotionRequestKind.Restart:
@@ -176,6 +178,7 @@ internal static class PotionRuntime
                         else
                         {
                             session.Puzzle.RestartBoard();
+                            session.Orientation = PotionPairOrientation.Vertical;
                             session.RewardGranted = false;
                             ++session.Revision;
                             session.Status = "Board cleared. Recipe progress restarted.";
@@ -193,6 +196,7 @@ internal static class PotionRuntime
                             {
                                 session.Recipe = next;
                                 session.Puzzle.BeginNextRecipe(next.ToPuzzleRecipe());
+                                session.Orientation = PotionPairOrientation.Vertical;
                                 session.RewardGranted = false;
                                 ++session.RecipeRound;
                                 ++session.Revision;
@@ -315,6 +319,7 @@ Send:
                 Status = session.Status,
                 LastScoreGain = session.LastScoreGain,
                 LastChain = session.LastChain,
+                Orientation = (int)session.Orientation,
             },
         };
     }
