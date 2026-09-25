@@ -145,7 +145,19 @@ internal sealed partial class PokerWindow : Base
                 seat.AllIn ? Strings.Poker.AllIn : !seat.InHand ? Strings.Poker.Waiting : seat.Seat == state.DealerSeat ? "(B)" : "";
             var decision = seat == null ? null : state.Decisions.LastOrDefault(d => d.PlayerId == seat.PlayerId);
             _decisions[slot].Text = decision == null ? "" : Describe(decision);
-            _decisions[slot].IsHidden = _tableSkin?.Texture != null;
+            if (_tableSkin?.Texture != null)
+            {
+                if (seat != null && playing && seat.Seat == state.ActingSeat)
+                {
+                    _decisions[slot].Text = seat.PlayerId == me.PlayerId ? "TURN" : "ACTING";
+                }
+
+                _decisions[slot].IsHidden = seat == null || string.IsNullOrWhiteSpace(_decisions[slot].Text);
+            }
+            else
+            {
+                _decisions[slot].IsHidden = false;
+            }
             _names[slot].TextColorOverride = seat?.Seat == state.ActingSeat ? Gold : Color.White;
             _decisions[slot].TextColorOverride = decision?.Action == "wins" ? Gold : Color.White;
         }
