@@ -52,14 +52,30 @@ internal sealed class QuestGuidanceManager
             var maxX = Math.Max(margin, Width - margin);
             var maxY = Math.Max(margin, Height - margin);
 
-            var tx = Math.Abs(direction.X) < 0.001f
-                ? float.MaxValue
-                : (direction.X > 0 ? maxX - center.X : margin - center.X) / direction.X;
-            var ty = Math.Abs(direction.Y) < 0.001f
-                ? float.MaxValue
-                : (direction.Y > 0 ? maxY - center.Y : margin - center.Y) / direction.Y;
-            var distance = Math.Max(0, Math.Min(Math.Abs(tx), Math.Abs(ty)));
-            var end = center + direction * distance;
+            Vector2 end;
+            var targetIsOnScreen =
+                target.X >= margin &&
+                target.X <= maxX &&
+                target.Y >= margin &&
+                target.Y <= maxY;
+
+            if (targetIsOnScreen)
+            {
+                // When the objective is visible, terminate the arrow on the objective
+                // instead of extending all the way to the edge of the screen.
+                end = target;
+            }
+            else
+            {
+                var tx = Math.Abs(direction.X) < 0.001f
+                    ? float.MaxValue
+                    : (direction.X > 0 ? maxX - center.X : margin - center.X) / direction.X;
+                var ty = Math.Abs(direction.Y) < 0.001f
+                    ? float.MaxValue
+                    : (direction.Y > 0 ? maxY - center.Y : margin - center.Y) / direction.Y;
+                var distance = Math.Max(0, Math.Min(Math.Abs(tx), Math.Abs(ty)));
+                end = center + direction * distance;
+            }
 
             var start = center + direction * 42f;
             var shaftEnd = end - direction * 18f;
