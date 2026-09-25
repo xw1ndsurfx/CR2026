@@ -277,6 +277,15 @@ public partial class QuestTaskDescriptor
             case QuestObjective.PotionEarnScore:
                 taskString = $"Earn {Quantity} Royal Alchemy score. {Description}".Trim();
                 break;
+            case QuestObjective.PotionReachChain:
+                taskString = $"Reach a Royal Alchemy chain x{Quantity}. {Description}".Trim();
+                break;
+            case QuestObjective.PotionBrewUnderOccupiedCells:
+                taskString = $"Brew a potion with at most {Quantity} occupied board cells. {Description}".Trim();
+                break;
+            case QuestObjective.PotionBrewSpecificRecipeMinScore:
+                taskString = $"Brew {(string.IsNullOrWhiteSpace(TargetName) ? "the required potion recipe" : TargetName)} with at least {Quantity} score. {Description}".Trim();
+                break;
         }
 
         return taskString;
