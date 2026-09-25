@@ -1,3 +1,5 @@
+using Intersect.Framework.Core.MiniGames;
+
 using MessagePack;
 
 namespace Intersect.Framework.Core.MiniGames.Potions;
