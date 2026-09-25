@@ -370,8 +370,14 @@ public partial class QuestsWindow
 
         mQuestTaskHudPanel.IsHidden = false;
         mQuestTaskHudTitle.Text = mSelectedQuest.Name;
+        var questPercent = GetQuestCompletionPercent(mSelectedQuest, playerQuest);
+        var completedTasks = GetCompletedTaskCount(mSelectedQuest, playerQuest);
+        progressText = string.IsNullOrEmpty(progressText)
+            ? $"Quest {completedTasks}/{mSelectedQuest.Tasks.Count} • {questPercent}%"
+            : $"{progressText} • Quest {questPercent}%";
+
         mQuestTaskHudProgressLabel.Text = progressText;
-        mQuestTaskHudProgressLabel.IsHidden = string.IsNullOrEmpty(progressText);
+        mQuestTaskHudProgressLabel.IsHidden = false;
 
         mQuestTaskHudLabel.ClearText();
         if (!string.IsNullOrWhiteSpace(mainText))
@@ -576,6 +582,25 @@ public partial class QuestsWindow
         }
     }
 
+    private static int GetCompletedTaskCount(QuestDescriptor quest, QuestProgress progress)
+    {
+        if (quest.Tasks.Count == 0) return progress.Completed ? 1 : 0;
+        if (progress.Completed && progress.TaskId == Guid.Empty) return quest.Tasks.Count;
+        if (progress.TaskId == Guid.Empty) return 0;
+
+        var currentIndex = quest.GetTaskIndex(progress.TaskId);
+        return currentIndex < 0 ? 0 : Math.Clamp(currentIndex, 0, quest.Tasks.Count);
+    }
+
+    private static int GetQuestCompletionPercent(QuestDescriptor quest, QuestProgress progress)
+    {
+        if (quest.Tasks.Count == 0) return progress.Completed ? 100 : 0;
+        return (int)Math.Round(
+            GetCompletedTaskCount(quest, progress) * 100d / quest.Tasks.Count,
+            MidpointRounding.AwayFromZero
+        );
+    }
+
     private void AddQuestToDict(Dictionary<string, List<Tuple<QuestDescriptor, int, Color>>> dict, QuestDescriptor quest)
     {
         var category = string.Empty;
@@ -639,6 +664,13 @@ public partial class QuestsWindow
 
     private void AddQuestToList(string name, Color clr, Guid questId, bool indented = true)
     {
+        if (QuestDescriptor.TryGet(questId, out var quest) &&
+            Globals.Me?.QuestProgress.TryGetValue(questId, out var progress) == true &&
+            progress.TaskId != Guid.Empty)
+        {
+            name += $" [{GetQuestCompletionPercent(quest, progress)}%]";
+        }
+
         var item = _questList.AddRow((indented ? "\t\t\t" : "") + name);
         item.UserData = questId;
         item.Clicked += QuestListItem_Clicked;
@@ -711,6 +743,21 @@ public partial class QuestsWindow
                         mQuestDescLabel.AddLineBreak();
                         mQuestDescLabel.AddLineBreak();
                     }
+
+                    var overallPercent = GetQuestCompletionPercent(
+                        mSelectedQuest,
+                        Globals.Me.QuestProgress[mSelectedQuest.Id]
+                    );
+                    var completedTaskCount = GetCompletedTaskCount(
+                        mSelectedQuest,
+                        Globals.Me.QuestProgress[mSelectedQuest.Id]
+                    );
+                    mQuestDescLabel.AddText(
+                        $"Quest progress: {completedTaskCount}/{mSelectedQuest.Tasks.Count} tasks ({overallPercent}%)",
+                        mQuestDescTemplateLabel
+                    );
+                    mQuestDescLabel.AddLineBreak();
+                    mQuestDescLabel.AddLineBreak();
 
                     mQuestDescLabel.AddText(Strings.QuestLog.CurrentTask, mQuestDescTemplateLabel);
 
