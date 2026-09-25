@@ -9,11 +9,18 @@ public partial class WorldMapMapDataPacket : IntersectPacket
     {
     }
 
-    public WorldMapMapDataPacket(Guid mapId, string data, byte[] tileData, int revision)
+    public WorldMapMapDataPacket(
+        Guid mapId,
+        string data,
+        byte[] tileData,
+        byte[] attributeData,
+        int revision
+    )
     {
         MapId = mapId;
         Data = data;
         TileData = tileData;
+        AttributeData = attributeData;
         Revision = revision;
     }
 
@@ -28,4 +35,7 @@ public partial class WorldMapMapDataPacket : IntersectPacket
 
     [Key(3)]
     public int Revision { get; set; }
+
+    [Key(4)]
+    public byte[] AttributeData { get; set; } = [];
 }
