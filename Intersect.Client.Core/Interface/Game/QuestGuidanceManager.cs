@@ -16,8 +16,14 @@ using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 
 namespace Intersect.Client.Interface.Game;
 
+internal readonly record struct QuestGuidanceTarget(Guid MapId, int X, int Y);
+
 internal sealed class QuestGuidanceManager
 {
+    internal static QuestGuidanceTarget? CurrentTarget { get; private set; }
+
+    public bool SuppressOverlay { get; set; }
+
     private sealed record Marker(
         Guid TaskId,
         Guid AnimationId,
@@ -183,7 +189,15 @@ internal sealed class QuestGuidanceManager
 
         SynchronizeMarkers(desiredMarkers);
 
-        if (nearestArrowTarget != null)
+        CurrentTarget = nearestArrowTarget == null
+            ? null
+            : new QuestGuidanceTarget(
+                nearestArrowTarget.MapId,
+                nearestArrowTarget.X,
+                nearestArrowTarget.Y
+            );
+
+        if (nearestArrowTarget != null && !SuppressOverlay)
         {
             _arrow.HasTarget = true;
             _arrow.TargetWorld = nearestArrowTarget.Center;
@@ -324,6 +338,7 @@ internal sealed class QuestGuidanceManager
             RemoveMarker(marker);
         _markers.Clear();
 
+        CurrentTarget = null;
         _arrow.HasTarget = false;
         _arrow.IsHidden = true;
     }
