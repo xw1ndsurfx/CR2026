@@ -19,6 +19,7 @@ public static class MiniGameCatalog
     [
         new(MiniGameType.Poker, "Poker - Texas hold'em", 2, 6, "poker-1"),
         new(MiniGameType.Blackjack, "Blackjack - versus dealer", 2, 6, "blackjack-1"),
+        new(MiniGameType.Potions, "Potions - Royal Alchemy", 1, 6, "potions-1"),
     ];
 
     public static IReadOnlyList<MiniGameDefinition> All => Definitions;
