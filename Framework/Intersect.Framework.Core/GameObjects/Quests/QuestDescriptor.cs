@@ -6,6 +6,7 @@ using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Framework.Core.Serialization;
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Localization;
 using Intersect.Models;
 using Newtonsoft.Json;
@@ -262,6 +263,20 @@ public partial class QuestTaskDescriptor
                 break;
             case QuestObjective.BlackjackPlayHands:
                 taskString = $"Play {Quantity} Blackjack hand(s). {Description}".Trim();
+                break;
+            case QuestObjective.PotionBrewRecipes:
+                taskString = $"Brew {Quantity} potion recipe(s). {Description}".Trim();
+                break;
+            case QuestObjective.PotionBrewSpecificRecipe:
+                var recipeName = RewardConfiguration.Instance.PotionRecipes
+                    .FirstOrDefault(recipe => recipe.Id == TargetId)?.Name ?? "potion recipe";
+                taskString = $"Brew {Quantity} x {recipeName}. {Description}".Trim();
+                break;
+            case QuestObjective.PotionReachLevel:
+                taskString = $"Reach Alchemy level {Quantity}. {Description}".Trim();
+                break;
+            case QuestObjective.PotionEarnScore:
+                taskString = $"Earn {Quantity} Royal Alchemy score. {Description}".Trim();
                 break;
         }
 
