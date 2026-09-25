@@ -156,14 +156,12 @@ internal sealed class PotionRecipeDialog : DarkForm
     {
         _unlockVariable.Items.Clear();
         _unlockVariable.Items.Add(new VariableChoice(Guid.Empty, "No event unlock required"));
-        foreach (var variable in PlayerVariableDescriptor.Lookup.Values
-                     .OfType<PlayerVariableDescriptor>()
-                     .Where(variable => variable.DataType == VariableDataType.Boolean)
-                     .OrderBy(variable => variable.Name, StringComparer.OrdinalIgnoreCase))
+        var names = PlayerVariableDescriptor.GetNamesByType(VariableDataType.Boolean);
+        for (var index = 0; index < names.Length; ++index)
         {
             _unlockVariable.Items.Add(new VariableChoice(
-                variable.Id,
-                string.IsNullOrWhiteSpace(variable.Folder) ? variable.Name : $"[{variable.Folder}] / {variable.Name}"
+                PlayerVariableDescriptor.IdFromList(index, VariableDataType.Boolean),
+                names[index]
             ));
         }
 
