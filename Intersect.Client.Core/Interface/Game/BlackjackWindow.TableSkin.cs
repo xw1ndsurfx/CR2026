@@ -60,6 +60,11 @@ internal sealed partial class BlackjackWindow
             image?.SendToBack();
         }
 
+        foreach (var image in _portraitSkinActions)
+        {
+            image?.SendToBack();
+        }
+
         _topSkin.SendToBack();
         _tableSkin.SendToBack();
     }
@@ -80,25 +85,34 @@ internal sealed partial class BlackjackWindow
         for (var slot = 0; slot < 5; ++slot)
         {
             var (x, y, w) = Panel(slot);
-            SetTableSkinBounds(_portraitSkinFrames[slot], _layout.Rect(x - 3, y - 3, 43, 52));
-            SetTableSkinBounds(_portraitSkinDetails[slot], _layout.Rect(x + 39, y - 2, Math.Max(110, w - 39), 56));
-            SetTableSkinBounds(_portraitSkinActions[slot], _layout.Rect(x - 8, y - 29, 58, 26));
-            SetTableSkinBounds(_portraitSkinCurrency[slot], _layout.Rect(x + 47, y + 27, 18, 18));
+            var frameX = slot == 0 ? 360 : x - 3;
+            var frameY = slot == 0 ? 400 : y - 3;
+            var detailsX = slot == 0 ? 431 : x + 39;
+            var detailsY = slot == 0 ? 405 : y - 2;
+            var detailsW = 208;
+            var actionX = slot == 0 ? 356 : x - 8;
+            var actionY = slot == 0 ? 374 : y - 29;
 
-            var name = _layout.Rect(x + 45, y + 1, Math.Max(104, w - 50), 20);
+            SetTableSkinBounds(_portraitSkinFrames[slot], _layout.Rect(frameX, frameY, 67, 75));
+            SetTableSkinBounds(_portraitSkinDetails[slot], _layout.Rect(detailsX, detailsY, detailsW, 61));
+            SetTableSkinBounds(_portraitSkinActions[slot], _layout.Rect(actionX, actionY, 74, 33));
+            SetTableSkinBounds(_portraitSkinCurrency[slot], _layout.Rect(detailsX + 12, detailsY + 29, 18, 18));
+
+            var name = _layout.Rect(detailsX + 6, detailsY + 2, detailsW - 12, 20);
             _names[slot].SetBounds(name.X, name.Y, name.Width, name.Height);
             _names[slot].FontSize = _layout.FontSize(10);
             _names[slot].TextAlign = Pos.Left | Pos.CenterV;
 
-            var balance = _layout.Rect(x + 45, y + 23, Math.Max(104, w - 50), 20);
+            var balance = _layout.Rect(detailsX + 34, detailsY + 22, detailsW - 40, 20);
             _balances[slot].SetBounds(balance.X, balance.Y, balance.Width, balance.Height);
             _balances[slot].FontSize = _layout.FontSize(9);
             _balances[slot].TextAlign = Pos.Left | Pos.CenterV;
 
-            var action = _layout.Rect(x - 8, y - 28, 58, 24);
+            var action = _layout.Rect(actionX, actionY + 1, 74, 30);
             _decisions[slot].SetBounds(action.X, action.Y, action.Width, action.Height);
             _decisions[slot].FontSize = _layout.FontSize(8);
             _decisions[slot].TextAlign = Pos.Center;
+            _decisions[slot].BringToFront();
         }
 
         SetTableSkinBounds(_portraitSkinFrames[5], _layout.Rect(385, 103, 67, 75));
