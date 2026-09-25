@@ -11,4 +11,10 @@ internal sealed partial class PacketHandler
         if (packet.IsValid)
             ClientInterface.GameUi?.OpenPotionMiniGame(packet);
     }
+
+    public void HandlePacket(IPacketSender sender, PotionStatePacket packet)
+    {
+        if (packet.IsValid)
+            ClientInterface.GameUi?.QueuePotionState(packet);
+    }
 }
