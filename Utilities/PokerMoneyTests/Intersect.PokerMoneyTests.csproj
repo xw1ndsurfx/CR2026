@@ -9,6 +9,7 @@
     <Compile Include="../../Intersect.Server.Core/MiniGames/Currency/PokerMoneyLedger.cs" Link="PokerMoneyLedger.cs" />
     <Compile Include="../../Intersect.Server.Core/MiniGames/Currency/PokerFundedTable.cs" Link="PokerFundedTable.cs" />
     <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/*.cs" Link="Shared/%(Filename)%(Extension)" />
+    <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/Potions/*.cs" Link="Shared/Potions/%(Filename)%(Extension)" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.11" />
   </ItemGroup>
 </Project>
