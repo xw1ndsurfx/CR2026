@@ -15,7 +15,7 @@ namespace Intersect.Client.Interface.Game;
 
 internal sealed class QuestGuidanceManager
 {
-    private sealed record Marker(Guid TaskId, Guid AnimationId, Animation Animation);
+    private sealed record Marker(Guid TaskId, Guid AnimationId, Entity Entity, AnimationSource Source);
 
     private sealed class QuestArrowOverlay(Base parent) : Base(parent, "QuestObjectiveArrow")
     {
@@ -43,30 +43,39 @@ internal sealed class QuestGuidanceManager
             var maxX = Math.Max(margin, Width - margin);
             var maxY = Math.Max(margin, Height - margin);
 
-            var end = target;
-            if (target.X < margin || target.Y < margin || target.X > maxX || target.Y > maxY)
-            {
-                var tx = Math.Abs(direction.X) < 0.001f
-                    ? float.MaxValue
-                    : (direction.X > 0 ? maxX - center.X : margin - center.X) / direction.X;
-                var ty = Math.Abs(direction.Y) < 0.001f
-                    ? float.MaxValue
-                    : (direction.Y > 0 ? maxY - center.Y : margin - center.Y) / direction.Y;
-                var distance = Math.Max(0, Math.Min(Math.Abs(tx), Math.Abs(ty)));
-                end = center + direction * distance;
-            }
+            var tx = Math.Abs(direction.X) < 0.001f
+                ? float.MaxValue
+                : (direction.X > 0 ? maxX - center.X : margin - center.X) / direction.X;
+            var ty = Math.Abs(direction.Y) < 0.001f
+                ? float.MaxValue
+                : (direction.Y > 0 ? maxY - center.Y : margin - center.Y) / direction.Y;
+            var distance = Math.Max(0, Math.Min(Math.Abs(tx), Math.Abs(ty)));
+            var end = center + direction * distance;
 
-            var start = center + direction * 28f;
-            var shaftEnd = end - direction * 14f;
+            var start = center + direction * 42f;
+            var shaftEnd = end - direction * 18f;
             var normal = new Vector2(-direction.Y, direction.X);
 
             var renderer = skin.Renderer;
-            renderer.DrawColor = new Color(a: 235, r: 238, g: 203, b: 112);
-            DrawLine(renderer, start, shaftEnd);
-            DrawLine(renderer, end, shaftEnd + normal * 9f);
-            DrawLine(renderer, end, shaftEnd - normal * 9f);
-            renderer.DrawColor = new Color(a: 130, r: 40, g: 26, b: 20);
-            DrawLine(renderer, start + normal * 2f, shaftEnd + normal * 2f);
+            renderer.DrawColor = new Color(a: 245, r: 238, g: 203, b: 112);
+            for (var offset = -2; offset <= 2; ++offset)
+                DrawLine(renderer, start + normal * offset, shaftEnd + normal * offset);
+
+            for (var offset = -1; offset <= 1; ++offset)
+            {
+                DrawLine(renderer, end + normal * offset, shaftEnd + normal * (12 + offset));
+                DrawLine(renderer, end + normal * offset, shaftEnd - normal * (12 - offset));
+            }
+
+            renderer.DrawColor = new Color(a: 220, r: 255, g: 244, b: 185);
+            renderer.DrawFilledRect(
+                new Intersect.Client.Framework.GenericClasses.Rectangle(
+                    (int)Math.Round(end.X) - 4,
+                    (int)Math.Round(end.Y) - 4,
+                    8,
+                    8
+                )
+            );
         }
 
         private static void DrawLine(RendererBase renderer, Vector2 a, Vector2 b) =>
@@ -183,27 +192,59 @@ internal sealed class QuestGuidanceManager
         {
             if (!desired.TryGetValue(entityId, out var target) ||
                 target.TaskId != marker.TaskId ||
-                target.AnimationId != marker.AnimationId)
+                target.AnimationId != marker.AnimationId ||
+                marker.Entity.IsDisposed)
             {
-                marker.Animation.Dispose();
+                RemoveMarker(marker);
                 _markers.Remove(entityId);
             }
         }
 
         foreach (var (entityId, target) in desired)
         {
-            if (_markers.ContainsKey(entityId)) continue;
-            if (!AnimationDescriptor.TryGet(target.AnimationId, out var descriptor)) continue;
+            if (_markers.TryGetValue(entityId, out var existing) && !existing.Entity.IsDisposed)
+                continue;
 
-            var animation = new Animation(descriptor, true, false, -1, target.Entity);
-            _markers[entityId] = new Marker(target.TaskId, target.AnimationId, animation);
+            if (!AnimationDescriptor.TryGet(target.AnimationId, out var descriptor))
+                continue;
+
+            var source = new AnimationSource(AnimationSourceType.Any, target.TaskId);
+            RemoveEntityAnimationSafely(target.Entity, source);
+
+            var animation = new Animation(
+                descriptor,
+                true,
+                false,
+                -1,
+                target.Entity,
+                source
+            );
+
+            if (!target.Entity.TryAddAnimation(animation, source))
+            {
+                if (!animation.IsDisposed)
+                    animation.Dispose();
+                continue;
+            }
+
+            _markers[entityId] = new Marker(target.TaskId, target.AnimationId, target.Entity, source);
         }
     }
+
+    private static void RemoveEntityAnimationSafely(Entity entity, AnimationSource source)
+    {
+        if (entity.IsDisposed) return;
+        if (!entity.TryRemoveAnimation(source, out var animation) || animation == null) return;
+        if (!animation.IsDisposed) animation.Dispose();
+    }
+
+    private static void RemoveMarker(Marker marker) =>
+        RemoveEntityAnimationSafely(marker.Entity, marker.Source);
 
     public void Clear()
     {
         foreach (var marker in _markers.Values)
-            marker.Animation.Dispose();
+            RemoveMarker(marker);
         _markers.Clear();
 
         _arrow.HasTarget = false;
