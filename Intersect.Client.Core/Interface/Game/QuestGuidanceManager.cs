@@ -6,6 +6,7 @@ using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.GameObjects;
 using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
@@ -15,7 +16,13 @@ namespace Intersect.Client.Interface.Game;
 
 internal sealed class QuestGuidanceManager
 {
-    private sealed record Marker(Guid TaskId, Guid AnimationId, Entity Entity, AnimationSource Source);
+    private sealed record Marker(
+        Guid TaskId,
+        Guid AnimationId,
+        Entity Entity,
+        AnimationSource Source,
+        Animation Animation
+    );
 
     private sealed class QuestArrowOverlay(Base parent) : Base(parent, "QuestObjectiveArrow")
     {
@@ -58,33 +65,39 @@ internal sealed class QuestGuidanceManager
 
             var renderer = skin.Renderer;
             renderer.DrawColor = new Color(a: 245, r: 238, g: 203, b: 112);
-            for (var offset = -2; offset <= 2; ++offset)
-                DrawLine(renderer, start + normal * offset, shaftEnd + normal * offset);
+            DrawSegment(renderer, start, shaftEnd, 5);
 
-            for (var offset = -1; offset <= 1; ++offset)
-            {
-                DrawLine(renderer, end + normal * offset, shaftEnd + normal * (12 + offset));
-                DrawLine(renderer, end + normal * offset, shaftEnd - normal * (12 - offset));
-            }
-
-            renderer.DrawColor = new Color(a: 220, r: 255, g: 244, b: 185);
+            renderer.DrawColor = new Color(a: 255, r: 255, g: 244, b: 185);
+            DrawSegment(renderer, end, shaftEnd + normal * 13f, 6);
+            DrawSegment(renderer, end, shaftEnd - normal * 13f, 6);
             renderer.DrawFilledRect(
                 new Intersect.Client.Framework.GenericClasses.Rectangle(
-                    (int)Math.Round(end.X) - 4,
-                    (int)Math.Round(end.Y) - 4,
-                    8,
-                    8
+                    (int)Math.Round(end.X) - 5,
+                    (int)Math.Round(end.Y) - 5,
+                    10,
+                    10
                 )
             );
         }
 
-        private static void DrawLine(RendererBase renderer, Vector2 a, Vector2 b) =>
-            renderer.DrawLine(
-                (int)Math.Round(a.X),
-                (int)Math.Round(a.Y),
-                (int)Math.Round(b.X),
-                (int)Math.Round(b.Y)
-            );
+        private static void DrawSegment(RendererBase renderer, Vector2 a, Vector2 b, int thickness)
+        {
+            var delta = b - a;
+            var length = Math.Max(1, (int)Math.Ceiling(delta.Length()));
+            for (var step = 0; step <= length; step += 3)
+            {
+                var t = step / (float)length;
+                var p = a + delta * t;
+                renderer.DrawFilledRect(
+                    new Intersect.Client.Framework.GenericClasses.Rectangle(
+                        (int)Math.Round(p.X) - thickness / 2,
+                        (int)Math.Round(p.Y) - thickness / 2,
+                        thickness,
+                        thickness
+                    )
+                );
+            }
+        }
     }
 
     private readonly Canvas _canvas;
@@ -167,11 +180,19 @@ internal sealed class QuestGuidanceManager
             if (entity.MapInstance == null) continue;
 
             if (task.Objective == QuestObjective.KillNpcs &&
-                entity.Type == EntityType.GlobalEntity &&
-                entity.NpcDescriptorId == task.TargetId)
+                entity.Type == EntityType.GlobalEntity)
             {
-                yield return entity;
-                continue;
+                var exactIdMatch = entity.NpcDescriptorId == task.TargetId;
+                var fallbackNameMatch =
+                    entity.NpcDescriptorId == Guid.Empty &&
+                    NPCDescriptor.TryGet(task.TargetId, out var npcDescriptor) &&
+                    string.Equals(entity.Name, npcDescriptor.Name, StringComparison.OrdinalIgnoreCase);
+
+                if (exactIdMatch || fallbackNameMatch)
+                {
+                    yield return entity;
+                    continue;
+                }
             }
 
             if (task.Objective == QuestObjective.GatherItems &&
@@ -202,8 +223,16 @@ internal sealed class QuestGuidanceManager
 
         foreach (var (entityId, target) in desired)
         {
-            if (_markers.TryGetValue(entityId, out var existing) && !existing.Entity.IsDisposed)
+            if (_markers.TryGetValue(entityId, out var existing) &&
+                !existing.Entity.IsDisposed &&
+                !existing.Animation.IsDisposed)
                 continue;
+
+            if (existing != null)
+            {
+                RemoveMarker(existing);
+                _markers.Remove(entityId);
+            }
 
             if (!AnimationDescriptor.TryGet(target.AnimationId, out var descriptor))
                 continue;
@@ -227,7 +256,13 @@ internal sealed class QuestGuidanceManager
                 continue;
             }
 
-            _markers[entityId] = new Marker(target.TaskId, target.AnimationId, target.Entity, source);
+            _markers[entityId] = new Marker(
+                target.TaskId,
+                target.AnimationId,
+                target.Entity,
+                source,
+                animation
+            );
         }
     }
 
@@ -238,8 +273,12 @@ internal sealed class QuestGuidanceManager
         if (!animation.IsDisposed) animation.Dispose();
     }
 
-    private static void RemoveMarker(Marker marker) =>
+    private static void RemoveMarker(Marker marker)
+    {
         RemoveEntityAnimationSafely(marker.Entity, marker.Source);
+        if (!marker.Animation.IsDisposed)
+            marker.Animation.Dispose();
+    }
 
     public void Clear()
     {
