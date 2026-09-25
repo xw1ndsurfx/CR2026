@@ -7,6 +7,7 @@
     <Compile Include="../../Intersect.Server.Core/MiniGames/Poker/*.cs" Link="Poker/%(Filename)%(Extension)" />
     <Compile Include="../../Intersect.Server.Core/MiniGames/Progression/MiniGameProgressStore.cs" Link="MiniGameProgressStore.cs" />
     <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/*.cs" Link="Shared/%(Filename)%(Extension)" />
+    <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/Potions/*.cs" Link="Shared/Potions/%(Filename)%(Extension)" />
     <Compile Include="../../Framework/Intersect.Framework.Core/GameObjects/Quests/QuestObjective.cs" Link="Shared/QuestObjective.cs" />
     <Compile Include="../../Framework/Intersect.Framework.Core/GameObjects/Quests/PokerQuestProgress.cs" Link="Shared/PokerQuestProgress.cs" />
   </ItemGroup>
