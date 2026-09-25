@@ -64,21 +64,21 @@ public partial class GameInterface
         }
 
         if (_potionModel.NeedsRefresh(now))
-            SendPotionRequest(PotionRequestKind.Refresh, 0);
+            SendPotionRequest(PotionRequestKind.Refresh, 0, Guid.Empty);
 
         _potionWindow.Update(_potionModel);
     }
 
-    private void SendPotionRequest(PotionRequestKind kind, int column)
+    private void SendPotionRequest(PotionRequestKind kind, int column, Guid recipeId)
     {
-        var packet = _potionModel.Request(kind, Environment.TickCount64, column);
+        var packet = _potionModel.Request(kind, Environment.TickCount64, column, recipeId);
         if (packet != null) ClientNetwork.SendPacket(packet);
     }
 
     private bool ClosePotionWindow()
     {
         if (_potionModel.Current == null && _potionWindow == null) return false;
-        SendPotionRequest(PotionRequestKind.Leave, 0);
+        SendPotionRequest(PotionRequestKind.Leave, 0, Guid.Empty);
         _potionModel.Dismiss();
         _potionWindow?.Destroy();
         _potionWindow = null;
