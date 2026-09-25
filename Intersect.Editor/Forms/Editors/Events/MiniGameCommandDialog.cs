@@ -96,6 +96,7 @@ internal sealed class MiniGameCommandDialog : Form
         var blackjackMaximum = Number(command.BlackjackMaximumBet, 2, 1_000_000_000); blackjackMaximum.Name = "BlackjackMaximumBet"; blackjackMaximum.Increment = 2;
         var blackjackHitSoft17 = new CheckBox { Name = "BlackjackHitSoft17", Text = "Dealer hits soft 17 (H17)", Checked = command.BlackjackHitSoft17, AutoSize = true };
         bool IsBlackjack() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Blackjack;
+        bool IsPotions() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Potions;
         var currencyModeFunded = command.CurrencyItemId != Guid.Empty;
         long testChipsValue = command.CurrencyItemId == Guid.Empty ? command.StartingChips : 1000;
         long fundedBuyInValue = command.CurrencyItemId != Guid.Empty ? command.StartingChips : 0;
@@ -156,13 +157,26 @@ internal sealed class MiniGameCommandDialog : Form
         void UpdateGameUi()
         {
             var blackjack = IsBlackjack();
-            small.Enabled = big.Enabled = dealer.Enabled = !blackjack;
+            var potions = IsPotions();
+
+            small.Enabled = big.Enabled = dealer.Enabled = !blackjack && !potions;
             blackjackMinimum.Enabled = blackjackMaximum.Enabled = blackjackHitSoft17.Enabled = blackjack;
+            seats.Enabled = npcs.Enabled = currency.Enabled = chips.Enabled = reserve.Enabled =
+                unlimitedNpcBankroll.Enabled = automatic.Enabled = !potions;
+            backs.Enabled = motionSpeed.Enabled = motionPanel.Enabled = !potions;
+
             if (blackjack)
             {
                 dealer.Checked = false;
                 unlimitedNpcBankroll.Checked = false;
             }
+            if (potions)
+            {
+                dealer.Checked = false;
+                npcs.Value = 0;
+                unlimitedNpcBankroll.Checked = false;
+            }
+
             LimitNpcs();
             EnsureBlackjackReserve();
         }
@@ -251,10 +265,20 @@ internal sealed class MiniGameCommandDialog : Form
             var selectedGame = (game.SelectedItem as GameChoice)?.Type ?? MiniGameType.Poker;
             var definition = MiniGameCatalog.Get(selectedGame);
             var blackjack = selectedGame == MiniGameType.Blackjack;
+            var potions = selectedGame == MiniGameType.Potions;
             var dealerSeats = blackjack ? 1 : (dealer.Checked ? 1 : 0);
             var humanSeats = Math.Max(1, (int)seats.Value - (int)npcs.Value - dealerSeats);
             var funded = ((currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty) != Guid.Empty;
             var tableValid = MiniGameCatalog.IsValidTableId(table.Text);
+
+            if (potions)
+            {
+                summary.ForeColor = DrawingColor.LightSkyBlue;
+                summary.Text = $"{definition.DisplayName} | Solo 8x10 merge board | " +
+                    "Recipes, output items, required levels and XP are configured globally in Content Editors > Daily & Level Rewards Editor > Potion Recipes.";
+                return;
+            }
+
             var rules = blackjack
                 ? $"Bet {blackjackMinimum.Value}-{blackjackMaximum.Value} | {(blackjackHitSoft17.Checked ? "H17" : "S17")}"
                 : $"Blinds {small.Value}/{big.Value}";
@@ -271,6 +295,14 @@ internal sealed class MiniGameCommandDialog : Form
         {
             var id = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
             var blackjack = IsBlackjack();
+            if (IsPotions())
+            {
+                chipsLabel.Text = "Not used by Potions";
+                status.ForeColor = DrawingColor.Gold;
+                status.Text = "Royal Alchemy rewards are real Intersect items configured globally in the Potion Recipes tab. " +
+                    "The server validates every move, grants recipe XP, and delivers the configured output item.";
+                return;
+            }
             EnsureBlackjackReserve();
             reserve.Enabled = id != Guid.Empty && !unlimitedNpcBankroll.Checked;
             unlimitedNpcBankroll.Enabled = id != Guid.Empty && !blackjack;
@@ -338,21 +370,24 @@ internal sealed class MiniGameCommandDialog : Form
         save.Click += (_, _) =>
         {
             EnsureBlackjackReserve();
-            var selected = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
-            if (selected != Guid.Empty && !MiniGameCurrency.IsCompatible(ItemDescriptor.Get(selected)))
+            var selected = IsPotions() ? Guid.Empty : (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
+            if (!IsPotions() && selected != Guid.Empty && !MiniGameCurrency.IsCompatible(ItemDescriptor.Get(selected)))
             {
                 MessageBox.Show(this, "The selected item is missing or incompatible. Select a Currency or another stackable item.",
                     "Invalid table currency", MessageBoxButtons.OK, MessageBoxIcon.Warning); return;
             }
             var draft = new StartMiniGameCommand
             {
-                Game = ((GameChoice)game.SelectedItem!).Type, TableId = table.Text, MaxPlayers = (int)seats.Value, CurrencyItemId = selected,
+                Game = ((GameChoice)game.SelectedItem!).Type, TableId = table.Text,
+                MaxPlayers = IsPotions() ? 1 : (int)seats.Value, CurrencyItemId = selected,
                 StartingChips = (long)chips.Value, NpcReserve = (long)reserve.Value,
                 UnlimitedNpcBankroll = unlimitedNpcBankroll.Checked,
                 BlackjackMinimumBet = (long)blackjackMinimum.Value, BlackjackMaximumBet = (long)blackjackMaximum.Value,
                 BlackjackHitSoft17 = blackjackHitSoft17.Checked,
                 SmallBlind = (long)small.Value, BigBlind = (long)big.Value, TurnSeconds = (int)seconds.Value,
-                DealerPlays = dealer.Checked, NpcPlayers = (int)npcs.Value, AutoStart = automatic.Checked,
+                DealerPlays = IsPotions() ? false : dealer.Checked,
+                NpcPlayers = IsPotions() ? 0 : (int)npcs.Value,
+                AutoStart = IsPotions() ? false : automatic.Checked,
                 DealAnimationId = ((AnimationChoice)animation.SelectedItem!).Id, AnnounceWins = announce.Checked,
                 VictoryAnimationId = ((AnimationChoice)victory.SelectedItem!).Id, NpcCardBackId = backs.SelectedIndex,
                 DealSound = ((SoundChoice)dealSound.SelectedItem!).File, CheckSound = ((SoundChoice)checkSound.SelectedItem!).File,
