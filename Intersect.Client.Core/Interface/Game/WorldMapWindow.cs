@@ -52,7 +52,7 @@ internal sealed class WorldMapWindow : Window
             Font = Skin.DefaultFont,
             FontSize = 9,
             TextColorOverride = new Color(200, 200, 200),
-            Text = "Drag to move • Mouse wheel or +/- to zoom • Gold marker = you",
+            Text = "Drag to move • Mouse wheel or +/- to zoom • Gold marker = you • Gold route = quest path",
         };
 
         _mapCanvas = new WorldMapCanvas(this, "WorldMapCanvas");
@@ -124,6 +124,13 @@ internal sealed class WorldMapWindow : Window
 
         private readonly Dictionary<Guid, IGameRenderTexture> _previews = [];
         private readonly Dictionary<Guid, int> _previewRevisions = [];
+        private readonly Dictionary<Guid, (int Revision, bool[,] Blocked)> _blockedTiles = [];
+        private List<(int X, int Y)> _questRoute = [];
+        private QuestGuidanceTarget? _questRouteTarget;
+        private Guid _questRouteStartMapId;
+        private int _questRouteStartX = -1;
+        private int _questRouteStartY = -1;
+        private int _questRouteRefreshCounter;
 
         private float _zoom = 0.78f;
         private float _panX;
@@ -288,9 +295,307 @@ internal sealed class WorldMapWindow : Window
                 }
             }
 
+            DrawQuestRoute(renderer, cellWidth, cellHeight);
             DrawWorldMapEventMarkers(renderer, cellWidth, cellHeight);
             DrawPlayerMarker(renderer);
         }
+
+        private void DrawQuestRoute(RendererBase renderer, int cellWidth, int cellHeight)
+        {
+            RefreshQuestRouteIfNeeded();
+
+            if (_questRoute.Count < 2)
+            {
+                return;
+            }
+
+            var mapWidth = Math.Max(1, Options.Instance.Map.MapWidth);
+            var mapHeight = Math.Max(1, Options.Instance.Map.MapHeight);
+
+            renderer.DrawColor = new Color(a: 235, r: 255, g: 215, b: 92);
+
+            for (var index = 1; index < _questRoute.Count; ++index)
+            {
+                var previous = _questRoute[index - 1];
+                var current = _questRoute[index];
+
+                var x1 = _panX + (previous.X + 0.5f) / mapWidth * cellWidth;
+                var y1 = _panY + (previous.Y + 0.5f) / mapHeight * cellHeight;
+                var x2 = _panX + (current.X + 0.5f) / mapWidth * cellWidth;
+                var y2 = _panY + (current.Y + 0.5f) / mapHeight * cellHeight;
+
+                DrawRouteSegment(renderer, x1, y1, x2, y2);
+            }
+        }
+
+        private static void DrawRouteSegment(
+            RendererBase renderer,
+            float x1,
+            float y1,
+            float x2,
+            float y2
+        )
+        {
+            var dx = x2 - x1;
+            var dy = y2 - y1;
+            var distance = MathF.Sqrt(dx * dx + dy * dy);
+            var steps = Math.Max(1, (int)Math.Ceiling(distance / 3f));
+
+            for (var step = 0; step <= steps; ++step)
+            {
+                var t = step / (float)steps;
+                var x = (int)Math.Round(x1 + dx * t);
+                var y = (int)Math.Round(y1 + dy * t);
+
+                renderer.DrawColor = new Color(a: 190, r: 45, g: 30, b: 18);
+                renderer.DrawFilledRect(new Rectangle(x - 3, y - 3, 6, 6));
+                renderer.DrawColor = new Color(a: 245, r: 255, g: 215, b: 92);
+                renderer.DrawFilledRect(new Rectangle(x - 2, y - 2, 4, 4));
+            }
+        }
+
+        private void RefreshQuestRouteIfNeeded()
+        {
+            var player = Globals.Me;
+            var target = QuestGuidanceManager.CurrentTarget;
+
+            if (player == null || target == null)
+            {
+                _questRoute.Clear();
+                _questRouteTarget = null;
+                return;
+            }
+
+            var changed =
+                _questRouteTarget != target ||
+                _questRouteStartMapId != player.MapId ||
+                _questRouteStartX != player.X ||
+                _questRouteStartY != player.Y;
+
+            if (!changed && ++_questRouteRefreshCounter < 30)
+            {
+                return;
+            }
+
+            _questRouteRefreshCounter = 0;
+            _questRouteTarget = target;
+            _questRouteStartMapId = player.MapId;
+            _questRouteStartX = player.X;
+            _questRouteStartY = player.Y;
+            _questRoute = BuildQuestRoute(player.MapId, player.X, player.Y, target.Value) ?? [];
+        }
+
+        private List<(int X, int Y)>? BuildQuestRoute(
+            Guid startMapId,
+            int startTileX,
+            int startTileY,
+            QuestGuidanceTarget target
+        )
+        {
+            if (Globals.MapGrid == null ||
+                !Globals.GridMaps.TryGetValue(startMapId, out var startGrid) ||
+                !Globals.GridMaps.TryGetValue(target.MapId, out var targetGrid))
+            {
+                return null;
+            }
+
+            var mapWidth = Math.Max(1, Options.Instance.Map.MapWidth);
+            var mapHeight = Math.Max(1, Options.Instance.Map.MapHeight);
+
+            var startX = startGrid.X * mapWidth + startTileX;
+            var startY = startGrid.Y * mapHeight + startTileY;
+            var targetX = targetGrid.X * mapWidth + target.X;
+            var targetY = targetGrid.Y * mapHeight + target.Y;
+
+            var startKey = RouteKey(startX, startY);
+            var targetKey = RouteKey(targetX, targetY);
+
+            var frontier = new PriorityQueue<(int X, int Y), int>();
+            frontier.Enqueue((startX, startY), 0);
+
+            var cameFrom = new Dictionary<long, long>();
+            var cost = new Dictionary<long, int> { [startKey] = 0 };
+            var visited = new HashSet<long>();
+
+            const int maxVisitedNodes = 180_000;
+            var visitedCount = 0;
+            var directions = new (int X, int Y)[]
+            {
+                (0, -1),
+                (-1, 0),
+                (1, 0),
+                (0, 1),
+            };
+
+            while (frontier.Count > 0 && visitedCount < maxVisitedNodes)
+            {
+                var current = frontier.Dequeue();
+                var currentKey = RouteKey(current.X, current.Y);
+                if (!visited.Add(currentKey))
+                {
+                    continue;
+                }
+
+                ++visitedCount;
+                if (currentKey == targetKey)
+                {
+                    return ReconstructQuestRoute(cameFrom, startKey, targetKey);
+                }
+
+                foreach (var direction in directions)
+                {
+                    var nextX = current.X + direction.X;
+                    var nextY = current.Y + direction.Y;
+                    var nextKey = RouteKey(nextX, nextY);
+
+                    if (!IsWorldTileWalkable(nextX, nextY, targetX, targetY))
+                    {
+                        continue;
+                    }
+
+                    var nextCost = cost[currentKey] + 1;
+                    if (cost.TryGetValue(nextKey, out var existingCost) && existingCost <= nextCost)
+                    {
+                        continue;
+                    }
+
+                    cost[nextKey] = nextCost;
+                    cameFrom[nextKey] = currentKey;
+
+                    var heuristic = Math.Abs(targetX - nextX) + Math.Abs(targetY - nextY);
+                    frontier.Enqueue((nextX, nextY), nextCost + heuristic);
+                }
+            }
+
+            return null;
+        }
+
+        private bool IsWorldTileWalkable(
+            int globalX,
+            int globalY,
+            int targetX,
+            int targetY
+        )
+        {
+            if (globalX == targetX && globalY == targetY)
+            {
+                return true;
+            }
+
+            var grid = Globals.MapGrid;
+            if (grid == null)
+            {
+                return false;
+            }
+
+            var mapWidth = Math.Max(1, Options.Instance.Map.MapWidth);
+            var mapHeight = Math.Max(1, Options.Instance.Map.MapHeight);
+            if (globalX < 0 || globalY < 0)
+            {
+                return false;
+            }
+
+            var gridX = globalX / mapWidth;
+            var gridY = globalY / mapHeight;
+            if (gridX < 0 || gridY < 0 ||
+                gridX >= grid.GetLength(0) ||
+                gridY >= grid.GetLength(1))
+            {
+                return false;
+            }
+
+            var mapId = grid[gridX, gridY];
+            if (mapId == Guid.Empty)
+            {
+                return false;
+            }
+
+            var localX = globalX % mapWidth;
+            var localY = globalY % mapHeight;
+            var blocked = GetBlockedTiles(mapId);
+            return blocked != null &&
+                   localX >= 0 &&
+                   localY >= 0 &&
+                   localX < blocked.GetLength(0) &&
+                   localY < blocked.GetLength(1) &&
+                   !blocked[localX, localY];
+        }
+
+        private bool[,]? GetBlockedTiles(Guid mapId)
+        {
+            WorldMapMapDataPacket? sourcePacket = null;
+            lock (Globals.GameLock)
+            {
+                Globals.WorldMapMapData.TryGetValue(mapId, out sourcePacket);
+            }
+
+            var liveMap = MapInstance.Get(mapId);
+            var revision = sourcePacket?.Revision ?? liveMap?.Revision ?? -1;
+            if (_blockedTiles.TryGetValue(mapId, out var cached) && cached.Revision == revision)
+            {
+                return cached.Blocked;
+            }
+
+            MapInstance? map = null;
+            if (sourcePacket != null && !string.IsNullOrWhiteSpace(sourcePacket.Data))
+            {
+                map = new MapInstance(mapId);
+                map.Load(sourcePacket.Data);
+            }
+            else if (liveMap is { IsLoaded: true })
+            {
+                map = liveMap;
+            }
+
+            if (map?.Attributes == null)
+            {
+                return null;
+            }
+
+            var width = Math.Max(1, Options.Instance.Map.MapWidth);
+            var height = Math.Max(1, Options.Instance.Map.MapHeight);
+            var blocked = new bool[width, height];
+
+            for (var x = 0; x < width; ++x)
+            {
+                for (var y = 0; y < height; ++y)
+                {
+                    var attribute = map.Attributes[x, y];
+                    blocked[x, y] =
+                        attribute?.Type == MapAttributeType.Blocked ||
+                        attribute?.Type == MapAttributeType.Resource;
+                }
+            }
+
+            _blockedTiles[mapId] = (revision, blocked);
+            return blocked;
+        }
+
+        private static List<(int X, int Y)> ReconstructQuestRoute(
+            IReadOnlyDictionary<long, long> cameFrom,
+            long startKey,
+            long targetKey
+        )
+        {
+            var route = new List<(int X, int Y)>();
+            var current = targetKey;
+            route.Add(RoutePoint(current));
+
+            while (current != startKey && cameFrom.TryGetValue(current, out var previous))
+            {
+                current = previous;
+                route.Add(RoutePoint(current));
+            }
+
+            route.Reverse();
+            return route;
+        }
+
+        private static long RouteKey(int x, int y) =>
+            ((long)x << 32) | (uint)y;
+
+        private static (int X, int Y) RoutePoint(long key) =>
+            ((int)(key >> 32), (int)key);
 
         private void DrawWorldMapEventMarkers(RendererBase renderer, int cellWidth, int cellHeight)
         {
@@ -659,6 +964,8 @@ internal sealed class WorldMapWindow : Window
 
                 _previews.Clear();
                 _previewRevisions.Clear();
+                _blockedTiles.Clear();
+                _questRoute.Clear();
             }
 
             base.Dispose(disposing);
