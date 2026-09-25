@@ -101,9 +101,9 @@ internal sealed partial class BlackjackWindow
             _decisions[slot].TextAlign = Pos.Center;
         }
 
-        SetTableSkinBounds(_portraitSkinFrames[5], _layout.Rect(356, 78, 67, 75));
-        SetTableSkinBounds(_portraitSkinDetails[5], _layout.Rect(426, 83, 208, 61));
-        SetTableSkinBounds(_portraitSkinActions[5], _layout.Rect(352, 48, 74, 33));
+        SetTableSkinBounds(_portraitSkinFrames[5], _layout.Rect(385, 103, 67, 75));
+        SetTableSkinBounds(_portraitSkinDetails[5], _layout.Rect(456, 108, 208, 61));
+        SetTableSkinBounds(_portraitSkinActions[5], _layout.Rect(382, 82, 74, 33));
         if (_portraitSkinFrames[5] != null)
         {
             _portraitSkinFrames[5]!.TextureFilename = "table/portrait_1.png";
@@ -136,6 +136,27 @@ internal sealed partial class BlackjackWindow
         var backStatus = _layout.Rect(620, 742, 352, 26);
         _backStatus.SetBounds(backStatus.X, backStatus.Y, backStatus.Width, backStatus.Height);
         _backStatus.TextAlign = Pos.Center;
+        _backStatus.IsHidden = _tableSkin.Texture != null;
+
+        var dealerLabel = Children.OfType<Label>().FirstOrDefault(label => label.Name == "BlackjackDealer");
+        if (dealerLabel != null)
+        {
+            var dealerTitle = _layout.Rect(465, 111, 190, 22);
+            dealerLabel.SetBounds(dealerTitle.X, dealerTitle.Y, dealerTitle.Width, dealerTitle.Height);
+            dealerLabel.FontSize = _layout.FontSize(13);
+        }
+
+        var bank = _layout.Rect(465, 133, 190, 20);
+        _bank.SetBounds(bank.X, bank.Y, bank.Width, bank.Height);
+        _bank.FontSize = _layout.FontSize(9);
+
+        var dealerTotal = _layout.Rect(420, 241, 320, 24);
+        _dealerTotal.SetBounds(dealerTotal.X, dealerTotal.Y, dealerTotal.Width, dealerTotal.Height);
+        _dealerTotal.TextAlign = Pos.Center;
+
+        var rules = _layout.Rect(320, 271, 360, 72);
+        _rules.SetBounds(rules.X, rules.Y, rules.Width, rules.Height);
+        _rules.TextAlign = Pos.Center;
     }
 
     private void UpdateTableSkin(BlackjackClientModel model, BlackjackTableState state, BlackjackPlayerState me)
