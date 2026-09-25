@@ -19,7 +19,7 @@ public readonly record struct PotionPair(PotionPiece First, PotionPiece Second)
 
 public readonly record struct PotionRequirement(PotionFamily Family, int Level, int Needed)
 {
-    public bool IsValid => Level is >= 2 and <= 4 && Needed is >= 1 and <= 20 && Enum.IsDefined(Family);
+    public bool IsValid => Level is >= 1 and <= 4 && Needed is >= 1 and <= 20 && Enum.IsDefined(Family);
 }
 
 public sealed record PotionRecipe(string Name, PotionRequirement[] Requirements)
@@ -50,7 +50,7 @@ public sealed class PotionPuzzle
 
     private readonly PotionPiece?[,] _cells = new PotionPiece?[Columns, Rows];
     private readonly Random _random;
-    private readonly int[] _progress;
+    private int[] _progress;
 
     public PotionRecipe Recipe { get; private set; }
     public PotionPair Current { get; private set; }
@@ -61,10 +61,10 @@ public sealed class PotionPuzzle
     public bool Complete { get; private set; }
     public bool GameOver { get; private set; }
 
-    public PotionPuzzle(int seed)
+    public PotionPuzzle(int seed, PotionRecipe? recipe = null)
     {
         _random = new Random(seed == 0 ? 1 : seed);
-        Recipe = RollRecipe();
+        Recipe = recipe is { IsValid: true } ? recipe : RollRecipe();
         _progress = new int[Recipe.Requirements.Length];
         Current = RollPair();
         Next = RollPair();
@@ -118,11 +118,13 @@ public sealed class PotionPuzzle
         return new(true, string.Empty, merges.ToArray(), gained + (Complete ? 100 : 0), Complete);
     }
 
-    public void BeginNextRecipe()
+    public void BeginNextRecipe() => BeginNextRecipe(RollRecipe());
+
+    public void BeginNextRecipe(PotionRecipe recipe)
     {
-        if (!Complete) return;
-        Recipe = RollRecipe();
-        Array.Clear(_progress);
+        if (!Complete || !recipe.IsValid) return;
+        Recipe = recipe;
+        _progress = new int[Recipe.Requirements.Length];
         Complete = false;
         GameOver = Enumerable.Range(0, Columns).All(c => EmptyCells(c) < 2);
     }
