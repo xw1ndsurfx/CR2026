@@ -202,16 +202,19 @@ public partial class QuestTaskEditor : UserControl
         {
             case QuestObjective.EventDriven: //Event Driven
                 mMyTask.TargetId = Guid.Empty;
+                mMyTask.TargetName = string.Empty;
                 mMyTask.Quantity = 1;
 
                 break;
             case QuestObjective.GatherItems: //Gather Items
                 mMyTask.TargetId = ItemDescriptor.IdFromList(cmbItem.SelectedIndex);
+                mMyTask.TargetName = string.Empty;
                 mMyTask.Quantity = (int) nudItemAmount.Value;
 
                 break;
             case QuestObjective.KillNpcs: //Kill Npcs
                 mMyTask.TargetId = NPCDescriptor.IdFromList(cmbNpc.SelectedIndex);
+                mMyTask.TargetName = string.Empty;
                 mMyTask.Quantity = (int) nudNpcQuantity.Value;
                 break;
             case QuestObjective.PokerWinHands:
@@ -226,11 +229,13 @@ public partial class QuestTaskEditor : UserControl
             case QuestObjective.PotionReachLevel:
             case QuestObjective.PotionEarnScore:
                 mMyTask.TargetId = Guid.Empty;
+                mMyTask.TargetName = string.Empty;
                 mMyTask.Quantity = (int) nudItemAmount.Value;
                 break;
 
             case QuestObjective.PotionBrewSpecificRecipe:
                 mMyTask.TargetId = PotionRecipeIdFromList(cmbItem.SelectedIndex);
+                mMyTask.TargetName = PotionRecipeNameFromList(cmbItem.SelectedIndex);
                 mMyTask.Quantity = (int) nudItemAmount.Value;
                 break;
         }
@@ -252,6 +257,12 @@ public partial class QuestTaskEditor : UserControl
     {
         var recipes = PotionRecipes();
         return index >= 0 && index < recipes.Length ? recipes[index].Id : Guid.Empty;
+    }
+
+    private static string PotionRecipeNameFromList(int index)
+    {
+        var recipes = PotionRecipes();
+        return index >= 0 && index < recipes.Length ? recipes[index].Name : string.Empty;
     }
 
     private void btnCancel_Click(object sender, EventArgs e)
