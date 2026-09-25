@@ -14,4 +14,7 @@ public partial class NpcEntityPacket : EntityPacket
 
     [Key(24)]
     public NpcAggression Aggression { get; set; }
+
+    [Key(25)]
+    public Guid NpcId { get; set; }
 }
