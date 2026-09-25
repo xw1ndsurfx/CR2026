@@ -36,7 +36,7 @@ internal static class PotionRuntime
         public PotionPairOrientation Orientation;
         public int LastScoreGain;
         public int LastChain;
-        public string Status = "Move over a column, left-click to drop, right-click to swap.";
+        public string Status = "Move over a column, left-click to drop, right-click to rotate.";
     }
 
     private static readonly object Gate = new();
