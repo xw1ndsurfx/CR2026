@@ -2248,10 +2248,22 @@ public abstract partial class Entity : IEntity
             }
             else if (baseDamage < 0 && !enemy.IsFullVital(Vital.Health))
             {
-                enemy.AddVital(Vital.Health, -baseDamage);
-                PacketSender.SendActionMsg(
-                    enemy, Strings.Combat.AddSymbol + Math.Abs(baseDamage), CustomColors.Combat.Heal
+                var requestedHealing = baseDamage == long.MinValue
+                    ? long.MaxValue
+                    : -baseDamage;
+                var missingHealth = Math.Max(
+                    0L,
+                    enemy.GetMaxVital(Vital.Health) - enemy.GetVital(Vital.Health)
                 );
+                var effectiveHealing = Math.Min(requestedHealing, missingHealth);
+
+                enemy.AddVital(Vital.Health, requestedHealing);
+                PacketSender.SendActionMsg(
+                    enemy, Strings.Combat.AddSymbol + effectiveHealing, CustomColors.Combat.Heal
+                );
+
+                if (effectiveHealing > 0 && enemy is Player healedPlayer)
+                    InvasionRuntime.RegisterHealingContribution(this, healedPlayer, effectiveHealing);
             }
         }
 
