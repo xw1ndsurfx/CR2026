@@ -33,6 +33,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
     private readonly NumericUpDown _rewardExp = new() { Minimum = 0, Maximum = 2_000_000_000, Width = 150 };
     private readonly NumericUpDown _participationMinimumRewardPercent = new() { Minimum = 0, Maximum = 500, Width = 90 };
     private readonly NumericUpDown _participationMaximumRewardPercent = new() { Minimum = 1, Maximum = 500, Width = 90 };
+    private readonly NumericUpDown _healingContributionPercent = new() { Minimum = 0, Maximum = 500, Width = 90 };
 
     private readonly ComboBox _invasionMusic = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
     private readonly NumericUpDown _nightBrightness = new() { Minimum = 0, Maximum = 100, Width = 90 };
@@ -263,6 +264,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         effortReward.Controls.Add(new Label { Text = "Max %", AutoSize = true, Padding = new Padding(8, 5, 0, 0) });
         effortReward.Controls.Add(_participationMaximumRewardPercent);
         AddRow(table, "Effort reward range", effortReward);
+        AddRow(table, "Healing contribution weight (%)", _healingContributionPercent);
 
         var help = new Label
         {
@@ -271,7 +273,8 @@ public sealed class FrmInvasionConfiguration : DarkForm
             Text =
                 "Choose a map event to make that event the invasion objective. Its map position becomes the target automatically. " +
                 "Choose None to use the manual target tile instead. Invasion NPCs ignore their normal idle movement while assigned to an invasion and march toward this objective. " +
-                "Every player who damages an invasion NPC is registered as a defender. Victory EXP is calculated from actual damage contribution: average effort receives 100% of the base EXP, while lower or higher effort scales within the configured min/max range.",
+                "Defender effort includes actual damage dealt to invasion NPCs plus effective healing done to players already participating in the invasion. Overhealing does not count. " +
+                "Average effort receives 100% of the base EXP, while lower or higher effort scales within the configured min/max range.",
         };
         AddRow(table, "How it works", help);
 
@@ -440,6 +443,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         _rewardExp.Value = invasion.RewardExperience;
         _participationMinimumRewardPercent.Value = invasion.ParticipationMinimumRewardPercent;
         _participationMaximumRewardPercent.Value = invasion.ParticipationMaximumRewardPercent;
+        _healingContributionPercent.Value = invasion.HealingContributionPercent;
         _invasionMusic.Text = invasion.InvasionMusic ?? string.Empty;
         _nightBrightness.Value = invasion.NightBrightness;
         _overlayAlpha.Value = invasion.OverlayAlpha;
@@ -509,6 +513,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         invasion.BossDamagePercent = (int)_bossDamagePercent.Value;
         invasion.ParticipationMinimumRewardPercent = (int)_participationMinimumRewardPercent.Value;
         invasion.ParticipationMaximumRewardPercent = (int)_participationMaximumRewardPercent.Value;
+        invasion.HealingContributionPercent = (int)_healingContributionPercent.Value;
         invasion.RewardExperience = (long)_rewardExp.Value;
 
         var days = InvasionScheduleDays.None;
