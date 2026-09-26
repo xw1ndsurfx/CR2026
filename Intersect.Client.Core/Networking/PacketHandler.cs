@@ -200,6 +200,7 @@ internal sealed partial class PacketHandler
     //JoinGamePacket
     public void HandlePacket(IPacketSender packetSender, JoinGamePacket packet)
     {
+        InvasionEnvironmentManager.Reset();
         Main.JoinGame();
         Globals.JoiningGame = true;
     }
