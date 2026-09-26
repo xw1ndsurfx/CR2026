@@ -21,7 +21,7 @@ public sealed partial class CookingRequestPacket : IntersectPacket
         SessionId != Guid.Empty &&
         RequestId > 0 &&
         Revision >= 0 &&
-        Kind is >= CookingRequestKind.Refresh and <= CookingRequestKind.Leave &&
+        Kind is >= CookingRequestKind.Refresh and <= CookingRequestKind.ReturnToRecipes &&
         (Kind == CookingRequestKind.StartRecipe
             ? RecipeId != Guid.Empty
             : RecipeId == Guid.Empty) &&
