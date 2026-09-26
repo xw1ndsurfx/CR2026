@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.MiniGames.Cooking;
 using Intersect.Network.Packets.MiniGames;
 using MessagePack;
 
