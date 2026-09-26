@@ -174,6 +174,12 @@ internal static class InvasionRuntime
                 continue;
 
             session.NextObjectiveHitAt[npc.Id] = nowMs + session.Definition.ObjectiveHitIntervalMs;
+            FaceObjective(npc, session.TargetX, session.TargetY);
+            PacketSender.SendEntityAttack(
+                npc,
+                Math.Max(250, session.Definition.ObjectiveHitIntervalMs)
+            );
+
             var damage = Math.Max(1, npc.InvasionObjectiveDamage);
             session.ObjectiveHealth = Math.Max(0, session.ObjectiveHealth - damage);
 
@@ -378,6 +384,23 @@ internal static class InvasionRuntime
 
         foreach (var player in Player.OnlinePlayers)
             player?.SendPacket(packet);
+    }
+
+    private static void FaceObjective(Npc npc, int targetX, int targetY)
+    {
+        var dx = targetX - npc.X;
+        var dy = targetY - npc.Y;
+        if (dx == 0 && dy == 0)
+            return;
+
+        Direction direction;
+        if (Math.Abs(dx) > Math.Abs(dy))
+            direction = dx < 0 ? Direction.Left : Direction.Right;
+        else
+            direction = dy < 0 ? Direction.Up : Direction.Down;
+
+        if (npc.Dir != direction)
+            npc.ChangeDir(direction);
     }
 
     private static (Guid MapId, int X, int Y, string Name) ResolveObjective(
