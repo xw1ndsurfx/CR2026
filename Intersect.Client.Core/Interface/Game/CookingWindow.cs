@@ -20,6 +20,7 @@ internal sealed class CookingWindow : Base
     private readonly Label _status;
     private readonly Label _score;
     private readonly Label _players;
+    private readonly Label _professionXp;
     private readonly Button _previousRecipe;
     private readonly Button _nextRecipe;
     private readonly Button _solo;
@@ -75,6 +76,7 @@ internal sealed class CookingWindow : Base
         _status = MakeLabel("CookingStatus", 500, 210, 470, 100, 12);
         _score = MakeLabel("CookingScore", 500, 320, 470, 80, 15);
         _players = MakeLabel("CookingPlayers", 500, 410, 470, 100, 11);
+        _professionXp = MakeLabel("CookingProfessionXp", 30, 632, 740, 42, 11);
 
         _previousRecipe = MakeButton("CookingPreviousRecipe", "< Recipe", 30, 520, 130, () =>
         {
@@ -205,6 +207,17 @@ internal sealed class CookingWindow : Base
                     $"{player.Name}: {player.Actions} action(s) • {player.Score}%"
                 )
             );
+
+            _professionXp.Text = FormatProfessionProgress(
+                state.ProfessionName,
+                state.ProfessionLevel,
+                state.ProfessionMaximumLevel,
+                state.ProfessionExperienceIntoLevel,
+                state.ProfessionExperienceRequiredForLevel,
+                state.ProfessionExperienceToNextLevel,
+                state.ProfessionExperiencePercent,
+                state.ProfessionMaximumLevelReached
+            );
         }
     }
 
@@ -225,7 +238,8 @@ internal sealed class CookingWindow : Base
         var recipe = _state.Recipes[Math.Clamp(_recipeIndex, 0, _state.Recipes.Length - 1)];
         var lockText = recipe.Unlocked ? "READY" : $"LOCKED — {recipe.LockedReason}";
         _recipe.Text =
-            $"{recipe.Name}\nCooking level {recipe.RequiredLevel} • {recipe.Experience:N0} base XP\n{lockText}";
+            $"{recipe.Name}\n{recipe.ProfessionName} Lv {Math.Max(1, recipe.ProfessionLevel)}/{Math.Max(1, recipe.ProfessionMaximumLevel)} • " +
+            $"{recipe.Experience:N0} base XP\n{lockText}";
 
         _ingredients.Text =
             "INGREDIENTS\n" +
@@ -263,6 +277,16 @@ internal sealed class CookingWindow : Base
         _status.Text = "Cook solo, or invite a nearby member of your Party.";
         _score.Text = string.Empty;
         _players.Text = string.Empty;
+        _professionXp.Text = FormatProfessionProgress(
+            recipe.ProfessionName,
+            recipe.ProfessionLevel,
+            recipe.ProfessionMaximumLevel,
+            recipe.ProfessionExperienceIntoLevel,
+            recipe.ProfessionExperienceRequiredForLevel,
+            recipe.ProfessionExperienceToNextLevel,
+            recipe.ProfessionExperiencePercent,
+            recipe.ProfessionMaximumLevelReached
+        );
     }
 
     private void StartSolo()
@@ -525,9 +549,79 @@ internal sealed class CookingWindow : Base
             DrawStageProp(Fill, state, elapsed);
         }
 
+        DrawProfessionXpBar(Fill);
         DrawActionFeedback(Fill);
         DrawComicEvent(Fill);
         base.Render(skin);
+    }
+
+    private void DrawProfessionXpBar(Action<int, int, int, int, Color> fill)
+    {
+        if (_state == null)
+            return;
+
+        int percent;
+        bool maximumLevelReached;
+
+        if (_state.RecipeSelectionRequired && _state.Recipes.Length > 0)
+        {
+            var recipe = _state.Recipes[Math.Clamp(_recipeIndex, 0, _state.Recipes.Length - 1)];
+            percent = recipe.ProfessionExperiencePercent;
+            maximumLevelReached = recipe.ProfessionMaximumLevelReached;
+        }
+        else
+        {
+            percent = _state.ProfessionExperiencePercent;
+            maximumLevelReached = _state.ProfessionMaximumLevelReached;
+        }
+
+        percent = Math.Clamp(percent, 0, 100);
+
+        const int x = 30;
+        const int y = 676;
+        const int width = 740;
+        const int height = 14;
+
+        fill(x, y, width, height, new Color(a: 255, r: 28, g: 24, b: 20));
+
+        var fillWidth = maximumLevelReached
+            ? width
+            : (int)Math.Round(width * percent / 100d);
+
+        if (fillWidth > 0)
+        {
+            fill(
+                x + 2,
+                y + 2,
+                Math.Max(1, fillWidth - 4),
+                height - 4,
+                new Color(a: 255, r: 190, g: 145, b: 66)
+            );
+        }
+    }
+
+    private static string FormatProfessionProgress(
+        string name,
+        int level,
+        int maximumLevel,
+        long experienceIntoLevel,
+        long experienceRequiredForLevel,
+        long experienceToNextLevel,
+        int percent,
+        bool maximumLevelReached
+    )
+    {
+        var displayName = string.IsNullOrWhiteSpace(name) ? "Cooking" : name;
+        var displayLevel = Math.Max(1, level);
+        var displayMaximum = Math.Max(displayLevel, maximumLevel);
+
+        if (maximumLevelReached)
+            return $"{displayName} Lv {displayLevel}/{displayMaximum} • MAX LEVEL • 100%";
+
+        return $"{displayName} Lv {displayLevel}/{displayMaximum} • " +
+               $"{Math.Clamp(percent, 0, 100)}% • " +
+               $"{experienceIntoLevel:N0}/{Math.Max(1L, experienceRequiredForLevel):N0} XP • " +
+               $"{experienceToNextLevel:N0} XP to next level";
     }
 
     private void DrawStageProp(
