@@ -38,9 +38,19 @@ internal sealed class CookingWindow : Base
     private int _recipeIndex;
     private int _partnerIndex;
     private long _lastActionSequence;
+    private long _lastComicEventSequence;
     private long _feedbackUntil;
+    private long _comicUntil;
     private int _feedbackScore;
     private CookingStageType _feedbackStage;
+    private CookingComicEventType _comicEventType;
+    private string _comicEventText = string.Empty;
+    private bool _stateTransitionsInitialized;
+    private bool _previousSelecting;
+    private bool _previousWaitingForPartner;
+    private bool _previousInvitePending;
+    private bool _previousComplete;
+    private Guid _previousPartnerId;
     private bool _destroyed;
 
     public bool ExitRequested { get; private set; }
@@ -139,7 +149,9 @@ internal sealed class CookingWindow : Base
 
         _state = state;
         _serverOffset = model.Current.ServerUnixMs - Environment.TickCount64;
+        HandleStateSounds(state);
         HandleActionFeedback(state);
+        HandleComicEvent(state);
 
         if (_recipeIndex >= state.Recipes.Length) _recipeIndex = Math.Max(0, state.Recipes.Length - 1);
         if (_partnerIndex >= state.PartyCandidates.Length) _partnerIndex = Math.Max(0, state.PartyCandidates.Length - 1);
@@ -176,8 +188,11 @@ internal sealed class CookingWindow : Base
                     : $"STAGE {stageNumber}/{state.StageCount}\n{StageName(state.StageType)}\n" +
                       $"{state.CompletedActions}/{state.RequiredActions} actions";
 
+            var comicText = _comicUntil > Environment.TickCount64 && !string.IsNullOrWhiteSpace(_comicEventText)
+                ? $"\n⚠ {_comicEventText}"
+                : string.Empty;
             _status.Text = string.IsNullOrWhiteSpace(model.ErrorCode)
-                ? $"{state.Status}\n{state.ActionHint}"
+                ? $"{state.Status}\n{state.ActionHint}{comicText}"
                 : ErrorText(model.ErrorCode);
 
             _score.Text = state.Complete
@@ -272,6 +287,77 @@ internal sealed class CookingWindow : Base
 
     private void DoAction(CookingActionInput input) =>
         _send(CookingRequestKind.Action, Guid.Empty, Guid.Empty, false, input);
+
+    private void HandleStateSounds(CookingSessionState state)
+    {
+        if (!_stateTransitionsInitialized)
+        {
+            _stateTransitionsInitialized = true;
+            _previousSelecting = state.RecipeSelectionRequired;
+            _previousWaitingForPartner = state.WaitingForPartner;
+            _previousInvitePending = state.InvitePendingForYou;
+            _previousComplete = state.Complete;
+            _previousPartnerId = state.PartnerId;
+
+            if (state.InvitePendingForYou)
+                PlayCookingSound(state.InviteSound);
+            else if (!state.RecipeSelectionRequired && !state.WaitingForPartner && !state.Complete)
+                PlayCookingSound(state.StartSound);
+
+            return;
+        }
+
+        if (!_previousInvitePending && state.InvitePendingForYou)
+            PlayCookingSound(state.InviteSound);
+
+        if (_previousWaitingForPartner &&
+            !state.WaitingForPartner &&
+            state.PartnerId != Guid.Empty)
+        {
+            PlayCookingSound(state.PartnerJoinedSound);
+            PlayCookingSound(state.StartSound);
+        }
+        else if (_previousSelecting &&
+                 !state.RecipeSelectionRequired &&
+                 !state.WaitingForPartner)
+        {
+            PlayCookingSound(state.StartSound);
+        }
+
+        if (!_previousComplete && state.Complete)
+        {
+            PlayCookingSound(state.CompleteSound);
+            switch (state.Quality)
+            {
+                case CookingQuality.Burnt:
+                    PlayCookingSound(state.BurntSound);
+                    break;
+                case CookingQuality.Great:
+                    PlayCookingSound(state.GreatSound);
+                    break;
+                case CookingQuality.Perfect:
+                    PlayCookingSound(state.PerfectSoundRecipe);
+                    break;
+            }
+        }
+
+        _previousSelecting = state.RecipeSelectionRequired;
+        _previousWaitingForPartner = state.WaitingForPartner;
+        _previousInvitePending = state.InvitePendingForYou;
+        _previousComplete = state.Complete;
+        _previousPartnerId = state.PartnerId;
+    }
+
+    private void HandleComicEvent(CookingSessionState state)
+    {
+        if (state.ComicEventSequence <= _lastComicEventSequence)
+            return;
+
+        _lastComicEventSequence = state.ComicEventSequence;
+        _comicEventType = state.ComicEventType;
+        _comicEventText = state.ComicEventText;
+        _comicUntil = Environment.TickCount64 + 1_650;
+    }
 
     private void HandleActionFeedback(CookingSessionState state)
     {
@@ -440,6 +526,7 @@ internal sealed class CookingWindow : Base
         }
 
         DrawActionFeedback(Fill);
+        DrawComicEvent(Fill);
         base.Render(skin);
     }
 
@@ -495,6 +582,73 @@ internal sealed class CookingWindow : Base
                 fill(645, 378, 170, 90, new Color(a: 255, r: 224, g: 220, b: 202));
                 fill(662, 394, 136, 58, new Color(a: 255, r: 47, g: 58, b: 47));
                 break;
+        }
+    }
+
+    private void DrawComicEvent(Action<int, int, int, int, Color> fill)
+    {
+        var remaining = _comicUntil - Environment.TickCount64;
+        if (remaining <= 0)
+            return;
+
+        var age = 1_650 - remaining;
+        switch (_comicEventType)
+        {
+            case CookingComicEventType.PanOverflow:
+                for (var drop = 0; drop < 9; ++drop)
+                {
+                    var x = 610 + ((drop * 41 + (int)(age / 7)) % 300);
+                    var y = 360 + ((drop * 29 + (int)(age / 12)) % 120);
+                    fill(x, y, 9, 9, new Color(a: 220, r: 211, g: 151, b: 78));
+                }
+                break;
+
+            case CookingComicEventType.EscapingIngredient:
+            {
+                var run = (int)Math.Min(360, age / 3);
+                fill(540 + run, 420 - (run % 80) / 4, 34, 22, new Color(a: 255, r: 224, g: 138, b: 65));
+                break;
+            }
+
+            case CookingComicEventType.SauceSplash:
+                for (var splash = 0; splash < 11; ++splash)
+                {
+                    var x = 530 + ((splash * 53) % 390);
+                    var y = 120 + ((splash * 71) % 330);
+                    var size = 8 + splash % 4 * 4;
+                    fill(x, y, size, size, new Color(a: 190, r: 159, g: 54, b: 37));
+                }
+                break;
+
+            case CookingComicEventType.SmokeCloud:
+                for (var cloud = 0; cloud < 10; ++cloud)
+                {
+                    var drift = (int)(age / 25);
+                    fill(
+                        560 + cloud * 34 + (cloud % 2 == 0 ? drift : -drift / 2),
+                        430 - cloud * 13 - drift,
+                        30 + cloud % 3 * 9,
+                        30 + cloud % 3 * 9,
+                        new Color(a: 115, r: 92, g: 90, b: 84)
+                    );
+                }
+                break;
+
+            case CookingComicEventType.FlyingFood:
+            {
+                var travel = (int)Math.Min(390, age / 3);
+                var rise = 120 - Math.Abs(195 - travel) / 2;
+                fill(520 + travel, 420 - Math.Max(0, rise), 42, 22, new Color(a: 255, r: 215, g: 140, b: 67));
+                break;
+            }
+
+            case CookingComicEventType.WobblyPlate:
+            {
+                var wobble = ((int)(age / 80) % 2 == 0) ? -12 : 12;
+                fill(665 + wobble, 390, 180, 80, new Color(a: 210, r: 232, g: 228, b: 208));
+                fill(684 + wobble, 407, 142, 48, new Color(a: 210, r: 48, g: 62, b: 48));
+                break;
+            }
         }
     }
 
