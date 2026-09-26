@@ -59,6 +59,9 @@ internal sealed class CookingRecipeDialog : DarkForm
     private readonly NumericUpDown _duration = new() { Minimum = 4, Maximum = 60, Width = 70 };
     private readonly NumericUpDown _actions = new() { Minimum = 1, Maximum = 20, Width = 70 };
     private readonly ComboBox _assignment = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 110 };
+    private readonly TextBox _actionSound = new() { Width = 150, MaxLength = CookingStageDefinition.MaximumSoundFileLength };
+    private readonly TextBox _perfectSound = new() { Width = 150, MaxLength = CookingStageDefinition.MaximumSoundFileLength };
+    private readonly TextBox _mishapSound = new() { Width = 150, MaxLength = CookingStageDefinition.MaximumSoundFileLength };
 
     private readonly ListBox _outputs = new() { Width = 520, Height = 100 };
     private readonly ComboBox _quality = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 110 };
@@ -128,13 +131,13 @@ internal sealed class CookingRecipeDialog : DarkForm
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 13,
+            RowCount = 14,
             Padding = new Padding(12),
             AutoScroll = true,
         };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 145));
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        for (var i = 0; i < 13; ++i) root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var i = 0; i < 14; ++i) root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         AddRow(root, 0, "Recipe name", _name);
         AddRow(root, 1, "Profession", _profession);
@@ -192,7 +195,17 @@ internal sealed class CookingRecipeDialog : DarkForm
         stageControls.Controls.Add(stageAdd);
         stageControls.Controls.Add(stageRemove);
         AddRow(root, 7, "Cooking stage", stageControls);
-        AddRow(root, 8, "Stages", _stages);
+
+        var soundControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true };
+        soundControls.Controls.Add(new Label { Text = "Action", AutoSize = true, Margin = new Padding(3, 8, 3, 3) });
+        soundControls.Controls.Add(_actionSound);
+        soundControls.Controls.Add(new Label { Text = "Perfect", AutoSize = true, Margin = new Padding(8, 8, 3, 3) });
+        soundControls.Controls.Add(_perfectSound);
+        soundControls.Controls.Add(new Label { Text = "Mishap", AutoSize = true, Margin = new Padding(8, 8, 3, 3) });
+        soundControls.Controls.Add(_mishapSound);
+        AddRow(root, 8, "Stage sounds", soundControls);
+
+        AddRow(root, 9, "Stages", _stages);
 
         var outputControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true };
         outputControls.Controls.Add(_quality);
@@ -209,8 +222,8 @@ internal sealed class CookingRecipeDialog : DarkForm
         };
         outputControls.Controls.Add(outputAdd);
         outputControls.Controls.Add(outputRemove);
-        AddRow(root, 9, "Quality output", outputControls);
-        AddRow(root, 10, "Outputs", _outputs);
+        AddRow(root, 10, "Quality output", outputControls);
+        AddRow(root, 11, "Outputs", _outputs);
 
         var help = new Label
         {
@@ -221,7 +234,7 @@ internal sealed class CookingRecipeDialog : DarkForm
                 "Quality is scored 0-100: Burnt <40, Decent 40-69, Great 70-89, Perfect 90-100. " +
                 "Auto stage assignment alternates players in co-op. Partner/Both stages require co-op.",
         };
-        AddRow(root, 11, "Rules", help);
+        AddRow(root, 12, "Rules", help);
 
         var buttons = new FlowLayoutPanel
         {
@@ -336,7 +349,10 @@ internal sealed class CookingRecipeDialog : DarkForm
                 (int)_difficulty.Value,
                 (int)_duration.Value,
                 (int)_actions.Value,
-                assignment
+                assignment,
+                _actionSound.Text.Trim(),
+                _perfectSound.Text.Trim(),
+                _mishapSound.Text.Trim()
             )
         );
         RefreshStages();
@@ -378,10 +394,20 @@ internal sealed class CookingRecipeDialog : DarkForm
                 new StageChoice(
                     stage,
                     $"{index + 1}. {stage.Type} | Difficulty {stage.Difficulty}/5 | " +
-                    $"{stage.DurationSeconds}s | {stage.RequiredActions} action(s) | {stage.Assignment}"
+                    $"{stage.DurationSeconds}s | {stage.RequiredActions} action(s) | {stage.Assignment} | " +
+                    $"SFX: {SoundSummary(stage)}"
                 )
             );
         }
+    }
+
+    private static string SoundSummary(CookingStageDefinition stage)
+    {
+        var values = new List<string>();
+        if (!string.IsNullOrWhiteSpace(stage.ActionSound)) values.Add("action");
+        if (!string.IsNullOrWhiteSpace(stage.PerfectSound)) values.Add("perfect");
+        if (!string.IsNullOrWhiteSpace(stage.MishapSound)) values.Add("mishap");
+        return values.Count == 0 ? "none" : string.Join("/", values);
     }
 
     private void RefreshOutputs()
