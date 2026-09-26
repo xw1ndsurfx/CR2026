@@ -382,6 +382,7 @@ internal static class InvasionRuntime
         npc.InvasionScaledLevel = scaling.TargetLevel;
         npc.InvasionScalingPlayerCount = scaling.PlayerCount;
         npc.InvasionHealthMultiplier = healthMultiplier;
+        npc.InvasionBaseDamageMultiplier = levelRatio;
         npc.InvasionDamageMultiplier = isBoss ? definition.BossDamagePercent / 100d : 1d;
 
         var maxStat = Math.Max(1, Options.Instance.Player.MaxStat);

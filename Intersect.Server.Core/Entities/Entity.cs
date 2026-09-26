@@ -2093,6 +2093,22 @@ public abstract partial class Entity : IEntity
             isCrit = true;
         }
 
+        // Invasion scaling adjusts the raw damaging value before the normal combat formula.
+        // This affects only spawned invasion NPC instances, never their shared NPC descriptor.
+        if (baseDamage > 0 &&
+            this is Npc baseDamageInvasionNpc &&
+            baseDamageInvasionNpc.InvasionSessionId != Guid.Empty &&
+            Math.Abs(baseDamageInvasionNpc.InvasionBaseDamageMultiplier - 1d) > double.Epsilon)
+        {
+            baseDamage = Math.Max(
+                1,
+                (long)Math.Round(
+                    baseDamage * baseDamageInvasionNpc.InvasionBaseDamageMultiplier,
+                    MidpointRounding.AwayFromZero
+                )
+            );
+        }
+
         //If the enemy is a resource, the original base damage value will be used on "Calculate Damages", if not, we need change...
         if (!(enemy is Resource))
         {
@@ -2236,6 +2252,20 @@ public abstract partial class Entity : IEntity
 
         if (secondaryDamage != 0)
         {
+            if (secondaryDamage > 0 &&
+                this is Npc secondaryBaseDamageInvasionNpc &&
+                secondaryBaseDamageInvasionNpc.InvasionSessionId != Guid.Empty &&
+                Math.Abs(secondaryBaseDamageInvasionNpc.InvasionBaseDamageMultiplier - 1d) > double.Epsilon)
+            {
+                secondaryDamage = Math.Max(
+                    1,
+                    (long)Math.Round(
+                        secondaryDamage * secondaryBaseDamageInvasionNpc.InvasionBaseDamageMultiplier,
+                        MidpointRounding.AwayFromZero
+                    )
+                );
+            }
+
             secondaryDamage = Formulas.CalculateDamage(
                 secondaryDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy
             );

@@ -76,6 +76,7 @@ public partial class Npc : Entity
     public int InvasionScaledLevel { get; set; }
     public int InvasionScalingPlayerCount { get; set; }
     public double InvasionHealthMultiplier { get; set; } = 1d;
+    public double InvasionBaseDamageMultiplier { get; set; } = 1d;
     public double InvasionDamageMultiplier { get; set; } = 1d;
 
     //Moving
