@@ -92,6 +92,20 @@ public sealed class InvasionDefinition
     public int ParticipationMinimumRewardPercent { get; set; } = 10;
     public int ParticipationMaximumRewardPercent { get; set; } = 200;
     public int HealingContributionPercent { get; set; } = 100;
+
+    public bool Reminder60Enabled { get; set; } = true;
+    public string Reminder60Message { get; set; } = "{name} will begin in 1 hour near {island}.";
+    public string Reminder60Sound { get; set; } = string.Empty;
+    public bool Reminder30Enabled { get; set; } = true;
+    public string Reminder30Message { get; set; } = "{name} will begin in 30 minutes near {island}.";
+    public string Reminder30Sound { get; set; } = string.Empty;
+    public bool Reminder15Enabled { get; set; } = true;
+    public string Reminder15Message { get; set; } = "{name} will begin in 15 minutes near {island}.";
+    public string Reminder15Sound { get; set; } = string.Empty;
+    public bool Reminder5Enabled { get; set; } = true;
+    public string Reminder5Message { get; set; } = "{name} will begin in 5 minutes near {island}.";
+    public string Reminder5Sound { get; set; } = string.Empty;
+
     public long RewardExperience { get; set; } = 500;
     public InvasionWaveDefinition[] Waves { get; set; } = [];
 
@@ -126,6 +140,14 @@ public sealed class InvasionDefinition
         ParticipationMaximumRewardPercent is >= 1 and <= 500 &&
         ParticipationMinimumRewardPercent <= ParticipationMaximumRewardPercent &&
         HealingContributionPercent is >= 0 and <= 500 &&
+        Reminder60Message.Length <= 512 &&
+        Reminder60Sound.Length <= 260 &&
+        Reminder30Message.Length <= 512 &&
+        Reminder30Sound.Length <= 260 &&
+        Reminder15Message.Length <= 512 &&
+        Reminder15Sound.Length <= 260 &&
+        Reminder5Message.Length <= 512 &&
+        Reminder5Sound.Length <= 260 &&
         RewardExperience is >= 0 and <= 2_000_000_000 &&
         Waves is { Length: > 0 and <= 128 } &&
         Waves.All(wave => wave is { IsStructurallyValid: true }) &&
@@ -176,6 +198,14 @@ public sealed class InvasionConfiguration
         value.Invasions ??= [];
         foreach (var invasion in value.Invasions)
         {
+            invasion.Reminder60Message ??= string.Empty;
+            invasion.Reminder60Sound ??= string.Empty;
+            invasion.Reminder30Message ??= string.Empty;
+            invasion.Reminder30Sound ??= string.Empty;
+            invasion.Reminder15Message ??= string.Empty;
+            invasion.Reminder15Sound ??= string.Empty;
+            invasion.Reminder5Message ??= string.Empty;
+            invasion.Reminder5Sound ??= string.Empty;
             invasion.Waves ??= [];
             foreach (var wave in invasion.Waves)
                 wave.Spawns ??= [];
