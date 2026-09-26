@@ -460,6 +460,7 @@ public partial class GameInterface : MutableInterface
         PlayerStatusWindow?.Update();
         mMapItemWindow.Update();
         _minimapHud?.Update();
+        UpdateProfessionProgress();
         _shopWindow?.Update();
         AnnouncementWindow?.Update();
         mPictureWindow?.Update();
