@@ -26,9 +26,9 @@ internal sealed class MiniGameCommandDialog : Form
         ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
         MinimumSize = new Size(580, 420);
         BackColor = DrawingColor.FromArgb(45, 45, 48); ForeColor = DrawingColor.Gainsboro;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 46, AutoScroll = true };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 48, AutoScroll = true };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
-        for (var row = 0; row < 46; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var row = 0; row < 48; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(12, 8, 12, 8) };
         Controls.Add(layout); Controls.Add(buttons);
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
@@ -41,7 +41,7 @@ internal sealed class MiniGameCommandDialog : Form
             game.Items.Add(new GameChoice(definition.Type, definition.DisplayName));
         game.SelectedItem = game.Items.Cast<GameChoice>().FirstOrDefault(choice => choice.Type == command.Game) ?? game.Items[0];
         var table = new TextBox { Name = "TableId", Text = command.TableId ?? "", MaxLength = 64, Dock = DockStyle.Fill };
-        var seats = Number(command.MaxPlayers, 2, 6);
+        var seats = Number(command.MaxPlayers, 1, 6);
         var currency = CurrencyPicker(command.CurrencyItemId);
         var chips = Number(command.StartingChips, 1, 1_000_000_000); chips.Name = "StartingChips";
         var reserve = Number(command.NpcReserve, 0, 1_000_000_000); reserve.Name = "NpcReserve";
@@ -95,8 +95,11 @@ internal sealed class MiniGameCommandDialog : Form
         var blackjackMinimum = Number(command.BlackjackMinimumBet, 2, 1_000_000_000); blackjackMinimum.Name = "BlackjackMinimumBet"; blackjackMinimum.Increment = 2;
         var blackjackMaximum = Number(command.BlackjackMaximumBet, 2, 1_000_000_000); blackjackMaximum.Name = "BlackjackMaximumBet"; blackjackMaximum.Increment = 2;
         var blackjackHitSoft17 = new CheckBox { Name = "BlackjackHitSoft17", Text = "Dealer hits soft 17 (H17)", Checked = command.BlackjackHitSoft17, AutoSize = true };
+        var rouletteMinimum = Number(command.RouletteMinimumBet, 1, 20_000_000); rouletteMinimum.Name = "RouletteMinimumBet";
+        var rouletteMaximum = Number(command.RouletteMaximumBet, 1, 20_000_000); rouletteMaximum.Name = "RouletteMaximumBet";
         bool IsBlackjack() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Blackjack;
         bool IsPotions() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Potions;
+        bool IsRoulette() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Roulette;
         var currencyModeFunded = command.CurrencyItemId != Guid.Empty;
         long testChipsValue = command.CurrencyItemId == Guid.Empty ? command.StartingChips : 1000;
         long fundedBuyInValue = command.CurrencyItemId != Guid.Empty ? command.StartingChips : 0;
@@ -158,12 +161,17 @@ internal sealed class MiniGameCommandDialog : Form
         {
             var blackjack = IsBlackjack();
             var potions = IsPotions();
+            var roulette = IsRoulette();
 
-            small.Enabled = big.Enabled = dealer.Enabled = !blackjack && !potions;
+            small.Enabled = big.Enabled = dealer.Enabled = !blackjack && !potions && !roulette;
             blackjackMinimum.Enabled = blackjackMaximum.Enabled = blackjackHitSoft17.Enabled = blackjack;
-            seats.Enabled = npcs.Enabled = currency.Enabled = chips.Enabled = reserve.Enabled =
-                unlimitedNpcBankroll.Enabled = automatic.Enabled = !potions;
-            backs.Enabled = motionSpeed.Enabled = motionPanel.Enabled = !potions;
+            rouletteMinimum.Enabled = rouletteMaximum.Enabled = roulette;
+            seats.Enabled = !potions && !roulette;
+            npcs.Enabled = !potions && !roulette;
+            currency.Enabled = chips.Enabled = reserve.Enabled = !potions;
+            unlimitedNpcBankroll.Enabled = !potions && !blackjack;
+            automatic.Enabled = !potions && !roulette;
+            backs.Enabled = motionSpeed.Enabled = motionPanel.Enabled = !potions && !roulette;
 
             if (blackjack)
             {
@@ -175,6 +183,12 @@ internal sealed class MiniGameCommandDialog : Form
                 dealer.Checked = false;
                 npcs.Value = 0;
                 unlimitedNpcBankroll.Checked = false;
+            }
+            if (roulette)
+            {
+                seats.Value = 1;
+                dealer.Checked = false;
+                npcs.Value = 0;
             }
 
             LimitNpcs();
@@ -259,6 +273,8 @@ internal sealed class MiniGameCommandDialog : Form
         AddRow(layout, 43, "Blackjack minimum bet (even)", blackjackMinimum);
         AddRow(layout, 44, "Blackjack maximum bet (even)", blackjackMaximum);
         AddRow(layout, 45, "Blackjack dealer rule", blackjackHitSoft17);
+        AddRow(layout, 46, "Roulette minimum bet", rouletteMinimum);
+        AddRow(layout, 47, "Roulette maximum bet", rouletteMaximum);
 
         void ShowSummary()
         {
@@ -266,6 +282,7 @@ internal sealed class MiniGameCommandDialog : Form
             var definition = MiniGameCatalog.Get(selectedGame);
             var blackjack = selectedGame == MiniGameType.Blackjack;
             var potions = selectedGame == MiniGameType.Potions;
+            var roulette = selectedGame == MiniGameType.Roulette;
             var dealerSeats = blackjack ? 1 : (dealer.Checked ? 1 : 0);
             var humanSeats = Math.Max(1, (int)seats.Value - (int)npcs.Value - dealerSeats);
             var funded = ((currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty) != Guid.Empty;
@@ -281,7 +298,9 @@ internal sealed class MiniGameCommandDialog : Form
 
             var rules = blackjack
                 ? $"Bet {blackjackMinimum.Value}-{blackjackMaximum.Value} | {(blackjackHitSoft17.Checked ? "H17" : "S17")}"
-                : $"Blinds {small.Value}/{big.Value}";
+                : roulette
+                    ? $"European 0-36 | Bet {rouletteMinimum.Value}-{rouletteMaximum.Value} | Straight 35:1"
+                    : $"Blinds {small.Value}/{big.Value}";
             var funding = funded ? $"FUNDED buy-in {chips.Value:N0}" : $"TEST chips {chips.Value:N0}";
             summary.ForeColor = tableValid ? DrawingColor.LightSkyBlue : DrawingColor.OrangeRed;
             summary.Text = $"{definition.DisplayName} | Table: {(string.IsNullOrWhiteSpace(table.Text) ? "(missing)" : table.Text)} | " +
@@ -379,15 +398,16 @@ internal sealed class MiniGameCommandDialog : Form
             var draft = new StartMiniGameCommand
             {
                 Game = ((GameChoice)game.SelectedItem!).Type, TableId = table.Text,
-                MaxPlayers = IsPotions() ? 1 : (int)seats.Value, CurrencyItemId = selected,
+                MaxPlayers = IsPotions() || IsRoulette() ? 1 : (int)seats.Value, CurrencyItemId = selected,
                 StartingChips = (long)chips.Value, NpcReserve = (long)reserve.Value,
                 UnlimitedNpcBankroll = unlimitedNpcBankroll.Checked,
                 BlackjackMinimumBet = (long)blackjackMinimum.Value, BlackjackMaximumBet = (long)blackjackMaximum.Value,
                 BlackjackHitSoft17 = blackjackHitSoft17.Checked,
+                RouletteMinimumBet = (long)rouletteMinimum.Value, RouletteMaximumBet = (long)rouletteMaximum.Value,
                 SmallBlind = (long)small.Value, BigBlind = (long)big.Value, TurnSeconds = (int)seconds.Value,
-                DealerPlays = IsPotions() ? false : dealer.Checked,
-                NpcPlayers = IsPotions() ? 0 : (int)npcs.Value,
-                AutoStart = IsPotions() ? false : automatic.Checked,
+                DealerPlays = IsPotions() || IsRoulette() ? false : dealer.Checked,
+                NpcPlayers = IsPotions() || IsRoulette() ? 0 : (int)npcs.Value,
+                AutoStart = IsPotions() || IsRoulette() ? false : automatic.Checked,
                 DealAnimationId = ((AnimationChoice)animation.SelectedItem!).Id, AnnounceWins = announce.Checked,
                 VictoryAnimationId = ((AnimationChoice)victory.SelectedItem!).Id, NpcCardBackId = backs.SelectedIndex,
                 DealSound = ((SoundChoice)dealSound.SelectedItem!).File, CheckSound = ((SoundChoice)checkSound.SelectedItem!).File,
@@ -414,7 +434,7 @@ internal sealed class MiniGameCommandDialog : Form
             if (!draft.HasValidSettings())
             {
                 MessageBox.Show(this,
-                    "Check the highlighted summary. Use a valid Table ID, seat count and rules; Poker needs valid blinds and Blackjack needs even min/max bets. At least one human seat must remain.",
+                    "Check the highlighted summary. Use a valid Table ID and rules; Poker needs valid blinds, Blackjack needs even min/max bets, and Roulette needs a valid min/max wager plus enough house reserve for funded 35:1 payouts.",
                     "Invalid mini-game configuration", MessageBoxButtons.OK, MessageBoxIcon.Warning); return;
             }
             command.Game = draft.Game; command.TableId = draft.TableId; command.MaxPlayers = draft.MaxPlayers;
@@ -422,6 +442,7 @@ internal sealed class MiniGameCommandDialog : Form
             command.UnlimitedNpcBankroll = draft.UnlimitedNpcBankroll;
             command.BlackjackMinimumBet = draft.BlackjackMinimumBet; command.BlackjackMaximumBet = draft.BlackjackMaximumBet;
             command.BlackjackHitSoft17 = draft.BlackjackHitSoft17;
+            command.RouletteMinimumBet = draft.RouletteMinimumBet; command.RouletteMaximumBet = draft.RouletteMaximumBet;
             command.StartingChips = draft.StartingChips; command.SmallBlind = draft.SmallBlind; command.BigBlind = draft.BigBlind;
             command.TurnSeconds = draft.TurnSeconds; command.DealerPlays = draft.DealerPlays; command.NpcPlayers = draft.NpcPlayers;
             command.AutoStart = draft.AutoStart; command.DealAnimationId = draft.DealAnimationId; command.AnnounceWins = draft.AnnounceWins;
