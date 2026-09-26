@@ -106,6 +106,10 @@ public sealed class InvasionDefinition
     public string Reminder5Message { get; set; } = "{name} will begin in 5 minutes near {island}.";
     public string Reminder5Sound { get; set; } = string.Empty;
 
+    public bool PreStartCinematicEnabled { get; set; }
+    public Guid PreStartCinematicEventId { get; set; }
+    public int PreStartCinematicLeadSeconds { get; set; } = 15;
+
     public long RewardExperience { get; set; } = 500;
     public InvasionWaveDefinition[] Waves { get; set; } = [];
 
@@ -148,6 +152,8 @@ public sealed class InvasionDefinition
         Reminder15Sound.Length <= 260 &&
         Reminder5Message.Length <= 512 &&
         Reminder5Sound.Length <= 260 &&
+        PreStartCinematicLeadSeconds is >= 1 and <= 300 &&
+        (!PreStartCinematicEnabled || PreStartCinematicEventId != Guid.Empty) &&
         RewardExperience is >= 0 and <= 2_000_000_000 &&
         Waves is { Length: > 0 and <= 128 } &&
         Waves.All(wave => wave is { IsStructurallyValid: true }) &&
