@@ -9,6 +9,7 @@ using Intersect.Server.MiniGames;
 using Intersect.Server.MiniGames.Blackjack;
 using Intersect.Server.MiniGames.Poker;
 using Intersect.Server.MiniGames.Potions;
+using Intersect.Server.MiniGames.Roulette;
 using Intersect.Server.Networking;
 
 namespace Intersect.Server.Entities.Events;
@@ -39,6 +40,20 @@ public static partial class CommandProcessing
             return;
         }
 
+        if (command.Game == MiniGameType.Roulette)
+        {
+            if (!RouletteRuntime.Join(player, command))
+            {
+                PacketSender.SendChatMsg(
+                    player,
+                    "[Roulette] Unable to open this roulette table.",
+                    ChatMessageType.Error,
+                    Color.White
+                );
+            }
+            return;
+        }
+
         if (command.CurrencyItemId != Guid.Empty && !MiniGameCurrency.IsCompatible(ItemDescriptor.Get(command.CurrencyItemId)))
         {
             PacketSender.SendChatMsg(player, "[Poker] The configured currency item is missing or incompatible. No items were taken.",
@@ -58,6 +73,7 @@ public static partial class CommandProcessing
     {
         if (player == null) return;
         if (PotionRuntime.Leave(player)) return;
+        if (RouletteRuntime.Leave(player)) return;
         if (!BlackjackRuntime.Leave(player)) PokerRuntime.Leave(player);
     }
 }
