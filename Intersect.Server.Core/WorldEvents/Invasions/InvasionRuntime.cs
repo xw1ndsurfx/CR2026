@@ -49,6 +49,7 @@ internal static class InvasionRuntime
     private static readonly Dictionary<Guid, Session> Sessions = [];
     private static readonly ConcurrentDictionary<Guid, Session> SessionsById = [];
     private static readonly Dictionary<Guid, string> LastScheduleKeys = [];
+    private static readonly Dictionary<(Guid InvasionId, int MinutesBefore), string> LastReminderKeys = [];
     private static long _nextScheduleCheckAt;
 
     internal static void Update(long nowMs)
@@ -139,6 +140,8 @@ internal static class InvasionRuntime
     private static void CheckSchedules(long nowMs)
     {
         var now = DateTimeOffset.Now;
+        CheckPreInvasionReminders(now);
+
         foreach (var definition in InvasionConfigurationRuntime.Current.Invasions)
         {
             if (!definition.Enabled ||
@@ -155,6 +158,106 @@ internal static class InvasionRuntime
 
             LastScheduleKeys[definition.Id] = scheduleKey;
             Start(definition, nowMs);
+        }
+    }
+
+    private static void CheckPreInvasionReminders(DateTimeOffset now)
+    {
+        foreach (var definition in InvasionConfigurationRuntime.Current.Invasions)
+        {
+            if (!definition.Enabled || Sessions.ContainsKey(definition.Id))
+                continue;
+
+            CheckReminder(definition, now, 60, definition.Reminder60Enabled, definition.Reminder60Message, definition.Reminder60Sound);
+            CheckReminder(definition, now, 30, definition.Reminder30Enabled, definition.Reminder30Message, definition.Reminder30Sound);
+            CheckReminder(definition, now, 15, definition.Reminder15Enabled, definition.Reminder15Message, definition.Reminder15Sound);
+            CheckReminder(definition, now, 5, definition.Reminder5Enabled, definition.Reminder5Message, definition.Reminder5Sound);
+        }
+    }
+
+    private static void CheckReminder(
+        InvasionDefinition definition,
+        DateTimeOffset now,
+        int minutesBefore,
+        bool enabled,
+        string message,
+        string sound
+    )
+    {
+        if (!enabled)
+            return;
+
+        // Check both today's and tomorrow's occurrence so an invasion shortly after
+        // midnight can still announce its 1-hour/30-minute warning the previous day.
+        for (var dayOffset = 0; dayOffset <= 1; ++dayOffset)
+        {
+            var date = now.Date.AddDays(dayOffset);
+            var scheduledStart = new DateTimeOffset(
+                date.Year,
+                date.Month,
+                date.Day,
+                definition.StartHour,
+                definition.StartMinute,
+                0,
+                now.Offset
+            );
+
+            if (!definition.RunsOn(scheduledStart.DayOfWeek))
+                continue;
+
+            var reminderAt = scheduledStart.AddMinutes(-minutesBefore);
+            if (now < reminderAt || now >= reminderAt.AddMinutes(1))
+                continue;
+
+            var scheduleKey = scheduledStart.ToString("yyyy-MM-dd-HH-mm");
+            var reminderKey = (definition.Id, minutesBefore);
+            if (LastReminderKeys.TryGetValue(reminderKey, out var last) &&
+                string.Equals(last, scheduleKey, StringComparison.Ordinal))
+                return;
+
+            LastReminderKeys[reminderKey] = scheduleKey;
+            BroadcastPreInvasionReminder(definition, scheduledStart, minutesBefore, message, sound);
+            return;
+        }
+    }
+
+    private static void BroadcastPreInvasionReminder(
+        InvasionDefinition definition,
+        DateTimeOffset scheduledStart,
+        int minutesBefore,
+        string message,
+        string sound
+    )
+    {
+        var (_, _, _, targetName) = ResolveObjective(definition);
+        var islandName = MapController.Get(definition.TargetMapId)?.Name ?? "the target island";
+        var remaining = minutesBefore == 60 ? "1 hour" : $"{minutesBefore} minutes";
+
+        var text = string.IsNullOrWhiteSpace(message)
+            ? $"{definition.Name} will begin in {remaining} near {islandName}."
+            : message.Trim();
+
+        text = text
+            .Replace("{name}", definition.Name)
+            .Replace("{island}", islandName)
+            .Replace("{target}", targetName)
+            .Replace("{minutes}", minutesBefore.ToString())
+            .Replace("{remaining}", remaining)
+            .Replace("{time}", scheduledStart.ToString("HH:mm"));
+
+        PacketSender.SendGlobalMsg($"[Invasion] {text}");
+        PacketSender.SendGameAnnouncement(
+            $"INVASION IN {remaining.ToUpperInvariant()}\n{text}",
+            6_000
+        );
+
+        if (string.IsNullOrWhiteSpace(sound))
+            return;
+
+        foreach (var player in Player.OnlinePlayers)
+        {
+            if (player != null)
+                PacketSender.SendPlaySound(player, sound.Trim());
         }
     }
 
