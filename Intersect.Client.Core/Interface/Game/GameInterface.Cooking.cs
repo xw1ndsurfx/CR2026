@@ -1,5 +1,6 @@
 using Intersect.Client.General;
 using Intersect.Client.MiniGames;
+using Intersect.Framework.Core.MiniGames.Cooking;
 using Intersect.Network.Packets.MiniGames;
 using Intersect.Network.Packets.Server;
 using ClientNetwork = Intersect.Client.Networking.Network;
