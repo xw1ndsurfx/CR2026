@@ -59,7 +59,8 @@ internal sealed class CookingClientModel
         long now,
         Guid recipeId = default,
         Guid partnerId = default,
-        bool accept = false
+        bool accept = false,
+        CookingActionInput actionInput = CookingActionInput.Primary
     )
     {
         if (Current?.State is not { } state) return null;
@@ -80,6 +81,7 @@ internal sealed class CookingClientModel
             RecipeId = recipeId,
             PartnerId = partnerId,
             Accept = accept,
+            ActionInput = actionInput,
         };
 
         if (!packet.IsValid) return null;
