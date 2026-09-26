@@ -18,4 +18,5 @@ public partial class InvasionResultPacket : IntersectPacket
     [Key(8)] public long ContributionDamage { get; set; }
     [Key(9)] public int ContributionPercent { get; set; }
     [Key(10)] public int RewardPercentOfBase { get; set; }
+    [Key(11)] public long ContributionHealing { get; set; }
 }
