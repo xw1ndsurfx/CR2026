@@ -119,8 +119,6 @@ internal sealed class CookingWindow : Base
                 Math.Max(1, (int)(design.Height * scale))
             );
 
-            if (control is Label label && label.UserData is Rectangle)
-                label.FontSize = Math.Max(8, (int)(label.FontSize * scale));
         }
     }
 
