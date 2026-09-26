@@ -54,7 +54,9 @@ public sealed class WikiController : IntersectController
         int X,
         int Y,
         bool IsIndoors,
-        string Zone
+        string Zone,
+        int Revision,
+        string PreviewUrl
     );
 
     [HttpGet("catalog")]
@@ -224,11 +226,43 @@ public sealed class WikiController : IntersectController
                 x,
                 y,
                 map.IsIndoors,
-                map.ZoneType.ToString()
+                map.ZoneType.ToString(),
+                map.Revision,
+                $"/api/v1/wiki/maps/{map.Id}/preview?v={map.Revision}"
             ));
         }
 
         return Ok(result);
+    }
+
+    [HttpGet("maps/{mapId:guid}/preview")]
+    [Produces("image/png")]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(StatusMessageResponseBody), (int)HttpStatusCode.NotFound, ContentTypes.Json)]
+    public IActionResult MapPreview(Guid mapId)
+    {
+        if (mapId == Guid.Empty || !MapDescriptor.Lookup.TryGetValue(mapId, out var mapObject) || mapObject is not MapDescriptor map)
+        {
+            return NotFound("No published map preview was found.");
+        }
+
+        var previewDirectory = Path.Combine(AppContext.BaseDirectory, "resources", "wiki", "maps");
+        var revisionPath = Path.Combine(previewDirectory, $"{map.Id:N}-{map.Revision}.png");
+        var stablePath = Path.Combine(previewDirectory, $"{map.Id:N}.png");
+        var previewPath = System.IO.File.Exists(revisionPath)
+            ? revisionPath
+            : System.IO.File.Exists(stablePath)
+                ? stablePath
+                : null;
+
+        if (previewPath == null)
+        {
+            return NotFound("Map preview is not available yet.");
+        }
+
+        Response.Headers.CacheControl = "public,max-age=3600,immutable";
+        Response.Headers.ETag = $"\"map-{map.Id:N}-{map.Revision}\"";
+        return PhysicalFile(previewPath, "image/png");
     }
 
     [HttpGet("minigames")]
