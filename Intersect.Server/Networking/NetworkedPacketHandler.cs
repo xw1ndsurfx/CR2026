@@ -267,6 +267,65 @@ internal sealed partial class NetworkedPacketHandler
             PacketSender.SendMapListToAll();
         }
 
+        //WikiMapPreviewPacket
+        public void HandlePacket(Client client, Network.Packets.Editor.WikiMapPreviewPacket packet)
+        {
+            if (!client.IsEditor)
+            {
+                return;
+            }
+
+            if (packet.MapId == Guid.Empty ||
+                packet.PngData == null ||
+                packet.PngData.Length < 8 ||
+                packet.PngData.Length > 8 * 1024 * 1024 ||
+                !MapController.TryGet(packet.MapId, out var map))
+            {
+                return;
+            }
+
+            ReadOnlySpan<byte> pngSignature = stackalloc byte[] { 137, 80, 78, 71, 13, 10, 26, 10 };
+            if (!packet.PngData.AsSpan(0, 8).SequenceEqual(pngSignature))
+            {
+                return;
+            }
+
+            try
+            {
+                var directory = Path.Combine(AppContext.BaseDirectory, "resources", "wiki", "maps");
+                Directory.CreateDirectory(directory);
+
+                var finalPath = Path.Combine(directory, $"{map.Id:N}-{map.Revision}.png");
+                var tempPath = finalPath + ".tmp";
+
+                File.WriteAllBytes(tempPath, packet.PngData);
+                File.Move(tempPath, finalPath, true);
+
+                foreach (var oldPreview in Directory.EnumerateFiles(directory, $"{map.Id:N}-*.png"))
+                {
+                    if (!string.Equals(oldPreview, finalPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        try
+                        {
+                            File.Delete(oldPreview);
+                        }
+                        catch
+                        {
+                            // Old previews are cache files; failure to remove one is harmless.
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ApplicationContext.CurrentContext.Logger.LogWarning(
+                    ex,
+                    "Failed to persist wiki preview for map {MapId}",
+                    packet.MapId
+                );
+            }
+        }
+
         //CreateMapPacket
         public void HandlePacket(Client client, Network.Packets.Editor.CreateMapPacket packet)
         {
