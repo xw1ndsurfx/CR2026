@@ -22,6 +22,7 @@ using Intersect.GameObjects;
 using Intersect.Network;
 using Intersect.Network.Packets.Server;
 using Intersect.Network.Packets.WorldEvents;
+using Intersect.Framework.Core.Professions;
 using Microsoft.Extensions.Logging;
 using ApplicationContext = Intersect.Core.ApplicationContext;
 
@@ -764,6 +765,15 @@ internal sealed partial class PacketHandler
         if (packet.OpenEditor)
         {
             Globals.MainForm.BeginInvoke((Action)(() => Globals.MainForm.OpenRewardConfigurationEditor()));
+        }
+    }
+
+    public void HandlePacket(IPacketSender packetSender, ProfessionConfigurationPacket packet)
+    {
+        ProfessionConfiguration.Load(packet.ConfigurationJson);
+        if (packet.OpenEditor)
+        {
+            Globals.MainForm.BeginInvoke((Action)(() => Globals.MainForm.OpenProfessionEditor()));
         }
     }
 

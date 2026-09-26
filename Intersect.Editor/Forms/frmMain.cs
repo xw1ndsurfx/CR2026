@@ -112,6 +112,8 @@ public partial class FrmMain : Form
         InitLocalization();
         InitExternalTools();
         AddRewardConfigurationEditorMenu();
+        AddProfessionEditorMenu();
+        PacketSender.SendRequestProfessionConfiguration(openEditor: false);
         AddWorldEventsEditorMenu();
         Show();
 
@@ -217,6 +219,29 @@ public partial class FrmMain : Form
     public void OpenRewardConfigurationEditor()
     {
         var editor = new FrmRewardConfiguration();
+        editor.Show();
+        editor.BringToFront();
+    }
+
+    private void AddProfessionEditorMenu()
+    {
+        if (contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>()
+            .Any(item => item.Name == "professionEditorToolStripMenuItem"))
+            return;
+
+        var professions = new ToolStripMenuItem
+        {
+            Name = "professionEditorToolStripMenuItem",
+            Text = "Professions...",
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
+        };
+        professions.Click += (_, _) => PacketSender.SendRequestProfessionConfiguration(openEditor: true);
+        contentEditorsToolStripMenuItem.DropDownItems.Add(professions);
+    }
+
+    public void OpenProfessionEditor()
+    {
+        var editor = new FrmProfessionConfiguration();
         editor.Show();
         editor.BringToFront();
     }
