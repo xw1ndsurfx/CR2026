@@ -90,6 +90,10 @@ public sealed partial class CookingSessionState
     [Key(31)] public CookingParticipantState[] Participants { get; set; } = [];
     [Key(32)] public string RewardText { get; set; } = string.Empty;
     [Key(33)] public int StageDifficulty { get; set; }
+    [Key(34)] public int MeterPermille { get; set; }
+    [Key(35)] public int Combo { get; set; }
+    [Key(36)] public int Mishaps { get; set; }
+    [Key(37)] public string ActionHint { get; set; } = string.Empty;
 
     [IgnoreMember]
     public bool IsValid =>
@@ -107,6 +111,10 @@ public sealed partial class CookingSessionState
         RequiredActions is >= 0 and <= 20 &&
         CompletedActions is >= 0 and <= 40 &&
         StageDifficulty is >= 0 and <= 5 &&
+        MeterPermille is >= 0 and <= 1000 &&
+        Combo is >= 0 and <= 999 &&
+        Mishaps is >= 0 and <= 999 &&
+        ActionHint is { Length: <= 160 } &&
         StageScore is >= 0 and <= 100 &&
         TeamScore is >= 0 and <= 100 &&
         Enum.IsDefined(Quality) &&
