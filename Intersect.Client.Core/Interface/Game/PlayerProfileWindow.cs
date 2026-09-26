@@ -4,6 +4,7 @@ using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Localization;
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets.Server;
 
 namespace Intersect.Client.Interface.Game;
@@ -72,7 +73,7 @@ internal sealed class PlayerProfileWindow : Window
         var y = 8;
         y = AddSection("CHARACTER", BuildCharacterText(profile), y);
         y = AddSection("STATS", BuildStatsText(profile), y);
-        y = AddSection("EQUIPMENT", BuildEquipmentText(profile), y);
+        y = AddEquipmentSection(profile, y);
         y = AddSection("PROFESSIONS", BuildProfessionsText(profile), y);
 
         _scroll.SetInnerSize(540, Math.Max(430, y + 16));
@@ -142,19 +143,138 @@ internal sealed class PlayerProfileWindow : Window
         return builder.ToString();
     }
 
-    private static string BuildEquipmentText(PlayerProfilePacket profile)
+    private int AddEquipmentSection(PlayerProfilePacket profile, int y)
     {
-        if (profile.Equipment == null || profile.Equipment.Length == 0)
-            return "No equipment information.";
-
-        var builder = new StringBuilder();
-        foreach (var equipment in profile.Equipment.OrderBy(entry => entry.SlotIndex))
+        var titleLabel = new Label(_scroll, "EquipmentTitle")
         {
-            if (builder.Length > 0) builder.AppendLine();
-            builder.Append($"{equipment.SlotName}: {(equipment.ItemId == Guid.Empty ? "Empty" : equipment.ItemName)}");
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 13,
+            TextColorOverride = new Color(a: 255, r: 236, g: 210, b: 153),
+            Text = "EQUIPMENT",
+        };
+        titleLabel.SetBounds(8, y, 510, 24);
+        y += 26;
+
+        var hint = new Label(_scroll, "EquipmentHint")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+            FontSize = 9,
+            TextColorOverride = new Color(a: 255, r: 205, g: 195, b: 175),
+            Text = "Hover an equipped item to view its full description, stats and bonuses.",
+        };
+        hint.SetBounds(18, y, 510, 20);
+        y += 24;
+
+        var equipmentEntries = (profile.Equipment ?? [])
+            .OrderBy(entry => entry.SlotIndex)
+            .ToArray();
+
+        if (equipmentEntries.Length == 0)
+        {
+            var empty = new Label(_scroll, "EquipmentEmpty")
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 10,
+                TextColorOverride = Color.White,
+                Text = "No equipment information.",
+            };
+            empty.SetBounds(18, y, 500, 24);
+            return y + 42;
         }
 
-        return builder.ToString();
+        const int cardWidth = 248;
+        const int cardHeight = 62;
+        const int horizontalGap = 8;
+        const int verticalGap = 8;
+        const int startX = 8;
+
+        for (var index = 0; index < equipmentEntries.Length; ++index)
+        {
+            var equipment = equipmentEntries[index];
+            var column = index % 2;
+            var row = index / 2;
+            var cardX = startX + column * (cardWidth + horizontalGap);
+            var cardY = y + row * (cardHeight + verticalGap);
+
+            var card = new Button(_scroll, $"ProfileEquipmentCard{equipment.SlotIndex}")
+            {
+                Text = string.Empty,
+                MouseInputEnabled = true,
+            };
+            card.SetBounds(cardX, cardY, cardWidth, cardHeight);
+            card.SetStateTexture(ComponentState.Normal, "control_button.png");
+            card.SetStateTexture(ComponentState.Hovered, "control_button_hovered.png");
+            card.SetStateTexture(ComponentState.Active, "control_button_clicked.png");
+
+            var icon = new ImagePanel(card, $"ProfileEquipmentIcon{equipment.SlotIndex}")
+            {
+                MouseInputEnabled = false,
+            };
+            icon.SetBounds(8, 9, 44, 44);
+
+            var slotLabel = new Label(card, $"ProfileEquipmentSlot{equipment.SlotIndex}")
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                FontSize = 9,
+                TextColorOverride = new Color(a: 255, r: 236, g: 210, b: 153),
+                Text = equipment.SlotName,
+                MouseInputEnabled = false,
+            };
+            slotLabel.SetBounds(62, 8, cardWidth - 72, 20);
+
+            var itemLabel = new Label(card, $"ProfileEquipmentName{equipment.SlotIndex}")
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 10,
+                TextColorOverride = Color.White,
+                Text = equipment.ItemId == Guid.Empty ? "Empty" : equipment.ItemName,
+                MouseInputEnabled = false,
+            };
+            itemLabel.SetBounds(62, 29, cardWidth - 72, 23);
+
+            if (equipment.ItemId == Guid.Empty ||
+                !ItemDescriptor.TryGet(equipment.ItemId, out var itemDescriptor))
+            {
+                icon.Hide();
+                continue;
+            }
+
+            if (GameContentManager.Current.GetTexture(
+                    Framework.Content.TextureType.Item,
+                    itemDescriptor.Icon
+                ) is { } itemTexture)
+            {
+                icon.Texture = itemTexture;
+                icon.RenderColor = itemDescriptor.Color;
+                icon.Show();
+            }
+            else
+            {
+                icon.Hide();
+            }
+
+            card.HoverEnter += (_, _) =>
+            {
+                Interface.GameUi.ItemDescriptionWindow?.Show(
+                    itemDescriptor,
+                    1,
+                    equipment.Properties
+                );
+            };
+
+            card.HoverLeave += (_, _) =>
+            {
+                Interface.GameUi.ItemDescriptionWindow?.Hide();
+            };
+        }
+
+        var rows = (equipmentEntries.Length + 1) / 2;
+        return y + rows * (cardHeight + verticalGap) + 12;
     }
 
     private static string BuildProfessionsText(PlayerProfilePacket profile)
