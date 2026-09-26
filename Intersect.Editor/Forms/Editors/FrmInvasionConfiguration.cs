@@ -51,6 +51,19 @@ public sealed class FrmInvasionConfiguration : DarkForm
         AutoSize = true,
     };
 
+    private readonly CheckBox _reminder60Enabled = new() { Text = "Enabled", AutoSize = true };
+    private readonly TextBox _reminder60Message = new() { Width = 430 };
+    private readonly ComboBox _reminder60Sound = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
+    private readonly CheckBox _reminder30Enabled = new() { Text = "Enabled", AutoSize = true };
+    private readonly TextBox _reminder30Message = new() { Width = 430 };
+    private readonly ComboBox _reminder30Sound = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
+    private readonly CheckBox _reminder15Enabled = new() { Text = "Enabled", AutoSize = true };
+    private readonly TextBox _reminder15Message = new() { Width = 430 };
+    private readonly ComboBox _reminder15Sound = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
+    private readonly CheckBox _reminder5Enabled = new() { Text = "Enabled", AutoSize = true };
+    private readonly TextBox _reminder5Message = new() { Width = 430 };
+    private readonly ComboBox _reminder5Sound = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
+
     private readonly CheckBox _scaleNpcToPlayers = new()
     {
         Text = "Scale invasion NPCs to connected players",
@@ -120,6 +133,19 @@ public sealed class FrmInvasionConfiguration : DarkForm
         _fog.Items.Add(string.Empty);
         foreach (var fog in GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Fog))
             _fog.Items.Add(fog);
+
+        FillSoundChoices(_reminder60Sound);
+        FillSoundChoices(_reminder30Sound);
+        FillSoundChoices(_reminder15Sound);
+        FillSoundChoices(_reminder5Sound);
+    }
+
+    private static void FillSoundChoices(ComboBox combo)
+    {
+        combo.Items.Clear();
+        combo.Items.Add(string.Empty);
+        foreach (var sound in GameContentManager.SmartSortedSoundNames)
+            combo.Items.Add(sound);
     }
 
     private void FillTargetEvents(Guid mapId, Guid selectedEventId)
@@ -188,6 +214,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
 
         var tabs = new TabControl { Dock = DockStyle.Fill };
         tabs.TabPages.Add(BuildGeneralTab());
+        tabs.TabPages.Add(BuildRemindersTab());
         tabs.TabPages.Add(BuildEnvironmentTab());
         tabs.TabPages.Add(BuildScalingTab());
         tabs.TabPages.Add(BuildWavesTab());
@@ -280,6 +307,78 @@ public sealed class FrmInvasionConfiguration : DarkForm
 
         page.Controls.Add(table);
         return page;
+    }
+
+    private TabPage BuildRemindersTab()
+    {
+        var page = new TabPage("Pre-Invasion Alerts");
+        var table = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            ColumnCount = 2,
+            Padding = new Padding(14),
+        };
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180));
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+        AddReminderEditor(table, "1 hour before", _reminder60Enabled, _reminder60Message, _reminder60Sound);
+        AddReminderEditor(table, "30 minutes before", _reminder30Enabled, _reminder30Message, _reminder30Sound);
+        AddReminderEditor(table, "15 minutes before", _reminder15Enabled, _reminder15Message, _reminder15Sound);
+        AddReminderEditor(table, "5 minutes before", _reminder5Enabled, _reminder5Message, _reminder5Sound);
+
+        var help = new Label
+        {
+            AutoSize = true,
+            MaximumSize = new Size(650, 0),
+            Text =
+                "Each enabled warning is broadcast to every connected player exactly once before the scheduled invasion. " +
+                "The optional sound is played as a normal game sound, so it can be a recorded narrator voice placed in resources/sounds. " +
+                "Message placeholders: {name}, {island}, {target}, {minutes}, {time}.",
+        };
+        AddRow(table, "Behavior", help);
+
+        page.Controls.Add(table);
+        return page;
+    }
+
+    private static void AddReminderEditor(
+        TableLayoutPanel table,
+        string label,
+        CheckBox enabled,
+        TextBox message,
+        ComboBox sound
+    )
+    {
+        var panel = new FlowLayoutPanel
+        {
+            AutoSize = true,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+        };
+
+        var messageRow = new FlowLayoutPanel { AutoSize = true };
+        messageRow.Controls.Add(enabled);
+        messageRow.Controls.Add(new Label
+        {
+            Text = "Message",
+            AutoSize = true,
+            Padding = new Padding(8, 5, 0, 0),
+        });
+        messageRow.Controls.Add(message);
+        panel.Controls.Add(messageRow);
+
+        var soundRow = new FlowLayoutPanel { AutoSize = true };
+        soundRow.Controls.Add(new Label
+        {
+            Text = "Narrator sound",
+            AutoSize = true,
+            Padding = new Padding(0, 5, 0, 0),
+        });
+        soundRow.Controls.Add(sound);
+        panel.Controls.Add(soundRow);
+
+        AddRow(table, label, panel);
     }
 
     private TabPage BuildEnvironmentTab()
@@ -444,6 +543,20 @@ public sealed class FrmInvasionConfiguration : DarkForm
         _participationMinimumRewardPercent.Value = invasion.ParticipationMinimumRewardPercent;
         _participationMaximumRewardPercent.Value = invasion.ParticipationMaximumRewardPercent;
         _healingContributionPercent.Value = invasion.HealingContributionPercent;
+
+        _reminder60Enabled.Checked = invasion.Reminder60Enabled;
+        _reminder60Message.Text = invasion.Reminder60Message ?? string.Empty;
+        _reminder60Sound.Text = invasion.Reminder60Sound ?? string.Empty;
+        _reminder30Enabled.Checked = invasion.Reminder30Enabled;
+        _reminder30Message.Text = invasion.Reminder30Message ?? string.Empty;
+        _reminder30Sound.Text = invasion.Reminder30Sound ?? string.Empty;
+        _reminder15Enabled.Checked = invasion.Reminder15Enabled;
+        _reminder15Message.Text = invasion.Reminder15Message ?? string.Empty;
+        _reminder15Sound.Text = invasion.Reminder15Sound ?? string.Empty;
+        _reminder5Enabled.Checked = invasion.Reminder5Enabled;
+        _reminder5Message.Text = invasion.Reminder5Message ?? string.Empty;
+        _reminder5Sound.Text = invasion.Reminder5Sound ?? string.Empty;
+
         _invasionMusic.Text = invasion.InvasionMusic ?? string.Empty;
         _nightBrightness.Value = invasion.NightBrightness;
         _overlayAlpha.Value = invasion.OverlayAlpha;
@@ -514,6 +627,20 @@ public sealed class FrmInvasionConfiguration : DarkForm
         invasion.ParticipationMinimumRewardPercent = (int)_participationMinimumRewardPercent.Value;
         invasion.ParticipationMaximumRewardPercent = (int)_participationMaximumRewardPercent.Value;
         invasion.HealingContributionPercent = (int)_healingContributionPercent.Value;
+
+        invasion.Reminder60Enabled = _reminder60Enabled.Checked;
+        invasion.Reminder60Message = _reminder60Message.Text?.Trim() ?? string.Empty;
+        invasion.Reminder60Sound = _reminder60Sound.Text?.Trim() ?? string.Empty;
+        invasion.Reminder30Enabled = _reminder30Enabled.Checked;
+        invasion.Reminder30Message = _reminder30Message.Text?.Trim() ?? string.Empty;
+        invasion.Reminder30Sound = _reminder30Sound.Text?.Trim() ?? string.Empty;
+        invasion.Reminder15Enabled = _reminder15Enabled.Checked;
+        invasion.Reminder15Message = _reminder15Message.Text?.Trim() ?? string.Empty;
+        invasion.Reminder15Sound = _reminder15Sound.Text?.Trim() ?? string.Empty;
+        invasion.Reminder5Enabled = _reminder5Enabled.Checked;
+        invasion.Reminder5Message = _reminder5Message.Text?.Trim() ?? string.Empty;
+        invasion.Reminder5Sound = _reminder5Sound.Text?.Trim() ?? string.Empty;
+
         invasion.RewardExperience = (long)_rewardExp.Value;
 
         var days = InvasionScheduleDays.None;
