@@ -86,7 +86,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         if (map != null)
         {
             foreach (var targetEvent in map.LocalEvents.Values
-                         .Where(targetEvent => targetEvent != null && !targetEvent.CommonEvent)
+                         .Where(targetEvent => targetEvent != null && !targetEvent.CommonEvent && targetEvent.Global)
                          .OrderBy(targetEvent => targetEvent.Name, StringComparer.OrdinalIgnoreCase))
             {
                 _targetEvent.Items.Add(
