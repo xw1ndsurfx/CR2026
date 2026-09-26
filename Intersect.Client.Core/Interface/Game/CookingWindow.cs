@@ -21,6 +21,9 @@ internal sealed class CookingWindow : Base
     private readonly Label _score;
     private readonly Label _players;
     private readonly Label _professionXp;
+    private readonly Label _recipeHeader;
+    private readonly Label _stationHeader;
+    private readonly Dictionary<Base, int> _fontSizes = [];
     private readonly Button _previousRecipe;
     private readonly Button _nextRecipe;
     private readonly Button _solo;
@@ -70,6 +73,15 @@ internal sealed class CookingWindow : Base
         _title.Text = "ROYAL KITCHEN";
         _title.TextAlign = Pos.Center;
         _title.TextColorOverride = new Color(255, 236, 210, 117);
+
+        _recipeHeader = MakeLabel("CookingRecipeHeader", 62, 101, 286, 18, 10);
+        _recipeHeader.Text = "RECIPE";
+        _recipeHeader.TextColorOverride = new Color(255, 202, 166, 96);
+
+        _stationHeader = MakeLabel("CookingStationHeader", 420, 101, 530, 18, 10);
+        _stationHeader.Text = "KITCHEN STATION";
+        _stationHeader.TextAlign = Pos.Center;
+        _stationHeader.TextColorOverride = new Color(255, 202, 166, 96);
 
         _recipe = MakeLabel("CookingRecipe", 62, 115, 286, 92, 15);
         _ingredients = MakeLabel("CookingIngredients", 62, 228, 286, 198, 11);
@@ -158,6 +170,8 @@ internal sealed class CookingWindow : Base
                 Math.Max(1, (int)(design.Height * scale))
             );
 
+            if (control is Label label && _fontSizes.TryGetValue(control, out var baseFont))
+                label.FontSize = Math.Max(8, (int)Math.Round(baseFont * scale));
         }
     }
 
@@ -902,6 +916,7 @@ internal sealed class CookingWindow : Base
             UserData = new Rectangle(x, y, w, h),
         };
         label.SetBounds(x, y, w, h);
+        _fontSizes[label] = font;
         return label;
     }
 
@@ -915,6 +930,7 @@ internal sealed class CookingWindow : Base
             UserData = new Rectangle(x, y, w, 36),
         };
         button.SetBounds(x, y, w, 36);
+        _fontSizes[button] = 11;
         button.Clicked += (_, _) => action();
         return button;
     }
