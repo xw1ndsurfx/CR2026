@@ -11,6 +11,7 @@ using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Variables;
+using Intersect.Framework.Core.Professions;
 using Intersect.GameObjects;
 using Microsoft.Extensions.Logging;
 using VariableMod = Intersect.Framework.Core.GameObjects.Events.VariableMod;
@@ -829,6 +830,19 @@ public static partial class CommandPrinter
         {
             return Strings.EventCommandList.giveexp.ToString(command.Exp);
         }
+    }
+
+    private static string GetCommandText(ModifyProfessionCommand command, MapInstance map)
+    {
+        var profession = ProfessionConfiguration.Instance.Find(command.ProfessionId);
+        var name = profession?.Name ?? "Unknown Profession";
+        var value = command.Action is ProfessionModification.AddExperience
+            or ProfessionModification.SetExperience
+            or ProfessionModification.SetLevel
+            ? $" {command.Value:N0}"
+            : string.Empty;
+
+        return $"Profession: {command.Action} {name}{value}";
     }
 
     private static string GetCommandText(ChangeLevelCommand command, MapInstance map)
