@@ -465,6 +465,7 @@ public partial class GameInterface : MutableInterface
         AnnouncementWindow?.Update();
         mPictureWindow?.Update();
         UpdatePotions();
+        UpdateCooking();
         UpdatePoker();
         UpdateRoulette();
         UpdateQuestGuidance();
@@ -690,6 +691,7 @@ public partial class GameInterface : MutableInterface
     public bool CloseAllWindows()
     {
         var closedWindows = ClosePotionWindow();
+        closedWindows = CloseCookingWindow() || closedWindows;
         closedWindows = CloseRouletteWindow() || closedWindows;
         closedWindows = ClosePokerWindow() || closedWindows;
         if (_bagWindow != null && _bagWindow.IsVisibleInTree)
@@ -747,6 +749,7 @@ public partial class GameInterface : MutableInterface
     public void Dispose()
     {
         DisposePotions();
+        DisposeCooking();
         DisposePoker();
         DisposeRoulette();
         DisposeQuestGuidance();
