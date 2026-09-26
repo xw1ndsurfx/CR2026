@@ -39,6 +39,7 @@ internal static class InvasionRuntime
         public long LastStatusAtMs { get; set; }
         public ConcurrentDictionary<Guid, byte> Participants { get; } = [];
         public ConcurrentDictionary<Guid, long> ContributionDamage { get; } = [];
+        public ConcurrentDictionary<Guid, long> ContributionHealing { get; } = [];
         public Dictionary<Guid, Npc> ActiveNpcs { get; } = [];
         public Dictionary<Guid, long> NextObjectiveHitAt { get; } = [];
         public bool Completed { get; set; }
@@ -112,6 +113,27 @@ internal static class InvasionRuntime
             damage,
             (_, current) => current > long.MaxValue - damage ? long.MaxValue : current + damage
         );
+    }
+
+    internal static void RegisterHealingContribution(Entity healer, Player healedPlayer, long effectiveHealing)
+    {
+        if (effectiveHealing <= 0 || healer is not Player healingPlayer)
+            return;
+
+        foreach (var session in SessionsById.Values)
+        {
+            if (session.Completed || !session.Participants.ContainsKey(healedPlayer.Id))
+                continue;
+
+            session.Participants.TryAdd(healingPlayer.Id, 0);
+            session.ContributionHealing.AddOrUpdate(
+                healingPlayer.Id,
+                effectiveHealing,
+                (_, current) => current > long.MaxValue - effectiveHealing
+                    ? long.MaxValue
+                    : current + effectiveHealing
+            );
+        }
     }
 
     private static void CheckSchedules(long nowMs)
@@ -456,10 +478,25 @@ internal static class InvasionRuntime
         }
 
         var wavesCompleted = Math.Max(0, session.WaveIndex + (victory ? 1 : 0));
-        var totalContribution = session.ContributionDamage.Values
-            .Where(value => value > 0)
-            .Aggregate(0m, (total, value) => total + value);
-        var contributorCount = session.ContributionDamage.Count(pair => pair.Value > 0);
+        var healingWeight = session.Definition.HealingContributionPercent / 100m;
+
+        decimal ContributionScore(Guid playerId)
+        {
+            session.ContributionDamage.TryGetValue(playerId, out var damage);
+            session.ContributionHealing.TryGetValue(playerId, out var healing);
+            return Math.Max(0m, (decimal)damage + (decimal)healing * healingWeight);
+        }
+
+        var participantScores = session.Participants.Keys
+            .Select(playerId => (PlayerId: playerId, Score: ContributionScore(playerId)))
+            .Where(entry => entry.Score > 0)
+            .ToArray();
+
+        var totalContribution = participantScores.Aggregate(
+            0m,
+            (total, entry) => total + entry.Score
+        );
+        var contributorCount = participantScores.Length;
         var averageContribution = contributorCount > 0
             ? totalContribution / contributorCount
             : 0m;
@@ -471,10 +508,12 @@ internal static class InvasionRuntime
                 continue;
 
             session.ContributionDamage.TryGetValue(playerId, out var contributionDamage);
+            session.ContributionHealing.TryGetValue(playerId, out var contributionHealing);
+            var contributionScore = ContributionScore(playerId);
 
             var contributionPercent = totalContribution > 0
                 ? (int)Math.Clamp(
-                    Math.Round((decimal)contributionDamage * 100m / totalContribution),
+                    Math.Round(contributionScore * 100m / totalContribution),
                     0m,
                     100m
                 )
@@ -482,10 +521,10 @@ internal static class InvasionRuntime
 
             var rewardPercent = 0;
             var xp = 0L;
-            if (victory && !configurationFailure && contributionDamage > 0 && averageContribution > 0)
+            if (victory && !configurationFailure && contributionScore > 0 && averageContribution > 0)
             {
                 var rawRewardPercent = Math.Round(
-                    (decimal)contributionDamage * 100m / averageContribution
+                    contributionScore * 100m / averageContribution
                 );
                 rewardPercent = (int)Math.Clamp(
                     rawRewardPercent,
@@ -514,6 +553,7 @@ internal static class InvasionRuntime
                     ObjectiveHealthRemaining = session.ObjectiveHealth,
                     ParticipantCount = session.Participants.Count,
                     ContributionDamage = contributionDamage,
+                    ContributionHealing = contributionHealing,
                     ContributionPercent = contributionPercent,
                     RewardPercentOfBase = rewardPercent,
                 }
