@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Intersect.Client.Core;
 using Intersect.Client.Maps;
 using Intersect.Configuration;
@@ -24,7 +25,7 @@ internal sealed record InvasionEnvironmentState(
 
 internal static class InvasionEnvironmentManager
 {
-    private static readonly Dictionary<Guid, InvasionEnvironmentState> Active = [];
+    private static readonly ConcurrentDictionary<Guid, InvasionEnvironmentState> Active = [];
 
     internal static bool IsActive => Active.Count > 0;
 
@@ -35,7 +36,7 @@ internal static class InvasionEnvironmentManager
             .FirstOrDefault();
 
     internal static bool HasMusicOverride =>
-        Current is { Music.Length: > 0 };
+        Current is { } current && !string.IsNullOrWhiteSpace(current.Music);
 
     internal static void ApplyStatus(InvasionStatusPacket packet)
     {
@@ -61,7 +62,7 @@ internal static class InvasionEnvironmentManager
         }
         else
         {
-            Active.Remove(packet.InvasionId);
+            Active.TryRemove(packet.InvasionId, out _);
         }
 
         var after = Current;
