@@ -886,7 +886,7 @@ internal sealed class CookingWindow : Base
     protected override void Render(SkinBase skin)
     {
         var renderer = skin.Renderer;
-        renderer.DrawColor = new Color(a: 245, r: 31, g: 23, b: 18);
+        renderer.DrawColor = new Color(a: 245, r: 20, g: 14, b: 10);
         renderer.DrawFilledRect(new Rectangle(0, 0, Width, Height));
 
         var scaleX = Width / 1024f;
@@ -908,52 +908,63 @@ internal sealed class CookingWindow : Base
             );
         }
 
-        // Full-screen dimmer like Poker/Potions.
-        Fill(0, 0, 1024, 720, new Color(a: 225, r: 8, g: 11, b: 9));
-
         void Panel(int x, int y, int w, int h, Color body, Color border)
         {
+            Fill(x - 3, y - 3, w + 6, h + 6, new Color(a: 255, r: 49, g: 28, b: 17));
             Fill(x - 2, y - 2, w + 4, h + 4, border);
             Fill(x, y, w, h, body);
+            Fill(x + 5, y + 5, w - 10, 2, new Color(a: 115, r: 255, g: 222, b: 153));
         }
 
-        // Framed title and the two major play areas.
-        Panel(36, 12, 952, 58, new Color(a: 255, r: 30, g: 22, b: 18), new Color(a: 255, r: 132, g: 89, b: 48));
-        Panel(40, 90, 330, 520, new Color(a: 255, r: 43, g: 31, b: 25), new Color(a: 255, r: 145, g: 100, b: 55));
-        Panel(390, 90, 590, 520, new Color(a: 255, r: 38, g: 27, b: 21), new Color(a: 255, r: 148, g: 101, b: 54));
-        Panel(40, 615, 740, 82, new Color(a: 255, r: 38, g: 28, b: 22), new Color(a: 255, r: 125, g: 92, b: 48));
+        // The mini-game is now staged as a real kitchen first, with the UI sitting on top
+        // like Poker's table instead of filling the whole screen with flat panels.
+        DrawKitchenEnvironment(Fill, Environment.TickCount64);
 
-        // Section header bars.
-        Fill(52, 102, 306, 5, new Color(a: 255, r: 178, g: 127, b: 67));
-        Fill(402, 102, 566, 5, new Color(a: 255, r: 178, g: 127, b: 67));
-        Fill(52, 214, 306, 2, new Color(a: 255, r: 83, g: 59, b: 40));
-        Fill(52, 438, 306, 2, new Color(a: 255, r: 83, g: 59, b: 40));
+        // Carved wooden title sign.
+        Panel(
+            248,
+            10,
+            528,
+            58,
+            new Color(a: 245, r: 73, g: 31, b: 20),
+            new Color(a: 255, r: 178, g: 117, b: 52)
+        );
+        Fill(270, 60, 484, 6, new Color(a: 255, r: 101, g: 54, b: 29));
 
-        // Cooking counter / work surface gives the center panel a real "game" focal point.
-        Fill(430, 340, 510, 136, new Color(a: 255, r: 91, g: 58, b: 35));
-        Fill(438, 348, 494, 120, new Color(a: 255, r: 124, g: 80, b: 44));
-        Fill(438, 348, 494, 8, new Color(a: 255, r: 187, g: 134, b: 73));
-        Fill(454, 368, 184, 82, new Color(a: 255, r: 53, g: 45, b: 39));
-        Fill(470, 382, 152, 54, new Color(a: 255, r: 31, g: 28, b: 25));
-        Fill(680, 365, 225, 88, new Color(a: 255, r: 67, g: 50, b: 36));
+        // Recipe book / pantry board.
+        Panel(
+            28,
+            82,
+            338,
+            526,
+            new Color(a: 238, r: 46, g: 28, b: 19),
+            new Color(a: 255, r: 151, g: 93, b: 46)
+        );
+        Fill(43, 99, 308, 6, new Color(a: 255, r: 196, g: 137, b: 66));
+        Fill(48, 212, 298, 2, new Color(a: 255, r: 94, g: 56, b: 34));
+        Fill(48, 437, 298, 2, new Color(a: 255, r: 94, g: 56, b: 34));
 
-        // Stove burners / preparation bowls.
-        for (var burner = 0; burner < 3; ++burner)
-        {
-            var bx = 708 + burner * 62;
-            Fill(bx, 385, 44, 44, new Color(a: 255, r: 31, g: 29, b: 27));
-            Fill(bx + 7, 392, 30, 30, new Color(a: 255, r: 84, g: 62, b: 44));
-            Fill(bx + 13, 398, 18, 18, new Color(a: 255, r: 38, g: 31, b: 26));
-        }
+        // Parchment-style status / stage board suspended above the work station.
+        Panel(
+            405,
+            90,
+            552,
+            215,
+            new Color(a: 232, r: 45, g: 31, b: 23),
+            new Color(a: 255, r: 141, g: 90, b: 45)
+        );
+        Fill(419, 103, 524, 5, new Color(a: 255, r: 207, g: 158, b: 84));
+        Fill(433, 195, 496, 2, new Color(a: 170, r: 116, g: 73, b: 40));
 
-        // Selection screen still looks like a game before the first stage begins.
-        if (_state is { RecipeSelectionRequired: true })
-        {
-            Fill(515, 370, 88, 58, new Color(a: 255, r: 218, g: 206, b: 178));
-            Fill(530, 382, 58, 34, new Color(a: 255, r: 54, g: 71, b: 49));
-            Fill(770, 370, 80, 12, new Color(a: 255, r: 202, g: 174, b: 112));
-            Fill(786, 348, 48, 30, new Color(a: 255, r: 226, g: 220, b: 196));
-        }
+        // XP plaque built into the lower cabinetry.
+        Panel(
+            40,
+            615,
+            740,
+            84,
+            new Color(a: 244, r: 54, g: 31, b: 20),
+            new Color(a: 255, r: 140, g: 91, b: 43)
+        );
 
         DrawStageProgress(Fill);
 
@@ -962,11 +973,14 @@ internal sealed class CookingWindow : Base
             var nowServer = Environment.TickCount64 + _serverOffset;
             var elapsed = Math.Clamp(nowServer - state.StageStartedUnixMs, 0, state.StageDurationMs);
 
-            const int meterX = 470;
-            const int meterY = 480;
-            const int meterW = 400;
-            const int meterH = 28;
+            const int meterX = 476;
+            const int meterY = 488;
+            const int meterW = 392;
+            const int meterH = 26;
 
+            // A brass-edged control rail mounted to the kitchen counter.
+            Fill(meterX - 10, meterY - 8, meterW + 20, meterH + 26, new Color(a: 235, r: 45, g: 29, b: 19));
+            Fill(meterX - 7, meterY - 5, meterW + 14, meterH + 20, new Color(a: 255, r: 132, g: 83, b: 39));
             Fill(meterX, meterY, meterW, meterH, new Color(a: 255, r: 24, g: 20, b: 17));
 
             if (state.StageType == CookingStageType.Plate)
@@ -980,7 +994,7 @@ internal sealed class CookingWindow : Base
                     meterY + 5,
                     meterW / 3 - 8,
                     meterH - 10,
-                    new Color(a: 255, r: 78, g: 145, b: 72)
+                    new Color(a: 255, r: 80, g: 151, b: 74)
                 );
             }
             else
@@ -992,7 +1006,7 @@ internal sealed class CookingWindow : Base
                     meterY + 3,
                     toleranceW,
                     meterH - 6,
-                    new Color(a: 255, r: 78, g: 145, b: 72)
+                    new Color(a: 255, r: 80, g: 151, b: 74)
                 );
 
                 var meter = state.StageType is CookingStageType.Heat or CookingStageType.Season
@@ -1008,7 +1022,7 @@ internal sealed class CookingWindow : Base
 
             var remaining = Math.Max(0, state.StageDurationMs - elapsed);
             var timeWidth = (int)(meterW * remaining / Math.Max(1d, state.StageDurationMs));
-            Fill(meterX, meterY + 36, timeWidth, 5, new Color(a: 255, r: 194, g: 164, b: 91));
+            Fill(meterX, meterY + 34, timeWidth, 5, new Color(a: 255, r: 214, g: 169, b: 77));
 
             DrawStageProp(Fill, state, elapsed);
         }
@@ -1017,6 +1031,173 @@ internal sealed class CookingWindow : Base
         DrawActionFeedback(Fill);
         DrawComicEvent(Fill);
         base.Render(skin);
+    }
+
+    private void DrawKitchenEnvironment(
+        Action<int, int, int, int, Color> fill,
+        long now
+    )
+    {
+        // Warm stone/plaster back wall.
+        fill(0, 0, 1024, 720, new Color(a: 255, r: 42, g: 29, b: 21));
+        fill(0, 74, 1024, 318, new Color(a: 255, r: 78, g: 64, b: 50));
+
+        // Hand-built tile/brick backsplash.
+        for (var row = 0; row < 10; ++row)
+        {
+            var brickY = 80 + row * 31;
+            var offset = row % 2 == 0 ? 0 : 23;
+            for (var column = -1; column < 24; ++column)
+            {
+                var brickX = column * 48 + offset;
+                var shade = 86 + ((row + column + 12) % 3) * 7;
+                fill(
+                    brickX,
+                    brickY,
+                    45,
+                    28,
+                    new Color(a: 255, r: shade, g: shade - 18, b: shade - 31)
+                );
+                fill(brickX, brickY + 27, 45, 1, new Color(a: 175, r: 44, g: 35, b: 29));
+            }
+        }
+
+        // Left stone hearth, deliberately behind the recipe board so it reads as room depth.
+        fill(0, 150, 224, 290, new Color(a: 255, r: 65, g: 45, b: 34));
+        fill(18, 184, 186, 226, new Color(a: 255, r: 36, g: 24, b: 19));
+        fill(28, 200, 166, 200, new Color(a: 255, r: 25, g: 18, b: 15));
+
+        // Animated oven fire.
+        for (var flame = 0; flame < 9; ++flame)
+        {
+            var wave = (int)((now / 85 + flame * 17) % 22);
+            var height = 22 + (wave % 14);
+            var x = 42 + flame * 16;
+            fill(x, 371 - height, 12, height, new Color(a: 220, r: 232, g: 110, b: 39));
+            fill(x + 3, 371 - height + 8, 7, Math.Max(5, height - 12), new Color(a: 230, r: 251, g: 182, b: 65));
+        }
+
+        // Back counter and lower cabinets.
+        fill(0, 390, 1024, 330, new Color(a: 255, r: 49, g: 29, b: 19));
+        fill(0, 390, 1024, 20, new Color(a: 255, r: 133, g: 79, b: 40));
+        fill(0, 410, 1024, 25, new Color(a: 255, r: 91, g: 52, b: 29));
+
+        for (var cabinet = 0; cabinet < 7; ++cabinet)
+        {
+            var x = cabinet * 146;
+            fill(x + 4, 455, 136, 248, new Color(a: 255, r: 73, g: 41, b: 25));
+            fill(x + 10, 466, 124, 225, new Color(a: 255, r: 91, g: 53, b: 30));
+            fill(x + 18, 477, 108, 203, new Color(a: 255, r: 61, g: 35, b: 23));
+            fill(x + 67, 470, 7, 7, new Color(a: 255, r: 194, g: 133, b: 58));
+        }
+
+        // Large center preparation island.
+        fill(376, 354, 604, 151, new Color(a: 255, r: 66, g: 38, b: 23));
+        fill(386, 362, 584, 133, new Color(a: 255, r: 125, g: 78, b: 42));
+        fill(386, 362, 584, 10, new Color(a: 255, r: 197, g: 141, b: 74));
+        fill(398, 475, 560, 12, new Color(a: 255, r: 72, g: 43, b: 27));
+
+        // Cutting board.
+        fill(446, 390, 222, 76, new Color(a: 255, r: 85, g: 51, b: 29));
+        fill(452, 396, 210, 64, new Color(a: 255, r: 162, g: 106, b: 57));
+        fill(458, 402, 198, 4, new Color(a: 160, r: 232, g: 178, b: 103));
+
+        // Stove embedded in the island.
+        fill(700, 378, 230, 90, new Color(a: 255, r: 54, g: 49, b: 44));
+        fill(710, 387, 210, 70, new Color(a: 255, r: 36, g: 32, b: 29));
+
+        for (var burner = 0; burner < 3; ++burner)
+        {
+            var bx = 728 + burner * 60;
+            fill(bx, 404, 42, 42, new Color(a: 255, r: 21, g: 20, b: 19));
+            fill(bx + 7, 411, 28, 28, new Color(a: 255, r: 76, g: 61, b: 48));
+            fill(bx + 12, 416, 18, 18, new Color(a: 255, r: 29, g: 25, b: 22));
+        }
+
+        // Pantry shelves on the right wall.
+        fill(838, 104, 160, 220, new Color(a: 255, r: 63, g: 38, b: 24));
+        for (var shelf = 0; shelf < 3; ++shelf)
+        {
+            var sy = 141 + shelf * 63;
+            fill(848, sy, 140, 8, new Color(a: 255, r: 136, g: 83, b: 41));
+
+            for (var jar = 0; jar < 5; ++jar)
+            {
+                var jx = 854 + jar * 27;
+                var body = jar % 3 switch
+                {
+                    0 => new Color(a: 255, r: 126, g: 78, b: 42),
+                    1 => new Color(a: 255, r: 94, g: 108, b: 57),
+                    _ => new Color(a: 255, r: 157, g: 118, b: 64),
+                };
+                fill(jx, sy - 27, 18, 23, body);
+                fill(jx + 3, sy - 31, 12, 5, new Color(a: 255, r: 207, g: 178, b: 122));
+            }
+        }
+
+        // Hanging copper cookware.
+        fill(594, 80, 226, 7, new Color(a: 255, r: 91, g: 56, b: 33));
+        for (var pan = 0; pan < 5; ++pan)
+        {
+            var px = 612 + pan * 41;
+            var length = 42 + (pan % 3) * 12;
+            fill(px + 12, 86, 4, length, new Color(a: 255, r: 102, g: 66, b: 40));
+            fill(px, 86 + length, 28, 24, new Color(a: 255, r: 155, g: 83, b: 42));
+            fill(px + 5, 91 + length, 18, 14, new Color(a: 255, r: 196, g: 108, b: 50));
+        }
+
+        // Small kitchen window with cool outside light to contrast the warm room.
+        fill(934, 114, 80, 186, new Color(a: 255, r: 47, g: 34, b: 27));
+        fill(942, 123, 64, 166, new Color(a: 255, r: 64, g: 97, b: 107));
+        fill(972, 123, 5, 166, new Color(a: 255, r: 58, g: 39, b: 28));
+        fill(942, 202, 64, 5, new Color(a: 255, r: 58, g: 39, b: 28));
+
+        // Lanterns and warm light pools.
+        for (var lantern = 0; lantern < 2; ++lantern)
+        {
+            var lx = lantern == 0 ? 112 : 900;
+            fill(lx, 12, 34, 42, new Color(a: 255, r: 55, g: 34, b: 23));
+            fill(lx + 6, 18, 22, 28, new Color(a: 255, r: 239, g: 163, b: 67));
+            fill(lx + 10, 22, 14, 20, new Color(a: 235, r: 255, g: 211, b: 98));
+        }
+
+        // Pots / ingredients on the work surface.
+        fill(770, 324, 132, 55, new Color(a: 255, r: 79, g: 50, b: 34));
+        fill(782, 310, 108, 21, new Color(a: 255, r: 101, g: 61, b: 39));
+
+        for (var item = 0; item < 8; ++item)
+        {
+            var ix = 402 + item * 32;
+            var iy = 345 - (item % 3) * 7;
+            var ingredient = item % 4 switch
+            {
+                0 => new Color(a: 255, r: 210, g: 95, b: 38),
+                1 => new Color(a: 255, r: 99, g: 132, b: 57),
+                2 => new Color(a: 255, r: 222, g: 204, b: 151),
+                _ => new Color(a: 255, r: 150, g: 54, b: 36),
+            };
+            fill(ix, iy, 18, 15, ingredient);
+            fill(ix + 6, iy - 5, 5, 7, new Color(a: 255, r: 73, g: 114, b: 54));
+        }
+
+        // Steam above the main pot.
+        for (var puff = 0; puff < 5; ++puff)
+        {
+            var rise = (int)((now / 28 + puff * 23) % 72);
+            var px = 806 + puff * 12 + ((puff % 2 == 0 ? 1 : -1) * rise / 14);
+            fill(
+                px,
+                304 - rise,
+                12 + puff % 2 * 5,
+                10 + puff % 3 * 5,
+                new Color(a: 58, r: 226, g: 222, b: 211)
+            );
+        }
+
+        // Foreground shadow/vignette anchors the kitchen in the room.
+        fill(0, 704, 1024, 16, new Color(a: 190, r: 10, g: 7, b: 5));
+        fill(0, 0, 18, 720, new Color(a: 140, r: 8, g: 6, b: 5));
+        fill(1006, 0, 18, 720, new Color(a: 140, r: 8, g: 6, b: 5));
     }
 
     private void DrawStageProgress(Action<int, int, int, int, Color> fill)
