@@ -1,6 +1,8 @@
 using DarkUI.Forms;
 using Intersect.Editor.Networking;
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.WorldEvents.Invasions;
 
 namespace Intersect.Editor.Forms.Editors;
@@ -22,6 +24,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
     private readonly NumericUpDown _minute = new() { Minimum = 0, Maximum = 59, Width = 70 };
 
     private readonly ComboBox _targetMap = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 330 };
+    private readonly ComboBox _targetEvent = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 330 };
     private readonly NumericUpDown _targetX = new() { Minimum = 0, Maximum = 255, Width = 75 };
     private readonly NumericUpDown _targetY = new() { Minimum = 0, Maximum = 255, Width = 75 };
     private readonly NumericUpDown _targetHealth = new() { Minimum = 1, Maximum = 1_000_000_000, Width = 130 };
@@ -46,6 +49,18 @@ public sealed class FrmInvasionConfiguration : DarkForm
 
         FillMaps();
         BuildUi();
+        _targetMap.SelectedIndexChanged += (_, _) =>
+        {
+            if (_loading) return;
+            var mapId = (_targetMap.SelectedItem as Choice)?.Id ?? Guid.Empty;
+            FillTargetEvents(mapId, Guid.Empty);
+            ApplySelectedTargetEvent();
+        };
+        _targetEvent.SelectedIndexChanged += (_, _) =>
+        {
+            if (_loading) return;
+            ApplySelectedTargetEvent();
+        };
         RefreshInvasionList();
 
         if (_list.Items.Count > 0)
@@ -58,6 +73,49 @@ public sealed class FrmInvasionConfiguration : DarkForm
         var names = GameObjectType.Map.Names();
         for (var index = 0; index < names.Length; ++index)
             _targetMap.Items.Add(new Choice(GameObjectType.Map.IdFromList(index), names[index]));
+    }
+
+    private void FillTargetEvents(Guid mapId, Guid selectedEventId)
+    {
+        var wasLoading = _loading;
+        _loading = true;
+        _targetEvent.Items.Clear();
+        _targetEvent.Items.Add(new Choice(Guid.Empty, "None - use target tile"));
+
+        var map = MapDescriptor.Get(mapId);
+        if (map != null)
+        {
+            foreach (var targetEvent in map.LocalEvents.Values
+                         .Where(targetEvent => targetEvent != null && !targetEvent.CommonEvent)
+                         .OrderBy(targetEvent => targetEvent.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                _targetEvent.Items.Add(
+                    new Choice(
+                        targetEvent.Id,
+                        $"{targetEvent.Name} ({targetEvent.SpawnX},{targetEvent.SpawnY})"
+                    )
+                );
+            }
+        }
+
+        SelectChoice(_targetEvent, selectedEventId);
+        _loading = wasLoading;
+    }
+
+    private void ApplySelectedTargetEvent()
+    {
+        var eventId = (_targetEvent.SelectedItem as Choice)?.Id ?? Guid.Empty;
+        var targetEvent = eventId == Guid.Empty ? null : EventDescriptor.Get(eventId);
+        var usesEvent = targetEvent != null;
+
+        if (usesEvent)
+        {
+            _targetX.Value = Math.Clamp(targetEvent!.SpawnX, (int)_targetX.Minimum, (int)_targetX.Maximum);
+            _targetY.Value = Math.Clamp(targetEvent.SpawnY, (int)_targetY.Minimum, (int)_targetY.Maximum);
+        }
+
+        _targetX.Enabled = !usesEvent;
+        _targetY.Enabled = !usesEvent;
     }
 
     private void BuildUi()
@@ -138,6 +196,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         AddRow(table, "Start time", time);
 
         AddRow(table, "Target island / map", _targetMap);
+        AddRow(table, "Defense target event", _targetEvent);
 
         var targetCoords = new FlowLayoutPanel { AutoSize = true };
         targetCoords.Controls.Add(new Label { Text = "X", AutoSize = true, Padding = new Padding(0, 5, 0, 0) });
@@ -155,8 +214,8 @@ public sealed class FrmInvasionConfiguration : DarkForm
             AutoSize = true,
             MaximumSize = new Size(600, 0),
             Text =
-                "The target tile is the object the invaders are trying to destroy. " +
-                "Place your gate, fort, tower, event, or other visual object on that tile. " +
+                "Choose a map event to make that event the invasion objective. Its map position becomes the target automatically. " +
+                "Choose None to use the manual target tile instead. Invasion NPCs ignore their normal idle movement while assigned to an invasion and march toward this objective. " +
                 "Every player who damages an invasion NPC is registered as a defender and receives the configured EXP if the invasion is repelled.",
         };
         AddRow(table, "How it works", help);
@@ -223,6 +282,8 @@ public sealed class FrmInvasionConfiguration : DarkForm
         }
 
         SelectChoice(_targetMap, invasion.TargetMapId);
+        FillTargetEvents(invasion.TargetMapId, invasion.TargetEventId);
+        ApplySelectedTargetEvent();
         RefreshWaveList();
         _loading = false;
     }
@@ -238,6 +299,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         invasion.StartHour = (int)_hour.Value;
         invasion.StartMinute = (int)_minute.Value;
         invasion.TargetMapId = (_targetMap.SelectedItem as Choice)?.Id ?? Guid.Empty;
+        invasion.TargetEventId = (_targetEvent.SelectedItem as Choice)?.Id ?? Guid.Empty;
         invasion.TargetX = (int)_targetX.Value;
         invasion.TargetY = (int)_targetY.Value;
         invasion.TargetHealth = (int)_targetHealth.Value;
