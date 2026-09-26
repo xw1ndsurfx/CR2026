@@ -41,6 +41,9 @@ internal static class CookingRuntime
         public int StageTargetPermille;
         public int StageScoreTotal;
         public int StageScoredActions;
+        public int StageMeterPermille;
+        public int Combo;
+        public int Mishaps;
         public readonly Dictionary<Guid, int> StageActions = [];
         public readonly List<int> CompletedStageScores = [];
         public long Revision;
@@ -386,7 +389,7 @@ internal static class CookingRuntime
             return;
         }
 
-        var score = ScoreAction(session, stage, elapsed);
+        var score = ScoreAction(session, stage, elapsed, request.ActionInput);
         var participant = GetParticipant(session, player.Id)!;
         participant.Actions++;
         participant.ScoreTotal += score;
@@ -395,7 +398,16 @@ internal static class CookingRuntime
         session.StageScoreTotal += score;
         session.StageScoredActions++;
         session.StageActions[player.Id] = session.StageActions.GetValueOrDefault(player.Id) + 1;
-        session.Status = CookingStatus(stage.Type, score, player.Name);
+
+        if (score >= 75)
+            session.Combo = Math.Min(999, session.Combo + 1);
+        else
+        {
+            session.Combo = 0;
+            if (score < 40) session.Mishaps = Math.Min(999, session.Mishaps + 1);
+        }
+
+        session.Status = CookingStatus(stage.Type, score, player.Name, session.Combo, session.Mishaps);
         ++session.Revision;
 
         if (StageComplete(session, stage))
@@ -419,24 +431,94 @@ internal static class CookingRuntime
         return true;
     }
 
-    private static int ScoreAction(Session session, CookingStageDefinition stage, long elapsedMs)
+    private static int ScoreAction(
+        Session session,
+        CookingStageDefinition stage,
+        long elapsedMs,
+        CookingActionInput input
+    )
     {
-        var duration = Math.Max(1, stage.DurationSeconds * 1000L);
-        var normalized = (double)elapsedMs / duration;
-        var cycles = 2d + stage.Difficulty * 0.75d;
-        var phase = normalized * cycles;
-        var fraction = phase - Math.Floor(phase);
-        var cursor = fraction <= 0.5d
-            ? (int)Math.Round(fraction * 2000d)
-            : (int)Math.Round((1d - fraction) * 2000d);
+        var duration = Math.Max(1, stage.DurationSeconds * 1000);
+        var tolerance = CookingStageRules.TargetTolerance(stage.Difficulty);
 
-        var distance = Math.Abs(cursor - session.StageTargetPermille);
-        var tolerance = Math.Max(70, 260 - stage.Difficulty * 28);
-        if (distance <= tolerance / 4) return 100;
-        if (distance <= tolerance / 2) return 90;
-        if (distance <= tolerance) return 75;
-        if (distance <= tolerance * 2) return 45;
-        return 15;
+        switch (stage.Type)
+        {
+            case CookingStageType.Heat:
+            {
+                var delta = input switch
+                {
+                    CookingActionInput.Primary => CookingStageRules.HeatStep(stage.Difficulty),
+                    CookingActionInput.Secondary => -CookingStageRules.HeatStep(stage.Difficulty),
+                    _ => 0,
+                };
+                if (delta == 0) return 15;
+                session.StageMeterPermille = CookingStageRules.MoveMeter(session.StageMeterPermille, delta);
+                return CookingStageRules.PrecisionScore(
+                    session.StageMeterPermille,
+                    session.StageTargetPermille,
+                    tolerance
+                );
+            }
+
+            case CookingStageType.Season:
+            {
+                var delta = input switch
+                {
+                    CookingActionInput.Primary => CookingStageRules.SeasonStep(stage.Difficulty),
+                    CookingActionInput.Secondary => -CookingStageRules.SeasonStep(stage.Difficulty),
+                    _ => 0,
+                };
+                if (delta == 0) return 15;
+                session.StageMeterPermille = CookingStageRules.MoveMeter(session.StageMeterPermille, delta);
+                return CookingStageRules.PrecisionScore(
+                    session.StageMeterPermille,
+                    session.StageTargetPermille,
+                    tolerance
+                );
+            }
+
+            case CookingStageType.Plate:
+                session.StageMeterPermille = input switch
+                {
+                    CookingActionInput.Primary => 200,
+                    CookingActionInput.Secondary => 500,
+                    CookingActionInput.Tertiary => 800,
+                    _ => session.StageMeterPermille,
+                };
+                return CookingStageRules.PlateScore(input, session.StageTargetPermille);
+
+            case CookingStageType.Stir:
+            case CookingStageType.Knead:
+            {
+                var actionNumber = session.StageActions.Values.Sum();
+                var expected = actionNumber % 2 == 0
+                    ? CookingActionInput.Primary
+                    : CookingActionInput.Secondary;
+                if (input != expected) return 15;
+
+                var cursor = CookingStageRules.TimingCursorPermille(
+                    elapsedMs,
+                    duration,
+                    stage.Difficulty
+                );
+                session.StageMeterPermille = cursor;
+                return CookingStageRules.PrecisionScore(cursor, session.StageTargetPermille, tolerance);
+            }
+
+            case CookingStageType.Chop:
+            case CookingStageType.Flip:
+            default:
+            {
+                if (input != CookingActionInput.Primary) return 15;
+                var cursor = CookingStageRules.TimingCursorPermille(
+                    elapsedMs,
+                    duration,
+                    stage.Difficulty
+                );
+                session.StageMeterPermille = cursor;
+                return CookingStageRules.PrecisionScore(cursor, session.StageTargetPermille, tolerance);
+            }
+        }
     }
 
     private static void BeginFirstStage(Session session)
@@ -457,11 +539,21 @@ internal static class CookingRuntime
         }
 
         session.StageStartedUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        session.StageTargetPermille = Random.Shared.Next(180, 821);
+        var stage = session.Recipe.Stages[session.StageIndex];
+        session.StageTargetPermille = stage.Type == CookingStageType.Plate
+            ? CookingStageRules.RandomPlateTarget(Random.Shared)
+            : Random.Shared.Next(180, 821);
+        session.StageMeterPermille = stage.Type switch
+        {
+            CookingStageType.Heat => 500,
+            CookingStageType.Season => 0,
+            CookingStageType.Plate => 500,
+            _ => 0,
+        };
         session.StageScoreTotal = 0;
         session.StageScoredActions = 0;
         session.StageActions.Clear();
-        var stage = session.Recipe.Stages[session.StageIndex];
+        session.Combo = 0;
         session.Status = StagePrompt(stage.Type);
         ++session.Revision;
     }
@@ -752,7 +844,7 @@ internal static class CookingRuntime
                 StageStartedUnixMs = stage == null ? 0 : session.StageStartedUnixMs,
                 StageDurationMs = duration,
                 TargetPermille = stage == null ? 0 : session.StageTargetPermille,
-                TolerancePermille = stage == null ? 0 : Math.Max(70, 260 - stage.Difficulty * 28),
+                TolerancePermille = stage == null ? 0 : CookingStageRules.TargetTolerance(stage.Difficulty),
                 RequiredActions = stage?.RequiredActions ?? 0,
                 CompletedActions = session.StageActions.Values.Sum(),
                 YourTurn = stage != null && CanAct(session, viewer.Id, stage),
@@ -775,6 +867,10 @@ internal static class CookingRuntime
                 }).ToArray(),
                 RewardText = session.RewardText,
                 StageDifficulty = stage?.Difficulty ?? 0,
+                MeterPermille = session.StageMeterPermille,
+                Combo = session.Combo,
+                Mishaps = session.Mishaps,
+                ActionHint = stage == null ? string.Empty : ActionHint(session, stage),
             },
         };
     }
@@ -903,14 +999,49 @@ internal static class CookingRuntime
         _ => "PLATE! Make it look expensive.",
     };
 
-    private static string CookingStatus(CookingStageType type, int score, string player) =>
-        score >= 90
-            ? $"{player}: PERFECT {type}! The kitchen applauds."
+    private static string CookingStatus(
+        CookingStageType type,
+        int score,
+        string player,
+        int combo,
+        int mishaps
+    )
+    {
+        var comboText = combo >= 3 ? $" COMBO x{combo}!" : string.Empty;
+        var mishapText = mishaps > 0 && score < 40 ? $" Kitchen disaster #{mishaps}." : string.Empty;
+
+        return score >= 90
+            ? $"{player}: PERFECT {type}! The kitchen applauds.{comboText}"
             : score >= 70
-                ? $"{player}: Great {type}! Nobody screamed."
+                ? $"{player}: Great {type}! Nobody screamed.{comboText}"
                 : score >= 40
                     ? $"{player}: Decent {type}. Still edible."
-                    : $"{player}: CHAOS during {type}! Something is smoking.";
+                    : $"{player}: CHAOS during {type}! Something is smoking.{mishapText}";
+    }
+
+    private static string ActionHint(Session session, CookingStageDefinition stage)
+    {
+        var actionNumber = session.StageActions.Values.Sum();
+        return stage.Type switch
+        {
+            CookingStageType.Chop => "Hit CHOP when the knife marker crosses the green zone.",
+            CookingStageType.Stir => actionNumber % 2 == 0
+                ? "Stir CLOCKWISE now."
+                : "Stir COUNTER-CLOCKWISE now.",
+            CookingStageType.Heat => "Use MORE HEAT / LESS HEAT to hold the pan in the green zone.",
+            CookingStageType.Flip => "Hit FLIP at the green catch zone.",
+            CookingStageType.Season => "Add or remove seasoning until the shaker reaches the green zone.",
+            CookingStageType.Knead => actionNumber % 2 == 0
+                ? "PRESS LEFT."
+                : "PRESS RIGHT.",
+            CookingStageType.Plate => session.StageTargetPermille < 350
+                ? "Place it on the LEFT side of the plate."
+                : session.StageTargetPermille > 650
+                    ? "Place it on the RIGHT side of the plate."
+                    : "Place it in the CENTER of the plate.",
+            _ => "Cook!",
+        };
+    }
 
     private static string FunnyFinish(CookingQuality quality) => quality switch
     {
