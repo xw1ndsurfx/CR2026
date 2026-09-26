@@ -23,6 +23,12 @@ internal sealed class CookingWindow : Base
     private readonly Label _professionXp;
     private readonly Label _recipeHeader;
     private readonly Label _stationHeader;
+    private readonly CookingRecipePickerPanel _recipePicker;
+    private readonly Label _recipePickerTitle;
+    private readonly Label _recipePickerPage;
+    private readonly Button[] _recipeCards = new Button[6];
+    private readonly Button _recipePagePrevious;
+    private readonly Button _recipePageNext;
     private readonly Dictionary<Base, int> _fontSizes = [];
     private readonly Button _previousRecipe;
     private readonly Button _nextRecipe;
@@ -40,6 +46,7 @@ internal sealed class CookingWindow : Base
     private CookingSessionState? _state;
     private long _serverOffset;
     private int _recipeIndex;
+    private int _recipePage;
     private int _partnerIndex;
     private long _lastActionSequence;
     private long _lastComicEventSequence;
@@ -103,6 +110,74 @@ internal sealed class CookingWindow : Base
         _professionXp = MakeLabel("CookingProfessionXp", 55, 626, 700, 28, 11);
         _professionXp.TextColorOverride = new Color(255, 236, 210, 117);
 
+        _recipePicker = new CookingRecipePickerPanel(this)
+        {
+            IsHidden = true,
+            MouseInputEnabled = true,
+            KeyboardInputEnabled = false,
+        };
+
+        _recipePickerTitle = new Label(_recipePicker, "CookingRecipePickerTitle")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 17,
+            Text = "CHOOSE A RECIPE",
+            TextAlign = Pos.Center,
+            TextColorOverride = new Color(255, 236, 210, 117),
+            MouseInputEnabled = false,
+            KeyboardInputEnabled = false,
+        };
+
+        _recipePickerPage = new Label(_recipePicker, "CookingRecipePickerPage")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 10,
+            TextAlign = Pos.Center,
+            TextColorOverride = new Color(255, 211, 188, 137),
+            MouseInputEnabled = false,
+            KeyboardInputEnabled = false,
+        };
+
+        for (var slot = 0; slot < _recipeCards.Length; ++slot)
+        {
+            var captured = slot;
+            var card = new Button(_recipePicker, "CookingRecipeCard" + slot)
+            {
+                Font = Skin.DefaultFont,
+                FontSize = 11,
+                Text = string.Empty,
+                TextColorOverride = Color.White,
+            };
+            card.Clicked += (_, _) => SelectRecipeCard(captured);
+            _recipeCards[slot] = card;
+        }
+
+        _recipePagePrevious = new Button(_recipePicker, "CookingRecipePagePrevious")
+        {
+            Font = Skin.DefaultFont,
+            FontSize = 11,
+            Text = "< Previous",
+        };
+        _recipePagePrevious.Clicked += (_, _) =>
+        {
+            if (_recipePage > 0) --_recipePage;
+            RefreshRecipePicker();
+        };
+
+        _recipePageNext = new Button(_recipePicker, "CookingRecipePageNext")
+        {
+            Font = Skin.DefaultFont,
+            FontSize = 11,
+            Text = "Next >",
+        };
+        _recipePageNext.Clicked += (_, _) =>
+        {
+            ++_recipePage;
+            RefreshRecipePicker();
+        };
+
         _previousRecipe = MakeButton("CookingPreviousRecipe", "< Recipe", 55, 538, 92, () =>
         {
             _recipeIndex = Math.Max(0, _recipeIndex - 1);
@@ -114,7 +189,7 @@ internal sealed class CookingWindow : Base
                 _recipeIndex = Math.Min(Math.Max(0, _state.Recipes.Length - 1), _recipeIndex + 1);
             RefreshSelection();
         });
-        _solo = MakeButton("CookingSolo", "COOK SOLO", 253, 538, 100, StartSolo);
+        _solo = MakeButton("CookingSolo", "COOK SOLO", 55, 538, 142, StartSolo);
 
         _previousPartner = MakeButton("CookingPreviousPartner", "< Friend", 55, 578, 92, () =>
         {
@@ -127,7 +202,7 @@ internal sealed class CookingWindow : Base
                 _partnerIndex = Math.Min(Math.Max(0, _state.PartyCandidates.Length - 1), _partnerIndex + 1);
             RefreshSelection();
         });
-        _coop = MakeButton("CookingCoop", "COOK TOGETHER", 253, 578, 100, StartCoop);
+        _coop = MakeButton("CookingCoop", "COOK TOGETHER", 206, 538, 147, StartCoop);
 
         _action = MakeButton("CookingAction", "DO IT!", 435, 528, 160, () => DoAction(CookingActionInput.Primary));
         _actionSecondary = MakeButton("CookingActionSecondary", "SECONDARY", 606, 528, 160, () => DoAction(CookingActionInput.Secondary));
@@ -173,6 +248,39 @@ internal sealed class CookingWindow : Base
             if (control is Label label && _fontSizes.TryGetValue(control, out var baseFont))
                 label.FontSize = Math.Max(8, (int)Math.Round(baseFont * scale));
         }
+
+        var pickerX = offsetX + (int)(405 * scale);
+        var pickerY = offsetY + (int)(118 * scale);
+        var pickerW = Math.Max(1, (int)(550 * scale));
+        var pickerH = Math.Max(1, (int)(390 * scale));
+        _recipePicker.SetBounds(pickerX, pickerY, pickerW, pickerH);
+
+        int PX(int value) => (int)Math.Round(value * pickerW / 550d);
+        int PY(int value) => (int)Math.Round(value * pickerH / 390d);
+
+        _recipePickerTitle.SetBounds(PX(18), PY(14), PX(514), PY(32));
+        _recipePickerTitle.FontSize = Math.Max(9, (int)Math.Round(17 * scale));
+
+        for (var slot = 0; slot < _recipeCards.Length; ++slot)
+        {
+            var column = slot % 2;
+            var row = slot / 2;
+            var card = _recipeCards[slot];
+            card.SetBounds(
+                PX(20 + column * 258),
+                PY(58 + row * 82),
+                PX(246),
+                PY(70)
+            );
+            card.FontSize = Math.Max(8, (int)Math.Round(11 * scale));
+        }
+
+        _recipePagePrevious.SetBounds(PX(20), PY(322), PX(108), PY(34));
+        _recipePagePrevious.FontSize = Math.Max(8, (int)Math.Round(11 * scale));
+        _recipePickerPage.SetBounds(PX(138), PY(322), PX(274), PY(34));
+        _recipePickerPage.FontSize = Math.Max(8, (int)Math.Round(10 * scale));
+        _recipePageNext.SetBounds(PX(422), PY(322), PX(108), PY(34));
+        _recipePageNext.FontSize = Math.Max(8, (int)Math.Round(11 * scale));
     }
 
     public void Update(CookingClientModel model)
@@ -192,7 +300,12 @@ internal sealed class CookingWindow : Base
         if (_partnerIndex >= state.PartyCandidates.Length) _partnerIndex = Math.Max(0, state.PartyCandidates.Length - 1);
 
         var selecting = state.RecipeSelectionRequired;
-        _previousRecipe.IsHidden = _nextRecipe.IsHidden = _solo.IsHidden = _coop.IsHidden = !selecting;
+        _recipePicker.IsHidden = !selecting;
+        if (selecting) _recipePicker.BringToFront();
+
+        _previousRecipe.IsHidden = true;
+        _nextRecipe.IsHidden = true;
+        _solo.IsHidden = _coop.IsHidden = !selecting;
         _previousPartner.IsHidden = _nextPartner.IsHidden = !selecting;
         var hideActions = selecting || state.WaitingForPartner || state.InvitePendingForYou || state.Complete;
         _action.IsHidden = hideActions;
@@ -208,6 +321,14 @@ internal sealed class CookingWindow : Base
         _coop.IsDisabled = model.Pending;
 
         RefreshSelection();
+        RefreshRecipePicker();
+
+        // RefreshSelection computes availability; pending always wins.
+        if (selecting)
+        {
+            _solo.IsDisabled = _solo.IsDisabled || model.Pending;
+            _coop.IsDisabled = _coop.IsDisabled || model.Pending;
+        }
 
         if (!selecting)
         {
