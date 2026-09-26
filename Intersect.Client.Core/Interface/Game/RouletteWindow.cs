@@ -306,7 +306,8 @@ internal sealed class RouletteWindow : Base
         {
             var rectangle = _layout.Rect(placement.X, placement.Y, placement.W, placement.H);
             placement.Control.SetBounds(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height);
-            placement.Control.FontSize = _layout.Font(placement.Font);
+            if (placement.Control is Label label && placement.Font > 0)
+                label.FontSize = _layout.FontSize(placement.Font);
         }
     }
 
