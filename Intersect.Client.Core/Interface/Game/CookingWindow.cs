@@ -621,6 +621,44 @@ internal sealed class CookingWindow : Base
         base.Render(skin);
     }
 
+    private void DrawStageProgress(Action<int, int, int, int, Color> fill)
+    {
+        if (_state == null)
+            return;
+
+        const int x = 420;
+        const int y = 96;
+        const int width = 530;
+        const int height = 7;
+
+        if (_state.RecipeSelectionRequired || _state.StageCount <= 0)
+        {
+            fill(x, y, width, height, new Color(a: 255, r: 57, g: 43, b: 32));
+            return;
+        }
+
+        var count = Math.Clamp(_state.StageCount, 1, 12);
+        var gap = 5;
+        var segmentWidth = Math.Max(8, (width - gap * (count - 1)) / count);
+
+        for (var index = 0; index < count; ++index)
+        {
+            var segmentX = x + index * (segmentWidth + gap);
+            var color = index < _state.StageIndex
+                ? new Color(a: 255, r: 74, g: 157, b: 91)
+                : index == _state.StageIndex && !_state.Complete
+                    ? new Color(a: 255, r: 231, g: 194, b: 112)
+                    : _state.Complete
+                        ? new Color(a: 255, r: 74, g: 157, b: 91)
+                        : new Color(a: 255, r: 70, g: 52, b: 39);
+
+            fill(segmentX, y, segmentWidth, height, color);
+
+            if (index == _state.StageIndex && !_state.Complete)
+                fill(segmentX, y - 2, segmentWidth, 2, new Color(a: 255, r: 255, g: 232, b: 165));
+        }
+    }
+
     private void DrawProfessionXpBar(Action<int, int, int, int, Color> fill)
     {
         if (_state == null)
