@@ -1,5 +1,4 @@
-using Intersect.Network.Packets.Editor;
-using Intersect.Network.Packets.Server;
+using Intersect.Network.Packets.WorldEvents;
 using Intersect.Server.WorldEvents.Invasions;
 
 namespace Intersect.Server.Networking;
