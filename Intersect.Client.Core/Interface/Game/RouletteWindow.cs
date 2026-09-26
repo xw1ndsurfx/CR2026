@@ -257,9 +257,9 @@ internal sealed class RouletteWindow : Base
                 ? "History: —"
                 : "History: " + string.Join("  •  ", state.History.Reverse());
 
-        var level = Framework.Core.MiniGames.MiniGameProgression.Level(state.Experience);
+        var level = Intersect.Framework.Core.MiniGames.MiniGameProgression.Level(state.Experience);
         _xp.Text =
-            $"Roulette Level {level}/{Framework.Core.MiniGames.MiniGameProgression.MaximumLevel} • " +
+            $"Roulette Level {level}/{Intersect.Framework.Core.MiniGames.MiniGameProgression.MaximumLevel} • " +
             $"{state.Experience:N0} XP • {state.Wins:N0} win(s)";
 
         _error.Text = model.ErrorCode switch
@@ -297,9 +297,6 @@ internal sealed class RouletteWindow : Base
 
     private void UpdateLayout(bool force = false)
     {
-        if (!force && _layout.ViewportWidth == _canvas.Width && _layout.ViewportHeight == _canvas.Height)
-            return;
-
         _layout = new PokerSceneLayout(Math.Max(1, _canvas.Width), Math.Max(1, _canvas.Height));
 
         SetPosition(0, 0);
