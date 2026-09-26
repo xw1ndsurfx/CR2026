@@ -62,7 +62,8 @@ public partial class GameInterface
         CookingRequestKind kind,
         Guid recipeId,
         Guid partnerId,
-        bool accept
+        bool accept,
+        CookingActionInput actionInput = CookingActionInput.Primary
     )
     {
         var packet = _cookingModel.Request(
@@ -70,7 +71,8 @@ public partial class GameInterface
             Environment.TickCount64,
             recipeId,
             partnerId,
-            accept
+            accept,
+            actionInput
         );
         if (packet != null)
             ClientNetwork.SendPacket(packet);
