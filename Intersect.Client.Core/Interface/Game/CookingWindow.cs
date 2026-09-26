@@ -11,7 +11,7 @@ namespace Intersect.Client.Interface.Game;
 internal sealed class CookingWindow : Base
 {
     private readonly Canvas _canvas;
-    private readonly Action<CookingRequestKind, Guid, Guid, bool> _send;
+    private readonly Action<CookingRequestKind, Guid, Guid, bool, CookingActionInput> _send;
     private readonly Label _title;
     private readonly Label _recipe;
     private readonly Label _ingredients;
@@ -27,6 +27,8 @@ internal sealed class CookingWindow : Base
     private readonly Button _previousPartner;
     private readonly Button _nextPartner;
     private readonly Button _action;
+    private readonly Button _actionSecondary;
+    private readonly Button _actionTertiary;
     private readonly Button _accept;
     private readonly Button _decline;
     private readonly Button _leave;
@@ -41,7 +43,7 @@ internal sealed class CookingWindow : Base
 
     public CookingWindow(
         Canvas canvas,
-        Action<CookingRequestKind, Guid, Guid, bool> send
+        Action<CookingRequestKind, Guid, Guid, bool, CookingActionInput> send
     ) : base(canvas, nameof(CookingWindow))
     {
         _canvas = canvas;
@@ -86,12 +88,14 @@ internal sealed class CookingWindow : Base
         });
         _coop = MakeButton("CookingCoop", "COOK TOGETHER", 310, 570, 150, StartCoop);
 
-        _action = MakeButton("CookingAction", "DO IT!", 595, 540, 260, DoAction);
+        _action = MakeButton("CookingAction", "DO IT!", 520, 540, 140, () => DoAction(CookingActionInput.Primary));
+        _actionSecondary = MakeButton("CookingActionSecondary", "SECONDARY", 670, 540, 140, () => DoAction(CookingActionInput.Secondary));
+        _actionTertiary = MakeButton("CookingActionTertiary", "TERTIARY", 820, 540, 140, () => DoAction(CookingActionInput.Tertiary));
         _accept = MakeButton("CookingAccept", "ACCEPT COOKING INVITE", 540, 540, 220, () =>
-            _send(CookingRequestKind.RespondInvite, Guid.Empty, Guid.Empty, true)
+            _send(CookingRequestKind.RespondInvite, Guid.Empty, Guid.Empty, true, CookingActionInput.Primary)
         );
         _decline = MakeButton("CookingDecline", "DECLINE", 770, 540, 140, () =>
-            _send(CookingRequestKind.RespondInvite, Guid.Empty, Guid.Empty, false)
+            _send(CookingRequestKind.RespondInvite, Guid.Empty, Guid.Empty, false, CookingActionInput.Primary)
         );
         _leave = MakeButton("CookingLeave", "Leave Kitchen", 820, 650, 150, () => ExitRequested = true);
 
@@ -138,10 +142,16 @@ internal sealed class CookingWindow : Base
         var selecting = state.RecipeSelectionRequired;
         _previousRecipe.IsHidden = _nextRecipe.IsHidden = _solo.IsHidden = _coop.IsHidden = !selecting;
         _previousPartner.IsHidden = _nextPartner.IsHidden = !selecting;
-        _action.IsHidden = selecting || state.WaitingForPartner || state.InvitePendingForYou || state.Complete;
+        var hideActions = selecting || state.WaitingForPartner || state.InvitePendingForYou || state.Complete;
+        _action.IsHidden = hideActions;
+        _actionSecondary.IsHidden = hideActions;
+        _actionTertiary.IsHidden = hideActions;
         _accept.IsHidden = _decline.IsHidden = !state.InvitePendingForYou;
 
+        ConfigureStageButtons(state);
         _action.IsDisabled = model.Pending || !state.YourTurn;
+        _actionSecondary.IsDisabled = model.Pending || !state.YourTurn;
+        _actionTertiary.IsDisabled = model.Pending || !state.YourTurn;
         _solo.IsDisabled = model.Pending;
         _coop.IsDisabled = model.Pending;
 
@@ -162,12 +172,12 @@ internal sealed class CookingWindow : Base
                       $"{state.CompletedActions}/{state.RequiredActions} actions";
 
             _status.Text = string.IsNullOrWhiteSpace(model.ErrorCode)
-                ? state.Status
+                ? $"{state.Status}\n{state.ActionHint}"
                 : ErrorText(model.ErrorCode);
 
             _score.Text = state.Complete
                 ? $"TEAM SCORE: {state.TeamScore}%\n{state.Quality}\n{state.RewardText}"
-                : $"Stage score: {state.StageScore}%";
+                : $"Stage score: {state.StageScore}%   Combo x{state.Combo}   Mishaps {state.Mishaps}";
 
             _players.Text = string.Join(
                 "\n",
@@ -239,7 +249,7 @@ internal sealed class CookingWindow : Base
     {
         if (_state?.Recipes is not { Length: > 0 }) return;
         var recipe = _state.Recipes[Math.Clamp(_recipeIndex, 0, _state.Recipes.Length - 1)];
-        _send(CookingRequestKind.StartRecipe, recipe.Id, Guid.Empty, false);
+        _send(CookingRequestKind.StartRecipe, recipe.Id, Guid.Empty, false, CookingActionInput.Primary);
     }
 
     private void StartCoop()
@@ -252,11 +262,69 @@ internal sealed class CookingWindow : Base
         var partner = _state.PartyCandidates[
             Math.Clamp(_partnerIndex, 0, _state.PartyCandidates.Length - 1)
         ];
-        _send(CookingRequestKind.StartRecipe, recipe.Id, partner.PlayerId, false);
+        _send(CookingRequestKind.StartRecipe, recipe.Id, partner.PlayerId, false, CookingActionInput.Primary);
     }
 
-    private void DoAction() =>
-        _send(CookingRequestKind.Action, Guid.Empty, Guid.Empty, false);
+    private void DoAction(CookingActionInput input) =>
+        _send(CookingRequestKind.Action, Guid.Empty, Guid.Empty, false, input);
+
+    private void ConfigureStageButtons(CookingSessionState state)
+    {
+        _action.IsHidden = _action.IsHidden;
+        _actionSecondary.IsHidden = _actionSecondary.IsHidden;
+        _actionTertiary.IsHidden = _actionTertiary.IsHidden;
+
+        switch (state.StageType)
+        {
+            case CookingStageType.Chop:
+                _action.Text = "CHOP!";
+                _actionSecondary.IsHidden = true;
+                _actionTertiary.IsHidden = true;
+                break;
+
+            case CookingStageType.Stir:
+                _action.Text = "CLOCKWISE";
+                _actionSecondary.Text = "COUNTER";
+                _actionSecondary.IsHidden = _action.IsHidden;
+                _actionTertiary.IsHidden = true;
+                break;
+
+            case CookingStageType.Heat:
+                _action.Text = "MORE HEAT";
+                _actionSecondary.Text = "LESS HEAT";
+                _actionSecondary.IsHidden = _action.IsHidden;
+                _actionTertiary.IsHidden = true;
+                break;
+
+            case CookingStageType.Flip:
+                _action.Text = "FLIP!";
+                _actionSecondary.IsHidden = true;
+                _actionTertiary.IsHidden = true;
+                break;
+
+            case CookingStageType.Season:
+                _action.Text = "ADD";
+                _actionSecondary.Text = "REMOVE";
+                _actionSecondary.IsHidden = _action.IsHidden;
+                _actionTertiary.IsHidden = true;
+                break;
+
+            case CookingStageType.Knead:
+                _action.Text = "LEFT";
+                _actionSecondary.Text = "RIGHT";
+                _actionSecondary.IsHidden = _action.IsHidden;
+                _actionTertiary.IsHidden = true;
+                break;
+
+            case CookingStageType.Plate:
+                _action.Text = "LEFT";
+                _actionSecondary.Text = "CENTER";
+                _actionTertiary.Text = "RIGHT";
+                _actionSecondary.IsHidden = _action.IsHidden;
+                _actionTertiary.IsHidden = _action.IsHidden;
+                break;
+        }
+    }
 
     protected override void Render(SkinBase skin)
     {
@@ -291,11 +359,6 @@ internal sealed class CookingWindow : Base
         {
             var nowServer = Environment.TickCount64 + _serverOffset;
             var elapsed = Math.Clamp(nowServer - state.StageStartedUnixMs, 0, state.StageDurationMs);
-            var normalized = elapsed / (double)Math.Max(1, state.StageDurationMs);
-            var difficultyCycles = 2d + state.StageDifficulty * 0.75d;
-            var phase = normalized * difficultyCycles;
-            var fraction = phase - Math.Floor(phase);
-            var cursor = fraction <= 0.5d ? fraction * 2d : (1d - fraction) * 2d;
 
             const int meterX = 535;
             const int meterY = 470;
@@ -304,18 +367,46 @@ internal sealed class CookingWindow : Base
 
             Fill(meterX, meterY, meterW, meterH, new Color(a: 255, r: 24, g: 20, b: 17));
 
-            var targetX = meterX + (int)(meterW * state.TargetPermille / 1000d);
-            var toleranceW = Math.Max(8, (int)(meterW * state.TolerancePermille / 1000d));
-            Fill(
-                targetX - toleranceW / 2,
-                meterY + 3,
-                toleranceW,
-                meterH - 6,
-                new Color(a: 255, r: 78, g: 145, b: 72)
-            );
+            if (state.StageType == CookingStageType.Plate)
+            {
+                Fill(meterX, meterY + 3, meterW / 3 - 3, meterH - 6, new Color(a: 255, r: 66, g: 64, b: 55));
+                Fill(meterX + meterW / 3 + 2, meterY + 3, meterW / 3 - 4, meterH - 6, new Color(a: 255, r: 74, g: 70, b: 56));
+                Fill(meterX + meterW * 2 / 3 + 2, meterY + 3, meterW / 3 - 2, meterH - 6, new Color(a: 255, r: 66, g: 64, b: 55));
+                var targetZone = CookingStageRules.PlateZoneFromTarget(state.TargetPermille);
+                Fill(
+                    meterX + targetZone * meterW / 3 + 4,
+                    meterY + 5,
+                    meterW / 3 - 8,
+                    meterH - 10,
+                    new Color(a: 255, r: 78, g: 145, b: 72)
+                );
+            }
+            else
+            {
+                var targetX = meterX + (int)(meterW * state.TargetPermille / 1000d);
+                var toleranceW = Math.Max(8, (int)(meterW * state.TolerancePermille / 1000d));
+                Fill(
+                    targetX - toleranceW / 2,
+                    meterY + 3,
+                    toleranceW,
+                    meterH - 6,
+                    new Color(a: 255, r: 78, g: 145, b: 72)
+                );
 
-            var cursorX = meterX + (int)(meterW * cursor);
-            Fill(cursorX - 3, meterY - 5, 6, meterH + 10, Color.White);
+                var meter = state.StageType is CookingStageType.Heat or CookingStageType.Season
+                    ? state.MeterPermille
+                    : CookingStageRules.TimingCursorPermille(
+                        elapsed,
+                        state.StageDurationMs,
+                        Math.Max(1, state.StageDifficulty)
+                    );
+                var cursorX = meterX + (int)(meterW * meter / 1000d);
+                Fill(cursorX - 3, meterY - 5, 6, meterH + 10, Color.White);
+            }
+
+            var remaining = Math.Max(0, state.StageDurationMs - elapsed);
+            var timeWidth = (int)(meterW * remaining / Math.Max(1d, state.StageDurationMs));
+            Fill(meterX, meterY + 36, timeWidth, 5, new Color(a: 255, r: 194, g: 164, b: 91));
         }
 
         base.Render(skin);
