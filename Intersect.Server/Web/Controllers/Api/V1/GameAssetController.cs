@@ -97,7 +97,7 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
             ))
             .ToArray();
 
-        Response.Headers[HeaderNames.CacheControl] = "public,max-age=3600";
+        Response.Headers[HeaderNames.CacheControl] = "private,no-store";
         return Ok(new GameAssetManifestResponse(DateTimeOffset.UtcNow, items, resources, spells));
     }
 
