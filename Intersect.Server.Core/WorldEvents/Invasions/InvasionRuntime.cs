@@ -19,6 +19,7 @@ internal static class InvasionRuntime
     {
         public required InvasionDefinition Definition { get; init; }
         public Guid SessionId { get; } = Guid.NewGuid();
+        public long StartedAtUnixMilliseconds { get; init; }
         public int WaveIndex { get; set; } = -1;
         public Guid TargetMapId { get; init; }
         public Guid TargetEventId { get; init; }
@@ -127,6 +128,7 @@ internal static class InvasionRuntime
         var session = new Session
         {
             Definition = definition,
+            StartedAtUnixMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             TargetMapId = targetMapId,
             TargetEventId = definition.TargetEventId,
             TargetX = targetX,
@@ -363,6 +365,18 @@ internal static class InvasionRuntime
             ObjectiveMaxHealth = session.Definition.TargetHealth,
             BossWave = boss,
             Message = message,
+            StartedAtUnixMilliseconds = session.StartedAtUnixMilliseconds,
+            Music = session.Definition.InvasionMusic,
+            NightBrightness = session.Definition.NightBrightness,
+            OverlayAlpha = session.Definition.OverlayAlpha,
+            OverlayRed = session.Definition.OverlayRed,
+            OverlayGreen = session.Definition.OverlayGreen,
+            OverlayBlue = session.Definition.OverlayBlue,
+            Fog = session.Definition.Fog,
+            FogAlpha = session.Definition.FogAlpha,
+            FogXSpeed = session.Definition.FogXSpeed,
+            FogYSpeed = session.Definition.FogYSpeed,
+            EnvironmentOutdoorsOnly = session.Definition.EnvironmentOutdoorsOnly,
         };
 
         foreach (var player in Player.OnlinePlayers)
