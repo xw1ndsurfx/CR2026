@@ -25,6 +25,14 @@ public sealed partial class CookingRecipeSummary
     [Key(7)] public bool Unlocked { get; set; }
     [Key(8)] public string LockedReason { get; set; } = string.Empty;
     [Key(9)] public CookingIngredientState[] Ingredients { get; set; } = [];
+    [Key(10)] public string ProfessionName { get; set; } = string.Empty;
+    [Key(11)] public int ProfessionLevel { get; set; }
+    [Key(12)] public int ProfessionMaximumLevel { get; set; }
+    [Key(13)] public long ProfessionExperienceIntoLevel { get; set; }
+    [Key(14)] public long ProfessionExperienceRequiredForLevel { get; set; }
+    [Key(15)] public long ProfessionExperienceToNextLevel { get; set; }
+    [Key(16)] public int ProfessionExperiencePercent { get; set; }
+    [Key(17)] public bool ProfessionMaximumLevelReached { get; set; }
 }
 
 [MessagePackObject]
@@ -109,6 +117,12 @@ public sealed partial class CookingSessionState
     [Key(50)] public long ComicEventSequence { get; set; }
     [Key(51)] public CookingComicEventType ComicEventType { get; set; }
     [Key(52)] public string ComicEventText { get; set; } = string.Empty;
+    [Key(53)] public int ProfessionMaximumLevel { get; set; }
+    [Key(54)] public long ProfessionExperienceIntoLevel { get; set; }
+    [Key(55)] public long ProfessionExperienceRequiredForLevel { get; set; }
+    [Key(56)] public long ProfessionExperienceToNextLevel { get; set; }
+    [Key(57)] public int ProfessionExperiencePercent { get; set; }
+    [Key(58)] public bool ProfessionMaximumLevelReached { get; set; }
 
     [IgnoreMember]
     public bool IsValid =>
@@ -145,6 +159,11 @@ public sealed partial class CookingSessionState
         ComicEventSequence >= 0 &&
         Enum.IsDefined(ComicEventType) &&
         ComicEventText is { Length: <= 160 } &&
+        ProfessionMaximumLevel is >= 0 and <= 500 &&
+        ProfessionExperienceIntoLevel >= 0 &&
+        ProfessionExperienceRequiredForLevel >= 0 &&
+        ProfessionExperienceToNextLevel >= 0 &&
+        ProfessionExperiencePercent is >= 0 and <= 100 &&
         StageScore is >= 0 and <= 100 &&
         TeamScore is >= 0 and <= 100 &&
         Enum.IsDefined(Quality) &&
