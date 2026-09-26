@@ -10,6 +10,7 @@ public enum CookingRequestKind
     RespondInvite = 2,
     Action = 3,
     Leave = 4,
+    ReturnToRecipes = 5,
 }
 
 [MessagePackObject]
@@ -123,6 +124,8 @@ public sealed partial class CookingSessionState
     [Key(56)] public long ProfessionExperienceToNextLevel { get; set; }
     [Key(57)] public int ProfessionExperiencePercent { get; set; }
     [Key(58)] public bool ProfessionMaximumLevelReached { get; set; }
+    [Key(59)] public long ProfessionExperienceAwarded { get; set; }
+    [Key(60)] public int PeakCombo { get; set; }
 
     [IgnoreMember]
     public bool IsValid =>
@@ -164,6 +167,8 @@ public sealed partial class CookingSessionState
         ProfessionExperienceRequiredForLevel >= 0 &&
         ProfessionExperienceToNextLevel >= 0 &&
         ProfessionExperiencePercent is >= 0 and <= 100 &&
+        ProfessionExperienceAwarded >= 0 &&
+        PeakCombo is >= 0 and <= 999 &&
         StageScore is >= 0 and <= 100 &&
         TeamScore is >= 0 and <= 100 &&
         Enum.IsDefined(Quality) &&
