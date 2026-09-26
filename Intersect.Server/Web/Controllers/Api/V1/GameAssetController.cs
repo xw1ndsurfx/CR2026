@@ -22,7 +22,6 @@ namespace Intersect.Server.Web.Controllers.Api.V1;
 /// </summary>
 [Authorize]
 [Route("api/v1/game-assets")]
-[ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
 public sealed class GameAssetController(ILogger<GameAssetController> logger) : IntersectController
 {
     private static readonly string[] AssetRoots =
@@ -103,6 +102,7 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
     }
 
     [AllowAnonymous]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     [HttpGet("items/{itemId:guid}")]
     [ProducesResponseType(typeof(byte[]), (int)HttpStatusCode.OK, ContentTypes.Png)]
     [ProducesResponseType(typeof(StatusMessageResponseBody), (int)HttpStatusCode.NotFound, ContentTypes.Json)]
@@ -116,6 +116,7 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
     }
 
     [AllowAnonymous]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     [HttpGet("spells/{spellId:guid}")]
     [ProducesResponseType(typeof(byte[]), (int)HttpStatusCode.OK, ContentTypes.Png)]
     [ProducesResponseType(typeof(StatusMessageResponseBody), (int)HttpStatusCode.NotFound, ContentTypes.Json)]
@@ -129,6 +130,7 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
     }
 
     [AllowAnonymous]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     [HttpGet("resources/{resourceId:guid}")]
     [ProducesResponseType(typeof(byte[]), (int)HttpStatusCode.OK, ContentTypes.Png)]
     [ProducesResponseType(typeof(StatusMessageResponseBody), (int)HttpStatusCode.NotFound, ContentTypes.Json)]
@@ -146,6 +148,7 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
     }
 
     [AllowAnonymous]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     [HttpGet("resources/{resourceId:guid}/{stateId:guid}")]
     [ProducesResponseType(typeof(byte[]), (int)HttpStatusCode.OK, ContentTypes.Png)]
     [ProducesResponseType(typeof(StatusMessageResponseBody), (int)HttpStatusCode.NotFound, ContentTypes.Json)]
