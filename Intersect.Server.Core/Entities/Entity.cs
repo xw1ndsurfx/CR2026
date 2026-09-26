@@ -2097,8 +2097,22 @@ public abstract partial class Entity : IEntity
         if (!(enemy is Resource))
         {
             baseDamage = Formulas.CalculateDamage(
-            baseDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy
-        );
+                baseDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy
+            );
+        }
+
+        if (baseDamage > 0 &&
+            this is Npc invasionNpc &&
+            invasionNpc.InvasionSessionId != Guid.Empty &&
+            Math.Abs(invasionNpc.InvasionDamageMultiplier - 1d) > double.Epsilon)
+        {
+            baseDamage = Math.Max(
+                1,
+                (long)Math.Round(
+                    baseDamage * invasionNpc.InvasionDamageMultiplier,
+                    MidpointRounding.AwayFromZero
+                )
+            );
         }
 
         //Check on each attack if the enemy is a player AND if they are blocking.
@@ -2225,6 +2239,20 @@ public abstract partial class Entity : IEntity
             secondaryDamage = Formulas.CalculateDamage(
                 secondaryDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy
             );
+
+            if (secondaryDamage > 0 &&
+                this is Npc secondaryInvasionNpc &&
+                secondaryInvasionNpc.InvasionSessionId != Guid.Empty &&
+                Math.Abs(secondaryInvasionNpc.InvasionDamageMultiplier - 1d) > double.Epsilon)
+            {
+                secondaryDamage = Math.Max(
+                    1,
+                    (long)Math.Round(
+                        secondaryDamage * secondaryInvasionNpc.InvasionDamageMultiplier,
+                        MidpointRounding.AwayFromZero
+                    )
+                );
+            }
 
             if (secondaryDamage < 0 && secondaryDamagingAttack)
             {

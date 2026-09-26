@@ -79,6 +79,14 @@ public sealed class InvasionDefinition
     public int FogYSpeed { get; set; } = -3;
     public bool EnvironmentOutdoorsOnly { get; set; } = true;
 
+    public bool ScaleNpcToPlayers { get; set; } = true;
+    public int ScalingMinimumLevel { get; set; } = 1;
+    public int ScalingMaximumLevel { get; set; } = 100;
+    public int ScalingLevelOffset { get; set; }
+    public int ExtraPlayerHealthPercent { get; set; } = 25;
+    public int BossHealthPercent { get; set; } = 250;
+    public int BossDamagePercent { get; set; } = 125;
+
     public long RewardExperience { get; set; } = 500;
     public InvasionWaveDefinition[] Waves { get; set; } = [];
 
@@ -102,6 +110,13 @@ public sealed class InvasionDefinition
         FogAlpha is >= 0 and <= 255 &&
         FogXSpeed is >= -5 and <= 5 &&
         FogYSpeed is >= -5 and <= 5 &&
+        ScalingMinimumLevel is >= 1 and <= 1_000 &&
+        ScalingMaximumLevel is >= 1 and <= 1_000 &&
+        ScalingMinimumLevel <= ScalingMaximumLevel &&
+        ScalingLevelOffset is >= -1_000 and <= 1_000 &&
+        ExtraPlayerHealthPercent is >= 0 and <= 500 &&
+        BossHealthPercent is >= 1 and <= 2_000 &&
+        BossDamagePercent is >= 1 and <= 1_000 &&
         RewardExperience is >= 0 and <= 2_000_000_000 &&
         Waves is { Length: > 0 and <= 128 } &&
         Waves.All(wave => wave is { IsStructurallyValid: true }) &&

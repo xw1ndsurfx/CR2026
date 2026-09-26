@@ -48,6 +48,18 @@ public sealed class FrmInvasionConfiguration : DarkForm
         AutoSize = true,
     };
 
+    private readonly CheckBox _scaleNpcToPlayers = new()
+    {
+        Text = "Scale invasion NPCs to connected players",
+        AutoSize = true,
+    };
+    private readonly NumericUpDown _scalingMinimumLevel = new() { Minimum = 1, Maximum = 1_000, Width = 90 };
+    private readonly NumericUpDown _scalingMaximumLevel = new() { Minimum = 1, Maximum = 1_000, Width = 90 };
+    private readonly NumericUpDown _scalingLevelOffset = new() { Minimum = -1_000, Maximum = 1_000, Width = 90 };
+    private readonly NumericUpDown _extraPlayerHealthPercent = new() { Minimum = 0, Maximum = 500, Width = 90 };
+    private readonly NumericUpDown _bossHealthPercent = new() { Minimum = 1, Maximum = 2_000, Width = 90 };
+    private readonly NumericUpDown _bossDamagePercent = new() { Minimum = 1, Maximum = 1_000, Width = 90 };
+
     private readonly ListBox _waves = new() { Dock = DockStyle.Fill };
 
     private int _selectedIndex = -1;
@@ -67,6 +79,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         FillMaps();
         FillEnvironmentAssets();
         BuildUi();
+        _scaleNpcToPlayers.CheckedChanged += (_, _) => RefreshScalingControls();
         _targetMap.SelectedIndexChanged += (_, _) =>
         {
             if (_loading) return;
@@ -173,6 +186,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         var tabs = new TabControl { Dock = DockStyle.Fill };
         tabs.TabPages.Add(BuildGeneralTab());
         tabs.TabPages.Add(BuildEnvironmentTab());
+        tabs.TabPages.Add(BuildScalingTab());
         tabs.TabPages.Add(BuildWavesTab());
         split.Panel2.Controls.Add(tabs);
 
@@ -311,6 +325,60 @@ public sealed class FrmInvasionConfiguration : DarkForm
         return page;
     }
 
+    private TabPage BuildScalingTab()
+    {
+        var page = new TabPage("NPC Scaling");
+        var table = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            ColumnCount = 2,
+            Padding = new Padding(14),
+        };
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220));
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+        AddRow(table, "Adaptive scaling", _scaleNpcToPlayers);
+
+        var levels = new FlowLayoutPanel { AutoSize = true };
+        levels.Controls.Add(new Label { Text = "Min", AutoSize = true, Padding = new Padding(0, 5, 0, 0) });
+        levels.Controls.Add(_scalingMinimumLevel);
+        levels.Controls.Add(new Label { Text = "Max", AutoSize = true, Padding = new Padding(8, 5, 0, 0) });
+        levels.Controls.Add(_scalingMaximumLevel);
+        levels.Controls.Add(new Label { Text = "Offset", AutoSize = true, Padding = new Padding(8, 5, 0, 0) });
+        levels.Controls.Add(_scalingLevelOffset);
+        AddRow(table, "NPC target level", levels);
+
+        AddRow(table, "Extra HP / extra player (%)", _extraPlayerHealthPercent);
+        AddRow(table, "Boss HP (%)", _bossHealthPercent);
+        AddRow(table, "Boss damage (%)", _bossDamagePercent);
+
+        var help = new Label
+        {
+            AutoSize = true,
+            MaximumSize = new Size(650, 0),
+            Text =
+                "At the start of every wave, the server takes a fresh snapshot of connected players and uses their median level. " +
+                "Only NPC instances spawned by this invasion are scaled; the NPC definition and every normal NPC elsewhere in the world stay unchanged. " +
+                "HP also grows with the number of connected players. Players joining later affect the next wave, not enemies already in combat.",
+        };
+        AddRow(table, "Behavior", help);
+
+        page.Controls.Add(table);
+        return page;
+    }
+
+    private void RefreshScalingControls()
+    {
+        var enabled = _scaleNpcToPlayers.Checked;
+        _scalingMinimumLevel.Enabled = enabled;
+        _scalingMaximumLevel.Enabled = enabled;
+        _scalingLevelOffset.Enabled = enabled;
+        _extraPlayerHealthPercent.Enabled = enabled;
+        _bossHealthPercent.Enabled = enabled;
+        _bossDamagePercent.Enabled = enabled;
+    }
+
     private TabPage BuildWavesTab()
     {
         var page = new TabPage("Waves");
@@ -372,6 +440,14 @@ public sealed class FrmInvasionConfiguration : DarkForm
         _fogXSpeed.Value = invasion.FogXSpeed;
         _fogYSpeed.Value = invasion.FogYSpeed;
         _environmentOutdoorsOnly.Checked = invasion.EnvironmentOutdoorsOnly;
+        _scaleNpcToPlayers.Checked = invasion.ScaleNpcToPlayers;
+        _scalingMinimumLevel.Value = invasion.ScalingMinimumLevel;
+        _scalingMaximumLevel.Value = invasion.ScalingMaximumLevel;
+        _scalingLevelOffset.Value = invasion.ScalingLevelOffset;
+        _extraPlayerHealthPercent.Value = invasion.ExtraPlayerHealthPercent;
+        _bossHealthPercent.Value = invasion.BossHealthPercent;
+        _bossDamagePercent.Value = invasion.BossDamagePercent;
+        RefreshScalingControls();
 
         for (var day = 0; day < _days.Items.Count; ++day)
         {
@@ -413,6 +489,13 @@ public sealed class FrmInvasionConfiguration : DarkForm
         invasion.FogXSpeed = (int)_fogXSpeed.Value;
         invasion.FogYSpeed = (int)_fogYSpeed.Value;
         invasion.EnvironmentOutdoorsOnly = _environmentOutdoorsOnly.Checked;
+        invasion.ScaleNpcToPlayers = _scaleNpcToPlayers.Checked;
+        invasion.ScalingMinimumLevel = (int)_scalingMinimumLevel.Value;
+        invasion.ScalingMaximumLevel = (int)_scalingMaximumLevel.Value;
+        invasion.ScalingLevelOffset = (int)_scalingLevelOffset.Value;
+        invasion.ExtraPlayerHealthPercent = (int)_extraPlayerHealthPercent.Value;
+        invasion.BossHealthPercent = (int)_bossHealthPercent.Value;
+        invasion.BossDamagePercent = (int)_bossDamagePercent.Value;
         invasion.RewardExperience = (long)_rewardExp.Value;
 
         var days = InvasionScheduleDays.None;

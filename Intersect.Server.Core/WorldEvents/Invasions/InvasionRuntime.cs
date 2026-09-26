@@ -15,6 +15,14 @@ namespace Intersect.Server.WorldEvents.Invasions;
 
 internal static class InvasionRuntime
 {
+    private readonly record struct ScalingSnapshot(
+        bool Enabled,
+        int PlayerCount,
+        int MedianLevel,
+        int TargetLevel,
+        double PopulationHealthMultiplier
+    );
+
     private sealed class Session
     {
         public required InvasionDefinition Definition { get; init; }
@@ -230,6 +238,20 @@ internal static class InvasionRuntime
         var wave = session.Definition.Waves[waveIndex];
         session.WaveIndex = waveIndex;
         var spawned = 0;
+        var scaling = CaptureScalingSnapshot(session.Definition);
+
+        if (scaling.Enabled)
+        {
+            ApplicationContext.Context.Value?.Logger.LogInformation(
+                "Invasion {InvasionName} wave {Wave} scaling to level {TargetLevel} from median level {MedianLevel} across {PlayerCount} online player(s); population HP multiplier {HealthMultiplier:0.##}x.",
+                session.Definition.Name,
+                waveIndex + 1,
+                scaling.TargetLevel,
+                scaling.MedianLevel,
+                scaling.PlayerCount,
+                scaling.PopulationHealthMultiplier
+            );
+        }
 
         foreach (var spawn in wave.Spawns)
         {
@@ -245,18 +267,16 @@ internal static class InvasionRuntime
                     (byte)Math.Clamp(y, 0, Options.Instance.Map.MapHeight - 1),
                     Direction.Down,
                     spawn.NpcId,
-                    despawnable: true
+                    despawnable: true,
+                    configure: spawnedNpc => ConfigureInvasionNpc(
+                        spawnedNpc,
+                        session,
+                        spawn,
+                        scaling
+                    )
                 );
                 if (npc == null)
                     continue;
-
-                npc.InvasionSessionId = session.SessionId;
-                npc.InvasionDefinitionId = session.Definition.Id;
-                npc.InvasionBoss = spawn.IsBoss;
-                npc.InvasionTargetMapId = session.TargetMapId;
-                npc.InvasionTargetX = session.TargetX;
-                npc.InvasionTargetY = session.TargetY;
-                npc.InvasionObjectiveDamage = spawn.ObjectiveDamage;
 
                 session.ActiveNpcs[npc.Id] = npc;
                 ++spawned;
@@ -284,6 +304,113 @@ internal static class InvasionRuntime
             bossWave ? 5_000 : 3_500
         );
         BroadcastStatus(session, bossWave ? "Boss wave!" : wave.Name);
+    }
+
+    private static ScalingSnapshot CaptureScalingSnapshot(InvasionDefinition definition)
+    {
+        if (!definition.ScaleNpcToPlayers)
+            return default;
+
+        var levels = Player.OnlinePlayers
+            .Where(player => player != null && !player.IsDisposed && player.Level > 0)
+            .Select(player => player!.Level)
+            .OrderBy(level => level)
+            .ToArray();
+
+        if (levels.Length == 0)
+            return default;
+
+        var middle = levels.Length / 2;
+        var medianLevel = levels.Length % 2 == 1
+            ? levels[middle]
+            : (int)(((long)levels[middle - 1] + levels[middle]) / 2L);
+
+        var targetLevel = Math.Clamp(
+            medianLevel + definition.ScalingLevelOffset,
+            definition.ScalingMinimumLevel,
+            definition.ScalingMaximumLevel
+        );
+
+        var populationHealthMultiplier =
+            1d + Math.Max(0, levels.Length - 1) * (definition.ExtraPlayerHealthPercent / 100d);
+
+        return new ScalingSnapshot(
+            Enabled: true,
+            PlayerCount: levels.Length,
+            MedianLevel: medianLevel,
+            TargetLevel: targetLevel,
+            PopulationHealthMultiplier: populationHealthMultiplier
+        );
+    }
+
+    private static void ConfigureInvasionNpc(
+        Npc npc,
+        Session session,
+        InvasionSpawnDefinition spawn,
+        ScalingSnapshot scaling
+    )
+    {
+        npc.InvasionSessionId = session.SessionId;
+        npc.InvasionDefinitionId = session.Definition.Id;
+        npc.InvasionBoss = spawn.IsBoss;
+        npc.InvasionTargetMapId = session.TargetMapId;
+        npc.InvasionTargetX = session.TargetX;
+        npc.InvasionTargetY = session.TargetY;
+        npc.InvasionObjectiveDamage = spawn.ObjectiveDamage;
+        npc.InvasionScaledLevel = npc.Level;
+
+        if (!scaling.Enabled)
+            return;
+
+        ApplyAdaptiveScaling(npc, session.Definition, spawn.IsBoss, scaling);
+    }
+
+    private static void ApplyAdaptiveScaling(
+        Npc npc,
+        InvasionDefinition definition,
+        bool isBoss,
+        ScalingSnapshot scaling
+    )
+    {
+        var baseLevel = Math.Max(1, npc.Descriptor.Level);
+        var levelRatio = Math.Max(0.01d, (double)scaling.TargetLevel / baseLevel);
+        var bossHealthMultiplier = isBoss ? definition.BossHealthPercent / 100d : 1d;
+        var healthMultiplier =
+            levelRatio * scaling.PopulationHealthMultiplier * bossHealthMultiplier;
+
+        npc.Level = scaling.TargetLevel;
+        npc.InvasionScaledLevel = scaling.TargetLevel;
+        npc.InvasionScalingPlayerCount = scaling.PlayerCount;
+        npc.InvasionHealthMultiplier = healthMultiplier;
+        npc.InvasionDamageMultiplier = isBoss ? definition.BossDamagePercent / 100d : 1d;
+
+        var maxStat = Math.Max(1, Options.Instance.Player.MaxStat);
+        for (var statIndex = 0; statIndex < Enum.GetValues<Stat>().Length; ++statIndex)
+        {
+            var baseStat = Math.Max(0, npc.Descriptor.Stats[statIndex]);
+            var scaledStat = (int)Math.Round(
+                baseStat * levelRatio,
+                MidpointRounding.AwayFromZero
+            );
+            npc.BaseStats[statIndex] = Math.Clamp(scaledStat, 0, maxStat);
+        }
+
+        for (var vitalIndex = 0; vitalIndex < Enum.GetValues<Vital>().Length; ++vitalIndex)
+        {
+            var multiplier = vitalIndex == (int)Vital.Health
+                ? healthMultiplier
+                : levelRatio;
+            var scaledValue = Math.Max(0d, npc.Descriptor.MaxVitals[vitalIndex] * multiplier);
+            var scaledVital = scaledValue >= long.MaxValue
+                ? long.MaxValue
+                : (long)Math.Round(scaledValue, MidpointRounding.AwayFromZero);
+
+            if (vitalIndex == (int)Vital.Health)
+                scaledVital = Math.Max(1, scaledVital);
+
+            npc.SetMaxVital(vitalIndex, scaledVital);
+            npc.SetVital(vitalIndex, scaledVital);
+        }
     }
 
     private static void Finish(Session session, bool victory, bool configurationFailure = false)
