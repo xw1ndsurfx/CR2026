@@ -466,6 +466,7 @@ public partial class GameInterface : MutableInterface
         mPictureWindow?.Update();
         UpdatePotions();
         UpdatePoker();
+        UpdateRoulette();
         UpdateQuestGuidance();
 
         var questDescriptorId = Globals.QuestOffers.FirstOrDefault();
@@ -689,6 +690,7 @@ public partial class GameInterface : MutableInterface
     public bool CloseAllWindows()
     {
         var closedWindows = ClosePotionWindow();
+        closedWindows = CloseRouletteWindow() || closedWindows;
         closedWindows = ClosePokerWindow() || closedWindows;
         if (_bagWindow != null && _bagWindow.IsVisibleInTree)
         {
@@ -746,6 +748,7 @@ public partial class GameInterface : MutableInterface
     {
         DisposePotions();
         DisposePoker();
+        DisposeRoulette();
         DisposeQuestGuidance();
 
         // GameCanvas is the lifetime owner for normal Gwen controls. During logout /
