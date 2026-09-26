@@ -14,7 +14,7 @@ internal sealed class InvasionResultWindow : Window
 
     public InvasionResultWindow(Canvas parent) : base(parent, "Invasion Result", false, nameof(InvasionResultWindow))
     {
-        SetSize(520, 330);
+        SetSize(520, 380);
         Alignment = [Alignments.Center];
         DeleteOnClose = false;
 
@@ -35,7 +35,7 @@ internal sealed class InvasionResultWindow : Window
             TextAlign = Pos.Center,
             TextColorOverride = Color.White,
         };
-        _summary.SetBounds(32, 102, 456, 92);
+        _summary.SetBounds(32, 102, 456, 132);
 
         _experience = new Label(this, "Experience")
         {
@@ -44,7 +44,7 @@ internal sealed class InvasionResultWindow : Window
             FontSize = 20,
             TextAlign = Pos.Center,
         };
-        _experience.SetBounds(32, 198, 456, 42);
+        _experience.SetBounds(32, 242, 456, 42);
 
         _close = new Button(this, "Close")
         {
@@ -52,7 +52,7 @@ internal sealed class InvasionResultWindow : Window
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 13,
         };
-        _close.SetBounds(170, 258, 180, 38);
+        _close.SetBounds(170, 308, 180, 38);
         _close.Clicked += (_, _) => Hide();
 
         Hide();
@@ -73,7 +73,11 @@ internal sealed class InvasionResultWindow : Window
             $"{result.Name}\n" +
             $"Waves: {result.WavesCompleted}/{result.WaveCount}\n" +
             $"Objective HP remaining: {result.ObjectiveHealthRemaining:N0}\n" +
-            $"Defenders: {result.ParticipantCount:N0}";
+            $"Defenders: {result.ParticipantCount:N0}\n" +
+            $"Your contribution: {result.ContributionPercent}% ({result.ContributionDamage:N0} damage)\n" +
+            (result.Victory
+                ? $"Effort reward: {result.RewardPercentOfBase}% of base EXP"
+                : "Effort recorded - no victory EXP");
 
         _experience.Text = result.ExperienceAwarded > 0
             ? $"+{result.ExperienceAwarded:N0} EXP"
