@@ -48,8 +48,8 @@ public static partial class PacketSender
                 var height = Math.Max(1, (int)Math.Round(screenshot.Height * (width / (double)screenshot.Width)));
 
                 using var resized = width == screenshot.Width
-                    ? new Bitmap(screenshot)
-                    : new Bitmap(screenshot, width, height);
+                    ? new System.Drawing.Bitmap(screenshot)
+                    : new System.Drawing.Bitmap(screenshot, width, height);
                 using var stream = new MemoryStream();
                 resized.Save(stream, ImageFormat.Png);
                 previewBytes = stream.ToArray();
