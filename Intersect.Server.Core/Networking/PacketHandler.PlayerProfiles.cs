@@ -1,6 +1,7 @@
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
@@ -62,6 +63,9 @@ internal sealed partial class PacketHandler
                     SlotName = slotName,
                     ItemId = itemId,
                     ItemName = itemName,
+                    Properties = target.TryGetEquippedItem(slotIndex, out var equippedItem)
+                        ? new ItemProperties(equippedItem.Properties)
+                        : null,
                 }
             );
         }
