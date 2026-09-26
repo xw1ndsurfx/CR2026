@@ -292,7 +292,7 @@ internal sealed class CookingWindow : Base
             var nowServer = Environment.TickCount64 + _serverOffset;
             var elapsed = Math.Clamp(nowServer - state.StageStartedUnixMs, 0, state.StageDurationMs);
             var normalized = elapsed / (double)Math.Max(1, state.StageDurationMs);
-            var difficultyCycles = 3.5d;
+            var difficultyCycles = 2d + state.StageDifficulty * 0.75d;
             var phase = normalized * difficultyCycles;
             var fraction = phase - Math.Floor(phase);
             var cursor = fraction <= 0.5d ? fraction * 2d : (1d - fraction) * 2d;
