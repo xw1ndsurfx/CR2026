@@ -5,6 +5,8 @@ using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Maps;
 using Intersect.Enums;
+using Intersect.Framework.Core.MiniGames;
+using Intersect.Framework.Core.WorldEvents.Invasions;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -19,6 +21,8 @@ using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.GameObjects;
 using Intersect.Network;
 using Intersect.Network.Packets.Server;
+using Intersect.Network.Packets.WorldEvents;
+using Intersect.Framework.Core.Professions;
 using Microsoft.Extensions.Logging;
 using ApplicationContext = Intersect.Core.ApplicationContext;
 
@@ -753,5 +757,32 @@ internal sealed partial class PacketHandler
     public void HandlePacket(IPacketSender packetSender, TimeDataPacket packet)
     {
         DaylightCycleDescriptor.Instance.LoadFromJson(packet.TimeJson);
+    }
+
+    public void HandlePacket(IPacketSender packetSender, RewardConfigurationPacket packet)
+    {
+        RewardConfiguration.Load(packet.ConfigurationJson);
+        if (packet.OpenEditor)
+        {
+            Globals.MainForm.BeginInvoke((Action)(() => Globals.MainForm.OpenRewardConfigurationEditor()));
+        }
+    }
+
+    public void HandlePacket(IPacketSender packetSender, ProfessionConfigurationPacket packet)
+    {
+        ProfessionConfiguration.Load(packet.ConfigurationJson);
+        if (packet.OpenEditor)
+        {
+            Globals.MainForm.BeginInvoke((Action)(() => Globals.MainForm.OpenProfessionEditor()));
+        }
+    }
+
+    public void HandlePacket(IPacketSender packetSender, InvasionConfigurationPacket packet)
+    {
+        InvasionConfiguration.Load(packet.ConfigurationJson);
+        if (packet.OpenEditor)
+        {
+            Globals.MainForm.BeginInvoke((Action)(() => Globals.MainForm.OpenInvasionEditor()));
+        }
     }
 }

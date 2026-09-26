@@ -1429,7 +1429,8 @@ public static partial class PacketSender
                     character.Face,
                     character.Level,
                     ClassDescriptor.GetName(character.ClassId),
-                    equipment
+                    equipment,
+                    character.Guild?.Name ?? string.Empty
                 )
             );
         }
@@ -1492,11 +1493,25 @@ public static partial class PacketSender
 
         if (client.IsEditor)
         {
-            client.Send(new MapGridPacket(null, grid.GetEditorData(), clearKnownMaps));
+            client.Send(
+                new MapGridPacket(
+                    null,
+                    grid.GetEditorData(),
+                    clearKnownMaps,
+                    grid.GetWorldMapEventMarkers(client.Entity)
+                )
+            );
         }
         else
         {
-            client.Send(new MapGridPacket(grid.GetClientData(), null, clearKnownMaps));
+            client.Send(
+                new MapGridPacket(
+                    grid.GetClientData(),
+                    grid.GetEditorData(),
+                    clearKnownMaps,
+                    grid.GetWorldMapEventMarkers(client.Entity)
+                )
+            );
             if (clearKnownMaps)
             {
                 SendAreaPacket(client.Entity);
@@ -1666,6 +1681,12 @@ public static partial class PacketSender
     public static void SendStopSounds(Player player)
     {
         player.SendPacket(new StopSoundsPacket());
+    }
+
+    //OpenLogiklikNewsPacket
+    public static void SendOpenLogiklikNews(Player player)
+    {
+        player.SendPacket(new OpenLogiklikNewsPacket());
     }
 
     //ShowPicturePacket

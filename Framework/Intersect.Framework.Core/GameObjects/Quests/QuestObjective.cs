@@ -23,4 +23,18 @@ public enum QuestObjective
     BlackjackReachLevel,
 
     BlackjackPlayHands,
+
+    PotionBrewRecipes,
+
+    PotionBrewSpecificRecipe,
+
+    PotionReachLevel,
+
+    PotionEarnScore,
+
+    PotionReachChain,
+
+    PotionBrewUnderOccupiedCells,
+
+    PotionBrewSpecificRecipeMinScore,
 }

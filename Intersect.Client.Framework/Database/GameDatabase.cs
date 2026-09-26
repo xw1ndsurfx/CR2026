@@ -67,6 +67,8 @@ public abstract partial class GameDatabase
 
     public bool SimplifiedEscapeMenu { get; set; }
 
+    public bool ShowQuestGuidanceArrow { get; set; } = true;
+
     public TypewriterBehavior TypewriterBehavior { get; set; }
 
     public bool TypewriterEnabled => TypewriterBehavior != TypewriterBehavior.Off;
@@ -146,6 +148,7 @@ public abstract partial class GameDatabase
         ShowHealthAsPercentage = LoadPreference(nameof(ShowHealthAsPercentage), false);
         ShowManaAsPercentage = LoadPreference(nameof(ShowManaAsPercentage), false);
         SimplifiedEscapeMenu = LoadPreference(nameof(SimplifiedEscapeMenu), false);
+        ShowQuestGuidanceArrow = LoadPreference(nameof(ShowQuestGuidanceArrow), true);
         TypewriterBehavior = LoadPreference(nameof(TypewriterBehavior), TypewriterBehavior.Word);
         UIScale = LoadPreference(nameof(UIScale), 1.0f);
         EnableScrollingWorldZoom = LoadPreference(nameof(EnableScrollingWorldZoom), false);
@@ -187,6 +190,7 @@ public abstract partial class GameDatabase
         SavePreference(nameof(ShowHealthAsPercentage), ShowHealthAsPercentage);
         SavePreference(nameof(ShowManaAsPercentage), ShowManaAsPercentage);
         SavePreference(nameof(SimplifiedEscapeMenu), SimplifiedEscapeMenu);
+        SavePreference(nameof(ShowQuestGuidanceArrow), ShowQuestGuidanceArrow);
         SavePreference(nameof(TypewriterBehavior), TypewriterBehavior);
         SavePreference(nameof(UIScale), UIScale);
         SavePreference(nameof(EnableScrollingWorldZoom), EnableScrollingWorldZoom);

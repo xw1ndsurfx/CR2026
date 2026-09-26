@@ -140,4 +140,8 @@ public enum EventCommandType
     // CR2026 mini-games: reserved range; never renumber existing serialized commands.
     StartMiniGame = 1000,
     LeaveMiniGame = 1001,
+    OpenLogiklikNews = 1002,
+
+    // CR2026 professions: explicit value preserves serialized command ids.
+    ModifyProfession = 1010,
 }

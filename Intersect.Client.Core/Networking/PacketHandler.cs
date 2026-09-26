@@ -10,6 +10,7 @@ using Intersect.Client.Interface.Menu;
 using Intersect.Client.Items;
 using Intersect.Client.Localization;
 using Intersect.Client.Maps;
+using Intersect.Client.WorldEvents.Invasions;
 using Intersect.Configuration;
 using Intersect.Core;
 using Intersect.Enums;
@@ -167,6 +168,16 @@ internal sealed partial class PacketHandler
         PingTime = Timing.Global.Milliseconds;
     }
 
+    public void HandlePacket(IPacketSender packetSender, DailyRewardStatePacket packet)
+    {
+        if (!Intersect.Client.Interface.Interface.HasInGameUI)
+        {
+            return;
+        }
+
+        Intersect.Client.Interface.Interface.GameUi.UpdateDailyRewardState(packet);
+    }
+
     //ConfigPacket
     public void HandlePacket(IPacketSender packetSender, ConfigPacket packet)
     {
@@ -189,6 +200,7 @@ internal sealed partial class PacketHandler
     //JoinGamePacket
     public void HandlePacket(IPacketSender packetSender, JoinGamePacket packet)
     {
+        InvasionEnvironmentManager.Reset();
         Main.JoinGame();
         Globals.JoiningGame = true;
     }
@@ -291,12 +303,7 @@ internal sealed partial class PacketHandler
 
             if (mapId == Globals.Me?.MapId)
             {
-                Audio.PlayMusic(
-                    mapInstance.Music,
-                    ClientConfiguration.Instance.MusicFadeTimer,
-                    ClientConfiguration.Instance.MusicFadeTimer,
-                    true
-                );
+                InvasionEnvironmentManager.ApplyMapMusic(mapInstance);
             }
 
             if (!Globals.GridMaps.TryGetValue(packet.MapId, out var gridPosition))
@@ -347,6 +354,14 @@ internal sealed partial class PacketHandler
         Player.FetchNewMaps();
     }
 
+    public void HandlePacket(IPacketSender packetSender, WorldMapMapDataPacket packet)
+    {
+        lock (Globals.GameLock)
+        {
+            Globals.WorldMapMapData[packet.MapId] = packet;
+        }
+    }
+
     //PlayerEntityPacket
     public void HandlePacket(IPacketSender packetSender, PlayerEntityPacket packet)
     {
@@ -377,12 +392,14 @@ internal sealed partial class PacketHandler
         {
             en.Load(packet);
             en.Aggression = packet.Aggression;
+            en.NpcDescriptorId = packet.NpcId;
         }
         else
         {
             var entity = new Entity(packet.EntityId, packet, EntityType.GlobalEntity)
             {
                 Aggression = packet.Aggression,
+                NpcDescriptorId = packet.NpcId,
             };
             Globals.Entities.Add(entity.Id, entity);
         }
@@ -1669,12 +1686,23 @@ internal sealed partial class PacketHandler
     //PlayMusicPacket
     public void HandlePacket(IPacketSender packetSender, PlayMusicPacket packet)
     {
-        Audio.PlayMusic(packet.BGM, ClientConfiguration.Instance.MusicFadeTimer, ClientConfiguration.Instance.MusicFadeTimer, true);
+        if (InvasionEnvironmentManager.SuppressScriptedMusicChange())
+            return;
+
+        Audio.PlayMusic(
+            packet.BGM,
+            ClientConfiguration.Instance.MusicFadeTimer,
+            ClientConfiguration.Instance.MusicFadeTimer,
+            true
+        );
     }
 
     //StopMusicPacket
     public void HandlePacket(IPacketSender packetSender, StopMusicPacket packet)
     {
+        if (InvasionEnvironmentManager.SuppressScriptedMusicChange())
+            return;
+
         Audio.StopMusic(ClientConfiguration.Instance.MusicFadeTimer);
     }
 
@@ -1857,6 +1885,8 @@ internal sealed partial class PacketHandler
     {
         Globals.MapGridWidth = packet.Grid.GetLength(0);
         Globals.MapGridHeight = packet.Grid.GetLength(1);
+        Globals.EditorMapGrid = packet.EditorGrid;
+        Globals.WorldMapEventMarkers = packet.WorldMapEventMarkers ?? [];
         var clearKnownMaps = packet.ClearKnownMaps;
         Globals.MapGrid = new Guid[Globals.MapGridWidth, Globals.MapGridHeight];
         if (clearKnownMaps)
@@ -2090,6 +2120,11 @@ internal sealed partial class PacketHandler
         }
     }
 
+    public void HandlePacket(IPacketSender packetSender, OpenLogiklikNewsPacket packet)
+    {
+        global::Intersect.Client.Interface.Interface.GameUi.OpenLogiklikNews();
+    }
+
     //PlayerDeathPacket
     public void HandlePacket(IPacketSender packetSender, PlayerDeathPacket packet)
     {
@@ -2207,7 +2242,8 @@ internal sealed partial class PacketHandler
                     characterPacket.Face,
                     characterPacket.Level,
                     characterPacket.ClassName,
-                    characterPacket.Equipment
+                    characterPacket.Equipment,
+                    characterPacket.GuildName
                 )
             ),
         ];

@@ -4,6 +4,7 @@ using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Models;
 using Intersect.Network.Packets.Editor;
+using Intersect.Network.Packets.WorldEvents;
 
 namespace Intersect.Editor.Networking;
 
@@ -169,6 +170,41 @@ public static partial class PacketSender
     public static void SendSaveTime(string timeJson)
     {
         Network.SendPacket(new SaveTimeDataPacket(timeJson));
+    }
+
+    public static void SendRequestRewardConfiguration()
+    {
+        Network.SendPacket(new RequestRewardConfigurationPacket());
+    }
+
+    public static void SendSaveRewardConfiguration(string configurationJson)
+    {
+        Network.SendPacket(new SaveRewardConfigurationPacket(configurationJson));
+    }
+
+    public static void SendRequestProfessionConfiguration(bool openEditor)
+    {
+        Network.SendPacket(new RequestProfessionConfigurationPacket(openEditor));
+    }
+
+    public static void SendSaveProfessionConfiguration(string configurationJson)
+    {
+        Network.SendPacket(new SaveProfessionConfigurationPacket(configurationJson));
+    }
+
+    public static void SendRequestInvasionConfiguration()
+    {
+        Network.SendPacket(new RequestInvasionConfigurationPacket());
+    }
+
+    public static void SendSaveInvasionConfiguration(string configurationJson)
+    {
+        Network.SendPacket(new SaveInvasionConfigurationPacket(configurationJson));
+    }
+
+    public static void SendStartInvasionNow(Guid invasionId)
+    {
+        Network.SendPacket(new StartInvasionNowPacket(invasionId));
     }
 
     public static void SendNewTilesets(string[] tilesets)

@@ -210,6 +210,14 @@ public partial class QuestTaskDescriptor
 
     public Guid TargetId { get; set; }
 
+    public string TargetName { get; set; } = string.Empty;
+
+    public Guid GuideAnimationId { get; set; }
+
+    public Guid GuideResourceId { get; set; }
+
+    public bool ShowNavigationArrow { get; set; } = true;
+
     public int Quantity { get; set; }
 
     public string Description { get; set; } = string.Empty;
@@ -262,6 +270,27 @@ public partial class QuestTaskDescriptor
                 break;
             case QuestObjective.BlackjackPlayHands:
                 taskString = $"Play {Quantity} Blackjack hand(s). {Description}".Trim();
+                break;
+            case QuestObjective.PotionBrewRecipes:
+                taskString = $"Brew {Quantity} potion recipe(s). {Description}".Trim();
+                break;
+            case QuestObjective.PotionBrewSpecificRecipe:
+                taskString = $"Brew {Quantity} x {(string.IsNullOrWhiteSpace(TargetName) ? "potion recipe" : TargetName)}. {Description}".Trim();
+                break;
+            case QuestObjective.PotionReachLevel:
+                taskString = $"Reach Alchemy level {Quantity}. {Description}".Trim();
+                break;
+            case QuestObjective.PotionEarnScore:
+                taskString = $"Earn {Quantity} Royal Alchemy score. {Description}".Trim();
+                break;
+            case QuestObjective.PotionReachChain:
+                taskString = $"Reach a Royal Alchemy chain x{Quantity}. {Description}".Trim();
+                break;
+            case QuestObjective.PotionBrewUnderOccupiedCells:
+                taskString = $"Brew a potion with at most {Quantity} occupied board cells. {Description}".Trim();
+                break;
+            case QuestObjective.PotionBrewSpecificRecipeMinScore:
+                taskString = $"Brew {(string.IsNullOrWhiteSpace(TargetName) ? "the required potion recipe" : TargetName)} with at least {Quantity} score. {Description}".Trim();
                 break;
         }
 

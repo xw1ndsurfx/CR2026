@@ -17,6 +17,7 @@ using Intersect.Client.Networking;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.GameObjects;
+using Intersect.Network.Packets.Server;
 using Microsoft.Extensions.Logging;
 
 namespace Intersect.Client.Interface.Game;
@@ -51,6 +52,10 @@ public partial class GameInterface : MutableInterface
     private MapItemWindow mMapItemWindow;
 
     private MinimapHud _minimapHud;
+
+    private WorldMapWindow? _worldMapWindow;
+    private LogiklikNewsWindow? _logiklikNewsWindow;
+    private DailyRewardWindow? _dailyRewardWindow;
 
     private SettingsWindow? _settingsWindow;
 
@@ -147,6 +152,8 @@ public partial class GameInterface : MutableInterface
 
     public MenuContainer GameMenu { get; private set; }
 
+    internal MinimapHud? MinimapHud => _minimapHud;
+
     public void InitGameGui()
     {
         mChatBox = new Chatbox(GameCanvas, this);
@@ -162,8 +169,9 @@ public partial class GameInterface : MutableInterface
 
         mQuestOfferWindow = new QuestOfferWindow(GameCanvas);
         mMapItemWindow = new MapItemWindow(GameCanvas);
-        _minimapHud = new MinimapHud(GameCanvas);
+        _minimapHud = new MinimapHud(GameCanvas, ToggleWorldMap);
         _minimapHud.SendToBack();
+        PacketSender.SendRequestDailyRewardState(autoOpen: true);
     }
 
     //Chatbox
@@ -215,6 +223,100 @@ public partial class GameInterface : MutableInterface
         }
 
         return mAdminWindow.IsVisibleInParent;
+    }
+
+    public void ToggleWorldMap()
+    {
+        if (_worldMapWindow == null)
+        {
+            _worldMapWindow = new WorldMapWindow(GameCanvas) { DeleteOnClose = true };
+            _worldMapWindow.Disposed += (_, _) =>
+            {
+                _worldMapWindow = null;
+                SetQuestGuidanceOverlaySuppressed(false);
+            };
+            _worldMapWindow.Show();
+            SetQuestGuidanceOverlaySuppressed(true);
+            return;
+        }
+
+        if (_worldMapWindow.IsHidden)
+        {
+            _worldMapWindow.Show();
+            SetQuestGuidanceOverlaySuppressed(true);
+        }
+        else
+        {
+            _worldMapWindow.Hide();
+            SetQuestGuidanceOverlaySuppressed(false);
+        }
+    }
+
+
+    public bool IsLogiklikNewsVisible =>
+        _logiklikNewsWindow is { IsHidden: false };
+
+    public void OpenLogiklikNews()
+    {
+        GameMenu?.HideWindows();
+
+        if (_logiklikNewsWindow == null)
+        {
+            // Reuse the news window after the title-bar X is clicked.
+            // DeleteOnClose caused a delayed-dispose race where the cached reference
+            // could still point at the closing window on the next open request.
+            _logiklikNewsWindow = new LogiklikNewsWindow(GameCanvas) { DeleteOnClose = false };
+        }
+
+        _logiklikNewsWindow.ShowAndRefresh();
+    }
+
+    public void ToggleLogiklikNews()
+    {
+        if (_logiklikNewsWindow is { IsHidden: false })
+        {
+            _logiklikNewsWindow.Hide();
+            return;
+        }
+
+        OpenLogiklikNews();
+    }
+
+    public void HideLogiklikNews()
+    {
+        _logiklikNewsWindow?.Hide();
+    }
+
+    public bool IsDailyRewardVisible => _dailyRewardWindow is { IsHidden: false };
+
+    public void ToggleDailyReward()
+    {
+        _dailyRewardWindow ??= new DailyRewardWindow(GameCanvas);
+        if (!_dailyRewardWindow.IsHidden)
+        {
+            _dailyRewardWindow.Hide();
+            return;
+        }
+
+        GameMenu?.HideWindows();
+        _dailyRewardWindow.ShowAndRequest();
+    }
+
+    public void HideDailyReward()
+    {
+        _dailyRewardWindow?.Hide();
+    }
+
+    public void UpdateDailyRewardState(DailyRewardStatePacket packet)
+    {
+        _dailyRewardWindow ??= new DailyRewardWindow(GameCanvas);
+        _dailyRewardWindow.Apply(packet);
+        if (packet.AutoOpen && packet.CanClaim)
+        {
+            GameMenu?.HideWindows();
+            _dailyRewardWindow.Show();
+            _dailyRewardWindow.BringToFront();
+        }
     }
 
     //Shop
@@ -358,9 +460,15 @@ public partial class GameInterface : MutableInterface
         PlayerStatusWindow?.Update();
         mMapItemWindow.Update();
         _minimapHud?.Update();
+        UpdateProfessionProgress();
+        _shopWindow?.Update();
         AnnouncementWindow?.Update();
         mPictureWindow?.Update();
+        UpdatePotions();
+        UpdateCooking();
         UpdatePoker();
+        UpdateRoulette();
+        UpdateQuestGuidance();
 
         var questDescriptorId = Globals.QuestOffers.FirstOrDefault();
         if (questDescriptorId == default)
@@ -582,7 +690,10 @@ public partial class GameInterface : MutableInterface
 
     public bool CloseAllWindows()
     {
-        var closedWindows = ClosePokerWindow();
+        var closedWindows = ClosePotionWindow();
+        closedWindows = CloseCookingWindow() || closedWindows;
+        closedWindows = CloseRouletteWindow() || closedWindows;
+        closedWindows = ClosePokerWindow() || closedWindows;
         if (_bagWindow != null && _bagWindow.IsVisibleInTree)
         {
             CloseBagWindow();
@@ -613,6 +724,12 @@ public partial class GameInterface : MutableInterface
             closedWindows = true;
         }
 
+        if (_worldMapWindow is { IsVisibleInTree: true })
+        {
+            _worldMapWindow.Hide();
+            closedWindows = true;
+        }
+
         if (GameMenu != null && GameMenu.HasWindowsOpen())
         {
             GameMenu.CloseAllWindows();
@@ -631,13 +748,43 @@ public partial class GameInterface : MutableInterface
     //Dispose
     public void Dispose()
     {
+        DisposePotions();
+        DisposeCooking();
         DisposePoker();
-        CloseBagWindow();
-        CloseBank();
-        CloseCraftingTable();
-        CloseShop();
-        CloseTrading();
-        _minimapHud?.Dispose();
+        DisposeRoulette();
+        DisposeQuestGuidance();
+
+        // GameCanvas is the lifetime owner for normal Gwen controls. During logout /
+        // character-select transitions, calling Close() or Dispose() on individual
+        // child windows here can queue/remove/dispose children and then immediately
+        // make GameCanvas dispose the same control tree a second time. ScrollControl
+        // children (notably VerticalScrollBar) and MinimapHud are especially strict
+        // about double-dispose and throw ObjectDisposedException.
+        //
+        // Reset gameplay state and notify the server, but let the canvas dispose its
+        // entire remaining UI tree exactly once.
+        Globals.GameShop = null;
+        Globals.InBank = false;
+        Globals.InBag = false;
+        Globals.InCraft = false;
+        Globals.InTrade = false;
+
+        PacketSender.SendCloseShop();
+        PacketSender.SendCloseBank();
+        PacketSender.SendCloseBag();
+        PacketSender.SendCloseCrafting();
+        PacketSender.SendDeclineTrade();
+
+        _shopWindow = null;
+        _bankWindow = null;
+        _bagWindow = null;
+        mCraftingWindow = null;
+        mTradingWindow = null;
+        _worldMapWindow = null;
+        _logiklikNewsWindow = null;
+        _dailyRewardWindow = null;
+        _minimapHud = null;
+
         GameCanvas.Dispose();
     }
 }

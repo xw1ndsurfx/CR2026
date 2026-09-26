@@ -30,6 +30,12 @@ public partial class Event : Entity
 
     public EventTrigger Trigger { get; set; }
 
+    public bool QuestArrowEnabled { get; set; }
+
+    public Guid QuestArrowQuestId { get; set; }
+
+    public Guid QuestArrowTaskId { get; set; }
+
     protected override Vector2 CenterOffset
     {
         get
@@ -72,6 +78,9 @@ public partial class Event : Entity
         Graphic = eventEntityPacket.Graphic;
         RenderLevel = eventEntityPacket.RenderLayer;
         Trigger = eventEntityPacket.Trigger;
+        QuestArrowEnabled = eventEntityPacket.QuestArrowEnabled;
+        QuestArrowQuestId = eventEntityPacket.QuestArrowQuestId;
+        QuestArrowTaskId = eventEntityPacket.QuestArrowTaskId;
 
         _drawCompletedWithoutTexture = Graphic.Type != EventGraphicType.Tileset;
 

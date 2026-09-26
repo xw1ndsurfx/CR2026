@@ -1,4 +1,5 @@
 using Intersect.Client.Entities;
+using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -21,13 +22,13 @@ namespace Intersect.Client.Interface.Game;
 internal sealed class MinimapHud : Base
 {
     private const int CompactWidth = 280;
-    private const int CompactHeight = 305;
+    private const int CompactHeight = 315;
     private const int ExpandedWidth = 430;
-    private const int ExpandedHeight = 465;
+    private const int ExpandedHeight = 475;
     private const int CompactRadius = 8;
     private const int ExpandedRadius = 14;
     private const int Cell = 12;
-    private const int GridY = 46;
+    private const int GridY = 52;
 
     private readonly Label _mapName;
     private readonly Label _coords;
@@ -37,6 +38,7 @@ internal sealed class MinimapHud : Base
     private readonly Label _west;
     private readonly Label _legend;
     private readonly Button _expandButton;
+    private readonly Button _worldMapButton;
     private bool _expanded;
 
     private int Radius => _expanded ? ExpandedRadius : CompactRadius;
@@ -44,7 +46,7 @@ internal sealed class MinimapHud : Base
     private int GridPixels => GridSize * Cell;
     private int GridX => (Width - GridPixels) / 2;
 
-    public MinimapHud(Base parent) : base(parent, "MinimapHud")
+    public MinimapHud(Base parent, Action openWorldMap) : base(parent, "MinimapHud")
     {
         SetSize(CompactWidth, CompactHeight);
         MouseInputEnabled = false;
@@ -57,10 +59,31 @@ internal sealed class MinimapHud : Base
         _east = MakeLabel("MinimapEast", 248, 145, 22, 18, 12, "E");
         _south = MakeLabel("MinimapSouth", 124, 255, 32, 18, 12, "S");
         _west = MakeLabel("MinimapWest", 10, 145, 22, 18, 12, "W");
-        _legend = MakeLabel("MinimapLegend", 12, 420, 406, 18, 9, "Cyan: Party   Gold: Quest   Blue: Player");
+        _legend = MakeLabel(
+            "MinimapLegend",
+            12,
+            420,
+            406,
+            18,
+            9,
+            "Red: Enemy   Cyan: Party   Gold: Quest   Blue: Player"
+        );
         _legend.IsHidden = true;
 
-        var compassColor = new Color(255, 230, 140, 255);
+        var titleFont = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont;
+        _mapName.Font = titleFont;
+        _mapName.TextColorOverride = Color.White;
+        _coords.Font = titleFont;
+        _coords.FontSize = 9;
+        _coords.TextColorOverride = new Color(a: 255, r: 220, g: 220, b: 220);
+        _legend.Font = titleFont;
+        _legend.TextColorOverride = new Color(a: 255, r: 220, g: 220, b: 220);
+
+        var compassColor = Color.White;
+        _north.Font = titleFont;
+        _east.Font = titleFont;
+        _south.Font = titleFont;
+        _west.Font = titleFont;
         _north.TextColorOverride = compassColor;
         _east.TextColorOverride = compassColor;
         _south.TextColorOverride = compassColor;
@@ -73,8 +96,26 @@ internal sealed class MinimapHud : Base
             FontSize = 10,
             MouseInputEnabled = true,
         };
-        _expandButton.SetBounds(207, 5, 24, 22);
+        _expandButton.SetBounds(Width - 33, 5, 24, 22);
+        _expandButton.SetStateTexture(ComponentState.Normal, "control_button.png");
+        _expandButton.SetStateTexture(ComponentState.Hovered, "control_button_hovered.png");
+        _expandButton.SetStateTexture(ComponentState.Active, "control_button_clicked.png");
+        _expandButton.TextColorOverride = new Color(a: 255, r: 246, g: 241, b: 229);
         _expandButton.Clicked += (_, _) => ToggleExpanded();
+
+        _worldMapButton = new Button(this, "WorldMapButton")
+        {
+            Text = "World Map",
+            Font = Skin.DefaultFont,
+            FontSize = 9,
+            MouseInputEnabled = true,
+        };
+        _worldMapButton.SetBounds(12, Height - 48, 92, 22);
+        _worldMapButton.SetStateTexture(ComponentState.Normal, "control_button.png");
+        _worldMapButton.SetStateTexture(ComponentState.Hovered, "control_button_hovered.png");
+        _worldMapButton.SetStateTexture(ComponentState.Active, "control_button_clicked.png");
+        _worldMapButton.TextColorOverride = new Color(a: 255, r: 246, g: 241, b: 229);
+        _worldMapButton.Clicked += (_, _) => openWorldMap();
 
         UpdateLayout();
         Update();
@@ -85,7 +126,7 @@ internal sealed class MinimapHud : Base
         var label = new Label(this, name)
         {
             AutoSizeToContents = false,
-            Font = Skin.DefaultFont,
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
             FontSize = size,
             TextColorOverride = Color.White,
             MouseInputEnabled = false,
@@ -109,10 +150,11 @@ internal sealed class MinimapHud : Base
 
     private void UpdateLayout()
     {
-        _mapName.SetBounds(12, 5, Width - 50, 22);
+        _mapName.SetBounds(14, 5, Width - 54, 22);
         _expandButton.SetBounds(Width - 33, 5, 24, 22);
-        _coords.SetBounds(12, Height - 24, Width - 24, 18);
-        _legend.SetBounds(12, Height - 45, Width - 24, 18);
+        _coords.SetBounds(112, Height - 29, Width - 124, 18);
+        _legend.SetBounds(112, Height - 50, Width - 124, 18);
+        _worldMapButton.SetBounds(14, Height - 51, 90, 24);
 
         var gridX = GridX;
         var gridPixels = GridPixels;
@@ -145,9 +187,15 @@ internal sealed class MinimapHud : Base
         var gridX = GridX;
         var gridPixels = GridPixels;
 
-        Fill(renderer, new Color(8, 12, 16, 245), 0, 0, Width, Height);
-        Outline(renderer, new Color(185, 205, 220, 255), 0, 0, Width, Height, 3);
-        Fill(renderer, new Color(18, 24, 30, 250), gridX - 4, GridY - 4, gridPixels + 8, gridPixels + 8);
+        // Match the World Map window: brown title bar, dark translucent body,
+        // white typography and restrained bronze borders.
+        Fill(renderer, new Color(a: 226, r: 24, g: 14, b: 15), 0, 0, Width, Height);
+        Fill(renderer, new Color(a: 246, r: 94, g: 60, b: 49), 0, 0, Width, 32);
+        Fill(renderer, new Color(a: 255, r: 126, g: 82, b: 62), 0, 31, Width, 1);
+        Outline(renderer, new Color(a: 255, r: 72, g: 43, b: 35), 0, 0, Width, Height, 2);
+
+        Fill(renderer, new Color(a: 210, r: 20, g: 16, b: 17), gridX - 6, GridY - 6, gridPixels + 12, gridPixels + 12);
+        Outline(renderer, new Color(a: 235, r: 126, g: 82, b: 62), gridX - 6, GridY - 6, gridPixels + 12, gridPixels + 12, 1);
 
         var attributes = map.Attributes;
         var width = attributes.GetLength(0);
@@ -163,19 +211,19 @@ internal sealed class MinimapHud : Base
 
             if (mapX < 0 || mapY < 0 || mapX >= width || mapY >= height)
             {
-                Fill(renderer, new Color(9, 11, 14, 255), x, y, Cell - 1, Cell - 1);
+                Fill(renderer, new Color(a: 225, r: 28, g: 21, b: 22), x, y, Cell - 1, Cell - 1);
                 continue;
             }
 
             var attribute = attributes[mapX, mapY];
             var color = attribute?.Type switch
             {
-                MapAttributeType.Blocked => new Color(65, 68, 74, 255),
-                MapAttributeType.Warp => new Color(235, 190, 70, 255),
-                MapAttributeType.Resource => new Color(90, 155, 88, 255),
-                MapAttributeType.Item => new Color(95, 130, 180, 255),
-                MapAttributeType.NpcAvoid => new Color(130, 92, 72, 255),
-                _ => new Color(70, 105, 88, 255),
+                MapAttributeType.Blocked => new Color(a: 235, r: 69, g: 58, b: 54),
+                MapAttributeType.Warp => new Color(a: 245, r: 205, g: 164, b: 74),
+                MapAttributeType.Resource => new Color(a: 235, r: 96, g: 132, b: 78),
+                MapAttributeType.Item => new Color(a: 235, r: 96, g: 120, b: 134),
+                MapAttributeType.NpcAvoid => new Color(a: 235, r: 128, g: 88, b: 68),
+                _ => new Color(a: 230, r: 86, g: 112, b: 78),
             };
             Fill(renderer, color, x, y, Cell - 1, Cell - 1);
         }
@@ -187,39 +235,86 @@ internal sealed class MinimapHud : Base
     private void DrawEntities(RendererBase renderer, MapInstance map, Player player, int gridX)
     {
         var questTargets = ActiveKillQuestTargetNames(player);
+        var drawnEntityIds = new HashSet<Guid>();
 
+        // Events/resources that belong to the current map instance.
         foreach (var entity in map.LocalEntities.Values)
         {
-            if (entity.Id == player.Id || entity.IsHidden) continue;
-            var dx = entity.X - player.X;
-            var dy = entity.Y - player.Y;
-            if (Math.Abs(dx) > Radius || Math.Abs(dy) > Radius) continue;
+            if (DrawEntityMarker(renderer, entity, player, gridX, questTargets))
+            {
+                drawnEntityIds.Add(entity.Id);
+            }
+        }
 
-            var x = gridX + (dx + Radius) * Cell + 2;
-            var y = GridY + (dy + Radius) * Cell + 2;
+        // NPCs/enemies are global entities in Intersect and are not stored in
+        // MapInstance.LocalEntities. Draw the NPCs that are on the player's map.
+        foreach (var entity in Globals.Entities.Values)
+        {
+            if (entity.Type != EntityType.GlobalEntity ||
+                entity.MapId != map.Id ||
+                drawnEntityIds.Contains(entity.Id))
+            {
+                continue;
+            }
 
-            var isParty = entity.Type == EntityType.Player && player.IsInMyParty(entity.Id);
-            var isQuestTarget = entity.Type == EntityType.GlobalEntity &&
-                questTargets.Contains(entity.Name ?? string.Empty);
+            DrawEntityMarker(renderer, entity, player, gridX, questTargets);
+        }
+    }
 
-            var color = isParty
-                ? new Color(80, 245, 255, 255)
-                : isQuestTarget
-                    ? new Color(255, 220, 80, 255)
+    private bool DrawEntityMarker(
+        RendererBase renderer,
+        Entity entity,
+        Player player,
+        int gridX,
+        HashSet<string> questTargets
+    )
+    {
+        if (entity.Id == player.Id || !entity.ShouldDraw)
+        {
+            return false;
+        }
+
+        var dx = entity.X - player.X;
+        var dy = entity.Y - player.Y;
+        if (Math.Abs(dx) > Radius || Math.Abs(dy) > Radius)
+        {
+            return false;
+        }
+
+        var x = gridX + (dx + Radius) * Cell + 2;
+        var y = GridY + (dy + Radius) * Cell + 2;
+
+        var isParty = entity.Type == EntityType.Player && player.IsInMyParty(entity.Id);
+        var isEnemy = entity.Type == EntityType.GlobalEntity;
+        var isQuestTarget = isEnemy && questTargets.Contains(entity.Name ?? string.Empty);
+
+        var color = isParty
+            ? new Color(a: 255, r: 80, g: 245, b: 255)
+            : isQuestTarget
+                ? new Color(a: 255, r: 255, g: 220, b: 80)
+                : isEnemy
+                    ? new Color(a: 255, r: 235, g: 70, b: 70)
                     : entity.Type switch
                     {
-                        EntityType.Player => new Color(82, 165, 236, 255),
-                        EntityType.Resource => new Color(106, 194, 100, 255),
-                        EntityType.Event => new Color(218, 184, 86, 255),
-                        _ => new Color(220, 110, 110, 255),
+                        EntityType.Player => new Color(a: 255, r: 82, g: 165, b: 236),
+                        EntityType.Resource => new Color(a: 255, r: 106, g: 194, b: 100),
+                        EntityType.Event => new Color(a: 255, r: 218, g: 184, b: 86),
+                        _ => new Color(a: 255, r: 220, g: 110, b: 110),
                     };
 
-            var size = isParty || isQuestTarget ? 8 : 6;
-            Fill(renderer, color, x, y, size, size);
+        var size = isParty || isQuestTarget || isEnemy ? 8 : 6;
+        Fill(renderer, color, x, y, size, size);
 
-            if (isQuestTarget)
-                Outline(renderer, new Color(255, 245, 180, 255), x - 1, y - 1, size + 2, size + 2, 1);
+        if (isQuestTarget)
+        {
+            Outline(renderer, new Color(a: 255, r: 255, g: 245, b: 180), x - 1, y - 1, size + 2, size + 2, 1);
         }
+        else if (isEnemy)
+        {
+            Outline(renderer, new Color(a: 255, r: 120, g: 20, b: 20), x - 1, y - 1, size + 2, size + 2, 1);
+        }
+
+        return true;
     }
 
     private static HashSet<string> ActiveKillQuestTargetNames(Player player)
@@ -243,8 +338,8 @@ internal sealed class MinimapHud : Base
     {
         var cx = gridX + Radius * Cell + Cell / 2;
         var cy = GridY + Radius * Cell + Cell / 2;
-        Fill(renderer, new Color(255, 255, 255, 255), cx - 5, cy - 5, 10, 10);
-        Outline(renderer, new Color(40, 40, 40, 255), cx - 6, cy - 6, 12, 12, 1);
+        Fill(renderer, new Color(a: 255, r: 255, g: 255, b: 255), cx - 5, cy - 5, 10, 10);
+        Outline(renderer, new Color(a: 255, r: 40, g: 40, b: 40), cx - 6, cy - 6, 12, 12, 1);
 
         var (dx, dy) = direction switch
         {
@@ -258,7 +353,7 @@ internal sealed class MinimapHud : Base
             Direction.DownRight => (6, 6),
             _ => (0, -7),
         };
-        Fill(renderer, new Color(90, 230, 255, 255), cx + dx - 3, cy + dy - 3, 6, 6);
+        Fill(renderer, new Color(a: 255, r: 90, g: 230, b: 255), cx + dx - 3, cy + dy - 3, 6, 6);
     }
 
     private static void Outline(RendererBase renderer, Color color, int x, int y, int width, int height, int thickness)

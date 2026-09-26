@@ -128,4 +128,29 @@ public sealed class SqliteMiniGameProgressStore : IMiniGameProgressStore
             return progress;
         }
     }
+    public MiniGameProgress AwardExperience(Guid character, string game, Guid receiptGroup, long receiptId, long experience)
+    {
+        MiniGameProgressKeys.Validate(character, game);
+        MiniGameProgressKeys.ValidateReceipt(receiptGroup, receiptId);
+        if (experience is < 1 or > 5_000) throw new ArgumentOutOfRangeException(nameof(experience));
+        lock (_gate)
+        {
+            using var connection = Open();
+            using var transaction = connection.BeginTransaction();
+            var progress = Read(connection, transaction, character, game);
+            using var receipt = Command(connection, transaction, character, game, """
+                INSERT INTO MiniGameWinReceipts(CharacterId,GameKey,TableId,HandId)
+                VALUES($character,$game,$table,$hand) ON CONFLICT DO NOTHING;
+                """);
+            receipt.Parameters.AddWithValue("$table", receiptGroup.ToString("N"));
+            receipt.Parameters.AddWithValue("$hand", receiptId);
+            if (receipt.ExecuteNonQuery() == 1)
+            {
+                progress = progress.WithExperience(experience);
+                Write(connection, transaction, character, game, progress);
+            }
+            transaction.Commit();
+            return progress;
+        }
+    }
 }

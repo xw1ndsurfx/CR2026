@@ -19,6 +19,12 @@ public partial class SelectCharacterWindow : Window
 
     private readonly Label _nameLabel;
     private readonly Label _infoLabel;
+    private readonly Label _levelCaptionLabel;
+    private readonly Label _levelValueLabel;
+    private readonly Label _classCaptionLabel;
+    private readonly Label _classValueLabel;
+    private readonly Label _guildCaptionLabel;
+    private readonly Label _guildValueLabel;
     private readonly ImagePanel _preview;
     private readonly Button _selectCharacterRightButton;
     private readonly Button _selectCharacterLeftButton;
@@ -171,6 +177,37 @@ public partial class SelectCharacterWindow : Window
             FontSize = 12,
         };
 
+        _levelCaptionLabel = new Label(_characterPreviewPanel, name: nameof(_levelCaptionLabel))
+        {
+            Font = _defaultFont,
+            FontSize = 12,
+        };
+        _levelValueLabel = new Label(_characterPreviewPanel, name: nameof(_levelValueLabel))
+        {
+            Font = _defaultFont,
+            FontSize = 12,
+        };
+        _classCaptionLabel = new Label(_characterPreviewPanel, name: nameof(_classCaptionLabel))
+        {
+            Font = _defaultFont,
+            FontSize = 12,
+        };
+        _classValueLabel = new Label(_characterPreviewPanel, name: nameof(_classValueLabel))
+        {
+            Font = _defaultFont,
+            FontSize = 12,
+        };
+        _guildCaptionLabel = new Label(_characterPreviewPanel, name: nameof(_guildCaptionLabel))
+        {
+            Font = _defaultFont,
+            FontSize = 12,
+        };
+        _guildValueLabel = new Label(_characterPreviewPanel, name: nameof(_guildValueLabel))
+        {
+            Font = _defaultFont,
+            FontSize = 12,
+        };
+
         _previewContainer = new Panel(_characterPreviewPanel, name: nameof(_previewContainer))
         {
             Dock = Pos.Fill,
@@ -197,6 +234,47 @@ public partial class SelectCharacterWindow : Window
         SizeToChildren(recursive: true);
 
         LoadJsonUi(GameContentManager.UI.Menu, Graphics.Renderer?.GetResolutionString());
+
+        // Character sheet-style profile card. Gwen Label does not reliably render
+        // embedded newlines here, so every row is its own label/value pair.
+        SetSize(Math.Max(680, Width), Math.Max(300, Height));
+
+        _previewContainer.Dock = Pos.None;
+        _previewContainer.SetBounds(78, 48, 112, 112);
+        _preview.SetBounds(0, 0, 112, 112);
+
+        static void PlaceProfileLabel(Label label, int x, int y, int width, Color color)
+        {
+            label.Dock = Pos.None;
+            label.AutoSizeToContents = false;
+            label.TextAlign = Pos.Left | Pos.CenterV;
+            label.TextColorOverride = color;
+            label.SetBounds(x, y, width, 22);
+        }
+
+        // Color uses ARGB ordering here. Keep CR accents warm gold/brown - never purple.
+        var captionColor = new Color(255, 236, 210, 153);
+        const int captionX = 205;
+        const int valueX = 278;
+        const int captionWidth = 68;
+        const int valueWidth = 285;
+        const int firstRowY = 55;
+        const int rowGap = 24;
+
+        PlaceProfileLabel(_infoLabel, captionX, firstRowY, captionWidth, captionColor);
+        PlaceProfileLabel(_nameLabel, valueX, firstRowY, valueWidth, Color.White);
+        PlaceProfileLabel(_levelCaptionLabel, captionX, firstRowY + rowGap, captionWidth, captionColor);
+        PlaceProfileLabel(_levelValueLabel, valueX, firstRowY + rowGap, valueWidth, Color.White);
+        PlaceProfileLabel(_classCaptionLabel, captionX, firstRowY + rowGap * 2, captionWidth, captionColor);
+        PlaceProfileLabel(_classValueLabel, valueX, firstRowY + rowGap * 2, valueWidth, Color.White);
+        PlaceProfileLabel(_guildCaptionLabel, captionX, firstRowY + rowGap * 3, captionWidth, captionColor);
+        PlaceProfileLabel(_guildValueLabel, valueX, firstRowY + rowGap * 3, valueWidth, Color.White);
+
+        _infoLabel.Text = "Name:";
+        _levelCaptionLabel.Text = "Level:";
+        _classCaptionLabel.Text = "Class:";
+        _guildCaptionLabel.Text = "Guild:";
+
         EnsureArrowsVisibility();
     }
 
@@ -248,43 +326,30 @@ public partial class SelectCharacterWindow : Window
 
             _infoLabel.Text = Strings.CharacterSelection.Empty;
             _nameLabel.Text = string.Empty;
+            _levelCaptionLabel.Text = string.Empty;
+            _levelValueLabel.Text = string.Empty;
+            _classCaptionLabel.Text = string.Empty;
+            _classValueLabel.Text = string.Empty;
+            _guildCaptionLabel.Text = string.Empty;
+            _guildValueLabel.Text = string.Empty;
             return;
         }
 
-        _nameLabel.Text = Strings.CharacterSelection.Name.ToString(selectedPreviewMetadata.Name);
-        _infoLabel.Text = Strings.CharacterSelection.Info.ToString(
-            selectedPreviewMetadata.Level,
-            selectedPreviewMetadata.Class
-        );
+        _infoLabel.Text = "Name:";
+        _nameLabel.Text = selectedPreviewMetadata.Name;
+        _levelCaptionLabel.Text = "Level:";
+        _levelValueLabel.Text = selectedPreviewMetadata.Level.ToString();
+        _classCaptionLabel.Text = "Class:";
+        _classValueLabel.Text = selectedPreviewMetadata.Class;
+        _guildCaptionLabel.Text = "Guild:";
+        _guildValueLabel.Text = string.IsNullOrWhiteSpace(selectedPreviewMetadata.Guild) ? "-" : selectedPreviewMetadata.Guild;
 
         _buttonPlay.Show();
         _buttonDelete.Show();
         _buttonNew.Hide();
 
-        var faceTexture = GameContentManager.Current.GetTexture(TextureType.Face, selectedPreviewMetadata.Face);
-        if (faceTexture != default)
-        {
-            var faceLayer = _renderLayers[0];
-            var scale = Math.Min(
-                _preview.InnerWidth / (double)faceTexture.Width,
-                _preview.InnerHeight / (double)faceTexture.Height
-            );
-            var faceTextureWidth = (int)(faceTexture.Width * scale);
-            var faceTextureHeight = (int)(faceTexture.Height * scale);
-            var x = (_preview.Width - faceTextureWidth) / 2;
-            var y = (_preview.Height - faceTextureHeight) / 2;
-            faceLayer.ResetUVs();
-            faceLayer.SetBounds(x, y, faceTextureWidth, faceTextureHeight);
-            faceLayer.Texture = faceTexture;
-            faceLayer.IsVisibleInTree = true;
-
-            foreach (var renderLayer in _renderLayers.Skip(1))
-            {
-                renderLayer.IsVisibleInTree = false;
-            }
-            return;
-        }
-
+        // Always render the actual character sprite + paperdolls here. A face image
+        // hid equipment/appearance changes and made different characters look stale.
         // we are rendering the player facing down, then we need to know the render order of the equipments
         for (var paperdollLayerIndex = 0; paperdollLayerIndex < Options.Instance.Equipment.Paperdoll.Down.Count; paperdollLayerIndex++)
         {
@@ -337,7 +402,11 @@ public partial class SelectCharacterWindow : Window
             _ = paperdollContainer.SetSize(textureWidth, textureHeight);
 
             var centerX = (_preview.Width / 2) - (paperdollContainer.Width / 2);
-            var centerY = (_preview.Height / 2) - (paperdollContainer.Height / 2);
+            // The portrait background's visible medallion sits above the geometric
+            // center of the image panel. Lift every sprite/paperdoll layer together
+            // so the character is actually centered inside the circle.
+            const int portraitCenterYOffset = -38;
+            var centerY = (_preview.Height / 2) - (paperdollContainer.Height / 2) + portraitCenterYOffset;
             paperdollContainer.SetPosition(centerX, centerY);
 
             paperdollContainer.Show();
@@ -353,7 +422,11 @@ public partial class SelectCharacterWindow : Window
             {
                 _renderLayers[i] = new ImagePanel(_preview)
                 {
-                    Alignment = [Alignments.Center],
+                    // This portrait uses exact coordinates. Do not let Gwen's layout
+                    // system re-center the sprite after UpdateDisplay positions it.
+                    Dock = Pos.None,
+                    Alignment = [],
+                    RestrictToParent = false,
                 };
             }
         }
@@ -364,14 +437,25 @@ public partial class SelectCharacterWindow : Window
         }
 
         _selectedCharacterIndex = 0;
+
+        // Show/layout the window first. Calling UpdateDisplay before base.Show()
+        // let Gwen perform a later layout pass that moved the paperdoll layers back
+        // below the medallion. Position the portrait only after that layout pass.
+        base.Show();
         UpdateDisplay();
 
-        if (_buttonPlay.IsVisibleInParent)
-        {
-            PostLayout.Enqueue(button => button.Focus(), _buttonPlay);
-        }
+        PostLayout.Enqueue(
+            window =>
+            {
+                UpdateDisplay();
+                if (_buttonPlay.IsVisibleInParent)
+                {
+                    _buttonPlay.Focus();
+                }
+            },
+            this
+        );
 
-        base.Show();
         EnsureArrowsVisibility();
     }
 

@@ -16,6 +16,7 @@ using Intersect.Client.Interface.Shared;
 using Intersect.Client.Items;
 using Intersect.Client.Localization;
 using Intersect.Client.Maps;
+using Intersect.Client.WorldEvents.Invasions;
 using Intersect.Client.Networking;
 using Intersect.Config.Guilds;
 using Intersect.Configuration;
@@ -206,9 +207,9 @@ public partial class Player : Entity, IPlayer
                 base.MapId = value;
                 if (Globals.Me == this)
                 {
-                    if (Maps.MapInstance.Get(Globals.Me.MapId) != null)
+                    if (Maps.MapInstance.Get(Globals.Me.MapId) is MapInstance currentMap)
                     {
-                        Audio.PlayMusic(Maps.MapInstance.Get(Globals.Me.MapId).Music, ClientConfiguration.Instance.MusicFadeTimer, ClientConfiguration.Instance.MusicFadeTimer, true);
+                        InvasionEnvironmentManager.ApplyMapMusic(currentMap);
                     }
 
                     if (newMap != null && oldMap != null)

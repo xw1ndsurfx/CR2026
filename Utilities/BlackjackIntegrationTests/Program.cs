@@ -96,6 +96,13 @@ Test("Full-inventory failure retains the claim",()=>
     using var f=new MoneyFixture();var p=f.Human();f.Ledger.Release(p.Id);var refund=f.Ledger.Refunds(f.Player).Single();
     Throws(()=>f.Ledger.Cashout(refund,(_,_)=>throw new MoneyRuleException("full")));Check(f.Ledger.Refunds(f.Player).Single().Amount==100 && f.Inventory()==250,"lost claim");
 });
+Test("Legacy low blackjack reserve is upgraded for a usable funded dealer bank",()=>
+{
+    using var f=new MoneyFixture();
+    var settings=new BlackjackSettings(new BlackjackRules(5,100,10,100,5),0,false,f.Currency,2,Guid.Empty,Guid.Empty,true,0);
+    var t=new BlackjackSessionTable(new(Guid.NewGuid(),Guid.Empty,"legacy-low"),settings,f.Ledger,new MemoryMiniGameProgressStore());
+    Check(t.Core.Bank>=2000,"legacy reserve was not upgraded");
+});
 Test("Funded blackjack session completes independently with named NPC guests",()=>
 {
     using var f=new MoneyFixture();var settings=new BlackjackSettings(new BlackjackRules(5,100,10,100,5),2,false,f.Currency,50000,Guid.Empty,Guid.Empty,true,0);

@@ -92,6 +92,8 @@ namespace Intersect.Editor.Forms.Editors.Events
             var questControlTreeNode = new TreeNode("Quest Control", new TreeNode[] { startQuestTreeNode, completeQuestTreeNode, endQuestTreeNode });
             var waitTreeNode = new TreeNode("Wait...");
             var etcTreeNode = new TreeNode("Etc", new TreeNode[] { waitTreeNode });
+            var openLogiklikNewsTreeNode = new TreeNode("Open Corps Royaux News");
+            var interfaceTreeNode = new TreeNode("Interface", new TreeNode[] { openLogiklikNewsTreeNode });
             var openBankTreeNode = new TreeNode("Open Bank");
             var openShopTreeNode = new TreeNode("Open Shop");
             var openCraftingStationTreeNode = new TreeNode("Open Crafting Station");
@@ -121,6 +123,7 @@ namespace Intersect.Editor.Forms.Editors.Events
             grpPreview = new DarkGroupBox();
             lblAnimation = new Label();
             cmbAnimation = new DarkComboBox();
+            chkWorldMapAnimation = new DarkCheckBox();
             pnlPreview = new Panel();
             grpMovement = new DarkGroupBox();
             lblLayer = new Label();
@@ -410,6 +413,7 @@ namespace Intersect.Editor.Forms.Editors.Events
             // 
             grpPreview.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
             grpPreview.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            grpPreview.Controls.Add(chkWorldMapAnimation);
             grpPreview.Controls.Add(lblAnimation);
             grpPreview.Controls.Add(cmbAnimation);
             grpPreview.Controls.Add(pnlPreview);
@@ -454,6 +458,17 @@ namespace Intersect.Editor.Forms.Editors.Events
             cmbAnimation.Text = null;
             cmbAnimation.TextPadding = new Padding(2);
             cmbAnimation.SelectedIndexChanged += cmbAnimation_SelectedIndexChanged;
+            // 
+            // chkWorldMapAnimation
+            // 
+            chkWorldMapAnimation.AutoSize = true;
+            chkWorldMapAnimation.Location = new System.Drawing.Point(82, 132);
+            chkWorldMapAnimation.Margin = new Padding(4, 3, 4, 3);
+            chkWorldMapAnimation.Name = "chkWorldMapAnimation";
+            chkWorldMapAnimation.Size = new Size(86, 19);
+            chkWorldMapAnimation.TabIndex = 3;
+            chkWorldMapAnimation.Text = "World Map";
+            chkWorldMapAnimation.CheckedChanged += chkWorldMapAnimation_CheckedChanged;
             // 
             // pnlPreview
             // 
@@ -1000,6 +1015,11 @@ namespace Intersect.Editor.Forms.Editors.Events
             waitTreeNode.Text = "Wait...";
             etcTreeNode.Name = "etc";
             etcTreeNode.Text = "Etc";
+            openLogiklikNewsTreeNode.Name = "openlogikliknews";
+            openLogiklikNewsTreeNode.Tag = (int)EventCommandType.OpenLogiklikNews;
+            openLogiklikNewsTreeNode.Text = "Open Corps Royaux News";
+            interfaceTreeNode.Name = "interface";
+            interfaceTreeNode.Text = "Interface";
             openBankTreeNode.Name = "openbank";
             openBankTreeNode.Tag = (int)EventCommandType.OpenBank;
             openBankTreeNode.Text = "Open Bank";
@@ -1025,7 +1045,7 @@ namespace Intersect.Editor.Forms.Editors.Events
             setGuildBankSlotsTreeNode.Text = "Set Guild Bank Slots Count";
             guildsTreeNode.Name = "guilds";
             guildsTreeNode.Text = "Guilds";
-            lstCommands.Nodes.AddRange(new TreeNode[] { dialogueTreeNode, logicFlowTreeNode, playerControlTreeNode, movementTreeNode, specialEffectsTreeNode, questControlTreeNode, etcTreeNode, shopAndBankTreeNode, guildsTreeNode });
+            lstCommands.Nodes.AddRange(new TreeNode[] { dialogueTreeNode, logicFlowTreeNode, playerControlTreeNode, movementTreeNode, specialEffectsTreeNode, questControlTreeNode, interfaceTreeNode, etcTreeNode, shopAndBankTreeNode, guildsTreeNode });
             lstCommands.Size = new Size(500, 536);
             lstCommands.TabIndex = 2;
             lstCommands.NodeMouseDoubleClick += lstCommands_NodeMouseDoubleClick;
@@ -1435,6 +1455,7 @@ namespace Intersect.Editor.Forms.Editors.Events
         private DarkGroupBox grpGeneral;
         private Label lblAnimation;
         private DarkComboBox cmbAnimation;
+        private DarkCheckBox chkWorldMapAnimation;
         private DarkCheckBox chkIsGlobal;
         private Label lblLayer;
         private Label lblCloseCommands;

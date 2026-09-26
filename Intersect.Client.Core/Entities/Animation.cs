@@ -282,7 +282,10 @@ public partial class Animation : IAnimation
 
     public void Dispose()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_disposed)
+        {
+            return;
+        }
 
         lock (Graphics.AnimationLock)
         {

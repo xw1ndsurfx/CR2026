@@ -22,7 +22,7 @@ internal sealed partial class PokerWindow : Base
     private readonly Label _table, _turn, _stage, _pot, _ownCards, _error, _payouts, _backStatus, _experience, _levelUp;
     private readonly Label[] _names = new Label[6], _stacks = new Label[6], _seatCards = new Label[6], _decisions = new Label[6];
     private readonly Label[] _board = new Label[5], _feed = new Label[3];
-    private readonly Button _start, _fold, _check, _call, _raise, _allIn, _minimum, _back;
+    private readonly Button _start, _fold, _check, _call, _raise, _allIn, _minimum, _refresh, _back;
     private readonly Button[] _backs = new Button[6];
     private readonly TextBox _amount;
     private readonly PokerFlatPanel _backTray;
@@ -74,13 +74,17 @@ internal sealed partial class PokerWindow : Base
         _call = Button("Call", "Call", 387, 634, 122, () => Send(PokerRequestKind.Call));
         _allIn = Button("AllIn", Strings.Poker.AllIn, 521, 634, 110,
             () => Send(_state?.CanRaise == true ? PokerRequestKind.RaiseTo : PokerRequestKind.Call, _state?.MaximumRaiseTo ?? 0));
-        Button("Refresh", Strings.Poker.Refresh, 643, 634, 112, () => Send(PokerRequestKind.Refresh));
+        _refresh = Button("Refresh", Strings.Poker.Refresh, 643, 634, 112, () => Send(PokerRequestKind.Refresh));
         Button("Leave", Strings.Poker.Leave, 767, 634, 181, RequestExit);
         _experience = Label("Experience", 52, 678, 640, 28);
         _backTray = new PokerFlatPanel(_content, "BackPicker") { IsHidden = true };
         Place(_backTray, 168, 398, 664, 150);
         _back = Button("CardBack", Strings.PokerScene.Back.ToString(1), 710, 676, 238, () =>
-        { _backTray.IsHidden = !_backTray.IsHidden; if (!_backTray.IsHidden) _backTray.BringToFront(); });
+        {
+            if (_portraitTray != null) _portraitTray.IsHidden = true;
+            _backTray.IsHidden = !_backTray.IsHidden;
+            if (!_backTray.IsHidden) _backTray.BringToFront();
+        });
         _backStatus = Label("CardBackStatus", 710, 710, 238, 26);
         Label("TestOnly", 52, 742, 895, 26).Text = Strings.PokerScene.TestProgress;
         for (var i = 0; i < 6; ++i)
@@ -91,6 +95,7 @@ internal sealed partial class PokerWindow : Base
             Place(b, 8 + i * 108, 103, 106, 34, 12, local: true);
             b.Clicked += (_, _) => SelectBack(id); _backs[i] = b;
         }
+        InitializeTableSkin();
         _art = new PokerTableArt(_content, _backTray, _board);
         _victory = new PokerScreenEffect(canvas);
         _actionEffect = new PokerScreenEffect(canvas, "PokerAction");
@@ -109,6 +114,7 @@ internal sealed partial class PokerWindow : Base
             p.Control.SetBounds(r.X, r.Y, r.Width, r.Height);
             if (p.Control is Label label && p.Font > 0) label.FontSize = _layout.FontSize(p.Font);
         }
+        LayoutTableSkin();
     }
     public void Update(PokerClientModel model)
     {
@@ -130,10 +136,11 @@ internal sealed partial class PokerWindow : Base
             : me.Chips == 0 ? Strings.Poker.NoChips : !opponents ? Strings.Poker.NeedPlayers :
                 state.AutoStart ? Strings.Poker.AutomaticNext : Strings.Poker.Ready;
         _art.Update(state, me.PlayerId, model.Current.TableInstanceId, _layout);
+        UpdateTableSkin(model, state, me);
         for (var slot = 0; slot < 6; ++slot)
         {
             var seat = state.Seats.FirstOrDefault(s => PokerSceneLayout.Slot(s.Seat, me.Seat) == slot);
-            var name = seat == null ? Strings.Poker.EmptySeat.ToString(slot + 1) : seat.PlayerId == state.DealerNpcId
+            var name = seat == null ? (_tableSkin?.Texture == null ? Strings.Poker.EmptySeat.ToString(slot + 1) : string.Empty) : seat.PlayerId == state.DealerNpcId
                 ? Strings.PokerScene.Dealer.ToString(seat.Name) : seat.PlayerId == me.PlayerId
                 ? Strings.PokerScene.You.ToString(seat.Name) : seat.Name;
             _names[slot].Text = Short(name, 22);
@@ -142,6 +149,19 @@ internal sealed partial class PokerWindow : Base
                 seat.AllIn ? Strings.Poker.AllIn : !seat.InHand ? Strings.Poker.Waiting : seat.Seat == state.DealerSeat ? "(B)" : "";
             var decision = seat == null ? null : state.Decisions.LastOrDefault(d => d.PlayerId == seat.PlayerId);
             _decisions[slot].Text = decision == null ? "" : Describe(decision);
+            if (_tableSkin?.Texture != null)
+            {
+                if (seat != null && playing && seat.Seat == state.ActingSeat)
+                {
+                    _decisions[slot].Text = seat.PlayerId == me.PlayerId ? "TURN" : "ACTING";
+                }
+
+                _decisions[slot].IsHidden = seat == null || string.IsNullOrWhiteSpace(_decisions[slot].Text);
+            }
+            else
+            {
+                _decisions[slot].IsHidden = false;
+            }
             _names[slot].TextColorOverride = seat?.Seat == state.ActingSeat ? Gold : Color.White;
             _decisions[slot].TextColorOverride = decision?.Action == "wins" ? Gold : Color.White;
         }
@@ -150,7 +170,8 @@ internal sealed partial class PokerWindow : Base
         var recent = state.Decisions.TakeLast(3).ToArray();
         for (var i = 0; i < 3; ++i) _feed[i].Text = i < recent.Length ? Short(recent[i].Name + ": " + Describe(recent[i]), 40) : "";
         _payouts.Text = state.NetWin > 0 ? Strings.PokerScene.Net.ToString(state.NetWin) : "";
-        _back.Text = Strings.PokerScene.Back.ToString(_selectedBack + 1); _back.IsDisabled = model.Pending || me.Leaving;
+        _back.Text = _cardsSkinApplied ? string.Empty : Strings.PokerScene.Back.ToString(_selectedBack + 1);
+        _back.IsDisabled = model.Pending || me.Leaving;
         _backStatus.Text = _art.SelectedBackMissing ? Strings.PokerCosmetics.MissingArt : Strings.PokerCosmetics.Selected;
         for (var i = 0; i < 6; ++i)
         {
@@ -191,40 +212,52 @@ internal sealed partial class PokerWindow : Base
         };
         UpdateCurrency(state, me);
         if (!_backTray.IsHidden) _backTray.BringToFront();
+        if (_portraitTray is { IsHidden: false }) _portraitTray.BringToFront();
     }
     private static readonly Color Gold = new(231, 194, 112);
     protected override void Render(SkinBase skin)
     {
         var r = skin.Renderer;
         r.DrawColor = new Color(205, 9, 14, 17); r.DrawFilledRect(new Rectangle(0, 0, Width, Height));
-        Fill(r, new Color(24, 17, 14), 36, 581, 928, 151);
-        Fill(r, new Color(125, 92, 48), 36, 581, 928, 2);
-        Ellipse(r, new Color(25, 17, 14), 185, 174, 630, 340);
-        Ellipse(r, new Color(117, 75, 41), 189, 166, 622, 334);
-        Ellipse(r, new Color(174, 122, 66), 198, 174, 604, 316);
-        Ellipse(r, new Color(67, 44, 30), 208, 184, 584, 296);
-        for (var y = 224; y < 455; y += 38) Fill(r, new Color(78, 52, 34), 290, y, 420, 2);
-        for (var slot = 0; slot < 6; ++slot)
+        RenderTableSkinBackground(r);
+        if (_tableSkin?.Texture != null)
         {
-            var c = PokerSceneLayout.Center(slot);
-            var seat = _state?.Seats.FirstOrDefault(s => PokerSceneLayout.Slot(s.Seat, _localSeat) == slot);
-            Fill(r, new Color(42, 28, 22), c.X - 30, c.Y - 18, 60, 48);
-            Fill(r, new Color(117, 78, 43), c.X - 25, c.Y - 12, 50, 34);
-            if (seat == null) continue;
-            if (seat.Seat == _state!.ActingSeat)
-                for (var row = 0; row < 8; ++row) Fill(r, Gold, c.X - row, c.Y - 48 + row, row * 2 + 1, 1);
-            if (!_art.HasPortrait(slot))
-            {
-                var coat = slot % 2 == 0 ? new Color(47, 75, 85) : new Color(98, 55, 51);
-                Fill(r, new Color(30, 25, 25), c.X - 22, c.Y + 6, 44, 20);
-                Fill(r, coat, c.X - 21, c.Y - 10, 42, 29);
-                Fill(r, new Color(205, 169, 132), c.X - 26, c.Y - 3, 10, 13);
-                Fill(r, new Color(205, 169, 132), c.X + 16, c.Y - 3, 10, 13);
-                Fill(r, new Color(205, 169, 132), c.X - 11, c.Y - 33, 22, 25);
-                Fill(r, new Color(52, 37, 32), c.X - 13, c.Y - 37, 26, 10);
-            }
+            RenderTableActionPanel(r);
         }
-        for (var i = 0; i < 5; ++i) Fill(r, new Color(42, 29, 24), 332 + i * 66, 301, 58, 76);
+        else
+        {
+            Fill(r, new Color(24, 17, 14), 36, 581, 928, 151);
+            Fill(r, new Color(125, 92, 48), 36, 581, 928, 2);
+        }
+        if (_tableSkin?.Texture == null)
+        {
+            Ellipse(r, new Color(25, 17, 14), 185, 174, 630, 340);
+            Ellipse(r, new Color(117, 75, 41), 189, 166, 622, 334);
+            Ellipse(r, new Color(174, 122, 66), 198, 174, 604, 316);
+            Ellipse(r, new Color(67, 44, 30), 208, 184, 584, 296);
+            for (var y = 224; y < 455; y += 38) Fill(r, new Color(78, 52, 34), 290, y, 420, 2);
+            for (var slot = 0; slot < 6; ++slot)
+            {
+                var c = PokerSceneLayout.Center(slot);
+                var seat = _state?.Seats.FirstOrDefault(s => PokerSceneLayout.Slot(s.Seat, _localSeat) == slot);
+                Fill(r, new Color(42, 28, 22), c.X - 30, c.Y - 18, 60, 48);
+                Fill(r, new Color(117, 78, 43), c.X - 25, c.Y - 12, 50, 34);
+                if (seat == null) continue;
+                if (seat.Seat == _state!.ActingSeat)
+                    for (var row = 0; row < 8; ++row) Fill(r, Gold, c.X - row, c.Y - 48 + row, row * 2 + 1, 1);
+                if (!_art.HasPortrait(slot))
+                {
+                    var coat = slot % 2 == 0 ? new Color(47, 75, 85) : new Color(98, 55, 51);
+                    Fill(r, new Color(30, 25, 25), c.X - 22, c.Y + 6, 44, 20);
+                    Fill(r, coat, c.X - 21, c.Y - 10, 42, 29);
+                    Fill(r, new Color(205, 169, 132), c.X - 26, c.Y - 3, 10, 13);
+                    Fill(r, new Color(205, 169, 132), c.X + 16, c.Y - 3, 10, 13);
+                    Fill(r, new Color(205, 169, 132), c.X - 11, c.Y - 33, 22, 25);
+                    Fill(r, new Color(52, 37, 32), c.X - 13, c.Y - 37, 26, 10);
+                }
+            }
+            for (var i = 0; i < 5; ++i) Fill(r, new Color(42, 29, 24), 332 + i * 66, 301, 58, 76);
+        }
         RenderProceduralMotions(r);
         var experienceWidth = (int)(616 * Math.Clamp(_xpFraction, 0, 1));
         Fill(r, new Color(45, 99, 61), 52, 710, 618, 18);

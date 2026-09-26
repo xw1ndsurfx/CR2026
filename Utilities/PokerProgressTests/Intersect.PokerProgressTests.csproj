@@ -2,8 +2,12 @@
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><WarningsAsErrors>nullable</WarningsAsErrors></PropertyGroup>
   <ItemGroup>
     <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/*.cs" Link="Shared/%(Filename)%(Extension)" />
+    <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/Potions/PotionPuzzle.cs" Link="Shared/Potions/PotionPuzzle.cs" />
+    <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/Potions/PotionRecipeDefinition.cs" Link="Shared/Potions/PotionRecipeDefinition.cs" />
+    <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/Cooking/CookingRecipeDefinition.cs" Link="Shared/Cooking/CookingRecipeDefinition.cs" />
     <Compile Include="../../Framework/Intersect.Framework.Core/GameObjects/Quests/QuestObjective.cs" Link="Shared/QuestObjective.cs" />
     <Compile Include="../../Framework/Intersect.Framework.Core/GameObjects/Quests/PokerQuestProgress.cs" Link="Shared/PokerQuestProgress.cs" />
+    <Compile Include="../../Framework/Intersect.Framework.Core/GameObjects/Quests/PotionQuestProgress.cs" Link="Shared/PotionQuestProgress.cs" />
     <Compile Include="../../Intersect.Server.Core/MiniGames/Progression/*.cs" Link="Progression/%(Filename)%(Extension)" />
     <Compile Include="../../Intersect.Server.Core/MiniGames/Poker/*.cs" Link="Poker/%(Filename)%(Extension)" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="8.0.11" />

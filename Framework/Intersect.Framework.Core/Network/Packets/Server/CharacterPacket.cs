@@ -27,7 +27,8 @@ public partial class CharacterPacket : IntersectPacket
         string face,
         int level,
         string className,
-        EquipmentFragment[] equipment
+        EquipmentFragment[] equipment,
+        string guildName
     )
     {
         Id = id;
@@ -37,6 +38,7 @@ public partial class CharacterPacket : IntersectPacket
         Level = level;
         ClassName = className;
         Equipment = equipment;
+        GuildName = guildName;
     }
 
     [Key(0)]
@@ -59,5 +61,8 @@ public partial class CharacterPacket : IntersectPacket
 
     [Key(6)]
     public EquipmentFragment[] Equipment { get; set; }
+
+    [Key(7)]
+    public string GuildName { get; set; } = string.Empty;
 
 }

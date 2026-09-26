@@ -111,6 +111,10 @@ public partial class FrmMain : Form
         InitMapProperties();
         InitLocalization();
         InitExternalTools();
+        AddRewardConfigurationEditorMenu();
+        AddProfessionEditorMenu();
+        PacketSender.SendRequestProfessionConfiguration(openEditor: false);
+        AddWorldEventsEditorMenu();
         Show();
 
         //Init Forms with RenderTargets
@@ -193,6 +197,87 @@ public partial class FrmMain : Form
         spellEditorToolStripMenuItem.Text = Strings.MainForm.spelleditor;
         variableEditorToolStripMenuItem.Text = Strings.MainForm.variableeditor;
         timeEditorToolStripMenuItem.Text = Strings.MainForm.timeeditor;
+    }
+
+    private void AddRewardConfigurationEditorMenu()
+    {
+        if (contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>().Any(item => item.Name == "rewardConfigurationEditorToolStripMenuItem"))
+        {
+            return;
+        }
+
+        var rewardEditor = new ToolStripMenuItem
+        {
+            Name = "rewardConfigurationEditorToolStripMenuItem",
+            Text = "Daily & Level Rewards Editor",
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
+        };
+        rewardEditor.Click += (_, _) => PacketSender.SendRequestRewardConfiguration();
+        contentEditorsToolStripMenuItem.DropDownItems.Add(rewardEditor);
+    }
+
+    public void OpenRewardConfigurationEditor()
+    {
+        var editor = new FrmRewardConfiguration();
+        editor.Show();
+        editor.BringToFront();
+    }
+
+    private void AddProfessionEditorMenu()
+    {
+        if (contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>()
+            .Any(item => item.Name == "professionEditorToolStripMenuItem"))
+            return;
+
+        var professions = new ToolStripMenuItem
+        {
+            Name = "professionEditorToolStripMenuItem",
+            Text = "Professions...",
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
+        };
+        professions.Click += (_, _) => PacketSender.SendRequestProfessionConfiguration(openEditor: true);
+        contentEditorsToolStripMenuItem.DropDownItems.Add(professions);
+    }
+
+    public void OpenProfessionEditor()
+    {
+        var editor = new FrmProfessionConfiguration();
+        editor.Show();
+        editor.BringToFront();
+    }
+
+    private void AddWorldEventsEditorMenu()
+    {
+        if (menuStrip.Items.Cast<ToolStripItem>().Any(item => item.Name == "worldEventsToolStripMenuItem"))
+            return;
+
+        var eventsMenu = new ToolStripMenuItem
+        {
+            Name = "worldEventsToolStripMenuItem",
+            Text = "Events",
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
+        };
+        var invasions = new ToolStripMenuItem
+        {
+            Name = "invasionEditorToolStripMenuItem",
+            Text = "Invasions...",
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
+        };
+        invasions.Click += (_, _) => PacketSender.SendRequestInvasionConfiguration();
+        eventsMenu.DropDownItems.Add(invasions);
+
+        var toolsIndex = menuStrip.Items.IndexOf(toolsToolStripMenuItem);
+        if (toolsIndex >= 0)
+            menuStrip.Items.Insert(toolsIndex, eventsMenu);
+        else
+            menuStrip.Items.Add(eventsMenu);
+    }
+
+    public void OpenInvasionEditor()
+    {
+        var editor = new FrmInvasionConfiguration();
+        editor.Show();
+        editor.BringToFront();
     }
 
     private void InitLocalizationMenuTools()

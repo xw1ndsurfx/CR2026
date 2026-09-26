@@ -34,6 +34,7 @@ using Intersect.Server.Framework.Items;
 using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
+using Intersect.Server.Professions;
 using Intersect.Utilities;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -1510,6 +1511,11 @@ public partial class Player : Entity
             case Resource resource:
                 {
                     var descriptor = resource.Descriptor;
+                    if (descriptor != null)
+                    {
+                        ProfessionRuntime.AwardHarvest(this, descriptor.Id);
+                    }
+
                     if (descriptor?.Event != null)
                     {
                         EnqueueStartCommonEvent(descriptor.Event);
@@ -1592,6 +1598,12 @@ public partial class Player : Entity
 
             // Check that a resource is actually required.
             var descriptor = resource.Descriptor;
+
+            if (!ProfessionRuntime.CanHarvest(this, descriptor, out var professionError))
+            {
+                PacketSender.SendChatMsg(this, professionError, ChatMessageType.Error);
+                return;
+            }
 
             //Check Dynamic Requirements
             if (!Conditions.MeetsConditionLists(descriptor.HarvestingRequirements, this, null))
@@ -1739,6 +1751,12 @@ public partial class Player : Entity
 
             // Check that a resource is actually required.
             var descriptor = resource.Descriptor;
+
+            if (!ProfessionRuntime.CanHarvest(this, descriptor, out var professionError))
+            {
+                PacketSender.SendChatMsg(this, professionError, ChatMessageType.Error);
+                return;
+            }
 
             //Check Dynamic Requirements
             if (!Conditions.MeetsConditionLists(descriptor.HarvestingRequirements, this, null))

@@ -4,9 +4,13 @@ using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Configuration;
+using Intersect.Network.Packets.Server;
 using Intersect.Server.MiniGames;
 using Intersect.Server.MiniGames.Blackjack;
+using Intersect.Server.MiniGames.Cooking;
 using Intersect.Server.MiniGames.Poker;
+using Intersect.Server.MiniGames.Potions;
+using Intersect.Server.MiniGames.Roulette;
 using Intersect.Server.Networking;
 
 namespace Intersect.Server.Entities.Events;
@@ -23,6 +27,48 @@ public static partial class CommandProcessing
                 ChatMessageType.Error, Color.White);
             return;
         }
+        if (command.Game == MiniGameType.Potions)
+        {
+            if (!PotionRuntime.Join(player))
+            {
+                PacketSender.SendChatMsg(
+                    player,
+                    "[Potions] Unable to start Royal Alchemy. Configure at least one recipe unlocked at level 1.",
+                    ChatMessageType.Error,
+                    Color.White
+                );
+            }
+            return;
+        }
+
+        if (command.Game == MiniGameType.Roulette)
+        {
+            if (!RouletteRuntime.Join(player, command))
+            {
+                PacketSender.SendChatMsg(
+                    player,
+                    "[Roulette] Unable to open this roulette table.",
+                    ChatMessageType.Error,
+                    Color.White
+                );
+            }
+            return;
+        }
+
+        if (command.Game == MiniGameType.Cooking)
+        {
+            if (!CookingRuntime.Join(player))
+            {
+                PacketSender.SendChatMsg(
+                    player,
+                    "[Cooking] Unable to open Royal Kitchen.",
+                    ChatMessageType.Error,
+                    Color.White
+                );
+            }
+            return;
+        }
+
         if (command.CurrencyItemId != Guid.Empty && !MiniGameCurrency.IsCompatible(ItemDescriptor.Get(command.CurrencyItemId)))
         {
             PacketSender.SendChatMsg(player, "[Poker] The configured currency item is missing or incompatible. No items were taken.",
@@ -41,6 +87,9 @@ public static partial class CommandProcessing
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
         if (player == null) return;
+        if (PotionRuntime.Leave(player)) return;
+        if (CookingRuntime.Leave(player)) return;
+        if (RouletteRuntime.Leave(player)) return;
         if (!BlackjackRuntime.Leave(player)) PokerRuntime.Leave(player);
     }
 }

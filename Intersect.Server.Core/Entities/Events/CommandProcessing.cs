@@ -8,6 +8,7 @@ using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Variables;
+using Intersect.Framework.Core.Professions;
 using Intersect.GameObjects;
 using Intersect.Server.Core.MapInstancing;
 using Intersect.Server.Database;
@@ -17,6 +18,7 @@ using Intersect.Server.General;
 using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
+using Intersect.Server.Professions;
 using Intersect.Utilities;
 
 namespace Intersect.Server.Entities.Events;
@@ -466,6 +468,35 @@ public static partial class CommandProcessing
         else if (quantity < 0)
         {
             player.TakeExperience(Math.Abs(quantity), command.EnableLosingLevels, force: true);
+        }
+    }
+
+    // Profession Command
+    private static void ProcessCommand(
+        ModifyProfessionCommand command,
+        Player player,
+        Event instance,
+        CommandInstance stackInfo,
+        Stack<CommandInstance> callStack
+    )
+    {
+        switch (command.Action)
+        {
+            case ProfessionModification.Learn:
+                ProfessionRuntime.Learn(player, command.ProfessionId);
+                break;
+            case ProfessionModification.Forget:
+                ProfessionRuntime.Forget(player, command.ProfessionId);
+                break;
+            case ProfessionModification.AddExperience:
+                ProfessionRuntime.AddExperience(player, command.ProfessionId, command.Value);
+                break;
+            case ProfessionModification.SetExperience:
+                ProfessionRuntime.SetExperience(player, command.ProfessionId, command.Value);
+                break;
+            case ProfessionModification.SetLevel:
+                ProfessionRuntime.SetLevel(player, command.ProfessionId, (int)Math.Clamp(command.Value, 0, 500));
+                break;
         }
     }
 
@@ -1235,6 +1266,18 @@ public static partial class CommandProcessing
         callStack.Peek().WaitingForResponse = CommandInstance.EventResponse.Timer;
     }
 
+    //Open Corps Royaux News Command
+    private static void ProcessCommand(
+        OpenLogiklikNewsCommand command,
+        Player player,
+        Event instance,
+        CommandInstance stackInfo,
+        Stack<CommandInstance> callStack
+    )
+    {
+        PacketSender.SendOpenLogiklikNews(player);
+    }
+
     //Open Bank Command
     private static void ProcessCommand(
         OpenBankCommand command,
@@ -1806,6 +1849,15 @@ public static partial class CommandProcessing
             {
                 if (input.Contains(val.Key))
                     sb.Replace(val.Key, val.Value);
+            }
+
+            foreach (var profession in ProfessionConfiguration.Instance.Professions ?? [])
+            {
+                var id = profession.Id.ToString();
+                sb.Replace($"\\professionname{{{id}}}", profession.Name);
+                sb.Replace($"\\professionlevel{{{id}}}", ProfessionRuntime.GetLevel(player, profession.Id).ToString());
+                sb.Replace($"\\professionxp{{{id}}}", ProfessionRuntime.GetExperience(player, profession.Id).ToString());
+                sb.Replace($"\\professionnextxp{{{id}}}", ProfessionRuntime.GetExperienceToNextLevel(player, profession.Id).ToString());
             }
 
             foreach (var val in DbInterface.ServerVariableEventTextLookup)
