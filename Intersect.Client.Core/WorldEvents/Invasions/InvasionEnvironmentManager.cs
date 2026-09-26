@@ -38,6 +38,12 @@ internal static class InvasionEnvironmentManager
     internal static bool HasMusicOverride =>
         Current is { } current && !string.IsNullOrWhiteSpace(current.Music);
 
+    internal static void Reset()
+    {
+        Active.Clear();
+        Graphics.GridSwitched = true;
+    }
+
     internal static void ApplyStatus(InvasionStatusPacket packet)
     {
         var before = Current;
