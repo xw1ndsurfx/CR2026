@@ -21,6 +21,7 @@ public static class MiniGameCatalog
         new(MiniGameType.Blackjack, "Blackjack - versus dealer", 2, 6, "blackjack-1"),
         new(MiniGameType.Potions, "Potions - Royal Alchemy", 1, 6, "potions-1"),
         new(MiniGameType.Roulette, "Roulette - European (0-36)", 1, 1, "roulette-1"),
+        new(MiniGameType.Cooking, "Royal Kitchen - Cooking", 1, 2, "cooking-1"),
     ];
 
     public static IReadOnlyList<MiniGameDefinition> All => Definitions;
