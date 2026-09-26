@@ -3,6 +3,7 @@ using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Framework.Core.MiniGames;
+using Intersect.Framework.Core.Professions;
 using Intersect.Server.Entities;
 using Intersect.Server.Networking;
 using Newtonsoft.Json;
@@ -48,6 +49,12 @@ internal static class RewardConfigurationRuntime
         configuration.DailyRewards.All(reward => ItemDescriptor.Get(reward.ItemId) != null) &&
         configuration.PotionRecipes.All(recipe =>
             ItemDescriptor.Get(recipe.OutputItemId) != null &&
+            (recipe.UnlockPlayerVariableId == Guid.Empty ||
+             PlayerVariableDescriptor.Get(recipe.UnlockPlayerVariableId) is { DataType: VariableDataType.Boolean })) &&
+        configuration.CookingRecipes.All(recipe =>
+            ProfessionConfigurationRuntime.Current.Find(recipe.ProfessionId) != null &&
+            recipe.Ingredients.All(ingredient => ItemDescriptor.Get(ingredient.ItemId) != null) &&
+            recipe.Outputs.All(output => ItemDescriptor.Get(output.ItemId) != null) &&
             (recipe.UnlockPlayerVariableId == Guid.Empty ||
              PlayerVariableDescriptor.Get(recipe.UnlockPlayerVariableId) is { DataType: VariableDataType.Boolean }));
 
