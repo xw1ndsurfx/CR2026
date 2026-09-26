@@ -44,6 +44,7 @@ internal static class InvasionConfigurationRuntime
                 var targetEvent = EventDescriptor.Get(invasion.TargetEventId);
                 if (targetEvent == null ||
                     targetEvent.CommonEvent ||
+                    !targetEvent.Global ||
                     targetEvent.MapId != invasion.TargetMapId)
                     return false;
             }
