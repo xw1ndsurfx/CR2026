@@ -13,6 +13,9 @@ public static partial class CommandPrinter
         if (command.Game == MiniGameType.Potions)
             return $"Start {game}: 8x10 board | falling pairs | 3+ merge chains";
 
+        if (command.Game == MiniGameType.Cooking)
+            return $"Start {game}: profession recipes | solo or 2-player Party co-op | inventory ingredients";
+
         var mode = command.CurrencyItemId == Guid.Empty
             ? $"{command.StartingChips} test chips"
             : $"Buy-in {command.StartingChips} {ItemDescriptor.GetName(command.CurrencyItemId)}";
