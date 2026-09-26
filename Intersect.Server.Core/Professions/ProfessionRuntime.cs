@@ -19,6 +19,21 @@ internal static class ProfessionRuntime
         return definition == null || !IsLearned(player, id) ? 0 : definition.LevelForExperience(Total(player, id));
     }
 
+    internal static long GetExperience(Player player, Guid id) =>
+        IsLearned(player, id) ? Total(player, id) : 0L;
+
+    internal static long GetExperienceToNextLevel(Player player, Guid id)
+    {
+        var definition = ProfessionConfigurationRuntime.Current.Find(id);
+        if (definition == null || !IsLearned(player, id)) return -1;
+
+        var total = Total(player, id);
+        var level = definition.LevelForExperience(total);
+        if (level >= definition.MaximumLevel) return -1;
+
+        return Math.Max(0L, definition.ExperienceToReachLevel(level + 1) - total);
+    }
+
     internal static void Learn(Player player, Guid id)
     {
         var definition = ProfessionConfigurationRuntime.Current.Find(id);
@@ -46,6 +61,25 @@ internal static class ProfessionRuntime
         var total = definition.ExperienceToReachLevel(target);
         player.SetVariableValue(id, total == long.MaxValue ? long.MaxValue : total + 1L);
         if (target > oldLevel) GrantLevelRewards(player, definition, oldLevel, target);
+    }
+
+    internal static void SetExperience(Player player, Guid id, long experience)
+    {
+        var definition = ProfessionConfigurationRuntime.Current.Find(id);
+        if (definition == null) return;
+
+        if (!IsLearned(player, id)) Learn(player, id);
+
+        var oldLevel = GetLevel(player, id);
+        var total = Math.Max(0L, experience);
+        player.SetVariableValue(id, total == long.MaxValue ? long.MaxValue : total + 1L);
+        var newLevel = definition.LevelForExperience(total);
+
+        if (newLevel > oldLevel)
+        {
+            PacketSender.SendChatMsg(player, $"[{definition.Name}] Level {newLevel}!", ChatMessageType.Notice);
+            GrantLevelRewards(player, definition, oldLevel, newLevel);
+        }
     }
 
     internal static void AddExperience(Player player, Guid id, long amount)

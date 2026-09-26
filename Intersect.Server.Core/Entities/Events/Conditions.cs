@@ -7,6 +7,7 @@ using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.GameObjects;
 using Intersect.Server.General;
 using Intersect.Server.Maps;
+using Intersect.Server.Professions;
 
 namespace Intersect.Server.Entities.Events;
 
@@ -262,6 +263,26 @@ public static partial class Conditions
         }
 
         return false;
+    }
+
+    public static bool MeetsCondition(
+        ProfessionLevelCondition condition,
+        Player player,
+        Event eventInstance,
+        QuestDescriptor questDescriptor
+    )
+    {
+        var level = ProfessionRuntime.GetLevel(player, condition.ProfessionId);
+        return condition.Comparator switch
+        {
+            VariableComparator.Equal => level == condition.Value,
+            VariableComparator.GreaterOrEqual => level >= condition.Value,
+            VariableComparator.LesserOrEqual => level <= condition.Value,
+            VariableComparator.Greater => level > condition.Value,
+            VariableComparator.Less => level < condition.Value,
+            VariableComparator.NotEqual => level != condition.Value,
+            _ => false,
+        };
     }
 
     public static bool MeetsCondition(
