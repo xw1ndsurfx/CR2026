@@ -10,6 +10,7 @@ using Intersect.Client.Interface.Menu;
 using Intersect.Client.Items;
 using Intersect.Client.Localization;
 using Intersect.Client.Maps;
+using Intersect.Client.WorldEvents.Invasions;
 using Intersect.Configuration;
 using Intersect.Core;
 using Intersect.Enums;
@@ -301,12 +302,7 @@ internal sealed partial class PacketHandler
 
             if (mapId == Globals.Me?.MapId)
             {
-                Audio.PlayMusic(
-                    mapInstance.Music,
-                    ClientConfiguration.Instance.MusicFadeTimer,
-                    ClientConfiguration.Instance.MusicFadeTimer,
-                    true
-                );
+                InvasionEnvironmentManager.ApplyMapMusic(mapInstance);
             }
 
             if (!Globals.GridMaps.TryGetValue(packet.MapId, out var gridPosition))
@@ -1689,12 +1685,23 @@ internal sealed partial class PacketHandler
     //PlayMusicPacket
     public void HandlePacket(IPacketSender packetSender, PlayMusicPacket packet)
     {
-        Audio.PlayMusic(packet.BGM, ClientConfiguration.Instance.MusicFadeTimer, ClientConfiguration.Instance.MusicFadeTimer, true);
+        if (InvasionEnvironmentManager.SuppressScriptedMusicChange())
+            return;
+
+        Audio.PlayMusic(
+            packet.BGM,
+            ClientConfiguration.Instance.MusicFadeTimer,
+            ClientConfiguration.Instance.MusicFadeTimer,
+            true
+        );
     }
 
     //StopMusicPacket
     public void HandlePacket(IPacketSender packetSender, StopMusicPacket packet)
     {
+        if (InvasionEnvironmentManager.SuppressScriptedMusicChange())
+            return;
+
         Audio.StopMusic(ClientConfiguration.Instance.MusicFadeTimer);
     }
 
