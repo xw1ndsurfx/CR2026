@@ -774,6 +774,7 @@ internal static class CookingRuntime
                     Ready = session.IngredientsConsumed,
                 }).ToArray(),
                 RewardText = session.RewardText,
+                StageDifficulty = stage?.Difficulty ?? 0,
             },
         };
     }
