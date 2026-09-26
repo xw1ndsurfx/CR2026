@@ -89,6 +89,7 @@ public sealed partial class CookingSessionState
     [Key(30)] public string Status { get; set; } = string.Empty;
     [Key(31)] public CookingParticipantState[] Participants { get; set; } = [];
     [Key(32)] public string RewardText { get; set; } = string.Empty;
+    [Key(33)] public int StageDifficulty { get; set; }
 
     [IgnoreMember]
     public bool IsValid =>
@@ -105,6 +106,7 @@ public sealed partial class CookingSessionState
         TolerancePermille is >= 0 and <= 500 &&
         RequiredActions is >= 0 and <= 20 &&
         CompletedActions is >= 0 and <= 40 &&
+        StageDifficulty is >= 0 and <= 5 &&
         StageScore is >= 0 and <= 100 &&
         TeamScore is >= 0 and <= 100 &&
         Enum.IsDefined(Quality) &&
