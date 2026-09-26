@@ -41,17 +41,10 @@ public static partial class PacketSender
         try
         {
             byte[] previewBytes;
-            using (var screenshot = Graphics.ScreenShotMap())
+            using (var screenshot = Intersect.Editor.Core.Graphics.ScreenShotMap())
             {
-                const int maxWidth = 768;
-                var width = Math.Min(maxWidth, screenshot.Width);
-                var height = Math.Max(1, (int)Math.Round(screenshot.Height * (width / (double)screenshot.Width)));
-
-                using var resized = width == screenshot.Width
-                    ? new System.Drawing.Bitmap(screenshot)
-                    : new System.Drawing.Bitmap(screenshot, width, height);
                 using var stream = new MemoryStream();
-                resized.Save(stream, ImageFormat.Png);
+                screenshot.Save(stream, ImageFormat.Png);
                 previewBytes = stream.ToArray();
             }
 
