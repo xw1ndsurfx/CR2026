@@ -810,6 +810,36 @@ internal static class CookingRuntime
             ? null
             : ProfessionConfigurationRuntime.Current.Find(recipe.ProfessionId);
         var level = recipe == null ? 0 : ProfessionRuntime.GetLevel(viewer, recipe.ProfessionId);
+        var totalProfessionExperience = recipe == null ? 0L : ProfessionRuntime.GetExperience(viewer, recipe.ProfessionId);
+        var maximumProfessionLevel = profession?.MaximumLevel ?? 0;
+
+        var professionMaximumLevelReached =
+            profession != null &&
+            level >= profession.MaximumLevel &&
+            level > 0;
+
+        long professionExperienceIntoLevel = 0;
+        long professionExperienceRequiredForLevel = 0;
+        long professionExperienceToNextLevel = 0;
+        int professionExperiencePercent = professionMaximumLevelReached ? 100 : 0;
+
+        if (profession != null && level > 0 && !professionMaximumLevelReached)
+        {
+            var currentLevelStart = profession.ExperienceToReachLevel(level);
+            var nextLevelStart = profession.ExperienceToReachLevel(level + 1);
+            professionExperienceIntoLevel = Math.Max(0L, totalProfessionExperience - currentLevelStart);
+            professionExperienceRequiredForLevel = Math.Max(1L, nextLevelStart - currentLevelStart);
+            professionExperienceToNextLevel = Math.Max(0L, nextLevelStart - totalProfessionExperience);
+            professionExperiencePercent = (int)Math.Clamp(
+                Math.Round(
+                    (decimal)professionExperienceIntoLevel * 100m /
+                    professionExperienceRequiredForLevel,
+                    MidpointRounding.AwayFromZero
+                ),
+                0m,
+                100m
+            );
+        }
         var stage = recipe != null &&
                     session.StageIndex >= 0 &&
                     session.StageIndex < recipe.Stages.Length
@@ -841,6 +871,37 @@ internal static class CookingRuntime
                 .Select(value =>
                 {
                     var viewerLevel = ProfessionRuntime.GetLevel(viewer, value.ProfessionId);
+                    var viewerTotalExperience = ProfessionRuntime.GetExperience(viewer, value.ProfessionId);
+                    var viewerProfession = ProfessionConfigurationRuntime.Current.Find(value.ProfessionId);
+                    var viewerMaximumLevel = viewerProfession?.MaximumLevel ?? 0;
+                    var viewerMaximumLevelReached =
+                        viewerProfession != null &&
+                        viewerLevel >= viewerProfession.MaximumLevel &&
+                        viewerLevel > 0;
+
+                    long viewerExperienceIntoLevel = 0;
+                    long viewerExperienceRequiredForLevel = 0;
+                    long viewerExperienceToNextLevel = 0;
+                    int viewerExperiencePercent = viewerMaximumLevelReached ? 100 : 0;
+
+                    if (viewerProfession != null && viewerLevel > 0 && !viewerMaximumLevelReached)
+                    {
+                        var currentLevelStart = viewerProfession.ExperienceToReachLevel(viewerLevel);
+                        var nextLevelStart = viewerProfession.ExperienceToReachLevel(viewerLevel + 1);
+                        viewerExperienceIntoLevel = Math.Max(0L, viewerTotalExperience - currentLevelStart);
+                        viewerExperienceRequiredForLevel = Math.Max(1L, nextLevelStart - currentLevelStart);
+                        viewerExperienceToNextLevel = Math.Max(0L, nextLevelStart - viewerTotalExperience);
+                        viewerExperiencePercent = (int)Math.Clamp(
+                            Math.Round(
+                                (decimal)viewerExperienceIntoLevel * 100m /
+                                viewerExperienceRequiredForLevel,
+                                MidpointRounding.AwayFromZero
+                            ),
+                            0m,
+                            100m
+                        );
+                    }
+
                     var unlocked = RecipeUnlocked(viewer, value, viewerLevel);
                     return new CookingRecipeSummary
                     {
@@ -864,6 +925,14 @@ internal static class CookingRuntime
                             Needed = ingredient.Quantity,
                             Available = viewer.FindInventoryItemQuantity(ingredient.ItemId),
                         }).ToArray(),
+                        ProfessionName = viewerProfession?.Name ?? string.Empty,
+                        ProfessionLevel = viewerLevel,
+                        ProfessionMaximumLevel = viewerMaximumLevel,
+                        ProfessionExperienceIntoLevel = viewerExperienceIntoLevel,
+                        ProfessionExperienceRequiredForLevel = viewerExperienceRequiredForLevel,
+                        ProfessionExperienceToNextLevel = viewerExperienceToNextLevel,
+                        ProfessionExperiencePercent = viewerExperiencePercent,
+                        ProfessionMaximumLevelReached = viewerMaximumLevelReached,
                     };
                 })
                 .ToArray()
@@ -949,6 +1018,12 @@ internal static class CookingRuntime
                 ComicEventSequence = session.ComicEventSequence,
                 ComicEventType = session.ComicEventType,
                 ComicEventText = session.ComicEventText,
+                ProfessionMaximumLevel = maximumProfessionLevel,
+                ProfessionExperienceIntoLevel = professionExperienceIntoLevel,
+                ProfessionExperienceRequiredForLevel = professionExperienceRequiredForLevel,
+                ProfessionExperienceToNextLevel = professionExperienceToNextLevel,
+                ProfessionExperiencePercent = professionExperiencePercent,
+                ProfessionMaximumLevelReached = professionMaximumLevelReached,
             },
         };
     }
