@@ -91,6 +91,7 @@ public sealed class InvasionDefinition
     // matches the average contribution of all defenders in the invasion.
     public int ParticipationMinimumRewardPercent { get; set; } = 10;
     public int ParticipationMaximumRewardPercent { get; set; } = 200;
+    public int HealingContributionPercent { get; set; } = 100;
     public long RewardExperience { get; set; } = 500;
     public InvasionWaveDefinition[] Waves { get; set; } = [];
 
@@ -124,6 +125,7 @@ public sealed class InvasionDefinition
         ParticipationMinimumRewardPercent is >= 0 and <= 500 &&
         ParticipationMaximumRewardPercent is >= 1 and <= 500 &&
         ParticipationMinimumRewardPercent <= ParticipationMaximumRewardPercent &&
+        HealingContributionPercent is >= 0 and <= 500 &&
         RewardExperience is >= 0 and <= 2_000_000_000 &&
         Waves is { Length: > 0 and <= 128 } &&
         Waves.All(wave => wave is { IsStructurallyValid: true }) &&
