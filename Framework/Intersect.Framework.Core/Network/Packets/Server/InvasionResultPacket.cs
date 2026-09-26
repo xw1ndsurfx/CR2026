@@ -15,4 +15,7 @@ public partial class InvasionResultPacket : IntersectPacket
     [Key(5)] public int WaveCount { get; set; }
     [Key(6)] public int ObjectiveHealthRemaining { get; set; }
     [Key(7)] public int ParticipantCount { get; set; }
+    [Key(8)] public long ContributionDamage { get; set; }
+    [Key(9)] public int ContributionPercent { get; set; }
+    [Key(10)] public int RewardPercentOfBase { get; set; }
 }
