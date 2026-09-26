@@ -9,5 +9,6 @@ public record struct CharacterSelectionPreviewMetadata(
     string Face,
     int Level,
     string Class,
-    EquipmentFragment[] Equipment
+    EquipmentFragment[] Equipment,
+    string Guild
 );

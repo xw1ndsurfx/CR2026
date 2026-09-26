@@ -216,6 +216,8 @@ public partial class Entity : IEntity
 
     public NpcAggression Aggression { get; set; }
 
+    public Guid NpcDescriptorId { get; set; }
+
     public long[] Vital { get; set; } = new long[Enum.GetValues<Vital>().Length];
 
     IReadOnlyDictionary<Vital, long> IEntity.Vitals =>

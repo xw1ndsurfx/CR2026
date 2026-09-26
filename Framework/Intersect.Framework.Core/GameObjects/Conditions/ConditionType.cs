@@ -41,4 +41,7 @@ public enum ConditionType
     CheckEquipment,
 
     IsInCombat,
+
+    // CR2026 professions: explicit value preserves serialized condition ids.
+    ProfessionLevel = 1000,
 }

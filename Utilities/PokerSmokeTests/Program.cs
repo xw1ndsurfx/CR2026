@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.MiniGames.Cooking;
 using Intersect.Server.MiniGames.Poker;
 
 var tests = new (string Name, Action Run)[]
@@ -19,6 +20,7 @@ var tests = new (string Name, Action Run)[]
     ("Short blind does not create a dry side pot", ShortBlind),
     ("Repeated hands rotate the dealer", RepeatedHands),
     ("Deterministic simulated games conserve every chip", Simulations),
+    ("Royal Kitchen stage rules are deterministic and bounded", CookingStages),
 };
 var failures = 0;
 foreach (var test in tests)
@@ -32,6 +34,18 @@ Console.WriteLine($"{tests.Length - failures}/{tests.Length} core tests passed")
 try { RegistrySmokeTests.RunAll(); }
 catch (Exception error) { ++failures; Console.Error.WriteLine(error); }
 Environment.ExitCode = failures == 0 ? 0 : 1;
+
+static void CookingStages()
+{
+    Check(CookingStageRules.TargetTolerance(1) > CookingStageRules.TargetTolerance(5), "Difficulty tolerance");
+    Check(CookingStageRules.TimingCursorPermille(0, 10_000, 3) == 0, "Timing cursor start");
+    Check(CookingStageRules.TimingCursorPermille(10_000, 10_000, 3) is >= 0 and <= 1000, "Timing cursor bounds");
+    Check(CookingStageRules.PrecisionScore(500, 500, 100) == 100, "Perfect precision");
+    Check(CookingStageRules.MoveMeter(950, 200) == 1000, "Meter upper clamp");
+    Check(CookingStageRules.MoveMeter(50, -200) == 0, "Meter lower clamp");
+    Check(CookingStageRules.PlateScore(CookingActionInput.Secondary, 500) == 100, "Plate center");
+    Check(CookingStageRules.PlateScore(CookingActionInput.Primary, 800) == 15, "Plate wrong side");
+}
 
 static DateTimeOffset Now() => DateTimeOffset.FromUnixTimeSeconds(1_800_000_000);
 static Guid Id(int i) => new(i, 0, 0, new byte[8]);

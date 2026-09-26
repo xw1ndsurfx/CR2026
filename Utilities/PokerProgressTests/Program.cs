@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Server.MiniGames.Poker;
 using Intersect.Server.MiniGames.Progression;
@@ -69,6 +70,72 @@ try
             Check(store.Load(a, "poker").Experience == 0, "Invalid request gained XP");
         });
     }
+    Run("Potions: advanced quest objectives use authoritative brew metrics", () =>
+    {
+        var recipe = Guid.NewGuid();
+
+        Check(
+            PotionQuestProgress.Apply(
+                QuestObjective.PotionReachChain,
+                Guid.Empty,
+                0,
+                4,
+                new PotionQuestUpdate(false, recipe, 1, 40, ChainAchieved: 3)
+            ) == 3,
+            "Chain progress did not record best chain"
+        );
+        Check(
+            PotionQuestProgress.Apply(
+                QuestObjective.PotionReachChain,
+                Guid.Empty,
+                3,
+                4,
+                new PotionQuestUpdate(false, recipe, 1, 10, ChainAchieved: 2)
+            ) == 3,
+            "Smaller chain reduced progress"
+        );
+        Check(
+            PotionQuestProgress.Apply(
+                QuestObjective.PotionBrewUnderOccupiedCells,
+                Guid.Empty,
+                0,
+                12,
+                new PotionQuestUpdate(true, recipe, 1, 100, OccupiedCells: 12)
+            ) == 12,
+            "Board-density challenge did not complete at threshold"
+        );
+        Check(
+            PotionQuestProgress.Apply(
+                QuestObjective.PotionBrewUnderOccupiedCells,
+                Guid.Empty,
+                0,
+                12,
+                new PotionQuestUpdate(true, recipe, 1, 100, OccupiedCells: 13)
+            ) == 0,
+            "Board-density challenge completed above threshold"
+        );
+        Check(
+            PotionQuestProgress.Apply(
+                QuestObjective.PotionBrewSpecificRecipeMinScore,
+                recipe,
+                0,
+                500,
+                new PotionQuestUpdate(true, recipe, 1, 100, RecipeScore: 500)
+            ) == 500,
+            "Specific recipe score challenge did not complete"
+        );
+        Check(
+            PotionQuestProgress.Apply(
+                QuestObjective.PotionBrewSpecificRecipeMinScore,
+                recipe,
+                0,
+                500,
+                new PotionQuestUpdate(true, Guid.NewGuid(), 1, 100, RecipeScore: 999)
+            ) == 0,
+            "Wrong recipe completed score challenge"
+        );
+    });
+
     Run("SQLite: XP, choice and receipts survive a new store instance", () =>
     {
         var path = Path.Combine(root, "restart.db"); var a = Guid.NewGuid(); var table = Guid.NewGuid();
@@ -190,4 +257,6 @@ sealed class FaultStore : IMiniGameProgressStore
         if (ThrowAfterAward) { ThrowAfterAward = false; throw new IOException("test uncertain commit"); }
         return p;
     }
+    public MiniGameProgress AwardExperience(Guid id, string game, Guid group, long receipt, long experience) =>
+        _inner.AwardExperience(id, game, group, receipt, experience);
 }

@@ -63,6 +63,14 @@ public partial class FriendsRow
         // Set up events.
         mTell.Clicked += MTell_Clicked;
         mRemove.Clicked += MRemove_Clicked;
+
+        mName.MouseInputEnabled = true;
+        mName.SetToolTipText("View character information");
+        mName.Clicked += MInfo_Clicked;
+
+        mStatus.MouseInputEnabled = true;
+        mStatus.SetToolTipText("View character information");
+        mStatus.Clicked += MInfo_Clicked;
     }
 
     private void UpdateControls()
@@ -100,6 +108,11 @@ public partial class FriendsRow
     private void MTell_Clicked(Base sender, MouseButtonState arguments)
     {
         Interface.GameUi.SetChatboxText($"/pm {mMyName} ");
+    }
+
+    private void MInfo_Clicked(Base sender, MouseButtonState arguments)
+    {
+        PacketSender.SendRequestPlayerProfile(mMyName, openWindow: true);
     }
 
     public Rectangle Bounds => mRowContainer.Bounds;

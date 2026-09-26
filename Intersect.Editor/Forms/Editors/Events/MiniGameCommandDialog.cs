@@ -26,9 +26,9 @@ internal sealed class MiniGameCommandDialog : Form
         ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
         MinimumSize = new Size(580, 420);
         BackColor = DrawingColor.FromArgb(45, 45, 48); ForeColor = DrawingColor.Gainsboro;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 46, AutoScroll = true };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 48, AutoScroll = true };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
-        for (var row = 0; row < 46; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var row = 0; row < 48; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(12, 8, 12, 8) };
         Controls.Add(layout); Controls.Add(buttons);
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
@@ -41,9 +41,9 @@ internal sealed class MiniGameCommandDialog : Form
             game.Items.Add(new GameChoice(definition.Type, definition.DisplayName));
         game.SelectedItem = game.Items.Cast<GameChoice>().FirstOrDefault(choice => choice.Type == command.Game) ?? game.Items[0];
         var table = new TextBox { Name = "TableId", Text = command.TableId ?? "", MaxLength = 64, Dock = DockStyle.Fill };
-        var seats = Number(command.MaxPlayers, 2, 6);
+        var seats = Number(command.MaxPlayers, 1, 6);
         var currency = CurrencyPicker(command.CurrencyItemId);
-        var chips = Number(command.StartingChips, 1, 1_000_000_000);
+        var chips = Number(command.StartingChips, 1, 1_000_000_000); chips.Name = "StartingChips";
         var reserve = Number(command.NpcReserve, 0, 1_000_000_000); reserve.Name = "NpcReserve";
         var unlimitedNpcBankroll = new CheckBox
         {
@@ -95,7 +95,78 @@ internal sealed class MiniGameCommandDialog : Form
         var blackjackMinimum = Number(command.BlackjackMinimumBet, 2, 1_000_000_000); blackjackMinimum.Name = "BlackjackMinimumBet"; blackjackMinimum.Increment = 2;
         var blackjackMaximum = Number(command.BlackjackMaximumBet, 2, 1_000_000_000); blackjackMaximum.Name = "BlackjackMaximumBet"; blackjackMaximum.Increment = 2;
         var blackjackHitSoft17 = new CheckBox { Name = "BlackjackHitSoft17", Text = "Dealer hits soft 17 (H17)", Checked = command.BlackjackHitSoft17, AutoSize = true };
+        var rouletteMinimum = Number(command.RouletteMinimumBet, 1, 20_000_000); rouletteMinimum.Name = "RouletteMinimumBet";
+        var rouletteMaximum = Number(command.RouletteMaximumBet, 1, 20_000_000); rouletteMaximum.Name = "RouletteMaximumBet";
         bool IsBlackjack() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Blackjack;
+        bool IsPotions() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Potions;
+        bool IsRoulette() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Roulette;
+        bool IsCooking() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Cooking;
+        var currencyModeFunded = command.CurrencyItemId != Guid.Empty;
+        long testChipsValue = command.CurrencyItemId == Guid.Empty ? command.StartingChips : 1000;
+        long fundedBuyInValue = command.CurrencyItemId != Guid.Empty ? command.StartingChips : 0;
+
+        long SuggestedFundedBuyIn()
+        {
+            if (!IsBlackjack()) return Math.Clamp(testChipsValue, 1, 1_000_000_000);
+            var minimum = (long)blackjackMinimum.Value;
+            var maximum = (long)blackjackMaximum.Value;
+            return Math.Clamp(Math.Max(maximum, minimum * 10), 1, 1_000_000_000);
+        }
+
+        long SuggestedBlackjackReserve()
+        {
+            var buyIn = (long)chips.Value;
+            var maximumBet = (long)blackjackMaximum.Value;
+            var seatCount = (long)seats.Value;
+            return Math.Clamp(Math.Max(buyIn, maximumBet * 4L * seatCount), 1, 1_000_000_000);
+        }
+
+        void EnsureBlackjackReserve()
+        {
+            var funded = ((currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty) != Guid.Empty;
+            if (!funded || !IsBlackjack()) return;
+
+            var suggested = SuggestedBlackjackReserve();
+            if ((long)reserve.Value < suggested)
+            {
+                reserve.Value = suggested;
+            }
+        }
+
+        long SuggestedRouletteReserve()
+        {
+            var maximumBet = (long)rouletteMaximum.Value;
+            return Math.Clamp(maximumBet * 35L, 1L, 1_000_000_000L);
+        }
+
+        void EnsureRouletteReserve()
+        {
+            var funded = ((currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty) != Guid.Empty;
+            if (!funded || !IsRoulette()) return;
+
+            var suggested = SuggestedRouletteReserve();
+            if ((long)reserve.Value < suggested)
+                reserve.Value = suggested;
+        }
+
+        void ChangeCurrencyMode()
+        {
+            var funded = ((currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty) != Guid.Empty;
+            if (funded == currencyModeFunded) return;
+
+            if (currencyModeFunded) fundedBuyInValue = (long)chips.Value;
+            else testChipsValue = (long)chips.Value;
+
+            currencyModeFunded = funded;
+            var next = funded
+                ? (fundedBuyInValue > 0 ? fundedBuyInValue : SuggestedFundedBuyIn())
+                : testChipsValue;
+            chips.Value = Math.Clamp(next, (long)chips.Minimum, (long)chips.Maximum);
+            if (funded && fundedBuyInValue == 0) fundedBuyInValue = (long)chips.Value;
+
+            EnsureBlackjackReserve();
+        }
+
         void LimitNpcs()
         {
             var maximum = seats.Value - 1 - (IsBlackjack() ? 1 : (dealer.Checked ? 1 : 0));
@@ -106,16 +177,52 @@ internal sealed class MiniGameCommandDialog : Form
         void UpdateGameUi()
         {
             var blackjack = IsBlackjack();
-            small.Enabled = big.Enabled = dealer.Enabled = !blackjack;
+            var potions = IsPotions();
+            var roulette = IsRoulette();
+            var cooking = IsCooking();
+
+            small.Enabled = big.Enabled = dealer.Enabled = !blackjack && !potions && !roulette && !cooking;
             blackjackMinimum.Enabled = blackjackMaximum.Enabled = blackjackHitSoft17.Enabled = blackjack;
+            rouletteMinimum.Enabled = rouletteMaximum.Enabled = roulette;
+            seats.Enabled = !potions && !roulette && !cooking;
+            npcs.Enabled = !potions && !roulette && !cooking;
+            currency.Enabled = chips.Enabled = reserve.Enabled = !potions && !cooking;
+            unlimitedNpcBankroll.Enabled = !potions && !blackjack && !cooking;
+            automatic.Enabled = !potions && !roulette && !cooking;
+            backs.Enabled = motionSpeed.Enabled = motionPanel.Enabled = !potions && !roulette && !cooking;
+
             if (blackjack)
             {
                 dealer.Checked = false;
                 unlimitedNpcBankroll.Checked = false;
             }
+            if (potions)
+            {
+                dealer.Checked = false;
+                npcs.Value = 0;
+                unlimitedNpcBankroll.Checked = false;
+            }
+            if (roulette)
+            {
+                seats.Value = 1;
+                dealer.Checked = false;
+                npcs.Value = 0;
+            }
+            if (cooking)
+            {
+                seats.Value = 2;
+                dealer.Checked = false;
+                npcs.Value = 0;
+                unlimitedNpcBankroll.Checked = false;
+            }
+
             LimitNpcs();
+            EnsureBlackjackReserve();
+            EnsureRouletteReserve();
         }
-        seats.ValueChanged += (_, _) => LimitNpcs(); dealer.CheckedChanged += (_, _) => LimitNpcs(); LimitNpcs();
+        seats.ValueChanged += (_, _) => { LimitNpcs(); EnsureBlackjackReserve(); EnsureRouletteReserve(); };
+        dealer.CheckedChanged += (_, _) => LimitNpcs();
+        LimitNpcs();
         AddRow(layout, 1, "Mini-game", game); AddRow(layout, 2, "Table ID (letters, digits, - or _)", table);
         AddRow(layout, 3, "Maximum seats (humans + NPCs)", seats); AddRow(layout, 4, "Table currency / Monnaie", currency);
         var chipsLabel = AddRow(layout, 5, "Starting test chips", chips);
@@ -123,7 +230,7 @@ internal sealed class MiniGameCommandDialog : Form
         AddRow(layout, 9, "Dealer plays and deals", dealer); AddRow(layout, 10, "Other NPC opponents", npcs);
         AddRow(layout, 11, "Automatic hands", automatic); AddRow(layout, 12, "Dealing animation", animation);
         AddRow(layout, 13, "Announce wins in GLOBAL chat", announce); AddRow(layout, 14, "Victory animation (winner only)", victory);
-        AddRow(layout, 15, "Dealer / NPC card back", backs); AddRow(layout, 16, "Initial NPC reserve (one-time seed)", reserve);
+        AddRow(layout, 15, "Dealer / NPC card back", backs); AddRow(layout, 16, "Dealer / NPC bank reserve", reserve);
         AddRow(layout, 17, "Unlimited NPC bankroll", unlimitedNpcBankroll);
         AddRow(layout, 18, "Sound - Deal", dealSound); AddRow(layout, 19, "Sound - Check", checkSound);
         AddRow(layout, 20, "Sound - Call", callSound); AddRow(layout, 21, "Sound - Raise", raiseSound);
@@ -183,27 +290,48 @@ internal sealed class MiniGameCommandDialog : Form
         rewardPanel.Controls.Add(rewardList); rewardPanel.Controls.Add(rewardControls); RefreshRewards();
         AddRow(layout, 40, "Procedural animation speed", motionSpeed);
         AddRow(layout, 41, "Procedural animation effects", motionPanel);
-        AddRow(layout, 42, "Poker level rewards", rewardPanel);
+        AddRow(layout, 42, "Level rewards", new Label
+        {
+            AutoSize = true,
+            MaximumSize = new Size(560, 0),
+            Text = "Configured globally in Content Editors > Daily & Level Rewards Editor. All tables use the same rewards."
+        });
         AddRow(layout, 43, "Blackjack minimum bet (even)", blackjackMinimum);
         AddRow(layout, 44, "Blackjack maximum bet (even)", blackjackMaximum);
         AddRow(layout, 45, "Blackjack dealer rule", blackjackHitSoft17);
+        AddRow(layout, 46, "Roulette minimum bet", rouletteMinimum);
+        AddRow(layout, 47, "Roulette maximum bet", rouletteMaximum);
 
         void ShowSummary()
         {
             var selectedGame = (game.SelectedItem as GameChoice)?.Type ?? MiniGameType.Poker;
             var definition = MiniGameCatalog.Get(selectedGame);
             var blackjack = selectedGame == MiniGameType.Blackjack;
+            var potions = selectedGame == MiniGameType.Potions;
+            var roulette = selectedGame == MiniGameType.Roulette;
             var dealerSeats = blackjack ? 1 : (dealer.Checked ? 1 : 0);
             var humanSeats = Math.Max(1, (int)seats.Value - (int)npcs.Value - dealerSeats);
             var funded = ((currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty) != Guid.Empty;
             var tableValid = MiniGameCatalog.IsValidTableId(table.Text);
+
+            if (potions)
+            {
+                summary.ForeColor = DrawingColor.LightSkyBlue;
+                summary.Text = $"{definition.DisplayName} | Solo 8x10 merge board | " +
+                    "Recipes, output items, required levels and XP are configured globally in Content Editors > Daily & Level Rewards Editor > Potion Recipes.";
+                return;
+            }
+
             var rules = blackjack
                 ? $"Bet {blackjackMinimum.Value}-{blackjackMaximum.Value} | {(blackjackHitSoft17.Checked ? "H17" : "S17")}"
-                : $"Blinds {small.Value}/{big.Value}";
+                : roulette
+                    ? $"European 0-36 | Bet {rouletteMinimum.Value}-{rouletteMaximum.Value} | Straight 35:1"
+                    : $"Blinds {small.Value}/{big.Value}";
+            var funding = funded ? $"FUNDED buy-in {chips.Value:N0}" : $"TEST chips {chips.Value:N0}";
             summary.ForeColor = tableValid ? DrawingColor.LightSkyBlue : DrawingColor.OrangeRed;
             summary.Text = $"{definition.DisplayName} | Table: {(string.IsNullOrWhiteSpace(table.Text) ? "(missing)" : table.Text)} | " +
                 $"{seats.Value} seats ({humanSeats} human available, {npcs.Value + dealerSeats} NPC/dealer) | " +
-                $"{rules} | {(funded ? "FUNDED" : "TEST")} | " +
+                $"{rules} | {funding} | " +
                 $"{(automatic.Checked ? "Auto rounds" : "Manual start")}" +
                 (tableValid ? "" : " | INVALID TABLE ID");
         }
@@ -212,6 +340,16 @@ internal sealed class MiniGameCommandDialog : Form
         {
             var id = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
             var blackjack = IsBlackjack();
+            var roulette = IsRoulette();
+            if (IsPotions())
+            {
+                chipsLabel.Text = "Not used by Potions";
+                status.ForeColor = DrawingColor.Gold;
+                status.Text = "Royal Alchemy rewards are real Intersect items configured globally in the Potion Recipes tab. " +
+                    "The server validates every move, grants recipe XP, and delivers the configured output item.";
+                return;
+            }
+            EnsureBlackjackReserve();
             reserve.Enabled = id != Guid.Empty && !unlimitedNpcBankroll.Checked;
             unlimitedNpcBankroll.Enabled = id != Guid.Empty && !blackjack;
             if (id == Guid.Empty)
@@ -220,25 +358,53 @@ internal sealed class MiniGameCommandDialog : Form
                 status.Text = "TEST mode: no inventory items are taken or paid. Test XP stays in resources/minigames-test.db.";
                 return;
             }
-            chipsLabel.Text = "Buy-in (inventory item units)"; status.ForeColor = DrawingColor.Gold;
+
+            chipsLabel.Text = "Buy-in (inventory item units)";
             var item = ItemDescriptor.Get(id);
-            status.Text = !MiniGameCurrency.IsCompatible(item)
-                ? "The selected item is missing or is no longer a compatible stackable item. Choose another item or test chips."
-                : $"Selected item: {item.Name}. ID: {id}.\n" +
-                    "FUNDED mode (SQLite player database): the buy-in is removed from inventory once. " +
-                    "The remaining balance is returned after leaving and settling the hand. Full inventory refunds wait safely. " +
-                    (blackjack
-                        ? "Blackjack always uses a finite house/dealer reserve; unlimited NPC funding is not enabled for this game. "
+            if (!MiniGameCurrency.IsCompatible(item))
+            {
+                status.ForeColor = DrawingColor.OrangeRed;
+                status.Text = "The selected item is missing or is no longer a compatible stackable item. Choose another item or test chips.";
+                return;
+            }
+
+            var itemName = ItemDescriptor.GetName(id);
+            status.ForeColor = DrawingColor.Gold;
+            status.Text = $"Selected item: {itemName}. ID: {id}.\n" +
+                $"FUNDED mode: entering the table removes exactly {chips.Value:N0} {itemName} from the player's main inventory as the buy-in. " +
+                "The remaining balance is returned after leaving and settling the hand. Full inventory refunds wait safely. " +
+                (blackjack
+                    ? "Blackjack uses a finite house/dealer reserve. "
+                    : roulette
+                        ? "Roulette uses the reserve as its house bank and must be able to cover a 35:1 straight-number win. "
                         : unlimitedNpcBankroll.Checked
-                            ? "UNLIMITED NPC BANKROLL is enabled: the server creates only the missing NPC buy-in when the house cannot fund a seat. " +
-                              "This is an intentional currency faucet so NPC opponents never disappear for lack of house funds. "
-                            : "NPC reserve creates an authorized house budget ONCE per map + Table ID + currency, shared across instances. " +
-                              "Reopening, restarting or editing this number does not refill an existing house. Zero means no initial NPC funds. ") +
-                    "Funded XP is separate from test XP. Back up the entire player database before enabling.";
+                            ? "UNLIMITED NPC BANKROLL is enabled: the server creates only the missing NPC buy-in when the house cannot fund a seat. "
+                            : "NPC reserve creates an authorized house budget once per map + Table ID + currency. ") +
+                "Funded XP is separate from test XP.";
+
+            if (blackjack)
+            {
+                var suggestedReserve = SuggestedBlackjackReserve();
+                status.Text += $"\nBlackjack dealer bank: {reserve.Value:N0} {itemName}. " +
+                    $"The editor keeps this at or above {suggestedReserve:N0} so the dealer can cover the configured table.";
+            }
+            else if (roulette)
+            {
+                var suggestedReserve = SuggestedRouletteReserve();
+                status.Text += $"\nRoulette house bank: {reserve.Value:N0} {itemName}. " +
+                    $"Minimum recommended reserve: {suggestedReserve:N0} to cover the configured maximum straight-number wager.";
+            }
         }
-        currency.SelectedIndexChanged += (_, _) => { ShowCurrencyStatus(); ShowSummary(); };
+        currency.SelectedIndexChanged += (_, _) => { ChangeCurrencyMode(); ShowCurrencyStatus(); ShowSummary(); };
+        chips.ValueChanged += (_, _) =>
+        {
+            if (currencyModeFunded) fundedBuyInValue = (long)chips.Value;
+            else testChipsValue = (long)chips.Value;
+            ShowCurrencyStatus(); ShowSummary();
+        };
+        reserve.ValueChanged += (_, _) => ShowCurrencyStatus();
         unlimitedNpcBankroll.CheckedChanged += (_, _) => ShowCurrencyStatus();
-        game.SelectedIndexChanged += (_, _) => { UpdateGameUi(); ShowCurrencyStatus(); ShowSummary(); };
+        game.SelectedIndexChanged += (_, _) => { UpdateGameUi(); EnsureRouletteReserve(); ShowCurrencyStatus(); ShowSummary(); };
         table.TextChanged += (_, _) => ShowSummary();
         seats.ValueChanged += (_, _) => ShowSummary();
         npcs.ValueChanged += (_, _) => ShowSummary();
@@ -246,9 +412,11 @@ internal sealed class MiniGameCommandDialog : Form
         small.ValueChanged += (_, _) => ShowSummary();
         big.ValueChanged += (_, _) => ShowSummary();
         automatic.CheckedChanged += (_, _) => ShowSummary();
-        blackjackMinimum.ValueChanged += (_, _) => ShowSummary();
-        blackjackMaximum.ValueChanged += (_, _) => ShowSummary();
+        blackjackMinimum.ValueChanged += (_, _) => { EnsureBlackjackReserve(); ShowCurrencyStatus(); ShowSummary(); };
+        blackjackMaximum.ValueChanged += (_, _) => { EnsureBlackjackReserve(); ShowCurrencyStatus(); ShowSummary(); };
         blackjackHitSoft17.CheckedChanged += (_, _) => ShowSummary();
+        rouletteMinimum.ValueChanged += (_, _) => ShowSummary();
+        rouletteMaximum.ValueChanged += (_, _) => { EnsureRouletteReserve(); ShowCurrencyStatus(); ShowSummary(); };
         UpdateGameUi();
         ShowCurrencyStatus();
         ShowSummary();
@@ -257,21 +425,29 @@ internal sealed class MiniGameCommandDialog : Form
         buttons.Controls.Add(cancel); buttons.Controls.Add(save); AcceptButton = save; CancelButton = cancel;
         save.Click += (_, _) =>
         {
-            var selected = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
-            if (selected != Guid.Empty && !MiniGameCurrency.IsCompatible(ItemDescriptor.Get(selected)))
+            EnsureBlackjackReserve();
+            EnsureRouletteReserve();
+            var selected = IsPotions() || IsCooking()
+                ? Guid.Empty
+                : (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
+            if (!IsPotions() && !IsCooking() && selected != Guid.Empty && !MiniGameCurrency.IsCompatible(ItemDescriptor.Get(selected)))
             {
                 MessageBox.Show(this, "The selected item is missing or incompatible. Select a Currency or another stackable item.",
                     "Invalid table currency", MessageBoxButtons.OK, MessageBoxIcon.Warning); return;
             }
             var draft = new StartMiniGameCommand
             {
-                Game = ((GameChoice)game.SelectedItem!).Type, TableId = table.Text, MaxPlayers = (int)seats.Value, CurrencyItemId = selected,
+                Game = ((GameChoice)game.SelectedItem!).Type, TableId = table.Text,
+                MaxPlayers = IsPotions() || IsRoulette() ? 1 : IsCooking() ? 2 : (int)seats.Value, CurrencyItemId = selected,
                 StartingChips = (long)chips.Value, NpcReserve = (long)reserve.Value,
                 UnlimitedNpcBankroll = unlimitedNpcBankroll.Checked,
                 BlackjackMinimumBet = (long)blackjackMinimum.Value, BlackjackMaximumBet = (long)blackjackMaximum.Value,
                 BlackjackHitSoft17 = blackjackHitSoft17.Checked,
+                RouletteMinimumBet = (long)rouletteMinimum.Value, RouletteMaximumBet = (long)rouletteMaximum.Value,
                 SmallBlind = (long)small.Value, BigBlind = (long)big.Value, TurnSeconds = (int)seconds.Value,
-                DealerPlays = dealer.Checked, NpcPlayers = (int)npcs.Value, AutoStart = automatic.Checked,
+                DealerPlays = IsPotions() || IsRoulette() || IsCooking() ? false : dealer.Checked,
+                NpcPlayers = IsPotions() || IsRoulette() || IsCooking() ? 0 : (int)npcs.Value,
+                AutoStart = IsPotions() || IsRoulette() || IsCooking() ? false : automatic.Checked,
                 DealAnimationId = ((AnimationChoice)animation.SelectedItem!).Id, AnnounceWins = announce.Checked,
                 VictoryAnimationId = ((AnimationChoice)victory.SelectedItem!).Id, NpcCardBackId = backs.SelectedIndex,
                 DealSound = ((SoundChoice)dealSound.SelectedItem!).File, CheckSound = ((SoundChoice)checkSound.SelectedItem!).File,
@@ -298,7 +474,7 @@ internal sealed class MiniGameCommandDialog : Form
             if (!draft.HasValidSettings())
             {
                 MessageBox.Show(this,
-                    "Check the highlighted summary. Use a valid Table ID, seat count and rules; Poker needs valid blinds and Blackjack needs even min/max bets. At least one human seat must remain.",
+                    "Check the highlighted summary. Poker needs valid blinds, Blackjack needs even min/max bets, Roulette needs a valid house reserve, and Royal Kitchen uses global Cooking Recipes with no table currency.",
                     "Invalid mini-game configuration", MessageBoxButtons.OK, MessageBoxIcon.Warning); return;
             }
             command.Game = draft.Game; command.TableId = draft.TableId; command.MaxPlayers = draft.MaxPlayers;
@@ -306,6 +482,7 @@ internal sealed class MiniGameCommandDialog : Form
             command.UnlimitedNpcBankroll = draft.UnlimitedNpcBankroll;
             command.BlackjackMinimumBet = draft.BlackjackMinimumBet; command.BlackjackMaximumBet = draft.BlackjackMaximumBet;
             command.BlackjackHitSoft17 = draft.BlackjackHitSoft17;
+            command.RouletteMinimumBet = draft.RouletteMinimumBet; command.RouletteMaximumBet = draft.RouletteMaximumBet;
             command.StartingChips = draft.StartingChips; command.SmallBlind = draft.SmallBlind; command.BigBlind = draft.BigBlind;
             command.TurnSeconds = draft.TurnSeconds; command.DealerPlays = draft.DealerPlays; command.NpcPlayers = draft.NpcPlayers;
             command.AutoStart = draft.AutoStart; command.DealAnimationId = draft.DealAnimationId; command.AnnounceWins = draft.AnnounceWins;
@@ -323,6 +500,7 @@ internal sealed class MiniGameCommandDialog : Form
             command.AnimateDealCards = draft.AnimateDealCards; command.AnimateBoardCards = draft.AnimateBoardCards;
             command.AnimateChips = draft.AnimateChips; command.AnimateShowdown = draft.AnimateShowdown;
             command.AnimateShuffle = draft.AnimateShuffle; command.AnimateAllIn = draft.AnimateAllIn;
+            // Preserve legacy data for backwards compatibility; runtime rewards are global.
             command.LevelRewards = draft.LevelRewards.ToArray();
             DialogResult = DialogResult.OK; Close();
         };

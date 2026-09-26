@@ -520,7 +520,14 @@ public partial class MapInstance : IMapInstance
     /// <param name="npcId">NPC Entity ID to spawn</param>
     /// <param name="despawnable">Whether or not this NPC can be despawned (for example, if spawned via event command)</param>
     /// <returns></returns>
-    public Npc SpawnNpc(byte tileX, byte tileY, Direction dir, Guid npcId, bool despawnable = false)
+    public Npc SpawnNpc(
+        byte tileX,
+        byte tileY,
+        Direction dir,
+        Guid npcId,
+        bool despawnable = false,
+        Action<Npc>? configure = null
+    )
     {
         var npcBase = NPCDescriptor.Get(npcId);
         if (npcBase != null)
@@ -535,6 +542,7 @@ public partial class MapInstance : IMapInstance
                 MapInstanceId = processLayer
             };
 
+            configure?.Invoke(npc);
             AddEntity(npc);
             PacketSender.SendEntityDataToProximity(npc);
 

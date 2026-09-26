@@ -27,9 +27,23 @@ public partial class FrmEvent : Form
 
     private static string mCopyLists = null;
 
+    private sealed record QuestArrowChoice(Guid Id, string Text)
+    {
+        public override string ToString() => Text;
+    }
+
     private readonly List<CommandListProperties> mCommandProperties = new List<CommandListProperties>();
 
     private readonly MapDescriptor mCurrentMap;
+
+    private readonly DarkGroupBox _questArrowGroup = new();
+    private readonly DarkCheckBox _questArrowEnabled = new();
+    private readonly DarkComboBox _questArrowQuest = new();
+    private readonly DarkComboBox _questArrowTask = new();
+    private readonly Label _questArrowQuestLabel = new();
+    private readonly Label _questArrowTaskLabel = new();
+    private bool _loadingQuestArrow;
+    private bool _questArrowSupported;
 
     public EventPage CurrentPage;
 
@@ -444,6 +458,11 @@ public partial class FrmEvent : Form
         CurrentPage.AnimationId = AnimationDescriptor.IdFromList(cmbAnimation.SelectedIndex - 1);
     }
 
+    private void chkWorldMapAnimation_CheckedChanged(object sender, EventArgs e)
+    {
+        CurrentPage.ShowAnimationOnWorldMap = chkWorldMapAnimation.Checked;
+    }
+
     private void chkIsGlobal_CheckedChanged(object sender, EventArgs e)
     {
         MyEvent.Global = chkIsGlobal.Checked;
@@ -577,6 +596,10 @@ public partial class FrmEvent : Form
                 break;
             case EventCommandType.GiveExperience:
                 tmpCommand = new GiveExperienceCommand();
+
+                break;
+            case EventCommandType.ModifyProfession:
+                tmpCommand = new ModifyProfessionCommand();
 
                 break;
             case EventCommandType.ChangeLevel:
@@ -755,6 +778,10 @@ public partial class FrmEvent : Form
                 tmpCommand = new ScreenFadeCommand();
 
                 break;
+            case EventCommandType.OpenLogiklikNews:
+                tmpCommand = new OpenLogiklikNewsCommand();
+
+                break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -792,9 +819,166 @@ public partial class FrmEvent : Form
     public FrmEvent(MapDescriptor currentMap)
     {
         InitializeComponent();
+        AddProfessionCommands();
+        InitializeQuestArrowControls();
         Icon = Program.Icon;
 
         mCurrentMap = currentMap;
+    }
+
+    private void AddProfessionCommands()
+    {
+        if (lstCommands.Nodes.Cast<TreeNode>().Any(node => node.Name == "professions"))
+            return;
+
+        var root = new TreeNode("Professions") { Name = "professions" };
+        root.Nodes.Add(
+            new TreeNode("Modify Profession")
+            {
+                Name = "modifyprofession",
+                Tag = (int)EventCommandType.ModifyProfession,
+            }
+        );
+        lstCommands.Nodes.Add(root);
+    }
+
+    private void InitializeQuestArrowControls()
+    {
+        _questArrowGroup.Text = "Quest Arrow";
+        _questArrowGroup.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+        _questArrowGroup.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+        _questArrowGroup.ForeColor = System.Drawing.Color.Gainsboro;
+        _questArrowGroup.Location = new System.Drawing.Point(4, 624);
+        _questArrowGroup.Size = new Size(380, 124);
+
+        _questArrowEnabled.Text = "Enable quest arrow for this event page";
+        _questArrowEnabled.AutoSize = true;
+        _questArrowEnabled.Location = new System.Drawing.Point(10, 21);
+        _questArrowEnabled.CheckedChanged += (_, _) =>
+        {
+            if (_loadingQuestArrow || CurrentPage == null) return;
+            CurrentPage.QuestArrowEnabled = _questArrowEnabled.Checked;
+            UpdateQuestArrowEnabledState();
+        };
+
+        _questArrowQuestLabel.Text = "Quest:";
+        _questArrowQuestLabel.AutoSize = true;
+        _questArrowQuestLabel.Location = new System.Drawing.Point(10, 53);
+
+        _questArrowQuest.DropDownStyle = ComboBoxStyle.DropDownList;
+        _questArrowQuest.Location = new System.Drawing.Point(70, 49);
+        _questArrowQuest.Size = new Size(294, 24);
+        _questArrowQuest.SelectedIndexChanged += (_, _) =>
+        {
+            if (_loadingQuestArrow || CurrentPage == null) return;
+            var choice = _questArrowQuest.SelectedItem as QuestArrowChoice;
+            CurrentPage.QuestArrowQuestId = choice?.Id ?? Guid.Empty;
+            FillQuestArrowTasks(CurrentPage.QuestArrowQuestId, Guid.Empty);
+            CurrentPage.QuestArrowTaskId =
+                (_questArrowTask.SelectedItem as QuestArrowChoice)?.Id ?? Guid.Empty;
+            UpdateQuestArrowEnabledState();
+        };
+
+        _questArrowTaskLabel.Text = "Task:";
+        _questArrowTaskLabel.AutoSize = true;
+        _questArrowTaskLabel.Location = new System.Drawing.Point(10, 85);
+
+        _questArrowTask.DropDownStyle = ComboBoxStyle.DropDownList;
+        _questArrowTask.Location = new System.Drawing.Point(70, 81);
+        _questArrowTask.Size = new Size(294, 24);
+        _questArrowTask.SelectedIndexChanged += (_, _) =>
+        {
+            if (_loadingQuestArrow || CurrentPage == null) return;
+            CurrentPage.QuestArrowTaskId =
+                (_questArrowTask.SelectedItem as QuestArrowChoice)?.Id ?? Guid.Empty;
+            UpdateQuestArrowEnabledState();
+        };
+
+        _questArrowGroup.Controls.Add(_questArrowEnabled);
+        _questArrowGroup.Controls.Add(_questArrowQuestLabel);
+        _questArrowGroup.Controls.Add(_questArrowQuest);
+        _questArrowGroup.Controls.Add(_questArrowTaskLabel);
+        _questArrowGroup.Controls.Add(_questArrowTask);
+        pnlEditorComponents.Controls.Add(_questArrowGroup);
+        _questArrowGroup.BringToFront();
+    }
+
+    private void FillQuestArrowQuests()
+    {
+        _loadingQuestArrow = true;
+        _questArrowQuest.Items.Clear();
+        _questArrowQuest.Items.Add(new QuestArrowChoice(Guid.Empty, "None"));
+
+        for (var index = 0; index < QuestDescriptor.Names.Length; ++index)
+        {
+            var id = QuestDescriptor.IdFromList(index);
+            if (id == Guid.Empty) continue;
+            _questArrowQuest.Items.Add(new QuestArrowChoice(id, QuestDescriptor.Names[index]));
+        }
+
+        if (_questArrowQuest.Items.Count > 0)
+            _questArrowQuest.SelectedIndex = 0;
+        _loadingQuestArrow = false;
+    }
+
+    private void FillQuestArrowTasks(Guid questId, Guid selectedTaskId)
+    {
+        var previousLoading = _loadingQuestArrow;
+        _loadingQuestArrow = true;
+        _questArrowTask.Items.Clear();
+        _questArrowTask.Items.Add(new QuestArrowChoice(Guid.Empty, "None"));
+
+        var selectedIndex = 0;
+        if (questId != Guid.Empty && QuestDescriptor.TryGet(questId, out var quest))
+        {
+            for (var index = 0; index < quest.Tasks.Count; ++index)
+            {
+                var task = quest.Tasks[index];
+                var description = string.IsNullOrWhiteSpace(task.Description)
+                    ? task.Objective.ToString()
+                    : task.Description;
+                _questArrowTask.Items.Add(
+                    new QuestArrowChoice(task.Id, $"Task {index + 1}: {description}")
+                );
+                if (task.Id == selectedTaskId)
+                    selectedIndex = _questArrowTask.Items.Count - 1;
+            }
+        }
+
+        _questArrowTask.SelectedIndex = selectedIndex;
+        _loadingQuestArrow = previousLoading;
+    }
+
+    private void LoadQuestArrowControls()
+    {
+        if (!_questArrowSupported || CurrentPage == null) return;
+
+        _loadingQuestArrow = true;
+        _questArrowEnabled.Checked = CurrentPage.QuestArrowEnabled;
+
+        var questIndex = 0;
+        for (var index = 0; index < _questArrowQuest.Items.Count; ++index)
+        {
+            if ((_questArrowQuest.Items[index] as QuestArrowChoice)?.Id == CurrentPage.QuestArrowQuestId)
+            {
+                questIndex = index;
+                break;
+            }
+        }
+
+        _questArrowQuest.SelectedIndex = questIndex;
+        FillQuestArrowTasks(CurrentPage.QuestArrowQuestId, CurrentPage.QuestArrowTaskId);
+        _loadingQuestArrow = false;
+        UpdateQuestArrowEnabledState();
+    }
+
+    private void UpdateQuestArrowEnabledState()
+    {
+        var enabled = _questArrowSupported && _questArrowEnabled.Checked;
+        _questArrowQuest.Enabled = enabled;
+        _questArrowTask.Enabled =
+            enabled &&
+            (_questArrowQuest.SelectedItem as QuestArrowChoice)?.Id != Guid.Empty;
     }
 
     private Size _defaultFormSize;
@@ -961,11 +1145,19 @@ public partial class FrmEvent : Form
 
         for (var i = 0; i < lstCommands.Nodes.Count; i++)
         {
-            lstCommands.Nodes[i].Text = Strings.EventCommands.commands[lstCommands.Nodes[i].Name];
-            for (var x = 0; x < lstCommands.Nodes[i].Nodes.Count; x++)
+            var parentNode = lstCommands.Nodes[i];
+            if (Strings.EventCommands.commands.TryGetValue(parentNode.Name, out var parentText))
             {
-                lstCommands.Nodes[i].Nodes[x].Text =
-                    Strings.EventCommands.commands[lstCommands.Nodes[i].Nodes[x].Name];
+                parentNode.Text = parentText;
+            }
+
+            for (var x = 0; x < parentNode.Nodes.Count; x++)
+            {
+                var childNode = parentNode.Nodes[x];
+                if (Strings.EventCommands.commands.TryGetValue(childNode.Name, out var childText))
+                {
+                    childNode.Text = childText;
+                }
             }
         }
     }
@@ -1003,6 +1195,11 @@ public partial class FrmEvent : Form
         cmbAnimation.Items.Add(Strings.General.None);
         cmbAnimation.Items.AddRange(AnimationDescriptor.Names);
         chkParallelRun.Checked = MyEvent.CanRunInParallel;
+
+        _questArrowSupported = !MyEvent.CommonEvent && !questEvent;
+        _questArrowGroup.Visible = _questArrowSupported;
+        if (_questArrowSupported)
+            FillQuestArrowQuests();
         if (MyEvent.CommonEvent || questEvent)
         {
             grpEntityOptions.Hide();
@@ -1091,6 +1288,7 @@ public partial class FrmEvent : Form
         }
 
         cmbAnimation.SelectedIndex = AnimationDescriptor.ListIndex(CurrentPage.AnimationId) + 1;
+        chkWorldMapAnimation.Checked = CurrentPage.ShowAnimationOnWorldMap;
         chkHideName.Checked = Convert.ToBoolean(CurrentPage.HideName);
         chkDisableInspector.Checked = Convert.ToBoolean(CurrentPage.DisablePreview);
         chkDirectionFix.Checked = Convert.ToBoolean(CurrentPage.DirectionFix);
@@ -1098,6 +1296,7 @@ public partial class FrmEvent : Form
         chkInteractionFreeze.Checked = Convert.ToBoolean(CurrentPage.InteractionFreeze);
         chkIgnoreNpcAvoids.Checked = Convert.ToBoolean(CurrentPage.IgnoreNpcAvoids);
         txtDesc.Text = CurrentPage.Description;
+        LoadQuestArrowControls();
         ListPageCommands();
         UpdateEventPreview();
         EnableButtons();
@@ -1235,6 +1434,10 @@ public partial class FrmEvent : Form
                 break;
             case EventCommandType.GiveExperience:
                 cmdWindow = new EventCommandGiveExperience((GiveExperienceCommand)command, this);
+
+                break;
+            case EventCommandType.ModifyProfession:
+                cmdWindow = new EventCommandProfession((ModifyProfessionCommand)command, this);
 
                 break;
             case EventCommandType.ChangeLevel:
@@ -1399,6 +1602,8 @@ public partial class FrmEvent : Form
             case EventCommandType.Fade:
                 cmdWindow = new EventCommand_ScreenFade((ScreenFadeCommand)command, this);
 
+                break;
+            case EventCommandType.OpenLogiklikNews:
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

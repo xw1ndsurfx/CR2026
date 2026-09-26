@@ -11,9 +11,10 @@ public sealed record MiniGameProgress(long Experience = 0, long Wins = 0, int Se
     public int Level => MiniGameProgression.Level(Experience);
     public bool IsValid => Experience >= 0 && Experience <= MiniGameProgression.MaximumExperience &&
         Wins >= 0 && MiniGameProgression.IsUnlocked(SelectedBack, Experience);
-    public MiniGameProgress WithWin() => this with
+    public MiniGameProgress WithWin() => WithExperience(MiniGameProgression.ExperiencePerWin);
+    public MiniGameProgress WithExperience(long amount) => this with
     {
-        Experience = Math.Min(MiniGameProgression.MaximumExperience, Experience + MiniGameProgression.ExperiencePerWin),
+        Experience = Math.Min(MiniGameProgression.MaximumExperience, Experience + Math.Max(0, amount)),
         Wins = Wins == long.MaxValue ? Wins : Wins + 1,
     };
 }
@@ -24,6 +25,7 @@ public interface IMiniGameProgressStore
     MiniGameProgress Load(Guid character, string game);
     MiniGameProgress SelectBack(Guid character, string game, int backId);
     MiniGameProgress AwardWin(Guid character, string game, Guid tableInstance, long hand);
+    MiniGameProgress AwardExperience(Guid character, string game, Guid receiptGroup, long receiptId, long experience);
 }
 
 public static class MiniGameProgressKeys
@@ -69,6 +71,17 @@ public sealed class MemoryMiniGameProgressStore : IMiniGameProgressStore
             var profile = Load(character, game);
             if (!_receipts.Add((character, game, tableInstance, hand))) return profile;
             return _profiles[(character, game)] = profile.WithWin();
+        }
+    }
+    public MiniGameProgress AwardExperience(Guid character, string game, Guid receiptGroup, long receiptId, long experience)
+    {
+        MiniGameProgressKeys.ValidateReceipt(receiptGroup, receiptId);
+        if (experience is < 1 or > 5_000) throw new ArgumentOutOfRangeException(nameof(experience));
+        lock (_gate)
+        {
+            var profile = Load(character, game);
+            if (!_receipts.Add((character, game, receiptGroup, receiptId))) return profile;
+            return _profiles[(character, game)] = profile.WithExperience(experience);
         }
     }
 }

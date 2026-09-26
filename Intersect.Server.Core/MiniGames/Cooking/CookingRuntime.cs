@@ -1,0 +1,1280 @@
+#nullable enable
+using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.MiniGames.Cooking;
+using Intersect.Network.Packets.Client;
+using Intersect.Network.Packets.MiniGames;
+using Intersect.Network.Packets.Server;
+using Intersect.Server.Entities;
+using Intersect.Server.MiniGames.Blackjack;
+using Intersect.Server.MiniGames.Poker;
+using Intersect.Server.MiniGames.Potions;
+using Intersect.Server.MiniGames.Roulette;
+using Intersect.Server.Networking;
+using Intersect.Server.Professions;
+
+namespace Intersect.Server.MiniGames.Cooking;
+
+internal static class CookingRuntime
+{
+    private sealed class Participant
+    {
+        public required Player Player;
+        public required Client Client;
+        public int Actions;
+        public int ScoreTotal;
+        public int ScoredActions;
+    }
+
+    private sealed class Session
+    {
+        public required Guid Id;
+        public required Participant Host;
+        public Participant? Partner;
+        public CookingRecipeDefinition? Recipe;
+        public bool WaitingForPartner;
+        public bool PartnerAccepted;
+        public bool IngredientsConsumed;
+        public bool Complete;
+        public int StageIndex = -1;
+        public long StageStartedUnixMs;
+        public int StageTargetPermille;
+        public int StageScoreTotal;
+        public int StageScoredActions;
+        public int StageMeterPermille;
+        public int Combo;
+        public int PeakCombo;
+        public int Mishaps;
+        public long ActionSequence;
+        public int LastActionScore;
+        public long ComicEventSequence;
+        public CookingComicEventType ComicEventType;
+        public string ComicEventText = string.Empty;
+        public readonly Dictionary<Guid, int> StageActions = [];
+        public readonly List<int> CompletedStageScores = [];
+        public long Revision;
+        public long LastHostRequest;
+        public long LastPartnerRequest;
+        public CookingQuality Quality;
+        public int TeamScore;
+        public string RewardText = string.Empty;
+        public readonly Dictionary<Guid, long> AwardedExperience = [];
+        public string Status = "Choose a recipe and cook alone or with a party member.";
+    }
+
+    private const int PartnerRange = 8;
+    private static readonly object Gate = new();
+    private static readonly Dictionary<Guid, Session> SessionsByPlayer = [];
+    private static long _sequence;
+    private static readonly System.Threading.Timer Timer =
+        new(_ => Sweep(), null, TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(500));
+
+    internal static bool Contains(Guid playerId)
+    {
+        lock (Gate) return SessionsByPlayer.ContainsKey(playerId);
+    }
+
+    internal static bool Join(Player player)
+    {
+        _ = Timer;
+
+        if (player.Client is not { IsEditor: false } client)
+            return false;
+
+        if (PokerRuntime.HasSeat(player.Id) ||
+            BlackjackRuntime.Contains(player.Id) ||
+            PotionRuntime.Contains(player.Id) ||
+            RouletteRuntime.Contains(player.Id))
+        {
+            return false;
+        }
+
+        CookingStatePacket packet;
+        lock (Gate)
+        {
+            if (SessionsByPlayer.TryGetValue(player.Id, out var existing))
+            {
+                packet = Project(existing, player, 0);
+            }
+            else
+            {
+                var session = new Session
+                {
+                    Id = Guid.NewGuid(),
+                    Host = new Participant { Player = player, Client = client },
+                };
+                SessionsByPlayer[player.Id] = session;
+                packet = Project(session, player, 0);
+            }
+        }
+
+        SafeSend(client, packet);
+        return true;
+    }
+
+    internal static bool Leave(Player player)
+    {
+        Session? session;
+        lock (Gate)
+        {
+            if (!SessionsByPlayer.TryGetValue(player.Id, out session))
+                return false;
+
+            RemoveSession(session);
+        }
+
+        SendClosed(session, "LeftKitchen");
+        return true;
+    }
+
+    internal static void Handle(Client client, CookingRequestPacket request)
+    {
+        if (client.IsEditor || client.Entity is not { } player || !request.IsValid)
+            return;
+
+        Session? session;
+        lock (Gate)
+        {
+            if (!SessionsByPlayer.TryGetValue(player.Id, out session) ||
+                session.Id != request.SessionId)
+            {
+                return;
+            }
+
+            var participant = GetParticipant(session, player.Id);
+            if (participant == null || !ReferenceEquals(participant.Client, client))
+                return;
+
+            ref long lastRequest = ref (
+                player.Id == session.Host.Player.Id
+                    ? ref session.LastHostRequest
+                    : ref session.LastPartnerRequest
+            );
+
+            if (request.RequestId <= lastRequest)
+                return;
+
+            lastRequest = request.RequestId;
+
+            switch (request.Kind)
+            {
+                case CookingRequestKind.Refresh:
+                    SafeSend(client, Project(session, player, request.RequestId));
+                    return;
+
+                case CookingRequestKind.Leave:
+                    RemoveSession(session);
+                    break;
+
+                case CookingRequestKind.StartRecipe:
+                    HandleStartRecipe(session, player, request, client);
+                    return;
+
+                case CookingRequestKind.RespondInvite:
+                    HandleInviteResponse(session, player, request, client);
+                    return;
+
+                case CookingRequestKind.Action:
+                    HandleAction(session, player, request, client);
+                    return;
+
+                case CookingRequestKind.ReturnToRecipes:
+                    HandleReturnToRecipes(session, player, request, client);
+                    return;
+            }
+        }
+
+        SendClosed(session!, "LeftKitchen");
+    }
+
+    private static void HandleStartRecipe(
+        Session session,
+        Player player,
+        CookingRequestPacket request,
+        Client client
+    )
+    {
+        if (player.Id != session.Host.Player.Id ||
+            session.Recipe != null ||
+            session.WaitingForPartner ||
+            session.Complete)
+        {
+            SafeSend(client, Project(session, player, request.RequestId, "CannotStartRecipe"));
+            return;
+        }
+
+        var recipe = RewardConfigurationRuntime.Current.CookingRecipes
+            .FirstOrDefault(value => value.IsStructurallyValid && value.Id == request.RecipeId);
+
+        if (recipe == null)
+        {
+            SafeSend(client, Project(session, player, request.RequestId, "RecipeNotFound"));
+            return;
+        }
+
+        var hostLevel = ProfessionRuntime.GetLevel(player, recipe.ProfessionId);
+        if (!RecipeUnlocked(player, recipe, hostLevel))
+        {
+            SafeSend(
+                client,
+                Project(
+                    session,
+                    player,
+                    request.RequestId,
+                    recipe.RequiredProfessionLevel > Math.Max(1, hostLevel)
+                        ? "ProfessionLevelTooLow"
+                        : "RecipeEventLocked"
+                )
+            );
+            return;
+        }
+
+        session.Recipe = recipe;
+
+        if (request.PartnerId == Guid.Empty)
+        {
+            if (!recipe.AllowSolo || recipe.RequireCoop)
+            {
+                session.Recipe = null;
+                SafeSend(client, Project(session, player, request.RequestId, "CoopRequired"));
+                return;
+            }
+
+            if (!HasIngredients([player], recipe))
+            {
+                session.Recipe = null;
+                SafeSend(client, Project(session, player, request.RequestId, "MissingIngredients"));
+                return;
+            }
+
+            if (!ConsumeIngredients([player], recipe))
+            {
+                session.Recipe = null;
+                SafeSend(client, Project(session, player, request.RequestId, "InventoryChanged"));
+                return;
+            }
+
+            session.IngredientsConsumed = true;
+            BeginFirstStage(session);
+            Broadcast(session, request.RequestId);
+            return;
+        }
+
+        if (!recipe.AllowCoop)
+        {
+            session.Recipe = null;
+            SafeSend(client, Project(session, player, request.RequestId, "CoopNotAllowed"));
+            return;
+        }
+
+        var partner = player.Party.FirstOrDefault(member => member.Id == request.PartnerId);
+        if (partner == null ||
+            partner.Id == player.Id ||
+            partner.Client is not { IsEditor: false } partnerClient ||
+            partner.MapId != player.MapId ||
+            partner.MapInstanceId != player.MapInstanceId ||
+            !player.InRangeOf(partner, PartnerRange) ||
+            SessionsByPlayer.ContainsKey(partner.Id) ||
+            PokerRuntime.HasSeat(partner.Id) ||
+            BlackjackRuntime.Contains(partner.Id) ||
+            PotionRuntime.Contains(partner.Id) ||
+            RouletteRuntime.Contains(partner.Id))
+        {
+            session.Recipe = null;
+            SafeSend(client, Project(session, player, request.RequestId, "PartnerUnavailable"));
+            return;
+        }
+
+        var partnerLevel = ProfessionRuntime.GetLevel(partner, recipe.ProfessionId);
+        if (!RecipeUnlocked(partner, recipe, partnerLevel))
+        {
+            session.Recipe = null;
+            SafeSend(client, Project(session, player, request.RequestId, "PartnerRecipeLocked"));
+            return;
+        }
+
+        session.Partner = new Participant { Player = partner, Client = partnerClient };
+        session.WaitingForPartner = true;
+        SessionsByPlayer[partner.Id] = session;
+        session.Status = $"{player.Name} invited {partner.Name} to cook {recipe.Name}.";
+        ++session.Revision;
+        Broadcast(session, request.RequestId);
+    }
+
+    private static void HandleInviteResponse(
+        Session session,
+        Player player,
+        CookingRequestPacket request,
+        Client client
+    )
+    {
+        if (!session.WaitingForPartner ||
+            session.Partner?.Player.Id != player.Id ||
+            session.Recipe == null)
+        {
+            SafeSend(client, Project(session, player, request.RequestId, "NoCookingInvite"));
+            return;
+        }
+
+        if (!request.Accept)
+        {
+            var partner = session.Partner;
+            if (partner != null)
+                SessionsByPlayer.Remove(partner.Player.Id);
+
+            session.Partner = null;
+            session.WaitingForPartner = false;
+            session.Recipe = null;
+            session.Status = "Cooking invitation declined.";
+            ++session.Revision;
+            SafeSend(client, ClosedPacket(session, player, request.RequestId, "InviteDeclined"));
+            SafeSend(session.Host.Client, Project(session, session.Host.Player, 0, "InviteDeclined"));
+            return;
+        }
+
+        var host = session.Host.Player;
+        var partnerPlayer = session.Partner.Player;
+
+        if (!host.Party.Contains(partnerPlayer) ||
+            host.MapId != partnerPlayer.MapId ||
+            host.MapInstanceId != partnerPlayer.MapInstanceId ||
+            !host.InRangeOf(partnerPlayer, PartnerRange))
+        {
+            SafeSend(client, Project(session, player, request.RequestId, "PartnerUnavailable"));
+            return;
+        }
+
+        var players = new[] { host, partnerPlayer };
+        if (!HasIngredients(players, session.Recipe))
+        {
+            SafeSend(client, Project(session, player, request.RequestId, "MissingIngredients"));
+            SafeSend(session.Host.Client, Project(session, host, 0, "MissingIngredients"));
+            return;
+        }
+
+        if (!ConsumeIngredients(players, session.Recipe))
+        {
+            SafeSend(client, Project(session, player, request.RequestId, "InventoryChanged"));
+            SafeSend(session.Host.Client, Project(session, host, 0, "InventoryChanged"));
+            return;
+        }
+
+        session.PartnerAccepted = true;
+        session.WaitingForPartner = false;
+        session.IngredientsConsumed = true;
+        session.Status = $"{host.Name} and {partnerPlayer.Name} are cooking together!";
+        BeginFirstStage(session);
+        Broadcast(session, request.RequestId);
+    }
+
+    private static void HandleReturnToRecipes(
+        Session session,
+        Player player,
+        CookingRequestPacket request,
+        Client client
+    )
+    {
+        if (!session.Complete)
+        {
+            SafeSend(client, Project(session, player, request.RequestId, "CookingNotComplete"));
+            return;
+        }
+
+        if (player.Id != session.Host.Player.Id)
+        {
+            SafeSend(client, Project(session, player, request.RequestId, "HostControlsKitchen"));
+            return;
+        }
+
+        var formerPartner = session.Partner;
+
+        session.Recipe = null;
+        session.Partner = null;
+        session.WaitingForPartner = false;
+        session.PartnerAccepted = false;
+        session.IngredientsConsumed = false;
+        session.Complete = false;
+        session.StageIndex = -1;
+        session.StageStartedUnixMs = 0;
+        session.StageTargetPermille = 0;
+        session.StageScoreTotal = 0;
+        session.StageScoredActions = 0;
+        session.StageMeterPermille = 0;
+        session.Combo = 0;
+        session.PeakCombo = 0;
+        session.Mishaps = 0;
+        session.LastActionScore = 0;
+        session.ComicEventText = string.Empty;
+        session.StageActions.Clear();
+        session.CompletedStageScores.Clear();
+        session.TeamScore = 0;
+        session.Quality = CookingQuality.Burnt;
+        session.RewardText = string.Empty;
+        session.AwardedExperience.Clear();
+        session.Status = "Choose another recipe.";
+        session.Host.Actions = 0;
+        session.Host.ScoreTotal = 0;
+        session.Host.ScoredActions = 0;
+        ++session.Revision;
+
+        if (formerPartner != null)
+        {
+            SessionsByPlayer.Remove(formerPartner.Player.Id);
+            SafeSend(
+                formerPartner.Client,
+                ClosedPacket(session, formerPartner.Player, 0, "HostReturnedToRecipes")
+            );
+        }
+
+        SafeSend(client, Project(session, player, request.RequestId));
+    }
+
+    private static void HandleAction(
+        Session session,
+        Player player,
+        CookingRequestPacket request,
+        Client client
+    )
+    {
+        if (session.Recipe == null ||
+            session.StageIndex < 0 ||
+            session.StageIndex >= session.Recipe.Stages.Length ||
+            session.Complete ||
+            session.WaitingForPartner)
+        {
+            SafeSend(client, Project(session, player, request.RequestId, "NoActiveStage"));
+            return;
+        }
+
+        var stage = session.Recipe.Stages[session.StageIndex];
+        if (!CanAct(session, player.Id, stage))
+        {
+            SafeSend(client, Project(session, player, request.RequestId, "NotYourStation"));
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var elapsed = now - session.StageStartedUnixMs;
+        if (elapsed < 0 || elapsed > stage.DurationSeconds * 1000L)
+        {
+            FinalizeStage(session);
+            Broadcast(session, request.RequestId);
+            return;
+        }
+
+        var score = ScoreAction(session, stage, elapsed, request.ActionInput);
+        var participant = GetParticipant(session, player.Id)!;
+        participant.Actions++;
+        participant.ScoreTotal += score;
+        participant.ScoredActions++;
+
+        session.StageScoreTotal += score;
+        session.StageScoredActions++;
+        session.ActionSequence++;
+        session.LastActionScore = score;
+        TryTriggerComicEvent(session, stage, score);
+        session.StageActions[player.Id] = session.StageActions.GetValueOrDefault(player.Id) + 1;
+
+        if (score >= 75)
+        {
+            session.Combo = Math.Min(999, session.Combo + 1);
+            session.PeakCombo = Math.Max(session.PeakCombo, session.Combo);
+        }
+        else
+        {
+            session.Combo = 0;
+            if (score < 40) session.Mishaps = Math.Min(999, session.Mishaps + 1);
+        }
+
+        session.Status = CookingStatus(stage.Type, score, player.Name, session.Combo, session.Mishaps);
+        ++session.Revision;
+
+        if (StageComplete(session, stage))
+            FinalizeStage(session);
+
+        Broadcast(session, request.RequestId);
+    }
+
+    private static void TryTriggerComicEvent(
+        Session session,
+        CookingStageDefinition stage,
+        int score
+    )
+    {
+        if (session.Recipe == null)
+            return;
+
+        var available = session.Recipe.ComicEvents ?? [];
+        if (available.Length == 0 || session.Recipe.ComicEventChancePercent <= 0)
+            return;
+
+        // Mishaps are deliberately more likely to produce comedy, but good play can still
+        // trigger harmless visual gags.
+        var chance = session.Recipe.ComicEventChancePercent + (score < 40 ? 22 : 0);
+        if (Random.Shared.Next(0, 100) >= Math.Clamp(chance, 0, 100))
+            return;
+
+        var compatible = available.Where(type => IsComicEventCompatible(type, stage.Type)).ToArray();
+        if (compatible.Length == 0)
+            compatible = available;
+
+        session.ComicEventType = compatible[Random.Shared.Next(compatible.Length)];
+        session.ComicEventText = ComicEventText(session.ComicEventType);
+        session.ComicEventSequence++;
+    }
+
+    private static bool IsComicEventCompatible(
+        CookingComicEventType comic,
+        CookingStageType stage
+    ) =>
+        comic switch
+        {
+            CookingComicEventType.PanOverflow => stage is CookingStageType.Heat or CookingStageType.Stir,
+            CookingComicEventType.EscapingIngredient => stage is CookingStageType.Chop or CookingStageType.Flip,
+            CookingComicEventType.SauceSplash => stage is CookingStageType.Stir or CookingStageType.Season,
+            CookingComicEventType.SmokeCloud => stage is CookingStageType.Heat or CookingStageType.Flip,
+            CookingComicEventType.FlyingFood => stage is CookingStageType.Flip or CookingStageType.Chop,
+            CookingComicEventType.WobblyPlate => stage == CookingStageType.Plate,
+            _ => true,
+        };
+
+    private static string ComicEventText(CookingComicEventType type) => type switch
+    {
+        CookingComicEventType.PanOverflow => "THE PAN IS OVERFLOWING! Somebody save the royal stove!",
+        CookingComicEventType.EscapingIngredient => "ESCAPING INGREDIENT! It clearly has dinner plans elsewhere.",
+        CookingComicEventType.SauceSplash => "SAUCE SPLASH! The kitchen wall has been seasoned.",
+        CookingComicEventType.SmokeCloud => "SMOKE CLOUD! The recipe has entered its mysterious phase.",
+        CookingComicEventType.FlyingFood => "FLYING FOOD! Five-second rule is not royal policy.",
+        CookingComicEventType.WobblyPlate => "WOBBLY PLATE! Nobody breathe near the table.",
+        _ => "Kitchen chaos!",
+    };
+
+    private static bool StageComplete(Session session, CookingStageDefinition stage)
+    {
+        var total = session.StageActions.Values.Sum();
+        if (total < stage.RequiredActions)
+            return false;
+
+        if (stage.Assignment == CookingStageAssignment.Both && session.Partner != null)
+        {
+            return session.StageActions.GetValueOrDefault(session.Host.Player.Id) > 0 &&
+                   session.StageActions.GetValueOrDefault(session.Partner.Player.Id) > 0;
+        }
+
+        return true;
+    }
+
+    private static int ScoreAction(
+        Session session,
+        CookingStageDefinition stage,
+        long elapsedMs,
+        CookingActionInput input
+    )
+    {
+        var duration = Math.Max(1, stage.DurationSeconds * 1000);
+        var tolerance = CookingStageRules.TargetTolerance(stage.Difficulty);
+
+        switch (stage.Type)
+        {
+            case CookingStageType.Heat:
+            {
+                var delta = input switch
+                {
+                    CookingActionInput.Primary => CookingStageRules.HeatStep(stage.Difficulty),
+                    CookingActionInput.Secondary => -CookingStageRules.HeatStep(stage.Difficulty),
+                    _ => 0,
+                };
+                if (delta == 0) return 15;
+                session.StageMeterPermille = CookingStageRules.MoveMeter(session.StageMeterPermille, delta);
+                return CookingStageRules.PrecisionScore(
+                    session.StageMeterPermille,
+                    session.StageTargetPermille,
+                    tolerance
+                );
+            }
+
+            case CookingStageType.Season:
+            {
+                var delta = input switch
+                {
+                    CookingActionInput.Primary => CookingStageRules.SeasonStep(stage.Difficulty),
+                    CookingActionInput.Secondary => -CookingStageRules.SeasonStep(stage.Difficulty),
+                    _ => 0,
+                };
+                if (delta == 0) return 15;
+                session.StageMeterPermille = CookingStageRules.MoveMeter(session.StageMeterPermille, delta);
+                return CookingStageRules.PrecisionScore(
+                    session.StageMeterPermille,
+                    session.StageTargetPermille,
+                    tolerance
+                );
+            }
+
+            case CookingStageType.Plate:
+                session.StageMeterPermille = input switch
+                {
+                    CookingActionInput.Primary => 200,
+                    CookingActionInput.Secondary => 500,
+                    CookingActionInput.Tertiary => 800,
+                    _ => session.StageMeterPermille,
+                };
+                return CookingStageRules.PlateScore(input, session.StageTargetPermille);
+
+            case CookingStageType.Stir:
+            case CookingStageType.Knead:
+            {
+                var actionNumber = session.StageActions.Values.Sum();
+                var expected = actionNumber % 2 == 0
+                    ? CookingActionInput.Primary
+                    : CookingActionInput.Secondary;
+                if (input != expected) return 15;
+
+                var cursor = CookingStageRules.TimingCursorPermille(
+                    elapsedMs,
+                    duration,
+                    stage.Difficulty
+                );
+                session.StageMeterPermille = cursor;
+                return CookingStageRules.PrecisionScore(cursor, session.StageTargetPermille, tolerance);
+            }
+
+            case CookingStageType.Chop:
+            case CookingStageType.Flip:
+            default:
+            {
+                if (input != CookingActionInput.Primary) return 15;
+                var cursor = CookingStageRules.TimingCursorPermille(
+                    elapsedMs,
+                    duration,
+                    stage.Difficulty
+                );
+                session.StageMeterPermille = cursor;
+                return CookingStageRules.PrecisionScore(cursor, session.StageTargetPermille, tolerance);
+            }
+        }
+    }
+
+    private static void BeginFirstStage(Session session)
+    {
+        session.StageIndex = 0;
+        session.CompletedStageScores.Clear();
+        session.TeamScore = 0;
+        session.Quality = CookingQuality.Burnt;
+        BeginStage(session);
+    }
+
+    private static void BeginStage(Session session)
+    {
+        if (session.Recipe == null || session.StageIndex >= session.Recipe.Stages.Length)
+        {
+            CompleteRecipe(session);
+            return;
+        }
+
+        session.StageStartedUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var stage = session.Recipe.Stages[session.StageIndex];
+        session.StageTargetPermille = stage.Type == CookingStageType.Plate
+            ? CookingStageRules.RandomPlateTarget(Random.Shared)
+            : Random.Shared.Next(180, 821);
+        session.StageMeterPermille = stage.Type switch
+        {
+            CookingStageType.Heat => 500,
+            CookingStageType.Season => 0,
+            CookingStageType.Plate => 500,
+            _ => 0,
+        };
+        session.StageScoreTotal = 0;
+        session.StageScoredActions = 0;
+        session.StageActions.Clear();
+        session.Combo = 0;
+        session.LastActionScore = 0;
+        session.Status = StagePrompt(stage.Type);
+        ++session.Revision;
+    }
+
+    private static void FinalizeStage(Session session)
+    {
+        if (session.Recipe == null || session.Complete)
+            return;
+
+        var score = session.StageScoredActions == 0
+            ? 0
+            : (int)Math.Round(session.StageScoreTotal / (double)session.StageScoredActions);
+
+        session.CompletedStageScores.Add(Math.Clamp(score, 0, 100));
+        session.StageIndex++;
+        BeginStage(session);
+    }
+
+    private static void CompleteRecipe(Session session)
+    {
+        if (session.Recipe == null || session.Complete)
+            return;
+
+        session.Complete = true;
+        session.StageIndex = session.Recipe.Stages.Length;
+        session.TeamScore = session.CompletedStageScores.Count == 0
+            ? 0
+            : (int)Math.Round(session.CompletedStageScores.Average());
+        session.Quality = CookingRecipeDefinition.QualityForScore(session.TeamScore);
+
+        var output = session.Recipe.OutputFor(session.Quality);
+        var participants = Participants(session).ToArray();
+        var totalActions = Math.Max(1, participants.Sum(value => value.Actions));
+        var rewardParts = new List<string>();
+
+        foreach (var participant in participants)
+        {
+            var player = participant.Player;
+
+            if (output != null)
+            {
+                if (player.TryGiveItem(
+                        output.ItemId,
+                        output.Quantity,
+                        ItemHandling.Normal,
+                        bankOverflow: true
+                    ))
+                {
+                    rewardParts.Add(
+                        $"{player.Name}: {output.Quantity:N0} x {ItemDescriptor.GetName(output.ItemId)}"
+                    );
+                }
+                else
+                {
+                    PacketSender.SendChatMsg(
+                        player,
+                        "[Cooking] Your meal could not be delivered. Free inventory/bank space.",
+                        ChatMessageType.Error,
+                        Color.White
+                    );
+                }
+            }
+
+            var share = participants.Length == 1
+                ? 1d
+                : participant.Actions / (double)totalActions;
+            var effortMultiplier = participants.Length == 1
+                ? 1d
+                : 0.5d + Math.Clamp(share * participants.Length, 0d, 1.5d) * 0.5d;
+            var xp = Math.Max(
+                1L,
+                (long)Math.Round(
+                    session.Recipe.ProfessionExperience *
+                    CookingRecipeDefinition.ExperienceMultiplier(session.Quality) *
+                    effortMultiplier,
+                    MidpointRounding.AwayFromZero
+                )
+            );
+
+            ProfessionRuntime.AwardActivity(player, session.Recipe.ProfessionId, xp);
+            session.AwardedExperience[player.Id] = xp;
+        }
+
+        session.RewardText = rewardParts.Count == 0
+            ? "Meal finished."
+            : string.Join(" | ", rewardParts);
+        session.Status =
+            $"{session.Quality}! Team score {session.TeamScore}% — " +
+            FunnyFinish(session.Quality);
+        ++session.Revision;
+    }
+
+    private static bool CanAct(Session session, Guid playerId, CookingStageDefinition stage)
+    {
+        var partnerId = session.Partner?.Player.Id ?? Guid.Empty;
+
+        return stage.Assignment switch
+        {
+            CookingStageAssignment.Host => playerId == session.Host.Player.Id,
+            CookingStageAssignment.Partner => partnerId == Guid.Empty
+                ? playerId == session.Host.Player.Id
+                : playerId == partnerId,
+            CookingStageAssignment.Both => playerId == session.Host.Player.Id || playerId == partnerId,
+            _ => partnerId == Guid.Empty
+                ? playerId == session.Host.Player.Id
+                : session.StageIndex % 2 == 0
+                    ? playerId == session.Host.Player.Id
+                    : playerId == partnerId,
+        };
+    }
+
+    private static bool RecipeUnlocked(Player player, CookingRecipeDefinition recipe, int level)
+    {
+        if (recipe.RequiredProfessionLevel > Math.Max(1, level))
+            return false;
+
+        if (recipe.UnlockPlayerVariableId == Guid.Empty)
+            return true;
+
+        return player.GetVariableValue(recipe.UnlockPlayerVariableId).Boolean;
+    }
+
+    private static bool HasIngredients(IEnumerable<Player> players, CookingRecipeDefinition recipe)
+    {
+        var group = players.ToArray();
+        return recipe.Ingredients.All(
+            ingredient =>
+                group.Sum(player => (long)player.FindInventoryItemQuantity(ingredient.ItemId)) >=
+                ingredient.Quantity
+        );
+    }
+
+    private static bool ConsumeIngredients(Player[] players, CookingRecipeDefinition recipe)
+    {
+        var snapshots = players.ToDictionary(
+            player => player.Id,
+            player => player.Items.Select(item => item.Clone()).ToArray()
+        );
+
+        try
+        {
+            foreach (var ingredient in recipe.Ingredients)
+            {
+                var remaining = ingredient.Quantity;
+                foreach (var player in players)
+                {
+                    if (remaining <= 0) break;
+
+                    var available = player.FindInventoryItemQuantity(ingredient.ItemId);
+                    var take = Math.Min(remaining, available);
+                    if (take <= 0) continue;
+
+                    if (!player.TryTakeItem(ingredient.ItemId, take, ItemHandling.Normal, sendUpdate: false))
+                        throw new InvalidOperationException("Inventory changed while reserving cooking ingredients.");
+
+                    remaining -= take;
+                }
+
+                if (remaining > 0)
+                    throw new InvalidOperationException("Cooking ingredients disappeared.");
+            }
+
+            foreach (var player in players)
+                PacketSender.SendInventory(player);
+
+            return true;
+        }
+        catch
+        {
+            foreach (var player in players)
+            {
+                var snapshot = snapshots[player.Id];
+                for (var index = 0; index < Math.Min(player.Items.Count, snapshot.Length); ++index)
+                    player.Items[index].Set(snapshot[index]);
+
+                PacketSender.SendInventory(player);
+            }
+
+            return false;
+        }
+    }
+
+    private static CookingStatePacket Project(
+        Session session,
+        Player viewer,
+        long requestId,
+        string error = ""
+    )
+    {
+        var recipe = session.Recipe;
+        var profession = recipe == null
+            ? null
+            : ProfessionConfigurationRuntime.Current.Find(recipe.ProfessionId);
+        var level = recipe == null ? 0 : ProfessionRuntime.GetLevel(viewer, recipe.ProfessionId);
+        var totalProfessionExperience = recipe == null ? 0L : ProfessionRuntime.GetExperience(viewer, recipe.ProfessionId);
+        var maximumProfessionLevel = profession?.MaximumLevel ?? 0;
+
+        var professionMaximumLevelReached =
+            profession != null &&
+            level >= profession.MaximumLevel &&
+            level > 0;
+
+        long professionExperienceIntoLevel = 0;
+        long professionExperienceRequiredForLevel = 0;
+        long professionExperienceToNextLevel = 0;
+        int professionExperiencePercent = professionMaximumLevelReached ? 100 : 0;
+
+        if (profession != null && level > 0 && !professionMaximumLevelReached)
+        {
+            var currentLevelStart = profession.ExperienceToReachLevel(level);
+            var nextLevelStart = profession.ExperienceToReachLevel(level + 1);
+            professionExperienceIntoLevel = Math.Max(0L, totalProfessionExperience - currentLevelStart);
+            professionExperienceRequiredForLevel = Math.Max(1L, nextLevelStart - currentLevelStart);
+            professionExperienceToNextLevel = Math.Max(0L, nextLevelStart - totalProfessionExperience);
+            professionExperiencePercent = (int)Math.Clamp(
+                Math.Round(
+                    (decimal)professionExperienceIntoLevel * 100m /
+                    professionExperienceRequiredForLevel,
+                    MidpointRounding.AwayFromZero
+                ),
+                0m,
+                100m
+            );
+        }
+        var stage = recipe != null &&
+                    session.StageIndex >= 0 &&
+                    session.StageIndex < recipe.Stages.Length
+            ? recipe.Stages[session.StageIndex]
+            : null;
+
+        var candidates = viewer.Id == session.Host.Player.Id && recipe == null
+            ? viewer.Party
+                .Where(member =>
+                    member.Id != viewer.Id &&
+                    member.Client is { IsEditor: false } &&
+                    member.MapId == viewer.MapId &&
+                    member.MapInstanceId == viewer.MapInstanceId &&
+                    viewer.InRangeOf(member, PartnerRange) &&
+                    !SessionsByPlayer.ContainsKey(member.Id))
+                .Select(member => new CookingPartyCandidate
+                {
+                    PlayerId = member.Id,
+                    Name = member.Name,
+                })
+                .ToArray()
+            : [];
+
+        var choices = recipe == null
+            ? RewardConfigurationRuntime.Current.CookingRecipes
+                .Where(value => value.IsStructurallyValid)
+                .OrderBy(value => value.RequiredProfessionLevel)
+                .ThenBy(value => value.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(value =>
+                {
+                    var viewerLevel = ProfessionRuntime.GetLevel(viewer, value.ProfessionId);
+                    var viewerTotalExperience = ProfessionRuntime.GetExperience(viewer, value.ProfessionId);
+                    var viewerProfession = ProfessionConfigurationRuntime.Current.Find(value.ProfessionId);
+                    var viewerMaximumLevel = viewerProfession?.MaximumLevel ?? 0;
+                    var viewerMaximumLevelReached =
+                        viewerProfession != null &&
+                        viewerLevel >= viewerProfession.MaximumLevel &&
+                        viewerLevel > 0;
+
+                    long viewerExperienceIntoLevel = 0;
+                    long viewerExperienceRequiredForLevel = 0;
+                    long viewerExperienceToNextLevel = 0;
+                    int viewerExperiencePercent = viewerMaximumLevelReached ? 100 : 0;
+
+                    if (viewerProfession != null && viewerLevel > 0 && !viewerMaximumLevelReached)
+                    {
+                        var currentLevelStart = viewerProfession.ExperienceToReachLevel(viewerLevel);
+                        var nextLevelStart = viewerProfession.ExperienceToReachLevel(viewerLevel + 1);
+                        viewerExperienceIntoLevel = Math.Max(0L, viewerTotalExperience - currentLevelStart);
+                        viewerExperienceRequiredForLevel = Math.Max(1L, nextLevelStart - currentLevelStart);
+                        viewerExperienceToNextLevel = Math.Max(0L, nextLevelStart - viewerTotalExperience);
+                        viewerExperiencePercent = (int)Math.Clamp(
+                            Math.Round(
+                                (decimal)viewerExperienceIntoLevel * 100m /
+                                viewerExperienceRequiredForLevel,
+                                MidpointRounding.AwayFromZero
+                            ),
+                            0m,
+                            100m
+                        );
+                    }
+
+                    var unlocked = RecipeUnlocked(viewer, value, viewerLevel);
+                    return new CookingRecipeSummary
+                    {
+                        Id = value.Id,
+                        Name = value.Name,
+                        RequiredLevel = value.RequiredProfessionLevel,
+                        Experience = value.ProfessionExperience,
+                        AllowSolo = value.AllowSolo,
+                        AllowCoop = value.AllowCoop,
+                        RequireCoop = value.RequireCoop,
+                        Unlocked = unlocked,
+                        LockedReason = unlocked
+                            ? string.Empty
+                            : value.RequiredProfessionLevel > Math.Max(1, viewerLevel)
+                                ? "Profession level too low"
+                                : "Event locked",
+                        Ingredients = value.Ingredients.Select(ingredient => new CookingIngredientState
+                        {
+                            ItemId = ingredient.ItemId,
+                            Name = ItemDescriptor.GetName(ingredient.ItemId),
+                            Needed = ingredient.Quantity,
+                            Available = viewer.FindInventoryItemQuantity(ingredient.ItemId),
+                        }).ToArray(),
+                        ProfessionName = viewerProfession?.Name ?? string.Empty,
+                        ProfessionLevel = viewerLevel,
+                        ProfessionMaximumLevel = viewerMaximumLevel,
+                        ProfessionExperienceIntoLevel = viewerExperienceIntoLevel,
+                        ProfessionExperienceRequiredForLevel = viewerExperienceRequiredForLevel,
+                        ProfessionExperienceToNextLevel = viewerExperienceToNextLevel,
+                        ProfessionExperiencePercent = viewerExperiencePercent,
+                        ProfessionMaximumLevelReached = viewerMaximumLevelReached,
+                    };
+                })
+                .ToArray()
+            : [];
+
+        var elapsed = stage == null
+            ? 0L
+            : Math.Max(0L, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - session.StageStartedUnixMs);
+        var duration = stage?.DurationSeconds * 1000 ?? 0;
+
+        return new CookingStatePacket
+        {
+            SessionId = session.Id,
+            PlayerId = viewer.Id,
+            Sequence = Interlocked.Increment(ref _sequence),
+            RequestId = requestId,
+            ServerUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            ErrorCode = error,
+            State = new CookingSessionState
+            {
+                Revision = session.Revision,
+                RecipeSelectionRequired = recipe == null,
+                WaitingForPartner = session.WaitingForPartner,
+                InvitePendingForYou =
+                    session.WaitingForPartner && session.Partner?.Player.Id == viewer.Id,
+                IsHost = viewer.Id == session.Host.Player.Id,
+                HostId = session.Host.Player.Id,
+                HostName = session.Host.Player.Name,
+                PartnerId = session.Partner?.Player.Id ?? Guid.Empty,
+                PartnerName = session.Partner?.Player.Name ?? string.Empty,
+                Recipes = choices,
+                PartyCandidates = candidates,
+                RecipeId = recipe?.Id ?? Guid.Empty,
+                RecipeName = recipe?.Name ?? string.Empty,
+                ProfessionLevel = level,
+                ProfessionName = profession?.Name ?? string.Empty,
+                StageIndex = session.StageIndex,
+                StageCount = recipe?.Stages.Length ?? 0,
+                StageType = stage?.Type ?? CookingStageType.Chop,
+                StageAssignment = stage?.Assignment ?? CookingStageAssignment.Auto,
+                StageStartedUnixMs = stage == null ? 0 : session.StageStartedUnixMs,
+                StageDurationMs = duration,
+                TargetPermille = stage == null ? 0 : session.StageTargetPermille,
+                TolerancePermille = stage == null ? 0 : CookingStageRules.TargetTolerance(stage.Difficulty),
+                RequiredActions = stage?.RequiredActions ?? 0,
+                CompletedActions = session.StageActions.Values.Sum(),
+                YourTurn = stage != null && CanAct(session, viewer.Id, stage),
+                StageScore = session.StageScoredActions == 0
+                    ? 0
+                    : (int)Math.Round(session.StageScoreTotal / (double)session.StageScoredActions),
+                TeamScore = session.TeamScore,
+                Quality = session.Quality,
+                Complete = session.Complete,
+                Status = session.Status,
+                Participants = Participants(session).Select(value => new CookingParticipantState
+                {
+                    PlayerId = value.Player.Id,
+                    Name = value.Player.Name,
+                    Score = value.ScoredActions == 0
+                        ? 0
+                        : (int)Math.Round(value.ScoreTotal / (double)value.ScoredActions),
+                    Actions = value.Actions,
+                    Ready = session.IngredientsConsumed,
+                }).ToArray(),
+                RewardText = session.RewardText,
+                StageDifficulty = stage?.Difficulty ?? 0,
+                MeterPermille = session.StageMeterPermille,
+                Combo = session.Combo,
+                Mishaps = session.Mishaps,
+                ActionHint = stage == null ? string.Empty : ActionHint(session, stage),
+                ActionSequence = session.ActionSequence,
+                LastActionScore = session.LastActionScore,
+                ActionSound = stage?.ActionSound ?? string.Empty,
+                PerfectSound = stage?.PerfectSound ?? string.Empty,
+                MishapSound = stage?.MishapSound ?? string.Empty,
+                StartSound = recipe?.Sounds?.Start ?? string.Empty,
+                CompleteSound = recipe?.Sounds?.Complete ?? string.Empty,
+                BurntSound = recipe?.Sounds?.Burnt ?? string.Empty,
+                GreatSound = recipe?.Sounds?.Great ?? string.Empty,
+                PerfectSoundRecipe = recipe?.Sounds?.Perfect ?? string.Empty,
+                InviteSound = recipe?.Sounds?.Invite ?? string.Empty,
+                PartnerJoinedSound = recipe?.Sounds?.PartnerJoined ?? string.Empty,
+                ComicEventSequence = session.ComicEventSequence,
+                ComicEventType = session.ComicEventType,
+                ComicEventText = session.ComicEventText,
+                ProfessionMaximumLevel = maximumProfessionLevel,
+                ProfessionExperienceIntoLevel = professionExperienceIntoLevel,
+                ProfessionExperienceRequiredForLevel = professionExperienceRequiredForLevel,
+                ProfessionExperienceToNextLevel = professionExperienceToNextLevel,
+                ProfessionExperiencePercent = professionExperiencePercent,
+                ProfessionMaximumLevelReached = professionMaximumLevelReached,
+                ProfessionExperienceAwarded = session.AwardedExperience.GetValueOrDefault(viewer.Id),
+                PeakCombo = session.PeakCombo,
+            },
+        };
+    }
+
+    private static void Broadcast(Session session, long requestId = 0, string error = "")
+    {
+        foreach (var participant in Participants(session))
+            SafeSend(participant.Client, Project(session, participant.Player, requestId, error));
+    }
+
+    private static void Sweep()
+    {
+        List<Session> close = [];
+        List<Session> update = [];
+
+        lock (Gate)
+        {
+            foreach (var session in SessionsByPlayer.Values.Distinct().ToArray())
+            {
+                var participants = Participants(session).ToArray();
+                if (participants.Any(value =>
+                        value.Player.Client == null ||
+                        !ReferenceEquals(value.Player.Client, value.Client) ||
+                        !value.Player.IsOnline))
+                {
+                    close.Add(session);
+                    continue;
+                }
+
+                if (session.Partner != null &&
+                    (!session.Host.Player.Party.Contains(session.Partner.Player) ||
+                     session.Host.Player.MapId != session.Partner.Player.MapId ||
+                     session.Host.Player.MapInstanceId != session.Partner.Player.MapInstanceId ||
+                     !session.Host.Player.InRangeOf(session.Partner.Player, PartnerRange)))
+                {
+                    close.Add(session);
+                    continue;
+                }
+
+                if (session.Recipe != null &&
+                    !session.Complete &&
+                    !session.WaitingForPartner &&
+                    session.StageIndex >= 0 &&
+                    session.StageIndex < session.Recipe.Stages.Length)
+                {
+                    var stage = session.Recipe.Stages[session.StageIndex];
+                    var elapsed =
+                        DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - session.StageStartedUnixMs;
+                    if (elapsed >= stage.DurationSeconds * 1000L)
+                    {
+                        FinalizeStage(session);
+                        update.Add(session);
+                    }
+                }
+            }
+
+            foreach (var session in close)
+                RemoveSession(session);
+        }
+
+        foreach (var session in close)
+            SendClosed(session, "KitchenSessionEnded");
+
+        foreach (var session in update.Except(close))
+            Broadcast(session);
+    }
+
+    private static Participant? GetParticipant(Session session, Guid playerId)
+    {
+        if (session.Host.Player.Id == playerId) return session.Host;
+        if (session.Partner?.Player.Id == playerId) return session.Partner;
+        return null;
+    }
+
+    private static IEnumerable<Participant> Participants(Session session)
+    {
+        yield return session.Host;
+        if (session.Partner != null) yield return session.Partner;
+    }
+
+    private static void RemoveSession(Session session)
+    {
+        SessionsByPlayer.Remove(session.Host.Player.Id);
+        if (session.Partner != null)
+            SessionsByPlayer.Remove(session.Partner.Player.Id);
+    }
+
+    private static void SendClosed(Session session, string error)
+    {
+        foreach (var participant in Participants(session))
+            SafeSend(participant.Client, ClosedPacket(session, participant.Player, 0, error));
+    }
+
+    private static CookingStatePacket ClosedPacket(
+        Session session,
+        Player player,
+        long requestId,
+        string error
+    ) =>
+        new()
+        {
+            SessionId = session.Id,
+            PlayerId = player.Id,
+            Sequence = Interlocked.Increment(ref _sequence),
+            RequestId = requestId,
+            ServerUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            Closed = true,
+            ErrorCode = error,
+        };
+
+    private static void SafeSend(Client? client, CookingStatePacket packet)
+    {
+        if (client == null) return;
+        try { client.Send(packet); }
+        catch { }
+    }
+
+    private static string StagePrompt(CookingStageType type) => type switch
+    {
+        CookingStageType.Chop => "CHOP! Hit the sweet spot before the vegetables escape.",
+        CookingStageType.Stir => "STIR! Keep the royal sauce moving.",
+        CookingStageType.Heat => "HEAT! Do not turn dinner into charcoal.",
+        CookingStageType.Flip => "FLIP! Catch it before it meets the floor.",
+        CookingStageType.Season => "SEASON! The king asked for flavour, not a salt mine.",
+        CookingStageType.Knead => "KNEAD! Show that dough who is in charge.",
+        _ => "PLATE! Make it look expensive.",
+    };
+
+    private static string CookingStatus(
+        CookingStageType type,
+        int score,
+        string player,
+        int combo,
+        int mishaps
+    )
+    {
+        var comboText = combo >= 3 ? $" COMBO x{combo}!" : string.Empty;
+        var mishapText = mishaps > 0 && score < 40 ? $" Kitchen disaster #{mishaps}." : string.Empty;
+
+        return score >= 90
+            ? $"{player}: PERFECT {type}! The kitchen applauds.{comboText}"
+            : score >= 70
+                ? $"{player}: Great {type}! Nobody screamed.{comboText}"
+                : score >= 40
+                    ? $"{player}: Decent {type}. Still edible."
+                    : $"{player}: CHAOS during {type}! Something is smoking.{mishapText}";
+    }
+
+    private static string ActionHint(Session session, CookingStageDefinition stage)
+    {
+        var actionNumber = session.StageActions.Values.Sum();
+        return stage.Type switch
+        {
+            CookingStageType.Chop => "Hit CHOP when the knife marker crosses the green zone.",
+            CookingStageType.Stir => actionNumber % 2 == 0
+                ? "Stir CLOCKWISE now."
+                : "Stir COUNTER-CLOCKWISE now.",
+            CookingStageType.Heat => "Use MORE HEAT / LESS HEAT to hold the pan in the green zone.",
+            CookingStageType.Flip => "Hit FLIP at the green catch zone.",
+            CookingStageType.Season => "Add or remove seasoning until the shaker reaches the green zone.",
+            CookingStageType.Knead => actionNumber % 2 == 0
+                ? "PRESS LEFT."
+                : "PRESS RIGHT.",
+            CookingStageType.Plate => session.StageTargetPermille < 350
+                ? "Place it on the LEFT side of the plate."
+                : session.StageTargetPermille > 650
+                    ? "Place it on the RIGHT side of the plate."
+                    : "Place it in the CENTER of the plate.",
+            _ => "Cook!",
+        };
+    }
+
+    private static string FunnyFinish(CookingQuality quality) => quality switch
+    {
+        CookingQuality.Perfect => "The plate looks suspiciously professional.",
+        CookingQuality.Great => "The tavern customers are fighting for seconds.",
+        CookingQuality.Decent => "Nobody asked what happened in the kitchen.",
+        _ => "Technically, charcoal is also food-shaped.",
+    };
+}

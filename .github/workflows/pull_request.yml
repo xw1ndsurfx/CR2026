@@ -30,6 +30,10 @@ env:
   VERSION_SUFFIX: -pr${{ github.event.number }}
   PARENT_VERSION_SUFFIX: -beta
 
+concurrency:
+  group: pull-request-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
 

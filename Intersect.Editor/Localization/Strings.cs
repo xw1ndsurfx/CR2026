@@ -9,6 +9,7 @@ using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.GameObjects.Variables;
+using Intersect.Framework.Core.Professions;
 using Intersect.Framework.Reflection;
 using Intersect.GameObjects;
 using Intersect.Localization;
@@ -184,6 +185,24 @@ public static partial class Strings
         }
 
         return EventConditionDesc.levelorstat.ToString(lvlorstat, pLvl);
+    }
+
+    public static string GetEventConditionalDesc(ProfessionLevelCondition condition)
+    {
+        var profession = ProfessionConfiguration.Instance.Find(condition.ProfessionId);
+        var name = profession?.Name ?? "Unknown Profession";
+        var comparison = condition.Comparator switch
+        {
+            VariableComparator.Equal => "==",
+            VariableComparator.GreaterOrEqual => ">=",
+            VariableComparator.LesserOrEqual => "<=",
+            VariableComparator.Greater => ">",
+            VariableComparator.Less => "<",
+            VariableComparator.NotEqual => "!=",
+            _ => "?",
+        };
+
+        return $"Profession {name} level {comparison} {condition.Value}";
     }
 
     public static string GetEventConditionalDesc(SelfSwitchCondition condition)

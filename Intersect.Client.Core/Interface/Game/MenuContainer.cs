@@ -35,6 +35,12 @@ public partial class MenuContainer : Panel
     private readonly Button _questsButton;
     private readonly QuestsWindow _questsWindow;
 
+    private readonly ImagePanel _newsButtonContainer;
+    private readonly Button _newsButton;
+
+    private readonly ImagePanel _dailyRewardButtonContainer;
+    private readonly Button _dailyRewardButton;
+
     private readonly ImagePanel _friendsButtonContainer;
     private readonly Button _friendsButton;
     private readonly FriendsWindow _friendsWindow;
@@ -138,6 +144,44 @@ public partial class MenuContainer : Panel
         _questsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "questsicon_hovered.png");
         _questsButton.SetToolTipText(text: Strings.GameMenu.Quest);
         _questsButton.Clicked += QuestBtn_Clicked;
+
+        _newsButtonContainer = new ImagePanel(parent: this, name: nameof(_newsButtonContainer))
+        {
+            Dock = Pos.Top,
+            MaximumSize = new Point(x: 71, y: 55),
+            MinimumSize = new Point(x: 71, y: 55),
+            Padding = new Padding(size: 0),
+            Size = new Point(x: 71, y: 55),
+        };
+        _newsButton = new Button(parent: _newsButtonContainer, name: nameof(_newsButton), disableText: true)
+        {
+            Alignment = [Alignments.Center],
+            Size = new Point(x: 71, y: 55),
+        };
+        _newsButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_News.png");
+        _newsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_News_over.png");
+        _newsButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_News_down.png");
+        _newsButton.SetToolTipText(text: "Corps Royaux News");
+        _newsButton.Clicked += NewsButton_Clicked;
+
+        _dailyRewardButtonContainer = new ImagePanel(parent: this, name: nameof(_dailyRewardButtonContainer))
+        {
+            Dock = Pos.Top,
+            MaximumSize = new Point(x: 71, y: 55),
+            MinimumSize = new Point(x: 71, y: 55),
+            Padding = new Padding(size: 0),
+            Size = new Point(x: 71, y: 55),
+        };
+        _dailyRewardButton = new Button(parent: _dailyRewardButtonContainer, name: nameof(_dailyRewardButton), disableText: true)
+        {
+            Alignment = [Alignments.Center],
+            Size = new Point(x: 71, y: 55),
+        };
+        _dailyRewardButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Daily.png");
+        _dailyRewardButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Daily_over.png");
+        _dailyRewardButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_Daily_down.png");
+        _dailyRewardButton.SetToolTipText(text: "Daily Reward");
+        _dailyRewardButton.Clicked += DailyRewardButton_Clicked;
 
         _friendsButtonContainer = new ImagePanel(parent: this, name: nameof(_friendsButtonContainer))
         {
@@ -254,6 +298,7 @@ public partial class MenuContainer : Panel
             action: () =>
             {
                 LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer!.GetResolutionString());
+                ApplyCorpsRoyauxVerticalMenuLayout();
             }
         );
 
@@ -265,6 +310,86 @@ public partial class MenuContainer : Panel
         _questsWindow = new QuestsWindow(gameCanvas: gameCanvas);
         _mapItemWindow = new MapItemWindow(gameCanvas: gameCanvas);
         _guildWindow = new GuildWindow(gameCanvas: gameCanvas);
+    }
+
+    private void ApplyCorpsRoyauxVerticalMenuLayout()
+    {
+        const int buttonWidth = 71;
+        const int buttonHeight = 55;
+        const int buttonSpacing = 5;
+        const int toggleGap = 5;
+
+        Padding = Padding.Zero;
+
+        var containers = new[]
+        {
+            _inventoryButtonContainer,
+            _spellsButtonContainer,
+            _characterButtonContainer,
+            _questsButtonContainer,
+            _newsButtonContainer,
+            _dailyRewardButtonContainer,
+            _friendsButtonContainer,
+            _partyButtonContainer,
+            _guildButtonContainer,
+            _escapeMenuButtonContainer,
+        };
+
+        var buttons = new[]
+        {
+            _inventoryButton,
+            _spellsButton,
+            _characterButton,
+            _questsButton,
+            _newsButton,
+            _dailyRewardButton,
+            _friendsButton,
+            _partyButton,
+            _guildButton,
+            _escapeMenuButton,
+        };
+
+        for (var index = 0; index < containers.Length; ++index)
+        {
+            var container = containers[index];
+            container.Dock = Pos.None;
+            container.Margin = Margin.Zero;
+            container.Padding = new Padding(size: 0);
+            container.MinimumSize = new Point(buttonWidth, buttonHeight);
+            container.MaximumSize = new Point(buttonWidth, buttonHeight);
+            container.SetBounds(0, index * (buttonHeight + buttonSpacing), buttonWidth, buttonHeight);
+
+            var button = buttons[index];
+            button.Dock = Pos.None;
+            button.Margin = Margin.Zero;
+            button.SetBounds(0, 0, buttonWidth, buttonHeight);
+        }
+
+        // Dedicated Corps Royaux GUI art supplied with the client.
+        // Reapply after LoadJsonUi so layout overrides cannot replace the custom textures.
+        _newsButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_News.png");
+        _newsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_News_over.png");
+        _newsButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_News_down.png");
+
+        _dailyRewardButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Daily.png");
+        _dailyRewardButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Daily_over.png");
+        _dailyRewardButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_Daily_down.png");
+
+        SetSize(
+            buttonWidth,
+            containers.Length * buttonHeight + (containers.Length - 1) * buttonSpacing
+        );
+
+        // Keep Show / Hide beside the bottom Settings/Menu button. Adding News made
+        // the vertical stack taller, so the old fixed bottom-left position overlapped it.
+        _menuToggleButtonContainer.Dock = Pos.None;
+        _menuToggleButtonContainer.Alignment = [Alignments.Bottom, Alignments.Left];
+        _menuToggleButtonContainer.AlignmentPadding = new Padding
+        {
+            Left = buttonWidth + toggleGap,
+            Bottom = 4,
+        };
+        _menuToggleButtonContainer.Margin = Margin.Zero;
     }
 
     //Methods
@@ -283,6 +408,11 @@ public partial class MenuContainer : Panel
     public void UpdateFriendsList()
     {
         _friendsWindow.UpdateList();
+    }
+
+    public void ApplyOwnPlayerProfile(Intersect.Network.Packets.Server.PlayerProfilePacket packet)
+    {
+        _characterWindow.ApplyPlayerProfile(packet);
     }
 
     public void UpdateGuildList()
@@ -305,6 +435,8 @@ public partial class MenuContainer : Panel
         _questsWindow.Hide();
         _spellsWindow.Hide();
         _guildWindow.Hide();
+        Interface.GameUi.HideLogiklikNews();
+        Interface.GameUi.HideDailyReward();
     }
 
     public void ToggleCharacterWindow()
@@ -441,6 +573,9 @@ public partial class MenuContainer : Panel
         _partyWindow.Hide();
 
         _guildWindow.Hide();
+
+        Interface.GameUi.HideLogiklikNews();
+        Interface.GameUi.HideDailyReward();
     }
 
     public bool HasWindowsOpen()
@@ -451,7 +586,9 @@ public partial class MenuContainer : Panel
                           _questsWindow.IsVisible() ||
                           _spellsWindow.IsVisibleInTree ||
                           _partyWindow.IsVisible() ||
-                          _guildWindow.IsVisibleInTree;
+                          _guildWindow.IsVisibleInTree ||
+                          Interface.GameUi.IsLogiklikNewsVisible ||
+                          Interface.GameUi.IsDailyRewardVisible;
         return windowsOpen;
     }
 
@@ -495,6 +632,16 @@ public partial class MenuContainer : Panel
     private void QuestBtn_Clicked(Base sender, MouseButtonState arguments)
     {
         ToggleQuestsWindow();
+    }
+
+    private void NewsButton_Clicked(Base sender, MouseButtonState arguments)
+    {
+        Interface.GameUi.ToggleLogiklikNews();
+    }
+
+    private void DailyRewardButton_Clicked(Base sender, MouseButtonState arguments)
+    {
+        Interface.GameUi.ToggleDailyReward();
     }
 
     private void InventoryButton_Clicked(Base sender, MouseButtonState arguments)

@@ -18,6 +18,8 @@ public partial class EventPage
 
     public Guid AnimationId { get; set; }
 
+    public bool ShowAnimationOnWorldMap { get; set; }
+
     public Dictionary<Guid, List<EventCommand>> CommandLists { get; set; } = new();
 
     public ConditionLists ConditionLists { get; set; } = new();
@@ -55,4 +57,10 @@ public partial class EventPage
     public bool WalkingAnimation { get; set; } = true;
 
     public bool IgnoreNpcAvoids { get; set; }
+
+    public bool QuestArrowEnabled { get; set; }
+
+    public Guid QuestArrowQuestId { get; set; }
+
+    public Guid QuestArrowTaskId { get; set; }
 }

@@ -7,6 +7,7 @@ using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Graphics;
 using Intersect.Client.General;
 using Intersect.Client.Maps;
+using Intersect.Client.WorldEvents.Invasions;
 using Intersect.Configuration;
 using Intersect.Enums;
 using Intersect.Framework;
@@ -281,10 +282,11 @@ public static partial class Graphics
             sPlayerLightExpand = currentMap.PlayerLightExpand;
 
             //Overlay
-            OverlayColor.A = (byte)currentMap.AHue;
-            OverlayColor.R = (byte)currentMap.RHue;
-            OverlayColor.G = (byte)currentMap.GHue;
-            OverlayColor.B = (byte)currentMap.BHue;
+            var overlayTarget = GetOverlayTarget(currentMap);
+            OverlayColor.A = overlayTarget.A;
+            OverlayColor.R = overlayTarget.R;
+            OverlayColor.G = overlayTarget.G;
+            OverlayColor.B = overlayTarget.B;
 
             //Fog && Panorama
             currentMap.GridSwitched();
@@ -684,6 +686,21 @@ public static partial class Graphics
         map.DrawPanorama();
     }
 
+    private static Color GetOverlayTarget(MapInstance map)
+    {
+        if (InvasionEnvironmentManager.TryGetEnvironment(map, out var environment))
+        {
+            return new Color(
+                environment.OverlayAlpha,
+                environment.OverlayRed,
+                environment.OverlayGreen,
+                environment.OverlayBlue
+            );
+        }
+
+        return new Color(map.AHue, map.RHue, map.GHue, map.BHue);
+    }
+
     public static void DrawOverlay()
     {
         if (Renderer == default)
@@ -694,108 +711,24 @@ public static partial class Graphics
         if (MapInstance.TryGet(Globals.Me?.MapId ?? default, out var map))
         {
             float ecTime = Timing.Global.MillisecondsUtc - sOverlayUpdate;
+            var target = GetOverlayTarget(map);
+            var change = Math.Max(1, (int)(255 * ecTime / 2000f));
 
-            if (OverlayColor.A != map.AHue ||
-                OverlayColor.R != map.RHue ||
-                OverlayColor.G != map.GHue ||
-                OverlayColor.B != map.BHue)
+            static byte Approach(byte current, byte target, int change)
             {
-                if (OverlayColor.A < map.AHue)
-                {
-                    if (OverlayColor.A + (int)(255 * ecTime / 2000f) > map.AHue)
-                    {
-                        OverlayColor.A = (byte)map.AHue;
-                    }
-                    else
-                    {
-                        OverlayColor.A += (byte)(255 * ecTime / 2000f);
-                    }
-                }
+                if (current < target)
+                    return (byte)Math.Min(target, current + change);
 
-                if (OverlayColor.A > map.AHue)
-                {
-                    if (OverlayColor.A - (int)(255 * ecTime / 2000f) < map.AHue)
-                    {
-                        OverlayColor.A = (byte)map.AHue;
-                    }
-                    else
-                    {
-                        OverlayColor.A -= (byte)(255 * ecTime / 2000f);
-                    }
-                }
+                if (current > target)
+                    return (byte)Math.Max(target, current - change);
 
-                if (OverlayColor.R < map.RHue)
-                {
-                    if (OverlayColor.R + (int)(255 * ecTime / 2000f) > map.RHue)
-                    {
-                        OverlayColor.R = (byte)map.RHue;
-                    }
-                    else
-                    {
-                        OverlayColor.R += (byte)(255 * ecTime / 2000f);
-                    }
-                }
-
-                if (OverlayColor.R > map.RHue)
-                {
-                    if (OverlayColor.R - (int)(255 * ecTime / 2000f) < map.RHue)
-                    {
-                        OverlayColor.R = (byte)map.RHue;
-                    }
-                    else
-                    {
-                        OverlayColor.R -= (byte)(255 * ecTime / 2000f);
-                    }
-                }
-
-                if (OverlayColor.G < map.GHue)
-                {
-                    if (OverlayColor.G + (int)(255 * ecTime / 2000f) > map.GHue)
-                    {
-                        OverlayColor.G = (byte)map.GHue;
-                    }
-                    else
-                    {
-                        OverlayColor.G += (byte)(255 * ecTime / 2000f);
-                    }
-                }
-
-                if (OverlayColor.G > map.GHue)
-                {
-                    if (OverlayColor.G - (int)(255 * ecTime / 2000f) < map.GHue)
-                    {
-                        OverlayColor.G = (byte)map.GHue;
-                    }
-                    else
-                    {
-                        OverlayColor.G -= (byte)(255 * ecTime / 2000f);
-                    }
-                }
-
-                if (OverlayColor.B < map.BHue)
-                {
-                    if (OverlayColor.B + (int)(255 * ecTime / 2000f) > map.BHue)
-                    {
-                        OverlayColor.B = (byte)map.BHue;
-                    }
-                    else
-                    {
-                        OverlayColor.B += (byte)(255 * ecTime / 2000f);
-                    }
-                }
-
-                if (OverlayColor.B > map.BHue)
-                {
-                    if (OverlayColor.B - (int)(255 * ecTime / 2000f) < map.BHue)
-                    {
-                        OverlayColor.B = (byte)map.BHue;
-                    }
-                    else
-                    {
-                        OverlayColor.B -= (byte)(255 * ecTime / 2000f);
-                    }
-                }
+                return current;
             }
+
+            OverlayColor.A = Approach(OverlayColor.A, target.A, change);
+            OverlayColor.R = Approach(OverlayColor.R, target.R, change);
+            OverlayColor.G = Approach(OverlayColor.G, target.G, change);
+            OverlayColor.B = Approach(OverlayColor.B, target.B, change);
         }
 
         DrawGameTexture(Renderer.WhitePixel, new FloatRect(0, 0, 1, 1), CurrentView, OverlayColor, null);
@@ -1116,13 +1049,25 @@ public static partial class Graphics
                 new Color(255, 255, 255, 255), sDarknessTexture, GameBlendModes.Add
             );
 
+            var timeTint = Time.GetTintColor();
+            var outdoorTint = InvasionEnvironmentManager.TryGetEnvironment(map, out var environment)
+                ? new Color(
+                    (int)Math.Round(255 * (100 - environment.NightBrightness) / 100d),
+                    0,
+                    0,
+                    0
+                )
+                : new Color(
+                    (int)timeTint.A,
+                    (int)timeTint.R,
+                    (int)timeTint.G,
+                    (int)timeTint.B
+                );
+
             DrawGameTexture(
                 Renderer.WhitePixel, new FloatRect(0, 0, 1, 1),
                 destRect,
-                new Color(
-                    (int)Time.GetTintColor().A, (int)Time.GetTintColor().R, (int)Time.GetTintColor().G,
-                    (int)Time.GetTintColor().B
-                ), sDarknessTexture, GameBlendModes.None
+                outdoorTint, sDarknessTexture, GameBlendModes.None
             );
         }
 

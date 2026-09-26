@@ -284,6 +284,9 @@ public partial class EventPageInstance : Entity
         pkt.Graphic = MyGraphic;
         pkt.RenderLayer = (byte)mRenderLayer;
         pkt.Trigger = Trigger;
+        pkt.QuestArrowEnabled = MyPage.QuestArrowEnabled;
+        pkt.QuestArrowQuestId = MyPage.QuestArrowQuestId;
+        pkt.QuestArrowTaskId = MyPage.QuestArrowTaskId;
 
         return pkt;
     }

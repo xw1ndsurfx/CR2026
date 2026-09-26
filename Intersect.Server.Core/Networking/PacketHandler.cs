@@ -734,6 +734,44 @@ internal sealed partial class PacketHandler
         }
     }
 
+    public void HandlePacket(Client client, RequestWorldMapPacket packet)
+    {
+        var player = client?.Entity;
+        if (player == null || !MapController.TryGet(player.MapId, out var playerMapController))
+        {
+            return;
+        }
+
+        var grid = DbInterface.GetGrid(playerMapController.MapGrid);
+        if (grid == null)
+        {
+            return;
+        }
+
+        // Always refresh marker metadata when the World Map is opened.
+        PacketSender.SendMapGrid(client, grid, clearKnownMaps: false);
+
+        // Send dedicated World Map data instead of normal gameplay MapPackets.
+        // This keeps the complete grid independent from the normal 3x3 gameplay map lifecycle.
+        foreach (var mapId in grid.MapIds)
+        {
+            if (!MapController.TryGet(mapId, out var map))
+            {
+                continue;
+            }
+
+            client.Send(
+                new WorldMapMapDataPacket(
+                    map.Id,
+                    map.JsonData,
+                    map.TileData,
+                    map.GetAttributeData(),
+                    map.Revision
+                )
+            );
+        }
+    }
+
     //NeedMapPacket
     public void HandlePacket(Client client, GetObjectData<MapDescriptor> packet)
     {

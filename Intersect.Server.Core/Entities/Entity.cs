@@ -22,6 +22,7 @@ using Intersect.Server.General;
 using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
+using Intersect.Server.WorldEvents.Invasions;
 using Intersect.Utilities;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -2092,12 +2093,42 @@ public abstract partial class Entity : IEntity
             isCrit = true;
         }
 
+        // Invasion scaling adjusts the raw damaging value before the normal combat formula.
+        // This affects only spawned invasion NPC instances, never their shared NPC descriptor.
+        if (baseDamage > 0 &&
+            this is Npc baseDamageInvasionNpc &&
+            baseDamageInvasionNpc.InvasionSessionId != Guid.Empty &&
+            Math.Abs(baseDamageInvasionNpc.InvasionBaseDamageMultiplier - 1d) > double.Epsilon)
+        {
+            baseDamage = Math.Max(
+                1,
+                (long)Math.Round(
+                    baseDamage * baseDamageInvasionNpc.InvasionBaseDamageMultiplier,
+                    MidpointRounding.AwayFromZero
+                )
+            );
+        }
+
         //If the enemy is a resource, the original base damage value will be used on "Calculate Damages", if not, we need change...
         if (!(enemy is Resource))
         {
             baseDamage = Formulas.CalculateDamage(
-            baseDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy
-        );
+                baseDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy
+            );
+        }
+
+        if (baseDamage > 0 &&
+            this is Npc invasionNpc &&
+            invasionNpc.InvasionSessionId != Guid.Empty &&
+            Math.Abs(invasionNpc.InvasionDamageMultiplier - 1d) > double.Epsilon)
+        {
+            baseDamage = Math.Max(
+                1,
+                (long)Math.Round(
+                    baseDamage * invasionNpc.InvasionDamageMultiplier,
+                    MidpointRounding.AwayFromZero
+                )
+            );
         }
 
         //Check on each attack if the enemy is a player AND if they are blocking.
@@ -2156,6 +2187,11 @@ public abstract partial class Entity : IEntity
 
             if (baseDamage > 0 && enemy.HasVital(Vital.Health) && !invulnerable)
             {
+                var appliedHealthDamage = Math.Min(
+                    baseDamage,
+                    Math.Max(0, enemyVitals[(int)Vital.Health])
+                );
+
                 if (isCrit)
                 {
                     PacketSender.SendActionMsg(enemy, Strings.Combat.Critical, CustomColors.Combat.Critical);
@@ -2204,6 +2240,7 @@ public abstract partial class Entity : IEntity
 
                     enemyNpc.LootMap.TryAdd(Id, true);
                     enemyNpc.LootMapCache = enemyNpc.LootMap.Keys.ToArray();
+                    InvasionRuntime.RegisterContribution(enemyNpc, this, appliedHealthDamage);
                     enemyNpc.TryFindNewTarget(Timing.Global.Milliseconds, default, false, this);
                 }
 
@@ -2211,18 +2248,58 @@ public abstract partial class Entity : IEntity
             }
             else if (baseDamage < 0 && !enemy.IsFullVital(Vital.Health))
             {
-                enemy.AddVital(Vital.Health, -baseDamage);
-                PacketSender.SendActionMsg(
-                    enemy, Strings.Combat.AddSymbol + Math.Abs(baseDamage), CustomColors.Combat.Heal
+                var requestedHealing = baseDamage == long.MinValue
+                    ? long.MaxValue
+                    : -baseDamage;
+                var missingHealth = Math.Max(
+                    0L,
+                    enemy.GetMaxVital(Vital.Health) - enemy.GetVital(Vital.Health)
                 );
+                var effectiveHealing = Math.Min(requestedHealing, missingHealth);
+
+                enemy.AddVital(Vital.Health, requestedHealing);
+                PacketSender.SendActionMsg(
+                    enemy, Strings.Combat.AddSymbol + effectiveHealing, CustomColors.Combat.Heal
+                );
+
+                if (effectiveHealing > 0 && enemy is Player healedPlayer)
+                    InvasionRuntime.RegisterHealingContribution(this, healedPlayer, effectiveHealing);
             }
         }
 
         if (secondaryDamage != 0)
         {
+            if (secondaryDamage > 0 &&
+                this is Npc secondaryBaseDamageInvasionNpc &&
+                secondaryBaseDamageInvasionNpc.InvasionSessionId != Guid.Empty &&
+                Math.Abs(secondaryBaseDamageInvasionNpc.InvasionBaseDamageMultiplier - 1d) > double.Epsilon)
+            {
+                secondaryDamage = Math.Max(
+                    1,
+                    (long)Math.Round(
+                        secondaryDamage * secondaryBaseDamageInvasionNpc.InvasionBaseDamageMultiplier,
+                        MidpointRounding.AwayFromZero
+                    )
+                );
+            }
+
             secondaryDamage = Formulas.CalculateDamage(
                 secondaryDamage, damageType, scalingStat, scaling, critMultiplier, this, enemy
             );
+
+            if (secondaryDamage > 0 &&
+                this is Npc secondaryInvasionNpc &&
+                secondaryInvasionNpc.InvasionSessionId != Guid.Empty &&
+                Math.Abs(secondaryInvasionNpc.InvasionDamageMultiplier - 1d) > double.Epsilon)
+            {
+                secondaryDamage = Math.Max(
+                    1,
+                    (long)Math.Round(
+                        secondaryDamage * secondaryInvasionNpc.InvasionDamageMultiplier,
+                        MidpointRounding.AwayFromZero
+                    )
+                );
+            }
 
             if (secondaryDamage < 0 && secondaryDamagingAttack)
             {

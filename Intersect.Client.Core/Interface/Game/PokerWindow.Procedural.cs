@@ -76,7 +76,10 @@ internal sealed partial class PokerWindow
         {
             _proceduralMotions.Clear();
             if (settings.Shuffle)
-                AddMotion(ProceduralMotionKind.Shuffle, now, settings.Duration(520), 500, 246, 500, 246);
+            {
+                var deck = PokerMotionDeck();
+                AddMotion(ProceduralMotionKind.Shuffle, now, settings.Duration(520), deck.X, deck.Y, deck.X, deck.Y);
+            }
 
             if (settings.DealCards)
             {
@@ -91,9 +94,10 @@ internal sealed partial class PokerWindow
                 foreach (var seat in active)
                 {
                     var slot = PokerSceneLayout.Slot(seat.Seat, me.Seat);
-                    var target = PokerSceneLayout.Cards(slot);
+                    var target = PokerMotionCardTarget(slot, card);
+                    var deck = PokerMotionDeck();
                     AddMotion(ProceduralMotionKind.DealCard, now + delay + index++ * step,
-                        settings.Duration(360), 500, 246, target.X + card * 58 + 26, target.Y + 35, card);
+                        settings.Duration(360), deck.X, deck.Y, target.X, target.Y, card);
                 }
             }
         }
@@ -102,8 +106,12 @@ internal sealed partial class PokerWindow
         {
             var first = _proceduralBoardCount;
             for (var i = first; i < state.Board.Length; ++i)
+            {
+                var deck = PokerMotionDeck();
+                var target = PokerMotionBoardTarget(i);
                 AddMotion(ProceduralMotionKind.BoardCard, now + (i - first) * Math.Max(55, settings.Duration(110)),
-                    settings.Duration(420), 500, 246, 361 + i * 66, 339, i);
+                    settings.Duration(420), deck.X, deck.Y, target.X, target.Y, i);
+            }
         }
 
         foreach (var decision in state.Decisions.Where(d => d.Sequence > _proceduralDecision).OrderBy(d => d.Sequence))
@@ -111,7 +119,7 @@ internal sealed partial class PokerWindow
             var seat = state.Seats.FirstOrDefault(s => s.PlayerId == decision.PlayerId);
             if (seat == null) continue;
             var slot = PokerSceneLayout.Slot(seat.Seat, me.Seat);
-            var center = PokerSceneLayout.Center(slot);
+            var center = PokerMotionSeatCenter(slot);
             var allIn = seat.AllIn && decision.Action is "call" or "raise";
 
             if (settings.Chips && decision.Action is "call" or "raise")
@@ -147,7 +155,7 @@ internal sealed partial class PokerWindow
                     var winner = state.Seats.FirstOrDefault(s => s.PlayerId == payout.PlayerId);
                     if (winner == null) continue;
                     var slot = PokerSceneLayout.Slot(winner.Seat, me.Seat);
-                    var center = PokerSceneLayout.Center(slot);
+                    var center = PokerMotionSeatCenter(slot);
                     AddMotion(ProceduralMotionKind.PotToWinner,
                         now + payoutIndex++ * Math.Max(70, settings.Duration(140)), settings.Duration(560),
                         500, 286, center.X, center.Y + 15);
@@ -175,6 +183,22 @@ internal sealed partial class PokerWindow
         if (dealer < 0) return seat;
         var distance = (seat - dealer + 6) % 6;
         return distance == 0 ? 6 : distance;
+    }
+
+    private Point PokerMotionDeck() => _tableSkin?.Texture != null ? new(500, 272) : new(500, 246);
+
+    private static Point PokerMotionBoardTarget(int index) => new(363 + index * 66, 338);
+
+    private static Point PokerMotionCardTarget(int slot, int card)
+    {
+        var cards = PokerSceneLayout.Cards(slot);
+        return new(cards.X + card * 58 + 26, cards.Y + 35);
+    }
+
+    private Point PokerMotionSeatCenter(int slot)
+    {
+        var center = PokerSceneLayout.Center(slot);
+        return _tableSkin?.Texture != null && slot == 3 ? new(center.X, 142) : center;
     }
 
     private void AddMotion(ProceduralMotionKind kind, long starts, int duration,
@@ -258,9 +282,10 @@ internal sealed partial class PokerWindow
 
     private void DrawShuffle(RendererBase renderer, float t)
     {
+        var deck = PokerMotionDeck();
         var offset = (int)(28 * MathF.Sin(t * MathF.PI * 2f));
-        DrawMotionCard(renderer, 487 + offset, 246, 32, 46, false, t);
-        DrawMotionCard(renderer, 513 - offset, 246, 32, 46, false, 1f - t);
+        DrawMotionCard(renderer, deck.X - 13 + offset, deck.Y, 34, 48, false, t);
+        DrawMotionCard(renderer, deck.X + 13 - offset, deck.Y, 34, 48, false, 1f - t);
     }
 
     private void DrawAllInPulse(RendererBase renderer, float x, float y, float t)

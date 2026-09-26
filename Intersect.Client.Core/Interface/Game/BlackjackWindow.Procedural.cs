@@ -77,7 +77,10 @@ internal sealed partial class BlackjackWindow
         {
             _proceduralMotions.Clear();
             if (settings.Shuffle)
-                AddBlackjackMotion(BlackjackMotionKind.Shuffle, now, settings.Duration(520), 500, 240, 500, 240);
+            {
+                var deck = BlackjackMotionDeck();
+                AddBlackjackMotion(BlackjackMotionKind.Shuffle, now, settings.Duration(520), deck.X, deck.Y, deck.X, deck.Y);
+            }
 
             if (settings.DealCards && state.Stage >= BlackjackStage.Players)
             {
@@ -91,16 +94,20 @@ internal sealed partial class BlackjackWindow
                     for (var hand = 0; hand < player.Hands.Length; ++hand)
                     for (var card = 0; card < player.Hands[hand].Cards.Length; ++card)
                     {
-                        var targetX = panel.X + hand * panel.W / 2 + 28 + card * 22;
-                        var targetY = panel.Y + 101;
+                        var target = BlackjackMotionCardTarget(slot, hand, card, player.Hands.Length > 1);
+                        var deck = BlackjackMotionDeck();
                         AddBlackjackMotion(BlackjackMotionKind.DealCard, now + delay + index++ * step,
-                            settings.Duration(340), 500, 240, targetX, targetY);
+                            settings.Duration(340), deck.X, deck.Y, target.X, target.Y);
                     }
                 }
 
                 if (state.DealerCards.Length > 0)
+                {
+                    var deck = BlackjackMotionDeck();
+                    var dealer = BlackjackDealerMotionTarget(0);
                     AddBlackjackMotion(BlackjackMotionKind.DealerCard, now + delay + index * step,
-                        settings.Duration(340), 500, 240, 500, 172);
+                        settings.Duration(340), deck.X, deck.Y, dealer.X, dealer.Y);
+                }
             }
         }
         else if (state.HandId == _motionHand)
@@ -117,10 +124,13 @@ internal sealed partial class BlackjackWindow
                         var oldCount = _motionCardCounts.GetValueOrDefault(key);
                         var currentCount = player.Hands[hand].Cards.Length;
                         for (var card = oldCount; card < currentCount; ++card)
+                        {
+                            var target = BlackjackMotionCardTarget(slot, hand, card, player.Hands.Length > 1);
+                            var deck = BlackjackMotionDeck();
                             AddBlackjackMotion(BlackjackMotionKind.DealCard,
                                 now + (card - oldCount) * Math.Max(40, settings.Duration(90)),
-                                settings.Duration(330), 500, 240,
-                                panel.X + hand * panel.W / 2 + 28 + card * 22, panel.Y + 101);
+                                settings.Duration(330), deck.X, deck.Y, target.X, target.Y);
+                        }
                     }
                 }
             }
@@ -136,8 +146,12 @@ internal sealed partial class BlackjackWindow
                         var key = (player.PlayerId, hand);
                         var oldBet = _motionBets.GetValueOrDefault(key);
                         if (player.Hands[hand].Bet > oldBet)
+                        {
+                            var source = BlackjackMotionSeatCenter(slot);
+                            var wager = BlackjackMotionWagerTarget(slot, hand);
                             AddBlackjackMotion(BlackjackMotionKind.ChipToTable, now,
-                                settings.Duration(420), panel.X + panel.W / 2, panel.Y + 54, 500, 292);
+                                settings.Duration(420), source.X, source.Y, wager.X, wager.Y);
+                        }
                     }
                 }
             }
@@ -148,12 +162,19 @@ internal sealed partial class BlackjackWindow
             if (dealerAdded && (initialDealerCard ? settings.DealCards : settings.BoardCards))
             {
                 for (var i = _motionDealerCards; i < state.DealerCards.Length; ++i)
+                {
+                    var deck = BlackjackMotionDeck();
+                    var target = BlackjackDealerMotionTarget(i);
                     AddBlackjackMotion(BlackjackMotionKind.DealerCard,
                         now + (i - _motionDealerCards) * Math.Max(55, settings.Duration(110)),
-                        settings.Duration(380), 500, 240, 500 + (i - 1) * 38, 172);
+                        settings.Duration(380), deck.X, deck.Y, target.X, target.Y);
+                }
             }
             if (revealed && settings.Showdown)
-                AddBlackjackMotion(BlackjackMotionKind.Reveal, now, settings.Duration(520), 500, 172, 500, 172);
+            {
+                var target = BlackjackDealerMotionTarget(1);
+                AddBlackjackMotion(BlackjackMotionKind.Reveal, now, settings.Duration(520), target.X, target.Y, target.X, target.Y);
+            }
 
             var enteredFinished = _motionStage != BlackjackStage.Finished && state.Stage == BlackjackStage.Finished;
             if (enteredFinished)
@@ -164,18 +185,18 @@ internal sealed partial class BlackjackWindow
                     foreach (var player in state.Seats.Where(s => s.Hands.Sum(h => h.Net) > 0))
                     {
                         var slot = (player.Seat - me.Seat + 5) % 5;
-                        var panel = Panel(slot);
+                        var target = BlackjackMotionSeatCenter(slot);
                         AddBlackjackMotion(BlackjackMotionKind.ChipToPlayer,
                             now + payout++ * Math.Max(65, settings.Duration(130)),
-                            settings.Duration(520), 500, 292, panel.X + panel.W / 2, panel.Y + 54);
+                            settings.Duration(520), 500, 300, target.X, target.Y);
                     }
                 }
 
                 if (settings.Showdown && me.Hands.Sum(h => h.Net) > 0)
                 {
-                    var panel = Panel(0);
+                    var target = _tableSkin?.Texture != null ? new Point(500, 356) : new Point(500, 468);
                     AddBlackjackMotion(BlackjackMotionKind.ResultPulse, now, settings.Duration(720),
-                        panel.X + panel.W / 2, panel.Y + 68, panel.X + panel.W / 2, panel.Y + 68);
+                        target.X, target.Y, target.X, target.Y);
                 }
             }
         }
@@ -201,6 +222,51 @@ internal sealed partial class BlackjackWindow
             _motionCardCounts[(player.PlayerId, hand)] = player.Hands[hand].Cards.Length;
             _motionBets[(player.PlayerId, hand)] = player.Hands[hand].Bet;
         }
+    }
+
+    private Point BlackjackMotionDeck() => _tableSkin?.Texture != null ? new(500, 202) : new(500, 240);
+
+    private Point BlackjackDealerMotionTarget(int card)
+    {
+        if (_tableSkin?.Texture != null)
+        {
+            return new(444 + card * 54, 203);
+        }
+
+        return new(500 + Math.Max(0, card - 1) * 38, 172);
+    }
+
+    private Point BlackjackMotionCardTarget(int slot, int hand, int card, bool split)
+    {
+        if (_tableSkin?.Texture != null && slot == 0)
+        {
+            var cardX = split ? 350 + hand * 155 : 420;
+            return new(cardX + 22 + card * 44, 355);
+        }
+
+        var panel = Panel(slot);
+        return new(panel.X + hand * panel.W / 2 + 28 + card * 22, panel.Y + 101);
+    }
+
+    private Point BlackjackMotionSeatCenter(int slot)
+    {
+        if (_tableSkin?.Texture != null && slot == 0)
+        {
+            return new(535, 435);
+        }
+
+        var panel = Panel(slot);
+        return new(panel.X + panel.W / 2, panel.Y + 54);
+    }
+
+    private Point BlackjackMotionWagerTarget(int slot, int hand)
+    {
+        if (_tableSkin?.Texture != null && slot == 0)
+        {
+            return new(500 + hand * 80, 392);
+        }
+
+        return new(500, 292);
     }
 
     private void AddBlackjackMotion(BlackjackMotionKind kind, long starts, int duration,
@@ -281,9 +347,10 @@ internal sealed partial class BlackjackWindow
 
     private void DrawBlackjackShuffle(RendererBase renderer, float t)
     {
+        var deck = BlackjackMotionDeck();
         var offset = (int)(26 * MathF.Sin(t * MathF.PI * 2f));
-        DrawBlackjackMotionCard(renderer, 487 + offset, 240, t);
-        DrawBlackjackMotionCard(renderer, 513 - offset, 240, 1f - t);
+        DrawBlackjackMotionCard(renderer, deck.X - 13 + offset, deck.Y, t);
+        DrawBlackjackMotionCard(renderer, deck.X + 13 - offset, deck.Y, 1f - t);
     }
 
     private void DrawBlackjackResultPulse(RendererBase renderer, float x, float y, float t)

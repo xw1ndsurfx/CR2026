@@ -130,11 +130,21 @@ public partial class MonoContentManager : GameContentManager
         }
         else
         {
-            var items = Directory.GetFiles(dir, "*.png");
+            var items = Directory.GetFiles(dir, "*.png", SearchOption.AllDirectories);
             for (var i = 0; i < items.Length; i++)
             {
-                var filename = items[i].Replace(dir, "").TrimStart(Path.DirectorySeparatorChar).ToLower();
-                dict.Add(filename, Core.Graphics.Renderer.LoadTexture(Path.Combine(dir, filename), Path.Combine(dir, items[i].Replace(dir, "").TrimStart(Path.DirectorySeparatorChar))));
+                var filename = Path.GetRelativePath(dir, items[i])
+                    .Replace('\\', '/')
+                    .ToLowerInvariant();
+                var cachePath = Path.Combine(
+                    dir,
+                    filename.Replace('/', Path.DirectorySeparatorChar)
+                );
+
+                dict.Add(
+                    filename,
+                    Core.Graphics.Renderer.LoadTexture(cachePath, items[i])
+                );
             }
         }
 

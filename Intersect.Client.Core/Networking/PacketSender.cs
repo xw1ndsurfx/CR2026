@@ -55,7 +55,15 @@ public static partial class PacketSender
     public static void SendNeedMap(params Guid[] mapIds)
     {
         var validMapIds = mapIds.Where(
-                mapId => mapId != default && !MapInstance.TryGet(mapId, out _) && MapInstance.MapNotRequested(mapId)
+                mapId =>
+                {
+                    if (mapId == default || !MapInstance.MapNotRequested(mapId))
+                    {
+                        return false;
+                    }
+
+                    return !MapInstance.TryGet(mapId, out var map) || !map.IsLoaded;
+                }
             )
             .ToArray();
         if (validMapIds.Length < 1)
@@ -69,6 +77,11 @@ public static partial class PacketSender
             )
         );
         MapInstance.UpdateMapRequestTime(validMapIds);
+    }
+
+    public static void SendWorldMapRequest()
+    {
+        Network.SendPacket(new RequestWorldMapPacket());
     }
 
     public static void SendNeedMapForGrid(MapInstance? mapInstance = default)
@@ -409,6 +422,16 @@ public static partial class PacketSender
     public static void SendRequestFriends()
     {
         Network.SendPacket(new RequestFriendsPacket());
+    }
+
+    public static void SendRequestDailyRewardState(bool autoOpen = false)
+    {
+        Network.SendPacket(new RequestDailyRewardStatePacket(autoOpen));
+    }
+
+    public static void SendClaimDailyReward()
+    {
+        Network.SendPacket(new ClaimDailyRewardPacket());
     }
 
     public static void SendAddFriend(string name)

@@ -17,6 +17,7 @@ using Intersect.Server.Framework.Entities;
 using Intersect.Server.Framework.Items;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
+using Intersect.Server.WorldEvents.Invasions;
 using Intersect.Utilities;
 using Microsoft.Extensions.Logging;
 using Stat = Intersect.Enums.Stat;
@@ -62,6 +63,21 @@ public partial class Npc : Entity
     }
 
     public bool Despawnable;
+
+    // Scheduled invasion metadata. These NPCs still use normal combat/loot rules,
+    // but return to the configured invasion objective whenever they have no combat target.
+    public Guid InvasionSessionId { get; set; }
+    public Guid InvasionDefinitionId { get; set; }
+    public bool InvasionBoss { get; set; }
+    public Guid InvasionTargetMapId { get; set; }
+    public int InvasionTargetX { get; set; }
+    public int InvasionTargetY { get; set; }
+    public int InvasionObjectiveDamage { get; set; }
+    public int InvasionScaledLevel { get; set; }
+    public int InvasionScalingPlayerCount { get; set; }
+    public double InvasionHealthMultiplier { get; set; } = 1d;
+    public double InvasionBaseDamageMultiplier { get; set; } = 1d;
+    public double InvasionDamageMultiplier { get; set; } = 1d;
 
     //Moving
     public long LastRandomMove;
@@ -828,7 +844,8 @@ public partial class Npc : Entity
                     }
                 }
 
-                var fleeing = IsFleeing();
+                var invasionNpc = InvasionSessionId != Guid.Empty;
+                var fleeing = !invasionNpc && IsFleeing();
 
                 if (MoveTimer < Timing.Global.Milliseconds)
                 {
@@ -844,7 +861,9 @@ public partial class Npc : Entity
                     }
 
                     //TODO Clear Damage Map if out of combat (target is null and combat timer is to the point that regen has started)
-                    if (tempTarget != null && (Options.Instance.Npc.ResetIfCombatTimerExceeded && Timing.Global.Milliseconds > CombatTimer))
+                    if (InvasionSessionId == Guid.Empty &&
+                        tempTarget != null &&
+                        (Options.Instance.Npc.ResetIfCombatTimerExceeded && Timing.Global.Milliseconds > CombatTimer))
                     {
                         if (CheckForResetLocation(true))
                         {
@@ -906,6 +925,24 @@ public partial class Npc : Entity
                         tempTarget = Target;
                     }
 
+                    // Invasion NPCs do not use their descriptor's idle movement while the
+                    // invasion is active. If they have no combat target, advance toward the
+                    // next map/tile waypoint on the invasion route instead.
+                    if (targetMap == Guid.Empty && invasionNpc)
+                    {
+                        if (InvasionNavigation.TryGetWaypoint(this, out var invasionMap, out var invasionX, out var invasionY))
+                        {
+                            targetMap = invasionMap;
+                            targetX = invasionX;
+                            targetY = invasionY;
+                            targetZ = 0;
+                        }
+                        else
+                        {
+                            mPathFinder.SetTarget(null);
+                        }
+                    }
+
                     if (targetMap != Guid.Empty)
                     {
                         //Check if target map is on one of the surrounding maps, if not then we are not even going to look.
@@ -951,15 +988,25 @@ public partial class Npc : Entity
 
                     }
 
-                    if (mPathFinder.GetTarget() != null && Descriptor.Movement != (int)NpcMovement.Static)
+                    if (mPathFinder.GetTarget() != null &&
+                        (invasionNpc || Descriptor.Movement != (int)NpcMovement.Static))
                     {
                         TryCastSpells();
                         // TODO: Make resetting mobs actually return to their starting location.
-                        if ((!mResetting && !IsOneBlockAway(
-                            mPathFinder.GetTarget().TargetMapId, mPathFinder.GetTarget().TargetX,
-                            mPathFinder.GetTarget().TargetY, mPathFinder.GetTarget().TargetZ
-                        )) ||
-                        (mResetting && GetDistanceTo(AggroCenterMap, AggroCenterX, AggroCenterY) != 0)
+                        var pathTarget = mPathFinder.GetTarget();
+                        var invasionCrossingMap =
+                            invasionNpc &&
+                            pathTarget.TargetMapId != MapId;
+
+                        if ((!mResetting &&
+                             (invasionCrossingMap ||
+                              !IsOneBlockAway(
+                                  pathTarget.TargetMapId,
+                                  pathTarget.TargetX,
+                                  pathTarget.TargetY,
+                                  pathTarget.TargetZ
+                              ))) ||
+                            (mResetting && GetDistanceTo(AggroCenterMap, AggroCenterX, AggroCenterY) != 0)
                         )
                         {
                             var pathFinderResult = mPathFinder.Update(timeMs);
@@ -1050,15 +1097,31 @@ public partial class Npc : Entity
 
                                 case PathfinderResultType.OutOfRange:
                                 case PathfinderResultType.NoPathToTarget:
-                                    TryFindNewTarget(timeMs, tempTarget?.Id ?? Guid.Empty, true);
-                                    tempTarget = Target;
                                     targetMap = Guid.Empty;
+                                    if (invasionNpc)
+                                    {
+                                        mPathFinder.SetTarget(null);
+                                        LastRandomMove = timeMs + 250;
+                                    }
+                                    else
+                                    {
+                                        TryFindNewTarget(timeMs, tempTarget?.Id ?? Guid.Empty, true);
+                                        tempTarget = Target;
+                                    }
                                     break;
 
                                 case PathfinderResultType.Failure:
                                     targetMap = Guid.Empty;
-                                    TryFindNewTarget(timeMs, tempTarget?.Id ?? Guid.Empty, true);
-                                    tempTarget = Target;
+                                    if (invasionNpc)
+                                    {
+                                        mPathFinder.SetTarget(null);
+                                        LastRandomMove = timeMs + 250;
+                                    }
+                                    else
+                                    {
+                                        TryFindNewTarget(timeMs, tempTarget?.Id ?? Guid.Empty, true);
+                                        tempTarget = Target;
+                                    }
                                     break;
 
                                 case PathfinderResultType.Wait:
@@ -1157,30 +1220,33 @@ public partial class Npc : Entity
                         }
                     }
 
-                    CheckForResetLocation();
-
-                    if (targetMap != Guid.Empty || LastRandomMove >= Timing.Global.Milliseconds || IsCasting)
+                    if (!invasionNpc)
                     {
-                        return;
-                    }
+                        CheckForResetLocation();
 
-                    switch (Descriptor.Movement)
-                    {
-                        case (int)NpcMovement.StandStill:
-                            LastRandomMove = Timing.Global.Milliseconds + Randomization.Next(1000, 3000);
+                        if (targetMap != Guid.Empty || LastRandomMove >= Timing.Global.Milliseconds || IsCasting)
+                        {
                             return;
-                        case (int)NpcMovement.TurnRandomly:
-                            ChangeDir(Randomization.NextDirection());
-                            LastRandomMove = Timing.Global.Milliseconds + Randomization.Next(1000, 3000);
-                            return;
-                        case (int)NpcMovement.MoveRandomly:
-                            MoveRandomly();
-                            break;
-                    }
+                        }
 
-                    if (fleeing)
-                    {
-                        LastRandomMove = Timing.Global.Milliseconds + (long)GetMovementTime();
+                        switch (Descriptor.Movement)
+                        {
+                            case (int)NpcMovement.StandStill:
+                                LastRandomMove = Timing.Global.Milliseconds + Randomization.Next(1000, 3000);
+                                return;
+                            case (int)NpcMovement.TurnRandomly:
+                                ChangeDir(Randomization.NextDirection());
+                                LastRandomMove = Timing.Global.Milliseconds + Randomization.Next(1000, 3000);
+                                return;
+                            case (int)NpcMovement.MoveRandomly:
+                                MoveRandomly();
+                                break;
+                        }
+
+                        if (fleeing)
+                        {
+                            LastRandomMove = Timing.Global.Milliseconds + (long)GetMovementTime();
+                        }
                     }
                 }
 
@@ -1704,6 +1770,7 @@ public partial class Npc : Entity
 
         var pkt = (NpcEntityPacket)packet;
         pkt.Aggression = GetAggression(forPlayer);
+        pkt.NpcId = Descriptor?.Id ?? Guid.Empty;
 
         return pkt;
     }

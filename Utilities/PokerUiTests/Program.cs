@@ -50,7 +50,10 @@ foreach (var size in new[] { new Point(858, 658), new Point(800, 600), new Point
             var content = Descendants(scene).Single(c => c.Name == "PokerContent");
             var labels = Descendants(content).OfType<Label>().ToArray();
             Check(labels.Length >= 50, "Scene labels missing");
-            Check(labels.OfType<Button>().Count() == 16, "Betting, picker or six back buttons missing");
+            Check(labels.OfType<Button>().Count() >= 23, "Betting, card-back or portrait picker buttons missing");
+            Check(labels.OfType<Button>().Any(b => b.Name == "PokerPortraitsButton"), "Portrait picker toggle missing");
+            Check(Enumerable.Range(0, 6).All(i => labels.OfType<Button>().Any(b => b.Name == "PortraitChoice" + i)),
+                "Portrait picker choices missing");
             Check(labels.OfType<TextBox>().Count() == 1, "Wager input missing");
             foreach (var label in labels)
             {

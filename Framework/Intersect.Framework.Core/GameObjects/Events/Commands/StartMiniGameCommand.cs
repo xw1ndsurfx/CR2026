@@ -2,10 +2,11 @@ using System.ComponentModel;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Configuration;
 using Intersect.Framework.Core.MiniGames.Blackjack;
+using Intersect.Framework.Core.MiniGames.Roulette;
 
 namespace Intersect.Framework.Core.GameObjects.Events.Commands;
 
-public enum MiniGameType { Poker = 0, Blackjack = 1 }
+public enum MiniGameType { Poker = 0, Blackjack = 1, Potions = 2, Roulette = 3, Cooking = 4 }
 
 /// <summary>Empty currency selects isolated test chips. A currency item selects inventory-backed play.</summary>
 public sealed class StartMiniGameCommand : EventCommand
@@ -57,6 +58,8 @@ public sealed class StartMiniGameCommand : EventCommand
     [DefaultValue(10L)] public long BlackjackMinimumBet { get; set; } = 10;
     [DefaultValue(100L)] public long BlackjackMaximumBet { get; set; } = 100;
     [DefaultValue(false)] public bool BlackjackHitSoft17 { get; set; }
+    [DefaultValue(10L)] public long RouletteMinimumBet { get; set; } = 10;
+    [DefaultValue(100L)] public long RouletteMaximumBet { get; set; } = 100;
     [DefaultValue(PokerMotionSpeed.Normal)] public PokerMotionSpeed ProceduralAnimationSpeed { get; set; } = PokerMotionSpeed.Normal;
     [DefaultValue(true)] public bool AnimateDealCards { get; set; } = true;
     [DefaultValue(true)] public bool AnimateBoardCards { get; set; } = true;
@@ -85,7 +88,7 @@ public sealed class StartMiniGameCommand : EventCommand
         NpcReserve is >= 0 and <= 1_000_000_000 &&
         TurnSeconds is >= 5 and <= 300 && NpcPlayers is >= 0 and <= 5 &&
         MiniGameProgression.IsBack(NpcCardBackId) &&
-        CreateSoundSet().IsValid && CreateLevelRewardSet().IsValid && CreateMotionSet().IsValid &&
+        CreateSoundSet().IsValid && CreateMotionSet().IsValid &&
         (Game switch
         {
             MiniGameType.Poker => SmallBlind >= 1 && BigBlind >= SmallBlind &&
@@ -94,6 +97,22 @@ public sealed class StartMiniGameCommand : EventCommand
             MiniGameType.Blackjack => NpcPlayers < MaxPlayers - 1 &&
                 new BlackjackRules(MaxPlayers - 1, StartingChips, BlackjackMinimumBet, BlackjackMaximumBet,
                     TurnSeconds, BlackjackHitSoft17).IsValid,
+            MiniGameType.Potions => true,
+            MiniGameType.Cooking =>
+                MaxPlayers is >= 1 and <= 2 &&
+                CurrencyItemId == Guid.Empty &&
+                NpcPlayers == 0 &&
+                !DealerPlays,
+            MiniGameType.Roulette =>
+                MaxPlayers == 1 &&
+                NpcPlayers == 0 &&
+                !DealerPlays &&
+                RouletteMinimumBet >= 1 &&
+                RouletteMaximumBet >= RouletteMinimumBet &&
+                RouletteMaximumBet <= 20_000_000 &&
+                StartingChips >= RouletteMinimumBet &&
+                (CurrencyItemId == Guid.Empty ||
+                    NpcReserve >= RouletteMaximumBet * 35L),
             _ => false,
         });
 }

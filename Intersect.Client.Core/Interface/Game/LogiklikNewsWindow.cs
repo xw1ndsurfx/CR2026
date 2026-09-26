@@ -1,0 +1,742 @@
+using System.Net;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
+using Intersect.Client.Framework.Content;
+using Intersect.Client.Framework.File_Management;
+using Intersect.Client.Framework.Graphics;
+using Intersect.Client.Framework.Gwen;
+using Intersect.Client.Framework.Gwen.Control;
+using Intersect.Client.Framework.Gwen.Control.EventArguments;
+using Intersect.Client.Framework.Input;
+using Newtonsoft.Json.Linq;
+
+namespace Intersect.Client.Interface.Game;
+
+/// <summary>
+/// In-game reader for Corps Royaux announcements published through Logiklik News.
+/// The public announcement feed is filtered client-side to the CR category.
+/// </summary>
+internal sealed class LogiklikNewsWindow : Window
+{
+    private const string FeedUrl = "https://logiklik.com/annonces_json.php";
+    private const string RequiredCategory = "CR";
+
+    private static readonly HttpClient s_httpClient = new()
+    {
+        Timeout = TimeSpan.FromSeconds(12),
+    };
+
+    private readonly ScrollControl _newsList;
+    private readonly Label _status;
+    private readonly Label _detailTitle;
+    private readonly Label _detailDate;
+    private readonly ImagePanel _detailImage;
+    private readonly Label _imageStatus;
+    private readonly ScrollControl _detailArea;
+    private readonly RichLabel _detailLabel;
+    private readonly Label _detailTemplate;
+    private readonly Button _refreshButton;
+
+    private bool _initialized;
+    private bool _loading;
+    private int _imageLoadVersion;
+    private DateTime _lastRefreshUtc = DateTime.MinValue;
+    private List<NewsItem> _items = [];
+
+    public LogiklikNewsWindow(Canvas parent) : base(parent, "Corps Royaux News", false, nameof(LogiklikNewsWindow))
+    {
+        DisableResizing();
+        Alignment = [Alignments.Center];
+        MinimumSize = new Point(820, 580);
+        IsResizable = false;
+        IsClosable = true;
+        SetSize(820, 580);
+
+        var header = new Label(this, "NewsHeader")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 14,
+            Text = "Corps Royaux News",
+            TextColorOverride = Color.White,
+            TextAlign = Pos.Left | Pos.CenterV,
+        };
+        header.SetBounds(20, 14, 540, 28);
+
+        var subHeader = new Label(this, "NewsSubHeader")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 9,
+            Text = "Powered by Logiklik News • Category: CR",
+            TextColorOverride = new Color(a: 255, r: 210, g: 210, b: 210),
+            TextAlign = Pos.Left | Pos.CenterV,
+        };
+        subHeader.SetBounds(20, 40, 540, 20);
+
+        _refreshButton = new Button(this, "NewsRefresh")
+        {
+            Text = "Refresh",
+            Font = Skin.DefaultFont,
+            FontSize = 9,
+        };
+        _refreshButton.SetBounds(708, 22, 82, 26);
+        _refreshButton.Clicked += RefreshButton_Clicked;
+
+        _status = new Label(this, "NewsStatus")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 9,
+            TextColorOverride = new Color(a: 255, r: 190, g: 198, b: 205),
+            TextAlign = Pos.Left | Pos.CenterV,
+        };
+        _status.SetBounds(20, 65, 770, 20);
+
+        _newsList = new ScrollControl(this, "NewsList")
+        {
+            OverflowX = OverflowBehavior.Hidden,
+            OverflowY = OverflowBehavior.Scroll,
+            AutoHideBars = false,
+        };
+        _newsList.SetBounds(20, 92, 292, 440);
+
+        _detailTitle = new Label(this, "NewsDetailTitle")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 13,
+            TextColorOverride = Color.White,
+            TextAlign = Pos.Left | Pos.CenterV,
+        };
+        _detailTitle.SetBounds(320, 92, 470, 42);
+
+        _detailDate = new Label(this, "NewsDetailDate")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 9,
+            TextColorOverride = new Color(a: 255, r: 225, g: 190, b: 120),
+            TextAlign = Pos.Left | Pos.CenterV,
+        };
+        _detailDate.SetBounds(320, 134, 470, 20);
+
+        _detailImage = new ImagePanel(this, "NewsDetailImage")
+        {
+            IsHidden = true,
+            MaintainAspectRatio = true,
+            MouseInputEnabled = false,
+        };
+        _detailImage.SetBounds(320, 162, 470, 180);
+
+        _imageStatus = new Label(this, "NewsImageStatus")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 9,
+            TextColorOverride = new Color(a: 255, r: 160, g: 174, b: 186),
+            TextAlign = Pos.Center,
+            IsHidden = true,
+            MouseInputEnabled = false,
+        };
+        _imageStatus.SetBounds(320, 162, 470, 180);
+
+        _detailArea = new ScrollControl(this, "NewsDetailArea");
+        SetDetailAreaHasImage(false);
+
+        _detailLabel = new RichLabel(_detailArea)
+        {
+            MouseInputEnabled = false,
+        };
+        _detailLabel.SetBounds(0, 0, 438, 360);
+
+        _detailTemplate = new Label(null)
+        {
+            Font = Skin.DefaultFont,
+            FontSize = 10,
+            TextColor = new Color(a: 255, r: 225, g: 230, b: 234),
+            Width = 438,
+        };
+
+        SetEmptyDetail("Select a news item.");
+    }
+
+    public void ShowAndRefresh()
+    {
+        Show();
+
+        var stale = DateTime.UtcNow - _lastRefreshUtc > TimeSpan.FromMinutes(5);
+        if (_items.Count == 0 || stale)
+        {
+            _ = RefreshAsync();
+        }
+    }
+
+    protected override void EnsureInitialized()
+    {
+        if (_initialized)
+        {
+            return;
+        }
+
+        _initialized = true;
+    }
+
+    private void RefreshButton_Clicked(Base sender, MouseButtonState arguments)
+    {
+        _ = RefreshAsync(force: true);
+    }
+
+    private async Task RefreshAsync(bool force = false)
+    {
+        if (_loading)
+        {
+            return;
+        }
+
+        if (!force &&
+            _items.Count > 0 &&
+            DateTime.UtcNow - _lastRefreshUtc <= TimeSpan.FromMinutes(5))
+        {
+            return;
+        }
+
+        _loading = true;
+        RunOnMainThread(
+            () =>
+            {
+                _status.Text = "Loading Corps Royaux news...";
+                _refreshButton.IsDisabled = true;
+            }
+        );
+
+        try
+        {
+            var json = await s_httpClient.GetStringAsync(FeedUrl).ConfigureAwait(false);
+            var items = ParseFeed(json);
+
+            RunOnMainThread(
+                () =>
+                {
+                    ApplyItems(items);
+                    _lastRefreshUtc = DateTime.UtcNow;
+                    _refreshButton.IsDisabled = false;
+                    _loading = false;
+                }
+            );
+        }
+        catch (Exception exception)
+        {
+            RunOnMainThread(
+                () =>
+                {
+                    _status.Text = "Unable to load Logiklik News. Try Refresh.";
+                    _refreshButton.IsDisabled = false;
+                    _loading = false;
+                    SetEmptyDetail(exception.Message);
+                }
+            );
+        }
+    }
+
+    private void ApplyItems(List<NewsItem> items)
+    {
+        _items = items;
+        _newsList.DeleteAll();
+
+        var rowIndex = 0;
+        foreach (var item in _items)
+        {
+            var date = item.PublishedAt.HasValue
+                ? item.PublishedAt.Value.ToLocalTime().ToString("yyyy-MM-dd")
+                : "Corps Royaux";
+
+            var title = item.Title.Length > 34 ? item.Title[..31] + "..." : item.Title;
+            var row = new Button(_newsList, "NewsRow" + rowIndex)
+            {
+                Dock = Pos.Top,
+                Height = 46,
+                Margin = new Margin(0, 0, 0, 5),
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 9,
+                Text = $"{date}  {title}",
+                TextColorOverride = Color.White,
+                UserData = item,
+            };
+            row.SetStateTexture(ComponentState.Normal, "control_button.png");
+            row.SetStateTexture(ComponentState.Hovered, "control_button_hovered.png");
+            row.SetStateTexture(ComponentState.Active, "control_button_clicked.png");
+            row.Clicked += NewsRow_Clicked;
+            ++rowIndex;
+        }
+
+        var contentHeight = Math.Max(_newsList.Height + 1, rowIndex * 51);
+        _newsList.SetInnerSize(Math.Max(1, _newsList.Width - 17), contentHeight);
+        _newsList.UpdateScrollBars();
+        _newsList.VerticalScrollBar.IsHidden = false;
+        _newsList.VerticalScrollBar.IsVisibleInTree = true;
+        _newsList.VerticalScrollBar.BringToFront();
+
+        if (_items.Count == 0)
+        {
+            _status.Text = "No published news found in category CR.";
+            SetEmptyDetail("No Corps Royaux news is currently available.");
+            return;
+        }
+
+        _status.Text = $"{_items.Count} Corps Royaux news item{(_items.Count == 1 ? string.Empty : "s")}";
+        SelectItem(_items[0]);
+    }
+
+    private void NewsRow_Clicked(Base sender, MouseButtonState arguments)
+    {
+        if (sender.UserData is NewsItem item)
+        {
+            SelectItem(item);
+        }
+    }
+
+    private void SelectItem(NewsItem item)
+    {
+        _detailTitle.Text = item.Title;
+        _detailDate.Text = item.PublishedAt.HasValue
+            ? item.PublishedAt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+            : "Corps Royaux";
+
+        _detailLabel.ClearText();
+        _detailTemplate.Width = Math.Max(100, _detailArea.Width - _detailArea.VerticalScrollBar.Width - 8);
+        _detailLabel.Width = _detailTemplate.Width;
+        _detailLabel.AddText(item.Summary, _detailTemplate);
+        _detailLabel.SizeToChildren(false, true);
+        _detailLabel.Invalidate();
+
+        _ = ShowArticleImageAsync(item);
+    }
+
+    private async Task ShowArticleImageAsync(NewsItem item)
+    {
+        var loadVersion = ++_imageLoadVersion;
+
+        if (item.ImageUrls.Count == 0)
+        {
+            RunOnMainThread(
+                () =>
+                {
+                    if (loadVersion != _imageLoadVersion)
+                    {
+                        return;
+                    }
+
+                    _detailImage.Texture = null;
+                    _detailImage.IsHidden = true;
+                    _imageStatus.IsHidden = true;
+                    SetDetailAreaHasImage(false);
+                }
+            );
+            return;
+        }
+
+        RunOnMainThread(
+            () =>
+            {
+                if (loadVersion != _imageLoadVersion)
+                {
+                    return;
+                }
+
+                _detailImage.Texture = null;
+                _detailImage.IsHidden = true;
+                _imageStatus.Text = "Loading image...";
+                _imageStatus.IsHidden = false;
+                SetDetailAreaHasImage(true);
+            }
+        );
+
+        foreach (var imageUrl in item.ImageUrls)
+        {
+            try
+            {
+                var bytes = await s_httpClient.GetByteArrayAsync(imageUrl).ConfigureAwait(false);
+                if (bytes.Length == 0 || loadVersion != _imageLoadVersion)
+                {
+                    continue;
+                }
+
+                var textureName = "logiklik-news-" +
+                                  Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(imageUrl)))
+                                      .ToLowerInvariant();
+
+                RunOnMainThread(
+                    () =>
+                    {
+                        if (loadVersion != _imageLoadVersion)
+                        {
+                            return;
+                        }
+
+                        try
+                        {
+                            var texture = GameContentManager.Current.Load<IGameTexture>(
+                                ContentType.Interface,
+                                textureName,
+                                () => new MemoryStream(bytes, writable: false)
+                            );
+
+                            _detailImage.Texture = texture;
+                            _detailImage.IsHidden = false;
+                            _imageStatus.IsHidden = true;
+                            SetDetailAreaHasImage(true);
+                            _detailImage.Invalidate();
+                        }
+                        catch
+                        {
+                            _detailImage.Texture = null;
+                        }
+                    }
+                );
+
+                return;
+            }
+            catch
+            {
+                // Try the next image URL exposed by the article.
+            }
+        }
+
+        RunOnMainThread(
+            () =>
+            {
+                if (loadVersion != _imageLoadVersion)
+                {
+                    return;
+                }
+
+                _detailImage.Texture = null;
+                _detailImage.IsHidden = true;
+                _imageStatus.Text = "Image unavailable";
+                _imageStatus.IsHidden = false;
+                SetDetailAreaHasImage(true);
+            }
+        );
+    }
+
+    private void SetDetailAreaHasImage(bool hasImage)
+    {
+        if (hasImage)
+        {
+            _detailArea.SetBounds(320, 350, 470, 182);
+        }
+        else
+        {
+            _detailArea.SetBounds(320, 162, 470, 370);
+        }
+
+        if (_detailTemplate != null)
+        {
+            _detailTemplate.Width = Math.Max(100, _detailArea.Width - _detailArea.VerticalScrollBar.Width - 8);
+        }
+
+        if (_detailLabel != null)
+        {
+            _detailLabel.Width = Math.Max(100, _detailArea.Width - _detailArea.VerticalScrollBar.Width - 8);
+        }
+    }
+
+    private void SetEmptyDetail(string text)
+    {
+        ++_imageLoadVersion;
+        _detailTitle.Text = string.Empty;
+        _detailDate.Text = string.Empty;
+        _detailImage.Texture = null;
+        _detailImage.IsHidden = true;
+        _imageStatus.IsHidden = true;
+        SetDetailAreaHasImage(false);
+        _detailLabel.ClearText();
+        _detailLabel.AddText(text, _detailTemplate);
+        _detailLabel.SizeToChildren(false, true);
+    }
+
+    private static List<NewsItem> ParseFeed(string json)
+    {
+        var root = JToken.Parse(json);
+        IEnumerable<JToken> source = root.Type == JTokenType.Array
+            ? root.Children()
+            : FindProperty(root, "items", "annonces", "news")?.Children() ?? [];
+
+        var items = new List<NewsItem>();
+        foreach (var token in source)
+        {
+            if (token.Type != JTokenType.Object || !MatchesCrFilter(token))
+            {
+                continue;
+            }
+
+            var title = ReadString(token, "titre", "title", "Title");
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                continue;
+            }
+
+            var rawContent = ReadString(
+                token,
+                "description",
+                "summary",
+                "Summary",
+                "contenu",
+                "content"
+            );
+            var summary = CleanHtml(rawContent);
+            var imageUrls = ExtractImageUrls(token, rawContent);
+
+            var dateRaw = ReadString(token, "date_publication", "date", "Date", "published_at", "published");
+            DateTimeOffset? publishedAt = null;
+            if (DateTimeOffset.TryParse(dateRaw, out var parsedDate))
+            {
+                publishedAt = parsedDate;
+            }
+
+            items.Add(
+                new NewsItem(
+                    WebUtility.HtmlDecode(title).Trim(),
+                    summary,
+                    ReadString(token, "lien", "link", "Link"),
+                    publishedAt,
+                    imageUrls
+                )
+            );
+        }
+
+        return items
+            .OrderByDescending(item => item.PublishedAt ?? DateTimeOffset.MinValue)
+            .Take(40)
+            .ToList();
+    }
+
+    private static bool MatchesCrFilter(JToken token)
+    {
+        var filterToken = FindProperty(
+            token,
+            "categorie",
+            "catégorie",
+            "category",
+            "categories",
+            "category_name",
+            "categorie_nom",
+            "tags",
+            "tenant",
+            "tenant_code"
+        );
+
+        return TokenMatchesFilter(filterToken);
+    }
+
+    private static bool TokenMatchesFilter(JToken? token)
+    {
+        if (token == null)
+        {
+            return false;
+        }
+
+        if (token.Type == JTokenType.Array)
+        {
+            return token.Children().Any(TokenMatchesFilter);
+        }
+
+        if (token.Type == JTokenType.Object)
+        {
+            return token.Children<JProperty>().Any(property => TokenMatchesFilter(property.Value));
+        }
+
+        var value = token.ToString().Trim();
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        return value
+            .Split([',', ';', '|', '/'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Any(part =>
+                string.Equals(part, RequiredCategory, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(part, "Corps Royaux", StringComparison.OrdinalIgnoreCase)
+            );
+    }
+
+    private static string ReadString(JToken token, params string[] names) =>
+        FindProperty(token, names)?.ToString() ?? string.Empty;
+
+    private static JToken? FindProperty(JToken token, params string[] names)
+    {
+        if (token is not JObject obj)
+        {
+            return null;
+        }
+
+        foreach (var property in obj.Properties())
+        {
+            if (names.Any(name => string.Equals(name, property.Name, StringComparison.OrdinalIgnoreCase)))
+            {
+                return property.Value;
+            }
+        }
+
+        return null;
+    }
+
+    private static List<string> ExtractImageUrls(JToken token, string rawHtml)
+    {
+        var urls = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(rawHtml))
+        {
+            foreach (Match match in Regex.Matches(
+                         rawHtml,
+                         @"<img[^>]+src\s*=\s*[""'](?<src>[^""']+)[""']",
+                         RegexOptions.IgnoreCase
+                     ))
+            {
+                AddImageUrl(urls, match.Groups["src"].Value);
+            }
+        }
+
+        AddImagePropertyUrls(
+            token,
+            urls,
+            "image",
+            "image_url",
+            "imageUrl",
+            "image_path",
+            "image_src",
+            "imageSrc",
+            "thumbnail",
+            "thumbnail_url",
+            "featured_image",
+            "featuredImage",
+            "cover",
+            "cover_image",
+            "photo",
+            "picture",
+            "media",
+            "media_url",
+            "url_image"
+        );
+
+        return urls;
+    }
+
+    private static void AddImagePropertyUrls(JToken token, List<string> urls, params string[] names)
+    {
+        if (token is JObject obj)
+        {
+            foreach (var property in obj.Properties())
+            {
+                if (names.Any(name => string.Equals(name, property.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    AddImageToken(urls, property.Value);
+                }
+                else if (property.Value is JObject or JArray)
+                {
+                    AddImagePropertyUrls(property.Value, urls, names);
+                }
+            }
+
+            return;
+        }
+
+        if (token is JArray array)
+        {
+            foreach (var child in array)
+            {
+                AddImagePropertyUrls(child, urls, names);
+            }
+        }
+    }
+
+    private static void AddImageToken(List<string> urls, JToken token)
+    {
+        switch (token.Type)
+        {
+            case JTokenType.String:
+                AddImageUrl(urls, token.ToString());
+                break;
+
+            case JTokenType.Array:
+                foreach (var child in token.Children())
+                {
+                    AddImageToken(urls, child);
+                }
+
+                break;
+
+            case JTokenType.Object:
+                foreach (var property in token.Children<JProperty>())
+                {
+                    if (property.Name.Equals("url", StringComparison.OrdinalIgnoreCase) ||
+                        property.Name.Equals("src", StringComparison.OrdinalIgnoreCase) ||
+                        property.Name.Equals("path", StringComparison.OrdinalIgnoreCase))
+                    {
+                        AddImageToken(urls, property.Value);
+                    }
+                }
+
+                break;
+        }
+    }
+
+    private static void AddImageUrl(List<string> urls, string rawUrl)
+    {
+        var value = WebUtility.HtmlDecode(rawUrl ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(value) || value.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (value.StartsWith("//", StringComparison.Ordinal))
+        {
+            value = "https:" + value;
+        }
+        else if (value.StartsWith("/", StringComparison.Ordinal))
+        {
+            value = "https://logiklik.com" + value;
+        }
+        else if (!Uri.TryCreate(value, UriKind.Absolute, out _))
+        {
+            value = "https://logiklik.com/" + value.TrimStart('/');
+        }
+
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
+        {
+            return;
+        }
+
+        if (!urls.Contains(value, StringComparer.OrdinalIgnoreCase))
+        {
+            urls.Add(value);
+        }
+    }
+
+    private static string CleanHtml(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "No description.";
+        }
+
+        var text = Regex.Replace(value, @"<br\s*/?>", "\n", RegexOptions.IgnoreCase);
+        text = Regex.Replace(text, @"</p\s*>", "\n\n", RegexOptions.IgnoreCase);
+        text = Regex.Replace(text, @"<[^>]+>", string.Empty);
+        text = WebUtility.HtmlDecode(text);
+        text = Regex.Replace(text, @"[ \t]+", " ");
+        text = Regex.Replace(text, @"\n{3,}", "\n\n");
+        return text.Trim();
+    }
+
+    private sealed record NewsItem(
+        string Title,
+        string Summary,
+        string Link,
+        DateTimeOffset? PublishedAt,
+        List<string> ImageUrls
+    );
+}

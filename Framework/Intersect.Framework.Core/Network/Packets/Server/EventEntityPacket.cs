@@ -39,4 +39,13 @@ public partial class EventEntityPacket : EntityPacket
     [Key(30)]
     public EventTrigger Trigger { get; set; }
 
+    [Key(31)]
+    public bool QuestArrowEnabled { get; set; }
+
+    [Key(32)]
+    public Guid QuestArrowQuestId { get; set; }
+
+    [Key(33)]
+    public Guid QuestArrowTaskId { get; set; }
+
 }

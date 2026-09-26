@@ -7,6 +7,10 @@
     <Compile Include="../../Intersect.Server.Core/MiniGames/Poker/*.cs" Link="Poker/%(Filename)%(Extension)" />
     <Compile Include="../../Intersect.Server.Core/MiniGames/Progression/MiniGameProgressStore.cs" Link="MiniGameProgressStore.cs" />
     <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/*.cs" Link="Shared/%(Filename)%(Extension)" />
+    <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/Potions/PotionPuzzle.cs" Link="Shared/Potions/PotionPuzzle.cs" />
+    <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/Potions/PotionRecipeDefinition.cs" Link="Shared/Potions/PotionRecipeDefinition.cs" />
+    <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/Cooking/CookingRecipeDefinition.cs" Link="Shared/Cooking/CookingRecipeDefinition.cs" />
+    <Compile Include="../../Framework/Intersect.Framework.Core/MiniGames/Cooking/CookingStageRules.cs" Link="Shared/Cooking/CookingStageRules.cs" />
     <Compile Include="../../Framework/Intersect.Framework.Core/GameObjects/Quests/QuestObjective.cs" Link="Shared/QuestObjective.cs" />
     <Compile Include="../../Framework/Intersect.Framework.Core/GameObjects/Quests/PokerQuestProgress.cs" Link="Shared/PokerQuestProgress.cs" />
   </ItemGroup>
