@@ -9,6 +9,7 @@ using Intersect.Client.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
+using Intersect.Network.Packets.Server;
 
 namespace Intersect.Client.Interface.Game.Character;
 
@@ -88,6 +89,8 @@ public partial class CharacterWindow
     int CooldownAmount = 0;
 
     int ManaStealAmount = 0;
+
+    private PlayerProfessionProfilePacket[] _professionDetails = [];
 
     //Init
     public CharacterWindow(Canvas gameCanvas)
@@ -470,7 +473,36 @@ public partial class CharacterWindow
         tooltip.AppendLine(Strings.Character.Tenacity.ToString(TenacityAmount));
         tooltip.AppendLine(Strings.Character.CooldownReduction.ToString(CooldownAmount));
         tooltip.AppendLine(Strings.Character.Manasteal.ToString(ManaStealAmount));
+
+        tooltip.AppendLine();
+        tooltip.AppendLine("Professions");
+        if (_professionDetails.Length == 0)
+        {
+            tooltip.AppendLine("No professions learned.");
+        }
+        else
+        {
+            foreach (var profession in _professionDetails.OrderBy(entry => entry.Name))
+            {
+                var next = profession.ExperienceToNextLevel < 0
+                    ? "MAX"
+                    : $"{profession.ExperienceToNextLevel:N0} XP to next";
+                tooltip.AppendLine(
+                    $"{profession.Name}: Lv {profession.Level}/{profession.MaximumLevel} • {next}"
+                );
+            }
+        }
+
         _detailsButton.SetToolTipText(tooltip.ToString());
+    }
+
+    public void ApplyPlayerProfile(PlayerProfilePacket packet)
+    {
+        if (!packet.Found || Globals.Me == null || packet.PlayerId != Globals.Me.Id)
+            return;
+
+        _professionDetails = packet.Professions ?? [];
+        UpdateExtraBuffTooltip(null, null);
     }
 
     /// <summary>
@@ -479,6 +511,9 @@ public partial class CharacterWindow
     public void Show()
     {
         mCharacterWindow.IsHidden = false;
+
+        if (Globals.Me != null)
+            PacketSender.SendRequestPlayerProfile(Globals.Me.Id, openWindow: false);
     }
 
     /// <summary>
