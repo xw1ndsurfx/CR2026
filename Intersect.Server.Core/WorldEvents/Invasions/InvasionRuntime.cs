@@ -38,6 +38,7 @@ internal static class InvasionRuntime
         public long NextWaveAtMs { get; set; }
         public long LastStatusAtMs { get; set; }
         public ConcurrentDictionary<Guid, byte> Participants { get; } = [];
+        public ConcurrentDictionary<Guid, long> ContributionDamage { get; } = [];
         public Dictionary<Guid, Npc> ActiveNpcs { get; } = [];
         public Dictionary<Guid, long> NextObjectiveHitAt { get; } = [];
         public bool Completed { get; set; }
@@ -94,17 +95,23 @@ internal static class InvasionRuntime
         }
     }
 
-    internal static void RegisterParticipant(Npc npc, Entity attacker)
+    internal static void RegisterContribution(Npc npc, Entity attacker, long damage)
     {
-        if (npc.InvasionSessionId == Guid.Empty)
+        if (npc.InvasionSessionId == Guid.Empty || damage <= 0)
             return;
 
-        Player? player = attacker as Player;
-        if (player == null)
+        if (attacker is not Player player)
             return;
 
-        if (SessionsById.TryGetValue(npc.InvasionSessionId, out var session))
-            session.Participants.TryAdd(player.Id, 0);
+        if (!SessionsById.TryGetValue(npc.InvasionSessionId, out var session))
+            return;
+
+        session.Participants.TryAdd(player.Id, 0);
+        session.ContributionDamage.AddOrUpdate(
+            player.Id,
+            damage,
+            (_, current) => current > long.MaxValue - damage ? long.MaxValue : current + damage
+        );
     }
 
     private static void CheckSchedules(long nowMs)
@@ -448,15 +455,52 @@ internal static class InvasionRuntime
             PacketSender.SendGameAnnouncement($"INVASION LOST\n{session.Definition.Name}", 6_000);
         }
 
+        var wavesCompleted = Math.Max(0, session.WaveIndex + (victory ? 1 : 0));
+        var totalContribution = session.ContributionDamage.Values
+            .Where(value => value > 0)
+            .Aggregate(0m, (total, value) => total + value);
+        var contributorCount = session.ContributionDamage.Count(pair => pair.Value > 0);
+        var averageContribution = contributorCount > 0
+            ? totalContribution / contributorCount
+            : 0m;
+
         foreach (var playerId in session.Participants.Keys)
         {
             var player = Player.FindOnline(playerId);
             if (player == null)
                 continue;
 
-            var xp = victory ? session.Definition.RewardExperience : 0;
-            if (xp > 0)
-                player.GiveExperience(xp);
+            session.ContributionDamage.TryGetValue(playerId, out var contributionDamage);
+
+            var contributionPercent = totalContribution > 0
+                ? (int)Math.Clamp(
+                    Math.Round((decimal)contributionDamage * 100m / totalContribution),
+                    0m,
+                    100m
+                )
+                : 0;
+
+            var rewardPercent = 0;
+            var xp = 0L;
+            if (victory && !configurationFailure && contributionDamage > 0 && averageContribution > 0)
+            {
+                var rawRewardPercent = Math.Round(
+                    (decimal)contributionDamage * 100m / averageContribution
+                );
+                rewardPercent = (int)Math.Clamp(
+                    rawRewardPercent,
+                    session.Definition.ParticipationMinimumRewardPercent,
+                    session.Definition.ParticipationMaximumRewardPercent
+                );
+
+                var reward = (decimal)session.Definition.RewardExperience * rewardPercent / 100m;
+                xp = reward >= long.MaxValue
+                    ? long.MaxValue
+                    : Math.Max(0L, (long)Math.Round(reward));
+
+                if (xp > 0)
+                    player.GiveExperience(xp);
+            }
 
             player.SendPacket(
                 new InvasionResultPacket
@@ -465,10 +509,13 @@ internal static class InvasionRuntime
                     Name = session.Definition.Name,
                     Victory = victory,
                     ExperienceAwarded = xp,
-                    WavesCompleted = Math.Max(0, session.WaveIndex + (victory ? 1 : 0)),
+                    WavesCompleted = wavesCompleted,
                     WaveCount = session.Definition.Waves.Length,
                     ObjectiveHealthRemaining = session.ObjectiveHealth,
                     ParticipantCount = session.Participants.Count,
+                    ContributionDamage = contributionDamage,
+                    ContributionPercent = contributionPercent,
+                    RewardPercentOfBase = rewardPercent,
                 }
             );
         }
