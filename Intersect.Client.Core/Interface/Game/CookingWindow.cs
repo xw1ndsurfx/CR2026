@@ -694,7 +694,7 @@ internal sealed class CookingWindow : Base
             $"{state.ProfessionExperiencePercent}%";
 
         var actionCount = state.Participants
-            .FirstOrDefault(participant => participant.PlayerId == Globals.Me?.Id)?.Actions ?? 0;
+            .FirstOrDefault(participant => participant.PlayerId == Intersect.Client.General.Globals.Me?.Id)?.Actions ?? 0;
 
         _resultStats.Text =
             $"Peak Combo x{state.PeakCombo}   •   Mishaps {state.Mishaps}   •   Your actions {actionCount}";
@@ -1407,5 +1407,99 @@ internal sealed class CookingRecipePickerPanel(Base parent) : Base(parent, "Cook
 
         renderer.DrawColor = new Color(255, 90, 62, 39);
         renderer.DrawFilledRect(new Rectangle(SX(18), SY(309), SW(514), SH(2)));
+    }
+}
+
+
+internal sealed class CookingResultPanel(Base parent) : Base(parent, "CookingResultPanel")
+{
+    public CookingQuality Quality { get; set; }
+
+    protected override void Render(SkinBase skin)
+    {
+        var renderer = skin.Renderer;
+        var bounds = RenderBounds;
+
+        var accent = Quality switch
+        {
+            CookingQuality.Perfect => new Color(255, 238, 201, 88),
+            CookingQuality.Great => new Color(255, 86, 169, 100),
+            CookingQuality.Decent => new Color(255, 185, 147, 86),
+            _ => new Color(255, 158, 67, 53),
+        };
+
+        renderer.DrawColor = accent;
+        renderer.DrawFilledRect(bounds);
+
+        renderer.DrawColor = new Color(250, 23, 17, 13);
+        renderer.DrawFilledRect(
+            new Rectangle(bounds.X + 3, bounds.Y + 3, Math.Max(1, bounds.Width - 6), Math.Max(1, bounds.Height - 6))
+        );
+
+        int SX(int value) => bounds.X + (int)Math.Round(value * bounds.Width / 520d);
+        int SY(int value) => bounds.Y + (int)Math.Round(value * bounds.Height / 410d);
+        int SW(int value) => Math.Max(1, (int)Math.Round(value * bounds.Width / 520d));
+        int SH(int value) => Math.Max(1, (int)Math.Round(value * bounds.Height / 410d));
+
+        // Decorative plate / meal behind the text, deliberately built from primitives so it
+        // matches the rest of the current mini-game without requiring external art.
+        renderer.DrawColor = new Color(255, 216, 209, 183);
+        renderer.DrawFilledRect(new Rectangle(SX(190), SY(119), SW(140), SH(46)));
+        renderer.DrawColor = new Color(255, 57, 63, 43);
+        renderer.DrawFilledRect(new Rectangle(SX(211), SY(129), SW(98), SH(26)));
+
+        // Quality pips act like a simple result rating.
+        var pips = Quality switch
+        {
+            CookingQuality.Perfect => 4,
+            CookingQuality.Great => 3,
+            CookingQuality.Decent => 2,
+            _ => 1,
+        };
+
+        for (var index = 0; index < 4; ++index)
+        {
+            renderer.DrawColor = index < pips
+                ? accent
+                : new Color(255, 66, 49, 38);
+            renderer.DrawFilledRect(new Rectangle(SX(204 + index * 30), SY(166), SW(18), SH(5)));
+        }
+
+        // Perfect/Great results get a restrained celebratory sparkle field; Burnt gets smoke.
+        var now = Environment.TickCount64;
+        if (Quality is CookingQuality.Perfect or CookingQuality.Great)
+        {
+            for (var spark = 0; spark < 10; ++spark)
+            {
+                var x = 70 + ((spark * 43 + (int)(now / 30)) % 380);
+                var y = 48 + ((spark * 61 + (int)(now / 45)) % 225);
+                renderer.DrawColor = new Color(
+                    a: 190,
+                    r: accent.R,
+                    g: accent.G,
+                    b: accent.B
+                );
+                renderer.DrawFilledRect(new Rectangle(SX(x), SY(y), SW(4), SH(4)));
+            }
+        }
+        else if (Quality == CookingQuality.Burnt)
+        {
+            for (var cloud = 0; cloud < 6; ++cloud)
+            {
+                var drift = (int)((now / 35 + cloud * 17) % 45);
+                renderer.DrawColor = new Color(a: 105, r: 90, g: 86, b: 80);
+                renderer.DrawFilledRect(
+                    new Rectangle(
+                        SX(205 + cloud * 26 + drift / 4),
+                        SY(125 - drift),
+                        SW(20 + cloud % 3 * 6),
+                        SH(20 + cloud % 3 * 6)
+                    )
+                );
+            }
+        }
+
+        renderer.DrawColor = new Color(255, 84, 59, 39);
+        renderer.DrawFilledRect(new Rectangle(SX(28), SY(335), SW(464), SH(2)));
     }
 }
