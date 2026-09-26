@@ -4,6 +4,7 @@ using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Models;
 using Intersect.Network.Packets.Editor;
+using Intersect.Network.Packets.WorldEvents;
 
 namespace Intersect.Editor.Networking;
 
