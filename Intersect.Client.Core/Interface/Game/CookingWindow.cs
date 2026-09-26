@@ -37,6 +37,10 @@ internal sealed class CookingWindow : Base
     private long _serverOffset;
     private int _recipeIndex;
     private int _partnerIndex;
+    private long _lastActionSequence;
+    private long _feedbackUntil;
+    private int _feedbackScore;
+    private CookingStageType _feedbackStage;
     private bool _destroyed;
 
     public bool ExitRequested { get; private set; }
@@ -135,6 +139,7 @@ internal sealed class CookingWindow : Base
 
         _state = state;
         _serverOffset = model.Current.ServerUnixMs - Environment.TickCount64;
+        HandleActionFeedback(state);
 
         if (_recipeIndex >= state.Recipes.Length) _recipeIndex = Math.Max(0, state.Recipes.Length - 1);
         if (_partnerIndex >= state.PartyCandidates.Length) _partnerIndex = Math.Max(0, state.PartyCandidates.Length - 1);
@@ -267,6 +272,29 @@ internal sealed class CookingWindow : Base
 
     private void DoAction(CookingActionInput input) =>
         _send(CookingRequestKind.Action, Guid.Empty, Guid.Empty, false, input);
+
+    private void HandleActionFeedback(CookingSessionState state)
+    {
+        if (state.ActionSequence <= _lastActionSequence)
+            return;
+
+        _lastActionSequence = state.ActionSequence;
+        _feedbackScore = state.LastActionScore;
+        _feedbackStage = state.StageType;
+        _feedbackUntil = Environment.TickCount64 + (_feedbackScore >= 90 || _feedbackScore < 40 ? 1_300 : 750);
+
+        PlayCookingSound(state.ActionSound);
+        if (_feedbackScore >= 90)
+            PlayCookingSound(state.PerfectSound);
+        else if (_feedbackScore < 40)
+            PlayCookingSound(state.MishapSound);
+    }
+
+    private static void PlayCookingSound(string? file)
+    {
+        if (!string.IsNullOrWhiteSpace(file))
+            Intersect.Client.Core.Audio.AddGameSound(file, false);
+    }
 
     private void ConfigureStageButtons(CookingSessionState state)
     {
@@ -407,9 +435,106 @@ internal sealed class CookingWindow : Base
             var remaining = Math.Max(0, state.StageDurationMs - elapsed);
             var timeWidth = (int)(meterW * remaining / Math.Max(1d, state.StageDurationMs));
             Fill(meterX, meterY + 36, timeWidth, 5, new Color(a: 255, r: 194, g: 164, b: 91));
+
+            DrawStageProp(Fill, state, elapsed);
         }
 
+        DrawActionFeedback(Fill);
         base.Render(skin);
+    }
+
+    private void DrawStageProp(
+        Action<int, int, int, int, Color> fill,
+        CookingSessionState state,
+        long elapsed
+    )
+    {
+        var pulse = (int)((elapsed / 120) % 6);
+        switch (state.StageType)
+        {
+            case CookingStageType.Chop:
+                fill(650 + pulse * 4, 380 - pulse * 2, 12, 70, new Color(a: 255, r: 210, g: 210, b: 205));
+                fill(615, 445, 160, 14, new Color(a: 255, r: 122, g: 82, b: 48));
+                break;
+
+            case CookingStageType.Stir:
+                fill(640, 392, 155, 70, new Color(a: 255, r: 113, g: 76, b: 50));
+                fill(660 + pulse * 4, 365, 10, 82, new Color(a: 255, r: 195, g: 165, b: 110));
+                break;
+
+            case CookingStageType.Heat:
+                for (var flame = 0; flame < 5; ++flame)
+                {
+                    var height = 18 + ((pulse + flame) % 4) * 8;
+                    fill(635 + flame * 30, 458 - height, 18, height, new Color(a: 230, r: 219, g: 105, b: 45));
+                }
+                fill(610, 388, 190, 35, new Color(a: 255, r: 72, g: 66, b: 58));
+                break;
+
+            case CookingStageType.Flip:
+            {
+                var arc = (int)((elapsed / 45) % 110);
+                var rise = 55 - Math.Abs(55 - arc);
+                fill(690 + arc / 3, 420 - rise, 42, 18, new Color(a: 255, r: 218, g: 169, b: 91));
+                fill(620, 445, 175, 20, new Color(a: 255, r: 74, g: 68, b: 60));
+                break;
+            }
+
+            case CookingStageType.Season:
+                fill(705 + pulse * 2, 375, 28, 65, new Color(a: 255, r: 213, g: 203, b: 180));
+                for (var grain = 0; grain < 6; ++grain)
+                    fill(690 + grain * 16, 440 + ((grain + pulse) % 3) * 6, 4, 4, Color.White);
+                break;
+
+            case CookingStageType.Knead:
+                fill(640, 415, 160, 48, new Color(a: 255, r: 218, g: 185, b: 137));
+                fill(625 + pulse * 8, 390, 60, 24, new Color(a: 255, r: 196, g: 166, b: 128));
+                break;
+
+            case CookingStageType.Plate:
+                fill(645, 378, 170, 90, new Color(a: 255, r: 224, g: 220, b: 202));
+                fill(662, 394, 136, 58, new Color(a: 255, r: 47, g: 58, b: 47));
+                break;
+        }
+    }
+
+    private void DrawActionFeedback(Action<int, int, int, int, Color> fill)
+    {
+        var remaining = _feedbackUntil - Environment.TickCount64;
+        if (remaining <= 0)
+            return;
+
+        if (_feedbackScore >= 90)
+        {
+            var pulse = 8 + (int)((remaining / 70) % 8);
+            fill(492 - pulse, 60 - pulse, 456 + pulse * 2, 444 + pulse * 2, new Color(a: 28, r: 236, g: 208, b: 113));
+            for (var spark = 0; spark < 8; ++spark)
+            {
+                var x = 540 + ((spark * 61 + (int)(remaining / 12)) % 390);
+                var y = 110 + ((spark * 47 + (int)(remaining / 17)) % 340);
+                fill(x, y, 7, 7, new Color(a: 230, r: 245, g: 218, b: 123));
+            }
+            return;
+        }
+
+        if (_feedbackScore < 40)
+        {
+            // Cartoony smoke/splatter: intentionally simple geometric FX so no new art asset is required.
+            for (var cloud = 0; cloud < 7; ++cloud)
+            {
+                var drift = (int)((1_300 - Math.Max(0, remaining)) / 22);
+                var x = 610 + cloud * 40 + (cloud % 2 == 0 ? drift : -drift / 2);
+                var y = 405 - cloud * 9 - drift;
+                var size = 24 + (cloud % 3) * 8;
+                fill(x, y, size, size, new Color(a: 125, r: 72, g: 70, b: 66));
+            }
+
+            if (_feedbackStage is CookingStageType.Flip or CookingStageType.Chop)
+            {
+                var fly = (int)((1_300 - Math.Max(0, remaining)) / 8);
+                fill(575 + fly, 390 - Math.Min(95, fly / 2), 38, 18, new Color(a: 245, r: 190, g: 120, b: 67));
+            }
+        }
     }
 
     private Label MakeLabel(string name, int x, int y, int w, int h, int font)
