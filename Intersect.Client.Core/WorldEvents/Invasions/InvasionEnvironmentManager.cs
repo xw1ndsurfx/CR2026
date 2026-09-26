@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Intersect.Client.Core;
+using Intersect.Client.General;
 using Intersect.Client.Maps;
 using Intersect.Configuration;
 using Intersect.Framework.Core.GameObjects.Maps;
