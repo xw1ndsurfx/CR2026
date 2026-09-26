@@ -445,6 +445,93 @@ internal sealed class CookingWindow : Base
         );
     }
 
+    private void SelectRecipeCard(int slot)
+    {
+        if (_state?.RecipeSelectionRequired != true)
+            return;
+
+        var index = _recipePage * _recipeCards.Length + slot;
+        if (index < 0 || index >= _state.Recipes.Length)
+            return;
+
+        _recipeIndex = index;
+        RefreshSelection();
+        RefreshRecipePicker();
+    }
+
+    private void RefreshRecipePicker()
+    {
+        if (_state == null)
+            return;
+
+        var recipes = _state.Recipes;
+        var pageCount = Math.Max(1, (recipes.Length + _recipeCards.Length - 1) / _recipeCards.Length);
+        _recipePage = Math.Clamp(_recipePage, 0, pageCount - 1);
+
+        if (_recipeIndex >= 0 && _recipeIndex < recipes.Length)
+        {
+            var selectedPage = _recipeIndex / _recipeCards.Length;
+            if (_recipePage < 0 || _recipePage >= pageCount)
+                _recipePage = selectedPage;
+        }
+
+        _recipePickerTitle.Text =
+            recipes.Length == 0
+                ? "NO RECIPES AVAILABLE"
+                : $"CHOOSE A RECIPE   •   {recipes.Length} AVAILABLE";
+
+        for (var slot = 0; slot < _recipeCards.Length; ++slot)
+        {
+            var card = _recipeCards[slot];
+            var index = _recipePage * _recipeCards.Length + slot;
+
+            if (index >= recipes.Length)
+            {
+                card.IsHidden = true;
+                continue;
+            }
+
+            var recipe = recipes[index];
+            var missingCount = recipe.Ingredients.Count(
+                ingredient => ingredient.Available < ingredient.Needed
+            );
+            var mode = recipe.RequireCoop
+                ? "2P REQUIRED"
+                : recipe.AllowSolo && recipe.AllowCoop
+                    ? "SOLO / 2P"
+                    : recipe.AllowCoop
+                        ? "2P"
+                        : "SOLO";
+
+            var selected = index == _recipeIndex;
+            var stateText = !recipe.Unlocked
+                ? $"LOCKED • {recipe.LockedReason}"
+                : missingCount > 0
+                    ? $"MISSING {missingCount} INGREDIENT{(missingCount == 1 ? "" : "S")}"
+                    : "READY TO COOK";
+
+            card.IsHidden = false;
+            card.IsDisabled = false;
+            card.Text =
+                $"{(selected ? "▶ " : "")}{recipe.Name}\n" +
+                $"Lv {recipe.RequiredLevel} • +{recipe.Experience:N0} XP • {mode}\n" +
+                stateText;
+
+            card.TextColorOverride = !recipe.Unlocked
+                ? new Color(255, 157, 128, 113)
+                : selected
+                    ? new Color(255, 236, 210, 117)
+                    : missingCount > 0
+                        ? new Color(255, 221, 177, 108)
+                        : Color.White;
+        }
+
+        _recipePickerPage.Text = $"Page {_recipePage + 1} / {pageCount}";
+        _recipePagePrevious.IsDisabled = _recipePage <= 0;
+        _recipePageNext.IsDisabled = _recipePage >= pageCount - 1;
+        _recipePicker.SelectedSlot = _recipeIndex - _recipePage * _recipeCards.Length;
+    }
+
     private void StartSolo()
     {
         if (_state?.Recipes is not { Length: > 0 }) return;
@@ -1090,5 +1177,59 @@ internal sealed class CookingWindow : Base
         Hide();
         Parent?.RemoveChild(this, false);
         Dispose();
+    }
+}
+
+
+internal sealed class CookingRecipePickerPanel(Base parent) : Base(parent, "CookingRecipePicker")
+{
+    public int SelectedSlot { get; set; } = -1;
+
+    protected override void Render(SkinBase skin)
+    {
+        var renderer = skin.Renderer;
+        var bounds = RenderBounds;
+
+        renderer.DrawColor = new Color(242, 18, 13, 10);
+        renderer.DrawFilledRect(bounds);
+
+        renderer.DrawColor = new Color(255, 148, 101, 54);
+        renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, 2));
+        renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y + bounds.Height - 2, bounds.Width, 2));
+        renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, 2, bounds.Height));
+        renderer.DrawFilledRect(new Rectangle(bounds.X + bounds.Width - 2, bounds.Y, 2, bounds.Height));
+
+        int SX(int value) => bounds.X + (int)Math.Round(value * bounds.Width / 550d);
+        int SY(int value) => bounds.Y + (int)Math.Round(value * bounds.Height / 390d);
+        int SW(int value) => Math.Max(1, (int)Math.Round(value * bounds.Width / 550d));
+        int SH(int value) => Math.Max(1, (int)Math.Round(value * bounds.Height / 390d));
+
+        for (var slot = 0; slot < 6; ++slot)
+        {
+            var column = slot % 2;
+            var row = slot / 2;
+            var x = SX(17 + column * 258);
+            var y = SY(55 + row * 82);
+            var w = SW(252);
+            var h = SH(76);
+
+            renderer.DrawColor = slot == SelectedSlot
+                ? new Color(255, 231, 194, 112)
+                : new Color(255, 91, 62, 39);
+            renderer.DrawFilledRect(new Rectangle(x, y, w, h));
+
+            renderer.DrawColor = new Color(255, 42, 30, 24);
+            renderer.DrawFilledRect(
+                new Rectangle(x + SW(2), y + SH(2), Math.Max(1, w - SW(4)), Math.Max(1, h - SH(4)))
+            );
+
+            renderer.DrawColor = slot == SelectedSlot
+                ? new Color(255, 184, 129, 65)
+                : new Color(255, 78, 54, 36);
+            renderer.DrawFilledRect(new Rectangle(x + SW(5), y + SH(5), Math.Max(1, w - SW(10)), SH(4)));
+        }
+
+        renderer.DrawColor = new Color(255, 90, 62, 39);
+        renderer.DrawFilledRect(new Rectangle(SX(18), SY(309), SW(514), SH(2)));
     }
 }
