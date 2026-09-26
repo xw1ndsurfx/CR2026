@@ -1,4 +1,5 @@
 using Intersect.Client.Interface;
+using Intersect.Client.Interface.Shared;
 using Intersect.Enums;
 using Intersect.Network;
 using Intersect.Network.Packets.Server;
