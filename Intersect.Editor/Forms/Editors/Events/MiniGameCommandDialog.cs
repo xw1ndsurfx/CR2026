@@ -331,6 +331,7 @@ internal sealed class MiniGameCommandDialog : Form
         {
             var id = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
             var blackjack = IsBlackjack();
+            var roulette = IsRoulette();
             if (IsPotions())
             {
                 chipsLabel.Text = "Not used by Potions";
@@ -365,9 +366,11 @@ internal sealed class MiniGameCommandDialog : Form
                 "The remaining balance is returned after leaving and settling the hand. Full inventory refunds wait safely. " +
                 (blackjack
                     ? "Blackjack uses a finite house/dealer reserve. "
-                    : unlimitedNpcBankroll.Checked
-                        ? "UNLIMITED NPC BANKROLL is enabled: the server creates only the missing NPC buy-in when the house cannot fund a seat. "
-                        : "NPC reserve creates an authorized house budget once per map + Table ID + currency. ") +
+                    : roulette
+                        ? "Roulette uses the reserve as its house bank and must be able to cover a 35:1 straight-number win. "
+                        : unlimitedNpcBankroll.Checked
+                            ? "UNLIMITED NPC BANKROLL is enabled: the server creates only the missing NPC buy-in when the house cannot fund a seat. "
+                            : "NPC reserve creates an authorized house budget once per map + Table ID + currency. ") +
                 "Funded XP is separate from test XP.";
 
             if (blackjack)
@@ -375,6 +378,12 @@ internal sealed class MiniGameCommandDialog : Form
                 var suggestedReserve = SuggestedBlackjackReserve();
                 status.Text += $"\nBlackjack dealer bank: {reserve.Value:N0} {itemName}. " +
                     $"The editor keeps this at or above {suggestedReserve:N0} so the dealer can cover the configured table.";
+            }
+            else if (roulette)
+            {
+                var suggestedReserve = SuggestedRouletteReserve();
+                status.Text += $"\nRoulette house bank: {reserve.Value:N0} {itemName}. " +
+                    $"Minimum recommended reserve: {suggestedReserve:N0} to cover the configured maximum straight-number wager.";
             }
         }
         currency.SelectedIndexChanged += (_, _) => { ChangeCurrencyMode(); ShowCurrencyStatus(); ShowSummary(); };
