@@ -334,7 +334,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
             Text =
                 "Each enabled warning is broadcast to every connected player exactly once before the scheduled invasion. " +
                 "The optional sound is played as a normal game sound, so it can be a recorded narrator voice placed in resources/sounds. " +
-                "Message placeholders: {name}, {island}, {target}, {minutes}, {time}.",
+                "Message placeholders: {name}, {island}, {target}, {minutes}, {remaining}, {time}.",
         };
         AddRow(table, "Behavior", help);
 
