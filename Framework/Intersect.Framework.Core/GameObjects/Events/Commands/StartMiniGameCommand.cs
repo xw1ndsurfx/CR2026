@@ -6,7 +6,7 @@ using Intersect.Framework.Core.MiniGames.Roulette;
 
 namespace Intersect.Framework.Core.GameObjects.Events.Commands;
 
-public enum MiniGameType { Poker = 0, Blackjack = 1, Potions = 2, Roulette = 3 }
+public enum MiniGameType { Poker = 0, Blackjack = 1, Potions = 2, Roulette = 3, Cooking = 4 }
 
 /// <summary>Empty currency selects isolated test chips. A currency item selects inventory-backed play.</summary>
 public sealed class StartMiniGameCommand : EventCommand
@@ -98,6 +98,11 @@ public sealed class StartMiniGameCommand : EventCommand
                 new BlackjackRules(MaxPlayers - 1, StartingChips, BlackjackMinimumBet, BlackjackMaximumBet,
                     TurnSeconds, BlackjackHitSoft17).IsValid,
             MiniGameType.Potions => true,
+            MiniGameType.Cooking =>
+                MaxPlayers is >= 1 and <= 2 &&
+                CurrencyItemId == Guid.Empty &&
+                NpcPlayers == 0 &&
+                !DealerPlays,
             MiniGameType.Roulette =>
                 MaxPlayers == 1 &&
                 NpcPlayers == 0 &&
