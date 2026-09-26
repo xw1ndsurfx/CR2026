@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Roulette;
 using MessagePack;
 
