@@ -1,4 +1,4 @@
-using Intersect.Network.Packets.Server;
+using Intersect.Network.Packets.WorldEvents;
 
 namespace Intersect.Client.Interface.Game;
 
