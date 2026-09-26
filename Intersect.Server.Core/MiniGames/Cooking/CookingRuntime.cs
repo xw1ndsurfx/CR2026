@@ -43,6 +43,7 @@ internal static class CookingRuntime
         public int StageScoredActions;
         public int StageMeterPermille;
         public int Combo;
+        public int PeakCombo;
         public int Mishaps;
         public long ActionSequence;
         public int LastActionScore;
@@ -57,6 +58,7 @@ internal static class CookingRuntime
         public CookingQuality Quality;
         public int TeamScore;
         public string RewardText = string.Empty;
+        public readonly Dictionary<Guid, long> AwardedExperience = [];
         public string Status = "Choose a recipe and cook alone or with a party member.";
     }
 
@@ -174,6 +176,10 @@ internal static class CookingRuntime
 
                 case CookingRequestKind.Action:
                     HandleAction(session, player, request, client);
+                    return;
+
+                case CookingRequestKind.ReturnToRecipes:
+                    HandleReturnToRecipes(session, player, request, client);
                     return;
             }
         }
@@ -361,6 +367,68 @@ internal static class CookingRuntime
         Broadcast(session, request.RequestId);
     }
 
+    private static void HandleReturnToRecipes(
+        Session session,
+        Player player,
+        CookingRequestPacket request,
+        Client client
+    )
+    {
+        if (!session.Complete)
+        {
+            SafeSend(client, Project(session, player, request.RequestId, "CookingNotComplete"));
+            return;
+        }
+
+        if (player.Id != session.Host.Player.Id)
+        {
+            SafeSend(client, Project(session, player, request.RequestId, "HostControlsKitchen"));
+            return;
+        }
+
+        var formerPartner = session.Partner;
+
+        session.Recipe = null;
+        session.Partner = null;
+        session.WaitingForPartner = false;
+        session.PartnerAccepted = false;
+        session.IngredientsConsumed = false;
+        session.Complete = false;
+        session.StageIndex = -1;
+        session.StageStartedUnixMs = 0;
+        session.StageTargetPermille = 0;
+        session.StageScoreTotal = 0;
+        session.StageScoredActions = 0;
+        session.StageMeterPermille = 0;
+        session.Combo = 0;
+        session.PeakCombo = 0;
+        session.Mishaps = 0;
+        session.LastActionScore = 0;
+        session.ComicEventText = string.Empty;
+        session.StageActions.Clear();
+        session.CompletedStageScores.Clear();
+        session.TeamScore = 0;
+        session.Quality = CookingQuality.Burnt;
+        session.RewardText = string.Empty;
+        session.AwardedExperience.Clear();
+        session.Status = "Choose another recipe.";
+        session.Host.Actions = 0;
+        session.Host.ScoreTotal = 0;
+        session.Host.ScoredActions = 0;
+        ++session.Revision;
+
+        if (formerPartner != null)
+        {
+            SessionsByPlayer.Remove(formerPartner.Player.Id);
+            SafeSend(
+                formerPartner.Client,
+                ClosedPacket(session, formerPartner.Player, 0, "HostReturnedToRecipes")
+            );
+        }
+
+        SafeSend(client, Project(session, player, request.RequestId));
+    }
+
     private static void HandleAction(
         Session session,
         Player player,
@@ -408,7 +476,10 @@ internal static class CookingRuntime
         session.StageActions[player.Id] = session.StageActions.GetValueOrDefault(player.Id) + 1;
 
         if (score >= 75)
+        {
             session.Combo = Math.Min(999, session.Combo + 1);
+            session.PeakCombo = Math.Max(session.PeakCombo, session.Combo);
+        }
         else
         {
             session.Combo = 0;
@@ -697,6 +768,7 @@ internal static class CookingRuntime
             );
 
             ProfessionRuntime.AwardActivity(player, session.Recipe.ProfessionId, xp);
+            session.AwardedExperience[player.Id] = xp;
         }
 
         session.RewardText = rewardParts.Count == 0
@@ -1024,6 +1096,8 @@ internal static class CookingRuntime
                 ProfessionExperienceToNextLevel = professionExperienceToNextLevel,
                 ProfessionExperiencePercent = professionExperiencePercent,
                 ProfessionMaximumLevelReached = professionMaximumLevelReached,
+                ProfessionExperienceAwarded = session.AwardedExperience.GetValueOrDefault(viewer.Id),
+                PeakCombo = session.PeakCombo,
             },
         };
     }
