@@ -61,6 +61,7 @@ public sealed class InvasionDefinition
     public int StartMinute { get; set; }
 
     public Guid TargetMapId { get; set; }
+    public Guid TargetEventId { get; set; }
     public int TargetX { get; set; }
     public int TargetY { get; set; }
     public int TargetHealth { get; set; } = 2_500;
