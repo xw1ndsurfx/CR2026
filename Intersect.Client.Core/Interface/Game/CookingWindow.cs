@@ -73,14 +73,18 @@ internal sealed class CookingWindow : Base
 
         _recipe = MakeLabel("CookingRecipe", 62, 115, 286, 92, 15);
         _ingredients = MakeLabel("CookingIngredients", 62, 228, 286, 198, 11);
+        _ingredients.TextColorOverride = new Color(255, 239, 232, 214);
         _partner = MakeLabel("CookingPartner", 62, 448, 286, 78, 11);
+        _partner.TextColorOverride = new Color(255, 220, 205, 176);
 
         _stage = MakeLabel("CookingStage", 420, 112, 530, 86, 18);
         _stage.TextAlign = Pos.Center;
+        _stage.TextColorOverride = new Color(255, 236, 210, 117);
         _status = MakeLabel("CookingStatus", 420, 210, 530, 92, 12);
         _status.TextAlign = Pos.Center;
         _score = MakeLabel("CookingScore", 420, 314, 530, 60, 15);
         _score.TextAlign = Pos.Center;
+        _score.TextColorOverride = new Color(255, 235, 224, 198);
         _players = MakeLabel("CookingPlayers", 420, 390, 530, 72, 11);
         _players.TextAlign = Pos.Center;
 
@@ -288,8 +292,10 @@ internal sealed class CookingWindow : Base
 
         _previousRecipe.IsDisabled = _recipeIndex <= 0;
         _nextRecipe.IsDisabled = _recipeIndex >= _state.Recipes.Length - 1;
-        _stage.Text = "Choose a recipe.";
-        _status.Text = "Cook solo, or invite a nearby member of your Party.";
+        _stage.Text = "CHOOSE A RECIPE";
+        _status.Text = hasIngredients
+            ? "Everything is ready. Cook solo or invite a nearby Party member."
+            : "Gather the missing ingredients before starting the kitchen.";
         _score.Text = string.Empty;
         _players.Text = string.Empty;
         _professionXp.Text = FormatProfessionProgress(
@@ -504,18 +510,63 @@ internal sealed class CookingWindow : Base
             );
         }
 
-        Fill(15, 8, 970, 695, new Color(a: 255, r: 63, g: 38, b: 25));
-        Fill(24, 18, 952, 675, new Color(a: 255, r: 25, g: 55, b: 37));
-        Fill(480, 58, 480, 445, new Color(a: 255, r: 38, g: 30, b: 23));
+        // Full-screen dimmer like Poker/Potions.
+        Fill(0, 0, 1024, 720, new Color(a: 225, r: 8, g: 11, b: 9));
+
+        void Panel(int x, int y, int w, int h, Color body, Color border)
+        {
+            Fill(x - 2, y - 2, w + 4, h + 4, border);
+            Fill(x, y, w, h, body);
+        }
+
+        // Framed title and the two major play areas.
+        Panel(36, 12, 952, 58, new Color(a: 255, r: 30, g: 22, b: 18), new Color(a: 255, r: 132, g: 89, b: 48));
+        Panel(40, 90, 330, 520, new Color(a: 255, r: 43, g: 31, b: 25), new Color(a: 255, r: 145, g: 100, b: 55));
+        Panel(390, 90, 590, 520, new Color(a: 255, r: 38, g: 27, b: 21), new Color(a: 255, r: 148, g: 101, b: 54));
+        Panel(40, 615, 740, 82, new Color(a: 255, r: 38, g: 28, b: 22), new Color(a: 255, r: 125, g: 92, b: 48));
+
+        // Section header bars.
+        Fill(52, 102, 306, 5, new Color(a: 255, r: 178, g: 127, b: 67));
+        Fill(402, 102, 566, 5, new Color(a: 255, r: 178, g: 127, b: 67));
+        Fill(52, 214, 306, 2, new Color(a: 255, r: 83, g: 59, b: 40));
+        Fill(52, 438, 306, 2, new Color(a: 255, r: 83, g: 59, b: 40));
+
+        // Cooking counter / work surface gives the center panel a real "game" focal point.
+        Fill(430, 340, 510, 136, new Color(a: 255, r: 91, g: 58, b: 35));
+        Fill(438, 348, 494, 120, new Color(a: 255, r: 124, g: 80, b: 44));
+        Fill(438, 348, 494, 8, new Color(a: 255, r: 187, g: 134, b: 73));
+        Fill(454, 368, 184, 82, new Color(a: 255, r: 53, g: 45, b: 39));
+        Fill(470, 382, 152, 54, new Color(a: 255, r: 31, g: 28, b: 25));
+        Fill(680, 365, 225, 88, new Color(a: 255, r: 67, g: 50, b: 36));
+
+        // Stove burners / preparation bowls.
+        for (var burner = 0; burner < 3; ++burner)
+        {
+            var bx = 708 + burner * 62;
+            Fill(bx, 385, 44, 44, new Color(a: 255, r: 31, g: 29, b: 27));
+            Fill(bx + 7, 392, 30, 30, new Color(a: 255, r: 84, g: 62, b: 44));
+            Fill(bx + 13, 398, 18, 18, new Color(a: 255, r: 38, g: 31, b: 26));
+        }
+
+        // Selection screen still looks like a game before the first stage begins.
+        if (_state is { RecipeSelectionRequired: true })
+        {
+            Fill(515, 370, 88, 58, new Color(a: 255, r: 218, g: 206, b: 178));
+            Fill(530, 382, 58, 34, new Color(a: 255, r: 54, g: 71, b: 49));
+            Fill(770, 370, 80, 12, new Color(a: 255, r: 202, g: 174, b: 112));
+            Fill(786, 348, 48, 30, new Color(a: 255, r: 226, g: 220, b: 196));
+        }
+
+        DrawStageProgress(Fill);
 
         if (_state is { RecipeSelectionRequired: false, Complete: false, WaitingForPartner: false, StageDurationMs: > 0 } state)
         {
             var nowServer = Environment.TickCount64 + _serverOffset;
             var elapsed = Math.Clamp(nowServer - state.StageStartedUnixMs, 0, state.StageDurationMs);
 
-            const int meterX = 535;
-            const int meterY = 470;
-            const int meterW = 370;
+            const int meterX = 470;
+            const int meterY = 480;
+            const int meterW = 400;
             const int meterH = 28;
 
             Fill(meterX, meterY, meterW, meterH, new Color(a: 255, r: 24, g: 20, b: 17));
@@ -592,10 +643,10 @@ internal sealed class CookingWindow : Base
 
         percent = Math.Clamp(percent, 0, 100);
 
-        const int x = 30;
-        const int y = 676;
-        const int width = 740;
-        const int height = 14;
+        const int x = 55;
+        const int y = 662;
+        const int width = 700;
+        const int height = 16;
 
         fill(x, y, width, height, new Color(a: 255, r: 28, g: 24, b: 20));
 
