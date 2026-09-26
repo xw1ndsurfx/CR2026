@@ -87,6 +87,10 @@ public sealed class InvasionDefinition
     public int BossHealthPercent { get; set; } = 250;
     public int BossDamagePercent { get; set; } = 125;
 
+    // RewardExperience is the baseline reward for a defender whose contribution
+    // matches the average contribution of all defenders in the invasion.
+    public int ParticipationMinimumRewardPercent { get; set; } = 10;
+    public int ParticipationMaximumRewardPercent { get; set; } = 200;
     public long RewardExperience { get; set; } = 500;
     public InvasionWaveDefinition[] Waves { get; set; } = [];
 
@@ -117,6 +121,9 @@ public sealed class InvasionDefinition
         ExtraPlayerHealthPercent is >= 0 and <= 500 &&
         BossHealthPercent is >= 1 and <= 2_000 &&
         BossDamagePercent is >= 1 and <= 1_000 &&
+        ParticipationMinimumRewardPercent is >= 0 and <= 500 &&
+        ParticipationMaximumRewardPercent is >= 1 and <= 500 &&
+        ParticipationMinimumRewardPercent <= ParticipationMaximumRewardPercent &&
         RewardExperience is >= 0 and <= 2_000_000_000 &&
         Waves is { Length: > 0 and <= 128 } &&
         Waves.All(wave => wave is { IsStructurallyValid: true }) &&
