@@ -64,6 +64,23 @@ public sealed class FrmInvasionConfiguration : DarkForm
     private readonly TextBox _reminder5Message = new() { Width = 430 };
     private readonly ComboBox _reminder5Sound = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
 
+    private readonly CheckBox _preStartCinematicEnabled = new()
+    {
+        Text = "Play a cinematic before the invasion begins",
+        AutoSize = true,
+    };
+    private readonly ComboBox _preStartCinematicEvent = new()
+    {
+        DropDownStyle = ComboBoxStyle.DropDownList,
+        Width = 360,
+    };
+    private readonly NumericUpDown _preStartCinematicLeadSeconds = new()
+    {
+        Minimum = 1,
+        Maximum = 300,
+        Width = 90,
+    };
+
     private readonly CheckBox _scaleNpcToPlayers = new()
     {
         Text = "Scale invasion NPCs to connected players",
@@ -94,8 +111,10 @@ public sealed class FrmInvasionConfiguration : DarkForm
 
         FillMaps();
         FillEnvironmentAssets();
+        FillCinematicEvents();
         BuildUi();
         _scaleNpcToPlayers.CheckedChanged += (_, _) => RefreshScalingControls();
+        _preStartCinematicEnabled.CheckedChanged += (_, _) => RefreshCinematicControls();
         _targetMap.SelectedIndexChanged += (_, _) =>
         {
             if (_loading) return;
@@ -146,6 +165,17 @@ public sealed class FrmInvasionConfiguration : DarkForm
         combo.Items.Add(string.Empty);
         foreach (var sound in GameContentManager.SmartSortedSoundNames)
             combo.Items.Add(sound);
+    }
+
+    private void FillCinematicEvents()
+    {
+        _preStartCinematicEvent.Items.Clear();
+        _preStartCinematicEvent.Items.Add(new Choice(Guid.Empty, "None"));
+
+        foreach (var pair in EventDescriptor.ItemPairs)
+            _preStartCinematicEvent.Items.Add(new Choice(pair.Key, pair.Value));
+
+        _preStartCinematicEvent.SelectedIndex = 0;
     }
 
     private void FillTargetEvents(Guid mapId, Guid selectedEventId)
@@ -215,6 +245,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         var tabs = new TabControl { Dock = DockStyle.Fill };
         tabs.TabPages.Add(BuildGeneralTab());
         tabs.TabPages.Add(BuildRemindersTab());
+        tabs.TabPages.Add(BuildCinematicTab());
         tabs.TabPages.Add(BuildEnvironmentTab());
         tabs.TabPages.Add(BuildScalingTab());
         tabs.TabPages.Add(BuildWavesTab());
@@ -379,6 +410,55 @@ public sealed class FrmInvasionConfiguration : DarkForm
         panel.Controls.Add(soundRow);
 
         AddRow(table, label, panel);
+    }
+
+    private TabPage BuildCinematicTab()
+    {
+        var page = new TabPage("Cinematic");
+        var table = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            ColumnCount = 2,
+            Padding = new Padding(14),
+        };
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 210));
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+        AddRow(table, "Pre-start cinematic", _preStartCinematicEnabled);
+        AddRow(table, "Common Event", _preStartCinematicEvent);
+
+        var lead = new FlowLayoutPanel { AutoSize = true };
+        lead.Controls.Add(_preStartCinematicLeadSeconds);
+        lead.Controls.Add(new Label
+        {
+            Text = "seconds before invasion start",
+            AutoSize = true,
+            Padding = new Padding(8, 5, 0, 0),
+        });
+        AddRow(table, "Start cinematic", lead);
+
+        var help = new Label
+        {
+            AutoSize = true,
+            MaximumSize = new Size(650, 0),
+            Text =
+                "The selected Common Event is launched for every connected player before the scheduled invasion. " +
+                "Build the cinematic with normal event commands such as Hold Player, Screen Fade, Show Text, Show Picture, Play Sound/BGM, Warp, Move Route, Wait and Start Common Event. " +
+                "The invasion itself still begins at its scheduled time, so keep the cinematic duration within the configured lead time. " +
+                "Start Now also plays the cinematic first and delays the invasion by this many seconds for testing.",
+        };
+        AddRow(table, "Behavior", help);
+
+        page.Controls.Add(table);
+        return page;
+    }
+
+    private void RefreshCinematicControls()
+    {
+        var enabled = _preStartCinematicEnabled.Checked;
+        _preStartCinematicEvent.Enabled = enabled;
+        _preStartCinematicLeadSeconds.Enabled = enabled;
     }
 
     private TabPage BuildEnvironmentTab()
@@ -557,6 +637,15 @@ public sealed class FrmInvasionConfiguration : DarkForm
         _reminder5Message.Text = invasion.Reminder5Message ?? string.Empty;
         _reminder5Sound.Text = invasion.Reminder5Sound ?? string.Empty;
 
+        _preStartCinematicEnabled.Checked = invasion.PreStartCinematicEnabled;
+        SelectChoice(_preStartCinematicEvent, invasion.PreStartCinematicEventId);
+        _preStartCinematicLeadSeconds.Value = Math.Clamp(
+            invasion.PreStartCinematicLeadSeconds,
+            (int)_preStartCinematicLeadSeconds.Minimum,
+            (int)_preStartCinematicLeadSeconds.Maximum
+        );
+        RefreshCinematicControls();
+
         _invasionMusic.Text = invasion.InvasionMusic ?? string.Empty;
         _nightBrightness.Value = invasion.NightBrightness;
         _overlayAlpha.Value = invasion.OverlayAlpha;
@@ -640,6 +729,11 @@ public sealed class FrmInvasionConfiguration : DarkForm
         invasion.Reminder5Enabled = _reminder5Enabled.Checked;
         invasion.Reminder5Message = _reminder5Message.Text?.Trim() ?? string.Empty;
         invasion.Reminder5Sound = _reminder5Sound.Text?.Trim() ?? string.Empty;
+
+        invasion.PreStartCinematicEnabled = _preStartCinematicEnabled.Checked;
+        invasion.PreStartCinematicEventId =
+            (_preStartCinematicEvent.SelectedItem as Choice)?.Id ?? Guid.Empty;
+        invasion.PreStartCinematicLeadSeconds = (int)_preStartCinematicLeadSeconds.Value;
 
         invasion.RewardExperience = (long)_rewardExp.Value;
 
