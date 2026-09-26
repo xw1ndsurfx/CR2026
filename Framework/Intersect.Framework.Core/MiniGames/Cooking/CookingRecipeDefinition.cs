@@ -39,14 +39,27 @@ public sealed record CookingStageDefinition(
     int Difficulty,
     int DurationSeconds,
     int RequiredActions,
-    CookingStageAssignment Assignment = CookingStageAssignment.Auto)
+    CookingStageAssignment Assignment = CookingStageAssignment.Auto,
+    string ActionSound = "",
+    string PerfectSound = "",
+    string MishapSound = "")
 {
+    public const int MaximumSoundFileLength = 128;
+
     public bool IsValid =>
         Enum.IsDefined(Type) &&
         Difficulty is >= 1 and <= 5 &&
         DurationSeconds is >= 4 and <= 60 &&
         RequiredActions is >= 1 and <= 20 &&
-        Enum.IsDefined(Assignment);
+        Enum.IsDefined(Assignment) &&
+        ValidSound(ActionSound) &&
+        ValidSound(PerfectSound) &&
+        ValidSound(MishapSound);
+
+    private static bool ValidSound(string? value) =>
+        value != null &&
+        value.Length <= MaximumSoundFileLength &&
+        value.All(character => !char.IsControl(character));
 }
 
 public sealed record CookingQualityOutput(
