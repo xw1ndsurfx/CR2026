@@ -1,3 +1,5 @@
+using System.Drawing.Imaging;
+using Intersect.Editor.Core;
 using Intersect.Editor.General;
 using Intersect.Editor.Maps;
 using Intersect.Enums;
@@ -30,6 +32,38 @@ public static partial class PacketSender
     public static void SendMap(MapInstance map)
     {
         Network.SendPacket(new MapUpdatePacket(map.Id, map.JsonData, map.GenerateTileData(), map.AttributeData));
+
+        if (Globals.CurrentMap?.Id != map.Id)
+        {
+            return;
+        }
+
+        try
+        {
+            byte[] previewBytes;
+            using (var screenshot = Graphics.ScreenShotMap())
+            {
+                const int maxWidth = 768;
+                var width = Math.Min(maxWidth, screenshot.Width);
+                var height = Math.Max(1, (int)Math.Round(screenshot.Height * (width / (double)screenshot.Width)));
+
+                using var resized = width == screenshot.Width
+                    ? new Bitmap(screenshot)
+                    : new Bitmap(screenshot, width, height);
+                using var stream = new MemoryStream();
+                resized.Save(stream, ImageFormat.Png);
+                previewBytes = stream.ToArray();
+            }
+
+            if (previewBytes.Length is > 0 and <= 8 * 1024 * 1024)
+            {
+                Network.SendPacket(new WikiMapPreviewPacket(map.Id, previewBytes));
+            }
+        }
+        catch
+        {
+            // A wiki preview must never prevent saving the map itself.
+        }
     }
 
     public static void SendCreateMap(int location, Guid currentMapId, MapListItem parent)
