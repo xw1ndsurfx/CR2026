@@ -1,6 +1,6 @@
 using MessagePack;
 
-namespace Intersect.Network.Packets.Server;
+namespace Intersect.Network.Packets.WorldEvents;
 
 [MessagePackObject]
 public partial class InvasionResultPacket : IntersectPacket
