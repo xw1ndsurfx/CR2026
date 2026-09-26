@@ -110,6 +110,16 @@ internal static class ProfessionRuntime
         }
     }
 
+    internal static void AwardActivity(Player player, Guid professionId, long amount)
+    {
+        var definition = ProfessionConfigurationRuntime.Current.Find(professionId);
+        if (definition == null || amount <= 0) return;
+
+        var oldLevel = GetLevel(player, professionId);
+        AddExperience(player, professionId, amount);
+        SendHarvestProgress(player, definition, amount, oldLevel);
+    }
+
     internal static bool CanHarvest(Player player, ResourceDescriptor resource, out string error)
     {
         error = string.Empty;
