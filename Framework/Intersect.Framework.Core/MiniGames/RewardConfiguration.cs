@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Intersect.Framework.Core.MiniGames.Cooking;
 using Intersect.Framework.Core.MiniGames.Potions;
 
 namespace Intersect.Framework.Core.MiniGames;
@@ -28,6 +29,7 @@ public sealed class RewardConfiguration
     public PokerLevelReward[] PokerLevelRewards { get; set; } = [];
     public PokerLevelReward[] BlackjackLevelRewards { get; set; } = [];
     public PotionRecipeDefinition[] PotionRecipes { get; set; } = [];
+    public CookingRecipeDefinition[] CookingRecipes { get; set; } = [];
 
     public bool IsStructurallyValid =>
         DailyCycleDays is >= 1 and <= MaximumDailyCycleDays &&
@@ -38,6 +40,9 @@ public sealed class RewardConfiguration
         (PotionRecipes ?? []).Length <= 128 &&
         (PotionRecipes ?? []).All(recipe => recipe is { IsStructurallyValid: true }) &&
         (PotionRecipes ?? []).Select(recipe => recipe.Id).Distinct().Count() == (PotionRecipes ?? []).Length &&
+        (CookingRecipes ?? []).Length <= 256 &&
+        (CookingRecipes ?? []).All(recipe => recipe is { IsStructurallyValid: true }) &&
+        (CookingRecipes ?? []).Select(recipe => recipe.Id).Distinct().Count() == (CookingRecipes ?? []).Length &&
         (!DailyRewardsEnabled ||
             Enumerable.Range(1, DailyCycleDays).All(day => (DailyRewards ?? []).Any(reward => reward.Day == day)));
 
@@ -62,6 +67,7 @@ public sealed class RewardConfiguration
         value.PokerLevelRewards ??= [];
         value.BlackjackLevelRewards ??= [];
         value.PotionRecipes ??= [];
+        value.CookingRecipes ??= [];
         if (!value.IsStructurallyValid)
         {
             throw new InvalidDataException("Invalid reward configuration.");
