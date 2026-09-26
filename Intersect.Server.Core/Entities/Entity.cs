@@ -2187,6 +2187,11 @@ public abstract partial class Entity : IEntity
 
             if (baseDamage > 0 && enemy.HasVital(Vital.Health) && !invulnerable)
             {
+                var appliedHealthDamage = Math.Min(
+                    baseDamage,
+                    Math.Max(0, enemyVitals[(int)Vital.Health])
+                );
+
                 if (isCrit)
                 {
                     PacketSender.SendActionMsg(enemy, Strings.Combat.Critical, CustomColors.Combat.Critical);
@@ -2235,7 +2240,7 @@ public abstract partial class Entity : IEntity
 
                     enemyNpc.LootMap.TryAdd(Id, true);
                     enemyNpc.LootMapCache = enemyNpc.LootMap.Keys.ToArray();
-                    InvasionRuntime.RegisterParticipant(enemyNpc, this);
+                    InvasionRuntime.RegisterContribution(enemyNpc, this, appliedHealthDamage);
                     enemyNpc.TryFindNewTarget(Timing.Global.Milliseconds, default, false, this);
                 }
 
