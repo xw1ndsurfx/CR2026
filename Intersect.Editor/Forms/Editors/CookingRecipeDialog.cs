@@ -275,7 +275,8 @@ internal sealed class CookingRecipeDialog : DarkForm
             Text =
                 "Royal Kitchen uses real inventory ingredients. The server consumes them only when the run starts. " +
                 "Quality is scored 0-100: Burnt <40, Decent 40-69, Great 70-89, Perfect 90-100. " +
-                "Auto stage assignment alternates players in co-op. Partner/Both stages require co-op.",
+                "Auto stage assignment alternates players in co-op. Partner/Both stages require co-op. " +
+                "Sound fields use filenames from resources/sounds. Comic-event chance is rolled by the server after actions.",
         };
         AddRow(root, 14, "Rules", help);
 
