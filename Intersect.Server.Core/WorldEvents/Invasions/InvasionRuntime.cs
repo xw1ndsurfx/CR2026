@@ -3,7 +3,7 @@ using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.WorldEvents.Invasions;
-using Intersect.Network.Packets.Server;
+using Intersect.Network.Packets.WorldEvents;
 using Intersect.Server.Entities;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
