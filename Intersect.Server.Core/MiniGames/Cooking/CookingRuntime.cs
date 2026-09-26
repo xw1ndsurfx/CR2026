@@ -135,9 +135,11 @@ internal static class CookingRuntime
             if (participant == null || !ReferenceEquals(participant.Client, client))
                 return;
 
-            ref var lastRequest = ref player.Id == session.Host.Player.Id
-                ? ref session.LastHostRequest
-                : ref session.LastPartnerRequest;
+            ref long lastRequest = ref (
+                player.Id == session.Host.Player.Id
+                    ? ref session.LastHostRequest
+                    : ref session.LastPartnerRequest
+            );
 
             if (request.RequestId <= lastRequest)
                 return;
