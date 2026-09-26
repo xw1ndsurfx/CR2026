@@ -255,7 +255,7 @@ internal sealed class RouletteWindow : Base
         _history.Text =
             state.History.Length == 0
                 ? "History: —"
-                : "History: " + string.Join("  •  ", state.History.Reverse());
+                : "History: " + string.Join("  •  ", state.History.AsEnumerable().Reverse().Select(number => number.ToString(CultureInfo.InvariantCulture)));
 
         var level = Intersect.Framework.Core.MiniGames.MiniGameProgression.Level(state.Experience);
         _xp.Text =
@@ -352,7 +352,7 @@ internal sealed class RouletteWindow : Base
 
         var hub = _layout.Rect(242, 284, 72, 72);
         skin.Renderer.DrawColor = Gold;
-        skin.Renderer.DrawFilledRect(hub);
+        skin.Renderer.DrawFilledRect(new Rectangle(hub.X, hub.Y, hub.Width, hub.Height));
 
         var now = Environment.TickCount64;
         var spinning = now < _spinAnimationUntil;
