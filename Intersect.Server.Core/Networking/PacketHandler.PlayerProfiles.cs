@@ -96,7 +96,7 @@ internal sealed partial class PacketHandler
                 ClassName = ClassDescriptor.GetName(target.ClassId),
                 GuildName = target.Guild?.Name ?? string.Empty,
                 MapName = target.MapName,
-                Experience = target.Experience,
+                Experience = target.Exp,
                 ExperienceToNextLevel = target.ExperienceToNextLevel,
                 Stats = stats,
                 Equipment = equipment.ToArray(),
