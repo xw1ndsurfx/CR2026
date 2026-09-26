@@ -7,6 +7,7 @@ using Intersect.Server.Database;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Entities;
 using Intersect.Server.MiniGames.Blackjack;
+using Intersect.Server.MiniGames.Roulette;
 using Intersect.Server.Networking;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -122,10 +123,19 @@ internal static class PokerInventoryBridge
         {
             if (!player.IsOnline || player.Client == null || player.IsSaving) return;
             // Both runtimes share escrow. Never orphan a live blackjack membership.
-            if (!PokerCurrencyRuntime.Contains(player.Id) && !BlackjackRuntime.Contains(player.Id)) Ledger.ReleaseOrphanHuman(player.Id);
+            if (!PokerCurrencyRuntime.Contains(player.Id) &&
+                !BlackjackRuntime.Contains(player.Id) &&
+                !RouletteRuntime.Contains(player.Id))
+            {
+                Ledger.ReleaseOrphanHuman(player.Id);
+            }
             foreach (var refund in Ledger.Refunds(player.Id))
             {
-                var game = refund.House.StartsWith("blackjack:", StringComparison.Ordinal) ? "Blackjack" : "Poker";
+                var game = refund.House.StartsWith("blackjack:", StringComparison.Ordinal)
+                    ? "Blackjack"
+                    : refund.House.StartsWith("roulette:", StringComparison.Ordinal)
+                        ? "Roulette"
+                        : "Poker";
                 try
                 {
                     List<Change> changes = [];
