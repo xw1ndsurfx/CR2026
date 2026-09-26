@@ -27,6 +27,37 @@ public enum CookingQuality
     Perfect = 3,
 }
 
+public enum CookingComicEventType
+{
+    PanOverflow = 0,
+    EscapingIngredient = 1,
+    SauceSplash = 2,
+    SmokeCloud = 3,
+    FlyingFood = 4,
+    WobblyPlate = 5,
+}
+
+public sealed record CookingRecipeSoundSet(
+    string Start = "",
+    string Complete = "",
+    string Burnt = "",
+    string Great = "",
+    string Perfect = "",
+    string Invite = "",
+    string PartnerJoined = "")
+{
+    public const int MaximumFileLength = 128;
+
+    public bool IsValid =>
+        new[] { Start, Complete, Burnt, Great, Perfect, Invite, PartnerJoined }
+            .All(Valid);
+
+    private static bool Valid(string? value) =>
+        value != null &&
+        value.Length <= MaximumFileLength &&
+        value.All(character => !char.IsControl(character));
+}
+
 public sealed record CookingIngredient(Guid ItemId, int Quantity)
 {
     public bool IsValid =>
@@ -89,7 +120,10 @@ public sealed record CookingRecipeDefinition(
     bool AllowSolo = true,
     bool AllowCoop = true,
     bool RequireCoop = false,
-    Guid UnlockPlayerVariableId = default)
+    Guid UnlockPlayerVariableId = default,
+    CookingRecipeSoundSet? Sounds = null,
+    int ComicEventChancePercent = 18,
+    CookingComicEventType[]? ComicEvents = null)
 {
     public bool IsStructurallyValid =>
         Id != Guid.Empty &&
@@ -107,7 +141,12 @@ public sealed record CookingRecipeDefinition(
         Outputs.All(output => output is { IsValid: true }) &&
         Outputs.Select(output => output.Quality).Distinct().Count() == Outputs.Length &&
         (AllowSolo || AllowCoop) &&
-        (!RequireCoop || AllowCoop);
+        (!RequireCoop || AllowCoop) &&
+        (Sounds == null || Sounds.IsValid) &&
+        ComicEventChancePercent is >= 0 and <= 100 &&
+        (ComicEvents ?? []).Length <= Enum.GetValues<CookingComicEventType>().Length &&
+        (ComicEvents ?? []).All(Enum.IsDefined) &&
+        (ComicEvents ?? []).Distinct().Count() == (ComicEvents ?? []).Length;
 
     public CookingQualityOutput? OutputFor(CookingQuality quality) =>
         Outputs.FirstOrDefault(output => output.Quality == quality) ??
