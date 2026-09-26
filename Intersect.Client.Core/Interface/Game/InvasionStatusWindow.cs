@@ -1,7 +1,7 @@
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
-using Intersect.Network.Packets.Server;
+using Intersect.Network.Packets.WorldEvents;
 using Rectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 
