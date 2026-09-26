@@ -23,6 +23,11 @@ internal static class InvasionRuntime
         double PopulationHealthMultiplier
     );
 
+    private readonly record struct PendingStart(
+        InvasionDefinition Definition,
+        long StartAtMs
+    );
+
     private sealed class Session
     {
         public required InvasionDefinition Definition { get; init; }
@@ -50,12 +55,24 @@ internal static class InvasionRuntime
     private static readonly ConcurrentDictionary<Guid, Session> SessionsById = [];
     private static readonly Dictionary<Guid, string> LastScheduleKeys = [];
     private static readonly Dictionary<(Guid InvasionId, int MinutesBefore), string> LastReminderKeys = [];
+    private static readonly Dictionary<Guid, string> LastCinematicKeys = [];
+    private static readonly Dictionary<Guid, PendingStart> PendingStarts = [];
     private static long _nextScheduleCheckAt;
 
     internal static void Update(long nowMs)
     {
         lock (Gate)
         {
+            foreach (var pending in PendingStarts.ToArray())
+            {
+                if (nowMs < pending.Value.StartAtMs)
+                    continue;
+
+                PendingStarts.Remove(pending.Key);
+                if (!Sessions.ContainsKey(pending.Key))
+                    Start(pending.Value.Definition, nowMs);
+            }
+
             if (nowMs >= _nextScheduleCheckAt)
             {
                 _nextScheduleCheckAt = nowMs + 1_000;
@@ -85,13 +102,25 @@ internal static class InvasionRuntime
                 return false;
             }
 
-            if (Sessions.ContainsKey(definition.Id))
+            if (Sessions.ContainsKey(definition.Id) || PendingStarts.ContainsKey(definition.Id))
             {
-                error = "That invasion is already active.";
+                error = "That invasion is already active or waiting for its cinematic to finish.";
                 return false;
             }
 
-            Start(definition, Timing.Global.Milliseconds);
+            var nowMs = Timing.Global.Milliseconds;
+            if (TryLaunchCinematic(definition))
+            {
+                PendingStarts[definition.Id] = new PendingStart(
+                    definition,
+                    nowMs + definition.PreStartCinematicLeadSeconds * 1_000L
+                );
+            }
+            else
+            {
+                Start(definition, nowMs);
+            }
+
             error = string.Empty;
             return true;
         }
@@ -141,11 +170,13 @@ internal static class InvasionRuntime
     {
         var now = DateTimeOffset.Now;
         CheckPreInvasionReminders(now);
+        CheckPreStartCinematics(now);
 
         foreach (var definition in InvasionConfigurationRuntime.Current.Invasions)
         {
             if (!definition.Enabled ||
                 Sessions.ContainsKey(definition.Id) ||
+                PendingStarts.ContainsKey(definition.Id) ||
                 !definition.RunsOn(now.DayOfWeek) ||
                 now.Hour != definition.StartHour ||
                 now.Minute != definition.StartMinute)
@@ -161,11 +192,93 @@ internal static class InvasionRuntime
         }
     }
 
+    private static void CheckPreStartCinematics(DateTimeOffset now)
+    {
+        foreach (var definition in InvasionConfigurationRuntime.Current.Invasions)
+        {
+            if (!definition.Enabled ||
+                !definition.PreStartCinematicEnabled ||
+                definition.PreStartCinematicEventId == Guid.Empty ||
+                Sessions.ContainsKey(definition.Id) ||
+                PendingStarts.ContainsKey(definition.Id))
+                continue;
+
+            for (var dayOffset = 0; dayOffset <= 1; ++dayOffset)
+            {
+                var date = now.Date.AddDays(dayOffset);
+                var scheduledStart = new DateTimeOffset(
+                    date.Year,
+                    date.Month,
+                    date.Day,
+                    definition.StartHour,
+                    definition.StartMinute,
+                    0,
+                    now.Offset
+                );
+
+                if (!definition.RunsOn(scheduledStart.DayOfWeek))
+                    continue;
+
+                var cinematicAt = scheduledStart.AddSeconds(-definition.PreStartCinematicLeadSeconds);
+                if (now < cinematicAt || now >= scheduledStart)
+                    continue;
+
+                var scheduleKey = scheduledStart.ToString("yyyy-MM-dd-HH-mm");
+                if (LastCinematicKeys.TryGetValue(definition.Id, out var last) &&
+                    string.Equals(last, scheduleKey, StringComparison.Ordinal))
+                    break;
+
+                LastCinematicKeys[definition.Id] = scheduleKey;
+                TryLaunchCinematic(definition);
+                break;
+            }
+        }
+    }
+
+    private static bool TryLaunchCinematic(InvasionDefinition definition)
+    {
+        if (!definition.PreStartCinematicEnabled ||
+            definition.PreStartCinematicEventId == Guid.Empty)
+            return false;
+
+        var cinematic = EventDescriptor.Get(definition.PreStartCinematicEventId);
+        if (cinematic == null || !cinematic.CommonEvent)
+        {
+            ApplicationContext.Context.Value?.Logger.LogWarning(
+                "Invasion {InvasionName} could not launch cinematic event {EventId} because it is missing or is not a Common Event.",
+                definition.Name,
+                definition.PreStartCinematicEventId
+            );
+            return false;
+        }
+
+        var launched = 0;
+        foreach (var player in Player.OnlinePlayers)
+        {
+            if (player == null || player.IsDisposed)
+                continue;
+
+            player.EnqueueStartCommonEvent(cinematic, CommonEventTrigger.None);
+            ++launched;
+        }
+
+        ApplicationContext.Context.Value?.Logger.LogInformation(
+            "Invasion {InvasionName} launched pre-start cinematic {CinematicName} for {PlayerCount} online player(s).",
+            definition.Name,
+            cinematic.Name,
+            launched
+        );
+
+        return true;
+    }
+
     private static void CheckPreInvasionReminders(DateTimeOffset now)
     {
         foreach (var definition in InvasionConfigurationRuntime.Current.Invasions)
         {
-            if (!definition.Enabled || Sessions.ContainsKey(definition.Id))
+            if (!definition.Enabled ||
+                Sessions.ContainsKey(definition.Id) ||
+                PendingStarts.ContainsKey(definition.Id))
                 continue;
 
             CheckReminder(definition, now, 60, definition.Reminder60Enabled, definition.Reminder60Message, definition.Reminder60Sound);
