@@ -28,6 +28,7 @@ public sealed partial class TargetContextMenu : ContextMenu
     private readonly MenuItem _friendMenuItem;
     private readonly MenuItem _guildMenuItem;
     private readonly MenuItem _privateMessageMenuItem;
+    private readonly MenuItem _characterInfoMenuItem;
     private readonly Player? _me;
     private IEntity? _entity;
 
@@ -60,6 +61,9 @@ public sealed partial class TargetContextMenu : ContextMenu
 
         _privateMessageMenuItem = AddItem(Strings.EntityContextMenu.PrivateMessage);
         _privateMessageMenuItem.Clicked += privateMessageRequest_Clicked;
+
+        _characterInfoMenuItem = AddItem("Character Information");
+        _characterInfoMenuItem.Clicked += characterInfoRequest_Clicked;
 
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer?.GetResolutionString());
         BuildContextMenu();
@@ -148,6 +152,9 @@ public sealed partial class TargetContextMenu : ContextMenu
             _targetNameMenuItem.MouseInputEnabled = false;
             AddChild(_nameDivider);
         }
+
+        if (_entity is Player)
+            AddChild(_characterInfoMenuItem);
 
         AddChild(_tradeMenuItem);
         AddChild(_partyMenuItem);
@@ -245,6 +252,15 @@ public sealed partial class TargetContextMenu : ContextMenu
                 new Chat.ChatboxMsg(Strings.Guilds.InviteAlreadyInGuild, Color.Red, ChatMessageType.Guild)
             );
         }
+    }
+
+    void characterInfoRequest_Clicked(Base sender, MouseButtonState arguments)
+    {
+        if (_entity is not Player player)
+            return;
+
+        PacketSender.SendRequestPlayerProfile(player.Id, openWindow: true);
+        Close();
     }
 
     void privateMessageRequest_Clicked(Base sender, MouseButtonState arguments)
