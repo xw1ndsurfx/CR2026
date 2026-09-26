@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.WorldEvents.Invasions;
 using Intersect.Server.Maps;
@@ -37,6 +38,15 @@ internal static class InvasionConfigurationRuntime
         {
             if (MapController.Get(invasion.TargetMapId) == null)
                 return false;
+
+            if (invasion.TargetEventId != Guid.Empty)
+            {
+                var targetEvent = EventDescriptor.Get(invasion.TargetEventId);
+                if (targetEvent == null ||
+                    targetEvent.CommonEvent ||
+                    targetEvent.MapId != invasion.TargetMapId)
+                    return false;
+            }
 
             foreach (var wave in invasion.Waves)
             foreach (var spawn in wave.Spawns)
