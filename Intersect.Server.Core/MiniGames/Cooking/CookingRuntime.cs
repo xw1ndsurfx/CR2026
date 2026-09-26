@@ -44,6 +44,8 @@ internal static class CookingRuntime
         public int StageMeterPermille;
         public int Combo;
         public int Mishaps;
+        public long ActionSequence;
+        public int LastActionScore;
         public readonly Dictionary<Guid, int> StageActions = [];
         public readonly List<int> CompletedStageScores = [];
         public long Revision;
@@ -397,6 +399,8 @@ internal static class CookingRuntime
 
         session.StageScoreTotal += score;
         session.StageScoredActions++;
+        session.ActionSequence++;
+        session.LastActionScore = score;
         session.StageActions[player.Id] = session.StageActions.GetValueOrDefault(player.Id) + 1;
 
         if (score >= 75)
@@ -554,6 +558,7 @@ internal static class CookingRuntime
         session.StageScoredActions = 0;
         session.StageActions.Clear();
         session.Combo = 0;
+        session.LastActionScore = 0;
         session.Status = StagePrompt(stage.Type);
         ++session.Revision;
     }
@@ -871,6 +876,11 @@ internal static class CookingRuntime
                 Combo = session.Combo,
                 Mishaps = session.Mishaps,
                 ActionHint = stage == null ? string.Empty : ActionHint(session, stage),
+                ActionSequence = session.ActionSequence,
+                LastActionScore = session.LastActionScore,
+                ActionSound = stage?.ActionSound ?? string.Empty,
+                PerfectSound = stage?.PerfectSound ?? string.Empty,
+                MishapSound = stage?.MishapSound ?? string.Empty,
             },
         };
     }
