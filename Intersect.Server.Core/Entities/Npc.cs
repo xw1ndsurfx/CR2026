@@ -988,11 +988,20 @@ public partial class Npc : Entity
                     {
                         TryCastSpells();
                         // TODO: Make resetting mobs actually return to their starting location.
-                        if ((!mResetting && !IsOneBlockAway(
-                            mPathFinder.GetTarget().TargetMapId, mPathFinder.GetTarget().TargetX,
-                            mPathFinder.GetTarget().TargetY, mPathFinder.GetTarget().TargetZ
-                        )) ||
-                        (mResetting && GetDistanceTo(AggroCenterMap, AggroCenterX, AggroCenterY) != 0)
+                        var pathTarget = mPathFinder.GetTarget();
+                        var invasionCrossingMap =
+                            invasionNpc &&
+                            pathTarget.TargetMapId != MapId;
+
+                        if ((!mResetting &&
+                             (invasionCrossingMap ||
+                              !IsOneBlockAway(
+                                  pathTarget.TargetMapId,
+                                  pathTarget.TargetX,
+                                  pathTarget.TargetY,
+                                  pathTarget.TargetZ
+                              ))) ||
+                            (mResetting && GetDistanceTo(AggroCenterMap, AggroCenterX, AggroCenterY) != 0)
                         )
                         {
                             var pathFinderResult = mPathFinder.Update(timeMs);
