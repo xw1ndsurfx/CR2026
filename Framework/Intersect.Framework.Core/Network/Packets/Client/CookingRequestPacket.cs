@@ -13,6 +13,7 @@ public sealed partial class CookingRequestPacket : IntersectPacket
     [Key(4)] public Guid RecipeId { get; set; }
     [Key(5)] public Guid PartnerId { get; set; }
     [Key(6)] public bool Accept { get; set; }
+    [Key(7)] public CookingActionInput ActionInput { get; set; } = CookingActionInput.Primary;
 
     [IgnoreMember]
     public bool IsValid =>
@@ -25,5 +26,6 @@ public sealed partial class CookingRequestPacket : IntersectPacket
             : RecipeId == Guid.Empty) &&
         (Kind == CookingRequestKind.RespondInvite
             ? PartnerId == Guid.Empty
-            : true);
+            : true) &&
+        Enum.IsDefined(ActionInput);
 }
