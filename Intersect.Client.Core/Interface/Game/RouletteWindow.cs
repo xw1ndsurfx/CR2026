@@ -319,11 +319,11 @@ internal sealed class RouletteWindow : Base
 
         var table = _layout.Rect(14, 8, 548, 706);
         renderer.DrawColor = new Color(a: 255, r: 61, g: 40, b: 28);
-        renderer.DrawFilledRect(table);
+        renderer.DrawFilledRect(new Rectangle(table.X, table.Y, table.Width, table.Height));
 
         var inner = _layout.Rect(24, 18, 528, 686);
         renderer.DrawColor = new Color(a: 255, r: 28, g: 71, b: 48);
-        renderer.DrawFilledRect(inner);
+        renderer.DrawFilledRect(new Rectangle(inner.X, inner.Y, inner.Width, inner.Height));
 
         DrawWheel(skin);
         base.Render(skin);
