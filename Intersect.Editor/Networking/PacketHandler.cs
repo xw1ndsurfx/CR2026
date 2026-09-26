@@ -21,6 +21,7 @@ using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.GameObjects;
 using Intersect.Network;
 using Intersect.Network.Packets.Server;
+using Intersect.Network.Packets.WorldEvents;
 using Microsoft.Extensions.Logging;
 using ApplicationContext = Intersect.Core.ApplicationContext;
 
