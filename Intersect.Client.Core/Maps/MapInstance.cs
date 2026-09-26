@@ -12,6 +12,7 @@ using Intersect.Client.Framework.Items;
 using Intersect.Client.Framework.Maps;
 using Intersect.Client.General;
 using Intersect.Client.Localization;
+using Intersect.Client.WorldEvents.Invasions;
 using Intersect.Compression;
 using Intersect.Core;
 using Intersect.Enums;
@@ -1369,14 +1370,27 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
     /// </summary>
     public void DrawFog()
     {
+        var fogName = Fog;
+        var fogAlpha = FogTransparency;
+        var fogXSpeed = FogXSpeed;
+        var fogYSpeed = FogYSpeed;
+
+        if (InvasionEnvironmentManager.TryGetEnvironment(this, out var invasionEnvironment))
+        {
+            fogName = invasionEnvironment.Fog;
+            fogAlpha = invasionEnvironment.FogAlpha;
+            fogXSpeed = invasionEnvironment.FogXSpeed;
+            fogYSpeed = invasionEnvironment.FogYSpeed;
+        }
+
         // Exit early if the player or map data is not available, or if there is no fog texture.
-        if (Globals.Me == null || Lookup.Get(Globals.Me.MapId) == null || string.IsNullOrWhiteSpace(Fog))
+        if (Globals.Me == null || Lookup.Get(Globals.Me.MapId) == null || string.IsNullOrWhiteSpace(fogName))
         {
             return;
         }
 
         // Get fog texture and exit early if it is not available.
-        var fogTex = Globals.ContentManager.GetTexture(Framework.Content.TextureType.Fog, Fog);
+        var fogTex = Globals.ContentManager.GetTexture(Framework.Content.TextureType.Fog, fogName);
         if (fogTex == null)
         {
             return;
@@ -1397,8 +1411,8 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         var yCount = _height * _tileHeight * 3 / fogTex.Height;
 
         // Update the fog texture's position based on its speed and elapsed time.
-        mFogCurrentX += elapsedTime / 1000f * FogXSpeed * 2;
-        mFogCurrentY += elapsedTime / 1000f * FogYSpeed * 2;
+        mFogCurrentX += elapsedTime / 1000f * fogXSpeed * 2;
+        mFogCurrentY += elapsedTime / 1000f * fogYSpeed * 2;
 
         // Handle cases where the fog texture's position goes out of bounds.
         mFogCurrentX %= fogTex.Width;
@@ -1418,7 +1432,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                         X - _width * _tileWidth * 1f + x * fogTex.Width + drawX,
                         Y - _height * _tileHeight * 1f + y * fogTex.Height + drawY,
                         fogTex.Width, fogTex.Height
-                    ), new Color((byte)(FogTransparency * mCurFogIntensity), 255, 255, 255)
+                    ), new Color((byte)(fogAlpha * mCurFogIntensity), 255, 255, 255)
                 );
             }
         }
