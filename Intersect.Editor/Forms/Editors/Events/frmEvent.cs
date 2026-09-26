@@ -598,6 +598,10 @@ public partial class FrmEvent : Form
                 tmpCommand = new GiveExperienceCommand();
 
                 break;
+            case EventCommandType.ModifyProfession:
+                tmpCommand = new ModifyProfessionCommand();
+
+                break;
             case EventCommandType.ChangeLevel:
                 tmpCommand = new ChangeLevelCommand();
 
@@ -815,10 +819,27 @@ public partial class FrmEvent : Form
     public FrmEvent(MapDescriptor currentMap)
     {
         InitializeComponent();
+        AddProfessionCommands();
         InitializeQuestArrowControls();
         Icon = Program.Icon;
 
         mCurrentMap = currentMap;
+    }
+
+    private void AddProfessionCommands()
+    {
+        if (lstCommands.Nodes.Cast<TreeNode>().Any(node => node.Name == "professions"))
+            return;
+
+        var root = new TreeNode("Professions") { Name = "professions" };
+        root.Nodes.Add(
+            new TreeNode("Modify Profession")
+            {
+                Name = "modifyprofession",
+                Tag = (int)EventCommandType.ModifyProfession,
+            }
+        );
+        lstCommands.Nodes.Add(root);
     }
 
     private void InitializeQuestArrowControls()
@@ -1413,6 +1434,10 @@ public partial class FrmEvent : Form
                 break;
             case EventCommandType.GiveExperience:
                 cmdWindow = new EventCommandGiveExperience((GiveExperienceCommand)command, this);
+
+                break;
+            case EventCommandType.ModifyProfession:
+                cmdWindow = new EventCommandProfession((ModifyProfessionCommand)command, this);
 
                 break;
             case EventCommandType.ChangeLevel:
