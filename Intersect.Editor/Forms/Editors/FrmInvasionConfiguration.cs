@@ -31,6 +31,8 @@ public sealed class FrmInvasionConfiguration : DarkForm
     private readonly NumericUpDown _targetHealth = new() { Minimum = 1, Maximum = 1_000_000_000, Width = 130 };
     private readonly NumericUpDown _hitInterval = new() { Minimum = 250, Maximum = 60_000, Increment = 250, Width = 110 };
     private readonly NumericUpDown _rewardExp = new() { Minimum = 0, Maximum = 2_000_000_000, Width = 150 };
+    private readonly NumericUpDown _participationMinimumRewardPercent = new() { Minimum = 0, Maximum = 500, Width = 90 };
+    private readonly NumericUpDown _participationMaximumRewardPercent = new() { Minimum = 1, Maximum = 500, Width = 90 };
 
     private readonly ComboBox _invasionMusic = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
     private readonly NumericUpDown _nightBrightness = new() { Minimum = 0, Maximum = 100, Width = 90 };
@@ -253,7 +255,14 @@ public sealed class FrmInvasionConfiguration : DarkForm
 
         AddRow(table, "Target HP", _targetHealth);
         AddRow(table, "Invader hit interval (ms)", _hitInterval);
-        AddRow(table, "Victory EXP / participant", _rewardExp);
+        AddRow(table, "Base victory EXP", _rewardExp);
+
+        var effortReward = new FlowLayoutPanel { AutoSize = true };
+        effortReward.Controls.Add(new Label { Text = "Min %", AutoSize = true, Padding = new Padding(0, 5, 0, 0) });
+        effortReward.Controls.Add(_participationMinimumRewardPercent);
+        effortReward.Controls.Add(new Label { Text = "Max %", AutoSize = true, Padding = new Padding(8, 5, 0, 0) });
+        effortReward.Controls.Add(_participationMaximumRewardPercent);
+        AddRow(table, "Effort reward range", effortReward);
 
         var help = new Label
         {
@@ -262,7 +271,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
             Text =
                 "Choose a map event to make that event the invasion objective. Its map position becomes the target automatically. " +
                 "Choose None to use the manual target tile instead. Invasion NPCs ignore their normal idle movement while assigned to an invasion and march toward this objective. " +
-                "Every player who damages an invasion NPC is registered as a defender and receives the configured EXP if the invasion is repelled.",
+                "Every player who damages an invasion NPC is registered as a defender. Victory EXP is calculated from actual damage contribution: average effort receives 100% of the base EXP, while lower or higher effort scales within the configured min/max range.",
         };
         AddRow(table, "How it works", help);
 
@@ -429,6 +438,8 @@ public sealed class FrmInvasionConfiguration : DarkForm
         _targetHealth.Value = invasion.TargetHealth;
         _hitInterval.Value = invasion.ObjectiveHitIntervalMs;
         _rewardExp.Value = invasion.RewardExperience;
+        _participationMinimumRewardPercent.Value = invasion.ParticipationMinimumRewardPercent;
+        _participationMaximumRewardPercent.Value = invasion.ParticipationMaximumRewardPercent;
         _invasionMusic.Text = invasion.InvasionMusic ?? string.Empty;
         _nightBrightness.Value = invasion.NightBrightness;
         _overlayAlpha.Value = invasion.OverlayAlpha;
@@ -496,6 +507,8 @@ public sealed class FrmInvasionConfiguration : DarkForm
         invasion.ExtraPlayerHealthPercent = (int)_extraPlayerHealthPercent.Value;
         invasion.BossHealthPercent = (int)_bossHealthPercent.Value;
         invasion.BossDamagePercent = (int)_bossDamagePercent.Value;
+        invasion.ParticipationMinimumRewardPercent = (int)_participationMinimumRewardPercent.Value;
+        invasion.ParticipationMaximumRewardPercent = (int)_participationMaximumRewardPercent.Value;
         invasion.RewardExperience = (long)_rewardExp.Value;
 
         var days = InvasionScheduleDays.None;
