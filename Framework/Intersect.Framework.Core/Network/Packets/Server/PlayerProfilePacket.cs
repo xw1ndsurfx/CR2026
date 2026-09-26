@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.GameObjects.Items;
 using MessagePack;
 
 namespace Intersect.Network.Packets.Server;
@@ -38,6 +39,9 @@ public partial class PlayerEquipmentProfilePacket
 
     [Key(3)]
     public string ItemName { get; set; } = string.Empty;
+
+    [Key(4)]
+    public ItemProperties? Properties { get; set; }
 }
 
 [MessagePackObject]
