@@ -99,6 +99,16 @@ public sealed partial class CookingSessionState
     [Key(40)] public string ActionSound { get; set; } = string.Empty;
     [Key(41)] public string PerfectSound { get; set; } = string.Empty;
     [Key(42)] public string MishapSound { get; set; } = string.Empty;
+    [Key(43)] public string StartSound { get; set; } = string.Empty;
+    [Key(44)] public string CompleteSound { get; set; } = string.Empty;
+    [Key(45)] public string BurntSound { get; set; } = string.Empty;
+    [Key(46)] public string GreatSound { get; set; } = string.Empty;
+    [Key(47)] public string PerfectSoundRecipe { get; set; } = string.Empty;
+    [Key(48)] public string InviteSound { get; set; } = string.Empty;
+    [Key(49)] public string PartnerJoinedSound { get; set; } = string.Empty;
+    [Key(50)] public long ComicEventSequence { get; set; }
+    [Key(51)] public CookingComicEventType ComicEventType { get; set; }
+    [Key(52)] public string ComicEventText { get; set; } = string.Empty;
 
     [IgnoreMember]
     public bool IsValid =>
@@ -125,6 +135,16 @@ public sealed partial class CookingSessionState
         ActionSound is { Length: <= CookingStageDefinition.MaximumSoundFileLength } &&
         PerfectSound is { Length: <= CookingStageDefinition.MaximumSoundFileLength } &&
         MishapSound is { Length: <= CookingStageDefinition.MaximumSoundFileLength } &&
+        StartSound is { Length: <= CookingRecipeSoundSet.MaximumFileLength } &&
+        CompleteSound is { Length: <= CookingRecipeSoundSet.MaximumFileLength } &&
+        BurntSound is { Length: <= CookingRecipeSoundSet.MaximumFileLength } &&
+        GreatSound is { Length: <= CookingRecipeSoundSet.MaximumFileLength } &&
+        PerfectSoundRecipe is { Length: <= CookingRecipeSoundSet.MaximumFileLength } &&
+        InviteSound is { Length: <= CookingRecipeSoundSet.MaximumFileLength } &&
+        PartnerJoinedSound is { Length: <= CookingRecipeSoundSet.MaximumFileLength } &&
+        ComicEventSequence >= 0 &&
+        Enum.IsDefined(ComicEventType) &&
+        ComicEventText is { Length: <= 160 } &&
         StageScore is >= 0 and <= 100 &&
         TeamScore is >= 0 and <= 100 &&
         Enum.IsDefined(Quality) &&
