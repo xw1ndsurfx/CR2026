@@ -104,7 +104,7 @@ internal static class ProfessionRuntime
         foreach (var reward in definition.LevelRewards.Where(r => r.Level > oldLevel && r.Level <= newLevel).OrderBy(r => r.Level))
         {
             if (reward.ItemId != Guid.Empty && reward.Quantity > 0)
-                player.TryGiveItem(reward.ItemId, reward.Quantity, ItemHandling.Normal, bankOverflow: true);
+                player.TryGiveItem(reward.ItemId, reward.Quantity);
 
             if (reward.EventId != Guid.Empty &&
                 Intersect.Framework.Core.GameObjects.Events.EventDescriptor.Get(reward.EventId) is { CommonEvent: true } evt)
