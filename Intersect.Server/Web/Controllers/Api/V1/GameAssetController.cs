@@ -20,7 +20,7 @@ namespace Intersect.Server.Web.Controllers.Api.V1;
 /// to expose to the player wiki. It only resolves files referenced by real
 /// item/resource/spell descriptors and never accepts an arbitrary filesystem path.
 /// </summary>
-[AllowAnonymous]
+[Authorize]
 [Route("api/v1/game-assets")]
 [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
 public sealed class GameAssetController(ILogger<GameAssetController> logger) : IntersectController
@@ -102,6 +102,7 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
         return Ok(new GameAssetManifestResponse(DateTimeOffset.UtcNow, items, resources, spells));
     }
 
+    [AllowAnonymous]
     [HttpGet("items/{itemId:guid}")]
     [ProducesResponseType(typeof(byte[]), (int)HttpStatusCode.OK, ContentTypes.Png)]
     [ProducesResponseType(typeof(StatusMessageResponseBody), (int)HttpStatusCode.NotFound, ContentTypes.Json)]
@@ -114,6 +115,7 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
         return file == null ? NotFound("Item image file not found.") : Png(file);
     }
 
+    [AllowAnonymous]
     [HttpGet("spells/{spellId:guid}")]
     [ProducesResponseType(typeof(byte[]), (int)HttpStatusCode.OK, ContentTypes.Png)]
     [ProducesResponseType(typeof(StatusMessageResponseBody), (int)HttpStatusCode.NotFound, ContentTypes.Json)]
@@ -126,6 +128,7 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
         return file == null ? NotFound("Spell image file not found.") : Png(file);
     }
 
+    [AllowAnonymous]
     [HttpGet("resources/{resourceId:guid}")]
     [ProducesResponseType(typeof(byte[]), (int)HttpStatusCode.OK, ContentTypes.Png)]
     [ProducesResponseType(typeof(StatusMessageResponseBody), (int)HttpStatusCode.NotFound, ContentTypes.Json)]
@@ -142,6 +145,7 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
         return file == null ? NotFound("Resource image file not found.") : Png(file);
     }
 
+    [AllowAnonymous]
     [HttpGet("resources/{resourceId:guid}/{stateId:guid}")]
     [ProducesResponseType(typeof(byte[]), (int)HttpStatusCode.OK, ContentTypes.Png)]
     [ProducesResponseType(typeof(StatusMessageResponseBody), (int)HttpStatusCode.NotFound, ContentTypes.Json)]
