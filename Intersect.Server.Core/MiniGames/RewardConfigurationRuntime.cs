@@ -5,6 +5,7 @@ using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.Professions;
 using Intersect.Server.Entities;
+using Intersect.Server.Professions;
 using Intersect.Server.Networking;
 using Newtonsoft.Json;
 
