@@ -410,6 +410,11 @@ public partial class MenuContainer : Panel
         _friendsWindow.UpdateList();
     }
 
+    public void ApplyOwnPlayerProfile(Intersect.Network.Packets.Server.PlayerProfilePacket packet)
+    {
+        _characterWindow.ApplyPlayerProfile(packet);
+    }
+
     public void UpdateGuildList()
     {
         _guildWindow.UpdateList();
