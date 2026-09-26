@@ -1,6 +1,7 @@
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.Professions;
+using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
 using Intersect.Server.Networking;
 
@@ -128,9 +129,77 @@ internal static class ProfessionRuntime
     {
         var match = ProfessionConfigurationRuntime.Current.FindResource(resourceId);
         if (match == null) return;
+
         var (profession, link) = match.Value;
-        if (link.Experience > 0) AddExperience(player, profession.Id, link.Experience);
-        else if (!IsLearned(player, profession.Id)) Learn(player, profession.Id);
+        var oldLevel = GetLevel(player, profession.Id);
+
+        if (link.Experience > 0)
+            AddExperience(player, profession.Id, link.Experience);
+        else if (!IsLearned(player, profession.Id))
+            Learn(player, profession.Id);
+
+        SendHarvestProgress(player, profession, link.Experience, oldLevel);
+    }
+
+    private static void SendHarvestProgress(
+        Player player,
+        ProfessionDefinition profession,
+        long experienceGained,
+        int oldLevel
+    )
+    {
+        if (!IsLearned(player, profession.Id))
+            return;
+
+        var totalExperience = GetExperience(player, profession.Id);
+        var level = profession.LevelForExperience(totalExperience);
+        var maximumLevelReached = level >= profession.MaximumLevel;
+
+        long experienceIntoLevel;
+        long experienceRequiredForLevel;
+        long experienceToNextLevel;
+        int percentage;
+
+        if (maximumLevelReached)
+        {
+            experienceIntoLevel = 0;
+            experienceRequiredForLevel = 0;
+            experienceToNextLevel = 0;
+            percentage = 100;
+        }
+        else
+        {
+            var currentLevelStart = profession.ExperienceToReachLevel(level);
+            var nextLevelStart = profession.ExperienceToReachLevel(level + 1);
+
+            experienceIntoLevel = Math.Max(0L, totalExperience - currentLevelStart);
+            experienceRequiredForLevel = Math.Max(1L, nextLevelStart - currentLevelStart);
+            experienceToNextLevel = Math.Max(0L, nextLevelStart - totalExperience);
+
+            var progress = (decimal)experienceIntoLevel * 100m / experienceRequiredForLevel;
+            percentage = (int)Math.Clamp(
+                Math.Round(progress, MidpointRounding.AwayFromZero),
+                0m,
+                100m
+            );
+        }
+
+        player.SendPacket(
+            new ProfessionProgressPacket
+            {
+                ProfessionId = profession.Id,
+                ProfessionName = profession.Name,
+                Level = level,
+                MaximumLevel = profession.MaximumLevel,
+                ExperienceGained = Math.Max(0L, experienceGained),
+                ExperienceIntoLevel = experienceIntoLevel,
+                ExperienceRequiredForLevel = experienceRequiredForLevel,
+                ExperienceToNextLevel = experienceToNextLevel,
+                Percentage = percentage,
+                LeveledUp = level > oldLevel,
+                MaximumLevelReached = maximumLevelReached,
+            }
+        );
     }
 
     private static void GrantLevelRewards(Player player, ProfessionDefinition definition, int oldLevel, int newLevel)
