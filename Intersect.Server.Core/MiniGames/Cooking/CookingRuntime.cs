@@ -46,6 +46,9 @@ internal static class CookingRuntime
         public int Mishaps;
         public long ActionSequence;
         public int LastActionScore;
+        public long ComicEventSequence;
+        public CookingComicEventType ComicEventType;
+        public string ComicEventText = string.Empty;
         public readonly Dictionary<Guid, int> StageActions = [];
         public readonly List<int> CompletedStageScores = [];
         public long Revision;
@@ -401,6 +404,7 @@ internal static class CookingRuntime
         session.StageScoredActions++;
         session.ActionSequence++;
         session.LastActionScore = score;
+        TryTriggerComicEvent(session, stage, score);
         session.StageActions[player.Id] = session.StageActions.GetValueOrDefault(player.Id) + 1;
 
         if (score >= 75)
@@ -419,6 +423,60 @@ internal static class CookingRuntime
 
         Broadcast(session, request.RequestId);
     }
+
+    private static void TryTriggerComicEvent(
+        Session session,
+        CookingStageDefinition stage,
+        int score
+    )
+    {
+        if (session.Recipe == null)
+            return;
+
+        var available = session.Recipe.ComicEvents ?? [];
+        if (available.Length == 0 || session.Recipe.ComicEventChancePercent <= 0)
+            return;
+
+        // Mishaps are deliberately more likely to produce comedy, but good play can still
+        // trigger harmless visual gags.
+        var chance = session.Recipe.ComicEventChancePercent + (score < 40 ? 22 : 0);
+        if (Random.Shared.Next(0, 100) >= Math.Clamp(chance, 0, 100))
+            return;
+
+        var compatible = available.Where(type => IsComicEventCompatible(type, stage.Type)).ToArray();
+        if (compatible.Length == 0)
+            compatible = available;
+
+        session.ComicEventType = compatible[Random.Shared.Next(compatible.Length)];
+        session.ComicEventText = ComicEventText(session.ComicEventType);
+        session.ComicEventSequence++;
+    }
+
+    private static bool IsComicEventCompatible(
+        CookingComicEventType comic,
+        CookingStageType stage
+    ) =>
+        comic switch
+        {
+            CookingComicEventType.PanOverflow => stage is CookingStageType.Heat or CookingStageType.Stir,
+            CookingComicEventType.EscapingIngredient => stage is CookingStageType.Chop or CookingStageType.Flip,
+            CookingComicEventType.SauceSplash => stage is CookingStageType.Stir or CookingStageType.Season,
+            CookingComicEventType.SmokeCloud => stage is CookingStageType.Heat or CookingStageType.Flip,
+            CookingComicEventType.FlyingFood => stage is CookingStageType.Flip or CookingStageType.Chop,
+            CookingComicEventType.WobblyPlate => stage == CookingStageType.Plate,
+            _ => true,
+        };
+
+    private static string ComicEventText(CookingComicEventType type) => type switch
+    {
+        CookingComicEventType.PanOverflow => "THE PAN IS OVERFLOWING! Somebody save the royal stove!",
+        CookingComicEventType.EscapingIngredient => "ESCAPING INGREDIENT! It clearly has dinner plans elsewhere.",
+        CookingComicEventType.SauceSplash => "SAUCE SPLASH! The kitchen wall has been seasoned.",
+        CookingComicEventType.SmokeCloud => "SMOKE CLOUD! The recipe has entered its mysterious phase.",
+        CookingComicEventType.FlyingFood => "FLYING FOOD! Five-second rule is not royal policy.",
+        CookingComicEventType.WobblyPlate => "WOBBLY PLATE! Nobody breathe near the table.",
+        _ => "Kitchen chaos!",
+    };
 
     private static bool StageComplete(Session session, CookingStageDefinition stage)
     {
@@ -881,6 +939,16 @@ internal static class CookingRuntime
                 ActionSound = stage?.ActionSound ?? string.Empty,
                 PerfectSound = stage?.PerfectSound ?? string.Empty,
                 MishapSound = stage?.MishapSound ?? string.Empty,
+                StartSound = recipe?.Sounds?.Start ?? string.Empty,
+                CompleteSound = recipe?.Sounds?.Complete ?? string.Empty,
+                BurntSound = recipe?.Sounds?.Burnt ?? string.Empty,
+                GreatSound = recipe?.Sounds?.Great ?? string.Empty,
+                PerfectSoundRecipe = recipe?.Sounds?.Perfect ?? string.Empty,
+                InviteSound = recipe?.Sounds?.Invite ?? string.Empty,
+                PartnerJoinedSound = recipe?.Sounds?.PartnerJoined ?? string.Empty,
+                ComicEventSequence = session.ComicEventSequence,
+                ComicEventType = session.ComicEventType,
+                ComicEventText = session.ComicEventText,
             },
         };
     }
