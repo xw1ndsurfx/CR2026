@@ -67,6 +67,18 @@ public sealed class InvasionDefinition
     public int TargetHealth { get; set; } = 2_500;
     public int ObjectiveHitIntervalMs { get; set; } = 1_000;
 
+    public string InvasionMusic { get; set; } = string.Empty;
+    public int NightBrightness { get; set; } = 20;
+    public int OverlayAlpha { get; set; } = 120;
+    public int OverlayRed { get; set; } = 50;
+    public int OverlayGreen { get; set; } = 255;
+    public int OverlayBlue { get; set; } = 50;
+    public string Fog { get; set; } = "brume2.png";
+    public int FogAlpha { get; set; } = 150;
+    public int FogXSpeed { get; set; } = 3;
+    public int FogYSpeed { get; set; } = -3;
+    public bool EnvironmentOutdoorsOnly { get; set; } = true;
+
     public long RewardExperience { get; set; } = 500;
     public InvasionWaveDefinition[] Waves { get; set; } = [];
 
@@ -82,6 +94,14 @@ public sealed class InvasionDefinition
         TargetY is >= 0 and <= 255 &&
         TargetHealth is >= 1 and <= 1_000_000_000 &&
         ObjectiveHitIntervalMs is >= 250 and <= 60_000 &&
+        NightBrightness is >= 0 and <= 100 &&
+        OverlayAlpha is >= 0 and <= 255 &&
+        OverlayRed is >= 0 and <= 255 &&
+        OverlayGreen is >= 0 and <= 255 &&
+        OverlayBlue is >= 0 and <= 255 &&
+        FogAlpha is >= 0 and <= 255 &&
+        FogXSpeed is >= -5 and <= 5 &&
+        FogYSpeed is >= -5 and <= 5 &&
         RewardExperience is >= 0 and <= 2_000_000_000 &&
         Waves is { Length: > 0 and <= 128 } &&
         Waves.All(wave => wave is { IsStructurallyValid: true }) &&
