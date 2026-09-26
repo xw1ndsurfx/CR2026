@@ -57,7 +57,7 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
             .OrderBy(resource => resource.Name, StringComparer.OrdinalIgnoreCase)
             .Select(resource =>
             {
-                var states = (resource.States?.Values ?? [])
+                var states = (resource.States?.Values ?? Enumerable.Empty<ResourceStateDescriptor>())
                     .Where(state => state != null)
                     .OrderByDescending(state => state.MaximumHealth)
                     .ThenByDescending(state => state.MinimumHealth)
@@ -176,7 +176,7 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
     }
 
     private static ResourceStateDescriptor? PrimaryState(ResourceDescriptor resource) =>
-        resource.States?.Values
+        (resource.States?.Values ?? Enumerable.Empty<ResourceStateDescriptor>())
             .Where(state => state != null)
             .OrderByDescending(state => state.MaximumHealth)
             .ThenByDescending(state => state.MinimumHealth)
