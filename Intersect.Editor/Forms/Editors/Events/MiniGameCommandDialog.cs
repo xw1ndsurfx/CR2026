@@ -100,6 +100,7 @@ internal sealed class MiniGameCommandDialog : Form
         bool IsBlackjack() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Blackjack;
         bool IsPotions() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Potions;
         bool IsRoulette() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Roulette;
+        bool IsCooking() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Cooking;
         var currencyModeFunded = command.CurrencyItemId != Guid.Empty;
         long testChipsValue = command.CurrencyItemId == Guid.Empty ? command.StartingChips : 1000;
         long fundedBuyInValue = command.CurrencyItemId != Guid.Empty ? command.StartingChips : 0;
@@ -178,16 +179,17 @@ internal sealed class MiniGameCommandDialog : Form
             var blackjack = IsBlackjack();
             var potions = IsPotions();
             var roulette = IsRoulette();
+            var cooking = IsCooking();
 
-            small.Enabled = big.Enabled = dealer.Enabled = !blackjack && !potions && !roulette;
+            small.Enabled = big.Enabled = dealer.Enabled = !blackjack && !potions && !roulette && !cooking;
             blackjackMinimum.Enabled = blackjackMaximum.Enabled = blackjackHitSoft17.Enabled = blackjack;
             rouletteMinimum.Enabled = rouletteMaximum.Enabled = roulette;
-            seats.Enabled = !potions && !roulette;
-            npcs.Enabled = !potions && !roulette;
-            currency.Enabled = chips.Enabled = reserve.Enabled = !potions;
-            unlimitedNpcBankroll.Enabled = !potions && !blackjack;
-            automatic.Enabled = !potions && !roulette;
-            backs.Enabled = motionSpeed.Enabled = motionPanel.Enabled = !potions && !roulette;
+            seats.Enabled = !potions && !roulette && !cooking;
+            npcs.Enabled = !potions && !roulette && !cooking;
+            currency.Enabled = chips.Enabled = reserve.Enabled = !potions && !cooking;
+            unlimitedNpcBankroll.Enabled = !potions && !blackjack && !cooking;
+            automatic.Enabled = !potions && !roulette && !cooking;
+            backs.Enabled = motionSpeed.Enabled = motionPanel.Enabled = !potions && !roulette && !cooking;
 
             if (blackjack)
             {
@@ -205,6 +207,13 @@ internal sealed class MiniGameCommandDialog : Form
                 seats.Value = 1;
                 dealer.Checked = false;
                 npcs.Value = 0;
+            }
+            if (cooking)
+            {
+                seats.Value = 2;
+                dealer.Checked = false;
+                npcs.Value = 0;
+                unlimitedNpcBankroll.Checked = false;
             }
 
             LimitNpcs();
@@ -418,8 +427,10 @@ internal sealed class MiniGameCommandDialog : Form
         {
             EnsureBlackjackReserve();
             EnsureRouletteReserve();
-            var selected = IsPotions() ? Guid.Empty : (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
-            if (!IsPotions() && selected != Guid.Empty && !MiniGameCurrency.IsCompatible(ItemDescriptor.Get(selected)))
+            var selected = IsPotions() || IsCooking()
+                ? Guid.Empty
+                : (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
+            if (!IsPotions() && !IsCooking() && selected != Guid.Empty && !MiniGameCurrency.IsCompatible(ItemDescriptor.Get(selected)))
             {
                 MessageBox.Show(this, "The selected item is missing or incompatible. Select a Currency or another stackable item.",
                     "Invalid table currency", MessageBoxButtons.OK, MessageBoxIcon.Warning); return;
@@ -427,16 +438,16 @@ internal sealed class MiniGameCommandDialog : Form
             var draft = new StartMiniGameCommand
             {
                 Game = ((GameChoice)game.SelectedItem!).Type, TableId = table.Text,
-                MaxPlayers = IsPotions() || IsRoulette() ? 1 : (int)seats.Value, CurrencyItemId = selected,
+                MaxPlayers = IsPotions() || IsRoulette() ? 1 : IsCooking() ? 2 : (int)seats.Value, CurrencyItemId = selected,
                 StartingChips = (long)chips.Value, NpcReserve = (long)reserve.Value,
                 UnlimitedNpcBankroll = unlimitedNpcBankroll.Checked,
                 BlackjackMinimumBet = (long)blackjackMinimum.Value, BlackjackMaximumBet = (long)blackjackMaximum.Value,
                 BlackjackHitSoft17 = blackjackHitSoft17.Checked,
                 RouletteMinimumBet = (long)rouletteMinimum.Value, RouletteMaximumBet = (long)rouletteMaximum.Value,
                 SmallBlind = (long)small.Value, BigBlind = (long)big.Value, TurnSeconds = (int)seconds.Value,
-                DealerPlays = IsPotions() || IsRoulette() ? false : dealer.Checked,
-                NpcPlayers = IsPotions() || IsRoulette() ? 0 : (int)npcs.Value,
-                AutoStart = IsPotions() || IsRoulette() ? false : automatic.Checked,
+                DealerPlays = IsPotions() || IsRoulette() || IsCooking() ? false : dealer.Checked,
+                NpcPlayers = IsPotions() || IsRoulette() || IsCooking() ? 0 : (int)npcs.Value,
+                AutoStart = IsPotions() || IsRoulette() || IsCooking() ? false : automatic.Checked,
                 DealAnimationId = ((AnimationChoice)animation.SelectedItem!).Id, AnnounceWins = announce.Checked,
                 VictoryAnimationId = ((AnimationChoice)victory.SelectedItem!).Id, NpcCardBackId = backs.SelectedIndex,
                 DealSound = ((SoundChoice)dealSound.SelectedItem!).File, CheckSound = ((SoundChoice)checkSound.SelectedItem!).File,
@@ -463,7 +474,7 @@ internal sealed class MiniGameCommandDialog : Form
             if (!draft.HasValidSettings())
             {
                 MessageBox.Show(this,
-                    "Check the highlighted summary. Use a valid Table ID and rules; Poker needs valid blinds, Blackjack needs even min/max bets, and Roulette needs a valid min/max wager plus enough house reserve for funded 35:1 payouts.",
+                    "Check the highlighted summary. Poker needs valid blinds, Blackjack needs even min/max bets, Roulette needs a valid house reserve, and Royal Kitchen uses global Cooking Recipes with no table currency.",
                     "Invalid mini-game configuration", MessageBoxButtons.OK, MessageBoxIcon.Warning); return;
             }
             command.Game = draft.Game; command.TableId = draft.TableId; command.MaxPlayers = draft.MaxPlayers;
