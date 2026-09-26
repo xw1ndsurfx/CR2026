@@ -1,4 +1,5 @@
 using DarkUI.Forms;
+using Intersect.Editor.Content;
 using Intersect.Editor.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -31,6 +32,22 @@ public sealed class FrmInvasionConfiguration : DarkForm
     private readonly NumericUpDown _hitInterval = new() { Minimum = 250, Maximum = 60_000, Increment = 250, Width = 110 };
     private readonly NumericUpDown _rewardExp = new() { Minimum = 0, Maximum = 2_000_000_000, Width = 150 };
 
+    private readonly ComboBox _invasionMusic = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
+    private readonly NumericUpDown _nightBrightness = new() { Minimum = 0, Maximum = 100, Width = 90 };
+    private readonly NumericUpDown _overlayAlpha = new() { Minimum = 0, Maximum = 255, Width = 80 };
+    private readonly NumericUpDown _overlayRed = new() { Minimum = 0, Maximum = 255, Width = 80 };
+    private readonly NumericUpDown _overlayGreen = new() { Minimum = 0, Maximum = 255, Width = 80 };
+    private readonly NumericUpDown _overlayBlue = new() { Minimum = 0, Maximum = 255, Width = 80 };
+    private readonly ComboBox _fog = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
+    private readonly NumericUpDown _fogAlpha = new() { Minimum = 0, Maximum = 255, Width = 80 };
+    private readonly NumericUpDown _fogXSpeed = new() { Minimum = -5, Maximum = 5, Width = 80 };
+    private readonly NumericUpDown _fogYSpeed = new() { Minimum = -5, Maximum = 5, Width = 80 };
+    private readonly CheckBox _environmentOutdoorsOnly = new()
+    {
+        Text = "Only apply night / overlay / fog on outdoor maps",
+        AutoSize = true,
+    };
+
     private readonly ListBox _waves = new() { Dock = DockStyle.Fill };
 
     private int _selectedIndex = -1;
@@ -48,6 +65,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
             .Invasions.ToList();
 
         FillMaps();
+        FillEnvironmentAssets();
         BuildUi();
         _targetMap.SelectedIndexChanged += (_, _) =>
         {
@@ -73,6 +91,19 @@ public sealed class FrmInvasionConfiguration : DarkForm
         var names = GameObjectType.Map.Names();
         for (var index = 0; index < names.Length; ++index)
             _targetMap.Items.Add(new Choice(GameObjectType.Map.IdFromList(index), names[index]));
+    }
+
+    private void FillEnvironmentAssets()
+    {
+        _invasionMusic.Items.Clear();
+        _invasionMusic.Items.Add(string.Empty);
+        foreach (var music in GameContentManager.SmartSortedMusicNames)
+            _invasionMusic.Items.Add(music);
+
+        _fog.Items.Clear();
+        _fog.Items.Add(string.Empty);
+        foreach (var fog in GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Fog))
+            _fog.Items.Add(fog);
     }
 
     private void FillTargetEvents(Guid mapId, Guid selectedEventId)
@@ -141,6 +172,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
 
         var tabs = new TabControl { Dock = DockStyle.Fill };
         tabs.TabPages.Add(BuildGeneralTab());
+        tabs.TabPages.Add(BuildEnvironmentTab());
         tabs.TabPages.Add(BuildWavesTab());
         split.Panel2.Controls.Add(tabs);
 
@@ -224,6 +256,61 @@ public sealed class FrmInvasionConfiguration : DarkForm
         return page;
     }
 
+    private TabPage BuildEnvironmentTab()
+    {
+        var page = new TabPage("Environment");
+        var table = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            ColumnCount = 2,
+            Padding = new Padding(14),
+        };
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 210));
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+        AddRow(table, "Invasion music", _invasionMusic);
+        AddRow(table, "Night brightness (%)", _nightBrightness);
+
+        var overlay = new FlowLayoutPanel { AutoSize = true };
+        overlay.Controls.Add(new Label { Text = "A", AutoSize = true, Padding = new Padding(0, 5, 0, 0) });
+        overlay.Controls.Add(_overlayAlpha);
+        overlay.Controls.Add(new Label { Text = "R", AutoSize = true, Padding = new Padding(8, 5, 0, 0) });
+        overlay.Controls.Add(_overlayRed);
+        overlay.Controls.Add(new Label { Text = "G", AutoSize = true, Padding = new Padding(8, 5, 0, 0) });
+        overlay.Controls.Add(_overlayGreen);
+        overlay.Controls.Add(new Label { Text = "B", AutoSize = true, Padding = new Padding(8, 5, 0, 0) });
+        overlay.Controls.Add(_overlayBlue);
+        AddRow(table, "Overlay ARGB", overlay);
+
+        AddRow(table, "Fog texture", _fog);
+
+        var fogSettings = new FlowLayoutPanel { AutoSize = true };
+        fogSettings.Controls.Add(new Label { Text = "Alpha", AutoSize = true, Padding = new Padding(0, 5, 0, 0) });
+        fogSettings.Controls.Add(_fogAlpha);
+        fogSettings.Controls.Add(new Label { Text = "X speed", AutoSize = true, Padding = new Padding(8, 5, 0, 0) });
+        fogSettings.Controls.Add(_fogXSpeed);
+        fogSettings.Controls.Add(new Label { Text = "Y speed", AutoSize = true, Padding = new Padding(8, 5, 0, 0) });
+        fogSettings.Controls.Add(_fogYSpeed);
+        AddRow(table, "Fog settings", fogSettings);
+
+        AddRow(table, "Scope", _environmentOutdoorsOnly);
+
+        var help = new Label
+        {
+            AutoSize = true,
+            MaximumSize = new Size(650, 0),
+            Text =
+                "During the invasion, the selected music overrides map/event music everywhere. " +
+                "Outdoor maps use the configured night brightness, color overlay and fog. " +
+                "When the invasion ends, the current map's normal music, daylight tint, overlay and fog resume automatically.",
+        };
+        AddRow(table, "Behavior", help);
+
+        page.Controls.Add(table);
+        return page;
+    }
+
     private TabPage BuildWavesTab()
     {
         var page = new TabPage("Waves");
@@ -274,6 +361,17 @@ public sealed class FrmInvasionConfiguration : DarkForm
         _targetHealth.Value = invasion.TargetHealth;
         _hitInterval.Value = invasion.ObjectiveHitIntervalMs;
         _rewardExp.Value = invasion.RewardExperience;
+        _invasionMusic.Text = invasion.InvasionMusic ?? string.Empty;
+        _nightBrightness.Value = invasion.NightBrightness;
+        _overlayAlpha.Value = invasion.OverlayAlpha;
+        _overlayRed.Value = invasion.OverlayRed;
+        _overlayGreen.Value = invasion.OverlayGreen;
+        _overlayBlue.Value = invasion.OverlayBlue;
+        _fog.Text = invasion.Fog ?? string.Empty;
+        _fogAlpha.Value = invasion.FogAlpha;
+        _fogXSpeed.Value = invasion.FogXSpeed;
+        _fogYSpeed.Value = invasion.FogYSpeed;
+        _environmentOutdoorsOnly.Checked = invasion.EnvironmentOutdoorsOnly;
 
         for (var day = 0; day < _days.Items.Count; ++day)
         {
@@ -304,6 +402,17 @@ public sealed class FrmInvasionConfiguration : DarkForm
         invasion.TargetY = (int)_targetY.Value;
         invasion.TargetHealth = (int)_targetHealth.Value;
         invasion.ObjectiveHitIntervalMs = (int)_hitInterval.Value;
+        invasion.InvasionMusic = _invasionMusic.Text?.Trim() ?? string.Empty;
+        invasion.NightBrightness = (int)_nightBrightness.Value;
+        invasion.OverlayAlpha = (int)_overlayAlpha.Value;
+        invasion.OverlayRed = (int)_overlayRed.Value;
+        invasion.OverlayGreen = (int)_overlayGreen.Value;
+        invasion.OverlayBlue = (int)_overlayBlue.Value;
+        invasion.Fog = _fog.Text?.Trim() ?? string.Empty;
+        invasion.FogAlpha = (int)_fogAlpha.Value;
+        invasion.FogXSpeed = (int)_fogXSpeed.Value;
+        invasion.FogYSpeed = (int)_fogYSpeed.Value;
+        invasion.EnvironmentOutdoorsOnly = _environmentOutdoorsOnly.Checked;
         invasion.RewardExperience = (long)_rewardExp.Value;
 
         var days = InvasionScheduleDays.None;
