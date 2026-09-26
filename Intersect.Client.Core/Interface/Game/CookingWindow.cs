@@ -24,6 +24,15 @@ internal sealed class CookingWindow : Base
     private readonly Label _recipeHeader;
     private readonly Label _stationHeader;
     private readonly CookingRecipePickerPanel _recipePicker;
+    private readonly CookingResultPanel _resultPanel;
+    private readonly Label _resultTitle;
+    private readonly Label _resultQuality;
+    private readonly Label _resultScore;
+    private readonly Label _resultReward;
+    private readonly Label _resultXp;
+    private readonly Label _resultStats;
+    private readonly Button _resultAgain;
+    private readonly Button _resultLeave;
     private readonly Label _recipePickerTitle;
     private readonly Label _recipePickerPage;
     private readonly Button[] _recipeCards = new Button[6];
@@ -116,6 +125,98 @@ internal sealed class CookingWindow : Base
             MouseInputEnabled = true,
             KeyboardInputEnabled = false,
         };
+
+        _resultPanel = new CookingResultPanel(this)
+        {
+            IsHidden = true,
+            MouseInputEnabled = true,
+            KeyboardInputEnabled = false,
+        };
+
+        _resultTitle = new Label(_resultPanel, "CookingResultTitle")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 16,
+            Text = "DINNER IS READY!",
+            TextAlign = Pos.Center,
+            TextColorOverride = new Color(255, 236, 210, 117),
+            MouseInputEnabled = false,
+            KeyboardInputEnabled = false,
+        };
+
+        _resultQuality = new Label(_resultPanel, "CookingResultQuality")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 30,
+            TextAlign = Pos.Center,
+            TextColorOverride = Color.White,
+            MouseInputEnabled = false,
+            KeyboardInputEnabled = false,
+        };
+
+        _resultScore = new Label(_resultPanel, "CookingResultScore")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 15,
+            TextAlign = Pos.Center,
+            TextColorOverride = new Color(255, 235, 224, 198),
+            MouseInputEnabled = false,
+            KeyboardInputEnabled = false,
+        };
+
+        _resultReward = new Label(_resultPanel, "CookingResultReward")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 11,
+            TextAlign = Pos.Center,
+            TextColorOverride = Color.White,
+            MouseInputEnabled = false,
+            KeyboardInputEnabled = false,
+        };
+
+        _resultXp = new Label(_resultPanel, "CookingResultXp")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 13,
+            TextAlign = Pos.Center,
+            TextColorOverride = new Color(255, 236, 210, 117),
+            MouseInputEnabled = false,
+            KeyboardInputEnabled = false,
+        };
+
+        _resultStats = new Label(_resultPanel, "CookingResultStats")
+        {
+            AutoSizeToContents = false,
+            Font = Skin.DefaultFont,
+            FontSize = 10,
+            TextAlign = Pos.Center,
+            TextColorOverride = new Color(255, 216, 205, 182),
+            MouseInputEnabled = false,
+            KeyboardInputEnabled = false,
+        };
+
+        _resultAgain = new Button(_resultPanel, "CookingResultAgain")
+        {
+            Font = Skin.DefaultFont,
+            FontSize = 11,
+            Text = "CHOOSE ANOTHER RECIPE",
+            TextColorOverride = new Color(255, 236, 210, 117),
+        };
+        _resultAgain.Clicked += (_, _) =>
+            _send(CookingRequestKind.ReturnToRecipes, Guid.Empty, Guid.Empty, false, CookingActionInput.Primary);
+
+        _resultLeave = new Button(_resultPanel, "CookingResultLeave")
+        {
+            Font = Skin.DefaultFont,
+            FontSize = 11,
+            Text = "LEAVE KITCHEN",
+        };
+        _resultLeave.Clicked += (_, _) => ExitRequested = true;
 
         _recipePickerTitle = new Label(_recipePicker, "CookingRecipePickerTitle")
         {
@@ -281,6 +382,32 @@ internal sealed class CookingWindow : Base
         _recipePickerPage.FontSize = Math.Max(8, (int)Math.Round(10 * scale));
         _recipePageNext.SetBounds(PX(422), PY(322), PX(108), PY(34));
         _recipePageNext.FontSize = Math.Max(8, (int)Math.Round(11 * scale));
+
+        var resultX = offsetX + (int)(425 * scale);
+        var resultY = offsetY + (int)(130 * scale);
+        var resultW = Math.Max(1, (int)(520 * scale));
+        var resultH = Math.Max(1, (int)(410 * scale));
+        _resultPanel.SetBounds(resultX, resultY, resultW, resultH);
+
+        int RX(int value) => (int)Math.Round(value * resultW / 520d);
+        int RY(int value) => (int)Math.Round(value * resultH / 410d);
+
+        _resultTitle.SetBounds(RX(18), RY(18), RX(484), RY(28));
+        _resultTitle.FontSize = Math.Max(9, (int)Math.Round(16 * scale));
+        _resultQuality.SetBounds(RX(18), RY(56), RX(484), RY(62));
+        _resultQuality.FontSize = Math.Max(14, (int)Math.Round(30 * scale));
+        _resultScore.SetBounds(RX(18), RY(126), RX(484), RY(34));
+        _resultScore.FontSize = Math.Max(9, (int)Math.Round(15 * scale));
+        _resultReward.SetBounds(RX(35), RY(176), RX(450), RY(64));
+        _resultReward.FontSize = Math.Max(8, (int)Math.Round(11 * scale));
+        _resultXp.SetBounds(RX(18), RY(250), RX(484), RY(34));
+        _resultXp.FontSize = Math.Max(8, (int)Math.Round(13 * scale));
+        _resultStats.SetBounds(RX(18), RY(292), RX(484), RY(42));
+        _resultStats.FontSize = Math.Max(8, (int)Math.Round(10 * scale));
+        _resultAgain.SetBounds(RX(58), RY(350), RX(250), RY(38));
+        _resultAgain.FontSize = Math.Max(8, (int)Math.Round(11 * scale));
+        _resultLeave.SetBounds(RX(320), RY(350), RX(142), RY(38));
+        _resultLeave.FontSize = Math.Max(8, (int)Math.Round(11 * scale));
     }
 
     public void Update(CookingClientModel model)
@@ -303,6 +430,13 @@ internal sealed class CookingWindow : Base
         _recipePicker.IsHidden = !selecting;
         if (selecting) _recipePicker.BringToFront();
 
+        _resultPanel.IsHidden = !state.Complete;
+        if (state.Complete)
+        {
+            RefreshResultPanel(state);
+            _resultPanel.BringToFront();
+        }
+
         _previousRecipe.IsHidden = true;
         _nextRecipe.IsHidden = true;
         _solo.IsHidden = _coop.IsHidden = !selecting;
@@ -312,6 +446,7 @@ internal sealed class CookingWindow : Base
         _actionSecondary.IsHidden = hideActions;
         _actionTertiary.IsHidden = hideActions;
         _accept.IsHidden = _decline.IsHidden = !state.InvitePendingForYou;
+        _leave.IsHidden = state.Complete;
 
         ConfigureStageButtons(state);
         _action.IsDisabled = model.Pending || !state.YourTurn;
@@ -530,6 +665,47 @@ internal sealed class CookingWindow : Base
         _recipePagePrevious.IsDisabled = _recipePage <= 0;
         _recipePageNext.IsDisabled = _recipePage >= pageCount - 1;
         _recipePicker.SelectedSlot = _recipeIndex - _recipePage * _recipeCards.Length;
+    }
+
+    private void RefreshResultPanel(CookingSessionState state)
+    {
+        _resultPanel.Quality = state.Quality;
+
+        _resultQuality.Text = state.Quality.ToString().ToUpperInvariant();
+        _resultQuality.TextColorOverride = state.Quality switch
+        {
+            CookingQuality.Perfect => new Color(255, 250, 216, 104),
+            CookingQuality.Great => new Color(255, 111, 207, 123),
+            CookingQuality.Decent => new Color(255, 225, 198, 142),
+            _ => new Color(255, 203, 103, 82),
+        };
+
+        _resultScore.Text = $"TEAM SCORE   {state.TeamScore}%";
+        _resultReward.Text = string.IsNullOrWhiteSpace(state.RewardText)
+            ? "No meal reward was delivered."
+            : $"REWARD\n{state.RewardText}";
+
+        var professionName = string.IsNullOrWhiteSpace(state.ProfessionName)
+            ? "Cooking"
+            : state.ProfessionName;
+        _resultXp.Text =
+            $"+{state.ProfessionExperienceAwarded:N0} {professionName} XP   •   " +
+            $"Lv {Math.Max(1, state.ProfessionLevel)}/{Math.Max(1, state.ProfessionMaximumLevel)}   •   " +
+            $"{state.ProfessionExperiencePercent}%";
+
+        var actionCount = state.Participants
+            .FirstOrDefault(participant => participant.PlayerId == Globals.Me?.Id)?.Actions ?? 0;
+
+        _resultStats.Text =
+            $"Peak Combo x{state.PeakCombo}   •   Mishaps {state.Mishaps}   •   Your actions {actionCount}";
+
+        _resultAgain.IsHidden = !state.IsHost;
+        _resultAgain.IsDisabled = !state.IsHost;
+
+        if (state.IsHost)
+            _resultTitle.Text = "DINNER IS READY!";
+        else
+            _resultTitle.Text = "DINNER IS READY! • HOST CONTROLS NEXT ROUND";
     }
 
     private void StartSolo()
