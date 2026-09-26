@@ -5,14 +5,15 @@ using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.Professions;
+using DrawingColor = System.Drawing.Color;
 
 namespace Intersect.Editor.Forms.Editors;
 
 public sealed class FrmProfessionConfiguration : DarkForm
 {
-    private static readonly Color PanelBackColor = Color.FromArgb(45, 45, 48);
-    private static readonly Color InputBackColor = Color.FromArgb(37, 37, 38);
-    private static readonly Color TextColor = Color.Gainsboro;
+    private static readonly DrawingColor PanelBackColor = DrawingColor.FromArgb(45, 45, 48);
+    private static readonly DrawingColor InputBackColor = DrawingColor.FromArgb(37, 37, 38);
+    private static readonly DrawingColor TextColor = DrawingColor.Gainsboro;
 
     private sealed record IdChoice(Guid Id, string Text)
     {
@@ -561,7 +562,7 @@ public sealed class FrmProfessionConfiguration : DarkForm
             Text = text,
             BackColor = PanelBackColor,
             ForeColor = TextColor,
-            BorderColor = Color.FromArgb(90, 90, 90),
+            BorderColor = DrawingColor.FromArgb(90, 90, 90),
         };
 
     private static TabPage CreatePage(string text) =>
@@ -578,7 +579,7 @@ public sealed class FrmProfessionConfiguration : DarkForm
             Text = text,
             AutoSize = true,
             ForeColor = TextColor,
-            BackColor = Color.Transparent,
+            BackColor = DrawingColor.Transparent,
         };
 
     private static Label CreateInlineLabel(string text) =>
@@ -587,7 +588,7 @@ public sealed class FrmProfessionConfiguration : DarkForm
             Text = text,
             AutoSize = true,
             ForeColor = TextColor,
-            BackColor = Color.Transparent,
+            BackColor = DrawingColor.Transparent,
             Margin = new Padding(10, 7, 4, 3),
         };
 
@@ -606,7 +607,7 @@ public sealed class FrmProfessionConfiguration : DarkForm
         title.Font = new Font(title.Font, FontStyle.Bold);
 
         var helpLabel = CreateLabel(help);
-        helpLabel.ForeColor = Color.Silver;
+        helpLabel.ForeColor = DrawingColor.Silver;
         helpLabel.Margin = new Padding(0, 2, 0, 6);
 
         panel.Controls.Add(title);
