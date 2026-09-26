@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.WorldEvents.Invasions;
 using Intersect.Network.Packets.WorldEvents;
 using Intersect.Server.Entities;
@@ -19,6 +20,11 @@ internal static class InvasionRuntime
         public required InvasionDefinition Definition { get; init; }
         public Guid SessionId { get; } = Guid.NewGuid();
         public int WaveIndex { get; set; } = -1;
+        public Guid TargetMapId { get; init; }
+        public Guid TargetEventId { get; init; }
+        public int TargetX { get; init; }
+        public int TargetY { get; init; }
+        public string TargetName { get; init; } = "Defense Objective";
         public int ObjectiveHealth { get; set; }
         public long NextWaveAtMs { get; set; }
         public long LastStatusAtMs { get; set; }
@@ -116,18 +122,30 @@ internal static class InvasionRuntime
 
     private static void Start(InvasionDefinition definition, long nowMs)
     {
+        var (targetMapId, targetX, targetY, targetName) = ResolveObjective(definition);
+
         var session = new Session
         {
             Definition = definition,
+            TargetMapId = targetMapId,
+            TargetEventId = definition.TargetEventId,
+            TargetX = targetX,
+            TargetY = targetY,
+            TargetName = targetName,
             ObjectiveHealth = definition.TargetHealth,
             NextWaveAtMs = nowMs + definition.Waves[0].DelaySeconds * 1_000L,
         };
         Sessions[definition.Id] = session;
         SessionsById[session.SessionId] = session;
 
-        var targetName = MapController.Get(definition.TargetMapId)?.Name ?? "the island";
-        PacketSender.SendGlobalMsg($"[Invasion] {definition.Name} is attacking {targetName}! Defend the objective.");
-        PacketSender.SendGameAnnouncement($"INVASION: {definition.Name}\nDefend {targetName}!", 6_000);
+        var islandName = MapController.Get(session.TargetMapId)?.Name ?? "the island";
+        PacketSender.SendGlobalMsg(
+            $"[Invasion] {definition.Name} is attacking {islandName}! Defend {session.TargetName}."
+        );
+        PacketSender.SendGameAnnouncement(
+            $"INVASION: {definition.Name}\nDefend {session.TargetName}!",
+            6_000
+        );
         BroadcastStatus(session, "Invasion starting...");
     }
 
@@ -147,9 +165,9 @@ internal static class InvasionRuntime
             }
 
             if (npc.Target != null ||
-                npc.MapId != session.Definition.TargetMapId ||
-                Math.Abs(npc.X - session.Definition.TargetX) > 1 ||
-                Math.Abs(npc.Y - session.Definition.TargetY) > 1)
+                npc.MapId != session.TargetMapId ||
+                Math.Abs(npc.X - session.TargetX) > 1 ||
+                Math.Abs(npc.Y - session.TargetY) > 1)
                 continue;
 
             if (session.NextObjectiveHitAt.TryGetValue(npc.Id, out var nextHit) && nowMs < nextHit)
@@ -227,9 +245,9 @@ internal static class InvasionRuntime
                 npc.InvasionSessionId = session.SessionId;
                 npc.InvasionDefinitionId = session.Definition.Id;
                 npc.InvasionBoss = spawn.IsBoss;
-                npc.InvasionTargetMapId = session.Definition.TargetMapId;
-                npc.InvasionTargetX = session.Definition.TargetX;
-                npc.InvasionTargetY = session.Definition.TargetY;
+                npc.InvasionTargetMapId = session.TargetMapId;
+                npc.InvasionTargetX = session.TargetX;
+                npc.InvasionTargetY = session.TargetY;
                 npc.InvasionObjectiveDamage = spawn.ObjectiveDamage;
 
                 session.ActiveNpcs[npc.Id] = npc;
@@ -360,6 +378,36 @@ internal static class InvasionRuntime
 
         foreach (var player in Player.OnlinePlayers)
             player?.SendPacket(packet);
+    }
+
+    private static (Guid MapId, int X, int Y, string Name) ResolveObjective(
+        InvasionDefinition definition
+    )
+    {
+        if (definition.TargetEventId != Guid.Empty)
+        {
+            var targetEvent = EventDescriptor.Get(definition.TargetEventId);
+            if (targetEvent != null &&
+                !targetEvent.CommonEvent &&
+                targetEvent.MapId == definition.TargetMapId &&
+                targetEvent.SpawnX >= 0 &&
+                targetEvent.SpawnY >= 0)
+            {
+                return (
+                    targetEvent.MapId,
+                    targetEvent.SpawnX,
+                    targetEvent.SpawnY,
+                    string.IsNullOrWhiteSpace(targetEvent.Name) ? "Defense Objective" : targetEvent.Name
+                );
+            }
+        }
+
+        return (
+            definition.TargetMapId,
+            definition.TargetX,
+            definition.TargetY,
+            "Defense Objective"
+        );
     }
 
     private static MapInstance? GetOrCreateOverworldMap(Guid mapId)
