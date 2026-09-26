@@ -66,54 +66,69 @@ internal sealed class CookingWindow : Base
         ShouldDrawBackground = false;
         MouseInputEnabled = true;
 
-        _title = MakeLabel("CookingTitle", 20, 12, 800, 42, 22);
+        _title = MakeLabel("CookingTitle", 82, 20, 860, 42, 22);
         _title.Text = "ROYAL KITCHEN";
+        _title.TextAlign = Pos.Center;
+        _title.TextColorOverride = new Color(255, 236, 210, 117);
 
-        _recipe = MakeLabel("CookingRecipe", 30, 70, 430, 120, 14);
-        _ingredients = MakeLabel("CookingIngredients", 30, 200, 430, 220, 11);
-        _partner = MakeLabel("CookingPartner", 30, 430, 430, 70, 12);
-        _stage = MakeLabel("CookingStage", 500, 80, 470, 120, 18);
-        _status = MakeLabel("CookingStatus", 500, 210, 470, 100, 12);
-        _score = MakeLabel("CookingScore", 500, 320, 470, 80, 15);
-        _players = MakeLabel("CookingPlayers", 500, 410, 470, 100, 11);
-        _professionXp = MakeLabel("CookingProfessionXp", 30, 632, 740, 42, 11);
+        _recipe = MakeLabel("CookingRecipe", 62, 115, 286, 92, 15);
+        _ingredients = MakeLabel("CookingIngredients", 62, 228, 286, 198, 11);
+        _partner = MakeLabel("CookingPartner", 62, 448, 286, 78, 11);
 
-        _previousRecipe = MakeButton("CookingPreviousRecipe", "< Recipe", 30, 520, 130, () =>
+        _stage = MakeLabel("CookingStage", 420, 112, 530, 86, 18);
+        _stage.TextAlign = Pos.Center;
+        _status = MakeLabel("CookingStatus", 420, 210, 530, 92, 12);
+        _status.TextAlign = Pos.Center;
+        _score = MakeLabel("CookingScore", 420, 314, 530, 60, 15);
+        _score.TextAlign = Pos.Center;
+        _players = MakeLabel("CookingPlayers", 420, 390, 530, 72, 11);
+        _players.TextAlign = Pos.Center;
+
+        _professionXp = MakeLabel("CookingProfessionXp", 55, 626, 700, 28, 11);
+        _professionXp.TextColorOverride = new Color(255, 236, 210, 117);
+
+        _previousRecipe = MakeButton("CookingPreviousRecipe", "< Recipe", 55, 538, 92, () =>
         {
             _recipeIndex = Math.Max(0, _recipeIndex - 1);
             RefreshSelection();
         });
-        _nextRecipe = MakeButton("CookingNextRecipe", "Recipe >", 170, 520, 130, () =>
+        _nextRecipe = MakeButton("CookingNextRecipe", "Recipe >", 154, 538, 92, () =>
         {
             if (_state != null)
                 _recipeIndex = Math.Min(Math.Max(0, _state.Recipes.Length - 1), _recipeIndex + 1);
             RefreshSelection();
         });
-        _solo = MakeButton("CookingSolo", "COOK SOLO", 310, 520, 150, StartSolo);
+        _solo = MakeButton("CookingSolo", "COOK SOLO", 253, 538, 100, StartSolo);
 
-        _previousPartner = MakeButton("CookingPreviousPartner", "< Friend", 30, 570, 130, () =>
+        _previousPartner = MakeButton("CookingPreviousPartner", "< Friend", 55, 578, 92, () =>
         {
             _partnerIndex = Math.Max(0, _partnerIndex - 1);
             RefreshSelection();
         });
-        _nextPartner = MakeButton("CookingNextPartner", "Friend >", 170, 570, 130, () =>
+        _nextPartner = MakeButton("CookingNextPartner", "Friend >", 154, 578, 92, () =>
         {
             if (_state != null)
                 _partnerIndex = Math.Min(Math.Max(0, _state.PartyCandidates.Length - 1), _partnerIndex + 1);
             RefreshSelection();
         });
-        _coop = MakeButton("CookingCoop", "COOK TOGETHER", 310, 570, 150, StartCoop);
+        _coop = MakeButton("CookingCoop", "COOK TOGETHER", 253, 578, 100, StartCoop);
 
-        _action = MakeButton("CookingAction", "DO IT!", 520, 540, 140, () => DoAction(CookingActionInput.Primary));
-        _actionSecondary = MakeButton("CookingActionSecondary", "SECONDARY", 670, 540, 140, () => DoAction(CookingActionInput.Secondary));
-        _actionTertiary = MakeButton("CookingActionTertiary", "TERTIARY", 820, 540, 140, () => DoAction(CookingActionInput.Tertiary));
-        _accept = MakeButton("CookingAccept", "ACCEPT COOKING INVITE", 540, 540, 220, () =>
+        _action = MakeButton("CookingAction", "DO IT!", 435, 528, 160, () => DoAction(CookingActionInput.Primary));
+        _actionSecondary = MakeButton("CookingActionSecondary", "SECONDARY", 606, 528, 160, () => DoAction(CookingActionInput.Secondary));
+        _actionTertiary = MakeButton("CookingActionTertiary", "TERTIARY", 777, 528, 160, () => DoAction(CookingActionInput.Tertiary));
+        _accept = MakeButton("CookingAccept", "ACCEPT COOKING INVITE", 500, 528, 220, () =>
             _send(CookingRequestKind.RespondInvite, Guid.Empty, Guid.Empty, true, CookingActionInput.Primary)
         );
-        _decline = MakeButton("CookingDecline", "DECLINE", 770, 540, 140, () =>
+        _decline = MakeButton("CookingDecline", "DECLINE", 730, 528, 140, () =>
             _send(CookingRequestKind.RespondInvite, Guid.Empty, Guid.Empty, false, CookingActionInput.Primary)
         );
-        _leave = MakeButton("CookingLeave", "Leave Kitchen", 820, 650, 150, () => ExitRequested = true);
+        _leave = MakeButton("CookingLeave", "Leave Kitchen", 805, 650, 145, () => ExitRequested = true);
+
+        _solo.TextColorOverride = new Color(255, 236, 210, 117);
+        _coop.TextColorOverride = new Color(255, 236, 210, 117);
+        _action.TextColorOverride = new Color(255, 236, 210, 117);
+        _actionSecondary.TextColorOverride = Color.White;
+        _actionTertiary.TextColorOverride = Color.White;
 
         ResizeToCanvas();
     }
