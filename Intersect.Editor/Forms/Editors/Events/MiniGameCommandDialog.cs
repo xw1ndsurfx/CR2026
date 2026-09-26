@@ -132,6 +132,22 @@ internal sealed class MiniGameCommandDialog : Form
             }
         }
 
+        long SuggestedRouletteReserve()
+        {
+            var maximumBet = (long)rouletteMaximum.Value;
+            return Math.Clamp(maximumBet * 35L, 1L, 1_000_000_000L);
+        }
+
+        void EnsureRouletteReserve()
+        {
+            var funded = ((currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty) != Guid.Empty;
+            if (!funded || !IsRoulette()) return;
+
+            var suggested = SuggestedRouletteReserve();
+            if ((long)reserve.Value < suggested)
+                reserve.Value = suggested;
+        }
+
         void ChangeCurrencyMode()
         {
             var funded = ((currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty) != Guid.Empty;
@@ -193,8 +209,9 @@ internal sealed class MiniGameCommandDialog : Form
 
             LimitNpcs();
             EnsureBlackjackReserve();
+            EnsureRouletteReserve();
         }
-        seats.ValueChanged += (_, _) => { LimitNpcs(); EnsureBlackjackReserve(); };
+        seats.ValueChanged += (_, _) => { LimitNpcs(); EnsureBlackjackReserve(); EnsureRouletteReserve(); };
         dealer.CheckedChanged += (_, _) => LimitNpcs();
         LimitNpcs();
         AddRow(layout, 1, "Mini-game", game); AddRow(layout, 2, "Table ID (letters, digits, - or _)", table);
@@ -369,7 +386,7 @@ internal sealed class MiniGameCommandDialog : Form
         };
         reserve.ValueChanged += (_, _) => ShowCurrencyStatus();
         unlimitedNpcBankroll.CheckedChanged += (_, _) => ShowCurrencyStatus();
-        game.SelectedIndexChanged += (_, _) => { UpdateGameUi(); ShowCurrencyStatus(); ShowSummary(); };
+        game.SelectedIndexChanged += (_, _) => { UpdateGameUi(); EnsureRouletteReserve(); ShowCurrencyStatus(); ShowSummary(); };
         table.TextChanged += (_, _) => ShowSummary();
         seats.ValueChanged += (_, _) => ShowSummary();
         npcs.ValueChanged += (_, _) => ShowSummary();
@@ -380,6 +397,8 @@ internal sealed class MiniGameCommandDialog : Form
         blackjackMinimum.ValueChanged += (_, _) => { EnsureBlackjackReserve(); ShowCurrencyStatus(); ShowSummary(); };
         blackjackMaximum.ValueChanged += (_, _) => { EnsureBlackjackReserve(); ShowCurrencyStatus(); ShowSummary(); };
         blackjackHitSoft17.CheckedChanged += (_, _) => ShowSummary();
+        rouletteMinimum.ValueChanged += (_, _) => ShowSummary();
+        rouletteMaximum.ValueChanged += (_, _) => { EnsureRouletteReserve(); ShowCurrencyStatus(); ShowSummary(); };
         UpdateGameUi();
         ShowCurrencyStatus();
         ShowSummary();
@@ -389,6 +408,7 @@ internal sealed class MiniGameCommandDialog : Form
         save.Click += (_, _) =>
         {
             EnsureBlackjackReserve();
+            EnsureRouletteReserve();
             var selected = IsPotions() ? Guid.Empty : (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
             if (!IsPotions() && selected != Guid.Empty && !MiniGameCurrency.IsCompatible(ItemDescriptor.Get(selected)))
             {
