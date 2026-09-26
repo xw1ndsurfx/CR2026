@@ -1124,7 +1124,7 @@ internal sealed class CookingWindow : Base
             for (var jar = 0; jar < 5; ++jar)
             {
                 var jx = 854 + jar * 27;
-                var body = jar % 3 switch
+                var body = (jar % 3) switch
                 {
                     0 => new Color(a: 255, r: 126, g: 78, b: 42),
                     1 => new Color(a: 255, r: 94, g: 108, b: 57),
@@ -1169,7 +1169,7 @@ internal sealed class CookingWindow : Base
         {
             var ix = 402 + item * 32;
             var iy = 345 - (item % 3) * 7;
-            var ingredient = item % 4 switch
+            var ingredient = (item % 4) switch
             {
                 0 => new Color(a: 255, r: 210, g: 95, b: 38),
                 1 => new Color(a: 255, r: 99, g: 132, b: 57),
