@@ -6,6 +6,7 @@ public static class MiniGameProgression
     public const string Poker = "poker";
     public const string Blackjack = "blackjack";
     public const string Potions = "potions";
+    public const string Roulette = "roulette";
     public const int ExperiencePerWin = 25;
     public const int MaximumLevel = 25;
     public const long MaximumExperience = 30_000;
