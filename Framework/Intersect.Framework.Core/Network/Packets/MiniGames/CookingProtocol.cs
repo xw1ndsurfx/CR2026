@@ -94,6 +94,11 @@ public sealed partial class CookingSessionState
     [Key(35)] public int Combo { get; set; }
     [Key(36)] public int Mishaps { get; set; }
     [Key(37)] public string ActionHint { get; set; } = string.Empty;
+    [Key(38)] public long ActionSequence { get; set; }
+    [Key(39)] public int LastActionScore { get; set; }
+    [Key(40)] public string ActionSound { get; set; } = string.Empty;
+    [Key(41)] public string PerfectSound { get; set; } = string.Empty;
+    [Key(42)] public string MishapSound { get; set; } = string.Empty;
 
     [IgnoreMember]
     public bool IsValid =>
@@ -115,6 +120,11 @@ public sealed partial class CookingSessionState
         Combo is >= 0 and <= 999 &&
         Mishaps is >= 0 and <= 999 &&
         ActionHint is { Length: <= 160 } &&
+        ActionSequence >= 0 &&
+        LastActionScore is >= 0 and <= 100 &&
+        ActionSound is { Length: <= CookingStageDefinition.MaximumSoundFileLength } &&
+        PerfectSound is { Length: <= CookingStageDefinition.MaximumSoundFileLength } &&
+        MishapSound is { Length: <= CookingStageDefinition.MaximumSoundFileLength } &&
         StageScore is >= 0 and <= 100 &&
         TeamScore is >= 0 and <= 100 &&
         Enum.IsDefined(Quality) &&
