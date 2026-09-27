@@ -30,6 +30,7 @@ public partial class EventCommandConditionalBranch : UserControl
     private readonly ConditionControl_PlayerSpell _playerSpellControl;
     private readonly ConditionControl_PlayerStat _playerStatControl;
     private readonly ConditionControl_Profession _professionControl;
+    private readonly ConditionControl_Premium _premiumControl;
     private readonly ConditionControl_QuestCanStart _questCanStartControl;
     private readonly ConditionControl_QuestCompleted _questCompletedControl;
     private readonly ConditionControl_QuestInProgress _questInProgressControl;
@@ -66,6 +67,7 @@ public partial class EventCommandConditionalBranch : UserControl
         _playerSpellControl = new();
         _playerStatControl = new();
         _professionControl = new();
+        _premiumControl = new();
         _questCanStartControl = new();
         _questCompletedControl = new();
         _questInProgressControl = new();
@@ -86,6 +88,7 @@ public partial class EventCommandConditionalBranch : UserControl
         pnlConditionControl.Controls.Add(_playerSpellControl);
         pnlConditionControl.Controls.Add(_playerStatControl);
         pnlConditionControl.Controls.Add(_professionControl);
+        pnlConditionControl.Controls.Add(_premiumControl);
         pnlConditionControl.Controls.Add(_questCanStartControl);
         pnlConditionControl.Controls.Add(_questCompletedControl);
         pnlConditionControl.Controls.Add(_questInProgressControl);
@@ -109,7 +112,9 @@ public partial class EventCommandConditionalBranch : UserControl
         }
 
         if (Condition.Type == ConditionType.ProfessionLevel)
-            cmbConditionType.SelectedIndex = cmbConditionType.Items.Count - 1;
+            cmbConditionType.SelectedItem = "Profession Level";
+        else if (Condition.Type == ConditionType.PremiumStatus)
+            cmbConditionType.SelectedItem = "Premium...";
 
         chkNegated.Checked = refCommand.Negated;
         chkHasElse.Checked = refCommand.ElseEnabled;
@@ -128,6 +133,7 @@ public partial class EventCommandConditionalBranch : UserControl
             cmbConditionType.Items.Add(itm.Value);
         }
         cmbConditionType.Items.Add("Profession Level");
+        cmbConditionType.Items.Add("Premium...");
 
         chkNegated.Text = Strings.EventConditional.negated;
         chkHasElse.Text = Strings.EventConditional.HasElse;
@@ -151,6 +157,7 @@ public partial class EventCommandConditionalBranch : UserControl
         _playerSpellControl.Hide();
         _playerStatControl.Hide();
         _professionControl.Hide();
+        _premiumControl.Hide();
         _questCanStartControl.Hide();
         _questCompletedControl.Hide();
         _questInProgressControl.Hide();
@@ -214,6 +221,10 @@ public partial class EventCommandConditionalBranch : UserControl
 
             case ConditionType.ProfessionLevel:
                 _professionControl.Show();
+                break;
+
+            case ConditionType.PremiumStatus:
+                _premiumControl.Show();
                 break;
 
             case ConditionType.CanStartQuest:
@@ -308,6 +319,10 @@ public partial class EventCommandConditionalBranch : UserControl
                 _professionControl.SetupFormValues(professionCondition);
                 break;
 
+            case PremiumStatusCondition premiumCondition:
+                _premiumControl.SetupFormValues(premiumCondition);
+                break;
+
             case CanStartQuestCondition questCanStartCondition:
                 _questCanStartControl.SetupFormValues(questCanStartCondition);
                 break;
@@ -400,6 +415,10 @@ public partial class EventCommandConditionalBranch : UserControl
                 _professionControl.SaveFormValues(professionCondition);
                 break;
 
+            case PremiumStatusCondition premiumCondition:
+                _premiumControl.SaveFormValues(premiumCondition);
+                break;
+
             case CanStartQuestCondition questCanStartCondition:
                 _questCanStartControl.SaveFormValues(questCanStartCondition);
                 break;
@@ -468,7 +487,9 @@ public partial class EventCommandConditionalBranch : UserControl
     {
         var conditionType = string.Equals(cmbConditionType.Text, "Profession Level", StringComparison.Ordinal)
             ? ConditionType.ProfessionLevel
-            : Strings.EventConditional.conditions.FirstOrDefault(x => x.Value == cmbConditionType.Text).Key;
+            : string.Equals(cmbConditionType.Text, "Premium...", StringComparison.Ordinal)
+                ? ConditionType.PremiumStatus
+                : Strings.EventConditional.conditions.FirstOrDefault(x => x.Value == cmbConditionType.Text).Key;
 
         if (conditionType < ConditionType.HasItem && conditionType != ConditionType.VariableIs)
             conditionType = ConditionType.VariableIs;
@@ -532,6 +553,10 @@ public partial class EventCommandConditionalBranch : UserControl
 
                 case ConditionType.ProfessionLevel:
                     Condition = new ProfessionLevelCondition();
+                    break;
+
+                case ConditionType.PremiumStatus:
+                    Condition = new PremiumStatusCondition();
                     break;
 
                 case ConditionType.CanStartQuest:
