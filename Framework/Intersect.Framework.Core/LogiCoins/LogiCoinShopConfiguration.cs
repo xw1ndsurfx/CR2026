@@ -112,7 +112,7 @@ public sealed class LogiCoinShopConfiguration
 
     public bool Enabled { get; set; } = true;
 
-    public string ShopUrl { get; set; } = "https://shop.logiklik.com";
+    public string ShopUrl { get; set; } = "https://shop.logiklik.com/?category=currency";
 
     /// <summary>
     /// Integer User Variable containing the premium expiry as Unix time milliseconds.
