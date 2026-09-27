@@ -1230,6 +1230,11 @@ public static partial class CommandPrinter
         return "Open Corps Royaux News";
     }
 
+    private static string GetCommandText(OpenMarketplaceCommand command, MapInstance map)
+    {
+        return "Open Marketplace";
+    }
+
     private static string GetCommandText(OpenBankCommand command, MapInstance map)
     {
         return Strings.EventCommandList.openbank;

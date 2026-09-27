@@ -17,6 +17,7 @@ using Intersect.Server.Database.PlayerData.Security;
 using Intersect.Server.General;
 using Intersect.Server.Localization;
 using Intersect.Server.Maps;
+using Intersect.Server.Marketplace;
 using Intersect.Server.Networking;
 using Intersect.Server.Professions;
 using Intersect.Utilities;
@@ -1276,6 +1277,18 @@ public static partial class CommandProcessing
     )
     {
         PacketSender.SendOpenLogiklikNews(player);
+    }
+
+    //Open Marketplace Command
+    private static void ProcessCommand(
+        OpenMarketplaceCommand command,
+        Player player,
+        Event instance,
+        CommandInstance stackInfo,
+        Stack<CommandInstance> callStack
+    )
+    {
+        player.SendPacket(MarketplaceRuntime.BuildState(player));
     }
 
     //Open Bank Command
