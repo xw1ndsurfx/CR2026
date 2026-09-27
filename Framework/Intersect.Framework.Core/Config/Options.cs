@@ -172,6 +172,11 @@ public partial record Options
     [RequiresRestart]
     public SmtpSettings SmtpSettings { get; set; } = new();
 
+    [Category(CategorySecurity)]
+    [JsonProperty(Order = -59)]
+    [RequiresRestart]
+    public LogiklikIntegrationOptions Logiklik { get; set; } = new();
+
     #endregion Security
 
     #region Other Game Properties
