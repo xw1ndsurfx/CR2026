@@ -40,6 +40,8 @@ internal sealed class MarketplaceWindow : Window
         var refresh = new Button(this, "Refresh")
         {
             Text = "Refresh",
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 10,
         };
         refresh.SetBounds(800, 30, 90, 30);
         refresh.Clicked += (_, _) => Networking.PacketSender.SendRequestMarketplaceState();
@@ -47,7 +49,10 @@ internal sealed class MarketplaceWindow : Window
         _status = new Label(this, "Status")
         {
             AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+            FontSize = 10,
             TextColorOverride = Color.White,
+            TextAlign = Pos.Left | Pos.CenterV,
         };
         _status.SetBounds(20, 62, 870, 28);
 
@@ -80,20 +85,43 @@ internal sealed class MarketplaceWindow : Window
         sellLabel.SetBounds(20, 398, 400, 24);
 
         AddFieldLabel("PriceLabel", "Price / starting bid", 20, 426, 135);
-        _price = new TextBox(this, "Price") { Text = "1" };
+        _price = new TextBox(this, "Price")
+        {
+            Text = "1",
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+            FontSize = 10,
+            TextColorOverride = Color.White,
+            TextAlign = Pos.Left | Pos.CenterV,
+        };
         _price.SetBounds(20, 448, 130, 28);
 
         AddFieldLabel("QuantityLabel", "Quantity", 165, 426, 100);
-        _quantity = new TextBox(this, "Quantity") { Text = "1" };
+        _quantity = new TextBox(this, "Quantity")
+        {
+            Text = "1",
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+            FontSize = 10,
+            TextColorOverride = Color.White,
+            TextAlign = Pos.Left | Pos.CenterV,
+        };
         _quantity.SetBounds(165, 448, 90, 28);
 
         AddFieldLabel("DurationLabel", "Duration (minutes, 0 = none)", 270, 426, 210);
-        _duration = new TextBox(this, "Duration") { Text = "0" };
+        _duration = new TextBox(this, "Duration")
+        {
+            Text = "0",
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+            FontSize = 10,
+            TextColorOverride = Color.White,
+            TextAlign = Pos.Left | Pos.CenterV,
+        };
         _duration.SetBounds(270, 448, 150, 28);
 
         _auction = new LabeledCheckBox(this, "Auction")
         {
             Text = "Auction",
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+            FontSize = 10,
             TextColorOverride = Color.White,
         };
         _auction.SetBounds(445, 447, 150, 28);
@@ -102,7 +130,10 @@ internal sealed class MarketplaceWindow : Window
         {
             AutoSizeToContents = false,
             Text = "Auction bids are held in escrow. Duration 0 keeps the auction open until you accept a bid.",
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+            FontSize = 9,
             TextColorOverride = new Color(a: 255, r: 205, g: 205, b: 205),
+            TextAlign = Pos.Left | Pos.CenterV,
         };
         help.SetBounds(20, 480, 870, 24);
 
@@ -133,7 +164,10 @@ internal sealed class MarketplaceWindow : Window
         {
             AutoSizeToContents = false,
             Text = text,
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+            FontSize = 9,
             TextColorOverride = Color.White,
+            TextAlign = Pos.Left | Pos.CenterV,
         };
         label.SetBounds(x, y, width, 20);
     }
@@ -178,6 +212,8 @@ internal sealed class MarketplaceWindow : Window
             {
                 AutoSizeToContents = false,
                 Text = "No active Marketplace listings.",
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 10,
                 TextColorOverride = Color.White,
                 TextAlign = Pos.Center,
             };
@@ -207,6 +243,8 @@ internal sealed class MarketplaceWindow : Window
             {
                 AutoSizeToContents = false,
                 Text = "No Inventory/Bank items are enabled for Marketplace sale.",
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 10,
                 TextColorOverride = Color.White,
                 TextAlign = Pos.Center,
             };
@@ -277,7 +315,9 @@ internal sealed class MarketplaceWindow : Window
             {
                 AutoSizeToContents = false,
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                FontSize = 11,
                 TextColorOverride = Color.White,
+                TextAlign = Pos.Left | Pos.CenterV,
                 Text = $"{listing.Quantity:N0} x {ItemDescriptor.GetName(listing.ItemId)}",
             };
             title.SetBounds(62, 5, 240, 23);
@@ -286,7 +326,10 @@ internal sealed class MarketplaceWindow : Window
             var price = new Label(this, "Price")
             {
                 AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 9,
                 TextColorOverride = Color.White,
+                TextAlign = Pos.Left | Pos.CenterV,
                 Text = $"{(listing.IsAuction ? "Auction" : "Fixed price")}: {priceValue:N0} Aurons",
             };
             price.SetBounds(62, 28, 240, 20);
@@ -294,7 +337,10 @@ internal sealed class MarketplaceWindow : Window
             var seller = new Label(this, "Seller")
             {
                 AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 9,
                 TextColorOverride = new Color(a: 255, r: 205, g: 205, b: 205),
+                TextAlign = Pos.Left | Pos.CenterV,
                 Text = "Seller: " + listing.SellerName,
             };
             seller.SetBounds(62, 48, 240, 18);
@@ -305,7 +351,10 @@ internal sealed class MarketplaceWindow : Window
             var expiry = new Label(this, "Expiry")
             {
                 AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 9,
                 TextColorOverride = Color.White,
+                TextAlign = Pos.Left | Pos.CenterV,
                 Text = expiryText,
             };
             expiry.SetBounds(310, 8, 190, 20);
@@ -315,7 +364,10 @@ internal sealed class MarketplaceWindow : Window
                 var bidder = new Label(this, "Bidder")
                 {
                     AutoSizeToContents = false,
+                    Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                    FontSize = 9,
                     TextColorOverride = Color.White,
+                    TextAlign = Pos.Left | Pos.CenterV,
                     Text = "Highest: " + listing.CurrentBidderName,
                 };
                 bidder.SetBounds(310, 31, 190, 20);
@@ -325,7 +377,12 @@ internal sealed class MarketplaceWindow : Window
             {
                 if (listing.CanAcceptBid)
                 {
-                    var accept = new Button(this, "Accept") { Text = "Accept bid" };
+                    var accept = new Button(this, "Accept")
+                    {
+                        Text = "Accept bid",
+                        Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                        FontSize = 9,
+                    };
                     accept.SetBounds(590, 17, 110, 34);
                     accept.Clicked += (_, _) =>
                         Networking.PacketSender.SendCompleteMarketplaceAuction(listing.ListingId);
@@ -334,6 +391,8 @@ internal sealed class MarketplaceWindow : Window
                 var cancel = new Button(this, "Cancel")
                 {
                     Text = listing.CanCancel ? "Cancel" : "Bid active",
+                    Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                    FontSize = 9,
                     IsDisabled = !listing.CanCancel,
                 };
                 cancel.SetBounds(708, 17, 110, 34);
@@ -344,7 +403,12 @@ internal sealed class MarketplaceWindow : Window
 
             if (!listing.IsAuction)
             {
-                var buy = new Button(this, "Buy") { Text = "Buy" };
+                var buy = new Button(this, "Buy")
+                {
+                    Text = "Buy",
+                    Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                    FontSize = 10,
+                };
                 buy.SetBounds(708, 17, 110, 34);
                 buy.Clicked += (_, _) =>
                     Networking.PacketSender.SendBuyMarketplaceListing(listing.ListingId);
@@ -354,10 +418,22 @@ internal sealed class MarketplaceWindow : Window
             var minimum = listing.CurrentBid > 0
                 ? (listing.CurrentBid == int.MaxValue ? int.MaxValue : listing.CurrentBid + 1)
                 : listing.AskingPrice;
-            var bidText = new TextBox(this, "BidAmount") { Text = minimum.ToString() };
+            var bidText = new TextBox(this, "BidAmount")
+            {
+                Text = minimum.ToString(),
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 10,
+                TextColorOverride = Color.White,
+                TextAlign = Pos.Left | Pos.CenterV,
+            };
             bidText.SetBounds(520, 20, 120, 28);
 
-            var bid = new Button(this, "Bid") { Text = "Bid" };
+            var bid = new Button(this, "Bid")
+            {
+                Text = "Bid",
+                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                FontSize = 10,
+            };
             bid.SetBounds(648, 17, 80, 34);
             bid.Clicked += (_, _) =>
             {
@@ -394,7 +470,10 @@ internal sealed class MarketplaceWindow : Window
             var item = new Label(this, "Item")
             {
                 AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                FontSize = 10,
                 TextColorOverride = Color.White,
+                TextAlign = Pos.Left | Pos.CenterV,
                 Text = $"{owned.Quantity:N0} x {ItemDescriptor.GetName(owned.ItemId)}",
             };
             item.SetBounds(52, 7, 340, 20);
@@ -402,12 +481,20 @@ internal sealed class MarketplaceWindow : Window
             var source = new Label(this, "Source")
             {
                 AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 9,
                 TextColorOverride = new Color(a: 255, r: 205, g: 205, b: 205),
+                TextAlign = Pos.Left | Pos.CenterV,
                 Text = owned.Source == MarketplaceItemSource.Bank ? "Bank" : "Inventory",
             };
             source.SetBounds(52, 26, 180, 18);
 
-            var sell = new Button(this, "Sell") { Text = "List item" };
+            var sell = new Button(this, "Sell")
+            {
+                Text = "List item",
+                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                FontSize = 9,
+            };
             sell.SetBounds(708, 7, 110, 32);
             sell.Clicked += (_, _) => create();
         }
