@@ -1,5 +1,9 @@
 using System.Drawing.Imaging;
 using Intersect.Editor.Core;
+using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.GameObjects.Resources;
+using Intersect.GameObjects;
 using Intersect.Editor.General;
 using Intersect.Editor.Maps;
 using Intersect.Enums;
@@ -192,6 +196,166 @@ public static partial class PacketSender
     public static void SendSaveObject(IDatabaseObject obj)
     {
         Network.SendPacket(new SaveGameObjectPacket(obj.Type, obj.Id, obj.JsonData));
+        TrySendWikiGameAsset(obj);
+    }
+
+    private static void TrySendWikiGameAsset(IDatabaseObject obj)
+    {
+        try
+        {
+            switch (obj)
+            {
+                case ItemDescriptor item when !string.IsNullOrWhiteSpace(item.Icon):
+                    TrySendPngFile("items", item.Id, Path.Combine("resources", "items", item.Icon));
+                    break;
+
+                case SpellDescriptor spell when !string.IsNullOrWhiteSpace(spell.Icon):
+                    TrySendPngFile("spells", spell.Id, Path.Combine("resources", "spells", spell.Icon));
+                    break;
+
+                case ResourceDescriptor resource:
+                    TrySendResourcePreview(resource);
+                    break;
+            }
+        }
+        catch
+        {
+            // Wiki images must never block saving game data.
+        }
+    }
+
+    private static void TrySendPngFile(string category, Guid objectId, string path)
+    {
+        if (!File.Exists(path))
+        {
+            return;
+        }
+
+        var bytes = File.ReadAllBytes(path);
+        if (bytes.Length is <= 0 or > 8 * 1024 * 1024)
+        {
+            return;
+        }
+
+        Network.SendPacket(new WikiGameAssetUploadPacket(category, objectId, bytes));
+    }
+
+    private static void TrySendResourcePreview(ResourceDescriptor resource)
+    {
+        var state = resource.States?.Values
+            .Where(value => value != null)
+            .OrderByDescending(value => value.MaximumHealth)
+            .ThenByDescending(value => value.MinimumHealth)
+            .FirstOrDefault();
+
+        if (state == null)
+        {
+            return;
+        }
+
+        string? sourcePath = null;
+        System.Drawing.Rectangle? crop = null;
+
+        switch (state.TextureType)
+        {
+            case ResourceTextureSource.Resource:
+                sourcePath = ResolvePngPath(Path.Combine("resources", "resources"), state.TextureName);
+                crop = ResourceCrop(state);
+                break;
+
+            case ResourceTextureSource.Tileset:
+                sourcePath = ResolvePngPath(Path.Combine("resources", "tilesets"), state.TextureName);
+                crop = ResourceCrop(state);
+                break;
+
+            case ResourceTextureSource.Animation:
+                var animation = AnimationDescriptor.Get(state.AnimationId);
+                var layer = !string.IsNullOrWhiteSpace(animation?.Lower?.Sprite)
+                    ? animation.Lower
+                    : animation?.Upper;
+
+                if (layer == null || string.IsNullOrWhiteSpace(layer.Sprite))
+                {
+                    return;
+                }
+
+                sourcePath = ResolvePngPath(Path.Combine("resources", "animations"), layer.Sprite);
+                if (sourcePath != null)
+                {
+                    using var probe = System.Drawing.Image.FromFile(sourcePath);
+                    var frameWidth = Math.Max(1, probe.Width / Math.Max(1, layer.XFrames));
+                    var frameHeight = Math.Max(1, probe.Height / Math.Max(1, layer.YFrames));
+                    crop = new System.Drawing.Rectangle(0, 0, frameWidth, frameHeight);
+                }
+                break;
+        }
+
+        if (sourcePath == null || !File.Exists(sourcePath))
+        {
+            return;
+        }
+
+        using var image = System.Drawing.Image.FromFile(sourcePath);
+        using var bitmap = new System.Drawing.Bitmap(image);
+
+        System.Drawing.Bitmap output;
+        if (crop is { } rect &&
+            rect.Width > 0 &&
+            rect.Height > 0 &&
+            rect.X >= 0 &&
+            rect.Y >= 0 &&
+            rect.Right <= bitmap.Width &&
+            rect.Bottom <= bitmap.Height)
+        {
+            output = bitmap.Clone(rect, PixelFormat.Format32bppArgb);
+        }
+        else
+        {
+            output = new System.Drawing.Bitmap(bitmap);
+        }
+
+        using (output)
+        using (var stream = new MemoryStream())
+        {
+            output.Save(stream, ImageFormat.Png);
+            var bytes = stream.ToArray();
+            if (bytes.Length is > 0 and <= 8 * 1024 * 1024)
+            {
+                Network.SendPacket(new WikiGameAssetUploadPacket("resources", resource.Id, bytes));
+            }
+        }
+    }
+
+    private static string? ResolvePngPath(string directory, string? configuredName)
+    {
+        if (string.IsNullOrWhiteSpace(configuredName))
+        {
+            return null;
+        }
+
+        var fileName = Path.GetFileName(configuredName);
+        if (Path.GetExtension(fileName).Length == 0)
+        {
+            fileName += ".png";
+        }
+
+        var path = Path.Combine(directory, fileName);
+        return File.Exists(path) ? path : null;
+    }
+
+    private static System.Drawing.Rectangle? ResourceCrop(ResourceStateDescriptor state)
+    {
+        if (state.Width <= 0 || state.Height <= 0)
+        {
+            return null;
+        }
+
+        return new System.Drawing.Rectangle(
+            Math.Max(0, state.X),
+            Math.Max(0, state.Y),
+            state.Width,
+            state.Height
+        );
     }
 
     public static void SendSaveTime(string timeJson)
