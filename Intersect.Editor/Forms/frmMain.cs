@@ -112,6 +112,7 @@ public partial class FrmMain : Form
         InitLocalization();
         InitExternalTools();
         AddRewardConfigurationEditorMenu();
+        AddLogiCoinShopEditorMenu();
         AddProfessionEditorMenu();
         PacketSender.SendRequestProfessionConfiguration(openEditor: false);
         AddWorldEventsEditorMenu();
@@ -219,6 +220,31 @@ public partial class FrmMain : Form
     public void OpenRewardConfigurationEditor()
     {
         var editor = new FrmRewardConfiguration();
+        editor.Show();
+        editor.BringToFront();
+    }
+
+    private void AddLogiCoinShopEditorMenu()
+    {
+        if (contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>()
+            .Any(item => item.Name == "logiCoinShopEditorToolStripMenuItem"))
+        {
+            return;
+        }
+
+        var shopEditor = new ToolStripMenuItem
+        {
+            Name = "logiCoinShopEditorToolStripMenuItem",
+            Text = "LogiCoin Shop...",
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
+        };
+        shopEditor.Click += (_, _) => PacketSender.SendRequestLogiCoinShopConfiguration();
+        contentEditorsToolStripMenuItem.DropDownItems.Add(shopEditor);
+    }
+
+    public void OpenLogiCoinShopEditor()
+    {
+        var editor = new FrmLogiCoinShopConfiguration();
         editor.Show();
         editor.BringToFront();
     }
