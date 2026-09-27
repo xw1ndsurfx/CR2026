@@ -193,7 +193,7 @@ internal sealed class LogiCoinShopWindow : Window
                     : Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(fallbackItemId);
                 if (item != null && !string.IsNullOrWhiteSpace(item.Icon))
                 {
-                    image.Texture = Globals.ContentManager?.GetTexture(Framework.Content.TextureType.Item, item.Icon);
+                    image.Texture = GameContentManager.Current.GetTexture(Framework.Content.TextureType.Item, item.Icon);
                     image.RenderColor = item.Color;
                 }
             }
