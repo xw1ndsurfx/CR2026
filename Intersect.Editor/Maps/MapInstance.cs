@@ -4,6 +4,7 @@ using Intersect.Editor.Classes.Maps;
 using Intersect.Editor.Core;
 using Intersect.Editor.Entities;
 using Intersect.Editor.General;
+using Intersect.Editor.Networking;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Lighting;
