@@ -153,3 +153,15 @@ For Premium, create an **INTEGER User Variable** such as `PremiumUntil` and sele
 `PremiumUntil > System Time`
 
 The in-game **Buy more LogiCoins** button opens the Shop in the Steam overlay when Steam is available, and falls back to the operating-system browser otherwise.
+
+
+### Premium event conditions and Shop images
+
+The Event Editor exposes a dedicated **Premium...** condition with:
+- Premium is active
+- Premium is inactive / expired
+- Premium remaining at least X days
+
+The condition uses the `PremiumUntil` User Variable selected in **Content Editors > LogiCoin Shop...**.
+
+Each LogiCoin Shop offer can also define an optional image from `resources/images`. If no custom image is configured, item offers and bundles automatically fall back to the underlying Intersect item icon when possible.
