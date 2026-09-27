@@ -33,6 +33,20 @@ public static partial class PacketSender
         Network.SendPacket(new NeedMapPacket(mapId));
     }
 
+    public static void SendWikiMapPreview(Guid mapId, byte[] pngData)
+    {
+        if (mapId == Guid.Empty ||
+            pngData == null ||
+            pngData.Length < 8 ||
+            pngData.Length > 8 * 1024 * 1024)
+        {
+            return;
+        }
+
+        Network.SendPacket(new WikiMapPreviewPacket(mapId, pngData));
+    }
+
+
     public static void SendMap(MapInstance map)
     {
         Network.SendPacket(new MapUpdatePacket(map.Id, map.JsonData, map.GenerateTileData(), map.AttributeData));
@@ -52,10 +66,7 @@ public static partial class PacketSender
                 previewBytes = stream.ToArray();
             }
 
-            if (previewBytes.Length is > 0 and <= 8 * 1024 * 1024)
-            {
-                Network.SendPacket(new WikiMapPreviewPacket(map.Id, previewBytes));
-            }
+            SendWikiMapPreview(map.Id, previewBytes);
         }
         catch
         {
