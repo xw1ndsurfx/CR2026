@@ -133,7 +133,7 @@ internal static class MarketplaceRuntime
                 return BuildStateLocked(player, "Invalid quantity.", false);
             }
 
-            if (!descriptor.IsStackable && quantity != 1)
+            if (!descriptor.Stackable && quantity != 1)
             {
                 return BuildStateLocked(player, "Non-stackable items must be listed one at a time.", false);
             }
