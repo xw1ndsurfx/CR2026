@@ -357,7 +357,7 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
             );
 
             var relative = Path.GetRelativePath(categoryRoot.FullName, candidatePath);
-            if (!relative.StartsWith("..", StringComparison.Ordinal) && File.Exists(candidatePath))
+            if (!relative.StartsWith("..", StringComparison.Ordinal) && System.IO.File.Exists(candidatePath))
                 return new FileInfo(candidatePath);
 
             var fileName = Path.GetFileName(normalized);
