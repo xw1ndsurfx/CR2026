@@ -1,3 +1,4 @@
+using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
