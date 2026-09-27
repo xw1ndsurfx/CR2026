@@ -283,7 +283,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
             Id = source.Id,
             Name = source.Name,
             Description = source.Description,
-            Image = source.Image,
+            Image = source.Image ?? string.Empty,
             Type = source.Type,
             PriceLogiCoins = source.PriceLogiCoins,
             ItemId = source.ItemId,
