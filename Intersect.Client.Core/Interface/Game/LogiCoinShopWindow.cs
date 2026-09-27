@@ -173,7 +173,7 @@ internal sealed class LogiCoinShopWindow : Window
 
             if (!string.IsNullOrWhiteSpace(offer.Image))
             {
-                image.Texture = GameContentManager.Current.GetTexture(Framework.Content.TextureType.Image, offer.Image);
+                image.Texture = GameContentManager.Current.GetTexture(TextureType.Image, offer.Image);
                 image.RenderColor = Color.White;
             }
             else
@@ -193,7 +193,7 @@ internal sealed class LogiCoinShopWindow : Window
                     : Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(fallbackItemId);
                 if (item != null && !string.IsNullOrWhiteSpace(item.Icon))
                 {
-                    image.Texture = GameContentManager.Current.GetTexture(Framework.Content.TextureType.Item, item.Icon);
+                    image.Texture = GameContentManager.Current.GetTexture(TextureType.Item, item.Icon);
                     image.RenderColor = item.Color;
                 }
             }
