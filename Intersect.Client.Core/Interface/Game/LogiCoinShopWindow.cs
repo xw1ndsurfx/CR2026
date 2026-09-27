@@ -2,6 +2,7 @@ using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
+using Intersect.Client.ThirdParty;
 using Intersect.Framework.Core.LogiCoins;
 using Intersect.Utilities;
 using Intersect.Network.Packets.Server;
@@ -52,7 +53,7 @@ internal sealed class LogiCoinShopWindow : Window
         _buyMore.Clicked += (_, _) =>
         {
             var url = LogiCoinShopConfiguration.Instance.ShopUrl;
-            if (!string.IsNullOrWhiteSpace(url))
+            if (!string.IsNullOrWhiteSpace(url) && !Steam.OpenWebPageInOverlay(url))
             {
                 BrowserUtils.Open(url);
             }
