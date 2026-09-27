@@ -445,21 +445,21 @@ public partial class MapGrid
             Database.ClearAllMapCache();
         }
 
-        //Get a list of maps without images.
+        // Upload any cached previews we already have, and collect maps that still need one.
         for (var x = 0; x < GridWidth; x++)
         {
             for (var y = 0; y < GridHeight; y++)
             {
                 if (Grid[x, y].MapId != Guid.Empty)
                 {
-                    var img = Database.LoadMapCacheLegacy(Grid[x, y].MapId, Grid[x, y].Revision);
-                    if (img == null)
+                    var previewBytes = Database.LoadMapCacheRaw(Grid[x, y].MapId, Grid[x, y].Revision);
+                    if (previewBytes == null)
                     {
                         maps.Add(Grid[x, y].MapId);
                     }
                     else
                     {
-                        img.Dispose();
+                        PacketSender.SendWikiMapPreview(Grid[x, y].MapId, previewBytes);
                     }
                 }
             }
