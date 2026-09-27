@@ -42,6 +42,8 @@ public enum ConditionType
 
     IsInCombat,
 
-    // CR2026 professions: explicit value preserves serialized condition ids.
+    // CR2026 custom conditions: explicit values preserve serialized condition ids.
     ProfessionLevel = 1000,
+
+    PremiumStatus = 1001,
 }

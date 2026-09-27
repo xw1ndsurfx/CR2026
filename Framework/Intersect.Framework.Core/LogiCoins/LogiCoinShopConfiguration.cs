@@ -24,6 +24,11 @@ public sealed class LogiCoinShopOffer
 
     public string Description { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Optional image filename from client resources/images. When empty, item offers use the item icon.
+    /// </summary>
+    public string Image { get; set; } = string.Empty;
+
     public LogiCoinOfferType Type { get; set; }
 
     public int PriceLogiCoins { get; set; }
@@ -82,6 +87,8 @@ public sealed class LogiCoinShopOffer
         !string.IsNullOrWhiteSpace(Name) &&
         Name.Length <= 120 &&
         Description.Length <= 800 &&
+        (Image ?? string.Empty).Length <= 255 &&
+        !(Image ?? string.Empty).Contains("..", StringComparison.Ordinal) &&
         PriceLogiCoins is >= 0 and <= 1_000_000_000 &&
         DiscountPercent is >= 0 and <= 100 &&
         SortOrder is >= -1_000_000 and <= 1_000_000 &&

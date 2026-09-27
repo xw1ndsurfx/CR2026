@@ -7,6 +7,7 @@ using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.GameObjects;
 using Intersect.Server.General;
 using Intersect.Server.Maps;
+using Intersect.Server.LogiCoins;
 using Intersect.Server.Professions;
 
 namespace Intersect.Server.Entities.Events;
@@ -281,6 +282,32 @@ public static partial class Conditions
             VariableComparator.Greater => level > condition.Value,
             VariableComparator.Less => level < condition.Value,
             VariableComparator.NotEqual => level != condition.Value,
+            _ => false,
+        };
+    }
+
+    public static bool MeetsCondition(
+        PremiumStatusCondition condition,
+        Player player,
+        Event eventInstance,
+        QuestDescriptor questDescriptor
+    )
+    {
+        var variableId = LogiCoinShopRuntime.Current.PremiumUntilUserVariableId;
+        if (variableId == Guid.Empty)
+        {
+            return condition.Mode == PremiumConditionMode.Inactive;
+        }
+
+        var expiresAt = player.User.GetVariableValue(variableId).Integer;
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+        return condition.Mode switch
+        {
+            PremiumConditionMode.Active => expiresAt > now,
+            PremiumConditionMode.Inactive => expiresAt <= now,
+            PremiumConditionMode.RemainingDaysAtLeast =>
+                expiresAt >= now + Math.Max(0, condition.RemainingDays) * 86_400_000L,
             _ => false,
         };
     }

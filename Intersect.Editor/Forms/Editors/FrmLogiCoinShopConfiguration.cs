@@ -91,7 +91,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
         {
             AutoSize = true,
             MaximumSize = new Size(760, 0),
-            Text = "Premium stores a Unix timestamp in this INTEGER User Variable. In an Event, compare this variable > System Time to test Premium access.",
+            Text = "Premium stores its expiry in this INTEGER User Variable. Events now have a dedicated Premium... condition for active, expired, or remaining-days checks.",
             Margin = new Padding(8, 7, 3, 0),
         });
 
@@ -283,6 +283,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
             Id = source.Id,
             Name = source.Name,
             Description = source.Description,
+            Image = source.Image ?? string.Empty,
             Type = source.Type,
             PriceLogiCoins = source.PriceLogiCoins,
             ItemId = source.ItemId,
@@ -305,6 +306,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
 
         private readonly TextBox _name = new() { Width = 300 };
         private readonly TextBox _description = new() { Width = 480, Multiline = true, Height = 70 };
+        private readonly ComboBox _image = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
         private readonly ComboBox _type = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 180 };
         private readonly NumericUpDown _price = new() { Minimum = 0, Maximum = 1_000_000_000, Width = 140, ThousandsSeparator = true };
         private readonly NumericUpDown _sortOrder = new() { Minimum = -1_000_000, Maximum = 1_000_000, Width = 100 };
@@ -339,11 +341,13 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
             _type.Items.AddRange(Enum.GetValues<LogiCoinOfferType>().Cast<object>().ToArray());
             FillItems(_item);
             FillItems(_bundleItem);
+            FillImages(_image);
 
             if (source != null)
             {
                 _name.Text = source.Name;
                 _description.Text = source.Description;
+                _image.Text = source.Image ?? string.Empty;
                 _type.SelectedItem = source.Type;
                 _price.Value = source.PriceLogiCoins;
                 _sortOrder.Value = source.SortOrder;
@@ -390,23 +394,24 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 8,
+                RowCount = 9,
                 Padding = new Padding(10),
                 AutoScroll = true,
             };
 
             root.Controls.Add(Row("Name", _name), 0, 0);
             root.Controls.Add(Row("Description", _description), 0, 1);
-            root.Controls.Add(Row("Type", _type, "Price (LogiCoins)", _price, "Sort", _sortOrder, _enabled), 0, 2);
-            root.Controls.Add(Row("Discount %", _discount, "Starts (local)", _promoStart, "Ends (local)", _promoEnd), 0, 3);
+            root.Controls.Add(Row("Image (resources/images)", _image), 0, 2);
+            root.Controls.Add(Row("Type", _type, "Price (LogiCoins)", _price, "Sort", _sortOrder, _enabled), 0, 3);
+            root.Controls.Add(Row("Discount %", _discount, "Starts (local)", _promoStart, "Ends (local)", _promoEnd), 0, 4);
             root.Controls.Add(new Label
             {
-                Text = "Promotions are active only between the optional start/end dates. A 0% discount disables the promotion.",
+                Text = "Promotions are active only between the optional start/end dates. A 0% discount disables the promotion. Leave Image empty to use the item icon automatically when possible.",
                 AutoSize = true,
-            }, 0, 4);
+            }, 0, 5);
 
             _specificPanel.Height = 230;
-            root.Controls.Add(_specificPanel, 0, 5);
+            root.Controls.Add(_specificPanel, 0, 6);
 
             var buttons = new FlowLayoutPanel
             {
@@ -420,7 +425,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
             ok.Click += (_, _) => SaveOffer();
             buttons.Controls.Add(cancel);
             buttons.Controls.Add(ok);
-            root.Controls.Add(buttons, 0, 6);
+            root.Controls.Add(buttons, 0, 7);
 
             Controls.Add(root);
             _type.SelectedIndexChanged += (_, _) => RebuildSpecificEditor();
@@ -530,6 +535,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
                 Id = _id,
                 Name = _name.Text.Trim(),
                 Description = _description.Text.Trim(),
+                Image = _image.Text.Trim(),
                 Type = type,
                 PriceLogiCoins = (int)_price.Value,
                 ItemId = itemId,
@@ -584,6 +590,34 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
             }
 
             return row;
+        }
+
+        private static void FillImages(ComboBox picker)
+        {
+            picker.Items.Clear();
+            picker.Items.Add(string.Empty);
+
+            var imageRoot = Path.Combine("resources", "images");
+            if (!Directory.Exists(imageRoot))
+            {
+                return;
+            }
+
+            foreach (var file in Directory.EnumerateFiles(imageRoot, "*.*", SearchOption.AllDirectories)
+                         .Where(file =>
+                         {
+                             var extension = Path.GetExtension(file);
+                             return extension.Equals(".png", StringComparison.OrdinalIgnoreCase) ||
+                                    extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                                    extension.Equals(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                                    extension.Equals(".bmp", StringComparison.OrdinalIgnoreCase) ||
+                                    extension.Equals(".webp", StringComparison.OrdinalIgnoreCase);
+                         })
+                         .Select(file => Path.GetRelativePath(imageRoot, file).Replace('\\', '/'))
+                         .OrderBy(file => file, StringComparer.OrdinalIgnoreCase))
+            {
+                picker.Items.Add(file);
+            }
         }
 
         private static void FillItems(ComboBox picker)
