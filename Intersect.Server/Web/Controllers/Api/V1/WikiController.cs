@@ -3,6 +3,8 @@ using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
+using Intersect.Framework.Core.GameObjects.Resources;
+using Intersect.GameObjects;
 using Intersect.Framework.Core.MiniGames.Configuration;
 using Intersect.Models;
 using Intersect.Server.Web.Http;
@@ -36,7 +38,8 @@ public sealed class WikiController : IntersectController
         string Name,
         string Type,
         string? Subtitle = null,
-        string? Icon = null
+        string? Icon = null,
+        string? ImageUrl = null
     );
 
     public sealed record WikiCatalogEntry(string Slug, string Type, string Label);
@@ -45,6 +48,7 @@ public sealed class WikiController : IntersectController
         Guid Id,
         string Name,
         string Type,
+        string? ImageUrl,
         IReadOnlyDictionary<string, object?> Facts
     );
 
@@ -277,7 +281,24 @@ public sealed class WikiController : IntersectController
                 item.Name,
                 item.Type.ToString(),
                 string.IsNullOrWhiteSpace(item.Description) ? item.ItemType.ToString() : item.Description,
-                SafeAssetName(item.Icon)
+                SafeAssetName(item.Icon),
+                item.ImageUrl
+            ),
+            ResourceDescriptor resource => new WikiGameObjectSummary(
+                resource.Id,
+                resource.Name,
+                resource.Type.ToString(),
+                "Ressource",
+                null,
+                resource.ImageUrl
+            ),
+            SpellDescriptor spell => new WikiGameObjectSummary(
+                spell.Id,
+                spell.Name,
+                spell.Type.ToString(),
+                "Sort",
+                SafeAssetName(spell.Icon),
+                spell.ImageUrl
             ),
             MapDescriptor map => new WikiGameObjectSummary(
                 map.Id,
@@ -329,7 +350,15 @@ public sealed class WikiController : IntersectController
                 break;
         }
 
-        return new WikiPublicDetail(value.Id, value.Name, value.Type.ToString(), facts);
+        var imageUrl = value switch
+        {
+            ItemDescriptor item => item.ImageUrl,
+            ResourceDescriptor resource => resource.ImageUrl,
+            SpellDescriptor spell => spell.ImageUrl,
+            _ => null,
+        };
+
+        return new WikiPublicDetail(value.Id, value.Name, value.Type.ToString(), imageUrl, facts);
     }
 
     private static void Add(IDictionary<string, object?> facts, string key, object? value)
