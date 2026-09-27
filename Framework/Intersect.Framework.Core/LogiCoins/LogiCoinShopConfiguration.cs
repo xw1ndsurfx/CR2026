@@ -87,8 +87,8 @@ public sealed class LogiCoinShopOffer
         !string.IsNullOrWhiteSpace(Name) &&
         Name.Length <= 120 &&
         Description.Length <= 800 &&
-        Image.Length <= 255 &&
-        !Image.Contains("..", StringComparison.Ordinal) &&
+        (Image ?? string.Empty).Length <= 255 &&
+        !(Image ?? string.Empty).Contains("..", StringComparison.Ordinal) &&
         PriceLogiCoins is >= 0 and <= 1_000_000_000 &&
         DiscountPercent is >= 0 and <= 100 &&
         SortOrder is >= -1_000_000 and <= 1_000_000 &&
