@@ -111,6 +111,10 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
         if (!ItemDescriptor.TryGet(itemId, out var item) || string.IsNullOrWhiteSpace(item.Icon))
             return NotFound("Item image not found.");
 
+        var uploaded = ResolveUploadedAsset("items", item.Id);
+        if (uploaded != null)
+            return Png(uploaded);
+
         var file = ResolveTextureFile("items", item.Icon);
         return file == null ? NotFound("Item image file not found.") : Png(file);
     }
@@ -125,6 +129,10 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
         if (!SpellDescriptor.TryGet(spellId, out var spell) || string.IsNullOrWhiteSpace(spell.Icon))
             return NotFound("Spell image not found.");
 
+        var uploaded = ResolveUploadedAsset("spells", spell.Id);
+        if (uploaded != null)
+            return Png(uploaded);
+
         var file = ResolveTextureFile("spells", spell.Icon);
         return file == null ? NotFound("Spell image file not found.") : Png(file);
     }
@@ -138,6 +146,10 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
     {
         if (!ResourceDescriptor.TryGet(resourceId, out var resource))
             return NotFound("Resource not found.");
+
+        var uploaded = ResolveUploadedAsset("resources", resource.Id);
+        if (uploaded != null)
+            return Png(uploaded);
 
         var state = PrimaryState(resource);
         if (state == null)
@@ -188,6 +200,20 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
             .OrderByDescending(state => state.MaximumHealth)
             .ThenByDescending(state => state.MinimumHealth)
             .FirstOrDefault();
+
+    private static FileInfo? ResolveUploadedAsset(string category, Guid objectId)
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            ".cache",
+            "game-assets",
+            "uploads",
+            category,
+            $"{objectId:N}.png"
+        );
+
+        return System.IO.File.Exists(path) ? new FileInfo(path) : null;
+    }
 
     private FileInfo? ResolveResourceStateImage(
         ResourceDescriptor resource,
