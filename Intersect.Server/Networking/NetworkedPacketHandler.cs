@@ -267,6 +267,70 @@ internal sealed partial class NetworkedPacketHandler
             PacketSender.SendMapListToAll();
         }
 
+        //WikiGameAssetUploadPacket
+        public void HandlePacket(Client client, Network.Packets.Editor.WikiGameAssetUploadPacket packet)
+        {
+            if (!client.IsEditor)
+            {
+                return;
+            }
+
+            var category = (packet.Category ?? string.Empty).Trim().ToLowerInvariant();
+            if (category is not ("items" or "resources" or "spells") ||
+                packet.ObjectId == Guid.Empty ||
+                packet.PngData == null ||
+                packet.PngData.Length < 8 ||
+                packet.PngData.Length > 8 * 1024 * 1024)
+            {
+                return;
+            }
+
+            ReadOnlySpan<byte> pngSignature = stackalloc byte[] { 137, 80, 78, 71, 13, 10, 26, 10 };
+            if (!packet.PngData.AsSpan(0, 8).SequenceEqual(pngSignature))
+            {
+                return;
+            }
+
+            var exists = category switch
+            {
+                "items" => ItemDescriptor.TryGet(packet.ObjectId, out _),
+                "resources" => ResourceDescriptor.TryGet(packet.ObjectId, out _),
+                "spells" => SpellDescriptor.TryGet(packet.ObjectId, out _),
+                _ => false,
+            };
+
+            if (!exists)
+            {
+                return;
+            }
+
+            try
+            {
+                var directory = Path.Combine(
+                    AppContext.BaseDirectory,
+                    ".cache",
+                    "game-assets",
+                    "uploads",
+                    category
+                );
+                Directory.CreateDirectory(directory);
+
+                var finalPath = Path.Combine(directory, $"{packet.ObjectId:N}.png");
+                var tempPath = finalPath + ".tmp";
+                File.WriteAllBytes(tempPath, packet.PngData);
+                File.Move(tempPath, finalPath, true);
+            }
+            catch (Exception ex)
+            {
+                ApplicationContext.CurrentContext.Logger.LogWarning(
+                    ex,
+                    "Failed to persist uploaded wiki game asset {Category}/{ObjectId}",
+                    category,
+                    packet.ObjectId
+                );
+            }
+        }
+
         //WikiMapPreviewPacket
         public void HandlePacket(Client client, Network.Packets.Editor.WikiMapPreviewPacket packet)
         {
