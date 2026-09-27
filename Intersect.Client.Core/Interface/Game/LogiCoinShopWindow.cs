@@ -234,9 +234,13 @@ internal sealed class LogiCoinShopWindow : Window
                 _ => string.Empty,
             };
 
-            return string.IsNullOrWhiteSpace(offer.Description)
+            var promotion = offer.IsPromotionActive(DateTimeOffset.UtcNow) && offer.PromotionEndsAtUtc is { } ends
+                ? $"\nPromo until {ends.ToLocalTime():yyyy-MM-dd HH:mm}"
+                : string.Empty;
+
+            return (string.IsNullOrWhiteSpace(offer.Description)
                 ? reward
-                : $"{offer.Description}\n{reward}";
+                : $"{offer.Description}\n{reward}") + promotion;
         }
     }
 }
