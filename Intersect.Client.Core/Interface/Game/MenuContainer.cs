@@ -44,6 +44,9 @@ public partial class MenuContainer : Panel
     private readonly ImagePanel _logiCoinShopButtonContainer;
     private readonly Button _logiCoinShopButton;
 
+    private readonly ImagePanel _marketplaceButtonContainer;
+    private readonly Button _marketplaceButton;
+
     private readonly ImagePanel _friendsButtonContainer;
     private readonly Button _friendsButton;
     private readonly FriendsWindow _friendsWindow;
@@ -205,6 +208,25 @@ public partial class MenuContainer : Panel
         _logiCoinShopButton.SetToolTipText(text: "LogiCoin Shop");
         _logiCoinShopButton.Clicked += LogiCoinShopButton_Clicked;
 
+        _marketplaceButtonContainer = new ImagePanel(parent: this, name: nameof(_marketplaceButtonContainer))
+        {
+            Dock = Pos.Top,
+            MaximumSize = new Point(x: 71, y: 55),
+            MinimumSize = new Point(x: 71, y: 55),
+            Padding = new Padding(size: 0),
+            Size = new Point(x: 71, y: 55),
+            TextureFilename = "menuitem.png",
+        };
+        _marketplaceButton = new Button(parent: _marketplaceButtonContainer, name: nameof(_marketplaceButton), disableText: false)
+        {
+            Alignment = [Alignments.Center],
+            Size = new Point(x: 71, y: 55),
+            Text = "MKT",
+            FontSize = 11,
+        };
+        _marketplaceButton.SetToolTipText(text: "Player Marketplace");
+        _marketplaceButton.Clicked += MarketplaceButton_Clicked;
+
         _friendsButtonContainer = new ImagePanel(parent: this, name: nameof(_friendsButtonContainer))
         {
             Dock = Pos.Left,
@@ -352,6 +374,7 @@ public partial class MenuContainer : Panel
             _newsButtonContainer,
             _dailyRewardButtonContainer,
             _logiCoinShopButtonContainer,
+            _marketplaceButtonContainer,
             _friendsButtonContainer,
             _partyButtonContainer,
             _guildButtonContainer,
@@ -367,6 +390,7 @@ public partial class MenuContainer : Panel
             _newsButton,
             _dailyRewardButton,
             _logiCoinShopButton,
+            _marketplaceButton,
             _friendsButton,
             _partyButton,
             _guildButton,
@@ -462,6 +486,7 @@ public partial class MenuContainer : Panel
         Interface.GameUi.HideLogiklikNews();
         Interface.GameUi.HideDailyReward();
         Interface.GameUi.HideLogiCoinShop();
+        Interface.GameUi.HideMarketplace();
     }
 
     public void ToggleCharacterWindow()
@@ -601,6 +626,8 @@ public partial class MenuContainer : Panel
 
         Interface.GameUi.HideLogiklikNews();
         Interface.GameUi.HideDailyReward();
+        Interface.GameUi.HideLogiCoinShop();
+        Interface.GameUi.HideMarketplace();
     }
 
     public bool HasWindowsOpen()
@@ -613,7 +640,9 @@ public partial class MenuContainer : Panel
                           _partyWindow.IsVisible() ||
                           _guildWindow.IsVisibleInTree ||
                           Interface.GameUi.IsLogiklikNewsVisible ||
-                          Interface.GameUi.IsDailyRewardVisible;
+                          Interface.GameUi.IsDailyRewardVisible ||
+                          Interface.GameUi.IsLogiCoinShopVisible ||
+                          Interface.GameUi.IsMarketplaceVisible;
         return windowsOpen;
     }
 
@@ -672,6 +701,11 @@ public partial class MenuContainer : Panel
     private void LogiCoinShopButton_Clicked(Base sender, MouseButtonState arguments)
     {
         Interface.GameUi.ToggleLogiCoinShop();
+    }
+
+    private void MarketplaceButton_Clicked(Base sender, MouseButtonState arguments)
+    {
+        Interface.GameUi.ToggleMarketplace();
     }
 
     private void InventoryButton_Clicked(Base sender, MouseButtonState arguments)
