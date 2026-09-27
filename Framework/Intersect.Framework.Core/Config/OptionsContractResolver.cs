@@ -16,6 +16,7 @@ public sealed class OptionsContractResolver(bool serializePrivateProperties, boo
         typeof(Options).GetProperty(nameof(Options.GameDatabase)),
         typeof(Options).GetProperty(nameof(Options.Logging)),
         typeof(Options).GetProperty(nameof(Options.LoggingDatabase)),
+        typeof(Options).GetProperty(nameof(Options.Logiklik)),
         typeof(Options).GetProperty(nameof(Options.MaxClientConnections)),
         typeof(Options).GetProperty(nameof(Options.MaximumLoggedInUsers)),
         typeof(Options).GetProperty(nameof(Options.Metrics)),

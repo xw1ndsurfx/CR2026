@@ -384,6 +384,16 @@ public static partial class PacketSender
         Network.SendPacket(new SaveRewardConfigurationPacket(configurationJson));
     }
 
+    public static void SendRequestLogiCoinShopConfiguration()
+    {
+        Network.SendPacket(new RequestLogiCoinShopConfigurationPacket());
+    }
+
+    public static void SendSaveLogiCoinShopConfiguration(string configurationJson)
+    {
+        Network.SendPacket(new SaveLogiCoinShopConfigurationPacket(configurationJson));
+    }
+
     public static void SendRequestProfessionConfiguration(bool openEditor)
     {
         Network.SendPacket(new RequestProfessionConfigurationPacket(openEditor));

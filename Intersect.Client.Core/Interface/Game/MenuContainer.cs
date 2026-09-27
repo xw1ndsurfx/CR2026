@@ -41,6 +41,9 @@ public partial class MenuContainer : Panel
     private readonly ImagePanel _dailyRewardButtonContainer;
     private readonly Button _dailyRewardButton;
 
+    private readonly ImagePanel _logiCoinShopButtonContainer;
+    private readonly Button _logiCoinShopButton;
+
     private readonly ImagePanel _friendsButtonContainer;
     private readonly Button _friendsButton;
     private readonly FriendsWindow _friendsWindow;
@@ -182,6 +185,25 @@ public partial class MenuContainer : Panel
         _dailyRewardButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_Daily_down.png");
         _dailyRewardButton.SetToolTipText(text: "Daily Reward");
         _dailyRewardButton.Clicked += DailyRewardButton_Clicked;
+
+        _logiCoinShopButtonContainer = new ImagePanel(parent: this, name: nameof(_logiCoinShopButtonContainer))
+        {
+            Dock = Pos.Top,
+            MaximumSize = new Point(x: 71, y: 55),
+            MinimumSize = new Point(x: 71, y: 55),
+            Padding = new Padding(size: 0),
+            Size = new Point(x: 71, y: 55),
+            TextureFilename = "menuitem.png",
+        };
+        _logiCoinShopButton = new Button(parent: _logiCoinShopButtonContainer, name: nameof(_logiCoinShopButton), disableText: false)
+        {
+            Alignment = [Alignments.Center],
+            Size = new Point(x: 71, y: 55),
+            Text = "LC",
+            FontSize = 13,
+        };
+        _logiCoinShopButton.SetToolTipText(text: "LogiCoin Shop");
+        _logiCoinShopButton.Clicked += LogiCoinShopButton_Clicked;
 
         _friendsButtonContainer = new ImagePanel(parent: this, name: nameof(_friendsButtonContainer))
         {
@@ -329,6 +351,7 @@ public partial class MenuContainer : Panel
             _questsButtonContainer,
             _newsButtonContainer,
             _dailyRewardButtonContainer,
+            _logiCoinShopButtonContainer,
             _friendsButtonContainer,
             _partyButtonContainer,
             _guildButtonContainer,
@@ -343,6 +366,7 @@ public partial class MenuContainer : Panel
             _questsButton,
             _newsButton,
             _dailyRewardButton,
+            _logiCoinShopButton,
             _friendsButton,
             _partyButton,
             _guildButton,
@@ -437,6 +461,7 @@ public partial class MenuContainer : Panel
         _guildWindow.Hide();
         Interface.GameUi.HideLogiklikNews();
         Interface.GameUi.HideDailyReward();
+        Interface.GameUi.HideLogiCoinShop();
     }
 
     public void ToggleCharacterWindow()
@@ -642,6 +667,11 @@ public partial class MenuContainer : Panel
     private void DailyRewardButton_Clicked(Base sender, MouseButtonState arguments)
     {
         Interface.GameUi.ToggleDailyReward();
+    }
+
+    private void LogiCoinShopButton_Clicked(Base sender, MouseButtonState arguments)
+    {
+        Interface.GameUi.ToggleLogiCoinShop();
     }
 
     private void InventoryButton_Clicked(Base sender, MouseButtonState arguments)

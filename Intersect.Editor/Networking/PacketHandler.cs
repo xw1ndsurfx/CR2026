@@ -768,6 +768,15 @@ internal sealed partial class PacketHandler
         }
     }
 
+    public void HandlePacket(IPacketSender packetSender, LogiCoinShopConfigurationPacket packet)
+    {
+        Intersect.Framework.Core.LogiCoins.LogiCoinShopConfiguration.Load(packet.ConfigurationJson);
+        if (packet.OpenEditor)
+        {
+            Globals.MainForm.BeginInvoke((Action)(() => Globals.MainForm.OpenLogiCoinShopEditor()));
+        }
+    }
+
     public void HandlePacket(IPacketSender packetSender, ProfessionConfigurationPacket packet)
     {
         ProfessionConfiguration.Load(packet.ConfigurationJson);

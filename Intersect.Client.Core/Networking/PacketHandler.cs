@@ -2125,6 +2125,11 @@ internal sealed partial class PacketHandler
         global::Intersect.Client.Interface.Interface.GameUi.OpenLogiklikNews();
     }
 
+    public void HandlePacket(IPacketSender packetSender, LogiCoinShopStatePacket packet)
+    {
+        global::Intersect.Client.Interface.Interface.GameUi.ApplyLogiCoinShopState(packet);
+    }
+
     //PlayerDeathPacket
     public void HandlePacket(IPacketSender packetSender, PlayerDeathPacket packet)
     {

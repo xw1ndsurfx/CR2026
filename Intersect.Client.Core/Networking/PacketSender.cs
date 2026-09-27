@@ -429,6 +429,16 @@ public static partial class PacketSender
         Network.SendPacket(new RequestDailyRewardStatePacket(autoOpen));
     }
 
+    public static void SendRequestLogiCoinShopState()
+    {
+        Network.SendPacket(new RequestLogiCoinShopStatePacket());
+    }
+
+    public static void SendPurchaseLogiCoinOffer(Guid offerId, Guid purchaseId)
+    {
+        Network.SendPacket(new PurchaseLogiCoinOfferPacket(offerId, purchaseId));
+    }
+
     public static void SendClaimDailyReward()
     {
         Network.SendPacket(new ClaimDailyRewardPacket());
