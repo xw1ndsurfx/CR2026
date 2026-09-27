@@ -123,3 +123,33 @@ Third-party libraries used by Intersect are under their own licenses.  Please re
  * The [official documentation](https://docs.freemmorpgmaker.com) is on our website.
  * The official [Intersect Assets](https://github.com/AscensionGameDev/Intersect-Assets) repo is separate and can be found on GitHub.
  * Download stable and development [installers and packages](https://freemmorpgmaker.com/download).
+
+
+## LogiCoin Shop
+
+Corps Royaux includes a native LogiCoin Shop configured from **Game Editor > Content Editors > LogiCoin Shop...**.
+
+The Logiklik wallet remains the source of truth. The game server reads and spends LogiCoins through the private Logiklik API bridge; the client never receives the shared secret.
+
+Server configuration in `resources/config.json`:
+
+```json
+"Logiklik": {
+  "ApiBaseUrl": "https://logiklik.com/logiklik-api",
+  "GameKey": "SAME_SECRET_AS_LK_CORPS_ROYAUX_GAME_KEY"
+}
+```
+
+The editor supports:
+- simple item offers;
+- item bundles with per-item quantities;
+- Premium subscriptions measured in days;
+- percentage promotions with optional start/end dates;
+- sorting and enable/disable controls;
+- a configurable Buy More LogiCoins URL.
+
+For Premium, create an **INTEGER User Variable** such as `PremiumUntil` and select it in the LogiCoin Shop editor. The Shop stores the expiration as Unix time milliseconds. Existing Event conditions can test Premium with:
+
+`PremiumUntil > System Time`
+
+The in-game **Buy more LogiCoins** button opens the Shop in the Steam overlay when Steam is available, and falls back to the operating-system browser otherwise.
