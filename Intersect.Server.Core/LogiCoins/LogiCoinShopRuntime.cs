@@ -395,18 +395,21 @@ internal static class LogiCoinPurchaseRuntime
 
         if (!record.WalletDebited)
         {
-            var spend = LogiCoinWalletService.Spend(player.User.Email, price, spendReference, offer.Name);
-            if (!spend.Ok)
+            if (price > 0)
             {
-                record.LastError = spend.Error;
-                LogiCoinPurchaseJournal.Save(record);
-                return BuildState(
-                    player,
-                    false,
-                    spend.StatusCode == 409
-                        ? $"Not enough LogiCoins. Balance: {spend.Balance:N0}."
-                        : (string.IsNullOrWhiteSpace(spend.Error) ? "LogiCoin payment failed." : spend.Error)
-                );
+                var spend = LogiCoinWalletService.Spend(player.User.Email, price, spendReference, offer.Name);
+                if (!spend.Ok)
+                {
+                    record.LastError = spend.Error;
+                    LogiCoinPurchaseJournal.Save(record);
+                    return BuildState(
+                        player,
+                        false,
+                        spend.StatusCode == 409
+                            ? $"Not enough LogiCoins. Balance: {spend.Balance:N0}."
+                            : (string.IsNullOrWhiteSpace(spend.Error) ? "LogiCoin payment failed." : spend.Error)
+                    );
+                }
             }
 
             record.WalletDebited = true;
