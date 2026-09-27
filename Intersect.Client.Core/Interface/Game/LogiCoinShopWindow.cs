@@ -141,8 +141,8 @@ internal sealed class LogiCoinShopWindow : Window
                      .ThenBy(offer => offer.Name, StringComparer.OrdinalIgnoreCase))
         {
             var row = new OfferRow(_offers, offer, now);
-            row.SetBounds(4, y, 638, 104);
-            y += 110;
+            row.SetBounds(4, y, 638, 120);
+            y += 126;
         }
 
         _offers.SetInnerSize(646, Math.Max(390, y + 4));
@@ -164,6 +164,40 @@ internal sealed class LogiCoinShopWindow : Window
         {
             _offer = offer;
 
+            var image = new ImagePanel(this, "Image")
+            {
+                MaintainAspectRatio = true,
+                ShouldDrawBackground = false,
+            };
+            image.SetBounds(12, 16, 68, 68);
+
+            if (!string.IsNullOrWhiteSpace(offer.Image))
+            {
+                image.Texture = GameContentManager.Current.GetTexture(Framework.Content.TextureType.Image, offer.Image);
+                image.RenderColor = Color.White;
+            }
+            else
+            {
+                Guid fallbackItemId = Guid.Empty;
+                if (offer.Type == LogiCoinOfferType.Item)
+                {
+                    fallbackItemId = offer.ItemId;
+                }
+                else if (offer.Type == LogiCoinOfferType.Bundle && offer.Bundle is { Length: > 0 })
+                {
+                    fallbackItemId = offer.Bundle[0].ItemId;
+                }
+
+                var item = fallbackItemId == Guid.Empty
+                    ? null
+                    : Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(fallbackItemId);
+                if (item != null && !string.IsNullOrWhiteSpace(item.Icon))
+                {
+                    image.Texture = Globals.ContentManager?.GetTexture(Framework.Content.TextureType.Item, item.Icon);
+                    image.RenderColor = item.Color;
+                }
+            }
+
             var title = new Label(this, "Title")
             {
                 AutoSizeToContents = false,
@@ -172,7 +206,7 @@ internal sealed class LogiCoinShopWindow : Window
                 TextColorOverride = Color.White,
                 Text = offer.Name,
             };
-            title.SetBounds(12, 8, 390, 24);
+            title.SetBounds(94, 8, 330, 24);
 
             var description = new Label(this, "Description")
             {
@@ -182,7 +216,7 @@ internal sealed class LogiCoinShopWindow : Window
                 TextColorOverride = new Color(a:255,r:200,g:205,b:210),
                 Text = OfferDescription(offer),
             };
-            description.SetBounds(12, 34, 420, 58);
+            description.SetBounds(94, 34, 330, 74);
 
             var effective = offer.EffectivePrice(now);
             var priceText = effective == offer.PriceLogiCoins
