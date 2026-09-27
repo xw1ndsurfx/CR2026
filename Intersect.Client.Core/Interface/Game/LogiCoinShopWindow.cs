@@ -3,7 +3,7 @@ using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Framework.Core.LogiCoins;
-using Intersect.Framework.Utilities;
+using Intersect.Utilities;
 using Intersect.Network.Packets.Server;
 
 namespace Intersect.Client.Interface.Game;
@@ -54,7 +54,7 @@ internal sealed class LogiCoinShopWindow : Window
             var url = LogiCoinShopConfiguration.Instance.ShopUrl;
             if (!string.IsNullOrWhiteSpace(url))
             {
-                BrowserHelper.Open(url);
+                BrowserUtils.Open(url);
             }
         };
 
