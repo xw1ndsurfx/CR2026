@@ -19,6 +19,7 @@ internal sealed class MarketplaceWindow : Window
     private readonly TextBox _duration;
     private readonly LabeledCheckBox _auction;
     private MarketplaceStatePacket _state = new();
+    private bool _initialized;
 
     public MarketplaceWindow(Canvas parent) : base(parent, "Player Marketplace", false, nameof(MarketplaceWindow))
     {
@@ -113,6 +114,16 @@ internal sealed class MarketplaceWindow : Window
         _sellable.SetBounds(20, 510, 870, 135);
 
         Hide();
+    }
+
+    protected override void EnsureInitialized()
+    {
+        if (_initialized)
+        {
+            return;
+        }
+
+        _initialized = true;
     }
 
     private void AddFieldLabel(string name, string text, int x, int y, int width)
