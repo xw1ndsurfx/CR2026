@@ -87,6 +87,12 @@ public partial class ItemDescriptor : DatabaseObject<ItemDescriptor>, IFolderabl
     public bool CanSell { get; set; } = true;
 
     /// <summary>
+    /// Defines whether or not this item can be listed by a player on the player Marketplace.
+    /// Disabled by default so existing progression or special items do not enter the player economy accidentally.
+    /// </summary>
+    public bool CanSellInMarketplace { get; set; } = false;
+
+    /// <summary>
     /// Defines whether or not this item can be banked by a player.
     /// </summary>
     public bool CanBank { get; set; } = true;
