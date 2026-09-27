@@ -209,7 +209,9 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                         ms.Close();
                     }
 
-                    Database.SaveMapCache(Id, Revision, ms.ToArray());
+                    var previewBytes = ms.ToArray();
+                    Database.SaveMapCache(Id, Revision, previewBytes);
+                    PacketSender.SendWikiMapPreview(Id, previewBytes);
                 }
 
                 Globals.CurrentMap = prevMap;
