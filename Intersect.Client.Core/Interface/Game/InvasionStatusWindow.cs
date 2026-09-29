@@ -2,6 +2,7 @@ using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Network.Packets.WorldEvents;
+using Intersect.Utilities;
 using Rectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 
@@ -13,6 +14,8 @@ internal sealed class InvasionStatusWindow : Base
     private readonly Label _wave;
     private readonly Label _objective;
     private InvasionStatusPacket? _state;
+    private bool _reminderMode;
+    private long _reminderHideAt;
 
     public InvasionStatusWindow(Canvas parent) : base(parent, nameof(InvasionStatusWindow))
     {
@@ -53,8 +56,41 @@ internal sealed class InvasionStatusWindow : Base
         Hide();
     }
 
+    public void Update()
+    {
+        if (!_reminderMode || _reminderHideAt <= 0 || Timing.Global.Milliseconds <= _reminderHideAt)
+            return;
+
+        _reminderMode = false;
+        _reminderHideAt = 0;
+        Hide();
+    }
+
+    public void ShowReminder(string announcementText, long displayTime)
+    {
+        _state = null;
+        _reminderMode = true;
+        _reminderHideAt = Timing.Global.Milliseconds + Math.Max(1_000L, displayTime);
+
+        var lines = (announcementText ?? string.Empty)
+            .Replace("\r", string.Empty)
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        _title.Text = lines.Length > 0 ? lines[0] : "INVASION APPROACHING";
+        _wave.Text = lines.Length > 1 ? string.Join(" ", lines.Skip(1)) : "Prepare for battle.";
+        _wave.FontSize = 9;
+        _objective.Text = "Prepare your defenses.";
+
+        PositionAtTop();
+        Show();
+        BringToFront();
+    }
+
     public void Apply(InvasionStatusPacket state)
     {
+        _reminderMode = false;
+        _reminderHideAt = 0;
+        _wave.FontSize = 10;
         _state = state;
         if (!state.Active)
         {
@@ -69,15 +105,20 @@ internal sealed class InvasionStatusWindow : Base
               (string.IsNullOrWhiteSpace(state.Message) ? string.Empty : $" • {state.Message}");
         _objective.Text = $"Defense target: {state.ObjectiveHealth:N0} / {state.ObjectiveMaxHealth:N0} HP";
 
-        X = Math.Max(8, (Parent?.Width ?? Width) / 2 - Width / 2);
-        Y = 16;
+        PositionAtTop();
         Show();
         BringToFront();
     }
 
+    private void PositionAtTop()
+    {
+        X = Math.Max(8, (Parent?.Width ?? Width) / 2 - Width / 2);
+        Y = 16;
+    }
+
     protected override void Render(SkinBase skin)
     {
-        if (_state == null || !_state.Active) return;
+        if (!_reminderMode && (_state == null || !_state.Active)) return;
 
         var renderer = skin.Renderer;
         var bounds = RenderBounds;
@@ -89,6 +130,13 @@ internal sealed class InvasionStatusWindow : Base
         renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Bottom - 2, bounds.Width, 2));
         renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, 2, bounds.Height));
         renderer.DrawFilledRect(new Rectangle(bounds.Right - 2, bounds.Y, 2, bounds.Height));
+
+        if (_reminderMode)
+        {
+            renderer.DrawColor = new Color(a: 255, r: 238, g: 205, b: 125);
+            renderer.DrawFilledRect(new Rectangle(bounds.X + 28, bounds.Y + 76, bounds.Width - 56, 2));
+            return;
+        }
 
         var bar = new Rectangle(bounds.X + 28, bounds.Y + 62, bounds.Width - 56, 15);
         renderer.DrawColor = new Color(a: 255, r: 28, g: 18, b: 17);
