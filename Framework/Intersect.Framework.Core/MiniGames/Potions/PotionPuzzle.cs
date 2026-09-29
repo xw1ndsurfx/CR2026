@@ -164,21 +164,16 @@ public sealed class PotionPuzzle
     {
         if (!Complete || !recipe.IsValid) return;
 
-        var previousFamilyCount = AvailableFamilyCount;
         Recipe = recipe;
+        Array.Clear(_cells);
         _progress = new int[Recipe.Requirements.Length];
         Complete = false;
+        GameOver = false;
 
-        // Crossing the level-5 threshold changes the available ingredient pool.
-        // Reroll the preview/current pair so a level 5+ recipe immediately uses
-        // the new Radiant family, and lower recipes never inherit one.
-        if (AvailableFamilyCount != previousFamilyCount)
-        {
-            Current = RollPair();
-            Next = RollPair();
-        }
-
-        GameOver = !HasAnyPlacement();
+        // A new potion recipe is a fresh round: no old ingredients remain on the
+        // board, and the active/queued pairs are both regenerated for this recipe.
+        Current = RollPair();
+        Next = RollPair();
     }
 
     public void RestartBoard()

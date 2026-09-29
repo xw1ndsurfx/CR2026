@@ -27,6 +27,7 @@ internal sealed class PotionWindow : Base
         private readonly Action<int> _hover;
         private readonly Action<int> _drop;
         private readonly Action _swap;
+        private bool _rightDownHandled;
 
         public PotionBoardInput(Base parent, Action<int> hover, Action<int> drop, Action swap)
             : base(parent, nameof(PotionBoardInput))
@@ -63,8 +64,16 @@ internal sealed class PotionWindow : Base
         {
             base.OnMouseDown(mouseButton, mousePosition, userAction);
 
-            // Placement is handled only by a real left-button press. This prevents
-            // the synthetic left Clicked event some backends emit after right click.
+            if (mouseButton == MouseButton.Right)
+            {
+                // Some Intersect backends report right-click on MouseDown, others
+                // only on Clicked. Handle it here when available and remember it so
+                // the Clicked event from the same physical click cannot rotate twice.
+                _rightDownHandled = true;
+                _swap();
+                return;
+            }
+
             if (mouseButton != MouseButton.Left)
                 return;
 
@@ -84,10 +93,18 @@ internal sealed class PotionWindow : Base
         {
             base.OnMouseClicked(mouseButton, mousePosition, userAction);
 
-            // Right-click rotation remains on Clicked because this is the path the
-            // client input backend reliably reports for right mouse buttons.
-            if (mouseButton == MouseButton.Right)
-                _swap();
+            if (mouseButton != MouseButton.Right)
+                return;
+
+            // If MouseDown already handled this physical click, consume the matching
+            // Clicked event. Otherwise use Clicked as the backend fallback.
+            if (_rightDownHandled)
+            {
+                _rightDownHandled = false;
+                return;
+            }
+
+            _swap();
         }
     }
 
@@ -156,6 +173,7 @@ internal sealed class PotionWindow : Base
     private bool _pending;
     private bool _destroyed;
     private bool _showRecipeList;
+    private bool _recipeSelectionRequested;
     private int _hoverColumn = -1;
     private double _previewColumn = -1;
     private int _recipePage;
@@ -351,6 +369,14 @@ internal sealed class PotionWindow : Base
             _orientationRevision = nextState.Revision;
         }
 
+        if (nextState != null && nextState.Board.All(value => value == 0) &&
+            (_state == null || _state.Board.Any(value => value != 0)))
+        {
+            _motions.Clear();
+            _pulses.Clear();
+            _dropAnimationUntil = 0;
+        }
+
         _state = nextState;
         _error = model.ErrorCode;
         _pending = model.Pending;
@@ -358,7 +384,22 @@ internal sealed class PotionWindow : Base
         RefreshRecipePicker();
 
         var recipeSelectionRequired = _state?.RecipeSelectionRequired == true;
-        if (recipeSelectionRequired) _showRecipeList = true;
+
+        if (_recipeSelectionRequested && !_pending)
+        {
+            // The response to the selection arrived. Close immediately on success;
+            // on rejection, leave the picker open so the player can choose again.
+            if (!recipeSelectionRequired && string.IsNullOrWhiteSpace(_error))
+                _showRecipeList = false;
+            else
+                _showRecipeList = true;
+
+            _recipeSelectionRequested = false;
+        }
+        else if (recipeSelectionRequired && !_recipeSelectionRequested)
+        {
+            _showRecipeList = true;
+        }
 
         var selectingRecipe = recipeSelectionRequired || _showRecipeList;
         var dropAnimating = IsDropAnimating();
@@ -525,7 +566,8 @@ internal sealed class PotionWindow : Base
 
     private void SelectRecipeSlot(int slot)
     {
-        if (_state == null || _pending || (!_showRecipeList && !_state.RecipeSelectionRequired)) return;
+        if (_state == null || _pending || _recipeSelectionRequested ||
+            (!_showRecipeList && !_state.RecipeSelectionRequired)) return;
         var index = _recipePage * _recipeButtons.Length + slot;
         if (index < 0 || index >= _state.RecipeChoices.Length) return;
 
@@ -536,8 +578,9 @@ internal sealed class PotionWindow : Base
             return;
         }
 
-        _showRecipeList = false;
+        _recipeSelectionRequested = true;
         Send(PotionRequestKind.SelectRecipe, 0, recipe.Id);
+        RefreshRecipePicker();
     }
 
     private void OpenRecipeList()
@@ -572,7 +615,7 @@ internal sealed class PotionWindow : Base
 
             var recipe = choices[index];
             button.IsHidden = false;
-            button.IsDisabled = _pending || !recipe.Unlocked;
+            button.IsDisabled = _pending || _recipeSelectionRequested || !recipe.Unlocked;
             button.Text = recipe.Unlocked
                 ? $"Lv {recipe.RequiredLevel}  {recipe.Name}\n{recipe.OutputQuantity:N0} x {recipe.OutputItemName}   •   +{recipe.CompletionExperience} XP"
                 : recipe.EventLocked && recipe.RequiredLevel <= (_state?.Level ?? 0)
@@ -900,7 +943,7 @@ internal sealed class PotionWindow : Base
 
                 var row = index / PotionPuzzle.Columns;
                 var column = index % PotionPuzzle.Columns;
-                if (_motions.Count < 32)
+                if (!IsDropAnimating() && _motions.Count < 32)
                     QueueMotion(PotionStateEncoding.Decode(after), column, row, now, 420 + row * 28);
 
                 if (before != 0)
