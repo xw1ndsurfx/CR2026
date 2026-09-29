@@ -7,6 +7,7 @@ using Intersect.Client.MiniGames;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Potions;
+using Keys = Intersect.Client.Framework.GenericClasses.Keys;
 using Rectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
 using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
