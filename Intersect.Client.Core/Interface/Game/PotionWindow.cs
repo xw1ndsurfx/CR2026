@@ -2,6 +2,7 @@ using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Input;
 using Intersect.Client.Framework.File_Management;
+using Intersect.Client.General;
 using Intersect.Client.MiniGames;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
@@ -26,15 +27,12 @@ internal sealed class PotionWindow : Base
     {
         private readonly Action<int> _hover;
         private readonly Action<int> _drop;
-        private readonly Action _swap;
-        private bool _rightDownHandled;
 
-        public PotionBoardInput(Base parent, Action<int> hover, Action<int> drop, Action swap)
+        public PotionBoardInput(Base parent, Action<int> hover, Action<int> drop)
             : base(parent, nameof(PotionBoardInput))
         {
             _hover = hover;
             _drop = drop;
-            _swap = swap;
             ShouldDrawBackground = false;
             MouseInputEnabled = true;
             KeyboardInputEnabled = false;
@@ -64,16 +62,8 @@ internal sealed class PotionWindow : Base
         {
             base.OnMouseDown(mouseButton, mousePosition, userAction);
 
-            if (mouseButton == MouseButton.Right)
-            {
-                // Some Intersect backends report right-click on MouseDown, others
-                // only on Clicked. Handle it here when available and remember it so
-                // the Clicked event from the same physical click cannot rotate twice.
-                _rightDownHandled = true;
-                _swap();
-                return;
-            }
-
+            // Rotation is handled from the raw input edge in PotionWindow.Update.
+            // Gwen mouse events are kept for left-click placement only.
             if (mouseButton != MouseButton.Left)
                 return;
 
@@ -86,26 +76,7 @@ internal sealed class PotionWindow : Base
                 _drop(column);
         }
 
-        protected override void OnMouseClicked(
-            MouseButton mouseButton,
-            Intersect.Point mousePosition,
-            bool userAction = true)
-        {
-            base.OnMouseClicked(mouseButton, mousePosition, userAction);
 
-            if (mouseButton != MouseButton.Right)
-                return;
-
-            // If MouseDown already handled this physical click, consume the matching
-            // Clicked event. Otherwise use Clicked as the backend fallback.
-            if (_rightDownHandled)
-            {
-                _rightDownHandled = false;
-                return;
-            }
-
-            _swap();
-        }
     }
 
     private sealed class RecipePickerPanel(Base parent) : Base(parent, "PotionRecipePicker")
@@ -346,10 +317,19 @@ internal sealed class PotionWindow : Base
                 _hoverColumn = column;
                 if (_previewColumn < 0 && column >= 0) _previewColumn = column;
             },
-            DropFromBoard,
-            RotatePairLocal
+            DropFromBoard
         );
-        Place(_boardInput, BoardX, BoardY, PotionPuzzle.Columns * CellW, PotionPuzzle.Rows * CellH);
+
+        // The live pair is drawn above the first board row. Include that whole
+        // header/drop zone in the mouse surface so the player can manipulate the
+        // pair directly, like TLOPO, instead of having to click inside the grid.
+        Place(
+            _boardInput,
+            BoardX,
+            BoardY - 96,
+            PotionPuzzle.Columns * CellW,
+            PotionPuzzle.Rows * CellH + 96
+        );
 
         ResizeToCanvas();
     }
@@ -403,6 +383,9 @@ internal sealed class PotionWindow : Base
 
         var selectingRecipe = recipeSelectionRequired || _showRecipeList;
         var dropAnimating = IsDropAnimating();
+
+        HandleRotationInput(selectingRecipe, dropAnimating);
+
         _recipePicker.IsHidden = !selectingRecipe;
         if (selectingRecipe) _recipePicker.BringToFront();
 
@@ -1148,6 +1131,31 @@ internal sealed class PotionWindow : Base
         }
 
         RefreshText();
+    }
+
+    private void HandleRotationInput(bool selectingRecipe, bool dropAnimating)
+    {
+        if (selectingRecipe || dropAnimating || _pending ||
+            _state is not { Complete: false, GameOver: false })
+            return;
+
+        var input = Globals.InputManager;
+        if (!input.IsMouseButtonDown(MouseButton.Right) || input.WasMouseButtonDown(MouseButton.Right))
+            return;
+
+        var mouse = input.MousePosition;
+        var interaction = _layout.Rect(
+            BoardX,
+            BoardY - 96,
+            PotionPuzzle.Columns * CellW,
+            PotionPuzzle.Rows * CellH + 96
+        );
+
+        if (mouse.X < interaction.X || mouse.X >= interaction.X + interaction.Width ||
+            mouse.Y < interaction.Y || mouse.Y >= interaction.Y + interaction.Height)
+            return;
+
+        RotatePairLocal();
     }
 
     private void RefreshText()
