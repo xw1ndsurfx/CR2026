@@ -66,6 +66,9 @@ internal sealed class PlayerProfileWindow : Window
         _subtitle.Text =
             $"Level {profile.Level:N0}  •  {profile.ClassName}" +
             (string.IsNullOrWhiteSpace(profile.GuildName) ? string.Empty : $"  •  Guild: {profile.GuildName}") +
+            (string.IsNullOrWhiteSpace(profile.RankingTitle)
+                ? string.Empty
+                : $"  •  {profile.RankingTitle} (+{profile.RankingExperienceBonusPercent}% EXP)") +
             (string.IsNullOrWhiteSpace(profile.MapName) ? string.Empty : $"\nLocation: {profile.MapName}");
 
         _scroll.DeleteAll();
@@ -117,11 +120,17 @@ internal sealed class PlayerProfileWindow : Window
             ? "MAX"
             : profile.ExperienceToNextLevel.ToString("N0");
 
+        var ranking =
+            string.IsNullOrWhiteSpace(profile.RankingTitle)
+                ? "None"
+                : $"{profile.RankingTitle}  •  Rank #{profile.RankingPosition}  •  +{profile.RankingExperienceBonusPercent}% EXP  •  {profile.RankingConsecutiveDays} consecutive days";
+
         return
             $"Name: {profile.Name}\n" +
             $"Level: {profile.Level:N0}\n" +
             $"Class: {profile.ClassName}\n" +
             $"Guild: {(string.IsNullOrWhiteSpace(profile.GuildName) ? "None" : profile.GuildName)}\n" +
+            $"Ranking title: {ranking}\n" +
             $"Experience: {profile.Experience:N0} / {next}";
     }
 
