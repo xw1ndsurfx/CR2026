@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Intersect.Enums;
 using Intersect.Server.Database;
 using Intersect.Server.Entities;
 using Intersect.Server.Networking;
@@ -71,7 +72,17 @@ internal static class LeaderboardTitleRuntime
             _nextRefreshAt = now.AddSeconds(30);
             _state ??= LoadState();
 
-            var topThree = ReadTopThree();
+            Candidate[] topThree;
+            try
+            {
+                topThree = ReadTopThree();
+            }
+            catch
+            {
+                // Ranking is a gameplay enhancement: database availability must never block EXP or login.
+                return;
+            }
+
             var today = DateTime.Today;
 
             if (_state.LastEvaluationDate.Date != today)
@@ -141,7 +152,7 @@ internal static class LeaderboardTitleRuntime
                 PacketSender.SendChatMsg(
                     player,
                     $"[Classement] Titre retiré : {change.Before.Title}.",
-                    Enums.ChatMessageType.Notice,
+                    ChatMessageType.Notice,
                     Color.White
                 );
             }
@@ -151,7 +162,7 @@ internal static class LeaderboardTitleRuntime
                 PacketSender.SendChatMsg(
                     player,
                     $"[Classement] {verb} : {change.After.Title} (+{change.After.ExperienceBonusPercent}% EXP).",
-                    Enums.ChatMessageType.Notice,
+                    ChatMessageType.Notice,
                     Color.White
                 );
             }
