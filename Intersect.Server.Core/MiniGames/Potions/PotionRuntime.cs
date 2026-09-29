@@ -95,7 +95,14 @@ internal static class PotionRuntime
 
         client.Send(packet);
         if (packet.State != null)
+        {
             player.UpdatePotionQuestTasks(new PotionQuestUpdate(false, Guid.Empty, packet.State.Level, 0));
+            RewardConfigurationRuntime.GrantPendingLevelRewards(
+                player,
+                MiniGameProgression.Potions,
+                packet.State.Level
+            );
+        }
         return true;
     }
 
@@ -124,6 +131,7 @@ internal static class PotionRuntime
 
         PotionStatePacket? packet;
         var notifyInventory = false;
+        var rewardLevel = 0;
         PotionQuestUpdate? questUpdate = null;
         lock (Gate)
         {
@@ -310,6 +318,7 @@ internal static class PotionRuntime
                             session.RecipeRound,
                             session.Recipe.CompletionExperience
                         );
+                        rewardLevel = session.Progress.Level;
                         session.RewardGranted = true;
                         session.Status = $"Brewed {session.Recipe.OutputQuantity:N0} x {item.Name} • +{session.Recipe.CompletionExperience} Alchemy XP";
                         questUpdate = new PotionQuestUpdate(
@@ -333,6 +342,8 @@ Send:
         if (questUpdate is { } update) player.UpdatePotionQuestTasks(update);
         if (notifyInventory) PacketSender.SendInventory(player);
         sessionSend(packet, client);
+        if (rewardLevel >= 2)
+            RewardConfigurationRuntime.GrantPendingLevelRewards(player, MiniGameProgression.Potions, rewardLevel);
     }
 
     private static int OccupiedCells(PotionPuzzle puzzle)
