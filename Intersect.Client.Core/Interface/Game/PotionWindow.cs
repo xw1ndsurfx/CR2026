@@ -110,7 +110,7 @@ internal sealed class PotionWindow : Base
 
     private readonly Canvas _canvas;
     private readonly Base _content;
-    private readonly Action<PotionRequestKind, int, Guid> _send;
+    private readonly Action<PotionRequestKind, int, Guid, int> _send;
     private readonly List<Placement> _placements = [];
     private readonly Button[] _dropButtons = new Button[PotionPuzzle.Columns];
     private readonly PotionBoardInput _boardInput;
@@ -133,7 +133,6 @@ internal sealed class PotionWindow : Base
     private readonly Button[] _recipeButtons = new Button[8];
     private readonly Button _recipePrev;
     private readonly Button _recipeNextPage;
-    private readonly Button _swap;
     private readonly Button _nextRecipe;
     private readonly Button _restart;
 
@@ -145,6 +144,8 @@ internal sealed class PotionWindow : Base
     private long _fxStarted;
     private long _fxUntil;
     private long _dropAnimationUntil;
+    private long _orientationRevision = -1;
+    private PotionPairOrientation _localOrientation = PotionPairOrientation.Vertical;
     private string _error = string.Empty;
     private bool _pending;
     private bool _destroyed;
@@ -154,7 +155,7 @@ internal sealed class PotionWindow : Base
 
     public bool ExitRequested { get; private set; }
 
-    public PotionWindow(Canvas canvas, Action<PotionRequestKind, int, Guid> send) : base(canvas, nameof(PotionWindow))
+    public PotionWindow(Canvas canvas, Action<PotionRequestKind, int, Guid, int> send) : base(canvas, nameof(PotionWindow))
     {
         _canvas = canvas;
         _send = send;
@@ -203,8 +204,7 @@ internal sealed class PotionWindow : Base
         _fx.TextColorOverride = new Color(255, 236, 210, 117);
         _fx.IsHidden = true;
 
-        _swap = Button("PotionSwap", "Rotate pair", 65, 690, 140, () => Send(PotionRequestKind.Swap));
-        _nextRecipe = Button("PotionNextRecipe", "Next recipe", 215, 690, 165, () => Send(PotionRequestKind.NextRecipe));
+        _nextRecipe = Button("PotionNextRecipe", "Next recipe", 65, 690, 315, () => Send(PotionRequestKind.NextRecipe));
         _restart = Button("PotionRestart", "Restart board", 65, 730, 140, () => Send(PotionRequestKind.Restart));
         Button("PotionExit", "Exit", 215, 730, 165, () => ExitRequested = true);
 
@@ -292,7 +292,7 @@ internal sealed class PotionWindow : Base
                 if (_previewColumn < 0 && column >= 0) _previewColumn = column;
             },
             DropFromBoard,
-            () => Send(PotionRequestKind.Swap)
+            RotatePairLocal
         );
         Place(_boardInput, BoardX, BoardY, PotionPuzzle.Columns * CellW, PotionPuzzle.Rows * CellH);
 
@@ -307,6 +307,12 @@ internal sealed class PotionWindow : Base
         var nextState = model.Current?.State;
         if (nextState != null && nextState.Revision != _lastRevision)
             CapturePresentationEffects(nextState);
+
+        if (nextState != null && nextState.Revision != _orientationRevision)
+        {
+            _localOrientation = (PotionPairOrientation)nextState.Orientation;
+            _orientationRevision = nextState.Revision;
+        }
 
         _state = nextState;
         _error = model.ErrorCode;
@@ -323,7 +329,6 @@ internal sealed class PotionWindow : Base
             _dropButtons[column].IsDisabled =
                 selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete || _state.GameOver || EmptyCells(column) < 2;
 
-        _swap.IsDisabled = selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete || _state.GameOver;
         _nextRecipe.IsDisabled = selectingRecipe || dropAnimating || _pending || _state is not { Complete: true };
         _restart.IsDisabled = selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete;
         _boardInput.IsDisabled = selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete || _state.GameOver;
@@ -405,8 +410,8 @@ internal sealed class PotionWindow : Base
 
         if (_hoverColumn >= 0 && _state is { Complete: false, GameOver: false } hoverState)
         {
-            var valid = !_pending && CanPlace(_hoverColumn, (PotionPairOrientation)hoverState.Orientation);
-            var span = IsHorizontal((PotionPairOrientation)hoverState.Orientation) ? 2 : 1;
+            var valid = !_pending && !IsDropAnimating() && CanPlace(_hoverColumn, _localOrientation);
+            var span = IsHorizontal(_localOrientation) ? 2 : 1;
             var hover = _layout.Rect(
                 BoardX + _hoverColumn * CellW,
                 BoardY,
@@ -610,7 +615,7 @@ internal sealed class PotionWindow : Base
             _state is not { Complete: false, GameOver: false } state)
             return;
 
-        var orientation = (PotionPairOrientation)state.Orientation;
+        var orientation = _localOrientation;
         if (!CanPlace(_hoverColumn, orientation)) return;
 
         var first = PotionStateEncoding.Decode(state.CurrentFirst);
@@ -889,12 +894,12 @@ internal sealed class PotionWindow : Base
         if (_pending || IsDropAnimating() || _state is not { Complete: false, GameOver: false } state)
             return;
 
-        var orientation = (PotionPairOrientation)state.Orientation;
+        var orientation = _localOrientation;
         if (!CanPlace(column, orientation))
             return;
 
         AnimateLocalDrop(column, orientation, state);
-        Send(PotionRequestKind.Drop, column);
+        Send(PotionRequestKind.Drop, column, Guid.Empty, (int)orientation);
     }
 
     private void AnimateLocalDrop(int column, PotionPairOrientation orientation, PotionSessionState state)
@@ -1022,10 +1027,19 @@ internal sealed class PotionWindow : Base
         return count;
     }
 
-    private void Send(PotionRequestKind kind, int column = 0, Guid recipeId = default)
+    private void Send(PotionRequestKind kind, int column = 0, Guid recipeId = default, int orientation = 0)
     {
         if (_pending) return;
-        _send(kind, column, recipeId);
+        _send(kind, column, recipeId, orientation);
+    }
+
+    private void RotatePairLocal()
+    {
+        if (_pending || IsDropAnimating() || _state is not { Complete: false, GameOver: false })
+            return;
+
+        _localOrientation = (PotionPairOrientation)(((int)_localOrientation + 1) % 4);
+        RefreshText();
     }
 
     private void RefreshText()
@@ -1073,7 +1087,7 @@ internal sealed class PotionWindow : Base
         var nextFirst = PotionStateEncoding.Decode(_state.NextFirst);
         var nextSecond = PotionStateEncoding.Decode(_state.NextSecond);
 
-        var orientation = (PotionPairOrientation)_state.Orientation;
+        var orientation = _localOrientation;
         _current.Text = $"CURRENT PAIR ({OrientationName(orientation)})\n{PieceName(currentFirst)}  +  {PieceName(currentSecond)}";
         _next.Text = $"NEXT\n{PieceName(nextFirst)}  +  {PieceName(nextSecond)}";
         _score.Text = $"Score: {_state.Score:N0}   |   Brewed: {_state.RecipesCompleted:N0}";

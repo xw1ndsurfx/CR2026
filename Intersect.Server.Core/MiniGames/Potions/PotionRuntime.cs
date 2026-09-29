@@ -209,7 +209,8 @@ internal static class PotionRuntime
                             break;
                         }
                     {
-                        var result = session.Puzzle.Drop(request.Column, session.Orientation);
+                        var requestedOrientation = (PotionPairOrientation)request.Orientation;
+                        var result = session.Puzzle.Drop(request.Column, requestedOrientation);
                         if (!result.Success) error = result.Error;
                         else
                         {
