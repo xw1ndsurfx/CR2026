@@ -12,11 +12,13 @@ using Intersect.Framework.Core.WorldEvents.Invasions;
 using Intersect.Models;
 using Intersect.Server.WorldEvents.Invasions;
 using Intersect.Server.MiniGames;
+using Intersect.Server.Database;
 using Intersect.Server.Professions;
 using Intersect.Server.Web.Http;
 using Intersect.Server.Web.Types;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Intersect.Server.Web.Controllers.Api.V1;
 
@@ -139,6 +141,58 @@ public sealed class WikiController : IntersectController
         IReadOnlyList<WikiCookingStage> Stages,
         IReadOnlyList<WikiCookingOutput> Outputs
     );
+
+
+    public sealed record WikiLevelLeaderboardEntry(
+        int Rank,
+        string Name,
+        int Level,
+        long Experience,
+        string Class,
+        string? Guild
+    );
+
+    public sealed record WikiLevelLeaderboardResponse(
+        DateTimeOffset GeneratedAt,
+        IReadOnlyList<WikiLevelLeaderboardEntry> Players
+    );
+
+    [HttpGet("leaderboard/levels")]
+    [ProducesResponseType(typeof(WikiLevelLeaderboardResponse), (int)HttpStatusCode.OK, ContentTypes.Json)]
+    public IActionResult LevelLeaderboard([FromQuery] int limit = 50)
+    {
+        limit = Math.Clamp(limit, 1, 100);
+
+        using var context = DbInterface.CreatePlayerContext();
+        var rows = context.Players
+            .AsNoTracking()
+            .OrderByDescending(player => player.Level)
+            .ThenByDescending(player => player.Exp)
+            .ThenBy(player => player.Name)
+            .Take(limit)
+            .Select(player => new
+            {
+                player.Name,
+                player.Level,
+                player.Exp,
+                player.ClassId,
+                GuildName = player.Guild != null ? player.Guild.Name : null,
+            })
+            .ToArray();
+
+        var players = rows
+            .Select((player, index) => new WikiLevelLeaderboardEntry(
+                index + 1,
+                player.Name,
+                player.Level,
+                player.Exp,
+                ClassDescriptor.GetName(player.ClassId),
+                player.GuildName
+            ))
+            .ToArray();
+
+        return Ok(new WikiLevelLeaderboardResponse(DateTimeOffset.UtcNow, players));
+    }
 
     [HttpGet("catalog")]
     [ProducesResponseType(typeof(object), (int)HttpStatusCode.OK, ContentTypes.Json)]
