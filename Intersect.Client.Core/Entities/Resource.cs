@@ -1,14 +1,17 @@
+using System.Collections.Concurrent;
 using Intersect.Client.Core;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.Entities;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.GenericClasses;
+using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Maps;
 using Intersect.Client.General;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Resources;
+using Intersect.Framework.Core.Professions;
 using Intersect.Network.Packets.Server;
 using Microsoft.Extensions.Logging;
 
@@ -16,6 +19,16 @@ namespace Intersect.Client.Entities;
 
 public partial class Resource : Entity, IResource
 {
+    private readonly record struct OpaqueTopCacheKey(
+        string TextureName,
+        int SourceX,
+        int SourceY,
+        int SourceWidth,
+        int SourceHeight
+    );
+
+    private static readonly ConcurrentDictionary<OpaqueTopCacheKey, int> OpaqueTopCache = [];
+
     private FloatRect _renderBoundsDest = FloatRect.Empty;
     private FloatRect _renderBoundsSrc = FloatRect.Empty;
 
@@ -41,7 +54,11 @@ public partial class Resource : Entity, IResource
 
     public Resource(Guid id, ResourceEntityPacket packet) : base(id, packet, EntityType.Resource)
     {
-        mRenderPriority = 0;
+        // Normal resources (trees, rocks, etc.) must participate in the same
+        // Y-sorted entity layer as players/NPCs so a player behind a tall
+        // resource is actually occluded by it. Individual resource states
+        // can still opt into RenderBelowEntities for ground-level graphics.
+        mRenderPriority = 1;
     }
 
     public ResourceDescriptor? Descriptor
@@ -504,6 +521,159 @@ public partial class Resource : Entity, IResource
         }
 
         _recalculateRenderBounds = false;
+    }
+
+    protected override (int X, int Y) GetHpBarPosition(IGameTexture boundingTexture)
+    {
+        if (_renderBoundsDest.Width <= 0 ||
+            _renderBoundsDest.Height <= 0 ||
+            Texture == null)
+        {
+            return base.GetHpBarPosition(boundingTexture);
+        }
+
+        // Anchor the bar to the first visible (non-transparent) pixel row,
+        // not to the top edge of the PNG/tileset rectangle. This keeps
+        // transparent padding around large resource sprites from pushing the
+        // HP bar too far away from the actual tree/rock/etc.
+        var visibleTopOffset = GetFirstOpaqueRow(Texture, _renderBoundsSrc);
+
+        var x = (int)Math.Round(_renderBoundsDest.X + _renderBoundsDest.Width / 2f);
+        var visibleTopY = _renderBoundsDest.Y + visibleTopOffset;
+        var y = (int)Math.Round(visibleTopY - boundingTexture.Height / 2f - 6f);
+        return (x, y);
+    }
+
+    private static int GetFirstOpaqueRow(IGameTexture texture, FloatRect source)
+    {
+        var sourceX = Math.Clamp((int)Math.Floor(source.X), 0, Math.Max(0, texture.Width - 1));
+        var sourceY = Math.Clamp((int)Math.Floor(source.Y), 0, Math.Max(0, texture.Height - 1));
+        var sourceWidth = Math.Clamp((int)Math.Ceiling(source.Width), 0, texture.Width - sourceX);
+        var sourceHeight = Math.Clamp((int)Math.Ceiling(source.Height), 0, texture.Height - sourceY);
+
+        if (sourceWidth <= 0 || sourceHeight <= 0)
+            return 0;
+
+        var key = new OpaqueTopCacheKey(
+            texture.Name,
+            sourceX,
+            sourceY,
+            sourceWidth,
+            sourceHeight
+        );
+
+        return OpaqueTopCache.GetOrAdd(
+            key,
+            _ =>
+            {
+                for (var localY = 0; localY < sourceHeight; ++localY)
+                {
+                    var pixelY = sourceY + localY;
+                    for (var localX = 0; localX < sourceWidth; ++localX)
+                    {
+                        var pixel = texture.GetPixel(sourceX + localX, pixelY);
+                        if (pixel.A > 0)
+                            return localY;
+                    }
+                }
+
+                return 0;
+            }
+        );
+    }
+
+    public override void DrawHpBar()
+    {
+        base.DrawHpBar();
+        DrawTreeHarvestProgress();
+    }
+
+    private void DrawTreeHarvestProgress()
+    {
+        if (!ShouldDrawHpBar ||
+            IsDead ||
+            Descriptor == null ||
+            !IsTreeResource(Descriptor) ||
+            Graphics.Renderer == null)
+        {
+            return;
+        }
+
+        var maxHealth = MaxVital[(int)Enums.Vital.Health];
+        var currentHealth = Vital[(int)Enums.Vital.Health];
+        if (maxHealth <= 0 || currentHealth <= 0 || currentHealth >= maxHealth)
+            return;
+
+        // Progress represents how close the tree is to being felled:
+        // 0% at full health, 100% when the final hit lands.
+        var progress = 1d - Math.Clamp(currentHealth / (double)maxHealth, 0d, 1d);
+        var percentage = (int)Math.Clamp(
+            Math.Round(progress * 100d, MidpointRounding.AwayFromZero),
+            1d,
+            99d
+        );
+        var text = $"{percentage}%";
+
+        var barTexture = GetBoundingHpBarTexture();
+        var (x, barY) = GetHpBarPosition(barTexture);
+        var textSize = Graphics.Renderer.MeasureText(
+            text,
+            Graphics.EntityNameFont,
+            Graphics.EntityNameFontSize,
+            1
+        );
+
+        var textX = x - (int)Math.Ceiling(textSize.X / 2f);
+        var textY = barY - barTexture.Height / 2 - (int)Math.Ceiling(textSize.Y) - 4;
+
+        Graphics.Renderer.DrawString(
+            text,
+            Graphics.EntityNameFont,
+            Graphics.EntityNameFontSize,
+            textX,
+            textY,
+            1,
+            Color.White,
+            true,
+            null,
+            Color.Black
+        );
+    }
+
+    private static bool IsTreeResource(ResourceDescriptor descriptor)
+    {
+        var resourceName = descriptor.Name ?? string.Empty;
+        if (resourceName.Contains("tree", StringComparison.OrdinalIgnoreCase) ||
+            resourceName.Contains("arbre", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var profession = ProfessionConfiguration.Instance.FindResource(descriptor.Id)?.Profession;
+        if (profession != null)
+        {
+            var professionName = profession.Name ?? string.Empty;
+            if (professionName.Contains("woodcut", StringComparison.OrdinalIgnoreCase) ||
+                professionName.Contains("lumber", StringComparison.OrdinalIgnoreCase) ||
+                professionName.Contains("bûcher", StringComparison.OrdinalIgnoreCase) ||
+                professionName.Contains("bucher", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        var toolIndex = descriptor.Tool;
+        if (toolIndex >= 0 && toolIndex < Options.Instance.Equipment.ToolTypes.Count)
+        {
+            var toolName = Options.Instance.Equipment.ToolTypes[toolIndex] ?? string.Empty;
+            if (toolName.Contains("axe", StringComparison.OrdinalIgnoreCase) ||
+                toolName.Contains("hache", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     //Rendering Resources

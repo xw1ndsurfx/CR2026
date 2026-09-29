@@ -1,4 +1,5 @@
 using Intersect.Client.Core;
+using Intersect.Client.Entities;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.GenericClasses;
@@ -11,6 +12,7 @@ using Intersect.Client.General;
 using Intersect.Client.Maps;
 using Intersect.Client.Networking;
 using Intersect.Configuration;
+using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -117,7 +119,7 @@ internal sealed class WorldMapWindow : Window
         _mapCanvas.CenterOnPlayer();
     }
 
-    private sealed class WorldMapCanvas : Base
+    internal sealed class WorldMapCanvas : Base
     {
         private const int BaseCellWidth = 180;
         private const int PreviewWidth = 288;
@@ -127,6 +129,12 @@ internal sealed class WorldMapWindow : Window
         private readonly Dictionary<Guid, IGameRenderTexture> _previews = [];
         private readonly Dictionary<Guid, int> _previewRevisions = [];
         private readonly Dictionary<Guid, (int Revision, bool[,] Blocked)> _blockedTiles = [];
+        private readonly bool _interactive;
+        private readonly bool _showWorldEventMarkers;
+        private readonly bool _showQuestRoute;
+        private readonly bool _showEnemies;
+        private readonly bool _preloadWorld;
+        private readonly bool _autoCenterOnPlayer;
         private List<(int X, int Y)> _questRoute = [];
         private QuestGuidanceTarget? _questRouteTarget;
         private Guid _questRouteStartMapId;
@@ -140,9 +148,41 @@ internal sealed class WorldMapWindow : Window
         private bool _dragging;
         private int _requestRefreshCounter;
 
-        public WorldMapCanvas(Base parent, string name) : base(parent, name)
+        public WorldMapCanvas(Base parent, string name) : this(
+            parent,
+            name,
+            interactive: true,
+            showWorldEventMarkers: true,
+            showQuestRoute: true,
+            showEnemies: false,
+            preloadWorld: true,
+            initialZoom: 0.78f,
+            autoCenterOnPlayer: false
+        )
         {
-            MouseInputEnabled = true;
+        }
+
+        public WorldMapCanvas(
+            Base parent,
+            string name,
+            bool interactive,
+            bool showWorldEventMarkers,
+            bool showQuestRoute,
+            bool showEnemies,
+            bool preloadWorld,
+            float initialZoom,
+            bool autoCenterOnPlayer
+        ) : base(parent, name)
+        {
+            _interactive = interactive;
+            _showWorldEventMarkers = showWorldEventMarkers;
+            _showQuestRoute = showQuestRoute;
+            _showEnemies = showEnemies;
+            _preloadWorld = preloadWorld;
+            _autoCenterOnPlayer = autoCenterOnPlayer;
+            _zoom = Math.Clamp(initialZoom, 0.30f, 2.25f);
+
+            MouseInputEnabled = interactive;
             KeyboardInputEnabled = false;
             ShouldDrawBackground = false;
         }
@@ -163,18 +203,28 @@ internal sealed class WorldMapWindow : Window
 
         public void ZoomBy(float delta)
         {
+            if (!_interactive)
+            {
+                return;
+            }
+
             _zoom = Math.Clamp(_zoom + delta, 0.30f, 2.25f);
             Invalidate();
         }
 
         public void CenterOnPlayer()
         {
+            CenterOnPlayerCore(invalidate: true);
+        }
+
+        private void CenterOnPlayerCore(bool invalidate)
+        {
             var player = Globals.Me;
             if (player == null || !Globals.GridMaps.TryGetValue(player.MapId, out var grid))
             {
                 _panX = 0;
                 _panY = 0;
-                Invalidate();
+                if (invalidate) Invalidate();
                 return;
             }
 
@@ -185,12 +235,18 @@ internal sealed class WorldMapWindow : Window
 
             _panX = Width / 2f - (grid.X + localX) * CellWidth;
             _panY = Height / 2f - (grid.Y + localY) * CellHeight;
-            Invalidate();
+            if (invalidate) Invalidate();
         }
 
         protected override void Render(SkinBase skin)
         {
             base.Render(skin);
+
+            if (_autoCenterOnPlayer)
+            {
+                CenterOnPlayerCore(invalidate: false);
+            }
+
             var renderer = skin.Renderer;
 
             Fill(renderer, new Color(a: 252, r: 7, g: 10, b: 13), 0, 0, Width, Height);
@@ -211,28 +267,31 @@ internal sealed class WorldMapWindow : Window
             // Keep asking for any maps that are still missing. SendNeedMap filters maps that
             // are already loaded or already requested, so this is safe and lets the World Map
             // recover if a distant map was not delivered on the first request.
-            if (++_requestRefreshCounter >= ReRequestIntervalFrames)
+            if (_preloadWorld && ++_requestRefreshCounter >= ReRequestIntervalFrames)
             {
                 _requestRefreshCounter = 0;
                 PacketSender.SendWorldMapRequest();
             }
 
-            // Build previews for the complete world grid, not only the cells currently inside
-            // the viewport. This makes every map ready when the user pans or zooms.
+            // The full World Map preloads every cell. The minimap deliberately skips this
+            // and only builds cells that are actually visible in its fixed local viewport.
             var previewsBuiltThisFrame = 0;
-            for (var preloadX = 0; preloadX < gridWidth && previewsBuiltThisFrame < PreviewBuildsPerFrame; ++preloadX)
+            if (_preloadWorld)
             {
-                for (var preloadY = 0; preloadY < gridHeight && previewsBuiltThisFrame < PreviewBuildsPerFrame; ++preloadY)
+                for (var preloadX = 0; preloadX < gridWidth && previewsBuiltThisFrame < PreviewBuildsPerFrame; ++preloadX)
                 {
-                    var preloadId = grid[preloadX, preloadY];
-                    if (preloadId == Guid.Empty || _previews.ContainsKey(preloadId))
+                    for (var preloadY = 0; preloadY < gridHeight && previewsBuiltThisFrame < PreviewBuildsPerFrame; ++preloadY)
                     {
-                        continue;
-                    }
+                        var preloadId = grid[preloadX, preloadY];
+                        if (preloadId == Guid.Empty || _previews.ContainsKey(preloadId))
+                        {
+                            continue;
+                        }
 
-                    if (BuildPreviewForMap(preloadId) != null)
-                    {
-                        ++previewsBuiltThisFrame;
+                        if (BuildPreviewForMap(preloadId) != null)
+                        {
+                            ++previewsBuiltThisFrame;
+                        }
                     }
                 }
             }
@@ -297,8 +356,21 @@ internal sealed class WorldMapWindow : Window
                 }
             }
 
-            DrawQuestRoute(renderer, cellWidth, cellHeight);
-            DrawWorldMapEventMarkers(renderer, cellWidth, cellHeight);
+            if (_showQuestRoute)
+            {
+                DrawQuestRoute(renderer, cellWidth, cellHeight);
+            }
+
+            if (_showEnemies)
+            {
+                DrawEnemyMarkers(renderer);
+            }
+
+            if (_showWorldEventMarkers)
+            {
+                DrawWorldMapEventMarkers(renderer, cellWidth, cellHeight);
+            }
+
             DrawPlayerMarker(renderer);
         }
 
@@ -598,6 +670,67 @@ internal sealed class WorldMapWindow : Window
 
         private static (int X, int Y) RoutePoint(long key) =>
             ((int)(key >> 32), (int)key);
+
+        private void DrawEnemyMarkers(RendererBase renderer)
+        {
+            var player = Globals.Me;
+            if (player == null)
+            {
+                return;
+            }
+
+            var mapWidth = Math.Max(1, Options.Instance.Map.MapWidth);
+            var mapHeight = Math.Max(1, Options.Instance.Map.MapHeight);
+            var markerSize = Math.Clamp((int)Math.Round(7f * _zoom), 5, 11);
+
+            foreach (var entity in Globals.Entities.Values)
+            {
+                if (entity == null ||
+                    entity.Id == player.Id ||
+                    entity.Type != EntityType.GlobalEntity ||
+                    !entity.ShouldDraw ||
+                    !Globals.GridMaps.TryGetValue(entity.MapId, out var gridPosition) ||
+                    entity.Aggression is not (
+                        NpcAggression.Aggressive or
+                        NpcAggression.AttackWhenAttacked or
+                        NpcAggression.AttackOnSight
+                    ))
+                {
+                    continue;
+                }
+
+                var localX = (entity.X + 0.5f) / mapWidth;
+                var localY = (entity.Y + 0.5f) / mapHeight;
+                var markerX = (int)Math.Round(_panX + (gridPosition.X + localX) * CellWidth);
+                var markerY = (int)Math.Round(_panY + (gridPosition.Y + localY) * CellHeight);
+
+                if (markerX < -markerSize ||
+                    markerY < -markerSize ||
+                    markerX > Width + markerSize ||
+                    markerY > Height + markerSize)
+                {
+                    continue;
+                }
+
+                Fill(
+                    renderer,
+                    new Color(a: 255, r: 232, g: 64, b: 64),
+                    markerX - markerSize / 2,
+                    markerY - markerSize / 2,
+                    markerSize,
+                    markerSize
+                );
+                Outline(
+                    renderer,
+                    new Color(a: 255, r: 105, g: 18, b: 18),
+                    markerX - markerSize / 2 - 1,
+                    markerY - markerSize / 2 - 1,
+                    markerSize + 2,
+                    markerSize + 2,
+                    1
+                );
+            }
+        }
 
         private void DrawWorldMapEventMarkers(RendererBase renderer, int cellWidth, int cellHeight)
         {
@@ -963,19 +1096,19 @@ internal sealed class WorldMapWindow : Window
         protected override void OnMouseDown(MouseButton mouseButton, Point mousePosition, bool userAction = true)
         {
             base.OnMouseDown(mouseButton, mousePosition, userAction);
-            if (mouseButton == MouseButton.Left) _dragging = true;
+            if (_interactive && mouseButton == MouseButton.Left) _dragging = true;
         }
 
         protected override void OnMouseUp(MouseButton mouseButton, Point mousePosition, bool userAction = true)
         {
             base.OnMouseUp(mouseButton, mousePosition, userAction);
-            if (mouseButton == MouseButton.Left) _dragging = false;
+            if (_interactive && mouseButton == MouseButton.Left) _dragging = false;
         }
 
         protected override void OnMouseMoved(int x, int y, int dx, int dy)
         {
             base.OnMouseMoved(x, y, dx, dy);
-            if (!_dragging) return;
+            if (!_interactive || !_dragging) return;
             _panX += dx;
             _panY += dy;
             Invalidate();
@@ -983,6 +1116,11 @@ internal sealed class WorldMapWindow : Window
 
         protected override bool OnMouseWheeled(int delta)
         {
+            if (!_interactive)
+            {
+                return false;
+            }
+
             ZoomBy(delta > 0 ? 0.1f : -0.1f);
             return true;
         }
