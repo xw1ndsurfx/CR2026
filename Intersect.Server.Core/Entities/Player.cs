@@ -32,6 +32,7 @@ using Intersect.Server.Entities.Events;
 using Intersect.Server.Framework.Entities;
 using Intersect.Server.Framework.Items;
 using Intersect.Server.Localization;
+using Intersect.Server.Leaderboards;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
 using Intersect.Server.Professions;
@@ -1087,6 +1088,20 @@ public partial class Player : Entity
         pkt.Guild = Guild?.Name;
         pkt.GuildRank = GuildRank;
 
+        var rankingTitle = LeaderboardTitleRuntime.GetStatus(Id);
+        if (rankingTitle != null)
+        {
+            var existingHeader = pkt.HeaderLabel?.Label;
+            var titleText = $"[{rankingTitle.Title}]";
+            if (!string.IsNullOrWhiteSpace(existingHeader))
+                titleText += $" {existingHeader}";
+
+            pkt.HeaderLabel = new LabelPacket(
+                titleText,
+                rankingTitle.Rank == 1 ? new Color(255, 215, 90) : new Color(210, 200, 170)
+            );
+        }
+
         return pkt;
     }
 
@@ -1391,10 +1406,21 @@ public partial class Player : Entity
             TakeExperience(-amount);
             return;
         }
-        var equipmentBonus = (int)Math.Round(amount * GetEquipmentBonusEffect(ItemEffect.EXP) / 100f);
-        Exp += amount + equipmentBonus;
+
+        var equipmentBonus = (long)Math.Round(
+            amount * GetEquipmentBonusEffect(ItemEffect.EXP) / 100d,
+            MidpointRounding.AwayFromZero
+        );
+
+        var rankingBonusPercent = LeaderboardTitleRuntime.GetExperienceBonusPercent(Id);
+        var rankingBonus = rankingBonusPercent > 0
+            ? (long)Math.Round(amount * rankingBonusPercent / 100d, MidpointRounding.AwayFromZero)
+            : 0L;
+
+        Exp += amount + equipmentBonus + rankingBonus;
 
         CheckLevelUp();
+        LeaderboardTitleRuntime.MarkRankingDirty();
     }
 
     public void TakeExperience(long amount, bool enableLosingLevels = false, bool force = false)
