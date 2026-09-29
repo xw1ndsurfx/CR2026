@@ -47,7 +47,7 @@ public sealed partial class PotionRequirementState
 
     [IgnoreMember]
     public bool IsValid =>
-        Family is >= 0 and <= 2 &&
+        Family is >= 0 and <= 3 &&
         Level is >= 1 and <= 4 &&
         Needed is >= 1 and <= 20 &&
         Progress is >= 0 && Progress <= Needed;
@@ -118,11 +118,11 @@ public static class PotionStateEncoding
     public static int Encode(PotionPiece piece) => 1 + (int)piece.Family * 4 + (piece.Level - 1);
 
     public static bool IsEncodedPiece(int value, bool allowEmpty = true) =>
-        (allowEmpty && value == 0) || value is >= 1 and <= 12;
+        (allowEmpty && value == 0) || value is >= 1 and <= 16;
 
     public static PotionPiece Decode(int value)
     {
-        if (value is < 1 or > 12) throw new ArgumentOutOfRangeException(nameof(value));
+        if (value is < 1 or > 16) throw new ArgumentOutOfRangeException(nameof(value));
         var zero = value - 1;
         return new PotionPiece((PotionFamily)(zero / 4), zero % 4 + 1);
     }

@@ -688,13 +688,15 @@ internal sealed class PotionWindow : Base
         {
             PotionFamily.Verdant => new Color(alpha, 64, 145, 67),
             PotionFamily.Ember => new Color(alpha, 160, 52, 72),
-            _ => new Color(alpha, 61, 103, 178),
+            PotionFamily.Arcane => new Color(alpha, 61, 103, 178),
+            _ => new Color(alpha, 205, 151, 43),
         };
         var dark = piece.Family switch
         {
             PotionFamily.Verdant => new Color(alpha, 31, 79, 42),
             PotionFamily.Ember => new Color(alpha, 86, 27, 44),
-            _ => new Color(alpha, 31, 51, 101),
+            PotionFamily.Arcane => new Color(alpha, 31, 51, 101),
+            _ => new Color(alpha, 105, 73, 20),
         };
         var accent = piece.Level switch
         {
@@ -781,9 +783,8 @@ internal sealed class PotionWindow : Base
                 renderer.DrawFilledRect(new Rectangle(cx - Math.Max(1, scale / 2), cy, Math.Max(1, scale), scale * 2));
                 break;
 
-            default:
-                // Arcane = an unmistakable "eye/rune" instead of a generic diamond:
-                // outer eye, bright pupil, and four small rune rays.
+            case PotionFamily.Arcane:
+                // Arcane = an unmistakable eye/rune.
                 renderer.DrawLine(cx - scale * 3, cy, cx - scale, cy - scale * 2);
                 renderer.DrawLine(cx - scale, cy - scale * 2, cx + scale, cy - scale * 2);
                 renderer.DrawLine(cx + scale, cy - scale * 2, cx + scale * 3, cy);
@@ -801,6 +802,23 @@ internal sealed class PotionWindow : Base
                 renderer.DrawLine(cx, cy + scale * 2, cx, cy + scale * 3);
                 renderer.DrawLine(cx - scale * 4, cy, cx - scale * 3, cy);
                 renderer.DrawLine(cx + scale * 3, cy, cx + scale * 4, cy);
+                break;
+
+            default:
+                // Radiant = a gold sun/star, visually distinct from all three
+                // starter families and introduced with level 5+ recipes.
+                renderer.DrawFilledRect(new Rectangle(cx - scale, cy - scale, scale * 2, scale * 2));
+                renderer.DrawLine(cx, cy - scale * 4, cx, cy - scale * 2);
+                renderer.DrawLine(cx, cy + scale * 2, cx, cy + scale * 4);
+                renderer.DrawLine(cx - scale * 4, cy, cx - scale * 2, cy);
+                renderer.DrawLine(cx + scale * 2, cy, cx + scale * 4, cy);
+                renderer.DrawLine(cx - scale * 3, cy - scale * 3, cx - scale * 2, cy - scale * 2);
+                renderer.DrawLine(cx + scale * 2, cy + scale * 2, cx + scale * 3, cy + scale * 3);
+                renderer.DrawLine(cx + scale * 2, cy - scale * 2, cx + scale * 3, cy - scale * 3);
+                renderer.DrawLine(cx - scale * 3, cy + scale * 3, cx - scale * 2, cy + scale * 2);
+                renderer.DrawColor = new Color(alpha, 255, 232, 143);
+                renderer.DrawFilledRect(new Rectangle(cx - Math.Max(1, scale / 2), cy - Math.Max(1, scale / 2),
+                    Math.Max(2, scale), Math.Max(2, scale)));
                 break;
         }
     }
@@ -1107,7 +1125,8 @@ internal sealed class PotionWindow : Base
     {
         PotionFamily.Verdant => "Verdant",
         PotionFamily.Ember => "Ember",
-        _ => "Arcane",
+        PotionFamily.Arcane => "Arcane",
+        _ => "Radiant",
     };
 
     private static string LevelName(int level) => level switch

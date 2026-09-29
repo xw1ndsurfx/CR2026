@@ -5,6 +5,7 @@ public enum PotionFamily
     Verdant = 0,
     Ember = 1,
     Arcane = 2,
+    Radiant = 3,
 }
 
 public readonly record struct PotionPiece(PotionFamily Family, int Level)
@@ -30,12 +31,15 @@ public readonly record struct PotionRequirement(PotionFamily Family, int Level, 
     public bool IsValid => Level is >= 1 and <= 4 && Needed is >= 1 and <= 20 && Enum.IsDefined(Family);
 }
 
-public sealed record PotionRecipe(string Name, PotionRequirement[] Requirements)
+public sealed record PotionRecipe(string Name, PotionRequirement[] Requirements, int RequiredLevel = 1)
 {
     public bool IsValid =>
         !string.IsNullOrWhiteSpace(Name) && Name.Length <= 64 &&
+        RequiredLevel >= 1 &&
         Requirements is { Length: > 0 and <= 6 } &&
-        Requirements.All(requirement => requirement.IsValid);
+        Requirements.All(requirement =>
+            requirement.IsValid &&
+            (requirement.Family != PotionFamily.Radiant || RequiredLevel >= 5));
 }
 
 public sealed record PotionMerge(PotionPiece Result, int GroupSize, int Chain, bool ConsumedByRecipe);
@@ -159,9 +163,21 @@ public sealed class PotionPuzzle
     public void BeginNextRecipe(PotionRecipe recipe)
     {
         if (!Complete || !recipe.IsValid) return;
+
+        var previousFamilyCount = AvailableFamilyCount;
         Recipe = recipe;
         _progress = new int[Recipe.Requirements.Length];
         Complete = false;
+
+        // Crossing the level-5 threshold changes the available ingredient pool.
+        // Reroll the preview/current pair so a level 5+ recipe immediately uses
+        // the new Radiant family, and lower recipes never inherit one.
+        if (AvailableFamilyCount != previousFamilyCount)
+        {
+            Current = RollPair();
+            Next = RollPair();
+        }
+
         GameOver = !HasAnyPlacement();
     }
 
@@ -293,7 +309,9 @@ public sealed class PotionPuzzle
 
     private PotionPair RollPair() => new(RollPiece(), RollPiece());
 
-    private PotionPiece RollPiece() => new((PotionFamily)_random.Next(0, 3), 1);
+    private int AvailableFamilyCount => Recipe.RequiredLevel >= 5 ? 4 : 3;
+
+    private PotionPiece RollPiece() => new((PotionFamily)_random.Next(0, AvailableFamilyCount), 1);
 
     private PotionRecipe RollRecipe()
     {
