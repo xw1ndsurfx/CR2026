@@ -25,6 +25,8 @@ internal sealed class PotionWindow : Base
         private readonly Action<int> _hover;
         private readonly Action<int> _drop;
         private readonly Action _swap;
+        private long _suppressDropUntil;
+        private int _suppressDropColumn = -1;
 
         public PotionBoardInput(Base parent, Action<int> hover, Action<int> drop, Action swap)
             : base(parent, nameof(PotionBoardInput))
@@ -66,12 +68,24 @@ internal sealed class PotionWindow : Base
 
             if (mouseButton == MouseButton.Right)
             {
+                // Some mouse/input backends can emit a left-click immediately after
+                // a right-click release. Remember this column for a very short window
+                // so right click remains a pure rotate action.
+                _suppressDropColumn = column;
+                _suppressDropUntil = Environment.TickCount64 + 140;
                 _swap();
                 return;
             }
 
             if (mouseButton == MouseButton.Left && column >= 0)
+            {
+                if (column == _suppressDropColumn && Environment.TickCount64 <= _suppressDropUntil)
+                    return;
+
+                _suppressDropColumn = -1;
+                _suppressDropUntil = 0;
                 _drop(column);
+            }
         }
     }
 
@@ -767,12 +781,25 @@ internal sealed class PotionWindow : Base
                 break;
 
             default:
-                renderer.DrawLine(cx, cy - scale * 3, cx + scale * 2, cy);
-                renderer.DrawLine(cx + scale * 2, cy, cx, cy + scale * 3);
-                renderer.DrawLine(cx, cy + scale * 3, cx - scale * 2, cy);
-                renderer.DrawLine(cx - scale * 2, cy, cx, cy - scale * 3);
-                renderer.DrawLine(cx - scale * 2, cy, cx + scale * 2, cy);
-                renderer.DrawLine(cx, cy - scale * 2, cx, cy + scale * 2);
+                // Arcane = an unmistakable "eye/rune" instead of a generic diamond:
+                // outer eye, bright pupil, and four small rune rays.
+                renderer.DrawLine(cx - scale * 3, cy, cx - scale, cy - scale * 2);
+                renderer.DrawLine(cx - scale, cy - scale * 2, cx + scale, cy - scale * 2);
+                renderer.DrawLine(cx + scale, cy - scale * 2, cx + scale * 3, cy);
+                renderer.DrawLine(cx + scale * 3, cy, cx + scale, cy + scale * 2);
+                renderer.DrawLine(cx + scale, cy + scale * 2, cx - scale, cy + scale * 2);
+                renderer.DrawLine(cx - scale, cy + scale * 2, cx - scale * 3, cy);
+
+                renderer.DrawFilledRect(new Rectangle(cx - scale, cy - scale, scale * 2, scale * 2));
+                renderer.DrawColor = new Color(alpha, 149, 222, 255);
+                renderer.DrawFilledRect(new Rectangle(cx - Math.Max(1, scale / 2), cy - Math.Max(1, scale / 2),
+                    Math.Max(2, scale), Math.Max(2, scale)));
+
+                renderer.DrawColor = new Color(alpha, 248, 238, 207);
+                renderer.DrawLine(cx, cy - scale * 3, cx, cy - scale * 2);
+                renderer.DrawLine(cx, cy + scale * 2, cx, cy + scale * 3);
+                renderer.DrawLine(cx - scale * 4, cy, cx - scale * 3, cy);
+                renderer.DrawLine(cx + scale * 3, cy, cx + scale * 4, cy);
                 break;
         }
     }
