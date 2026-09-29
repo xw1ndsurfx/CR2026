@@ -55,7 +55,11 @@ public sealed class WikiController : IntersectController
         string Type,
         string? Subtitle = null,
         string? Icon = null,
-        string? ImageUrl = null
+        string? ImageUrl = null,
+        string? ItemCategory = null,
+        int? Rarity = null,
+        string? RarityName = null,
+        string? EquipmentSlot = null
     );
 
     public sealed record WikiCatalogEntry(string Slug, string Type, string Label);
@@ -986,7 +990,11 @@ public sealed class WikiController : IntersectController
                 item.Type.ToString(),
                 string.IsNullOrWhiteSpace(item.Description) ? item.ItemType.ToString() : item.Description,
                 SafeAssetName(item.Icon),
-                item.ImageUrl
+                item.ImageUrl,
+                item.ItemType.ToString(),
+                item.Rarity,
+                ItemRarityName(item),
+                ItemEquipmentSlotName(item)
             ),
             ResourceDescriptor resource => new WikiGameObjectSummary(
                 resource.Id,
@@ -1030,7 +1038,11 @@ public sealed class WikiController : IntersectController
                 Add(facts, "Description", item.Description);
                 Add(facts, "Catégorie", item.ItemType.ToString());
                 Add(facts, "Icône", SafeAssetName(item.Icon));
-                Add(facts, "Rareté", item.Rarity);
+                Add(facts, "Rareté", ItemRarityName(item));
+                if (item.ItemType == ItemType.Equipment)
+                {
+                    Add(facts, "Emplacement d'équipement", ItemEquipmentSlotName(item));
+                }
                 Add(facts, "Prix", item.Price);
                 Add(facts, "Échangeable", item.CanTrade);
                 Add(facts, "Vendable", item.CanSell);
@@ -1268,6 +1280,33 @@ public sealed class WikiController : IntersectController
                 yield return line;
             }
         }
+    }
+
+    private static string ItemRarityName(ItemDescriptor item)
+    {
+        if (Intersect.Options.Instance?.Items?.TryGetRarityName(item.Rarity, out var rarityName) == true &&
+            !string.IsNullOrWhiteSpace(rarityName))
+        {
+            return rarityName;
+        }
+
+        return item.Rarity.ToString();
+    }
+
+    private static string? ItemEquipmentSlotName(ItemDescriptor item)
+    {
+        if (item.ItemType != ItemType.Equipment)
+        {
+            return null;
+        }
+
+        var slots = Intersect.Options.Instance?.Equipment?.Slots;
+        if (slots == null || item.EquipmentSlot < 0 || item.EquipmentSlot >= slots.Count)
+        {
+            return null;
+        }
+
+        return slots[item.EquipmentSlot];
     }
 
     private static void Add(IDictionary<string, object?> facts, string key, object? value)
