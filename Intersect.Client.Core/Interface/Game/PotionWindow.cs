@@ -128,6 +128,7 @@ internal sealed class PotionWindow : Base
     private readonly Button _recipeBack;
     private readonly Button _recipeList;
     private readonly Button _nextRecipe;
+    private readonly Button _rotate;
     private readonly Button _restart;
 
     private PokerSceneLayout _layout;
@@ -219,8 +220,14 @@ internal sealed class PotionWindow : Base
 
         _recipeList = Button("PotionRecipeList", "Recipe list", 65, 690, 140, OpenRecipeList);
         _nextRecipe = Button("PotionNextRecipe", "Next recipe", 215, 690, 165, () => Send(PotionRequestKind.NextRecipe));
-        _restart = Button("PotionRestart", "Restart board", 65, 730, 140, () => Send(PotionRequestKind.Restart));
-        Button("PotionExit", "Exit", 215, 730, 165, () => ExitRequested = true);
+
+        // Keep a deterministic rotation control available at all times. Right-click
+        // remains supported, but this button uses the exact same local rotation path
+        // and is the reliable fallback on clients where mouse-button edge reporting
+        // is inconsistent.
+        _rotate = Button("PotionRotate", "Rotate pair", 65, 730, 100, RotatePairLocal);
+        _restart = Button("PotionRestart", "Restart", 170, 730, 100, () => Send(PotionRequestKind.Restart));
+        Button("PotionExit", "Exit", 275, 730, 105, () => ExitRequested = true);
 
         _recipePicker = new RecipePickerPanel(this)
         {
@@ -395,6 +402,7 @@ internal sealed class PotionWindow : Base
 
         _recipeList.IsDisabled = recipeSelectionRequired || dropAnimating || _pending || _state == null;
         _nextRecipe.IsDisabled = selectingRecipe || dropAnimating || _pending || _state is not { Complete: true };
+        _rotate.IsDisabled = selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete || _state.GameOver;
         _restart.IsDisabled = selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete;
         _boardInput.IsDisabled = selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete || _state.GameOver;
         _recipeBack.IsDisabled = recipeSelectionRequired || _pending;
