@@ -11,6 +11,8 @@ public partial class Player
 
     public static IReadOnlySet<Player> OnlinePlayers => _onlinePlayers;
 
+    public static Player[] OnlinePlayersSnapshot() => OnlinePlayersById.Values.ToArray();
+
     public static int OnlineCount => OnlinePlayersById.Count;
 
     [NotMapped] public bool IsOnline => OnlinePlayersById.ContainsKey(Id);
