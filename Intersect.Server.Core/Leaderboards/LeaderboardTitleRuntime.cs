@@ -25,6 +25,8 @@ internal static class LeaderboardTitleRuntime
     private static readonly object Gate = new();
     private static readonly string StatePath = Path.Combine("resources", "leaderboard-title-state.json");
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+    private static readonly System.Threading.Timer RefreshTimer =
+        new(_ => SafeTimerRefresh(), null, TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(1));
 
     private static PersistedState? _state;
     private static Dictionary<Guid, LeaderboardTitleStatus> _active = [];
@@ -56,6 +58,18 @@ internal static class LeaderboardTitleRuntime
         EnsureFresh();
         lock (Gate)
             return new Dictionary<Guid, LeaderboardTitleStatus>(_active);
+    }
+
+    private static void SafeTimerRefresh()
+    {
+        try
+        {
+            EnsureFresh();
+        }
+        catch
+        {
+            // Ignore transient timer refresh errors.
+        }
     }
 
     private static void EnsureFresh()
