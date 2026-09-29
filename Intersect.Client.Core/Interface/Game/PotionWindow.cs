@@ -107,6 +107,7 @@ internal sealed class PotionWindow : Base
     private readonly Label _title;
     private readonly Label _recipe;
     private readonly Label _requirements;
+    private readonly Label[] _requirementRows = new Label[6];
     private readonly Label _current;
     private readonly Label _next;
     private readonly Label _score;
@@ -159,23 +160,39 @@ internal sealed class PotionWindow : Base
         _title.Text = "ROYAL ALCHEMY";
         _title.TextAlign = Pos.Center;
 
-        _recipe = Label("PotionRecipe", 65, 112, 315, 76, 18);
-        _requirements = Label("PotionRequirements", 65, 198, 315, 184, 14);
-        _current = Label("PotionCurrent", 65, 395, 315, 54, 15);
-        _next = Label("PotionNext", 65, 455, 315, 54, 13);
-        _score = Label("PotionScore", 65, 525, 315, 34, 14);
-        _xpLabel = Label("PotionXpLabel", 65, 562, 315, 24, 12);
-        _status = Label("PotionStatus", 65, 614, 315, 50, 12);
+        _recipe = Label("PotionRecipe", 65, 112, 315, 76, 17);
+        _requirements = Label("PotionRequirements", 118, 198, 250, 24, 13);
+        _requirements.Text = "INGREDIENTS";
+        for (var i = 0; i < _requirementRows.Length; ++i)
+        {
+            _requirementRows[i] = Label("PotionRequirementRow" + i, 118, 224 + i * 34, 250, 30, 12);
+            _requirementRows[i].IsHidden = true;
+        }
+
+        _current = Label("PotionCurrent", 65, 438, 315, 46, 14);
+        _next = Label("PotionNext", 65, 489, 315, 46, 12);
+        _score = Label("PotionScore", 65, 542, 315, 30, 13);
+        _xpLabel = Label("PotionXpLabel", 65, 575, 315, 24, 12);
+        _status = Label("PotionStatus", 65, 624, 315, 54, 12);
+
+        var parchmentText = new Color(255, 72, 47, 28);
+        _recipe.TextColorOverride = parchmentText;
+        _requirements.TextColorOverride = new Color(255, 96, 60, 30);
+        _current.TextColorOverride = parchmentText;
+        _next.TextColorOverride = parchmentText;
+        _score.TextColorOverride = parchmentText;
+        _xpLabel.TextColorOverride = parchmentText;
+        _status.TextColorOverride = new Color(255, 96, 49, 35);
 
         _fx = Label("PotionFx", BoardX, 280, PotionPuzzle.Columns * CellW, 46, 20);
         _fx.TextAlign = Pos.Center;
         _fx.TextColorOverride = new Color(255, 236, 210, 117);
         _fx.IsHidden = true;
 
-        _swap = Button("PotionSwap", "Rotate pair", 65, 675, 140, () => Send(PotionRequestKind.Swap));
-        _nextRecipe = Button("PotionNextRecipe", "Brew next", 215, 675, 165, () => Send(PotionRequestKind.NextRecipe));
-        _restart = Button("PotionRestart", "Restart board", 65, 718, 140, () => Send(PotionRequestKind.Restart));
-        Button("PotionExit", "Exit", 215, 718, 165, () => ExitRequested = true);
+        _swap = Button("PotionSwap", "Rotate pair", 65, 690, 140, () => Send(PotionRequestKind.Swap));
+        _nextRecipe = Button("PotionNextRecipe", "Next recipe", 215, 690, 165, () => Send(PotionRequestKind.NextRecipe));
+        _restart = Button("PotionRestart", "Restart board", 65, 730, 140, () => Send(PotionRequestKind.Restart));
+        Button("PotionExit", "Exit", 215, 730, 165, () => ExitRequested = true);
 
         _recipePicker = new RecipePickerPanel(this)
         {
@@ -347,23 +364,27 @@ internal sealed class PotionWindow : Base
         var renderer = skin.Renderer;
         var now = Environment.TickCount64;
 
-        renderer.DrawColor = new Color(224, 8, 12, 10);
+        renderer.DrawColor = new Color(255, 18, 11, 7);
         renderer.DrawFilledRect(new Rectangle(0, 0, Width, Height));
 
-        DrawPanel(renderer, 45, 90, 355, 675, new Color(47, 34, 27), new Color(145, 100, 55));
+        DrawPanel(renderer, 45, 90, 355, 675, new Color(255, 214, 196, 146), new Color(255, 94, 58, 31));
+        DrawParchmentDetails(renderer);
         DrawPanel(
             renderer,
             BoardX - 22,
             BoardY - 58,
             PotionPuzzle.Columns * CellW + 44,
             PotionPuzzle.Rows * CellH + 126,
-            new Color(43, 27, 20),
-            new Color(148, 101, 54)
+            new Color(255, 67, 40, 24),
+            new Color(255, 128, 78, 39)
         );
 
         var board = _layout.Rect(BoardX, BoardY, PotionPuzzle.Columns * CellW, PotionPuzzle.Rows * CellH);
-        renderer.DrawColor = new Color(37, 67, 45);
+        renderer.DrawColor = new Color(255, 101, 59, 32);
         renderer.DrawFilledRect(new Rectangle(board.X, board.Y, board.Width, board.Height));
+        DrawWoodGrain(renderer, board);
+        DrawAlchemyRune(renderer, board);
+        DrawRecipeRequirementIcons(renderer);
 
         DrawExperienceBar(renderer);
 
@@ -407,7 +428,7 @@ internal sealed class PotionWindow : Base
     {
         if (_state == null) return;
 
-        var bounds = _layout.Rect(65, 589, 315, 14);
+        var bounds = _layout.Rect(65, 603, 315, 14);
         renderer.DrawColor = new Color(80, 145, 100, 55);
         renderer.DrawFilledRect(new Rectangle(bounds.X - 1, bounds.Y - 1, bounds.Width + 2, bounds.Height + 2));
 
@@ -495,6 +516,77 @@ internal sealed class PotionWindow : Base
         renderer.DrawFilledRect(new Rectangle(bounds.X - 2, bounds.Y - 2, bounds.Width + 4, bounds.Height + 4));
         renderer.DrawColor = fill;
         renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height));
+    }
+
+    private void DrawParchmentDetails(RendererBase renderer)
+    {
+        var panel = _layout.Rect(45, 90, 355, 675);
+        renderer.DrawColor = new Color(55, 255, 244, 205);
+        renderer.DrawFilledRect(new Rectangle(panel.X + 5, panel.Y + 5, Math.Max(1, panel.Width - 10), 2));
+        renderer.DrawColor = new Color(80, 104, 64, 35);
+        renderer.DrawFilledRect(new Rectangle(panel.X + 5, panel.Y + panel.Height - 7, Math.Max(1, panel.Width - 10), 2));
+
+        var separator = _layout.Rect(108, 198, 2, 224);
+        renderer.DrawColor = new Color(105, 104, 64, 35);
+        renderer.DrawFilledRect(new Rectangle(separator.X, separator.Y, separator.Width, separator.Height));
+
+        var rule = _layout.Rect(64, 189, 316, 1);
+        renderer.DrawColor = new Color(85, 104, 64, 35);
+        renderer.DrawFilledRect(new Rectangle(rule.X, rule.Y, rule.Width, rule.Height));
+    }
+
+    private void DrawWoodGrain(RendererBase renderer, PokerSceneRect board)
+    {
+        renderer.DrawColor = new Color(55, 177, 112, 67);
+        for (var i = 1; i < 8; ++i)
+        {
+            var y = board.Y + i * board.Height / 8;
+            renderer.DrawLine(board.X + 2, y, board.X + board.Width - 3, y);
+        }
+
+        renderer.DrawColor = new Color(45, 58, 32, 21);
+        for (var i = 0; i < 5; ++i)
+        {
+            var x = board.X + (i * 83 + 37) % Math.Max(1, board.Width - 20) + 10;
+            renderer.DrawLine(x, board.Y + 4, Math.Min(board.X + board.Width - 4, x + 26), board.Y + board.Height - 5);
+        }
+    }
+
+    private void DrawAlchemyRune(RendererBase renderer, PokerSceneRect board)
+    {
+        var cx = board.X + board.Width / 2;
+        var top = board.Y + 22;
+        var bottom = board.Y + board.Height - 22;
+        var half = Math.Max(18, board.Width / 7);
+
+        renderer.DrawColor = new Color(82, 48, 25, 17);
+        renderer.DrawLine(cx, top, cx, bottom);
+        renderer.DrawLine(cx - half, top + 48, cx + half, top + 48);
+        renderer.DrawLine(cx - half, bottom - 48, cx + half, bottom - 48);
+        renderer.DrawLine(cx - half, top + 48, cx, top + 86);
+        renderer.DrawLine(cx + half, top + 48, cx, top + 86);
+        renderer.DrawLine(cx - half, bottom - 48, cx, bottom - 86);
+        renderer.DrawLine(cx + half, bottom - 48, cx, bottom - 86);
+        renderer.DrawLine(cx - half / 2, top + 112, cx + half / 2, bottom - 112);
+        renderer.DrawLine(cx + half / 2, top + 112, cx - half / 2, bottom - 112);
+    }
+
+    private void DrawRecipeRequirementIcons(RendererBase renderer)
+    {
+        if (_state?.Requirements == null) return;
+
+        for (var i = 0; i < _state.Requirements.Length && i < _requirementRows.Length; ++i)
+        {
+            var requirement = _state.Requirements[i];
+            var piece = new PotionPiece((PotionFamily)requirement.Family, requirement.Level);
+            var icon = _layout.Rect(70, 221 + i * 34, 32, 28);
+            DrawPiece(renderer, icon, piece);
+
+            if (requirement.Progress < requirement.Needed) continue;
+            renderer.DrawColor = new Color(255, 44, 104, 52);
+            renderer.DrawLine(icon.X + icon.Width - 10, icon.Y + 4, icon.X + icon.Width - 6, icon.Y + 9);
+            renderer.DrawLine(icon.X + icon.Width - 6, icon.Y + 9, icon.X + icon.Width - 1, icon.Y + 1);
+        }
     }
 
     private void DrawHoverPair(RendererBase renderer)
@@ -627,17 +719,61 @@ internal sealed class PotionWindow : Base
         renderer.DrawFilledRect(new Rectangle(ix + icut / 2, iy + ih - iband * 2, Math.Max(1, iw - icut), iband));
         renderer.DrawFilledRect(new Rectangle(ix + icut, iy + ih - iband, Math.Max(1, iw - icut * 2), iband));
 
-        // Glass highlight / tier pips.
+        // Glass highlight, a high-contrast family glyph and tier pips make every
+        // temporary ingredient readable before the final hand-painted art exists.
         renderer.DrawColor = new Color(alpha, 245, 245, 228);
-        renderer.DrawFilledRect(new Rectangle(ix + iw / 4, iy + ih / 5, Math.Max(2, iw / 6), Math.Max(2, ih / 10)));
+        renderer.DrawFilledRect(new Rectangle(ix + iw / 5, iy + ih / 6, Math.Max(2, iw / 6), Math.Max(2, ih / 10)));
+        DrawPieceGlyph(renderer, ix, iy, iw, ih, piece, alpha);
 
-        var pip = Math.Max(2, Math.Min(iw, ih) / 10);
+        var pip = Math.Max(2, Math.Min(iw, ih) / 11);
         renderer.DrawColor = accent;
         for (var i = 0; i < piece.Level; ++i)
         {
             var px = ix + iw / 2 - (piece.Level * pip * 2 - pip) / 2 + i * pip * 2;
-            var py = iy + ih / 2 - pip / 2;
+            var py = iy + ih - pip * 3;
             renderer.DrawFilledRect(new Rectangle(px, py, pip, pip));
+        }
+    }
+
+    private static void DrawPieceGlyph(
+        RendererBase renderer,
+        int x,
+        int y,
+        int width,
+        int height,
+        PotionPiece piece,
+        byte alpha)
+    {
+        var cx = x + width / 2;
+        var cy = y + height / 2 - Math.Max(1, height / 14);
+        var scale = Math.Max(2, Math.Min(width, height) / 10);
+        renderer.DrawColor = new Color(alpha, 248, 238, 207);
+
+        switch (piece.Family)
+        {
+            case PotionFamily.Verdant:
+                renderer.DrawLine(cx - scale * 2, cy + scale * 2, cx + scale * 2, cy - scale * 2);
+                renderer.DrawFilledRect(new Rectangle(cx - scale * 2, cy - scale * 2, scale * 2, scale));
+                renderer.DrawFilledRect(new Rectangle(cx, cy, scale * 2, scale));
+                renderer.DrawFilledRect(new Rectangle(cx - scale, cy - scale, scale * 2, scale * 2));
+                break;
+
+            case PotionFamily.Ember:
+                renderer.DrawFilledRect(new Rectangle(cx - scale, cy - scale * 2, scale * 2, scale * 4));
+                renderer.DrawFilledRect(new Rectangle(cx - scale * 2, cy, scale * 4, scale * 2));
+                renderer.DrawFilledRect(new Rectangle(cx, cy - scale * 3, scale, scale * 2));
+                renderer.DrawColor = new Color(alpha, 255, 205, 114);
+                renderer.DrawFilledRect(new Rectangle(cx - Math.Max(1, scale / 2), cy, Math.Max(1, scale), scale * 2));
+                break;
+
+            default:
+                renderer.DrawLine(cx, cy - scale * 3, cx + scale * 2, cy);
+                renderer.DrawLine(cx + scale * 2, cy, cx, cy + scale * 3);
+                renderer.DrawLine(cx, cy + scale * 3, cx - scale * 2, cy);
+                renderer.DrawLine(cx - scale * 2, cy, cx, cy - scale * 3);
+                renderer.DrawLine(cx - scale * 2, cy, cx + scale * 2, cy);
+                renderer.DrawLine(cx, cy - scale * 2, cx, cy + scale * 2);
+                break;
         }
     }
 
@@ -757,7 +893,8 @@ internal sealed class PotionWindow : Base
         if (_state == null)
         {
             _recipe.Text = "Waiting for Royal Alchemy...";
-            _requirements.Text = string.Empty;
+            _requirements.Text = "INGREDIENTS";
+            foreach (var row in _requirementRows) row.IsHidden = true;
             _current.Text = string.Empty;
             _next.Text = string.Empty;
             _score.Text = string.Empty;
@@ -771,15 +908,25 @@ internal sealed class PotionWindow : Base
             $"Requires Alchemy Lv {_state.RequiredLevel}\n" +
             $"Reward: {_state.OutputQuantity:N0} x {_state.OutputItemName} (+{_state.CompletionExperience} XP)";
 
-        _requirements.Text = string.Join(
-            "\n\n",
-            _state.Requirements.Select(requirement =>
+        _requirements.Text = "INGREDIENTS";
+        for (var i = 0; i < _requirementRows.Length; ++i)
+        {
+            var row = _requirementRows[i];
+            if (i >= _state.Requirements.Length)
             {
-                var done = requirement.Progress >= requirement.Needed;
-                return $"{(done ? "✓" : "○")} {FamilyName((PotionFamily)requirement.Family)} {LevelName(requirement.Level)}   " +
+                row.IsHidden = true;
+                continue;
+            }
+
+            var requirement = _state.Requirements[i];
+            var done = requirement.Progress >= requirement.Needed;
+            row.IsHidden = false;
+            row.Text = $"{FamilyName((PotionFamily)requirement.Family)} {LevelName(requirement.Level)}   " +
                        $"{requirement.Progress}/{requirement.Needed}";
-            })
-        );
+            row.TextColorOverride = done
+                ? new Color(255, 38, 101, 49)
+                : new Color(255, 72, 47, 28);
+        }
 
         var currentFirst = PotionStateEncoding.Decode(_state.CurrentFirst);
         var currentSecond = PotionStateEncoding.Decode(_state.CurrentSecond);
