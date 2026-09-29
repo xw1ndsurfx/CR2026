@@ -122,7 +122,8 @@ public sealed class WikiController : IntersectController
         string Quality,
         string Item,
         int Quantity,
-        string? ImageUrl
+        string? ImageUrl,
+        long SoloProfessionExperience
     );
 
     public sealed record WikiCookingRecipe(
@@ -493,11 +494,21 @@ public sealed class WikiController : IntersectController
                     .Select(output =>
                     {
                         var item = ItemDescriptor.Get(output.ItemId);
+                        var soloExperience = Math.Max(
+                            1L,
+                            (long)Math.Round(
+                                recipe.ProfessionExperience *
+                                CookingRecipeDefinition.ExperienceMultiplier(output.Quality),
+                                MidpointRounding.AwayFromZero
+                            )
+                        );
+
                         return new WikiCookingOutput(
                             output.Quality.ToString(),
                             item?.Name ?? "Unknown item",
                             output.Quantity,
-                            item?.ImageUrl
+                            item?.ImageUrl,
+                            soloExperience
                         );
                     })
                     .ToArray();
