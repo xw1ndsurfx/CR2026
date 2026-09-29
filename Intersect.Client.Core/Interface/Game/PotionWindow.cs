@@ -25,7 +25,6 @@ internal sealed class PotionWindow : Base
         private readonly Action<int> _hover;
         private readonly Action<int> _drop;
         private readonly Action _swap;
-        private long _suppressLeftUntil;
 
         public PotionBoardInput(Base parent, Action<int> hover, Action<int> drop, Action swap)
             : base(parent, nameof(PotionBoardInput))
@@ -60,28 +59,19 @@ internal sealed class PotionWindow : Base
             bool userAction = true)
         {
             base.OnMouseDown(mouseButton, mousePosition, userAction);
+
+            // Placement is handled only by a real left-button press. This prevents
+            // the synthetic left Clicked event some backends emit after right click.
+            if (mouseButton != MouseButton.Left)
+                return;
+
             var local = CanvasPosToLocal(mousePosition);
             var column = Width <= 0
                 ? -1
                 : Math.Clamp(local.X * PotionPuzzle.Columns / Math.Max(1, Width), 0, PotionPuzzle.Columns - 1);
 
-            if (mouseButton == MouseButton.Right)
-            {
-                // Rotate on the physical right-button press, not on Clicked. Certain
-                // backends synthesize a Left Clicked event after a right-button
-                // release; handling gameplay on MouseDown avoids that duplicate.
-                _suppressLeftUntil = Environment.TickCount64 + 350;
-                _swap();
-                return;
-            }
-
-            if (mouseButton == MouseButton.Left && column >= 0)
-            {
-                if (Environment.TickCount64 <= _suppressLeftUntil)
-                    return;
-
+            if (column >= 0)
                 _drop(column);
-            }
         }
 
         protected override void OnMouseClicked(
@@ -89,9 +79,12 @@ internal sealed class PotionWindow : Base
             Intersect.Point mousePosition,
             bool userAction = true)
         {
-            // Intentionally no gameplay here. Drop/rotate are handled on MouseDown
-            // so a right click can never also be interpreted as a placement.
             base.OnMouseClicked(mouseButton, mousePosition, userAction);
+
+            // Right-click rotation remains on Clicked because this is the path the
+            // client input backend reliably reports for right mouse buttons.
+            if (mouseButton == MouseButton.Right)
+                _swap();
         }
     }
 
