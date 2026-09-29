@@ -1292,6 +1292,8 @@ public partial class Player : Entity
             PacketSender.SendEntityDataToProximity(this);
             PacketSender.SendExperience(this);
         }
+
+        LeaderboardTitleRuntime.MarkRankingDirty();
     }
 
     /// <summary>
@@ -1459,6 +1461,7 @@ public partial class Player : Entity
         }
 
         AddLevels(-levelsToRemove);
+        LeaderboardTitleRuntime.MarkRankingDirty();
     }
 
     /// <summary>
