@@ -5,6 +5,7 @@ using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
 using Intersect.Client.Maps;
+using Intersect.Client.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.NPCs;
@@ -96,6 +97,10 @@ internal sealed class MinimapHud : Base
             MouseInputEnabled = false,
             KeyboardInputEnabled = false,
         };
+
+        // Fetch the same detached map data used by the World Map so quest
+        // guidance can continue across unloaded/distant maps.
+        PacketSender.SendWorldMapRequest();
 
         UpdateLayout();
         Update();
