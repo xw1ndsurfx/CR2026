@@ -6,7 +6,9 @@ using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.GameObjects;
 using Intersect.Framework.Core.MiniGames.Configuration;
+using Intersect.Framework.Core.WorldEvents.Invasions;
 using Intersect.Models;
+using Intersect.Server.WorldEvents.Invasions;
 using Intersect.Server.Web.Http;
 using Intersect.Server.Web.Types;
 using Microsoft.AspNetCore.Authorization;
@@ -61,6 +63,23 @@ public sealed class WikiController : IntersectController
         string Zone,
         int Revision,
         string PreviewUrl
+    );
+
+    public sealed record WikiInvasionScheduleEntry(
+        string Name,
+        string TargetMap,
+        IReadOnlyList<string> Days,
+        string StartTime,
+        DateTimeOffset? NextStartAt,
+        int WaveCount,
+        bool HasBossWave,
+        long BaseExperience,
+        bool HasPreStartCinematic
+    );
+
+    public sealed record WikiInvasionScheduleResponse(
+        DateTimeOffset GeneratedAt,
+        IReadOnlyList<WikiInvasionScheduleEntry> Upcoming
     );
 
     [HttpGet("catalog")]
@@ -267,6 +286,80 @@ public sealed class WikiController : IntersectController
         Response.Headers.CacheControl = "public,max-age=3600,immutable";
         Response.Headers.ETag = $"\"map-{map.Id:N}-{map.Revision}\"";
         return PhysicalFile(previewPath, "image/png");
+    }
+
+
+    [HttpGet("invasions")]
+    [ProducesResponseType(typeof(WikiInvasionScheduleResponse), (int)HttpStatusCode.OK, ContentTypes.Json)]
+    public IActionResult Invasions()
+    {
+        var now = DateTimeOffset.Now;
+        var upcoming = InvasionConfigurationRuntime.Current.Invasions
+            .Where(invasion => invasion.Enabled)
+            .Select(invasion =>
+            {
+                var targetMap = MapDescriptor.Lookup.TryGetValue(invasion.TargetMapId, out var mapObject) &&
+                                mapObject is MapDescriptor map
+                    ? map.Name
+                    : "Unknown";
+
+                return new WikiInvasionScheduleEntry(
+                    invasion.Name,
+                    targetMap,
+                    ScheduleDayNames(invasion),
+                    $"{invasion.StartHour:00}:{invasion.StartMinute:00}",
+                    NextOccurrence(invasion, now),
+                    invasion.Waves?.Length ?? 0,
+                    invasion.Waves?.Any(wave => wave.Spawns?.Any(spawn => spawn.IsBoss) == true) == true,
+                    invasion.RewardExperience,
+                    invasion.PreStartCinematicEnabled
+                );
+            })
+            .OrderBy(entry => entry.NextStartAt ?? DateTimeOffset.MaxValue)
+            .ThenBy(entry => entry.Name)
+            .ToArray();
+
+        return Ok(new WikiInvasionScheduleResponse(now, upcoming));
+    }
+
+    private static DateTimeOffset? NextOccurrence(InvasionDefinition invasion, DateTimeOffset now)
+    {
+        for (var dayOffset = 0; dayOffset <= 7; ++dayOffset)
+        {
+            var date = now.Date.AddDays(dayOffset);
+            var candidate = new DateTimeOffset(
+                date.Year,
+                date.Month,
+                date.Day,
+                invasion.StartHour,
+                invasion.StartMinute,
+                0,
+                now.Offset
+            );
+
+            if (!invasion.RunsOn(candidate.DayOfWeek) || candidate < now)
+            {
+                continue;
+            }
+
+            return candidate;
+        }
+
+        return null;
+    }
+
+    private static IReadOnlyList<string> ScheduleDayNames(InvasionDefinition invasion)
+    {
+        var days = new List<string>(7);
+        foreach (var day in Enum.GetValues<DayOfWeek>())
+        {
+            if (invasion.RunsOn(day))
+            {
+                days.Add(day.ToString());
+            }
+        }
+
+        return days;
     }
 
     [HttpGet("minigames")]
