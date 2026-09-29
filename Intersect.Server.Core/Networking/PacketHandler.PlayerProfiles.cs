@@ -5,6 +5,7 @@ using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
+using Intersect.Server.Leaderboards;
 using Intersect.Server.Professions;
 
 namespace Intersect.Server.Networking;
@@ -89,6 +90,8 @@ internal sealed partial class PacketHandler
             );
         }
 
+        var rankingTitle = LeaderboardTitleRuntime.GetStatus(target.Id);
+
         client.Send(
             new PlayerProfilePacket
             {
@@ -106,6 +109,10 @@ internal sealed partial class PacketHandler
                 Equipment = equipment.ToArray(),
                 Professions = professions.ToArray(),
                 IsSelf = requester.Id == target.Id,
+                RankingTitle = rankingTitle?.Title ?? string.Empty,
+                RankingExperienceBonusPercent = rankingTitle?.ExperienceBonusPercent ?? 0,
+                RankingPosition = rankingTitle?.Rank ?? 0,
+                RankingConsecutiveDays = rankingTitle?.ConsecutiveDays ?? 0,
             }
         );
     }
