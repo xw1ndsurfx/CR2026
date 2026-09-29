@@ -47,6 +47,7 @@ internal static class RewardConfigurationRuntime
         configuration.IsStructurallyValid &&
         LevelDefinitionsExist(configuration.PokerLevelRewards) &&
         LevelDefinitionsExist(configuration.BlackjackLevelRewards) &&
+        LevelDefinitionsExist(configuration.PotionLevelRewards) &&
         configuration.DailyRewards.All(reward => ItemDescriptor.Get(reward.ItemId) != null) &&
         configuration.PotionRecipes.All(recipe =>
             ItemDescriptor.Get(recipe.OutputItemId) != null &&
@@ -82,12 +83,23 @@ internal static class RewardConfigurationRuntime
         if (currentLevel < 2) return;
 
         var configuration = Current;
-        var rewards = string.Equals(gameKey, MiniGameProgression.Blackjack, StringComparison.OrdinalIgnoreCase)
-            ? configuration.BlackjackLevelRewards
-            : configuration.PokerLevelRewards;
-        var gameName = string.Equals(gameKey, MiniGameProgression.Blackjack, StringComparison.OrdinalIgnoreCase)
-            ? "Blackjack"
-            : "Poker";
+        PokerLevelReward[] rewards;
+        string gameName;
+        if (string.Equals(gameKey, MiniGameProgression.Blackjack, StringComparison.OrdinalIgnoreCase))
+        {
+            rewards = configuration.BlackjackLevelRewards ?? [];
+            gameName = "Blackjack";
+        }
+        else if (string.Equals(gameKey, MiniGameProgression.Potions, StringComparison.OrdinalIgnoreCase))
+        {
+            rewards = configuration.PotionLevelRewards ?? [];
+            gameName = "Alchemy";
+        }
+        else
+        {
+            rewards = configuration.PokerLevelRewards ?? [];
+            gameName = "Poker";
+        }
 
         foreach (var group in (rewards ?? [])
                      .Where(reward => reward.Level <= currentLevel)

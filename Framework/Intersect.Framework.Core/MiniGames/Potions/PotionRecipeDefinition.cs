@@ -24,8 +24,10 @@ public sealed record PotionRecipeDefinition(
         OutputQuantity is >= 1 and <= 1_000_000_000 &&
         CompletionExperience is >= 1 and <= 5_000 &&
         Requirements is { Length: > 0 and <= 6 } &&
-        Requirements.All(requirement => requirement.IsValid) &&
+        Requirements.All(requirement =>
+            requirement.IsValid &&
+            (requirement.Family != PotionFamily.Radiant || RequiredLevel >= 5)) &&
         Requirements.Distinct().Count() == Requirements.Length;
 
-    public PotionRecipe ToPuzzleRecipe() => new(Name, Requirements ?? []);
+    public PotionRecipe ToPuzzleRecipe() => new(Name, Requirements ?? [], RequiredLevel);
 }

@@ -207,6 +207,9 @@ namespace Intersect.Server.Migrations.Sqlite.Game
                     b.Property<bool>("CanGuildBank")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("CanSellInMarketplace")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("CanSell")
                         .HasColumnType("INTEGER");
 

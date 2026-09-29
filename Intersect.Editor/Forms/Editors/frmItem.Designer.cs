@@ -71,6 +71,7 @@ namespace Intersect.Editor.Forms.Editors
             nudDeathDropChance = new DarkNumericUpDown();
             lblDeathDropChance = new Label();
             chkCanSell = new DarkCheckBox();
+            chkCanSellMarketplace = new DarkCheckBox();
             chkCanTrade = new DarkCheckBox();
             chkCanBag = new DarkCheckBox();
             chkCanBank = new DarkCheckBox();
@@ -395,6 +396,7 @@ namespace Intersect.Editor.Forms.Editors
             grpGeneral.Controls.Add(lblEquipmentAnimation);
             grpGeneral.Controls.Add(nudDeathDropChance);
             grpGeneral.Controls.Add(lblDeathDropChance);
+            grpGeneral.Controls.Add(chkCanSellMarketplace);
             grpGeneral.Controls.Add(chkCanSell);
             grpGeneral.Controls.Add(chkCanTrade);
             grpGeneral.Controls.Add(chkCanBag);
@@ -837,6 +839,17 @@ namespace Intersect.Editor.Forms.Editors
             chkCanSell.TabIndex = 92;
             chkCanSell.Text = "Can Sell?";
             chkCanSell.CheckedChanged += chkCanSell_CheckedChanged;
+            // 
+            // chkCanSellMarketplace
+            // 
+            chkCanSellMarketplace.AutoSize = true;
+            chkCanSellMarketplace.Location = new System.Drawing.Point(317, 410);
+            chkCanSellMarketplace.Margin = new Padding(4, 3, 4, 3);
+            chkCanSellMarketplace.Name = "chkCanSellMarketplace";
+            chkCanSellMarketplace.Size = new Size(153, 19);
+            chkCanSellMarketplace.TabIndex = 100;
+            chkCanSellMarketplace.Text = "Can sell in Marketplace";
+            chkCanSellMarketplace.CheckedChanged += chkCanSellMarketplace_CheckedChanged;
             // 
             // chkCanTrade
             // 
@@ -3228,6 +3241,7 @@ namespace Intersect.Editor.Forms.Editors
         private DarkCheckBox chkIgnoreCdr;
         private Controls.GameObjectList lstGameObjects;
         private DarkCheckBox chkCanSell;
+        private DarkCheckBox chkCanSellMarketplace;
         private DarkCheckBox chkCanTrade;
         private DarkCheckBox chkCanBag;
         private DarkCheckBox chkCanBank;

@@ -462,6 +462,7 @@ public partial class MenuContainer : Panel
         Interface.GameUi.HideLogiklikNews();
         Interface.GameUi.HideDailyReward();
         Interface.GameUi.HideLogiCoinShop();
+        Interface.GameUi.HideMarketplace();
     }
 
     public void ToggleCharacterWindow()
@@ -601,6 +602,8 @@ public partial class MenuContainer : Panel
 
         Interface.GameUi.HideLogiklikNews();
         Interface.GameUi.HideDailyReward();
+        Interface.GameUi.HideLogiCoinShop();
+        Interface.GameUi.HideMarketplace();
     }
 
     public bool HasWindowsOpen()
@@ -613,7 +616,9 @@ public partial class MenuContainer : Panel
                           _partyWindow.IsVisible() ||
                           _guildWindow.IsVisibleInTree ||
                           Interface.GameUi.IsLogiklikNewsVisible ||
-                          Interface.GameUi.IsDailyRewardVisible;
+                          Interface.GameUi.IsDailyRewardVisible ||
+                          Interface.GameUi.IsLogiCoinShopVisible ||
+                          Interface.GameUi.IsMarketplaceVisible;
         return windowsOpen;
     }
 

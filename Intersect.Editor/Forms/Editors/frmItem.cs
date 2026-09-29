@@ -212,6 +212,7 @@ public partial class FrmItem : EditorForm
         chkCanBag.Text = Strings.ItemEditor.CanBag;
         chkCanTrade.Text = Strings.ItemEditor.CanTrade;
         chkCanSell.Text = Strings.ItemEditor.CanSell;
+        chkCanSellMarketplace.Text = Strings.ItemEditor.CanSellMarketplace;
 
         grpStack.Text = Strings.ItemEditor.StackOptions;
         chkStackable.Text = Strings.ItemEditor.stackable;
@@ -389,6 +390,7 @@ public partial class FrmItem : EditorForm
             chkCanGuildBank.Checked = Convert.ToBoolean(mEditorItem.CanGuildBank);
             chkCanBag.Checked = Convert.ToBoolean(mEditorItem.CanBag);
             chkCanSell.Checked = Convert.ToBoolean(mEditorItem.CanSell);
+            chkCanSellMarketplace.Checked = Convert.ToBoolean(mEditorItem.CanSellInMarketplace);
             chkCanTrade.Checked = Convert.ToBoolean(mEditorItem.CanTrade);
             chkStackable.Checked = Convert.ToBoolean(mEditorItem.Stackable);
             nudInvStackLimit.Value = mEditorItem.MaxInventoryStack;
@@ -944,6 +946,11 @@ public partial class FrmItem : EditorForm
     private void chkCanSell_CheckedChanged(object sender, EventArgs e)
     {
         mEditorItem.CanSell = chkCanSell.Checked;
+    }
+
+    private void chkCanSellMarketplace_CheckedChanged(object sender, EventArgs e)
+    {
+        mEditorItem.CanSellInMarketplace = chkCanSellMarketplace.Checked;
     }
 
     private void nudDeathDropChance_ValueChanged(object sender, EventArgs e)

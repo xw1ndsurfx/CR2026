@@ -223,6 +223,9 @@ namespace Intersect.Server.Migrations.MySql.Game
                     b.Property<bool>("CanGuildBank")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<bool>("CanSellInMarketplace")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<bool>("CanSell")
                         .HasColumnType("tinyint(1)");
 

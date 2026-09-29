@@ -69,9 +69,9 @@ public partial class GameInterface
         _potionWindow.Update(_potionModel);
     }
 
-    private void SendPotionRequest(PotionRequestKind kind, int column, Guid recipeId)
+    private void SendPotionRequest(PotionRequestKind kind, int column, Guid recipeId, int orientation = 0)
     {
-        var packet = _potionModel.Request(kind, Environment.TickCount64, column, recipeId);
+        var packet = _potionModel.Request(kind, Environment.TickCount64, column, recipeId, orientation);
         if (packet != null) ClientNetwork.SendPacket(packet);
     }
 

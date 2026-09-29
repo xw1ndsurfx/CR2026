@@ -95,7 +95,14 @@ internal static class PotionRuntime
 
         client.Send(packet);
         if (packet.State != null)
+        {
             player.UpdatePotionQuestTasks(new PotionQuestUpdate(false, Guid.Empty, packet.State.Level, 0));
+            RewardConfigurationRuntime.GrantPendingLevelRewards(
+                player,
+                MiniGameProgression.Potions,
+                packet.State.Level
+            );
+        }
         return true;
     }
 
@@ -124,6 +131,7 @@ internal static class PotionRuntime
 
         PotionStatePacket? packet;
         var notifyInventory = false;
+        var rewardLevel = 0;
         PotionQuestUpdate? questUpdate = null;
         lock (Gate)
         {
@@ -157,12 +165,16 @@ internal static class PotionRuntime
 
                     case PotionRequestKind.SelectRecipe:
                     {
-                        if (!session.RecipeSelectionRequired)
+                        // The recipe list can be reopened at any time. If a completed
+                        // recipe still has an undelivered reward, keep that reward safe
+                        // instead of allowing the player to abandon it.
+                        if (!session.RecipeSelectionRequired && session.Puzzle.Complete && !session.RewardGranted)
                         {
-                            error = "RecipeSelectionClosed";
+                            error = "RewardPending";
                             break;
                         }
 
+                        var initialSelection = session.RecipeSelectionRequired;
                         var selected = RewardConfigurationRuntime.Current.PotionRecipes
                             .FirstOrDefault(recipe =>
                                 recipe.IsStructurallyValid &&
@@ -189,6 +201,7 @@ internal static class PotionRuntime
                         session.RewardGranted = false;
                         session.RecipeStartScore = 0;
                         session.RecipeSelectionRequired = false;
+                        if (!initialSelection) ++session.RecipeRound;
                         ++session.Revision;
                         session.Status = $"Selected {selected.Name}.";
                         break;
@@ -201,7 +214,8 @@ internal static class PotionRuntime
                             break;
                         }
                     {
-                        var result = session.Puzzle.Drop(request.Column, session.Orientation);
+                        var requestedOrientation = (PotionPairOrientation)request.Orientation;
+                        var result = session.Puzzle.Drop(request.Column, requestedOrientation);
                         if (!result.Success) error = result.Error;
                         else
                         {
@@ -310,6 +324,7 @@ internal static class PotionRuntime
                             session.RecipeRound,
                             session.Recipe.CompletionExperience
                         );
+                        rewardLevel = session.Progress.Level;
                         session.RewardGranted = true;
                         session.Status = $"Brewed {session.Recipe.OutputQuantity:N0} x {item.Name} • +{session.Recipe.CompletionExperience} Alchemy XP";
                         questUpdate = new PotionQuestUpdate(
@@ -333,6 +348,8 @@ Send:
         if (questUpdate is { } update) player.UpdatePotionQuestTasks(update);
         if (notifyInventory) PacketSender.SendInventory(player);
         sessionSend(packet, client);
+        if (rewardLevel >= 2)
+            RewardConfigurationRuntime.GrantPendingLevelRewards(player, MiniGameProgression.Potions, rewardLevel);
     }
 
     private static int OccupiedCells(PotionPuzzle puzzle)
@@ -407,6 +424,7 @@ Send:
                 RecipeId = session.Recipe.Id,
                 RecipeName = session.Recipe.Name,
                 RequiredLevel = session.Recipe.RequiredLevel,
+                OutputItemId = session.Recipe.OutputItemId,
                 OutputItemName = ItemDescriptor.GetName(session.Recipe.OutputItemId),
                 OutputQuantity = session.Recipe.OutputQuantity,
                 CompletionExperience = session.Recipe.CompletionExperience,

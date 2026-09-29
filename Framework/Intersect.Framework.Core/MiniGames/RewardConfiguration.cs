@@ -28,6 +28,7 @@ public sealed class RewardConfiguration
     public DailyRewardEntry[] DailyRewards { get; set; } = [];
     public PokerLevelReward[] PokerLevelRewards { get; set; } = [];
     public PokerLevelReward[] BlackjackLevelRewards { get; set; } = [];
+    public PokerLevelReward[] PotionLevelRewards { get; set; } = [];
     public PotionRecipeDefinition[] PotionRecipes { get; set; } = [];
     public CookingRecipeDefinition[] CookingRecipes { get; set; } = [];
 
@@ -37,6 +38,7 @@ public sealed class RewardConfiguration
         (DailyRewards ?? []).All(reward => reward is { } && reward.IsValid(DailyCycleDays)) &&
         new PokerLevelRewardSet(PokerLevelRewards ?? []).IsValid &&
         new PokerLevelRewardSet(BlackjackLevelRewards ?? []).IsValid &&
+        new PokerLevelRewardSet(PotionLevelRewards ?? []).IsValid &&
         (PotionRecipes ?? []).Length <= 128 &&
         (PotionRecipes ?? []).All(recipe => recipe is { IsStructurallyValid: true }) &&
         (PotionRecipes ?? []).Select(recipe => recipe.Id).Distinct().Count() == (PotionRecipes ?? []).Length &&
@@ -48,6 +50,7 @@ public sealed class RewardConfiguration
 
     public PokerLevelRewardSet CreatePokerLevelRewardSet() => new(PokerLevelRewards ?? []);
     public PokerLevelRewardSet CreateBlackjackLevelRewardSet() => new(BlackjackLevelRewards ?? []);
+    public PokerLevelRewardSet CreatePotionLevelRewardSet() => new(PotionLevelRewards ?? []);
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -66,6 +69,7 @@ public sealed class RewardConfiguration
         value.DailyRewards ??= [];
         value.PokerLevelRewards ??= [];
         value.BlackjackLevelRewards ??= [];
+        value.PotionLevelRewards ??= [];
         value.PotionRecipes ??= [];
         value.CookingRecipes ??= [];
         if (!value.IsStructurallyValid)

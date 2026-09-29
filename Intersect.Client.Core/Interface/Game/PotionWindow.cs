@@ -1,7 +1,10 @@
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Input;
+using Intersect.Client.Framework.File_Management;
+using Intersect.Client.General;
 using Intersect.Client.MiniGames;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Potions;
 using Rectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
@@ -17,21 +20,22 @@ namespace Intersect.Client.Interface.Game;
 internal sealed class PotionWindow : Base
 {
     private sealed record Placement(Base Control, int X, int Y, int W, int H, int Font = 0);
-    private sealed record PieceMotion(PotionPiece Piece, int Column, int Row, long Started, int Duration);
+    private sealed record PieceMotion(PotionPiece Piece, int Column, int Row, int StartY, long Started, int Duration);
     private sealed record CellPulse(int Column, int Row, long Started, int Duration);
 
     private sealed class PotionBoardInput : Base
     {
         private readonly Action<int> _hover;
         private readonly Action<int> _drop;
-        private readonly Action _swap;
+        private readonly Action _rotate;
+        private long _lastRightRotateAt = long.MinValue;
 
-        public PotionBoardInput(Base parent, Action<int> hover, Action<int> drop, Action swap)
+        public PotionBoardInput(Base parent, Action<int> hover, Action<int> drop, Action rotate)
             : base(parent, nameof(PotionBoardInput))
         {
             _hover = hover;
             _drop = drop;
-            _swap = swap;
+            _rotate = rotate;
             ShouldDrawBackground = false;
             MouseInputEnabled = true;
             KeyboardInputEnabled = false;
@@ -49,8 +53,34 @@ internal sealed class PotionWindow : Base
 
         protected override void OnMouseLeft()
         {
+            // TLOPO-style: the active pair stays parked above the last selected
+            // column when the cursor leaves the board.
             base.OnMouseLeft();
-            _hover(-1);
+        }
+
+        protected override void OnMouseDown(
+            MouseButton mouseButton,
+            Intersect.Point mousePosition,
+            bool userAction = true)
+        {
+            base.OnMouseDown(mouseButton, mousePosition, userAction);
+
+            if (mouseButton == MouseButton.Right)
+            {
+                TryRotate();
+                return;
+            }
+
+            if (mouseButton != MouseButton.Left)
+                return;
+
+            var local = CanvasPosToLocal(mousePosition);
+            var column = Width <= 0
+                ? -1
+                : Math.Clamp(local.X * PotionPuzzle.Columns / Math.Max(1, Width), 0, PotionPuzzle.Columns - 1);
+
+            if (column >= 0)
+                _drop(column);
         }
 
         protected override void OnMouseClicked(
@@ -59,19 +89,21 @@ internal sealed class PotionWindow : Base
             bool userAction = true)
         {
             base.OnMouseClicked(mouseButton, mousePosition, userAction);
-            var local = CanvasPosToLocal(mousePosition);
-            var column = Width <= 0
-                ? -1
-                : Math.Clamp(local.X * PotionPuzzle.Columns / Math.Max(1, Width), 0, PotionPuzzle.Columns - 1);
 
+            // Some backends only surface the right button here. Try both paths,
+            // but debounce them so one physical click can rotate at most once.
             if (mouseButton == MouseButton.Right)
-            {
-                _swap();
-                return;
-            }
+                TryRotate();
+        }
 
-            if (mouseButton == MouseButton.Left && column >= 0)
-                _drop(column);
+        private void TryRotate()
+        {
+            var now = Environment.TickCount64;
+            if (now - _lastRightRotateAt < 150)
+                return;
+
+            _lastRightRotateAt = now;
+            _rotate();
         }
     }
 
@@ -97,7 +129,7 @@ internal sealed class PotionWindow : Base
 
     private readonly Canvas _canvas;
     private readonly Base _content;
-    private readonly Action<PotionRequestKind, int, Guid> _send;
+    private readonly Action<PotionRequestKind, int, Guid, int> _send;
     private readonly List<Placement> _placements = [];
     private readonly Button[] _dropButtons = new Button[PotionPuzzle.Columns];
     private readonly PotionBoardInput _boardInput;
@@ -105,8 +137,10 @@ internal sealed class PotionWindow : Base
     private readonly List<CellPulse> _pulses = [];
 
     private readonly Label _title;
+    private readonly ImagePanel _rewardIcon;
     private readonly Label _recipe;
     private readonly Label _requirements;
+    private readonly Label[] _requirementRows = new Label[6];
     private readonly Label _current;
     private readonly Label _next;
     private readonly Label _score;
@@ -119,8 +153,10 @@ internal sealed class PotionWindow : Base
     private readonly Button[] _recipeButtons = new Button[8];
     private readonly Button _recipePrev;
     private readonly Button _recipeNextPage;
-    private readonly Button _swap;
+    private readonly Button _recipeBack;
+    private readonly Button _recipeList;
     private readonly Button _nextRecipe;
+    private readonly Button _rotate;
     private readonly Button _restart;
 
     private PokerSceneLayout _layout;
@@ -130,20 +166,27 @@ internal sealed class PotionWindow : Base
     private long _lastExperience;
     private long _fxStarted;
     private long _fxUntil;
+    private long _dropAnimationUntil;
+    private long _orientationRevision = -1;
+    private PotionPairOrientation _localOrientation = PotionPairOrientation.Vertical;
     private string _error = string.Empty;
     private bool _pending;
     private bool _destroyed;
+    private bool _showRecipeList;
+    private bool _recipeSelectionRequested;
     private int _hoverColumn = -1;
     private double _previewColumn = -1;
     private int _recipePage;
 
     public bool ExitRequested { get; private set; }
 
-    public PotionWindow(Canvas canvas, Action<PotionRequestKind, int, Guid> send) : base(canvas, nameof(PotionWindow))
+    public PotionWindow(Canvas canvas, Action<PotionRequestKind, int, Guid, int> send) : base(canvas, nameof(PotionWindow))
     {
         _canvas = canvas;
         _send = send;
         _layout = new PokerSceneLayout(Math.Max(1, canvas.Width), Math.Max(1, canvas.Height));
+        _hoverColumn = Math.Max(0, PotionPuzzle.Columns / 2 - 1);
+        _previewColumn = _hoverColumn;
 
         ShouldDrawBackground = false;
         MouseInputEnabled = true;
@@ -155,27 +198,64 @@ internal sealed class PotionWindow : Base
             MouseInputEnabled = false,
         };
 
-        _title = Label("PotionTitle", 70, 28, 860, 42, 22);
+        // Keep the title entirely inside the brown board header. The upcoming
+        // pair is intentionally not rendered so only the live pair is visible.
+        _title = Label("PotionTitle", BoardX, BoardY - 58, PotionPuzzle.Columns * CellW, 42, 19);
         _title.Text = "ROYAL ALCHEMY";
         _title.TextAlign = Pos.Center;
+        _title.TextColorOverride = Color.White;
 
-        _recipe = Label("PotionRecipe", 65, 112, 315, 76, 18);
-        _requirements = Label("PotionRequirements", 65, 198, 315, 184, 14);
-        _current = Label("PotionCurrent", 65, 395, 315, 54, 15);
-        _next = Label("PotionNext", 65, 455, 315, 54, 13);
-        _score = Label("PotionScore", 65, 525, 315, 34, 14);
-        _xpLabel = Label("PotionXpLabel", 65, 562, 315, 24, 12);
-        _status = Label("PotionStatus", 65, 614, 315, 50, 12);
+        _rewardIcon = new ImagePanel(_content, "PotionRewardIcon")
+        {
+            MaintainAspectRatio = true,
+            ShouldDrawBackground = false,
+            MouseInputEnabled = false,
+            KeyboardInputEnabled = false,
+            IsHidden = true,
+        };
+        Place(_rewardIcon, 72, 118, 52, 52);
+
+        _recipe = Label("PotionRecipe", 136, 118, 240, 52, 17);
+        _recipe.TextAlign = Pos.Left | Pos.CenterV;
+        _requirements = Label("PotionRequirements", 118, 198, 250, 24, 13);
+        _requirements.Text = "INGREDIENTS";
+        for (var i = 0; i < _requirementRows.Length; ++i)
+        {
+            _requirementRows[i] = Label("PotionRequirementRow" + i, 118, 224 + i * 34, 250, 30, 12);
+            _requirementRows[i].IsHidden = true;
+        }
+
+        _current = Label("PotionCurrent", 65, 438, 315, 46, 14);
+        _next = Label("PotionNext", 65, 489, 315, 46, 12);
+        _next.IsHidden = true;
+        _score = Label("PotionScore", 65, 542, 315, 30, 13);
+        _xpLabel = Label("PotionXpLabel", 65, 575, 315, 24, 12);
+        _status = Label("PotionStatus", 65, 624, 315, 54, 12);
+
+        var parchmentText = new Color(255, 72, 47, 28);
+        _recipe.TextColorOverride = parchmentText;
+        _requirements.TextColorOverride = new Color(255, 96, 60, 30);
+        _current.TextColorOverride = parchmentText;
+        _next.TextColorOverride = parchmentText;
+        _score.TextColorOverride = parchmentText;
+        _xpLabel.TextColorOverride = parchmentText;
+        _status.TextColorOverride = new Color(255, 96, 49, 35);
 
         _fx = Label("PotionFx", BoardX, 280, PotionPuzzle.Columns * CellW, 46, 20);
         _fx.TextAlign = Pos.Center;
         _fx.TextColorOverride = new Color(255, 236, 210, 117);
         _fx.IsHidden = true;
 
-        _swap = Button("PotionSwap", "Rotate pair", 65, 675, 140, () => Send(PotionRequestKind.Swap));
-        _nextRecipe = Button("PotionNextRecipe", "Brew next", 215, 675, 165, () => Send(PotionRequestKind.NextRecipe));
-        _restart = Button("PotionRestart", "Restart board", 65, 718, 140, () => Send(PotionRequestKind.Restart));
-        Button("PotionExit", "Exit", 215, 718, 165, () => ExitRequested = true);
+        _recipeList = Button("PotionRecipeList", "Recipe list", 65, 690, 140, OpenRecipeList);
+        _nextRecipe = Button("PotionNextRecipe", "Next recipe", 215, 690, 165, () => Send(PotionRequestKind.NextRecipe));
+
+        // Keep a deterministic rotation control available at all times. Right-click
+        // remains supported, but this button uses the exact same local rotation path
+        // and is the reliable fallback on clients where mouse-button edge reporting
+        // is inconsistent.
+        _rotate = Button("PotionRotate", "Rotate pair", 65, 730, 100, RotatePairLocal);
+        _restart = Button("PotionRestart", "Restart", 170, 730, 100, () => Send(PotionRequestKind.Restart));
+        Button("PotionExit", "Exit", 275, 730, 105, () => ExitRequested = true);
 
         _recipePicker = new RecipePickerPanel(this)
         {
@@ -238,6 +318,18 @@ internal sealed class PotionWindow : Base
             RefreshRecipePicker();
         };
 
+        _recipeBack = new Button(_recipePicker, "PotionRecipeBack")
+        {
+            Font = Skin.DefaultFont,
+            FontSize = 12,
+            Text = "Back to game",
+        };
+        _recipeBack.Clicked += (_, _) =>
+        {
+            if (_state?.RecipeSelectionRequired == true || _pending) return;
+            _showRecipeList = false;
+        };
+
         for (var column = 0; column < PotionPuzzle.Columns; ++column)
         {
             var captured = column;
@@ -260,10 +352,20 @@ internal sealed class PotionWindow : Base
                 _hoverColumn = column;
                 if (_previewColumn < 0 && column >= 0) _previewColumn = column;
             },
-            column => Send(PotionRequestKind.Drop, column),
-            () => Send(PotionRequestKind.Swap)
+            DropFromBoard,
+            RotatePairLocal
         );
-        Place(_boardInput, BoardX, BoardY, PotionPuzzle.Columns * CellW, PotionPuzzle.Rows * CellH);
+
+        // The live pair is drawn above the first board row. Include that whole
+        // header/drop zone in the mouse surface so the player can manipulate the
+        // pair directly, like TLOPO, instead of having to click inside the grid.
+        Place(
+            _boardInput,
+            BoardX,
+            BoardY - 96,
+            PotionPuzzle.Columns * CellW,
+            PotionPuzzle.Rows * CellH + 96
+        );
 
         ResizeToCanvas();
     }
@@ -277,24 +379,60 @@ internal sealed class PotionWindow : Base
         if (nextState != null && nextState.Revision != _lastRevision)
             CapturePresentationEffects(nextState);
 
+        if (nextState != null && nextState.Revision != _orientationRevision)
+        {
+            _localOrientation = (PotionPairOrientation)nextState.Orientation;
+            _orientationRevision = nextState.Revision;
+        }
+
+        if (nextState != null && nextState.Board.All(value => value == 0) &&
+            (_state == null || _state.Board.Any(value => value != 0)))
+        {
+            _motions.Clear();
+            _pulses.Clear();
+            _dropAnimationUntil = 0;
+        }
+
         _state = nextState;
         _error = model.ErrorCode;
         _pending = model.Pending;
         RefreshText();
         RefreshRecipePicker();
 
-        var selectingRecipe = _state?.RecipeSelectionRequired == true;
+        var recipeSelectionRequired = _state?.RecipeSelectionRequired == true;
+
+        if (_recipeSelectionRequested && !_pending)
+        {
+            // The response to the selection arrived. Close immediately on success;
+            // on rejection, leave the picker open so the player can choose again.
+            if (!recipeSelectionRequired && string.IsNullOrWhiteSpace(_error))
+                _showRecipeList = false;
+            else
+                _showRecipeList = true;
+
+            _recipeSelectionRequested = false;
+        }
+        else if (recipeSelectionRequired && !_recipeSelectionRequested)
+        {
+            _showRecipeList = true;
+        }
+
+        var selectingRecipe = recipeSelectionRequired || _showRecipeList;
+        var dropAnimating = IsDropAnimating();
+
         _recipePicker.IsHidden = !selectingRecipe;
         if (selectingRecipe) _recipePicker.BringToFront();
 
         for (var column = 0; column < _dropButtons.Length; ++column)
             _dropButtons[column].IsDisabled =
-                selectingRecipe || _pending || _state == null || _state.Complete || _state.GameOver || EmptyCells(column) < 2;
+                selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete || _state.GameOver || EmptyCells(column) < 2;
 
-        _swap.IsDisabled = selectingRecipe || _pending || _state == null || _state.Complete || _state.GameOver;
-        _nextRecipe.IsDisabled = selectingRecipe || _pending || _state is not { Complete: true };
-        _restart.IsDisabled = selectingRecipe || _pending || _state == null || _state.Complete;
-        _boardInput.IsDisabled = selectingRecipe || _pending || _state == null || _state.Complete || _state.GameOver;
+        _recipeList.IsDisabled = recipeSelectionRequired || dropAnimating || _pending || _state == null;
+        _nextRecipe.IsDisabled = selectingRecipe || dropAnimating || _pending || _state is not { Complete: true };
+        _rotate.IsDisabled = selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete || _state.GameOver;
+        _restart.IsDisabled = selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete;
+        _boardInput.IsDisabled = selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete || _state.GameOver;
+        _recipeBack.IsDisabled = recipeSelectionRequired || _pending;
 
         UpdatePreviewMotion();
         UpdateFx();
@@ -340,6 +478,10 @@ internal sealed class PotionWindow : Base
         _recipePickerPage.FontSize = _layout.FontSize(11);
         var next = _layout.LocalRect(466, 454, 130, 38);
         _recipeNextPage.SetBounds(next.X, next.Y, next.Width, next.Height);
+
+        var back = _layout.LocalRect(220, 500, 180, 30);
+        _recipeBack.SetBounds(back.X, back.Y, back.Width, back.Height);
+        _recipeBack.FontSize = _layout.FontSize(11);
     }
 
     protected override void Render(SkinBase skin)
@@ -347,30 +489,36 @@ internal sealed class PotionWindow : Base
         var renderer = skin.Renderer;
         var now = Environment.TickCount64;
 
-        renderer.DrawColor = new Color(224, 8, 12, 10);
+        // Keep the alchemy UI readable while letting the game world remain visible.
+        // Alpha 26 = roughly 10% opacity / 90% transparent.
+        renderer.DrawColor = new Color(26, 18, 11, 7);
         renderer.DrawFilledRect(new Rectangle(0, 0, Width, Height));
 
-        DrawPanel(renderer, 45, 90, 355, 675, new Color(47, 34, 27), new Color(145, 100, 55));
+        DrawPanel(renderer, 45, 90, 355, 675, new Color(255, 214, 196, 146), new Color(255, 94, 58, 31));
+        DrawParchmentDetails(renderer);
         DrawPanel(
             renderer,
             BoardX - 22,
             BoardY - 58,
             PotionPuzzle.Columns * CellW + 44,
             PotionPuzzle.Rows * CellH + 126,
-            new Color(43, 27, 20),
-            new Color(148, 101, 54)
+            new Color(255, 67, 40, 24),
+            new Color(255, 128, 78, 39)
         );
 
         var board = _layout.Rect(BoardX, BoardY, PotionPuzzle.Columns * CellW, PotionPuzzle.Rows * CellH);
-        renderer.DrawColor = new Color(37, 67, 45);
+        renderer.DrawColor = new Color(255, 101, 59, 32);
         renderer.DrawFilledRect(new Rectangle(board.X, board.Y, board.Width, board.Height));
+        DrawWoodGrain(renderer, board);
+        DrawAlchemyRune(renderer, board);
+        DrawRecipeRequirementIcons(renderer);
 
         DrawExperienceBar(renderer);
 
         if (_hoverColumn >= 0 && _state is { Complete: false, GameOver: false } hoverState)
         {
-            var valid = !_pending && CanPlace(_hoverColumn, (PotionPairOrientation)hoverState.Orientation);
-            var span = IsHorizontal((PotionPairOrientation)hoverState.Orientation) ? 2 : 1;
+            var valid = !_pending && !IsDropAnimating() && CanPlace(_hoverColumn, _localOrientation);
+            var span = IsHorizontal(_localOrientation) ? 2 : 1;
             var hover = _layout.Rect(
                 BoardX + _hoverColumn * CellW,
                 BoardY,
@@ -407,7 +555,7 @@ internal sealed class PotionWindow : Base
     {
         if (_state == null) return;
 
-        var bounds = _layout.Rect(65, 589, 315, 14);
+        var bounds = _layout.Rect(65, 603, 315, 14);
         renderer.DrawColor = new Color(80, 145, 100, 55);
         renderer.DrawFilledRect(new Rectangle(bounds.X - 1, bounds.Y - 1, bounds.Width + 2, bounds.Height + 2));
 
@@ -436,7 +584,8 @@ internal sealed class PotionWindow : Base
 
     private void SelectRecipeSlot(int slot)
     {
-        if (_state?.RecipeSelectionRequired != true || _pending) return;
+        if (_state == null || _pending || _recipeSelectionRequested ||
+            (!_showRecipeList && !_state.RecipeSelectionRequired)) return;
         var index = _recipePage * _recipeButtons.Length + slot;
         if (index < 0 || index >= _state.RecipeChoices.Length) return;
 
@@ -447,7 +596,19 @@ internal sealed class PotionWindow : Base
             return;
         }
 
+        _recipeSelectionRequested = true;
         Send(PotionRequestKind.SelectRecipe, 0, recipe.Id);
+        RefreshRecipePicker();
+    }
+
+    private void OpenRecipeList()
+    {
+        if (_pending || IsDropAnimating() || _state == null) return;
+        _recipePage = 0;
+        _showRecipeList = true;
+        RefreshRecipePicker();
+        _recipePicker.IsHidden = false;
+        _recipePicker.BringToFront();
     }
 
     private void RefreshRecipePicker()
@@ -472,7 +633,7 @@ internal sealed class PotionWindow : Base
 
             var recipe = choices[index];
             button.IsHidden = false;
-            button.IsDisabled = _pending || !recipe.Unlocked;
+            button.IsDisabled = _pending || _recipeSelectionRequested || !recipe.Unlocked;
             button.Text = recipe.Unlocked
                 ? $"Lv {recipe.RequiredLevel}  {recipe.Name}\n{recipe.OutputQuantity:N0} x {recipe.OutputItemName}   •   +{recipe.CompletionExperience} XP"
                 : recipe.EventLocked && recipe.RequiredLevel <= (_state?.Level ?? 0)
@@ -497,13 +658,84 @@ internal sealed class PotionWindow : Base
         renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, bounds.Height));
     }
 
+    private void DrawParchmentDetails(RendererBase renderer)
+    {
+        var panel = _layout.Rect(45, 90, 355, 675);
+        renderer.DrawColor = new Color(55, 255, 244, 205);
+        renderer.DrawFilledRect(new Rectangle(panel.X + 5, panel.Y + 5, Math.Max(1, panel.Width - 10), 2));
+        renderer.DrawColor = new Color(80, 104, 64, 35);
+        renderer.DrawFilledRect(new Rectangle(panel.X + 5, panel.Y + panel.Height - 7, Math.Max(1, panel.Width - 10), 2));
+
+        var separator = _layout.Rect(108, 198, 2, 224);
+        renderer.DrawColor = new Color(105, 104, 64, 35);
+        renderer.DrawFilledRect(new Rectangle(separator.X, separator.Y, separator.Width, separator.Height));
+
+        var rule = _layout.Rect(64, 189, 316, 1);
+        renderer.DrawColor = new Color(85, 104, 64, 35);
+        renderer.DrawFilledRect(new Rectangle(rule.X, rule.Y, rule.Width, rule.Height));
+    }
+
+    private void DrawWoodGrain(RendererBase renderer, PokerSceneRect board)
+    {
+        renderer.DrawColor = new Color(55, 177, 112, 67);
+        for (var i = 1; i < 8; ++i)
+        {
+            var y = board.Y + i * board.Height / 8;
+            renderer.DrawLine(board.X + 2, y, board.X + board.Width - 3, y);
+        }
+
+        renderer.DrawColor = new Color(45, 58, 32, 21);
+        for (var i = 0; i < 5; ++i)
+        {
+            var x = board.X + (i * 83 + 37) % Math.Max(1, board.Width - 20) + 10;
+            renderer.DrawLine(x, board.Y + 4, Math.Min(board.X + board.Width - 4, x + 26), board.Y + board.Height - 5);
+        }
+    }
+
+    private void DrawAlchemyRune(RendererBase renderer, PokerSceneRect board)
+    {
+        var cx = board.X + board.Width / 2;
+        var top = board.Y + 22;
+        var bottom = board.Y + board.Height - 22;
+        var half = Math.Max(18, board.Width / 7);
+
+        renderer.DrawColor = new Color(82, 48, 25, 17);
+        renderer.DrawLine(cx, top, cx, bottom);
+        renderer.DrawLine(cx - half, top + 48, cx + half, top + 48);
+        renderer.DrawLine(cx - half, bottom - 48, cx + half, bottom - 48);
+        renderer.DrawLine(cx - half, top + 48, cx, top + 86);
+        renderer.DrawLine(cx + half, top + 48, cx, top + 86);
+        renderer.DrawLine(cx - half, bottom - 48, cx, bottom - 86);
+        renderer.DrawLine(cx + half, bottom - 48, cx, bottom - 86);
+        renderer.DrawLine(cx - half / 2, top + 112, cx + half / 2, bottom - 112);
+        renderer.DrawLine(cx + half / 2, top + 112, cx - half / 2, bottom - 112);
+    }
+
+    private void DrawRecipeRequirementIcons(RendererBase renderer)
+    {
+        if (_state?.Requirements == null) return;
+
+        for (var i = 0; i < _state.Requirements.Length && i < _requirementRows.Length; ++i)
+        {
+            var requirement = _state.Requirements[i];
+            var piece = new PotionPiece((PotionFamily)requirement.Family, requirement.Level);
+            var icon = _layout.Rect(70, 221 + i * 34, 32, 28);
+            DrawPiece(renderer, icon, piece);
+
+            if (requirement.Progress < requirement.Needed) continue;
+            renderer.DrawColor = new Color(255, 44, 104, 52);
+            renderer.DrawLine(icon.X + icon.Width - 10, icon.Y + 4, icon.X + icon.Width - 6, icon.Y + 9);
+            renderer.DrawLine(icon.X + icon.Width - 6, icon.Y + 9, icon.X + icon.Width - 1, icon.Y + 1);
+        }
+    }
+
     private void DrawHoverPair(RendererBase renderer)
     {
-        if (_hoverColumn < 0 || _previewColumn < 0 || _pending ||
+        if (_hoverColumn < 0 || _previewColumn < 0 || _pending || IsDropAnimating() ||
             _state is not { Complete: false, GameOver: false } state)
             return;
 
-        var orientation = (PotionPairOrientation)state.Orientation;
+        var orientation = _localOrientation;
         if (!CanPlace(_hoverColumn, orientation)) return;
 
         var first = PotionStateEncoding.Decode(state.CurrentFirst);
@@ -549,7 +781,7 @@ internal sealed class PotionWindow : Base
 
             var t = Math.Clamp(elapsed / (double)motion.Duration, 0d, 1d);
             var eased = 1d - Math.Pow(1d - t, 3d);
-            var startY = BoardY - CellH;
+            var startY = motion.StartY;
             var targetY = BoardY + motion.Row * CellH;
             var y = startY + (int)((targetY - startY) * eased);
             var rect = _layout.Rect(BoardX + motion.Column * CellW, y, CellW, CellH);
@@ -581,13 +813,15 @@ internal sealed class PotionWindow : Base
         {
             PotionFamily.Verdant => new Color(alpha, 64, 145, 67),
             PotionFamily.Ember => new Color(alpha, 160, 52, 72),
-            _ => new Color(alpha, 61, 103, 178),
+            PotionFamily.Arcane => new Color(alpha, 61, 103, 178),
+            _ => new Color(alpha, 205, 151, 43),
         };
         var dark = piece.Family switch
         {
             PotionFamily.Verdant => new Color(alpha, 31, 79, 42),
             PotionFamily.Ember => new Color(alpha, 86, 27, 44),
-            _ => new Color(alpha, 31, 51, 101),
+            PotionFamily.Arcane => new Color(alpha, 31, 51, 101),
+            _ => new Color(alpha, 105, 73, 20),
         };
         var accent = piece.Level switch
         {
@@ -627,17 +861,90 @@ internal sealed class PotionWindow : Base
         renderer.DrawFilledRect(new Rectangle(ix + icut / 2, iy + ih - iband * 2, Math.Max(1, iw - icut), iband));
         renderer.DrawFilledRect(new Rectangle(ix + icut, iy + ih - iband, Math.Max(1, iw - icut * 2), iband));
 
-        // Glass highlight / tier pips.
+        // Glass highlight, a high-contrast family glyph and tier pips make every
+        // temporary ingredient readable before the final hand-painted art exists.
         renderer.DrawColor = new Color(alpha, 245, 245, 228);
-        renderer.DrawFilledRect(new Rectangle(ix + iw / 4, iy + ih / 5, Math.Max(2, iw / 6), Math.Max(2, ih / 10)));
+        renderer.DrawFilledRect(new Rectangle(ix + iw / 5, iy + ih / 6, Math.Max(2, iw / 6), Math.Max(2, ih / 10)));
+        DrawPieceGlyph(renderer, ix, iy, iw, ih, piece, alpha);
 
-        var pip = Math.Max(2, Math.Min(iw, ih) / 10);
+        var pip = Math.Max(2, Math.Min(iw, ih) / 11);
         renderer.DrawColor = accent;
         for (var i = 0; i < piece.Level; ++i)
         {
             var px = ix + iw / 2 - (piece.Level * pip * 2 - pip) / 2 + i * pip * 2;
-            var py = iy + ih / 2 - pip / 2;
+            var py = iy + ih - pip * 3;
             renderer.DrawFilledRect(new Rectangle(px, py, pip, pip));
+        }
+    }
+
+    private static void DrawPieceGlyph(
+        RendererBase renderer,
+        int x,
+        int y,
+        int width,
+        int height,
+        PotionPiece piece,
+        byte alpha)
+    {
+        var cx = x + width / 2;
+        var cy = y + height / 2 - Math.Max(1, height / 14);
+        var scale = Math.Max(2, Math.Min(width, height) / 10);
+        renderer.DrawColor = new Color(alpha, 248, 238, 207);
+
+        switch (piece.Family)
+        {
+            case PotionFamily.Verdant:
+                renderer.DrawLine(cx - scale * 2, cy + scale * 2, cx + scale * 2, cy - scale * 2);
+                renderer.DrawFilledRect(new Rectangle(cx - scale * 2, cy - scale * 2, scale * 2, scale));
+                renderer.DrawFilledRect(new Rectangle(cx, cy, scale * 2, scale));
+                renderer.DrawFilledRect(new Rectangle(cx - scale, cy - scale, scale * 2, scale * 2));
+                break;
+
+            case PotionFamily.Ember:
+                renderer.DrawFilledRect(new Rectangle(cx - scale, cy - scale * 2, scale * 2, scale * 4));
+                renderer.DrawFilledRect(new Rectangle(cx - scale * 2, cy, scale * 4, scale * 2));
+                renderer.DrawFilledRect(new Rectangle(cx, cy - scale * 3, scale, scale * 2));
+                renderer.DrawColor = new Color(alpha, 255, 205, 114);
+                renderer.DrawFilledRect(new Rectangle(cx - Math.Max(1, scale / 2), cy, Math.Max(1, scale), scale * 2));
+                break;
+
+            case PotionFamily.Arcane:
+                // Arcane = an unmistakable eye/rune.
+                renderer.DrawLine(cx - scale * 3, cy, cx - scale, cy - scale * 2);
+                renderer.DrawLine(cx - scale, cy - scale * 2, cx + scale, cy - scale * 2);
+                renderer.DrawLine(cx + scale, cy - scale * 2, cx + scale * 3, cy);
+                renderer.DrawLine(cx + scale * 3, cy, cx + scale, cy + scale * 2);
+                renderer.DrawLine(cx + scale, cy + scale * 2, cx - scale, cy + scale * 2);
+                renderer.DrawLine(cx - scale, cy + scale * 2, cx - scale * 3, cy);
+
+                renderer.DrawFilledRect(new Rectangle(cx - scale, cy - scale, scale * 2, scale * 2));
+                renderer.DrawColor = new Color(alpha, 149, 222, 255);
+                renderer.DrawFilledRect(new Rectangle(cx - Math.Max(1, scale / 2), cy - Math.Max(1, scale / 2),
+                    Math.Max(2, scale), Math.Max(2, scale)));
+
+                renderer.DrawColor = new Color(alpha, 248, 238, 207);
+                renderer.DrawLine(cx, cy - scale * 3, cx, cy - scale * 2);
+                renderer.DrawLine(cx, cy + scale * 2, cx, cy + scale * 3);
+                renderer.DrawLine(cx - scale * 4, cy, cx - scale * 3, cy);
+                renderer.DrawLine(cx + scale * 3, cy, cx + scale * 4, cy);
+                break;
+
+            default:
+                // Radiant = a gold sun/star, visually distinct from all three
+                // starter families and introduced with level 5+ recipes.
+                renderer.DrawFilledRect(new Rectangle(cx - scale, cy - scale, scale * 2, scale * 2));
+                renderer.DrawLine(cx, cy - scale * 4, cx, cy - scale * 2);
+                renderer.DrawLine(cx, cy + scale * 2, cx, cy + scale * 4);
+                renderer.DrawLine(cx - scale * 4, cy, cx - scale * 2, cy);
+                renderer.DrawLine(cx + scale * 2, cy, cx + scale * 4, cy);
+                renderer.DrawLine(cx - scale * 3, cy - scale * 3, cx - scale * 2, cy - scale * 2);
+                renderer.DrawLine(cx + scale * 2, cy + scale * 2, cx + scale * 3, cy + scale * 3);
+                renderer.DrawLine(cx + scale * 2, cy - scale * 2, cx + scale * 3, cy - scale * 3);
+                renderer.DrawLine(cx - scale * 3, cy + scale * 3, cx - scale * 2, cy + scale * 2);
+                renderer.DrawColor = new Color(alpha, 255, 232, 143);
+                renderer.DrawFilledRect(new Rectangle(cx - Math.Max(1, scale / 2), cy - Math.Max(1, scale / 2),
+                    Math.Max(2, scale), Math.Max(2, scale)));
+                break;
         }
     }
 
@@ -654,8 +961,8 @@ internal sealed class PotionWindow : Base
 
                 var row = index / PotionPuzzle.Columns;
                 var column = index % PotionPuzzle.Columns;
-                if (_motions.Count < 32)
-                    _motions.Add(new(PotionStateEncoding.Decode(after), column, row, now, 250 + row * 22));
+                if (!IsDropAnimating() && _motions.Count < 32)
+                    QueueMotion(PotionStateEncoding.Decode(after), column, row, now, 420 + row * 28);
 
                 if (before != 0)
                     _pulses.Add(new(column, row, now, 650));
@@ -702,22 +1009,112 @@ internal sealed class PotionWindow : Base
         _pulses.RemoveAll(pulse => now - pulse.Started >= pulse.Duration);
     }
 
+    private void DropFromBoard(int column)
+    {
+        if (_pending || IsDropAnimating() || _state is not { Complete: false, GameOver: false } state)
+            return;
+
+        var orientation = _localOrientation;
+        if (!CanPlace(column, orientation))
+            return;
+
+        AnimateLocalDrop(column, orientation, state);
+        Send(PotionRequestKind.Drop, column, Guid.Empty, (int)orientation);
+    }
+
+    private void AnimateLocalDrop(int column, PotionPairOrientation orientation, PotionSessionState state)
+    {
+        var now = Environment.TickCount64;
+        var first = PotionStateEncoding.Decode(state.CurrentFirst);
+        var second = PotionStateEncoding.Decode(state.CurrentSecond);
+        var longest = 0;
+
+        switch (orientation)
+        {
+            case PotionPairOrientation.Vertical:
+            {
+                var empty = EmptyCells(column);
+                var firstDuration = 560 + (empty - 1) * 30;
+                var secondDuration = 560 + (empty - 2) * 30;
+                QueueMotion(first, column, empty - 1, now, firstDuration, BoardY - 52);
+                QueueMotion(second, column, empty - 2, now + 45, secondDuration, BoardY - 92);
+                longest = Math.Max(firstDuration, 45 + secondDuration);
+                break;
+            }
+
+            case PotionPairOrientation.VerticalReversed:
+            {
+                var empty = EmptyCells(column);
+                var secondDuration = 560 + (empty - 1) * 30;
+                var firstDuration = 560 + (empty - 2) * 30;
+                QueueMotion(second, column, empty - 1, now, secondDuration, BoardY - 52);
+                QueueMotion(first, column, empty - 2, now + 45, firstDuration, BoardY - 92);
+                longest = Math.Max(secondDuration, 45 + firstDuration);
+                break;
+            }
+
+            case PotionPairOrientation.Horizontal:
+            {
+                var leftDuration = 560 + (EmptyCells(column) - 1) * 30;
+                var rightDuration = 560 + (EmptyCells(column + 1) - 1) * 30;
+                QueueMotion(first, column, EmptyCells(column) - 1, now, leftDuration, BoardY - 66);
+                QueueMotion(second, column + 1, EmptyCells(column + 1) - 1, now + 35, rightDuration, BoardY - 66);
+                longest = Math.Max(leftDuration, 35 + rightDuration);
+                break;
+            }
+
+            case PotionPairOrientation.HorizontalReversed:
+            {
+                var leftDuration = 560 + (EmptyCells(column) - 1) * 30;
+                var rightDuration = 560 + (EmptyCells(column + 1) - 1) * 30;
+                QueueMotion(second, column, EmptyCells(column) - 1, now, leftDuration, BoardY - 66);
+                QueueMotion(first, column + 1, EmptyCells(column + 1) - 1, now + 35, rightDuration, BoardY - 66);
+                longest = Math.Max(leftDuration, 35 + rightDuration);
+                break;
+            }
+        }
+
+        // Keep the just-dropped pair as the only "live" visual until it reaches
+        // the board. The server can already advance Current -> Next, but the next
+        // pair must not become interactive while the previous pair is still falling.
+        _dropAnimationUntil = now + Math.Max(420, longest) + 40;
+    }
+
+    private bool IsDropAnimating() => Environment.TickCount64 < _dropAnimationUntil;
+
+    private void QueueMotion(
+        PotionPiece piece,
+        int column,
+        int row,
+        long started,
+        int duration,
+        int startY = BoardY - CellH)
+    {
+        if (row is < 0 or >= PotionPuzzle.Rows || column is < 0 or >= PotionPuzzle.Columns)
+            return;
+
+        var duplicate = _motions.Any(motion =>
+            motion.Column == column &&
+            motion.Row == row &&
+            motion.Piece == piece &&
+            started - motion.Started < 900 &&
+            started - motion.Started > -900);
+
+        if (duplicate)
+            return;
+
+        if (_motions.Count >= 32)
+            _motions.RemoveAt(0);
+
+        _motions.Add(new(piece, column, row, startY, started, Math.Max(360, duration)));
+    }
+
     private void UpdatePreviewMotion()
     {
-        if (_hoverColumn < 0)
-        {
-            _previewColumn = -1;
-            return;
-        }
-
-        if (_previewColumn < 0)
-        {
+        // TLOPO-style control is deterministic: the pair follows the selected
+        // board column immediately instead of lagging behind the mouse.
+        if (_hoverColumn >= 0)
             _previewColumn = _hoverColumn;
-            return;
-        }
-
-        _previewColumn += (_hoverColumn - _previewColumn) * 0.28;
-        if (Math.Abs(_previewColumn - _hoverColumn) < 0.01) _previewColumn = _hoverColumn;
     }
 
     private bool CanPlace(int column, PotionPairOrientation orientation)
@@ -746,18 +1143,40 @@ internal sealed class PotionWindow : Base
         return count;
     }
 
-    private void Send(PotionRequestKind kind, int column = 0, Guid recipeId = default)
+    private void Send(PotionRequestKind kind, int column = 0, Guid recipeId = default, int orientation = 0)
     {
         if (_pending) return;
-        _send(kind, column, recipeId);
+        _send(kind, column, recipeId, orientation);
+    }
+
+    private void RotatePairLocal()
+    {
+        if (_pending || IsDropAnimating() || _state is not { Complete: false, GameOver: false })
+            return;
+
+        _localOrientation = (PotionPairOrientation)(((int)_localOrientation + 1) % 4);
+
+        // A horizontal pair occupies two columns. If the player rotates while
+        // parked at the far-right edge, shift it left one column instead of
+        // leaving the live pair in an impossible position.
+        if (IsHorizontal(_localOrientation) && _hoverColumn >= PotionPuzzle.Columns - 1)
+        {
+            _hoverColumn = PotionPuzzle.Columns - 2;
+            _previewColumn = _hoverColumn;
+        }
+
+        RefreshText();
     }
 
     private void RefreshText()
     {
         if (_state == null)
         {
+            _rewardIcon.IsHidden = true;
+            _rewardIcon.Texture = null;
             _recipe.Text = "Waiting for Royal Alchemy...";
-            _requirements.Text = string.Empty;
+            _requirements.Text = "INGREDIENTS";
+            foreach (var row in _requirementRows) row.IsHidden = true;
             _current.Text = string.Empty;
             _next.Text = string.Empty;
             _score.Text = string.Empty;
@@ -766,27 +1185,49 @@ internal sealed class PotionWindow : Base
             return;
         }
 
-        _recipe.Text =
-            $"{(_state.Complete ? "✓ " : "")}{_state.RecipeName}\n" +
-            $"Requires Alchemy Lv {_state.RequiredLevel}\n" +
-            $"Reward: {_state.OutputQuantity:N0} x {_state.OutputItemName} (+{_state.CompletionExperience} XP)";
+        _recipe.Text = _state.OutputItemName;
+        if (ItemDescriptor.Get(_state.OutputItemId) is { } rewardItem &&
+            !string.IsNullOrWhiteSpace(rewardItem.Icon))
+        {
+            _rewardIcon.Texture = GameContentManager.Current.GetTexture(
+                Framework.Content.TextureType.Item,
+                rewardItem.Icon
+            );
+            _rewardIcon.RenderColor = rewardItem.Color;
+            _rewardIcon.IsHidden = _rewardIcon.Texture == null;
+        }
+        else
+        {
+            _rewardIcon.Texture = null;
+            _rewardIcon.IsHidden = true;
+        }
 
-        _requirements.Text = string.Join(
-            "\n\n",
-            _state.Requirements.Select(requirement =>
+        _requirements.Text = "INGREDIENTS";
+        for (var i = 0; i < _requirementRows.Length; ++i)
+        {
+            var row = _requirementRows[i];
+            if (i >= _state.Requirements.Length)
             {
-                var done = requirement.Progress >= requirement.Needed;
-                return $"{(done ? "✓" : "○")} {FamilyName((PotionFamily)requirement.Family)} {LevelName(requirement.Level)}   " +
+                row.IsHidden = true;
+                continue;
+            }
+
+            var requirement = _state.Requirements[i];
+            var done = requirement.Progress >= requirement.Needed;
+            row.IsHidden = false;
+            row.Text = $"{FamilyName((PotionFamily)requirement.Family)} {LevelName(requirement.Level)}   " +
                        $"{requirement.Progress}/{requirement.Needed}";
-            })
-        );
+            row.TextColorOverride = done
+                ? new Color(255, 38, 101, 49)
+                : new Color(255, 72, 47, 28);
+        }
 
         var currentFirst = PotionStateEncoding.Decode(_state.CurrentFirst);
         var currentSecond = PotionStateEncoding.Decode(_state.CurrentSecond);
         var nextFirst = PotionStateEncoding.Decode(_state.NextFirst);
         var nextSecond = PotionStateEncoding.Decode(_state.NextSecond);
 
-        var orientation = (PotionPairOrientation)_state.Orientation;
+        var orientation = _localOrientation;
         _current.Text = $"CURRENT PAIR ({OrientationName(orientation)})\n{PieceName(currentFirst)}  +  {PieceName(currentSecond)}";
         _next.Text = $"NEXT\n{PieceName(nextFirst)}  +  {PieceName(nextSecond)}";
         _score.Text = $"Score: {_state.Score:N0}   |   Brewed: {_state.RecipesCompleted:N0}";
@@ -838,7 +1279,8 @@ internal sealed class PotionWindow : Base
     {
         PotionFamily.Verdant => "Verdant",
         PotionFamily.Ember => "Ember",
-        _ => "Arcane",
+        PotionFamily.Arcane => "Arcane",
+        _ => "Radiant",
     };
 
     private static string LevelName(int level) => level switch

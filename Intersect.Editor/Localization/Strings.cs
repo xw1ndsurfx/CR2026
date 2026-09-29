@@ -3779,6 +3779,9 @@ Tick timer saved in server config.json.";
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public static LocalizedString CanSell = @"Can Sell?";
 
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public static LocalizedString CanSellMarketplace = @"Can sell in Marketplace";
+
         public static LocalizedString cancel = @"Cancel";
 
         public static LocalizedString consumeablepanel = @"Consumable";
