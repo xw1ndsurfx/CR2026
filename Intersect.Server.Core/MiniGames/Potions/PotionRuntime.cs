@@ -165,12 +165,16 @@ internal static class PotionRuntime
 
                     case PotionRequestKind.SelectRecipe:
                     {
-                        if (!session.RecipeSelectionRequired)
+                        // The recipe list can be reopened at any time. If a completed
+                        // recipe still has an undelivered reward, keep that reward safe
+                        // instead of allowing the player to abandon it.
+                        if (!session.RecipeSelectionRequired && session.Puzzle.Complete && !session.RewardGranted)
                         {
-                            error = "RecipeSelectionClosed";
+                            error = "RewardPending";
                             break;
                         }
 
+                        var initialSelection = session.RecipeSelectionRequired;
                         var selected = RewardConfigurationRuntime.Current.PotionRecipes
                             .FirstOrDefault(recipe =>
                                 recipe.IsStructurallyValid &&
@@ -197,6 +201,7 @@ internal static class PotionRuntime
                         session.RewardGranted = false;
                         session.RecipeStartScore = 0;
                         session.RecipeSelectionRequired = false;
+                        if (!initialSelection) ++session.RecipeRound;
                         ++session.Revision;
                         session.Status = $"Selected {selected.Name}.";
                         break;

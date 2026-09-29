@@ -136,6 +136,8 @@ internal sealed class PotionWindow : Base
     private readonly Button[] _recipeButtons = new Button[8];
     private readonly Button _recipePrev;
     private readonly Button _recipeNextPage;
+    private readonly Button _recipeBack;
+    private readonly Button _recipeList;
     private readonly Button _nextRecipe;
     private readonly Button _restart;
 
@@ -152,6 +154,7 @@ internal sealed class PotionWindow : Base
     private string _error = string.Empty;
     private bool _pending;
     private bool _destroyed;
+    private bool _showRecipeList;
     private int _hoverColumn = -1;
     private double _previewColumn = -1;
     private int _recipePage;
@@ -218,7 +221,8 @@ internal sealed class PotionWindow : Base
         _fx.TextColorOverride = new Color(255, 236, 210, 117);
         _fx.IsHidden = true;
 
-        _nextRecipe = Button("PotionNextRecipe", "Next recipe", 65, 690, 315, () => Send(PotionRequestKind.NextRecipe));
+        _recipeList = Button("PotionRecipeList", "Recipe list", 65, 690, 140, OpenRecipeList);
+        _nextRecipe = Button("PotionNextRecipe", "Next recipe", 215, 690, 165, () => Send(PotionRequestKind.NextRecipe));
         _restart = Button("PotionRestart", "Restart board", 65, 730, 140, () => Send(PotionRequestKind.Restart));
         Button("PotionExit", "Exit", 215, 730, 165, () => ExitRequested = true);
 
@@ -283,6 +287,18 @@ internal sealed class PotionWindow : Base
             RefreshRecipePicker();
         };
 
+        _recipeBack = new Button(_recipePicker, "PotionRecipeBack")
+        {
+            Font = Skin.DefaultFont,
+            FontSize = 12,
+            Text = "Back to game",
+        };
+        _recipeBack.Clicked += (_, _) =>
+        {
+            if (_state?.RecipeSelectionRequired == true || _pending) return;
+            _showRecipeList = false;
+        };
+
         for (var column = 0; column < PotionPuzzle.Columns; ++column)
         {
             var captured = column;
@@ -334,7 +350,10 @@ internal sealed class PotionWindow : Base
         RefreshText();
         RefreshRecipePicker();
 
-        var selectingRecipe = _state?.RecipeSelectionRequired == true;
+        var recipeSelectionRequired = _state?.RecipeSelectionRequired == true;
+        if (recipeSelectionRequired) _showRecipeList = true;
+
+        var selectingRecipe = recipeSelectionRequired || _showRecipeList;
         var dropAnimating = IsDropAnimating();
         _recipePicker.IsHidden = !selectingRecipe;
         if (selectingRecipe) _recipePicker.BringToFront();
@@ -343,9 +362,11 @@ internal sealed class PotionWindow : Base
             _dropButtons[column].IsDisabled =
                 selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete || _state.GameOver || EmptyCells(column) < 2;
 
+        _recipeList.IsDisabled = recipeSelectionRequired || dropAnimating || _pending || _state == null;
         _nextRecipe.IsDisabled = selectingRecipe || dropAnimating || _pending || _state is not { Complete: true };
         _restart.IsDisabled = selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete;
         _boardInput.IsDisabled = selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete || _state.GameOver;
+        _recipeBack.IsDisabled = recipeSelectionRequired || _pending;
 
         UpdatePreviewMotion();
         UpdateFx();
@@ -391,6 +412,10 @@ internal sealed class PotionWindow : Base
         _recipePickerPage.FontSize = _layout.FontSize(11);
         var next = _layout.LocalRect(466, 454, 130, 38);
         _recipeNextPage.SetBounds(next.X, next.Y, next.Width, next.Height);
+
+        var back = _layout.LocalRect(220, 500, 180, 30);
+        _recipeBack.SetBounds(back.X, back.Y, back.Width, back.Height);
+        _recipeBack.FontSize = _layout.FontSize(11);
     }
 
     protected override void Render(SkinBase skin)
@@ -398,7 +423,9 @@ internal sealed class PotionWindow : Base
         var renderer = skin.Renderer;
         var now = Environment.TickCount64;
 
-        renderer.DrawColor = new Color(255, 18, 11, 7);
+        // Keep the alchemy UI readable while letting the game world remain visible.
+        // Alpha 26 = roughly 10% opacity / 90% transparent.
+        renderer.DrawColor = new Color(26, 18, 11, 7);
         renderer.DrawFilledRect(new Rectangle(0, 0, Width, Height));
 
         DrawPanel(renderer, 45, 90, 355, 675, new Color(255, 214, 196, 146), new Color(255, 94, 58, 31));
@@ -491,7 +518,7 @@ internal sealed class PotionWindow : Base
 
     private void SelectRecipeSlot(int slot)
     {
-        if (_state?.RecipeSelectionRequired != true || _pending) return;
+        if (_state == null || _pending || (!_showRecipeList && !_state.RecipeSelectionRequired)) return;
         var index = _recipePage * _recipeButtons.Length + slot;
         if (index < 0 || index >= _state.RecipeChoices.Length) return;
 
@@ -502,7 +529,18 @@ internal sealed class PotionWindow : Base
             return;
         }
 
+        _showRecipeList = false;
         Send(PotionRequestKind.SelectRecipe, 0, recipe.Id);
+    }
+
+    private void OpenRecipeList()
+    {
+        if (_pending || IsDropAnimating() || _state == null) return;
+        _recipePage = 0;
+        _showRecipeList = true;
+        RefreshRecipePicker();
+        _recipePicker.IsHidden = false;
+        _recipePicker.BringToFront();
     }
 
     private void RefreshRecipePicker()
