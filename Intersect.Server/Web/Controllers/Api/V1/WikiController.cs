@@ -4,6 +4,7 @@ using Intersect.Framework.Core.GameObjects.Events.Commands;
 using System.Text.RegularExpressions;
 using System.Net;
 using Intersect.Enums;
+using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
@@ -231,6 +232,36 @@ public sealed class WikiController : IntersectController
         IReadOnlyList<WikiProfessionLeaderboard> Leaderboards
     );
 
+
+    public sealed record WikiGuildSummary(
+        Guid Id,
+        string Name,
+        DateTime FoundingDate,
+        int MemberCount,
+        string? Leader,
+        int HighestMemberLevel,
+        double AverageMemberLevel
+    );
+
+    public sealed record WikiGuildMember(
+        string Name,
+        string Rank,
+        int Level,
+        string Class,
+        DateTime JoinedAt
+    );
+
+    public sealed record WikiGuildDetail(
+        Guid Id,
+        string Name,
+        DateTime FoundingDate,
+        int MemberCount,
+        string? Leader,
+        int HighestMemberLevel,
+        double AverageMemberLevel,
+        IReadOnlyList<WikiGuildMember> Members
+    );
+
     [HttpGet("leaderboard/minigames")]
     [ProducesResponseType(typeof(WikiMiniGameLeaderboardResponse), (int)HttpStatusCode.OK, ContentTypes.Json)]
     public IActionResult MiniGameLeaderboards([FromQuery] int limit = 50)
@@ -347,6 +378,155 @@ public sealed class WikiController : IntersectController
             .ToArray();
 
         return Ok(new WikiLevelLeaderboardResponse(DateTimeOffset.UtcNow, players));
+    }
+
+    [HttpGet("guilds")]
+    [ProducesResponseType(typeof(IReadOnlyList<WikiGuildSummary>), (int)HttpStatusCode.OK, ContentTypes.Json)]
+    public IActionResult Guilds([FromQuery] int limit = 100)
+    {
+        limit = Math.Clamp(limit, 1, 250);
+
+        using var context = DbInterface.CreatePlayerContext();
+        var guilds = context.Guilds
+            .AsNoTracking()
+            .OrderBy(guild => guild.Name)
+            .Take(limit)
+            .Select(guild => new
+            {
+                guild.Id,
+                guild.Name,
+                guild.FoundingDate,
+            })
+            .ToArray();
+
+        var guildIds = guilds.Select(guild => guild.Id).ToArray();
+        var members = context.Players
+            .AsNoTracking()
+            .Where(player => player.GuildId.HasValue && guildIds.Contains(player.GuildId.Value))
+            .Select(player => new
+            {
+                GuildId = player.GuildId!.Value,
+                player.Name,
+                player.GuildRank,
+                player.Level,
+            })
+            .ToArray()
+            .GroupBy(player => player.GuildId)
+            .ToDictionary(group => group.Key, group => group.ToArray());
+
+        var result = guilds
+            .Select(guild =>
+            {
+                members.TryGetValue(guild.Id, out var guildMembers);
+                guildMembers ??= [];
+
+                var leader = guildMembers
+                    .Where(member => member.GuildRank == 0)
+                    .OrderBy(member => member.Name)
+                    .Select(member => member.Name)
+                    .FirstOrDefault();
+
+                var highestLevel = guildMembers.Length == 0
+                    ? 0
+                    : guildMembers.Max(member => member.Level);
+
+                var averageLevel = guildMembers.Length == 0
+                    ? 0
+                    : Math.Round(guildMembers.Average(member => member.Level), 1);
+
+                return new WikiGuildSummary(
+                    guild.Id,
+                    guild.Name,
+                    guild.FoundingDate,
+                    guildMembers.Length,
+                    leader,
+                    highestLevel,
+                    averageLevel
+                );
+            })
+            .ToArray();
+
+        return Ok(result);
+    }
+
+    [HttpGet("guilds/{guildId:guid}")]
+    [ProducesResponseType(typeof(WikiGuildDetail), (int)HttpStatusCode.OK, ContentTypes.Json)]
+    [ProducesResponseType(typeof(StatusMessageResponseBody), (int)HttpStatusCode.NotFound, ContentTypes.Json)]
+    public IActionResult GuildDetail(Guid guildId)
+    {
+        if (guildId == Guid.Empty)
+        {
+            return NotFound("No published guild was found.");
+        }
+
+        using var context = DbInterface.CreatePlayerContext();
+        var guild = context.Guilds
+            .AsNoTracking()
+            .Where(value => value.Id == guildId)
+            .Select(value => new
+            {
+                value.Id,
+                value.Name,
+                value.FoundingDate,
+            })
+            .FirstOrDefault();
+
+        if (guild == null)
+        {
+            return NotFound("No published guild was found.");
+        }
+
+        var rows = context.Players
+            .AsNoTracking()
+            .Where(player => player.GuildId == guildId)
+            .Select(player => new
+            {
+                player.Name,
+                player.GuildRank,
+                player.Level,
+                player.ClassId,
+                player.GuildJoinDate,
+            })
+            .ToArray()
+            .OrderBy(player => player.GuildRank)
+            .ThenByDescending(player => player.Level)
+            .ThenBy(player => player.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var rankDefinitions = Options.Instance.Guild.Ranks ?? [];
+        string RankName(int rank) =>
+            rank >= 0 && rank < rankDefinitions.Length && !string.IsNullOrWhiteSpace(rankDefinitions[rank].Title)
+                ? rankDefinitions[rank].Title
+                : $"Rank {rank + 1}";
+
+        var members = rows
+            .Select(player => new WikiGuildMember(
+                player.Name,
+                RankName(player.GuildRank),
+                player.Level,
+                ClassDescriptor.GetName(player.ClassId),
+                player.GuildJoinDate
+            ))
+            .ToArray();
+
+        var leader = rows
+            .Where(player => player.GuildRank == 0)
+            .Select(player => player.Name)
+            .FirstOrDefault();
+
+        var highestLevel = rows.Length == 0 ? 0 : rows.Max(player => player.Level);
+        var averageLevel = rows.Length == 0 ? 0 : Math.Round(rows.Average(player => player.Level), 1);
+
+        return Ok(new WikiGuildDetail(
+            guild.Id,
+            guild.Name,
+            guild.FoundingDate,
+            members.Length,
+            leader,
+            highestLevel,
+            averageLevel,
+            members
+        ));
     }
 
     [HttpGet("catalog")]
