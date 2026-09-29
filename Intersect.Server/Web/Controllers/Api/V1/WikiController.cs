@@ -1,3 +1,7 @@
+using Intersect.Framework.Core.GameObjects.Quests;
+using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Framework.Core.GameObjects.Events.Commands;
+using System.Text.RegularExpressions;
 using System.Net;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -161,6 +165,31 @@ public sealed class WikiController : IntersectController
     public sealed record WikiLevelLeaderboardResponse(
         DateTimeOffset GeneratedAt,
         IReadOnlyList<WikiLevelLeaderboardEntry> Players
+    );
+
+
+    public sealed record WikiQuestTask(
+        int Number,
+        string Objective,
+        string? Target,
+        int Quantity,
+        string Description,
+        bool NavigationEnabled,
+        string? GuideResource
+    );
+
+    public sealed record WikiQuestDetail(
+        string Name,
+        string StartDescription,
+        string InProgressDescription,
+        string EndDescription,
+        string BeforeDescription,
+        string Category,
+        bool Repeatable,
+        bool Quitable,
+        IReadOnlyList<string> Locations,
+        IReadOnlyList<WikiQuestTask> Tasks,
+        IReadOnlyList<string> Rewards
     );
 
 
@@ -368,10 +397,13 @@ public sealed class WikiController : IntersectController
         }
 
         var ordered = values.OrderBy(value => value.Name).ToArray();
+        var questLocationIndex = gameObjectType == GameObjectType.Quest
+            ? BuildQuestLocationIndex()
+            : null;
         var entries = ordered
             .Skip(pageInfo.Page * pageInfo.PageSize)
             .Take(pageInfo.PageSize)
-            .Select(ToPublicSummary)
+            .Select(value => ToPublicSummary(value, questLocationIndex))
             .ToArray();
 
         return Ok(new DataPage<WikiGameObjectSummary>(
@@ -417,6 +449,52 @@ public sealed class WikiController : IntersectController
         }
 
         return Ok(ToPublicDetail(gameObject));
+    }
+
+    [HttpGet("quests/{questId:guid}")]
+    [ProducesResponseType(typeof(WikiQuestDetail), (int)HttpStatusCode.OK, ContentTypes.Json)]
+    [ProducesResponseType(typeof(StatusMessageResponseBody), (int)HttpStatusCode.NotFound, ContentTypes.Json)]
+    public IActionResult QuestDetail(Guid questId)
+    {
+        if (questId == Guid.Empty || QuestDescriptor.Get(questId) is not { } quest)
+        {
+            return NotFound("No published quest was found.");
+        }
+
+        var locationIndex = BuildQuestLocationIndex();
+        locationIndex.TryGetValue(quest.Id, out var locations);
+
+        var tasks = quest.Tasks
+            .Select((task, index) => new WikiQuestTask(
+                index + 1,
+                task.Objective.ToString(),
+                QuestTaskTarget(task),
+                Math.Max(0, task.Quantity),
+                task.Description ?? string.Empty,
+                task.ShowNavigationArrow,
+                task.GuideResourceId != Guid.Empty
+                    ? ResourceDescriptor.GetName(task.GuideResourceId)
+                    : null
+            ))
+            .ToArray();
+
+        var category = !string.IsNullOrWhiteSpace(quest.InProgressCategory)
+            ? quest.InProgressCategory
+            : quest.UnstartedCategory;
+
+        return Ok(new WikiQuestDetail(
+            quest.Name,
+            quest.StartDescription ?? string.Empty,
+            quest.InProgressDescription ?? string.Empty,
+            quest.EndDescription ?? string.Empty,
+            quest.BeforeDescription ?? string.Empty,
+            category ?? string.Empty,
+            quest.Repeatable,
+            quest.Quitable,
+            locations ?? [],
+            tasks,
+            ExtractQuestRewards(quest)
+        ));
     }
 
     [HttpGet("maps/layout")]
@@ -716,7 +794,10 @@ public sealed class WikiController : IntersectController
     [ProducesResponseType(typeof(IReadOnlyList<MiniGameDefinition>), (int)HttpStatusCode.OK, ContentTypes.Json)]
     public IActionResult MiniGames() => Ok(MiniGameCatalog.All);
 
-    private static WikiGameObjectSummary ToPublicSummary(IDatabaseObject value) =>
+    private static WikiGameObjectSummary ToPublicSummary(
+        IDatabaseObject value,
+        IReadOnlyDictionary<Guid, IReadOnlyList<string>>? questLocationIndex = null
+    ) =>
         value switch
         {
             ItemDescriptor item => new WikiGameObjectSummary(
@@ -749,6 +830,13 @@ public sealed class WikiController : IntersectController
                 map.Type.ToString(),
                 $"{map.ZoneType} · {(map.IsIndoors ? "Intérieur" : "Extérieur")}"
             ),
+            QuestDescriptor quest => new WikiGameObjectSummary(
+                quest.Id,
+                quest.Name,
+                quest.Type.ToString(),
+                QuestSummarySubtitle(quest, questLocationIndex)
+            ),
+
             _ => new WikiGameObjectSummary(value.Id, value.Name, value.Type.ToString())
         };
 
@@ -802,6 +890,204 @@ public sealed class WikiController : IntersectController
         };
 
         return new WikiPublicDetail(value.Id, value.Name, value.Type.ToString(), imageUrl, facts);
+    }
+
+    private static string QuestSummarySubtitle(
+        QuestDescriptor quest,
+        IReadOnlyDictionary<Guid, IReadOnlyList<string>>? locationIndex
+    )
+    {
+        var taskCount = quest.Tasks?.Count ?? 0;
+        var taskText = taskCount == 1 ? "1 tâche" : $"{taskCount} tâches";
+
+        if (locationIndex != null &&
+            locationIndex.TryGetValue(quest.Id, out var locations) &&
+            locations.Count > 0)
+        {
+            return $"{taskText} · {string.Join(", ", locations.Take(2))}";
+        }
+
+        return taskText;
+    }
+
+    private static string? QuestTaskTarget(QuestTaskDescriptor task) =>
+        task.Objective switch
+        {
+            QuestObjective.GatherItems => ItemDescriptor.GetName(task.TargetId),
+            QuestObjective.KillNpcs => NPCDescriptor.GetName(task.TargetId),
+            QuestObjective.PotionBrewSpecificRecipe or
+            QuestObjective.PotionBrewSpecificRecipeMinScore =>
+                string.IsNullOrWhiteSpace(task.TargetName) ? null : task.TargetName,
+            _ => string.IsNullOrWhiteSpace(task.TargetName) ? null : task.TargetName,
+        };
+
+    private static Dictionary<Guid, IReadOnlyList<string>> BuildQuestLocationIndex()
+    {
+        var result = new Dictionary<Guid, HashSet<string>>();
+
+        foreach (var eventDescriptor in EventDescriptor.Lookup.Values.OfType<EventDescriptor>())
+        {
+            if (eventDescriptor.CommonEvent || eventDescriptor.MapId == Guid.Empty)
+            {
+                continue;
+            }
+
+            if (!MapDescriptor.Lookup.TryGetValue(eventDescriptor.MapId, out var mapObject) ||
+                mapObject is not MapDescriptor map)
+            {
+                continue;
+            }
+
+            var questIds = QuestIdsStartedByEvent(eventDescriptor, []);
+            foreach (var questId in questIds)
+            {
+                if (!result.TryGetValue(questId, out var locations))
+                {
+                    locations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    result[questId] = locations;
+                }
+
+                locations.Add(map.Name);
+            }
+        }
+
+        return result.ToDictionary(
+            pair => pair.Key,
+            pair => (IReadOnlyList<string>)pair.Value
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                .ToArray()
+        );
+    }
+
+    private static HashSet<Guid> QuestIdsStartedByEvent(
+        EventDescriptor eventDescriptor,
+        HashSet<Guid> visitedCommonEvents
+    )
+    {
+        var result = new HashSet<Guid>();
+
+        foreach (var page in eventDescriptor.Pages ?? [])
+        {
+            foreach (var command in page.CommandLists.Values.SelectMany(commands => commands))
+            {
+                switch (command)
+                {
+                    case StartQuestCommand startQuest when startQuest.QuestId != Guid.Empty:
+                        result.Add(startQuest.QuestId);
+                        break;
+
+                    case StartCommmonEventCommand startCommon when startCommon.EventId != Guid.Empty:
+                        if (!visitedCommonEvents.Add(startCommon.EventId))
+                        {
+                            break;
+                        }
+
+                        if (EventDescriptor.Get(startCommon.EventId) is { CommonEvent: true } common)
+                        {
+                            result.UnionWith(QuestIdsStartedByEvent(common, visitedCommonEvents));
+                        }
+
+                        break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static IReadOnlyList<string> ExtractQuestRewards(QuestDescriptor quest)
+    {
+        var result = new List<string>();
+        var descriptions = new[]
+        {
+            quest.StartDescription,
+            quest.InProgressDescription,
+            quest.EndDescription,
+            quest.BeforeDescription,
+        };
+
+        foreach (var description in descriptions)
+        {
+            foreach (var reward in ExtractRewardLines(description))
+            {
+                if (!result.Contains(reward, StringComparer.OrdinalIgnoreCase))
+                {
+                    result.Add(reward);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static IEnumerable<string> ExtractRewardLines(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            yield break;
+        }
+
+        var cleaned = Regex.Replace(text, "<br\\s*/?>", "\n", RegexOptions.IgnoreCase);
+        cleaned = Regex.Replace(cleaned, "<[^>]+>", " ");
+        cleaned = WebUtility.HtmlDecode(cleaned);
+
+        var lines = cleaned
+            .Replace("\r\n", "\n")
+            .Replace('\r', '\n')
+            .Split('\n')
+            .Select(line => Regex.Replace(line, @"\s+", " ").Trim())
+            .Where(line => line.Length > 0)
+            .ToArray();
+
+        var heading = new Regex(
+            @"^(?:récompenses?|recompenses?|rewards?)\s*(?::|-|–|—)?\s*(.*)$",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+        );
+
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var match = heading.Match(lines[i]);
+            if (!match.Success)
+            {
+                continue;
+            }
+
+            var inline = match.Groups[1].Value.Trim();
+            if (inline.Length > 0)
+            {
+                yield return inline;
+            }
+
+            for (var j = i + 1; j < lines.Length && j <= i + 6; j++)
+            {
+                var next = lines[j];
+                if (heading.IsMatch(next) ||
+                    Regex.IsMatch(
+                        next,
+                        @"^(?:objectifs?|objectives?|description|histoire|story|mission|quête|quest|tâches?|tasks?|prérequis|requirements?)\s*(?::|-|–|—)",
+                        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+                    ))
+                {
+                    break;
+                }
+
+                yield return next;
+            }
+
+            yield break;
+        }
+
+        foreach (var line in lines)
+        {
+            if (Regex.IsMatch(
+                line,
+                @"\b(?:exp|xp|aureons?|logicoins?)\b",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+            ) && Regex.IsMatch(line, @"\d"))
+            {
+                yield return line;
+            }
+        }
     }
 
     private static void Add(IDictionary<string, object?> facts, string key, object? value)
