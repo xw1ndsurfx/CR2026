@@ -19,7 +19,7 @@ namespace Intersect.Client.Interface.Game;
 internal sealed class PotionWindow : Base
 {
     private sealed record Placement(Base Control, int X, int Y, int W, int H, int Font = 0);
-    private sealed record PieceMotion(PotionPiece Piece, int Column, int Row, long Started, int Duration);
+    private sealed record PieceMotion(PotionPiece Piece, int Column, int Row, int StartY, long Started, int Duration);
     private sealed record CellPulse(int Column, int Row, long Started, int Duration);
 
     private sealed class PotionBoardInput : Base
@@ -51,8 +51,9 @@ internal sealed class PotionWindow : Base
 
         protected override void OnMouseLeft()
         {
+            // TLOPO-style: the active pair stays parked above the last selected
+            // column when the cursor leaves the board.
             base.OnMouseLeft();
-            _hover(-1);
         }
 
         protected override void OnMouseDown(
@@ -167,6 +168,8 @@ internal sealed class PotionWindow : Base
         _canvas = canvas;
         _send = send;
         _layout = new PokerSceneLayout(Math.Max(1, canvas.Width), Math.Max(1, canvas.Height));
+        _hoverColumn = Math.Max(0, PotionPuzzle.Columns / 2 - 1);
+        _previewColumn = _hoverColumn;
 
         ShouldDrawBackground = false;
         MouseInputEnabled = true;
@@ -331,7 +334,7 @@ internal sealed class PotionWindow : Base
                 if (_previewColumn < 0 && column >= 0) _previewColumn = column;
             },
             DropFromBoard,
-            () => Send(PotionRequestKind.Swap)
+            RotatePairLocal
         );
         Place(_boardInput, BoardX, BoardY, PotionPuzzle.Columns * CellW, PotionPuzzle.Rows * CellH);
 
@@ -736,7 +739,7 @@ internal sealed class PotionWindow : Base
 
             var t = Math.Clamp(elapsed / (double)motion.Duration, 0d, 1d);
             var eased = 1d - Math.Pow(1d - t, 3d);
-            var startY = BoardY - CellH;
+            var startY = motion.StartY;
             var targetY = BoardY + motion.Row * CellH;
             var y = startY + (int)((targetY - startY) * eased);
             var rect = _layout.Rect(BoardX + motion.Column * CellW, y, CellW, CellH);
@@ -991,8 +994,8 @@ internal sealed class PotionWindow : Base
                 var empty = EmptyCells(column);
                 var firstDuration = 560 + (empty - 1) * 30;
                 var secondDuration = 560 + (empty - 2) * 30;
-                QueueMotion(first, column, empty - 1, now, firstDuration);
-                QueueMotion(second, column, empty - 2, now + 45, secondDuration);
+                QueueMotion(first, column, empty - 1, now, firstDuration, BoardY - 52);
+                QueueMotion(second, column, empty - 2, now + 45, secondDuration, BoardY - 92);
                 longest = Math.Max(firstDuration, 45 + secondDuration);
                 break;
             }
@@ -1002,8 +1005,8 @@ internal sealed class PotionWindow : Base
                 var empty = EmptyCells(column);
                 var secondDuration = 560 + (empty - 1) * 30;
                 var firstDuration = 560 + (empty - 2) * 30;
-                QueueMotion(second, column, empty - 1, now, secondDuration);
-                QueueMotion(first, column, empty - 2, now + 45, firstDuration);
+                QueueMotion(second, column, empty - 1, now, secondDuration, BoardY - 52);
+                QueueMotion(first, column, empty - 2, now + 45, firstDuration, BoardY - 92);
                 longest = Math.Max(secondDuration, 45 + firstDuration);
                 break;
             }
@@ -1012,8 +1015,8 @@ internal sealed class PotionWindow : Base
             {
                 var leftDuration = 560 + (EmptyCells(column) - 1) * 30;
                 var rightDuration = 560 + (EmptyCells(column + 1) - 1) * 30;
-                QueueMotion(first, column, EmptyCells(column) - 1, now, leftDuration);
-                QueueMotion(second, column + 1, EmptyCells(column + 1) - 1, now + 35, rightDuration);
+                QueueMotion(first, column, EmptyCells(column) - 1, now, leftDuration, BoardY - 66);
+                QueueMotion(second, column + 1, EmptyCells(column + 1) - 1, now + 35, rightDuration, BoardY - 66);
                 longest = Math.Max(leftDuration, 35 + rightDuration);
                 break;
             }
@@ -1022,8 +1025,8 @@ internal sealed class PotionWindow : Base
             {
                 var leftDuration = 560 + (EmptyCells(column) - 1) * 30;
                 var rightDuration = 560 + (EmptyCells(column + 1) - 1) * 30;
-                QueueMotion(second, column, EmptyCells(column) - 1, now, leftDuration);
-                QueueMotion(first, column + 1, EmptyCells(column + 1) - 1, now + 35, rightDuration);
+                QueueMotion(second, column, EmptyCells(column) - 1, now, leftDuration, BoardY - 66);
+                QueueMotion(first, column + 1, EmptyCells(column + 1) - 1, now + 35, rightDuration, BoardY - 66);
                 longest = Math.Max(leftDuration, 35 + rightDuration);
                 break;
             }
@@ -1037,7 +1040,13 @@ internal sealed class PotionWindow : Base
 
     private bool IsDropAnimating() => Environment.TickCount64 < _dropAnimationUntil;
 
-    private void QueueMotion(PotionPiece piece, int column, int row, long started, int duration)
+    private void QueueMotion(
+        PotionPiece piece,
+        int column,
+        int row,
+        long started,
+        int duration,
+        int startY = BoardY - CellH)
     {
         if (row is < 0 or >= PotionPuzzle.Rows || column is < 0 or >= PotionPuzzle.Columns)
             return;
@@ -1055,25 +1064,15 @@ internal sealed class PotionWindow : Base
         if (_motions.Count >= 32)
             _motions.RemoveAt(0);
 
-        _motions.Add(new(piece, column, row, started, Math.Max(360, duration)));
+        _motions.Add(new(piece, column, row, startY, started, Math.Max(360, duration)));
     }
 
     private void UpdatePreviewMotion()
     {
-        if (_hoverColumn < 0)
-        {
-            _previewColumn = -1;
-            return;
-        }
-
-        if (_previewColumn < 0)
-        {
+        // TLOPO-style control is deterministic: the pair follows the selected
+        // board column immediately instead of lagging behind the mouse.
+        if (_hoverColumn >= 0)
             _previewColumn = _hoverColumn;
-            return;
-        }
-
-        _previewColumn += (_hoverColumn - _previewColumn) * 0.28;
-        if (Math.Abs(_previewColumn - _hoverColumn) < 0.01) _previewColumn = _hoverColumn;
     }
 
     private bool CanPlace(int column, PotionPairOrientation orientation)
@@ -1114,6 +1113,16 @@ internal sealed class PotionWindow : Base
             return;
 
         _localOrientation = (PotionPairOrientation)(((int)_localOrientation + 1) % 4);
+
+        // A horizontal pair occupies two columns. If the player rotates while
+        // parked at the far-right edge, shift it left one column instead of
+        // leaving the live pair in an impossible position.
+        if (IsHorizontal(_localOrientation) && _hoverColumn >= PotionPuzzle.Columns - 1)
+        {
+            _hoverColumn = PotionPuzzle.Columns - 2;
+            _previewColumn = _hoverColumn;
+        }
+
         RefreshText();
     }
 
