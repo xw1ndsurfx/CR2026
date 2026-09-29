@@ -53,7 +53,11 @@ public partial class Resource : Entity, IResource
 
     public Resource(Guid id, ResourceEntityPacket packet) : base(id, packet, EntityType.Resource)
     {
-        mRenderPriority = 0;
+        // Normal resources (trees, rocks, etc.) must participate in the same
+        // Y-sorted entity layer as players/NPCs so a player behind a tall
+        // resource is actually occluded by it. Individual resource states
+        // can still opt into RenderBelowEntities for ground-level graphics.
+        mRenderPriority = 1;
     }
 
     public ResourceDescriptor? Descriptor
