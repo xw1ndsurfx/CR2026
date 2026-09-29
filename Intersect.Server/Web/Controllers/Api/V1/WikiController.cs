@@ -163,6 +163,95 @@ public sealed class WikiController : IntersectController
         IReadOnlyList<WikiLevelLeaderboardEntry> Players
     );
 
+
+    public sealed record WikiMiniGameLeaderboardEntry(
+        int Rank,
+        string Name,
+        int Level,
+        long Experience,
+        long Wins
+    );
+
+    public sealed record WikiMiniGameLeaderboard(
+        string Key,
+        string Name,
+        IReadOnlyList<WikiMiniGameLeaderboardEntry> Players
+    );
+
+    public sealed record WikiMiniGameLeaderboardResponse(
+        DateTimeOffset GeneratedAt,
+        IReadOnlyList<WikiMiniGameLeaderboard> Leaderboards
+    );
+
+    public sealed record WikiProfessionLeaderboardEntry(
+        int Rank,
+        string Name,
+        int Level,
+        long Experience
+    );
+
+    public sealed record WikiProfessionLeaderboard(
+        string Key,
+        string Name,
+        int MaximumLevel,
+        IReadOnlyList<WikiProfessionLeaderboardEntry> Players
+    );
+
+    public sealed record WikiProfessionLeaderboardResponse(
+        DateTimeOffset GeneratedAt,
+        IReadOnlyList<WikiProfessionLeaderboard> Leaderboards
+    );
+
+    [HttpGet("leaderboard/minigames")]
+    [ProducesResponseType(typeof(WikiMiniGameLeaderboardResponse), (int)HttpStatusCode.OK, ContentTypes.Json)]
+    public IActionResult MiniGameLeaderboards([FromQuery] int limit = 50)
+    {
+        limit = Math.Clamp(limit, 1, 100);
+
+        var leaderboards = LeaderboardDataRuntime.MiniGames(limit)
+            .GroupBy(row => new { row.GameKey, row.GameName })
+            .OrderBy(group => group.Key.GameName)
+            .Select(group => new WikiMiniGameLeaderboard(
+                group.Key.GameKey,
+                group.Key.GameName,
+                group.Select((row, index) => new WikiMiniGameLeaderboardEntry(
+                    index + 1,
+                    row.PlayerName,
+                    row.Level,
+                    row.Experience,
+                    row.Wins
+                )).ToArray()
+            ))
+            .ToArray();
+
+        return Ok(new WikiMiniGameLeaderboardResponse(DateTimeOffset.UtcNow, leaderboards));
+    }
+
+    [HttpGet("leaderboard/professions")]
+    [ProducesResponseType(typeof(WikiProfessionLeaderboardResponse), (int)HttpStatusCode.OK, ContentTypes.Json)]
+    public IActionResult ProfessionLeaderboards([FromQuery] int limit = 50)
+    {
+        limit = Math.Clamp(limit, 1, 100);
+
+        var leaderboards = LeaderboardDataRuntime.Professions(limit)
+            .GroupBy(row => new { row.ProfessionKey, row.ProfessionName, row.MaximumLevel })
+            .OrderBy(group => group.Key.ProfessionName)
+            .Select(group => new WikiProfessionLeaderboard(
+                group.Key.ProfessionKey,
+                group.Key.ProfessionName,
+                group.Key.MaximumLevel,
+                group.Select((row, index) => new WikiProfessionLeaderboardEntry(
+                    index + 1,
+                    row.PlayerName,
+                    row.Level,
+                    row.Experience
+                )).ToArray()
+            ))
+            .ToArray();
+
+        return Ok(new WikiProfessionLeaderboardResponse(DateTimeOffset.UtcNow, leaderboards));
+    }
+
     [HttpGet("leaderboard/levels")]
     [ProducesResponseType(typeof(WikiLevelLeaderboardResponse), (int)HttpStatusCode.OK, ContentTypes.Json)]
     public IActionResult LevelLeaderboard([FromQuery] int limit = 50)
