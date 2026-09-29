@@ -1891,7 +1891,28 @@ public partial class Entity : IEntity
         );
     }
 
-    public void DrawHpBar()
+    protected virtual (int X, int Y) GetHpBarPosition(IGameTexture boundingTexture)
+    {
+        var x = (int)Math.Ceiling(Origin.X);
+        var y = (int)Math.Ceiling(Origin.Y);
+
+        var sprite = Globals.ContentManager.GetTexture(TextureType.Entity, Sprite);
+        if (sprite != null)
+        {
+            y -= sprite.Height / Options.Instance.Sprites.Directions;
+            y -= boundingTexture.Height + 2;
+        }
+
+        y += boundingTexture.Height / 2;
+
+        // Preserve the existing entity/NPC offset. Resources override this and
+        // anchor the bar to their actual rendered sprite bounds.
+        y += 128;
+
+        return (x, y);
+    }
+
+    public virtual void DrawHpBar()
     {
         // Are we supposed to hide this HP bar?
         if (!ShouldDrawHpBar)
@@ -1940,20 +1961,7 @@ public partial class Entity : IEntity
             shieldFillWidth = 1;
         }
 
-        var x = (int)Math.Ceiling(Origin.X);
-        var y = (int)Math.Ceiling(Origin.Y);
-
-        var sprite = Globals.ContentManager.GetTexture(TextureType.Entity, Sprite);
-        if (sprite != null)
-        {
-            y -= sprite.Height / Options.Instance.Sprites.Directions;
-            y -= boundingTeture.Height + 2;
-        }
-
-        y += boundingTeture.Height / 2;
-
-        // ⬇️ Descendre la barre de 32 pixels
-        y += 128;
+        var (x, y) = GetHpBarPosition(boundingTeture);
 
         if (hpBackground != null)
         {
