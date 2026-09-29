@@ -14,6 +14,7 @@ using Intersect.Models;
 using Intersect.Server.WorldEvents.Invasions;
 using Intersect.Server.MiniGames;
 using Intersect.Server.Database;
+using Intersect.Server.Entities;
 using Intersect.Server.Leaderboards;
 using Intersect.Server.Professions;
 using Intersect.Server.Web.Http;
@@ -186,7 +187,7 @@ public sealed class WikiController : IntersectController
             })
             .ToDictionary(player => player.Id);
 
-        foreach (var online in Entities.Player.OnlinePlayersSnapshot())
+        foreach (var online in Player.OnlinePlayersSnapshot())
         {
             candidates[online.Id] = new
             {
