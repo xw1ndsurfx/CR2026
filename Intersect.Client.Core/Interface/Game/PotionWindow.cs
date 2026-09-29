@@ -338,6 +338,11 @@ internal sealed class PotionWindow : Base
             PotionPuzzle.Rows * CellH + 96
         );
 
+        // Use the same global mouse-down path Intersect uses for its controls.
+        // This avoids Gwen's inconsistent right-click delivery while still calling
+        // the exact same RotatePairLocal action as the working Rotate Pair button.
+        Intersect.Client.Core.Input.MouseDown += OnGlobalMouseDown;
+
         ResizeToCanvas();
     }
 
@@ -390,8 +395,6 @@ internal sealed class PotionWindow : Base
 
         var selectingRecipe = recipeSelectionRequired || _showRecipeList;
         var dropAnimating = IsDropAnimating();
-
-        HandleRotationInput(selectingRecipe, dropAnimating);
 
         _recipePicker.IsHidden = !selectingRecipe;
         if (selectingRecipe) _recipePicker.BringToFront();
@@ -1141,17 +1144,14 @@ internal sealed class PotionWindow : Base
         RefreshText();
     }
 
-    private void HandleRotationInput(bool selectingRecipe, bool dropAnimating)
+    private void OnGlobalMouseDown(Keys modifier, Keys key)
     {
-        if (selectingRecipe || dropAnimating || _pending ||
-            _state is not { Complete: false, GameOver: false })
+        if (_destroyed || key != Keys.RButton || _pending || IsDropAnimating() ||
+            _showRecipeList || _state is not { Complete: false, GameOver: false } state ||
+            state.RecipeSelectionRequired)
             return;
 
-        var input = Globals.InputManager;
-        if (!input.IsMouseButtonDown(MouseButton.Right) || input.WasMouseButtonDown(MouseButton.Right))
-            return;
-
-        var mouse = input.MousePosition;
+        var mouse = Globals.InputManager.MousePosition;
         var interaction = _layout.Rect(
             BoardX,
             BoardY - 96,
@@ -1163,6 +1163,7 @@ internal sealed class PotionWindow : Base
             mouse.Y < interaction.Y || mouse.Y >= interaction.Y + interaction.Height)
             return;
 
+        // Exactly the same action used by the working Rotate Pair button.
         RotatePairLocal();
     }
 
@@ -1327,6 +1328,7 @@ internal sealed class PotionWindow : Base
     {
         if (_destroyed) return;
         _destroyed = true;
+        Intersect.Client.Core.Input.MouseDown -= OnGlobalMouseDown;
         Hide();
         Parent?.RemoveChild(this, false);
         Dispose();
