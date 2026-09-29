@@ -144,6 +144,7 @@ internal sealed class PotionWindow : Base
     private long _lastExperience;
     private long _fxStarted;
     private long _fxUntil;
+    private long _dropAnimationUntil;
     private string _error = string.Empty;
     private bool _pending;
     private bool _destroyed;
@@ -314,17 +315,18 @@ internal sealed class PotionWindow : Base
         RefreshRecipePicker();
 
         var selectingRecipe = _state?.RecipeSelectionRequired == true;
+        var dropAnimating = IsDropAnimating();
         _recipePicker.IsHidden = !selectingRecipe;
         if (selectingRecipe) _recipePicker.BringToFront();
 
         for (var column = 0; column < _dropButtons.Length; ++column)
             _dropButtons[column].IsDisabled =
-                selectingRecipe || _pending || _state == null || _state.Complete || _state.GameOver || EmptyCells(column) < 2;
+                selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete || _state.GameOver || EmptyCells(column) < 2;
 
-        _swap.IsDisabled = selectingRecipe || _pending || _state == null || _state.Complete || _state.GameOver;
-        _nextRecipe.IsDisabled = selectingRecipe || _pending || _state is not { Complete: true };
-        _restart.IsDisabled = selectingRecipe || _pending || _state == null || _state.Complete;
-        _boardInput.IsDisabled = selectingRecipe || _pending || _state == null || _state.Complete || _state.GameOver;
+        _swap.IsDisabled = selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete || _state.GameOver;
+        _nextRecipe.IsDisabled = selectingRecipe || dropAnimating || _pending || _state is not { Complete: true };
+        _restart.IsDisabled = selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete;
+        _boardInput.IsDisabled = selectingRecipe || dropAnimating || _pending || _state == null || _state.Complete || _state.GameOver;
 
         UpdatePreviewMotion();
         UpdateFx();
@@ -604,7 +606,7 @@ internal sealed class PotionWindow : Base
 
     private void DrawHoverPair(RendererBase renderer)
     {
-        if (_hoverColumn < 0 || _previewColumn < 0 || _pending ||
+        if (_hoverColumn < 0 || _previewColumn < 0 || _pending || IsDropAnimating() ||
             _state is not { Complete: false, GameOver: false } state)
             return;
 
@@ -866,7 +868,7 @@ internal sealed class PotionWindow : Base
 
     private void DropFromBoard(int column)
     {
-        if (_pending || _state is not { Complete: false, GameOver: false } state)
+        if (_pending || IsDropAnimating() || _state is not { Complete: false, GameOver: false } state)
             return;
 
         var orientation = (PotionPairOrientation)state.Orientation;
@@ -882,38 +884,60 @@ internal sealed class PotionWindow : Base
         var now = Environment.TickCount64;
         var first = PotionStateEncoding.Decode(state.CurrentFirst);
         var second = PotionStateEncoding.Decode(state.CurrentSecond);
+        var longest = 0;
 
         switch (orientation)
         {
             case PotionPairOrientation.Vertical:
             {
                 var empty = EmptyCells(column);
-                QueueMotion(first, column, empty - 1, now, 560 + (empty - 1) * 30);
-                QueueMotion(second, column, empty - 2, now + 45, 560 + (empty - 2) * 30);
+                var firstDuration = 560 + (empty - 1) * 30;
+                var secondDuration = 560 + (empty - 2) * 30;
+                QueueMotion(first, column, empty - 1, now, firstDuration);
+                QueueMotion(second, column, empty - 2, now + 45, secondDuration);
+                longest = Math.Max(firstDuration, 45 + secondDuration);
                 break;
             }
 
             case PotionPairOrientation.VerticalReversed:
             {
                 var empty = EmptyCells(column);
-                QueueMotion(second, column, empty - 1, now, 560 + (empty - 1) * 30);
-                QueueMotion(first, column, empty - 2, now + 45, 560 + (empty - 2) * 30);
+                var secondDuration = 560 + (empty - 1) * 30;
+                var firstDuration = 560 + (empty - 2) * 30;
+                QueueMotion(second, column, empty - 1, now, secondDuration);
+                QueueMotion(first, column, empty - 2, now + 45, firstDuration);
+                longest = Math.Max(secondDuration, 45 + firstDuration);
                 break;
             }
 
             case PotionPairOrientation.Horizontal:
-                QueueMotion(first, column, EmptyCells(column) - 1, now, 560 + (EmptyCells(column) - 1) * 30);
-                QueueMotion(second, column + 1, EmptyCells(column + 1) - 1, now + 35,
-                    560 + (EmptyCells(column + 1) - 1) * 30);
+            {
+                var leftDuration = 560 + (EmptyCells(column) - 1) * 30;
+                var rightDuration = 560 + (EmptyCells(column + 1) - 1) * 30;
+                QueueMotion(first, column, EmptyCells(column) - 1, now, leftDuration);
+                QueueMotion(second, column + 1, EmptyCells(column + 1) - 1, now + 35, rightDuration);
+                longest = Math.Max(leftDuration, 35 + rightDuration);
                 break;
+            }
 
             case PotionPairOrientation.HorizontalReversed:
-                QueueMotion(second, column, EmptyCells(column) - 1, now, 560 + (EmptyCells(column) - 1) * 30);
-                QueueMotion(first, column + 1, EmptyCells(column + 1) - 1, now + 35,
-                    560 + (EmptyCells(column + 1) - 1) * 30);
+            {
+                var leftDuration = 560 + (EmptyCells(column) - 1) * 30;
+                var rightDuration = 560 + (EmptyCells(column + 1) - 1) * 30;
+                QueueMotion(second, column, EmptyCells(column) - 1, now, leftDuration);
+                QueueMotion(first, column + 1, EmptyCells(column + 1) - 1, now + 35, rightDuration);
+                longest = Math.Max(leftDuration, 35 + rightDuration);
                 break;
+            }
         }
+
+        // Keep the just-dropped pair as the only "live" visual until it reaches
+        // the board. The server can already advance Current -> Next, but the next
+        // pair must not become interactive while the previous pair is still falling.
+        _dropAnimationUntil = now + Math.Max(420, longest) + 40;
     }
+
+    private bool IsDropAnimating() => Environment.TickCount64 < _dropAnimationUntil;
 
     private void QueueMotion(PotionPiece piece, int column, int row, long started, int duration)
     {
