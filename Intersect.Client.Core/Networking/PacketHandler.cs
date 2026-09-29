@@ -639,7 +639,11 @@ internal sealed partial class PacketHandler
     public void HandlePacket(IPacketSender packetSender, AnnouncementPacket packet)
     {
         Interface.Interface.EnqueueInGame(
-            gameInterface => gameInterface.AnnouncementWindow.ShowAnnouncement(packet.Message, packet.Duration)
+            gameInterface =>
+            {
+                if (!gameInterface.TryShowInvasionAnnouncement(packet.Message, packet.Duration))
+                    gameInterface.AnnouncementWindow.ShowAnnouncement(packet.Message, packet.Duration);
+            }
         );
     }
 
