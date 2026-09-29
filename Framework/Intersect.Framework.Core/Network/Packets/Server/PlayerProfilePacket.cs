@@ -91,4 +91,16 @@ public partial class PlayerProfilePacket : IntersectPacket
 
     [Key(14)]
     public bool IsSelf { get; set; }
+
+    [Key(15)]
+    public string RankingTitle { get; set; } = string.Empty;
+
+    [Key(16)]
+    public int RankingExperienceBonusPercent { get; set; }
+
+    [Key(17)]
+    public int RankingPosition { get; set; }
+
+    [Key(18)]
+    public int RankingConsecutiveDays { get; set; }
 }
