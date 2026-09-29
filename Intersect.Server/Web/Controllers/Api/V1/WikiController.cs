@@ -169,12 +169,12 @@ public sealed class WikiController : IntersectController
         limit = Math.Clamp(limit, 1, 100);
 
         using var context = DbInterface.CreatePlayerContext();
-        var rows = context.Players
+        var candidates = context.Players
             .AsNoTracking()
             .OrderByDescending(player => player.Level)
             .ThenByDescending(player => player.Exp)
             .ThenBy(player => player.Name)
-            .Take(limit)
+            .Take(Math.Max(limit, 100))
             .Select(player => new
             {
                 player.Id,
@@ -184,6 +184,26 @@ public sealed class WikiController : IntersectController
                 player.ClassId,
                 GuildName = player.Guild != null ? player.Guild.Name : null,
             })
+            .ToDictionary(player => player.Id);
+
+        foreach (var online in Entities.Player.OnlinePlayersSnapshot())
+        {
+            candidates[online.Id] = new
+            {
+                online.Id,
+                online.Name,
+                online.Level,
+                online.Exp,
+                online.ClassId,
+                GuildName = online.Guild?.Name,
+            };
+        }
+
+        var rows = candidates.Values
+            .OrderByDescending(player => player.Level)
+            .ThenByDescending(player => player.Exp)
+            .ThenBy(player => player.Name)
+            .Take(limit)
             .ToArray();
 
         var titleStatuses = LeaderboardTitleRuntime.Snapshot();
