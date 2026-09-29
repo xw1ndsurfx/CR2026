@@ -1,4 +1,5 @@
 using Intersect.Client.Core;
+using Intersect.Client.Entities;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.GenericClasses;
@@ -11,6 +12,7 @@ using Intersect.Client.General;
 using Intersect.Client.Maps;
 using Intersect.Client.Networking;
 using Intersect.Configuration;
+using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Events;
