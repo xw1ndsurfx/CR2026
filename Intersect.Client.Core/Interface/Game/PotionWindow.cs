@@ -120,6 +120,7 @@ internal sealed class PotionWindow : Base
     private readonly List<CellPulse> _pulses = [];
 
     private readonly Label _title;
+    private readonly Label _nextHeader;
     private readonly ImagePanel _rewardIcon;
     private readonly Label _recipe;
     private readonly Label _requirements;
@@ -177,9 +178,16 @@ internal sealed class PotionWindow : Base
             MouseInputEnabled = false,
         };
 
-        _title = Label("PotionTitle", 70, 28, 860, 42, 22);
+        // Keep the game title inside the brown board header instead of over the HUD.
+        _nextHeader = Label("PotionNextHeader", BoardX - 5, BoardY - 54, 48, 32, 11);
+        _nextHeader.Text = "NEXT";
+        _nextHeader.TextAlign = Pos.Center;
+        _nextHeader.TextColorOverride = new Color(255, 236, 210, 153);
+
+        _title = Label("PotionTitle", BoardX + 155, BoardY - 58, 245, 42, 19);
         _title.Text = "ROYAL ALCHEMY";
         _title.TextAlign = Pos.Center;
+        _title.TextColorOverride = Color.White;
 
         _rewardIcon = new ImagePanel(_content, "PotionRewardIcon")
         {
@@ -203,6 +211,7 @@ internal sealed class PotionWindow : Base
 
         _current = Label("PotionCurrent", 65, 438, 315, 46, 14);
         _next = Label("PotionNext", 65, 489, 315, 46, 12);
+        _next.IsHidden = true;
         _score = Label("PotionScore", 65, 542, 315, 30, 13);
         _xpLabel = Label("PotionXpLabel", 65, 575, 315, 24, 12);
         _status = Label("PotionStatus", 65, 624, 315, 54, 12);
@@ -322,7 +331,7 @@ internal sealed class PotionWindow : Base
                 if (_previewColumn < 0 && column >= 0) _previewColumn = column;
             },
             DropFromBoard,
-            RotatePairLocal
+            () => Send(PotionRequestKind.Swap)
         );
         Place(_boardInput, BoardX, BoardY, PotionPuzzle.Columns * CellW, PotionPuzzle.Rows * CellH);
 
@@ -446,6 +455,7 @@ internal sealed class PotionWindow : Base
         DrawWoodGrain(renderer, board);
         DrawAlchemyRune(renderer, board);
         DrawRecipeRequirementIcons(renderer);
+        DrawNextPairPreview(renderer);
 
         DrawExperienceBar(renderer);
 
@@ -659,6 +669,19 @@ internal sealed class PotionWindow : Base
             renderer.DrawLine(icon.X + icon.Width - 10, icon.Y + 4, icon.X + icon.Width - 6, icon.Y + 9);
             renderer.DrawLine(icon.X + icon.Width - 6, icon.Y + 9, icon.X + icon.Width - 1, icon.Y + 1);
         }
+    }
+
+    private void DrawNextPairPreview(RendererBase renderer)
+    {
+        if (_state == null) return;
+
+        var first = PotionStateEncoding.Decode(_state.NextFirst);
+        var second = PotionStateEncoding.Decode(_state.NextSecond);
+
+        var firstRect = _layout.Rect(BoardX + 44, BoardY - 52, 34, 32);
+        var secondRect = _layout.Rect(BoardX + 80, BoardY - 52, 34, 32);
+        DrawPiece(renderer, firstRect, first, 235);
+        DrawPiece(renderer, secondRect, second, 235);
     }
 
     private void DrawHoverPair(RendererBase renderer)
