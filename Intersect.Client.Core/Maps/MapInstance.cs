@@ -111,6 +111,13 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
     protected float mFogCurrentY;
 
+    // Fog transition state. Keep the currently rendered fog around while it
+    // fades out so changing maps/environments never pops a cloud layer in or out.
+    private string mRenderedFogName = string.Empty;
+    private int mRenderedFogAlpha;
+    private int mRenderedFogXSpeed;
+    private int mRenderedFogYSpeed;
+
     //Fog Variables
     protected long mFogUpdateTime = -1;
 
@@ -1370,69 +1377,135 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
     /// </summary>
     public void DrawFog()
     {
-        var fogName = Fog;
-        var fogAlpha = FogTransparency;
-        var fogXSpeed = FogXSpeed;
-        var fogYSpeed = FogYSpeed;
+        var desiredFogName = Fog;
+        var desiredFogAlpha = FogTransparency;
+        var desiredFogXSpeed = FogXSpeed;
+        var desiredFogYSpeed = FogYSpeed;
 
         if (InvasionEnvironmentManager.TryGetEnvironment(this, out var invasionEnvironment))
         {
-            fogName = invasionEnvironment.Fog;
-            fogAlpha = invasionEnvironment.FogAlpha;
-            fogXSpeed = invasionEnvironment.FogXSpeed;
-            fogYSpeed = invasionEnvironment.FogYSpeed;
+            desiredFogName = invasionEnvironment.Fog;
+            desiredFogAlpha = invasionEnvironment.FogAlpha;
+            desiredFogXSpeed = invasionEnvironment.FogXSpeed;
+            desiredFogYSpeed = invasionEnvironment.FogYSpeed;
         }
 
-        // Exit early if the player or map data is not available, or if there is no fog texture.
-        if (Globals.Me == null || Lookup.Get(Globals.Me.MapId) == null || string.IsNullOrWhiteSpace(fogName))
+        if (Globals.Me == null || Lookup.Get(Globals.Me.MapId) == null)
         {
             return;
         }
 
-        // Get fog texture and exit early if it is not available.
-        var fogTex = Globals.ContentManager.GetTexture(Framework.Content.TextureType.Fog, fogName);
+        var now = Timing.Global.MillisecondsUtc;
+        var elapsedTime = mFogUpdateTime < 0
+            ? 0f
+            : (float)Math.Clamp(now - mFogUpdateTime, 0L, 1000L);
+        mFogUpdateTime = now;
+
+        var isCurrentMap = Id == Globals.Me.MapId;
+        var desiredHasFog = !string.IsNullOrWhiteSpace(desiredFogName);
+        var fogChanged = !string.Equals(
+            mRenderedFogName,
+            desiredFogName,
+            StringComparison.OrdinalIgnoreCase
+        );
+
+        // First fog on this map starts fully transparent and fades in.
+        if (string.IsNullOrWhiteSpace(mRenderedFogName) && desiredHasFog)
+        {
+            mRenderedFogName = desiredFogName;
+            mRenderedFogAlpha = desiredFogAlpha;
+            mRenderedFogXSpeed = desiredFogXSpeed;
+            mRenderedFogYSpeed = desiredFogYSpeed;
+            mCurFogIntensity = 0f;
+            fogChanged = false;
+        }
+
+        // If the fog texture changed (including invasion fog), keep drawing the
+        // old texture until it has completely faded out. Only then switch to
+        // the new texture, which will fade in from zero.
+        var fadingOldFog = fogChanged && !string.IsNullOrWhiteSpace(mRenderedFogName);
+        if (fadingOldFog)
+        {
+            mCurFogIntensity = Math.Max(0f, mCurFogIntensity - elapsedTime / 2000f);
+
+            if (mCurFogIntensity <= 0f)
+            {
+                mRenderedFogName = desiredHasFog ? desiredFogName : string.Empty;
+                mRenderedFogAlpha = desiredFogAlpha;
+                mRenderedFogXSpeed = desiredFogXSpeed;
+                mRenderedFogYSpeed = desiredFogYSpeed;
+                mCurFogIntensity = 0f;
+                fadingOldFog = false;
+            }
+        }
+        else
+        {
+            // Same fog: keep its live settings in sync. A non-current map fades
+            // out naturally as the player moves away.
+            if (desiredHasFog &&
+                string.Equals(mRenderedFogName, desiredFogName, StringComparison.OrdinalIgnoreCase))
+            {
+                mRenderedFogAlpha = desiredFogAlpha;
+                mRenderedFogXSpeed = desiredFogXSpeed;
+                mRenderedFogYSpeed = desiredFogYSpeed;
+            }
+
+            var targetVisible = isCurrentMap && desiredHasFog;
+            mCurFogIntensity = targetVisible
+                ? Math.Min(1f, mCurFogIntensity + elapsedTime / 2000f)
+                : Math.Max(0f, mCurFogIntensity - elapsedTime / 2000f);
+
+            if (!desiredHasFog && mCurFogIntensity <= 0f)
+            {
+                mRenderedFogName = string.Empty;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(mRenderedFogName) || mCurFogIntensity <= 0f)
+        {
+            return;
+        }
+
+        var fogTex = Globals.ContentManager.GetTexture(
+            Framework.Content.TextureType.Fog,
+            mRenderedFogName
+        );
         if (fogTex == null)
         {
             return;
         }
 
-        // Calculate elapsed time since the last update and set maximum value for elapsedTime to
-        // prevent large jumps in fog intensity (1 second maximum).
-        float elapsedTime = Math.Min(Timing.Global.MillisecondsUtc - mFogUpdateTime, 1000);
-        mFogUpdateTime = Timing.Global.MillisecondsUtc;
-
-        // Update fog intensity based on whether the player is on the current map or not.
-        mCurFogIntensity = Id == Globals.Me.MapId
-            ? Math.Min(1, mCurFogIntensity + elapsedTime / 2000f)
-            : Math.Max(0, mCurFogIntensity - elapsedTime / 2000f);
-
-        // Calculate the number of times the fog texture needs to be drawn to cover the map area.
         var xCount = _width * _tileWidth * 3 / fogTex.Width;
         var yCount = _height * _tileHeight * 3 / fogTex.Height;
 
-        // Update the fog texture's position based on its speed and elapsed time.
-        mFogCurrentX += elapsedTime / 1000f * fogXSpeed * 2;
-        mFogCurrentY += elapsedTime / 1000f * fogYSpeed * 2;
+        mFogCurrentX += elapsedTime / 1000f * mRenderedFogXSpeed * 2;
+        mFogCurrentY += elapsedTime / 1000f * mRenderedFogYSpeed * 2;
 
-        // Handle cases where the fog texture's position goes out of bounds.
         mFogCurrentX %= fogTex.Width;
         mFogCurrentY %= fogTex.Height;
 
-        // Round the fog texture's position to the nearest integer value.
         var drawX = (float)Math.Round(mFogCurrentX);
         var drawY = (float)Math.Round(mFogCurrentY);
+        var drawAlpha = (byte)Math.Clamp(
+            (int)Math.Round(mRenderedFogAlpha * mCurFogIntensity),
+            0,
+            255
+        );
 
         for (var x = -1; x <= xCount; x++)
         {
             for (var y = -1; y <= yCount; y++)
             {
                 Graphics.DrawGameTexture(
-                    fogTex, new FloatRect(0, 0, fogTex.Width, fogTex.Height),
+                    fogTex,
+                    new FloatRect(0, 0, fogTex.Width, fogTex.Height),
                     new FloatRect(
                         X - _width * _tileWidth * 1f + x * fogTex.Width + drawX,
                         Y - _height * _tileHeight * 1f + y * fogTex.Height + drawY,
-                        fogTex.Width, fogTex.Height
-                    ), new Color((byte)(fogAlpha * mCurFogIntensity), 255, 255, 255)
+                        fogTex.Width,
+                        fogTex.Height
+                    ),
+                    new Color(drawAlpha, 255, 255, 255)
                 );
             }
         }
@@ -1496,7 +1569,11 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
     public void GridSwitched()
     {
         mPanoramaIntensity = 1f;
-        mCurFogIntensity = 1f;
+
+        // Never force fog to 100% on a grid/environment switch. Preserve the
+        // current transition state and restart the timer so the next frame
+        // cannot create a large opacity jump.
+        mFogUpdateTime = Timing.Global.MillisecondsUtc;
     }
 
     public void DrawPanorama()
@@ -1585,12 +1662,19 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                 return;
             }
 
-            // Copy over fog values.
+            // Copy over fog values and the retained visual state so the same
+            // fog continues smoothly across adjacent maps.
             mFogUpdateTime = tempMap.mFogUpdateTime;
-            var ratio = (float)tempMap.FogTransparency / FogTransparency;
-            mCurFogIntensity = ratio * tempMap.mCurFogIntensity;
+            var ratio = FogTransparency <= 0
+                ? 1f
+                : (float)tempMap.FogTransparency / FogTransparency;
+            mCurFogIntensity = Math.Clamp(ratio * tempMap.mCurFogIntensity, 0f, 1f);
             mFogCurrentX = tempMap.mFogCurrentX;
             mFogCurrentY = tempMap.mFogCurrentY;
+            mRenderedFogName = tempMap.mRenderedFogName;
+            mRenderedFogAlpha = tempMap.mRenderedFogAlpha;
+            mRenderedFogXSpeed = tempMap.mRenderedFogXSpeed;
+            mRenderedFogYSpeed = tempMap.mRenderedFogYSpeed;
 
             // Calculate displacement of current map compared to old map.
             float dx = X - oldMap.X;
