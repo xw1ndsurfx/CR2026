@@ -14,6 +14,7 @@ using Intersect.Models;
 using Intersect.Server.WorldEvents.Invasions;
 using Intersect.Server.MiniGames;
 using Intersect.Server.Database;
+using Intersect.Server.Leaderboards;
 using Intersect.Server.Professions;
 using Intersect.Server.Web.Http;
 using Intersect.Server.Web.Types;
@@ -150,7 +151,10 @@ public sealed class WikiController : IntersectController
         int Level,
         long Experience,
         string Class,
-        string? Guild
+        string? Guild,
+        string? Title,
+        int ExperienceBonusPercent,
+        int ConsecutiveDays
     );
 
     public sealed record WikiLevelLeaderboardResponse(
@@ -173,6 +177,7 @@ public sealed class WikiController : IntersectController
             .Take(limit)
             .Select(player => new
             {
+                player.Id,
                 player.Name,
                 player.Level,
                 player.Exp,
@@ -181,15 +186,25 @@ public sealed class WikiController : IntersectController
             })
             .ToArray();
 
+        var titleStatuses = LeaderboardTitleRuntime.Snapshot();
+
         var players = rows
-            .Select((player, index) => new WikiLevelLeaderboardEntry(
-                index + 1,
-                player.Name,
-                player.Level,
-                player.Exp,
-                ClassDescriptor.GetName(player.ClassId),
-                player.GuildName
-            ))
+            .Select((player, index) =>
+            {
+                titleStatuses.TryGetValue(player.Id, out var title);
+
+                return new WikiLevelLeaderboardEntry(
+                    index + 1,
+                    player.Name,
+                    player.Level,
+                    player.Exp,
+                    ClassDescriptor.GetName(player.ClassId),
+                    player.GuildName,
+                    title?.Title,
+                    title?.ExperienceBonusPercent ?? 0,
+                    title?.ConsecutiveDays ?? 0
+                );
+            })
             .ToArray();
 
         return Ok(new WikiLevelLeaderboardResponse(DateTimeOffset.UtcNow, players));
