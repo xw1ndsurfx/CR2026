@@ -4,6 +4,7 @@ using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.Entities;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.GenericClasses;
+using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Maps;
 using Intersect.Client.General;
 using Intersect.Core;
