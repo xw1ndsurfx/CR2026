@@ -12,6 +12,7 @@ public sealed partial class PotionRequestPacket : IntersectPacket
     [Key(3)] public PotionRequestKind Kind { get; set; }
     [Key(4)] public int Column { get; set; }
     [Key(5)] public Guid RecipeId { get; set; }
+    [Key(6)] public int Orientation { get; set; }
 
     [IgnoreMember]
     public bool IsValid =>
@@ -19,9 +20,10 @@ public sealed partial class PotionRequestPacket : IntersectPacket
         RequestId > 0 &&
         Revision >= 0 &&
         Kind is >= PotionRequestKind.Refresh and <= PotionRequestKind.SelectRecipe &&
+        Orientation is >= 0 and <= 3 &&
         (Kind == PotionRequestKind.Drop
             ? Column is >= 0 and < PotionPuzzle.Columns && RecipeId == Guid.Empty
             : Kind == PotionRequestKind.SelectRecipe
-                ? Column == 0 && RecipeId != Guid.Empty
-                : Column == 0 && RecipeId == Guid.Empty);
+                ? Column == 0 && RecipeId != Guid.Empty && Orientation == 0
+                : Column == 0 && RecipeId == Guid.Empty && Orientation == 0);
 }

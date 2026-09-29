@@ -782,6 +782,10 @@ public partial class FrmEvent : Form
                 tmpCommand = new OpenLogiklikNewsCommand();
 
                 break;
+            case EventCommandType.OpenMarketplace:
+                tmpCommand = new OpenMarketplaceCommand();
+
+                break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -819,11 +823,30 @@ public partial class FrmEvent : Form
     public FrmEvent(MapDescriptor currentMap)
     {
         InitializeComponent();
+        AddMarketplaceCommand();
         AddProfessionCommands();
         InitializeQuestArrowControls();
         Icon = Program.Icon;
 
         mCurrentMap = currentMap;
+    }
+
+    private void AddMarketplaceCommand()
+    {
+        var interfaceNode = lstCommands.Nodes.Cast<TreeNode>()
+            .FirstOrDefault(node => node.Name == "interface");
+        if (interfaceNode == null || interfaceNode.Nodes.Cast<TreeNode>().Any(node => node.Name == "openmarketplace"))
+        {
+            return;
+        }
+
+        interfaceNode.Nodes.Add(
+            new TreeNode("Open Marketplace")
+            {
+                Name = "openmarketplace",
+                Tag = (int)EventCommandType.OpenMarketplace,
+            }
+        );
     }
 
     private void AddProfessionCommands()
@@ -1604,6 +1627,8 @@ public partial class FrmEvent : Form
 
                 break;
             case EventCommandType.OpenLogiklikNews:
+                break;
+            case EventCommandType.OpenMarketplace:
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

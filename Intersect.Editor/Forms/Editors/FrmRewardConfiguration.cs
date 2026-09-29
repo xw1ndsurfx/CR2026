@@ -38,6 +38,7 @@ public sealed class FrmRewardConfiguration : DarkForm
     private readonly RewardConfiguration _working;
     private readonly List<PokerLevelReward> _poker;
     private readonly List<PokerLevelReward> _blackjack;
+    private readonly List<PokerLevelReward> _potionLevels;
     private readonly List<DailyRewardEntry> _daily;
     private readonly List<PotionRecipeDefinition> _potions;
     private readonly List<CookingRecipeDefinition> _cooking;
@@ -52,6 +53,7 @@ public sealed class FrmRewardConfiguration : DarkForm
 
     private readonly ListBox _pokerList = new() { Dock = DockStyle.Fill };
     private readonly ListBox _blackjackList = new() { Dock = DockStyle.Fill };
+    private readonly ListBox _potionLevelList = new() { Dock = DockStyle.Fill };
     private readonly ListBox _potionList = new() { Dock = DockStyle.Fill };
     private readonly ListBox _cookingList = new() { Dock = DockStyle.Fill };
 
@@ -67,6 +69,7 @@ public sealed class FrmRewardConfiguration : DarkForm
         _working = RewardConfiguration.FromJson(RewardConfiguration.Instance.ToJson());
         _poker = (_working.PokerLevelRewards ?? []).ToList();
         _blackjack = (_working.BlackjackLevelRewards ?? []).ToList();
+        _potionLevels = (_working.PotionLevelRewards ?? []).ToList();
         _daily = (_working.DailyRewards ?? []).ToList();
         _potions = (_working.PotionRecipes ?? []).ToList();
         _cooking = (_working.CookingRecipes ?? []).ToList();
@@ -78,6 +81,7 @@ public sealed class FrmRewardConfiguration : DarkForm
         tabs.TabPages.Add(BuildDailyTab());
         tabs.TabPages.Add(BuildLevelTab("Poker Level Rewards", _poker, _pokerList));
         tabs.TabPages.Add(BuildLevelTab("Blackjack Level Rewards", _blackjack, _blackjackList));
+        tabs.TabPages.Add(BuildLevelTab("Alchemy Level Rewards", _potionLevels, _potionLevelList));
         tabs.TabPages.Add(BuildPotionTab());
         tabs.TabPages.Add(BuildCookingTab());
 
@@ -100,6 +104,7 @@ public sealed class FrmRewardConfiguration : DarkForm
         RefreshDaily();
         RefreshLevels(_poker, _pokerList);
         RefreshLevels(_blackjack, _blackjackList);
+        RefreshLevels(_potionLevels, _potionLevelList);
         RefreshPotions();
         RefreshCooking();
     }
@@ -414,6 +419,7 @@ public sealed class FrmRewardConfiguration : DarkForm
         _working.DailyRewards = _daily.ToArray();
         _working.PokerLevelRewards = _poker.ToArray();
         _working.BlackjackLevelRewards = _blackjack.ToArray();
+        _working.PotionLevelRewards = _potionLevels.ToArray();
         _working.PotionRecipes = _potions.ToArray();
         _working.CookingRecipes = _cooking.ToArray();
         if (!_working.IsStructurallyValid)

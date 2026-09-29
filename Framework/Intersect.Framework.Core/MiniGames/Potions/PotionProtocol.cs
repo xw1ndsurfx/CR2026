@@ -47,7 +47,7 @@ public sealed partial class PotionRequirementState
 
     [IgnoreMember]
     public bool IsValid =>
-        Family is >= 0 and <= 2 &&
+        Family is >= 0 and <= 3 &&
         Level is >= 1 and <= 4 &&
         Needed is >= 1 and <= 20 &&
         Progress is >= 0 && Progress <= Needed;
@@ -82,6 +82,7 @@ public sealed partial class PotionSessionState
     [Key(23)] public int Orientation { get; set; }
     [Key(24)] public bool RecipeSelectionRequired { get; set; }
     [Key(25)] public PotionRecipeChoiceState[] RecipeChoices { get; set; } = [];
+    [Key(26)] public Guid OutputItemId { get; set; }
 
     [IgnoreMember]
     public bool IsValid =>
@@ -97,6 +98,7 @@ public sealed partial class PotionSessionState
         RecipeName is { Length: >= 1 and <= 64 } &&
         RequiredLevel is >= 1 and <= MiniGameProgression.MaximumLevel &&
         OutputItemName is { Length: >= 1 and <= 128 } &&
+        OutputItemId != Guid.Empty &&
         OutputQuantity is >= 1 and <= 1_000_000_000 &&
         CompletionExperience is >= 1 and <= 5_000 &&
         Requirements is { Length: > 0 and <= 6 } &&
@@ -118,11 +120,11 @@ public static class PotionStateEncoding
     public static int Encode(PotionPiece piece) => 1 + (int)piece.Family * 4 + (piece.Level - 1);
 
     public static bool IsEncodedPiece(int value, bool allowEmpty = true) =>
-        (allowEmpty && value == 0) || value is >= 1 and <= 12;
+        (allowEmpty && value == 0) || value is >= 1 and <= 16;
 
     public static PotionPiece Decode(int value)
     {
-        if (value is < 1 or > 12) throw new ArgumentOutOfRangeException(nameof(value));
+        if (value is < 1 or > 16) throw new ArgumentOutOfRangeException(nameof(value));
         var zero = value - 1;
         return new PotionPiece((PotionFamily)(zero / 4), zero % 4 + 1);
     }

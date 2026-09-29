@@ -114,6 +114,7 @@ internal sealed class PotionRecipeDialog : DarkForm
             AutoSize = true,
             MaximumSize = new Size(450, 0),
             Text = "Tier 1 = Shard, 2 = Extract, 3 = Essence, 4 = Soul. " +
+                   "Radiant (gold) is the fourth ingredient family and is available only on recipes requiring Alchemy level 5 or higher. " +
                    "Optional Event unlock uses a BOOLEAN Player Variable. Set that variable to TRUE from any event or quest completion event to unlock the recipe for that character."
         };
         AddRow(root, 7, "Rules", help);
@@ -171,6 +172,19 @@ internal sealed class PotionRecipeDialog : DarkForm
     private void AddRequirement()
     {
         if (_family.SelectedItem is not PotionFamily family || _tier.SelectedItem is not int tier) return;
+
+        if (family == PotionFamily.Radiant && _level.Value < 5)
+        {
+            MessageBox.Show(
+                this,
+                "Radiant ingredients are available only for recipes requiring Alchemy level 5 or higher.",
+                "Potion Recipe",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
         var requirement = new PotionRequirement(family, tier, (int)_needed.Value);
         if (!requirement.IsValid || _draft.Contains(requirement) || _draft.Count >= 6) return;
         _draft.Add(requirement);
@@ -194,6 +208,18 @@ internal sealed class PotionRecipeDialog : DarkForm
         if (_outputItem.SelectedItem is not ItemChoice item || item.Id == Guid.Empty)
         {
             MessageBox.Show(this, "Choose an output item.", "Potion Recipe", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        if (_level.Value < 5 && _draft.Any(requirement => requirement.Family == PotionFamily.Radiant))
+        {
+            MessageBox.Show(
+                this,
+                "Radiant ingredients require a recipe level of at least 5. Raise the required level or remove the Radiant requirement.",
+                "Potion Recipe",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+            );
             return;
         }
 
