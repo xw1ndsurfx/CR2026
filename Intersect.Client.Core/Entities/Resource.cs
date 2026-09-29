@@ -9,6 +9,7 @@ using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Resources;
+using Intersect.Framework.Core.Professions;
 using Intersect.Network.Packets.Server;
 using Microsoft.Extensions.Logging;
 
@@ -504,6 +505,110 @@ public partial class Resource : Entity, IResource
         }
 
         _recalculateRenderBounds = false;
+    }
+
+    protected override (int X, int Y) GetHpBarPosition(IGameTexture boundingTexture)
+    {
+        if (_renderBoundsDest.Width <= 0 || _renderBoundsDest.Height <= 0)
+            return base.GetHpBarPosition(boundingTexture);
+
+        var x = (int)Math.Round(_renderBoundsDest.X + _renderBoundsDest.Width / 2f);
+        var y = (int)Math.Round(_renderBoundsDest.Y - boundingTexture.Height / 2f - 6f);
+        return (x, y);
+    }
+
+    public override void DrawHpBar()
+    {
+        base.DrawHpBar();
+        DrawTreeHarvestProgress();
+    }
+
+    private void DrawTreeHarvestProgress()
+    {
+        if (!ShouldDrawHpBar ||
+            IsDead ||
+            Descriptor == null ||
+            !IsTreeResource(Descriptor) ||
+            Graphics.Renderer == null)
+        {
+            return;
+        }
+
+        var maxHealth = MaxVital[(int)Enums.Vital.Health];
+        var currentHealth = Vital[(int)Enums.Vital.Health];
+        if (maxHealth <= 0 || currentHealth <= 0 || currentHealth >= maxHealth)
+            return;
+
+        // Progress represents how close the tree is to being felled:
+        // 0% at full health, 100% when the final hit lands.
+        var progress = 1d - Math.Clamp(currentHealth / (double)maxHealth, 0d, 1d);
+        var percentage = (int)Math.Clamp(
+            Math.Round(progress * 100d, MidpointRounding.AwayFromZero),
+            1d,
+            99d
+        );
+        var text = $"{percentage}%";
+
+        var barTexture = GetBoundingHpBarTexture();
+        var (x, barY) = GetHpBarPosition(barTexture);
+        var textSize = Graphics.Renderer.MeasureText(
+            text,
+            Graphics.EntityNameFont,
+            Graphics.EntityNameFontSize,
+            1
+        );
+
+        var textX = x - (int)Math.Ceiling(textSize.X / 2f);
+        var textY = barY - barTexture.Height / 2 - (int)Math.Ceiling(textSize.Y) - 4;
+
+        Graphics.Renderer.DrawString(
+            text,
+            Graphics.EntityNameFont,
+            Graphics.EntityNameFontSize,
+            textX,
+            textY,
+            1,
+            Color.White,
+            true,
+            null,
+            Color.Black
+        );
+    }
+
+    private static bool IsTreeResource(ResourceDescriptor descriptor)
+    {
+        var resourceName = descriptor.Name ?? string.Empty;
+        if (resourceName.Contains("tree", StringComparison.OrdinalIgnoreCase) ||
+            resourceName.Contains("arbre", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var profession = ProfessionConfiguration.Instance.FindResource(descriptor.Id)?.Profession;
+        if (profession != null)
+        {
+            var professionName = profession.Name ?? string.Empty;
+            if (professionName.Contains("woodcut", StringComparison.OrdinalIgnoreCase) ||
+                professionName.Contains("lumber", StringComparison.OrdinalIgnoreCase) ||
+                professionName.Contains("bûcher", StringComparison.OrdinalIgnoreCase) ||
+                professionName.Contains("bucher", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        var toolIndex = descriptor.Tool;
+        if (toolIndex >= 0 && toolIndex < Options.Instance.Equipment.ToolTypes.Count)
+        {
+            var toolName = Options.Instance.Equipment.ToolTypes[toolIndex] ?? string.Empty;
+            if (toolName.Contains("axe", StringComparison.OrdinalIgnoreCase) ||
+                toolName.Contains("hache", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     //Rendering Resources
