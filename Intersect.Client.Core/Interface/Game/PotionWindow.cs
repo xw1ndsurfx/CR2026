@@ -25,8 +25,7 @@ internal sealed class PotionWindow : Base
         private readonly Action<int> _hover;
         private readonly Action<int> _drop;
         private readonly Action _swap;
-        private long _suppressDropUntil;
-        private int _suppressDropColumn = -1;
+        private long _suppressLeftUntil;
 
         public PotionBoardInput(Base parent, Action<int> hover, Action<int> drop, Action swap)
             : base(parent, nameof(PotionBoardInput))
@@ -55,12 +54,12 @@ internal sealed class PotionWindow : Base
             _hover(-1);
         }
 
-        protected override void OnMouseClicked(
+        protected override void OnMouseDown(
             MouseButton mouseButton,
             Intersect.Point mousePosition,
             bool userAction = true)
         {
-            base.OnMouseClicked(mouseButton, mousePosition, userAction);
+            base.OnMouseDown(mouseButton, mousePosition, userAction);
             var local = CanvasPosToLocal(mousePosition);
             var column = Width <= 0
                 ? -1
@@ -68,24 +67,31 @@ internal sealed class PotionWindow : Base
 
             if (mouseButton == MouseButton.Right)
             {
-                // Some mouse/input backends can emit a left-click immediately after
-                // a right-click release. Remember this column for a very short window
-                // so right click remains a pure rotate action.
-                _suppressDropColumn = column;
-                _suppressDropUntil = Environment.TickCount64 + 140;
+                // Rotate on the physical right-button press, not on Clicked. Certain
+                // backends synthesize a Left Clicked event after a right-button
+                // release; handling gameplay on MouseDown avoids that duplicate.
+                _suppressLeftUntil = Environment.TickCount64 + 350;
                 _swap();
                 return;
             }
 
             if (mouseButton == MouseButton.Left && column >= 0)
             {
-                if (column == _suppressDropColumn && Environment.TickCount64 <= _suppressDropUntil)
+                if (Environment.TickCount64 <= _suppressLeftUntil)
                     return;
 
-                _suppressDropColumn = -1;
-                _suppressDropUntil = 0;
                 _drop(column);
             }
+        }
+
+        protected override void OnMouseClicked(
+            MouseButton mouseButton,
+            Intersect.Point mousePosition,
+            bool userAction = true)
+        {
+            // Intentionally no gameplay here. Drop/rotate are handled on MouseDown
+            // so a right click can never also be interpreted as a placement.
+            base.OnMouseClicked(mouseButton, mousePosition, userAction);
         }
     }
 
@@ -291,7 +297,7 @@ internal sealed class PotionWindow : Base
                 _hoverColumn = column;
                 if (_previewColumn < 0 && column >= 0) _previewColumn = column;
             },
-            column => Send(PotionRequestKind.Drop, column),
+            DropFromBoard,
             () => Send(PotionRequestKind.Swap)
         );
         Place(_boardInput, BoardX, BoardY, PotionPuzzle.Columns * CellW, PotionPuzzle.Rows * CellH);
@@ -818,7 +824,7 @@ internal sealed class PotionWindow : Base
                 var row = index / PotionPuzzle.Columns;
                 var column = index % PotionPuzzle.Columns;
                 if (_motions.Count < 32)
-                    _motions.Add(new(PotionStateEncoding.Decode(after), column, row, now, 250 + row * 22));
+                    QueueMotion(PotionStateEncoding.Decode(after), column, row, now, 420 + row * 28);
 
                 if (before != 0)
                     _pulses.Add(new(column, row, now, 650));
@@ -863,6 +869,78 @@ internal sealed class PotionWindow : Base
         var now = Environment.TickCount64;
         _motions.RemoveAll(motion => now - motion.Started >= motion.Duration);
         _pulses.RemoveAll(pulse => now - pulse.Started >= pulse.Duration);
+    }
+
+    private void DropFromBoard(int column)
+    {
+        if (_pending || _state is not { Complete: false, GameOver: false } state)
+            return;
+
+        var orientation = (PotionPairOrientation)state.Orientation;
+        if (!CanPlace(column, orientation))
+            return;
+
+        AnimateLocalDrop(column, orientation, state);
+        Send(PotionRequestKind.Drop, column);
+    }
+
+    private void AnimateLocalDrop(int column, PotionPairOrientation orientation, PotionSessionState state)
+    {
+        var now = Environment.TickCount64;
+        var first = PotionStateEncoding.Decode(state.CurrentFirst);
+        var second = PotionStateEncoding.Decode(state.CurrentSecond);
+
+        switch (orientation)
+        {
+            case PotionPairOrientation.Vertical:
+            {
+                var empty = EmptyCells(column);
+                QueueMotion(first, column, empty - 1, now, 560 + (empty - 1) * 30);
+                QueueMotion(second, column, empty - 2, now + 45, 560 + (empty - 2) * 30);
+                break;
+            }
+
+            case PotionPairOrientation.VerticalReversed:
+            {
+                var empty = EmptyCells(column);
+                QueueMotion(second, column, empty - 1, now, 560 + (empty - 1) * 30);
+                QueueMotion(first, column, empty - 2, now + 45, 560 + (empty - 2) * 30);
+                break;
+            }
+
+            case PotionPairOrientation.Horizontal:
+                QueueMotion(first, column, EmptyCells(column) - 1, now, 560 + (EmptyCells(column) - 1) * 30);
+                QueueMotion(second, column + 1, EmptyCells(column + 1) - 1, now + 35,
+                    560 + (EmptyCells(column + 1) - 1) * 30);
+                break;
+
+            case PotionPairOrientation.HorizontalReversed:
+                QueueMotion(second, column, EmptyCells(column) - 1, now, 560 + (EmptyCells(column) - 1) * 30);
+                QueueMotion(first, column + 1, EmptyCells(column + 1) - 1, now + 35,
+                    560 + (EmptyCells(column + 1) - 1) * 30);
+                break;
+        }
+    }
+
+    private void QueueMotion(PotionPiece piece, int column, int row, long started, int duration)
+    {
+        if (row is < 0 or >= PotionPuzzle.Rows || column is < 0 or >= PotionPuzzle.Columns)
+            return;
+
+        var duplicate = _motions.Any(motion =>
+            motion.Column == column &&
+            motion.Row == row &&
+            motion.Piece == piece &&
+            started - motion.Started < 900 &&
+            started - motion.Started > -900);
+
+        if (duplicate)
+            return;
+
+        if (_motions.Count >= 32)
+            _motions.RemoveAt(0);
+
+        _motions.Add(new(piece, column, row, started, Math.Max(360, duration)));
     }
 
     private void UpdatePreviewMotion()
