@@ -3,6 +3,7 @@ using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
+using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.GameObjects;
 using Intersect.Framework.Core.MiniGames.Configuration;
