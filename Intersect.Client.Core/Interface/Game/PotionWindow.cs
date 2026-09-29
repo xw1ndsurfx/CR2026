@@ -1,7 +1,9 @@
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Input;
+using Intersect.Client.Framework.File_Management;
 using Intersect.Client.MiniGames;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Potions;
 using Rectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
@@ -118,6 +120,7 @@ internal sealed class PotionWindow : Base
     private readonly List<CellPulse> _pulses = [];
 
     private readonly Label _title;
+    private readonly ImagePanel _rewardIcon;
     private readonly Label _recipe;
     private readonly Label _requirements;
     private readonly Label[] _requirementRows = new Label[6];
@@ -175,7 +178,18 @@ internal sealed class PotionWindow : Base
         _title.Text = "ROYAL ALCHEMY";
         _title.TextAlign = Pos.Center;
 
-        _recipe = Label("PotionRecipe", 65, 112, 315, 76, 17);
+        _rewardIcon = new ImagePanel(_content, "PotionRewardIcon")
+        {
+            MaintainAspectRatio = true,
+            ShouldDrawBackground = false,
+            MouseInputEnabled = false,
+            KeyboardInputEnabled = false,
+            IsHidden = true,
+        };
+        Place(_rewardIcon, 72, 118, 52, 52);
+
+        _recipe = Label("PotionRecipe", 136, 118, 240, 52, 17);
+        _recipe.TextAlign = Pos.Left | Pos.CenterV;
         _requirements = Label("PotionRequirements", 118, 198, 250, 24, 13);
         _requirements.Text = "INGREDIENTS";
         for (var i = 0; i < _requirementRows.Length; ++i)
@@ -1046,6 +1060,8 @@ internal sealed class PotionWindow : Base
     {
         if (_state == null)
         {
+            _rewardIcon.IsHidden = true;
+            _rewardIcon.Texture = null;
             _recipe.Text = "Waiting for Royal Alchemy...";
             _requirements.Text = "INGREDIENTS";
             foreach (var row in _requirementRows) row.IsHidden = true;
@@ -1057,10 +1073,22 @@ internal sealed class PotionWindow : Base
             return;
         }
 
-        _recipe.Text =
-            $"{(_state.Complete ? "✓ " : "")}{_state.RecipeName}\n" +
-            $"Requires Alchemy Lv {_state.RequiredLevel}\n" +
-            $"Reward: {_state.OutputQuantity:N0} x {_state.OutputItemName} (+{_state.CompletionExperience} XP)";
+        _recipe.Text = _state.OutputItemName;
+        if (ItemDescriptor.Get(_state.OutputItemId) is { } rewardItem &&
+            !string.IsNullOrWhiteSpace(rewardItem.Icon))
+        {
+            _rewardIcon.Texture = GameContentManager.Current.GetTexture(
+                Framework.Content.TextureType.Item,
+                rewardItem.Icon
+            );
+            _rewardIcon.RenderColor = rewardItem.Color;
+            _rewardIcon.IsHidden = _rewardIcon.Texture == null;
+        }
+        else
+        {
+            _rewardIcon.Texture = null;
+            _rewardIcon.IsHidden = true;
+        }
 
         _requirements.Text = "INGREDIENTS";
         for (var i = 0; i < _requirementRows.Length; ++i)

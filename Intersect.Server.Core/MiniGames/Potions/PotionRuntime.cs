@@ -419,6 +419,7 @@ Send:
                 RecipeId = session.Recipe.Id,
                 RecipeName = session.Recipe.Name,
                 RequiredLevel = session.Recipe.RequiredLevel,
+                OutputItemId = session.Recipe.OutputItemId,
                 OutputItemName = ItemDescriptor.GetName(session.Recipe.OutputItemId),
                 OutputQuantity = session.Recipe.OutputQuantity,
                 CompletionExperience = session.Recipe.CompletionExperience,
