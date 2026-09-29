@@ -6,9 +6,13 @@ using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.GameObjects;
 using Intersect.Framework.Core.MiniGames.Configuration;
+using Intersect.Framework.Core.MiniGames.Cooking;
+using Intersect.Framework.Core.MiniGames.Potions;
 using Intersect.Framework.Core.WorldEvents.Invasions;
 using Intersect.Models;
 using Intersect.Server.WorldEvents.Invasions;
+using Intersect.Server.MiniGames;
+using Intersect.Server.Professions;
 using Intersect.Server.Web.Http;
 using Intersect.Server.Web.Types;
 using Microsoft.AspNetCore.Authorization;
@@ -80,6 +84,59 @@ public sealed class WikiController : IntersectController
     public sealed record WikiInvasionScheduleResponse(
         DateTimeOffset GeneratedAt,
         IReadOnlyList<WikiInvasionScheduleEntry> Upcoming
+    );
+
+
+    public sealed record WikiPotionRequirement(
+        string Family,
+        int Level,
+        int Needed
+    );
+
+    public sealed record WikiPotionRecipe(
+        string Name,
+        int RequiredLevel,
+        string OutputItem,
+        int OutputQuantity,
+        string? OutputImageUrl,
+        int CompletionExperience,
+        bool RequiresEventUnlock,
+        IReadOnlyList<WikiPotionRequirement> Requirements
+    );
+
+    public sealed record WikiCookingIngredient(
+        string Item,
+        int Quantity,
+        string? ImageUrl
+    );
+
+    public sealed record WikiCookingStage(
+        string Type,
+        int Difficulty,
+        int DurationSeconds,
+        int RequiredActions,
+        string Assignment
+    );
+
+    public sealed record WikiCookingOutput(
+        string Quality,
+        string Item,
+        int Quantity,
+        string? ImageUrl
+    );
+
+    public sealed record WikiCookingRecipe(
+        string Name,
+        string Profession,
+        int RequiredProfessionLevel,
+        long BaseProfessionExperience,
+        bool AllowSolo,
+        bool AllowCoop,
+        bool RequireCoop,
+        bool RequiresEventUnlock,
+        IReadOnlyList<WikiCookingIngredient> Ingredients,
+        IReadOnlyList<WikiCookingStage> Stages,
+        IReadOnlyList<WikiCookingOutput> Outputs
     );
 
     [HttpGet("catalog")]
@@ -360,6 +417,108 @@ public sealed class WikiController : IntersectController
         }
 
         return days;
+    }
+
+
+    [HttpGet("minigames/potions/recipes")]
+    [ProducesResponseType(typeof(IReadOnlyList<WikiPotionRecipe>), (int)HttpStatusCode.OK, ContentTypes.Json)]
+    public IActionResult PotionRecipes()
+    {
+        var recipes = (RewardConfigurationRuntime.Current.PotionRecipes ?? [])
+            .Where(recipe => recipe.IsStructurallyValid)
+            .OrderBy(recipe => recipe.RequiredLevel)
+            .ThenBy(recipe => recipe.Name)
+            .Select(recipe =>
+            {
+                var output = ItemDescriptor.Get(recipe.OutputItemId);
+                return new WikiPotionRecipe(
+                    recipe.Name,
+                    recipe.RequiredLevel,
+                    output?.Name ?? "Unknown item",
+                    recipe.OutputQuantity,
+                    output?.ImageUrl,
+                    recipe.CompletionExperience,
+                    recipe.UnlockPlayerVariableId != Guid.Empty,
+                    (recipe.Requirements ?? [])
+                        .Select(requirement => new WikiPotionRequirement(
+                            requirement.Family.ToString(),
+                            requirement.Level,
+                            requirement.Needed
+                        ))
+                        .ToArray()
+                );
+            })
+            .ToArray();
+
+        return Ok(recipes);
+    }
+
+    [HttpGet("minigames/cooking/recipes")]
+    [ProducesResponseType(typeof(IReadOnlyList<WikiCookingRecipe>), (int)HttpStatusCode.OK, ContentTypes.Json)]
+    public IActionResult CookingRecipes()
+    {
+        var professions = ProfessionConfigurationRuntime.Current;
+
+        var recipes = (RewardConfigurationRuntime.Current.CookingRecipes ?? [])
+            .Where(recipe => recipe.IsStructurallyValid)
+            .OrderBy(recipe => recipe.RequiredProfessionLevel)
+            .ThenBy(recipe => recipe.Name)
+            .Select(recipe =>
+            {
+                var profession = professions.Find(recipe.ProfessionId);
+                var ingredients = (recipe.Ingredients ?? [])
+                    .Select(ingredient =>
+                    {
+                        var item = ItemDescriptor.Get(ingredient.ItemId);
+                        return new WikiCookingIngredient(
+                            item?.Name ?? "Unknown item",
+                            ingredient.Quantity,
+                            item?.ImageUrl
+                        );
+                    })
+                    .ToArray();
+
+                var stages = (recipe.Stages ?? [])
+                    .Select(stage => new WikiCookingStage(
+                        stage.Type.ToString(),
+                        stage.Difficulty,
+                        stage.DurationSeconds,
+                        stage.RequiredActions,
+                        stage.Assignment.ToString()
+                    ))
+                    .ToArray();
+
+                var outputs = (recipe.Outputs ?? [])
+                    .OrderBy(output => output.Quality)
+                    .Select(output =>
+                    {
+                        var item = ItemDescriptor.Get(output.ItemId);
+                        return new WikiCookingOutput(
+                            output.Quality.ToString(),
+                            item?.Name ?? "Unknown item",
+                            output.Quantity,
+                            item?.ImageUrl
+                        );
+                    })
+                    .ToArray();
+
+                return new WikiCookingRecipe(
+                    recipe.Name,
+                    profession?.Name ?? "Cooking",
+                    recipe.RequiredProfessionLevel,
+                    recipe.ProfessionExperience,
+                    recipe.AllowSolo,
+                    recipe.AllowCoop,
+                    recipe.RequireCoop,
+                    recipe.UnlockPlayerVariableId != Guid.Empty,
+                    ingredients,
+                    stages,
+                    outputs
+                );
+            })
+            .ToArray();
+
+        return Ok(recipes);
     }
 
     [HttpGet("minigames")]
