@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Intersect.Client.Core;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.Entities;
@@ -17,6 +18,16 @@ namespace Intersect.Client.Entities;
 
 public partial class Resource : Entity, IResource
 {
+    private readonly record struct OpaqueTopCacheKey(
+        string TextureName,
+        int SourceX,
+        int SourceY,
+        int SourceWidth,
+        int SourceHeight
+    );
+
+    private static readonly ConcurrentDictionary<OpaqueTopCacheKey, int> OpaqueTopCache = [];
+
     private FloatRect _renderBoundsDest = FloatRect.Empty;
     private FloatRect _renderBoundsSrc = FloatRect.Empty;
 
@@ -509,12 +520,61 @@ public partial class Resource : Entity, IResource
 
     protected override (int X, int Y) GetHpBarPosition(IGameTexture boundingTexture)
     {
-        if (_renderBoundsDest.Width <= 0 || _renderBoundsDest.Height <= 0)
+        if (_renderBoundsDest.Width <= 0 ||
+            _renderBoundsDest.Height <= 0 ||
+            Texture == null)
+        {
             return base.GetHpBarPosition(boundingTexture);
+        }
+
+        // Anchor the bar to the first visible (non-transparent) pixel row,
+        // not to the top edge of the PNG/tileset rectangle. This keeps
+        // transparent padding around large resource sprites from pushing the
+        // HP bar too far away from the actual tree/rock/etc.
+        var visibleTopOffset = GetFirstOpaqueRow(Texture, _renderBoundsSrc);
 
         var x = (int)Math.Round(_renderBoundsDest.X + _renderBoundsDest.Width / 2f);
-        var y = (int)Math.Round(_renderBoundsDest.Y - boundingTexture.Height / 2f - 6f);
+        var visibleTopY = _renderBoundsDest.Y + visibleTopOffset;
+        var y = (int)Math.Round(visibleTopY - boundingTexture.Height / 2f - 6f);
         return (x, y);
+    }
+
+    private static int GetFirstOpaqueRow(IGameTexture texture, FloatRect source)
+    {
+        var sourceX = Math.Clamp((int)Math.Floor(source.X), 0, Math.Max(0, texture.Width - 1));
+        var sourceY = Math.Clamp((int)Math.Floor(source.Y), 0, Math.Max(0, texture.Height - 1));
+        var sourceWidth = Math.Clamp((int)Math.Ceiling(source.Width), 0, texture.Width - sourceX);
+        var sourceHeight = Math.Clamp((int)Math.Ceiling(source.Height), 0, texture.Height - sourceY);
+
+        if (sourceWidth <= 0 || sourceHeight <= 0)
+            return 0;
+
+        var key = new OpaqueTopCacheKey(
+            texture.Name,
+            sourceX,
+            sourceY,
+            sourceWidth,
+            sourceHeight
+        );
+
+        return OpaqueTopCache.GetOrAdd(
+            key,
+            _ =>
+            {
+                for (var localY = 0; localY < sourceHeight; ++localY)
+                {
+                    var pixelY = sourceY + localY;
+                    for (var localX = 0; localX < sourceWidth; ++localX)
+                    {
+                        var pixel = texture.GetPixel(sourceX + localX, pixelY);
+                        if (pixel.A > 0)
+                            return localY;
+                    }
+                }
+
+                return 0;
+            }
+        );
     }
 
     public override void DrawHpBar()
