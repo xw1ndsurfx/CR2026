@@ -7,7 +7,6 @@ using Intersect.Client.MiniGames;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Potions;
-using Keys = Intersect.Client.Framework.GenericClasses.Keys;
 using Rectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
 using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
@@ -28,12 +27,15 @@ internal sealed class PotionWindow : Base
     {
         private readonly Action<int> _hover;
         private readonly Action<int> _drop;
+        private readonly Action _rotate;
+        private long _lastRightRotateAt = long.MinValue;
 
-        public PotionBoardInput(Base parent, Action<int> hover, Action<int> drop)
+        public PotionBoardInput(Base parent, Action<int> hover, Action<int> drop, Action rotate)
             : base(parent, nameof(PotionBoardInput))
         {
             _hover = hover;
             _drop = drop;
+            _rotate = rotate;
             ShouldDrawBackground = false;
             MouseInputEnabled = true;
             KeyboardInputEnabled = false;
@@ -63,8 +65,12 @@ internal sealed class PotionWindow : Base
         {
             base.OnMouseDown(mouseButton, mousePosition, userAction);
 
-            // Rotation is handled from the raw input edge in PotionWindow.Update.
-            // Gwen mouse events are kept for left-click placement only.
+            if (mouseButton == MouseButton.Right)
+            {
+                TryRotate();
+                return;
+            }
+
             if (mouseButton != MouseButton.Left)
                 return;
 
@@ -77,7 +83,28 @@ internal sealed class PotionWindow : Base
                 _drop(column);
         }
 
+        protected override void OnMouseClicked(
+            MouseButton mouseButton,
+            Intersect.Point mousePosition,
+            bool userAction = true)
+        {
+            base.OnMouseClicked(mouseButton, mousePosition, userAction);
 
+            // Some backends only surface the right button here. Try both paths,
+            // but debounce them so one physical click can rotate at most once.
+            if (mouseButton == MouseButton.Right)
+                TryRotate();
+        }
+
+        private void TryRotate()
+        {
+            var now = Environment.TickCount64;
+            if (now - _lastRightRotateAt < 150)
+                return;
+
+            _lastRightRotateAt = now;
+            _rotate();
+        }
     }
 
     private sealed class RecipePickerPanel(Base parent) : Base(parent, "PotionRecipePicker")
@@ -325,7 +352,8 @@ internal sealed class PotionWindow : Base
                 _hoverColumn = column;
                 if (_previewColumn < 0 && column >= 0) _previewColumn = column;
             },
-            DropFromBoard
+            DropFromBoard,
+            RotatePairLocal
         );
 
         // The live pair is drawn above the first board row. Include that whole
@@ -338,11 +366,6 @@ internal sealed class PotionWindow : Base
             PotionPuzzle.Columns * CellW,
             PotionPuzzle.Rows * CellH + 96
         );
-
-        // Use the same global mouse-down path Intersect uses for its controls.
-        // This avoids Gwen's inconsistent right-click delivery while still calling
-        // the exact same RotatePairLocal action as the working Rotate Pair button.
-        Intersect.Client.Core.Input.MouseDown += OnGlobalMouseDown;
 
         ResizeToCanvas();
     }
@@ -1145,29 +1168,6 @@ internal sealed class PotionWindow : Base
         RefreshText();
     }
 
-    private void OnGlobalMouseDown(Keys modifier, Keys key)
-    {
-        if (_destroyed || key != Keys.RButton || _pending || IsDropAnimating() ||
-            _showRecipeList || _state is not { Complete: false, GameOver: false } state ||
-            state.RecipeSelectionRequired)
-            return;
-
-        var mouse = Globals.InputManager.MousePosition;
-        var interaction = _layout.Rect(
-            BoardX,
-            BoardY - 96,
-            PotionPuzzle.Columns * CellW,
-            PotionPuzzle.Rows * CellH + 96
-        );
-
-        if (mouse.X < interaction.X || mouse.X >= interaction.X + interaction.Width ||
-            mouse.Y < interaction.Y || mouse.Y >= interaction.Y + interaction.Height)
-            return;
-
-        // Exactly the same action used by the working Rotate Pair button.
-        RotatePairLocal();
-    }
-
     private void RefreshText()
     {
         if (_state == null)
@@ -1329,7 +1329,6 @@ internal sealed class PotionWindow : Base
     {
         if (_destroyed) return;
         _destroyed = true;
-        Intersect.Client.Core.Input.MouseDown -= OnGlobalMouseDown;
         Hide();
         Parent?.RemoveChild(this, false);
         Dispose();
