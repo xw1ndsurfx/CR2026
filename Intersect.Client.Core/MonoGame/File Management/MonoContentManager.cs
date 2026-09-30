@@ -5,6 +5,7 @@ using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Localization;
 using Intersect.Client.MonoGame.Audio;
+using Intersect.Client.MonoGame.Graphics;
 using Intersect.Compression;
 using Intersect.Configuration;
 using Intersect.Core;
@@ -299,6 +300,75 @@ public partial class MonoContentManager : GameContentManager
             }
 
             throw new UnreachableException();
+        }
+
+        LoadBitmapFonts(assetDirectory);
+    }
+
+    private void LoadBitmapFonts(string assetDirectory)
+    {
+        const string bitmapSuffix = ".bitmapfont.png";
+
+        if (Core.Graphics.Renderer is not MonoRenderer monoRenderer)
+        {
+            return;
+        }
+
+        foreach (var spriteSheetPath in Directory.GetFiles(assetDirectory, $"*{bitmapSuffix}"))
+        {
+            var filename = Path.GetFileName(spriteSheetPath);
+            if (!filename.EndsWith(bitmapSuffix, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var localFamilyName = filename[..^bitmapSuffix.Length];
+            var fontName = localFamilyName.Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(fontName))
+            {
+                continue;
+            }
+
+            var metricsPath = Path.Combine(assetDirectory, $"{localFamilyName}.bitmapfont.txt");
+            if (!File.Exists(metricsPath))
+            {
+                ApplicationContext.CurrentContext.Logger.LogWarning(
+                    "Ignoring bitmap font '{FontName}' because its metrics file is missing: {MetricsPath}",
+                    fontName,
+                    metricsPath
+                );
+                continue;
+            }
+
+            try
+            {
+                var font = monoRenderer.LoadBitmapFont(
+                    fontName,
+                    spriteSheetPath,
+                    metricsPath,
+                    Enumerable.Range(8, 19).ToArray()
+                );
+
+                // Runtime bitmap fonts intentionally win over a converted XNB family
+                // with the same name. This allows pixel-authored fonts to bypass TTF
+                // rasterization without changing normal Intersect font handling.
+                mFontDict[fontName] = font;
+
+                ApplicationContext.CurrentContext.Logger.LogInformation(
+                    "Loaded runtime bitmap font '{FontName}' from {SpriteSheetPath}",
+                    fontName,
+                    spriteSheetPath
+                );
+            }
+            catch (Exception exception)
+            {
+                ApplicationContext.CurrentContext.Logger.LogError(
+                    exception,
+                    "Failed to load runtime bitmap font '{FontName}' from {SpriteSheetPath}",
+                    fontName,
+                    spriteSheetPath
+                );
+            }
         }
     }
 

@@ -481,6 +481,9 @@ internal partial class MonoRenderer : GameRenderer
         }
 
         var renderer = platformFont.GetRendererFor(size);
+        var renderScale = fontScale * (renderer is SpriteFontRenderer spriteFontRenderer
+            ? spriteFontRenderer.RenderScale
+            : 1f);
 
         var spriteFont = renderer.PlatformObject;
 
@@ -503,7 +506,7 @@ internal partial class MonoRenderer : GameRenderer
                 platformBorderColor,
                 0f,
                 Vector2.Zero,
-                new Vector2(fontScale, fontScale),
+                new Vector2(renderScale, renderScale),
                 SpriteEffects.None,
                 0
             );
@@ -515,7 +518,7 @@ internal partial class MonoRenderer : GameRenderer
                 platformBorderColor,
                 0f,
                 Vector2.Zero,
-                new Vector2(fontScale, fontScale),
+                new Vector2(renderScale, renderScale),
                 SpriteEffects.None,
                 0
             );
@@ -527,7 +530,7 @@ internal partial class MonoRenderer : GameRenderer
                 platformBorderColor,
                 0f,
                 Vector2.Zero,
-                new Vector2(fontScale, fontScale),
+                new Vector2(renderScale, renderScale),
                 SpriteEffects.None,
                 0
             );
@@ -539,13 +542,23 @@ internal partial class MonoRenderer : GameRenderer
                 platformBorderColor,
                 0f,
                 Vector2.Zero,
-                new Vector2(fontScale, fontScale),
+                new Vector2(renderScale, renderScale),
                 SpriteEffects.None,
                 0
             );
         }
 
-        _spriteBatch.DrawString(spriteFont, text, new Vector2(x, y), ConvertColor(fontColor));
+        _spriteBatch.DrawString(
+            spriteFont,
+            text,
+            new Vector2(x, y),
+            ConvertColor(fontColor),
+            0f,
+            Vector2.Zero,
+            new Vector2(renderScale, renderScale),
+            SpriteEffects.None,
+            0
+        );
     }
 
     public override void DrawString(
@@ -568,6 +581,9 @@ internal partial class MonoRenderer : GameRenderer
         }
 
         var renderer = platformFont.GetRendererFor(size);
+        var renderScale = fontScale * (renderer is SpriteFontRenderer spriteFontRenderer
+            ? spriteFontRenderer.RenderScale
+            : 1f);
 
         var spriteFont = renderer.PlatformObject;
 
@@ -608,7 +624,7 @@ internal partial class MonoRenderer : GameRenderer
                 platformBorderColor,
                 0f,
                 Vector2.Zero,
-                new Vector2(fontScale, fontScale),
+                new Vector2(renderScale, renderScale),
                 SpriteEffects.None,
                 0
             );
@@ -620,7 +636,7 @@ internal partial class MonoRenderer : GameRenderer
                 platformBorderColor,
                 0f,
                 Vector2.Zero,
-                new Vector2(fontScale, fontScale),
+                new Vector2(renderScale, renderScale),
                 SpriteEffects.None,
                 0
             );
@@ -632,7 +648,7 @@ internal partial class MonoRenderer : GameRenderer
                 platformBorderColor,
                 0f,
                 Vector2.Zero,
-                new Vector2(fontScale, fontScale),
+                new Vector2(renderScale, renderScale),
                 SpriteEffects.None,
                 0
             );
@@ -644,7 +660,7 @@ internal partial class MonoRenderer : GameRenderer
                 platformBorderColor,
                 0f,
                 Vector2.Zero,
-                new Vector2(fontScale, fontScale),
+                new Vector2(renderScale, renderScale),
                 SpriteEffects.None,
                 0
             );
@@ -657,7 +673,7 @@ internal partial class MonoRenderer : GameRenderer
             clr,
             0f,
             Vector2.Zero,
-            new Vector2(fontScale, fontScale),
+            new Vector2(renderScale, renderScale),
             SpriteEffects.None,
             0
         );
@@ -1005,6 +1021,16 @@ internal partial class MonoRenderer : GameRenderer
         return new MonoFont(fontName, fontSourcesBySize, _contentManager);
     }
 
+    internal IFont LoadBitmapFont(
+        string fontName,
+        string spriteSheetPath,
+        string metricsPath,
+        ICollection<int> supportedSizes
+    )
+    {
+        return new MonoBitmapFont(fontName, spriteSheetPath, metricsPath, supportedSizes, _graphicsDevice);
+    }
+
     public override GameShader LoadShader(string shaderName)
     {
         return new Shader(this, shaderName, _contentManager);
@@ -1023,12 +1049,18 @@ internal partial class MonoRenderer : GameRenderer
         }
 
         var renderer = platformFont.GetRendererFor(size);
+        var renderScale = fontScale * (renderer is SpriteFontRenderer spriteFontRenderer
+            ? spriteFontRenderer.RenderScale
+            : 1f);
         var spriteFont = renderer.PlatformObject;
         text = SanitizeText(text, spriteFont);
 
         var textMeasurement = spriteFont.MeasureString(text);
 
-        return new System.Numerics.Vector2(textMeasurement.X * fontScale, textMeasurement.Y * fontScale);
+        return new System.Numerics.Vector2(
+            textMeasurement.X * renderScale,
+            textMeasurement.Y * renderScale
+        );
     }
 
     private readonly Dictionary<SpriteFont, char> _defaultCharacterForSpriteFont = [];

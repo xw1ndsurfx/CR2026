@@ -221,3 +221,7 @@ packages/
 .local/
 
 Custom*.props
+
+# Licensed local bitmap-font source files
+/resources/fonts/empire7.bitmapfont.png
+/resources/fonts/empire7.bitmapfont.txt
