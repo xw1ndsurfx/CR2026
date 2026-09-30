@@ -274,6 +274,8 @@ internal sealed class CookingRecipeDialog : DarkForm
             MaximumSize = new Size(590, 0),
             Text =
                 "Royal Kitchen uses real inventory ingredients. The server consumes them only when the run starts. " +
+                "Stages are gesture-driven: Chop = drag down, Stir = circular mouse motion, Heat/Season = horizontal control, " +
+                "Flip = quick upward flick, Knead = left/right pushes, Plate = drag to a target zone. " +
                 "Quality is scored 0-100: Burnt <40, Decent 40-69, Great 70-89, Perfect 90-100. " +
                 "Auto stage assignment alternates players in co-op. Partner/Both stages require co-op. " +
                 "Sound fields use filenames from resources/sounds. Comic-event chance is rolled by the server after actions.",
