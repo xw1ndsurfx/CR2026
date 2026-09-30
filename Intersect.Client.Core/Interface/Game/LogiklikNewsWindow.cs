@@ -15,13 +15,16 @@ namespace Intersect.Client.Interface.Game;
 
 /// <summary>
 /// In-game reader for Corps Royaux announcements published through Logiklik News.
-/// The public announcement feed is filtered client-side to the CR category.
+/// The public feed is scoped to the Logiklik tenant and the CR category.
 /// </summary>
 internal sealed class LogiklikNewsWindow : Window
 {
     private const string NewsBaseUrl = "https://news.logiklik.com";
-    private const string FeedUrl = NewsBaseUrl + "/annonces_json.php";
+    private const string RequiredTenant = "logiklik";
     private const string RequiredCategory = "CR";
+    private const string FeedUrl =
+        NewsBaseUrl + "/feed.php?tenant=" + RequiredTenant +
+        "&lang=fr&limit=24&page=1&categorie=" + RequiredCategory;
 
     private static readonly HttpClient s_httpClient = new()
     {
@@ -235,7 +238,7 @@ internal sealed class LogiklikNewsWindow : Window
                     _status.Text = "Unable to load Logiklik News. Try Refresh.";
                     _refreshButton.IsDisabled = false;
                     _loading = false;
-                    SetEmptyDetail(exception.Message);
+                    SetEmptyDetail("Logiklik News is temporarily unavailable.");
                 }
             );
         }
@@ -458,9 +461,26 @@ internal sealed class LogiklikNewsWindow : Window
         _detailLabel.SizeToChildren(false, true);
     }
 
-    private static List<NewsItem> ParseFeed(string json)
+    private static List<NewsItem> ParseFeed(string payload)
     {
-        var root = JToken.Parse(json);
+        if (string.IsNullOrWhiteSpace(payload))
+        {
+            return [];
+        }
+
+        var trimmedPayload = payload.TrimStart();
+        if (trimmedPayload.StartsWith("<", StringComparison.Ordinal))
+        {
+            return ParseHtmlFeed(payload);
+        }
+
+        var root = JToken.Parse(payload);
+        var html = ReadString(root, "html");
+        if (!string.IsNullOrWhiteSpace(html))
+        {
+            return ParseHtmlFeed(html);
+        }
+
         IEnumerable<JToken> source = root.Type == JTokenType.Array
             ? root.Children()
             : FindProperty(root, "items", "annonces", "news")?.Children() ?? [];
@@ -506,6 +526,80 @@ internal sealed class LogiklikNewsWindow : Window
                     imageUrls
                 )
             );
+        }
+
+        return items
+            .OrderByDescending(item => item.PublishedAt ?? DateTimeOffset.MinValue)
+            .Take(40)
+            .ToList();
+    }
+
+    private static List<NewsItem> ParseHtmlFeed(string html)
+    {
+        var items = new List<NewsItem>();
+        var options = RegexOptions.IgnoreCase | RegexOptions.Singleline;
+
+        var cardStarts = Regex.Matches(
+            html,
+            @"<(?<tag>article|div)\b[^>]*class\s*=\s*[""'][^""']*(?<![\w-])annonce(?![\w-])[^""']*[""'][^>]*>",
+            options
+        );
+
+        for (var index = 0; index < cardStarts.Count; ++index)
+        {
+            var start = cardStarts[index].Index;
+            var end = index + 1 < cardStarts.Count ? cardStarts[index + 1].Index : html.Length;
+            var block = html[start..end];
+
+            var titleMatch = Regex.Match(block, @"<h3\b[^>]*>(?<value>.*?)</h3\s*>", options);
+            if (!titleMatch.Success)
+            {
+                continue;
+            }
+
+            var title = CleanHtml(titleMatch.Groups["value"].Value);
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                continue;
+            }
+
+            var summaryMatch = Regex.Match(block, @"<p\b[^>]*>(?<value>.*?)</p\s*>", options);
+            var summary = summaryMatch.Success
+                ? CleanHtml(summaryMatch.Groups["value"].Value)
+                : "No description.";
+
+            var imageUrls = new List<string>();
+            foreach (Match imageMatch in Regex.Matches(
+                         block,
+                         @"<img\b[^>]+src\s*=\s*[""'](?<src>[^""']+)[""']",
+                         options
+                     ))
+            {
+                AddImageUrl(imageUrls, imageMatch.Groups["src"].Value);
+            }
+
+            var linkMatch = Regex.Match(
+                block,
+                @"<a\b[^>]+href\s*=\s*[""'](?<href>[^""']+)[""']",
+                options
+            );
+            var link = linkMatch.Success
+                ? WebUtility.HtmlDecode(linkMatch.Groups["href"].Value).Trim()
+                : string.Empty;
+
+            DateTimeOffset? publishedAt = null;
+            var dateMatch = Regex.Match(
+                block,
+                @"<time\b[^>]*datetime\s*=\s*[""'](?<date>[^""']+)[""']",
+                options
+            );
+            if (dateMatch.Success &&
+                DateTimeOffset.TryParse(WebUtility.HtmlDecode(dateMatch.Groups["date"].Value), out var parsedDate))
+            {
+                publishedAt = parsedDate;
+            }
+
+            items.Add(new NewsItem(title, summary, link, publishedAt, imageUrls));
         }
 
         return items
