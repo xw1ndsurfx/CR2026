@@ -19,7 +19,8 @@ namespace Intersect.Client.Interface.Game;
 /// </summary>
 internal sealed class LogiklikNewsWindow : Window
 {
-    private const string FeedUrl = "https://logiklik.com/annonces_json.php";
+    private const string NewsBaseUrl = "https://news.logiklik.com";
+    private const string FeedUrl = NewsBaseUrl + "/annonces_json.php";
     private const string RequiredCategory = "CR";
 
     private static readonly HttpClient s_httpClient = new()
@@ -697,11 +698,11 @@ internal sealed class LogiklikNewsWindow : Window
         }
         else if (value.StartsWith("/", StringComparison.Ordinal))
         {
-            value = "https://logiklik.com" + value;
+            value = NewsBaseUrl + value;
         }
         else if (!Uri.TryCreate(value, UriKind.Absolute, out _))
         {
-            value = "https://logiklik.com/" + value.TrimStart('/');
+            value = NewsBaseUrl + "/" + value.TrimStart('/');
         }
 
         if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) ||
