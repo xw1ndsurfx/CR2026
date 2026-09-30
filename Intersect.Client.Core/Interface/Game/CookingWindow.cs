@@ -20,6 +20,9 @@ internal sealed class CookingWindow : Base
     private readonly Label _status;
     private readonly Label _score;
     private readonly Label _players;
+    private readonly Label _interactionTitle;
+    private readonly Label _interactionHelp;
+    private readonly CookingInteractionPad _interactionPad;
     private readonly Label _professionXp;
     private readonly Label _recipeHeader;
     private readonly Label _stationHeader;
@@ -110,11 +113,31 @@ internal sealed class CookingWindow : Base
         _stage.TextColorOverride = new Color(255, 236, 210, 117);
         _status = MakeLabel("CookingStatus", 420, 210, 530, 92, 12);
         _status.TextAlign = Pos.Center;
-        _score = MakeLabel("CookingScore", 420, 314, 530, 60, 15);
+        _score = MakeLabel("CookingScore", 420, 306, 530, 30, 11);
         _score.TextAlign = Pos.Center;
         _score.TextColorOverride = new Color(255, 235, 224, 198);
         _players = MakeLabel("CookingPlayers", 420, 390, 530, 72, 11);
         _players.TextAlign = Pos.Center;
+        _players.IsHidden = true;
+
+        _interactionTitle = MakeLabel("CookingInteractionTitle", 420, 340, 530, 25, 14);
+        _interactionTitle.TextAlign = Pos.Center;
+        _interactionTitle.TextColorOverride = new Color(255, 236, 210, 117);
+        _interactionTitle.IsHidden = true;
+
+        _interactionHelp = MakeLabel("CookingInteractionHelp", 420, 365, 530, 24, 10);
+        _interactionHelp.TextAlign = Pos.Center;
+        _interactionHelp.TextColorOverride = new Color(255, 226, 214, 187);
+        _interactionHelp.IsHidden = true;
+
+        _interactionPad = new CookingInteractionPad(this, DoAction)
+        {
+            UserData = new Rectangle(430, 392, 510, 82),
+            IsHidden = true,
+            MouseInputEnabled = true,
+            KeyboardInputEnabled = false,
+        };
+        _interactionPad.SetBounds(430, 392, 510, 82);
 
         _professionXp = MakeLabel("CookingProfessionXp", 55, 626, 700, 28, 11);
         _professionXp.TextColorOverride = new Color(255, 236, 210, 117);
@@ -442,16 +465,26 @@ internal sealed class CookingWindow : Base
         _solo.IsHidden = _coop.IsHidden = !selecting;
         _previousPartner.IsHidden = _nextPartner.IsHidden = !selecting;
         var hideActions = selecting || state.WaitingForPartner || state.InvitePendingForYou || state.Complete;
-        _action.IsHidden = hideActions;
-        _actionSecondary.IsHidden = hideActions;
-        _actionTertiary.IsHidden = hideActions;
+
+        // Royal Kitchen is gesture-driven now. The old click buttons remain instantiated for
+        // compatibility with the existing layout code, but are intentionally hidden.
+        _action.IsHidden = true;
+        _actionSecondary.IsHidden = true;
+        _actionTertiary.IsHidden = true;
+
+        var showInteraction = !hideActions;
+        _interactionTitle.IsHidden = !showInteraction;
+        _interactionHelp.IsHidden = !showInteraction;
+        _interactionPad.IsHidden = !showInteraction;
+        _interactionPad.Configure(state, showInteraction && state.YourTurn && !model.Pending);
+        _interactionPad.Tick();
+
         _accept.IsHidden = _decline.IsHidden = !state.InvitePendingForYou;
         _leave.IsHidden = state.Complete;
 
-        ConfigureStageButtons(state);
-        _action.IsDisabled = model.Pending || !state.YourTurn;
-        _actionSecondary.IsDisabled = model.Pending || !state.YourTurn;
-        _actionTertiary.IsDisabled = model.Pending || !state.YourTurn;
+        _action.IsDisabled = true;
+        _actionSecondary.IsDisabled = true;
+        _actionTertiary.IsDisabled = true;
         _solo.IsDisabled = model.Pending;
         _coop.IsDisabled = model.Pending;
 
@@ -480,22 +513,37 @@ internal sealed class CookingWindow : Base
                       $"{state.CompletedActions}/{state.RequiredActions} actions";
 
             var comicText = _comicUntil > Environment.TickCount64 && !string.IsNullOrWhiteSpace(_comicEventText)
-                ? $"\n⚠ {_comicEventText}"
+                ? $"\nWARNING: {_comicEventText}"
                 : string.Empty;
             _status.Text = string.IsNullOrWhiteSpace(model.ErrorCode)
-                ? $"{state.Status}\n{state.ActionHint}{comicText}"
+                ? $"{state.Status}{comicText}"
                 : ErrorText(model.ErrorCode);
 
             _score.Text = state.Complete
-                ? $"TEAM SCORE: {state.TeamScore}%\n{state.Quality}\n{state.RewardText}"
-                : $"Stage score: {state.StageScore}%   Combo x{state.Combo}   Mishaps {state.Mishaps}";
+                ? $"TEAM SCORE: {state.TeamScore}% | {state.Quality}"
+                : $"Stage {state.StageScore}% | Combo x{state.Combo} | Mishaps {state.Mishaps}";
 
-            _players.Text = string.Join(
-                "\n",
-                state.Participants.Select(player =>
-                    $"{player.Name}: {player.Actions} action(s) • {player.Score}%"
-                )
-            );
+            _players.IsHidden = true;
+            _partner.Text = state.PartnerId == Guid.Empty
+                ? "MODE\nSolo kitchen"
+                : "CO-OP TEAM\n" + string.Join(
+                    "\n",
+                    state.Participants.Select(player =>
+                        $"{player.Name}: {player.Actions} actions | {player.Score}%"
+                    )
+                );
+
+            if (showInteraction)
+            {
+                _interactionTitle.Text = !state.YourTurn
+                    ? "PARTNER AT THE STATION"
+                    : InteractionTitle(state);
+                _interactionHelp.Text = !state.YourTurn
+                    ? "Watch the station. Your turn will come on the next assigned step."
+                    : model.Pending
+                        ? "Checking your move..."
+                        : state.ActionHint;
+            }
 
             _professionXp.Text = FormatProfessionProgress(
                 state.ProfessionName,
@@ -515,6 +563,11 @@ internal sealed class CookingWindow : Base
         if (_state == null || !_state.RecipeSelectionRequired)
             return;
 
+        _interactionTitle.IsHidden = true;
+        _interactionHelp.IsHidden = true;
+        _interactionPad.IsHidden = true;
+        _players.IsHidden = true;
+
         if (_state.Recipes.Length == 0)
         {
             _recipe.Text = "No Royal Kitchen recipes have been created in Game Editor.";
@@ -525,9 +578,9 @@ internal sealed class CookingWindow : Base
         }
 
         var recipe = _state.Recipes[Math.Clamp(_recipeIndex, 0, _state.Recipes.Length - 1)];
-        var lockText = recipe.Unlocked ? "READY" : $"LOCKED — {recipe.LockedReason}";
+        var lockText = recipe.Unlocked ? "READY" : $"LOCKED - {recipe.LockedReason}";
         _recipe.Text =
-            $"{recipe.Name}\n{recipe.ProfessionName} Lv {Math.Max(1, recipe.ProfessionLevel)}/{Math.Max(1, recipe.ProfessionMaximumLevel)} • " +
+            $"{recipe.Name}\n{recipe.ProfessionName} Lv {Math.Max(1, recipe.ProfessionLevel)}/{Math.Max(1, recipe.ProfessionMaximumLevel)} | " +
             $"{recipe.Experience:N0} base XP\n{lockText}";
 
         _ingredients.Text =
@@ -535,7 +588,7 @@ internal sealed class CookingWindow : Base
             string.Join(
                 "\n",
                 recipe.Ingredients.Select(ingredient =>
-                    $"{(ingredient.Available >= ingredient.Needed ? "✓" : "✗")} " +
+                    $"{(ingredient.Available >= ingredient.Needed ? "[OK]" : "[MISSING]")} " +
                     $"{ingredient.Name}: {ingredient.Available}/{ingredient.Needed}"
                 )
             );
@@ -555,7 +608,7 @@ internal sealed class CookingWindow : Base
                 Math.Clamp(_partnerIndex, 0, _state.PartyCandidates.Length - 1)
             ];
             _partner.Text =
-                $"CO-OP PARTNER\n{candidate.Name}\nParty member • nearby • ready to invite";
+                $"CO-OP PARTNER\n{candidate.Name}\nParty member | nearby | ready to invite";
             _previousPartner.IsDisabled = _partnerIndex <= 0;
             _nextPartner.IsDisabled = _partnerIndex >= _state.PartyCandidates.Length - 1;
         }
@@ -613,7 +666,7 @@ internal sealed class CookingWindow : Base
         _recipePickerTitle.Text =
             recipes.Length == 0
                 ? "NO RECIPES AVAILABLE"
-                : $"CHOOSE A RECIPE   •   {recipes.Length} AVAILABLE";
+                : $"CHOOSE A RECIPE   |   {recipes.Length} AVAILABLE";
 
         for (var slot = 0; slot < _recipeCards.Length; ++slot)
         {
@@ -640,7 +693,7 @@ internal sealed class CookingWindow : Base
 
             var selected = index == _recipeIndex;
             var stateText = !recipe.Unlocked
-                ? $"LOCKED • {recipe.LockedReason}"
+                ? $"LOCKED | {recipe.LockedReason}"
                 : missingCount > 0
                     ? $"MISSING {missingCount} INGREDIENT{(missingCount == 1 ? "" : "S")}"
                     : "READY TO COOK";
@@ -648,8 +701,8 @@ internal sealed class CookingWindow : Base
             card.IsHidden = false;
             card.IsDisabled = false;
             card.Text =
-                $"{(selected ? "▶ " : "")}{recipe.Name}\n" +
-                $"Lv {recipe.RequiredLevel} • +{recipe.Experience:N0} XP • {mode}\n" +
+                $"{(selected ? "> " : "")}{recipe.Name}\n" +
+                $"Lv {recipe.RequiredLevel} | +{recipe.Experience:N0} XP | {mode}\n" +
                 stateText;
 
             card.TextColorOverride = !recipe.Unlocked
@@ -689,15 +742,15 @@ internal sealed class CookingWindow : Base
             ? "Cooking"
             : state.ProfessionName;
         _resultXp.Text =
-            $"+{state.ProfessionExperienceAwarded:N0} {professionName} XP   •   " +
-            $"Lv {Math.Max(1, state.ProfessionLevel)}/{Math.Max(1, state.ProfessionMaximumLevel)}   •   " +
+            $"+{state.ProfessionExperienceAwarded:N0} {professionName} XP   |   " +
+            $"Lv {Math.Max(1, state.ProfessionLevel)}/{Math.Max(1, state.ProfessionMaximumLevel)}   |   " +
             $"{state.ProfessionExperiencePercent}%";
 
         var actionCount = state.Participants
             .FirstOrDefault(participant => participant.PlayerId == Intersect.Client.General.Globals.Me?.Id)?.Actions ?? 0;
 
         _resultStats.Text =
-            $"Peak Combo x{state.PeakCombo}   •   Mishaps {state.Mishaps}   •   Your actions {actionCount}";
+            $"Peak Combo x{state.PeakCombo}   |   Mishaps {state.Mishaps}   |   Your actions {actionCount}";
 
         _resultAgain.IsHidden = !state.IsHost;
         _resultAgain.IsDisabled = !state.IsHost;
@@ -705,7 +758,7 @@ internal sealed class CookingWindow : Base
         if (state.IsHost)
             _resultTitle.Text = "DINNER IS READY!";
         else
-            _resultTitle.Text = "DINNER IS READY! • HOST CONTROLS NEXT ROUND";
+            _resultTitle.Text = "DINNER IS READY! | HOST CONTROLS NEXT ROUND";
     }
 
     private void StartSolo()
@@ -823,6 +876,38 @@ internal sealed class CookingWindow : Base
     {
         if (!string.IsNullOrWhiteSpace(file))
             Intersect.Client.Core.Audio.AddGameSound(file, false);
+    }
+
+    private static string InteractionTitle(CookingSessionState state)
+    {
+        var actionNumber = Math.Max(0, state.CompletedActions);
+        return state.StageType switch
+        {
+            CookingStageType.Chop => "SLICE DOWN THROUGH THE INGREDIENT",
+            CookingStageType.Stir => actionNumber % 2 == 0
+                ? "STIR CLOCKWISE"
+                : "STIR COUNTER-CLOCKWISE",
+            CookingStageType.Heat => state.MeterPermille < state.TargetPermille - state.TolerancePermille / 3
+                ? "RAISE THE HEAT"
+                : state.MeterPermille > state.TargetPermille + state.TolerancePermille / 3
+                    ? "LOWER THE HEAT"
+                    : "HOLD THE HEAT STEADY",
+            CookingStageType.Flip => "FLICK THE PAN UP",
+            CookingStageType.Season => state.MeterPermille < state.TargetPermille - state.TolerancePermille / 3
+                ? "ADD SEASONING"
+                : state.MeterPermille > state.TargetPermille + state.TolerancePermille / 3
+                    ? "REMOVE SEASONING"
+                    : "SEASONING IS ON TARGET",
+            CookingStageType.Knead => actionNumber % 2 == 0
+                ? "KNEAD TO THE LEFT"
+                : "KNEAD TO THE RIGHT",
+            CookingStageType.Plate => state.TargetPermille < 350
+                ? "DRAG FOOD TO THE LEFT"
+                : state.TargetPermille > 650
+                    ? "DRAG FOOD TO THE RIGHT"
+                    : "DRAG FOOD TO THE CENTER",
+            _ => "COOK",
+        };
     }
 
     private void ConfigureStageButtons(CookingSessionState state)
@@ -1299,11 +1384,11 @@ internal sealed class CookingWindow : Base
         var displayMaximum = Math.Max(displayLevel, maximumLevel);
 
         if (maximumLevelReached)
-            return $"{displayName} Lv {displayLevel}/{displayMaximum} • MAX LEVEL • 100%";
+            return $"{displayName} Lv {displayLevel}/{displayMaximum} | MAX LEVEL | 100%";
 
-        return $"{displayName} Lv {displayLevel}/{displayMaximum} • " +
-               $"{Math.Clamp(percent, 0, 100)}% • " +
-               $"{experienceIntoLevel:N0}/{Math.Max(1L, experienceRequiredForLevel):N0} XP • " +
+        return $"{displayName} Lv {displayLevel}/{displayMaximum} | " +
+               $"{Math.Clamp(percent, 0, 100)}% | " +
+               $"{experienceIntoLevel:N0}/{Math.Max(1L, experienceRequiredForLevel):N0} XP | " +
                $"{experienceToNextLevel:N0} XP to next level";
     }
 
@@ -1682,5 +1767,486 @@ internal sealed class CookingResultPanel(Base parent) : Base(parent, "CookingRes
 
         renderer.DrawColor = new Color(255, 84, 59, 39);
         renderer.DrawFilledRect(new Rectangle(SX(28), SY(335), SW(464), SH(2)));
+    }
+}
+
+
+internal sealed class CookingInteractionPad : Base
+{
+    private readonly Action<CookingActionInput> _submit;
+    private CookingSessionState? _state;
+    private bool _enabled;
+    private bool _dragging;
+    private bool _inputLocked;
+    private bool _sentThisDrag;
+    private Point _lastPoint;
+    private long _dragStartedAt;
+    private double _linearAccumulator;
+    private double _rotationAccumulator;
+    private double _lastAngle;
+    private int _visualProgressPermille;
+    private int _cursorXPermille = 500;
+    private int _lastStageIndex = -1;
+    private long _lastActionSequence = -1;
+
+    public CookingInteractionPad(Base parent, Action<CookingActionInput> submit)
+        : base(parent, "CookingInteractionPad")
+    {
+        _submit = submit;
+        ShouldDrawBackground = false;
+        MouseInputEnabled = true;
+        KeyboardInputEnabled = false;
+        KeepFocusOnMouseExit = true;
+    }
+
+    public void Configure(CookingSessionState state, bool enabled)
+    {
+        var stageChanged = _lastStageIndex != state.StageIndex;
+        var actionChanged = _lastActionSequence != state.ActionSequence;
+
+        _state = state;
+        _enabled = enabled;
+
+        if (stageChanged)
+        {
+            CancelGesture();
+            _inputLocked = false;
+            _cursorXPermille = 500;
+        }
+        else if (actionChanged)
+        {
+            _inputLocked = false;
+            _linearAccumulator = 0;
+            _rotationAccumulator = 0;
+            _visualProgressPermille = 0;
+
+            if (_dragging)
+            {
+                _lastPoint = CanvasPosToLocal(
+                    Intersect.Client.Framework.Gwen.Input.InputHandler.MousePosition
+                );
+                _lastAngle = AngleFromCenter(_lastPoint);
+            }
+        }
+
+        _lastStageIndex = state.StageIndex;
+        _lastActionSequence = state.ActionSequence;
+    }
+
+    public void Tick()
+    {
+        if (!_dragging || !_enabled || _inputLocked || _state == null)
+            return;
+
+        var current = CanvasPosToLocal(
+            Intersect.Client.Framework.Gwen.Input.InputHandler.MousePosition
+        );
+        _cursorXPermille = Width <= 0
+            ? 500
+            : Math.Clamp((int)Math.Round(current.X * 1000d / Width), 0, 1000);
+
+        var dx = current.X - _lastPoint.X;
+        var dy = current.Y - _lastPoint.Y;
+
+        switch (_state.StageType)
+        {
+            case CookingStageType.Chop:
+                TickChop(dx, dy);
+                break;
+
+            case CookingStageType.Stir:
+                TickStir(current);
+                break;
+
+            case CookingStageType.Heat:
+            case CookingStageType.Season:
+            case CookingStageType.Knead:
+                TickHorizontal(dx);
+                break;
+
+            case CookingStageType.Flip:
+                TickFlip(dx, dy);
+                break;
+
+            case CookingStageType.Plate:
+                _visualProgressPermille = _cursorXPermille;
+                break;
+        }
+
+        _lastPoint = current;
+    }
+
+    protected override void OnMouseDown(
+        Intersect.Client.Framework.Input.MouseButton mouseButton,
+        Point mousePosition,
+        bool userAction = true
+    )
+    {
+        base.OnMouseDown(mouseButton, mousePosition, userAction);
+
+        if (mouseButton != Intersect.Client.Framework.Input.MouseButton.Left ||
+            !_enabled ||
+            _state == null)
+        {
+            return;
+        }
+
+        _dragging = true;
+        _sentThisDrag = false;
+        _linearAccumulator = 0;
+        _rotationAccumulator = 0;
+        _visualProgressPermille = 0;
+        _dragStartedAt = Environment.TickCount64;
+        _lastPoint = CanvasPosToLocal(mousePosition);
+        _cursorXPermille = Width <= 0
+            ? 500
+            : Math.Clamp((int)Math.Round(_lastPoint.X * 1000d / Width), 0, 1000);
+        _lastAngle = AngleFromCenter(_lastPoint);
+    }
+
+    protected override void OnMouseUp(
+        Intersect.Client.Framework.Input.MouseButton mouseButton,
+        Point mousePosition,
+        bool userAction = true
+    )
+    {
+        base.OnMouseUp(mouseButton, mousePosition, userAction);
+
+        if (mouseButton != Intersect.Client.Framework.Input.MouseButton.Left)
+            return;
+
+        if (_dragging &&
+            _enabled &&
+            !_inputLocked &&
+            !_sentThisDrag &&
+            _state?.StageType == CookingStageType.Plate)
+        {
+            var local = CanvasPosToLocal(mousePosition);
+            var zone = Width <= 0
+                ? 1
+                : Math.Clamp(local.X * 3 / Math.Max(1, Width), 0, 2);
+
+            Submit(
+                zone switch
+                {
+                    0 => CookingActionInput.Primary,
+                    1 => CookingActionInput.Secondary,
+                    _ => CookingActionInput.Tertiary,
+                },
+                oneShot: true
+            );
+        }
+
+        _dragging = false;
+        _sentThisDrag = false;
+        _linearAccumulator = 0;
+        _rotationAccumulator = 0;
+        _visualProgressPermille = 0;
+    }
+
+    private void TickChop(int dx, int dy)
+    {
+        if (_sentThisDrag)
+            return;
+
+        if (dy > 0 && Math.Abs(dy) >= Math.Abs(dx) / 2)
+            _linearAccumulator += dy;
+        else if (dy < 0)
+            _linearAccumulator = Math.Max(0, _linearAccumulator + dy * 0.6d);
+
+        var threshold = Math.Max(30d, Height * 0.55d);
+        _visualProgressPermille = Math.Clamp(
+            (int)Math.Round(_linearAccumulator * 1000d / threshold),
+            0,
+            1000
+        );
+
+        if (_linearAccumulator >= threshold)
+            Submit(CookingActionInput.Primary, oneShot: true);
+    }
+
+    private void TickStir(Point current)
+    {
+        var angle = AngleFromCenter(current);
+        var delta = NormalizeAngle(angle - _lastAngle);
+        _lastAngle = angle;
+
+        // Ignore teleports across the circle center while keeping deliberate circular motion.
+        if (Math.Abs(delta) <= 1.15d)
+            _rotationAccumulator += delta;
+
+        var threshold = Math.PI * 1.15d;
+        _visualProgressPermille = Math.Clamp(
+            (int)Math.Round(Math.Abs(_rotationAccumulator) * 1000d / threshold),
+            0,
+            1000
+        );
+
+        if (Math.Abs(_rotationAccumulator) < threshold)
+            return;
+
+        // Screen-space Y grows downward, so positive angular motion is clockwise.
+        Submit(
+            _rotationAccumulator > 0
+                ? CookingActionInput.Primary
+                : CookingActionInput.Secondary,
+            oneShot: false
+        );
+    }
+
+    private void TickHorizontal(int dx)
+    {
+        _linearAccumulator += dx;
+        var threshold = Math.Max(28d, Width * 0.11d);
+        _visualProgressPermille = Math.Clamp(
+            (int)Math.Round(Math.Abs(_linearAccumulator) * 1000d / threshold),
+            0,
+            1000
+        );
+
+        if (_linearAccumulator >= threshold)
+            Submit(CookingActionInput.Primary, oneShot: false);
+        else if (_linearAccumulator <= -threshold)
+            Submit(CookingActionInput.Secondary, oneShot: false);
+    }
+
+    private void TickFlip(int dx, int dy)
+    {
+        if (_sentThisDrag)
+            return;
+
+        if (dy < 0 && Math.Abs(dy) >= Math.Abs(dx) / 2)
+            _linearAccumulator += -dy;
+        else if (dy > 0)
+            _linearAccumulator = Math.Max(0, _linearAccumulator - dy * 0.35d);
+
+        var threshold = Math.Max(30d, Height * 0.45d);
+        _visualProgressPermille = Math.Clamp(
+            (int)Math.Round(_linearAccumulator * 1000d / threshold),
+            0,
+            1000
+        );
+
+        if (_linearAccumulator >= threshold &&
+            Environment.TickCount64 - _dragStartedAt <= 1_100)
+        {
+            Submit(CookingActionInput.Primary, oneShot: true);
+        }
+    }
+
+    private void Submit(CookingActionInput input, bool oneShot)
+    {
+        if (!_enabled || _inputLocked)
+            return;
+
+        _inputLocked = true;
+        _sentThisDrag |= oneShot;
+        _visualProgressPermille = 1000;
+        _linearAccumulator = 0;
+        _rotationAccumulator = 0;
+        _submit(input);
+    }
+
+    private double AngleFromCenter(Point point) =>
+        Math.Atan2(point.Y - Height / 2d, point.X - Width / 2d);
+
+    private static double NormalizeAngle(double angle)
+    {
+        while (angle > Math.PI) angle -= Math.PI * 2d;
+        while (angle < -Math.PI) angle += Math.PI * 2d;
+        return angle;
+    }
+
+    private void CancelGesture()
+    {
+        _dragging = false;
+        _sentThisDrag = false;
+        _linearAccumulator = 0;
+        _rotationAccumulator = 0;
+        _visualProgressPermille = 0;
+    }
+
+    protected override void Render(SkinBase skin)
+    {
+        var renderer = skin.Renderer;
+        var bounds = RenderBounds;
+
+        renderer.DrawColor = new Color(a: 150, r: 27, g: 19, b: 14);
+        renderer.DrawFilledRect(bounds);
+
+        renderer.DrawColor = _enabled
+            ? new Color(a: 255, r: 180, g: 125, b: 61)
+            : new Color(a: 255, r: 83, g: 64, b: 48);
+        renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, 2));
+        renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y + bounds.Height - 2, bounds.Width, 2));
+        renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, 2, bounds.Height));
+        renderer.DrawFilledRect(new Rectangle(bounds.X + bounds.Width - 2, bounds.Y, 2, bounds.Height));
+
+        if (_state == null)
+            return;
+
+        int SX(int value) => bounds.X + (int)Math.Round(value * bounds.Width / 510d);
+        int SY(int value) => bounds.Y + (int)Math.Round(value * bounds.Height / 82d);
+        int SW(int value) => Math.Max(1, (int)Math.Round(value * bounds.Width / 510d));
+        int SH(int value) => Math.Max(1, (int)Math.Round(value * bounds.Height / 82d));
+
+        var muted = new Color(a: 255, r: 86, g: 63, b: 44);
+        var gold = new Color(a: 255, r: 224, g: 180, b: 83);
+        var green = new Color(a: 255, r: 79, g: 153, b: 82);
+        var pale = new Color(a: 255, r: 226, g: 214, b: 188);
+
+        switch (_state.StageType)
+        {
+            case CookingStageType.Chop:
+            {
+                renderer.DrawColor = new Color(a: 255, r: 143, g: 91, b: 49);
+                renderer.DrawFilledRect(new Rectangle(SX(95), SY(13), SW(320), SH(56)));
+
+                var lanes = Math.Clamp(_state.RequiredActions, 1, 8);
+                for (var lane = 0; lane < lanes; ++lane)
+                {
+                    var x = 112 + (lane + 1) * 286 / (lanes + 1);
+                    renderer.DrawColor = lane < _state.CompletedActions
+                        ? green
+                        : lane == Math.Min(_state.CompletedActions, lanes - 1)
+                            ? gold
+                            : muted;
+                    renderer.DrawFilledRect(new Rectangle(SX(x), SY(20), SW(3), SH(42)));
+                }
+
+                if (_dragging)
+                {
+                    renderer.DrawColor = pale;
+                    var h = Math.Max(3, (int)Math.Round(38 * _visualProgressPermille / 1000d));
+                    renderer.DrawFilledRect(new Rectangle(SX(250), SY(20), SW(8), SH(h)));
+                }
+
+                break;
+            }
+
+            case CookingStageType.Stir:
+            {
+                var cx = SX(255);
+                var cy = SY(41);
+                var radiusX = Math.Max(8, SW(88));
+                var radiusY = Math.Max(8, SH(30));
+
+                for (var dot = 0; dot < 16; ++dot)
+                {
+                    var angle = dot / 16d * Math.PI * 2d;
+                    renderer.DrawColor = dot % 4 == 0 ? gold : muted;
+                    renderer.DrawFilledRect(
+                        new Rectangle(
+                            cx + (int)Math.Round(Math.Cos(angle) * radiusX) - SW(3),
+                            cy + (int)Math.Round(Math.Sin(angle) * radiusY) - SH(3),
+                            SW(6),
+                            SH(6)
+                        )
+                    );
+                }
+
+                var direction = _state.CompletedActions % 2 == 0 ? 1d : -1d;
+                var markerAngle = direction * _visualProgressPermille / 1000d * Math.PI * 1.5d;
+                renderer.DrawColor = pale;
+                renderer.DrawFilledRect(
+                    new Rectangle(
+                        cx + (int)Math.Round(Math.Cos(markerAngle) * radiusX) - SW(5),
+                        cy + (int)Math.Round(Math.Sin(markerAngle) * radiusY) - SH(5),
+                        SW(10),
+                        SH(10)
+                    )
+                );
+                break;
+            }
+
+            case CookingStageType.Heat:
+            case CookingStageType.Season:
+            {
+                var railX = SX(65);
+                var railY = SY(35);
+                var railW = SW(380);
+                var railH = SH(13);
+
+                renderer.DrawColor = muted;
+                renderer.DrawFilledRect(new Rectangle(railX, railY, railW, railH));
+
+                var targetX = railX + (int)Math.Round(railW * _state.TargetPermille / 1000d);
+                var toleranceW = Math.Max(SW(10), (int)Math.Round(railW * _state.TolerancePermille / 1000d));
+                renderer.DrawColor = green;
+                renderer.DrawFilledRect(
+                    new Rectangle(targetX - toleranceW / 2, railY + SH(2), toleranceW, Math.Max(1, railH - SH(4)))
+                );
+
+                var knobX = railX + (int)Math.Round(railW * _state.MeterPermille / 1000d);
+                renderer.DrawColor = pale;
+                renderer.DrawFilledRect(new Rectangle(knobX - SW(4), SY(25), SW(8), SH(32)));
+                break;
+            }
+
+            case CookingStageType.Flip:
+            {
+                renderer.DrawColor = new Color(a: 255, r: 82, g: 72, b: 61);
+                renderer.DrawFilledRect(new Rectangle(SX(145), SY(58), SW(220), SH(10)));
+
+                renderer.DrawColor = gold;
+                for (var step = 0; step < 5; ++step)
+                {
+                    var y = 52 - step * 9;
+                    renderer.DrawFilledRect(new Rectangle(SX(250 - step * 3), SY(y), SW(12 + step * 6), SH(4)));
+                }
+
+                if (_dragging)
+                {
+                    var lift = (int)Math.Round(30 * _visualProgressPermille / 1000d);
+                    renderer.DrawColor = pale;
+                    renderer.DrawFilledRect(new Rectangle(SX(224), SY(49 - lift), SW(62), SH(10)));
+                }
+                break;
+            }
+
+            case CookingStageType.Knead:
+            {
+                renderer.DrawColor = new Color(a: 255, r: 214, g: 179, b: 127);
+                renderer.DrawFilledRect(new Rectangle(SX(205), SY(25), SW(100), SH(35)));
+
+                var left = _state.CompletedActions % 2 == 0;
+                renderer.DrawColor = gold;
+                renderer.DrawFilledRect(
+                    left
+                        ? new Rectangle(SX(80), SY(36), SW(100), SH(10))
+                        : new Rectangle(SX(330), SY(36), SW(100), SH(10))
+                );
+                renderer.DrawColor = muted;
+                renderer.DrawFilledRect(
+                    left
+                        ? new Rectangle(SX(330), SY(36), SW(100), SH(10))
+                        : new Rectangle(SX(80), SY(36), SW(100), SH(10))
+                );
+                break;
+            }
+
+            case CookingStageType.Plate:
+            {
+                var zoneW = 150;
+                for (var zone = 0; zone < 3; ++zone)
+                {
+                    var target = CookingStageRules.PlateZoneFromTarget(_state.TargetPermille);
+                    renderer.DrawColor = zone == target ? green : muted;
+                    renderer.DrawFilledRect(new Rectangle(SX(25 + zone * 155), SY(17), SW(zoneW), SH(48)));
+                }
+
+                var tokenX = 25 + (int)Math.Round(440 * _cursorXPermille / 1000d);
+                renderer.DrawColor = pale;
+                renderer.DrawFilledRect(new Rectangle(SX(tokenX), SY(33), SW(24), SH(16)));
+                break;
+            }
+        }
+
+        if (_dragging && _state.StageType is not CookingStageType.Plate)
+        {
+            renderer.DrawColor = gold;
+            var width = Math.Max(SW(2), (int)Math.Round(SW(470) * _visualProgressPermille / 1000d));
+            renderer.DrawFilledRect(new Rectangle(SX(20), SY(74), width, SH(3)));
+        }
     }
 }
