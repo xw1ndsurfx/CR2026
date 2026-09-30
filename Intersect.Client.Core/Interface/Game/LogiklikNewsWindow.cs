@@ -21,10 +21,10 @@ internal sealed class LogiklikNewsWindow : Window
 {
     private const string NewsBaseUrl = "https://news.logiklik.com";
     private const string RequiredTenant = "logiklik";
-    private const string RequiredCategory = "CR";
-    private const string FeedUrl =
+    private const string RequiredCategory = "Corps Royaux";
+    private static readonly string FeedUrl =
         NewsBaseUrl + "/feed.php?tenant=" + RequiredTenant +
-        "&lang=fr&limit=24&page=1&categorie=" + RequiredCategory;
+        "&lang=fr&limit=24&page=1&categorie=" + Uri.EscapeDataString(RequiredCategory);
 
     private static readonly HttpClient s_httpClient = new()
     {
@@ -73,7 +73,7 @@ internal sealed class LogiklikNewsWindow : Window
             AutoSizeToContents = false,
             Font = Skin.DefaultFont,
             FontSize = 9,
-            Text = "Powered by Logiklik News • Category: CR",
+            Text = "Powered by Logiklik News • Category: Corps Royaux",
             TextColorOverride = new Color(a: 255, r: 210, g: 210, b: 210),
             TextAlign = Pos.Left | Pos.CenterV,
         };
@@ -284,7 +284,7 @@ internal sealed class LogiklikNewsWindow : Window
 
         if (_items.Count == 0)
         {
-            _status.Text = "No published news found in category CR.";
+            _status.Text = "No published news found in category Corps Royaux.";
             SetEmptyDetail("No Corps Royaux news is currently available.");
             return;
         }
