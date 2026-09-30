@@ -567,13 +567,15 @@ internal sealed class LogiklikNewsWindow : Window
                 heading.Index - match.Index <= 6000
             );
 
+            // Do not stop at the next matching <div> class: Logiklik News cards contain
+            // nested divs such as media/card containers before the actual <img>, which
+            // previously truncated the block and removed every image.
             var start = cardStart?.Index ?? heading.Index;
-            var nextCardStart = cardStarts.FirstOrDefault(match => match.Index > heading.Index);
-            var nextHeadingIndex = index + 1 < headings.Count ? headings[index + 1].Index : html.Length;
-            var end = nextCardStart?.Index ?? nextHeadingIndex;
+            var end = index + 1 < headings.Count ? headings[index + 1].Index : html.Length;
             if (end <= start)
             {
-                end = nextHeadingIndex;
+                start = heading.Index;
+                end = index + 1 < headings.Count ? headings[index + 1].Index : html.Length;
             }
 
             var block = html[start..Math.Min(end, html.Length)];
