@@ -566,12 +566,16 @@ internal sealed class CookingWindow : Base
             {
                 _interactionTitle.Text = !state.YourTurn
                     ? "PARTNER AT THE STATION"
-                    : InteractionTitle(state);
+                    : _interactionPad.WaitingForPlacement
+                        ? _interactionPad.PlacementTitle
+                        : InteractionTitle(state);
                 _interactionHelp.Text = !state.YourTurn
                     ? "Watch the station. Your turn will come on the next assigned step."
                     : model.Pending
                         ? "Checking your move..."
-                        : state.ActionHint;
+                        : _interactionPad.WaitingForPlacement
+                            ? _interactionPad.PlacementHelp
+                            : state.ActionHint;
             }
 
             _professionXp.Text = FormatProfessionProgress(
@@ -1817,6 +1821,10 @@ internal sealed class CookingInteractionPad : Base
     private bool _inputLocked;
     private bool _sentThisDrag;
     private bool _ingredientGrabbed;
+    private bool _placingIngredient;
+    private bool _ingredientPlaced;
+    private Guid _activeIngredientId;
+    private string _activeStation = string.Empty;
     private Point _lastPoint;
     private Point _grabOffset;
     private long _dragStartedAt;
@@ -1838,20 +1846,54 @@ internal sealed class CookingInteractionPad : Base
         KeepFocusOnMouseExit = true;
     }
 
+    public bool WaitingForPlacement =>
+        _enabled &&
+        _state is not null &&
+        _state.StageType != CookingStageType.Plate &&
+        !_ingredientPlaced &&
+        TryGetActiveIngredient(out _, out _);
+
+    public string PlacementTitle
+    {
+        get
+        {
+            if (!TryGetActiveIngredient(out var ingredient, out _))
+                return "PREPARE THE STATION";
+
+            return $"MOVE {ingredient.Name.ToUpperInvariant()} TO {PlacementStation(_state?.StageType ?? CookingStageType.Chop)}";
+        }
+    }
+
+    public string PlacementHelp =>
+        "Drag the highlighted ingredient from the tray into the glowing station, then perform the cooking motion.";
+
     public void Configure(CookingSessionState state, bool enabled)
     {
         var stageChanged = _lastStageIndex != state.StageIndex;
         var actionChanged = _lastActionSequence != state.ActionSequence;
+        var previousIngredientId = _activeIngredientId;
+        var previousStation = _activeStation;
 
         _state = state;
         _enabled = enabled;
 
-        if (stageChanged)
+        var currentIngredientId = CurrentActiveIngredientId();
+        var currentStation = PlacementStation(state.StageType);
+        var ingredientChanged = previousIngredientId != currentIngredientId;
+
+        if (stageChanged || ingredientChanged)
         {
+            var keepAtStation =
+                _ingredientPlaced &&
+                currentIngredientId != Guid.Empty &&
+                previousIngredientId == currentIngredientId &&
+                string.Equals(previousStation, currentStation, StringComparison.Ordinal) &&
+                state.StageType != CookingStageType.Plate;
+
             CancelGesture();
             _inputLocked = false;
             _cursorXPermille = 500;
-            _ingredientGrabbed = false;
+            _ingredientPlaced = keepAtStation;
         }
         else if (actionChanged)
         {
@@ -1869,6 +1911,8 @@ internal sealed class CookingInteractionPad : Base
             }
         }
 
+        _activeIngredientId = currentIngredientId;
+        _activeStation = currentStation;
         _lastStageIndex = state.StageIndex;
         _lastActionSequence = state.ActionSequence;
     }
@@ -1887,6 +1931,12 @@ internal sealed class CookingInteractionPad : Base
 
         var dx = current.X - _lastPoint.X;
         var dy = current.Y - _lastPoint.Y;
+
+        if (_placingIngredient)
+        {
+            _lastPoint = current;
+            return;
+        }
 
         switch (_state.StageType)
         {
@@ -1932,14 +1982,23 @@ internal sealed class CookingInteractionPad : Base
         }
 
         var localPoint = CanvasPosToLocal(mousePosition);
-        var requiresIngredientGrab = RequiresIngredientGrab(_state.StageType);
         var ingredientRect = ActiveIngredientRectLocal();
+        var needsPlacement = WaitingForPlacement;
 
-        if (requiresIngredientGrab && !Contains(ingredientRect, localPoint))
+        if (needsPlacement && !Contains(ingredientRect, localPoint))
             return;
 
+        var requiresIngredientGrab = GestureRequiresIngredientGrab(_state.StageType);
+        if (!needsPlacement &&
+            requiresIngredientGrab &&
+            !Contains(ingredientRect, localPoint))
+        {
+            return;
+        }
+
         _dragging = true;
-        _ingredientGrabbed = requiresIngredientGrab;
+        _placingIngredient = needsPlacement;
+        _ingredientGrabbed = needsPlacement || requiresIngredientGrab;
         _sentThisDrag = false;
         _linearAccumulator = 0;
         _rotationAccumulator = 0;
@@ -1966,6 +2025,15 @@ internal sealed class CookingInteractionPad : Base
         if (mouseButton != Intersect.Client.Framework.Input.MouseButton.Left)
             return;
 
+        var local = CanvasPosToLocal(mousePosition);
+
+        if (_dragging && _placingIngredient)
+        {
+            _ingredientPlaced = Contains(IngredientDropZoneLocal(), local);
+            ResetDragMotion();
+            return;
+        }
+
         if (_dragging &&
             _enabled &&
             !_inputLocked &&
@@ -1973,25 +2041,22 @@ internal sealed class CookingInteractionPad : Base
             _ingredientGrabbed &&
             _state?.StageType == CookingStageType.Plate)
         {
-            var local = CanvasPosToLocal(mousePosition);
-            var zone = Width <= 0
-                ? 1
-                : Math.Clamp(local.X * 3 / Math.Max(1, Width), 0, 2);
-
-            Submit(
-                zone switch
-                {
-                    0 => CookingActionInput.Primary,
-                    1 => CookingActionInput.Secondary,
-                    _ => CookingActionInput.Tertiary,
-                },
-                oneShot: true
-            );
+            var zone = PlateZoneAt(local);
+            if (zone >= 0)
+            {
+                Submit(
+                    zone switch
+                    {
+                        0 => CookingActionInput.Primary,
+                        1 => CookingActionInput.Secondary,
+                        _ => CookingActionInput.Tertiary,
+                    },
+                    oneShot: true
+                );
+            }
         }
 
-        _dragging = false;
-        _ingredientGrabbed = false;
-        _sentThisDrag = false;
+        ResetDragMotion();
         _linearAccumulator = 0;
         _rotationAccumulator = 0;
         _visualProgressPermille = 0;
@@ -2142,11 +2207,35 @@ internal sealed class CookingInteractionPad : Base
         return ItemDescriptor.TryGet(ingredient.ItemId, out descriptor);
     }
 
-    private static bool RequiresIngredientGrab(CookingStageType type) =>
+    private Guid CurrentActiveIngredientId()
+    {
+        var ingredients = StageIngredients();
+        var index = ingredients.Length == 0
+            ? -1
+            : Math.Clamp(_state?.CompletedActions ?? 0, 0, ingredients.Length - 1);
+        return index >= 0 && index < ingredients.Length
+            ? ingredients[index].ItemId
+            : Guid.Empty;
+    }
+
+    private static bool GestureRequiresIngredientGrab(CookingStageType type) =>
         type is CookingStageType.Chop or
             CookingStageType.Flip or
             CookingStageType.Knead or
             CookingStageType.Plate;
+
+    private static string PlacementStation(CookingStageType type) =>
+        type switch
+        {
+            CookingStageType.Chop => "CUTTING BOARD",
+            CookingStageType.Stir => "POT",
+            CookingStageType.Heat => "PAN",
+            CookingStageType.Flip => "PAN",
+            CookingStageType.Season => "PAN",
+            CookingStageType.Knead => "WORK BOARD",
+            CookingStageType.Plate => "PLATE",
+            _ => "STATION",
+        };
 
     private static bool Contains(Rectangle rectangle, Point point) =>
         point.X >= rectangle.X &&
@@ -2156,22 +2245,11 @@ internal sealed class CookingInteractionPad : Base
 
     private Rectangle ActiveIngredientRectLocal()
     {
-        int X(int value) => (int)Math.Round(value * Width / 510d);
-        int Y(int value) => (int)Math.Round(value * Height / 82d);
-        int W(int value) => Math.Max(1, (int)Math.Round(value * Width / 510d));
-        int H(int value) => Math.Max(1, (int)Math.Round(value * Height / 82d));
-
-        var design = _state?.StageType switch
-        {
-            CookingStageType.Chop => new Rectangle(X(232), Y(18), W(46), H(46)),
-            CookingStageType.Stir => new Rectangle(X(232), Y(19), W(46), H(46)),
-            CookingStageType.Heat => new Rectangle(X(232), Y(5), W(46), H(46)),
-            CookingStageType.Flip => new Rectangle(X(232), Y(31), W(46), H(38)),
-            CookingStageType.Season => new Rectangle(X(232), Y(5), W(46), H(46)),
-            CookingStageType.Knead => new Rectangle(X(226), Y(20), W(58), H(42)),
-            CookingStageType.Plate => new Rectangle(X(243), Y(25), W(40), H(32)),
-            _ => new Rectangle(X(232), Y(18), W(46), H(46)),
-        };
+        var design = _state?.StageType == CookingStageType.Plate
+            ? IngredientSourceRectLocal()
+            : _ingredientPlaced
+                ? StationIngredientRectLocal()
+                : IngredientSourceRectLocal();
 
         if (!_dragging || !_ingredientGrabbed)
             return design;
@@ -2179,6 +2257,77 @@ internal sealed class CookingInteractionPad : Base
         var x = Math.Clamp(_lastPoint.X - _grabOffset.X, 0, Math.Max(0, Width - design.Width));
         var y = Math.Clamp(_lastPoint.Y - _grabOffset.Y, 0, Math.Max(0, Height - design.Height));
         return new Rectangle(x, y, design.Width, design.Height);
+    }
+
+    private Rectangle IngredientSourceRectLocal()
+    {
+        int X(int value) => (int)Math.Round(value * Width / 510d);
+        int Y(int value) => (int)Math.Round(value * Height / 82d);
+        int W(int value) => Math.Max(1, (int)Math.Round(value * Width / 510d));
+        int H(int value) => Math.Max(1, (int)Math.Round(value * Height / 82d));
+
+        return new Rectangle(X(18), Y(20), W(52), H(44));
+    }
+
+    private Rectangle StationIngredientRectLocal()
+    {
+        int X(int value) => (int)Math.Round(value * Width / 510d);
+        int Y(int value) => (int)Math.Round(value * Height / 82d);
+        int W(int value) => Math.Max(1, (int)Math.Round(value * Width / 510d));
+        int H(int value) => Math.Max(1, (int)Math.Round(value * Height / 82d));
+
+        return _state?.StageType switch
+        {
+            CookingStageType.Chop => new Rectangle(X(232), Y(18), W(46), H(46)),
+            CookingStageType.Stir => new Rectangle(X(232), Y(19), W(46), H(46)),
+            CookingStageType.Heat => new Rectangle(X(232), Y(5), W(46), H(46)),
+            CookingStageType.Flip => new Rectangle(X(232), Y(31), W(46), H(38)),
+            CookingStageType.Season => new Rectangle(X(232), Y(5), W(46), H(46)),
+            CookingStageType.Knead => new Rectangle(X(226), Y(20), W(58), H(42)),
+            CookingStageType.Plate => IngredientSourceRectLocal(),
+            _ => new Rectangle(X(232), Y(18), W(46), H(46)),
+        };
+    }
+
+    private Rectangle IngredientDropZoneLocal()
+    {
+        int X(int value) => (int)Math.Round(value * Width / 510d);
+        int Y(int value) => (int)Math.Round(value * Height / 82d);
+        int W(int value) => Math.Max(1, (int)Math.Round(value * Width / 510d));
+        int H(int value) => Math.Max(1, (int)Math.Round(value * Height / 82d));
+
+        return _state?.StageType switch
+        {
+            CookingStageType.Chop => new Rectangle(X(105), Y(7), W(300), H(68)),
+            CookingStageType.Stir => new Rectangle(X(160), Y(11), W(190), H(58)),
+            CookingStageType.Heat => new Rectangle(X(182), Y(3), W(146), H(53)),
+            CookingStageType.Flip => new Rectangle(X(168), Y(20), W(174), H(51)),
+            CookingStageType.Season => new Rectangle(X(188), Y(3), W(134), H(53)),
+            CookingStageType.Knead => new Rectangle(X(124), Y(10), W(262), H(62)),
+            _ => StationIngredientRectLocal(),
+        };
+    }
+
+    private Rectangle PlateZoneRectLocal(int zone)
+    {
+        int X(int value) => (int)Math.Round(value * Width / 510d);
+        int Y(int value) => (int)Math.Round(value * Height / 82d);
+        int W(int value) => Math.Max(1, (int)Math.Round(value * Width / 510d));
+        int H(int value) => Math.Max(1, (int)Math.Round(value * Height / 82d));
+
+        zone = Math.Clamp(zone, 0, 2);
+        return new Rectangle(X(100 + zone * 132), Y(12), W(124), H(58));
+    }
+
+    private int PlateZoneAt(Point point)
+    {
+        for (var zone = 0; zone < 3; ++zone)
+        {
+            if (Contains(PlateZoneRectLocal(zone), point))
+                return zone;
+        }
+
+        return -1;
     }
 
     private static Rectangle FitTexture(Rectangle target, int textureWidth, int textureHeight)
@@ -2250,14 +2399,20 @@ internal sealed class CookingInteractionPad : Base
         return angle;
     }
 
-    private void CancelGesture()
+    private void ResetDragMotion()
     {
         _dragging = false;
         _ingredientGrabbed = false;
+        _placingIngredient = false;
         _sentThisDrag = false;
         _linearAccumulator = 0;
         _rotationAccumulator = 0;
         _visualProgressPermille = 0;
+    }
+
+    private void CancelGesture()
+    {
+        ResetDragMotion();
     }
 
     protected override void Render(SkinBase skin)
@@ -2289,6 +2444,31 @@ internal sealed class CookingInteractionPad : Base
         var green = new Color(a: 255, r: 79, g: 153, b: 82);
         var pale = new Color(a: 255, r: 226, g: 214, b: 188);
 
+        Rectangle ToRender(Rectangle local) =>
+            new(bounds.X + local.X, bounds.Y + local.Y, local.Width, local.Height);
+
+        void Outline(Rectangle rectangle, Color color, int thickness = 2)
+        {
+            var t = Math.Max(1, thickness);
+            renderer.DrawColor = color;
+            renderer.DrawFilledRect(new Rectangle(rectangle.X, rectangle.Y, rectangle.Width, t));
+            renderer.DrawFilledRect(new Rectangle(rectangle.X, rectangle.Y + rectangle.Height - t, rectangle.Width, t));
+            renderer.DrawFilledRect(new Rectangle(rectangle.X, rectangle.Y, t, rectangle.Height));
+            renderer.DrawFilledRect(new Rectangle(rectangle.X + rectangle.Width - t, rectangle.Y, t, rectangle.Height));
+        }
+
+        // Every non-plating stage now begins by physically moving the real item sprite
+        // from the ingredient tray to the station. Wrong drops snap back to the tray.
+        if (WaitingForPlacement)
+        {
+            var source = ToRender(IngredientSourceRectLocal());
+            var target = ToRender(IngredientDropZoneLocal());
+            renderer.DrawColor = new Color(a: 200, r: 52, g: 38, b: 27);
+            renderer.DrawFilledRect(new Rectangle(source.X - 4, source.Y - 4, source.Width + 8, source.Height + 8));
+            Outline(source, gold);
+            Outline(target, green, 3);
+        }
+
         switch (_state.StageType)
         {
             case CookingStageType.Chop:
@@ -2300,21 +2480,24 @@ internal sealed class CookingInteractionPad : Base
 
                 DrawActiveIngredient(skin, bounds, _ingredientGrabbed ? pale : gold);
 
-                var ingredient = ActiveIngredientRectLocal();
-                for (var cut = 1; cut <= 3; ++cut)
+                if (_ingredientPlaced)
                 {
-                    var x = bounds.X + ingredient.X + ingredient.Width * cut / 4;
-                    renderer.DrawColor = cut <= Math.Min(3, _state.CompletedActions)
-                        ? green
-                        : new Color(a: 205, r: 244, g: 226, b: 178);
-                    renderer.DrawFilledRect(
-                        new Rectangle(
-                            x,
-                            bounds.Y + ingredient.Y + SH(5),
-                            Math.Max(1, SW(2)),
-                            Math.Max(1, ingredient.Height - SH(10))
-                        )
-                    );
+                    var ingredient = ActiveIngredientRectLocal();
+                    for (var cut = 1; cut <= 3; ++cut)
+                    {
+                        var x = bounds.X + ingredient.X + ingredient.Width * cut / 4;
+                        renderer.DrawColor = cut <= Math.Min(3, _state.CompletedActions)
+                            ? green
+                            : new Color(a: 205, r: 244, g: 226, b: 178);
+                        renderer.DrawFilledRect(
+                            new Rectangle(
+                                x,
+                                bounds.Y + ingredient.Y + SH(5),
+                                Math.Max(1, SW(2)),
+                                Math.Max(1, ingredient.Height - SH(10))
+                            )
+                        );
+                    }
                 }
                 break;
             }
@@ -2450,12 +2633,20 @@ internal sealed class CookingInteractionPad : Base
 
             case CookingStageType.Plate:
             {
-                var zoneW = 150;
+                var source = ToRender(IngredientSourceRectLocal());
+                renderer.DrawColor = new Color(a: 200, r: 52, g: 38, b: 27);
+                renderer.DrawFilledRect(new Rectangle(source.X - 4, source.Y - 4, source.Width + 8, source.Height + 8));
+                Outline(source, gold);
+
                 var target = CookingStageRules.PlateZoneFromTarget(_state.TargetPermille);
                 for (var zone = 0; zone < 3; ++zone)
                 {
-                    renderer.DrawColor = zone == target ? green : muted;
-                    renderer.DrawFilledRect(new Rectangle(SX(25 + zone * 155), SY(12), SW(zoneW), SH(58)));
+                    var zoneRect = ToRender(PlateZoneRectLocal(zone));
+                    renderer.DrawColor = zone == target
+                        ? new Color(a: 160, r: 56, g: 111, b: 61)
+                        : new Color(a: 160, r: 70, g: 51, b: 37);
+                    renderer.DrawFilledRect(zoneRect);
+                    Outline(zoneRect, zone == target ? green : muted, zone == target ? 3 : 2);
                 }
 
                 DrawActiveIngredient(skin, bounds, _ingredientGrabbed ? pale : gold);
@@ -2463,7 +2654,9 @@ internal sealed class CookingInteractionPad : Base
             }
         }
 
-        if (_dragging && _state.StageType is not CookingStageType.Plate)
+        if (_dragging &&
+            !_placingIngredient &&
+            _state.StageType is not CookingStageType.Plate)
         {
             renderer.DrawColor = gold;
             var width = Math.Max(SW(2), (int)Math.Round(SW(470) * _visualProgressPermille / 1000d));
