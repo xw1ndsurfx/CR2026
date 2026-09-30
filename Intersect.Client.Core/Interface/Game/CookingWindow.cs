@@ -1814,7 +1814,20 @@ internal sealed class CookingResultPanel(Base parent) : Base(parent, "CookingRes
 
 internal sealed class CookingInteractionPad : Base
 {
+    private enum IngredientVisualState
+    {
+        Raw = 0,
+        Prepared = 1,
+        Cooking = 2,
+        Cooked = 3,
+        Burnt = 4,
+    }
+
     private readonly Action<CookingActionInput> _submit;
+    private readonly Dictionary<Guid, IngredientVisualState> _ingredientVisualStates = [];
+    private readonly Dictionary<Guid, int> _ingredientCookProgress = [];
+    private readonly HashSet<Guid> _choppedIngredients = [];
+    private readonly HashSet<Guid> _kneadedIngredients = [];
     private CookingSessionState? _state;
     private bool _enabled;
     private bool _dragging;
@@ -1835,6 +1848,7 @@ internal sealed class CookingInteractionPad : Base
     private int _cursorXPermille = 500;
     private int _lastStageIndex = -1;
     private long _lastActionSequence = -1;
+    private Guid _lastRecipeId;
 
     public CookingInteractionPad(Base parent, Action<CookingActionInput> submit)
         : base(parent, "CookingInteractionPad")
@@ -1869,10 +1883,37 @@ internal sealed class CookingInteractionPad : Base
 
     public void Configure(CookingSessionState state, bool enabled)
     {
+        var previousState = _state;
         var stageChanged = _lastStageIndex != state.StageIndex;
         var actionChanged = _lastActionSequence != state.ActionSequence;
         var previousIngredientId = _activeIngredientId;
         var previousStation = _activeStation;
+
+        if (_lastRecipeId != state.RecipeId)
+        {
+            _ingredientVisualStates.Clear();
+            _ingredientCookProgress.Clear();
+            _choppedIngredients.Clear();
+            _kneadedIngredients.Clear();
+            _ingredientPlaced = false;
+            _lastRecipeId = state.RecipeId;
+        }
+
+        if (actionChanged && state.ActionSequence > 0)
+        {
+            // When the last action completed a stage, the packet already points at the
+            // next stage. Attribute that score to the stage that actually produced it.
+            ApplyActionVisual(
+                stageChanged && previousState != null ? previousState : state,
+                state.LastActionScore
+            );
+        }
+
+        if (stageChanged && previousState != null)
+            FinalizeStageVisual(previousState);
+
+        if (state.Complete)
+            FinalizeRecipeVisual(state);
 
         _state = state;
         _enabled = enabled;
@@ -2165,19 +2206,8 @@ internal sealed class CookingInteractionPad : Base
         _submit(input);
     }
 
-    private CookingIngredientState[] StageIngredients()
-    {
-        if (_state == null || _state.RecipeIngredients.Length == 0)
-            return [];
-
-        var ids = _state.StageIngredientItemIds.ToHashSet();
-        if (ids.Count == 0)
-            return _state.RecipeIngredients;
-
-        return _state.RecipeIngredients
-            .Where(ingredient => ids.Contains(ingredient.ItemId))
-            .ToArray();
-    }
+    private CookingIngredientState[] StageIngredients() =>
+        _state == null ? [] : StageIngredients(_state);
 
     private int ActiveIngredientIndex
     {
@@ -2205,6 +2235,142 @@ internal sealed class CookingInteractionPad : Base
 
         ingredient = ingredients[index];
         return ItemDescriptor.TryGet(ingredient.ItemId, out descriptor);
+    }
+
+    private void ApplyActionVisual(CookingSessionState actionState, int score)
+    {
+        var ingredients = StageIngredients(actionState);
+        if (ingredients.Length == 0)
+            return;
+
+        var index = Math.Clamp(actionState.CompletedActions, 0, ingredients.Length - 1);
+        var itemId = ingredients[index].ItemId;
+        if (itemId == Guid.Empty)
+            return;
+
+        var current = VisualState(itemId);
+        if (current == IngredientVisualState.Burnt)
+            return;
+
+        switch (actionState.StageType)
+        {
+            case CookingStageType.Chop:
+                _choppedIngredients.Add(itemId);
+                _ingredientVisualStates[itemId] = IngredientVisualState.Prepared;
+                break;
+
+            case CookingStageType.Knead:
+                _kneadedIngredients.Add(itemId);
+                _ingredientVisualStates[itemId] = IngredientVisualState.Prepared;
+                break;
+
+            case CookingStageType.Stir:
+            case CookingStageType.Season:
+                if (current == IngredientVisualState.Raw)
+                    _ingredientVisualStates[itemId] = IngredientVisualState.Prepared;
+                break;
+
+            case CookingStageType.Heat:
+            case CookingStageType.Flip:
+            {
+                var progress = _ingredientCookProgress.GetValueOrDefault(itemId);
+                progress = Math.Clamp(
+                    progress + Math.Clamp(10 + score / 4, 10, 35),
+                    0,
+                    100
+                );
+                _ingredientCookProgress[itemId] = progress;
+
+                if (score < 40 && progress >= 55)
+                {
+                    _ingredientVisualStates[itemId] = IngredientVisualState.Burnt;
+                }
+                else
+                {
+                    _ingredientVisualStates[itemId] = progress >= 78
+                        ? IngredientVisualState.Cooked
+                        : IngredientVisualState.Cooking;
+                }
+
+                break;
+            }
+        }
+    }
+
+    private void FinalizeStageVisual(CookingSessionState previousState)
+    {
+        var ingredients = StageIngredients(previousState);
+        foreach (var ingredient in ingredients)
+        {
+            var itemId = ingredient.ItemId;
+            if (itemId == Guid.Empty || VisualState(itemId) == IngredientVisualState.Burnt)
+                continue;
+
+            switch (previousState.StageType)
+            {
+                case CookingStageType.Chop:
+                    _choppedIngredients.Add(itemId);
+                    _ingredientVisualStates[itemId] = IngredientVisualState.Prepared;
+                    break;
+
+                case CookingStageType.Knead:
+                    _kneadedIngredients.Add(itemId);
+                    _ingredientVisualStates[itemId] = IngredientVisualState.Prepared;
+                    break;
+
+                case CookingStageType.Heat:
+                case CookingStageType.Flip:
+                    _ingredientCookProgress[itemId] = Math.Max(
+                        80,
+                        _ingredientCookProgress.GetValueOrDefault(itemId)
+                    );
+                    _ingredientVisualStates[itemId] = IngredientVisualState.Cooked;
+                    break;
+
+                case CookingStageType.Stir:
+                case CookingStageType.Season:
+                    if (VisualState(itemId) == IngredientVisualState.Raw)
+                        _ingredientVisualStates[itemId] = IngredientVisualState.Prepared;
+                    break;
+            }
+        }
+    }
+
+    private void FinalizeRecipeVisual(CookingSessionState state)
+    {
+        foreach (var ingredient in state.RecipeIngredients)
+        {
+            if (state.Quality == CookingQuality.Burnt)
+            {
+                _ingredientVisualStates[ingredient.ItemId] = IngredientVisualState.Burnt;
+                continue;
+            }
+
+            var current = VisualState(ingredient.ItemId);
+            if (current == IngredientVisualState.Cooking)
+                _ingredientVisualStates[ingredient.ItemId] = IngredientVisualState.Cooked;
+        }
+    }
+
+    private IngredientVisualState VisualState(Guid itemId)
+    {
+        return _ingredientVisualStates.TryGetValue(itemId, out var state)
+            ? state
+            : IngredientVisualState.Raw;
+    }
+
+    private static CookingIngredientState[] StageIngredients(CookingSessionState state)
+    {
+        if (state.RecipeIngredients.Length == 0)
+            return [];
+
+        var ids = state.StageIngredientItemIds.ToHashSet();
+        if (ids.Count == 0)
+            return state.RecipeIngredients;
+
+        return state.RecipeIngredients
+            .Where(ingredient => ids.Contains(ingredient.ItemId))
+            .ToArray();
     }
 
     private Guid CurrentActiveIngredientId()
@@ -2349,17 +2515,166 @@ internal sealed class CookingInteractionPad : Base
         );
     }
 
+    private Color IngredientTint(ItemDescriptor descriptor, Guid itemId)
+    {
+        var state = VisualState(itemId);
+
+        // An item actively sitting over heat should already look like it is cooking,
+        // even before the first scored heat action.
+        if (_ingredientPlaced &&
+            _state?.StageType is CookingStageType.Heat or CookingStageType.Flip &&
+            state is IngredientVisualState.Raw or IngredientVisualState.Prepared)
+        {
+            state = IngredientVisualState.Cooking;
+        }
+
+        static int Scale(byte value, double factor) =>
+            Math.Clamp((int)Math.Round(value * factor), 0, 255);
+
+        return state switch
+        {
+            IngredientVisualState.Prepared => new Color(
+                a: descriptor.Color.A,
+                r: Math.Min(255, Scale(descriptor.Color.R, 1.08)),
+                g: Math.Min(255, Scale(descriptor.Color.G, 1.04)),
+                b: Scale(descriptor.Color.B, 0.92)
+            ),
+            IngredientVisualState.Cooking => new Color(
+                a: descriptor.Color.A,
+                r: Math.Min(255, Scale(descriptor.Color.R, 1.12)),
+                g: Scale(descriptor.Color.G, 0.78),
+                b: Scale(descriptor.Color.B, 0.58)
+            ),
+            IngredientVisualState.Cooked => new Color(
+                a: descriptor.Color.A,
+                r: Scale(descriptor.Color.R, 0.86),
+                g: Scale(descriptor.Color.G, 0.67),
+                b: Scale(descriptor.Color.B, 0.48)
+            ),
+            IngredientVisualState.Burnt => new Color(
+                a: descriptor.Color.A,
+                r: Scale(descriptor.Color.R, 0.34),
+                g: Scale(descriptor.Color.G, 0.31),
+                b: Scale(descriptor.Color.B, 0.28)
+            ),
+            _ => descriptor.Color,
+        };
+    }
+
+    private void DrawFoodTexture(
+        SkinBase skin,
+        ItemDescriptor descriptor,
+        Guid itemId,
+        Rectangle target
+    )
+    {
+        var texture = GameContentManager.Current?.GetTexture(TextureType.Item, descriptor.Icon);
+        if (texture == null)
+            return;
+
+        var tint = IngredientTint(descriptor, itemId);
+
+        if (_choppedIngredients.Contains(itemId) && !_dragging)
+        {
+            // Reuse the actual item sprite as smaller pieces instead of requiring duplicate assets.
+            var pieceWidth = Math.Max(6, target.Width / 3);
+            var pieceHeight = Math.Max(6, target.Height * 2 / 3);
+            for (var piece = 0; piece < 3; ++piece)
+            {
+                var pieceTarget = new Rectangle(
+                    target.X + piece * Math.Max(1, (target.Width - pieceWidth) / 2),
+                    target.Y + (piece % 2 == 0 ? target.Height - pieceHeight : 0),
+                    pieceWidth,
+                    pieceHeight
+                );
+                var fittedPiece = FitTexture(pieceTarget, texture.Width, texture.Height);
+                skin.Renderer.DrawTexturedRect(texture, fittedPiece, tint, 0f, 0f, 1f, 1f);
+            }
+            return;
+        }
+
+        if (_kneadedIngredients.Contains(itemId) && !_dragging)
+        {
+            // Kneaded dough reads flatter and wider without needing a second sprite.
+            var kneaded = new Rectangle(
+                target.X - target.Width / 8,
+                target.Y + target.Height / 8,
+                target.Width + target.Width / 4,
+                Math.Max(4, target.Height * 3 / 4)
+            );
+            var fittedKneaded = FitTexture(kneaded, texture.Width, texture.Height);
+            skin.Renderer.DrawTexturedRect(texture, fittedKneaded, tint, 0f, 0f, 1f, 1f);
+            return;
+        }
+
+        var fitted = FitTexture(target, texture.Width, texture.Height);
+        skin.Renderer.DrawTexturedRect(texture, fitted, tint, 0f, 0f, 1f, 1f);
+    }
+
+    private void DrawFoodEffects(
+        SkinBase skin,
+        Rectangle padBounds,
+        Guid itemId,
+        Rectangle localTarget
+    )
+    {
+        var visual = VisualState(itemId);
+        var activelyHeating =
+            _ingredientPlaced &&
+            _state?.StageType is CookingStageType.Heat or CookingStageType.Flip;
+
+        if (!activelyHeating &&
+            visual is not IngredientVisualState.Cooking and not IngredientVisualState.Cooked and not IngredientVisualState.Burnt)
+        {
+            return;
+        }
+
+        var now = Environment.TickCount64;
+        var target = new Rectangle(
+            padBounds.X + localTarget.X,
+            padBounds.Y + localTarget.Y,
+            localTarget.Width,
+            localTarget.Height
+        );
+
+        var burnt = visual == IngredientVisualState.Burnt;
+        var particleCount = burnt ? 6 : 4;
+        for (var particle = 0; particle < particleCount; ++particle)
+        {
+            var drift = (int)((now / (burnt ? 38 : 28) + particle * 17) % 28);
+            var x = target.X + 4 + (particle * 13 % Math.Max(8, target.Width - 8));
+            var y = target.Y - 2 - drift;
+            var size = burnt ? 7 + particle % 3 * 2 : 3 + particle % 2 * 2;
+
+            skin.Renderer.DrawColor = burnt
+                ? new Color(a: 120, r: 76, g: 72, b: 67)
+                : new Color(a: 125, r: 220, g: 220, b: 205);
+            skin.Renderer.DrawFilledRect(new Rectangle(x, y, size, size));
+        }
+
+        if (activelyHeating)
+        {
+            // Tiny gold/orange sizzle flecks make the heat station feel alive.
+            for (var spark = 0; spark < 4; ++spark)
+            {
+                var x = target.X + ((spark * 19 + (int)(now / 22)) % Math.Max(8, target.Width));
+                var y = target.Y + target.Height - 3 - spark * 2;
+                skin.Renderer.DrawColor = new Color(a: 205, r: 235, g: 168, b: 70);
+                skin.Renderer.DrawFilledRect(new Rectangle(x, y, 2, 2));
+            }
+        }
+    }
+
     private bool DrawActiveIngredient(
         SkinBase skin,
         Rectangle padBounds,
         Color frameColor
     )
     {
-        if (!TryGetActiveIngredient(out _, out var descriptor))
+        if (!TryGetActiveIngredient(out var ingredient, out var descriptor))
             return false;
 
-        var texture = GameContentManager.Current?.GetTexture(TextureType.Item, descriptor.Icon);
-        if (texture == null)
+        if (GameContentManager.Current?.GetTexture(TextureType.Item, descriptor.Icon) == null)
             return false;
 
         var local = ActiveIngredientRectLocal();
@@ -2369,7 +2684,6 @@ internal sealed class CookingInteractionPad : Base
             local.Width,
             local.Height
         );
-        var fitted = FitTexture(target, texture.Width, texture.Height);
 
         skin.Renderer.DrawColor = frameColor;
         skin.Renderer.DrawFilledRect(new Rectangle(target.X - 2, target.Y - 2, target.Width + 4, 2));
@@ -2377,15 +2691,8 @@ internal sealed class CookingInteractionPad : Base
         skin.Renderer.DrawFilledRect(new Rectangle(target.X - 2, target.Y - 2, 2, target.Height + 4));
         skin.Renderer.DrawFilledRect(new Rectangle(target.X + target.Width, target.Y - 2, 2, target.Height + 4));
 
-        skin.Renderer.DrawTexturedRect(
-            texture,
-            fitted,
-            descriptor.Color,
-            0f,
-            0f,
-            1f,
-            1f
-        );
+        DrawFoodTexture(skin, descriptor, ingredient.ItemId, target);
+        DrawFoodEffects(skin, padBounds, ingredient.ItemId, local);
         return true;
     }
 
@@ -2569,6 +2876,19 @@ internal sealed class CookingInteractionPad : Base
                 var knobX = railX + (int)Math.Round(railW * _state.MeterPermille / 1000d);
                 renderer.DrawColor = pale;
                 renderer.DrawFilledRect(new Rectangle(knobX - SW(4), SY(55), SW(8), SH(22)));
+
+                if (TryGetActiveIngredient(out var heatIngredient, out _))
+                {
+                    var cooked = _ingredientCookProgress.GetValueOrDefault(heatIngredient.ItemId);
+                    renderer.DrawColor = new Color(a: 255, r: 49, g: 37, b: 27);
+                    renderer.DrawFilledRect(new Rectangle(SX(345), SY(8), SW(135), SH(8)));
+                    renderer.DrawColor = VisualState(heatIngredient.ItemId) == IngredientVisualState.Burnt
+                        ? new Color(a: 255, r: 82, g: 72, b: 67)
+                        : new Color(a: 255, r: 207, g: 132, b: 55);
+                    renderer.DrawFilledRect(
+                        new Rectangle(SX(345), SY(8), SW(135 * cooked / 100), SH(8))
+                    );
+                }
                 break;
             }
 
@@ -2586,6 +2906,19 @@ internal sealed class CookingInteractionPad : Base
                 {
                     var y = 48 - step * 10;
                     renderer.DrawFilledRect(new Rectangle(SX(250), SY(y), SW(9), SH(4)));
+                }
+
+                if (TryGetActiveIngredient(out var flipIngredient, out _))
+                {
+                    var cooked = _ingredientCookProgress.GetValueOrDefault(flipIngredient.ItemId);
+                    renderer.DrawColor = new Color(a: 255, r: 49, g: 37, b: 27);
+                    renderer.DrawFilledRect(new Rectangle(SX(345), SY(8), SW(135), SH(8)));
+                    renderer.DrawColor = VisualState(flipIngredient.ItemId) == IngredientVisualState.Burnt
+                        ? new Color(a: 255, r: 82, g: 72, b: 67)
+                        : new Color(a: 255, r: 207, g: 132, b: 55);
+                    renderer.DrawFilledRect(
+                        new Rectangle(SX(345), SY(8), SW(135 * cooked / 100), SH(8))
+                    );
                 }
                 break;
             }
