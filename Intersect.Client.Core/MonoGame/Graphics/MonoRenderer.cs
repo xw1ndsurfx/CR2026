@@ -10,6 +10,7 @@ using Intersect.Client.General;
 using Intersect.Client.Localization;
 using Intersect.Client.MonoGame.NativeInterop;
 using Intersect.Client.ThirdParty;
+using Intersect.Configuration;
 using Intersect.Core;
 using Intersect.Extensions;
 using Intersect.Framework.Core;
