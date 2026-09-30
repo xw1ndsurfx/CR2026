@@ -20,122 +20,178 @@ function Resolve-FullPath {
     return [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath $Path).Path)
 }
 
-function Get-EmpireCharacterRegions {
-    param([Parameter(Mandatory = $true)][string]$ParametersFile)
-
-    $lines = Get-Content -LiteralPath $ParametersFile -Encoding UTF8
-    $markerIndex = -1
-    for ($i = 0; $i -lt $lines.Count; $i++) {
-        if ($lines[$i].Trim() -eq "Character set:") {
-            $markerIndex = $i
-            break
-        }
-    }
-
-    if ($markerIndex -lt 0) {
-        throw "Could not find 'Character set:' in $ParametersFile."
-    }
-
-    $characterLine = $null
-    for ($i = $markerIndex + 1; $i -lt $lines.Count; $i++) {
-        if (-not [string]::IsNullOrWhiteSpace($lines[$i])) {
-            $characterLine = $lines[$i]
-            break
-        }
-    }
-
-    if ([string]::IsNullOrWhiteSpace($characterLine)) {
-        throw "The Empire 7 character set is empty in $ParametersFile."
-    }
-
-    # Space is defined in the supplied spacing table but is not repeated on the Character set line.
-    $codePoints = (" " + $characterLine).ToCharArray() |
-        ForEach-Object { [int]$_ } |
-        Sort-Object -Unique
-
-    $regions = New-Object System.Collections.Generic.List[object]
-    $start = $null
-    $previous = $null
-
-    foreach ($codePoint in $codePoints) {
-        if ($null -eq $start) {
-            $start = $codePoint
-            $previous = $codePoint
-            continue
-        }
-
-        if ($codePoint -eq ($previous + 1)) {
-            $previous = $codePoint
-            continue
-        }
-
-        $regions.Add([pscustomobject]@{ Start = $start; End = $previous })
-        $start = $codePoint
-        $previous = $codePoint
-    }
-
-    if ($null -ne $start) {
-        $regions.Add([pscustomobject]@{ Start = $start; End = $previous })
-    }
-
-    return $regions
-}
-
-function New-SpriteFontXml {
+function Get-EmpireMetrics {
     param(
-        [Parameter(Mandatory = $true)][int]$Size,
-        [Parameter(Mandatory = $true)]$Regions
+        [Parameter(Mandatory = $true)][string]$ParametersFile,
+        [Parameter(Mandatory = $true)][int]$Columns
     )
 
-    $regionXml = ($Regions | ForEach-Object {
-        $startHex = $_.Start.ToString("X4")
-        $endHex = $_.End.ToString("X4")
-        "      <CharacterRegion><Start>&#x$startHex;</Start><End>&#x$endHex;</End></CharacterRegion>"
-    }) -join [Environment]::NewLine
+    $raw = Get-Content -LiteralPath $ParametersFile -Raw -Encoding UTF8
 
-    return @"
-<?xml version="1.0" encoding="utf-8"?>
-<XnaContent xmlns:Graphics="Microsoft.Xna.Framework.Content.Pipeline.Graphics">
-  <Asset Type="Graphics:FontDescription">
-    <FontName>Empire 7.ttf</FontName>
-    <Size>$Size</Size>
-    <Spacing>0</Spacing>
-    <UseKerning>false</UseKerning>
-    <Style>Regular</Style>
-    <DefaultCharacter>?</DefaultCharacter>
-    <CharacterRegions>
-$regionXml
-    </CharacterRegions>
-  </Asset>
-</XnaContent>
-"@
+    $characterWidthMatch = [regex]::Match($raw, 'Character width:\s*(\d+)')
+    $characterHeightMatch = [regex]::Match($raw, 'Character height:\s*(\d+)')
+    $characterSetMatch = [regex]::Match($raw, 'Character set:\s*\r?\n([^\r\n]+)')
+
+    if (-not $characterWidthMatch.Success -or -not $characterHeightMatch.Success -or -not $characterSetMatch.Success) {
+        throw "Could not read the Empire 7 grid or character set from $ParametersFile."
+    }
+
+    $cellWidth = [int]$characterWidthMatch.Groups[1].Value
+    $cellHeight = [int]$characterHeightMatch.Groups[1].Value
+    $characterLine = $characterSetMatch.Groups[1].Value
+
+    $widths = [ordered]@{}
+    $spacingMatches = [regex]::Matches($raw, '\[(\d+),"((?:\\.|[^"])*)"\]')
+    foreach ($spacingMatch in $spacingMatches) {
+        $width = [int]$spacingMatch.Groups[1].Value
+        $encodedCharacters = $spacingMatch.Groups[2].Value
+        $decodedCharacters = [regex]::Unescape($encodedCharacters)
+        foreach ($character in $decodedCharacters.ToCharArray()) {
+            $widths[[string][int]$character] = $width
+        }
+    }
+
+    if (-not $widths.Contains("32")) {
+        $widths["32"] = 4
+    }
+
+    $characterCodes = @($characterLine.ToCharArray() | ForEach-Object { [int]$_ })
+    foreach ($codePoint in $characterCodes) {
+        $key = [string]$codePoint
+        if (-not $widths.Contains($key)) {
+            throw "No spacing value was found for Empire 7 character U+$($codePoint.ToString('X4'))."
+        }
+    }
+
+    return [pscustomobject]@{
+        CellWidth = $cellWidth
+        CellHeight = $cellHeight
+        Columns = $Columns
+        Characters = $characterCodes
+        Widths = $widths
+    }
 }
 
-function Invoke-Mgcb {
+function Get-EmpirePixelScale {
+    param([Parameter(Mandatory = $true)][int]$RequestedSize)
+
+    # Whole-number nearest-neighbour scaling keeps the original bitmap pixel grid.
+    # 16-22 maps to 2x, which matches the readable Corps Royaux HUD scale well.
+    return [Math]::Max(1, [Math]::Floor($RequestedSize / 8))
+}
+
+function Resize-PngNearest {
     param(
-        [Parameter(Mandatory = $true)][string]$ResponseFile,
+        [Parameter(Mandatory = $true)][string]$SourcePath,
+        [Parameter(Mandatory = $true)][string]$DestinationPath,
+        [Parameter(Mandatory = $true)][int]$Scale
+    )
+
+    if ($Scale -lt 1) {
+        throw "PNG scale must be at least 1."
+    }
+
+    if ($Scale -eq 1) {
+        Copy-Item -LiteralPath $SourcePath -Destination $DestinationPath -Force
+        return
+    }
+
+    Add-Type -AssemblyName System.Drawing
+
+    $source = [System.Drawing.Bitmap]::FromFile($SourcePath)
+    try {
+        $destination = New-Object System.Drawing.Bitmap(
+            $source.Width * $Scale,
+            $source.Height * $Scale,
+            [System.Drawing.Imaging.PixelFormat]::Format32bppArgb
+        )
+
+        try {
+            $graphics = [System.Drawing.Graphics]::FromImage($destination)
+            try {
+                $graphics.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceCopy
+                $graphics.CompositingQuality = [System.Drawing.Drawing2D.CompositingQuality]::HighSpeed
+                $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
+                $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::None
+                $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
+
+                $destinationRect = New-Object System.Drawing.Rectangle(0, 0, $destination.Width, $destination.Height)
+                $graphics.DrawImage(
+                    $source,
+                    $destinationRect,
+                    0,
+                    0,
+                    $source.Width,
+                    $source.Height,
+                    [System.Drawing.GraphicsUnit]::Pixel
+                )
+            }
+            finally {
+                $graphics.Dispose()
+            }
+
+            $destination.Save($DestinationPath, [System.Drawing.Imaging.ImageFormat]::Png)
+        }
+        finally {
+            $destination.Dispose()
+        }
+    }
+    finally {
+        $source.Dispose()
+    }
+}
+
+function Get-DotNetCommand {
+    $dotnet = Get-Command dotnet -ErrorAction SilentlyContinue
+    if ($null -eq $dotnet) {
+        throw "The .NET SDK is required to build the Empire 7 bitmap-font pipeline. Install the .NET 8 SDK, then run the script again."
+    }
+
+    return $dotnet.Source
+}
+
+function Build-EmpireProcessor {
+    param(
         [Parameter(Mandatory = $true)][string]$TempDirectory,
         [Parameter(Mandatory = $true)][string]$Version
     )
 
-    $mgcb = Get-Command mgcb -ErrorAction SilentlyContinue
-    if ($null -ne $mgcb) {
-        & $mgcb.Source "/@:$ResponseFile" /rebuild
-        if ($LASTEXITCODE -ne 0) {
-            throw "MGCB failed with exit code $LASTEXITCODE."
-        }
-        return
+    $dotnet = Get-DotNetCommand
+    $processorSourceDirectory = Join-Path $PSScriptRoot "EmpireBitmapFontProcessor"
+    if (-not (Test-Path -LiteralPath $processorSourceDirectory -PathType Container)) {
+        throw "Empire bitmap-font processor sources were not found: $processorSourceDirectory"
     }
 
-    $dotnet = Get-Command dotnet -ErrorAction SilentlyContinue
-    if ($null -eq $dotnet) {
-        throw "MGCB was not found and the .NET SDK is unavailable. Install the .NET 8 SDK, then run the script again."
+    $processorBuildDirectory = Join-Path $TempDirectory "processor-source"
+    $processorOutputDirectory = Join-Path $TempDirectory "processor-bin"
+    Copy-Item -LiteralPath $processorSourceDirectory -Destination $processorBuildDirectory -Recurse -Force
+    New-Item -ItemType Directory -Path $processorOutputDirectory -Force | Out-Null
+
+    $projectPath = Join-Path $processorBuildDirectory "EmpireBitmapFontProcessor.csproj"
+    & $dotnet build $projectPath -c Release -o $processorOutputDirectory "-p:MonoGameVersion=$Version"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not build the Empire bitmap-font processor."
     }
 
+    $processorDll = Join-Path $processorOutputDirectory "EmpireBitmapFontProcessor.dll"
+    if (-not (Test-Path -LiteralPath $processorDll -PathType Leaf)) {
+        throw "Empire bitmap-font processor DLL was not generated: $processorDll"
+    }
+
+    return $processorDll
+}
+
+function Get-MgcbExecutable {
+    param(
+        [Parameter(Mandatory = $true)][string]$TempDirectory,
+        [Parameter(Mandatory = $true)][string]$Version
+    )
+
+    $dotnet = Get-DotNetCommand
     $toolDirectory = Join-Path $TempDirectory "mgcb-tool"
     New-Item -ItemType Directory -Path $toolDirectory -Force | Out-Null
 
-    & $dotnet.Source tool install dotnet-mgcb --tool-path $toolDirectory --version $Version
+    & $dotnet tool install dotnet-mgcb --tool-path $toolDirectory --version $Version
     if ($LASTEXITCODE -ne 0) {
         throw "Could not install dotnet-mgcb $Version."
     }
@@ -148,7 +204,18 @@ function Invoke-Mgcb {
         throw "dotnet-mgcb was installed but the mgcb executable could not be located."
     }
 
-    & $mgcbExecutable.FullName "/@:$ResponseFile" /rebuild
+    return $mgcbExecutable.FullName
+}
+
+function Invoke-Mgcb {
+    param(
+        [Parameter(Mandatory = $true)][string]$ResponseFile,
+        [Parameter(Mandatory = $true)][string]$TempDirectory,
+        [Parameter(Mandatory = $true)][string]$Version
+    )
+
+    $mgcbExecutable = Get-MgcbExecutable -TempDirectory $TempDirectory -Version $Version
+    & $mgcbExecutable "/@:$ResponseFile" /rebuild
     if ($LASTEXITCODE -ne 0) {
         throw "MGCB failed with exit code $LASTEXITCODE."
     }
@@ -186,22 +253,45 @@ New-Item -ItemType Directory -Path $tempDirectory -Force | Out-Null
 try {
     Expand-Archive -LiteralPath $zipFullPath -DestinationPath $tempDirectory -Force
 
-    $fontFile = Get-ChildItem -LiteralPath $tempDirectory -Recurse -File -Filter "Empire 7.ttf" | Select-Object -First 1
+    $fontImage = Get-ChildItem -LiteralPath $tempDirectory -Recurse -File -Filter "empire_7.png" | Select-Object -First 1
     $parametersFile = Get-ChildItem -LiteralPath $tempDirectory -Recurse -File -Filter "empire_7.txt" | Select-Object -First 1
 
-    if ($null -eq $fontFile) {
-        throw "Empire 7.ttf was not found in the supplied ZIP."
+    if ($null -eq $fontImage) {
+        throw "empire_7.png was not found in the supplied ZIP."
     }
     if ($null -eq $parametersFile) {
         throw "empire_7.txt was not found in the supplied ZIP."
     }
 
+    Add-Type -AssemblyName System.Drawing
+    $sourceImage = [System.Drawing.Image]::FromFile($fontImage.FullName)
+    try {
+        $rawParameters = Get-Content -LiteralPath $parametersFile.FullName -Raw -Encoding UTF8
+        $widthMatch = [regex]::Match($rawParameters, 'Character width:\s*(\d+)')
+        if (-not $widthMatch.Success) {
+            throw "Could not read the Empire 7 character width."
+        }
+
+        $cellWidth = [int]$widthMatch.Groups[1].Value
+        if ($cellWidth -lt 1 -or ($sourceImage.Width % $cellWidth) -ne 0) {
+            throw "Empire 7 sprite sheet width does not match its character grid."
+        }
+
+        $columns = [int]($sourceImage.Width / $cellWidth)
+    }
+    finally {
+        $sourceImage.Dispose()
+    }
+
     $buildRoot = Join-Path $tempDirectory "build"
     $fontSourceDirectory = Join-Path $buildRoot "Fonts"
     New-Item -ItemType Directory -Path $fontSourceDirectory -Force | Out-Null
-    Copy-Item -LiteralPath $fontFile.FullName -Destination (Join-Path $fontSourceDirectory "Empire 7.ttf") -Force
 
-    $regions = Get-EmpireCharacterRegions -ParametersFile $parametersFile.FullName
+    $metrics = Get-EmpireMetrics -ParametersFile $parametersFile.FullName -Columns $columns
+    $metricsPath = Join-Path $fontSourceDirectory "empire7.metrics.json"
+    $metrics | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $metricsPath -Encoding UTF8
+
+    $processorDll = Build-EmpireProcessor -TempDirectory $tempDirectory -Version $MonoGameVersion
 
     $mgcbLines = New-Object System.Collections.Generic.List[string]
     $mgcbLines.Add("/outputDir:bin/DesktopGL")
@@ -210,6 +300,7 @@ try {
     $mgcbLines.Add("/config:")
     $mgcbLines.Add("/profile:Reach")
     $mgcbLines.Add("/compress:False")
+    $mgcbLines.Add("/reference:$processorDll")
     $mgcbLines.Add("")
 
     foreach ($size in ($Sizes | Sort-Object -Unique)) {
@@ -217,16 +308,17 @@ try {
             throw "Font sizes must be positive integers. Invalid size: $size"
         }
 
-        $spriteFontName = "empire7_$size.spritefont"
-        $spriteFontPath = Join-Path $fontSourceDirectory $spriteFontName
-        New-SpriteFontXml -Size $size -Regions $regions | Set-Content -LiteralPath $spriteFontPath -Encoding UTF8
+        $scale = Get-EmpirePixelScale -RequestedSize $size
+        $bitmapName = "empire7_$size.png"
+        $bitmapPath = Join-Path $fontSourceDirectory $bitmapName
+        Resize-PngNearest -SourcePath $fontImage.FullName -DestinationPath $bitmapPath -Scale $scale
 
-        $mgcbLines.Add("#begin Fonts/$spriteFontName")
-        $mgcbLines.Add("/importer:FontDescriptionImporter")
-        $mgcbLines.Add("/processor:FontDescriptionProcessor")
-        $mgcbLines.Add("/processorParam:PremultiplyAlpha=True")
-        $mgcbLines.Add("/processorParam:TextureFormat=NoChange")
-        $mgcbLines.Add("/build:Fonts/$spriteFontName")
+        $mgcbLines.Add("#begin Fonts/$bitmapName")
+        $mgcbLines.Add("/importer:TextureImporter")
+        $mgcbLines.Add("/processor:EmpireBitmapFontProcessor")
+        $mgcbLines.Add("/processorParam:MetricsFile=empire7.metrics.json")
+        $mgcbLines.Add("/processorParam:Scale=$scale")
+        $mgcbLines.Add("/build:Fonts/$bitmapName;Fonts/empire7_$size")
         $mgcbLines.Add("")
     }
 
@@ -244,12 +336,13 @@ try {
     foreach ($size in ($Sizes | Sort-Object -Unique)) {
         $builtFont = Join-Path $buildRoot "bin/DesktopGL/Fonts/empire7_$size.xnb"
         if (-not (Test-Path -LiteralPath $builtFont -PathType Leaf)) {
-            throw "Expected XNB was not generated: $builtFont"
+            throw "Expected bitmap-font XNB was not generated: $builtFont"
         }
+
         Copy-Item -LiteralPath $builtFont -Destination (Join-Path $fontsOutputDirectory "empire7_$size.xnb") -Force
     }
 
-    Write-Host "Empire 7 XNB files installed in: $fontsOutputDirectory"
+    Write-Host "Empire 7 pixel-perfect XNB files installed in: $fontsOutputDirectory"
 
     if (-not $SkipConfigUpdate) {
         $configPath = Join-Path $ResourcesDirectory "config.json"
@@ -259,18 +352,24 @@ try {
             Copy-Item -LiteralPath $configPath -Destination $backupPath -Force
 
             $config = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
-            $properties = @("GameFont", "UIFont", "EntityNameFont", "ChatBubbleFont", "ActionMsgFont")
+            $minimumSizes = @{
+                GameFont = 16
+                UIFont = 20
+                EntityNameFont = 16
+                ChatBubbleFont = 16
+                ActionMsgFont = 16
+            }
 
-            foreach ($property in $properties) {
+            foreach ($property in $minimumSizes.Keys) {
                 $jsonProperty = $config.PSObject.Properties[$property]
                 if ($null -eq $jsonProperty) {
                     continue
                 }
 
+                $fontSize = [int]$minimumSizes[$property]
                 $current = [string]$jsonProperty.Value
-                $fontSize = if ($property -eq "UIFont") { 10 } else { 8 }
                 if ($current -match ',\s*(\d+)\s*$') {
-                    $fontSize = [int]$Matches[1]
+                    $fontSize = [Math]::Max($fontSize, [int]$Matches[1])
                 }
 
                 $nearestSize = $Sizes |
@@ -286,11 +385,11 @@ try {
         }
         else {
             Write-Warning "No config.json was found in $ResourcesDirectory. XNB files were installed, but font settings were not changed."
-            Write-Warning "Set GameFont, UIFont, EntityNameFont, ChatBubbleFont and ActionMsgFont to empire7,<size> in the client config."
+            Write-Warning "Recommended CR settings: GameFont 16, UIFont 20, EntityNameFont 16, ChatBubbleFont 16, ActionMsgFont 16."
         }
     }
 
-    Write-Host "Empire 7 migration complete. The original TTF was only used from the ZIP and was not copied into the repository."
+    Write-Host "Empire 7 bitmap migration complete. The supplied PNG/TTF remain outside the public repository."
 }
 finally {
     if (Test-Path -LiteralPath $tempDirectory) {
