@@ -6,6 +6,7 @@ using Intersect.Editor.Localization;
 using Intersect.Editor.Maps;
 using Intersect.Enums;
 using Intersect.Framework.Core.MiniGames;
+using Intersect.Framework.Core.Achievements;
 using Intersect.Framework.Core.WorldEvents.Invasions;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
@@ -783,6 +784,15 @@ internal sealed partial class PacketHandler
         if (packet.OpenEditor)
         {
             Globals.MainForm.BeginInvoke((Action)(() => Globals.MainForm.OpenProfessionEditor()));
+        }
+    }
+
+    public void HandlePacket(IPacketSender packetSender, AchievementConfigurationPacket packet)
+    {
+        AchievementConfiguration.Load(packet.ConfigurationJson);
+        if (packet.OpenEditor)
+        {
+            Globals.MainForm.BeginInvoke((Action)(() => Globals.MainForm.OpenAchievementEditor()));
         }
     }
 
