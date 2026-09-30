@@ -51,6 +51,8 @@ public partial class SelectCharacterWindow : Window
     private readonly Panel _previewContainer;
     private readonly Panel _buttonsPanel;
 
+    private int _previewRefreshFramesRemaining;
+
     public SelectCharacterWindow(Canvas parent, MainMenu mainMenu) : base(
         parent: parent,
         title: Strings.CharacterSelection.Title,
@@ -293,6 +295,16 @@ public partial class SelectCharacterWindow : Window
         _buttonDelete.IsDisabled = Globals.WaitingOnServer;
         _buttonLogout.IsDisabled = Globals.WaitingOnServer;
         _buttonChangePassword.IsDisabled = Globals.WaitingOnServer;
+
+        // Gwen can perform another layout pass after Show/PostLayout once the first
+        // character textures are ready. Re-apply the exact portrait coordinates for
+        // the first couple of visible frames so the initial character is positioned
+        // identically to characters selected with the navigation arrows.
+        if (_previewRefreshFramesRemaining > 0)
+        {
+            UpdateDisplay();
+            --_previewRefreshFramesRemaining;
+        }
     }
 
     private void UpdateDisplay()
@@ -437,6 +449,7 @@ public partial class SelectCharacterWindow : Window
         }
 
         _selectedCharacterIndex = 0;
+        _previewRefreshFramesRemaining = 2;
 
         // Show/layout the window first. Calling UpdateDisplay before base.Show()
         // let Gwen perform a later layout pass that moved the paperdoll layers back
