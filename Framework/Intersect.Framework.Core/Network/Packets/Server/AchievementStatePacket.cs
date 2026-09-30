@@ -47,10 +47,15 @@ public partial class AchievementStatePacket : IntersectPacket
     {
     }
 
-    public AchievementStatePacket(string configurationJson, AchievementProgressEntry[] progress)
+    public AchievementStatePacket(
+        string configurationJson,
+        AchievementProgressEntry[] progress,
+        bool openWindow = false
+    )
     {
         ConfigurationJson = configurationJson;
         Progress = progress;
+        OpenWindow = openWindow;
     }
 
     [Key(0)]
@@ -58,4 +63,7 @@ public partial class AchievementStatePacket : IntersectPacket
 
     [Key(1)]
     public AchievementProgressEntry[] Progress { get; set; } = [];
+
+    [Key(2)]
+    public bool OpenWindow { get; set; }
 }
