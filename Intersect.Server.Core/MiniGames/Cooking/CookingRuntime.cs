@@ -1098,6 +1098,13 @@ internal static class CookingRuntime
                 ProfessionMaximumLevelReached = professionMaximumLevelReached,
                 ProfessionExperienceAwarded = session.AwardedExperience.GetValueOrDefault(viewer.Id),
                 PeakCombo = session.PeakCombo,
+                RecipeIngredients = recipe?.Ingredients.Select(ingredient => new CookingIngredientState
+                {
+                    ItemId = ingredient.ItemId,
+                    Name = ItemDescriptor.GetName(ingredient.ItemId),
+                    Needed = ingredient.Quantity,
+                    Available = ingredient.Quantity,
+                }).ToArray() ?? [],
             },
         };
     }
@@ -1251,21 +1258,21 @@ internal static class CookingRuntime
         var actionNumber = session.StageActions.Values.Sum();
         return stage.Type switch
         {
-            CookingStageType.Chop => "Hold the mouse button and slice straight DOWN through the board.",
+            CookingStageType.Chop => "Grab the ingredient, hold the mouse button, and slice straight DOWN.",
             CookingStageType.Stir => actionNumber % 2 == 0
                 ? "Hold and draw a CLOCKWISE circle."
                 : "Hold and draw a COUNTER-CLOCKWISE circle.",
             CookingStageType.Heat => "Hold and drag RIGHT for more heat or LEFT for less. Keep the marker in green.",
-            CookingStageType.Flip => "Hold and flick UP quickly to flip the food.",
+            CookingStageType.Flip => "Grab the food and flick UP quickly to flip it.",
             CookingStageType.Season => "Hold and drag RIGHT to add seasoning or LEFT to reduce it. Aim for green.",
             CookingStageType.Knead => actionNumber % 2 == 0
-                ? "Hold and push the dough LEFT."
-                : "Hold and push the dough RIGHT.",
+                ? "Grab the dough and push it LEFT."
+                : "Grab the dough and push it RIGHT.",
             CookingStageType.Plate => session.StageTargetPermille < 350
-                ? "Drag the food to the LEFT section and release."
+                ? "Grab the food, drag it to the LEFT section, and release."
                 : session.StageTargetPermille > 650
-                    ? "Drag the food to the RIGHT section and release."
-                    : "Drag the food to the CENTER section and release.",
+                    ? "Grab the food, drag it to the RIGHT section, and release."
+                    : "Grab the food, drag it to the CENTER section, and release.",
             _ => "Cook!",
         };
     }

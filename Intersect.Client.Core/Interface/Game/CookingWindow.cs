@@ -1,7 +1,10 @@
+using Intersect.Client.Framework.Content;
+using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.MiniGames;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames.Cooking;
 using Intersect.Network.Packets.MiniGames;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
@@ -504,6 +507,18 @@ internal sealed class CookingWindow : Base
                 $"{state.RecipeName}\n{state.ProfessionName} Lv {state.ProfessionLevel}\n" +
                 $"{(state.PartnerId == Guid.Empty ? "Solo kitchen" : "Two-player kitchen")}";
 
+            var activeIngredientIndex = state.RecipeIngredients.Length == 0
+                ? -1
+                : Math.Clamp(state.CompletedActions % state.RecipeIngredients.Length, 0, state.RecipeIngredients.Length - 1);
+            _ingredients.Text = state.RecipeIngredients.Length == 0
+                ? "INGREDIENTS\nNo ingredient data."
+                : "INGREDIENTS\n" + string.Join(
+                    "\n",
+                    state.RecipeIngredients.Select((ingredient, index) =>
+                        $"{(index == activeIngredientIndex ? "> " : "  ")}{ingredient.Needed:N0} x {ingredient.Name}"
+                    )
+                );
+
             var stageNumber = Math.Min(state.StageCount, state.StageIndex + 1);
             _stage.Text = state.Complete
                 ? $"DINNER IS READY!\n{state.Quality}"
@@ -883,7 +898,7 @@ internal sealed class CookingWindow : Base
         var actionNumber = Math.Max(0, state.CompletedActions);
         return state.StageType switch
         {
-            CookingStageType.Chop => "SLICE DOWN THROUGH THE INGREDIENT",
+            CookingStageType.Chop => "GRAB THE INGREDIENT AND SLICE DOWN",
             CookingStageType.Stir => actionNumber % 2 == 0
                 ? "STIR CLOCKWISE"
                 : "STIR COUNTER-CLOCKWISE",
@@ -892,15 +907,15 @@ internal sealed class CookingWindow : Base
                 : state.MeterPermille > state.TargetPermille + state.TolerancePermille / 3
                     ? "LOWER THE HEAT"
                     : "HOLD THE HEAT STEADY",
-            CookingStageType.Flip => "FLICK THE PAN UP",
+            CookingStageType.Flip => "GRAB THE FOOD AND FLICK UP",
             CookingStageType.Season => state.MeterPermille < state.TargetPermille - state.TolerancePermille / 3
                 ? "ADD SEASONING"
                 : state.MeterPermille > state.TargetPermille + state.TolerancePermille / 3
                     ? "REMOVE SEASONING"
                     : "SEASONING IS ON TARGET",
             CookingStageType.Knead => actionNumber % 2 == 0
-                ? "KNEAD TO THE LEFT"
-                : "KNEAD TO THE RIGHT",
+                ? "GRAB THE DOUGH AND PUSH LEFT"
+                : "GRAB THE DOUGH AND PUSH RIGHT",
             CookingStageType.Plate => state.TargetPermille < 350
                 ? "DRAG FOOD TO THE LEFT"
                 : state.TargetPermille > 650
@@ -1779,7 +1794,9 @@ internal sealed class CookingInteractionPad : Base
     private bool _dragging;
     private bool _inputLocked;
     private bool _sentThisDrag;
+    private bool _ingredientGrabbed;
     private Point _lastPoint;
+    private Point _grabOffset;
     private long _dragStartedAt;
     private double _linearAccumulator;
     private double _rotationAccumulator;
@@ -1812,6 +1829,7 @@ internal sealed class CookingInteractionPad : Base
             CancelGesture();
             _inputLocked = false;
             _cursorXPermille = 500;
+            _ingredientGrabbed = false;
         }
         else if (actionChanged)
         {
@@ -1891,13 +1909,24 @@ internal sealed class CookingInteractionPad : Base
             return;
         }
 
+        var localPoint = CanvasPosToLocal(mousePosition);
+        var requiresIngredientGrab = RequiresIngredientGrab(_state.StageType);
+        var ingredientRect = ActiveIngredientRectLocal();
+
+        if (requiresIngredientGrab && !Contains(ingredientRect, localPoint))
+            return;
+
         _dragging = true;
+        _ingredientGrabbed = requiresIngredientGrab;
         _sentThisDrag = false;
         _linearAccumulator = 0;
         _rotationAccumulator = 0;
         _visualProgressPermille = 0;
         _dragStartedAt = Environment.TickCount64;
-        _lastPoint = CanvasPosToLocal(mousePosition);
+        _lastPoint = localPoint;
+        _grabOffset = _ingredientGrabbed
+            ? new Point(localPoint.X - ingredientRect.X, localPoint.Y - ingredientRect.Y)
+            : new Point(0, 0);
         _cursorXPermille = Width <= 0
             ? 500
             : Math.Clamp((int)Math.Round(_lastPoint.X * 1000d / Width), 0, 1000);
@@ -1919,6 +1948,7 @@ internal sealed class CookingInteractionPad : Base
             _enabled &&
             !_inputLocked &&
             !_sentThisDrag &&
+            _ingredientGrabbed &&
             _state?.StageType == CookingStageType.Plate)
         {
             var local = CanvasPosToLocal(mousePosition);
@@ -1938,6 +1968,7 @@ internal sealed class CookingInteractionPad : Base
         }
 
         _dragging = false;
+        _ingredientGrabbed = false;
         _sentThisDrag = false;
         _linearAccumulator = 0;
         _rotationAccumulator = 0;
@@ -2047,6 +2078,125 @@ internal sealed class CookingInteractionPad : Base
         _submit(input);
     }
 
+    private int ActiveIngredientIndex =>
+        _state?.RecipeIngredients is { Length: > 0 } ingredients
+            ? Math.Clamp(_state.CompletedActions % ingredients.Length, 0, ingredients.Length - 1)
+            : -1;
+
+    private bool TryGetActiveIngredient(
+        out CookingIngredientState ingredient,
+        out ItemDescriptor descriptor
+    )
+    {
+        ingredient = default!;
+        descriptor = default!;
+
+        var index = ActiveIngredientIndex;
+        if (_state == null || index < 0 || index >= _state.RecipeIngredients.Length)
+            return false;
+
+        ingredient = _state.RecipeIngredients[index];
+        return ItemDescriptor.TryGet(ingredient.ItemId, out descriptor);
+    }
+
+    private static bool RequiresIngredientGrab(CookingStageType type) =>
+        type is CookingStageType.Chop or
+            CookingStageType.Flip or
+            CookingStageType.Knead or
+            CookingStageType.Plate;
+
+    private static bool Contains(Rectangle rectangle, Point point) =>
+        point.X >= rectangle.X &&
+        point.Y >= rectangle.Y &&
+        point.X < rectangle.X + rectangle.Width &&
+        point.Y < rectangle.Y + rectangle.Height;
+
+    private Rectangle ActiveIngredientRectLocal()
+    {
+        int X(int value) => (int)Math.Round(value * Width / 510d);
+        int Y(int value) => (int)Math.Round(value * Height / 82d);
+        int W(int value) => Math.Max(1, (int)Math.Round(value * Width / 510d));
+        int H(int value) => Math.Max(1, (int)Math.Round(value * Height / 82d));
+
+        var design = _state?.StageType switch
+        {
+            CookingStageType.Chop => new Rectangle(X(232), Y(18), W(46), H(46)),
+            CookingStageType.Stir => new Rectangle(X(232), Y(19), W(46), H(46)),
+            CookingStageType.Heat => new Rectangle(X(232), Y(5), W(46), H(46)),
+            CookingStageType.Flip => new Rectangle(X(232), Y(31), W(46), H(38)),
+            CookingStageType.Season => new Rectangle(X(232), Y(5), W(46), H(46)),
+            CookingStageType.Knead => new Rectangle(X(226), Y(20), W(58), H(42)),
+            CookingStageType.Plate => new Rectangle(X(243), Y(25), W(40), H(32)),
+            _ => new Rectangle(X(232), Y(18), W(46), H(46)),
+        };
+
+        if (!_dragging || !_ingredientGrabbed)
+            return design;
+
+        var x = Math.Clamp(_lastPoint.X - _grabOffset.X, 0, Math.Max(0, Width - design.Width));
+        var y = Math.Clamp(_lastPoint.Y - _grabOffset.Y, 0, Math.Max(0, Height - design.Height));
+        return new Rectangle(x, y, design.Width, design.Height);
+    }
+
+    private static Rectangle FitTexture(Rectangle target, int textureWidth, int textureHeight)
+    {
+        if (textureWidth <= 0 || textureHeight <= 0)
+            return target;
+
+        var ratio = Math.Min(
+            target.Width / (double)textureWidth,
+            target.Height / (double)textureHeight
+        );
+        var width = Math.Max(1, (int)Math.Round(textureWidth * ratio));
+        var height = Math.Max(1, (int)Math.Round(textureHeight * ratio));
+        return new Rectangle(
+            target.X + (target.Width - width) / 2,
+            target.Y + (target.Height - height) / 2,
+            width,
+            height
+        );
+    }
+
+    private bool DrawActiveIngredient(
+        SkinBase skin,
+        Rectangle padBounds,
+        Color frameColor
+    )
+    {
+        if (!TryGetActiveIngredient(out _, out var descriptor))
+            return false;
+
+        var texture = GameContentManager.Current?.GetTexture(TextureType.Item, descriptor.Icon);
+        if (texture == null)
+            return false;
+
+        var local = ActiveIngredientRectLocal();
+        var target = new Rectangle(
+            padBounds.X + local.X,
+            padBounds.Y + local.Y,
+            local.Width,
+            local.Height
+        );
+        var fitted = FitTexture(target, texture.Width, texture.Height);
+
+        skin.Renderer.DrawColor = frameColor;
+        skin.Renderer.DrawFilledRect(new Rectangle(target.X - 2, target.Y - 2, target.Width + 4, 2));
+        skin.Renderer.DrawFilledRect(new Rectangle(target.X - 2, target.Y + target.Height, target.Width + 4, 2));
+        skin.Renderer.DrawFilledRect(new Rectangle(target.X - 2, target.Y - 2, 2, target.Height + 4));
+        skin.Renderer.DrawFilledRect(new Rectangle(target.X + target.Width, target.Y - 2, 2, target.Height + 4));
+
+        skin.Renderer.DrawTexturedRect(
+            texture,
+            fitted,
+            descriptor.Color,
+            0f,
+            0f,
+            1f,
+            1f
+        );
+        return true;
+    }
+
     private double AngleFromCenter(Point point) =>
         Math.Atan2(point.Y - Height / 2d, point.X - Width / 2d);
 
@@ -2060,6 +2210,7 @@ internal sealed class CookingInteractionPad : Base
     private void CancelGesture()
     {
         _dragging = false;
+        _ingredientGrabbed = false;
         _sentThisDrag = false;
         _linearAccumulator = 0;
         _rotationAccumulator = 0;
@@ -2100,27 +2251,28 @@ internal sealed class CookingInteractionPad : Base
             case CookingStageType.Chop:
             {
                 renderer.DrawColor = new Color(a: 255, r: 143, g: 91, b: 49);
-                renderer.DrawFilledRect(new Rectangle(SX(95), SY(13), SW(320), SH(56)));
+                renderer.DrawFilledRect(new Rectangle(SX(95), SY(10), SW(320), SH(62)));
+                renderer.DrawColor = new Color(a: 180, r: 225, g: 169, b: 92);
+                renderer.DrawFilledRect(new Rectangle(SX(103), SY(16), SW(304), SH(3)));
 
-                var lanes = Math.Clamp(_state.RequiredActions, 1, 8);
-                for (var lane = 0; lane < lanes; ++lane)
+                DrawActiveIngredient(skin, bounds, _ingredientGrabbed ? pale : gold);
+
+                var ingredient = ActiveIngredientRectLocal();
+                for (var cut = 1; cut <= 3; ++cut)
                 {
-                    var x = 112 + (lane + 1) * 286 / (lanes + 1);
-                    renderer.DrawColor = lane < _state.CompletedActions
+                    var x = bounds.X + ingredient.X + ingredient.Width * cut / 4;
+                    renderer.DrawColor = cut <= Math.Min(3, _state.CompletedActions)
                         ? green
-                        : lane == Math.Min(_state.CompletedActions, lanes - 1)
-                            ? gold
-                            : muted;
-                    renderer.DrawFilledRect(new Rectangle(SX(x), SY(20), SW(3), SH(42)));
+                        : new Color(a: 205, r: 244, g: 226, b: 178);
+                    renderer.DrawFilledRect(
+                        new Rectangle(
+                            x,
+                            bounds.Y + ingredient.Y + SH(5),
+                            Math.Max(1, SW(2)),
+                            Math.Max(1, ingredient.Height - SH(10))
+                        )
+                    );
                 }
-
-                if (_dragging)
-                {
-                    renderer.DrawColor = pale;
-                    var h = Math.Max(3, (int)Math.Round(38 * _visualProgressPermille / 1000d));
-                    renderer.DrawFilledRect(new Rectangle(SX(250), SY(20), SW(8), SH(h)));
-                }
-
                 break;
             }
 
@@ -2128,8 +2280,15 @@ internal sealed class CookingInteractionPad : Base
             {
                 var cx = SX(255);
                 var cy = SY(41);
-                var radiusX = Math.Max(8, SW(88));
-                var radiusY = Math.Max(8, SH(30));
+                var radiusX = Math.Max(8, SW(92));
+                var radiusY = Math.Max(8, SH(31));
+
+                renderer.DrawColor = new Color(a: 255, r: 102, g: 69, b: 45);
+                renderer.DrawFilledRect(new Rectangle(SX(165), SY(15), SW(180), SH(52)));
+                renderer.DrawColor = new Color(a: 255, r: 58, g: 42, b: 31);
+                renderer.DrawFilledRect(new Rectangle(SX(176), SY(21), SW(158), SH(40)));
+
+                DrawActiveIngredient(skin, bounds, gold);
 
                 for (var dot = 0; dot < 16; ++dot)
                 {
@@ -2160,13 +2319,17 @@ internal sealed class CookingInteractionPad : Base
             }
 
             case CookingStageType.Heat:
-            case CookingStageType.Season:
             {
-                var railX = SX(65);
-                var railY = SY(35);
-                var railW = SW(380);
-                var railH = SH(13);
+                renderer.DrawColor = new Color(a: 255, r: 69, g: 62, b: 55);
+                renderer.DrawFilledRect(new Rectangle(SX(188), SY(5), SW(134), SH(48)));
+                renderer.DrawColor = new Color(a: 255, r: 31, g: 29, b: 27);
+                renderer.DrawFilledRect(new Rectangle(SX(199), SY(11), SW(112), SH(35)));
+                DrawActiveIngredient(skin, bounds, gold);
 
+                var railX = SX(65);
+                var railY = SY(61);
+                var railW = SW(380);
+                var railH = SH(10);
                 renderer.DrawColor = muted;
                 renderer.DrawFilledRect(new Rectangle(railX, railY, railW, railH));
 
@@ -2174,70 +2337,85 @@ internal sealed class CookingInteractionPad : Base
                 var toleranceW = Math.Max(SW(10), (int)Math.Round(railW * _state.TolerancePermille / 1000d));
                 renderer.DrawColor = green;
                 renderer.DrawFilledRect(
-                    new Rectangle(targetX - toleranceW / 2, railY + SH(2), toleranceW, Math.Max(1, railH - SH(4)))
+                    new Rectangle(targetX - toleranceW / 2, railY + SH(1), toleranceW, Math.Max(1, railH - SH(2)))
                 );
 
                 var knobX = railX + (int)Math.Round(railW * _state.MeterPermille / 1000d);
                 renderer.DrawColor = pale;
-                renderer.DrawFilledRect(new Rectangle(knobX - SW(4), SY(25), SW(8), SH(32)));
+                renderer.DrawFilledRect(new Rectangle(knobX - SW(4), SY(55), SW(8), SH(22)));
                 break;
             }
 
             case CookingStageType.Flip:
             {
                 renderer.DrawColor = new Color(a: 255, r: 82, g: 72, b: 61);
-                renderer.DrawFilledRect(new Rectangle(SX(145), SY(58), SW(220), SH(10)));
+                renderer.DrawFilledRect(new Rectangle(SX(145), SY(62), SW(220), SH(8)));
+                renderer.DrawColor = new Color(a: 255, r: 48, g: 44, b: 39);
+                renderer.DrawFilledRect(new Rectangle(SX(174), SY(54), SW(162), SH(11)));
+
+                DrawActiveIngredient(skin, bounds, _ingredientGrabbed ? pale : gold);
 
                 renderer.DrawColor = gold;
-                for (var step = 0; step < 5; ++step)
+                for (var step = 0; step < 4; ++step)
                 {
-                    var y = 52 - step * 9;
-                    renderer.DrawFilledRect(new Rectangle(SX(250 - step * 3), SY(y), SW(12 + step * 6), SH(4)));
+                    var y = 48 - step * 10;
+                    renderer.DrawFilledRect(new Rectangle(SX(250), SY(y), SW(9), SH(4)));
                 }
+                break;
+            }
 
-                if (_dragging)
-                {
-                    var lift = (int)Math.Round(30 * _visualProgressPermille / 1000d);
-                    renderer.DrawColor = pale;
-                    renderer.DrawFilledRect(new Rectangle(SX(224), SY(49 - lift), SW(62), SH(10)));
-                }
+            case CookingStageType.Season:
+            {
+                renderer.DrawColor = new Color(a: 255, r: 203, g: 194, b: 172);
+                renderer.DrawFilledRect(new Rectangle(SX(194), SY(5), SW(122), SH(48)));
+                renderer.DrawColor = new Color(a: 255, r: 62, g: 68, b: 52);
+                renderer.DrawFilledRect(new Rectangle(SX(207), SY(12), SW(96), SH(33)));
+                DrawActiveIngredient(skin, bounds, gold);
+
+                var railX = SX(65);
+                var railY = SY(61);
+                var railW = SW(380);
+                var railH = SH(10);
+                renderer.DrawColor = muted;
+                renderer.DrawFilledRect(new Rectangle(railX, railY, railW, railH));
+
+                var targetX = railX + (int)Math.Round(railW * _state.TargetPermille / 1000d);
+                var toleranceW = Math.Max(SW(10), (int)Math.Round(railW * _state.TolerancePermille / 1000d));
+                renderer.DrawColor = green;
+                renderer.DrawFilledRect(
+                    new Rectangle(targetX - toleranceW / 2, railY + SH(1), toleranceW, Math.Max(1, railH - SH(2)))
+                );
+                var knobX = railX + (int)Math.Round(railW * _state.MeterPermille / 1000d);
+                renderer.DrawColor = pale;
+                renderer.DrawFilledRect(new Rectangle(knobX - SW(4), SY(55), SW(8), SH(22)));
                 break;
             }
 
             case CookingStageType.Knead:
             {
-                renderer.DrawColor = new Color(a: 255, r: 214, g: 179, b: 127);
-                renderer.DrawFilledRect(new Rectangle(SX(205), SY(25), SW(100), SH(35)));
+                renderer.DrawColor = new Color(a: 255, r: 159, g: 108, b: 62);
+                renderer.DrawFilledRect(new Rectangle(SX(130), SY(14), SW(250), SH(55)));
+                DrawActiveIngredient(skin, bounds, _ingredientGrabbed ? pale : gold);
 
                 var left = _state.CompletedActions % 2 == 0;
-                renderer.DrawColor = gold;
-                renderer.DrawFilledRect(
-                    left
-                        ? new Rectangle(SX(80), SY(36), SW(100), SH(10))
-                        : new Rectangle(SX(330), SY(36), SW(100), SH(10))
-                );
-                renderer.DrawColor = muted;
-                renderer.DrawFilledRect(
-                    left
-                        ? new Rectangle(SX(330), SY(36), SW(100), SH(10))
-                        : new Rectangle(SX(80), SY(36), SW(100), SH(10))
-                );
+                renderer.DrawColor = left ? gold : muted;
+                renderer.DrawFilledRect(new Rectangle(SX(55), SY(35), SW(70), SH(10)));
+                renderer.DrawColor = left ? muted : gold;
+                renderer.DrawFilledRect(new Rectangle(SX(385), SY(35), SW(70), SH(10)));
                 break;
             }
 
             case CookingStageType.Plate:
             {
                 var zoneW = 150;
+                var target = CookingStageRules.PlateZoneFromTarget(_state.TargetPermille);
                 for (var zone = 0; zone < 3; ++zone)
                 {
-                    var target = CookingStageRules.PlateZoneFromTarget(_state.TargetPermille);
                     renderer.DrawColor = zone == target ? green : muted;
-                    renderer.DrawFilledRect(new Rectangle(SX(25 + zone * 155), SY(17), SW(zoneW), SH(48)));
+                    renderer.DrawFilledRect(new Rectangle(SX(25 + zone * 155), SY(12), SW(zoneW), SH(58)));
                 }
 
-                var tokenX = 25 + (int)Math.Round(440 * _cursorXPermille / 1000d);
-                renderer.DrawColor = pale;
-                renderer.DrawFilledRect(new Rectangle(SX(tokenX), SY(33), SW(24), SH(16)));
+                DrawActiveIngredient(skin, bounds, _ingredientGrabbed ? pale : gold);
                 break;
             }
         }
@@ -2246,7 +2424,7 @@ internal sealed class CookingInteractionPad : Base
         {
             renderer.DrawColor = gold;
             var width = Math.Max(SW(2), (int)Math.Round(SW(470) * _visualProgressPermille / 1000d));
-            renderer.DrawFilledRect(new Rectangle(SX(20), SY(74), width, SH(3)));
+            renderer.DrawFilledRect(new Rectangle(SX(20), SY(76), width, SH(3)));
         }
     }
 }
