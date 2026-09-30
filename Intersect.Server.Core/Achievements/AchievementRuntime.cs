@@ -237,12 +237,13 @@ internal static class AchievementRuntime
             .ToArray();
     }
 
-    internal static void SendState(Player player)
+    internal static void SendState(Player player, bool openWindow = false)
     {
         player.SendPacket(
             new AchievementStatePacket(
                 AchievementConfigurationRuntime.Json,
-                BuildState(player)
+                BuildState(player),
+                openWindow
             )
         );
     }
