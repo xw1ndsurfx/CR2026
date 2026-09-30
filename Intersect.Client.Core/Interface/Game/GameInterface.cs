@@ -172,6 +172,7 @@ public partial class GameInterface : MutableInterface
         _minimapHud = new MinimapHud(GameCanvas, ToggleWorldMap);
         _minimapHud.SendToBack();
         PacketSender.SendRequestDailyRewardState(autoOpen: true);
+        PacketSender.SendRequestAchievementState(openWindow: false);
     }
 
     //Chatbox
