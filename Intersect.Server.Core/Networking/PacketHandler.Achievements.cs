@@ -49,7 +49,7 @@ internal sealed partial class PacketHandler
         if (client.Entity is not { } player)
             return;
 
-        AchievementRuntime.SendState(player);
+        AchievementRuntime.SendState(player, packet.OpenWindow);
     }
 
     public void HandlePacket(Client client, ClaimAchievementRewardPacket packet)
