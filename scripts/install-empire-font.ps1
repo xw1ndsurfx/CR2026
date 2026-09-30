@@ -5,11 +5,11 @@ param(
 
     [string]$ResourcesDirectory = "",
 
-    [int]$GameSize = 16,
-    [int]$UiSize = 16,
-    [int]$EntityNameSize = 16,
-    [int]$ChatBubbleSize = 16,
-    [int]$ActionMsgSize = 16,
+    [int]$GameSize = 10,
+    [int]$UiSize = 10,
+    [int]$EntityNameSize = 10,
+    [int]$ChatBubbleSize = 10,
+    [int]$ActionMsgSize = 10,
 
     [switch]$SkipConfigUpdate
 )
@@ -118,10 +118,19 @@ try {
                 $globalFontProperty.Value = "empire7"
             }
 
+            $globalFontSizeProperty = $config.PSObject.Properties["GlobalFontSize"]
+            if ($null -eq $globalFontSizeProperty) {
+                $config | Add-Member -NotePropertyName "GlobalFontSize" -NotePropertyValue 10
+            }
+            else {
+                $globalFontSizeProperty.Value = 10
+            }
+
             $config | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $configPath -Encoding UTF8
 
             Write-Host "Updated font settings in: $configPath"
             Write-Host "Global font override: empire7"
+            Write-Host "Global font size: 10"
             Write-Host "Config backup: $backupPath"
         }
         else {

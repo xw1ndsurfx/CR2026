@@ -462,6 +462,22 @@ internal partial class MonoRenderer : GameRenderer
         return _contentManager;
     }
 
+    private static int ResolveGlobalFontSize(IFont? font, int requestedSize)
+    {
+        var configuredFamily = ClientConfiguration.Instance.GlobalFontFamily;
+        var configuredSize = ClientConfiguration.Instance.GlobalFontSize;
+
+        if (configuredSize > 0 &&
+            !string.IsNullOrWhiteSpace(configuredFamily) &&
+            font != null &&
+            string.Equals(font.Name, configuredFamily, StringComparison.OrdinalIgnoreCase))
+        {
+            return configuredSize;
+        }
+
+        return requestedSize;
+    }
+
     public override void DrawString(
         string text,
         IFont? font,
@@ -480,6 +496,7 @@ internal partial class MonoRenderer : GameRenderer
             return;
         }
 
+        size = ResolveGlobalFontSize(font, size);
         var renderer = platformFont.GetRendererFor(size);
         var renderScale = fontScale * (renderer is SpriteFontRenderer spriteFontRenderer
             ? spriteFontRenderer.RenderScale
@@ -580,6 +597,7 @@ internal partial class MonoRenderer : GameRenderer
             return;
         }
 
+        size = ResolveGlobalFontSize(font, size);
         var renderer = platformFont.GetRendererFor(size);
         var renderScale = fontScale * (renderer is SpriteFontRenderer spriteFontRenderer
             ? spriteFontRenderer.RenderScale
@@ -1048,6 +1066,7 @@ internal partial class MonoRenderer : GameRenderer
             return default;
         }
 
+        size = ResolveGlobalFontSize(font, size);
         var renderer = platformFont.GetRendererFor(size);
         var renderScale = fontScale * (renderer is SpriteFontRenderer spriteFontRenderer
             ? spriteFontRenderer.RenderScale

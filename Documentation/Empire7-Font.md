@@ -87,3 +87,10 @@ The installer writes:
 ```
 
 to the client `config.json`. The Corps Royaux client also defaults this setting to `empire7`, so older configs that do not yet contain the property still use the global override when the bitmap assets are present.
+
+
+## Global size 10
+
+The Corps Royaux client now uses `GlobalFontSize: 10` together with `GlobalFontFamily: "empire7"`.
+
+This forces Empire 7 to render at logical size 10 everywhere in the client, including controls and layouts that previously requested larger or smaller font sizes. Set `GlobalFontSize` to `0` to restore per-control sizing.

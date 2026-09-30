@@ -124,6 +124,7 @@ public sealed partial class ClientConfiguration : IConfiguration<ClientConfigura
         TypewriterSounds = [..TypewriterSounds?.Distinct() ?? new List<string>()];
         UIFont = string.IsNullOrWhiteSpace(UIFont) ? DefaultUIFont : UIFont.Trim();
         GlobalFontFamily = string.IsNullOrWhiteSpace(GlobalFontFamily) ? null : GlobalFontFamily.Trim();
+        GlobalFontSize = MathHelper.Clamp(GlobalFontSize, 0, 64);
     }
 
     #endregion
@@ -170,6 +171,12 @@ public sealed partial class ClientConfiguration : IConfiguration<ClientConfigura
     /// resolves to this family while preserving the requested font size.
     /// </summary>
     public string? GlobalFontFamily { get; set; } = "empire7";
+
+    /// <summary>
+    /// Optional client-wide font size override. Set to 0 to preserve per-control sizes.
+    /// Corps Royaux uses 10 for the Empire 7 global UI.
+    /// </summary>
+    public int GlobalFontSize { get; set; } = 10;
 
     /// <summary>
     /// Number of lines to save for chat scrollback
