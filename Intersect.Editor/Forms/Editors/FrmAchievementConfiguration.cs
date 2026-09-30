@@ -8,6 +8,7 @@ using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.Professions;
+using Intersect.GameObjects;
 using DrawingColor = System.Drawing.Color;
 
 namespace Intersect.Editor.Forms.Editors;
@@ -348,7 +349,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
             _rewardCurrency,
             ItemDescriptor.Lookup.Values
                 .OfType<ItemDescriptor>()
-                .Where(x => x.ItemType == Intersect.Enums.ItemType.Currency)
+                .Where(x => x.ItemType == ItemType.Currency)
                 .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(x => new IdChoice(x.Id, x.Name))
         );
