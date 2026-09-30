@@ -1098,6 +1098,14 @@ internal static class CookingRuntime
                 ProfessionMaximumLevelReached = professionMaximumLevelReached,
                 ProfessionExperienceAwarded = session.AwardedExperience.GetValueOrDefault(viewer.Id),
                 PeakCombo = session.PeakCombo,
+                RecipeIngredients = recipe?.Ingredients.Select(ingredient => new CookingIngredientState
+                {
+                    ItemId = ingredient.ItemId,
+                    Name = ItemDescriptor.GetName(ingredient.ItemId),
+                    Needed = ingredient.Quantity,
+                    Available = ingredient.Quantity,
+                }).ToArray() ?? [],
+                StageIngredientItemIds = StageIngredientIds(recipe, stage),
             },
         };
     }
@@ -1217,13 +1225,13 @@ internal static class CookingRuntime
 
     private static string StagePrompt(CookingStageType type) => type switch
     {
-        CookingStageType.Chop => "CHOP! Hit the sweet spot before the vegetables escape.",
-        CookingStageType.Stir => "STIR! Keep the royal sauce moving.",
-        CookingStageType.Heat => "HEAT! Do not turn dinner into charcoal.",
-        CookingStageType.Flip => "FLIP! Catch it before it meets the floor.",
-        CookingStageType.Season => "SEASON! The king asked for flavour, not a salt mine.",
-        CookingStageType.Knead => "KNEAD! Show that dough who is in charge.",
-        _ => "PLATE! Make it look expensive.",
+        CookingStageType.Chop => "SLICE! Drag the knife downward through the ingredient.",
+        CookingStageType.Stir => "STIR! Draw a full circle with the mouse in the requested direction.",
+        CookingStageType.Heat => "HEAT! Drag left or right to control the stove.",
+        CookingStageType.Flip => "FLIP! Make a quick upward flick with the pan.",
+        CookingStageType.Season => "SEASON! Drag left or right to adjust the amount.",
+        CookingStageType.Knead => "KNEAD! Push the dough left and right as requested.",
+        _ => "PLATE! Drag the food into the highlighted part of the plate.",
     };
 
     private static string CookingStatus(
@@ -1246,26 +1254,58 @@ internal static class CookingRuntime
                     : $"{player}: CHAOS during {type}! Something is smoking.{mishapText}";
     }
 
+    private static Guid[] StageIngredientIds(
+        CookingRecipeDefinition? recipe,
+        CookingStageDefinition? stage
+    )
+    {
+        if (recipe == null || stage == null)
+            return [];
+
+        var recipeIds = recipe.Ingredients.Select(ingredient => ingredient.ItemId).ToHashSet();
+        var configured = (stage.IngredientItemIds ?? [])
+            .Where(recipeIds.Contains)
+            .Distinct()
+            .ToArray();
+
+        // Backwards compatibility for recipes created before per-stage assignments.
+        return configured.Length > 0
+            ? configured
+            : recipe.Ingredients.Select(ingredient => ingredient.ItemId).ToArray();
+    }
+
+    private static string ActiveStageIngredientName(Session session, CookingStageDefinition stage)
+    {
+        var ids = StageIngredientIds(session.Recipe, stage);
+        if (ids.Length == 0)
+            return "the ingredient";
+
+        var actionNumber = session.StageActions.Values.Sum();
+        var index = Math.Clamp(actionNumber, 0, ids.Length - 1);
+        return ItemDescriptor.GetName(ids[index]);
+    }
+
     private static string ActionHint(Session session, CookingStageDefinition stage)
     {
         var actionNumber = session.StageActions.Values.Sum();
+        var ingredient = ActiveStageIngredientName(session, stage);
         return stage.Type switch
         {
-            CookingStageType.Chop => "Hit CHOP when the knife marker crosses the green zone.",
+            CookingStageType.Chop => $"Grab {ingredient}, hold the mouse button, and slice straight DOWN.",
             CookingStageType.Stir => actionNumber % 2 == 0
-                ? "Stir CLOCKWISE now."
-                : "Stir COUNTER-CLOCKWISE now.",
-            CookingStageType.Heat => "Use MORE HEAT / LESS HEAT to hold the pan in the green zone.",
-            CookingStageType.Flip => "Hit FLIP at the green catch zone.",
-            CookingStageType.Season => "Add or remove seasoning until the shaker reaches the green zone.",
+                ? "Hold and draw a CLOCKWISE circle."
+                : "Hold and draw a COUNTER-CLOCKWISE circle.",
+            CookingStageType.Heat => "Hold and drag RIGHT for more heat or LEFT for less. Keep the marker in green.",
+            CookingStageType.Flip => $"Grab {ingredient} and flick UP quickly to flip it.",
+            CookingStageType.Season => "Hold and drag RIGHT to add seasoning or LEFT to reduce it. Aim for green.",
             CookingStageType.Knead => actionNumber % 2 == 0
-                ? "PRESS LEFT."
-                : "PRESS RIGHT.",
+                ? $"Grab {ingredient} and push it LEFT."
+                : $"Grab {ingredient} and push it RIGHT.",
             CookingStageType.Plate => session.StageTargetPermille < 350
-                ? "Place it on the LEFT side of the plate."
+                ? $"Grab {ingredient}, drag it to the LEFT section, and release."
                 : session.StageTargetPermille > 650
-                    ? "Place it on the RIGHT side of the plate."
-                    : "Place it in the CENTER of the plate.",
+                    ? $"Grab {ingredient}, drag it to the RIGHT section, and release."
+                    : $"Grab {ingredient}, drag it to the CENTER section, and release.",
             _ => "Cook!",
         };
     }
