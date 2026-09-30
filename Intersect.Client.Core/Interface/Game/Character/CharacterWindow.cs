@@ -71,6 +71,8 @@ public partial class CharacterWindow
 
     //Extra Buffs
     Button _detailsButton;
+
+    Button _achievementsButton;
     
     ClassDescriptor mPlayer;
 
@@ -160,7 +162,37 @@ public partial class CharacterWindow
         _detailsButton.HoverEnter += UpdateExtraBuffTooltip; // Update Tooltip on hover.
         UpdateExtraBuffTooltip(null, null); // Initial tooltip update.
 
+        _achievementsButton = new Button(mCharacterWindow, nameof(_achievementsButton))
+        {
+            Text = "Achievements",
+        };
+        _achievementsButton.Clicked += (_, _) =>
+            PacketSender.SendRequestAchievementState(openWindow: true);
+
         mCharacterWindow.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
+
+        // CharacterWindow JSON only knows about the historical Details button.
+        // Keep both actions on the same bottom row and position the new button
+        // after JSON layout has been applied so it is always visible.
+        const int actionButtonWidth = 120;
+        const int actionButtonGap = 8;
+        var actionButtonHeight = Math.Max(24, _detailsButton.Height);
+        var actionButtonsWidth = actionButtonWidth * 2 + actionButtonGap;
+        var actionButtonsX = Math.Max(8, (mCharacterWindow.Width - actionButtonsWidth) / 2);
+        var actionButtonsY = _detailsButton.Y;
+
+        _detailsButton.SetBounds(
+            actionButtonsX,
+            actionButtonsY,
+            actionButtonWidth,
+            actionButtonHeight
+        );
+        _achievementsButton.SetBounds(
+            actionButtonsX + actionButtonWidth + actionButtonGap,
+            actionButtonsY,
+            actionButtonWidth,
+            actionButtonHeight
+        );
     }
 
     //Update Button Event Handlers
