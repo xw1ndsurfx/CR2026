@@ -61,7 +61,7 @@ internal sealed class LogiklikNewsWindow : Window
         {
             AutoSizeToContents = false,
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-            FontSize = 14,
+            FontSize = 16,
             Text = "Corps Royaux News",
             TextColorOverride = Color.White,
             TextAlign = Pos.Left | Pos.CenterV,
@@ -72,7 +72,7 @@ internal sealed class LogiklikNewsWindow : Window
         {
             AutoSizeToContents = false,
             Font = Skin.DefaultFont,
-            FontSize = 9,
+            FontSize = 10,
             Text = "Powered by Logiklik News • Category: Corps Royaux",
             TextColorOverride = new Color(a: 255, r: 210, g: 210, b: 210),
             TextAlign = Pos.Left | Pos.CenterV,
@@ -83,7 +83,7 @@ internal sealed class LogiklikNewsWindow : Window
         {
             Text = "Refresh",
             Font = Skin.DefaultFont,
-            FontSize = 9,
+            FontSize = 10,
         };
         _refreshButton.SetBounds(708, 22, 82, 26);
         _refreshButton.Clicked += RefreshButton_Clicked;
@@ -92,7 +92,7 @@ internal sealed class LogiklikNewsWindow : Window
         {
             AutoSizeToContents = false,
             Font = Skin.DefaultFont,
-            FontSize = 9,
+            FontSize = 10,
             TextColorOverride = new Color(a: 255, r: 190, g: 198, b: 205),
             TextAlign = Pos.Left | Pos.CenterV,
         };
@@ -110,7 +110,7 @@ internal sealed class LogiklikNewsWindow : Window
         {
             AutoSizeToContents = false,
             Font = Skin.DefaultFont,
-            FontSize = 13,
+            FontSize = 14,
             TextColorOverride = Color.White,
             TextAlign = Pos.Left | Pos.CenterV,
         };
@@ -120,7 +120,7 @@ internal sealed class LogiklikNewsWindow : Window
         {
             AutoSizeToContents = false,
             Font = Skin.DefaultFont,
-            FontSize = 9,
+            FontSize = 10,
             TextColorOverride = new Color(a: 255, r: 225, g: 190, b: 120),
             TextAlign = Pos.Left | Pos.CenterV,
         };
@@ -138,7 +138,7 @@ internal sealed class LogiklikNewsWindow : Window
         {
             AutoSizeToContents = false,
             Font = Skin.DefaultFont,
-            FontSize = 9,
+            FontSize = 10,
             TextColorOverride = new Color(a: 255, r: 160, g: 174, b: 186),
             TextAlign = Pos.Center,
             IsHidden = true,
@@ -158,7 +158,7 @@ internal sealed class LogiklikNewsWindow : Window
         _detailTemplate = new Label(null)
         {
             Font = Skin.DefaultFont,
-            FontSize = 10,
+            FontSize = 11,
             TextColor = new Color(a: 255, r: 225, g: 230, b: 234),
             Width = 438,
         };
@@ -254,7 +254,7 @@ internal sealed class LogiklikNewsWindow : Window
         {
             var date = item.PublishedAt.HasValue
                 ? item.PublishedAt.Value.ToLocalTime().ToString("yyyy-MM-dd")
-                : "Corps Royaux";
+                : string.Empty;
 
             var title = item.Title.Length > 34 ? item.Title[..31] + "..." : item.Title;
             var row = new Button(_newsList, "NewsRow" + rowIndex)
@@ -263,8 +263,8 @@ internal sealed class LogiklikNewsWindow : Window
                 Height = 46,
                 Margin = new Margin(0, 0, 0, 5),
                 Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
-                FontSize = 9,
-                Text = $"{date}  {title}",
+                FontSize = 10,
+                Text = string.IsNullOrEmpty(date) ? title : $"{date}  {title}",
                 TextColorOverride = Color.White,
                 UserData = item,
             };
@@ -544,21 +544,43 @@ internal sealed class LogiklikNewsWindow : Window
         var items = new List<NewsItem>();
         var options = RegexOptions.IgnoreCase | RegexOptions.Singleline;
 
-        // Logiklik News renders the public feed as HTML inside its JSON response.
-        // The markup has evolved over time, so do not depend on a single card class.
-        // Split primarily on article headings and then inspect each heading's block.
         var headings = Regex.Matches(
             html,
             @"<h(?<level>[2-4])\b[^>]*>(?<value>.*?)</h\k<level>\s*>",
             options
         );
 
+        // Logiklik News cards often render their image before the h2/h3 title.
+        // Keep the nearest card opening tag so that media is not lost when splitting by headings.
+        var cardStarts = Regex.Matches(
+            html,
+            @"<(?<tag>article|div)\b[^>]*class\s*=\s*[""'][^""']*(?:annonce|publication|news|card)[^""']*[""'][^>]*>",
+            options
+        ).Cast<Match>().ToList();
+
         for (var index = 0; index < headings.Count; ++index)
         {
             var heading = headings[index];
-            var start = heading.Index;
-            var end = index + 1 < headings.Count ? headings[index + 1].Index : html.Length;
-            var block = html[start..end];
+
+            var cardStart = cardStarts.LastOrDefault(match =>
+                match.Index <= heading.Index &&
+                heading.Index - match.Index <= 6000
+            );
+
+            var start = cardStart?.Index ?? heading.Index;
+            var nextCardStart = cardStarts.FirstOrDefault(match => match.Index > heading.Index);
+            var nextHeadingIndex = index + 1 < headings.Count ? headings[index + 1].Index : html.Length;
+            var end = nextCardStart?.Index ?? nextHeadingIndex;
+            if (end <= start)
+            {
+                end = nextHeadingIndex;
+            }
+
+            var block = html[start..Math.Min(end, html.Length)];
+            var headingEndInBlock = Math.Max(0, heading.Index + heading.Length - start);
+            var contentAfterHeading = headingEndInBlock < block.Length
+                ? block[headingEndInBlock..]
+                : string.Empty;
 
             var title = CleanHtml(heading.Groups["value"].Value);
             if (string.IsNullOrWhiteSpace(title))
@@ -566,10 +588,10 @@ internal sealed class LogiklikNewsWindow : Window
                 continue;
             }
 
-            var summaryMatch = Regex.Match(block, @"<p\b[^>]*>(?<value>.*?)</p\s*>", options);
+            var summaryMatch = Regex.Match(contentAfterHeading, @"<p\b[^>]*>(?<value>.*?)</p\s*>", options);
             var summary = summaryMatch.Success
                 ? CleanHtml(summaryMatch.Groups["value"].Value)
-                : CleanHtml(Regex.Replace(block, @"<h[2-4]\b[^>]*>.*?</h[2-4]\s*>", string.Empty, options));
+                : CleanHtml(contentAfterHeading);
 
             if (string.IsNullOrWhiteSpace(summary) ||
                 string.Equals(summary, title, StringComparison.OrdinalIgnoreCase))
@@ -577,15 +599,7 @@ internal sealed class LogiklikNewsWindow : Window
                 summary = "No description.";
             }
 
-            var imageUrls = new List<string>();
-            foreach (Match imageMatch in Regex.Matches(
-                         block,
-                         @"<img\b[^>]+(?:src|data-src)\s*=\s*[""'](?<src>[^""']+)[""']",
-                         options
-                     ))
-            {
-                AddImageUrl(imageUrls, imageMatch.Groups["src"].Value);
-            }
+            var imageUrls = ExtractImageUrlsFromHtml(block);
 
             var linkMatch = Regex.Match(
                 block,
@@ -623,58 +637,54 @@ internal sealed class LogiklikNewsWindow : Window
             items.Add(new NewsItem(title, summary, link, publishedAt, imageUrls));
         }
 
-        // Some themes do not use h2-h4 headings. Fall back to card containers with
-        // common Logiklik News/publication class names and extract a title from them.
-        if (items.Count == 0)
-        {
-            var cards = Regex.Matches(
-                html,
-                @"<(?<tag>article|div)\b[^>]*class\s*=\s*[""'][^""']*(?:annonce|publication|news|card)[^""']*[""'][^>]*>(?<value>.*?)</\k<tag>\s*>",
-                options
-            );
-
-            foreach (Match card in cards)
-            {
-                var block = card.Groups["value"].Value;
-                var titleMatch = Regex.Match(
-                    block,
-                    @"<(?:h1|h2|h3|h4|strong)\b[^>]*>(?<value>.*?)</(?:h1|h2|h3|h4|strong)\s*>",
-                    options
-                );
-                if (!titleMatch.Success)
-                {
-                    continue;
-                }
-
-                var title = CleanHtml(titleMatch.Groups["value"].Value);
-                if (string.IsNullOrWhiteSpace(title))
-                {
-                    continue;
-                }
-
-                var summaryMatch = Regex.Match(block, @"<p\b[^>]*>(?<value>.*?)</p\s*>", options);
-                var summary = summaryMatch.Success ? CleanHtml(summaryMatch.Groups["value"].Value) : "No description.";
-
-                var imageUrls = new List<string>();
-                foreach (Match imageMatch in Regex.Matches(
-                             block,
-                             @"<img\b[^>]+(?:src|data-src)\s*=\s*[""'](?<src>[^""']+)[""']",
-                             options
-                         ))
-                {
-                    AddImageUrl(imageUrls, imageMatch.Groups["src"].Value);
-                }
-
-                items.Add(new NewsItem(title, summary, string.Empty, null, imageUrls));
-            }
-        }
-
         return items
             .GroupBy(item => item.Title, StringComparer.OrdinalIgnoreCase)
             .Select(group => group.First())
             .OrderByDescending(item => item.PublishedAt ?? DateTimeOffset.MinValue)
             .Take(40)
             .ToList();
+    }
+
+    private static List<string> ExtractImageUrlsFromHtml(string html)
+    {
+        var urls = new List<string>();
+        var options = RegexOptions.IgnoreCase | RegexOptions.Singleline;
+
+        foreach (Match match in Regex.Matches(
+                     html,
+                     @"<(?:img|source)\b[^>]+(?:src|data-src|data-lazy-src|data-original|poster)\s*=\s*[""'](?<src>[^""']+)[""']",
+                     options
+                 ))
+        {
+            AddImageUrl(urls, match.Groups["src"].Value);
+        }
+
+        foreach (Match match in Regex.Matches(
+                     html,
+                     @"<(?:img|source)\b[^>]+(?:srcset|data-srcset)\s*=\s*[""'](?<srcset>[^""']+)[""']",
+                     options
+                 ))
+        {
+            foreach (var candidate in match.Groups["srcset"].Value.Split(','))
+            {
+                var url = candidate.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+                if (!string.IsNullOrWhiteSpace(url))
+                {
+                    AddImageUrl(urls, url);
+                }
+            }
+        }
+
+        foreach (Match match in Regex.Matches(
+                     html,
+                     @"background-image\s*:\s*url\(\s*[""']?(?<src>[^)""']+)[""']?\s*\)",
+                     options
+                 ))
+        {
+            AddImageUrl(urls, match.Groups["src"].Value);
+        }
+
+        return urls;
     }
 
     private static bool MatchesCrFilter(JToken token)
@@ -749,19 +759,9 @@ internal sealed class LogiklikNewsWindow : Window
 
     private static List<string> ExtractImageUrls(JToken token, string rawHtml)
     {
-        var urls = new List<string>();
-
-        if (!string.IsNullOrWhiteSpace(rawHtml))
-        {
-            foreach (Match match in Regex.Matches(
-                         rawHtml,
-                         @"<img[^>]+src\s*=\s*[""'](?<src>[^""']+)[""']",
-                         RegexOptions.IgnoreCase
-                     ))
-            {
-                AddImageUrl(urls, match.Groups["src"].Value);
-            }
-        }
+        var urls = string.IsNullOrWhiteSpace(rawHtml)
+            ? new List<string>()
+            : ExtractImageUrlsFromHtml(rawHtml);
 
         AddImagePropertyUrls(
             token,
@@ -891,7 +891,23 @@ internal sealed class LogiklikNewsWindow : Window
         text = Regex.Replace(text, @"</p\s*>", "\n\n", RegexOptions.IgnoreCase);
         text = Regex.Replace(text, @"<[^>]+>", string.Empty);
         text = WebUtility.HtmlDecode(text);
+
+        // The in-game bitmap font does not contain emoji and some typographic punctuation.
+        // Normalize them before rendering so Gwen does not display replacement question marks.
+        text = text
+            .Replace('\u00A0', ' ')
+            .Replace('\u2013', '-')
+            .Replace('\u2014', '-')
+            .Replace('\u2018', '\'')
+            .Replace('\u2019', '\'')
+            .Replace('\u201C', '"')
+            .Replace('\u201D', '"')
+            .Replace("\u2026", "...");
+
+        text = Regex.Replace(text, @"[\uD800-\uDBFF][\uDC00-\uDFFF]", string.Empty);
+        text = Regex.Replace(text, @"[\u2600-\u27BF\uFE0E\uFE0F\u200D]", string.Empty);
         text = Regex.Replace(text, @"[ \t]+", " ");
+        text = Regex.Replace(text, @" *\n *", "\n");
         text = Regex.Replace(text, @"\n{3,}", "\n\n");
         return text.Trim();
     }
