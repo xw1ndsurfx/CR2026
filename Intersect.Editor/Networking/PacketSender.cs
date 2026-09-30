@@ -404,6 +404,16 @@ public static partial class PacketSender
         Network.SendPacket(new SaveProfessionConfigurationPacket(configurationJson));
     }
 
+    public static void SendRequestAchievementConfiguration(bool openEditor)
+    {
+        Network.SendPacket(new RequestAchievementConfigurationPacket(openEditor));
+    }
+
+    public static void SendSaveAchievementConfiguration(string configurationJson)
+    {
+        Network.SendPacket(new SaveAchievementConfigurationPacket(configurationJson));
+    }
+
     public static void SendRequestInvasionConfiguration()
     {
         Network.SendPacket(new RequestInvasionConfigurationPacket());

@@ -115,6 +115,8 @@ public partial class FrmMain : Form
         AddLogiCoinShopEditorMenu();
         AddProfessionEditorMenu();
         PacketSender.SendRequestProfessionConfiguration(openEditor: false);
+        AddAchievementEditorMenu();
+        PacketSender.SendRequestAchievementConfiguration(openEditor: false);
         AddWorldEventsEditorMenu();
         Show();
 
@@ -268,6 +270,29 @@ public partial class FrmMain : Form
     public void OpenProfessionEditor()
     {
         var editor = new FrmProfessionConfiguration();
+        editor.Show();
+        editor.BringToFront();
+    }
+
+    private void AddAchievementEditorMenu()
+    {
+        if (contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>()
+            .Any(item => item.Name == "achievementEditorToolStripMenuItem"))
+            return;
+
+        var achievements = new ToolStripMenuItem
+        {
+            Name = "achievementEditorToolStripMenuItem",
+            Text = "Achievements...",
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
+        };
+        achievements.Click += (_, _) => PacketSender.SendRequestAchievementConfiguration(openEditor: true);
+        contentEditorsToolStripMenuItem.DropDownItems.Add(achievements);
+    }
+
+    public void OpenAchievementEditor()
+    {
+        var editor = new FrmAchievementConfiguration();
         editor.Show();
         editor.BringToFront();
     }

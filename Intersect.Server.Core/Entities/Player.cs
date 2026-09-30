@@ -23,6 +23,7 @@ using Intersect.GameObjects;
 using Intersect.Network;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Core.MapInstancing;
+using Intersect.Server.Achievements;
 using Intersect.Server.Database;
 using Intersect.Server.Database.Logging.Entities;
 using Intersect.Server.Database.PlayerData;
@@ -1294,6 +1295,11 @@ public partial class Player : Entity
         }
 
         LeaderboardTitleRuntime.MarkRankingDirty();
+        AchievementRuntime.SetAbsoluteProgress(
+            this,
+            Intersect.Framework.Core.Achievements.AchievementObjectiveType.PlayerLevel,
+            Level
+        );
     }
 
     /// <summary>
@@ -1510,6 +1516,12 @@ public partial class Player : Entity
                         {
                             partyMember.GiveExperience(partyExperience);
                             partyMember.UpdateQuestKillTasks(entity);
+                            AchievementRuntime.AddProgress(
+                                partyMember,
+                                Intersect.Framework.Core.Achievements.AchievementObjectiveType.NpcKills,
+                                1,
+                                descriptor.Id
+                            );
                         }
 
                         if (partyEvent != null)
@@ -1527,6 +1539,12 @@ public partial class Player : Entity
                     {
                         GiveExperience(descriptor.Experience);
                         UpdateQuestKillTasks(entity);
+                        AchievementRuntime.AddProgress(
+                            this,
+                            Intersect.Framework.Core.Achievements.AchievementObjectiveType.NpcKills,
+                            1,
+                            descriptor.Id
+                        );
                     }
 
                     if (playerEvent != null)
@@ -1543,6 +1561,12 @@ public partial class Player : Entity
                     if (descriptor != null)
                     {
                         ProfessionRuntime.AwardHarvest(this, descriptor.Id);
+                        AchievementRuntime.AddProgress(
+                            this,
+                            Intersect.Framework.Core.Achievements.AchievementObjectiveType.ResourceHarvests,
+                            1,
+                            descriptor.Id
+                        );
                     }
 
                     if (descriptor?.Event != null)
@@ -3018,6 +3042,13 @@ public partial class Player : Entity
 
         if (success)
         {
+            AchievementRuntime.AddProgress(
+                this,
+                Intersect.Framework.Core.Achievements.AchievementObjectiveType.ItemsObtained,
+                item.Quantity,
+                item.ItemId
+            );
+
             // Start common events related to inventory changes.
             EnqueueStartCommonEvent(item.Descriptor?.GetEventTrigger(ItemEventTrigger.OnPickup));
             StartCommonEventsWithTrigger(CommonEventTrigger.InventoryChanged);
@@ -6569,6 +6600,7 @@ public partial class Player : Entity
             if (questProgress != null)
             {
                 //Complete Quest
+                var wasAlreadyCompleted = questProgress.Completed;
                 questProgress.Completed = true;
                 questProgress.TaskId = Guid.Empty;
                 questProgress.TaskProgress = -1;
@@ -6581,6 +6613,16 @@ public partial class Player : Entity
                     );
                 }
                 PacketSender.SendQuestsProgress(this);
+
+                if (!wasAlreadyCompleted)
+                {
+                    AchievementRuntime.AddProgress(
+                        this,
+                        Intersect.Framework.Core.Achievements.AchievementObjectiveType.QuestCompletions,
+                        1,
+                        questId
+                    );
+                }
             }
         }
         UnequipInvalidItems();
