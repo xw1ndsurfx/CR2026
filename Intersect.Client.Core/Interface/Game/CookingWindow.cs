@@ -26,6 +26,8 @@ internal sealed class CookingWindow : Base
     private readonly Label _interactionTitle;
     private readonly Label _interactionHelp;
     private readonly CookingInteractionPad _interactionPad;
+    private readonly Label _feedbackBanner;
+    private readonly Label _feedbackCombo;
     private readonly Label _professionXp;
     private readonly Label _recipeHeader;
     private readonly Label _stationHeader;
@@ -68,6 +70,7 @@ internal sealed class CookingWindow : Base
     private long _feedbackUntil;
     private long _comicUntil;
     private int _feedbackScore;
+    private int _feedbackComboValue;
     private CookingStageType _feedbackStage;
     private CookingComicEventType _comicEventType;
     private string _comicEventText = string.Empty;
@@ -141,6 +144,16 @@ internal sealed class CookingWindow : Base
             KeyboardInputEnabled = false,
         };
         _interactionPad.SetBounds(430, 392, 510, 82);
+
+        _feedbackBanner = MakeLabel("CookingFeedbackBanner", 510, 320, 350, 54, 28);
+        _feedbackBanner.TextAlign = Pos.Center;
+        _feedbackBanner.TextColorOverride = new Color(255, 236, 210, 117);
+        _feedbackBanner.IsHidden = true;
+
+        _feedbackCombo = MakeLabel("CookingFeedbackCombo", 560, 372, 250, 28, 14);
+        _feedbackCombo.TextAlign = Pos.Center;
+        _feedbackCombo.TextColorOverride = new Color(255, 226, 214, 187);
+        _feedbackCombo.IsHidden = true;
 
         _professionXp = MakeLabel("CookingProfessionXp", 55, 626, 700, 28, 11);
         _professionXp.TextColorOverride = new Color(255, 236, 210, 117);
@@ -462,6 +475,10 @@ internal sealed class CookingWindow : Base
             RefreshResultPanel(state);
             _resultPanel.BringToFront();
         }
+        else
+        {
+            _resultPanel.CelebrationStartedAt = 0;
+        }
 
         _previousRecipe.IsHidden = true;
         _nextRecipe.IsHidden = true;
@@ -756,6 +773,10 @@ internal sealed class CookingWindow : Base
     private void RefreshResultPanel(CookingSessionState state)
     {
         _resultPanel.Quality = state.Quality;
+        if (_resultPanel.CelebrationStartedAt <= 0)
+            _resultPanel.CelebrationStartedAt = Environment.TickCount64;
+
+        var revealAge = Environment.TickCount64 - _resultPanel.CelebrationStartedAt;
 
         _resultQuality.Text = state.Quality.ToString().ToUpperInvariant();
         _resultQuality.TextColorOverride = state.Quality switch
@@ -785,8 +806,18 @@ internal sealed class CookingWindow : Base
         _resultStats.Text =
             $"Peak Combo x{state.PeakCombo}   |   Mishaps {state.Mishaps}   |   Your actions {actionCount}";
 
-        _resultAgain.IsHidden = !state.IsHost;
-        _resultAgain.IsDisabled = !state.IsHost;
+        _resultTitle.IsHidden = false;
+        _resultQuality.IsHidden = revealAge < 250;
+        _resultScore.IsHidden = revealAge < 500;
+        _resultReward.IsHidden = revealAge < 720;
+        _resultXp.IsHidden = revealAge < 900;
+        _resultStats.IsHidden = revealAge < 1_020;
+
+        var controlsReady = revealAge >= 1_150;
+        _resultAgain.IsHidden = !state.IsHost || !controlsReady;
+        _resultAgain.IsDisabled = !state.IsHost || !controlsReady;
+        _resultLeave.IsHidden = !controlsReady;
+        _resultLeave.IsDisabled = !controlsReady;
 
         if (state.IsHost)
             _resultTitle.Text = "DINNER IS READY!";
@@ -895,8 +926,39 @@ internal sealed class CookingWindow : Base
 
         _lastActionSequence = state.ActionSequence;
         _feedbackScore = state.LastActionScore;
+        _feedbackComboValue = state.Combo;
         _feedbackStage = state.StageType;
-        _feedbackUntil = Environment.TickCount64 + (_feedbackScore >= 90 || _feedbackScore < 40 ? 1_300 : 750);
+        _feedbackUntil = Environment.TickCount64 + (
+            _feedbackScore >= 90 || _feedbackScore < 40
+                ? 1_450
+                : _feedbackScore >= 70
+                    ? 1_100
+                    : 900
+        );
+
+        _feedbackBanner.Text = _feedbackScore switch
+        {
+            >= 90 => $"PERFECT!  {_feedbackScore}",
+            >= 70 => $"GREAT!  {_feedbackScore}",
+            >= 40 => $"GOOD  {_feedbackScore}",
+            _ => $"MISS  {_feedbackScore}",
+        };
+        _feedbackBanner.TextColorOverride = _feedbackScore switch
+        {
+            >= 90 => new Color(255, 250, 216, 104),
+            >= 70 => new Color(255, 111, 207, 123),
+            >= 40 => new Color(255, 226, 190, 118),
+            _ => new Color(255, 224, 105, 83),
+        };
+
+        _feedbackCombo.Text = _feedbackScore < 40
+            ? "COMBO BROKEN"
+            : _feedbackComboValue >= 2
+                ? $"COMBO x{_feedbackComboValue}"
+                : string.Empty;
+        _feedbackCombo.TextColorOverride = _feedbackScore < 40
+            ? new Color(255, 224, 105, 83)
+            : new Color(255, 236, 210, 117);
 
         PlayCookingSound(state.ActionSound);
         if (_feedbackScore >= 90)
@@ -1156,6 +1218,7 @@ internal sealed class CookingWindow : Base
         DrawProfessionXpBar(Fill);
         DrawActionFeedback(Fill);
         DrawComicEvent(Fill);
+        UpdateActionFeedbackOverlay();
         base.Render(skin);
     }
 
@@ -1561,25 +1624,66 @@ internal sealed class CookingWindow : Base
         if (remaining <= 0)
             return;
 
+        var age = Math.Max(0, 1_450 - remaining);
+        var accent = _feedbackScore switch
+        {
+            >= 90 => new Color(a: 210, r: 245, g: 218, b: 123),
+            >= 70 => new Color(a: 190, r: 111, g: 207, b: 123),
+            >= 40 => new Color(a: 175, r: 226, g: 190, b: 118),
+            _ => new Color(a: 205, r: 224, g: 105, b: 83),
+        };
+
+        var plaquePulse = _feedbackScore >= 90
+            ? 8 + (int)((remaining / 70) % 8)
+            : _feedbackScore < 40
+                ? ((int)(Environment.TickCount64 / 45) % 2 == 0 ? 7 : -7)
+                : 2;
+        fill(
+            505 - Math.Abs(plaquePulse),
+            315,
+            360 + Math.Abs(plaquePulse) * 2,
+            88,
+            new Color(a: 75, r: accent.R, g: accent.G, b: accent.B)
+        );
+
         if (_feedbackScore >= 90)
         {
             var pulse = 8 + (int)((remaining / 70) % 8);
             fill(492 - pulse, 60 - pulse, 456 + pulse * 2, 444 + pulse * 2, new Color(a: 28, r: 236, g: 208, b: 113));
-            for (var spark = 0; spark < 8; ++spark)
+            for (var spark = 0; spark < 16; ++spark)
             {
-                var x = 540 + ((spark * 61 + (int)(remaining / 12)) % 390);
-                var y = 110 + ((spark * 47 + (int)(remaining / 17)) % 340);
-                fill(x, y, 7, 7, new Color(a: 230, r: 245, g: 218, b: 123));
+                var travel = (int)(age / 18);
+                var x = 535 + ((spark * 47 + travel * (spark % 3 + 1)) % 395);
+                var y = 100 + ((spark * 59 + travel * (spark % 2 + 1)) % 350);
+                var size = 4 + spark % 3 * 2;
+                fill(x, y, size, size, new Color(a: 235, r: 245, g: 218, b: 123));
             }
-            return;
         }
-
-        if (_feedbackScore < 40)
+        else if (_feedbackScore >= 70)
         {
-            // Cartoony smoke/splatter: intentionally simple geometric FX so no new art asset is required.
+            for (var spark = 0; spark < 9; ++spark)
+            {
+                var x = 565 + ((spark * 57 + (int)(age / 16)) % 320);
+                var y = 170 + ((spark * 43 + (int)(age / 22)) % 225);
+                fill(x, y, 5, 5, new Color(a: 205, r: 111, g: 207, b: 123));
+            }
+        }
+        else if (_feedbackScore >= 40)
+        {
+            var width = 120 + (int)((remaining / 18) % 70);
+            fill(685 - width / 2, 405, width, 4, new Color(a: 190, r: 226, g: 190, b: 118));
+        }
+        else
+        {
+            var shake = ((int)(Environment.TickCount64 / 45) % 2 == 0) ? -8 : 8;
+            fill(400 + shake, 86, 565, 5, new Color(a: 170, r: 175, g: 64, b: 48));
+            fill(400 + shake, 306, 565, 5, new Color(a: 170, r: 175, g: 64, b: 48));
+            fill(400 + shake, 86, 5, 225, new Color(a: 170, r: 175, g: 64, b: 48));
+            fill(960 + shake, 86, 5, 225, new Color(a: 170, r: 175, g: 64, b: 48));
+
             for (var cloud = 0; cloud < 7; ++cloud)
             {
-                var drift = (int)((1_300 - Math.Max(0, remaining)) / 22);
+                var drift = (int)(age / 22);
                 var x = 610 + cloud * 40 + (cloud % 2 == 0 ? drift : -drift / 2);
                 var y = 405 - cloud * 9 - drift;
                 var size = 24 + (cloud % 3) * 8;
@@ -1588,9 +1692,77 @@ internal sealed class CookingWindow : Base
 
             if (_feedbackStage is CookingStageType.Flip or CookingStageType.Chop)
             {
-                var fly = (int)((1_300 - Math.Max(0, remaining)) / 8);
+                var fly = (int)(age / 8);
                 fill(575 + fly, 390 - Math.Min(95, fly / 2), 38, 18, new Color(a: 245, r: 190, g: 120, b: 67));
             }
+        }
+
+        if (_feedbackScore >= 40 && _feedbackComboValue >= 2)
+        {
+            var visiblePips = Math.Min(8, _feedbackComboValue);
+            for (var pip = 0; pip < visiblePips; ++pip)
+            {
+                fill(
+                    635 + pip * 18,
+                    402,
+                    12,
+                    5,
+                    pip == visiblePips - 1
+                        ? accent
+                        : new Color(a: 175, r: 191, g: 143, b: 71)
+                );
+            }
+        }
+    }
+
+    private void UpdateActionFeedbackOverlay()
+    {
+        var remaining = _feedbackUntil - Environment.TickCount64;
+        if (remaining <= 0)
+        {
+            _feedbackBanner.IsHidden = true;
+            _feedbackCombo.IsHidden = true;
+            return;
+        }
+
+        var scaleX = Width / 1024f;
+        var scaleY = Height / 720f;
+        var scale = Math.Min(scaleX, scaleY);
+        var offsetX = (int)((Width - 1024 * scale) / 2f);
+        var offsetY = (int)((Height - 720 * scale) / 2f);
+
+        var shake = _feedbackScore < 40
+            ? ((int)(Environment.TickCount64 / 45) % 2 == 0 ? -7 : 7)
+            : 0;
+        var rise = _feedbackScore >= 90
+            ? (int)Math.Round(6 * Math.Sin(Environment.TickCount64 / 80d))
+            : 0;
+
+        _feedbackBanner.IsHidden = false;
+        _feedbackBanner.SetBounds(
+            offsetX + (int)((510 + shake) * scale),
+            offsetY + (int)((320 + rise) * scale),
+            Math.Max(1, (int)(350 * scale)),
+            Math.Max(1, (int)(54 * scale))
+        );
+        _feedbackBanner.FontSize = Math.Max(
+            14,
+            (int)Math.Round((_feedbackScore >= 90 ? 32 : 28) * scale)
+        );
+        _feedbackBanner.BringToFront();
+
+        var showCombo = !string.IsNullOrWhiteSpace(_feedbackCombo.Text);
+        _feedbackCombo.IsHidden = !showCombo;
+        if (showCombo)
+        {
+            _feedbackCombo.SetBounds(
+                offsetX + (int)((560 + shake) * scale),
+                offsetY + (int)(372 * scale),
+                Math.Max(1, (int)(250 * scale)),
+                Math.Max(1, (int)(28 * scale))
+            );
+            _feedbackCombo.FontSize = Math.Max(9, (int)Math.Round(14 * scale));
+            _feedbackCombo.BringToFront();
         }
     }
 
@@ -1722,6 +1894,8 @@ internal sealed class CookingResultPanel(Base parent) : Base(parent, "CookingRes
 {
     public CookingQuality Quality { get; set; }
 
+    public long CelebrationStartedAt { get; set; }
+
     protected override void Render(SkinBase skin)
     {
         var renderer = skin.Renderer;
@@ -1748,12 +1922,32 @@ internal sealed class CookingResultPanel(Base parent) : Base(parent, "CookingRes
         int SW(int value) => Math.Max(1, (int)Math.Round(value * bounds.Width / 520d));
         int SH(int value) => Math.Max(1, (int)Math.Round(value * bounds.Height / 410d));
 
+        var celebrationAge = CelebrationStartedAt <= 0
+            ? 2_000L
+            : Math.Max(0, Environment.TickCount64 - CelebrationStartedAt);
+        var plateDrop = celebrationAge < 520
+            ? (int)Math.Round((1d - celebrationAge / 520d) * 58d)
+            : 0;
+        var plateBounce = celebrationAge is >= 520 and < 760
+            ? (int)Math.Round(Math.Sin((celebrationAge - 520) / 240d * Math.PI) * -10d)
+            : 0;
+        var plateOffsetY = plateDrop + plateBounce;
+
+        if (celebrationAge < 900)
+        {
+            var ray = Math.Clamp((int)(celebrationAge / 9), 0, 90);
+            renderer.DrawColor = new Color(a: 125, r: accent.R, g: accent.G, b: accent.B);
+            renderer.DrawFilledRect(new Rectangle(SX(255 - ray), SY(137), SW(ray), SH(3)));
+            renderer.DrawFilledRect(new Rectangle(SX(265), SY(137), SW(ray), SH(3)));
+            renderer.DrawFilledRect(new Rectangle(SX(258), SY(137 - ray / 2), SW(3), SH(ray / 2)));
+        }
+
         // Decorative plate / meal behind the text, deliberately built from primitives so it
         // matches the rest of the current mini-game without requiring external art.
         renderer.DrawColor = new Color(255, 216, 209, 183);
-        renderer.DrawFilledRect(new Rectangle(SX(190), SY(119), SW(140), SH(46)));
+        renderer.DrawFilledRect(new Rectangle(SX(190), SY(119 + plateOffsetY), SW(140), SH(46)));
         renderer.DrawColor = new Color(255, 57, 63, 43);
-        renderer.DrawFilledRect(new Rectangle(SX(211), SY(129), SW(98), SH(26)));
+        renderer.DrawFilledRect(new Rectangle(SX(211), SY(129 + plateOffsetY), SW(98), SH(26)));
 
         // Quality pips act like a simple result rating.
         var pips = Quality switch
@@ -1774,7 +1968,7 @@ internal sealed class CookingResultPanel(Base parent) : Base(parent, "CookingRes
 
         // Perfect/Great results get a restrained celebratory sparkle field; Burnt gets smoke.
         var now = Environment.TickCount64;
-        if (Quality is CookingQuality.Perfect or CookingQuality.Great)
+        if ((Quality is CookingQuality.Perfect or CookingQuality.Great) && celebrationAge >= 500)
         {
             for (var spark = 0; spark < 10; ++spark)
             {
