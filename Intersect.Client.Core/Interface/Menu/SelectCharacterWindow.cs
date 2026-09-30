@@ -51,7 +51,6 @@ public partial class SelectCharacterWindow : Window
     private readonly Panel _previewContainer;
     private readonly Panel _buttonsPanel;
 
-    private int _previewRefreshFramesRemaining;
 
     public SelectCharacterWindow(Canvas parent, MainMenu mainMenu) : base(
         parent: parent,
@@ -296,15 +295,11 @@ public partial class SelectCharacterWindow : Window
         _buttonLogout.IsDisabled = Globals.WaitingOnServer;
         _buttonChangePassword.IsDisabled = Globals.WaitingOnServer;
 
-        // Gwen can perform another layout pass after Show/PostLayout once the first
-        // character textures are ready. Re-apply the exact portrait coordinates for
-        // the first couple of visible frames so the initial character is positioned
-        // identically to characters selected with the navigation arrows.
-        if (_previewRefreshFramesRemaining > 0)
-        {
-            UpdateDisplay();
-            --_previewRefreshFramesRemaining;
-        }
+        // Texture dimensions can become valid a few frames after the selection window
+        // first appears. Keep only the layer geometry in sync every visible frame;
+        // this avoids reloading/resetting the portrait while still correcting the
+        // initial position as soon as the real sprite dimensions are available.
+        RefreshRenderLayerGeometry();
     }
 
     private void UpdateDisplay()
@@ -398,30 +393,48 @@ public partial class SelectCharacterWindow : Window
                 }
             }
 
-            var layerTex = paperdollContainer.Texture;
-            if (layerTex == default)
+            if (paperdollContainer.Texture == default)
             {
                 paperdollContainer.Hide();
                 continue;
             }
 
-            var imgWidth = layerTex.Width;
-            var imgHeight = layerTex.Height;
-            var textureWidth = imgWidth / Options.Instance.Sprites.NormalFrames;
-            var textureHeight = imgHeight / Options.Instance.Sprites.Directions;
+            paperdollContainer.Show();
+        }
+
+        RefreshRenderLayerGeometry();
+    }
+
+    private void RefreshRenderLayerGeometry()
+    {
+        if (_renderLayers == default)
+        {
+            return;
+        }
+
+        const int portraitCenterYOffset = -38;
+
+        foreach (var paperdollContainer in _renderLayers)
+        {
+            var layerTex = paperdollContainer.Texture;
+            if (layerTex == default)
+            {
+                continue;
+            }
+
+            var textureWidth = layerTex.Width / Options.Instance.Sprites.NormalFrames;
+            var textureHeight = layerTex.Height / Options.Instance.Sprites.Directions;
+            if (textureWidth <= 0 || textureHeight <= 0)
+            {
+                continue;
+            }
 
             paperdollContainer.SetTextureRect(0, 0, textureWidth, textureHeight);
             _ = paperdollContainer.SetSize(textureWidth, textureHeight);
 
-            var centerX = (_preview.Width / 2) - (paperdollContainer.Width / 2);
-            // The portrait background's visible medallion sits above the geometric
-            // center of the image panel. Lift every sprite/paperdoll layer together
-            // so the character is actually centered inside the circle.
-            const int portraitCenterYOffset = -38;
-            var centerY = (_preview.Height / 2) - (paperdollContainer.Height / 2) + portraitCenterYOffset;
+            var centerX = (_preview.Width - textureWidth) / 2;
+            var centerY = (_preview.Height - textureHeight) / 2 + portraitCenterYOffset;
             paperdollContainer.SetPosition(centerX, centerY);
-
-            paperdollContainer.Show();
         }
     }
 
@@ -449,7 +462,6 @@ public partial class SelectCharacterWindow : Window
         }
 
         _selectedCharacterIndex = 0;
-        _previewRefreshFramesRemaining = 2;
 
         // Show/layout the window first. Calling UpdateDisplay before base.Show()
         // let Gwen perform a later layout pass that moved the paperdoll layers back
