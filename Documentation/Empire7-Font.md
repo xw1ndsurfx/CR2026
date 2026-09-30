@@ -1,36 +1,43 @@
 # Empire 7 font for Corps Royaux
 
-Corps Royaux can use **Empire 7 by Ivano Palmentieri / somepx** without storing the licensed font files in the public source repository.
+Corps Royaux can use **Empire 7 by Ivano Palmentieri / somepx** without storing the licensed font binaries in the public CR2026 repository.
 
 Font page and license terms: https://somepx.itch.io/pixel-font-empire
 
-## Why the v2 installer uses the PNG instead of the TTF
+## Current workflow
 
-Empire 7 is a true pixel font. Its author recommends 12/24 pt and explicitly recommends disabling anti-aliasing. MonoGame's normal `FontDescriptionProcessor` rasterizes TTF fonts through its font pipeline, which can bake smoothed edge pixels into the generated SpriteFont atlas. Point sampling at runtime cannot remove smoothing that is already present in the atlas.
+Use the external font-conversion tool to convert Empire 7 to MonoGame/XNB first. The converted package should contain files named like:
 
-The Corps Royaux installer therefore uses the **supplied `empire_7.png` sprite sheet and spacing data** as the source of truth. It scales that bitmap only by whole-number nearest-neighbour factors and then packages the exact pixels into MonoGame SpriteFont XNB files through a small custom content processor.
+- `Empire 7_8_Regular.xnb`
+- `Empire 7_9_Regular.xnb`
+- ...
+- `Empire 7_26_Regular.xnb`
 
-This preserves the appearance of the original Empire 7 artwork much more closely than rasterizing `Empire 7.ttf` at arbitrary sizes.
+The CR installer then imports those ready-made XNB files and renames them to the naming convention expected by Intersect:
 
-## Install / rebuild
+- `Empire 7_16_Regular.xnb` -> `resources/fonts/empire7_16.xnb`
+- `Empire 7_20_Regular.xnb` -> `resources/fonts/empire7_20.xnb`
+
+Intersect discovers font families from the part of the XNB filename before the final size separator, so these names register the family as `empire7`.
+
+## Install
 
 From the CR2026 repository root:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\install-empire-font.ps1 -ZipPath "C:\path\to\empire_7_v2.zip" -ResourcesDirectory "C:\path\to\CURRENT CLIENT & EDITOR\resources"
+powershell -ExecutionPolicy Bypass -File .\scripts\install-empire-font.ps1 -ZipPath "C:\path\to\Empire 7.zip" -ResourcesDirectory "C:\path\to\CURRENT CLIENT & EDITOR\resources"
 ```
 
-The installer:
+The script:
 
-1. extracts the purchased ZIP to a temporary directory;
-2. reads `empire_7.png` and `empire_7.txt`;
-3. builds the local `EmpireBitmapFontProcessor` against the same MonoGame version as CR;
-4. creates nearest-neighbour bitmap variants for the normal Intersect font slots;
-5. builds `empire7_*.xnb` without TTF rasterization;
-6. copies the XNB files to `resources/fonts`;
-7. updates the five CR font settings and creates a timestamped backup of `config.json`.
+1. extracts the converted ZIP to a temporary folder;
+2. finds all `Empire 7_<size>_Regular.xnb` files;
+3. copies them to `resources/fonts` as `empire7_<size>.xnb`;
+4. overwrites the older locally generated Empire 7 XNB files if present;
+5. updates the five client font settings;
+6. creates a timestamped backup of `config.json`.
 
-Recommended defaults used by the installer are:
+Recommended defaults are:
 
 - `GameFont`: `empire7,16`
 - `UIFont`: `empire7,20`
@@ -38,24 +45,14 @@ Recommended defaults used by the installer are:
 - `ChatBubbleFont`: `empire7,16`
 - `ActionMsgFont`: `empire7,16`
 
-If a current setting is already larger than the recommendation, the installer keeps the larger size and picks the nearest generated slot.
+If the config already has an explicit `empire7,<size>` value and that size exists in the converted pack, the installer preserves it.
 
-## Pixel scaling
+## Why this replaces the custom MGCB pipeline
 
-The generated slots use whole-number scaling only:
+The previous experimental branch attempted to build a custom MonoGame bitmap-font content processor. That added unnecessary build dependencies and failed on the local machine before the processor could be built.
 
-- 8-14 -> 1x source pixels
-- 16-22 -> 2x source pixels
-- 24-26 -> 3x source pixels
-
-This keeps glyph edges aligned to the pixel grid. CR's renderer already uses `SamplerState.PointClamp`, so the bitmap atlas stays crisp when drawn.
-
-## Re-running after the old TTF-based install
-
-Run the installer again with the same purchased ZIP and the correct client `resources` directory. The new XNB files use the same `empire7_<size>.xnb` names and overwrite the previous TTF-generated files.
-
-Restart the client after the installer finishes.
+The external converter already produces ready-to-load XNB SpriteFonts, so CR does not need to compile the licensed font itself. Importing and renaming the converted XNB files is simpler and avoids changing the game renderer or content pipeline.
 
 ## Licensing
 
-The public repository contains only the migration/build tooling. It does **not** contain `Empire 7.ttf`, `empire_7.png`, or generated Empire 7 XNB assets. Those files are created locally from the user's licensed ZIP.
+The public repository contains only the installer/documentation. It does **not** contain the original TTF, PNG, or converted Empire 7 XNB files. Those remain local.
