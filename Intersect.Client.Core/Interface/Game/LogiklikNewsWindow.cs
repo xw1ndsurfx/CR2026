@@ -536,28 +536,31 @@ internal sealed class LogiklikNewsWindow : Window
 
     private static List<NewsItem> ParseHtmlFeed(string html)
     {
+        if (string.IsNullOrWhiteSpace(html))
+        {
+            return [];
+        }
+
         var items = new List<NewsItem>();
         var options = RegexOptions.IgnoreCase | RegexOptions.Singleline;
 
-        var cardStarts = Regex.Matches(
+        // Logiklik News renders the public feed as HTML inside its JSON response.
+        // The markup has evolved over time, so do not depend on a single card class.
+        // Split primarily on article headings and then inspect each heading's block.
+        var headings = Regex.Matches(
             html,
-            @"<(?<tag>article|div)\b[^>]*class\s*=\s*[""'][^""']*(?<![\w-])annonce(?![\w-])[^""']*[""'][^>]*>",
+            @"<h(?<level>[2-4])\b[^>]*>(?<value>.*?)</h\k<level>\s*>",
             options
         );
 
-        for (var index = 0; index < cardStarts.Count; ++index)
+        for (var index = 0; index < headings.Count; ++index)
         {
-            var start = cardStarts[index].Index;
-            var end = index + 1 < cardStarts.Count ? cardStarts[index + 1].Index : html.Length;
+            var heading = headings[index];
+            var start = heading.Index;
+            var end = index + 1 < headings.Count ? headings[index + 1].Index : html.Length;
             var block = html[start..end];
 
-            var titleMatch = Regex.Match(block, @"<h3\b[^>]*>(?<value>.*?)</h3\s*>", options);
-            if (!titleMatch.Success)
-            {
-                continue;
-            }
-
-            var title = CleanHtml(titleMatch.Groups["value"].Value);
+            var title = CleanHtml(heading.Groups["value"].Value);
             if (string.IsNullOrWhiteSpace(title))
             {
                 continue;
@@ -566,12 +569,18 @@ internal sealed class LogiklikNewsWindow : Window
             var summaryMatch = Regex.Match(block, @"<p\b[^>]*>(?<value>.*?)</p\s*>", options);
             var summary = summaryMatch.Success
                 ? CleanHtml(summaryMatch.Groups["value"].Value)
-                : "No description.";
+                : CleanHtml(Regex.Replace(block, @"<h[2-4]\b[^>]*>.*?</h[2-4]\s*>", string.Empty, options));
+
+            if (string.IsNullOrWhiteSpace(summary) ||
+                string.Equals(summary, title, StringComparison.OrdinalIgnoreCase))
+            {
+                summary = "No description.";
+            }
 
             var imageUrls = new List<string>();
             foreach (Match imageMatch in Regex.Matches(
                          block,
-                         @"<img\b[^>]+src\s*=\s*[""'](?<src>[^""']+)[""']",
+                         @"<img\b[^>]+(?:src|data-src)\s*=\s*[""'](?<src>[^""']+)[""']",
                          options
                      ))
             {
@@ -593,16 +602,76 @@ internal sealed class LogiklikNewsWindow : Window
                 @"<time\b[^>]*datetime\s*=\s*[""'](?<date>[^""']+)[""']",
                 options
             );
-            if (dateMatch.Success &&
-                DateTimeOffset.TryParse(WebUtility.HtmlDecode(dateMatch.Groups["date"].Value), out var parsedDate))
+            if (!dateMatch.Success)
             {
-                publishedAt = parsedDate;
+                dateMatch = Regex.Match(
+                    block,
+                    @"<(?:span|div|p)\b[^>]*class\s*=\s*[""'][^""']*(?:date|published)[^""']*[""'][^>]*>(?<date>.*?)</(?:span|div|p)\s*>",
+                    options
+                );
+            }
+
+            if (dateMatch.Success)
+            {
+                var rawDate = CleanHtml(dateMatch.Groups["date"].Value);
+                if (DateTimeOffset.TryParse(rawDate, out var parsedDate))
+                {
+                    publishedAt = parsedDate;
+                }
             }
 
             items.Add(new NewsItem(title, summary, link, publishedAt, imageUrls));
         }
 
+        // Some themes do not use h2-h4 headings. Fall back to card containers with
+        // common Logiklik News/publication class names and extract a title from them.
+        if (items.Count == 0)
+        {
+            var cards = Regex.Matches(
+                html,
+                @"<(?<tag>article|div)\b[^>]*class\s*=\s*[""'][^""']*(?:annonce|publication|news|card)[^""']*[""'][^>]*>(?<value>.*?)</\k<tag>\s*>",
+                options
+            );
+
+            foreach (Match card in cards)
+            {
+                var block = card.Groups["value"].Value;
+                var titleMatch = Regex.Match(
+                    block,
+                    @"<(?:h1|h2|h3|h4|strong)\b[^>]*>(?<value>.*?)</(?:h1|h2|h3|h4|strong)\s*>",
+                    options
+                );
+                if (!titleMatch.Success)
+                {
+                    continue;
+                }
+
+                var title = CleanHtml(titleMatch.Groups["value"].Value);
+                if (string.IsNullOrWhiteSpace(title))
+                {
+                    continue;
+                }
+
+                var summaryMatch = Regex.Match(block, @"<p\b[^>]*>(?<value>.*?)</p\s*>", options);
+                var summary = summaryMatch.Success ? CleanHtml(summaryMatch.Groups["value"].Value) : "No description.";
+
+                var imageUrls = new List<string>();
+                foreach (Match imageMatch in Regex.Matches(
+                             block,
+                             @"<img\b[^>]+(?:src|data-src)\s*=\s*[""'](?<src>[^""']+)[""']",
+                             options
+                         ))
+                {
+                    AddImageUrl(imageUrls, imageMatch.Groups["src"].Value);
+                }
+
+                items.Add(new NewsItem(title, summary, string.Empty, null, imageUrls));
+            }
+        }
+
         return items
+            .GroupBy(item => item.Title, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
             .OrderByDescending(item => item.PublishedAt ?? DateTimeOffset.MinValue)
             .Take(40)
             .ToList();
