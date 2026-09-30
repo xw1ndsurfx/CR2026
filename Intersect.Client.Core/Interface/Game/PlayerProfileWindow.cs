@@ -3,6 +3,7 @@ using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Localization;
+using Intersect.Client.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets.Server;
@@ -74,6 +75,19 @@ internal sealed class PlayerProfileWindow : Window
         _scroll.DeleteAll();
 
         var y = 8;
+        if (profile.IsSelf)
+        {
+            var achievements = new Button(_scroll, "OpenAchievementsButton")
+            {
+                Text = "Achievements",
+                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                FontSize = 11,
+            };
+            achievements.SetBounds(154, y, 230, 36);
+            achievements.Clicked += (_, _) => PacketSender.SendRequestAchievementState(openWindow: true);
+            y += 48;
+        }
+
         y = AddSection("CHARACTER", BuildCharacterText(profile), y);
         y = AddSection("STATS", BuildStatsText(profile), y);
         y = AddEquipmentSection(profile, y);
