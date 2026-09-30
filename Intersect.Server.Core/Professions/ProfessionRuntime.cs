@@ -3,6 +3,7 @@ using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.Professions;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
+using Intersect.Server.Achievements;
 using Intersect.Server.Networking;
 
 namespace Intersect.Server.Professions;
@@ -75,6 +76,12 @@ internal static class ProfessionRuntime
         var total = Math.Max(0L, experience);
         player.SetVariableValue(id, total == long.MaxValue ? long.MaxValue : total + 1L);
         var newLevel = definition.LevelForExperience(total);
+        AchievementRuntime.SetAbsoluteProgress(
+            player,
+            Intersect.Framework.Core.Achievements.AchievementObjectiveType.ProfessionLevel,
+            newLevel,
+            id
+        );
 
         if (newLevel > oldLevel)
         {
@@ -99,6 +106,12 @@ internal static class ProfessionRuntime
         var newTotal = amount > 0 && oldTotal > long.MaxValue - amount ? long.MaxValue : Math.Max(0L, oldTotal + amount);
         player.SetVariableValue(id, newTotal == long.MaxValue ? long.MaxValue : newTotal + 1L);
         var newLevel = definition.LevelForExperience(newTotal);
+        AchievementRuntime.SetAbsoluteProgress(
+            player,
+            Intersect.Framework.Core.Achievements.AchievementObjectiveType.ProfessionLevel,
+            newLevel,
+            id
+        );
 
         if (amount > 0)
             PacketSender.SendChatMsg(player, $"[{definition.Name}] +{amount:N0} profession XP.", ChatMessageType.Notice);
