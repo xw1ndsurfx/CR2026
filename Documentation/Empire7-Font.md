@@ -59,3 +59,31 @@ Sizes can be changed with `-GameSize`, `-UiSize`, `-EntityNameSize`, `-ChatBubbl
 ## Licensing
 
 The public repository contains only runtime support, the local installer, and documentation. The licensed PNG/TTF and locally generated resources are not committed.
+
+
+## Use Empire 7 everywhere in the game client
+
+Corps Royaux now supports a client-wide font-family override through `GlobalFontFamily`.
+
+When `GlobalFontFamily` is set to `empire7`, every client font lookup resolves to the Empire 7 bitmap font, including:
+
+- the main menu and character selection;
+- GWEN labels, buttons, tabs, tooltips, text boxes and windows;
+- HUD text, chat, entity names, action messages and bubbles;
+- shops, inventory, bank, crafting, quests and description windows;
+- custom Corps Royaux windows and mini-games;
+- layouts that explicitly request another font family such as Source Sans Pro.
+
+The requested **font size is preserved**. Only the family is overridden.
+
+The bitmap font exposes logical sizes 6 through 64 so larger title text and smaller UI text can continue using their existing size values while keeping Empire 7.
+
+If the Empire 7 bitmap resources are missing, the client falls back to the originally requested font family instead of failing.
+
+The installer writes:
+
+```json
+"GlobalFontFamily": "empire7"
+```
+
+to the client `config.json`. The Corps Royaux client also defaults this setting to `empire7`, so older configs that do not yet contain the property still use the global override when the bitmap assets are present.

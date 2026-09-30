@@ -346,7 +346,7 @@ public partial class MonoContentManager : GameContentManager
                     fontName,
                     spriteSheetPath,
                     metricsPath,
-                    Enumerable.Range(8, 19).ToArray()
+                    Enumerable.Range(6, 59).ToArray()
                 );
 
                 // Runtime bitmap fonts intentionally win over a converted XNB family
@@ -370,6 +370,18 @@ public partial class MonoContentManager : GameContentManager
                 );
             }
         }
+    }
+
+    public override IFont? GetFont(string? name)
+    {
+        var globalFontFamily = ClientConfiguration.Instance.GlobalFontFamily?.Trim().ToLowerInvariant();
+        if (!string.IsNullOrWhiteSpace(globalFontFamily) &&
+            mFontDict.TryGetValue(globalFontFamily, out var globalFont))
+        {
+            return globalFont;
+        }
+
+        return base.GetFont(name);
     }
 
     public override void LoadShaders()

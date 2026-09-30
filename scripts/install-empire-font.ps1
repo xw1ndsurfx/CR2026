@@ -106,13 +106,22 @@ try {
                     continue
                 }
 
-                $size = [Math]::Min(26, [Math]::Max(8, [int]$requestedSizes[$property]))
+                $size = [Math]::Min(64, [Math]::Max(6, [int]$requestedSizes[$property]))
                 $jsonProperty.Value = "empire7,$size"
+            }
+
+            $globalFontProperty = $config.PSObject.Properties["GlobalFontFamily"]
+            if ($null -eq $globalFontProperty) {
+                $config | Add-Member -NotePropertyName "GlobalFontFamily" -NotePropertyValue "empire7"
+            }
+            else {
+                $globalFontProperty.Value = "empire7"
             }
 
             $config | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $configPath -Encoding UTF8
 
             Write-Host "Updated font settings in: $configPath"
+            Write-Host "Global font override: empire7"
             Write-Host "Config backup: $backupPath"
         }
         else {

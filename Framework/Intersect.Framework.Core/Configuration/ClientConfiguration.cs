@@ -123,6 +123,7 @@ public sealed partial class ClientConfiguration : IConfiguration<ClientConfigura
         TypewriterPauses ??= [];
         TypewriterSounds = [..TypewriterSounds?.Distinct() ?? new List<string>()];
         UIFont = string.IsNullOrWhiteSpace(UIFont) ? DefaultUIFont : UIFont.Trim();
+        GlobalFontFamily = string.IsNullOrWhiteSpace(GlobalFontFamily) ? null : GlobalFontFamily.Trim();
     }
 
     #endregion
@@ -163,6 +164,12 @@ public sealed partial class ClientConfiguration : IConfiguration<ClientConfigura
     /// The font family to use on unstyled windows such as the debug menu/admin window
     /// </summary>
     public string UIFont { get; set; } = DefaultUIFont;
+
+    /// <summary>
+    /// Optional client-wide font family override. When set, every font lookup in the game client
+    /// resolves to this family while preserving the requested font size.
+    /// </summary>
+    public string? GlobalFontFamily { get; set; } = "empire7";
 
     /// <summary>
     /// Number of lines to save for chat scrollback
