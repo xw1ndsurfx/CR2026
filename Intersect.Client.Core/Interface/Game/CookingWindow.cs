@@ -2995,6 +2995,145 @@ internal sealed class CookingInteractionPad : Base
             renderer.DrawFilledRect(new Rectangle(rectangle.X + rectangle.Width - t, rectangle.Y, t, rectangle.Height));
         }
 
+        Point ToolPoint(int idleX, int idleY)
+        {
+            if (_dragging && !_placingIngredient)
+                return new Point(bounds.X + _lastPoint.X, bounds.Y + _lastPoint.Y);
+
+            return new Point(SX(idleX), SY(idleY));
+        }
+
+        void DrawKnife()
+        {
+            var point = ToolPoint(322, 20);
+            var bob = _dragging
+                ? (int)Math.Round(SH(8) * _visualProgressPermille / 1000d)
+                : 0;
+
+            // Dark wooden handle.
+            renderer.DrawColor = new Color(a: 255, r: 92, g: 55, b: 32);
+            renderer.DrawFilledRect(
+                new Rectangle(point.X - SW(5), point.Y - SH(19) + bob, SW(10), SH(15))
+            );
+
+            // Steel blade with a pale cutting edge.
+            renderer.DrawColor = new Color(a: 255, r: 184, g: 189, b: 184);
+            renderer.DrawFilledRect(
+                new Rectangle(point.X - SW(3), point.Y - SH(4) + bob, SW(7), SH(27))
+            );
+            renderer.DrawColor = new Color(a: 255, r: 230, g: 229, b: 211);
+            renderer.DrawFilledRect(
+                new Rectangle(point.X + SW(3), point.Y - SH(1) + bob, SW(2), SH(24))
+            );
+        }
+
+        void DrawSpoon()
+        {
+            var point = ToolPoint(274, 32);
+            var wobble = _dragging
+                ? (int)Math.Round(Math.Sin(Environment.TickCount64 / 70d) * SW(3))
+                : 0;
+
+            renderer.DrawColor = new Color(a: 255, r: 126, g: 82, b: 45);
+            renderer.DrawFilledRect(
+                new Rectangle(point.X + wobble - SW(2), point.Y - SH(28), SW(5), SH(28))
+            );
+            renderer.DrawColor = new Color(a: 255, r: 160, g: 107, b: 57);
+            renderer.DrawFilledRect(
+                new Rectangle(point.X + wobble - SW(7), point.Y - SH(3), SW(15), SH(9))
+            );
+        }
+
+        void DrawHeatFlames()
+        {
+            var intensity = Math.Clamp((_state.MeterPermille + 199) / 200, 1, 5);
+            var now = Environment.TickCount64;
+
+            for (var flame = 0; flame < intensity; ++flame)
+            {
+                var flicker = (int)((now / 65 + flame * 3) % 5);
+                var x = SX(205 + flame * 24);
+                var y = SY(50 - flicker);
+                var height = SH(9 + flicker);
+
+                renderer.DrawColor = flame % 2 == 0
+                    ? new Color(a: 220, r: 232, g: 142, b: 48)
+                    : new Color(a: 220, r: 201, g: 78, b: 36);
+                renderer.DrawFilledRect(
+                    new Rectangle(x, y, SW(10), Math.Max(2, height))
+                );
+            }
+        }
+
+        void DrawPanHandle(int verticalOffset = 0)
+        {
+            renderer.DrawColor = new Color(a: 255, r: 66, g: 58, b: 52);
+            renderer.DrawFilledRect(
+                new Rectangle(SX(315), SY(28) + verticalOffset, SW(105), SH(9))
+            );
+            renderer.DrawColor = new Color(a: 255, r: 112, g: 96, b: 82);
+            renderer.DrawFilledRect(
+                new Rectangle(SX(410), SY(26) + verticalOffset, SW(48), SH(13))
+            );
+        }
+
+        void DrawSaltShaker()
+        {
+            var point = ToolPoint(260, 18);
+            var shake = _dragging
+                ? ((Environment.TickCount64 / 45) % 2 == 0 ? -SW(4) : SW(4))
+                : 0;
+
+            renderer.DrawColor = new Color(a: 255, r: 176, g: 168, b: 149);
+            renderer.DrawFilledRect(
+                new Rectangle(point.X + shake - SW(8), point.Y - SH(7), SW(17), SH(22))
+            );
+            renderer.DrawColor = new Color(a: 255, r: 100, g: 92, b: 79);
+            renderer.DrawFilledRect(
+                new Rectangle(point.X + shake - SW(9), point.Y - SH(11), SW(19), SH(6))
+            );
+
+            if (_dragging && !_placingIngredient)
+            {
+                for (var grain = 0; grain < 5; ++grain)
+                {
+                    var fall = (int)((Environment.TickCount64 / 35 + grain * 5) % 17);
+                    renderer.DrawColor = new Color(a: 210, r: 236, g: 228, b: 198);
+                    renderer.DrawFilledRect(
+                        new Rectangle(
+                            point.X + shake - SW(8) + grain * SW(4),
+                            point.Y + SH(13 + fall),
+                            Math.Max(1, SW(2)),
+                            Math.Max(1, SH(2))
+                        )
+                    );
+                }
+            }
+        }
+
+        void DrawRollingPin()
+        {
+            var point = ToolPoint(255, 30);
+            var x = point.X - SW(48);
+
+            renderer.DrawColor = new Color(a: 255, r: 102, g: 62, b: 34);
+            renderer.DrawFilledRect(
+                new Rectangle(x - SW(18), point.Y - SH(3), SW(18), SH(7))
+            );
+            renderer.DrawFilledRect(
+                new Rectangle(x + SW(96), point.Y - SH(3), SW(18), SH(7))
+            );
+
+            renderer.DrawColor = new Color(a: 255, r: 185, g: 122, b: 65);
+            renderer.DrawFilledRect(
+                new Rectangle(x, point.Y - SH(6), SW(96), SH(13))
+            );
+            renderer.DrawColor = new Color(a: 255, r: 218, g: 154, b: 87);
+            renderer.DrawFilledRect(
+                new Rectangle(x + SW(6), point.Y - SH(4), SW(84), SH(3))
+            );
+        }
+
         // Every non-plating stage now begins by physically moving the real item sprite
         // from the ingredient tray to the station. Wrong drops snap back to the tray.
         if (WaitingForPlacement)
@@ -3040,6 +3179,8 @@ internal sealed class CookingInteractionPad : Base
                             )
                         );
                     }
+
+                    DrawKnife();
                 }
                 break;
             }
@@ -3085,17 +3226,20 @@ internal sealed class CookingInteractionPad : Base
                         SH(10)
                     )
                 );
+
+                if (_stationIngredientIds.Count > 0)
+                    DrawSpoon();
                 break;
             }
 
             case CookingStageType.Heat:
             {
+                DrawHeatFlames();
                 renderer.DrawColor = new Color(a: 255, r: 69, g: 62, b: 55);
                 renderer.DrawFilledRect(new Rectangle(SX(188), SY(5), SW(134), SH(48)));
                 renderer.DrawColor = new Color(a: 255, r: 31, g: 29, b: 27);
                 renderer.DrawFilledRect(new Rectangle(SX(199), SY(11), SW(112), SH(35)));
-                DrawSourceIngredients(skin, bounds, gold, muted);
-                DrawStationIngredients(skin, bounds, gold, muted);
+                DrawPanHandle();
                 DrawSourceIngredients(skin, bounds, gold, muted);
                 DrawStationIngredients(skin, bounds, gold, muted);
                 DrawActiveIngredient(skin, bounds, gold);
@@ -3135,10 +3279,15 @@ internal sealed class CookingInteractionPad : Base
 
             case CookingStageType.Flip:
             {
+                var panLift = _dragging && !_placingIngredient
+                    ? -(int)Math.Round(SH(22) * _visualProgressPermille / 1000d)
+                    : 0;
+
                 renderer.DrawColor = new Color(a: 255, r: 82, g: 72, b: 61);
-                renderer.DrawFilledRect(new Rectangle(SX(145), SY(62), SW(220), SH(8)));
+                renderer.DrawFilledRect(new Rectangle(SX(145), SY(62) + panLift, SW(220), SH(8)));
                 renderer.DrawColor = new Color(a: 255, r: 48, g: 44, b: 39);
-                renderer.DrawFilledRect(new Rectangle(SX(174), SY(54), SW(162), SH(11)));
+                renderer.DrawFilledRect(new Rectangle(SX(174), SY(54) + panLift, SW(162), SH(11)));
+                DrawPanHandle(panLift);
 
                 DrawSourceIngredients(skin, bounds, gold, muted);
                 DrawStationIngredients(skin, bounds, gold, muted);
@@ -3172,7 +3321,11 @@ internal sealed class CookingInteractionPad : Base
                 renderer.DrawFilledRect(new Rectangle(SX(194), SY(5), SW(122), SH(48)));
                 renderer.DrawColor = new Color(a: 255, r: 62, g: 68, b: 52);
                 renderer.DrawFilledRect(new Rectangle(SX(207), SY(12), SW(96), SH(33)));
+                DrawSourceIngredients(skin, bounds, gold, muted);
+                DrawStationIngredients(skin, bounds, gold, muted);
                 DrawActiveIngredient(skin, bounds, gold);
+                if (_stationIngredientIds.Count > 0)
+                    DrawSaltShaker();
 
                 var railX = SX(65);
                 var railY = SY(61);
@@ -3206,6 +3359,9 @@ internal sealed class CookingInteractionPad : Base
                 renderer.DrawFilledRect(new Rectangle(SX(55), SY(35), SW(70), SH(10)));
                 renderer.DrawColor = left ? muted : gold;
                 renderer.DrawFilledRect(new Rectangle(SX(385), SY(35), SW(70), SH(10)));
+
+                if (_stationIngredientIds.Count > 0)
+                    DrawRollingPin();
                 break;
             }
 
