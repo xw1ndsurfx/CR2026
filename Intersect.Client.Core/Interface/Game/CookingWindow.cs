@@ -507,16 +507,30 @@ internal sealed class CookingWindow : Base
                 $"{state.RecipeName}\n{state.ProfessionName} Lv {state.ProfessionLevel}\n" +
                 $"{(state.PartnerId == Guid.Empty ? "Solo kitchen" : "Two-player kitchen")}";
 
-            var activeIngredientIndex = state.RecipeIngredients.Length == 0
+            var stageIngredientIds = state.StageIngredientItemIds.ToHashSet();
+            var stageIngredients = state.RecipeIngredients
+                .Where(ingredient => stageIngredientIds.Contains(ingredient.ItemId))
+                .ToArray();
+            var activeStageIngredientIndex = stageIngredients.Length == 0
                 ? -1
-                : Math.Clamp(state.CompletedActions % state.RecipeIngredients.Length, 0, state.RecipeIngredients.Length - 1);
+                : Math.Clamp(state.CompletedActions, 0, stageIngredients.Length - 1);
+            var activeStageIngredientId = activeStageIngredientIndex >= 0
+                ? stageIngredients[activeStageIngredientIndex].ItemId
+                : Guid.Empty;
+
             _ingredients.Text = state.RecipeIngredients.Length == 0
                 ? "INGREDIENTS\nNo ingredient data."
                 : "INGREDIENTS\n" + string.Join(
                     "\n",
-                    state.RecipeIngredients.Select((ingredient, index) =>
-                        $"{(index == activeIngredientIndex ? "> " : "  ")}{ingredient.Needed:N0} x {ingredient.Name}"
-                    )
+                    state.RecipeIngredients.Select(ingredient =>
+                    {
+                        var prefix = ingredient.ItemId == activeStageIngredientId
+                            ? "> "
+                            : stageIngredientIds.Contains(ingredient.ItemId)
+                                ? "+ "
+                                : "  ";
+                        return $"{prefix}{ingredient.Needed:N0} x {ingredient.Name}";
+                    })
                 );
 
             var stageNumber = Math.Min(state.StageCount, state.StageIndex + 1);
@@ -896,9 +910,17 @@ internal sealed class CookingWindow : Base
     private static string InteractionTitle(CookingSessionState state)
     {
         var actionNumber = Math.Max(0, state.CompletedActions);
+        var stageIds = state.StageIngredientItemIds.ToHashSet();
+        var ingredients = state.RecipeIngredients
+            .Where(ingredient => stageIds.Count == 0 || stageIds.Contains(ingredient.ItemId))
+            .ToArray();
+        var active = ingredients.Length == 0
+            ? "INGREDIENT"
+            : ingredients[Math.Clamp(actionNumber, 0, ingredients.Length - 1)].Name.ToUpperInvariant();
+
         return state.StageType switch
         {
-            CookingStageType.Chop => "GRAB THE INGREDIENT AND SLICE DOWN",
+            CookingStageType.Chop => $"GRAB {active} AND SLICE DOWN",
             CookingStageType.Stir => actionNumber % 2 == 0
                 ? "STIR CLOCKWISE"
                 : "STIR COUNTER-CLOCKWISE",
@@ -907,20 +929,20 @@ internal sealed class CookingWindow : Base
                 : state.MeterPermille > state.TargetPermille + state.TolerancePermille / 3
                     ? "LOWER THE HEAT"
                     : "HOLD THE HEAT STEADY",
-            CookingStageType.Flip => "GRAB THE FOOD AND FLICK UP",
+            CookingStageType.Flip => $"GRAB {active} AND FLICK UP",
             CookingStageType.Season => state.MeterPermille < state.TargetPermille - state.TolerancePermille / 3
                 ? "ADD SEASONING"
                 : state.MeterPermille > state.TargetPermille + state.TolerancePermille / 3
                     ? "REMOVE SEASONING"
                     : "SEASONING IS ON TARGET",
             CookingStageType.Knead => actionNumber % 2 == 0
-                ? "GRAB THE DOUGH AND PUSH LEFT"
-                : "GRAB THE DOUGH AND PUSH RIGHT",
+                ? $"GRAB {active} AND PUSH LEFT"
+                : $"GRAB {active} AND PUSH RIGHT",
             CookingStageType.Plate => state.TargetPermille < 350
-                ? "DRAG FOOD TO THE LEFT"
+                ? $"DRAG {active} TO THE LEFT"
                 : state.TargetPermille > 650
-                    ? "DRAG FOOD TO THE RIGHT"
-                    : "DRAG FOOD TO THE CENTER",
+                    ? $"DRAG {active} TO THE RIGHT"
+                    : $"DRAG {active} TO THE CENTER",
             _ => "COOK",
         };
     }
@@ -2078,10 +2100,30 @@ internal sealed class CookingInteractionPad : Base
         _submit(input);
     }
 
-    private int ActiveIngredientIndex =>
-        _state?.RecipeIngredients is { Length: > 0 } ingredients
-            ? Math.Clamp(_state.CompletedActions % ingredients.Length, 0, ingredients.Length - 1)
-            : -1;
+    private CookingIngredientState[] StageIngredients()
+    {
+        if (_state == null || _state.RecipeIngredients.Length == 0)
+            return [];
+
+        var ids = _state.StageIngredientItemIds.ToHashSet();
+        if (ids.Count == 0)
+            return _state.RecipeIngredients;
+
+        return _state.RecipeIngredients
+            .Where(ingredient => ids.Contains(ingredient.ItemId))
+            .ToArray();
+    }
+
+    private int ActiveIngredientIndex
+    {
+        get
+        {
+            var ingredients = StageIngredients();
+            return ingredients.Length == 0
+                ? -1
+                : Math.Clamp(_state?.CompletedActions ?? 0, 0, ingredients.Length - 1);
+        }
+    }
 
     private bool TryGetActiveIngredient(
         out CookingIngredientState ingredient,
@@ -2091,11 +2133,12 @@ internal sealed class CookingInteractionPad : Base
         ingredient = default!;
         descriptor = default!;
 
+        var ingredients = StageIngredients();
         var index = ActiveIngredientIndex;
-        if (_state == null || index < 0 || index >= _state.RecipeIngredients.Length)
+        if (index < 0 || index >= ingredients.Length)
             return false;
 
-        ingredient = _state.RecipeIngredients[index];
+        ingredient = ingredients[index];
         return ItemDescriptor.TryGet(ingredient.ItemId, out descriptor);
     }
 

@@ -134,6 +134,7 @@ public sealed partial class CookingSessionState
     [Key(59)] public long ProfessionExperienceAwarded { get; set; }
     [Key(60)] public int PeakCombo { get; set; }
     [Key(61)] public CookingIngredientState[] RecipeIngredients { get; set; } = [];
+    [Key(62)] public Guid[] StageIngredientItemIds { get; set; } = [];
 
     [IgnoreMember]
     public bool IsValid =>
@@ -145,6 +146,9 @@ public sealed partial class CookingSessionState
         PartyCandidates is { Length: <= 12 } &&
         RecipeIngredients is { Length: <= 12 } &&
         RecipeIngredients.All(ingredient => ingredient is { IsValid: true }) &&
+        StageIngredientItemIds is { Length: <= 12 } &&
+        StageIngredientItemIds.All(itemId => itemId != Guid.Empty) &&
+        StageIngredientItemIds.Distinct().Count() == StageIngredientItemIds.Length &&
         StageIndex is >= -1 and < 12 &&
         StageCount is >= 0 and <= 12 &&
         StageDurationMs is >= 0 and <= 60_000 &&

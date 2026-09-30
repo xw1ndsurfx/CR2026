@@ -1105,6 +1105,7 @@ internal static class CookingRuntime
                     Needed = ingredient.Quantity,
                     Available = ingredient.Quantity,
                 }).ToArray() ?? [],
+                StageIngredientItemIds = StageIngredientIds(recipe, stage),
             },
         };
     }
@@ -1253,26 +1254,58 @@ internal static class CookingRuntime
                     : $"{player}: CHAOS during {type}! Something is smoking.{mishapText}";
     }
 
+    private static Guid[] StageIngredientIds(
+        CookingRecipeDefinition? recipe,
+        CookingStageDefinition? stage
+    )
+    {
+        if (recipe == null || stage == null)
+            return [];
+
+        var recipeIds = recipe.Ingredients.Select(ingredient => ingredient.ItemId).ToHashSet();
+        var configured = (stage.IngredientItemIds ?? [])
+            .Where(recipeIds.Contains)
+            .Distinct()
+            .ToArray();
+
+        // Backwards compatibility for recipes created before per-stage assignments.
+        return configured.Length > 0
+            ? configured
+            : recipe.Ingredients.Select(ingredient => ingredient.ItemId).ToArray();
+    }
+
+    private static string ActiveStageIngredientName(Session session, CookingStageDefinition stage)
+    {
+        var ids = StageIngredientIds(session.Recipe, stage);
+        if (ids.Length == 0)
+            return "the ingredient";
+
+        var actionNumber = session.StageActions.Values.Sum();
+        var index = Math.Clamp(actionNumber, 0, ids.Length - 1);
+        return ItemDescriptor.GetName(ids[index]);
+    }
+
     private static string ActionHint(Session session, CookingStageDefinition stage)
     {
         var actionNumber = session.StageActions.Values.Sum();
+        var ingredient = ActiveStageIngredientName(session, stage);
         return stage.Type switch
         {
-            CookingStageType.Chop => "Grab the ingredient, hold the mouse button, and slice straight DOWN.",
+            CookingStageType.Chop => $"Grab {ingredient}, hold the mouse button, and slice straight DOWN.",
             CookingStageType.Stir => actionNumber % 2 == 0
                 ? "Hold and draw a CLOCKWISE circle."
                 : "Hold and draw a COUNTER-CLOCKWISE circle.",
             CookingStageType.Heat => "Hold and drag RIGHT for more heat or LEFT for less. Keep the marker in green.",
-            CookingStageType.Flip => "Grab the food and flick UP quickly to flip it.",
+            CookingStageType.Flip => $"Grab {ingredient} and flick UP quickly to flip it.",
             CookingStageType.Season => "Hold and drag RIGHT to add seasoning or LEFT to reduce it. Aim for green.",
             CookingStageType.Knead => actionNumber % 2 == 0
-                ? "Grab the dough and push it LEFT."
-                : "Grab the dough and push it RIGHT.",
+                ? $"Grab {ingredient} and push it LEFT."
+                : $"Grab {ingredient} and push it RIGHT.",
             CookingStageType.Plate => session.StageTargetPermille < 350
-                ? "Grab the food, drag it to the LEFT section, and release."
+                ? $"Grab {ingredient}, drag it to the LEFT section, and release."
                 : session.StageTargetPermille > 650
-                    ? "Grab the food, drag it to the RIGHT section, and release."
-                    : "Grab the food, drag it to the CENTER section, and release.",
+                    ? $"Grab {ingredient}, drag it to the RIGHT section, and release."
+                    : $"Grab {ingredient}, drag it to the CENTER section, and release.",
             _ => "Cook!",
         };
     }

@@ -69,6 +69,7 @@ internal sealed class CookingRecipeDialog : DarkForm
     private readonly NumericUpDown _duration = new() { Minimum = 4, Maximum = 60, Width = 70 };
     private readonly NumericUpDown _actions = new() { Minimum = 1, Maximum = 20, Width = 70 };
     private readonly ComboBox _assignment = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 110 };
+    private readonly CheckedListBox _stageIngredients = new() { Width = 520, Height = 90, CheckOnClick = true };
     private readonly TextBox _actionSound = new() { Width = 150, MaxLength = CookingStageDefinition.MaximumSoundFileLength };
     private readonly TextBox _perfectSound = new() { Width = 150, MaxLength = CookingStageDefinition.MaximumSoundFileLength };
     private readonly TextBox _mishapSound = new() { Width = 150, MaxLength = CookingStageDefinition.MaximumSoundFileLength };
@@ -158,13 +159,13 @@ internal sealed class CookingRecipeDialog : DarkForm
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 17,
+            RowCount = 18,
             Padding = new Padding(12),
             AutoScroll = true,
         };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 145));
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        for (var i = 0; i < 17; ++i) root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var i = 0; i < 18; ++i) root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         AddRow(root, 0, "Recipe name", _name);
         AddRow(root, 1, "Profession", _profession);
@@ -227,8 +228,10 @@ internal sealed class CookingRecipeDialog : DarkForm
         stageControls.Controls.Add(_actions);
         stageControls.Controls.Add(_assignment);
         var stageAdd = new Button { Text = "Add stage", AutoSize = true };
+        var stageUpdate = new Button { Text = "Update selected", AutoSize = true };
         var stageRemove = new Button { Text = "Remove selected", AutoSize = true };
         stageAdd.Click += (_, _) => AddStage();
+        stageUpdate.Click += (_, _) => UpdateSelectedStage();
         stageRemove.Click += (_, _) =>
         {
             if (_stages.SelectedItem is StageChoice choice)
@@ -236,8 +239,10 @@ internal sealed class CookingRecipeDialog : DarkForm
             RefreshStages();
         };
         stageControls.Controls.Add(stageAdd);
+        stageControls.Controls.Add(stageUpdate);
         stageControls.Controls.Add(stageRemove);
         AddRow(root, 9, "Cooking stage", stageControls);
+        AddRow(root, 10, "Stage ingredients", _stageIngredients);
 
         var soundControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true };
         soundControls.Controls.Add(new Label { Text = "Action", AutoSize = true, Margin = new Padding(3, 8, 3, 3) });
@@ -246,9 +251,9 @@ internal sealed class CookingRecipeDialog : DarkForm
         soundControls.Controls.Add(_perfectSound);
         soundControls.Controls.Add(new Label { Text = "Mishap", AutoSize = true, Margin = new Padding(8, 8, 3, 3) });
         soundControls.Controls.Add(_mishapSound);
-        AddRow(root, 10, "Stage sounds", soundControls);
+        AddRow(root, 11, "Stage sounds", soundControls);
 
-        AddRow(root, 11, "Stages", _stages);
+        AddRow(root, 12, "Stages", _stages);
 
         var outputControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true };
         outputControls.Controls.Add(_quality);
@@ -265,8 +270,8 @@ internal sealed class CookingRecipeDialog : DarkForm
         };
         outputControls.Controls.Add(outputAdd);
         outputControls.Controls.Add(outputRemove);
-        AddRow(root, 12, "Quality output", outputControls);
-        AddRow(root, 13, "Outputs", _outputs);
+        AddRow(root, 13, "Quality output", outputControls);
+        AddRow(root, 14, "Outputs", _outputs);
 
         var help = new Label
         {
@@ -276,11 +281,13 @@ internal sealed class CookingRecipeDialog : DarkForm
                 "Royal Kitchen uses real inventory ingredients. The server consumes them only when the run starts. " +
                 "Stages are gesture-driven: Chop = drag down, Stir = circular mouse motion, Heat/Season = horizontal control, " +
                 "Flip = quick upward flick, Knead = left/right pushes, Plate = drag to a target zone. " +
+                "Choose one or more Stage ingredients to decide exactly which recipe items appear at that station. " +
+                "When several are selected, actions advance through them in order; old stages with no assignment fall back to all recipe ingredients. " +
                 "Quality is scored 0-100: Burnt <40, Decent 40-69, Great 70-89, Perfect 90-100. " +
                 "Auto stage assignment alternates players in co-op. Partner/Both stages require co-op. " +
                 "Sound fields use filenames from resources/sounds. Comic-event chance is rolled by the server after actions.",
         };
-        AddRow(root, 14, "Rules", help);
+        AddRow(root, 15, "Rules", help);
 
         var buttons = new FlowLayoutPanel
         {
@@ -313,6 +320,7 @@ internal sealed class CookingRecipeDialog : DarkForm
             if (_profession.SelectedItem is ProfessionChoice choice)
                 _requiredLevel.Maximum = Math.Max(1, choice.MaximumLevel);
         };
+        _stages.SelectedIndexChanged += (_, _) => LoadSelectedStage();
 
         RefreshIngredients();
         RefreshStages();
@@ -382,26 +390,87 @@ internal sealed class CookingRecipeDialog : DarkForm
         RefreshIngredients();
     }
 
-    private void AddStage()
+    private CookingStageDefinition? StageFromControls()
     {
         if (_stageType.SelectedItem is not CookingStageType type ||
             _assignment.SelectedItem is not CookingStageAssignment assignment)
+            return null;
+
+        var ingredientIds = _stageIngredients.CheckedItems
+            .Cast<ItemChoice>()
+            .Select(choice => choice.Id)
+            .Where(id => id != Guid.Empty)
+            .Distinct()
+            .ToArray();
+
+        if (ingredientIds.Length == 0)
+        {
+            MessageBox.Show(
+                this,
+                "Choose at least one ingredient for this stage.",
+                "Cooking Stage",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return null;
+        }
+
+        return new CookingStageDefinition(
+            type,
+            (int)_difficulty.Value,
+            (int)_duration.Value,
+            (int)_actions.Value,
+            assignment,
+            _actionSound.Text.Trim(),
+            _perfectSound.Text.Trim(),
+            _mishapSound.Text.Trim(),
+            ingredientIds
+        );
+    }
+
+    private void AddStage()
+    {
+        if (_stageDraft.Count >= 12) return;
+        var stage = StageFromControls();
+        if (stage == null) return;
+
+        _stageDraft.Add(stage);
+        RefreshStages();
+        _stages.SelectedIndex = _stages.Items.Count - 1;
+    }
+
+    private void UpdateSelectedStage()
+    {
+        if (_stages.SelectedItem is not StageChoice selected)
             return;
 
-        if (_stageDraft.Count >= 12) return;
-        _stageDraft.Add(
-            new CookingStageDefinition(
-                type,
-                (int)_difficulty.Value,
-                (int)_duration.Value,
-                (int)_actions.Value,
-                assignment,
-                _actionSound.Text.Trim(),
-                _perfectSound.Text.Trim(),
-                _mishapSound.Text.Trim()
-            )
-        );
+        var index = _stageDraft.IndexOf(selected.Stage);
+        if (index < 0) return;
+
+        var stage = StageFromControls();
+        if (stage == null) return;
+
+        _stageDraft[index] = stage;
         RefreshStages();
+        if (index < _stages.Items.Count)
+            _stages.SelectedIndex = index;
+    }
+
+    private void LoadSelectedStage()
+    {
+        if (_stages.SelectedItem is not StageChoice selected)
+            return;
+
+        var stage = selected.Stage;
+        _stageType.SelectedItem = stage.Type;
+        _difficulty.Value = Math.Clamp(stage.Difficulty, 1, 5);
+        _duration.Value = Math.Clamp(stage.DurationSeconds, 4, 60);
+        _actions.Value = Math.Clamp(stage.RequiredActions, 1, 20);
+        _assignment.SelectedItem = stage.Assignment;
+        _actionSound.Text = stage.ActionSound;
+        _perfectSound.Text = stage.PerfectSound;
+        _mishapSound.Text = stage.MishapSound;
+        RefreshStageIngredientPicker(stage.IngredientItemIds ?? []);
     }
 
     private void AddOutput()
@@ -428,6 +497,33 @@ internal sealed class CookingRecipeDialog : DarkForm
                 )
             );
         }
+
+        RefreshStageIngredientPicker();
+    }
+
+    private void RefreshStageIngredientPicker(IEnumerable<Guid>? checkedIds = null)
+    {
+        var selected = checkedIds?.ToHashSet() ??
+            _stageIngredients.CheckedItems.Cast<ItemChoice>().Select(choice => choice.Id).ToHashSet();
+
+        _stageIngredients.Items.Clear();
+        foreach (var ingredient in _ingredientDraft)
+        {
+            var choice = new ItemChoice(
+                ingredient.ItemId,
+                ItemDescriptor.GetName(ingredient.ItemId)
+            );
+            _stageIngredients.Items.Add(choice, selected.Contains(choice.Id));
+        }
+
+        // New recipes should be immediately understandable: default the first ingredient
+        // instead of silently creating an unassigned stage.
+        if (_stageIngredients.Items.Count > 0 &&
+            _stageIngredients.CheckedItems.Count == 0 &&
+            _stages.SelectedItem == null)
+        {
+            _stageIngredients.SetItemChecked(0, true);
+        }
     }
 
     private void RefreshStages()
@@ -441,10 +537,18 @@ internal sealed class CookingRecipeDialog : DarkForm
                     stage,
                     $"{index + 1}. {stage.Type} | Difficulty {stage.Difficulty}/5 | " +
                     $"{stage.DurationSeconds}s | {stage.RequiredActions} action(s) | {stage.Assignment} | " +
-                    $"SFX: {SoundSummary(stage)}"
+                    $"Items: {StageIngredientSummary(stage)} | SFX: {SoundSummary(stage)}"
                 )
             );
         }
+    }
+
+    private static string StageIngredientSummary(CookingStageDefinition stage)
+    {
+        var ids = stage.IngredientItemIds ?? [];
+        return ids.Length == 0
+            ? "legacy/all"
+            : string.Join(", ", ids.Select(ItemDescriptor.GetName));
     }
 
     private static string SoundSummary(CookingStageDefinition stage)

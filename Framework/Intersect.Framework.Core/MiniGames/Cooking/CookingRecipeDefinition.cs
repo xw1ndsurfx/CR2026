@@ -73,7 +73,8 @@ public sealed record CookingStageDefinition(
     CookingStageAssignment Assignment = CookingStageAssignment.Auto,
     string ActionSound = "",
     string PerfectSound = "",
-    string MishapSound = "")
+    string MishapSound = "",
+    Guid[]? IngredientItemIds = null)
 {
     public const int MaximumSoundFileLength = 128;
 
@@ -83,6 +84,9 @@ public sealed record CookingStageDefinition(
         DurationSeconds is >= 4 and <= 60 &&
         RequiredActions is >= 1 and <= 20 &&
         Enum.IsDefined(Assignment) &&
+        (IngredientItemIds ?? []).Length <= 12 &&
+        (IngredientItemIds ?? []).All(itemId => itemId != Guid.Empty) &&
+        (IngredientItemIds ?? []).Distinct().Count() == (IngredientItemIds ?? []).Length &&
         ValidSound(ActionSound) &&
         ValidSound(PerfectSound) &&
         ValidSound(MishapSound);
@@ -136,7 +140,12 @@ public sealed record CookingRecipeDefinition(
         Ingredients.All(ingredient => ingredient is { IsValid: true }) &&
         Ingredients.Select(ingredient => ingredient.ItemId).Distinct().Count() == Ingredients.Length &&
         Stages is { Length: > 0 and <= 12 } &&
-        Stages.All(stage => stage is { IsValid: true }) &&
+        Stages.All(stage =>
+            stage is { IsValid: true } &&
+            (stage.IngredientItemIds ?? []).All(itemId =>
+                Ingredients.Any(ingredient => ingredient.ItemId == itemId)
+            )
+        ) &&
         Outputs is { Length: > 0 and <= 4 } &&
         Outputs.All(output => output is { IsValid: true }) &&
         Outputs.Select(output => output.Quality).Distinct().Count() == Outputs.Length &&
