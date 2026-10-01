@@ -702,6 +702,8 @@ public sealed class FrmBalanceLab : DarkForm
         var partySize = Math.Clamp((int)_partySize.Value, 1, 5);
         var targetTtk = Math.Max(0.1, (double)_targetTtk.Value);
         var targetHpLoss = Math.Max(0.1, (double)_targetHpLoss.Value);
+        var gearProfile = Math.Max(0, _gearProfile.SelectedIndex);
+        var includeClassSpells = _includeClassSpells.Checked;
 
         foreach (var entry in _entries.Where(entry => entry.Kind == BalanceObjectKind.Npc))
         {
@@ -720,7 +722,17 @@ public sealed class FrmBalanceLab : DarkForm
                 );
 
             var results = classes
-                .Select(playerClass => SimulateClassVsNpc(playerClass, npc, level, partySize))
+                .Select(
+                    playerClass => SimulateClassVsNpc(
+                        playerClass,
+                        npc,
+                        level,
+                        partySize,
+                        gearProfile,
+                        includeClassSpells,
+                        targetTtk
+                    )
+                )
                 .Where(result => result != null)
                 .Cast<CombatSimulation>()
                 .ToArray();
@@ -733,6 +745,10 @@ public sealed class FrmBalanceLab : DarkForm
             var ttk = results.Average(result => result.TtkSeconds);
             var hpLoss = results.Average(result => result.HpLossPercent);
             var outgoingDps = results.Average(result => result.PlayerDps) * partySize;
+            var autoAttackDps = results.Average(result => result.AutoAttackDps) * partySize;
+            var spellDps = results.Average(result => result.SpellDps) * partySize;
+            var manaUse = results.Average(result => result.ManaUsePerSecond) * partySize;
+            var gearPower = results.Average(result => result.GearPower);
             var incomingDps = results.Average(result => result.NpcDps);
             var worstHpLoss = results.Max(result => result.HpLossPercent);
             var bestHpLoss = results.Min(result => result.HpLossPercent);
@@ -775,11 +791,26 @@ public sealed class FrmBalanceLab : DarkForm
                     ? "TOO EASY"
                     : "TARGET";
 
+            var loadoutText = results.Length == 1
+                ? results[0].GearSummary
+                : $"{_gearProfile.Text}; actual selected items vary by class only when weapon behavior differs.";
+
+            var spellText = results.Length == 1
+                ? results[0].SpellSummary
+                : includeClassSpells
+                    ? "Learned spell rotations are calculated independently for each class."
+                    : "Class spells disabled.";
+
             entry.SimulationNotes =
                 $"Simulation basis: {entry.SimulationClass}\r\n" +
                 $"Player level: {level}\r\n" +
                 $"Party size: {partySize}\r\n" +
+                $"Expected gear: {_gearProfile.Text} (avg gear power {gearPower:0.0})\r\n" +
+                $"Class spells: {(includeClassSpells ? "ON" : "OFF")}\r\n" +
                 $"Outgoing party DPS: {outgoingDps:0.0}\r\n" +
+                $"  Auto-attack DPS: {autoAttackDps:0.0}\r\n" +
+                $"  Spell DPS: {spellDps:0.0}\r\n" +
+                $"  Mana use: {manaUse:0.0}/sec\r\n" +
                 $"Incoming NPC DPS: {incomingDps:0.0}\r\n" +
                 $"Estimated TTK: {ttk:0.00}s (target {targetTtk:0.0}s)\r\n" +
                 $"Estimated party-average HP lost: {hpLoss:0.0}% (target {targetHpLoss:0.0}%)\r\n" +
@@ -789,9 +820,11 @@ public sealed class FrmBalanceLab : DarkForm
                     : string.Empty) +
                 $"Suggested NPC HP toward TTK target: {entry.SimulationSuggestedHp:0}\r\n" +
                 $"Suggested base damage toward HP-loss target: {entry.SimulationSuggestedDamage:0.##}\r\n\r\n" +
-                "This is a deterministic baseline using Intersect's default damage formula, " +
-                "class level growth and attack-speed formula. It assumes class auto-attacks with no equipment; " +
-                "spells, status effects, blocking, movement and custom server formulas can change live combat.";
+                $"GEAR\r\n----\r\n{loadoutText}\r\n\r\n" +
+                $"SPELL ROTATION\r\n--------------\r\n{spellText}\r\n\r\n" +
+                "Combat math follows Intersect's default physical/magic/true damage formulas, class growth, " +
+                "item stat stacking, attack speed, cast/cooldown timing and mana sustain. Dynamic item usage " +
+                "requirements, movement, blocking, status-control value and custom formulas still require designer review.";
         }
     }
 
@@ -799,7 +832,10 @@ public sealed class FrmBalanceLab : DarkForm
         object playerClass,
         object npc,
         int level,
-        int partySize
+        int partySize,
+        int gearProfile,
+        bool includeClassSpells,
+        double sustainWindowSeconds
     )
     {
         var stats = new double[5];
@@ -812,7 +848,7 @@ public sealed class FrmBalanceLab : DarkForm
             stats[i] = ScaleByLevel(baseStat, increase, increasePercentage, level);
         }
 
-        var playerHp = Math.Max(
+        var baseHp = Math.Max(
             1d,
             ScaleByLevel(
                 Math.Max(1d, Indexed(playerClass, "BaseVital", 0)),
@@ -822,6 +858,38 @@ public sealed class FrmBalanceLab : DarkForm
             )
         );
 
+        var baseMana = Math.Max(
+            0d,
+            ScaleByLevel(
+                Math.Max(0d, Indexed(playerClass, "BaseVital", 1)),
+                Indexed(playerClass, "VitalIncrease", 1),
+                increasePercentage,
+                level
+            )
+        );
+
+        var loadout = BuildLoadout(gearProfile);
+
+        for (var i = 0; i < stats.Length; i++)
+        {
+            var flat = stats[i] + loadout.FlatStats[i];
+            stats[i] = Math.Max(1d, Math.Ceiling(flat + flat * loadout.PercentStats[i] / 100d));
+        }
+
+        var playerHp = Math.Max(
+            1d,
+            baseHp +
+            loadout.FlatVitals[0] +
+            baseHp * loadout.PercentVitals[0] / 100d
+        );
+
+        var playerMana = Math.Max(
+            0d,
+            baseMana +
+            loadout.FlatVitals[1] +
+            baseMana * loadout.PercentVitals[1] / 100d
+        );
+
         var npcHp = Math.Max(1d, Indexed(npc, "MaxVitals", 0));
         var npcStats = new double[5];
         for (var i = 0; i < npcStats.Length; i++)
@@ -829,12 +897,13 @@ public sealed class FrmBalanceLab : DarkForm
             npcStats[i] = Math.Max(0d, Indexed(npc, "Stats", i));
         }
 
-        var playerBaseDamage = Math.Max(0d, Number(playerClass, "Damage"));
-        var playerDamageType = (DamageType)(int)Number(playerClass, "DamageType");
-        var playerScalingStat = Math.Clamp((int)Number(playerClass, "ScalingStat"), 0, stats.Length - 1);
-        var playerScaling = (int)Number(playerClass, "Scaling");
-        var playerCritChance = Math.Clamp(Number(playerClass, "CritChance"), 0d, 100d);
-        var playerCritMultiplier = Math.Max(1d, Number(playerClass, "CritMultiplier"));
+        var combatSource = loadout.Weapon ?? playerClass;
+        var playerBaseDamage = Math.Max(0d, Number(combatSource, "Damage"));
+        var playerDamageType = (DamageType)(int)Number(combatSource, "DamageType");
+        var playerScalingStat = Math.Clamp((int)Number(combatSource, "ScalingStat"), 0, stats.Length - 1);
+        var playerScaling = (int)Number(combatSource, "Scaling");
+        var playerCritChance = Math.Clamp(Number(combatSource, "CritChance"), 0d, 100d);
+        var playerCritMultiplier = Math.Max(1d, Number(combatSource, "CritMultiplier"));
 
         var playerHit = AverageDamage(
             playerBaseDamage,
@@ -847,15 +916,36 @@ public sealed class FrmBalanceLab : DarkForm
             npcStats[(int)Stat.MagicResist]
         );
 
-        var playerAttackMs = CalculateAttackTimeMs(
+        var playerAttackMs = CalculatePlayerAttackTimeMs(
             stats[(int)Stat.Speed],
-            (int)Number(playerClass, "AttackSpeedModifier"),
-            (int)Number(playerClass, "AttackSpeedValue"),
-            subtractPingAllowance: true
+            playerClass,
+            loadout.Weapon
         );
 
         var playerAttackSeconds = Math.Max(0.05, playerAttackMs / 1000d);
-        var perPlayerDps = playerHit / playerAttackSeconds;
+        var rawAutoAttackDps = playerHit / playerAttackSeconds;
+
+        var manaRegenPerSecond = CalculateManaRegenPerSecond(
+            playerClass,
+            playerMana,
+            loadout.VitalRegen[1]
+        );
+
+        var spellRotation = EstimateSpellRotation(
+            playerClass,
+            level,
+            stats,
+            npcStats,
+            playerMana,
+            manaRegenPerSecond,
+            includeClassSpells,
+            sustainWindowSeconds
+        );
+
+        var autoAttackDps =
+            rawAutoAttackDps * Math.Max(0.15d, 1d - spellRotation.CastOccupancy);
+
+        var perPlayerDps = Math.Max(0.0001, autoAttackDps + spellRotation.Dps);
         var partyDps = Math.Max(0.0001, perPlayerDps * Math.Max(1, partySize));
 
         var npcBaseDamage = Math.Max(0d, Number(npc, "Damage"));
@@ -901,9 +991,16 @@ public sealed class FrmBalanceLab : DarkForm
             Level = level,
             ClassName = Text(playerClass, "Name", "Unnamed Class"),
             PlayerHp = playerHp,
+            PlayerMana = playerMana,
             PlayerDamagePerHit = playerHit,
             PlayerAttackSeconds = playerAttackSeconds,
             PlayerDps = perPlayerDps,
+            AutoAttackDps = autoAttackDps,
+            SpellDps = spellRotation.Dps,
+            ManaUsePerSecond = spellRotation.ManaPerSecond,
+            GearPower = loadout.Power,
+            GearSummary = loadout.Summary,
+            SpellSummary = spellRotation.Summary,
             NpcDamagePerHit = npcHit,
             NpcAttackSeconds = npcAttackSeconds,
             NpcDps = npcDps,
@@ -911,6 +1008,358 @@ public sealed class FrmBalanceLab : DarkForm
             HpLossPercent = hpLoss,
             TimeToPartyWipeSeconds = timeToWipe,
         };
+    }
+
+    private static LoadoutSnapshot BuildLoadout(int profile)
+    {
+        var loadout = new LoadoutSnapshot();
+        if (profile <= 0)
+        {
+            return loadout;
+        }
+
+        var bySlot = ItemDescriptor.Lookup.Values
+            .Where(item =>
+                item != null &&
+                (int)Number(item, "ItemType") == (int)ItemType.Equipment)
+            .Where(item =>
+            {
+                var slot = (int)Number(item!, "EquipmentSlot");
+                return slot >= 0 && slot < Options.Instance.Equipment.Slots.Count;
+            })
+            .GroupBy(item => (int)Number(item!, "EquipmentSlot"))
+            .ToDictionary(group => group.Key, group => group.Cast<object>().ToArray());
+
+        var selected = new Dictionary<int, object>();
+        var percentile = profile switch
+        {
+            1 => 0.50d,
+            2 => 0.75d,
+            _ => 1.00d,
+        };
+
+        foreach (var pair in bySlot)
+        {
+            var ordered = pair.Value
+                .OrderBy(CalculateEquipmentPower)
+                .ThenBy(item => Text(item, "Name", string.Empty), StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (ordered.Length == 0)
+            {
+                continue;
+            }
+
+            var index = (int)Math.Round(
+                (ordered.Length - 1) * percentile,
+                MidpointRounding.AwayFromZero
+            );
+            index = Math.Clamp(index, 0, ordered.Length - 1);
+            selected[pair.Key] = ordered[index];
+        }
+
+        if (selected.TryGetValue(Options.Instance.Equipment.WeaponSlot, out var selectedWeapon) &&
+            Convert.ToBoolean(Property(selectedWeapon, "TwoHanded") ?? false))
+        {
+            selected.Remove(Options.Instance.Equipment.ShieldSlot);
+        }
+
+        var summary = new List<string>();
+        foreach (var pair in selected.OrderBy(pair => pair.Key))
+        {
+            var item = pair.Value;
+            for (var i = 0; i < loadout.FlatStats.Length; i++)
+            {
+                loadout.FlatStats[i] += Indexed(item, "StatsGiven", i);
+                loadout.PercentStats[i] += Indexed(item, "PercentageStatsGiven", i);
+            }
+
+            for (var i = 0; i < loadout.FlatVitals.Length; i++)
+            {
+                loadout.FlatVitals[i] += Indexed(item, "VitalsGiven", i);
+                loadout.PercentVitals[i] += Indexed(item, "PercentageVitalsGiven", i);
+                loadout.VitalRegen[i] += Indexed(item, "VitalsRegen", i);
+            }
+
+            var power = CalculateEquipmentPower(item);
+            loadout.Power += power;
+            loadout.ItemCount++;
+
+            var slotName = pair.Key >= 0 && pair.Key < Options.Instance.Equipment.Slots.Count
+                ? Options.Instance.Equipment.Slots[pair.Key]
+                : $"Slot {pair.Key}";
+
+            summary.Add($"{slotName}: {Text(item, "Name", "Unnamed Item")} (power {power:0.0})");
+
+            if (pair.Key == Options.Instance.Equipment.WeaponSlot)
+            {
+                loadout.Weapon = item;
+            }
+        }
+
+        loadout.Summary = summary.Count == 0
+            ? "No matching equipment found."
+            : string.Join("\r\n", summary);
+
+        return loadout;
+    }
+
+    private static double CalculateEquipmentPower(object item)
+    {
+        var statTotal = 0d;
+        var percentageStats = 0d;
+
+        for (var i = 0; i < 5; i++)
+        {
+            statTotal += Math.Abs(Indexed(item, "StatsGiven", i));
+            percentageStats += Math.Abs(Indexed(item, "PercentageStatsGiven", i));
+        }
+
+        var hp = Math.Abs(Indexed(item, "VitalsGiven", 0));
+        var mp = Math.Abs(Indexed(item, "VitalsGiven", 1));
+        var hpPercent = Math.Abs(Indexed(item, "PercentageVitalsGiven", 0));
+        var mpPercent = Math.Abs(Indexed(item, "PercentageVitalsGiven", 1));
+        var damage = Math.Abs(Number(item, "Damage"));
+        var crit = Math.Abs(Number(item, "CritChance"));
+        var block = Math.Abs(Number(item, "BlockChance"));
+        var scaling = Math.Abs(Number(item, "Scaling"));
+
+        return Math.Max(
+            0.01,
+            statTotal +
+            percentageStats * 2.0 +
+            hp * 0.08 +
+            mp * 0.035 +
+            hpPercent * 1.8 +
+            mpPercent * 0.8 +
+            damage * 1.8 +
+            crit * 1.2 +
+            block * 1.0 +
+            scaling * 0.8
+        );
+    }
+
+    private static SpellRotationSnapshot EstimateSpellRotation(
+        object playerClass,
+        int level,
+        double[] stats,
+        double[] npcStats,
+        double playerMana,
+        double manaRegenPerSecond,
+        bool includeSpells,
+        double sustainWindowSeconds
+    )
+    {
+        var result = new SpellRotationSnapshot();
+        if (!includeSpells)
+        {
+            return result;
+        }
+
+        if (Property(playerClass, "Spells") is not IEnumerable classSpells)
+        {
+            result.Summary = "No class spell list found.";
+            return result;
+        }
+
+        var spellRows = new List<(string Name, double Dps, double ManaPerSecond, double Occupancy)>();
+
+        foreach (var classSpell in classSpells)
+        {
+            if (classSpell == null || Number(classSpell, "Level") > level)
+            {
+                continue;
+            }
+
+            var spellId = GuidValue(classSpell, "Id");
+            if (spellId == Guid.Empty ||
+                !SpellDescriptor.Lookup.TryGetValue(spellId, out var spell) ||
+                spell == null ||
+                (SpellType)(int)Number(spell, "SpellType") != SpellType.CombatSpell)
+            {
+                continue;
+            }
+
+            var combat = Property(spell, "Combat");
+            if (combat == null ||
+                Convert.ToBoolean(Property(combat, "Friendly") ?? false))
+            {
+                continue;
+            }
+
+            var baseDamage = Math.Max(0d, Indexed(combat, "VitalDiff", 0));
+            if (baseDamage <= 0)
+            {
+                continue;
+            }
+
+            var scalingStat = Math.Clamp((int)Number(combat, "ScalingStat"), 0, stats.Length - 1);
+            var hitDamage = AverageDamage(
+                baseDamage,
+                (DamageType)(int)Number(combat, "DamageType"),
+                stats[scalingStat],
+                (int)Number(combat, "Scaling"),
+                Math.Clamp(Number(combat, "CritChance"), 0d, 100d),
+                Math.Max(1d, Number(combat, "CritMultiplier")),
+                npcStats[(int)Stat.Defense],
+                npcStats[(int)Stat.MagicResist]
+            );
+
+            var totalDamage = hitDamage;
+            if (Convert.ToBoolean(Property(combat, "HoTDoT") ?? false))
+            {
+                var duration = Math.Max(0d, Number(combat, "Duration"));
+                var interval = Math.Max(0d, Number(combat, "HotDotInterval"));
+                if (duration > 0 && interval > 0)
+                {
+                    var extraTicks = Math.Ceiling(duration / interval);
+                    totalDamage += hitDamage * extraTicks;
+                }
+            }
+
+            var castMs = Math.Max(0d, Number(spell, "CastDuration"));
+            var cooldownMs = Math.Max(0d, Number(spell, "CooldownDuration"));
+            var ignoresGlobal = Convert.ToBoolean(Property(spell, "IgnoreGlobalCooldown") ?? false);
+            var globalMs =
+                Options.Instance.Combat.EnableGlobalCooldowns && !ignoresGlobal
+                    ? Math.Max(0d, Options.Instance.Combat.GlobalCooldownDuration)
+                    : 0d;
+
+            var cycleMs = Math.Max(250d, castMs + Math.Max(cooldownMs, globalMs));
+            var castsPerSecond = 1000d / cycleMs;
+            var dps = totalDamage * castsPerSecond;
+            var manaCost = Math.Max(0d, Indexed(spell, "VitalCost", 1));
+            var manaPerSecond = manaCost * castsPerSecond;
+            var occupancy = Math.Clamp(castMs / cycleMs, 0d, 1d);
+
+            spellRows.Add(
+                (
+                    Text(spell, "Name", "Unnamed Spell"),
+                    dps,
+                    manaPerSecond,
+                    occupancy
+                )
+            );
+        }
+
+        if (spellRows.Count == 0)
+        {
+            result.Summary = "No damaging class spells are learned at this level.";
+            return result;
+        }
+
+        var rawDps = spellRows.Sum(row => row.Dps);
+        var rawManaPerSecond = spellRows.Sum(row => row.ManaPerSecond);
+        var rawOccupancy = spellRows.Sum(row => row.Occupancy);
+
+        var occupancyScale = rawOccupancy > 0.85d
+            ? 0.85d / rawOccupancy
+            : 1d;
+
+        rawDps *= occupancyScale;
+        rawManaPerSecond *= occupancyScale;
+        rawOccupancy *= occupancyScale;
+
+        var window = Math.Max(1d, sustainWindowSeconds);
+        var sustainableManaPerSecond =
+            playerMana / window + Math.Max(0d, manaRegenPerSecond);
+
+        var manaScale =
+            rawManaPerSecond > 0.0001 && rawManaPerSecond > sustainableManaPerSecond
+                ? Math.Clamp(sustainableManaPerSecond / rawManaPerSecond, 0d, 1d)
+                : 1d;
+
+        result.Dps = rawDps * manaScale;
+        result.ManaPerSecond = rawManaPerSecond * manaScale;
+        result.CastOccupancy = Math.Clamp(rawOccupancy * manaScale, 0d, 0.85d);
+        result.SpellCount = spellRows.Count;
+
+        var top = spellRows
+            .OrderByDescending(row => row.Dps)
+            .Take(5)
+            .Select(row => $"{row.Name}: {row.Dps * occupancyScale * manaScale:0.0} DPS")
+            .ToArray();
+
+        result.Summary =
+            $"Learned damaging spells: {spellRows.Count}\r\n" +
+            $"Spell DPS: {result.Dps:0.0}\r\n" +
+            $"Mana use: {result.ManaPerSecond:0.0}/sec\r\n" +
+            $"Mana sustain budget: {sustainableManaPerSecond:0.0}/sec over {window:0.0}s\r\n" +
+            $"Casting occupancy: {result.CastOccupancy * 100d:0.0}%\r\n" +
+            (manaScale < 0.999
+                ? $"Mana-limited rotation scale: {manaScale * 100d:0.0}%\r\n"
+                : string.Empty) +
+            string.Join("\r\n", top);
+
+        return result;
+    }
+
+    private static double CalculateManaRegenPerSecond(
+        object playerClass,
+        double playerMana,
+        double equipmentManaRegen
+    )
+    {
+        if (!Options.Instance.Combat.RegenVitalsInCombat)
+        {
+            return 0d;
+        }
+
+        var regenRate = Indexed(playerClass, "VitalRegen", 1) + equipmentManaRegen;
+        if (Math.Abs(regenRate) < 0.0001)
+        {
+            return 0d;
+        }
+
+        var regenIntervalSeconds = Math.Max(0.1d, Options.Instance.Combat.RegenTime / 1000d);
+        var regenPerTick =
+            Math.Max(1d, playerMana * Math.Abs(regenRate) / 100d) *
+            Math.Sign(regenRate);
+
+        return regenPerTick / regenIntervalSeconds;
+    }
+
+    private static double CalculatePlayerAttackTimeMs(
+        double speed,
+        object playerClass,
+        object? weapon
+    )
+    {
+        var attackTime = CalculateBaseAttackTimeMs(speed);
+
+        if ((int)Number(playerClass, "AttackSpeedModifier") == 1 &&
+            Number(playerClass, "AttackSpeedValue") > 0)
+        {
+            attackTime = Number(playerClass, "AttackSpeedValue");
+        }
+
+        if (weapon != null)
+        {
+            var weaponModifier = (int)Number(weapon, "AttackSpeedModifier");
+            var weaponValue = Number(weapon, "AttackSpeedValue");
+
+            if (weaponModifier == 1 && weaponValue > 0)
+            {
+                attackTime = weaponValue;
+            }
+            else if (weaponModifier == 2 && weaponValue > 0)
+            {
+                attackTime *= 100d / weaponValue;
+            }
+        }
+
+        return Math.Max(50d, attackTime - 60d);
+    }
+
+    private static double CalculateBaseAttackTimeMs(double speed)
+    {
+        var maxStat = Math.Max(1d, Options.Instance.Player.MaxStat);
+        var clampedSpeed = Math.Clamp(speed, 0d, maxStat);
+
+        return
+            Options.Instance.Combat.MaxAttackRate +
+            (Options.Instance.Combat.MinAttackRate - Options.Instance.Combat.MaxAttackRate) *
+            ((maxStat - clampedSpeed) / maxStat);
     }
 
     private static double ScaleByLevel(
@@ -963,13 +1412,7 @@ public sealed class FrmBalanceLab : DarkForm
         bool subtractPingAllowance
     )
     {
-        var maxStat = Math.Max(1d, Options.Instance.Player.MaxStat);
-        var clampedSpeed = Math.Clamp(speed, 0d, maxStat);
-
-        var attackTime =
-            Options.Instance.Combat.MaxAttackRate +
-            (Options.Instance.Combat.MinAttackRate - Options.Instance.Combat.MaxAttackRate) *
-            ((maxStat - clampedSpeed) / maxStat);
+        var attackTime = CalculateBaseAttackTimeMs(speed);
 
         if (attackSpeedModifier == 1 && attackSpeedValue > 0)
         {
@@ -1593,6 +2036,19 @@ public sealed class FrmBalanceLab : DarkForm
         }
 
         return 0d;
+    }
+
+    private static Guid GuidValue(object source, string name)
+    {
+        var value = Property(source, name);
+        if (value is Guid guid)
+        {
+            return guid;
+        }
+
+        return Guid.TryParse(value?.ToString(), out var parsed)
+            ? parsed
+            : Guid.Empty;
     }
 
     private static double ToDouble(object? value)
