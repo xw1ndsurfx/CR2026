@@ -90,13 +90,22 @@ public partial class FrmNpc : EditorForm
         Dispose();
     }
 
-    private void frmNpc_Load(object sender, EventArgs e)
+    public void RefreshEntitySpriteChoices()
     {
+        var selected = cmbSprite.Text;
         cmbSprite.Items.Clear();
         cmbSprite.Items.Add(Strings.General.None);
         cmbSprite.Items.AddRange(
             GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
         );
+
+        var index = cmbSprite.FindStringExact(selected);
+        cmbSprite.SelectedIndex = index >= 0 ? index : 0;
+    }
+
+    private void frmNpc_Load(object sender, EventArgs e)
+    {
+        RefreshEntitySpriteChoices();
 
         cmbSpell.Items.Clear();
         cmbSpell.Items.AddRange(SpellDescriptor.Names);
