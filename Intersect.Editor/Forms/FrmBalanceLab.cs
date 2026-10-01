@@ -1,6 +1,7 @@
 using System.Collections;
 using DarkUI.Forms;
 using Intersect.Editor.Core;
+using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
@@ -27,6 +28,42 @@ public sealed class FrmBalanceLab : DarkForm
         public Guid Id { get; init; }
     }
 
+    private sealed class ClassChoice
+    {
+        public Guid? Id { get; init; }
+
+        public required string Name { get; init; }
+
+        public override string ToString() => Name;
+    }
+
+    private sealed class CombatSimulation
+    {
+        public int Level { get; init; }
+
+        public required string ClassName { get; init; }
+
+        public double PlayerHp { get; init; }
+
+        public double PlayerDamagePerHit { get; init; }
+
+        public double PlayerAttackSeconds { get; init; }
+
+        public double PlayerDps { get; init; }
+
+        public double NpcDamagePerHit { get; init; }
+
+        public double NpcAttackSeconds { get; init; }
+
+        public double NpcDps { get; init; }
+
+        public double TtkSeconds { get; init; }
+
+        public double HpLossPercent { get; init; }
+
+        public double TimeToPartyWipeSeconds { get; init; }
+    }
+
     private sealed class BalanceEntry
     {
         public required BalanceObjectKind Kind { get; init; }
@@ -51,6 +88,26 @@ public sealed class FrmBalanceLab : DarkForm
         public required string Metrics { get; init; }
 
         public string Suggestion { get; set; } = string.Empty;
+
+        public double? SimulationTtk { get; set; }
+
+        public double? SimulationHpLoss { get; set; }
+
+        public double? SimulationPlayerDps { get; set; }
+
+        public double? SimulationNpcDps { get; set; }
+
+        public double? SimulationSuggestedHp { get; set; }
+
+        public double? SimulationSuggestedDamage { get; set; }
+
+        public int? SimulationLevel { get; set; }
+
+        public string SimulationClass { get; set; } = string.Empty;
+
+        public string SimulationStatus { get; set; } = string.Empty;
+
+        public string SimulationNotes { get; set; } = string.Empty;
     }
 
     private readonly Action<BalanceOpenRequest>? _openEditor;
@@ -63,6 +120,14 @@ public sealed class FrmBalanceLab : DarkForm
     private readonly TextBox _details = new();
     private readonly Label _summary = new();
 
+    private readonly ComboBox _simulationClass = new();
+    private readonly CheckBox _matchNpcLevel = new();
+    private readonly NumericUpDown _simulationLevel = new();
+    private readonly NumericUpDown _partySize = new();
+    private readonly NumericUpDown _targetTtk = new();
+    private readonly NumericUpDown _targetHpLoss = new();
+
+    private readonly List<ClassChoice> _simulationClasses = new();
     private readonly List<BalanceEntry> _entries = new();
 
     public FrmBalanceLab(Action<BalanceOpenRequest>? openEditor = null)
@@ -80,6 +145,7 @@ public sealed class FrmBalanceLab : DarkForm
 
         Shown += (_, _) =>
         {
+            LoadSimulationClasses();
             _profile.SelectedIndex = 1;
             RunAnalysis();
         };
@@ -97,10 +163,24 @@ public sealed class FrmBalanceLab : DarkForm
             BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
         };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 110));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
         Controls.Add(root);
+
+        var topBars = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+        };
+        topBars.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        topBars.RowStyles.Add(new RowStyle(SizeType.Absolute, 56));
+        topBars.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
+        root.Controls.Add(topBars, 0, 0);
 
         var toolbar = new FlowLayoutPanel
         {
@@ -147,7 +227,86 @@ public sealed class FrmBalanceLab : DarkForm
             Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold),
         };
         toolbar.Controls.Add(readOnly);
-        root.Controls.Add(toolbar, 0, 0);
+        topBars.Controls.Add(toolbar, 0, 0);
+
+        var simulationBar = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(10, 8, 10, 7),
+            BackColor = System.Drawing.Color.FromArgb(32, 28, 29),
+        };
+
+        simulationBar.Controls.Add(CreateToolbarLabel("Class:"));
+
+        _simulationClass.Width = 180;
+        _simulationClass.DropDownStyle = ComboBoxStyle.DropDownList;
+        _simulationClass.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        _simulationClass.ForeColor = System.Drawing.Color.White;
+        simulationBar.Controls.Add(_simulationClass);
+
+        _matchNpcLevel.Text = "Match NPC level";
+        _matchNpcLevel.Checked = true;
+        _matchNpcLevel.AutoSize = true;
+        _matchNpcLevel.ForeColor = System.Drawing.Color.Gainsboro;
+        _matchNpcLevel.Margin = new Padding(14, 7, 8, 0);
+        _matchNpcLevel.CheckedChanged += (_, _) =>
+        {
+            _simulationLevel.Enabled = !_matchNpcLevel.Checked;
+        };
+        simulationBar.Controls.Add(_matchNpcLevel);
+
+        simulationBar.Controls.Add(CreateToolbarLabel("Level:"));
+        ConfigureSimulationNumber(
+            _simulationLevel,
+            1,
+            Math.Max(1, Options.Instance.Player.MaxLevel),
+            Math.Min(10, Math.Max(1, Options.Instance.Player.MaxLevel)),
+            64
+        );
+        _simulationLevel.Enabled = false;
+        simulationBar.Controls.Add(_simulationLevel);
+
+        simulationBar.Controls.Add(CreateToolbarLabel("Party:"));
+        ConfigureSimulationNumber(_partySize, 1, 5, 1, 52);
+        simulationBar.Controls.Add(_partySize);
+
+        simulationBar.Controls.Add(CreateToolbarLabel("Target TTK:"));
+        ConfigureSimulationNumber(_targetTtk, 1, 120, 8, 62);
+        _targetTtk.DecimalPlaces = 1;
+        _targetTtk.Increment = 0.5M;
+        simulationBar.Controls.Add(_targetTtk);
+
+        simulationBar.Controls.Add(CreateToolbarLabel("HP loss %:"));
+        ConfigureSimulationNumber(_targetHpLoss, 1, 100, 20, 62);
+        _targetHpLoss.DecimalPlaces = 1;
+        _targetHpLoss.Increment = 1M;
+        simulationBar.Controls.Add(_targetHpLoss);
+
+        var simulate = CreateAccentButton("SIMULATE");
+        simulate.Size = new Size(125, 32);
+        simulate.Margin = new Padding(12, 0, 0, 0);
+        simulate.Click += (_, _) =>
+        {
+            RunCombatSimulation();
+            RefreshGrid();
+        };
+        simulationBar.Controls.Add(simulate);
+
+        var simInfo = new Label
+        {
+            AutoSize = false,
+            Width = 310,
+            Height = 32,
+            Margin = new Padding(14, 0, 0, 0),
+            Text = "Uses Intersect default damage + class growth formulas",
+            ForeColor = System.Drawing.Color.Silver,
+            TextAlign = ContentAlignment.MiddleLeft,
+        };
+        simulationBar.Controls.Add(simInfo);
+
+        topBars.Controls.Add(simulationBar, 0, 1);
 
         var body = new TableLayoutPanel
         {
@@ -173,6 +332,7 @@ public sealed class FrmBalanceLab : DarkForm
         {
             "Overview",
             "NPCs",
+            "Combat Simulation",
             "Equipment / Items",
             "Spells",
             "Resources",
@@ -246,6 +406,24 @@ public sealed class FrmBalanceLab : DarkForm
         number.Maximum = max;
         number.Value = value;
         number.Width = 64;
+        number.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        number.ForeColor = System.Drawing.Color.White;
+        number.BorderStyle = BorderStyle.FixedSingle;
+        number.TextAlign = HorizontalAlignment.Center;
+    }
+
+    private static void ConfigureSimulationNumber(
+        NumericUpDown number,
+        decimal min,
+        decimal max,
+        decimal value,
+        int width
+    )
+    {
+        number.Minimum = min;
+        number.Maximum = max;
+        number.Value = Math.Clamp(value, min, max);
+        number.Width = width;
         number.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
         number.ForeColor = System.Drawing.Color.White;
         number.BorderStyle = BorderStyle.FixedSingle;
@@ -326,6 +504,9 @@ public sealed class FrmBalanceLab : DarkForm
         AddGridColumn("Baseline", 90);
         AddGridColumn("Deviation", 90);
         AddGridColumn("Status", 85);
+        AddGridColumn("TTK", 75);
+        AddGridColumn("HP Lost", 80);
+        AddGridColumn("Sim", 95);
 
         _grid.SelectionChanged += (_, _) => ShowSelectedDetails();
         _grid.CellDoubleClick += (_, _) => OpenSelected();
