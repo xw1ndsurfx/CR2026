@@ -390,13 +390,13 @@ public sealed class FrmAnimationImport : DarkForm
         root.Controls.Add(footer, 0, 2);
 
         AddFooterLabel(footer, "Name:", 14, 15);
-        _name.Location = new Point(62, 10);
+        _name.Location = new System.Drawing.Point(62, 10);
         _name.Size = new Size(265, 28);
         StyleTextBox(_name);
         footer.Controls.Add(_name);
 
         AddFooterLabel(footer, "Folder:", 345, 15);
-        _category.Location = new Point(398, 10);
+        _category.Location = new System.Drawing.Point(398, 10);
         _category.Size = new Size(150, 28);
         _category.DropDownStyle = ComboBoxStyle.DropDown;
         _category.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
@@ -414,13 +414,13 @@ public sealed class FrmAnimationImport : DarkForm
         ConfigureNumber(footer, _frameDuration, 942, 10, 15, 2000, 80);
 
         var importSelected = CreateAccentButton("IMPORT TO GAME + OPEN EDITOR");
-        importSelected.Location = new Point(1040, 8);
+        importSelected.Location = new System.Drawing.Point(1040, 8);
         importSelected.Size = new Size(290, 34);
         importSelected.Click += (_, _) => ImportSelectedAsset();
         footer.Controls.Add(importSelected);
 
         _status.AutoSize = false;
-        _status.Location = new Point(14, 57);
+        _status.Location = new System.Drawing.Point(14, 57);
         _status.Size = new Size(1315, 48);
         _status.ForeColor = System.Drawing.Color.Silver;
         footer.Controls.Add(_status);
@@ -520,7 +520,7 @@ public sealed class FrmAnimationImport : DarkForm
                 AutoSize = true,
                 Text = text,
                 ForeColor = System.Drawing.Color.Gainsboro,
-                Location = new Point(x, y),
+                Location = new System.Drawing.Point(x, y),
             }
         );
     }
@@ -535,7 +535,7 @@ public sealed class FrmAnimationImport : DarkForm
         int value
     )
     {
-        number.Location = new Point(x, y);
+        number.Location = new System.Drawing.Point(x, y);
         number.Size = new Size(62, 28);
         number.Minimum = minimum;
         number.Maximum = maximum;
