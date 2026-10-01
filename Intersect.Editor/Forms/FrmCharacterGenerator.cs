@@ -1,5 +1,7 @@
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using Color = System.Drawing.Color;
+using Point = System.Drawing.Point;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 
