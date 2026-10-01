@@ -43,6 +43,22 @@ public sealed class FrmCharacterGenerator : DarkForm
             new(StringComparer.OrdinalIgnoreCase);
     }
 
+    private sealed class CharacterSnapshot
+    {
+        public CharacterGender Gender { get; init; }
+
+        public bool AdvancedMode { get; init; }
+
+        public string ExportName { get; init; } = string.Empty;
+
+        public CharacterAnimation PreviewAnimation { get; init; }
+
+        public int PreviewDirection { get; init; }
+
+        public Dictionary<string, string> Selections { get; init; } =
+            new(StringComparer.OrdinalIgnoreCase);
+    }
+
     private sealed class PartFamily
     {
         public required string Name { get; init; }
@@ -409,6 +425,8 @@ public sealed class FrmCharacterGenerator : DarkForm
     private readonly TextBox _partSearch = new();
     private readonly Button _favoritePartButton = new();
     private readonly Button _favoritesOnlyButton = new();
+    private readonly Button _undoButton = new();
+    private readonly Button _redoButton = new();
     private readonly Label _categoryTitle = new();
     private readonly PixelPreview _preview = new();
     private readonly TextBox _exportName = new();
@@ -431,6 +449,9 @@ public sealed class FrmCharacterGenerator : DarkForm
     private readonly HashSet<string> _favoriteParts =
         new(StringComparer.OrdinalIgnoreCase);
 
+    private readonly Stack<CharacterSnapshot> _undoHistory = new();
+    private readonly Stack<CharacterSnapshot> _redoHistory = new();
+
     private readonly System.Windows.Forms.Timer _reloadTimer = new() { Interval = 250 };
     private readonly System.Windows.Forms.Timer _previewTimer = new() { Interval = 140 };
 
@@ -441,6 +462,9 @@ public sealed class FrmCharacterGenerator : DarkForm
     private int _previewDirection;
     private int _previewFrame;
     private bool _advancedMode;
+    private bool _favoritesOnly;
+    private bool _populatingParts;
+    private bool _restoringHistory;
     private bool _reloading;
 
     public FrmCharacterGenerator(Action? afterExport = null)
@@ -637,6 +661,28 @@ public sealed class FrmCharacterGenerator : DarkForm
         loadBuildButton.Margin = new Padding(0, 0, 8, 0);
         loadBuildButton.Click += (_, _) => LoadCharacterProject();
         presetBar.Controls.Add(loadBuildButton);
+
+        _undoButton.Text = "↶ UNDO";
+        _undoButton.Size = new Size(96, 32);
+        _undoButton.Margin = new Padding(8, 0, 0, 0);
+        _undoButton.FlatStyle = FlatStyle.Flat;
+        _undoButton.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+        _undoButton.ForeColor = System.Drawing.Color.Gainsboro;
+        _undoButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(90, 78, 81);
+        _undoButton.Click += (_, _) => UndoCharacter();
+        presetBar.Controls.Add(_undoButton);
+
+        _redoButton.Text = "↷ REDO";
+        _redoButton.Size = new Size(96, 32);
+        _redoButton.Margin = new Padding(0, 0, 8, 0);
+        _redoButton.FlatStyle = FlatStyle.Flat;
+        _redoButton.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+        _redoButton.ForeColor = System.Drawing.Color.Gainsboro;
+        _redoButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(90, 78, 81);
+        _redoButton.Click += (_, _) => RedoCharacter();
+        presetBar.Controls.Add(_redoButton);
+
+        UpdateHistoryButtons();
 
         topTools.Controls.Add(simpleBar, 0, 0);
         topTools.Controls.Add(presetBar, 0, 1);
@@ -891,6 +937,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         resetButton.Height = 42;
         resetButton.Click += (_, _) =>
         {
+            RememberState();
             _selectedPartByCategory.Clear();
             _previewFrame = 0;
             PopulatePartsList();
@@ -903,6 +950,111 @@ public sealed class FrmCharacterGenerator : DarkForm
         UpdateDirectionButtonState();
         UpdateFavoritesOnlyButtonState();
         UpdateFavoriteButtonState();
+        UpdateHistoryButtons();
+    }
+
+    private CharacterSnapshot CaptureSnapshot()
+    {
+        return new CharacterSnapshot
+        {
+            Gender = _selectedGender,
+            AdvancedMode = _advancedMode,
+            ExportName = _exportName.Text,
+            PreviewAnimation = _previewAnimation,
+            PreviewDirection = _previewDirection,
+            Selections = new Dictionary<string, string>(
+                _selectedPartByCategory,
+                StringComparer.OrdinalIgnoreCase
+            ),
+        };
+    }
+
+    private void RememberState()
+    {
+        if (_restoringHistory)
+        {
+            return;
+        }
+
+        _undoHistory.Push(CaptureSnapshot());
+        _redoHistory.Clear();
+
+        // Keep memory bounded during long editing sessions.
+        if (_undoHistory.Count > 50)
+        {
+            var recent = _undoHistory.Reverse().Skip(1).ToArray();
+            _undoHistory.Clear();
+            foreach (var snapshot in recent)
+            {
+                _undoHistory.Push(snapshot);
+            }
+        }
+
+        UpdateHistoryButtons();
+    }
+
+    private void UndoCharacter()
+    {
+        if (_undoHistory.Count == 0)
+        {
+            return;
+        }
+
+        _redoHistory.Push(CaptureSnapshot());
+        ApplySnapshot(_undoHistory.Pop());
+        UpdateHistoryButtons();
+    }
+
+    private void RedoCharacter()
+    {
+        if (_redoHistory.Count == 0)
+        {
+            return;
+        }
+
+        _undoHistory.Push(CaptureSnapshot());
+        ApplySnapshot(_redoHistory.Pop());
+        UpdateHistoryButtons();
+    }
+
+    private void ApplySnapshot(CharacterSnapshot snapshot)
+    {
+        _restoringHistory = true;
+        try
+        {
+            _selectedGender = snapshot.Gender;
+            _previewAnimation = snapshot.PreviewAnimation;
+            _previewDirection = Math.Clamp(snapshot.PreviewDirection, 0, 3);
+            _exportName.Text = snapshot.ExportName;
+
+            _selectedPartByCategory.Clear();
+            foreach (var pair in snapshot.Selections)
+            {
+                if (_partsByCategory.TryGetValue(pair.Key, out var parts) &&
+                    parts.Any(part =>
+                        string.Equals(part.Name, pair.Value, StringComparison.OrdinalIgnoreCase)))
+                {
+                    _selectedPartByCategory[pair.Key] = pair.Value;
+                }
+            }
+
+            UpdateGenderButtonState();
+            SetAdvancedMode(snapshot.AdvancedMode);
+            UpdateAnimationButtonState();
+            UpdateDirectionButtonState();
+            PopulatePartsList();
+            DrawPreview();
+        }
+        finally
+        {
+            _restoringHistory = false;
+        }
+    }
+
+    private void UpdateHistoryButtons()
+    {
+        _undoButton.Enabled = _undoHistory.Count > 0;
+        _redoButton.Enabled = _redoHistory.Count > 0;
     }
 
     private string FavoritesFilePath =>
@@ -1035,6 +1187,7 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private void ToggleAdvancedMode()
     {
+        RememberState();
         SetAdvancedMode(!_advancedMode);
     }
 
@@ -1197,6 +1350,7 @@ public sealed class FrmCharacterGenerator : DarkForm
             return;
         }
 
+        RememberState();
         _selectedGender = gender;
 
         foreach (var category in _selectedPartByCategory.Keys.ToArray())
@@ -1325,6 +1479,8 @@ public sealed class FrmCharacterGenerator : DarkForm
                 throw new InvalidOperationException("The build file is empty or invalid.");
             }
 
+            RememberState();
+
             _selectedGender = Enum.TryParse<CharacterGender>(
                 project.Gender,
                 ignoreCase: true,
@@ -1391,6 +1547,7 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private void ApplyPreset(string preset)
     {
+        RememberState();
         _selectedPartByCategory.Clear();
 
         PickRandomPart("Base", required: true);
@@ -1560,6 +1717,7 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private void RandomizeFaceAndHair()
     {
+        RememberState();
         PickRandomPart("Hair", chance: 0.95);
         PickRandomPart("Head", chance: 0.30);
 
@@ -1577,6 +1735,7 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private void RandomizeClothes()
     {
+        RememberState();
         PickRandomPart("Hands", chance: 0.62);
         PickRandomPart("Feet", chance: 0.95);
 
@@ -1602,6 +1761,7 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private void RandomizeEquipment()
     {
+        RememberState();
         var weapon = PickOneCategory(
             new[] { "One Handed", "Staff", "Bow", "Rifle" },
             required: false,
@@ -1638,6 +1798,7 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private void ClearEquipment()
     {
+        RememberState();
         ClearEquipmentSelectionsOnly();
         RefreshAfterRandomize();
     }
@@ -1651,6 +1812,7 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private void RandomizeCharacter()
     {
+        RememberState();
         _selectedPartByCategory.Clear();
 
         // Character foundation.
@@ -2078,6 +2240,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         var category = _categoryList.SelectedItem?.ToString();
         _categoryTitle.Text = category == null ? "PREVIEW" : $"PREVIEW — {category.ToUpperInvariant()}";
 
+        _populatingParts = true;
         _partsView.BeginUpdate();
         _partsView.Items.Clear();
         _partImages.Images.Clear();
@@ -2150,12 +2313,13 @@ public sealed class FrmCharacterGenerator : DarkForm
         }
 
         _partsView.EndUpdate();
+        _populatingParts = false;
         UpdateFavoriteButtonState();
     }
 
     private void SelectCurrentPart()
     {
-        if (_reloading || _partsView.SelectedItems.Count == 0)
+        if (_reloading || _populatingParts || _partsView.SelectedItems.Count == 0)
         {
             return;
         }
@@ -2166,6 +2330,17 @@ public sealed class FrmCharacterGenerator : DarkForm
         {
             return;
         }
+
+        var current = _selectedPartByCategory.TryGetValue(category, out var currentPart)
+            ? currentPart
+            : "None";
+
+        if (string.Equals(current, part, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        RememberState();
 
         if (string.Equals(part, "None", StringComparison.OrdinalIgnoreCase))
         {
