@@ -1,6 +1,7 @@
 using System.Collections;
 using DarkUI.Forms;
 using Intersect.Editor.Core;
+using Intersect.Editor.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.NPCs;
@@ -723,6 +724,424 @@ public sealed class FrmBalanceLab : DarkForm
         }
     }
 
+    private sealed class NpcBatchSuggestion
+    {
+        public Guid Id { get; init; }
+
+        public required string Name { get; init; }
+
+        public int Level { get; init; }
+
+        public required string Status { get; init; }
+
+        public long CurrentHp { get; init; }
+
+        public long SuggestedHp { get; init; }
+
+        public int CurrentDamage { get; init; }
+
+        public int SuggestedDamage { get; init; }
+
+        public int CurrentDefense { get; init; }
+
+        public int SuggestedDefense { get; init; }
+
+        public int CurrentMagicResist { get; init; }
+
+        public int SuggestedMagicResist { get; init; }
+
+        public long CurrentExperience { get; init; }
+
+        public long SuggestedExperience { get; init; }
+
+        public double CurrentTtk { get; init; }
+
+        public double CurrentHpLoss { get; init; }
+
+        public required string Reason { get; init; }
+    }
+
+    private sealed class NpcBalanceSnapshot
+    {
+        public Guid Id { get; init; }
+
+        public required string Name { get; init; }
+
+        public long Hp { get; init; }
+
+        public int Damage { get; init; }
+
+        public int Defense { get; init; }
+
+        public int MagicResist { get; init; }
+
+        public long Experience { get; init; }
+    }
+
+    private sealed class BalanceBatchHistory
+    {
+        public DateTime AppliedAt { get; init; } = DateTime.Now;
+
+        public List<NpcBalanceSnapshot> Entries { get; } = new();
+
+        public bool AppliedHp { get; init; }
+
+        public bool AppliedDamage { get; init; }
+
+        public bool AppliedDefense { get; init; }
+
+        public bool AppliedExperience { get; init; }
+    }
+
+    private sealed class NpcBatchSuggestionForm : DarkForm
+    {
+        private readonly IReadOnlyList<NpcBatchSuggestion> _suggestions;
+        private readonly DataGridView _grid = new();
+        private readonly CheckBox _applyHp = new();
+        private readonly CheckBox _applyDamage = new();
+        private readonly CheckBox _applyDefense = new();
+        private readonly CheckBox _applyExperience = new();
+        private readonly Label _summary = new();
+
+        public NpcBatchSuggestionForm(IReadOnlyList<NpcBatchSuggestion> suggestions)
+        {
+            _suggestions = suggestions;
+
+            Text = "Game Balance Lab - Batch Suggestions";
+            StartPosition = FormStartPosition.CenterParent;
+            MinimumSize = new Size(1050, 620);
+            Size = new Size(1500, 820);
+            BackColor = System.Drawing.Color.FromArgb(18, 18, 18);
+            ForeColor = System.Drawing.Color.Gainsboro;
+
+            var root = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 3,
+                Margin = Padding.Empty,
+                Padding = Padding.Empty,
+                BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
+            };
+            root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 84));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+            Controls.Add(root);
+
+            var header = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                Padding = new Padding(10, 9, 10, 6),
+                BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+            };
+
+            header.Controls.Add(
+                new Label
+                {
+                    AutoSize = false,
+                    Width = 128,
+                    Height = 28,
+                    Text = "Apply fields:",
+                    ForeColor = System.Drawing.Color.Gainsboro,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold),
+                }
+            );
+
+            ConfigureApplyCheckBox(_applyHp, "HP", true);
+            ConfigureApplyCheckBox(_applyDamage, "Damage", true);
+            ConfigureApplyCheckBox(_applyDefense, "Defense + MR", false);
+            ConfigureApplyCheckBox(_applyExperience, "EXP", true);
+
+            header.Controls.Add(_applyHp);
+            header.Controls.Add(_applyDamage);
+            header.Controls.Add(_applyDefense);
+            header.Controls.Add(_applyExperience);
+
+            var note = new Label
+            {
+                AutoSize = false,
+                Width = 665,
+                Height = 28,
+                Margin = new Padding(18, 0, 0, 0),
+                Text = "Defense/MR is optional by default so tank identities are not flattened. Every applied batch can be undone.",
+                ForeColor = System.Drawing.Color.Silver,
+                TextAlign = ContentAlignment.MiddleLeft,
+            };
+            header.Controls.Add(note);
+
+            var selectAll = CreateSmallButton("SELECT ALL");
+            selectAll.Click += (_, _) => SetAllRows(true);
+            header.Controls.Add(selectAll);
+
+            var selectNone = CreateSmallButton("NONE");
+            selectNone.Click += (_, _) => SetAllRows(false);
+            header.Controls.Add(selectNone);
+
+            var selectHard = CreateSmallButton("HARD ONLY");
+            selectHard.Click += (_, _) => SelectByStatus("TOO HARD");
+            header.Controls.Add(selectHard);
+
+            var selectEasy = CreateSmallButton("EASY ONLY");
+            selectEasy.Click += (_, _) => SelectByStatus("TOO EASY");
+            header.Controls.Add(selectEasy);
+
+            root.Controls.Add(header, 0, 0);
+
+            ConfigureSuggestionGrid();
+            root.Controls.Add(_grid, 0, 1);
+
+            var footer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+            };
+            root.Controls.Add(footer, 0, 2);
+
+            _summary.AutoSize = false;
+            _summary.Location = new Point(12, 7);
+            _summary.Size = new Size(850, 38);
+            _summary.ForeColor = System.Drawing.Color.Silver;
+            _summary.TextAlign = ContentAlignment.MiddleLeft;
+            footer.Controls.Add(_summary);
+
+            var cancel = CreateSmallButton("CANCEL");
+            cancel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            cancel.Size = new Size(120, 34);
+            cancel.DialogResult = DialogResult.Cancel;
+            footer.Controls.Add(cancel);
+
+            var apply = new Button
+            {
+                Text = "APPLY SELECTED",
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Size = new Size(190, 34),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = System.Drawing.Color.FromArgb(247, 69, 96),
+                ForeColor = System.Drawing.Color.White,
+                Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold),
+            };
+            apply.FlatAppearance.BorderColor = apply.BackColor;
+            apply.Click += (_, _) =>
+            {
+                if (SelectedSuggestions.Count == 0)
+                {
+                    MessageBox.Show(
+                        this,
+                        "Select at least one NPC first.",
+                        "Batch Suggestions",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
+                    return;
+                }
+
+                DialogResult = DialogResult.OK;
+                Close();
+            };
+            footer.Controls.Add(apply);
+
+            footer.Resize += (_, _) =>
+            {
+                apply.Left = Math.Max(10, footer.ClientSize.Width - apply.Width - 12);
+                apply.Top = 7;
+                cancel.Left = Math.Max(10, apply.Left - cancel.Width - 10);
+                cancel.Top = 7;
+                _summary.Width = Math.Max(200, cancel.Left - _summary.Left - 12);
+            };
+
+            AcceptButton = apply;
+            CancelButton = cancel;
+
+            PopulateRows();
+            UpdateSummary();
+        }
+
+        public IReadOnlyList<NpcBatchSuggestion> SelectedSuggestions =>
+            _grid.Rows
+                .Cast<DataGridViewRow>()
+                .Where(row => Convert.ToBoolean(row.Cells["Apply"].Value ?? false))
+                .Select(row => row.Tag)
+                .OfType<NpcBatchSuggestion>()
+                .ToArray();
+
+        public bool ApplyHp => _applyHp.Checked;
+
+        public bool ApplyDamage => _applyDamage.Checked;
+
+        public bool ApplyDefense => _applyDefense.Checked;
+
+        public bool ApplyExperience => _applyExperience.Checked;
+
+        private static void ConfigureApplyCheckBox(CheckBox checkBox, string text, bool value)
+        {
+            checkBox.Text = text;
+            checkBox.Checked = value;
+            checkBox.AutoSize = true;
+            checkBox.ForeColor = System.Drawing.Color.Gainsboro;
+            checkBox.Margin = new Padding(10, 5, 4, 0);
+        }
+
+        private static Button CreateSmallButton(string text)
+        {
+            return new Button
+            {
+                Text = text,
+                Size = new Size(112, 30),
+                Margin = new Padding(8, 2, 0, 0),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = System.Drawing.Color.FromArgb(55, 47, 49),
+                ForeColor = System.Drawing.Color.Gainsboro,
+                Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 8, FontStyle.Bold),
+            };
+        }
+
+        private void ConfigureSuggestionGrid()
+        {
+            _grid.Dock = DockStyle.Fill;
+            _grid.ReadOnly = false;
+            _grid.AllowUserToAddRows = false;
+            _grid.AllowUserToDeleteRows = false;
+            _grid.AllowUserToResizeRows = false;
+            _grid.RowHeadersVisible = false;
+            _grid.MultiSelect = false;
+            _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            _grid.AutoGenerateColumns = false;
+            _grid.BackgroundColor = System.Drawing.Color.FromArgb(32, 28, 29);
+            _grid.BorderStyle = BorderStyle.None;
+            _grid.GridColor = System.Drawing.Color.FromArgb(60, 52, 54);
+            _grid.EnableHeadersVisualStyles = false;
+            _grid.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(38, 32, 34);
+            _grid.DefaultCellStyle.ForeColor = System.Drawing.Color.Gainsboro;
+            _grid.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(72, 54, 58);
+            _grid.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
+            _grid.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+            _grid.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.White;
+            _grid.ColumnHeadersHeight = 34;
+
+            _grid.Columns.Add(
+                new DataGridViewCheckBoxColumn
+                {
+                    Name = "Apply",
+                    HeaderText = "Apply",
+                    Width = 52,
+                    ReadOnly = false,
+                }
+            );
+
+            AddTextColumn("NPC", "NPC", 190);
+            AddTextColumn("Level", "Lv", 48);
+            AddTextColumn("Status", "Status", 78);
+            AddTextColumn("TTK", "TTK", 72);
+            AddTextColumn("HpLoss", "HP Lost", 72);
+            AddTextColumn("HP", "HP current -> target", 145);
+            AddTextColumn("Damage", "Damage current -> target", 160);
+            AddTextColumn("Defense", "Defense current -> peer", 160);
+            AddTextColumn("MR", "MR current -> peer", 150);
+            AddTextColumn("EXP", "EXP current -> target", 160);
+
+            _grid.CurrentCellDirtyStateChanged += (_, _) =>
+            {
+                if (_grid.IsCurrentCellDirty)
+                {
+                    _grid.CommitEdit(DataGridViewDataErrorContexts.Commit);
+                }
+            };
+            _grid.CellValueChanged += (_, args) =>
+            {
+                if (args.ColumnIndex == _grid.Columns["Apply"].Index)
+                {
+                    UpdateSummary();
+                }
+            };
+        }
+
+        private void AddTextColumn(string name, string header, int width)
+        {
+            _grid.Columns.Add(
+                new DataGridViewTextBoxColumn
+                {
+                    Name = name,
+                    HeaderText = header,
+                    Width = width,
+                    ReadOnly = true,
+                    SortMode = DataGridViewColumnSortMode.Automatic,
+                }
+            );
+        }
+
+        private void PopulateRows()
+        {
+            _grid.Rows.Clear();
+
+            foreach (var suggestion in _suggestions
+                         .OrderBy(suggestion => suggestion.Status == "TOO HARD" ? 0 : 1)
+                         .ThenBy(suggestion => suggestion.Level)
+                         .ThenBy(suggestion => suggestion.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                var rowIndex = _grid.Rows.Add(
+                    true,
+                    suggestion.Name,
+                    suggestion.Level,
+                    suggestion.Status,
+                    $"{suggestion.CurrentTtk:0.00}s",
+                    $"{suggestion.CurrentHpLoss:0.0}%",
+                    $"{suggestion.CurrentHp:N0} -> {suggestion.SuggestedHp:N0}",
+                    $"{suggestion.CurrentDamage:N0} -> {suggestion.SuggestedDamage:N0}",
+                    $"{suggestion.CurrentDefense:N0} -> {suggestion.SuggestedDefense:N0}",
+                    $"{suggestion.CurrentMagicResist:N0} -> {suggestion.SuggestedMagicResist:N0}",
+                    $"{suggestion.CurrentExperience:N0} -> {suggestion.SuggestedExperience:N0}"
+                );
+
+                var row = _grid.Rows[rowIndex];
+                row.Tag = suggestion;
+                row.DefaultCellStyle.ForeColor = suggestion.Status == "TOO HARD"
+                    ? System.Drawing.Color.FromArgb(255, 150, 150)
+                    : System.Drawing.Color.FromArgb(145, 195, 255);
+
+                row.Cells["NPC"].ToolTipText = suggestion.Reason;
+            }
+        }
+
+        private void SetAllRows(bool selected)
+        {
+            foreach (DataGridViewRow row in _grid.Rows)
+            {
+                row.Cells["Apply"].Value = selected;
+            }
+
+            UpdateSummary();
+        }
+
+        private void SelectByStatus(string status)
+        {
+            foreach (DataGridViewRow row in _grid.Rows)
+            {
+                row.Cells["Apply"].Value =
+                    row.Tag is NpcBatchSuggestion suggestion &&
+                    string.Equals(suggestion.Status, status, StringComparison.OrdinalIgnoreCase);
+            }
+
+            UpdateSummary();
+        }
+
+        private void UpdateSummary()
+        {
+            var count = _grid.Rows
+                .Cast<DataGridViewRow>()
+                .Count(row => Convert.ToBoolean(row.Cells["Apply"].Value ?? false));
+
+            var hard = _suggestions.Count(suggestion => suggestion.Status == "TOO HARD");
+            var easy = _suggestions.Count(suggestion => suggestion.Status == "TOO EASY");
+
+            _summary.Text =
+                $"{count:N0} selected of {_suggestions.Count:N0} suggestions   |   Too hard: {hard:N0}   Too easy: {easy:N0}";
+        }
+    }
+
     private sealed class BalanceEntry
     {
         public required BalanceObjectKind Kind { get; init; }
@@ -787,7 +1206,9 @@ public sealed class FrmBalanceLab : DarkForm
     private readonly NumericUpDown _targetHpLoss = new();
     private readonly ComboBox _gearProfile = new();
     private readonly CheckBox _includeClassSpells = new();
+    private readonly Button _undoBatchButton = new();
 
+    private readonly Stack<BalanceBatchHistory> _batchHistory = new();
     private readonly List<ClassChoice> _simulationClasses = new();
     private readonly List<BalanceEntry> _entries = new();
 
@@ -826,7 +1247,7 @@ public sealed class FrmBalanceLab : DarkForm
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 160));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 88));
         Controls.Add(root);
 
         var topBars = new TableLayoutPanel
@@ -1066,9 +1487,28 @@ public sealed class FrmBalanceLab : DarkForm
         };
         root.Controls.Add(footer, 0, 2);
 
+        var batchButton = CreateAccentButton("BATCH SUGGESTIONS");
+        batchButton.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+        batchButton.Location = new Point(12, 7);
+        batchButton.Size = new Size(190, 32);
+        batchButton.Click += (_, _) => ShowBatchSuggestions();
+        footer.Controls.Add(batchButton);
+
+        _undoBatchButton.Text = "UNDO LAST BATCH";
+        _undoBatchButton.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+        _undoBatchButton.Location = new Point(212, 7);
+        _undoBatchButton.Size = new Size(175, 32);
+        _undoBatchButton.FlatStyle = FlatStyle.Flat;
+        _undoBatchButton.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+        _undoBatchButton.ForeColor = System.Drawing.Color.Gainsboro;
+        _undoBatchButton.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold);
+        _undoBatchButton.Click += (_, _) => UndoLastBatch();
+        footer.Controls.Add(_undoBatchButton);
+        UpdateUndoBatchButton();
+
         _summary.AutoSize = false;
-        _summary.Location = new Point(14, 7);
-        _summary.Size = new Size(1050, 32);
+        _summary.Location = new Point(14, 45);
+        _summary.Size = new Size(1400, 32);
         _summary.ForeColor = System.Drawing.Color.Silver;
         _summary.TextAlign = ContentAlignment.MiddleLeft;
         footer.Controls.Add(_summary);
@@ -1109,7 +1549,7 @@ public sealed class FrmBalanceLab : DarkForm
 
             _summary.Width = Math.Max(
                 200,
-                heatmapButton.Left - _summary.Left - 10
+                footer.ClientSize.Width - _summary.Left - 14
             );
         };
     }
