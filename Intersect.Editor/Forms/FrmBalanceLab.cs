@@ -544,6 +544,359 @@ public sealed class FrmBalanceLab : DarkForm
         }
     }
 
+    private void LoadSimulationClasses()
+    {
+        _simulationClasses.Clear();
+        _simulationClass.Items.Clear();
+
+        var all = new ClassChoice
+        {
+            Id = null,
+            Name = "Average all classes",
+        };
+        _simulationClasses.Add(all);
+        _simulationClass.Items.Add(all);
+
+        foreach (var pair in ClassDescriptor.Lookup
+                     .Where(pair => pair.Value != null)
+                     .OrderBy(pair => Text(pair.Value!, "Name", "Unnamed Class"), StringComparer.OrdinalIgnoreCase))
+        {
+            var choice = new ClassChoice
+            {
+                Id = pair.Key,
+                Name = Text(pair.Value!, "Name", "Unnamed Class"),
+            };
+            _simulationClasses.Add(choice);
+            _simulationClass.Items.Add(choice);
+        }
+
+        _simulationClass.SelectedIndex = 0;
+    }
+
+    private void RunCombatSimulation()
+    {
+        foreach (var entry in _entries.Where(entry => entry.Kind == BalanceObjectKind.Npc))
+        {
+            entry.SimulationTtk = null;
+            entry.SimulationHpLoss = null;
+            entry.SimulationPlayerDps = null;
+            entry.SimulationNpcDps = null;
+            entry.SimulationSuggestedHp = null;
+            entry.SimulationSuggestedDamage = null;
+            entry.SimulationLevel = null;
+            entry.SimulationClass = string.Empty;
+            entry.SimulationStatus = string.Empty;
+            entry.SimulationNotes = string.Empty;
+        }
+
+        var selectedChoice = _simulationClass.SelectedItem as ClassChoice;
+        var classes = new List<object>();
+
+        if (selectedChoice?.Id is Guid selectedId &&
+            ClassDescriptor.Lookup.TryGetValue(selectedId, out var selectedClass) &&
+            selectedClass != null)
+        {
+            classes.Add(selectedClass);
+        }
+        else
+        {
+            classes.AddRange(
+                ClassDescriptor.Lookup.Values
+                    .Where(value => value != null)
+                    .Cast<object>()
+            );
+        }
+
+        if (classes.Count == 0)
+        {
+            return;
+        }
+
+        var partySize = Math.Clamp((int)_partySize.Value, 1, 5);
+        var targetTtk = Math.Max(0.1, (double)_targetTtk.Value);
+        var targetHpLoss = Math.Max(0.1, (double)_targetHpLoss.Value);
+
+        foreach (var entry in _entries.Where(entry => entry.Kind == BalanceObjectKind.Npc))
+        {
+            if (!NPCDescriptor.Lookup.TryGetValue(entry.Id, out var npc) || npc == null)
+            {
+                continue;
+            }
+
+            var npcLevel = Math.Max(1, (int)Math.Round(Number(npc, "Level")));
+            var level = _matchNpcLevel.Checked
+                ? npcLevel
+                : Math.Clamp(
+                    (int)_simulationLevel.Value,
+                    1,
+                    Math.Max(1, Options.Instance.Player.MaxLevel)
+                );
+
+            var results = classes
+                .Select(playerClass => SimulateClassVsNpc(playerClass, npc, level, partySize))
+                .Where(result => result != null)
+                .Cast<CombatSimulation>()
+                .ToArray();
+
+            if (results.Length == 0)
+            {
+                continue;
+            }
+
+            var ttk = results.Average(result => result.TtkSeconds);
+            var hpLoss = results.Average(result => result.HpLossPercent);
+            var outgoingDps = results.Average(result => result.PlayerDps) * partySize;
+            var incomingDps = results.Average(result => result.NpcDps);
+            var worstHpLoss = results.Max(result => result.HpLossPercent);
+            var bestHpLoss = results.Min(result => result.HpLossPercent);
+            var minTtk = results.Min(result => result.TtkSeconds);
+            var maxTtk = results.Max(result => result.TtkSeconds);
+
+            var npcHp = Math.Max(1d, Indexed(npc, "MaxVitals", 0));
+            var npcBaseDamage = Math.Max(0d, Number(npc, "Damage"));
+
+            entry.SimulationTtk = ttk;
+            entry.SimulationHpLoss = hpLoss;
+            entry.SimulationPlayerDps = outgoingDps;
+            entry.SimulationNpcDps = incomingDps;
+            entry.SimulationLevel = level;
+            entry.SimulationClass = selectedChoice?.Id == null
+                ? $"Average of {results.Length} class(es)"
+                : selectedChoice.Name;
+
+            entry.SimulationSuggestedHp = ttk > 0
+                ? Math.Max(1d, npcHp * targetTtk / ttk)
+                : npcHp;
+
+            entry.SimulationSuggestedDamage =
+                hpLoss > 0.01 && npcBaseDamage > 0
+                    ? Math.Max(0d, npcBaseDamage * targetHpLoss / hpLoss)
+                    : npcBaseDamage;
+
+            var tooHard =
+                hpLoss >= 100d ||
+                ttk > targetTtk * 1.35 ||
+                hpLoss > targetHpLoss * 1.50;
+
+            var tooEasy =
+                ttk < targetTtk * 0.65 &&
+                hpLoss < targetHpLoss * 0.55;
+
+            entry.SimulationStatus = tooHard
+                ? "TOO HARD"
+                : tooEasy
+                    ? "TOO EASY"
+                    : "TARGET";
+
+            entry.SimulationNotes =
+                $"Simulation basis: {entry.SimulationClass}\r\n" +
+                $"Player level: {level}\r\n" +
+                $"Party size: {partySize}\r\n" +
+                $"Outgoing party DPS: {outgoingDps:0.0}\r\n" +
+                $"Incoming NPC DPS: {incomingDps:0.0}\r\n" +
+                $"Estimated TTK: {ttk:0.00}s (target {targetTtk:0.0}s)\r\n" +
+                $"Estimated party-average HP lost: {hpLoss:0.0}% (target {targetHpLoss:0.0}%)\r\n" +
+                (results.Length > 1
+                    ? $"Class range TTK: {minTtk:0.00}s - {maxTtk:0.00}s\r\n" +
+                      $"Class range HP lost: {bestHpLoss:0.0}% - {worstHpLoss:0.0}%\r\n"
+                    : string.Empty) +
+                $"Suggested NPC HP toward TTK target: {entry.SimulationSuggestedHp:0}\r\n" +
+                $"Suggested base damage toward HP-loss target: {entry.SimulationSuggestedDamage:0.##}\r\n\r\n" +
+                "This is a deterministic baseline using Intersect's default damage formula, " +
+                "class level growth and attack-speed formula. It assumes class auto-attacks with no equipment; " +
+                "spells, status effects, blocking, movement and custom server formulas can change live combat.";
+        }
+    }
+
+    private static CombatSimulation? SimulateClassVsNpc(
+        object playerClass,
+        object npc,
+        int level,
+        int partySize
+    )
+    {
+        var stats = new double[5];
+        var increasePercentage = Convert.ToBoolean(Property(playerClass, "IncreasePercentage") ?? false);
+
+        for (var i = 0; i < stats.Length; i++)
+        {
+            var baseStat = Math.Max(0d, Indexed(playerClass, "BaseStat", i));
+            var increase = Indexed(playerClass, "StatIncrease", i);
+            stats[i] = ScaleByLevel(baseStat, increase, increasePercentage, level);
+        }
+
+        var playerHp = Math.Max(
+            1d,
+            ScaleByLevel(
+                Math.Max(1d, Indexed(playerClass, "BaseVital", 0)),
+                Indexed(playerClass, "VitalIncrease", 0),
+                increasePercentage,
+                level
+            )
+        );
+
+        var npcHp = Math.Max(1d, Indexed(npc, "MaxVitals", 0));
+        var npcStats = new double[5];
+        for (var i = 0; i < npcStats.Length; i++)
+        {
+            npcStats[i] = Math.Max(0d, Indexed(npc, "Stats", i));
+        }
+
+        var playerBaseDamage = Math.Max(0d, Number(playerClass, "Damage"));
+        var playerDamageType = (DamageType)(int)Number(playerClass, "DamageType");
+        var playerScalingStat = Math.Clamp((int)Number(playerClass, "ScalingStat"), 0, stats.Length - 1);
+        var playerScaling = (int)Number(playerClass, "Scaling");
+        var playerCritChance = Math.Clamp(Number(playerClass, "CritChance"), 0d, 100d);
+        var playerCritMultiplier = Math.Max(1d, Number(playerClass, "CritMultiplier"));
+
+        var playerHit = AverageDamage(
+            playerBaseDamage,
+            playerDamageType,
+            stats[playerScalingStat],
+            playerScaling,
+            playerCritChance,
+            playerCritMultiplier,
+            npcStats[(int)Stat.Defense],
+            npcStats[(int)Stat.MagicResist]
+        );
+
+        var playerAttackMs = CalculateAttackTimeMs(
+            stats[(int)Stat.Speed],
+            (int)Number(playerClass, "AttackSpeedModifier"),
+            (int)Number(playerClass, "AttackSpeedValue"),
+            subtractPingAllowance: true
+        );
+
+        var playerAttackSeconds = Math.Max(0.05, playerAttackMs / 1000d);
+        var perPlayerDps = playerHit / playerAttackSeconds;
+        var partyDps = Math.Max(0.0001, perPlayerDps * Math.Max(1, partySize));
+
+        var npcBaseDamage = Math.Max(0d, Number(npc, "Damage"));
+        var npcDamageType = (DamageType)(int)Number(npc, "DamageType");
+        var npcScalingStat = Math.Clamp((int)Number(npc, "ScalingStat"), 0, npcStats.Length - 1);
+        var npcScaling = (int)Number(npc, "Scaling");
+        var npcCritChance = Math.Clamp(Number(npc, "CritChance"), 0d, 100d);
+        var npcCritMultiplier = Math.Max(1d, Number(npc, "CritMultiplier"));
+
+        var npcHit = AverageDamage(
+            npcBaseDamage,
+            npcDamageType,
+            npcStats[npcScalingStat],
+            npcScaling,
+            npcCritChance,
+            npcCritMultiplier,
+            stats[(int)Stat.Defense],
+            stats[(int)Stat.MagicResist]
+        );
+
+        var npcAttackMs = CalculateAttackTimeMs(
+            npcStats[(int)Stat.Speed],
+            (int)Number(npc, "AttackSpeedModifier"),
+            (int)Number(npc, "AttackSpeedValue"),
+            subtractPingAllowance: false
+        );
+
+        var npcAttackSeconds = Math.Max(0.05, npcAttackMs / 1000d);
+        var npcDps = npcHit / npcAttackSeconds;
+
+        var ttk = npcHp / partyDps;
+        var pooledPartyHp = playerHp * Math.Max(1, partySize);
+        var hpLoss = pooledPartyHp <= 0
+            ? 100d
+            : npcDps * ttk / pooledPartyHp * 100d;
+
+        var timeToWipe = npcDps <= 0.0001
+            ? double.PositiveInfinity
+            : pooledPartyHp / npcDps;
+
+        return new CombatSimulation
+        {
+            Level = level,
+            ClassName = Text(playerClass, "Name", "Unnamed Class"),
+            PlayerHp = playerHp,
+            PlayerDamagePerHit = playerHit,
+            PlayerAttackSeconds = playerAttackSeconds,
+            PlayerDps = perPlayerDps,
+            NpcDamagePerHit = npcHit,
+            NpcAttackSeconds = npcAttackSeconds,
+            NpcDps = npcDps,
+            TtkSeconds = ttk,
+            HpLossPercent = hpLoss,
+            TimeToPartyWipeSeconds = timeToWipe,
+        };
+    }
+
+    private static double ScaleByLevel(
+        double baseValue,
+        double increase,
+        bool percentageIncrease,
+        int level
+    )
+    {
+        var safeLevel = Math.Max(1, level);
+        if (percentageIncrease)
+        {
+            return baseValue * Math.Pow(1d + increase / 100d, safeLevel - 1);
+        }
+
+        return baseValue + increase * (safeLevel - 1);
+    }
+
+    private static double AverageDamage(
+        double baseDamage,
+        DamageType damageType,
+        double scalingStat,
+        int scaling,
+        double critChance,
+        double critMultiplier,
+        double victimDefense,
+        double victimMagicResist
+    )
+    {
+        var scaled = baseDamage + scalingStat * scaling / 100d;
+
+        // The default Intersect formula randomizes each hit from 97.5%-102.5%.
+        // Its expected value is 100%, so the Balance Lab uses the mean.
+        var averageCritMultiplier =
+            1d + Math.Clamp(critChance, 0d, 100d) / 100d * (Math.Max(1d, critMultiplier) - 1d);
+
+        var raw = Math.Max(0d, scaled * averageCritMultiplier);
+        return damageType switch
+        {
+            DamageType.Physical => raw * (100d / (100d + Math.Max(0d, victimDefense))),
+            DamageType.Magic => raw * (100d / (100d + Math.Max(0d, victimMagicResist))),
+            _ => raw,
+        };
+    }
+
+    private static double CalculateAttackTimeMs(
+        double speed,
+        int attackSpeedModifier,
+        int attackSpeedValue,
+        bool subtractPingAllowance
+    )
+    {
+        var maxStat = Math.Max(1d, Options.Instance.Player.MaxStat);
+        var clampedSpeed = Math.Clamp(speed, 0d, maxStat);
+
+        var attackTime =
+            Options.Instance.Combat.MaxAttackRate +
+            (Options.Instance.Combat.MinAttackRate - Options.Instance.Combat.MaxAttackRate) *
+            ((maxStat - clampedSpeed) / maxStat);
+
+        if (attackSpeedModifier == 1 && attackSpeedValue > 0)
+        {
+            attackTime = attackSpeedValue;
+        }
+
+        if (subtractPingAllowance)
+        {
+            attackTime -= 60d;
+        }
+
+        return Math.Max(50d, attackTime);
+    }
+
     private void RunAnalysis()
     {
         _entries.Clear();
@@ -555,6 +908,7 @@ public sealed class FrmBalanceLab : DarkForm
         AnalyzeClasses();
 
         ApplyBaselinesAndSeverity();
+        RunCombatSimulation();
         RefreshGrid();
     }
 
@@ -961,6 +1315,9 @@ public sealed class FrmBalanceLab : DarkForm
         visible = selectedScope switch
         {
             "NPCs" => visible.Where(entry => entry.Kind == BalanceObjectKind.Npc),
+            "Combat Simulation" => visible.Where(entry =>
+                entry.Kind == BalanceObjectKind.Npc &&
+                !string.IsNullOrWhiteSpace(entry.SimulationStatus)),
             "Equipment / Items" => visible.Where(entry => entry.Kind == BalanceObjectKind.Item),
             "Spells" => visible.Where(entry => entry.Kind == BalanceObjectKind.Spell),
             "Resources" => visible.Where(entry => entry.Kind == BalanceObjectKind.Resource),
@@ -968,10 +1325,17 @@ public sealed class FrmBalanceLab : DarkForm
             _ => visible.Where(entry => entry.Severity != "OK"),
         };
 
-        visible = visible
-            .OrderBy(entry => entry.Severity == "CRITICAL" ? 0 : entry.Severity == "WARNING" ? 1 : 2)
-            .ThenByDescending(entry => Math.Abs(entry.DeviationPercent))
-            .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase);
+        visible = selectedScope == "Combat Simulation"
+            ? visible
+                .OrderBy(entry => entry.SimulationStatus == "TOO HARD" ? 0 :
+                                  entry.SimulationStatus == "TOO EASY" ? 1 : 2)
+                .ThenByDescending(entry =>
+                    Math.Abs((entry.SimulationHpLoss ?? 0d) - (double)_targetHpLoss.Value))
+                .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+            : visible
+                .OrderBy(entry => entry.Severity == "CRITICAL" ? 0 : entry.Severity == "WARNING" ? 1 : 2)
+                .ThenByDescending(entry => Math.Abs(entry.DeviationPercent))
+                .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase);
 
         _grid.Rows.Clear();
 
@@ -984,7 +1348,10 @@ public sealed class FrmBalanceLab : DarkForm
                 entry.Power.ToString("0.0"),
                 entry.Baseline.ToString("0.0"),
                 $"{entry.DeviationPercent:+0.0;-0.0;0.0}%",
-                entry.Severity
+                entry.Severity,
+                entry.SimulationTtk.HasValue ? $"{entry.SimulationTtk.Value:0.00}s" : "",
+                entry.SimulationHpLoss.HasValue ? $"{entry.SimulationHpLoss.Value:0.0}%" : "",
+                entry.SimulationStatus
             );
 
             var row = _grid.Rows[rowIndex];
@@ -998,14 +1365,29 @@ public sealed class FrmBalanceLab : DarkForm
             {
                 row.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(255, 205, 120);
             }
+
+            if (selectedScope == "Combat Simulation")
+            {
+                row.DefaultCellStyle.ForeColor = entry.SimulationStatus switch
+                {
+                    "TOO HARD" => System.Drawing.Color.FromArgb(255, 135, 135),
+                    "TOO EASY" => System.Drawing.Color.FromArgb(130, 190, 255),
+                    _ => System.Drawing.Color.FromArgb(155, 225, 165),
+                };
+            }
         }
 
         var critical = _entries.Count(entry => entry.Severity == "CRITICAL");
         var warnings = _entries.Count(entry => entry.Severity == "WARNING");
         var ok = _entries.Count(entry => entry.Severity == "OK");
 
+        var simHard = _entries.Count(entry => entry.SimulationStatus == "TOO HARD");
+        var simEasy = _entries.Count(entry => entry.SimulationStatus == "TOO EASY");
+        var simTarget = _entries.Count(entry => entry.SimulationStatus == "TARGET");
+
         _summary.Text =
-            $"Analyzed {_entries.Count:N0} objects - OK: {ok:N0}   Warning: {warnings:N0}   Critical: {critical:N0}";
+            $"Analyzed {_entries.Count:N0} objects - OK: {ok:N0}   Warning: {warnings:N0}   Critical: {critical:N0}" +
+            $"   |   Simulation: Target {simTarget:N0} / Hard {simHard:N0} / Easy {simEasy:N0}";
 
         if (_grid.Rows.Count > 0)
         {
@@ -1036,6 +1418,12 @@ public sealed class FrmBalanceLab : DarkForm
             $"Peer baseline: {entry.Baseline:0.0}\r\n" +
             $"Deviation: {entry.DeviationPercent:+0.0;-0.0;0.0}%\r\n\r\n" +
             $"{entry.Metrics}\r\n\r\n" +
+            (entry.SimulationTtk.HasValue
+                ? $"COMBAT SIMULATION\r\n" +
+                  $"-----------------\r\n" +
+                  $"Status: {entry.SimulationStatus}\r\n" +
+                  $"{entry.SimulationNotes}\r\n\r\n"
+                : string.Empty) +
             $"SUGGESTION\r\n" +
             $"----------\r\n" +
             entry.Suggestion;
