@@ -1,6 +1,7 @@
 using System.Collections;
 using DarkUI.Forms;
 using Intersect.Editor.Core;
+using Intersect.Editor.General;
 using Intersect.Editor.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
@@ -271,7 +272,7 @@ public sealed class FrmBalanceLab : DarkForm
             double targetHpLoss
         )
         {
-            Text = $"Balance Progression - {npcName}";
+            base.Text = $"Balance Progression - {npcName}";
             StartPosition = FormStartPosition.CenterParent;
             MinimumSize = new Size(900, 650);
             Size = new Size(1180, 780);
@@ -383,7 +384,7 @@ public sealed class FrmBalanceLab : DarkForm
             _datasets = datasets;
             _openNpc = openNpc;
 
-            Text = "Corps Royaux - Full Balance Heatmap";
+            base.Text = "Corps Royaux - Full Balance Heatmap";
             StartPosition = FormStartPosition.CenterParent;
             MinimumSize = new Size(1050, 650);
             Size = new Size(1580, 900);
@@ -465,7 +466,7 @@ public sealed class FrmBalanceLab : DarkForm
             root.Controls.Add(footer, 0, 2);
 
             _details.AutoSize = false;
-            _details.Location = new Point(12, 5);
+            _details.Location = new System.Drawing.Point(12, 5);
             _details.Size = new Size(980, 46);
             _details.ForeColor = System.Drawing.Color.Gainsboro;
             _details.TextAlign = ContentAlignment.MiddleLeft;
@@ -807,7 +808,7 @@ public sealed class FrmBalanceLab : DarkForm
         {
             _suggestions = suggestions;
 
-            Text = "Game Balance Lab - Batch Suggestions";
+            base.Text = "Game Balance Lab - Batch Suggestions";
             StartPosition = FormStartPosition.CenterParent;
             MinimumSize = new Size(1050, 620);
             Size = new Size(1500, 820);
@@ -902,7 +903,7 @@ public sealed class FrmBalanceLab : DarkForm
             root.Controls.Add(footer, 0, 2);
 
             _summary.AutoSize = false;
-            _summary.Location = new Point(12, 7);
+            _summary.Location = new System.Drawing.Point(12, 7);
             _summary.Size = new Size(850, 38);
             _summary.ForeColor = System.Drawing.Color.Silver;
             _summary.TextAlign = ContentAlignment.MiddleLeft;
@@ -1216,7 +1217,7 @@ public sealed class FrmBalanceLab : DarkForm
     {
         _openEditor = openEditor;
 
-        Text = "Corps Royaux - Game Balance Lab";
+        base.Text = "Corps Royaux - Game Balance Lab";
         StartPosition = FormStartPosition.CenterParent;
         MinimumSize = new Size(1180, 720);
         Size = new Size(1500, 900);
@@ -1489,14 +1490,14 @@ public sealed class FrmBalanceLab : DarkForm
 
         var batchButton = CreateAccentButton("BATCH SUGGESTIONS");
         batchButton.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-        batchButton.Location = new Point(12, 7);
+        batchButton.Location = new System.Drawing.Point(12, 7);
         batchButton.Size = new Size(190, 32);
         batchButton.Click += (_, _) => ShowBatchSuggestions();
         footer.Controls.Add(batchButton);
 
         _undoBatchButton.Text = "UNDO LAST BATCH";
         _undoBatchButton.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-        _undoBatchButton.Location = new Point(212, 7);
+        _undoBatchButton.Location = new System.Drawing.Point(212, 7);
         _undoBatchButton.Size = new Size(175, 32);
         _undoBatchButton.FlatStyle = FlatStyle.Flat;
         _undoBatchButton.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
@@ -1507,7 +1508,7 @@ public sealed class FrmBalanceLab : DarkForm
         UpdateUndoBatchButton();
 
         _summary.AutoSize = false;
-        _summary.Location = new Point(14, 45);
+        _summary.Location = new System.Drawing.Point(14, 45);
         _summary.Size = new Size(1400, 32);
         _summary.ForeColor = System.Drawing.Color.Silver;
         _summary.TextAlign = ContentAlignment.MiddleLeft;
@@ -1788,7 +1789,8 @@ public sealed class FrmBalanceLab : DarkForm
 
         foreach (var entry in _entries.Where(entry => entry.Kind == BalanceObjectKind.Npc))
         {
-            if (!NPCDescriptor.Lookup.TryGetValue(entry.Id, out var npc) || npc == null)
+            var npc = NPCDescriptor.Get(entry.Id);
+            if (npc == null)
             {
                 continue;
             }
@@ -3164,7 +3166,8 @@ public sealed class FrmBalanceLab : DarkForm
         {
             foreach (var suggestion in selected)
             {
-                if (!NPCDescriptor.Lookup.TryGetValue(suggestion.Id, out var npc) || npc == null)
+                var npc = NPCDescriptor.Get(suggestion.Id);
+                if (npc == null)
                 {
                     continue;
                 }
@@ -3261,7 +3264,8 @@ public sealed class FrmBalanceLab : DarkForm
             var currentExperience = Math.Max(0L, npc.Experience);
 
             var peerNpcs = NPCDescriptor.Lookup.Values
-                .Where(peer => peer != null && peer.Level == level)
+                .OfType<NPCDescriptor>()
+                .Where(peer => peer.Level == level)
                 .ToArray();
 
             var medianDamage = (int)Math.Round(
@@ -3451,7 +3455,8 @@ public sealed class FrmBalanceLab : DarkForm
         {
             foreach (var snapshot in history.Entries)
             {
-                if (!NPCDescriptor.Lookup.TryGetValue(snapshot.Id, out var npc) || npc == null)
+                var npc = NPCDescriptor.Get(snapshot.Id);
+                if (npc == null)
                 {
                     continue;
                 }
