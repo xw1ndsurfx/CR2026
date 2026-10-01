@@ -952,60 +952,141 @@ public sealed class FrmCharacterGenerator : DarkForm
     {
         _selectedPartByCategory.Clear();
 
-        var requiredCategories = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        // Character foundation.
+        PickRandomPart("Base", required: true);
+        PickRandomPart("Body", required: true);
+
+        // Identity / face.
+        PickRandomPart("Hair", chance: 0.92);
+        PickRandomPart("Head", chance: 0.30);
+        PickRandomPart("Hands", chance: 0.62);
+        PickRandomPart("Feet", chance: 0.95);
+
+        if (_selectedGender == CharacterGender.Male)
         {
-            "Base",
-            "Body",
-        };
+            PickRandomPart("Beard", chance: 0.42);
+        }
 
-        var commonCategories = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        // Bottoms are mutually exclusive.
+        PickOneCategory(new[] { "Pants", "Skirt" }, required: true);
+
+        // Overall replaces the normal top/chest stack. Otherwise a shirt/top can
+        // optionally receive an additional chest layer.
+        var hasOverall = _partsByCategory.ContainsKey("Overall") && _random.NextDouble() < 0.20;
+        if (hasOverall && PickRandomPart("Overall", required: true))
         {
-            "Hair",
-            "Pants",
-            "Skirt",
-            "Feet",
-            "Top",
-            "Chest",
-            "Overall",
-            "Hands",
-            "Beard",
-            "Head",
-        };
-
-        foreach (var category in SortCategories(_partsByCategory.Keys))
+            _selectedPartByCategory.Remove("Top");
+            _selectedPartByCategory.Remove("Chest");
+        }
+        else
         {
-            if (!_partsByCategory.TryGetValue(category, out var allParts))
-            {
-                continue;
-            }
+            PickRandomPart("Top", chance: 0.90);
+            PickRandomPart("Chest", chance: 0.45);
+            _selectedPartByCategory.Remove("Overall");
+        }
 
-            var compatible = allParts
-                .Where(part => IsPartCompatibleWithGender(part.Name))
-                .ToArray();
+        // Only one main weapon family can be active at a time.
+        var weapon = PickOneCategory(
+            new[] { "One Handed", "Staff", "Bow", "Rifle" },
+            required: false,
+            overallChance: 0.42
+        );
 
-            if (compatible.Length == 0)
-            {
-                continue;
-            }
+        // Equipment dependencies.
+        if (string.Equals(weapon, "Bow", StringComparison.OrdinalIgnoreCase))
+        {
+            PickRandomPart("Quiver", required: true);
+            _selectedPartByCategory.Remove("Offhand");
+        }
+        else if (string.Equals(weapon, "One Handed", StringComparison.OrdinalIgnoreCase))
+        {
+            PickRandomPart("Offhand", chance: 0.48);
+            _selectedPartByCategory.Remove("Quiver");
+        }
+        else
+        {
+            _selectedPartByCategory.Remove("Offhand");
+            _selectedPartByCategory.Remove("Quiver");
+        }
 
-            var shouldPick = requiredCategories.Contains(category) ||
-                             (commonCategories.Contains(category) && _random.NextDouble() < 0.72) ||
-                             (!commonCategories.Contains(category) &&
-                              !requiredCategories.Contains(category) &&
-                              _random.NextDouble() < 0.18);
+        // Back accessories are intentionally uncommon so randomized characters
+        // do not all look overloaded.
+        PickRandomPart("Cape", chance: 0.22);
 
-            if (!shouldPick)
-            {
-                continue;
-            }
-
-            _selectedPartByCategory[category] =
-                compatible[_random.Next(compatible.Length)].Name;
+        if (_advancedMode)
+        {
+            PickRandomPart("Artifact", chance: 0.10);
+            PickRandomPart("FX", chance: 0.08);
+            PickRandomPart("Bundles", chance: 0.05);
         }
 
         _previewFrame = 0;
         PopulatePartsList();
         DrawPreview();
+    }
+
+    private bool PickRandomPart(string category, double chance = 1.0, bool required = false)
+    {
+        if (!required && _random.NextDouble() > chance)
+        {
+            _selectedPartByCategory.Remove(category);
+            return false;
+        }
+
+        if (!_partsByCategory.TryGetValue(category, out var allParts))
+        {
+            _selectedPartByCategory.Remove(category);
+            return false;
+        }
+
+        var compatible = allParts
+            .Where(part => IsPartCompatibleWithGender(part.Name))
+            .ToArray();
+
+        if (compatible.Length == 0)
+        {
+            _selectedPartByCategory.Remove(category);
+            return false;
+        }
+
+        _selectedPartByCategory[category] =
+            compatible[_random.Next(compatible.Length)].Name;
+        return true;
+    }
+
+    private string? PickOneCategory(
+        IEnumerable<string> categories,
+        bool required,
+        double overallChance = 1.0
+    )
+    {
+        var categoryArray = categories.ToArray();
+
+        foreach (var category in categoryArray)
+        {
+            _selectedPartByCategory.Remove(category);
+        }
+
+        if (!required && _random.NextDouble() > overallChance)
+        {
+            return null;
+        }
+
+        var available = categoryArray
+            .Where(category =>
+                _partsByCategory.TryGetValue(category, out var parts) &&
+                parts.Any(part => IsPartCompatibleWithGender(part.Name)))
+            .ToArray();
+
+        if (available.Length == 0)
+        {
+            return null;
+        }
+
+        var selectedCategory = available[_random.Next(available.Length)];
+        return PickRandomPart(selectedCategory, required: true)
+            ? selectedCategory
+            : null;
     }
 
     private static TableLayoutPanel CreateSection(string title)
