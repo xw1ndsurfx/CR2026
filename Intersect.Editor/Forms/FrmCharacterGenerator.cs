@@ -406,6 +406,9 @@ public sealed class FrmCharacterGenerator : DarkForm
     private readonly ListBox _categoryList = new();
     private readonly ListView _partsView = new();
     private readonly ImageList _partImages = new();
+    private readonly TextBox _partSearch = new();
+    private readonly Button _favoritePartButton = new();
+    private readonly Button _favoritesOnlyButton = new();
     private readonly Label _categoryTitle = new();
     private readonly PixelPreview _preview = new();
     private readonly TextBox _exportName = new();
@@ -423,6 +426,9 @@ public sealed class FrmCharacterGenerator : DarkForm
         new(StringComparer.OrdinalIgnoreCase);
 
     private readonly Dictionary<string, string> _selectedPartByCategory =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly HashSet<string> _favoriteParts =
         new(StringComparer.OrdinalIgnoreCase);
 
     private readonly System.Windows.Forms.Timer _reloadTimer = new() { Interval = 250 };
@@ -453,6 +459,7 @@ public sealed class FrmCharacterGenerator : DarkForm
 
         BuildInterface();
         EnsureFolders();
+        LoadFavorites();
 
         _reloadTimer.Tick += (_, _) =>
         {
@@ -723,14 +730,78 @@ public sealed class FrmCharacterGenerator : DarkForm
         var categoriesPanel = CreateSection("CATEGORIES");
         _categoryList.Dock = DockStyle.Fill;
         StyleListBox(_categoryList);
-        _categoryList.SelectedIndexChanged += (_, _) => PopulatePartsList();
+        _categoryList.SelectedIndexChanged += (_, _) =>
+        {
+            PopulatePartsList();
+            UpdateFavoriteButtonState();
+        };
         categoriesPanel.Controls.Add(_categoryList, 0, 1);
         body.Controls.Add(categoriesPanel, 0, 0);
 
         var partsPanel = CreateSection("PAPERDOLLS");
         ConfigurePartThumbnailView();
-        _partsView.SelectedIndexChanged += (_, _) => SelectCurrentPart();
-        partsPanel.Controls.Add(_partsView, 0, 1);
+        _partsView.SelectedIndexChanged += (_, _) =>
+        {
+            SelectCurrentPart();
+            UpdateFavoriteButtonState();
+        };
+
+        var partsHost = new Panel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = System.Drawing.Color.FromArgb(38, 32, 34),
+        };
+
+        var partsToolbar = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            Height = 38,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            BackColor = System.Drawing.Color.FromArgb(32, 28, 29),
+            Padding = new Padding(4, 4, 4, 2),
+        };
+
+        _partSearch.Width = 160;
+        _partSearch.Height = 28;
+        _partSearch.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        _partSearch.ForeColor = System.Drawing.Color.White;
+        _partSearch.BorderStyle = BorderStyle.FixedSingle;
+        _partSearch.PlaceholderText = "Search paperdolls...";
+        _partSearch.TextChanged += (_, _) => PopulatePartsList();
+
+        _favoritePartButton.Text = "☆ FAVORITE";
+        _favoritePartButton.Size = new Size(102, 28);
+        _favoritePartButton.Margin = new Padding(4, 0, 0, 0);
+        _favoritePartButton.FlatStyle = FlatStyle.Flat;
+        _favoritePartButton.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+        _favoritePartButton.ForeColor = System.Drawing.Color.Gainsboro;
+        _favoritePartButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(90, 78, 81);
+        _favoritePartButton.Click += (_, _) => ToggleSelectedFavorite();
+
+        _favoritesOnlyButton.Text = "★ ONLY";
+        _favoritesOnlyButton.Size = new Size(82, 28);
+        _favoritesOnlyButton.Margin = new Padding(4, 0, 0, 0);
+        _favoritesOnlyButton.FlatStyle = FlatStyle.Flat;
+        _favoritesOnlyButton.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+        _favoritesOnlyButton.ForeColor = System.Drawing.Color.Gainsboro;
+        _favoritesOnlyButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(90, 78, 81);
+        _favoritesOnlyButton.Click += (_, _) =>
+        {
+            _favoritesOnly = !_favoritesOnly;
+            UpdateFavoritesOnlyButtonState();
+            PopulatePartsList();
+        };
+
+        partsToolbar.Controls.Add(_partSearch);
+        partsToolbar.Controls.Add(_favoritePartButton);
+        partsToolbar.Controls.Add(_favoritesOnlyButton);
+
+        partsHost.Controls.Add(_partsView);
+        partsHost.Controls.Add(partsToolbar);
+        partsToolbar.BringToFront();
+
+        partsPanel.Controls.Add(partsHost, 0, 1);
         body.Controls.Add(partsPanel, 1, 0);
 
         var previewPanel = new Panel
@@ -830,6 +901,119 @@ public sealed class FrmCharacterGenerator : DarkForm
         body.Controls.Add(previewPanel, 2, 0);
         UpdateAnimationButtonState();
         UpdateDirectionButtonState();
+        UpdateFavoritesOnlyButtonState();
+        UpdateFavoriteButtonState();
+    }
+
+    private string FavoritesFilePath =>
+        Path.Combine(_charagenRoot, "favorites.json");
+
+    private static string MakeFavoriteKey(string category, string partName)
+    {
+        return category + "::" + partName;
+    }
+
+    private void LoadFavorites()
+    {
+        _favoriteParts.Clear();
+
+        try
+        {
+            if (!File.Exists(FavoritesFilePath))
+            {
+                return;
+            }
+
+            var json = File.ReadAllText(FavoritesFilePath);
+            var favorites = JsonSerializer.Deserialize<string[]>(json) ?? Array.Empty<string>();
+            foreach (var favorite in favorites.Where(value => !string.IsNullOrWhiteSpace(value)))
+            {
+                _favoriteParts.Add(favorite);
+            }
+        }
+        catch
+        {
+            // Favorites are optional metadata; never block the generator if the
+            // file is missing, old or malformed.
+        }
+    }
+
+    private void SaveFavorites()
+    {
+        try
+        {
+            Directory.CreateDirectory(_charagenRoot);
+            File.WriteAllText(
+                FavoritesFilePath,
+                JsonSerializer.Serialize(
+                    _favoriteParts.OrderBy(value => value, StringComparer.OrdinalIgnoreCase).ToArray(),
+                    new JsonSerializerOptions { WriteIndented = true }
+                )
+            );
+        }
+        catch (Exception ex)
+        {
+            _status.Text = "Unable to save favorites: " + ex.Message;
+        }
+    }
+
+    private void ToggleSelectedFavorite()
+    {
+        if (_partsView.SelectedItems.Count == 0)
+        {
+            return;
+        }
+
+        var category = _categoryList.SelectedItem?.ToString();
+        var partName = _partsView.SelectedItems[0].Tag?.ToString();
+        if (string.IsNullOrWhiteSpace(category) ||
+            string.IsNullOrWhiteSpace(partName) ||
+            string.Equals(partName, "None", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var key = MakeFavoriteKey(category, partName);
+        if (!_favoriteParts.Add(key))
+        {
+            _favoriteParts.Remove(key);
+        }
+
+        SaveFavorites();
+        PopulatePartsList();
+        UpdateFavoriteButtonState();
+    }
+
+    private void UpdateFavoriteButtonState()
+    {
+        var category = _categoryList.SelectedItem?.ToString();
+        var partName = _partsView.SelectedItems.Count > 0
+            ? _partsView.SelectedItems[0].Tag?.ToString()
+            : null;
+
+        var canFavorite =
+            !string.IsNullOrWhiteSpace(category) &&
+            !string.IsNullOrWhiteSpace(partName) &&
+            !string.Equals(partName, "None", StringComparison.OrdinalIgnoreCase);
+
+        _favoritePartButton.Enabled = canFavorite;
+
+        var isFavorite = canFavorite &&
+            _favoriteParts.Contains(MakeFavoriteKey(category!, partName!));
+
+        _favoritePartButton.Text = isFavorite ? "★ FAVORITE" : "☆ FAVORITE";
+        _favoritePartButton.BackColor = isFavorite
+            ? System.Drawing.Color.FromArgb(247, 69, 96)
+            : System.Drawing.Color.FromArgb(55, 47, 49);
+        _favoritePartButton.FlatAppearance.BorderColor = _favoritePartButton.BackColor;
+    }
+
+    private void UpdateFavoritesOnlyButtonState()
+    {
+        _favoritesOnlyButton.BackColor = _favoritesOnly
+            ? System.Drawing.Color.FromArgb(247, 69, 96)
+            : System.Drawing.Color.FromArgb(55, 47, 49);
+        _favoritesOnlyButton.FlatAppearance.BorderColor = _favoritesOnlyButton.BackColor;
     }
 
     private void ConfigurePartThumbnailView()
@@ -1917,13 +2101,28 @@ public sealed class FrmCharacterGenerator : DarkForm
 
         if (category != null && _partsByCategory.TryGetValue(category, out var parts))
         {
-            foreach (var part in parts.Where(part => IsPartCompatibleWithGender(part.Name)))
+            var search = _partSearch.Text.Trim();
+
+            var visibleParts = parts
+                .Where(part => IsPartCompatibleWithGender(part.Name))
+                .Where(part =>
+                    string.IsNullOrWhiteSpace(search) ||
+                    part.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
+                .Where(part =>
+                    !_favoritesOnly ||
+                    _favoriteParts.Contains(MakeFavoriteKey(category, part.Name)))
+                .OrderByDescending(part =>
+                    _favoriteParts.Contains(MakeFavoriteKey(category, part.Name)))
+                .ThenBy(part => part.Name, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var part in visibleParts)
             {
                 var key = category + "::" + part.Name;
                 using var thumbnail = CreatePartThumbnail(part);
                 _partImages.Images.Add(key, new Bitmap(thumbnail));
 
-                var item = new ListViewItem(part.Name)
+                var favorite = _favoriteParts.Contains(MakeFavoriteKey(category, part.Name));
+                var item = new ListViewItem((favorite ? "★ " : string.Empty) + part.Name)
                 {
                     ImageKey = key,
                     Tag = part.Name,
@@ -1951,6 +2150,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         }
 
         _partsView.EndUpdate();
+        UpdateFavoriteButtonState();
     }
 
     private void SelectCurrentPart()
