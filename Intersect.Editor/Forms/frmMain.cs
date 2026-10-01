@@ -117,6 +117,7 @@ public partial class FrmMain : Form
         PacketSender.SendRequestProfessionConfiguration(openEditor: false);
         AddAchievementEditorMenu();
         PacketSender.SendRequestAchievementConfiguration(openEditor: false);
+        AddCharacterGeneratorEditorMenu();
         AddWorldEventsEditorMenu();
         Show();
 
@@ -295,6 +296,44 @@ public partial class FrmMain : Form
         var editor = new FrmAchievementConfiguration();
         editor.Show();
         editor.BringToFront();
+    }
+
+    private void AddCharacterGeneratorEditorMenu()
+    {
+        if (contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>()
+            .Any(item => item.Name == "characterGeneratorEditorToolStripMenuItem"))
+        {
+            return;
+        }
+
+        var generator = new ToolStripMenuItem
+        {
+            Name = "characterGeneratorEditorToolStripMenuItem",
+            Text = "Character Generator...",
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
+        };
+
+        generator.Click += (_, _) =>
+        {
+            var editor = new FrmCharacterGenerator(RefreshOpenEntityEditors);
+            editor.Show(this);
+            editor.BringToFront();
+        };
+
+        contentEditorsToolStripMenuItem.DropDownItems.Add(generator);
+    }
+
+    private void RefreshOpenEntityEditors()
+    {
+        if (mNpcEditor != null && !mNpcEditor.IsDisposed && mNpcEditor.Visible)
+        {
+            mNpcEditor.RefreshEntitySpriteChoices();
+        }
+
+        if (mClassEditor != null && !mClassEditor.IsDisposed && mClassEditor.Visible)
+        {
+            mClassEditor.RefreshEntitySpriteChoices();
+        }
     }
 
     private void AddWorldEventsEditorMenu()
