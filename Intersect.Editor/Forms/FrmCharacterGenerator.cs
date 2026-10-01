@@ -25,6 +25,23 @@ public sealed class FrmCharacterGenerator : DarkForm
         Female,
     }
 
+    public sealed class GeneratedItemRequest
+    {
+        public required string ItemName { get; init; }
+
+        public required string IconFile { get; init; }
+
+        public required string PaperdollFile { get; init; }
+
+        public required string SourceCategory { get; init; }
+
+        public required string SourcePartName { get; init; }
+
+        public bool MaleCompatible { get; init; }
+
+        public bool FemaleCompatible { get; init; }
+    }
+
     private sealed class CharacterProject
     {
         public int Version { get; set; } = 1;
@@ -417,7 +434,10 @@ public sealed class FrmCharacterGenerator : DarkForm
     private readonly string _gameRoot;
     private readonly string _charagenRoot;
     private readonly string _entitiesRoot;
+    private readonly string _paperdollsRoot;
+    private readonly string _itemsRoot;
     private readonly Action? _afterExport;
+    private readonly Action<GeneratedItemRequest>? _afterPaperdollExport;
 
     private readonly ListBox _categoryList = new();
     private readonly ListView _partsView = new();
@@ -430,6 +450,9 @@ public sealed class FrmCharacterGenerator : DarkForm
     private readonly Label _categoryTitle = new();
     private readonly PixelPreview _preview = new();
     private readonly TextBox _exportName = new();
+    private readonly TextBox _paperdollExportName = new();
+    private readonly TextBox _itemExportName = new();
+    private readonly CheckBox _createItemAfterPaperdollExport = new();
     private readonly Label _status = new();
     private readonly FlowLayoutPanel _animationButtons = new();
     private readonly Dictionary<CharacterAnimation, Button> _animationButtonLookup = new();
@@ -467,12 +490,18 @@ public sealed class FrmCharacterGenerator : DarkForm
     private bool _restoringHistory;
     private bool _reloading;
 
-    public FrmCharacterGenerator(Action? afterExport = null)
+    public FrmCharacterGenerator(
+        Action? afterExport = null,
+        Action<GeneratedItemRequest>? afterPaperdollExport = null
+    )
     {
         _afterExport = afterExport;
+        _afterPaperdollExport = afterPaperdollExport;
         _gameRoot = ResolveGameRoot();
         _charagenRoot = Path.Combine(_gameRoot, "charagen");
         _entitiesRoot = Path.Combine(_gameRoot, "resources", "entities");
+        _paperdollsRoot = Path.Combine(_gameRoot, "resources", "paperdolls");
+        _itemsRoot = Path.Combine(_gameRoot, "resources", "items");
 
         Text = "Corps Royaux Character Generator";
         StartPosition = FormStartPosition.CenterParent;
@@ -537,6 +566,8 @@ public sealed class FrmCharacterGenerator : DarkForm
     {
         Directory.CreateDirectory(_charagenRoot);
         Directory.CreateDirectory(_entitiesRoot);
+        Directory.CreateDirectory(_paperdollsRoot);
+        Directory.CreateDirectory(_itemsRoot);
 
         foreach (var category in DefaultCategories)
         {
@@ -560,7 +591,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         rootLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 98));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 82));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 126));
         Controls.Add(rootLayout);
 
         var topTools = new TableLayoutPanel
@@ -715,39 +746,39 @@ public sealed class FrmCharacterGenerator : DarkForm
         var exportLabel = new Label
         {
             AutoSize = true,
-            Text = "Export name:",
+            Text = "Character:",
             ForeColor = System.Drawing.Color.Gainsboro,
-            Location = new System.Drawing.Point(18, 16),
+            Location = new System.Drawing.Point(18, 17),
         };
         footer.Controls.Add(exportLabel);
 
-        _exportName.Location = new System.Drawing.Point(110, 12);
-        _exportName.Width = 300;
+        _exportName.Location = new System.Drawing.Point(90, 12);
+        _exportName.Width = 240;
         _exportName.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
         _exportName.ForeColor = System.Drawing.Color.White;
         _exportName.BorderStyle = BorderStyle.FixedSingle;
         footer.Controls.Add(_exportName);
 
-        var exportButton = CreateAccentButton("EXPORT 6 ANIMATIONS");
-        exportButton.Location = new System.Drawing.Point(425, 10);
-        exportButton.Size = new Size(210, 34);
+        var exportButton = CreateAccentButton("EXPORT CHARACTER");
+        exportButton.Location = new System.Drawing.Point(340, 10);
+        exportButton.Size = new Size(185, 34);
         exportButton.Click += (_, _) => ExportCharacter();
         footer.Controls.Add(exportButton);
 
         var refreshButton = CreateDarkButton("REFRESH CHARAGEN");
-        refreshButton.Location = new System.Drawing.Point(645, 10);
-        refreshButton.Size = new Size(180, 34);
+        refreshButton.Location = new System.Drawing.Point(535, 10);
+        refreshButton.Size = new Size(160, 34);
         refreshButton.Click += (_, _) => ReloadAssets();
         footer.Controls.Add(refreshButton);
 
         var importButton = CreateDarkButton("IMPORT ARTIST ZIP");
-        importButton.Location = new System.Drawing.Point(835, 10);
-        importButton.Size = new Size(170, 34);
+        importButton.Location = new System.Drawing.Point(705, 10);
+        importButton.Size = new Size(160, 34);
         importButton.Click += (_, _) => ImportArtistZip();
         footer.Controls.Add(importButton);
 
         var openButton = CreateDarkButton("OPEN CHARAGEN FOLDER");
-        openButton.Location = new System.Drawing.Point(1015, 10);
+        openButton.Location = new System.Drawing.Point(875, 10);
         openButton.Size = new Size(190, 34);
         openButton.Click += (_, _) =>
         {
@@ -766,9 +797,54 @@ public sealed class FrmCharacterGenerator : DarkForm
         };
         footer.Controls.Add(openButton);
 
+        var paperdollLabel = new Label
+        {
+            AutoSize = true,
+            Text = "Paperdoll:",
+            ForeColor = System.Drawing.Color.Gainsboro,
+            Location = new System.Drawing.Point(18, 57),
+        };
+        footer.Controls.Add(paperdollLabel);
+
+        _paperdollExportName.Location = new System.Drawing.Point(90, 52);
+        _paperdollExportName.Width = 205;
+        _paperdollExportName.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        _paperdollExportName.ForeColor = System.Drawing.Color.White;
+        _paperdollExportName.BorderStyle = BorderStyle.FixedSingle;
+        footer.Controls.Add(_paperdollExportName);
+
+        var itemLabel = new Label
+        {
+            AutoSize = true,
+            Text = "Item:",
+            ForeColor = System.Drawing.Color.Gainsboro,
+            Location = new System.Drawing.Point(310, 57),
+        };
+        footer.Controls.Add(itemLabel);
+
+        _itemExportName.Location = new System.Drawing.Point(350, 52);
+        _itemExportName.Width = 205;
+        _itemExportName.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        _itemExportName.ForeColor = System.Drawing.Color.White;
+        _itemExportName.BorderStyle = BorderStyle.FixedSingle;
+        footer.Controls.Add(_itemExportName);
+
+        _createItemAfterPaperdollExport.Text = "Create in Item Editor";
+        _createItemAfterPaperdollExport.Checked = true;
+        _createItemAfterPaperdollExport.AutoSize = true;
+        _createItemAfterPaperdollExport.ForeColor = System.Drawing.Color.Gainsboro;
+        _createItemAfterPaperdollExport.Location = new System.Drawing.Point(570, 56);
+        footer.Controls.Add(_createItemAfterPaperdollExport);
+
+        var exportPaperdollButton = CreateAccentButton("EXPORT PAPERDOLL + ITEM");
+        exportPaperdollButton.Location = new System.Drawing.Point(735, 50);
+        exportPaperdollButton.Size = new Size(230, 34);
+        exportPaperdollButton.Click += (_, _) => ExportSelectedPaperdoll();
+        footer.Controls.Add(exportPaperdollButton);
+
         _status.AutoSize = false;
-        _status.Location = new System.Drawing.Point(18, 50);
-        _status.Size = new Size(1000, 20);
+        _status.Location = new System.Drawing.Point(18, 94);
+        _status.Size = new Size(1180, 22);
         _status.ForeColor = System.Drawing.Color.Silver;
         footer.Controls.Add(_status);
 
@@ -2422,6 +2498,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         else
         {
             _selectedPartByCategory[category] = part;
+            SuggestPaperdollExportNames(part);
         }
 
         _previewFrame = 0;
@@ -2857,6 +2934,292 @@ public sealed class FrmCharacterGenerator : DarkForm
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(20)
             .ToList();
+    }
+
+    private void SuggestPaperdollExportNames(string partName)
+    {
+        var friendly = GetFriendlyPartName(partName);
+        if (string.IsNullOrWhiteSpace(_paperdollExportName.Text))
+        {
+            _paperdollExportName.Text = MakeFileStem(friendly);
+        }
+
+        if (string.IsNullOrWhiteSpace(_itemExportName.Text))
+        {
+            _itemExportName.Text = friendly;
+        }
+    }
+
+    private static string MakeFileStem(string value)
+    {
+        var cleaned = value.Trim();
+        foreach (var invalid in Path.GetInvalidFileNameChars())
+        {
+            cleaned = cleaned.Replace(invalid, '_');
+        }
+
+        cleaned = string.Join(
+            "_",
+            cleaned.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+        );
+
+        return cleaned.Trim('_', '.', ' ');
+    }
+
+    private bool TryGetSelectedPaperdoll(
+        out string category,
+        out string partName,
+        out PartFamily? family
+    )
+    {
+        category = _categoryList.SelectedItem?.ToString() ?? string.Empty;
+        partName = _partsView.SelectedItems.Count > 0
+            ? _partsView.SelectedItems[0].Tag?.ToString() ?? string.Empty
+            : string.Empty;
+        family = null;
+
+        if (string.IsNullOrWhiteSpace(category) ||
+            string.IsNullOrWhiteSpace(partName) ||
+            string.Equals(partName, "None", StringComparison.OrdinalIgnoreCase) ||
+            !_partsByCategory.TryGetValue(category, out var parts))
+        {
+            return false;
+        }
+
+        family = parts.FirstOrDefault(part =>
+            string.Equals(part.Name, partName, StringComparison.OrdinalIgnoreCase));
+
+        return family != null;
+    }
+
+    private static Rectangle FindOpaqueBounds(Bitmap bitmap, Rectangle source)
+    {
+        var left = source.Right;
+        var top = source.Bottom;
+        var right = source.Left - 1;
+        var bottom = source.Top - 1;
+
+        for (var y = source.Top; y < source.Bottom; y++)
+        {
+            for (var x = source.Left; x < source.Right; x++)
+            {
+                if (bitmap.GetPixel(x, y).A == 0)
+                {
+                    continue;
+                }
+
+                left = Math.Min(left, x);
+                top = Math.Min(top, y);
+                right = Math.Max(right, x);
+                bottom = Math.Max(bottom, y);
+            }
+        }
+
+        if (right < left || bottom < top)
+        {
+            return source;
+        }
+
+        return Rectangle.FromLTRB(left, top, right + 1, bottom + 1);
+    }
+
+    private static Bitmap CreateItemPreview32(string sourceFile)
+    {
+        using var sheet = new Bitmap(sourceFile);
+
+        var frameHeight = Math.Max(1, sheet.Height / 4);
+        var frameWidth = Math.Min(frameHeight, sheet.Width);
+        var firstDownFrame = new Rectangle(
+            0,
+            0,
+            Math.Min(frameWidth, sheet.Width),
+            Math.Min(frameHeight, sheet.Height)
+        );
+
+        var opaque = FindOpaqueBounds(sheet, firstDownFrame);
+        var output = new Bitmap(32, 32, PixelFormat.Format32bppArgb);
+
+        using var graphics = Graphics.FromImage(output);
+        graphics.Clear(System.Drawing.Color.Transparent);
+        graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
+        graphics.PixelOffsetMode = PixelOffsetMode.Half;
+        graphics.SmoothingMode = SmoothingMode.None;
+
+        const int padding = 2;
+        var maxSize = 32 - padding * 2;
+        var scale = Math.Min(
+            (double)maxSize / Math.Max(1, opaque.Width),
+            (double)maxSize / Math.Max(1, opaque.Height)
+        );
+        scale = Math.Min(1d, scale);
+
+        var width = Math.Max(1, (int)Math.Round(opaque.Width * scale));
+        var height = Math.Max(1, (int)Math.Round(opaque.Height * scale));
+        var destination = new Rectangle(
+            (32 - width) / 2,
+            (32 - height) / 2,
+            width,
+            height
+        );
+
+        graphics.DrawImage(sheet, destination, opaque, GraphicsUnit.Pixel);
+        return output;
+    }
+
+    private void ExportSelectedPaperdoll()
+    {
+        if (!TryGetSelectedPaperdoll(out var category, out var partName, out var family) ||
+            family == null)
+        {
+            MessageBox.Show(
+                this,
+                "Select a paperdoll thumbnail before exporting.",
+                "Character Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        var paperdollName = MakeFileStem(_paperdollExportName.Text);
+        var itemName = _itemExportName.Text.Trim();
+
+        if (string.IsNullOrWhiteSpace(paperdollName))
+        {
+            MessageBox.Show(
+                this,
+                "Enter a paperdoll name.",
+                "Character Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(itemName))
+        {
+            MessageBox.Show(
+                this,
+                "Enter an item name.",
+                "Character Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        var itemIconStem = MakeFileStem(itemName);
+        if (string.IsNullOrWhiteSpace(itemIconStem))
+        {
+            MessageBox.Show(
+                this,
+                "The item name cannot be converted to a valid icon filename.",
+                "Character Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+            );
+            return;
+        }
+
+        Directory.CreateDirectory(_paperdollsRoot);
+        Directory.CreateDirectory(_itemsRoot);
+
+        var writtenPaperdolls = new List<string>();
+        try
+        {
+            foreach (var definition in AnimationDefinitions)
+            {
+                var sourceFile = family.Resolve(definition.Animation);
+                if (string.IsNullOrWhiteSpace(sourceFile) || !File.Exists(sourceFile))
+                {
+                    throw new InvalidOperationException(
+                        $"No source sprite could be resolved for {definition.Label}."
+                    );
+                }
+
+                using var source = new Bitmap(sourceFile);
+                using var copy = new Bitmap(source);
+
+                var fileName = paperdollName + definition.Suffix + ".png";
+                var destination = Path.Combine(_paperdollsRoot, fileName);
+                var temporary = destination + ".tmp";
+
+                copy.Save(temporary, ImageFormat.Png);
+                File.Move(temporary, destination, true);
+                writtenPaperdolls.Add(fileName);
+            }
+
+            var previewSource =
+                family.Resolve(CharacterAnimation.Idle) ??
+                family.Resolve(CharacterAnimation.Move) ??
+                family.Files.Values.FirstOrDefault();
+
+            if (string.IsNullOrWhiteSpace(previewSource) || !File.Exists(previewSource))
+            {
+                throw new InvalidOperationException("Unable to find a source image for the item preview.");
+            }
+
+            var itemIconFile = itemIconStem + ".png";
+            var itemDestination = Path.Combine(_itemsRoot, itemIconFile);
+            var itemTemporary = itemDestination + ".tmp";
+
+            using (var preview = CreateItemPreview32(previewSource))
+            {
+                preview.Save(itemTemporary, ImageFormat.Png);
+            }
+
+            File.Move(itemTemporary, itemDestination, true);
+
+            GameContentManager.ReloadPaperdollAndItemTextures();
+
+            var maleCompatible =
+                !partName.StartsWith("F_", StringComparison.OrdinalIgnoreCase);
+            var femaleCompatible =
+                !partName.StartsWith("B_", StringComparison.OrdinalIgnoreCase) &&
+                !partName.StartsWith("M_", StringComparison.OrdinalIgnoreCase);
+
+            if (_createItemAfterPaperdollExport.Checked && _afterPaperdollExport != null)
+            {
+                _afterPaperdollExport(
+                    new GeneratedItemRequest
+                    {
+                        ItemName = itemName,
+                        IconFile = itemIconFile,
+                        PaperdollFile = paperdollName + ".png",
+                        SourceCategory = category,
+                        SourcePartName = partName,
+                        MaleCompatible = maleCompatible,
+                        FemaleCompatible = femaleCompatible,
+                    }
+                );
+            }
+
+            _status.Text =
+                $"Paperdoll exported: {paperdollName} — Item icon: {itemIconFile} (32x32).";
+
+            MessageBox.Show(
+                this,
+                $"Paperdoll export complete.\n\n" +
+                $"Paperdoll: resources\\paperdolls\\{paperdollName}.png (+ 5 animation overrides)\n" +
+                $"Item icon: resources\\items\\{itemIconFile} (32x32)\n" +
+                (_createItemAfterPaperdollExport.Checked
+                    ? "\nThe Item Editor will create and prefill the equipment item."
+                    : string.Empty),
+                "Character Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                this,
+                "Paperdoll export failed: " + ex.Message,
+                "Character Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error
+            );
+        }
     }
 
     private void ExportCharacter()
