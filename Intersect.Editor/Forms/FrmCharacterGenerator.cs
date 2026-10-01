@@ -1,7 +1,5 @@
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using Color = System.Drawing.Color;
-using Point = System.Drawing.Point;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 
@@ -48,7 +46,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         public PixelPreview()
         {
             DoubleBuffered = true;
-            BackColor = Color.FromArgb(17, 17, 17);
+            BackColor = System.Drawing.Color.FromArgb(17, 17, 17);
         }
 
         public void SetImage(Bitmap? image)
@@ -73,8 +71,8 @@ public sealed class FrmCharacterGenerator : DarkForm
             base.OnPaint(e);
 
             const int checker = 16;
-            using var dark = new SolidBrush(Color.FromArgb(35, 35, 35));
-            using var light = new SolidBrush(Color.FromArgb(50, 50, 50));
+            using var dark = new SolidBrush(System.Drawing.Color.FromArgb(35, 35, 35));
+            using var light = new SolidBrush(System.Drawing.Color.FromArgb(50, 50, 50));
 
             for (var y = 0; y < Height; y += checker)
             {
@@ -210,8 +208,8 @@ public sealed class FrmCharacterGenerator : DarkForm
         StartPosition = FormStartPosition.CenterParent;
         MinimumSize = new Size(1100, 720);
         Size = new Size(1280, 800);
-        BackColor = Color.FromArgb(18, 18, 18);
-        ForeColor = Color.Gainsboro;
+        BackColor = System.Drawing.Color.FromArgb(18, 18, 18);
+        ForeColor = System.Drawing.Color.Gainsboro;
 
         BuildInterface();
         EnsureFolders();
@@ -269,7 +267,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         {
             Dock = DockStyle.Top,
             Height = 72,
-            BackColor = Color.FromArgb(247, 69, 96),
+            BackColor = System.Drawing.Color.FromArgb(247, 69, 96),
             Padding = new Padding(18, 8, 18, 8),
         };
 
@@ -278,8 +276,8 @@ public sealed class FrmCharacterGenerator : DarkForm
             AutoSize = true,
             Text = "CORPS ROYAUX CHARACTER CREATOR",
             Font = new Font(Font.FontFamily, 20, FontStyle.Bold),
-            ForeColor = Color.FromArgb(20, 20, 20),
-            Location = new Point(16, 18),
+            ForeColor = System.Drawing.Color.FromArgb(20, 20, 20),
+            Location = new System.Drawing.Point(16, 18),
         };
         header.Controls.Add(title);
         Controls.Add(header);
@@ -288,7 +286,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         {
             Dock = DockStyle.Bottom,
             Height = 82,
-            BackColor = Color.FromArgb(25, 22, 23),
+            BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
             Padding = new Padding(14),
         };
         Controls.Add(footer);
@@ -297,32 +295,32 @@ public sealed class FrmCharacterGenerator : DarkForm
         {
             AutoSize = true,
             Text = "Export name:",
-            ForeColor = Color.Gainsboro,
-            Location = new Point(18, 16),
+            ForeColor = System.Drawing.Color.Gainsboro,
+            Location = new System.Drawing.Point(18, 16),
         };
         footer.Controls.Add(exportLabel);
 
-        _exportName.Location = new Point(110, 12);
+        _exportName.Location = new System.Drawing.Point(110, 12);
         _exportName.Width = 300;
-        _exportName.BackColor = Color.FromArgb(45, 38, 40);
-        _exportName.ForeColor = Color.White;
+        _exportName.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        _exportName.ForeColor = System.Drawing.Color.White;
         _exportName.BorderStyle = BorderStyle.FixedSingle;
         footer.Controls.Add(_exportName);
 
         var exportButton = CreateAccentButton("EXPORT 6 ANIMATIONS");
-        exportButton.Location = new Point(425, 10);
+        exportButton.Location = new System.Drawing.Point(425, 10);
         exportButton.Size = new Size(210, 34);
         exportButton.Click += (_, _) => ExportCharacter();
         footer.Controls.Add(exportButton);
 
         var refreshButton = CreateDarkButton("REFRESH CHARAGEN");
-        refreshButton.Location = new Point(645, 10);
+        refreshButton.Location = new System.Drawing.Point(645, 10);
         refreshButton.Size = new Size(180, 34);
         refreshButton.Click += (_, _) => ReloadAssets();
         footer.Controls.Add(refreshButton);
 
         var openButton = CreateDarkButton("OPEN CHARAGEN FOLDER");
-        openButton.Location = new Point(835, 10);
+        openButton.Location = new System.Drawing.Point(835, 10);
         openButton.Size = new Size(200, 34);
         openButton.Click += (_, _) =>
         {
@@ -342,9 +340,9 @@ public sealed class FrmCharacterGenerator : DarkForm
         footer.Controls.Add(openButton);
 
         _status.AutoSize = false;
-        _status.Location = new Point(18, 50);
+        _status.Location = new System.Drawing.Point(18, 50);
         _status.Size = new Size(1000, 20);
-        _status.ForeColor = Color.Silver;
+        _status.ForeColor = System.Drawing.Color.Silver;
         footer.Controls.Add(_status);
 
         var body = new TableLayoutPanel
@@ -352,7 +350,7 @@ public sealed class FrmCharacterGenerator : DarkForm
             Dock = DockStyle.Fill,
             ColumnCount = 3,
             RowCount = 1,
-            BackColor = Color.FromArgb(18, 18, 18),
+            BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
             Padding = new Padding(12),
         };
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220));
@@ -380,14 +378,14 @@ public sealed class FrmCharacterGenerator : DarkForm
         var previewPanel = new Panel
         {
             Dock = DockStyle.Fill,
-            BackColor = Color.FromArgb(12, 12, 12),
+            BackColor = System.Drawing.Color.FromArgb(12, 12, 12),
             Padding = new Padding(12),
         };
 
         _categoryTitle.Dock = DockStyle.Top;
         _categoryTitle.Height = 36;
         _categoryTitle.Font = new Font(Font.FontFamily, 13, FontStyle.Bold);
-        _categoryTitle.ForeColor = Color.FromArgb(247, 69, 96);
+        _categoryTitle.ForeColor = System.Drawing.Color.FromArgb(247, 69, 96);
         _categoryTitle.TextAlign = ContentAlignment.MiddleLeft;
         previewPanel.Controls.Add(_categoryTitle);
 
@@ -395,7 +393,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         _animationButtons.Height = 48;
         _animationButtons.FlowDirection = FlowDirection.LeftToRight;
         _animationButtons.WrapContents = false;
-        _animationButtons.BackColor = Color.FromArgb(12, 12, 12);
+        _animationButtons.BackColor = System.Drawing.Color.FromArgb(12, 12, 12);
         previewPanel.Controls.Add(_animationButtons);
 
         foreach (var definition in AnimationDefinitions)
@@ -419,7 +417,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         {
             Dock = DockStyle.Fill,
             Padding = new Padding(0, 8, 0, 0),
-            BackColor = Color.FromArgb(12, 12, 12),
+            BackColor = System.Drawing.Color.FromArgb(12, 12, 12),
         };
         _preview.Dock = DockStyle.Fill;
         previewHost.Controls.Add(_preview);
@@ -445,7 +443,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         var panel = new Panel
         {
             Dock = DockStyle.Fill,
-            BackColor = Color.FromArgb(28, 24, 25),
+            BackColor = System.Drawing.Color.FromArgb(28, 24, 25),
             Margin = new Padding(4),
             Padding = new Padding(8, 40, 8, 8),
         };
@@ -455,7 +453,7 @@ public sealed class FrmCharacterGenerator : DarkForm
             Text = title,
             Dock = DockStyle.Top,
             Height = 34,
-            ForeColor = Color.FromArgb(247, 69, 96),
+            ForeColor = System.Drawing.Color.FromArgb(247, 69, 96),
             Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 11, FontStyle.Bold),
             TextAlign = ContentAlignment.MiddleLeft,
         };
@@ -466,8 +464,8 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private static void StyleListBox(ListBox list)
     {
-        list.BackColor = Color.FromArgb(38, 32, 34);
-        list.ForeColor = Color.Gainsboro;
+        list.BackColor = System.Drawing.Color.FromArgb(38, 32, 34);
+        list.ForeColor = System.Drawing.Color.Gainsboro;
         list.BorderStyle = BorderStyle.None;
         list.IntegralHeight = false;
         list.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 10);
@@ -479,9 +477,9 @@ public sealed class FrmCharacterGenerator : DarkForm
         {
             Text = text,
             FlatStyle = FlatStyle.Flat,
-            BackColor = Color.FromArgb(247, 69, 96),
-            ForeColor = Color.White,
-            FlatAppearance = { BorderColor = Color.FromArgb(247, 69, 96) },
+            BackColor = System.Drawing.Color.FromArgb(247, 69, 96),
+            ForeColor = System.Drawing.Color.White,
+            FlatAppearance = { BorderColor = System.Drawing.Color.FromArgb(247, 69, 96) },
             Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold),
             Cursor = Cursors.Hand,
         };
@@ -493,9 +491,9 @@ public sealed class FrmCharacterGenerator : DarkForm
         {
             Text = text,
             FlatStyle = FlatStyle.Flat,
-            BackColor = Color.FromArgb(55, 47, 49),
-            ForeColor = Color.Gainsboro,
-            FlatAppearance = { BorderColor = Color.FromArgb(90, 78, 81) },
+            BackColor = System.Drawing.Color.FromArgb(55, 47, 49),
+            ForeColor = System.Drawing.Color.Gainsboro,
+            FlatAppearance = { BorderColor = System.Drawing.Color.FromArgb(90, 78, 81) },
             Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold),
             Cursor = Cursors.Hand,
         };
@@ -506,8 +504,8 @@ public sealed class FrmCharacterGenerator : DarkForm
         foreach (var pair in _animationButtonLookup)
         {
             pair.Value.BackColor = pair.Key == _previewAnimation
-                ? Color.FromArgb(247, 69, 96)
-                : Color.FromArgb(55, 47, 49);
+                ? System.Drawing.Color.FromArgb(247, 69, 96)
+                : System.Drawing.Color.FromArgb(55, 47, 49);
         }
     }
 
@@ -790,7 +788,7 @@ public sealed class FrmCharacterGenerator : DarkForm
             var output = new Bitmap(width, height, PixelFormat.Format32bppArgb);
 
             using var graphics = Graphics.FromImage(output);
-            graphics.Clear(Color.Transparent);
+            graphics.Clear(System.Drawing.Color.Transparent);
             graphics.CompositingMode = CompositingMode.SourceOver;
             graphics.CompositingQuality = CompositingQuality.HighSpeed;
             graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
