@@ -1,6 +1,7 @@
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO.Compression;
+using System.Text.Json;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 
@@ -22,6 +23,24 @@ public sealed class FrmCharacterGenerator : DarkForm
     {
         Male,
         Female,
+    }
+
+    private sealed class CharacterProject
+    {
+        public int Version { get; set; } = 1;
+
+        public string Gender { get; set; } = CharacterGender.Male.ToString();
+
+        public bool AdvancedMode { get; set; }
+
+        public string ExportName { get; set; } = string.Empty;
+
+        public string PreviewAnimation { get; set; } = CharacterAnimation.Move.ToString();
+
+        public int PreviewDirection { get; set; }
+
+        public Dictionary<string, string> Selections { get; set; } =
+            new(StringComparer.OrdinalIgnoreCase);
     }
 
     private sealed class PartFamily
@@ -600,6 +619,18 @@ public sealed class FrmCharacterGenerator : DarkForm
             presetBar.Controls.Add(button);
         }
 
+        var saveBuildButton = CreateDarkButton("SAVE BUILD");
+        saveBuildButton.Size = new Size(112, 32);
+        saveBuildButton.Margin = new Padding(8, 0, 0, 0);
+        saveBuildButton.Click += (_, _) => SaveCharacterProject();
+        presetBar.Controls.Add(saveBuildButton);
+
+        var loadBuildButton = CreateDarkButton("LOAD BUILD");
+        loadBuildButton.Size = new Size(112, 32);
+        loadBuildButton.Margin = new Padding(0, 0, 8, 0);
+        loadBuildButton.Click += (_, _) => LoadCharacterProject();
+        presetBar.Controls.Add(loadBuildButton);
+
         topTools.Controls.Add(simpleBar, 0, 0);
         topTools.Controls.Add(presetBar, 0, 1);
         Controls.Add(topTools);
@@ -820,7 +851,12 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private void ToggleAdvancedMode()
     {
-        _advancedMode = !_advancedMode;
+        SetAdvancedMode(!_advancedMode);
+    }
+
+    private void SetAdvancedMode(bool advancedMode)
+    {
+        _advancedMode = advancedMode;
         _advancedModeButton.Text = _advancedMode ? "ADVANCED MODE" : "SIMPLE MODE";
         _advancedModeButton.BackColor = _advancedMode
             ? System.Drawing.Color.FromArgb(247, 69, 96)
@@ -1019,6 +1055,154 @@ public sealed class FrmCharacterGenerator : DarkForm
         }
 
         return true;
+    }
+
+    private void SaveCharacterProject()
+    {
+        var projectsRoot = Path.Combine(_charagenRoot, "projects");
+        Directory.CreateDirectory(projectsRoot);
+
+        using var dialog = new SaveFileDialog
+        {
+            Filter = "Character Creator build (*.crchar)|*.crchar",
+            Title = "Save character build",
+            InitialDirectory = projectsRoot,
+            FileName = string.IsNullOrWhiteSpace(_exportName.Text)
+                ? "character.crchar"
+                : Path.GetFileNameWithoutExtension(_exportName.Text.Trim()) + ".crchar",
+            AddExtension = true,
+            DefaultExt = "crchar",
+        };
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        try
+        {
+            var project = new CharacterProject
+            {
+                Gender = _selectedGender.ToString(),
+                AdvancedMode = _advancedMode,
+                ExportName = _exportName.Text.Trim(),
+                PreviewAnimation = _previewAnimation.ToString(),
+                PreviewDirection = _previewDirection,
+                Selections = new Dictionary<string, string>(
+                    _selectedPartByCategory,
+                    StringComparer.OrdinalIgnoreCase
+                ),
+            };
+
+            var json = JsonSerializer.Serialize(
+                project,
+                new JsonSerializerOptions { WriteIndented = true }
+            );
+            File.WriteAllText(dialog.FileName, json);
+            _status.Text = $"Saved build: {Path.GetFileName(dialog.FileName)}";
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                this,
+                "Unable to save build: " + ex.Message,
+                "Character Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error
+            );
+        }
+    }
+
+    private void LoadCharacterProject()
+    {
+        var projectsRoot = Path.Combine(_charagenRoot, "projects");
+        Directory.CreateDirectory(projectsRoot);
+
+        using var dialog = new OpenFileDialog
+        {
+            Filter = "Character Creator build (*.crchar)|*.crchar",
+            Title = "Load character build",
+            InitialDirectory = projectsRoot,
+            CheckFileExists = true,
+            Multiselect = false,
+        };
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        try
+        {
+            var json = File.ReadAllText(dialog.FileName);
+            var project = JsonSerializer.Deserialize<CharacterProject>(json);
+            if (project == null)
+            {
+                throw new InvalidOperationException("The build file is empty or invalid.");
+            }
+
+            _selectedGender = Enum.TryParse<CharacterGender>(
+                project.Gender,
+                ignoreCase: true,
+                out var gender
+            )
+                ? gender
+                : CharacterGender.Male;
+
+            _previewAnimation = Enum.TryParse<CharacterAnimation>(
+                project.PreviewAnimation,
+                ignoreCase: true,
+                out var animation
+            )
+                ? animation
+                : CharacterAnimation.Move;
+
+            _previewDirection = Math.Clamp(project.PreviewDirection, 0, 3);
+            _exportName.Text = project.ExportName ?? string.Empty;
+
+            _selectedPartByCategory.Clear();
+            var skipped = 0;
+
+            foreach (var pair in project.Selections ?? new Dictionary<string, string>())
+            {
+                if (!_partsByCategory.TryGetValue(pair.Key, out var parts) ||
+                    !parts.Any(part =>
+                        string.Equals(part.Name, pair.Value, StringComparison.OrdinalIgnoreCase)))
+                {
+                    skipped++;
+                    continue;
+                }
+
+                if (!IsPartCompatibleWithGender(pair.Value))
+                {
+                    skipped++;
+                    continue;
+                }
+
+                _selectedPartByCategory[pair.Key] = pair.Value;
+            }
+
+            UpdateGenderButtonState();
+            SetAdvancedMode(project.AdvancedMode);
+            UpdateAnimationButtonState();
+            UpdateDirectionButtonState();
+            PopulatePartsList();
+            DrawPreview();
+
+            _status.Text = skipped == 0
+                ? $"Loaded build: {Path.GetFileName(dialog.FileName)}"
+                : $"Loaded build: {Path.GetFileName(dialog.FileName)} — skipped {skipped} missing/incompatible selection(s).";
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                this,
+                "Unable to load build: " + ex.Message,
+                "Character Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error
+            );
+        }
     }
 
     private void ApplyPreset(string preset)
@@ -2150,6 +2334,83 @@ public sealed class FrmCharacterGenerator : DarkForm
         }
     }
 
+    private List<string> GetCharacterWarnings()
+    {
+        var warnings = new List<string>();
+
+        if (!_selectedPartByCategory.ContainsKey("Base"))
+        {
+            warnings.Add("No Base paperdoll is selected.");
+        }
+
+        if (!_selectedPartByCategory.ContainsKey("Body"))
+        {
+            warnings.Add("No Body paperdoll is selected.");
+        }
+
+        if (_selectedPartByCategory.ContainsKey("Pants") &&
+            _selectedPartByCategory.ContainsKey("Skirt"))
+        {
+            warnings.Add("Pants and Skirt are both selected.");
+        }
+
+        if (_selectedPartByCategory.ContainsKey("Overall") &&
+            (_selectedPartByCategory.ContainsKey("Top") ||
+             _selectedPartByCategory.ContainsKey("Chest")))
+        {
+            warnings.Add("Overall overlaps the Top/Chest outfit stack.");
+        }
+
+        var weaponCategories = new[] { "One Handed", "Staff", "Bow", "Rifle" };
+        var selectedWeapons = weaponCategories
+            .Where(_selectedPartByCategory.ContainsKey)
+            .ToArray();
+
+        if (selectedWeapons.Length > 1)
+        {
+            warnings.Add("More than one main weapon family is selected.");
+        }
+
+        if (_selectedPartByCategory.ContainsKey("Bow") &&
+            !_selectedPartByCategory.ContainsKey("Quiver"))
+        {
+            warnings.Add("Bow is selected without a Quiver.");
+        }
+
+        foreach (var pair in _selectedPartByCategory)
+        {
+            if (!_partsByCategory.TryGetValue(pair.Key, out var parts))
+            {
+                warnings.Add($"Category '{pair.Key}' no longer exists.");
+                continue;
+            }
+
+            var family = parts.FirstOrDefault(part =>
+                string.Equals(part.Name, pair.Value, StringComparison.OrdinalIgnoreCase));
+
+            if (family == null)
+            {
+                warnings.Add($"Paperdoll '{pair.Value}' in {pair.Key} no longer exists.");
+                continue;
+            }
+
+            foreach (var definition in AnimationDefinitions)
+            {
+                if (!family.Files.ContainsKey(definition.Animation))
+                {
+                    warnings.Add(
+                        $"{pair.Key} / {pair.Value} is missing {definition.Label}; MOVE fallback will be used."
+                    );
+                }
+            }
+        }
+
+        return warnings
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(20)
+            .ToList();
+    }
+
     private void ExportCharacter()
     {
         var name = Path.GetFileNameWithoutExtension(_exportName.Text.Trim());
@@ -2172,6 +2433,26 @@ public sealed class FrmCharacterGenerator : DarkForm
             MessageBox.Show(this, "Select at least one paperdoll before exporting.", "Character Generator",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
+        }
+
+        var warnings = GetCharacterWarnings();
+        if (warnings.Count > 0)
+        {
+            var warningText =
+                "The character can be exported, but the following issues were detected:\n\n" +
+                string.Join("\n", warnings.Select(warning => "• " + warning)) +
+                "\n\nExport anyway?";
+
+            if (MessageBox.Show(
+                    this,
+                    warningText,
+                    "Character Generator — Validation",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning
+                ) != DialogResult.Yes)
+            {
+                return;
+            }
         }
 
         Directory.CreateDirectory(_entitiesRoot);
