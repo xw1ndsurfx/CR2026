@@ -162,19 +162,23 @@ public partial class CharacterWindow
         _detailsButton.HoverEnter += UpdateExtraBuffTooltip; // Update Tooltip on hover.
         UpdateExtraBuffTooltip(null, null); // Initial tooltip update.
 
+        mCharacterWindow.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
+
+        // Create Achievements after JSON layout is loaded. This prevents legacy
+        // CharacterWindow JSON/font data from leaving the dynamically-added button
+        // with stale text geometry (which could render as only a single glyph).
         _achievementsButton = new Button(mCharacterWindow, nameof(_achievementsButton))
         {
+            Font = _detailsButton.Font,
+            FontSize = _detailsButton.FontSize,
             Text = "Achievements",
+            TextAlign = Pos.Center,
         };
         _achievementsButton.Clicked += (_, _) =>
             PacketSender.SendRequestAchievementState(openWindow: true);
 
-        mCharacterWindow.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
-
-        // CharacterWindow JSON only knows about the historical Details button.
-        // Keep both actions on the same bottom row and position the new button
-        // after JSON layout has been applied so it is always visible.
-        const int actionButtonWidth = 120;
+        // Keep both actions on the same bottom row.
+        const int actionButtonWidth = 132;
         const int actionButtonGap = 8;
         var actionButtonHeight = Math.Max(24, _detailsButton.Height);
         var actionButtonsWidth = actionButtonWidth * 2 + actionButtonGap;
@@ -193,6 +197,11 @@ public partial class CharacterWindow
             actionButtonWidth,
             actionButtonHeight
         );
+
+        // Re-apply the text after final bounds/font assignment so Gwen rebuilds the
+        // internal Text control using the actual button width.
+        _achievementsButton.SetText("Achievements");
+        _achievementsButton.Invalidate();
     }
 
     //Update Button Event Handlers
