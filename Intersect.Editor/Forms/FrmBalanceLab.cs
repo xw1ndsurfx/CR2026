@@ -3071,6 +3071,450 @@ public sealed class FrmBalanceLab : DarkForm
             entry.Suggestion;
     }
 
+    private void ShowBatchSuggestions()
+    {
+        // Recalculate against the currently selected simulation profile so the
+        // review window never applies stale recommendations.
+        RunCombatSimulation();
+
+        var suggestions = BuildNpcBatchSuggestions();
+        if (suggestions.Count == 0)
+        {
+            MessageBox.Show(
+                this,
+                "No NPCs are currently outside the combat target range.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        using var form = new NpcBatchSuggestionForm(suggestions);
+        if (form.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        if (!form.ApplyHp &&
+            !form.ApplyDamage &&
+            !form.ApplyDefense &&
+            !form.ApplyExperience)
+        {
+            MessageBox.Show(
+                this,
+                "Select at least one field to apply.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        if (Globals.CurrentEditor != -1)
+        {
+            MessageBox.Show(
+                this,
+                "Close the currently open content editor before applying a balance batch. " +
+                "This prevents the batch from overwriting unsaved editor changes.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+            );
+            return;
+        }
+
+        var selected = form.SelectedSuggestions;
+        if (selected.Count == 0)
+        {
+            return;
+        }
+
+        var fields = new List<string>();
+        if (form.ApplyHp) fields.Add("HP");
+        if (form.ApplyDamage) fields.Add("Damage");
+        if (form.ApplyDefense) fields.Add("Defense/MR");
+        if (form.ApplyExperience) fields.Add("EXP");
+
+        var confirmation = MessageBox.Show(
+            this,
+            $"Apply balance suggestions to {selected.Count:N0} NPC(s)?\n\n" +
+            $"Fields: {string.Join(", ", fields)}\n\n" +
+            "The current values will be kept in an in-session undo batch before saving.",
+            "Apply Balance Batch",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning
+        );
+
+        if (confirmation != DialogResult.Yes)
+        {
+            return;
+        }
+
+        var history = new BalanceBatchHistory
+        {
+            AppliedHp = form.ApplyHp,
+            AppliedDamage = form.ApplyDamage,
+            AppliedDefense = form.ApplyDefense,
+            AppliedExperience = form.ApplyExperience,
+        };
+
+        Cursor = Cursors.WaitCursor;
+        try
+        {
+            foreach (var suggestion in selected)
+            {
+                if (!NPCDescriptor.Lookup.TryGetValue(suggestion.Id, out var npc) || npc == null)
+                {
+                    continue;
+                }
+
+                history.Entries.Add(
+                    new NpcBalanceSnapshot
+                    {
+                        Id = suggestion.Id,
+                        Name = suggestion.Name,
+                        Hp = npc.MaxVitals[(int)Vital.Health],
+                        Damage = npc.Damage,
+                        Defense = npc.Stats[(int)Stat.Defense],
+                        MagicResist = npc.Stats[(int)Stat.MagicResist],
+                        Experience = npc.Experience,
+                    }
+                );
+
+                if (form.ApplyHp)
+                {
+                    npc.MaxVitals[(int)Vital.Health] = Math.Max(1L, suggestion.SuggestedHp);
+                }
+
+                if (form.ApplyDamage)
+                {
+                    npc.Damage = Math.Max(0, suggestion.SuggestedDamage);
+                }
+
+                if (form.ApplyDefense)
+                {
+                    npc.Stats[(int)Stat.Defense] = Math.Clamp(
+                        suggestion.SuggestedDefense,
+                        0,
+                        Options.Instance.Player.MaxStat
+                    );
+                    npc.Stats[(int)Stat.MagicResist] = Math.Clamp(
+                        suggestion.SuggestedMagicResist,
+                        0,
+                        Options.Instance.Player.MaxStat
+                    );
+                }
+
+                if (form.ApplyExperience)
+                {
+                    npc.Experience = Math.Max(0L, suggestion.SuggestedExperience);
+                }
+
+                PacketSender.SendSaveObject(npc);
+            }
+
+            if (history.Entries.Count > 0)
+            {
+                _batchHistory.Push(history);
+            }
+        }
+        finally
+        {
+            Cursor = Cursors.Default;
+        }
+
+        UpdateUndoBatchButton();
+        RunAnalysis();
+
+        MessageBox.Show(
+            this,
+            $"Applied balance changes to {history.Entries.Count:N0} NPC(s).\n\n" +
+            "Use UNDO LAST BATCH if you want to restore the previous values.",
+            "Game Balance Lab",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information
+        );
+    }
+
+    private List<NpcBatchSuggestion> BuildNpcBatchSuggestions()
+    {
+        var suggestions = new List<NpcBatchSuggestion>();
+
+        foreach (var entry in _entries.Where(entry =>
+                     entry.Kind == BalanceObjectKind.Npc &&
+                     (entry.SimulationStatus == "TOO HARD" ||
+                      entry.SimulationStatus == "TOO EASY") &&
+                     entry.SimulationTtk.HasValue &&
+                     entry.SimulationHpLoss.HasValue))
+        {
+            if (!NPCDescriptor.Lookup.TryGetValue(entry.Id, out var npc) || npc == null)
+            {
+                continue;
+            }
+
+            var level = Math.Max(1, npc.Level);
+            var currentHp = Math.Max(1L, npc.MaxVitals[(int)Vital.Health]);
+            var currentDamage = Math.Max(0, npc.Damage);
+            var currentDefense = Math.Max(0, npc.Stats[(int)Stat.Defense]);
+            var currentMagicResist = Math.Max(0, npc.Stats[(int)Stat.MagicResist]);
+            var currentExperience = Math.Max(0L, npc.Experience);
+
+            var peerNpcs = NPCDescriptor.Lookup.Values
+                .Where(peer => peer != null && peer.Level == level)
+                .ToArray();
+
+            var medianDamage = (int)Math.Round(
+                Median(peerNpcs.Select(peer => (double)Math.Max(0, peer!.Damage)))
+            );
+            var medianDefense = (int)Math.Round(
+                Median(peerNpcs.Select(peer => (double)Math.Max(0, peer!.Stats[(int)Stat.Defense])))
+            );
+            var medianMagicResist = (int)Math.Round(
+                Median(peerNpcs.Select(peer => (double)Math.Max(0, peer!.Stats[(int)Stat.MagicResist])))
+            );
+
+            var rawHp = entry.SimulationSuggestedHp ?? currentHp;
+            var suggestedHp = (long)Math.Round(
+                Math.Clamp(
+                    rawHp,
+                    Math.Max(1d, currentHp * 0.25d),
+                    Math.Max(1d, currentHp * 4d)
+                )
+            );
+
+            var rawDamage = entry.SimulationSuggestedDamage ?? currentDamage;
+            if (entry.SimulationStatus == "TOO EASY" &&
+                currentDamage <= 0 &&
+                medianDamage > 0)
+            {
+                rawDamage = medianDamage;
+            }
+
+            var suggestedDamage = (int)Math.Round(
+                Math.Clamp(
+                    rawDamage,
+                    0d,
+                    Math.Max(1d, Math.Max(currentDamage, medianDamage) * 4d)
+                )
+            );
+
+            // Defense and MR are deliberately only nudged toward same-level peers.
+            // They are optional in the batch dialog because they often represent
+            // intentional NPC identity (tank, mage-resistant, glass cannon, etc.).
+            var suggestedDefense = (int)Math.Round(
+                currentDefense + (medianDefense - currentDefense) * 0.35d
+            );
+            var suggestedMagicResist = (int)Math.Round(
+                currentMagicResist + (medianMagicResist - currentMagicResist) * 0.35d
+            );
+
+            suggestedDefense = Math.Clamp(
+                suggestedDefense,
+                0,
+                Options.Instance.Player.MaxStat
+            );
+            suggestedMagicResist = Math.Clamp(
+                suggestedMagicResist,
+                0,
+                Options.Instance.Player.MaxStat
+            );
+
+            var suggestedPower = CalculateNpcPowerForValues(
+                npc,
+                suggestedHp,
+                suggestedDamage,
+                suggestedDefense,
+                suggestedMagicResist
+            );
+
+            var peerRewardEfficiency = Median(
+                _entries
+                    .Where(peer =>
+                        peer.Kind == BalanceObjectKind.Npc &&
+                        string.Equals(peer.Group, entry.Group, StringComparison.OrdinalIgnoreCase) &&
+                        peer.Power > 0 &&
+                        peer.Reward > 0)
+                    .Select(peer => peer.Reward / peer.Power)
+            );
+
+            long suggestedExperience;
+            if (peerRewardEfficiency > 0)
+            {
+                suggestedExperience = (long)Math.Round(
+                    Math.Max(0d, peerRewardEfficiency * suggestedPower)
+                );
+            }
+            else
+            {
+                var oldPower = Math.Max(0.0001d, entry.Power);
+                suggestedExperience = (long)Math.Round(
+                    currentExperience * Math.Clamp(suggestedPower / oldPower, 0.25d, 4d)
+                );
+            }
+
+            var reason =
+                $"{entry.SimulationStatus}: TTK {entry.SimulationTtk.Value:0.00}s, " +
+                $"HP lost {entry.SimulationHpLoss.Value:0.0}%. " +
+                $"Targets: {(double)_targetTtk.Value:0.0}s / {(double)_targetHpLoss.Value:0.0}%.";
+
+            suggestions.Add(
+                new NpcBatchSuggestion
+                {
+                    Id = entry.Id,
+                    Name = entry.Name,
+                    Level = level,
+                    Status = entry.SimulationStatus,
+                    CurrentHp = currentHp,
+                    SuggestedHp = Math.Max(1L, suggestedHp),
+                    CurrentDamage = currentDamage,
+                    SuggestedDamage = Math.Max(0, suggestedDamage),
+                    CurrentDefense = currentDefense,
+                    SuggestedDefense = suggestedDefense,
+                    CurrentMagicResist = currentMagicResist,
+                    SuggestedMagicResist = suggestedMagicResist,
+                    CurrentExperience = currentExperience,
+                    SuggestedExperience = Math.Max(0L, suggestedExperience),
+                    CurrentTtk = entry.SimulationTtk.Value,
+                    CurrentHpLoss = entry.SimulationHpLoss.Value,
+                    Reason = reason,
+                }
+            );
+        }
+
+        return suggestions;
+    }
+
+    private static double CalculateNpcPowerForValues(
+        NPCDescriptor npc,
+        long hp,
+        int damage,
+        int defense,
+        int magicResist
+    )
+    {
+        var attack = Math.Max(0d, npc.Stats[(int)Stat.Attack]);
+        var ap = Math.Max(0d, npc.Stats[(int)Stat.AbilityPower]);
+        var speed = Math.Max(0d, npc.Stats[(int)Stat.Speed]);
+        var crit = Math.Max(0d, npc.CritChance);
+
+        var offense =
+            Math.Max(0, damage) * 2.0 +
+            attack * 0.75 +
+            ap * 0.65 +
+            speed * 0.20 +
+            crit * 0.30;
+
+        var durability =
+            Math.Max(1L, hp) *
+            (1d + (Math.Max(0, defense) + Math.Max(0, magicResist)) / 220d);
+
+        return Math.Max(1d, Math.Sqrt(durability) * Math.Max(1d, offense));
+    }
+
+    private void UndoLastBatch()
+    {
+        if (_batchHistory.Count == 0)
+        {
+            return;
+        }
+
+        if (Globals.CurrentEditor != -1)
+        {
+            MessageBox.Show(
+                this,
+                "Close the currently open content editor before undoing a balance batch.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+            );
+            return;
+        }
+
+        var history = _batchHistory.Peek();
+        var confirmation = MessageBox.Show(
+            this,
+            $"Restore the previous values for {history.Entries.Count:N0} NPC(s)?\n\n" +
+            $"Batch applied: {history.AppliedAt:g}",
+            "Undo Balance Batch",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning
+        );
+
+        if (confirmation != DialogResult.Yes)
+        {
+            return;
+        }
+
+        Cursor = Cursors.WaitCursor;
+        try
+        {
+            foreach (var snapshot in history.Entries)
+            {
+                if (!NPCDescriptor.Lookup.TryGetValue(snapshot.Id, out var npc) || npc == null)
+                {
+                    continue;
+                }
+
+                if (history.AppliedHp)
+                {
+                    npc.MaxVitals[(int)Vital.Health] = Math.Max(1L, snapshot.Hp);
+                }
+
+                if (history.AppliedDamage)
+                {
+                    npc.Damage = Math.Max(0, snapshot.Damage);
+                }
+
+                if (history.AppliedDefense)
+                {
+                    npc.Stats[(int)Stat.Defense] = Math.Clamp(
+                        snapshot.Defense,
+                        0,
+                        Options.Instance.Player.MaxStat
+                    );
+                    npc.Stats[(int)Stat.MagicResist] = Math.Clamp(
+                        snapshot.MagicResist,
+                        0,
+                        Options.Instance.Player.MaxStat
+                    );
+                }
+
+                if (history.AppliedExperience)
+                {
+                    npc.Experience = Math.Max(0L, snapshot.Experience);
+                }
+
+                PacketSender.SendSaveObject(npc);
+            }
+
+            _batchHistory.Pop();
+        }
+        finally
+        {
+            Cursor = Cursors.Default;
+        }
+
+        UpdateUndoBatchButton();
+        RunAnalysis();
+
+        MessageBox.Show(
+            this,
+            "The last balance batch was restored.",
+            "Game Balance Lab",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information
+        );
+    }
+
+    private void UpdateUndoBatchButton()
+    {
+        _undoBatchButton.Enabled = _batchHistory.Count > 0;
+        _undoBatchButton.Text = _batchHistory.Count > 0
+            ? $"UNDO BATCH ({_batchHistory.Count})"
+            : "UNDO LAST BATCH";
+    }
+
     private static string GetSimulationStatus(
         double ttk,
         double hpLoss,
