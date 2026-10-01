@@ -112,6 +112,223 @@ public sealed class FrmBalanceLab : DarkForm
         public string Summary { get; set; } = "Class spells disabled";
     }
 
+    private sealed class ProgressionPoint
+    {
+        public int Level { get; init; }
+
+        public double Ttk { get; init; }
+
+        public double HpLoss { get; init; }
+
+        public double Dps { get; init; }
+    }
+
+    private sealed class ProgressionChart : Control
+    {
+        private readonly IReadOnlyList<ProgressionPoint> _points;
+        private readonly Func<ProgressionPoint, double> _selector;
+        private readonly double _target;
+        private readonly string _title;
+        private readonly string _suffix;
+
+        public ProgressionChart(
+            IReadOnlyList<ProgressionPoint> points,
+            Func<ProgressionPoint, double> selector,
+            double target,
+            string title,
+            string suffix
+        )
+        {
+            _points = points;
+            _selector = selector;
+            _target = target;
+            _title = title;
+            _suffix = suffix;
+
+            Dock = DockStyle.Fill;
+            DoubleBuffered = true;
+            BackColor = System.Drawing.Color.FromArgb(24, 21, 22);
+            ForeColor = System.Drawing.Color.Gainsboro;
+            Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+
+            var graphics = e.Graphics;
+            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+            using var titleBrush = new SolidBrush(System.Drawing.Color.FromArgb(247, 69, 96));
+            using var textBrush = new SolidBrush(System.Drawing.Color.Gainsboro);
+            using var gridPen = new Pen(System.Drawing.Color.FromArgb(58, 50, 52));
+            using var linePen = new Pen(System.Drawing.Color.FromArgb(120, 205, 255), 2f);
+            using var targetPen = new Pen(System.Drawing.Color.FromArgb(255, 205, 120), 1.5f)
+            {
+                DashStyle = System.Drawing.Drawing2D.DashStyle.Dash,
+            };
+
+            graphics.DrawString(_title, new Font(Font, FontStyle.Bold), titleBrush, 10, 8);
+
+            if (_points.Count == 0 || Width < 120 || Height < 100)
+            {
+                graphics.DrawString("No progression data.", Font, textBrush, 10, 36);
+                return;
+            }
+
+            var plot = new Rectangle(58, 38, Math.Max(20, Width - 78), Math.Max(20, Height - 70));
+            var values = _points.Select(_selector).Where(double.IsFinite).ToArray();
+            if (values.Length == 0)
+            {
+                return;
+            }
+
+            var maxValue = Math.Max(values.Max(), _target);
+            maxValue = Math.Max(1d, maxValue * 1.10d);
+
+            for (var i = 0; i <= 4; i++)
+            {
+                var y = plot.Top + plot.Height * i / 4f;
+                graphics.DrawLine(gridPen, plot.Left, y, plot.Right, y);
+
+                var value = maxValue * (1d - i / 4d);
+                graphics.DrawString(
+                    $"{value:0.#}{_suffix}",
+                    Font,
+                    textBrush,
+                    4,
+                    y - Font.Height / 2f
+                );
+            }
+
+            graphics.DrawRectangle(gridPen, plot);
+
+            float XFor(int index) =>
+                _points.Count <= 1
+                    ? plot.Left
+                    : plot.Left + plot.Width * index / (float)(_points.Count - 1);
+
+            float YFor(double value) =>
+                plot.Bottom - (float)(Math.Clamp(value, 0d, maxValue) / maxValue * plot.Height);
+
+            if (_target > 0)
+            {
+                var targetY = YFor(_target);
+                graphics.DrawLine(targetPen, plot.Left, targetY, plot.Right, targetY);
+                graphics.DrawString(
+                    $"Target {_target:0.#}{_suffix}",
+                    Font,
+                    textBrush,
+                    Math.Max(plot.Left, plot.Right - 125),
+                    Math.Max(plot.Top, targetY - Font.Height - 2)
+                );
+            }
+
+            for (var i = 1; i < _points.Count; i++)
+            {
+                var previous = _selector(_points[i - 1]);
+                var current = _selector(_points[i]);
+                if (!double.IsFinite(previous) || !double.IsFinite(current))
+                {
+                    continue;
+                }
+
+                graphics.DrawLine(
+                    linePen,
+                    XFor(i - 1),
+                    YFor(previous),
+                    XFor(i),
+                    YFor(current)
+                );
+            }
+
+            var labelLevels = new[]
+            {
+                0,
+                Math.Max(0, (_points.Count - 1) / 4),
+                Math.Max(0, (_points.Count - 1) / 2),
+                Math.Max(0, (_points.Count - 1) * 3 / 4),
+                _points.Count - 1,
+            }.Distinct();
+
+            foreach (var index in labelLevels)
+            {
+                var x = XFor(index);
+                var label = $"Lv {_points[index].Level}";
+                graphics.DrawString(label, Font, textBrush, x - 18, plot.Bottom + 5);
+            }
+        }
+    }
+
+    private sealed class ProgressionForm : DarkForm
+    {
+        public ProgressionForm(
+            string npcName,
+            string simulationLabel,
+            IReadOnlyList<ProgressionPoint> points,
+            double targetTtk,
+            double targetHpLoss
+        )
+        {
+            Text = $"Balance Progression - {npcName}";
+            StartPosition = FormStartPosition.CenterParent;
+            MinimumSize = new Size(900, 650);
+            Size = new Size(1180, 780);
+            BackColor = System.Drawing.Color.FromArgb(18, 18, 18);
+            ForeColor = System.Drawing.Color.Gainsboro;
+
+            var root = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 3,
+                Margin = Padding.Empty,
+                Padding = new Padding(10),
+                BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
+            };
+            root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 46));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            Controls.Add(root);
+
+            var header = new Label
+            {
+                Dock = DockStyle.Fill,
+                Text = $"{npcName}   |   {simulationLabel}   |   Level 1 -> {points.LastOrDefault()?.Level ?? 1}",
+                ForeColor = System.Drawing.Color.Gainsboro,
+                Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 10, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(8, 0, 0, 0),
+            };
+            root.Controls.Add(header, 0, 0);
+
+            root.Controls.Add(
+                new ProgressionChart(
+                    points,
+                    point => point.Ttk,
+                    targetTtk,
+                    "TIME TO KILL BY PLAYER LEVEL",
+                    "s"
+                ),
+                0,
+                1
+            );
+
+            root.Controls.Add(
+                new ProgressionChart(
+                    points,
+                    point => point.HpLoss,
+                    targetHpLoss,
+                    "ESTIMATED PARTY HP LOST BY PLAYER LEVEL",
+                    "%"
+                ),
+                0,
+                2
+            );
+        }
+    }
+
     private sealed class BalanceEntry
     {
         public required BalanceObjectKind Kind { get; init; }
@@ -462,15 +679,27 @@ public sealed class FrmBalanceLab : DarkForm
         _summary.TextAlign = ContentAlignment.MiddleLeft;
         footer.Controls.Add(_summary);
 
+        var progressionButton = CreateAccentButton("LEVEL 1 -> MAX GRAPH");
+        progressionButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        progressionButton.Size = new Size(210, 32);
+        progressionButton.Click += (_, _) => ShowSelectedProgression();
+        footer.Controls.Add(progressionButton);
+
         var openButton = CreateAccentButton("OPEN SELECTED IN EDITOR");
         openButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-        openButton.Location = new Point(1160, 7);
         openButton.Size = new Size(270, 32);
         openButton.Click += (_, _) => OpenSelected();
         footer.Controls.Add(openButton);
+
         footer.Resize += (_, _) =>
         {
             openButton.Left = Math.Max(10, footer.ClientSize.Width - openButton.Width - 14);
+            progressionButton.Left = Math.Max(
+                10,
+                openButton.Left - progressionButton.Width - 10
+            );
+            progressionButton.Top = 7;
+            openButton.Top = 7;
         };
     }
 
@@ -1996,6 +2225,104 @@ public sealed class FrmBalanceLab : DarkForm
             $"SUGGESTION\r\n" +
             $"----------\r\n" +
             entry.Suggestion;
+    }
+
+    private void ShowSelectedProgression()
+    {
+        if (_grid.SelectedRows.Count == 0 ||
+            _grid.SelectedRows[0].Tag is not BalanceEntry entry ||
+            entry.Kind != BalanceObjectKind.Npc ||
+            !NPCDescriptor.Lookup.TryGetValue(entry.Id, out var npc) ||
+            npc == null)
+        {
+            MessageBox.Show(
+                this,
+                "Select an NPC in the Balance Lab first.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        var selectedChoice = _simulationClass.SelectedItem as ClassChoice;
+        var classes = new List<object>();
+
+        if (selectedChoice?.Id is Guid selectedId &&
+            ClassDescriptor.Lookup.TryGetValue(selectedId, out var selectedClass) &&
+            selectedClass != null)
+        {
+            classes.Add(selectedClass);
+        }
+        else
+        {
+            classes.AddRange(
+                ClassDescriptor.Lookup.Values
+                    .Where(value => value != null)
+                    .Cast<object>()
+            );
+        }
+
+        if (classes.Count == 0)
+        {
+            return;
+        }
+
+        var partySize = Math.Clamp((int)_partySize.Value, 1, 5);
+        var gearProfile = Math.Max(0, _gearProfile.SelectedIndex);
+        var includeClassSpells = _includeClassSpells.Checked;
+        var targetTtk = Math.Max(0.1, (double)_targetTtk.Value);
+        var targetHpLoss = Math.Max(0.1, (double)_targetHpLoss.Value);
+        var maxLevel = Math.Max(1, Options.Instance.Player.MaxLevel);
+
+        var points = new List<ProgressionPoint>(maxLevel);
+
+        for (var level = 1; level <= maxLevel; level++)
+        {
+            var simulations = classes
+                .Select(
+                    playerClass => SimulateClassVsNpc(
+                        playerClass,
+                        npc,
+                        level,
+                        partySize,
+                        gearProfile,
+                        includeClassSpells,
+                        targetTtk
+                    )
+                )
+                .Where(result => result != null)
+                .Cast<CombatSimulation>()
+                .ToArray();
+
+            if (simulations.Length == 0)
+            {
+                continue;
+            }
+
+            points.Add(
+                new ProgressionPoint
+                {
+                    Level = level,
+                    Ttk = simulations.Average(result => result.TtkSeconds),
+                    HpLoss = simulations.Average(result => result.HpLossPercent),
+                    Dps = simulations.Average(result => result.PlayerDps) * partySize,
+                }
+            );
+        }
+
+        var simulationLabel =
+            $"{(selectedChoice?.Id == null ? "Average all classes" : selectedChoice.Name)} | " +
+            $"Party {partySize} | {_gearProfile.Text} | Spells {(includeClassSpells ? "ON" : "OFF")}";
+
+        using var form = new ProgressionForm(
+            entry.Name,
+            simulationLabel,
+            points,
+            targetTtk,
+            targetHpLoss
+        );
+        form.ShowDialog(this);
     }
 
     private void OpenSelected()
