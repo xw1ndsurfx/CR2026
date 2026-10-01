@@ -281,6 +281,12 @@ public static partial class GameContentManager
         LoadEntities();
     }
 
+    public static void ReloadPaperdollAndItemTextures()
+    {
+        LoadPaperdolls();
+        LoadItems();
+    }
+
     private static void LoadSpells()
     {
         LoadTextureGroup("spells", sSpellDict);
