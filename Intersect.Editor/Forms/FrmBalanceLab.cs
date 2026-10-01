@@ -366,6 +366,7 @@ public sealed class FrmBalanceLab : DarkForm
             new object[]
             {
                 "No gear",
+                "Class starting gear",
                 "Median per slot",
                 "Upper quartile per slot",
                 "Best per slot",
@@ -868,7 +869,7 @@ public sealed class FrmBalanceLab : DarkForm
             )
         );
 
-        var loadout = BuildLoadout(gearProfile);
+        var loadout = BuildLoadout(playerClass, gearProfile);
 
         for (var i = 0; i < stats.Length; i++)
         {
@@ -1010,7 +1011,7 @@ public sealed class FrmBalanceLab : DarkForm
         };
     }
 
-    private static LoadoutSnapshot BuildLoadout(int profile)
+    private static LoadoutSnapshot BuildLoadout(object playerClass, int profile)
     {
         var loadout = new LoadoutSnapshot();
         if (profile <= 0)
@@ -1018,44 +1019,82 @@ public sealed class FrmBalanceLab : DarkForm
             return loadout;
         }
 
-        var bySlot = ItemDescriptor.Lookup.Values
-            .Where(item =>
-                item != null &&
-                (int)Number(item, "ItemType") == (int)ItemType.Equipment)
-            .Where(item =>
-            {
-                var slot = (int)Number(item!, "EquipmentSlot");
-                return slot >= 0 && slot < Options.Instance.Equipment.Slots.Count;
-            })
-            .GroupBy(item => (int)Number(item!, "EquipmentSlot"))
-            .ToDictionary(group => group.Key, group => group.Cast<object>().ToArray());
-
         var selected = new Dictionary<int, object>();
-        var percentile = profile switch
-        {
-            1 => 0.50d,
-            2 => 0.75d,
-            _ => 1.00d,
-        };
 
-        foreach (var pair in bySlot)
+        if (profile == 1)
         {
-            var ordered = pair.Value
-                .OrderBy(CalculateEquipmentPower)
-                .ThenBy(item => Text(item, "Name", string.Empty), StringComparer.OrdinalIgnoreCase)
-                .ToArray();
-
-            if (ordered.Length == 0)
+            if (Property(playerClass, "Items") is IEnumerable classItems)
             {
-                continue;
-            }
+                foreach (var classItem in classItems)
+                {
+                    if (classItem == null)
+                    {
+                        continue;
+                    }
 
-            var index = (int)Math.Round(
-                (ordered.Length - 1) * percentile,
-                MidpointRounding.AwayFromZero
-            );
-            index = Math.Clamp(index, 0, ordered.Length - 1);
-            selected[pair.Key] = ordered[index];
+                    var itemId = GuidValue(classItem, "Id");
+                    if (itemId == Guid.Empty ||
+                        !ItemDescriptor.Lookup.TryGetValue(itemId, out var item) ||
+                        item == null ||
+                        (int)Number(item, "ItemType") != (int)ItemType.Equipment)
+                    {
+                        continue;
+                    }
+
+                    var slot = (int)Number(item, "EquipmentSlot");
+                    if (slot < 0 || slot >= Options.Instance.Equipment.Slots.Count)
+                    {
+                        continue;
+                    }
+
+                    if (!selected.TryGetValue(slot, out var current) ||
+                        CalculateEquipmentPower(item) > CalculateEquipmentPower(current))
+                    {
+                        selected[slot] = item;
+                    }
+                }
+            }
+        }
+        else
+        {
+            var bySlot = ItemDescriptor.Lookup.Values
+                .Where(item =>
+                    item != null &&
+                    (int)Number(item, "ItemType") == (int)ItemType.Equipment)
+                .Where(item =>
+                {
+                    var slot = (int)Number(item!, "EquipmentSlot");
+                    return slot >= 0 && slot < Options.Instance.Equipment.Slots.Count;
+                })
+                .GroupBy(item => (int)Number(item!, "EquipmentSlot"))
+                .ToDictionary(group => group.Key, group => group.Cast<object>().ToArray());
+
+            var percentile = profile switch
+            {
+                2 => 0.50d,
+                3 => 0.75d,
+                _ => 1.00d,
+            };
+
+            foreach (var pair in bySlot)
+            {
+                var ordered = pair.Value
+                    .OrderBy(CalculateEquipmentPower)
+                    .ThenBy(item => Text(item, "Name", string.Empty), StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                if (ordered.Length == 0)
+                {
+                    continue;
+                }
+
+                var index = (int)Math.Round(
+                    (ordered.Length - 1) * percentile,
+                    MidpointRounding.AwayFromZero
+                );
+                index = Math.Clamp(index, 0, ordered.Length - 1);
+                selected[pair.Key] = ordered[index];
+            }
         }
 
         if (selected.TryGetValue(Options.Instance.Equipment.WeaponSlot, out var selectedWeapon) &&
