@@ -287,6 +287,11 @@ public static partial class GameContentManager
         LoadItems();
     }
 
+    public static void ReloadAnimationTextures()
+    {
+        LoadAnimations();
+    }
+
     private static void LoadSpells()
     {
         LoadTextureGroup("spells", sSpellDict);
