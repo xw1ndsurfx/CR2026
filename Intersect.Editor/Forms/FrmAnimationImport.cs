@@ -405,13 +405,13 @@ public sealed class FrmAnimationImport : DarkForm
         footer.Controls.Add(_category);
 
         AddFooterLabel(footer, "X:", 570, 15);
-        ConfigureNumber(_xFrames, 596, 10, 1, 32, 1);
+        ConfigureNumber(footer, _xFrames, 596, 10, 1, 32, 1);
         AddFooterLabel(footer, "Y:", 668, 15);
-        ConfigureNumber(_yFrames, 694, 10, 1, 32, 1);
+        ConfigureNumber(footer, _yFrames, 694, 10, 1, 32, 1);
         AddFooterLabel(footer, "Frames:", 768, 15);
-        ConfigureNumber(_frameCount, 826, 10, 1, 1024, 1);
+        ConfigureNumber(footer, _frameCount, 826, 10, 1, 1024, 1);
         AddFooterLabel(footer, "ms:", 910, 15);
-        ConfigureNumber(_frameDuration, 942, 10, 15, 2000, 80);
+        ConfigureNumber(footer, _frameDuration, 942, 10, 15, 2000, 80);
 
         var importSelected = CreateAccentButton("IMPORT TO GAME + OPEN EDITOR");
         importSelected.Location = new Point(1040, 8);
@@ -526,6 +526,7 @@ public sealed class FrmAnimationImport : DarkForm
     }
 
     private static void ConfigureNumber(
+        Control parent,
         NumericUpDown number,
         int x,
         int y,
@@ -543,7 +544,7 @@ public sealed class FrmAnimationImport : DarkForm
         number.ForeColor = System.Drawing.Color.White;
         number.BorderStyle = BorderStyle.FixedSingle;
         number.TextAlign = HorizontalAlignment.Center;
-        number.Parent = null;
+        parent.Controls.Add(number);
     }
 
     private void OpenImportFolder()
