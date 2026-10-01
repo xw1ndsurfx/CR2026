@@ -55,6 +55,8 @@ public partial class FrmMain : Form
 
     private FrmItem mItemEditor;
 
+    private FrmCharacterGenerator.GeneratedItemRequest? mPendingGeneratedItemRequest;
+
     private FrmNpc mNpcEditor;
 
     private FrmProjectile mProjectileEditor;
@@ -315,12 +317,46 @@ public partial class FrmMain : Form
 
         generator.Click += (_, _) =>
         {
-            var editor = new FrmCharacterGenerator(RefreshOpenEntityEditors);
+            var editor = new FrmCharacterGenerator(
+                RefreshOpenEntityEditors,
+                BeginGeneratedItemCreation
+            );
             editor.Show(this);
             editor.BringToFront();
         };
 
         contentEditorsToolStripMenuItem.DropDownItems.Add(generator);
+    }
+
+    private void BeginGeneratedItemCreation(
+        FrmCharacterGenerator.GeneratedItemRequest request
+    )
+    {
+        if (mItemEditor != null &&
+            !mItemEditor.IsDisposed &&
+            mItemEditor.Visible &&
+            Globals.CurrentEditor == (int)GameObjectType.Item)
+        {
+            mItemEditor.RefreshGeneratedAssetChoices();
+            mItemEditor.BeginGeneratedItemCreation(request);
+            mItemEditor.BringToFront();
+            return;
+        }
+
+        if (Globals.CurrentEditor != -1)
+        {
+            MessageBox.Show(
+                this,
+                "Close the currently open content editor, then export the paperdoll again to create its item automatically.",
+                "Character Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        mPendingGeneratedItemRequest = request;
+        PacketSender.SendOpenEditor(GameObjectType.Item);
     }
 
     private void RefreshOpenEntityEditors()
@@ -1794,6 +1830,15 @@ public partial class FrmMain : Form
                         mItemEditor = new FrmItem();
                         mItemEditor.InitEditor();
                         mItemEditor.Show();
+                    }
+
+                    if (mPendingGeneratedItemRequest != null)
+                    {
+                        var request = mPendingGeneratedItemRequest;
+                        mPendingGeneratedItemRequest = null;
+                        mItemEditor.RefreshGeneratedAssetChoices();
+                        mItemEditor.BeginGeneratedItemCreation(request);
+                        mItemEditor.BringToFront();
                     }
 
                     break;
