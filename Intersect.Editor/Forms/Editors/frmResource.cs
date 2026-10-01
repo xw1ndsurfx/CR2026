@@ -73,6 +73,11 @@ public partial class FrmResource : EditorForm
         UpdateEditor();
     }
 
+    public bool SelectBalanceObject(Guid id)
+    {
+        return lstGameObjects.SelectObject(id);
+    }
+
     private void toolStripItemNew_Click(object sender, EventArgs e)
     {
         PacketSender.SendCreateObject(GameObjectType.Resource);
