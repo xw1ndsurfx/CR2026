@@ -47,6 +47,11 @@ public partial class FrmNpc : EditorForm
         UpdateEditor();
     }
 
+    public bool SelectBalanceObject(Guid id)
+    {
+        return lstGameObjects.SelectObject(id);
+    }
+
     protected override void GameObjectUpdatedDelegate(GameObjectType type)
     {
         if (type == GameObjectType.Npc)
