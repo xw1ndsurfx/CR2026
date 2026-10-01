@@ -3051,7 +3051,6 @@ public sealed class FrmCharacterGenerator : DarkForm
             (double)maxSize / Math.Max(1, opaque.Width),
             (double)maxSize / Math.Max(1, opaque.Height)
         );
-        scale = Math.Min(1d, scale);
 
         var width = Math.Max(1, (int)Math.Round(opaque.Width * scale));
         var height = Math.Max(1, (int)Math.Round(opaque.Height * scale));
