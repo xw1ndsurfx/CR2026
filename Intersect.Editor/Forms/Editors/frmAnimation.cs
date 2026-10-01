@@ -3,6 +3,7 @@ using DarkUI.Controls;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
+using Intersect.Editor.Forms;
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Networking;
@@ -27,6 +28,10 @@ public partial class FrmAnimation : EditorForm
     private AnimationDescriptor mEditorItem;
 
     private List<string> mKnownFolders = new List<string>();
+
+    private FrmAnimationImport.GeneratedAnimationRequest? _pendingGeneratedAnimation;
+
+    private HashSet<Guid> _generatedAnimationExistingIds = new();
 
     private RenderTarget2D mLowerDarkness;
 
@@ -72,6 +77,8 @@ public partial class FrmAnimation : EditorForm
         }
 
         InitEditor();
+        TryApplyPendingGeneratedAnimation();
+
         if (mEditorItem == null || AnimationDescriptor.Lookup.Values.Contains(mEditorItem))
         {
             return;
@@ -79,6 +86,112 @@ public partial class FrmAnimation : EditorForm
 
         mEditorItem = null;
         UpdateEditor();
+    }
+
+    public void BeginGeneratedAnimationCreation(
+        FrmAnimationImport.GeneratedAnimationRequest request
+    )
+    {
+        _pendingGeneratedAnimation = request;
+        _generatedAnimationExistingIds = AnimationDescriptor.Lookup.Keys.ToHashSet();
+
+        RefreshGeneratedAnimationChoices();
+        PacketSender.SendCreateObject(GameObjectType.Animation);
+    }
+
+    public void RefreshGeneratedAnimationChoices()
+    {
+        var lower = cmbLowerGraphic.Text;
+        var upper = cmbUpperGraphic.Text;
+
+        cmbLowerGraphic.SelectedIndexChanged -= cmbLowerGraphic_SelectedIndexChanged;
+        cmbUpperGraphic.SelectedIndexChanged -= cmbUpperGraphic_SelectedIndexChanged;
+
+        try
+        {
+            var names =
+                GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Animation);
+
+            cmbLowerGraphic.BeginUpdate();
+            cmbUpperGraphic.BeginUpdate();
+
+            cmbLowerGraphic.Items.Clear();
+            cmbLowerGraphic.Items.Add(Strings.General.None);
+            cmbLowerGraphic.Items.AddRange(names);
+
+            cmbUpperGraphic.Items.Clear();
+            cmbUpperGraphic.Items.Add(Strings.General.None);
+            cmbUpperGraphic.Items.AddRange(names);
+
+            var lowerIndex = cmbLowerGraphic.FindStringExact(lower);
+            if (lowerIndex >= 0)
+            {
+                cmbLowerGraphic.SelectedIndex = lowerIndex;
+            }
+
+            var upperIndex = cmbUpperGraphic.FindStringExact(upper);
+            if (upperIndex >= 0)
+            {
+                cmbUpperGraphic.SelectedIndex = upperIndex;
+            }
+        }
+        finally
+        {
+            cmbLowerGraphic.EndUpdate();
+            cmbUpperGraphic.EndUpdate();
+
+            cmbLowerGraphic.SelectedIndexChanged += cmbLowerGraphic_SelectedIndexChanged;
+            cmbUpperGraphic.SelectedIndexChanged += cmbUpperGraphic_SelectedIndexChanged;
+        }
+    }
+
+    private void TryApplyPendingGeneratedAnimation()
+    {
+        if (_pendingGeneratedAnimation == null)
+        {
+            return;
+        }
+
+        var createdAnimation = AnimationDescriptor.Lookup
+            .Where(pair => !_generatedAnimationExistingIds.Contains(pair.Key))
+            .Select(pair => pair.Value as AnimationDescriptor)
+            .FirstOrDefault(animation => animation != null);
+
+        if (createdAnimation == null)
+        {
+            return;
+        }
+
+        var request = _pendingGeneratedAnimation;
+        _pendingGeneratedAnimation = null;
+        _generatedAnimationExistingIds.Clear();
+
+        mEditorItem = createdAnimation;
+
+        // Create the standard backup first so Undo/Cancel still behave exactly
+        // like animations created manually in the editor.
+        UpdateEditor();
+
+        mEditorItem.Name = request.Name;
+        mEditorItem.Folder = request.Folder;
+        mEditorItem.Lower.Sprite = request.SpriteFile;
+        mEditorItem.Lower.XFrames = Math.Max(1, request.XFrames);
+        mEditorItem.Lower.YFrames = Math.Max(1, request.YFrames);
+        mEditorItem.Lower.FrameCount = Math.Max(
+            1,
+            Math.Min(
+                request.FrameCount,
+                mEditorItem.Lower.XFrames * mEditorItem.Lower.YFrames
+            )
+        );
+        mEditorItem.Lower.FrameSpeed = Math.Max(15, request.FrameDuration);
+        mEditorItem.Lower.LoopCount = Math.Max(1, mEditorItem.Lower.LoopCount);
+
+        RefreshGeneratedAnimationChoices();
+        UpdateEditor();
+
+        Text = $"{Strings.AnimationEditor.title} - Imported: {request.Name}";
+        BringToFront();
     }
 
     private void btnCancel_Click(object sender, EventArgs e)
