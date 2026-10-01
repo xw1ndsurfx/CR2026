@@ -47,6 +47,8 @@ public partial class FrmMain : Form
 
     private FrmAnimationImport.GeneratedAnimationRequest? mPendingGeneratedAnimationRequest;
 
+    private FrmBalanceLab.BalanceOpenRequest? mPendingBalanceOpenRequest;
+
     private FrmClass mClassEditor;
 
     private FrmCommonEvent mCommonEventEditor;
@@ -123,6 +125,7 @@ public partial class FrmMain : Form
         PacketSender.SendRequestAchievementConfiguration(openEditor: false);
         AddCharacterGeneratorEditorMenu();
         AddAnimationImportEditorMenu();
+        AddBalanceLabEditorMenu();
         AddWorldEventsEditorMenu();
         Show();
 
@@ -301,6 +304,151 @@ public partial class FrmMain : Form
         var editor = new FrmAchievementConfiguration();
         editor.Show();
         editor.BringToFront();
+    }
+
+    private void AddBalanceLabEditorMenu()
+    {
+        if (contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>()
+            .Any(item => item.Name == "balanceLabEditorToolStripMenuItem"))
+        {
+            return;
+        }
+
+        var balanceLab = new ToolStripMenuItem
+        {
+            Name = "balanceLabEditorToolStripMenuItem",
+            Text = "Game Balance Lab...",
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
+        };
+
+        balanceLab.Click += (_, _) =>
+        {
+            var editor = new FrmBalanceLab(OpenBalanceObjectEditor);
+            editor.Show(this);
+            editor.BringToFront();
+        };
+
+        contentEditorsToolStripMenuItem.DropDownItems.Add(balanceLab);
+    }
+
+    private void OpenBalanceObjectEditor(FrmBalanceLab.BalanceOpenRequest request)
+    {
+        var type = request.Kind switch
+        {
+            FrmBalanceLab.BalanceObjectKind.Npc => GameObjectType.Npc,
+            FrmBalanceLab.BalanceObjectKind.Item => GameObjectType.Item,
+            FrmBalanceLab.BalanceObjectKind.Spell => GameObjectType.Spell,
+            FrmBalanceLab.BalanceObjectKind.Resource => GameObjectType.Resource,
+            FrmBalanceLab.BalanceObjectKind.PlayerClass => GameObjectType.Class,
+            _ => GameObjectType.Npc,
+        };
+
+        if (Globals.CurrentEditor == (int)type)
+        {
+            var selected = request.Kind switch
+            {
+                FrmBalanceLab.BalanceObjectKind.Npc =>
+                    mNpcEditor != null && !mNpcEditor.IsDisposed && mNpcEditor.SelectBalanceObject(request.Id),
+                FrmBalanceLab.BalanceObjectKind.Item =>
+                    mItemEditor != null && !mItemEditor.IsDisposed && mItemEditor.SelectBalanceObject(request.Id),
+                FrmBalanceLab.BalanceObjectKind.Spell =>
+                    mSpellEditor != null && !mSpellEditor.IsDisposed && mSpellEditor.SelectBalanceObject(request.Id),
+                FrmBalanceLab.BalanceObjectKind.Resource =>
+                    mResourceEditor != null && !mResourceEditor.IsDisposed && mResourceEditor.SelectBalanceObject(request.Id),
+                FrmBalanceLab.BalanceObjectKind.PlayerClass =>
+                    mClassEditor != null && !mClassEditor.IsDisposed && mClassEditor.SelectBalanceObject(request.Id),
+                _ => false,
+            };
+
+            if (selected)
+            {
+                switch (request.Kind)
+                {
+                    case FrmBalanceLab.BalanceObjectKind.Npc:
+                        mNpcEditor?.BringToFront();
+                        break;
+                    case FrmBalanceLab.BalanceObjectKind.Item:
+                        mItemEditor?.BringToFront();
+                        break;
+                    case FrmBalanceLab.BalanceObjectKind.Spell:
+                        mSpellEditor?.BringToFront();
+                        break;
+                    case FrmBalanceLab.BalanceObjectKind.Resource:
+                        mResourceEditor?.BringToFront();
+                        break;
+                    case FrmBalanceLab.BalanceObjectKind.PlayerClass:
+                        mClassEditor?.BringToFront();
+                        break;
+                }
+            }
+
+            return;
+        }
+
+        if (Globals.CurrentEditor != -1)
+        {
+            MessageBox.Show(
+                this,
+                "Close the currently open content editor, then click OPEN SELECTED IN EDITOR again.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        mPendingBalanceOpenRequest = request;
+        PacketSender.SendOpenEditor(type);
+    }
+
+    private void TryApplyPendingBalanceSelection(GameObjectType type)
+    {
+        if (mPendingBalanceOpenRequest == null)
+        {
+            return;
+        }
+
+        var request = mPendingBalanceOpenRequest;
+        var expectedType = request.Kind switch
+        {
+            FrmBalanceLab.BalanceObjectKind.Npc => GameObjectType.Npc,
+            FrmBalanceLab.BalanceObjectKind.Item => GameObjectType.Item,
+            FrmBalanceLab.BalanceObjectKind.Spell => GameObjectType.Spell,
+            FrmBalanceLab.BalanceObjectKind.Resource => GameObjectType.Resource,
+            FrmBalanceLab.BalanceObjectKind.PlayerClass => GameObjectType.Class,
+            _ => type,
+        };
+
+        if (expectedType != type)
+        {
+            return;
+        }
+
+        mPendingBalanceOpenRequest = null;
+
+        switch (request.Kind)
+        {
+            case FrmBalanceLab.BalanceObjectKind.Npc:
+                mNpcEditor?.SelectBalanceObject(request.Id);
+                mNpcEditor?.BringToFront();
+                break;
+            case FrmBalanceLab.BalanceObjectKind.Item:
+                mItemEditor?.SelectBalanceObject(request.Id);
+                mItemEditor?.BringToFront();
+                break;
+            case FrmBalanceLab.BalanceObjectKind.Spell:
+                mSpellEditor?.SelectBalanceObject(request.Id);
+                mSpellEditor?.BringToFront();
+                break;
+            case FrmBalanceLab.BalanceObjectKind.Resource:
+                mResourceEditor?.SelectBalanceObject(request.Id);
+                mResourceEditor?.BringToFront();
+                break;
+            case FrmBalanceLab.BalanceObjectKind.PlayerClass:
+                mClassEditor?.SelectBalanceObject(request.Id);
+                mClassEditor?.BringToFront();
+                break;
+        }
     }
 
     private void AddAnimationImportEditorMenu()
@@ -2021,6 +2169,7 @@ public partial class FrmMain : Form
                     return;
             }
 
+            TryApplyPendingBalanceSelection(type);
             Globals.CurrentEditor = (int)type;
         }
     }
