@@ -92,20 +92,41 @@ public partial class FrmNpc : EditorForm
 
     public void RefreshEntitySpriteChoices()
     {
+        // This method is only for refreshing an already-open editor after new
+        // entity textures are generated. Preserve the current text without
+        // forcing a fallback selection, which would trigger change handlers.
         var selected = cmbSprite.Text;
+
+        cmbSprite.BeginUpdate();
+        try
+        {
+            cmbSprite.Items.Clear();
+            cmbSprite.Items.Add(Strings.General.None);
+            cmbSprite.Items.AddRange(
+                GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
+            );
+
+            var index = cmbSprite.FindStringExact(selected);
+            if (index >= 0)
+            {
+                cmbSprite.SelectedIndex = index;
+            }
+        }
+        finally
+        {
+            cmbSprite.EndUpdate();
+        }
+    }
+
+    private void frmNpc_Load(object sender, EventArgs e)
+    {
+        // Keep the original load path event-safe. Selecting an item here can fire
+        // cmbSprite events before the rest of the NPC editor controls are initialized.
         cmbSprite.Items.Clear();
         cmbSprite.Items.Add(Strings.General.None);
         cmbSprite.Items.AddRange(
             GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
         );
-
-        var index = cmbSprite.FindStringExact(selected);
-        cmbSprite.SelectedIndex = index >= 0 ? index : 0;
-    }
-
-    private void frmNpc_Load(object sender, EventArgs e)
-    {
-        RefreshEntitySpriteChoices();
 
         cmbSpell.Items.Clear();
         cmbSpell.Items.AddRange(SpellDescriptor.Names);
