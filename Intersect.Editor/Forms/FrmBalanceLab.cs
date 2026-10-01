@@ -329,6 +329,400 @@ public sealed class FrmBalanceLab : DarkForm
         }
     }
 
+    private sealed class HeatmapCell
+    {
+        public int Level { get; init; }
+
+        public double Ttk { get; init; }
+
+        public double HpLoss { get; init; }
+
+        public double Dps { get; init; }
+
+        public required string Status { get; init; }
+    }
+
+    private sealed class HeatmapRow
+    {
+        public Guid NpcId { get; init; }
+
+        public required string NpcName { get; init; }
+
+        public int NpcLevel { get; init; }
+
+        public List<HeatmapCell> Cells { get; } = new();
+    }
+
+    private sealed class HeatmapDataset
+    {
+        public required string Name { get; init; }
+
+        public List<HeatmapRow> Rows { get; } = new();
+    }
+
+    private sealed class HeatmapForm : DarkForm
+    {
+        private readonly IReadOnlyList<HeatmapDataset> _datasets;
+        private readonly Action<Guid>? _openNpc;
+        private readonly ComboBox _display = new();
+        private readonly TabControl _tabs = new();
+        private readonly Label _details = new();
+        private readonly Label _summary = new();
+
+        public HeatmapForm(
+            IReadOnlyList<HeatmapDataset> datasets,
+            int partySize,
+            string gearProfile,
+            bool spellsEnabled,
+            double targetTtk,
+            double targetHpLoss,
+            Action<Guid>? openNpc
+        )
+        {
+            _datasets = datasets;
+            _openNpc = openNpc;
+
+            Text = "Corps Royaux - Full Balance Heatmap";
+            StartPosition = FormStartPosition.CenterParent;
+            MinimumSize = new Size(1050, 650);
+            Size = new Size(1580, 900);
+            BackColor = System.Drawing.Color.FromArgb(18, 18, 18);
+            ForeColor = System.Drawing.Color.Gainsboro;
+
+            var root = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 3,
+                Margin = Padding.Empty,
+                Padding = Padding.Empty,
+                BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
+            };
+            root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 62));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+            Controls.Add(root);
+
+            var header = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                Padding = new Padding(10, 10, 10, 8),
+                BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+            };
+
+            header.Controls.Add(
+                new Label
+                {
+                    AutoSize = false,
+                    Width = 78,
+                    Height = 32,
+                    Text = "Display:",
+                    ForeColor = System.Drawing.Color.Gainsboro,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                }
+            );
+
+            _display.Width = 135;
+            _display.DropDownStyle = ComboBoxStyle.DropDownList;
+            _display.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+            _display.ForeColor = System.Drawing.Color.White;
+            _display.Items.AddRange(new object[] { "Status", "TTK", "HP Lost", "DPS" });
+            _display.SelectedIndex = 0;
+            _display.SelectedIndexChanged += (_, _) => RefreshCellText();
+            header.Controls.Add(_display);
+
+            var legend = new Label
+            {
+                AutoSize = false,
+                Width = 780,
+                Height = 32,
+                Margin = new Padding(18, 0, 0, 0),
+                Text =
+                    $"Party {partySize}  |  Gear: {gearProfile}  |  Spells: {(spellsEnabled ? "ON" : "OFF")}  |  " +
+                    $"Targets: {targetTtk:0.#}s TTK / {targetHpLoss:0.#}% HP  |  " +
+                    "Green=Target  Red=Too Hard  Blue=Too Easy",
+                ForeColor = System.Drawing.Color.Silver,
+                TextAlign = ContentAlignment.MiddleLeft,
+            };
+            header.Controls.Add(legend);
+            root.Controls.Add(header, 0, 0);
+
+            _tabs.Dock = DockStyle.Fill;
+            _tabs.Appearance = TabAppearance.Normal;
+            _tabs.BackColor = System.Drawing.Color.FromArgb(18, 18, 18);
+            _tabs.ForeColor = System.Drawing.Color.Gainsboro;
+            root.Controls.Add(_tabs, 0, 1);
+
+            var footer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+            };
+            root.Controls.Add(footer, 0, 2);
+
+            _details.AutoSize = false;
+            _details.Location = new Point(12, 5);
+            _details.Size = new Size(980, 46);
+            _details.ForeColor = System.Drawing.Color.Gainsboro;
+            _details.TextAlign = ContentAlignment.MiddleLeft;
+            footer.Controls.Add(_details);
+
+            _summary.AutoSize = false;
+            _summary.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            _summary.Size = new Size(455, 46);
+            _summary.ForeColor = System.Drawing.Color.Silver;
+            _summary.TextAlign = ContentAlignment.MiddleRight;
+            footer.Controls.Add(_summary);
+
+            footer.Resize += (_, _) =>
+            {
+                _summary.Left = Math.Max(10, footer.ClientSize.Width - _summary.Width - 12);
+                _details.Width = Math.Max(200, _summary.Left - _details.Left - 12);
+            };
+
+            BuildTabs();
+        }
+
+        private void BuildTabs()
+        {
+            _tabs.SuspendLayout();
+            try
+            {
+                _tabs.TabPages.Clear();
+
+                foreach (var dataset in _datasets)
+                {
+                    var page = new TabPage(dataset.Name)
+                    {
+                        BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
+                        ForeColor = System.Drawing.Color.Gainsboro,
+                        Padding = new Padding(4),
+                    };
+
+                    var grid = CreateGrid(dataset);
+                    page.Controls.Add(grid);
+                    _tabs.TabPages.Add(page);
+                }
+            }
+            finally
+            {
+                _tabs.ResumeLayout();
+            }
+
+            UpdateSummary();
+        }
+
+        private DataGridView CreateGrid(HeatmapDataset dataset)
+        {
+            var grid = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
+                RowHeadersVisible = false,
+                AutoGenerateColumns = false,
+                SelectionMode = DataGridViewSelectionMode.CellSelect,
+                MultiSelect = false,
+                BackgroundColor = System.Drawing.Color.FromArgb(32, 28, 29),
+                BorderStyle = BorderStyle.None,
+                GridColor = System.Drawing.Color.FromArgb(60, 52, 54),
+                EnableHeadersVisualStyles = false,
+                ClipboardCopyMode = DataGridViewClipboardCopyMode.EnableWithoutHeaderText,
+            };
+
+            grid.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(38, 32, 34);
+            grid.DefaultCellStyle.ForeColor = System.Drawing.Color.Gainsboro;
+            grid.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(95, 72, 78);
+            grid.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
+            grid.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.White;
+            grid.ColumnHeadersHeight = 34;
+            grid.RowTemplate.Height = 31;
+
+            grid.Columns.Add(
+                new DataGridViewTextBoxColumn
+                {
+                    Name = "NPC",
+                    HeaderText = "NPC",
+                    Frozen = true,
+                    Width = 190,
+                    SortMode = DataGridViewColumnSortMode.NotSortable,
+                }
+            );
+
+            grid.Columns.Add(
+                new DataGridViewTextBoxColumn
+                {
+                    Name = "NpcLevel",
+                    HeaderText = "NPC Lv",
+                    Frozen = true,
+                    Width = 62,
+                    SortMode = DataGridViewColumnSortMode.NotSortable,
+                }
+            );
+
+            var maxLevel = dataset.Rows
+                .SelectMany(row => row.Cells)
+                .Select(cell => cell.Level)
+                .DefaultIfEmpty(1)
+                .Max();
+
+            for (var level = 1; level <= maxLevel; level++)
+            {
+                grid.Columns.Add(
+                    new DataGridViewTextBoxColumn
+                    {
+                        Name = $"Level{level}",
+                        HeaderText = level.ToString(),
+                        Width = 54,
+                        SortMode = DataGridViewColumnSortMode.NotSortable,
+                    }
+                );
+            }
+
+            foreach (var heatmapRow in dataset.Rows
+                         .OrderBy(row => row.NpcLevel)
+                         .ThenBy(row => row.NpcName, StringComparer.OrdinalIgnoreCase))
+            {
+                var rowIndex = grid.Rows.Add();
+                var row = grid.Rows[rowIndex];
+                row.Tag = heatmapRow;
+                row.Cells[0].Value = heatmapRow.NpcName;
+                row.Cells[1].Value = heatmapRow.NpcLevel;
+
+                foreach (var cell in heatmapRow.Cells)
+                {
+                    var columnIndex = 1 + cell.Level;
+                    if (columnIndex < 2 || columnIndex >= row.Cells.Count)
+                    {
+                        continue;
+                    }
+
+                    var target = row.Cells[columnIndex];
+                    target.Tag = cell;
+                    ApplyHeatmapStyle(target, cell.Status);
+                    target.ToolTipText =
+                        $"{dataset.Name} | {heatmapRow.NpcName} | Player Lv {cell.Level}\n" +
+                        $"TTK: {cell.Ttk:0.00}s\n" +
+                        $"HP Lost: {cell.HpLoss:0.0}%\n" +
+                        $"DPS: {cell.Dps:0.0}\n" +
+                        $"Status: {cell.Status}";
+                }
+            }
+
+            grid.CellEnter += (_, args) => ShowCellDetails(grid, dataset, args.RowIndex, args.ColumnIndex);
+            grid.CellDoubleClick += (_, args) =>
+            {
+                if (args.RowIndex < 0 ||
+                    grid.Rows[args.RowIndex].Tag is not HeatmapRow row ||
+                    _openNpc == null)
+                {
+                    return;
+                }
+
+                _openNpc(row.NpcId);
+            };
+
+            RefreshCellText(grid);
+            return grid;
+        }
+
+        private static void ApplyHeatmapStyle(DataGridViewCell cell, string status)
+        {
+            cell.Style.BackColor = status switch
+            {
+                "TOO HARD" => System.Drawing.Color.FromArgb(115, 48, 52),
+                "TOO EASY" => System.Drawing.Color.FromArgb(42, 72, 108),
+                _ => System.Drawing.Color.FromArgb(46, 92, 58),
+            };
+            cell.Style.ForeColor = System.Drawing.Color.White;
+            cell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+        }
+
+        private void RefreshCellText()
+        {
+            foreach (TabPage page in _tabs.TabPages)
+            {
+                if (page.Controls.OfType<DataGridView>().FirstOrDefault() is { } grid)
+                {
+                    RefreshCellText(grid);
+                }
+            }
+        }
+
+        private void RefreshCellText(DataGridView grid)
+        {
+            foreach (DataGridViewRow row in grid.Rows)
+            {
+                for (var column = 2; column < row.Cells.Count; column++)
+                {
+                    if (row.Cells[column].Tag is not HeatmapCell cell)
+                    {
+                        continue;
+                    }
+
+                    row.Cells[column].Value = _display.SelectedIndex switch
+                    {
+                        1 => $"{cell.Ttk:0.#}s",
+                        2 => $"{cell.HpLoss:0}%",
+                        3 => $"{cell.Dps:0}",
+                        _ => cell.Status switch
+                        {
+                            "TOO HARD" => "HARD",
+                            "TOO EASY" => "EASY",
+                            _ => "OK",
+                        },
+                    };
+                }
+            }
+        }
+
+        private void ShowCellDetails(
+            DataGridView grid,
+            HeatmapDataset dataset,
+            int rowIndex,
+            int columnIndex
+        )
+        {
+            if (rowIndex < 0 ||
+                rowIndex >= grid.Rows.Count ||
+                grid.Rows[rowIndex].Tag is not HeatmapRow row)
+            {
+                return;
+            }
+
+            if (columnIndex < 2 ||
+                columnIndex >= grid.Rows[rowIndex].Cells.Count ||
+                grid.Rows[rowIndex].Cells[columnIndex].Tag is not HeatmapCell cell)
+            {
+                _details.Text =
+                    $"{dataset.Name} | {row.NpcName} (NPC Lv {row.NpcLevel}) | Double-click to open NPC Editor";
+                return;
+            }
+
+            _details.Text =
+                $"{dataset.Name} | {row.NpcName} | Player Lv {cell.Level} | " +
+                $"TTK {cell.Ttk:0.00}s | HP lost {cell.HpLoss:0.0}% | DPS {cell.Dps:0.0} | {cell.Status}";
+        }
+
+        private void UpdateSummary()
+        {
+            var cells = _datasets.SelectMany(dataset => dataset.Rows).SelectMany(row => row.Cells).ToArray();
+            var hard = cells.Count(cell => cell.Status == "TOO HARD");
+            var easy = cells.Count(cell => cell.Status == "TOO EASY");
+            var target = cells.Count(cell => cell.Status == "TARGET");
+
+            _summary.Text =
+                $"{_datasets.Count} views | {cells.Length:N0} simulations | " +
+                $"Target {target:N0} / Hard {hard:N0} / Easy {easy:N0}";
+        }
+    }
+
     private sealed class BalanceEntry
     {
         public required BalanceObjectKind Kind { get; init; }
@@ -679,6 +1073,12 @@ public sealed class FrmBalanceLab : DarkForm
         _summary.TextAlign = ContentAlignment.MiddleLeft;
         footer.Controls.Add(_summary);
 
+        var heatmapButton = CreateAccentButton("FULL GAME HEATMAP");
+        heatmapButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        heatmapButton.Size = new Size(190, 32);
+        heatmapButton.Click += (_, _) => ShowFullHeatmap();
+        footer.Controls.Add(heatmapButton);
+
         var progressionButton = CreateAccentButton("LEVEL 1 -> MAX GRAPH");
         progressionButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         progressionButton.Size = new Size(210, 32);
@@ -698,8 +1098,19 @@ public sealed class FrmBalanceLab : DarkForm
                 10,
                 openButton.Left - progressionButton.Width - 10
             );
+            heatmapButton.Left = Math.Max(
+                10,
+                progressionButton.Left - heatmapButton.Width - 10
+            );
+
+            heatmapButton.Top = 7;
             progressionButton.Top = 7;
             openButton.Top = 7;
+
+            _summary.Width = Math.Max(
+                200,
+                heatmapButton.Left - _summary.Left - 10
+            );
         };
     }
 
@@ -1006,20 +1417,12 @@ public sealed class FrmBalanceLab : DarkForm
                     ? Math.Max(0d, npcBaseDamage * targetHpLoss / hpLoss)
                     : npcBaseDamage;
 
-            var tooHard =
-                hpLoss >= 100d ||
-                ttk > targetTtk * 1.35 ||
-                hpLoss > targetHpLoss * 1.50;
-
-            var tooEasy =
-                ttk < targetTtk * 0.65 &&
-                hpLoss < targetHpLoss * 0.55;
-
-            entry.SimulationStatus = tooHard
-                ? "TOO HARD"
-                : tooEasy
-                    ? "TOO EASY"
-                    : "TARGET";
+            entry.SimulationStatus = GetSimulationStatus(
+                ttk,
+                hpLoss,
+                targetTtk,
+                targetHpLoss
+            );
 
             var loadoutText = results.Length == 1
                 ? results[0].GearSummary
@@ -1065,7 +1468,8 @@ public sealed class FrmBalanceLab : DarkForm
         int partySize,
         int gearProfile,
         bool includeClassSpells,
-        double sustainWindowSeconds
+        double sustainWindowSeconds,
+        LoadoutSnapshot? cachedLoadout = null
     )
     {
         var stats = new double[5];
@@ -1098,7 +1502,7 @@ public sealed class FrmBalanceLab : DarkForm
             )
         );
 
-        var loadout = BuildLoadout(playerClass, gearProfile);
+        var loadout = cachedLoadout ?? BuildLoadout(playerClass, gearProfile);
 
         for (var i = 0; i < stats.Length; i++)
         {
@@ -2225,6 +2629,219 @@ public sealed class FrmBalanceLab : DarkForm
             $"SUGGESTION\r\n" +
             $"----------\r\n" +
             entry.Suggestion;
+    }
+
+    private static string GetSimulationStatus(
+        double ttk,
+        double hpLoss,
+        double targetTtk,
+        double targetHpLoss
+    )
+    {
+        var tooHard =
+            hpLoss >= 100d ||
+            ttk > targetTtk * 1.35 ||
+            hpLoss > targetHpLoss * 1.50;
+
+        var tooEasy =
+            ttk < targetTtk * 0.65 &&
+            hpLoss < targetHpLoss * 0.55;
+
+        return tooHard
+            ? "TOO HARD"
+            : tooEasy
+                ? "TOO EASY"
+                : "TARGET";
+    }
+
+    private void ShowFullHeatmap()
+    {
+        var classes = ClassDescriptor.Lookup.Values
+            .Where(value => value != null)
+            .Cast<object>()
+            .OrderBy(value => Text(value, "Name", "Unnamed Class"), StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var npcs = NPCDescriptor.Lookup.Values
+            .Where(value => value != null)
+            .Cast<object>()
+            .OrderBy(value => Number(value, "Level"))
+            .ThenBy(value => Text(value, "Name", "Unnamed NPC"), StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (classes.Length == 0 || npcs.Length == 0)
+        {
+            MessageBox.Show(
+                this,
+                "At least one class and one NPC are required to build the heatmap.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        var partySize = Math.Clamp((int)_partySize.Value, 1, 5);
+        var gearProfile = Math.Max(0, _gearProfile.SelectedIndex);
+        var includeClassSpells = _includeClassSpells.Checked;
+        var targetTtk = Math.Max(0.1, (double)_targetTtk.Value);
+        var targetHpLoss = Math.Max(0.1, (double)_targetHpLoss.Value);
+        var maxLevel = Math.Max(1, Options.Instance.Player.MaxLevel);
+
+        Cursor = Cursors.WaitCursor;
+        try
+        {
+            var datasets = new List<HeatmapDataset>();
+            var average = new HeatmapDataset { Name = "AVERAGE ALL" };
+            datasets.Add(average);
+
+            var perClass = new Dictionary<Guid, HeatmapDataset>();
+            var cachedLoadouts = new Dictionary<Guid, LoadoutSnapshot>();
+
+            foreach (var playerClass in classes)
+            {
+                var classId = GuidValue(playerClass, "Id");
+                if (classId == Guid.Empty)
+                {
+                    continue;
+                }
+
+                var dataset = new HeatmapDataset
+                {
+                    Name = Text(playerClass, "Name", "Unnamed Class"),
+                };
+                perClass[classId] = dataset;
+                datasets.Add(dataset);
+                cachedLoadouts[classId] = BuildLoadout(playerClass, gearProfile);
+            }
+
+            foreach (var npc in npcs)
+            {
+                var npcId = GuidValue(npc, "Id");
+                var npcName = Text(npc, "Name", "Unnamed NPC");
+                var npcLevel = Math.Max(1, (int)Math.Round(Number(npc, "Level")));
+
+                var averageRow = new HeatmapRow
+                {
+                    NpcId = npcId,
+                    NpcName = npcName,
+                    NpcLevel = npcLevel,
+                };
+                average.Rows.Add(averageRow);
+
+                var classRows = new Dictionary<Guid, HeatmapRow>();
+                foreach (var pair in perClass)
+                {
+                    var row = new HeatmapRow
+                    {
+                        NpcId = npcId,
+                        NpcName = npcName,
+                        NpcLevel = npcLevel,
+                    };
+                    pair.Value.Rows.Add(row);
+                    classRows[pair.Key] = row;
+                }
+
+                for (var level = 1; level <= maxLevel; level++)
+                {
+                    var levelResults = new List<CombatSimulation>();
+
+                    foreach (var playerClass in classes)
+                    {
+                        var classId = GuidValue(playerClass, "Id");
+                        if (classId == Guid.Empty ||
+                            !cachedLoadouts.TryGetValue(classId, out var cachedLoadout) ||
+                            !classRows.TryGetValue(classId, out var classRow))
+                        {
+                            continue;
+                        }
+
+                        var simulation = SimulateClassVsNpc(
+                            playerClass,
+                            npc,
+                            level,
+                            partySize,
+                            gearProfile,
+                            includeClassSpells,
+                            targetTtk,
+                            cachedLoadout
+                        );
+
+                        if (simulation == null)
+                        {
+                            continue;
+                        }
+
+                        levelResults.Add(simulation);
+                        classRow.Cells.Add(
+                            new HeatmapCell
+                            {
+                                Level = level,
+                                Ttk = simulation.TtkSeconds,
+                                HpLoss = simulation.HpLossPercent,
+                                Dps = simulation.PlayerDps * partySize,
+                                Status = GetSimulationStatus(
+                                    simulation.TtkSeconds,
+                                    simulation.HpLossPercent,
+                                    targetTtk,
+                                    targetHpLoss
+                                ),
+                            }
+                        );
+                    }
+
+                    if (levelResults.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    var averageTtk = levelResults.Average(result => result.TtkSeconds);
+                    var averageHpLoss = levelResults.Average(result => result.HpLossPercent);
+                    var averageDps = levelResults.Average(result => result.PlayerDps) * partySize;
+
+                    averageRow.Cells.Add(
+                        new HeatmapCell
+                        {
+                            Level = level,
+                            Ttk = averageTtk,
+                            HpLoss = averageHpLoss,
+                            Dps = averageDps,
+                            Status = GetSimulationStatus(
+                                averageTtk,
+                                averageHpLoss,
+                                targetTtk,
+                                targetHpLoss
+                            ),
+                        }
+                    );
+                }
+            }
+
+            Action<Guid>? openNpc = _openEditor == null
+                ? null
+                : id => _openEditor(
+                    new BalanceOpenRequest
+                    {
+                        Kind = BalanceObjectKind.Npc,
+                        Id = id,
+                    }
+                );
+
+            using var form = new HeatmapForm(
+                datasets,
+                partySize,
+                _gearProfile.Text,
+                includeClassSpells,
+                targetTtk,
+                targetHpLoss,
+                openNpc
+            );
+            form.ShowDialog(this);
+        }
+        finally
+        {
+            Cursor = Cursors.Default;
+        }
     }
 
     private void ShowSelectedProgression()
