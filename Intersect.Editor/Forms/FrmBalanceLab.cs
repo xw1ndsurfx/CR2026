@@ -45,11 +45,25 @@ public sealed class FrmBalanceLab : DarkForm
 
         public double PlayerHp { get; init; }
 
+        public double PlayerMana { get; init; }
+
         public double PlayerDamagePerHit { get; init; }
 
         public double PlayerAttackSeconds { get; init; }
 
         public double PlayerDps { get; init; }
+
+        public double AutoAttackDps { get; init; }
+
+        public double SpellDps { get; init; }
+
+        public double ManaUsePerSecond { get; init; }
+
+        public double GearPower { get; init; }
+
+        public string GearSummary { get; init; } = string.Empty;
+
+        public string SpellSummary { get; init; } = string.Empty;
 
         public double NpcDamagePerHit { get; init; }
 
@@ -62,6 +76,40 @@ public sealed class FrmBalanceLab : DarkForm
         public double HpLossPercent { get; init; }
 
         public double TimeToPartyWipeSeconds { get; init; }
+    }
+
+    private sealed class LoadoutSnapshot
+    {
+        public double[] FlatStats { get; } = new double[5];
+
+        public double[] PercentStats { get; } = new double[5];
+
+        public double[] FlatVitals { get; } = new double[2];
+
+        public double[] PercentVitals { get; } = new double[2];
+
+        public double[] VitalRegen { get; } = new double[2];
+
+        public object? Weapon { get; set; }
+
+        public double Power { get; set; }
+
+        public int ItemCount { get; set; }
+
+        public string Summary { get; set; } = "No equipment";
+    }
+
+    private sealed class SpellRotationSnapshot
+    {
+        public double Dps { get; set; }
+
+        public double ManaPerSecond { get; set; }
+
+        public double CastOccupancy { get; set; }
+
+        public int SpellCount { get; set; }
+
+        public string Summary { get; set; } = "Class spells disabled";
     }
 
     private sealed class BalanceEntry
@@ -126,6 +174,8 @@ public sealed class FrmBalanceLab : DarkForm
     private readonly NumericUpDown _partySize = new();
     private readonly NumericUpDown _targetTtk = new();
     private readonly NumericUpDown _targetHpLoss = new();
+    private readonly ComboBox _gearProfile = new();
+    private readonly CheckBox _includeClassSpells = new();
 
     private readonly List<ClassChoice> _simulationClasses = new();
     private readonly List<BalanceEntry> _entries = new();
@@ -163,7 +213,7 @@ public sealed class FrmBalanceLab : DarkForm
             BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
         };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 110));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 160));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
         Controls.Add(root);
@@ -172,7 +222,7 @@ public sealed class FrmBalanceLab : DarkForm
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 2,
+            RowCount = 3,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
             BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
@@ -180,6 +230,7 @@ public sealed class FrmBalanceLab : DarkForm
         topBars.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         topBars.RowStyles.Add(new RowStyle(SizeType.Absolute, 56));
         topBars.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
+        topBars.RowStyles.Add(new RowStyle(SizeType.Absolute, 50));
         root.Controls.Add(topBars, 0, 0);
 
         var toolbar = new FlowLayoutPanel
@@ -294,19 +345,55 @@ public sealed class FrmBalanceLab : DarkForm
         };
         simulationBar.Controls.Add(simulate);
 
+        topBars.Controls.Add(simulationBar, 0, 1);
+
+        var optionsBar = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(10, 7, 10, 6),
+            BackColor = System.Drawing.Color.FromArgb(27, 24, 25),
+        };
+
+        optionsBar.Controls.Add(CreateToolbarLabel("Expected gear:"));
+
+        _gearProfile.Width = 185;
+        _gearProfile.DropDownStyle = ComboBoxStyle.DropDownList;
+        _gearProfile.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        _gearProfile.ForeColor = System.Drawing.Color.White;
+        _gearProfile.Items.AddRange(
+            new object[]
+            {
+                "No gear",
+                "Median per slot",
+                "Upper quartile per slot",
+                "Best per slot",
+            }
+        );
+        _gearProfile.SelectedIndex = 1;
+        optionsBar.Controls.Add(_gearProfile);
+
+        _includeClassSpells.Text = "Include learned class spells";
+        _includeClassSpells.Checked = true;
+        _includeClassSpells.AutoSize = true;
+        _includeClassSpells.ForeColor = System.Drawing.Color.Gainsboro;
+        _includeClassSpells.Margin = new Padding(16, 7, 8, 0);
+        optionsBar.Controls.Add(_includeClassSpells);
+
         var simInfo = new Label
         {
             AutoSize = false,
-            Width = 310,
+            Width = 620,
             Height = 32,
-            Margin = new Padding(14, 0, 0, 0),
-            Text = "Uses Intersect default damage + class growth formulas",
+            Margin = new Padding(18, 0, 0, 0),
+            Text = "Gear uses real equipment by slot; spells include cooldown, cast time, DoT and mana sustain. Dynamic item requirements are not auto-resolved yet.",
             ForeColor = System.Drawing.Color.Silver,
             TextAlign = ContentAlignment.MiddleLeft,
         };
-        simulationBar.Controls.Add(simInfo);
+        optionsBar.Controls.Add(simInfo);
 
-        topBars.Controls.Add(simulationBar, 0, 1);
+        topBars.Controls.Add(optionsBar, 0, 2);
 
         var body = new TableLayoutPanel
         {
