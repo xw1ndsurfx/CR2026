@@ -279,13 +279,33 @@ public partial class FrmClass : EditorForm
         UpdateToolStripItems();
     }
 
-    private void frmClass_Load(object sender, EventArgs e)
+    public void RefreshEntitySpriteChoices()
     {
+        var selectedSprite = cmbSprite.Text;
+        var selectedAttack = cmbAttackSprite.Text;
+
         cmbSprite.Items.Clear();
         cmbSprite.Items.Add(Strings.General.None);
         cmbSprite.Items.AddRange(
             GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
         );
+
+        cmbAttackSprite.Items.Clear();
+        cmbAttackSprite.Items.Add(Strings.General.None);
+        cmbAttackSprite.Items.AddRange(
+            GameContentManager.GetOverridesFor(GameContentManager.TextureType.Entity, "attack").ToArray()
+        );
+
+        var spriteIndex = cmbSprite.FindStringExact(selectedSprite);
+        cmbSprite.SelectedIndex = spriteIndex >= 0 ? spriteIndex : 0;
+
+        var attackIndex = cmbAttackSprite.FindStringExact(selectedAttack);
+        cmbAttackSprite.SelectedIndex = attackIndex >= 0 ? attackIndex : 0;
+    }
+
+    private void frmClass_Load(object sender, EventArgs e)
+    {
+        RefreshEntitySpriteChoices();
 
         cmbFace.Items.Clear();
         cmbFace.Items.Add(Strings.General.None);
@@ -299,11 +319,6 @@ public partial class FrmClass : EditorForm
         cmbAttackAnimation.Items.Clear();
         cmbAttackAnimation.Items.Add(Strings.General.None);
         cmbAttackAnimation.Items.AddRange(AnimationDescriptor.Names);
-        cmbAttackSprite.Items.Clear();
-        cmbAttackSprite.Items.Add(Strings.General.None);
-        cmbAttackSprite.Items.AddRange(
-            GameContentManager.GetOverridesFor(GameContentManager.TextureType.Entity, "attack").ToArray()
-        );
         cmbScalingStat.Items.Clear();
         for (var x = 0; x < ((int)Stat.Speed) + 1; x++)
         {
