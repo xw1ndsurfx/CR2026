@@ -47,6 +47,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         AlwaysFront,
         DirectionalWeapon,
         DirectionalOffhand,
+        DirectionalBackAccessory,
         KeywordDriven,
     }
 
@@ -173,8 +174,8 @@ public sealed class FrmCharacterGenerator : DarkForm
             ["Head"] = LayerRule.Normal,
             ["Lines"] = LayerRule.Normal,
 
-            ["Cape"] = LayerRule.AlwaysBehind,
-            ["Quiver"] = LayerRule.AlwaysBehind,
+            ["Cape"] = LayerRule.DirectionalBackAccessory,
+            ["Quiver"] = LayerRule.DirectionalBackAccessory,
 
             ["One Handed"] = LayerRule.DirectionalWeapon,
             ["Staff"] = LayerRule.DirectionalWeapon,
@@ -998,9 +999,9 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private static void DrawLayer(Graphics graphics, Bitmap bitmap, int outputWidth, int outputHeight)
     {
-        var x = (outputWidth - bitmap.Width) / 2;
-        var y = (outputHeight - bitmap.Height) / 2;
-        graphics.DrawImageUnscaled(bitmap, x, y);
+        // Paperdolls and base sprites are authored on the same 768x512 canvas.
+        // Keep their exact origin instead of re-centering each sheet.
+        graphics.DrawImageUnscaled(bitmap, 0, 0);
     }
 
     private static bool IsBehindCharacter(string category, string partName, int directionRow)
@@ -1029,6 +1030,11 @@ public sealed class FrmCharacterGenerator : DarkForm
             return IsOffhandBehind(directionRow);
         }
 
+        if (rule == LayerRule.DirectionalBackAccessory)
+        {
+            return IsBackAccessoryBehind(directionRow);
+        }
+
         if (rule == LayerRule.KeywordDriven)
         {
             if (FrontKeywords.Any(keyword =>
@@ -1040,15 +1046,14 @@ public sealed class FrmCharacterGenerator : DarkForm
             if (BehindKeywords.Any(keyword =>
                 partName.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
             {
-                return true;
+                return IsBackAccessoryBehind(directionRow);
             }
         }
 
-        if (directionRow == 0 &&
-            TopRowBehindPartKeywords.Any(keyword =>
+        if (TopRowBehindPartKeywords.Any(keyword =>
                 partName.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
         {
-            return true;
+            return IsBackAccessoryBehind(directionRow);
         }
 
         return false;
@@ -1056,31 +1061,45 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private static bool IsWeaponBehind(int directionRow)
     {
-        // Intersect-style sheets use four direction rows. We treat:
-        // row 0 as back/up, rows 1-2 as side views, row 3 as front/down.
-        // Back/up always goes behind the body. Side views are intentionally
-        // asymmetric so the weapon can visually pass behind the torso on one side.
+        // Artist/Intersect row order in these sheets:
+        // 0 = front/down, 1 = left, 2 = right, 3 = back/up.
+        // Main-hand equipment is behind on the back view and on the side where
+        // the weapon arm crosses behind the torso.
         return directionRow switch
         {
-            0 => true,
+            0 => false,
             1 => true,
             2 => false,
-            3 => false,
+            3 => true,
             _ => false,
         };
     }
 
     private static bool IsOffhandBehind(int directionRow)
     {
-        // Shields/offhand items use the mirrored side-view behavior compared
-        // with the main-hand weapon so the visible hand stays convincing.
+        // Offhand/shields mirror the side-view behavior of the main hand.
+        return directionRow switch
+        {
+            0 => false,
+            1 => false,
+            2 => true,
+            3 => true,
+            _ => false,
+        };
+    }
+
+    private static bool IsBackAccessoryBehind(int directionRow)
+    {
+        // Capes, quivers, backpacks, balloons, tails, wings, etc. sit behind
+        // the body when viewed from the front or sides. On the back/up row the
+        // accessory itself must be drawn over the body so it remains visible.
         return directionRow switch
         {
             0 => true,
-            1 => false,
+            1 => true,
             2 => true,
             3 => false,
-            _ => false,
+            _ => true,
         };
     }
 
