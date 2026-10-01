@@ -305,7 +305,11 @@ public partial class FrmClass : EditorForm
 
     private void frmClass_Load(object sender, EventArgs e)
     {
-        RefreshEntitySpriteChoices();
+        cmbSprite.Items.Clear();
+        cmbSprite.Items.Add(Strings.General.None);
+        cmbSprite.Items.AddRange(
+            GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
+        );
 
         cmbFace.Items.Clear();
         cmbFace.Items.Add(Strings.General.None);
