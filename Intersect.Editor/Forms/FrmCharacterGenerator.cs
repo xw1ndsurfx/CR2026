@@ -496,14 +496,37 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private void BuildInterface()
     {
-        var simpleBar = new FlowLayoutPanel
+        var topTools = new TableLayoutPanel
         {
             Dock = DockStyle.Top,
-            Height = 52,
+            Height = 98,
+            ColumnCount = 1,
+            RowCount = 2,
+            BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+            Padding = Padding.Empty,
+        };
+        topTools.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        topTools.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
+        topTools.RowStyles.Add(new RowStyle(SizeType.Absolute, 46));
+
+        var simpleBar = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = false,
             BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
             Padding = new Padding(12, 8, 12, 8),
+            Margin = Padding.Empty,
+        };
+
+        var presetBar = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            BackColor = System.Drawing.Color.FromArgb(32, 28, 29),
+            Padding = new Padding(12, 6, 12, 6),
+            Margin = Padding.Empty,
         };
 
         ConfigureGenderButton(_maleButton, "MALE", CharacterGender.Male);
@@ -553,7 +576,33 @@ public sealed class FrmCharacterGenerator : DarkForm
         simpleBar.Controls.Add(clothesButton);
         simpleBar.Controls.Add(equipmentButton);
         simpleBar.Controls.Add(clearGearButton);
-        Controls.Add(simpleBar);
+
+        var presetLabel = new Label
+        {
+            AutoSize = false,
+            Text = "PRESETS",
+            Width = 92,
+            Height = 32,
+            ForeColor = System.Drawing.Color.FromArgb(247, 69, 96),
+            Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold),
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(0, 0, 8, 0),
+        };
+        presetBar.Controls.Add(presetLabel);
+
+        foreach (var preset in new[] { "KNIGHT", "ARCHER", "MAGE", "PIRATE", "CIVILIAN" })
+        {
+            var presetName = preset;
+            var button = CreateDarkButton(presetName);
+            button.Size = new Size(112, 32);
+            button.Margin = new Padding(0, 0, 8, 0);
+            button.Click += (_, _) => ApplyPreset(presetName);
+            presetBar.Controls.Add(button);
+        }
+
+        topTools.Controls.Add(simpleBar, 0, 0);
+        topTools.Controls.Add(presetBar, 0, 1);
+        Controls.Add(topTools);
 
         var footer = new Panel
         {
@@ -637,7 +686,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         Controls.Add(body);
         body.BringToFront();
-        simpleBar.BringToFront();
+        topTools.BringToFront();
         footer.BringToFront();
 
         var categoriesPanel = CreateSection("CATEGORIES");
@@ -972,6 +1021,175 @@ public sealed class FrmCharacterGenerator : DarkForm
         return true;
     }
 
+    private void ApplyPreset(string preset)
+    {
+        _selectedPartByCategory.Clear();
+
+        PickRandomPart("Base", required: true);
+        PickRandomPart("Body", required: true);
+        PickPresetPart("Hair", new[] { preset }, chance: 0.90);
+        PickRandomPart("Feet", chance: 0.95);
+
+        if (_selectedGender == CharacterGender.Male)
+        {
+            PickRandomPart("Beard", chance: preset == "PIRATE" ? 0.68 : 0.34);
+        }
+
+        switch (preset)
+        {
+            case "KNIGHT":
+                PickOneCategory(new[] { "Pants" }, required: true);
+                PickPresetPart("Chest", new[] { "knight", "plate", "armor", "chain", "guard" }, required: true);
+                PickPresetPart("Head", new[] { "helm", "helmet", "knight", "guard" }, chance: 0.75);
+                PickPresetPart("Hands", new[] { "gauntlet", "armor", "plate" }, chance: 0.78);
+                PickPresetPart("One Handed", new[] { "sword", "blade", "axe", "mace" }, required: true);
+                PickPresetPart("Offhand", new[] { "shield", "buckler" }, chance: 0.82);
+                PickPresetPart("Cape", new[] { "cape", "cloak", "royal" }, chance: 0.40);
+                break;
+
+            case "ARCHER":
+                PickOneCategory(new[] { "Pants" }, required: true);
+                PickPresetPart("Top", new[] { "archer", "ranger", "leather", "hunter" }, required: true);
+                PickPresetPart("Chest", new[] { "archer", "ranger", "leather", "hunter" }, chance: 0.42);
+                PickPresetPart("Head", new[] { "hood", "archer", "ranger", "hunter" }, chance: 0.48);
+                PickPresetPart("Bow", new[] { "bow", "longbow", "archer" }, required: true);
+                PickPresetPart("Quiver", new[] { "quiver", "arrow" }, required: true);
+                _selectedPartByCategory.Remove("Offhand");
+                break;
+
+            case "MAGE":
+                PickOneCategory(new[] { "Pants", "Skirt" }, required: true);
+                if (!PickPresetPart("Overall", new[] { "robe", "mage", "wizard", "sorcer" }, chance: 0.58))
+                {
+                    PickPresetPart("Top", new[] { "robe", "mage", "wizard", "sorcer" }, required: true);
+                    PickPresetPart("Chest", new[] { "robe", "mage", "wizard", "sorcer" }, chance: 0.36);
+                }
+                else
+                {
+                    _selectedPartByCategory.Remove("Top");
+                    _selectedPartByCategory.Remove("Chest");
+                }
+                PickPresetPart("Head", new[] { "wizard", "mage", "hood", "hat" }, chance: 0.52);
+                PickPresetPart("Staff", new[] { "staff", "wand", "mage", "wizard" }, required: true);
+                PickPresetPart("Cape", new[] { "cape", "cloak", "mage" }, chance: 0.38);
+                _selectedPartByCategory.Remove("Offhand");
+                _selectedPartByCategory.Remove("Quiver");
+                break;
+
+            case "PIRATE":
+                PickOneCategory(new[] { "Pants" }, required: true);
+                PickPresetPart("Top", new[] { "pirate", "sailor", "corsair", "shirt" }, required: true);
+                PickPresetPart("Chest", new[] { "pirate", "sailor", "corsair", "vest" }, chance: 0.44);
+                PickPresetPart("Head", new[] { "pirate", "tricorn", "bandana", "captain" }, chance: 0.72);
+                PickPresetPart("One Handed", new[] { "cutlass", "saber", "sword", "rapier" }, required: true);
+                PickPresetPart("Offhand", new[] { "pistol", "shield", "lantern" }, chance: 0.24);
+                _selectedPartByCategory.Remove("Quiver");
+                break;
+
+            default: // CIVILIAN
+                PickOneCategory(new[] { "Pants", "Skirt" }, required: true);
+                PickPresetPart("Top", new[] { "civil", "shirt", "common", "villager", "worker" }, required: true);
+                PickPresetPart("Chest", new[] { "civil", "vest", "common", "villager" }, chance: 0.20);
+                PickPresetPart("Head", new[] { "cap", "hat", "common", "villager" }, chance: 0.22);
+                ClearEquipmentSelectionsOnly();
+                break;
+        }
+
+        // Presets are mutually exclusive for main-hand weapon families.
+        NormalizeWeaponSelection(preset);
+        _status.Text = $"Preset applied: {preset}.";
+        RefreshAfterRandomize();
+    }
+
+    private bool PickPresetPart(
+        string category,
+        IEnumerable<string> keywords,
+        double chance = 1.0,
+        bool required = false
+    )
+    {
+        if (!required && _random.NextDouble() > chance)
+        {
+            _selectedPartByCategory.Remove(category);
+            return false;
+        }
+
+        if (!_partsByCategory.TryGetValue(category, out var allParts))
+        {
+            _selectedPartByCategory.Remove(category);
+            return false;
+        }
+
+        var compatible = allParts
+            .Where(part => IsPartCompatibleWithGender(part.Name))
+            .ToArray();
+
+        if (compatible.Length == 0)
+        {
+            _selectedPartByCategory.Remove(category);
+            return false;
+        }
+
+        var keywordArray = keywords
+            .Where(keyword => !string.IsNullOrWhiteSpace(keyword))
+            .ToArray();
+
+        var themed = compatible
+            .Where(part => keywordArray.Any(keyword =>
+                part.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
+            .ToArray();
+
+        var pool = themed.Length > 0 ? themed : compatible;
+        _selectedPartByCategory[category] = pool[_random.Next(pool.Length)].Name;
+        return true;
+    }
+
+    private void NormalizeWeaponSelection(string preset)
+    {
+        var allowed = preset switch
+        {
+            "ARCHER" => "Bow",
+            "MAGE" => "Staff",
+            "KNIGHT" => "One Handed",
+            "PIRATE" => "One Handed",
+            _ => null,
+        };
+
+        foreach (var category in new[] { "One Handed", "Staff", "Bow", "Rifle" })
+        {
+            if (!string.Equals(category, allowed, StringComparison.OrdinalIgnoreCase))
+            {
+                _selectedPartByCategory.Remove(category);
+            }
+        }
+
+        if (allowed == null)
+        {
+            _selectedPartByCategory.Remove("Offhand");
+            _selectedPartByCategory.Remove("Quiver");
+        }
+    }
+
+    private void ClearEquipmentSelectionsOnly()
+    {
+        foreach (var category in new[]
+                 {
+                     "One Handed",
+                     "Staff",
+                     "Bow",
+                     "Rifle",
+                     "Offhand",
+                     "Quiver",
+                     "Cape",
+                     "Artifact",
+                     "FX",
+                     "Bundles",
+                 })
+        {
+            _selectedPartByCategory.Remove(category);
+        }
+    }
+
     private void RandomizeFaceAndHair()
     {
         PickRandomPart("Hair", chance: 0.95);
@@ -1052,23 +1270,7 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private void ClearEquipment()
     {
-        foreach (var category in new[]
-                 {
-                     "One Handed",
-                     "Staff",
-                     "Bow",
-                     "Rifle",
-                     "Offhand",
-                     "Quiver",
-                     "Cape",
-                     "Artifact",
-                     "FX",
-                     "Bundles",
-                 })
-        {
-            _selectedPartByCategory.Remove(category);
-        }
-
+        ClearEquipmentSelectionsOnly();
         RefreshAfterRandomize();
     }
 
