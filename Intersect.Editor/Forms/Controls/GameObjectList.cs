@@ -184,6 +184,45 @@ public partial class GameObjectList : TreeView
     }
 
 
+    public bool SelectObject(Guid id)
+    {
+        TreeNode? FindNode(TreeNodeCollection nodes)
+        {
+            foreach (TreeNode node in nodes)
+            {
+                if (node.Tag is Guid nodeId && nodeId == id)
+                {
+                    return node;
+                }
+
+                var child = FindNode(node.Nodes);
+                if (child != null)
+                {
+                    return child;
+                }
+            }
+
+            return null;
+        }
+
+        var match = FindNode(Nodes);
+        if (match == null)
+        {
+            return false;
+        }
+
+        var parent = match.Parent;
+        while (parent != null)
+        {
+            parent.Expand();
+            parent = parent.Parent;
+        }
+
+        SelectedNode = match;
+        match.EnsureVisible();
+        return true;
+    }
+
     public void ExpandFolder(string name)
     {
         mExpandedFolders.Add(name);
