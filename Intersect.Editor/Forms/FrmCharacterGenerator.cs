@@ -546,10 +546,26 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private void BuildInterface()
     {
+        // Use a single root layout so the toolbars reserve real space instead
+        // of floating over the center content via WinForms docking/z-order.
+        var rootLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
+        };
+        rootLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 98));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 82));
+        Controls.Add(rootLayout);
+
         var topTools = new TableLayoutPanel
         {
-            Dock = DockStyle.Top,
-            Height = 98,
+            Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 2,
             BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
@@ -686,16 +702,15 @@ public sealed class FrmCharacterGenerator : DarkForm
 
         topTools.Controls.Add(simpleBar, 0, 0);
         topTools.Controls.Add(presetBar, 0, 1);
-        Controls.Add(topTools);
+        rootLayout.Controls.Add(topTools, 0, 0);
 
         var footer = new Panel
         {
-            Dock = DockStyle.Bottom,
-            Height = 82,
+            Dock = DockStyle.Fill,
             BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
             Padding = new Padding(14),
         };
-        Controls.Add(footer);
+        rootLayout.Controls.Add(footer, 0, 2);
 
         var exportLabel = new Label
         {
@@ -768,10 +783,8 @@ public sealed class FrmCharacterGenerator : DarkForm
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 210));
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 390));
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        Controls.Add(body);
-        body.BringToFront();
-        topTools.BringToFront();
-        footer.BringToFront();
+        body.Margin = Padding.Empty;
+        rootLayout.Controls.Add(body, 0, 1);
 
         var categoriesPanel = CreateSection("CATEGORIES");
         _categoryList.Dock = DockStyle.Fill;
