@@ -1178,6 +1178,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         _partsView.LargeImageList = _partImages;
         _partsView.MultiSelect = false;
         _partsView.HideSelection = false;
+        _partsView.ShowItemToolTips = true;
         _partsView.BorderStyle = BorderStyle.None;
         _partsView.BackColor = System.Drawing.Color.FromArgb(38, 32, 34);
         _partsView.ForeColor = System.Drawing.Color.Gainsboro;
@@ -2105,6 +2106,55 @@ public sealed class FrmCharacterGenerator : DarkForm
             .ThenBy(name => name, StringComparer.OrdinalIgnoreCase);
     }
 
+    private static bool IsIgnoredArtistAnimationFile(string fileName)
+    {
+        var pieces = fileName.Split('_', StringSplitOptions.RemoveEmptyEntries);
+        if (pieces.Length < 2)
+        {
+            return false;
+        }
+
+        var animationIndex = 0;
+        if (pieces.Length >= 3 &&
+            (string.Equals(pieces[0], "M", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(pieces[0], "F", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(pieces[0], "B", StringComparison.OrdinalIgnoreCase)))
+        {
+            animationIndex = 1;
+        }
+
+        return animationIndex < pieces.Length &&
+               ArtistIgnoredAnimationCodes.Contains(pieces[animationIndex]);
+    }
+
+    private static string GetFriendlyPartName(string partName)
+    {
+        var displayName = partName;
+
+        if (displayName.Length > 2 &&
+            displayName[1] == '_' &&
+            (char.ToUpperInvariant(displayName[0]) == 'B' ||
+             char.ToUpperInvariant(displayName[0]) == 'M' ||
+             char.ToUpperInvariant(displayName[0]) == 'F'))
+        {
+            displayName = displayName[2..];
+        }
+
+        return displayName.Replace('_', ' ').Trim();
+    }
+
+    private static string GetAnimationSummary(PartFamily part)
+    {
+        var missing = AnimationDefinitions
+            .Where(definition => !part.Files.ContainsKey(definition.Animation))
+            .Select(definition => definition.Label)
+            .ToArray();
+
+        return missing.Length == 0
+            ? "Animations: 6/6"
+            : $"Animations: {AnimationDefinitions.Length - missing.Length}/{AnimationDefinitions.Length} — Missing: {string.Join(", ", missing)}";
+    }
+
     private static List<PartFamily> DiscoverFamilies(string categoryDirectory)
     {
         var groups = new Dictionary<string, PartFamily>(StringComparer.OrdinalIgnoreCase);
@@ -2112,6 +2162,12 @@ public sealed class FrmCharacterGenerator : DarkForm
         foreach (var file in Directory.GetFiles(categoryDirectory, "*.png", SearchOption.AllDirectories))
         {
             var relative = Path.GetRelativePath(categoryDirectory, file);
+            var artistFileName = Path.GetFileNameWithoutExtension(relative);
+            if (IsIgnoredArtistAnimationFile(artistFileName))
+            {
+                continue;
+            }
+
             var animation = DetectAnimation(relative, out var cleanName);
             if (string.IsNullOrWhiteSpace(cleanName))
             {
@@ -2270,13 +2326,14 @@ public sealed class FrmCharacterGenerator : DarkForm
                 .Where(part => IsPartCompatibleWithGender(part.Name))
                 .Where(part =>
                     string.IsNullOrWhiteSpace(search) ||
-                    part.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
+                    part.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                    GetFriendlyPartName(part.Name).Contains(search, StringComparison.OrdinalIgnoreCase))
                 .Where(part =>
                     !_favoritesOnly ||
                     _favoriteParts.Contains(MakeFavoriteKey(category, part.Name)))
                 .OrderByDescending(part =>
                     _favoriteParts.Contains(MakeFavoriteKey(category, part.Name)))
-                .ThenBy(part => part.Name, StringComparer.OrdinalIgnoreCase);
+                .ThenBy(part => GetFriendlyPartName(part.Name), StringComparer.OrdinalIgnoreCase);
 
             foreach (var part in visibleParts)
             {
@@ -2285,10 +2342,13 @@ public sealed class FrmCharacterGenerator : DarkForm
                 _partImages.Images.Add(key, new Bitmap(thumbnail));
 
                 var favorite = _favoriteParts.Contains(MakeFavoriteKey(category, part.Name));
-                var item = new ListViewItem((favorite ? "★ " : string.Empty) + part.Name)
+                var friendlyName = GetFriendlyPartName(part.Name);
+                var animationSummary = GetAnimationSummary(part);
+                var item = new ListViewItem((favorite ? "★ " : string.Empty) + friendlyName)
                 {
                     ImageKey = key,
                     Tag = part.Name,
+                    ToolTipText = $"{part.Name}\n{animationSummary}",
                 };
                 _partsView.Items.Add(item);
             }
@@ -2684,7 +2744,7 @@ public sealed class FrmCharacterGenerator : DarkForm
             MessageBox.Show(
                 this,
                 $"Import complete.\n\nImported: {imported:N0}\nSkipped: {skipped:N0}\nInvalid: {invalid:N0}\n\n" +
-                "The original artist filenames were preserved. The generator now recognizes Mov/Mel/Mag/Idl/Ran/Use automatically.",
+                "The original artist filenames were preserved. Mov/Mel/Mag/Idl/Ran/Use are recognized automatically; Blo/Fis/Rif are ignored by the character generator.",
                 "Character Generator",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information
