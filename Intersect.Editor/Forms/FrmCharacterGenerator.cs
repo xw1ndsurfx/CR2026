@@ -40,6 +40,17 @@ public sealed class FrmCharacterGenerator : DarkForm
         }
     }
 
+    private sealed class SelectedLayer
+    {
+        public required string Category { get; init; }
+
+        public required string PartName { get; init; }
+
+        public required string File { get; init; }
+
+        public required Bitmap Bitmap { get; init; }
+    }
+
     private sealed class PixelPreview : Control
     {
         private Bitmap? _image;
@@ -132,6 +143,19 @@ public sealed class FrmCharacterGenerator : DarkForm
         "Skirt",
         "Staff",
         "Top",
+    };
+
+    private static readonly HashSet<string> AlwaysBehindCategories =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Cape",
+            "Quiver",
+        };
+
+    private static readonly string[] TopRowBehindPartKeywords =
+    {
+        "Balloon",
+        "Ballon",
     };
 
     private static readonly string[] PreferredLayerOrder =
@@ -283,25 +307,6 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private void BuildInterface()
     {
-        var header = new Panel
-        {
-            Dock = DockStyle.Top,
-            Height = 72,
-            BackColor = System.Drawing.Color.FromArgb(247, 69, 96),
-            Padding = new Padding(18, 8, 18, 8),
-        };
-
-        var title = new Label
-        {
-            AutoSize = true,
-            Text = "CORPS ROYAUX CHARACTER CREATOR",
-            Font = new Font(Font.FontFamily, 20, FontStyle.Bold),
-            ForeColor = System.Drawing.Color.FromArgb(20, 20, 20),
-            Location = new System.Drawing.Point(16, 18),
-        };
-        header.Controls.Add(title);
-        Controls.Add(header);
-
         var footer = new Panel
         {
             Dock = DockStyle.Bottom,
@@ -384,7 +389,6 @@ public sealed class FrmCharacterGenerator : DarkForm
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         Controls.Add(body);
         body.BringToFront();
-        header.BringToFront();
         footer.BringToFront();
 
         var categoriesPanel = CreateSection("CATEGORIES");
@@ -844,22 +848,30 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private Bitmap? RenderCharacter(CharacterAnimation animation)
     {
-        var files = GetSelectedLayerFiles(animation).ToArray();
-        if (files.Length == 0)
+        var selectedLayers = GetSelectedLayers(animation).ToArray();
+        if (selectedLayers.Length == 0)
         {
             return null;
         }
 
-        var layers = new List<Bitmap>();
+        var layers = new List<SelectedLayer>();
         try
         {
-            foreach (var file in files)
+            foreach (var selected in selectedLayers)
             {
-                if (File.Exists(file))
+                if (!File.Exists(selected.File))
                 {
-                    using var source = new Bitmap(file);
-                    layers.Add(new Bitmap(source));
+                    continue;
                 }
+
+                using var source = new Bitmap(selected.File);
+                layers.Add(new SelectedLayer
+                {
+                    Category = selected.Category,
+                    PartName = selected.PartName,
+                    File = selected.File,
+                    Bitmap = new Bitmap(source),
+                });
             }
 
             if (layers.Count == 0)
@@ -867,8 +879,8 @@ public sealed class FrmCharacterGenerator : DarkForm
                 return null;
             }
 
-            var width = layers.Max(image => image.Width);
-            var height = layers.Max(image => image.Height);
+            var width = layers.Max(layer => layer.Bitmap.Width);
+            var height = layers.Max(layer => layer.Bitmap.Height);
             var output = new Bitmap(width, height, PixelFormat.Format32bppArgb);
 
             using var graphics = Graphics.FromImage(output);
@@ -879,11 +891,28 @@ public sealed class FrmCharacterGenerator : DarkForm
             graphics.PixelOffsetMode = PixelOffsetMode.Half;
             graphics.SmoothingMode = SmoothingMode.None;
 
-            foreach (var layer in layers)
+            const int directionRows = 4;
+            var rowHeight = Math.Max(1, height / directionRows);
+
+            for (var row = 0; row < directionRows; row++)
             {
-                var x = (width - layer.Width) / 2;
-                var y = (height - layer.Height) / 2;
-                graphics.DrawImageUnscaled(layer, x, y);
+                var rowTop = row * rowHeight;
+                var rowBottom = row == directionRows - 1 ? height : Math.Min(height, rowTop + rowHeight);
+                graphics.SetClip(new Rectangle(0, rowTop, width, rowBottom - rowTop));
+
+                // Draw layers that must sit behind the body for this direction first.
+                foreach (var layer in layers.Where(layer => IsBehindCharacter(layer.Category, layer.PartName, row)))
+                {
+                    DrawLayer(graphics, layer.Bitmap, width, height);
+                }
+
+                // Then draw the normal stack, skipping anything already drawn behind for this row.
+                foreach (var layer in layers.Where(layer => !IsBehindCharacter(layer.Category, layer.PartName, row)))
+                {
+                    DrawLayer(graphics, layer.Bitmap, width, height);
+                }
+
+                graphics.ResetClip();
             }
 
             return output;
@@ -892,12 +921,38 @@ public sealed class FrmCharacterGenerator : DarkForm
         {
             foreach (var layer in layers)
             {
-                layer.Dispose();
+                layer.Bitmap.Dispose();
             }
         }
     }
 
-    private IEnumerable<string> GetSelectedLayerFiles(CharacterAnimation animation)
+    private static void DrawLayer(Graphics graphics, Bitmap bitmap, int outputWidth, int outputHeight)
+    {
+        var x = (outputWidth - bitmap.Width) / 2;
+        var y = (outputHeight - bitmap.Height) / 2;
+        graphics.DrawImageUnscaled(bitmap, x, y);
+    }
+
+    private static bool IsBehindCharacter(string category, string partName, int directionRow)
+    {
+        if (AlwaysBehindCategories.Contains(category))
+        {
+            return true;
+        }
+
+        if (directionRow == 0 &&
+            TopRowBehindPartKeywords.Any(keyword =>
+                partName.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private IEnumerable<(string Category, string PartName, string File)> GetSelectedLayers(
+        CharacterAnimation animation
+    )
     {
         foreach (var category in SortCategories(_selectedPartByCategory.Keys))
         {
@@ -913,7 +968,7 @@ public sealed class FrmCharacterGenerator : DarkForm
             var file = family?.Resolve(animation);
             if (!string.IsNullOrWhiteSpace(file))
             {
-                yield return file;
+                yield return (category, selectedName, file);
             }
         }
     }
