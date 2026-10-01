@@ -188,6 +188,8 @@ public partial class FrmAnimation : EditorForm
         mEditorItem.Lower.LoopCount = Math.Max(1, mEditorItem.Lower.LoopCount);
 
         RefreshGeneratedAnimationChoices();
+        InitEditor();
+        lstGameObjects.SelectObject(mEditorItem.Id);
         UpdateEditor();
 
         Text = $"{Strings.AnimationEditor.title} - Imported: {request.Name}";
