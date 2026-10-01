@@ -3251,7 +3251,8 @@ public sealed class FrmBalanceLab : DarkForm
                      entry.SimulationTtk.HasValue &&
                      entry.SimulationHpLoss.HasValue))
         {
-            if (!NPCDescriptor.Lookup.TryGetValue(entry.Id, out var npc) || npc == null)
+            var npc = NPCDescriptor.Get(entry.Id);
+            if (npc == null)
             {
                 continue;
             }
