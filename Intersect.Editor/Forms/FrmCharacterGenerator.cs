@@ -18,6 +18,12 @@ public sealed class FrmCharacterGenerator : DarkForm
         Weapon,
     }
 
+    private enum CharacterGender
+    {
+        Male,
+        Female,
+    }
+
     private sealed class PartFamily
     {
         public required string Name { get; init; }
@@ -229,6 +235,69 @@ public sealed class FrmCharacterGenerator : DarkForm
         "Ballon",
     };
 
+    private static readonly Dictionary<int, string[]> ServerPaperdollOrder =
+        new()
+        {
+            // Artist/Intersect sheet row order: 0=Down, 1=Left, 2=Right, 3=Up.
+            [0] = new[]
+            {
+                "Bag", "Cape", "Player", "Earring", "Armor", "Legs", "Belt", "Head",
+                "Gloves", "Ring", "Shield", "Weapon", "Boots", "Necklace", "Tag", "Ship",
+            },
+            [1] = new[]
+            {
+                "Shield", "Player", "Earring", "Bag", "Cape", "Armor", "Belt", "Head",
+                "Weapon", "Gloves", "Ring", "Legs", "Boots", "Necklace", "Tag", "Ship",
+            },
+            [2] = new[]
+            {
+                "Shield", "Player", "Earring", "Bag", "Cape", "Armor", "Belt", "Head",
+                "Weapon", "Gloves", "Ring", "Legs", "Boots", "Necklace", "Tag", "Ship",
+            },
+            [3] = new[]
+            {
+                "Shield", "Weapon", "Player", "Earring", "Armor", "Belt", "Head", "Gloves",
+                "Ring", "Legs", "Boots", "Bag", "Cape", "Necklace", "Tag", "Ship",
+            },
+        };
+
+    private static readonly Dictionary<string, string> CategoryToPaperdollSlot =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Base"] = "Player",
+            ["Body"] = "Player",
+            ["Female"] = "Player",
+            ["Lines"] = "Player",
+
+            ["Top"] = "Armor",
+            ["Chest"] = "Armor",
+            ["Overall"] = "Armor",
+
+            ["Pants"] = "Legs",
+            ["Skirt"] = "Legs",
+
+            ["Feet"] = "Boots",
+            ["Hands"] = "Gloves",
+
+            ["Hair"] = "Head",
+            ["Beard"] = "Head",
+            ["Head"] = "Head",
+
+            ["Cape"] = "Cape",
+            ["Quiver"] = "Bag",
+
+            ["Offhand"] = "Shield",
+
+            ["One Handed"] = "Weapon",
+            ["Staff"] = "Weapon",
+            ["Bow"] = "Weapon",
+            ["Rifle"] = "Weapon",
+
+            ["Artifact"] = "Tag",
+            ["FX"] = "Tag",
+            ["Bundles"] = "Ship",
+        };
+
     private static readonly string[] PreferredLayerOrder =
     {
         "Base",
@@ -299,6 +368,9 @@ public sealed class FrmCharacterGenerator : DarkForm
     private readonly Label _status = new();
     private readonly FlowLayoutPanel _animationButtons = new();
     private readonly Dictionary<CharacterAnimation, Button> _animationButtonLookup = new();
+    private readonly Button _maleButton = new();
+    private readonly Button _femaleButton = new();
+    private readonly Random _random = new();
 
     private readonly Dictionary<string, List<PartFamily>> _partsByCategory =
         new(StringComparer.OrdinalIgnoreCase);
@@ -310,6 +382,7 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private FileSystemWatcher? _watcher;
     private CharacterAnimation _previewAnimation = CharacterAnimation.Move;
+    private CharacterGender _selectedGender = CharacterGender.Male;
     private bool _reloading;
 
     public FrmCharacterGenerator(Action? afterExport = null)
@@ -378,6 +451,29 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private void BuildInterface()
     {
+        var simpleBar = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            Height = 52,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+            Padding = new Padding(12, 8, 12, 8),
+        };
+
+        ConfigureGenderButton(_maleButton, "MALE", CharacterGender.Male);
+        ConfigureGenderButton(_femaleButton, "FEMALE", CharacterGender.Female);
+
+        var randomizeButton = CreateAccentButton("RANDOMIZE CHARACTER");
+        randomizeButton.Size = new Size(190, 34);
+        randomizeButton.Margin = new Padding(8, 0, 0, 0);
+        randomizeButton.Click += (_, _) => RandomizeCharacter();
+
+        simpleBar.Controls.Add(_maleButton);
+        simpleBar.Controls.Add(_femaleButton);
+        simpleBar.Controls.Add(randomizeButton);
+        Controls.Add(simpleBar);
+
         var footer = new Panel
         {
             Dock = DockStyle.Bottom,
@@ -460,6 +556,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         Controls.Add(body);
         body.BringToFront();
+        simpleBar.BringToFront();
         footer.BringToFront();
 
         var categoriesPanel = CreateSection("CATEGORIES");
@@ -537,6 +634,130 @@ public sealed class FrmCharacterGenerator : DarkForm
 
         body.Controls.Add(previewPanel, 2, 0);
         UpdateAnimationButtonState();
+    }
+
+    private void ConfigureGenderButton(Button button, string text, CharacterGender gender)
+    {
+        button.Text = text;
+        button.Size = new Size(110, 34);
+        button.Margin = new Padding(0, 0, 8, 0);
+        button.FlatStyle = FlatStyle.Flat;
+        button.ForeColor = System.Drawing.Color.White;
+        button.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold);
+        button.Cursor = Cursors.Hand;
+        button.Click += (_, _) => SetGender(gender);
+        UpdateGenderButtonState();
+    }
+
+    private void SetGender(CharacterGender gender)
+    {
+        if (_selectedGender == gender)
+        {
+            UpdateGenderButtonState();
+            return;
+        }
+
+        _selectedGender = gender;
+
+        foreach (var category in _selectedPartByCategory.Keys.ToArray())
+        {
+            var selected = _selectedPartByCategory[category];
+            if (!IsPartCompatibleWithGender(selected))
+            {
+                _selectedPartByCategory.Remove(category);
+            }
+        }
+
+        UpdateGenderButtonState();
+        PopulatePartsList();
+        DrawPreview();
+    }
+
+    private void UpdateGenderButtonState()
+    {
+        var accent = System.Drawing.Color.FromArgb(247, 69, 96);
+        var dark = System.Drawing.Color.FromArgb(55, 47, 49);
+
+        _maleButton.BackColor = _selectedGender == CharacterGender.Male ? accent : dark;
+        _femaleButton.BackColor = _selectedGender == CharacterGender.Female ? accent : dark;
+
+        _maleButton.FlatAppearance.BorderColor = _maleButton.BackColor;
+        _femaleButton.FlatAppearance.BorderColor = _femaleButton.BackColor;
+    }
+
+    private bool IsPartCompatibleWithGender(string partName)
+    {
+        if (partName.StartsWith("F_", StringComparison.OrdinalIgnoreCase))
+        {
+            return _selectedGender == CharacterGender.Female;
+        }
+
+        if (partName.StartsWith("B_", StringComparison.OrdinalIgnoreCase) ||
+            partName.StartsWith("M_", StringComparison.OrdinalIgnoreCase))
+        {
+            return _selectedGender == CharacterGender.Male;
+        }
+
+        return true;
+    }
+
+    private void RandomizeCharacter()
+    {
+        _selectedPartByCategory.Clear();
+
+        var requiredCategories = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Base",
+            "Body",
+        };
+
+        var commonCategories = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Hair",
+            "Pants",
+            "Skirt",
+            "Feet",
+            "Top",
+            "Chest",
+            "Overall",
+            "Hands",
+            "Beard",
+            "Head",
+        };
+
+        foreach (var category in SortCategories(_partsByCategory.Keys))
+        {
+            if (!_partsByCategory.TryGetValue(category, out var allParts))
+            {
+                continue;
+            }
+
+            var compatible = allParts
+                .Where(part => IsPartCompatibleWithGender(part.Name))
+                .ToArray();
+
+            if (compatible.Length == 0)
+            {
+                continue;
+            }
+
+            var shouldPick = requiredCategories.Contains(category) ||
+                             (commonCategories.Contains(category) && _random.NextDouble() < 0.72) ||
+                             (!commonCategories.Contains(category) &&
+                              !requiredCategories.Contains(category) &&
+                              _random.NextDouble() < 0.18);
+
+            if (!shouldPick)
+            {
+                continue;
+            }
+
+            _selectedPartByCategory[category] =
+                compatible[_random.Next(compatible.Length)].Name;
+        }
+
+        PopulatePartsList();
+        DrawPreview();
     }
 
     private static TableLayoutPanel CreateSection(string title)
@@ -856,7 +1077,7 @@ public sealed class FrmCharacterGenerator : DarkForm
 
         if (category != null && _partsByCategory.TryGetValue(category, out var parts))
         {
-            foreach (var part in parts)
+            foreach (var part in parts.Where(part => IsPartCompatibleWithGender(part.Name)))
             {
                 _partsList.Items.Add(part.Name);
             }
@@ -971,14 +1192,7 @@ public sealed class FrmCharacterGenerator : DarkForm
                 var rowBottom = row == directionRows - 1 ? height : Math.Min(height, rowTop + rowHeight);
                 graphics.SetClip(new Rectangle(0, rowTop, width, rowBottom - rowTop));
 
-                // Draw layers that must sit behind the body for this direction first.
-                foreach (var layer in layers.Where(layer => IsBehindCharacter(layer.Category, layer.PartName, row)))
-                {
-                    DrawLayer(graphics, layer.Bitmap, width, height);
-                }
-
-                // Then draw the normal stack, skipping anything already drawn behind for this row.
-                foreach (var layer in layers.Where(layer => !IsBehindCharacter(layer.Category, layer.PartName, row)))
+                foreach (var layer in OrderLayersForDirection(layers, row))
                 {
                     DrawLayer(graphics, layer.Bitmap, width, height);
                 }
@@ -995,6 +1209,36 @@ public sealed class FrmCharacterGenerator : DarkForm
                 layer.Bitmap.Dispose();
             }
         }
+    }
+
+    private static IEnumerable<SelectedLayer> OrderLayersForDirection(
+        IEnumerable<SelectedLayer> layers,
+        int directionRow
+    )
+    {
+        if (!ServerPaperdollOrder.TryGetValue(directionRow, out var slotOrder))
+        {
+            return layers;
+        }
+
+        var slotPriority = slotOrder
+            .Select((slot, index) => (slot, index))
+            .ToDictionary(pair => pair.slot, pair => pair.index, StringComparer.OrdinalIgnoreCase);
+
+        return layers
+            .Select((layer, originalIndex) => new
+            {
+                Layer = layer,
+                OriginalIndex = originalIndex,
+                Slot = CategoryToPaperdollSlot.TryGetValue(layer.Category, out var slot)
+                    ? slot
+                    : "Tag",
+            })
+            .OrderBy(item => slotPriority.TryGetValue(item.Slot, out var priority)
+                ? priority
+                : int.MaxValue)
+            .ThenBy(item => item.OriginalIndex)
+            .Select(item => item.Layer);
     }
 
     private static void DrawLayer(Graphics graphics, Bitmap bitmap, int outputWidth, int outputHeight)
