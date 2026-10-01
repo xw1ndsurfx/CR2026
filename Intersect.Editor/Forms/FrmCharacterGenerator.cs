@@ -365,14 +365,14 @@ public sealed class FrmCharacterGenerator : DarkForm
         _categoryList.Dock = DockStyle.Fill;
         StyleListBox(_categoryList);
         _categoryList.SelectedIndexChanged += (_, _) => PopulatePartsList();
-        categoriesPanel.Controls.Add(_categoryList);
+        categoriesPanel.Controls.Add(_categoryList, 0, 1);
         body.Controls.Add(categoriesPanel, 0, 0);
 
         var partsPanel = CreateSection("PAPERDOLLS");
         _partsList.Dock = DockStyle.Fill;
         StyleListBox(_partsList);
         _partsList.SelectedIndexChanged += (_, _) => SelectCurrentPart();
-        partsPanel.Controls.Add(_partsList);
+        partsPanel.Controls.Add(_partsList, 0, 1);
         body.Controls.Add(partsPanel, 1, 0);
 
         var previewPanel = new Panel
@@ -438,27 +438,33 @@ public sealed class FrmCharacterGenerator : DarkForm
         UpdateAnimationButtonState();
     }
 
-    private static Panel CreateSection(string title)
+    private static TableLayoutPanel CreateSection(string title)
     {
-        var panel = new Panel
+        var panel = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             BackColor = System.Drawing.Color.FromArgb(28, 24, 25),
             Margin = new Padding(4),
-            Padding = new Padding(8, 40, 8, 8),
+            Padding = new Padding(8),
+            ColumnCount = 1,
+            RowCount = 2,
         };
+
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
         var label = new Label
         {
             Text = title,
-            Dock = DockStyle.Top,
-            Height = 34,
+            Dock = DockStyle.Fill,
             ForeColor = System.Drawing.Color.FromArgb(247, 69, 96),
             Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 11, FontStyle.Bold),
             TextAlign = ContentAlignment.MiddleLeft,
+            Margin = Padding.Empty,
         };
-        panel.Controls.Add(label);
-        label.BringToFront();
+
+        panel.Controls.Add(label, 0, 0);
         return panel;
     }
 
