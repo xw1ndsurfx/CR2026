@@ -45,6 +45,8 @@ public partial class FrmMain : Form
     //Editor References
     private FrmAnimation mAnimationEditor;
 
+    private FrmAnimationImport.GeneratedAnimationRequest? mPendingGeneratedAnimationRequest;
+
     private FrmClass mClassEditor;
 
     private FrmCommonEvent mCommonEventEditor;
@@ -120,6 +122,7 @@ public partial class FrmMain : Form
         AddAchievementEditorMenu();
         PacketSender.SendRequestAchievementConfiguration(openEditor: false);
         AddCharacterGeneratorEditorMenu();
+        AddAnimationImportEditorMenu();
         AddWorldEventsEditorMenu();
         Show();
 
@@ -298,6 +301,62 @@ public partial class FrmMain : Form
         var editor = new FrmAchievementConfiguration();
         editor.Show();
         editor.BringToFront();
+    }
+
+    private void AddAnimationImportEditorMenu()
+    {
+        if (contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>()
+            .Any(item => item.Name == "animationImportEditorToolStripMenuItem"))
+        {
+            return;
+        }
+
+        var animationImport = new ToolStripMenuItem
+        {
+            Name = "animationImportEditorToolStripMenuItem",
+            Text = "Animations Import...",
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
+        };
+
+        animationImport.Click += (_, _) =>
+        {
+            var editor = new FrmAnimationImport(BeginGeneratedAnimationCreation);
+            editor.Show(this);
+            editor.BringToFront();
+        };
+
+        contentEditorsToolStripMenuItem.DropDownItems.Add(animationImport);
+    }
+
+    private void BeginGeneratedAnimationCreation(
+        FrmAnimationImport.GeneratedAnimationRequest request
+    )
+    {
+        if (mAnimationEditor != null &&
+            !mAnimationEditor.IsDisposed &&
+            mAnimationEditor.Visible &&
+            Globals.CurrentEditor == (int)GameObjectType.Animation)
+        {
+            mAnimationEditor.RefreshGeneratedAnimationChoices();
+            mAnimationEditor.BeginGeneratedAnimationCreation(request);
+            mAnimationEditor.BringToFront();
+            return;
+        }
+
+        if (Globals.CurrentEditor != -1)
+        {
+            MessageBox.Show(
+                this,
+                "Close the currently open content editor, then import the animation again to create it automatically.",
+                "Animations Import",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        mPendingGeneratedAnimationRequest = request;
+        PacketSender.SendOpenEditor(GameObjectType.Animation);
     }
 
     private void AddCharacterGeneratorEditorMenu()
@@ -1821,6 +1880,15 @@ public partial class FrmMain : Form
                         mAnimationEditor = new FrmAnimation();
                         mAnimationEditor.InitEditor();
                         mAnimationEditor.Show();
+                    }
+
+                    if (mPendingGeneratedAnimationRequest != null)
+                    {
+                        var request = mPendingGeneratedAnimationRequest;
+                        mPendingGeneratedAnimationRequest = null;
+                        mAnimationEditor.RefreshGeneratedAnimationChoices();
+                        mAnimationEditor.BeginGeneratedAnimationCreation(request);
+                        mAnimationEditor.BringToFront();
                     }
 
                     break;
