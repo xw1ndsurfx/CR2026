@@ -2986,8 +2986,9 @@ public sealed class FrmCharacterGenerator : DarkForm
             return false;
         }
 
+        var selectedPartName = partName;
         family = parts.FirstOrDefault(part =>
-            string.Equals(part.Name, partName, StringComparison.OrdinalIgnoreCase));
+            string.Equals(part.Name, selectedPartName, StringComparison.OrdinalIgnoreCase));
 
         return family != null;
     }
