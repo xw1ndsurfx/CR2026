@@ -225,10 +225,12 @@ public partial class FrmItem : EditorForm
             return -1;
         }
 
-        for (var i = 0; i < Options.Instance.Equipment.Slots.Count; i++)
+        var slots = Options.Instance.Equipment.Slots.ToArray();
+
+        for (var i = 0; i < slots.Length; i++)
         {
             if (string.Equals(
-                    Options.Instance.Equipment.Slots[i],
+                    slots[i],
                     preferredSlot,
                     StringComparison.OrdinalIgnoreCase
                 ))
@@ -237,10 +239,9 @@ public partial class FrmItem : EditorForm
             }
         }
 
-        for (var i = 0; i < Options.Instance.Equipment.Slots.Count; i++)
+        for (var i = 0; i < slots.Length; i++)
         {
-            if (Options.Instance.Equipment.Slots[i]
-                .Contains(preferredSlot, StringComparison.OrdinalIgnoreCase))
+            if (slots[i].Contains(preferredSlot, StringComparison.OrdinalIgnoreCase))
             {
                 return i;
             }
