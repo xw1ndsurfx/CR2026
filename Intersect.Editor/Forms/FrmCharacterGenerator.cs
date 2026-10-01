@@ -525,10 +525,34 @@ public sealed class FrmCharacterGenerator : DarkForm
         _advancedModeButton.Cursor = Cursors.Hand;
         _advancedModeButton.Click += (_, _) => ToggleAdvancedMode();
 
+        var faceButton = CreateDarkButton("FACE & HAIR");
+        faceButton.Size = new Size(118, 34);
+        faceButton.Margin = new Padding(8, 0, 0, 0);
+        faceButton.Click += (_, _) => RandomizeFaceAndHair();
+
+        var clothesButton = CreateDarkButton("CLOTHES");
+        clothesButton.Size = new Size(110, 34);
+        clothesButton.Margin = new Padding(8, 0, 0, 0);
+        clothesButton.Click += (_, _) => RandomizeClothes();
+
+        var equipmentButton = CreateDarkButton("EQUIPMENT");
+        equipmentButton.Size = new Size(120, 34);
+        equipmentButton.Margin = new Padding(8, 0, 0, 0);
+        equipmentButton.Click += (_, _) => RandomizeEquipment();
+
+        var clearGearButton = CreateDarkButton("CLEAR GEAR");
+        clearGearButton.Size = new Size(110, 34);
+        clearGearButton.Margin = new Padding(8, 0, 0, 0);
+        clearGearButton.Click += (_, _) => ClearEquipment();
+
         simpleBar.Controls.Add(_maleButton);
         simpleBar.Controls.Add(_femaleButton);
         simpleBar.Controls.Add(randomizeButton);
         simpleBar.Controls.Add(_advancedModeButton);
+        simpleBar.Controls.Add(faceButton);
+        simpleBar.Controls.Add(clothesButton);
+        simpleBar.Controls.Add(equipmentButton);
+        simpleBar.Controls.Add(clearGearButton);
         Controls.Add(simpleBar);
 
         var footer = new Panel
@@ -948,6 +972,113 @@ public sealed class FrmCharacterGenerator : DarkForm
         return true;
     }
 
+    private void RandomizeFaceAndHair()
+    {
+        PickRandomPart("Hair", chance: 0.95);
+        PickRandomPart("Head", chance: 0.30);
+
+        if (_selectedGender == CharacterGender.Male)
+        {
+            PickRandomPart("Beard", chance: 0.42);
+        }
+        else
+        {
+            _selectedPartByCategory.Remove("Beard");
+        }
+
+        RefreshAfterRandomize();
+    }
+
+    private void RandomizeClothes()
+    {
+        PickRandomPart("Hands", chance: 0.62);
+        PickRandomPart("Feet", chance: 0.95);
+
+        // Pick exactly one bottom when possible.
+        PickOneCategory(new[] { "Pants", "Skirt" }, required: true);
+
+        // Overall replaces Top + Chest. Otherwise build a normal layered outfit.
+        var hasOverall = _partsByCategory.ContainsKey("Overall") && _random.NextDouble() < 0.20;
+        if (hasOverall && PickRandomPart("Overall", required: true))
+        {
+            _selectedPartByCategory.Remove("Top");
+            _selectedPartByCategory.Remove("Chest");
+        }
+        else
+        {
+            PickRandomPart("Top", chance: 0.90);
+            PickRandomPart("Chest", chance: 0.45);
+            _selectedPartByCategory.Remove("Overall");
+        }
+
+        RefreshAfterRandomize();
+    }
+
+    private void RandomizeEquipment()
+    {
+        var weapon = PickOneCategory(
+            new[] { "One Handed", "Staff", "Bow", "Rifle" },
+            required: false,
+            overallChance: 0.72
+        );
+
+        if (string.Equals(weapon, "Bow", StringComparison.OrdinalIgnoreCase))
+        {
+            PickRandomPart("Quiver", required: true);
+            _selectedPartByCategory.Remove("Offhand");
+        }
+        else if (string.Equals(weapon, "One Handed", StringComparison.OrdinalIgnoreCase))
+        {
+            PickRandomPart("Offhand", chance: 0.52);
+            _selectedPartByCategory.Remove("Quiver");
+        }
+        else
+        {
+            _selectedPartByCategory.Remove("Offhand");
+            _selectedPartByCategory.Remove("Quiver");
+        }
+
+        PickRandomPart("Cape", chance: 0.30);
+
+        if (_advancedMode)
+        {
+            PickRandomPart("Artifact", chance: 0.12);
+            PickRandomPart("FX", chance: 0.08);
+            PickRandomPart("Bundles", chance: 0.05);
+        }
+
+        RefreshAfterRandomize();
+    }
+
+    private void ClearEquipment()
+    {
+        foreach (var category in new[]
+                 {
+                     "One Handed",
+                     "Staff",
+                     "Bow",
+                     "Rifle",
+                     "Offhand",
+                     "Quiver",
+                     "Cape",
+                     "Artifact",
+                     "FX",
+                     "Bundles",
+                 })
+        {
+            _selectedPartByCategory.Remove(category);
+        }
+
+        RefreshAfterRandomize();
+    }
+
+    private void RefreshAfterRandomize()
+    {
+        _previewFrame = 0;
+        PopulatePartsList();
+        DrawPreview();
+    }
+
     private void RandomizeCharacter()
     {
         _selectedPartByCategory.Clear();
@@ -1020,9 +1151,7 @@ public sealed class FrmCharacterGenerator : DarkForm
             PickRandomPart("Bundles", chance: 0.05);
         }
 
-        _previewFrame = 0;
-        PopulatePartsList();
-        DrawPreview();
+        RefreshAfterRandomize();
     }
 
     private bool PickRandomPart(string category, double chance = 1.0, bool required = false)
