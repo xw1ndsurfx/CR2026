@@ -24,41 +24,19 @@ public sealed class FrmCharacterGenerator : DarkForm
 
         public Dictionary<CharacterAnimation, string> Files { get; } = new();
 
-        public Dictionary<CharacterAnimation, string> BackFiles { get; } = new();
-
-        public Dictionary<CharacterAnimation, string> FrontFiles { get; } = new();
-
         public string? Resolve(CharacterAnimation animation)
         {
-            return ResolveFrom(Files, animation);
-        }
-
-        public string? ResolveBack(CharacterAnimation animation)
-        {
-            return ResolveFrom(BackFiles, animation);
-        }
-
-        public string? ResolveFront(CharacterAnimation animation)
-        {
-            return ResolveFrom(FrontFiles, animation);
-        }
-
-        private static string? ResolveFrom(
-            Dictionary<CharacterAnimation, string> files,
-            CharacterAnimation animation
-        )
-        {
-            if (files.TryGetValue(animation, out var exact))
+            if (Files.TryGetValue(animation, out var exact))
             {
                 return exact;
             }
 
-            if (files.TryGetValue(CharacterAnimation.Move, out var move))
+            if (Files.TryGetValue(CharacterAnimation.Move, out var move))
             {
                 return move;
             }
 
-            return files.Values.FirstOrDefault();
+            return Files.Values.FirstOrDefault();
         }
     }
 
@@ -72,13 +50,6 @@ public sealed class FrmCharacterGenerator : DarkForm
         KeywordDriven,
     }
 
-    private enum PaperdollDepth
-    {
-        Normal,
-        Back,
-        Front,
-    }
-
     private sealed class SelectedLayer
     {
         public required string Category { get; init; }
@@ -86,8 +57,6 @@ public sealed class FrmCharacterGenerator : DarkForm
         public required string PartName { get; init; }
 
         public required string File { get; init; }
-
-        public required PaperdollDepth Depth { get; init; }
 
         public required Bitmap Bitmap { get; init; }
     }
@@ -185,20 +154,6 @@ public sealed class FrmCharacterGenerator : DarkForm
         "Staff",
         "Top",
     };
-
-    private static readonly HashSet<string> SplitDepthCategories =
-        new(StringComparer.OrdinalIgnoreCase)
-        {
-            "Artifact",
-            "Bow",
-            "Cape",
-            "FX",
-            "Offhand",
-            "One Handed",
-            "Quiver",
-            "Rifle",
-            "Staff",
-        };
 
     private static readonly Dictionary<string, LayerRule> CategoryLayerRules =
         new(StringComparer.OrdinalIgnoreCase)
@@ -762,12 +717,11 @@ public sealed class FrmCharacterGenerator : DarkForm
     private static List<PartFamily> DiscoverFamilies(string categoryDirectory)
     {
         var groups = new Dictionary<string, PartFamily>(StringComparer.OrdinalIgnoreCase);
-        var category = Path.GetFileName(categoryDirectory);
 
         foreach (var file in Directory.GetFiles(categoryDirectory, "*.png", SearchOption.AllDirectories))
         {
             var relative = Path.GetRelativePath(categoryDirectory, file);
-            var animation = DetectAnimation(relative, category, out var cleanName, out var depth);
+            var animation = DetectAnimation(relative, out var cleanName);
             if (string.IsNullOrWhiteSpace(cleanName))
             {
                 cleanName = Path.GetFileNameWithoutExtension(file);
@@ -779,18 +733,7 @@ public sealed class FrmCharacterGenerator : DarkForm
                 groups[cleanName] = family;
             }
 
-            switch (depth)
-            {
-                case PaperdollDepth.Back:
-                    family.BackFiles[animation] = file;
-                    break;
-                case PaperdollDepth.Front:
-                    family.FrontFiles[animation] = file;
-                    break;
-                default:
-                    family.Files[animation] = file;
-                    break;
-            }
+            family.Files[animation] = file;
         }
 
         return groups.Values
@@ -798,14 +741,8 @@ public sealed class FrmCharacterGenerator : DarkForm
             .ToList();
     }
 
-    private static CharacterAnimation DetectAnimation(
-        string relativePath,
-        string category,
-        out string cleanName,
-        out PaperdollDepth depth
-    )
+    private static CharacterAnimation DetectAnimation(string relativePath, out string cleanName)
     {
-        depth = PaperdollDepth.Normal;
         var fileName = Path.GetFileNameWithoutExtension(relativePath);
         var directorySegments = (Path.GetDirectoryName(relativePath) ?? string.Empty)
             .Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
@@ -821,7 +758,7 @@ public sealed class FrmCharacterGenerator : DarkForm
             }
         }
 
-        if (TryParseArtistFileName(fileName, category, out var artistAnimation, out var artistName, out depth))
+        if (TryParseArtistFileName(fileName, out var artistAnimation, out var artistName))
         {
             cleanName = artistName;
             return artistAnimation;
@@ -858,15 +795,12 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private static bool TryParseArtistFileName(
         string fileName,
-        string category,
         out CharacterAnimation animation,
-        out string cleanName,
-        out PaperdollDepth depth
+        out string cleanName
     )
     {
         animation = CharacterAnimation.Move;
         cleanName = fileName;
-        depth = PaperdollDepth.Normal;
 
         var pieces = fileName.Split('_', StringSplitOptions.RemoveEmptyEntries);
         if (pieces.Length < 2)
@@ -875,26 +809,14 @@ public sealed class FrmCharacterGenerator : DarkForm
         }
 
         var animationIndex = 0;
+        string? genderPrefix = null;
 
-        // In the artist pack, B_/F_ mean Back/Front halves for these equipment
-        // categories. Both halves belong to the same selectable paperdoll and
-        // must be rendered together.
-        if (SplitDepthCategories.Contains(category) &&
-            pieces.Length >= 3 &&
-            (string.Equals(pieces[0], "B", StringComparison.OrdinalIgnoreCase) ||
-             string.Equals(pieces[0], "F", StringComparison.OrdinalIgnoreCase)))
+        if (pieces.Length >= 3 &&
+            (string.Equals(pieces[0], "M", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(pieces[0], "F", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(pieces[0], "B", StringComparison.OrdinalIgnoreCase)))
         {
-            depth = string.Equals(pieces[0], "B", StringComparison.OrdinalIgnoreCase)
-                ? PaperdollDepth.Back
-                : PaperdollDepth.Front;
-            animationIndex = 1;
-        }
-        else if (pieces.Length >= 3 &&
-                 (string.Equals(pieces[0], "M", StringComparison.OrdinalIgnoreCase) ||
-                  string.Equals(pieces[0], "F", StringComparison.OrdinalIgnoreCase)))
-        {
-            // For body/base clothing categories M_/F_ are true gender prefixes,
-            // so preserve them in the family name.
+            genderPrefix = pieces[0].ToUpperInvariant();
             animationIndex = 1;
         }
 
@@ -910,18 +832,9 @@ public sealed class FrmCharacterGenerator : DarkForm
         }
 
         var remainder = string.Join("_", pieces.Skip(animationIndex + 1));
-
-        if (!SplitDepthCategories.Contains(category) &&
-            animationIndex == 1 &&
-            (string.Equals(pieces[0], "M", StringComparison.OrdinalIgnoreCase) ||
-             string.Equals(pieces[0], "F", StringComparison.OrdinalIgnoreCase)))
-        {
-            cleanName = pieces[0].ToUpperInvariant() + "_" + remainder;
-        }
-        else
-        {
-            cleanName = remainder;
-        }
+        cleanName = string.IsNullOrWhiteSpace(genderPrefix)
+            ? remainder
+            : genderPrefix + "_" + remainder;
 
         return !string.IsNullOrWhiteSpace(cleanName);
     }
@@ -1027,7 +940,6 @@ public sealed class FrmCharacterGenerator : DarkForm
                     Category = selected.Category,
                     PartName = selected.PartName,
                     File = selected.File,
-                    Depth = selected.Depth,
                     Bitmap = new Bitmap(source),
                 });
             }
@@ -1037,9 +949,6 @@ public sealed class FrmCharacterGenerator : DarkForm
                 return null;
             }
 
-            // The artist sheets are authored against the same canvas. Never
-            // center individual paperdolls relative to one another: preserve the
-            // exact source-sheet origin so every pixel lands on its authored frame.
             var width = layers.Max(layer => layer.Bitmap.Width);
             var height = layers.Max(layer => layer.Bitmap.Height);
             var output = new Bitmap(width, height, PixelFormat.Format32bppArgb);
@@ -1052,22 +961,28 @@ public sealed class FrmCharacterGenerator : DarkForm
             graphics.PixelOffsetMode = PixelOffsetMode.Half;
             graphics.SmoothingMode = SmoothingMode.None;
 
-            // 1) Artist-authored B_ sheets: behind the character.
-            foreach (var layer in layers.Where(layer => layer.Depth == PaperdollDepth.Back))
-            {
-                graphics.DrawImageUnscaled(layer.Bitmap, 0, 0);
-            }
+            const int directionRows = 4;
+            var rowHeight = Math.Max(1, height / directionRows);
 
-            // 2) Normal body/clothing stack.
-            foreach (var layer in layers.Where(layer => layer.Depth == PaperdollDepth.Normal))
+            for (var row = 0; row < directionRows; row++)
             {
-                graphics.DrawImageUnscaled(layer.Bitmap, 0, 0);
-            }
+                var rowTop = row * rowHeight;
+                var rowBottom = row == directionRows - 1 ? height : Math.Min(height, rowTop + rowHeight);
+                graphics.SetClip(new Rectangle(0, rowTop, width, rowBottom - rowTop));
 
-            // 3) Artist-authored F_ sheets: in front of the character.
-            foreach (var layer in layers.Where(layer => layer.Depth == PaperdollDepth.Front))
-            {
-                graphics.DrawImageUnscaled(layer.Bitmap, 0, 0);
+                // Draw layers that must sit behind the body for this direction first.
+                foreach (var layer in layers.Where(layer => IsBehindCharacter(layer.Category, layer.PartName, row)))
+                {
+                    DrawLayer(graphics, layer.Bitmap, width, height);
+                }
+
+                // Then draw the normal stack, skipping anything already drawn behind for this row.
+                foreach (var layer in layers.Where(layer => !IsBehindCharacter(layer.Category, layer.PartName, row)))
+                {
+                    DrawLayer(graphics, layer.Bitmap, width, height);
+                }
+
+                graphics.ResetClip();
             }
 
             return output;
@@ -1081,7 +996,95 @@ public sealed class FrmCharacterGenerator : DarkForm
         }
     }
 
-    private IEnumerable<(string Category, string PartName, string File, PaperdollDepth Depth)> GetSelectedLayers(
+    private static void DrawLayer(Graphics graphics, Bitmap bitmap, int outputWidth, int outputHeight)
+    {
+        var x = (outputWidth - bitmap.Width) / 2;
+        var y = (outputHeight - bitmap.Height) / 2;
+        graphics.DrawImageUnscaled(bitmap, x, y);
+    }
+
+    private static bool IsBehindCharacter(string category, string partName, int directionRow)
+    {
+        var rule = CategoryLayerRules.TryGetValue(category, out var configuredRule)
+            ? configuredRule
+            : LayerRule.Normal;
+
+        if (rule == LayerRule.AlwaysBehind || AlwaysBehindCategories.Contains(category))
+        {
+            return true;
+        }
+
+        if (rule == LayerRule.AlwaysFront)
+        {
+            return false;
+        }
+
+        if (rule == LayerRule.DirectionalWeapon)
+        {
+            return IsWeaponBehind(directionRow);
+        }
+
+        if (rule == LayerRule.DirectionalOffhand)
+        {
+            return IsOffhandBehind(directionRow);
+        }
+
+        if (rule == LayerRule.KeywordDriven)
+        {
+            if (FrontKeywords.Any(keyword =>
+                partName.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
+            {
+                return false;
+            }
+
+            if (BehindKeywords.Any(keyword =>
+                partName.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
+        }
+
+        if (directionRow == 0 &&
+            TopRowBehindPartKeywords.Any(keyword =>
+                partName.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsWeaponBehind(int directionRow)
+    {
+        // Intersect-style sheets use four direction rows. We treat:
+        // row 0 as back/up, rows 1-2 as side views, row 3 as front/down.
+        // Back/up always goes behind the body. Side views are intentionally
+        // asymmetric so the weapon can visually pass behind the torso on one side.
+        return directionRow switch
+        {
+            0 => true,
+            1 => true,
+            2 => false,
+            3 => false,
+            _ => false,
+        };
+    }
+
+    private static bool IsOffhandBehind(int directionRow)
+    {
+        // Shields/offhand items use the mirrored side-view behavior compared
+        // with the main-hand weapon so the visible hand stays convincing.
+        return directionRow switch
+        {
+            0 => true,
+            1 => false,
+            2 => true,
+            3 => false,
+            _ => false,
+        };
+    }
+
+    private IEnumerable<(string Category, string PartName, string File)> GetSelectedLayers(
         CharacterAnimation animation
     )
     {
@@ -1095,27 +1098,11 @@ public sealed class FrmCharacterGenerator : DarkForm
 
             var family = parts.FirstOrDefault(part =>
                 string.Equals(part.Name, selectedName, StringComparison.OrdinalIgnoreCase));
-            if (family == null)
-            {
-                continue;
-            }
 
-            var back = family.ResolveBack(animation);
-            if (!string.IsNullOrWhiteSpace(back))
+            var file = family?.Resolve(animation);
+            if (!string.IsNullOrWhiteSpace(file))
             {
-                yield return (category, selectedName, back, PaperdollDepth.Back);
-            }
-
-            var normal = family.Resolve(animation);
-            if (!string.IsNullOrWhiteSpace(normal))
-            {
-                yield return (category, selectedName, normal, PaperdollDepth.Normal);
-            }
-
-            var front = family.ResolveFront(animation);
-            if (!string.IsNullOrWhiteSpace(front))
-            {
-                yield return (category, selectedName, front, PaperdollDepth.Front);
+                yield return (category, selectedName, file);
             }
         }
     }
