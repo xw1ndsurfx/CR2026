@@ -40,6 +40,16 @@ public sealed class FrmCharacterGenerator : DarkForm
         }
     }
 
+    private enum LayerRule
+    {
+        Normal,
+        AlwaysBehind,
+        AlwaysFront,
+        DirectionalWeapon,
+        DirectionalOffhand,
+        KeywordDriven,
+    }
+
     private sealed class SelectedLayer
     {
         public required string Category { get; init; }
@@ -143,6 +153,66 @@ public sealed class FrmCharacterGenerator : DarkForm
         "Skirt",
         "Staff",
         "Top",
+    };
+
+    private static readonly Dictionary<string, LayerRule> CategoryLayerRules =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Base"] = LayerRule.Normal,
+            ["Body"] = LayerRule.Normal,
+            ["Female"] = LayerRule.Normal,
+            ["Pants"] = LayerRule.Normal,
+            ["Skirt"] = LayerRule.Normal,
+            ["Feet"] = LayerRule.Normal,
+            ["Top"] = LayerRule.Normal,
+            ["Chest"] = LayerRule.Normal,
+            ["Overall"] = LayerRule.Normal,
+            ["Hands"] = LayerRule.Normal,
+            ["Beard"] = LayerRule.Normal,
+            ["Hair"] = LayerRule.Normal,
+            ["Head"] = LayerRule.Normal,
+            ["Lines"] = LayerRule.Normal,
+
+            ["Cape"] = LayerRule.AlwaysBehind,
+            ["Quiver"] = LayerRule.AlwaysBehind,
+
+            ["One Handed"] = LayerRule.DirectionalWeapon,
+            ["Staff"] = LayerRule.DirectionalWeapon,
+            ["Bow"] = LayerRule.DirectionalWeapon,
+            ["Rifle"] = LayerRule.DirectionalWeapon,
+            ["Offhand"] = LayerRule.DirectionalOffhand,
+
+            ["Artifact"] = LayerRule.KeywordDriven,
+            ["FX"] = LayerRule.KeywordDriven,
+            ["Bundles"] = LayerRule.KeywordDriven,
+        };
+
+    private static readonly string[] BehindKeywords =
+    {
+        "balloon",
+        "ballon",
+        "backpack",
+        "bag",
+        "back",
+        "wings",
+        "wing",
+        "tail",
+        "cape",
+        "quiver",
+    };
+
+    private static readonly string[] FrontKeywords =
+    {
+        "front",
+        "glow",
+        "spark",
+        "sparkle",
+        "flare",
+        "flash",
+        "aura",
+        "torch",
+        "lantern",
+        "orb",
     };
 
     private static readonly HashSet<string> AlwaysBehindCategories =
@@ -935,9 +1005,43 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private static bool IsBehindCharacter(string category, string partName, int directionRow)
     {
-        if (AlwaysBehindCategories.Contains(category))
+        var rule = CategoryLayerRules.TryGetValue(category, out var configuredRule)
+            ? configuredRule
+            : LayerRule.Normal;
+
+        if (rule == LayerRule.AlwaysBehind || AlwaysBehindCategories.Contains(category))
         {
             return true;
+        }
+
+        if (rule == LayerRule.AlwaysFront)
+        {
+            return false;
+        }
+
+        if (rule == LayerRule.DirectionalWeapon)
+        {
+            return IsWeaponBehind(directionRow);
+        }
+
+        if (rule == LayerRule.DirectionalOffhand)
+        {
+            return IsOffhandBehind(directionRow);
+        }
+
+        if (rule == LayerRule.KeywordDriven)
+        {
+            if (FrontKeywords.Any(keyword =>
+                partName.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
+            {
+                return false;
+            }
+
+            if (BehindKeywords.Any(keyword =>
+                partName.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
         }
 
         if (directionRow == 0 &&
@@ -948,6 +1052,36 @@ public sealed class FrmCharacterGenerator : DarkForm
         }
 
         return false;
+    }
+
+    private static bool IsWeaponBehind(int directionRow)
+    {
+        // Intersect-style sheets use four direction rows. We treat:
+        // row 0 as back/up, rows 1-2 as side views, row 3 as front/down.
+        // Back/up always goes behind the body. Side views are intentionally
+        // asymmetric so the weapon can visually pass behind the torso on one side.
+        return directionRow switch
+        {
+            0 => true,
+            1 => true,
+            2 => false,
+            3 => false,
+            _ => false,
+        };
+    }
+
+    private static bool IsOffhandBehind(int directionRow)
+    {
+        // Shields/offhand items use the mirrored side-view behavior compared
+        // with the main-hand weapon so the visible hand stays convincing.
+        return directionRow switch
+        {
+            0 => true,
+            1 => false,
+            2 => true,
+            3 => false,
+            _ => false,
+        };
     }
 
     private IEnumerable<(string Category, string PartName, string File)> GetSelectedLayers(
