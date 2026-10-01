@@ -31,7 +31,6 @@ public partial class SelectCharacterWindow : Window
     private readonly Button _buttonPlay;
     private readonly Button _buttonDelete;
     private readonly Button _buttonNew;
-    private readonly Button _buttonChangePassword;
     private readonly Button _buttonLogout;
 
     private ImagePanel[]? _renderLayers;
@@ -50,6 +49,7 @@ public partial class SelectCharacterWindow : Window
     private readonly Panel _characterPreviewPanel;
     private readonly Panel _previewContainer;
     private readonly Panel _buttonsPanel;
+
 
     public SelectCharacterWindow(Canvas parent, MainMenu mainMenu) : base(
         parent: parent,
@@ -95,7 +95,7 @@ public partial class SelectCharacterWindow : Window
             Alignment = [Alignments.Left],
             Font = _defaultFont,
             FontSize = 12,
-            MinimumSize = new Point(160, 24),
+            MinimumSize = new Point(208, 24),
             Text = Strings.CharacterSelection.Play,
         };
         _buttonPlay.Clicked += ButtonPlay_Clicked;
@@ -105,27 +105,17 @@ public partial class SelectCharacterWindow : Window
             Alignment = [Alignments.CenterH],
             Font = _defaultFont,
             FontSize = 12,
-            MinimumSize = new Point(160, 24),
+            MinimumSize = new Point(208, 24),
             Text = Strings.CharacterSelection.Delete,
         };
         _buttonDelete.Clicked += _buttonDelete_Clicked;
-
-        _buttonChangePassword = new Button(_buttonsPanel, name: nameof(_buttonLogout))
-        {
-            Alignment = [Alignments.Right],
-            Font = _defaultFont,
-            FontSize = 12,
-            MinimumSize = new Point(160, 24),
-            Text = Strings.CharacterSelection.ChangePassword,
-        };
-        _buttonChangePassword.Clicked += ButtonChangePasswordOnClicked;
 
         _buttonLogout = new Button(_buttonsPanel, name: nameof(_buttonLogout))
         {
             Alignment = [Alignments.Right],
             Font = _defaultFont,
             FontSize = 12,
-            MinimumSize = new Point(160, 24),
+            MinimumSize = new Point(208, 24),
             Text = Strings.CharacterSelection.Logout,
         };
         _buttonLogout.Clicked += _buttonLogout_Clicked;
@@ -224,11 +214,6 @@ public partial class SelectCharacterWindow : Window
         _buttonsPanel.SizeToChildren(recursive: true);
     }
 
-    private void ButtonChangePasswordOnClicked(Base sender, MouseButtonState arguments)
-    {
-        _mainMenu.OpenPasswordChangeWindow(null, PasswordChangeMode.ExistingPassword, this);
-    }
-
     protected override void EnsureInitialized()
     {
         SizeToChildren(recursive: true);
@@ -275,6 +260,14 @@ public partial class SelectCharacterWindow : Window
         _classCaptionLabel.Text = "Class:";
         _guildCaptionLabel.Text = "Guild:";
 
+        // Change Password is intentionally not exposed from Character Select.
+        // Keep the three remaining primary actions evenly spaced across the bottom row.
+        const int characterActionWidth = 208;
+        _buttonPlay.MinimumSize = new Point(characterActionWidth, 24);
+        _buttonDelete.MinimumSize = new Point(characterActionWidth, 24);
+        _buttonLogout.MinimumSize = new Point(characterActionWidth, 24);
+        _buttonsPanel.SizeToChildren(recursive: true);
+
         EnsureArrowsVisibility();
     }
 
@@ -292,7 +285,12 @@ public partial class SelectCharacterWindow : Window
         _buttonNew.IsDisabled = Globals.WaitingOnServer;
         _buttonDelete.IsDisabled = Globals.WaitingOnServer;
         _buttonLogout.IsDisabled = Globals.WaitingOnServer;
-        _buttonChangePassword.IsDisabled = Globals.WaitingOnServer;
+
+        // Texture dimensions can become valid a few frames after the selection window
+        // first appears. Keep only the layer geometry in sync every visible frame;
+        // this avoids reloading/resetting the portrait while still correcting the
+        // initial position as soon as the real sprite dimensions are available.
+        RefreshRenderLayerGeometry();
     }
 
     private void UpdateDisplay()
@@ -386,30 +384,48 @@ public partial class SelectCharacterWindow : Window
                 }
             }
 
-            var layerTex = paperdollContainer.Texture;
-            if (layerTex == default)
+            if (paperdollContainer.Texture == default)
             {
                 paperdollContainer.Hide();
                 continue;
             }
 
-            var imgWidth = layerTex.Width;
-            var imgHeight = layerTex.Height;
-            var textureWidth = imgWidth / Options.Instance.Sprites.NormalFrames;
-            var textureHeight = imgHeight / Options.Instance.Sprites.Directions;
+            paperdollContainer.Show();
+        }
+
+        RefreshRenderLayerGeometry();
+    }
+
+    private void RefreshRenderLayerGeometry()
+    {
+        if (_renderLayers == default)
+        {
+            return;
+        }
+
+        const int portraitCenterYOffset = -38;
+
+        foreach (var paperdollContainer in _renderLayers)
+        {
+            var layerTex = paperdollContainer.Texture;
+            if (layerTex == default)
+            {
+                continue;
+            }
+
+            var textureWidth = layerTex.Width / Options.Instance.Sprites.NormalFrames;
+            var textureHeight = layerTex.Height / Options.Instance.Sprites.Directions;
+            if (textureWidth <= 0 || textureHeight <= 0)
+            {
+                continue;
+            }
 
             paperdollContainer.SetTextureRect(0, 0, textureWidth, textureHeight);
             _ = paperdollContainer.SetSize(textureWidth, textureHeight);
 
-            var centerX = (_preview.Width / 2) - (paperdollContainer.Width / 2);
-            // The portrait background's visible medallion sits above the geometric
-            // center of the image panel. Lift every sprite/paperdoll layer together
-            // so the character is actually centered inside the circle.
-            const int portraitCenterYOffset = -38;
-            var centerY = (_preview.Height / 2) - (paperdollContainer.Height / 2) + portraitCenterYOffset;
+            var centerX = (_preview.Width - textureWidth) / 2;
+            var centerY = (_preview.Height - textureHeight) / 2 + portraitCenterYOffset;
             paperdollContainer.SetPosition(centerX, centerY);
-
-            paperdollContainer.Show();
         }
     }
 
