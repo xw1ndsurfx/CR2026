@@ -298,6 +298,30 @@ public sealed class FrmCharacterGenerator : DarkForm
             ["Bundles"] = "Ship",
         };
 
+    private static readonly HashSet<string> SimpleVisibleCategories =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Base",
+            "Body",
+            "Hair",
+            "Beard",
+            "Head",
+            "Top",
+            "Chest",
+            "Overall",
+            "Pants",
+            "Skirt",
+            "Feet",
+            "Hands",
+            "Cape",
+            "Quiver",
+            "Offhand",
+            "One Handed",
+            "Staff",
+            "Bow",
+            "Rifle",
+        };
+
     private static readonly string[] PreferredLayerOrder =
     {
         "Base",
@@ -361,7 +385,8 @@ public sealed class FrmCharacterGenerator : DarkForm
     private readonly Action? _afterExport;
 
     private readonly ListBox _categoryList = new();
-    private readonly ListBox _partsList = new();
+    private readonly ListView _partsView = new();
+    private readonly ImageList _partImages = new();
     private readonly Label _categoryTitle = new();
     private readonly PixelPreview _preview = new();
     private readonly TextBox _exportName = new();
@@ -370,6 +395,9 @@ public sealed class FrmCharacterGenerator : DarkForm
     private readonly Dictionary<CharacterAnimation, Button> _animationButtonLookup = new();
     private readonly Button _maleButton = new();
     private readonly Button _femaleButton = new();
+    private readonly Button _advancedModeButton = new();
+    private readonly FlowLayoutPanel _directionButtons = new();
+    private readonly Dictionary<int, Button> _directionButtonLookup = new();
     private readonly Random _random = new();
 
     private readonly Dictionary<string, List<PartFamily>> _partsByCategory =
@@ -379,10 +407,15 @@ public sealed class FrmCharacterGenerator : DarkForm
         new(StringComparer.OrdinalIgnoreCase);
 
     private readonly System.Windows.Forms.Timer _reloadTimer = new() { Interval = 250 };
+    private readonly System.Windows.Forms.Timer _previewTimer = new() { Interval = 140 };
 
     private FileSystemWatcher? _watcher;
+    private Bitmap? _previewSheet;
     private CharacterAnimation _previewAnimation = CharacterAnimation.Move;
     private CharacterGender _selectedGender = CharacterGender.Male;
+    private int _previewDirection;
+    private int _previewFrame;
+    private bool _advancedMode;
     private bool _reloading;
 
     public FrmCharacterGenerator(Action? afterExport = null)
@@ -408,13 +441,25 @@ public sealed class FrmCharacterGenerator : DarkForm
             ReloadAssets();
         };
 
+        _previewTimer.Tick += (_, _) =>
+        {
+            AdvancePreviewFrame();
+        };
+
         Shown += (_, _) =>
         {
             ReloadAssets();
             StartWatcher();
+            _previewTimer.Start();
         };
 
-        FormClosed += (_, _) => _watcher?.Dispose();
+        FormClosed += (_, _) =>
+        {
+            _previewTimer.Stop();
+            _watcher?.Dispose();
+            _previewSheet?.Dispose();
+            _partImages.Dispose();
+        };
     }
 
     private static string ResolveGameRoot()
@@ -469,9 +514,21 @@ public sealed class FrmCharacterGenerator : DarkForm
         randomizeButton.Margin = new Padding(8, 0, 0, 0);
         randomizeButton.Click += (_, _) => RandomizeCharacter();
 
+        _advancedModeButton.Text = "SIMPLE MODE";
+        _advancedModeButton.Size = new Size(140, 34);
+        _advancedModeButton.Margin = new Padding(8, 0, 0, 0);
+        _advancedModeButton.FlatStyle = FlatStyle.Flat;
+        _advancedModeButton.ForeColor = System.Drawing.Color.White;
+        _advancedModeButton.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+        _advancedModeButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(90, 78, 81);
+        _advancedModeButton.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold);
+        _advancedModeButton.Cursor = Cursors.Hand;
+        _advancedModeButton.Click += (_, _) => ToggleAdvancedMode();
+
         simpleBar.Controls.Add(_maleButton);
         simpleBar.Controls.Add(_femaleButton);
         simpleBar.Controls.Add(randomizeButton);
+        simpleBar.Controls.Add(_advancedModeButton);
         Controls.Add(simpleBar);
 
         var footer = new Panel
@@ -551,8 +608,8 @@ public sealed class FrmCharacterGenerator : DarkForm
             BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
             Padding = new Padding(12),
         };
-        body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220));
-        body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 310));
+        body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 210));
+        body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 390));
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         Controls.Add(body);
         body.BringToFront();
@@ -567,10 +624,9 @@ public sealed class FrmCharacterGenerator : DarkForm
         body.Controls.Add(categoriesPanel, 0, 0);
 
         var partsPanel = CreateSection("PAPERDOLLS");
-        _partsList.Dock = DockStyle.Fill;
-        StyleListBox(_partsList);
-        _partsList.SelectedIndexChanged += (_, _) => SelectCurrentPart();
-        partsPanel.Controls.Add(_partsList, 0, 1);
+        ConfigurePartThumbnailView();
+        _partsView.SelectedIndexChanged += (_, _) => SelectCurrentPart();
+        partsPanel.Controls.Add(_partsView, 0, 1);
         body.Controls.Add(partsPanel, 1, 0);
 
         var previewPanel = new Panel
@@ -604,11 +660,45 @@ public sealed class FrmCharacterGenerator : DarkForm
             button.Click += (_, _) =>
             {
                 _previewAnimation = animation;
+                _previewFrame = 0;
                 UpdateAnimationButtonState();
                 DrawPreview();
             };
             _animationButtons.Controls.Add(button);
             _animationButtonLookup[animation] = button;
+        }
+
+        _directionButtons.Dock = DockStyle.Top;
+        _directionButtons.Height = 42;
+        _directionButtons.FlowDirection = FlowDirection.LeftToRight;
+        _directionButtons.WrapContents = false;
+        _directionButtons.BackColor = System.Drawing.Color.FromArgb(12, 12, 12);
+        previewPanel.Controls.Add(_directionButtons);
+
+        var directionDefinitions = new[]
+        {
+            (Row: 0, Label: "↓ DOWN"),
+            (Row: 1, Label: "← LEFT"),
+            (Row: 2, Label: "→ RIGHT"),
+            (Row: 3, Label: "↑ UP"),
+        };
+
+        foreach (var definition in directionDefinitions)
+        {
+            var row = definition.Row;
+            var button = CreateDarkButton(definition.Label);
+            button.Width = 90;
+            button.Height = 30;
+            button.Margin = new Padding(0, 4, 6, 4);
+            button.Click += (_, _) =>
+            {
+                _previewDirection = row;
+                _previewFrame = 0;
+                UpdateDirectionButtonState();
+                ShowPreviewFrame();
+            };
+            _directionButtons.Controls.Add(button);
+            _directionButtonLookup[row] = button;
         }
 
         var previewHost = new Panel
@@ -627,6 +717,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         resetButton.Click += (_, _) =>
         {
             _selectedPartByCategory.Clear();
+            _previewFrame = 0;
             PopulatePartsList();
             DrawPreview();
         };
@@ -634,6 +725,162 @@ public sealed class FrmCharacterGenerator : DarkForm
 
         body.Controls.Add(previewPanel, 2, 0);
         UpdateAnimationButtonState();
+        UpdateDirectionButtonState();
+    }
+
+    private void ConfigurePartThumbnailView()
+    {
+        _partImages.ImageSize = new Size(96, 96);
+        _partImages.ColorDepth = ColorDepth.Depth32Bit;
+
+        _partsView.Dock = DockStyle.Fill;
+        _partsView.View = View.LargeIcon;
+        _partsView.LargeImageList = _partImages;
+        _partsView.MultiSelect = false;
+        _partsView.HideSelection = false;
+        _partsView.BorderStyle = BorderStyle.None;
+        _partsView.BackColor = System.Drawing.Color.FromArgb(38, 32, 34);
+        _partsView.ForeColor = System.Drawing.Color.Gainsboro;
+        _partsView.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9);
+        _partsView.TileSize = new Size(118, 124);
+    }
+
+    private void ToggleAdvancedMode()
+    {
+        _advancedMode = !_advancedMode;
+        _advancedModeButton.Text = _advancedMode ? "ADVANCED MODE" : "SIMPLE MODE";
+        _advancedModeButton.BackColor = _advancedMode
+            ? System.Drawing.Color.FromArgb(247, 69, 96)
+            : System.Drawing.Color.FromArgb(55, 47, 49);
+        _advancedModeButton.FlatAppearance.BorderColor = _advancedModeButton.BackColor;
+        ReloadCategoryList();
+    }
+
+    private void ReloadCategoryList()
+    {
+        var selectedCategory = _categoryList.SelectedItem?.ToString();
+
+        _categoryList.BeginUpdate();
+        _categoryList.Items.Clear();
+
+        var categories = SortCategories(_partsByCategory.Keys);
+        if (!_advancedMode)
+        {
+            categories = categories.Where(SimpleVisibleCategories.Contains);
+        }
+
+        foreach (var category in categories)
+        {
+            _categoryList.Items.Add(category);
+        }
+
+        _categoryList.EndUpdate();
+
+        if (!string.IsNullOrWhiteSpace(selectedCategory))
+        {
+            var index = _categoryList.FindStringExact(selectedCategory);
+            if (index >= 0)
+            {
+                _categoryList.SelectedIndex = index;
+            }
+        }
+
+        if (_categoryList.SelectedIndex < 0 && _categoryList.Items.Count > 0)
+        {
+            _categoryList.SelectedIndex = 0;
+        }
+    }
+
+    private Bitmap CreatePartThumbnail(PartFamily part)
+    {
+        const int thumbSize = 96;
+        var thumbnail = new Bitmap(thumbSize, thumbSize, PixelFormat.Format32bppArgb);
+
+        var file = part.Resolve(CharacterAnimation.Move) ?? part.Files.Values.FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(file) || !File.Exists(file))
+        {
+            return thumbnail;
+        }
+
+        using var sheet = new Bitmap(file);
+        var frameHeight = Math.Max(1, sheet.Height / 4);
+        var frameWidth = Math.Min(frameHeight, sheet.Width);
+        var source = new Rectangle(0, 0, frameWidth, frameHeight);
+
+        using var graphics = Graphics.FromImage(thumbnail);
+        graphics.Clear(System.Drawing.Color.Transparent);
+        graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
+        graphics.PixelOffsetMode = PixelOffsetMode.Half;
+        graphics.SmoothingMode = SmoothingMode.None;
+
+        var scale = Math.Min((double)(thumbSize - 8) / frameWidth, (double)(thumbSize - 8) / frameHeight);
+        var width = Math.Max(1, (int)Math.Round(frameWidth * scale));
+        var height = Math.Max(1, (int)Math.Round(frameHeight * scale));
+        var destination = new Rectangle((thumbSize - width) / 2, (thumbSize - height) / 2, width, height);
+
+        graphics.DrawImage(sheet, destination, source, GraphicsUnit.Pixel);
+        return thumbnail;
+    }
+
+    private void UpdateDirectionButtonState()
+    {
+        foreach (var pair in _directionButtonLookup)
+        {
+            pair.Value.BackColor = pair.Key == _previewDirection
+                ? System.Drawing.Color.FromArgb(247, 69, 96)
+                : System.Drawing.Color.FromArgb(55, 47, 49);
+        }
+    }
+
+    private void AdvancePreviewFrame()
+    {
+        if (_previewSheet == null)
+        {
+            return;
+        }
+
+        var frameHeight = Math.Max(1, _previewSheet.Height / 4);
+        var frameWidth = Math.Min(frameHeight, _previewSheet.Width);
+        var frameCount = Math.Max(1, _previewSheet.Width / frameWidth);
+
+        _previewFrame = (_previewFrame + 1) % frameCount;
+        ShowPreviewFrame();
+    }
+
+    private void ShowPreviewFrame()
+    {
+        if (_previewSheet == null)
+        {
+            _preview.SetImage(null);
+            return;
+        }
+
+        var frameHeight = Math.Max(1, _previewSheet.Height / 4);
+        var frameWidth = Math.Min(frameHeight, _previewSheet.Width);
+        var frameCount = Math.Max(1, _previewSheet.Width / frameWidth);
+        var frame = Math.Clamp(_previewFrame, 0, frameCount - 1);
+        var direction = Math.Clamp(_previewDirection, 0, 3);
+
+        var x = frame * frameWidth;
+        var y = direction * frameHeight;
+        if (x + frameWidth > _previewSheet.Width || y + frameHeight > _previewSheet.Height)
+        {
+            return;
+        }
+
+        var output = new Bitmap(frameWidth, frameHeight, PixelFormat.Format32bppArgb);
+        using var graphics = Graphics.FromImage(output);
+        graphics.Clear(System.Drawing.Color.Transparent);
+        graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
+        graphics.PixelOffsetMode = PixelOffsetMode.Half;
+        graphics.DrawImage(
+            _previewSheet,
+            new Rectangle(0, 0, frameWidth, frameHeight),
+            new Rectangle(x, y, frameWidth, frameHeight),
+            GraphicsUnit.Pixel
+        );
+
+        _preview.SetImage(output);
     }
 
     private void ConfigureGenderButton(Button button, string text, CharacterGender gender)
@@ -756,6 +1003,7 @@ public sealed class FrmCharacterGenerator : DarkForm
                 compatible[_random.Next(compatible.Length)].Name;
         }
 
+        _previewFrame = 0;
         PopulatePartsList();
         DrawPreview();
     }
@@ -881,7 +1129,6 @@ public sealed class FrmCharacterGenerator : DarkForm
         _reloading = true;
         try
         {
-            var selectedCategory = _categoryList.SelectedItem?.ToString();
             _partsByCategory.Clear();
 
             foreach (var directory in Directory.GetDirectories(_charagenRoot))
@@ -890,27 +1137,7 @@ public sealed class FrmCharacterGenerator : DarkForm
                 _partsByCategory[category] = DiscoverFamilies(directory);
             }
 
-            _categoryList.BeginUpdate();
-            _categoryList.Items.Clear();
-            foreach (var category in SortCategories(_partsByCategory.Keys))
-            {
-                _categoryList.Items.Add(category);
-            }
-            _categoryList.EndUpdate();
-
-            if (!string.IsNullOrWhiteSpace(selectedCategory))
-            {
-                var index = _categoryList.FindStringExact(selectedCategory);
-                if (index >= 0)
-                {
-                    _categoryList.SelectedIndex = index;
-                }
-            }
-
-            if (_categoryList.SelectedIndex < 0 && _categoryList.Items.Count > 0)
-            {
-                _categoryList.SelectedIndex = 0;
-            }
+            ReloadCategoryList();
 
             _status.Text = $"Watching {_charagenRoot} — {_partsByCategory.Values.Sum(parts => parts.Count)} paperdoll sets detected.";
             DrawPreview();
@@ -1071,44 +1298,74 @@ public sealed class FrmCharacterGenerator : DarkForm
         var category = _categoryList.SelectedItem?.ToString();
         _categoryTitle.Text = category == null ? "PREVIEW" : $"PREVIEW — {category.ToUpperInvariant()}";
 
-        _partsList.BeginUpdate();
-        _partsList.Items.Clear();
-        _partsList.Items.Add("None");
+        _partsView.BeginUpdate();
+        _partsView.Items.Clear();
+        _partImages.Images.Clear();
+
+        using (var noneImage = new Bitmap(96, 96, PixelFormat.Format32bppArgb))
+        {
+            using var graphics = Graphics.FromImage(noneImage);
+            graphics.Clear(System.Drawing.Color.Transparent);
+            using var pen = new Pen(System.Drawing.Color.FromArgb(100, 100, 100), 2);
+            graphics.DrawLine(pen, 18, 18, 78, 78);
+            graphics.DrawLine(pen, 78, 18, 18, 78);
+            _partImages.Images.Add("None", new Bitmap(noneImage));
+        }
+
+        var noneItem = new ListViewItem("None")
+        {
+            ImageKey = "None",
+            Tag = "None",
+        };
+        _partsView.Items.Add(noneItem);
 
         if (category != null && _partsByCategory.TryGetValue(category, out var parts))
         {
             foreach (var part in parts.Where(part => IsPartCompatibleWithGender(part.Name)))
             {
-                _partsList.Items.Add(part.Name);
+                var key = category + "::" + part.Name;
+                using var thumbnail = CreatePartThumbnail(part);
+                _partImages.Images.Add(key, new Bitmap(thumbnail));
+
+                var item = new ListViewItem(part.Name)
+                {
+                    ImageKey = key,
+                    Tag = part.Name,
+                };
+                _partsView.Items.Add(item);
             }
 
             if (_selectedPartByCategory.TryGetValue(category, out var selected))
             {
-                var index = _partsList.FindStringExact(selected);
-                _partsList.SelectedIndex = index >= 0 ? index : 0;
+                var selectedItem = _partsView.Items
+                    .Cast<ListViewItem>()
+                    .FirstOrDefault(item =>
+                        string.Equals(item.Tag?.ToString(), selected, StringComparison.OrdinalIgnoreCase));
+                selectedItem?.Selected = true;
+                selectedItem?.EnsureVisible();
             }
             else
             {
-                _partsList.SelectedIndex = 0;
+                noneItem.Selected = true;
             }
         }
         else
         {
-            _partsList.SelectedIndex = 0;
+            noneItem.Selected = true;
         }
 
-        _partsList.EndUpdate();
+        _partsView.EndUpdate();
     }
 
     private void SelectCurrentPart()
     {
-        if (_reloading)
+        if (_reloading || _partsView.SelectedItems.Count == 0)
         {
             return;
         }
 
         var category = _categoryList.SelectedItem?.ToString();
-        var part = _partsList.SelectedItem?.ToString();
+        var part = _partsView.SelectedItems[0].Tag?.ToString();
         if (category == null || part == null)
         {
             return;
@@ -1123,6 +1380,7 @@ public sealed class FrmCharacterGenerator : DarkForm
             _selectedPartByCategory[category] = part;
         }
 
+        _previewFrame = 0;
         DrawPreview();
     }
 
@@ -1130,7 +1388,10 @@ public sealed class FrmCharacterGenerator : DarkForm
     {
         try
         {
-            _preview.SetImage(RenderCharacter(_previewAnimation));
+            _previewSheet?.Dispose();
+            _previewSheet = RenderCharacter(_previewAnimation);
+            _previewFrame = 0;
+            ShowPreviewFrame();
         }
         catch (Exception ex)
         {
