@@ -169,13 +169,24 @@ public partial class CharacterWindow
         // with stale text geometry (which could render as only a single glyph).
         _achievementsButton = new Button(mCharacterWindow, nameof(_achievementsButton))
         {
+            // The button's internal Text control can collapse to a single glyph with
+            // the global Empire 7 bitmap override. Keep the clickable button textless
+            // and render its caption with a normal Label child instead.
+            Text = string.Empty,
+        };
+        _achievementsButton.Clicked += (_, _) =>
+            PacketSender.SendRequestAchievementState(openWindow: true);
+
+        var achievementsCaption = new Label(_achievementsButton, "AchievementsCaption")
+        {
+            AutoSizeToContents = false,
             Font = _detailsButton.Font,
             FontSize = _detailsButton.FontSize,
             Text = "Achievements",
             TextAlign = Pos.Center,
+            TextColorOverride = Color.White,
+            MouseInputEnabled = false,
         };
-        _achievementsButton.Clicked += (_, _) =>
-            PacketSender.SendRequestAchievementState(openWindow: true);
 
         // Keep both actions on the same bottom row.
         const int actionButtonWidth = 132;
@@ -197,11 +208,8 @@ public partial class CharacterWindow
             actionButtonWidth,
             actionButtonHeight
         );
-
-        // Re-apply the text after final bounds/font assignment so Gwen rebuilds the
-        // internal Text control using the actual button width.
-        _achievementsButton.SetText("Achievements");
-        _achievementsButton.Invalidate();
+        achievementsCaption.SetBounds(0, 0, actionButtonWidth, actionButtonHeight);
+        achievementsCaption.BringToFront();
     }
 
     //Update Button Event Handlers
