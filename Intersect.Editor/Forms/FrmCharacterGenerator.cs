@@ -1,5 +1,6 @@
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.IO.Compression;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 
@@ -171,6 +172,25 @@ public sealed class FrmCharacterGenerator : DarkForm
         (CharacterAnimation.Weapon, "_weapon", "WEAPON"),
     };
 
+    private static readonly Dictionary<string, CharacterAnimation> ArtistAnimationCodes =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Mov"] = CharacterAnimation.Move,
+            ["Mel"] = CharacterAnimation.Attack,
+            ["Mag"] = CharacterAnimation.Cast,
+            ["Idl"] = CharacterAnimation.Idle,
+            ["Ran"] = CharacterAnimation.Shoot,
+            ["Use"] = CharacterAnimation.Weapon,
+        };
+
+    private static readonly HashSet<string> ArtistIgnoredAnimationCodes =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Blo",
+            "Fis",
+            "Rif",
+        };
+
     private readonly string _gameRoot;
     private readonly string _charagenRoot;
     private readonly string _entitiesRoot;
@@ -319,9 +339,15 @@ public sealed class FrmCharacterGenerator : DarkForm
         refreshButton.Click += (_, _) => ReloadAssets();
         footer.Controls.Add(refreshButton);
 
+        var importButton = CreateDarkButton("IMPORT ARTIST ZIP");
+        importButton.Location = new System.Drawing.Point(835, 10);
+        importButton.Size = new Size(170, 34);
+        importButton.Click += (_, _) => ImportArtistZip();
+        footer.Controls.Add(importButton);
+
         var openButton = CreateDarkButton("OPEN CHARAGEN FOLDER");
-        openButton.Location = new System.Drawing.Point(835, 10);
-        openButton.Size = new Size(200, 34);
+        openButton.Location = new System.Drawing.Point(1015, 10);
+        openButton.Size = new Size(190, 34);
         openButton.Click += (_, _) =>
         {
             try
@@ -658,6 +684,12 @@ public sealed class FrmCharacterGenerator : DarkForm
             }
         }
 
+        if (TryParseArtistFileName(fileName, out var artistAnimation, out var artistName))
+        {
+            cleanName = artistName;
+            return artistAnimation;
+        }
+
         foreach (var definition in AnimationDefinitions.Where(definition => definition.Animation != CharacterAnimation.Move))
         {
             var words = new[]
@@ -685,6 +717,52 @@ public sealed class FrmCharacterGenerator : DarkForm
 
         cleanName = fileName;
         return CharacterAnimation.Move;
+    }
+
+    private static bool TryParseArtistFileName(
+        string fileName,
+        out CharacterAnimation animation,
+        out string cleanName
+    )
+    {
+        animation = CharacterAnimation.Move;
+        cleanName = fileName;
+
+        var pieces = fileName.Split('_', StringSplitOptions.RemoveEmptyEntries);
+        if (pieces.Length < 2)
+        {
+            return false;
+        }
+
+        var animationIndex = 0;
+        string? genderPrefix = null;
+
+        if (pieces.Length >= 3 &&
+            (string.Equals(pieces[0], "M", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(pieces[0], "F", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(pieces[0], "B", StringComparison.OrdinalIgnoreCase)))
+        {
+            genderPrefix = pieces[0].ToUpperInvariant();
+            animationIndex = 1;
+        }
+
+        var code = pieces[animationIndex];
+        if (ArtistIgnoredAnimationCodes.Contains(code))
+        {
+            return false;
+        }
+
+        if (!ArtistAnimationCodes.TryGetValue(code, out animation))
+        {
+            return false;
+        }
+
+        var remainder = string.Join("_", pieces.Skip(animationIndex + 1));
+        cleanName = string.IsNullOrWhiteSpace(genderPrefix)
+            ? remainder
+            : genderPrefix + "_" + remainder;
+
+        return !string.IsNullOrWhiteSpace(cleanName);
     }
 
     private void PopulatePartsList()
@@ -836,6 +914,113 @@ public sealed class FrmCharacterGenerator : DarkForm
             if (!string.IsNullOrWhiteSpace(file))
             {
                 yield return file;
+            }
+        }
+    }
+
+    private void ImportArtistZip()
+    {
+        using var dialog = new OpenFileDialog
+        {
+            Filter = "ZIP archive (*.zip)|*.zip",
+            Title = "Import Corps Royaux paperdolls",
+            CheckFileExists = true,
+            Multiselect = false,
+        };
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        var imported = 0;
+        var skipped = 0;
+        var invalid = 0;
+
+        try
+        {
+            if (_watcher != null)
+            {
+                _watcher.EnableRaisingEvents = false;
+            }
+
+            using var archive = ZipFile.OpenRead(dialog.FileName);
+            foreach (var entry in archive.Entries)
+            {
+                if (!entry.FullName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var pieces = entry.FullName
+                    .Replace('\\', '/')
+                    .Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+                var paperdollsIndex = Array.FindIndex(
+                    pieces,
+                    piece => string.Equals(piece, "Paperdolls", StringComparison.OrdinalIgnoreCase)
+                );
+
+                if (paperdollsIndex < 0 || paperdollsIndex + 2 >= pieces.Length)
+                {
+                    continue;
+                }
+
+                var category = pieces[paperdollsIndex + 1];
+                var fileName = Path.GetFileName(pieces[^1]);
+
+                if (string.IsNullOrWhiteSpace(category) ||
+                    string.IsNullOrWhiteSpace(fileName) ||
+                    !string.Equals(category, Path.GetFileName(category), StringComparison.Ordinal))
+                {
+                    invalid++;
+                    continue;
+                }
+
+                var categoryDirectory = Path.Combine(_charagenRoot, category);
+                Directory.CreateDirectory(categoryDirectory);
+
+                var destination = Path.Combine(categoryDirectory, fileName);
+                if (File.Exists(destination))
+                {
+                    skipped++;
+                    continue;
+                }
+
+                entry.ExtractToFile(destination, overwrite: false);
+                imported++;
+            }
+
+            ReloadAssets();
+
+            _status.Text =
+                $"Imported {imported:N0} PNGs from {Path.GetFileName(dialog.FileName)}. " +
+                $"Skipped {skipped:N0} duplicates/existing files.";
+
+            MessageBox.Show(
+                this,
+                $"Import complete.\n\nImported: {imported:N0}\nSkipped: {skipped:N0}\nInvalid: {invalid:N0}\n\n" +
+                "The original artist filenames were preserved. The generator now recognizes Mov/Mel/Mag/Idl/Ran/Use automatically.",
+                "Character Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                this,
+                "Import failed: " + ex.Message,
+                "Character Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error
+            );
+        }
+        finally
+        {
+            if (_watcher != null)
+            {
+                _watcher.EnableRaisingEvents = true;
             }
         }
     }
