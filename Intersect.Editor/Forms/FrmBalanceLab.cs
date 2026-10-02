@@ -3510,6 +3510,462 @@ public sealed class FrmBalanceLab : DarkForm
 
     private void ShowBatchSuggestions()
     {
+        var scope = _scope.SelectedItem?.ToString() ?? "Overview";
+        var kind = scope switch
+        {
+            "NPCs" => BalanceObjectKind.Npc,
+            "Combat Simulation" => BalanceObjectKind.Npc,
+            "Equipment / Items" => BalanceObjectKind.Item,
+            "Spells" => BalanceObjectKind.Spell,
+            "Resources" => BalanceObjectKind.Resource,
+            "Classes" => BalanceObjectKind.PlayerClass,
+            _ => _grid.SelectedRows.Count > 0 &&
+                 _grid.SelectedRows[0].Tag is BalanceEntry selectedEntry
+                ? selectedEntry.Kind
+                : BalanceObjectKind.Npc,
+        };
+
+        if (kind == BalanceObjectKind.Npc)
+        {
+            ShowNpcBatchSuggestions();
+            return;
+        }
+
+        ShowGenericBatchSuggestions(kind);
+    }
+
+    private void ShowGenericBatchSuggestions(BalanceObjectKind kind)
+    {
+        // Refresh peer baselines immediately before generating batch values.
+        RunAnalysis();
+
+        var suggestions = BuildGenericBatchSuggestions(kind);
+        if (suggestions.Count == 0)
+        {
+            MessageBox.Show(
+                this,
+                $"No {KindLabel(kind).ToLowerInvariant()} entries are outside the selected balance tolerance.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        using var form = new GenericBatchSuggestionForm(kind, suggestions);
+        if (form.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        if (!form.ApplyA && !form.ApplyB && !form.ApplyC)
+        {
+            MessageBox.Show(
+                this,
+                "Select at least one field group to apply.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        if (Globals.CurrentEditor != -1)
+        {
+            MessageBox.Show(
+                this,
+                "Close the currently open content editor before applying a balance batch. " +
+                "This prevents the batch from overwriting unsaved editor changes.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+            );
+            return;
+        }
+
+        var selected = form.SelectedSuggestions;
+        if (selected.Count == 0)
+        {
+            return;
+        }
+
+        var confirmation = MessageBox.Show(
+            this,
+            $"Apply reviewed balance suggestions to {selected.Count:N0} {KindLabel(kind).ToLowerInvariant()} object(s)?\n\n" +
+            "Only the checked field groups will be changed. Current values are stored in the in-session undo stack.",
+            "Apply Balance Batch",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning
+        );
+
+        if (confirmation != DialogResult.Yes)
+        {
+            return;
+        }
+
+        var history = new BalanceBatchHistory
+        {
+            GenericKind = kind,
+        };
+
+        Cursor = Cursors.WaitCursor;
+        try
+        {
+            foreach (var suggestion in selected)
+            {
+                switch (kind)
+                {
+                    case BalanceObjectKind.Item:
+                        ApplyItemBatchSuggestion(suggestion, form, history);
+                        break;
+                    case BalanceObjectKind.Spell:
+                        ApplySpellBatchSuggestion(suggestion, form, history);
+                        break;
+                    case BalanceObjectKind.Resource:
+                        ApplyResourceBatchSuggestion(suggestion, form, history);
+                        break;
+                    case BalanceObjectKind.PlayerClass:
+                        ApplyClassBatchSuggestion(suggestion, form, history);
+                        break;
+                }
+            }
+
+            if (GetHistoryEntryCount(history) > 0)
+            {
+                _batchHistory.Push(history);
+            }
+        }
+        finally
+        {
+            Cursor = Cursors.Default;
+        }
+
+        UpdateUndoBatchButton();
+        RunAnalysis();
+
+        MessageBox.Show(
+            this,
+            $"Applied balance changes to {GetHistoryEntryCount(history):N0} {KindLabel(kind).ToLowerInvariant()} object(s).\n\n" +
+            "Use UNDO LAST BATCH to restore the previous values.",
+            "Game Balance Lab",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information
+        );
+    }
+
+    private List<GenericBatchSuggestion> BuildGenericBatchSuggestions(BalanceObjectKind kind)
+    {
+        var suggestions = new List<GenericBatchSuggestion>();
+
+        foreach (var entry in _entries.Where(entry =>
+                     entry.Kind == kind &&
+                     entry.Severity != "OK" &&
+                     entry.Baseline > 0.0001 &&
+                     entry.Power > 0.0001))
+        {
+            // One batch intentionally cannot move an object by more than 50%.
+            // This keeps outliers reviewable instead of flattening identities in
+            // a single click. Re-running the analyzer can perform another pass.
+            var factor = Math.Clamp(entry.Baseline / entry.Power, 0.50d, 1.50d);
+            var status = entry.Power > entry.Baseline ? "OVER" : "UNDER";
+
+            suggestions.Add(
+                new GenericBatchSuggestion
+                {
+                    Kind = kind,
+                    Id = entry.Id,
+                    Name = entry.Name,
+                    Group = entry.Group,
+                    Status = status,
+                    CurrentPower = entry.Power,
+                    TargetPower = entry.Baseline,
+                    Factor = factor,
+                    Reason =
+                        $"{Math.Abs(entry.DeviationPercent):0.0}% " +
+                        $"{(status == "OVER" ? "above" : "below")} peer baseline. " +
+                        $"This pass proposes {factor * 100d:0}% of current tunable values.",
+                }
+            );
+        }
+
+        return suggestions;
+    }
+
+    private static int ScaleInt(int value, double factor)
+    {
+        var scaled = Math.Round(value * factor);
+        return (int)Math.Clamp(scaled, int.MinValue, int.MaxValue);
+    }
+
+    private static long ScaleLong(long value, double factor)
+    {
+        var scaled = Math.Round(value * factor);
+        return (long)Math.Clamp(scaled, long.MinValue, long.MaxValue);
+    }
+
+    private void ApplyItemBatchSuggestion(
+        GenericBatchSuggestion suggestion,
+        GenericBatchSuggestionForm form,
+        BalanceBatchHistory history
+    )
+    {
+        var item = ItemDescriptor.Get(suggestion.Id);
+        if (item == null)
+        {
+            return;
+        }
+
+        history.ItemEntries.Add(
+            new ItemBalanceSnapshot
+            {
+                Id = item.Id,
+                StatsGiven = item.StatsGiven.ToArray(),
+                PercentageStatsGiven = item.PercentageStatsGiven.ToArray(),
+                VitalsGiven = item.VitalsGiven.ToArray(),
+                PercentageVitalsGiven = item.PercentageVitalsGiven.ToArray(),
+                Damage = item.Damage,
+                CritChance = item.CritChance,
+                BlockChance = item.BlockChance,
+                Scaling = item.Scaling,
+                Price = item.Price,
+            }
+        );
+
+        var factor = suggestion.Factor;
+
+        if (form.ApplyA)
+        {
+            for (var i = 0; i < item.StatsGiven.Length; i++)
+            {
+                item.StatsGiven[i] = ScaleInt(item.StatsGiven[i], factor);
+            }
+
+            for (var i = 0; i < item.PercentageStatsGiven.Length; i++)
+            {
+                item.PercentageStatsGiven[i] = ScaleInt(item.PercentageStatsGiven[i], factor);
+            }
+
+            for (var i = 0; i < item.VitalsGiven.Length; i++)
+            {
+                item.VitalsGiven[i] = ScaleLong(item.VitalsGiven[i], factor);
+            }
+
+            for (var i = 0; i < item.PercentageVitalsGiven.Length; i++)
+            {
+                item.PercentageVitalsGiven[i] = ScaleInt(item.PercentageVitalsGiven[i], factor);
+            }
+        }
+
+        if (form.ApplyB)
+        {
+            item.Damage = Math.Max(0, ScaleInt(item.Damage, factor));
+            item.CritChance = Math.Clamp(ScaleInt(item.CritChance, factor), 0, 100);
+            item.BlockChance = Math.Clamp(ScaleInt(item.BlockChance, factor), 0, 100);
+            item.Scaling = Math.Max(0, ScaleInt(item.Scaling, factor));
+        }
+
+        if (form.ApplyC)
+        {
+            item.Price = Math.Max(0, ScaleInt(item.Price, factor));
+        }
+
+        PacketSender.SendSaveObject(item);
+    }
+
+    private void ApplySpellBatchSuggestion(
+        GenericBatchSuggestion suggestion,
+        GenericBatchSuggestionForm form,
+        BalanceBatchHistory history
+    )
+    {
+        var spell = SpellDescriptor.Get(suggestion.Id);
+        if (spell == null)
+        {
+            return;
+        }
+
+        history.SpellEntries.Add(
+            new SpellBalanceSnapshot
+            {
+                Id = spell.Id,
+                VitalDiff = spell.Combat.VitalDiff.ToArray(),
+                Scaling = spell.Combat.Scaling,
+                CritChance = spell.Combat.CritChance,
+                CooldownDuration = spell.CooldownDuration,
+                VitalCost = spell.VitalCost.ToArray(),
+            }
+        );
+
+        var factor = suggestion.Factor;
+
+        if (form.ApplyA)
+        {
+            for (var i = 0; i < spell.Combat.VitalDiff.Length; i++)
+            {
+                spell.Combat.VitalDiff[i] = ScaleLong(spell.Combat.VitalDiff[i], factor);
+            }
+
+            spell.Combat.Scaling = Math.Max(0, ScaleInt(spell.Combat.Scaling, factor));
+            spell.Combat.CritChance = Math.Clamp(
+                ScaleInt(spell.Combat.CritChance, factor),
+                0,
+                100
+            );
+        }
+
+        if (form.ApplyB)
+        {
+            var inverse = factor <= 0.0001 ? 1d : 1d / factor;
+            spell.CooldownDuration = Math.Max(
+                0,
+                ScaleInt(spell.CooldownDuration, inverse)
+            );
+        }
+
+        if (form.ApplyC)
+        {
+            var inverse = factor <= 0.0001 ? 1d : 1d / factor;
+            for (var i = 0; i < spell.VitalCost.Length; i++)
+            {
+                spell.VitalCost[i] = Math.Max(
+                    0L,
+                    ScaleLong(spell.VitalCost[i], inverse)
+                );
+            }
+        }
+
+        PacketSender.SendSaveObject(spell);
+    }
+
+    private void ApplyResourceBatchSuggestion(
+        GenericBatchSuggestion suggestion,
+        GenericBatchSuggestionForm form,
+        BalanceBatchHistory history
+    )
+    {
+        var resource = ResourceDescriptor.Get(suggestion.Id);
+        if (resource == null)
+        {
+            return;
+        }
+
+        history.ResourceEntries.Add(
+            new ResourceBalanceSnapshot
+            {
+                Id = resource.Id,
+                MinHp = resource.MinHp,
+                MaxHp = resource.MaxHp,
+                VitalRegen = resource.VitalRegen,
+                SpawnDuration = resource.SpawnDuration,
+            }
+        );
+
+        var factor = suggestion.Factor;
+
+        if (form.ApplyA)
+        {
+            resource.MinHp = Math.Max(0, ScaleInt(resource.MinHp, factor));
+            resource.MaxHp = Math.Max(resource.MinHp, ScaleInt(resource.MaxHp, factor));
+            resource.VitalRegen = Math.Max(0, ScaleInt(resource.VitalRegen, factor));
+        }
+
+        if (form.ApplyB)
+        {
+            resource.SpawnDuration = Math.Max(
+                0,
+                ScaleInt(resource.SpawnDuration, factor)
+            );
+        }
+
+        PacketSender.SendSaveObject(resource);
+    }
+
+    private void ApplyClassBatchSuggestion(
+        GenericBatchSuggestion suggestion,
+        GenericBatchSuggestionForm form,
+        BalanceBatchHistory history
+    )
+    {
+        var playerClass = ClassDescriptor.Get(suggestion.Id);
+        if (playerClass == null)
+        {
+            return;
+        }
+
+        history.ClassEntries.Add(
+            new ClassBalanceSnapshot
+            {
+                Id = playerClass.Id,
+                BaseStat = playerClass.BaseStat.ToArray(),
+                BaseVital = playerClass.BaseVital.ToArray(),
+                StatIncrease = playerClass.StatIncrease.ToArray(),
+                VitalIncrease = playerClass.VitalIncrease.ToArray(),
+                Damage = playerClass.Damage,
+                Scaling = playerClass.Scaling,
+            }
+        );
+
+        var factor = suggestion.Factor;
+
+        if (form.ApplyA)
+        {
+            for (var i = 0; i < playerClass.BaseStat.Length; i++)
+            {
+                playerClass.BaseStat[i] = Math.Max(
+                    0,
+                    ScaleInt(playerClass.BaseStat[i], factor)
+                );
+            }
+
+            for (var i = 0; i < playerClass.BaseVital.Length; i++)
+            {
+                playerClass.BaseVital[i] = Math.Max(
+                    0L,
+                    ScaleLong(playerClass.BaseVital[i], factor)
+                );
+            }
+        }
+
+        if (form.ApplyB)
+        {
+            for (var i = 0; i < playerClass.StatIncrease.Length; i++)
+            {
+                playerClass.StatIncrease[i] = Math.Max(
+                    0,
+                    ScaleInt(playerClass.StatIncrease[i], factor)
+                );
+            }
+
+            for (var i = 0; i < playerClass.VitalIncrease.Length; i++)
+            {
+                playerClass.VitalIncrease[i] = Math.Max(
+                    0L,
+                    ScaleLong(playerClass.VitalIncrease[i], factor)
+                );
+            }
+        }
+
+        if (form.ApplyC)
+        {
+            playerClass.Damage = Math.Max(0, ScaleInt(playerClass.Damage, factor));
+            playerClass.Scaling = Math.Max(0, ScaleInt(playerClass.Scaling, factor));
+        }
+
+        PacketSender.SendSaveObject(playerClass);
+    }
+
+    private static int GetHistoryEntryCount(BalanceBatchHistory history)
+    {
+        return
+            history.Entries.Count +
+            history.ItemEntries.Count +
+            history.SpellEntries.Count +
+            history.ResourceEntries.Count +
+            history.ClassEntries.Count;
+    }
+
+    private void ShowNpcBatchSuggestions()
+    {
         // Recalculate against the currently selected simulation profile so the
         // review window never applies stale recommendations.
         RunCombatSimulation();
