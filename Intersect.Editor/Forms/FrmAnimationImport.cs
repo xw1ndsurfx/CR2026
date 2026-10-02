@@ -790,37 +790,27 @@ public sealed class FrmAnimationImport : DarkForm
                 return;
             }
 
-            if (result.Cancelled)
-            {
-                _status.Text =
-                    $"Import cancelled. {result.ImportedAnimations:N0} animation(s) " +
-                    $"were already completed and kept; {result.Skipped:N0} skipped.";
-            }
-            else
+            if (!result.Cancelled)
             {
                 _importProgress.Style = ProgressBarStyle.Blocks;
                 _importProgress.Value = 100;
                 _importProgressLabel.Text =
                     $"100% | Complete | {stopwatch.Elapsed:mm\\:ss}";
-
-                _status.Text =
-                    $"ZIP imported: {result.ImportedAnimations:N0} animation(s). " +
-                    $"{result.CombinedAnimations:N0} sequence(s) combined from " +
-                    $"{result.CombinedFrames:N0} frame image(s), " +
-                    $"{result.StandaloneSheets:N0} ready-made sheet(s), " +
-                    $"{result.Skipped:N0} skipped.";
             }
 
             // The expensive ZIP/image work happens off the UI thread. Refresh
             // the final list only once after the import has completed/cancelled.
             ReloadAssets();
 
-            if (result.Cancelled)
-            {
-                _status.Text =
-                    $"Import cancelled. {result.ImportedAnimations:N0} completed " +
-                    $"animation(s) remain available in animationimport.";
-            }
+            _status.Text = result.Cancelled
+                ? $"Import cancelled. {result.ImportedAnimations:N0} completed " +
+                  $"animation(s) remain available in animationimport; " +
+                  $"{result.Skipped:N0} skipped."
+                : $"ZIP imported: {result.ImportedAnimations:N0} animation(s). " +
+                  $"{result.CombinedAnimations:N0} sequence(s) combined from " +
+                  $"{result.CombinedFrames:N0} frame image(s), " +
+                  $"{result.StandaloneSheets:N0} ready-made sheet(s), " +
+                  $"{result.Skipped:N0} skipped.";
         }
         catch (OperationCanceledException)
         {
