@@ -4,4 +4,5 @@ public enum AnimationSourceType
 {
     Any,
     SpellCast,
+    NpcBoss,
 }
