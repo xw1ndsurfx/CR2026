@@ -1006,6 +1006,7 @@ public sealed class FrmAnimationImport : DarkForm
                   $"{result.CombinedAnimations:N0} sequence(s) combined from " +
                   $"{result.CombinedFrames:N0} frame image(s), " +
                   $"{result.StandaloneSheets:N0} ready-made sheet(s), " +
+                  $"{result.RenamedDuplicates:N0} duplicate(s) renamed, " +
                   $"{result.Skipped:N0} skipped.";
         }
         catch (OperationCanceledException)
@@ -1195,12 +1196,22 @@ public sealed class FrmAnimationImport : DarkForm
                         safeName = "animation";
                     }
 
-                    var destination = GetUniquePath(
-                        Path.Combine(
-                            categoryDirectory,
-                            safeName + ".png"
-                        )
+                    var requestedDestination = Path.Combine(
+                        categoryDirectory,
+                        safeName + ".png"
                     );
+                    var destination = GetUniquePath(
+                        requestedDestination
+                    );
+
+                    if (!string.Equals(
+                            destination,
+                            requestedDestination,
+                            StringComparison.OrdinalIgnoreCase
+                        ))
+                    {
+                        result.RenamedDuplicates++;
+                    }
 
                     cancellationToken.ThrowIfCancellationRequested();
                     sheet.Save(destination, ImageFormat.Png);
@@ -1292,9 +1303,22 @@ public sealed class FrmAnimationImport : DarkForm
                         continue;
                     }
 
-                    var destination = GetUniquePath(
-                        Path.Combine(categoryDirectory, fileName)
+                    var requestedDestination = Path.Combine(
+                        categoryDirectory,
+                        fileName
                     );
+                    var destination = GetUniquePath(
+                        requestedDestination
+                    );
+
+                    if (!string.Equals(
+                            destination,
+                            requestedDestination,
+                            StringComparison.OrdinalIgnoreCase
+                        ))
+                    {
+                        result.RenamedDuplicates++;
+                    }
 
                     cancellationToken.ThrowIfCancellationRequested();
                     buffer.Position = 0;
@@ -2564,14 +2588,25 @@ public sealed class FrmAnimationImport : DarkForm
             return;
         }
 
-        var spriteFile = fileStem + ".png";
-        var destination = Path.Combine(_animationsRoot, spriteFile);
-        var temporary = destination + ".tmp";
+        var requestedSpriteFile = fileStem + ".png";
+        var requestedDestination = Path.Combine(
+            _animationsRoot,
+            requestedSpriteFile
+        );
+        var destination = GetUniquePath(requestedDestination);
+        var spriteFile = Path.GetFileName(destination);
+        var temporary =
+            destination + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        var wasRenamed = !string.Equals(
+            destination,
+            requestedDestination,
+            StringComparison.OrdinalIgnoreCase
+        );
 
         try
         {
-            File.Copy(_selectedAsset.FilePath, temporary, true);
-            File.Move(temporary, destination, true);
+            File.Copy(_selectedAsset.FilePath, temporary, false);
+            File.Move(temporary, destination, false);
 
             GameContentManager.ReloadAnimationTextures();
 
@@ -2590,7 +2625,8 @@ public sealed class FrmAnimationImport : DarkForm
 
             _status.Text =
                 $"Imported {animationName}: resources/animations/{spriteFile} - " +
-                $"{(int)_xFrames.Value}x{(int)_yFrames.Value}, {(int)_frameCount.Value} frames.";
+                $"{(int)_xFrames.Value}x{(int)_yFrames.Value}, {(int)_frameCount.Value} frames." +
+                (wasRenamed ? " Existing filename preserved; duplicate was renamed." : string.Empty);
 
             MessageBox.Show(
                 this,
@@ -2599,8 +2635,11 @@ public sealed class FrmAnimationImport : DarkForm
                 $"Folder: {folder}\n" +
                 $"Grid: {(int)_xFrames.Value}x{(int)_yFrames.Value}\n" +
                 $"Frames: {(int)_frameCount.Value}\n" +
-                $"Sprite: resources\\animations\\{spriteFile}\n\n" +
-                "The Animation Editor will open and prefill the detected settings.",
+                $"Sprite: resources\\animations\\{spriteFile}\n" +
+                (wasRenamed
+                    ? "A file with the requested name already existed, so this copy was renamed and the existing file was kept.\n"
+                    : string.Empty) +
+                "\nThe Animation Editor will open and prefill the detected settings.",
                 "Animations Import",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information
@@ -2608,6 +2647,18 @@ public sealed class FrmAnimationImport : DarkForm
         }
         catch (Exception ex)
         {
+            try
+            {
+                if (File.Exists(temporary))
+                {
+                    File.Delete(temporary);
+                }
+            }
+            catch
+            {
+                // Best effort cleanup only.
+            }
+
             MessageBox.Show(
                 this,
                 "Unable to import animation: " + ex.Message,
