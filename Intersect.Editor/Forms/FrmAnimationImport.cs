@@ -42,6 +42,8 @@ public sealed class FrmAnimationImport : DarkForm
 
         public int FrameCount { get; set; } = 1;
 
+        public DateTime LastWriteTimeUtc { get; init; }
+
         public bool MetadataLoaded { get; set; }
     }
 
