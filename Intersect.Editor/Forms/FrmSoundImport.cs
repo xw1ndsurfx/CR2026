@@ -20,6 +20,8 @@ public sealed class FrmSoundImport : DarkForm
 
         public long FileSize { get; init; }
 
+        public DateTime LastWriteTimeUtc { get; init; }
+
         public TimeSpan Duration { get; set; }
 
         public int SampleRate { get; set; }
@@ -48,6 +50,8 @@ public sealed class FrmSoundImport : DarkForm
 
         public int Skipped { get; set; }
 
+        public int RenamedDuplicates { get; set; }
+
         public bool Cancelled { get; set; }
     }
 
@@ -67,6 +71,9 @@ public sealed class FrmSoundImport : DarkForm
         "Music FX",
         "Misc",
     };
+
+    private const string FavoritesView = "[Favorites]";
+    private const string NewView = "[New]";
 
     private static readonly Dictionary<string, string[]> CategoryKeywords =
         new(StringComparer.OrdinalIgnoreCase)
@@ -138,10 +145,13 @@ public sealed class FrmSoundImport : DarkForm
     private readonly string _gameRoot;
     private readonly string _importRoot;
     private readonly string _soundsRoot;
+    private readonly string _favoritesPath;
 
     private readonly ListBox _categoryList = new();
     private readonly ListView _soundList = new();
     private readonly TextBox _search = new();
+    private readonly ComboBox _sort = new();
+    private readonly Button _favoriteButton = new();
     private readonly TextBox _name = new();
     private readonly ComboBox _category = new();
     private readonly Label _details = new();
@@ -161,6 +171,8 @@ public sealed class FrmSoundImport : DarkForm
 
     private readonly List<SoundAsset> _assets = new();
     private readonly List<SoundAsset> _visibleAssets = new();
+    private readonly HashSet<string> _favoriteAssetKeys =
+        new(StringComparer.OrdinalIgnoreCase);
 
     private CancellationTokenSource? _operationCancellation;
     private CancellationTokenSource? _libraryCancellation;
@@ -173,6 +185,11 @@ public sealed class FrmSoundImport : DarkForm
         _gameRoot = ResolveGameRoot();
         _importRoot = Path.Combine(_gameRoot, "soundimport");
         _soundsRoot = Path.Combine(_gameRoot, "resources", "sounds");
+        _favoritesPath = Path.Combine(
+            _gameRoot,
+            ".soundimport-cache",
+            "favorites.txt"
+        );
 
         Text = "Sounds Import";
         StartPosition = FormStartPosition.CenterParent;
@@ -183,6 +200,7 @@ public sealed class FrmSoundImport : DarkForm
 
         Directory.CreateDirectory(_importRoot);
         Directory.CreateDirectory(_soundsRoot);
+        LoadFavorites();
         foreach (var categoryName in Categories)
         {
             Directory.CreateDirectory(Path.Combine(_importRoot, categoryName));
