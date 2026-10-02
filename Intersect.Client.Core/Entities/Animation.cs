@@ -179,6 +179,14 @@ public partial class Animation : IAnimation
                 {
                     var frameWidth = tex.Width / Descriptor.Lower.XFrames;
                     var frameHeight = tex.Height / Descriptor.Lower.YFrames;
+                    var scale = Math.Clamp(
+                        Descriptor.Lower.ScalePercent,
+                        10,
+                        1000
+                    ) / 100f;
+                    var drawWidth = frameWidth * scale;
+                    var drawHeight = frameHeight * scale;
+
                     Graphics.DrawGameTexture(
                         tex,
                         new FloatRect(
@@ -187,8 +195,16 @@ public partial class Animation : IAnimation
                             frameWidth, frameHeight
                         ),
                         new FloatRect(
-                            mRenderX - frameWidth / 2, mRenderY - frameHeight / 2 + SpriteYOffset, frameWidth, frameHeight
-                        ), Color.White, null, GameBlendModes.None, null, rotationDegrees
+                            mRenderX - drawWidth / 2,
+                            mRenderY - drawHeight / 2 + SpriteYOffset,
+                            drawWidth,
+                            drawHeight
+                        ),
+                        Color.White,
+                        null,
+                        GameBlendModes.None,
+                        null,
+                        rotationDegrees
                     );
                 }
             }
@@ -219,6 +235,13 @@ public partial class Animation : IAnimation
                 {
                     var frameWidth = tex.Width / Descriptor.Upper.XFrames;
                     var frameHeight = tex.Height / Descriptor.Upper.YFrames;
+                    var scale = Math.Clamp(
+                        Descriptor.Upper.ScalePercent,
+                        10,
+                        1000
+                    ) / 100f;
+                    var drawWidth = frameWidth * scale;
+                    var drawHeight = frameHeight * scale;
 
                     Graphics.DrawGameTexture(
                         tex,
@@ -228,8 +251,16 @@ public partial class Animation : IAnimation
                             frameWidth, frameHeight
                         ),
                         new FloatRect(
-                            mRenderX - frameWidth / 2, mRenderY - frameHeight / 2 + SpriteYOffset, frameWidth, frameHeight
-                        ), Color.White, null, GameBlendModes.None, null, rotationDegrees
+                            mRenderX - drawWidth / 2,
+                            mRenderY - drawHeight / 2 + SpriteYOffset,
+                            drawWidth,
+                            drawHeight
+                        ),
+                        Color.White,
+                        null,
+                        GameBlendModes.None,
+                        null,
+                        rotationDegrees
                     );
                 }
             }
@@ -405,8 +436,17 @@ public partial class Animation : IAnimation
         {
             if (Descriptor.Lower.XFrames > 0 && Descriptor.Lower.YFrames > 0)
             {
-                var frameWidth = tex.Width / Descriptor.Lower.XFrames;
-                var frameHeight = tex.Height / Descriptor.Lower.YFrames;
+                var scale = Math.Clamp(
+                    Descriptor.Lower.ScalePercent,
+                    10,
+                    1000
+                ) / 100f;
+                var frameWidth = (int)Math.Ceiling(
+                    tex.Width / (double)Descriptor.Lower.XFrames * scale
+                );
+                var frameHeight = (int)Math.Ceiling(
+                    tex.Height / (double)Descriptor.Lower.YFrames * scale
+                );
                 if (frameWidth > size.X)
                 {
                     size.X = frameWidth;
@@ -424,8 +464,17 @@ public partial class Animation : IAnimation
         {
             if (Descriptor.Upper.XFrames > 0 && Descriptor.Upper.YFrames > 0)
             {
-                var frameWidth = tex.Width / Descriptor.Upper.XFrames;
-                var frameHeight = tex.Height / Descriptor.Upper.YFrames;
+                var scale = Math.Clamp(
+                    Descriptor.Upper.ScalePercent,
+                    10,
+                    1000
+                ) / 100f;
+                var frameWidth = (int)Math.Ceiling(
+                    tex.Width / (double)Descriptor.Upper.XFrames * scale
+                );
+                var frameHeight = (int)Math.Ceiling(
+                    tex.Height / (double)Descriptor.Upper.YFrames * scale
+                );
                 if (frameWidth > size.X)
                 {
                     size.X = frameWidth;
