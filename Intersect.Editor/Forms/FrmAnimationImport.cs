@@ -36,6 +36,23 @@ public sealed class FrmAnimationImport : DarkForm
 
         public required string Category { get; init; }
 
+        public int XFrames { get; set; } = 1;
+
+        public int YFrames { get; set; } = 1;
+
+        public int FrameCount { get; set; } = 1;
+
+        public bool MetadataLoaded { get; set; }
+    }
+
+    private sealed class AssetPreviewLoad
+    {
+        public required Bitmap Bitmap { get; init; }
+
+        public int Width { get; init; }
+
+        public int Height { get; init; }
+
         public int XFrames { get; init; }
 
         public int YFrames { get; init; }
@@ -243,6 +260,10 @@ public sealed class FrmAnimationImport : DarkForm
     private readonly ListBox _categoryList = new();
     private readonly ListView _assetList = new();
     private readonly ImageList _assetImages = new();
+    private readonly TextBox _assetSearch = new();
+    private readonly Button _previousPageButton = new();
+    private readonly Button _nextPageButton = new();
+    private readonly Label _pageLabel = new();
     private readonly AnimationPreview _preview = new();
     private readonly TextBox _name = new();
     private readonly ComboBox _category = new();
@@ -258,10 +279,18 @@ public sealed class FrmAnimationImport : DarkForm
     private readonly Label _importProgressLabel = new();
     private readonly System.Windows.Forms.Timer _previewTimer = new() { Interval = 80 };
 
+    private const int AssetPageSize = 120;
+
     private CancellationTokenSource? _importCancellation;
+    private CancellationTokenSource? _libraryLoadCancellation;
+    private CancellationTokenSource? _thumbnailCancellation;
+    private CancellationTokenSource? _selectionCancellation;
 
     private readonly List<AnimationAsset> _assets = new();
+    private readonly List<AnimationAsset> _visibleAssets = new();
     private AnimationAsset? _selectedAsset;
+    private int _assetPage;
+    private bool _libraryLoading;
 
     public FrmAnimationImport(Action<GeneratedAnimationRequest>? afterImport = null)
     {
@@ -291,17 +320,29 @@ public sealed class FrmAnimationImport : DarkForm
             _preview.Advance((int)_frameCount.Value);
         };
 
-        Shown += (_, _) =>
+        Shown += async (_, _) =>
         {
-            ReloadAssets();
             _previewTimer.Start();
+            await ReloadAssetsAsync();
         };
 
         FormClosed += (_, _) =>
         {
             _importCancellation?.Cancel();
+            _libraryLoadCancellation?.Cancel();
+            _thumbnailCancellation?.Cancel();
+            _selectionCancellation?.Cancel();
+
             _importCancellation?.Dispose();
+            _libraryLoadCancellation?.Dispose();
+            _thumbnailCancellation?.Dispose();
+            _selectionCancellation?.Dispose();
+
             _importCancellation = null;
+            _libraryLoadCancellation = null;
+            _thumbnailCancellation = null;
+            _selectionCancellation = null;
+
             _previewTimer.Stop();
             _assetImages.Dispose();
         };
@@ -370,7 +411,7 @@ public sealed class FrmAnimationImport : DarkForm
 
         var refresh = CreateDarkButton("REFRESH");
         refresh.Size = new Size(120, 34);
-        refresh.Click += (_, _) => ReloadAssets();
+        refresh.Click += async (_, _) => await ReloadAssetsAsync();
 
         var open = CreateDarkButton("OPEN ANIMATIONIMPORT");
         open.Size = new Size(205, 34);
@@ -439,7 +480,11 @@ public sealed class FrmAnimationImport : DarkForm
         var categoryPanel = CreateSection("CATEGORIES");
         _categoryList.Dock = DockStyle.Fill;
         StyleListBox(_categoryList);
-        _categoryList.SelectedIndexChanged += (_, _) => PopulateAssetList();
+        _categoryList.SelectedIndexChanged += (_, _) =>
+        {
+            _assetPage = 0;
+            PopulateAssetList();
+        };
         categoryPanel.Controls.Add(_categoryList, 0, 1);
         body.Controls.Add(categoryPanel, 0, 0);
 
@@ -457,9 +502,83 @@ public sealed class FrmAnimationImport : DarkForm
         _assetList.BackColor = System.Drawing.Color.FromArgb(38, 32, 34);
         _assetList.ForeColor = System.Drawing.Color.Gainsboro;
         _assetList.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9);
-        _assetList.SelectedIndexChanged += (_, _) => SelectAsset();
+        _assetList.SelectedIndexChanged += async (_, _) => await SelectAssetAsync();
 
-        assetPanel.Controls.Add(_assetList, 0, 1);
+        var assetHost = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            ColumnCount = 1,
+            RowCount = 3,
+            BackColor = System.Drawing.Color.FromArgb(38, 32, 34),
+        };
+        assetHost.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        assetHost.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+        assetHost.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        assetHost.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+
+        _assetSearch.Dock = DockStyle.Fill;
+        _assetSearch.Margin = new Padding(0, 0, 0, 6);
+        _assetSearch.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        _assetSearch.ForeColor = System.Drawing.Color.White;
+        _assetSearch.BorderStyle = BorderStyle.FixedSingle;
+        _assetSearch.PlaceholderText = "Search animations...";
+        _assetSearch.TextChanged += (_, _) =>
+        {
+            _assetPage = 0;
+            PopulateAssetList();
+        };
+
+        var pager = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(0, 3, 0, 0),
+            BackColor = System.Drawing.Color.FromArgb(38, 32, 34),
+        };
+
+        _previousPageButton.Text = "<";
+        _previousPageButton.Size = new Size(42, 28);
+        _previousPageButton.FlatStyle = FlatStyle.Flat;
+        _previousPageButton.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+        _previousPageButton.ForeColor = System.Drawing.Color.Gainsboro;
+        _previousPageButton.Click += (_, _) =>
+        {
+            if (_assetPage <= 0)
+            {
+                return;
+            }
+
+            _assetPage--;
+            PopulateAssetList();
+        };
+
+        _pageLabel.AutoSize = false;
+        _pageLabel.Size = new Size(245, 28);
+        _pageLabel.ForeColor = System.Drawing.Color.Silver;
+        _pageLabel.TextAlign = ContentAlignment.MiddleCenter;
+
+        _nextPageButton.Text = ">";
+        _nextPageButton.Size = new Size(42, 28);
+        _nextPageButton.FlatStyle = FlatStyle.Flat;
+        _nextPageButton.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+        _nextPageButton.ForeColor = System.Drawing.Color.Gainsboro;
+        _nextPageButton.Click += (_, _) =>
+        {
+            _assetPage++;
+            PopulateAssetList();
+        };
+
+        pager.Controls.Add(_previousPageButton);
+        pager.Controls.Add(_pageLabel);
+        pager.Controls.Add(_nextPageButton);
+
+        assetHost.Controls.Add(_assetSearch, 0, 0);
+        assetHost.Controls.Add(_assetList, 0, 1);
+        assetHost.Controls.Add(pager, 0, 2);
+        assetPanel.Controls.Add(assetHost, 0, 1);
         body.Controls.Add(assetPanel, 1, 0);
 
         var previewPanel = CreateSection("PREVIEW");
