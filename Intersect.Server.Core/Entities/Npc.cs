@@ -1893,7 +1893,7 @@ public partial class Npc : Entity
                 continue;
             }
 
-            var score = Randomization.Next(0, 5);
+            var score = (double)Randomization.Next(0, 5);
 
             if (candidate == preferred)
             {
