@@ -4328,9 +4328,14 @@ public sealed class FrmBalanceLab : DarkForm
         }
 
         var history = _batchHistory.Peek();
+        var count = GetHistoryEntryCount(history);
+        var typeLabel = history.GenericKind.HasValue
+            ? KindLabel(history.GenericKind.Value)
+            : "NPC";
+
         var confirmation = MessageBox.Show(
             this,
-            $"Restore the previous values for {history.Entries.Count:N0} NPC(s)?\n\n" +
+            $"Restore the previous values for {count:N0} {typeLabel.ToLowerInvariant()} object(s)?\n\n" +
             $"Batch applied: {history.AppliedAt:g}",
             "Undo Balance Batch",
             MessageBoxButtons.YesNo,
@@ -4385,6 +4390,74 @@ public sealed class FrmBalanceLab : DarkForm
                 PacketSender.SendSaveObject(npc);
             }
 
+            foreach (var snapshot in history.ItemEntries)
+            {
+                var item = ItemDescriptor.Get(snapshot.Id);
+                if (item == null)
+                {
+                    continue;
+                }
+
+                item.StatsGiven = snapshot.StatsGiven.ToArray();
+                item.PercentageStatsGiven = snapshot.PercentageStatsGiven.ToArray();
+                item.VitalsGiven = snapshot.VitalsGiven.ToArray();
+                item.PercentageVitalsGiven = snapshot.PercentageVitalsGiven.ToArray();
+                item.Damage = snapshot.Damage;
+                item.CritChance = snapshot.CritChance;
+                item.BlockChance = snapshot.BlockChance;
+                item.Scaling = snapshot.Scaling;
+                item.Price = snapshot.Price;
+                PacketSender.SendSaveObject(item);
+            }
+
+            foreach (var snapshot in history.SpellEntries)
+            {
+                var spell = SpellDescriptor.Get(snapshot.Id);
+                if (spell == null)
+                {
+                    continue;
+                }
+
+                spell.Combat.VitalDiff = snapshot.VitalDiff.ToArray();
+                spell.Combat.Scaling = snapshot.Scaling;
+                spell.Combat.CritChance = snapshot.CritChance;
+                spell.CooldownDuration = snapshot.CooldownDuration;
+                spell.VitalCost = snapshot.VitalCost.ToArray();
+                PacketSender.SendSaveObject(spell);
+            }
+
+            foreach (var snapshot in history.ResourceEntries)
+            {
+                var resource = ResourceDescriptor.Get(snapshot.Id);
+                if (resource == null)
+                {
+                    continue;
+                }
+
+                resource.MinHp = snapshot.MinHp;
+                resource.MaxHp = snapshot.MaxHp;
+                resource.VitalRegen = snapshot.VitalRegen;
+                resource.SpawnDuration = snapshot.SpawnDuration;
+                PacketSender.SendSaveObject(resource);
+            }
+
+            foreach (var snapshot in history.ClassEntries)
+            {
+                var playerClass = ClassDescriptor.Get(snapshot.Id);
+                if (playerClass == null)
+                {
+                    continue;
+                }
+
+                playerClass.BaseStat = snapshot.BaseStat.ToArray();
+                playerClass.BaseVital = snapshot.BaseVital.ToArray();
+                playerClass.StatIncrease = snapshot.StatIncrease.ToArray();
+                playerClass.VitalIncrease = snapshot.VitalIncrease.ToArray();
+                playerClass.Damage = snapshot.Damage;
+                playerClass.Scaling = snapshot.Scaling;
+                PacketSender.SendSaveObject(playerClass);
+            }
+
             _batchHistory.Pop();
         }
         finally
@@ -4397,7 +4470,7 @@ public sealed class FrmBalanceLab : DarkForm
 
         MessageBox.Show(
             this,
-            "The last balance batch was restored.",
+            $"The last {typeLabel.ToLowerInvariant()} balance batch was restored.",
             "Game Balance Lab",
             MessageBoxButtons.OK,
             MessageBoxIcon.Information
