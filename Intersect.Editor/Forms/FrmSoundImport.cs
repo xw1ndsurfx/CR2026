@@ -1000,6 +1000,102 @@ public sealed class FrmSoundImport : DarkForm
         }
     }
 
+    private string GetFavoriteKey(string filePath)
+    {
+        try
+        {
+            return Path.GetRelativePath(_importRoot, filePath)
+                .Replace('\\', '/');
+        }
+        catch
+        {
+            return filePath.Replace('\\', '/');
+        }
+    }
+
+    private bool IsFavorite(SoundAsset asset) =>
+        _favoriteAssetKeys.Contains(GetFavoriteKey(asset.FilePath));
+
+    private void LoadFavorites()
+    {
+        _favoriteAssetKeys.Clear();
+
+        try
+        {
+            if (!File.Exists(_favoritesPath))
+            {
+                return;
+            }
+
+            foreach (var line in File.ReadLines(_favoritesPath))
+            {
+                var key = line.Trim().Replace('\\', '/');
+                if (!string.IsNullOrWhiteSpace(key))
+                {
+                    _favoriteAssetKeys.Add(key);
+                }
+            }
+        }
+        catch
+        {
+            // Favorites are convenience metadata only.
+        }
+    }
+
+    private void SaveFavorites()
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(_favoritesPath);
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            File.WriteAllLines(
+                _favoritesPath,
+                _favoriteAssetKeys.OrderBy(
+                    key => key,
+                    StringComparer.OrdinalIgnoreCase
+                )
+            );
+        }
+        catch (Exception ex)
+        {
+            _status.Text = "Unable to save sound favorites: " + ex.Message;
+        }
+    }
+
+    private void ToggleFavorite()
+    {
+        if (_selectedAsset == null)
+        {
+            return;
+        }
+
+        var key = GetFavoriteKey(_selectedAsset.FilePath);
+        if (!_favoriteAssetKeys.Add(key))
+        {
+            _favoriteAssetKeys.Remove(key);
+        }
+
+        SaveFavorites();
+        UpdateFavoriteButton();
+
+        _page = 0;
+        PopulateSoundList();
+    }
+
+    private void UpdateFavoriteButton()
+    {
+        var hasSelection = _selectedAsset != null;
+        _favoriteButton.Enabled = hasSelection;
+        _favoriteButton.Text =
+            hasSelection && IsFavorite(_selectedAsset!)
+                ? "* FAVORITE"
+                : "FAVORITE";
+    }
+
     private async Task ImportZipAsync()
     {
         using var dialog = new OpenFileDialog
@@ -1120,9 +1216,11 @@ public sealed class FrmSoundImport : DarkForm
 
             _status.Text = result.Cancelled
                 ? $"Operation cancelled. {result.Imported:N0} sound(s) completed; " +
-                  $"{result.Skipped:N0} skipped."
+                  $"{result.Skipped:N0} skipped; " +
+                  $"{result.RenamedDuplicates:N0} duplicate name(s) safely renamed."
                 : $"Operation complete. {result.Imported:N0} sound(s) imported; " +
-                  $"{result.Skipped:N0} skipped.";
+                  $"{result.Skipped:N0} skipped; " +
+                  $"{result.RenamedDuplicates:N0} duplicate name(s) safely renamed.";
         }
         catch (OperationCanceledException)
         {
@@ -1214,9 +1312,20 @@ public sealed class FrmSoundImport : DarkForm
                         continue;
                     }
 
+                    var requestedDestination =
+                        Path.Combine(categoryDirectory, fileName);
                     var destination = GetUniquePath(
-                        Path.Combine(categoryDirectory, fileName)
+                        requestedDestination
                     );
+
+                    if (!string.Equals(
+                            destination,
+                            requestedDestination,
+                            StringComparison.OrdinalIgnoreCase
+                        ))
+                    {
+                        result.RenamedDuplicates++;
+                    }
 
                     using var input = entry.Open();
                     using var output = File.Create(destination);
@@ -1288,12 +1397,22 @@ public sealed class FrmSoundImport : DarkForm
                         Path.Combine(_importRoot, categoryName);
                     Directory.CreateDirectory(categoryDirectory);
 
-                    var destination = GetUniquePath(
-                        Path.Combine(
-                            categoryDirectory,
-                            Path.GetFileName(file)
-                        )
+                    var requestedDestination = Path.Combine(
+                        categoryDirectory,
+                        Path.GetFileName(file)
                     );
+                    var destination = GetUniquePath(
+                        requestedDestination
+                    );
+
+                    if (!string.Equals(
+                            destination,
+                            requestedDestination,
+                            StringComparison.OrdinalIgnoreCase
+                        ))
+                    {
+                        result.RenamedDuplicates++;
+                    }
 
                     using var input = File.OpenRead(file);
                     using var output = File.Create(destination);
@@ -1407,6 +1526,7 @@ public sealed class FrmSoundImport : DarkForm
 
         var imported = 0;
         var skipped = 0;
+        var renamedDuplicates = 0;
 
         try
         {
@@ -1418,9 +1538,20 @@ public sealed class FrmSoundImport : DarkForm
                         cancellationToken.ThrowIfCancellationRequested();
 
                         var (asset, fileName) = assets[i];
+                        var requestedDestination =
+                            Path.Combine(_soundsRoot, fileName);
                         var destination = GetUniquePath(
-                            Path.Combine(_soundsRoot, fileName)
+                            requestedDestination
                         );
+
+                        if (!string.Equals(
+                                destination,
+                                requestedDestination,
+                                StringComparison.OrdinalIgnoreCase
+                            ))
+                        {
+                            renamedDuplicates++;
+                        }
 
                         try
                         {
@@ -1475,7 +1606,8 @@ public sealed class FrmSoundImport : DarkForm
             _progressBar.Value = 100;
             _progressLabel.Text = "100%";
             _status.Text =
-                $"Game sounds refreshed: {imported:N0} imported, {skipped:N0} skipped.";
+                $"Game sounds refreshed: {imported:N0} imported, {skipped:N0} skipped, " +
+                $"{renamedDuplicates:N0} duplicate name(s) safely renamed.";
         }
         catch (OperationCanceledException)
         {
