@@ -40,7 +40,18 @@ public sealed class FrmAnimationImport : DarkForm
 
         public int YFrames { get; init; }
 
-        public int FrameCount => Math.Max(1, XFrames * YFrames);
+        public int FrameCount { get; init; }
+    }
+
+    private sealed class ZipFrameEntry
+    {
+        public required ZipArchiveEntry Entry { get; init; }
+
+        public required string Directory { get; init; }
+
+        public required string BaseName { get; init; }
+
+        public int FrameIndex { get; init; }
     }
 
     private sealed class AnimationPreview : Control
@@ -580,48 +591,148 @@ public sealed class FrmAnimationImport : DarkForm
             return;
         }
 
-        var imported = 0;
+        var importedAnimations = 0;
+        var combinedAnimations = 0;
+        var combinedFrames = 0;
+        var standaloneSheets = 0;
         var skipped = 0;
 
         try
         {
             using var archive = ZipFile.OpenRead(dialog.FileName);
-            foreach (var entry in archive.Entries)
+            var pngEntries = archive.Entries
+                .Where(entry =>
+                    entry.Length > 0 &&
+                    entry.FullName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+            var frameEntries = pngEntries
+                .Select(entry => TryCreateZipFrameEntry(entry, out var frame) ? frame : null)
+                .Where(frame => frame != null)
+                .Cast<ZipFrameEntry>()
+                .ToArray();
+
+            var sequenceGroups = frameEntries
+                .GroupBy(
+                    frame => $"{frame.Directory}\n{frame.BaseName}",
+                    StringComparer.OrdinalIgnoreCase
+                )
+                .Where(group =>
+                    group.Count() >= 2 &&
+                    group.Select(frame => frame.FrameIndex).Distinct().Count() >= 2)
+                .Select(group =>
+                    group
+                        .OrderBy(frame => frame.FrameIndex)
+                        .ThenBy(frame => frame.Entry.FullName, StringComparer.OrdinalIgnoreCase)
+                        .ToArray()
+                )
+                .OrderBy(group => group[0].Entry.FullName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            var consumedEntries = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var group in sequenceGroups)
             {
-                if (!entry.FullName.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
-                    entry.Length <= 0)
+                try
+                {
+                    using var sheet = CombineZipFrames(
+                        group,
+                        out var xFrames,
+                        out var yFrames,
+                        out var frameCount
+                    );
+
+                    var sourceName = group[0].BaseName;
+                    var folderHint = group[0].Directory.Replace('/', ' ').Replace('\\', ' ');
+                    var categoryName = ClassifyAnimation(
+                        $"{sourceName} {folderHint}",
+                        sheet
+                    );
+                    var categoryDirectory = Path.Combine(_importRoot, categoryName);
+                    Directory.CreateDirectory(categoryDirectory);
+
+                    var safeName = MakeFileStem(sourceName);
+                    if (string.IsNullOrWhiteSpace(safeName))
+                    {
+                        safeName = "animation";
+                    }
+
+                    var destination = GetUniquePath(
+                        Path.Combine(categoryDirectory, safeName + ".png")
+                    );
+
+                    sheet.Save(destination, ImageFormat.Png);
+                    WriteGridMetadata(destination, xFrames, yFrames, frameCount);
+
+                    foreach (var frame in group)
+                    {
+                        consumedEntries.Add(frame.Entry.FullName);
+                    }
+
+                    importedAnimations++;
+                    combinedAnimations++;
+                    combinedFrames += frameCount;
+                }
+                catch
+                {
+                    // If a sequence cannot be merged, leave its entries available
+                    // for the normal single-sheet import path below.
+                    skipped++;
+                }
+            }
+
+            foreach (var entry in pngEntries)
+            {
+                if (consumedEntries.Contains(entry.FullName))
                 {
                     continue;
                 }
 
-                using var stream = entry.Open();
-                using var buffer = new MemoryStream();
-                stream.CopyTo(buffer);
-                buffer.Position = 0;
+                try
+                {
+                    using var stream = entry.Open();
+                    using var buffer = new MemoryStream();
+                    stream.CopyTo(buffer);
+                    buffer.Position = 0;
 
-                using var bitmap = new Bitmap(buffer);
-                var sourceName = Path.GetFileNameWithoutExtension(entry.Name);
-                var categoryName = ClassifyAnimation(sourceName, bitmap);
-                var categoryDirectory = Path.Combine(_importRoot, categoryName);
-                Directory.CreateDirectory(categoryDirectory);
+                    using var bitmap = new Bitmap(buffer);
+                    var sourceName = Path.GetFileNameWithoutExtension(entry.Name);
+                    var directoryHint = GetZipDirectory(entry.FullName)
+                        .Replace('/', ' ')
+                        .Replace('\\', ' ');
+                    var categoryName = ClassifyAnimation(
+                        $"{sourceName} {directoryHint}",
+                        bitmap
+                    );
+                    var categoryDirectory = Path.Combine(_importRoot, categoryName);
+                    Directory.CreateDirectory(categoryDirectory);
 
-                var fileName = Path.GetFileName(entry.Name);
-                if (string.IsNullOrWhiteSpace(fileName))
+                    var fileName = Path.GetFileName(entry.Name);
+                    if (string.IsNullOrWhiteSpace(fileName))
+                    {
+                        skipped++;
+                        continue;
+                    }
+
+                    var destination = GetUniquePath(Path.Combine(categoryDirectory, fileName));
+                    buffer.Position = 0;
+                    using var output = File.Create(destination);
+                    buffer.CopyTo(output);
+
+                    importedAnimations++;
+                    standaloneSheets++;
+                }
+                catch
                 {
                     skipped++;
-                    continue;
                 }
-
-                var destination = GetUniquePath(Path.Combine(categoryDirectory, fileName));
-                buffer.Position = 0;
-                using var output = File.Create(destination);
-                buffer.CopyTo(output);
-                imported++;
             }
 
             ReloadAssets();
             _status.Text =
-                $"ZIP imported: {imported} PNG(s), {skipped} skipped. Files were categorized automatically in animationimport.";
+                $"ZIP imported: {importedAnimations} animation(s). " +
+                $"{combinedAnimations} sequence(s) combined from {combinedFrames} frame image(s), " +
+                $"{standaloneSheets} ready-made sheet(s), {skipped} skipped.";
         }
         catch (Exception ex)
         {
@@ -632,6 +743,216 @@ public sealed class FrmAnimationImport : DarkForm
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error
             );
+        }
+    }
+
+    private static bool TryCreateZipFrameEntry(
+        ZipArchiveEntry entry,
+        out ZipFrameEntry? frame
+    )
+    {
+        frame = null;
+
+        var stem = Path.GetFileNameWithoutExtension(entry.Name);
+        if (string.IsNullOrWhiteSpace(stem))
+        {
+            return false;
+        }
+
+        var directory = GetZipDirectory(entry.FullName);
+
+        // Common asset-pack conventions:
+        // skill_eff_413_1.png, skill_eff_413-2.png, frame 003.png, (04).png
+        var match = Regex.Match(
+            stem,
+            @"^(?<base>.*?)(?:[_\-\s]+|\()(?<index>\d+)\)?$",
+            RegexOptions.CultureInvariant
+        );
+
+        string baseName;
+        int frameIndex;
+
+        if (match.Success &&
+            int.TryParse(match.Groups["index"].Value, out frameIndex))
+        {
+            baseName = match.Groups["base"].Value.Trim(' ', '_', '-', '(', ')');
+        }
+        else if (int.TryParse(stem.Trim(' ', '(', ')'), out frameIndex))
+        {
+            // Some packs simply use 1.png, 2.png, 3.png inside one animation folder.
+            baseName = Path.GetFileName(
+                directory.TrimEnd('/', '\\')
+            );
+        }
+        else
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(baseName))
+        {
+            baseName = "animation";
+        }
+
+        frame = new ZipFrameEntry
+        {
+            Entry = entry,
+            Directory = directory,
+            BaseName = baseName,
+            FrameIndex = frameIndex,
+        };
+        return true;
+    }
+
+    private static string GetZipDirectory(string fullName)
+    {
+        var normalized = fullName.Replace('\\', '/');
+        var slash = normalized.LastIndexOf('/');
+        return slash < 0 ? string.Empty : normalized[..slash];
+    }
+
+    private static Bitmap CombineZipFrames(
+        IReadOnlyList<ZipFrameEntry> frames,
+        out int xFrames,
+        out int yFrames,
+        out int frameCount
+    )
+    {
+        if (frames.Count < 2)
+        {
+            throw new InvalidDataException("At least two frame images are required.");
+        }
+
+        var bitmaps = new List<Bitmap>(frames.Count);
+        try
+        {
+            foreach (var frame in frames)
+            {
+                using var stream = frame.Entry.Open();
+                using var source = new Bitmap(stream);
+                bitmaps.Add(new Bitmap(source));
+            }
+
+            var cellWidth = bitmaps.Max(bitmap => bitmap.Width);
+            var cellHeight = bitmaps.Max(bitmap => bitmap.Height);
+
+            if (cellWidth <= 0 || cellHeight <= 0)
+            {
+                throw new InvalidDataException("Animation frame dimensions are invalid.");
+            }
+
+            frameCount = bitmaps.Count;
+
+            // Intersect exposes X/Y frame controls up to 32. Keep short effects
+            // on one horizontal strip; larger packs automatically wrap while
+            // preserving frame order from left-to-right, then top-to-bottom.
+            xFrames = Math.Min(32, frameCount);
+            yFrames = (int)Math.Ceiling(frameCount / (double)xFrames);
+
+            if (yFrames > 32)
+            {
+                throw new InvalidDataException(
+                    $"Sequence has {frameCount} frames; the importer supports up to 1024 frames."
+                );
+            }
+
+            var sheetWidth = checked(cellWidth * xFrames);
+            var sheetHeight = checked(cellHeight * yFrames);
+
+            var output = new Bitmap(
+                sheetWidth,
+                sheetHeight,
+                PixelFormat.Format32bppArgb
+            );
+
+            using var graphics = Graphics.FromImage(output);
+            graphics.Clear(System.Drawing.Color.Transparent);
+            graphics.CompositingMode = CompositingMode.SourceCopy;
+            graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
+            graphics.PixelOffsetMode = PixelOffsetMode.Half;
+            graphics.SmoothingMode = SmoothingMode.None;
+
+            for (var i = 0; i < bitmaps.Count; i++)
+            {
+                var bitmap = bitmaps[i];
+                var column = i % xFrames;
+                var row = i / xFrames;
+
+                // Preserve the original pixels and center smaller frames inside
+                // the common cell so mixed-size exports stay visually aligned.
+                var x = column * cellWidth + (cellWidth - bitmap.Width) / 2;
+                var y = row * cellHeight + (cellHeight - bitmap.Height) / 2;
+                graphics.DrawImageUnscaled(bitmap, x, y);
+            }
+
+            return output;
+        }
+        finally
+        {
+            foreach (var bitmap in bitmaps)
+            {
+                bitmap.Dispose();
+            }
+        }
+    }
+
+    private static string GridMetadataPath(string pngPath) => pngPath + ".grid";
+
+    private static void WriteGridMetadata(
+        string pngPath,
+        int xFrames,
+        int yFrames,
+        int frameCount
+    )
+    {
+        File.WriteAllText(
+            GridMetadataPath(pngPath),
+            $"{xFrames}x{yFrames};frames={frameCount}"
+        );
+    }
+
+    private static bool TryReadGridMetadata(
+        string pngPath,
+        out int xFrames,
+        out int yFrames,
+        out int frameCount
+    )
+    {
+        xFrames = 1;
+        yFrames = 1;
+        frameCount = 1;
+
+        var metadataPath = GridMetadataPath(pngPath);
+        if (!File.Exists(metadataPath))
+        {
+            return false;
+        }
+
+        try
+        {
+            var value = File.ReadAllText(metadataPath).Trim();
+            var match = Regex.Match(
+                value,
+                @"^(?<x>\d+)x(?<y>\d+);frames=(?<frames>\d+)$",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+            );
+
+            if (!match.Success ||
+                !int.TryParse(match.Groups["x"].Value, out xFrames) ||
+                !int.TryParse(match.Groups["y"].Value, out yFrames) ||
+                !int.TryParse(match.Groups["frames"].Value, out frameCount))
+            {
+                return false;
+            }
+
+            xFrames = Math.Clamp(xFrames, 1, 32);
+            yFrames = Math.Clamp(yFrames, 1, 32);
+            frameCount = Math.Clamp(frameCount, 1, xFrames * yFrames);
+            return true;
+        }
+        catch
+        {
+            return false;
         }
     }
 
@@ -670,7 +991,16 @@ public sealed class FrmAnimationImport : DarkForm
                 var categoryName = Path.GetFileName(Path.GetDirectoryName(file)) ?? "Misc";
                 var fileName = Path.GetFileName(file);
                 var stem = Path.GetFileNameWithoutExtension(file);
-                var (xFrames, yFrames) = DetectGrid(bitmap, stem);
+
+                int xFrames;
+                int yFrames;
+                int frameCount;
+
+                if (!TryReadGridMetadata(file, out xFrames, out yFrames, out frameCount))
+                {
+                    (xFrames, yFrames) = DetectGrid(bitmap, stem);
+                    frameCount = Math.Max(1, xFrames * yFrames);
+                }
 
                 _assets.Add(
                     new AnimationAsset
@@ -681,6 +1011,7 @@ public sealed class FrmAnimationImport : DarkForm
                         Category = categoryName,
                         XFrames = xFrames,
                         YFrames = yFrames,
+                        FrameCount = frameCount,
                     }
                 );
             }
@@ -755,7 +1086,7 @@ public sealed class FrmAnimationImport : DarkForm
                 ImageKey = asset.FilePath,
                 Tag = asset,
                 ToolTipText =
-                    $"{asset.FileName}\n{asset.Category}\nDetected grid: {asset.XFrames}x{asset.YFrames} ({asset.FrameCount} frames)",
+                    $"{asset.FileName}\n{asset.Category}\nGrid: {asset.XFrames}x{asset.YFrames} ({asset.FrameCount} frames)",
             };
             _assetList.Items.Add(item);
         }
@@ -818,9 +1149,13 @@ public sealed class FrmAnimationImport : DarkForm
         _category.Text = _selectedAsset.Category;
         _xFrames.Value = Math.Clamp(_selectedAsset.XFrames, (int)_xFrames.Minimum, (int)_xFrames.Maximum);
         _yFrames.Value = Math.Clamp(_selectedAsset.YFrames, (int)_yFrames.Minimum, (int)_yFrames.Maximum);
+        _frameCount.Maximum = Math.Max(
+            1,
+            (int)_xFrames.Value * (int)_yFrames.Value
+        );
         _frameCount.Value = Math.Min(
             _frameCount.Maximum,
-            Math.Max(1, (int)_xFrames.Value * (int)_yFrames.Value)
+            Math.Max(1, _selectedAsset.FrameCount)
         );
         _frameDuration.Value = 80;
 
