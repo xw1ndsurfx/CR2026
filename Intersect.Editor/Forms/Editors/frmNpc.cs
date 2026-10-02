@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Drawing.Imaging;
+using DarkUI.Controls;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
@@ -31,16 +32,135 @@ public partial class FrmNpc : EditorForm
 
     private BindingList<NotifiableDrop> _dropList = [];
 
+    private readonly DarkGroupBox _grpBoss = new();
+    private readonly DarkCheckBox _chkIsBoss = new();
+    private readonly DarkComboBox _cmbBossAnimation = new();
+    private readonly DarkComboBox _cmbBossDeathAnimation = new();
+    private readonly DarkNumericUpDown _nudBossAnimationOffsetY = new();
+
     public FrmNpc()
     {
         ApplyHooks();
         InitializeComponent();
+        BuildBossControls();
         Icon = Program.Icon;
         _btnSave = btnSave;
         _btnCancel = btnCancel;
 
         lstGameObjects.Init(UpdateToolStripItems, AssignEditorItem, toolStripItemNew_Click, toolStripItemCopy_Click, toolStripItemUndo_Click, toolStripItemPaste_Click, toolStripItemDelete_Click);
     }
+    private void BuildBossControls()
+    {
+        _grpBoss.Text = "Boss";
+        _grpBoss.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+        _grpBoss.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+        _grpBoss.ForeColor = System.Drawing.Color.Gainsboro;
+        _grpBoss.Location = new System.Drawing.Point(536, 724);
+        _grpBoss.Size = new Size(298, 190);
+        _grpBoss.TabStop = false;
+
+        _chkIsBoss.Text = "This NPC is a boss";
+        _chkIsBoss.AutoSize = true;
+        _chkIsBoss.Location = new System.Drawing.Point(12, 26);
+        _chkIsBoss.CheckedChanged += (_, _) =>
+        {
+            UpdateBossControlState();
+            if (mEditorItem != null)
+            {
+                mEditorItem.IsBoss = _chkIsBoss.Checked;
+            }
+        };
+
+        var lblBossAnimation = new Label
+        {
+            Text = "Boss overhead animation:",
+            AutoSize = true,
+            Location = new System.Drawing.Point(12, 57),
+            ForeColor = System.Drawing.Color.Gainsboro,
+        };
+
+        _cmbBossAnimation.Location = new System.Drawing.Point(12, 76);
+        _cmbBossAnimation.Size = new Size(272, 24);
+        _cmbBossAnimation.DropDownStyle = ComboBoxStyle.DropDownList;
+        _cmbBossAnimation.SelectedIndexChanged += (_, _) =>
+        {
+            if (mEditorItem == null)
+            {
+                return;
+            }
+
+            mEditorItem.BossAnimation =
+                AnimationDescriptor.Get(
+                    AnimationDescriptor.IdFromList(_cmbBossAnimation.SelectedIndex - 1)
+                );
+        };
+
+        var lblOffset = new Label
+        {
+            Text = "Overhead Y offset:",
+            AutoSize = true,
+            Location = new System.Drawing.Point(12, 108),
+            ForeColor = System.Drawing.Color.Gainsboro,
+        };
+
+        _nudBossAnimationOffsetY.Location = new System.Drawing.Point(166, 105);
+        _nudBossAnimationOffsetY.Size = new Size(118, 24);
+        _nudBossAnimationOffsetY.Minimum = -512;
+        _nudBossAnimationOffsetY.Maximum = 512;
+        _nudBossAnimationOffsetY.Value = -48;
+        _nudBossAnimationOffsetY.ValueChanged += (_, _) =>
+        {
+            if (mEditorItem != null)
+            {
+                mEditorItem.BossAnimationOffsetY =
+                    (int)_nudBossAnimationOffsetY.Value;
+            }
+        };
+
+        var lblDeathAnimation = new Label
+        {
+            Text = "Animation played on death:",
+            AutoSize = true,
+            Location = new System.Drawing.Point(12, 137),
+            ForeColor = System.Drawing.Color.Gainsboro,
+        };
+
+        _cmbBossDeathAnimation.Location = new System.Drawing.Point(12, 156);
+        _cmbBossDeathAnimation.Size = new Size(272, 24);
+        _cmbBossDeathAnimation.DropDownStyle = ComboBoxStyle.DropDownList;
+        _cmbBossDeathAnimation.SelectedIndexChanged += (_, _) =>
+        {
+            if (mEditorItem == null)
+            {
+                return;
+            }
+
+            mEditorItem.DeathAnimation =
+                AnimationDescriptor.Get(
+                    AnimationDescriptor.IdFromList(_cmbBossDeathAnimation.SelectedIndex - 1)
+                );
+        };
+
+        _grpBoss.Controls.Add(_chkIsBoss);
+        _grpBoss.Controls.Add(lblBossAnimation);
+        _grpBoss.Controls.Add(_cmbBossAnimation);
+        _grpBoss.Controls.Add(lblOffset);
+        _grpBoss.Controls.Add(_nudBossAnimationOffsetY);
+        _grpBoss.Controls.Add(lblDeathAnimation);
+        _grpBoss.Controls.Add(_cmbBossDeathAnimation);
+        pnlContainer.Controls.Add(_grpBoss);
+
+        UpdateBossControlState();
+    }
+
+    private void UpdateBossControlState()
+    {
+        var enabled = _chkIsBoss.Checked;
+        _cmbBossAnimation.Enabled = enabled;
+        _nudBossAnimationOffsetY.Enabled = enabled;
+        _cmbBossDeathAnimation.Enabled = enabled;
+    }
+
     private void AssignEditorItem(Guid id)
     {
         mEditorItem = NPCDescriptor.Get(id);
@@ -143,6 +263,12 @@ public partial class FrmNpc : EditorForm
         cmbAttackAnimation.Items.Clear();
         cmbAttackAnimation.Items.Add(Strings.General.None);
         cmbAttackAnimation.Items.AddRange(AnimationDescriptor.Names);
+        _cmbBossAnimation.Items.Clear();
+        _cmbBossAnimation.Items.Add(Strings.General.None);
+        _cmbBossAnimation.Items.AddRange(AnimationDescriptor.Names);
+        _cmbBossDeathAnimation.Items.Clear();
+        _cmbBossDeathAnimation.Items.Add(Strings.General.None);
+        _cmbBossDeathAnimation.Items.AddRange(AnimationDescriptor.Names);
         cmbOnDeathEventKiller.Items.Clear();
         cmbOnDeathEventKiller.Items.Add(Strings.General.None);
         cmbOnDeathEventKiller.Items.AddRange(EventDescriptor.Names);
@@ -315,6 +441,18 @@ public partial class FrmNpc : EditorForm
 
             nudLevel.Value = mEditorItem.Level;
             nudSpawnDuration.Value = mEditorItem.SpawnDuration;
+
+            _chkIsBoss.Checked = mEditorItem.IsBoss;
+            _cmbBossAnimation.SelectedIndex =
+                AnimationDescriptor.ListIndex(mEditorItem.BossAnimationId) + 1;
+            _cmbBossDeathAnimation.SelectedIndex =
+                AnimationDescriptor.ListIndex(mEditorItem.DeathAnimationId) + 1;
+            _nudBossAnimationOffsetY.Value = Math.Clamp(
+                mEditorItem.BossAnimationOffsetY,
+                (int)_nudBossAnimationOffsetY.Minimum,
+                (int)_nudBossAnimationOffsetY.Maximum
+            );
+            UpdateBossControlState();
 
             //Behavior
             chkAggressive.Checked = mEditorItem.Aggressive;
