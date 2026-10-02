@@ -378,6 +378,8 @@ public sealed class FrmBalanceLab : DarkForm
             bool spellsEnabled,
             double targetTtk,
             double targetHpLoss,
+            double bossTtkMultiplier,
+            double bossHpLossMultiplier,
             Action<Guid>? openNpc
         )
         {
@@ -445,6 +447,7 @@ public sealed class FrmBalanceLab : DarkForm
                 Text =
                     $"Party {partySize}  |  Gear: {gearProfile}  |  Spells: {(spellsEnabled ? "ON" : "OFF")}  |  " +
                     $"Targets: {targetTtk:0.#}s TTK / {targetHpLoss:0.#}% HP  |  " +
+                    $"Boss: x{bossTtkMultiplier:0.#} TTK / x{bossHpLossMultiplier:0.#} HP  |  " +
                     "Green=Target  Red=Too Hard  Blue=Too Easy",
                 ForeColor = System.Drawing.Color.Silver,
                 TextAlign = ContentAlignment.MiddleLeft,
@@ -4550,10 +4553,9 @@ public sealed class FrmBalanceLab : DarkForm
             .ToArray();
 
         var npcs = NPCDescriptor.Lookup.Values
-            .Where(value => value != null)
-            .Cast<object>()
-            .OrderBy(value => Number(value, "Level"))
-            .ThenBy(value => Text(value, "Name", "Unnamed NPC"), StringComparer.OrdinalIgnoreCase)
+            .OfType<NPCDescriptor>()
+            .OrderBy(value => value.Level)
+            .ThenBy(value => value.Name, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
         if (classes.Length == 0 || npcs.Length == 0)
@@ -4573,6 +4575,8 @@ public sealed class FrmBalanceLab : DarkForm
         var includeClassSpells = _includeClassSpells.Checked;
         var targetTtk = Math.Max(0.1, (double)_targetTtk.Value);
         var targetHpLoss = Math.Max(0.1, (double)_targetHpLoss.Value);
+        var bossTtkMultiplier = Math.Max(1d, (double)_bossTtkMultiplier.Value);
+        var bossHpLossMultiplier = Math.Max(1d, (double)_bossHpLossMultiplier.Value);
         var maxLevel = Math.Max(1, Options.Instance.Player.MaxLevel);
 
         Cursor = Cursors.WaitCursor;
@@ -4604,9 +4608,15 @@ public sealed class FrmBalanceLab : DarkForm
 
             foreach (var npc in npcs)
             {
-                var npcId = GuidValue(npc, "Id");
-                var npcName = Text(npc, "Name", "Unnamed NPC");
-                var npcLevel = Math.Max(1, (int)Math.Round(Number(npc, "Level")));
+                var npcId = npc.Id;
+                var npcName = npc.Name;
+                var npcLevel = Math.Max(1, npc.Level);
+                var npcTargetTtk =
+                    targetTtk * (npc.IsBoss ? bossTtkMultiplier : 1d);
+                var npcTargetHpLoss = Math.Min(
+                    100d,
+                    targetHpLoss * (npc.IsBoss ? bossHpLossMultiplier : 1d)
+                );
 
                 var averageRow = new HeatmapRow
                 {
@@ -4650,7 +4660,7 @@ public sealed class FrmBalanceLab : DarkForm
                             partySize,
                             gearProfile,
                             includeClassSpells,
-                            targetTtk,
+                            npcTargetTtk,
                             cachedLoadout
                         );
 
@@ -4670,8 +4680,8 @@ public sealed class FrmBalanceLab : DarkForm
                                 Status = GetSimulationStatus(
                                     simulation.TtkSeconds,
                                     simulation.HpLossPercent,
-                                    targetTtk,
-                                    targetHpLoss
+                                    npcTargetTtk,
+                                    npcTargetHpLoss
                                 ),
                             }
                         );
@@ -4696,8 +4706,8 @@ public sealed class FrmBalanceLab : DarkForm
                             Status = GetSimulationStatus(
                                 averageTtk,
                                 averageHpLoss,
-                                targetTtk,
-                                targetHpLoss
+                                npcTargetTtk,
+                                npcTargetHpLoss
                             ),
                         }
                     );
@@ -4721,6 +4731,8 @@ public sealed class FrmBalanceLab : DarkForm
                 includeClassSpells,
                 targetTtk,
                 targetHpLoss,
+                bossTtkMultiplier,
+                bossHpLossMultiplier,
                 openNpc
             );
             form.ShowDialog(this);
@@ -4733,11 +4745,16 @@ public sealed class FrmBalanceLab : DarkForm
 
     private void ShowSelectedProgression()
     {
+        var selectedNpc =
+            _grid.SelectedRows.Count > 0 &&
+            _grid.SelectedRows[0].Tag is BalanceEntry selectedEntry &&
+            selectedEntry.Kind == BalanceObjectKind.Npc
+                ? NPCDescriptor.Get(selectedEntry.Id)
+                : null;
+
         if (_grid.SelectedRows.Count == 0 ||
             _grid.SelectedRows[0].Tag is not BalanceEntry entry ||
-            entry.Kind != BalanceObjectKind.Npc ||
-            !NPCDescriptor.Lookup.TryGetValue(entry.Id, out var npc) ||
-            npc == null)
+            selectedNpc == null)
         {
             MessageBox.Show(
                 this,
@@ -4748,6 +4765,8 @@ public sealed class FrmBalanceLab : DarkForm
             );
             return;
         }
+
+        var npc = selectedNpc;
 
         var selectedChoice = _simulationClass.SelectedItem as ClassChoice;
         var classes = new List<object>();
@@ -4775,8 +4794,16 @@ public sealed class FrmBalanceLab : DarkForm
         var partySize = Math.Clamp((int)_partySize.Value, 1, 5);
         var gearProfile = Math.Max(0, _gearProfile.SelectedIndex);
         var includeClassSpells = _includeClassSpells.Checked;
-        var targetTtk = Math.Max(0.1, (double)_targetTtk.Value);
-        var targetHpLoss = Math.Max(0.1, (double)_targetHpLoss.Value);
+        var baseTargetTtk = Math.Max(0.1, (double)_targetTtk.Value);
+        var baseTargetHpLoss = Math.Max(0.1, (double)_targetHpLoss.Value);
+        var targetTtk =
+            baseTargetTtk *
+            (npc.IsBoss ? Math.Max(1d, (double)_bossTtkMultiplier.Value) : 1d);
+        var targetHpLoss = Math.Min(
+            100d,
+            baseTargetHpLoss *
+            (npc.IsBoss ? Math.Max(1d, (double)_bossHpLossMultiplier.Value) : 1d)
+        );
         var maxLevel = Math.Max(1, Options.Instance.Player.MaxLevel);
 
         var points = new List<ProgressionPoint>(maxLevel);
@@ -4816,6 +4843,7 @@ public sealed class FrmBalanceLab : DarkForm
         }
 
         var simulationLabel =
+            $"{(npc.IsBoss ? "BOSS | " : string.Empty)}" +
             $"{(selectedChoice?.Id == null ? "Average all classes" : selectedChoice.Name)} | " +
             $"Party {partySize} | {_gearProfile.Text} | Spells {(includeClassSpells ? "ON" : "OFF")}";
 
