@@ -864,7 +864,7 @@ public sealed class FrmBalanceLab : DarkForm
             var note = new Label
             {
                 AutoSize = false,
-                Width = 620,
+                Width = 360,
                 Height = 28,
                 Margin = new Padding(18, 0, 0, 0),
                 Text = "Suggestions preserve the object's existing stat pattern and move it toward its peer baseline. Every batch can be undone.",
@@ -1640,6 +1640,8 @@ public sealed class FrmBalanceLab : DarkForm
     private readonly NumericUpDown _partySize = new();
     private readonly NumericUpDown _targetTtk = new();
     private readonly NumericUpDown _targetHpLoss = new();
+    private readonly NumericUpDown _bossTtkMultiplier = new();
+    private readonly NumericUpDown _bossHpLossMultiplier = new();
     private readonly ComboBox _gearProfile = new();
     private readonly CheckBox _includeClassSpells = new();
     private readonly Button _undoBatchButton = new();
@@ -1850,13 +1852,25 @@ public sealed class FrmBalanceLab : DarkForm
         _includeClassSpells.Margin = new Padding(16, 7, 8, 0);
         optionsBar.Controls.Add(_includeClassSpells);
 
+        optionsBar.Controls.Add(CreateToolbarLabel("Boss TTK x:"));
+        ConfigureSimulationNumber(_bossTtkMultiplier, 1, 10, 4, 58);
+        _bossTtkMultiplier.DecimalPlaces = 1;
+        _bossTtkMultiplier.Increment = 0.5M;
+        optionsBar.Controls.Add(_bossTtkMultiplier);
+
+        optionsBar.Controls.Add(CreateToolbarLabel("Boss HP loss x:"));
+        ConfigureSimulationNumber(_bossHpLossMultiplier, 1, 5, 2, 58);
+        _bossHpLossMultiplier.DecimalPlaces = 1;
+        _bossHpLossMultiplier.Increment = 0.25M;
+        optionsBar.Controls.Add(_bossHpLossMultiplier);
+
         var simInfo = new Label
         {
             AutoSize = false,
             Width = 620,
             Height = 32,
             Margin = new Padding(18, 0, 0, 0),
-            Text = "Gear uses real equipment by slot; spells include cooldown, cast time, DoT and mana sustain. Dynamic item requirements are not auto-resolved yet.",
+            Text = "Boss targets use the multipliers above. Gear/spells remain part of the same deterministic simulation.",
             ForeColor = System.Drawing.Color.Silver,
             TextAlign = ContentAlignment.MiddleLeft,
         };
@@ -2217,8 +2231,10 @@ public sealed class FrmBalanceLab : DarkForm
         }
 
         var partySize = Math.Clamp((int)_partySize.Value, 1, 5);
-        var targetTtk = Math.Max(0.1, (double)_targetTtk.Value);
-        var targetHpLoss = Math.Max(0.1, (double)_targetHpLoss.Value);
+        var baseTargetTtk = Math.Max(0.1, (double)_targetTtk.Value);
+        var baseTargetHpLoss = Math.Max(0.1, (double)_targetHpLoss.Value);
+        var bossTtkMultiplier = Math.Max(1d, (double)_bossTtkMultiplier.Value);
+        var bossHpLossMultiplier = Math.Max(1d, (double)_bossHpLossMultiplier.Value);
         var gearProfile = Math.Max(0, _gearProfile.SelectedIndex);
         var includeClassSpells = _includeClassSpells.Checked;
 
@@ -2238,6 +2254,12 @@ public sealed class FrmBalanceLab : DarkForm
                     1,
                     Math.Max(1, Options.Instance.Player.MaxLevel)
                 );
+
+            var targetTtk = baseTargetTtk * (npc.IsBoss ? bossTtkMultiplier : 1d);
+            var targetHpLoss = Math.Min(
+                100d,
+                baseTargetHpLoss * (npc.IsBoss ? bossHpLossMultiplier : 1d)
+            );
 
             var results = classes
                 .Select(
@@ -2313,6 +2335,7 @@ public sealed class FrmBalanceLab : DarkForm
 
             entry.SimulationNotes =
                 $"Simulation basis: {entry.SimulationClass}\r\n" +
+                $"NPC type: {(npc.IsBoss ? "BOSS" : "Normal")}\r\n" +
                 $"Player level: {level}\r\n" +
                 $"Party size: {partySize}\r\n" +
                 $"Expected gear: {_gearProfile.Text} (avg gear power {gearPower:0.0})\r\n" +
@@ -3023,11 +3046,12 @@ public sealed class FrmBalanceLab : DarkForm
                     Kind = BalanceObjectKind.Npc,
                     Id = pair.Key,
                     Name = Text(npc, "Name", "Unnamed NPC"),
-                    Group = $"Lv {level:0}",
+                    Group = $"{(Convert.ToBoolean(Property(npc, "IsBoss") ?? false) ? "Boss " : "")}Lv {level:0}",
                     Power = power,
                     Reward = exp,
                     Metrics =
                         $"Level: {level:0}\r\n" +
+                        $"Boss: {(Convert.ToBoolean(Property(npc, "IsBoss") ?? false) ? "Yes" : "No")}\r\n" +
                         $"HP / MP: {hp:0} / {mana:0}\r\n" +
                         $"Attack / AP: {attack:0} / {ap:0}\r\n" +
                         $"Defense / MR: {defense:0} / {mr:0}\r\n" +
@@ -4157,7 +4181,7 @@ public sealed class FrmBalanceLab : DarkForm
 
             var peerNpcs = NPCDescriptor.Lookup.Values
                 .OfType<NPCDescriptor>()
-                .Where(peer => peer.Level == level)
+                .Where(peer => peer.Level == level && peer.IsBoss == npc.IsBoss)
                 .ToArray();
 
             var medianDamage = (int)Math.Round(
@@ -4249,10 +4273,19 @@ public sealed class FrmBalanceLab : DarkForm
                 );
             }
 
+            var batchTargetTtk =
+                Math.Max(0.1, (double)_targetTtk.Value) *
+                (npc.IsBoss ? Math.Max(1d, (double)_bossTtkMultiplier.Value) : 1d);
+            var batchTargetHpLoss = Math.Min(
+                100d,
+                Math.Max(0.1, (double)_targetHpLoss.Value) *
+                (npc.IsBoss ? Math.Max(1d, (double)_bossHpLossMultiplier.Value) : 1d)
+            );
+
             var reason =
-                $"{entry.SimulationStatus}: TTK {entry.SimulationTtk.Value:0.00}s, " +
-                $"HP lost {entry.SimulationHpLoss.Value:0.0}%. " +
-                $"Targets: {(double)_targetTtk.Value:0.0}s / {(double)_targetHpLoss.Value:0.0}%.";
+                $"{(npc.IsBoss ? "BOSS - " : string.Empty)}{entry.SimulationStatus}: " +
+                $"TTK {entry.SimulationTtk.Value:0.00}s, HP lost {entry.SimulationHpLoss.Value:0.0}%. " +
+                $"Targets: {batchTargetTtk:0.0}s / {batchTargetHpLoss:0.0}%.";
 
             suggestions.Add(
                 new NpcBatchSuggestion
