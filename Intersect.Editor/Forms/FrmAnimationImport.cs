@@ -1254,6 +1254,8 @@ public sealed class FrmAnimationImport : DarkForm
 
     private static Bitmap CombineZipFrames(
         IReadOnlyList<ZipFrameEntry> frames,
+        CancellationToken cancellationToken,
+        Action<int, int, int>? onProgress,
         out int xFrames,
         out int yFrames,
         out int frameCount
@@ -1261,51 +1263,70 @@ public sealed class FrmAnimationImport : DarkForm
     {
         if (frames.Count < 2)
         {
-            throw new InvalidDataException("At least two frame images are required.");
+            throw new InvalidDataException(
+                "At least two frame images are required."
+            );
         }
 
-        var bitmaps = new List<Bitmap>(frames.Count);
+        frameCount = frames.Count;
+
+        // Build a near-square grid so large effects use both columns and rows
+        // instead of producing extremely wide spritesheets.
+        xFrames = Math.Clamp(
+            (int)Math.Ceiling(Math.Sqrt(frameCount)),
+            1,
+            32
+        );
+        yFrames = (int)Math.Ceiling(frameCount / (double)xFrames);
+
+        if (yFrames > 32)
+        {
+            xFrames = 32;
+            yFrames = (int)Math.Ceiling(frameCount / 32d);
+        }
+
+        if (yFrames > 32)
+        {
+            throw new InvalidDataException(
+                $"Sequence has {frameCount} frames; the importer supports up to 1024 frames."
+            );
+        }
+
+        var cellWidth = 0;
+        var cellHeight = 0;
+
+        // First streaming pass only measures each frame. This keeps memory usage
+        // essentially constant even for ZIPs containing hundreds of large PNGs.
+        for (var i = 0; i < frames.Count; i++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using var stream = frames[i].Entry.Open();
+            using var source = new Bitmap(stream);
+
+            cellWidth = Math.Max(cellWidth, source.Width);
+            cellHeight = Math.Max(cellHeight, source.Height);
+
+            onProgress?.Invoke(0, i + 1, frames.Count);
+        }
+
+        if (cellWidth <= 0 || cellHeight <= 0)
+        {
+            throw new InvalidDataException(
+                "Animation frame dimensions are invalid."
+            );
+        }
+
+        var sheetWidth = checked(cellWidth * xFrames);
+        var sheetHeight = checked(cellHeight * yFrames);
+        var output = new Bitmap(
+            sheetWidth,
+            sheetHeight,
+            PixelFormat.Format32bppArgb
+        );
+
         try
         {
-            foreach (var frame in frames)
-            {
-                using var stream = frame.Entry.Open();
-                using var source = new Bitmap(stream);
-                bitmaps.Add(new Bitmap(source));
-            }
-
-            var cellWidth = bitmaps.Max(bitmap => bitmap.Width);
-            var cellHeight = bitmaps.Max(bitmap => bitmap.Height);
-
-            if (cellWidth <= 0 || cellHeight <= 0)
-            {
-                throw new InvalidDataException("Animation frame dimensions are invalid.");
-            }
-
-            frameCount = bitmaps.Count;
-
-            // Intersect exposes X/Y frame controls up to 32. Keep short effects
-            // on one horizontal strip; larger packs automatically wrap while
-            // preserving frame order from left-to-right, then top-to-bottom.
-            xFrames = Math.Min(32, frameCount);
-            yFrames = (int)Math.Ceiling(frameCount / (double)xFrames);
-
-            if (yFrames > 32)
-            {
-                throw new InvalidDataException(
-                    $"Sequence has {frameCount} frames; the importer supports up to 1024 frames."
-                );
-            }
-
-            var sheetWidth = checked(cellWidth * xFrames);
-            var sheetHeight = checked(cellHeight * yFrames);
-
-            var output = new Bitmap(
-                sheetWidth,
-                sheetHeight,
-                PixelFormat.Format32bppArgb
-            );
-
             using var graphics = Graphics.FromImage(output);
             graphics.Clear(System.Drawing.Color.Transparent);
             graphics.CompositingMode = CompositingMode.SourceCopy;
@@ -1313,27 +1334,35 @@ public sealed class FrmAnimationImport : DarkForm
             graphics.PixelOffsetMode = PixelOffsetMode.Half;
             graphics.SmoothingMode = SmoothingMode.None;
 
-            for (var i = 0; i < bitmaps.Count; i++)
+            // Second streaming pass draws one frame at a time. No full list of
+            // decoded bitmaps is retained, which is important for colossal ZIPs.
+            for (var i = 0; i < frames.Count; i++)
             {
-                var bitmap = bitmaps[i];
+                cancellationToken.ThrowIfCancellationRequested();
+
+                using var stream = frames[i].Entry.Open();
+                using var source = new Bitmap(stream);
+
                 var column = i % xFrames;
                 var row = i / xFrames;
 
-                // Preserve the original pixels and center smaller frames inside
-                // the common cell so mixed-size exports stay visually aligned.
-                var x = column * cellWidth + (cellWidth - bitmap.Width) / 2;
-                var y = row * cellHeight + (cellHeight - bitmap.Height) / 2;
-                graphics.DrawImageUnscaled(bitmap, x, y);
+                var x =
+                    column * cellWidth +
+                    (cellWidth - source.Width) / 2;
+                var y =
+                    row * cellHeight +
+                    (cellHeight - source.Height) / 2;
+
+                graphics.DrawImageUnscaled(source, x, y);
+                onProgress?.Invoke(1, i + 1, frames.Count);
             }
 
             return output;
         }
-        finally
+        catch
         {
-            foreach (var bitmap in bitmaps)
-            {
-                bitmap.Dispose();
-            }
+            output.Dispose();
+            throw;
         }
     }
 
