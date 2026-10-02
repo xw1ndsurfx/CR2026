@@ -38,11 +38,17 @@ public partial class FrmNpc : EditorForm
     private readonly DarkComboBox _cmbBossDeathAnimation = new();
     private readonly DarkNumericUpDown _nudBossAnimationOffsetY = new();
 
+    private readonly DarkGroupBox _grpCombatAi = new();
+    private readonly DarkCheckBox _chkSmartCombatMovement = new();
+    private readonly DarkComboBox _cmbCombatMovementMode = new();
+    private readonly DarkNumericUpDown _nudPreferredCombatRange = new();
+
     public FrmNpc()
     {
         ApplyHooks();
         InitializeComponent();
         BuildBossControls();
+        BuildCombatAiControls();
         Icon = Program.Icon;
         _btnSave = btnSave;
         _btnCancel = btnCancel;
@@ -159,6 +165,99 @@ public partial class FrmNpc : EditorForm
         _cmbBossAnimation.Enabled = enabled;
         _nudBossAnimationOffsetY.Enabled = enabled;
         _cmbBossDeathAnimation.Enabled = enabled;
+    }
+
+    private void BuildCombatAiControls()
+    {
+        _grpCombatAi.Text = "Combat AI";
+        _grpCombatAi.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+        _grpCombatAi.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+        _grpCombatAi.ForeColor = System.Drawing.Color.Gainsboro;
+        _grpCombatAi.Location = new System.Drawing.Point(844, 744);
+        _grpCombatAi.Size = new Size(264, 170);
+        _grpCombatAi.TabStop = false;
+
+        _chkSmartCombatMovement.Text = "Smart combat movement";
+        _chkSmartCombatMovement.AutoSize = true;
+        _chkSmartCombatMovement.Location = new System.Drawing.Point(12, 25);
+        _chkSmartCombatMovement.Checked = true;
+        _chkSmartCombatMovement.CheckedChanged += (_, _) =>
+        {
+            UpdateCombatAiControlState();
+            if (mEditorItem != null)
+            {
+                mEditorItem.SmartCombatMovement = _chkSmartCombatMovement.Checked;
+            }
+        };
+
+        var lblMode = new Label
+        {
+            Text = "Combat style:",
+            AutoSize = true,
+            Location = new System.Drawing.Point(12, 55),
+            ForeColor = System.Drawing.Color.Gainsboro,
+        };
+
+        _cmbCombatMovementMode.Location = new System.Drawing.Point(12, 74);
+        _cmbCombatMovementMode.Size = new Size(238, 24);
+        _cmbCombatMovementMode.DropDownStyle = ComboBoxStyle.DropDownList;
+        _cmbCombatMovementMode.Items.AddRange(
+            new object[]
+            {
+                "Auto",
+                "Melee",
+                "Ranged",
+                "Caster",
+                "Kite",
+                "Hold Position",
+            }
+        );
+        _cmbCombatMovementMode.SelectedIndex = 0;
+        _cmbCombatMovementMode.SelectedIndexChanged += (_, _) =>
+        {
+            if (mEditorItem != null)
+            {
+                mEditorItem.CombatMovementMode =
+                    Math.Max(0, _cmbCombatMovementMode.SelectedIndex);
+            }
+        };
+
+        var lblRange = new Label
+        {
+            Text = "Preferred range (0 = Auto):",
+            AutoSize = true,
+            Location = new System.Drawing.Point(12, 108),
+            ForeColor = System.Drawing.Color.Gainsboro,
+        };
+
+        _nudPreferredCombatRange.Location = new System.Drawing.Point(12, 128);
+        _nudPreferredCombatRange.Size = new Size(238, 24);
+        _nudPreferredCombatRange.Minimum = 0;
+        _nudPreferredCombatRange.Maximum = 20;
+        _nudPreferredCombatRange.ValueChanged += (_, _) =>
+        {
+            if (mEditorItem != null)
+            {
+                mEditorItem.PreferredCombatRange =
+                    (int)_nudPreferredCombatRange.Value;
+            }
+        };
+
+        _grpCombatAi.Controls.Add(_chkSmartCombatMovement);
+        _grpCombatAi.Controls.Add(lblMode);
+        _grpCombatAi.Controls.Add(_cmbCombatMovementMode);
+        _grpCombatAi.Controls.Add(lblRange);
+        _grpCombatAi.Controls.Add(_nudPreferredCombatRange);
+        pnlContainer.Controls.Add(_grpCombatAi);
+
+        UpdateCombatAiControlState();
+    }
+
+    private void UpdateCombatAiControlState()
+    {
+        var enabled = _chkSmartCombatMovement.Checked;
+        _cmbCombatMovementMode.Enabled = enabled;
+        _nudPreferredCombatRange.Enabled = enabled;
     }
 
     private void AssignEditorItem(Guid id)
@@ -453,6 +552,19 @@ public partial class FrmNpc : EditorForm
                 (int)_nudBossAnimationOffsetY.Maximum
             );
             UpdateBossControlState();
+
+            _chkSmartCombatMovement.Checked = mEditorItem.SmartCombatMovement;
+            _cmbCombatMovementMode.SelectedIndex = Math.Clamp(
+                mEditorItem.CombatMovementMode,
+                0,
+                _cmbCombatMovementMode.Items.Count - 1
+            );
+            _nudPreferredCombatRange.Value = Math.Clamp(
+                mEditorItem.PreferredCombatRange,
+                (int)_nudPreferredCombatRange.Minimum,
+                (int)_nudPreferredCombatRange.Maximum
+            );
+            UpdateCombatAiControlState();
 
             //Behavior
             chkAggressive.Checked = mEditorItem.Aggressive;
