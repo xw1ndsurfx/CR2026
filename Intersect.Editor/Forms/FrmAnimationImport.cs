@@ -390,7 +390,13 @@ public sealed class FrmAnimationImport : DarkForm
         );
         _cancelImportButton.Cursor = Cursors.Hand;
         _cancelImportButton.Enabled = false;
-        _cancelImportButton.Click += (_, _) => _importCancellation?.Cancel();
+        _cancelImportButton.Click += (_, _) =>
+        {
+            _importCancellation?.Cancel();
+            _cancelImportButton.Enabled = false;
+            _cancelImportButton.Text = "CANCELLING...";
+            _status.Text = "Cancelling ZIP import safely after the current frame...";
+        };
 
         _importProgress.Width = 270;
         _importProgress.Height = 24;
@@ -660,8 +666,13 @@ public sealed class FrmAnimationImport : DarkForm
         }
     }
 
-    private void ImportZip()
+    private async Task ImportZipAsync()
     {
+        if (_importCancellation != null)
+        {
+            return;
+        }
+
         using var dialog = new OpenFileDialog
         {
             Filter = "ZIP archives (*.zip)|*.zip",
@@ -675,23 +686,220 @@ public sealed class FrmAnimationImport : DarkForm
             return;
         }
 
-        var importedAnimations = 0;
-        var combinedAnimations = 0;
-        var combinedFrames = 0;
-        var standaloneSheets = 0;
-        var skipped = 0;
+        _importCancellation = new CancellationTokenSource();
+        var cancellationToken = _importCancellation.Token;
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        _importZipButton.Enabled = false;
+        _cancelImportButton.Enabled = true;
+        _cancelImportButton.Text = "CANCEL";
+        _importProgress.Visible = true;
+        _importProgress.Style = ProgressBarStyle.Marquee;
+        _importProgress.MarqueeAnimationSpeed = 30;
+        _importProgressLabel.Visible = true;
+        _importProgressLabel.Text = "Opening ZIP...";
+        _status.Text =
+            $"Opening {Path.GetFileName(dialog.FileName)} in the background. " +
+            "The editor remains usable while frames are processed.";
+
+        var progress = new Progress<ZipImportProgress>(
+            value =>
+            {
+                if (IsDisposed || Disposing)
+                {
+                    return;
+                }
+
+                if (value.TotalUnits > 0)
+                {
+                    if (_importProgress.Style != ProgressBarStyle.Blocks)
+                    {
+                        _importProgress.Style = ProgressBarStyle.Blocks;
+                    }
+
+                    var percent = Math.Clamp(
+                        (int)Math.Round(
+                            value.CompletedUnits * 100d / value.TotalUnits
+                        ),
+                        0,
+                        100
+                    );
+
+                    _importProgress.Value = percent;
+
+                    var etaText = string.Empty;
+                    if (value.CompletedUnits > 0 &&
+                        value.CompletedUnits < value.TotalUnits &&
+                        stopwatch.Elapsed.TotalSeconds >= 1d)
+                    {
+                        var unitsPerSecond =
+                            value.CompletedUnits / stopwatch.Elapsed.TotalSeconds;
+
+                        if (unitsPerSecond > 0.001d)
+                        {
+                            var remainingSeconds =
+                                (value.TotalUnits - value.CompletedUnits) /
+                                unitsPerSecond;
+
+                            var eta = TimeSpan.FromSeconds(
+                                Math.Max(0d, remainingSeconds)
+                            );
+
+                            etaText = eta.TotalHours >= 1d
+                                ? $" | ETA {eta:hh\\:mm\\:ss}"
+                                : $" | ETA {eta:mm\\:ss}";
+                        }
+                    }
+
+                    var itemText = string.IsNullOrWhiteSpace(value.CurrentItem)
+                        ? string.Empty
+                        : $" | {value.CurrentItem}";
+
+                    var currentText =
+                        value.CurrentTotal > 0
+                            ? $" | {value.CurrentIndex:N0}/{value.CurrentTotal:N0}"
+                            : string.Empty;
+
+                    _importProgressLabel.Text =
+                        $"{percent}% | {value.Stage}{currentText}{etaText}";
+                    _status.Text =
+                        $"{value.Stage}{itemText}{currentText} " +
+                        $"({value.CompletedUnits:N0}/{value.TotalUnits:N0} work units)";
+                }
+                else
+                {
+                    _importProgressLabel.Text = value.Stage;
+                    _status.Text = value.Stage;
+                }
+            }
+        );
 
         try
         {
-            using var archive = ZipFile.OpenRead(dialog.FileName);
+            var result = await Task.Run(
+                () => ProcessZipImport(
+                    dialog.FileName,
+                    progress,
+                    cancellationToken
+                ),
+                cancellationToken
+            );
+
+            if (IsDisposed || Disposing)
+            {
+                return;
+            }
+
+            if (result.Cancelled)
+            {
+                _status.Text =
+                    $"Import cancelled. {result.ImportedAnimations:N0} animation(s) " +
+                    $"were already completed and kept; {result.Skipped:N0} skipped.";
+            }
+            else
+            {
+                _importProgress.Style = ProgressBarStyle.Blocks;
+                _importProgress.Value = 100;
+                _importProgressLabel.Text =
+                    $"100% | Complete | {stopwatch.Elapsed:mm\\:ss}";
+
+                _status.Text =
+                    $"ZIP imported: {result.ImportedAnimations:N0} animation(s). " +
+                    $"{result.CombinedAnimations:N0} sequence(s) combined from " +
+                    $"{result.CombinedFrames:N0} frame image(s), " +
+                    $"{result.StandaloneSheets:N0} ready-made sheet(s), " +
+                    $"{result.Skipped:N0} skipped.";
+            }
+
+            // The expensive ZIP/image work happens off the UI thread. Refresh
+            // the final list only once after the import has completed/cancelled.
+            ReloadAssets();
+
+            if (result.Cancelled)
+            {
+                _status.Text =
+                    $"Import cancelled. {result.ImportedAnimations:N0} completed " +
+                    $"animation(s) remain available in animationimport.";
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            if (!IsDisposed && !Disposing)
+            {
+                _status.Text =
+                    "Import cancelled. Completed files remain available in animationimport.";
+            }
+        }
+        catch (Exception ex)
+        {
+            if (!IsDisposed && !Disposing)
+            {
+                MessageBox.Show(
+                    this,
+                    "Unable to import ZIP: " + ex.Message,
+                    "Animations Import",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            }
+        }
+        finally
+        {
+            stopwatch.Stop();
+
+            _importCancellation?.Dispose();
+            _importCancellation = null;
+
+            if (!IsDisposed && !Disposing)
+            {
+                _importZipButton.Enabled = true;
+                _cancelImportButton.Enabled = false;
+                _cancelImportButton.Text = "CANCEL";
+                _importProgress.MarqueeAnimationSpeed = 0;
+            }
+        }
+    }
+
+    private ZipImportResult ProcessZipImport(
+        string zipPath,
+        IProgress<ZipImportProgress> progress,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = new ZipImportResult();
+
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            progress.Report(
+                new ZipImportProgress
+                {
+                    CompletedUnits = 0,
+                    TotalUnits = 0,
+                    Stage = "Reading ZIP directory...",
+                }
+            );
+
+            using var archive = ZipFile.OpenRead(zipPath);
             var pngEntries = archive.Entries
                 .Where(entry =>
                     entry.Length > 0 &&
-                    entry.FullName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                    entry.FullName.EndsWith(
+                        ".png",
+                        StringComparison.OrdinalIgnoreCase
+                    ))
                 .ToArray();
 
+            cancellationToken.ThrowIfCancellationRequested();
+
             var frameEntries = pngEntries
-                .Select(entry => TryCreateZipFrameEntry(entry, out var frame) ? frame : null)
+                .Select(
+                    entry =>
+                        TryCreateZipFrameEntry(entry, out var frame)
+                            ? frame
+                            : null
+                )
                 .Where(frame => frame != null)
                 .Cast<ZipFrameEntry>()
                 .ToArray();
@@ -703,36 +911,96 @@ public sealed class FrmAnimationImport : DarkForm
                 )
                 .Where(group =>
                     group.Count() >= 2 &&
-                    group.Select(frame => frame.FrameIndex).Distinct().Count() >= 2)
+                    group.Select(frame => frame.FrameIndex)
+                        .Distinct()
+                        .Count() >= 2)
                 .Select(group =>
                     group
                         .OrderBy(frame => frame.FrameIndex)
-                        .ThenBy(frame => frame.Entry.FullName, StringComparer.OrdinalIgnoreCase)
-                        .ToArray()
+                        .ThenBy(
+                            frame => frame.Entry.FullName,
+                            StringComparer.OrdinalIgnoreCase
+                        )
+                        .ToArray())
+                .OrderBy(
+                    group => group[0].Entry.FullName,
+                    StringComparer.OrdinalIgnoreCase
                 )
-                .OrderBy(group => group[0].Entry.FullName, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
 
-            var consumedEntries = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            // A combined sequence uses two streaming passes: one to discover
+            // the maximum cell size and one to draw. Standalone images use one
+            // unit. This gives the progress bar useful movement even when one
+            // animation contains hundreds of frames.
+            var totalUnits = Math.Max(
+                1,
+                sequenceGroups.Sum(group => group.Length * 2) +
+                pngEntries.Length
+            );
+            var completedUnits = 0;
 
-            foreach (var group in sequenceGroups)
+            progress.Report(
+                new ZipImportProgress
+                {
+                    CompletedUnits = 0,
+                    TotalUnits = totalUnits,
+                    Stage =
+                        $"Analyzed {pngEntries.Length:N0} PNG(s), " +
+                        $"{sequenceGroups.Length:N0} sequence(s)",
+                }
+            );
+
+            var consumedEntries =
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            for (var groupIndex = 0; groupIndex < sequenceGroups.Length; groupIndex++)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+                var group = sequenceGroups[groupIndex];
+                var sourceName = group[0].BaseName;
+
                 try
                 {
                     using var sheet = CombineZipFrames(
                         group,
+                        cancellationToken,
+                        (phase, frameIndex, frameTotal) =>
+                        {
+                            completedUnits++;
+                            progress.Report(
+                                new ZipImportProgress
+                                {
+                                    CompletedUnits = Math.Min(
+                                        completedUnits,
+                                        totalUnits
+                                    ),
+                                    TotalUnits = totalUnits,
+                                    Stage =
+                                        phase == 0
+                                            ? "Measuring frames"
+                                            : "Combining frames",
+                                    CurrentItem = sourceName,
+                                    CurrentIndex = frameIndex,
+                                    CurrentTotal = frameTotal,
+                                }
+                            );
+                        },
                         out var xFrames,
                         out var yFrames,
                         out var frameCount
                     );
 
-                    var sourceName = group[0].BaseName;
-                    var folderHint = group[0].Directory.Replace('/', ' ').Replace('\\', ' ');
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    var folderHint = group[0].Directory
+                        .Replace('/', ' ')
+                        .Replace('\\', ' ');
                     var categoryName = ClassifyAnimation(
                         $"{sourceName} {folderHint}",
                         sheet
                     );
-                    var categoryDirectory = Path.Combine(_importRoot, categoryName);
+                    var categoryDirectory =
+                        Path.Combine(_importRoot, categoryName);
                     Directory.CreateDirectory(categoryDirectory);
 
                     var safeName = MakeFileStem(sourceName);
@@ -742,31 +1010,65 @@ public sealed class FrmAnimationImport : DarkForm
                     }
 
                     var destination = GetUniquePath(
-                        Path.Combine(categoryDirectory, safeName + ".png")
+                        Path.Combine(
+                            categoryDirectory,
+                            safeName + ".png"
+                        )
                     );
 
+                    cancellationToken.ThrowIfCancellationRequested();
                     sheet.Save(destination, ImageFormat.Png);
-                    WriteGridMetadata(destination, xFrames, yFrames, frameCount);
+                    WriteGridMetadata(
+                        destination,
+                        xFrames,
+                        yFrames,
+                        frameCount
+                    );
 
                     foreach (var frame in group)
                     {
                         consumedEntries.Add(frame.Entry.FullName);
                     }
 
-                    importedAnimations++;
-                    combinedAnimations++;
-                    combinedFrames += frameCount;
+                    result.ImportedAnimations++;
+                    result.CombinedAnimations++;
+                    result.CombinedFrames += frameCount;
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
-                    // If a sequence cannot be merged, leave its entries available
-                    // for the normal single-sheet import path below.
-                    skipped++;
+                    // If a sequence cannot be merged, its entries are still
+                    // attempted below as standalone PNGs.
+                    result.Skipped++;
                 }
             }
 
-            foreach (var entry in pngEntries)
+            for (var entryIndex = 0; entryIndex < pngEntries.Length; entryIndex++)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+                var entry = pngEntries[entryIndex];
+
+                completedUnits++;
+                progress.Report(
+                    new ZipImportProgress
+                    {
+                        CompletedUnits = Math.Min(
+                            completedUnits,
+                            totalUnits
+                        ),
+                        TotalUnits = totalUnits,
+                        Stage = consumedEntries.Contains(entry.FullName)
+                            ? "Finalizing sequences"
+                            : "Importing standalone sheets",
+                        CurrentItem = entry.FullName,
+                        CurrentIndex = entryIndex + 1,
+                        CurrentTotal = pngEntries.Length,
+                    }
+                );
+
                 if (consumedEntries.Contains(entry.FullName))
                 {
                     continue;
@@ -776,11 +1078,16 @@ public sealed class FrmAnimationImport : DarkForm
                 {
                     using var stream = entry.Open();
                     using var buffer = new MemoryStream();
-                    stream.CopyTo(buffer);
+                    CopyStreamWithCancellation(
+                        stream,
+                        buffer,
+                        cancellationToken
+                    );
                     buffer.Position = 0;
 
                     using var bitmap = new Bitmap(buffer);
-                    var sourceName = Path.GetFileNameWithoutExtension(entry.Name);
+                    var sourceName =
+                        Path.GetFileNameWithoutExtension(entry.Name);
                     var directoryHint = GetZipDirectory(entry.FullName)
                         .Replace('/', ' ')
                         .Replace('\\', ' ');
@@ -788,45 +1095,95 @@ public sealed class FrmAnimationImport : DarkForm
                         $"{sourceName} {directoryHint}",
                         bitmap
                     );
-                    var categoryDirectory = Path.Combine(_importRoot, categoryName);
+                    var categoryDirectory =
+                        Path.Combine(_importRoot, categoryName);
                     Directory.CreateDirectory(categoryDirectory);
 
                     var fileName = Path.GetFileName(entry.Name);
                     if (string.IsNullOrWhiteSpace(fileName))
                     {
-                        skipped++;
+                        result.Skipped++;
                         continue;
                     }
 
-                    var destination = GetUniquePath(Path.Combine(categoryDirectory, fileName));
-                    buffer.Position = 0;
-                    using var output = File.Create(destination);
-                    buffer.CopyTo(output);
+                    var destination = GetUniquePath(
+                        Path.Combine(categoryDirectory, fileName)
+                    );
 
-                    importedAnimations++;
-                    standaloneSheets++;
+                    cancellationToken.ThrowIfCancellationRequested();
+                    buffer.Position = 0;
+
+                    try
+                    {
+                        using var output = File.Create(destination);
+                        CopyStreamWithCancellation(
+                            buffer,
+                            output,
+                            cancellationToken
+                        );
+                    }
+                    catch
+                    {
+                        try
+                        {
+                            if (File.Exists(destination))
+                            {
+                                File.Delete(destination);
+                            }
+                        }
+                        catch
+                        {
+                            // Best effort cleanup of a cancelled/failed copy.
+                        }
+
+                        throw;
+                    }
+
+                    result.ImportedAnimations++;
+                    result.StandaloneSheets++;
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
-                    skipped++;
+                    result.Skipped++;
                 }
             }
 
-            ReloadAssets();
-            _status.Text =
-                $"ZIP imported: {importedAnimations} animation(s). " +
-                $"{combinedAnimations} sequence(s) combined from {combinedFrames} frame image(s), " +
-                $"{standaloneSheets} ready-made sheet(s), {skipped} skipped.";
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(
-                this,
-                "Unable to import ZIP: " + ex.Message,
-                "Animations Import",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error
+            progress.Report(
+                new ZipImportProgress
+                {
+                    CompletedUnits = totalUnits,
+                    TotalUnits = totalUnits,
+                    Stage = "Import complete",
+                    CurrentIndex = pngEntries.Length,
+                    CurrentTotal = pngEntries.Length,
+                }
             );
+        }
+        catch (OperationCanceledException)
+        {
+            result.Cancelled = true;
+        }
+
+        return result;
+    }
+
+    private static void CopyStreamWithCancellation(
+        Stream source,
+        Stream destination,
+        CancellationToken cancellationToken
+    )
+    {
+        var buffer = new byte[128 * 1024];
+        int read;
+
+        while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            destination.Write(buffer, 0, read);
         }
     }
 
