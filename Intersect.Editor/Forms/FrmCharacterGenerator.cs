@@ -2553,8 +2553,46 @@ public sealed class FrmCharacterGenerator : DarkForm
                 return null;
             }
 
-            var width = layers.Max(layer => layer.Bitmap.Width);
-            var height = layers.Max(layer => layer.Bitmap.Height);
+            // Paperdoll packs are not always exported at exactly the same sheet
+            // dimensions. Using the largest sheet as the preview canvas causes a
+            // 2x accessory sheet to make the player look tiny and, more
+            // importantly, makes directional rows no longer line up.
+            //
+            // Normalize every layer per frame instead. The player/base layer is
+            // the authoritative frame size/count and accessories are sampled
+            // from their own 4 directional rows, then mapped into that canvas.
+            var playerLayers = layers
+                .Where(layer =>
+                    CategoryToPaperdollSlot.TryGetValue(layer.Category, out var slot) &&
+                    string.Equals(slot, "Player", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+            var referenceLayer = playerLayers.FirstOrDefault() ?? layers[0];
+            var frameSize = GetLayerFrameSize(referenceLayer.Bitmap);
+            var frameCount = GetLayerFrameCount(referenceLayer.Bitmap);
+
+            if (frameSize <= 0)
+            {
+                frameSize = layers
+                    .Select(layer => GetLayerFrameSize(layer.Bitmap))
+                    .Where(size => size > 0)
+                    .DefaultIfEmpty(128)
+                    .Min();
+            }
+
+            if (frameCount <= 0)
+            {
+                frameCount = layers
+                    .Select(layer => GetLayerFrameCount(layer.Bitmap))
+                    .DefaultIfEmpty(1)
+                    .Max();
+            }
+
+            frameSize = Math.Max(1, frameSize);
+            frameCount = Math.Max(1, frameCount);
+
+            var width = checked(frameSize * frameCount);
+            var height = checked(frameSize * 4);
             var output = new Bitmap(width, height, PixelFormat.Format32bppArgb);
 
             using var graphics = Graphics.FromImage(output);
@@ -2565,21 +2603,30 @@ public sealed class FrmCharacterGenerator : DarkForm
             graphics.PixelOffsetMode = PixelOffsetMode.Half;
             graphics.SmoothingMode = SmoothingMode.None;
 
-            const int directionRows = 4;
-            var rowHeight = Math.Max(1, height / directionRows);
-
-            for (var row = 0; row < directionRows; row++)
+            for (var directionRow = 0; directionRow < 4; directionRow++)
             {
-                var rowTop = row * rowHeight;
-                var rowBottom = row == directionRows - 1 ? height : Math.Min(height, rowTop + rowHeight);
-                graphics.SetClip(new Rectangle(0, rowTop, width, rowBottom - rowTop));
+                var orderedLayers = OrderLayersForDirection(layers, directionRow).ToArray();
 
-                foreach (var layer in OrderLayersForDirection(layers, row))
+                for (var frame = 0; frame < frameCount; frame++)
                 {
-                    DrawLayer(graphics, layer.Bitmap, width, height);
-                }
+                    var destination = new Rectangle(
+                        frame * frameSize,
+                        directionRow * frameSize,
+                        frameSize,
+                        frameSize
+                    );
 
-                graphics.ResetClip();
+                    foreach (var layer in orderedLayers)
+                    {
+                        DrawLayerFrame(
+                            graphics,
+                            layer.Bitmap,
+                            directionRow,
+                            frame,
+                            destination
+                        );
+                    }
+                }
             }
 
             return output;
@@ -2591,6 +2638,66 @@ public sealed class FrmCharacterGenerator : DarkForm
                 layer.Bitmap.Dispose();
             }
         }
+    }
+
+    private static int GetLayerFrameSize(Bitmap bitmap)
+    {
+        // Character/paperdoll sheets use four direction rows. Frames are square,
+        // so row height is the reliable cell size even when the sheet has a
+        // different number of animation columns.
+        return Math.Max(1, bitmap.Height / 4);
+    }
+
+    private static int GetLayerFrameCount(Bitmap bitmap)
+    {
+        var frameSize = GetLayerFrameSize(bitmap);
+        return Math.Max(1, bitmap.Width / frameSize);
+    }
+
+    private static void DrawLayerFrame(
+        Graphics graphics,
+        Bitmap bitmap,
+        int directionRow,
+        int frame,
+        Rectangle destination
+    )
+    {
+        var sourceFrameSize = GetLayerFrameSize(bitmap);
+        var sourceFrameCount = GetLayerFrameCount(bitmap);
+
+        // Accessories frequently fall back from IDLE/CAST/etc. to MOVE and can
+        // therefore have a different number of columns than the player sheet.
+        // Cycle their available frames instead of letting them disappear.
+        var sourceFrame = sourceFrameCount <= 1
+            ? 0
+            : frame % sourceFrameCount;
+
+        var sourceX = sourceFrame * sourceFrameSize;
+        var sourceY = Math.Clamp(directionRow, 0, 3) * sourceFrameSize;
+
+        if (sourceX >= bitmap.Width || sourceY >= bitmap.Height)
+        {
+            return;
+        }
+
+        var source = new Rectangle(
+            sourceX,
+            sourceY,
+            Math.Min(sourceFrameSize, bitmap.Width - sourceX),
+            Math.Min(sourceFrameSize, bitmap.Height - sourceY)
+        );
+
+        if (source.Width <= 0 || source.Height <= 0)
+        {
+            return;
+        }
+
+        graphics.DrawImage(
+            bitmap,
+            destination,
+            source,
+            GraphicsUnit.Pixel
+        );
     }
 
     private static IEnumerable<SelectedLayer> OrderLayersForDirection(
@@ -2621,13 +2728,6 @@ public sealed class FrmCharacterGenerator : DarkForm
                 : int.MaxValue)
             .ThenBy(item => item.OriginalIndex)
             .Select(item => item.Layer);
-    }
-
-    private static void DrawLayer(Graphics graphics, Bitmap bitmap, int outputWidth, int outputHeight)
-    {
-        // Paperdolls and base sprites are authored on the same 768x512 canvas.
-        // Keep their exact origin instead of re-centering each sheet.
-        graphics.DrawImageUnscaled(bitmap, 0, 0);
     }
 
     private static bool IsBehindCharacter(string category, string partName, int directionRow)
