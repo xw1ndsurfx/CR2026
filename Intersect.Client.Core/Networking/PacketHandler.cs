@@ -30,6 +30,7 @@ using Intersect.Framework.Core.GameObjects.Mapping.Tilesets;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Maps.Attributes;
 using Intersect.Framework.Core.GameObjects.Maps.MapList;
+using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.Security;
 using Intersect.Localization;
 using Microsoft.Extensions.Logging;
@@ -393,6 +394,7 @@ internal sealed partial class PacketHandler
             en.Load(packet);
             en.Aggression = packet.Aggression;
             en.NpcDescriptorId = packet.NpcId;
+            SyncNpcBossAnimation(en, packet.NpcId);
         }
         else
         {
@@ -402,7 +404,50 @@ internal sealed partial class PacketHandler
                 NpcDescriptorId = packet.NpcId,
             };
             Globals.Entities.Add(entity.Id, entity);
+            SyncNpcBossAnimation(entity, packet.NpcId);
         }
+    }
+
+    private static void SyncNpcBossAnimation(Entity entity, Guid npcDescriptorId)
+    {
+        var source = new AnimationSource(AnimationSourceType.NpcBoss, entity.Id);
+        var npcDescriptor = NPCDescriptor.Get(npcDescriptorId);
+
+        if (npcDescriptor == null ||
+            !npcDescriptor.IsBoss ||
+            npcDescriptor.BossAnimationId == Guid.Empty ||
+            !AnimationDescriptor.TryGet(
+                npcDescriptor.BossAnimationId,
+                out var animationDescriptor
+            ))
+        {
+            entity.TryRemoveAnimation(source, dispose: true);
+            return;
+        }
+
+        if (entity.TryGetAnimation(source, out var existingAnimation) &&
+            existingAnimation.Descriptor == animationDescriptor &&
+            !existingAnimation.IsDisposed)
+        {
+            existingAnimation.ParentOffsetY = npcDescriptor.BossAnimationOffsetY;
+            return;
+        }
+
+        entity.TryRemoveAnimation(source, dispose: true);
+
+        var animation = new Animation(
+            animationDescriptor,
+            true,
+            false,
+            -1,
+            entity,
+            source
+        )
+        {
+            ParentOffsetY = npcDescriptor.BossAnimationOffsetY,
+        };
+
+        entity.TryAddAnimation(animation, source);
     }
 
     //ResourceEntityPacket

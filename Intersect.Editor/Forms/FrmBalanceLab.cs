@@ -1,0 +1,4968 @@
+using System.Collections;
+using DarkUI.Forms;
+using Intersect.Editor.Core;
+using Intersect.Editor.General;
+using Intersect.Editor.Networking;
+using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Framework.Core.GameObjects.PlayerClass;
+using Intersect.Framework.Core.GameObjects.Resources;
+using Intersect.GameObjects;
+
+namespace Intersect.Editor.Forms;
+
+public sealed class FrmBalanceLab : DarkForm
+{
+    public enum BalanceObjectKind
+    {
+        Npc,
+        Item,
+        Spell,
+        Resource,
+        PlayerClass,
+    }
+
+    public sealed class BalanceOpenRequest
+    {
+        public required BalanceObjectKind Kind { get; init; }
+
+        public Guid Id { get; init; }
+    }
+
+    private sealed class ClassChoice
+    {
+        public Guid? Id { get; init; }
+
+        public required string Name { get; init; }
+
+        public override string ToString() => Name;
+    }
+
+    private sealed class CombatSimulation
+    {
+        public int Level { get; init; }
+
+        public required string ClassName { get; init; }
+
+        public double PlayerHp { get; init; }
+
+        public double PlayerMana { get; init; }
+
+        public double PlayerDamagePerHit { get; init; }
+
+        public double PlayerAttackSeconds { get; init; }
+
+        public double PlayerDps { get; init; }
+
+        public double AutoAttackDps { get; init; }
+
+        public double SpellDps { get; init; }
+
+        public double ManaUsePerSecond { get; init; }
+
+        public double GearPower { get; init; }
+
+        public string GearSummary { get; init; } = string.Empty;
+
+        public string SpellSummary { get; init; } = string.Empty;
+
+        public double NpcDamagePerHit { get; init; }
+
+        public double NpcAttackSeconds { get; init; }
+
+        public double NpcDps { get; init; }
+
+        public double TtkSeconds { get; init; }
+
+        public double HpLossPercent { get; init; }
+
+        public double TimeToPartyWipeSeconds { get; init; }
+    }
+
+    private sealed class LoadoutSnapshot
+    {
+        public double[] FlatStats { get; } = new double[5];
+
+        public double[] PercentStats { get; } = new double[5];
+
+        public double[] FlatVitals { get; } = new double[2];
+
+        public double[] PercentVitals { get; } = new double[2];
+
+        public double[] VitalRegen { get; } = new double[2];
+
+        public object? Weapon { get; set; }
+
+        public double Power { get; set; }
+
+        public int ItemCount { get; set; }
+
+        public string Summary { get; set; } = "No equipment";
+    }
+
+    private sealed class SpellRotationSnapshot
+    {
+        public double Dps { get; set; }
+
+        public double ManaPerSecond { get; set; }
+
+        public double CastOccupancy { get; set; }
+
+        public int SpellCount { get; set; }
+
+        public string Summary { get; set; } = "Class spells disabled";
+    }
+
+    private sealed class ProgressionPoint
+    {
+        public int Level { get; init; }
+
+        public double Ttk { get; init; }
+
+        public double HpLoss { get; init; }
+
+        public double Dps { get; init; }
+    }
+
+    private sealed class ProgressionChart : Control
+    {
+        private readonly IReadOnlyList<ProgressionPoint> _points;
+        private readonly Func<ProgressionPoint, double> _selector;
+        private readonly double _target;
+        private readonly string _title;
+        private readonly string _suffix;
+
+        public ProgressionChart(
+            IReadOnlyList<ProgressionPoint> points,
+            Func<ProgressionPoint, double> selector,
+            double target,
+            string title,
+            string suffix
+        )
+        {
+            _points = points;
+            _selector = selector;
+            _target = target;
+            _title = title;
+            _suffix = suffix;
+
+            Dock = DockStyle.Fill;
+            DoubleBuffered = true;
+            BackColor = System.Drawing.Color.FromArgb(24, 21, 22);
+            ForeColor = System.Drawing.Color.Gainsboro;
+            Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+
+            var graphics = e.Graphics;
+            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+            using var titleBrush = new SolidBrush(System.Drawing.Color.FromArgb(247, 69, 96));
+            using var textBrush = new SolidBrush(System.Drawing.Color.Gainsboro);
+            using var gridPen = new Pen(System.Drawing.Color.FromArgb(58, 50, 52));
+            using var linePen = new Pen(System.Drawing.Color.FromArgb(120, 205, 255), 2f);
+            using var targetPen = new Pen(System.Drawing.Color.FromArgb(255, 205, 120), 1.5f)
+            {
+                DashStyle = System.Drawing.Drawing2D.DashStyle.Dash,
+            };
+
+            graphics.DrawString(_title, new Font(Font, FontStyle.Bold), titleBrush, 10, 8);
+
+            if (_points.Count == 0 || Width < 120 || Height < 100)
+            {
+                graphics.DrawString("No progression data.", Font, textBrush, 10, 36);
+                return;
+            }
+
+            var plot = new Rectangle(58, 38, Math.Max(20, Width - 78), Math.Max(20, Height - 70));
+            var values = _points.Select(_selector).Where(double.IsFinite).ToArray();
+            if (values.Length == 0)
+            {
+                return;
+            }
+
+            var maxValue = Math.Max(values.Max(), _target);
+            maxValue = Math.Max(1d, maxValue * 1.10d);
+
+            for (var i = 0; i <= 4; i++)
+            {
+                var y = plot.Top + plot.Height * i / 4f;
+                graphics.DrawLine(gridPen, plot.Left, y, plot.Right, y);
+
+                var value = maxValue * (1d - i / 4d);
+                graphics.DrawString(
+                    $"{value:0.#}{_suffix}",
+                    Font,
+                    textBrush,
+                    4,
+                    y - Font.Height / 2f
+                );
+            }
+
+            graphics.DrawRectangle(gridPen, plot);
+
+            float XFor(int index) =>
+                _points.Count <= 1
+                    ? plot.Left
+                    : plot.Left + plot.Width * index / (float)(_points.Count - 1);
+
+            float YFor(double value) =>
+                plot.Bottom - (float)(Math.Clamp(value, 0d, maxValue) / maxValue * plot.Height);
+
+            if (_target > 0)
+            {
+                var targetY = YFor(_target);
+                graphics.DrawLine(targetPen, plot.Left, targetY, plot.Right, targetY);
+                graphics.DrawString(
+                    $"Target {_target:0.#}{_suffix}",
+                    Font,
+                    textBrush,
+                    Math.Max(plot.Left, plot.Right - 125),
+                    Math.Max(plot.Top, targetY - Font.Height - 2)
+                );
+            }
+
+            for (var i = 1; i < _points.Count; i++)
+            {
+                var previous = _selector(_points[i - 1]);
+                var current = _selector(_points[i]);
+                if (!double.IsFinite(previous) || !double.IsFinite(current))
+                {
+                    continue;
+                }
+
+                graphics.DrawLine(
+                    linePen,
+                    XFor(i - 1),
+                    YFor(previous),
+                    XFor(i),
+                    YFor(current)
+                );
+            }
+
+            var labelLevels = new[]
+            {
+                0,
+                Math.Max(0, (_points.Count - 1) / 4),
+                Math.Max(0, (_points.Count - 1) / 2),
+                Math.Max(0, (_points.Count - 1) * 3 / 4),
+                _points.Count - 1,
+            }.Distinct();
+
+            foreach (var index in labelLevels)
+            {
+                var x = XFor(index);
+                var label = $"Lv {_points[index].Level}";
+                graphics.DrawString(label, Font, textBrush, x - 18, plot.Bottom + 5);
+            }
+        }
+    }
+
+    private sealed class ProgressionForm : DarkForm
+    {
+        public ProgressionForm(
+            string npcName,
+            string simulationLabel,
+            IReadOnlyList<ProgressionPoint> points,
+            double targetTtk,
+            double targetHpLoss
+        )
+        {
+            base.Text = $"Balance Progression - {npcName}";
+            StartPosition = FormStartPosition.CenterParent;
+            MinimumSize = new Size(900, 650);
+            Size = new Size(1180, 780);
+            BackColor = System.Drawing.Color.FromArgb(18, 18, 18);
+            ForeColor = System.Drawing.Color.Gainsboro;
+
+            var root = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 3,
+                Margin = Padding.Empty,
+                Padding = new Padding(10),
+                BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
+            };
+            root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 46));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            Controls.Add(root);
+
+            var header = new Label
+            {
+                Dock = DockStyle.Fill,
+                Text = $"{npcName}   |   {simulationLabel}   |   Level 1 -> {points.LastOrDefault()?.Level ?? 1}",
+                ForeColor = System.Drawing.Color.Gainsboro,
+                Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 10, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(8, 0, 0, 0),
+            };
+            root.Controls.Add(header, 0, 0);
+
+            root.Controls.Add(
+                new ProgressionChart(
+                    points,
+                    point => point.Ttk,
+                    targetTtk,
+                    "TIME TO KILL BY PLAYER LEVEL",
+                    "s"
+                ),
+                0,
+                1
+            );
+
+            root.Controls.Add(
+                new ProgressionChart(
+                    points,
+                    point => point.HpLoss,
+                    targetHpLoss,
+                    "ESTIMATED PARTY HP LOST BY PLAYER LEVEL",
+                    "%"
+                ),
+                0,
+                2
+            );
+        }
+    }
+
+    private sealed class HeatmapCell
+    {
+        public int Level { get; init; }
+
+        public double Ttk { get; init; }
+
+        public double HpLoss { get; init; }
+
+        public double Dps { get; init; }
+
+        public required string Status { get; init; }
+    }
+
+    private sealed class HeatmapRow
+    {
+        public Guid NpcId { get; init; }
+
+        public required string NpcName { get; init; }
+
+        public int NpcLevel { get; init; }
+
+        public List<HeatmapCell> Cells { get; } = new();
+    }
+
+    private sealed class HeatmapDataset
+    {
+        public required string Name { get; init; }
+
+        public List<HeatmapRow> Rows { get; } = new();
+    }
+
+    private sealed class HeatmapForm : DarkForm
+    {
+        private readonly IReadOnlyList<HeatmapDataset> _datasets;
+        private readonly Action<Guid>? _openNpc;
+        private readonly ComboBox _display = new();
+        private readonly TabControl _tabs = new();
+        private readonly Label _details = new();
+        private readonly Label _summary = new();
+
+        public HeatmapForm(
+            IReadOnlyList<HeatmapDataset> datasets,
+            int partySize,
+            string gearProfile,
+            bool spellsEnabled,
+            double targetTtk,
+            double targetHpLoss,
+            double bossTtkMultiplier,
+            double bossHpLossMultiplier,
+            Action<Guid>? openNpc
+        )
+        {
+            _datasets = datasets;
+            _openNpc = openNpc;
+
+            base.Text = "Corps Royaux - Full Balance Heatmap";
+            StartPosition = FormStartPosition.CenterParent;
+            MinimumSize = new Size(1050, 650);
+            Size = new Size(1580, 900);
+            BackColor = System.Drawing.Color.FromArgb(18, 18, 18);
+            ForeColor = System.Drawing.Color.Gainsboro;
+
+            var root = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 3,
+                Margin = Padding.Empty,
+                Padding = Padding.Empty,
+                BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
+            };
+            root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 62));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+            Controls.Add(root);
+
+            var header = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                Padding = new Padding(10, 10, 10, 8),
+                BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+            };
+
+            header.Controls.Add(
+                new Label
+                {
+                    AutoSize = false,
+                    Width = 78,
+                    Height = 32,
+                    Text = "Display:",
+                    ForeColor = System.Drawing.Color.Gainsboro,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                }
+            );
+
+            _display.Width = 135;
+            _display.DropDownStyle = ComboBoxStyle.DropDownList;
+            _display.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+            _display.ForeColor = System.Drawing.Color.White;
+            _display.Items.AddRange(new object[] { "Status", "TTK", "HP Lost", "DPS" });
+            _display.SelectedIndex = 0;
+            _display.SelectedIndexChanged += (_, _) => RefreshCellText();
+            header.Controls.Add(_display);
+
+            var legend = new Label
+            {
+                AutoSize = false,
+                Width = 780,
+                Height = 32,
+                Margin = new Padding(18, 0, 0, 0),
+                Text =
+                    $"Party {partySize}  |  Gear: {gearProfile}  |  Spells: {(spellsEnabled ? "ON" : "OFF")}  |  " +
+                    $"Targets: {targetTtk:0.#}s TTK / {targetHpLoss:0.#}% HP  |  " +
+                    $"Boss: x{bossTtkMultiplier:0.#} TTK / x{bossHpLossMultiplier:0.#} HP  |  " +
+                    "Green=Target  Red=Too Hard  Blue=Too Easy",
+                ForeColor = System.Drawing.Color.Silver,
+                TextAlign = ContentAlignment.MiddleLeft,
+            };
+            header.Controls.Add(legend);
+            root.Controls.Add(header, 0, 0);
+
+            _tabs.Dock = DockStyle.Fill;
+            _tabs.Appearance = TabAppearance.Normal;
+            _tabs.BackColor = System.Drawing.Color.FromArgb(18, 18, 18);
+            _tabs.ForeColor = System.Drawing.Color.Gainsboro;
+            root.Controls.Add(_tabs, 0, 1);
+
+            var footer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+            };
+            root.Controls.Add(footer, 0, 2);
+
+            _details.AutoSize = false;
+            _details.Location = new System.Drawing.Point(12, 5);
+            _details.Size = new Size(980, 46);
+            _details.ForeColor = System.Drawing.Color.Gainsboro;
+            _details.TextAlign = ContentAlignment.MiddleLeft;
+            footer.Controls.Add(_details);
+
+            _summary.AutoSize = false;
+            _summary.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            _summary.Size = new Size(455, 46);
+            _summary.ForeColor = System.Drawing.Color.Silver;
+            _summary.TextAlign = ContentAlignment.MiddleRight;
+            footer.Controls.Add(_summary);
+
+            footer.Resize += (_, _) =>
+            {
+                _summary.Left = Math.Max(10, footer.ClientSize.Width - _summary.Width - 12);
+                _details.Width = Math.Max(200, _summary.Left - _details.Left - 12);
+            };
+
+            BuildTabs();
+        }
+
+        private void BuildTabs()
+        {
+            _tabs.SuspendLayout();
+            try
+            {
+                _tabs.TabPages.Clear();
+
+                foreach (var dataset in _datasets)
+                {
+                    var page = new TabPage(dataset.Name)
+                    {
+                        BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
+                        ForeColor = System.Drawing.Color.Gainsboro,
+                        Padding = new Padding(4),
+                    };
+
+                    var grid = CreateGrid(dataset);
+                    page.Controls.Add(grid);
+                    _tabs.TabPages.Add(page);
+                }
+            }
+            finally
+            {
+                _tabs.ResumeLayout();
+            }
+
+            UpdateSummary();
+        }
+
+        private DataGridView CreateGrid(HeatmapDataset dataset)
+        {
+            var grid = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
+                RowHeadersVisible = false,
+                AutoGenerateColumns = false,
+                SelectionMode = DataGridViewSelectionMode.CellSelect,
+                MultiSelect = false,
+                BackgroundColor = System.Drawing.Color.FromArgb(32, 28, 29),
+                BorderStyle = BorderStyle.None,
+                GridColor = System.Drawing.Color.FromArgb(60, 52, 54),
+                EnableHeadersVisualStyles = false,
+                ClipboardCopyMode = DataGridViewClipboardCopyMode.EnableWithoutHeaderText,
+            };
+
+            grid.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(38, 32, 34);
+            grid.DefaultCellStyle.ForeColor = System.Drawing.Color.Gainsboro;
+            grid.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(95, 72, 78);
+            grid.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
+            grid.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.White;
+            grid.ColumnHeadersHeight = 34;
+            grid.RowTemplate.Height = 31;
+
+            grid.Columns.Add(
+                new DataGridViewTextBoxColumn
+                {
+                    Name = "NPC",
+                    HeaderText = "NPC",
+                    Frozen = true,
+                    Width = 190,
+                    SortMode = DataGridViewColumnSortMode.NotSortable,
+                }
+            );
+
+            grid.Columns.Add(
+                new DataGridViewTextBoxColumn
+                {
+                    Name = "NpcLevel",
+                    HeaderText = "NPC Lv",
+                    Frozen = true,
+                    Width = 62,
+                    SortMode = DataGridViewColumnSortMode.NotSortable,
+                }
+            );
+
+            var maxLevel = dataset.Rows
+                .SelectMany(row => row.Cells)
+                .Select(cell => cell.Level)
+                .DefaultIfEmpty(1)
+                .Max();
+
+            for (var level = 1; level <= maxLevel; level++)
+            {
+                grid.Columns.Add(
+                    new DataGridViewTextBoxColumn
+                    {
+                        Name = $"Level{level}",
+                        HeaderText = level.ToString(),
+                        Width = 54,
+                        SortMode = DataGridViewColumnSortMode.NotSortable,
+                    }
+                );
+            }
+
+            foreach (var heatmapRow in dataset.Rows
+                         .OrderBy(row => row.NpcLevel)
+                         .ThenBy(row => row.NpcName, StringComparer.OrdinalIgnoreCase))
+            {
+                var rowIndex = grid.Rows.Add();
+                var row = grid.Rows[rowIndex];
+                row.Tag = heatmapRow;
+                row.Cells[0].Value = heatmapRow.NpcName;
+                row.Cells[1].Value = heatmapRow.NpcLevel;
+
+                foreach (var cell in heatmapRow.Cells)
+                {
+                    var columnIndex = 1 + cell.Level;
+                    if (columnIndex < 2 || columnIndex >= row.Cells.Count)
+                    {
+                        continue;
+                    }
+
+                    var target = row.Cells[columnIndex];
+                    target.Tag = cell;
+                    ApplyHeatmapStyle(target, cell.Status);
+                    target.ToolTipText =
+                        $"{dataset.Name} | {heatmapRow.NpcName} | Player Lv {cell.Level}\n" +
+                        $"TTK: {cell.Ttk:0.00}s\n" +
+                        $"HP Lost: {cell.HpLoss:0.0}%\n" +
+                        $"DPS: {cell.Dps:0.0}\n" +
+                        $"Status: {cell.Status}";
+                }
+            }
+
+            grid.CellEnter += (_, args) => ShowCellDetails(grid, dataset, args.RowIndex, args.ColumnIndex);
+            grid.CellDoubleClick += (_, args) =>
+            {
+                if (args.RowIndex < 0 ||
+                    grid.Rows[args.RowIndex].Tag is not HeatmapRow row ||
+                    _openNpc == null)
+                {
+                    return;
+                }
+
+                _openNpc(row.NpcId);
+            };
+
+            RefreshCellText(grid);
+            return grid;
+        }
+
+        private static void ApplyHeatmapStyle(DataGridViewCell cell, string status)
+        {
+            cell.Style.BackColor = status switch
+            {
+                "TOO HARD" => System.Drawing.Color.FromArgb(115, 48, 52),
+                "TOO EASY" => System.Drawing.Color.FromArgb(42, 72, 108),
+                _ => System.Drawing.Color.FromArgb(46, 92, 58),
+            };
+            cell.Style.ForeColor = System.Drawing.Color.White;
+            cell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+        }
+
+        private void RefreshCellText()
+        {
+            foreach (TabPage page in _tabs.TabPages)
+            {
+                if (page.Controls.OfType<DataGridView>().FirstOrDefault() is { } grid)
+                {
+                    RefreshCellText(grid);
+                }
+            }
+        }
+
+        private void RefreshCellText(DataGridView grid)
+        {
+            foreach (DataGridViewRow row in grid.Rows)
+            {
+                for (var column = 2; column < row.Cells.Count; column++)
+                {
+                    if (row.Cells[column].Tag is not HeatmapCell cell)
+                    {
+                        continue;
+                    }
+
+                    row.Cells[column].Value = _display.SelectedIndex switch
+                    {
+                        1 => $"{cell.Ttk:0.#}s",
+                        2 => $"{cell.HpLoss:0}%",
+                        3 => $"{cell.Dps:0}",
+                        _ => cell.Status switch
+                        {
+                            "TOO HARD" => "HARD",
+                            "TOO EASY" => "EASY",
+                            _ => "OK",
+                        },
+                    };
+                }
+            }
+        }
+
+        private void ShowCellDetails(
+            DataGridView grid,
+            HeatmapDataset dataset,
+            int rowIndex,
+            int columnIndex
+        )
+        {
+            if (rowIndex < 0 ||
+                rowIndex >= grid.Rows.Count ||
+                grid.Rows[rowIndex].Tag is not HeatmapRow row)
+            {
+                return;
+            }
+
+            if (columnIndex < 2 ||
+                columnIndex >= grid.Rows[rowIndex].Cells.Count ||
+                grid.Rows[rowIndex].Cells[columnIndex].Tag is not HeatmapCell cell)
+            {
+                _details.Text =
+                    $"{dataset.Name} | {row.NpcName} (NPC Lv {row.NpcLevel}) | Double-click to open NPC Editor";
+                return;
+            }
+
+            _details.Text =
+                $"{dataset.Name} | {row.NpcName} | Player Lv {cell.Level} | " +
+                $"TTK {cell.Ttk:0.00}s | HP lost {cell.HpLoss:0.0}% | DPS {cell.Dps:0.0} | {cell.Status}";
+        }
+
+        private void UpdateSummary()
+        {
+            var cells = _datasets.SelectMany(dataset => dataset.Rows).SelectMany(row => row.Cells).ToArray();
+            var hard = cells.Count(cell => cell.Status == "TOO HARD");
+            var easy = cells.Count(cell => cell.Status == "TOO EASY");
+            var target = cells.Count(cell => cell.Status == "TARGET");
+
+            _summary.Text =
+                $"{_datasets.Count} views | {cells.Length:N0} simulations | " +
+                $"Target {target:N0} / Hard {hard:N0} / Easy {easy:N0}";
+        }
+    }
+
+    private sealed class GenericBatchSuggestion
+    {
+        public BalanceObjectKind Kind { get; init; }
+
+        public Guid Id { get; init; }
+
+        public required string Name { get; init; }
+
+        public required string Group { get; init; }
+
+        public required string Status { get; init; }
+
+        public double CurrentPower { get; init; }
+
+        public double TargetPower { get; init; }
+
+        public double Factor { get; init; }
+
+        public required string Reason { get; init; }
+    }
+
+    private sealed class ItemBalanceSnapshot
+    {
+        public Guid Id { get; init; }
+        public int[] StatsGiven { get; init; } = [];
+        public int[] PercentageStatsGiven { get; init; } = [];
+        public long[] VitalsGiven { get; init; } = [];
+        public int[] PercentageVitalsGiven { get; init; } = [];
+        public int Damage { get; init; }
+        public int CritChance { get; init; }
+        public int BlockChance { get; init; }
+        public int Scaling { get; init; }
+        public int Price { get; init; }
+    }
+
+    private sealed class SpellBalanceSnapshot
+    {
+        public Guid Id { get; init; }
+        public long[] VitalDiff { get; init; } = [];
+        public int Scaling { get; init; }
+        public int CritChance { get; init; }
+        public int CooldownDuration { get; init; }
+        public long[] VitalCost { get; init; } = [];
+    }
+
+    private sealed class ResourceBalanceSnapshot
+    {
+        public Guid Id { get; init; }
+        public int MinHp { get; init; }
+        public int MaxHp { get; init; }
+        public int VitalRegen { get; init; }
+        public int SpawnDuration { get; init; }
+    }
+
+    private sealed class ClassBalanceSnapshot
+    {
+        public Guid Id { get; init; }
+        public int[] BaseStat { get; init; } = [];
+        public long[] BaseVital { get; init; } = [];
+        public int[] StatIncrease { get; init; } = [];
+        public long[] VitalIncrease { get; init; } = [];
+        public int Damage { get; init; }
+        public int Scaling { get; init; }
+    }
+
+    private sealed class GenericBatchSuggestionForm : DarkForm
+    {
+        private readonly IReadOnlyList<GenericBatchSuggestion> _suggestions;
+        private readonly DataGridView _grid = new();
+        private readonly CheckBox _applyA = new();
+        private readonly CheckBox _applyB = new();
+        private readonly CheckBox _applyC = new();
+        private readonly Label _summary = new();
+
+        public GenericBatchSuggestionForm(
+            BalanceObjectKind kind,
+            IReadOnlyList<GenericBatchSuggestion> suggestions
+        )
+        {
+            Kind = kind;
+            _suggestions = suggestions;
+
+            base.Text = $"Game Balance Lab - {KindLabel(kind)} Batch Suggestions";
+            StartPosition = FormStartPosition.CenterParent;
+            MinimumSize = new Size(980, 600);
+            Size = new Size(1380, 780);
+            BackColor = System.Drawing.Color.FromArgb(18, 18, 18);
+            ForeColor = System.Drawing.Color.Gainsboro;
+
+            var root = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 3,
+                Margin = Padding.Empty,
+                Padding = Padding.Empty,
+                BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
+            };
+            root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 86));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+            Controls.Add(root);
+
+            var header = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                Padding = new Padding(10, 9, 10, 6),
+                BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+            };
+
+            header.Controls.Add(
+                new Label
+                {
+                    AutoSize = false,
+                    Width = 125,
+                    Height = 28,
+                    Text = "Apply fields:",
+                    ForeColor = System.Drawing.Color.Gainsboro,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold),
+                }
+            );
+
+            var config = GetBatchFieldConfig(kind);
+            ConfigureApplyCheckBox(_applyA, config.ALabel, config.ADefault);
+            ConfigureApplyCheckBox(_applyB, config.BLabel, config.BDefault);
+            ConfigureApplyCheckBox(_applyC, config.CLabel, config.CDefault);
+            _applyC.Enabled = config.CEnabled;
+
+            header.Controls.Add(_applyA);
+            header.Controls.Add(_applyB);
+            header.Controls.Add(_applyC);
+
+            var note = new Label
+            {
+                AutoSize = false,
+                Width = 360,
+                Height = 28,
+                Margin = new Padding(18, 0, 0, 0),
+                Text = "Suggestions preserve the object's existing stat pattern and move it toward its peer baseline. Every batch can be undone.",
+                ForeColor = System.Drawing.Color.Silver,
+                TextAlign = ContentAlignment.MiddleLeft,
+            };
+            header.Controls.Add(note);
+
+            var selectAll = CreateSmallButton("SELECT ALL");
+            selectAll.Click += (_, _) => SetAllRows(true);
+            header.Controls.Add(selectAll);
+
+            var selectNone = CreateSmallButton("NONE");
+            selectNone.Click += (_, _) => SetAllRows(false);
+            header.Controls.Add(selectNone);
+
+            var selectHigh = CreateSmallButton("HIGH ONLY");
+            selectHigh.Click += (_, _) => SelectByStatus("OVER");
+            header.Controls.Add(selectHigh);
+
+            var selectLow = CreateSmallButton("LOW ONLY");
+            selectLow.Click += (_, _) => SelectByStatus("UNDER");
+            header.Controls.Add(selectLow);
+
+            root.Controls.Add(header, 0, 0);
+
+            ConfigureGrid();
+            root.Controls.Add(_grid, 0, 1);
+
+            var footer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+            };
+            root.Controls.Add(footer, 0, 2);
+
+            _summary.AutoSize = false;
+            _summary.Location = new System.Drawing.Point(12, 7);
+            _summary.Size = new Size(760, 38);
+            _summary.ForeColor = System.Drawing.Color.Silver;
+            _summary.TextAlign = ContentAlignment.MiddleLeft;
+            footer.Controls.Add(_summary);
+
+            var cancel = CreateSmallButton("CANCEL");
+            cancel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            cancel.Size = new Size(120, 34);
+            cancel.DialogResult = DialogResult.Cancel;
+            footer.Controls.Add(cancel);
+
+            var apply = new Button
+            {
+                Text = "APPLY SELECTED",
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Size = new Size(190, 34),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = System.Drawing.Color.FromArgb(247, 69, 96),
+                ForeColor = System.Drawing.Color.White,
+                Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold),
+            };
+            apply.FlatAppearance.BorderColor = apply.BackColor;
+            apply.Click += (_, _) =>
+            {
+                if (SelectedSuggestions.Count == 0)
+                {
+                    MessageBox.Show(
+                        this,
+                        $"Select at least one {KindLabel(kind).ToLowerInvariant()} first.",
+                        "Batch Suggestions",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
+                    return;
+                }
+
+                DialogResult = DialogResult.OK;
+                Close();
+            };
+            footer.Controls.Add(apply);
+
+            footer.Resize += (_, _) =>
+            {
+                apply.Left = Math.Max(10, footer.ClientSize.Width - apply.Width - 12);
+                apply.Top = 7;
+                cancel.Left = Math.Max(10, apply.Left - cancel.Width - 10);
+                cancel.Top = 7;
+                _summary.Width = Math.Max(200, cancel.Left - _summary.Left - 12);
+            };
+
+            AcceptButton = apply;
+            CancelButton = cancel;
+
+            PopulateRows();
+            UpdateSummary();
+        }
+
+        public BalanceObjectKind Kind { get; }
+
+        public IReadOnlyList<GenericBatchSuggestion> SelectedSuggestions =>
+            _grid.Rows
+                .Cast<DataGridViewRow>()
+                .Where(row => Convert.ToBoolean(row.Cells["Apply"].Value ?? false))
+                .Select(row => row.Tag)
+                .OfType<GenericBatchSuggestion>()
+                .ToArray();
+
+        public bool ApplyA => _applyA.Checked;
+        public bool ApplyB => _applyB.Checked;
+        public bool ApplyC => _applyC.Checked && _applyC.Enabled;
+
+        private static (string ALabel, bool ADefault, string BLabel, bool BDefault, string CLabel, bool CDefault, bool CEnabled)
+            GetBatchFieldConfig(BalanceObjectKind kind)
+        {
+            return kind switch
+            {
+                BalanceObjectKind.Item =>
+                    ("Stats / Vitals", true, "Damage / Crit / Scaling", true, "Price", false, true),
+                BalanceObjectKind.Spell =>
+                    ("Magnitude / Scaling", true, "Cooldown", false, "HP / MP Cost", false, true),
+                BalanceObjectKind.Resource =>
+                    ("HP / Regen", true, "Respawn", false, "Unused", false, false),
+                BalanceObjectKind.PlayerClass =>
+                    ("Base Stats / Vitals", true, "Level Growth", false, "Damage / Scaling", true, true),
+                _ =>
+                    ("Primary", true, "Secondary", false, "Optional", false, true),
+            };
+        }
+
+        private static void ConfigureApplyCheckBox(CheckBox checkBox, string text, bool value)
+        {
+            checkBox.Text = text;
+            checkBox.Checked = value;
+            checkBox.AutoSize = true;
+            checkBox.ForeColor = System.Drawing.Color.Gainsboro;
+            checkBox.Margin = new Padding(10, 5, 4, 0);
+        }
+
+        private static Button CreateSmallButton(string text)
+        {
+            return new Button
+            {
+                Text = text,
+                Size = new Size(112, 30),
+                Margin = new Padding(8, 2, 0, 0),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = System.Drawing.Color.FromArgb(55, 47, 49),
+                ForeColor = System.Drawing.Color.Gainsboro,
+                Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 8, FontStyle.Bold),
+            };
+        }
+
+        private void ConfigureGrid()
+        {
+            _grid.Dock = DockStyle.Fill;
+            _grid.ReadOnly = false;
+            _grid.AllowUserToAddRows = false;
+            _grid.AllowUserToDeleteRows = false;
+            _grid.AllowUserToResizeRows = false;
+            _grid.RowHeadersVisible = false;
+            _grid.MultiSelect = false;
+            _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            _grid.AutoGenerateColumns = false;
+            _grid.BackgroundColor = System.Drawing.Color.FromArgb(32, 28, 29);
+            _grid.BorderStyle = BorderStyle.None;
+            _grid.GridColor = System.Drawing.Color.FromArgb(60, 52, 54);
+            _grid.EnableHeadersVisualStyles = false;
+            _grid.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(38, 32, 34);
+            _grid.DefaultCellStyle.ForeColor = System.Drawing.Color.Gainsboro;
+            _grid.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(72, 54, 58);
+            _grid.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
+            _grid.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+            _grid.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.White;
+            _grid.ColumnHeadersHeight = 34;
+
+            _grid.Columns.Add(
+                new DataGridViewCheckBoxColumn
+                {
+                    Name = "Apply",
+                    HeaderText = "Apply",
+                    Width = 52,
+                    ReadOnly = false,
+                }
+            );
+
+            AddTextColumn("Name", "Name", 220);
+            AddTextColumn("Group", "Peer Group", 190);
+            AddTextColumn("Status", "Status", 95);
+            AddTextColumn("Power", "Current Power", 110);
+            AddTextColumn("Target", "Target Power", 110);
+            AddTextColumn("Adjustment", "Adjustment", 105);
+            AddTextColumn("Reason", "Why", 430);
+
+            _grid.CurrentCellDirtyStateChanged += (_, _) =>
+            {
+                if (_grid.IsCurrentCellDirty)
+                {
+                    _grid.CommitEdit(DataGridViewDataErrorContexts.Commit);
+                }
+            };
+            _grid.CellValueChanged += (_, args) =>
+            {
+                if (args.ColumnIndex >= 0 &&
+                    _grid.Columns[args.ColumnIndex].Name == "Apply")
+                {
+                    UpdateSummary();
+                }
+            };
+        }
+
+        private void AddTextColumn(string name, string header, int width)
+        {
+            _grid.Columns.Add(
+                new DataGridViewTextBoxColumn
+                {
+                    Name = name,
+                    HeaderText = header,
+                    Width = width,
+                    ReadOnly = true,
+                    SortMode = DataGridViewColumnSortMode.Automatic,
+                }
+            );
+        }
+
+        private void PopulateRows()
+        {
+            _grid.Rows.Clear();
+
+            foreach (var suggestion in _suggestions
+                         .OrderByDescending(suggestion => Math.Abs(suggestion.Factor - 1d))
+                         .ThenBy(suggestion => suggestion.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                var rowIndex = _grid.Rows.Add(
+                    true,
+                    suggestion.Name,
+                    suggestion.Group,
+                    suggestion.Status,
+                    suggestion.CurrentPower.ToString("0.0"),
+                    suggestion.TargetPower.ToString("0.0"),
+                    $"{suggestion.Factor * 100d:0}%",
+                    suggestion.Reason
+                );
+
+                var row = _grid.Rows[rowIndex];
+                row.Tag = suggestion;
+                row.DefaultCellStyle.ForeColor = suggestion.Status == "OVER"
+                    ? System.Drawing.Color.FromArgb(255, 150, 150)
+                    : System.Drawing.Color.FromArgb(145, 195, 255);
+            }
+        }
+
+        private void SetAllRows(bool selected)
+        {
+            foreach (DataGridViewRow row in _grid.Rows)
+            {
+                row.Cells["Apply"].Value = selected;
+            }
+
+            UpdateSummary();
+        }
+
+        private void SelectByStatus(string status)
+        {
+            foreach (DataGridViewRow row in _grid.Rows)
+            {
+                row.Cells["Apply"].Value =
+                    row.Tag is GenericBatchSuggestion suggestion &&
+                    string.Equals(suggestion.Status, status, StringComparison.OrdinalIgnoreCase);
+            }
+
+            UpdateSummary();
+        }
+
+        private void UpdateSummary()
+        {
+            var count = _grid.Rows
+                .Cast<DataGridViewRow>()
+                .Count(row => Convert.ToBoolean(row.Cells["Apply"].Value ?? false));
+
+            var over = _suggestions.Count(suggestion => suggestion.Status == "OVER");
+            var under = _suggestions.Count(suggestion => suggestion.Status == "UNDER");
+
+            _summary.Text =
+                $"{count:N0} selected of {_suggestions.Count:N0}   |   Over baseline: {over:N0}   Under baseline: {under:N0}";
+        }
+    }
+
+    private sealed class NpcBatchSuggestion
+    {
+        public Guid Id { get; init; }
+
+        public required string Name { get; init; }
+
+        public int Level { get; init; }
+
+        public required string Status { get; init; }
+
+        public long CurrentHp { get; init; }
+
+        public long SuggestedHp { get; init; }
+
+        public int CurrentDamage { get; init; }
+
+        public int SuggestedDamage { get; init; }
+
+        public int CurrentDefense { get; init; }
+
+        public int SuggestedDefense { get; init; }
+
+        public int CurrentMagicResist { get; init; }
+
+        public int SuggestedMagicResist { get; init; }
+
+        public long CurrentExperience { get; init; }
+
+        public long SuggestedExperience { get; init; }
+
+        public double CurrentTtk { get; init; }
+
+        public double CurrentHpLoss { get; init; }
+
+        public required string Reason { get; init; }
+    }
+
+    private sealed class NpcBalanceSnapshot
+    {
+        public Guid Id { get; init; }
+
+        public required string Name { get; init; }
+
+        public long Hp { get; init; }
+
+        public int Damage { get; init; }
+
+        public int Defense { get; init; }
+
+        public int MagicResist { get; init; }
+
+        public long Experience { get; init; }
+    }
+
+    private sealed class BalanceBatchHistory
+    {
+        public DateTime AppliedAt { get; init; } = DateTime.Now;
+
+        public List<NpcBalanceSnapshot> Entries { get; } = new();
+
+        public bool AppliedHp { get; init; }
+
+        public bool AppliedDamage { get; init; }
+
+        public bool AppliedDefense { get; init; }
+
+        public bool AppliedExperience { get; init; }
+
+        public BalanceObjectKind? GenericKind { get; init; }
+
+        public List<ItemBalanceSnapshot> ItemEntries { get; } = new();
+
+        public List<SpellBalanceSnapshot> SpellEntries { get; } = new();
+
+        public List<ResourceBalanceSnapshot> ResourceEntries { get; } = new();
+
+        public List<ClassBalanceSnapshot> ClassEntries { get; } = new();
+    }
+
+    private sealed class NpcBatchSuggestionForm : DarkForm
+    {
+        private readonly IReadOnlyList<NpcBatchSuggestion> _suggestions;
+        private readonly DataGridView _grid = new();
+        private readonly CheckBox _applyHp = new();
+        private readonly CheckBox _applyDamage = new();
+        private readonly CheckBox _applyDefense = new();
+        private readonly CheckBox _applyExperience = new();
+        private readonly Label _summary = new();
+
+        public NpcBatchSuggestionForm(IReadOnlyList<NpcBatchSuggestion> suggestions)
+        {
+            _suggestions = suggestions;
+
+            base.Text = "Game Balance Lab - Batch Suggestions";
+            StartPosition = FormStartPosition.CenterParent;
+            MinimumSize = new Size(1050, 620);
+            Size = new Size(1500, 820);
+            BackColor = System.Drawing.Color.FromArgb(18, 18, 18);
+            ForeColor = System.Drawing.Color.Gainsboro;
+
+            var root = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 3,
+                Margin = Padding.Empty,
+                Padding = Padding.Empty,
+                BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
+            };
+            root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 84));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+            Controls.Add(root);
+
+            var header = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                Padding = new Padding(10, 9, 10, 6),
+                BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+            };
+
+            header.Controls.Add(
+                new Label
+                {
+                    AutoSize = false,
+                    Width = 128,
+                    Height = 28,
+                    Text = "Apply fields:",
+                    ForeColor = System.Drawing.Color.Gainsboro,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold),
+                }
+            );
+
+            ConfigureApplyCheckBox(_applyHp, "HP", true);
+            ConfigureApplyCheckBox(_applyDamage, "Damage", true);
+            ConfigureApplyCheckBox(_applyDefense, "Defense + MR", false);
+            ConfigureApplyCheckBox(_applyExperience, "EXP", true);
+
+            header.Controls.Add(_applyHp);
+            header.Controls.Add(_applyDamage);
+            header.Controls.Add(_applyDefense);
+            header.Controls.Add(_applyExperience);
+
+            var note = new Label
+            {
+                AutoSize = false,
+                Width = 665,
+                Height = 28,
+                Margin = new Padding(18, 0, 0, 0),
+                Text = "Defense/MR is optional by default so tank identities are not flattened. Every applied batch can be undone.",
+                ForeColor = System.Drawing.Color.Silver,
+                TextAlign = ContentAlignment.MiddleLeft,
+            };
+            header.Controls.Add(note);
+
+            var selectAll = CreateSmallButton("SELECT ALL");
+            selectAll.Click += (_, _) => SetAllRows(true);
+            header.Controls.Add(selectAll);
+
+            var selectNone = CreateSmallButton("NONE");
+            selectNone.Click += (_, _) => SetAllRows(false);
+            header.Controls.Add(selectNone);
+
+            var selectHard = CreateSmallButton("HARD ONLY");
+            selectHard.Click += (_, _) => SelectByStatus("TOO HARD");
+            header.Controls.Add(selectHard);
+
+            var selectEasy = CreateSmallButton("EASY ONLY");
+            selectEasy.Click += (_, _) => SelectByStatus("TOO EASY");
+            header.Controls.Add(selectEasy);
+
+            root.Controls.Add(header, 0, 0);
+
+            ConfigureSuggestionGrid();
+            root.Controls.Add(_grid, 0, 1);
+
+            var footer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+            };
+            root.Controls.Add(footer, 0, 2);
+
+            _summary.AutoSize = false;
+            _summary.Location = new System.Drawing.Point(12, 7);
+            _summary.Size = new Size(850, 38);
+            _summary.ForeColor = System.Drawing.Color.Silver;
+            _summary.TextAlign = ContentAlignment.MiddleLeft;
+            footer.Controls.Add(_summary);
+
+            var cancel = CreateSmallButton("CANCEL");
+            cancel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            cancel.Size = new Size(120, 34);
+            cancel.DialogResult = DialogResult.Cancel;
+            footer.Controls.Add(cancel);
+
+            var apply = new Button
+            {
+                Text = "APPLY SELECTED",
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Size = new Size(190, 34),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = System.Drawing.Color.FromArgb(247, 69, 96),
+                ForeColor = System.Drawing.Color.White,
+                Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold),
+            };
+            apply.FlatAppearance.BorderColor = apply.BackColor;
+            apply.Click += (_, _) =>
+            {
+                if (SelectedSuggestions.Count == 0)
+                {
+                    MessageBox.Show(
+                        this,
+                        "Select at least one NPC first.",
+                        "Batch Suggestions",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
+                    return;
+                }
+
+                DialogResult = DialogResult.OK;
+                Close();
+            };
+            footer.Controls.Add(apply);
+
+            footer.Resize += (_, _) =>
+            {
+                apply.Left = Math.Max(10, footer.ClientSize.Width - apply.Width - 12);
+                apply.Top = 7;
+                cancel.Left = Math.Max(10, apply.Left - cancel.Width - 10);
+                cancel.Top = 7;
+                _summary.Width = Math.Max(200, cancel.Left - _summary.Left - 12);
+            };
+
+            AcceptButton = apply;
+            CancelButton = cancel;
+
+            PopulateRows();
+            UpdateSummary();
+        }
+
+        public IReadOnlyList<NpcBatchSuggestion> SelectedSuggestions =>
+            _grid.Rows
+                .Cast<DataGridViewRow>()
+                .Where(row => Convert.ToBoolean(row.Cells["Apply"].Value ?? false))
+                .Select(row => row.Tag)
+                .OfType<NpcBatchSuggestion>()
+                .ToArray();
+
+        public bool ApplyHp => _applyHp.Checked;
+
+        public bool ApplyDamage => _applyDamage.Checked;
+
+        public bool ApplyDefense => _applyDefense.Checked;
+
+        public bool ApplyExperience => _applyExperience.Checked;
+
+        private static void ConfigureApplyCheckBox(CheckBox checkBox, string text, bool value)
+        {
+            checkBox.Text = text;
+            checkBox.Checked = value;
+            checkBox.AutoSize = true;
+            checkBox.ForeColor = System.Drawing.Color.Gainsboro;
+            checkBox.Margin = new Padding(10, 5, 4, 0);
+        }
+
+        private static Button CreateSmallButton(string text)
+        {
+            return new Button
+            {
+                Text = text,
+                Size = new Size(112, 30),
+                Margin = new Padding(8, 2, 0, 0),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = System.Drawing.Color.FromArgb(55, 47, 49),
+                ForeColor = System.Drawing.Color.Gainsboro,
+                Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 8, FontStyle.Bold),
+            };
+        }
+
+        private void ConfigureSuggestionGrid()
+        {
+            _grid.Dock = DockStyle.Fill;
+            _grid.ReadOnly = false;
+            _grid.AllowUserToAddRows = false;
+            _grid.AllowUserToDeleteRows = false;
+            _grid.AllowUserToResizeRows = false;
+            _grid.RowHeadersVisible = false;
+            _grid.MultiSelect = false;
+            _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            _grid.AutoGenerateColumns = false;
+            _grid.BackgroundColor = System.Drawing.Color.FromArgb(32, 28, 29);
+            _grid.BorderStyle = BorderStyle.None;
+            _grid.GridColor = System.Drawing.Color.FromArgb(60, 52, 54);
+            _grid.EnableHeadersVisualStyles = false;
+            _grid.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(38, 32, 34);
+            _grid.DefaultCellStyle.ForeColor = System.Drawing.Color.Gainsboro;
+            _grid.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(72, 54, 58);
+            _grid.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
+            _grid.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+            _grid.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.White;
+            _grid.ColumnHeadersHeight = 34;
+
+            _grid.Columns.Add(
+                new DataGridViewCheckBoxColumn
+                {
+                    Name = "Apply",
+                    HeaderText = "Apply",
+                    Width = 52,
+                    ReadOnly = false,
+                }
+            );
+
+            AddTextColumn("NPC", "NPC", 190);
+            AddTextColumn("Level", "Lv", 48);
+            AddTextColumn("Status", "Status", 78);
+            AddTextColumn("TTK", "TTK", 72);
+            AddTextColumn("HpLoss", "HP Lost", 72);
+            AddTextColumn("HP", "HP current -> target", 145);
+            AddTextColumn("Damage", "Damage current -> target", 160);
+            AddTextColumn("Defense", "Defense current -> peer", 160);
+            AddTextColumn("MR", "MR current -> peer", 150);
+            AddTextColumn("EXP", "EXP current -> target", 160);
+
+            _grid.CurrentCellDirtyStateChanged += (_, _) =>
+            {
+                if (_grid.IsCurrentCellDirty)
+                {
+                    _grid.CommitEdit(DataGridViewDataErrorContexts.Commit);
+                }
+            };
+            _grid.CellValueChanged += (_, args) =>
+            {
+                if (args.ColumnIndex == _grid.Columns["Apply"].Index)
+                {
+                    UpdateSummary();
+                }
+            };
+        }
+
+        private void AddTextColumn(string name, string header, int width)
+        {
+            _grid.Columns.Add(
+                new DataGridViewTextBoxColumn
+                {
+                    Name = name,
+                    HeaderText = header,
+                    Width = width,
+                    ReadOnly = true,
+                    SortMode = DataGridViewColumnSortMode.Automatic,
+                }
+            );
+        }
+
+        private void PopulateRows()
+        {
+            _grid.Rows.Clear();
+
+            foreach (var suggestion in _suggestions
+                         .OrderBy(suggestion => suggestion.Status == "TOO HARD" ? 0 : 1)
+                         .ThenBy(suggestion => suggestion.Level)
+                         .ThenBy(suggestion => suggestion.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                var rowIndex = _grid.Rows.Add(
+                    true,
+                    suggestion.Name,
+                    suggestion.Level,
+                    suggestion.Status,
+                    $"{suggestion.CurrentTtk:0.00}s",
+                    $"{suggestion.CurrentHpLoss:0.0}%",
+                    $"{suggestion.CurrentHp:N0} -> {suggestion.SuggestedHp:N0}",
+                    $"{suggestion.CurrentDamage:N0} -> {suggestion.SuggestedDamage:N0}",
+                    $"{suggestion.CurrentDefense:N0} -> {suggestion.SuggestedDefense:N0}",
+                    $"{suggestion.CurrentMagicResist:N0} -> {suggestion.SuggestedMagicResist:N0}",
+                    $"{suggestion.CurrentExperience:N0} -> {suggestion.SuggestedExperience:N0}"
+                );
+
+                var row = _grid.Rows[rowIndex];
+                row.Tag = suggestion;
+                row.DefaultCellStyle.ForeColor = suggestion.Status == "TOO HARD"
+                    ? System.Drawing.Color.FromArgb(255, 150, 150)
+                    : System.Drawing.Color.FromArgb(145, 195, 255);
+
+                row.Cells["NPC"].ToolTipText = suggestion.Reason;
+            }
+        }
+
+        private void SetAllRows(bool selected)
+        {
+            foreach (DataGridViewRow row in _grid.Rows)
+            {
+                row.Cells["Apply"].Value = selected;
+            }
+
+            UpdateSummary();
+        }
+
+        private void SelectByStatus(string status)
+        {
+            foreach (DataGridViewRow row in _grid.Rows)
+            {
+                row.Cells["Apply"].Value =
+                    row.Tag is NpcBatchSuggestion suggestion &&
+                    string.Equals(suggestion.Status, status, StringComparison.OrdinalIgnoreCase);
+            }
+
+            UpdateSummary();
+        }
+
+        private void UpdateSummary()
+        {
+            var count = _grid.Rows
+                .Cast<DataGridViewRow>()
+                .Count(row => Convert.ToBoolean(row.Cells["Apply"].Value ?? false));
+
+            var hard = _suggestions.Count(suggestion => suggestion.Status == "TOO HARD");
+            var easy = _suggestions.Count(suggestion => suggestion.Status == "TOO EASY");
+
+            _summary.Text =
+                $"{count:N0} selected of {_suggestions.Count:N0} suggestions   |   Too hard: {hard:N0}   Too easy: {easy:N0}";
+        }
+    }
+
+    private sealed class BalanceEntry
+    {
+        public required BalanceObjectKind Kind { get; init; }
+
+        public Guid Id { get; init; }
+
+        public required string Name { get; init; }
+
+        public required string Group { get; init; }
+
+        public double Power { get; init; }
+
+        public double Reward { get; init; }
+
+        public double Baseline { get; set; }
+
+        public double DeviationPercent =>
+            Baseline <= 0.0001 ? 0 : (Power / Baseline - 1d) * 100d;
+
+        public string Severity { get; set; } = "OK";
+
+        public required string Metrics { get; init; }
+
+        public string Suggestion { get; set; } = string.Empty;
+
+        public double? SimulationTtk { get; set; }
+
+        public double? SimulationHpLoss { get; set; }
+
+        public double? SimulationPlayerDps { get; set; }
+
+        public double? SimulationNpcDps { get; set; }
+
+        public double? SimulationSuggestedHp { get; set; }
+
+        public double? SimulationSuggestedDamage { get; set; }
+
+        public int? SimulationLevel { get; set; }
+
+        public string SimulationClass { get; set; } = string.Empty;
+
+        public string SimulationStatus { get; set; } = string.Empty;
+
+        public string SimulationNotes { get; set; } = string.Empty;
+    }
+
+    private readonly Action<BalanceOpenRequest>? _openEditor;
+
+    private readonly ComboBox _profile = new();
+    private readonly NumericUpDown _warningThreshold = new();
+    private readonly NumericUpDown _criticalThreshold = new();
+    private readonly ListBox _scope = new();
+    private readonly DataGridView _grid = new();
+    private readonly TextBox _details = new();
+    private readonly Label _summary = new();
+
+    private readonly ComboBox _simulationClass = new();
+    private readonly CheckBox _matchNpcLevel = new();
+    private readonly NumericUpDown _simulationLevel = new();
+    private readonly NumericUpDown _partySize = new();
+    private readonly NumericUpDown _targetTtk = new();
+    private readonly NumericUpDown _targetHpLoss = new();
+    private readonly NumericUpDown _bossTtkMultiplier = new();
+    private readonly NumericUpDown _bossHpLossMultiplier = new();
+    private readonly ComboBox _gearProfile = new();
+    private readonly CheckBox _includeClassSpells = new();
+    private readonly Button _undoBatchButton = new();
+
+    private readonly Stack<BalanceBatchHistory> _batchHistory = new();
+    private readonly List<ClassChoice> _simulationClasses = new();
+    private readonly List<BalanceEntry> _entries = new();
+
+    public FrmBalanceLab(Action<BalanceOpenRequest>? openEditor = null)
+    {
+        _openEditor = openEditor;
+
+        base.Text = "Corps Royaux - Game Balance Lab";
+        StartPosition = FormStartPosition.CenterParent;
+        MinimumSize = new Size(1180, 720);
+        Size = new Size(1500, 900);
+        BackColor = System.Drawing.Color.FromArgb(18, 18, 18);
+        ForeColor = System.Drawing.Color.Gainsboro;
+
+        BuildInterface();
+
+        Shown += (_, _) =>
+        {
+            LoadSimulationClasses();
+            _profile.SelectedIndex = 1;
+            RunAnalysis();
+        };
+    }
+
+    private void BuildInterface()
+    {
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
+        };
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 160));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 88));
+        Controls.Add(root);
+
+        var topBars = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+        };
+        topBars.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        topBars.RowStyles.Add(new RowStyle(SizeType.Absolute, 56));
+        topBars.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
+        topBars.RowStyles.Add(new RowStyle(SizeType.Absolute, 50));
+        root.Controls.Add(topBars, 0, 0);
+
+        var toolbar = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(10, 10, 10, 8),
+            BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+        };
+
+        toolbar.Controls.Add(CreateToolbarLabel("Profile:"));
+
+        _profile.Width = 150;
+        _profile.DropDownStyle = ComboBoxStyle.DropDownList;
+        _profile.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        _profile.ForeColor = System.Drawing.Color.White;
+        _profile.Items.AddRange(new object[] { "Conservative", "Standard", "Strict" });
+        _profile.SelectedIndexChanged += (_, _) => ApplyProfile();
+        toolbar.Controls.Add(_profile);
+
+        toolbar.Controls.Add(CreateToolbarLabel("Warning %:"));
+        ConfigureThreshold(_warningThreshold, 5, 100, 20);
+        toolbar.Controls.Add(_warningThreshold);
+
+        toolbar.Controls.Add(CreateToolbarLabel("Critical %:"));
+        ConfigureThreshold(_criticalThreshold, 10, 200, 40);
+        toolbar.Controls.Add(_criticalThreshold);
+
+        var analyze = CreateAccentButton("ANALYZE GAME");
+        analyze.Size = new Size(160, 34);
+        analyze.Margin = new Padding(12, 0, 0, 0);
+        analyze.Click += (_, _) => RunAnalysis();
+        toolbar.Controls.Add(analyze);
+
+        var readOnly = new Label
+        {
+            AutoSize = false,
+            Width = 360,
+            Height = 34,
+            Margin = new Padding(18, 0, 0, 0),
+            Text = "READ-ONLY AUDIT - no game data is changed",
+            ForeColor = System.Drawing.Color.FromArgb(160, 210, 160),
+            TextAlign = ContentAlignment.MiddleLeft,
+            Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold),
+        };
+        toolbar.Controls.Add(readOnly);
+        topBars.Controls.Add(toolbar, 0, 0);
+
+        var simulationBar = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(10, 8, 10, 7),
+            BackColor = System.Drawing.Color.FromArgb(32, 28, 29),
+        };
+
+        simulationBar.Controls.Add(CreateToolbarLabel("Class:"));
+
+        _simulationClass.Width = 180;
+        _simulationClass.DropDownStyle = ComboBoxStyle.DropDownList;
+        _simulationClass.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        _simulationClass.ForeColor = System.Drawing.Color.White;
+        simulationBar.Controls.Add(_simulationClass);
+
+        _matchNpcLevel.Text = "Match NPC level";
+        _matchNpcLevel.Checked = true;
+        _matchNpcLevel.AutoSize = true;
+        _matchNpcLevel.ForeColor = System.Drawing.Color.Gainsboro;
+        _matchNpcLevel.Margin = new Padding(14, 7, 8, 0);
+        _matchNpcLevel.CheckedChanged += (_, _) =>
+        {
+            _simulationLevel.Enabled = !_matchNpcLevel.Checked;
+        };
+        simulationBar.Controls.Add(_matchNpcLevel);
+
+        simulationBar.Controls.Add(CreateToolbarLabel("Level:"));
+        ConfigureSimulationNumber(
+            _simulationLevel,
+            1,
+            Math.Max(1, Options.Instance.Player.MaxLevel),
+            Math.Min(10, Math.Max(1, Options.Instance.Player.MaxLevel)),
+            64
+        );
+        _simulationLevel.Enabled = false;
+        simulationBar.Controls.Add(_simulationLevel);
+
+        simulationBar.Controls.Add(CreateToolbarLabel("Party:"));
+        ConfigureSimulationNumber(_partySize, 1, 5, 1, 52);
+        simulationBar.Controls.Add(_partySize);
+
+        simulationBar.Controls.Add(CreateToolbarLabel("Target TTK:"));
+        ConfigureSimulationNumber(_targetTtk, 1, 120, 8, 62);
+        _targetTtk.DecimalPlaces = 1;
+        _targetTtk.Increment = 0.5M;
+        simulationBar.Controls.Add(_targetTtk);
+
+        simulationBar.Controls.Add(CreateToolbarLabel("HP loss %:"));
+        ConfigureSimulationNumber(_targetHpLoss, 1, 100, 20, 62);
+        _targetHpLoss.DecimalPlaces = 1;
+        _targetHpLoss.Increment = 1M;
+        simulationBar.Controls.Add(_targetHpLoss);
+
+        var simulate = CreateAccentButton("SIMULATE");
+        simulate.Size = new Size(125, 32);
+        simulate.Margin = new Padding(12, 0, 0, 0);
+        simulate.Click += (_, _) =>
+        {
+            RunCombatSimulation();
+            RefreshGrid();
+        };
+        simulationBar.Controls.Add(simulate);
+
+        topBars.Controls.Add(simulationBar, 0, 1);
+
+        var optionsBar = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(10, 7, 10, 6),
+            BackColor = System.Drawing.Color.FromArgb(27, 24, 25),
+        };
+
+        optionsBar.Controls.Add(CreateToolbarLabel("Expected gear:"));
+
+        _gearProfile.Width = 185;
+        _gearProfile.DropDownStyle = ComboBoxStyle.DropDownList;
+        _gearProfile.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        _gearProfile.ForeColor = System.Drawing.Color.White;
+        _gearProfile.Items.AddRange(
+            new object[]
+            {
+                "No gear",
+                "Class starting gear",
+                "Median per slot",
+                "Upper quartile per slot",
+                "Best per slot",
+            }
+        );
+        _gearProfile.SelectedIndex = 1;
+        optionsBar.Controls.Add(_gearProfile);
+
+        _includeClassSpells.Text = "Include learned class spells";
+        _includeClassSpells.Checked = true;
+        _includeClassSpells.AutoSize = true;
+        _includeClassSpells.ForeColor = System.Drawing.Color.Gainsboro;
+        _includeClassSpells.Margin = new Padding(16, 7, 8, 0);
+        optionsBar.Controls.Add(_includeClassSpells);
+
+        optionsBar.Controls.Add(CreateToolbarLabel("Boss TTK x:"));
+        ConfigureSimulationNumber(_bossTtkMultiplier, 1, 10, 4, 58);
+        _bossTtkMultiplier.DecimalPlaces = 1;
+        _bossTtkMultiplier.Increment = 0.5M;
+        optionsBar.Controls.Add(_bossTtkMultiplier);
+
+        optionsBar.Controls.Add(CreateToolbarLabel("Boss HP loss x:"));
+        ConfigureSimulationNumber(_bossHpLossMultiplier, 1, 5, 2, 58);
+        _bossHpLossMultiplier.DecimalPlaces = 1;
+        _bossHpLossMultiplier.Increment = 0.25M;
+        optionsBar.Controls.Add(_bossHpLossMultiplier);
+
+        var simInfo = new Label
+        {
+            AutoSize = false,
+            Width = 620,
+            Height = 32,
+            Margin = new Padding(18, 0, 0, 0),
+            Text = "Boss targets use the multipliers above. Gear/spells remain part of the same deterministic simulation.",
+            ForeColor = System.Drawing.Color.Silver,
+            TextAlign = ContentAlignment.MiddleLeft,
+        };
+        optionsBar.Controls.Add(simInfo);
+
+        topBars.Controls.Add(optionsBar, 0, 2);
+
+        var body = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 3,
+            RowCount = 1,
+            Margin = Padding.Empty,
+            Padding = new Padding(10),
+            BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
+        };
+        body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190));
+        body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 68));
+        body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32));
+        root.Controls.Add(body, 0, 1);
+
+        var scopePanel = CreateSection("SCOPE");
+        _scope.Dock = DockStyle.Fill;
+        _scope.BackColor = System.Drawing.Color.FromArgb(38, 32, 34);
+        _scope.ForeColor = System.Drawing.Color.Gainsboro;
+        _scope.BorderStyle = BorderStyle.None;
+        _scope.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 10);
+        _scope.Items.AddRange(new object[]
+        {
+            "Overview",
+            "NPCs",
+            "Combat Simulation",
+            "Equipment / Items",
+            "Spells",
+            "Resources",
+            "Classes",
+        });
+        _scope.SelectedIndex = 0;
+        _scope.SelectedIndexChanged += (_, _) => RefreshGrid();
+        scopePanel.Controls.Add(_scope, 0, 1);
+        body.Controls.Add(scopePanel, 0, 0);
+
+        var resultsPanel = CreateSection("BALANCE AUDIT");
+        ConfigureGrid();
+        resultsPanel.Controls.Add(_grid, 0, 1);
+        body.Controls.Add(resultsPanel, 1, 0);
+
+        var detailPanel = CreateSection("DETAILS / SUGGESTION");
+        _details.Dock = DockStyle.Fill;
+        _details.Multiline = true;
+        _details.ReadOnly = true;
+        _details.ScrollBars = ScrollBars.Vertical;
+        _details.BackColor = System.Drawing.Color.FromArgb(32, 28, 29);
+        _details.ForeColor = System.Drawing.Color.Gainsboro;
+        _details.BorderStyle = BorderStyle.None;
+        _details.Font = new Font("Consolas", 10);
+        detailPanel.Controls.Add(_details, 0, 1);
+        body.Controls.Add(detailPanel, 2, 0);
+
+        var footer = new Panel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+        };
+        root.Controls.Add(footer, 0, 2);
+
+        var batchButton = CreateAccentButton("BATCH SUGGESTIONS");
+        batchButton.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+        batchButton.Location = new System.Drawing.Point(12, 7);
+        batchButton.Size = new Size(190, 32);
+        batchButton.Click += (_, _) => ShowBatchSuggestions();
+        footer.Controls.Add(batchButton);
+
+        _undoBatchButton.Text = "UNDO LAST BATCH";
+        _undoBatchButton.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+        _undoBatchButton.Location = new System.Drawing.Point(212, 7);
+        _undoBatchButton.Size = new Size(175, 32);
+        _undoBatchButton.FlatStyle = FlatStyle.Flat;
+        _undoBatchButton.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+        _undoBatchButton.ForeColor = System.Drawing.Color.Gainsboro;
+        _undoBatchButton.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold);
+        _undoBatchButton.Click += (_, _) => UndoLastBatch();
+        footer.Controls.Add(_undoBatchButton);
+        UpdateUndoBatchButton();
+
+        _summary.AutoSize = false;
+        _summary.Location = new System.Drawing.Point(14, 45);
+        _summary.Size = new Size(1400, 32);
+        _summary.ForeColor = System.Drawing.Color.Silver;
+        _summary.TextAlign = ContentAlignment.MiddleLeft;
+        footer.Controls.Add(_summary);
+
+        var heatmapButton = CreateAccentButton("FULL GAME HEATMAP");
+        heatmapButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        heatmapButton.Size = new Size(190, 32);
+        heatmapButton.Click += (_, _) => ShowFullHeatmap();
+        footer.Controls.Add(heatmapButton);
+
+        var progressionButton = CreateAccentButton("LEVEL 1 -> MAX GRAPH");
+        progressionButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        progressionButton.Size = new Size(210, 32);
+        progressionButton.Click += (_, _) => ShowSelectedProgression();
+        footer.Controls.Add(progressionButton);
+
+        var openButton = CreateAccentButton("OPEN SELECTED IN EDITOR");
+        openButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        openButton.Size = new Size(270, 32);
+        openButton.Click += (_, _) => OpenSelected();
+        footer.Controls.Add(openButton);
+
+        footer.Resize += (_, _) =>
+        {
+            openButton.Left = Math.Max(10, footer.ClientSize.Width - openButton.Width - 14);
+            progressionButton.Left = Math.Max(
+                10,
+                openButton.Left - progressionButton.Width - 10
+            );
+            heatmapButton.Left = Math.Max(
+                10,
+                progressionButton.Left - heatmapButton.Width - 10
+            );
+
+            heatmapButton.Top = 7;
+            progressionButton.Top = 7;
+            openButton.Top = 7;
+
+            _summary.Width = Math.Max(
+                200,
+                footer.ClientSize.Width - _summary.Left - 14
+            );
+        };
+    }
+
+    private static Label CreateToolbarLabel(string text)
+    {
+        return new Label
+        {
+            AutoSize = false,
+            Width = text.Length * 8 + 16,
+            Height = 32,
+            Text = text,
+            ForeColor = System.Drawing.Color.Gainsboro,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(8, 0, 2, 0),
+        };
+    }
+
+    private static void ConfigureThreshold(NumericUpDown number, int min, int max, int value)
+    {
+        number.Minimum = min;
+        number.Maximum = max;
+        number.Value = value;
+        number.Width = 64;
+        number.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        number.ForeColor = System.Drawing.Color.White;
+        number.BorderStyle = BorderStyle.FixedSingle;
+        number.TextAlign = HorizontalAlignment.Center;
+    }
+
+    private static void ConfigureSimulationNumber(
+        NumericUpDown number,
+        decimal min,
+        decimal max,
+        decimal value,
+        int width
+    )
+    {
+        number.Minimum = min;
+        number.Maximum = max;
+        number.Value = Math.Clamp(value, min, max);
+        number.Width = width;
+        number.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        number.ForeColor = System.Drawing.Color.White;
+        number.BorderStyle = BorderStyle.FixedSingle;
+        number.TextAlign = HorizontalAlignment.Center;
+    }
+
+    private static Button CreateAccentButton(string text)
+    {
+        return new Button
+        {
+            Text = text,
+            FlatStyle = FlatStyle.Flat,
+            BackColor = System.Drawing.Color.FromArgb(247, 69, 96),
+            ForeColor = System.Drawing.Color.White,
+            FlatAppearance = { BorderColor = System.Drawing.Color.FromArgb(247, 69, 96) },
+            Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold),
+            Cursor = Cursors.Hand,
+        };
+    }
+
+    private static TableLayoutPanel CreateSection(string title)
+    {
+        var panel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            Margin = new Padding(5),
+            Padding = new Padding(8),
+            ColumnCount = 1,
+            RowCount = 2,
+            BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+        };
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+        panel.Controls.Add(
+            new Label
+            {
+                Text = title,
+                Dock = DockStyle.Fill,
+                ForeColor = System.Drawing.Color.FromArgb(247, 69, 96),
+                Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 11, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft,
+            },
+            0,
+            0
+        );
+
+        return panel;
+    }
+
+    private void ConfigureGrid()
+    {
+        _grid.Dock = DockStyle.Fill;
+        _grid.ReadOnly = true;
+        _grid.AllowUserToAddRows = false;
+        _grid.AllowUserToDeleteRows = false;
+        _grid.AllowUserToResizeRows = false;
+        _grid.MultiSelect = false;
+        _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        _grid.RowHeadersVisible = false;
+        _grid.AutoGenerateColumns = false;
+        _grid.BackgroundColor = System.Drawing.Color.FromArgb(32, 28, 29);
+        _grid.BorderStyle = BorderStyle.None;
+        _grid.GridColor = System.Drawing.Color.FromArgb(60, 52, 54);
+        _grid.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(38, 32, 34);
+        _grid.DefaultCellStyle.ForeColor = System.Drawing.Color.Gainsboro;
+        _grid.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(72, 54, 58);
+        _grid.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
+        _grid.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+        _grid.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.White;
+        _grid.EnableHeadersVisualStyles = false;
+
+        AddGridColumn("Type", 90);
+        AddGridColumn("Name", 220);
+        AddGridColumn("Group", 110);
+        AddGridColumn("Power", 90);
+        AddGridColumn("Baseline", 90);
+        AddGridColumn("Deviation", 90);
+        AddGridColumn("Status", 85);
+        AddGridColumn("TTK", 75);
+        AddGridColumn("HP Lost", 80);
+        AddGridColumn("Sim", 95);
+
+        _grid.SelectionChanged += (_, _) => ShowSelectedDetails();
+        _grid.CellDoubleClick += (_, _) => OpenSelected();
+    }
+
+    private void AddGridColumn(string name, int width)
+    {
+        _grid.Columns.Add(
+            new DataGridViewTextBoxColumn
+            {
+                Name = name,
+                HeaderText = name,
+                Width = width,
+                SortMode = DataGridViewColumnSortMode.Automatic,
+            }
+        );
+    }
+
+    private void ApplyProfile()
+    {
+        switch (_profile.SelectedIndex)
+        {
+            case 0:
+                _warningThreshold.Value = 30;
+                _criticalThreshold.Value = 60;
+                break;
+            case 2:
+                _warningThreshold.Value = 12;
+                _criticalThreshold.Value = 25;
+                break;
+            default:
+                _warningThreshold.Value = 20;
+                _criticalThreshold.Value = 40;
+                break;
+        }
+    }
+
+    private void LoadSimulationClasses()
+    {
+        _simulationClasses.Clear();
+        _simulationClass.Items.Clear();
+
+        var all = new ClassChoice
+        {
+            Id = null,
+            Name = "Average all classes",
+        };
+        _simulationClasses.Add(all);
+        _simulationClass.Items.Add(all);
+
+        foreach (var pair in ClassDescriptor.Lookup
+                     .Where(pair => pair.Value != null)
+                     .OrderBy(pair => Text(pair.Value!, "Name", "Unnamed Class"), StringComparer.OrdinalIgnoreCase))
+        {
+            var choice = new ClassChoice
+            {
+                Id = pair.Key,
+                Name = Text(pair.Value!, "Name", "Unnamed Class"),
+            };
+            _simulationClasses.Add(choice);
+            _simulationClass.Items.Add(choice);
+        }
+
+        _simulationClass.SelectedIndex = 0;
+    }
+
+    private void RunCombatSimulation()
+    {
+        foreach (var entry in _entries.Where(entry => entry.Kind == BalanceObjectKind.Npc))
+        {
+            entry.SimulationTtk = null;
+            entry.SimulationHpLoss = null;
+            entry.SimulationPlayerDps = null;
+            entry.SimulationNpcDps = null;
+            entry.SimulationSuggestedHp = null;
+            entry.SimulationSuggestedDamage = null;
+            entry.SimulationLevel = null;
+            entry.SimulationClass = string.Empty;
+            entry.SimulationStatus = string.Empty;
+            entry.SimulationNotes = string.Empty;
+        }
+
+        var selectedChoice = _simulationClass.SelectedItem as ClassChoice;
+        var classes = new List<object>();
+
+        if (selectedChoice?.Id is Guid selectedId &&
+            ClassDescriptor.Lookup.TryGetValue(selectedId, out var selectedClass) &&
+            selectedClass != null)
+        {
+            classes.Add(selectedClass);
+        }
+        else
+        {
+            classes.AddRange(
+                ClassDescriptor.Lookup.Values
+                    .Where(value => value != null)
+                    .Cast<object>()
+            );
+        }
+
+        if (classes.Count == 0)
+        {
+            return;
+        }
+
+        var partySize = Math.Clamp((int)_partySize.Value, 1, 5);
+        var baseTargetTtk = Math.Max(0.1, (double)_targetTtk.Value);
+        var baseTargetHpLoss = Math.Max(0.1, (double)_targetHpLoss.Value);
+        var bossTtkMultiplier = Math.Max(1d, (double)_bossTtkMultiplier.Value);
+        var bossHpLossMultiplier = Math.Max(1d, (double)_bossHpLossMultiplier.Value);
+        var gearProfile = Math.Max(0, _gearProfile.SelectedIndex);
+        var includeClassSpells = _includeClassSpells.Checked;
+
+        foreach (var entry in _entries.Where(entry => entry.Kind == BalanceObjectKind.Npc))
+        {
+            var npc = NPCDescriptor.Get(entry.Id);
+            if (npc == null)
+            {
+                continue;
+            }
+
+            var npcLevel = Math.Max(1, (int)Math.Round(Number(npc, "Level")));
+            var level = _matchNpcLevel.Checked
+                ? npcLevel
+                : Math.Clamp(
+                    (int)_simulationLevel.Value,
+                    1,
+                    Math.Max(1, Options.Instance.Player.MaxLevel)
+                );
+
+            var targetTtk = baseTargetTtk * (npc.IsBoss ? bossTtkMultiplier : 1d);
+            var targetHpLoss = Math.Min(
+                100d,
+                baseTargetHpLoss * (npc.IsBoss ? bossHpLossMultiplier : 1d)
+            );
+
+            var results = classes
+                .Select(
+                    playerClass => SimulateClassVsNpc(
+                        playerClass,
+                        npc,
+                        level,
+                        partySize,
+                        gearProfile,
+                        includeClassSpells,
+                        targetTtk
+                    )
+                )
+                .Where(result => result != null)
+                .Cast<CombatSimulation>()
+                .ToArray();
+
+            if (results.Length == 0)
+            {
+                continue;
+            }
+
+            var ttk = results.Average(result => result.TtkSeconds);
+            var hpLoss = results.Average(result => result.HpLossPercent);
+            var outgoingDps = results.Average(result => result.PlayerDps) * partySize;
+            var autoAttackDps = results.Average(result => result.AutoAttackDps) * partySize;
+            var spellDps = results.Average(result => result.SpellDps) * partySize;
+            var manaUse = results.Average(result => result.ManaUsePerSecond) * partySize;
+            var gearPower = results.Average(result => result.GearPower);
+            var incomingDps = results.Average(result => result.NpcDps);
+            var worstHpLoss = results.Max(result => result.HpLossPercent);
+            var bestHpLoss = results.Min(result => result.HpLossPercent);
+            var minTtk = results.Min(result => result.TtkSeconds);
+            var maxTtk = results.Max(result => result.TtkSeconds);
+
+            var npcHp = Math.Max(1d, Indexed(npc, "MaxVitals", 0));
+            var npcBaseDamage = Math.Max(0d, Number(npc, "Damage"));
+
+            entry.SimulationTtk = ttk;
+            entry.SimulationHpLoss = hpLoss;
+            entry.SimulationPlayerDps = outgoingDps;
+            entry.SimulationNpcDps = incomingDps;
+            entry.SimulationLevel = level;
+            entry.SimulationClass = selectedChoice?.Id == null
+                ? $"Average of {results.Length} class(es)"
+                : selectedChoice.Name;
+
+            entry.SimulationSuggestedHp = ttk > 0
+                ? Math.Max(1d, npcHp * targetTtk / ttk)
+                : npcHp;
+
+            entry.SimulationSuggestedDamage =
+                hpLoss > 0.01 && npcBaseDamage > 0
+                    ? Math.Max(0d, npcBaseDamage * targetHpLoss / hpLoss)
+                    : npcBaseDamage;
+
+            entry.SimulationStatus = GetSimulationStatus(
+                ttk,
+                hpLoss,
+                targetTtk,
+                targetHpLoss
+            );
+
+            var loadoutText = results.Length == 1
+                ? results[0].GearSummary
+                : $"{_gearProfile.Text}; actual selected items vary by class only when weapon behavior differs.";
+
+            var spellText = results.Length == 1
+                ? results[0].SpellSummary
+                : includeClassSpells
+                    ? "Learned spell rotations are calculated independently for each class."
+                    : "Class spells disabled.";
+
+            entry.SimulationNotes =
+                $"Simulation basis: {entry.SimulationClass}\r\n" +
+                $"NPC type: {(npc.IsBoss ? "BOSS" : "Normal")}\r\n" +
+                $"Player level: {level}\r\n" +
+                $"Party size: {partySize}\r\n" +
+                $"Expected gear: {_gearProfile.Text} (avg gear power {gearPower:0.0})\r\n" +
+                $"Class spells: {(includeClassSpells ? "ON" : "OFF")}\r\n" +
+                $"Outgoing party DPS: {outgoingDps:0.0}\r\n" +
+                $"  Auto-attack DPS: {autoAttackDps:0.0}\r\n" +
+                $"  Spell DPS: {spellDps:0.0}\r\n" +
+                $"  Mana use: {manaUse:0.0}/sec\r\n" +
+                $"Incoming NPC DPS: {incomingDps:0.0}\r\n" +
+                $"Estimated TTK: {ttk:0.00}s (target {targetTtk:0.0}s)\r\n" +
+                $"Estimated party-average HP lost: {hpLoss:0.0}% (target {targetHpLoss:0.0}%)\r\n" +
+                (results.Length > 1
+                    ? $"Class range TTK: {minTtk:0.00}s - {maxTtk:0.00}s\r\n" +
+                      $"Class range HP lost: {bestHpLoss:0.0}% - {worstHpLoss:0.0}%\r\n"
+                    : string.Empty) +
+                $"Suggested NPC HP toward TTK target: {entry.SimulationSuggestedHp:0}\r\n" +
+                $"Suggested base damage toward HP-loss target: {entry.SimulationSuggestedDamage:0.##}\r\n\r\n" +
+                $"GEAR\r\n----\r\n{loadoutText}\r\n\r\n" +
+                $"SPELL ROTATION\r\n--------------\r\n{spellText}\r\n\r\n" +
+                "Combat math follows Intersect's default physical/magic/true damage formulas, class growth, " +
+                "item stat stacking, attack speed, cast/cooldown timing and mana sustain. Dynamic item usage " +
+                "requirements, movement, blocking, status-control value and custom formulas still require designer review.";
+        }
+    }
+
+    private static CombatSimulation? SimulateClassVsNpc(
+        object playerClass,
+        object npc,
+        int level,
+        int partySize,
+        int gearProfile,
+        bool includeClassSpells,
+        double sustainWindowSeconds,
+        LoadoutSnapshot? cachedLoadout = null
+    )
+    {
+        var stats = new double[5];
+        var increasePercentage = Convert.ToBoolean(Property(playerClass, "IncreasePercentage") ?? false);
+
+        for (var i = 0; i < stats.Length; i++)
+        {
+            var baseStat = Math.Max(0d, Indexed(playerClass, "BaseStat", i));
+            var increase = Indexed(playerClass, "StatIncrease", i);
+            stats[i] = ScaleByLevel(baseStat, increase, increasePercentage, level);
+        }
+
+        var baseHp = Math.Max(
+            1d,
+            ScaleByLevel(
+                Math.Max(1d, Indexed(playerClass, "BaseVital", 0)),
+                Indexed(playerClass, "VitalIncrease", 0),
+                increasePercentage,
+                level
+            )
+        );
+
+        var baseMana = Math.Max(
+            0d,
+            ScaleByLevel(
+                Math.Max(0d, Indexed(playerClass, "BaseVital", 1)),
+                Indexed(playerClass, "VitalIncrease", 1),
+                increasePercentage,
+                level
+            )
+        );
+
+        var loadout = cachedLoadout ?? BuildLoadout(playerClass, gearProfile);
+
+        for (var i = 0; i < stats.Length; i++)
+        {
+            var flat = stats[i] + loadout.FlatStats[i];
+            stats[i] = Math.Max(1d, Math.Ceiling(flat + flat * loadout.PercentStats[i] / 100d));
+        }
+
+        var playerHp = Math.Max(
+            1d,
+            baseHp +
+            loadout.FlatVitals[0] +
+            baseHp * loadout.PercentVitals[0] / 100d
+        );
+
+        var playerMana = Math.Max(
+            0d,
+            baseMana +
+            loadout.FlatVitals[1] +
+            baseMana * loadout.PercentVitals[1] / 100d
+        );
+
+        var npcHp = Math.Max(1d, Indexed(npc, "MaxVitals", 0));
+        var npcStats = new double[5];
+        for (var i = 0; i < npcStats.Length; i++)
+        {
+            npcStats[i] = Math.Max(0d, Indexed(npc, "Stats", i));
+        }
+
+        var combatSource = loadout.Weapon ?? playerClass;
+        var playerBaseDamage = Math.Max(0d, Number(combatSource, "Damage"));
+        var playerDamageType = (DamageType)(int)Number(combatSource, "DamageType");
+        var playerScalingStat = Math.Clamp((int)Number(combatSource, "ScalingStat"), 0, stats.Length - 1);
+        var playerScaling = (int)Number(combatSource, "Scaling");
+        var playerCritChance = Math.Clamp(Number(combatSource, "CritChance"), 0d, 100d);
+        var playerCritMultiplier = Math.Max(1d, Number(combatSource, "CritMultiplier"));
+
+        var playerHit = AverageDamage(
+            playerBaseDamage,
+            playerDamageType,
+            stats[playerScalingStat],
+            playerScaling,
+            playerCritChance,
+            playerCritMultiplier,
+            npcStats[(int)Stat.Defense],
+            npcStats[(int)Stat.MagicResist]
+        );
+
+        var playerAttackMs = CalculatePlayerAttackTimeMs(
+            stats[(int)Stat.Speed],
+            playerClass,
+            loadout.Weapon
+        );
+
+        var playerAttackSeconds = Math.Max(0.05, playerAttackMs / 1000d);
+        var rawAutoAttackDps = playerHit / playerAttackSeconds;
+
+        var manaRegenPerSecond = CalculateManaRegenPerSecond(
+            playerClass,
+            playerMana,
+            loadout.VitalRegen[1]
+        );
+
+        var spellRotation = EstimateSpellRotation(
+            playerClass,
+            level,
+            stats,
+            npcStats,
+            playerMana,
+            manaRegenPerSecond,
+            includeClassSpells,
+            sustainWindowSeconds
+        );
+
+        var autoAttackDps =
+            rawAutoAttackDps * Math.Max(0.15d, 1d - spellRotation.CastOccupancy);
+
+        var perPlayerDps = Math.Max(0.0001, autoAttackDps + spellRotation.Dps);
+        var partyDps = Math.Max(0.0001, perPlayerDps * Math.Max(1, partySize));
+
+        var npcBaseDamage = Math.Max(0d, Number(npc, "Damage"));
+        var npcDamageType = (DamageType)(int)Number(npc, "DamageType");
+        var npcScalingStat = Math.Clamp((int)Number(npc, "ScalingStat"), 0, npcStats.Length - 1);
+        var npcScaling = (int)Number(npc, "Scaling");
+        var npcCritChance = Math.Clamp(Number(npc, "CritChance"), 0d, 100d);
+        var npcCritMultiplier = Math.Max(1d, Number(npc, "CritMultiplier"));
+
+        var npcHit = AverageDamage(
+            npcBaseDamage,
+            npcDamageType,
+            npcStats[npcScalingStat],
+            npcScaling,
+            npcCritChance,
+            npcCritMultiplier,
+            stats[(int)Stat.Defense],
+            stats[(int)Stat.MagicResist]
+        );
+
+        var npcAttackMs = CalculateAttackTimeMs(
+            npcStats[(int)Stat.Speed],
+            (int)Number(npc, "AttackSpeedModifier"),
+            (int)Number(npc, "AttackSpeedValue"),
+            subtractPingAllowance: false
+        );
+
+        var npcAttackSeconds = Math.Max(0.05, npcAttackMs / 1000d);
+        var npcDps = npcHit / npcAttackSeconds;
+
+        var ttk = npcHp / partyDps;
+        var pooledPartyHp = playerHp * Math.Max(1, partySize);
+        var hpLoss = pooledPartyHp <= 0
+            ? 100d
+            : npcDps * ttk / pooledPartyHp * 100d;
+
+        var timeToWipe = npcDps <= 0.0001
+            ? double.PositiveInfinity
+            : pooledPartyHp / npcDps;
+
+        return new CombatSimulation
+        {
+            Level = level,
+            ClassName = Text(playerClass, "Name", "Unnamed Class"),
+            PlayerHp = playerHp,
+            PlayerMana = playerMana,
+            PlayerDamagePerHit = playerHit,
+            PlayerAttackSeconds = playerAttackSeconds,
+            PlayerDps = perPlayerDps,
+            AutoAttackDps = autoAttackDps,
+            SpellDps = spellRotation.Dps,
+            ManaUsePerSecond = spellRotation.ManaPerSecond,
+            GearPower = loadout.Power,
+            GearSummary = loadout.Summary,
+            SpellSummary = spellRotation.Summary,
+            NpcDamagePerHit = npcHit,
+            NpcAttackSeconds = npcAttackSeconds,
+            NpcDps = npcDps,
+            TtkSeconds = ttk,
+            HpLossPercent = hpLoss,
+            TimeToPartyWipeSeconds = timeToWipe,
+        };
+    }
+
+    private static LoadoutSnapshot BuildLoadout(object playerClass, int profile)
+    {
+        var loadout = new LoadoutSnapshot();
+        if (profile <= 0)
+        {
+            return loadout;
+        }
+
+        var selected = new Dictionary<int, object>();
+
+        if (profile == 1)
+        {
+            if (Property(playerClass, "Items") is IEnumerable classItems)
+            {
+                foreach (var classItem in classItems)
+                {
+                    if (classItem == null)
+                    {
+                        continue;
+                    }
+
+                    var itemId = GuidValue(classItem, "Id");
+                    if (itemId == Guid.Empty ||
+                        !ItemDescriptor.Lookup.TryGetValue(itemId, out var item) ||
+                        item == null ||
+                        (int)Number(item, "ItemType") != (int)ItemType.Equipment)
+                    {
+                        continue;
+                    }
+
+                    var slot = (int)Number(item, "EquipmentSlot");
+                    if (slot < 0 || slot >= Options.Instance.Equipment.Slots.Count)
+                    {
+                        continue;
+                    }
+
+                    if (!selected.TryGetValue(slot, out var current) ||
+                        CalculateEquipmentPower(item) > CalculateEquipmentPower(current))
+                    {
+                        selected[slot] = item;
+                    }
+                }
+            }
+        }
+        else
+        {
+            var bySlot = ItemDescriptor.Lookup.Values
+                .Where(item =>
+                    item != null &&
+                    (int)Number(item, "ItemType") == (int)ItemType.Equipment)
+                .Where(item =>
+                {
+                    var slot = (int)Number(item!, "EquipmentSlot");
+                    return slot >= 0 && slot < Options.Instance.Equipment.Slots.Count;
+                })
+                .GroupBy(item => (int)Number(item!, "EquipmentSlot"))
+                .ToDictionary(group => group.Key, group => group.Cast<object>().ToArray());
+
+            var percentile = profile switch
+            {
+                2 => 0.50d,
+                3 => 0.75d,
+                _ => 1.00d,
+            };
+
+            foreach (var pair in bySlot)
+            {
+                var ordered = pair.Value
+                    .OrderBy(CalculateEquipmentPower)
+                    .ThenBy(item => Text(item, "Name", string.Empty), StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                if (ordered.Length == 0)
+                {
+                    continue;
+                }
+
+                var index = (int)Math.Round(
+                    (ordered.Length - 1) * percentile,
+                    MidpointRounding.AwayFromZero
+                );
+                index = Math.Clamp(index, 0, ordered.Length - 1);
+                selected[pair.Key] = ordered[index];
+            }
+        }
+
+        if (selected.TryGetValue(Options.Instance.Equipment.WeaponSlot, out var selectedWeapon) &&
+            Convert.ToBoolean(Property(selectedWeapon, "TwoHanded") ?? false))
+        {
+            selected.Remove(Options.Instance.Equipment.ShieldSlot);
+        }
+
+        var summary = new List<string>();
+        foreach (var pair in selected.OrderBy(pair => pair.Key))
+        {
+            var item = pair.Value;
+            for (var i = 0; i < loadout.FlatStats.Length; i++)
+            {
+                loadout.FlatStats[i] += Indexed(item, "StatsGiven", i);
+                loadout.PercentStats[i] += Indexed(item, "PercentageStatsGiven", i);
+            }
+
+            for (var i = 0; i < loadout.FlatVitals.Length; i++)
+            {
+                loadout.FlatVitals[i] += Indexed(item, "VitalsGiven", i);
+                loadout.PercentVitals[i] += Indexed(item, "PercentageVitalsGiven", i);
+                loadout.VitalRegen[i] += Indexed(item, "VitalsRegen", i);
+            }
+
+            var power = CalculateEquipmentPower(item);
+            loadout.Power += power;
+            loadout.ItemCount++;
+
+            var slotName = pair.Key >= 0 && pair.Key < Options.Instance.Equipment.Slots.Count
+                ? Options.Instance.Equipment.Slots[pair.Key]
+                : $"Slot {pair.Key}";
+
+            summary.Add($"{slotName}: {Text(item, "Name", "Unnamed Item")} (power {power:0.0})");
+
+            if (pair.Key == Options.Instance.Equipment.WeaponSlot)
+            {
+                loadout.Weapon = item;
+            }
+        }
+
+        loadout.Summary = summary.Count == 0
+            ? "No matching equipment found."
+            : string.Join("\r\n", summary);
+
+        return loadout;
+    }
+
+    private static double CalculateEquipmentPower(object item)
+    {
+        var statTotal = 0d;
+        var percentageStats = 0d;
+
+        for (var i = 0; i < 5; i++)
+        {
+            statTotal += Math.Abs(Indexed(item, "StatsGiven", i));
+            percentageStats += Math.Abs(Indexed(item, "PercentageStatsGiven", i));
+        }
+
+        var hp = Math.Abs(Indexed(item, "VitalsGiven", 0));
+        var mp = Math.Abs(Indexed(item, "VitalsGiven", 1));
+        var hpPercent = Math.Abs(Indexed(item, "PercentageVitalsGiven", 0));
+        var mpPercent = Math.Abs(Indexed(item, "PercentageVitalsGiven", 1));
+        var damage = Math.Abs(Number(item, "Damage"));
+        var crit = Math.Abs(Number(item, "CritChance"));
+        var block = Math.Abs(Number(item, "BlockChance"));
+        var scaling = Math.Abs(Number(item, "Scaling"));
+
+        return Math.Max(
+            0.01,
+            statTotal +
+            percentageStats * 2.0 +
+            hp * 0.08 +
+            mp * 0.035 +
+            hpPercent * 1.8 +
+            mpPercent * 0.8 +
+            damage * 1.8 +
+            crit * 1.2 +
+            block * 1.0 +
+            scaling * 0.8
+        );
+    }
+
+    private static SpellRotationSnapshot EstimateSpellRotation(
+        object playerClass,
+        int level,
+        double[] stats,
+        double[] npcStats,
+        double playerMana,
+        double manaRegenPerSecond,
+        bool includeSpells,
+        double sustainWindowSeconds
+    )
+    {
+        var result = new SpellRotationSnapshot();
+        if (!includeSpells)
+        {
+            return result;
+        }
+
+        if (Property(playerClass, "Spells") is not IEnumerable classSpells)
+        {
+            result.Summary = "No class spell list found.";
+            return result;
+        }
+
+        var spellRows = new List<(string Name, double Dps, double ManaPerSecond, double Occupancy)>();
+
+        foreach (var classSpell in classSpells)
+        {
+            if (classSpell == null || Number(classSpell, "Level") > level)
+            {
+                continue;
+            }
+
+            var spellId = GuidValue(classSpell, "Id");
+            if (spellId == Guid.Empty ||
+                !SpellDescriptor.Lookup.TryGetValue(spellId, out var spell) ||
+                spell == null ||
+                (SpellType)(int)Number(spell, "SpellType") != SpellType.CombatSpell)
+            {
+                continue;
+            }
+
+            var combat = Property(spell, "Combat");
+            if (combat == null ||
+                Convert.ToBoolean(Property(combat, "Friendly") ?? false))
+            {
+                continue;
+            }
+
+            var baseDamage = Math.Max(0d, Indexed(combat, "VitalDiff", 0));
+            if (baseDamage <= 0)
+            {
+                continue;
+            }
+
+            var scalingStat = Math.Clamp((int)Number(combat, "ScalingStat"), 0, stats.Length - 1);
+            var hitDamage = AverageDamage(
+                baseDamage,
+                (DamageType)(int)Number(combat, "DamageType"),
+                stats[scalingStat],
+                (int)Number(combat, "Scaling"),
+                Math.Clamp(Number(combat, "CritChance"), 0d, 100d),
+                Math.Max(1d, Number(combat, "CritMultiplier")),
+                npcStats[(int)Stat.Defense],
+                npcStats[(int)Stat.MagicResist]
+            );
+
+            var totalDamage = hitDamage;
+            if (Convert.ToBoolean(Property(combat, "HoTDoT") ?? false))
+            {
+                var duration = Math.Max(0d, Number(combat, "Duration"));
+                var interval = Math.Max(0d, Number(combat, "HotDotInterval"));
+                if (duration > 0 && interval > 0)
+                {
+                    var extraTicks = Math.Ceiling(duration / interval);
+                    totalDamage += hitDamage * extraTicks;
+                }
+            }
+
+            var castMs = Math.Max(0d, Number(spell, "CastDuration"));
+            var cooldownMs = Math.Max(0d, Number(spell, "CooldownDuration"));
+            var ignoresGlobal = Convert.ToBoolean(Property(spell, "IgnoreGlobalCooldown") ?? false);
+            var globalMs =
+                Options.Instance.Combat.EnableGlobalCooldowns && !ignoresGlobal
+                    ? Math.Max(0d, Options.Instance.Combat.GlobalCooldownDuration)
+                    : 0d;
+
+            var cycleMs = Math.Max(250d, castMs + Math.Max(cooldownMs, globalMs));
+            var castsPerSecond = 1000d / cycleMs;
+            var dps = totalDamage * castsPerSecond;
+            var manaCost = Math.Max(0d, Indexed(spell, "VitalCost", 1));
+            var manaPerSecond = manaCost * castsPerSecond;
+            var occupancy = Math.Clamp(castMs / cycleMs, 0d, 1d);
+
+            spellRows.Add(
+                (
+                    Text(spell, "Name", "Unnamed Spell"),
+                    dps,
+                    manaPerSecond,
+                    occupancy
+                )
+            );
+        }
+
+        if (spellRows.Count == 0)
+        {
+            result.Summary = "No damaging class spells are learned at this level.";
+            return result;
+        }
+
+        var rawDps = spellRows.Sum(row => row.Dps);
+        var rawManaPerSecond = spellRows.Sum(row => row.ManaPerSecond);
+        var rawOccupancy = spellRows.Sum(row => row.Occupancy);
+
+        var occupancyScale = rawOccupancy > 0.85d
+            ? 0.85d / rawOccupancy
+            : 1d;
+
+        rawDps *= occupancyScale;
+        rawManaPerSecond *= occupancyScale;
+        rawOccupancy *= occupancyScale;
+
+        var window = Math.Max(1d, sustainWindowSeconds);
+        var sustainableManaPerSecond =
+            playerMana / window + Math.Max(0d, manaRegenPerSecond);
+
+        var manaScale =
+            rawManaPerSecond > 0.0001 && rawManaPerSecond > sustainableManaPerSecond
+                ? Math.Clamp(sustainableManaPerSecond / rawManaPerSecond, 0d, 1d)
+                : 1d;
+
+        result.Dps = rawDps * manaScale;
+        result.ManaPerSecond = rawManaPerSecond * manaScale;
+        result.CastOccupancy = Math.Clamp(rawOccupancy * manaScale, 0d, 0.85d);
+        result.SpellCount = spellRows.Count;
+
+        var top = spellRows
+            .OrderByDescending(row => row.Dps)
+            .Take(5)
+            .Select(row => $"{row.Name}: {row.Dps * occupancyScale * manaScale:0.0} DPS")
+            .ToArray();
+
+        result.Summary =
+            $"Learned damaging spells: {spellRows.Count}\r\n" +
+            $"Spell DPS: {result.Dps:0.0}\r\n" +
+            $"Mana use: {result.ManaPerSecond:0.0}/sec\r\n" +
+            $"Mana sustain budget: {sustainableManaPerSecond:0.0}/sec over {window:0.0}s\r\n" +
+            $"Casting occupancy: {result.CastOccupancy * 100d:0.0}%\r\n" +
+            (manaScale < 0.999
+                ? $"Mana-limited rotation scale: {manaScale * 100d:0.0}%\r\n"
+                : string.Empty) +
+            string.Join("\r\n", top);
+
+        return result;
+    }
+
+    private static double CalculateManaRegenPerSecond(
+        object playerClass,
+        double playerMana,
+        double equipmentManaRegen
+    )
+    {
+        if (!Options.Instance.Combat.RegenVitalsInCombat)
+        {
+            return 0d;
+        }
+
+        var regenRate = Indexed(playerClass, "VitalRegen", 1) + equipmentManaRegen;
+        if (Math.Abs(regenRate) < 0.0001)
+        {
+            return 0d;
+        }
+
+        var regenIntervalSeconds = Math.Max(0.1d, Options.Instance.Combat.RegenTime / 1000d);
+        var regenPerTick =
+            Math.Max(1d, playerMana * Math.Abs(regenRate) / 100d) *
+            Math.Sign(regenRate);
+
+        return regenPerTick / regenIntervalSeconds;
+    }
+
+    private static double CalculatePlayerAttackTimeMs(
+        double speed,
+        object playerClass,
+        object? weapon
+    )
+    {
+        var attackTime = CalculateBaseAttackTimeMs(speed);
+
+        if ((int)Number(playerClass, "AttackSpeedModifier") == 1 &&
+            Number(playerClass, "AttackSpeedValue") > 0)
+        {
+            attackTime = Number(playerClass, "AttackSpeedValue");
+        }
+
+        if (weapon != null)
+        {
+            var weaponModifier = (int)Number(weapon, "AttackSpeedModifier");
+            var weaponValue = Number(weapon, "AttackSpeedValue");
+
+            if (weaponModifier == 1 && weaponValue > 0)
+            {
+                attackTime = weaponValue;
+            }
+            else if (weaponModifier == 2 && weaponValue > 0)
+            {
+                attackTime *= 100d / weaponValue;
+            }
+        }
+
+        return Math.Max(50d, attackTime - 60d);
+    }
+
+    private static double CalculateBaseAttackTimeMs(double speed)
+    {
+        var maxStat = Math.Max(1d, Options.Instance.Player.MaxStat);
+        var clampedSpeed = Math.Clamp(speed, 0d, maxStat);
+
+        return
+            Options.Instance.Combat.MaxAttackRate +
+            (Options.Instance.Combat.MinAttackRate - Options.Instance.Combat.MaxAttackRate) *
+            ((maxStat - clampedSpeed) / maxStat);
+    }
+
+    private static double ScaleByLevel(
+        double baseValue,
+        double increase,
+        bool percentageIncrease,
+        int level
+    )
+    {
+        var safeLevel = Math.Max(1, level);
+        if (percentageIncrease)
+        {
+            return baseValue * Math.Pow(1d + increase / 100d, safeLevel - 1);
+        }
+
+        return baseValue + increase * (safeLevel - 1);
+    }
+
+    private static double AverageDamage(
+        double baseDamage,
+        DamageType damageType,
+        double scalingStat,
+        int scaling,
+        double critChance,
+        double critMultiplier,
+        double victimDefense,
+        double victimMagicResist
+    )
+    {
+        var scaled = baseDamage + scalingStat * scaling / 100d;
+
+        // The default Intersect formula randomizes each hit from 97.5%-102.5%.
+        // Its expected value is 100%, so the Balance Lab uses the mean.
+        var averageCritMultiplier =
+            1d + Math.Clamp(critChance, 0d, 100d) / 100d * (Math.Max(1d, critMultiplier) - 1d);
+
+        var raw = Math.Max(0d, scaled * averageCritMultiplier);
+        return damageType switch
+        {
+            DamageType.Physical => raw * (100d / (100d + Math.Max(0d, victimDefense))),
+            DamageType.Magic => raw * (100d / (100d + Math.Max(0d, victimMagicResist))),
+            _ => raw,
+        };
+    }
+
+    private static double CalculateAttackTimeMs(
+        double speed,
+        int attackSpeedModifier,
+        int attackSpeedValue,
+        bool subtractPingAllowance
+    )
+    {
+        var attackTime = CalculateBaseAttackTimeMs(speed);
+
+        if (attackSpeedModifier == 1 && attackSpeedValue > 0)
+        {
+            attackTime = attackSpeedValue;
+        }
+
+        if (subtractPingAllowance)
+        {
+            attackTime -= 60d;
+        }
+
+        return Math.Max(50d, attackTime);
+    }
+
+    private void RunAnalysis()
+    {
+        _entries.Clear();
+
+        AnalyzeNpcs();
+        AnalyzeItems();
+        AnalyzeSpells();
+        AnalyzeResources();
+        AnalyzeClasses();
+
+        ApplyBaselinesAndSeverity();
+        RunCombatSimulation();
+        RefreshGrid();
+    }
+
+    private void AnalyzeNpcs()
+    {
+        foreach (var pair in NPCDescriptor.Lookup)
+        {
+            var npc = pair.Value;
+            if (npc == null)
+            {
+                continue;
+            }
+
+            var level = Math.Max(1d, Number(npc, "Level"));
+            var hp = Math.Max(1d, Indexed(npc, "MaxVitals", 0));
+            var mana = Math.Max(0d, Indexed(npc, "MaxVitals", 1));
+            var attack = Math.Max(0d, Indexed(npc, "Stats", 0));
+            var ap = Math.Max(0d, Indexed(npc, "Stats", 1));
+            var defense = Math.Max(0d, Indexed(npc, "Stats", 2));
+            var mr = Math.Max(0d, Indexed(npc, "Stats", 3));
+            var speed = Math.Max(0d, Indexed(npc, "Stats", 4));
+            var damage = Math.Max(0d, Number(npc, "Damage"));
+            var exp = Math.Max(0d, Number(npc, "Experience"));
+            var crit = Math.Max(0d, Number(npc, "CritChance"));
+
+            var offense = damage * 2.0 + attack * 0.75 + ap * 0.65 + speed * 0.20 + crit * 0.30;
+            var durability = hp * (1d + (defense + mr) / 220d);
+            var power = Math.Max(1d, Math.Sqrt(durability) * Math.Max(1d, offense));
+
+            _entries.Add(
+                new BalanceEntry
+                {
+                    Kind = BalanceObjectKind.Npc,
+                    Id = pair.Key,
+                    Name = Text(npc, "Name", "Unnamed NPC"),
+                    Group = $"{(Convert.ToBoolean(Property(npc, "IsBoss") ?? false) ? "Boss " : "")}Lv {level:0}",
+                    Power = power,
+                    Reward = exp,
+                    Metrics =
+                        $"Level: {level:0}\r\n" +
+                        $"Boss: {(Convert.ToBoolean(Property(npc, "IsBoss") ?? false) ? "Yes" : "No")}\r\n" +
+                        $"HP / MP: {hp:0} / {mana:0}\r\n" +
+                        $"Attack / AP: {attack:0} / {ap:0}\r\n" +
+                        $"Defense / MR: {defense:0} / {mr:0}\r\n" +
+                        $"Speed: {speed:0}\r\n" +
+                        $"Base damage: {damage:0}\r\n" +
+                        $"Crit chance: {crit:0.##}\r\n" +
+                        $"EXP reward: {exp:0}\r\n" +
+                        $"Relative combat power: {power:0.0}",
+                }
+            );
+        }
+    }
+
+    private void AnalyzeItems()
+    {
+        foreach (var pair in ItemDescriptor.Lookup)
+        {
+            var item = pair.Value;
+            if (item == null)
+            {
+                continue;
+            }
+
+            var itemType = (int)Number(item, "ItemType");
+            var slot = (int)Number(item, "EquipmentSlot");
+            var rarity = (int)Number(item, "Rarity");
+
+            var attack = Indexed(item, "StatsGiven", 0);
+            var ap = Indexed(item, "StatsGiven", 1);
+            var defense = Indexed(item, "StatsGiven", 2);
+            var mr = Indexed(item, "StatsGiven", 3);
+            var speed = Indexed(item, "StatsGiven", 4);
+
+            var percentageStats = 0d;
+            for (var i = 0; i < 5; i++)
+            {
+                percentageStats += Math.Abs(Indexed(item, "PercentageStatsGiven", i));
+            }
+
+            var hp = Math.Abs(Indexed(item, "VitalsGiven", 0));
+            var mp = Math.Abs(Indexed(item, "VitalsGiven", 1));
+            var hpPercent = Math.Abs(Indexed(item, "PercentageVitalsGiven", 0));
+            var mpPercent = Math.Abs(Indexed(item, "PercentageVitalsGiven", 1));
+            var damage = Math.Abs(Number(item, "Damage"));
+            var crit = Math.Abs(Number(item, "CritChance"));
+            var block = Math.Abs(Number(item, "BlockChance"));
+            var scaling = Math.Abs(Number(item, "Scaling"));
+            var price = Math.Max(0d, Number(item, "Price"));
+
+            var statTotal =
+                Math.Abs(attack) +
+                Math.Abs(ap) +
+                Math.Abs(defense) +
+                Math.Abs(mr) +
+                Math.Abs(speed);
+
+            var power =
+                statTotal +
+                percentageStats * 2.0 +
+                hp * 0.08 +
+                mp * 0.035 +
+                hpPercent * 1.8 +
+                mpPercent * 0.8 +
+                damage * 1.8 +
+                crit * 1.2 +
+                block * 1.0 +
+                scaling * 0.8;
+
+            // Keep non-equipment items visible, but prevent zero-power consumables
+            // from dominating the median of actual equipment.
+            power = Math.Max(0.01, power);
+
+            var group = itemType == 1
+                ? $"Equip slot {slot} / R{rarity}"
+                : $"Type {itemType} / R{rarity}";
+
+            _entries.Add(
+                new BalanceEntry
+                {
+                    Kind = BalanceObjectKind.Item,
+                    Id = pair.Key,
+                    Name = Text(item, "Name", "Unnamed Item"),
+                    Group = group,
+                    Power = power,
+                    Reward = price,
+                    Metrics =
+                        $"Item type: {itemType}\r\n" +
+                        $"Equipment slot: {slot}\r\n" +
+                        $"Rarity: {rarity}\r\n" +
+                        $"Flat stats total: {statTotal:0.##}\r\n" +
+                        $"Percent stats total: {percentageStats:0.##}%\r\n" +
+                        $"HP / MP bonus: {hp:0.##} / {mp:0.##}\r\n" +
+                        $"Damage: {damage:0.##}\r\n" +
+                        $"Crit / Block: {crit:0.##} / {block:0.##}\r\n" +
+                        $"Price: {price:0}\r\n" +
+                        $"Estimated item power: {power:0.0}",
+                }
+            );
+        }
+    }
+
+    private void AnalyzeSpells()
+    {
+        foreach (var pair in SpellDescriptor.Lookup)
+        {
+            var spell = pair.Value;
+            if (spell == null)
+            {
+                continue;
+            }
+
+            var spellType = (int)Number(spell, "SpellType");
+            var castMs = Math.Max(0d, Number(spell, "CastDuration"));
+            var cooldownMs = Math.Max(0d, Number(spell, "CooldownDuration"));
+            var hpCost = Math.Abs(Indexed(spell, "VitalCost", 0));
+            var mpCost = Math.Abs(Indexed(spell, "VitalCost", 1));
+
+            var combat = Property(spell, "Combat");
+            var hpMagnitude = combat == null ? 0d : Math.Abs(Indexed(combat, "VitalDiff", 0));
+            var mpMagnitude = combat == null ? 0d : Math.Abs(Indexed(combat, "VitalDiff", 1));
+            var scaling = combat == null ? 0d : Math.Abs(Number(combat, "Scaling"));
+
+            var cycleSeconds = Math.Max(0.25, (castMs + cooldownMs) / 1000d);
+            var throughput = (hpMagnitude + mpMagnitude * 0.35 + scaling * 0.5) / cycleSeconds;
+            var efficiencyPenalty = 1d + hpCost * 0.02 + mpCost * 0.01;
+            var power = Math.Max(0.01, throughput / efficiencyPenalty);
+
+            _entries.Add(
+                new BalanceEntry
+                {
+                    Kind = BalanceObjectKind.Spell,
+                    Id = pair.Key,
+                    Name = Text(spell, "Name", "Unnamed Spell"),
+                    Group = $"Type {spellType}",
+                    Power = power,
+                    Reward = 0,
+                    Metrics =
+                        $"Spell type: {spellType}\r\n" +
+                        $"Cast time: {castMs:0} ms\r\n" +
+                        $"Cooldown: {cooldownMs:0} ms\r\n" +
+                        $"HP / MP cost: {hpCost:0.##} / {mpCost:0.##}\r\n" +
+                        $"Combat HP magnitude: {hpMagnitude:0.##}\r\n" +
+                        $"Combat MP magnitude: {mpMagnitude:0.##}\r\n" +
+                        $"Scaling: {scaling:0.##}\r\n" +
+                        $"Estimated throughput score: {power:0.0}",
+                }
+            );
+        }
+    }
+
+    private void AnalyzeResources()
+    {
+        foreach (var pair in ResourceDescriptor.Lookup)
+        {
+            var resource = pair.Value;
+            if (resource == null)
+            {
+                continue;
+            }
+
+            var minHp = Math.Max(0d, Number(resource, "MinHp"));
+            var maxHp = Math.Max(minHp, Number(resource, "MaxHp"));
+            var averageHp = (minHp + maxHp) / 2d;
+            var spawn = Math.Max(0d, Number(resource, "SpawnDuration"));
+            var regen = Math.Max(0d, Number(resource, "VitalRegen"));
+
+            var drops = Property(resource, "Drops") as IEnumerable;
+            var expectedDropUnits = 0d;
+            if (drops != null)
+            {
+                foreach (var drop in drops)
+                {
+                    if (drop == null)
+                    {
+                        continue;
+                    }
+
+                    var min = Math.Max(0d, Number(drop, "MinQuantity"));
+                    var max = Math.Max(min, Number(drop, "MaxQuantity"));
+                    var chance = Math.Max(0d, Number(drop, "Chance"));
+                    if (chance > 1d)
+                    {
+                        chance /= 100d;
+                    }
+
+                    expectedDropUnits += ((min + max) / 2d) * Math.Min(1d, chance);
+                }
+            }
+
+            var effort =
+                Math.Max(0.01, averageHp + regen * 10d + spawn / 1000d * 2d);
+
+            _entries.Add(
+                new BalanceEntry
+                {
+                    Kind = BalanceObjectKind.Resource,
+                    Id = pair.Key,
+                    Name = Text(resource, "Name", "Unnamed Resource"),
+                    Group = $"Tool {(int)Number(resource, "Tool")}",
+                    Power = effort,
+                    Reward = expectedDropUnits,
+                    Metrics =
+                        $"HP range: {minHp:0} - {maxHp:0}\r\n" +
+                        $"Average HP: {averageHp:0.0}\r\n" +
+                        $"Respawn: {spawn:0}\r\n" +
+                        $"Regen: {regen:0.##}\r\n" +
+                        $"Expected drop units: {expectedDropUnits:0.##}\r\n" +
+                        $"Estimated harvest effort: {effort:0.0}",
+                }
+            );
+        }
+    }
+
+    private void AnalyzeClasses()
+    {
+        foreach (var pair in ClassDescriptor.Lookup)
+        {
+            var playerClass = pair.Value;
+            if (playerClass == null)
+            {
+                continue;
+            }
+
+            var attack = Math.Max(0d, Indexed(playerClass, "BaseStat", 0));
+            var ap = Math.Max(0d, Indexed(playerClass, "BaseStat", 1));
+            var defense = Math.Max(0d, Indexed(playerClass, "BaseStat", 2));
+            var mr = Math.Max(0d, Indexed(playerClass, "BaseStat", 3));
+            var speed = Math.Max(0d, Indexed(playerClass, "BaseStat", 4));
+            var hp = Math.Max(1d, Indexed(playerClass, "BaseVital", 0));
+            var mp = Math.Max(0d, Indexed(playerClass, "BaseVital", 1));
+            var damage = Math.Max(0d, Number(playerClass, "Damage"));
+            var scaling = Math.Max(0d, Number(playerClass, "Scaling"));
+
+            var statGrowth = 0d;
+            for (var i = 0; i < 5; i++)
+            {
+                statGrowth += Math.Abs(Indexed(playerClass, "StatIncrease", i));
+            }
+
+            var vitalGrowth =
+                Math.Abs(Indexed(playerClass, "VitalIncrease", 0)) * 0.08 +
+                Math.Abs(Indexed(playerClass, "VitalIncrease", 1)) * 0.035;
+
+            var baseStats = attack + ap + defense + mr + speed;
+            var power =
+                baseStats +
+                hp * 0.08 +
+                mp * 0.035 +
+                damage * 2.0 +
+                scaling +
+                statGrowth * 4.0 +
+                vitalGrowth;
+
+            _entries.Add(
+                new BalanceEntry
+                {
+                    Kind = BalanceObjectKind.PlayerClass,
+                    Id = pair.Key,
+                    Name = Text(playerClass, "Name", "Unnamed Class"),
+                    Group = "Player Classes",
+                    Power = Math.Max(0.01, power),
+                    Reward = Math.Max(0d, Number(playerClass, "BaseExp")),
+                    Metrics =
+                        $"Base Attack / AP: {attack:0} / {ap:0}\r\n" +
+                        $"Base Defense / MR: {defense:0} / {mr:0}\r\n" +
+                        $"Base Speed: {speed:0}\r\n" +
+                        $"Base HP / MP: {hp:0} / {mp:0}\r\n" +
+                        $"Base damage: {damage:0.##}\r\n" +
+                        $"Scaling: {scaling:0.##}\r\n" +
+                        $"Stat growth total: {statGrowth:0.##}\r\n" +
+                        $"Relative class power: {power:0.0}",
+                }
+            );
+        }
+    }
+
+    private void ApplyBaselinesAndSeverity()
+    {
+        var warning = (double)_warningThreshold.Value;
+        var critical = (double)_criticalThreshold.Value;
+
+        foreach (var entry in _entries)
+        {
+            var peers = _entries
+                .Where(other =>
+                    other.Kind == entry.Kind &&
+                    string.Equals(other.Group, entry.Group, StringComparison.OrdinalIgnoreCase))
+                .Select(other => other.Power)
+                .Where(value => value > 0)
+                .ToArray();
+
+            if (peers.Length < 3)
+            {
+                peers = _entries
+                    .Where(other => other.Kind == entry.Kind)
+                    .Select(other => other.Power)
+                    .Where(value => value > 0)
+                    .ToArray();
+            }
+
+            entry.Baseline = Median(peers);
+            var deviation = Math.Abs(entry.DeviationPercent);
+
+            entry.Severity = deviation >= critical
+                ? "CRITICAL"
+                : deviation >= warning
+                    ? "WARNING"
+                    : "OK";
+
+            if (entry.Baseline <= 0)
+            {
+                entry.Suggestion = "Not enough comparable data to build a baseline.";
+            }
+            else if (entry.Severity == "OK")
+            {
+                entry.Suggestion =
+                    "This entry is inside the selected tolerance compared with similar game objects.";
+            }
+            else
+            {
+                var direction = entry.DeviationPercent > 0 ? "above" : "below";
+                var targetFactor = entry.Power <= 0 ? 1d : entry.Baseline / entry.Power;
+
+                entry.Suggestion =
+                    $"Relative power is {Math.Abs(entry.DeviationPercent):0.0}% {direction} its peer baseline.\r\n\r\n" +
+                    $"A first-pass rebalance would move its combined power toward about " +
+                    $"{targetFactor * 100d:0}% of the current value.\r\n\r\n" +
+                    "Do not apply this as a blind multiplier. Open the source editor and decide " +
+                    "which stats are intended to define this object (HP, damage, defense, cooldown, rewards, etc.).";
+            }
+
+            if (entry.Kind == BalanceObjectKind.Npc && entry.Reward > 0 && entry.Power > 0)
+            {
+                var rewardEfficiency = entry.Reward / entry.Power;
+                var peerEfficiencies = _entries
+                    .Where(other =>
+                        other.Kind == BalanceObjectKind.Npc &&
+                        string.Equals(other.Group, entry.Group, StringComparison.OrdinalIgnoreCase) &&
+                        other.Reward > 0 &&
+                        other.Power > 0)
+                    .Select(other => other.Reward / other.Power)
+                    .ToArray();
+
+                var rewardBaseline = Median(peerEfficiencies);
+                if (rewardBaseline > 0)
+                {
+                    var rewardDeviation = (rewardEfficiency / rewardBaseline - 1d) * 100d;
+                    if (Math.Abs(rewardDeviation) >= warning)
+                    {
+                        entry.Suggestion +=
+                            $"\r\n\r\nReward check: EXP per combat-power is {Math.Abs(rewardDeviation):0.0}% " +
+                            $"{(rewardDeviation > 0 ? "above" : "below")} same-level peers.";
+                    }
+                }
+            }
+        }
+    }
+
+    private void RefreshGrid()
+    {
+        var selectedScope = _scope.SelectedItem?.ToString() ?? "Overview";
+
+        IEnumerable<BalanceEntry> visible = _entries;
+        visible = selectedScope switch
+        {
+            "NPCs" => visible.Where(entry => entry.Kind == BalanceObjectKind.Npc),
+            "Combat Simulation" => visible.Where(entry =>
+                entry.Kind == BalanceObjectKind.Npc &&
+                !string.IsNullOrWhiteSpace(entry.SimulationStatus)),
+            "Equipment / Items" => visible.Where(entry => entry.Kind == BalanceObjectKind.Item),
+            "Spells" => visible.Where(entry => entry.Kind == BalanceObjectKind.Spell),
+            "Resources" => visible.Where(entry => entry.Kind == BalanceObjectKind.Resource),
+            "Classes" => visible.Where(entry => entry.Kind == BalanceObjectKind.PlayerClass),
+            _ => visible.Where(entry => entry.Severity != "OK"),
+        };
+
+        visible = selectedScope == "Combat Simulation"
+            ? visible
+                .OrderBy(entry => entry.SimulationStatus == "TOO HARD" ? 0 :
+                                  entry.SimulationStatus == "TOO EASY" ? 1 : 2)
+                .ThenByDescending(entry =>
+                    Math.Abs((entry.SimulationHpLoss ?? 0d) - (double)_targetHpLoss.Value))
+                .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+            : visible
+                .OrderBy(entry => entry.Severity == "CRITICAL" ? 0 : entry.Severity == "WARNING" ? 1 : 2)
+                .ThenByDescending(entry => Math.Abs(entry.DeviationPercent))
+                .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase);
+
+        _grid.Rows.Clear();
+
+        foreach (var entry in visible)
+        {
+            var rowIndex = _grid.Rows.Add(
+                KindLabel(entry.Kind),
+                entry.Name,
+                entry.Group,
+                entry.Power.ToString("0.0"),
+                entry.Baseline.ToString("0.0"),
+                $"{entry.DeviationPercent:+0.0;-0.0;0.0}%",
+                entry.Severity,
+                entry.SimulationTtk.HasValue ? $"{entry.SimulationTtk.Value:0.00}s" : "",
+                entry.SimulationHpLoss.HasValue ? $"{entry.SimulationHpLoss.Value:0.0}%" : "",
+                entry.SimulationStatus
+            );
+
+            var row = _grid.Rows[rowIndex];
+            row.Tag = entry;
+
+            if (entry.Severity == "CRITICAL")
+            {
+                row.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(255, 135, 135);
+            }
+            else if (entry.Severity == "WARNING")
+            {
+                row.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(255, 205, 120);
+            }
+
+            if (selectedScope == "Combat Simulation")
+            {
+                row.DefaultCellStyle.ForeColor = entry.SimulationStatus switch
+                {
+                    "TOO HARD" => System.Drawing.Color.FromArgb(255, 135, 135),
+                    "TOO EASY" => System.Drawing.Color.FromArgb(130, 190, 255),
+                    _ => System.Drawing.Color.FromArgb(155, 225, 165),
+                };
+            }
+        }
+
+        var critical = _entries.Count(entry => entry.Severity == "CRITICAL");
+        var warnings = _entries.Count(entry => entry.Severity == "WARNING");
+        var ok = _entries.Count(entry => entry.Severity == "OK");
+
+        var simHard = _entries.Count(entry => entry.SimulationStatus == "TOO HARD");
+        var simEasy = _entries.Count(entry => entry.SimulationStatus == "TOO EASY");
+        var simTarget = _entries.Count(entry => entry.SimulationStatus == "TARGET");
+
+        _summary.Text =
+            $"Analyzed {_entries.Count:N0} objects - OK: {ok:N0}   Warning: {warnings:N0}   Critical: {critical:N0}" +
+            $"   |   Simulation: Target {simTarget:N0} / Hard {simHard:N0} / Easy {simEasy:N0}";
+
+        if (_grid.Rows.Count > 0)
+        {
+            _grid.Rows[0].Selected = true;
+        }
+        else
+        {
+            _details.Clear();
+        }
+    }
+
+    private void ShowSelectedDetails()
+    {
+        if (_grid.SelectedRows.Count == 0 ||
+            _grid.SelectedRows[0].Tag is not BalanceEntry entry)
+        {
+            _details.Clear();
+            return;
+        }
+
+        _details.Text =
+            $"{KindLabel(entry.Kind)}\r\n" +
+            $"{entry.Name}\r\n" +
+            $"{new string('=', Math.Min(42, Math.Max(8, entry.Name.Length)))}\r\n\r\n" +
+            $"Peer group: {entry.Group}\r\n" +
+            $"Status: {entry.Severity}\r\n" +
+            $"Power score: {entry.Power:0.0}\r\n" +
+            $"Peer baseline: {entry.Baseline:0.0}\r\n" +
+            $"Deviation: {entry.DeviationPercent:+0.0;-0.0;0.0}%\r\n\r\n" +
+            $"{entry.Metrics}\r\n\r\n" +
+            (entry.SimulationTtk.HasValue
+                ? $"COMBAT SIMULATION\r\n" +
+                  $"-----------------\r\n" +
+                  $"Status: {entry.SimulationStatus}\r\n" +
+                  $"{entry.SimulationNotes}\r\n\r\n"
+                : string.Empty) +
+            $"SUGGESTION\r\n" +
+            $"----------\r\n" +
+            entry.Suggestion;
+    }
+
+    private void ShowBatchSuggestions()
+    {
+        var scope = _scope.SelectedItem?.ToString() ?? "Overview";
+        var kind = scope switch
+        {
+            "NPCs" => BalanceObjectKind.Npc,
+            "Combat Simulation" => BalanceObjectKind.Npc,
+            "Equipment / Items" => BalanceObjectKind.Item,
+            "Spells" => BalanceObjectKind.Spell,
+            "Resources" => BalanceObjectKind.Resource,
+            "Classes" => BalanceObjectKind.PlayerClass,
+            _ => _grid.SelectedRows.Count > 0 &&
+                 _grid.SelectedRows[0].Tag is BalanceEntry selectedEntry
+                ? selectedEntry.Kind
+                : BalanceObjectKind.Npc,
+        };
+
+        if (kind == BalanceObjectKind.Npc)
+        {
+            ShowNpcBatchSuggestions();
+            return;
+        }
+
+        ShowGenericBatchSuggestions(kind);
+    }
+
+    private void ShowGenericBatchSuggestions(BalanceObjectKind kind)
+    {
+        // Refresh peer baselines immediately before generating batch values.
+        RunAnalysis();
+
+        var suggestions = BuildGenericBatchSuggestions(kind);
+        if (suggestions.Count == 0)
+        {
+            MessageBox.Show(
+                this,
+                $"No {KindLabel(kind).ToLowerInvariant()} entries are outside the selected balance tolerance.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        using var form = new GenericBatchSuggestionForm(kind, suggestions);
+        if (form.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        if (!form.ApplyA && !form.ApplyB && !form.ApplyC)
+        {
+            MessageBox.Show(
+                this,
+                "Select at least one field group to apply.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        if (Globals.CurrentEditor != -1)
+        {
+            MessageBox.Show(
+                this,
+                "Close the currently open content editor before applying a balance batch. " +
+                "This prevents the batch from overwriting unsaved editor changes.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+            );
+            return;
+        }
+
+        var selected = form.SelectedSuggestions;
+        if (selected.Count == 0)
+        {
+            return;
+        }
+
+        var confirmation = MessageBox.Show(
+            this,
+            $"Apply reviewed balance suggestions to {selected.Count:N0} {KindLabel(kind).ToLowerInvariant()} object(s)?\n\n" +
+            "Only the checked field groups will be changed. Current values are stored in the in-session undo stack.",
+            "Apply Balance Batch",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning
+        );
+
+        if (confirmation != DialogResult.Yes)
+        {
+            return;
+        }
+
+        var history = new BalanceBatchHistory
+        {
+            GenericKind = kind,
+        };
+
+        Cursor = Cursors.WaitCursor;
+        try
+        {
+            foreach (var suggestion in selected)
+            {
+                switch (kind)
+                {
+                    case BalanceObjectKind.Item:
+                        ApplyItemBatchSuggestion(suggestion, form, history);
+                        break;
+                    case BalanceObjectKind.Spell:
+                        ApplySpellBatchSuggestion(suggestion, form, history);
+                        break;
+                    case BalanceObjectKind.Resource:
+                        ApplyResourceBatchSuggestion(suggestion, form, history);
+                        break;
+                    case BalanceObjectKind.PlayerClass:
+                        ApplyClassBatchSuggestion(suggestion, form, history);
+                        break;
+                }
+            }
+
+            if (GetHistoryEntryCount(history) > 0)
+            {
+                _batchHistory.Push(history);
+            }
+        }
+        finally
+        {
+            Cursor = Cursors.Default;
+        }
+
+        UpdateUndoBatchButton();
+        RunAnalysis();
+
+        MessageBox.Show(
+            this,
+            $"Applied balance changes to {GetHistoryEntryCount(history):N0} {KindLabel(kind).ToLowerInvariant()} object(s).\n\n" +
+            "Use UNDO LAST BATCH to restore the previous values.",
+            "Game Balance Lab",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information
+        );
+    }
+
+    private List<GenericBatchSuggestion> BuildGenericBatchSuggestions(BalanceObjectKind kind)
+    {
+        var suggestions = new List<GenericBatchSuggestion>();
+
+        foreach (var entry in _entries.Where(entry =>
+                     entry.Kind == kind &&
+                     entry.Severity != "OK" &&
+                     entry.Baseline > 0.0001 &&
+                     entry.Power > 0.0001))
+        {
+            // One batch intentionally cannot move an object by more than 50%.
+            // This keeps outliers reviewable instead of flattening identities in
+            // a single click. Re-running the analyzer can perform another pass.
+            var factor = Math.Clamp(entry.Baseline / entry.Power, 0.50d, 1.50d);
+            var status = entry.Power > entry.Baseline ? "OVER" : "UNDER";
+
+            suggestions.Add(
+                new GenericBatchSuggestion
+                {
+                    Kind = kind,
+                    Id = entry.Id,
+                    Name = entry.Name,
+                    Group = entry.Group,
+                    Status = status,
+                    CurrentPower = entry.Power,
+                    TargetPower = entry.Baseline,
+                    Factor = factor,
+                    Reason =
+                        $"{Math.Abs(entry.DeviationPercent):0.0}% " +
+                        $"{(status == "OVER" ? "above" : "below")} peer baseline. " +
+                        $"This pass proposes {factor * 100d:0}% of current tunable values.",
+                }
+            );
+        }
+
+        return suggestions;
+    }
+
+    private static int ScaleInt(int value, double factor)
+    {
+        var scaled = Math.Round(value * factor);
+        return (int)Math.Clamp(scaled, int.MinValue, int.MaxValue);
+    }
+
+    private static long ScaleLong(long value, double factor)
+    {
+        var scaled = Math.Round(value * factor);
+        return (long)Math.Clamp(scaled, long.MinValue, long.MaxValue);
+    }
+
+    private void ApplyItemBatchSuggestion(
+        GenericBatchSuggestion suggestion,
+        GenericBatchSuggestionForm form,
+        BalanceBatchHistory history
+    )
+    {
+        var item = ItemDescriptor.Get(suggestion.Id);
+        if (item == null)
+        {
+            return;
+        }
+
+        history.ItemEntries.Add(
+            new ItemBalanceSnapshot
+            {
+                Id = item.Id,
+                StatsGiven = item.StatsGiven.ToArray(),
+                PercentageStatsGiven = item.PercentageStatsGiven.ToArray(),
+                VitalsGiven = item.VitalsGiven.ToArray(),
+                PercentageVitalsGiven = item.PercentageVitalsGiven.ToArray(),
+                Damage = item.Damage,
+                CritChance = item.CritChance,
+                BlockChance = item.BlockChance,
+                Scaling = item.Scaling,
+                Price = item.Price,
+            }
+        );
+
+        var factor = suggestion.Factor;
+
+        if (form.ApplyA)
+        {
+            for (var i = 0; i < item.StatsGiven.Length; i++)
+            {
+                item.StatsGiven[i] = ScaleInt(item.StatsGiven[i], factor);
+            }
+
+            for (var i = 0; i < item.PercentageStatsGiven.Length; i++)
+            {
+                item.PercentageStatsGiven[i] = ScaleInt(item.PercentageStatsGiven[i], factor);
+            }
+
+            for (var i = 0; i < item.VitalsGiven.Length; i++)
+            {
+                item.VitalsGiven[i] = ScaleLong(item.VitalsGiven[i], factor);
+            }
+
+            for (var i = 0; i < item.PercentageVitalsGiven.Length; i++)
+            {
+                item.PercentageVitalsGiven[i] = ScaleInt(item.PercentageVitalsGiven[i], factor);
+            }
+        }
+
+        if (form.ApplyB)
+        {
+            item.Damage = Math.Max(0, ScaleInt(item.Damage, factor));
+            item.CritChance = Math.Clamp(ScaleInt(item.CritChance, factor), 0, 100);
+            item.BlockChance = Math.Clamp(ScaleInt(item.BlockChance, factor), 0, 100);
+            item.Scaling = Math.Max(0, ScaleInt(item.Scaling, factor));
+        }
+
+        if (form.ApplyC)
+        {
+            item.Price = Math.Max(0, ScaleInt(item.Price, factor));
+        }
+
+        PacketSender.SendSaveObject(item);
+    }
+
+    private void ApplySpellBatchSuggestion(
+        GenericBatchSuggestion suggestion,
+        GenericBatchSuggestionForm form,
+        BalanceBatchHistory history
+    )
+    {
+        var spell = SpellDescriptor.Get(suggestion.Id);
+        if (spell == null)
+        {
+            return;
+        }
+
+        history.SpellEntries.Add(
+            new SpellBalanceSnapshot
+            {
+                Id = spell.Id,
+                VitalDiff = spell.Combat.VitalDiff.ToArray(),
+                Scaling = spell.Combat.Scaling,
+                CritChance = spell.Combat.CritChance,
+                CooldownDuration = spell.CooldownDuration,
+                VitalCost = spell.VitalCost.ToArray(),
+            }
+        );
+
+        var factor = suggestion.Factor;
+
+        if (form.ApplyA)
+        {
+            for (var i = 0; i < spell.Combat.VitalDiff.Length; i++)
+            {
+                spell.Combat.VitalDiff[i] = ScaleLong(spell.Combat.VitalDiff[i], factor);
+            }
+
+            spell.Combat.Scaling = Math.Max(0, ScaleInt(spell.Combat.Scaling, factor));
+            spell.Combat.CritChance = Math.Clamp(
+                ScaleInt(spell.Combat.CritChance, factor),
+                0,
+                100
+            );
+        }
+
+        if (form.ApplyB)
+        {
+            var inverse = factor <= 0.0001 ? 1d : 1d / factor;
+            spell.CooldownDuration = Math.Max(
+                0,
+                ScaleInt(spell.CooldownDuration, inverse)
+            );
+        }
+
+        if (form.ApplyC)
+        {
+            var inverse = factor <= 0.0001 ? 1d : 1d / factor;
+            for (var i = 0; i < spell.VitalCost.Length; i++)
+            {
+                spell.VitalCost[i] = Math.Max(
+                    0L,
+                    ScaleLong(spell.VitalCost[i], inverse)
+                );
+            }
+        }
+
+        PacketSender.SendSaveObject(spell);
+    }
+
+    private void ApplyResourceBatchSuggestion(
+        GenericBatchSuggestion suggestion,
+        GenericBatchSuggestionForm form,
+        BalanceBatchHistory history
+    )
+    {
+        var resource = ResourceDescriptor.Get(suggestion.Id);
+        if (resource == null)
+        {
+            return;
+        }
+
+        history.ResourceEntries.Add(
+            new ResourceBalanceSnapshot
+            {
+                Id = resource.Id,
+                MinHp = resource.MinHp,
+                MaxHp = resource.MaxHp,
+                VitalRegen = resource.VitalRegen,
+                SpawnDuration = resource.SpawnDuration,
+            }
+        );
+
+        var factor = suggestion.Factor;
+
+        if (form.ApplyA)
+        {
+            resource.MinHp = Math.Max(0, ScaleInt(resource.MinHp, factor));
+            resource.MaxHp = Math.Max(resource.MinHp, ScaleInt(resource.MaxHp, factor));
+            resource.VitalRegen = Math.Max(0, ScaleInt(resource.VitalRegen, factor));
+        }
+
+        if (form.ApplyB)
+        {
+            resource.SpawnDuration = Math.Max(
+                0,
+                ScaleInt(resource.SpawnDuration, factor)
+            );
+        }
+
+        PacketSender.SendSaveObject(resource);
+    }
+
+    private void ApplyClassBatchSuggestion(
+        GenericBatchSuggestion suggestion,
+        GenericBatchSuggestionForm form,
+        BalanceBatchHistory history
+    )
+    {
+        var playerClass = ClassDescriptor.Get(suggestion.Id);
+        if (playerClass == null)
+        {
+            return;
+        }
+
+        history.ClassEntries.Add(
+            new ClassBalanceSnapshot
+            {
+                Id = playerClass.Id,
+                BaseStat = playerClass.BaseStat.ToArray(),
+                BaseVital = playerClass.BaseVital.ToArray(),
+                StatIncrease = playerClass.StatIncrease.ToArray(),
+                VitalIncrease = playerClass.VitalIncrease.ToArray(),
+                Damage = playerClass.Damage,
+                Scaling = playerClass.Scaling,
+            }
+        );
+
+        var factor = suggestion.Factor;
+
+        if (form.ApplyA)
+        {
+            for (var i = 0; i < playerClass.BaseStat.Length; i++)
+            {
+                playerClass.BaseStat[i] = Math.Max(
+                    0,
+                    ScaleInt(playerClass.BaseStat[i], factor)
+                );
+            }
+
+            for (var i = 0; i < playerClass.BaseVital.Length; i++)
+            {
+                playerClass.BaseVital[i] = Math.Max(
+                    0L,
+                    ScaleLong(playerClass.BaseVital[i], factor)
+                );
+            }
+        }
+
+        if (form.ApplyB)
+        {
+            for (var i = 0; i < playerClass.StatIncrease.Length; i++)
+            {
+                playerClass.StatIncrease[i] = Math.Max(
+                    0,
+                    ScaleInt(playerClass.StatIncrease[i], factor)
+                );
+            }
+
+            for (var i = 0; i < playerClass.VitalIncrease.Length; i++)
+            {
+                playerClass.VitalIncrease[i] = Math.Max(
+                    0L,
+                    ScaleLong(playerClass.VitalIncrease[i], factor)
+                );
+            }
+        }
+
+        if (form.ApplyC)
+        {
+            playerClass.Damage = Math.Max(0, ScaleInt(playerClass.Damage, factor));
+            playerClass.Scaling = Math.Max(0, ScaleInt(playerClass.Scaling, factor));
+        }
+
+        PacketSender.SendSaveObject(playerClass);
+    }
+
+    private static int GetHistoryEntryCount(BalanceBatchHistory history)
+    {
+        return
+            history.Entries.Count +
+            history.ItemEntries.Count +
+            history.SpellEntries.Count +
+            history.ResourceEntries.Count +
+            history.ClassEntries.Count;
+    }
+
+    private void ShowNpcBatchSuggestions()
+    {
+        // Recalculate against the currently selected simulation profile so the
+        // review window never applies stale recommendations.
+        RunCombatSimulation();
+
+        var suggestions = BuildNpcBatchSuggestions();
+        if (suggestions.Count == 0)
+        {
+            MessageBox.Show(
+                this,
+                "No NPCs are currently outside the combat target range.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        using var form = new NpcBatchSuggestionForm(suggestions);
+        if (form.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        if (!form.ApplyHp &&
+            !form.ApplyDamage &&
+            !form.ApplyDefense &&
+            !form.ApplyExperience)
+        {
+            MessageBox.Show(
+                this,
+                "Select at least one field to apply.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        if (Globals.CurrentEditor != -1)
+        {
+            MessageBox.Show(
+                this,
+                "Close the currently open content editor before applying a balance batch. " +
+                "This prevents the batch from overwriting unsaved editor changes.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+            );
+            return;
+        }
+
+        var selected = form.SelectedSuggestions;
+        if (selected.Count == 0)
+        {
+            return;
+        }
+
+        var fields = new List<string>();
+        if (form.ApplyHp) fields.Add("HP");
+        if (form.ApplyDamage) fields.Add("Damage");
+        if (form.ApplyDefense) fields.Add("Defense/MR");
+        if (form.ApplyExperience) fields.Add("EXP");
+
+        var confirmation = MessageBox.Show(
+            this,
+            $"Apply balance suggestions to {selected.Count:N0} NPC(s)?\n\n" +
+            $"Fields: {string.Join(", ", fields)}\n\n" +
+            "The current values will be kept in an in-session undo batch before saving.",
+            "Apply Balance Batch",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning
+        );
+
+        if (confirmation != DialogResult.Yes)
+        {
+            return;
+        }
+
+        var history = new BalanceBatchHistory
+        {
+            AppliedHp = form.ApplyHp,
+            AppliedDamage = form.ApplyDamage,
+            AppliedDefense = form.ApplyDefense,
+            AppliedExperience = form.ApplyExperience,
+        };
+
+        Cursor = Cursors.WaitCursor;
+        try
+        {
+            foreach (var suggestion in selected)
+            {
+                var npc = NPCDescriptor.Get(suggestion.Id);
+                if (npc == null)
+                {
+                    continue;
+                }
+
+                history.Entries.Add(
+                    new NpcBalanceSnapshot
+                    {
+                        Id = suggestion.Id,
+                        Name = suggestion.Name,
+                        Hp = npc.MaxVitals[(int)Vital.Health],
+                        Damage = npc.Damage,
+                        Defense = npc.Stats[(int)Stat.Defense],
+                        MagicResist = npc.Stats[(int)Stat.MagicResist],
+                        Experience = npc.Experience,
+                    }
+                );
+
+                if (form.ApplyHp)
+                {
+                    npc.MaxVitals[(int)Vital.Health] = Math.Max(1L, suggestion.SuggestedHp);
+                }
+
+                if (form.ApplyDamage)
+                {
+                    npc.Damage = Math.Max(0, suggestion.SuggestedDamage);
+                }
+
+                if (form.ApplyDefense)
+                {
+                    npc.Stats[(int)Stat.Defense] = Math.Clamp(
+                        suggestion.SuggestedDefense,
+                        0,
+                        Options.Instance.Player.MaxStat
+                    );
+                    npc.Stats[(int)Stat.MagicResist] = Math.Clamp(
+                        suggestion.SuggestedMagicResist,
+                        0,
+                        Options.Instance.Player.MaxStat
+                    );
+                }
+
+                if (form.ApplyExperience)
+                {
+                    npc.Experience = Math.Max(0L, suggestion.SuggestedExperience);
+                }
+
+                PacketSender.SendSaveObject(npc);
+            }
+
+            if (history.Entries.Count > 0)
+            {
+                _batchHistory.Push(history);
+            }
+        }
+        finally
+        {
+            Cursor = Cursors.Default;
+        }
+
+        UpdateUndoBatchButton();
+        RunAnalysis();
+
+        MessageBox.Show(
+            this,
+            $"Applied balance changes to {history.Entries.Count:N0} NPC(s).\n\n" +
+            "Use UNDO LAST BATCH if you want to restore the previous values.",
+            "Game Balance Lab",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information
+        );
+    }
+
+    private List<NpcBatchSuggestion> BuildNpcBatchSuggestions()
+    {
+        var suggestions = new List<NpcBatchSuggestion>();
+
+        foreach (var entry in _entries.Where(entry =>
+                     entry.Kind == BalanceObjectKind.Npc &&
+                     (entry.SimulationStatus == "TOO HARD" ||
+                      entry.SimulationStatus == "TOO EASY") &&
+                     entry.SimulationTtk.HasValue &&
+                     entry.SimulationHpLoss.HasValue))
+        {
+            var npc = NPCDescriptor.Get(entry.Id);
+            if (npc == null)
+            {
+                continue;
+            }
+
+            var level = Math.Max(1, npc.Level);
+            var currentHp = Math.Max(1L, npc.MaxVitals[(int)Vital.Health]);
+            var currentDamage = Math.Max(0, npc.Damage);
+            var currentDefense = Math.Max(0, npc.Stats[(int)Stat.Defense]);
+            var currentMagicResist = Math.Max(0, npc.Stats[(int)Stat.MagicResist]);
+            var currentExperience = Math.Max(0L, npc.Experience);
+
+            var peerNpcs = NPCDescriptor.Lookup.Values
+                .OfType<NPCDescriptor>()
+                .Where(peer => peer.Level == level && peer.IsBoss == npc.IsBoss)
+                .ToArray();
+
+            var medianDamage = (int)Math.Round(
+                Median(peerNpcs.Select(peer => (double)Math.Max(0, peer!.Damage)))
+            );
+            var medianDefense = (int)Math.Round(
+                Median(peerNpcs.Select(peer => (double)Math.Max(0, peer!.Stats[(int)Stat.Defense])))
+            );
+            var medianMagicResist = (int)Math.Round(
+                Median(peerNpcs.Select(peer => (double)Math.Max(0, peer!.Stats[(int)Stat.MagicResist])))
+            );
+
+            var rawHp = entry.SimulationSuggestedHp ?? currentHp;
+            var suggestedHp = (long)Math.Round(
+                Math.Clamp(
+                    rawHp,
+                    Math.Max(1d, currentHp * 0.25d),
+                    Math.Max(1d, currentHp * 4d)
+                )
+            );
+
+            var rawDamage = entry.SimulationSuggestedDamage ?? currentDamage;
+            if (entry.SimulationStatus == "TOO EASY" &&
+                currentDamage <= 0 &&
+                medianDamage > 0)
+            {
+                rawDamage = medianDamage;
+            }
+
+            var suggestedDamage = (int)Math.Round(
+                Math.Clamp(
+                    rawDamage,
+                    0d,
+                    Math.Max(1d, Math.Max(currentDamage, medianDamage) * 4d)
+                )
+            );
+
+            // Defense and MR are deliberately only nudged toward same-level peers.
+            // They are optional in the batch dialog because they often represent
+            // intentional NPC identity (tank, mage-resistant, glass cannon, etc.).
+            var suggestedDefense = (int)Math.Round(
+                currentDefense + (medianDefense - currentDefense) * 0.35d
+            );
+            var suggestedMagicResist = (int)Math.Round(
+                currentMagicResist + (medianMagicResist - currentMagicResist) * 0.35d
+            );
+
+            suggestedDefense = Math.Clamp(
+                suggestedDefense,
+                0,
+                Options.Instance.Player.MaxStat
+            );
+            suggestedMagicResist = Math.Clamp(
+                suggestedMagicResist,
+                0,
+                Options.Instance.Player.MaxStat
+            );
+
+            var suggestedPower = CalculateNpcPowerForValues(
+                npc,
+                suggestedHp,
+                suggestedDamage,
+                suggestedDefense,
+                suggestedMagicResist
+            );
+
+            var peerRewardEfficiency = Median(
+                _entries
+                    .Where(peer =>
+                        peer.Kind == BalanceObjectKind.Npc &&
+                        string.Equals(peer.Group, entry.Group, StringComparison.OrdinalIgnoreCase) &&
+                        peer.Power > 0 &&
+                        peer.Reward > 0)
+                    .Select(peer => peer.Reward / peer.Power)
+            );
+
+            long suggestedExperience;
+            if (peerRewardEfficiency > 0)
+            {
+                suggestedExperience = (long)Math.Round(
+                    Math.Max(0d, peerRewardEfficiency * suggestedPower)
+                );
+            }
+            else
+            {
+                var oldPower = Math.Max(0.0001d, entry.Power);
+                suggestedExperience = (long)Math.Round(
+                    currentExperience * Math.Clamp(suggestedPower / oldPower, 0.25d, 4d)
+                );
+            }
+
+            var batchTargetTtk =
+                Math.Max(0.1, (double)_targetTtk.Value) *
+                (npc.IsBoss ? Math.Max(1d, (double)_bossTtkMultiplier.Value) : 1d);
+            var batchTargetHpLoss = Math.Min(
+                100d,
+                Math.Max(0.1, (double)_targetHpLoss.Value) *
+                (npc.IsBoss ? Math.Max(1d, (double)_bossHpLossMultiplier.Value) : 1d)
+            );
+
+            var reason =
+                $"{(npc.IsBoss ? "BOSS - " : string.Empty)}{entry.SimulationStatus}: " +
+                $"TTK {entry.SimulationTtk.Value:0.00}s, HP lost {entry.SimulationHpLoss.Value:0.0}%. " +
+                $"Targets: {batchTargetTtk:0.0}s / {batchTargetHpLoss:0.0}%.";
+
+            suggestions.Add(
+                new NpcBatchSuggestion
+                {
+                    Id = entry.Id,
+                    Name = entry.Name,
+                    Level = level,
+                    Status = entry.SimulationStatus,
+                    CurrentHp = currentHp,
+                    SuggestedHp = Math.Max(1L, suggestedHp),
+                    CurrentDamage = currentDamage,
+                    SuggestedDamage = Math.Max(0, suggestedDamage),
+                    CurrentDefense = currentDefense,
+                    SuggestedDefense = suggestedDefense,
+                    CurrentMagicResist = currentMagicResist,
+                    SuggestedMagicResist = suggestedMagicResist,
+                    CurrentExperience = currentExperience,
+                    SuggestedExperience = Math.Max(0L, suggestedExperience),
+                    CurrentTtk = entry.SimulationTtk.Value,
+                    CurrentHpLoss = entry.SimulationHpLoss.Value,
+                    Reason = reason,
+                }
+            );
+        }
+
+        return suggestions;
+    }
+
+    private static double CalculateNpcPowerForValues(
+        NPCDescriptor npc,
+        long hp,
+        int damage,
+        int defense,
+        int magicResist
+    )
+    {
+        var attack = Math.Max(0d, npc.Stats[(int)Stat.Attack]);
+        var ap = Math.Max(0d, npc.Stats[(int)Stat.AbilityPower]);
+        var speed = Math.Max(0d, npc.Stats[(int)Stat.Speed]);
+        var crit = Math.Max(0d, npc.CritChance);
+
+        var offense =
+            Math.Max(0, damage) * 2.0 +
+            attack * 0.75 +
+            ap * 0.65 +
+            speed * 0.20 +
+            crit * 0.30;
+
+        var durability =
+            Math.Max(1L, hp) *
+            (1d + (Math.Max(0, defense) + Math.Max(0, magicResist)) / 220d);
+
+        return Math.Max(1d, Math.Sqrt(durability) * Math.Max(1d, offense));
+    }
+
+    private void UndoLastBatch()
+    {
+        if (_batchHistory.Count == 0)
+        {
+            return;
+        }
+
+        if (Globals.CurrentEditor != -1)
+        {
+            MessageBox.Show(
+                this,
+                "Close the currently open content editor before undoing a balance batch.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+            );
+            return;
+        }
+
+        var history = _batchHistory.Peek();
+        var count = GetHistoryEntryCount(history);
+        var typeLabel = history.GenericKind.HasValue
+            ? KindLabel(history.GenericKind.Value)
+            : "NPC";
+
+        var confirmation = MessageBox.Show(
+            this,
+            $"Restore the previous values for {count:N0} {typeLabel.ToLowerInvariant()} object(s)?\n\n" +
+            $"Batch applied: {history.AppliedAt:g}",
+            "Undo Balance Batch",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning
+        );
+
+        if (confirmation != DialogResult.Yes)
+        {
+            return;
+        }
+
+        Cursor = Cursors.WaitCursor;
+        try
+        {
+            foreach (var snapshot in history.Entries)
+            {
+                var npc = NPCDescriptor.Get(snapshot.Id);
+                if (npc == null)
+                {
+                    continue;
+                }
+
+                if (history.AppliedHp)
+                {
+                    npc.MaxVitals[(int)Vital.Health] = Math.Max(1L, snapshot.Hp);
+                }
+
+                if (history.AppliedDamage)
+                {
+                    npc.Damage = Math.Max(0, snapshot.Damage);
+                }
+
+                if (history.AppliedDefense)
+                {
+                    npc.Stats[(int)Stat.Defense] = Math.Clamp(
+                        snapshot.Defense,
+                        0,
+                        Options.Instance.Player.MaxStat
+                    );
+                    npc.Stats[(int)Stat.MagicResist] = Math.Clamp(
+                        snapshot.MagicResist,
+                        0,
+                        Options.Instance.Player.MaxStat
+                    );
+                }
+
+                if (history.AppliedExperience)
+                {
+                    npc.Experience = Math.Max(0L, snapshot.Experience);
+                }
+
+                PacketSender.SendSaveObject(npc);
+            }
+
+            foreach (var snapshot in history.ItemEntries)
+            {
+                var item = ItemDescriptor.Get(snapshot.Id);
+                if (item == null)
+                {
+                    continue;
+                }
+
+                item.StatsGiven = snapshot.StatsGiven.ToArray();
+                item.PercentageStatsGiven = snapshot.PercentageStatsGiven.ToArray();
+                item.VitalsGiven = snapshot.VitalsGiven.ToArray();
+                item.PercentageVitalsGiven = snapshot.PercentageVitalsGiven.ToArray();
+                item.Damage = snapshot.Damage;
+                item.CritChance = snapshot.CritChance;
+                item.BlockChance = snapshot.BlockChance;
+                item.Scaling = snapshot.Scaling;
+                item.Price = snapshot.Price;
+                PacketSender.SendSaveObject(item);
+            }
+
+            foreach (var snapshot in history.SpellEntries)
+            {
+                var spell = SpellDescriptor.Get(snapshot.Id);
+                if (spell == null)
+                {
+                    continue;
+                }
+
+                spell.Combat.VitalDiff = snapshot.VitalDiff.ToArray();
+                spell.Combat.Scaling = snapshot.Scaling;
+                spell.Combat.CritChance = snapshot.CritChance;
+                spell.CooldownDuration = snapshot.CooldownDuration;
+                spell.VitalCost = snapshot.VitalCost.ToArray();
+                PacketSender.SendSaveObject(spell);
+            }
+
+            foreach (var snapshot in history.ResourceEntries)
+            {
+                var resource = ResourceDescriptor.Get(snapshot.Id);
+                if (resource == null)
+                {
+                    continue;
+                }
+
+                resource.MinHp = snapshot.MinHp;
+                resource.MaxHp = snapshot.MaxHp;
+                resource.VitalRegen = snapshot.VitalRegen;
+                resource.SpawnDuration = snapshot.SpawnDuration;
+                PacketSender.SendSaveObject(resource);
+            }
+
+            foreach (var snapshot in history.ClassEntries)
+            {
+                var playerClass = ClassDescriptor.Get(snapshot.Id);
+                if (playerClass == null)
+                {
+                    continue;
+                }
+
+                playerClass.BaseStat = snapshot.BaseStat.ToArray();
+                playerClass.BaseVital = snapshot.BaseVital.ToArray();
+                playerClass.StatIncrease = snapshot.StatIncrease.ToArray();
+                playerClass.VitalIncrease = snapshot.VitalIncrease.ToArray();
+                playerClass.Damage = snapshot.Damage;
+                playerClass.Scaling = snapshot.Scaling;
+                PacketSender.SendSaveObject(playerClass);
+            }
+
+            _batchHistory.Pop();
+        }
+        finally
+        {
+            Cursor = Cursors.Default;
+        }
+
+        UpdateUndoBatchButton();
+        RunAnalysis();
+
+        MessageBox.Show(
+            this,
+            $"The last {typeLabel.ToLowerInvariant()} balance batch was restored.",
+            "Game Balance Lab",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information
+        );
+    }
+
+    private void UpdateUndoBatchButton()
+    {
+        _undoBatchButton.Enabled = _batchHistory.Count > 0;
+        _undoBatchButton.Text = _batchHistory.Count > 0
+            ? $"UNDO BATCH ({_batchHistory.Count})"
+            : "UNDO LAST BATCH";
+    }
+
+    private static string GetSimulationStatus(
+        double ttk,
+        double hpLoss,
+        double targetTtk,
+        double targetHpLoss
+    )
+    {
+        var tooHard =
+            hpLoss >= 100d ||
+            ttk > targetTtk * 1.35 ||
+            hpLoss > targetHpLoss * 1.50;
+
+        var tooEasy =
+            ttk < targetTtk * 0.65 &&
+            hpLoss < targetHpLoss * 0.55;
+
+        return tooHard
+            ? "TOO HARD"
+            : tooEasy
+                ? "TOO EASY"
+                : "TARGET";
+    }
+
+    private void ShowFullHeatmap()
+    {
+        var classes = ClassDescriptor.Lookup.Values
+            .Where(value => value != null)
+            .Cast<object>()
+            .OrderBy(value => Text(value, "Name", "Unnamed Class"), StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var npcs = NPCDescriptor.Lookup.Values
+            .OfType<NPCDescriptor>()
+            .OrderBy(value => value.Level)
+            .ThenBy(value => value.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (classes.Length == 0 || npcs.Length == 0)
+        {
+            MessageBox.Show(
+                this,
+                "At least one class and one NPC are required to build the heatmap.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        var partySize = Math.Clamp((int)_partySize.Value, 1, 5);
+        var gearProfile = Math.Max(0, _gearProfile.SelectedIndex);
+        var includeClassSpells = _includeClassSpells.Checked;
+        var targetTtk = Math.Max(0.1, (double)_targetTtk.Value);
+        var targetHpLoss = Math.Max(0.1, (double)_targetHpLoss.Value);
+        var bossTtkMultiplier = Math.Max(1d, (double)_bossTtkMultiplier.Value);
+        var bossHpLossMultiplier = Math.Max(1d, (double)_bossHpLossMultiplier.Value);
+        var maxLevel = Math.Max(1, Options.Instance.Player.MaxLevel);
+
+        Cursor = Cursors.WaitCursor;
+        try
+        {
+            var datasets = new List<HeatmapDataset>();
+            var average = new HeatmapDataset { Name = "AVERAGE ALL" };
+            datasets.Add(average);
+
+            var perClass = new Dictionary<Guid, HeatmapDataset>();
+            var cachedLoadouts = new Dictionary<Guid, LoadoutSnapshot>();
+
+            foreach (var playerClass in classes)
+            {
+                var classId = GuidValue(playerClass, "Id");
+                if (classId == Guid.Empty)
+                {
+                    continue;
+                }
+
+                var dataset = new HeatmapDataset
+                {
+                    Name = Text(playerClass, "Name", "Unnamed Class"),
+                };
+                perClass[classId] = dataset;
+                datasets.Add(dataset);
+                cachedLoadouts[classId] = BuildLoadout(playerClass, gearProfile);
+            }
+
+            foreach (var npc in npcs)
+            {
+                var npcId = npc.Id;
+                var npcName = npc.Name;
+                var npcLevel = Math.Max(1, npc.Level);
+                var npcTargetTtk =
+                    targetTtk * (npc.IsBoss ? bossTtkMultiplier : 1d);
+                var npcTargetHpLoss = Math.Min(
+                    100d,
+                    targetHpLoss * (npc.IsBoss ? bossHpLossMultiplier : 1d)
+                );
+
+                var averageRow = new HeatmapRow
+                {
+                    NpcId = npcId,
+                    NpcName = npcName,
+                    NpcLevel = npcLevel,
+                };
+                average.Rows.Add(averageRow);
+
+                var classRows = new Dictionary<Guid, HeatmapRow>();
+                foreach (var pair in perClass)
+                {
+                    var row = new HeatmapRow
+                    {
+                        NpcId = npcId,
+                        NpcName = npcName,
+                        NpcLevel = npcLevel,
+                    };
+                    pair.Value.Rows.Add(row);
+                    classRows[pair.Key] = row;
+                }
+
+                for (var level = 1; level <= maxLevel; level++)
+                {
+                    var levelResults = new List<CombatSimulation>();
+
+                    foreach (var playerClass in classes)
+                    {
+                        var classId = GuidValue(playerClass, "Id");
+                        if (classId == Guid.Empty ||
+                            !cachedLoadouts.TryGetValue(classId, out var cachedLoadout) ||
+                            !classRows.TryGetValue(classId, out var classRow))
+                        {
+                            continue;
+                        }
+
+                        var simulation = SimulateClassVsNpc(
+                            playerClass,
+                            npc,
+                            level,
+                            partySize,
+                            gearProfile,
+                            includeClassSpells,
+                            npcTargetTtk,
+                            cachedLoadout
+                        );
+
+                        if (simulation == null)
+                        {
+                            continue;
+                        }
+
+                        levelResults.Add(simulation);
+                        classRow.Cells.Add(
+                            new HeatmapCell
+                            {
+                                Level = level,
+                                Ttk = simulation.TtkSeconds,
+                                HpLoss = simulation.HpLossPercent,
+                                Dps = simulation.PlayerDps * partySize,
+                                Status = GetSimulationStatus(
+                                    simulation.TtkSeconds,
+                                    simulation.HpLossPercent,
+                                    npcTargetTtk,
+                                    npcTargetHpLoss
+                                ),
+                            }
+                        );
+                    }
+
+                    if (levelResults.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    var averageTtk = levelResults.Average(result => result.TtkSeconds);
+                    var averageHpLoss = levelResults.Average(result => result.HpLossPercent);
+                    var averageDps = levelResults.Average(result => result.PlayerDps) * partySize;
+
+                    averageRow.Cells.Add(
+                        new HeatmapCell
+                        {
+                            Level = level,
+                            Ttk = averageTtk,
+                            HpLoss = averageHpLoss,
+                            Dps = averageDps,
+                            Status = GetSimulationStatus(
+                                averageTtk,
+                                averageHpLoss,
+                                npcTargetTtk,
+                                npcTargetHpLoss
+                            ),
+                        }
+                    );
+                }
+            }
+
+            Action<Guid>? openNpc = _openEditor == null
+                ? null
+                : id => _openEditor(
+                    new BalanceOpenRequest
+                    {
+                        Kind = BalanceObjectKind.Npc,
+                        Id = id,
+                    }
+                );
+
+            using var form = new HeatmapForm(
+                datasets,
+                partySize,
+                _gearProfile.Text,
+                includeClassSpells,
+                targetTtk,
+                targetHpLoss,
+                bossTtkMultiplier,
+                bossHpLossMultiplier,
+                openNpc
+            );
+            form.ShowDialog(this);
+        }
+        finally
+        {
+            Cursor = Cursors.Default;
+        }
+    }
+
+    private void ShowSelectedProgression()
+    {
+        var selectedNpc =
+            _grid.SelectedRows.Count > 0 &&
+            _grid.SelectedRows[0].Tag is BalanceEntry selectedEntry &&
+            selectedEntry.Kind == BalanceObjectKind.Npc
+                ? NPCDescriptor.Get(selectedEntry.Id)
+                : null;
+
+        if (_grid.SelectedRows.Count == 0 ||
+            _grid.SelectedRows[0].Tag is not BalanceEntry entry ||
+            selectedNpc == null)
+        {
+            MessageBox.Show(
+                this,
+                "Select an NPC in the Balance Lab first.",
+                "Game Balance Lab",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        var npc = selectedNpc;
+
+        var selectedChoice = _simulationClass.SelectedItem as ClassChoice;
+        var classes = new List<object>();
+
+        if (selectedChoice?.Id is Guid selectedId &&
+            ClassDescriptor.Lookup.TryGetValue(selectedId, out var selectedClass) &&
+            selectedClass != null)
+        {
+            classes.Add(selectedClass);
+        }
+        else
+        {
+            classes.AddRange(
+                ClassDescriptor.Lookup.Values
+                    .Where(value => value != null)
+                    .Cast<object>()
+            );
+        }
+
+        if (classes.Count == 0)
+        {
+            return;
+        }
+
+        var partySize = Math.Clamp((int)_partySize.Value, 1, 5);
+        var gearProfile = Math.Max(0, _gearProfile.SelectedIndex);
+        var includeClassSpells = _includeClassSpells.Checked;
+        var baseTargetTtk = Math.Max(0.1, (double)_targetTtk.Value);
+        var baseTargetHpLoss = Math.Max(0.1, (double)_targetHpLoss.Value);
+        var targetTtk =
+            baseTargetTtk *
+            (npc.IsBoss ? Math.Max(1d, (double)_bossTtkMultiplier.Value) : 1d);
+        var targetHpLoss = Math.Min(
+            100d,
+            baseTargetHpLoss *
+            (npc.IsBoss ? Math.Max(1d, (double)_bossHpLossMultiplier.Value) : 1d)
+        );
+        var maxLevel = Math.Max(1, Options.Instance.Player.MaxLevel);
+
+        var points = new List<ProgressionPoint>(maxLevel);
+
+        for (var level = 1; level <= maxLevel; level++)
+        {
+            var simulations = classes
+                .Select(
+                    playerClass => SimulateClassVsNpc(
+                        playerClass,
+                        npc,
+                        level,
+                        partySize,
+                        gearProfile,
+                        includeClassSpells,
+                        targetTtk
+                    )
+                )
+                .Where(result => result != null)
+                .Cast<CombatSimulation>()
+                .ToArray();
+
+            if (simulations.Length == 0)
+            {
+                continue;
+            }
+
+            points.Add(
+                new ProgressionPoint
+                {
+                    Level = level,
+                    Ttk = simulations.Average(result => result.TtkSeconds),
+                    HpLoss = simulations.Average(result => result.HpLossPercent),
+                    Dps = simulations.Average(result => result.PlayerDps) * partySize,
+                }
+            );
+        }
+
+        var simulationLabel =
+            $"{(npc.IsBoss ? "BOSS | " : string.Empty)}" +
+            $"{(selectedChoice?.Id == null ? "Average all classes" : selectedChoice.Name)} | " +
+            $"Party {partySize} | {_gearProfile.Text} | Spells {(includeClassSpells ? "ON" : "OFF")}";
+
+        using var form = new ProgressionForm(
+            entry.Name,
+            simulationLabel,
+            points,
+            targetTtk,
+            targetHpLoss
+        );
+        form.ShowDialog(this);
+    }
+
+    private void OpenSelected()
+    {
+        if (_openEditor == null ||
+            _grid.SelectedRows.Count == 0 ||
+            _grid.SelectedRows[0].Tag is not BalanceEntry entry)
+        {
+            return;
+        }
+
+        _openEditor(
+            new BalanceOpenRequest
+            {
+                Kind = entry.Kind,
+                Id = entry.Id,
+            }
+        );
+    }
+
+    private static string KindLabel(BalanceObjectKind kind)
+    {
+        return kind switch
+        {
+            BalanceObjectKind.Npc => "NPC",
+            BalanceObjectKind.Item => "Item",
+            BalanceObjectKind.Spell => "Spell",
+            BalanceObjectKind.Resource => "Resource",
+            BalanceObjectKind.PlayerClass => "Class",
+            _ => kind.ToString(),
+        };
+    }
+
+    private static double Median(IEnumerable<double> values)
+    {
+        var sorted = values.Where(value => !double.IsNaN(value) && !double.IsInfinity(value))
+            .OrderBy(value => value)
+            .ToArray();
+
+        if (sorted.Length == 0)
+        {
+            return 0;
+        }
+
+        var middle = sorted.Length / 2;
+        return sorted.Length % 2 == 0
+            ? (sorted[middle - 1] + sorted[middle]) / 2d
+            : sorted[middle];
+    }
+
+    private static object? Property(object source, string name)
+    {
+        return source.GetType().GetProperty(name)?.GetValue(source);
+    }
+
+    private static string Text(object source, string name, string fallback)
+    {
+        return Property(source, name)?.ToString() ?? fallback;
+    }
+
+    private static double Number(object source, string name)
+    {
+        return ToDouble(Property(source, name));
+    }
+
+    private static double Indexed(object source, string name, int index)
+    {
+        var value = Property(source, name);
+        if (value is IList list && index >= 0 && index < list.Count)
+        {
+            return ToDouble(list[index]);
+        }
+
+        if (value is Array array && index >= 0 && index < array.Length)
+        {
+            return ToDouble(array.GetValue(index));
+        }
+
+        return 0d;
+    }
+
+    private static Guid GuidValue(object source, string name)
+    {
+        var value = Property(source, name);
+        if (value is Guid guid)
+        {
+            return guid;
+        }
+
+        return Guid.TryParse(value?.ToString(), out var parsed)
+            ? parsed
+            : Guid.Empty;
+    }
+
+    private static double ToDouble(object? value)
+    {
+        if (value == null)
+        {
+            return 0d;
+        }
+
+        try
+        {
+            return Convert.ToDouble(value);
+        }
+        catch
+        {
+            return 0d;
+        }
+    }
+}

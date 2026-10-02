@@ -3,6 +3,7 @@ using DarkUI.Controls;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
+using Intersect.Editor.Forms;
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Networking;
@@ -19,6 +20,10 @@ namespace Intersect.Editor.Forms.Editors;
 public partial class FrmAnimation : EditorForm
 {
     private readonly ToolTip _tooltip = new();
+    private readonly DarkNumericUpDown _nudLowerScale = new();
+    private readonly DarkNumericUpDown _nudUpperScale = new();
+    private readonly Label _lblLowerScale = new();
+    private readonly Label _lblUpperScale = new();
 
     private List<AnimationDescriptor> mChanged = new List<AnimationDescriptor>();
 
@@ -27,6 +32,10 @@ public partial class FrmAnimation : EditorForm
     private AnimationDescriptor mEditorItem;
 
     private List<string> mKnownFolders = new List<string>();
+
+    private FrmAnimationImport.GeneratedAnimationRequest? _pendingGeneratedAnimation;
+
+    private HashSet<Guid> _generatedAnimationExistingIds = new();
 
     private RenderTarget2D mLowerDarkness;
 
@@ -53,9 +62,104 @@ public partial class FrmAnimation : EditorForm
     {
         ApplyHooks();
         InitializeComponent();
+        BuildScaleControls();
         Icon = Program.Icon;
 
         lstGameObjects.Init(UpdateToolStripItems, AssignEditorItem, toolStripItemNew_Click, toolStripItemCopy_Click, toolStripItemUndo_Click, toolStripItemPaste_Click, toolStripItemDelete_Click);
+    }
+
+    private void BuildScaleControls()
+    {
+        ConfigureScaleControl(
+            grpLowerExtraOptions,
+            _lblLowerScale,
+            _nudLowerScale,
+            "Scale:",
+            (_, _) =>
+            {
+                if (mEditorItem == null)
+                {
+                    return;
+                }
+
+                mEditorItem.Lower.ScalePercent = (int)_nudLowerScale.Value;
+                DrawLowerFrame();
+            }
+        );
+
+        ConfigureScaleControl(
+            grpUpperExtraOptions,
+            _lblUpperScale,
+            _nudUpperScale,
+            "Scale:",
+            (_, _) =>
+            {
+                if (mEditorItem == null)
+                {
+                    return;
+                }
+
+                mEditorItem.Upper.ScalePercent = (int)_nudUpperScale.Value;
+                DrawUpperFrame();
+            }
+        );
+
+        _tooltip.SetToolTip(
+            _nudLowerScale,
+            "Resize the lower animation visually. 100% keeps the original frame size."
+        );
+        _tooltip.SetToolTip(
+            _nudUpperScale,
+            "Resize the upper animation visually. 100% keeps the original frame size."
+        );
+    }
+
+    private static void ConfigureScaleControl(
+        DarkGroupBox parent,
+        Label label,
+        DarkNumericUpDown number,
+        string text,
+        EventHandler changed
+    )
+    {
+        parent.Height = Math.Max(parent.Height, 102);
+
+        label.AutoSize = true;
+        label.Text = text;
+        label.ForeColor = System.Drawing.Color.Gainsboro;
+        label.Location = new System.Drawing.Point(8, 70);
+
+        number.Location = new System.Drawing.Point(154, 65);
+        number.Size = new Size(88, 23);
+        number.Minimum = 10;
+        number.Maximum = 1000;
+        number.Increment = 5;
+        number.Value = 100;
+        number.DecimalPlaces = 0;
+        number.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
+        number.ForeColor = System.Drawing.Color.Gainsboro;
+        number.TextAlign = HorizontalAlignment.Center;
+        number.ValueChanged += changed;
+
+        var percent = new Label
+        {
+            AutoSize = true,
+            Text = "%",
+            ForeColor = System.Drawing.Color.Gainsboro,
+            Location = new System.Drawing.Point(246, 70),
+        };
+
+        parent.Controls.Add(label);
+        parent.Controls.Add(number);
+        parent.Controls.Add(percent);
+        label.BringToFront();
+        number.BringToFront();
+        percent.BringToFront();
+    }
+
+    private static int NormalizeAnimationScale(int value)
+    {
+        return Math.Clamp(value <= 0 ? 100 : value, 10, 1000);
     }
 
     private void AssignEditorItem(Guid id)
@@ -72,6 +176,8 @@ public partial class FrmAnimation : EditorForm
         }
 
         InitEditor();
+        TryApplyPendingGeneratedAnimation();
+
         if (mEditorItem == null || AnimationDescriptor.Lookup.Values.Contains(mEditorItem))
         {
             return;
@@ -79,6 +185,115 @@ public partial class FrmAnimation : EditorForm
 
         mEditorItem = null;
         UpdateEditor();
+    }
+
+    public void BeginGeneratedAnimationCreation(
+        FrmAnimationImport.GeneratedAnimationRequest request
+    )
+    {
+        _pendingGeneratedAnimation = request;
+        _generatedAnimationExistingIds = AnimationDescriptor.Lookup.Keys.ToHashSet();
+
+        RefreshGeneratedAnimationChoices();
+        PacketSender.SendCreateObject(GameObjectType.Animation);
+    }
+
+    public void RefreshGeneratedAnimationChoices()
+    {
+        var lower = cmbLowerGraphic.Text;
+        var upper = cmbUpperGraphic.Text;
+
+        cmbLowerGraphic.SelectedIndexChanged -= cmbLowerGraphic_SelectedIndexChanged;
+        cmbUpperGraphic.SelectedIndexChanged -= cmbUpperGraphic_SelectedIndexChanged;
+
+        try
+        {
+            var names =
+                GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Animation);
+
+            cmbLowerGraphic.BeginUpdate();
+            cmbUpperGraphic.BeginUpdate();
+
+            cmbLowerGraphic.Items.Clear();
+            cmbLowerGraphic.Items.Add(Strings.General.None);
+            cmbLowerGraphic.Items.AddRange(names);
+
+            cmbUpperGraphic.Items.Clear();
+            cmbUpperGraphic.Items.Add(Strings.General.None);
+            cmbUpperGraphic.Items.AddRange(names);
+
+            var lowerIndex = cmbLowerGraphic.FindStringExact(lower);
+            if (lowerIndex >= 0)
+            {
+                cmbLowerGraphic.SelectedIndex = lowerIndex;
+            }
+
+            var upperIndex = cmbUpperGraphic.FindStringExact(upper);
+            if (upperIndex >= 0)
+            {
+                cmbUpperGraphic.SelectedIndex = upperIndex;
+            }
+        }
+        finally
+        {
+            cmbLowerGraphic.EndUpdate();
+            cmbUpperGraphic.EndUpdate();
+
+            cmbLowerGraphic.SelectedIndexChanged += cmbLowerGraphic_SelectedIndexChanged;
+            cmbUpperGraphic.SelectedIndexChanged += cmbUpperGraphic_SelectedIndexChanged;
+        }
+    }
+
+    private void TryApplyPendingGeneratedAnimation()
+    {
+        if (_pendingGeneratedAnimation == null)
+        {
+            return;
+        }
+
+        var createdAnimation = AnimationDescriptor.Lookup
+            .Where(pair => !_generatedAnimationExistingIds.Contains(pair.Key))
+            .Select(pair => pair.Value as AnimationDescriptor)
+            .FirstOrDefault(animation => animation != null);
+
+        if (createdAnimation == null)
+        {
+            return;
+        }
+
+        var request = _pendingGeneratedAnimation;
+        _pendingGeneratedAnimation = null;
+        _generatedAnimationExistingIds.Clear();
+
+        mEditorItem = createdAnimation;
+
+        // Create the standard backup first so Undo/Cancel still behave exactly
+        // like animations created manually in the editor.
+        UpdateEditor();
+
+        mEditorItem.Name = request.Name;
+        mEditorItem.Folder = request.Folder;
+        mEditorItem.Lower.Sprite = request.SpriteFile;
+        mEditorItem.Lower.XFrames = Math.Max(1, request.XFrames);
+        mEditorItem.Lower.YFrames = Math.Max(1, request.YFrames);
+        mEditorItem.Lower.FrameCount = Math.Max(
+            1,
+            Math.Min(
+                request.FrameCount,
+                mEditorItem.Lower.XFrames * mEditorItem.Lower.YFrames
+            )
+        );
+        mEditorItem.Lower.FrameSpeed = Math.Max(15, request.FrameDuration);
+        mEditorItem.Lower.LoopCount = Math.Max(1, mEditorItem.Lower.LoopCount);
+        mEditorItem.Lower.ScalePercent = 100;
+
+        RefreshGeneratedAnimationChoices();
+        InitEditor();
+        lstGameObjects.SelectObject(mEditorItem.Id);
+        UpdateEditor();
+
+        Text = $"{Strings.AnimationEditor.title} - Imported: {request.Name}";
+        BringToFront();
     }
 
     private void btnCancel_Click(object sender, EventArgs e)
@@ -231,6 +446,9 @@ public partial class FrmAnimation : EditorForm
             nudLowerFrameDuration.Value = mEditorItem.Lower.FrameSpeed;
             tmrLowerAnimation.Interval = (int)nudLowerFrameDuration.Value;
             nudLowerLoopCount.Value = mEditorItem.Lower.LoopCount;
+            mEditorItem.Lower.ScalePercent =
+                NormalizeAnimationScale(mEditorItem.Lower.ScalePercent);
+            _nudLowerScale.Value = mEditorItem.Lower.ScalePercent;
 
             cmbUpperGraphic.SelectedIndex =
                 cmbUpperGraphic.FindString(TextUtils.NullToNone(mEditorItem.Upper.Sprite));
@@ -243,6 +461,9 @@ public partial class FrmAnimation : EditorForm
             nudUpperFrameDuration.Value = mEditorItem.Upper.FrameSpeed;
             tmrUpperAnimation.Interval = (int)nudUpperFrameDuration.Value;
             nudUpperLoopCount.Value = mEditorItem.Upper.LoopCount;
+            mEditorItem.Upper.ScalePercent =
+                NormalizeAnimationScale(mEditorItem.Upper.ScalePercent);
+            _nudUpperScale.Value = mEditorItem.Upper.ScalePercent;
 
             chkDisableLowerRotations.Checked = mEditorItem.Lower.DisableRotations;
             chkDisableUpperRotations.Checked = mEditorItem.Upper.DisableRotations;
@@ -430,12 +651,22 @@ public partial class FrmAnimation : EditorForm
             }
 
             var y = (int)Math.Floor(mLowerFrame / nudLowerHorizontalFrames.Value) * h;
+            var scale =
+                NormalizeAnimationScale(mEditorItem.Lower.ScalePercent) /
+                100f;
+            var drawWidth = w * scale;
+            var drawHeight = h * scale;
+
             Core.Graphics.DrawTexture(
-                animTexture, new RectangleF(x, y, w, h),
+                animTexture,
+                new RectangleF(x, y, w, h),
                 new RectangleF(
-                    picLowerAnimation.Width / 2 - (int)w / 2, (int)picLowerAnimation.Height / 2 - (int)h / 2, w,
-                    h
-                ), mLowerWindow
+                    picLowerAnimation.Width / 2f - drawWidth / 2f,
+                    picLowerAnimation.Height / 2f - drawHeight / 2f,
+                    drawWidth,
+                    drawHeight
+                ),
+                mLowerWindow
             );
         }
 
@@ -494,12 +725,22 @@ public partial class FrmAnimation : EditorForm
             }
 
             var y = (int)Math.Floor(mUpperFrame / nudUpperHorizontalFrames.Value) * h;
+            var scale =
+                NormalizeAnimationScale(mEditorItem.Upper.ScalePercent) /
+                100f;
+            var drawWidth = w * scale;
+            var drawHeight = h * scale;
+
             Core.Graphics.DrawTexture(
-                animTexture, new RectangleF(x, y, w, h),
+                animTexture,
+                new RectangleF(x, y, w, h),
                 new RectangleF(
-                    picUpperAnimation.Width / 2 - (int)w / 2, (int)picUpperAnimation.Height / 2 - (int)h / 2, w,
-                    h
-                ), mUpperWindow
+                    picUpperAnimation.Width / 2f - drawWidth / 2f,
+                    picUpperAnimation.Height / 2f - drawHeight / 2f,
+                    drawWidth,
+                    drawHeight
+                ),
+                mUpperWindow
             );
         }
 
@@ -625,6 +866,7 @@ public partial class FrmAnimation : EditorForm
         var lowerAnimFrameCount = mEditorItem.Lower.FrameCount;
         var lowerAnimFrameSpeed = mEditorItem.Lower.FrameSpeed;
         var lowerAnimLoopCount = mEditorItem.Lower.LoopCount;
+        var lowerAnimScalePercent = mEditorItem.Lower.ScalePercent;
         var disableLowerRotations = mEditorItem.Lower.DisableRotations;
         var lowerLights = mEditorItem.Lower.Lights;
         mEditorItem.Lower.Sprite = mEditorItem.Upper.Sprite;
@@ -633,6 +875,7 @@ public partial class FrmAnimation : EditorForm
         mEditorItem.Lower.FrameCount = mEditorItem.Upper.FrameCount;
         mEditorItem.Lower.FrameSpeed = mEditorItem.Upper.FrameSpeed;
         mEditorItem.Lower.LoopCount = mEditorItem.Upper.LoopCount;
+        mEditorItem.Lower.ScalePercent = mEditorItem.Upper.ScalePercent;
         mEditorItem.Lower.Lights = mEditorItem.Upper.Lights;
         mEditorItem.Lower.DisableRotations = mEditorItem.Upper.DisableRotations;
 
@@ -642,6 +885,7 @@ public partial class FrmAnimation : EditorForm
         mEditorItem.Upper.FrameCount = lowerAnimFrameCount;
         mEditorItem.Upper.FrameSpeed = lowerAnimFrameSpeed;
         mEditorItem.Upper.LoopCount = lowerAnimLoopCount;
+        mEditorItem.Upper.ScalePercent = lowerAnimScalePercent;
         mEditorItem.Upper.Lights = lowerLights;
         mEditorItem.Upper.DisableRotations = disableLowerRotations;
 

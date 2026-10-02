@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Drawing.Imaging;
+using DarkUI.Controls;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
@@ -31,20 +32,243 @@ public partial class FrmNpc : EditorForm
 
     private BindingList<NotifiableDrop> _dropList = [];
 
+    private readonly DarkGroupBox _grpBoss = new();
+    private readonly DarkCheckBox _chkIsBoss = new();
+    private readonly DarkComboBox _cmbBossAnimation = new();
+    private readonly DarkComboBox _cmbBossDeathAnimation = new();
+    private readonly DarkNumericUpDown _nudBossAnimationOffsetY = new();
+
+    private readonly DarkGroupBox _grpCombatAi = new();
+    private readonly DarkCheckBox _chkSmartCombatMovement = new();
+    private readonly DarkComboBox _cmbCombatMovementMode = new();
+    private readonly DarkNumericUpDown _nudPreferredCombatRange = new();
+
     public FrmNpc()
     {
         ApplyHooks();
         InitializeComponent();
+        BuildBossControls();
+        BuildCombatAiControls();
         Icon = Program.Icon;
         _btnSave = btnSave;
         _btnCancel = btnCancel;
 
         lstGameObjects.Init(UpdateToolStripItems, AssignEditorItem, toolStripItemNew_Click, toolStripItemCopy_Click, toolStripItemUndo_Click, toolStripItemPaste_Click, toolStripItemDelete_Click);
     }
+    private void BuildBossControls()
+    {
+        _grpBoss.Text = "Boss";
+        _grpBoss.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+        _grpBoss.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+        _grpBoss.ForeColor = System.Drawing.Color.Gainsboro;
+        _grpBoss.Location = new System.Drawing.Point(536, 724);
+        _grpBoss.Size = new Size(298, 190);
+        _grpBoss.TabStop = false;
+
+        _chkIsBoss.Text = "This NPC is a boss";
+        _chkIsBoss.AutoSize = true;
+        _chkIsBoss.Location = new System.Drawing.Point(12, 26);
+        _chkIsBoss.CheckedChanged += (_, _) =>
+        {
+            UpdateBossControlState();
+            if (mEditorItem != null)
+            {
+                mEditorItem.IsBoss = _chkIsBoss.Checked;
+            }
+        };
+
+        var lblBossAnimation = new Label
+        {
+            Text = "Boss overhead animation:",
+            AutoSize = true,
+            Location = new System.Drawing.Point(12, 57),
+            ForeColor = System.Drawing.Color.Gainsboro,
+        };
+
+        _cmbBossAnimation.Location = new System.Drawing.Point(12, 76);
+        _cmbBossAnimation.Size = new Size(272, 24);
+        _cmbBossAnimation.DropDownStyle = ComboBoxStyle.DropDownList;
+        _cmbBossAnimation.SelectedIndexChanged += (_, _) =>
+        {
+            if (mEditorItem == null)
+            {
+                return;
+            }
+
+            mEditorItem.BossAnimation =
+                AnimationDescriptor.Get(
+                    AnimationDescriptor.IdFromList(_cmbBossAnimation.SelectedIndex - 1)
+                );
+        };
+
+        var lblOffset = new Label
+        {
+            Text = "Overhead Y offset:",
+            AutoSize = true,
+            Location = new System.Drawing.Point(12, 108),
+            ForeColor = System.Drawing.Color.Gainsboro,
+        };
+
+        _nudBossAnimationOffsetY.Location = new System.Drawing.Point(166, 105);
+        _nudBossAnimationOffsetY.Size = new Size(118, 24);
+        _nudBossAnimationOffsetY.Minimum = -512;
+        _nudBossAnimationOffsetY.Maximum = 512;
+        _nudBossAnimationOffsetY.Value = -48;
+        _nudBossAnimationOffsetY.ValueChanged += (_, _) =>
+        {
+            if (mEditorItem != null)
+            {
+                mEditorItem.BossAnimationOffsetY =
+                    (int)_nudBossAnimationOffsetY.Value;
+            }
+        };
+
+        var lblDeathAnimation = new Label
+        {
+            Text = "Animation played on death:",
+            AutoSize = true,
+            Location = new System.Drawing.Point(12, 137),
+            ForeColor = System.Drawing.Color.Gainsboro,
+        };
+
+        _cmbBossDeathAnimation.Location = new System.Drawing.Point(12, 156);
+        _cmbBossDeathAnimation.Size = new Size(272, 24);
+        _cmbBossDeathAnimation.DropDownStyle = ComboBoxStyle.DropDownList;
+        _cmbBossDeathAnimation.SelectedIndexChanged += (_, _) =>
+        {
+            if (mEditorItem == null)
+            {
+                return;
+            }
+
+            mEditorItem.DeathAnimation =
+                AnimationDescriptor.Get(
+                    AnimationDescriptor.IdFromList(_cmbBossDeathAnimation.SelectedIndex - 1)
+                );
+        };
+
+        _grpBoss.Controls.Add(_chkIsBoss);
+        _grpBoss.Controls.Add(lblBossAnimation);
+        _grpBoss.Controls.Add(_cmbBossAnimation);
+        _grpBoss.Controls.Add(lblOffset);
+        _grpBoss.Controls.Add(_nudBossAnimationOffsetY);
+        _grpBoss.Controls.Add(lblDeathAnimation);
+        _grpBoss.Controls.Add(_cmbBossDeathAnimation);
+        pnlContainer.Controls.Add(_grpBoss);
+
+        UpdateBossControlState();
+    }
+
+    private void UpdateBossControlState()
+    {
+        var enabled = _chkIsBoss.Checked;
+        _cmbBossAnimation.Enabled = enabled;
+        _nudBossAnimationOffsetY.Enabled = enabled;
+        _cmbBossDeathAnimation.Enabled = enabled;
+    }
+
+    private void BuildCombatAiControls()
+    {
+        _grpCombatAi.Text = "Combat AI";
+        _grpCombatAi.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+        _grpCombatAi.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+        _grpCombatAi.ForeColor = System.Drawing.Color.Gainsboro;
+        _grpCombatAi.Location = new System.Drawing.Point(844, 744);
+        _grpCombatAi.Size = new Size(264, 170);
+        _grpCombatAi.TabStop = false;
+
+        _chkSmartCombatMovement.Text = "Smart combat movement";
+        _chkSmartCombatMovement.AutoSize = true;
+        _chkSmartCombatMovement.Location = new System.Drawing.Point(12, 25);
+        _chkSmartCombatMovement.Checked = true;
+        _chkSmartCombatMovement.CheckedChanged += (_, _) =>
+        {
+            UpdateCombatAiControlState();
+            if (mEditorItem != null)
+            {
+                mEditorItem.SmartCombatMovement = _chkSmartCombatMovement.Checked;
+            }
+        };
+
+        var lblMode = new Label
+        {
+            Text = "Combat style:",
+            AutoSize = true,
+            Location = new System.Drawing.Point(12, 55),
+            ForeColor = System.Drawing.Color.Gainsboro,
+        };
+
+        _cmbCombatMovementMode.Location = new System.Drawing.Point(12, 74);
+        _cmbCombatMovementMode.Size = new Size(238, 24);
+        _cmbCombatMovementMode.DropDownStyle = ComboBoxStyle.DropDownList;
+        _cmbCombatMovementMode.Items.AddRange(
+            new object[]
+            {
+                "Auto",
+                "Melee",
+                "Ranged",
+                "Caster",
+                "Kite",
+                "Hold Position",
+            }
+        );
+        _cmbCombatMovementMode.SelectedIndex = 0;
+        _cmbCombatMovementMode.SelectedIndexChanged += (_, _) =>
+        {
+            if (mEditorItem != null)
+            {
+                mEditorItem.CombatMovementMode =
+                    Math.Max(0, _cmbCombatMovementMode.SelectedIndex);
+            }
+        };
+
+        var lblRange = new Label
+        {
+            Text = "Preferred range (0 = Auto):",
+            AutoSize = true,
+            Location = new System.Drawing.Point(12, 108),
+            ForeColor = System.Drawing.Color.Gainsboro,
+        };
+
+        _nudPreferredCombatRange.Location = new System.Drawing.Point(12, 128);
+        _nudPreferredCombatRange.Size = new Size(238, 24);
+        _nudPreferredCombatRange.Minimum = 0;
+        _nudPreferredCombatRange.Maximum = 20;
+        _nudPreferredCombatRange.ValueChanged += (_, _) =>
+        {
+            if (mEditorItem != null)
+            {
+                mEditorItem.PreferredCombatRange =
+                    (int)_nudPreferredCombatRange.Value;
+            }
+        };
+
+        _grpCombatAi.Controls.Add(_chkSmartCombatMovement);
+        _grpCombatAi.Controls.Add(lblMode);
+        _grpCombatAi.Controls.Add(_cmbCombatMovementMode);
+        _grpCombatAi.Controls.Add(lblRange);
+        _grpCombatAi.Controls.Add(_nudPreferredCombatRange);
+        pnlContainer.Controls.Add(_grpCombatAi);
+
+        UpdateCombatAiControlState();
+    }
+
+    private void UpdateCombatAiControlState()
+    {
+        var enabled = _chkSmartCombatMovement.Checked;
+        _cmbCombatMovementMode.Enabled = enabled;
+        _nudPreferredCombatRange.Enabled = enabled;
+    }
+
     private void AssignEditorItem(Guid id)
     {
         mEditorItem = NPCDescriptor.Get(id);
         UpdateEditor();
+    }
+
+    public bool SelectBalanceObject(Guid id)
+    {
+        return lstGameObjects.SelectObject(id);
     }
 
     protected override void GameObjectUpdatedDelegate(GameObjectType type)
@@ -90,8 +314,38 @@ public partial class FrmNpc : EditorForm
         Dispose();
     }
 
+    public void RefreshEntitySpriteChoices()
+    {
+        // This method is only for refreshing an already-open editor after new
+        // entity textures are generated. Preserve the current text without
+        // forcing a fallback selection, which would trigger change handlers.
+        var selected = cmbSprite.Text;
+
+        cmbSprite.BeginUpdate();
+        try
+        {
+            cmbSprite.Items.Clear();
+            cmbSprite.Items.Add(Strings.General.None);
+            cmbSprite.Items.AddRange(
+                GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
+            );
+
+            var index = cmbSprite.FindStringExact(selected);
+            if (index >= 0)
+            {
+                cmbSprite.SelectedIndex = index;
+            }
+        }
+        finally
+        {
+            cmbSprite.EndUpdate();
+        }
+    }
+
     private void frmNpc_Load(object sender, EventArgs e)
     {
+        // Keep the original load path event-safe. Selecting an item here can fire
+        // cmbSprite events before the rest of the NPC editor controls are initialized.
         cmbSprite.Items.Clear();
         cmbSprite.Items.Add(Strings.General.None);
         cmbSprite.Items.AddRange(
@@ -108,6 +362,12 @@ public partial class FrmNpc : EditorForm
         cmbAttackAnimation.Items.Clear();
         cmbAttackAnimation.Items.Add(Strings.General.None);
         cmbAttackAnimation.Items.AddRange(AnimationDescriptor.Names);
+        _cmbBossAnimation.Items.Clear();
+        _cmbBossAnimation.Items.Add(Strings.General.None);
+        _cmbBossAnimation.Items.AddRange(AnimationDescriptor.Names);
+        _cmbBossDeathAnimation.Items.Clear();
+        _cmbBossDeathAnimation.Items.Add(Strings.General.None);
+        _cmbBossDeathAnimation.Items.AddRange(AnimationDescriptor.Names);
         cmbOnDeathEventKiller.Items.Clear();
         cmbOnDeathEventKiller.Items.Add(Strings.General.None);
         cmbOnDeathEventKiller.Items.AddRange(EventDescriptor.Names);
@@ -280,6 +540,31 @@ public partial class FrmNpc : EditorForm
 
             nudLevel.Value = mEditorItem.Level;
             nudSpawnDuration.Value = mEditorItem.SpawnDuration;
+
+            _chkIsBoss.Checked = mEditorItem.IsBoss;
+            _cmbBossAnimation.SelectedIndex =
+                AnimationDescriptor.ListIndex(mEditorItem.BossAnimationId) + 1;
+            _cmbBossDeathAnimation.SelectedIndex =
+                AnimationDescriptor.ListIndex(mEditorItem.DeathAnimationId) + 1;
+            _nudBossAnimationOffsetY.Value = Math.Clamp(
+                mEditorItem.BossAnimationOffsetY,
+                (int)_nudBossAnimationOffsetY.Minimum,
+                (int)_nudBossAnimationOffsetY.Maximum
+            );
+            UpdateBossControlState();
+
+            _chkSmartCombatMovement.Checked = mEditorItem.SmartCombatMovement;
+            _cmbCombatMovementMode.SelectedIndex = Math.Clamp(
+                mEditorItem.CombatMovementMode,
+                0,
+                _cmbCombatMovementMode.Items.Count - 1
+            );
+            _nudPreferredCombatRange.Value = Math.Clamp(
+                mEditorItem.PreferredCombatRange,
+                (int)_nudPreferredCombatRange.Minimum,
+                (int)_nudPreferredCombatRange.Maximum
+            );
+            UpdateCombatAiControlState();
 
             //Behavior
             chkAggressive.Checked = mEditorItem.Aggressive;

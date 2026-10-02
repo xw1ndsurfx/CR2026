@@ -148,8 +148,56 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
         set => AttackAnimationId = value?.Id ?? Guid.Empty;
     }
 
+    //Boss configuration
+    public bool IsBoss { get; set; }
+
+    [Column("BossAnimation")]
+    public Guid BossAnimationId { get; set; }
+
+    [NotMapped]
+    [JsonIgnore]
+    public AnimationDescriptor BossAnimation
+    {
+        get => AnimationDescriptor.Get(BossAnimationId);
+        set => BossAnimationId = value?.Id ?? Guid.Empty;
+    }
+
+    /// <summary>
+    /// Vertical pixel offset for the looping boss marker/aura attached to the NPC.
+    /// Negative values render the animation above the NPC.
+    /// </summary>
+    public int BossAnimationOffsetY { get; set; } = -48;
+
+    [Column("DeathAnimation")]
+    public Guid DeathAnimationId { get; set; }
+
+    [NotMapped]
+    [JsonIgnore]
+    public AnimationDescriptor DeathAnimation
+    {
+        get => AnimationDescriptor.Get(DeathAnimationId);
+        set => DeathAnimationId = value?.Id ?? Guid.Empty;
+    }
+
     //Behavior
     public bool Aggressive { get; set; }
+
+    /// <summary>
+    /// Enables tactical positioning while this NPC has a combat target.
+    /// </summary>
+    public bool SmartCombatMovement { get; set; } = true;
+
+    /// <summary>
+    /// Controls how the NPC positions itself around combat targets.
+    /// Auto infers the role from its offensive spells.
+    /// </summary>
+    public int CombatMovementMode { get; set; } = (int)NpcCombatMovementMode.Auto;
+
+    /// <summary>
+    /// Preferred distance in tiles. Zero lets Auto/role logic derive a range
+    /// from configured spell cast/projectile ranges.
+    /// </summary>
+    public int PreferredCombatRange { get; set; }
 
     public byte Movement { get; set; }
 

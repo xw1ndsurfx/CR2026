@@ -942,6 +942,11 @@ public partial class Entity : IEntity
         return true;
     }
 
+    public bool TryGetAnimation(
+        AnimationSource animationSource,
+        [NotNullWhen(true)] out Animation? animation
+    ) => _animationsBySource.TryGetValue(animationSource, out animation);
+
     public bool TryRemoveAnimation(AnimationSource animationSource, bool dispose = false) => TryRemoveAnimation(
         animationSource: animationSource,
         dispose: dispose,

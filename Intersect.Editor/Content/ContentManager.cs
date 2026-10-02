@@ -276,6 +276,22 @@ public static partial class GameContentManager
         LoadTextureGroup("entities", sEntityDict);
     }
 
+    public static void ReloadEntityTextures()
+    {
+        LoadEntities();
+    }
+
+    public static void ReloadPaperdollAndItemTextures()
+    {
+        LoadPaperdolls();
+        LoadItems();
+    }
+
+    public static void ReloadAnimationTextures()
+    {
+        LoadAnimations();
+    }
+
     private static void LoadSpells()
     {
         LoadTextureGroup("spells", sSpellDict);

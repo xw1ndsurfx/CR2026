@@ -83,6 +83,28 @@ public partial class Npc : Entity
     public long LastRandomMove;
     private byte _randomMoveRange;
 
+    // Smart movement state. These values are runtime-only and intentionally do
+    // not change NPC data. They keep roaming coherent and prevent oscillation
+    // when pathfinding encounters temporary blockers.
+    private static readonly Direction[] SmartMoveDirections =
+    [
+        Direction.Up,
+        Direction.Down,
+        Direction.Left,
+        Direction.Right,
+        Direction.UpLeft,
+        Direction.UpRight,
+        Direction.DownRight,
+        Direction.DownLeft,
+    ];
+
+    private Direction _lastSmartMoveDirection = Direction.None;
+    private long _nextTacticalReposition;
+    private Guid _roamHomeMapId = Guid.Empty;
+    private int _roamHomeX;
+    private int _roamHomeY;
+    private bool _roamHomeInitialized;
+
     //Pathfinding
     private Pathfinder mPathFinder;
 
@@ -191,6 +213,20 @@ public partial class Npc : Entity
             AggroCenterX = 0;
             AggroCenterY = 0;
             AggroCenterZ = 0;
+
+            if (Descriptor.IsBoss && Descriptor.DeathAnimationId != Guid.Empty)
+            {
+                PacketSender.SendAnimationToProximity(
+                    Descriptor.DeathAnimationId,
+                    -1,
+                    Guid.Empty,
+                    MapId,
+                    X,
+                    Y,
+                    Direction.None,
+                    MapInstanceId
+                );
+            }
 
             if (MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var instance))
             {
@@ -664,7 +700,7 @@ public partial class Npc : Entity
     {
         var target = Target;
 
-        if (target == null || mPathFinder.GetTarget() == null)
+        if (target == null)
         {
             return;
         }
@@ -907,10 +943,26 @@ public partial class Npc : Entity
                         }
                     }
 
+                    // Tactical ranged/caster movement can intentionally hold,
+                    // retreat or strafe instead of always pathing into melee range.
+                    var tacticalMovementHandled = false;
+                    if (tempTarget != null &&
+                        !tempTarget.IsDead &&
+                        CanTarget(tempTarget) &&
+                        !mResetting &&
+                        !fleeing &&
+                        Descriptor.SmartCombatMovement)
+                    {
+                        tacticalMovementHandled =
+                            TryHandleTacticalCombatMovement(tempTarget, timeMs);
+                    }
+
                     //Check if there is a target, if so, run their ass down.
                     if (tempTarget != null && CanTarget(tempTarget))
                     {
-                        if (!tempTarget.IsDead && CanAttack(tempTarget, null))
+                        if (!tacticalMovementHandled &&
+                            !tempTarget.IsDead &&
+                            CanAttack(tempTarget, null))
                         {
                             targetMap = tempTarget.MapId;
                             targetX = tempTarget.X;
@@ -1016,20 +1068,35 @@ public partial class Npc : Entity
                                     var nextPathDirection = mPathFinder.GetMove();
                                     if (nextPathDirection > Direction.None)
                                     {
-                                        if (fleeing)
+                                        if (!fleeing &&
+                                            Descriptor.SmartCombatMovement &&
+                                            tempTarget != null &&
+                                            tempTarget.MapId == MapId &&
+                                            ResolveCombatMovementMode() == NpcCombatMovementMode.Melee &&
+                                            GetDistanceTo(tempTarget) <= 3)
                                         {
-                                            nextPathDirection = nextPathDirection switch
+                                            var approachDirection =
+                                                ChooseTacticalCombatDirection(
+                                                    tempTarget,
+                                                    1,
+                                                    false,
+                                                    nextPathDirection
+                                                );
+
+                                            if (approachDirection > Direction.None)
                                             {
-                                                Direction.Up => Direction.Down,
-                                                Direction.Down => Direction.Up,
-                                                Direction.Left => Direction.Right,
-                                                Direction.Right => Direction.Left,
-                                                Direction.UpLeft => Direction.UpRight,
-                                                Direction.UpRight => Direction.UpLeft,
-                                                Direction.DownRight => Direction.DownLeft,
-                                                Direction.DownLeft => Direction.DownRight,
-                                                _ => nextPathDirection,
-                                            };
+                                                nextPathDirection = approachDirection;
+                                            }
+                                        }
+
+                                        if (fleeing && tempTarget != null)
+                                        {
+                                            nextPathDirection = ChooseSmartMovementDirection(
+                                                OppositeDirection(nextPathDirection),
+                                                null,
+                                                tempTarget,
+                                                true
+                                            );
                                         }
 
                                         if (CanMoveInDirection(nextPathDirection, out var blockerType, out var blockingEntityType, out var blockingEntity) || blockerType == MovementBlockerType.Slide)
@@ -1048,6 +1115,7 @@ public partial class Npc : Entity
                                             }
 
                                             Move(nextPathDirection, null);
+                                            _lastSmartMoveDirection = nextPathDirection;
                                         }
                                         else
                                         {
@@ -1071,7 +1139,23 @@ public partial class Npc : Entity
 
                                             if (!blockerAttacked)
                                             {
-                                                mPathFinder.PathFailed(timeMs);
+                                                var detourDirection = ChooseSmartMovementDirection(
+                                                    nextPathDirection,
+                                                    pathTarget,
+                                                    fleeing ? tempTarget : null,
+                                                    fleeing
+                                                );
+
+                                                if (detourDirection > Direction.None &&
+                                                    detourDirection != nextPathDirection)
+                                                {
+                                                    Move(detourDirection, null);
+                                                    _lastSmartMoveDirection = detourDirection;
+                                                }
+                                                else
+                                                {
+                                                    mPathFinder.PathFailed(timeMs);
+                                                }
                                             }
                                         }
 
@@ -1137,44 +1221,16 @@ public partial class Npc : Entity
                             var fleed = false;
                             if (tempTarget != null && fleeing)
                             {
-                                var dir = DirectionToTarget(tempTarget);
-                                switch (dir)
-                                {
-                                    case Direction.Up:
-                                        dir = Direction.Down;
+                                var dir = ChooseSmartMovementDirection(
+                                    OppositeDirection(DirectionToTarget(tempTarget)),
+                                    null,
+                                    tempTarget,
+                                    true
+                                );
 
-                                        break;
-                                    case Direction.Down:
-                                        dir = Direction.Up;
-
-                                        break;
-                                    case Direction.Left:
-                                        dir = Direction.Right;
-
-                                        break;
-                                    case Direction.Right:
-                                        dir = Direction.Left;
-
-                                        break;
-                                    case Direction.UpLeft:
-                                        dir = Direction.UpRight;
-
-                                        break;
-                                    case Direction.UpRight:
-                                        dir = Direction.UpLeft;
-                                        break;
-
-                                    case Direction.DownRight:
-                                        dir = Direction.DownLeft;
-
-                                        break;
-                                    case Direction.DownLeft:
-                                        dir = Direction.DownRight;
-
-                                        break;
-                                }
-
-                                if (CanMoveInDirection(dir, out var blockerType, out _) || blockerType == MovementBlockerType.Slide)
+                                if (dir > Direction.None &&
+                                    (CanMoveInDirection(dir, out var blockerType, out _) ||
+                                     blockerType == MovementBlockerType.Slide))
                                 {
                                     //check if NPC is snared or stunned
                                     foreach (var status in CachedStatuses)
@@ -1188,6 +1244,7 @@ public partial class Npc : Entity
                                     }
 
                                     Move(dir, null);
+                                    _lastSmartMoveDirection = dir;
                                     fleed = true;
                                 }
                             }
@@ -1280,38 +1337,656 @@ public partial class Npc : Entity
         }
     }
 
-    private void MoveRandomly()
+    private bool TryHandleTacticalCombatMovement(Entity target, long timeMs)
     {
-        if (_randomMoveRange <= 0)
+        if (target.MapId != MapId ||
+            target.MapInstanceId != MapInstanceId ||
+            Descriptor.Movement == (byte)NpcMovement.Static)
         {
-            Dir = Randomization.NextDirection();
-            LastRandomMove = Timing.Global.Milliseconds + Randomization.Next(1000, 2000);
-            _randomMoveRange = (byte)Randomization.Next(0, Descriptor.SightRange + Randomization.Next(0, 3));
+            return ResolveCombatMovementMode() == NpcCombatMovementMode.HoldPosition;
         }
-        else if (CanMoveInDirection(Dir))
+
+        var mode = ResolveCombatMovementMode();
+        if (mode == NpcCombatMovementMode.Melee)
         {
-            foreach (var status in CachedStatuses)
+            return false;
+        }
+
+        var distance = GetDistanceTo(target);
+        if (distance == 9999)
+        {
+            return false;
+        }
+
+        var preferredRange = ResolvePreferredCombatRange(mode);
+        var minRange = mode == NpcCombatMovementMode.Kite
+            ? Math.Max(2, preferredRange)
+            : Math.Max(2, preferredRange - 1);
+        var maxRange = mode == NpcCombatMovementMode.Kite
+            ? preferredRange + 1
+            : preferredRange + 1;
+
+        if (mode == NpcCombatMovementMode.HoldPosition)
+        {
+            mPathFinder.SetTarget(null);
+            FaceCombatTarget(target);
+            TryCastSpells();
+
+            if (IsOneBlockAway(target) && CanAttack(target, null))
             {
-                if (status.Type is SpellEffect.Stun or SpellEffect.Snare or SpellEffect.Sleep)
+                TryAttack(target);
+            }
+
+            return true;
+        }
+
+        // Too close: immediately create room. This is the key difference from
+        // legacy behavior where every NPC blindly collapsed into melee range.
+        if (distance < minRange)
+        {
+            mPathFinder.SetTarget(null);
+            TryCastSpells();
+
+            if (timeMs >= _nextTacticalReposition)
+            {
+                var retreat = ChooseTacticalCombatDirection(
+                    target,
+                    preferredRange,
+                    true,
+                    OppositeDirection(DirectionToTarget(target))
+                );
+
+                if (TrySmartCombatMove(retreat))
                 {
-                    return;
+                    _nextTacticalReposition =
+                        timeMs + (Descriptor.IsBoss ? 650 : 350);
+                }
+                else
+                {
+                    FaceCombatTarget(target);
+                    _nextTacticalReposition = timeMs + 250;
                 }
             }
 
-            Move(Dir, null);
-            LastRandomMove = Timing.Global.Milliseconds + (long)GetMovementTime();
+            return true;
+        }
 
-            if (_randomMoveRange <= Randomization.Next(0, 3))
+        // Inside the preferred band: stop chasing, face/cast and occasionally
+        // strafe to avoid forming a motionless pile around the same player.
+        if (distance <= maxRange)
+        {
+            mPathFinder.SetTarget(null);
+            FaceCombatTarget(target);
+            TryCastSpells();
+
+            if (IsOneBlockAway(target) && CanAttack(target, null))
             {
-                Dir = Randomization.NextDirection();
+                TryAttack(target);
             }
 
-            _randomMoveRange--;
+            if (timeMs >= _nextTacticalReposition)
+            {
+                var shouldStrafe =
+                    mode == NpcCombatMovementMode.Kite ||
+                    Randomization.Next(0, 100) < (Descriptor.IsBoss ? 20 : 35);
+
+                if (shouldStrafe)
+                {
+                    var strafe = ChooseTacticalCombatDirection(
+                        target,
+                        preferredRange,
+                        false,
+                        Direction.None
+                    );
+
+                    _ = TrySmartCombatMove(strafe);
+                }
+
+                _nextTacticalReposition =
+                    timeMs + Randomization.Next(
+                        Descriptor.IsBoss ? 900 : 600,
+                        Descriptor.IsBoss ? 1600 : 1200
+                    );
+            }
+
+            return true;
         }
-        else
+
+        // Too far away: let the normal pathfinder close the distance. It will
+        // be interrupted automatically as soon as the NPC enters its range band.
+        return false;
+    }
+
+    private NpcCombatMovementMode ResolveCombatMovementMode()
+    {
+        var configured = Enum.IsDefined(
+            typeof(NpcCombatMovementMode),
+            Descriptor.CombatMovementMode
+        )
+            ? (NpcCombatMovementMode)Descriptor.CombatMovementMode
+            : NpcCombatMovementMode.Auto;
+
+        if (configured != NpcCombatMovementMode.Auto)
         {
-            Dir = Randomization.NextDirection();
+            return configured;
         }
+
+        var hasHostileCombatSpell = false;
+        var hasProjectileSpell = false;
+        var longestCastRange = 0;
+
+        foreach (var spellId in Descriptor.Spells)
+        {
+            var spell = SpellDescriptor.Get(spellId);
+            if (spell?.Combat == null ||
+                spell.SpellType != SpellType.CombatSpell ||
+                spell.Combat.Friendly)
+            {
+                continue;
+            }
+
+            hasHostileCombatSpell = true;
+            longestCastRange = Math.Max(
+                longestCastRange,
+                spell.Combat.CastRange
+            );
+
+            if (spell.Combat.Projectile != null)
+            {
+                hasProjectileSpell = true;
+                longestCastRange = Math.Max(
+                    longestCastRange,
+                    spell.Combat.Projectile.Range
+                );
+            }
+        }
+
+        if (hasProjectileSpell)
+        {
+            return NpcCombatMovementMode.Ranged;
+        }
+
+        if (hasHostileCombatSpell && longestCastRange >= 2)
+        {
+            return NpcCombatMovementMode.Caster;
+        }
+
+        return NpcCombatMovementMode.Melee;
+    }
+
+    private int ResolvePreferredCombatRange(NpcCombatMovementMode mode)
+    {
+        if (Descriptor.PreferredCombatRange > 0)
+        {
+            return Math.Clamp(Descriptor.PreferredCombatRange, 1, 20);
+        }
+
+        var inferredRange = 0;
+        foreach (var spellId in Descriptor.Spells)
+        {
+            var spell = SpellDescriptor.Get(spellId);
+            if (spell?.Combat == null ||
+                spell.SpellType != SpellType.CombatSpell ||
+                spell.Combat.Friendly)
+            {
+                continue;
+            }
+
+            inferredRange = Math.Max(inferredRange, spell.Combat.CastRange);
+            if (spell.Combat.Projectile != null)
+            {
+                inferredRange = Math.Max(
+                    inferredRange,
+                    spell.Combat.Projectile.Range
+                );
+            }
+        }
+
+        var preferred = mode switch
+        {
+            NpcCombatMovementMode.Melee => 1,
+            NpcCombatMovementMode.Ranged => Math.Clamp(inferredRange, 3, 8),
+            NpcCombatMovementMode.Caster => Math.Clamp(inferredRange, 3, 7),
+            NpcCombatMovementMode.Kite => Math.Clamp(inferredRange, 4, 9),
+            NpcCombatMovementMode.HoldPosition => Math.Max(1, inferredRange),
+            _ => Math.Clamp(inferredRange, 1, 8),
+        };
+
+        // Bosses should feel deliberate rather than standing directly on top of
+        // players. Explicit designer ranges are never modified.
+        if (Descriptor.IsBoss &&
+            mode is NpcCombatMovementMode.Ranged or
+                NpcCombatMovementMode.Caster or
+                NpcCombatMovementMode.Kite)
+        {
+            preferred = Math.Min(10, preferred + 1);
+        }
+
+        return preferred;
+    }
+
+    private bool TrySmartCombatMove(Direction direction)
+    {
+        if (direction <= Direction.None)
+        {
+            return false;
+        }
+
+        if (!CanMoveInDirection(
+                direction,
+                out var blockerType,
+                out _,
+                out _
+            ) &&
+            blockerType != MovementBlockerType.Slide)
+        {
+            return false;
+        }
+
+        foreach (var status in CachedStatuses)
+        {
+            if (status.Type is SpellEffect.Stun or SpellEffect.Snare or SpellEffect.Sleep)
+            {
+                return false;
+            }
+        }
+
+        Move(direction, null);
+        _lastSmartMoveDirection = direction;
+        return true;
+    }
+
+    private void FaceCombatTarget(Entity target)
+    {
+        var direction = DirectionToTarget(target);
+        if (direction > Direction.None && direction != Dir)
+        {
+            ChangeDir(direction);
+        }
+    }
+
+    private Direction ChooseTacticalCombatDirection(
+        Entity target,
+        int preferredRange,
+        bool retreatOnly,
+        Direction preferredDirection
+    )
+    {
+        var currentDistance = GetDistanceTo(target);
+        var bestDirection = Direction.None;
+        var bestScore = double.MinValue;
+
+        foreach (var candidate in SmartMoveDirections)
+        {
+            if (!CanMoveInDirection(
+                    candidate,
+                    out var blockerType,
+                    out _,
+                    out _
+                ) &&
+                blockerType != MovementBlockerType.Slide)
+            {
+                continue;
+            }
+
+            var (dx, dy) = DirectionOffset(candidate);
+            var projectedX = X + dx;
+            var projectedY = Y + dy;
+
+            var projectedDistance = Math.Max(
+                Math.Abs(projectedX - target.X),
+                Math.Abs(projectedY - target.Y)
+            );
+
+            if (retreatOnly && projectedDistance <= currentDistance)
+            {
+                continue;
+            }
+
+            var score =
+                120d -
+                Math.Abs(projectedDistance - preferredRange) * 35d;
+
+            if (candidate == preferredDirection)
+            {
+                score += 24;
+            }
+
+            if (candidate == Dir)
+            {
+                score += 8;
+            }
+
+            if (candidate == _lastSmartMoveDirection)
+            {
+                score += 6;
+            }
+
+            if (candidate == OppositeDirection(_lastSmartMoveDirection))
+            {
+                score -= 15;
+            }
+
+            // Strongly discourage choosing a tile already crowded by NPCs
+            // fighting the same target. This naturally distributes melee mobs
+            // and gives ranged/caster NPCs their own firing positions.
+            score -= GetCombatCrowding(projectedX, projectedY, target) * 45d;
+            score += Randomization.Next(0, 8);
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestDirection = candidate;
+            }
+        }
+
+        return bestDirection;
+    }
+
+    private int GetCombatCrowding(int x, int y, Entity target)
+    {
+        if (!MapController.TryGetInstanceFromMap(
+                MapId,
+                MapInstanceId,
+                out var instance
+            ))
+        {
+            return 0;
+        }
+
+        var crowding = 0;
+        foreach (var entity in instance.GetEntities(true))
+        {
+            if (entity is not Npc npc ||
+                npc == this ||
+                npc.IsDead ||
+                npc.MapId != MapId)
+            {
+                continue;
+            }
+
+            var dx = Math.Abs(npc.X - x);
+            var dy = Math.Abs(npc.Y - y);
+            if (Math.Max(dx, dy) > 1)
+            {
+                continue;
+            }
+
+            crowding += npc.Target == target ? 2 : 1;
+        }
+
+        return crowding;
+    }
+
+    private void MoveRandomly()
+    {
+        EnsureRoamHome();
+
+        if (_randomMoveRange <= 0)
+        {
+            var preferred = Dir > Direction.None
+                ? Dir
+                : Randomization.NextDirection();
+
+            var direction = ChooseSmartRoamDirection(preferred);
+            if (direction <= Direction.None)
+            {
+                LastRandomMove =
+                    Timing.Global.Milliseconds + Randomization.Next(600, 1400);
+                return;
+            }
+
+            Dir = direction;
+            _randomMoveRange = (byte)Math.Clamp(
+                Randomization.Next(2, Math.Max(4, Descriptor.SightRange + 2)),
+                2,
+                12
+            );
+
+            // A short think/pause before starting the next coherent movement
+            // burst makes idle NPCs look intentional instead of jittery.
+            LastRandomMove =
+                Timing.Global.Milliseconds + Randomization.Next(450, 1100);
+            return;
+        }
+
+        var nextDirection = ChooseSmartRoamDirection(Dir);
+        if (nextDirection <= Direction.None)
+        {
+            _randomMoveRange = 0;
+            LastRandomMove =
+                Timing.Global.Milliseconds + Randomization.Next(500, 1200);
+            return;
+        }
+
+        foreach (var status in CachedStatuses)
+        {
+            if (status.Type is SpellEffect.Stun or SpellEffect.Snare or SpellEffect.Sleep)
+            {
+                return;
+            }
+        }
+
+        Dir = nextDirection;
+        Move(nextDirection, null);
+        _lastSmartMoveDirection = nextDirection;
+        LastRandomMove = Timing.Global.Milliseconds + (long)GetMovementTime();
+        _randomMoveRange--;
+
+        // Occasionally end a walking burst naturally instead of changing to a
+        // random direction mid-step. This removes the common zig-zag look.
+        if (_randomMoveRange > 0 && Randomization.Next(0, 100) < 12)
+        {
+            _randomMoveRange = 0;
+            LastRandomMove += Randomization.Next(350, 900);
+        }
+    }
+
+    private void EnsureRoamHome()
+    {
+        if (_roamHomeInitialized)
+        {
+            return;
+        }
+
+        _roamHomeMapId = MapId;
+        _roamHomeX = X;
+        _roamHomeY = Y;
+        _roamHomeInitialized = true;
+    }
+
+    private Direction ChooseSmartRoamDirection(Direction preferred)
+    {
+        var bestDirection = Direction.None;
+        var bestScore = double.MinValue;
+        var roamRadius = Math.Clamp(Math.Max(2, Descriptor.SightRange), 2, 12);
+        var distanceFromHome =
+            _roamHomeMapId == MapId
+                ? Math.Max(Math.Abs(X - _roamHomeX), Math.Abs(Y - _roamHomeY))
+                : 0;
+
+        foreach (var candidate in SmartMoveDirections)
+        {
+            if (!CanMoveInDirection(candidate, out var blockerType, out _) &&
+                blockerType != MovementBlockerType.Slide)
+            {
+                continue;
+            }
+
+            var score = Randomization.Next(0, 8);
+
+            if (candidate == preferred)
+            {
+                score += 45;
+            }
+
+            if (candidate == Dir)
+            {
+                score += 25;
+            }
+
+            if (candidate == _lastSmartMoveDirection)
+            {
+                score += 20;
+            }
+
+            if (candidate == OppositeDirection(_lastSmartMoveDirection))
+            {
+                score -= 35;
+            }
+
+            var (dx, dy) = DirectionOffset(candidate);
+            var projectedX = X + dx;
+            var projectedY = Y + dy;
+
+            if (_roamHomeMapId == MapId)
+            {
+                var projectedDistance = Math.Max(
+                    Math.Abs(projectedX - _roamHomeX),
+                    Math.Abs(projectedY - _roamHomeY)
+                );
+
+                // Once outside the idle roam radius, returning toward home
+                // dominates the random/inertia score.
+                if (distanceFromHome >= roamRadius)
+                {
+                    score += (distanceFromHome - projectedDistance) * 100;
+                }
+                else
+                {
+                    // Softly discourage drifting to the edge of the allowed
+                    // roaming area while still permitting natural wandering.
+                    score -= projectedDistance * 2;
+                }
+            }
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestDirection = candidate;
+            }
+        }
+
+        return bestDirection;
+    }
+
+    private Direction ChooseSmartMovementDirection(
+        Direction preferred,
+        PathfinderTarget? pathTarget,
+        Entity? avoidTarget,
+        bool fleeing
+    )
+    {
+        var bestDirection = Direction.None;
+        var bestScore = double.MinValue;
+
+        foreach (var candidate in SmartMoveDirections)
+        {
+            if (!CanMoveInDirection(
+                    candidate,
+                    out var blockerType,
+                    out _,
+                    out _
+                ) &&
+                blockerType != MovementBlockerType.Slide)
+            {
+                continue;
+            }
+
+            var score = (double)Randomization.Next(0, 5);
+
+            if (candidate == preferred)
+            {
+                score += 35;
+            }
+
+            if (candidate == Dir)
+            {
+                score += 12;
+            }
+
+            if (candidate == _lastSmartMoveDirection)
+            {
+                score += 10;
+            }
+
+            if (candidate == OppositeDirection(_lastSmartMoveDirection))
+            {
+                score -= 20;
+            }
+
+            var (dx, dy) = DirectionOffset(candidate);
+            var projectedX = X + dx;
+            var projectedY = Y + dy;
+
+            if (avoidTarget != null)
+            {
+                score -= GetCombatCrowding(
+                    projectedX,
+                    projectedY,
+                    avoidTarget
+                ) * 25d;
+            }
+
+            if (fleeing &&
+                avoidTarget != null &&
+                avoidTarget.MapId == MapId)
+            {
+                var distanceX = projectedX - avoidTarget.X;
+                var distanceY = projectedY - avoidTarget.Y;
+                score += (distanceX * distanceX + distanceY * distanceY) * 8;
+            }
+            else if (pathTarget != null &&
+                     pathTarget.TargetMapId == MapId)
+            {
+                var distanceX = projectedX - pathTarget.TargetX;
+                var distanceY = projectedY - pathTarget.TargetY;
+
+                // Lower squared distance is better. Using a strong weight means
+                // the detour still progresses toward the target when possible.
+                score -= (distanceX * distanceX + distanceY * distanceY) * 8;
+            }
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestDirection = candidate;
+            }
+        }
+
+        return bestDirection;
+    }
+
+    private static Direction OppositeDirection(Direction direction)
+    {
+        return direction switch
+        {
+            Direction.Up => Direction.Down,
+            Direction.Down => Direction.Up,
+            Direction.Left => Direction.Right,
+            Direction.Right => Direction.Left,
+            Direction.UpLeft => Direction.DownRight,
+            Direction.UpRight => Direction.DownLeft,
+            Direction.DownRight => Direction.UpLeft,
+            Direction.DownLeft => Direction.UpRight,
+            _ => Direction.None,
+        };
+    }
+
+    private static (int X, int Y) DirectionOffset(Direction direction)
+    {
+        return direction switch
+        {
+            Direction.Up => (0, -1),
+            Direction.Down => (0, 1),
+            Direction.Left => (-1, 0),
+            Direction.Right => (1, 0),
+            Direction.UpLeft => (-1, -1),
+            Direction.UpRight => (1, -1),
+            Direction.DownRight => (1, 1),
+            Direction.DownLeft => (-1, 1),
+            _ => (0, 0),
+        };
     }
 
     /// <summary>
@@ -1701,6 +2376,11 @@ public partial class Npc : Entity
         Y = (int)newY;
         Z = zOverride;
         Dir = newDir;
+
+        _roamHomeInitialized = false;
+        _randomMoveRange = 0;
+        _lastSmartMoveDirection = Direction.None;
+        _nextTacticalReposition = 0;
         if (newMapId != MapId)
         {
             if (MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var oldMap))

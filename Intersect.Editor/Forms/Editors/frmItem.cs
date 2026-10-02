@@ -2,6 +2,7 @@ using System.Drawing.Imaging;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
+using Intersect.Editor.Forms;
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Networking;
@@ -32,6 +33,10 @@ public partial class FrmItem : EditorForm
 
     private bool EffectValueUpdating = false;
 
+    private FrmCharacterGenerator.GeneratedItemRequest? _pendingGeneratedItem;
+
+    private HashSet<Guid> _generatedItemExistingIds = new();
+
     public FrmItem()
     {
         ApplyHooks();
@@ -58,11 +63,18 @@ public partial class FrmItem : EditorForm
         UpdateEditor();
     }
 
+    public bool SelectBalanceObject(Guid id)
+    {
+        return lstGameObjects.SelectObject(id);
+    }
+
     protected override void GameObjectUpdatedDelegate(GameObjectType type)
     {
         if (type == GameObjectType.Item)
         {
             InitEditor();
+            TryApplyPendingGeneratedItem();
+
             if (mEditorItem != null && !ItemDescriptor.Lookup.Values.Contains(mEditorItem))
             {
                 mEditorItem = null;
@@ -76,6 +88,171 @@ public partial class FrmItem : EditorForm
         {
             frmItem_Load(null, null);
         }
+    }
+
+    public void BeginGeneratedItemCreation(FrmCharacterGenerator.GeneratedItemRequest request)
+    {
+        _pendingGeneratedItem = request;
+        _generatedItemExistingIds = ItemDescriptor.Lookup.Keys.ToHashSet();
+
+        RefreshGeneratedAssetChoices();
+        PacketSender.SendCreateObject(GameObjectType.Item);
+    }
+
+    public void RefreshGeneratedAssetChoices()
+    {
+        var selectedIcon = cmbPic.Text;
+        var selectedMale = cmbMalePaperdoll.Text;
+        var selectedFemale = cmbFemalePaperdoll.Text;
+
+        cmbPic.SelectedIndexChanged -= cmbPic_SelectedIndexChanged;
+        cmbMalePaperdoll.SelectedIndexChanged -= cmbPaperdoll_SelectedIndexChanged;
+        cmbFemalePaperdoll.SelectedIndexChanged -= cmbFemalePaperdoll_SelectedIndexChanged;
+
+        try
+        {
+            cmbPic.BeginUpdate();
+            cmbMalePaperdoll.BeginUpdate();
+            cmbFemalePaperdoll.BeginUpdate();
+
+            cmbPic.Items.Clear();
+            cmbPic.Items.Add(Strings.General.None);
+            cmbPic.Items.AddRange(
+                GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Item)
+            );
+
+            var paperdolls =
+                GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Paperdoll);
+
+            cmbMalePaperdoll.Items.Clear();
+            cmbMalePaperdoll.Items.Add(Strings.General.None);
+            cmbMalePaperdoll.Items.AddRange(paperdolls);
+
+            cmbFemalePaperdoll.Items.Clear();
+            cmbFemalePaperdoll.Items.Add(Strings.General.None);
+            cmbFemalePaperdoll.Items.AddRange(paperdolls);
+
+            var iconIndex = cmbPic.FindStringExact(selectedIcon);
+            if (iconIndex >= 0)
+            {
+                cmbPic.SelectedIndex = iconIndex;
+            }
+
+            var maleIndex = cmbMalePaperdoll.FindStringExact(selectedMale);
+            if (maleIndex >= 0)
+            {
+                cmbMalePaperdoll.SelectedIndex = maleIndex;
+            }
+
+            var femaleIndex = cmbFemalePaperdoll.FindStringExact(selectedFemale);
+            if (femaleIndex >= 0)
+            {
+                cmbFemalePaperdoll.SelectedIndex = femaleIndex;
+            }
+        }
+        finally
+        {
+            cmbPic.EndUpdate();
+            cmbMalePaperdoll.EndUpdate();
+            cmbFemalePaperdoll.EndUpdate();
+
+            cmbPic.SelectedIndexChanged += cmbPic_SelectedIndexChanged;
+            cmbMalePaperdoll.SelectedIndexChanged += cmbPaperdoll_SelectedIndexChanged;
+            cmbFemalePaperdoll.SelectedIndexChanged += cmbFemalePaperdoll_SelectedIndexChanged;
+        }
+    }
+
+    private void TryApplyPendingGeneratedItem()
+    {
+        if (_pendingGeneratedItem == null)
+        {
+            return;
+        }
+
+        var createdItem = ItemDescriptor.Lookup
+            .Where(pair => !_generatedItemExistingIds.Contains(pair.Key))
+            .Select(pair => pair.Value as ItemDescriptor)
+            .FirstOrDefault(item => item != null);
+
+        if (createdItem == null)
+        {
+            return;
+        }
+
+        var request = _pendingGeneratedItem;
+        _pendingGeneratedItem = null;
+        _generatedItemExistingIds.Clear();
+
+        mEditorItem = createdItem;
+
+        // Let UpdateEditor create the normal backup before applying generated data.
+        UpdateEditor();
+
+        mEditorItem.Name = request.ItemName;
+        mEditorItem.Icon = request.IconFile;
+        mEditorItem.ItemType = ItemType.Equipment;
+        mEditorItem.MalePaperdoll = request.MaleCompatible ? request.PaperdollFile : string.Empty;
+        mEditorItem.FemalePaperdoll = request.FemaleCompatible ? request.PaperdollFile : string.Empty;
+
+        var generatedSlot = ResolveGeneratedEquipmentSlot(request.SourceCategory);
+        if (generatedSlot >= 0)
+        {
+            mEditorItem.EquipmentSlot = generatedSlot;
+        }
+
+        RefreshGeneratedAssetChoices();
+        UpdateEditor();
+
+        Text = $"{Strings.ItemEditor.title} — Generated: {request.ItemName}";
+        BringToFront();
+    }
+
+    private static int ResolveGeneratedEquipmentSlot(string sourceCategory)
+    {
+        var preferredSlot = sourceCategory switch
+        {
+            "Head" or "Hair" or "Beard" => "Head",
+            "Top" or "Chest" or "Overall" => "Armor",
+            "Pants" or "Skirt" => "Legs",
+            "Feet" => "Boots",
+            "Hands" => "Gloves",
+            "Cape" => "Cape",
+            "Quiver" => "Bag",
+            "Offhand" => "Shield",
+            "One Handed" or "Staff" or "Bow" or "Rifle" => "Weapon",
+            "Artifact" or "FX" => "Tag",
+            "Bundles" => "Ship",
+            _ => string.Empty,
+        };
+
+        if (string.IsNullOrWhiteSpace(preferredSlot))
+        {
+            return -1;
+        }
+
+        var slots = Options.Instance.Equipment.Slots.ToArray();
+
+        for (var i = 0; i < slots.Length; i++)
+        {
+            if (string.Equals(
+                    slots[i],
+                    preferredSlot,
+                    StringComparison.OrdinalIgnoreCase
+                ))
+            {
+                return i;
+            }
+        }
+
+        for (var i = 0; i < slots.Length; i++)
+        {
+            if (slots[i].Contains(preferredSlot, StringComparison.OrdinalIgnoreCase))
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     private void btnCancel_Click(object sender, EventArgs e)

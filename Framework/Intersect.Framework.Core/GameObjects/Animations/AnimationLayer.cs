@@ -31,6 +31,11 @@ public partial class AnimationLayer
 
     public int LoopCount { get; set; }
 
+    /// <summary>
+    /// Visual size of this layer at runtime. 100 is the source frame size.
+    /// </summary>
+    public int ScalePercent { get; set; } = 100;
+
     public bool DisableRotations { get; set; }
 
     public bool AlternateRenderLayer { get; set; }
