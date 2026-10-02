@@ -192,6 +192,20 @@ public partial class Npc : Entity
             AggroCenterY = 0;
             AggroCenterZ = 0;
 
+            if (Descriptor.IsBoss && Descriptor.DeathAnimationId != Guid.Empty)
+            {
+                PacketSender.SendAnimationToProximity(
+                    Descriptor.DeathAnimationId,
+                    -1,
+                    Guid.Empty,
+                    MapId,
+                    X,
+                    Y,
+                    Direction.None,
+                    MapInstanceId
+                );
+            }
+
             if (MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var instance))
             {
                 instance.RemoveEntity(this);
