@@ -361,8 +361,21 @@ public sealed class FrmSoundImport : DarkForm
         libraryHost.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         libraryHost.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
 
+        var filterBar = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            ColumnCount = 3,
+            RowCount = 1,
+            BackColor = System.Drawing.Color.FromArgb(38, 32, 34),
+        };
+        filterBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 48));
+        filterBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32));
+        filterBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20));
+
         _search.Dock = DockStyle.Fill;
-        _search.Margin = new Padding(0, 0, 0, 7);
+        _search.Margin = new Padding(0, 0, 6, 7);
         _search.PlaceholderText = "Search sounds...";
         StyleTextBox(_search);
         _search.TextChanged += (_, _) =>
@@ -370,6 +383,43 @@ public sealed class FrmSoundImport : DarkForm
             _page = 0;
             PopulateSoundList();
         };
+
+        _sort.Dock = DockStyle.Fill;
+        _sort.Margin = new Padding(0, 0, 6, 7);
+        _sort.DropDownStyle = ComboBoxStyle.DropDownList;
+        _sort.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        _sort.ForeColor = System.Drawing.Color.White;
+        _sort.Items.AddRange(
+            new object[]
+            {
+                "Name A-Z",
+                "Newest First",
+                "Oldest First",
+                "Favorites First",
+            }
+        );
+        _sort.SelectedIndex = 0;
+        _sort.SelectedIndexChanged += (_, _) =>
+        {
+            _page = 0;
+            PopulateSoundList();
+        };
+
+        _favoriteButton.Dock = DockStyle.Fill;
+        _favoriteButton.Margin = new Padding(0, 0, 0, 7);
+        _favoriteButton.Text = "FAVORITE";
+        ConfigureDarkButtonStyle(_favoriteButton);
+        _favoriteButton.Font = new Font(
+            SystemFonts.MessageBoxFont.FontFamily,
+            8,
+            FontStyle.Bold
+        );
+        _favoriteButton.Enabled = false;
+        _favoriteButton.Click += (_, _) => ToggleFavorite();
+
+        filterBar.Controls.Add(_search, 0, 0);
+        filterBar.Controls.Add(_sort, 1, 0);
+        filterBar.Controls.Add(_favoriteButton, 2, 0);
 
         _soundList.Dock = DockStyle.Fill;
         _soundList.View = View.Details;
@@ -423,7 +473,7 @@ public sealed class FrmSoundImport : DarkForm
         pager.Controls.Add(_pageLabel);
         pager.Controls.Add(_nextPageButton);
 
-        libraryHost.Controls.Add(_search, 0, 0);
+        libraryHost.Controls.Add(filterBar, 0, 0);
         libraryHost.Controls.Add(_soundList, 0, 1);
         libraryHost.Controls.Add(pager, 0, 2);
         libraryPanel.Controls.Add(libraryHost, 0, 1);
@@ -568,6 +618,8 @@ public sealed class FrmSoundImport : DarkForm
             {
                 _categoryList.Items.Clear();
                 _categoryList.Items.Add("All");
+                _categoryList.Items.Add(FavoritesView);
+                _categoryList.Items.Add(NewView);
 
                 foreach (var categoryName in _assets
                              .Select(asset => asset.Category)
@@ -668,6 +720,7 @@ public sealed class FrmSoundImport : DarkForm
                         SuggestedName = FriendlyName(stem),
                         Category = categoryName,
                         FileSize = new FileInfo(file).Length,
+                        LastWriteTimeUtc = File.GetLastWriteTimeUtc(file),
                     }
                 );
 
@@ -692,12 +745,25 @@ public sealed class FrmSoundImport : DarkForm
         IEnumerable<SoundAsset> query = _assets;
 
         var categoryName = _categoryList.SelectedItem?.ToString();
-        if (!string.IsNullOrWhiteSpace(categoryName) &&
-            !string.Equals(
+        if (string.Equals(
                 categoryName,
-                "All",
+                FavoritesView,
                 StringComparison.OrdinalIgnoreCase
             ))
+        {
+            query = query.Where(IsFavorite);
+        }
+        else if (!string.IsNullOrWhiteSpace(categoryName) &&
+                 !string.Equals(
+                     categoryName,
+                     "All",
+                     StringComparison.OrdinalIgnoreCase
+                 ) &&
+                 !string.Equals(
+                     categoryName,
+                     NewView,
+                     StringComparison.OrdinalIgnoreCase
+                 ))
         {
             query = query.Where(
                 asset => string.Equals(
@@ -726,6 +792,56 @@ public sealed class FrmSoundImport : DarkForm
                         StringComparison.OrdinalIgnoreCase
                     )
             );
+        }
+
+        var sortMode = _sort.SelectedItem?.ToString() ?? "Name A-Z";
+
+        if (string.Equals(
+                categoryName,
+                NewView,
+                StringComparison.OrdinalIgnoreCase
+            ) ||
+            string.Equals(
+                sortMode,
+                "Newest First",
+                StringComparison.OrdinalIgnoreCase
+            ))
+        {
+            return query
+                .OrderByDescending(asset => asset.LastWriteTimeUtc)
+                .ThenBy(
+                    asset => asset.SuggestedName,
+                    StringComparer.OrdinalIgnoreCase
+                );
+        }
+
+        if (string.Equals(
+                sortMode,
+                "Oldest First",
+                StringComparison.OrdinalIgnoreCase
+            ))
+        {
+            return query
+                .OrderBy(asset => asset.LastWriteTimeUtc)
+                .ThenBy(
+                    asset => asset.SuggestedName,
+                    StringComparer.OrdinalIgnoreCase
+                );
+        }
+
+        if (string.Equals(
+                sortMode,
+                "Favorites First",
+                StringComparison.OrdinalIgnoreCase
+            ))
+        {
+            return query
+                .OrderByDescending(IsFavorite)
+                .ThenByDescending(asset => asset.LastWriteTimeUtc)
+                .ThenBy(
+                    asset => asset.SuggestedName,
+                    StringComparer.OrdinalIgnoreCase
+                );
         }
 
         return query.OrderBy(
@@ -761,7 +877,12 @@ public sealed class FrmSoundImport : DarkForm
 
             foreach (var asset in _visibleAssets)
             {
-                var item = new ListViewItem(asset.SuggestedName)
+                var favoritePrefix = IsFavorite(asset)
+                    ? "* "
+                    : string.Empty;
+                var item = new ListViewItem(
+                    favoritePrefix + asset.SuggestedName
+                )
                 {
                     Tag = asset,
                 };
@@ -794,6 +915,7 @@ public sealed class FrmSoundImport : DarkForm
         {
             _selectedAsset = null;
             _details.Text = string.Empty;
+            UpdateFavoriteButton();
         }
     }
 
@@ -818,6 +940,7 @@ public sealed class FrmSoundImport : DarkForm
         var cancellationToken = _selectionCancellation.Token;
 
         _selectedAsset = asset;
+        UpdateFavoriteButton();
         _name.Text = asset.SuggestedName;
         _category.Text = asset.Category;
         _details.Text = $"Loading {asset.FileName}...";
@@ -852,7 +975,8 @@ public sealed class FrmSoundImport : DarkForm
                 $"Sample rate: {asset.SampleRate:N0} Hz\r\n" +
                 $"Channels: {asset.Channels}\r\n" +
                 $"Bit depth: {asset.BitsPerSample}-bit\r\n" +
-                $"Size: {FormatSize(asset.FileSize)}\r\n\r\n" +
+                $"Size: {FormatSize(asset.FileSize)}\r\n" +
+                $"Added/updated: {asset.LastWriteTimeUtc.ToLocalTime():yyyy-MM-dd HH:mm}\r\n\r\n" +
                 "PLAY previews the original WAV without importing it.";
 
             if (_soundList.SelectedItems.Count > 0)
