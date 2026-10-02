@@ -237,6 +237,9 @@ public sealed class FrmAnimationImport : DarkForm
         "Misc",
     };
 
+    private const string FavoritesView = "[Favorites]";
+    private const string NewView = "[New]";
+
     private static readonly Dictionary<string, string[]> CategoryKeywords =
         new(StringComparer.OrdinalIgnoreCase)
         {
@@ -1678,6 +1681,8 @@ public sealed class FrmAnimationImport : DarkForm
             {
                 _categoryList.Items.Clear();
                 _categoryList.Items.Add("All");
+                _categoryList.Items.Add(FavoritesView);
+                _categoryList.Items.Add(NewView);
 
                 var categories = _assets
                     .Select(asset => asset.Category)
@@ -1799,6 +1804,7 @@ public sealed class FrmAnimationImport : DarkForm
                         YFrames = metadataLoaded ? yFrames : 1,
                         FrameCount = metadataLoaded ? frameCount : 1,
                         MetadataLoaded = metadataLoaded,
+                        LastWriteTimeUtc = File.GetLastWriteTimeUtc(file),
                     }
                 );
 
@@ -1836,12 +1842,25 @@ public sealed class FrmAnimationImport : DarkForm
 
         IEnumerable<AnimationAsset> query = _assets;
 
-        if (!string.IsNullOrWhiteSpace(categoryName) &&
-            !string.Equals(
+        if (string.Equals(
                 categoryName,
-                "All",
+                FavoritesView,
                 StringComparison.OrdinalIgnoreCase
             ))
+        {
+            query = query.Where(IsFavorite);
+        }
+        else if (!string.IsNullOrWhiteSpace(categoryName) &&
+                 !string.Equals(
+                     categoryName,
+                     "All",
+                     StringComparison.OrdinalIgnoreCase
+                 ) &&
+                 !string.Equals(
+                     categoryName,
+                     NewView,
+                     StringComparison.OrdinalIgnoreCase
+                 ))
         {
             query = query.Where(
                 asset => string.Equals(
@@ -1871,12 +1890,63 @@ public sealed class FrmAnimationImport : DarkForm
             );
         }
 
-        var filtered = query
-            .OrderBy(
+        var sortMode = _assetSort.SelectedItem?.ToString() ?? "Name A-Z";
+
+        IOrderedEnumerable<AnimationAsset> ordered;
+        if (string.Equals(
+                categoryName,
+                NewView,
+                StringComparison.OrdinalIgnoreCase
+            ) ||
+            string.Equals(
+                sortMode,
+                "Newest First",
+                StringComparison.OrdinalIgnoreCase
+            ))
+        {
+            ordered = query
+                .OrderByDescending(asset => asset.LastWriteTimeUtc)
+                .ThenBy(
+                    asset => asset.SuggestedName,
+                    StringComparer.OrdinalIgnoreCase
+                );
+        }
+        else if (string.Equals(
+                     sortMode,
+                     "Oldest First",
+                     StringComparison.OrdinalIgnoreCase
+                 ))
+        {
+            ordered = query
+                .OrderBy(asset => asset.LastWriteTimeUtc)
+                .ThenBy(
+                    asset => asset.SuggestedName,
+                    StringComparer.OrdinalIgnoreCase
+                );
+        }
+        else if (string.Equals(
+                     sortMode,
+                     "Favorites First",
+                     StringComparison.OrdinalIgnoreCase
+                 ))
+        {
+            ordered = query
+                .OrderByDescending(IsFavorite)
+                .ThenByDescending(asset => asset.LastWriteTimeUtc)
+                .ThenBy(
+                    asset => asset.SuggestedName,
+                    StringComparer.OrdinalIgnoreCase
+                );
+        }
+        else
+        {
+            ordered = query.OrderBy(
                 asset => asset.SuggestedName,
                 StringComparer.OrdinalIgnoreCase
-            )
-            .ToArray();
+            );
+        }
+
+        var filtered = ordered.ToArray();
 
         var pageCount = Math.Max(
             1,
@@ -1906,16 +1976,25 @@ public sealed class FrmAnimationImport : DarkForm
 
             foreach (var asset in _visibleAssets)
             {
-                var item = new ListViewItem(asset.SuggestedName)
+                var favoritePrefix = IsFavorite(asset) ? "* " : string.Empty;
+                var addedText = asset.LastWriteTimeUtc == DateTime.MinValue
+                    ? "Unknown"
+                    : asset.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+
+                var item = new ListViewItem(
+                    favoritePrefix + asset.SuggestedName
+                )
                 {
                     ImageKey = "__placeholder",
                     Tag = asset,
                     ToolTipText = asset.MetadataLoaded
                         ? $"{asset.FileName}\n{asset.Category}\n" +
                           $"Grid: {asset.XFrames}x{asset.YFrames} " +
-                          $"({asset.FrameCount} frames)"
+                          $"({asset.FrameCount} frames)\n" +
+                          $"Added/updated: {addedText}"
                         : $"{asset.FileName}\n{asset.Category}\n" +
-                          "Grid: loads on demand",
+                          $"Grid: loads on demand\n" +
+                          $"Added/updated: {addedText}",
                 };
 
                 _assetList.Items.Add(item);
@@ -1941,6 +2020,7 @@ public sealed class FrmAnimationImport : DarkForm
             _selectedAsset = null;
             _preview.SetAnimation(null, 1, 1);
             _assetInfo.Text = string.Empty;
+            UpdateFavoriteButton();
         }
 
         _ = LoadPageThumbnailsAsync(cancellationToken);
@@ -2229,6 +2309,7 @@ public sealed class FrmAnimationImport : DarkForm
         var cancellationToken = _selectionCancellation.Token;
 
         _selectedAsset = asset;
+        UpdateFavoriteButton();
         _name.Text = asset.SuggestedName;
         _category.Text = asset.Category;
         _assetInfo.Text = $"Loading {asset.FileName}...";
@@ -2298,10 +2379,14 @@ public sealed class FrmAnimationImport : DarkForm
             _previewTimer.Interval =
                 (int)_frameDuration.Value;
 
+            var addedText = asset.LastWriteTimeUtc == DateTime.MinValue
+                ? "Unknown"
+                : asset.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+
             _assetInfo.Text =
                 $"{asset.FileName}   |   {asset.Category}   |   " +
                 $"{asset.XFrames}x{asset.YFrames} grid   |   " +
-                $"{asset.FrameCount} frame(s)";
+                $"{asset.FrameCount} frame(s)   |   Added {addedText}";
         }
         catch (OperationCanceledException)
         {
@@ -2317,6 +2402,103 @@ public sealed class FrmAnimationImport : DarkForm
                     $"Unable to load {asset.FileName}: {ex.Message}";
             }
         }
+    }
+
+    private string GetFavoriteKey(string filePath)
+    {
+        try
+        {
+            return Path.GetRelativePath(_importRoot, filePath)
+                .Replace('\\', '/');
+        }
+        catch
+        {
+            return filePath.Replace('\\', '/');
+        }
+    }
+
+    private bool IsFavorite(AnimationAsset asset) =>
+        _favoriteAssetKeys.Contains(GetFavoriteKey(asset.FilePath));
+
+    private void LoadFavorites()
+    {
+        _favoriteAssetKeys.Clear();
+
+        try
+        {
+            if (!File.Exists(_favoritesPath))
+            {
+                return;
+            }
+
+            foreach (var line in File.ReadLines(_favoritesPath))
+            {
+                var key = line.Trim().Replace('\\', '/');
+                if (!string.IsNullOrWhiteSpace(key))
+                {
+                    _favoriteAssetKeys.Add(key);
+                }
+            }
+        }
+        catch
+        {
+            // Favorites are convenience metadata only.
+        }
+    }
+
+    private void SaveFavorites()
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(_favoritesPath);
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            File.WriteAllLines(
+                _favoritesPath,
+                _favoriteAssetKeys.OrderBy(
+                    key => key,
+                    StringComparer.OrdinalIgnoreCase
+                )
+            );
+        }
+        catch (Exception ex)
+        {
+            _status.Text =
+                "Unable to save animation favorites: " + ex.Message;
+        }
+    }
+
+    private void ToggleFavorite()
+    {
+        if (_selectedAsset == null)
+        {
+            return;
+        }
+
+        var key = GetFavoriteKey(_selectedAsset.FilePath);
+        if (!_favoriteAssetKeys.Add(key))
+        {
+            _favoriteAssetKeys.Remove(key);
+        }
+
+        SaveFavorites();
+        UpdateFavoriteButton();
+
+        _assetPage = 0;
+        PopulateAssetList();
+    }
+
+    private void UpdateFavoriteButton()
+    {
+        var hasSelection = _selectedAsset != null;
+        _favoriteButton.Enabled = hasSelection;
+        _favoriteButton.Text =
+            hasSelection && IsFavorite(_selectedAsset!)
+                ? "* FAVORITE"
+                : "FAVORITE";
     }
 
     private void GridChanged()
