@@ -182,6 +182,23 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
     //Behavior
     public bool Aggressive { get; set; }
 
+    /// <summary>
+    /// Enables tactical positioning while this NPC has a combat target.
+    /// </summary>
+    public bool SmartCombatMovement { get; set; } = true;
+
+    /// <summary>
+    /// Controls how the NPC positions itself around combat targets.
+    /// Auto infers the role from its offensive spells.
+    /// </summary>
+    public int CombatMovementMode { get; set; } = (int)NpcCombatMovementMode.Auto;
+
+    /// <summary>
+    /// Preferred distance in tiles. Zero lets Auto/role logic derive a range
+    /// from configured spell cast/projectile ranges.
+    /// </summary>
+    public int PreferredCombatRange { get; set; }
+
     public byte Movement { get; set; }
 
     public bool Swarm { get; set; }
