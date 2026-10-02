@@ -725,6 +725,431 @@ public sealed class FrmBalanceLab : DarkForm
         }
     }
 
+    private sealed class GenericBatchSuggestion
+    {
+        public BalanceObjectKind Kind { get; init; }
+
+        public Guid Id { get; init; }
+
+        public required string Name { get; init; }
+
+        public required string Group { get; init; }
+
+        public required string Status { get; init; }
+
+        public double CurrentPower { get; init; }
+
+        public double TargetPower { get; init; }
+
+        public double Factor { get; init; }
+
+        public required string Reason { get; init; }
+    }
+
+    private sealed class ItemBalanceSnapshot
+    {
+        public Guid Id { get; init; }
+        public int[] StatsGiven { get; init; } = [];
+        public int[] PercentageStatsGiven { get; init; } = [];
+        public long[] VitalsGiven { get; init; } = [];
+        public int[] PercentageVitalsGiven { get; init; } = [];
+        public int Damage { get; init; }
+        public int CritChance { get; init; }
+        public int BlockChance { get; init; }
+        public int Scaling { get; init; }
+        public int Price { get; init; }
+    }
+
+    private sealed class SpellBalanceSnapshot
+    {
+        public Guid Id { get; init; }
+        public long[] VitalDiff { get; init; } = [];
+        public int Scaling { get; init; }
+        public int CritChance { get; init; }
+        public int CooldownDuration { get; init; }
+        public long[] VitalCost { get; init; } = [];
+    }
+
+    private sealed class ResourceBalanceSnapshot
+    {
+        public Guid Id { get; init; }
+        public int MinHp { get; init; }
+        public int MaxHp { get; init; }
+        public int VitalRegen { get; init; }
+        public int SpawnDuration { get; init; }
+    }
+
+    private sealed class ClassBalanceSnapshot
+    {
+        public Guid Id { get; init; }
+        public int[] BaseStat { get; init; } = [];
+        public long[] BaseVital { get; init; } = [];
+        public int[] StatIncrease { get; init; } = [];
+        public long[] VitalIncrease { get; init; } = [];
+        public int Damage { get; init; }
+        public int Scaling { get; init; }
+    }
+
+    private sealed class GenericBatchSuggestionForm : DarkForm
+    {
+        private readonly IReadOnlyList<GenericBatchSuggestion> _suggestions;
+        private readonly DataGridView _grid = new();
+        private readonly CheckBox _applyA = new();
+        private readonly CheckBox _applyB = new();
+        private readonly CheckBox _applyC = new();
+        private readonly Label _summary = new();
+
+        public GenericBatchSuggestionForm(
+            BalanceObjectKind kind,
+            IReadOnlyList<GenericBatchSuggestion> suggestions
+        )
+        {
+            Kind = kind;
+            _suggestions = suggestions;
+
+            base.Text = $"Game Balance Lab - {KindLabel(kind)} Batch Suggestions";
+            StartPosition = FormStartPosition.CenterParent;
+            MinimumSize = new Size(980, 600);
+            Size = new Size(1380, 780);
+            BackColor = System.Drawing.Color.FromArgb(18, 18, 18);
+            ForeColor = System.Drawing.Color.Gainsboro;
+
+            var root = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 3,
+                Margin = Padding.Empty,
+                Padding = Padding.Empty,
+                BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
+            };
+            root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 86));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+            Controls.Add(root);
+
+            var header = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                Padding = new Padding(10, 9, 10, 6),
+                BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+            };
+
+            header.Controls.Add(
+                new Label
+                {
+                    AutoSize = false,
+                    Width = 125,
+                    Height = 28,
+                    Text = "Apply fields:",
+                    ForeColor = System.Drawing.Color.Gainsboro,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold),
+                }
+            );
+
+            var config = GetBatchFieldConfig(kind);
+            ConfigureApplyCheckBox(_applyA, config.ALabel, config.ADefault);
+            ConfigureApplyCheckBox(_applyB, config.BLabel, config.BDefault);
+            ConfigureApplyCheckBox(_applyC, config.CLabel, config.CDefault);
+            _applyC.Enabled = config.CEnabled;
+
+            header.Controls.Add(_applyA);
+            header.Controls.Add(_applyB);
+            header.Controls.Add(_applyC);
+
+            var note = new Label
+            {
+                AutoSize = false,
+                Width = 620,
+                Height = 28,
+                Margin = new Padding(18, 0, 0, 0),
+                Text = "Suggestions preserve the object's existing stat pattern and move it toward its peer baseline. Every batch can be undone.",
+                ForeColor = System.Drawing.Color.Silver,
+                TextAlign = ContentAlignment.MiddleLeft,
+            };
+            header.Controls.Add(note);
+
+            var selectAll = CreateSmallButton("SELECT ALL");
+            selectAll.Click += (_, _) => SetAllRows(true);
+            header.Controls.Add(selectAll);
+
+            var selectNone = CreateSmallButton("NONE");
+            selectNone.Click += (_, _) => SetAllRows(false);
+            header.Controls.Add(selectNone);
+
+            var selectHigh = CreateSmallButton("HIGH ONLY");
+            selectHigh.Click += (_, _) => SelectByStatus("OVER");
+            header.Controls.Add(selectHigh);
+
+            var selectLow = CreateSmallButton("LOW ONLY");
+            selectLow.Click += (_, _) => SelectByStatus("UNDER");
+            header.Controls.Add(selectLow);
+
+            root.Controls.Add(header, 0, 0);
+
+            ConfigureGrid();
+            root.Controls.Add(_grid, 0, 1);
+
+            var footer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
+            };
+            root.Controls.Add(footer, 0, 2);
+
+            _summary.AutoSize = false;
+            _summary.Location = new System.Drawing.Point(12, 7);
+            _summary.Size = new Size(760, 38);
+            _summary.ForeColor = System.Drawing.Color.Silver;
+            _summary.TextAlign = ContentAlignment.MiddleLeft;
+            footer.Controls.Add(_summary);
+
+            var cancel = CreateSmallButton("CANCEL");
+            cancel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            cancel.Size = new Size(120, 34);
+            cancel.DialogResult = DialogResult.Cancel;
+            footer.Controls.Add(cancel);
+
+            var apply = new Button
+            {
+                Text = "APPLY SELECTED",
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Size = new Size(190, 34),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = System.Drawing.Color.FromArgb(247, 69, 96),
+                ForeColor = System.Drawing.Color.White,
+                Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9, FontStyle.Bold),
+            };
+            apply.FlatAppearance.BorderColor = apply.BackColor;
+            apply.Click += (_, _) =>
+            {
+                if (SelectedSuggestions.Count == 0)
+                {
+                    MessageBox.Show(
+                        this,
+                        $"Select at least one {KindLabel(kind).ToLowerInvariant()} first.",
+                        "Batch Suggestions",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
+                    return;
+                }
+
+                DialogResult = DialogResult.OK;
+                Close();
+            };
+            footer.Controls.Add(apply);
+
+            footer.Resize += (_, _) =>
+            {
+                apply.Left = Math.Max(10, footer.ClientSize.Width - apply.Width - 12);
+                apply.Top = 7;
+                cancel.Left = Math.Max(10, apply.Left - cancel.Width - 10);
+                cancel.Top = 7;
+                _summary.Width = Math.Max(200, cancel.Left - _summary.Left - 12);
+            };
+
+            AcceptButton = apply;
+            CancelButton = cancel;
+
+            PopulateRows();
+            UpdateSummary();
+        }
+
+        public BalanceObjectKind Kind { get; }
+
+        public IReadOnlyList<GenericBatchSuggestion> SelectedSuggestions =>
+            _grid.Rows
+                .Cast<DataGridViewRow>()
+                .Where(row => Convert.ToBoolean(row.Cells["Apply"].Value ?? false))
+                .Select(row => row.Tag)
+                .OfType<GenericBatchSuggestion>()
+                .ToArray();
+
+        public bool ApplyA => _applyA.Checked;
+        public bool ApplyB => _applyB.Checked;
+        public bool ApplyC => _applyC.Checked && _applyC.Enabled;
+
+        private static (string ALabel, bool ADefault, string BLabel, bool BDefault, string CLabel, bool CDefault, bool CEnabled)
+            GetBatchFieldConfig(BalanceObjectKind kind)
+        {
+            return kind switch
+            {
+                BalanceObjectKind.Item =>
+                    ("Stats / Vitals", true, "Damage / Crit / Scaling", true, "Price", false, true),
+                BalanceObjectKind.Spell =>
+                    ("Magnitude / Scaling", true, "Cooldown", false, "HP / MP Cost", false, true),
+                BalanceObjectKind.Resource =>
+                    ("HP / Regen", true, "Respawn", false, "Unused", false, false),
+                BalanceObjectKind.PlayerClass =>
+                    ("Base Stats / Vitals", true, "Level Growth", false, "Damage / Scaling", true, true),
+                _ =>
+                    ("Primary", true, "Secondary", false, "Optional", false, true),
+            };
+        }
+
+        private static void ConfigureApplyCheckBox(CheckBox checkBox, string text, bool value)
+        {
+            checkBox.Text = text;
+            checkBox.Checked = value;
+            checkBox.AutoSize = true;
+            checkBox.ForeColor = System.Drawing.Color.Gainsboro;
+            checkBox.Margin = new Padding(10, 5, 4, 0);
+        }
+
+        private static Button CreateSmallButton(string text)
+        {
+            return new Button
+            {
+                Text = text,
+                Size = new Size(112, 30),
+                Margin = new Padding(8, 2, 0, 0),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = System.Drawing.Color.FromArgb(55, 47, 49),
+                ForeColor = System.Drawing.Color.Gainsboro,
+                Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 8, FontStyle.Bold),
+            };
+        }
+
+        private void ConfigureGrid()
+        {
+            _grid.Dock = DockStyle.Fill;
+            _grid.ReadOnly = false;
+            _grid.AllowUserToAddRows = false;
+            _grid.AllowUserToDeleteRows = false;
+            _grid.AllowUserToResizeRows = false;
+            _grid.RowHeadersVisible = false;
+            _grid.MultiSelect = false;
+            _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            _grid.AutoGenerateColumns = false;
+            _grid.BackgroundColor = System.Drawing.Color.FromArgb(32, 28, 29);
+            _grid.BorderStyle = BorderStyle.None;
+            _grid.GridColor = System.Drawing.Color.FromArgb(60, 52, 54);
+            _grid.EnableHeadersVisualStyles = false;
+            _grid.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(38, 32, 34);
+            _grid.DefaultCellStyle.ForeColor = System.Drawing.Color.Gainsboro;
+            _grid.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(72, 54, 58);
+            _grid.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
+            _grid.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+            _grid.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.White;
+            _grid.ColumnHeadersHeight = 34;
+
+            _grid.Columns.Add(
+                new DataGridViewCheckBoxColumn
+                {
+                    Name = "Apply",
+                    HeaderText = "Apply",
+                    Width = 52,
+                    ReadOnly = false,
+                }
+            );
+
+            AddTextColumn("Name", "Name", 220);
+            AddTextColumn("Group", "Peer Group", 190);
+            AddTextColumn("Status", "Status", 95);
+            AddTextColumn("Power", "Current Power", 110);
+            AddTextColumn("Target", "Target Power", 110);
+            AddTextColumn("Adjustment", "Adjustment", 105);
+            AddTextColumn("Reason", "Why", 430);
+
+            _grid.CurrentCellDirtyStateChanged += (_, _) =>
+            {
+                if (_grid.IsCurrentCellDirty)
+                {
+                    _grid.CommitEdit(DataGridViewDataErrorContexts.Commit);
+                }
+            };
+            _grid.CellValueChanged += (_, args) =>
+            {
+                if (args.ColumnIndex >= 0 &&
+                    _grid.Columns[args.ColumnIndex].Name == "Apply")
+                {
+                    UpdateSummary();
+                }
+            };
+        }
+
+        private void AddTextColumn(string name, string header, int width)
+        {
+            _grid.Columns.Add(
+                new DataGridViewTextBoxColumn
+                {
+                    Name = name,
+                    HeaderText = header,
+                    Width = width,
+                    ReadOnly = true,
+                    SortMode = DataGridViewColumnSortMode.Automatic,
+                }
+            );
+        }
+
+        private void PopulateRows()
+        {
+            _grid.Rows.Clear();
+
+            foreach (var suggestion in _suggestions
+                         .OrderByDescending(suggestion => Math.Abs(suggestion.Factor - 1d))
+                         .ThenBy(suggestion => suggestion.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                var rowIndex = _grid.Rows.Add(
+                    true,
+                    suggestion.Name,
+                    suggestion.Group,
+                    suggestion.Status,
+                    suggestion.CurrentPower.ToString("0.0"),
+                    suggestion.TargetPower.ToString("0.0"),
+                    $"{suggestion.Factor * 100d:0}%",
+                    suggestion.Reason
+                );
+
+                var row = _grid.Rows[rowIndex];
+                row.Tag = suggestion;
+                row.DefaultCellStyle.ForeColor = suggestion.Status == "OVER"
+                    ? System.Drawing.Color.FromArgb(255, 150, 150)
+                    : System.Drawing.Color.FromArgb(145, 195, 255);
+            }
+        }
+
+        private void SetAllRows(bool selected)
+        {
+            foreach (DataGridViewRow row in _grid.Rows)
+            {
+                row.Cells["Apply"].Value = selected;
+            }
+
+            UpdateSummary();
+        }
+
+        private void SelectByStatus(string status)
+        {
+            foreach (DataGridViewRow row in _grid.Rows)
+            {
+                row.Cells["Apply"].Value =
+                    row.Tag is GenericBatchSuggestion suggestion &&
+                    string.Equals(suggestion.Status, status, StringComparison.OrdinalIgnoreCase);
+            }
+
+            UpdateSummary();
+        }
+
+        private void UpdateSummary()
+        {
+            var count = _grid.Rows
+                .Cast<DataGridViewRow>()
+                .Count(row => Convert.ToBoolean(row.Cells["Apply"].Value ?? false));
+
+            var over = _suggestions.Count(suggestion => suggestion.Status == "OVER");
+            var under = _suggestions.Count(suggestion => suggestion.Status == "UNDER");
+
+            _summary.Text =
+                $"{count:N0} selected of {_suggestions.Count:N0}   |   Over baseline: {over:N0}   Under baseline: {under:N0}";
+        }
+    }
+
     private sealed class NpcBatchSuggestion
     {
         public Guid Id { get; init; }
@@ -792,6 +1217,16 @@ public sealed class FrmBalanceLab : DarkForm
         public bool AppliedDefense { get; init; }
 
         public bool AppliedExperience { get; init; }
+
+        public BalanceObjectKind? GenericKind { get; init; }
+
+        public List<ItemBalanceSnapshot> ItemEntries { get; } = new();
+
+        public List<SpellBalanceSnapshot> SpellEntries { get; } = new();
+
+        public List<ResourceBalanceSnapshot> ResourceEntries { get; } = new();
+
+        public List<ClassBalanceSnapshot> ClassEntries { get; } = new();
     }
 
     private sealed class NpcBatchSuggestionForm : DarkForm
