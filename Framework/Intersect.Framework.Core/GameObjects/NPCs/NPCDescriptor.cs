@@ -148,6 +148,37 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
         set => AttackAnimationId = value?.Id ?? Guid.Empty;
     }
 
+    //Boss configuration
+    public bool IsBoss { get; set; }
+
+    [Column("BossAnimation")]
+    public Guid BossAnimationId { get; set; }
+
+    [NotMapped]
+    [JsonIgnore]
+    public AnimationDescriptor BossAnimation
+    {
+        get => AnimationDescriptor.Get(BossAnimationId);
+        set => BossAnimationId = value?.Id ?? Guid.Empty;
+    }
+
+    /// <summary>
+    /// Vertical pixel offset for the looping boss marker/aura attached to the NPC.
+    /// Negative values render the animation above the NPC.
+    /// </summary>
+    public int BossAnimationOffsetY { get; set; } = -48;
+
+    [Column("DeathAnimation")]
+    public Guid DeathAnimationId { get; set; }
+
+    [NotMapped]
+    [JsonIgnore]
+    public AnimationDescriptor DeathAnimation
+    {
+        get => AnimationDescriptor.Get(DeathAnimationId);
+        set => DeathAnimationId = value?.Id ?? Guid.Empty;
+    }
+
     //Behavior
     public bool Aggressive { get; set; }
 
