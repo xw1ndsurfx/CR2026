@@ -125,6 +125,7 @@ public partial class FrmMain : Form
         PacketSender.SendRequestAchievementConfiguration(openEditor: false);
         AddCharacterGeneratorEditorMenu();
         AddAnimationImportEditorMenu();
+        AddSoundImportEditorMenu();
         AddBalanceLabEditorMenu();
         AddWorldEventsEditorMenu();
         Show();
@@ -474,6 +475,32 @@ public partial class FrmMain : Form
         };
 
         contentEditorsToolStripMenuItem.DropDownItems.Add(animationImport);
+    }
+
+    private void AddSoundImportEditorMenu()
+    {
+        if (contentEditorsToolStripMenuItem.DropDownItems
+            .Cast<ToolStripItem>()
+            .Any(item => item.Name == "soundImportEditorToolStripMenuItem"))
+        {
+            return;
+        }
+
+        var soundImport = new ToolStripMenuItem
+        {
+            Name = "soundImportEditorToolStripMenuItem",
+            Text = "Sounds Import...",
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
+        };
+
+        soundImport.Click += (_, _) =>
+        {
+            var editor = new FrmSoundImport();
+            editor.Show(this);
+            editor.BringToFront();
+        };
+
+        contentEditorsToolStripMenuItem.DropDownItems.Add(soundImport);
     }
 
     private void BeginGeneratedAnimationCreation(
