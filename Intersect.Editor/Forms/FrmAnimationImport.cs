@@ -255,6 +255,7 @@ public sealed class FrmAnimationImport : DarkForm
     private readonly string _gameRoot;
     private readonly string _importRoot;
     private readonly string _animationsRoot;
+    private readonly string _thumbnailRoot;
     private readonly Action<GeneratedAnimationRequest>? _afterImport;
 
     private readonly ListBox _categoryList = new();
@@ -298,6 +299,11 @@ public sealed class FrmAnimationImport : DarkForm
         _gameRoot = ResolveGameRoot();
         _importRoot = Path.Combine(_gameRoot, "animationimport");
         _animationsRoot = Path.Combine(_gameRoot, "resources", "animations");
+        _thumbnailRoot = Path.Combine(
+            _gameRoot,
+            ".animationimport-cache",
+            "thumbnails"
+        );
 
         Text = "Animations Import";
         StartPosition = FormStartPosition.CenterParent;
@@ -308,6 +314,7 @@ public sealed class FrmAnimationImport : DarkForm
 
         Directory.CreateDirectory(_importRoot);
         Directory.CreateDirectory(_animationsRoot);
+        Directory.CreateDirectory(_thumbnailRoot);
         foreach (var categoryName in Categories)
         {
             Directory.CreateDirectory(Path.Combine(_importRoot, categoryName));
@@ -919,7 +926,7 @@ public sealed class FrmAnimationImport : DarkForm
 
             // The expensive ZIP/image work happens off the UI thread. Refresh
             // the final list only once after the import has completed/cancelled.
-            ReloadAssets();
+            await ReloadAssetsAsync();
 
             _status.Text = result.Cancelled
                 ? $"Import cancelled. {result.ImportedAnimations:N0} completed " +
@@ -1558,119 +1565,305 @@ public sealed class FrmAnimationImport : DarkForm
         return Path.Combine(directory, $"{stem}_{Guid.NewGuid():N}{extension}");
     }
 
-    private void ReloadAssets()
+    private async Task ReloadAssetsAsync()
     {
-        _assets.Clear();
-
-        foreach (var file in Directory.GetFiles(_importRoot, "*.png", SearchOption.AllDirectories))
+        if (_libraryLoading)
         {
+            _libraryLoadCancellation?.Cancel();
+        }
+
+        _libraryLoadCancellation?.Cancel();
+        _libraryLoadCancellation?.Dispose();
+        _libraryLoadCancellation = new CancellationTokenSource();
+        var cancellationToken = _libraryLoadCancellation.Token;
+        _libraryLoading = true;
+
+        var selectedCategory = _categoryList.SelectedItem?.ToString();
+        _status.Text =
+            "Indexing animation library in the background... " +
+            "PNG files are not decoded during startup.";
+
+        var progress = new Progress<int>(
+            count =>
+            {
+                if (!IsDisposed && !Disposing)
+                {
+                    _status.Text =
+                        $"Indexing animation library... {count:N0} file(s) found.";
+                }
+            }
+        );
+
+        try
+        {
+            var assets = await Task.Run(
+                () => BuildAssetIndex(progress, cancellationToken),
+                cancellationToken
+            );
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            _assets.Clear();
+            _assets.AddRange(assets);
+
+            _categoryList.BeginUpdate();
             try
             {
-                using var bitmap = new Bitmap(file);
-                var categoryName = Path.GetFileName(Path.GetDirectoryName(file)) ?? "Misc";
+                _categoryList.Items.Clear();
+                _categoryList.Items.Add("All");
+
+                var categories = _assets
+                    .Select(asset => asset.Category)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(categoryName =>
+                    {
+                        var index = Array.FindIndex(
+                            Categories,
+                            value => string.Equals(
+                                value,
+                                categoryName,
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                        );
+
+                        return index < 0 ? int.MaxValue : index;
+                    })
+                    .ThenBy(
+                        value => value,
+                        StringComparer.OrdinalIgnoreCase
+                    )
+                    .ToArray();
+
+                foreach (var categoryName in categories)
+                {
+                    _categoryList.Items.Add(categoryName);
+                }
+            }
+            finally
+            {
+                _categoryList.EndUpdate();
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedCategory))
+            {
+                var selectedIndex =
+                    _categoryList.FindStringExact(selectedCategory);
+
+                if (selectedIndex >= 0)
+                {
+                    _categoryList.SelectedIndex = selectedIndex;
+                }
+            }
+
+            if (_categoryList.SelectedIndex < 0 &&
+                _categoryList.Items.Count > 0)
+            {
+                _categoryList.SelectedIndex = 0;
+            }
+
+            _assetPage = 0;
+            PopulateAssetList();
+
+            _status.Text =
+                $"Indexed {_assets.Count:N0} animation sheet(s). " +
+                $"Only {AssetPageSize:N0} are rendered per page.";
+        }
+        catch (OperationCanceledException)
+        {
+            // A newer refresh request replaced this one.
+        }
+        catch (Exception ex)
+        {
+            if (!IsDisposed && !Disposing)
+            {
+                MessageBox.Show(
+                    this,
+                    "Unable to index animation library: " + ex.Message,
+                    "Animations Import",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            }
+        }
+        finally
+        {
+            _libraryLoading = false;
+        }
+    }
+
+    private List<AnimationAsset> BuildAssetIndex(
+        IProgress<int> progress,
+        CancellationToken cancellationToken
+    )
+    {
+        var assets = new List<AnimationAsset>();
+        var count = 0;
+
+        foreach (var file in Directory.EnumerateFiles(
+                     _importRoot,
+                     "*.png",
+                     SearchOption.AllDirectories
+                 ))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                var categoryName =
+                    Path.GetFileName(Path.GetDirectoryName(file)) ?? "Misc";
                 var fileName = Path.GetFileName(file);
                 var stem = Path.GetFileNameWithoutExtension(file);
 
-                int xFrames;
-                int yFrames;
-                int frameCount;
+                var metadataLoaded = TryReadGridMetadata(
+                    file,
+                    out var xFrames,
+                    out var yFrames,
+                    out var frameCount
+                );
 
-                if (!TryReadGridMetadata(file, out xFrames, out yFrames, out frameCount))
-                {
-                    (xFrames, yFrames) = DetectGrid(bitmap, stem);
-                    frameCount = Math.Max(1, xFrames * yFrames);
-                }
-
-                _assets.Add(
+                assets.Add(
                     new AnimationAsset
                     {
                         FilePath = file,
                         FileName = fileName,
                         SuggestedName = FriendlyName(stem),
                         Category = categoryName,
-                        XFrames = xFrames,
-                        YFrames = yFrames,
-                        FrameCount = frameCount,
+                        XFrames = metadataLoaded ? xFrames : 1,
+                        YFrames = metadataLoaded ? yFrames : 1,
+                        FrameCount = metadataLoaded ? frameCount : 1,
+                        MetadataLoaded = metadataLoaded,
                     }
                 );
+
+                count++;
+                if (count % 250 == 0)
+                {
+                    progress.Report(count);
+                }
             }
             catch
             {
-                // Ignore invalid images but leave the import tool usable.
+                // Ignore invalid paths/metadata. Image decoding is deferred
+                // until the item is actually visible or selected.
             }
         }
 
-        var selectedCategory = _categoryList.SelectedItem?.ToString();
-        _categoryList.BeginUpdate();
-        _categoryList.Items.Clear();
-
-        var categories = _assets
-            .Select(asset => asset.Category)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(categoryName =>
-            {
-                var index = Array.FindIndex(
-                    Categories,
-                    value => string.Equals(value, categoryName, StringComparison.OrdinalIgnoreCase)
-                );
-                return index < 0 ? int.MaxValue : index;
-            })
-            .ThenBy(value => value, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        foreach (var categoryName in categories)
-        {
-            _categoryList.Items.Add(categoryName);
-        }
-
-        _categoryList.EndUpdate();
-
-        if (!string.IsNullOrWhiteSpace(selectedCategory))
-        {
-            var index = _categoryList.FindStringExact(selectedCategory);
-            if (index >= 0)
-            {
-                _categoryList.SelectedIndex = index;
-            }
-        }
-
-        if (_categoryList.SelectedIndex < 0 && _categoryList.Items.Count > 0)
-        {
-            _categoryList.SelectedIndex = 0;
-        }
-
-        PopulateAssetList();
-        _status.Text = $"Watching {_importRoot} - {_assets.Count} animation sheet(s) detected.";
+        progress.Report(count);
+        return assets;
     }
 
     private void PopulateAssetList()
     {
-        var categoryName = _categoryList.SelectedItem?.ToString();
-
-        _assetList.BeginUpdate();
-        _assetList.Items.Clear();
-        _assetImages.Images.Clear();
-
-        foreach (var asset in _assets
-                     .Where(asset =>
-                         string.IsNullOrWhiteSpace(categoryName) ||
-                         string.Equals(asset.Category, categoryName, StringComparison.OrdinalIgnoreCase))
-                     .OrderBy(asset => asset.SuggestedName, StringComparer.OrdinalIgnoreCase))
+        if (IsDisposed || Disposing)
         {
-            using var thumbnail = CreateThumbnail(asset);
-            _assetImages.Images.Add(asset.FilePath, new Bitmap(thumbnail));
-
-            var item = new ListViewItem(asset.SuggestedName)
-            {
-                ImageKey = asset.FilePath,
-                Tag = asset,
-                ToolTipText =
-                    $"{asset.FileName}\n{asset.Category}\nGrid: {asset.XFrames}x{asset.YFrames} ({asset.FrameCount} frames)",
-            };
-            _assetList.Items.Add(item);
+            return;
         }
 
-        _assetList.EndUpdate();
+        _thumbnailCancellation?.Cancel();
+        _thumbnailCancellation?.Dispose();
+        _thumbnailCancellation = new CancellationTokenSource();
+
+        var cancellationToken = _thumbnailCancellation.Token;
+        var categoryName = _categoryList.SelectedItem?.ToString();
+        var search = _assetSearch.Text.Trim();
+
+        IEnumerable<AnimationAsset> query = _assets;
+
+        if (!string.IsNullOrWhiteSpace(categoryName) &&
+            !string.Equals(
+                categoryName,
+                "All",
+                StringComparison.OrdinalIgnoreCase
+            ))
+        {
+            query = query.Where(
+                asset => string.Equals(
+                    asset.Category,
+                    categoryName,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(
+                asset =>
+                    asset.SuggestedName.Contains(
+                        search,
+                        StringComparison.OrdinalIgnoreCase
+                    ) ||
+                    asset.FileName.Contains(
+                        search,
+                        StringComparison.OrdinalIgnoreCase
+                    ) ||
+                    asset.Category.Contains(
+                        search,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+            );
+        }
+
+        var filtered = query
+            .OrderBy(
+                asset => asset.SuggestedName,
+                StringComparer.OrdinalIgnoreCase
+            )
+            .ToArray();
+
+        var pageCount = Math.Max(
+            1,
+            (int)Math.Ceiling(filtered.Length / (double)AssetPageSize)
+        );
+
+        _assetPage = Math.Clamp(_assetPage, 0, pageCount - 1);
+
+        _visibleAssets.Clear();
+        _visibleAssets.AddRange(
+            filtered
+                .Skip(_assetPage * AssetPageSize)
+                .Take(AssetPageSize)
+        );
+
+        _assetList.BeginUpdate();
+        try
+        {
+            _assetList.Items.Clear();
+            _assetImages.Images.Clear();
+
+            using var placeholder = CreatePlaceholderThumbnail();
+            _assetImages.Images.Add(
+                "__placeholder",
+                new Bitmap(placeholder)
+            );
+
+            foreach (var asset in _visibleAssets)
+            {
+                var item = new ListViewItem(asset.SuggestedName)
+                {
+                    ImageKey = "__placeholder",
+                    Tag = asset,
+                    ToolTipText = asset.MetadataLoaded
+                        ? $"{asset.FileName}\n{asset.Category}\n" +
+                          $"Grid: {asset.XFrames}x{asset.YFrames} " +
+                          $"({asset.FrameCount} frames)"
+                        : $"{asset.FileName}\n{asset.Category}\n" +
+                          "Grid: loads on demand",
+                };
+
+                _assetList.Items.Add(item);
+            }
+        }
+        finally
+        {
+            _assetList.EndUpdate();
+        }
+
+        _previousPageButton.Enabled = _assetPage > 0;
+        _nextPageButton.Enabled = _assetPage + 1 < pageCount;
+        _pageLabel.Text =
+            $"Page {_assetPage + 1:N0}/{pageCount:N0} - " +
+            $"{filtered.Length:N0} animation(s)";
 
         if (_assetList.Items.Count > 0)
         {
@@ -1682,17 +1875,191 @@ public sealed class FrmAnimationImport : DarkForm
             _preview.SetAnimation(null, 1, 1);
             _assetInfo.Text = string.Empty;
         }
+
+        _ = LoadPageThumbnailsAsync(cancellationToken);
     }
 
-    private static Bitmap CreateThumbnail(AnimationAsset asset)
+    private async Task LoadPageThumbnailsAsync(
+        CancellationToken cancellationToken
+    )
+    {
+        var pageAssets = _visibleAssets.ToArray();
+
+        for (var i = 0; i < pageAssets.Length; i++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var asset = pageAssets[i];
+            Bitmap? thumbnail = null;
+
+            try
+            {
+                thumbnail = await Task.Run(
+                    () => GetOrCreateThumbnail(
+                        asset,
+                        cancellationToken
+                    ),
+                    cancellationToken
+                );
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (IsDisposed || Disposing)
+                {
+                    return;
+                }
+
+                if (!_visibleAssets.Contains(asset))
+                {
+                    continue;
+                }
+
+                if (!_assetImages.Images.ContainsKey(asset.FilePath))
+                {
+                    _assetImages.Images.Add(
+                        asset.FilePath,
+                        new Bitmap(thumbnail)
+                    );
+                }
+
+                foreach (ListViewItem item in _assetList.Items)
+                {
+                    if (!ReferenceEquals(item.Tag, asset))
+                    {
+                        continue;
+                    }
+
+                    item.ImageKey = asset.FilePath;
+                    item.ToolTipText =
+                        $"{asset.FileName}\n{asset.Category}\n" +
+                        $"Grid: {asset.XFrames}x{asset.YFrames} " +
+                        $"({asset.FrameCount} frames)";
+                    break;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch
+            {
+                // A bad or huge image should not block the rest of the page.
+            }
+            finally
+            {
+                thumbnail?.Dispose();
+            }
+        }
+    }
+
+    private Bitmap GetOrCreateThumbnail(
+        AnimationAsset asset,
+        CancellationToken cancellationToken
+    )
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var cachePath = GetThumbnailCachePath(asset);
+        try
+        {
+            if (File.Exists(cachePath) &&
+                File.GetLastWriteTimeUtc(cachePath) >=
+                File.GetLastWriteTimeUtc(asset.FilePath))
+            {
+                using var cached = new Bitmap(cachePath);
+                return new Bitmap(cached);
+            }
+        }
+        catch
+        {
+            // Rebuild stale/corrupt cache entries below.
+        }
+
+        using var source = new Bitmap(asset.FilePath);
+        EnsureAssetMetadata(asset, source);
+
+        using var generated = CreateThumbnail(asset, source);
+
+        try
+        {
+            var directory = Path.GetDirectoryName(cachePath);
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            generated.Save(cachePath, ImageFormat.Png);
+        }
+        catch
+        {
+            // Thumbnail cache is an optimization only.
+        }
+
+        return new Bitmap(generated);
+    }
+
+    private string GetThumbnailCachePath(AnimationAsset asset)
+    {
+        var category = MakeFileStem(asset.Category);
+        if (string.IsNullOrWhiteSpace(category))
+        {
+            category = "Misc";
+        }
+
+        return Path.Combine(
+            _thumbnailRoot,
+            category,
+            asset.FileName + ".thumb.png"
+        );
+    }
+
+    private static Bitmap CreatePlaceholderThumbnail()
     {
         const int size = 112;
-        var output = new Bitmap(size, size, PixelFormat.Format32bppArgb);
+        var output = new Bitmap(
+            size,
+            size,
+            PixelFormat.Format32bppArgb
+        );
 
-        using var bitmap = new Bitmap(asset.FilePath);
-        var frameWidth = Math.Max(1, bitmap.Width / Math.Max(1, asset.XFrames));
-        var frameHeight = Math.Max(1, bitmap.Height / Math.Max(1, asset.YFrames));
-        var source = new Rectangle(0, 0, frameWidth, frameHeight);
+        using var graphics = Graphics.FromImage(output);
+        graphics.Clear(System.Drawing.Color.FromArgb(38, 32, 34));
+
+        using var pen = new Pen(
+            System.Drawing.Color.FromArgb(80, 80, 80),
+            2f
+        );
+        graphics.DrawRectangle(pen, 12, 12, size - 25, size - 25);
+
+        return output;
+    }
+
+    private static Bitmap CreateThumbnail(
+        AnimationAsset asset,
+        Bitmap bitmap
+    )
+    {
+        const int size = 112;
+        var output = new Bitmap(
+            size,
+            size,
+            PixelFormat.Format32bppArgb
+        );
+
+        var frameWidth = Math.Max(
+            1,
+            bitmap.Width / Math.Max(1, asset.XFrames)
+        );
+        var frameHeight = Math.Max(
+            1,
+            bitmap.Height / Math.Max(1, asset.YFrames)
+        );
+        var source = new Rectangle(
+            0,
+            0,
+            Math.Min(frameWidth, bitmap.Width),
+            Math.Min(frameHeight, bitmap.Height)
+        );
 
         using var graphics = Graphics.FromImage(output);
         graphics.Clear(System.Drawing.Color.Transparent);
@@ -1703,48 +2070,186 @@ public sealed class FrmAnimationImport : DarkForm
             (double)(size - 8) / source.Width,
             (double)(size - 8) / source.Height
         );
-        var width = Math.Max(1, (int)Math.Round(source.Width * scale));
-        var height = Math.Max(1, (int)Math.Round(source.Height * scale));
-        var destination = new Rectangle((size - width) / 2, (size - height) / 2, width, height);
+        var width = Math.Max(
+            1,
+            (int)Math.Round(source.Width * scale)
+        );
+        var height = Math.Max(
+            1,
+            (int)Math.Round(source.Height * scale)
+        );
+        var destination = new Rectangle(
+            (size - width) / 2,
+            (size - height) / 2,
+            width,
+            height
+        );
 
-        graphics.DrawImage(bitmap, destination, source, GraphicsUnit.Pixel);
+        graphics.DrawImage(
+            bitmap,
+            destination,
+            source,
+            GraphicsUnit.Pixel
+        );
+
         return output;
     }
 
-    private void SelectAsset()
+    private static void EnsureAssetMetadata(
+        AnimationAsset asset,
+        Bitmap bitmap
+    )
+    {
+        if (asset.MetadataLoaded)
+        {
+            return;
+        }
+
+        lock (asset)
+        {
+            if (asset.MetadataLoaded)
+            {
+                return;
+            }
+
+            var stem = Path.GetFileNameWithoutExtension(
+                asset.FileName
+            );
+            var (xFrames, yFrames) = DetectGrid(bitmap, stem);
+
+            asset.XFrames = Math.Max(1, xFrames);
+            asset.YFrames = Math.Max(1, yFrames);
+            asset.FrameCount = Math.Max(
+                1,
+                asset.XFrames * asset.YFrames
+            );
+            asset.MetadataLoaded = true;
+
+            try
+            {
+                WriteGridMetadata(
+                    asset.FilePath,
+                    asset.XFrames,
+                    asset.YFrames,
+                    asset.FrameCount
+                );
+            }
+            catch
+            {
+                // Metadata persistence is an optimization only.
+            }
+        }
+    }
+
+    private async Task SelectAssetAsync()
     {
         if (_assetList.SelectedItems.Count == 0)
         {
             return;
         }
 
-        _selectedAsset = _assetList.SelectedItems[0].Tag as AnimationAsset;
-        if (_selectedAsset == null)
+        var asset =
+            _assetList.SelectedItems[0].Tag as AnimationAsset;
+
+        if (asset == null)
         {
             return;
         }
 
-        _name.Text = _selectedAsset.SuggestedName;
-        _category.Text = _selectedAsset.Category;
-        _xFrames.Value = Math.Clamp(_selectedAsset.XFrames, (int)_xFrames.Minimum, (int)_xFrames.Maximum);
-        _yFrames.Value = Math.Clamp(_selectedAsset.YFrames, (int)_yFrames.Minimum, (int)_yFrames.Maximum);
-        _frameCount.Maximum = Math.Max(
-            1,
-            (int)_xFrames.Value * (int)_yFrames.Value
-        );
-        _frameCount.Value = Math.Min(
-            _frameCount.Maximum,
-            Math.Max(1, _selectedAsset.FrameCount)
-        );
-        _frameDuration.Value = 80;
+        _selectionCancellation?.Cancel();
+        _selectionCancellation?.Dispose();
+        _selectionCancellation = new CancellationTokenSource();
+        var cancellationToken = _selectionCancellation.Token;
 
-        using var source = new Bitmap(_selectedAsset.FilePath);
-        _preview.SetAnimation(new Bitmap(source), (int)_xFrames.Value, (int)_yFrames.Value);
-        _previewTimer.Interval = (int)_frameDuration.Value;
+        _selectedAsset = asset;
+        _name.Text = asset.SuggestedName;
+        _category.Text = asset.Category;
+        _assetInfo.Text = $"Loading {asset.FileName}...";
 
-        _assetInfo.Text =
-            $"{_selectedAsset.FileName}   |   {_selectedAsset.Category}   |   " +
-            $"{source.Width}x{source.Height}px   |   detected {(int)_xFrames.Value}x{(int)_yFrames.Value}";
+        AssetPreviewLoad? loaded = null;
+
+        try
+        {
+            loaded = await Task.Run(
+                () =>
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    using var source = new Bitmap(asset.FilePath);
+                    EnsureAssetMetadata(asset, source);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    return new AssetPreviewLoad
+                    {
+                        Bitmap = new Bitmap(source),
+                        Width = source.Width,
+                        Height = source.Height,
+                        XFrames = asset.XFrames,
+                        YFrames = asset.YFrames,
+                        FrameCount = asset.FrameCount,
+                    };
+                },
+                cancellationToken
+            );
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!ReferenceEquals(_selectedAsset, asset))
+            {
+                loaded.Bitmap.Dispose();
+                return;
+            }
+
+            _xFrames.Value = Math.Clamp(
+                loaded.XFrames,
+                (int)_xFrames.Minimum,
+                (int)_xFrames.Maximum
+            );
+            _yFrames.Value = Math.Clamp(
+                loaded.YFrames,
+                (int)_yFrames.Minimum,
+                (int)_yFrames.Maximum
+            );
+            _frameCount.Maximum = Math.Max(
+                1,
+                (int)_xFrames.Value * (int)_yFrames.Value
+            );
+            _frameCount.Value = Math.Min(
+                _frameCount.Maximum,
+                Math.Max(1, loaded.FrameCount)
+            );
+            _frameDuration.Value = 80;
+
+            _preview.SetAnimation(
+                loaded.Bitmap,
+                (int)_xFrames.Value,
+                (int)_yFrames.Value
+            );
+            loaded = null;
+
+            _previewTimer.Interval =
+                (int)_frameDuration.Value;
+
+            _assetInfo.Text =
+                $"{asset.FileName}   |   {asset.Category}   |   " +
+                $"{asset.XFrames}x{asset.YFrames} grid   |   " +
+                $"{asset.FrameCount} frame(s)";
+        }
+        catch (OperationCanceledException)
+        {
+            loaded?.Bitmap.Dispose();
+        }
+        catch (Exception ex)
+        {
+            loaded?.Bitmap.Dispose();
+
+            if (!IsDisposed && !Disposing)
+            {
+                _assetInfo.Text =
+                    $"Unable to load {asset.FileName}: {ex.Message}";
+            }
+        }
     }
 
     private void GridChanged()
