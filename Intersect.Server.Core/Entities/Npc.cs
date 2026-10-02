@@ -83,6 +83,27 @@ public partial class Npc : Entity
     public long LastRandomMove;
     private byte _randomMoveRange;
 
+    // Smart movement state. These values are runtime-only and intentionally do
+    // not change NPC data. They keep roaming coherent and prevent oscillation
+    // when pathfinding encounters temporary blockers.
+    private static readonly Direction[] SmartMoveDirections =
+    [
+        Direction.Up,
+        Direction.Down,
+        Direction.Left,
+        Direction.Right,
+        Direction.UpLeft,
+        Direction.UpRight,
+        Direction.DownRight,
+        Direction.DownLeft,
+    ];
+
+    private Direction _lastSmartMoveDirection = Direction.None;
+    private Guid _roamHomeMapId = Guid.Empty;
+    private int _roamHomeX;
+    private int _roamHomeY;
+    private bool _roamHomeInitialized;
+
     //Pathfinding
     private Pathfinder mPathFinder;
 
@@ -1030,20 +1051,14 @@ public partial class Npc : Entity
                                     var nextPathDirection = mPathFinder.GetMove();
                                     if (nextPathDirection > Direction.None)
                                     {
-                                        if (fleeing)
+                                        if (fleeing && tempTarget != null)
                                         {
-                                            nextPathDirection = nextPathDirection switch
-                                            {
-                                                Direction.Up => Direction.Down,
-                                                Direction.Down => Direction.Up,
-                                                Direction.Left => Direction.Right,
-                                                Direction.Right => Direction.Left,
-                                                Direction.UpLeft => Direction.UpRight,
-                                                Direction.UpRight => Direction.UpLeft,
-                                                Direction.DownRight => Direction.DownLeft,
-                                                Direction.DownLeft => Direction.DownRight,
-                                                _ => nextPathDirection,
-                                            };
+                                            nextPathDirection = ChooseSmartMovementDirection(
+                                                OppositeDirection(nextPathDirection),
+                                                null,
+                                                tempTarget,
+                                                true
+                                            );
                                         }
 
                                         if (CanMoveInDirection(nextPathDirection, out var blockerType, out var blockingEntityType, out var blockingEntity) || blockerType == MovementBlockerType.Slide)
@@ -1062,6 +1077,7 @@ public partial class Npc : Entity
                                             }
 
                                             Move(nextPathDirection, null);
+                                            _lastSmartMoveDirection = nextPathDirection;
                                         }
                                         else
                                         {
@@ -1085,7 +1101,23 @@ public partial class Npc : Entity
 
                                             if (!blockerAttacked)
                                             {
-                                                mPathFinder.PathFailed(timeMs);
+                                                var detourDirection = ChooseSmartMovementDirection(
+                                                    nextPathDirection,
+                                                    pathTarget,
+                                                    fleeing ? tempTarget : null,
+                                                    fleeing
+                                                );
+
+                                                if (detourDirection > Direction.None &&
+                                                    detourDirection != nextPathDirection)
+                                                {
+                                                    Move(detourDirection, null);
+                                                    _lastSmartMoveDirection = detourDirection;
+                                                }
+                                                else
+                                                {
+                                                    mPathFinder.PathFailed(timeMs);
+                                                }
                                             }
                                         }
 
@@ -1151,44 +1183,16 @@ public partial class Npc : Entity
                             var fleed = false;
                             if (tempTarget != null && fleeing)
                             {
-                                var dir = DirectionToTarget(tempTarget);
-                                switch (dir)
-                                {
-                                    case Direction.Up:
-                                        dir = Direction.Down;
+                                var dir = ChooseSmartMovementDirection(
+                                    OppositeDirection(DirectionToTarget(tempTarget)),
+                                    null,
+                                    tempTarget,
+                                    true
+                                );
 
-                                        break;
-                                    case Direction.Down:
-                                        dir = Direction.Up;
-
-                                        break;
-                                    case Direction.Left:
-                                        dir = Direction.Right;
-
-                                        break;
-                                    case Direction.Right:
-                                        dir = Direction.Left;
-
-                                        break;
-                                    case Direction.UpLeft:
-                                        dir = Direction.UpRight;
-
-                                        break;
-                                    case Direction.UpRight:
-                                        dir = Direction.UpLeft;
-                                        break;
-
-                                    case Direction.DownRight:
-                                        dir = Direction.DownLeft;
-
-                                        break;
-                                    case Direction.DownLeft:
-                                        dir = Direction.DownRight;
-
-                                        break;
-                                }
-
-                                if (CanMoveInDirection(dir, out var blockerType, out _) || blockerType == MovementBlockerType.Slide)
+                                if (dir > Direction.None &&
+                                    (CanMoveInDirection(dir, out var blockerType, out _) ||
+                                     blockerType == MovementBlockerType.Slide))
                                 {
                                     //check if NPC is snared or stunned
                                     foreach (var status in CachedStatuses)
@@ -1202,6 +1206,7 @@ public partial class Npc : Entity
                                     }
 
                                     Move(dir, null);
+                                    _lastSmartMoveDirection = dir;
                                     fleed = true;
                                 }
                             }
@@ -1296,36 +1301,264 @@ public partial class Npc : Entity
 
     private void MoveRandomly()
     {
+        EnsureRoamHome();
+
         if (_randomMoveRange <= 0)
         {
-            Dir = Randomization.NextDirection();
-            LastRandomMove = Timing.Global.Milliseconds + Randomization.Next(1000, 2000);
-            _randomMoveRange = (byte)Randomization.Next(0, Descriptor.SightRange + Randomization.Next(0, 3));
-        }
-        else if (CanMoveInDirection(Dir))
-        {
-            foreach (var status in CachedStatuses)
+            var preferred = Dir > Direction.None
+                ? Dir
+                : Randomization.NextDirection();
+
+            var direction = ChooseSmartRoamDirection(preferred);
+            if (direction <= Direction.None)
             {
-                if (status.Type is SpellEffect.Stun or SpellEffect.Snare or SpellEffect.Sleep)
+                LastRandomMove =
+                    Timing.Global.Milliseconds + Randomization.Next(600, 1400);
+                return;
+            }
+
+            Dir = direction;
+            _randomMoveRange = (byte)Math.Clamp(
+                Randomization.Next(2, Math.Max(4, Descriptor.SightRange + 2)),
+                2,
+                12
+            );
+
+            // A short think/pause before starting the next coherent movement
+            // burst makes idle NPCs look intentional instead of jittery.
+            LastRandomMove =
+                Timing.Global.Milliseconds + Randomization.Next(450, 1100);
+            return;
+        }
+
+        var nextDirection = ChooseSmartRoamDirection(Dir);
+        if (nextDirection <= Direction.None)
+        {
+            _randomMoveRange = 0;
+            LastRandomMove =
+                Timing.Global.Milliseconds + Randomization.Next(500, 1200);
+            return;
+        }
+
+        foreach (var status in CachedStatuses)
+        {
+            if (status.Type is SpellEffect.Stun or SpellEffect.Snare or SpellEffect.Sleep)
+            {
+                return;
+            }
+        }
+
+        Dir = nextDirection;
+        Move(nextDirection, null);
+        _lastSmartMoveDirection = nextDirection;
+        LastRandomMove = Timing.Global.Milliseconds + (long)GetMovementTime();
+        _randomMoveRange--;
+
+        // Occasionally end a walking burst naturally instead of changing to a
+        // random direction mid-step. This removes the common zig-zag look.
+        if (_randomMoveRange > 0 && Randomization.Next(0, 100) < 12)
+        {
+            _randomMoveRange = 0;
+            LastRandomMove += Randomization.Next(350, 900);
+        }
+    }
+
+    private void EnsureRoamHome()
+    {
+        if (_roamHomeInitialized)
+        {
+            return;
+        }
+
+        _roamHomeMapId = MapId;
+        _roamHomeX = X;
+        _roamHomeY = Y;
+        _roamHomeInitialized = true;
+    }
+
+    private Direction ChooseSmartRoamDirection(Direction preferred)
+    {
+        var bestDirection = Direction.None;
+        var bestScore = double.MinValue;
+        var roamRadius = Math.Clamp(Math.Max(2, Descriptor.SightRange), 2, 12);
+        var distanceFromHome =
+            _roamHomeMapId == MapId
+                ? Math.Max(Math.Abs(X - _roamHomeX), Math.Abs(Y - _roamHomeY))
+                : 0;
+
+        foreach (var candidate in SmartMoveDirections)
+        {
+            if (!CanMoveInDirection(candidate, out var blockerType, out _) &&
+                blockerType != MovementBlockerType.Slide)
+            {
+                continue;
+            }
+
+            var score = Randomization.Next(0, 8);
+
+            if (candidate == preferred)
+            {
+                score += 45;
+            }
+
+            if (candidate == Dir)
+            {
+                score += 25;
+            }
+
+            if (candidate == _lastSmartMoveDirection)
+            {
+                score += 20;
+            }
+
+            if (candidate == OppositeDirection(_lastSmartMoveDirection))
+            {
+                score -= 35;
+            }
+
+            var (dx, dy) = DirectionOffset(candidate);
+            var projectedX = X + dx;
+            var projectedY = Y + dy;
+
+            if (_roamHomeMapId == MapId)
+            {
+                var projectedDistance = Math.Max(
+                    Math.Abs(projectedX - _roamHomeX),
+                    Math.Abs(projectedY - _roamHomeY)
+                );
+
+                // Once outside the idle roam radius, returning toward home
+                // dominates the random/inertia score.
+                if (distanceFromHome >= roamRadius)
                 {
-                    return;
+                    score += (distanceFromHome - projectedDistance) * 100;
+                }
+                else
+                {
+                    // Softly discourage drifting to the edge of the allowed
+                    // roaming area while still permitting natural wandering.
+                    score -= projectedDistance * 2;
                 }
             }
 
-            Move(Dir, null);
-            LastRandomMove = Timing.Global.Milliseconds + (long)GetMovementTime();
-
-            if (_randomMoveRange <= Randomization.Next(0, 3))
+            if (score > bestScore)
             {
-                Dir = Randomization.NextDirection();
+                bestScore = score;
+                bestDirection = candidate;
+            }
+        }
+
+        return bestDirection;
+    }
+
+    private Direction ChooseSmartMovementDirection(
+        Direction preferred,
+        PathfinderTarget? pathTarget,
+        Entity? avoidTarget,
+        bool fleeing
+    )
+    {
+        var bestDirection = Direction.None;
+        var bestScore = double.MinValue;
+
+        foreach (var candidate in SmartMoveDirections)
+        {
+            if (!CanMoveInDirection(
+                    candidate,
+                    out var blockerType,
+                    out _,
+                    out _
+                ) &&
+                blockerType != MovementBlockerType.Slide)
+            {
+                continue;
             }
 
-            _randomMoveRange--;
+            var score = Randomization.Next(0, 5);
+
+            if (candidate == preferred)
+            {
+                score += 35;
+            }
+
+            if (candidate == Dir)
+            {
+                score += 12;
+            }
+
+            if (candidate == _lastSmartMoveDirection)
+            {
+                score += 10;
+            }
+
+            if (candidate == OppositeDirection(_lastSmartMoveDirection))
+            {
+                score -= 20;
+            }
+
+            var (dx, dy) = DirectionOffset(candidate);
+            var projectedX = X + dx;
+            var projectedY = Y + dy;
+
+            if (fleeing &&
+                avoidTarget != null &&
+                avoidTarget.MapId == MapId)
+            {
+                var distanceX = projectedX - avoidTarget.X;
+                var distanceY = projectedY - avoidTarget.Y;
+                score += (distanceX * distanceX + distanceY * distanceY) * 8;
+            }
+            else if (pathTarget != null &&
+                     pathTarget.TargetMapId == MapId)
+            {
+                var distanceX = projectedX - pathTarget.TargetX;
+                var distanceY = projectedY - pathTarget.TargetY;
+
+                // Lower squared distance is better. Using a strong weight means
+                // the detour still progresses toward the target when possible.
+                score -= (distanceX * distanceX + distanceY * distanceY) * 8;
+            }
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestDirection = candidate;
+            }
         }
-        else
+
+        return bestDirection;
+    }
+
+    private static Direction OppositeDirection(Direction direction)
+    {
+        return direction switch
         {
-            Dir = Randomization.NextDirection();
-        }
+            Direction.Up => Direction.Down,
+            Direction.Down => Direction.Up,
+            Direction.Left => Direction.Right,
+            Direction.Right => Direction.Left,
+            Direction.UpLeft => Direction.DownRight,
+            Direction.UpRight => Direction.DownLeft,
+            Direction.DownRight => Direction.UpLeft,
+            Direction.DownLeft => Direction.UpRight,
+            _ => Direction.None,
+        };
+    }
+
+    private static (int X, int Y) DirectionOffset(Direction direction)
+    {
+        return direction switch
+        {
+            Direction.Up => (0, -1),
+            Direction.Down => (0, 1),
+            Direction.Left => (-1, 0),
+            Direction.Right => (1, 0),
+            Direction.UpLeft => (-1, -1),
+            Direction.UpRight => (1, -1),
+            Direction.DownRight => (1, 1),
+            Direction.DownLeft => (-1, 1),
+            _ => (0, 0),
+        };
     }
 
     /// <summary>
@@ -1715,6 +1948,10 @@ public partial class Npc : Entity
         Y = (int)newY;
         Z = zOverride;
         Dir = newDir;
+
+        _roamHomeInitialized = false;
+        _randomMoveRange = 0;
+        _lastSmartMoveDirection = Direction.None;
         if (newMapId != MapId)
         {
             if (MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var oldMap))
