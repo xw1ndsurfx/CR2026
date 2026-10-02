@@ -54,6 +54,36 @@ public sealed class FrmAnimationImport : DarkForm
         public int FrameIndex { get; init; }
     }
 
+    private sealed class ZipImportProgress
+    {
+        public int CompletedUnits { get; init; }
+
+        public int TotalUnits { get; init; }
+
+        public required string Stage { get; init; }
+
+        public string CurrentItem { get; init; } = string.Empty;
+
+        public int CurrentIndex { get; init; }
+
+        public int CurrentTotal { get; init; }
+    }
+
+    private sealed class ZipImportResult
+    {
+        public int ImportedAnimations { get; set; }
+
+        public int CombinedAnimations { get; set; }
+
+        public int CombinedFrames { get; set; }
+
+        public int StandaloneSheets { get; set; }
+
+        public int Skipped { get; set; }
+
+        public bool Cancelled { get; set; }
+    }
+
     private sealed class AnimationPreview : Control
     {
         private Bitmap? _image;
@@ -222,7 +252,13 @@ public sealed class FrmAnimationImport : DarkForm
     private readonly NumericUpDown _frameDuration = new();
     private readonly Label _assetInfo = new();
     private readonly Label _status = new();
+    private readonly Button _importZipButton = new();
+    private readonly Button _cancelImportButton = new();
+    private readonly ProgressBar _importProgress = new();
+    private readonly Label _importProgressLabel = new();
     private readonly System.Windows.Forms.Timer _previewTimer = new() { Interval = 80 };
+
+    private CancellationTokenSource? _importCancellation;
 
     private readonly List<AnimationAsset> _assets = new();
     private AnimationAsset? _selectedAsset;
@@ -263,6 +299,9 @@ public sealed class FrmAnimationImport : DarkForm
 
         FormClosed += (_, _) =>
         {
+            _importCancellation?.Cancel();
+            _importCancellation?.Dispose();
+            _importCancellation = null;
             _previewTimer.Stop();
             _assetImages.Dispose();
         };
@@ -315,9 +354,19 @@ public sealed class FrmAnimationImport : DarkForm
             BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
         };
 
-        var importZip = CreateAccentButton("IMPORT ZIP");
-        importZip.Size = new Size(145, 34);
-        importZip.Click += (_, _) => ImportZip();
+        _importZipButton.Text = "IMPORT ZIP";
+        _importZipButton.Size = new Size(145, 34);
+        _importZipButton.FlatStyle = FlatStyle.Flat;
+        _importZipButton.BackColor = System.Drawing.Color.FromArgb(247, 69, 96);
+        _importZipButton.ForeColor = System.Drawing.Color.White;
+        _importZipButton.FlatAppearance.BorderColor = _importZipButton.BackColor;
+        _importZipButton.Font = new Font(
+            SystemFonts.MessageBoxFont.FontFamily,
+            9,
+            FontStyle.Bold
+        );
+        _importZipButton.Cursor = Cursors.Hand;
+        _importZipButton.Click += async (_, _) => await ImportZipAsync();
 
         var refresh = CreateDarkButton("REFRESH");
         refresh.Size = new Size(120, 34);
@@ -327,9 +376,44 @@ public sealed class FrmAnimationImport : DarkForm
         open.Size = new Size(205, 34);
         open.Click += (_, _) => OpenImportFolder();
 
-        toolbar.Controls.Add(importZip);
+        _cancelImportButton.Text = "CANCEL";
+        _cancelImportButton.Size = new Size(105, 34);
+        _cancelImportButton.FlatStyle = FlatStyle.Flat;
+        _cancelImportButton.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+        _cancelImportButton.ForeColor = System.Drawing.Color.Gainsboro;
+        _cancelImportButton.FlatAppearance.BorderColor =
+            System.Drawing.Color.FromArgb(90, 78, 81);
+        _cancelImportButton.Font = new Font(
+            SystemFonts.MessageBoxFont.FontFamily,
+            9,
+            FontStyle.Bold
+        );
+        _cancelImportButton.Cursor = Cursors.Hand;
+        _cancelImportButton.Enabled = false;
+        _cancelImportButton.Click += (_, _) => _importCancellation?.Cancel();
+
+        _importProgress.Width = 270;
+        _importProgress.Height = 24;
+        _importProgress.Margin = new Padding(14, 5, 0, 0);
+        _importProgress.Minimum = 0;
+        _importProgress.Maximum = 100;
+        _importProgress.Value = 0;
+        _importProgress.Visible = false;
+
+        _importProgressLabel.AutoSize = false;
+        _importProgressLabel.Width = 330;
+        _importProgressLabel.Height = 34;
+        _importProgressLabel.Margin = new Padding(8, 0, 0, 0);
+        _importProgressLabel.ForeColor = System.Drawing.Color.Silver;
+        _importProgressLabel.TextAlign = ContentAlignment.MiddleLeft;
+        _importProgressLabel.Visible = false;
+
+        toolbar.Controls.Add(_importZipButton);
         toolbar.Controls.Add(refresh);
         toolbar.Controls.Add(open);
+        toolbar.Controls.Add(_cancelImportButton);
+        toolbar.Controls.Add(_importProgress);
+        toolbar.Controls.Add(_importProgressLabel);
         root.Controls.Add(toolbar, 0, 0);
 
         var body = new TableLayoutPanel
