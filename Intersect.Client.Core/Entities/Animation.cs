@@ -25,6 +25,12 @@ public partial class Animation : IAnimation
 
     public bool InfiniteLoop { get; set; }
 
+    /// <summary>
+    /// Pixel offset applied when this animation follows a parent entity.
+    /// Negative values render above the entity.
+    /// </summary>
+    public float ParentOffsetY { get; set; }
+
     private bool mDisposeNextDraw;
 
     private int mLowerFrame;
@@ -318,7 +324,7 @@ public partial class Animation : IAnimation
     public void SetPosition(float worldX, float worldY, int mapx, int mapy, Guid mapId, Direction dir, int z = 0)
     {
         mRenderX = worldX;
-        mRenderY = worldY;
+        mRenderY = worldY + ParentOffsetY;
         mSound?.UpdatePosition(mapx, mapy, mapId);
 
         if (dir > Direction.None)
