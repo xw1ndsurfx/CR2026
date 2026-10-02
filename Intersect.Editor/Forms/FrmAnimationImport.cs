@@ -98,6 +98,8 @@ public sealed class FrmAnimationImport : DarkForm
 
         public int Skipped { get; set; }
 
+        public int RenamedDuplicates { get; set; }
+
         public bool Cancelled { get; set; }
     }
 
@@ -256,12 +258,15 @@ public sealed class FrmAnimationImport : DarkForm
     private readonly string _importRoot;
     private readonly string _animationsRoot;
     private readonly string _thumbnailRoot;
+    private readonly string _favoritesPath;
     private readonly Action<GeneratedAnimationRequest>? _afterImport;
 
     private readonly ListBox _categoryList = new();
     private readonly ListView _assetList = new();
     private readonly ImageList _assetImages = new();
     private readonly TextBox _assetSearch = new();
+    private readonly ComboBox _assetSort = new();
+    private readonly Button _favoriteButton = new();
     private readonly Button _previousPageButton = new();
     private readonly Button _nextPageButton = new();
     private readonly Label _pageLabel = new();
@@ -289,6 +294,8 @@ public sealed class FrmAnimationImport : DarkForm
 
     private readonly List<AnimationAsset> _assets = new();
     private readonly List<AnimationAsset> _visibleAssets = new();
+    private readonly HashSet<string> _favoriteAssetKeys =
+        new(StringComparer.OrdinalIgnoreCase);
     private AnimationAsset? _selectedAsset;
     private int _assetPage;
     private bool _libraryLoading;
@@ -304,6 +311,11 @@ public sealed class FrmAnimationImport : DarkForm
             ".animationimport-cache",
             "thumbnails"
         );
+        _favoritesPath = Path.Combine(
+            _gameRoot,
+            ".animationimport-cache",
+            "favorites.txt"
+        );
 
         Text = "Animations Import";
         StartPosition = FormStartPosition.CenterParent;
@@ -315,6 +327,7 @@ public sealed class FrmAnimationImport : DarkForm
         Directory.CreateDirectory(_importRoot);
         Directory.CreateDirectory(_animationsRoot);
         Directory.CreateDirectory(_thumbnailRoot);
+        LoadFavorites();
         foreach (var categoryName in Categories)
         {
             Directory.CreateDirectory(Path.Combine(_importRoot, categoryName));
@@ -525,8 +538,21 @@ public sealed class FrmAnimationImport : DarkForm
         assetHost.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         assetHost.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
 
+        var filterBar = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            ColumnCount = 3,
+            RowCount = 1,
+            BackColor = System.Drawing.Color.FromArgb(38, 32, 34),
+        };
+        filterBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 48));
+        filterBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32));
+        filterBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20));
+
         _assetSearch.Dock = DockStyle.Fill;
-        _assetSearch.Margin = new Padding(0, 0, 0, 6);
+        _assetSearch.Margin = new Padding(0, 0, 6, 6);
         _assetSearch.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
         _assetSearch.ForeColor = System.Drawing.Color.White;
         _assetSearch.BorderStyle = BorderStyle.FixedSingle;
@@ -536,6 +562,47 @@ public sealed class FrmAnimationImport : DarkForm
             _assetPage = 0;
             PopulateAssetList();
         };
+
+        _assetSort.Dock = DockStyle.Fill;
+        _assetSort.Margin = new Padding(0, 0, 6, 6);
+        _assetSort.DropDownStyle = ComboBoxStyle.DropDownList;
+        _assetSort.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        _assetSort.ForeColor = System.Drawing.Color.White;
+        _assetSort.Items.AddRange(
+            new object[]
+            {
+                "Name A-Z",
+                "Newest First",
+                "Oldest First",
+                "Favorites First",
+            }
+        );
+        _assetSort.SelectedIndex = 0;
+        _assetSort.SelectedIndexChanged += (_, _) =>
+        {
+            _assetPage = 0;
+            PopulateAssetList();
+        };
+
+        _favoriteButton.Dock = DockStyle.Fill;
+        _favoriteButton.Margin = new Padding(0, 0, 0, 6);
+        _favoriteButton.Text = "FAVORITE";
+        _favoriteButton.FlatStyle = FlatStyle.Flat;
+        _favoriteButton.BackColor = System.Drawing.Color.FromArgb(55, 47, 49);
+        _favoriteButton.ForeColor = System.Drawing.Color.Gainsboro;
+        _favoriteButton.FlatAppearance.BorderColor =
+            System.Drawing.Color.FromArgb(90, 78, 81);
+        _favoriteButton.Font = new Font(
+            SystemFonts.MessageBoxFont.FontFamily,
+            8,
+            FontStyle.Bold
+        );
+        _favoriteButton.Enabled = false;
+        _favoriteButton.Click += (_, _) => ToggleFavorite();
+
+        filterBar.Controls.Add(_assetSearch, 0, 0);
+        filterBar.Controls.Add(_assetSort, 1, 0);
+        filterBar.Controls.Add(_favoriteButton, 2, 0);
 
         var pager = new FlowLayoutPanel
         {
@@ -582,7 +649,7 @@ public sealed class FrmAnimationImport : DarkForm
         pager.Controls.Add(_pageLabel);
         pager.Controls.Add(_nextPageButton);
 
-        assetHost.Controls.Add(_assetSearch, 0, 0);
+        assetHost.Controls.Add(filterBar, 0, 0);
         assetHost.Controls.Add(_assetList, 0, 1);
         assetHost.Controls.Add(pager, 0, 2);
         assetPanel.Controls.Add(assetHost, 0, 1);
