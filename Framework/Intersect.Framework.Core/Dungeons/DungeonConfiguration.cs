@@ -50,6 +50,7 @@ public sealed class DungeonDefinition
     public int MinimumPartySize { get; set; } = 1;
     public int MaximumPartySize { get; set; } = 5;
     public int TimeLimitMinutes { get; set; }
+    public bool PremiumRequired { get; set; }
 
     // Completion / boss
     public Guid FinalBossNpcId { get; set; }
