@@ -9,6 +9,8 @@ using Intersect.Client.ThirdParty;
 using Intersect.Framework;
 using Intersect.Framework.Core;
 using Intersect.Network;
+using Intersect.Core;
+using Microsoft.Extensions.Logging;
 using ClientNetwork = Intersect.Client.Networking.Network;
 
 namespace Intersect.Client.Interface.Menu;
@@ -132,6 +134,13 @@ public partial class MainMenu : MutableInterface
 
     private void HandleSteamAutoLogin(object? sender, EventArgs eventArgs)
     {
+        ApplicationContext.Context.Value?.Logger.LogInformation(
+            "Steam auto-login trigger received. Initialized={SteamInitialized}, Connected={Connected}, AlreadyAttempted={AlreadyAttempted}",
+            Steam.Initialized,
+            ClientNetwork.IsConnected,
+            _steamAutoLoginAttempted
+        );
+
         if (_steamAutoLoginAttempted || !Steam.Initialized || !ClientNetwork.IsConnected)
         {
             return;
@@ -146,6 +155,9 @@ public partial class MainMenu : MutableInterface
                     return;
                 }
 
+                ApplicationContext.Context.Value?.Logger.LogInformation(
+                    "Sending Steam authentication ticket to the Corps Royaux server."
+                );
                 Globals.WaitingOnServer = true;
                 PacketSender.SendSteamLogin(ticket);
             }
