@@ -130,7 +130,7 @@ public partial class MainMenu : MutableInterface
 
     private void HandleSteamAutoLogin(object? sender, EventArgs eventArgs)
     {
-        if (_steamAutoLoginAttempted || !Steam.Initialized || !Networking.Network.IsConnected)
+        if (_steamAutoLoginAttempted || !Steam.Initialized || !Network.IsConnected)
         {
             return;
         }
@@ -139,7 +139,7 @@ public partial class MainMenu : MutableInterface
         Steam.TryRequestCorpsRoyauxLoginTicket(
             ticket =>
             {
-                if (string.IsNullOrWhiteSpace(ticket) || !Networking.Network.IsConnected)
+                if (string.IsNullOrWhiteSpace(ticket) || !Network.IsConnected)
                 {
                     return;
                 }
