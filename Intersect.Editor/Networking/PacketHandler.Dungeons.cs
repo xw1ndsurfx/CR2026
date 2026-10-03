@@ -1,4 +1,5 @@
 using Intersect.Editor.Core;
+using Intersect.Editor.General;
 using Intersect.Framework.Core.Dungeons;
 using Intersect.Network;
 using Intersect.Network.Packets.Server;
