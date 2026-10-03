@@ -5,6 +5,7 @@ using Intersect.Framework.Core.Dungeons;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.GameObjects;
 using DrawingColor = System.Drawing.Color;
 
@@ -43,6 +44,11 @@ public sealed class FrmDungeonConfiguration : DarkForm
     };
     private readonly DarkTextBox _image = new() { Dock = DockStyle.Fill };
     private readonly DarkTextBox _location = new() { Dock = DockStyle.Fill };
+    private readonly DarkComboBox _associatedQuest = new()
+    {
+        Dock = DockStyle.Fill,
+        DropDownStyle = ComboBoxStyle.DropDownList,
+    };
     private readonly DarkComboBox _rank = new()
     {
         Dock = DockStyle.Fill,
@@ -122,6 +128,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
             _availabilityMode.Items.Add(value);
 
         FillCompletionChoices();
+        FillQuestChoices();
 
         foreach (var day in new[]
                  {
@@ -299,6 +306,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
         AddRow(table, "Description", _description, 88);
         AddRow(table, "Image file (resources/images)", _image);
         AddRow(table, "Location", _location);
+        AddRow(table, "Associated Quest", _associatedQuest);
         AddRow(table, "Dungeon rank", _rank);
         AddRow(table, "Minimum level", _minimumLevel);
         AddRow(table, "Recommended level", _recommendedLevel);
@@ -458,6 +466,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
         _description.Text = _selected.Description;
         _image.Text = _selected.Image;
         _location.Text = _selected.Location;
+        SelectId(_associatedQuest, _selected.AssociatedQuestId);
         _rank.SelectedItem = _selected.Rank;
         _minimumLevel.Value = Math.Clamp(_selected.MinimumLevel, 1, 1_000_000);
         _recommendedLevel.Value = Math.Clamp(_selected.RecommendedLevel, 1, 1_000_000);
@@ -494,7 +503,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
     {
         foreach (var control in new Control[]
                  {
-                     _name, _description, _image, _location, _rank,
+                     _name, _description, _image, _location, _associatedQuest, _rank,
                      _minimumLevel, _recommendedLevel, _maximumLevel,
                      _minimumParty, _maximumParty, _timeLimit, _sortOrder,
                      _finalBoss, _completionExperience, _completionItem,
@@ -528,6 +537,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
         _selected.Description = _description.Text ?? string.Empty;
         _selected.Image = _image.Text?.Trim() ?? string.Empty;
         _selected.Location = _location.Text?.Trim() ?? string.Empty;
+        _selected.AssociatedQuestId = (_associatedQuest.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
         _selected.Rank = _rank.SelectedItem is DungeonRank rank ? rank : DungeonRank.F;
         _selected.MinimumLevel = (int)_minimumLevel.Value;
         _selected.RecommendedLevel = (int)_recommendedLevel.Value;
@@ -579,6 +589,17 @@ public sealed class FrmDungeonConfiguration : DarkForm
 
         PacketSender.SendSaveDungeonConfiguration(_working.ToJson());
         Close();
+    }
+
+    private void FillQuestChoices()
+    {
+        Fill(
+            _associatedQuest,
+            QuestDescriptor.Lookup.Values
+                .OfType<QuestDescriptor>()
+                .OrderBy(quest => quest.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(quest => new IdChoice(quest.Id, quest.Name))
+        );
     }
 
     private void FillCompletionChoices()
