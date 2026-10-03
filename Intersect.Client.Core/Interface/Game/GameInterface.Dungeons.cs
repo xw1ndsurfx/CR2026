@@ -5,6 +5,7 @@ namespace Intersect.Client.Interface.Game;
 public partial class GameInterface
 {
     private DungeonPanelWindow? _dungeonPanelWindow;
+    private DungeonRunHudWindow? _dungeonRunHudWindow;
 
     public bool IsDungeonPanelVisible => _dungeonPanelWindow?.IsVisibleInTree == true;
 
