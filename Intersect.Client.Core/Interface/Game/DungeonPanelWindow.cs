@@ -5,6 +5,7 @@ using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
 using Intersect.Framework.Core.Dungeons;
 using Intersect.Framework.Core.GameObjects.Quests;
+using Intersect.GameObjects;
 using Intersect.Network.Packets.Server;
 
 namespace Intersect.Client.Interface.Game;
@@ -132,7 +133,8 @@ internal sealed class DungeonPanelWindow : Window
 
         if (!string.IsNullOrWhiteSpace(dungeon.Image))
         {
-            image.Texture = Globals.ContentManager.GetTexture(TextureType.Image, dungeon.Image);
+            var contentManager = Globals.ContentManager;
+            image.Texture = contentManager?.GetTexture(TextureType.Image, dungeon.Image);
             if (image.Texture == null)
                 image.Hide();
         }
