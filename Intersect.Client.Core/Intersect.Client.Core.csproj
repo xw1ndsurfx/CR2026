@@ -70,12 +70,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <EmbeddedResource Include="Resources\runtimes\linux-x64\native\libsdkencryptedappticket.so" />
-    <EmbeddedResource Include="Resources\runtimes\linux-x64\native\libsteam_api.so" />
-    <EmbeddedResource Include="Resources\runtimes\osx\native\libsdkencryptedappticket.dylib" />
-    <EmbeddedResource Include="Resources\runtimes\osx\native\libsteam_api.dylib" />
-    <EmbeddedResource Include="Resources\runtimes\win-x64\native\sdkencryptedappticket64.dll" />
-    <EmbeddedResource Include="Resources\runtimes\win-x64\native\steam_api64.dll" />
   </ItemGroup>
 
   <ItemGroup Label="Steam Resources (Exclusion)" Condition="'$(INTERSECT_STEAMWORKS)' == ''">
