@@ -79,21 +79,24 @@ public static partial class CommandProcessing
             return;
         }
 
-        var instanceType = command.UsePartyInstance && partySize > 1
-            ? MapInstanceType.Shared
-            : MapInstanceType.Personal;
-
-        player.Warp(
-            command.MapId,
-            command.X,
-            command.Y,
-            Direction.Down,
-            adminWarp: false,
-            zOverride: 0,
-            mapSave: false,
-            fromWarpEvent: true,
-            mapInstanceType: instanceType
-        );
+        if (!DungeonRunRuntime.TryStart(
+                player,
+                dungeon,
+                command.MapId,
+                command.X,
+                command.Y,
+                command.UsePartyInstance,
+                out var startError
+            ))
+        {
+            PacketSender.SendChatMsg(
+                player,
+                $"[Dungeon] {startError}",
+                ChatMessageType.Error,
+                Color.White
+            );
+            return;
+        }
 
         PacketSender.SendChatMsg(
             player,
