@@ -4,6 +4,7 @@ using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
 using Intersect.Framework.Core.Dungeons;
+using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Network.Packets.Server;
 
 namespace Intersect.Client.Interface.Game;
@@ -112,7 +113,7 @@ internal sealed class DungeonPanelWindow : Window
     private int AddDungeonCard(DungeonDefinition dungeon, DungeonStatusEntry status, int y)
     {
         const int width = 724;
-        const int height = 154;
+        const int height = 174;
 
         var card = new Button(_scroll, $"DungeonCard{dungeon.Id}")
         {
@@ -187,6 +188,23 @@ internal sealed class DungeonPanelWindow : Window
         };
         description.SetBounds(154, 57, 488, 32);
 
+        var quest = dungeon.AssociatedQuestId == Guid.Empty
+            ? null
+            : QuestDescriptor.Get(dungeon.AssociatedQuestId);
+
+        var questLabel = new Label(card, $"DungeonQuest{dungeon.Id}")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 8,
+            TextColorOverride = new Color(a: 255, r: 220, g: 196, b: 135),
+            Text = quest == null ? string.Empty : $"QUEST • {quest.Name}",
+            MouseInputEnabled = false,
+        };
+        questLabel.SetBounds(154, 91, 488, 18);
+        if (quest == null)
+            questLabel.Hide();
+
         var maximumLevel = dungeon.MaximumLevel <= 0 ? "+" : $"-{dungeon.MaximumLevel}";
         var details = new Label(card, $"DungeonDetails{dungeon.Id}")
         {
@@ -200,7 +218,7 @@ internal sealed class DungeonPanelWindow : Window
                 (dungeon.TimeLimitMinutes > 0 ? $"  •  {dungeon.TimeLimitMinutes} MIN" : string.Empty),
             MouseInputEnabled = false,
         };
-        details.SetBounds(154, 95, 540, 18);
+        details.SetBounds(154, 113, 540, 18);
 
         var statusLabel = new Label(card, $"DungeonStatus{dungeon.Id}")
         {
@@ -213,7 +231,7 @@ internal sealed class DungeonPanelWindow : Window
             Text = status.Available ? "● AVAILABLE" : "◆ SEALED",
             MouseInputEnabled = false,
         };
-        statusLabel.SetBounds(154, 121, 150, 20);
+        statusLabel.SetBounds(154, 141, 150, 20);
 
         var transition = new Label(card, $"DungeonTransition{dungeon.Id}")
         {
@@ -225,7 +243,7 @@ internal sealed class DungeonPanelWindow : Window
             Text = BuildTransitionText(status),
             MouseInputEnabled = false,
         };
-        transition.SetBounds(310, 121, 382, 20);
+        transition.SetBounds(310, 141, 382, 20);
 
         return y + height + 10;
     }
