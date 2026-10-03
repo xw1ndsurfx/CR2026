@@ -3,7 +3,7 @@ using MessagePack;
 namespace Intersect.Network.Packets.Server;
 
 [MessagePackObject]
-public sealed class DungeonStatusEntry
+public partial class DungeonStatusEntry
 {
     public DungeonStatusEntry()
     {
