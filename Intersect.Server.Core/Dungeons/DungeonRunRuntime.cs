@@ -8,6 +8,7 @@ using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
+using Intersect.Server.LogiCoins;
 using Intersect.Server.Networking;
 
 namespace Intersect.Server.Dungeons;
@@ -74,6 +75,16 @@ internal static class DungeonRunRuntime
                 ? $"{invalidLevel.Name} must be level {dungeon.MinimumLevel}-{dungeon.MaximumLevel}."
                 : $"{invalidLevel.Name} must be level {dungeon.MinimumLevel}+.";
             return false;
+        }
+
+        if (dungeon.PremiumRequired)
+        {
+            var nonPremiumMember = party.FirstOrDefault(member => !LogiCoinPurchaseRuntime.HasActivePremium(member));
+            if (nonPremiumMember != null)
+            {
+                error = $"{dungeon.Name} requires an active Premium account. {nonPremiumMember.Name} does not have Premium access.";
+                return false;
+            }
         }
 
         var instanceType = shared ? MapInstanceType.Shared : MapInstanceType.Personal;
