@@ -36,4 +36,15 @@ public partial class GameInterface
     {
         _dungeonPanelWindow?.Hide();
     }
+
+    public void ApplyDungeonRunState(DungeonRunStatePacket packet)
+    {
+        _dungeonRunHudWindow ??= new DungeonRunHudWindow(GameCanvas);
+        _dungeonRunHudWindow.Apply(packet);
+    }
+
+    public void UpdateDungeonRunUi()
+    {
+        _dungeonRunHudWindow?.Update();
+    }
 }
