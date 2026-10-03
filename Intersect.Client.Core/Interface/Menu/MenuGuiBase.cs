@@ -42,8 +42,16 @@ public partial class MenuGuiBase : IMutableInterface
 
     ~MenuGuiBase()
     {
+        // Finalizer fallback only. Avoid touching the network/UI object graph here.
         // ReSharper disable once DelegateSubtraction
         MainMenu.NetworkStatusChanged -= HandleNetworkStatusChanged;
+    }
+
+    private void DetachEventHandlers()
+    {
+        // ReSharper disable once DelegateSubtraction
+        MainMenu.NetworkStatusChanged -= HandleNetworkStatusChanged;
+        MainMenu.DetachEventHandlers();
     }
 
     private void HandleNetworkStatusChanged()
@@ -75,7 +83,9 @@ public partial class MenuGuiBase : IMutableInterface
     //Dispose
     public void Dispose()
     {
+        DetachEventHandlers();
         _menuCanvas.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     /// <inheritdoc />

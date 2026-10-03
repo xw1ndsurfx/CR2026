@@ -187,6 +187,12 @@ public partial class MainMenuWindow : Window
         Networking.Network.Socket.Disconnected -= _registerDisconnected;
     }
 
+    internal void DetachEventHandlers()
+    {
+        _removeLoginEvents();
+        _removeRegisterEvents();
+    }
+
     private void _registerConnectionFailed(INetworkLayerInterface nli, ConnectionEventArgs args, bool denied) => _removeRegisterEvents();
 
     private void _registerDisconnected(INetworkLayerInterface nli, ConnectionEventArgs args) => _removeRegisterEvents();
