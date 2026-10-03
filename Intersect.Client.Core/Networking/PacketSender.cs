@@ -28,6 +28,11 @@ public static partial class PacketSender
         Network.SendPacket(new LoginPacket(username, password));
     }
 
+    public static void SendSteamLogin(string ticket)
+    {
+        Network.SendPacket(new SteamLoginPacket(ticket));
+    }
+
     public static void SendLogout(bool characterSelect = false)
     {
         Network.SendPacket(new LogoutPacket(characterSelect));
