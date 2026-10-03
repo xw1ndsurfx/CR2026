@@ -277,6 +277,13 @@ public partial class LoginWindow : Window, IMainMenuWindow
 
     public override void Show()
     {
+        if (_mainMenu.SteamAutoLoginInProgress)
+        {
+            Hide();
+            _mainMenu.Show();
+            return;
+        }
+
         base.Show();
         if (!_forgotPasswordButton.IsHidden)
         {
@@ -296,7 +303,7 @@ public partial class LoginWindow : Window, IMainMenuWindow
 
     private void TryLogin()
     {
-        if (Globals.WaitingOnServer)
+        if (_mainMenu.SteamAutoLoginInProgress || Globals.WaitingOnServer)
         {
             return;
         }
