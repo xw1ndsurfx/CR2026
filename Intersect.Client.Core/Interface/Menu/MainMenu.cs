@@ -125,7 +125,10 @@ public partial class MainMenu : MutableInterface
 
     ~MainMenu()
     {
-        DetachEventHandlers();
+        // Finalizer fallback only. Normal UI teardown uses DetachEventHandlers() explicitly.
+        // ReSharper disable once DelegateSubtraction
+        NetworkStatusChanged -= HandleNetworkStatusChanged;
+        ReceivedConfiguration -= HandleSteamAutoLogin;
     }
 
     internal void DetachEventHandlers()
