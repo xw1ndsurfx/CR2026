@@ -68,6 +68,26 @@ public static partial class Steam
 
     public static bool Initialized { get; }
 
+    public static bool LoggedOn
+    {
+        get
+        {
+            if (!Initialized)
+            {
+                return false;
+            }
+
+            try
+            {
+                return SteamUser.BLoggedOn();
+            }
+            catch
+            {
+                return false;
+            }
+        }
+    }
+
     public static string Language { get; } = string.Empty;
 
     public static string[] Languages { get; } = Array.Empty<string>();
