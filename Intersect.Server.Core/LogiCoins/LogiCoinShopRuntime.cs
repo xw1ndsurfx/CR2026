@@ -571,6 +571,11 @@ internal static class LogiCoinPurchaseRuntime
         return true;
     }
 
+    internal static bool HasActivePremium(Player player)
+    {
+        return PremiumUntil(player) > DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    }
+
     private static long PremiumUntil(Player player)
     {
         var variableId = LogiCoinShopRuntime.Current.PremiumUntilUserVariableId;

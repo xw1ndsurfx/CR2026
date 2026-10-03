@@ -345,6 +345,8 @@ public partial class QuestsWindow
                 $"Blackjack level {playerQuest.TaskProgress} / {currentTask.Quantity}",
             QuestObjective.BlackjackPlayHands =>
                 $"{playerQuest.TaskProgress} / {currentTask.Quantity} Blackjack hands played",
+            QuestObjective.CompleteDungeon =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} {(string.IsNullOrWhiteSpace(currentTask.TargetName) ? "dungeon completions" : currentTask.TargetName)}",
             _ => string.Empty,
         };
 
@@ -792,6 +794,18 @@ public partial class QuestsWindow
                                         mSelectedQuest.Tasks[i].Quantity,
                                         NPCDescriptor.GetName(mSelectedQuest.Tasks[i].TargetId)
                                     ), mQuestDescTemplateLabel
+                                );
+                            }
+                            else if (mSelectedQuest.Tasks[i].Objective == QuestObjective.CompleteDungeon)
+                            {
+                                var progress = Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress;
+                                var quantity = mSelectedQuest.Tasks[i].Quantity;
+                                var dungeonName = string.IsNullOrWhiteSpace(mSelectedQuest.Tasks[i].TargetName)
+                                    ? "Dungeon"
+                                    : mSelectedQuest.Tasks[i].TargetName;
+                                mQuestDescLabel.AddText(
+                                    $"{progress} / {quantity} {dungeonName} completion(s)",
+                                    mQuestDescTemplateLabel
                                 );
                             }
                             else if (mSelectedQuest.Tasks[i].Objective is QuestObjective.PokerWinHands or QuestObjective.PokerWinAmount or

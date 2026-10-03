@@ -47,6 +47,8 @@ public partial class ChangeItemsCommand : EventCommand
 
     public int Quantity { get; set; }
 
+    public bool ShowNotification { get; set; }
+
     //Branch[0] is the event commands to execute when given/taken successfully, Branch[1] is for when they're not.
     public Guid[] BranchIds { get; set; } = new Guid[2];
 

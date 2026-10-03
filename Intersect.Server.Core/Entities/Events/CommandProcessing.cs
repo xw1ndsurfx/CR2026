@@ -10,6 +10,7 @@ using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Framework.Core.Professions;
 using Intersect.GameObjects;
+using Intersect.Network.Packets.Server;
 using Intersect.Server.Core.MapInstancing;
 using Intersect.Server.Database;
 using Intersect.Server.Database.PlayerData.Players;
@@ -597,6 +598,10 @@ public static partial class CommandProcessing
             }
         }
 
+        var itemCountBefore = command.ShowNotification && !skip
+            ? player.CountItems(command.ItemId)
+            : 0;
+
         if (!skip)
         {
             if (command.Add)
@@ -612,6 +617,21 @@ public static partial class CommandProcessing
         {
             // If we're skipping, this always succeeds.
             success = true;
+        }
+
+        if (success && command.ShowNotification && !skip)
+        {
+            var itemCountAfter = player.CountItems(command.ItemId);
+            var signedQuantity = itemCountAfter - itemCountBefore;
+            if (signedQuantity != 0)
+            {
+                player.SendPacket(
+                    new ItemChangeNotificationPacket(
+                        command.ItemId,
+                        signedQuantity
+                    )
+                );
+            }
         }
 
         List<EventCommand> newCommandList = null;

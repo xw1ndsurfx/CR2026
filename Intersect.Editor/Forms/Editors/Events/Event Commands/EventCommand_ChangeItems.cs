@@ -1,3 +1,4 @@
+using DarkUI.Controls;
 using Intersect.Enums;
 using Intersect.Editor.Localization;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -17,6 +18,11 @@ public partial class EventCommandChangeItems : UserControl
     private EventPage mCurrentPage;
 
     private ChangeItemsCommand mMyCommand;
+    private readonly DarkCheckBox _showNotification = new()
+    {
+        Text = "Show item change notification",
+        AutoSize = true,
+    };
 
     public EventCommandChangeItems(ChangeItemsCommand refCommand, EventPage refPage, FrmEvent editor)
     {
@@ -34,6 +40,14 @@ public partial class EventCommandChangeItems : UserControl
         rdoVariable.Checked = mMyCommand.UseVariable;
         rdoGlobalVariable.Checked = mMyCommand.VariableType == VariableType.ServerVariable;
         rdoGuildVariable.Checked = mMyCommand.VariableType == VariableType.GuildVariable;
+
+        _showNotification.Checked = mMyCommand.ShowNotification;
+        _showNotification.Location = new System.Drawing.Point(108, 208);
+        grpChangeItems.Controls.Add(_showNotification);
+        btnSave.Top = 235;
+        btnCancel.Top = 235;
+        grpChangeItems.Height = 271;
+        Height = 283;
 
         SetupAmountInput();
     }
@@ -96,6 +110,7 @@ public partial class EventCommandChangeItems : UserControl
 
         mMyCommand.Quantity = (int)nudGiveTakeAmount.Value;
         mMyCommand.ItemHandling = (ItemHandling)cmbMethod.SelectedIndex;
+        mMyCommand.ShowNotification = _showNotification.Checked;
         mEventEditor.FinishCommandEdit();
     }
 

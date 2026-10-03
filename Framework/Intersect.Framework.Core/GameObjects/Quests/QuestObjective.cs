@@ -37,4 +37,6 @@ public enum QuestObjective
     PotionBrewUnderOccupiedCells,
 
     PotionBrewSpecificRecipeMinScore,
+
+    CompleteDungeon,
 }

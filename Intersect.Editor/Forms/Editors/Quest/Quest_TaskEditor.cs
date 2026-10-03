@@ -6,6 +6,7 @@ using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Framework.Core.Dungeons;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Potions;
@@ -95,6 +96,10 @@ public partial class QuestTaskEditor : UserControl
                 cmbItem.SelectedIndex = PotionRecipeListIndex(mMyTask?.TargetId ?? Guid.Empty);
                 nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
                 break;
+            case 18:
+                cmbItem.SelectedIndex = DungeonListIndex(mMyTask?.TargetId ?? Guid.Empty);
+                nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
+                break;
         }
     }
 
@@ -123,6 +128,7 @@ public partial class QuestTaskEditor : UserControl
         cmbTaskType.Items.Add("Potions - Reach chain");
         cmbTaskType.Items.Add("Potions - Brew with max occupied cells");
         cmbTaskType.Items.Add("Potions - Brew specific recipe with minimum score");
+        cmbTaskType.Items.Add("Dungeon - Complete dungeon");
 
         lblDesc.Text = Strings.TaskEditor.desc;
 
@@ -230,6 +236,20 @@ public partial class QuestTaskEditor : UserControl
                 nudItemAmount.Maximum = 1_000_000_000;
                 nudItemAmount.Value = 1;
                 break;
+
+            case 18:
+                grpGatherItems.Show();
+                grpGatherItems.Text = "Dungeon - Complete dungeon";
+                cmbItem.Show();
+                lblItem.Show();
+                lblItem.Text = "Dungeon:";
+                lblItemQuantity.Text = "Completions:";
+                cmbItem.Items.Clear();
+                cmbItem.Items.AddRange(Dungeons().Select(dungeon => $"[{dungeon.Rank}] {dungeon.Name}").ToArray());
+                if (cmbItem.Items.Count > 0) cmbItem.SelectedIndex = 0;
+                nudItemAmount.Maximum = 1_000_000_000;
+                nudItemAmount.Value = 1;
+                break;
         }
     }
 
@@ -284,6 +304,12 @@ public partial class QuestTaskEditor : UserControl
             case QuestObjective.PotionBrewSpecificRecipeMinScore:
                 mMyTask.TargetId = PotionRecipeIdFromList(cmbItem.SelectedIndex);
                 mMyTask.TargetName = PotionRecipeNameFromList(cmbItem.SelectedIndex);
+                mMyTask.Quantity = (int) nudItemAmount.Value;
+                break;
+
+            case QuestObjective.CompleteDungeon:
+                mMyTask.TargetId = DungeonIdFromList(cmbItem.SelectedIndex);
+                mMyTask.TargetName = DungeonNameFromList(cmbItem.SelectedIndex);
                 mMyTask.Quantity = (int) nudItemAmount.Value;
                 break;
         }
@@ -382,6 +408,28 @@ public partial class QuestTaskEditor : UserControl
     {
         var recipes = PotionRecipes();
         return index >= 0 && index < recipes.Length ? recipes[index].Name : string.Empty;
+    }
+
+    private static DungeonDefinition[] Dungeons() =>
+        (DungeonConfiguration.Instance.Dungeons ?? [])
+            .OrderBy(dungeon => dungeon.SortOrder)
+            .ThenBy(dungeon => dungeon.Rank)
+            .ThenBy(dungeon => dungeon.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+    private static int DungeonListIndex(Guid id) =>
+        Array.FindIndex(Dungeons(), dungeon => dungeon.Id == id);
+
+    private static Guid DungeonIdFromList(int index)
+    {
+        var dungeons = Dungeons();
+        return index >= 0 && index < dungeons.Length ? dungeons[index].Id : Guid.Empty;
+    }
+
+    private static string DungeonNameFromList(int index)
+    {
+        var dungeons = Dungeons();
+        return index >= 0 && index < dungeons.Length ? dungeons[index].Name : string.Empty;
     }
 
     private void btnCancel_Click(object sender, EventArgs e)
