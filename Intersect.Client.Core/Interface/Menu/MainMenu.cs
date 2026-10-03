@@ -2,12 +2,14 @@ using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
+using Intersect.Client.General;
 using Intersect.Client.Interface.Shared;
 using Intersect.Client.Networking;
 using Intersect.Client.ThirdParty;
 using Intersect.Framework;
 using Intersect.Framework.Core;
 using Intersect.Network;
+using ClientNetwork = Intersect.Client.Networking.Network;
 
 namespace Intersect.Client.Interface.Menu;
 
@@ -130,7 +132,7 @@ public partial class MainMenu : MutableInterface
 
     private void HandleSteamAutoLogin(object? sender, EventArgs eventArgs)
     {
-        if (_steamAutoLoginAttempted || !Steam.Initialized || !Network.IsConnected)
+        if (_steamAutoLoginAttempted || !Steam.Initialized || !ClientNetwork.IsConnected)
         {
             return;
         }
@@ -139,7 +141,7 @@ public partial class MainMenu : MutableInterface
         Steam.TryRequestCorpsRoyauxLoginTicket(
             ticket =>
             {
-                if (string.IsNullOrWhiteSpace(ticket) || !Network.IsConnected)
+                if (string.IsNullOrWhiteSpace(ticket) || !ClientNetwork.IsConnected)
                 {
                     return;
                 }
