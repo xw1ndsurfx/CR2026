@@ -155,7 +155,7 @@ public partial class MainMenu : MutableInterface
 
         // A Steam launch is authoritative while the automatic authentication flow is active.
         // Never leave the classic username/password window interactive in parallel.
-        LoginWindow.Hide();
+        _loginWindow?.Hide();
         _mainMenuWindow.Show();
 
         var ticketRequestStarted = Steam.TryRequestCorpsRoyauxLoginTicket(
@@ -244,16 +244,16 @@ public partial class MainMenu : MutableInterface
     {
         _settingsWindow = null;
 
-        LoginWindow.Hide();
-        RegistrationWindow.Hide();
-        CreditsWindow.Hide();
-        ForgotPasswordWindow.Hide();
+        _loginWindow?.Hide();
+        _registrationWindow?.Hide();
+        _creditsWindow?.Hide();
+        _forgotPasswordWindow?.Hide();
 
         _passwordChangeWindow?.DelayedDelete();
         _passwordChangeWindow = null;
 
-        CharacterCreationWindow.Hide();
-        SelectCharacterWindow.Hide();
+        _characterCreationWindow?.Hide();
+        _selectCharacterWindow?.Hide();
         _mainMenuWindow.Show();
         _mainMenuWindow.Reset();
     }
