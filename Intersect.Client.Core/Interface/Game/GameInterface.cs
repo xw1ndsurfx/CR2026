@@ -465,6 +465,7 @@ public partial class GameInterface : MutableInterface
         _shopWindow?.Update();
         UpdateInvasionUi();
         UpdateDungeonRunUi();
+        UpdateItemChangeNotifications();
         AnnouncementWindow?.Update();
         mPictureWindow?.Update();
         UpdatePotions();
