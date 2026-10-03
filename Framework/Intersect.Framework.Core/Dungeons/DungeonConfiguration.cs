@@ -42,6 +42,7 @@ public sealed class DungeonDefinition
     public string Description { get; set; } = string.Empty;
     public string Image { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
+    public Guid AssociatedQuestId { get; set; }
     public DungeonRank Rank { get; set; } = DungeonRank.F;
     public int MinimumLevel { get; set; } = 1;
     public int RecommendedLevel { get; set; } = 1;
