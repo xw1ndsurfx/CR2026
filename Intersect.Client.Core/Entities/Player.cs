@@ -2,6 +2,7 @@ using Intersect.Client.Core;
 using Intersect.Client.Core.Controls;
 using Intersect.Client.Entities.Events;
 using Intersect.Client.Entities.Projectiles;
+using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.Entities;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen.Control;
@@ -59,6 +60,8 @@ public partial class Player : Entity, IPlayer
     }
 
     public Access AccessLevel { get; set; }
+
+    public int BadgeId { get; set; }
 
     public long Experience { get; set; } = 0;
 
@@ -352,6 +355,7 @@ public partial class Player : Entity, IPlayer
         Gender = playerPacket.Gender;
         Class = playerPacket.ClassId;
         AccessLevel = playerPacket.AccessLevel;
+        BadgeId = playerPacket.BadgeId;
         CombatTimer = playerPacket.CombatTimeRemaining + Timing.Global.Milliseconds;
         Guild = playerPacket.Guild;
         Rank = playerPacket.GuildRank;
@@ -2740,9 +2744,60 @@ public partial class Player : Entity, IPlayer
     private void DrawNameAndLabels(Color textColor, Color? borderColor, Color? backgroundColor)
     {
         base.DrawName(textColor, borderColor, backgroundColor);
+        DrawBadge();
         DrawLabels(HeaderLabel.Text, 0, HeaderLabel.Color, textColor, borderColor, backgroundColor);
         DrawLabels(FooterLabel.Text, 1, FooterLabel.Color, textColor, borderColor, backgroundColor);
         DrawGuildName(textColor, borderColor, backgroundColor);
+    }
+
+    private void DrawBadge()
+    {
+        if (BadgeId <= 0 || !ShouldDrawName || Graphics.Renderer == default)
+        {
+            return;
+        }
+
+        var badgeTexture = Globals.ContentManager.GetTexture(
+            TextureType.Resource,
+            $"badges/{BadgeId}.png"
+        );
+
+        if (badgeTexture == null || badgeTexture.Width <= 0 || badgeTexture.Height <= 0)
+        {
+            return;
+        }
+
+        var displayedName = Options.Instance.Player.ShowLevelByName
+            ? Strings.GameWindow.EntityNameAndLevel.ToString(Name, Level)
+            : Name;
+
+        var textSize = Graphics.Renderer.MeasureText(
+            displayedName,
+            Graphics.EntityNameFont,
+            Graphics.EntityNameFontSize,
+            1
+        );
+
+        const float maximumBadgeHeight = 16f;
+        const float badgeSpacing = 4f;
+        var scale = Math.Min(1f, maximumBadgeHeight / badgeTexture.Height);
+        var badgeWidth = badgeTexture.Width * scale;
+        var badgeHeight = badgeTexture.Height * scale;
+
+        var x = (int)Math.Ceiling(Origin.X);
+        var y = GetLabelLocation(LabelType.Name) + 38;
+
+        Graphics.DrawGameTexture(
+            badgeTexture,
+            new FloatRect(0, 0, badgeTexture.Width, badgeTexture.Height),
+            new FloatRect(
+                x + textSize.X / 2f + badgeSpacing,
+                y + (textSize.Y - badgeHeight) / 2f,
+                badgeWidth,
+                badgeHeight
+            ),
+            Color.White
+        );
     }
 
     public virtual void DrawGuildName(Color textColor, Color? borderColor = default, Color? backgroundColor = default)
