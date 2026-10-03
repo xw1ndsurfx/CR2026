@@ -49,6 +49,15 @@ public sealed class DungeonDefinition
     public int MinimumPartySize { get; set; } = 1;
     public int MaximumPartySize { get; set; } = 5;
     public int TimeLimitMinutes { get; set; }
+
+    // Completion / boss
+    public Guid FinalBossNpcId { get; set; }
+    public long CompletionExperience { get; set; }
+    public Guid CompletionItemId { get; set; }
+    public int CompletionItemQuantity { get; set; }
+    public Guid CompletionCommonEventId { get; set; }
+    public Guid FailureCommonEventId { get; set; }
+
     public DungeonAvailabilityMode AvailabilityMode { get; set; } = DungeonAvailabilityMode.Always;
     public bool ManualAvailable { get; set; } = true;
     public DungeonWeekdays AvailableDays { get; set; } = DungeonWeekdays.EveryDay;
@@ -72,6 +81,8 @@ public sealed class DungeonDefinition
         MaximumPartySize is >= 1 and <= 100 &&
         MaximumPartySize >= MinimumPartySize &&
         TimeLimitMinutes is >= 0 and <= 24 * 60 &&
+        CompletionExperience is >= 0 and <= 2_000_000_000 &&
+        CompletionItemQuantity is >= 0 and <= 1_000_000_000 &&
         StartMinuteOfDay is >= 0 and <= 1439 &&
         EndMinuteOfDay is >= 0 and <= 1440 &&
         (AvailabilityMode != DungeonAvailabilityMode.Scheduled || AvailableDays != DungeonWeekdays.None);
