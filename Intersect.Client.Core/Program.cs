@@ -109,12 +109,6 @@ static class Program
         DeleteIfExists("MonoGame.Framework.Client.dll.config");
         DeleteIfExists("MonoGame.Framework.Client.dll");
 
-        DeleteIfExists("libsdkencryptedappticket.dylib");
-        DeleteIfExists("libsteam_api.dylib");
-        DeleteIfExists("libsdkencryptedappticket.so");
-        DeleteIfExists("libsteam_api.so");
-        DeleteIfExists("sdkencryptedappticket64.dll");
-        DeleteIfExists("steam_api64.dll");
     }
 
     private static string ReadProcessOutput(string name)
@@ -185,11 +179,6 @@ static class Program
             case PlatformID.WinCE:
                 ExportDependency("SDL2.dll", "x64");
                 ExportDependency("soft_oal.dll", "x64");
-                if (Steam.SupportedAttribute.IsPresent(typeof(Program).Assembly))
-                {
-                    ExportDependency("sdkencryptedappticket64.dll", "runtimes/win-x64/native");
-                    ExportDependency("steam_api64.dll", "runtimes/win-x64/native");
-                }
                 break;
 
             case PlatformID.MacOSX:
@@ -197,11 +186,6 @@ static class Program
                 ExportDependency("libSDL2.dylib");
                 ExportDependency("openal32.dll");
                 ExportDependency("MonoGame.Framework.dll.config", nameoverride: "MonoGame.Framework.Client.dll.config");
-                if (Steam.SupportedAttribute.IsPresent(typeof(Program).Assembly))
-                {
-                    ExportDependency("libsdkencryptedappticket.dylib", "runtimes/osx/native");
-                    ExportDependency("libsteam_api.dylib", "runtimes/osx/native");
-                }
                 break;
 
             case PlatformID.Xbox:
@@ -213,11 +197,6 @@ static class Program
                 ExportDependency("libSDL2-2.0.so.0");
                 ExportDependency("openal32.dll");
                 ExportDependency("MonoGame.Framework.dll.config", nameoverride: "MonoGame.Framework.Client.dll.config");
-                if (Steam.SupportedAttribute.IsPresent(typeof(Program).Assembly))
-                {
-                    ExportDependency("libsdkencryptedappticket.so", "runtimes/linux-x64/native");
-                    ExportDependency("libsteam_api.so", "runtimes/linux-x64/native");
-                }
                 break;
         }
 
