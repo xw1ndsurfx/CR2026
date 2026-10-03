@@ -217,7 +217,8 @@ internal sealed class DungeonPanelWindow : Window
             Text =
                 $"LEVEL {dungeon.MinimumLevel}{maximumLevel}  •  RECOMMENDED {dungeon.RecommendedLevel}+  •  " +
                 $"PARTY {dungeon.MinimumPartySize}-{dungeon.MaximumPartySize}" +
-                (dungeon.TimeLimitMinutes > 0 ? $"  •  {dungeon.TimeLimitMinutes} MIN" : string.Empty),
+                (dungeon.TimeLimitMinutes > 0 ? $"  •  {dungeon.TimeLimitMinutes} MIN" : string.Empty) +
+                (dungeon.PremiumRequired ? "  •  PREMIUM" : string.Empty),
             MouseInputEnabled = false,
         };
         details.SetBounds(154, 113, 540, 18);
