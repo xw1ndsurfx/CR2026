@@ -39,7 +39,7 @@ internal sealed partial class PacketHandler
                 )
             );
 
-            foreach (var player in Entities.Player.OnlinePlayersSnapshot())
+            foreach (var player in Intersect.Server.Entities.Player.OnlinePlayersSnapshot())
                 DungeonConfigurationRuntime.SendState(player, openWindow: false);
         }
         catch (Exception exception)
