@@ -25,6 +25,13 @@
 	  <ProjectReference Include="..\Intersect.Client.Core\Intersect.Client.Core.csproj" />
 	</ItemGroup>
 
+	<ItemGroup Label="Steam Resources" Condition="'$(INTERSECT_STEAMWORKS)' != ''">
+	  <Content Include="..\Intersect.Client.Core\steam_appid.txt" Link="steam_appid.txt">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+	  </Content>
+	</ItemGroup>
+
 	<ItemGroup Label="Plugins">
     <ProjectReference Include="@(PluginToDebug)">
       <OutputItemType>Content</OutputItemType>
