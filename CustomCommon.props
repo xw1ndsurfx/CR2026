@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Corps Royaux ships through Steam; keep Steamworks support enabled in every client build. -->
+    <INTERSECT_STEAMWORKS>true</INTERSECT_STEAMWORKS>
+  </PropertyGroup>
+</Project>
