@@ -43,6 +43,9 @@ internal static class DungeonConfigurationRuntime
         }
     }
 
+    internal static bool IsAvailable(DungeonDefinition dungeon, DateTimeOffset now) =>
+        BuildStatus(dungeon, now).Available;
+
     internal static DungeonStatusEntry[] BuildStatuses(DateTimeOffset now)
     {
         return Current.Dungeons
