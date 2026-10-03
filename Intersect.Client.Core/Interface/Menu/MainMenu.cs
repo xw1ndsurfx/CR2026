@@ -357,6 +357,14 @@ public partial class MainMenu : MutableInterface
 
     internal void SwitchToWindow<TMainMenuWindow>() where TMainMenuWindow : IMainMenuWindow
     {
+        if (_steamAutoLoginInProgress &&
+            (typeof(TMainMenuWindow) == typeof(LoginWindow) ||
+             typeof(TMainMenuWindow) == typeof(RegistrationWindow)))
+        {
+            _mainMenuWindow.Show();
+            return;
+        }
+
         _mainMenuWindow.Hide();
         if (typeof(TMainMenuWindow) == typeof(LoginWindow))
         {
