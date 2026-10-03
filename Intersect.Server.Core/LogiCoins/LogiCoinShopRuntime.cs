@@ -170,7 +170,7 @@ internal static class LogiCoinWalletService
             "/game/corps-royaux/wallet/refund",
             new
             {
-                email,
+                username,
                 amount,
                 reference,
                 original_reference = originalReference,
