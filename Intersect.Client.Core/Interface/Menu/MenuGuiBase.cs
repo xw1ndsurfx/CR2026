@@ -42,8 +42,14 @@ public partial class MenuGuiBase : IMutableInterface
 
     ~MenuGuiBase()
     {
+        DetachEventHandlers();
+    }
+
+    private void DetachEventHandlers()
+    {
         // ReSharper disable once DelegateSubtraction
         MainMenu.NetworkStatusChanged -= HandleNetworkStatusChanged;
+        MainMenu.DetachEventHandlers();
     }
 
     private void HandleNetworkStatusChanged()
@@ -75,7 +81,9 @@ public partial class MenuGuiBase : IMutableInterface
     //Dispose
     public void Dispose()
     {
+        DetachEventHandlers();
         _menuCanvas.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     /// <inheritdoc />
