@@ -1091,8 +1091,11 @@ public partial class Player : Entity
 
         var rankingTitle = LeaderboardTitleRuntime.GetStatus(Id);
 
-        // Badge 2 is reserved for players with an active leaderboard EXP bonus.
-        pkt.BadgeId = rankingTitle?.ExperienceBonusPercent > 0 ? 2 : 0;
+        // Leaderboard badges mirror the qualified player's current rank:
+        // 1st place -> 1.png, 2nd place -> 2.png, 3rd place -> 3.png.
+        pkt.BadgeId = rankingTitle is { Rank: >= 1 and <= 3 }
+            ? rankingTitle.Rank
+            : 0;
 
         if (rankingTitle != null)
         {
