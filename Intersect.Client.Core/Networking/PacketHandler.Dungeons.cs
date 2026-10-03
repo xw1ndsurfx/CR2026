@@ -14,4 +14,11 @@ internal sealed partial class PacketHandler
             gameInterface => gameInterface.ApplyDungeonState(packet)
         );
     }
+
+    public void HandlePacket(IPacketSender packetSender, DungeonRunStatePacket packet)
+    {
+        Interface.Interface.EnqueueInGame(
+            gameInterface => gameInterface.ApplyDungeonRunState(packet)
+        );
+    }
 }
