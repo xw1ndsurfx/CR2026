@@ -65,9 +65,10 @@
   </ItemGroup>
 
   <ItemGroup Label="Steam Resources" Condition="'$(INTERSECT_STEAMWORKS)' != ''">
-    <AssemblyAttribute Include="Intersect.Client.Core.ThirdParty.Steam.Supported" />
+    <AssemblyAttribute Include="Intersect.Client.ThirdParty.Steam.SupportedAttribute" />
     <Content Include="steam_appid.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <EmbeddedResource Include="Resources\runtimes\linux-x64\native\libsdkencryptedappticket.so" />
     <EmbeddedResource Include="Resources\runtimes\linux-x64\native\libsteam_api.so" />
