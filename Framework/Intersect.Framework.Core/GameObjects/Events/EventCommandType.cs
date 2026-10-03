@@ -145,4 +145,7 @@ public enum EventCommandType
 
     // CR2026 professions: explicit value preserves serialized command ids.
     ModifyProfession = 1010,
+
+    // CR2026 dungeons.
+    StartDungeon = 1020,
 }
