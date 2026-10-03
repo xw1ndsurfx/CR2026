@@ -292,6 +292,9 @@ public partial class QuestTaskDescriptor
             case QuestObjective.PotionBrewSpecificRecipeMinScore:
                 taskString = $"Brew {(string.IsNullOrWhiteSpace(TargetName) ? "the required potion recipe" : TargetName)} with at least {Quantity} score. {Description}".Trim();
                 break;
+            case QuestObjective.CompleteDungeon:
+                taskString = $"Complete {(string.IsNullOrWhiteSpace(TargetName) ? "the required dungeon" : TargetName)} {Quantity} time(s). {Description}".Trim();
+                break;
         }
 
         return taskString;
