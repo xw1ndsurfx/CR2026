@@ -39,4 +39,8 @@ public partial class PlayerEntityPacket : EntityPacket
 
     [Key(30)]
     public int GuildRank { get; set; }
+
+
+    [Key(31)]
+    public int BadgeId { get; set; }
 }
