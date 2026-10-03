@@ -160,6 +160,11 @@ public partial class MonoContentManager : GameContentManager
         }
     }
 
+    public override void LoadBadges()
+    {
+        LoadTextureGroup("badges", mBadgeDict);
+    }
+
     public override void LoadItems()
     {
         LoadTextureGroup("items", mItemDict);
