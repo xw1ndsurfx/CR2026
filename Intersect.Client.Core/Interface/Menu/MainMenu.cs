@@ -125,9 +125,15 @@ public partial class MainMenu : MutableInterface
 
     ~MainMenu()
     {
+        DetachEventHandlers();
+    }
+
+    internal void DetachEventHandlers()
+    {
         // ReSharper disable once DelegateSubtraction
         NetworkStatusChanged -= HandleNetworkStatusChanged;
         ReceivedConfiguration -= HandleSteamAutoLogin;
+        _mainMenuWindow.DetachEventHandlers();
     }
 
     public static void HandleReceivedConfiguration()
