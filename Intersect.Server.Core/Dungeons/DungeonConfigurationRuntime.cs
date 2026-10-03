@@ -116,32 +116,27 @@ internal static class DungeonConfigurationRuntime
         int minuteOfDay
     )
     {
-        var dayFlag = ToFlag(dayOfWeek);
-        if ((dungeon.AvailableDays & dayFlag) == 0)
-        {
-            // For schedules that cross midnight, the early morning portion belongs
-            // to the previous configured day.
-            if (dungeon.EndMinuteOfDay < dungeon.StartMinuteOfDay)
-            {
-                var previousDay = ToFlag(PreviousDay(dayOfWeek));
-                return (dungeon.AvailableDays & previousDay) != 0 &&
-                       minuteOfDay < dungeon.EndMinuteOfDay;
-            }
-
-            return false;
-        }
+        var todayConfigured = (dungeon.AvailableDays & ToFlag(dayOfWeek)) != 0;
 
         if (dungeon.StartMinuteOfDay == dungeon.EndMinuteOfDay)
-            return true;
+            return todayConfigured;
 
         if (dungeon.EndMinuteOfDay > dungeon.StartMinuteOfDay)
         {
-            return minuteOfDay >= dungeon.StartMinuteOfDay &&
+            return todayConfigured &&
+                   minuteOfDay >= dungeon.StartMinuteOfDay &&
                    minuteOfDay < dungeon.EndMinuteOfDay;
         }
 
-        return minuteOfDay >= dungeon.StartMinuteOfDay ||
-               minuteOfDay < dungeon.EndMinuteOfDay;
+        // A window such as 22:00 -> 02:00 belongs to the configured start day.
+        // The late-night part uses today's flag; the after-midnight part uses
+        // yesterday's flag.
+        if (minuteOfDay >= dungeon.StartMinuteOfDay)
+            return todayConfigured;
+
+        var previousDayConfigured =
+            (dungeon.AvailableDays & ToFlag(PreviousDay(dayOfWeek))) != 0;
+        return previousDayConfigured && minuteOfDay < dungeon.EndMinuteOfDay;
     }
 
     private static DateTimeOffset? FindNextTransition(
@@ -188,7 +183,7 @@ internal static class DungeonConfigurationRuntime
         };
 
     private static DayOfWeek PreviousDay(DayOfWeek dayOfWeek) =>
-        dayOfWeek == DayOfWeek.Sunday ? DayOfWeek.Saturday : dayOfWeek - 1;
+        (DayOfWeek)(((int)dayOfWeek + 6) % 7);
 
     private static DungeonConfiguration LoadCore()
     {
