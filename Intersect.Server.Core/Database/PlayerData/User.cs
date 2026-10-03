@@ -723,6 +723,66 @@ public partial class User
         }
     }
 
+    public static bool TryExternalLogin(
+        string username,
+        [NotNullWhen(true)] out User? user,
+        out LoginFailureReason failureReason
+    )
+    {
+        user = FindOnline(username);
+        failureReason = default;
+
+        if (user != null)
+        {
+            var result = user.Save();
+            if (result != UserSaveResult.Completed)
+            {
+                ApplicationContext.Context.Value?.Logger.LogError(
+                    "External login to {Username} failed due to pre-logged in User save failure: {Result}",
+                    username,
+                    result
+                );
+                user = default;
+                failureReason = new LoginFailureReason(LoginFailureType.ServerError);
+                return false;
+            }
+
+            user = PostLoad(user);
+            if (user != default)
+            {
+                return true;
+            }
+
+            failureReason = new LoginFailureReason(LoginFailureType.ServerError);
+            return false;
+        }
+
+        try
+        {
+            using var context = DbInterface.CreatePlayerContext();
+            var queriedUser = QueryUserByNameShallow(context, username);
+            user = PostLoad(queriedUser, context);
+            if (user == default)
+            {
+                failureReason = new LoginFailureReason(LoginFailureType.InvalidCredentials);
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception exception)
+        {
+            ApplicationContext.Context.Value?.Logger.LogError(
+                exception,
+                "External login to {Username} failed due to an exception",
+                username
+            );
+            user = default;
+            failureReason = new LoginFailureReason(LoginFailureType.ServerError);
+            return false;
+        }
+    }
+
     public static bool TryFind(LookupKey lookupKey, PlayerContext playerContext, [NotNullWhen(true)] out User? user)
     {
         if (lookupKey.IsId)

@@ -150,27 +150,27 @@ internal static class LogiCoinWalletService
         Timeout = TimeSpan.FromSeconds(12),
     };
 
-    internal static LogiCoinWalletResult GetBalance(string email) =>
-        Send("/game/corps-royaux/wallet", new { email });
+    internal static LogiCoinWalletResult GetBalance(string username) =>
+        Send("/game/corps-royaux/wallet", new { username });
 
-    internal static LogiCoinWalletResult Spend(string email, int amount, string reference, string description) =>
+    internal static LogiCoinWalletResult Spend(string username, int amount, string reference, string description) =>
         Send(
             "/game/corps-royaux/wallet/spend",
             new
             {
-                email,
+                username,
                 amount,
                 reference,
                 description,
             }
         );
 
-    internal static LogiCoinWalletResult Refund(string email, int amount, string reference, string originalReference) =>
+    internal static LogiCoinWalletResult Refund(string username, int amount, string reference, string originalReference) =>
         Send(
             "/game/corps-royaux/wallet/refund",
             new
             {
-                email,
+                username,
                 amount,
                 reference,
                 original_reference = originalReference,
@@ -358,7 +358,7 @@ internal static class LogiCoinPurchaseRuntime
     {
         TryResumePending(player);
 
-        var wallet = LogiCoinWalletService.GetBalance(player.User.Email);
+        var wallet = LogiCoinWalletService.GetBalance(player.User.Name);
         var premiumUntil = PremiumUntil(player);
 
         return new LogiCoinShopStatePacket(
@@ -398,7 +398,7 @@ internal static class LogiCoinPurchaseRuntime
         {
             if (price > 0)
             {
-                var spend = LogiCoinWalletService.Spend(player.User.Email, price, spendReference, offer.Name);
+                var spend = LogiCoinWalletService.Spend(player.User.Name, price, spendReference, offer.Name);
                 if (!spend.Ok)
                 {
                     record.LastError = spend.Error;
