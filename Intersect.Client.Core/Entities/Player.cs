@@ -2758,8 +2758,8 @@ public partial class Player : Entity, IPlayer
         }
 
         var badgeTexture = Globals.ContentManager.GetTexture(
-            TextureType.Resource,
-            $"badges/{BadgeId}.png"
+            TextureType.Badge,
+            $"{BadgeId}.png"
         );
 
         if (badgeTexture == null || badgeTexture.Width <= 0 || badgeTexture.Height <= 0)
