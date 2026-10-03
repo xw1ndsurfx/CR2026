@@ -45,29 +45,6 @@ public static partial class CommandProcessing
             return;
         }
 
-        if (player.Level < dungeon.MinimumLevel)
-        {
-            PacketSender.SendChatMsg(
-                player,
-                $"[Dungeon] Level {dungeon.MinimumLevel} is required to enter {dungeon.Name}.",
-                ChatMessageType.Error,
-                Color.White
-            );
-            return;
-        }
-
-        var partySize = player.Party?.Count ?? 1;
-        if (partySize < dungeon.MinimumPartySize || partySize > dungeon.MaximumPartySize)
-        {
-            PacketSender.SendChatMsg(
-                player,
-                $"[Dungeon] {dungeon.Name} requires a party of {dungeon.MinimumPartySize}-{dungeon.MaximumPartySize} player(s).",
-                ChatMessageType.Error,
-                Color.White
-            );
-            return;
-        }
-
         if (command.MapId == Guid.Empty)
         {
             PacketSender.SendChatMsg(
