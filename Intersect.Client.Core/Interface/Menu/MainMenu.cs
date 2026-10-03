@@ -24,9 +24,12 @@ public partial class MainMenu : MutableInterface
     private bool _shouldOpenCharacterSelection;
     private bool _forceCharacterCreation;
 
+    private const long SteamAutoLoginTimeoutMilliseconds = 10_000;
+
     private string? _username;
     private bool _steamAutoLoginAttempted;
     private bool _steamAutoLoginInProgress;
+    private long _steamAutoLoginStartedAt;
 
     internal bool SteamAutoLoginInProgress => _steamAutoLoginInProgress;
 
@@ -147,8 +150,9 @@ public partial class MainMenu : MutableInterface
     private void HandleSteamAutoLogin(object? sender, EventArgs eventArgs)
     {
         ApplicationContext.Context.Value?.Logger.LogInformation(
-            "Steam auto-login trigger received. Initialized={SteamInitialized}, Connected={Connected}, AlreadyAttempted={AlreadyAttempted}",
+            "Steam auto-login trigger received. Initialized={SteamInitialized}, LoggedOn={SteamLoggedOn}, Connected={Connected}, AlreadyAttempted={AlreadyAttempted}",
             Steam.Initialized,
+            Steam.LoggedOn,
             ClientNetwork.IsConnected,
             _steamAutoLoginAttempted
         );
@@ -158,8 +162,18 @@ public partial class MainMenu : MutableInterface
             return;
         }
 
+        if (!Steam.LoggedOn)
+        {
+            ApplicationContext.Context.Value?.Logger.LogWarning(
+                "Steam is initialized but no Steam user is logged on. Skipping automatic Steam login so classic login stays available."
+            );
+            _mainMenuWindow.UpdateDisabled();
+            return;
+        }
+
         _steamAutoLoginAttempted = true;
         _steamAutoLoginInProgress = true;
+        _steamAutoLoginStartedAt = Timing.Global.MillisecondsUtc;
         Globals.WaitingOnServer = true;
 
         // A Steam launch is authoritative while the automatic authentication flow is active.
@@ -170,6 +184,14 @@ public partial class MainMenu : MutableInterface
         var ticketRequestStarted = Steam.TryRequestCorpsRoyauxLoginTicket(
             ticket =>
             {
+                if (!_steamAutoLoginInProgress)
+                {
+                    ApplicationContext.Context.Value?.Logger.LogWarning(
+                        "Ignoring a late Steam authentication ticket because automatic login is no longer active."
+                    );
+                    return;
+                }
+
                 if (string.IsNullOrWhiteSpace(ticket) || !ClientNetwork.IsConnected)
                 {
                     CancelSteamAutoLogin();
@@ -197,6 +219,7 @@ public partial class MainMenu : MutableInterface
         }
 
         _steamAutoLoginInProgress = false;
+        _steamAutoLoginStartedAt = 0;
         Globals.WaitingOnServer = false;
         _mainMenuWindow.UpdateDisabled();
 
@@ -208,6 +231,17 @@ public partial class MainMenu : MutableInterface
     //Methods
     public void Update(TimeSpan elapsed, TimeSpan total)
     {
+        if (_steamAutoLoginInProgress &&
+            _steamAutoLoginStartedAt > 0 &&
+            Timing.Global.MillisecondsUtc - _steamAutoLoginStartedAt >= SteamAutoLoginTimeoutMilliseconds)
+        {
+            ApplicationContext.Context.Value?.Logger.LogWarning(
+                "Steam authentication ticket did not arrive within {TimeoutSeconds} seconds. Falling back to classic login.",
+                SteamAutoLoginTimeoutMilliseconds / 1000
+            );
+            CancelSteamAutoLogin();
+        }
+
         if (_mainMenuWindow.IsVisibleInTree)
         {
             _mainMenuWindow.Update();
