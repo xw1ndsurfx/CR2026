@@ -3,7 +3,7 @@ using Intersect.Editor.Networking;
 
 namespace Intersect.Editor.Forms;
 
-public partial class frmMain
+public partial class FrmMain
 {
     private void AddDungeonEditorMenu()
     {
