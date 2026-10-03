@@ -18,6 +18,10 @@ public static partial class Steam
         }
 
         _webApiTicketPending = true;
+        ApplicationContext.Context.Value?.Logger.LogInformation(
+            "Requesting Steam Web API authentication ticket for Corps Royaux."
+        );
+
         _webApiTicketCallback ??= Callback<GetTicketForWebApiResponse_t>.Create(
             response =>
             {
@@ -36,6 +40,10 @@ public static partial class Steam
                     return;
                 }
 
+                ApplicationContext.Context.Value?.Logger.LogInformation(
+                    "Steam Web API authentication ticket received ({TicketBytes} bytes).",
+                    response.m_cubTicket
+                );
                 completion(Convert.ToHexString(response.m_rgubTicket.AsSpan(0, response.m_cubTicket)));
             }
         );
