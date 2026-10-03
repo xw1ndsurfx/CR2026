@@ -229,6 +229,8 @@ public partial class Npc : Entity
                 );
             }
 
+            DungeonRunRuntime.OnNpcDied(this);
+
             if (MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var instance))
             {
                 instance.RemoveEntity(this);
