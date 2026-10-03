@@ -786,6 +786,10 @@ public partial class FrmEvent : Form
                 tmpCommand = new OpenMarketplaceCommand();
 
                 break;
+            case EventCommandType.StartDungeon:
+                tmpCommand = new StartDungeonCommand();
+
+                break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -824,6 +828,7 @@ public partial class FrmEvent : Form
     {
         InitializeComponent();
         AddMarketplaceCommand();
+        AddDungeonCommands();
         AddProfessionCommands();
         InitializeQuestArrowControls();
         Icon = Program.Icon;
@@ -847,6 +852,22 @@ public partial class FrmEvent : Form
                 Tag = (int)EventCommandType.OpenMarketplace,
             }
         );
+    }
+
+    private void AddDungeonCommands()
+    {
+        if (lstCommands.Nodes.Cast<TreeNode>().Any(node => node.Name == "dungeons"))
+            return;
+
+        var root = new TreeNode("Dungeons") { Name = "dungeons" };
+        root.Nodes.Add(
+            new TreeNode("Start Dungeon...")
+            {
+                Name = "startdungeon",
+                Tag = (int)EventCommandType.StartDungeon,
+            }
+        );
+        lstCommands.Nodes.Add(root);
     }
 
     private void AddProfessionCommands()
@@ -1629,6 +1650,9 @@ public partial class FrmEvent : Form
             case EventCommandType.OpenLogiklikNews:
                 break;
             case EventCommandType.OpenMarketplace:
+                break;
+            case EventCommandType.StartDungeon:
+                cmdWindow = new EventCommand_StartDungeon((StartDungeonCommand)command, this);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
