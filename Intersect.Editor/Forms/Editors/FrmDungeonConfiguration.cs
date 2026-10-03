@@ -60,6 +60,11 @@ public sealed class FrmDungeonConfiguration : DarkForm
     private readonly DarkNumericUpDown _minimumParty = Numeric(1, 100);
     private readonly DarkNumericUpDown _maximumParty = Numeric(1, 100);
     private readonly DarkNumericUpDown _timeLimit = Numeric(0, 1440);
+    private readonly DarkCheckBox _premiumRequired = new()
+    {
+        Text = "Premium account required",
+        AutoSize = true,
+    };
     private readonly DarkNumericUpDown _sortOrder = Numeric(-100_000, 100_000);
 
     private readonly DarkComboBox _finalBoss = new()
@@ -314,6 +319,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
         AddRow(table, "Minimum party size", _minimumParty);
         AddRow(table, "Maximum party size", _maximumParty);
         AddRow(table, "Time limit minutes (0 = none)", _timeLimit);
+        AddRow(table, "Premium access", _premiumRequired);
         AddRow(table, "Sort order", _sortOrder);
 
         page.Controls.Add(table);
@@ -474,6 +480,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
         _minimumParty.Value = Math.Clamp(_selected.MinimumPartySize, 1, 100);
         _maximumParty.Value = Math.Clamp(_selected.MaximumPartySize, 1, 100);
         _timeLimit.Value = Math.Clamp(_selected.TimeLimitMinutes, 0, 1440);
+        _premiumRequired.Checked = _selected.PremiumRequired;
         _sortOrder.Value = Math.Clamp(_selected.SortOrder, -100_000, 100_000);
 
         SelectId(_finalBoss, _selected.FinalBossNpcId);
@@ -505,7 +512,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
                  {
                      _name, _description, _image, _location, _associatedQuest, _rank,
                      _minimumLevel, _recommendedLevel, _maximumLevel,
-                     _minimumParty, _maximumParty, _timeLimit, _sortOrder,
+                     _minimumParty, _maximumParty, _timeLimit, _premiumRequired, _sortOrder,
                      _finalBoss, _completionExperience, _completionItem,
                      _completionItemQuantity, _completionEvent, _failureEvent,
                      _availabilityMode, _manualAvailable, _days, _startTime, _endTime,
@@ -545,6 +552,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
         _selected.MinimumPartySize = (int)_minimumParty.Value;
         _selected.MaximumPartySize = (int)_maximumParty.Value;
         _selected.TimeLimitMinutes = (int)_timeLimit.Value;
+        _selected.PremiumRequired = _premiumRequired.Checked;
         _selected.SortOrder = (int)_sortOrder.Value;
         _selected.FinalBossNpcId = (_finalBoss.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
         _selected.CompletionExperience = (long)_completionExperience.Value;
