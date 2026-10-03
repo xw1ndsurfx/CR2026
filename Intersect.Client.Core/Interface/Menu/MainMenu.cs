@@ -26,6 +26,9 @@ public partial class MainMenu : MutableInterface
 
     private string? _username;
     private bool _steamAutoLoginAttempted;
+    private bool _steamAutoLoginInProgress;
+
+    internal bool SteamAutoLoginInProgress => _steamAutoLoginInProgress;
 
     // Network status
     public static NetworkStatus ActiveNetworkStatus { get; set; }
@@ -147,20 +150,49 @@ public partial class MainMenu : MutableInterface
         }
 
         _steamAutoLoginAttempted = true;
-        Steam.TryRequestCorpsRoyauxLoginTicket(
+        _steamAutoLoginInProgress = true;
+        Globals.WaitingOnServer = true;
+
+        // A Steam launch is authoritative while the automatic authentication flow is active.
+        // Never leave the classic username/password window interactive in parallel.
+        LoginWindow.Hide();
+        _mainMenuWindow.Show();
+
+        var ticketRequestStarted = Steam.TryRequestCorpsRoyauxLoginTicket(
             ticket =>
             {
                 if (string.IsNullOrWhiteSpace(ticket) || !ClientNetwork.IsConnected)
                 {
+                    CancelSteamAutoLogin();
                     return;
                 }
 
                 ApplicationContext.Context.Value?.Logger.LogInformation(
                     "Sending Steam authentication ticket to the Corps Royaux server."
                 );
-                Globals.WaitingOnServer = true;
                 PacketSender.SendSteamLogin(ticket);
             }
+        );
+
+        if (!ticketRequestStarted)
+        {
+            CancelSteamAutoLogin();
+        }
+    }
+
+    internal void CancelSteamAutoLogin()
+    {
+        if (!_steamAutoLoginInProgress)
+        {
+            return;
+        }
+
+        _steamAutoLoginInProgress = false;
+        Globals.WaitingOnServer = false;
+        _mainMenuWindow.UpdateDisabled();
+
+        ApplicationContext.Context.Value?.Logger.LogInformation(
+            "Steam automatic login ended before authentication completed; classic login is available again."
         );
     }
 
@@ -295,6 +327,7 @@ public partial class MainMenu : MutableInterface
 
     private void CreateCharacterSelection()
     {
+        _steamAutoLoginInProgress = false;
         Hide();
         LoginWindow.Hide();
         RegistrationWindow.Hide();
@@ -312,6 +345,7 @@ public partial class MainMenu : MutableInterface
 
     private void CreateCharacterCreation()
     {
+        _steamAutoLoginInProgress = false;
         Hide();
         LoginWindow.Hide();
         RegistrationWindow.Hide();
