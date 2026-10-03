@@ -2,12 +2,21 @@ using DarkUI.Controls;
 using DarkUI.Forms;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.Dungeons;
+using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.GameObjects;
 using DrawingColor = System.Drawing.Color;
 
 namespace Intersect.Editor.Forms.Editors;
 
 public sealed class FrmDungeonConfiguration : DarkForm
 {
+    private sealed record IdChoice(Guid Id, string Text)
+    {
+        public override string ToString() => Text;
+    }
+
     private static readonly DrawingColor PanelBackColor = DrawingColor.FromArgb(45, 45, 48);
     private static readonly DrawingColor InputBackColor = DrawingColor.FromArgb(37, 37, 38);
     private static readonly DrawingColor TextColor = DrawingColor.Gainsboro;
@@ -46,6 +55,29 @@ public sealed class FrmDungeonConfiguration : DarkForm
     private readonly DarkNumericUpDown _maximumParty = Numeric(1, 100);
     private readonly DarkNumericUpDown _timeLimit = Numeric(0, 1440);
     private readonly DarkNumericUpDown _sortOrder = Numeric(-100_000, 100_000);
+
+    private readonly DarkComboBox _finalBoss = new()
+    {
+        Dock = DockStyle.Fill,
+        DropDownStyle = ComboBoxStyle.DropDownList,
+    };
+    private readonly DarkNumericUpDown _completionExperience = Numeric(0, 2_000_000_000);
+    private readonly DarkComboBox _completionItem = new()
+    {
+        Dock = DockStyle.Fill,
+        DropDownStyle = ComboBoxStyle.DropDownList,
+    };
+    private readonly DarkNumericUpDown _completionItemQuantity = Numeric(0, 1_000_000_000);
+    private readonly DarkComboBox _completionEvent = new()
+    {
+        Dock = DockStyle.Fill,
+        DropDownStyle = ComboBoxStyle.DropDownList,
+    };
+    private readonly DarkComboBox _failureEvent = new()
+    {
+        Dock = DockStyle.Fill,
+        DropDownStyle = ComboBoxStyle.DropDownList,
+    };
 
     private readonly DarkComboBox _availabilityMode = new()
     {
@@ -88,6 +120,8 @@ public sealed class FrmDungeonConfiguration : DarkForm
 
         foreach (var value in Enum.GetValues<DungeonAvailabilityMode>())
             _availabilityMode.Items.Add(value);
+
+        FillCompletionChoices();
 
         foreach (var day in new[]
                  {
@@ -251,6 +285,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
     {
         var tabs = new TabControl { Dock = DockStyle.Fill };
         tabs.TabPages.Add(BuildGeneralTab());
+        tabs.TabPages.Add(BuildCompletionTab());
         tabs.TabPages.Add(BuildAvailabilityTab());
         return tabs;
     }
@@ -272,6 +307,35 @@ public sealed class FrmDungeonConfiguration : DarkForm
         AddRow(table, "Maximum party size", _maximumParty);
         AddRow(table, "Time limit minutes (0 = none)", _timeLimit);
         AddRow(table, "Sort order", _sortOrder);
+
+        page.Controls.Add(table);
+        return page;
+    }
+
+    private TabPage BuildCompletionTab()
+    {
+        var page = CreatePage("Completion");
+        var table = CreateTable();
+
+        AddRow(table, "Final boss NPC", _finalBoss);
+        AddRow(table, "Completion EXP", _completionExperience);
+        AddRow(table, "Reward item", _completionItem);
+        AddRow(table, "Reward item quantity", _completionItemQuantity);
+        AddRow(table, "Completion Common Event", _completionEvent);
+        AddRow(table, "Failure Common Event", _failureEvent);
+
+        var help = new Label
+        {
+            AutoSize = true,
+            MaximumSize = new Size(700, 0),
+            ForeColor = DrawingColor.Silver,
+            Text =
+                "When the configured final boss dies inside this dungeon instance, the run is completed. " +
+                "EXP and item rewards are granted to every run participant. Completion/failure Common Events are optional.",
+            Margin = new Padding(8, 12, 8, 8),
+        };
+        table.Controls.Add(help);
+        table.SetColumnSpan(help, 2);
 
         page.Controls.Add(table);
         return page;
@@ -403,6 +467,13 @@ public sealed class FrmDungeonConfiguration : DarkForm
         _timeLimit.Value = Math.Clamp(_selected.TimeLimitMinutes, 0, 1440);
         _sortOrder.Value = Math.Clamp(_selected.SortOrder, -100_000, 100_000);
 
+        SelectId(_finalBoss, _selected.FinalBossNpcId);
+        _completionExperience.Value = Math.Clamp(_selected.CompletionExperience, 0, 2_000_000_000);
+        SelectId(_completionItem, _selected.CompletionItemId);
+        _completionItemQuantity.Value = Math.Clamp(_selected.CompletionItemQuantity, 0, 1_000_000_000);
+        SelectId(_completionEvent, _selected.CompletionCommonEventId);
+        SelectId(_failureEvent, _selected.FailureCommonEventId);
+
         _availabilityMode.SelectedItem = _selected.AvailabilityMode;
         _manualAvailable.Checked = _selected.ManualAvailable;
 
@@ -426,6 +497,8 @@ public sealed class FrmDungeonConfiguration : DarkForm
                      _name, _description, _image, _location, _rank,
                      _minimumLevel, _recommendedLevel, _maximumLevel,
                      _minimumParty, _maximumParty, _timeLimit, _sortOrder,
+                     _finalBoss, _completionExperience, _completionItem,
+                     _completionItemQuantity, _completionEvent, _failureEvent,
                      _availabilityMode, _manualAvailable, _days, _startTime, _endTime,
                  })
             control.Enabled = enabled;
@@ -463,6 +536,12 @@ public sealed class FrmDungeonConfiguration : DarkForm
         _selected.MaximumPartySize = (int)_maximumParty.Value;
         _selected.TimeLimitMinutes = (int)_timeLimit.Value;
         _selected.SortOrder = (int)_sortOrder.Value;
+        _selected.FinalBossNpcId = (_finalBoss.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
+        _selected.CompletionExperience = (long)_completionExperience.Value;
+        _selected.CompletionItemId = (_completionItem.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
+        _selected.CompletionItemQuantity = (int)_completionItemQuantity.Value;
+        _selected.CompletionCommonEventId = (_completionEvent.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
+        _selected.FailureCommonEventId = (_failureEvent.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
         _selected.AvailabilityMode =
             _availabilityMode.SelectedItem is DungeonAvailabilityMode mode
                 ? mode
@@ -500,6 +579,60 @@ public sealed class FrmDungeonConfiguration : DarkForm
 
         PacketSender.SendSaveDungeonConfiguration(_working.ToJson());
         Close();
+    }
+
+    private void FillCompletionChoices()
+    {
+        Fill(
+            _finalBoss,
+            NPCDescriptor.Lookup.Values
+                .OfType<NPCDescriptor>()
+                .Where(npc => npc.IsBoss)
+                .OrderBy(npc => npc.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(npc => new IdChoice(npc.Id, npc.Name))
+        );
+
+        Fill(
+            _completionItem,
+            ItemDescriptor.Lookup.Values
+                .OfType<ItemDescriptor>()
+                .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(item => new IdChoice(item.Id, item.Name))
+        );
+
+        var commonEvents = EventDescriptor.Lookup.Values
+            .OfType<EventDescriptor>()
+            .Where(evt => evt.CommonEvent)
+            .OrderBy(evt => evt.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(evt => new IdChoice(evt.Id, evt.Name))
+            .ToArray();
+
+        Fill(_completionEvent, commonEvents);
+        Fill(_failureEvent, commonEvents);
+    }
+
+    private static void Fill(DarkComboBox combo, IEnumerable<IdChoice> choices)
+    {
+        combo.Items.Clear();
+        combo.Items.Add(new IdChoice(Guid.Empty, "None"));
+        foreach (var choice in choices)
+            combo.Items.Add(choice);
+        combo.SelectedIndex = 0;
+    }
+
+    private static void SelectId(DarkComboBox combo, Guid id)
+    {
+        for (var index = 0; index < combo.Items.Count; ++index)
+        {
+            if (combo.Items[index] is IdChoice choice && choice.Id == id)
+            {
+                combo.SelectedIndex = index;
+                return;
+            }
+        }
+
+        if (combo.Items.Count > 0)
+            combo.SelectedIndex = 0;
     }
 
     private static DungeonWeekdays ToFlag(DayOfWeek dayOfWeek) =>
