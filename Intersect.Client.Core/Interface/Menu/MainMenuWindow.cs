@@ -102,6 +102,11 @@ public partial class MainMenuWindow : Window
 
     private void _buttonLogin_Clicked(Base sender, MouseButtonState arguments)
     {
+        if (_mainMenu.SteamAutoLoginInProgress)
+        {
+            return;
+        }
+
         if (Networking.Network.InterruptDisconnectsIfConnected())
         {
             _mainMenu.SwitchToWindow<LoginWindow>();
@@ -135,6 +140,13 @@ public partial class MainMenuWindow : Window
     private void _loginConnected(object? sender, EventArgs eventArgs)
     {
         _removeLoginEvents();
+
+        if (_mainMenu.SteamAutoLoginInProgress)
+        {
+            _mainMenu.Show();
+            return;
+        }
+
         _mainMenu.SwitchToWindow<LoginWindow>();
     }
 
@@ -144,6 +156,11 @@ public partial class MainMenuWindow : Window
 
     private void _buttonRegister_Clicked(Base sender, MouseButtonState arguments)
     {
+        if (_mainMenu.SteamAutoLoginInProgress)
+        {
+            return;
+        }
+
         if (Networking.Network.InterruptDisconnectsIfConnected())
         {
             _mainMenu.SwitchToWindow<RegistrationWindow>();
@@ -196,6 +213,13 @@ public partial class MainMenuWindow : Window
 
     internal void Update()
     {
+        if (_mainMenu.SteamAutoLoginInProgress)
+        {
+            _buttonLogin.IsDisabled = true;
+            _buttonRegister.IsDisabled = true;
+            return;
+        }
+
         if (Networking.Network.IsConnected)
         {
             _buttonLogin.IsDisabled = Globals.WaitingOnServer;
@@ -212,7 +236,11 @@ public partial class MainMenuWindow : Window
     {
         var networkStatus = MainMenu.ActiveNetworkStatus;
         var isOffline = networkStatus != NetworkStatus.Online;
-        _buttonLogin.IsDisabled = isOffline;
-        _buttonRegister.IsDisabled = isOffline || (Options.IsLoaded && Options.Instance.BlockClientRegistrations);
+        var steamLoginPending = _mainMenu.SteamAutoLoginInProgress;
+        _buttonLogin.IsDisabled = isOffline || steamLoginPending;
+        _buttonRegister.IsDisabled =
+            isOffline ||
+            steamLoginPending ||
+            (Options.IsLoaded && Options.Instance.BlockClientRegistrations);
     }
 }

@@ -1315,6 +1315,7 @@ internal sealed partial class PacketHandler
     {
         Fade.FadeIn(ClientConfiguration.Instance.FadeDurationMs);
         Globals.WaitingOnServer = false;
+        Interface.Interface.MenuUi?.MainMenu.CancelSteamAutoLogin();
         Interface.Interface.ShowAlert(packet.Error, packet.Header, alertType: AlertType.Error);
         Interface.Interface.MenuUi?.Reset();
     }
