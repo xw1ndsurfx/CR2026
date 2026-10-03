@@ -231,6 +231,7 @@ internal sealed partial class LogicService
 
                     Time.Update();
                     InvasionRuntime.Update(startTime);
+                    DungeonRunRuntime.Update(startTime);
                     swCps++;
 
                     var endTime = Timing.Global.Milliseconds;
