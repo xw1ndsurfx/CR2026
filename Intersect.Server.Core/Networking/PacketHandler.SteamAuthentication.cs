@@ -1,6 +1,7 @@
 using Intersect.Enums;
 using Intersect.GameObjects;
-using Intersect.Framework;
+using Intersect.Core;
+using Intersect.Framework.Core;
 using Intersect.Utilities;
 using Intersect.Network.Packets.Client;
 using Intersect.Server.Authentication;
