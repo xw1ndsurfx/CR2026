@@ -3,6 +3,8 @@ using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Interface.Shared;
+using Intersect.Client.Networking;
+using Intersect.Client.ThirdParty;
 using Intersect.Framework;
 using Intersect.Framework.Core;
 using Intersect.Network;
@@ -19,6 +21,7 @@ public partial class MainMenu : MutableInterface
     private bool _forceCharacterCreation;
 
     private string? _username;
+    private bool _steamAutoLoginAttempted;
 
     // Network status
     public static NetworkStatus ActiveNetworkStatus { get; set; }
@@ -110,17 +113,41 @@ public partial class MainMenu : MutableInterface
         logo.LoadJsonUi(GameContentManager.UI.Menu, Graphics.Renderer.GetResolutionString());
 
         NetworkStatusChanged += HandleNetworkStatusChanged;
+        ReceivedConfiguration += HandleSteamAutoLogin;
     }
 
     ~MainMenu()
     {
         // ReSharper disable once DelegateSubtraction
         NetworkStatusChanged -= HandleNetworkStatusChanged;
+        ReceivedConfiguration -= HandleSteamAutoLogin;
     }
 
     public static void HandleReceivedConfiguration()
     {
         ReceivedConfiguration?.Invoke(default, EventArgs.Empty);
+    }
+
+    private void HandleSteamAutoLogin(object? sender, EventArgs eventArgs)
+    {
+        if (_steamAutoLoginAttempted || !Steam.Initialized || !Networking.Network.IsConnected)
+        {
+            return;
+        }
+
+        _steamAutoLoginAttempted = true;
+        Steam.TryRequestCorpsRoyauxLoginTicket(
+            ticket =>
+            {
+                if (string.IsNullOrWhiteSpace(ticket) || !Networking.Network.IsConnected)
+                {
+                    return;
+                }
+
+                Globals.WaitingOnServer = true;
+                PacketSender.SendSteamLogin(ticket);
+            }
+        );
     }
 
     //Methods
