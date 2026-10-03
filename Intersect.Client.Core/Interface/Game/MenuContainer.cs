@@ -35,6 +35,9 @@ public partial class MenuContainer : Panel
     private readonly Button _questsButton;
     private readonly QuestsWindow _questsWindow;
 
+    private readonly ImagePanel _dungeonsButtonContainer;
+    private readonly Button _dungeonsButton;
+
     private readonly ImagePanel _newsButtonContainer;
     private readonly Button _newsButton;
 
@@ -147,6 +150,25 @@ public partial class MenuContainer : Panel
         _questsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "questsicon_hovered.png");
         _questsButton.SetToolTipText(text: Strings.GameMenu.Quest);
         _questsButton.Clicked += QuestBtn_Clicked;
+
+        _dungeonsButtonContainer = new ImagePanel(parent: this, name: nameof(_dungeonsButtonContainer))
+        {
+            Dock = Pos.Top,
+            MaximumSize = new Point(x: 71, y: 55),
+            MinimumSize = new Point(x: 71, y: 55),
+            Padding = new Padding(size: 0),
+            Size = new Point(x: 71, y: 55),
+            TextureFilename = "menuitem.png",
+        };
+        _dungeonsButton = new Button(parent: _dungeonsButtonContainer, name: nameof(_dungeonsButton), disableText: false)
+        {
+            Alignment = [Alignments.Center],
+            Size = new Point(x: 71, y: 55),
+            Text = "DG",
+            FontSize = 13,
+        };
+        _dungeonsButton.SetToolTipText(text: "Dungeon Gates");
+        _dungeonsButton.Clicked += DungeonsButton_Clicked;
 
         _newsButtonContainer = new ImagePanel(parent: this, name: nameof(_newsButtonContainer))
         {
@@ -349,6 +371,7 @@ public partial class MenuContainer : Panel
             _spellsButtonContainer,
             _characterButtonContainer,
             _questsButtonContainer,
+            _dungeonsButtonContainer,
             _newsButtonContainer,
             _dailyRewardButtonContainer,
             _logiCoinShopButtonContainer,
@@ -364,6 +387,7 @@ public partial class MenuContainer : Panel
             _spellsButton,
             _characterButton,
             _questsButton,
+            _dungeonsButton,
             _newsButton,
             _dailyRewardButton,
             _logiCoinShopButton,
@@ -463,6 +487,7 @@ public partial class MenuContainer : Panel
         Interface.GameUi.HideDailyReward();
         Interface.GameUi.HideLogiCoinShop();
         Interface.GameUi.HideMarketplace();
+        Interface.GameUi.HideDungeonPanel();
     }
 
     public void ToggleCharacterWindow()
@@ -604,6 +629,7 @@ public partial class MenuContainer : Panel
         Interface.GameUi.HideDailyReward();
         Interface.GameUi.HideLogiCoinShop();
         Interface.GameUi.HideMarketplace();
+        Interface.GameUi.HideDungeonPanel();
     }
 
     public bool HasWindowsOpen()
@@ -618,7 +644,8 @@ public partial class MenuContainer : Panel
                           Interface.GameUi.IsLogiklikNewsVisible ||
                           Interface.GameUi.IsDailyRewardVisible ||
                           Interface.GameUi.IsLogiCoinShopVisible ||
-                          Interface.GameUi.IsMarketplaceVisible;
+                          Interface.GameUi.IsMarketplaceVisible ||
+                          Interface.GameUi.IsDungeonPanelVisible;
         return windowsOpen;
     }
 
@@ -662,6 +689,11 @@ public partial class MenuContainer : Panel
     private void QuestBtn_Clicked(Base sender, MouseButtonState arguments)
     {
         ToggleQuestsWindow();
+    }
+
+    private void DungeonsButton_Clicked(Base sender, MouseButtonState arguments)
+    {
+        Interface.GameUi.ToggleDungeonPanel();
     }
 
     private void NewsButton_Clicked(Base sender, MouseButtonState arguments)
