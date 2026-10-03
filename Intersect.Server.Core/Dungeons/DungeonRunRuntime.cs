@@ -209,6 +209,8 @@ internal static class DungeonRunRuntime
 
         foreach (var player in GetParticipants(run))
         {
+            player.UpdateDungeonQuestTasks(run.Dungeon.Id);
+
             if (run.Dungeon.CompletionExperience > 0)
                 player.GiveExperience(run.Dungeon.CompletionExperience);
 
