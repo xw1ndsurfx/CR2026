@@ -1090,6 +1090,10 @@ public partial class Player : Entity
         pkt.GuildRank = GuildRank;
 
         var rankingTitle = LeaderboardTitleRuntime.GetStatus(Id);
+
+        // Badge 2 is reserved for players with an active leaderboard EXP bonus.
+        pkt.BadgeId = rankingTitle?.ExperienceBonusPercent > 0 ? 2 : 0;
+
         if (rankingTitle != null)
         {
             var existingHeader = pkt.HeaderLabel?.Label;
