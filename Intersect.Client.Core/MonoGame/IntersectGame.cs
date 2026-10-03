@@ -255,6 +255,10 @@ internal partial class IntersectGame : Game
     /// <param name="gameTime">Provides a snapshot of timing values.</param>
     protected override void Update(GameTime gameTime)
     {
+        // Steam callbacks (including GetTicketForWebApiResponse_t) are only delivered
+        // while RunCallbacks is pumped. Keep this in the main client update loop.
+        Steam.PumpEvents();
+
         _elapsedSincePlatformStatisticsRefresh += gameTime.ElapsedGameTime;
         if (_elapsedSincePlatformStatisticsRefresh.TotalSeconds > 1)
         {
