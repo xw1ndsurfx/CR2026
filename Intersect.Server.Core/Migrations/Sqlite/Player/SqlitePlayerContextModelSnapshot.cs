@@ -524,6 +524,10 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.Property<Guid>("ClassId")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("AppearanceJson")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Appearance");
+
                     b.Property<DateTime?>("CreationDate")
                         .HasColumnType("TEXT");
 

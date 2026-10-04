@@ -1,4 +1,5 @@
 ﻿using Intersect.Enums;
+using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Events;
 using MessagePack;
 
@@ -39,4 +40,7 @@ public partial class PlayerEntityPacket : EntityPacket
 
     [Key(30)]
     public int GuildRank { get; set; }
+
+    [Key(31)]
+    public CharacterAppearance Appearance { get; set; } = new();
 }
