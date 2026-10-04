@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Intersect.Enums;
 using Intersect.Framework.Core;
+using Intersect.Framework.Core.Achievements;
 using Intersect.Framework.Core.Dungeons;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
