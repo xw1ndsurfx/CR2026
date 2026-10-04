@@ -471,7 +471,7 @@ internal static class DungeonRunRuntime
         }
 
         foreach (var player in participants)
-            WarpToExit(player, run, reviveIfDeadPlayers && player.IsDead);
+            WarpToExit(player, run, reviveDeadPlayers && player.IsDead);
 
         lock (Gate)
             RunsByInstance.Remove(run.MapInstanceId);
