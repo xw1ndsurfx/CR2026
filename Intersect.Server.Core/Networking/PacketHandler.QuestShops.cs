@@ -34,11 +34,12 @@ internal sealed partial class PacketHandler
         }
     }
 
-    public void HandlePacket(Client client, AcceptQuestShopQuestPacket packet)
+    public void HandlePacket(Client client, RequestQuestShopOfferPacket packet)
     {
         if (client.IsEditor || client.Entity is not { } player)
             return;
 
-        client.Send(QuestShopRuntime.Accept(player, packet.ShopId, packet.QuestId));
+        if (!QuestShopRuntime.TryOffer(player, packet.ShopId, packet.QuestId, out var error))
+            client.Send(QuestShopRuntime.Open(player, packet.ShopId, error));
     }
 }
