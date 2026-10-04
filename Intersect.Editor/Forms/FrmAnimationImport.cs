@@ -9,6 +9,13 @@ namespace Intersect.Editor.Forms;
 
 public sealed class FrmAnimationImport : DarkForm
 {
+    private enum ZipImportMode
+    {
+        AutoDetect,
+        SeparateFrames,
+        ReadyMadeSheets,
+    }
+
     public sealed class GeneratedAnimationRequest
     {
         public required string Name { get; init; }
@@ -285,6 +292,7 @@ public sealed class FrmAnimationImport : DarkForm
     private readonly Label _assetInfo = new();
     private readonly Label _status = new();
     private readonly Button _importZipButton = new();
+    private readonly ComboBox _zipImportMode = new();
     private readonly Button _cancelImportButton = new();
     private readonly ProgressBar _importProgress = new();
     private readonly Label _importProgressLabel = new();
@@ -434,6 +442,25 @@ public sealed class FrmAnimationImport : DarkForm
         _importZipButton.Cursor = Cursors.Hand;
         _importZipButton.Click += async (_, _) => await ImportZipAsync();
 
+        _zipImportMode.Size = new Size(180, 34);
+        _zipImportMode.DropDownStyle = ComboBoxStyle.DropDownList;
+        _zipImportMode.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
+        _zipImportMode.ForeColor = System.Drawing.Color.White;
+        _zipImportMode.Font = new Font(
+            SystemFonts.MessageBoxFont.FontFamily,
+            9,
+            FontStyle.Bold
+        );
+        _zipImportMode.Items.AddRange(
+            new object[]
+            {
+                "AUTO DETECT",
+                "SEPARATE FRAMES",
+                "READY-MADE SHEETS",
+            }
+        );
+        _zipImportMode.SelectedIndex = 0;
+
         var refresh = CreateDarkButton("REFRESH");
         refresh.Size = new Size(120, 34);
         refresh.Click += async (_, _) => await ReloadAssetsAsync();
@@ -481,6 +508,7 @@ public sealed class FrmAnimationImport : DarkForm
         _importProgressLabel.Visible = false;
 
         toolbar.Controls.Add(_importZipButton);
+        toolbar.Controls.Add(_zipImportMode);
         toolbar.Controls.Add(refresh);
         toolbar.Controls.Add(open);
         toolbar.Controls.Add(_cancelImportButton);
@@ -974,11 +1002,19 @@ public sealed class FrmAnimationImport : DarkForm
 
         try
         {
+            var selectedMode = _zipImportMode.SelectedIndex switch
+            {
+                1 => ZipImportMode.SeparateFrames,
+                2 => ZipImportMode.ReadyMadeSheets,
+                _ => ZipImportMode.AutoDetect,
+            };
+
             var result = await Task.Run(
                 () => ProcessZipImport(
                     dialog.FileName,
                     progress,
-                    cancellationToken
+                    cancellationToken,
+                    selectedMode
                 ),
                 cancellationToken
             );
@@ -1052,7 +1088,8 @@ public sealed class FrmAnimationImport : DarkForm
     private ZipImportResult ProcessZipImport(
         string zipPath,
         IProgress<ZipImportProgress> progress,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        ZipImportMode importMode
     )
     {
         var result = new ZipImportResult();
@@ -1082,7 +1119,7 @@ public sealed class FrmAnimationImport : DarkForm
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            var frameEntries = pngEntries
+            var allFrameEntries = pngEntries
                 .Select(
                     entry =>
                         TryCreateZipFrameEntry(entry, out var frame)
@@ -1091,6 +1128,24 @@ public sealed class FrmAnimationImport : DarkForm
                 )
                 .Where(frame => frame != null)
                 .Cast<ZipFrameEntry>()
+                .ToArray();
+
+            var readyMadeEntries = importMode switch
+            {
+                ZipImportMode.ReadyMadeSheets => pngEntries
+                    .Select(entry => entry.FullName)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase),
+                ZipImportMode.SeparateFrames => new HashSet<string>(
+                    StringComparer.OrdinalIgnoreCase
+                ),
+                _ => DetectReadyMadeSheetEntries(
+                    allFrameEntries,
+                    cancellationToken
+                ),
+            };
+
+            var frameEntries = allFrameEntries
+                .Where(frame => !readyMadeEntries.Contains(frame.Entry.FullName))
                 .ToArray();
 
             var sequenceGroups = frameEntries
@@ -1135,7 +1190,8 @@ public sealed class FrmAnimationImport : DarkForm
                     TotalUnits = totalUnits,
                     Stage =
                         $"Analyzed {pngEntries.Length:N0} PNG(s), " +
-                        $"{sequenceGroups.Length:N0} sequence(s)",
+                        $"{sequenceGroups.Length:N0} frame sequence(s), " +
+                        $"{readyMadeEntries.Count:N0} ready-made sheet(s)",
                 }
             );
 
@@ -1381,6 +1437,226 @@ public sealed class FrmAnimationImport : DarkForm
         }
 
         return result;
+    }
+
+    private static HashSet<string> DetectReadyMadeSheetEntries(
+        IReadOnlyList<ZipFrameEntry> frameEntries,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        var groups = frameEntries
+            .GroupBy(
+                frame => $"{frame.Directory}\n{frame.BaseName}",
+                StringComparer.OrdinalIgnoreCase
+            )
+            .Where(group => group.Count() >= 3);
+
+        foreach (var group in groups)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var dimensions = new List<(ZipFrameEntry Frame, int Width, int Height)>();
+            foreach (var frame in group)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (TryReadPngDimensions(
+                        frame.Entry,
+                        out var width,
+                        out var height
+                    ))
+                {
+                    dimensions.Add((frame, width, height));
+                }
+            }
+
+            if (dimensions.Count < 3 ||
+                !LooksLikeReadyMadeSheetCollection(dimensions))
+            {
+                continue;
+            }
+
+            foreach (var item in dimensions)
+            {
+                result.Add(item.Frame.Entry.FullName);
+            }
+        }
+
+        return result;
+    }
+
+    private static bool LooksLikeReadyMadeSheetCollection(
+        IReadOnlyList<(ZipFrameEntry Frame, int Width, int Height)> images
+    )
+    {
+        if (images.Count < 3)
+        {
+            return false;
+        }
+
+        var requiredCount = Math.Max(
+            3,
+            (int)Math.Ceiling(images.Count * 0.6d)
+        );
+
+        var dominantWidth = images
+            .GroupBy(image => image.Width)
+            .OrderByDescending(group => group.Count())
+            .First();
+
+        if (dominantWidth.Count() >= requiredCount)
+        {
+            var matching = dominantWidth.ToArray();
+            var heights = matching
+                .Select(image => image.Height)
+                .Distinct()
+                .ToArray();
+
+            if (heights.Length >= 2)
+            {
+                var cell = GreatestCommonDivisor(heights);
+                var columns = cell > 0
+                    ? dominantWidth.Key / cell
+                    : 0;
+
+                if (cell >= 8 &&
+                    dominantWidth.Key % cell == 0 &&
+                    columns is >= 2 and <= 32 &&
+                    matching.All(image =>
+                        image.Height % cell == 0 &&
+                        image.Height / cell is >= 1 and <= 32))
+                {
+                    return true;
+                }
+            }
+        }
+
+        var dominantHeight = images
+            .GroupBy(image => image.Height)
+            .OrderByDescending(group => group.Count())
+            .First();
+
+        if (dominantHeight.Count() >= requiredCount)
+        {
+            var matching = dominantHeight.ToArray();
+            var widths = matching
+                .Select(image => image.Width)
+                .Distinct()
+                .ToArray();
+
+            if (widths.Length >= 2)
+            {
+                var cell = GreatestCommonDivisor(widths);
+                var rows = cell > 0
+                    ? dominantHeight.Key / cell
+                    : 0;
+
+                if (cell >= 8 &&
+                    dominantHeight.Key % cell == 0 &&
+                    rows is >= 2 and <= 32 &&
+                    matching.All(image =>
+                        image.Width % cell == 0 &&
+                        image.Width / cell is >= 1 and <= 32))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static int GreatestCommonDivisor(IEnumerable<int> values)
+    {
+        var gcd = 0;
+        foreach (var value in values)
+        {
+            var current = Math.Abs(value);
+            if (current == 0)
+            {
+                continue;
+            }
+
+            gcd = gcd == 0
+                ? current
+                : GreatestCommonDivisor(gcd, current);
+        }
+
+        return gcd;
+    }
+
+    private static int GreatestCommonDivisor(int left, int right)
+    {
+        left = Math.Abs(left);
+        right = Math.Abs(right);
+
+        while (right != 0)
+        {
+            var remainder = left % right;
+            left = right;
+            right = remainder;
+        }
+
+        return left;
+    }
+
+    private static bool TryReadPngDimensions(
+        ZipArchiveEntry entry,
+        out int width,
+        out int height
+    )
+    {
+        width = 0;
+        height = 0;
+
+        try
+        {
+            using var stream = entry.Open();
+            Span<byte> header = stackalloc byte[24];
+            var offset = 0;
+
+            while (offset < header.Length)
+            {
+                var read = stream.Read(header[offset..]);
+                if (read <= 0)
+                {
+                    return false;
+                }
+
+                offset += read;
+            }
+
+            if (header[0] != 0x89 ||
+                header[1] != 0x50 ||
+                header[2] != 0x4E ||
+                header[3] != 0x47 ||
+                header[12] != 0x49 ||
+                header[13] != 0x48 ||
+                header[14] != 0x44 ||
+                header[15] != 0x52)
+            {
+                return false;
+            }
+
+            width =
+                (header[16] << 24) |
+                (header[17] << 16) |
+                (header[18] << 8) |
+                header[19];
+            height =
+                (header[20] << 24) |
+                (header[21] << 16) |
+                (header[22] << 8) |
+                header[23];
+
+            return width > 0 && height > 0;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static void CopyStreamWithCancellation(
