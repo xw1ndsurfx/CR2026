@@ -346,7 +346,9 @@ internal static class DungeonRunRuntime
 
     private static int CountAliveMonsters(Run run)
     {
+        var participants = GetParticipants(run).ToArray();
         var count = 0;
+
         foreach (var mapId in GetDungeonMapIds(run.Dungeon, run.EntryMapId))
         {
             if (!MapController.TryGetInstanceFromMap(mapId, run.MapInstanceId, out var instance))
@@ -355,7 +357,10 @@ internal static class DungeonRunRuntime
             count += instance
                 .GetEntities()
                 .OfType<Npc>()
-                .Count(npc => !npc.IsDead);
+                .Count(npc =>
+                    !npc.IsDead &&
+                    participants.Any(player => npc.CanPlayerAttack(player))
+                );
         }
 
         return count;
