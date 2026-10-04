@@ -56,13 +56,24 @@ public static partial class CommandProcessing
             return;
         }
 
+        // Commands created before the Warp-style editor keep their original
+        // Personal/Party behavior until they are edited and saved.
+        var changeInstance = command.UseWarpSettings
+            ? command.ChangeInstance
+            : true;
+        var instanceType = command.UseWarpSettings
+            ? command.InstanceType
+            : (command.UsePartyInstance ? MapInstanceType.Shared : MapInstanceType.Personal);
+
         if (!DungeonRunRuntime.TryStart(
                 player,
                 dungeon,
                 command.MapId,
                 command.X,
                 command.Y,
-                command.UsePartyInstance,
+                command.Direction,
+                changeInstance,
+                instanceType,
                 out var startError
             ))
         {
