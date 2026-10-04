@@ -26,6 +26,9 @@ internal static class DungeonRunRuntime
         public required Direction EntryDirection { get; init; }
         public required long StartedAtUnixMilliseconds { get; init; }
         public required long EndAtUnixMilliseconds { get; init; }
+        public required Guid InitiatorId { get; init; }
+        public required bool ChangeInstance { get; init; }
+        public required MapInstanceType InstanceType { get; init; }
         public required int LivesRemaining { get; set; }
         public ConcurrentDictionary<Guid, byte> Participants { get; } = [];
         public bool BossDefeated { get; set; }
@@ -33,7 +36,22 @@ internal static class DungeonRunRuntime
     }
 
     private static readonly object Gate = new();
+    private sealed class RetryOffer
+    {
+        public required Guid Id { get; init; }
+        public required Guid PlayerId { get; init; }
+        public required DungeonDefinition Dungeon { get; init; }
+        public required Guid EntryMapId { get; init; }
+        public required byte EntryX { get; init; }
+        public required byte EntryY { get; init; }
+        public required WarpDirection EntryDirection { get; init; }
+        public required bool ChangeInstance { get; init; }
+        public required MapInstanceType InstanceType { get; init; }
+        public required long ExpiresAtUnixMilliseconds { get; init; }
+    }
+
     private static readonly Dictionary<Guid, Run> RunsByInstance = [];
+    private static readonly Dictionary<Guid, RetryOffer> RetryOffers = [];
     private static long _nextUpdateAt;
 
     internal static bool TryStart(
@@ -199,6 +217,9 @@ internal static class DungeonRunRuntime
             EntryDirection = entryDirection,
             StartedAtUnixMilliseconds = now,
             EndAtUnixMilliseconds = end,
+            InitiatorId = player.Id,
+            ChangeInstance = changeInstance,
+            InstanceType = instanceType,
             LivesRemaining = Math.Max(1, dungeon.MaxLives),
         };
 
@@ -309,7 +330,7 @@ internal static class DungeonRunRuntime
 
         if (run.LivesRemaining <= 0)
         {
-            Fail(run, "NO LIVES REMAINING", reviveDeadPlayers: true);
+            Fail(run, "NO LIVES REMAINING", reviveDeadPlayers: true, offerRetry: true);
             return true;
         }
 
@@ -340,6 +361,14 @@ internal static class DungeonRunRuntime
         lock (Gate)
         {
             var nowUnix = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            foreach (var retryId in RetryOffers.Values
+                         .Where(retry => retry.ExpiresAtUnixMilliseconds <= nowUnix)
+                         .Select(retry => retry.Id)
+                         .ToArray())
+            {
+                RetryOffers.Remove(retryId);
+            }
+
             expired = RunsByInstance.Values
                 .Where(run =>
                     !run.Finished &&
@@ -350,7 +379,7 @@ internal static class DungeonRunRuntime
         }
 
         foreach (var run in expired)
-            Fail(run, "TIME EXPIRED", reviveDeadPlayers: false);
+            Fail(run, "TIME EXPIRED", reviveDeadPlayers: false, offerRetry: false);
     }
 
     private static void EvaluateCompletion(Run run)
@@ -467,7 +496,7 @@ internal static class DungeonRunRuntime
             RunsByInstance.Remove(run.MapInstanceId);
     }
 
-    private static void Fail(Run run, string reason, bool reviveDeadPlayers)
+    private static void Fail(Run run, string reason, bool reviveDeadPlayers, bool offerRetry)
     {
         lock (Gate)
         {
@@ -493,6 +522,91 @@ internal static class DungeonRunRuntime
 
         lock (Gate)
             RunsByInstance.Remove(run.MapInstanceId);
+
+        if (offerRetry)
+        {
+            var initiator = participants.FirstOrDefault(player => player.Id == run.InitiatorId);
+            if (initiator != null && initiator.IsOnline)
+            {
+                CreateRetryOffer(initiator, run);
+            }
+        }
+    }
+
+    private static void CreateRetryOffer(Player player, Run run)
+    {
+        var retry = new RetryOffer
+        {
+            Id = Guid.NewGuid(),
+            PlayerId = player.Id,
+            Dungeon = run.Dungeon,
+            EntryMapId = run.EntryMapId,
+            EntryX = run.EntryX,
+            EntryY = run.EntryY,
+            EntryDirection = run.EntryDirection == player.Dir
+                ? WarpDirection.Retain
+                : (WarpDirection)((int)run.EntryDirection + 1),
+            ChangeInstance = run.ChangeInstance,
+            InstanceType = run.InstanceType,
+            ExpiresAtUnixMilliseconds = DateTimeOffset.UtcNow.AddMinutes(2).ToUnixTimeMilliseconds(),
+        };
+
+        lock (Gate)
+        {
+            foreach (var stale in RetryOffers.Values.Where(value => value.PlayerId == player.Id).Select(value => value.Id).ToArray())
+                RetryOffers.Remove(stale);
+            RetryOffers[retry.Id] = retry;
+        }
+
+        player.SendPacket(
+            new DungeonRetryOfferPacket(
+                retry.Id,
+                run.Dungeon.Id,
+                DungeonConfigurationRuntime.Json
+            )
+        );
+    }
+
+    internal static bool TryHandleRetry(Player player, Guid retryId, bool accept, out string error)
+    {
+        error = string.Empty;
+        RetryOffer? retry;
+
+        lock (Gate)
+        {
+            if (!RetryOffers.Remove(retryId, out retry) || retry.PlayerId != player.Id)
+            {
+                error = "This dungeon retry offer is no longer valid.";
+                return false;
+            }
+        }
+
+        if (!accept)
+            return true;
+
+        if (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > retry.ExpiresAtUnixMilliseconds)
+        {
+            error = "This dungeon retry offer has expired.";
+            return false;
+        }
+
+        if (!DungeonConfigurationRuntime.IsAvailable(retry.Dungeon, DateTimeOffset.Now))
+        {
+            error = $"{retry.Dungeon.Name} is currently sealed.";
+            return false;
+        }
+
+        return TryStart(
+            player,
+            retry.Dungeon,
+            retry.EntryMapId,
+            retry.EntryX,
+            retry.EntryY,
+            retry.EntryDirection,
+            retry.ChangeInstance,
+            retry.InstanceType,
+            out error
+        );
     }
 
     private static void WarpToExit(Player player, Run run, bool reviveIfDead)
