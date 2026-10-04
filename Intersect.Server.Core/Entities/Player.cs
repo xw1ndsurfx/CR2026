@@ -30,6 +30,7 @@ using Intersect.Server.Database.PlayerData;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Database.PlayerData.Security;
 using Intersect.Server.Entities.Events;
+using Intersect.Server.Dungeons;
 using Intersect.Server.Framework.Entities;
 using Intersect.Server.Framework.Items;
 using Intersect.Server.Localization;
@@ -1133,6 +1134,8 @@ public partial class Player : Entity
 
     public override void Die(bool dropItems = true, Entity killer = null)
     {
+        var dungeonDeath = DungeonRunRuntime.IsPlayerInActiveRun(this);
+
         CastTime = 0;
         CastTarget = null;
 
@@ -1159,12 +1162,13 @@ public partial class Player : Entity
 
         lock (EntityLock)
         {
-            base.Die(dropItems, killer);
+            base.Die(dropItems && !dungeonDeath, killer);
         }
 
 
         // EXP Loss - don't lose in shared instance, or in an Arena zone
-        if (InstanceType != MapInstanceType.Shared || Options.Instance.Instancing.LoseExpOnInstanceDeath)
+        if (!dungeonDeath &&
+            (InstanceType != MapInstanceType.Shared || Options.Instance.Instancing.LoseExpOnInstanceDeath))
         {
             if (Options.Instance.Player.ExpLossOnDeathPercent > 0)
             {
@@ -1175,8 +1179,49 @@ public partial class Player : Entity
             }
         }
         PacketSender.SendEntityDie(this);
-        Respawn();
+        if (!DungeonRunRuntime.TryHandlePlayerDeath(this))
+        {
+            Respawn();
+        }
         PacketSender.SendInventory(this);
+    }
+
+    internal void RespawnInDungeon(Guid mapId, byte x, byte y, Direction direction)
+    {
+        Warp(
+            mapId,
+            x,
+            y,
+            direction,
+            adminWarp: false,
+            zOverride: 0,
+            mapSave: false,
+            fromWarpEvent: true,
+            mapInstanceType: null
+        );
+
+        Reset();
+        PacketSender.SendEntityDataToProximity(this);
+        StartCommonEventsWithTrigger(CommonEventTrigger.OnRespawn);
+    }
+
+    internal void RespawnFromDungeon(Guid mapId, byte x, byte y, Direction direction)
+    {
+        Warp(
+            mapId,
+            x,
+            y,
+            direction,
+            adminWarp: false,
+            zOverride: 0,
+            mapSave: false,
+            fromWarpEvent: true,
+            mapInstanceType: MapInstanceType.Overworld
+        );
+
+        Reset();
+        PacketSender.SendEntityDataToProximity(this);
+        StartCommonEventsWithTrigger(CommonEventTrigger.OnRespawn);
     }
 
     public override void ProcessRegen()
@@ -6930,6 +6975,23 @@ public partial class Player : Entity
                     {
                         var tmpStack = new CommandInstance(stackInfo.Page, stackInfo.BranchIds[responseId - 1]);
                         evt.Value.CallStack.Push(tmpStack);
+                    }
+                    else if (stackInfo.WaitingOnCommand is StartDungeonCommand dungeonCommand)
+                    {
+                        if (responseId == 1 &&
+                            !CommandProcessing.TryStartConfirmedDungeon(
+                                dungeonCommand,
+                                this,
+                                out var dungeonError
+                            ))
+                        {
+                            PacketSender.SendChatMsg(
+                                this,
+                                $"[Dungeon] {dungeonError}",
+                                ChatMessageType.Error,
+                                Color.White
+                            );
+                        }
                     }
 
                     return;

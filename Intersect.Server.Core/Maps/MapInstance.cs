@@ -15,6 +15,7 @@ using Intersect.Server.Entities.Events;
 using Intersect.Server.Networking;
 using Intersect.Utilities;
 using Intersect.Server.Entities;
+using Intersect.Server.Dungeons;
 using Intersect.Server.Classes.Maps;
 using Intersect.Server.Core.MapInstancing;
 using Intersect.Server.Framework.Items;
@@ -1340,6 +1341,11 @@ public partial class MapInstance : IMapInstance
 
     private void ProcessNpcRespawns()
     {
+        if (!DungeonRunRuntime.ShouldRespawnNpcs(mMapController.Id, MapInstanceId))
+        {
+            return;
+        }
+
         var spawns = mMapController.Spawns;
         for (var i = 0; i < spawns.Count; i++)
         {

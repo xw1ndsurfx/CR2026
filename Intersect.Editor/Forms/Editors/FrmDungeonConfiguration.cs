@@ -6,6 +6,8 @@ using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
+using Intersect.Framework.Core.GameObjects.Maps;
+using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.GameObjects;
 using DrawingColor = System.Drawing.Color;
 
@@ -42,8 +44,27 @@ public sealed class FrmDungeonConfiguration : DarkForm
         Multiline = true,
         Height = 80,
     };
-    private readonly DarkTextBox _image = new() { Dock = DockStyle.Fill };
+    private readonly DarkComboBox _image = new()
+    {
+        Dock = DockStyle.Fill,
+        DropDownStyle = ComboBoxStyle.DropDownList,
+    };
     private readonly DarkTextBox _location = new() { Dock = DockStyle.Fill };
+
+    private readonly CheckedListBox _maps = new()
+    {
+        Dock = DockStyle.Fill,
+        BackColor = InputBackColor,
+        ForeColor = TextColor,
+        CheckOnClick = true,
+        Height = 210,
+    };
+    private readonly DarkCheckBox _npcRespawn = new()
+    {
+        Text = "NPCs respawn inside this dungeon",
+        AutoSize = true,
+    };
+    private readonly DarkNumericUpDown _maxLives = Numeric(1, 99);
     private readonly DarkComboBox _associatedQuest = new()
     {
         Dock = DockStyle.Fill,
@@ -67,6 +88,16 @@ public sealed class FrmDungeonConfiguration : DarkForm
     };
     private readonly DarkNumericUpDown _sortOrder = Numeric(-100_000, 100_000);
 
+    private readonly DarkCheckBox _requireFinalBoss = new()
+    {
+        Text = "Defeat final boss",
+        AutoSize = true,
+    };
+    private readonly DarkCheckBox _requireAllMonsters = new()
+    {
+        Text = "Defeat all monsters on dungeon maps",
+        AutoSize = true,
+    };
     private readonly DarkComboBox _finalBoss = new()
     {
         Dock = DockStyle.Fill,
@@ -85,6 +116,18 @@ public sealed class FrmDungeonConfiguration : DarkForm
         DropDownStyle = ComboBoxStyle.DropDownList,
     };
     private readonly DarkComboBox _failureEvent = new()
+    {
+        Dock = DockStyle.Fill,
+        DropDownStyle = ComboBoxStyle.DropDownList,
+    };
+    private readonly DarkComboBox _exitMap = new()
+    {
+        Dock = DockStyle.Fill,
+        DropDownStyle = ComboBoxStyle.DropDownList,
+    };
+    private readonly DarkNumericUpDown _exitX = Numeric(0, Math.Max(0, Options.Instance.Map.MapWidth - 1));
+    private readonly DarkNumericUpDown _exitY = Numeric(0, Math.Max(0, Options.Instance.Map.MapHeight - 1));
+    private readonly DarkComboBox _exitDirection = new()
     {
         Dock = DockStyle.Fill,
         DropDownStyle = ComboBoxStyle.DropDownList,
@@ -134,6 +177,11 @@ public sealed class FrmDungeonConfiguration : DarkForm
 
         FillCompletionChoices();
         FillQuestChoices();
+        FillDungeonImages();
+        FillDungeonMaps();
+
+        foreach (WarpDirection direction in Enum.GetValues(typeof(WarpDirection)))
+            _exitDirection.Items.Add(direction);
 
         foreach (var day in new[]
                  {
@@ -297,6 +345,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
     {
         var tabs = new TabControl { Dock = DockStyle.Fill };
         tabs.TabPages.Add(BuildGeneralTab());
+        tabs.TabPages.Add(BuildInstanceTab());
         tabs.TabPages.Add(BuildCompletionTab());
         tabs.TabPages.Add(BuildAvailabilityTab());
         return tabs;
@@ -309,7 +358,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
 
         AddRow(table, "Name", _name);
         AddRow(table, "Description", _description, 88);
-        AddRow(table, "Image file (resources/images)", _image);
+        AddRow(table, "Image (resources/dungeons)", _image);
         AddRow(table, "Location", _location);
         AddRow(table, "Associated Quest", _associatedQuest);
         AddRow(table, "Dungeon rank", _rank);
@@ -326,17 +375,14 @@ public sealed class FrmDungeonConfiguration : DarkForm
         return page;
     }
 
-    private TabPage BuildCompletionTab()
+    private TabPage BuildInstanceTab()
     {
-        var page = CreatePage("Completion");
+        var page = CreatePage("Instance");
         var table = CreateTable();
 
-        AddRow(table, "Final boss NPC", _finalBoss);
-        AddRow(table, "Completion EXP", _completionExperience);
-        AddRow(table, "Reward item", _completionItem);
-        AddRow(table, "Reward item quantity", _completionItemQuantity);
-        AddRow(table, "Completion Common Event", _completionEvent);
-        AddRow(table, "Failure Common Event", _failureEvent);
+        AddRow(table, "Dungeon maps", _maps, 230);
+        AddRow(table, "NPC respawn", _npcRespawn);
+        AddRow(table, "Lives", _maxLives);
 
         var help = new Label
         {
@@ -344,8 +390,43 @@ public sealed class FrmDungeonConfiguration : DarkForm
             MaximumSize = new Size(700, 0),
             ForeColor = DrawingColor.Silver,
             Text =
-                "When the configured final boss dies inside this dungeon instance, the run is completed. " +
-                "EXP and item rewards are granted to every run participant. Completion/failure Common Events are optional.",
+                "Selected maps define the dungeon area used by Kill All Monsters and NPC respawn rules. " +
+                "Lives are shared by the active dungeon run; a player death consumes one life.",
+            Margin = new Padding(8, 12, 8, 8),
+        };
+        table.Controls.Add(help);
+        table.SetColumnSpan(help, 2);
+
+        page.Controls.Add(table);
+        return page;
+    }
+
+    private TabPage BuildCompletionTab()
+    {
+        var page = CreatePage("Completion");
+        var table = CreateTable();
+
+        AddRow(table, "Objective", _requireFinalBoss);
+        AddRow(table, "Objective", _requireAllMonsters);
+        AddRow(table, "Final boss NPC", _finalBoss);
+        AddRow(table, "Completion EXP", _completionExperience);
+        AddRow(table, "Reward item", _completionItem);
+        AddRow(table, "Reward item quantity", _completionItemQuantity);
+        AddRow(table, "Completion Common Event", _completionEvent);
+        AddRow(table, "Failure Common Event", _failureEvent);
+        AddRow(table, "Exit map", _exitMap);
+        AddRow(table, "Exit X", _exitX);
+        AddRow(table, "Exit Y", _exitY);
+        AddRow(table, "Exit direction", _exitDirection);
+
+        var help = new Label
+        {
+            AutoSize = true,
+            MaximumSize = new Size(700, 0),
+            ForeColor = DrawingColor.Silver,
+            Text =
+                "Completion requirements can be combined. If both are checked, the final boss and every monster on the selected dungeon maps must be defeated. " +
+                "Rewards are granted to every participant, then players are warped to the configured exit when one is set.",
             Margin = new Padding(8, 12, 8, 8),
         };
         table.Controls.Add(help);
@@ -470,8 +551,16 @@ public sealed class FrmDungeonConfiguration : DarkForm
 
         _name.Text = _selected.Name;
         _description.Text = _selected.Description;
-        _image.Text = _selected.Image;
+        SelectString(_image, _selected.Image);
         _location.Text = _selected.Location;
+
+        for (var i = 0; i < _maps.Items.Count; ++i)
+        {
+            var choice = (IdChoice)_maps.Items[i]!;
+            _maps.SetItemChecked(i, (_selected.MapIds ?? []).Contains(choice.Id));
+        }
+        _npcRespawn.Checked = _selected.NpcRespawnEnabled;
+        _maxLives.Value = Math.Clamp(_selected.MaxLives, 1, 99);
         SelectId(_associatedQuest, _selected.AssociatedQuestId);
         _rank.SelectedItem = _selected.Rank;
         _minimumLevel.Value = Math.Clamp(_selected.MinimumLevel, 1, 1_000_000);
@@ -483,12 +572,20 @@ public sealed class FrmDungeonConfiguration : DarkForm
         _premiumRequired.Checked = _selected.PremiumRequired;
         _sortOrder.Value = Math.Clamp(_selected.SortOrder, -100_000, 100_000);
 
+        _requireFinalBoss.Checked =
+            (_selected.CompletionRequirements & DungeonCompletionRequirement.DefeatFinalBoss) != 0;
+        _requireAllMonsters.Checked =
+            (_selected.CompletionRequirements & DungeonCompletionRequirement.DefeatAllMonsters) != 0;
         SelectId(_finalBoss, _selected.FinalBossNpcId);
         _completionExperience.Value = Math.Clamp(_selected.CompletionExperience, 0, 2_000_000_000);
         SelectId(_completionItem, _selected.CompletionItemId);
         _completionItemQuantity.Value = Math.Clamp(_selected.CompletionItemQuantity, 0, 1_000_000_000);
         SelectId(_completionEvent, _selected.CompletionCommonEventId);
         SelectId(_failureEvent, _selected.FailureCommonEventId);
+        SelectId(_exitMap, _selected.ExitMapId);
+        _exitX.Value = Math.Clamp((int)_selected.ExitX, 0, Math.Max(0, Options.Instance.Map.MapWidth - 1));
+        _exitY.Value = Math.Clamp((int)_selected.ExitY, 0, Math.Max(0, Options.Instance.Map.MapHeight - 1));
+        _exitDirection.SelectedItem = _selected.ExitDirection;
 
         _availabilityMode.SelectedItem = _selected.AvailabilityMode;
         _manualAvailable.Checked = _selected.ManualAvailable;
@@ -513,8 +610,10 @@ public sealed class FrmDungeonConfiguration : DarkForm
                      _name, _description, _image, _location, _associatedQuest, _rank,
                      _minimumLevel, _recommendedLevel, _maximumLevel,
                      _minimumParty, _maximumParty, _timeLimit, _premiumRequired, _sortOrder,
-                     _finalBoss, _completionExperience, _completionItem,
+                     _maps, _npcRespawn, _maxLives,
+                     _requireFinalBoss, _requireAllMonsters, _finalBoss, _completionExperience, _completionItem,
                      _completionItemQuantity, _completionEvent, _failureEvent,
+                     _exitMap, _exitX, _exitY, _exitDirection,
                      _availabilityMode, _manualAvailable, _days, _startTime, _endTime,
                  })
             control.Enabled = enabled;
@@ -542,8 +641,17 @@ public sealed class FrmDungeonConfiguration : DarkForm
 
         _selected.Name = string.IsNullOrWhiteSpace(_name.Text) ? "Dungeon" : _name.Text.Trim();
         _selected.Description = _description.Text ?? string.Empty;
-        _selected.Image = _image.Text?.Trim() ?? string.Empty;
+        _selected.Image = string.Equals(_image.Text, "None", StringComparison.OrdinalIgnoreCase)
+            ? string.Empty
+            : _image.Text?.Trim() ?? string.Empty;
         _selected.Location = _location.Text?.Trim() ?? string.Empty;
+        _selected.MapIds = _maps.CheckedItems
+            .Cast<IdChoice>()
+            .Select(choice => choice.Id)
+            .Distinct()
+            .ToArray();
+        _selected.NpcRespawnEnabled = _npcRespawn.Checked;
+        _selected.MaxLives = (int)_maxLives.Value;
         _selected.AssociatedQuestId = (_associatedQuest.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
         _selected.Rank = _rank.SelectedItem is DungeonRank rank ? rank : DungeonRank.F;
         _selected.MinimumLevel = (int)_minimumLevel.Value;
@@ -554,12 +662,23 @@ public sealed class FrmDungeonConfiguration : DarkForm
         _selected.TimeLimitMinutes = (int)_timeLimit.Value;
         _selected.PremiumRequired = _premiumRequired.Checked;
         _selected.SortOrder = (int)_sortOrder.Value;
+        _selected.CompletionRequirements = DungeonCompletionRequirement.None;
+        if (_requireFinalBoss.Checked)
+            _selected.CompletionRequirements |= DungeonCompletionRequirement.DefeatFinalBoss;
+        if (_requireAllMonsters.Checked)
+            _selected.CompletionRequirements |= DungeonCompletionRequirement.DefeatAllMonsters;
         _selected.FinalBossNpcId = (_finalBoss.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
         _selected.CompletionExperience = (long)_completionExperience.Value;
         _selected.CompletionItemId = (_completionItem.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
         _selected.CompletionItemQuantity = (int)_completionItemQuantity.Value;
         _selected.CompletionCommonEventId = (_completionEvent.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
         _selected.FailureCommonEventId = (_failureEvent.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
+        _selected.ExitMapId = (_exitMap.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
+        _selected.ExitX = (byte)_exitX.Value;
+        _selected.ExitY = (byte)_exitY.Value;
+        _selected.ExitDirection = _exitDirection.SelectedItem is WarpDirection exitDirection
+            ? exitDirection
+            : WarpDirection.Down;
         _selected.AvailabilityMode =
             _availabilityMode.SelectedItem is DungeonAvailabilityMode mode
                 ? mode
@@ -597,6 +716,46 @@ public sealed class FrmDungeonConfiguration : DarkForm
 
         PacketSender.SendSaveDungeonConfiguration(_working.ToJson());
         Close();
+    }
+
+    private void FillDungeonImages()
+    {
+        var folder = Path.Combine("resources", "dungeons");
+        Directory.CreateDirectory(folder);
+
+        _image.Items.Clear();
+        _image.Items.Add("None");
+        foreach (var file in Directory.GetFiles(folder, "*.png")
+                     .Select(Path.GetFileName)
+                     .Where(name => !string.IsNullOrWhiteSpace(name))
+                     .OrderBy(name => name, StringComparer.OrdinalIgnoreCase))
+        {
+            _image.Items.Add(file!);
+        }
+        _image.SelectedIndex = 0;
+    }
+
+    private void FillDungeonMaps()
+    {
+        _maps.Items.Clear();
+        _exitMap.Items.Clear();
+        _exitMap.Items.Add(new IdChoice(Guid.Empty, "None"));
+
+        foreach (var map in MapList.OrderedMaps)
+        {
+            var choice = new IdChoice(map.MapId, map.Name);
+            _maps.Items.Add(choice);
+            _exitMap.Items.Add(choice);
+        }
+
+        _exitMap.SelectedIndex = 0;
+    }
+
+    private static void SelectString(DarkComboBox combo, string? value)
+    {
+        var desired = string.IsNullOrWhiteSpace(value) ? "None" : value;
+        var index = combo.FindStringExact(desired);
+        combo.SelectedIndex = index >= 0 ? index : 0;
     }
 
     private void FillQuestChoices()

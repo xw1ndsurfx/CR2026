@@ -27,4 +27,6 @@ public enum TextureType
 
     Misc,
 
+    Dungeon,
+
 }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Intersect.Framework.Core.GameObjects.Maps;
 
 namespace Intersect.Framework.Core.Dungeons;
 
@@ -12,6 +13,14 @@ public enum DungeonRank
     B = 4,
     A = 5,
     S = 6,
+}
+
+[Flags]
+public enum DungeonCompletionRequirement
+{
+    None = 0,
+    DefeatFinalBoss = 1 << 0,
+    DefeatAllMonsters = 1 << 1,
 }
 
 public enum DungeonAvailabilityMode
@@ -42,6 +51,9 @@ public sealed class DungeonDefinition
     public string Description { get; set; } = string.Empty;
     public string Image { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
+    public Guid[] MapIds { get; set; } = [];
+    public bool NpcRespawnEnabled { get; set; } = true;
+    public int MaxLives { get; set; } = 3;
     public Guid AssociatedQuestId { get; set; }
     public DungeonRank Rank { get; set; } = DungeonRank.F;
     public int MinimumLevel { get; set; } = 1;
@@ -52,13 +64,20 @@ public sealed class DungeonDefinition
     public int TimeLimitMinutes { get; set; }
     public bool PremiumRequired { get; set; }
 
-    // Completion / boss
+    // Completion / objectives
+    public DungeonCompletionRequirement CompletionRequirements { get; set; } = DungeonCompletionRequirement.DefeatFinalBoss;
     public Guid FinalBossNpcId { get; set; }
     public long CompletionExperience { get; set; }
     public Guid CompletionItemId { get; set; }
     public int CompletionItemQuantity { get; set; }
     public Guid CompletionCommonEventId { get; set; }
     public Guid FailureCommonEventId { get; set; }
+
+    // Exit / completion warp
+    public Guid ExitMapId { get; set; }
+    public byte ExitX { get; set; }
+    public byte ExitY { get; set; }
+    public WarpDirection ExitDirection { get; set; } = WarpDirection.Down;
 
     public DungeonAvailabilityMode AvailabilityMode { get; set; } = DungeonAvailabilityMode.Always;
     public bool ManualAvailable { get; set; } = true;
@@ -75,6 +94,10 @@ public sealed class DungeonDefinition
         (Description?.Length ?? 0) <= 2_000 &&
         (Image?.Length ?? 0) <= 255 &&
         (Location?.Length ?? 0) <= 255 &&
+        (MapIds ?? []).Length <= 256 &&
+        (MapIds ?? []).All(id => id != Guid.Empty) &&
+        (MapIds ?? []).Distinct().Count() == (MapIds ?? []).Length &&
+        MaxLives is >= 1 and <= 99 &&
         MinimumLevel is >= 1 and <= 1_000_000 &&
         RecommendedLevel is >= 1 and <= 1_000_000 &&
         MaximumLevel is >= 0 and <= 1_000_000 &&
@@ -127,6 +150,7 @@ public sealed class DungeonConfiguration
             dungeon.Description ??= string.Empty;
             dungeon.Image ??= string.Empty;
             dungeon.Location ??= string.Empty;
+            dungeon.MapIds ??= [];
         }
 
         if (!value.IsStructurallyValid)

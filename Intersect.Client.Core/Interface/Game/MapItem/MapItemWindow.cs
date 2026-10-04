@@ -156,11 +156,38 @@ public partial class MapItemWindow
             mLastItemScan = Timing.Global.Milliseconds + mScanTimer;
         }
 
+        // Keep the loot panel close to the action instead of hidden at a
+        // fixed screen-layout position.
+        if (mFoundItems)
+        {
+            PositionUnderPlayer();
+        }
+
         // Do we display our window?
         if (mFoundItems != mMapItemWindow.IsVisibleInTree)
         {
             mMapItemWindow.IsVisibleInTree = mFoundItems;
         }
+    }
+
+    private void PositionUnderPlayer()
+    {
+        if (Globals.Me == null)
+        {
+            return;
+        }
+
+        var canvas = Interface.GameUi.GameCanvas;
+        var x = (int)Math.Round(Globals.Me.Origin.X - mMapItemWindow.Width / 2f);
+        var y = (int)Math.Round(Globals.Me.Origin.Y + 64f);
+
+        var maxX = Math.Max(4, canvas.Width - mMapItemWindow.Width - 4);
+        var maxY = Math.Max(4, canvas.Height - mMapItemWindow.Height - 4);
+
+        mMapItemWindow.SetPosition(
+            Math.Clamp(x, 4, maxX),
+            Math.Clamp(y, 4, maxY)
+        );
     }
 
     private void CreateItemContainer()
