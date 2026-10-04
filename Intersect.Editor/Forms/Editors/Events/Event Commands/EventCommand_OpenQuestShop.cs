@@ -37,9 +37,9 @@ public sealed class EventCommand_OpenQuestShop : UserControl
         {
             Text = "Quest Shop",
             AutoSize = true,
-            Location = new Point(18, 42),
+            Location = new System.Drawing.Point(18, 42),
         };
-        _shops.Location = new Point(120, 36);
+        _shops.Location = new System.Drawing.Point(120, 36);
 
         foreach (var shop in QuestShopConfiguration.Instance.Shops
                      .OrderBy(shop => shop.SortOrder)
@@ -59,8 +59,8 @@ public sealed class EventCommand_OpenQuestShop : UserControl
         if (_shops.SelectedIndex < 0 && _shops.Items.Count > 0)
             _shops.SelectedIndex = 0;
 
-        var save = new DarkButton { Text = "Save", Width = 100, Height = 30, Location = new Point(330, 105) };
-        var cancel = new DarkButton { Text = "Cancel", Width = 100, Height = 30, Location = new Point(438, 105) };
+        var save = new DarkButton { Text = "Save", Width = 100, Height = 30, Location = new System.Drawing.Point(330, 105) };
+        var cancel = new DarkButton { Text = "Cancel", Width = 100, Height = 30, Location = new System.Drawing.Point(438, 105) };
         save.Click += (_, _) =>
         {
             if (_shops.SelectedItem is ShopChoice choice)
