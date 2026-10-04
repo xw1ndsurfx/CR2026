@@ -206,7 +206,10 @@ public sealed class FrmRoyalStylistConfiguration : DarkForm
         add.Click += (_, _) =>
         {
             CommitSelected();
-            var stylist = new RoyalStylistDefinition();
+            var stylist = new RoyalStylistDefinition
+            {
+                CurrencyItemId = FindDefaultCurrencyId(),
+            };
             _stylists.Add(stylist);
             RefreshList(stylist.Id);
         };
@@ -349,6 +352,25 @@ public sealed class FrmRoyalStylistConfiguration : DarkForm
         table.Controls.Add(control, 1, row);
     }
 
+    private static Guid FindDefaultCurrencyId()
+    {
+        var compatible = MiniGameCurrency.CompatibleItems(
+                ItemDescriptor.Lookup.Values
+                    .OfType<ItemDescriptor>())
+            .ToArray();
+
+        var aureons = compatible.FirstOrDefault(item =>
+            string.Equals(
+                MiniGameCurrency.DisplayName(item),
+                "Aureons",
+                StringComparison.OrdinalIgnoreCase
+            ));
+
+        return aureons?.Id ??
+               compatible.FirstOrDefault()?.Id ??
+               Guid.Empty;
+    }
+
     private void PopulateCurrencies()
     {
         _currency.Items.Clear();
@@ -369,6 +391,12 @@ public sealed class FrmRoyalStylistConfiguration : DarkForm
         }
 
         _currency.SelectedIndex = 0;
+
+        var defaultCurrencyId = FindDefaultCurrencyId();
+        if (defaultCurrencyId != Guid.Empty)
+        {
+            SelectCurrency(defaultCurrencyId);
+        }
     }
 
     private void PopulateStyles()
