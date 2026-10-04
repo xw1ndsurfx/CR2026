@@ -56,6 +56,18 @@ internal static class DungeonRunRuntime
             return false;
         }
 
+        if (changeInstance && instanceType == MapInstanceType.Overworld)
+        {
+            error = "Dungeons cannot start in the Overworld instance. Choose Personal, Guild or Shared.";
+            return false;
+        }
+
+        if (!changeInstance && player.MapInstanceId == Guid.Empty)
+        {
+            error = "Change instance must be enabled when starting a dungeon from the Overworld.";
+            return false;
+        }
+
         var party = player.Party?.Where(member => member is { IsOnline: true }).ToList() ?? [];
         if (party.Count == 0)
             party.Add(player);
