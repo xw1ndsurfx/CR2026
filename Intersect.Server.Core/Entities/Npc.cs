@@ -1094,11 +1094,9 @@ public partial class Npc : Entity
 
                                         if (fleeing && tempTarget != null)
                                         {
-                                            nextPathDirection = ChooseSmartMovementDirection(
-                                                OppositeDirection(nextPathDirection),
-                                                null,
-                                                tempTarget,
-                                                true
+                                            nextPathDirection = ChooseFleeMovementDirection(
+                                                nextPathDirection,
+                                                tempTarget
                                             );
                                         }
 
@@ -1142,21 +1140,30 @@ public partial class Npc : Entity
 
                                             if (!blockerAttacked)
                                             {
-                                                var detourDirection = ChooseSmartMovementDirection(
-                                                    nextPathDirection,
-                                                    pathTarget,
-                                                    fleeing ? tempTarget : null,
-                                                    fleeing
-                                                );
-
-                                                if (detourDirection > Direction.None &&
-                                                    detourDirection != nextPathDirection)
+                                                if (Descriptor.SmartCombatMovement)
                                                 {
-                                                    Move(detourDirection, null);
-                                                    _lastSmartMoveDirection = detourDirection;
+                                                    var detourDirection = ChooseSmartMovementDirection(
+                                                        nextPathDirection,
+                                                        pathTarget,
+                                                        fleeing ? tempTarget : null,
+                                                        fleeing
+                                                    );
+
+                                                    if (detourDirection > Direction.None &&
+                                                        detourDirection != nextPathDirection)
+                                                    {
+                                                        Move(detourDirection, null);
+                                                        _lastSmartMoveDirection = detourDirection;
+                                                    }
+                                                    else
+                                                    {
+                                                        mPathFinder.PathFailed(timeMs);
+                                                    }
                                                 }
                                                 else
                                                 {
+                                                    // Smart combat movement is opt-in. When disabled,
+                                                    // preserve Intersect's legacy pathfinder behavior.
                                                     mPathFinder.PathFailed(timeMs);
                                                 }
                                             }
@@ -1224,11 +1231,9 @@ public partial class Npc : Entity
                             var fleed = false;
                             if (tempTarget != null && fleeing)
                             {
-                                var dir = ChooseSmartMovementDirection(
-                                    OppositeDirection(DirectionToTarget(tempTarget)),
-                                    null,
-                                    tempTarget,
-                                    true
+                                var dir = ChooseFleeMovementDirection(
+                                    DirectionToTarget(tempTarget),
+                                    tempTarget
                                 );
 
                                 if (dir > Direction.None &&
@@ -1284,23 +1289,29 @@ public partial class Npc : Entity
                     {
                         CheckForResetLocation();
 
-                        if (targetMap != Guid.Empty || LastRandomMove >= Timing.Global.Milliseconds || IsCasting)
+                        // A tactical combat decision already handled this movement tick.
+                        // Do not fall through into idle roaming/turning after Hold Position,
+                        // ranged spacing, caster spacing, or kiting logic.
+                        if (!tacticalMovementHandled)
                         {
-                            return;
-                        }
+                            if (targetMap != Guid.Empty || LastRandomMove >= Timing.Global.Milliseconds || IsCasting)
+                            {
+                                return;
+                            }
 
-                        switch (Descriptor.Movement)
-                        {
-                            case (int)NpcMovement.StandStill:
-                                LastRandomMove = Timing.Global.Milliseconds + Randomization.Next(1000, 3000);
-                                return;
-                            case (int)NpcMovement.TurnRandomly:
-                                ChangeDir(Randomization.NextDirection());
-                                LastRandomMove = Timing.Global.Milliseconds + Randomization.Next(1000, 3000);
-                                return;
-                            case (int)NpcMovement.MoveRandomly:
-                                MoveRandomly();
-                                break;
+                            switch (Descriptor.Movement)
+                            {
+                                case (int)NpcMovement.StandStill:
+                                    LastRandomMove = Timing.Global.Milliseconds + Randomization.Next(1000, 3000);
+                                    return;
+                                case (int)NpcMovement.TurnRandomly:
+                                    ChangeDir(Randomization.NextDirection());
+                                    LastRandomMove = Timing.Global.Milliseconds + Randomization.Next(1000, 3000);
+                                    return;
+                                case (int)NpcMovement.MoveRandomly:
+                                    MoveRandomly();
+                                    break;
+                            }
                         }
 
                         if (fleeing)
@@ -1723,6 +1734,12 @@ public partial class Npc : Entity
 
     private void MoveRandomly()
     {
+        if (!Descriptor.SmartCombatMovement)
+        {
+            MoveRandomlyLegacy();
+            return;
+        }
+
         EnsureRoamHome();
 
         if (_randomMoveRange <= 0)
@@ -1783,6 +1800,80 @@ public partial class Npc : Entity
             _randomMoveRange = 0;
             LastRandomMove += Randomization.Next(350, 900);
         }
+    }
+
+    private void MoveRandomlyLegacy()
+    {
+        if (_randomMoveRange <= 0)
+        {
+            Dir = Randomization.NextDirection();
+            LastRandomMove = Timing.Global.Milliseconds + Randomization.Next(1000, 2000);
+            _randomMoveRange =
+                (byte)Randomization.Next(
+                    0,
+                    Descriptor.SightRange + Randomization.Next(0, 3)
+                );
+        }
+        else if (CanMoveInDirection(Dir))
+        {
+            foreach (var status in CachedStatuses)
+            {
+                if (status.Type is SpellEffect.Stun or SpellEffect.Snare or SpellEffect.Sleep)
+                {
+                    return;
+                }
+            }
+
+            Move(Dir, null);
+            LastRandomMove = Timing.Global.Milliseconds + (long)GetMovementTime();
+
+            if (_randomMoveRange <= Randomization.Next(0, 3))
+            {
+                Dir = Randomization.NextDirection();
+            }
+
+            _randomMoveRange--;
+        }
+        else
+        {
+            Dir = Randomization.NextDirection();
+        }
+    }
+
+    private Direction ChooseFleeMovementDirection(
+        Direction towardTarget,
+        Entity target
+    )
+    {
+        if (Descriptor.SmartCombatMovement)
+        {
+            return ChooseSmartMovementDirection(
+                OppositeDirection(towardTarget),
+                null,
+                target,
+                true
+            );
+        }
+
+        // Keep the original Intersect flee behavior when smart movement is off.
+        // This is intentionally separate from tactical combat AI.
+        return LegacyFleeDirection(towardTarget);
+    }
+
+    private static Direction LegacyFleeDirection(Direction direction)
+    {
+        return direction switch
+        {
+            Direction.Up => Direction.Down,
+            Direction.Down => Direction.Up,
+            Direction.Left => Direction.Right,
+            Direction.Right => Direction.Left,
+            Direction.UpLeft => Direction.UpRight,
+            Direction.UpRight => Direction.UpLeft,
+            Direction.DownRight => Direction.DownLeft,
+            Direction.DownLeft => Direction.DownRight,
+            _ => direction,
+        };
     }
 
     private void EnsureRoamHome()
