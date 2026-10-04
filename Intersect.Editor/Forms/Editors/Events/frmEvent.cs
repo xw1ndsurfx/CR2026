@@ -794,6 +794,10 @@ public partial class FrmEvent : Form
                 tmpCommand = new OpenQuestShopCommand();
 
                 break;
+            case EventCommandType.OpenRoyalStylist:
+                tmpCommand = new OpenRoyalStylistCommand();
+
+                break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -833,6 +837,7 @@ public partial class FrmEvent : Form
         InitializeComponent();
         AddMarketplaceCommand();
         AddQuestShopCommand();
+        AddRoyalStylistCommand();
         AddDungeonCommands();
         AddProfessionCommands();
         InitializeQuestArrowControls();
@@ -872,6 +877,26 @@ public partial class FrmEvent : Form
             {
                 Name = "openquestshop",
                 Tag = (int)EventCommandType.OpenQuestShop,
+            }
+        );
+    }
+
+    private void AddRoyalStylistCommand()
+    {
+        var shopNode = lstCommands.Nodes.Cast<TreeNode>()
+            .FirstOrDefault(node => node.Name == "shopandbank");
+        if (shopNode == null ||
+            shopNode.Nodes.Cast<TreeNode>()
+                .Any(node => node.Name == "openroyalstylist"))
+        {
+            return;
+        }
+
+        shopNode.Nodes.Add(
+            new TreeNode("Open Royal Stylist")
+            {
+                Name = "openroyalstylist",
+                Tag = (int)EventCommandType.OpenRoyalStylist,
             }
         );
     }
@@ -1678,6 +1703,9 @@ public partial class FrmEvent : Form
                 break;
             case EventCommandType.OpenQuestShop:
                 cmdWindow = new EventCommand_OpenQuestShop((OpenQuestShopCommand)command, this);
+                break;
+            case EventCommandType.OpenRoyalStylist:
+                cmdWindow = new EventCommand_OpenRoyalStylist((OpenRoyalStylistCommand)command, this);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
