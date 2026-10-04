@@ -9,6 +9,7 @@ using Intersect.GameObjects;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
 using Intersect.Server.LogiCoins;
+using Intersect.Server.Maps;
 using Intersect.Server.Networking;
 
 namespace Intersect.Server.Dungeons;
@@ -20,9 +21,14 @@ internal static class DungeonRunRuntime
         public required DungeonDefinition Dungeon { get; init; }
         public required Guid MapInstanceId { get; init; }
         public required Guid EntryMapId { get; init; }
+        public required byte EntryX { get; init; }
+        public required byte EntryY { get; init; }
+        public required Direction EntryDirection { get; init; }
         public required long StartedAtUnixMilliseconds { get; init; }
         public required long EndAtUnixMilliseconds { get; init; }
+        public required int LivesRemaining { get; set; }
         public ConcurrentDictionary<Guid, byte> Participants { get; } = [];
+        public bool BossDefeated { get; set; }
         public bool Finished { get; set; }
     }
 
@@ -54,8 +60,6 @@ internal static class DungeonRunRuntime
         if (party.Count == 0)
             party.Add(player);
 
-        // Shared dungeon instances are entered as a Party. All other instance
-        // types behave like Warp and only move the player that triggered the Event.
         var sharedParty = changeInstance && instanceType == MapInstanceType.Shared && party.Count > 1;
         List<Player> participants = sharedParty ? party : [player];
 
@@ -93,19 +97,19 @@ internal static class DungeonRunRuntime
             }
         }
 
-        // Match Warp semantics. A Shared instance without another Party member
-        // falls back to Personal so solo players still get an isolated dungeon.
         MapInstanceType? requestedInstanceType = changeInstance
             ? instanceType == MapInstanceType.Shared && !sharedParty
                 ? MapInstanceType.Personal
                 : instanceType
             : null;
 
+        var entryDirection = ResolveDirection(player, direction);
+
         player.Warp(
             mapId,
             x,
             y,
-            ResolveDirection(player, direction),
+            entryDirection,
             adminWarp: false,
             zOverride: 0,
             mapSave: false,
@@ -116,7 +120,7 @@ internal static class DungeonRunRuntime
         var instanceId = player.MapInstanceId;
         if (instanceId == Guid.Empty)
         {
-            error = "The dungeon instance could not be created.";
+            error = "Dungeons require a non-overworld map instance. Choose Personal, Guild or Shared.";
             return false;
         }
 
@@ -141,6 +145,15 @@ internal static class DungeonRunRuntime
             }
         }
 
+        // Pre-create every configured dungeon map in this same instance so
+        // monster counting and no-respawn behavior are deterministic.
+        foreach (var dungeonMapId in GetDungeonMapIds(dungeon, mapId))
+        {
+            var controller = MapController.Get(dungeonMapId);
+            if (controller != null && !controller.TryGetInstance(instanceId, out _))
+                controller.TryCreateInstance(instanceId, out _, player);
+        }
+
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var end = dungeon.TimeLimitMinutes > 0
             ? now + dungeon.TimeLimitMinutes * 60_000L
@@ -151,8 +164,12 @@ internal static class DungeonRunRuntime
             Dungeon = dungeon,
             MapInstanceId = instanceId,
             EntryMapId = mapId,
+            EntryX = x,
+            EntryY = y,
+            EntryDirection = entryDirection,
             StartedAtUnixMilliseconds = now,
             EndAtUnixMilliseconds = end,
+            LivesRemaining = Math.Max(1, dungeon.MaxLives),
         };
 
         foreach (var member in participants)
@@ -172,14 +189,8 @@ internal static class DungeonRunRuntime
             RunsByInstance[instanceId] = run;
         }
 
-        Broadcast(
-            run,
-            DungeonRunStatus.Active,
-            dungeon.FinalBossNpcId == Guid.Empty
-                ? "Defeat the dungeon encounter."
-                : "Defeat the final boss."
-        );
-
+        Broadcast(run, DungeonRunStatus.Active, BuildObjectiveText(run));
+        EvaluateCompletion(run);
         return true;
     }
 
@@ -187,6 +198,30 @@ internal static class DungeonRunRuntime
         direction == WarpDirection.Retain
             ? player.Dir
             : (Direction)(direction - 1);
+
+    private static Guid[] GetDungeonMapIds(DungeonDefinition dungeon, Guid entryMapId)
+    {
+        var configured = (dungeon.MapIds ?? [])
+            .Where(id => id != Guid.Empty)
+            .Distinct()
+            .ToArray();
+
+        return configured.Length > 0 ? configured : [entryMapId];
+    }
+
+    private static bool IsDungeonMap(Run run, Guid mapId) =>
+        GetDungeonMapIds(run.Dungeon, run.EntryMapId).Contains(mapId);
+
+    internal static bool ShouldRespawnNpcs(Guid mapId, Guid mapInstanceId)
+    {
+        lock (Gate)
+        {
+            return !RunsByInstance.TryGetValue(mapInstanceId, out var run) ||
+                   run.Finished ||
+                   !IsDungeonMap(run, mapId) ||
+                   run.Dungeon.NpcRespawnEnabled;
+        }
+    }
 
     internal static void OnNpcDied(Npc npc)
     {
@@ -196,15 +231,59 @@ internal static class DungeonRunRuntime
         Run? run;
         lock (Gate)
         {
-            if (!RunsByInstance.TryGetValue(npc.MapInstanceId, out run) || run.Finished)
+            if (!RunsByInstance.TryGetValue(npc.MapInstanceId, out run) ||
+                run.Finished ||
+                !IsDungeonMap(run, npc.MapId))
                 return;
         }
 
-        if (run.Dungeon.FinalBossNpcId == Guid.Empty ||
-            npc.Descriptor?.Id != run.Dungeon.FinalBossNpcId)
-            return;
+        if (run.Dungeon.FinalBossNpcId != Guid.Empty &&
+            npc.Descriptor?.Id == run.Dungeon.FinalBossNpcId)
+        {
+            run.BossDefeated = true;
+        }
 
-        Complete(run);
+        EvaluateCompletion(run);
+        if (!run.Finished)
+            Broadcast(run, DungeonRunStatus.Active, BuildObjectiveText(run));
+    }
+
+    internal static bool TryHandlePlayerDeath(Player player)
+    {
+        if (player == null || player.MapInstanceId == Guid.Empty)
+            return false;
+
+        Run? run;
+        lock (Gate)
+        {
+            if (!RunsByInstance.TryGetValue(player.MapInstanceId, out run) ||
+                run.Finished ||
+                !run.Participants.ContainsKey(player.Id))
+                return false;
+
+            run.LivesRemaining = Math.Max(0, run.LivesRemaining - 1);
+        }
+
+        if (run.LivesRemaining <= 0)
+        {
+            Fail(run, "NO LIVES REMAINING", reviveDeadPlayers: true);
+            return true;
+        }
+
+        Broadcast(
+            run,
+            DungeonRunStatus.Active,
+            $"LIFE LOST • {run.LivesRemaining}/{run.Dungeon.MaxLives} remaining"
+        );
+
+        player.RespawnInDungeon(
+            run.EntryMapId,
+            run.EntryX,
+            run.EntryY,
+            run.EntryDirection
+        );
+
+        return true;
     }
 
     internal static void Update(long nowMs)
@@ -228,7 +307,62 @@ internal static class DungeonRunRuntime
         }
 
         foreach (var run in expired)
-            Fail(run, "TIME EXPIRED");
+            Fail(run, "TIME EXPIRED", reviveDeadPlayers: false);
+    }
+
+    private static void EvaluateCompletion(Run run)
+    {
+        if (run.Finished)
+            return;
+
+        var requirements = run.Dungeon.CompletionRequirements;
+        if (requirements == DungeonCompletionRequirement.None)
+            requirements = DungeonCompletionRequirement.DefeatFinalBoss;
+
+        var bossDone =
+            (requirements & DungeonCompletionRequirement.DefeatFinalBoss) == 0 ||
+            run.BossDefeated;
+
+        var allMonstersDone =
+            (requirements & DungeonCompletionRequirement.DefeatAllMonsters) == 0 ||
+            CountAliveMonsters(run) == 0;
+
+        if (bossDone && allMonstersDone)
+            Complete(run);
+    }
+
+    private static int CountAliveMonsters(Run run)
+    {
+        var count = 0;
+        foreach (var mapId in GetDungeonMapIds(run.Dungeon, run.EntryMapId))
+        {
+            if (!MapController.TryGetInstanceFromMap(mapId, run.MapInstanceId, out var instance))
+                continue;
+
+            count += instance
+                .GetEntities()
+                .OfType<Npc>()
+                .Count(npc => !npc.IsDead);
+        }
+
+        return count;
+    }
+
+    private static string BuildObjectiveText(Run run)
+    {
+        var requirements = run.Dungeon.CompletionRequirements;
+        if (requirements == DungeonCompletionRequirement.None)
+            requirements = DungeonCompletionRequirement.DefeatFinalBoss;
+
+        var parts = new List<string>();
+
+        if ((requirements & DungeonCompletionRequirement.DefeatFinalBoss) != 0)
+            parts.Add(run.BossDefeated ? "Boss defeated" : "Defeat final boss");
+
+        if ((requirements & DungeonCompletionRequirement.DefeatAllMonsters) != 0)
+            parts.Add($"{CountAliveMonsters(run)} monsters remaining");
+
+        return parts.Count == 0 ? "Complete the dungeon." : string.Join(" • ", parts);
     }
 
     private static void Complete(Run run)
@@ -240,7 +374,9 @@ internal static class DungeonRunRuntime
             run.Finished = true;
         }
 
-        foreach (var player in GetParticipants(run))
+        var participants = GetParticipants(run).ToArray();
+
+        foreach (var player in participants)
         {
             player.UpdateDungeonQuestTasks(run.Dungeon.Id);
 
@@ -258,6 +394,15 @@ internal static class DungeonRunRuntime
                 );
             }
 
+            player.SendPacket(
+                new DungeonRewardNotificationPacket(
+                    run.Dungeon.Name,
+                    run.Dungeon.CompletionExperience,
+                    run.Dungeon.CompletionItemId,
+                    run.Dungeon.CompletionItemQuantity
+                )
+            );
+
             if (run.Dungeon.CompletionCommonEventId != Guid.Empty &&
                 EventDescriptor.Get(run.Dungeon.CompletionCommonEventId) is { } completionEvent)
             {
@@ -267,11 +412,14 @@ internal static class DungeonRunRuntime
 
         Broadcast(run, DungeonRunStatus.Completed, "DUNGEON CLEARED");
 
+        foreach (var player in participants)
+            WarpToExit(player, run, reviveIfDead: false);
+
         lock (Gate)
             RunsByInstance.Remove(run.MapInstanceId);
     }
 
-    private static void Fail(Run run, string reason)
+    private static void Fail(Run run, string reason, bool reviveDeadPlayers)
     {
         lock (Gate)
         {
@@ -293,13 +441,50 @@ internal static class DungeonRunRuntime
         }
 
         foreach (var player in participants)
-        {
-            if (player.MapInstanceId == run.MapInstanceId)
-                player.WarpToLastOverworldLocation(false);
-        }
+            WarpToExit(player, run, reviveIfDeadPlayers && player.IsDead);
 
         lock (Gate)
             RunsByInstance.Remove(run.MapInstanceId);
+    }
+
+    private static void WarpToExit(Player player, Run run, bool reviveIfDead)
+    {
+        if (run.Dungeon.ExitMapId != Guid.Empty)
+        {
+            var direction = run.Dungeon.ExitDirection == WarpDirection.Retain
+                ? player.Dir
+                : (Direction)(run.Dungeon.ExitDirection - 1);
+
+            if (reviveIfDead)
+            {
+                player.RespawnFromDungeon(
+                    run.Dungeon.ExitMapId,
+                    run.Dungeon.ExitX,
+                    run.Dungeon.ExitY,
+                    direction
+                );
+            }
+            else
+            {
+                player.Warp(
+                    run.Dungeon.ExitMapId,
+                    run.Dungeon.ExitX,
+                    run.Dungeon.ExitY,
+                    direction,
+                    mapInstanceType: MapInstanceType.Overworld
+                );
+            }
+
+            return;
+        }
+
+        if (reviveIfDead)
+        {
+            player.Reset();
+            PacketSender.SendEntityDataToProximity(player);
+        }
+
+        player.WarpToLastOverworldLocation(false);
     }
 
     private static IEnumerable<Player> GetParticipants(Run run)
@@ -330,6 +515,11 @@ internal static class DungeonRunRuntime
             run.Dungeon.Rank.ToString(),
             status,
             run.EndAtUnixMilliseconds,
-            message
+            message,
+            run.LivesRemaining,
+            run.Dungeon.MaxLives,
+            (run.Dungeon.CompletionRequirements & DungeonCompletionRequirement.DefeatAllMonsters) != 0
+                ? CountAliveMonsters(run)
+                : -1
         );
 }
