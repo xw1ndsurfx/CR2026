@@ -11,6 +11,7 @@ using Intersect.Client.Interface.Shared;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
 using Intersect.Core;
+using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Reflection;
 using Intersect.GameObjects;
@@ -37,6 +38,17 @@ public partial class CharacterCreationWindow : Window
 
     private readonly LabeledComboBox _classCombobox;
 
+    private readonly LabeledComboBox _hairCombobox;
+    private readonly LabeledComboBox _hairColorCombobox;
+    private readonly LabeledComboBox _shirtCombobox;
+    private readonly LabeledComboBox _shirtColorCombobox;
+    private readonly LabeledComboBox _pantsCombobox;
+    private readonly LabeledComboBox _pantsColorCombobox;
+    private readonly LabeledComboBox _bootsCombobox;
+    private readonly LabeledComboBox _bootsColorCombobox;
+    private readonly Button _randomizeAppearanceButton;
+    private readonly Panel _directionPanel;
+
     private readonly Panel _genderInputPanel;
     private readonly LabeledCheckBox _genderMaleCheckbox;
     private readonly LabeledCheckBox _genderFemaleCheckbox;
@@ -50,6 +62,8 @@ public partial class CharacterCreationWindow : Window
     private readonly Button _createButton;
 
     private int _displaySpriteIndex = -1;
+    private int _previewDirection;
+    private readonly Random _random = new();
     private readonly List<KeyValuePair<int, ClassSprite>> _femaleSprites = [];
     private readonly List<KeyValuePair<int, ClassSprite>> _maleSprites = [];
     private Button _backButton;
@@ -64,7 +78,7 @@ public partial class CharacterCreationWindow : Window
         _defaultFont = GameContentManager.Current.GetFont(name: "sourcesansproblack");
 
         Alignment = [Alignments.Center];
-        MinimumSize = new Point(x: 560, y: 240);
+        MinimumSize = new Point(x: 860, y: 560);
         IsClosable = false;
         IsResizable = false;
         InnerPanelPadding = new Padding(8);
@@ -133,6 +147,25 @@ public partial class CharacterCreationWindow : Window
         };
         _classCombobox.ItemSelected += classCombobox_ItemSelected;
 
+        _hairCombobox = CreateAppearanceCombo(nameof(_hairCombobox), "Hair");
+        _hairColorCombobox = CreateAppearanceCombo(nameof(_hairColorCombobox), "Hair Color");
+        _shirtCombobox = CreateAppearanceCombo(nameof(_shirtCombobox), "Shirt");
+        _shirtColorCombobox = CreateAppearanceCombo(nameof(_shirtColorCombobox), "Shirt Color");
+        _pantsCombobox = CreateAppearanceCombo(nameof(_pantsCombobox), "Pants");
+        _pantsColorCombobox = CreateAppearanceCombo(nameof(_pantsColorCombobox), "Pants Color");
+        _bootsCombobox = CreateAppearanceCombo(nameof(_bootsCombobox), "Boots");
+        _bootsColorCombobox = CreateAppearanceCombo(nameof(_bootsColorCombobox), "Boots Color");
+
+        _randomizeAppearanceButton = new Button(_propertiesPanel, name: nameof(_randomizeAppearanceButton))
+        {
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 11,
+            MinimumSize = new Point(240, 26),
+            Text = "Randomize Appearance",
+        };
+        _randomizeAppearanceButton.Clicked += (_, _) => RandomizeAppearance();
+
         _genderInputPanel = new Panel(_propertiesPanel, name: nameof(_genderInputPanel))
         {
             Dock = Pos.Top,
@@ -200,6 +233,21 @@ public partial class CharacterCreationWindow : Window
             TextureFilename = "character_preview_background.png",
         };
 
+        _directionPanel = new Panel(_previewPanel, name: nameof(_directionPanel))
+        {
+            Dock = Pos.Bottom,
+            DisplayMode = DisplayMode.FlowStartToEnd,
+            DockChildSpacing = new Padding(6),
+            Margin = new Margin(38, 0, 38, 0),
+            ShouldDrawBackground = false,
+        };
+
+        AddDirectionButton("↓ Down", 0);
+        AddDirectionButton("← Left", 1);
+        AddDirectionButton("→ Right", 2);
+        AddDirectionButton("↑ Up", 3);
+        _directionPanel.SizeToChildren(recursive: true);
+
         _buttonsPanel.SizeToChildren(recursive: true);
         _propertiesPanel.SizeToChildren(recursive: true);
     }
@@ -227,6 +275,7 @@ public partial class CharacterCreationWindow : Window
             typeof(CharacterCreationWindow).GetName(qualified: true)
         );
 
+        PopulateAppearanceControls();
         LoadClass();
         UpdateDisplay();
     }
@@ -254,117 +303,94 @@ public partial class CharacterCreationWindow : Window
         _backButton.IsVisibleInTree = !force;
         _createButton.Alignment = force ? [Alignments.Center] : [Alignments.Left];
 
-        _renderLayers = new ImagePanel[Options.Instance.Equipment.Paperdoll.Down.Count];
-        for (var i = 0; i < _renderLayers.Length; i++)
+        if (_renderLayers == null)
         {
-            _renderLayers[i] = new ImagePanel(_preview)
+            _renderLayers = new ImagePanel[Options.Instance.Equipment.Paperdoll.Down.Count];
+            for (var i = 0; i < _renderLayers.Length; i++)
             {
-                Alignment = [Alignments.Center],
-            };
+                _renderLayers[i] = new ImagePanel(_preview)
+                {
+                    Alignment = [Alignments.Center],
+                    RestrictToParent = false,
+                };
+            }
         }
 
+        UpdateDisplay();
         base.Show();
     }
 
     //Methods
     private void UpdateDisplay()
     {
-        var classDescriptor = GetClass();
+        if (_renderLayers == null)
+        {
+            return;
+        }
 
+        var classDescriptor = GetClass();
         if (classDescriptor == default || _displaySpriteIndex == -1 || classDescriptor.Sprites.Count <= 0)
         {
             foreach (var renderLayer in _renderLayers)
             {
-                renderLayer.IsVisibleInTree = false;
+                renderLayer.Hide();
             }
+
             return;
         }
 
-        var source = _genderMaleCheckbox.IsChecked ? _maleSprites[_displaySpriteIndex] : _femaleSprites[_displaySpriteIndex];
+        var source = _genderMaleCheckbox.IsChecked
+            ? _maleSprites[_displaySpriteIndex]
+            : _femaleSprites[_displaySpriteIndex];
 
-        var faceTexture = GameContentManager.Current.GetTexture(TextureType.Face, source.Value.Face);
-        if (faceTexture != default)
+        var paperdollOrder = Options.Instance.Equipment.Paperdoll.Directions[_previewDirection];
+        var appearance = GetCurrentAppearance();
+
+        for (var layerIndex = 0; layerIndex < _renderLayers.Length; layerIndex++)
         {
-            var faceLayer = _renderLayers[0];
-            var faceScale = Math.Min(
-                _preview.InnerWidth / (double)faceTexture.Width,
-                _preview.InnerHeight / (double)faceTexture.Height
+            var container = _renderLayers[layerIndex];
+            container.Texture = default;
+            container.RenderColor = Color.White;
+
+            if (layerIndex >= paperdollOrder.Count)
+            {
+                container.Hide();
+                continue;
+            }
+
+            var layerType = paperdollOrder[layerIndex];
+            if (string.Equals("Player", layerType, StringComparison.Ordinal))
+            {
+                container.Texture = Globals.ContentManager.GetTexture(TextureType.Entity, source.Value.Sprite);
+            }
+            else if (appearance.TryGetLayer(layerType, out var style, out var color))
+            {
+                container.Texture = Globals.ContentManager.GetTexture(TextureType.Paperdoll, style);
+                container.RenderColor = color;
+            }
+
+            var texture = container.Texture;
+            if (texture == default)
+            {
+                container.Hide();
+                continue;
+            }
+
+            var textureWidth = texture.Width / Options.Instance.Sprites.NormalFrames;
+            var textureHeight = texture.Height / Options.Instance.Sprites.Directions;
+            if (textureWidth <= 0 || textureHeight <= 0)
+            {
+                container.Hide();
+                continue;
+            }
+
+            container.SetTextureRect(0, _previewDirection * textureHeight, textureWidth, textureHeight);
+            _ = container.SetSize(textureWidth, textureHeight);
+            container.SetPosition(
+                (_preview.Width - textureWidth) / 2,
+                (_preview.Height - textureHeight) / 2
             );
-            var faceTextureWidth = (int)(faceTexture.Width * faceScale);
-            var faceTextureHeight = (int)(faceTexture.Height * faceScale);
-            var x = (_preview.Width - faceTextureWidth) / 2;
-            var y = (_preview.Height - faceTextureHeight) / 2;
-            faceLayer.ResetUVs();
-            faceLayer.SetBounds(x, y, faceTextureWidth, faceTextureHeight);
-            faceLayer.Texture = faceTexture;
-            faceLayer.IsVisibleInTree = true;
-
-            foreach (var renderLayer in _renderLayers.Skip(1))
-            {
-                renderLayer.IsVisibleInTree = false;
-            }
-
-            return;
-        }
-
-        // we are rendering the player facing down, then we need to know the render order of the equipments
-        for (var paperdollLayerIndex = 0; paperdollLayerIndex < Options.Instance.Equipment.Paperdoll.Down.Count; paperdollLayerIndex++)
-        {
-            var paperdollLayerType = Options.Instance.Equipment.Paperdoll.Down[paperdollLayerIndex];
-            var paperdollContainer = _renderLayers[paperdollLayerIndex];
-
-            // handle player/equip rendering, we just need to find the correct texture
-            if (string.Equals("Player", paperdollLayerType, StringComparison.Ordinal))
-            {
-                var spriteSource = source.Value.Sprite;
-                var spriteTex = Globals.ContentManager.GetTexture(TextureType.Entity, spriteSource);
-                paperdollContainer.Texture = spriteTex;
-            }
-            else
-            {
-                paperdollContainer.Texture = default;
-                continue;
-                // if (paperdollLayerIndex >= selectedPreviewMetadata.Equipment.Length)
-                // {
-                //     continue;
-                // }
-                //
-                // var equipFragment = selectedPreviewMetadata.Equipment[paperdollLayerIndex];
-                //
-                // if (equipFragment == default)
-                // {
-                //     paperdollContainer.Texture = default;
-                //     continue;
-                // }
-                //
-                // paperdollContainer.Texture = Globals.ContentManager.GetTexture(TextureType.Paperdoll, equipFragment.Name);
-                //
-                // if (paperdollContainer.Texture != default)
-                // {
-                //     paperdollContainer.RenderColor = equipFragment.RenderColor;
-                // }
-            }
-
-            var layerTexture = paperdollContainer.Texture;
-            if (layerTexture == default)
-            {
-                paperdollContainer.Hide();
-                continue;
-            }
-
-            var imgWidth = layerTexture.Width;
-            var imgHeight = layerTexture.Height;
-            var textureWidth = imgWidth / Options.Instance.Sprites.NormalFrames;
-            var textureHeight = imgHeight / Options.Instance.Sprites.Directions;
-
-            paperdollContainer.SetTextureRect(0, 0, textureWidth, textureHeight);
-            _ = paperdollContainer.SetSize(textureWidth, textureHeight);
-
-            var centerX = (_preview.Width / 2) - (paperdollContainer.Width / 2);
-            var centerY = (_preview.Height / 2) - (paperdollContainer.Height / 2);
-            paperdollContainer.SetPosition(centerX, centerY);
-
-            paperdollContainer.Show();
+            container.Show();
         }
     }
 
@@ -515,6 +541,195 @@ public partial class CharacterCreationWindow : Window
         UpdateDisplay();
     }
 
+    private LabeledComboBox CreateAppearanceCombo(string name, string label)
+    {
+        var combo = new LabeledComboBox(_propertiesPanel, name: name)
+        {
+            AutoSizeToContents = false,
+            Dock = Pos.Top,
+            Font = _defaultFont,
+            FontSize = 11,
+            Label = label,
+            MinimumSize = new Point(240, 28),
+        };
+        combo.ItemSelected += (_, _) => UpdateDisplay();
+        return combo;
+    }
+
+    private void AddDirectionButton(string text, int direction)
+    {
+        var button = new Button(_directionPanel)
+        {
+            Font = _defaultFont,
+            FontSize = 10,
+            MinimumSize = new Point(72, 24),
+            Text = text,
+        };
+        button.Clicked += (_, _) =>
+        {
+            _previewDirection = direction;
+            UpdateDisplay();
+        };
+    }
+
+    private static bool IsBaseAppearanceTexture(string name, string prefix)
+    {
+        if (string.IsNullOrWhiteSpace(name) ||
+            !name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ||
+            !name.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return !name.EndsWith("_attack.png", StringComparison.OrdinalIgnoreCase) &&
+               !name.EndsWith("_cast.png", StringComparison.OrdinalIgnoreCase) &&
+               !name.EndsWith("_idle.png", StringComparison.OrdinalIgnoreCase) &&
+               !name.EndsWith("_shoot.png", StringComparison.OrdinalIgnoreCase) &&
+               !name.EndsWith("_weapon.png", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string FriendlyAppearanceName(string fileName, string prefix)
+    {
+        var name = Path.GetFileNameWithoutExtension(fileName);
+        if (name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            name = name[prefix.Length..];
+        }
+
+        return string.Join(
+            " ",
+            name.Split('_', StringSplitOptions.RemoveEmptyEntries)
+                .Select(part => char.ToUpperInvariant(part[0]) + part[1..])
+        );
+    }
+
+    private void PopulateStyleCombo(LabeledComboBox combo, string prefix)
+    {
+        combo.ClearItems();
+        var none = combo.AddItem("None", userData: string.Empty);
+        combo.SelectedItem = none;
+
+        var names = GameContentManager.Current.GetTextureNames(TextureType.Paperdoll) ?? [];
+        foreach (var name in names
+                     .Where(value => IsBaseAppearanceTexture(value, prefix))
+                     .OrderBy(value => value, StringComparer.OrdinalIgnoreCase))
+        {
+            combo.AddItem(FriendlyAppearanceName(name, prefix), userData: name);
+        }
+
+        if (names.Any(value => IsBaseAppearanceTexture(value, prefix)))
+        {
+            var first = names
+                .Where(value => IsBaseAppearanceTexture(value, prefix))
+                .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+                .First();
+            combo.SelectByUserData(first);
+        }
+    }
+
+    private void PopulateColorCombo(LabeledComboBox combo, bool hair)
+    {
+        combo.ClearItems();
+        var colors = hair
+            ? new (string, Color)[]
+            {
+                ("Black", new Color(38, 30, 30)),
+                ("Dark Brown", new Color(74, 48, 35)),
+                ("Brown", new Color(116, 74, 46)),
+                ("Auburn", new Color(145, 67, 39)),
+                ("Blonde", new Color(210, 176, 98)),
+                ("Silver", new Color(174, 176, 181)),
+                ("White", Color.White),
+                ("Blue", new Color(61, 104, 173)),
+            }
+            : new (string, Color)[]
+            {
+                ("Navy", new Color(42, 63, 104)),
+                ("Burgundy", new Color(118, 48, 58)),
+                ("Forest", new Color(55, 99, 63)),
+                ("Brown", new Color(112, 75, 48)),
+                ("Charcoal", new Color(58, 60, 66)),
+                ("Gray", new Color(125, 127, 132)),
+                ("Cream", new Color(222, 211, 178)),
+                ("Gold", new Color(190, 151, 62)),
+            };
+
+        MenuItem? first = null;
+        foreach (var (label, color) in colors)
+        {
+            var item = combo.AddItem(label, userData: color);
+            first ??= item;
+        }
+
+        combo.SelectedItem = first;
+    }
+
+    private void PopulateAppearanceControls()
+    {
+        PopulateStyleCombo(_hairCombobox, CharacterAppearance.HairPrefix);
+        PopulateStyleCombo(_shirtCombobox, CharacterAppearance.ShirtPrefix);
+        PopulateStyleCombo(_pantsCombobox, CharacterAppearance.PantsPrefix);
+        PopulateStyleCombo(_bootsCombobox, CharacterAppearance.BootsPrefix);
+
+        PopulateColorCombo(_hairColorCombobox, hair: true);
+        PopulateColorCombo(_shirtColorCombobox, hair: false);
+        PopulateColorCombo(_pantsColorCombobox, hair: false);
+        PopulateColorCombo(_bootsColorCombobox, hair: false);
+    }
+
+    private static string SelectedStyle(LabeledComboBox combo) =>
+        combo.SelectedItem?.UserData as string ?? string.Empty;
+
+    private static Color SelectedColor(LabeledComboBox combo) =>
+        combo.SelectedItem?.UserData is Color color ? new Color(color) : Color.White;
+
+    private CharacterAppearance GetCurrentAppearance() =>
+        new CharacterAppearance
+        {
+            HairStyle = SelectedStyle(_hairCombobox),
+            HairColor = SelectedColor(_hairColorCombobox),
+            ShirtStyle = SelectedStyle(_shirtCombobox),
+            ShirtColor = SelectedColor(_shirtColorCombobox),
+            PantsStyle = SelectedStyle(_pantsCombobox),
+            PantsColor = SelectedColor(_pantsColorCombobox),
+            BootsStyle = SelectedStyle(_bootsCombobox),
+            BootsColor = SelectedColor(_bootsColorCombobox),
+        }.SanitizedCopy();
+
+    private void RandomizeAppearance()
+    {
+        RandomizeStyle(_hairCombobox, CharacterAppearance.HairPrefix);
+        RandomizeStyle(_shirtCombobox, CharacterAppearance.ShirtPrefix);
+        RandomizeStyle(_pantsCombobox, CharacterAppearance.PantsPrefix);
+        RandomizeStyle(_bootsCombobox, CharacterAppearance.BootsPrefix);
+
+        RandomizeColor(_hairColorCombobox);
+        RandomizeColor(_shirtColorCombobox);
+        RandomizeColor(_pantsColorCombobox);
+        RandomizeColor(_bootsColorCombobox);
+        UpdateDisplay();
+    }
+
+    private void RandomizeStyle(LabeledComboBox combo, string prefix)
+    {
+        var values = (GameContentManager.Current.GetTextureNames(TextureType.Paperdoll) ?? [])
+            .Where(value => IsBaseAppearanceTexture(value, prefix))
+            .ToArray();
+
+        if (values.Length > 0)
+        {
+            combo.SelectByUserData(values[_random.Next(values.Length)]);
+        }
+    }
+
+    private void RandomizeColor(LabeledComboBox combo)
+    {
+        var palette = combo == _hairColorCombobox
+            ? new[] { "Black", "Dark Brown", "Brown", "Auburn", "Blonde", "Silver", "White", "Blue" }
+            : new[] { "Navy", "Burgundy", "Forest", "Brown", "Charcoal", "Gray", "Cream", "Gold" };
+        combo.SelectByText(palette[_random.Next(palette.Length)]);
+    }
+
     void TryCreateCharacter()
     {
         var cls = GetClass();
@@ -532,7 +747,7 @@ public partial class CharacterCreationWindow : Window
         var charName = _nameInput.Text;
         var spriteKey = _genderMaleCheckbox.IsChecked ? _maleSprites[_displaySpriteIndex].Key : _femaleSprites[_displaySpriteIndex].Key;
 
-        PacketSender.SendCreateCharacter(charName, cls.Id, spriteKey);
+        PacketSender.SendCreateCharacter(charName, cls.Id, spriteKey, GetCurrentAppearance());
         Globals.WaitingOnServer = true;
         _createButton.Disable();
         ChatboxMsg.ClearMessages();

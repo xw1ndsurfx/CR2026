@@ -1,3 +1,4 @@
+using Intersect.Framework.Core;
 using Intersect.Network.Packets.Server;
 
 namespace Intersect.Client.Interface.Menu;
@@ -10,5 +11,6 @@ public record struct CharacterSelectionPreviewMetadata(
     int Level,
     string Class,
     EquipmentFragment[] Equipment,
-    string Guild
+    string Guild,
+    CharacterAppearance Appearance
 );

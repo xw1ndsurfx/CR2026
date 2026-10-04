@@ -363,24 +363,37 @@ public partial class SelectCharacterWindow : Window
             }
             else
             {
-                if (paperdollLayerIndex >= selectedPreviewMetadata.Equipment.Length)
+                var equipFragment = paperdollLayerIndex < selectedPreviewMetadata.Equipment.Length
+                    ? selectedPreviewMetadata.Equipment[paperdollLayerIndex]
+                    : default;
+
+                if (equipFragment != default)
                 {
-                    continue;
+                    paperdollContainer.Texture = Globals.ContentManager.GetTexture(
+                        TextureType.Paperdoll,
+                        equipFragment.Name
+                    );
+                    if (paperdollContainer.Texture != default)
+                    {
+                        paperdollContainer.RenderColor = equipFragment.RenderColor;
+                    }
                 }
-
-                var equipFragment = selectedPreviewMetadata.Equipment[paperdollLayerIndex];
-
-                if (equipFragment == default)
+                else if (selectedPreviewMetadata.Appearance != null &&
+                         selectedPreviewMetadata.Appearance.TryGetLayer(
+                             paperdollLayerType,
+                             out var baseStyle,
+                             out var baseColor
+                         ))
+                {
+                    paperdollContainer.Texture = Globals.ContentManager.GetTexture(
+                        TextureType.Paperdoll,
+                        baseStyle
+                    );
+                    paperdollContainer.RenderColor = baseColor;
+                }
+                else
                 {
                     paperdollContainer.Texture = default;
-                    continue;
-                }
-
-                paperdollContainer.Texture = Globals.ContentManager.GetTexture(TextureType.Paperdoll, equipFragment.Name);
-
-                if (paperdollContainer.Texture != default)
-                {
-                    paperdollContainer.RenderColor = equipFragment.RenderColor;
                 }
             }
 
