@@ -1848,14 +1848,37 @@ internal sealed partial class PacketHandler
     public void HandlePacket(IPacketSender packetSender, BankUpdatePacket packet)
     {
         var slot = packet.Slot;
+        if (slot < 0)
+        {
+            return;
+        }
+
+        // Bank updates can arrive while the bank window is closed (for example when
+        // a reward overflows into the bank). In that case BankSlots has not been
+        // initialized by BankPacket yet, so grow a lightweight cache instead of
+        // dereferencing null and crashing the client.
+        var bankSlots = Globals.BankSlots;
+        if (bankSlots == null || slot >= bankSlots.Length)
+        {
+            var requiredSize = Math.Max(slot + 1, Math.Max(Globals.BankSlotCount, bankSlots?.Length ?? 0));
+            var resizedBankSlots = new Item[requiredSize];
+            if (bankSlots != null)
+            {
+                Array.Copy(bankSlots, resizedBankSlots, bankSlots.Length);
+            }
+
+            Globals.BankSlots = resizedBankSlots;
+            bankSlots = resizedBankSlots;
+        }
+
         if (packet.ItemId != Guid.Empty)
         {
-            Globals.BankSlots[slot] = new Item();
-            Globals.BankSlots[slot].Load(packet.ItemId, packet.Quantity, packet.BagId, packet.Properties);
+            bankSlots[slot] = new Item();
+            bankSlots[slot].Load(packet.ItemId, packet.Quantity, packet.BagId, packet.Properties);
         }
         else
         {
-            Globals.BankSlots[slot] = null;
+            bankSlots[slot] = null;
         }
     }
 
