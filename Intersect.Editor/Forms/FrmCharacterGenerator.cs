@@ -82,19 +82,55 @@ public sealed class FrmCharacterGenerator : DarkForm
 
         public Dictionary<CharacterAnimation, string> Files { get; } = new();
 
+        // Several equipment packs use B_/F_ as Back/Front halves, not
+        // Boy/Female variants. Keep those halves in the same selectable family.
+        public Dictionary<CharacterAnimation, string> BackFiles { get; } = new();
+
+        public Dictionary<CharacterAnimation, string> FrontFiles { get; } = new();
+
         public string? Resolve(CharacterAnimation animation)
         {
-            if (Files.TryGetValue(animation, out var exact))
+            return ResolveFrom(Files, animation);
+        }
+
+        public string? ResolveBack(CharacterAnimation animation)
+        {
+            return ResolveFrom(BackFiles, animation);
+        }
+
+        public string? ResolveFront(CharacterAnimation animation)
+        {
+            return ResolveFrom(FrontFiles, animation);
+        }
+
+        public string? ResolveAny(CharacterAnimation animation)
+        {
+            return Resolve(animation) ?? ResolveFront(animation) ?? ResolveBack(animation);
+        }
+
+        public bool Has(CharacterAnimation animation)
+        {
+            return Files.ContainsKey(animation) ||
+                   BackFiles.ContainsKey(animation) ||
+                   FrontFiles.ContainsKey(animation);
+        }
+
+        private static string? ResolveFrom(
+            Dictionary<CharacterAnimation, string> files,
+            CharacterAnimation animation
+        )
+        {
+            if (files.TryGetValue(animation, out var exact))
             {
                 return exact;
             }
 
-            if (Files.TryGetValue(CharacterAnimation.Move, out var move))
+            if (files.TryGetValue(CharacterAnimation.Move, out var move))
             {
                 return move;
             }
 
-            return Files.Values.FirstOrDefault();
+            return files.Values.FirstOrDefault();
         }
     }
 
@@ -109,6 +145,13 @@ public sealed class FrmCharacterGenerator : DarkForm
         KeywordDriven,
     }
 
+    private enum PaperdollDepth
+    {
+        Back,
+        Normal,
+        Front,
+    }
+
     private sealed class SelectedLayer
     {
         public required string Category { get; init; }
@@ -116,6 +159,8 @@ public sealed class FrmCharacterGenerator : DarkForm
         public required string PartName { get; init; }
 
         public required string File { get; init; }
+
+        public required PaperdollDepth Depth { get; init; }
 
         public required Bitmap Bitmap { get; init; }
     }
@@ -213,6 +258,20 @@ public sealed class FrmCharacterGenerator : DarkForm
         "Staff",
         "Top",
     };
+
+    private static readonly HashSet<string> SplitDepthCategories =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Artifact",
+            "Bow",
+            "Cape",
+            "FX",
+            "Offhand",
+            "One Handed",
+            "Quiver",
+            "Rifle",
+            "Staff",
+        };
 
     private static readonly Dictionary<string, LayerRule> CategoryLayerRules =
         new(StringComparer.OrdinalIgnoreCase)
@@ -401,9 +460,6 @@ public sealed class FrmCharacterGenerator : DarkForm
         "Lines",
         "Bundles",
     };
-
-    private const int PaperdollColumns = 4;
-    private const int PaperdollDirectionRows = 4;
 
     private static readonly (CharacterAnimation Animation, string Suffix, string Label)[] AnimationDefinitions =
     {
@@ -1335,16 +1391,19 @@ public sealed class FrmCharacterGenerator : DarkForm
         const int thumbSize = 96;
         var thumbnail = new Bitmap(thumbSize, thumbSize, PixelFormat.Format32bppArgb);
 
-        var file = part.Resolve(CharacterAnimation.Move) ?? part.Files.Values.FirstOrDefault();
+        var file =
+            part.ResolveAny(CharacterAnimation.Move) ??
+            part.Files.Values.FirstOrDefault() ??
+            part.FrontFiles.Values.FirstOrDefault() ??
+            part.BackFiles.Values.FirstOrDefault();
         if (string.IsNullOrWhiteSpace(file) || !File.Exists(file))
         {
             return thumbnail;
         }
 
         using var sheet = new Bitmap(file);
-        var cell = GetLayerFrameSize(sheet);
-        var frameWidth = cell.Width;
-        var frameHeight = cell.Height;
+        var frameHeight = Math.Max(1, sheet.Height / 4);
+        var frameWidth = Math.Min(frameHeight, sheet.Width);
         var source = new Rectangle(0, 0, frameWidth, frameHeight);
 
         using var graphics = Graphics.FromImage(thumbnail);
@@ -1379,7 +1438,9 @@ public sealed class FrmCharacterGenerator : DarkForm
             return;
         }
 
-        var frameCount = GetLayerFrameCount(_previewSheet);
+        var frameHeight = Math.Max(1, _previewSheet.Height / 4);
+        var frameWidth = Math.Min(frameHeight, _previewSheet.Width);
+        var frameCount = Math.Max(1, _previewSheet.Width / frameWidth);
 
         _previewFrame = (_previewFrame + 1) % frameCount;
         ShowPreviewFrame();
@@ -1393,12 +1454,11 @@ public sealed class FrmCharacterGenerator : DarkForm
             return;
         }
 
-        var cell = GetLayerFrameSize(_previewSheet);
-        var frameWidth = cell.Width;
-        var frameHeight = cell.Height;
-        var frameCount = GetLayerFrameCount(_previewSheet);
+        var frameHeight = Math.Max(1, _previewSheet.Height / 4);
+        var frameWidth = Math.Min(frameHeight, _previewSheet.Width);
+        var frameCount = Math.Max(1, _previewSheet.Width / frameWidth);
         var frame = Math.Clamp(_previewFrame, 0, frameCount - 1);
-        var direction = Math.Clamp(_previewDirection, 0, PaperdollDirectionRows - 1);
+        var direction = Math.Clamp(_previewDirection, 0, 3);
 
         var x = frame * frameWidth;
         var y = direction * frameHeight;
@@ -2238,7 +2298,7 @@ public sealed class FrmCharacterGenerator : DarkForm
     private static string GetAnimationSummary(PartFamily part)
     {
         var missing = AnimationDefinitions
-            .Where(definition => !part.Files.ContainsKey(definition.Animation))
+            .Where(definition => !part.Has(definition.Animation))
             .Select(definition => definition.Label)
             .ToArray();
 
@@ -2250,6 +2310,7 @@ public sealed class FrmCharacterGenerator : DarkForm
     private static List<PartFamily> DiscoverFamilies(string categoryDirectory)
     {
         var groups = new Dictionary<string, PartFamily>(StringComparer.OrdinalIgnoreCase);
+        var category = Path.GetFileName(categoryDirectory);
 
         foreach (var file in Directory.GetFiles(categoryDirectory, "*.png", SearchOption.AllDirectories))
         {
@@ -2260,7 +2321,7 @@ public sealed class FrmCharacterGenerator : DarkForm
                 continue;
             }
 
-            var animation = DetectAnimation(relative, out var cleanName);
+            var animation = DetectAnimation(relative, category, out var cleanName, out var depth);
             if (string.IsNullOrWhiteSpace(cleanName))
             {
                 cleanName = Path.GetFileNameWithoutExtension(file);
@@ -2272,7 +2333,18 @@ public sealed class FrmCharacterGenerator : DarkForm
                 groups[cleanName] = family;
             }
 
-            family.Files[animation] = file;
+            switch (depth)
+            {
+                case PaperdollDepth.Back:
+                    family.BackFiles[animation] = file;
+                    break;
+                case PaperdollDepth.Front:
+                    family.FrontFiles[animation] = file;
+                    break;
+                default:
+                    family.Files[animation] = file;
+                    break;
+            }
         }
 
         return groups.Values
@@ -2280,8 +2352,14 @@ public sealed class FrmCharacterGenerator : DarkForm
             .ToList();
     }
 
-    private static CharacterAnimation DetectAnimation(string relativePath, out string cleanName)
+    private static CharacterAnimation DetectAnimation(
+        string relativePath,
+        string category,
+        out string cleanName,
+        out PaperdollDepth depth
+    )
     {
+        depth = PaperdollDepth.Normal;
         var fileName = Path.GetFileNameWithoutExtension(relativePath);
         var directorySegments = (Path.GetDirectoryName(relativePath) ?? string.Empty)
             .Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
@@ -2297,7 +2375,13 @@ public sealed class FrmCharacterGenerator : DarkForm
             }
         }
 
-        if (TryParseArtistFileName(fileName, out var artistAnimation, out var artistName))
+        if (TryParseArtistFileName(
+                fileName,
+                category,
+                out var artistAnimation,
+                out var artistName,
+                out depth
+            ))
         {
             cleanName = artistName;
             return artistAnimation;
@@ -2334,12 +2418,15 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private static bool TryParseArtistFileName(
         string fileName,
+        string category,
         out CharacterAnimation animation,
-        out string cleanName
+        out string cleanName,
+        out PaperdollDepth depth
     )
     {
         animation = CharacterAnimation.Move;
         cleanName = fileName;
+        depth = PaperdollDepth.Normal;
 
         var pieces = fileName.Split('_', StringSplitOptions.RemoveEmptyEntries);
         if (pieces.Length < 2)
@@ -2350,11 +2437,26 @@ public sealed class FrmCharacterGenerator : DarkForm
         var animationIndex = 0;
         string? genderPrefix = null;
 
-        if (pieces.Length >= 3 &&
-            (string.Equals(pieces[0], "M", StringComparison.OrdinalIgnoreCase) ||
-             string.Equals(pieces[0], "F", StringComparison.OrdinalIgnoreCase) ||
-             string.Equals(pieces[0], "B", StringComparison.OrdinalIgnoreCase)))
+        // IMPORTANT: in equipment categories the artist pack uses B_/F_ for
+        // Back/Front drawing halves. Treating them as Boy/Female caused the
+        // Female/front half to be filtered out while MALE was selected, which is
+        // why the Down/front direction showed no equipment.
+        if (SplitDepthCategories.Contains(category) &&
+            pieces.Length >= 3 &&
+            (string.Equals(pieces[0], "B", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(pieces[0], "F", StringComparison.OrdinalIgnoreCase)))
         {
+            depth = string.Equals(pieces[0], "B", StringComparison.OrdinalIgnoreCase)
+                ? PaperdollDepth.Back
+                : PaperdollDepth.Front;
+            animationIndex = 1;
+        }
+        else if (pieces.Length >= 3 &&
+                 (string.Equals(pieces[0], "M", StringComparison.OrdinalIgnoreCase) ||
+                  string.Equals(pieces[0], "F", StringComparison.OrdinalIgnoreCase) ||
+                  string.Equals(pieces[0], "B", StringComparison.OrdinalIgnoreCase)))
+        {
+            // Outside split equipment categories B/F/M keep their gender meaning.
             genderPrefix = pieces[0].ToUpperInvariant();
             animationIndex = 1;
         }
@@ -2547,6 +2649,7 @@ public sealed class FrmCharacterGenerator : DarkForm
                     Category = selected.Category,
                     PartName = selected.PartName,
                     File = selected.File,
+                    Depth = selected.Depth,
                     Bitmap = new Bitmap(source),
                 });
             }
@@ -2556,15 +2659,14 @@ public sealed class FrmCharacterGenerator : DarkForm
                 return null;
             }
 
-            // The original Corps Royaux character assets are authored as a 4x4
-            // grid, but the cells are not necessarily square. A common source
-            // sheet is 768x512, which means each frame is 192x128. Treating the
-            // row height (128) as both dimensions cropped the right side of every
-            // equipment frame. That is why One Handed / Offhand / Quiver / Staff
-            // could disappear specifically in the Down direction.
+            // Paperdoll packs are not always exported at exactly the same sheet
+            // dimensions. Using the largest sheet as the preview canvas causes a
+            // 2x accessory sheet to make the player look tiny and, more
+            // importantly, makes directional rows no longer line up.
             //
-            // Use the player/base layer as the output grid, then scale every
-            // accessory's full rectangular source cell into the matching cell.
+            // Normalize every layer per frame instead. The player/base layer is
+            // the authoritative frame size/count and accessories are sampled
+            // from their own 4 directional rows, then mapped into that canvas.
             var playerLayers = layers
                 .Where(layer =>
                     CategoryToPaperdollSlot.TryGetValue(layer.Category, out var slot) &&
@@ -2572,13 +2674,31 @@ public sealed class FrmCharacterGenerator : DarkForm
                 .ToArray();
 
             var referenceLayer = playerLayers.FirstOrDefault() ?? layers[0];
-            var referenceCell = GetLayerFrameSize(referenceLayer.Bitmap);
-            var frameWidth = referenceCell.Width;
-            var frameHeight = referenceCell.Height;
+            var frameSize = GetLayerFrameSize(referenceLayer.Bitmap);
             var frameCount = GetLayerFrameCount(referenceLayer.Bitmap);
 
-            var width = checked(frameWidth * frameCount);
-            var height = checked(frameHeight * PaperdollDirectionRows);
+            if (frameSize <= 0)
+            {
+                frameSize = layers
+                    .Select(layer => GetLayerFrameSize(layer.Bitmap))
+                    .Where(size => size > 0)
+                    .DefaultIfEmpty(128)
+                    .Min();
+            }
+
+            if (frameCount <= 0)
+            {
+                frameCount = layers
+                    .Select(layer => GetLayerFrameCount(layer.Bitmap))
+                    .DefaultIfEmpty(1)
+                    .Max();
+            }
+
+            frameSize = Math.Max(1, frameSize);
+            frameCount = Math.Max(1, frameCount);
+
+            var width = checked(frameSize * frameCount);
+            var height = checked(frameSize * 4);
             var output = new Bitmap(width, height, PixelFormat.Format32bppArgb);
 
             using var graphics = Graphics.FromImage(output);
@@ -2589,17 +2709,17 @@ public sealed class FrmCharacterGenerator : DarkForm
             graphics.PixelOffsetMode = PixelOffsetMode.Half;
             graphics.SmoothingMode = SmoothingMode.None;
 
-            for (var directionRow = 0; directionRow < PaperdollDirectionRows; directionRow++)
+            for (var directionRow = 0; directionRow < 4; directionRow++)
             {
                 var orderedLayers = OrderLayersForDirection(layers, directionRow).ToArray();
 
                 for (var frame = 0; frame < frameCount; frame++)
                 {
                     var destination = new Rectangle(
-                        frame * frameWidth,
-                        directionRow * frameHeight,
-                        frameWidth,
-                        frameHeight
+                        frame * frameSize,
+                        directionRow * frameSize,
+                        frameSize,
+                        frameSize
                     );
 
                     foreach (var layer in orderedLayers)
@@ -2626,20 +2746,18 @@ public sealed class FrmCharacterGenerator : DarkForm
         }
     }
 
-    private static Size GetLayerFrameSize(Bitmap bitmap)
+    private static int GetLayerFrameSize(Bitmap bitmap)
     {
-        // CR character/paperdoll sources use a 4x4 grid. Keep width and height
-        // independent because the source cells can be rectangular.
-        return new Size(
-            Math.Max(1, bitmap.Width / PaperdollColumns),
-            Math.Max(1, bitmap.Height / PaperdollDirectionRows)
-        );
+        // Character/paperdoll sheets use four direction rows. Frames are square,
+        // so row height is the reliable cell size even when the sheet has a
+        // different number of animation columns.
+        return Math.Max(1, bitmap.Height / 4);
     }
 
     private static int GetLayerFrameCount(Bitmap bitmap)
     {
-        var cell = GetLayerFrameSize(bitmap);
-        return Math.Clamp(bitmap.Width / cell.Width, 1, PaperdollColumns);
+        var frameSize = GetLayerFrameSize(bitmap);
+        return Math.Max(1, bitmap.Width / frameSize);
     }
 
     private static void DrawLayerFrame(
@@ -2650,19 +2768,18 @@ public sealed class FrmCharacterGenerator : DarkForm
         Rectangle destination
     )
     {
-        var sourceCell = GetLayerFrameSize(bitmap);
+        var sourceFrameSize = GetLayerFrameSize(bitmap);
         var sourceFrameCount = GetLayerFrameCount(bitmap);
 
-        // Accessories can have a different physical sheet size than the player,
-        // but their logical layout is still the same 4x4 grid.
+        // Accessories frequently fall back from IDLE/CAST/etc. to MOVE and can
+        // therefore have a different number of columns than the player sheet.
+        // Cycle their available frames instead of letting them disappear.
         var sourceFrame = sourceFrameCount <= 1
             ? 0
             : frame % sourceFrameCount;
 
-        var sourceX = sourceFrame * sourceCell.Width;
-        var sourceY =
-            Math.Clamp(directionRow, 0, PaperdollDirectionRows - 1) *
-            sourceCell.Height;
+        var sourceX = sourceFrame * sourceFrameSize;
+        var sourceY = Math.Clamp(directionRow, 0, 3) * sourceFrameSize;
 
         if (sourceX >= bitmap.Width || sourceY >= bitmap.Height)
         {
@@ -2672,8 +2789,8 @@ public sealed class FrmCharacterGenerator : DarkForm
         var source = new Rectangle(
             sourceX,
             sourceY,
-            Math.Min(sourceCell.Width, bitmap.Width - sourceX),
-            Math.Min(sourceCell.Height, bitmap.Height - sourceY)
+            Math.Min(sourceFrameSize, bitmap.Width - sourceX),
+            Math.Min(sourceFrameSize, bitmap.Height - sourceY)
         );
 
         if (source.Width <= 0 || source.Height <= 0)
@@ -2712,7 +2829,14 @@ public sealed class FrmCharacterGenerator : DarkForm
                     ? slot
                     : "Tag",
             })
-            .OrderBy(item => slotPriority.TryGetValue(item.Slot, out var priority)
+            .OrderBy(item => item.Layer.Depth switch
+            {
+                PaperdollDepth.Back => 0,
+                PaperdollDepth.Normal => 1,
+                PaperdollDepth.Front => 2,
+                _ => 1,
+            })
+            .ThenBy(item => slotPriority.TryGetValue(item.Slot, out var priority)
                 ? priority
                 : int.MaxValue)
             .ThenBy(item => item.OriginalIndex)
@@ -2818,7 +2942,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         };
     }
 
-    private IEnumerable<(string Category, string PartName, string File)> GetSelectedLayers(
+    private IEnumerable<(string Category, string PartName, string File, PaperdollDepth Depth)> GetSelectedLayers(
         CharacterAnimation animation
     )
     {
@@ -2832,11 +2956,27 @@ public sealed class FrmCharacterGenerator : DarkForm
 
             var family = parts.FirstOrDefault(part =>
                 string.Equals(part.Name, selectedName, StringComparison.OrdinalIgnoreCase));
-
-            var file = family?.Resolve(animation);
-            if (!string.IsNullOrWhiteSpace(file))
+            if (family == null)
             {
-                yield return (category, selectedName, file);
+                continue;
+            }
+
+            var back = family.ResolveBack(animation);
+            if (!string.IsNullOrWhiteSpace(back))
+            {
+                yield return (category, selectedName, back, PaperdollDepth.Back);
+            }
+
+            var normal = family.Resolve(animation);
+            if (!string.IsNullOrWhiteSpace(normal))
+            {
+                yield return (category, selectedName, normal, PaperdollDepth.Normal);
+            }
+
+            var front = family.ResolveFront(animation);
+            if (!string.IsNullOrWhiteSpace(front))
+            {
+                yield return (category, selectedName, front, PaperdollDepth.Front);
             }
         }
     }
@@ -3010,7 +3150,7 @@ public sealed class FrmCharacterGenerator : DarkForm
 
             foreach (var definition in AnimationDefinitions)
             {
-                if (!family.Files.ContainsKey(definition.Animation))
+                if (!family.Has(definition.Animation))
                 {
                     warnings.Add(
                         $"{pair.Key} / {pair.Value} is missing {definition.Label}; MOVE fallback will be used."
@@ -3113,13 +3253,10 @@ public sealed class FrmCharacterGenerator : DarkForm
         return Rectangle.FromLTRB(left, top, right + 1, bottom + 1);
     }
 
-    private static Bitmap CreateItemPreview32(string sourceFile)
+    private static Bitmap CreateItemPreview32(Bitmap sheet)
     {
-        using var sheet = new Bitmap(sourceFile);
-
-        var cell = GetLayerFrameSize(sheet);
-        var frameWidth = cell.Width;
-        var frameHeight = cell.Height;
+        var frameHeight = Math.Max(1, sheet.Height / 4);
+        var frameWidth = Math.Min(frameHeight, sheet.Width);
         var firstDownFrame = new Rectangle(
             0,
             0,
@@ -3154,6 +3291,62 @@ public sealed class FrmCharacterGenerator : DarkForm
 
         graphics.DrawImage(sheet, destination, opaque, GraphicsUnit.Pixel);
         return output;
+    }
+
+    private static Bitmap? RenderPaperdollFamily(
+        PartFamily family,
+        CharacterAnimation animation
+    )
+    {
+        var paths = new[]
+        {
+            family.ResolveBack(animation),
+            family.Resolve(animation),
+            family.ResolveFront(animation),
+        }
+            .Where(path => !string.IsNullOrWhiteSpace(path) && File.Exists(path))
+            .Cast<string>()
+            .ToArray();
+
+        if (paths.Length == 0)
+        {
+            return null;
+        }
+
+        var bitmaps = new List<Bitmap>(paths.Length);
+        try
+        {
+            foreach (var path in paths)
+            {
+                using var source = new Bitmap(path);
+                bitmaps.Add(new Bitmap(source));
+            }
+
+            var width = bitmaps.Max(bitmap => bitmap.Width);
+            var height = bitmaps.Max(bitmap => bitmap.Height);
+            var output = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+
+            using var graphics = Graphics.FromImage(output);
+            graphics.Clear(System.Drawing.Color.Transparent);
+            graphics.CompositingMode = CompositingMode.SourceOver;
+            graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
+            graphics.PixelOffsetMode = PixelOffsetMode.Half;
+            graphics.SmoothingMode = SmoothingMode.None;
+
+            foreach (var bitmap in bitmaps)
+            {
+                graphics.DrawImageUnscaled(bitmap, 0, 0);
+            }
+
+            return output;
+        }
+        finally
+        {
+            foreach (var bitmap in bitmaps)
+            {
+                bitmap.Dispose();
+            }
+        }
     }
 
     private void ExportSelectedPaperdoll()
@@ -3219,16 +3412,13 @@ public sealed class FrmCharacterGenerator : DarkForm
         {
             foreach (var definition in AnimationDefinitions)
             {
-                var sourceFile = family.Resolve(definition.Animation);
-                if (string.IsNullOrWhiteSpace(sourceFile) || !File.Exists(sourceFile))
+                using var copy = RenderPaperdollFamily(family, definition.Animation);
+                if (copy == null)
                 {
                     throw new InvalidOperationException(
                         $"No source sprite could be resolved for {definition.Label}."
                     );
                 }
-
-                using var source = new Bitmap(sourceFile);
-                using var copy = new Bitmap(source);
 
                 var fileName = paperdollName + definition.Suffix + ".png";
                 var destination = Path.Combine(_paperdollsRoot, fileName);
@@ -3239,12 +3429,11 @@ public sealed class FrmCharacterGenerator : DarkForm
                 writtenPaperdolls.Add(fileName);
             }
 
-            var previewSource =
-                family.Resolve(CharacterAnimation.Idle) ??
-                family.Resolve(CharacterAnimation.Move) ??
-                family.Files.Values.FirstOrDefault();
+            using var previewSource =
+                RenderPaperdollFamily(family, CharacterAnimation.Idle) ??
+                RenderPaperdollFamily(family, CharacterAnimation.Move);
 
-            if (string.IsNullOrWhiteSpace(previewSource) || !File.Exists(previewSource))
+            if (previewSource == null)
             {
                 throw new InvalidOperationException("Unable to find a source image for the item preview.");
             }
