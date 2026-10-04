@@ -18,6 +18,7 @@ internal sealed class DungeonConfirmationWindow : Window
     private readonly Label _rank;
     private readonly Label _name;
     private readonly Label _description;
+    private readonly Label _location;
     private readonly Label _level;
     private readonly Label _recommended;
     private readonly Label _party;
@@ -84,7 +85,16 @@ internal sealed class DungeonConfirmationWindow : Window
             FontSize = 9,
             TextColorOverride = new Color(a: 255, r: 215, g: 211, b: 203),
         };
-        _description.SetBounds(355, 120, 305, 96);
+        _description.SetBounds(355, 120, 305, 78);
+
+        _location = new Label(this, "DungeonConfirmLocation")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 8,
+            TextColorOverride = new Color(a: 255, r: 185, g: 181, b: 173),
+        };
+        _location.SetBounds(355, 204, 305, 22);
 
         _level = InfoLabel("DungeonConfirmLevel", 32, 280, 235);
         _recommended = InfoLabel("DungeonConfirmRecommended", 290, 280, 235);
@@ -176,6 +186,9 @@ internal sealed class DungeonConfirmationWindow : Window
         _rank.TextColorOverride = RankColor(dungeon.Rank);
         _name.Text = dungeon.Name;
         _description.Text = dungeon.Description;
+        _location.Text = string.IsNullOrWhiteSpace(dungeon.Location)
+            ? "LOCATION • Unknown"
+            : $"LOCATION • {dungeon.Location}";
 
         _image.Texture = null;
         _image.Hide();
