@@ -1134,6 +1134,8 @@ public partial class Player : Entity
 
     public override void Die(bool dropItems = true, Entity killer = null)
     {
+        var dungeonDeath = DungeonRunRuntime.IsPlayerInActiveRun(this);
+
         CastTime = 0;
         CastTarget = null;
 
@@ -1160,12 +1162,13 @@ public partial class Player : Entity
 
         lock (EntityLock)
         {
-            base.Die(dropItems, killer);
+            base.Die(dropItems && !dungeonDeath, killer);
         }
 
 
         // EXP Loss - don't lose in shared instance, or in an Arena zone
-        if (InstanceType != MapInstanceType.Shared || Options.Instance.Instancing.LoseExpOnInstanceDeath)
+        if (!dungeonDeath &&
+            (InstanceType != MapInstanceType.Shared || Options.Instance.Instancing.LoseExpOnInstanceDeath))
         {
             if (Options.Instance.Player.ExpLossOnDeathPercent > 0)
             {
