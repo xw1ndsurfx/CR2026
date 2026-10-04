@@ -3,6 +3,7 @@ using Intersect.Framework.Core;
 using Intersect.Framework.Core.Dungeons;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Maps;
+using Intersect.Network.Packets.Server;
 using Intersect.Server.Dungeons;
 using Intersect.Server.Networking;
 
@@ -56,41 +57,15 @@ public static partial class CommandProcessing
             return;
         }
 
-        // Commands created before the Warp-style editor keep their original
-        // Personal/Party behavior until they are edited and saved.
-        var changeInstance = command.UseWarpSettings
-            ? command.ChangeInstance
-            : true;
-        var instanceType = command.UseWarpSettings
-            ? command.InstanceType
-            : (command.UsePartyInstance ? MapInstanceType.Shared : MapInstanceType.Personal);
-
-        if (!DungeonRunRuntime.TryStart(
-                player,
-                dungeon,
-                command.MapId,
-                command.X,
-                command.Y,
-                command.Direction,
-                changeInstance,
-                instanceType,
-                out var startError
-            ))
-        {
-            PacketSender.SendChatMsg(
-                player,
-                $"[Dungeon] {startError}",
-                ChatMessageType.Error,
-                Color.White
-            );
-            return;
-        }
-
-        PacketSender.SendChatMsg(
-            player,
-            $"[Dungeon] Entering {dungeon.Name} • Rank {dungeon.Rank}.",
-            ChatMessageType.Local,
-            Color.White
+        player.SendPacket(
+            new DungeonConfirmationPacket(
+                instance.PageInstance.Id,
+                dungeon.Id,
+                DungeonConfigurationRuntime.Json
+            )
         );
+
+        stackInfo.WaitingForResponse = CommandInstance.EventResponse.Dialogue;
+        stackInfo.WaitingOnCommand = command;
     }
 }
