@@ -248,7 +248,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
         AddRow(table, "Image / icon (resources/achievements)", _icon);
         AddRow(table, "Objective type", _objective);
         AddRow(table, "Target", _target);
-        AddRow(table, "Target key", _targetKey);
+        AddRow(table, "Target key (CustomCounter/code)", _targetKey);
         AddRow(table, "Required amount", _targetAmount);
         AddRow(table, "Sort order", _sortOrder);
         AddRow(table, "Visibility", _hidden);
