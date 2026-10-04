@@ -105,7 +105,7 @@ internal static class QuestShopRequirementFormatter
             IntegerVariableComparison value =>
                 $"{left} {Comparator(value.Comparator)} {FormatIntegerValue(value)}",
             StringVariableComparison value =>
-                $"{left} {StringComparator(value.Comparator)} "{value.Value}"",
+                $"{left} {StringComparator(value.Comparator)} \"{value.Value}\"",
             _ => $"{left} matches configured value",
         };
     }
