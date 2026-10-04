@@ -30,6 +30,7 @@ using Intersect.Server.Database.PlayerData;
 using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Database.PlayerData.Security;
 using Intersect.Server.Entities.Events;
+using Intersect.Server.Dungeons;
 using Intersect.Server.Framework.Entities;
 using Intersect.Server.Framework.Items;
 using Intersect.Server.Localization;
@@ -1175,8 +1176,49 @@ public partial class Player : Entity
             }
         }
         PacketSender.SendEntityDie(this);
-        Respawn();
+        if (!DungeonRunRuntime.TryHandlePlayerDeath(this))
+        {
+            Respawn();
+        }
         PacketSender.SendInventory(this);
+    }
+
+    internal void RespawnInDungeon(Guid mapId, byte x, byte y, Direction direction)
+    {
+        Warp(
+            mapId,
+            x,
+            y,
+            direction,
+            adminWarp: false,
+            zOverride: 0,
+            mapSave: false,
+            fromWarpEvent: true,
+            mapInstanceType: null
+        );
+
+        Reset();
+        PacketSender.SendEntityDataToProximity(this);
+        StartCommonEventsWithTrigger(CommonEventTrigger.OnRespawn);
+    }
+
+    internal void RespawnFromDungeon(Guid mapId, byte x, byte y, Direction direction)
+    {
+        Warp(
+            mapId,
+            x,
+            y,
+            direction,
+            adminWarp: false,
+            zOverride: 0,
+            mapSave: false,
+            fromWarpEvent: true,
+            mapInstanceType: MapInstanceType.Overworld
+        );
+
+        Reset();
+        PacketSender.SendEntityDataToProximity(this);
+        StartCommonEventsWithTrigger(CommonEventTrigger.OnRespawn);
     }
 
     public override void ProcessRegen()
