@@ -66,8 +66,8 @@ internal sealed class QuestShopWindow : Window
         foreach (var entry in state.Entries ?? [])
         {
             var row = new QuestRow(_quests, state.ShopId, entry);
-            row.SetBounds(4, y, 638, 112);
-            y += 118;
+            row.SetBounds(4, y, 638, 156);
+            y += 162;
         }
 
         if ((state.Entries?.Length ?? 0) == 0)
@@ -109,7 +109,19 @@ internal sealed class QuestShopWindow : Window
                 TextColorOverride = new Color(a: 255, r: 200, g: 205, b: 210),
                 Text = entry.Description ?? string.Empty,
             };
-            description.SetBounds(14, 34, 430, 68);
+            description.SetBounds(14, 34, 430, 38);
+
+            var requirements = new Label(this, "Requirements")
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 8,
+                TextColorOverride = entry.CanAccept
+                    ? new Color(a: 255, r: 160, g: 220, b: 165)
+                    : new Color(a: 255, r: 225, g: 165, b: 145),
+                Text = $"Prerequisites: {entry.Requirements}",
+            };
+            requirements.SetBounds(14, 76, 430, 68);
 
             var status = new Label(this, "Status")
             {
@@ -122,21 +134,21 @@ internal sealed class QuestShopWindow : Window
             };
             status.SetBounds(460, 12, 160, 26);
 
-            var accept = new Button(this, "Accept")
+            var accept = new Button(this, "ViewQuest")
             {
-                Text = entry.CanAccept ? "ACCEPT QUEST" : entry.Status,
+                Text = entry.CanAccept ? "VIEW QUEST" : entry.Status,
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
                 FontSize = 9,
                 IsDisabled = !entry.CanAccept,
             };
-            accept.SetBounds(470, 52, 150, 38);
+            accept.SetBounds(470, 58, 150, 38);
             accept.Clicked += (_, _) =>
             {
                 if (!entry.CanAccept)
                     return;
                 accept.IsDisabled = true;
-                accept.Text = "ACCEPTING...";
-                Networking.PacketSender.SendAcceptQuestShopQuest(shopId, entry.QuestId);
+                accept.Text = "OPENING...";
+                Networking.PacketSender.SendRequestQuestShopOffer(shopId, entry.QuestId);
             };
         }
 
