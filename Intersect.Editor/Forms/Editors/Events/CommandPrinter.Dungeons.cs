@@ -12,7 +12,11 @@ public static partial class CommandPrinter
         var dungeon = DungeonConfiguration.Instance.Find(command.DungeonId);
         var dungeonName = dungeon == null ? "Unknown Dungeon" : $"[{dungeon.Rank}] {dungeon.Name}";
         var destination = MapDescriptor.Get(command.MapId)?.Name ?? "Unknown Map";
-        var instance = command.UsePartyInstance ? "Party/Personal" : "Personal";
-        return $"Start Dungeon: {dungeonName} -> {destination} ({command.X},{command.Y}) | {instance}";
+        var changeInstance = command.UseWarpSettings ? command.ChangeInstance : true;
+        var instanceType = command.UseWarpSettings
+            ? command.InstanceType
+            : (command.UsePartyInstance ? MapInstanceType.Shared : MapInstanceType.Personal);
+        var instance = changeInstance ? instanceType.ToString() : "Keep current instance";
+        return $"Start Dungeon: {dungeonName} -> {destination} ({command.X},{command.Y}) {command.Direction} | {instance}";
     }
 }
