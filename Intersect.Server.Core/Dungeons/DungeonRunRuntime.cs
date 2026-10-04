@@ -139,7 +139,7 @@ internal static class DungeonRunRuntime
             );
             if (missingQuestMember != null)
             {
-                var requiredQuest = Intersect.Framework.Core.GameObjects.Quests.QuestDescriptor.Get(dungeon.RequiredQuestInProgressId);
+                var requiredQuest = Intersect.GameObjects.QuestDescriptor.Get(dungeon.RequiredQuestInProgressId);
                 var questName = requiredQuest?.Name ?? "required quest";
                 error = $"{missingQuestMember.Name} must have '{questName}' in progress to enter {dungeon.Name}.";
                 return false;
