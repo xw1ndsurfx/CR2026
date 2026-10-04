@@ -901,6 +901,12 @@ public sealed class FrmCharacterGenerator : DarkForm
         exportPaperdollButton.Click += (_, _) => ExportSelectedPaperdoll();
         footer.Controls.Add(exportPaperdollButton);
 
+        var exportCreationButton = CreateDarkButton("ADD TO CHARACTER CREATION");
+        exportCreationButton.Location = new System.Drawing.Point(975, 50);
+        exportCreationButton.Size = new Size(265, 34);
+        exportCreationButton.Click += (_, _) => ExportSelectedPaperdollToCharacterCreation();
+        footer.Controls.Add(exportCreationButton);
+
         _status.AutoSize = false;
         _status.Location = new System.Drawing.Point(18, 94);
         _status.Size = new Size(1180, 22);
@@ -3346,6 +3352,147 @@ public sealed class FrmCharacterGenerator : DarkForm
             {
                 bitmap.Dispose();
             }
+        }
+    }
+
+    private static string? GetCharacterCreationPrefix(string category)
+    {
+        if (string.Equals(category, "Hair", StringComparison.OrdinalIgnoreCase))
+        {
+            return "cc_hair_";
+        }
+
+        if (string.Equals(category, "Top", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(category, "Chest", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(category, "Overall", StringComparison.OrdinalIgnoreCase))
+        {
+            return "cc_shirt_";
+        }
+
+        if (string.Equals(category, "Pants", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(category, "Skirt", StringComparison.OrdinalIgnoreCase))
+        {
+            return "cc_pants_";
+        }
+
+        if (string.Equals(category, "Feet", StringComparison.OrdinalIgnoreCase))
+        {
+            return "cc_boots_";
+        }
+
+        return null;
+    }
+
+    private static string MakeCharacterCreationStem(string category, string partName)
+    {
+        var prefix = GetCharacterCreationPrefix(category) ?? string.Empty;
+        var friendly = MakeFileStem(GetFriendlyPartName(partName)).ToLowerInvariant();
+
+        var removablePrefixes = category.ToLowerInvariant() switch
+        {
+            "hair" => new[] { "hair_" },
+            "top" or "chest" or "overall" => new[] { "shirt_", "top_", "chest_", "overall_" },
+            "pants" or "skirt" => new[] { "pants_", "pant_", "skirt_" },
+            "feet" => new[] { "boots_", "boot_", "feet_", "shoes_", "shoe_" },
+            _ => Array.Empty<string>(),
+        };
+
+        foreach (var removable in removablePrefixes)
+        {
+            if (friendly.StartsWith(removable, StringComparison.OrdinalIgnoreCase))
+            {
+                friendly = friendly[removable.Length..];
+                break;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(friendly))
+        {
+            friendly = "style";
+        }
+
+        return prefix + friendly;
+    }
+
+    private void ExportSelectedPaperdollToCharacterCreation()
+    {
+        if (!TryGetSelectedPaperdoll(out var category, out var partName, out var family) ||
+            family == null)
+        {
+            MessageBox.Show(
+                this,
+                "Select a paperdoll thumbnail first.",
+                "Character Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        var categoryPrefix = GetCharacterCreationPrefix(category);
+        if (string.IsNullOrWhiteSpace(categoryPrefix))
+        {
+            MessageBox.Show(
+                this,
+                "Character Creation only accepts Hair, Top/Chest/Overall, Pants/Skirt, or Feet paperdolls.",
+                "Character Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+            return;
+        }
+
+        var creationStem = MakeCharacterCreationStem(category, partName);
+        Directory.CreateDirectory(_paperdollsRoot);
+
+        var written = new List<string>();
+        try
+        {
+            foreach (var definition in AnimationDefinitions)
+            {
+                using var copy = RenderPaperdollFamily(family, definition.Animation);
+                if (copy == null)
+                {
+                    throw new InvalidOperationException(
+                        $"No source sprite could be resolved for {definition.Label}."
+                    );
+                }
+
+                var fileName = creationStem + definition.Suffix + ".png";
+                var destination = Path.Combine(_paperdollsRoot, fileName);
+                var temporary = destination + ".tmp";
+
+                copy.Save(temporary, ImageFormat.Png);
+                File.Move(temporary, destination, true);
+                written.Add(fileName);
+            }
+
+            GameContentManager.ReloadPaperdollAndItemTextures();
+
+            _status.Text =
+                $"Character Creation export: {creationStem}.png (+ 5 animation overrides).";
+
+            MessageBox.Show(
+                this,
+                $"Added to Character Creation.\n\n" +
+                $"Category: {category}\n" +
+                $"Paperdoll: resources\\paperdolls\\{creationStem}.png\n" +
+                $"Animations: {written.Count}\n\n" +
+                "No inventory item was created.",
+                "Character Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                this,
+                "Character Creation export failed: " + ex.Message,
+                "Character Generator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error
+            );
         }
     }
 
