@@ -36,7 +36,9 @@ internal static class DungeonRunRuntime
         Guid mapId,
         byte x,
         byte y,
-        bool usePartyInstance,
+        WarpDirection direction,
+        bool changeInstance,
+        MapInstanceType instanceType,
         out string error
     )
     {
@@ -52,20 +54,24 @@ internal static class DungeonRunRuntime
         if (party.Count == 0)
             party.Add(player);
 
-        var shared = usePartyInstance && party.Count > 1;
-        if (shared && player.PartyLeader != player)
+        // Shared dungeon instances are entered as a Party. All other instance
+        // types behave like Warp and only move the player that triggered the Event.
+        var sharedParty = changeInstance && instanceType == MapInstanceType.Shared && party.Count > 1;
+        var participants = sharedParty ? party : [player];
+
+        if (sharedParty && player.PartyLeader != player)
         {
             error = "Only the Party leader can open a shared dungeon gate.";
             return false;
         }
 
-        if (party.Count < dungeon.MinimumPartySize || party.Count > dungeon.MaximumPartySize)
+        if (participants.Count < dungeon.MinimumPartySize || participants.Count > dungeon.MaximumPartySize)
         {
             error = $"{dungeon.Name} requires {dungeon.MinimumPartySize}-{dungeon.MaximumPartySize} player(s).";
             return false;
         }
 
-        var invalidLevel = party.FirstOrDefault(member =>
+        var invalidLevel = participants.FirstOrDefault(member =>
             member.Level < dungeon.MinimumLevel ||
             (dungeon.MaximumLevel > 0 && member.Level > dungeon.MaximumLevel)
         );
@@ -79,7 +85,7 @@ internal static class DungeonRunRuntime
 
         if (dungeon.PremiumRequired)
         {
-            var nonPremiumMember = party.FirstOrDefault(member => !LogiCoinPurchaseRuntime.HasActivePremium(member));
+            var nonPremiumMember = participants.FirstOrDefault(member => !LogiCoinPurchaseRuntime.HasActivePremium(member));
             if (nonPremiumMember != null)
             {
                 error = $"{dungeon.Name} requires an active Premium account. {nonPremiumMember.Name} does not have Premium access.";
@@ -87,19 +93,24 @@ internal static class DungeonRunRuntime
             }
         }
 
-        var instanceType = shared ? MapInstanceType.Shared : MapInstanceType.Personal;
+        // Match Warp semantics. A Shared instance without another Party member
+        // falls back to Personal so solo players still get an isolated dungeon.
+        MapInstanceType? requestedInstanceType = changeInstance
+            ? instanceType == MapInstanceType.Shared && !sharedParty
+                ? MapInstanceType.Personal
+                : instanceType
+            : null;
 
-        // Warp the opener first so the engine creates the shared/personal instance id.
         player.Warp(
             mapId,
             x,
             y,
-            Direction.Down,
+            ResolveDirection(player, direction),
             adminWarp: false,
             zOverride: 0,
             mapSave: false,
             fromWarpEvent: true,
-            mapInstanceType: instanceType
+            mapInstanceType: requestedInstanceType
         );
 
         var instanceId = player.MapInstanceId;
@@ -109,9 +120,9 @@ internal static class DungeonRunRuntime
             return false;
         }
 
-        if (shared)
+        if (sharedParty)
         {
-            foreach (var member in party)
+            foreach (var member in participants)
             {
                 if (member.Id == player.Id)
                     continue;
@@ -120,7 +131,7 @@ internal static class DungeonRunRuntime
                     mapId,
                     x,
                     y,
-                    Direction.Down,
+                    ResolveDirection(member, direction),
                     adminWarp: false,
                     zOverride: 0,
                     mapSave: false,
@@ -144,7 +155,7 @@ internal static class DungeonRunRuntime
             EndAtUnixMilliseconds = end,
         };
 
-        foreach (var member in party)
+        foreach (var member in participants)
         {
             if (member.MapInstanceId == instanceId)
                 run.Participants.TryAdd(member.Id, 0);
@@ -152,6 +163,12 @@ internal static class DungeonRunRuntime
 
         lock (Gate)
         {
+            if (RunsByInstance.TryGetValue(instanceId, out var existing) && !existing.Finished)
+            {
+                error = "This map instance already has an active dungeon run.";
+                return false;
+            }
+
             RunsByInstance[instanceId] = run;
         }
 
@@ -165,6 +182,11 @@ internal static class DungeonRunRuntime
 
         return true;
     }
+
+    private static Direction ResolveDirection(Player player, WarpDirection direction) =>
+        direction == WarpDirection.Retain
+            ? player.Dir
+            : (Direction)(direction - 1);
 
     internal static void OnNpcDied(Npc npc)
     {
