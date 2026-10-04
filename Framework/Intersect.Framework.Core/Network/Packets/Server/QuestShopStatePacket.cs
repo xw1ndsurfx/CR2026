@@ -28,13 +28,21 @@ public partial class QuestShopEntryPacket
 {
     public QuestShopEntryPacket() { }
 
-    public QuestShopEntryPacket(Guid questId, string name, string description, string status, bool canAccept)
+    public QuestShopEntryPacket(
+        Guid questId,
+        string name,
+        string description,
+        string status,
+        bool canAccept,
+        string requirements
+    )
     {
         QuestId = questId;
         Name = name;
         Description = description;
         Status = status;
         CanAccept = canAccept;
+        Requirements = requirements;
     }
 
     [Key(0)] public Guid QuestId { get; set; }
@@ -42,4 +50,5 @@ public partial class QuestShopEntryPacket
     [Key(2)] public string Description { get; set; } = string.Empty;
     [Key(3)] public string Status { get; set; } = string.Empty;
     [Key(4)] public bool CanAccept { get; set; }
+    [Key(5)] public string Requirements { get; set; } = string.Empty;
 }
