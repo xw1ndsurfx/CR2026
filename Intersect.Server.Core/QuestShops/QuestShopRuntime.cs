@@ -63,28 +63,44 @@ internal static class QuestShopRuntime
         return BuildState(player, shop, message);
     }
 
-    internal static QuestShopStatePacket Accept(Player player, Guid shopId, Guid questId)
+    internal static bool TryOffer(Player player, Guid shopId, Guid questId, out string error)
     {
+        error = string.Empty;
         QuestShopDefinition? shop;
         lock (Gate)
         {
             if (!OpenShopsByPlayer.TryGetValue(player.Id, out var openShopId) || openShopId != shopId)
-                return new QuestShopStatePacket(Guid.Empty, "Quest Shop", string.Empty, [], "Open this Quest Shop again before accepting a quest.");
+            {
+                error = "Open this Quest Shop again before viewing a quest.";
+                return false;
+            }
+
             shop = Current.Find(openShopId);
         }
 
         if (shop == null || !(shop.QuestIds ?? []).Contains(questId))
-            return new QuestShopStatePacket(Guid.Empty, "Quest Shop", string.Empty, [], "This quest is not offered here.");
+        {
+            error = "This quest is not offered here.";
+            return false;
+        }
 
         var quest = QuestDescriptor.Get(questId);
         if (quest == null)
-            return BuildState(player, shop, "This quest no longer exists.");
+        {
+            error = "This quest no longer exists.";
+            return false;
+        }
 
         if (!player.CanStartQuest(quest))
-            return BuildState(player, shop, "You do not currently meet this quest's requirements.");
+        {
+            error = "You do not currently meet this quest's requirements.";
+            return false;
+        }
 
-        player.StartQuest(quest);
-        return BuildState(player, shop, $"Quest accepted: {quest.Name}");
+        if (!player.QuestOffers.Contains(quest.Id))
+            player.OfferQuest(quest);
+
+        return true;
     }
 
     private static QuestShopStatePacket BuildState(Player player, QuestShopDefinition shop, string message)
@@ -115,7 +131,8 @@ internal static class QuestShopRuntime
                     quest.Name,
                     description ?? string.Empty,
                     status,
-                    canStart
+                    canStart,
+                    QuestShopRequirementFormatter.Build(player, quest)
                 );
             })
             .ToArray();
