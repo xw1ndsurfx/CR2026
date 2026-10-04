@@ -14,4 +14,9 @@ public partial class GameInterface
         _questShopWindow.Show();
         _questShopWindow.BringToFront();
     }
+
+    public void HideQuestShop()
+    {
+        _questShopWindow?.Hide();
+    }
 }
