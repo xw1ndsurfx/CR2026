@@ -17,8 +17,6 @@ public enum TextureType
 
     Image,
 
-    Dungeon,
-
     Fog,
 
     Resource,
@@ -28,5 +26,7 @@ public enum TextureType
     Gui,
 
     Misc,
+
+    Dungeon,
 
 }
