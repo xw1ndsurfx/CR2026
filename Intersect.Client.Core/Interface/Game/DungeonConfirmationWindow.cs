@@ -227,9 +227,14 @@ internal sealed class DungeonConfirmationWindow : Window
         var quest = dungeon.AssociatedQuestId == Guid.Empty
             ? null
             : QuestDescriptor.Get(dungeon.AssociatedQuestId);
-        _quest.Text = quest == null
-            ? "QUEST • None"
-            : $"QUEST • {quest.Name}";
+        var requiredQuest = dungeon.RequiredQuestInProgressId == Guid.Empty
+            ? null
+            : QuestDescriptor.Get(dungeon.RequiredQuestInProgressId);
+        _quest.Text = requiredQuest != null
+            ? $"QUEST • {quest?.Name ?? "None"}   •   REQUIRED IN PROGRESS • {requiredQuest.Name}"
+            : quest == null
+                ? "QUEST • None"
+                : $"QUEST • {quest.Name}";
 
         var requirements = dungeon.CompletionRequirements == DungeonCompletionRequirement.None
             ? DungeonCompletionRequirement.DefeatFinalBoss
