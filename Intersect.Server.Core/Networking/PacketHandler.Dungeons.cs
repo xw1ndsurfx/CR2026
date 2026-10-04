@@ -67,7 +67,7 @@ internal sealed partial class PacketHandler
                 player,
                 "[Dungeon] " + error,
                 Intersect.Enums.ChatMessageType.Error,
-                Intersect.Framework.Core.Color.White
+                Intersect.Color.White
             );
         }
     }
