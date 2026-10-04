@@ -68,4 +68,63 @@ public static partial class CommandProcessing
         stackInfo.WaitingForResponse = CommandInstance.EventResponse.Dialogue;
         stackInfo.WaitingOnCommand = command;
     }
+    internal static bool TryStartConfirmedDungeon(
+        StartDungeonCommand command,
+        Player player,
+        out string error
+    )
+    {
+        error = string.Empty;
+
+        var dungeon = DungeonConfigurationRuntime.Current.Find(command.DungeonId);
+        if (dungeon == null)
+        {
+            error = "This dungeon is not configured.";
+            return false;
+        }
+
+        if (!DungeonConfigurationRuntime.IsAvailable(dungeon, DateTimeOffset.Now))
+        {
+            error = $"{dungeon.Name} is currently sealed.";
+            return false;
+        }
+
+        if (command.MapId == Guid.Empty)
+        {
+            error = "This dungeon gate has no destination map configured.";
+            return false;
+        }
+
+        var changeInstance = command.UseWarpSettings
+            ? command.ChangeInstance
+            : true;
+        var instanceType = command.UseWarpSettings
+            ? command.InstanceType
+            : (command.UsePartyInstance ? MapInstanceType.Shared : MapInstanceType.Personal);
+
+        if (!DungeonRunRuntime.TryStart(
+                player,
+                dungeon,
+                command.MapId,
+                command.X,
+                command.Y,
+                command.Direction,
+                changeInstance,
+                instanceType,
+                out error
+            ))
+        {
+            return false;
+        }
+
+        PacketSender.SendChatMsg(
+            player,
+            $"[Dungeon] Entering {dungeon.Name} • Rank {dungeon.Rank}.",
+            ChatMessageType.Local,
+            Color.White
+        );
+
+        return true;
+    }
+
 }
