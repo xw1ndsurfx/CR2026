@@ -13,6 +13,8 @@ public enum AchievementObjectiveType
     ProfessionLevel = 5,
     MiniGameWins = 6,
     CustomCounter = 7,
+    DungeonCompletions = 8,
+    InvasionCompletions = 9,
 }
 
 public sealed class AchievementRewardDefinition
