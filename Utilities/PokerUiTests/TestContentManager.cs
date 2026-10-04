@@ -55,6 +55,7 @@ internal sealed class TestContentManager : GameContentManager
     public override void LoadAnimations() => UnexpectedLoad();
     public override void LoadFaces() => UnexpectedLoad();
     public override void LoadImages() => UnexpectedLoad();
+    public override void LoadAchievements() => UnexpectedLoad();
     public override void LoadFogs() => UnexpectedLoad();
     public override void LoadResources() => UnexpectedLoad();
     public override void LoadPaperdolls() => UnexpectedLoad();
