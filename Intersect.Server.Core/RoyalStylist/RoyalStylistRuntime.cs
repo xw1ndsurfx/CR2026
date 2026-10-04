@@ -232,6 +232,10 @@ internal static class RoyalStylistRuntime
             stylist.PremiumRequired,
             premiumActive,
             canApply,
+            stylist.AllowNoHair,
+            stylist.AllowNoShirt,
+            stylist.AllowNoPants,
+            stylist.AllowNoBoots,
             message
         );
     }
@@ -254,6 +258,10 @@ internal static class RoyalStylistRuntime
             0,
             0,
             true,
+            false,
+            false,
+            false,
+            false,
             false,
             false,
             message
@@ -282,9 +290,10 @@ internal static class RoyalStylistRuntime
             return "Aureons";
         }
 
-        return ItemDescriptor.GetName(stylist.CurrencyItemId) is { Length: > 0 } name
-            ? name
-            : "Aureons";
+        var name = ItemDescriptor.GetName(stylist.CurrencyItemId);
+        return string.IsNullOrWhiteSpace(name)
+            ? "Aureons"
+            : name;
     }
 
     private static bool ValidateRequestedAppearance(

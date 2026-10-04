@@ -26,6 +26,10 @@ public partial class RoyalStylistStatePacket : IntersectPacket
         bool premiumRequired,
         bool premiumActive,
         bool canApply,
+        bool allowNoHair,
+        bool allowNoShirt,
+        bool allowNoPants,
+        bool allowNoBoots,
         string message = ""
     )
     {
@@ -44,6 +48,10 @@ public partial class RoyalStylistStatePacket : IntersectPacket
         PremiumRequired = premiumRequired;
         PremiumActive = premiumActive;
         CanApply = canApply;
+        AllowNoHair = allowNoHair;
+        AllowNoShirt = allowNoShirt;
+        AllowNoPants = allowNoPants;
+        AllowNoBoots = allowNoBoots;
         Message = message;
     }
 
@@ -63,4 +71,8 @@ public partial class RoyalStylistStatePacket : IntersectPacket
     [Key(13)] public bool PremiumActive { get; set; }
     [Key(14)] public bool CanApply { get; set; }
     [Key(15)] public string Message { get; set; } = string.Empty;
+    [Key(16)] public bool AllowNoHair { get; set; }
+    [Key(17)] public bool AllowNoShirt { get; set; }
+    [Key(18)] public bool AllowNoPants { get; set; }
+    [Key(19)] public bool AllowNoBoots { get; set; }
 }
