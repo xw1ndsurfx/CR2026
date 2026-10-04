@@ -24,6 +24,7 @@ internal static class DungeonRunRuntime
         public required byte EntryX { get; init; }
         public required byte EntryY { get; init; }
         public required Direction EntryDirection { get; init; }
+        public required WarpDirection RequestedDirection { get; init; }
         public required long StartedAtUnixMilliseconds { get; init; }
         public required long EndAtUnixMilliseconds { get; init; }
         public required Guid InitiatorId { get; init; }
@@ -215,6 +216,7 @@ internal static class DungeonRunRuntime
             EntryX = x,
             EntryY = y,
             EntryDirection = entryDirection,
+            RequestedDirection = direction,
             StartedAtUnixMilliseconds = now,
             EndAtUnixMilliseconds = end,
             InitiatorId = player.Id,
@@ -543,9 +545,7 @@ internal static class DungeonRunRuntime
             EntryMapId = run.EntryMapId,
             EntryX = run.EntryX,
             EntryY = run.EntryY,
-            EntryDirection = run.EntryDirection == player.Dir
-                ? WarpDirection.Retain
-                : (WarpDirection)((int)run.EntryDirection + 1),
+            EntryDirection = run.RequestedDirection,
             ChangeInstance = run.ChangeInstance,
             InstanceType = run.InstanceType,
             ExpiresAtUnixMilliseconds = DateTimeOffset.UtcNow.AddMinutes(2).ToUnixTimeMilliseconds(),
