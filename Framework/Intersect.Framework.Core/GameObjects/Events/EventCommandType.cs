@@ -148,4 +148,7 @@ public enum EventCommandType
 
     // CR2026 dungeons.
     StartDungeon = 1020,
+
+    // CR2026 quest shops.
+    OpenQuestShop = 1030,
 }
