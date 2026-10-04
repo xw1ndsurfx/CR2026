@@ -248,6 +248,19 @@ internal static class DungeonRunRuntime
             Broadcast(run, DungeonRunStatus.Active, BuildObjectiveText(run));
     }
 
+    internal static bool IsPlayerInActiveRun(Player player)
+    {
+        if (player == null || player.MapInstanceId == Guid.Empty)
+            return false;
+
+        lock (Gate)
+        {
+            return RunsByInstance.TryGetValue(player.MapInstanceId, out var run) &&
+                   !run.Finished &&
+                   run.Participants.ContainsKey(player.Id);
+        }
+    }
+
     internal static bool TryHandlePlayerDeath(Player player)
     {
         if (player == null || player.MapInstanceId == Guid.Empty)
