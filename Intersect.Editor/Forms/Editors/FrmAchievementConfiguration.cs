@@ -40,7 +40,11 @@ public sealed class FrmAchievementConfiguration : DarkForm
     private readonly DarkTextBox _name = new() { Dock = DockStyle.Fill };
     private readonly DarkTextBox _description = new() { Dock = DockStyle.Fill, Multiline = true, Height = 70 };
     private readonly DarkTextBox _category = new() { Dock = DockStyle.Fill };
-    private readonly DarkTextBox _icon = new() { Dock = DockStyle.Fill };
+    private readonly DarkComboBox _icon = new()
+    {
+        Dock = DockStyle.Fill,
+        DropDownStyle = ComboBoxStyle.DropDownList,
+    };
     private readonly DarkComboBox _objective = new() { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
     private readonly DarkComboBox _target = new() { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
     private readonly DarkTextBox _targetKey = new() { Dock = DockStyle.Fill };
@@ -102,6 +106,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
             _objective.Items.Add(value);
 
         FillRewardChoices();
+        FillAchievementImages();
         BuildUi();
 
         _objective.SelectedIndexChanged += (_, _) => RefreshTargetChoices();
@@ -482,7 +487,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
         _name.Text = _selected.Name;
         _description.Text = _selected.Description;
         _category.Text = _selected.Category;
-        _icon.Text = _selected.Icon;
+        SelectIcon(_selected.Icon);
 
         _objective.SelectedItem = _selected.ObjectiveType;
         RefreshTargetChoices();
@@ -522,7 +527,9 @@ public sealed class FrmAchievementConfiguration : DarkForm
         _selected.Name = string.IsNullOrWhiteSpace(_name.Text) ? "Achievement" : _name.Text.Trim();
         _selected.Description = _description.Text ?? string.Empty;
         _selected.Category = string.IsNullOrWhiteSpace(_category.Text) ? "General" : _category.Text.Trim();
-        _selected.Icon = _icon.Text?.Trim() ?? string.Empty;
+        _selected.Icon = string.Equals(_icon.Text, "None", StringComparison.OrdinalIgnoreCase)
+            ? string.Empty
+            : _icon.Text?.Trim() ?? string.Empty;
         _selected.ObjectiveType = _objective.SelectedItem is AchievementObjectiveType objective
             ? objective
             : AchievementObjectiveType.CustomCounter;
@@ -542,6 +549,38 @@ public sealed class FrmAchievementConfiguration : DarkForm
             CurrencyQuantity = (int)_rewardCurrencyQuantity.Value,
             CommonEventId = (_rewardEvent.SelectedItem as IdChoice)?.Id ?? Guid.Empty,
         };
+    }
+
+
+    private void FillAchievementImages()
+    {
+        var folder = Path.Combine("resources", "achievements");
+        Directory.CreateDirectory(folder);
+
+        _icon.Items.Clear();
+        _icon.Items.Add("None");
+
+        foreach (var file in Directory.EnumerateFiles(folder, "*.png", SearchOption.AllDirectories)
+                     .Select(file => Path.GetRelativePath(folder, file).Replace('\\', '/'))
+                     .OrderBy(file => file, StringComparer.OrdinalIgnoreCase))
+        {
+            _icon.Items.Add(file);
+        }
+
+        _icon.SelectedIndex = 0;
+    }
+
+    private void SelectIcon(string? icon)
+    {
+        var desired = string.IsNullOrWhiteSpace(icon) ? "None" : icon.Replace('\\', '/');
+        var index = _icon.FindStringExact(desired);
+        if (index < 0 && !string.Equals(desired, "None", StringComparison.OrdinalIgnoreCase))
+        {
+            _icon.Items.Add(desired);
+            index = _icon.Items.Count - 1;
+        }
+
+        _icon.SelectedIndex = Math.Max(0, index);
     }
 
     private void SaveConfiguration()
