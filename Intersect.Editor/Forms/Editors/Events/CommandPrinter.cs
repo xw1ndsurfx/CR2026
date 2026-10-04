@@ -12,6 +12,7 @@ using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Framework.Core.Professions;
+using Intersect.Framework.Core.QuestShops;
 using Intersect.GameObjects;
 using Microsoft.Extensions.Logging;
 using VariableMod = Intersect.Framework.Core.GameObjects.Events.VariableMod;
@@ -1243,6 +1244,12 @@ public static partial class CommandPrinter
     private static string GetCommandText(OpenShopCommand command, MapInstance map)
     {
         return Strings.EventCommandList.openshop.ToString(ShopDescriptor.GetName(command.ShopId));
+    }
+
+    private static string GetCommandText(OpenQuestShopCommand command, MapInstance map)
+    {
+        var shop = QuestShopConfiguration.Instance.Find(command.QuestShopId);
+        return $"Open Quest Shop: {shop?.Name ?? "Unknown"}";
     }
 
     private static string GetCommandText(OpenCraftingTableCommand command, MapInstance map)
