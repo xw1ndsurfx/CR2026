@@ -28,4 +28,11 @@ internal sealed partial class PacketHandler
             gameInterface => gameInterface.ShowDungeonConfirmation(packet)
         );
     }
+
+    public void HandlePacket(IPacketSender packetSender, DungeonRetryOfferPacket packet)
+    {
+        Interface.Interface.EnqueueInGame(
+            gameInterface => gameInterface.ShowDungeonRetryOffer(packet)
+        );
+    }
 }
