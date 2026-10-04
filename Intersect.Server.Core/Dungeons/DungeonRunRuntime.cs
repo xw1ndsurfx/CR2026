@@ -1,12 +1,14 @@
 using System.Collections.Concurrent;
 using Intersect.Enums;
 using Intersect.Framework.Core;
+using Intersect.Framework.Core.Achievements;
 using Intersect.Framework.Core.Dungeons;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Server;
+using Intersect.Server.Achievements;
 using Intersect.Server.Entities;
 using Intersect.Server.LogiCoins;
 using Intersect.Server.Networking;
@@ -221,6 +223,12 @@ internal static class DungeonRunRuntime
         foreach (var player in GetParticipants(run))
         {
             player.UpdateDungeonQuestTasks(run.Dungeon.Id);
+            AchievementRuntime.AddProgress(
+                player,
+                AchievementObjectiveType.DungeonCompletions,
+                1,
+                run.Dungeon.Id
+            );
 
             if (run.Dungeon.CompletionExperience > 0)
                 player.GiveExperience(run.Dungeon.CompletionExperience);
