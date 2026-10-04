@@ -45,6 +45,8 @@ public abstract partial class GameContentManager : IContentManager
 
     protected readonly Dictionary<string, IAsset> mImageDict = [];
 
+    protected readonly Dictionary<string, IAsset> mDungeonDict = [];
+
     protected readonly Dictionary<string, IAsset> mItemDict = [];
 
     protected readonly Dictionary<string, IAsset> mMiscDict = [];
@@ -116,6 +118,7 @@ public abstract partial class GameContentManager : IContentManager
         LoadSpells();
         LoadFaces();
         LoadImages();
+        LoadDungeons();
         LoadFogs();
         LoadResources();
         LoadPaperdolls();
@@ -140,6 +143,8 @@ public abstract partial class GameContentManager : IContentManager
     public abstract void LoadFaces();
 
     public abstract void LoadImages();
+
+    public abstract void LoadDungeons();
 
     public abstract void LoadFogs();
 
@@ -203,6 +208,9 @@ public abstract partial class GameContentManager : IContentManager
 
             case TextureType.Image:
                 return mImageDict.Keys.ToArray();
+
+            case TextureType.Dungeon:
+                return mDungeonDict.Keys.ToArray();
 
             case TextureType.Fog:
                 return mFogDict.Keys.ToArray();
@@ -272,6 +280,11 @@ public abstract partial class GameContentManager : IContentManager
 
             case TextureType.Image:
                 textureDict = mImageDict;
+
+                break;
+
+            case TextureType.Dungeon:
+                textureDict = mDungeonDict;
 
                 break;
 
