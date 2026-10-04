@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
+using Intersect.Framework.Core.Achievements;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.WorldEvents.Invasions;
 using Intersect.Network.Packets.WorldEvents;
