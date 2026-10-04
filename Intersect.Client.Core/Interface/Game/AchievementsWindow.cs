@@ -149,7 +149,7 @@ internal sealed class AchievementsWindow : Window
 
         if (!string.IsNullOrWhiteSpace(definition.Icon))
         {
-            icon.Texture = Globals.ContentManager.GetTexture(TextureType.Image, definition.Icon);
+            icon.Texture = Globals.ContentManager.GetTexture(TextureType.Achievement, definition.Icon);
             if (icon.Texture == null)
                 icon.Hide();
         }

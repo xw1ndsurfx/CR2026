@@ -125,6 +125,8 @@ public partial class FrmMain : Form
         PacketSender.SendRequestAchievementConfiguration(openEditor: false);
         AddDungeonEditorMenu();
         PacketSender.SendRequestDungeonConfiguration(openEditor: false);
+        AddQuestShopEditorMenu();
+        PacketSender.SendRequestQuestShopConfiguration(openEditor: false);
         AddCharacterGeneratorEditorMenu();
         AddAnimationImportEditorMenu();
         AddSoundImportEditorMenu();

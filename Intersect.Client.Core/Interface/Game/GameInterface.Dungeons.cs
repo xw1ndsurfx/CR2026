@@ -45,6 +45,13 @@ public partial class GameInterface
         _dungeonConfirmationWindow.Apply(packet);
     }
 
+    public void ShowDungeonRetryOffer(DungeonRetryOfferPacket packet)
+    {
+        GameMenu?.HideWindows();
+        _dungeonConfirmationWindow ??= new DungeonConfirmationWindow(GameCanvas);
+        _dungeonConfirmationWindow.ApplyRetry(packet);
+    }
+
     public void ApplyDungeonRunState(DungeonRunStatePacket packet)
     {
         _dungeonRunHudWindow ??= new DungeonRunHudWindow(GameCanvas);

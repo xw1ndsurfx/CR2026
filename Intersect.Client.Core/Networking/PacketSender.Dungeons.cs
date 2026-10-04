@@ -13,4 +13,9 @@ public static partial class PacketSender
     {
         Network.SendPacket(new EventResponsePacket(eventId, accept ? (byte)1 : (byte)2));
     }
+
+    public static void SendDungeonRetryResponse(Guid retryId, bool accept)
+    {
+        Network.SendPacket(new DungeonRetryResponsePacket(retryId, accept));
+    }
 }

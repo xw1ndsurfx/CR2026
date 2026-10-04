@@ -14,6 +14,7 @@ namespace Intersect.Client.Interface.Game;
 
 internal sealed class DungeonConfirmationWindow : Window
 {
+    private readonly Label _heading;
     private readonly ImagePanel _image;
     private readonly Label _rank;
     private readonly Label _name;
@@ -28,10 +29,12 @@ internal sealed class DungeonConfirmationWindow : Window
     private readonly Label _quest;
     private readonly Label _objectives;
     private readonly Label _rewards;
+    private readonly Label _question;
     private readonly Button _enter;
     private readonly Button _cancel;
 
     private Guid _eventId;
+    private Guid _retryId;
 
     public DungeonConfirmationWindow(Canvas parent)
         : base(parent, "Dungeon Gate", false, nameof(DungeonConfirmationWindow))
@@ -41,7 +44,7 @@ internal sealed class DungeonConfirmationWindow : Window
         DeleteOnClose = false;
         DisableResizing();
 
-        var heading = new Label(this, "DungeonConfirmHeading")
+        _heading = new Label(this, "DungeonConfirmHeading")
         {
             AutoSizeToContents = false,
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
@@ -50,7 +53,7 @@ internal sealed class DungeonConfirmationWindow : Window
             TextColorOverride = new Color(a: 255, r: 220, g: 196, b: 135),
             Text = "DUNGEON GATE DETECTED",
         };
-        heading.SetBounds(20, 34, 780, 24);
+        _heading.SetBounds(20, 34, 780, 24);
 
         _image = new ImagePanel(this, "DungeonConfirmImage")
         {
@@ -108,7 +111,7 @@ internal sealed class DungeonConfirmationWindow : Window
         _objectives = SectionLabel("DungeonConfirmObjectives", 32, 398, 746, 44);
         _rewards = SectionLabel("DungeonConfirmRewards", 32, 452, 746, 44);
 
-        var question = new Label(this, "DungeonConfirmQuestion")
+        _question = new Label(this, "DungeonConfirmQuestion")
         {
             AutoSizeToContents = false,
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
@@ -117,7 +120,7 @@ internal sealed class DungeonConfirmationWindow : Window
             TextColorOverride = Color.White,
             Text = "ENTER THIS DUNGEON?",
         };
-        question.SetBounds(230, 505, 360, 24);
+        _question.SetBounds(230, 505, 360, 24);
 
         _enter = new Button(this, "DungeonConfirmEnter")
         {
@@ -181,6 +184,10 @@ internal sealed class DungeonConfirmationWindow : Window
         }
 
         _eventId = packet.EventId;
+        _retryId = Guid.Empty;
+        _heading.Text = "DUNGEON GATE DETECTED";
+        _question.Text = "ENTER THIS DUNGEON?";
+        _enter.Text = "ENTER";
 
         _rank.Text = dungeon.Rank.ToString();
         _rank.TextColorOverride = RankColor(dungeon.Rank);
@@ -227,9 +234,14 @@ internal sealed class DungeonConfirmationWindow : Window
         var quest = dungeon.AssociatedQuestId == Guid.Empty
             ? null
             : QuestDescriptor.Get(dungeon.AssociatedQuestId);
-        _quest.Text = quest == null
-            ? "QUEST • None"
-            : $"QUEST • {quest.Name}";
+        var requiredQuest = dungeon.RequiredQuestInProgressId == Guid.Empty
+            ? null
+            : QuestDescriptor.Get(dungeon.RequiredQuestInProgressId);
+        _quest.Text = requiredQuest != null
+            ? $"QUEST • {quest?.Name ?? "None"}   •   REQUIRED IN PROGRESS • {requiredQuest.Name}"
+            : quest == null
+                ? "QUEST • None"
+                : $"QUEST • {quest.Name}";
 
         var requirements = dungeon.CompletionRequirements == DungeonCompletionRequirement.None
             ? DungeonCompletionRequirement.DefeatFinalBoss
@@ -261,8 +273,37 @@ internal sealed class DungeonConfirmationWindow : Window
         BringToFront();
     }
 
+
+    public void ApplyRetry(DungeonRetryOfferPacket packet)
+    {
+        Apply(
+            new DungeonConfirmationPacket(
+                Guid.Empty,
+                packet.DungeonId,
+                packet.ConfigurationJson
+            )
+        );
+
+        _eventId = Guid.Empty;
+        _retryId = packet.RetryId;
+        _heading.Text = "DUNGEON FAILED";
+        _question.Text = "RESTART THIS DUNGEON?";
+        _enter.Text = "RETRY";
+        Show();
+        BringToFront();
+    }
+
     private void Respond(bool accept)
     {
+        if (_retryId != Guid.Empty)
+        {
+            var retryId = _retryId;
+            _retryId = Guid.Empty;
+            Hide();
+            Networking.PacketSender.SendDungeonRetryResponse(retryId, accept);
+            return;
+        }
+
         if (_eventId == Guid.Empty)
             return;
 

@@ -45,6 +45,8 @@ public abstract partial class GameContentManager : IContentManager
 
     protected readonly Dictionary<string, IAsset> mImageDict = [];
 
+    protected readonly Dictionary<string, IAsset> mAchievementDict = [];
+
     protected readonly Dictionary<string, IAsset> mDungeonDict = [];
 
     protected readonly Dictionary<string, IAsset> mItemDict = [];
@@ -212,6 +214,9 @@ public abstract partial class GameContentManager : IContentManager
             case TextureType.Dungeon:
                 return mDungeonDict.Keys.ToArray();
 
+            case TextureType.Achievement:
+                return mAchievementDict.Keys.ToArray();
+
             case TextureType.Fog:
                 return mFogDict.Keys.ToArray();
 
@@ -285,6 +290,11 @@ public abstract partial class GameContentManager : IContentManager
 
             case TextureType.Dungeon:
                 textureDict = mDungeonDict;
+
+                break;
+
+            case TextureType.Achievement:
+                textureDict = mAchievementDict;
 
                 break;
 

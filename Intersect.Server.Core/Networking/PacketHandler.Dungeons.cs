@@ -55,4 +55,21 @@ internal sealed partial class PacketHandler
 
         DungeonConfigurationRuntime.SendState(player, packet.OpenWindow);
     }
+    public void HandlePacket(Client client, DungeonRetryResponsePacket packet)
+    {
+        if (client.IsEditor || client.Entity is not { } player)
+            return;
+
+        if (!DungeonRunRuntime.TryHandleRetry(player, packet.RetryId, packet.Accept, out var error) &&
+            !string.IsNullOrWhiteSpace(error))
+        {
+            PacketSender.SendChatMsg(
+                player,
+                "[Dungeon] " + error,
+                Intersect.Enums.ChatMessageType.Error,
+                Intersect.Color.White
+            );
+        }
+    }
+
 }

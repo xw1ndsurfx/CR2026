@@ -55,6 +55,7 @@ public sealed class DungeonDefinition
     public bool NpcRespawnEnabled { get; set; } = true;
     public int MaxLives { get; set; } = 3;
     public Guid AssociatedQuestId { get; set; }
+    public Guid RequiredQuestInProgressId { get; set; }
     public DungeonRank Rank { get; set; } = DungeonRank.F;
     public int MinimumLevel { get; set; } = 1;
     public int RecommendedLevel { get; set; } = 1;

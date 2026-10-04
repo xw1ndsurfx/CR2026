@@ -70,6 +70,11 @@ public sealed class FrmDungeonConfiguration : DarkForm
         Dock = DockStyle.Fill,
         DropDownStyle = ComboBoxStyle.DropDownList,
     };
+    private readonly DarkComboBox _requiredQuestInProgress = new()
+    {
+        Dock = DockStyle.Fill,
+        DropDownStyle = ComboBoxStyle.DropDownList,
+    };
     private readonly DarkComboBox _rank = new()
     {
         Dock = DockStyle.Fill,
@@ -361,6 +366,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
         AddRow(table, "Image (resources/dungeons)", _image);
         AddRow(table, "Location", _location);
         AddRow(table, "Associated Quest", _associatedQuest);
+        AddRow(table, "Required quest in progress", _requiredQuestInProgress);
         AddRow(table, "Dungeon rank", _rank);
         AddRow(table, "Minimum level", _minimumLevel);
         AddRow(table, "Recommended level", _recommendedLevel);
@@ -562,6 +568,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
         _npcRespawn.Checked = _selected.NpcRespawnEnabled;
         _maxLives.Value = Math.Clamp(_selected.MaxLives, 1, 99);
         SelectId(_associatedQuest, _selected.AssociatedQuestId);
+        SelectId(_requiredQuestInProgress, _selected.RequiredQuestInProgressId);
         _rank.SelectedItem = _selected.Rank;
         _minimumLevel.Value = Math.Clamp(_selected.MinimumLevel, 1, 1_000_000);
         _recommendedLevel.Value = Math.Clamp(_selected.RecommendedLevel, 1, 1_000_000);
@@ -607,7 +614,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
     {
         foreach (var control in new Control[]
                  {
-                     _name, _description, _image, _location, _associatedQuest, _rank,
+                     _name, _description, _image, _location, _associatedQuest, _requiredQuestInProgress, _rank,
                      _minimumLevel, _recommendedLevel, _maximumLevel,
                      _minimumParty, _maximumParty, _timeLimit, _premiumRequired, _sortOrder,
                      _maps, _npcRespawn, _maxLives,
@@ -653,6 +660,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
         _selected.NpcRespawnEnabled = _npcRespawn.Checked;
         _selected.MaxLives = (int)_maxLives.Value;
         _selected.AssociatedQuestId = (_associatedQuest.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
+        _selected.RequiredQuestInProgressId = (_requiredQuestInProgress.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
         _selected.Rank = _rank.SelectedItem is DungeonRank rank ? rank : DungeonRank.F;
         _selected.MinimumLevel = (int)_minimumLevel.Value;
         _selected.RecommendedLevel = (int)_recommendedLevel.Value;
@@ -760,13 +768,14 @@ public sealed class FrmDungeonConfiguration : DarkForm
 
     private void FillQuestChoices()
     {
-        Fill(
-            _associatedQuest,
-            QuestDescriptor.Lookup.Values
-                .OfType<QuestDescriptor>()
-                .OrderBy(quest => quest.Name, StringComparer.OrdinalIgnoreCase)
-                .Select(quest => new IdChoice(quest.Id, quest.Name))
-        );
+        var quests = QuestDescriptor.Lookup.Values
+            .OfType<QuestDescriptor>()
+            .OrderBy(quest => quest.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(quest => new IdChoice(quest.Id, quest.Name))
+            .ToArray();
+
+        Fill(_associatedQuest, quests);
+        Fill(_requiredQuestInProgress, quests);
     }
 
     private void FillCompletionChoices()
