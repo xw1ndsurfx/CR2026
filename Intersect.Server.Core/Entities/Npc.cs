@@ -1140,7 +1140,12 @@ public partial class Npc : Entity
 
                                             if (!blockerAttacked)
                                             {
-                                                if (Descriptor.SmartCombatMovement)
+                                                // Invasion navigation always needs the local detour helper.
+                                                // Invaders can cross several maps toward a destructible objective;
+                                                // falling back to legacy PathFailed-only behavior can leave them
+                                                // retrying the same blocked waypoint forever. Normal NPCs still
+                                                // keep SmartCombatMovement strictly opt-in.
+                                                if (invasionNpc || Descriptor.SmartCombatMovement)
                                                 {
                                                     var detourDirection = ChooseSmartMovementDirection(
                                                         nextPathDirection,
