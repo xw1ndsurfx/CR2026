@@ -190,6 +190,11 @@ public partial class MonoContentManager : GameContentManager
         LoadTextureGroup("images", mImageDict);
     }
 
+    public override void LoadAchievements()
+    {
+        LoadTextureGroup("achievements", mAchievementDict);
+    }
+
     public override void LoadFogs()
     {
         LoadTextureGroup("fogs", mFogDict);
