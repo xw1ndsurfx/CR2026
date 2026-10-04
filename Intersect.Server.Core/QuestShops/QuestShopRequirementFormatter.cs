@@ -147,7 +147,6 @@ internal static class QuestShopRequirementFormatter
         comparator switch
         {
             StringVariableComparator.Equal => "==",
-            StringVariableComparator.NotEqual => "!=",
             StringVariableComparator.Contains => "contains",
             _ => comparator.ToString(),
         };
