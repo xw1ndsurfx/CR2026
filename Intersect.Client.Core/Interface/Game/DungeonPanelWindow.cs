@@ -135,7 +135,9 @@ internal sealed class DungeonPanelWindow : Window
         if (!string.IsNullOrWhiteSpace(dungeon.Image))
         {
             var contentManager = Globals.ContentManager;
-            image.Texture = contentManager?.GetTexture(TextureType.Dungeon, dungeon.Image);
+            image.Texture =
+                contentManager?.GetTexture(TextureType.Dungeon, dungeon.Image) ??
+                contentManager?.GetTexture(TextureType.Image, dungeon.Image);
             if (image.Texture == null)
                 image.Hide();
         }
