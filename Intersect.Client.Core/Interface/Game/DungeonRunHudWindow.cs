@@ -13,6 +13,7 @@ internal sealed class DungeonRunHudWindow : Base
 {
     private readonly Label _title;
     private readonly Label _objective;
+    private readonly Label _lives;
     private readonly Label _timer;
 
     private DungeonRunStatePacket? _state;
@@ -20,7 +21,7 @@ internal sealed class DungeonRunHudWindow : Base
 
     public DungeonRunHudWindow(Canvas parent) : base(parent, nameof(DungeonRunHudWindow))
     {
-        SetSize(430, 104);
+        SetSize(430, 126);
         MouseInputEnabled = false;
         KeyboardInputEnabled = false;
 
@@ -44,6 +45,16 @@ internal sealed class DungeonRunHudWindow : Base
         };
         _objective.SetBounds(10, 38, 410, 20);
 
+        _lives = new Label(this, "DungeonRunLives")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 9,
+            TextAlign = Pos.Center,
+            TextColorOverride = new Color(a: 255, r: 225, g: 198, b: 128),
+        };
+        _lives.SetBounds(10, 62, 410, 18);
+
         _timer = new Label(this, "DungeonRunTimer")
         {
             AutoSizeToContents = false,
@@ -52,7 +63,7 @@ internal sealed class DungeonRunHudWindow : Base
             TextAlign = Pos.Center,
             TextColorOverride = new Color(a: 255, r: 225, g: 198, b: 128),
         };
-        _timer.SetBounds(10, 66, 410, 22);
+        _timer.SetBounds(10, 88, 410, 22);
 
         Hide();
     }
@@ -64,6 +75,9 @@ internal sealed class DungeonRunHudWindow : Base
 
         _title.Text = $"RANK {state.DungeonRank} • {state.DungeonName}";
         _objective.Text = state.Message;
+        _lives.Text = state.MaxLives > 0
+            ? $"LIVES {Math.Max(0, state.LivesRemaining)} / {state.MaxLives}"
+            : string.Empty;
 
         if (state.Status == DungeonRunStatus.Active)
         {
