@@ -6976,6 +6976,23 @@ public partial class Player : Entity
                         var tmpStack = new CommandInstance(stackInfo.Page, stackInfo.BranchIds[responseId - 1]);
                         evt.Value.CallStack.Push(tmpStack);
                     }
+                    else if (stackInfo.WaitingOnCommand is StartDungeonCommand dungeonCommand)
+                    {
+                        if (responseId == 1 &&
+                            !CommandProcessing.TryStartConfirmedDungeon(
+                                dungeonCommand,
+                                this,
+                                out var dungeonError
+                            ))
+                        {
+                            PacketSender.SendChatMsg(
+                                this,
+                                $"[Dungeon] {dungeonError}",
+                                ChatMessageType.Error,
+                                Color.White
+                            );
+                        }
+                    }
 
                     return;
                 }
