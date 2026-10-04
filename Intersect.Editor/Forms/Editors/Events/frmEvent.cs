@@ -790,6 +790,10 @@ public partial class FrmEvent : Form
                 tmpCommand = new StartDungeonCommand();
 
                 break;
+            case EventCommandType.OpenQuestShop:
+                tmpCommand = new OpenQuestShopCommand();
+
+                break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -828,6 +832,7 @@ public partial class FrmEvent : Form
     {
         InitializeComponent();
         AddMarketplaceCommand();
+        AddQuestShopCommand();
         AddDungeonCommands();
         AddProfessionCommands();
         InitializeQuestArrowControls();
@@ -850,6 +855,23 @@ public partial class FrmEvent : Form
             {
                 Name = "openmarketplace",
                 Tag = (int)EventCommandType.OpenMarketplace,
+            }
+        );
+    }
+
+
+    private void AddQuestShopCommand()
+    {
+        var shopNode = lstCommands.Nodes.Cast<TreeNode>()
+            .FirstOrDefault(node => node.Name == "shopandbank");
+        if (shopNode == null || shopNode.Nodes.Cast<TreeNode>().Any(node => node.Name == "openquestshop"))
+            return;
+
+        shopNode.Nodes.Add(
+            new TreeNode("Open Quest Shop")
+            {
+                Name = "openquestshop",
+                Tag = (int)EventCommandType.OpenQuestShop,
             }
         );
     }
@@ -1653,6 +1675,9 @@ public partial class FrmEvent : Form
                 break;
             case EventCommandType.StartDungeon:
                 cmdWindow = new EventCommand_StartDungeon((StartDungeonCommand)command, this);
+                break;
+            case EventCommandType.OpenQuestShop:
+                cmdWindow = new EventCommand_OpenQuestShop((OpenQuestShopCommand)command, this);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
