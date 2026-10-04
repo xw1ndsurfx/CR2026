@@ -120,57 +120,57 @@ public sealed class EventCommand_StartDungeon : UserControl
     private void BuildUi()
     {
         var dungeonLabel = Label("Dungeon:");
-        dungeonLabel.Location = new Point(15, 14);
+        dungeonLabel.Location = new System.Drawing.Point(15, 14);
 
-        _dungeon.Location = new Point(88, 10);
+        _dungeon.Location = new System.Drawing.Point(88, 10);
         _dungeon.Size = new Size(344, 24);
 
-        _warpGroup.Location = new Point(4, 43);
+        _warpGroup.Location = new System.Drawing.Point(4, 43);
         _warpGroup.Size = new Size(448, 232);
         _warpGroup.Padding = new Padding(4, 3, 4, 3);
 
         var mapLabel = Label(Strings.Warping.map.ToString(""));
-        mapLabel.Location = new Point(10, 22);
+        mapLabel.Location = new System.Drawing.Point(10, 22);
 
-        _map.Location = new Point(54, 18);
+        _map.Location = new System.Drawing.Point(54, 18);
         _map.Size = new Size(146, 24);
 
-        _xLabel.Location = new Point(10, 53);
-        _x.Location = new Point(54, 51);
+        _xLabel.Location = new System.Drawing.Point(10, 53);
+        _x.Location = new System.Drawing.Point(54, 51);
         _x.Size = new Size(146, 23);
         _x.Maximum = Options.Instance.Map.MapWidth - 1;
         _x.ValueChanged += (_, _) => UpdateCoordinateLabels();
 
-        _yLabel.Location = new Point(10, 84);
-        _y.Location = new Point(54, 82);
+        _yLabel.Location = new System.Drawing.Point(10, 84);
+        _y.Location = new System.Drawing.Point(54, 82);
         _y.Size = new Size(146, 23);
         _y.Maximum = Options.Instance.Map.MapHeight - 1;
         _y.ValueChanged += (_, _) => UpdateCoordinateLabels();
 
         var directionLabel = Label(Strings.Warping.direction.ToString(""));
-        directionLabel.Location = new Point(10, 118);
+        directionLabel.Location = new System.Drawing.Point(10, 118);
 
-        _direction.Location = new Point(54, 115);
+        _direction.Location = new System.Drawing.Point(54, 115);
         _direction.Size = new Size(146, 24);
 
         _changeInstance.Text = Strings.Warping.ChangeInstance;
-        _changeInstance.Location = new Point(214, 22);
+        _changeInstance.Location = new System.Drawing.Point(214, 22);
         _changeInstance.CheckedChanged += (_, _) =>
             _instanceGroup.Visible = _changeInstance.Checked;
 
         _instanceGroup.Text = Strings.Warping.MapInstancingGroup;
-        _instanceGroup.Location = new Point(214, 59);
+        _instanceGroup.Location = new System.Drawing.Point(214, 59);
         _instanceGroup.Size = new Size(220, 118);
 
         var instanceLabel = Label(Strings.Warping.InstanceType);
-        instanceLabel.Location = new Point(7, 36);
+        instanceLabel.Location = new System.Drawing.Point(7, 36);
 
-        _instanceType.Location = new Point(10, 54);
+        _instanceType.Location = new System.Drawing.Point(10, 54);
         _instanceType.Size = new Size(202, 24);
 
         var visual = new DarkButton
         {
-            Location = new Point(14, 150),
+            Location = new System.Drawing.Point(14, 150),
             Size = new Size(187, 27),
             Padding = new Padding(6),
             Text = Strings.Warping.visual,
@@ -179,7 +179,7 @@ public sealed class EventCommand_StartDungeon : UserControl
 
         var save = new DarkButton
         {
-            Location = new Point(245, 194),
+            Location = new System.Drawing.Point(245, 194),
             Size = new Size(88, 27),
             Padding = new Padding(6),
             Text = Strings.EventWarp.okay,
@@ -188,7 +188,7 @@ public sealed class EventCommand_StartDungeon : UserControl
 
         var cancel = new DarkButton
         {
-            Location = new Point(340, 194),
+            Location = new System.Drawing.Point(340, 194),
             Size = new Size(88, 27),
             Padding = new Padding(6),
             Text = Strings.EventWarp.cancel,
