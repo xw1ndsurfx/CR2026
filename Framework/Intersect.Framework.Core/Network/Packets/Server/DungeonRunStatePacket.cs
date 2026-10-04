@@ -23,7 +23,10 @@ public partial class DungeonRunStatePacket : IntersectPacket
         string dungeonRank,
         DungeonRunStatus status,
         long endTimeUnixMilliseconds,
-        string message
+        string message,
+        int livesRemaining = 0,
+        int maxLives = 0,
+        int monstersRemaining = -1
     )
     {
         DungeonId = dungeonId;
@@ -32,6 +35,9 @@ public partial class DungeonRunStatePacket : IntersectPacket
         Status = status;
         EndTimeUnixMilliseconds = endTimeUnixMilliseconds;
         Message = message;
+        LivesRemaining = livesRemaining;
+        MaxLives = maxLives;
+        MonstersRemaining = monstersRemaining;
     }
 
     [Key(0)] public Guid DungeonId { get; set; }
@@ -40,4 +46,7 @@ public partial class DungeonRunStatePacket : IntersectPacket
     [Key(3)] public DungeonRunStatus Status { get; set; }
     [Key(4)] public long EndTimeUnixMilliseconds { get; set; }
     [Key(5)] public string Message { get; set; } = string.Empty;
+    [Key(6)] public int LivesRemaining { get; set; }
+    [Key(7)] public int MaxLives { get; set; }
+    [Key(8)] public int MonstersRemaining { get; set; } = -1;
 }
