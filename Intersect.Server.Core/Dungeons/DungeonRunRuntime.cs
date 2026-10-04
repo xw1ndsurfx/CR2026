@@ -57,7 +57,7 @@ internal static class DungeonRunRuntime
         // Shared dungeon instances are entered as a Party. All other instance
         // types behave like Warp and only move the player that triggered the Event.
         var sharedParty = changeInstance && instanceType == MapInstanceType.Shared && party.Count > 1;
-        var participants = sharedParty ? party : [player];
+        List<Player> participants = sharedParty ? party : [player];
 
         if (sharedParty && player.PartyLeader != player)
         {
