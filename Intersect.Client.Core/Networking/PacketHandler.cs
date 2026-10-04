@@ -2090,6 +2090,13 @@ internal sealed partial class PacketHandler
         {
             Globals.QuestOffers.Add(packet.QuestId);
         }
+
+        if (Interface.Interface.HasInGameUI)
+        {
+            Interface.Interface.EnqueueInGame(
+                gameInterface => gameInterface.HideQuestShop()
+            );
+        }
     }
 
     //QuestProgressPacket
