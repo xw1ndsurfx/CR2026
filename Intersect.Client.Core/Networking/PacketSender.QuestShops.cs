@@ -4,8 +4,8 @@ namespace Intersect.Client.Networking;
 
 public static partial class PacketSender
 {
-    public static void SendAcceptQuestShopQuest(Guid shopId, Guid questId)
+    public static void SendRequestQuestShopOffer(Guid shopId, Guid questId)
     {
-        Network.SendPacket(new AcceptQuestShopQuestPacket(shopId, questId));
+        Network.SendPacket(new RequestQuestShopOfferPacket(shopId, questId));
     }
 }
