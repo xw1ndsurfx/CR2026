@@ -2,12 +2,14 @@ using DarkUI.Controls;
 using DarkUI.Forms;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.Achievements;
+using Intersect.Framework.Core.Dungeons;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.Professions;
+using Intersect.Framework.Core.WorldEvents.Invasions;
 using Intersect.GameObjects;
 using DrawingColor = System.Drawing.Color;
 
@@ -40,7 +42,11 @@ public sealed class FrmAchievementConfiguration : DarkForm
     private readonly DarkTextBox _name = new() { Dock = DockStyle.Fill };
     private readonly DarkTextBox _description = new() { Dock = DockStyle.Fill, Multiline = true, Height = 70 };
     private readonly DarkTextBox _category = new() { Dock = DockStyle.Fill };
-    private readonly DarkTextBox _icon = new() { Dock = DockStyle.Fill };
+    private readonly DarkComboBox _icon = new()
+    {
+        DropDownStyle = ComboBoxStyle.DropDownList,
+        Dock = DockStyle.Fill,
+    };
     private readonly DarkComboBox _objective = new() { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
     private readonly DarkComboBox _target = new() { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
     private readonly DarkTextBox _targetKey = new() { Dock = DockStyle.Fill };
@@ -102,6 +108,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
             _objective.Items.Add(value);
 
         FillRewardChoices();
+        FillAchievementIcons();
         BuildUi();
 
         _objective.SelectedIndexChanged += (_, _) => RefreshTargetChoices();
@@ -238,7 +245,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
         AddRow(table, "Name", _name);
         AddRow(table, "Description", _description, 78);
         AddRow(table, "Category", _category);
-        AddRow(table, "Image / icon file", _icon);
+        AddRow(table, "Image / icon (resources/achievements)", _icon);
         AddRow(table, "Objective type", _objective);
         AddRow(table, "Target", _target);
         AddRow(table, "Target key", _targetKey);
@@ -399,6 +406,17 @@ public sealed class FrmAchievementConfiguration : DarkForm
                         .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
                         .Select(x => new IdChoice(x.Id, x.Name)),
 
+                AchievementObjectiveType.DungeonCompletions =>
+                    DungeonConfiguration.Instance.Dungeons
+                        .OrderBy(x => x.SortOrder)
+                        .ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+                        .Select(x => new IdChoice(x.Id, x.Name)),
+
+                AchievementObjectiveType.InvasionCompletions =>
+                    InvasionConfiguration.Instance.Invasions
+                        .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+                        .Select(x => new IdChoice(x.Id, x.Name)),
+
                 _ => [],
             };
 
@@ -407,6 +425,31 @@ public sealed class FrmAchievementConfiguration : DarkForm
         }
 
         SelectId(_target, existingId);
+    }
+
+    private void FillAchievementIcons()
+    {
+        var folder = Path.Combine("resources", "achievements");
+        Directory.CreateDirectory(folder);
+
+        _icon.Items.Clear();
+        _icon.Items.Add("None");
+
+        foreach (var file in Directory.GetFiles(folder, "*.png", SearchOption.AllDirectories)
+                     .Select(path => Path.GetRelativePath(folder, path).Replace('\\', '/'))
+                     .OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+        {
+            _icon.Items.Add(file);
+        }
+
+        _icon.SelectedIndex = 0;
+    }
+
+    private static void SelectString(ComboBox combo, string? value)
+    {
+        var desired = string.IsNullOrWhiteSpace(value) ? "None" : value;
+        var index = combo.FindStringExact(desired);
+        combo.SelectedIndex = index >= 0 ? index : 0;
     }
 
     private static void Fill(ComboBox combo, IEnumerable<IdChoice> choices)
@@ -482,7 +525,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
         _name.Text = _selected.Name;
         _description.Text = _selected.Description;
         _category.Text = _selected.Category;
-        _icon.Text = _selected.Icon;
+        SelectString(_icon, _selected.Icon);
 
         _objective.SelectedItem = _selected.ObjectiveType;
         RefreshTargetChoices();
@@ -522,7 +565,9 @@ public sealed class FrmAchievementConfiguration : DarkForm
         _selected.Name = string.IsNullOrWhiteSpace(_name.Text) ? "Achievement" : _name.Text.Trim();
         _selected.Description = _description.Text ?? string.Empty;
         _selected.Category = string.IsNullOrWhiteSpace(_category.Text) ? "General" : _category.Text.Trim();
-        _selected.Icon = _icon.Text?.Trim() ?? string.Empty;
+        _selected.Icon = string.Equals(_icon.Text, "None", StringComparison.OrdinalIgnoreCase)
+            ? string.Empty
+            : _icon.Text?.Trim() ?? string.Empty;
         _selected.ObjectiveType = _objective.SelectedItem is AchievementObjectiveType objective
             ? objective
             : AchievementObjectiveType.CustomCounter;
