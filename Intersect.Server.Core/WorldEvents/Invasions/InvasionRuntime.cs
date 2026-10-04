@@ -5,6 +5,7 @@ using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.WorldEvents.Invasions;
 using Intersect.Network.Packets.WorldEvents;
+using Intersect.Server.Achievements;
 using Intersect.Server.Entities;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
@@ -734,6 +735,16 @@ internal static class InvasionRuntime
                     100m
                 )
                 : 0;
+
+            if (victory && !configurationFailure)
+            {
+                AchievementRuntime.AddProgress(
+                    player,
+                    AchievementObjectiveType.InvasionCompletions,
+                    1,
+                    session.Definition.Id
+                );
+            }
 
             var rewardPercent = 0;
             var xp = 0L;
