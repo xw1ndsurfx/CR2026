@@ -13,6 +13,7 @@ using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Variables;
 using Intersect.Framework.Core.Professions;
 using Intersect.Framework.Core.QuestShops;
+using Intersect.Framework.Core.RoyalStylist;
 using Intersect.GameObjects;
 using Microsoft.Extensions.Logging;
 using VariableMod = Intersect.Framework.Core.GameObjects.Events.VariableMod;
@@ -1250,6 +1251,12 @@ public static partial class CommandPrinter
     {
         var shop = QuestShopConfiguration.Instance.Find(command.QuestShopId);
         return $"Open Quest Shop: {shop?.Name ?? "Unknown"}";
+    }
+
+    private static string GetCommandText(OpenRoyalStylistCommand command, MapInstance map)
+    {
+        var stylist = RoyalStylistConfiguration.Instance.Find(command.StylistId);
+        return $"Open Royal Stylist: {stylist?.Name ?? "Unknown"}";
     }
 
     private static string GetCommandText(OpenCraftingTableCommand command, MapInstance map)

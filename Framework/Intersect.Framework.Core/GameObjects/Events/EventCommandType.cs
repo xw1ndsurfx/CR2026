@@ -151,4 +151,7 @@ public enum EventCommandType
 
     // CR2026 quest shops.
     OpenQuestShop = 1030,
+
+    // CR2026 premium character appearance shops.
+    OpenRoyalStylist = 1040,
 }
