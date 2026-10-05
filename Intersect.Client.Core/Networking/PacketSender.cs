@@ -7,6 +7,7 @@ using Intersect.Client.Interface.Shared;
 using Intersect.Client.Maps;
 using Intersect.Enums;
 using Intersect.Framework;
+using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Models;
 using Intersect.Network.Packets.Client;
@@ -200,9 +201,14 @@ public static partial class PacketSender
         Network.SendPacket(new UserRegistrationRequestPacket(username, password, email));
     }
 
-    public static void SendCreateCharacter(string name, Guid classId, int sprite)
+    public static void SendCreateCharacter(
+        string name,
+        Guid classId,
+        int sprite,
+        CharacterAppearance? appearance = null
+    )
     {
-        Network.SendPacket(new CreateCharacterPacket(name, classId, sprite));
+        Network.SendPacket(new CreateCharacterPacket(name, classId, sprite, appearance));
     }
 
     public static void SendPickupItem(Guid mapId, int tileIndex, Guid uniqueId)

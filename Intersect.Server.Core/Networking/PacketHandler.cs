@@ -1655,11 +1655,15 @@ internal sealed partial class PacketHandler
 
         if (classBase.Sprites.Count > 0)
         {
-            var spriteIndex = Math.Max(0, Math.Min(classBase.Sprites.Count, packet.Sprite));
+            var spriteIndex = Math.Clamp(packet.Sprite, 0, classBase.Sprites.Count - 1);
             newChar.Sprite = classBase.Sprites[spriteIndex].Sprite;
             newChar.Face = classBase.Sprites[spriteIndex].Face;
             newChar.Gender = classBase.Sprites[spriteIndex].Gender;
         }
+
+        // Appearance is cosmetic state, not inventory. Only dedicated character-creation
+        // paperdoll names survive the shared sanitization step.
+        newChar.Appearance = (packet.Appearance ?? new CharacterAppearance()).SanitizedCopy();
 
         client.LoadCharacter(newChar);
 

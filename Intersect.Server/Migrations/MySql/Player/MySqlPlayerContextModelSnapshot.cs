@@ -579,6 +579,10 @@ namespace Intersect.Server.Migrations.MySql.Player
                         .HasColumnType("char(36)")
                         .UseCollation("ascii_general_ci");
 
+                    b.Property<string>("AppearanceJson")
+                        .HasColumnType("longtext")
+                        .HasColumnName("Appearance");
+
                     b.Property<DateTime?>("CreationDate")
                         .HasColumnType("datetime(6)");
 

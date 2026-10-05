@@ -82,6 +82,18 @@ public partial class Player : Entity
 
     public Gender Gender { get; set; }
 
+    [JsonIgnore, Column("Appearance")]
+    public string AppearanceJson
+    {
+        get => JsonConvert.SerializeObject(Appearance);
+        set => Appearance = !string.IsNullOrWhiteSpace(value)
+            ? JsonConvert.DeserializeObject<CharacterAppearance>(value) ?? new CharacterAppearance()
+            : new CharacterAppearance();
+    }
+
+    [NotMapped]
+    public CharacterAppearance Appearance { get; set; } = new();
+
     public long Exp { get; set; }
 
     public int StatPoints { get; set; }
@@ -1061,6 +1073,7 @@ public partial class Player : Entity
         var pkt = (PlayerEntityPacket)packet;
         pkt.Gender = Gender;
         pkt.ClassId = ClassId;
+        pkt.Appearance = Appearance?.SanitizedCopy() ?? new CharacterAppearance();
         pkt.Stats = GetStatValues();
 
         if (Power.IsAdmin)

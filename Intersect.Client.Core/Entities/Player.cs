@@ -60,6 +60,8 @@ public partial class Player : Entity, IPlayer
 
     public Access AccessLevel { get; set; }
 
+    public CharacterAppearance Appearance { get; set; } = new();
+
     public long Experience { get; set; } = 0;
 
     public long ExperienceToNextLevel { get; set; } = 0;
@@ -351,6 +353,7 @@ public partial class Player : Entity, IPlayer
 
         Gender = playerPacket.Gender;
         Class = playerPacket.ClassId;
+        Appearance = playerPacket.Appearance ?? new CharacterAppearance();
         AccessLevel = playerPacket.AccessLevel;
         CombatTimer = playerPacket.CombatTimeRemaining + Timing.Global.Milliseconds;
         Guild = playerPacket.Guild;

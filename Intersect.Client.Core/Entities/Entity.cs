@@ -1321,34 +1321,40 @@ public partial class Entity : IEntity
             }
             else if (equipSlot > -1)
             {
-                //Don't render the paperdolls if they have transformed.
+                // Don't render paperdolls or the base appearance while transformed.
                 if (sprite == Sprite && Equipment.Length == Options.Instance.Equipment.Slots.Count)
                 {
-                    if (Equipment[equipSlot] != Guid.Empty && this != Globals.Me ||
-                        MyEquipment[equipSlot] < Options.Instance.Player.MaxInventory)
+                    var itemId = Guid.Empty;
+                    if (this == Globals.Me)
                     {
-                        var itemId = Guid.Empty;
-                        if (this == Globals.Me)
+                        var slot = MyEquipment[equipSlot];
+                        if (slot > -1 && slot < Inventory.Length)
                         {
-                            var slot = MyEquipment[equipSlot];
-                            if (slot > -1)
-                            {
-                                itemId = Inventory[slot].ItemId;
-                            }
+                            itemId = Inventory[slot].ItemId;
                         }
-                        else
-                        {
-                            itemId = Equipment[equipSlot];
-                        }
+                    }
+                    else
+                    {
+                        itemId = Equipment[equipSlot];
+                    }
 
-                        var item = ItemDescriptor.Get(itemId);
-                        if (ItemDescriptor.TryGet(itemId, out var itemDescriptor))
-                        {
-                            var itemPaperdoll = Gender == 0
-                                ? itemDescriptor.MalePaperdoll
-                                : itemDescriptor.FemalePaperdoll;
-                            DrawEquipment(itemPaperdoll, item.Color * renderColor);
-                        }
+                    var drewEquipment = false;
+                    if (ItemDescriptor.TryGet(itemId, out var itemDescriptor))
+                    {
+                        var itemPaperdoll = Gender == 0
+                            ? itemDescriptor.MalePaperdoll
+                            : itemDescriptor.FemalePaperdoll;
+                        DrawEquipment(itemPaperdoll, itemDescriptor.Color * renderColor);
+                        drewEquipment = true;
+                    }
+
+                    // Hair/shirt/pants/boots are persistent cosmetic base layers, not
+                    // inventory items. Equipment in the same slot always wins.
+                    if (!drewEquipment &&
+                        this is Player player &&
+                        player.Appearance.TryGetLayer(paperdoll, out var baseStyle, out var baseColor))
+                    {
+                        DrawEquipment(baseStyle, baseColor * renderColor);
                     }
                 }
             }

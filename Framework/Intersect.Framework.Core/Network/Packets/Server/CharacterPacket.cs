@@ -1,3 +1,4 @@
+using Intersect.Framework.Core;
 using MessagePack;
 
 namespace Intersect.Network.Packets.Server;
@@ -28,7 +29,8 @@ public partial class CharacterPacket : IntersectPacket
         int level,
         string className,
         EquipmentFragment[] equipment,
-        string guildName
+        string guildName,
+        CharacterAppearance? appearance = null
     )
     {
         Id = id;
@@ -39,6 +41,7 @@ public partial class CharacterPacket : IntersectPacket
         ClassName = className;
         Equipment = equipment;
         GuildName = guildName;
+        Appearance = appearance ?? new CharacterAppearance();
     }
 
     [Key(0)]
@@ -64,5 +67,8 @@ public partial class CharacterPacket : IntersectPacket
 
     [Key(7)]
     public string GuildName { get; set; } = string.Empty;
+
+    [Key(8)]
+    public CharacterAppearance Appearance { get; set; } = new();
 
 }

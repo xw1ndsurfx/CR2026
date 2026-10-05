@@ -1430,7 +1430,8 @@ public static partial class PacketSender
                     character.Level,
                     ClassDescriptor.GetName(character.ClassId),
                     equipment,
-                    character.Guild?.Name ?? string.Empty
+                    character.Guild?.Name ?? string.Empty,
+                    character.Appearance?.SanitizedCopy() ?? new CharacterAppearance()
                 )
             );
         }
