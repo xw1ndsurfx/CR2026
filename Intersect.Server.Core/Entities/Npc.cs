@@ -604,7 +604,11 @@ public partial class Npc : Entity
     {
         entityType = default;
 
-        if (Descriptor.Movement == (byte)NpcMovement.Static)
+        // Invasion NPCs are driven by the invasion route, not their descriptor's
+        // idle movement mode. A Static descriptor must therefore not prevent an
+        // active invader from advancing toward the destructible objective.
+        if (Descriptor.Movement == (byte)NpcMovement.Static &&
+            InvasionSessionId == Guid.Empty)
         {
             blockerType = MovementBlockerType.MapAttribute;
             return false;
@@ -620,6 +624,14 @@ public partial class Npc : Entity
             {
                 blockerType = MovementBlockerType.NotBlocked;
             }
+        }
+
+        // Invaders never use flee/reset-radius movement. They must remain free to
+        // traverse multiple maps all the way to the invasion objective even when
+        // the underlying NPC descriptor has flee settings configured.
+        if (InvasionSessionId != Guid.Empty)
+        {
+            return blockerType == MovementBlockerType.NotBlocked;
         }
 
         if ((blockerType != MovementBlockerType.NotBlocked && blockerType != MovementBlockerType.Slide) ||
