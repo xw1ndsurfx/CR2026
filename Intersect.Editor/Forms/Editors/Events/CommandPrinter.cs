@@ -1183,6 +1183,11 @@ public static partial class CommandPrinter
             }
         }
 
+        if (command.MapId == Guid.Empty && (command.OffsetX != 0 || command.OffsetY != 0))
+        {
+            commandTextBuilder.Append($" [Offset: {command.OffsetX}px, {command.OffsetY}px]");
+        }
+
         commandTextBuilder.Append(Strings.EventCommandList.PlayAnimationInstanced.ToString(command.InstanceToPlayer));
         return commandTextBuilder.ToString();
     }
