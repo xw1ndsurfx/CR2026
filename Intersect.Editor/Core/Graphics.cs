@@ -1652,6 +1652,10 @@ public static partial class Graphics
                         width = (eventTex.Width / Options.Instance.Sprites.NormalFrames);
                         height = (eventTex.Height / Options.Instance.Sprites.Directions);
 
+                        // Match the runtime entity renderer's sprite Y offset so event previews
+                        // are drawn on the same logical tile as their editor "E" marker.
+                        destinationY += 32;
+
                         break;
                     case EventGraphicType.Tileset: //Tile
                         eventTex = GameContentManager.GetTexture(
