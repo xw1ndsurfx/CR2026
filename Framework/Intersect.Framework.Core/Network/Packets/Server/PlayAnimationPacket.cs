@@ -21,7 +21,9 @@ public partial class PlayAnimationPacket : IntersectPacket
         int y,
         Direction direction,
         AnimationSourceType sourceType = AnimationSourceType.Any,
-        Guid sourceId = default
+        Guid sourceId = default,
+        int offsetX = 0,
+        int offsetY = 0
     )
     {
         AnimationId = animId;
@@ -33,6 +35,8 @@ public partial class PlayAnimationPacket : IntersectPacket
         Direction = direction;
         SourceType = sourceType;
         SourceId = sourceId;
+        OffsetX = offsetX;
+        OffsetY = offsetY;
     }
 
     [Key(0)]
@@ -61,5 +65,11 @@ public partial class PlayAnimationPacket : IntersectPacket
 
     [Key(8)]
     public Guid SourceId { get; set; }
+
+    [Key(9)]
+    public int OffsetX { get; set; }
+
+    [Key(10)]
+    public int OffsetY { get; set; }
 
 }
