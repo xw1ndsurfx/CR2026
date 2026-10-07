@@ -19,5 +19,10 @@ public partial class PlayAnimationCommand : EventCommand
 
     public sbyte Y { get; set; }
 
+    // Fine-grained pixel offsets used when the animation is attached to an entity.
+    public int OffsetX { get; set; }
+
+    public int OffsetY { get; set; }
+
     public bool InstanceToPlayer { get; set; }
 }
