@@ -1610,7 +1610,9 @@ public static partial class PacketSender
         Direction direction,
         Guid mapInstanceId,
         AnimationSourceType animationSourceType = AnimationSourceType.Any,
-        Guid animationSourceId = default
+        Guid animationSourceId = default,
+        int offsetX = 0,
+        int offsetY = 0
     )
     {
         if (!MapController.TryGetInstanceFromMap(mapId, mapInstanceId, out var mapInstance))
@@ -1618,7 +1620,19 @@ public static partial class PacketSender
             return;
         }
 
-        PlayAnimationPacket playAnimationPacket = new(animId, targetType, entityId, mapId, x, y, direction, animationSourceType, animationSourceId);
+        PlayAnimationPacket playAnimationPacket = new(
+            animId,
+            targetType,
+            entityId,
+            mapId,
+            x,
+            y,
+            direction,
+            animationSourceType,
+            animationSourceId,
+            offsetX,
+            offsetY
+        );
         if (Options.Instance.Packets.BatchAnimationPackets)
         {
             mapInstance.AddBatchedAnimation(playAnimationPacket);
@@ -1637,7 +1651,9 @@ public static partial class PacketSender
         byte x,
         byte y,
         Direction direction,
-        Player target
+        Player target,
+        int offsetX = 0,
+        int offsetY = 0
     )
     {
         if (animId == Guid.Empty)
@@ -1645,7 +1661,19 @@ public static partial class PacketSender
             return;
         }
 
-        target.SendPacket(new PlayAnimationPacket(animId, targetType, entityId, mapId, x, y, direction));
+        target.SendPacket(
+            new PlayAnimationPacket(
+                animId,
+                targetType,
+                entityId,
+                mapId,
+                x,
+                y,
+                direction,
+                offsetX: offsetX,
+                offsetY: offsetY
+            )
+        );
     }
 
     //HoldPlayerPacket
