@@ -1,3 +1,4 @@
+using System.Drawing;
 using DarkUI.Controls;
 using Intersect.Editor.Forms.Helpers;
 using Intersect.Editor.Localization;
@@ -29,13 +30,13 @@ public partial class EventCommandPlayAnimation : UserControl
 
     private Grid? mGrid;
 
-    private DarkNumericUpDown mOffsetX;
+    private DarkNumericUpDown mOffsetX = null!;
 
-    private DarkNumericUpDown mOffsetY;
+    private DarkNumericUpDown mOffsetY = null!;
 
-    private Label mOffsetXLabel;
+    private Label mOffsetXLabel = null!;
 
-    private Label mOffsetYLabel;
+    private Label mOffsetYLabel = null!;
 
     public EventCommandPlayAnimation(
         FrmEvent eventEditor,
