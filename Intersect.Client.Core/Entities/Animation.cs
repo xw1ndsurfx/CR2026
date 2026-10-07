@@ -29,6 +29,8 @@ public partial class Animation : IAnimation
     /// Pixel offset applied when this animation follows a parent entity.
     /// Negative values render above the entity.
     /// </summary>
+    public float ParentOffsetX { get; set; }
+
     public float ParentOffsetY { get; set; }
 
     private bool mDisposeNextDraw;
@@ -164,7 +166,10 @@ public partial class Animation : IAnimation
             }
         }
 
-        const int SpriteYOffset = -16;
+        // Map/tile animations keep the legacy offset. Animations attached to an entity
+        // must follow the same +32px visual shift as entity sprites, otherwise they render
+        // noticeably above the character/event they are attached to.
+        var spriteYOffset = mParent == null || mParent is Events.Event ? -16f : 32f;
 
         if (!upper && mShowLower && mZDimension < 1 || !upper && mShowLower && mZDimension > 0)
         {
@@ -196,7 +201,7 @@ public partial class Animation : IAnimation
                         ),
                         new FloatRect(
                             mRenderX - drawWidth / 2,
-                            mRenderY - drawHeight / 2 + SpriteYOffset,
+                            mRenderY - drawHeight / 2 + spriteYOffset,
                             drawWidth,
                             drawHeight
                         ),
@@ -252,7 +257,7 @@ public partial class Animation : IAnimation
                         ),
                         new FloatRect(
                             mRenderX - drawWidth / 2,
-                            mRenderY - drawHeight / 2 + SpriteYOffset,
+                            mRenderY - drawHeight / 2 + spriteYOffset,
                             drawWidth,
                             drawHeight
                         ),
@@ -354,7 +359,7 @@ public partial class Animation : IAnimation
 
     public void SetPosition(float worldX, float worldY, int mapx, int mapy, Guid mapId, Direction dir, int z = 0)
     {
-        mRenderX = worldX;
+        mRenderX = worldX + ParentOffsetX;
         mRenderY = worldY + ParentOffsetY;
         mSound?.UpdatePosition(mapx, mapy, mapId);
 

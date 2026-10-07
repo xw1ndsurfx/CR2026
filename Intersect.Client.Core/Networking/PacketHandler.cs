@@ -1638,7 +1638,11 @@ internal sealed partial class PacketHandler
                         -1,
                         entity,
                         source: animationSource
-                    );
+                    )
+                    {
+                        ParentOffsetX = packet.OffsetX,
+                        ParentOffsetY = packet.OffsetY,
+                    };
 
                     if (packet.Direction > Direction.None)
                     {
@@ -1687,7 +1691,11 @@ internal sealed partial class PacketHandler
                         -1,
                         entity,
                         source: animationSource
-                    );
+                    )
+                    {
+                        ParentOffsetX = packet.OffsetX,
+                        ParentOffsetY = packet.OffsetY,
+                    };
 
                     if (packet.Direction > Direction.None)
                     {

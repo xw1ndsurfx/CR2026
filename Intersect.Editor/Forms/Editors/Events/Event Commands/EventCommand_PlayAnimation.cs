@@ -1,3 +1,5 @@
+using System.Drawing;
+using DarkUI.Controls;
 using Intersect.Editor.Forms.Helpers;
 using Intersect.Editor.Localization;
 using Intersect.Enums;
@@ -28,6 +30,14 @@ public partial class EventCommandPlayAnimation : UserControl
 
     private Grid? mGrid;
 
+    private DarkNumericUpDown mOffsetX = null!;
+
+    private DarkNumericUpDown mOffsetY = null!;
+
+    private Label mOffsetXLabel = null!;
+
+    private Label mOffsetYLabel = null!;
+
     public EventCommandPlayAnimation(
         FrmEvent eventEditor,
         MapDescriptor currentMap,
@@ -36,6 +46,7 @@ public partial class EventCommandPlayAnimation : UserControl
     )
     {
         InitializeComponent();
+        InitializePixelOffsetControls();
         mMyCommand = editingCommand;
         mEventEditor = eventEditor;
         mEditingEvent = currentEvent;
@@ -54,6 +65,8 @@ public partial class EventCommandPlayAnimation : UserControl
         }
 
         chkInstanceToPlayer.Checked = mMyCommand.InstanceToPlayer;
+        mOffsetX.Value = Math.Clamp(mMyCommand.OffsetX, (int)mOffsetX.Minimum, (int)mOffsetX.Maximum);
+        mOffsetY.Value = Math.Clamp(mMyCommand.OffsetY, (int)mOffsetY.Minimum, (int)mOffsetY.Maximum);
 
         nudWarpX.Maximum = Options.Instance.Map.MapWidth;
         nudWarpY.Maximum = Options.Instance.Map.MapHeight;
@@ -92,6 +105,55 @@ public partial class EventCommandPlayAnimation : UserControl
 
                 break;
         }
+    }
+
+    private void InitializePixelOffsetControls()
+    {
+        // Leave the existing 5x5 tile selector intact and add fine pixel positioning
+        // underneath it for animations that are attached directly to an entity/event.
+        grpEntitySpawn.Size = new Size(275, 388);
+        grpPlayAnimation.Size = new Size(299, 552);
+        chkRelativeLocation.Location = new System.Drawing.Point(44, 332);
+        chkRotateDirection.Location = new System.Drawing.Point(44, 358);
+        chkInstanceToPlayer.Location = new System.Drawing.Point(10, 487);
+        btnSave.Location = new System.Drawing.Point(103, 515);
+        btnCancel.Location = new System.Drawing.Point(197, 515);
+        Size = new Size(312, 560);
+
+        mOffsetXLabel = new Label
+        {
+            AutoSize = true,
+            Location = new System.Drawing.Point(44, 276),
+            Text = "Offset X (px):",
+        };
+
+        mOffsetX = new DarkNumericUpDown
+        {
+            Location = new System.Drawing.Point(145, 272),
+            Minimum = -1024,
+            Maximum = 1024,
+            Size = new Size(86, 23),
+        };
+
+        mOffsetYLabel = new Label
+        {
+            AutoSize = true,
+            Location = new System.Drawing.Point(44, 305),
+            Text = "Offset Y (px):",
+        };
+
+        mOffsetY = new DarkNumericUpDown
+        {
+            Location = new System.Drawing.Point(145, 301),
+            Minimum = -1024,
+            Maximum = 1024,
+            Size = new Size(86, 23),
+        };
+
+        grpEntitySpawn.Controls.Add(mOffsetXLabel);
+        grpEntitySpawn.Controls.Add(mOffsetX);
+        grpEntitySpawn.Controls.Add(mOffsetYLabel);
+        grpEntitySpawn.Controls.Add(mOffsetY);
     }
 
     private void InitLocalization()
@@ -221,6 +283,8 @@ public partial class EventCommandPlayAnimation : UserControl
                 mMyCommand.X = (sbyte) nudWarpX.Value;
                 mMyCommand.Y = (sbyte) nudWarpY.Value;
                 mMyCommand.Dir = (byte) cmbDirection.SelectedIndex;
+                mMyCommand.OffsetX = 0;
+                mMyCommand.OffsetY = 0;
 
                 break;
             case 1: //On/Around Entity Spawn
@@ -260,6 +324,9 @@ public partial class EventCommandPlayAnimation : UserControl
 
                     //0 does not adhere to direction, 1 is Spawning Relative to Direction, 2 is Rotating Relative to Direction, and 3 is both.
                 }
+
+                mMyCommand.OffsetX = (int)mOffsetX.Value;
+                mMyCommand.OffsetY = (int)mOffsetY.Value;
 
                 break;
         }
