@@ -113,23 +113,23 @@ public partial class EventCommandPlayAnimation : UserControl
         // underneath it for animations that are attached directly to an entity/event.
         grpEntitySpawn.Size = new Size(275, 388);
         grpPlayAnimation.Size = new Size(299, 552);
-        chkRelativeLocation.Location = new Point(44, 332);
-        chkRotateDirection.Location = new Point(44, 358);
-        chkInstanceToPlayer.Location = new Point(10, 487);
-        btnSave.Location = new Point(103, 515);
-        btnCancel.Location = new Point(197, 515);
+        chkRelativeLocation.Location = new System.Drawing.Point(44, 332);
+        chkRotateDirection.Location = new System.Drawing.Point(44, 358);
+        chkInstanceToPlayer.Location = new System.Drawing.Point(10, 487);
+        btnSave.Location = new System.Drawing.Point(103, 515);
+        btnCancel.Location = new System.Drawing.Point(197, 515);
         Size = new Size(312, 560);
 
         mOffsetXLabel = new Label
         {
             AutoSize = true,
-            Location = new Point(44, 276),
+            Location = new System.Drawing.Point(44, 276),
             Text = "Offset X (px):",
         };
 
         mOffsetX = new DarkNumericUpDown
         {
-            Location = new Point(145, 272),
+            Location = new System.Drawing.Point(145, 272),
             Minimum = -1024,
             Maximum = 1024,
             Size = new Size(86, 23),
@@ -138,13 +138,13 @@ public partial class EventCommandPlayAnimation : UserControl
         mOffsetYLabel = new Label
         {
             AutoSize = true,
-            Location = new Point(44, 305),
+            Location = new System.Drawing.Point(44, 305),
             Text = "Offset Y (px):",
         };
 
         mOffsetY = new DarkNumericUpDown
         {
-            Location = new Point(145, 301),
+            Location = new System.Drawing.Point(145, 301),
             Minimum = -1024,
             Maximum = 1024,
             Size = new Size(86, 23),
