@@ -164,7 +164,10 @@ public partial class Animation : IAnimation
             }
         }
 
-        const int SpriteYOffset = -16;
+        // Map/tile animations keep the legacy offset. Animations attached to an entity
+        // must follow the same +32px visual shift as entity sprites, otherwise they render
+        // noticeably above the character/event they are attached to.
+        var spriteYOffset = mParent == null ? -16f : 32f;
 
         if (!upper && mShowLower && mZDimension < 1 || !upper && mShowLower && mZDimension > 0)
         {
@@ -196,7 +199,7 @@ public partial class Animation : IAnimation
                         ),
                         new FloatRect(
                             mRenderX - drawWidth / 2,
-                            mRenderY - drawHeight / 2 + SpriteYOffset,
+                            mRenderY - drawHeight / 2 + spriteYOffset,
                             drawWidth,
                             drawHeight
                         ),
@@ -252,7 +255,7 @@ public partial class Animation : IAnimation
                         ),
                         new FloatRect(
                             mRenderX - drawWidth / 2,
-                            mRenderY - drawHeight / 2 + SpriteYOffset,
+                            mRenderY - drawHeight / 2 + spriteYOffset,
                             drawWidth,
                             drawHeight
                         ),
