@@ -1069,14 +1069,31 @@ public static partial class CommandProcessing
                     if (command.InstanceToPlayer)
                     {
                         PacketSender.SendAnimationTo(
-                            animId, targetType, targetEntity.Id, targetEntity.MapId, 0, 0, 0, player
+                            animId,
+                            targetType,
+                            targetEntity.Id,
+                            targetEntity.MapId,
+                            0,
+                            0,
+                            0,
+                            player,
+                            command.OffsetX,
+                            command.OffsetY
                         );
                     }
                     else
                     {
                         PacketSender.SendAnimationToProximity(
-                            animId, targetType, targetEntity.Id,
-                            targetEntity.MapId, 0, 0, 0, targetEntity.MapInstanceId
+                            animId,
+                            targetType,
+                            targetEntity.Id,
+                            targetEntity.MapId,
+                            0,
+                            0,
+                            0,
+                            targetEntity.MapInstanceId,
+                            offsetX: command.OffsetX,
+                            offsetY: command.OffsetY
                         );
                     }
 
