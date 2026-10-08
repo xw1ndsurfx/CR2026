@@ -466,6 +466,20 @@ internal static class LockpickingRuntime
                 session.PickBroken
             );
 
+            if (perfect && session.Command.VictoryAnimationId != Guid.Empty)
+            {
+                PacketSender.SendAnimationToProximity(
+                    session.Command.VictoryAnimationId,
+                    1,
+                    session.Player.Id,
+                    session.Player.MapId,
+                    0,
+                    0,
+                    session.Player.Dir,
+                    session.Player.MapInstanceId
+                );
+            }
+
             var lockName = session.Player.EventLookup.Values
                 .FirstOrDefault(evt => evt.Descriptor?.Id == session.LockId)
                 ?.Descriptor?.Name ?? "Lock";
