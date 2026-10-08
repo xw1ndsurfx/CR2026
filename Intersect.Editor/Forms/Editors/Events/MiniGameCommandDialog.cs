@@ -31,9 +31,9 @@ internal sealed class MiniGameCommandDialog : Form
         ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
         MinimumSize = new Size(580, 420);
         BackColor = DrawingColor.FromArgb(45, 45, 48); ForeColor = DrawingColor.Gainsboro;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 75, AutoScroll = true };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 76, AutoScroll = true };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
-        for (var row = 0; row < 75; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var row = 0; row < 76; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(12, 8, 12, 8) };
         Controls.Add(layout); Controls.Add(buttons);
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
@@ -121,6 +121,7 @@ internal sealed class MiniGameCommandDialog : Form
             lockpickProfession.SelectedIndex = 0;
         var lockpickProfessionXp = Number(command.LockpickProfessionBaseExperience, 1, 2_000_000_000);
         lockpickProfessionXp.Name = "LockpickProfessionBaseExperience";
+        var lockpickTargetKind = EnumPicker<LockpickTargetKind>(command.LockpickTargetKind);
         var lockpickType = EnumPicker<LockpickLockType>(command.LockpickType);
         var lockpickScope = EnumPicker<LockpickUnlockScope>(command.LockpickUnlockScope);
         var lockpickRequiredLevel = Number(command.LockpickRequiredProfessionLevel, 0, 500);
@@ -236,7 +237,7 @@ internal sealed class MiniGameCommandDialog : Form
             lockpickProfession.Enabled = lockpickProfessionXp.Enabled = lockpicking;
             foreach (var control in new Control[]
                      {
-                         lockpickType, lockpickScope, lockpickRequiredLevel, lockpickSkillBonus,
+                         lockpickTargetKind, lockpickType, lockpickScope, lockpickRequiredLevel, lockpickSkillBonus,
                          lockpickPerfectBonus, lockpickFastBonus, lockpickFastSeconds, lockpickMinTool,
                          lockpickBasicItem, lockpickBasicBreak, lockpickReinforcedItem, lockpickReinforcedBreak,
                          lockpickRoyalItem, lockpickRoyalBreak, lockpickMasterItem, lockpickMasterBreak,
@@ -395,6 +396,7 @@ internal sealed class MiniGameCommandDialog : Form
         AddRow(layout, 72, "Common Event on failure", lockpickFailureEvent);
         AddRow(layout, 73, "Failure cooldown (seconds)", lockpickFailureCooldown);
         AddRow(layout, 74, "Invasion difficulty bonus", lockpickInvasionBonus);
+        AddRow(layout, 75, "Lockable target", lockpickTargetKind);
 
         void ShowSummary()
         {
@@ -423,7 +425,7 @@ internal sealed class MiniGameCommandDialog : Form
                 var awardedXp = (long)lockpickProfessionXp.Value * (long)lockpickDifficulty.Value;
                 summary.ForeColor = lockpickProfession.SelectedItem == null ? DrawingColor.OrangeRed : DrawingColor.LightSkyBlue;
                 summary.Text = $"{definition.DisplayName} | {(lockpickType.SelectedItem?.ToString() ?? "Standard")} | " +
-                    $"Difficulty {lockpickDifficulty.Value}/5 | {lockpickMistakes.Value} mistakes | {lockpickTime.Value}s | " +
+                    $"{lockpickTargetKind.SelectedItem} | Difficulty {lockpickDifficulty.Value}/5 | {lockpickMistakes.Value} mistakes | {lockpickTime.Value}s | " +
                     $"Profession: {professionName} Lv {lockpickRequiredLevel.Value}+ | " +
                     $"Scope: {lockpickScope.SelectedItem} | Base success XP: {awardedXp:N0} | " +
                     $"Perfect +{lockpickPerfectBonus.Value}% | Fast +{lockpickFastBonus.Value}%";
@@ -530,6 +532,7 @@ internal sealed class MiniGameCommandDialog : Form
         lockpickTime.ValueChanged += (_, _) => ShowSummary();
         lockpickProfession.SelectedIndexChanged += (_, _) => ShowSummary();
         lockpickProfessionXp.ValueChanged += (_, _) => ShowSummary();
+        lockpickTargetKind.SelectedIndexChanged += (_, _) => ShowSummary();
         lockpickType.SelectedIndexChanged += (_, _) => ShowSummary();
         lockpickScope.SelectedIndexChanged += (_, _) => ShowSummary();
         lockpickRequiredLevel.ValueChanged += (_, _) => ShowSummary();
@@ -571,6 +574,7 @@ internal sealed class MiniGameCommandDialog : Form
                 LockpickPerfectExperienceBonusPercent = (int)lockpickPerfectBonus.Value,
                 LockpickFastExperienceBonusPercent = (int)lockpickFastBonus.Value,
                 LockpickFastThresholdSeconds = (int)lockpickFastSeconds.Value,
+                LockpickTargetKind = Enum.TryParse<LockpickTargetKind>(lockpickTargetKind.SelectedItem?.ToString(), out var parsedTargetKind) ? parsedTargetKind : LockpickTargetKind.Door,
                 LockpickType = Enum.TryParse<LockpickLockType>(lockpickType.SelectedItem?.ToString(), out var parsedLockType) ? parsedLockType : LockpickLockType.Standard,
                 LockpickUnlockScope = Enum.TryParse<LockpickUnlockScope>(lockpickScope.SelectedItem?.ToString(), out var parsedLockScope) ? parsedLockScope : LockpickUnlockScope.Crew,
                 LockpickMinimumToolQuality = Enum.TryParse<LockpickToolQuality>(lockpickMinTool.SelectedItem?.ToString(), out var parsedToolQuality) ? parsedToolQuality : LockpickToolQuality.None,
@@ -636,6 +640,7 @@ internal sealed class MiniGameCommandDialog : Form
             command.LockpickPerfectExperienceBonusPercent = draft.LockpickPerfectExperienceBonusPercent;
             command.LockpickFastExperienceBonusPercent = draft.LockpickFastExperienceBonusPercent;
             command.LockpickFastThresholdSeconds = draft.LockpickFastThresholdSeconds;
+            command.LockpickTargetKind = draft.LockpickTargetKind;
             command.LockpickType = draft.LockpickType;
             command.LockpickUnlockScope = draft.LockpickUnlockScope;
             command.LockpickMinimumToolQuality = draft.LockpickMinimumToolQuality;
