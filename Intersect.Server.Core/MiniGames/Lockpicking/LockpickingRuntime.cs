@@ -6,6 +6,7 @@ using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
 using Intersect.Server.Networking;
+using Intersect.Server.Professions;
 
 namespace Intersect.Server.MiniGames.Lockpicking;
 
@@ -31,6 +32,8 @@ internal static class LockpickingRuntime
         public required int Difficulty;
         public required int MaxMistakes;
         public required int TimeLimitSeconds;
+        public required Guid ProfessionId;
+        public required long ProfessionBaseExperience;
         public required int SecretAngle;
         public required long StartedAt;
         public long LastRequestId;
@@ -101,6 +104,8 @@ internal static class LockpickingRuntime
                 Difficulty = command.LockpickDifficulty,
                 MaxMistakes = command.LockpickMaxMistakes,
                 TimeLimitSeconds = command.LockpickTimeSeconds,
+                ProfessionId = command.LockpickProfessionId,
+                ProfessionBaseExperience = command.LockpickProfessionBaseExperience,
                 SecretAngle = RandomNumberGenerator.GetInt32(-80, 81),
                 StartedAt = Environment.TickCount64,
             };
@@ -277,6 +282,25 @@ internal static class LockpickingRuntime
         }
 
         Send(session, requestId, closed: true, success: success, error: error);
+
+        if (success)
+        {
+            long professionExperience;
+            try
+            {
+                professionExperience = checked(session.ProfessionBaseExperience * session.Difficulty);
+            }
+            catch (OverflowException)
+            {
+                professionExperience = long.MaxValue;
+            }
+
+            ProfessionRuntime.AwardActivity(
+                session.Player,
+                session.ProfessionId,
+                professionExperience
+            );
+        }
 
         PacketSender.SendChatMsg(
             session.Player,
