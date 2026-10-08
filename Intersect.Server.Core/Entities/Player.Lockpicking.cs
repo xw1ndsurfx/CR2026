@@ -25,7 +25,7 @@ public partial class Player
 
                 if (success)
                 {
-                    stack.WaitingForResponse = Events.CommandInstance.EventResponse.None;
+                    stack.WaitingForResponse = CommandInstance.EventResponse.None;
                     stack.WaitingOnCommand = null;
                 }
                 else
