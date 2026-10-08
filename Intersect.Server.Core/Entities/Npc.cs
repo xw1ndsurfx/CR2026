@@ -604,11 +604,7 @@ public partial class Npc : Entity
     {
         entityType = default;
 
-        // Invasion NPCs are driven by the invasion route, not their descriptor's
-        // idle movement mode. A Static descriptor must therefore not prevent an
-        // active invader from advancing toward the destructible objective.
-        if (Descriptor.Movement == (byte)NpcMovement.Static &&
-            InvasionSessionId == Guid.Empty)
+        if (Descriptor.Movement == (byte)NpcMovement.Static)
         {
             blockerType = MovementBlockerType.MapAttribute;
             return false;
@@ -624,14 +620,6 @@ public partial class Npc : Entity
             {
                 blockerType = MovementBlockerType.NotBlocked;
             }
-        }
-
-        // Invaders never use flee/reset-radius movement. They must remain free to
-        // traverse multiple maps all the way to the invasion objective even when
-        // the underlying NPC descriptor has flee settings configured.
-        if (InvasionSessionId != Guid.Empty)
-        {
-            return blockerType == MovementBlockerType.NotBlocked;
         }
 
         if ((blockerType != MovementBlockerType.NotBlocked && blockerType != MovementBlockerType.Slide) ||
@@ -961,7 +949,8 @@ public partial class Npc : Entity
                     // Tactical ranged/caster movement can intentionally hold,
                     // retreat or strafe instead of always pathing into melee range.
                     var tacticalMovementHandled = false;
-                    if (tempTarget != null &&
+                    if (!invasionNpc &&
+                        tempTarget != null &&
                         !tempTarget.IsDead &&
                         CanTarget(tempTarget) &&
                         !mResetting &&
@@ -1012,12 +1001,8 @@ public partial class Npc : Entity
 
                     if (targetMap != Guid.Empty)
                     {
-                        // Normal NPC target validation still uses the cached surrounding-map
-                        // list. Invasion waypoints are already guaranteed to be the next
-                        // adjacent map by InvasionNavigation, and that subsystem now uses the
-                        // authoritative map grid. Do not discard a valid invasion waypoint
-                        // just because the cached SurroundingMaps list is stale.
-                        if (!invasionNpc && targetMap != MapId)
+                        //Check if target map is on one of the surrounding maps, if not then we are not even going to look.
+                        if (targetMap != MapId)
                         {
                             var found = false;
                             foreach (var map in MapController.Get(MapId).SurroundingMaps)
@@ -1087,7 +1072,8 @@ public partial class Npc : Entity
                                     var nextPathDirection = mPathFinder.GetMove();
                                     if (nextPathDirection > Direction.None)
                                     {
-                                        if (!fleeing &&
+                                        if (!invasionNpc &&
+                                            !fleeing &&
                                             Descriptor.SmartCombatMovement &&
                                             tempTarget != null &&
                                             tempTarget.MapId == MapId &&
@@ -1156,12 +1142,14 @@ public partial class Npc : Entity
 
                                             if (!blockerAttacked)
                                             {
-                                                // Invasion navigation always needs the local detour helper.
-                                                // Invaders can cross several maps toward a destructible objective;
-                                                // falling back to legacy PathFailed-only behavior can leave them
-                                                // retrying the same blocked waypoint forever. Normal NPCs still
-                                                // keep SmartCombatMovement strictly opt-in.
-                                                if (invasionNpc || Descriptor.SmartCombatMovement)
+                                                // Invasion NPCs must use the same legacy pathfinder recovery
+                                                // that was in place when the invasion system was introduced.
+                                                // Smart detours are reserved for normal NPC AI only.
+                                                if (invasionNpc)
+                                                {
+                                                    mPathFinder.PathFailed(timeMs);
+                                                }
+                                                else if (Descriptor.SmartCombatMovement)
                                                 {
                                                     var detourDirection = ChooseSmartMovementDirection(
                                                         nextPathDirection,
@@ -1183,8 +1171,6 @@ public partial class Npc : Entity
                                                 }
                                                 else
                                                 {
-                                                    // Smart combat movement is opt-in. When disabled,
-                                                    // preserve Intersect's legacy pathfinder behavior.
                                                     mPathFinder.PathFailed(timeMs);
                                                 }
                                             }
