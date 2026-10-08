@@ -4,6 +4,7 @@ using Intersect.Editor.Localization;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.GameObjects.NPCs;
@@ -476,7 +477,16 @@ public partial class QuestTaskEditor : UserControl
     private static EventDescriptor[] LockEvents() =>
         EventDescriptor.Lookup.Values
             .OfType<EventDescriptor>()
-            .Where(evt => !evt.CommonEvent && evt.Id != Guid.Empty)
+            .Where(evt =>
+                !evt.CommonEvent &&
+                evt.Id != Guid.Empty &&
+                evt.Pages.Any(page =>
+                    page.CommandLists.Values
+                        .SelectMany(commands => commands)
+                        .OfType<StartMiniGameCommand>()
+                        .Any(command => command.Game == MiniGameType.Lockpicking)
+                )
+            )
             .OrderBy(evt => evt.Name, StringComparer.OrdinalIgnoreCase)
             .ThenBy(evt => evt.Id)
             .ToArray();
