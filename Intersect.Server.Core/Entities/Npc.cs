@@ -886,7 +886,11 @@ public partial class Npc : Entity
                 var invasionNpc = InvasionSessionId != Guid.Empty;
                 var fleeing = !invasionNpc && IsFleeing();
 
-                if (MoveTimer < Timing.Global.Milliseconds)
+                if (invasionNpc)
+                {
+                    UpdateInvasionNpcLegacy(timeMs);
+                }
+                else if (MoveTimer < Timing.Global.Milliseconds)
                 {
                     var targetMap = Guid.Empty;
                     var targetX = 0;
@@ -1355,6 +1359,228 @@ public partial class Npc : Entity
             {
                 Monitor.Exit(EntityLock);
             }
+        }
+    }
+
+    private void UpdateInvasionNpcLegacy(long timeMs)
+    {
+        // Keep invasion movement on the exact legacy Intersect pathing flow that
+        // was used when invasions were introduced. Do not run smart roaming,
+        // tactical combat spacing, smart detours, or flee movement here.
+        if (MoveTimer >= Timing.Global.Milliseconds)
+        {
+            return;
+        }
+
+        var tempTarget = Target;
+        var targetMap = Guid.Empty;
+        var targetX = 0;
+        var targetY = 0;
+        var targetZ = 0;
+
+        if (tempTarget != null &&
+            (tempTarget.IsDead ||
+             !InRangeOf(tempTarget, Options.Instance.Map.MapWidth * 2) ||
+             !CanTarget(tempTarget)))
+        {
+            _ = TryFindNewTarget(
+                Timing.Global.Milliseconds,
+                tempTarget.Id,
+                !CanTarget(tempTarget)
+            );
+            tempTarget = Target;
+        }
+
+        // Preserve normal combat priority: an invader may engage a valid nearby
+        // target, but otherwise it always resumes the invasion waypoint.
+        if (tempTarget != null && CanTarget(tempTarget))
+        {
+            if (!tempTarget.IsDead && CanAttack(tempTarget, null))
+            {
+                targetMap = tempTarget.MapId;
+                targetX = tempTarget.X;
+                targetY = tempTarget.Y;
+                targetZ = tempTarget.Z;
+            }
+        }
+        else
+        {
+            TryFindNewTarget(timeMs);
+            tempTarget = Target;
+        }
+
+        if (targetMap == Guid.Empty)
+        {
+            if (InvasionNavigation.TryGetWaypoint(
+                    this,
+                    out var invasionMap,
+                    out var invasionX,
+                    out var invasionY
+                ))
+            {
+                targetMap = invasionMap;
+                targetX = invasionX;
+                targetY = invasionY;
+                targetZ = 0;
+            }
+            else
+            {
+                mPathFinder.SetTarget(null);
+                return;
+            }
+        }
+
+        // This is the same adjacency check that invasion NPCs used before Smart
+        // NPC movement was added.
+        if (targetMap != MapId)
+        {
+            var found = false;
+            var currentMap = MapController.Get(MapId);
+            if (currentMap != null)
+            {
+                foreach (var map in currentMap.SurroundingMaps)
+                {
+                    if (map.Id == targetMap)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!found)
+            {
+                mPathFinder.SetTarget(null);
+                return;
+            }
+        }
+
+        var currentPathTarget = mPathFinder.GetTarget();
+        if (currentPathTarget != null &&
+            (targetMap != currentPathTarget.TargetMapId ||
+             targetX != currentPathTarget.TargetX ||
+             targetY != currentPathTarget.TargetY))
+        {
+            mPathFinder.SetTarget(null);
+        }
+
+        if (mPathFinder.GetTarget() == null)
+        {
+            mPathFinder.SetTarget(
+                new PathfinderTarget(targetMap, targetX, targetY, targetZ)
+            );
+        }
+
+        // Legacy spell behavior required both an entity target and an active path.
+        if (tempTarget != null && mPathFinder.GetTarget() != null)
+        {
+            TryCastSpells();
+        }
+
+        var pathTarget = mPathFinder.GetTarget();
+        if (pathTarget == null)
+        {
+            return;
+        }
+
+        var crossingMap = pathTarget.TargetMapId != MapId;
+        if (crossingMap ||
+            !IsOneBlockAway(
+                pathTarget.TargetMapId,
+                pathTarget.TargetX,
+                pathTarget.TargetY,
+                pathTarget.TargetZ
+            ))
+        {
+            var pathFinderResult = mPathFinder.Update(timeMs);
+            switch (pathFinderResult.Type)
+            {
+                case PathfinderResultType.Success:
+                {
+                    var nextPathDirection = mPathFinder.GetMove();
+                    if (nextPathDirection <= Direction.None)
+                    {
+                        break;
+                    }
+
+                    if (CanMoveInDirection(
+                            nextPathDirection,
+                            out var blockerType,
+                            out var blockingEntityType,
+                            out var blockingEntity
+                        ) ||
+                        blockerType == MovementBlockerType.Slide)
+                    {
+                        foreach (var status in CachedStatuses)
+                        {
+                            if (status.Type is SpellEffect.Stun or
+                                SpellEffect.Snare or
+                                SpellEffect.Sleep)
+                            {
+                                return;
+                            }
+                        }
+
+                        Move(nextPathDirection, null);
+                    }
+                    else
+                    {
+                        var blockerAttacked = false;
+                        if (blockerType == MovementBlockerType.Entity &&
+                            blockingEntityType == EntityType.Player &&
+                            !(blockingEntity?.IsDisposed ?? true) &&
+                            CanAttack(blockingEntity, default))
+                        {
+                            ChangeDir(nextPathDirection);
+                            TryAttack(blockingEntity);
+                            blockerAttacked = true;
+                        }
+
+                        if (!blockerAttacked)
+                        {
+                            mPathFinder.PathFailed(timeMs);
+                        }
+                    }
+
+                    break;
+                }
+
+                case PathfinderResultType.OutOfRange:
+                case PathfinderResultType.NoPathToTarget:
+                case PathfinderResultType.Failure:
+                    mPathFinder.SetTarget(null);
+                    LastRandomMove = timeMs + 250;
+                    break;
+
+                case PathfinderResultType.Wait:
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            return;
+        }
+
+        // Once adjacent to a live combat target, use the original face/attack flow.
+        // The destructible invasion objective itself is damaged by InvasionRuntime.
+        if (tempTarget == null)
+        {
+            return;
+        }
+
+        var direction = DirectionToTarget(tempTarget);
+        if (Dir != direction && direction != Direction.None)
+        {
+            ChangeDir(direction);
+        }
+        else if (tempTarget.IsDisposed)
+        {
+            TryFindNewTarget(timeMs);
+        }
+        else if (CanAttack(tempTarget, null))
+        {
+            TryAttack(tempTarget);
         }
     }
 
