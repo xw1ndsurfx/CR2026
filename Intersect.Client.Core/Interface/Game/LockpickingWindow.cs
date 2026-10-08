@@ -115,8 +115,14 @@ internal sealed class LockpickingWindow : Base
             return;
 
         _attempt.IsDisabled = model.Pending || model.RemainingMilliseconds(now) <= 0;
+        var perfect = state.PerfectEligible ? "  •  PERFECT READY" : string.Empty;
+        var requirement = state.RequiredProfessionLevel > 0
+            ? $"  •  Skill {state.ProfessionLevel}/{state.RequiredProfessionLevel}"
+            : $"  •  Skill {state.ProfessionLevel}";
+        var tool = string.IsNullOrWhiteSpace(state.ToolName) ? string.Empty : $"  •  {state.ToolName}";
         _status.Text =
-            $"Difficulty {state.Difficulty}/5  •  Mistakes {state.Mistakes}/{state.MaxMistakes}  •  Cylinder {state.TurnPercent}%";
+            $"{state.LockType} lock  •  Difficulty {state.Difficulty}/5  •  " +
+            $"Mistakes {state.Mistakes}/{state.MaxMistakes}  •  Cylinder {state.TurnPercent}%{requirement}{tool}{perfect}";
 
         if (!string.IsNullOrWhiteSpace(state.Hint))
             _hint.Text = state.Hint + " — adjust the pick and try again.";
