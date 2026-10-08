@@ -6,7 +6,7 @@ using Intersect.Framework.Core.MiniGames.Roulette;
 
 namespace Intersect.Framework.Core.GameObjects.Events.Commands;
 
-public enum MiniGameType { Poker = 0, Blackjack = 1, Potions = 2, Roulette = 3, Cooking = 4 }
+public enum MiniGameType { Poker = 0, Blackjack = 1, Potions = 2, Roulette = 3, Cooking = 4, Lockpicking = 5 }
 
 /// <summary>Empty currency selects isolated test chips. A currency item selects inventory-backed play.</summary>
 public sealed class StartMiniGameCommand : EventCommand
@@ -60,6 +60,9 @@ public sealed class StartMiniGameCommand : EventCommand
     [DefaultValue(false)] public bool BlackjackHitSoft17 { get; set; }
     [DefaultValue(10L)] public long RouletteMinimumBet { get; set; } = 10;
     [DefaultValue(100L)] public long RouletteMaximumBet { get; set; } = 100;
+    [DefaultValue(2)] public int LockpickDifficulty { get; set; } = 2;
+    [DefaultValue(4)] public int LockpickMaxMistakes { get; set; } = 4;
+    [DefaultValue(30)] public int LockpickTimeSeconds { get; set; } = 30;
     [DefaultValue(PokerMotionSpeed.Normal)] public PokerMotionSpeed ProceduralAnimationSpeed { get; set; } = PokerMotionSpeed.Normal;
     [DefaultValue(true)] public bool AnimateDealCards { get; set; } = true;
     [DefaultValue(true)] public bool AnimateBoardCards { get; set; } = true;
@@ -103,6 +106,14 @@ public sealed class StartMiniGameCommand : EventCommand
                 CurrencyItemId == Guid.Empty &&
                 NpcPlayers == 0 &&
                 !DealerPlays,
+            MiniGameType.Lockpicking =>
+                MaxPlayers == 1 &&
+                CurrencyItemId == Guid.Empty &&
+                NpcPlayers == 0 &&
+                !DealerPlays &&
+                LockpickDifficulty is >= 1 and <= 5 &&
+                LockpickMaxMistakes is >= 1 and <= 10 &&
+                LockpickTimeSeconds is >= 10 and <= 180,
             MiniGameType.Roulette =>
                 MaxPlayers == 1 &&
                 NpcPlayers == 0 &&
