@@ -300,6 +300,11 @@ internal static class LockpickingRuntime
                 session.ProfessionId,
                 professionExperience
             );
+
+            var lockName = session.Player.EventLookup.Values
+                .FirstOrDefault(evt => evt.Descriptor?.Id == session.LockId)
+                ?.Descriptor?.Name ?? "Lock";
+            session.Player.UpdateLockpickingQuestTasks(session.LockId, lockName);
         }
 
         PacketSender.SendChatMsg(
