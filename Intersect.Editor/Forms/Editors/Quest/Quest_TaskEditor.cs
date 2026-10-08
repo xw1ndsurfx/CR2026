@@ -109,6 +109,12 @@ public partial class QuestTaskEditor : UserControl
                 cmbItem.SelectedIndex = LockEventListIndex(mMyTask?.TargetId ?? Guid.Empty);
                 nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
                 break;
+            case 21:
+            case 22:
+            case 23:
+            case 24:
+                nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
+                break;
         }
     }
 
@@ -140,6 +146,10 @@ public partial class QuestTaskEditor : UserControl
         cmbTaskType.Items.Add("Dungeon - Complete dungeon");
         cmbTaskType.Items.Add("Lockpicking - Pick locks");
         cmbTaskType.Items.Add("Lockpicking - Pick specific lock");
+        cmbTaskType.Items.Add("Lockpicking - Pick minimum difficulty");
+        cmbTaskType.Items.Add("Lockpicking - Perfect picks");
+        cmbTaskType.Items.Add("Lockpicking - Pick without breaking");
+        cmbTaskType.Items.Add("Lockpicking - Pick inside Dungeon");
 
         lblDesc.Text = Strings.TaskEditor.desc;
 
@@ -285,6 +295,46 @@ public partial class QuestTaskEditor : UserControl
                 nudItemAmount.Maximum = 1_000_000_000;
                 nudItemAmount.Value = 1;
                 break;
+
+            case 21:
+                grpGatherItems.Show();
+                grpGatherItems.Text = "Lockpicking - Pick minimum difficulty";
+                cmbItem.Hide();
+                lblItem.Hide();
+                lblItemQuantity.Text = "Difficulty:";
+                nudItemAmount.Maximum = 5;
+                nudItemAmount.Value = 1;
+                break;
+
+            case 22:
+                grpGatherItems.Show();
+                grpGatherItems.Text = "Lockpicking - Perfect picks";
+                cmbItem.Hide();
+                lblItem.Hide();
+                lblItemQuantity.Text = "Perfect picks:";
+                nudItemAmount.Maximum = 1_000_000_000;
+                nudItemAmount.Value = 1;
+                break;
+
+            case 23:
+                grpGatherItems.Show();
+                grpGatherItems.Text = "Lockpicking - Pick without breaking";
+                cmbItem.Hide();
+                lblItem.Hide();
+                lblItemQuantity.Text = "Successful locks:";
+                nudItemAmount.Maximum = 1_000_000_000;
+                nudItemAmount.Value = 1;
+                break;
+
+            case 24:
+                grpGatherItems.Show();
+                grpGatherItems.Text = "Lockpicking - Pick inside Dungeon";
+                cmbItem.Hide();
+                lblItem.Hide();
+                lblItemQuantity.Text = "Dungeon locks:";
+                nudItemAmount.Maximum = 1_000_000_000;
+                nudItemAmount.Value = 1;
+                break;
         }
     }
 
@@ -331,6 +381,10 @@ public partial class QuestTaskEditor : UserControl
             case QuestObjective.PotionReachChain:
             case QuestObjective.PotionBrewUnderOccupiedCells:
             case QuestObjective.LockpickLocks:
+            case QuestObjective.LockpickMinimumDifficulty:
+            case QuestObjective.LockpickPerfect:
+            case QuestObjective.LockpickWithoutBreaking:
+            case QuestObjective.LockpickInDungeon:
                 mMyTask.TargetId = Guid.Empty;
                 mMyTask.TargetName = string.Empty;
                 mMyTask.Quantity = (int) nudItemAmount.Value;
