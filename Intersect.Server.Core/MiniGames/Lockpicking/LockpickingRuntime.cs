@@ -11,12 +11,20 @@ namespace Intersect.Server.MiniGames.Lockpicking;
 
 internal static class LockpickingRuntime
 {
+    private readonly record struct CrewLockKey(
+        Guid LeaderId,
+        Guid LockId,
+        Guid MapId,
+        Guid MapInstanceId
+    );
+
     private sealed class Session
     {
         public required Player Player;
         public required Client Client;
         public required Guid SessionId;
         public required Guid EventId;
+        public required Guid LockId;
         public required Guid MapId;
         public required Guid MapInstanceId;
         public required DateTime? LoginStamp;
@@ -35,16 +43,37 @@ internal static class LockpickingRuntime
 
     private static readonly object Gate = new();
     private static readonly Dictionary<Guid, Session> Sessions = new();
+    private static readonly HashSet<CrewLockKey> CrewUnlocks = [];
     private static readonly System.Threading.Timer SweepTimer =
         new(_ => Sweep(), null, TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(500));
 
-    internal static bool Join(Player player, StartMiniGameCommand command, Guid eventId)
+    internal static bool IsUnlockedForCrew(
+        Player player,
+        Guid lockId,
+        Guid mapId,
+        Guid mapInstanceId
+    )
+    {
+        if (!TryGetCrewLockKey(player, lockId, mapId, mapInstanceId, out var key))
+            return false;
+
+        lock (Gate)
+            return CrewUnlocks.Contains(key);
+    }
+
+    internal static bool Join(
+        Player player,
+        StartMiniGameCommand command,
+        Guid eventId,
+        Guid lockId
+    )
     {
         _ = SweepTimer;
 
         if (command.Game != MiniGameType.Lockpicking ||
             !command.HasValidSettings() ||
             eventId == Guid.Empty ||
+            lockId == Guid.Empty ||
             player.Client is not { IsEditor: false } client ||
             player.IsDead)
         {
@@ -56,12 +85,16 @@ internal static class LockpickingRuntime
             if (Sessions.ContainsKey(player.Id))
                 return false;
 
+            if (IsUnlockedForCrew(player, lockId, player.MapId, player.MapInstanceId))
+                return false;
+
             var session = new Session
             {
                 Player = player,
                 Client = client,
                 SessionId = Guid.NewGuid(),
                 EventId = eventId,
+                LockId = lockId,
                 MapId = player.MapId,
                 MapInstanceId = player.MapInstanceId,
                 LoginStamp = player.LoginTime,
@@ -203,6 +236,13 @@ internal static class LockpickingRuntime
                 .Where(session => !session.Closed &&
                     (!StillValid(session) || RemainingMilliseconds(session) <= 0))
                 .ToArray();
+
+            foreach (var key in CrewUnlocks
+                         .Where(key => !CrewStillExists(key))
+                         .ToArray())
+            {
+                CrewUnlocks.Remove(key);
+            }
         }
 
         foreach (var session in stale)
@@ -223,12 +263,27 @@ internal static class LockpickingRuntime
         session.Closed = true;
         Sessions.Remove(session.Player.Id);
         session.TurnPercent = success ? 100 : session.TurnPercent;
+
+        if (success &&
+            TryGetCrewLockKey(
+                session.Player,
+                session.LockId,
+                session.MapId,
+                session.MapInstanceId,
+                out var crewKey
+            ))
+        {
+            CrewUnlocks.Add(crewKey);
+        }
+
         Send(session, requestId, closed: true, success: success, error: error);
 
         PacketSender.SendChatMsg(
             session.Player,
             success
-                ? "[Lockpicking] The lock clicks open."
+                ? session.Player.IsInParty
+                    ? "[Lockpicking] The lock clicks open for your Crew."
+                    : "[Lockpicking] The lock clicks open."
                 : error switch
                 {
                     "Timeout" => "[Lockpicking] Time ran out. The door remains locked.",
@@ -241,6 +296,52 @@ internal static class LockpickingRuntime
         );
 
         session.Player.ResolveLockpickingEvent(session.EventId, success);
+
+        if (success && session.Player.IsInParty)
+        {
+            foreach (var member in session.Player.Party
+                         .Where(member => member != null && member.Id != session.Player.Id)
+                         .ToArray())
+            {
+                PacketSender.SendChatMsg(
+                    member,
+                    $"[Lockpicking] {session.Player.Name} unlocked the door for the Crew.",
+                    ChatMessageType.Local,
+                    Color.White
+                );
+            }
+        }
+    }
+
+    private static bool TryGetCrewLockKey(
+        Player player,
+        Guid lockId,
+        Guid mapId,
+        Guid mapInstanceId,
+        out CrewLockKey key
+    )
+    {
+        key = default;
+
+        if (player?.Party == null ||
+            player.Party.Count < 2 ||
+            player.PartyLeader is not { } leader ||
+            lockId == Guid.Empty)
+        {
+            return false;
+        }
+
+        key = new CrewLockKey(leader.Id, lockId, mapId, mapInstanceId);
+        return true;
+    }
+
+    private static bool CrewStillExists(CrewLockKey key)
+    {
+        var leader = Player.FindOnline(key.LeaderId);
+        return leader != null &&
+               leader.Party != null &&
+               leader.Party.Count > 1 &&
+               leader.PartyLeader?.Id == key.LeaderId;
     }
 
     private static void Send(
