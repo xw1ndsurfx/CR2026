@@ -295,6 +295,12 @@ public partial class QuestTaskDescriptor
             case QuestObjective.CompleteDungeon:
                 taskString = $"Complete {(string.IsNullOrWhiteSpace(TargetName) ? "the required dungeon" : TargetName)} {Quantity} time(s). {Description}".Trim();
                 break;
+            case QuestObjective.LockpickLocks:
+                taskString = $"Successfully pick {Quantity} lock(s). {Description}".Trim();
+                break;
+            case QuestObjective.LockpickSpecificLock:
+                taskString = $"Successfully pick {(string.IsNullOrWhiteSpace(TargetName) ? "the required lock" : TargetName)} {Quantity} time(s). {Description}".Trim();
+                break;
         }
 
         return taskString;
