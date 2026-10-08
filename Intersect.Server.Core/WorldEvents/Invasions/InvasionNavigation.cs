@@ -1,6 +1,5 @@
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Maps;
-using Intersect.Server.Database;
 using Intersect.Server.Entities;
 using Intersect.Server.Maps;
 
@@ -98,39 +97,18 @@ internal static class InvasionNavigation
 
     private static IEnumerable<Guid> NeighborIds(MapController map)
     {
-        // Use the authoritative map grid rather than the cached Up/Down/Left/Right
-        // links. The generic pathfinder also uses this grid, so invasion routing
-        // now resolves neighbors from the exact same topology.
-        var grid = DbInterface.GetGrid(map.MapGrid);
-        if (grid == null)
-            yield break;
-
-        foreach (var (dx, dy) in new[] { (0, -1), (-1, 0), (1, 0), (0, 1) })
-        {
-            var x = map.MapGridX + dx;
-            var y = map.MapGridY + dy;
-            if (x < 0 || y < 0 || x >= grid.Width || y >= grid.Height)
-                continue;
-
-            var mapId = grid.MapIdGrid[x, y];
-            if (mapId != Guid.Empty)
-                yield return mapId;
-        }
+        if (map.Up != Guid.Empty) yield return map.Up;
+        if (map.Left != Guid.Empty) yield return map.Left;
+        if (map.Right != Guid.Empty) yield return map.Right;
+        if (map.Down != Guid.Empty) yield return map.Down;
     }
 
     private static Direction GetDirection(MapController map, Guid nextMapId)
     {
-        var next = MapController.Get(nextMapId);
-        if (next == null || next.MapGrid != map.MapGrid)
-            return Direction.None;
-
-        var dx = next.MapGridX - map.MapGridX;
-        var dy = next.MapGridY - map.MapGridY;
-
-        if (dx == 0 && dy == -1) return Direction.Up;
-        if (dx == 0 && dy == 1) return Direction.Down;
-        if (dx == -1 && dy == 0) return Direction.Left;
-        if (dx == 1 && dy == 0) return Direction.Right;
+        if (map.Up == nextMapId) return Direction.Up;
+        if (map.Down == nextMapId) return Direction.Down;
+        if (map.Left == nextMapId) return Direction.Left;
+        if (map.Right == nextMapId) return Direction.Right;
         return Direction.None;
     }
 
