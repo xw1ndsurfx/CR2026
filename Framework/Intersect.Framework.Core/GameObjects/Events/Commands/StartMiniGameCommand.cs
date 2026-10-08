@@ -63,6 +63,9 @@ public sealed class StartMiniGameCommand : EventCommand
     [DefaultValue(2)] public int LockpickDifficulty { get; set; } = 2;
     [DefaultValue(4)] public int LockpickMaxMistakes { get; set; } = 4;
     [DefaultValue(30)] public int LockpickTimeSeconds { get; set; } = 30;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")]
+    public Guid LockpickProfessionId { get; set; }
+    [DefaultValue(25L)] public long LockpickProfessionBaseExperience { get; set; } = 25;
     [DefaultValue(PokerMotionSpeed.Normal)] public PokerMotionSpeed ProceduralAnimationSpeed { get; set; } = PokerMotionSpeed.Normal;
     [DefaultValue(true)] public bool AnimateDealCards { get; set; } = true;
     [DefaultValue(true)] public bool AnimateBoardCards { get; set; } = true;
@@ -113,7 +116,9 @@ public sealed class StartMiniGameCommand : EventCommand
                 !DealerPlays &&
                 LockpickDifficulty is >= 1 and <= 5 &&
                 LockpickMaxMistakes is >= 1 and <= 10 &&
-                LockpickTimeSeconds is >= 10 and <= 180,
+                LockpickTimeSeconds is >= 10 and <= 180 &&
+                LockpickProfessionId != Guid.Empty &&
+                LockpickProfessionBaseExperience is >= 1 and <= 2_000_000_000,
             MiniGameType.Roulette =>
                 MaxPlayers == 1 &&
                 NpcPlayers == 0 &&
