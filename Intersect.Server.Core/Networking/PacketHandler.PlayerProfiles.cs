@@ -93,6 +93,7 @@ internal sealed partial class PacketHandler
                     PicksBroken = lockStats.PicksBroken,
                     HighestLockDifficulty = lockStats.HighestDifficulty,
                     FastestLockpickMilliseconds = lockStats.FastestPickMilliseconds,
+                    FastestDifficultyFiveLockpickMilliseconds = lockStats.FastestDifficultyFiveMilliseconds,
                 }
             );
         }
