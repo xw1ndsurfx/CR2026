@@ -35,10 +35,11 @@ public static partial class CommandProcessing
             {
                 PacketSender.SendChatMsg(
                     player,
-                    "[Lockpicking] Unable to start this lock.",
+                    "[Lockpicking] Unable to start this lock. The door remains locked.",
                     ChatMessageType.Error,
                     Color.White
                 );
+                callStack.Clear();
                 return;
             }
 
