@@ -1,5 +1,14 @@
 namespace Intersect.Framework.Core.MiniGames.Lockpicking;
 
+public enum LockpickTargetKind
+{
+    Door = 0,
+    Chest = 1,
+    SecretPassage = 2,
+    Mechanism = 3,
+    Generic = 4,
+}
+
 public enum LockpickLockType
 {
     Standard = 0,
