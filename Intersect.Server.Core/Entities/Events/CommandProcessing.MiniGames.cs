@@ -8,6 +8,7 @@ using Intersect.Network.Packets.Server;
 using Intersect.Server.MiniGames;
 using Intersect.Server.MiniGames.Blackjack;
 using Intersect.Server.MiniGames.Cooking;
+using Intersect.Server.MiniGames.Lockpicking;
 using Intersect.Server.MiniGames.Poker;
 using Intersect.Server.MiniGames.Potions;
 using Intersect.Server.MiniGames.Roulette;
@@ -27,6 +28,25 @@ public static partial class CommandProcessing
                 ChatMessageType.Error, Color.White);
             return;
         }
+        if (command.Game == MiniGameType.Lockpicking)
+        {
+            var eventId = instance.PageInstance?.Id ?? Guid.Empty;
+            if (eventId == Guid.Empty || !LockpickingRuntime.Join(player, command, eventId))
+            {
+                PacketSender.SendChatMsg(
+                    player,
+                    "[Lockpicking] Unable to start this lock.",
+                    ChatMessageType.Error,
+                    Color.White
+                );
+                return;
+            }
+
+            stackInfo.WaitingForResponse = CommandInstance.EventResponse.MiniGame;
+            stackInfo.WaitingOnCommand = command;
+            return;
+        }
+
         if (command.Game == MiniGameType.Potions)
         {
             if (!PotionRuntime.Join(player))
@@ -87,6 +107,7 @@ public static partial class CommandProcessing
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
         if (player == null) return;
+        if (LockpickingRuntime.Leave(player)) return;
         if (PotionRuntime.Leave(player)) return;
         if (CookingRuntime.Leave(player)) return;
         if (RouletteRuntime.Leave(player)) return;
