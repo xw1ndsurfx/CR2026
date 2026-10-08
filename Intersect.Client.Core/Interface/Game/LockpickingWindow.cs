@@ -17,6 +17,11 @@ internal sealed class LockpickingWindow : Base
     private readonly Label _hint;
     private readonly Label _timer;
     private readonly Button _attempt;
+    private readonly Button _left15;
+    private readonly Button _left5;
+    private readonly Button _right5;
+    private readonly Button _right15;
+    private readonly Button _cancel;
     private int _angle;
     private bool _destroyed;
 
@@ -41,12 +46,12 @@ internal sealed class LockpickingWindow : Base
         _hint = MakeLabel("LockHint", "Move the pick, then try to turn the cylinder.", 13);
         _timer = MakeLabel("LockTimer", "", 13);
 
-        MakeButton("LockLeft15", "<<", () => Move(-15));
-        MakeButton("LockLeft5", "<", () => Move(-5));
+        _left15 = MakeButton("LockLeft15", "<<", () => Move(-15));
+        _left5 = MakeButton("LockLeft5", "<", () => Move(-5));
         _attempt = MakeButton("LockAttempt", "TURN LOCK", Attempt);
-        MakeButton("LockRight5", ">", () => Move(5));
-        MakeButton("LockRight15", ">>", () => Move(15));
-        MakeButton("LockCancel", "Give up", () => ExitRequested = true);
+        _right5 = MakeButton("LockRight5", ">", () => Move(5));
+        _right15 = MakeButton("LockRight15", ">>", () => Move(15));
+        _cancel = MakeButton("LockCancel", "Give up", () => ExitRequested = true);
 
         Layout();
         RefreshAngle();
@@ -78,9 +83,6 @@ internal sealed class LockpickingWindow : Base
         return button;
     }
 
-    private T Child<T>(string name) where T : Base =>
-        Children.OfType<T>().First(control => control.Name == name);
-
     private void Layout()
     {
         SetPosition(0, 0);
@@ -97,12 +99,12 @@ internal sealed class LockpickingWindow : Base
         _hint.SetBounds(left + 30, top + 300, panelWidth - 60, 34);
         _timer.SetBounds(left + 30, top + 340, panelWidth - 60, 30);
 
-        Child<Button>("LockLeft15").SetBounds(left + 60, top + 390, 80, 42);
-        Child<Button>("LockLeft5").SetBounds(left + 150, top + 390, 80, 42);
+        _left15.SetBounds(left + 60, top + 390, 80, 42);
+        _left5.SetBounds(left + 150, top + 390, 80, 42);
         _attempt.SetBounds(left + panelWidth / 2 - 90, top + 384, 180, 54);
-        Child<Button>("LockRight5").SetBounds(left + panelWidth - 230, top + 390, 80, 42);
-        Child<Button>("LockRight15").SetBounds(left + panelWidth - 140, top + 390, 80, 42);
-        Child<Button>("LockCancel").SetBounds(left + panelWidth / 2 - 70, top + 448, 140, 34);
+        _right5.SetBounds(left + panelWidth - 230, top + 390, 80, 42);
+        _right15.SetBounds(left + panelWidth - 140, top + 390, 80, 42);
+        _cancel.SetBounds(left + panelWidth / 2 - 70, top + 448, 140, 34);
     }
 
     public void Update(LockpickingClientModel model, long now)
