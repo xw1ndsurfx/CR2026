@@ -1,4 +1,5 @@
 using Intersect.Framework.Core.GameObjects.Events.Commands;
+using Intersect.Server.Entities.Events;
 
 namespace Intersect.Server.Entities;
 
@@ -15,7 +16,7 @@ public partial class Player
                     continue;
 
                 var stack = evt.CallStack.Peek();
-                if (stack.WaitingForResponse != Events.CommandInstance.EventResponse.MiniGame ||
+                if (stack.WaitingForResponse != CommandInstance.EventResponse.MiniGame ||
                     stack.WaitingOnCommand is not StartMiniGameCommand command ||
                     command.Game != MiniGameType.Lockpicking)
                 {
