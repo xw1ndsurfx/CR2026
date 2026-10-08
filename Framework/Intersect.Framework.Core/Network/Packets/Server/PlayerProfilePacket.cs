@@ -38,6 +38,9 @@ public partial class PlayerProfessionProfilePacket
 
     [Key(10)]
     public long FastestLockpickMilliseconds { get; set; }
+
+    [Key(11)]
+    public long FastestDifficultyFiveLockpickMilliseconds { get; set; }
 }
 
 [MessagePackObject]
