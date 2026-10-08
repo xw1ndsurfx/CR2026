@@ -66,10 +66,14 @@ public static partial class CommandProcessing
                 return;
             }
 
+            var lockError = string.Empty;
             if (eventId == Guid.Empty ||
                 lockId == Guid.Empty ||
-                !LockpickingRuntime.Join(player, command, eventId, lockId, out var lockError))
+                !LockpickingRuntime.Join(player, command, eventId, lockId, out lockError))
             {
+                if (string.IsNullOrWhiteSpace(lockError))
+                    lockError = "This lock is not attached to a valid Event.";
+
                 PacketSender.SendChatMsg(
                     player,
                     $"[Lockpicking] {lockError} The lock remains closed.",
