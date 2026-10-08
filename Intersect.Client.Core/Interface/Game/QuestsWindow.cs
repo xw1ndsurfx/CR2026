@@ -347,6 +347,10 @@ public partial class QuestsWindow
                 $"{playerQuest.TaskProgress} / {currentTask.Quantity} Blackjack hands played",
             QuestObjective.CompleteDungeon =>
                 $"{playerQuest.TaskProgress} / {currentTask.Quantity} {(string.IsNullOrWhiteSpace(currentTask.TargetName) ? "dungeon completions" : currentTask.TargetName)}",
+            QuestObjective.LockpickLocks =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} locks picked",
+            QuestObjective.LockpickSpecificLock =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} {(string.IsNullOrWhiteSpace(currentTask.TargetName) ? "required lock" : currentTask.TargetName)}",
             _ => string.Empty,
         };
 
@@ -807,6 +811,15 @@ public partial class QuestsWindow
                                     $"{progress} / {quantity} {dungeonName} completion(s)",
                                     mQuestDescTemplateLabel
                                 );
+                            }
+                            else if (mSelectedQuest.Tasks[i].Objective is QuestObjective.LockpickLocks or QuestObjective.LockpickSpecificLock)
+                            {
+                                var progress = Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress;
+                                var quantity = mSelectedQuest.Tasks[i].Quantity;
+                                var text = mSelectedQuest.Tasks[i].Objective == QuestObjective.LockpickSpecificLock
+                                    ? $"{progress} / {quantity} {(string.IsNullOrWhiteSpace(mSelectedQuest.Tasks[i].TargetName) ? "required lock" : mSelectedQuest.Tasks[i].TargetName)}"
+                                    : $"{progress} / {quantity} locks picked";
+                                mQuestDescLabel.AddText(text, mQuestDescTemplateLabel);
                             }
                             else if (mSelectedQuest.Tasks[i].Objective is QuestObjective.PokerWinHands or QuestObjective.PokerWinAmount or
                                      QuestObjective.PokerReachLevel or QuestObjective.PokerPlayHands)
