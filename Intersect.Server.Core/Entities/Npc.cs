@@ -1012,8 +1012,12 @@ public partial class Npc : Entity
 
                     if (targetMap != Guid.Empty)
                     {
-                        //Check if target map is on one of the surrounding maps, if not then we are not even going to look.
-                        if (targetMap != MapId)
+                        // Normal NPC target validation still uses the cached surrounding-map
+                        // list. Invasion waypoints are already guaranteed to be the next
+                        // adjacent map by InvasionNavigation, and that subsystem now uses the
+                        // authoritative map grid. Do not discard a valid invasion waypoint
+                        // just because the cached SurroundingMaps list is stale.
+                        if (!invasionNpc && targetMap != MapId)
                         {
                             var found = false;
                             foreach (var map in MapController.Get(MapId).SurroundingMaps)
