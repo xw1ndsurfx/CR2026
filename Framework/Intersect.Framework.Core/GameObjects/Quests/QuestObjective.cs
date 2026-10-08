@@ -43,4 +43,12 @@ public enum QuestObjective
     LockpickLocks,
 
     LockpickSpecificLock,
+
+    LockpickMinimumDifficulty,
+
+    LockpickPerfect,
+
+    LockpickWithoutBreaking,
+
+    LockpickInDungeon,
 }
