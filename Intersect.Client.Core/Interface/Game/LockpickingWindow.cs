@@ -159,7 +159,18 @@ internal sealed class LockpickingWindow : Base
 
         var lockX = left + panelWidth / 2 - 130;
         var lockY = top + 166;
-        skin.Renderer.DrawColor = new Color(a: 255, r: 115, g: 105, b: 83);
+        var lockLabel = _status.Text ?? string.Empty;
+        var lockColor = lockLabel.Contains("Royal", StringComparison.OrdinalIgnoreCase)
+            ? new Color(a: 255, r: 178, g: 145, b: 70)
+            : lockLabel.Contains("Magical", StringComparison.OrdinalIgnoreCase)
+                ? new Color(a: 255, r: 91, g: 106, b: 166)
+                : lockLabel.Contains("Ancient", StringComparison.OrdinalIgnoreCase)
+                    ? new Color(a: 255, r: 128, g: 96, b: 62)
+                    : lockLabel.Contains("Mechanical", StringComparison.OrdinalIgnoreCase)
+                        ? new Color(a: 255, r: 102, g: 116, b: 122)
+                        : new Color(a: 255, r: 115, g: 105, b: 83);
+
+        skin.Renderer.DrawColor = lockColor;
         skin.Renderer.DrawFilledRect(new Rectangle(lockX, lockY, 260, 118));
 
         skin.Renderer.DrawColor = new Color(a: 255, r: 38, g: 40, b: 44);
