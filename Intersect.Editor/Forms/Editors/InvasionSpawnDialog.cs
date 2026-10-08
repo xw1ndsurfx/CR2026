@@ -1,5 +1,7 @@
 using DarkUI.Forms;
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Maps;
+using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Framework.Core.WorldEvents.Invasions;
 
 namespace Intersect.Editor.Forms.Editors;
@@ -31,7 +33,7 @@ internal sealed class InvasionSpawnDialog : DarkForm
         MaximizeBox = false;
 
         Fill(_npc, GameObjectType.Npc);
-        Fill(_map, GameObjectType.Map);
+        FillMaps(_map);
 
         var table = new TableLayoutPanel
         {
@@ -122,6 +124,21 @@ internal sealed class InvasionSpawnDialog : DarkForm
             combo.Items.Add(new Choice(type.IdFromList(index), names[index]));
     }
 
+    private static void FillMaps(ComboBox combo)
+    {
+        combo.Items.Clear();
+
+        foreach (var map in MapList.OrderedMaps
+                     .Where(map => map != null && map.MapId != Guid.Empty)
+                     .OrderBy(map => map.Name, StringComparer.CurrentCultureIgnoreCase))
+        {
+            combo.Items.Add(new Choice(map.MapId, map.Name));
+        }
+
+        if (combo.Items.Count == 0)
+            Fill(combo, GameObjectType.Map);
+    }
+
     private static void Select(ComboBox combo, Guid id)
     {
         for (var index = 0; index < combo.Items.Count; ++index)
@@ -129,6 +146,23 @@ internal sealed class InvasionSpawnDialog : DarkForm
             if ((combo.Items[index] as Choice)?.Id == id)
             {
                 combo.SelectedIndex = index;
+                return;
+            }
+        }
+
+        // Keep an existing spawn map intact even if the editor has not fetched
+        // that map descriptor yet.
+        if (id != Guid.Empty && ReferenceEquals(combo, combo))
+        {
+            var mapEntry = MapList.List.FindMap(id);
+            var mapName = mapEntry?.Name;
+            if (string.IsNullOrWhiteSpace(mapName))
+                mapName = MapDescriptor.GetName(id);
+
+            if (!string.IsNullOrWhiteSpace(mapName) && mapName != "Deleted")
+            {
+                combo.Items.Add(new Choice(id, mapName));
+                combo.SelectedIndex = combo.Items.Count - 1;
                 return;
             }
         }
