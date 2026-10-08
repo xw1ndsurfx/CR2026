@@ -4,6 +4,7 @@ using Intersect.Editor.Networking;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Maps;
+using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Framework.Core.WorldEvents.Invasions;
 
 namespace Intersect.Editor.Forms.Editors;
@@ -136,9 +137,26 @@ public sealed class FrmInvasionConfiguration : DarkForm
     private void FillMaps()
     {
         _targetMap.Items.Clear();
-        var names = GameObjectType.Map.Names();
-        for (var index = 0; index < names.Length; ++index)
-            _targetMap.Items.Add(new Choice(GameObjectType.Map.IdFromList(index), names[index]));
+
+        // MapDescriptor lookup in the editor only guarantees data for maps that
+        // are currently loaded/fetched. The map list is the authoritative source
+        // for every map in the project, so use it for invasion map selection.
+        foreach (var map in MapList.OrderedMaps
+                     .Where(map => map != null && map.MapId != Guid.Empty)
+                     .OrderBy(map => map.Name, StringComparer.CurrentCultureIgnoreCase))
+        {
+            _targetMap.Items.Add(new Choice(map.MapId, map.Name));
+        }
+
+        // Fallback for unusual startup states where the map list has not arrived
+        // yet. This keeps the editor usable without reintroducing the silent
+        // configured-map replacement bug.
+        if (_targetMap.Items.Count == 0)
+        {
+            var names = GameObjectType.Map.Names();
+            for (var index = 0; index < names.Length; ++index)
+                _targetMap.Items.Add(new Choice(GameObjectType.Map.IdFromList(index), names[index]));
+        }
     }
 
     private void FillEnvironmentAssets()
@@ -199,6 +217,22 @@ public sealed class FrmInvasionConfiguration : DarkForm
                     )
                 );
             }
+        }
+
+        // Never silently replace an already-configured objective event merely
+        // because its map has not been fetched into the editor yet.
+        if (selectedEventId != Guid.Empty &&
+            !_targetEvent.Items.Cast<Choice>().Any(choice => choice.Id == selectedEventId))
+        {
+            var eventName = EventDescriptor.GetName(selectedEventId);
+            _targetEvent.Items.Add(
+                new Choice(
+                    selectedEventId,
+                    string.IsNullOrWhiteSpace(eventName) || eventName == "Deleted"
+                        ? $"Configured event ({selectedEventId})"
+                        : $"{eventName} (map data not loaded)"
+                )
+            );
         }
 
         SelectChoice(_targetEvent, selectedEventId);
@@ -672,7 +706,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
             _days.SetItemChecked(day, (invasion.ScheduleDays & flag) != 0);
         }
 
-        SelectChoice(_targetMap, invasion.TargetMapId);
+        SelectMapChoice(_targetMap, invasion.TargetMapId);
         FillTargetEvents(invasion.TargetMapId, invasion.TargetEventId);
         ApplySelectedTargetEvent();
         RefreshWaveList();
@@ -927,6 +961,38 @@ public sealed class FrmInvasionConfiguration : DarkForm
 
         if (_list.SelectedIndex >= 0 && _list.SelectedIndex != _selectedIndex)
             SelectInvasion(_list.SelectedIndex);
+    }
+
+    private static void SelectMapChoice(ComboBox combo, Guid id)
+    {
+        for (var index = 0; index < combo.Items.Count; ++index)
+        {
+            if ((combo.Items[index] as Choice)?.Id == id)
+            {
+                combo.SelectedIndex = index;
+                return;
+            }
+        }
+
+        // Preserve the saved map id instead of defaulting to the first loaded map.
+        // Defaulting here used to overwrite TargetMapId as soon as Save/Start Now
+        // was pressed when the configured map was not present in the editor lookup.
+        if (id != Guid.Empty)
+        {
+            var mapListEntry = MapList.List.FindMap(id);
+            var name = mapListEntry?.Name;
+            if (string.IsNullOrWhiteSpace(name))
+                name = MapDescriptor.GetName(id);
+            if (string.IsNullOrWhiteSpace(name) || name == "Deleted")
+                name = $"Configured map ({id})";
+
+            combo.Items.Add(new Choice(id, name));
+            combo.SelectedIndex = combo.Items.Count - 1;
+            return;
+        }
+
+        if (combo.Items.Count > 0)
+            combo.SelectedIndex = 0;
     }
 
     private static void SelectChoice(ComboBox combo, Guid id)
