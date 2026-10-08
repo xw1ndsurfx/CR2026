@@ -39,4 +39,8 @@ public enum QuestObjective
     PotionBrewSpecificRecipeMinScore,
 
     CompleteDungeon,
+
+    LockpickLocks,
+
+    LockpickSpecificLock,
 }
