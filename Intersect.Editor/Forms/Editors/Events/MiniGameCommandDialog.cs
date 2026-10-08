@@ -1,10 +1,12 @@
 using System.Drawing;
 using System.Windows.Forms;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Configuration;
+using Intersect.Framework.Core.MiniGames.Lockpicking;
 using Intersect.Framework.Core.Professions;
 using DrawingColor = System.Drawing.Color;
 
@@ -20,6 +22,7 @@ internal sealed class MiniGameCommandDialog : Form
     private sealed record RewardListChoice(PokerLevelReward Reward, string Name) { public override string ToString() => Name; }
     private sealed record GameChoice(MiniGameType Type, string Name) { public override string ToString() => Name; }
     private sealed record ProfessionChoice(Guid Id, string Name) { public override string ToString() => Name; }
+    private sealed record EventChoice(Guid Id, string Name) { public override string ToString() => Name; }
     public MiniGameCommandDialog(StartMiniGameCommand command)
     {
         Text = "Start Mini-Game"; StartPosition = FormStartPosition.CenterParent;
@@ -28,9 +31,9 @@ internal sealed class MiniGameCommandDialog : Form
         ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
         MinimumSize = new Size(580, 420);
         BackColor = DrawingColor.FromArgb(45, 45, 48); ForeColor = DrawingColor.Gainsboro;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 53, AutoScroll = true };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 75, AutoScroll = true };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
-        for (var row = 0; row < 53; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var row = 0; row < 75; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(12, 8, 12, 8) };
         Controls.Add(layout); Controls.Add(buttons);
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
@@ -118,6 +121,28 @@ internal sealed class MiniGameCommandDialog : Form
             lockpickProfession.SelectedIndex = 0;
         var lockpickProfessionXp = Number(command.LockpickProfessionBaseExperience, 1, 2_000_000_000);
         lockpickProfessionXp.Name = "LockpickProfessionBaseExperience";
+        var lockpickType = EnumPicker<LockpickLockType>(command.LockpickType);
+        var lockpickScope = EnumPicker<LockpickUnlockScope>(command.LockpickUnlockScope);
+        var lockpickRequiredLevel = Number(command.LockpickRequiredProfessionLevel, 0, 500);
+        var lockpickSkillBonus = new CheckBox { Text = "Profession level widens sweet spot", Checked = command.LockpickUseProfessionSkillBonus, AutoSize = true };
+        var lockpickPerfectBonus = Number(command.LockpickPerfectExperienceBonusPercent, 0, 500);
+        var lockpickFastBonus = Number(command.LockpickFastExperienceBonusPercent, 0, 500);
+        var lockpickFastSeconds = Number(command.LockpickFastThresholdSeconds, 1, 180);
+        var lockpickMinTool = EnumPicker<LockpickToolQuality>(command.LockpickMinimumToolQuality);
+        var lockpickBasicItem = RewardItemPicker(command.LockpickBasicToolItemId);
+        var lockpickBasicBreak = Number(command.LockpickBasicBreakChancePercent, 0, 100);
+        var lockpickReinforcedItem = RewardItemPicker(command.LockpickReinforcedToolItemId);
+        var lockpickReinforcedBreak = Number(command.LockpickReinforcedBreakChancePercent, 0, 100);
+        var lockpickRoyalItem = RewardItemPicker(command.LockpickRoyalToolItemId);
+        var lockpickRoyalBreak = Number(command.LockpickRoyalBreakChancePercent, 0, 100);
+        var lockpickMasterItem = RewardItemPicker(command.LockpickMasterToolItemId);
+        var lockpickMasterBreak = Number(command.LockpickMasterBreakChancePercent, 0, 100);
+        var lockpickKeyItem = RewardItemPicker(command.LockpickKeyItemId);
+        var lockpickConsumeKey = new CheckBox { Text = "Consume key when used", Checked = command.LockpickConsumeKey, AutoSize = true };
+        var lockpickMistakeEvent = CommonEventPicker(command.LockpickMistakeCommonEventId);
+        var lockpickFailureEvent = CommonEventPicker(command.LockpickFailureCommonEventId);
+        var lockpickFailureCooldown = Number(command.LockpickFailureCooldownSeconds, 0, 86_400);
+        var lockpickInvasionBonus = Number(command.LockpickInvasionDifficultyBonus, 0, 4);
         bool IsBlackjack() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Blackjack;
         bool IsPotions() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Potions;
         bool IsRoulette() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Roulette;
@@ -209,6 +234,16 @@ internal sealed class MiniGameCommandDialog : Form
             rouletteMinimum.Enabled = rouletteMaximum.Enabled = roulette;
             lockpickDifficulty.Enabled = lockpickMistakes.Enabled = lockpickTime.Enabled = lockpicking;
             lockpickProfession.Enabled = lockpickProfessionXp.Enabled = lockpicking;
+            foreach (var control in new Control[]
+                     {
+                         lockpickType, lockpickScope, lockpickRequiredLevel, lockpickSkillBonus,
+                         lockpickPerfectBonus, lockpickFastBonus, lockpickFastSeconds, lockpickMinTool,
+                         lockpickBasicItem, lockpickBasicBreak, lockpickReinforcedItem, lockpickReinforcedBreak,
+                         lockpickRoyalItem, lockpickRoyalBreak, lockpickMasterItem, lockpickMasterBreak,
+                         lockpickKeyItem, lockpickConsumeKey, lockpickMistakeEvent, lockpickFailureEvent,
+                         lockpickFailureCooldown, lockpickInvasionBonus,
+                     })
+                control.Enabled = lockpicking;
             seats.Enabled = !potions && !roulette && !cooking && !lockpicking;
             npcs.Enabled = !potions && !roulette && !cooking && !lockpicking;
             currency.Enabled = chips.Enabled = reserve.Enabled = !potions && !cooking && !lockpicking;
@@ -338,6 +373,28 @@ internal sealed class MiniGameCommandDialog : Form
         AddRow(layout, 50, "Lockpicking time limit (seconds)", lockpickTime);
         AddRow(layout, 51, "Lockpicking profession", lockpickProfession);
         AddRow(layout, 52, "Lockpicking base profession XP", lockpickProfessionXp);
+        AddRow(layout, 53, "Lock type", lockpickType);
+        AddRow(layout, 54, "Unlock scope", lockpickScope);
+        AddRow(layout, 55, "Required profession level", lockpickRequiredLevel);
+        AddRow(layout, 56, "Profession skill bonus", lockpickSkillBonus);
+        AddRow(layout, 57, "Perfect XP bonus %", lockpickPerfectBonus);
+        AddRow(layout, 58, "Fast XP bonus %", lockpickFastBonus);
+        AddRow(layout, 59, "Fast threshold (seconds)", lockpickFastSeconds);
+        AddRow(layout, 60, "Minimum tool quality", lockpickMinTool);
+        AddRow(layout, 61, "Basic lockpick item", lockpickBasicItem);
+        AddRow(layout, 62, "Basic break chance %", lockpickBasicBreak);
+        AddRow(layout, 63, "Reinforced lockpick item", lockpickReinforcedItem);
+        AddRow(layout, 64, "Reinforced break chance %", lockpickReinforcedBreak);
+        AddRow(layout, 65, "Royal lockpick item", lockpickRoyalItem);
+        AddRow(layout, 66, "Royal break chance %", lockpickRoyalBreak);
+        AddRow(layout, 67, "Master lockpick item", lockpickMasterItem);
+        AddRow(layout, 68, "Master break chance %", lockpickMasterBreak);
+        AddRow(layout, 69, "Alternative key item", lockpickKeyItem);
+        AddRow(layout, 70, "Key behavior", lockpickConsumeKey);
+        AddRow(layout, 71, "Common Event on mistake", lockpickMistakeEvent);
+        AddRow(layout, 72, "Common Event on failure", lockpickFailureEvent);
+        AddRow(layout, 73, "Failure cooldown (seconds)", lockpickFailureCooldown);
+        AddRow(layout, 74, "Invasion difficulty bonus", lockpickInvasionBonus);
 
         void ShowSummary()
         {
@@ -365,9 +422,11 @@ internal sealed class MiniGameCommandDialog : Form
                 var professionName = (lockpickProfession.SelectedItem as ProfessionChoice)?.Name ?? "(missing profession)";
                 var awardedXp = (long)lockpickProfessionXp.Value * (long)lockpickDifficulty.Value;
                 summary.ForeColor = lockpickProfession.SelectedItem == null ? DrawingColor.OrangeRed : DrawingColor.LightSkyBlue;
-                summary.Text = $"{definition.DisplayName} | Difficulty {lockpickDifficulty.Value}/5 | " +
-                    $"{lockpickMistakes.Value} mistakes | {lockpickTime.Value}s | Profession: {professionName} | " +
-                    $"Success XP: {awardedXp:N0} ({lockpickProfessionXp.Value:N0} base x difficulty)";
+                summary.Text = $"{definition.DisplayName} | {(lockpickType.SelectedItem?.ToString() ?? "Standard")} | " +
+                    $"Difficulty {lockpickDifficulty.Value}/5 | {lockpickMistakes.Value} mistakes | {lockpickTime.Value}s | " +
+                    $"Profession: {professionName} Lv {lockpickRequiredLevel.Value}+ | " +
+                    $"Scope: {lockpickScope.SelectedItem} | Base success XP: {awardedXp:N0} | " +
+                    $"Perfect +{lockpickPerfectBonus.Value}% | Fast +{lockpickFastBonus.Value}%";
                 return;
             }
 
@@ -471,6 +530,11 @@ internal sealed class MiniGameCommandDialog : Form
         lockpickTime.ValueChanged += (_, _) => ShowSummary();
         lockpickProfession.SelectedIndexChanged += (_, _) => ShowSummary();
         lockpickProfessionXp.ValueChanged += (_, _) => ShowSummary();
+        lockpickType.SelectedIndexChanged += (_, _) => ShowSummary();
+        lockpickScope.SelectedIndexChanged += (_, _) => ShowSummary();
+        lockpickRequiredLevel.ValueChanged += (_, _) => ShowSummary();
+        lockpickPerfectBonus.ValueChanged += (_, _) => ShowSummary();
+        lockpickFastBonus.ValueChanged += (_, _) => ShowSummary();
         UpdateGameUi();
         ShowCurrencyStatus();
         ShowSummary();
@@ -503,6 +567,28 @@ internal sealed class MiniGameCommandDialog : Form
                 LockpickTimeSeconds = (int)lockpickTime.Value,
                 LockpickProfessionId = (lockpickProfession.SelectedItem as ProfessionChoice)?.Id ?? Guid.Empty,
                 LockpickProfessionBaseExperience = (long)lockpickProfessionXp.Value,
+                LockpickRequiredProfessionLevel = (int)lockpickRequiredLevel.Value,
+                LockpickPerfectExperienceBonusPercent = (int)lockpickPerfectBonus.Value,
+                LockpickFastExperienceBonusPercent = (int)lockpickFastBonus.Value,
+                LockpickFastThresholdSeconds = (int)lockpickFastSeconds.Value,
+                LockpickType = Enum.TryParse<LockpickLockType>(lockpickType.SelectedItem?.ToString(), out var parsedLockType) ? parsedLockType : LockpickLockType.Standard,
+                LockpickUnlockScope = Enum.TryParse<LockpickUnlockScope>(lockpickScope.SelectedItem?.ToString(), out var parsedLockScope) ? parsedLockScope : LockpickUnlockScope.Crew,
+                LockpickMinimumToolQuality = Enum.TryParse<LockpickToolQuality>(lockpickMinTool.SelectedItem?.ToString(), out var parsedToolQuality) ? parsedToolQuality : LockpickToolQuality.None,
+                LockpickBasicToolItemId = (lockpickBasicItem.SelectedItem as RewardItemChoice)?.Id ?? Guid.Empty,
+                LockpickReinforcedToolItemId = (lockpickReinforcedItem.SelectedItem as RewardItemChoice)?.Id ?? Guid.Empty,
+                LockpickRoyalToolItemId = (lockpickRoyalItem.SelectedItem as RewardItemChoice)?.Id ?? Guid.Empty,
+                LockpickMasterToolItemId = (lockpickMasterItem.SelectedItem as RewardItemChoice)?.Id ?? Guid.Empty,
+                LockpickBasicBreakChancePercent = (int)lockpickBasicBreak.Value,
+                LockpickReinforcedBreakChancePercent = (int)lockpickReinforcedBreak.Value,
+                LockpickRoyalBreakChancePercent = (int)lockpickRoyalBreak.Value,
+                LockpickMasterBreakChancePercent = (int)lockpickMasterBreak.Value,
+                LockpickKeyItemId = (lockpickKeyItem.SelectedItem as RewardItemChoice)?.Id ?? Guid.Empty,
+                LockpickConsumeKey = lockpickConsumeKey.Checked,
+                LockpickMistakeCommonEventId = (lockpickMistakeEvent.SelectedItem as EventChoice)?.Id ?? Guid.Empty,
+                LockpickFailureCommonEventId = (lockpickFailureEvent.SelectedItem as EventChoice)?.Id ?? Guid.Empty,
+                LockpickFailureCooldownSeconds = (int)lockpickFailureCooldown.Value,
+                LockpickInvasionDifficultyBonus = (int)lockpickInvasionBonus.Value,
+                LockpickUseProfessionSkillBonus = lockpickSkillBonus.Checked,
                 SmallBlind = (long)small.Value, BigBlind = (long)big.Value, TurnSeconds = (int)seconds.Value,
                 DealerPlays = IsPotions() || IsRoulette() || IsCooking() || IsLockpicking() ? false : dealer.Checked,
                 NpcPlayers = IsPotions() || IsRoulette() || IsCooking() || IsLockpicking() ? 0 : (int)npcs.Value,
@@ -546,6 +632,28 @@ internal sealed class MiniGameCommandDialog : Form
             command.LockpickTimeSeconds = draft.LockpickTimeSeconds;
             command.LockpickProfessionId = draft.LockpickProfessionId;
             command.LockpickProfessionBaseExperience = draft.LockpickProfessionBaseExperience;
+            command.LockpickRequiredProfessionLevel = draft.LockpickRequiredProfessionLevel;
+            command.LockpickPerfectExperienceBonusPercent = draft.LockpickPerfectExperienceBonusPercent;
+            command.LockpickFastExperienceBonusPercent = draft.LockpickFastExperienceBonusPercent;
+            command.LockpickFastThresholdSeconds = draft.LockpickFastThresholdSeconds;
+            command.LockpickType = draft.LockpickType;
+            command.LockpickUnlockScope = draft.LockpickUnlockScope;
+            command.LockpickMinimumToolQuality = draft.LockpickMinimumToolQuality;
+            command.LockpickBasicToolItemId = draft.LockpickBasicToolItemId;
+            command.LockpickReinforcedToolItemId = draft.LockpickReinforcedToolItemId;
+            command.LockpickRoyalToolItemId = draft.LockpickRoyalToolItemId;
+            command.LockpickMasterToolItemId = draft.LockpickMasterToolItemId;
+            command.LockpickBasicBreakChancePercent = draft.LockpickBasicBreakChancePercent;
+            command.LockpickReinforcedBreakChancePercent = draft.LockpickReinforcedBreakChancePercent;
+            command.LockpickRoyalBreakChancePercent = draft.LockpickRoyalBreakChancePercent;
+            command.LockpickMasterBreakChancePercent = draft.LockpickMasterBreakChancePercent;
+            command.LockpickKeyItemId = draft.LockpickKeyItemId;
+            command.LockpickConsumeKey = draft.LockpickConsumeKey;
+            command.LockpickMistakeCommonEventId = draft.LockpickMistakeCommonEventId;
+            command.LockpickFailureCommonEventId = draft.LockpickFailureCommonEventId;
+            command.LockpickFailureCooldownSeconds = draft.LockpickFailureCooldownSeconds;
+            command.LockpickInvasionDifficultyBonus = draft.LockpickInvasionDifficultyBonus;
+            command.LockpickUseProfessionSkillBonus = draft.LockpickUseProfessionSkillBonus;
             command.StartingChips = draft.StartingChips; command.SmallBlind = draft.SmallBlind; command.BigBlind = draft.BigBlind;
             command.TurnSeconds = draft.TurnSeconds; command.DealerPlays = draft.DealerPlays; command.NpcPlayers = draft.NpcPlayers;
             command.AutoStart = draft.AutoStart; command.DealAnimationId = draft.DealAnimationId; command.AnnounceWins = draft.AnnounceWins;
@@ -621,6 +729,28 @@ internal sealed class MiniGameCommandDialog : Form
         if (selected == null) { selected = new AnimationChoice(id, "Missing animation: " + id); picker.Items.Add(selected); }
         picker.SelectedItem = selected; return picker;
     }
+    private static ComboBox EnumPicker<T>(T selected) where T : struct, Enum
+    {
+        var picker = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
+        picker.Items.AddRange(Enum.GetNames<T>());
+        picker.SelectedItem = selected.ToString();
+        return picker;
+    }
+
+    private static ComboBox CommonEventPicker(Guid id)
+    {
+        var picker = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill, DropDownWidth = 480 };
+        picker.Items.Add(new EventChoice(Guid.Empty, "None"));
+        foreach (var evt in EventDescriptor.Lookup.Values
+                     .OfType<EventDescriptor>()
+                     .Where(evt => evt.CommonEvent)
+                     .OrderBy(evt => evt.Name, StringComparer.OrdinalIgnoreCase))
+            picker.Items.Add(new EventChoice(evt.Id, evt.Name));
+
+        picker.SelectedItem = picker.Items.Cast<EventChoice>().FirstOrDefault(choice => choice.Id == id) ?? picker.Items[0];
+        return picker;
+    }
+
     private static NumericUpDown Number(long value, long minimum, long maximum) => new()
     { Minimum = minimum, Maximum = maximum, Value = Math.Clamp(value, minimum, maximum), DecimalPlaces = 0, ThousandsSeparator = true, Dock = DockStyle.Fill };
     private static Label AddRow(TableLayoutPanel layout, int row, string text, Control input)
