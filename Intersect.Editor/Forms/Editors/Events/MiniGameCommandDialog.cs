@@ -5,6 +5,7 @@ using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Configuration;
+using Intersect.Framework.Core.Professions;
 using DrawingColor = System.Drawing.Color;
 
 namespace Intersect.Editor.Forms.Editors.Events;
@@ -18,6 +19,7 @@ internal sealed class MiniGameCommandDialog : Form
     private sealed record RewardItemChoice(Guid Id, string Name) { public override string ToString() => Name; }
     private sealed record RewardListChoice(PokerLevelReward Reward, string Name) { public override string ToString() => Name; }
     private sealed record GameChoice(MiniGameType Type, string Name) { public override string ToString() => Name; }
+    private sealed record ProfessionChoice(Guid Id, string Name) { public override string ToString() => Name; }
     public MiniGameCommandDialog(StartMiniGameCommand command)
     {
         Text = "Start Mini-Game"; StartPosition = FormStartPosition.CenterParent;
@@ -26,9 +28,9 @@ internal sealed class MiniGameCommandDialog : Form
         ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
         MinimumSize = new Size(580, 420);
         BackColor = DrawingColor.FromArgb(45, 45, 48); ForeColor = DrawingColor.Gainsboro;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 51, AutoScroll = true };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 53, AutoScroll = true };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
-        for (var row = 0; row < 51; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var row = 0; row < 53; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(12, 8, 12, 8) };
         Controls.Add(layout); Controls.Add(buttons);
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
@@ -100,6 +102,22 @@ internal sealed class MiniGameCommandDialog : Form
         var lockpickDifficulty = Number(command.LockpickDifficulty, 1, 5); lockpickDifficulty.Name = "LockpickDifficulty";
         var lockpickMistakes = Number(command.LockpickMaxMistakes, 1, 10); lockpickMistakes.Name = "LockpickMaxMistakes";
         var lockpickTime = Number(command.LockpickTimeSeconds, 10, 180); lockpickTime.Name = "LockpickTimeSeconds";
+        var lockpickProfession = new ComboBox
+        {
+            Name = "LockpickProfession",
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Dock = DockStyle.Fill,
+        };
+        foreach (var profession in ProfessionConfiguration.Instance.Professions.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase))
+            lockpickProfession.Items.Add(new ProfessionChoice(profession.Id, profession.Name));
+        var selectedProfession = lockpickProfession.Items.Cast<ProfessionChoice>()
+            .FirstOrDefault(choice => choice.Id == command.LockpickProfessionId);
+        if (selectedProfession != null)
+            lockpickProfession.SelectedItem = selectedProfession;
+        else if (lockpickProfession.Items.Count > 0)
+            lockpickProfession.SelectedIndex = 0;
+        var lockpickProfessionXp = Number(command.LockpickProfessionBaseExperience, 1, 2_000_000_000);
+        lockpickProfessionXp.Name = "LockpickProfessionBaseExperience";
         bool IsBlackjack() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Blackjack;
         bool IsPotions() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Potions;
         bool IsRoulette() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Roulette;
@@ -190,6 +208,7 @@ internal sealed class MiniGameCommandDialog : Form
             blackjackMinimum.Enabled = blackjackMaximum.Enabled = blackjackHitSoft17.Enabled = blackjack;
             rouletteMinimum.Enabled = rouletteMaximum.Enabled = roulette;
             lockpickDifficulty.Enabled = lockpickMistakes.Enabled = lockpickTime.Enabled = lockpicking;
+            lockpickProfession.Enabled = lockpickProfessionXp.Enabled = lockpicking;
             seats.Enabled = !potions && !roulette && !cooking && !lockpicking;
             npcs.Enabled = !potions && !roulette && !cooking && !lockpicking;
             currency.Enabled = chips.Enabled = reserve.Enabled = !potions && !cooking && !lockpicking;
@@ -317,6 +336,8 @@ internal sealed class MiniGameCommandDialog : Form
         AddRow(layout, 48, "Lockpicking difficulty (1-5)", lockpickDifficulty);
         AddRow(layout, 49, "Lockpicking allowed mistakes", lockpickMistakes);
         AddRow(layout, 50, "Lockpicking time limit (seconds)", lockpickTime);
+        AddRow(layout, 51, "Lockpicking profession", lockpickProfession);
+        AddRow(layout, 52, "Lockpicking base profession XP", lockpickProfessionXp);
 
         void ShowSummary()
         {
@@ -325,6 +346,7 @@ internal sealed class MiniGameCommandDialog : Form
             var blackjack = selectedGame == MiniGameType.Blackjack;
             var potions = selectedGame == MiniGameType.Potions;
             var roulette = selectedGame == MiniGameType.Roulette;
+            var lockpicking = selectedGame == MiniGameType.Lockpicking;
             var dealerSeats = blackjack ? 1 : (dealer.Checked ? 1 : 0);
             var humanSeats = Math.Max(1, (int)seats.Value - (int)npcs.Value - dealerSeats);
             var funded = ((currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty) != Guid.Empty;
@@ -335,6 +357,17 @@ internal sealed class MiniGameCommandDialog : Form
                 summary.ForeColor = DrawingColor.LightSkyBlue;
                 summary.Text = $"{definition.DisplayName} | Solo 8x10 merge board | " +
                     "Recipes, output items, required levels and XP are configured globally in Content Editors > Daily & Level Rewards Editor > Potion Recipes.";
+                return;
+            }
+
+            if (lockpicking)
+            {
+                var professionName = (lockpickProfession.SelectedItem as ProfessionChoice)?.Name ?? "(missing profession)";
+                var awardedXp = (long)lockpickProfessionXp.Value * (long)lockpickDifficulty.Value;
+                summary.ForeColor = lockpickProfession.SelectedItem == null ? DrawingColor.OrangeRed : DrawingColor.LightSkyBlue;
+                summary.Text = $"{definition.DisplayName} | Difficulty {lockpickDifficulty.Value}/5 | " +
+                    $"{lockpickMistakes.Value} mistakes | {lockpickTime.Value}s | Profession: {professionName} | " +
+                    $"Success XP: {awardedXp:N0} ({lockpickProfessionXp.Value:N0} base x difficulty)";
                 return;
             }
 
@@ -436,6 +469,8 @@ internal sealed class MiniGameCommandDialog : Form
         lockpickDifficulty.ValueChanged += (_, _) => ShowSummary();
         lockpickMistakes.ValueChanged += (_, _) => ShowSummary();
         lockpickTime.ValueChanged += (_, _) => ShowSummary();
+        lockpickProfession.SelectedIndexChanged += (_, _) => ShowSummary();
+        lockpickProfessionXp.ValueChanged += (_, _) => ShowSummary();
         UpdateGameUi();
         ShowCurrencyStatus();
         ShowSummary();
@@ -466,6 +501,8 @@ internal sealed class MiniGameCommandDialog : Form
                 LockpickDifficulty = (int)lockpickDifficulty.Value,
                 LockpickMaxMistakes = (int)lockpickMistakes.Value,
                 LockpickTimeSeconds = (int)lockpickTime.Value,
+                LockpickProfessionId = (lockpickProfession.SelectedItem as ProfessionChoice)?.Id ?? Guid.Empty,
+                LockpickProfessionBaseExperience = (long)lockpickProfessionXp.Value,
                 SmallBlind = (long)small.Value, BigBlind = (long)big.Value, TurnSeconds = (int)seconds.Value,
                 DealerPlays = IsPotions() || IsRoulette() || IsCooking() || IsLockpicking() ? false : dealer.Checked,
                 NpcPlayers = IsPotions() || IsRoulette() || IsCooking() || IsLockpicking() ? 0 : (int)npcs.Value,
@@ -496,7 +533,7 @@ internal sealed class MiniGameCommandDialog : Form
             if (!draft.HasValidSettings())
             {
                 MessageBox.Show(this,
-                    "Check the highlighted summary. Poker needs valid blinds, Blackjack needs even min/max bets, Roulette needs a valid house reserve, Royal Kitchen uses global Cooking Recipes, and Lockpicking requires difficulty 1-5 with a valid mistake/time limit.",
+                    "Check the highlighted summary. Poker needs valid blinds, Blackjack needs even min/max bets, Roulette needs a valid house reserve, Royal Kitchen uses global Cooking Recipes, and Lockpicking requires difficulty 1-5, a valid mistake/time limit, and a profession.",
                     "Invalid mini-game configuration", MessageBoxButtons.OK, MessageBoxIcon.Warning); return;
             }
             command.Game = draft.Game; command.TableId = draft.TableId; command.MaxPlayers = draft.MaxPlayers;
@@ -507,6 +544,8 @@ internal sealed class MiniGameCommandDialog : Form
             command.RouletteMinimumBet = draft.RouletteMinimumBet; command.RouletteMaximumBet = draft.RouletteMaximumBet;
             command.LockpickDifficulty = draft.LockpickDifficulty; command.LockpickMaxMistakes = draft.LockpickMaxMistakes;
             command.LockpickTimeSeconds = draft.LockpickTimeSeconds;
+            command.LockpickProfessionId = draft.LockpickProfessionId;
+            command.LockpickProfessionBaseExperience = draft.LockpickProfessionBaseExperience;
             command.StartingChips = draft.StartingChips; command.SmallBlind = draft.SmallBlind; command.BigBlind = draft.BigBlind;
             command.TurnSeconds = draft.TurnSeconds; command.DealerPlays = draft.DealerPlays; command.NpcPlayers = draft.NpcPlayers;
             command.AutoStart = draft.AutoStart; command.DealAnimationId = draft.DealAnimationId; command.AnnounceWins = draft.AnnounceWins;
