@@ -31,7 +31,27 @@ public static partial class CommandProcessing
         if (command.Game == MiniGameType.Lockpicking)
         {
             var eventId = instance.PageInstance?.Id ?? Guid.Empty;
-            if (eventId == Guid.Empty || !LockpickingRuntime.Join(player, command, eventId))
+            var lockId = instance.Descriptor?.Id ?? Guid.Empty;
+
+            if (LockpickingRuntime.IsUnlockedForCrew(
+                    player,
+                    lockId,
+                    player.MapId,
+                    player.MapInstanceId
+                ))
+            {
+                PacketSender.SendChatMsg(
+                    player,
+                    "[Lockpicking] Your Crew already unlocked this door.",
+                    ChatMessageType.Local,
+                    Color.White
+                );
+                return;
+            }
+
+            if (eventId == Guid.Empty ||
+                lockId == Guid.Empty ||
+                !LockpickingRuntime.Join(player, command, eventId, lockId))
             {
                 PacketSender.SendChatMsg(
                     player,
