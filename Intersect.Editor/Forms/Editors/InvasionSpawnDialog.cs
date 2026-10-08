@@ -78,7 +78,7 @@ internal sealed class InvasionSpawnDialog : DarkForm
         if (source != null)
         {
             Select(_npc, source.NpcId);
-            Select(_map, source.SpawnMapId);
+            SelectMap(_map, source.SpawnMapId);
             _x.Value = source.X;
             _y.Value = source.Y;
             _count.Value = source.Count;
@@ -88,7 +88,7 @@ internal sealed class InvasionSpawnDialog : DarkForm
         else
         {
             if (_npc.Items.Count > 0) _npc.SelectedIndex = 0;
-            Select(_map, defaultMapId);
+            SelectMap(_map, defaultMapId);
             _count.Value = 1;
             _damage.Value = 5;
         }
@@ -150,24 +150,39 @@ internal sealed class InvasionSpawnDialog : DarkForm
             }
         }
 
-        // Keep an existing spawn map intact even if the editor has not fetched
-        // that map descriptor yet.
-        if (id != Guid.Empty && ReferenceEquals(combo, combo))
+        if (combo.Items.Count > 0)
+            combo.SelectedIndex = 0;
+    }
+
+    private static void SelectMap(ComboBox combo, Guid id)
+    {
+        for (var index = 0; index < combo.Items.Count; ++index)
+        {
+            if ((combo.Items[index] as Choice)?.Id == id)
+            {
+                combo.SelectedIndex = index;
+                return;
+            }
+        }
+
+        // Preserve a configured spawn map even when its descriptor has not been
+        // fetched into the editor's live map lookup yet.
+        if (id != Guid.Empty)
         {
             var mapEntry = MapList.List.FindMap(id);
             var mapName = mapEntry?.Name;
             if (string.IsNullOrWhiteSpace(mapName))
                 mapName = MapDescriptor.GetName(id);
+            if (string.IsNullOrWhiteSpace(mapName) || mapName == "Deleted")
+                mapName = $"Configured map ({id})";
 
-            if (!string.IsNullOrWhiteSpace(mapName) && mapName != "Deleted")
-            {
-                combo.Items.Add(new Choice(id, mapName));
-                combo.SelectedIndex = combo.Items.Count - 1;
-                return;
-            }
+            combo.Items.Add(new Choice(id, mapName));
+            combo.SelectedIndex = combo.Items.Count - 1;
+            return;
         }
 
-        if (combo.Items.Count > 0) combo.SelectedIndex = 0;
+        if (combo.Items.Count > 0)
+            combo.SelectedIndex = 0;
     }
 
     private static void AddRow(TableLayoutPanel table, string label, Control control)
