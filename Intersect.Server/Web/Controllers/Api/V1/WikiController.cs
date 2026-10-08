@@ -236,6 +236,31 @@ public sealed class WikiController : IntersectController
         IReadOnlyList<WikiProfessionLeaderboard> Leaderboards
     );
 
+    public sealed record WikiLockpickingLeaderboardEntry(
+        int Rank,
+        string Name,
+        int Level,
+        long Experience,
+        long LocksPicked,
+        long PerfectPicks,
+        long PicksBroken,
+        int HighestDifficulty,
+        long FastestDifficultyFiveMilliseconds
+    );
+
+    public sealed record WikiLockpickingLeaderboard(
+        string Key,
+        string Name,
+        int MaximumLevel,
+        IReadOnlyList<WikiLockpickingLeaderboardEntry> Players
+    );
+
+    public sealed record WikiLockpickingLeaderboardResponse(
+        DateTimeOffset GeneratedAt,
+        string Sort,
+        IReadOnlyList<WikiLockpickingLeaderboard> Leaderboards
+    );
+
 
     public sealed record WikiGuildSummary(
         Guid Id,
@@ -314,6 +339,46 @@ public sealed class WikiController : IntersectController
             .ToArray();
 
         return Ok(new WikiProfessionLeaderboardResponse(DateTimeOffset.UtcNow, leaderboards));
+    }
+
+    [HttpGet("leaderboard/lockpicking")]
+    [ProducesResponseType(typeof(WikiLockpickingLeaderboardResponse), (int)HttpStatusCode.OK, ContentTypes.Json)]
+    public IActionResult LockpickingLeaderboards(
+        [FromQuery] int limit = 50,
+        [FromQuery] string sort = "locks"
+    )
+    {
+        limit = Math.Clamp(limit, 1, 100);
+        sort = (sort ?? "locks").Trim().ToLowerInvariant();
+        if (sort is not ("level" or "locks" or "perfect" or "fastest-d5"))
+            sort = "locks";
+
+        var leaderboards = LeaderboardDataRuntime.Lockpicking(limit, sort)
+            .GroupBy(row => new { row.ProfessionKey, row.ProfessionName, row.MaximumLevel })
+            .OrderBy(group => group.Key.ProfessionName)
+            .Select(group => new WikiLockpickingLeaderboard(
+                group.Key.ProfessionKey,
+                group.Key.ProfessionName,
+                group.Key.MaximumLevel,
+                group.Select((row, index) => new WikiLockpickingLeaderboardEntry(
+                    index + 1,
+                    row.PlayerName,
+                    row.Level,
+                    row.Experience,
+                    row.LocksPicked,
+                    row.PerfectPicks,
+                    row.PicksBroken,
+                    row.HighestDifficulty,
+                    row.FastestDifficultyFiveMilliseconds
+                )).ToArray()
+            ))
+            .ToArray();
+
+        return Ok(new WikiLockpickingLeaderboardResponse(
+            DateTimeOffset.UtcNow,
+            sort,
+            leaderboards
+        ));
     }
 
     [HttpGet("leaderboard/levels")]
