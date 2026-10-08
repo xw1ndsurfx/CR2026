@@ -71,6 +71,7 @@ public sealed class StartMiniGameCommand : EventCommand
     [DefaultValue(50)] public int LockpickPerfectExperienceBonusPercent { get; set; } = 50;
     [DefaultValue(25)] public int LockpickFastExperienceBonusPercent { get; set; } = 25;
     [DefaultValue(10)] public int LockpickFastThresholdSeconds { get; set; } = 10;
+    [DefaultValue(LockpickTargetKind.Door)] public LockpickTargetKind LockpickTargetKind { get; set; } = LockpickTargetKind.Door;
     [DefaultValue(LockpickLockType.Standard)] public LockpickLockType LockpickType { get; set; } = LockpickLockType.Standard;
     [DefaultValue(LockpickUnlockScope.Crew)] public LockpickUnlockScope LockpickUnlockScope { get; set; } = LockpickUnlockScope.Crew;
     [DefaultValue(LockpickToolQuality.None)] public LockpickToolQuality LockpickMinimumToolQuality { get; set; } = LockpickToolQuality.None;
@@ -146,6 +147,7 @@ public sealed class StartMiniGameCommand : EventCommand
                 LockpickPerfectExperienceBonusPercent is >= 0 and <= 500 &&
                 LockpickFastExperienceBonusPercent is >= 0 and <= 500 &&
                 LockpickFastThresholdSeconds is >= 1 and <= 180 &&
+                Enum.IsDefined(LockpickTargetKind) &&
                 Enum.IsDefined(LockpickType) &&
                 Enum.IsDefined(LockpickUnlockScope) &&
                 Enum.IsDefined(LockpickMinimumToolQuality) &&
