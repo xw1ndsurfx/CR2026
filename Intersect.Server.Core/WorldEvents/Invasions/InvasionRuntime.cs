@@ -419,17 +419,7 @@ internal static class InvasionRuntime
                 continue;
             }
 
-            var combatTarget = npc.Target;
-            var hasValidCombatTarget =
-                combatTarget != null &&
-                !combatTarget.IsDisposed &&
-                !combatTarget.IsDead &&
-                npc.CanTarget(combatTarget);
-
-            // A stale/dead target must not prevent an invader that reached the
-            // defense objective from attacking it. Live combat targets still take
-            // priority over objective damage.
-            if (hasValidCombatTarget ||
+            if (npc.Target != null ||
                 npc.MapId != session.TargetMapId ||
                 Math.Abs(npc.X - session.TargetX) > 1 ||
                 Math.Abs(npc.Y - session.TargetY) > 1)
