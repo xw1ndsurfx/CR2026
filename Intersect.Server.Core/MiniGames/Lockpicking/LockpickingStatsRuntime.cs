@@ -49,7 +49,9 @@ internal static class LockpickingStatsRuntime
         Guid professionId,
         int difficulty,
         long elapsedMilliseconds,
-        bool perfect
+        bool perfect,
+        bool fast,
+        bool pickBroken
     )
     {
         var stats = Get(player, professionId);
@@ -85,6 +87,24 @@ internal static class LockpickingStatsRuntime
             AchievementRuntime.AddProgress(
                 player,
                 AchievementObjectiveType.LockpickingDifficultyFive,
+                1
+            );
+        }
+
+        if (fast)
+        {
+            AchievementRuntime.AddProgress(
+                player,
+                AchievementObjectiveType.LockpickingFastPicks,
+                1
+            );
+        }
+
+        if (!pickBroken)
+        {
+            AchievementRuntime.AddProgress(
+                player,
+                AchievementObjectiveType.LockpickingNoBreakPicks,
                 1
             );
         }
