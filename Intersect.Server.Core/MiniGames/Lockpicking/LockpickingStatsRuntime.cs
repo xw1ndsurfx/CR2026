@@ -67,18 +67,16 @@ internal static class LockpickingStatsRuntime
 
         AchievementRuntime.AddProgress(
             player,
-            AchievementObjectiveType.CustomCounter,
-            1,
-            targetKey: "lockpicking.locks"
+            AchievementObjectiveType.LockpickingSuccesses,
+            1
         );
 
         if (perfect)
         {
             AchievementRuntime.AddProgress(
                 player,
-                AchievementObjectiveType.CustomCounter,
-                1,
-                targetKey: "lockpicking.perfect"
+                AchievementObjectiveType.LockpickingPerfects,
+                1
             );
         }
 
@@ -86,9 +84,8 @@ internal static class LockpickingStatsRuntime
         {
             AchievementRuntime.AddProgress(
                 player,
-                AchievementObjectiveType.CustomCounter,
-                1,
-                targetKey: "lockpicking.difficulty5"
+                AchievementObjectiveType.LockpickingDifficultyFive,
+                1
             );
         }
     }
@@ -99,9 +96,8 @@ internal static class LockpickingStatsRuntime
         Set(player, professionId, BrokenSalt, SafeAdd(stats.PicksBroken, 1));
         AchievementRuntime.AddProgress(
             player,
-            AchievementObjectiveType.CustomCounter,
-            1,
-            targetKey: "lockpicking.picks_broken"
+            AchievementObjectiveType.LockpickingBrokenPicks,
+            1
         );
     }
 
