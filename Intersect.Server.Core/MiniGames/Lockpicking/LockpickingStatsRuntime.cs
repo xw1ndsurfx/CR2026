@@ -4,12 +4,23 @@ using Intersect.Framework.Core.Achievements;
 using Intersect.Server.Achievements;
 using Intersect.Server.Entities;
 
+internal enum LockpickingStatField
+{
+    LocksPicked,
+    PerfectPicks,
+    PicksBroken,
+    HighestDifficulty,
+    FastestPickMilliseconds,
+    FastestDifficultyFiveMilliseconds,
+}
+
 internal readonly record struct LockpickingStats(
     long LocksPicked,
     long PerfectPicks,
     long PicksBroken,
     int HighestDifficulty,
-    long FastestPickMilliseconds
+    long FastestPickMilliseconds,
+    long FastestDifficultyFiveMilliseconds
 );
 
 internal static class LockpickingStatsRuntime
@@ -19,6 +30,22 @@ internal static class LockpickingStatsRuntime
     private const byte BrokenSalt = 0x69;
     private const byte DifficultySalt = 0x8B;
     private const byte FastestSalt = 0xAD;
+    private const byte FastestDifficultyFiveSalt = 0xCF;
+
+    internal static Guid VariableId(Guid professionId, LockpickingStatField field) =>
+        StateId(
+            professionId,
+            field switch
+            {
+                LockpickingStatField.LocksPicked => LocksSalt,
+                LockpickingStatField.PerfectPicks => PerfectSalt,
+                LockpickingStatField.PicksBroken => BrokenSalt,
+                LockpickingStatField.HighestDifficulty => DifficultySalt,
+                LockpickingStatField.FastestPickMilliseconds => FastestSalt,
+                LockpickingStatField.FastestDifficultyFiveMilliseconds => FastestDifficultyFiveSalt,
+                _ => LocksSalt,
+            }
+        );
 
     private static Guid StateId(Guid professionId, byte salt)
     {
@@ -41,7 +68,8 @@ internal static class LockpickingStatsRuntime
         Get(player, professionId, PerfectSalt),
         Get(player, professionId, BrokenSalt),
         (int)Math.Min(int.MaxValue, Get(player, professionId, DifficultySalt)),
-        Get(player, professionId, FastestSalt)
+        Get(player, professionId, FastestSalt),
+        Get(player, professionId, FastestDifficultyFiveSalt)
     );
 
     internal static void RecordSuccess(
@@ -65,6 +93,14 @@ internal static class LockpickingStatsRuntime
             (stats.FastestPickMilliseconds <= 0 || elapsedMilliseconds < stats.FastestPickMilliseconds))
         {
             Set(player, professionId, FastestSalt, elapsedMilliseconds);
+        }
+
+        if (difficulty >= 5 &&
+            elapsedMilliseconds > 0 &&
+            (stats.FastestDifficultyFiveMilliseconds <= 0 ||
+             elapsedMilliseconds < stats.FastestDifficultyFiveMilliseconds))
+        {
+            Set(player, professionId, FastestDifficultyFiveSalt, elapsedMilliseconds);
         }
 
         AchievementRuntime.AddProgress(
