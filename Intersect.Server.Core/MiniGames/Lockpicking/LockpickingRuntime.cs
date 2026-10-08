@@ -205,6 +205,7 @@ internal static class LockpickingRuntime
 
             Sessions[player.Id] = session;
             Send(session);
+            AnnounceBestCrewLocksmith(player, command.LockpickProfessionId);
             return true;
         }
     }
@@ -653,6 +654,36 @@ internal static class LockpickingRuntime
 
         if (EventDescriptor.Get(eventId) is { CommonEvent: true } evt)
             player.EnqueueStartCommonEvent(evt);
+    }
+
+    private static void AnnounceBestCrewLocksmith(Player player, Guid professionId)
+    {
+        if (!player.IsInParty || player.Party == null || player.Party.Count < 2)
+            return;
+
+        var best = player.Party
+            .Where(member => member != null && !member.IsDisposed)
+            .Select(member => new
+            {
+                Player = member,
+                Level = ProfessionRuntime.GetLevel(member, professionId),
+            })
+            .OrderByDescending(entry => entry.Level)
+            .ThenBy(entry => entry.Player.Name, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault();
+
+        if (best == null)
+            return;
+
+        foreach (var member in player.Party.Where(member => member != null))
+        {
+            PacketSender.SendChatMsg(
+                member,
+                $"[Crew] Best Locksmith: {best.Player.Name} - Level {best.Level}.",
+                ChatMessageType.Party,
+                Color.White
+            );
+        }
     }
 
     private static string ProfessionName(Guid professionId) =>
