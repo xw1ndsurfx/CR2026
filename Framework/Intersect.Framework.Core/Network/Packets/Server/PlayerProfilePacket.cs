@@ -23,6 +23,21 @@ public partial class PlayerProfessionProfilePacket
 
     [Key(5)]
     public long ExperienceToNextLevel { get; set; }
+
+    [Key(6)]
+    public long LocksPicked { get; set; }
+
+    [Key(7)]
+    public long PerfectPicks { get; set; }
+
+    [Key(8)]
+    public long PicksBroken { get; set; }
+
+    [Key(9)]
+    public int HighestLockDifficulty { get; set; }
+
+    [Key(10)]
+    public long FastestLockpickMilliseconds { get; set; }
 }
 
 [MessagePackObject]
