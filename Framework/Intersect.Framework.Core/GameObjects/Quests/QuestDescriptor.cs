@@ -301,6 +301,18 @@ public partial class QuestTaskDescriptor
             case QuestObjective.LockpickSpecificLock:
                 taskString = $"Successfully pick {(string.IsNullOrWhiteSpace(TargetName) ? "the required lock" : TargetName)} {Quantity} time(s). {Description}".Trim();
                 break;
+            case QuestObjective.LockpickMinimumDifficulty:
+                taskString = $"Successfully pick a difficulty {Quantity}+ lock. {Description}".Trim();
+                break;
+            case QuestObjective.LockpickPerfect:
+                taskString = $"Perform {Quantity} Perfect Lockpick(s). {Description}".Trim();
+                break;
+            case QuestObjective.LockpickWithoutBreaking:
+                taskString = $"Pick {Quantity} lock(s) without breaking a pick. {Description}".Trim();
+                break;
+            case QuestObjective.LockpickInDungeon:
+                taskString = $"Pick {Quantity} lock(s) while inside a Dungeon. {Description}".Trim();
+                break;
         }
 
         return taskString;
