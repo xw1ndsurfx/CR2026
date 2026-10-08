@@ -718,7 +718,7 @@ internal static class LockpickingRuntime
                 TurnPercent = session.TurnPercent,
                 Hint = session.Hint,
                 ErrorCode = error,
-                LockType = session.Command.LockpickType.ToString(),
+                LockType = $"{session.Command.LockpickTargetKind} / {session.Command.LockpickType}",
                 ToolName = session.ToolName,
                 ProfessionLevel = session.ProfessionLevel,
                 RequiredProfessionLevel = session.Command.LockpickRequiredProfessionLevel,
