@@ -19,6 +19,11 @@ public sealed partial class LockpickingStatePacket : IntersectPacket
     [Key(11)] public int TurnPercent { get; set; }
     [Key(12)] public string Hint { get; set; } = string.Empty;
     [Key(13)] public string ErrorCode { get; set; } = string.Empty;
+    [Key(14)] public string LockType { get; set; } = string.Empty;
+    [Key(15)] public string ToolName { get; set; } = string.Empty;
+    [Key(16)] public int ProfessionLevel { get; set; }
+    [Key(17)] public int RequiredProfessionLevel { get; set; }
+    [Key(18)] public bool PerfectEligible { get; set; }
 
     [IgnoreMember]
     public bool IsValid =>
@@ -33,5 +38,9 @@ public sealed partial class LockpickingStatePacket : IntersectPacket
         RemainingMilliseconds is >= 0 and <= 180_000 &&
         TurnPercent is >= 0 and <= 100 &&
         Hint is { Length: <= 32 } &&
-        ErrorCode is { Length: <= 64 };
+        ErrorCode is { Length: <= 64 } &&
+        LockType is { Length: <= 32 } &&
+        ToolName is { Length: <= 96 } &&
+        ProfessionLevel is >= 0 and <= 500 &&
+        RequiredProfessionLevel is >= 0 and <= 500;
 }
