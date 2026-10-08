@@ -33,8 +33,9 @@ public static partial class CommandProcessing
             var eventId = instance.PageInstance?.Id ?? Guid.Empty;
             var lockId = instance.Descriptor?.Id ?? Guid.Empty;
 
-            if (LockpickingRuntime.IsUnlockedForCrew(
+            if (LockpickingRuntime.IsUnlockedFor(
                     player,
+                    command,
                     lockId,
                     player.MapId,
                     player.MapInstanceId
@@ -42,7 +43,23 @@ public static partial class CommandProcessing
             {
                 PacketSender.SendChatMsg(
                     player,
-                    "[Lockpicking] Your Crew already unlocked this door.",
+                    "[Lockpicking] This lock is already open for you.",
+                    ChatMessageType.Local,
+                    Color.White
+                );
+                return;
+            }
+
+            if (LockpickingRuntime.TryUnlockWithKey(
+                    player,
+                    command,
+                    lockId,
+                    out var keyMessage
+                ))
+            {
+                PacketSender.SendChatMsg(
+                    player,
+                    keyMessage,
                     ChatMessageType.Local,
                     Color.White
                 );
@@ -51,11 +68,11 @@ public static partial class CommandProcessing
 
             if (eventId == Guid.Empty ||
                 lockId == Guid.Empty ||
-                !LockpickingRuntime.Join(player, command, eventId, lockId))
+                !LockpickingRuntime.Join(player, command, eventId, lockId, out var lockError))
             {
                 PacketSender.SendChatMsg(
                     player,
-                    "[Lockpicking] Unable to start this lock. The door remains locked.",
+                    $"[Lockpicking] {lockError} The lock remains closed.",
                     ChatMessageType.Error,
                     Color.White
                 );
