@@ -31,6 +31,16 @@ public sealed class WorldBossDefinition
     public int StartMinute { get; set; }
     public int LifetimeMinutes { get; set; } = 60;
 
+    // Reward XP is granted only on defeat, to players who actually damage this spawned boss.
+    // The proportional part compares each eligible player's damage against the average.
+    public long RewardExperience { get; set; } = 1_000;
+    public int MinimumContributionPercent { get; set; } = 1;
+    public int MinimumRewardPercent { get; set; } = 25;
+    public int MaximumRewardPercent { get; set; } = 200;
+    public int FirstPlaceBonusPercent { get; set; } = 50;
+    public int SecondPlaceBonusPercent { get; set; } = 25;
+    public int ThirdPlaceBonusPercent { get; set; } = 10;
+
     public bool Reminder60Enabled { get; set; } = true;
     public bool Reminder30Enabled { get; set; } = true;
     public bool Reminder15Enabled { get; set; } = true;
@@ -52,6 +62,14 @@ public sealed class WorldBossDefinition
         (ScheduleDays & ~WorldBossScheduleDays.All) == WorldBossScheduleDays.None &&
         StartHour is >= 0 and <= 23 && StartMinute is >= 0 and <= 59 &&
         LifetimeMinutes is >= 1 and <= 1_440 &&
+        RewardExperience is >= 0 and <= 2_000_000_000 &&
+        MinimumContributionPercent is >= 0 and <= 100 &&
+        MinimumRewardPercent is >= 0 and <= 500 &&
+        MaximumRewardPercent is >= 1 and <= 500 &&
+        MinimumRewardPercent <= MaximumRewardPercent &&
+        FirstPlaceBonusPercent is >= 0 and <= 500 &&
+        SecondPlaceBonusPercent is >= 0 and <= 500 &&
+        ThirdPlaceBonusPercent is >= 0 and <= 500 &&
         ReminderMessage is { Length: <= 512 } &&
         SpawnMessage is { Length: <= 512 } &&
         DefeatedMessage is { Length: <= 512 } &&

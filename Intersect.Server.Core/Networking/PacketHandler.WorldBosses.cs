@@ -1,4 +1,5 @@
 using Intersect.Network.Packets.WorldEvents;
+using Intersect.Server.Entities;
 using Intersect.Server.WorldEvents.WorldBosses;
 
 namespace Intersect.Server.Networking;
@@ -32,6 +33,13 @@ internal sealed partial class PacketHandler
         {
             PacketSender.SendError(client, exception.Message, "World Bosses");
         }
+    }
+
+    public void HandlePacket(Client client, RequestWorldBossStatusPacket packet)
+    {
+        if (client.IsEditor || client.Entity is not Player player)
+            return;
+        WorldBossRuntime.SendStatus(player);
     }
 
     public void HandlePacket(Client client, StartWorldBossNowPacket packet)

@@ -1,4 +1,6 @@
+using System.Collections.Concurrent;
 using Intersect.Core;
+using Intersect.Network.Packets.WorldEvents;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.WorldEvents.WorldBosses;
@@ -18,10 +20,16 @@ internal static class WorldBossRuntime
         public required WorldBossDefinition Definition { get; init; }
         public required Npc Npc { get; init; }
         public long ExpiresAtMs { get; init; }
+        public long ExpiresAtUnixMs { get; init; }
+        public ConcurrentDictionary<Guid, long> Damage { get; } = [];
+        public ConcurrentDictionary<Guid, string> Names { get; } = [];
+        public long LastBroadcastAtMs { get; set; };
+        public long LastHealth { get; set; } = -1;
     }
 
     private static readonly object Gate = new();
     private static readonly Dictionary<Guid, ActiveBoss> Active = [];
+    private static readonly ConcurrentDictionary<Guid, ActiveBoss> ActiveByNpcId = [];
     private static readonly Dictionary<Guid, string> LastScheduleKeys = [];
     private static readonly Dictionary<(Guid BossId, int Minutes), string> LastReminderKeys = [];
     private static long _nextCheckAt;
@@ -35,6 +43,8 @@ internal static class WorldBossRuntime
                 if (session.Npc.IsDead || session.Npc.IsDisposed)
                 {
                     Active.Remove(id);
+                    ActiveByNpcId.TryRemove(session.Npc.Id, out _);
+                    Finish(session, victory: true);
                     Announce(
                         session.Definition,
                         session.Definition.DefeatedMessage,
@@ -50,6 +60,8 @@ internal static class WorldBossRuntime
                     }
 
                     Active.Remove(id);
+                    ActiveByNpcId.TryRemove(session.Npc.Id, out _);
+                    Finish(session, victory: false);
                     Announce(
                         session.Definition,
                         session.Definition.ExpiredMessage,
@@ -64,6 +76,16 @@ internal static class WorldBossRuntime
             _nextCheckAt = nowMs + 1_000;
             var now = DateTimeOffset.Now; // Same server-local clock as Invasions.
             CheckReminders(now);
+            foreach (var session in Active.Values)
+            {
+                var health = session.Npc.GetVital(Vital.Health);
+                if (session.LastBroadcastAtMs + 2_000 <= nowMs || session.LastHealth != health)
+                {
+                    session.LastBroadcastAtMs = nowMs;
+                    session.LastHealth = health;
+                    Broadcast(session);
+                }
+            }
 
             foreach (var boss in WorldBossConfigurationRuntime.Current.Bosses)
             {
@@ -148,11 +170,125 @@ internal static class WorldBossRuntime
             Definition = boss,
             Npc = npc,
             ExpiresAtMs = nowMs + boss.LifetimeMinutes * 60_000L,
+            ExpiresAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + boss.LifetimeMinutes * 60_000L,
         };
 
+        ActiveByNpcId[npc.Id] = Active[boss.Id];
+        Broadcast(Active[boss.Id]);
         error = string.Empty;
         Announce(boss, boss.SpawnMessage, "SPAWNED");
         return true;
+    }
+
+    internal static void RegisterContribution(Npc npc, Entity attacker, long damage)
+    {
+        if (damage <= 0 || !ActiveByNpcId.TryGetValue(npc.Id, out var session))
+            return;
+        var player = attacker switch
+        {
+            Player direct => direct,
+            Npc { PetOwner: { } owner } => owner,
+            _ => null,
+        };
+        if (player == null || player.IsDisposed)
+            return;
+        session.Names[player.Id] = player.Name;
+        session.Damage.AddOrUpdate(player.Id, damage,
+            (_, total) => total > long.MaxValue - damage ? long.MaxValue : total + damage);
+    }
+
+    internal static void SendStatus(Player player)
+    {
+        foreach (var session in ActiveByNpcId.Values.DistinctBy(s => s.Npc.Id))
+            player.SendPacket(CreateStatus(session, player));
+    }
+
+    private static (Guid PlayerId, long Damage)[] Ranking(ActiveBoss session) =>
+        session.Damage.Where(pair => pair.Value > 0)
+            .OrderByDescending(pair => pair.Value).ThenBy(pair => pair.Key)
+            .Select(pair => (pair.Key, pair.Value)).ToArray();
+
+    private static WorldBossRankEntry[] Top(ActiveBoss session, (Guid PlayerId, long Damage)[] ranking) =>
+        ranking.Take(5).Select(entry => new WorldBossRankEntry
+        {
+            PlayerName = session.Names.TryGetValue(entry.PlayerId, out var name) ? name : "Player",
+            Damage = entry.Damage,
+        }).ToArray();
+
+    private static WorldBossStatusPacket CreateStatus(ActiveBoss session, Player player)
+    {
+        var ranking = Ranking(session);
+        var rank = Array.FindIndex(ranking, pair => pair.PlayerId == player.Id);
+        session.Damage.TryGetValue(player.Id, out var ownDamage);
+        return new WorldBossStatusPacket
+        {
+            Active = true, BossId = session.Definition.Id, Name = session.Definition.Name,
+            MapName = MapController.Get(session.Definition.MapId)?.Name ?? "Unknown map",
+            SpawnX = session.Definition.SpawnX, SpawnY = session.Definition.SpawnY,
+            Health = Math.Max(0, session.Npc.GetVital(Vital.Health)),
+            MaxHealth = Math.Max(1, session.Npc.GetMaxVital(Vital.Health)),
+            ExpiresAtUnixMilliseconds = session.ExpiresAtUnixMs,
+            ParticipantCount = ranking.Length, YourDamage = ownDamage,
+            YourRank = rank < 0 ? 0 : rank + 1, TopDamagers = Top(session, ranking),
+        };
+    }
+
+    private static void Broadcast(ActiveBoss session)
+    {
+        foreach (var player in Player.OnlinePlayersSnapshot())
+            if (player != null && !player.IsDisposed)
+                player.SendPacket(CreateStatus(session, player));
+    }
+
+    private static void Finish(ActiveBoss session, bool victory)
+    {
+        var ranking = Ranking(session);
+        var total = ranking.Aggregate(0m, (sum, entry) => sum + entry.Damage);
+        var eligible = ranking.Where(entry =>
+            total > 0 && entry.Damage * 100m / total >= session.Definition.MinimumContributionPercent).ToArray();
+        var average = eligible.Length > 0
+            ? eligible.Aggregate(0m, (sum, entry) => sum + entry.Damage) / eligible.Length : 0m;
+        var top = Top(session, ranking);
+        foreach (var player in Player.OnlinePlayersSnapshot())
+        {
+            if (player == null || player.IsDisposed)
+                continue;
+            player.SendPacket(new WorldBossStatusPacket { Active = false, BossId = session.Definition.Id });
+            var index = Array.FindIndex(ranking, entry => entry.PlayerId == player.Id);
+            if (index < 0)
+                continue;
+            var damage = ranking[index].Damage;
+            var qualified = victory && average > 0 &&
+                eligible.Any(entry => entry.PlayerId == player.Id);
+            var rewardPercent = qualified ? (int)Math.Clamp(
+                Math.Round(damage * 100m / average),
+                session.Definition.MinimumRewardPercent,
+                session.Definition.MaximumRewardPercent) : 0;
+            var rankBonus = index switch
+            {
+                0 => session.Definition.FirstPlaceBonusPercent,
+                1 => session.Definition.SecondPlaceBonusPercent,
+                2 => session.Definition.ThirdPlaceBonusPercent,
+                _ => 0,
+            };
+            var exp = qualified
+                ? (long)Math.Min(long.MaxValue,
+                    Math.Round((decimal)session.Definition.RewardExperience *
+                        (rewardPercent + rankBonus) / 100m))
+                : 0L;
+            if (exp > 0)
+                player.GiveExperience(exp);
+            player.SendPacket(new WorldBossResultPacket
+            {
+                BossId = session.Definition.Id, Name = session.Definition.Name,
+                Victory = victory, ContributionDamage = damage,
+                ContributionPercent = total > 0 ? (int)Math.Clamp(
+                    Math.Round(damage * 100m / total), 0m, 100m) : 0,
+                Rank = index + 1, ParticipantCount = ranking.Length,
+                RewardQualified = qualified, RewardPercentOfBase = qualified ? rewardPercent + rankBonus : 0,
+                ExperienceAwarded = exp, TopDamagers = top,
+            });
+        }
     }
 
     private static void CheckReminders(DateTimeOffset now)

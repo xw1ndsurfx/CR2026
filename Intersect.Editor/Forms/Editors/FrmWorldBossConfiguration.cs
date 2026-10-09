@@ -30,6 +30,13 @@ public sealed class FrmWorldBossConfiguration : DarkForm
     private readonly NumericUpDown _hour = new() { Maximum = 23, Width = 70 };
     private readonly NumericUpDown _minute = new() { Maximum = 59, Width = 70 };
     private readonly NumericUpDown _lifetime = new() { Minimum = 1, Maximum = 1440, Width = 90 };
+    private readonly NumericUpDown _rewardExp = new() { Minimum = 0, Maximum = 2_000_000_000, Width = 120 };
+    private readonly NumericUpDown _minimumContribution = new() { Minimum = 0, Maximum = 100, Width = 80 };
+    private readonly NumericUpDown _minimumReward = new() { Minimum = 0, Maximum = 500, Width = 80 };
+    private readonly NumericUpDown _maximumReward = new() { Minimum = 1, Maximum = 500, Width = 80 };
+    private readonly NumericUpDown _bonusFirst = new() { Minimum = 0, Maximum = 500, Width = 80 };
+    private readonly NumericUpDown _bonusSecond = new() { Minimum = 0, Maximum = 500, Width = 80 };
+    private readonly NumericUpDown _bonusThird = new() { Minimum = 0, Maximum = 500, Width = 80 };
     private readonly CheckBox _r60 = new() { Text = "60 minutes", AutoSize = true };
     private readonly CheckBox _r30 = new() { Text = "30 minutes", AutoSize = true };
     private readonly CheckBox _r15 = new() { Text = "15 minutes", AutoSize = true };
@@ -108,6 +115,7 @@ public sealed class FrmWorldBossConfiguration : DarkForm
         var tabs = new TabControl { Dock = DockStyle.Fill };
         tabs.TabPages.Add(BuildGeneral());
         tabs.TabPages.Add(BuildAnnouncements());
+        tabs.TabPages.Add(BuildRewards());
         split.Panel2.Controls.Add(tabs);
 
         var footer = new FlowLayoutPanel
@@ -157,6 +165,26 @@ public sealed class FrmWorldBossConfiguration : DarkForm
             Text = "The boss is spawned only in the overworld. Its original NPC stats, skills, AI and loot are preserved. Each configured event has only one active boss at a time.",
         });
         tab.Controls.Add(panel);
+        return tab;
+    }
+
+    private TabPage BuildRewards()
+    {
+        var tab = new TabPage("Contribution / Rewards");
+        var table = CreateTable();
+        AddRow(table, "Victory base experience", _rewardExp);
+        AddRow(table, "Minimum contribution (% of total)", _minimumContribution);
+        AddRow(table, "Minimum reward (% of base)", _minimumReward);
+        AddRow(table, "Maximum reward (% of base)", _maximumReward);
+        AddRow(table, "1st place bonus (%)", _bonusFirst);
+        AddRow(table, "2nd place bonus (%)", _bonusSecond);
+        AddRow(table, "3rd place bonus (%)", _bonusThird);
+        AddRow(table, "Rules", new Label
+        {
+            AutoSize = true, MaximumSize = new Size(470, 0),
+            Text = "Only players who deal boss damage qualify. EXP is awarded when the boss is killed, not when it times out. Ordinary NPC loot and drop tables are unchanged.",
+        });
+        tab.Controls.Add(table);
         return tab;
     }
 
@@ -259,6 +287,13 @@ public sealed class FrmWorldBossConfiguration : DarkForm
         _hour.Value = boss.StartHour;
         _minute.Value = boss.StartMinute;
         _lifetime.Value = boss.LifetimeMinutes;
+        _rewardExp.Value = boss.RewardExperience;
+        _minimumContribution.Value = boss.MinimumContributionPercent;
+        _minimumReward.Value = boss.MinimumRewardPercent;
+        _maximumReward.Value = boss.MaximumRewardPercent;
+        _bonusFirst.Value = boss.FirstPlaceBonusPercent;
+        _bonusSecond.Value = boss.SecondPlaceBonusPercent;
+        _bonusThird.Value = boss.ThirdPlaceBonusPercent;
         for (var i = 0; i < _days.Items.Count; ++i)
             _days.SetItemChecked(i, ((int)boss.ScheduleDays & (1 << i)) != 0);
         _r60.Checked = boss.Reminder60Enabled;
@@ -288,6 +323,13 @@ public sealed class FrmWorldBossConfiguration : DarkForm
         boss.StartHour = (int)_hour.Value;
         boss.StartMinute = (int)_minute.Value;
         boss.LifetimeMinutes = (int)_lifetime.Value;
+        boss.RewardExperience = (long)_rewardExp.Value;
+        boss.MinimumContributionPercent = (int)_minimumContribution.Value;
+        boss.MinimumRewardPercent = (int)_minimumReward.Value;
+        boss.MaximumRewardPercent = (int)_maximumReward.Value;
+        boss.FirstPlaceBonusPercent = (int)_bonusFirst.Value;
+        boss.SecondPlaceBonusPercent = (int)_bonusSecond.Value;
+        boss.ThirdPlaceBonusPercent = (int)_bonusThird.Value;
         boss.ScheduleDays = WorldBossScheduleDays.None;
         for (var i = 0; i < _days.Items.Count; ++i)
             if (_days.GetItemChecked(i))
