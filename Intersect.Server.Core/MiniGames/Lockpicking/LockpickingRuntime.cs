@@ -491,6 +491,8 @@ internal static class LockpickingRuntime
                 perfect,
                 session.PickBroken
             );
+
+            AwardChestLoot(session, perfect);
         }
         else if (error is not ("Cancelled" or "Interrupted"))
         {
@@ -569,6 +571,131 @@ internal static class LockpickingRuntime
             "Cancelled" => "[Lockpicking] You stopped picking the lock.",
             _ => "[Lockpicking] The attempt was interrupted. The lock remains closed.",
         };
+    }
+
+    internal static void ClearFailureCooldown(
+        Player player,
+        Guid lockId,
+        Guid mapInstanceId
+    )
+    {
+        if (player == null || lockId == Guid.Empty)
+            return;
+
+        lock (Gate)
+            FailureCooldowns.Remove(new CooldownKey(player.Id, lockId, mapInstanceId));
+    }
+
+    internal static void NotifyCrewDecision(Player player, string message)
+    {
+        if (player == null || string.IsNullOrWhiteSpace(message))
+            return;
+
+        if (!player.IsInParty || player.Party == null || player.Party.Count < 2)
+        {
+            PacketSender.SendChatMsg(
+                player,
+                $"[Lockpicking] {message}",
+                ChatMessageType.Local,
+                Color.White
+            );
+            return;
+        }
+
+        foreach (var member in player.Party
+                     .Where(member => member != null && member.MapInstanceId == player.MapInstanceId)
+                     .DistinctBy(member => member.Id)
+                     .ToArray())
+        {
+            PacketSender.SendChatMsg(
+                member,
+                $"[Lockpicking] {message}",
+                ChatMessageType.Party,
+                Color.White
+            );
+        }
+    }
+
+    internal static void TriggerFailureChoiceCommonEvent(
+        Player player,
+        Guid eventId,
+        bool affectCrew
+    )
+    {
+        if (player == null || eventId == Guid.Empty)
+            return;
+
+        if (EventDescriptor.Get(eventId) is not { CommonEvent: true } commonEvent)
+            return;
+
+        if (!affectCrew || !player.IsInParty || player.Party == null)
+        {
+            player.EnqueueStartCommonEvent(commonEvent);
+            return;
+        }
+
+        foreach (var member in player.Party
+                     .Where(member =>
+                         member != null &&
+                         member.IsOnline &&
+                         member.MapInstanceId == player.MapInstanceId)
+                     .DistinctBy(member => member.Id)
+                     .ToArray())
+        {
+            member.EnqueueStartCommonEvent(commonEvent);
+        }
+    }
+
+    private static void AwardChestLoot(Session session, bool perfect)
+    {
+        if (session.Command.LockpickTargetKind != LockpickTargetKind.Chest)
+            return;
+
+        var entries = session.Command.LockpickLootTable ?? [];
+        if (entries.Length == 0)
+            return;
+
+        foreach (var entry in entries.Where(entry => entry is { IsValid: true }))
+        {
+            if (session.ProfessionLevel < entry.MinimumProfessionLevel)
+                continue;
+
+            var levelDelta = Math.Max(0, session.ProfessionLevel - entry.MinimumProfessionLevel);
+            var chanceBasisPoints = entry.BaseChancePercent * 100L +
+                                    levelDelta * (long)entry.ChanceBonusBasisPointsPerLevel +
+                                    (perfect ? entry.PerfectBonusPercent * 100L : 0L);
+            chanceBasisPoints = Math.Clamp(chanceBasisPoints, 0L, 10_000L);
+
+            if (RandomNumberGenerator.GetInt32(0, 10_000) >= chanceBasisPoints)
+                continue;
+
+            var quantity = entry.MinQuantity == entry.MaxQuantity
+                ? entry.MinQuantity
+                : RandomNumberGenerator.GetInt32(entry.MinQuantity, entry.MaxQuantity + 1);
+
+            if (entry.QuantityBonusEveryLevels > 0)
+                quantity += session.ProfessionLevel / entry.QuantityBonusEveryLevels;
+
+            quantity = Math.Clamp(quantity, 1, 1_000_000);
+
+            if (!session.Player.TryGiveItem(entry.ItemId, quantity, ItemHandling.Overflow))
+            {
+                PacketSender.SendChatMsg(
+                    session.Player,
+                    $"[Locksmith Loot] Could not award {quantity:N0} x {ItemDescriptor.GetName(entry.ItemId)}.",
+                    ChatMessageType.Error,
+                    Color.White
+                );
+                continue;
+            }
+
+            PacketSender.SendChatMsg(
+                session.Player,
+                $"[Locksmith Loot] +{quantity:N0} {ItemDescriptor.GetName(entry.ItemId)}",
+                ChatMessageType.Inventory,
+                Color.White
+            );
+        }
     }
 
     private static void RegisterUnlock(
