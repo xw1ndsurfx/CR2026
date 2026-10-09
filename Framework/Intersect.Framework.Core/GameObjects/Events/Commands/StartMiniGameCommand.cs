@@ -90,6 +90,11 @@ public sealed class StartMiniGameCommand : EventCommand
     [DefaultValue(30)] public int LockpickFailureCooldownSeconds { get; set; } = 30;
     [DefaultValue(0)] public int LockpickInvasionDifficultyBonus { get; set; }
     [DefaultValue(true)] public bool LockpickUseProfessionSkillBonus { get; set; } = true;
+    [DefaultValue(true)] public bool LockpickFailureChoicesEnabled { get; set; } = true;
+    [DefaultValue(true)] public bool LockpickFailureChoicesAffectCrew { get; set; } = true;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LockpickKeySearchCommonEventId { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LockpickGuardianCommonEventId { get; set; }
+    public LockpickingLootEntry[] LockpickLootTable { get; set; } = [];
     [DefaultValue(PokerMotionSpeed.Normal)] public PokerMotionSpeed ProceduralAnimationSpeed { get; set; } = PokerMotionSpeed.Normal;
     [DefaultValue(true)] public bool AnimateDealCards { get; set; } = true;
     [DefaultValue(true)] public bool AnimateBoardCards { get; set; } = true;
@@ -156,7 +161,8 @@ public sealed class StartMiniGameCommand : EventCommand
                 LockpickRoyalBreakChancePercent is >= 0 and <= 100 &&
                 LockpickMasterBreakChancePercent is >= 0 and <= 100 &&
                 LockpickFailureCooldownSeconds is >= 0 and <= 86_400 &&
-                LockpickInvasionDifficultyBonus is >= 0 and <= 4,
+                LockpickInvasionDifficultyBonus is >= 0 and <= 4 &&
+                (LockpickLootTable ?? []).All(entry => entry is { IsValid: true }),
             MiniGameType.Roulette =>
                 MaxPlayers == 1 &&
                 NpcPlayers == 0 &&
