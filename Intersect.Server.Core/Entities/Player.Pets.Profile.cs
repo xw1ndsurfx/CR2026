@@ -4,6 +4,7 @@ using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
+using Intersect.Server.Networking;
 using Intersect.Utilities;
 
 namespace Intersect.Server.Entities;
