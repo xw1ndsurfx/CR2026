@@ -9,7 +9,7 @@ namespace Intersect.Server.Entities;
 
 public partial class Player
 {
-    internal void ResolveLockpickingEvent(Guid eventId, bool success)
+    internal void ResolveLockpickingEvent(Guid eventId, bool success, bool offerFailureChoices = false)
     {
         lock (mEventLock)
         {
@@ -32,7 +32,7 @@ public partial class Player
                     stack.WaitingForResponse = CommandInstance.EventResponse.None;
                     stack.WaitingOnCommand = null;
                 }
-                else if (command.LockpickFailureChoicesEnabled)
+                else if (offerFailureChoices && command.LockpickFailureChoicesEnabled)
                 {
                     ShowLockpickingFailureChoices(evt, stack, command);
                 }
