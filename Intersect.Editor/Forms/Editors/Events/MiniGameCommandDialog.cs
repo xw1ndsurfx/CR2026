@@ -23,9 +23,9 @@ internal sealed class MiniGameCommandDialog : Form
     private sealed record GameChoice(MiniGameType Type, string Name) { public override string ToString() => Name; }
     private sealed record ProfessionChoice(Guid Id, string Name) { public override string ToString() => Name; }
     private sealed record EventChoice(Guid Id, string Name) { public override string ToString() => Name; }
-    public MiniGameCommandDialog(StartMiniGameCommand command)
+    public MiniGameCommandDialog(StartMiniGameCommand command, MiniGameType? fixedGame = null)
     {
-        Text = "Start Mini-Game"; StartPosition = FormStartPosition.CenterParent;
+        Text = "Start " + MiniGameCatalog.Get(fixedGame ?? command.Game).DisplayName; StartPosition = FormStartPosition.CenterParent;
         FormBorderStyle = FormBorderStyle.Sizable; MaximizeBox = MinimizeBox = false;
         ShowInTaskbar = false; AutoScaleMode = AutoScaleMode.Font;
         ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
@@ -37,14 +37,17 @@ internal sealed class MiniGameCommandDialog : Form
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(12, 8, 12, 8) };
         Controls.Add(layout); Controls.Add(buttons);
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
-            Text = "Same map instance + Table ID = shared table. Use identical settings on all access events. " +
-                "Marlow deals and plays. 25 XP per positive-net human win; B1-B6 unlock at levels 1/5/10/15/20/25. " +
-                "Show the buy-in amount in a confirmation event before this command." };
+            Text = fixedGame == MiniGameType.Lockpicking
+                ? "Configure this lock's difficulty, profession XP, tools and Crew unlock scope."
+                : fixedGame is MiniGameType.Potions or MiniGameType.Cooking
+                    ? "Recipes and rewards are configured in the content editor."
+                    : "Same map instance + Table ID = shared table. Use identical settings on all access events. " +
+                      "Show the buy-in amount in a confirmation event before this command." };
         layout.Controls.Add(hint, 0, 0); layout.SetColumnSpan(hint, 2);
         var game = new ComboBox { Name = "MiniGameType", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
         foreach (var definition in MiniGameCatalog.All)
             game.Items.Add(new GameChoice(definition.Type, definition.DisplayName));
-        game.SelectedItem = game.Items.Cast<GameChoice>().FirstOrDefault(choice => choice.Type == command.Game) ?? game.Items[0];
+        game.SelectedItem = game.Items.Cast<GameChoice>().FirstOrDefault(choice => choice.Type == (fixedGame ?? command.Game)) ?? game.Items[0];
         var table = new TextBox { Name = "TableId", Text = command.TableId ?? "", MaxLength = 64, Dock = DockStyle.Fill };
         var seats = Number(command.MaxPlayers, 1, 6);
         var currency = CurrencyPicker(command.CurrencyItemId);
@@ -433,6 +436,43 @@ internal sealed class MiniGameCommandDialog : Form
         AddRow(layout, 79, "Guardian Common Event", lockpickGuardianEvent);
         AddRow(layout, 80, "Profession-scaled chest loot", lockpickLootButton);
 
+        // Keep the command's original serialization but expose only controls for its specific game.
+        // Existing events are opened with their saved game type, so this also cleans up editing.
+        void FilterGameRows()
+        {
+            var selectedGame = (game.SelectedItem as GameChoice)?.Type ?? MiniGameType.Poker;
+            var poker = selectedGame == MiniGameType.Poker;
+            var blackjack = selectedGame == MiniGameType.Blackjack;
+            var roulette = selectedGame == MiniGameType.Roulette;
+            var lockpicking = selectedGame == MiniGameType.Lockpicking;
+            for (var row = 1; row <= 80; row++)
+            {
+                var visible = row switch
+                {
+                    1 => fixedGame == null,
+                    >= 2 and <= 3 => poker || blackjack || roulette,
+                    >= 4 and <= 5 => poker || blackjack || roulette,
+                    6 or 7 => poker,
+                    8 => poker || blackjack,
+                    >= 9 and <= 17 => poker || blackjack,
+                    >= 18 and <= 37 => poker,
+                    38 or 39 => true,
+                    40 or 41 => poker,
+                    42 => false,
+                    >= 43 and <= 45 => blackjack,
+                    46 or 47 => roulette,
+                    >= 48 and <= 80 => lockpicking,
+                    _ => false,
+                };
+                for (var column = 0; column < 2; column++)
+                {
+                    if (layout.GetControlFromPosition(column, row) is { } control)
+                        control.Visible = visible;
+                }
+            }
+            status.Visible = poker || blackjack || roulette;
+            summary.Visible = true;
+        }
         void ShowSummary()
         {
             var selectedGame = (game.SelectedItem as GameChoice)?.Type ?? MiniGameType.Poker;
@@ -550,7 +590,7 @@ internal sealed class MiniGameCommandDialog : Form
         };
         reserve.ValueChanged += (_, _) => ShowCurrencyStatus();
         unlimitedNpcBankroll.CheckedChanged += (_, _) => ShowCurrencyStatus();
-        game.SelectedIndexChanged += (_, _) => { UpdateGameUi(); EnsureRouletteReserve(); ShowCurrencyStatus(); ShowSummary(); };
+        game.SelectedIndexChanged += (_, _) => { UpdateGameUi(); FilterGameRows(); EnsureRouletteReserve(); ShowCurrencyStatus(); ShowSummary(); };
         table.TextChanged += (_, _) => ShowSummary();
         seats.ValueChanged += (_, _) => ShowSummary();
         npcs.ValueChanged += (_, _) => ShowSummary();
@@ -577,6 +617,7 @@ internal sealed class MiniGameCommandDialog : Form
         lockpickFailureChoices.CheckedChanged += (_, _) => ShowSummary();
         lockpickFailureCrew.CheckedChanged += (_, _) => ShowSummary();
         UpdateGameUi();
+        FilterGameRows();
         ShowCurrencyStatus();
         ShowSummary();
         var cancel = new Button { Name = "Cancel", Text = "Cancel", AutoSize = true, DialogResult = DialogResult.Cancel };

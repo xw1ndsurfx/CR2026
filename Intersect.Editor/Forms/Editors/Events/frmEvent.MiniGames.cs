@@ -13,14 +13,21 @@ public partial class FrmEvent
         if (_miniGamesBound) return;
         _miniGamesBound = true;
         var category = new TreeNode("Mini-Games") { Name = "mini-games" };
-        category.Nodes.Add(new TreeNode("Start Mini-Game...")
-            { Name = "start-mini-game", Tag = (int)EventCommandType.StartMiniGame });
+        // Each entry is a dedicated editor action while retaining the existing serialized command type.
+        foreach (var definition in Intersect.Framework.Core.MiniGames.Configuration.MiniGameCatalog.All)
+        {
+            category.Nodes.Add(new TreeNode($"Start {definition.DisplayName}...")
+            {
+                Name = $"start-mini-game-{definition.Type}",
+                Tag = definition.Type,
+            });
+        }
         category.Nodes.Add(new TreeNode("Leave Mini-Game")
             { Name = "leave-mini-game", Tag = (int)EventCommandType.LeaveMiniGame });
         lstCommands.Nodes.Add(category);
         category.Expand();
 
-        // Keep all legacy command paths unchanged. Only the two new commands use this editor.
+        // Keep all legacy command paths unchanged; each mini-game still serializes as StartMiniGameCommand.
         lstCommands.NodeMouseDoubleClick -= lstCommands_NodeMouseDoubleClick;
         lstCommands.NodeMouseDoubleClick += MiniGameCommandDoubleClick;
         btnEdit.Click -= btnEdit_Click;
@@ -29,8 +36,10 @@ public partial class FrmEvent
 
     private void MiniGameCommandDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
     {
-        if (!int.TryParse(e.Node.Tag?.ToString(), out var value) ||
-            (value != (int)EventCommandType.StartMiniGame && value != (int)EventCommandType.LeaveMiniGame))
+        var selectedGame = e.Node.Parent?.Name == "mini-games" &&
+            e.Node.Tag is MiniGameType type ? type : (MiniGameType?)null;
+        var isLeave = e.Node.Name == "leave-mini-game";
+        if (selectedGame == null && !isLeave)
         {
             lstCommands_NodeMouseDoubleClick(sender, e);
             return;
@@ -42,10 +51,10 @@ public partial class FrmEvent
         try
         {
             EventCommand command;
-            if (value == (int)EventCommandType.StartMiniGame)
+            if (selectedGame is { } miniGame)
             {
-                var start = new StartMiniGameCommand();
-                using var dialog = new MiniGameCommandDialog(start);
+                var start = new StartMiniGameCommand { Game = miniGame };
+                using var dialog = new MiniGameCommandDialog(start, miniGame);
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
                 command = start;
             }
@@ -68,7 +77,7 @@ public partial class FrmEvent
         var command = target.MyList[target.MyIndex];
         if (command is StartMiniGameCommand start)
         {
-            using var dialog = new MiniGameCommandDialog(start);
+            using var dialog = new MiniGameCommandDialog(start, start.Game);
             if (dialog.ShowDialog(this) == DialogResult.OK) ListPageCommands();
             EnableButtons();
         }
