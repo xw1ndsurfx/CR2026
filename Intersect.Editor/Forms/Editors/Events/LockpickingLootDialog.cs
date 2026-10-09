@@ -29,11 +29,21 @@ internal sealed class LockpickingLootDialog : Form
         Height = 560;
         MinimumSize = new Size(900, 420);
 
-        _items = ItemDescriptor.Lookup.Values
+        var itemChoices = ItemDescriptor.Lookup.Values
             .OfType<ItemDescriptor>()
             .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
             .Select(item => new ItemChoice(item.Id, item.Name))
-            .ToArray();
+            .ToList();
+
+        foreach (var entry in entries ?? [])
+        {
+            if (entry.ItemId == Guid.Empty || itemChoices.Any(choice => choice.Id == entry.ItemId))
+                continue;
+
+            itemChoices.Add(new ItemChoice(entry.ItemId, $"Missing item: {entry.ItemId}"));
+        }
+
+        _items = itemChoices.ToArray();
 
         _grid = new DataGridView
         {
