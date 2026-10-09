@@ -39,7 +39,8 @@ public partial class Player
                 descriptor.Stats.Select(stat => (int)Math.Min(int.MaxValue,
                     (long)stat + (long)(level - 1) * Math.Max(0, descriptor.PetStatGrowth))).ToArray();
 
-            var interval = Math.Max(1, descriptor.PetSpellUnlockInterval);
+            // The UI and the combat AI must use the same per-slot pet requirement.
+            // Spells without an override retain the previous unlock interval.
             var abilities = descriptor.Spells
                 .Select((spellId, index) => new { Spell = SpellDescriptor.Get(spellId), Index = index })
                 .Where(entry => entry.Spell != null)
@@ -47,7 +48,7 @@ public partial class Player
                 {
                     Name = entry.Spell!.Name,
                     Icon = entry.Spell.Icon ?? string.Empty,
-                    RequiredLevel = 1 + entry.Index * interval,
+                    RequiredLevel = descriptor.GetPetSpellRequiredLevel(entry.Index),
                 }).ToArray();
 
             profiles.Add(new PetProfileEntry

@@ -764,11 +764,34 @@ public partial class Npc : Entity
             return;
         }
 
-        // Pick a random spell
-        var availableSpells = PetOwner == null ? Spells.Count :
-            Math.Min(Spells.Count, 1 + (Math.Max(1, Level) - 1) / Math.Max(1, Descriptor.PetSpellUnlockInterval));
-        if (availableSpells <= 0) return;
-        var spellIndex = Randomization.Next(0, availableSpells);
+        // Preserve the original random spell selection for ALL ordinary NPCs.
+        // Only player-owned companions filter spell slots by their configured levels.
+        int spellIndex;
+        if (PetOwner == null)
+        {
+            if (Spells.Count == 0)
+            {
+                return;
+            }
+
+            spellIndex = Randomization.Next(0, Spells.Count);
+        }
+        else
+        {
+            var eligibleSpellSlots = Enumerable.Range(
+                    0, Math.Min(Spells.Count, Descriptor.Spells.Count)
+                )
+                .Where(index => Descriptor.GetPetSpellRequiredLevel(index) <= Level)
+                .ToArray();
+
+            if (eligibleSpellSlots.Length == 0)
+            {
+                return;
+            }
+
+            spellIndex = eligibleSpellSlots[Randomization.Next(0, eligibleSpellSlots.Length)];
+        }
+
         var spellId = Descriptor.Spells[spellIndex];
         if (!SpellDescriptor.TryGet(spellId, out var spellBase))
         {

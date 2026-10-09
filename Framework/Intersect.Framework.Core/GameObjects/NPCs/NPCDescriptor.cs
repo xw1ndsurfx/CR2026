@@ -193,8 +193,92 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
 
     public int PetHealthGrowth { get; set; } = 10;
 
-    /// <summary>One spell at level 1, then another every N levels.</summary>
+    /// <summary>
+    /// Legacy progression for pet spells without an individual level override.
+    /// Ordinary NPC spells do not use these pet-only requirements.
+    /// </summary>
     public int PetSpellUnlockInterval { get; set; } = 5;
+
+    /// <summary>
+    /// Indexed by the NPC's existing Spells list. Zero means use the legacy interval.
+    /// This is deliberately separate from Spells so ordinary NPC behaviour is unchanged.
+    /// </summary>
+    [NotMapped]
+    public List<int> PetSpellRequiredLevels { get; set; } = [];
+
+    [JsonIgnore]
+    [Column("PetSpellRequiredLevels")]
+    public string PetSpellRequiredLevelsJson
+    {
+        get => JsonConvert.SerializeObject(PetSpellRequiredLevels ?? []);
+        set => PetSpellRequiredLevels = string.IsNullOrWhiteSpace(value)
+            ? []
+            : JsonConvert.DeserializeObject<List<int>>(value) ?? [];
+    }
+
+    public int GetPetSpellRequiredLevel(int spellIndex)
+    {
+        if (spellIndex < 0)
+        {
+            return 1;
+        }
+
+        if (HasCustomPetSpellLevel(spellIndex))
+        {
+            return Math.Clamp(PetSpellRequiredLevels[spellIndex], 1, 200);
+        }
+
+        return (int)Math.Clamp(
+            1L + (long)spellIndex * Math.Max(1, PetSpellUnlockInterval), 1L, 200L
+        );
+    }
+
+    public bool HasCustomPetSpellLevel(int spellIndex) =>
+        spellIndex >= 0 &&
+        PetSpellRequiredLevels is { } levels &&
+        spellIndex < levels.Count &&
+        levels[spellIndex] > 0;
+
+    /// <summary>
+    /// Align saved pet requirements with the existing spell slots, preserving
+    /// zero (automatic/legacy) values until the editor sets a specific level.
+    /// </summary>
+    public void EnsurePetSpellLevelSlots()
+    {
+        PetSpellRequiredLevels ??= [];
+        var spellCount = Spells?.Count ?? 0;
+        if (PetSpellRequiredLevels.Count > spellCount)
+        {
+            PetSpellRequiredLevels.RemoveRange(spellCount, PetSpellRequiredLevels.Count - spellCount);
+        }
+
+        while (PetSpellRequiredLevels.Count < spellCount)
+        {
+            PetSpellRequiredLevels.Add(0);
+        }
+    }
+
+    public void SetPetSpellRequiredLevel(int spellIndex, int level)
+    {
+        if (spellIndex < 0 || spellIndex >= (Spells?.Count ?? 0))
+        {
+            return;
+        }
+
+        EnsurePetSpellLevelSlots();
+        PetSpellRequiredLevels[spellIndex] = Math.Clamp(level, 1, 200);
+    }
+
+    public void ResetPetSpellRequiredLevel(int spellIndex)
+    {
+        if (spellIndex < 0 || spellIndex >= (Spells?.Count ?? 0))
+        {
+            return;
+        }
+
+        EnsurePetSpellLevelSlots();
+        PetSpellRequiredLevels[spellIndex] = 0;
+    }
 
     //Behavior
     public bool Aggressive { get; set; }

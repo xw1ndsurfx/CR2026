@@ -51,6 +51,11 @@ public partial class FrmNpc : EditorForm
     private readonly DarkNumericUpDown _nudPetStatGrowth = new();
     private readonly DarkNumericUpDown _nudPetHealthGrowth = new();
     private readonly DarkNumericUpDown _nudPetSpellInterval = new();
+    private readonly DarkNumericUpDown _nudPetSpellRequiredLevel = new();
+    private readonly DarkButton _btnPetSpellLevelAuto = new();
+    private readonly Label _lblPetSpellRequiredLevel = new();
+    private bool _refreshingNpcSpellList;
+    private bool _updatingPetSpellRequiredLevel;
 
     public FrmNpc()
     {
@@ -277,14 +282,23 @@ public partial class FrmNpc : EditorForm
         _grpPet.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
         _grpPet.ForeColor = System.Drawing.Color.Gainsboro;
         _grpPet.Location = new System.Drawing.Point(844, 925);
-        _grpPet.Size = new Size(264, 384);
+        // The extra row edits one selected pet spell without changing normal NPC spells.
+        _grpPet.Size = new Size(264, 456);
         _chkIsPet.Text = "Summonable companion";
         _chkIsPet.Location = new System.Drawing.Point(12, 23);
         _chkIsPet.AutoSize = true;
         _chkIsPet.CheckedChanged += (_, _) =>
         {
+            if (mEditorItem != null)
+            {
+                mEditorItem.IsPet = _chkIsPet.Checked;
+            }
+
             UpdatePetControlState();
-            if (mEditorItem != null) mEditorItem.IsPet = _chkIsPet.Checked;
+            if (mEditorItem != null)
+            {
+                RefreshNpcSpellList(lstSpells.SelectedIndex);
+            }
         };
         _grpPet.Controls.Add(_chkIsPet);
         _grpPet.Controls.Add(new Label { Text = "Unlock/summon item:", AutoSize = true,
@@ -306,8 +320,58 @@ public partial class FrmNpc : EditorForm
             v => mEditorItem.PetStatGrowth = v);
         AddPetNumber("Health gained per level:", _nudPetHealthGrowth, 281, 0, 10000,
             v => mEditorItem.PetHealthGrowth = v);
-        AddPetNumber("Spell unlock every N levels:", _nudPetSpellInterval, 338, 1, 200,
+        AddPetNumber("Default spell interval (auto):", _nudPetSpellInterval, 338, 1, 200,
             v => mEditorItem.PetSpellUnlockInterval = v);
+        _nudPetSpellInterval.ValueChanged += (_, _) =>
+        {
+            if (mEditorItem?.IsPet == true)
+            {
+                RefreshNpcSpellList(lstSpells.SelectedIndex);
+            }
+        };
+
+        _lblPetSpellRequiredLevel.Text = "Select a spell in Spells";
+        _lblPetSpellRequiredLevel.AutoSize = false;
+        _lblPetSpellRequiredLevel.Location = new System.Drawing.Point(12, 390);
+        _lblPetSpellRequiredLevel.Size = new Size(238, 20);
+        _lblPetSpellRequiredLevel.ForeColor = System.Drawing.Color.Gainsboro;
+        _grpPet.Controls.Add(_lblPetSpellRequiredLevel);
+
+        _nudPetSpellRequiredLevel.Location = new System.Drawing.Point(12, 415);
+        _nudPetSpellRequiredLevel.Size = new Size(134, 24);
+        _nudPetSpellRequiredLevel.Minimum = 1;
+        _nudPetSpellRequiredLevel.Maximum = 200;
+        _nudPetSpellRequiredLevel.ValueChanged += (_, _) =>
+        {
+            if (_updatingPetSpellRequiredLevel || mEditorItem?.IsPet != true ||
+                lstSpells.SelectedIndex < 0 || lstSpells.SelectedIndex >= mEditorItem.Spells.Count)
+            {
+                return;
+            }
+
+            mEditorItem.SetPetSpellRequiredLevel(
+                lstSpells.SelectedIndex, (int)_nudPetSpellRequiredLevel.Value
+            );
+            RefreshNpcSpellList(lstSpells.SelectedIndex);
+        };
+        _grpPet.Controls.Add(_nudPetSpellRequiredLevel);
+
+        _btnPetSpellLevelAuto.Text = "Auto";
+        _btnPetSpellLevelAuto.Location = new System.Drawing.Point(158, 413);
+        _btnPetSpellLevelAuto.Size = new Size(92, 28);
+        _btnPetSpellLevelAuto.Click += (_, _) =>
+        {
+            if (mEditorItem?.IsPet != true ||
+                lstSpells.SelectedIndex < 0 || lstSpells.SelectedIndex >= mEditorItem.Spells.Count)
+            {
+                return;
+            }
+
+            mEditorItem.ResetPetSpellRequiredLevel(lstSpells.SelectedIndex);
+            RefreshNpcSpellList(lstSpells.SelectedIndex);
+        };
+        _grpPet.Controls.Add(_btnPetSpellLevelAuto);
+
         pnlContainer.Controls.Add(_grpPet);
         UpdatePetControlState();
     }
@@ -337,6 +401,90 @@ public partial class FrmNpc : EditorForm
         _nudPetStatGrowth.Enabled = enabled;
         _nudPetHealthGrowth.Enabled = enabled;
         _nudPetSpellInterval.Enabled = enabled;
+        UpdateSelectedPetSpellControls();
+    }
+
+    /// <summary>
+    /// Only a pet receives level labels; the regular NPC spell list stays unchanged.
+    /// The level overrides follow spell slots even if the same spell appears twice.
+    /// </summary>
+    private void RefreshNpcSpellList(int preferredIndex)
+    {
+        if (mEditorItem == null || _refreshingNpcSpellList)
+        {
+            return;
+        }
+
+        _refreshingNpcSpellList = true;
+        try
+        {
+            lstSpells.BeginUpdate();
+            lstSpells.Items.Clear();
+            for (var index = 0; index < mEditorItem.Spells.Count; index++)
+            {
+                var id = mEditorItem.Spells[index];
+                var label = id == Guid.Empty
+                    ? Strings.General.None.ToString()
+                    : SpellDescriptor.GetName(id);
+
+                if (mEditorItem.IsPet)
+                {
+                    var level = mEditorItem.GetPetSpellRequiredLevel(index);
+                    var auto = !mEditorItem.HasCustomPetSpellLevel(index) ? " auto" : "";
+                    label += $"  (Lv. {level}{auto})";
+                }
+
+                lstSpells.Items.Add(label);
+            }
+
+            if (lstSpells.Items.Count > 0)
+            {
+                lstSpells.SelectedIndex = preferredIndex >= 0 &&
+                    preferredIndex < lstSpells.Items.Count ? preferredIndex : 0;
+                // Keep the existing spell combo synchronized with the selected slot.
+                cmbSpell.SelectedIndex = SpellDescriptor.ListIndex(
+                    mEditorItem.Spells[lstSpells.SelectedIndex]
+                );
+            }
+        }
+        finally
+        {
+            lstSpells.EndUpdate();
+            _refreshingNpcSpellList = false;
+        }
+
+        UpdateSelectedPetSpellControls();
+    }
+
+    private void UpdateSelectedPetSpellControls()
+    {
+        var index = lstSpells.SelectedIndex;
+        var enabled = mEditorItem?.IsPet == true && index >= 0 &&
+                      index < mEditorItem.Spells.Count;
+        _nudPetSpellRequiredLevel.Enabled = enabled;
+        _btnPetSpellLevelAuto.Enabled = enabled;
+        _lblPetSpellRequiredLevel.Text = enabled
+            ? "Required level for selected spell:"
+            : "Select a pet spell in Spells";
+
+        if (!enabled)
+        {
+            return;
+        }
+
+        _updatingPetSpellRequiredLevel = true;
+        try
+        {
+            _nudPetSpellRequiredLevel.Value = Math.Clamp(
+                mEditorItem.GetPetSpellRequiredLevel(index),
+                (int)_nudPetSpellRequiredLevel.Minimum,
+                (int)_nudPetSpellRequiredLevel.Maximum
+            );
+        }
+        finally
+        {
+            _updatingPetSpellRequiredLevel = false;
+        }
     }
 
     private void AssignEditorItem(Guid id)
@@ -704,26 +852,9 @@ public partial class FrmNpc : EditorForm
             nudHpRegen.Value = mEditorItem.VitalRegen[(int)Vital.Health];
             nudMpRegen.Value = mEditorItem.VitalRegen[(int)Vital.Mana];
 
-            // Add the spells to the list
-            lstSpells.Items.Clear();
-            for (var i = 0; i < mEditorItem.Spells.Count; i++)
-            {
-                if (mEditorItem.Spells[i] != Guid.Empty)
-                {
-                    lstSpells.Items.Add(SpellDescriptor.GetName(mEditorItem.Spells[i]));
-                }
-                else
-                {
-                    lstSpells.Items.Add(Strings.General.None);
-                }
-            }
-
-            if (lstSpells.Items.Count > 0)
-            {
-                lstSpells.SelectedIndex = 0;
-                cmbSpell.SelectedIndex = SpellDescriptor.ListIndex(mEditorItem.Spells[lstSpells.SelectedIndex]);
-            }
-
+            // The same spell list works for NPCs and pets. Only pets get
+            // the extra unlock-level annotations and editable requirements.
+            RefreshNpcSpellList(0);
             cmbFreq.SelectedIndex = mEditorItem.SpellFrequency;
 
             // Add the aggro NPC's to the list
@@ -837,25 +968,46 @@ public partial class FrmNpc : EditorForm
 
     private void btnAdd_Click(object sender, EventArgs e)
     {
-        mEditorItem.Spells.Add(SpellDescriptor.IdFromList(cmbSpell.SelectedIndex));
-        var n = lstSpells.SelectedIndex;
-        lstSpells.Items.Clear();
-        for (var i = 0; i < mEditorItem.Spells.Count; i++)
+        if (mEditorItem == null)
         {
-            lstSpells.Items.Add(SpellDescriptor.GetName(mEditorItem.Spells[i]));
+            return;
         }
 
-        lstSpells.SelectedIndex = n;
+        // Keep companion level settings slot-aligned when editing spells.
+        // Normal NPC spell lists remain untouched by pet-only metadata.
+        var hasPetLevelSettings = mEditorItem.IsPet ||
+                                  mEditorItem.PetSpellRequiredLevels is { Count: > 0 };
+        if (hasPetLevelSettings)
+        {
+            mEditorItem.EnsurePetSpellLevelSlots();
+        }
+
+        mEditorItem.Spells.Add(SpellDescriptor.IdFromList(cmbSpell.SelectedIndex));
+        if (hasPetLevelSettings)
+        {
+            mEditorItem.EnsurePetSpellLevelSlots();
+        }
+
+        RefreshNpcSpellList(mEditorItem.Spells.Count - 1);
     }
 
     private void btnRemove_Click(object sender, EventArgs e)
     {
-        if (lstSpells.SelectedIndex > -1)
+        if (mEditorItem == null || lstSpells.SelectedIndex < 0 ||
+            lstSpells.SelectedIndex >= mEditorItem.Spells.Count)
         {
-            var i = lstSpells.SelectedIndex;
-            lstSpells.Items.RemoveAt(i);
-            mEditorItem.Spells.RemoveAt(i);
+            return;
         }
+
+        var slot = lstSpells.SelectedIndex;
+        if (mEditorItem.IsPet || mEditorItem.PetSpellRequiredLevels is { Count: > 0 })
+        {
+            mEditorItem.EnsurePetSpellLevelSlots();
+            mEditorItem.PetSpellRequiredLevels.RemoveAt(slot);
+        }
+
+        mEditorItem.Spells.RemoveAt(slot);
+        RefreshNpcSpellList(Math.Min(slot, mEditorItem.Spells.Count - 1));
     }
 
     private void cmbFreq_SelectedIndexChanged(object sender, EventArgs e)
@@ -1003,27 +1155,37 @@ public partial class FrmNpc : EditorForm
 
     private void lstSpells_SelectedIndexChanged(object sender, EventArgs e)
     {
-        if (lstSpells.SelectedIndex > -1)
+        if (_refreshingNpcSpellList || mEditorItem == null)
         {
-            cmbSpell.SelectedIndex = SpellDescriptor.ListIndex(mEditorItem.Spells[lstSpells.SelectedIndex]);
+            return;
         }
+
+        if (lstSpells.SelectedIndex >= 0 &&
+            lstSpells.SelectedIndex < mEditorItem.Spells.Count)
+        {
+            cmbSpell.SelectedIndex = SpellDescriptor.ListIndex(
+                mEditorItem.Spells[lstSpells.SelectedIndex]
+            );
+        }
+
+        UpdateSelectedPetSpellControls();
     }
 
     private void cmbSpell_SelectedIndexChanged(object sender, EventArgs e)
     {
-        if (lstSpells.SelectedIndex > -1 && lstSpells.SelectedIndex < mEditorItem.Spells.Count)
+        if (_refreshingNpcSpellList || mEditorItem == null)
         {
-            mEditorItem.Spells[lstSpells.SelectedIndex] = SpellDescriptor.IdFromList(cmbSpell.SelectedIndex);
+            return;
         }
 
-        var n = lstSpells.SelectedIndex;
-        lstSpells.Items.Clear();
-        for (var i = 0; i < mEditorItem.Spells.Count; i++)
+        var index = lstSpells.SelectedIndex;
+        if (index >= 0 && index < mEditorItem.Spells.Count)
         {
-            lstSpells.Items.Add(SpellDescriptor.GetName(mEditorItem.Spells[i]));
+            // A spell replacement keeps the requirement attached to this slot.
+            mEditorItem.Spells[index] = SpellDescriptor.IdFromList(cmbSpell.SelectedIndex);
         }
 
-        lstSpells.SelectedIndex = n;
+        RefreshNpcSpellList(index);
     }
 
     private void nudScaling_ValueChanged(object sender, EventArgs e)
