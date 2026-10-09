@@ -23,7 +23,7 @@ internal static class WorldBossRuntime
         public long ExpiresAtUnixMs { get; init; }
         public ConcurrentDictionary<Guid, long> Damage { get; } = [];
         public ConcurrentDictionary<Guid, string> Names { get; } = [];
-        public long LastBroadcastAtMs { get; set; };
+        public long LastBroadcastAtMs { get; set; }
         public long LastHealth { get; set; } = -1;
     }
 
