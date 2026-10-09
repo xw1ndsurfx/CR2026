@@ -65,6 +65,9 @@ public sealed class PetProfileEntry
 
     [Key(15)]
     public PetAbilityEntry[] Abilities { get; set; } = [];
+
+    [Key(16)]
+    public string SpeciesName { get; set; } = string.Empty;
 }
 
 [MessagePackObject]

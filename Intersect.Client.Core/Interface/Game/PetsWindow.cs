@@ -71,7 +71,7 @@ internal sealed class PetsWindow : Window
                 Text = string.Empty,
                 MouseInputEnabled = false,
             };
-            card.SetBounds(8, y, 644, 272);
+            card.SetBounds(8, y, 644, 312);
             card.SetStateTexture(ComponentState.Normal, "control_button.png");
 
             var portrait = new ImagePanel(card, "PetSprite" + pet.PetId)
@@ -87,8 +87,11 @@ internal sealed class PetsWindow : Window
             }
             else portrait.Hide();
 
-            AddText(card, "PetName" + pet.PetId, pet.Name +
-                (pet.IsActive ? "  [INVOQUE]" : ""), 102, 14, 490, 30, 14, true);
+            var displayTitle = pet.Name +
+                (string.IsNullOrWhiteSpace(pet.SpeciesName) || pet.Name == pet.SpeciesName
+                    ? string.Empty : " (" + pet.SpeciesName + ")") +
+                (pet.IsActive ? "  [INVOQUE]" : string.Empty);
+            AddText(card, "PetName" + pet.PetId, displayTitle, 102, 14, 490, 30, 14, true);
             AddText(card, "PetLevel" + pet.PetId,
                 "Niveau " + pet.Level + " / " + pet.MaximumLevel +
                 "     HP " + pet.Health + "/" + pet.MaximumHealth +
@@ -120,13 +123,40 @@ internal sealed class PetsWindow : Window
                 "     Rayon : " + pet.LootRadius + " cases",
                 18, 190, 410, 23, 10);
 
+            AddText(card, "PetRenameLabel" + pet.PetId, "Nom :", 18, 225, 54, 25, 10);
+
+            var nameInput = new TextBox(card, "PetNameInput" + pet.PetId)
+            {
+                Text = pet.Name,
+                PlaceholderText = "Nom du familier",
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 10,
+                TextColorOverride = Color.White,
+                TextAlign = Pos.Left | Pos.CenterV,
+            };
+            nameInput.SetBounds(76, 218, 280, 30);
+            nameInput.SetMaxLength(24);
+
+            void SubmitName() => Networking.PacketSender.SendPetAction(
+                PetActionKind.Rename, pet.PetId, nameInput.Text);
+            nameInput.SubmitPressed += (_, _) => SubmitName();
+
+            var rename = new Button(card, "PetRename" + pet.PetId)
+            {
+                Text = "Renommer",
+                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                FontSize = 10,
+            };
+            rename.SetBounds(375, 218, 160, 30);
+            rename.Clicked += (_, _) => SubmitName();
+
             var summon = new Button(card, "PetSummon" + pet.PetId)
             {
                 Text = pet.IsActive ? "Ranger" : "Invoquer",
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
                 FontSize = 10,
             };
-            summon.SetBounds(18, 225, 170, 32);
+            summon.SetBounds(18, 262, 170, 32);
             summon.Clicked += (_, _) => Networking.PacketSender.SendPetAction(
                 pet.IsActive ? PetActionKind.Dismiss : PetActionKind.Summon, pet.PetId);
 
@@ -137,17 +167,17 @@ internal sealed class PetsWindow : Window
                 FontSize = 10,
                 IsDisabled = !pet.IsActive,
             };
-            loot.SetBounds(202, 225, 170, 32);
+            loot.SetBounds(202, 262, 170, 32);
             loot.Clicked += (_, _) => Networking.PacketSender.SendPetAction(
                 PetActionKind.ToggleAutoLoot, pet.PetId);
 
-            y += 284;
+            y += 324;
         }
         _scroll.SetInnerSize(661, Math.Max(450, y + 10));
         _scroll.UpdateScrollBars();
     }
 
-    private static void AddText(Base parent, string id, string value, int x, int y,
+    private void AddText(Base parent, string id, string value, int x, int y,
         int width, int height, int fontSize, bool heading = false)
     {
         var label = new Label(parent, id)

@@ -13,6 +13,6 @@ internal sealed partial class PacketHandler
     public void HandlePacket(Client client, PetActionPacket packet)
     {
         if (client.Entity is { InGame: true } player)
-            player.HandlePetAction(packet.Action, packet.PetId);
+            player.HandlePetAction(packet.Action, packet.PetId, packet.Name);
     }
 }

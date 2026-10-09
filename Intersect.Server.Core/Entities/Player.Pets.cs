@@ -19,6 +19,10 @@ public sealed class PetProgress
     public int Level { get; set; } = 1;
     public long Experience { get; set; }
     public bool AutoLoot { get; set; } = true;
+
+    /// <summary>Custom name per character; blank means the NPC's original name.</summary>
+    public string Nickname { get; set; } = string.Empty;
+
     public long ExperienceToNextLevel => 100L * Math.Max(1, Level) * Math.Max(1, Level);
 }
 
@@ -40,6 +44,17 @@ public partial class Player
 
     private void PetNotice(string message) =>
         PacketSender.SendChatMsg(this, message, ChatMessageType.Notice);
+
+    /// <summary>Resolve the nickname without modifying the shared NPC descriptor.</summary>
+    public string GetPetDisplayName(NPCDescriptor descriptor)
+    {
+        if (PetCollection.OwnedPets != null &&
+            PetCollection.OwnedPets.TryGetValue(descriptor.Id, out var progress) &&
+            progress != null && !string.IsNullOrWhiteSpace(progress.Nickname))
+            return progress.Nickname;
+
+        return descriptor.Name;
+    }
 
     public bool TryActivatePetItem(Guid itemId)
     {
@@ -73,7 +88,7 @@ public partial class Player
         DismissPetRuntime();
         PetCollection.ActivePetId = npcId;
         SpawnPetRuntime(descriptor);
-        PetNotice(descriptor.Name + " est maintenant ton familier !");
+        PetNotice(GetPetDisplayName(descriptor) + " est maintenant ton familier !");
         SendPetState();
     }
 
@@ -160,7 +175,7 @@ public partial class Player
         {
             ActivePet?.ApplyPetLevel(progress.Level);
             if (ActivePet != null) PacketSender.SendEntityDataToProximity(ActivePet);
-            PetNotice(descriptor.Name + " atteint le niveau " + progress.Level + " !");
+            PetNotice(GetPetDisplayName(descriptor) + " atteint le niveau " + progress.Level + " !");
         }
         SendPetState();
     }
@@ -184,7 +199,8 @@ public partial class Player
                 var matching = PetCollection.OwnedPets.Keys.Select(NPCDescriptor.Get)
                     .FirstOrDefault(npc => npc != null &&
                         (npc.Id.ToString().Equals(name, StringComparison.OrdinalIgnoreCase) ||
-                         npc.Name.Equals(name, StringComparison.OrdinalIgnoreCase)));
+                         npc.Name.Equals(name, StringComparison.OrdinalIgnoreCase) ||
+                         GetPetDisplayName(npc).Equals(name, StringComparison.OrdinalIgnoreCase)));
                 if (matching == null) PetNotice("Familier inconnu. Utilise /pet list.");
                 else SummonPet(matching.Id);
                 break;
@@ -203,7 +219,7 @@ public partial class Player
                 break;
             case "list":
                 var names = PetCollection.OwnedPets.Keys.Select(NPCDescriptor.Get)
-                    .Where(npc => npc != null).Select(npc => npc!.Name).ToArray();
+                    .Where(npc => npc != null).Select(npc => GetPetDisplayName(npc!)).ToArray();
                 PetNotice("Familiers : " + (names.Length == 0 ? "aucun" : string.Join(", ", names)));
                 break;
             case "status":
@@ -215,7 +231,7 @@ public partial class Player
                     break;
                 }
                 var current = NPCDescriptor.Get(PetCollection.ActivePetId);
-                PetNotice((current?.Name ?? "Familier") + " - Niv. " + state.Level +
+                PetNotice((current != null ? GetPetDisplayName(current) : "Familier") + " - Niv. " + state.Level +
                     " EXP " + state.Experience + "/" + state.ExperienceToNextLevel +
                     " Loot " + (state.AutoLoot ? "ON" : "OFF"));
                 break;

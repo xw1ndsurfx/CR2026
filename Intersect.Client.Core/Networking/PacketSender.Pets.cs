@@ -7,6 +7,6 @@ public static partial class PacketSender
     public static void SendRequestPetState(bool openWindow = false) =>
         Network.SendPacket(new RequestPetStatePacket(openWindow));
 
-    public static void SendPetAction(PetActionKind action, Guid petId) =>
-        Network.SendPacket(new PetActionPacket(action, petId));
+    public static void SendPetAction(PetActionKind action, Guid petId, string name = "") =>
+        Network.SendPacket(new PetActionPacket(action, petId, name));
 }

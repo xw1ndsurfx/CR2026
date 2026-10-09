@@ -1,4 +1,5 @@
 using Intersect.Enums;
+using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Client;
@@ -52,7 +53,8 @@ public partial class Player
             profiles.Add(new PetProfileEntry
             {
                 PetId = petId,
-                Name = descriptor.Name,
+                Name = GetPetDisplayName(descriptor),
+                SpeciesName = descriptor.Name,
                 Sprite = descriptor.Sprite ?? string.Empty,
                 Level = level,
                 MaximumLevel = maximumLevel,
@@ -78,7 +80,7 @@ public partial class Player
         });
     }
 
-    public void HandlePetAction(PetActionKind action, Guid petId)
+    public void HandlePetAction(PetActionKind action, Guid petId, string? requestedName = null)
     {
         if (!InGame || Client == null || IsDead)
             return;
@@ -110,6 +112,41 @@ public partial class Player
                     PetCollection.OwnedPets.TryGetValue(petId, out var progress) &&
                     progress != null)
                     progress.AutoLoot = !progress.AutoLoot;
+                break;
+
+            case PetActionKind.Rename:
+                if (petId == Guid.Empty ||
+                    !PetCollection.OwnedPets.TryGetValue(petId, out var renamedPet) ||
+                    renamedPet == null ||
+                    !NPCDescriptor.TryGet(petId, out var petDescriptor) || !petDescriptor.IsPet)
+                    break;
+
+                var newName = (requestedName ?? string.Empty).Trim().Normalize(
+                    System.Text.NormalizationForm.FormC);
+
+                // A blank name resets the nickname to the species' original name.
+                // Validate on the server, never trust the client text field.
+                if (newName.Length > 0 &&
+                    (newName.Length < 2 || newName.Length > 24 ||
+                     !newName.Any(char.IsLetterOrDigit) ||
+                     newName.Any(character => !char.IsLetterOrDigit(character) &&
+                         character != ' ' && character != '-' && character != '\'' &&
+                         character != '’')))
+                {
+                    PetNotice("Nom invalide : 2 à 24 caractères (lettres, chiffres, espaces, tirets, apostrophes).");
+                    break;
+                }
+
+                renamedPet.Nickname = newName;
+                if (ActivePet is { } activeCompanion && activeCompanion.Descriptor.Id == petId)
+                {
+                    activeCompanion.RefreshPetDisplayName();
+                    PacketSender.SendEntityDataToProximity(activeCompanion);
+                }
+
+                PetNotice(newName.Length == 0
+                    ? "Nom du familier réinitialisé."
+                    : "Ton familier s'appelle maintenant " + newName + " !");
                 break;
         }
 

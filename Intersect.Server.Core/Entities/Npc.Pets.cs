@@ -11,11 +11,22 @@ public partial class Npc
 {
     private long _nextPetLootCheck;
 
+    /// <summary>
+    /// Refresh a live companion's name without resetting its HP, MP or stats.
+    /// </summary>
+    public void RefreshPetDisplayName()
+    {
+        if (PetOwner != null)
+            Name = PetOwner.GetPetDisplayName(Descriptor);
+    }
+
     public void ApplyPetLevel(int petLevel)
     {
         if (PetOwner == null) return;
         Level = Math.Clamp(petLevel, 1, Math.Clamp(Descriptor.PetMaxLevel, 1, 200));
-        Name = Descriptor.Name + " [Lv. " + Level + "]";
+        // Intersect already renders Level in the entity nameplate.
+        // Keep the name itself free of level suffixes.
+        RefreshPetDisplayName();
         var bonusLevels = Level - 1;
         for (var i = 0; i < BaseStats.Length; i++)
             BaseStats[i] = (int)Math.Min(int.MaxValue,
