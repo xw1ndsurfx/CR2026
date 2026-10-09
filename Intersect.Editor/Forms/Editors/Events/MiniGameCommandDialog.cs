@@ -31,9 +31,9 @@ internal sealed class MiniGameCommandDialog : Form
         ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
         MinimumSize = new Size(580, 420);
         BackColor = DrawingColor.FromArgb(45, 45, 48); ForeColor = DrawingColor.Gainsboro;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 76, AutoScroll = true };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 81, AutoScroll = true };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58));
-        for (var row = 0; row < 76; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var row = 0; row < 81; ++row) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(12, 8, 12, 8) };
         Controls.Add(layout); Controls.Add(buttons);
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
@@ -144,6 +144,36 @@ internal sealed class MiniGameCommandDialog : Form
         var lockpickFailureEvent = CommonEventPicker(command.LockpickFailureCommonEventId);
         var lockpickFailureCooldown = Number(command.LockpickFailureCooldownSeconds, 0, 86_400);
         var lockpickInvasionBonus = Number(command.LockpickInvasionDifficultyBonus, 0, 4);
+        var lockpickFailureChoices = new CheckBox
+        {
+            Text = "Show Retry / Key / Guardian / Give Up after failure",
+            Checked = command.LockpickFailureChoicesEnabled,
+            AutoSize = true,
+        };
+        var lockpickFailureCrew = new CheckBox
+        {
+            Text = "Key-search / guardian Common Events affect the Crew",
+            Checked = command.LockpickFailureChoicesAffectCrew,
+            AutoSize = true,
+        };
+        var lockpickKeySearchEvent = CommonEventPicker(command.LockpickKeySearchCommonEventId);
+        var lockpickGuardianEvent = CommonEventPicker(command.LockpickGuardianCommonEventId);
+        var lockpickLootDraft = CloneLockpickLoot(command.LockpickLootTable ?? []);
+        var lockpickLootButton = new Button
+        {
+            Text = $"Edit Locksmith Chest Loot ({lockpickLootDraft.Length})",
+            AutoSize = true,
+        };
+        lockpickLootButton.Click += (_, _) =>
+        {
+            using var dialog = new LockpickingLootDialog(lockpickLootDraft);
+            if (dialog.ShowDialog(this) != DialogResult.OK)
+                return;
+
+            lockpickLootDraft = CloneLockpickLoot(dialog.Result);
+            lockpickLootButton.Text = $"Edit Locksmith Chest Loot ({lockpickLootDraft.Length})";
+            ShowSummary();
+        };
         bool IsBlackjack() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Blackjack;
         bool IsPotions() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Potions;
         bool IsRoulette() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Roulette;
@@ -242,7 +272,8 @@ internal sealed class MiniGameCommandDialog : Form
                          lockpickBasicItem, lockpickBasicBreak, lockpickReinforcedItem, lockpickReinforcedBreak,
                          lockpickRoyalItem, lockpickRoyalBreak, lockpickMasterItem, lockpickMasterBreak,
                          lockpickKeyItem, lockpickConsumeKey, lockpickMistakeEvent, lockpickFailureEvent,
-                         lockpickFailureCooldown, lockpickInvasionBonus,
+                         lockpickFailureCooldown, lockpickInvasionBonus, lockpickFailureChoices,
+                         lockpickFailureCrew, lockpickKeySearchEvent, lockpickGuardianEvent, lockpickLootButton,
                      })
                 control.Enabled = lockpicking;
             seats.Enabled = !potions && !roulette && !cooking && !lockpicking;
@@ -397,6 +428,11 @@ internal sealed class MiniGameCommandDialog : Form
         AddRow(layout, 73, "Failure cooldown (seconds)", lockpickFailureCooldown);
         AddRow(layout, 74, "Invasion difficulty bonus", lockpickInvasionBonus);
         AddRow(layout, 75, "Lockable target", lockpickTargetKind);
+        AddRow(layout, 76, "Post-failure decision window", lockpickFailureChoices);
+        AddRow(layout, 77, "Post-failure Crew behavior", lockpickFailureCrew);
+        AddRow(layout, 78, "Key-search Common Event", lockpickKeySearchEvent);
+        AddRow(layout, 79, "Guardian Common Event", lockpickGuardianEvent);
+        AddRow(layout, 80, "Profession-scaled chest loot", lockpickLootButton);
 
         void ShowSummary()
         {
@@ -428,7 +464,8 @@ internal sealed class MiniGameCommandDialog : Form
                     $"{lockpickTargetKind.SelectedItem} | Difficulty {lockpickDifficulty.Value}/5 | {lockpickMistakes.Value} mistakes | {lockpickTime.Value}s | " +
                     $"Profession: {professionName} Lv {lockpickRequiredLevel.Value}+ | " +
                     $"Scope: {lockpickScope.SelectedItem} | Base success XP: {awardedXp:N0} | " +
-                    $"Perfect +{lockpickPerfectBonus.Value}% | Fast +{lockpickFastBonus.Value}%";
+                    $"Perfect +{lockpickPerfectBonus.Value}% | Fast +{lockpickFastBonus.Value}% | " +
+                    $"Failure choices: {(lockpickFailureChoices.Checked ? "ON" : "OFF")} | Loot rows: {lockpickLootDraft.Length}";
                 return;
             }
 
@@ -538,6 +575,8 @@ internal sealed class MiniGameCommandDialog : Form
         lockpickRequiredLevel.ValueChanged += (_, _) => ShowSummary();
         lockpickPerfectBonus.ValueChanged += (_, _) => ShowSummary();
         lockpickFastBonus.ValueChanged += (_, _) => ShowSummary();
+        lockpickFailureChoices.CheckedChanged += (_, _) => ShowSummary();
+        lockpickFailureCrew.CheckedChanged += (_, _) => ShowSummary();
         UpdateGameUi();
         ShowCurrencyStatus();
         ShowSummary();
@@ -593,6 +632,11 @@ internal sealed class MiniGameCommandDialog : Form
                 LockpickFailureCooldownSeconds = (int)lockpickFailureCooldown.Value,
                 LockpickInvasionDifficultyBonus = (int)lockpickInvasionBonus.Value,
                 LockpickUseProfessionSkillBonus = lockpickSkillBonus.Checked,
+                LockpickFailureChoicesEnabled = lockpickFailureChoices.Checked,
+                LockpickFailureChoicesAffectCrew = lockpickFailureCrew.Checked,
+                LockpickKeySearchCommonEventId = (lockpickKeySearchEvent.SelectedItem as EventChoice)?.Id ?? Guid.Empty,
+                LockpickGuardianCommonEventId = (lockpickGuardianEvent.SelectedItem as EventChoice)?.Id ?? Guid.Empty,
+                LockpickLootTable = CloneLockpickLoot(lockpickLootDraft),
                 SmallBlind = (long)small.Value, BigBlind = (long)big.Value, TurnSeconds = (int)seconds.Value,
                 DealerPlays = IsPotions() || IsRoulette() || IsCooking() || IsLockpicking() ? false : dealer.Checked,
                 NpcPlayers = IsPotions() || IsRoulette() || IsCooking() || IsLockpicking() ? 0 : (int)npcs.Value,
@@ -659,6 +703,11 @@ internal sealed class MiniGameCommandDialog : Form
             command.LockpickFailureCooldownSeconds = draft.LockpickFailureCooldownSeconds;
             command.LockpickInvasionDifficultyBonus = draft.LockpickInvasionDifficultyBonus;
             command.LockpickUseProfessionSkillBonus = draft.LockpickUseProfessionSkillBonus;
+            command.LockpickFailureChoicesEnabled = draft.LockpickFailureChoicesEnabled;
+            command.LockpickFailureChoicesAffectCrew = draft.LockpickFailureChoicesAffectCrew;
+            command.LockpickKeySearchCommonEventId = draft.LockpickKeySearchCommonEventId;
+            command.LockpickGuardianCommonEventId = draft.LockpickGuardianCommonEventId;
+            command.LockpickLootTable = CloneLockpickLoot(draft.LockpickLootTable);
             command.StartingChips = draft.StartingChips; command.SmallBlind = draft.SmallBlind; command.BigBlind = draft.BigBlind;
             command.TurnSeconds = draft.TurnSeconds; command.DealerPlays = draft.DealerPlays; command.NpcPlayers = draft.NpcPlayers;
             command.AutoStart = draft.AutoStart; command.DealAnimationId = draft.DealAnimationId; command.AnnounceWins = draft.AnnounceWins;
@@ -755,6 +804,19 @@ internal sealed class MiniGameCommandDialog : Form
         picker.SelectedItem = picker.Items.Cast<EventChoice>().FirstOrDefault(choice => choice.Id == id) ?? picker.Items[0];
         return picker;
     }
+
+    private static LockpickingLootEntry[] CloneLockpickLoot(IEnumerable<LockpickingLootEntry> source) =>
+        source.Select(entry => new LockpickingLootEntry
+        {
+            ItemId = entry.ItemId,
+            MinQuantity = entry.MinQuantity,
+            MaxQuantity = entry.MaxQuantity,
+            BaseChancePercent = entry.BaseChancePercent,
+            ChanceBonusBasisPointsPerLevel = entry.ChanceBonusBasisPointsPerLevel,
+            PerfectBonusPercent = entry.PerfectBonusPercent,
+            MinimumProfessionLevel = entry.MinimumProfessionLevel,
+            QuantityBonusEveryLevels = entry.QuantityBonusEveryLevels,
+        }).ToArray();
 
     private static NumericUpDown Number(long value, long minimum, long maximum) => new()
     { Minimum = minimum, Maximum = maximum, Value = Math.Clamp(value, minimum, maximum), DecimalPlaces = 0, ThousandsSeparator = true, Dock = DockStyle.Fill };
