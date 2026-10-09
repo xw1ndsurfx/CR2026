@@ -67,12 +67,14 @@ public partial class Player
             PetCollection.ActivePetId = Guid.Empty;
             DismissPetRuntime();
             PetNotice("Familier range.");
+            SendPetState();
             return;
         }
         DismissPetRuntime();
         PetCollection.ActivePetId = npcId;
         SpawnPetRuntime(descriptor);
         PetNotice(descriptor.Name + " est maintenant ton familier !");
+        SendPetState();
     }
 
     private void SpawnPetRuntime(NPCDescriptor? descriptor = null)
@@ -113,6 +115,7 @@ public partial class Player
         ActivePet = null;
         PetCollection.ActivePetId = Guid.Empty;
         PetNotice("Ton familier est tombe au combat. Utilise /pet summon pour le rappeler.");
+        SendPetState();
     }
 
     private void UpdateActivePet(long timeMs)
@@ -159,6 +162,7 @@ public partial class Player
             if (ActivePet != null) PacketSender.SendEntityDataToProximity(ActivePet);
             PetNotice(descriptor.Name + " atteint le niveau " + progress.Level + " !");
         }
+        SendPetState();
     }
 
     public void HandlePetCommand(string arguments)
@@ -219,5 +223,6 @@ public partial class Player
                 PetNotice("/pet list | /pet summon NOM | /pet dismiss | /pet status | /pet loot on/off");
                 break;
         }
+        SendPetState();
     }
 }
