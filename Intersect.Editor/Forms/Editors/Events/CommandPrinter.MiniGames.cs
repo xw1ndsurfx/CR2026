@@ -16,6 +16,15 @@ public static partial class CommandPrinter
         if (command.Game == MiniGameType.Cooking)
             return $"Start {game}: profession recipes | solo or 2-player Party co-op | inventory ingredients";
 
+        if (command.Game == MiniGameType.Lockpicking)
+        {
+            return $"Start {game}: {command.TableId} | {command.LockpickTargetKind} | {command.LockpickType} | " +
+                $"Difficulty {command.LockpickDifficulty}/5 | {command.LockpickMaxMistakes} mistakes | " +
+                $"{command.LockpickTimeSeconds}s | Scope: {command.LockpickUnlockScope} | " +
+                $"Profession Lv {command.LockpickRequiredProfessionLevel}+ | " +
+                $"XP {command.LockpickProfessionBaseExperience:N0} base";
+        }
+
         var mode = command.CurrencyItemId == Guid.Empty
             ? $"{command.StartingChips} test chips"
             : $"Buy-in {command.StartingChips} {ItemDescriptor.GetName(command.CurrencyItemId)}";
