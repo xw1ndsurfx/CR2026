@@ -6982,6 +6982,13 @@ public partial class Player : Entity
                         return;
                     }
 
+                    if (stackInfo.WaitingOnCommand is StartMiniGameCommand miniGameCommand &&
+                        miniGameCommand.Game == MiniGameType.Lockpicking)
+                    {
+                        RespondToLockpickingFailureChoice(eventId, miniGameCommand, responseId);
+                        return;
+                    }
+
                     stackInfo.WaitingForResponse = CommandInstance.EventResponse.None;
                     if (stackInfo.WaitingOnCommand != null &&
                         stackInfo.WaitingOnCommand.Type == EventCommandType.ShowOptions)
