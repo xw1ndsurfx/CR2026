@@ -509,7 +509,13 @@ internal static class LockpickingRuntime
             Color.White
         );
 
-        session.Player.ResolveLockpickingEvent(session.EventId, success);
+        var offerFailureChoices = !success &&
+                                  error is "Timeout" or "BrokenPick" or "ToolBroken";
+        session.Player.ResolveLockpickingEvent(
+            session.EventId,
+            success,
+            offerFailureChoices
+        );
 
         if (success && session.Command.LockpickUnlockScope == LockpickUnlockScope.Crew &&
             session.Player.IsInParty)
