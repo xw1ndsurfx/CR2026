@@ -172,7 +172,6 @@ internal sealed class MiniGameCommandDialog : Form
 
             lockpickLootDraft = CloneLockpickLoot(dialog.Result);
             lockpickLootButton.Text = $"Edit Locksmith Chest Loot ({lockpickLootDraft.Length})";
-            ShowSummary();
         };
         bool IsBlackjack() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Blackjack;
         bool IsPotions() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Potions;
