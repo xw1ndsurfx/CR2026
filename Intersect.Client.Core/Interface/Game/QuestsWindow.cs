@@ -347,6 +347,18 @@ public partial class QuestsWindow
                 $"{playerQuest.TaskProgress} / {currentTask.Quantity} Blackjack hands played",
             QuestObjective.CompleteDungeon =>
                 $"{playerQuest.TaskProgress} / {currentTask.Quantity} {(string.IsNullOrWhiteSpace(currentTask.TargetName) ? "dungeon completions" : currentTask.TargetName)}",
+            QuestObjective.LockpickLocks =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} locks picked",
+            QuestObjective.LockpickSpecificLock =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} {(string.IsNullOrWhiteSpace(currentTask.TargetName) ? "required lock" : currentTask.TargetName)}",
+            QuestObjective.LockpickMinimumDifficulty =>
+                $"Pick a difficulty {currentTask.Quantity}+ lock",
+            QuestObjective.LockpickPerfect =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} Perfect Lockpicks",
+            QuestObjective.LockpickWithoutBreaking =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} locks without breaking a pick",
+            QuestObjective.LockpickInDungeon =>
+                $"{playerQuest.TaskProgress} / {currentTask.Quantity} Dungeon locks",
             _ => string.Empty,
         };
 
@@ -807,6 +819,29 @@ public partial class QuestsWindow
                                     $"{progress} / {quantity} {dungeonName} completion(s)",
                                     mQuestDescTemplateLabel
                                 );
+                            }
+                            else if (mSelectedQuest.Tasks[i].Objective is QuestObjective.LockpickLocks or
+                                     QuestObjective.LockpickSpecificLock or QuestObjective.LockpickMinimumDifficulty or
+                                     QuestObjective.LockpickPerfect or QuestObjective.LockpickWithoutBreaking or
+                                     QuestObjective.LockpickInDungeon)
+                            {
+                                var progress = Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress;
+                                var quantity = mSelectedQuest.Tasks[i].Quantity;
+                                var text = mSelectedQuest.Tasks[i].Objective switch
+                                {
+                                    QuestObjective.LockpickSpecificLock =>
+                                        $"{progress} / {quantity} {(string.IsNullOrWhiteSpace(mSelectedQuest.Tasks[i].TargetName) ? "required lock" : mSelectedQuest.Tasks[i].TargetName)}",
+                                    QuestObjective.LockpickMinimumDifficulty =>
+                                        $"Pick a difficulty {quantity}+ lock",
+                                    QuestObjective.LockpickPerfect =>
+                                        $"{progress} / {quantity} Perfect Lockpicks",
+                                    QuestObjective.LockpickWithoutBreaking =>
+                                        $"{progress} / {quantity} locks without breaking a pick",
+                                    QuestObjective.LockpickInDungeon =>
+                                        $"{progress} / {quantity} Dungeon locks",
+                                    _ => $"{progress} / {quantity} locks picked",
+                                };
+                                mQuestDescLabel.AddText(text, mQuestDescTemplateLabel);
                             }
                             else if (mSelectedQuest.Tasks[i].Objective is QuestObjective.PokerWinHands or QuestObjective.PokerWinAmount or
                                      QuestObjective.PokerReachLevel or QuestObjective.PokerPlayHands)

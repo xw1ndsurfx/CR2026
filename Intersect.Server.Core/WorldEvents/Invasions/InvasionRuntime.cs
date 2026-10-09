@@ -59,6 +59,20 @@ internal static class InvasionRuntime
     private static readonly Dictionary<Guid, PendingStart> PendingStarts = [];
     private static long _nextScheduleCheckAt;
 
+    internal static bool IsActiveOnMap(Guid mapId)
+    {
+        lock (Gate)
+        {
+            return Sessions.Values.Any(session =>
+                !session.Completed &&
+                (session.TargetMapId == mapId ||
+                 session.Definition.Waves.Any(wave =>
+                     wave.Spawns.Any(spawn => spawn.SpawnMapId == mapId)
+                 ))
+            );
+        }
+    }
+
     internal static void Update(long nowMs)
     {
         lock (Gate)

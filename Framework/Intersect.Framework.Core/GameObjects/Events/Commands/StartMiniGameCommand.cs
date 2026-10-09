@@ -2,11 +2,12 @@ using System.ComponentModel;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Configuration;
 using Intersect.Framework.Core.MiniGames.Blackjack;
+using Intersect.Framework.Core.MiniGames.Lockpicking;
 using Intersect.Framework.Core.MiniGames.Roulette;
 
 namespace Intersect.Framework.Core.GameObjects.Events.Commands;
 
-public enum MiniGameType { Poker = 0, Blackjack = 1, Potions = 2, Roulette = 3, Cooking = 4 }
+public enum MiniGameType { Poker = 0, Blackjack = 1, Potions = 2, Roulette = 3, Cooking = 4, Lockpicking = 5 }
 
 /// <summary>Empty currency selects isolated test chips. A currency item selects inventory-backed play.</summary>
 public sealed class StartMiniGameCommand : EventCommand
@@ -60,6 +61,40 @@ public sealed class StartMiniGameCommand : EventCommand
     [DefaultValue(false)] public bool BlackjackHitSoft17 { get; set; }
     [DefaultValue(10L)] public long RouletteMinimumBet { get; set; } = 10;
     [DefaultValue(100L)] public long RouletteMaximumBet { get; set; } = 100;
+    [DefaultValue(2)] public int LockpickDifficulty { get; set; } = 2;
+    [DefaultValue(4)] public int LockpickMaxMistakes { get; set; } = 4;
+    [DefaultValue(30)] public int LockpickTimeSeconds { get; set; } = 30;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")]
+    public Guid LockpickProfessionId { get; set; }
+    [DefaultValue(25L)] public long LockpickProfessionBaseExperience { get; set; } = 25;
+    [DefaultValue(0)] public int LockpickRequiredProfessionLevel { get; set; }
+    [DefaultValue(50)] public int LockpickPerfectExperienceBonusPercent { get; set; } = 50;
+    [DefaultValue(25)] public int LockpickFastExperienceBonusPercent { get; set; } = 25;
+    [DefaultValue(10)] public int LockpickFastThresholdSeconds { get; set; } = 10;
+    [DefaultValue(LockpickTargetKind.Door)] public LockpickTargetKind LockpickTargetKind { get; set; } = LockpickTargetKind.Door;
+    [DefaultValue(LockpickLockType.Standard)] public LockpickLockType LockpickType { get; set; } = LockpickLockType.Standard;
+    [DefaultValue(LockpickUnlockScope.Crew)] public LockpickUnlockScope LockpickUnlockScope { get; set; } = LockpickUnlockScope.Crew;
+    [DefaultValue(LockpickToolQuality.None)] public LockpickToolQuality LockpickMinimumToolQuality { get; set; } = LockpickToolQuality.None;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LockpickBasicToolItemId { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LockpickReinforcedToolItemId { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LockpickRoyalToolItemId { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LockpickMasterToolItemId { get; set; }
+    [DefaultValue(25)] public int LockpickBasicBreakChancePercent { get; set; } = 25;
+    [DefaultValue(15)] public int LockpickReinforcedBreakChancePercent { get; set; } = 15;
+    [DefaultValue(8)] public int LockpickRoyalBreakChancePercent { get; set; } = 8;
+    [DefaultValue(3)] public int LockpickMasterBreakChancePercent { get; set; } = 3;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LockpickKeyItemId { get; set; }
+    [DefaultValue(false)] public bool LockpickConsumeKey { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LockpickMistakeCommonEventId { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LockpickFailureCommonEventId { get; set; }
+    [DefaultValue(30)] public int LockpickFailureCooldownSeconds { get; set; } = 30;
+    [DefaultValue(0)] public int LockpickInvasionDifficultyBonus { get; set; }
+    [DefaultValue(true)] public bool LockpickUseProfessionSkillBonus { get; set; } = true;
+    [DefaultValue(true)] public bool LockpickFailureChoicesEnabled { get; set; } = true;
+    [DefaultValue(true)] public bool LockpickFailureChoicesAffectCrew { get; set; } = true;
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LockpickKeySearchCommonEventId { get; set; }
+    [DefaultValue(typeof(Guid), "00000000-0000-0000-0000-000000000000")] public Guid LockpickGuardianCommonEventId { get; set; }
+    public LockpickingLootEntry[] LockpickLootTable { get; set; } = [];
     [DefaultValue(PokerMotionSpeed.Normal)] public PokerMotionSpeed ProceduralAnimationSpeed { get; set; } = PokerMotionSpeed.Normal;
     [DefaultValue(true)] public bool AnimateDealCards { get; set; } = true;
     [DefaultValue(true)] public bool AnimateBoardCards { get; set; } = true;
@@ -103,6 +138,31 @@ public sealed class StartMiniGameCommand : EventCommand
                 CurrencyItemId == Guid.Empty &&
                 NpcPlayers == 0 &&
                 !DealerPlays,
+            MiniGameType.Lockpicking =>
+                MaxPlayers == 1 &&
+                CurrencyItemId == Guid.Empty &&
+                NpcPlayers == 0 &&
+                !DealerPlays &&
+                LockpickDifficulty is >= 1 and <= 5 &&
+                LockpickMaxMistakes is >= 1 and <= 10 &&
+                LockpickTimeSeconds is >= 10 and <= 180 &&
+                LockpickProfessionId != Guid.Empty &&
+                LockpickProfessionBaseExperience is >= 1 and <= 2_000_000_000 &&
+                LockpickRequiredProfessionLevel is >= 0 and <= 500 &&
+                LockpickPerfectExperienceBonusPercent is >= 0 and <= 500 &&
+                LockpickFastExperienceBonusPercent is >= 0 and <= 500 &&
+                LockpickFastThresholdSeconds is >= 1 and <= 180 &&
+                Enum.IsDefined(LockpickTargetKind) &&
+                Enum.IsDefined(LockpickType) &&
+                Enum.IsDefined(LockpickUnlockScope) &&
+                Enum.IsDefined(LockpickMinimumToolQuality) &&
+                LockpickBasicBreakChancePercent is >= 0 and <= 100 &&
+                LockpickReinforcedBreakChancePercent is >= 0 and <= 100 &&
+                LockpickRoyalBreakChancePercent is >= 0 and <= 100 &&
+                LockpickMasterBreakChancePercent is >= 0 and <= 100 &&
+                LockpickFailureCooldownSeconds is >= 0 and <= 86_400 &&
+                LockpickInvasionDifficultyBonus is >= 0 and <= 4 &&
+                (LockpickLootTable ?? []).All(entry => entry is { IsValid: true }),
             MiniGameType.Roulette =>
                 MaxPlayers == 1 &&
                 NpcPlayers == 0 &&

@@ -26,7 +26,9 @@ public partial class CommandInstance
 
         Picture,
 
-        Fade
+        Fade,
+
+        MiniGame
 
     }
 

@@ -6965,52 +6965,60 @@ public partial class Player : Entity
 
     public void RespondToEvent(Guid eventId, int responseId)
     {
+        StartMiniGameCommand? lockpickingCommand = null;
+
         lock (mEventLock)
         {
             foreach (var evt in EventLookup)
             {
-                if (evt.Value.PageInstance != null && evt.Value.PageInstance.Id == eventId)
-                {
-                    if (evt.Value.CallStack.Count <= 0)
-                    {
-                        return;
-                    }
+                if (evt.Value.PageInstance == null || evt.Value.PageInstance.Id != eventId)
+                    continue;
 
-                    var stackInfo = evt.Value.CallStack.Peek();
-                    if (stackInfo.WaitingForResponse != CommandInstance.EventResponse.Dialogue)
-                    {
-                        return;
-                    }
-
-                    stackInfo.WaitingForResponse = CommandInstance.EventResponse.None;
-                    if (stackInfo.WaitingOnCommand != null &&
-                        stackInfo.WaitingOnCommand.Type == EventCommandType.ShowOptions)
-                    {
-                        var tmpStack = new CommandInstance(stackInfo.Page, stackInfo.BranchIds[responseId - 1]);
-                        evt.Value.CallStack.Push(tmpStack);
-                    }
-                    else if (stackInfo.WaitingOnCommand is StartDungeonCommand dungeonCommand)
-                    {
-                        if (responseId == 1 &&
-                            !CommandProcessing.TryStartConfirmedDungeon(
-                                dungeonCommand,
-                                this,
-                                out var dungeonError
-                            ))
-                        {
-                            PacketSender.SendChatMsg(
-                                this,
-                                $"[Dungeon] {dungeonError}",
-                                ChatMessageType.Error,
-                                Color.White
-                            );
-                        }
-                    }
-
+                if (evt.Value.CallStack.Count <= 0)
                     return;
+
+                var stackInfo = evt.Value.CallStack.Peek();
+                if (stackInfo.WaitingForResponse != CommandInstance.EventResponse.Dialogue)
+                    return;
+
+                if (stackInfo.WaitingOnCommand is StartMiniGameCommand miniGameCommand &&
+                    miniGameCommand.Game == MiniGameType.Lockpicking)
+                {
+                    lockpickingCommand = miniGameCommand;
+                    break;
                 }
+
+                stackInfo.WaitingForResponse = CommandInstance.EventResponse.None;
+                if (stackInfo.WaitingOnCommand != null &&
+                    stackInfo.WaitingOnCommand.Type == EventCommandType.ShowOptions)
+                {
+                    var tmpStack = new CommandInstance(stackInfo.Page, stackInfo.BranchIds[responseId - 1]);
+                    evt.Value.CallStack.Push(tmpStack);
+                }
+                else if (stackInfo.WaitingOnCommand is StartDungeonCommand dungeonCommand)
+                {
+                    if (responseId == 1 &&
+                        !CommandProcessing.TryStartConfirmedDungeon(
+                            dungeonCommand,
+                            this,
+                            out var dungeonError
+                        ))
+                    {
+                        PacketSender.SendChatMsg(
+                            this,
+                            $"[Dungeon] {dungeonError}",
+                            ChatMessageType.Error,
+                            Color.White
+                        );
+                    }
+                }
+
+                return;
             }
         }
+
+        if (lockpickingCommand != null)
+            RespondToLockpickingFailureChoice(eventId, lockpickingCommand, responseId);
     }
 
     public void PictureClosed(Guid eventId)

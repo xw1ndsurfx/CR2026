@@ -4,6 +4,7 @@ using Intersect.Framework.Core.MiniGames;
 using Intersect.Server.Database;
 using Intersect.Server.Entities;
 using Intersect.Server.MiniGames.Progression;
+using Intersect.Server.MiniGames.Lockpicking;
 using Intersect.Server.Professions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,20 @@ internal sealed record ProfessionLeaderboardRow(
     string PlayerName,
     int Level,
     long Experience
+);
+
+internal sealed record LockpickingLeaderboardRow(
+    string ProfessionKey,
+    string ProfessionName,
+    int MaximumLevel,
+    string PlayerName,
+    int Level,
+    long Experience,
+    long LocksPicked,
+    long PerfectPicks,
+    long PicksBroken,
+    int HighestDifficulty,
+    long FastestDifficultyFiveMilliseconds
 );
 
 internal static class LeaderboardDataRuntime
@@ -166,6 +181,181 @@ internal static class LeaderboardDataRuntime
                     row.Name!,
                     row.Level,
                     row.Experience
+                ))
+            );
+        }
+
+        return result;
+    }
+
+    internal static IReadOnlyList<LockpickingLeaderboardRow> Lockpicking(
+        int limitPerProfession,
+        string? sort = null
+    )
+    {
+        limitPerProfession = Math.Clamp(limitPerProfession, 1, 100);
+        sort = (sort ?? "locks").Trim().ToLowerInvariant();
+
+        var definitions = ProfessionConfigurationRuntime.Current.Professions ?? [];
+        if (definitions.Length == 0)
+            return [];
+
+        var professionExperience = new Dictionary<(Guid ProfessionId, Guid PlayerId), long>();
+        var stats = new Dictionary<(Guid ProfessionId, Guid PlayerId), LockpickingStats>();
+        var names = ReadPlayerNames();
+
+        var statIdLookup = new Dictionary<Guid, (Guid ProfessionId, LockpickingStatField Field)>();
+        foreach (var definition in definitions)
+        {
+            foreach (var field in Enum.GetValues<LockpickingStatField>())
+            {
+                statIdLookup[LockpickingStatsRuntime.VariableId(definition.Id, field)] =
+                    (definition.Id, field);
+            }
+        }
+
+        try
+        {
+            var professionIds = definitions.Select(definition => definition.Id).ToHashSet();
+            var allVariableIds = professionIds
+                .Concat(statIdLookup.Keys)
+                .ToArray();
+
+            using var context = DbInterface.CreatePlayerContext();
+            var variables = context.Player_Variables
+                .AsNoTracking()
+                .Include(variable => variable.Player)
+                .Where(variable => allVariableIds.Contains(variable.VariableId))
+                .ToArray();
+
+            var rawStats = new Dictionary<(Guid ProfessionId, Guid PlayerId, LockpickingStatField Field), long>();
+
+            foreach (var variable in variables)
+            {
+                if (variable.Player != null)
+                    names[variable.PlayerId] = variable.Player.Name;
+
+                var raw = Math.Max(0L, variable.Value?.Integer ?? 0L);
+                if (professionIds.Contains(variable.VariableId))
+                {
+                    if (raw > 0)
+                    {
+                        professionExperience[(variable.VariableId, variable.PlayerId)] =
+                            Math.Max(0L, raw - 1L);
+                    }
+
+                    continue;
+                }
+
+                if (statIdLookup.TryGetValue(variable.VariableId, out var stat))
+                {
+                    rawStats[(stat.ProfessionId, variable.PlayerId, stat.Field)] = raw;
+                }
+            }
+
+            foreach (var group in rawStats
+                         .GroupBy(pair => (pair.Key.ProfessionId, pair.Key.PlayerId)))
+            {
+                long Value(LockpickingStatField field) =>
+                    group.FirstOrDefault(pair => pair.Key.Field == field).Value;
+
+                stats[group.Key] = new LockpickingStats(
+                    Value(LockpickingStatField.LocksPicked),
+                    Value(LockpickingStatField.PerfectPicks),
+                    Value(LockpickingStatField.PicksBroken),
+                    (int)Math.Min(int.MaxValue, Value(LockpickingStatField.HighestDifficulty)),
+                    Value(LockpickingStatField.FastestPickMilliseconds),
+                    Value(LockpickingStatField.FastestDifficultyFiveMilliseconds)
+                );
+            }
+        }
+        catch
+        {
+            // Online state below still provides a useful partial leaderboard.
+        }
+
+        foreach (var player in Player.OnlinePlayersSnapshot())
+        {
+            names[player.Id] = player.Name;
+            foreach (var definition in definitions)
+            {
+                if (ProfessionRuntime.IsLearned(player, definition.Id))
+                {
+                    professionExperience[(definition.Id, player.Id)] =
+                        ProfessionRuntime.GetExperience(player, definition.Id);
+                }
+
+                var liveStats = LockpickingStatsRuntime.Get(player, definition.Id);
+                if (liveStats.LocksPicked > 0 ||
+                    liveStats.PerfectPicks > 0 ||
+                    liveStats.PicksBroken > 0 ||
+                    liveStats.HighestDifficulty > 0)
+                {
+                    stats[(definition.Id, player.Id)] = liveStats;
+                }
+            }
+        }
+
+        var result = new List<LockpickingLeaderboardRow>();
+        foreach (var definition in definitions.OrderBy(definition => definition.Name))
+        {
+            var candidates = stats
+                .Where(pair => pair.Key.ProfessionId == definition.Id)
+                .Select(pair =>
+                {
+                    professionExperience.TryGetValue(
+                        (definition.Id, pair.Key.PlayerId),
+                        out var experience
+                    );
+
+                    return new
+                    {
+                        pair.Key.PlayerId,
+                        Stats = pair.Value,
+                        Experience = experience,
+                        Level = definition.LevelForExperience(experience),
+                        Name = names.GetValueOrDefault(pair.Key.PlayerId),
+                    };
+                })
+                .Where(row => !string.IsNullOrWhiteSpace(row.Name));
+
+            var ranked = sort switch
+            {
+                "level" => candidates
+                    .OrderByDescending(row => row.Level)
+                    .ThenByDescending(row => row.Experience)
+                    .ThenByDescending(row => row.Stats.LocksPicked)
+                    .ThenBy(row => row.Name, StringComparer.OrdinalIgnoreCase),
+                "perfect" => candidates
+                    .OrderByDescending(row => row.Stats.PerfectPicks)
+                    .ThenByDescending(row => row.Stats.LocksPicked)
+                    .ThenBy(row => row.Name, StringComparer.OrdinalIgnoreCase),
+                "fastest-d5" => candidates
+                    .OrderBy(row => row.Stats.FastestDifficultyFiveMilliseconds <= 0
+                        ? long.MaxValue
+                        : row.Stats.FastestDifficultyFiveMilliseconds)
+                    .ThenByDescending(row => row.Stats.LocksPicked)
+                    .ThenBy(row => row.Name, StringComparer.OrdinalIgnoreCase),
+                _ => candidates
+                    .OrderByDescending(row => row.Stats.LocksPicked)
+                    .ThenByDescending(row => row.Stats.PerfectPicks)
+                    .ThenBy(row => row.Name, StringComparer.OrdinalIgnoreCase),
+            };
+
+            var key = Slug(definition.Name);
+            result.AddRange(
+                ranked.Take(limitPerProfession).Select(row => new LockpickingLeaderboardRow(
+                    key,
+                    definition.Name,
+                    definition.MaximumLevel,
+                    row.Name!,
+                    row.Level,
+                    row.Experience,
+                    row.Stats.LocksPicked,
+                    row.Stats.PerfectPicks,
+                    row.Stats.PicksBroken,
+                    row.Stats.HighestDifficulty,
+                    row.Stats.FastestDifficultyFiveMilliseconds
                 ))
             );
         }

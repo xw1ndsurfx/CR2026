@@ -13,6 +13,12 @@ public enum AchievementObjectiveType
     ProfessionLevel = 5,
     MiniGameWins = 6,
     CustomCounter = 7,
+    LockpickingSuccesses = 8,
+    LockpickingPerfects = 9,
+    LockpickingDifficultyFive = 10,
+    LockpickingBrokenPicks = 11,
+    LockpickingFastPicks = 12,
+    LockpickingNoBreakPicks = 13,
 }
 
 public sealed class AchievementRewardDefinition

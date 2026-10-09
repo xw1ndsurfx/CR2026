@@ -3,6 +3,8 @@ using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.GameObjects.NPCs;
@@ -100,6 +102,19 @@ public partial class QuestTaskEditor : UserControl
                 cmbItem.SelectedIndex = DungeonListIndex(mMyTask?.TargetId ?? Guid.Empty);
                 nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
                 break;
+            case 19:
+                nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
+                break;
+            case 20:
+                cmbItem.SelectedIndex = LockEventListIndex(mMyTask?.TargetId ?? Guid.Empty);
+                nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
+                break;
+            case 21:
+            case 22:
+            case 23:
+            case 24:
+                nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
+                break;
         }
     }
 
@@ -129,6 +144,12 @@ public partial class QuestTaskEditor : UserControl
         cmbTaskType.Items.Add("Potions - Brew with max occupied cells");
         cmbTaskType.Items.Add("Potions - Brew specific recipe with minimum score");
         cmbTaskType.Items.Add("Dungeon - Complete dungeon");
+        cmbTaskType.Items.Add("Lockpicking - Pick locks");
+        cmbTaskType.Items.Add("Lockpicking - Pick specific lock");
+        cmbTaskType.Items.Add("Lockpicking - Pick minimum difficulty");
+        cmbTaskType.Items.Add("Lockpicking - Perfect picks");
+        cmbTaskType.Items.Add("Lockpicking - Pick without breaking");
+        cmbTaskType.Items.Add("Lockpicking - Pick inside Dungeon");
 
         lblDesc.Text = Strings.TaskEditor.desc;
 
@@ -250,6 +271,70 @@ public partial class QuestTaskEditor : UserControl
                 nudItemAmount.Maximum = 1_000_000_000;
                 nudItemAmount.Value = 1;
                 break;
+
+            case 19:
+                grpGatherItems.Show();
+                grpGatherItems.Text = "Lockpicking - Pick locks";
+                cmbItem.Hide();
+                lblItem.Hide();
+                lblItemQuantity.Text = "Successful locks:";
+                nudItemAmount.Maximum = 1_000_000_000;
+                nudItemAmount.Value = 1;
+                break;
+
+            case 20:
+                grpGatherItems.Show();
+                grpGatherItems.Text = "Lockpicking - Pick specific lock";
+                cmbItem.Show();
+                lblItem.Show();
+                lblItem.Text = "Lock event:";
+                lblItemQuantity.Text = "Successful picks:";
+                cmbItem.Items.Clear();
+                cmbItem.Items.AddRange(LockEvents().Select(evt => evt.Name).ToArray());
+                if (cmbItem.Items.Count > 0) cmbItem.SelectedIndex = 0;
+                nudItemAmount.Maximum = 1_000_000_000;
+                nudItemAmount.Value = 1;
+                break;
+
+            case 21:
+                grpGatherItems.Show();
+                grpGatherItems.Text = "Lockpicking - Pick minimum difficulty";
+                cmbItem.Hide();
+                lblItem.Hide();
+                lblItemQuantity.Text = "Difficulty:";
+                nudItemAmount.Maximum = 5;
+                nudItemAmount.Value = 1;
+                break;
+
+            case 22:
+                grpGatherItems.Show();
+                grpGatherItems.Text = "Lockpicking - Perfect picks";
+                cmbItem.Hide();
+                lblItem.Hide();
+                lblItemQuantity.Text = "Perfect picks:";
+                nudItemAmount.Maximum = 1_000_000_000;
+                nudItemAmount.Value = 1;
+                break;
+
+            case 23:
+                grpGatherItems.Show();
+                grpGatherItems.Text = "Lockpicking - Pick without breaking";
+                cmbItem.Hide();
+                lblItem.Hide();
+                lblItemQuantity.Text = "Successful locks:";
+                nudItemAmount.Maximum = 1_000_000_000;
+                nudItemAmount.Value = 1;
+                break;
+
+            case 24:
+                grpGatherItems.Show();
+                grpGatherItems.Text = "Lockpicking - Pick inside Dungeon";
+                cmbItem.Hide();
+                lblItem.Hide();
+                lblItemQuantity.Text = "Dungeon locks:";
+                nudItemAmount.Maximum = 1_000_000_000;
+                nudItemAmount.Value = 1;
+                break;
         }
     }
 
@@ -295,6 +380,11 @@ public partial class QuestTaskEditor : UserControl
             case QuestObjective.PotionEarnScore:
             case QuestObjective.PotionReachChain:
             case QuestObjective.PotionBrewUnderOccupiedCells:
+            case QuestObjective.LockpickLocks:
+            case QuestObjective.LockpickMinimumDifficulty:
+            case QuestObjective.LockpickPerfect:
+            case QuestObjective.LockpickWithoutBreaking:
+            case QuestObjective.LockpickInDungeon:
                 mMyTask.TargetId = Guid.Empty;
                 mMyTask.TargetName = string.Empty;
                 mMyTask.Quantity = (int) nudItemAmount.Value;
@@ -310,6 +400,12 @@ public partial class QuestTaskEditor : UserControl
             case QuestObjective.CompleteDungeon:
                 mMyTask.TargetId = DungeonIdFromList(cmbItem.SelectedIndex);
                 mMyTask.TargetName = DungeonNameFromList(cmbItem.SelectedIndex);
+                mMyTask.Quantity = (int) nudItemAmount.Value;
+                break;
+
+            case QuestObjective.LockpickSpecificLock:
+                mMyTask.TargetId = LockEventIdFromList(cmbItem.SelectedIndex);
+                mMyTask.TargetName = LockEventNameFromList(cmbItem.SelectedIndex);
                 mMyTask.Quantity = (int) nudItemAmount.Value;
                 break;
         }
@@ -430,6 +526,38 @@ public partial class QuestTaskEditor : UserControl
     {
         var dungeons = Dungeons();
         return index >= 0 && index < dungeons.Length ? dungeons[index].Name : string.Empty;
+    }
+
+    private static EventDescriptor[] LockEvents() =>
+        EventDescriptor.Lookup.Values
+            .OfType<EventDescriptor>()
+            .Where(evt =>
+                !evt.CommonEvent &&
+                evt.Id != Guid.Empty &&
+                evt.Pages.Any(page =>
+                    page.CommandLists.Values
+                        .SelectMany(commands => commands)
+                        .OfType<StartMiniGameCommand>()
+                        .Any(command => command.Game == MiniGameType.Lockpicking)
+                )
+            )
+            .OrderBy(evt => evt.Name, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(evt => evt.Id)
+            .ToArray();
+
+    private static int LockEventListIndex(Guid id) =>
+        Array.FindIndex(LockEvents(), evt => evt.Id == id);
+
+    private static Guid LockEventIdFromList(int index)
+    {
+        var events = LockEvents();
+        return index >= 0 && index < events.Length ? events[index].Id : Guid.Empty;
+    }
+
+    private static string LockEventNameFromList(int index)
+    {
+        var events = LockEvents();
+        return index >= 0 && index < events.Length ? events[index].Name : string.Empty;
     }
 
     private void btnCancel_Click(object sender, EventArgs e)

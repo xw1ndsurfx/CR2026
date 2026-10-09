@@ -539,6 +539,25 @@ public partial class CharacterWindow
                 tooltip.AppendLine(
                     $"{profession.Name}: Lv {profession.Level}/{profession.MaximumLevel} • {next}"
                 );
+
+                if (profession.LocksPicked > 0 ||
+                    profession.PerfectPicks > 0 ||
+                    profession.PicksBroken > 0 ||
+                    profession.HighestLockDifficulty > 0)
+                {
+                    var fastest = profession.FastestLockpickMilliseconds > 0
+                        ? $"{profession.FastestLockpickMilliseconds / 1000d:0.00}s"
+                        : "-";
+                    var fastestD5 = profession.FastestDifficultyFiveLockpickMilliseconds > 0
+                        ? $"{profession.FastestDifficultyFiveLockpickMilliseconds / 1000d:0.00}s"
+                        : "-";
+                    tooltip.AppendLine(
+                        $"  Locksmith: {profession.LocksPicked:N0} locks • " +
+                        $"{profession.PerfectPicks:N0} perfect • " +
+                        $"{profession.PicksBroken:N0} broken • " +
+                        $"D{profession.HighestLockDifficulty} max • best {fastest} • D5 best {fastestD5}"
+                    );
+                }
             }
         }
 

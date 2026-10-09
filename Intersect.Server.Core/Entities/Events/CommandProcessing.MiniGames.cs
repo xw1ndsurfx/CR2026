@@ -8,6 +8,7 @@ using Intersect.Network.Packets.Server;
 using Intersect.Server.MiniGames;
 using Intersect.Server.MiniGames.Blackjack;
 using Intersect.Server.MiniGames.Cooking;
+using Intersect.Server.MiniGames.Lockpicking;
 using Intersect.Server.MiniGames.Poker;
 using Intersect.Server.MiniGames.Potions;
 using Intersect.Server.MiniGames.Roulette;
@@ -27,6 +28,67 @@ public static partial class CommandProcessing
                 ChatMessageType.Error, Color.White);
             return;
         }
+        if (command.Game == MiniGameType.Lockpicking)
+        {
+            var eventId = instance.PageInstance?.Id ?? Guid.Empty;
+            var lockId = instance.Descriptor?.Id ?? Guid.Empty;
+
+            if (LockpickingRuntime.IsUnlockedFor(
+                    player,
+                    command,
+                    lockId,
+                    player.MapId,
+                    player.MapInstanceId
+                ))
+            {
+                PacketSender.SendChatMsg(
+                    player,
+                    "[Lockpicking] This lock is already open for you.",
+                    ChatMessageType.Local,
+                    Color.White
+                );
+                return;
+            }
+
+            if (LockpickingRuntime.TryUnlockWithKey(
+                    player,
+                    command,
+                    lockId,
+                    out var keyMessage
+                ))
+            {
+                PacketSender.SendChatMsg(
+                    player,
+                    keyMessage,
+                    ChatMessageType.Local,
+                    Color.White
+                );
+                return;
+            }
+
+            var lockError = string.Empty;
+            if (eventId == Guid.Empty ||
+                lockId == Guid.Empty ||
+                !LockpickingRuntime.Join(player, command, eventId, lockId, out lockError))
+            {
+                if (string.IsNullOrWhiteSpace(lockError))
+                    lockError = "This lock is not attached to a valid Event.";
+
+                PacketSender.SendChatMsg(
+                    player,
+                    $"[Lockpicking] {lockError} The lock remains closed.",
+                    ChatMessageType.Error,
+                    Color.White
+                );
+                callStack.Clear();
+                return;
+            }
+
+            stackInfo.WaitingForResponse = CommandInstance.EventResponse.MiniGame;
+            stackInfo.WaitingOnCommand = command;
+            return;
+        }
+
         if (command.Game == MiniGameType.Potions)
         {
             if (!PotionRuntime.Join(player))
@@ -87,6 +149,7 @@ public static partial class CommandProcessing
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
         if (player == null) return;
+        if (LockpickingRuntime.Leave(player)) return;
         if (PotionRuntime.Leave(player)) return;
         if (CookingRuntime.Leave(player)) return;
         if (RouletteRuntime.Leave(player)) return;

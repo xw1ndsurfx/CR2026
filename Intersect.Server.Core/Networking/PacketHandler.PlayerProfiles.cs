@@ -6,6 +6,7 @@ using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
 using Intersect.Server.Leaderboards;
+using Intersect.Server.MiniGames.Lockpicking;
 using Intersect.Server.Professions;
 
 namespace Intersect.Server.Networking;
@@ -77,6 +78,7 @@ internal sealed partial class PacketHandler
             if (!ProfessionRuntime.IsLearned(target, definition.Id))
                 continue;
 
+            var lockStats = LockpickingStatsRuntime.Get(target, definition.Id);
             professions.Add(
                 new PlayerProfessionProfilePacket
                 {
@@ -86,6 +88,12 @@ internal sealed partial class PacketHandler
                     MaximumLevel = definition.MaximumLevel,
                     Experience = ProfessionRuntime.GetExperience(target, definition.Id),
                     ExperienceToNextLevel = ProfessionRuntime.GetExperienceToNextLevel(target, definition.Id),
+                    LocksPicked = lockStats.LocksPicked,
+                    PerfectPicks = lockStats.PerfectPicks,
+                    PicksBroken = lockStats.PicksBroken,
+                    HighestLockDifficulty = lockStats.HighestDifficulty,
+                    FastestLockpickMilliseconds = lockStats.FastestPickMilliseconds,
+                    FastestDifficultyFiveLockpickMilliseconds = lockStats.FastestDifficultyFiveMilliseconds,
                 }
             );
         }
