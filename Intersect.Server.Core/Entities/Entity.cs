@@ -2239,8 +2239,15 @@ public abstract partial class Entity : IEntity
                     dmgMap[this] = damage + baseDamage;
 
                     enemyNpc.LootMap.TryAdd(Id, true);
+                    if (this is Npc { PetOwner: { } companionOwner })
+                    {
+                        dmgMap.TryGetValue(companionOwner, out var ownerDamage);
+                        dmgMap[companionOwner] = ownerDamage + baseDamage;
+                        enemyNpc.LootMap.TryAdd(companionOwner.Id, true);
+                    }
                     enemyNpc.LootMapCache = enemyNpc.LootMap.Keys.ToArray();
-                    InvasionRuntime.RegisterContribution(enemyNpc, this, appliedHealthDamage);
+                    InvasionRuntime.RegisterContribution(enemyNpc,
+                        this is Npc { PetOwner: { } creditOwner } ? creditOwner : this, appliedHealthDamage);
                     enemyNpc.TryFindNewTarget(Timing.Global.Milliseconds, default, false, this);
                 }
 

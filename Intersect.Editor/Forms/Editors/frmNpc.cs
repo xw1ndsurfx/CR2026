@@ -43,12 +43,22 @@ public partial class FrmNpc : EditorForm
     private readonly DarkComboBox _cmbCombatMovementMode = new();
     private readonly DarkNumericUpDown _nudPreferredCombatRange = new();
 
+    private readonly DarkGroupBox _grpPet = new();
+    private readonly DarkCheckBox _chkIsPet = new();
+    private readonly DarkComboBox _cmbPetItem = new();
+    private readonly DarkNumericUpDown _nudPetLootRadius = new();
+    private readonly DarkNumericUpDown _nudPetMaxLevel = new();
+    private readonly DarkNumericUpDown _nudPetStatGrowth = new();
+    private readonly DarkNumericUpDown _nudPetHealthGrowth = new();
+    private readonly DarkNumericUpDown _nudPetSpellInterval = new();
+
     public FrmNpc()
     {
         ApplyHooks();
         InitializeComponent();
         BuildBossControls();
         BuildCombatAiControls();
+        BuildPetControls();
         Icon = Program.Icon;
         _btnSave = btnSave;
         _btnCancel = btnCancel;
@@ -260,6 +270,75 @@ public partial class FrmNpc : EditorForm
         _nudPreferredCombatRange.Enabled = enabled;
     }
 
+    private void BuildPetControls()
+    {
+        _grpPet.Text = "Player companion / Pet";
+        _grpPet.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+        _grpPet.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+        _grpPet.ForeColor = System.Drawing.Color.Gainsboro;
+        _grpPet.Location = new System.Drawing.Point(844, 925);
+        _grpPet.Size = new Size(264, 384);
+        _chkIsPet.Text = "Summonable companion";
+        _chkIsPet.Location = new System.Drawing.Point(12, 23);
+        _chkIsPet.AutoSize = true;
+        _chkIsPet.CheckedChanged += (_, _) =>
+        {
+            UpdatePetControlState();
+            if (mEditorItem != null) mEditorItem.IsPet = _chkIsPet.Checked;
+        };
+        _grpPet.Controls.Add(_chkIsPet);
+        _grpPet.Controls.Add(new Label { Text = "Unlock/summon item:", AutoSize = true,
+            Location = new System.Drawing.Point(12, 54), ForeColor = System.Drawing.Color.Gainsboro });
+        _cmbPetItem.Location = new System.Drawing.Point(12, 75);
+        _cmbPetItem.Size = new Size(238, 24);
+        _cmbPetItem.DropDownStyle = ComboBoxStyle.DropDownList;
+        _cmbPetItem.SelectedIndexChanged += (_, _) =>
+        {
+            if (mEditorItem != null)
+                mEditorItem.PetSummonItemId = ItemDescriptor.IdFromList(_cmbPetItem.SelectedIndex - 1);
+        };
+        _grpPet.Controls.Add(_cmbPetItem);
+        AddPetNumber("Loot range (tiles, 0 = off):", _nudPetLootRadius, 110, 0, 8,
+            v => mEditorItem.PetLootRadius = v);
+        AddPetNumber("Maximum pet level:", _nudPetMaxLevel, 167, 1, 200,
+            v => mEditorItem.PetMaxLevel = v);
+        AddPetNumber("Stats gained per level:", _nudPetStatGrowth, 224, 0, 100,
+            v => mEditorItem.PetStatGrowth = v);
+        AddPetNumber("Health gained per level:", _nudPetHealthGrowth, 281, 0, 10000,
+            v => mEditorItem.PetHealthGrowth = v);
+        AddPetNumber("Spell unlock every N levels:", _nudPetSpellInterval, 338, 1, 200,
+            v => mEditorItem.PetSpellUnlockInterval = v);
+        pnlContainer.Controls.Add(_grpPet);
+        UpdatePetControlState();
+    }
+
+    private void AddPetNumber(string caption, DarkNumericUpDown control, int y,
+        int minimum, int maximum, Action<int> onChanged)
+    {
+        _grpPet.Controls.Add(new Label { Text = caption, AutoSize = true,
+            Location = new System.Drawing.Point(12, y), ForeColor = System.Drawing.Color.Gainsboro });
+        control.Location = new System.Drawing.Point(12, y + 19);
+        control.Size = new Size(238, 24);
+        control.Minimum = minimum;
+        control.Maximum = maximum;
+        control.ValueChanged += (_, _) =>
+        {
+            if (mEditorItem != null) onChanged((int)control.Value);
+        };
+        _grpPet.Controls.Add(control);
+    }
+
+    private void UpdatePetControlState()
+    {
+        var enabled = _chkIsPet.Checked;
+        _cmbPetItem.Enabled = enabled;
+        _nudPetLootRadius.Enabled = enabled;
+        _nudPetMaxLevel.Enabled = enabled;
+        _nudPetStatGrowth.Enabled = enabled;
+        _nudPetHealthGrowth.Enabled = enabled;
+        _nudPetSpellInterval.Enabled = enabled;
+    }
+
     private void AssignEditorItem(Guid id)
     {
         mEditorItem = NPCDescriptor.Get(id);
@@ -359,6 +438,9 @@ public partial class FrmNpc : EditorForm
         cmbDropItem.Items.Clear();
         cmbDropItem.Items.Add(Strings.General.None);
         cmbDropItem.Items.AddRange(ItemDescriptor.Names);
+        _cmbPetItem.Items.Clear();
+        _cmbPetItem.Items.Add(Strings.General.None);
+        _cmbPetItem.Items.AddRange(ItemDescriptor.Names);
         cmbAttackAnimation.Items.Clear();
         cmbAttackAnimation.Items.Add(Strings.General.None);
         cmbAttackAnimation.Items.AddRange(AnimationDescriptor.Names);
@@ -565,6 +647,14 @@ public partial class FrmNpc : EditorForm
                 (int)_nudPreferredCombatRange.Maximum
             );
             UpdateCombatAiControlState();
+            _chkIsPet.Checked = mEditorItem.IsPet;
+            _cmbPetItem.SelectedIndex = ItemDescriptor.ListIndex(mEditorItem.PetSummonItemId) + 1;
+            _nudPetLootRadius.Value = Math.Clamp(mEditorItem.PetLootRadius, 0, 8);
+            _nudPetMaxLevel.Value = Math.Clamp(mEditorItem.PetMaxLevel, 1, 200);
+            _nudPetStatGrowth.Value = Math.Clamp(mEditorItem.PetStatGrowth, 0, 100);
+            _nudPetHealthGrowth.Value = Math.Clamp(mEditorItem.PetHealthGrowth, 0, 10000);
+            _nudPetSpellInterval.Value = Math.Clamp(mEditorItem.PetSpellUnlockInterval, 1, 200);
+            UpdatePetControlState();
 
             //Behavior
             chkAggressive.Checked = mEditorItem.Aggressive;

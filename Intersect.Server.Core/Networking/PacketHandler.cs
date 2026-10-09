@@ -968,6 +968,11 @@ internal sealed partial class PacketHandler
         }
 
         var msgSplit = msg.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        if (cmd == "/pet")
+        {
+            player.HandlePetCommand(msg.Trim());
+            return;
+        }
 
         if (cmd == Strings.Chat.LocalCommand)
         {

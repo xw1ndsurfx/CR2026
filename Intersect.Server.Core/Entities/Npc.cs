@@ -65,6 +65,9 @@ public partial class Npc : Entity
 
     public bool Despawnable;
 
+    [Newtonsoft.Json.JsonIgnore]
+    public Player? PetOwner { get; set; }
+
     // Scheduled invasion metadata. These NPCs still use normal combat/loot rules,
     // but return to the configured invasion objective whenever they have no combat target.
     public Guid InvasionSessionId { get; set; }
@@ -208,6 +211,17 @@ public partial class Npc : Entity
     {
         lock (EntityLock)
         {
+            if (PetOwner is { } owner)
+            {
+                base.Die(false, null);
+                owner.OnPetDied(this);
+                if (MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var petMap))
+                    petMap.RemoveEntity(this);
+                PacketSender.SendEntityDie(this);
+                PacketSender.SendEntityLeave(this);
+                return;
+            }
+
             base.Die(generateLoot, killer);
 
             AggroCenterMap = null;
@@ -242,7 +256,7 @@ public partial class Npc : Entity
 
     protected override bool ShouldDropItem(Entity killer, ItemDescriptor itemDescriptor, Item item, float dropRateModifier, out Guid lootOwner)
     {
-        lootOwner = (killer as Player)?.Id ?? Id;
+        lootOwner = (killer as Player)?.Id ?? (killer as Npc)?.PetOwner?.Id ?? Id;
         return base.ShouldDropItem(killer, itemDescriptor, item, dropRateModifier, out _);
     }
 
@@ -289,7 +303,7 @@ public partial class Npc : Entity
             }
             else if (entity is Npc npc)
             {
-                if (!Descriptor.NpcVsNpcEnabled || (Descriptor == npc.Descriptor && !Descriptor.AttackAllies))
+                if ((PetOwner == null && !Descriptor.NpcVsNpcEnabled && !(npc.PetOwner != null && npc.Target == this)) || (PetOwner == null && Descriptor == npc.Descriptor && !Descriptor.AttackAllies))
                 {
                     return;
                 }
@@ -340,10 +354,13 @@ public partial class Npc : Entity
 
     public override bool CanTarget(Entity entity)
     {
+        if (PetOwner is { } owner)
+            return entity is Npc { PetOwner: null } enemy && !enemy.IsAllyOf(owner) && base.CanTarget(entity);
+
         // ReSharper disable once InvertIf
         if (entity is Npc npc)
         {
-            if (!Descriptor.NpcVsNpcEnabled)
+            if (!Descriptor.NpcVsNpcEnabled && !(npc.PetOwner != null && npc.Target == this))
             {
                 return false;
             }
@@ -446,6 +463,11 @@ public partial class Npc : Entity
         return true;
     }
 
+    public override void KilledEntity(Entity entity)
+    {
+        PetOwner?.KilledEntity(entity);
+    }
+
     public override void TryAttack(Entity target)
     {
         if (target.IsDisposed)
@@ -496,6 +518,12 @@ public partial class Npc : Entity
 
     public bool CanNpcCombat(Entity enemy, bool friendly = false)
     {
+        if (PetOwner != null)
+            return enemy is Npc npc && (friendly ? npc.PetOwner == PetOwner : CanTarget(npc));
+
+        if (enemy is Npc { PetOwner: { } owner } pet)
+            return friendly ? IsAllyOf(owner) : pet.Target == this && !IsAllyOf(owner);
+
         //Check for NpcVsNpc Combat, both must be enabled and the attacker must have it as an enemy or attack all types of npc.
         if (!friendly)
         {
@@ -604,7 +632,7 @@ public partial class Npc : Entity
     {
         entityType = default;
 
-        if (Descriptor.Movement == (byte)NpcMovement.Static)
+        if (PetOwner == null && Descriptor.Movement == (byte)NpcMovement.Static)
         {
             blockerType = MovementBlockerType.MapAttribute;
             return false;
@@ -737,7 +765,10 @@ public partial class Npc : Entity
         }
 
         // Pick a random spell
-        var spellIndex = Randomization.Next(0, Spells.Count);
+        var availableSpells = PetOwner == null ? Spells.Count :
+            Math.Min(Spells.Count, 1 + (Math.Max(1, Level) - 1) / Math.Max(1, Descriptor.PetSpellUnlockInterval));
+        if (availableSpells <= 0) return;
+        var spellIndex = Randomization.Next(0, availableSpells);
         var spellId = Descriptor.Spells[spellIndex];
         if (!SpellDescriptor.TryGet(spellId, out var spellBase))
         {
@@ -872,6 +903,11 @@ public partial class Npc : Entity
             {
                 var curMapLink = MapId;
                 base.Update(timeMs);
+                if (PetOwner != null)
+                {
+                    UpdatePet(timeMs);
+                    return;
+                }
 
                 var tempTarget = Target;
 
@@ -2207,6 +2243,17 @@ public partial class Npc : Entity
 
     public override bool IsAllyOf(Entity otherEntity)
     {
+        if (PetOwner is { } owner)
+            return otherEntity switch
+            {
+                Player player => owner.IsAllyOf(player),
+                Npc { PetOwner: { } otherOwner } => owner == otherOwner,
+                Npc npc => npc.IsAllyOf(owner),
+                _ => base.IsAllyOf(otherEntity)
+            };
+        if (otherEntity is Npc { PetOwner: { } petOwner })
+            return IsAllyOf(petOwner);
+
         switch (otherEntity)
         {
             case Npc otherNpc:

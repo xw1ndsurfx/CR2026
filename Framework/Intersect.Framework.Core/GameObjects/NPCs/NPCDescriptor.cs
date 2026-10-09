@@ -179,6 +179,23 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
         set => DeathAnimationId = value?.Id ?? Guid.Empty;
     }
 
+    // Player-owned companion settings. World NPCs are unchanged unless IsPet is enabled.
+    public bool IsPet { get; set; }
+
+    /// <summary>Inventory item that permanently unlocks and summons this companion.</summary>
+    public Guid PetSummonItemId { get; set; }
+
+    public int PetLootRadius { get; set; } = 2;
+
+    public int PetMaxLevel { get; set; } = 50;
+
+    public int PetStatGrowth { get; set; } = 1;
+
+    public int PetHealthGrowth { get; set; } = 10;
+
+    /// <summary>One spell at level 1, then another every N levels.</summary>
+    public int PetSpellUnlockInterval { get; set; } = 5;
+
     //Behavior
     public bool Aggressive { get; set; }
 

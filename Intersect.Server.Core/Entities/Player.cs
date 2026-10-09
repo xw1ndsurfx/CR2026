@@ -544,6 +544,8 @@ public partial class Player : Entity
         mSentMap = false;
         ChatTarget = null;
 
+        DismissPetRuntime();
+
         //Clear all event spawned NPC's
         var entities = SpawnedNpcs.ToArray();
         foreach (var t in entities)
@@ -796,6 +798,7 @@ public partial class Player : Entity
 
 
                 base.Update(timeMs);
+                UpdateActivePet(timeMs);
 
                 if (mAutorunCommonEventTimer < Timing.Global.Milliseconds)
                 {
@@ -1555,6 +1558,9 @@ public partial class Player : Entity
     //Combat
     public override void KilledEntity(Entity entity)
     {
+        if (entity is Npc { PetOwner: null } monster)
+            AwardPetExperience(monster.Descriptor.Experience);
+
         switch (entity)
         {
             case Npc npc:
@@ -3558,6 +3564,7 @@ public partial class Player : Entity
             }
 
             var useEvent = itemBase.GetEventTrigger(ItemEventTrigger.OnUse);
+            if (TryActivatePetItem(itemBase.Id)) return;
 
             switch (itemBase.ItemType)
             {
