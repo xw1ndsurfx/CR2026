@@ -133,6 +133,22 @@ public partial class Player
         SendPetState();
     }
 
+    /// <summary>
+    /// An explicit player warp (spell, event or admin transfer) should bring the
+    /// companion to the destination. Natural grid-boundary walking never calls
+    /// this method, so the pet crosses those boundaries using normal movement.
+    /// </summary>
+    private void RecallPetAfterOwnerWarp()
+    {
+        if (ActivePet == null || PetCollection.ActivePetId == Guid.Empty)
+        {
+            return;
+        }
+
+        DismissPetRuntime();
+        SpawnPetRuntime();
+    }
+
     private void UpdateActivePet(long timeMs)
     {
         if (Client == null || !InGame || IsDead || MapId == Guid.Empty) return;
@@ -146,7 +162,12 @@ public partial class Player
             SpawnPetRuntime();
             return;
         }
-        if (ActivePet.MapId != MapId || ActivePet.MapInstanceId != MapInstanceId)
+
+        // A different MapId is normal while the companion walks across a
+        // seamless border. Never destroy/resummon it merely for that reason.
+        // Recall only if the player really changed instances or left the
+        // adjacent maps the server pathfinder can traverse.
+        if (!PetMapTraversal.CanWalkToOwner(this, ActivePet))
         {
             DismissPetRuntime();
             SpawnPetRuntime();

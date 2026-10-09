@@ -11,6 +11,18 @@ public partial class Npc
 {
     private long _nextPetLootCheck;
 
+    // Companions may move a little faster to catch their master, without
+    // changing the movement speed of ordinary or invasion NPCs.
+    public override float GetMovementTime()
+    {
+        var normalTime = base.GetMovementTime();
+        if (PetOwner == null || Target != null)
+            return normalTime;
+
+        var gap = GetDistanceTo(PetOwner);
+        return gap > 3 && gap < 9999 ? Math.Max(95f, normalTime * 0.65f) : normalTime;
+    }
+
     /// <summary>
     /// Refresh a live companion's name without resetting its HP, MP or stats.
     /// </summary>
@@ -46,7 +58,7 @@ public partial class Npc
     {
         var owner = PetOwner;
         if (owner == null || owner.IsDead || !owner.InGame || owner.Client == null ||
-            owner.MapInstanceId != MapInstanceId || owner.MapId != MapId) return;
+            !PetMapTraversal.CanWalkToOwner(owner, this)) return;
 
         if (_nextPetLootCheck <= timeMs)
         {
@@ -78,12 +90,11 @@ public partial class Npc
 
         Entity follow = opponent ?? (Entity)owner;
         var distance = GetDistanceTo(follow);
-        if (opponent == null && distance > 10)
-        {
-            Warp(owner.MapId, owner.X, owner.Y, owner.Dir);
-            mPathFinder.SetTarget(null);
-            return;
-        }
+        // Never warp for a modest gap or a normal map seam. The shared map-grid
+        // pathfinder can navigate naturally between adjacent maps, even when
+        // owner.MapId differs from MapId during a boundary crossing.
+        // Let the pathfinder attempt a route even if the player is near the
+        // far side of a neighbouring map; its own range check is authoritative.
         if (opponent != null && IsOneBlockAway(opponent))
         {
             var direction = DirectionToTarget(opponent);
