@@ -712,13 +712,16 @@ internal static class LockpickingRuntime
         Guid mapInstanceId
     )
     {
-        Unlocks.Add(MakeUnlockKey(
+        var key = MakeUnlockKey(
             player,
             command.LockpickUnlockScope,
             lockId,
             mapId,
             mapInstanceId
-        ));
+        );
+
+        lock (Gate)
+            Unlocks.Add(key);
     }
 
     private static UnlockKey MakeUnlockKey(
