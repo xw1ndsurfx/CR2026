@@ -73,6 +73,8 @@ public partial class CharacterWindow
     Button _detailsButton;
 
     Button _achievementsButton;
+
+    Button _petsButton;
     
     ClassDescriptor mPlayer;
 
@@ -177,6 +179,19 @@ public partial class CharacterWindow
         _achievementsButton.Clicked += (_, _) =>
             PacketSender.SendRequestAchievementState(openWindow: true);
 
+        _petsButton = new Button(mCharacterWindow, nameof(_petsButton)) { Text = string.Empty };
+        _petsButton.Clicked += (_, _) => PacketSender.SendRequestPetState(openWindow: true);
+        var petsCaption = new Label(_petsButton, "PetsCaption")
+        {
+            AutoSizeToContents = false,
+            Font = _detailsButton.Font,
+            FontSize = _detailsButton.FontSize,
+            Text = "Familiers",
+            TextAlign = Pos.Center,
+            TextColorOverride = Color.White,
+            MouseInputEnabled = false,
+        };
+
         var achievementsCaption = new Label(_achievementsButton, "AchievementsCaption")
         {
             AutoSizeToContents = false,
@@ -192,7 +207,7 @@ public partial class CharacterWindow
         const int actionButtonWidth = 132;
         const int actionButtonGap = 8;
         var actionButtonHeight = Math.Max(24, _detailsButton.Height);
-        var actionButtonsWidth = actionButtonWidth * 2 + actionButtonGap;
+        var actionButtonsWidth = actionButtonWidth * 3 + actionButtonGap * 2;
         var actionButtonsX = Math.Max(8, (mCharacterWindow.Width - actionButtonsWidth) / 2);
         var actionButtonsY = _detailsButton.Y;
 
@@ -208,6 +223,10 @@ public partial class CharacterWindow
             actionButtonWidth,
             actionButtonHeight
         );
+        _petsButton.SetBounds(actionButtonsX + 2 * (actionButtonWidth + actionButtonGap),
+            actionButtonsY, actionButtonWidth, actionButtonHeight);
+        petsCaption.SetBounds(0, 0, actionButtonWidth, actionButtonHeight);
+        petsCaption.BringToFront();
         achievementsCaption.SetBounds(0, 0, actionButtonWidth, actionButtonHeight);
         achievementsCaption.BringToFront();
     }

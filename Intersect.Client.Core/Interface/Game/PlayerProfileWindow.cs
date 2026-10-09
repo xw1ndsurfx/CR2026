@@ -85,7 +85,15 @@ internal sealed class PlayerProfileWindow : Window
             };
             achievements.SetBounds(154, y, 230, 36);
             achievements.Clicked += (_, _) => PacketSender.SendRequestAchievementState(openWindow: true);
-            y += 48;
+            var pets = new Button(_scroll, "OpenPetsButton")
+            {
+                Text = "Familiers",
+                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                FontSize = 11,
+            };
+            pets.SetBounds(154, y + 43, 230, 36);
+            pets.Clicked += (_, _) => PacketSender.SendRequestPetState(openWindow: true);
+            y += 88;
         }
 
         y = AddSection("CHARACTER", BuildCharacterText(profile), y);
