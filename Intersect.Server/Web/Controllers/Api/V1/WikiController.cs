@@ -62,7 +62,10 @@ public sealed class WikiController : IntersectController
         string? ItemCategory = null,
         int? Rarity = null,
         string? RarityName = null,
-        string? EquipmentSlot = null
+        string? EquipmentSlot = null,
+        int? Level = null,
+        bool? IsBoss = null,
+        bool? IsPet = null
     );
 
     public sealed record WikiCatalogEntry(string Slug, string Type, string Label);
@@ -72,7 +75,57 @@ public sealed class WikiController : IntersectController
         string Name,
         string Type,
         string? ImageUrl,
-        IReadOnlyDictionary<string, object?> Facts
+        IReadOnlyDictionary<string, object?> Facts,
+        WikiNpcProfile? NpcProfile = null
+    );
+
+    // Public NPC descriptors: no private event commands, hidden map objects
+    // or personal player data are included in these read-only records.
+    public sealed record WikiNpcSpell(
+        string Name,
+        string? Description,
+        string? ImageUrl,
+        int? RequiredPetLevel
+    );
+
+    public sealed record WikiNpcDrop(
+        string Name,
+        string? ImageUrl,
+        int MinQuantity,
+        int MaxQuantity,
+        double BaseChancePercent,
+        string RarityName
+    );
+
+    public sealed record WikiNpcSpawnPoint(int X, int Y);
+
+    public sealed record WikiNpcLocation(
+        string MapName,
+        string Source,
+        int SpawnCount,
+        IReadOnlyList<WikiNpcSpawnPoint> Positions,
+        string? EventName = null
+    );
+
+    public sealed record WikiNpcProfile(
+        bool IsBoss,
+        bool IsPet,
+        int Level,
+        long BaseExperience,
+        long BaseHealth,
+        long BaseMana,
+        int BaseDamage,
+        int CriticalChancePercent,
+        double CriticalMultiplier,
+        int SightRange,
+        bool Aggressive,
+        int FleeHealthPercent,
+        IReadOnlyDictionary<string, int> BaseStats,
+        IReadOnlyList<WikiNpcSpell> Spells,
+        IReadOnlyList<WikiNpcDrop> Drops,
+        IReadOnlyList<WikiNpcLocation> Locations,
+        int? PetMaximumLevel,
+        string? PetSummonItemName
     );
 
     // Public companion species only. Player-owned pets, nicknames, experience,
@@ -1409,6 +1462,20 @@ public sealed class WikiController : IntersectController
                 SafeAssetName(spell.Icon),
                 spell.ImageUrl
             ),
+            NPCDescriptor npc => new WikiGameObjectSummary(
+                npc.Id,
+                npc.Name,
+                npc.Type.ToString(),
+                (npc.IsBoss ? "Boss - " : npc.IsPet ? "Familier - " : "") +
+                    $"Niveau {Math.Max(1, npc.Level)} - " +
+                    $"{Math.Max(0L, npc.MaxVitals[(int)Vital.Health]):N0} PV - " +
+                    $"{Math.Max(0L, npc.Experience):N0} EXP de base",
+                null,
+                NpcPreviewUrl(npc),
+                Level: Math.Max(1, npc.Level),
+                IsBoss: npc.IsBoss,
+                IsPet: npc.IsPet
+            ),
             MapDescriptor map => new WikiGameObjectSummary(
                 map.Id,
                 map.Name,
@@ -1431,6 +1498,14 @@ public sealed class WikiController : IntersectController
 
         switch (value)
         {
+            case NPCDescriptor npc:
+                Add(facts, "Niveau", Math.Max(1, npc.Level));
+                Add(facts, "Boss", npc.IsBoss);
+                Add(facts, "Familier", npc.IsPet);
+                Add(facts, "Expérience de base", Math.Max(0L, npc.Experience));
+                Add(facts, "Dégâts de base", Math.Max(0, npc.Damage));
+                break;
+
             case ItemDescriptor item:
                 Add(facts, "Description", item.Description);
                 Add(facts, "Catégorie", item.ItemType.ToString());
@@ -1475,10 +1550,122 @@ public sealed class WikiController : IntersectController
             ItemDescriptor item => item.ImageUrl,
             ResourceDescriptor resource => resource.ImageUrl,
             SpellDescriptor spell => spell.ImageUrl,
+            NPCDescriptor npc => NpcPreviewUrl(npc),
             _ => null,
         };
 
-        return new WikiPublicDetail(value.Id, value.Name, value.Type.ToString(), imageUrl, facts);
+        var npcProfile = value is NPCDescriptor descriptor
+            ? ToPublicNpcProfile(descriptor)
+            : null;
+
+        return new WikiPublicDetail(value.Id, value.Name, value.Type.ToString(), imageUrl, facts, npcProfile);
+    }
+
+    private static string? NpcPreviewUrl(NPCDescriptor npc) =>
+        string.IsNullOrWhiteSpace(npc.Sprite)
+            ? null
+            : $"/api/v1/game-assets/npcs/{npc.Id:D}";
+
+    private static WikiNpcProfile ToPublicNpcProfile(NPCDescriptor npc)
+    {
+        var statNames = Enum.GetNames<Stat>();
+        var baseStats = new Dictionary<string, int>();
+        for (var index = 0; index < statNames.Length && index < npc.Stats.Length; index++)
+            baseStats[statNames[index]] = Math.Max(0, npc.Stats[index]);
+
+        var spells = (npc.Spells ?? [])
+            .Select((id, index) => new
+            {
+                Spell = SpellDescriptor.Get(id),
+                PetLevel = npc.IsPet ? npc.GetPetSpellRequiredLevel(index) : (int?)null
+            })
+            .Where(entry => entry.Spell != null)
+            .Select(entry => new WikiNpcSpell(
+                entry.Spell!.Name,
+                entry.Spell.Description,
+                entry.Spell.ImageUrl,
+                entry.PetLevel
+            ))
+            .ToArray();
+
+        var drops = (npc.Drops ?? [])
+            .Select(drop => new { Drop = drop, Item = ItemDescriptor.Get(drop.ItemId) })
+            .Where(entry => entry.Item != null)
+            .Select(entry => new WikiNpcDrop(
+                entry.Item!.Name,
+                entry.Item.ImageUrl,
+                Math.Max(1, entry.Drop.MinQuantity),
+                Math.Max(1, entry.Drop.MaxQuantity),
+                Math.Clamp(entry.Drop.Chance, 0d, 100d),
+                ItemRarityName(entry.Item)
+            ))
+            .OrderByDescending(entry => entry.BaseChancePercent)
+            .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var mapLocations = MapDescriptor.Lookup.Values
+            .OfType<MapDescriptor>()
+            .Where(map => map.Spawns is { Count: > 0 })
+            .Select(map => new
+            {
+                Map = map,
+                Positions = map.Spawns
+                    .Where(spawn => spawn != null && spawn.NpcId == npc.Id)
+                    .Select(spawn => new WikiNpcSpawnPoint(spawn.X, spawn.Y))
+                    .ToArray()
+            })
+            .Where(entry => entry.Positions.Length > 0)
+            .Select(entry => new WikiNpcLocation(
+                entry.Map.Name,
+                "Map",
+                entry.Positions.Length,
+                entry.Positions.Take(8).ToArray()
+            ));
+
+        // Scheduled World Boss spawns are also publicly discoverable, but
+        // scripted Event spawns are not enumerable safely from map data.
+        var worldBossLocations = WorldBossConfigurationRuntime.Current.Bosses
+            .Where(boss => boss.Enabled && boss.NpcId == npc.Id)
+            .Select(boss =>
+            {
+                var mapName = MapDescriptor.Lookup.TryGetValue(boss.MapId, out var mapObj) &&
+                              mapObj is MapDescriptor map ? map.Name : "Unknown";
+                return new WikiNpcLocation(
+                    mapName,
+                    "WorldBoss",
+                    1,
+                    [new WikiNpcSpawnPoint(boss.SpawnX, boss.SpawnY)],
+                    boss.Name
+                );
+            });
+
+        var locations = mapLocations.Concat(worldBossLocations)
+            .OrderBy(entry => entry.MapName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(entry => entry.Source)
+            .Take(80)
+            .ToArray();
+
+        var petSummonItem = npc.IsPet ? ItemDescriptor.Get(npc.PetSummonItemId) : null;
+        return new WikiNpcProfile(
+            npc.IsBoss,
+            npc.IsPet,
+            Math.Max(1, npc.Level),
+            Math.Max(0L, npc.Experience),
+            Math.Max(1L, npc.MaxVitals[(int)Vital.Health]),
+            Math.Max(0L, npc.MaxVitals[(int)Vital.Mana]),
+            Math.Max(0, npc.Damage),
+            Math.Clamp(npc.CritChance, 0, 100),
+            Math.Max(0d, npc.CritMultiplier),
+            Math.Max(0, npc.SightRange),
+            npc.Aggressive,
+            Math.Clamp((int)npc.FleeHealthPercentage, 0, 100),
+            baseStats,
+            spells,
+            drops,
+            locations,
+            npc.IsPet ? Math.Clamp(npc.PetMaxLevel, 1, 200) : null,
+            petSummonItem?.Name
+        );
     }
 
     private static string QuestSummarySubtitle(
