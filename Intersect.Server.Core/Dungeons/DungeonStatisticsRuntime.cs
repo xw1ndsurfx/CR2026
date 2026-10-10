@@ -23,6 +23,20 @@ internal static class DungeonStatisticsRuntime
         LastCompletedUnixMilliseconds = 6,
     }
 
+    internal static Guid CompletionsVariableId(Guid dungeonId) =>
+        VariableId(dungeonId, Metric.Completions);
+
+    internal static Guid BestClearTimeVariableId(Guid dungeonId) =>
+        VariableId(dungeonId, Metric.BestClearTimeMilliseconds);
+
+    internal static (long Completions, long BestClearTimeMilliseconds) ReadLeaderboardStats(
+        Player player,
+        Guid dungeonId
+    ) => (
+        Read(player, dungeonId, Metric.Completions),
+        Read(player, dungeonId, Metric.BestClearTimeMilliseconds)
+    );
+
     private static Guid VariableId(Guid dungeonId, Metric metric)
     {
         Span<byte> input = stackalloc byte[33];

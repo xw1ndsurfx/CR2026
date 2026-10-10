@@ -20,6 +20,7 @@ using Intersect.Server.WorldEvents.Invasions;
 using Intersect.Server.MiniGames;
 using Intersect.Server.Database;
 using Intersect.Server.Entities;
+using Intersect.Server.Dungeons;
 using Intersect.Server.Leaderboards;
 using Intersect.Server.Professions;
 using Intersect.Server.Web.Http;
@@ -261,6 +262,33 @@ public sealed class WikiController : IntersectController
         IReadOnlyList<WikiLockpickingLeaderboard> Leaderboards
     );
 
+    public sealed record WikiDungeonSelection(
+        Guid Id,
+        string Name,
+        string Rank
+    );
+
+    public sealed record WikiDungeonLeaderboardEntry(
+        int Rank,
+        string Name,
+        long Completions,
+        long BestClearTimeMilliseconds
+    );
+
+    public sealed record WikiDungeonLeaderboard(
+        string Key,
+        string Name,
+        string Rank,
+        IReadOnlyList<WikiDungeonLeaderboardEntry> Players
+    );
+
+    public sealed record WikiDungeonLeaderboardResponse(
+        DateTimeOffset GeneratedAt,
+        string Sort,
+        IReadOnlyList<WikiDungeonSelection> Dungeons,
+        IReadOnlyList<WikiDungeonLeaderboard> Leaderboards
+    );
+
 
     public sealed record WikiGuildSummary(
         Guid Id,
@@ -290,6 +318,66 @@ public sealed class WikiController : IntersectController
         double AverageMemberLevel,
         IReadOnlyList<WikiGuildMember> Members
     );
+
+    [HttpGet("leaderboard/dungeons")]
+    [ProducesResponseType(typeof(WikiDungeonLeaderboardResponse), (int)HttpStatusCode.OK, ContentTypes.Json)]
+    public IActionResult DungeonLeaderboards(
+        [FromQuery] int limit = 50,
+        [FromQuery] string sort = "clears",
+        [FromQuery] Guid? dungeonId = null
+    )
+    {
+        limit = Math.Clamp(limit, 1, 100);
+        sort = (sort ?? "clears").Trim().ToLowerInvariant();
+        if (sort is not ("clears" or "fastest"))
+            sort = "clears";
+
+        var definitions = DungeonConfigurationRuntime.Current.Dungeons
+            .OrderBy(dungeon => dungeon.SortOrder)
+            .ThenBy(dungeon => dungeon.Rank)
+            .ThenBy(dungeon => dungeon.Name)
+            .ToArray();
+
+        var choices = definitions
+            .Select(dungeon => new WikiDungeonSelection(
+                dungeon.Id,
+                dungeon.Name,
+                dungeon.Rank.ToString()
+            ))
+            .ToArray();
+
+        // Omit the dungeonId query to use the first configured dungeon.
+        // Explicit unknown IDs do not silently switch to an unrelated gate.
+        var selected = dungeonId.HasValue
+            ? definitions.FirstOrDefault(dungeon => dungeon.Id == dungeonId.Value)
+            : definitions.FirstOrDefault();
+
+        if (dungeonId.HasValue && selected == null)
+            return NotFound();
+
+        var leaderboards = selected == null
+            ? Array.Empty<WikiDungeonLeaderboard>()
+            : [new WikiDungeonLeaderboard(
+                selected.Id.ToString("D"),
+                selected.Name,
+                selected.Rank.ToString(),
+                LeaderboardDataRuntime.Dungeons(selected.Id, limit, sort)
+                    .Select((row, index) => new WikiDungeonLeaderboardEntry(
+                        index + 1,
+                        row.PlayerName,
+                        row.Completions,
+                        row.BestClearTimeMilliseconds
+                    ))
+                    .ToArray()
+            )];
+
+        return Ok(new WikiDungeonLeaderboardResponse(
+            DateTimeOffset.UtcNow,
+            sort,
+            choices,
+            leaderboards
+        ));
+    }
 
     [HttpGet("leaderboard/minigames")]
     [ProducesResponseType(typeof(WikiMiniGameLeaderboardResponse), (int)HttpStatusCode.OK, ContentTypes.Json)]
