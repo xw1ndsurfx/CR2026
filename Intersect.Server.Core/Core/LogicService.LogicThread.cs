@@ -16,6 +16,7 @@ using Intersect.Server.Database.PlayerData.Api;
 using Intersect.Server.Core.MapInstancing;
 using Intersect.Server.Dungeons;
 using Intersect.Server.WorldEvents.Invasions;
+using Intersect.Server.WorldEvents.WorldBosses;
 
 namespace Intersect.Server.Core;
 
@@ -231,6 +232,7 @@ internal sealed partial class LogicService
 
                     Time.Update();
                     InvasionRuntime.Update(startTime);
+                    WorldBossRuntime.Update(startTime);
                     DungeonRunRuntime.Update(startTime);
                     swCps++;
 
