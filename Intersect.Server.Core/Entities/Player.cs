@@ -721,6 +721,29 @@ public partial class Player : Entity
     private Guid _lastAfkMapId;
     private bool _isAfk;
 
+    public void RegisterAfkActivity()
+    {
+        lock (EntityLock)
+        {
+            _lastAfkMovementTime = Timing.Global.Milliseconds;
+            if (_isAfk)
+            {
+                _isAfk = false;
+                PacketSender.SendEntityDataToProximity(this);
+            }
+        }
+    }
+
+    public void ToggleAfk()
+    {
+        lock (EntityLock)
+        {
+            _isAfk = !_isAfk;
+            _lastAfkMovementTime = Timing.Global.Milliseconds;
+            PacketSender.SendEntityDataToProximity(this);
+        }
+    }
+
     //Update
     public override void Update(long timeMs)
     {
@@ -748,7 +771,7 @@ public partial class Player : Entity
                         PacketSender.SendEntityDataToProximity(this);
                     }
                 }
-                else if (!_isAfk && timeMs - _lastAfkMovementTime >= 300000)
+                else if (!_isAfk && timeMs - _lastAfkMovementTime >= Math.Max(1000, Options.Instance.Player.AfkTimeoutMs))
                 {
                     _isAfk = true;
                     PacketSender.SendEntityDataToProximity(this);
