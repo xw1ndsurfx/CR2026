@@ -1,6 +1,8 @@
 using System.Net;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.GameObjects;
 using Intersect.Server.Web.Http;
@@ -33,6 +35,8 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
 
     private readonly DirectoryInfo _cacheRoot =
         new(Path.Combine(Environment.CurrentDirectory, ".cache", "game-assets"));
+
+    private static readonly object NpcPreviewGate = new();
 
     [HttpGet("manifest")]
     [ProducesResponseType(typeof(GameAssetManifestResponse), (int)HttpStatusCode.OK, ContentTypes.Json)]
@@ -99,6 +103,67 @@ public sealed class GameAssetController(ILogger<GameAssetController> logger) : I
 
         Response.Headers[HeaderNames.CacheControl] = "private,no-store";
         return Ok(new GameAssetManifestResponse(DateTimeOffset.UtcNow, items, resources, spells));
+    }
+
+    /// <summary>
+    /// Public, descriptor-bound NPC portrait. Crops a single down-facing frame
+    /// from the NPC sprite sheet using the exact normal-frame layout used by
+    /// the client, never accepting raw file paths from HTTP requests.
+    /// </summary>
+    [AllowAnonymous]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
+    [HttpGet("npcs/{npcId:guid}")]
+    [ProducesResponseType(typeof(byte[]), (int)HttpStatusCode.OK, ContentTypes.Png)]
+    [ProducesResponseType(typeof(StatusMessageResponseBody), (int)HttpStatusCode.NotFound, ContentTypes.Json)]
+    public IActionResult Npc(Guid npcId)
+    {
+        if (!NPCDescriptor.TryGet(npcId, out var npc) || string.IsNullOrWhiteSpace(npc.Sprite))
+            return NotFound("NPC image not found.");
+
+        // Prefer a deliberately uploaded icon if an admin configured one.
+        var uploaded = ResolveUploadedAsset("npcs", npc.Id);
+        if (uploaded != null)
+            return Png(uploaded);
+
+        var source = ResolveTextureFile("entities", npc.Sprite);
+        if (source == null)
+            return NotFound("NPC sprite file not found.");
+
+        var portrait = new FileInfo(Path.Combine(
+            _cacheRoot.FullName, "npcs", npc.Id.ToString("N") + ".png"
+        ));
+        lock (NpcPreviewGate)
+        {
+            if (portrait.Exists && portrait.LastWriteTimeUtc >= source.LastWriteTimeUtc)
+                return Png(portrait);
+
+            try
+            {
+                using var image = Image.Load(source.FullName);
+                var frames = Math.Max(1, Options.Instance.Sprites.NormalFrames);
+                var directions = Math.Max(1, Options.Instance.Sprites.Directions);
+                var width = image.Width / frames;
+                var height = image.Height / directions;
+                if (width <= 0 || height <= 0)
+                    return NotFound("NPC sprite dimensions are invalid.");
+
+                // The client uses row zero for Down. Prefer its center frame
+                // to avoid showing an entire sprite sheet on the Wiki.
+                var middleFrame = Math.Min(frames - 1, frames / 2);
+                image.Mutate(ctx => ctx.Crop(new ImageSharpRectangle(
+                    middleFrame * width, 0, width, height
+                )));
+
+                portrait.Directory?.Create();
+                image.SaveAsPng(portrait.FullName);
+                return Png(portrait);
+            }
+            catch (Exception exception)
+            {
+                logger.LogWarning(exception, "Cannot prepare NPC preview {NpcId}", npcId);
+                return NotFound("NPC preview is temporarily unavailable.");
+            }
+        }
     }
 
     [AllowAnonymous]
