@@ -23,6 +23,7 @@ using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
 using Intersect.Server.WorldEvents.Invasions;
+using Intersect.Server.WorldEvents.WorldBosses;
 using Intersect.Utilities;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -2248,6 +2249,7 @@ public abstract partial class Entity : IEntity
                     enemyNpc.LootMapCache = enemyNpc.LootMap.Keys.ToArray();
                     InvasionRuntime.RegisterContribution(enemyNpc,
                         this is Npc { PetOwner: { } creditOwner } ? creditOwner : this, appliedHealthDamage);
+                    WorldBossRuntime.RegisterContribution(enemyNpc, this, appliedHealthDamage);
                     enemyNpc.TryFindNewTarget(Timing.Global.Milliseconds, default, false, this);
                 }
 
