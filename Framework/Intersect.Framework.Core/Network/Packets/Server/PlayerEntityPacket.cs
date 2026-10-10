@@ -43,4 +43,7 @@ public partial class PlayerEntityPacket : EntityPacket
 
     [Key(31)]
     public CharacterAppearance Appearance { get; set; } = new();
+
+    [Key(32)]
+    public bool IsAfk { get; set; }
 }

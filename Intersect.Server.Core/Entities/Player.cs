@@ -714,6 +714,36 @@ public partial class Player : Entity
 #endif
     }
 
+    // AFK state is transient and is never saved with the character.
+    private long _lastAfkMovementTime;
+    private int _lastAfkX;
+    private int _lastAfkY;
+    private Guid _lastAfkMapId;
+    private bool _isAfk;
+
+    public void RegisterAfkActivity()
+    {
+        lock (EntityLock)
+        {
+            _lastAfkMovementTime = Timing.Global.Milliseconds;
+            if (_isAfk)
+            {
+                _isAfk = false;
+                PacketSender.SendEntityDataToProximity(this);
+            }
+        }
+    }
+
+    public void ToggleAfk()
+    {
+        lock (EntityLock)
+        {
+            _isAfk = !_isAfk;
+            _lastAfkMovementTime = Timing.Global.Milliseconds;
+            PacketSender.SendEntityDataToProximity(this);
+        }
+    }
+
     //Update
     public override void Update(long timeMs)
     {
@@ -728,6 +758,25 @@ public partial class Player : Entity
             Monitor.TryEnter(EntityLock, ref lockObtained);
             if (lockObtained)
             {
+                // Detect inactivity from authoritative player position, including map changes.
+                if (_lastAfkMovementTime == 0 || _lastAfkX != X || _lastAfkY != Y || _lastAfkMapId != MapId)
+                {
+                    _lastAfkMovementTime = timeMs;
+                    _lastAfkX = X;
+                    _lastAfkY = Y;
+                    _lastAfkMapId = MapId;
+                    if (_isAfk)
+                    {
+                        _isAfk = false;
+                        PacketSender.SendEntityDataToProximity(this);
+                    }
+                }
+                else if (!_isAfk && timeMs - _lastAfkMovementTime >= Math.Max(1000, Options.Instance.Player.AfkTimeoutMs))
+                {
+                    _isAfk = true;
+                    PacketSender.SendEntityDataToProximity(this);
+                }
+
                 if (Client == null) //Client logged out
                 {
                     if (CombatTimer < Timing.Global.Milliseconds)
@@ -1074,6 +1123,7 @@ public partial class Player : Entity
         packet = base.EntityPacket(packet, forPlayer);
 
         var pkt = (PlayerEntityPacket)packet;
+        pkt.IsAfk = _isAfk;
         pkt.Gender = Gender;
         pkt.ClassId = ClassId;
         pkt.Appearance = Appearance?.SanitizedCopy() ?? new CharacterAppearance();
