@@ -17,65 +17,222 @@ public partial class FrmTime : Form
 
     private DaylightCycleDescriptor mYTime;
     private bool _saved;
-    private readonly DateTimePicker _sunrise = PhasePicker();
-    private readonly DateTimePicker _day = PhasePicker();
-    private readonly DateTimePicker _sunset = PhasePicker();
-    private readonly DateTimePicker _night = PhasePicker();
+    private bool _initializing;
+    private bool _updatingList;
+    private bool _updatingPhaseCheckboxes;
 
-    private static DateTimePicker PhasePicker() => new()
+    private readonly DarkCheckBox _sunrise = PhaseCheckbox("Sunrise");
+    private readonly DarkCheckBox _day = PhaseCheckbox("Day");
+    private readonly DarkCheckBox _sunset = PhaseCheckbox("Sunset");
+    private readonly DarkCheckBox _night = PhaseCheckbox("Night");
+
+    private Label _selectedRangeLabel;
+    private Label _phaseCountsLabel;
+    private readonly List<string> _timeLabels = [];
+
+    private static DarkCheckBox PhaseCheckbox(string text) => new()
     {
-        Width = 105, Format = DateTimePickerFormat.Custom,
-        CustomFormat = "HH:mm", ShowUpDown = true,
+        Text = text,
+        AutoSize = false,
+        Size = new Size(155, 25),
+        ForeColor = System.Drawing.Color.Gainsboro,
+        BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
     };
-
-    private static int Minutes(DateTimePicker picker) => picker.Value.Hour * 60 + picker.Value.Minute;
-    private static void SetMinutes(DateTimePicker picker, int minutes) =>
-        picker.Value = DateTime.Today.AddMinutes(Math.Clamp(minutes, 0, 1439));
 
     private void InitializePhases()
     {
+        // Room for the original time list, the overlay tools, and one compact
+        // phase selector for the currently selected time interval.
         AutoSize = false;
-        ClientSize = new Size(940, 370);
-        MinimumSize = new Size(960, 410);
-        btnSave.Location = new System.Drawing.Point(693, 333);
-        btnCancel.Location = new System.Drawing.Point(814, 333);
+        ClientSize = new Size(1034, 370);
+        MinimumSize = new Size(1050, 410);
+        lstTimes.Size = new Size(292, 275);
+        grpSettings.Location = new System.Drawing.Point(322, 25);
+        grpRangeOptions.Location = new System.Drawing.Point(322, 206);
+        btnSave.Location = new System.Drawing.Point(780, 333);
+        btnCancel.Location = new System.Drawing.Point(905, 333);
+
         var box = new DarkGroupBox
         {
-            Text = "Day Phases  |  Sunrise / Day / Sunset / Night",
+            Text = "Phase for Selected Time Range",
             BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
             BorderColor = System.Drawing.Color.FromArgb(90, 90, 90),
             ForeColor = System.Drawing.Color.Gainsboro,
             Location = new System.Drawing.Point(615, 25),
-            Size = new Size(313, 300),
+            Size = new Size(408, 300),
         };
+
+        _selectedRangeLabel = new Label
+        {
+            Text = "Select a time range on the left.",
+            ForeColor = System.Drawing.Color.Khaki,
+            Location = new System.Drawing.Point(16, 28),
+            Size = new Size(376, 31),
+        };
+        box.Controls.Add(_selectedRangeLabel);
         box.Controls.Add(new Label
         {
-            Text = "Start time of each phase:", ForeColor = System.Drawing.Color.Gainsboro,
-            Location = new System.Drawing.Point(14, 30), AutoSize = true,
+            Text = "Select one phase for this time range:",
+            ForeColor = System.Drawing.Color.Gainsboro,
+            Location = new System.Drawing.Point(16, 65),
+            Size = new Size(373, 19),
         });
 
-        void Row(string label, DateTimePicker picker, int y)
+        var options = new (DarkCheckBox Check, DayPhase Phase, int X, int Y)[]
         {
-            box.Controls.Add(new Label
-            {
-                Text = label, ForeColor = System.Drawing.Color.Gainsboro,
-                Location = new System.Drawing.Point(16, y + 3), Size = new Size(135, 24),
-            });
-            picker.Location = new System.Drawing.Point(167, y);
-            box.Controls.Add(picker);
+            (_sunrise, DayPhase.Sunrise, 20, 101),
+            (_day, DayPhase.Day, 210, 101),
+            (_sunset, DayPhase.Sunset, 20, 145),
+            (_night, DayPhase.Night, 210, 145),
+        };
+        foreach (var (check, phase, x, y) in options)
+        {
+            check.Location = new System.Drawing.Point(x, y);
+            check.Enabled = false;
+            check.CheckedChanged += (_, _) => PhaseCheckboxChanged(check, phase);
+            box.Controls.Add(check);
         }
 
-        Row("Sunrise", _sunrise, 68);
-        Row("Day", _day, 111);
-        Row("Sunset", _sunset, 154);
-        Row("Night", _night, 197);
+        _phaseCountsLabel = new Label
+        {
+            Text = string.Empty,
+            ForeColor = System.Drawing.Color.LightSteelBlue,
+            Location = new System.Drawing.Point(16, 193),
+            Size = new Size(377, 39),
+        };
+        box.Controls.Add(_phaseCountsLabel);
         box.Controls.Add(new Label
         {
-            Text = "Night continues through midnight. Keep the phase starts in chronological order.",
+            Text = "Each time range has exactly one phase. You can repeat " +
+                   "Night, Day, Sunrise or Sunset as often as you want.",
             ForeColor = System.Drawing.Color.Silver,
-            Location = new System.Drawing.Point(16, 243), Size = new Size(279, 45),
+            Location = new System.Drawing.Point(16, 241),
+            Size = new Size(376, 44),
         });
+
         Controls.Add(box);
+    }
+
+    private void PhaseCheckboxChanged(DarkCheckBox checkbox, DayPhase phase)
+    {
+        if (_initializing || _updatingPhaseCheckboxes ||
+            mYTime == null || lstTimes.SelectedIndex < 0)
+            return;
+
+        // Checkboxes behave like an exclusive selection: every slot always has
+        // exactly one phase. Unchecking the active option keeps it selected.
+        if (!checkbox.Checked)
+        {
+            RefreshPhaseCheckboxes();
+            return;
+        }
+
+        var index = lstTimes.SelectedIndex;
+        mYTime.DayPhases ??= new DayPhaseSchedule();
+        mYTime.DayPhases.ConfigureIntervals(mYTime.RangeInterval);
+        mYTime.DayPhases.SetPhaseForInterval(index, phase);
+        RefreshTimeSlotText(index);
+        RefreshPhaseCheckboxes();
+    }
+
+    private void RefreshPhaseCheckboxes()
+    {
+        if (_updatingPhaseCheckboxes)
+            return;
+
+        _updatingPhaseCheckboxes = true;
+        try
+        {
+            var index = lstTimes.SelectedIndex;
+            var ready = mYTime?.DayPhases != null &&
+                        index >= 0 && index < _timeLabels.Count;
+
+            _selectedRangeLabel.Text = ready
+                ? _timeLabels[index]
+                : "Select a time range on the left.";
+
+            var selected = ready
+                ? mYTime.DayPhases.GetPhaseAtMinute(index * mYTime.RangeInterval)
+                : DayPhase.Night;
+
+            foreach (var (check, phase) in new[]
+            {
+                (_sunrise, DayPhase.Sunrise),
+                (_day, DayPhase.Day),
+                (_sunset, DayPhase.Sunset),
+                (_night, DayPhase.Night),
+            })
+            {
+                check.Enabled = ready;
+                check.Checked = ready && selected == phase;
+            }
+
+            if (mYTime?.DayPhases?.IntervalPhases is { } phases)
+            {
+                _phaseCountsLabel.Text =
+                    $"Ranges: Sunrise {phases.Count(p => p == DayPhase.Sunrise)}   " +
+                    $"Day {phases.Count(p => p == DayPhase.Day)}\n" +
+                    $"Sunset {phases.Count(p => p == DayPhase.Sunset)}   " +
+                    $"Night {phases.Count(p => p == DayPhase.Night)}";
+            }
+            else
+            {
+                _phaseCountsLabel.Text = string.Empty;
+            }
+        }
+        finally
+        {
+            _updatingPhaseCheckboxes = false;
+        }
+    }
+
+    private string TimeSlotText(int index)
+    {
+        var minute = index * mYTime.RangeInterval;
+        var phase = mYTime.DayPhases.GetPhaseAtMinute(minute);
+        return _timeLabels[index] + "  [" + phase + "]";
+    }
+
+    private void RefreshTimeSlotText(int index)
+    {
+        if (index < 0 || index >= _timeLabels.Count)
+            return;
+
+        var top = lstTimes.TopIndex;
+        _updatingList = true;
+        try
+        {
+            lstTimes.Items[index] = TimeSlotText(index);
+            lstTimes.SelectedIndex = index;
+            lstTimes.TopIndex = top;
+        }
+        finally
+        {
+            _updatingList = false;
+        }
+    }
+
+    private static Intersect.Color[] ResampleOverlay(
+        Intersect.Color[]? previous, int previousMinutes, int newMinutes)
+    {
+        var newColors = new Intersect.Color[1440 / newMinutes];
+        for (var index = 0; index < newColors.Length; index++)
+        {
+            var original = previousMinutes > 0
+                ? index * newMinutes / previousMinutes
+                : -1;
+
+            var source = previous != null && original >= 0 && original < previous.Length
+                ? previous[original]
+                : null;
+
+            // The tint colors are mutable objects: never share one instance
+            // between multiple new intervals.
+            newColors[index] = source == null
+                ? new Intersect.Color(255, 255, 255, 255)
+                : new Intersect.Color(source);
+        }
+        return newColors;
     }
 
     public FrmTime()
@@ -109,52 +266,92 @@ public partial class FrmTime : Form
 
     public void InitEditor(DaylightCycleDescriptor time)
     {
-        //Create a backup in case we want to revert
+        // Back up all values so Cancel restores the previous phase assignments,
+        // interval, and tint colors without persisting any accidental edits.
         mYTime = time;
         mBackupTime = new DaylightCycleDescriptor();
         mBackupTime.LoadFromJson(time.GetInstanceJson());
 
         mTileBackbuffer = new Bitmap(pnlColor.Width, pnlColor.Height);
-        UpdateList(DaylightCycleDescriptor.GetTimeInterval(cmbIntervals.SelectedIndex));
         typeof(Panel).InvokeMember(
-            "DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null,
-            pnlColor, new object[] {true}
+            "DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance |
+            BindingFlags.NonPublic, null, pnlColor, new object[] { true }
         );
 
-        chkSync.Checked = mYTime.SyncTime;
-        txtTimeRate.Text = mYTime.Rate.ToString();
-        cmbIntervals.SelectedIndex = DaylightCycleDescriptor.GetIntervalIndex(mYTime.RangeInterval);
-        UpdateList(mYTime.RangeInterval);
-        txtTimeRate.Enabled = !mYTime.SyncTime;
-        var phases = mYTime.DayPhases ?? new DayPhaseSchedule();
-        SetMinutes(_sunrise, phases.SunriseStartMinutes);
-        SetMinutes(_day, phases.DayStartMinutes);
-        SetMinutes(_sunset, phases.SunsetStartMinutes);
-        SetMinutes(_night, phases.NightStartMinutes);
+        _initializing = true;
+        try
+        {
+            chkSync.Checked = mYTime.SyncTime;
+            txtTimeRate.Text = mYTime.Rate.ToString();
+            cmbIntervals.SelectedIndex =
+                DaylightCycleDescriptor.GetIntervalIndex(mYTime.RangeInterval);
+            txtTimeRate.Enabled = !mYTime.SyncTime;
+        }
+        finally
+        {
+            _initializing = false;
+        }
+
+        mYTime.DayPhases ??= new DayPhaseSchedule();
+        mYTime.DayPhases.ConfigureIntervals(mYTime.RangeInterval);
+
+        if (mYTime.DaylightHues?.Length != 1440 / mYTime.RangeInterval)
+            mYTime.DaylightHues = ResampleOverlay(mYTime.DaylightHues,
+                mYTime.RangeInterval, mYTime.RangeInterval);
+
+        UpdateList(mYTime.RangeInterval, 0);
     }
 
     private void cmbIntervals_SelectedIndexChanged(object sender, EventArgs e)
     {
-        if (mYTime.RangeInterval != DaylightCycleDescriptor.GetTimeInterval(cmbIntervals.SelectedIndex))
-        {
-            mYTime.RangeInterval = DaylightCycleDescriptor.GetTimeInterval(cmbIntervals.SelectedIndex);
-            UpdateList(mYTime.RangeInterval);
-            mYTime.ResetColors();
-            grpRangeOptions.Hide();
-        }
+        if (_initializing || mYTime == null || cmbIntervals.SelectedIndex < 0)
+            return;
+
+        var newInterval = DaylightCycleDescriptor.GetTimeInterval(cmbIntervals.SelectedIndex);
+        if (mYTime.RangeInterval == newInterval)
+            return;
+
+        var oldInterval = mYTime.RangeInterval;
+        var selectedMinute = Math.Max(0, lstTimes.SelectedIndex) * oldInterval;
+        var resampledColors = ResampleOverlay(mYTime.DaylightHues, oldInterval, newInterval);
+
+        mYTime.DayPhases ??= new DayPhaseSchedule();
+        mYTime.DayPhases.ConfigureIntervals(newInterval);
+        mYTime.RangeInterval = newInterval;
+        mYTime.DaylightHues = resampledColors;
+        UpdateList(newInterval, selectedMinute);
     }
 
-    private void UpdateList(int duration)
+    private void UpdateList(int duration, int selectedMinute = 0)
     {
-        lstTimes.Items.Clear();
-        var time = new DateTime(2000, 1, 1, 0, 0, 0);
-        for (var i = 0; i < 1440; i += duration)
+        if (mYTime == null || duration <= 0)
+            return;
+
+        _updatingList = true;
+        lstTimes.BeginUpdate();
+        try
         {
-            var addRange = time.ToString("h:mm:ss tt") + " " + Strings.TimeEditor.to + " ";
-            time = time.AddMinutes(duration);
-            addRange += time.ToString("h:mm:ss tt");
-            lstTimes.Items.Add(addRange);
+            lstTimes.Items.Clear();
+            _timeLabels.Clear();
+            var time = new DateTime(2000, 1, 1, 0, 0, 0);
+            for (var minute = 0; minute < 1440; minute += duration)
+            {
+                var start = time.ToString("h:mm tt");
+                time = time.AddMinutes(duration);
+                var label = start + " - " + time.ToString("h:mm tt");
+                _timeLabels.Add(label);
+                lstTimes.Items.Add(TimeSlotText(_timeLabels.Count - 1));
+            }
+
+            lstTimes.SelectedIndex = Math.Clamp(selectedMinute / duration, 0, lstTimes.Items.Count - 1);
         }
+        finally
+        {
+            lstTimes.EndUpdate();
+            _updatingList = false;
+        }
+
+        lstTimes_SelectedIndexChanged(lstTimes, EventArgs.Empty);
     }
 
     private void pnlColor_DoubleClick(object sender, EventArgs e)
@@ -194,6 +391,10 @@ public partial class FrmTime : Form
 
     private void lstTimes_SelectedIndexChanged(object sender, EventArgs e)
     {
+        if (_updatingList || _initializing || mYTime == null)
+            return;
+
+        RefreshPhaseCheckboxes();
         if (lstTimes.SelectedIndex == -1)
         {
             grpRangeOptions.Hide();
@@ -230,20 +431,8 @@ public partial class FrmTime : Form
 
     private void btnSave_Click(object sender, EventArgs e)
     {
-        var phases = new DayPhaseSchedule
-        {
-            SunriseStartMinutes = Minutes(_sunrise),
-            DayStartMinutes = Minutes(_day),
-            SunsetStartMinutes = Minutes(_sunset),
-            NightStartMinutes = Minutes(_night),
-        };
-        if (!phases.IsValid)
-        {
-            MessageBox.Show(this, "Expected Sunrise < Day < Sunset < Night; each phase must have a duration.",
-                "Invalid day phases", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-        mYTime.DayPhases = phases;
+        mYTime.DayPhases ??= new DayPhaseSchedule();
+        mYTime.DayPhases.ConfigureIntervals(mYTime.RangeInterval);
         PacketSender.SendSaveTime(mYTime.GetInstanceJson());
         _saved = true;
         Hide();
