@@ -65,7 +65,10 @@ public sealed class WikiController : IntersectController
         string? EquipmentSlot = null,
         int? Level = null,
         bool? IsBoss = null,
-        bool? IsPet = null
+        bool? IsPet = null,
+        string? QuestCategory = null,
+        int? QuestTaskCount = null,
+        bool? Repeatable = null
     );
 
     public sealed record WikiCatalogEntry(string Slug, string Type, string Label);
@@ -212,7 +215,11 @@ public sealed class WikiController : IntersectController
         long? Health,
         long? MaximumHealth,
         DateTimeOffset? ExpiresAt,
-        int ParticipantCount
+        int ParticipantCount,
+        string? NpcImageUrl,
+        int MinimumRewardPercent,
+        int MaximumRewardPercent,
+        IReadOnlyList<DateTimeOffset> UpcomingSpawns
     );
 
     public sealed record WikiWorldBossResponse(
@@ -301,7 +308,10 @@ public sealed class WikiController : IntersectController
         int Quantity,
         string Description,
         bool NavigationEnabled,
-        string? GuideResource
+        string? GuideResource,
+        string? TargetType,
+        string? TargetImageUrl,
+        IReadOnlyList<string> TargetLocations
     );
 
     public sealed record WikiQuestDetail(
@@ -315,7 +325,9 @@ public sealed class WikiController : IntersectController
         bool Quitable,
         IReadOnlyList<string> Locations,
         IReadOnlyList<WikiQuestTask> Tasks,
-        IReadOnlyList<string> Rewards
+        IReadOnlyList<string> Rewards,
+        bool HasRequirements,
+        string CompletedCategory
     );
 
 
@@ -1007,7 +1019,10 @@ public sealed class WikiController : IntersectController
                 task.ShowNavigationArrow,
                 task.GuideResourceId != Guid.Empty
                     ? ResourceDescriptor.GetName(task.GuideResourceId)
-                    : null
+                    : null,
+                QuestTaskTargetType(task),
+                QuestTaskTargetImage(task),
+                QuestTaskTargetLocations(task)
             ))
             .ToArray();
 
@@ -1026,7 +1041,9 @@ public sealed class WikiController : IntersectController
             quest.Quitable,
             locations ?? [],
             tasks,
-            ExtractQuestRewards(quest)
+            ExtractQuestRewards(quest),
+            quest.Requirements?.Lists?.Any(list => list.Conditions?.Count > 0) == true,
+            quest.CompletedCategory ?? string.Empty
         ));
     }
 
@@ -1188,7 +1205,11 @@ public sealed class WikiController : IntersectController
                     isActive
                         ? DateTimeOffset.FromUnixTimeMilliseconds(status.ExpiresAtUnixMilliseconds).ToLocalTime()
                         : null,
-                    isActive ? status.ParticipantCount : 0
+                    isActive ? status.ParticipantCount : 0,
+                    npc != null ? NpcPreviewUrl(npc) : null,
+                    definition.MinimumRewardPercent,
+                    definition.MaximumRewardPercent,
+                    WorldBossUpcomingOccurrences(definition, now)
                 );
             })
             .OrderByDescending(entry => entry.Active)
@@ -1225,6 +1246,29 @@ public sealed class WikiController : IntersectController
         }
 
         return null;
+    }
+
+    private static IReadOnlyList<DateTimeOffset> WorldBossUpcomingOccurrences(
+        WorldBossDefinition definition, DateTimeOffset now
+    )
+    {
+        var result = new List<DateTimeOffset>(8);
+        for (var offset = 0; offset < 8; offset++)
+        {
+            var localTime = now.Date.AddDays(offset)
+                .AddHours(definition.StartHour)
+                .AddMinutes(definition.StartMinute);
+            if (!definition.RunsOn(localTime.DayOfWeek) ||
+                TimeZoneInfo.Local.IsInvalidTime(localTime))
+                continue;
+
+            var occurrence = new DateTimeOffset(
+                localTime, TimeZoneInfo.Local.GetUtcOffset(localTime));
+            if (occurrence >= now)
+                result.Add(occurrence);
+        }
+
+        return result;
     }
 
     private static IReadOnlyList<string> WorldBossScheduleDays(WorldBossDefinition definition)
@@ -1486,7 +1530,11 @@ public sealed class WikiController : IntersectController
                 quest.Id,
                 quest.Name,
                 quest.Type.ToString(),
-                QuestSummarySubtitle(quest, questLocationIndex)
+                QuestSummarySubtitle(quest, questLocationIndex),
+                QuestCategory: !string.IsNullOrWhiteSpace(quest.InProgressCategory)
+                    ? quest.InProgressCategory : quest.UnstartedCategory,
+                QuestTaskCount: quest.Tasks?.Count ?? 0,
+                Repeatable: quest.Repeatable
             ),
 
             _ => new WikiGameObjectSummary(value.Id, value.Name, value.Type.ToString())
@@ -1696,6 +1744,49 @@ public sealed class WikiController : IntersectController
                 string.IsNullOrWhiteSpace(task.TargetName) ? null : task.TargetName,
             _ => string.IsNullOrWhiteSpace(task.TargetName) ? null : task.TargetName,
         };
+
+    private static string? QuestTaskTargetType(QuestTaskDescriptor task) =>
+        task.Objective switch
+        {
+            QuestObjective.GatherItems => "Item",
+            QuestObjective.KillNpcs => "Npc",
+            _ => null,
+        };
+
+    private static string? QuestTaskTargetImage(QuestTaskDescriptor task) =>
+        task.Objective switch
+        {
+            QuestObjective.GatherItems => ItemDescriptor.Get(task.TargetId)?.ImageUrl,
+            QuestObjective.KillNpcs => NPCDescriptor.Get(task.TargetId) is { } npc
+                ? NpcPreviewUrl(npc)
+                : null,
+            _ => null,
+        };
+
+    // Map editor spawns are discoverable. Scripted events and dungeon instances
+    // cannot be safely inferred and are intentionally excluded from hints.
+    private static IReadOnlyList<string> QuestTaskTargetLocations(QuestTaskDescriptor task)
+    {
+        if (task.Objective != QuestObjective.KillNpcs || task.TargetId == Guid.Empty)
+            return [];
+
+        var mapSpawns = MapDescriptor.Lookup.Values
+            .OfType<MapDescriptor>()
+            .Where(map => map.Spawns?.Any(spawn => spawn.NpcId == task.TargetId) == true)
+            .Select(map => map.Name);
+
+        var worldBossMaps = WorldBossConfigurationRuntime.Current.Bosses
+            .Where(definition => definition.Enabled && definition.NpcId == task.TargetId)
+            .Select(definition => MapDescriptor.Lookup.TryGetValue(definition.MapId, out var map) &&
+                                  map is MapDescriptor descriptor ? descriptor.Name : null)
+            .OfType<string>();
+
+        return mapSpawns.Concat(worldBossMaps)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+            .Take(12)
+            .ToArray();
+    }
 
     private static Dictionary<Guid, IReadOnlyList<string>> BuildQuestLocationIndex()
     {
