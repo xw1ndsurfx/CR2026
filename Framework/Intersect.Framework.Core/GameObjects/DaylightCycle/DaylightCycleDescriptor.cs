@@ -32,6 +32,19 @@ public partial class DaylightCycleDescriptor
 
     public bool SyncTime { get; set; } = true;
 
+    [NotMapped]
+    public DayPhaseSchedule DayPhases { get; set; } = new();
+
+    [JsonIgnore]
+    [Column("DayPhases")]
+    public string DayPhasesJson
+    {
+        get => JsonConvert.SerializeObject(DayPhases ?? new DayPhaseSchedule());
+        protected set => DayPhases = string.IsNullOrWhiteSpace(value)
+            ? new DayPhaseSchedule()
+            : JsonConvert.DeserializeObject<DayPhaseSchedule>(value) ?? new DayPhaseSchedule();
+    }
+
     public void LoadFromJson(string json)
     {
         JsonConvert.PopulateObject(json, this);

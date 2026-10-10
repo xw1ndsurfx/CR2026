@@ -36,6 +36,7 @@ public partial class EventCommandConditionalBranch : UserControl
     private readonly ConditionControl_QuestInProgress _questInProgressControl;
     private readonly ConditionControl_SelfSwitch _selfSwitchControl;
     private readonly ConditionControl_TimeBetween _timeBetweenControl;
+    private readonly ConditionControl_TimeAndDate _calendarControl;
     private readonly ConditionControl_Variable _variableControl;
 
     public EventCommandConditionalBranch(
@@ -73,6 +74,7 @@ public partial class EventCommandConditionalBranch : UserControl
         _questInProgressControl = new();
         _selfSwitchControl = new();
         _timeBetweenControl = new();
+        _calendarControl = new();
         _variableControl = new(this);
 
         pnlConditionControl.Controls.Add(_equippedItemControl);
@@ -94,6 +96,7 @@ public partial class EventCommandConditionalBranch : UserControl
         pnlConditionControl.Controls.Add(_questInProgressControl);
         pnlConditionControl.Controls.Add(_selfSwitchControl);
         pnlConditionControl.Controls.Add(_timeBetweenControl);
+        pnlConditionControl.Controls.Add(_calendarControl);
         pnlConditionControl.Controls.Add(_variableControl);
 
         InitLocalization();
@@ -115,6 +118,12 @@ public partial class EventCommandConditionalBranch : UserControl
             cmbConditionType.SelectedItem = "Profession Level";
         else if (Condition.Type == ConditionType.PremiumStatus)
             cmbConditionType.SelectedItem = "Premium...";
+        else if (Condition.Type == ConditionType.TimePhase)
+            cmbConditionType.SelectedItem = "Time Phase...";
+        else if (Condition.Type == ConditionType.ClockTime)
+            cmbConditionType.SelectedItem = "Clock Time...";
+        else if (Condition.Type == ConditionType.CalendarDate)
+            cmbConditionType.SelectedItem = "Calendar Date...";
 
         chkNegated.Checked = refCommand.Negated;
         chkHasElse.Checked = refCommand.ElseEnabled;
@@ -134,6 +143,9 @@ public partial class EventCommandConditionalBranch : UserControl
         }
         cmbConditionType.Items.Add("Profession Level");
         cmbConditionType.Items.Add("Premium...");
+        cmbConditionType.Items.Add("Time Phase...");
+        cmbConditionType.Items.Add("Clock Time...");
+        cmbConditionType.Items.Add("Calendar Date...");
 
         chkNegated.Text = Strings.EventConditional.negated;
         chkHasElse.Text = Strings.EventConditional.HasElse;
@@ -163,6 +175,7 @@ public partial class EventCommandConditionalBranch : UserControl
         _questInProgressControl.Hide();
         _selfSwitchControl.Hide();
         _timeBetweenControl.Hide();
+        _calendarControl.Hide();
         _variableControl.Hide();
 
         switch (type)
@@ -245,6 +258,12 @@ public partial class EventCommandConditionalBranch : UserControl
 
             case ConditionType.TimeBetween:
                 _timeBetweenControl.Show();
+                break;
+
+            case ConditionType.TimePhase:
+            case ConditionType.ClockTime:
+            case ConditionType.CalendarDate:
+                _calendarControl.ShowFor(type);
                 break;
 
             case ConditionType.VariableIs:
@@ -343,6 +362,16 @@ public partial class EventCommandConditionalBranch : UserControl
                 _timeBetweenControl.SetupFormValues(timeBetweenCondition);
                 break;
 
+            case TimePhaseCondition phase:
+                _calendarControl.SetupFormValues(phase);
+                break;
+            case ClockTimeCondition clock:
+                _calendarControl.SetupFormValues(clock);
+                break;
+            case CalendarDateCondition date:
+                _calendarControl.SetupFormValues(date);
+                break;
+
             case VariableIsCondition variableIsCondition:
                 _variableControl.SetupFormValues(variableIsCondition);
                 break;
@@ -439,6 +468,16 @@ public partial class EventCommandConditionalBranch : UserControl
                 _timeBetweenControl.SaveFormValues(timeBetweenCondition);
                 break;
 
+            case TimePhaseCondition phase:
+                _calendarControl.SaveFormValues(phase);
+                break;
+            case ClockTimeCondition clock:
+                _calendarControl.SaveFormValues(clock);
+                break;
+            case CalendarDateCondition date:
+                _calendarControl.SaveFormValues(date);
+                break;
+
             case VariableIsCondition variableIsCondition:
                 _variableControl.SaveFormValues(variableIsCondition);
                 break;
@@ -485,11 +524,15 @@ public partial class EventCommandConditionalBranch : UserControl
 
     private void cmbConditionType_SelectedIndexChanged(object sender, EventArgs e)
     {
-        var conditionType = string.Equals(cmbConditionType.Text, "Profession Level", StringComparison.Ordinal)
-            ? ConditionType.ProfessionLevel
-            : string.Equals(cmbConditionType.Text, "Premium...", StringComparison.Ordinal)
-                ? ConditionType.PremiumStatus
-                : Strings.EventConditional.conditions.FirstOrDefault(x => x.Value == cmbConditionType.Text).Key;
+        var conditionType = cmbConditionType.Text switch
+        {
+            "Profession Level" => ConditionType.ProfessionLevel,
+            "Premium..." => ConditionType.PremiumStatus,
+            "Time Phase..." => ConditionType.TimePhase,
+            "Clock Time..." => ConditionType.ClockTime,
+            "Calendar Date..." => ConditionType.CalendarDate,
+            _ => Strings.EventConditional.conditions.FirstOrDefault(x => x.Value == cmbConditionType.Text).Key,
+        };
 
         if (conditionType < ConditionType.HasItem && conditionType != ConditionType.VariableIs)
             conditionType = ConditionType.VariableIs;
@@ -582,6 +625,15 @@ public partial class EventCommandConditionalBranch : UserControl
 
                 case ConditionType.TimeBetween:
                     Condition = new TimeBetweenCondition();
+                    break;
+                case ConditionType.TimePhase:
+                    Condition = new TimePhaseCondition();
+                    break;
+                case ConditionType.ClockTime:
+                    Condition = new ClockTimeCondition();
+                    break;
+                case ConditionType.CalendarDate:
+                    Condition = new CalendarDateCondition();
                     break;
 
                 case ConditionType.IsInCombat:
