@@ -41,76 +41,197 @@ public partial class FrmTime : Form
 
     private void InitializePhases()
     {
-        // Room for the original time list, the overlay tools, and one compact
-        // phase selector for the currently selected time interval.
-        AutoSize = false;
-        ClientSize = new Size(1034, 370);
-        MinimumSize = new Size(1050, 410);
-        lstTimes.Size = new Size(292, 275);
-        grpSettings.Location = new System.Drawing.Point(322, 25);
-        grpRangeOptions.Location = new System.Drawing.Point(322, 206);
-        btnSave.Location = new System.Drawing.Point(780, 333);
-        btnCancel.Location = new System.Drawing.Point(905, 333);
+        // Use docked columns instead of pixel offsets: WinForms font/DPI
+        // scaling previously made the phase group overlap Time Settings,
+        // hiding the beginning of its caption.
+        SuspendLayout();
+        try
+        {
+            AutoSize = false;
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(1150, 470);
+            MinimumSize = new Size(1010, 465);
 
-        var box = new DarkGroupBox
-        {
-            Text = "Phase for Selected Time Range",
-            BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
-            BorderColor = System.Drawing.Color.FromArgb(90, 90, 90),
-            ForeColor = System.Drawing.Color.Gainsboro,
-            Location = new System.Drawing.Point(615, 25),
-            Size = new Size(408, 300),
-        };
+            // Reparent existing designer controls without recreating their
+            // event bindings or disturbing overlay, rate and sync logic.
+            Controls.Clear();
 
-        _selectedRangeLabel = new Label
-        {
-            Text = "Select a time range on the left.",
-            ForeColor = System.Drawing.Color.Khaki,
-            Location = new System.Drawing.Point(16, 28),
-            Size = new Size(376, 31),
-        };
-        box.Controls.Add(_selectedRangeLabel);
-        box.Controls.Add(new Label
-        {
-            Text = "Select one phase for this time range:",
-            ForeColor = System.Drawing.Color.Gainsboro,
-            Location = new System.Drawing.Point(16, 65),
-            Size = new Size(373, 19),
-        });
+            var footer = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 59,
+                FlowDirection = FlowDirection.RightToLeft,
+                WrapContents = false,
+                Padding = new Padding(14, 10, 14, 9),
+                BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
+            };
+            btnCancel.Size = new Size(130, 34);
+            btnSave.Size = new Size(130, 34);
+            btnCancel.Margin = new Padding(6, 0, 0, 0);
+            btnSave.Margin = new Padding(6, 0, 0, 0);
+            footer.Controls.Add(btnCancel);
+            footer.Controls.Add(btnSave);
 
-        var options = new (DarkCheckBox Check, DayPhase Phase, int X, int Y)[]
-        {
-            (_sunrise, DayPhase.Sunrise, 20, 101),
-            (_day, DayPhase.Day, 210, 101),
-            (_sunset, DayPhase.Sunset, 20, 145),
-            (_night, DayPhase.Night, 210, 145),
-        };
-        foreach (var (check, phase, x, y) in options)
-        {
-            check.Location = new System.Drawing.Point(x, y);
-            check.Enabled = false;
-            check.CheckedChanged += (_, _) => PhaseCheckboxChanged(check, phase);
-            box.Controls.Add(check);
+            var columns = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 3,
+                RowCount = 1,
+                Padding = new Padding(14, 12, 14, 4),
+                BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
+            };
+            columns.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 27));
+            columns.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 31));
+            columns.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42));
+            columns.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+            var times = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                RowCount = 2,
+                ColumnCount = 1,
+                Margin = new Padding(0, 0, 12, 0),
+            };
+            times.RowStyles.Add(new RowStyle(SizeType.Absolute, 27));
+            times.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            lblTimes.Dock = DockStyle.Fill;
+            lblTimes.TextAlign = ContentAlignment.MiddleLeft;
+            lstTimes.Dock = DockStyle.Fill;
+            lstTimes.IntegralHeight = false;
+            times.Controls.Add(lblTimes, 0, 0);
+            times.Controls.Add(lstTimes, 0, 1);
+
+            var settings = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 3,
+                Margin = new Padding(0, 8, 12, 0),
+            };
+            settings.RowStyles.Add(new RowStyle(SizeType.Absolute, 192));
+            settings.RowStyles.Add(new RowStyle(SizeType.Absolute, 127));
+            settings.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            grpSettings.Dock = DockStyle.Fill;
+            grpSettings.Margin = new Padding(0, 0, 0, 9);
+            grpRangeOptions.Dock = DockStyle.Fill;
+            grpRangeOptions.Margin = new Padding(0, 0, 0, 0);
+            settings.Controls.Add(grpSettings, 0, 0);
+            settings.Controls.Add(grpRangeOptions, 0, 1);
+
+            var box = new DarkGroupBox
+            {
+                Text = "Day Phase - Selected Time Range",
+                BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
+                BorderColor = System.Drawing.Color.FromArgb(90, 90, 90),
+                ForeColor = System.Drawing.Color.Gainsboro,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0, 8, 0, 0),
+            };
+
+            var phaseLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 7,
+                Padding = new Padding(14, 20, 14, 12),
+                BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
+            };
+            phaseLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            phaseLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            phaseLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            phaseLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+            phaseLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            phaseLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            phaseLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 18));
+            phaseLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 69));
+            phaseLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+            _selectedRangeLabel = new Label
+            {
+                Text = "Select a time range on the left.",
+                Dock = DockStyle.Fill,
+                AutoEllipsis = true,
+                Font = new Font(Font, FontStyle.Bold),
+                ForeColor = System.Drawing.Color.Khaki,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(4, 0, 4, 1),
+            };
+            phaseLayout.Controls.Add(_selectedRangeLabel, 0, 0);
+            phaseLayout.SetColumnSpan(_selectedRangeLabel, 2);
+
+            var instruction = new Label
+            {
+                Text = "Choose one phase for the selected range:",
+                Dock = DockStyle.Fill,
+                ForeColor = System.Drawing.Color.Gainsboro,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(4, 0, 0, 0),
+            };
+            phaseLayout.Controls.Add(instruction, 0, 1);
+            phaseLayout.SetColumnSpan(instruction, 2);
+
+            var choices = new (DarkCheckBox Check, DayPhase Phase, int X, int Y)[]
+            {
+                (_sunrise, DayPhase.Sunrise, 0, 2),
+                (_day, DayPhase.Day, 1, 2),
+                (_sunset, DayPhase.Sunset, 0, 3),
+                (_night, DayPhase.Night, 1, 3),
+            };
+            foreach (var (check, phase, column, row) in choices)
+            {
+                check.Dock = DockStyle.Fill;
+                check.Margin = new Padding(6, 4, 5, 4);
+                check.Enabled = false;
+                check.CheckedChanged += (_, _) => PhaseCheckboxChanged(check, phase);
+                phaseLayout.Controls.Add(check, column, row);
+            }
+
+            var summaryTitle = new Label
+            {
+                Text = "RANGES PER PHASE",
+                Dock = DockStyle.Fill,
+                ForeColor = System.Drawing.Color.Khaki,
+                Font = new Font(Font, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(4, 0, 0, 0),
+            };
+            phaseLayout.Controls.Add(summaryTitle, 0, 4);
+            phaseLayout.SetColumnSpan(summaryTitle, 2);
+
+            _phaseCountsLabel = new Label
+            {
+                Dock = DockStyle.Fill,
+                ForeColor = System.Drawing.Color.LightSteelBlue,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(6, 1, 6, 1),
+            };
+            phaseLayout.Controls.Add(_phaseCountsLabel, 0, 5);
+            phaseLayout.SetColumnSpan(_phaseCountsLabel, 2);
+
+            var tip = new Label
+            {
+                Text = "Each interval has one phase. You may use multiple " +
+                       "days or nights in the same 24-hour cycle.",
+                Dock = DockStyle.Fill,
+                ForeColor = System.Drawing.Color.Silver,
+                TextAlign = ContentAlignment.TopLeft,
+                Margin = new Padding(4, 5, 4, 0),
+            };
+            phaseLayout.Controls.Add(tip, 0, 6);
+            phaseLayout.SetColumnSpan(tip, 2);
+
+            box.Controls.Add(phaseLayout);
+            columns.Controls.Add(times, 0, 0);
+            columns.Controls.Add(settings, 1, 0);
+            columns.Controls.Add(box, 2, 0);
+
+            Controls.Add(columns);
+            Controls.Add(footer);
         }
-
-        _phaseCountsLabel = new Label
+        finally
         {
-            Text = string.Empty,
-            ForeColor = System.Drawing.Color.LightSteelBlue,
-            Location = new System.Drawing.Point(16, 193),
-            Size = new Size(377, 39),
-        };
-        box.Controls.Add(_phaseCountsLabel);
-        box.Controls.Add(new Label
-        {
-            Text = "Each time range has exactly one phase. You can repeat " +
-                   "Night, Day, Sunrise or Sunset as often as you want.",
-            ForeColor = System.Drawing.Color.Silver,
-            Location = new System.Drawing.Point(16, 241),
-            Size = new Size(376, 44),
-        });
-
-        Controls.Add(box);
+            ResumeLayout(performLayout: true);
+        }
     }
 
     private void PhaseCheckboxChanged(DarkCheckBox checkbox, DayPhase phase)
@@ -170,10 +291,10 @@ public partial class FrmTime : Form
             if (mYTime?.DayPhases?.IntervalPhases is { } phases)
             {
                 _phaseCountsLabel.Text =
-                    $"Ranges: Sunrise {phases.Count(p => p == DayPhase.Sunrise)}   " +
-                    $"Day {phases.Count(p => p == DayPhase.Day)}\n" +
-                    $"Sunset {phases.Count(p => p == DayPhase.Sunset)}   " +
-                    $"Night {phases.Count(p => p == DayPhase.Night)}";
+                    $"Sunrise: {phases.Count(p => p == DayPhase.Sunrise)}        " +
+                    $"Day: {phases.Count(p => p == DayPhase.Day)}\n" +
+                    $"Sunset: {phases.Count(p => p == DayPhase.Sunset)}        " +
+                    $"Night: {phases.Count(p => p == DayPhase.Night)}";
             }
             else
             {
