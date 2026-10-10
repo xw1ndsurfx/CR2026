@@ -36,21 +36,21 @@ public partial class FrmTime : Form
     {
         AutoSize = false;
         ClientSize = new Size(815, 347);
-        btnSave.Location = new Point(568, 310);
-        btnCancel.Location = new Point(689, 310);
+        btnSave.Location = new System.Drawing.Point(568, 310);
+        btnCancel.Location = new System.Drawing.Point(689, 310);
         var box = new DarkGroupBox
         {
             Text = "Day Phases",
             BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
             BorderColor = System.Drawing.Color.FromArgb(90, 90, 90),
             ForeColor = System.Drawing.Color.Gainsboro,
-            Location = new Point(529, 25),
+            Location = new System.Drawing.Point(529, 25),
             Size = new Size(274, 279),
         };
         box.Controls.Add(new Label
         {
             Text = "Start time of each phase:", ForeColor = System.Drawing.Color.Gainsboro,
-            Location = new Point(10, 26), AutoSize = true,
+            Location = new System.Drawing.Point(10, 26), AutoSize = true,
         });
 
         void Row(string label, DateTimePicker picker, int y)
@@ -58,9 +58,9 @@ public partial class FrmTime : Form
             box.Controls.Add(new Label
             {
                 Text = label, ForeColor = System.Drawing.Color.Gainsboro,
-                Location = new Point(12, y + 3), Size = new Size(120, 24),
+                Location = new System.Drawing.Point(12, y + 3), Size = new Size(120, 24),
             });
-            picker.Location = new Point(141, y);
+            picker.Location = new System.Drawing.Point(141, y);
             box.Controls.Add(picker);
         }
 
@@ -72,7 +72,7 @@ public partial class FrmTime : Form
         {
             Text = "Night continues through midnight. Keep the phase starts in chronological order.",
             ForeColor = System.Drawing.Color.Silver,
-            Location = new Point(12, 220), Size = new Size(252, 50),
+            Location = new System.Drawing.Point(12, 220), Size = new Size(252, 50),
         });
         Controls.Add(box);
     }
