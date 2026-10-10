@@ -46,4 +46,10 @@ public enum ConditionType
     ProfessionLevel = 1000,
 
     PremiumStatus = 1001,
+
+    TimePhase = 1002,
+
+    ClockTime = 1003,
+
+    CalendarDate = 1004,
 }

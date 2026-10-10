@@ -857,6 +857,10 @@ namespace Intersect.Server.Migrations.Sqlite.Game
                         .HasColumnType("TEXT")
                         .HasColumnName("DaylightHues");
 
+                    b.Property<string>("DayPhasesJson")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("DayPhases");
+
                     b.Property<int>("RangeInterval")
                         .HasColumnType("INTEGER");
 

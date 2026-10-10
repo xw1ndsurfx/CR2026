@@ -361,6 +361,36 @@ public static partial class Conditions
     }
 
     public static bool MeetsCondition(
+        TimePhaseCondition condition,
+        Player player,
+        Event eventInstance,
+        QuestDescriptor questDescriptor
+    )
+    {
+        return DaylightCycleDescriptor.Instance.DayPhases.GetPhase(Time.GetTime()) == condition.Phase;
+    }
+
+    public static bool MeetsCondition(
+        ClockTimeCondition condition,
+        Player player,
+        Event eventInstance,
+        QuestDescriptor questDescriptor
+    )
+    {
+        return condition.Matches(condition.UseRealUtcTime ? DateTime.UtcNow : Time.GetTime());
+    }
+
+    public static bool MeetsCondition(
+        CalendarDateCondition condition,
+        Player player,
+        Event eventInstance,
+        QuestDescriptor questDescriptor
+    )
+    {
+        return condition.Matches(DateTime.UtcNow);
+    }
+
+    public static bool MeetsCondition(
         TimeBetweenCondition condition,
         Player player,
         Event eventInstance,
