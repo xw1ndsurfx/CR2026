@@ -8,6 +8,7 @@ using Intersect.Enums;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.Achievements;
 using Intersect.Framework.Core.WorldEvents.Invasions;
+using Intersect.Framework.Core.WorldEvents.WorldBosses;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Crafting;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -803,5 +804,11 @@ internal sealed partial class PacketHandler
         {
             Globals.MainForm.BeginInvoke((Action)(() => Globals.MainForm.OpenInvasionEditor()));
         }
+    }
+    public void HandlePacket(IPacketSender packetSender, WorldBossConfigurationPacket packet)
+    {
+        WorldBossConfiguration.Load(packet.ConfigurationJson);
+        if (packet.OpenEditor)
+            Globals.MainForm.BeginInvoke((Action)(() => Globals.MainForm.OpenWorldBossEditor()));
     }
 }

@@ -173,6 +173,7 @@ public partial class GameInterface : MutableInterface
         _minimapHud.SendToBack();
         PacketSender.SendRequestDailyRewardState(autoOpen: true);
         PacketSender.SendRequestAchievementState(openWindow: false);
+        PacketSender.SendRequestWorldBossStatus();
     }
 
     //Chatbox
@@ -464,6 +465,7 @@ public partial class GameInterface : MutableInterface
         UpdateProfessionProgress();
         _shopWindow?.Update();
         UpdateInvasionUi();
+        UpdateWorldBossUi();
         UpdateDungeonRunUi();
         UpdateDungeonRewardNotifications();
         UpdateItemChangeNotifications();
