@@ -73,6 +73,40 @@ public sealed class WikiController : IntersectController
         IReadOnlyDictionary<string, object?> Facts
     );
 
+    // Public companion species only. Player-owned pets, nicknames, experience,
+    // equipment, and ownership data are deliberately excluded.
+    public sealed record WikiPetSummary(
+        Guid Id,
+        string Name,
+        string? ImageUrl,
+        int MaximumLevel,
+        int LootRadius,
+        int AbilityCount,
+        string? SummonItemName
+    );
+
+    public sealed record WikiPetAbility(
+        string Name,
+        string? Description,
+        int RequiredLevel,
+        string? ImageUrl
+    );
+
+    public sealed record WikiPetDetail(
+        Guid Id,
+        string Name,
+        string? ImageUrl,
+        int MaximumLevel,
+        int LootRadius,
+        long BaseHealth,
+        long BaseMana,
+        int HealthGrowth,
+        int StatGrowth,
+        string? SummonItemName,
+        IReadOnlyDictionary<string, int> BaseStats,
+        IReadOnlyList<WikiPetAbility> Abilities
+    );
+
     public sealed record WikiMapLayoutEntry(
         Guid Id,
         string Name,
@@ -683,6 +717,82 @@ public sealed class WikiController : IntersectController
             highestLevel,
             averageLevel,
             members
+        ));
+    }
+
+    [HttpGet("pets")]
+    [ProducesResponseType(typeof(IReadOnlyList<WikiPetSummary>), (int)HttpStatusCode.OK, ContentTypes.Json)]
+    public IActionResult Pets()
+    {
+        var pets = NPCDescriptor.Lookup.Values
+            .OfType<NPCDescriptor>()
+            .Where(npc => npc.IsPet)
+            .OrderBy(npc => npc.Name, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(npc => npc.Id)
+            .Select(npc =>
+            {
+                var item = ItemDescriptor.Get(npc.PetSummonItemId);
+                return new WikiPetSummary(
+                    npc.Id,
+                    npc.Name,
+                    item?.ImageUrl,
+                    Math.Clamp(npc.PetMaxLevel, 1, 200),
+                    Math.Clamp(npc.PetLootRadius, 0, 8),
+                    npc.Spells?.Count(spellId => SpellDescriptor.Get(spellId) != null) ?? 0,
+                    item?.Name
+                );
+            })
+            .ToArray();
+
+        return Ok(pets);
+    }
+
+    [HttpGet("pets/{petId:guid}")]
+    [ProducesResponseType(typeof(WikiPetDetail), (int)HttpStatusCode.OK, ContentTypes.Json)]
+    [ProducesResponseType(typeof(StatusMessageResponseBody), (int)HttpStatusCode.NotFound, ContentTypes.Json)]
+    public IActionResult PetDetail(Guid petId)
+    {
+        if (petId == Guid.Empty ||
+            !NPCDescriptor.TryGet(petId, out var pet) ||
+            pet == null || !pet.IsPet)
+            return NotFound("No published companion was found.");
+
+        var item = ItemDescriptor.Get(pet.PetSummonItemId);
+        var statNames = Enum.GetNames<Stat>();
+        var baseStats = new Dictionary<string, int>();
+        for (var index = 0; index < statNames.Length && index < pet.Stats.Length; index++)
+            baseStats[statNames[index]] = pet.Stats[index];
+
+        var abilities = (pet.Spells ?? [])
+            .Select((spellId, index) => new
+            {
+                Spell = SpellDescriptor.Get(spellId),
+                RequiredLevel = pet.GetPetSpellRequiredLevel(index)
+            })
+            .Where(entry => entry.Spell != null)
+            .Select(entry => new WikiPetAbility(
+                entry.Spell!.Name,
+                entry.Spell.Description,
+                entry.RequiredLevel,
+                entry.Spell.ImageUrl
+            ))
+            .OrderBy(entry => entry.RequiredLevel)
+            .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return Ok(new WikiPetDetail(
+            pet.Id,
+            pet.Name,
+            item?.ImageUrl,
+            Math.Clamp(pet.PetMaxLevel, 1, 200),
+            Math.Clamp(pet.PetLootRadius, 0, 8),
+            Math.Max(1L, pet.MaxVitals[(int)Vital.Health]),
+            Math.Max(0L, pet.MaxVitals[(int)Vital.Mana]),
+            Math.Max(0, pet.PetHealthGrowth),
+            Math.Max(0, pet.PetStatGrowth),
+            item?.Name,
+            baseStats,
+            abilities
         ));
     }
 
