@@ -63,7 +63,8 @@ internal static class DungeonConfigurationRuntime
                 Json,
                 BuildStatuses(now),
                 openWindow,
-                now.ToUnixTimeMilliseconds()
+                now.ToUnixTimeMilliseconds(),
+                DungeonStatisticsRuntime.BuildState(player)
             )
         );
     }

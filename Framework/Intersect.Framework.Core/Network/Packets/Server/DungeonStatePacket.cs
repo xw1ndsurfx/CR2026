@@ -36,6 +36,54 @@ public partial class DungeonStatusEntry
 }
 
 [MessagePackObject]
+public partial class DungeonPlayerStatEntry
+{
+    public DungeonPlayerStatEntry()
+    {
+    }
+
+    public DungeonPlayerStatEntry(
+        Guid dungeonId,
+        long attempts,
+        long completions,
+        long failures,
+        long deaths,
+        long bestClearTimeMilliseconds,
+        long lastCompletedUnixMilliseconds
+    )
+    {
+        DungeonId = dungeonId;
+        Attempts = attempts;
+        Completions = completions;
+        Failures = failures;
+        Deaths = deaths;
+        BestClearTimeMilliseconds = bestClearTimeMilliseconds;
+        LastCompletedUnixMilliseconds = lastCompletedUnixMilliseconds;
+    }
+
+    [Key(0)]
+    public Guid DungeonId { get; set; }
+
+    [Key(1)]
+    public long Attempts { get; set; }
+
+    [Key(2)]
+    public long Completions { get; set; }
+
+    [Key(3)]
+    public long Failures { get; set; }
+
+    [Key(4)]
+    public long Deaths { get; set; }
+
+    [Key(5)]
+    public long BestClearTimeMilliseconds { get; set; }
+
+    [Key(6)]
+    public long LastCompletedUnixMilliseconds { get; set; }
+}
+
+[MessagePackObject]
 public partial class DungeonStatePacket : IntersectPacket
 {
     public DungeonStatePacket()
@@ -46,13 +94,15 @@ public partial class DungeonStatePacket : IntersectPacket
         string configurationJson,
         DungeonStatusEntry[] statuses,
         bool openWindow,
-        long serverTimeUnixMilliseconds
+        long serverTimeUnixMilliseconds,
+        DungeonPlayerStatEntry[]? playerStats = null
     )
     {
         ConfigurationJson = configurationJson;
         Statuses = statuses;
         OpenWindow = openWindow;
         ServerTimeUnixMilliseconds = serverTimeUnixMilliseconds;
+        PlayerStats = playerStats ?? [];
     }
 
     [Key(0)]
@@ -66,4 +116,7 @@ public partial class DungeonStatePacket : IntersectPacket
 
     [Key(3)]
     public long ServerTimeUnixMilliseconds { get; set; }
+
+    [Key(4)]
+    public DungeonPlayerStatEntry[] PlayerStats { get; set; } = [];
 }
