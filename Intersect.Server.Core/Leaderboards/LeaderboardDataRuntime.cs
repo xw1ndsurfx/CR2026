@@ -43,7 +43,7 @@ internal sealed record LockpickingLeaderboardRow(
     long FastestDifficultyFiveMilliseconds
 );
 
-internal static class LeaderboardDataRuntime
+internal static partial class LeaderboardDataRuntime
 {
     private static readonly string MiniGameProgressPath =
         Path.GetFullPath(Path.Combine("resources", "minigames-test.db"));
