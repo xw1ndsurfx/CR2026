@@ -8,6 +8,7 @@ using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.GameObjects;
 using Intersect.Network.Packets.Server;
+using Intersect.Utilities;
 
 namespace Intersect.Client.Interface.Game;
 
@@ -16,6 +17,8 @@ internal sealed class DungeonPanelWindow : Window
     private readonly Label _summary;
     private readonly Label _personalSummary;
     private readonly ScrollControl _scroll;
+    private Dictionary<Guid, DungeonPodiumEntry> _podiums = [];
+    private long _nextPodiumRefreshAt;
 
     public DungeonPanelWindow(Canvas parent) : base(parent, "Dungeons", false, nameof(DungeonPanelWindow))
     {
@@ -66,6 +69,22 @@ internal sealed class DungeonPanelWindow : Window
         };
         _personalSummary.SetBounds(20, 115, 780, 20);
 
+        var refresh = new Button(this, "DungeonPanelRefresh")
+        {
+            Text = "REFRESH",
+            FontSize = 9,
+        };
+        refresh.SetBounds(685, 37, 102, 27);
+        refresh.Clicked += (_, _) =>
+        {
+            var now = Timing.Global.Milliseconds;
+            if (now < _nextPodiumRefreshAt)
+                return;
+
+            _nextPodiumRefreshAt = now + 3_000;
+            Networking.PacketSender.SendRequestDungeonPanel(openWindow: true);
+        };
+
         _scroll = new ScrollControl(this, "DungeonPanelScroll")
         {
             OverflowX = OverflowBehavior.Hidden,
@@ -86,6 +105,14 @@ internal sealed class DungeonPanelWindow : Window
         DungeonConfiguration.Load(packet.ConfigurationJson);
         var statuses = (packet.Statuses ?? []).ToDictionary(status => status.DungeonId);
         var personalStats = (packet.PlayerStats ?? []).ToDictionary(entry => entry.DungeonId);
+        if (packet.Podiums != null)
+        {
+            _podiums = packet.Podiums
+                .Where(entry => entry != null && entry.DungeonId != Guid.Empty)
+                .GroupBy(entry => entry.DungeonId)
+                .ToDictionary(group => group.Key, group => group.First());
+        }
+
         var definitions = DungeonConfiguration.Instance.Dungeons
             .OrderBy(dungeon => dungeon.SortOrder)
             .ThenBy(dungeon => dungeon.Rank)
@@ -110,7 +137,8 @@ internal sealed class DungeonPanelWindow : Window
             status ??= new DungeonStatusEntry(dungeon.Id, false, "SEALED", 0);
             personalStats.TryGetValue(dungeon.Id, out var record);
             record ??= new DungeonPlayerStatEntry { DungeonId = dungeon.Id };
-            y = AddDungeonCard(dungeon, status, record, y);
+            _podiums.TryGetValue(dungeon.Id, out var podium);
+            y = AddDungeonCard(dungeon, status, record, podium, y);
         }
 
         if (definitions.Length == 0)
@@ -136,11 +164,12 @@ internal sealed class DungeonPanelWindow : Window
         DungeonDefinition dungeon,
         DungeonStatusEntry status,
         DungeonPlayerStatEntry record,
+        DungeonPodiumEntry? podium,
         int y
     )
     {
         const int width = 724;
-        const int height = 256;
+        const int height = 366;
 
         var card = new Button(_scroll, $"DungeonCard{dungeon.Id}")
         {
@@ -345,8 +374,100 @@ internal sealed class DungeonPanelWindow : Window
         };
         transition.SetBounds(310, 227, 382, 20);
 
+        AddPodiumColumn(
+            card,
+            dungeon.Id,
+            "Clears",
+            "TOP 3 • MOST CLEARS",
+            154,
+            podium?.TopClears ?? [],
+            fastest: false
+        );
+        AddPodiumColumn(
+            card,
+            dungeon.Id,
+            "Fastest",
+            "TOP 3 • FASTEST CLEARS",
+            432,
+            podium?.FastestClears ?? [],
+            fastest: true
+        );
+
         return y + height + 10;
     }
+
+    private void AddPodiumColumn(
+        Button card,
+        Guid dungeonId,
+        string key,
+        string header,
+        int x,
+        DungeonPodiumPlayerEntry[] entries,
+        bool fastest
+    )
+    {
+        var title = new Label(card, $"DungeonPodiumHeader{key}{dungeonId}")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 9,
+            TextColorOverride = new Color(a: 255, r: 223, g: 191, b: 120),
+            Text = header,
+            MouseInputEnabled = false,
+        };
+        title.SetBounds(x, 257, 266, 20);
+
+        if (entries.Length == 0)
+        {
+            var empty = new Label(card, $"DungeonPodiumEmpty{key}{dungeonId}")
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 8,
+                TextColorOverride = new Color(a: 255, r: 169, g: 164, b: 154),
+                Text = "No champions yet.",
+                MouseInputEnabled = false,
+            };
+            empty.SetBounds(x, 287, 260, 20);
+            return;
+        }
+
+        for (var index = 0; index < Math.Min(3, entries.Length); ++index)
+        {
+            var entry = entries[index];
+            if (entry == null)
+                continue;
+
+            var score = fastest
+                ? FormatDuration(entry.BestClearTimeMilliseconds)
+                : $"{entry.Completions:N0} CLEARS";
+
+            var row = new Label(card, $"DungeonPodium{key}{dungeonId}Rank{index}")
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                FontSize = 8,
+                TextColorOverride = PodiumColor(index),
+                Text = $"#{index + 1}  {ShortPlayerName(entry.PlayerName)}  •  {score}",
+                MouseInputEnabled = false,
+            };
+            row.SetBounds(x, 282 + index * 24, 267, 20);
+        }
+    }
+
+    private static string ShortPlayerName(string name)
+    {
+        var trimmed = (name ?? string.Empty).Trim();
+        return trimmed.Length > 17 ? trimmed[..14] + "..." : trimmed;
+    }
+
+    private static Color PodiumColor(int index) =>
+        index switch
+        {
+            0 => new Color(a: 255, r: 246, g: 207, b: 95),
+            1 => new Color(a: 255, r: 195, g: 201, b: 218),
+            _ => new Color(a: 255, r: 204, g: 149, b: 106),
+        };
 
     private static string FormatDuration(long milliseconds)
     {
