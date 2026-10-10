@@ -14,6 +14,7 @@ namespace Intersect.Client.Interface.Game;
 internal sealed class DungeonPanelWindow : Window
 {
     private readonly Label _summary;
+    private readonly Label _personalSummary;
     private readonly ScrollControl _scroll;
 
     public DungeonPanelWindow(Canvas parent) : base(parent, "Dungeons", false, nameof(DungeonPanelWindow))
@@ -55,13 +56,23 @@ internal sealed class DungeonPanelWindow : Window
         };
         _summary.SetBounds(20, 91, 780, 24);
 
+        _personalSummary = new Label(this, "DungeonPanelPersonalSummary")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 9,
+            TextAlign = Pos.Center,
+            TextColorOverride = new Color(a: 255, r: 220, g: 196, b: 135),
+        };
+        _personalSummary.SetBounds(20, 115, 780, 20);
+
         _scroll = new ScrollControl(this, "DungeonPanelScroll")
         {
             OverflowX = OverflowBehavior.Hidden,
             OverflowY = OverflowBehavior.Scroll,
             AutoHideBars = true,
         };
-        _scroll.SetBounds(24, 120, 772, 500);
+        _scroll.SetBounds(24, 143, 772, 477);
 
         Hide();
     }
@@ -74,6 +85,7 @@ internal sealed class DungeonPanelWindow : Window
     {
         DungeonConfiguration.Load(packet.ConfigurationJson);
         var statuses = (packet.Statuses ?? []).ToDictionary(status => status.DungeonId);
+        var personalStats = (packet.PlayerStats ?? []).ToDictionary(entry => entry.DungeonId);
         var definitions = DungeonConfiguration.Instance.Dungeons
             .OrderBy(dungeon => dungeon.SortOrder)
             .ThenBy(dungeon => dungeon.Rank)
@@ -82,6 +94,12 @@ internal sealed class DungeonPanelWindow : Window
 
         var openCount = statuses.Values.Count(status => status.Available);
         _summary.Text = $"{openCount:N0} ACTIVE GATE{(openCount == 1 ? string.Empty : "S")}  •  {definitions.Length:N0} REGISTERED";
+        var totalAttempts = personalStats.Values.Sum(entry => entry.Attempts);
+        var totalCompletions = personalStats.Values.Sum(entry => entry.Completions);
+        var totalFailures = personalStats.Values.Sum(entry => entry.Failures);
+        var totalDeaths = personalStats.Values.Sum(entry => entry.Deaths);
+        _personalSummary.Text = $"YOUR RECORD  •  {totalCompletions:N0} CLEARS / {totalAttempts:N0} RUNS" +
+            $"  •  {totalFailures:N0} FAILURES  •  {totalDeaths:N0} DEATHS";
 
         _scroll.DeleteAll();
 
@@ -90,7 +108,9 @@ internal sealed class DungeonPanelWindow : Window
         {
             statuses.TryGetValue(dungeon.Id, out var status);
             status ??= new DungeonStatusEntry(dungeon.Id, false, "SEALED", 0);
-            y = AddDungeonCard(dungeon, status, y);
+            personalStats.TryGetValue(dungeon.Id, out var record);
+            record ??= new DungeonPlayerStatEntry { DungeonId = dungeon.Id };
+            y = AddDungeonCard(dungeon, status, record, y);
         }
 
         if (definitions.Length == 0)
@@ -112,10 +132,15 @@ internal sealed class DungeonPanelWindow : Window
         _scroll.UpdateScrollBars();
     }
 
-    private int AddDungeonCard(DungeonDefinition dungeon, DungeonStatusEntry status, int y)
+    private int AddDungeonCard(
+        DungeonDefinition dungeon,
+        DungeonStatusEntry status,
+        DungeonPlayerStatEntry record,
+        int y
+    )
     {
         const int width = 724;
-        const int height = 214;
+        const int height = 256;
 
         var card = new Button(_scroll, $"DungeonCard{dungeon.Id}")
         {
@@ -269,6 +294,32 @@ internal sealed class DungeonPanelWindow : Window
         };
         rewards.SetBounds(154, 157, 540, 18);
 
+        var personalRecord = new Label(card, $"DungeonPersonalRecord{dungeon.Id}")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 8,
+            TextColorOverride = new Color(a: 255, r: 186, g: 218, b: 240),
+            Text = $"YOUR RECORD • {record.Attempts:N0} RUNS  •  {record.Completions:N0} CLEARS" +
+                   $"  •  {record.Failures:N0} FAILURES  •  {record.Deaths:N0} DEATHS",
+            MouseInputEnabled = false,
+        };
+        personalRecord.SetBounds(154, 181, 540, 18);
+
+        var clearRate = record.Attempts > 0 ? 100.0 * record.Completions / record.Attempts : 0.0;
+        var personalBest = new Label(card, $"DungeonPersonalBest{dungeon.Id}")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+            FontSize = 8,
+            TextColorOverride = new Color(a: 255, r: 210, g: 208, b: 199),
+            Text = $"BEST TIME • {FormatDuration(record.BestClearTimeMilliseconds)}" +
+                   $"  •  LAST CLEAR • {FormatLastClear(record.LastCompletedUnixMilliseconds)}" +
+                   $"  •  CLEAR RATE • {clearRate:0}%",
+            MouseInputEnabled = false,
+        };
+        personalBest.SetBounds(154, 201, 540, 18);
+
         var statusLabel = new Label(card, $"DungeonStatus{dungeon.Id}")
         {
             AutoSizeToContents = false,
@@ -280,7 +331,7 @@ internal sealed class DungeonPanelWindow : Window
             Text = status.Available ? "● AVAILABLE" : "◆ SEALED",
             MouseInputEnabled = false,
         };
-        statusLabel.SetBounds(154, 183, 150, 20);
+        statusLabel.SetBounds(154, 227, 150, 20);
 
         var transition = new Label(card, $"DungeonTransition{dungeon.Id}")
         {
@@ -292,9 +343,36 @@ internal sealed class DungeonPanelWindow : Window
             Text = BuildTransitionText(status),
             MouseInputEnabled = false,
         };
-        transition.SetBounds(310, 183, 382, 20);
+        transition.SetBounds(310, 227, 382, 20);
 
         return y + height + 10;
+    }
+
+    private static string FormatDuration(long milliseconds)
+    {
+        if (milliseconds <= 0)
+            return "NO RECORD";
+
+        var duration = TimeSpan.FromMilliseconds(milliseconds);
+        return duration.TotalHours >= 1
+            ? $"{(long)duration.TotalHours:00}:{duration.Minutes:00}:{duration.Seconds:00}"
+            : $"{(long)duration.TotalMinutes:00}:{duration.Seconds:00}";
+    }
+
+    private static string FormatLastClear(long unixMilliseconds)
+    {
+        if (unixMilliseconds <= 0)
+            return "NEVER";
+
+        try
+        {
+            return DateTimeOffset.FromUnixTimeMilliseconds(unixMilliseconds)
+                .ToLocalTime().ToString("yyyy-MM-dd");
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return "NEVER";
+        }
     }
 
     private static string BuildTransitionText(DungeonStatusEntry status)

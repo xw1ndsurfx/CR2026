@@ -242,6 +242,10 @@ internal static class DungeonRunRuntime
             RunsByInstance[instanceId] = run;
         }
 
+        // Register an attempt for every player actually inside this instance.
+        foreach (var participant in GetParticipants(run))
+            DungeonStatisticsRuntime.RecordAttempt(participant, run.Dungeon.Id);
+
         Broadcast(run, DungeonRunStatus.Active, BuildObjectiveText(run));
         EvaluateCompletion(run);
         return true;
@@ -329,6 +333,8 @@ internal static class DungeonRunRuntime
 
             run.LivesRemaining = Math.Max(0, run.LivesRemaining - 1);
         }
+
+        DungeonStatisticsRuntime.RecordDeath(player, run.Dungeon.Id);
 
         if (run.LivesRemaining <= 0)
         {
@@ -454,9 +460,12 @@ internal static class DungeonRunRuntime
         }
 
         var participants = GetParticipants(run).ToArray();
+        var clearTimeMs = Math.Max(1L,
+            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - run.StartedAtUnixMilliseconds);
 
         foreach (var player in participants)
         {
+            DungeonStatisticsRuntime.RecordCompletion(player, run.Dungeon.Id, clearTimeMs);
             player.UpdateDungeonQuestTasks(run.Dungeon.Id);
 
             if (run.Dungeon.CompletionExperience > 0)
@@ -494,6 +503,9 @@ internal static class DungeonRunRuntime
         foreach (var player in participants)
             WarpToExit(player, run, reviveIfDead: false);
 
+        foreach (var player in participants)
+            DungeonConfigurationRuntime.SendState(player, openWindow: false);
+
         lock (Gate)
             RunsByInstance.Remove(run.MapInstanceId);
     }
@@ -510,6 +522,8 @@ internal static class DungeonRunRuntime
         var participants = GetParticipants(run).ToArray();
         foreach (var player in participants)
         {
+            DungeonStatisticsRuntime.RecordFailure(player, run.Dungeon.Id);
+
             if (run.Dungeon.FailureCommonEventId != Guid.Empty &&
                 EventDescriptor.Get(run.Dungeon.FailureCommonEventId) is { } failureEvent)
             {
@@ -521,6 +535,9 @@ internal static class DungeonRunRuntime
 
         foreach (var player in participants)
             WarpToExit(player, run, reviveDeadPlayers && player.IsDead);
+
+        foreach (var player in participants)
+            DungeonConfigurationRuntime.SendState(player, openWindow: false);
 
         lock (Gate)
             RunsByInstance.Remove(run.MapInstanceId);
