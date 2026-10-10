@@ -62,6 +62,8 @@ public partial class Player : Entity, IPlayer
 
     public CharacterAppearance Appearance { get; set; } = new();
 
+    public bool IsAfk { get; private set; }
+
     public long Experience { get; set; } = 0;
 
     public long ExperienceToNextLevel { get; set; } = 0;
@@ -351,6 +353,7 @@ public partial class Player : Entity, IPlayer
             return;
         }
 
+        IsAfk = playerPacket.IsAfk;
         Gender = playerPacket.Gender;
         Class = playerPacket.ClassId;
         Appearance = playerPacket.Appearance ?? new CharacterAppearance();
@@ -2743,6 +2746,10 @@ public partial class Player : Entity, IPlayer
     private void DrawNameAndLabels(Color textColor, Color? borderColor, Color? backgroundColor)
     {
         base.DrawName(textColor, borderColor, backgroundColor);
+        if (IsAfk)
+        {
+            DrawLabels("AFK", 0, new Color(255, 255, 215, 0), textColor, borderColor, backgroundColor);
+        }
         DrawLabels(HeaderLabel.Text, 0, HeaderLabel.Color, textColor, borderColor, backgroundColor);
         DrawLabels(FooterLabel.Text, 1, FooterLabel.Color, textColor, borderColor, backgroundColor);
         DrawGuildName(textColor, borderColor, backgroundColor);
