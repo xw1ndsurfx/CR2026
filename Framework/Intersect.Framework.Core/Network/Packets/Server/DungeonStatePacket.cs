@@ -84,6 +84,58 @@ public partial class DungeonPlayerStatEntry
 }
 
 [MessagePackObject]
+public sealed class DungeonPodiumPlayerEntry
+{
+    public DungeonPodiumPlayerEntry()
+    {
+    }
+
+    public DungeonPodiumPlayerEntry(string playerName, long completions, long bestClearTimeMilliseconds)
+    {
+        PlayerName = playerName;
+        Completions = completions;
+        BestClearTimeMilliseconds = bestClearTimeMilliseconds;
+    }
+
+    [Key(0)]
+    public string PlayerName { get; set; } = string.Empty;
+
+    [Key(1)]
+    public long Completions { get; set; }
+
+    [Key(2)]
+    public long BestClearTimeMilliseconds { get; set; }
+}
+
+[MessagePackObject]
+public sealed class DungeonPodiumEntry
+{
+    public DungeonPodiumEntry()
+    {
+    }
+
+    public DungeonPodiumEntry(
+        Guid dungeonId,
+        DungeonPodiumPlayerEntry[] topClears,
+        DungeonPodiumPlayerEntry[] fastestClears
+    )
+    {
+        DungeonId = dungeonId;
+        TopClears = topClears;
+        FastestClears = fastestClears;
+    }
+
+    [Key(0)]
+    public Guid DungeonId { get; set; }
+
+    [Key(1)]
+    public DungeonPodiumPlayerEntry[] TopClears { get; set; } = [];
+
+    [Key(2)]
+    public DungeonPodiumPlayerEntry[] FastestClears { get; set; } = [];
+}
+
+[MessagePackObject]
 public partial class DungeonStatePacket : IntersectPacket
 {
     public DungeonStatePacket()
@@ -95,7 +147,8 @@ public partial class DungeonStatePacket : IntersectPacket
         DungeonStatusEntry[] statuses,
         bool openWindow,
         long serverTimeUnixMilliseconds,
-        DungeonPlayerStatEntry[]? playerStats = null
+        DungeonPlayerStatEntry[]? playerStats = null,
+        DungeonPodiumEntry[]? podiums = null
     )
     {
         ConfigurationJson = configurationJson;
@@ -103,6 +156,7 @@ public partial class DungeonStatePacket : IntersectPacket
         OpenWindow = openWindow;
         ServerTimeUnixMilliseconds = serverTimeUnixMilliseconds;
         PlayerStats = playerStats ?? [];
+        Podiums = podiums;
     }
 
     [Key(0)]
@@ -119,4 +173,9 @@ public partial class DungeonStatePacket : IntersectPacket
 
     [Key(4)]
     public DungeonPlayerStatEntry[] PlayerStats { get; set; } = [];
+
+    // Null means not refreshed (background state update); an empty array means
+    // a valid but empty snapshot. Only explicit window opens fetch podium data.
+    [Key(5)]
+    public DungeonPodiumEntry[]? Podiums { get; set; }
 }

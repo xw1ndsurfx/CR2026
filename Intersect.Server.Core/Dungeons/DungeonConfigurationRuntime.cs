@@ -1,6 +1,7 @@
 using Intersect.Framework.Core.Dungeons;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
+using Intersect.Server.Leaderboards;
 
 namespace Intersect.Server.Dungeons;
 
@@ -64,7 +65,8 @@ internal static class DungeonConfigurationRuntime
                 BuildStatuses(now),
                 openWindow,
                 now.ToUnixTimeMilliseconds(),
-                DungeonStatisticsRuntime.BuildState(player)
+                DungeonStatisticsRuntime.BuildState(player),
+                openWindow ? LeaderboardDataRuntime.DungeonPodiums() : null
             )
         );
     }
