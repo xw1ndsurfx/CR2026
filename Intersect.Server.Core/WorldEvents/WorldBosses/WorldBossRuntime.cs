@@ -12,6 +12,18 @@ using Microsoft.Extensions.Logging;
 
 namespace Intersect.Server.WorldEvents.WorldBosses;
 
+/// <summary>
+/// Read-only, anonymous-safe snapshot of a currently spawned boss. Personal
+/// contribution and player identity are intentionally not included.
+/// </summary>
+internal readonly record struct WorldBossPublicStatus(
+    Guid BossId,
+    long Health,
+    long MaximumHealth,
+    long ExpiresAtUnixMilliseconds,
+    int ParticipantCount
+);
+
 /// <summary>Schedules and tracks only NPC instances spawned by the World Boss system.</summary>
 internal static class WorldBossRuntime
 {
@@ -201,6 +213,28 @@ internal static class WorldBossRuntime
     {
         foreach (var session in ActiveByNpcId.Values.DistinctBy(s => s.Npc.Id))
             player.SendPacket(CreateStatus(session, player));
+    }
+
+    /// <summary>
+    /// Publishes only active encounter health, expiry and aggregate participant
+    /// count for the Wiki. The same gate protects Active mutations in Update
+    /// and StartNow. No per-player rank/damage/name leaves this method.
+    /// </summary>
+    internal static WorldBossPublicStatus[] PublicStatusSnapshot()
+    {
+        lock (Gate)
+        {
+            return Active.Values
+                .Where(session => !session.Npc.IsDead && !session.Npc.IsDisposed)
+                .Select(session => new WorldBossPublicStatus(
+                    session.Definition.Id,
+                    Math.Max(0L, session.Npc.GetVital(Vital.Health)),
+                    Math.Max(1L, session.Npc.GetMaxVital(Vital.Health)),
+                    session.ExpiresAtUnixMs,
+                    session.Damage.Count(entry => entry.Value > 0)
+                ))
+                .ToArray();
+        }
     }
 
     private static (Guid PlayerId, long Damage)[] Ranking(ActiveBoss session) =>

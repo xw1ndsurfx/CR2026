@@ -15,8 +15,10 @@ using Intersect.Framework.Core.MiniGames.Configuration;
 using Intersect.Framework.Core.MiniGames.Cooking;
 using Intersect.Framework.Core.MiniGames.Potions;
 using Intersect.Framework.Core.WorldEvents.Invasions;
+using Intersect.Framework.Core.WorldEvents.WorldBosses;
 using Intersect.Models;
 using Intersect.Server.WorldEvents.Invasions;
+using Intersect.Server.WorldEvents.WorldBosses;
 using Intersect.Server.MiniGames;
 using Intersect.Server.Database;
 using Intersect.Server.Entities;
@@ -133,6 +135,37 @@ public sealed class WikiController : IntersectController
     public sealed record WikiInvasionScheduleResponse(
         DateTimeOffset GeneratedAt,
         IReadOnlyList<WikiInvasionScheduleEntry> Upcoming
+    );
+
+    public sealed record WikiWorldBossEntry(
+        Guid Id,
+        string Name,
+        string NpcName,
+        int NpcLevel,
+        string MapName,
+        int SpawnX,
+        int SpawnY,
+        IReadOnlyList<string> Days,
+        string StartTime,
+        DateTimeOffset? NextStartAt,
+        int LifetimeMinutes,
+        long BaseExperience,
+        int MinimumContributionPercent,
+        int FirstPlaceBonusPercent,
+        int SecondPlaceBonusPercent,
+        int ThirdPlaceBonusPercent,
+        IReadOnlyList<int> ReminderMinutes,
+        bool Active,
+        long? Health,
+        long? MaximumHealth,
+        DateTimeOffset? ExpiresAt,
+        int ParticipantCount
+    );
+
+    public sealed record WikiWorldBossResponse(
+        DateTimeOffset GeneratedAt,
+        string ServerTimeZone,
+        IReadOnlyList<WikiWorldBossEntry> Bosses
     );
 
 
@@ -1051,6 +1084,107 @@ public sealed class WikiController : IntersectController
         return PhysicalFile(previewPath, "image/png");
     }
 
+
+    [HttpGet("world-bosses")]
+    [ProducesResponseType(typeof(WikiWorldBossResponse), (int)HttpStatusCode.OK, ContentTypes.Json)]
+    public IActionResult WorldBosses()
+    {
+        // The scheduler is authoritative and uses the host's local timezone.
+        // Read its configuration and a lock-protected runtime snapshot; never
+        // expose individual contributors, private profiles or editor messages.
+        var now = DateTimeOffset.Now;
+        var active = WorldBossRuntime.PublicStatusSnapshot()
+            .ToDictionary(entry => entry.BossId);
+
+        var bosses = WorldBossConfigurationRuntime.Current.Bosses
+            .Where(definition => definition.Enabled)
+            .Select(definition =>
+            {
+                var npc = NPCDescriptor.Get(definition.NpcId);
+                var mapName = MapDescriptor.Lookup.TryGetValue(definition.MapId, out var mapObject) &&
+                              mapObject is MapDescriptor map ? map.Name : "Unknown";
+
+                var isActive = active.TryGetValue(definition.Id, out var status);
+                var reminders = new List<int>(4);
+                if (definition.Reminder60Enabled) reminders.Add(60);
+                if (definition.Reminder30Enabled) reminders.Add(30);
+                if (definition.Reminder15Enabled) reminders.Add(15);
+                if (definition.Reminder5Enabled) reminders.Add(5);
+
+                return new WikiWorldBossEntry(
+                    definition.Id,
+                    definition.Name,
+                    npc?.Name ?? "Unknown",
+                    Math.Max(1, npc?.Level ?? 1),
+                    mapName,
+                    definition.SpawnX,
+                    definition.SpawnY,
+                    WorldBossScheduleDays(definition),
+                    $"{definition.StartHour:00}:{definition.StartMinute:00}",
+                    NextWorldBossOccurrence(definition, now),
+                    definition.LifetimeMinutes,
+                    definition.RewardExperience,
+                    definition.MinimumContributionPercent,
+                    definition.FirstPlaceBonusPercent,
+                    definition.SecondPlaceBonusPercent,
+                    definition.ThirdPlaceBonusPercent,
+                    reminders,
+                    isActive,
+                    isActive ? status.Health : null,
+                    isActive ? status.MaximumHealth : null,
+                    isActive
+                        ? DateTimeOffset.FromUnixTimeMilliseconds(status.ExpiresAtUnixMilliseconds).ToLocalTime()
+                        : null,
+                    isActive ? status.ParticipantCount : 0
+                );
+            })
+            .OrderByDescending(entry => entry.Active)
+            .ThenBy(entry => entry.NextStartAt ?? DateTimeOffset.MaxValue)
+            .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return Ok(new WikiWorldBossResponse(now, TimeZoneInfo.Local.Id, bosses));
+    }
+
+    private static DateTimeOffset? NextWorldBossOccurrence(
+        WorldBossDefinition definition,
+        DateTimeOffset now
+    )
+    {
+        for (var offset = 0; offset <= 7; offset++)
+        {
+            var date = now.Date.AddDays(offset);
+            if (!definition.RunsOn(date.DayOfWeek))
+                continue;
+
+            var localTime = date
+                .AddHours(definition.StartHour)
+                .AddMinutes(definition.StartMinute);
+            // A nonexistent local time on the DST spring transition cannot
+            // occur on the scheduler's wall clock, so skip that occurrence.
+            if (TimeZoneInfo.Local.IsInvalidTime(localTime))
+                continue;
+
+            var candidate = new DateTimeOffset(
+                localTime, TimeZoneInfo.Local.GetUtcOffset(localTime));
+            if (candidate >= now)
+                return candidate;
+        }
+
+        return null;
+    }
+
+    private static IReadOnlyList<string> WorldBossScheduleDays(WorldBossDefinition definition)
+    {
+        var days = new List<string>(7);
+        foreach (var day in Enum.GetValues<DayOfWeek>())
+        {
+            if (definition.RunsOn(day))
+                days.Add(day.ToString());
+        }
+
+        return days;
+    }
 
     [HttpGet("invasions")]
     [ProducesResponseType(typeof(WikiInvasionScheduleResponse), (int)HttpStatusCode.OK, ContentTypes.Json)]
