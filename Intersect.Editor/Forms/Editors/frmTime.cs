@@ -16,10 +16,71 @@ public partial class FrmTime : Form
     private Bitmap mTileBackbuffer;
 
     private DaylightCycleDescriptor mYTime;
+    private bool _saved;
+    private readonly DateTimePicker _sunrise = PhasePicker();
+    private readonly DateTimePicker _day = PhasePicker();
+    private readonly DateTimePicker _sunset = PhasePicker();
+    private readonly DateTimePicker _night = PhasePicker();
+
+    private static DateTimePicker PhasePicker() => new()
+    {
+        Width = 105, Format = DateTimePickerFormat.Custom,
+        CustomFormat = "HH:mm", ShowUpDown = true,
+    };
+
+    private static int Minutes(DateTimePicker picker) => picker.Value.Hour * 60 + picker.Value.Minute;
+    private static void SetMinutes(DateTimePicker picker, int minutes) =>
+        picker.Value = DateTime.Today.AddMinutes(Math.Clamp(minutes, 0, 1439));
+
+    private void InitializePhases()
+    {
+        AutoSize = false;
+        ClientSize = new Size(815, 347);
+        btnSave.Location = new Point(568, 310);
+        btnCancel.Location = new Point(689, 310);
+        var box = new DarkGroupBox
+        {
+            Text = "Day Phases",
+            BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
+            BorderColor = System.Drawing.Color.FromArgb(90, 90, 90),
+            ForeColor = System.Drawing.Color.Gainsboro,
+            Location = new Point(529, 25),
+            Size = new Size(274, 279),
+        };
+        box.Controls.Add(new Label
+        {
+            Text = "Start time of each phase:", ForeColor = System.Drawing.Color.Gainsboro,
+            Location = new Point(10, 26), AutoSize = true,
+        });
+
+        void Row(string label, DateTimePicker picker, int y)
+        {
+            box.Controls.Add(new Label
+            {
+                Text = label, ForeColor = System.Drawing.Color.Gainsboro,
+                Location = new Point(12, y + 3), Size = new Size(120, 24),
+            });
+            picker.Location = new Point(141, y);
+            box.Controls.Add(picker);
+        }
+
+        Row("Sunrise", _sunrise, 60);
+        Row("Day", _day, 100);
+        Row("Sunset", _sunset, 140);
+        Row("Night", _night, 180);
+        box.Controls.Add(new Label
+        {
+            Text = "Night continues through midnight. Keep the phase starts in chronological order.",
+            ForeColor = System.Drawing.Color.Silver,
+            Location = new Point(12, 220), Size = new Size(252, 50),
+        });
+        Controls.Add(box);
+    }
 
     public FrmTime()
     {
         InitializeComponent();
+        InitializePhases();
         InitLocalization();
     }
 
@@ -64,6 +125,11 @@ public partial class FrmTime : Form
         cmbIntervals.SelectedIndex = DaylightCycleDescriptor.GetIntervalIndex(mYTime.RangeInterval);
         UpdateList(mYTime.RangeInterval);
         txtTimeRate.Enabled = !mYTime.SyncTime;
+        var phases = mYTime.DayPhases ?? new DayPhaseSchedule();
+        SetMinutes(_sunrise, phases.SunriseStartMinutes);
+        SetMinutes(_day, phases.DayStartMinutes);
+        SetMinutes(_sunset, phases.SunsetStartMinutes);
+        SetMinutes(_night, phases.NightStartMinutes);
     }
 
     private void cmbIntervals_SelectedIndexChanged(object sender, EventArgs e)
@@ -163,7 +229,22 @@ public partial class FrmTime : Form
 
     private void btnSave_Click(object sender, EventArgs e)
     {
+        var phases = new DayPhaseSchedule
+        {
+            SunriseStartMinutes = Minutes(_sunrise),
+            DayStartMinutes = Minutes(_day),
+            SunsetStartMinutes = Minutes(_sunset),
+            NightStartMinutes = Minutes(_night),
+        };
+        if (!phases.IsValid)
+        {
+            MessageBox.Show(this, "Expected Sunrise < Day < Sunset < Night; each phase must have a duration.",
+                "Invalid day phases", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+        mYTime.DayPhases = phases;
         PacketSender.SendSaveTime(mYTime.GetInstanceJson());
+        _saved = true;
         Hide();
         Globals.CurrentEditor = -1;
         Dispose();
@@ -171,12 +252,14 @@ public partial class FrmTime : Form
 
     private void FrmTime_FormClosed(object sender, FormClosedEventArgs e)
     {
-        btnCancel_Click(null, null);
+        if (!_saved && mYTime != null && mBackupTime != null)
+            mYTime.LoadFromJson(mBackupTime.GetInstanceJson());
     }
 
     private void btnCancel_Click(object sender, EventArgs e)
     {
-        mYTime.LoadFromJson(mBackupTime.GetInstanceJson());
+        if (!_saved && mYTime != null && mBackupTime != null)
+            mYTime.LoadFromJson(mBackupTime.GetInstanceJson());
         Hide();
         Globals.CurrentEditor = -1;
         Dispose();
