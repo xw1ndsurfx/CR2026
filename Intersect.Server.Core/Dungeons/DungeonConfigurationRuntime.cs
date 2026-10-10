@@ -1,4 +1,6 @@
 using Intersect.Framework.Core.Dungeons;
+using Intersect.GameObjects;
+using Intersect.Server.General;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Entities;
 using Intersect.Server.Leaderboards;
@@ -73,30 +75,52 @@ internal static class DungeonConfigurationRuntime
 
     private static DungeonStatusEntry BuildStatus(DungeonDefinition dungeon, DateTimeOffset now)
     {
-        switch (dungeon.AvailabilityMode)
+        // The existing availability mode remains the first requirement.
+        // Additional time/date rules are combined with AND, just like a
+        // single list of Event Conditional Branch conditions.
+        var baseStatus = dungeon.AvailabilityMode switch
         {
-            case DungeonAvailabilityMode.Always:
-                return new DungeonStatusEntry(
-                    dungeon.Id,
-                    true,
-                    "AVAILABLE",
-                    0
-                );
+            DungeonAvailabilityMode.Always =>
+                new DungeonStatusEntry(dungeon.Id, true, "AVAILABLE", 0),
 
-            case DungeonAvailabilityMode.Manual:
-                return new DungeonStatusEntry(
+            DungeonAvailabilityMode.Manual =>
+                new DungeonStatusEntry(
                     dungeon.Id,
                     dungeon.ManualAvailable,
                     dungeon.ManualAvailable ? "AVAILABLE" : "SEALED",
                     0
-                );
+                ),
 
-            case DungeonAvailabilityMode.Scheduled:
-                return BuildScheduledStatus(dungeon, now);
+            DungeonAvailabilityMode.Scheduled => BuildScheduledStatus(dungeon, now),
+            _ => new DungeonStatusEntry(dungeon.Id, false, "SEALED", 0),
+        };
 
-            default:
-                return new DungeonStatusEntry(dungeon.Id, false, "SEALED", 0);
-        }
+        var conditions = dungeon.AvailabilityConditions;
+        if (conditions is not { Length: > 0 })
+            return baseStatus;
+
+        // Match the Event evaluator exactly: phase / game clock from the game
+        // time engine, optional real UTC clock and all dates from real UTC.
+        // This also ensures dungeon entry, retries and public status share the
+        // same authoritative server-side check.
+        var gameClock = Time.GetTime();
+        var utcClock = now.UtcDateTime;
+        var permitted = baseStatus.Available &&
+                        conditions.All(rule => rule.Matches(
+                            gameClock,
+                            utcClock,
+                            DaylightCycleDescriptor.Instance.DayPhases
+                        ));
+
+        // A scheduled opening alone cannot guarantee the next availability
+        // transition when an accelerated in-game clock or a date rule is
+        // involved. Do not display misleading next-open countdowns.
+        return new DungeonStatusEntry(
+            dungeon.Id,
+            permitted,
+            permitted ? "AVAILABLE" : "SEALED",
+            0
+        );
     }
 
     private static DungeonStatusEntry BuildScheduledStatus(DungeonDefinition dungeon, DateTimeOffset now)
