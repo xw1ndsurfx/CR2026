@@ -716,8 +716,8 @@ public partial class Player : Entity
 
     // AFK state is transient and is never saved with the character.
     private long _lastAfkMovementTime;
-    private byte _lastAfkX;
-    private byte _lastAfkY;
+    private int _lastAfkX;
+    private int _lastAfkY;
     private Guid _lastAfkMapId;
     private bool _isAfk;
 
