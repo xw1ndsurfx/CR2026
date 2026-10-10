@@ -631,12 +631,27 @@ public partial class FrmMain : Form
         };
         invasions.Click += (_, _) => PacketSender.SendRequestInvasionConfiguration();
         eventsMenu.DropDownItems.Add(invasions);
+        var worldBosses = new ToolStripMenuItem
+        {
+            Name = "worldBossEditorToolStripMenuItem",
+            Text = "World Bosses...",
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
+        };
+        worldBosses.Click += (_, _) => PacketSender.SendRequestWorldBossConfiguration();
+        eventsMenu.DropDownItems.Add(worldBosses);
 
         var toolsIndex = menuStrip.Items.IndexOf(toolsToolStripMenuItem);
         if (toolsIndex >= 0)
             menuStrip.Items.Insert(toolsIndex, eventsMenu);
         else
             menuStrip.Items.Add(eventsMenu);
+    }
+
+    public void OpenWorldBossEditor()
+    {
+        var editor = new FrmWorldBossConfiguration();
+        editor.Show();
+        editor.BringToFront();
     }
 
     public void OpenInvasionEditor()

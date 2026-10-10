@@ -414,6 +414,21 @@ public static partial class PacketSender
         Network.SendPacket(new SaveAchievementConfigurationPacket(configurationJson));
     }
 
+    public static void SendRequestWorldBossConfiguration()
+    {
+        Network.SendPacket(new RequestWorldBossConfigurationPacket());
+    }
+
+    public static void SendSaveWorldBossConfiguration(string configurationJson)
+    {
+        Network.SendPacket(new SaveWorldBossConfigurationPacket(configurationJson));
+    }
+
+    public static void SendStartWorldBossNow(Guid bossId)
+    {
+        Network.SendPacket(new StartWorldBossNowPacket(bossId));
+    }
+
     public static void SendRequestInvasionConfiguration()
     {
         Network.SendPacket(new RequestInvasionConfigurationPacket());
