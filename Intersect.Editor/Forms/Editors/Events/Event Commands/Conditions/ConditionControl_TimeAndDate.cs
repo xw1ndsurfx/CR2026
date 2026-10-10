@@ -45,7 +45,7 @@ public sealed class ConditionControl_TimeAndDate : UserControl
 
         _phasePanel = Section(
             TextLabel("Game time phase"), _phase,
-            Hint("Set phase boundaries in Time Editor. Night crosses midnight."));
+            Hint("In Time Editor, select a time range and check its phase. A day can contain several Day or Night periods."));
 
         _clockPanel = Section(
             TextLabel("Clock condition"), _clockMode,
