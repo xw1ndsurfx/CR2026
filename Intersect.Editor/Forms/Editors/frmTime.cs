@@ -35,22 +35,23 @@ public partial class FrmTime : Form
     private void InitializePhases()
     {
         AutoSize = false;
-        ClientSize = new Size(815, 347);
-        btnSave.Location = new System.Drawing.Point(568, 310);
-        btnCancel.Location = new System.Drawing.Point(689, 310);
+        ClientSize = new Size(940, 370);
+        MinimumSize = new Size(960, 410);
+        btnSave.Location = new System.Drawing.Point(693, 333);
+        btnCancel.Location = new System.Drawing.Point(814, 333);
         var box = new DarkGroupBox
         {
-            Text = "Day Phases",
+            Text = "Day Phases  |  Sunrise / Day / Sunset / Night",
             BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
             BorderColor = System.Drawing.Color.FromArgb(90, 90, 90),
             ForeColor = System.Drawing.Color.Gainsboro,
-            Location = new System.Drawing.Point(529, 25),
-            Size = new Size(274, 279),
+            Location = new System.Drawing.Point(615, 25),
+            Size = new Size(313, 300),
         };
         box.Controls.Add(new Label
         {
             Text = "Start time of each phase:", ForeColor = System.Drawing.Color.Gainsboro,
-            Location = new System.Drawing.Point(10, 26), AutoSize = true,
+            Location = new System.Drawing.Point(14, 30), AutoSize = true,
         });
 
         void Row(string label, DateTimePicker picker, int y)
@@ -58,21 +59,21 @@ public partial class FrmTime : Form
             box.Controls.Add(new Label
             {
                 Text = label, ForeColor = System.Drawing.Color.Gainsboro,
-                Location = new System.Drawing.Point(12, y + 3), Size = new Size(120, 24),
+                Location = new System.Drawing.Point(16, y + 3), Size = new Size(135, 24),
             });
-            picker.Location = new System.Drawing.Point(141, y);
+            picker.Location = new System.Drawing.Point(167, y);
             box.Controls.Add(picker);
         }
 
-        Row("Sunrise", _sunrise, 60);
-        Row("Day", _day, 100);
-        Row("Sunset", _sunset, 140);
-        Row("Night", _night, 180);
+        Row("Sunrise", _sunrise, 68);
+        Row("Day", _day, 111);
+        Row("Sunset", _sunset, 154);
+        Row("Night", _night, 197);
         box.Controls.Add(new Label
         {
             Text = "Night continues through midnight. Keep the phase starts in chronological order.",
             ForeColor = System.Drawing.Color.Silver,
-            Location = new System.Drawing.Point(12, 220), Size = new Size(252, 50),
+            Location = new System.Drawing.Point(16, 243), Size = new Size(279, 45),
         });
         Controls.Add(box);
     }
