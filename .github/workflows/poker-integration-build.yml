@@ -6,6 +6,7 @@ on:
     paths:
       - 'Framework/Intersect.Framework.Core/**'
       - 'Intersect.Server.Core/**'
+      - 'Intersect.Server/Web/**'
       - 'Intersect.Client.Core/**'
       - 'Intersect.Client.Framework/**'
       - 'Intersect.Editor/Forms/Editors/Events/**'
