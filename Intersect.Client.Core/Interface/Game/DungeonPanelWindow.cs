@@ -61,12 +61,26 @@ internal sealed class DungeonPanelWindow : Window
         _personalSummary = AddText(this, "DungeonPanelPersonalSummary", "",
             42, 134, 736, 19, 9, Gold, bold: true, center: true);
 
+        // Draw a large, high-contrast button using the same pixel-art framing
+        // as the registry. The native Gwen button text uses the skin's small
+        // default font, so the text is rendered with explicit readable labels.
+        // Keep the actual clickable control underneath these mouse-transparent
+        // decorations to preserve its existing network action.
         var refresh = new Button(this, "DungeonPanelRefresh")
         {
-            Text = "REFRESH",
-            FontSize = 9,
+            Text = string.Empty,
         };
-        refresh.SetBounds(690, 42, 98, 27);
+        refresh.SetBounds(614, 37, 174, 45);
+
+        var refreshFrame = new DungeonChrome(
+            refresh, "DungeonPanelRefreshFrame", ChromeStyle.Refresh);
+        refreshFrame.SetBounds(0, 0, 174, 45);
+
+        AddText(refresh, "DungeonPanelRefreshLabel", "REFRESH",
+            54, 5, 112, 22, 16, Cream, bold: true, center: true);
+        AddText(refresh, "DungeonPanelRefreshCaption", "RANKINGS",
+            54, 26, 112, 15, 11, Gold, bold: true, center: true);
+
         refresh.Clicked += (_, _) =>
         {
             var now = Timing.Global.Milliseconds;
@@ -450,6 +464,7 @@ internal sealed class DungeonPanelWindow : Window
         Ribbon,
         Card,
         Preview,
+        Refresh,
     }
 
     /// <summary>
@@ -497,6 +512,27 @@ internal sealed class DungeonPanelWindow : Window
                     Border(skin, bounds, OuterGold, 1);
                     Fill(skin, bounds.X + 7, bounds.Y + 4, 3, bounds.Height - 8, BrightGold);
                     Fill(skin, bounds.Right - 10, bounds.Y + 4, 3, bounds.Height - 8, BrightGold);
+                    break;
+
+                case ChromeStyle.Refresh:
+                    // A custom gold-edged bronze button and a small refresh
+                    // glyph painted with rectangles: no missing font icons.
+                    Fill(skin, bounds, Band);
+                    Border(skin, bounds, BrightGold, 2);
+                    Border(skin, Inset(bounds, 3), InnerGold, 1);
+                    Fill(skin, bounds.X + 7, bounds.Y + 7, 39, bounds.Height - 14, Darkest);
+                    Border(skin, new UiRectangle(bounds.X + 7, bounds.Y + 7,
+                        39, bounds.Height - 14), InnerGold, 1);
+                    Fill(skin, bounds.X + 16, bounds.Y + 15, 4, 13, BrightGold);
+                    Fill(skin, bounds.X + 20, bounds.Y + 11, 15, 4, BrightGold);
+                    Fill(skin, bounds.X + 34, bounds.Y + 15, 4, 9, BrightGold);
+                    Fill(skin, bounds.X + 22, bounds.Y + 28, 13, 4, BrightGold);
+                    Fill(skin, bounds.X + 35, bounds.Y + 9, 4, 10, BrightGold);
+                    Fill(skin, bounds.X + 39, bounds.Y + 16, 5, 4, BrightGold);
+                    Fill(skin, bounds.X + 49, bounds.Y + 7, 1,
+                        bounds.Height - 14, InnerGold);
+                    Fill(skin, bounds.X + 57, bounds.Y + 5, bounds.Width - 68, 1,
+                        InnerGold);
                     break;
 
                 case ChromeStyle.Card:
