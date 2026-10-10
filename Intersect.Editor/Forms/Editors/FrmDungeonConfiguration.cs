@@ -3,6 +3,7 @@ using DarkUI.Forms;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.Dungeons;
 using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Conditions;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
@@ -18,6 +19,31 @@ public sealed class FrmDungeonConfiguration : DarkForm
     private sealed record IdChoice(Guid Id, string Text)
     {
         public override string ToString() => Text;
+    }
+
+    private sealed record AvailabilityRuleChoice(DungeonAvailabilityCondition Rule)
+    {
+        public override string ToString()
+        {
+            static string TimeOfDay(int minute) => $"{minute / 60:00}:{minute % 60:00}";
+            var time = Rule.ClockMode == Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata.ClockTimeMode.Between
+                ? $"{TimeOfDay(Rule.StartMinute)} - {TimeOfDay(Rule.EndMinute)}"
+                : TimeOfDay(Rule.StartMinute);
+            var dates = Rule.DateMode == Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata.CalendarDateMode.Between
+                ? $"{Rule.StartDate:yyyy-MM-dd} - {Rule.EndDate:yyyy-MM-dd}"
+                : $"{Rule.StartDate:yyyy-MM-dd}";
+
+            return Rule.Type switch
+            {
+                ConditionType.TimePhase => $"Time Phase: {Rule.Phase}",
+                ConditionType.ClockTime =>
+                    $"Clock ({(Rule.UseRealUtcTime ? "real UTC" : "game time")}): {Rule.ClockMode} {time}",
+                ConditionType.CalendarDate =>
+                    $"Calendar (UTC): {Rule.DateMode} {dates}" +
+                    (Rule.RepeatAnnually ? " (every year)" : ""),
+                _ => "Unsupported condition",
+            };
+        }
     }
 
     private static readonly DrawingColor PanelBackColor = DrawingColor.FromArgb(45, 45, 48);
@@ -161,6 +187,18 @@ public sealed class FrmDungeonConfiguration : DarkForm
     private readonly DateTimePicker _startTime = TimePicker();
     private readonly DateTimePicker _endTime = TimePicker();
 
+    private readonly ListBox _availabilityRules = new()
+    {
+        Dock = DockStyle.Fill,
+        BackColor = InputBackColor,
+        ForeColor = TextColor,
+        BorderStyle = BorderStyle.FixedSingle,
+        IntegralHeight = false,
+    };
+    private readonly DarkButton _addRule = new() { Text = "Add...", Width = 105, Height = 31 };
+    private readonly DarkButton _editRule = new() { Text = "Edit...", Width = 105, Height = 31 };
+    private readonly DarkButton _removeRule = new() { Text = "Remove", Width = 105, Height = 31 };
+
     public FrmDungeonConfiguration()
     {
         Text = "Dungeons";
@@ -203,6 +241,10 @@ public sealed class FrmDungeonConfiguration : DarkForm
         BuildUi();
 
         _availabilityMode.SelectedIndexChanged += (_, _) => UpdateAvailabilityControls();
+        _availabilityRules.SelectedIndexChanged += (_, _) => UpdateRuleControls();
+        _addRule.Click += (_, _) => AddAvailabilityRule();
+        _editRule.Click += (_, _) => EditAvailabilityRule();
+        _removeRule.Click += (_, _) => RemoveAvailabilityRule();
         _list.SelectedIndexChanged += (_, _) =>
         {
             CommitSelected();
@@ -452,6 +494,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
         AddRow(table, "Available days", _days, 104);
         AddRow(table, "Opens at", _startTime);
         AddRow(table, "Closes at", _endTime);
+        AddRow(table, "Additional conditions\n(ALL must pass)", BuildAvailabilityRuleEditor(), 209);
 
         var help = new Label
         {
@@ -460,14 +503,100 @@ public sealed class FrmDungeonConfiguration : DarkForm
             ForeColor = DrawingColor.Silver,
             Text =
                 "Always: permanently open. Manual: use the checkbox to open/seal the gate. " +
-                "Scheduled: select days and an opening/closing time. Schedules may cross midnight, e.g. 22:00 -> 02:00.",
+                "Scheduled: select days and opening/closing times (overnight ranges are supported). " +
+                "Additional Time Phase, Clock Time and Calendar Date conditions apply in every mode. " +
+                "All additional conditions must match before any player can enter.",
             Margin = new Padding(8, 12, 8, 8),
         };
         table.Controls.Add(help);
         table.SetColumnSpan(help, 2);
 
+        page.AutoScroll = true;
         page.Controls.Add(table);
         return page;
+    }
+
+    private Control BuildAvailabilityRuleEditor()
+    {
+        var editor = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            RowCount = 2,
+            ColumnCount = 1,
+            BackColor = PanelBackColor,
+            Margin = new Padding(4, 3, 4, 5),
+        };
+        editor.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        editor.RowStyles.Add(new RowStyle(SizeType.Absolute, 39));
+
+        _availabilityRules.Margin = new Padding(0, 0, 0, 4);
+        editor.Controls.Add(_availabilityRules, 0, 0);
+
+        var buttons = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Margin = new Padding(0),
+        };
+        _addRule.Margin = new Padding(0, 3, 9, 0);
+        _editRule.Margin = new Padding(0, 3, 9, 0);
+        _removeRule.Margin = new Padding(0, 3, 0, 0);
+        buttons.Controls.Add(_addRule);
+        buttons.Controls.Add(_editRule);
+        buttons.Controls.Add(_removeRule);
+        editor.Controls.Add(buttons, 0, 1);
+        return editor;
+    }
+
+    private void AddAvailabilityRule()
+    {
+        if (_selected == null || _availabilityRules.Items.Count >= 32)
+            return;
+
+        using var dialog = new FrmDungeonAvailabilityCondition();
+        if (dialog.ShowDialog(this) != DialogResult.OK || dialog.Result == null)
+            return;
+
+        var index = _availabilityRules.Items.Add(new AvailabilityRuleChoice(dialog.Result));
+        _availabilityRules.SelectedIndex = index;
+        UpdateRuleControls();
+    }
+
+    private void EditAvailabilityRule()
+    {
+        if (_selected == null ||
+            _availabilityRules.SelectedItem is not AvailabilityRuleChoice current)
+            return;
+
+        using var dialog = new FrmDungeonAvailabilityCondition(current.Rule);
+        if (dialog.ShowDialog(this) != DialogResult.OK || dialog.Result == null)
+            return;
+
+        var index = _availabilityRules.SelectedIndex;
+        _availabilityRules.Items[index] = new AvailabilityRuleChoice(dialog.Result);
+        _availabilityRules.SelectedIndex = index;
+        UpdateRuleControls();
+    }
+
+    private void RemoveAvailabilityRule()
+    {
+        if (_selected == null || _availabilityRules.SelectedIndex < 0)
+            return;
+
+        var index = _availabilityRules.SelectedIndex;
+        _availabilityRules.Items.RemoveAt(index);
+        if (_availabilityRules.Items.Count > 0)
+            _availabilityRules.SelectedIndex = Math.Min(index, _availabilityRules.Items.Count - 1);
+        UpdateRuleControls();
+    }
+
+    private void UpdateRuleControls()
+    {
+        var validSelection = _selected != null && _availabilityRules.SelectedIndex >= 0;
+        _addRule.Enabled = _selected != null && _availabilityRules.Items.Count < 32;
+        _editRule.Enabled = validSelection;
+        _removeRule.Enabled = validSelection;
     }
 
     private static TabPage CreatePage(string text) =>
@@ -607,7 +736,20 @@ public sealed class FrmDungeonConfiguration : DarkForm
         var endMinute = _selected.EndMinuteOfDay == 1440 ? 0 : _selected.EndMinuteOfDay;
         _endTime.Value = DateTime.Today.AddMinutes(endMinute);
 
+        _availabilityRules.BeginUpdate();
+        try
+        {
+            _availabilityRules.Items.Clear();
+            foreach (var rule in _selected.AvailabilityConditions ?? [])
+                _availabilityRules.Items.Add(new AvailabilityRuleChoice(rule));
+        }
+        finally
+        {
+            _availabilityRules.EndUpdate();
+        }
+
         UpdateAvailabilityControls();
+        UpdateRuleControls();
     }
 
     private void SetEditorEnabled(bool enabled)
@@ -622,6 +764,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
                      _completionItemQuantity, _completionEvent, _failureEvent,
                      _exitMap, _exitX, _exitY, _exitDirection,
                      _availabilityMode, _manualAvailable, _days, _startTime, _endTime,
+                     _availabilityRules, _addRule, _editRule, _removeRule,
                  })
             control.Enabled = enabled;
     }
@@ -639,6 +782,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
         _days.Enabled = mode == DungeonAvailabilityMode.Scheduled;
         _startTime.Enabled = mode == DungeonAvailabilityMode.Scheduled;
         _endTime.Enabled = mode == DungeonAvailabilityMode.Scheduled;
+        UpdateRuleControls();
     }
 
     private void CommitSelected()
@@ -700,6 +844,10 @@ public sealed class FrmDungeonConfiguration : DarkForm
 
         _selected.StartMinuteOfDay = _startTime.Value.Hour * 60 + _startTime.Value.Minute;
         _selected.EndMinuteOfDay = _endTime.Value.Hour * 60 + _endTime.Value.Minute;
+        _selected.AvailabilityConditions = _availabilityRules.Items
+            .OfType<AvailabilityRuleChoice>()
+            .Select(choice => choice.Rule)
+            .ToArray();
 
         if (_selected.AvailabilityMode != DungeonAvailabilityMode.Scheduled)
             _selected.AvailableDays = DungeonWeekdays.EveryDay;
@@ -714,7 +862,7 @@ public sealed class FrmDungeonConfiguration : DarkForm
         {
             MessageBox.Show(
                 this,
-                "The dungeon configuration is invalid. Verify names, levels, party sizes and scheduled days.",
+                "Invalid dungeon configuration. Check levels, party sizes, scheduled days and advanced availability conditions.",
                 "Dungeons",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning
