@@ -85,6 +85,14 @@ public sealed class DungeonDefinition
     public DungeonWeekdays AvailableDays { get; set; } = DungeonWeekdays.EveryDay;
     public int StartMinuteOfDay { get; set; }
     public int EndMinuteOfDay { get; set; } = 1440;
+
+    /// <summary>
+    /// Optional additional Time Phase, Clock Time and Calendar Date conditions
+    /// from the same definitions as Event Conditional Branches. All must pass,
+    /// after the Always/Manual/Scheduled mode has been checked.
+    /// </summary>
+    public DungeonAvailabilityCondition[] AvailabilityConditions { get; set; } = [];
+
     public int SortOrder { get; set; }
 
     [JsonIgnore]
@@ -111,7 +119,9 @@ public sealed class DungeonDefinition
         CompletionItemQuantity is >= 0 and <= 1_000_000_000 &&
         StartMinuteOfDay is >= 0 and <= 1439 &&
         EndMinuteOfDay is >= 0 and <= 1440 &&
-        (AvailabilityMode != DungeonAvailabilityMode.Scheduled || AvailableDays != DungeonWeekdays.None);
+        (AvailabilityMode != DungeonAvailabilityMode.Scheduled || AvailableDays != DungeonWeekdays.None) &&
+        AvailabilityConditions is { Length: <= 32 } &&
+        AvailabilityConditions.All(rule => rule is { IsStructurallyValid: true });
 }
 
 public sealed class DungeonConfiguration
@@ -152,6 +162,7 @@ public sealed class DungeonConfiguration
             dungeon.Image ??= string.Empty;
             dungeon.Location ??= string.Empty;
             dungeon.MapIds ??= [];
+            dungeon.AvailabilityConditions ??= [];
         }
 
         if (!value.IsStructurallyValid)
