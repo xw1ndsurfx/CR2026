@@ -50,10 +50,34 @@ internal sealed partial class PacketHandler
 
     public void HandlePacket(Client client, RequestDungeonPanelPacket packet)
     {
-        if (client.Entity is not { } player)
+        if (client.Entity is not { InGame: true } player)
             return;
 
-        DungeonConfigurationRuntime.SendState(player, packet.OpenWindow);
+        if (packet.PlayerId == Guid.Empty || packet.PlayerId == player.Id)
+        {
+            DungeonConfigurationRuntime.SendState(player, packet.OpenWindow);
+            return;
+        }
+
+        // Inspect only online characters, just like Character Information.
+        // Send the target's saved per-dungeon records to the requester without
+        // changing the requester's own dungeon panel or granting actions.
+        var observed = Intersect.Server.Entities.Player.FindOnline(packet.PlayerId);
+        if (observed is not { InGame: true })
+            return;
+
+        var now = DateTimeOffset.Now;
+        client.Send(new DungeonStatePacket(
+            DungeonConfigurationRuntime.Json,
+            DungeonConfigurationRuntime.BuildStatuses(now),
+            packet.OpenWindow,
+            now.ToUnixTimeMilliseconds(),
+            DungeonStatisticsRuntime.BuildState(observed),
+            podiums: null)
+        {
+            InspectedPlayerId = observed.Id,
+            InspectedPlayerName = observed.Name,
+        });
     }
     public void HandlePacket(Client client, DungeonRetryResponsePacket packet)
     {
