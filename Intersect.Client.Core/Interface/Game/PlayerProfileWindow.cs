@@ -19,6 +19,7 @@ internal sealed class PlayerProfileWindow : Window
     private readonly Label _guildLine;
     private readonly Label _locationLine;
     private readonly Label _titleLine;
+    private readonly Label _rankingBonusLabel;
     private readonly Label _expLine;
     private readonly ProfileProgressBar _expBar;
     private readonly List<ImagePanel> _paperdollLayers = new();
@@ -70,6 +71,18 @@ internal sealed class PlayerProfileWindow : Window
         _guildLine = HeaderLine("ProfileGuild", 123);
         _locationLine = HeaderLine("ProfileLocation", 144);
         _titleLine = HeaderLine("ProfileTitle", 165);
+        _titleLine.SetBounds(247, 165, 270, 20);
+        _rankingBonusLabel = new Label(this, "ProfileRankingExpBonus")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 10,
+            TextAlign = Pos.Right | Pos.CenterV,
+            TextColorOverride = new Color(a:255,r:148,g:218,b:142),
+            MouseInputEnabled = false,
+        };
+        _rankingBonusLabel.SetBounds(522, 165, 126, 20);
+        _rankingBonusLabel.Hide();
         _expLine = HeaderLine("ProfileExp", 188);
         _expBar = new ProfileProgressBar(this, "ProfileExpBar");
         _expBar.SetBounds(248, 213, 400, 10);
@@ -139,6 +152,15 @@ internal sealed class PlayerProfileWindow : Window
         _guildLine.Text = "Guild: " + Fallback(profile.GuildName);
         _locationLine.Text = "Location: " + Fallback(profile.MapName);
         _titleLine.Text = "Title: " + Fallback(profile.RankingTitle);
+        if (!string.IsNullOrWhiteSpace(profile.RankingTitle))
+        {
+            _rankingBonusLabel.Text = $"+{profile.RankingExperienceBonusPercent:N0}% EXP";
+            _rankingBonusLabel.Show();
+        }
+        else
+        {
+            _rankingBonusLabel.Hide();
+        }
         var levelThreshold = profile.LevelExperienceRequired;
         var maximum = levelThreshold > 0 ? levelThreshold : profile.Experience;
         _expBar.Progress = maximum > 0
