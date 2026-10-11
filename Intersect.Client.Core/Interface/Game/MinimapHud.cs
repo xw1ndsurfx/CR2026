@@ -24,10 +24,10 @@ internal sealed class MinimapHud : Base
 {
     private const int CompactWidth = 280;
     private const int CompactHeight = 315;
-    private const int MapViewportX = 12;
-    private const int MapViewportY = 42;
-    private const int MapViewportWidth = 256;
-    private const int MapViewportHeight = 224;
+    private const int MapViewportX = 34;
+    private const int MapViewportY = 58;
+    private const int MapViewportWidth = 212;
+    private const int MapViewportHeight = 178;
 
     private readonly Label _mapName;
     private readonly Label _coords;
@@ -47,10 +47,10 @@ internal sealed class MinimapHud : Base
 
         _mapName = MakeLabel("MinimapMapName", 12, 5, 210, 24, 12);
         _coords = MakeLabel("MinimapCoords", 12, 281, 256, 18, 10);
-        _north = MakeLabel("MinimapNorth", 124, 26, 32, 18, 12, "N");
-        _east = MakeLabel("MinimapEast", 248, 145, 22, 18, 12, "E");
-        _south = MakeLabel("MinimapSouth", 124, 255, 32, 18, 12, "S");
-        _west = MakeLabel("MinimapWest", 10, 145, 22, 18, 12, "W");
+        _north = MakeLabel("MinimapNorth", 124, 36, 32, 18, 12, "N");
+        _east = MakeLabel("MinimapEast", 248, 138, 22, 18, 12, "E");
+        _south = MakeLabel("MinimapSouth", 124, 240, 32, 18, 12, "S");
+        _west = MakeLabel("MinimapWest", 10, 138, 22, 18, 12, "W");
         var titleFont = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont;
         _mapName.Font = titleFont;
         _mapName.TextColorOverride = Color.White;
@@ -127,6 +127,8 @@ internal sealed class MinimapHud : Base
         _mapName.SetBounds(14, 5, Width - 28, 22);
         _coords.SetBounds(112, Height - 29, Width - 124, 18);
         _worldMapButton.SetBounds(14, Height - 51, 90, 24);
+        // Keep the map canvas inside the compass rails and above the footer controls.
+        // Child canvases render over earlier siblings, so never overlap labels or buttons.
         _mapCanvas.SetBounds(MapViewportX, MapViewportY, MapViewportWidth, MapViewportHeight);
     }
 
