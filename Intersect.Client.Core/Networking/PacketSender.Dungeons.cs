@@ -4,9 +4,9 @@ namespace Intersect.Client.Networking;
 
 public static partial class PacketSender
 {
-    public static void SendRequestDungeonPanel(bool openWindow = true)
+    public static void SendRequestDungeonPanel(bool openWindow = true, Guid playerId = default)
     {
-        Network.SendPacket(new RequestDungeonPanelPacket(openWindow));
+        Network.SendPacket(new RequestDungeonPanelPacket(openWindow, playerId));
     }
 
     public static void SendDungeonConfirmationResponse(Guid eventId, bool accept)
