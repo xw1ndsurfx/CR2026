@@ -5,6 +5,7 @@ namespace Intersect.Client.Interface.Game;
 public partial class GameInterface
 {
     private DungeonPanelWindow? _dungeonPanelWindow;
+    private ObservedDungeonStatsWindow? _observedDungeonStatsWindow;
     private DungeonRunHudWindow? _dungeonRunHudWindow;
     private DungeonConfirmationWindow? _dungeonConfirmationWindow;
 
@@ -12,6 +13,19 @@ public partial class GameInterface
 
     public void ApplyDungeonState(DungeonStatePacket packet)
     {
+        if (packet.InspectedPlayerId != Guid.Empty)
+        {
+            if (!packet.OpenWindow)
+                return;
+
+            // Never populate the observing player's own dungeon panel with
+            // another character's run statistics.
+            _observedDungeonStatsWindow ??= new ObservedDungeonStatsWindow(GameCanvas);
+            _observedDungeonStatsWindow.Apply(packet);
+            _observedDungeonStatsWindow.ShowWindow();
+            return;
+        }
+
         _dungeonPanelWindow ??= new DungeonPanelWindow(GameCanvas);
         _dungeonPanelWindow.Apply(packet);
 
