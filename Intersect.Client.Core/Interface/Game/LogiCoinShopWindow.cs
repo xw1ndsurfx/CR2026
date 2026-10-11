@@ -6,6 +6,8 @@ using Intersect.Client.ThirdParty;
 using Intersect.Framework.Core.LogiCoins;
 using Intersect.Utilities;
 using Intersect.Network.Packets.Server;
+using UiRectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
+using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 
 namespace Intersect.Client.Interface.Game;
 
@@ -17,12 +19,22 @@ internal sealed class LogiCoinShopWindow : Window
     private readonly ScrollControl _offers;
     private readonly Button _buyMore;
     private bool _initialized;
+    private static readonly Color Gold = new(a:255,r:224,g:190,b:113);
+    private static readonly Color Cream = new(a:255,r:246,g:229,b:202);
+    private static readonly Color Muted = new(a:255,r:193,g:180,b:161);
+    private readonly Label _catalogHeading;
 
     public LogiCoinShopWindow(Canvas parent) : base(parent, "LogiCoin Shop", false, nameof(LogiCoinShopWindow))
     {
-        SetSize(720, 560);
+        SetSize(720, 580);
         Alignment = [Alignments.Center];
         DeleteOnClose = false;
+        DisableResizing();
+
+        var frame = new ShopChrome(this, "ShopFrame", ChromeStyle.Window);
+        frame.SetBounds(14, 30, 692, 522);
+        var header = new ShopChrome(this, "ShopHeader", ChromeStyle.Header);
+        header.SetBounds(27, 43, 666, 109);
 
         _balance = new Label(this, "Balance")
         {
@@ -32,7 +44,7 @@ internal sealed class LogiCoinShopWindow : Window
             TextColorOverride = new Color(a:255,r:236,g:210,b:153),
             Text = "LogiCoins: ...",
         };
-        _balance.SetBounds(24, 38, 330, 34);
+        _balance.SetBounds(42, 51, 392, 36);
 
         _premium = new Label(this, "Premium")
         {
@@ -41,7 +53,7 @@ internal sealed class LogiCoinShopWindow : Window
             FontSize = 10,
             TextColorOverride = Color.White,
         };
-        _premium.SetBounds(24, 72, 450, 24);
+        _premium.SetBounds(42, 92, 438, 29);
 
         _buyMore = new Button(this, "BuyMore")
         {
@@ -49,7 +61,8 @@ internal sealed class LogiCoinShopWindow : Window
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 11,
         };
-        _buyMore.SetBounds(490, 42, 200, 40);
+        _buyMore.SetBounds(479, 73, 198, 43);
+        StyleButton(_buyMore, "ShopBuyCoinsStyle", "BUY LOGICOINS", 198, 43, true);
         _buyMore.Clicked += (_, _) =>
         {
             var url = LogiCoinShopConfiguration.Instance.ShopUrl;
@@ -67,7 +80,17 @@ internal sealed class LogiCoinShopWindow : Window
             TextColorOverride = Color.White,
             TextAlign = Pos.Left | Pos.CenterV,
         };
-        _status.SetBounds(24, 102, 666, 34);
+        _status.SetBounds(37, 154, 645, 26);
+
+        _catalogHeading = new Label(this, "CatalogHeading")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 12,
+            TextColorOverride = Gold,
+            Text = "AVAILABLE OFFERS",
+        };
+        _catalogHeading.SetBounds(41, 188, 612, 24);
 
         _offers = new ScrollControl(this, "Offers")
         {
@@ -75,7 +98,7 @@ internal sealed class LogiCoinShopWindow : Window
             OverflowY = OverflowBehavior.Scroll,
             AutoHideBars = false,
         };
-        _offers.SetBounds(24, 142, 666, 388);
+        _offers.SetBounds(30, 214, 656, 322);
 
         Hide();
     }
@@ -140,12 +163,12 @@ internal sealed class LogiCoinShopWindow : Window
                      .OrderBy(offer => offer.SortOrder)
                      .ThenBy(offer => offer.Name, StringComparer.OrdinalIgnoreCase))
         {
-            var row = new OfferRow(_offers, offer, now);
-            row.SetBounds(4, y, 638, 120);
-            y += 126;
+            var row = new OfferRow(_offers, offer, now, state.Balance);
+            row.SetBounds(4, y, 626, 134);
+            y += 143;
         }
 
-        _offers.SetInnerSize(646, Math.Max(390, y + 4));
+        _offers.SetInnerSize(638, Math.Max(318, y + 8));
         _offers.UpdateScrollBars();
     }
 
@@ -156,20 +179,136 @@ internal sealed class LogiCoinShopWindow : Window
         Networking.PacketSender.SendRequestLogiCoinShopState();
     }
 
+    private static void StyleButton(Button button, string id, string caption,
+        int width, int height, bool primary)
+    {
+        button.Text = string.Empty;
+        var frame = new ShopChrome(button, id,
+            primary ? ChromeStyle.PrimaryButton : ChromeStyle.SecondaryButton);
+        frame.SetBounds(0, 0, width, height);
+        var label = new Label(button, id + "Caption")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? button.Skin.DefaultFont,
+            FontSize = 10,
+            TextAlign = Pos.Center,
+            TextColorOverride = Cream,
+            Text = caption,
+            MouseInputEnabled = false,
+        };
+        label.SetBounds(5, 0, width - 10, height);
+        label.BringToFront();
+    }
+
+    private enum ChromeStyle
+    {
+        Window, Header, Card, Portrait, PrimaryButton, SecondaryButton
+    }
+
+    private sealed class ShopChrome : Base
+    {
+        private static readonly Color Dark = new(a:255,r:28,g:18,b:17);
+        private static readonly Color Brown = new(a:255,r:56,g:35,b:28);
+        private static readonly Color Copper = new(a:255,r:90,g:55,b:37);
+        private static readonly Color BorderColor = new(a:255,r:162,g:116,b:55);
+        private static readonly Color Highlight = new(a:255,r:228,g:183,b:93);
+        private readonly ChromeStyle _style;
+
+        public ShopChrome(Base parent, string name, ChromeStyle style) : base(parent, name)
+        {
+            _style = style;
+            MouseInputEnabled = false;
+            KeyboardInputEnabled = false;
+        }
+
+        protected override void Render(SkinBase skin)
+        {
+            var bounds = RenderBounds;
+            switch (_style)
+            {
+                case ChromeStyle.Window:
+                    Fill(skin, bounds, Dark);
+                    Border(skin, bounds, BorderColor, 2);
+                    Border(skin, Inset(bounds, 5), Copper, 1);
+                    Fill(skin, bounds.X + 17, bounds.Y + 164, bounds.Width - 34, 1, Copper);
+                    break;
+                case ChromeStyle.Header:
+                    Fill(skin, bounds, Brown);
+                    Border(skin, bounds, Copper, 1);
+                    Fill(skin, bounds.X + 1, bounds.Y + 1, bounds.Width - 2, 6, Copper);
+                    break;
+                case ChromeStyle.Card:
+                    Fill(skin, bounds, Dark);
+                    Border(skin, bounds, BorderColor, 2);
+                    Border(skin, Inset(bounds, 4), Copper, 1);
+                    Fill(skin, bounds.X + 108, bounds.Y + 10,
+                        bounds.Width - 122, 35, Brown);
+                    Fill(skin, bounds.X + 108, bounds.Y + 45,
+                        bounds.Width - 122, 1, Copper);
+                    break;
+                case ChromeStyle.Portrait:
+                    Fill(skin, bounds, Dark);
+                    Border(skin, bounds, Highlight, 2);
+                    Border(skin, Inset(bounds, 5), Copper, 1);
+                    break;
+                case ChromeStyle.PrimaryButton:
+                    Fill(skin, bounds, new Color(a:255,r:49,g:77,b:42));
+                    Border(skin, bounds, new Color(a:255,r:148,g:183,b:105), 2);
+                    Border(skin, Inset(bounds, 4), Copper, 1);
+                    break;
+                case ChromeStyle.SecondaryButton:
+                    Fill(skin, bounds, Copper);
+                    Border(skin, bounds, Highlight, 2);
+                    Border(skin, Inset(bounds, 4), Brown, 1);
+                    break;
+            }
+        }
+
+        private static UiRectangle Inset(UiRectangle rect, int size) =>
+            new(rect.X + size, rect.Y + size,
+                rect.Width - size * 2, rect.Height - size * 2);
+
+        private static void Fill(SkinBase skin, UiRectangle rect, Color color)
+        {
+            skin.Renderer.DrawColor = color;
+            skin.Renderer.DrawFilledRect(rect);
+        }
+
+        private static void Fill(SkinBase skin, int x, int y, int width, int height, Color color)
+        {
+            if (width <= 0 || height <= 0) return;
+            Fill(skin, new UiRectangle(x, y, width, height), color);
+        }
+
+        private static void Border(SkinBase skin, UiRectangle rect, Color color, int thickness)
+        {
+            Fill(skin, rect.X, rect.Y, rect.Width, thickness, color);
+            Fill(skin, rect.X, rect.Bottom - thickness, rect.Width, thickness, color);
+            Fill(skin, rect.X, rect.Y, thickness, rect.Height, color);
+            Fill(skin, rect.Right - thickness, rect.Y, thickness, rect.Height, color);
+        }
+    }
+
     private sealed class OfferRow : Base
     {
         private readonly LogiCoinShopOffer _offer;
 
-        public OfferRow(Base parent, LogiCoinShopOffer offer, DateTimeOffset now) : base(parent, "Offer_" + offer.Id.ToString("N"))
+        public OfferRow(Base parent, LogiCoinShopOffer offer, DateTimeOffset now, long balance) : base(parent, "Offer_" + offer.Id.ToString("N"))
         {
             _offer = offer;
+            MouseInputEnabled = false;
+            var card = new ShopChrome(this, "OfferFrame", ChromeStyle.Card);
+            card.SetBounds(0, 0, 626, 134);
+            var imageFrame = new ShopChrome(this, "OfferImageFrame", ChromeStyle.Portrait);
+            imageFrame.SetBounds(11, 13, 88, 88);
 
             var image = new ImagePanel(this, "Image")
             {
                 MaintainAspectRatio = true,
                 ShouldDrawBackground = false,
             };
-            image.SetBounds(12, 16, 68, 68);
+            image.MouseInputEnabled = false;
+            image.SetBounds(20, 22, 70, 70);
 
             if (!string.IsNullOrWhiteSpace(offer.Image))
             {
@@ -206,7 +345,7 @@ internal sealed class LogiCoinShopWindow : Window
                 TextColorOverride = Color.White,
                 Text = offer.Name,
             };
-            title.SetBounds(94, 8, 330, 24);
+            title.SetBounds(113, 12, 328, 27);
 
             var description = new Label(this, "Description")
             {
@@ -216,7 +355,7 @@ internal sealed class LogiCoinShopWindow : Window
                 TextColorOverride = new Color(a:255,r:200,g:205,b:210),
                 Text = OfferDescription(offer),
             };
-            description.SetBounds(94, 34, 330, 74);
+            description.SetBounds(113, 43, 327, 78);
 
             var effective = offer.EffectivePrice(now);
             var priceText = effective == offer.PriceLogiCoins
@@ -234,7 +373,7 @@ internal sealed class LogiCoinShopWindow : Window
                     : new Color(a:255,r:236,g:210,b:153),
                 Text = priceText,
             };
-            price.SetBounds(430, 10, 190, 28);
+            price.SetBounds(444, 13, 169, 30);
 
             var buy = new Button(this, "Buy")
             {
@@ -242,11 +381,15 @@ internal sealed class LogiCoinShopWindow : Window
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
                 FontSize = 10,
             };
-            buy.SetBounds(480, 50, 140, 38);
+            buy.SetBounds(449, 57, 164, 41);
+            var affordable = balance >= effective;
+            if (!affordable)
+                buy.IsDisabled = true;
+            StyleButton(buy, "OfferBuyStyle", affordable ? "PURCHASE" : "NOT ENOUGH LC", 164, 41, affordable);
             buy.Clicked += (_, _) =>
             {
                 buy.IsDisabled = true;
-                buy.Text = "Processing...";
+                buy.Text = string.Empty;
                 Networking.PacketSender.SendPurchaseLogiCoinOffer(_offer.Id, Guid.NewGuid());
             };
         }
