@@ -135,7 +135,7 @@ public partial class Player
                          character != ' ' && character != '-' && character != '\'' &&
                          character != '’')))
                 {
-                    PetNotice("Nom invalide : 2 à 24 caractères (lettres, chiffres, espaces, tirets, apostrophes).");
+                    PetNotice("Invalid pet name: 2 to 24 characters (letters, numbers, spaces, hyphens, apostrophes).");
                     break;
                 }
 
@@ -147,8 +147,8 @@ public partial class Player
                 }
 
                 PetNotice(newName.Length == 0
-                    ? "Nom du familier réinitialisé."
-                    : "Ton familier s'appelle maintenant " + newName + " !");
+                    ? "Pet name reset."
+                    : "Your pet is now named " + newName + "!");
                 break;
         }
 

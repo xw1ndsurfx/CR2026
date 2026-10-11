@@ -19,7 +19,7 @@ internal sealed class PetsWindow : Window
     private readonly Label _summary;
     private readonly ScrollControl _scroll;
 
-    public PetsWindow(Canvas parent) : base(parent, "Familiers", false, nameof(PetsWindow))
+    public PetsWindow(Canvas parent) : base(parent, "Pets", false, nameof(PetsWindow))
     {
         SetSize(735, 560);
         Alignment = [Alignments.Center];
@@ -36,7 +36,7 @@ internal sealed class PetsWindow : Window
             FontSize = 17,
             TextAlign = Pos.Center,
             TextColorOverride = new Color(a: 255, r: 236, g: 210, b: 153),
-            Text = "FAMILIERS",
+            Text = "PETS",
         };
         title.SetBounds(20, 39, 695, 32);
 
@@ -68,9 +68,9 @@ internal sealed class PetsWindow : Window
         _scroll.DeleteAll();
         var pets = packet.Pets ?? [];
         _summary.Text = pets.Length == 0
-            ? "Aucun familier debloque. Utilise un objet d'invocation."
-            : pets.Length + " familiers debloques  -  " +
-              (pets.Any(p => p.IsActive) ? "1 invoque" : "aucun invoque");
+            ? "No pets unlocked. Use a pet summoning item."
+            : pets.Length + " pets unlocked  -  " +
+              (pets.Any(p => p.IsActive) ? "1 summoned" : "none summoned");
 
         var y = 10;
         foreach (var pet in pets)
@@ -122,10 +122,10 @@ internal sealed class PetsWindow : Window
             AddText(card, "PetName" + pet.PetId, displayTitle, 108, 13, 400, 26, 14, true,
                 new Color(a: 255, r: 255, g: 229, b: 177));
             AddText(card, "PetStatus" + pet.PetId,
-                pet.IsActive ? "[ INVOQUE ]" : "[ RANGE ]", 510, 14, 118, 25, 10, true,
+                pet.IsActive ? "[ SUMMONED ]" : "[ DISMISSED ]", 510, 14, 118, 25, 10, true,
                 pet.IsActive ? new Color(a: 255, r: 112, g: 231, b: 135)
                     : new Color(a: 255, r: 189, g: 177, b: 166));
-            AddText(card, "PetLevel" + pet.PetId, "Niveau " + pet.Level + " / " + pet.MaximumLevel,
+            AddText(card, "PetLevel" + pet.PetId, "Level " + pet.Level + " / " + pet.MaximumLevel,
                 108, 40, 290, 20, 11);
 
             // Native progress bars share the game's skin and adapt to any pet values.
@@ -134,7 +134,7 @@ internal sealed class PetsWindow : Window
             AddBar(card, "PetXp" + pet.PetId, "EXP", pet.Experience,
                 pet.ExperienceToNextLevel, 108, 108, 503);
 
-            AddText(card, "PetStatsTitle" + pet.PetId, "STATISTIQUES", 22, 151, 600, 22, 11,
+            AddText(card, "PetStatsTitle" + pet.PetId, "STATS", 22, 151, 600, 22, 11,
                 true, new Color(a: 255, r: 235, g: 201, b: 151));
             var labels = new[] { "ATK", "DEF", "SPD", "MAG", "RES" };
             var stats = pet.Stats ?? [];
@@ -145,26 +145,26 @@ internal sealed class PetsWindow : Window
                     22 + i * 122, 179, 110, 24, 10, true);
             }
 
-            AddText(card, "PetAbilities" + pet.PetId, "SORTS", 22, 217, 600, 19, 11, true,
+            AddText(card, "PetAbilities" + pet.PetId, "SPELLS", 22, 217, 600, 19, 11, true,
                 new Color(a: 255, r: 235, g: 201, b: 151));
             var abilities = pet.Abilities ?? [];
-            var abilityText = abilities.Length == 0 ? "Aucun sort configure" :
+            var abilityText = abilities.Length == 0 ? "No spells configured" :
                 string.Join("  |  ", abilities.Take(5).Select(spell =>
                     spell.Name + (pet.Level >= spell.RequiredLevel ? "" :
-                        " [niv. " + spell.RequiredLevel + "]")));
+                        " [Lv. " + spell.RequiredLevel + "]")));
             AddText(card, "PetAbilityNames" + pet.PetId, abilityText, 22, 241, 602, 22, 10);
 
             AddText(card, "PetLootStatus" + pet.PetId,
-                "RAMASSAGE AUTO : " + (pet.AutoLoot ? "ACTIF" : "INACTIF") +
-                "      Rayon : " + pet.LootRadius + " cases",
+                "AUTO-LOOT: " + (pet.AutoLoot ? "ON" : "OFF") +
+                "      Radius: " + pet.LootRadius + " tiles",
                 22, 274, 602, 20, 10, true,
                 pet.AutoLoot ? new Color(a: 255, r: 147, g: 225, b: 161) : Color.White);
 
-            AddText(card, "PetRenameLabel" + pet.PetId, "Nom :", 18, 301, 53, 25, 10);
+            AddText(card, "PetRenameLabel" + pet.PetId, "Name:", 18, 301, 53, 25, 10);
             var nameInput = new TextBox(card, "PetNameInput" + pet.PetId)
             {
                 Text = pet.Name,
-                PlaceholderText = "Nom du familier",
+                PlaceholderText = "Pet name",
                 Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
                 FontSize = 10,
                 TextColorOverride = Color.White,
@@ -179,36 +179,36 @@ internal sealed class PetsWindow : Window
 
             var rename = new Button(card, "PetRename" + pet.PetId)
             {
-                Text = "Renommer",
+                Text = "Rename",
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
                 FontSize = 10,
             };
             rename.SetBounds(400, 299, 226, 29);
-            StyleButton(rename, "PetRenameStyle" + pet.PetId, "RENOMMER", 226, 29, false);
+            StyleButton(rename, "PetRenameStyle" + pet.PetId, "RENAME", 226, 29, false);
             rename.Clicked += (_, _) => SubmitName();
 
             var summon = new Button(card, "PetSummon" + pet.PetId)
             {
-                Text = pet.IsActive ? "Ranger" : "Invoquer",
+                Text = pet.IsActive ? "Dismiss" : "Summon",
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
                 FontSize = 10,
             };
             summon.SetBounds(18, 337, 296, 32);
             StyleButton(summon, "PetSummonStyle" + pet.PetId,
-                pet.IsActive ? "RANGER" : "INVOQUER", 296, 32, !pet.IsActive);
+                pet.IsActive ? "DISMISS" : "SUMMON", 296, 32, !pet.IsActive);
             summon.Clicked += (_, _) => Networking.PacketSender.SendPetAction(
                 pet.IsActive ? PetActionKind.Dismiss : PetActionKind.Summon, pet.PetId);
 
             var loot = new Button(card, "PetLoot" + pet.PetId)
             {
-                Text = pet.AutoLoot ? "Desactiver l'auto-loot" : "Activer l'auto-loot",
+                Text = pet.AutoLoot ? "Disable auto-loot" : "Enable auto-loot",
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
                 FontSize = 10,
                 IsDisabled = !pet.IsActive,
             };
             loot.SetBounds(330, 337, 296, 32);
             StyleButton(loot, "PetLootStyle" + pet.PetId,
-                pet.AutoLoot ? "DESACTIVER AUTO-LOOT" : "ACTIVER AUTO-LOOT",
+                pet.AutoLoot ? "DISABLE AUTO-LOOT" : "ENABLE AUTO-LOOT",
                 296, 32, pet.IsActive && !pet.AutoLoot);
             loot.Clicked += (_, _) => Networking.PacketSender.SendPetAction(
                 PetActionKind.ToggleAutoLoot, pet.PetId);
