@@ -33,6 +33,9 @@ public partial class PartyWindow
     private readonly List<Label> _memberRoles = new();
     private Label _partySummary;
     private Label _leaveCaption;
+    private PartyRosterHud _rosterHud;
+    private readonly List<Label> _hudNames = new();
+    private Label _hudHeading;
 
     private ImagePanel mLeader;
 
@@ -164,6 +167,7 @@ public partial class PartyWindow
 
         mPartyWindow.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
         BuildCrewLayout();
+        BuildPartyHud(gameCanvas);
     }
 
     private void BuildCrewLayout()
@@ -276,9 +280,135 @@ public partial class PartyWindow
         _leaveCaption.SetBounds(3, 0, 239, 35);
     }
 
+    private void BuildPartyHud(Canvas canvas)
+    {
+        // Menu buttons occupy the leftmost ~70 pixels. The roster starts
+        // beyond them and never overlays their clickable area.
+        const int leftMenuClearance = 86;
+        _rosterHud = new PartyRosterHud(canvas, "PartyRosterHud");
+        _rosterHud.SetBounds(leftMenuClearance, 12, 210, 44 + Options.Instance.Party.MaximumMembers * 42);
+        _rosterHud.Hide();
+
+        _hudHeading = new Label(_rosterHud, "PartyRosterHeading")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mLeaveButton.Font,
+            FontSize = 11,
+            Text = "CREW",
+            TextColorOverride = new Color(a:255,r:236,g:210,b:153),
+            MouseInputEnabled = false,
+        };
+        _hudHeading.SetBounds(7, 3, 196, 25);
+
+        for (var i = 0; i < Options.Instance.Party.MaximumMembers; i++)
+        {
+            var name = new Label(_rosterHud, "PartyHudName" + i)
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? mLeaveButton.Font,
+                FontSize = 9,
+                TextColorOverride = Color.White,
+                MouseInputEnabled = false,
+            };
+            name.SetBounds(43, 31 + i * 42, 160, 18);
+            name.Hide();
+            _hudNames.Add(name);
+        }
+    }
+
+    private void UpdatePartyHud()
+    {
+        if (Globals.Me == null || Globals.Me.Party.Count == 0)
+        {
+            _rosterHud.Hide();
+            return;
+        }
+
+        var count = Math.Min(Globals.Me.Party.Count, _hudNames.Count);
+        _rosterHud.SetSize(210, 34 + count * 42);
+        _rosterHud.VisibleMembers = count;
+        _hudHeading.Text = $"CREW  {count}/{Options.Instance.Party.MaximumMembers}";
+        for (var i = 0; i < _hudNames.Count; i++)
+        {
+            if (i >= count)
+            {
+                _hudNames[i].Hide();
+                continue;
+            }
+
+            var member = Globals.Me.Party[i];
+            _hudNames[i].Text = (i == 0 ? "[L] " : "") + member.Name;
+            _hudNames[i].Show();
+            var hpMax = member.MaxVital[(int)Vital.Health];
+            var mpMax = member.MaxVital[(int)Vital.Mana];
+            _rosterHud.Health[i] = hpMax > 0
+                ? (float)Math.Clamp((double)member.Vital[(int)Vital.Health] / hpMax, 0d, 1d)
+                : 0f;
+            _rosterHud.Mana[i] = mpMax > 0
+                ? (float)Math.Clamp((double)member.Vital[(int)Vital.Mana] / mpMax, 0d, 1d)
+                : 0f;
+        }
+
+        _rosterHud.Show();
+    }
+
+    private sealed class PartyRosterHud : Base
+    {
+        public int VisibleMembers { get; set; }
+        public float[] Health { get; } = new float[Options.Instance.Party.MaximumMembers];
+        public float[] Mana { get; } = new float[Options.Instance.Party.MaximumMembers];
+
+        public PartyRosterHud(Base parent, string name) : base(parent, name)
+        {
+            MouseInputEnabled = false;
+            KeyboardInputEnabled = false;
+        }
+
+        protected override void Render(SkinBase skin)
+        {
+            var rect = RenderBounds;
+            void Fill(int x, int y, int w, int h, Color color)
+            {
+                if (w <= 0 || h <= 0) return;
+                skin.Renderer.DrawColor = color;
+                skin.Renderer.DrawFilledRect(new UiRectangle(x, y, w, h));
+            }
+
+            var dark = new Color(a:215,r:26,g:18,b:24);
+            var border = new Color(a:255,r:160,g:113,b:57);
+            Fill(rect.X, rect.Y, rect.Width, rect.Height, dark);
+            Fill(rect.X, rect.Y, rect.Width, 2, border);
+            Fill(rect.X, rect.Y, 2, rect.Height, border);
+            Fill(rect.Right - 2, rect.Y, 2, rect.Height, border);
+            Fill(rect.X, rect.Bottom - 2, rect.Width, 2, border);
+
+            for (var i = 0; i < VisibleMembers; i++)
+            {
+                var y = rect.Y + 29 + i * 42;
+                // Circular avatar substitute: party packets do not contain
+                // sprite/portrait data. Never guess another player's sprite.
+                Fill(rect.X + 8, y + 3, 27, 27,
+                    new Color(a:255,r:91,g:65,b:50));
+                Fill(rect.X + 11, y + 6, 21, 21,
+                    i == 0 ? border : new Color(a:255,r:73,g:87,b:102));
+                Fill(rect.X + 43, y + 20, 155, 7,
+                    new Color(a:255,r:18,g:15,b:19));
+                Fill(rect.X + 43, y + 20,
+                    (int)(155 * Math.Clamp(Health[i], 0f, 1f)), 7,
+                    new Color(a:255,r:89,g:189,b:81));
+                Fill(rect.X + 43, y + 29, 155, 3,
+                    new Color(a:255,r:18,g:15,b:19));
+                Fill(rect.X + 43, y + 29,
+                    (int)(155 * Math.Clamp(Mana[i], 0f, 1f)), 3,
+                    new Color(a:255,r:73,g:129,b:207));
+            }
+        }
+    }
+
     //Methods
     public void Update()
     {
+        UpdatePartyHud();
         if (mPartyWindow.IsHidden)
         {
             return;
