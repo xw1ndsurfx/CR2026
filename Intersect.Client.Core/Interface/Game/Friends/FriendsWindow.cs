@@ -11,6 +11,7 @@ using Intersect.Client.Localization;
 using Intersect.Client.Networking;
 using UiRectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
+using Label = Intersect.Client.Framework.Gwen.Control.Label;
 
 namespace Intersect.Client.Interface.Game;
 
