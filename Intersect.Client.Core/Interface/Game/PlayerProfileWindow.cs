@@ -1,5 +1,6 @@
 using System.Text;
 using Intersect.Client.Framework.File_Management;
+using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Localization;
@@ -15,10 +16,14 @@ internal sealed class PlayerProfileWindow : Window
     private readonly Label _headline;
     private readonly Label _subtitle;
     private readonly ScrollControl _scroll;
+    private readonly ImagePanel _playerPreview;
+    private readonly Label _previewFallback;
+    private static readonly Color Gold = new(a:255,r:236,g:210,b:153);
+    private static readonly Color Cream = new(a:255,r:234,g:221,b:202);
 
     public PlayerProfileWindow(Canvas parent) : base(parent, "Character Information", false, nameof(PlayerProfileWindow))
     {
-        SetSize(620, 610);
+        SetSize(700, 650);
         Alignment = [Alignments.Center];
         DeleteOnClose = false;
         DisableResizing();
@@ -31,7 +36,7 @@ internal sealed class PlayerProfileWindow : Window
             TextAlign = Pos.Center,
             TextColorOverride = Color.White,
         };
-        _headline.SetBounds(20, 38, 580, 34);
+        _headline.SetBounds(245, 56, 420, 38);
 
         _subtitle = new Label(this, "ProfileSubtitle")
         {
@@ -41,7 +46,7 @@ internal sealed class PlayerProfileWindow : Window
             TextAlign = Pos.Center,
             TextColorOverride = new Color(a: 255, r: 205, g: 195, b: 175),
         };
-        _subtitle.SetBounds(20, 74, 580, 44);
+        _subtitle.SetBounds(245, 101, 420, 75);
 
         _scroll = new ScrollControl(this, "ProfileScroll")
         {
@@ -49,7 +54,33 @@ internal sealed class PlayerProfileWindow : Window
             OverflowY = OverflowBehavior.Scroll,
             AutoHideBars = true,
         };
-        _scroll.SetBounds(28, 124, 564, 446);
+        _scroll.SetBounds(27, 250, 645, 353);
+
+        var previewFrame = new ProfileFrame(this, "CharacterPreviewFrame");
+        previewFrame.SetBounds(30, 39, 185, 194);
+        previewFrame.SendToBack();
+        _playerPreview = new ImagePanel(this, "ObservedPlayerSprite")
+        {
+            MaintainAspectRatio = true,
+            ShouldDrawBackground = false,
+            MouseInputEnabled = false,
+        };
+        _playerPreview.SetBounds(64, 62, 118, 140);
+        _previewFallback = new Label(this, "PreviewUnavailable")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+            FontSize = 11,
+            TextAlign = Pos.Center,
+            TextColorOverride = Cream,
+            Text = "Preview unavailable",
+            MouseInputEnabled = false,
+        };
+        _previewFallback.SetBounds(49, 108, 145, 55);
+
+        var headerFrame = new ProfileFrame(this, "ProfileHeaderFrame");
+        headerFrame.SetBounds(227, 39, 446, 194);
+        headerFrame.SendToBack();
 
         Hide();
     }
@@ -64,13 +95,25 @@ internal sealed class PlayerProfileWindow : Window
             return;
 
         _headline.Text = profile.Name;
-        _subtitle.Text =
-            $"Level {profile.Level:N0}  •  {profile.ClassName}" +
-            (string.IsNullOrWhiteSpace(profile.GuildName) ? string.Empty : $"  •  Guild: {profile.GuildName}") +
-            (string.IsNullOrWhiteSpace(profile.RankingTitle)
-                ? string.Empty
-                : $"  •  {profile.RankingTitle} (+{profile.RankingExperienceBonusPercent}% EXP)") +
-            (string.IsNullOrWhiteSpace(profile.MapName) ? string.Empty : $"\nLocation: {profile.MapName}");
+        _subtitle.Text = $"LEVEL {profile.Level:N0}   |   {profile.ClassName}\n" +
+            $"Guild: {Fallback(profile.GuildName)}\n" +
+            $"Location: {Fallback(profile.MapName)}\n" +
+            $"Title: {Fallback(profile.RankingTitle)}";
+
+        // A profile packet now supplies the observed player's actual sprite,
+        // including when they are on a different map.
+        _playerPreview.Hide();
+        _previewFallback.Show();
+        if (!string.IsNullOrWhiteSpace(profile.Sprite) &&
+            GameContentManager.Current.GetTexture(TextureType.Entity, profile.Sprite) is { } texture)
+        {
+            _playerPreview.Texture = texture;
+            var frameWidth = Math.Max(1, texture.Width / Math.Max(1, Options.Instance.Sprites.NormalFrames));
+            var frameHeight = Math.Max(1, texture.Height / Math.Max(1, Options.Instance.Sprites.Directions));
+            _playerPreview.SetTextureRect(0, 0, frameWidth, frameHeight);
+            _playerPreview.Show();
+            _previewFallback.Hide();
+        }
 
         _scroll.DeleteAll();
 
@@ -96,16 +139,112 @@ internal sealed class PlayerProfileWindow : Window
             y += 88;
         }
 
-        y = AddSection("CHARACTER", BuildCharacterText(profile), y);
-        y = AddSection("STATS", BuildStatsText(profile), y);
+        y = AddKeyValueSection("CHARACTER",
+            new (string, string)[]
+            {
+                ("Name", profile.Name),
+                ("Level", profile.Level.ToString("N0")),
+                ("Class", Fallback(profile.ClassName)),
+                ("Guild", Fallback(profile.GuildName)),
+                ("Ranking title", Fallback(profile.RankingTitle)),
+                ("Experience", profile.Experience.ToString("N0")),
+                ("XP to next", profile.ExperienceToNextLevel < 0 ? "MAX" :
+                    profile.ExperienceToNextLevel.ToString("N0")),
+                ("Location", Fallback(profile.MapName)),
+            }, y);
+        var stats = Enum.GetValues<Stat>();
+        y = AddKeyValueSection("STATS",
+            (profile.Stats ?? []).Select((value, index) => (value, index))
+                .Where(item => item.index < stats.Length)
+                .Select(item => (Strings.Combat.Stats[stats[item.index]].ToString(), item.value.ToString("N0")))
+                .ToArray(), y);
         y = AddEquipmentSection(profile, y);
         y = AddSection("PROFESSIONS", BuildProfessionsText(profile), y);
 
-        _scroll.SetInnerSize(540, Math.Max(430, y + 16));
+        _scroll.SetInnerSize(610, Math.Max(345, y + 16));
         _scroll.UpdateScrollBars();
 
         Show();
         BringToFront();
+    }
+
+    private static string Fallback(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? "None" : value;
+
+    // Each fact has its own row: bitmap fonts can render \n as a missing
+    // glyph in large concatenated labels, making the original text unreadable.
+    private int AddKeyValueSection(string title, (string Name, string Value)[] fields, int y)
+    {
+        var heading = new Label(_scroll, title + "Title")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 13,
+            TextColorOverride = Gold,
+            Text = title,
+            MouseInputEnabled = false,
+        };
+        heading.SetBounds(12, y, 582, 25);
+        y += 31;
+
+        for (var i = 0; i < fields.Length; i++)
+        {
+            var column = i % 2;
+            var row = i / 2;
+            var left = 12 + column * 295;
+            var top = y + row * 46;
+            var card = new ProfileFrame(_scroll, title + "Card" + i);
+            card.SetBounds(left, top, 285, 40);
+            card.SendToBack();
+            var label = new Label(_scroll, title + "Name" + i)
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 9,
+                Text = fields[i].Name,
+                TextColorOverride = new Color(a:255,r:181,g:170,b:155),
+                MouseInputEnabled = false,
+            };
+            label.SetBounds(left + 10, top + 3, 265, 15);
+            var value = new Label(_scroll, title + "Value" + i)
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                FontSize = 10,
+                Text = fields[i].Value,
+                TextColorOverride = Cream,
+                MouseInputEnabled = false,
+            };
+            value.SetBounds(left + 10, top + 19, 265, 18);
+        }
+
+        return y + ((fields.Length + 1) / 2) * 46 + 19;
+    }
+
+    private sealed class ProfileFrame : Base
+    {
+        public ProfileFrame(Base parent, string name) : base(parent, name)
+        {
+            MouseInputEnabled = false;
+        }
+
+        protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
+        {
+            var rect = RenderBounds;
+            void Fill(int x, int y, int width, int height, Color color)
+            {
+                if (width <= 0 || height <= 0) return;
+                skin.Renderer.DrawColor = color;
+                skin.Renderer.DrawFilledRect(
+                    new Intersect.Client.Framework.GenericClasses.Rectangle(x, y, width, height));
+            }
+            var border = new Color(a:255,r:154,g:110,b:60);
+            Fill(rect.X, rect.Y, rect.Width, rect.Height, new Color(a:255,r:38,g:24,b:22));
+            Fill(rect.X, rect.Y, rect.Width, 2, border);
+            Fill(rect.X, rect.Bottom - 2, rect.Width, 2, border);
+            Fill(rect.X, rect.Y, 2, rect.Height, border);
+            Fill(rect.Right - 2, rect.Y, 2, rect.Height, border);
+        }
     }
 
     private int AddSection(string title, string body, int y)
@@ -195,7 +334,7 @@ internal sealed class PlayerProfileWindow : Window
             TextColorOverride = new Color(a: 255, r: 205, g: 195, b: 175),
             Text = "Hover an equipped item to view its full description, stats and bonuses.",
         };
-        hint.SetBounds(18, y, 510, 20);
+        hint.SetBounds(18, y, 580, 20);
         y += 24;
 
         var equipmentEntries = (profile.Equipment ?? [])
@@ -216,9 +355,9 @@ internal sealed class PlayerProfileWindow : Window
             return y + 42;
         }
 
-        const int cardWidth = 248;
+        const int cardWidth = 285;
         const int cardHeight = 62;
-        const int horizontalGap = 8;
+        const int horizontalGap = 9;
         const int verticalGap = 8;
         const int startX = 8;
 
