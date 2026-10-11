@@ -5,6 +5,9 @@
 /// </summary>
 public partial class PlayerOptions
 {
+    /// <summary>Time without player activity before the AFK indicator appears (milliseconds).</summary>
+    public int AfkTimeoutMs { get; set; } = 300000;
+
     /// <summary>
     /// Default value for initial amount of player's bank slots.
     /// </summary>

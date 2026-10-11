@@ -830,6 +830,8 @@ internal sealed partial class PacketHandler
             return;
         }
 
+        player.RegisterAfkActivity();
+
         //check if player is stunned or snared, if so don't let them move.
         foreach (var status in player.CachedStatuses)
         {
@@ -924,6 +926,14 @@ internal sealed partial class PacketHandler
         {
             return;
         }
+
+        if (msg.Trim().Equals("/afk", StringComparison.OrdinalIgnoreCase))
+        {
+            player.ToggleAfk();
+            return;
+        }
+
+        player.RegisterAfkActivity();
 
         //If no /command, then use the designated channel.
         var cmd = string.Empty;
