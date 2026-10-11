@@ -13,12 +13,21 @@ public partial class Player
 {
     private long _nextPetActionAt;
 
-    /// <summary>Authoritative companion state, sent only to the owner.</summary>
+    /// <summary>Send the owner's companion state to the owning client.</summary>
     public void SendPetState(bool openWindow = false)
     {
         if (Client == null || !InGame)
             return;
 
+        SendPacket(BuildPetState(openWindow));
+    }
+
+    /// <summary>
+    /// Create a pet snapshot for an authorized inspection request. This never
+    /// changes or summons pets, and never sends a packet to the observed player.
+    /// </summary>
+    public PetStatePacket BuildPetState(bool openWindow = false)
+    {
         PetCollection.OwnedPets ??= [];
 
         var profiles = new List<PetProfileEntry>();
@@ -74,12 +83,12 @@ public partial class Player
             });
         }
 
-        SendPacket(new PetStatePacket
+        return new PetStatePacket
         {
             ActivePetId = PetCollection.ActivePetId,
             Pets = profiles.OrderBy(profile => profile.Name).ToArray(),
             OpenWindow = openWindow,
-        });
+        };
     }
 
     public void HandlePetAction(PetActionKind action, Guid petId, string? requestedName = null)
