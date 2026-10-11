@@ -1596,7 +1596,13 @@ public static partial class PacketSender
     //ExperiencePacket
     public static void SendExperience(Player player)
     {
-        player.SendPacket(new ExperiencePacket(player.Exp, player.ExperienceToNextLevel), TransmissionMode.Any);
+        var packet = new ExperiencePacket(player.Exp, player.ExperienceToNextLevel)
+        {
+            // Populated only while an NPC kill award is being processed.
+            // No guessing from the difference between level XP snapshots.
+            NpcGain = player.PendingNpcExperienceGain,
+        };
+        player.SendPacket(packet, TransmissionMode.Any);
     }
 
     //PlayAnimationPacket
