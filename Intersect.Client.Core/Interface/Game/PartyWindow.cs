@@ -6,6 +6,9 @@ using Intersect.Client.General;
 using Intersect.Client.Localization;
 using Intersect.Client.Networking;
 using Intersect.Enums;
+using Intersect.Client.Framework.File_Management;
+using UiRectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
+using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 
 namespace Intersect.Client.Interface.Game;
 
@@ -24,6 +27,11 @@ public partial class PartyWindow
     private List<Button> mKickButtons = new List<Button>();
 
     private List<Label> mLblnames = new List<Label>();
+
+    private readonly List<PartyCardChrome> _memberCards = new();
+    private readonly List<Label> _memberRoles = new();
+    private Label _partySummary;
+    private Label _leaveCaption;
 
     private ImagePanel mLeader;
 
@@ -60,8 +68,7 @@ public partial class PartyWindow
 
         if (Globals.Me.Party.Count > 0)
         {
-            mLeader.Show();
-            mLeaderText.Show();
+            // The captain is identified inside the first member card.
         }
 
         mLblnames.Clear();
@@ -155,6 +162,116 @@ public partial class PartyWindow
         mLeaveButton.Clicked += leave_Clicked;
 
         mPartyWindow.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
+        BuildCrewLayout();
+    }
+
+    private void BuildCrewLayout()
+    {
+        var memberCount = Options.Instance.Party.MaximumMembers;
+        const int cardHeight = 104;
+        const int cardGap = 7;
+        const int cardTop = 103;
+        var windowHeight = Math.Max(310, cardTop + memberCount * (cardHeight + cardGap) + 70);
+        mPartyWindow.SetSize(515, windowHeight);
+        mPartyWindow.Alignment = [Alignments.Center];
+
+        var outer = new PartyCardChrome(mPartyWindow, "CrewOuter", false);
+        outer.SetBounds(13, 29, 489, windowHeight - 52);
+        outer.SendToBack();
+
+        var title = new Label(mPartyWindow, "CrewHeading")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mLeaveButton.Font,
+            FontSize = 16,
+            TextAlign = Pos.Center,
+            TextColorOverride = new Color(a:255,r:236,g:210,b:153),
+            Text = "CREW",
+            MouseInputEnabled = false,
+        };
+        title.SetBounds(30, 39, 455, 27);
+
+        _partySummary = new Label(mPartyWindow, "CrewSummary")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? mLeaveButton.Font,
+            FontSize = 10,
+            TextAlign = Pos.Center,
+            TextColorOverride = Color.White,
+            MouseInputEnabled = false,
+        };
+        _partySummary.SetBounds(30, 70, 455, 23);
+
+        // Member information comes from authoritative party packets. Portraits
+        // aren't available in PartyMember, so we use a clear leader/crew badge.
+        for (var i = 0; i < memberCount; i++)
+        {
+            var top = cardTop + i * (cardHeight + cardGap);
+            var card = new PartyCardChrome(mPartyWindow, "CrewCard" + i, true);
+            card.SetBounds(28, top, 459, cardHeight);
+            card.SendToBack();
+            _memberCards.Add(card);
+            card.Hide();
+
+            var role = new Label(mPartyWindow, "CrewRole" + i)
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mLeaveButton.Font,
+                FontSize = 9,
+                TextAlign = Pos.Center,
+                TextColorOverride = new Color(a:255,r:236,g:210,b:153),
+                MouseInputEnabled = false,
+            };
+            role.SetBounds(352, top + 11, 100, 23);
+            role.Hide();
+            _memberRoles.Add(role);
+
+            mLblnames[i].SetBounds(44, top + 9, 290, 28);
+            mLblnames[i].TextColorOverride = Color.White;
+            mLblnames[i].Clicked += PartyWindow_Clicked;
+
+            mHpLabel[i].SetBounds(43, top + 36, 48, 19);
+            mHpLabel[i].Text = "HP";
+            mHpValue[i].SetBounds(310, top + 36, 153, 19);
+            mHpValue[i].TextAlign = Pos.Right | Pos.CenterV;
+            mMpLabel[i].SetBounds(43, top + 67, 48, 19);
+            mMpLabel[i].Text = "MP";
+            mMpValue[i].SetBounds(310, top + 67, 153, 19);
+            mMpValue[i].TextAlign = Pos.Right | Pos.CenterV;
+            foreach (var label in new[] { mHpLabel[i], mHpValue[i], mMpLabel[i], mMpValue[i] })
+            {
+                label.TextColorOverride = Color.White;
+                label.Font = GameContentManager.Current.GetFont("sourcesanspro") ?? mLeaveButton.Font;
+                label.FontSize = 9;
+            }
+
+            if (i > 0)
+            {
+                mKickButtons[i].SetBounds(354, top + 11, 99, 25);
+                mKickButtons[i].Text = "KICK";
+                mKickButtons[i].Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mLeaveButton.Font;
+                mKickButtons[i].FontSize = 9;
+                role.SetBounds(304, top + 11, 49, 23);
+            }
+        }
+
+        mLeader.Hide();
+        mLeaderText.Hide();
+        mLeader.SetBounds(0, 0, 0, 0);
+        mLeaderText.SetBounds(0, 0, 0, 0);
+        mLeaveButton.SetBounds(135, windowHeight - 75, 245, 35);
+        mLeaveButton.Text = string.Empty;
+        _leaveCaption = new Label(mLeaveButton, "CrewLeaveCaption")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mLeaveButton.Font,
+            FontSize = 11,
+            TextAlign = Pos.Center,
+            TextColorOverride = Color.White,
+            Text = "LEAVE CREW",
+            MouseInputEnabled = false,
+        };
+        _leaveCaption.SetBounds(3, 0, 239, 35);
     }
 
     //Methods
@@ -168,12 +285,16 @@ public partial class PartyWindow
         mLeader.Hide();
         mLeaderText.Hide();
         mLeaveButton.Hide();
+        _leaveCaption.Hide();
+        _partySummary.Text = "NO CREW FORMED";
         for (var i = 0; i < Options.Instance.Party.MaximumMembers; i++)
         {
             mHpBarContainer[i].Hide();
             mHpLabel[i].Hide();
             mHpValue[i].Hide();
             mLblnames[i].Text = string.Empty;
+            _memberCards[i].Hide();
+            _memberRoles[i].Hide();
             mMpBarContainer[i].Hide();
             mMpLabel[i].Hide();
             mMpValue[i].Hide();
@@ -188,6 +309,8 @@ public partial class PartyWindow
             mLeader.Show();
             mLeaderText.Show();
             mLeaveButton.Show();
+            _leaveCaption.Show();
+            _partySummary.Text = $"{Globals.Me.Party.Count} / {Options.Instance.Party.MaximumMembers} CREW MEMBERS";
 
             for (var i = 0; i < Options.Instance.Party.MaximumMembers; i++)
             {
@@ -208,7 +331,8 @@ public partial class PartyWindow
                     );
 
                     nameLabel.UserData = Globals.Me.Party[i].Id;
-                    nameLabel.Clicked += PartyWindow_Clicked;
+                    // Bound once during construction; updating every frame would
+                    // accumulate click handlers and repeat target selection.
 
                     if (mHpBar[i].Texture != null)
                     {
@@ -265,6 +389,23 @@ public partial class PartyWindow
                         Globals.Me.Party[i].Vital[(int) Vital.Mana],
                         Globals.Me.Party[i].MaxVital[(int) Vital.Mana]
                     );
+
+                    var hpMax = Globals.Me.Party[i].MaxVital[(int)Vital.Health];
+                    var mpMax = Globals.Me.Party[i].MaxVital[(int)Vital.Mana];
+                    _memberCards[i].HealthRatio = hpMax > 0
+                        ? (float)Math.Clamp((double)Globals.Me.Party[i].Vital[(int)Vital.Health] / hpMax, 0d, 1d)
+                        : 0f;
+                    _memberCards[i].ManaRatio = mpMax > 0
+                        ? (float)Math.Clamp((double)Globals.Me.Party[i].Vital[(int)Vital.Mana] / mpMax, 0d, 1d)
+                        : 0f;
+                    _memberCards[i].Show();
+                    _memberRoles[i].Text = i == 0 ? "CAPTAIN" :
+                        Globals.Me.Party[i].Id == Globals.Me.Id ? "YOU" : "CREW";
+                    _memberRoles[i].Show();
+                    // The new crew cards draw the gauges; old texture bars
+                    // must not cover the text or the custom pixel-art gauges.
+                    mHpBarContainer[i].Hide();
+                    mMpBarContainer[i].Hide();
 
                     if (i > 0)
                     {
@@ -337,6 +478,53 @@ public partial class PartyWindow
         if (Globals.Me.Party.Count > 0)
         {
             PacketSender.SendPartyLeave();
+        }
+    }
+
+    private sealed class PartyCardChrome : Base
+    {
+        private readonly bool _member;
+        public float HealthRatio { get; set; }
+        public float ManaRatio { get; set; }
+
+        public PartyCardChrome(Base parent, string name, bool member) : base(parent, name)
+        {
+            _member = member;
+            MouseInputEnabled = false;
+            KeyboardInputEnabled = false;
+        }
+
+        protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
+        {
+            var rect = RenderBounds;
+            var dark = new Color(a:255,r:28,g:18,b:17);
+            var copper = new Color(a:255,r:90,g:55,b:37);
+            var gold = new Color(a:255,r:162,g:116,b:55);
+            var bg = _member ? new Color(a:255,r:56,g:35,b:28) : dark;
+            void Fill(int x, int y, int w, int h, Color color)
+            {
+                if (w <= 0 || h <= 0) return;
+                skin.Renderer.DrawColor = color;
+                skin.Renderer.DrawFilledRect(new UiRectangle(x,y,w,h));
+            }
+
+            Fill(rect.X, rect.Y, rect.Width, rect.Height, bg);
+            Fill(rect.X, rect.Y, rect.Width, 2, gold);
+            Fill(rect.X, rect.Bottom - 2, rect.Width, 2, gold);
+            Fill(rect.X, rect.Y, 2, rect.Height, gold);
+            Fill(rect.Right - 2, rect.Y, 2, rect.Height, gold);
+            Fill(rect.X + 5, rect.Y + 5, rect.Width - 10, 1, copper);
+
+            if (!_member) return;
+            Fill(rect.X + 13, rect.Y + 31, rect.Width - 26, 1, copper);
+            Fill(rect.X + 13, rect.Y + 58, rect.Width - 26, 12, dark);
+            Fill(rect.X + 13, rect.Y + 85, rect.Width - 26, 12, dark);
+            Fill(rect.X + 15, rect.Y + 60,
+                (int)((rect.Width - 30) * Math.Clamp(HealthRatio, 0f, 1f)), 8,
+                new Color(a:255,r:173,g:65,b:63));
+            Fill(rect.X + 15, rect.Y + 87,
+                (int)((rect.Width - 30) * Math.Clamp(ManaRatio, 0f, 1f)), 8,
+                new Color(a:255,r:72,g:120,b:189));
         }
     }
 
