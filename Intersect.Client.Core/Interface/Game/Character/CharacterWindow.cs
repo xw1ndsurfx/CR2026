@@ -186,7 +186,7 @@ public partial class CharacterWindow
             AutoSizeToContents = false,
             Font = _detailsButton.Font,
             FontSize = _detailsButton.FontSize,
-            Text = "Familiers",
+            Text = "Pets",
             TextAlign = Pos.Center,
             TextColorOverride = Color.White,
             MouseInputEnabled = false,
@@ -204,7 +204,7 @@ public partial class CharacterWindow
         };
 
         // Keep all three actions evenly spaced within the character window.
-        // Fixed 132px buttons exceeded the window width and clipped Familiers.
+        // Fixed 132px buttons exceeded the window width and clipped Pets.
         const int actionButtonMargin = 12;
         const int actionButtonGap = 6;
         var actionButtonWidth = Math.Max(60, (mCharacterWindow.Width - actionButtonMargin * 2 - actionButtonGap * 2) / 3);
