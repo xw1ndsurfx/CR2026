@@ -1,6 +1,7 @@
 ﻿using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
+using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
 using Intersect.Client.General;
@@ -36,6 +37,8 @@ public partial class PartyWindow
     private PartyRosterHud _rosterHud;
     private readonly List<Label> _hudNames = new();
     private Label _hudHeading;
+    private Label _hudExpBonus;
+    private readonly List<ImagePanel> _hudPortraits = new();
     private readonly List<Button> _hudKickButtons = new();
     private Button _hudLeaveButton;
     private bool _hudManuallyHidden;
@@ -195,7 +198,7 @@ public partial class PartyWindow
             FontSize = 16,
             TextAlign = Pos.Center,
             TextColorOverride = new Color(a:255,r:236,g:210,b:153),
-            Text = "CREW",
+            Text = "PARTY",
             MouseInputEnabled = false,
         };
         title.SetBounds(30, 39, 455, 27);
@@ -289,7 +292,7 @@ public partial class PartyWindow
         // beyond them and never overlays their clickable area.
         const int leftMenuClearance = 86;
         _rosterHud = new PartyRosterHud(canvas, "PartyRosterHud");
-        _rosterHud.SetBounds(leftMenuClearance, 12, 258, 44 + Options.Instance.Party.MaximumMembers * 42);
+        _rosterHud.SetBounds(leftMenuClearance, 12, 258, 48 + Options.Instance.Party.MaximumMembers * 42);
         _rosterHud.Hide();
 
         _hudHeading = new Label(_rosterHud, "PartyRosterHeading")
@@ -301,7 +304,16 @@ public partial class PartyWindow
             TextColorOverride = new Color(a:255,r:236,g:210,b:153),
             MouseInputEnabled = false,
         };
-        _hudHeading.SetBounds(7, 3, 162, 25);
+        _hudHeading.SetBounds(7, 3, 162, 23);
+        _hudExpBonus = new Label(_rosterHud, "PartyHudExpBonus")
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mLeaveButton.Font,
+            FontSize = 9,
+            TextColorOverride = new Color(a:255,r:151,g:235,b:134),
+            MouseInputEnabled = false,
+        };
+        _hudExpBonus.SetBounds(7, 23, 220, 18);
 
         _hudLeaveButton = new Button(_rosterHud, "PartyHudLeave")
         {
@@ -323,7 +335,17 @@ public partial class PartyWindow
                 TextColorOverride = Color.White,
                 MouseInputEnabled = true,
             };
-            name.SetBounds(43, 31 + i * 42, 166, 18);
+            name.SetBounds(43, 43 + i * 42, 166, 18);
+            var portrait = new ImagePanel(_rosterHud, "PartyHudPortrait" + i)
+            {
+                MaintainAspectRatio = true,
+                ShouldDrawBackground = false,
+                MouseInputEnabled = true,
+            };
+            portrait.SetBounds(10, 42 + i * 42, 25, 25);
+            portrait.Clicked += PartyWindow_Clicked;
+            portrait.Hide();
+            _hudPortraits.Add(portrait);
             name.Clicked += PartyWindow_Clicked;
             name.Hide();
             _hudNames.Add(name);
@@ -334,7 +356,7 @@ public partial class PartyWindow
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mLeaveButton.Font,
                 FontSize = 8,
             };
-            kick.SetBounds(205, 34 + i * 42, 44, 21);
+            kick.SetBounds(205, 46 + i * 42, 44, 21);
             var memberIndex = i;
             kick.Clicked += (_, _) =>
             {
@@ -365,21 +387,41 @@ public partial class PartyWindow
         }
 
         var count = Math.Min(Globals.Me.Party.Count, _hudNames.Count);
-        _rosterHud.SetSize(258, 34 + count * 42);
+        _rosterHud.SetSize(258, 46 + count * 42);
         _hudLeaveButton.Show();
         _rosterHud.VisibleMembers = count;
-        _hudHeading.Text = $"CREW  {count}/{Options.Instance.Party.MaximumMembers}";
+        _hudHeading.Text = $"PARTY  {count}/{Options.Instance.Party.MaximumMembers}";
+        // Configured bonus to the experience pool scales with the member count.
+        var bonus = count * Options.Instance.Party.BonusExperiencePercentPerMember;
+        _hudExpBonus.Text = $"EXP BONUS +{bonus:0.#}%";
         for (var i = 0; i < _hudNames.Count; i++)
         {
             if (i >= count)
             {
                 _hudNames[i].Hide();
+                _hudPortraits[i].Hide();
                 _hudKickButtons[i].Hide();
                 continue;
             }
 
             var member = Globals.Me.Party[i];
-            _hudNames[i].Text = (i == 0 ? "[L] " : "") + member.Name;
+            _hudNames[i].Text = $"{(i == 0 ? "[L] " : "")}{member.Name}  Lv. {member.Level}";
+            // Sprites are available when the member's entity is loaded locally.
+            var portrait = _hudPortraits[i];
+            portrait.UserData = member.Id;
+            portrait.Hide();
+            if (Globals.Entities.TryGetValue(member.Id, out var entity) &&
+                !string.IsNullOrWhiteSpace(entity.Sprite))
+            {
+                var texture = Globals.ContentManager.GetTexture(TextureType.Entity, entity.Sprite);
+                if (texture != null)
+                {
+                    portrait.Texture = texture;
+                    portrait.SetTextureRect(0, 0,
+                        Math.Min(32, texture.Width), Math.Min(32, texture.Height));
+                    portrait.Show();
+                }
+            }
             _hudNames[i].UserData = member.Id;
             _hudNames[i].Show();
             if (i > 0 && Globals.Me.Party[0].Id == Globals.Me.Id)
@@ -431,7 +473,7 @@ public partial class PartyWindow
 
             for (var i = 0; i < VisibleMembers; i++)
             {
-                var y = rect.Y + 29 + i * 42;
+                var y = rect.Y + 41 + i * 42;
                 // Circular avatar substitute: party packets do not contain
                 // sprite/portrait data. Never guess another player's sprite.
                 Fill(rect.X + 8, y + 3, 27, 27,
@@ -617,10 +659,11 @@ public partial class PartyWindow
     {
         var memberId = (Guid)((Label)sender).UserData;
 
-        if (Globals.Entities.TryGetValue(memberId, out var teammate))
-        {
-            Globals.Me.TryTarget(teammate);
-        }
+        if (Globals.Me == null || memberId == Guid.Empty)
+            return;
+
+        // Fetch character info by ID, even when the member is on another map.
+        PacketSender.SendRequestPlayerProfile(memberId, openWindow: true);
     }
 
     public void Show()
