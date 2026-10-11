@@ -36,6 +36,9 @@ public partial class PartyWindow
     private PartyRosterHud _rosterHud;
     private readonly List<Label> _hudNames = new();
     private Label _hudHeading;
+    private readonly List<Button> _hudKickButtons = new();
+    private Button _hudLeaveButton;
+    private bool _hudManuallyHidden;
 
     private ImagePanel mLeader;
 
@@ -286,7 +289,7 @@ public partial class PartyWindow
         // beyond them and never overlays their clickable area.
         const int leftMenuClearance = 86;
         _rosterHud = new PartyRosterHud(canvas, "PartyRosterHud");
-        _rosterHud.SetBounds(leftMenuClearance, 12, 210, 44 + Options.Instance.Party.MaximumMembers * 42);
+        _rosterHud.SetBounds(leftMenuClearance, 12, 258, 44 + Options.Instance.Party.MaximumMembers * 42);
         _rosterHud.Hide();
 
         _hudHeading = new Label(_rosterHud, "PartyRosterHeading")
@@ -298,7 +301,17 @@ public partial class PartyWindow
             TextColorOverride = new Color(a:255,r:236,g:210,b:153),
             MouseInputEnabled = false,
         };
-        _hudHeading.SetBounds(7, 3, 196, 25);
+        _hudHeading.SetBounds(7, 3, 162, 25);
+
+        _hudLeaveButton = new Button(_rosterHud, "PartyHudLeave")
+        {
+            Text = "LEAVE",
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mLeaveButton.Font,
+            FontSize = 9,
+        };
+        _hudLeaveButton.SetBounds(191, 3, 58, 23);
+        _hudLeaveButton.SetToolTipText(Strings.Parties.LeaveTip);
+        _hudLeaveButton.Clicked += leave_Clicked;
 
         for (var i = 0; i < Options.Instance.Party.MaximumMembers; i++)
         {
@@ -310,22 +323,50 @@ public partial class PartyWindow
                 TextColorOverride = Color.White,
                 MouseInputEnabled = false,
             };
-            name.SetBounds(43, 31 + i * 42, 160, 18);
+            name.SetBounds(43, 31 + i * 42, 166, 18);
+            name.Clicked += PartyWindow_Clicked;
             name.Hide();
             _hudNames.Add(name);
+
+            var kick = new Button(_rosterHud, "PartyHudKick" + i)
+            {
+                Text = "KICK",
+                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mLeaveButton.Font,
+                FontSize = 8,
+            };
+            kick.SetBounds(205, 34 + i * 42, 44, 21);
+            kick.Clicked += (_, _) =>
+            {
+                // The button is tied to its original member index.
+                if (Globals.Me?.Party.Count > i &&
+                    Globals.Me.Party[0].Id == Globals.Me.Id && i > 0)
+                    PacketSender.SendPartyKick(Globals.Me.Party[i].Id);
+            };
+            kick.Hide();
+            _hudKickButtons.Add(kick);
         }
+    }
+
+    // The left-side Party menu icon toggles this HUD rather than opening the
+    // former empty centered roster window. Crew controls live in the HUD.
+    public void ToggleHud()
+    {
+        mPartyWindow.Hide();
+        _hudManuallyHidden = !_hudManuallyHidden;
+        UpdatePartyHud();
     }
 
     private void UpdatePartyHud()
     {
-        if (Globals.Me == null || Globals.Me.Party.Count == 0)
+        if (Globals.Me == null || Globals.Me.Party.Count == 0 || _hudManuallyHidden)
         {
             _rosterHud.Hide();
             return;
         }
 
         var count = Math.Min(Globals.Me.Party.Count, _hudNames.Count);
-        _rosterHud.SetSize(210, 34 + count * 42);
+        _rosterHud.SetSize(258, 34 + count * 42);
+        _hudLeaveButton.Show();
         _rosterHud.VisibleMembers = count;
         _hudHeading.Text = $"CREW  {count}/{Options.Instance.Party.MaximumMembers}";
         for (var i = 0; i < _hudNames.Count; i++)
@@ -333,12 +374,18 @@ public partial class PartyWindow
             if (i >= count)
             {
                 _hudNames[i].Hide();
+                _hudKickButtons[i].Hide();
                 continue;
             }
 
             var member = Globals.Me.Party[i];
             _hudNames[i].Text = (i == 0 ? "[L] " : "") + member.Name;
+            _hudNames[i].UserData = member.Id;
             _hudNames[i].Show();
+            if (i > 0 && Globals.Me.Party[0].Id == Globals.Me.Id)
+                _hudKickButtons[i].Show();
+            else
+                _hudKickButtons[i].Hide();
             var hpMax = member.MaxVital[(int)Vital.Health];
             var mpMax = member.MaxVital[(int)Vital.Mana];
             _rosterHud.Health[i] = hpMax > 0
@@ -360,7 +407,7 @@ public partial class PartyWindow
 
         public PartyRosterHud(Base parent, string name) : base(parent, name)
         {
-            MouseInputEnabled = false;
+            MouseInputEnabled = true;
             KeyboardInputEnabled = false;
         }
 
@@ -578,7 +625,10 @@ public partial class PartyWindow
 
     public void Show()
     {
-        mPartyWindow.IsHidden = false;
+        // Legacy calls must never reopen the centered Party window.
+        mPartyWindow.Hide();
+        _hudManuallyHidden = false;
+        UpdatePartyHud();
     }
 
     public bool IsVisible()
