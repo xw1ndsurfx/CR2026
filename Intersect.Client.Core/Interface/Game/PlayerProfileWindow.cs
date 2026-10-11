@@ -166,14 +166,14 @@ internal sealed class PlayerProfileWindow : Window
         {
             if (string.IsNullOrWhiteSpace(paperdolls[i]))
                 continue;
-            var texture = GameContentManager.Current.GetTexture(TextureType.Paperdoll, paperdolls[i]);
-            if (texture == null)
+            var paperdollTexture = GameContentManager.Current.GetTexture(TextureType.Paperdoll, paperdolls[i]);
+            if (paperdollTexture == null)
                 continue;
             var layer = _paperdollLayers[i];
-            layer.Texture = texture;
+            layer.Texture = paperdollTexture;
             layer.SetTextureRect(0, 0,
-                Math.Max(1, texture.Width / Math.Max(1, Options.Instance.Sprites.NormalFrames)),
-                Math.Max(1, texture.Height / Math.Max(1, Options.Instance.Sprites.Directions)));
+                Math.Max(1, paperdollTexture.Width / Math.Max(1, Options.Instance.Sprites.NormalFrames)),
+                Math.Max(1, paperdollTexture.Height / Math.Max(1, Options.Instance.Sprites.Directions)));
             layer.Show();
         }
 
