@@ -16,6 +16,12 @@ internal sealed class PlayerProfileWindow : Window
 {
     private readonly Label _headline;
     private readonly Label _subtitle;
+    private readonly Label _guildLine;
+    private readonly Label _locationLine;
+    private readonly Label _titleLine;
+    private readonly Label _expLine;
+    private readonly ProfileProgressBar _expBar;
+    private readonly List<ImagePanel> _paperdollLayers = new();
     private readonly ScrollControl _scroll;
     private readonly ImagePanel _playerPreview;
     private readonly Label _previewFallback;
@@ -37,7 +43,7 @@ internal sealed class PlayerProfileWindow : Window
             TextAlign = Pos.Center,
             TextColorOverride = Color.White,
         };
-        _headline.SetBounds(245, 56, 420, 38);
+        _headline.SetBounds(246, 55, 414, 38);
 
         _subtitle = new Label(this, "ProfileSubtitle")
         {
@@ -47,7 +53,26 @@ internal sealed class PlayerProfileWindow : Window
             TextAlign = Pos.Center,
             TextColorOverride = new Color(a: 255, r: 205, g: 195, b: 175),
         };
-        _subtitle.SetBounds(245, 101, 420, 75);
+        _subtitle.SetBounds(247, 98, 404, 24);
+        Label HeaderLine(string name, int y)
+        {
+            var label = new Label(this, name)
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 10,
+                TextColorOverride = Cream,
+                MouseInputEnabled = false,
+            };
+            label.SetBounds(247, y, 402, 20);
+            return label;
+        }
+        _guildLine = HeaderLine("ProfileGuild", 123);
+        _locationLine = HeaderLine("ProfileLocation", 144);
+        _titleLine = HeaderLine("ProfileTitle", 165);
+        _expLine = HeaderLine("ProfileExp", 188);
+        _expBar = new ProfileProgressBar(this, "ProfileExpBar");
+        _expBar.SetBounds(248, 213, 400, 10);
 
         _scroll = new ScrollControl(this, "ProfileScroll")
         {
@@ -66,7 +91,21 @@ internal sealed class PlayerProfileWindow : Window
             ShouldDrawBackground = false,
             MouseInputEnabled = false,
         };
-        _playerPreview.SetBounds(64, 62, 118, 140);
+        _playerPreview.SetBounds(62, 62, 122, 140);
+        // Paperdolls use the same ordering as the local character renderer.
+        // Each image is a separate layer over the observed player's sprite.
+        foreach (var slot in Options.Instance.Equipment.Paperdoll.Directions[1])
+        {
+            var layer = new ImagePanel(this, "ObservedPaperdoll" + _paperdollLayers.Count)
+            {
+                MaintainAspectRatio = true,
+                ShouldDrawBackground = false,
+                MouseInputEnabled = false,
+            };
+            layer.SetBounds(62, 62, 122, 140);
+            layer.Hide();
+            _paperdollLayers.Add(layer);
+        }
         _previewFallback = new Label(this, "PreviewUnavailable")
         {
             AutoSizeToContents = false,
@@ -96,15 +135,22 @@ internal sealed class PlayerProfileWindow : Window
             return;
 
         _headline.Text = profile.Name;
-        _subtitle.Text = $"LEVEL {profile.Level:N0}   |   {profile.ClassName}\n" +
-            $"Guild: {Fallback(profile.GuildName)}\n" +
-            $"Location: {Fallback(profile.MapName)}\n" +
-            $"Title: {Fallback(profile.RankingTitle)}";
+        _subtitle.Text = $"LEVEL {profile.Level:N0}  |  {Fallback(profile.ClassName)}";
+        _guildLine.Text = "Guild: " + Fallback(profile.GuildName);
+        _locationLine.Text = "Location: " + Fallback(profile.MapName);
+        _titleLine.Text = "Title: " + Fallback(profile.RankingTitle);
+        var levelThreshold = profile.LevelExperienceRequired;
+        var maximum = levelThreshold > 0 ? levelThreshold : profile.Experience;
+        _expBar.Progress = maximum > 0
+            ? (float)Math.Clamp((double)profile.Experience / maximum, 0d, 1d) : 1f;
+        _expLine.Text = levelThreshold <= 0
+            ? "EXP: MAX LEVEL"
+            : $"EXP: {profile.Experience:N0} / {levelThreshold:N0}  ({_expBar.Progress * 100:0.#}%)";
 
-        // A profile packet now supplies the observed player's actual sprite,
-        // including when they are on a different map.
         _playerPreview.Hide();
         _previewFallback.Show();
+        foreach (var layer in _paperdollLayers)
+            layer.Hide();
         if (!string.IsNullOrWhiteSpace(profile.Sprite) &&
             GameContentManager.Current.GetTexture(TextureType.Entity, profile.Sprite) is { } texture)
         {
@@ -114,6 +160,21 @@ internal sealed class PlayerProfileWindow : Window
             _playerPreview.SetTextureRect(0, 0, frameWidth, frameHeight);
             _playerPreview.Show();
             _previewFallback.Hide();
+        }
+        var paperdolls = profile.PaperdollSprites ?? [];
+        for (var i = 0; i < Math.Min(paperdolls.Length, _paperdollLayers.Count); i++)
+        {
+            if (string.IsNullOrWhiteSpace(paperdolls[i]))
+                continue;
+            var texture = GameContentManager.Current.GetTexture(TextureType.Paperdoll, paperdolls[i]);
+            if (texture == null)
+                continue;
+            var layer = _paperdollLayers[i];
+            layer.Texture = texture;
+            layer.SetTextureRect(0, 0,
+                Math.Max(1, texture.Width / Math.Max(1, Options.Instance.Sprites.NormalFrames)),
+                Math.Max(1, texture.Height / Math.Max(1, Options.Instance.Sprites.Directions)));
+            layer.Show();
         }
 
         _scroll.DeleteAll();
@@ -160,13 +221,52 @@ internal sealed class PlayerProfileWindow : Window
                 .Select(item => (Strings.Combat.Stats[stats[item.index]].ToString(), item.value.ToString("N0")))
                 .ToArray(), y);
         y = AddEquipmentSection(profile, y);
-        y = AddSection("PROFESSIONS", BuildProfessionsText(profile), y);
+        y = AddProfessionCards(profile, y);
 
         _scroll.SetInnerSize(610, Math.Max(345, y + 16));
         _scroll.UpdateScrollBars();
 
         Show();
         BringToFront();
+    }
+
+    private int AddProfessionCards(PlayerProfilePacket profile, int y)
+    {
+        var professions = (profile.Professions ?? []).OrderBy(p => p.Name).ToArray();
+        if (professions.Length == 0)
+            return AddKeyValueSection("PROFESSIONS", [("Status", "No professions learned")], y);
+
+        var entries = professions.SelectMany(p =>
+            new (string Name, string Value)[]
+            {
+                (p.Name, $"Level {p.Level}/{p.MaximumLevel}"),
+                (p.Name + " EXP", p.ExperienceToNextLevel < 0
+                    ? "MAX" : $"{p.Experience:N0} total | {p.ExperienceToNextLevel:N0} to next"),
+            }).ToList();
+
+        return AddKeyValueSection("PROFESSIONS", entries.ToArray(), y);
+    }
+
+    private sealed class ProfileProgressBar : Base
+    {
+        public float Progress { get; set; }
+        public ProfileProgressBar(Base parent, string name) : base(parent, name)
+        {
+            MouseInputEnabled = false;
+        }
+
+        protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
+        {
+            var r = RenderBounds;
+            skin.Renderer.DrawColor = new Color(a:255,r:35,g:23,b:19);
+            skin.Renderer.DrawFilledRect(r);
+            skin.Renderer.DrawColor = new Color(a:255,r:106,g:76,b:43);
+            skin.Renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(
+                r.X, r.Y, r.Width, 2));
+            skin.Renderer.DrawColor = new Color(a:255,r:79,g:175,b:99);
+            skin.Renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(
+                r.X + 2, r.Y + 2, Math.Max(0, (int)((r.Width - 4) * Math.Clamp(Progress, 0f, 1f))), Math.Max(0, r.Height - 4)));
+        }
     }
 
     private static string Fallback(string? value) =>
