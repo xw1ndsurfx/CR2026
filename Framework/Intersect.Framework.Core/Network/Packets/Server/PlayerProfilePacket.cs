@@ -124,4 +124,10 @@ public partial class PlayerProfilePacket : IntersectPacket
 
     [Key(19)]
     public string Sprite { get; set; } = string.Empty;
+
+    [Key(20)]
+    public string[] PaperdollSprites { get; set; } = [];
+
+    [Key(21)]
+    public long LevelExperienceRequired { get; set; }
 }
