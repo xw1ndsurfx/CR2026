@@ -5,7 +5,7 @@ public partial class PartyOptions
     /// <summary>
     /// Defines the maximum amount of members a party can have.
     /// </summary>
-    public int MaximumMembers{ get; set; } = 4;
+    public int MaximumMembers{ get; set; } = 5;
 
     public int SharedXpRange{ get; set; } = 40;
 
