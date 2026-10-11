@@ -189,7 +189,7 @@ internal sealed class PlayerProfileWindow : Window
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 11,
         };
-        achievements.SetBounds(12, y, 286, 36);
+        achievements.SetBounds(12, y, 188, 36);
         achievements.Clicked += (_, _) =>
             PacketSender.SendRequestAchievementState(openWindow: true, playerId: observedId);
 
@@ -199,9 +199,19 @@ internal sealed class PlayerProfileWindow : Window
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 11,
         };
-        familiars.SetBounds(307, y, 285, 36);
+        familiars.SetBounds(210, y, 187, 36);
         familiars.Clicked += (_, _) =>
             PacketSender.SendRequestPetState(openWindow: true, playerId: observedId);
+
+        var dungeons = new Button(_scroll, "OpenProfileDungeonsButton")
+        {
+            Text = "Dungeons",
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 11,
+        };
+        dungeons.SetBounds(407, y, 185, 36);
+        dungeons.Clicked += (_, _) =>
+            PacketSender.SendRequestDungeonPanel(openWindow: true, playerId: observedId);
         y += 50;
 
         y = AddKeyValueSection("CHARACTER",
