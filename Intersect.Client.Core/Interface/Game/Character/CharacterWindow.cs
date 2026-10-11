@@ -203,12 +203,14 @@ public partial class CharacterWindow
             MouseInputEnabled = false,
         };
 
-        // Keep both actions on the same bottom row.
-        const int actionButtonWidth = 132;
-        const int actionButtonGap = 8;
+        // Keep all three actions evenly spaced within the character window.
+        // Fixed 132px buttons exceeded the window width and clipped Familiers.
+        const int actionButtonMargin = 12;
+        const int actionButtonGap = 6;
+        var actionButtonWidth = Math.Max(60, (mCharacterWindow.Width - actionButtonMargin * 2 - actionButtonGap * 2) / 3);
         var actionButtonHeight = Math.Max(24, _detailsButton.Height);
-        var actionButtonsWidth = actionButtonWidth * 3 + actionButtonGap * 2;
-        var actionButtonsX = Math.Max(8, (mCharacterWindow.Width - actionButtonsWidth) / 2);
+        var actionButtonsX = actionButtonMargin;
+        _detailsButton.FontSize = 9;
         var actionButtonsY = _detailsButton.Y;
 
         _detailsButton.SetBounds(

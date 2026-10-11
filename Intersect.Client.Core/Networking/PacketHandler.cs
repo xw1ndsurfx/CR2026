@@ -1555,7 +1555,7 @@ internal sealed partial class PacketHandler
                     map.ActionMessages.Add(
                         new ActionMessage(
                             map, Globals.Me.X, Globals.Me.Y,
-                            $"+{gainedExperience:N0} EXP", new Color(255, 255, 215, 0)
+                            $"+{gainedExperience:N0} EXP", new Color(255, 76, 220, 100)
                         )
                     );
                 }
