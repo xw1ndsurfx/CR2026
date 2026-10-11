@@ -121,4 +121,7 @@ public partial class PlayerProfilePacket : IntersectPacket
 
     [Key(18)]
     public int RankingConsecutiveDays { get; set; }
+
+    [Key(19)]
+    public string Sprite { get; set; } = string.Empty;
 }
