@@ -121,6 +121,7 @@ internal sealed partial class PacketHandler
                 RankingExperienceBonusPercent = rankingTitle?.ExperienceBonusPercent ?? 0,
                 RankingPosition = rankingTitle?.Rank ?? 0,
                 RankingConsecutiveDays = rankingTitle?.ConsecutiveDays ?? 0,
+                Sprite = target.Sprite ?? string.Empty,
             }
         );
     }
