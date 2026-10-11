@@ -33,7 +33,7 @@ public partial class ExperiencePacket : IntersectPacket
 /// <summary>
 /// Authoritative per-NPC experience award, before any level-up consumes XP.
 /// All amounts are computed by the server using the exact award rounding.
-/// The party bonus is computed after dividing the NPC's pool among members.
+/// Party bonuses increase only the killer's full NPC award; no EXP is shared.
 /// </summary>
 [MessagePackObject]
 public sealed class NpcExperienceGainBreakdown
