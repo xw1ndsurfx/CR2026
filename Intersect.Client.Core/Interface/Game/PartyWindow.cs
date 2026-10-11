@@ -391,9 +391,12 @@ public partial class PartyWindow
         _hudLeaveButton.Show();
         _rosterHud.VisibleMembers = count;
         _hudHeading.Text = $"PARTY  {count}/{Options.Instance.Party.MaximumMembers}";
-        // Configured bonus to the experience pool scales with the member count.
-        var bonus = count * Options.Instance.Party.BonusExperiencePercentPerMember;
-        _hudExpBonus.Text = $"EXP BONUS +{bonus:0.#}%";
+        // Only other nearby party members count and EXP goes to the killer.
+        // This is the maximum potential bonus; actual kills require nearby,
+        // alive companions, which the server validates authoritatively.
+        var maximumBonus = Math.Max(0, count - 1) *
+            Math.Max(0f, Options.Instance.Party.BonusExperiencePercentPerMember);
+        _hudExpBonus.Text = $"UP TO +{maximumBonus:0.#}% EXP";
         for (var i = 0; i < _hudNames.Count; i++)
         {
             if (i >= count)
