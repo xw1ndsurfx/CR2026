@@ -2,6 +2,7 @@ using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
+using Intersect.Client.General;
 using Intersect.Framework.Core.Dungeons;
 using Intersect.Network.Packets.Server;
 using UiRectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
