@@ -1654,61 +1654,52 @@ public partial class Player : Entity
                     var playerEvent = descriptor.OnDeathEvent;
                     var partyEvent = descriptor.OnDeathPartyEvent;
 
-                    // If in party, split the exp.
-                    if (Party != null && Party.Count > 0)
-                    {
-                        var partyMembersInXpRange = Party.Where(partyMember => partyMember.InRangeOf(this, Options.Instance.Party.SharedXpRange)).ToArray();
-                        float bonusExp = Options.Instance.Party.BonusExperiencePercentPerMember / 100;
-                        var multiplier = 1.0f + (partyMembersInXpRange.Length * bonusExp);
-                        var partyExperience = (int)(descriptor.Experience * multiplier) / partyMembersInXpRange.Length;
-                        foreach (var partyMember in partyMembersInXpRange)
-                        {
-                            // The pool has already been boosted and shared.
-                            // Report the actual per-player base share and the
-                            // additional party EXP after server rounding.
-                            var baseShare = descriptor.Experience / partyMembersInXpRange.Length;
-                            partyMember.GiveExperience(
-                                partyExperience,
-                                fromNpcKill: true,
-                                npcBaseExperience: baseShare,
-                                npcPartyBonusExperience: partyExperience - baseShare,
-                                npcPartyBonusPercent: partyMembersInXpRange.Length *
-                                    Options.Instance.Party.BonusExperiencePercentPerMember
-                            );
-                            partyMember.UpdateQuestKillTasks(entity);
-                            AchievementRuntime.AddProgress(
-                                partyMember,
-                                Intersect.Framework.Core.Achievements.AchievementObjectiveType.NpcKills,
-                                1,
-                                descriptor.Id
-                            );
-                        }
+                    // Only the player credited with the NPC kill receives EXP.
+                    // Other in-range party members increase the killer's bonus,
+                    // but never receive an automatic share.
+                    var nearbyAllies = Party?.Count(member =>
+                        member != this &&
+                        member.InGame &&
+                        !member.IsDead &&
+                        member.InRangeOf(this, Options.Instance.Party.SharedXpRange)) ?? 0;
+                    var partyBonusPercent = nearbyAllies *
+                        Math.Max(0f, Options.Instance.Party.BonusExperiencePercentPerMember);
+                    var baseExperience = Math.Max(0L, descriptor.Experience);
+                    var partyBonusExperience = partyBonusPercent > 0
+                        ? (long)Math.Round(baseExperience * partyBonusPercent / 100d,
+                            MidpointRounding.AwayFromZero)
+                        : 0L;
 
-                        if (partyEvent != null)
+                    GiveExperience(
+                        baseExperience + partyBonusExperience,
+                        fromNpcKill: true,
+                        npcBaseExperience: baseExperience,
+                        npcPartyBonusExperience: partyBonusExperience,
+                        npcPartyBonusPercent: partyBonusPercent
+                    );
+
+                    // Credit kill tasks and achievements only to the killer.
+                    UpdateQuestKillTasks(entity);
+                    AchievementRuntime.AddProgress(
+                        this,
+                        Intersect.Framework.Core.Achievements.AchievementObjectiveType.NpcKills,
+                        1,
+                        descriptor.Id
+                    );
+
+                    // Event-configured party death triggers remain separate from
+                    // automatic NPC EXP and retain their existing behavior.
+                    if (Party is { Count: > 0 } && partyEvent != null)
+                    {
+                        foreach (var partyMember in Party)
                         {
-                            foreach (var partyMember in Party)
+                            if ((Options.Instance.Party.NpcDeathCommonEventStartRange <= 0 ||
+                                 partyMember.InRangeOf(this, Options.Instance.Party.NpcDeathCommonEventStartRange)) &&
+                                !(partyMember == this && playerEvent != null))
                             {
-                                if ((Options.Instance.Party.NpcDeathCommonEventStartRange <= 0 || partyMember.InRangeOf(this, Options.Instance.Party.NpcDeathCommonEventStartRange)) && !(partyMember == this && playerEvent != null))
-                                {
-                                    partyMember.EnqueueStartCommonEvent(partyEvent);
-                                }
+                                partyMember.EnqueueStartCommonEvent(partyEvent);
                             }
                         }
-                    }
-                    else
-                    {
-                        GiveExperience(
-                            descriptor.Experience,
-                            fromNpcKill: true,
-                            npcBaseExperience: descriptor.Experience
-                        );
-                        UpdateQuestKillTasks(entity);
-                        AchievementRuntime.AddProgress(
-                            this,
-                            Intersect.Framework.Core.Achievements.AchievementObjectiveType.NpcKills,
-                            1,
-                            descriptor.Id
-                        );
                     }
 
                     if (playerEvent != null)
