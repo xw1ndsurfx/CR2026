@@ -321,7 +321,7 @@ public partial class PartyWindow
                 Font = GameContentManager.Current.GetFont("sourcesanspro") ?? mLeaveButton.Font,
                 FontSize = 9,
                 TextColorOverride = Color.White,
-                MouseInputEnabled = false,
+                MouseInputEnabled = true,
             };
             name.SetBounds(43, 31 + i * 42, 166, 18);
             name.Clicked += PartyWindow_Clicked;
@@ -335,12 +335,12 @@ public partial class PartyWindow
                 FontSize = 8,
             };
             kick.SetBounds(205, 34 + i * 42, 44, 21);
+            var memberIndex = i;
             kick.Clicked += (_, _) =>
             {
-                // The button is tied to its original member index.
-                if (Globals.Me?.Party.Count > i &&
-                    Globals.Me.Party[0].Id == Globals.Me.Id && i > 0)
-                    PacketSender.SendPartyKick(Globals.Me.Party[i].Id);
+                if (Globals.Me?.Party.Count > memberIndex &&
+                    Globals.Me.Party[0].Id == Globals.Me.Id && memberIndex > 0)
+                    PacketSender.SendPartyKick(Globals.Me.Party[memberIndex].Id);
             };
             kick.Hide();
             _hudKickButtons.Add(kick);
