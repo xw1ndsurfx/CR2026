@@ -567,15 +567,9 @@ public partial class MenuContainer : Panel
 
     public void TogglePartyWindow()
     {
-        if (_partyWindow.IsVisible())
-        {
-            _partyWindow.Hide();
-        }
-        else
-        {
-            HideWindows();
-            _partyWindow.Show();
-        }
+        // Party is a TLOPO-style overlay, not a full-screen menu window.
+        // Keep the rest of the player's UI open when toggling it.
+        _partyWindow.ToggleHud();
     }
 
     public void ToggleQuestsWindow()
