@@ -1544,43 +1544,68 @@ internal sealed partial class PacketHandler
         if (Globals.Me == null)
             return;
 
-        // The server knows the exact NPC reward, including equipment, title,
-        // party splitting and level-ups. A simple XP delta is unreliable when
-        // the player levels up and their current-level EXP resets.
         var gainedExperience = packet.Experience - Globals.Me.Experience;
-        var message = packet.NpcGain is { } npcGain
-            ? npcGain.TotalExperience > 0 ? FormatNpcExperienceGain(npcGain) : null
-            : gainedExperience > 0 && Globals.Me.ExperienceToNextLevel > 0
-                ? $"+{gainedExperience:N0} EXP" : null;
-
-        if (message != null && MapInstance.Get(Globals.Me.MapId) is { } map)
+        if (MapInstance.Get(Globals.Me.MapId) is { } map)
         {
-            map.ActionMessages.Add(new ActionMessage(
-                map, Globals.Me.X, Globals.Me.Y,
-                message, new Color(255, 76, 220, 100)
-            ));
+            if (packet.NpcGain is { TotalExperience: > 0 } npcGain)
+            {
+                // Distinct short lines move together above the player, rather
+                // than one lengthy line or embedded newline glyphs.
+                var lines = BuildNpcExperienceGainLines(npcGain);
+                const int lineSpacing = 18;
+                var firstLineYOffset = -38 - (lines.Count - 1) * lineSpacing;
+                for (var index = 0; index < lines.Count; index++)
+                {
+                    var line = lines[index];
+                    map.ActionMessages.Add(new ActionMessage(
+                        map, Globals.Me.X, Globals.Me.Y, line.Text, line.Color,
+                        xOffset: 0, yOffset: firstLineYOffset + index * lineSpacing
+                    ));
+                }
+            }
+            else if (packet.NpcGain == null &&
+                     gainedExperience > 0 && Globals.Me.ExperienceToNextLevel > 0)
+            {
+                // Non-NPC rewards keep the existing compact EXP display.
+                map.ActionMessages.Add(new ActionMessage(
+                    map, Globals.Me.X, Globals.Me.Y,
+                    $"+{gainedExperience:N0} EXP", new Color(255, 76, 220, 100)
+                ));
+            }
         }
 
         Globals.Me.Experience = packet.Experience;
         Globals.Me.ExperienceToNextLevel = packet.ExperienceToNextLevel;
     }
 
-    private static string FormatNpcExperienceGain(NpcExperienceGainBreakdown gain)
+    private static List<(string Text, Color Color)> BuildNpcExperienceGainLines(
+        NpcExperienceGainBreakdown gain)
     {
-        static string Signed(long value) =>
-            value < 0 ? value.ToString("N0") : "+" + value.ToString("N0");
+        static string Signed(long amount) =>
+            amount < 0 ? amount.ToString("N0") : "+" + amount.ToString("N0");
 
-        var bonuses = new List<string>();
+        var baseColor = new Color(255, 235, 218, 177);
+        var bonusColor = new Color(255, 164, 217, 150);
+        var totalColor = new Color(255, 76, 220, 100);
+        var lines = new List<(string Text, Color Color)>();
+
+        if (gain.PartyBonusPercent == 0 && gain.EquipmentBonusPercent == 0 &&
+            gain.TitleBonusPercent == 0 && gain.PartyBonusExperience == 0 &&
+            gain.EquipmentBonusExperience == 0 && gain.TitleBonusExperience == 0)
+        {
+            lines.Add(($"+{gain.TotalExperience:N0} EXP", totalColor));
+            return lines;
+        }
+
+        lines.Add(($"BASE {Signed(gain.BaseExperience)} EXP", baseColor));
         if (gain.PartyBonusPercent != 0 || gain.PartyBonusExperience != 0)
-            bonuses.Add($"Party +{gain.PartyBonusPercent:0.#}%: {Signed(gain.PartyBonusExperience)}");
+            lines.Add(($"PARTY +{gain.PartyBonusPercent:0.#}%  {Signed(gain.PartyBonusExperience)}", bonusColor));
         if (gain.EquipmentBonusPercent != 0 || gain.EquipmentBonusExperience != 0)
-            bonuses.Add($"Gear +{gain.EquipmentBonusPercent}%: {Signed(gain.EquipmentBonusExperience)}");
+            lines.Add(($"GEAR +{gain.EquipmentBonusPercent}%  {Signed(gain.EquipmentBonusExperience)}", bonusColor));
         if (gain.TitleBonusPercent != 0 || gain.TitleBonusExperience != 0)
-            bonuses.Add($"Title +{gain.TitleBonusPercent}%: {Signed(gain.TitleBonusExperience)}");
-
-        return bonuses.Count == 0
-            ? $"+{gain.TotalExperience:N0} EXP"
-            : $"+{gain.BaseExperience:N0} EXP ({string.Join(", ", bonuses)}) = {gain.TotalExperience:N0} EXP";
+            lines.Add(($"TITLE +{gain.TitleBonusPercent}%  {Signed(gain.TitleBonusExperience)}", bonusColor));
+        lines.Add(($"TOTAL +{gain.TotalExperience:N0} EXP", totalColor));
+        return lines;
     }
 
     //ProjectileDeadPacket
