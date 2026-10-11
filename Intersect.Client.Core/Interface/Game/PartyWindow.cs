@@ -417,8 +417,13 @@ public partial class PartyWindow
                 if (texture != null)
                 {
                     portrait.Texture = texture;
-                    portrait.SetTextureRect(0, 0,
-                        Math.Min(32, texture.Width), Math.Min(32, texture.Height));
+                    // Entity images are sprite sheets, not single 32x32 icons.
+                    // Use the same frame layout as the character preview.
+                    var frameWidth = Math.Max(1, texture.Width /
+                        Math.Max(1, Options.Instance.Sprites.NormalFrames));
+                    var frameHeight = Math.Max(1, texture.Height /
+                        Math.Max(1, Options.Instance.Sprites.Directions));
+                    portrait.SetTextureRect(0, 0, frameWidth, frameHeight);
                     portrait.Show();
                 }
             }
@@ -657,7 +662,10 @@ public partial class PartyWindow
 
     private void PartyWindow_Clicked(Base sender, MouseButtonState arguments)
     {
-        var memberId = (Guid)((Label)sender).UserData;
+        // Both member names (Label) and portraits (ImagePanel) call this handler.
+        // Read the common Base.UserData without casting the control type.
+        if (sender.UserData is not Guid memberId)
+            return;
 
         if (Globals.Me == null || memberId == Guid.Empty)
             return;
