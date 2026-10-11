@@ -5,11 +5,16 @@ using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
 using Intersect.Framework.Core.Achievements;
 using Intersect.Network.Packets.Server;
+using UiRectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
+using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 
 namespace Intersect.Client.Interface.Game;
 
 internal sealed class AchievementsWindow : Window
 {
+    private static readonly Color Gold = new(a: 255, r: 224, g: 190, b: 113);
+    private static readonly Color Cream = new(a: 255, r: 246, g: 229, b: 202);
+    private static readonly Color Muted = new(a: 255, r: 193, g: 180, b: 161);
     private readonly Label _summary;
     private readonly ScrollControl _scroll;
 
@@ -20,11 +25,14 @@ internal sealed class AchievementsWindow : Window
         DeleteOnClose = false;
         DisableResizing();
 
+        var frame = new AchievementChrome(this, "AchievementsWindowFrame", ChromeStyle.Window);
+        frame.SetBounds(14, 30, 732, 562);
+
         var title = new Label(this, "AchievementsTitle")
         {
             AutoSizeToContents = false,
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-            FontSize = 22,
+            FontSize = 17,
             TextAlign = Pos.Center,
             TextColorOverride = new Color(a: 255, r: 236, g: 210, b: 153),
             Text = "ACHIEVEMENTS",
@@ -37,7 +45,7 @@ internal sealed class AchievementsWindow : Window
             Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
             FontSize = 10,
             TextAlign = Pos.Center,
-            TextColorOverride = Color.White,
+            TextColorOverride = Muted,
         };
         _summary.SetBounds(20, 72, 720, 32);
 
@@ -47,7 +55,7 @@ internal sealed class AchievementsWindow : Window
             OverflowY = OverflowBehavior.Scroll,
             AutoHideBars = true,
         };
-        _scroll.SetBounds(28, 112, 704, 472);
+        _scroll.SetBounds(30, 115, 700, 454);
 
         Hide();
     }
@@ -78,7 +86,7 @@ internal sealed class AchievementsWindow : Window
 
         _scroll.DeleteAll();
 
-        var y = 8;
+        var y = 12;
         string? lastCategory = null;
 
         foreach (var definition in definitions)
@@ -94,8 +102,8 @@ internal sealed class AchievementsWindow : Window
                     TextColorOverride = new Color(a: 255, r: 236, g: 210, b: 153),
                     Text = string.IsNullOrWhiteSpace(definition.Category) ? "GENERAL" : definition.Category.ToUpperInvariant(),
                 };
-                category.SetBounds(8, y, 650, 24);
-                y += 28;
+                category.SetBounds(12, y, 650, 24);
+                y += 30;
             }
 
             state.TryGetValue(definition.Id, out var progress);
@@ -119,7 +127,7 @@ internal sealed class AchievementsWindow : Window
             y = 140;
         }
 
-        _scroll.SetInnerSize(680, Math.Max(450, y + 12));
+        _scroll.SetInnerSize(680, Math.Max(440, y + 12));
         _scroll.UpdateScrollBars();
     }
 
@@ -130,114 +138,101 @@ internal sealed class AchievementsWindow : Window
     )
     {
         const int width = 660;
-        const int height = 128;
+        const int height = 160;
 
-        var card = new Button(_scroll, $"AchievementCard{definition.Id}")
+        var card = new Base(_scroll, $"AchievementCard{definition.Id}")
         {
-            Text = string.Empty,
             MouseInputEnabled = false,
         };
         card.SetBounds(8, y, width, height);
-        card.SetStateTexture(ComponentState.Normal, "control_button.png");
+
+        var frame = new AchievementChrome(card, $"AchievementFrame{definition.Id}", ChromeStyle.Card);
+        frame.SetBounds(0, 0, width, height);
+        var portraitFrame = new AchievementChrome(card, $"AchievementIconFrame{definition.Id}", ChromeStyle.Portrait);
+        portraitFrame.SetBounds(13, 13, 84, 84);
 
         var icon = new ImagePanel(card, $"AchievementIcon{definition.Id}")
         {
             MaintainAspectRatio = true,
             MouseInputEnabled = false,
         };
-        icon.SetBounds(12, 14, 72, 72);
-
+        icon.SetBounds(19, 19, 72, 72);
         if (!string.IsNullOrWhiteSpace(definition.Icon))
         {
             icon.Texture = Globals.ContentManager.GetTexture(TextureType.Achievement, definition.Icon);
-            if (icon.Texture == null)
-                icon.Hide();
+            if (icon.Texture == null) icon.Hide();
         }
-        else
-        {
-            icon.Hide();
-        }
+        else icon.Hide();
 
-        var name = new Label(card, $"AchievementName{definition.Id}")
-        {
-            AutoSizeToContents = false,
-            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-            FontSize = 12,
-            TextColorOverride = progress.Completed
-                ? new Color(a: 255, r: 241, g: 211, b: 125)
-                : Color.White,
-            Text = definition.Name,
-            MouseInputEnabled = false,
-        };
-        name.SetBounds(96, 10, 360, 22);
+        AddText(card, $"AchievementName{definition.Id}", definition.Name,
+            110, 13, 380, 25, 13, progress.Completed ? Gold : Cream, bold: true);
+        AddText(card, $"AchievementDescription{definition.Id}", definition.Description,
+            110, 39, 383, 37, 9, Muted);
 
-        var description = new Label(card, $"AchievementDescription{definition.Id}")
-        {
-            AutoSizeToContents = false,
-            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
-            FontSize = 9,
-            TextColorOverride = new Color(a: 255, r: 220, g: 214, b: 202),
-            Text = definition.Description,
-            MouseInputEnabled = false,
-        };
-        description.SetBounds(96, 34, 410, 34);
+        var statusText = progress.Claimed ? "REWARD CLAIMED"
+            : progress.Completed ? "READY TO CLAIM" : "IN PROGRESS";
+        var statusColor = progress.Claimed
+            ? new Color(a: 255, r: 151, g: 196, b: 132)
+            : progress.Completed ? Gold : Muted;
+        AddText(card, $"AchievementStatus{definition.Id}", statusText,
+            500, 13, 147, 23, 9, statusColor, bold: true, center: true);
 
         var targetAmount = Math.Max(1L, definition.TargetAmount);
         var boundedProgress = Math.Min(targetAmount, Math.Max(0L, progress.Progress));
-
-        var bar = new ProgressBar(card)
+        var fraction = (float)Math.Clamp((double)boundedProgress / targetAmount, 0d, 1d);
+        AddText(card, $"AchievementProgressCaption{definition.Id}", "PROGRESS",
+            110, 78, 210, 18, 9, Gold, bold: true);
+        var progressBar = new AchievementChrome(card, $"AchievementProgressBar{definition.Id}", ChromeStyle.Bar)
         {
-            AutoLabel = false,
-            Value = (float)Math.Clamp((double)boundedProgress / targetAmount, 0d, 1d),
-            Text = $"{boundedProgress:N0} / {targetAmount:N0}",
-            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
-            FontSize = 9,
-            TextColorOverride = Color.White,
-            MouseInputEnabled = false,
+            Progress = fraction,
+            ProgressColor = new Color(a: 255, r: 82, g: 159, b: 91),
         };
-        bar.SetBounds(96, 76, 410, 24);
-
-        var status = new Label(card, $"AchievementStatus{definition.Id}")
-        {
-            AutoSizeToContents = false,
-            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-            FontSize = 9,
-            TextAlign = Pos.Center,
-            Text = progress.Claimed ? "REWARD CLAIMED" : progress.Completed ? "COMPLETED" : "IN PROGRESS",
-            TextColorOverride = progress.Claimed
-                ? new Color(a: 255, r: 151, g: 196, b: 132)
-                : progress.Completed
-                    ? new Color(a: 255, r: 241, g: 211, b: 125)
-                    : new Color(a: 255, r: 210, g: 195, b: 175),
-            MouseInputEnabled = false,
-        };
-        status.SetBounds(514, 12, 134, 20);
+        progressBar.SetBounds(110, 100, 383, 17);
+        AddText(card, $"AchievementProgressValue{definition.Id}",
+            $"{boundedProgress:N0} / {targetAmount:N0}", 110, 100, 383, 17,
+            9, Cream, center: true);
 
         var rewardText = BuildRewardText(definition.Reward);
-        var reward = new Label(card, $"AchievementReward{definition.Id}")
-        {
-            AutoSizeToContents = false,
-            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
-            FontSize = 8,
-            TextAlign = Pos.Center,
-            TextColorOverride = Color.White,
-            Text = rewardText,
-            MouseInputEnabled = false,
-        };
-        reward.SetBounds(514, 38, 134, 34);
+        AddText(card, $"AchievementRewardCaption{definition.Id}", "REWARD",
+            14, 126, 83, 22, 9, Gold, bold: true);
+        AddText(card, $"AchievementReward{definition.Id}", rewardText,
+            100, 126, 377, 22, 9, Cream);
 
         var claim = new Button(card, $"AchievementClaim{definition.Id}")
         {
-            Text = progress.Claimed ? "Claimed" : "Claim Reward",
-            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-            FontSize = 9,
+            Text = string.Empty,
             IsDisabled = !progress.Completed || progress.Claimed,
         };
-        claim.SetBounds(516, 79, 130, 32);
+        claim.SetBounds(500, 113, 148, 36);
+        var claimFrame = new AchievementChrome(claim, $"AchievementClaimFrame{definition.Id}",
+            progress.Completed && !progress.Claimed ? ChromeStyle.PrimaryButton : ChromeStyle.SecondaryButton);
+        claimFrame.SetBounds(0, 0, 148, 36);
+        AddText(claim, $"AchievementClaimLabel{definition.Id}",
+            progress.Claimed ? "CLAIMED" : progress.Completed ? "CLAIM REWARD" : "LOCKED",
+            4, 0, 140, 36, 10, Cream, bold: true, center: true).BringToFront();
         claim.Clicked += (_, _) =>
             Networking.PacketSender.SendClaimAchievementReward(definition.Id);
 
-        return y + height + 10;
+        return y + height + 12;
+    }
+
+    private static Label AddText(Base parent, string id, string text,
+        int x, int y, int width, int height, int size, Color color,
+        bool bold = false, bool center = false)
+    {
+        var label = new Label(parent, id)
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont(
+                bold ? "sourcesansproblack" : "sourcesanspro") ?? parent.Skin.DefaultFont,
+            FontSize = size,
+            TextAlign = center ? Pos.Center : Pos.Left | Pos.CenterV,
+            TextColorOverride = color,
+            Text = text,
+            MouseInputEnabled = false,
+        };
+        label.SetBounds(x, y, width, height);
+        return label;
     }
 
     private static string BuildRewardText(AchievementRewardDefinition reward)
@@ -264,4 +259,102 @@ internal sealed class AchievementsWindow : Window
         Show();
         BringToFront();
     }
+    private enum ChromeStyle
+    {
+        Window, Card, Portrait, Bar, PrimaryButton, SecondaryButton
+    }
+
+    // Shared visual language with Pets: dark panels and copper/gold pixel frames.
+    private sealed class AchievementChrome : Base
+    {
+        private static readonly Color Dark = new(a: 255, r: 28, g: 18, b: 17);
+        private static readonly Color Brown = new(a: 255, r: 56, g: 35, b: 28);
+        private static readonly Color Copper = new(a: 255, r: 90, g: 55, b: 37);
+        private static readonly Color BorderColor = new(a: 255, r: 162, g: 116, b: 55);
+        private static readonly Color Highlight = new(a: 255, r: 228, g: 183, b: 93);
+        private readonly ChromeStyle _style;
+
+        public float Progress { get; set; }
+        public Color ProgressColor { get; set; } = Color.White;
+
+        public AchievementChrome(Base parent, string name, ChromeStyle style)
+            : base(parent, name)
+        {
+            _style = style;
+            MouseInputEnabled = false;
+            KeyboardInputEnabled = false;
+        }
+
+        protected override void Render(SkinBase skin)
+        {
+            var bounds = RenderBounds;
+            switch (_style)
+            {
+                case ChromeStyle.Window:
+                    Fill(skin, bounds, Dark);
+                    Border(skin, bounds, BorderColor, 2);
+                    Border(skin, Inset(bounds, 5), Copper, 1);
+                    Fill(skin, bounds.X + 18, bounds.Y + 73, bounds.Width - 36, 1, Copper);
+                    break;
+                case ChromeStyle.Card:
+                    Fill(skin, bounds, Dark);
+                    Border(skin, bounds, BorderColor, 2);
+                    Border(skin, Inset(bounds, 4), Copper, 1);
+                    Fill(skin, bounds.X + 105, bounds.Y + 10,
+                        bounds.Width - 119, 65, Copper);
+                    Fill(skin, bounds.X + 105, bounds.Y + 75,
+                        bounds.Width - 119, 1, Highlight);
+                    Fill(skin, bounds.X + 12, bounds.Bottom - 40,
+                        bounds.Width - 24, 1, Copper);
+                    break;
+                case ChromeStyle.Portrait:
+                    Fill(skin, bounds, Dark);
+                    Border(skin, bounds, Highlight, 2);
+                    Border(skin, Inset(bounds, 5), Copper, 1);
+                    break;
+                case ChromeStyle.Bar:
+                    Fill(skin, bounds, Dark);
+                    Border(skin, bounds, Copper, 1);
+                    Fill(skin, bounds.X + 2, bounds.Y + 2,
+                        (int)((bounds.Width - 4) * Math.Clamp(Progress, 0f, 1f)),
+                        bounds.Height - 4, ProgressColor);
+                    break;
+                case ChromeStyle.PrimaryButton:
+                    Fill(skin, bounds, new Color(a: 255, r: 49, g: 77, b: 42));
+                    Border(skin, bounds, new Color(a: 255, r: 148, g: 183, b: 105), 2);
+                    Border(skin, Inset(bounds, 4), Copper, 1);
+                    break;
+                case ChromeStyle.SecondaryButton:
+                    Fill(skin, bounds, Copper);
+                    Border(skin, bounds, Highlight, 2);
+                    Border(skin, Inset(bounds, 4), Brown, 1);
+                    break;
+            }
+        }
+
+        private static UiRectangle Inset(UiRectangle rect, int amount) =>
+            new(rect.X + amount, rect.Y + amount,
+                rect.Width - amount * 2, rect.Height - amount * 2);
+
+        private static void Fill(SkinBase skin, UiRectangle rect, Color color)
+        {
+            skin.Renderer.DrawColor = color;
+            skin.Renderer.DrawFilledRect(rect);
+        }
+
+        private static void Fill(SkinBase skin, int x, int y, int width, int height, Color color)
+        {
+            if (width <= 0 || height <= 0) return;
+            Fill(skin, new UiRectangle(x, y, width, height), color);
+        }
+
+        private static void Border(SkinBase skin, UiRectangle rect, Color color, int thickness)
+        {
+            Fill(skin, rect.X, rect.Y, rect.Width, thickness, color);
+            Fill(skin, rect.X, rect.Bottom - thickness, rect.Width, thickness, color);
+            Fill(skin, rect.X, rect.Y, thickness, rect.Height, color);
+            Fill(skin, rect.Right - thickness, rect.Y, thickness, rect.Height, color);
+        }
+    }
+
 }
