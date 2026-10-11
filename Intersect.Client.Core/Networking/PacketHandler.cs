@@ -1541,29 +1541,46 @@ internal sealed partial class PacketHandler
     //ExperiencePacket
     public void HandlePacket(IPacketSender packetSender, ExperiencePacket packet)
     {
-        if (Globals.Me != null)
-        {
-            // Reuse the damage number animation for experience earned by the local player.
-            // Experience packets contain the confirmed total for the current level, so
-            // only show positive changes (never a login sync or an XP decrease).
-            var gainedExperience = packet.Experience - Globals.Me.Experience;
-            if (gainedExperience > 0 && Globals.Me.ExperienceToNextLevel > 0)
-            {
-                var map = MapInstance.Get(Globals.Me.MapId);
-                if (map != null)
-                {
-                    map.ActionMessages.Add(
-                        new ActionMessage(
-                            map, Globals.Me.X, Globals.Me.Y,
-                            $"+{gainedExperience:N0} EXP", new Color(255, 76, 220, 100)
-                        )
-                    );
-                }
-            }
+        if (Globals.Me == null)
+            return;
 
-            Globals.Me.Experience = packet.Experience;
-            Globals.Me.ExperienceToNextLevel = packet.ExperienceToNextLevel;
+        // The server knows the exact NPC reward, including equipment, title,
+        // party splitting and level-ups. A simple XP delta is unreliable when
+        // the player levels up and their current-level EXP resets.
+        var gainedExperience = packet.Experience - Globals.Me.Experience;
+        var message = packet.NpcGain is { } npcGain
+            ? npcGain.TotalExperience > 0 ? FormatNpcExperienceGain(npcGain) : null
+            : gainedExperience > 0 && Globals.Me.ExperienceToNextLevel > 0
+                ? $"+{gainedExperience:N0} EXP" : null;
+
+        if (message != null && MapInstance.Get(Globals.Me.MapId) is { } map)
+        {
+            map.ActionMessages.Add(new ActionMessage(
+                map, Globals.Me.X, Globals.Me.Y,
+                message, new Color(255, 76, 220, 100)
+            ));
         }
+
+        Globals.Me.Experience = packet.Experience;
+        Globals.Me.ExperienceToNextLevel = packet.ExperienceToNextLevel;
+    }
+
+    private static string FormatNpcExperienceGain(NpcExperienceGainBreakdown gain)
+    {
+        static string Signed(long value) =>
+            value < 0 ? value.ToString("N0") : "+" + value.ToString("N0");
+
+        var bonuses = new List<string>();
+        if (gain.PartyBonusPercent != 0 || gain.PartyBonusExperience != 0)
+            bonuses.Add($"Party +{gain.PartyBonusPercent:0.#}%: {Signed(gain.PartyBonusExperience)}");
+        if (gain.EquipmentBonusPercent != 0 || gain.EquipmentBonusExperience != 0)
+            bonuses.Add($"Gear +{gain.EquipmentBonusPercent}%: {Signed(gain.EquipmentBonusExperience)}");
+        if (gain.TitleBonusPercent != 0 || gain.TitleBonusExperience != 0)
+            bonuses.Add($"Title +{gain.TitleBonusPercent}%: {Signed(gain.TitleBonusExperience)}");
+
+        return bonuses.Count == 0
+            ? $"+{gain.TotalExperience:N0} EXP"
+            : $"+{gain.BaseExperience:N0} EXP ({string.Join(", ", bonuses)}) = {gain.TotalExperience:N0} EXP";
     }
 
     //ProjectileDeadPacket
