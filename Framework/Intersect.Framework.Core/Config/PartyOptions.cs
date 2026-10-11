@@ -12,8 +12,11 @@ public partial class PartyOptions
     public int NpcDeathCommonEventStartRange{ get; set; } = 0;
 
     /// <summary>
-    /// It will determine if you will have an XP bonus for each member, Eg 10, will give 10% more to the monster's total XP, then split equally to all members.
-    /// A monster that would give 100 XP, now gives 120, getting 60 for each member, when 2 in the party.
+    /// NPC EXP bonus per other, alive, in-range party member. Only the player
+    /// credited with the kill receives the full monster EXP plus this bonus.
+    /// Example: with 25% per additional member and a two-player party,
+    /// a 100 EXP NPC grants 125 EXP to the killer and 0 to the teammate.
+    /// A solo player gets no party bonus.
     /// </summary>
     public float BonusExperiencePercentPerMember{ get; set; } = 0;
 }
