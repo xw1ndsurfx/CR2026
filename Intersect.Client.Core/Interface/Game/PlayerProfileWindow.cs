@@ -87,7 +87,7 @@ internal sealed class PlayerProfileWindow : Window
         previewFrame.SendToBack();
         _playerPreview = new ImagePanel(this, "ObservedPlayerSprite")
         {
-            MaintainAspectRatio = true,
+            MaintainAspectRatio = false,
             ShouldDrawBackground = false,
             MouseInputEnabled = false,
         };
