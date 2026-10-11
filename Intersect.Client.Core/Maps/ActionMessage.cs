@@ -20,16 +20,20 @@ public partial class ActionMessage : IActionMessage
 
     public int XOffset { get; init; }
 
+    public int YOffset { get; init; }
+
     public int Y { get; init; }
 
-    public ActionMessage(MapInstance map, int x, int y, string text, Color color)
+    public ActionMessage(MapInstance map, int x, int y, string text, Color color,
+        int? xOffset = null, int yOffset = 0)
     {
         Map = map;
         X = x;
         Y = y;
         Text = text;
         Color = color;
-        XOffset = Globals.Random.Next(-30, 30); //+- 16 pixels so action msg's don't overlap!
+        XOffset = xOffset ?? Globals.Random.Next(-30, 30); // Randomize ordinary messages.
+        YOffset = yOffset;
         TransmissionTimer = Timing.Global.MillisecondsUtc + 1000;
     }
 
