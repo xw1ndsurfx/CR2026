@@ -168,10 +168,11 @@ public partial class PartyWindow
     private void BuildCrewLayout()
     {
         var memberCount = Options.Instance.Party.MaximumMembers;
-        const int cardHeight = 104;
-        const int cardGap = 7;
-        const int cardTop = 103;
-        var windowHeight = Math.Max(310, cardTop + memberCount * (cardHeight + cardGap) + 70);
+        const int cardHeight = 82;
+        const int cardGap = 5;
+        const int cardTop = 99;
+        // Five roster cards fit in a compact window without clipping the footer.
+        var windowHeight = Math.Max(310, cardTop + memberCount * (cardHeight + cardGap) + 65);
         mPartyWindow.SetSize(515, windowHeight);
         mPartyWindow.Alignment = [Alignments.Center];
 
@@ -222,21 +223,21 @@ public partial class PartyWindow
                 TextColorOverride = new Color(a:255,r:236,g:210,b:153),
                 MouseInputEnabled = false,
             };
-            role.SetBounds(352, top + 11, 100, 23);
+            role.SetBounds(352, top + 7, 100, 23);
             role.Hide();
             _memberRoles.Add(role);
 
-            mLblnames[i].SetBounds(44, top + 9, 290, 28);
+            mLblnames[i].SetBounds(44, top + 5, 290, 25);
             mLblnames[i].TextColorOverride = Color.White;
             mLblnames[i].Clicked += PartyWindow_Clicked;
 
-            mHpLabel[i].SetBounds(43, top + 36, 48, 19);
+            mHpLabel[i].SetBounds(43, top + 29, 48, 19);
             mHpLabel[i].Text = "HP";
-            mHpValue[i].SetBounds(310, top + 36, 153, 19);
+            mHpValue[i].SetBounds(310, top + 29, 153, 19);
             mHpValue[i].TextAlign = Pos.Right | Pos.CenterV;
-            mMpLabel[i].SetBounds(43, top + 67, 48, 19);
+            mMpLabel[i].SetBounds(43, top + 54, 48, 19);
             mMpLabel[i].Text = "MP";
-            mMpValue[i].SetBounds(310, top + 67, 153, 19);
+            mMpValue[i].SetBounds(310, top + 54, 153, 19);
             mMpValue[i].TextAlign = Pos.Right | Pos.CenterV;
             foreach (var label in new[] { mHpLabel[i], mHpValue[i], mMpLabel[i], mMpValue[i] })
             {
@@ -247,11 +248,11 @@ public partial class PartyWindow
 
             if (i > 0)
             {
-                mKickButtons[i].SetBounds(354, top + 11, 99, 25);
+                mKickButtons[i].SetBounds(354, top + 7, 99, 25);
                 mKickButtons[i].Text = "KICK";
                 mKickButtons[i].Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mLeaveButton.Font;
                 mKickButtons[i].FontSize = 9;
-                role.SetBounds(304, top + 11, 49, 23);
+                role.SetBounds(304, top + 7, 49, 23);
             }
         }
 
@@ -259,7 +260,7 @@ public partial class PartyWindow
         mLeaderText.Hide();
         mLeader.SetBounds(0, 0, 0, 0);
         mLeaderText.SetBounds(0, 0, 0, 0);
-        mLeaveButton.SetBounds(135, windowHeight - 75, 245, 35);
+        mLeaveButton.SetBounds(135, windowHeight - 57, 245, 35);
         mLeaveButton.Text = string.Empty;
         _leaveCaption = new Label(mLeaveButton, "CrewLeaveCaption")
         {
@@ -516,13 +517,13 @@ public partial class PartyWindow
             Fill(rect.X + 5, rect.Y + 5, rect.Width - 10, 1, copper);
 
             if (!_member) return;
-            Fill(rect.X + 13, rect.Y + 31, rect.Width - 26, 1, copper);
-            Fill(rect.X + 13, rect.Y + 58, rect.Width - 26, 12, dark);
-            Fill(rect.X + 13, rect.Y + 85, rect.Width - 26, 12, dark);
-            Fill(rect.X + 15, rect.Y + 60,
+            Fill(rect.X + 13, rect.Y + 28, rect.Width - 26, 1, copper);
+            Fill(rect.X + 13, rect.Y + 46, rect.Width - 26, 10, dark);
+            Fill(rect.X + 13, rect.Y + 67, rect.Width - 26, 10, dark);
+            Fill(rect.X + 15, rect.Y + 48,
                 (int)((rect.Width - 30) * Math.Clamp(HealthRatio, 0f, 1f)), 8,
                 new Color(a:255,r:173,g:65,b:63));
-            Fill(rect.X + 15, rect.Y + 87,
+            Fill(rect.X + 15, rect.Y + 69,
                 (int)((rect.Width - 30) * Math.Clamp(ManaRatio, 0f, 1f)), 8,
                 new Color(a:255,r:72,g:120,b:189));
         }
