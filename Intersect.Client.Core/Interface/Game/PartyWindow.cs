@@ -410,10 +410,13 @@ public partial class PartyWindow
             var portrait = _hudPortraits[i];
             portrait.UserData = member.Id;
             portrait.Hide();
-            if (Globals.Entities.TryGetValue(member.Id, out var entity) &&
-                !string.IsNullOrWhiteSpace(entity.Sprite))
+            // The local player may not be present in Globals.Entities even
+            // though their own sprite is available via Globals.Me.
+            var sprite = member.Id == Globals.Me.Id ? Globals.Me.Sprite :
+                Globals.Entities.TryGetValue(member.Id, out var entity) ? entity.Sprite : null;
+            if (!string.IsNullOrWhiteSpace(sprite))
             {
-                var texture = Globals.ContentManager.GetTexture(TextureType.Entity, entity.Sprite);
+                var texture = Globals.ContentManager.GetTexture(TextureType.Entity, sprite);
                 if (texture != null)
                 {
                     portrait.Texture = texture;
