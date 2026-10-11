@@ -98,7 +98,7 @@ internal sealed class PlayerProfileWindow : Window
         {
             var layer = new ImagePanel(this, "ObservedPaperdoll" + _paperdollLayers.Count)
             {
-                MaintainAspectRatio = true,
+                MaintainAspectRatio = false,
                 ShouldDrawBackground = false,
                 MouseInputEnabled = false,
             };
