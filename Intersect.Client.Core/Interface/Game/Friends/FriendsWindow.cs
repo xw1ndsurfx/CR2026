@@ -1,4 +1,5 @@
 using Intersect.Client.Core;
+using Intersect.Client.Framework.Entities;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -135,12 +136,12 @@ partial class FriendsWindow
         ClearList();
 
         var friends = Globals.Me?.Friends;
-        Intersect.Client.Entities.FriendInstance[] online = friends == null
+        IFriendInstance[] online = friends == null
             ? []
             : friends.Where(friend => friend is { Online: true })
                 .OrderBy(friend => friend.Name, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
-        Intersect.Client.Entities.FriendInstance[] offline = friends == null
+        IFriendInstance[] offline = friends == null
             ? []
             : friends.Where(friend => friend is { Online: false })
                 .OrderBy(friend => friend.Name, StringComparer.OrdinalIgnoreCase)
@@ -164,7 +165,7 @@ partial class FriendsWindow
     }
 
     private int AddSection(string title,
-        IReadOnlyList<Intersect.Client.Entities.FriendInstance> friends, int y)
+        IReadOnlyList<IFriendInstance> friends, int y)
     {
         if (friends.Count == 0)
             return y;
