@@ -180,26 +180,29 @@ internal sealed class PlayerProfileWindow : Window
         _scroll.DeleteAll();
 
         var y = 8;
-        if (profile.IsSelf)
+        // Profile tabs are available for both the local player and observed
+        // online characters. Remote requests are served in read-only mode.
+        var observedId = profile.IsSelf ? Guid.Empty : profile.PlayerId;
+        var achievements = new Button(_scroll, "OpenProfileAchievementsButton")
         {
-            var achievements = new Button(_scroll, "OpenAchievementsButton")
-            {
-                Text = "Achievements",
-                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-                FontSize = 11,
-            };
-            achievements.SetBounds(154, y, 230, 36);
-            achievements.Clicked += (_, _) => PacketSender.SendRequestAchievementState(openWindow: true);
-            var pets = new Button(_scroll, "OpenPetsButton")
-            {
-                Text = "Familiers",
-                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-                FontSize = 11,
-            };
-            pets.SetBounds(154, y + 43, 230, 36);
-            pets.Clicked += (_, _) => PacketSender.SendRequestPetState(openWindow: true);
-            y += 88;
-        }
+            Text = "Achievements",
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 11,
+        };
+        achievements.SetBounds(12, y, 286, 36);
+        achievements.Clicked += (_, _) =>
+            PacketSender.SendRequestAchievementState(openWindow: true, playerId: observedId);
+
+        var familiars = new Button(_scroll, "OpenProfileFamiliarsButton")
+        {
+            Text = "Familiers",
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+            FontSize = 11,
+        };
+        familiars.SetBounds(307, y, 285, 36);
+        familiars.Clicked += (_, _) =>
+            PacketSender.SendRequestPetState(openWindow: true, playerId: observedId);
+        y += 50;
 
         y = AddKeyValueSection("CHARACTER",
             new (string, string)[]
