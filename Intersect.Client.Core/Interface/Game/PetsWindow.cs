@@ -16,7 +16,7 @@ internal sealed class PetsWindow : Window
 
     public PetsWindow(Canvas parent) : base(parent, "Familiers", false, nameof(PetsWindow))
     {
-        SetSize(735, 625);
+        SetSize(735, 560);
         Alignment = [Alignments.Center];
         DeleteOnClose = false;
         DisableResizing();
@@ -30,7 +30,7 @@ internal sealed class PetsWindow : Window
             TextColorOverride = new Color(a: 255, r: 236, g: 210, b: 153),
             Text = "FAMILIERS",
         };
-        title.SetBounds(20, 38, 695, 34);
+        title.SetBounds(20, 28, 695, 34);
 
         _summary = new Label(this, "PetsSummary")
         {
@@ -40,7 +40,7 @@ internal sealed class PetsWindow : Window
             TextAlign = Pos.Center,
             TextColorOverride = Color.White,
         };
-        _summary.SetBounds(20, 75, 695, 30);
+        _summary.SetBounds(20, 65, 695, 25);
 
         _scroll = new ScrollControl(this, "PetsScroll")
         {
@@ -48,7 +48,7 @@ internal sealed class PetsWindow : Window
             OverflowY = OverflowBehavior.Scroll,
             AutoHideBars = true,
         };
-        _scroll.SetBounds(24, 112, 687, 465);
+        _scroll.SetBounds(24, 100, 687, 412);
         Hide();
     }
 
@@ -63,15 +63,16 @@ internal sealed class PetsWindow : Window
             : pets.Length + " familiers debloques  -  " +
               (pets.Any(p => p.IsActive) ? "1 invoque" : "aucun invoque");
 
-        var y = 8;
+        var y = 10;
         foreach (var pet in pets)
         {
+            // Every pet has an independent, compact card, including its own actions.
             var card = new Button(_scroll, "PetCard" + pet.PetId)
             {
                 Text = string.Empty,
                 MouseInputEnabled = false,
             };
-            card.SetBounds(8, y, 644, 312);
+            card.SetBounds(8, y, 644, 378);
             card.SetStateTexture(ComponentState.Normal, "control_button.png");
 
             var portrait = new ImagePanel(card, "PetSprite" + pet.PetId)
@@ -79,7 +80,7 @@ internal sealed class PetsWindow : Window
                 MaintainAspectRatio = true,
                 MouseInputEnabled = false,
             };
-            portrait.SetBounds(14, 16, 76, 76);
+            portrait.SetBounds(16, 16, 78, 78);
             if (!string.IsNullOrWhiteSpace(pet.Sprite))
             {
                 portrait.Texture = Globals.ContentManager.GetTexture(TextureType.Entity, pet.Sprite);
@@ -89,42 +90,49 @@ internal sealed class PetsWindow : Window
 
             var displayTitle = pet.Name +
                 (string.IsNullOrWhiteSpace(pet.SpeciesName) || pet.Name == pet.SpeciesName
-                    ? string.Empty : " (" + pet.SpeciesName + ")") +
-                (pet.IsActive ? "  [INVOQUE]" : string.Empty);
-            AddText(card, "PetName" + pet.PetId, displayTitle, 102, 14, 490, 30, 14, true);
-            AddText(card, "PetLevel" + pet.PetId,
-                "Niveau " + pet.Level + " / " + pet.MaximumLevel +
-                "     HP " + pet.Health + "/" + pet.MaximumHealth +
-                "     MP " + pet.Mana + "/" + pet.MaximumMana,
-                102, 47, 512, 23, 10);
+                    ? string.Empty : " (" + pet.SpeciesName + ")");
+            AddText(card, "PetName" + pet.PetId, displayTitle, 108, 13, 400, 26, 15, true,
+                new Color(a: 255, r: 255, g: 229, b: 177));
+            AddText(card, "PetStatus" + pet.PetId,
+                pet.IsActive ? "[ INVOQUE ]" : "[ RANGE ]", 510, 14, 118, 25, 10, true,
+                pet.IsActive ? new Color(a: 255, r: 112, g: 231, b: 135)
+                    : new Color(a: 255, r: 189, g: 177, b: 166));
+            AddText(card, "PetLevel" + pet.PetId, "Niveau " + pet.Level + " / " + pet.MaximumLevel,
+                108, 40, 290, 20, 11);
 
-            var cap = pet.ExperienceToNextLevel <= 0;
-            var ratio = cap ? 1.0 : Math.Clamp(
-                (double)pet.Experience / Math.Max(1L, pet.ExperienceToNextLevel), 0, 1);
-            AddText(card, "PetExp" + pet.PetId,
-                cap ? "EXP  MAX" : "EXP  " + pet.Experience + " / " + pet.ExperienceToNextLevel +
-                "  (" + (int)Math.Round(ratio * 100) + "%)",
-                102, 72, 502, 22, 10);
+            // Native progress bars share the game's skin and adapt to any pet values.
+            AddBar(card, "PetHp" + pet.PetId, "HP", pet.Health, pet.MaximumHealth, 108, 65, 245);
+            AddBar(card, "PetMp" + pet.PetId, "MP", pet.Mana, pet.MaximumMana, 366, 65, 245);
+            AddBar(card, "PetXp" + pet.PetId, "EXP", pet.Experience,
+                pet.ExperienceToNextLevel, 108, 108, 503);
 
+            AddText(card, "PetStatsTitle" + pet.PetId, "STATISTIQUES", 18, 154, 600, 22, 11,
+                true, new Color(a: 255, r: 235, g: 201, b: 151));
             var labels = new[] { "ATK", "DEF", "SPD", "MAG", "RES" };
             var stats = pet.Stats ?? [];
-            var statText = string.Join("     ", labels.Select((label, index) =>
-                label + " " + (index < stats.Length ? stats[index] : 0)));
-            AddText(card, "PetStats" + pet.PetId, statText, 18, 105, 610, 24, 10);
-            AddText(card, "PetAbilities" + pet.PetId, "SORTS", 18, 137, 610, 21, 11, true);
+            for (var i = 0; i < labels.Length; i++)
+            {
+                var value = i < stats.Length ? stats[i] : 0;
+                AddText(card, "PetStat" + i + pet.PetId, labels[i] + "   " + value,
+                    18 + i * 123, 180, 118, 26, 11, true);
+            }
 
+            AddText(card, "PetAbilities" + pet.PetId, "SORTS", 18, 215, 600, 22, 11, true,
+                new Color(a: 255, r: 235, g: 201, b: 151));
             var abilities = pet.Abilities ?? [];
             var abilityText = abilities.Length == 0 ? "Aucun sort configure" :
-                string.Join("  |  ", abilities.Take(5).Select(s =>
-                    s.Name + (pet.Level >= s.RequiredLevel ? "" : " [niv. " + s.RequiredLevel + "]")));
-            AddText(card, "PetAbilityNames" + pet.PetId, abilityText, 18, 160, 608, 25, 9);
+                string.Join("  |  ", abilities.Take(5).Select(spell =>
+                    spell.Name + (pet.Level >= spell.RequiredLevel ? "" :
+                        " [niv. " + spell.RequiredLevel + "]")));
+            AddText(card, "PetAbilityNames" + pet.PetId, abilityText, 18, 239, 610, 26, 10);
+
             AddText(card, "PetLootStatus" + pet.PetId,
-                "Auto-loot: " + (pet.AutoLoot ? "ON" : "OFF") +
-                "     Rayon : " + pet.LootRadius + " cases",
-                18, 190, 410, 23, 10);
+                "RAMASSAGE AUTO : " + (pet.AutoLoot ? "ACTIF" : "INACTIF") +
+                "      Rayon : " + pet.LootRadius + " cases",
+                18, 268, 610, 22, 10, true,
+                pet.AutoLoot ? new Color(a: 255, r: 147, g: 225, b: 161) : Color.White);
 
-            AddText(card, "PetRenameLabel" + pet.PetId, "Nom :", 18, 225, 54, 25, 10);
-
+            AddText(card, "PetRenameLabel" + pet.PetId, "Nom :", 18, 301, 53, 25, 10);
             var nameInput = new TextBox(card, "PetNameInput" + pet.PetId)
             {
                 Text = pet.Name,
@@ -134,7 +142,7 @@ internal sealed class PetsWindow : Window
                 TextColorOverride = Color.White,
                 TextAlign = Pos.Left | Pos.CenterV,
             };
-            nameInput.SetBounds(76, 218, 280, 30);
+            nameInput.SetBounds(70, 295, 316, 30);
             nameInput.SetMaxLength(24);
 
             void SubmitName() => Networking.PacketSender.SendPetAction(
@@ -147,7 +155,7 @@ internal sealed class PetsWindow : Window
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
                 FontSize = 10,
             };
-            rename.SetBounds(375, 218, 160, 30);
+            rename.SetBounds(400, 295, 226, 30);
             rename.Clicked += (_, _) => SubmitName();
 
             var summon = new Button(card, "PetSummon" + pet.PetId)
@@ -156,29 +164,48 @@ internal sealed class PetsWindow : Window
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
                 FontSize = 10,
             };
-            summon.SetBounds(18, 262, 170, 32);
+            summon.SetBounds(18, 334, 296, 31);
             summon.Clicked += (_, _) => Networking.PacketSender.SendPetAction(
                 pet.IsActive ? PetActionKind.Dismiss : PetActionKind.Summon, pet.PetId);
 
             var loot = new Button(card, "PetLoot" + pet.PetId)
             {
-                Text = pet.AutoLoot ? "Loot: ON" : "Loot: OFF",
+                Text = pet.AutoLoot ? "Desactiver l'auto-loot" : "Activer l'auto-loot",
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
                 FontSize = 10,
                 IsDisabled = !pet.IsActive,
             };
-            loot.SetBounds(202, 262, 170, 32);
+            loot.SetBounds(330, 334, 296, 31);
             loot.Clicked += (_, _) => Networking.PacketSender.SendPetAction(
                 PetActionKind.ToggleAutoLoot, pet.PetId);
 
-            y += 324;
+            y += 392;
         }
-        _scroll.SetInnerSize(661, Math.Max(450, y + 10));
+        _scroll.SetInnerSize(661, Math.Max(400, y + 10));
         _scroll.UpdateScrollBars();
     }
 
-    private void AddText(Base parent, string id, string value, int x, int y,
-        int width, int height, int fontSize, bool heading = false)
+    private void AddBar(Base parent, string id, string title, long current, long maximum,
+        int x, int y, int width)
+    {
+        var capped = maximum <= 0;
+        var ratio = capped ? 0f : (float)Math.Clamp((double)current / maximum, 0d, 1d);
+        var value = capped ? (maximum == 0 ? current + " / 0" : "MAX")
+            : current + " / " + maximum;
+        AddText(parent, id + "Label", title + "  " + value, x, y, width, 18, 10);
+        var bar = new ProgressBar(parent)
+        {
+            AutoLabel = false,
+            Value = ratio,
+            Text = capped && maximum < 0 ? "MAX" : (int)Math.Round(ratio * 100) + "%",
+            FontSize = 9,
+            MouseInputEnabled = false,
+        };
+        bar.SetBounds(x, y + 19, width, 16);
+    }
+
+    private Label AddText(Base parent, string id, string value, int x, int y,
+        int width, int height, int fontSize, bool heading = false, Color? color = null)
     {
         var label = new Label(parent, id)
         {
@@ -186,10 +213,11 @@ internal sealed class PetsWindow : Window
             Font = GameContentManager.Current.GetFont(
                 heading ? "sourcesansproblack" : "sourcesanspro") ?? Skin.DefaultFont,
             FontSize = fontSize,
-            TextColorOverride = Color.White,
+            TextColorOverride = color ?? Color.White,
             Text = value,
             MouseInputEnabled = false,
         };
         label.SetBounds(x, y, width, height);
+        return label;
     }
 }
