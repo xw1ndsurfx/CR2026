@@ -2,6 +2,7 @@ using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Editor;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Achievements;
+using Intersect.Server.Entities;
 
 namespace Intersect.Server.Networking;
 
@@ -46,10 +47,29 @@ internal sealed partial class PacketHandler
 
     public void HandlePacket(Client client, RequestAchievementStatePacket packet)
     {
-        if (client.Entity is not { } player)
+        if (client.Entity is not { InGame: true } player)
             return;
 
-        AchievementRuntime.SendState(player, packet.OpenWindow);
+        if (packet.PlayerId == Guid.Empty || packet.PlayerId == player.Id)
+        {
+            AchievementRuntime.SendState(player, packet.OpenWindow);
+            return;
+        }
+
+        // Inspection never claims a reward or modifies the observer's state.
+        // Only online characters can be inspected, as with PlayerProfile.
+        var observed = Player.FindOnline(packet.PlayerId);
+        if (observed is not { InGame: true })
+            return;
+
+        client.Send(new AchievementStatePacket(
+            AchievementConfigurationRuntime.Json,
+            AchievementRuntime.BuildState(observed),
+            openWindow: packet.OpenWindow)
+        {
+            InspectedPlayerId = observed.Id,
+            InspectedPlayerName = observed.Name,
+        });
     }
 
     public void HandlePacket(Client client, ClaimAchievementRewardPacket packet)
