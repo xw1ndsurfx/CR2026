@@ -135,12 +135,12 @@ partial class FriendsWindow
         ClearList();
 
         var friends = Globals.Me?.Friends;
-        var online = friends == null
+        Intersect.Client.Entities.FriendInstance[] online = friends == null
             ? []
             : friends.Where(friend => friend is { Online: true })
                 .OrderBy(friend => friend.Name, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
-        var offline = friends == null
+        Intersect.Client.Entities.FriendInstance[] offline = friends == null
             ? []
             : friends.Where(friend => friend is { Online: false })
                 .OrderBy(friend => friend.Name, StringComparer.OrdinalIgnoreCase)
