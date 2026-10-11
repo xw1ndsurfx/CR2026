@@ -236,7 +236,7 @@ public partial class Player
                     (parts[1].Equals("on", StringComparison.OrdinalIgnoreCase) ||
                      parts[1].Equals("off", StringComparison.OrdinalIgnoreCase)))
                     progress.AutoLoot = parts[1].Equals("on", StringComparison.OrdinalIgnoreCase);
-                PetNotice( "Auto-loot: " + (progress.AutoLoot ? "ON" : "OFF"));
+                PetNotice("Auto-loot: " + (progress.AutoLoot ? "ON" : "OFF"));
                 break;
             case "list":
                 var names = PetCollection.OwnedPets.Keys.Select(NPCDescriptor.Get)
@@ -252,7 +252,7 @@ public partial class Player
                     break;
                 }
                 var current = NPCDescriptor.Get(PetCollection.ActivePetId);
-                PetNotice((current != null ? GetPetDisplayName(current) :  "Pet") + " - Lv. " + state.Level +
+                PetNotice((current != null ? GetPetDisplayName(current) : "Pet") + " - Lv. " + state.Level +
                     " EXP " + state.Experience + "/" + state.ExperienceToNextLevel +
                     " Loot " + (state.AutoLoot ? "ON" : "OFF"));
                 break;
