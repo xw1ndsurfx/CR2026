@@ -302,39 +302,69 @@ internal sealed class LogiCoinShopWindow : Window
             var imageFrame = new ShopChrome(this, "OfferImageFrame", ChromeStyle.Portrait);
             imageFrame.SetBounds(11, 13, 88, 88);
 
-            var image = new ImagePanel(this, "Image")
+            // Show the contents of a bundle, not just its first item.
+            // Scale the grid to the actual item count so each icon is represented.
+            if (offer.Type == LogiCoinOfferType.Bundle && offer.Bundle is { Length: > 0 })
             {
-                MaintainAspectRatio = true,
-                ShouldDrawBackground = false,
-            };
-            image.MouseInputEnabled = false;
-            image.SetBounds(20, 22, 70, 70);
+                var entries = offer.Bundle;
+                var columns = (int)Math.Ceiling(Math.Sqrt(entries.Length));
+                var rows = (int)Math.Ceiling(entries.Length / (double)columns);
+                var tile = Math.Max(1, Math.Min(70 / columns, 70 / rows));
+                var gridWidth = columns * tile;
+                var gridHeight = rows * tile;
+                var gridX = 20 + (70 - gridWidth) / 2;
+                var gridY = 22 + (70 - gridHeight) / 2;
 
-            if (!string.IsNullOrWhiteSpace(offer.Image))
-            {
-                image.Texture = GameContentManager.Current.GetTexture(TextureType.Image, offer.Image);
-                image.RenderColor = Color.White;
+                for (var i = 0; i < entries.Length; i++)
+                {
+                    var item = Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(entries[i].ItemId);
+                    if (item == null || string.IsNullOrWhiteSpace(item.Icon))
+                        continue;
+
+                    var texture = GameContentManager.Current.GetTexture(TextureType.Item, item.Icon);
+                    if (texture == null)
+                        continue;
+
+                    var icon = new ImagePanel(this, "BundleItem" + i)
+                    {
+                        MaintainAspectRatio = true,
+                        ShouldDrawBackground = false,
+                        MouseInputEnabled = false,
+                        Texture = texture,
+                        RenderColor = item.Color,
+                    };
+                    icon.SetBounds(gridX + (i % columns) * tile,
+                        gridY + (i / columns) * tile, tile, tile);
+                }
             }
             else
             {
-                Guid fallbackItemId = Guid.Empty;
-                if (offer.Type == LogiCoinOfferType.Item)
+                var image = new ImagePanel(this, "Image")
                 {
-                    fallbackItemId = offer.ItemId;
+                    MaintainAspectRatio = true,
+                    ShouldDrawBackground = false,
+                    MouseInputEnabled = false,
+                };
+                image.SetBounds(20, 22, 70, 70);
+
+                if (!string.IsNullOrWhiteSpace(offer.Image))
+                {
+                    image.Texture = GameContentManager.Current.GetTexture(TextureType.Image, offer.Image);
+                    image.RenderColor = Color.White;
                 }
-                else if (offer.Type == LogiCoinOfferType.Bundle && offer.Bundle is { Length: > 0 })
+                if (image.Texture == null && offer.Type == LogiCoinOfferType.Item)
                 {
-                    fallbackItemId = offer.Bundle[0].ItemId;
+                    var item = Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(offer.ItemId);
+                    if (item != null && !string.IsNullOrWhiteSpace(item.Icon))
+                    {
+                        image.Texture = GameContentManager.Current.GetTexture(TextureType.Item, item.Icon);
+                        image.RenderColor = item.Color;
+                    }
                 }
 
-                var item = fallbackItemId == Guid.Empty
-                    ? null
-                    : Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(fallbackItemId);
-                if (item != null && !string.IsNullOrWhiteSpace(item.Icon))
-                {
-                    image.Texture = GameContentManager.Current.GetTexture(TextureType.Item, item.Icon);
-                    image.RenderColor = item.Color;
-                }
+                // A missing asset must not render a broken/unknown placeholder.
+                if (image.Texture == null)
+                    image.Hide();
             }
 
             var title = new Label(this, "Title")
@@ -347,15 +377,30 @@ internal sealed class LogiCoinShopWindow : Window
             };
             title.SetBounds(113, 12, 328, 27);
 
+            // Separate the merchant description from the actual reward contents.
+            // Keep long bundle summaries in their own lines rather than crowding the price.
             var description = new Label(this, "Description")
             {
                 AutoSizeToContents = false,
                 Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
                 FontSize = 9,
-                TextColorOverride = new Color(a:255,r:200,g:205,b:210),
-                Text = OfferDescription(offer),
+                TextColorOverride = Muted,
+                Text = string.IsNullOrWhiteSpace(offer.Description)
+                    ? OfferTypeCaption(offer) : offer.Description.Trim(),
+                MouseInputEnabled = false,
             };
-            description.SetBounds(113, 43, 327, 78);
+            description.SetBounds(113, 46, 329, 34);
+
+            var contents = new Label(this, "Contents")
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 9,
+                TextColorOverride = Cream,
+                Text = OfferContents(offer),
+                MouseInputEnabled = false,
+            };
+            contents.SetBounds(113, 83, 329, 42);
 
             var effective = offer.EffectivePrice(now);
             var priceText = effective == offer.PriceLogiCoins
@@ -394,31 +439,33 @@ internal sealed class LogiCoinShopWindow : Window
             };
         }
 
-        private static string OfferDescription(LogiCoinShopOffer offer)
-        {
-            var reward = offer.Type switch
+        private static string OfferTypeCaption(LogiCoinShopOffer offer) =>
+            offer.Type switch
             {
-                LogiCoinOfferType.Item =>
-                    $"{offer.ItemQuantity:N0} x {Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.GetName(offer.ItemId)}",
-                LogiCoinOfferType.Bundle =>
-                    string.Join(
-                        ", ",
-                        (offer.Bundle ?? []).Take(4).Select(entry =>
-                            $"{entry.Quantity:N0}x {Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.GetName(entry.ItemId)}"
-                        )
-                    ) + ((offer.Bundle?.Length ?? 0) > 4 ? "..." : string.Empty),
-                LogiCoinOfferType.Premium =>
-                    $"{offer.PremiumDays} days Premium",
+                LogiCoinOfferType.Item => "ITEM",
+                LogiCoinOfferType.Bundle => "BUNDLE",
+                LogiCoinOfferType.Premium => "PREMIUM",
                 _ => string.Empty,
             };
 
-            var promotion = offer.IsPromotionActive(DateTimeOffset.UtcNow) && offer.PromotionEndsAtUtc is { } ends
-                ? $"\nPromo until {ends.ToLocalTime():yyyy-MM-dd HH:mm}"
-                : string.Empty;
-
-            return (string.IsNullOrWhiteSpace(offer.Description)
-                ? reward
-                : $"{offer.Description}\n{reward}") + promotion;
+        private static string OfferContents(LogiCoinShopOffer offer)
+        {
+            switch (offer.Type)
+            {
+                case LogiCoinOfferType.Item:
+                    return $"{offer.ItemQuantity:N0}x " +
+                        Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.GetName(offer.ItemId);
+                case LogiCoinOfferType.Premium:
+                    return $"{offer.PremiumDays} days Premium";
+                case LogiCoinOfferType.Bundle:
+                    // Every bundle entry is listed, even when there are too many
+                    // icons to show at a readable size in the preview grid.
+                    return string.Join(", ", (offer.Bundle ?? []).Select(entry =>
+                        $"{entry.Quantity:N0}x " +
+                        Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.GetName(entry.ItemId)));
+                default:
+                    return string.Empty;
+            }
         }
     }
 }
