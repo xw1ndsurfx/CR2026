@@ -1543,6 +1543,24 @@ internal sealed partial class PacketHandler
     {
         if (Globals.Me != null)
         {
+            // Reuse the damage number animation for experience earned by the local player.
+            // Experience packets contain the confirmed total for the current level, so
+            // only show positive changes (never a login sync or an XP decrease).
+            var gainedExperience = packet.Experience - Globals.Me.Experience;
+            if (gainedExperience > 0 && Globals.Me.ExperienceToNextLevel > 0)
+            {
+                var map = MapInstance.Get(Globals.Me.MapId);
+                if (map != null)
+                {
+                    map.ActionMessages.Add(
+                        new ActionMessage(
+                            map, Globals.Me.X, Globals.Me.Y,
+                            $"+{gainedExperience:N0} EXP", new Color(255, 255, 215, 0)
+                        )
+                    );
+                }
+            }
+
             Globals.Me.Experience = packet.Experience;
             Globals.Me.ExperienceToNextLevel = packet.ExperienceToNextLevel;
         }
