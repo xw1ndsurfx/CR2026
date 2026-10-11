@@ -72,6 +72,9 @@ public partial class CharacterWindow
     //Extra Buffs
     Button _detailsButton;
 
+    private WindowControl _detailsWindow;
+    private ScrollControl _detailsScroll;
+
     Button _achievementsButton;
 
     Button _petsButton;
@@ -161,10 +164,23 @@ public partial class CharacterWindow
         {
             Text = Strings.Character.ExtraBuffDetails,
         };
-        _detailsButton.HoverEnter += UpdateExtraBuffTooltip; // Update Tooltip on hover.
-        UpdateExtraBuffTooltip(null, null); // Initial tooltip update.
+        // Details now opens a dedicated, scrollable RPG panel rather than a tooltip.
+        _detailsButton.Clicked += (_, _) => OpenDetails();
 
         mCharacterWindow.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
+
+        _detailsWindow = new WindowControl(gameCanvas, "Character Details", false, "CharacterDetailsWindow");
+        _detailsWindow.SetSize(650, 530);
+        _detailsWindow.DisableResizing();
+        _detailsWindow.Alignment = [Alignments.Center];
+        _detailsScroll = new ScrollControl(_detailsWindow, "CharacterDetailsScroll")
+        {
+            OverflowX = OverflowBehavior.Hidden,
+            OverflowY = OverflowBehavior.Scroll,
+            AutoHideBars = true,
+        };
+        _detailsScroll.SetBounds(20, 48, 610, 445);
+        _detailsWindow.IsHidden = true;
 
         // Create Achievements after JSON layout is loaded. This prevents legacy
         // CharacterWindow JSON/font data from leaving the dynamically-added button
@@ -532,57 +548,136 @@ public partial class CharacterWindow
         // Update extra buffs from equipped items
         UpdateEquippedItems(true);
 
-        // Update tooltip with the current extra buffs
-        var tooltip = new System.Text.StringBuilder();
-        tooltip.AppendLine(Strings.Character.HealthRegen.ToString(HpRegenAmount));
-        tooltip.AppendLine(Strings.Character.ManaRegen.ToString(ManaRegenAmount));
-        tooltip.AppendLine(Strings.Character.Lifesteal.ToString(LifeStealAmount));
-        tooltip.AppendLine(Strings.Character.AttackSpeed.ToString(Globals.Me?.CalculateAttackTime() / 1000f));
-        tooltip.AppendLine(Strings.Character.ExtraExp.ToString(ExtraExpAmount));
-        tooltip.AppendLine(Strings.Character.Luck.ToString(LuckAmount));
-        tooltip.AppendLine(Strings.Character.Tenacity.ToString(TenacityAmount));
-        tooltip.AppendLine(Strings.Character.CooldownReduction.ToString(CooldownAmount));
-        tooltip.AppendLine(Strings.Character.Manasteal.ToString(ManaStealAmount));
+        // No hover tooltip: details are presented in the dedicated window.
+    }
 
-        tooltip.AppendLine();
-        tooltip.AppendLine("Professions");
+    private void OpenDetails()
+    {
+        RefreshDetails();
+        _detailsWindow.IsHidden = false;
+        _detailsWindow.BringToFront();
+        if (Globals.Me != null)
+            PacketSender.SendRequestPlayerProfile(Globals.Me.Id, openWindow: false);
+    }
+
+    private void RefreshDetails()
+    {
+        UpdateExtraBuffTooltip(null, null);
+        _detailsScroll.DeleteAll();
+        var y = 8;
+
+        void Heading(string title)
+        {
+            var section = new Label(_detailsScroll, "DetailsSection" + y)
+            {
+                Text = title.ToUpperInvariant(),
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? _detailsButton.Font,
+                FontSize = 13,
+                TextColorOverride = new Color(a: 255, r: 224, g: 190, b: 113),
+                MouseInputEnabled = false,
+            };
+            section.SetBounds(16, y, 560, 29);
+            y += 32;
+        }
+
+        void Row(string caption, string value)
+        {
+            var background = new DetailsRow(_detailsScroll, "DetailsRow" + y);
+            background.SetBounds(12, y, 555, 33);
+            var name = new Label(_detailsScroll, "DetailsName" + y)
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? _detailsButton.Font,
+                FontSize = 11,
+                Text = caption,
+                TextColorOverride = new Color(a: 255, r: 246, g: 229, b: 202),
+                MouseInputEnabled = false,
+                TextAlign = Pos.Left | Pos.CenterV,
+            };
+            name.SetBounds(24, y, 334, 31);
+            var stat = new Label(_detailsScroll, "DetailsValue" + y)
+            {
+                AutoSizeToContents = false,
+                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? _detailsButton.Font,
+                FontSize = 11,
+                Text = value,
+                TextColorOverride = new Color(a: 255, r: 224, g: 190, b: 113),
+                MouseInputEnabled = false,
+                TextAlign = Pos.Right | Pos.CenterV,
+            };
+            stat.SetBounds(363, y, 188, 31);
+            y += 37;
+        }
+
+        Heading("Regeneration");
+        Row("Health Regen", $"{HpRegenAmount}%");
+        Row("Mana Regen", $"{ManaRegenAmount}%");
+        Row("Lifesteal", $"{LifeStealAmount}%");
+        Row("Manasteal", $"{ManaStealAmount}%");
+
+        y += 10;
+        Heading("Combat Bonuses");
+        Row("Attack Speed", $"{Globals.Me?.CalculateAttackTime() / 1000f:0.###}s");
+        Row("Bonus EXP", $"{ExtraExpAmount}%");
+        Row("Luck", $"{LuckAmount}%");
+        Row("Tenacity", $"{TenacityAmount}%");
+        Row("Cooldown Reduction", $"{CooldownAmount}%");
+
+        y += 10;
+        Heading("Professions");
         if (_professionDetails.Length == 0)
         {
-            tooltip.AppendLine("No professions learned.");
+            Row("Professions", "None learned");
         }
         else
         {
             foreach (var profession in _professionDetails.OrderBy(entry => entry.Name))
             {
-                var next = profession.ExperienceToNextLevel < 0
-                    ? "MAX"
-                    : $"{profession.ExperienceToNextLevel:N0} XP to next";
-                tooltip.AppendLine(
-                    $"{profession.Name}: Lv {profession.Level}/{profession.MaximumLevel} • {next}"
-                );
-
-                if (profession.LocksPicked > 0 ||
-                    profession.PerfectPicks > 0 ||
-                    profession.PicksBroken > 0 ||
-                    profession.HighestLockDifficulty > 0)
+                Row(profession.Name,
+                    $"Lv {profession.Level}/{profession.MaximumLevel}");
+                Row("Experience to next",
+                    profession.ExperienceToNextLevel < 0 ? "MAX" :
+                        $"{profession.ExperienceToNextLevel:N0} XP");
+                if (profession.LocksPicked > 0 || profession.PerfectPicks > 0 ||
+                    profession.PicksBroken > 0 || profession.HighestLockDifficulty > 0)
                 {
-                    var fastest = profession.FastestLockpickMilliseconds > 0
-                        ? $"{profession.FastestLockpickMilliseconds / 1000d:0.00}s"
-                        : "-";
-                    var fastestD5 = profession.FastestDifficultyFiveLockpickMilliseconds > 0
-                        ? $"{profession.FastestDifficultyFiveLockpickMilliseconds / 1000d:0.00}s"
-                        : "-";
-                    tooltip.AppendLine(
-                        $"  Locksmith: {profession.LocksPicked:N0} locks • " +
-                        $"{profession.PerfectPicks:N0} perfect • " +
-                        $"{profession.PicksBroken:N0} broken • " +
-                        $"D{profession.HighestLockDifficulty} max • best {fastest} • D5 best {fastestD5}"
-                    );
+                    Row("Locks picked", $"{profession.LocksPicked:N0}");
+                    Row("Perfect / broken",
+                        $"{profession.PerfectPicks:N0} / {profession.PicksBroken:N0}");
+                    Row("Highest difficulty", $"D{profession.HighestLockDifficulty}");
+                    Row("Fastest lockpick",
+                        profession.FastestLockpickMilliseconds > 0
+                            ? $"{profession.FastestLockpickMilliseconds / 1000d:0.00}s" : "-");
+                    Row("Fastest D5",
+                        profession.FastestDifficultyFiveLockpickMilliseconds > 0
+                            ? $"{profession.FastestDifficultyFiveLockpickMilliseconds / 1000d:0.00}s" : "-");
                 }
+                y += 8;
             }
         }
 
-        _detailsButton.SetToolTipText(tooltip.ToString());
+        _detailsScroll.SetInnerSize(580, Math.Max(430, y + 14));
+        _detailsScroll.UpdateScrollBars();
+    }
+
+    private sealed class DetailsRow : Base
+    {
+        public DetailsRow(Base parent, string name) : base(parent, name)
+        {
+            MouseInputEnabled = false;
+        }
+
+        protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
+        {
+            var rect = RenderBounds;
+            skin.Renderer.DrawColor = new Color(a: 255, r: 56, g: 35, b: 28);
+            skin.Renderer.DrawFilledRect(rect);
+            skin.Renderer.DrawColor = new Color(a: 255, r: 109, g: 70, b: 43);
+            skin.Renderer.DrawFilledRect(
+                new Intersect.Client.Framework.GenericClasses.Rectangle(
+                    rect.X, rect.Bottom - 1, rect.Width, 1));
+        }
     }
 
     public void ApplyPlayerProfile(PlayerProfilePacket packet)
@@ -591,7 +686,8 @@ public partial class CharacterWindow
             return;
 
         _professionDetails = packet.Professions ?? [];
-        UpdateExtraBuffTooltip(null, null);
+        if (!_detailsWindow.IsHidden)
+            RefreshDetails();
     }
 
     /// <summary>
