@@ -6,11 +6,16 @@ using Intersect.Client.General;
 using Intersect.Enums;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
+using UiRectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
+using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 
 namespace Intersect.Client.Interface.Game;
 
 internal sealed class PetsWindow : Window
 {
+    private static readonly Color Gold = new(a: 255, r: 224, g: 190, b: 113);
+    private static readonly Color Cream = new(a: 255, r: 246, g: 229, b: 202);
+    private static readonly Color Muted = new(a: 255, r: 193, g: 180, b: 161);
     private readonly Label _summary;
     private readonly ScrollControl _scroll;
 
@@ -21,16 +26,19 @@ internal sealed class PetsWindow : Window
         DeleteOnClose = false;
         DisableResizing();
 
+        var frame = new PetChrome(this, "PetsWindowFrame", PetChromeStyle.Window);
+        frame.SetBounds(14, 30, 707, 500);
+
         var title = new Label(this, "PetsTitle")
         {
             AutoSizeToContents = false,
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-            FontSize = 21,
+            FontSize = 17,
             TextAlign = Pos.Center,
             TextColorOverride = new Color(a: 255, r: 236, g: 210, b: 153),
             Text = "FAMILIERS",
         };
-        title.SetBounds(20, 28, 695, 34);
+        title.SetBounds(20, 39, 695, 32);
 
         _summary = new Label(this, "PetsSummary")
         {
@@ -40,7 +48,8 @@ internal sealed class PetsWindow : Window
             TextAlign = Pos.Center,
             TextColorOverride = Color.White,
         };
-        _summary.SetBounds(20, 65, 695, 25);
+        _summary.SetBounds(20, 74, 695, 23);
+        _summary.TextColorOverride = Muted;
 
         _scroll = new ScrollControl(this, "PetsScroll")
         {
@@ -48,7 +57,7 @@ internal sealed class PetsWindow : Window
             OverflowY = OverflowBehavior.Scroll,
             AutoHideBars = true,
         };
-        _scroll.SetBounds(24, 100, 687, 412);
+        _scroll.SetBounds(31, 108, 673, 403);
         Hide();
     }
 
@@ -67,20 +76,28 @@ internal sealed class PetsWindow : Window
         foreach (var pet in pets)
         {
             // Every pet has an independent, compact card, including its own actions.
-            var card = new Button(_scroll, "PetCard" + pet.PetId)
+            var card = new Base(_scroll, "PetCard" + pet.PetId)
             {
-                Text = string.Empty,
                 MouseInputEnabled = false,
             };
-            card.SetBounds(8, y, 644, 378);
-            card.SetStateTexture(ComponentState.Normal, "control_button.png");
+            card.SetBounds(5, y, 644, 378);
+            var cardFrame = new PetChrome(card, "PetCardFrame" + pet.PetId, PetChromeStyle.Card);
+            cardFrame.SetBounds(0, 0, 644, 378);
+            var portraitFrame = new PetChrome(card, "PetPortraitFrame" + pet.PetId, PetChromeStyle.Portrait);
+            portraitFrame.SetBounds(13, 12, 85, 85);
+            var statsFrame = new PetChrome(card, "PetStatsFrame" + pet.PetId, PetChromeStyle.Section);
+            statsFrame.SetBounds(12, 150, 620, 60);
+            var abilitiesFrame = new PetChrome(card, "PetAbilitiesFrame" + pet.PetId, PetChromeStyle.Section);
+            abilitiesFrame.SetBounds(12, 215, 620, 53);
+            var optionsFrame = new PetChrome(card, "PetOptionsFrame" + pet.PetId, PetChromeStyle.Section);
+            optionsFrame.SetBounds(12, 272, 620, 25);
 
             var portrait = new ImagePanel(card, "PetSprite" + pet.PetId)
             {
                 MaintainAspectRatio = true,
                 MouseInputEnabled = false,
             };
-            portrait.SetBounds(16, 16, 78, 78);
+            portrait.SetBounds(18, 17, 76, 76);
             if (!string.IsNullOrWhiteSpace(pet.Sprite))
             {
                 portrait.Texture = Globals.ContentManager.GetTexture(TextureType.Entity, pet.Sprite);
@@ -91,7 +108,7 @@ internal sealed class PetsWindow : Window
             var displayTitle = pet.Name +
                 (string.IsNullOrWhiteSpace(pet.SpeciesName) || pet.Name == pet.SpeciesName
                     ? string.Empty : " (" + pet.SpeciesName + ")");
-            AddText(card, "PetName" + pet.PetId, displayTitle, 108, 13, 400, 26, 15, true,
+            AddText(card, "PetName" + pet.PetId, displayTitle, 108, 13, 400, 26, 14, true,
                 new Color(a: 255, r: 255, g: 229, b: 177));
             AddText(card, "PetStatus" + pet.PetId,
                 pet.IsActive ? "[ INVOQUE ]" : "[ RANGE ]", 510, 14, 118, 25, 10, true,
@@ -106,7 +123,7 @@ internal sealed class PetsWindow : Window
             AddBar(card, "PetXp" + pet.PetId, "EXP", pet.Experience,
                 pet.ExperienceToNextLevel, 108, 108, 503);
 
-            AddText(card, "PetStatsTitle" + pet.PetId, "STATISTIQUES", 18, 154, 600, 22, 11,
+            AddText(card, "PetStatsTitle" + pet.PetId, "STATISTIQUES", 22, 151, 600, 22, 11,
                 true, new Color(a: 255, r: 235, g: 201, b: 151));
             var labels = new[] { "ATK", "DEF", "SPD", "MAG", "RES" };
             var stats = pet.Stats ?? [];
@@ -114,22 +131,22 @@ internal sealed class PetsWindow : Window
             {
                 var value = i < stats.Length ? stats[i] : 0;
                 AddText(card, "PetStat" + i + pet.PetId, labels[i] + "   " + value,
-                    18 + i * 123, 180, 118, 26, 11, true);
+                    22 + i * 122, 179, 110, 24, 10, true);
             }
 
-            AddText(card, "PetAbilities" + pet.PetId, "SORTS", 18, 215, 600, 22, 11, true,
+            AddText(card, "PetAbilities" + pet.PetId, "SORTS", 22, 217, 600, 19, 11, true,
                 new Color(a: 255, r: 235, g: 201, b: 151));
             var abilities = pet.Abilities ?? [];
             var abilityText = abilities.Length == 0 ? "Aucun sort configure" :
                 string.Join("  |  ", abilities.Take(5).Select(spell =>
                     spell.Name + (pet.Level >= spell.RequiredLevel ? "" :
                         " [niv. " + spell.RequiredLevel + "]")));
-            AddText(card, "PetAbilityNames" + pet.PetId, abilityText, 18, 239, 610, 26, 10);
+            AddText(card, "PetAbilityNames" + pet.PetId, abilityText, 22, 241, 602, 22, 10);
 
             AddText(card, "PetLootStatus" + pet.PetId,
                 "RAMASSAGE AUTO : " + (pet.AutoLoot ? "ACTIF" : "INACTIF") +
                 "      Rayon : " + pet.LootRadius + " cases",
-                18, 268, 610, 22, 10, true,
+                22, 274, 602, 20, 10, true,
                 pet.AutoLoot ? new Color(a: 255, r: 147, g: 225, b: 161) : Color.White);
 
             AddText(card, "PetRenameLabel" + pet.PetId, "Nom :", 18, 301, 53, 25, 10);
@@ -142,7 +159,7 @@ internal sealed class PetsWindow : Window
                 TextColorOverride = Color.White,
                 TextAlign = Pos.Left | Pos.CenterV,
             };
-            nameInput.SetBounds(70, 295, 316, 30);
+            nameInput.SetBounds(70, 299, 316, 29);
             nameInput.SetMaxLength(24);
 
             void SubmitName() => Networking.PacketSender.SendPetAction(
@@ -155,7 +172,8 @@ internal sealed class PetsWindow : Window
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
                 FontSize = 10,
             };
-            rename.SetBounds(400, 295, 226, 30);
+            rename.SetBounds(400, 299, 226, 29);
+            StyleButton(rename, "PetRenameStyle" + pet.PetId, "RENOMMER", 226, 29, false);
             rename.Clicked += (_, _) => SubmitName();
 
             var summon = new Button(card, "PetSummon" + pet.PetId)
@@ -164,7 +182,9 @@ internal sealed class PetsWindow : Window
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
                 FontSize = 10,
             };
-            summon.SetBounds(18, 334, 296, 31);
+            summon.SetBounds(18, 337, 296, 32);
+            StyleButton(summon, "PetSummonStyle" + pet.PetId,
+                pet.IsActive ? "RANGER" : "INVOQUER", 296, 32, !pet.IsActive);
             summon.Clicked += (_, _) => Networking.PacketSender.SendPetAction(
                 pet.IsActive ? PetActionKind.Dismiss : PetActionKind.Summon, pet.PetId);
 
@@ -175,7 +195,10 @@ internal sealed class PetsWindow : Window
                 FontSize = 10,
                 IsDisabled = !pet.IsActive,
             };
-            loot.SetBounds(330, 334, 296, 31);
+            loot.SetBounds(330, 337, 296, 32);
+            StyleButton(loot, "PetLootStyle" + pet.PetId,
+                pet.AutoLoot ? "DESACTIVER AUTO-LOOT" : "ACTIVER AUTO-LOOT",
+                296, 32, pet.IsActive && !pet.AutoLoot);
             loot.Clicked += (_, _) => Networking.PacketSender.SendPetAction(
                 PetActionKind.ToggleAutoLoot, pet.PetId);
 
@@ -185,23 +208,47 @@ internal sealed class PetsWindow : Window
         _scroll.UpdateScrollBars();
     }
 
+    private static void StyleButton(Button button, string id, string caption,
+        int width, int height, bool primary)
+    {
+        button.Text = string.Empty;
+        var frame = new PetChrome(button, id,
+            primary ? PetChromeStyle.PrimaryButton : PetChromeStyle.SecondaryButton);
+        frame.SetBounds(0, 0, width, height);
+        var label = new Label(button, id + "Text")
+        {
+            AutoSizeToContents = false,
+            FontSize = 10,
+            TextAlign = Pos.Center,
+            TextColorOverride = Cream,
+            Text = caption,
+            MouseInputEnabled = false,
+        };
+        label.SetBounds(6, 2, width - 12, height - 4);
+    }
+
     private void AddBar(Base parent, string id, string title, long current, long maximum,
         int x, int y, int width)
     {
-        var capped = maximum <= 0;
-        var ratio = capped ? 0f : (float)Math.Clamp((double)current / maximum, 0d, 1d);
-        var value = capped ? (maximum == 0 ? current + " / 0" : "MAX")
-            : current + " / " + maximum;
-        AddText(parent, id + "Label", title + "  " + value, x, y, width, 18, 10);
-        var bar = new ProgressBar(parent)
+        var capped = maximum < 0;
+        var ratio = capped ? 1f : maximum == 0 ? 0f :
+            (float)Math.Clamp((double)current / maximum, 0d, 1d);
+        var value = capped ? "MAX" : current + " / " + maximum;
+        AddText(parent, id + "Label", title + "  " + value,
+            x, y, width, 18, 10, true, Gold);
+        var fillColor = title == "HP"
+            ? new Color(a: 255, r: 167, g: 66, b: 63)
+            : title == "MP" ? new Color(a: 255, r: 71, g: 116, b: 189)
+            : new Color(a: 255, r: 82, g: 159, b: 91);
+        var bar = new PetChrome(parent, id + "Bar", PetChromeStyle.Bar)
         {
-            AutoLabel = false,
-            Value = ratio,
-            Text = capped && maximum < 0 ? "MAX" : (int)Math.Round(ratio * 100) + "%",
-            FontSize = 9,
-            MouseInputEnabled = false,
+            Progress = ratio,
+            ProgressColor = fillColor,
         };
-        bar.SetBounds(x, y + 19, width, 16);
+        bar.SetBounds(x, y + 19, width, 13);
+        AddText(parent, id + "Percent", capped ? "MAX" :
+            (int)Math.Round(ratio * 100) + "%", x, y + 18, width, 16, 9,
+            false, Cream).TextAlign = Pos.Center;
     }
 
     private Label AddText(Base parent, string id, string value, int x, int y,
@@ -220,4 +267,101 @@ internal sealed class PetsWindow : Window
         label.SetBounds(x, y, width, height);
         return label;
     }
+    private enum PetChromeStyle
+    {
+        Window, Card, Portrait, Section, Bar, PrimaryButton, SecondaryButton
+    }
+
+    // Draw the same dark copper/gold pixel-art frames used by Dungeon Gate.
+    private sealed class PetChrome : Base
+    {
+        private static readonly Color Dark = new(a: 255, r: 28, g: 18, b: 17);
+        private static readonly Color Brown = new(a: 255, r: 56, g: 35, b: 28);
+        private static readonly Color Copper = new(a: 255, r: 90, g: 55, b: 37);
+        private static readonly Color BorderColor = new(a: 255, r: 162, g: 116, b: 55);
+        private static readonly Color Highlight = new(a: 255, r: 228, g: 183, b: 93);
+        private readonly PetChromeStyle _style;
+
+        public float Progress { get; set; }
+        public Color ProgressColor { get; set; } = Color.White;
+
+        public PetChrome(Base parent, string name, PetChromeStyle style) : base(parent, name)
+        {
+            _style = style;
+            MouseInputEnabled = false;
+            KeyboardInputEnabled = false;
+        }
+
+        protected override void Render(SkinBase skin)
+        {
+            var bounds = RenderBounds;
+            switch (_style)
+            {
+                case PetChromeStyle.Window:
+                    Fill(skin, bounds, Dark);
+                    Border(skin, bounds, BorderColor, 2);
+                    Border(skin, Inset(bounds, 5), Copper, 1);
+                    Fill(skin, bounds.X + 18, bounds.Y + 72, bounds.Width - 36, 1, Copper);
+                    break;
+                case PetChromeStyle.Card:
+                    Fill(skin, bounds, Dark);
+                    Border(skin, bounds, BorderColor, 2);
+                    Border(skin, Inset(bounds, 4), Copper, 1);
+                    Fill(skin, bounds.X + 105, bounds.Y + 10, bounds.Width - 119, 50, Copper);
+                    Fill(skin, bounds.X + 105, bounds.Y + 59, bounds.Width - 119, 1, Highlight);
+                    break;
+                case PetChromeStyle.Portrait:
+                    Fill(skin, bounds, Dark);
+                    Border(skin, bounds, Highlight, 2);
+                    Border(skin, Inset(bounds, 5), Copper, 1);
+                    break;
+                case PetChromeStyle.Section:
+                    Fill(skin, bounds, Brown);
+                    Border(skin, bounds, Copper, 1);
+                    break;
+                case PetChromeStyle.Bar:
+                    Fill(skin, bounds, Dark);
+                    Border(skin, bounds, Copper, 1);
+                    Fill(skin, bounds.X + 2, bounds.Y + 2,
+                        (int)((bounds.Width - 4) * Math.Clamp(Progress, 0f, 1f)),
+                        bounds.Height - 4, ProgressColor);
+                    break;
+                case PetChromeStyle.PrimaryButton:
+                    Fill(skin, bounds, new Color(a: 255, r: 49, g: 77, b: 42));
+                    Border(skin, bounds, new Color(a: 255, r: 148, g: 183, b: 105), 2);
+                    Border(skin, Inset(bounds, 4), Copper, 1);
+                    break;
+                case PetChromeStyle.SecondaryButton:
+                    Fill(skin, bounds, Copper);
+                    Border(skin, bounds, Highlight, 2);
+                    Border(skin, Inset(bounds, 4), Brown, 1);
+                    break;
+            }
+        }
+
+        private static UiRectangle Inset(UiRectangle rect, int amount) =>
+            new(rect.X + amount, rect.Y + amount,
+                rect.Width - amount * 2, rect.Height - amount * 2);
+
+        private static void Fill(SkinBase skin, UiRectangle rect, Color color)
+        {
+            skin.Renderer.DrawColor = color;
+            skin.Renderer.DrawFilledRect(rect);
+        }
+
+        private static void Fill(SkinBase skin, int x, int y, int width, int height, Color color)
+        {
+            if (width <= 0 || height <= 0) return;
+            Fill(skin, new UiRectangle(x, y, width, height), color);
+        }
+
+        private static void Border(SkinBase skin, UiRectangle rect, Color color, int thickness)
+        {
+            Fill(skin, rect.X, rect.Y, rect.Width, thickness, color);
+            Fill(skin, rect.X, rect.Bottom - thickness, rect.Width, thickness, color);
+            Fill(skin, rect.X, rect.Y, thickness, rect.Height, color);
+            Fill(skin, rect.Right - thickness, rect.Y, thickness, rect.Height, color);
+        }
+    }
+
 }
