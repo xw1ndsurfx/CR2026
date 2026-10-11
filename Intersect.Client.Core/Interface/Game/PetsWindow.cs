@@ -101,7 +101,18 @@ internal sealed class PetsWindow : Window
             if (!string.IsNullOrWhiteSpace(pet.Sprite))
             {
                 portrait.Texture = Globals.ContentManager.GetTexture(TextureType.Entity, pet.Sprite);
-                if (portrait.Texture == null) portrait.Hide();
+                if (portrait.Texture != null)
+                {
+                    // Entity textures are sheets of frames x directions, not portraits.
+                    // Match the first facing-down frame used in character selection.
+                    var frameWidth = portrait.Texture.Width / Math.Max(1, Options.Instance.Sprites.NormalFrames);
+                    var frameHeight = portrait.Texture.Height / Math.Max(1, Options.Instance.Sprites.Directions);
+                    if (frameWidth > 0 && frameHeight > 0)
+                        portrait.SetTextureRect(0, 0, frameWidth, frameHeight);
+                    else
+                        portrait.Hide();
+                }
+                else portrait.Hide();
             }
             else portrait.Hide();
 
@@ -218,13 +229,17 @@ internal sealed class PetsWindow : Window
         var label = new Label(button, id + "Text")
         {
             AutoSizeToContents = false,
+            // Match CharacterWindow's explicit font workaround: Empire bitmap
+            // fallback can collapse a label's glyph geometry to 1-2 letters.
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? button.Font ?? button.Skin.DefaultFont,
             FontSize = 10,
             TextAlign = Pos.Center,
             TextColorOverride = Cream,
             Text = caption,
             MouseInputEnabled = false,
         };
-        label.SetBounds(6, 2, width - 12, height - 4);
+        label.SetBounds(6, 0, width - 12, height);
+        label.BringToFront();
     }
 
     private void AddBar(Base parent, string id, string title, long current, long maximum,
