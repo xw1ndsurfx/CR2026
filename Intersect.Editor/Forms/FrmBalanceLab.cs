@@ -5031,6 +5031,11 @@ public sealed class FrmBalanceLab : DarkForm
             };
         }
 
+        // Guard against the optimizer driving base damage to 1 because
+        // spells, scaling and crit already account for most incoming damage.
+        // Keep a level/role-dependent floor for plausible auto-attacks.
+        var baseDamageFloor = Math.Clamp(
+            Math.Max(2, initialDamage / 3), 1, Math.Max(1, maxDamage));
         var probe = new NpcAutoBalanceProbe
         {
             MaxVitals = [Math.Clamp(initialHealth, 1, maxHealth), Math.Max(0, mana)],
@@ -5039,7 +5044,7 @@ public sealed class FrmBalanceLab : DarkForm
             SpellCastIntervalsMs = spellIntervalsMs?.ToArray() ?? [],
             SpellFrequency = spellFrequency,
             SpellFocused = spellFocused,
-            Damage = Math.Clamp(initialDamage, 1, maxDamage),
+            Damage = Math.Clamp(initialDamage, baseDamageFloor, maxDamage),
             DamageType = damageType,
             ScalingStat = Math.Clamp(scalingStat, 0, 4),
             Scaling = scaling,
@@ -5110,7 +5115,7 @@ public sealed class FrmBalanceLab : DarkForm
                 var lossRatio = Math.Clamp(
                     (targetHpLoss / averageHpLoss) / hpRatio, 0.25d, 4d);
                 probe.Damage = (int)Math.Clamp(
-                    Math.Round(probe.Damage * lossRatio), 1d, maxDamage);
+                    Math.Round(probe.Damage * lossRatio), baseDamageFloor, maxDamage);
             }
         }
 
