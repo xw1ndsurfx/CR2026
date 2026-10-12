@@ -4942,6 +4942,7 @@ public sealed class FrmBalanceLab : DarkForm
         public int AttackSpeedModifier { get; init; }
         public int AttackSpeedValue { get; init; }
         public IReadOnlyList<Guid> Spells { get; init; } = [];
+        public IReadOnlyList<int> SpellCastIntervalsMs { get; init; } = [];
         public int SpellFrequency { get; init; }
         public bool SpellFocused { get; init; }
     }
@@ -4962,10 +4963,11 @@ public sealed class FrmBalanceLab : DarkForm
             0 => 30000d, 1 => 15000d, 2 => 8000d,
             3 => 4000d, 4 => 2000d, _ => 30000d
         };
+        var hasOverrides = npc.SpellCastIntervalsMs.Any(ms => ms > 0);
         double totalDps = 0d;
-        foreach (var spellId in npc.Spells)
+        for (var slot = 0; slot < npc.Spells.Count; slot++)
         {
-            var spell = SpellDescriptor.Get(spellId);
+            var spell = SpellDescriptor.Get(npc.Spells[slot]);
             if (spell == null || spell.SpellType != SpellType.CombatSpell ||
                 spell.Combat == null || spell.Combat.Friendly ||
                 spell.Combat.VitalDiff.Length <= (int)Vital.Health ||
@@ -4993,19 +4995,27 @@ public sealed class FrmBalanceLab : DarkForm
                 damage *= 1d + Math.Ceiling((double)combat.Duration / combat.HotDotInterval);
             }
 
-            var cycleMs = Math.Max(intervalMs,
+            var overrideMs = slot < npc.SpellCastIntervalsMs.Count
+                ? npc.SpellCastIntervalsMs[slot] : 0;
+            var slotIntervalMs = overrideMs > 0
+                ? Math.Clamp(overrideMs, 1000, 120000) : intervalMs;
+            var cycleMs = Math.Max(slotIntervalMs,
                 Math.Max(250d, spell.CastDuration + spell.CooldownDuration));
             totalDps += damage * 1000d / cycleMs;
         }
 
-        return totalDps / npc.Spells.Count;
+        // Legacy AI casts one randomly chosen spell per global interval.
+        // Individual-mode spells each have a cooldown, but still share a
+        // brief global cast gap and a single casting channel.
+        return hasOverrides ? totalDps * 0.75d : totalDps / npc.Spells.Count;
     }
 
     public static NpcAutoBalanceResult CalibrateGeneratedNpc(
         int level, int partySize, double targetTtkSeconds, double targetHpLossPercent,
         long initialHealth, int initialDamage, int[] stats, int damageType,
         int scalingStat, int scaling, long maxHealth, int maxDamage,
-        int mana, IReadOnlyList<Guid> spells, int spellFrequency, bool spellFocused)
+        int mana, IReadOnlyList<Guid> spells, int spellFrequency, bool spellFocused,
+        IReadOnlyList<int>? spellIntervalsMs = null)
     {
         var classList = ClassDescriptor.Lookup.Values.Where(value => value != null)
             .Cast<object>().ToArray();
@@ -5023,7 +5033,8 @@ public sealed class FrmBalanceLab : DarkForm
         {
             MaxVitals = [Math.Clamp(initialHealth, 1, maxHealth), Math.Max(0, mana)],
             Stats = (int[])stats.Clone(),
-            Spells = spells.Distinct().ToArray(),
+            Spells = spells.ToArray(),
+            SpellCastIntervalsMs = spellIntervalsMs?.ToArray() ?? [],
             SpellFrequency = spellFrequency,
             SpellFocused = spellFocused,
             Damage = Math.Clamp(initialDamage, 1, maxDamage),
