@@ -32,10 +32,10 @@ public partial class FrmNpc
         public int CritChance(int role, int difficulty)
         {
             var baseValue = role switch { 1 => 12, 2 => 6, 3 => 2, 4 => 20, _ => 7 };
-            return Math.Clamp(baseValue + difficulty switch
+            return Math.Clamp(baseValue + (difficulty switch
             {
                 0 => -3, 2 => 3, 3 => 6, _ => 0
-            }, 0, 60);
+            }), 0, 60);
         }
 
         public decimal CritMultiplier(int role) => role switch
