@@ -123,15 +123,18 @@ public partial class FrmSpell
         panel.SuspendLayout();
         try
         {
-            var visible = groups.Where(group => group.Visible).ToArray();
+            // TabPages report child.Visible=false while not selected, even when
+            // the editor intends to show them. Arrange every group so switching
+            // tabs never leaves controls stranded outside the scrollable area.
+            var arranged = groups;
             var width = Math.Max(1, panel.ClientSize.Width - 22);
             var maxGroupWidth = Math.Max(1, groups.Max(group => group.Width));
             var count = width >= 2 * (maxGroupWidth + 12) ? 2 : 1;
             var heights = new int[count];
-            for (var i = 0; i < visible.Length; i++)
+            for (var i = 0; i < arranged.Length; i++)
             {
                 var column = Array.IndexOf(heights, heights.Min());
-                var group = visible[i];
+                var group = arranged[i];
                 group.Location = new System.Drawing.Point(
                     8 + column * (maxGroupWidth + 12), 8 + heights[column]);
                 heights[column] += group.Height + 12;
