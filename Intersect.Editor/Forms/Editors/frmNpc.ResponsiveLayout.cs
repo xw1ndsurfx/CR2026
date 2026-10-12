@@ -14,6 +14,7 @@ namespace Intersect.Editor.Forms.Editors;
 public partial class FrmNpc
 {
     private static Size _lastNpcEditorSize = Size.Empty;
+    private readonly DarkButton _btnNewNpcAuto = new();
     private bool _awaitingNewNpcForAutoCreator;
     private readonly HashSet<Guid> _existingNpcIdsBeforeAutoCreate = [];
     private readonly TabControl _npcTabs = new();
@@ -44,6 +45,14 @@ public partial class FrmNpc
             _npcTabs.SizeMode = TabSizeMode.Normal;
             _npcTabs.HotTrack = true;
             pnlContainer.Controls.Add(_npcTabs);
+
+            // Always available even when no NPC is selected (and the editor
+            // content panel is hidden). This button creates an entry first.
+            _btnNewNpcAuto.Text = "New NPC + Auto";
+            _btnNewNpcAuto.Size = new Size(214, 28);
+            _btnNewNpcAuto.Click += (_, _) => BeginNewNpcAutoCreate();
+            grpNpcs.Controls.Add(_btnNewNpcAuto);
+            _btnNewNpcAuto.BringToFront();
 
             AddNpcEditorTab("General", grpGeneral, grpCommonEvents, _grpBoss);
             AddNpcEditorTab("Stats & Resist", grpStats, grpRegen, grpImmunities);
@@ -225,7 +234,8 @@ public partial class FrmNpc
         var footerY = Math.Max(230, ClientSize.Height - 44);
         grpNpcs.SetBounds(4, 32, 232, Math.Max(120, footerY - 41));
         // GameObjectList is a native TreeView and needs to grow with its group.
-        lstGameObjects.Height = Math.Max(65, grpNpcs.ClientSize.Height - lstGameObjects.Top - 8);
+        lstGameObjects.Height = Math.Max(65, grpNpcs.ClientSize.Height - lstGameObjects.Top - 48);
+        _btnNewNpcAuto.SetBounds(8, grpNpcs.ClientSize.Height - 37, 214, 28);
         pnlContainer.SetBounds(245, 35,
             Math.Max(300, ClientSize.Width - 253),
             Math.Max(160, footerY - 39));
