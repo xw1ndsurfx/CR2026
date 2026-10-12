@@ -5029,6 +5029,17 @@ public sealed class FrmBalanceLab : DarkForm
             ScalingStat = Math.Clamp(scalingStat, 0, 4),
             Scaling = scaling,
         };
+        if (spellFocused &&
+            EstimateGeneratedNpcSpellDps(probe,
+                probe.Stats.Select(value => (double)value).ToArray(),
+                new double[5]) <= 0d)
+        {
+            return new NpcAutoBalanceResult
+            {
+                Health = probe.MaxVitals[0], Damage = probe.Damage,
+                Message = "This ranged NPC has no usable damaging spell (check spell, mana cost and selection)."
+            };
+        }
         var safePartySize = Math.Clamp(partySize, 1, 5);
         var safeLevel = Math.Clamp(level, 1, Math.Max(1, Options.Instance.Player.MaxLevel));
         var targetTtk = Math.Max(0.5d, targetTtkSeconds);
