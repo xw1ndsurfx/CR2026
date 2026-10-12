@@ -35,6 +35,7 @@ using Intersect.Server.General;
 using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
+using Intersect.Server.Professions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -432,6 +433,13 @@ public static partial class DbInterface
 
         CheckPlayerDatabaseCaseInsensitiveCollisions();
         ClearBankedExperienceAtLevelCap();
+        var normalizedProfessions = ProfessionRuntime.ClampStoredExperienceAtCaps(
+            ProfessionConfigurationRuntime.Current.Professions
+        );
+        if (normalizedProfessions > 0)
+            ApplicationContext.Context.Value?.Logger.LogInformation(
+                "Normalized saved EXP for {Count} capped profession records.", normalizedProfessions
+            );
 
         return true;
     }

@@ -397,8 +397,9 @@ public partial class Player : Entity
     {
         IsDisposed = false;
         mSentMap = false;
-        // Clean up old capped characters when they next enter the game.
+        // Clean up old capped characters and professions on sign-in.
         ClearExperienceAtLevelCap();
+        ProfessionRuntime.ClampPlayerExperienceAtCaps(this);
         if (OnlinePlayersById.TryGetValue(Id, out var player))
         {
             if (player != this)
