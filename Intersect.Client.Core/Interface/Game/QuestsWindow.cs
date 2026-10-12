@@ -1029,8 +1029,8 @@ public partial class QuestsWindow
             mBackButton.Show();
 
             // An unavailable "abandon" action should not look clickable.
-            var canAbandon = Globals.Me?.QuestProgress.TryGetValue(mSelectedQuest.Id, out var progress) == true
-                && progress.TaskId != Guid.Empty && mSelectedQuest.Quitable;
+            var canAbandon = Globals.Me?.QuestProgress.TryGetValue(mSelectedQuest.Id, out var abandonQuestProgress) == true
+                && abandonQuestProgress.TaskId != Guid.Empty && mSelectedQuest.Quitable;
             if (canAbandon)
                 mQuitButton.Show();
             else
