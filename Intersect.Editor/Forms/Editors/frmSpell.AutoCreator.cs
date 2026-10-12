@@ -97,7 +97,11 @@ public partial class FrmSpell
             Size = new System.Drawing.Size(285, 25),
             DropDownStyle = ComboBoxStyle.DropDownList
         };
-        targeting.Items.AddRange(new object[] { "Single Target", "Area of Effect", "Self" });
+        targeting.Items.AddRange(new object[]
+        {
+            "Single Target", "Area of Effect", "Self",
+            "Linear Projectile", "On Hit", "Trap"
+        });
         targeting.SelectedIndex = 0;
 
         var effect = new ComboBox
@@ -121,19 +125,30 @@ public partial class FrmSpell
         });
         buffStat.SelectedIndex = 2;
 
+        var projectile = new ComboBox
+        {
+            Location = new System.Drawing.Point(209, 299),
+            Size = new System.Drawing.Size(285, 25),
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
+        foreach (var item in cmbProjectile.Items)
+            projectile.Items.Add(item);
+        if (projectile.Items.Count > 0)
+            projectile.SelectedIndex = Math.Max(0, cmbProjectile.SelectedIndex);
+
         var keepArt = new CheckBox
         {
             Text = "Keep existing icon, cast sprite and animations",
             ForeColor = System.Drawing.Color.Gainsboro,
             Checked = true,
-            Location = new System.Drawing.Point(20, 303),
+            Location = new System.Drawing.Point(20, 345),
             Size = new System.Drawing.Size(470, 26)
         };
         var keepRequirements = new Label
         {
             Text = "Casting requirements and special settings are preserved.",
             ForeColor = System.Drawing.Color.Gainsboro,
-            Location = new System.Drawing.Point(20, 334),
+            Location = new System.Drawing.Point(20, 376),
             Size = new System.Drawing.Size(470, 26)
         };
         var description = new Label
@@ -141,12 +156,12 @@ public partial class FrmSpell
             Text = "Based on real NPC HP close to the chosen level when available. " +
                    "Damage is a starting value before armor, resistances and caster scaling.",
             ForeColor = System.Drawing.Color.Khaki,
-            Location = new System.Drawing.Point(20, 377),
+            Location = new System.Drawing.Point(20, 417),
             Size = new System.Drawing.Size(475, 51)
         };
         var preview = new Label
         {
-            Location = new System.Drawing.Point(20, 438),
+            Location = new System.Drawing.Point(20, 477),
             Size = new System.Drawing.Size(475, 218),
             BorderStyle = BorderStyle.FixedSingle,
             Padding = new Padding(12),
@@ -155,14 +170,14 @@ public partial class FrmSpell
         var apply = new Button
         {
             Text = "Apply to spell",
-            Location = new System.Drawing.Point(310, 682),
+            Location = new System.Drawing.Point(310, 723),
             Size = new System.Drawing.Size(184, 36),
             DialogResult = DialogResult.None
         };
         var cancel = new Button
         {
             Text = "Cancel",
-            Location = new System.Drawing.Point(20, 682),
+            Location = new System.Drawing.Point(20, 723),
             Size = new System.Drawing.Size(125, 36),
             DialogResult = DialogResult.Cancel
         };
@@ -175,6 +190,7 @@ public partial class FrmSpell
             Field("Targeting", 181), targeting,
             Field("Extra Effect", 221), effect,
             Field("Buff Stat", 261), buffStat,
+            Field("Projectile (if selected)", 301), projectile,
             keepArt, keepRequirements, description, preview, apply, cancel
         });
         wizard.CancelButton = cancel;
@@ -228,7 +244,8 @@ public partial class FrmSpell
             };
             var duration = spellRole switch { 4 => 9000, 5 => 14000, 6 => 2000, _ => 0 };
             var range = targeting.SelectedIndex == 2 ? 0 :
-                spellRole == 0 ? 1 : Math.Clamp(3 + spellLevel / 22, 3, 7);
+                spellRole == 0 && targeting.SelectedIndex == 0 ? 1 :
+                Math.Clamp(3 + spellLevel / 22, 3, 7);
             var radius = aoe ? (tier.SelectedIndex >= 2 ? 3 : 2) : 1;
             var scaling = spellRole == 5 ? 0 : spellRole switch
             {
@@ -250,6 +267,7 @@ public partial class FrmSpell
             var p = Calculate();
             effect.Enabled = template.SelectedIndex == 6;
             buffStat.Enabled = template.SelectedIndex == 5;
+            projectile.Enabled = targeting.SelectedIndex == 3;
             var percentage = p.ReferenceHealth > 0
                 ? p.HealthEffect * 100d / p.ReferenceHealth : 0d;
             preview.Text =
@@ -281,6 +299,14 @@ public partial class FrmSpell
         apply.Click += (_, _) =>
         {
             var role = template.SelectedIndex;
+            if (targeting.SelectedIndex == 3 && projectile.SelectedIndex < 0)
+            {
+                MessageBox.Show(wizard,
+                    "Create or select a projectile in the Projectile Editor first.",
+                    "Spell Auto Creator", MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
             var p = Calculate();
 
             static void Set(NumericUpDown target, decimal value) =>
@@ -307,8 +333,15 @@ public partial class FrmSpell
             {
                 1 => (int)SpellTargetType.AoE,
                 2 => (int)SpellTargetType.Self,
+                3 => (int)SpellTargetType.Projectile,
+                4 => (int)SpellTargetType.OnHit,
+                5 => (int)SpellTargetType.Trap,
                 _ => (int)SpellTargetType.Single
             };
+            if (targeting.SelectedIndex == 3 && projectile.SelectedIndex >= 0)
+                cmbProjectile.SelectedIndex = projectile.SelectedIndex;
+            if (targeting.SelectedIndex is 4 or 5)
+                Set(nudDuration, p.Duration > 0 ? p.Duration : 5000);
             Set(nudCastRange, p.Range);
             Set(nudHitRadius, p.Radius);
             chkHOTDOT.Checked = role == 4;
