@@ -33,6 +33,7 @@ internal sealed class LogiCoinShopWindow : Window
 
         var frame = new ShopChrome(this, "ShopFrame", ChromeStyle.Window);
         frame.SetBounds(14, 30, 692, 522);
+        AdmurinGuiArt.Add(this, "AdmurinShopFrame", "logicoin_0", 14, 30, 692, 522);
         var header = new ShopChrome(this, "ShopHeader", ChromeStyle.Header);
         header.SetBounds(27, 43, 666, 109);
 
