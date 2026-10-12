@@ -156,7 +156,7 @@ public partial class FrmNpc
         var warning = new Label
         {
             Text = "Calibrated with the Balance Lab's class simulation and median-per-slot equipment. " +
-                   "NPC spells are not included in the enemy DPS simulation. " +
+                   "NPC spell DPS is estimated using frequency, mana cost and cooldowns. " +
                    "Drops, events, pets and scripted invasion logic are preserved.",
             Location = new Point(20, 432), Size = new Size(452, 74),
             ForeColor = Color.Khaki
@@ -293,12 +293,25 @@ public partial class FrmNpc
             dialog.UseWaitCursor = true;
             try
             {
+                var selectedSpellId = spellPicker.SelectedIndex >= 0
+                    ? spellIds[spellPicker.SelectedIndex] : Guid.Empty;
+                var selectedNewSpell = selectedSpellId != Guid.Empty &&
+                    !mEditorItem.Spells.Contains(selectedSpellId);
+                var simulationSpells = mEditorItem.Spells
+                    .Where(id => id != Guid.Empty).ToList();
+                if (selectedNewSpell)
+                {
+                    simulationSpells.Add(selectedSpellId);
+                }
+                var frequency = selectedNewSpell && role.SelectedIndex is 1 or 2
+                    ? 3 : mEditorItem.SpellFrequency;
                 calibration = FrmBalanceLab.CalibrateGeneratedNpc(
                     (int)level.Value, (int)party.Value, targets.ttk, targets.loss,
                     proposed.hp, proposed.damage, stats,
                     role.SelectedIndex == 2 ? (int)DamageType.Magic : (int)DamageType.Physical,
                     role.SelectedIndex == 2 ? (int)Stat.AbilityPower : (int)Stat.Attack,
-                    100, (long)nudHp.Maximum, (int)nudDamage.Maximum);
+                    100, (long)nudHp.Maximum, (int)nudDamage.Maximum,
+                    proposed.mana, simulationSpells, frequency, role.SelectedIndex is 1 or 2);
             }
             catch (Exception ex)
             {
