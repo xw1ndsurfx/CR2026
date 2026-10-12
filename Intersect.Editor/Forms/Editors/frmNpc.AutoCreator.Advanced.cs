@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows.Forms;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.GameObjects;
@@ -18,10 +19,12 @@ public partial class FrmNpc
         public CheckBox Combat { get; } = new() { Text = "Auto combat / crit / attack speed", Checked = true };
         public CheckBox Regen { get; } = new() { Text = "Auto HP & MP regeneration", Checked = true };
         public CheckBox Immunities { get; } = new() { Text = "Auto tenacity & immunities", Checked = true };
-        public CheckBox Drops { get; } = new() { Text = "Generate a safe basic loot drop (opt-in)", Checked = false };
+        public CheckBox Drops { get; } = new() { Text = "Auto loot (Aurons, Auragems + safe consumables)", Checked = true };
         public CheckBox KeepDrops { get; } = new() { Text = "Keep existing drops", Checked = true };
         public CheckBox IndividualLoot { get; } = new() { Text = "Loot for all contributors on Boss", Checked = true };
         public CheckBox Hostility { get; } = new() { Text = "Configure NPC vs NPC hostility (opt-in)", Checked = false };
+        public CheckBox Sight { get; } = new() { Text = "Auto aggressive sight range", Checked = true };
+        public CheckBox DeathEvents { get; } = new() { Text = "Default [MONSTER] - BasicOne death events", Checked = true };
         public CheckBox KeepHostility { get; } = new() { Text = "Keep existing hostility list", Checked = true };
         public ComboBox LootItem { get; } = new() { DropDownStyle = ComboBoxStyle.DropDownList };
         public ComboBox HostileNpc { get; } = new() { DropDownStyle = ComboBoxStyle.DropDownList };
@@ -50,8 +53,18 @@ public partial class FrmNpc
 
         // The existing index 1 speed mode allows a value on the NPC Editor.
         // We only enable it for faster attack archetypes.
-        public int SpeedModifier(int role) => role is 1 or 4 ? 1 : 0;
-        public int SpeedValue(int role) => role switch { 1 => 10, 4 => 20, _ => 0 };
+        // Mode 1 is a fixed attack interval IN MILLISECONDS, not a %.
+        // Setting 10 or 20 previously caused 50-ms-clamped attacks.
+        public int SpeedModifier(int role) => 1;
+        public int SpeedValue(int role) => role switch
+        {
+            0 => 1050, // Warrior
+            1 => 850,  // Archer
+            2 => 1400, // Mage: most of its damage comes from spells
+            3 => 1600, // Tank: deliberately slower
+            4 => 700,  // Assassin: quick auto-attacks
+            _ => 1100
+        };
     }
 
     private NpcAutoAdvancedOptions BuildNpcAutoAdvancedOptions(Form dialog)
@@ -69,7 +82,8 @@ public partial class FrmNpc
         var toggles = new[]
         {
             options.Combat, options.Regen, options.Immunities, options.Drops,
-            options.KeepDrops, options.IndividualLoot, options.Hostility, options.KeepHostility
+            options.KeepDrops, options.IndividualLoot, options.Hostility, options.KeepHostility,
+            options.Sight, options.DeathEvents
         };
         for (var i = 0; i < toggles.Length; i++)
         {
@@ -82,19 +96,19 @@ public partial class FrmNpc
             dialog.Controls.Add(box);
         }
 
-        options.LootItem.Location = new System.Drawing.Point(20, 875);
+        options.LootItem.Location = new System.Drawing.Point(20, 933);
         options.LootItem.Size = new Size(215, 25);
-        options.HostileNpc.Location = new System.Drawing.Point(257, 875);
+        options.HostileNpc.Location = new System.Drawing.Point(257, 933);
         options.HostileNpc.Size = new Size(215, 25);
         dialog.Controls.Add(new Label
         {
             Text = "Loot pool (safe consumables):", ForeColor = System.Drawing.Color.Gainsboro,
-            Location = new System.Drawing.Point(20, 854), Size = new Size(215, 20)
+            Location = new System.Drawing.Point(20, 912), Size = new Size(215, 20)
         });
         dialog.Controls.Add(new Label
         {
             Text = "Hostile target (NPC vs NPC):", ForeColor = System.Drawing.Color.Gainsboro,
-            Location = new System.Drawing.Point(257, 854), Size = new Size(215, 20)
+            Location = new System.Drawing.Point(257, 912), Size = new Size(215, 20)
         });
 
         options.LootItem.Items.Add("Auto-select safe consumable");
@@ -127,13 +141,13 @@ public partial class FrmNpc
 
         dialog.Controls.Add(new Label
         {
-            Text = "Drop generation is OFF by default. No currencies, equipment, " +
-                   "quest-locked or event items are auto-selected. Hostility stays OFF unless enabled.",
+            Text = "Aurons and Auragems are searched by exact item name. If they are not " +
+                   "ItemDescriptors, the tool cannot add them as item drops. Custom drops are preserved.",
             ForeColor = System.Drawing.Color.Khaki,
-            Location = new System.Drawing.Point(20, 916),
+            Location = new System.Drawing.Point(20, 970),
             Size = new Size(450, 62)
         });
-        dialog.AutoScrollMinSize = new Size(500, 1060);
+        dialog.AutoScrollMinSize = new Size(500, 1115);
         return options;
     }
 
@@ -180,6 +194,33 @@ public partial class FrmNpc
                 : 0;
             AssignNpcField(nudHpRegen, hpRegen);
             AssignNpcField(nudMpRegen, manaRegen);
+        }
+
+        if (options.Sight.Checked)
+        {
+            // Aggressive without an appropriate sight radius makes an NPC feel idle.
+            AssignNpcField(nudSightRange,
+                Math.Min(20, (role switch { 1 => 9, 2 => 8, 3 => 6, 4 => 10, _ => 7 }) +
+                    (difficulty switch { 2 => 1, 3 => 2, _ => 0 })));
+        }
+
+        if (options.DeathEvents.Checked)
+        {
+            // Never overwrite an authored quest/boss event.
+            var basicMonsterEvent = EventDescriptor.Lookup.Values
+                .OfType<EventDescriptor>()
+                .FirstOrDefault(ev => ev.CommonEvent &&
+                    ev.Name.Contains("BasicOne", StringComparison.OrdinalIgnoreCase) &&
+                    ev.Name.Contains("MONSTER", StringComparison.OrdinalIgnoreCase));
+            if (basicMonsterEvent != null)
+            {
+                if (mEditorItem.OnDeathEventId == Guid.Empty)
+                    cmbOnDeathEventKiller.SelectedIndex =
+                        EventDescriptor.ListIndex(basicMonsterEvent.Id) + 1;
+                if (mEditorItem.OnDeathPartyEventId == Guid.Empty)
+                    cmbOnDeathEventParty.SelectedIndex =
+                        EventDescriptor.ListIndex(basicMonsterEvent.Id) + 1;
+            }
         }
 
         if (options.Immunities.Checked)
