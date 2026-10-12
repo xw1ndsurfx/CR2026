@@ -20,10 +20,12 @@ internal sealed class DailyRewardWindow : Window
         private readonly ImagePanel _icon;
         private bool _active;
         private bool _claimed;
+        private readonly ImagePanel? _check;
 
         public RewardCard(Base parent, int day) : base(parent, "DailyRewardCard" + day)
         {
             SetSize(132, 122);
+            AdmurinGuiArt.Add(this, "RewardSlot", "daily_1", 0, 0, 132, 122, 0, 0, 68, 67);
             _day = new Label(this, "Day")
             {
                 AutoSizeToContents = false,
@@ -37,6 +39,7 @@ internal sealed class DailyRewardWindow : Window
 
             _icon = new ImagePanel(this, "Icon") { MaintainAspectRatio = true };
             _icon.SetBounds(46, 29, 40, 40);
+            _check = AdmurinGuiArt.Add(this, "ClaimedCheck", "daily_2", 39, 24, 58, 58);
 
             _reward = new Label(this, "Reward")
             {
@@ -53,6 +56,11 @@ internal sealed class DailyRewardWindow : Window
         {
             _active = active;
             _claimed = claimed;
+            if (_check != null)
+            {
+                if (claimed) _check.Show();
+                else _check.Hide();
+            }
             _reward.Text = item == null
                 ? "No reward"
                 : $"{quantity:N0} x {item.Name}" + (extraRewards > 0 ? $"\n+ {extraRewards} more" : "");
@@ -88,6 +96,8 @@ internal sealed class DailyRewardWindow : Window
                 : _claimed
                     ? new Color(a:255,r:48,g:66,b:44)
                     : new Color(a:255,r:42,g:29,b:27);
+            if (GameContentManager.Current.GetTexture(TextureType.Gui, "admurin/daily_1.png") != null)
+                return;
             renderer.DrawFilledRect(RenderBounds);
             renderer.DrawColor = _active
                 ? new Color(a:255,r:218,g:184,b:86)
@@ -123,6 +133,8 @@ internal sealed class DailyRewardWindow : Window
             Text = "DAILY REWARDS",
         };
         _title.SetBounds(20, 38, 580, 38);
+        AdmurinGuiArt.Add(this, "ChestProgress", "chests", 80, 93, 460, 49, 0, 0, 240, 32);
+        AdmurinGuiArt.Add(this, "ProgressBar", "daily_4", 80, 146, 460, 15, 0, 16, 240, 8);
 
         _status = new Label(this, "Status")
         {
@@ -140,7 +152,7 @@ internal sealed class DailyRewardWindow : Window
             OverflowY = OverflowBehavior.Scroll,
             AutoHideBars = true,
         };
-        _cards.SetBounds(28, 120, 564, 230);
+        _cards.SetBounds(28, 178, 564, 172);
 
         _claim = new Button(this, "Claim")
         {
