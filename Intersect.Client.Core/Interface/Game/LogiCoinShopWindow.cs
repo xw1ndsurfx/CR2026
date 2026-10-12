@@ -3,115 +3,162 @@ using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.ThirdParty;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.LogiCoins;
-using Intersect.Utilities;
 using Intersect.Network.Packets.Server;
 using UiRectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 
 namespace Intersect.Client.Interface.Game;
 
+/// <summary>
+/// Admurin's three-column, paginated LogiCoin Shop. Offer categories are saved
+/// in the existing editor configuration; legacy offers remain in SPECIAL.
+/// Every BUY control still sends the original purchase packet.
+/// </summary>
 internal sealed class LogiCoinShopWindow : Window
 {
-    private readonly Label _balance;
-    private readonly Label _premium;
-    private readonly Label _status;
-    private readonly ScrollControl _offers;
-    private readonly Button _buyMore;
-    private bool _initialized;
-    private static readonly Color Gold = new(a:255,r:224,g:190,b:113);
-    private static readonly Color Cream = new(a:255,r:246,g:229,b:202);
-    private static readonly Color Muted = new(a:255,r:193,g:180,b:161);
-    private readonly Label _catalogHeading;
+    private static readonly Color Gold = new(a: 255, r: 237, g: 202, b: 136);
+    private static readonly Color Cream = new(a: 255, r: 244, g: 232, b: 207);
+    private static readonly Color Muted = new(a: 255, r: 175, g: 153, b: 138);
+    private static readonly Color Good = new(a: 255, r: 143, g: 228, b: 148);
 
-    public LogiCoinShopWindow(Canvas parent) : base(parent, "LogiCoin Shop", false, nameof(LogiCoinShopWindow))
+    private sealed class CatalogCardBackground : Base
     {
-        SetSize(720, 580);
+        public CatalogCardBackground(Base parent) : base(parent, "CatalogCardArt")
+        {
+            MouseInputEnabled = false;
+        }
+
+        protected override void Render(SkinBase skin)
+        {
+            var rect = RenderBounds;
+            var renderer = skin.Renderer;
+            renderer.DrawColor = new Color(a: 255, r: 23, g: 18, b: 15);
+            renderer.DrawFilledRect(rect);
+            renderer.DrawColor = new Color(a: 255, r: 105, g: 71, b: 58);
+            renderer.DrawFilledRect(new UiRectangle(rect.X + 2, rect.Y + 2,
+                rect.Width - 4, rect.Height - 4));
+            renderer.DrawColor = new Color(a: 255, r: 54, g: 34, b: 29);
+            renderer.DrawFilledRect(new UiRectangle(rect.X + 6, rect.Y + 23,
+                rect.Width - 12, rect.Height - 53));
+            renderer.DrawColor = new Color(a: 255, r: 152, g: 103, b: 78);
+            renderer.DrawFilledRect(new UiRectangle(rect.X + 7, rect.Y + rect.Height - 31,
+                rect.Width - 14, 2));
+        }
+    }
+
+    private readonly Base _tiles;
+    private readonly Label _balanceLabel;
+    private readonly Label _premiumLabel;
+    private readonly Label _status;
+    private readonly Label _pageLabel;
+    private readonly Label _detailsTitle;
+    private readonly Label _detailsBody;
+    private readonly Button _previous;
+    private readonly Button _next;
+    private readonly Button _buyMore;
+    private readonly List<(LogiCoinOfferCategory Category, Label Label)> _tabs = [];
+    private LogiCoinOfferCategory _selectedCategory = LogiCoinOfferCategory.Special;
+    private LogiCoinShopOffer[] _offers = [];
+    private long _balance;
+    private int _pageIndex;
+    private bool _enabled;
+
+    public LogiCoinShopWindow(Canvas parent)
+        : base(parent, "LogiCoin Shop", false, nameof(LogiCoinShopWindow))
+    {
+        SetSize(767, 585);
         Alignment = [Alignments.Center];
         DeleteOnClose = false;
         DisableResizing();
 
-        var frame = new ShopChrome(this, "ShopFrame", ChromeStyle.Window);
-        frame.SetBounds(14, 30, 692, 522);
-        AdmurinGuiArt.Add(this, "AdmurinShopFrame", "logicoin_0", 14, 30, 692, 522);
-        var header = new ShopChrome(this, "ShopHeader", ChromeStyle.Header);
-        header.SetBounds(27, 43, 666, 109);
+        // Artist-authored frame includes the left catalogue and three separate
+        // right-hand boxes; keep its original aspect ratio when scaling.
+        AdmurinGuiArt.Add(this, "AdmurinShopFrame", "logicoin_0",
+            12, 27, 742, 539);
 
-        _balance = new Label(this, "Balance")
+        var categories = Enum.GetValues<LogiCoinOfferCategory>();
+        int[] tabXs = [31, 131, 243, 360, 425];
+        int[] tabWidths = [100, 112, 117, 65, 82];
+        for (var i = 0; i < categories.Length; i++)
         {
-            AutoSizeToContents = false,
-            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-            FontSize = 18,
-            TextColorOverride = new Color(a:255,r:236,g:210,b:153),
-            Text = "LogiCoins: ...",
-        };
-        _balance.SetBounds(42, 51, 392, 36);
+            var category = categories[i];
+            var button = new Button(this, $"ShopTab{category}") { Text = string.Empty };
+            button.SetBounds(tabXs[i], 56, tabWidths[i], 32);
+            var caption = AddText(button, "Caption", category.ToString().ToUpperInvariant(),
+                1, 0, tabWidths[i] - 2, 30, 11, Muted, center: true);
+            button.Clicked += (_, _) =>
+            {
+                _selectedCategory = category;
+                _pageIndex = 0;
+                RebuildCatalog();
+            };
+            _tabs.Add((category, caption));
+        }
 
-        _premium = new Label(this, "Premium")
-        {
-            AutoSizeToContents = false,
-            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
-            FontSize = 10,
-            TextColorOverride = Color.White,
-        };
-        _premium.SetBounds(42, 92, 438, 29);
+        _tiles = new Base(this, "ShopCatalog");
+        _tiles.SetBounds(29, 97, 491, 401);
 
-        _buyMore = new Button(this, "BuyMore")
+        _previous = new Button(this, "CatalogPrevious") { Text = string.Empty };
+        _previous.SetBounds(218, 515, 29, 31);
+        AdmurinGuiArt.Add(_previous, "Previous", "dungeon_gates_4",
+            5, 0, 18, 30, 0, 0, 16, 32);
+        _previous.Clicked += (_, _) =>
         {
-            Text = "Buy more LogiCoins",
-            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-            FontSize = 11,
+            _pageIndex--;
+            RebuildCatalog();
         };
-        _buyMore.SetBounds(479, 73, 198, 43);
-        StyleButton(_buyMore, "ShopBuyCoinsStyle", "BUY LOGICOINS", 198, 43, true);
+
+        _pageLabel = AddText(this, "PageNumber", "1 / 1",
+            262, 514, 123, 30, 12, Cream, center: true);
+
+        _next = new Button(this, "CatalogNext") { Text = string.Empty };
+        _next.SetBounds(400, 515, 29, 31);
+        var rightArrow = AdmurinGuiArt.Add(_next, "Next", "dungeon_gates_4",
+            5, 0, 18, 30, 0, 0, 16, 32);
+        rightArrow?.SetUVs(16f / 64f, 0f, 0f, 1f);
+        _next.Clicked += (_, _) =>
+        {
+            _pageIndex++;
+            RebuildCatalog();
+        };
+
+        AddText(this, "SidebarHeading", "LOGIKLIK.COM", 548, 51, 190, 34,
+            13, Gold, center: true);
+
+        _balanceLabel = AddText(this, "ShopBalance", "LogiCoins: ...",
+            546, 105, 198, 20, 11, Cream);
+        _premiumLabel = AddText(this, "PremiumStatus", "Premium inactive",
+            546, 125, 195, 16, 10, Muted);
+
+        _buyMore = new Button(this, "BuyLogiCoins") { Text = string.Empty };
+        _buyMore.SetBounds(629, 145, 105, 30);
+        AdmurinGuiArt.Add(_buyMore, "BuyLogiCoinsArt", "logicoin_10",
+            0, 0, 105, 30, 0, 0, 56, 23);
+        AddText(_buyMore, "BuyCaption", "BUY LOGICOINS", 2, 2, 101, 25,
+            9, Cream, center: true);
         _buyMore.Clicked += (_, _) =>
         {
             var url = LogiCoinShopConfiguration.Instance.ShopUrl;
             if (!string.IsNullOrWhiteSpace(url) && !Steam.OpenWebPageInOverlay(url))
-            {
                 BrowserUtils.Open(url);
-            }
         };
 
-        _status = new Label(this, "Status")
-        {
-            AutoSizeToContents = false,
-            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
-            FontSize = 10,
-            TextColorOverride = Color.White,
-            TextAlign = Pos.Left | Pos.CenterV,
-        };
-        _status.SetBounds(37, 154, 645, 26);
+        AddText(this, "PromotionCaption", "PREMIUM & SPECIAL OFFERS",
+            541, 189, 201, 25, 11, Gold, center: true);
+        AddText(this, "PromotionHelp", "Explore the royal catalogue\nfor exclusive items and bundles.",
+            544, 221, 198, 38, 10, Cream, center: true);
 
-        _catalogHeading = new Label(this, "CatalogHeading")
-        {
-            AutoSizeToContents = false,
-            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-            FontSize = 12,
-            TextColorOverride = Gold,
-            Text = "AVAILABLE OFFERS",
-        };
-        _catalogHeading.SetBounds(41, 188, 612, 24);
+        _detailsTitle = AddText(this, "OfferDetailsTitle", "",
+            545, 295, 200, 31, 12, Gold, center: true);
+        _detailsBody = AddText(this, "OfferDetails", "",
+            549, 329, 193, 143, 10, Cream);
 
-        _offers = new ScrollControl(this, "Offers")
-        {
-            OverflowX = OverflowBehavior.Hidden,
-            OverflowY = OverflowBehavior.Scroll,
-            AutoHideBars = false,
-        };
-        _offers.SetBounds(30, 214, 656, 322);
+        _status = AddText(this, "ShopStatus", string.Empty,
+            543, 480, 202, 63, 10, Good, center: true);
 
         Hide();
-    }
-
-    protected override void EnsureInitialized()
-    {
-        if (_initialized)
-        {
-            return;
-        }
-
-        _initialized = true;
     }
 
     public void Apply(LogiCoinShopStatePacket state)
@@ -119,58 +166,84 @@ internal sealed class LogiCoinShopWindow : Window
         LogiCoinShopConfiguration.Load(state.ConfigurationJson);
         var configuration = LogiCoinShopConfiguration.Instance;
 
-        _balance.Text = $"LogiCoins: {state.Balance:N0}";
+        _balance = state.Balance;
+        _balanceLabel.Text = $"LogiCoins: {_balance:N0}";
         _buyMore.IsDisabled = string.IsNullOrWhiteSpace(configuration.ShopUrl);
 
         var nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         if (state.PremiumUntilUnixMilliseconds > nowMs)
         {
-            var until = DateTimeOffset.FromUnixTimeMilliseconds(state.PremiumUntilUnixMilliseconds).ToLocalTime();
-            _premium.Text = $"Premium active until {until:yyyy-MM-dd HH:mm}";
-            _premium.TextColorOverride = new Color(a:255,r:145,g:230,b:150);
+            var until = DateTimeOffset.FromUnixTimeMilliseconds(state.PremiumUntilUnixMilliseconds)
+                .ToLocalTime();
+            _premiumLabel.Text = $"Premium until {until:yyyy-MM-dd}";
+            _premiumLabel.TextColorOverride = Good;
         }
         else
         {
-            _premium.Text = "Premium inactive";
-            _premium.TextColorOverride = new Color(a:255,r:190,g:190,b:190);
+            _premiumLabel.Text = "Premium inactive";
+            _premiumLabel.TextColorOverride = Muted;
         }
 
         _status.Text = state.Message ?? string.Empty;
-        _status.TextColorOverride = state.PurchaseSucceeded
-            ? new Color(a:255,r:145,g:230,b:150)
-            : Color.White;
+        _status.TextColorOverride = state.PurchaseSucceeded ? Good : Cream;
+        _enabled = configuration.Enabled;
+        _offers = (configuration.Offers ?? [])
+            .Where(offer => offer.Enabled)
+            .OrderBy(offer => offer.SortOrder)
+            .ThenBy(offer => offer.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
-        _offers.DeleteAll();
+        RebuildCatalog();
+    }
 
-        if (!configuration.Enabled)
+    private void RebuildCatalog()
+    {
+        _tiles.DeleteAll();
+
+        foreach (var (category, label) in _tabs)
+            label.TextColorOverride = category == _selectedCategory ? Gold : Muted;
+
+        if (!_enabled)
         {
-            var disabled = new Label(_offers, "Disabled")
-            {
-                AutoSizeToContents = false,
-                Text = "The LogiCoin Shop is currently unavailable.",
-                TextAlign = Pos.Center,
-                TextColorOverride = Color.White,
-            };
-            disabled.SetBounds(30, 60, 580, 60);
-            _offers.SetInnerSize(640, 360);
-            _offers.UpdateScrollBars();
+            _pageLabel.Text = "0 / 0";
+            _detailsTitle.Text = "SHOP UNAVAILABLE";
+            _detailsBody.Text = "The LogiCoin Shop is currently disabled.";
+            _previous.IsDisabled = true;
+            _next.IsDisabled = true;
             return;
         }
 
-        var y = 4;
-        var now = DateTimeOffset.UtcNow;
-        foreach (var offer in (configuration.Offers ?? [])
-                     .Where(offer => offer.Enabled)
-                     .OrderBy(offer => offer.SortOrder)
-                     .ThenBy(offer => offer.Name, StringComparer.OrdinalIgnoreCase))
+        var categoryOffers = _offers.Where(offer => offer.Category == _selectedCategory).ToArray();
+        const int pageSize = 9;
+        var totalPages = Math.Max(1, (categoryOffers.Length + pageSize - 1) / pageSize);
+        _pageIndex = Math.Clamp(_pageIndex, 0, totalPages - 1);
+        _pageLabel.Text = $"{_pageIndex + 1} / {totalPages}";
+        _previous.IsDisabled = _pageIndex == 0;
+        _next.IsDisabled = _pageIndex + 1 >= totalPages;
+
+        var displayed = categoryOffers.Skip(_pageIndex * pageSize).Take(pageSize).ToArray();
+        for (var i = 0; i < displayed.Length; i++)
         {
-            var row = new OfferRow(_offers, offer, now, state.Balance);
-            row.SetBounds(4, y, 626, 134);
-            y += 143;
+            var offer = displayed[i];
+            var tile = new OfferTile(_tiles, offer, DateTimeOffset.UtcNow, _balance);
+            tile.SetBounds(3 + i % 3 * 163, 3 + i / 3 * 132, 154, 126);
         }
 
-        _offers.SetInnerSize(638, Math.Max(318, y + 8));
-        _offers.UpdateScrollBars();
+        if (displayed.Length > 0)
+        {
+            var first = displayed[0];
+            _detailsTitle.Text = Shorten(first.Name.ToUpperInvariant(), 25);
+            _detailsBody.Text = Shorten(
+                (string.IsNullOrWhiteSpace(first.Description) ? string.Empty :
+                    first.Description.Trim() + "\n\n") +
+                OfferContents(first), 220);
+        }
+        else
+        {
+            _detailsTitle.Text = "NO OFFERS";
+            _detailsBody.Text = "This category has no configured offers yet.\n\n" +
+                "Add an offer in the Game Editor and select its category.";
+        }
     }
 
     public void ShowAndRequest()
@@ -180,293 +253,167 @@ internal sealed class LogiCoinShopWindow : Window
         Networking.PacketSender.SendRequestLogiCoinShopState();
     }
 
-    private static void StyleButton(Button button, string id, string caption,
-        int width, int height, bool primary)
+    private static Label AddText(
+        Base parent, string id, string text, int x, int y, int width, int height,
+        int size, Color color, bool center = false)
     {
-        button.Text = string.Empty;
-        var frame = new ShopChrome(button, id,
-            primary ? ChromeStyle.PrimaryButton : ChromeStyle.SecondaryButton);
-        frame.SetBounds(0, 0, width, height);
-        var label = new Label(button, id + "Caption")
+        var label = new Label(parent, id)
         {
             AutoSizeToContents = false,
-            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? button.Skin.DefaultFont,
-            FontSize = 10,
-            TextAlign = Pos.Center,
-            TextColorOverride = Cream,
-            Text = caption,
+            Font = GameContentManager.Current.GetFont("empire7") ??
+                   GameContentManager.Current.GetFont("sourcesansproblack") ?? parent.Skin.DefaultFont,
+            Text = text,
+            FontSize = size,
+            TextAlign = center ? Pos.Center : Pos.Left | Pos.CenterV,
+            TextColorOverride = color,
             MouseInputEnabled = false,
         };
-        label.SetBounds(5, 0, width - 10, height);
-        label.BringToFront();
+        label.SetBounds(x, y, width, height);
+        return label;
     }
 
-    private enum ChromeStyle
+    private static string Shorten(string? content, int max)
     {
-        Window, Header, Card, Portrait, PrimaryButton, SecondaryButton
+        var value = (content ?? string.Empty).Trim();
+        return value.Length <= max ? value : value[..Math.Max(0, max - 3)] + "...";
     }
 
-    private sealed class ShopChrome : Base
+    private sealed class OfferTile : Base
     {
-        private static readonly Color Dark = new(a:255,r:28,g:18,b:17);
-        private static readonly Color Brown = new(a:255,r:56,g:35,b:28);
-        private static readonly Color Copper = new(a:255,r:90,g:55,b:37);
-        private static readonly Color BorderColor = new(a:255,r:162,g:116,b:55);
-        private static readonly Color Highlight = new(a:255,r:228,g:183,b:93);
-        private readonly ChromeStyle _style;
-
-        public ShopChrome(Base parent, string name, ChromeStyle style) : base(parent, name)
+        public OfferTile(Base parent, LogiCoinShopOffer offer, DateTimeOffset now, long balance)
+            : base(parent, "OfferTile" + offer.Id.ToString("N"))
         {
-            _style = style;
-            MouseInputEnabled = false;
-            KeyboardInputEnabled = false;
-        }
+            var frame = new CatalogCardBackground(this);
+            frame.SetBounds(0, 0, 154, 126);
 
-        protected override void Render(SkinBase skin)
-        {
-            var bounds = RenderBounds;
-            switch (_style)
-            {
-                case ChromeStyle.Window:
-                    Fill(skin, bounds, Dark);
-                    Border(skin, bounds, BorderColor, 2);
-                    Border(skin, Inset(bounds, 5), Copper, 1);
-                    Fill(skin, bounds.X + 17, bounds.Y + 164, bounds.Width - 34, 1, Copper);
-                    break;
-                case ChromeStyle.Header:
-                    Fill(skin, bounds, Brown);
-                    Border(skin, bounds, Copper, 1);
-                    Fill(skin, bounds.X + 1, bounds.Y + 1, bounds.Width - 2, 6, Copper);
-                    break;
-                case ChromeStyle.Card:
-                    Fill(skin, bounds, Dark);
-                    Border(skin, bounds, BorderColor, 2);
-                    Border(skin, Inset(bounds, 4), Copper, 1);
-                    Fill(skin, bounds.X + 108, bounds.Y + 10,
-                        bounds.Width - 122, 35, Brown);
-                    Fill(skin, bounds.X + 108, bounds.Y + 45,
-                        bounds.Width - 122, 1, Copper);
-                    break;
-                case ChromeStyle.Portrait:
-                    Fill(skin, bounds, Dark);
-                    Border(skin, bounds, Highlight, 2);
-                    Border(skin, Inset(bounds, 5), Copper, 1);
-                    break;
-                case ChromeStyle.PrimaryButton:
-                    Fill(skin, bounds, new Color(a:255,r:49,g:77,b:42));
-                    Border(skin, bounds, new Color(a:255,r:148,g:183,b:105), 2);
-                    Border(skin, Inset(bounds, 4), Copper, 1);
-                    break;
-                case ChromeStyle.SecondaryButton:
-                    Fill(skin, bounds, Copper);
-                    Border(skin, bounds, Highlight, 2);
-                    Border(skin, Inset(bounds, 4), Brown, 1);
-                    break;
-            }
-        }
-
-        private static UiRectangle Inset(UiRectangle rect, int size) =>
-            new(rect.X + size, rect.Y + size,
-                rect.Width - size * 2, rect.Height - size * 2);
-
-        private static void Fill(SkinBase skin, UiRectangle rect, Color color)
-        {
-            skin.Renderer.DrawColor = color;
-            skin.Renderer.DrawFilledRect(rect);
-        }
-
-        private static void Fill(SkinBase skin, int x, int y, int width, int height, Color color)
-        {
-            if (width <= 0 || height <= 0) return;
-            Fill(skin, new UiRectangle(x, y, width, height), color);
-        }
-
-        private static void Border(SkinBase skin, UiRectangle rect, Color color, int thickness)
-        {
-            Fill(skin, rect.X, rect.Y, rect.Width, thickness, color);
-            Fill(skin, rect.X, rect.Bottom - thickness, rect.Width, thickness, color);
-            Fill(skin, rect.X, rect.Y, thickness, rect.Height, color);
-            Fill(skin, rect.Right - thickness, rect.Y, thickness, rect.Height, color);
-        }
-    }
-
-    private sealed class OfferRow : Base
-    {
-        private readonly LogiCoinShopOffer _offer;
-
-        public OfferRow(Base parent, LogiCoinShopOffer offer, DateTimeOffset now, long balance) : base(parent, "Offer_" + offer.Id.ToString("N"))
-        {
-            _offer = offer;
-            MouseInputEnabled = false;
-            var card = new ShopChrome(this, "OfferFrame", ChromeStyle.Card);
-            card.SetBounds(0, 0, 626, 134);
-            var imageFrame = new ShopChrome(this, "OfferImageFrame", ChromeStyle.Portrait);
-            imageFrame.SetBounds(11, 13, 88, 88);
-
-            // Show the contents of a bundle, not just its first item.
-            // Scale the grid to the actual item count so each icon is represented.
-            if (offer.Type == LogiCoinOfferType.Bundle && offer.Bundle is { Length: > 0 })
-            {
-                var entries = offer.Bundle;
-                var columns = (int)Math.Ceiling(Math.Sqrt(entries.Length));
-                var rows = (int)Math.Ceiling(entries.Length / (double)columns);
-                var tile = Math.Max(1, Math.Min(70 / columns, 70 / rows));
-                var gridWidth = columns * tile;
-                var gridHeight = rows * tile;
-                var gridX = 20 + (70 - gridWidth) / 2;
-                var gridY = 22 + (70 - gridHeight) / 2;
-
-                for (var i = 0; i < entries.Length; i++)
-                {
-                    var item = Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(entries[i].ItemId);
-                    if (item == null || string.IsNullOrWhiteSpace(item.Icon))
-                        continue;
-
-                    var texture = GameContentManager.Current.GetTexture(TextureType.Item, item.Icon);
-                    if (texture == null)
-                        continue;
-
-                    var icon = new ImagePanel(this, "BundleItem" + i)
-                    {
-                        MaintainAspectRatio = true,
-                        ShouldDrawBackground = false,
-                        MouseInputEnabled = false,
-                        Texture = texture,
-                        RenderColor = item.Color,
-                    };
-                    icon.SetBounds(gridX + (i % columns) * tile,
-                        gridY + (i / columns) * tile, tile, tile);
-                }
-            }
-            else
-            {
-                var image = new ImagePanel(this, "Image")
-                {
-                    MaintainAspectRatio = true,
-                    ShouldDrawBackground = false,
-                    MouseInputEnabled = false,
-                };
-                image.SetBounds(20, 22, 70, 70);
-
-                if (!string.IsNullOrWhiteSpace(offer.Image))
-                {
-                    image.Texture = GameContentManager.Current.GetTexture(TextureType.Image, offer.Image);
-                    image.RenderColor = Color.White;
-                }
-                if (image.Texture == null && offer.Type == LogiCoinOfferType.Item)
-                {
-                    var item = Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(offer.ItemId);
-                    if (item != null && !string.IsNullOrWhiteSpace(item.Icon))
-                    {
-                        image.Texture = GameContentManager.Current.GetTexture(TextureType.Item, item.Icon);
-                        image.RenderColor = item.Color;
-                    }
-                }
-
-                // A missing asset must not render a broken/unknown placeholder.
-                if (image.Texture == null)
-                    image.Hide();
-            }
-
-            var title = new Label(this, "Title")
-            {
-                AutoSizeToContents = false,
-                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-                FontSize = 13,
-                TextColorOverride = Color.White,
-                Text = offer.Name,
-            };
-            title.SetBounds(113, 12, 328, 27);
-
-            // Separate the merchant description from the actual reward contents.
-            // Keep long bundle summaries in their own lines rather than crowding the price.
-            var description = new Label(this, "Description")
-            {
-                AutoSizeToContents = false,
-                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
-                FontSize = 9,
-                TextColorOverride = Muted,
-                Text = string.IsNullOrWhiteSpace(offer.Description)
-                    ? OfferTypeCaption(offer) : offer.Description.Trim(),
-                MouseInputEnabled = false,
-            };
-            description.SetBounds(113, 46, 329, 34);
-
-            var contents = new Label(this, "Contents")
-            {
-                AutoSizeToContents = false,
-                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
-                FontSize = 9,
-                TextColorOverride = Cream,
-                Text = OfferContents(offer),
-                MouseInputEnabled = false,
-            };
-            contents.SetBounds(113, 83, 329, 42);
+            AddText(this, "Name", Shorten(offer.Name, 23),
+                7, 2, 140, 23, 11, Cream, center: true);
+            AddArt(offer);
 
             var effective = offer.EffectivePrice(now);
-            var priceText = effective == offer.PriceLogiCoins
+            var price = effective == offer.PriceLogiCoins
                 ? $"{effective:N0} LC"
-                : $"{effective:N0} LC  (-{offer.DiscountPercent}%)";
+                : $"{effective:N0} LC (-{offer.DiscountPercent}%)";
+            AddText(this, "Price", price, 7, 103, 86, 18, 9,
+                offer.IsPromotionActive(now) ? Gold : Cream);
 
-            var price = new Label(this, "Price")
-            {
-                AutoSizeToContents = false,
-                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-                FontSize = 12,
-                TextAlign = Pos.Right | Pos.CenterV,
-                TextColorOverride = offer.IsPromotionActive(now)
-                    ? new Color(a:255,r:255,g:210,b:90)
-                    : new Color(a:255,r:236,g:210,b:153),
-                Text = priceText,
-            };
-            price.SetBounds(444, 13, 169, 30);
-
-            var buy = new Button(this, "Buy")
-            {
-                Text = "Buy",
-                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-                FontSize = 10,
-            };
-            buy.SetBounds(449, 57, 164, 41);
+            var buy = new Button(this, "Buy") { Text = string.Empty };
+            buy.SetBounds(97, 103, 52, 22);
             var affordable = balance >= effective;
-            if (!affordable)
-                buy.IsDisabled = true;
-            StyleButton(buy, "OfferBuyStyle", affordable ? "PURCHASE" : "NOT ENOUGH LC", 164, 41, affordable);
+            var sprite = AdmurinGuiArt.Add(buy, "BuyArt", "logicoin_10",
+                0, 0, 52, 22, 0, affordable ? 0 : 23, 56, 23);
+            if (sprite == null)
+            {
+                var buttonFrame = new CatalogCardBackground(buy);
+                buttonFrame.SetBounds(0, 0, 52, 22);
+            }
+
+            AddText(buy, "Caption", "BUY", 2, 0, 48, 21, 10, Cream, center: true);
+            buy.IsDisabled = !affordable;
+            buy.SetToolTipText(affordable ? "Purchase " + offer.Name :
+                "Not enough LogiCoins for " + offer.Name);
             buy.Clicked += (_, _) =>
             {
+                if (buy.IsDisabled)
+                    return;
                 buy.IsDisabled = true;
-                buy.Text = string.Empty;
-                Networking.PacketSender.SendPurchaseLogiCoinOffer(_offer.Id, Guid.NewGuid());
+                Networking.PacketSender.SendPurchaseLogiCoinOffer(offer.Id, Guid.NewGuid());
             };
+            SetToolTipText(Shorten(offer.Description, 230) + "\n" + OfferContents(offer));
         }
 
-        private static string OfferTypeCaption(LogiCoinShopOffer offer) =>
-            offer.Type switch
+        private void AddArt(LogiCoinShopOffer offer)
+        {
+            const int artX = 7;
+            const int artY = 25;
+            const int artW = 140;
+            const int artH = 70;
+
+            if (!string.IsNullOrWhiteSpace(offer.Image))
             {
-                LogiCoinOfferType.Item => "ITEM",
-                LogiCoinOfferType.Bundle => "BUNDLE",
-                LogiCoinOfferType.Premium => "PREMIUM",
+                var image = GameContentManager.Current.GetTexture(TextureType.Image, offer.Image);
+                if (image != null)
+                {
+                    var panel = new ImagePanel(this, "OfferArt")
+                    {
+                        Texture = image,
+                        MaintainAspectRatio = true,
+                        MouseInputEnabled = false,
+                        ShouldDrawBackground = false,
+                    };
+                    panel.SetBounds(artX, artY, artW, artH);
+                    return;
+                }
+            }
+
+            // The provided 139x71 images are art for the nine specifically
+            // named sample offers in Admurin's screenshot. Never mislabel a
+            // different purchasable item with one of those sample images.
+            var designerArt = offer.Name.Trim().ToLowerInvariant() switch
+            {
+                "membership (30 days)" => "logicoin_1",
+                "150 auragems" => "logicoin_2",
+                "100k aureons" => "logicoin_3",
+                "treasure hunter" => "logicoin_4",
+                "gemologist" => "logicoin_5",
+                "crafter" => "logicoin_6",
+                "ingot galore" => "logicoin_7",
+                "dungeon raider" => "logicoin_8",
+                "alchemist" => "logicoin_9",
                 _ => string.Empty,
             };
+            if (designerArt.Length > 0 &&
+                AdmurinGuiArt.Add(this, "DesignerOfferArt", designerArt,
+                    artX, artY, artW, artH) != null)
+                return;
 
-        private static string OfferContents(LogiCoinShopOffer offer)
-        {
-            switch (offer.Type)
+            var entries = offer.Type switch
             {
-                case LogiCoinOfferType.Item:
-                    return $"{offer.ItemQuantity:N0}x " +
-                        Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.GetName(offer.ItemId);
-                case LogiCoinOfferType.Premium:
-                    return $"{offer.PremiumDays} days Premium";
-                case LogiCoinOfferType.Bundle:
-                    // Every bundle entry is listed, even when there are too many
-                    // icons to show at a readable size in the preview grid.
-                    return string.Join(", ", (offer.Bundle ?? []).Select(entry =>
-                        $"{entry.Quantity:N0}x " +
-                        Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.GetName(entry.ItemId)));
-                default:
-                    return string.Empty;
+                LogiCoinOfferType.Item => new[] { new LogiCoinBundleItem(offer.ItemId, offer.ItemQuantity) },
+                LogiCoinOfferType.Bundle => offer.Bundle ?? [],
+                _ => [],
+            };
+            // Auto-preview actual configured item assets, preserving colour.
+            var valid = entries
+                .Select(entry => ItemDescriptor.Get(entry.ItemId))
+                .Where(item => item != null && !string.IsNullOrWhiteSpace(item.Icon))
+                .Take(9)
+                .ToArray();
+            var columns = Math.Max(1, (int)Math.Ceiling(Math.Sqrt(valid.Length)));
+            var rows = Math.Max(1, (int)Math.Ceiling(valid.Length / (double)columns));
+            var cell = Math.Min(42, Math.Min(artW / columns, artH / rows));
+            var originX = artX + (artW - columns * cell) / 2;
+            var originY = artY + (artH - rows * cell) / 2;
+
+            for (var index = 0; index < valid.Length; index++)
+            {
+                var item = valid[index]!;
+                var texture = GameContentManager.Current.GetTexture(TextureType.Item, item.Icon);
+                if (texture == null)
+                    continue;
+                var panel = new ImagePanel(this, "BundleItem" + index)
+                {
+                    Texture = texture,
+                    MaintainAspectRatio = true,
+                    RenderColor = item.Color,
+                    MouseInputEnabled = false,
+                    ShouldDrawBackground = false,
+                };
+                panel.SetBounds(originX + index % columns * cell,
+                    originY + index / columns * cell, cell, cell);
             }
         }
     }
+
+    private static string OfferContents(LogiCoinShopOffer offer) =>
+        offer.Type switch
+        {
+            LogiCoinOfferType.Item =>
+                $"{offer.ItemQuantity:N0}x {ItemDescriptor.GetName(offer.ItemId)}",
+            LogiCoinOfferType.Premium =>
+                $"{offer.PremiumDays:N0} days Premium",
+            LogiCoinOfferType.Bundle => string.Join(", ", (offer.Bundle ?? [])
+                .Select(entry => $"{entry.Quantity:N0}x {ItemDescriptor.GetName(entry.ItemId)}")),
+            _ => string.Empty,
+        };
 }
