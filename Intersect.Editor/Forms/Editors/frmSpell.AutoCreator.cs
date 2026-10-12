@@ -129,11 +129,10 @@ public partial class FrmSpell
             Location = new System.Drawing.Point(20, 303),
             Size = new System.Drawing.Size(470, 26)
         };
-        var keepRequirements = new CheckBox
+        var keepRequirements = new Label
         {
-            Text = "Preserve casting requirements and special settings",
+            Text = "Casting requirements and special settings are preserved.",
             ForeColor = System.Drawing.Color.Gainsboro,
-            Checked = true,
             Location = new System.Drawing.Point(20, 334),
             Size = new System.Drawing.Size(470, 26)
         };
