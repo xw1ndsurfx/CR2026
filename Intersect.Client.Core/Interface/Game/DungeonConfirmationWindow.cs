@@ -56,6 +56,7 @@ internal sealed class DungeonConfirmationWindow : Window
 
         var frame = new GateChrome(this, "DungeonConfirmFrame", GateChromeStyle.Window);
         frame.SetBounds(14, 29, 792, 643);
+        AdmurinGuiArt.Add(this, "AdmurinDungeonConfirm", "dungeon_gates_0b", 14, 29, 792, 643);
 
         _heading = AddText(this, "DungeonConfirmHeading", "DUNGEON GATE DETECTED",
             145, 46, 530, 31, 18, Gold, bold: true, center: true);
