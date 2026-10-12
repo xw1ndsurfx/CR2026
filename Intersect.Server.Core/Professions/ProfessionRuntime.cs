@@ -261,7 +261,7 @@ internal static class ProfessionRuntime
     }
 
     /// <summary>
-    /// Repair already-bank​ed profession XP on inactive characters as well.
+    /// Repair already-banked profession XP on inactive characters as well.
     /// Run at startup and before raising a profession cap in the editor.
     /// </summary>
     internal static int ClampStoredExperienceAtCaps(IEnumerable<ProfessionDefinition> definitions)
@@ -311,7 +311,7 @@ internal static class ProfessionRuntime
         }
 
         // Keep online in-memory characters synchronized with persisted data.
-        foreach (var player in Player.OnlinePlayersById.Values)
+        foreach (var player in Player.OnlinePlayersSnapshot())
             ClampPlayerExperienceAtCaps(player, byId.Values);
 
         return updated;
