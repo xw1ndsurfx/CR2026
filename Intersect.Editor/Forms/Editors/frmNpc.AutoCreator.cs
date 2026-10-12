@@ -115,7 +115,7 @@ public partial class FrmNpc
         var apply = new Button
         {
             Text = "Apply to selected NPC", Location = new Point(267, 483),
-            Size = new Size(205, 32), DialogResult = DialogResult.OK
+            Size = new Size(205, 32), DialogResult = DialogResult.None
         };
         var cancel = new Button
         {
@@ -155,17 +155,19 @@ public partial class FrmNpc
             {
                 3 => 0.7d, 4 => 1.35d, _ => 1.0d
             };
-            int Scale(double value) => (int)Math.Clamp(Math.Round(value), 0d, 100_000_000d);
+            int Cap(NumericUpDown field, double value) =>
+                (int)Math.Clamp(Math.Round(value), (double)field.Minimum,
+                    Math.Min((double)field.Maximum, 100_000_000d));
             return (
-                Scale((30d + 12d * lvl + lvl * lvl * 1.5d) * multiplier * hpWeight),
-                role.SelectedIndex == 2 ? Scale((20d + 7d * lvl) * multiplier) : 0,
-                role.SelectedIndex == 2 ? 0 : Scale((3d + 2.2d * lvl) * multiplier),
-                role.SelectedIndex == 2 ? Scale((3d + 2.2d * lvl) * multiplier) : 0,
-                Scale((2d + lvl * 1.1d) * multiplier * (role.SelectedIndex == 3 ? 1.5d : 1d)),
-                Scale((2d + lvl * 1.1d) * multiplier * (role.SelectedIndex == 2 ? 1.4d : 1d)),
-                Scale(2d + lvl * 0.8d),
-                Scale((3d + 1.8d * lvl) * multiplier * damageWeight),
-                Scale((5d + 3d * lvl + lvl * lvl * 0.5d) * multiplier)
+                Cap(nudHp, (30d + 12d * lvl + lvl * lvl * 1.5d) * multiplier * hpWeight),
+                role.SelectedIndex == 2 ? Cap(nudMana, (20d + 7d * lvl) * multiplier) : 0,
+                role.SelectedIndex == 2 ? 0 : Cap(nudStr, (3d + 2.2d * lvl) * multiplier),
+                role.SelectedIndex == 2 ? Cap(nudMag, (3d + 2.2d * lvl) * multiplier) : 0,
+                Cap(nudDef, (2d + lvl * 1.1d) * multiplier * (role.SelectedIndex == 3 ? 1.5d : 1d)),
+                Cap(nudMR, (2d + lvl * 1.1d) * multiplier * (role.SelectedIndex == 2 ? 1.4d : 1d)),
+                Cap(nudSpd, 2d + lvl * 0.8d),
+                Cap(nudDamage, (3d + 1.8d * lvl) * multiplier * damageWeight),
+                Cap(nudExp, (5d + 3d * lvl + lvl * lvl * 0.5d) * multiplier)
             );
         }
 
@@ -230,7 +232,7 @@ public partial class FrmNpc
                     proposed.hp, proposed.damage, stats,
                     role.SelectedIndex == 2 ? (int)DamageType.Magic : (int)DamageType.Physical,
                     role.SelectedIndex == 2 ? (int)Stat.AbilityPower : (int)Stat.Attack,
-                    100);
+                    100, (long)nudHp.Maximum, (int)nudDamage.Maximum);
             }
             catch (Exception ex)
             {
@@ -256,6 +258,14 @@ public partial class FrmNpc
         }
 
         simulate.Click += (_, _) => EnsureCalibrated();
+        apply.Click += (_, _) =>
+        {
+            if (EnsureCalibrated())
+            {
+                dialog.DialogResult = DialogResult.OK;
+                dialog.Close();
+            }
+        };
         RefreshPreview();
 
         if (dialog.ShowDialog(this) != DialogResult.OK)
@@ -263,8 +273,8 @@ public partial class FrmNpc
             return;
         }
 
-        // Refuse silently falling back to level-only heuristic guesses.
-        if (!EnsureCalibrated())
+        // The Apply button cannot close the dialog without a valid simulation.
+        if (calibration?.Calibrated != true)
         {
             return;
         }
@@ -287,6 +297,12 @@ public partial class FrmNpc
         Assign(nudDamage, calibration.Damage);
         Assign(nudExp, result.exp);
         Assign(nudScaling, 100);
+        Assign(nudCritChance, 0);
+        Assign(nudCritMultiplier, 1.50m);
+        cmbAttackSpeedModifier.SelectedIndex = 0;
+        Assign(nudAttackSpeedValue, 0);
+        Assign(nudHpRegen, 0);
+        Assign(nudMpRegen, 0);
         cmbDamageType.SelectedIndex = role.SelectedIndex == 2
             ? (int)DamageType.Magic : (int)DamageType.Physical;
         cmbScalingStat.SelectedIndex = role.SelectedIndex == 2
