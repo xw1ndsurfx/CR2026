@@ -3,11 +3,9 @@ using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
-using Intersect.Framework.Core;
 using Intersect.Framework.Core.Dungeons;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Quests;
-using Intersect.GameObjects;
 using Intersect.Network.Packets.Server;
 using Intersect.Utilities;
 using UiRectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
@@ -16,111 +14,151 @@ using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 namespace Intersect.Client.Interface.Game;
 
 /// <summary>
-/// The player's dungeon registry. All decorative accents are drawn in Gwen
-/// instead of using decorative Unicode characters, which do not exist in
-/// every glyph set of the game's pixel font.
+/// Compact Dungeon Gates registry based on Admurin's art. The carousel selects
+/// one dungeon; Details, Record and Rankings describe that dungeon only.
+/// All statistics and availability values come from DungeonStatePacket.
 /// </summary>
 internal sealed class DungeonPanelWindow : Window
 {
-    private static readonly Color Gold = new(a: 255, r: 220, g: 188, b: 111);
-    private static readonly Color SoftGold = new(a: 255, r: 190, g: 158, b: 97);
-    private static readonly Color Cream = new(a: 255, r: 241, g: 225, b: 195);
-    private static readonly Color Muted = new(a: 255, r: 184, g: 171, b: 151);
-    private static readonly Color Good = new(a: 255, r: 135, g: 213, b: 143);
-    private static readonly Color Bad = new(a: 255, r: 225, g: 122, b: 115);
+    private static readonly Color Gold = new(a: 255, r: 224, g: 189, b: 116);
+    private static readonly Color Cream = new(a: 255, r: 246, g: 229, b: 198);
+    private static readonly Color Muted = new(a: 255, r: 169, g: 149, b: 125);
+    private static readonly Color Good = new(a: 255, r: 132, g: 226, b: 154);
+    private static readonly Color Bad = new(a: 255, r: 215, g: 124, b: 111);
+
+    private sealed class DataFrame : Base
+    {
+        public DataFrame(Base parent, string name) : base(parent, name)
+        {
+            MouseInputEnabled = false;
+        }
+
+        protected override void Render(SkinBase skin)
+        {
+            var bounds = RenderBounds;
+            var renderer = skin.Renderer;
+            renderer.DrawColor = new Color(a: 255, r: 170, g: 142, b: 82);
+            renderer.DrawFilledRect(bounds);
+            renderer.DrawColor = new Color(a: 255, r: 12, g: 18, b: 9);
+            renderer.DrawFilledRect(new UiRectangle(
+                bounds.X + 2, bounds.Y + 2, bounds.Width - 4, bounds.Height - 4));
+        }
+    }
 
     private readonly Label _summary;
     private readonly Label _personalSummary;
-    private readonly ScrollControl _scroll;
+    private readonly Base _gateStrip;
+    private readonly DataFrame _details;
+    private readonly DataFrame _record;
+    private readonly DataFrame _clearsRanking;
+    private readonly DataFrame _fastestRanking;
+    private readonly Button _previous;
+    private readonly Button _next;
+    private readonly List<(int Index, ImagePanel? Frame, ImagePanel? Icon, Label Name, Label Location)> _gateCards = [];
+
+    private DungeonDefinition[] _definitions = [];
+    private Dictionary<Guid, DungeonStatusEntry> _statuses = [];
+    private Dictionary<Guid, DungeonPlayerStatEntry> _playerStats = [];
     private Dictionary<Guid, DungeonPodiumEntry> _podiums = [];
+    private Guid _selectedId;
+    private int _pageStart;
     private long _nextPodiumRefreshAt;
 
     public DungeonPanelWindow(Canvas parent)
         : base(parent, "Dungeons", false, nameof(DungeonPanelWindow))
     {
-        SetSize(820, 685);
+        SetSize(506, 689);
         Alignment = [Alignments.Center];
         DeleteOnClose = false;
         DisableResizing();
 
-        var backdrop = new DungeonChrome(this, "DungeonWindowFrame", ChromeStyle.Window);
-        backdrop.SetBounds(13, 27, 794, 642);
-        AdmurinGuiArt.Add(this, "AdmurinDungeonWindow", "dungeon_gates_0a", 13, 27, 794, 642);
-
-        AddText(this, "DungeonPanelTitle", "DUNGEON GATES",
-            125, 43, 570, 31, 21, Gold, bold: true, center: true);
-
-        AddText(this, "DungeonPanelSubtitle", "ROYAL GATE REGISTRY - DETECTED DUNGEONS",
-            120, 75, 580, 20, 9, Muted, center: true);
-
-        _summary = AddText(this, "DungeonPanelSummary", "",
-            125, 99, 570, 24, 10, Cream, bold: true, center: true);
-
-        var ribbon = new DungeonChrome(this, "DungeonRecordRibbon", ChromeStyle.Ribbon);
-        ribbon.SetBounds(28, 128, 764, 31);
-
-        _personalSummary = AddText(this, "DungeonPanelPersonalSummary", "",
-            42, 134, 736, 19, 9, Gold, bold: true, center: true);
-
-        // Draw a large, high-contrast button using the same pixel-art framing
-        // as the registry. The native Gwen button text uses the skin's small
-        // default font, so the text is rendered with explicit readable labels.
-        // Keep the actual clickable control underneath these mouse-transparent
-        // decorations to preserve its existing network action.
-        var refresh = new Button(this, "DungeonPanelRefresh")
+        // The complete frame is one authored 544x725 sprite. Render it as one
+        // image, not on top of an extra hand-painted competing frame.
+        if (AdmurinGuiArt.Add(this, "AdmurinDungeonFrame", "dungeon_gates_0a",
+                10, 26, 486, 646) == null)
         {
-            Text = string.Empty,
-        };
-        refresh.SetBounds(614, 37, 174, 45);
+            var fallback = new DataFrame(this, "DungeonFallbackFrame");
+            fallback.SetBounds(10, 26, 486, 646);
+        }
 
-        var refreshFrame = new DungeonChrome(
-            refresh, "DungeonPanelRefreshFrame", ChromeStyle.Refresh);
-        refreshFrame.SetBounds(0, 0, 174, 45);
+        AddText(this, "Heading", "DUNGEON GATES", 72, 43, 361, 26, 20, Gold, centered: true);
+        AddText(this, "Subtitle", "ROYAL GATE REGISTRY - DETECTED DUNGEONS",
+            47, 72, 412, 16, 9, Cream, centered: true);
+        _summary = AddText(this, "Summary", "", 55, 89, 399, 15, 9, Cream, centered: true);
 
-        AddText(refresh, "DungeonPanelRefreshLabel", "REFRESH",
-            54, 5, 112, 22, 16, Cream, bold: true, center: true);
-        AddText(refresh, "DungeonPanelRefreshCaption", "RANKINGS",
-            54, 26, 112, 15, 11, Gold, bold: true, center: true);
+        var ribbon = new DataFrame(this, "RecordRibbon");
+        ribbon.SetBounds(38, 108, 430, 23);
+        _personalSummary = AddText(ribbon, "RecordText", "", 9, 2, 413, 18, 9, Gold, centered: true);
 
+        _gateStrip = new Base(this, "DungeonGateStrip");
+        _gateStrip.SetBounds(54, 140, 398, 83);
+        _gateStrip.MouseInputEnabled = false;
+
+        _previous = new Button(this, "DungeonPagePrevious") { Text = string.Empty };
+        _previous.SetBounds(21, 164, 29, 33);
+        AdmurinGuiArt.Add(_previous, "PreviousArrow", "dungeon_gates_4",
+            4, 0, 18, 32, 0, 0, 16, 32);
+        _previous.Clicked += (_, _) => ChangePage(-3);
+
+        _next = new Button(this, "DungeonPageNext") { Text = string.Empty };
+        _next.SetBounds(459, 164, 28, 33);
+        var nextArrow = AdmurinGuiArt.Add(_next, "NextArrow", "dungeon_gates_4",
+            4, 0, 18, 32, 0, 0, 16, 32);
+        // The artist supplied left arrows; mirrored UVs produce the right arrow.
+        nextArrow?.SetUVs(16f / 64f, 0f, 0f, 1f);
+        _next.Clicked += (_, _) => ChangePage(3);
+
+        AddText(this, "DetailsHeading", "DETAILS", 61, 224, 388, 21, 17, Gold, centered: true);
+        _details = new DataFrame(this, "DungeonDetails");
+        _details.SetBounds(38, 248, 430, 154);
+
+        AddText(this, "RecordHeading", "RECORD", 62, 404, 386, 21, 17, Gold, centered: true);
+        _record = new DataFrame(this, "DungeonRecord");
+        _record.SetBounds(38, 429, 430, 111);
+
+        AddText(this, "RankingHeading", "RANKINGS", 62, 541, 386, 20, 17, Gold, centered: true);
+        _clearsRanking = new DataFrame(this, "MostClears");
+        _clearsRanking.SetBounds(38, 567, 208, 91);
+        _fastestRanking = new DataFrame(this, "Fastest");
+        _fastestRanking.SetBounds(259, 567, 209, 91);
+
+        var refresh = new Button(this, "DungeonRankingsRefresh") { Text = string.Empty };
+        refresh.SetBounds(443, 542, 25, 24);
+        AdmurinGuiArt.Add(refresh, "RefreshIcon", "dungeon_gates_3",
+            0, 0, 24, 24, 48, 0, 24, 24);
+        refresh.SetToolTipText("Refresh dungeon rankings");
         refresh.Clicked += (_, _) =>
         {
             var now = Timing.Global.Milliseconds;
             if (now < _nextPodiumRefreshAt)
                 return;
-
             _nextPodiumRefreshAt = now + 3_000;
             Networking.PacketSender.SendRequestDungeonPanel(openWindow: true);
         };
 
-        _scroll = new ScrollControl(this, "DungeonPanelScroll")
-        {
-            OverflowX = OverflowBehavior.Hidden,
-            OverflowY = OverflowBehavior.Scroll,
-            AutoHideBars = true,
-        };
-        _scroll.SetBounds(24, 170, 772, 489);
-
         Hide();
-    }
-
-    protected override void EnsureInitialized()
-    {
     }
 
     public void Apply(DungeonStatePacket packet)
     {
         DungeonConfiguration.Load(packet.ConfigurationJson);
+        _definitions = (DungeonConfiguration.Instance.Dungeons ?? [])
+            .OrderBy(dungeon => dungeon.SortOrder)
+            .ThenBy(dungeon => dungeon.Rank)
+            .ThenBy(dungeon => dungeon.Name)
+            .ToArray();
 
-        var statuses = (packet.Statuses ?? [])
-            .Where(value => value != null)
-            .GroupBy(value => value.DungeonId)
+        _statuses = (packet.Statuses ?? [])
+            .Where(entry => entry != null)
+            .GroupBy(entry => entry.DungeonId)
+            .ToDictionary(group => group.Key, group => group.First());
+        _playerStats = (packet.PlayerStats ?? [])
+            .Where(entry => entry != null)
+            .GroupBy(entry => entry.DungeonId)
             .ToDictionary(group => group.Key, group => group.First());
 
-        var personalStats = (packet.PlayerStats ?? [])
-            .Where(value => value != null)
-            .GroupBy(value => value.DungeonId)
-            .ToDictionary(group => group.Key, group => group.First());
-
+        // A null podium list means a background status packet; keep the last
+        // manually requested leaderboard rather than erasing it.
         if (packet.Podiums != null)
         {
             _podiums = packet.Podiums
@@ -129,270 +167,270 @@ internal sealed class DungeonPanelWindow : Window
                 .ToDictionary(group => group.Key, group => group.First());
         }
 
-        var definitions = DungeonConfiguration.Instance.Dungeons
-            .OrderBy(dungeon => dungeon.SortOrder)
-            .ThenBy(dungeon => dungeon.Rank)
-            .ThenBy(dungeon => dungeon.Name)
-            .ToArray();
+        var openCount = _definitions.Count(dungeon =>
+            _statuses.TryGetValue(dungeon.Id, out var status) && status.Available);
+        _summary.Text = $"{openCount} ACTIVE GATE{(openCount == 1 ? "" : "S")}  /  {_definitions.Length} REGISTERED";
 
-        var openCount = statuses.Values.Count(status => status.Available);
-        _summary.Text = $"{openCount:N0} ACTIVE GATE{(openCount == 1 ? "" : "S")}    /    {definitions.Length:N0} REGISTERED";
-
-        var totalAttempts = personalStats.Values.Sum(entry => entry.Attempts);
-        var totalCompletions = personalStats.Values.Sum(entry => entry.Completions);
-        var totalFailures = personalStats.Values.Sum(entry => entry.Failures);
-        var totalDeaths = personalStats.Values.Sum(entry => entry.Deaths);
+        var clears = _playerStats.Values.Sum(value => value.Completions);
+        var attempts = _playerStats.Values.Sum(value => value.Attempts);
+        var failures = _playerStats.Values.Sum(value => value.Failures);
+        var deaths = _playerStats.Values.Sum(value => value.Deaths);
         _personalSummary.Text =
-            $"YOUR RECORD    {totalCompletions:N0} CLEARS  /  {totalAttempts:N0} RUNS" +
-            $"  /  {totalFailures:N0} FAILURES  /  {totalDeaths:N0} DEATHS";
+            $"YOUR RECORD  {clears:N0} CLEARS / {attempts:N0} RUNS / {failures:N0} FAILURES / {deaths:N0} DEATHS";
 
-        _scroll.DeleteAll();
-
-        var y = 8;
-        foreach (var dungeon in definitions)
+        var selectedIndex = Array.FindIndex(_definitions, definition => definition.Id == _selectedId);
+        if (selectedIndex < 0)
         {
-            statuses.TryGetValue(dungeon.Id, out var status);
-            status ??= new DungeonStatusEntry(dungeon.Id, false, "SEALED", 0);
-            personalStats.TryGetValue(dungeon.Id, out var record);
-            record ??= new DungeonPlayerStatEntry { DungeonId = dungeon.Id };
-            _podiums.TryGetValue(dungeon.Id, out var podium);
-            y = AddDungeonCard(dungeon, status, record, podium, y);
+            selectedIndex = 0;
+            _selectedId = _definitions.Length > 0 ? _definitions[0].Id : Guid.Empty;
         }
+        _pageStart = selectedIndex / 3 * 3;
 
-        if (definitions.Length == 0)
-        {
-            AddText(_scroll, "NoDungeons", "No dungeon gates are registered yet.",
-                22, 90, 694, 40, 12, Cream, center: true);
-            y = 155;
-        }
-
-        _scroll.SetInnerSize(744, Math.Max(482, y + 12));
-        _scroll.UpdateScrollBars();
+        BuildGateStrip();
+        RenderSelection();
     }
 
-    private int AddDungeonCard(
-        DungeonDefinition dungeon,
-        DungeonStatusEntry status,
-        DungeonPlayerStatEntry record,
-        DungeonPodiumEntry? podium,
-        int y)
+    private void ChangePage(int offset)
     {
-        const int width = 724;
-        const int height = 453;
+        if (_definitions.Length == 0)
+            return;
 
-        // This non-interactive painted panel replaces the generic button
-        // texture and removes its accidental hover/placeholder artifacts.
-        var card = new DungeonChrome(_scroll, $"DungeonCard{dungeon.Id}", ChromeStyle.Card);
-        card.SetBounds(8, y, width, height);
+        var lastPage = (_definitions.Length - 1) / 3 * 3;
+        _pageStart = Math.Clamp(_pageStart + offset, 0, lastPage);
+        _selectedId = _definitions[_pageStart].Id;
+        BuildGateStrip();
+        RenderSelection();
+    }
 
-        var preview = new DungeonChrome(card, $"DungeonPreviewFrame{dungeon.Id}", ChromeStyle.Preview);
-        preview.SetBounds(17, 17, 124, 104);
+    private void BuildGateStrip()
+    {
+        _gateStrip.DeleteAll();
+        _gateCards.Clear();
 
-        // Use the image configured in Game Editor. Otherwise the preview
-        // displays a deliberately painted pixel-art dungeon gate.
-        if (!string.IsNullOrWhiteSpace(dungeon.Image))
+        _previous.IsDisabled = _pageStart == 0;
+        _next.IsDisabled = _pageStart + 3 >= _definitions.Length;
+
+        for (var slot = 0; slot < 3 && _pageStart + slot < _definitions.Length; slot++)
         {
-            var manager = Globals.ContentManager;
-            var texture =
-                manager?.GetTexture(TextureType.Dungeon, dungeon.Image) ??
-                manager?.GetTexture(TextureType.Image, dungeon.Image);
-            if (texture != null)
+            var index = _pageStart + slot;
+            var definition = _definitions[index];
+            var available = _statuses.TryGetValue(definition.Id, out var status) && status.Available;
+            var button = new Button(_gateStrip, $"GateChoice{index}") { Text = string.Empty };
+            button.SetBounds(slot * 129 + 5, 0, 117, 81);
+            button.SetToolTipText(string.IsNullOrWhiteSpace(definition.Description)
+                ? definition.Name : definition.Name + "\n" + Shorten(definition.Description, 170));
+
+            var frame = AdmurinGuiArt.Add(button, $"GateCardArt{index}", "dungeon_gates_2",
+                0, 0, 117, 81);
+
+            ImagePanel? gateIcon = null;
+            if (!string.IsNullOrWhiteSpace(definition.Image))
             {
-                var image = new ImagePanel(card, $"DungeonImage{dungeon.Id}")
+                var image = GameContentManager.Current.GetTexture(TextureType.Dungeon, definition.Image) ??
+                            GameContentManager.Current.GetTexture(TextureType.Image, definition.Image);
+                if (image != null)
                 {
-                    MaintainAspectRatio = true,
-                    MouseInputEnabled = false,
-                    Texture = texture,
-                };
-                image.SetBounds(22, 22, 114, 94);
+                    gateIcon = new ImagePanel(button, $"GateCustomIcon{index}")
+                    {
+                        Texture = image,
+                        MouseInputEnabled = false,
+                        MaintainAspectRatio = true,
+                        ShouldDrawBackground = false,
+                    };
+                    gateIcon.SetBounds(44, 6, 30, 29);
+                }
             }
+
+            if (gateIcon == null)
+                gateIcon = AdmurinGuiArt.Add(button, $"GateDefaultIcon{index}",
+                    "dungeon_gates_1", 43, 7, 31, 30,
+                    available ? 0 : 32, 0, 32, 32);
+
+            var name = AddText(button, $"GateName{index}",
+                Shorten(definition.Name, 17), 5, 43, 106, 15, 9, Cream, centered: true);
+            var location = AddText(button, $"GateLocation{index}",
+                Shorten(definition.Location, 18), 5, 58, 106, 14, 8, Gold, centered: true);
+
+            button.Clicked += (_, _) =>
+            {
+                _selectedId = definition.Id;
+                RenderSelection();
+            };
+            _gateCards.Add((index, frame, gateIcon, name, location));
+        }
+        HighlightSelection();
+    }
+
+    private void HighlightSelection()
+    {
+        foreach (var gate in _gateCards)
+        {
+            var definition = _definitions[gate.Index];
+            var selected = definition.Id == _selectedId;
+            var available = _statuses.TryGetValue(definition.Id, out var status) && status.Available;
+            if (gate.Frame != null)
+            {
+                gate.Frame.RenderColor = selected
+                    ? Color.White
+                    : new Color(a: 255, r: 157, g: 135, b: 125);
+            }
+
+            if (gate.Icon != null && string.IsNullOrWhiteSpace(definition.Image))
+            {
+                gate.Icon.SetTextureRect(selected && available ? 0 : available ? 64 : 32, 0, 32, 32);
+            }
+            gate.Name.TextColorOverride = selected ? Gold : Muted;
+            gate.Location.TextColorOverride = selected ? Cream : Muted;
+        }
+    }
+
+    private void RenderSelection()
+    {
+        HighlightSelection();
+        _details.DeleteAll();
+        _record.DeleteAll();
+        _clearsRanking.DeleteAll();
+        _fastestRanking.DeleteAll();
+
+        var selected = _definitions.FirstOrDefault(definition => definition.Id == _selectedId);
+        if (selected == null)
+        {
+            AddText(_details, "Empty", "No dungeon gates have been registered.", 12, 55, 406, 28,
+                11, Cream, centered: true);
+            return;
         }
 
-        AddText(card, $"DungeonName{dungeon.Id}", Shorten(dungeon.Name, 43),
-            165, 17, 468, 28, 15, Cream, bold: true);
+        _statuses.TryGetValue(selected.Id, out var status);
+        status ??= new DungeonStatusEntry(selected.Id, false, "SEALED", 0);
+        _playerStats.TryGetValue(selected.Id, out var record);
+        record ??= new DungeonPlayerStatEntry { DungeonId = selected.Id };
+        _podiums.TryGetValue(selected.Id, out var podium);
 
-        AddText(card, $"DungeonRank{dungeon.Id}", dungeon.Rank.ToString(),
-            657, 15, 49, 29, 21, RankColor(dungeon.Rank), bold: true, center: true);
+        var associatedQuest = selected.AssociatedQuestId == Guid.Empty
+            ? null : QuestDescriptor.Get(selected.AssociatedQuestId);
+        var requiredQuest = selected.RequiredQuestInProgressId == Guid.Empty
+            ? null : QuestDescriptor.Get(selected.RequiredQuestInProgressId);
+        var questName = requiredQuest?.Name ?? associatedQuest?.Name ?? "NONE";
 
-        AddText(card, $"DungeonLocation{dungeon.Id}",
-            "LOCATION  " + Shorten(
-                string.IsNullOrWhiteSpace(dungeon.Location) ? "Unknown" : dungeon.Location, 57),
-            165, 49, 524, 21, 10, Gold, bold: true);
-
-        AddText(card, $"DungeonDescription{dungeon.Id}", Shorten(
-                string.IsNullOrWhiteSpace(dungeon.Description) ? "No description provided." : dungeon.Description,
-                105),
-            165, 76, 515, 30, 9, Muted);
-
-        AddText(card, $"DungeonTransition{dungeon.Id}", Shorten(BuildTransitionText(status), 57),
-            165, 109, 390, 19, 9, Muted);
-
-        AddText(card, $"DungeonStatus{dungeon.Id}", status.Available ? "AVAILABLE" : "SEALED",
-            579, 104, 112, 22, 10, status.Available ? Good : Bad, bold: true, center: true);
-
-        var associatedQuest = dungeon.AssociatedQuestId == Guid.Empty
-            ? null
-            : QuestDescriptor.Get(dungeon.AssociatedQuestId);
-        var requiredQuest = dungeon.RequiredQuestInProgressId == Guid.Empty
-            ? null
-            : QuestDescriptor.Get(dungeon.RequiredQuestInProgressId);
-
-        var questText = associatedQuest?.Name ?? "None";
-        if (requiredQuest != null)
-            questText += " / REQUIRED IN PROGRESS: " + requiredQuest.Name;
-
-        AddInformationRow(card, dungeon.Id, "Quest", "QUEST", Shorten(questText, 72), 138);
-        var maxLevel = dungeon.MaximumLevel > 0 ? $"-{dungeon.MaximumLevel}" : "+";
-        var levelText = $"LEVEL {dungeon.MinimumLevel}{maxLevel}  /  RECOMMENDED {dungeon.RecommendedLevel}+" +
-                        $"  /  PARTY {dungeon.MinimumPartySize}-{dungeon.MaximumPartySize}" +
-                        $"  /  LIVES {Math.Max(1, dungeon.MaxLives)}";
-        if (dungeon.TimeLimitMinutes > 0)
-            levelText += $"  /  {dungeon.TimeLimitMinutes} MIN";
-        if (dungeon.PremiumRequired)
-            levelText += "  /  PREMIUM";
-        AddInformationRow(card, dungeon.Id, "Level", "LEVEL", Shorten(levelText, 100), 169);
-
-        var requirements = dungeon.CompletionRequirements == DungeonCompletionRequirement.None
+        var requirements = selected.CompletionRequirements == DungeonCompletionRequirement.None
             ? DungeonCompletionRequirement.DefeatFinalBoss
-            : dungeon.CompletionRequirements;
+            : selected.CompletionRequirements;
         var objectives = new List<string>();
         if ((requirements & DungeonCompletionRequirement.DefeatFinalBoss) != 0)
             objectives.Add("Final Boss");
         if ((requirements & DungeonCompletionRequirement.DefeatAllMonsters) != 0)
             objectives.Add("All Monsters");
-        AddInformationRow(card, dungeon.Id, "Objective", "OBJECTIVE",
-            objectives.Count > 0 ? string.Join("  /  ", objectives) : "No objectives configured", 200);
 
-        var rewards = new List<string>();
-        if (dungeon.CompletionExperience > 0)
-            rewards.Add($"{dungeon.CompletionExperience:N0} EXP");
-        var item = dungeon.CompletionItemId == Guid.Empty
-            ? null
-            : ItemDescriptor.Get(dungeon.CompletionItemId);
-        if (item != null && dungeon.CompletionItemQuantity > 0)
-            rewards.Add($"{item.Name} x{dungeon.CompletionItemQuantity:N0}");
-        AddInformationRow(card, dungeon.Id, "Rewards", "REWARDS",
-            rewards.Count > 0 ? Shorten(string.Join("  /  ", rewards), 88) : "None configured", 231);
+        var rewardParts = new List<string>();
+        if (selected.CompletionExperience > 0)
+            rewardParts.Add($"{selected.CompletionExperience:N0} EXP");
+        if (selected.CompletionItemId != Guid.Empty && selected.CompletionItemQuantity > 0)
+            rewardParts.Add($"{ItemDescriptor.GetName(selected.CompletionItemId)} x{selected.CompletionItemQuantity:N0}");
 
-        AddText(card, $"DungeonPersonalRecordTitle{dungeon.Id}", "YOUR RECORD",
-            38, 270, 244, 20, 11, Gold, bold: true);
-
-        AddText(card, $"DungeonPersonalRecord{dungeon.Id}",
-            $"{record.Completions:N0} CLEARS  /  {record.Attempts:N0} RUNS" +
-            $"  /  {record.Failures:N0} FAILURES  /  {record.Deaths:N0} DEATHS",
-            38, 294, 651, 22, 10, Cream, bold: true);
+        var levelRange = selected.MaximumLevel > 0
+            ? $"{selected.MinimumLevel}-{selected.MaximumLevel}"
+            : $"{selected.MinimumLevel}+";
+        var rows = new (string Heading, string Value, Color Tint)[]
+        {
+            ("NAME", selected.Name, Cream),
+            ("LOCATION", string.IsNullOrWhiteSpace(selected.Location) ? "UNKNOWN" : selected.Location, Cream),
+            ("STATUS", status.Available ? "AVAILABLE" : "SEALED - " + status.StatusText,
+                status.Available ? Good : Bad),
+            ("TIER", selected.Rank.ToString(), Cream),
+            ("QUEST REQUIRED", questName, Cream),
+            ("LEVEL", $"{levelRange} / RECOMMENDED {selected.RecommendedLevel}+", Cream),
+            ("PARTY", $"{selected.MinimumPartySize}-{selected.MaximumPartySize}", Cream),
+            ("LIVES", Math.Max(1, selected.MaxLives).ToString(), Cream),
+            ("OBJECTIVE", objectives.Count > 0 ? string.Join(" / ", objectives) : "NONE", Cream),
+            ("REWARDS", rewardParts.Count > 0 ? string.Join(" / ", rewardParts) : "NONE", Cream),
+        };
+        for (var index = 0; index < rows.Length; index++)
+        {
+            var (heading, value, tint) = rows[index];
+            var y = 6 + index * 14;
+            AddText(_details, $"DetailHeading{index}", heading, 7, y, 144, 14, 9, Gold);
+            AddText(_details, $"DetailValue{index}", Shorten(value, 45),
+                158, y, 263, 14, 9, tint);
+        }
 
         var clearRate = record.Attempts > 0
-            ? 100.0 * record.Completions / record.Attempts
-            : 0.0;
-        AddText(card, $"DungeonPersonalBestTitle{dungeon.Id}", "BEST TIME",
-            38, 324, 122, 20, 10, Gold, bold: true);
-        AddText(card, $"DungeonPersonalBest{dungeon.Id}",
-            $"{FormatDuration(record.BestClearTimeMilliseconds)}" +
-            $"  /  LAST CLEAR: {FormatLastClear(record.LastCompletedUnixMilliseconds)}" +
-            $"  /  CLEAR RATE: {clearRate:0}%",
-            168, 324, 521, 20, 9, Cream);
-
-        AddPodiumColumn(card, dungeon.Id, "Clears", "TOP 3 - MOST CLEARS",
-            37, podium?.TopClears ?? [], fastest: false);
-        AddPodiumColumn(card, dungeon.Id, "Fastest", "TOP 3 - FASTEST CLEARS",
-            390, podium?.FastestClears ?? [], fastest: true);
-
-        return y + height + 11;
-    }
-
-    private void AddInformationRow(
-        Base parent,
-        Guid dungeonId,
-        string key,
-        string heading,
-        string content,
-        int y)
-    {
-        AddText(parent, $"DungeonInfo{key}Label{dungeonId}", heading,
-            55, y, 142, 25, 10, Gold, bold: true);
-        AddText(parent, $"DungeonInfo{key}Value{dungeonId}", content,
-            201, y, 493, 25, 9, Cream);
-    }
-
-    private void AddPodiumColumn(
-        Base parent,
-        Guid dungeonId,
-        string key,
-        string title,
-        int x,
-        DungeonPodiumPlayerEntry[] entries,
-        bool fastest)
-    {
-        AddText(parent, $"DungeonPodiumHeader{key}{dungeonId}", title,
-            x, 360, 300, 22, 10, Gold, bold: true);
-
-        if (entries.Length == 0)
+            ? 100.0 * record.Completions / record.Attempts : 0;
+        var recordRows = new (string Heading, string Value)[]
         {
-            AddText(parent, $"DungeonPodiumEmpty{key}{dungeonId}", "No champions yet.",
-                x, 394, 306, 21, 9, Muted);
+            ("BEST TIME", FormatDuration(record.BestClearTimeMilliseconds)),
+            ("CLEARS", record.Completions.ToString("N0")),
+            ("RUNS", record.Attempts.ToString("N0")),
+            ("FAILURES", record.Failures.ToString("N0")),
+            ("DEATHS", record.Deaths.ToString("N0")),
+            ("LAST CLEAR", FormatLastClear(record.LastCompletedUnixMilliseconds)),
+            ("CLEAR RATE", $"{clearRate:0}%"),
+        };
+        for (var index = 0; index < recordRows.Length; index++)
+        {
+            var (heading, value) = recordRows[index];
+            AddText(_record, $"RecordHeading{index}", heading, 7, 5 + index * 14, 151, 14, 9, Gold);
+            AddText(_record, $"RecordValue{index}", value, 163, 5 + index * 14, 258, 14, 9, Cream);
+        }
+
+        DrawRanking(_clearsRanking, "CLEARS", podium?.TopClears ?? [], fastest: false);
+        DrawRanking(_fastestRanking, "FASTEST", podium?.FastestClears ?? [], fastest: true);
+    }
+
+    private static void DrawRanking(
+        Base parent, string identifier, DungeonPodiumPlayerEntry[] players, bool fastest)
+    {
+        AddText(parent, identifier + "Heading", fastest ? "RANK   FASTEST CLEARS    TIME" :
+            "RANK    MOST CLEARS     SCORE", 7, 3, 192, 14, 8, Gold);
+        if (players.Length == 0)
+        {
+            AddText(parent, identifier + "Empty", "No records yet.", 8, 30, 188, 18, 9, Muted);
             return;
         }
 
-        for (var index = 0; index < Math.Min(3, entries.Length); index++)
+        for (var index = 0; index < Math.Min(3, players.Length); index++)
         {
-            var entry = entries[index];
-            if (entry == null)
+            var player = players[index];
+            if (player == null)
                 continue;
-
-            var result = fastest
-                ? FormatDuration(entry.BestClearTimeMilliseconds)
-                : $"{entry.Completions:N0} CLEARS";
-            AddText(parent, $"DungeonPodium{key}{dungeonId}Rank{index}",
-                $"#{index + 1}  {Shorten(entry.PlayerName, 17)}  -  {result}",
-                x, 385 + index * 19, 301, 19, 9, PodiumColor(index), bold: true);
+            AddText(parent, identifier + "Rank" + index,
+                (index + 1).ToString(), 8, 21 + index * 21, 20, 18, 9, Cream);
+            AddText(parent, identifier + "Player" + index,
+                Shorten(player.PlayerName, 12), 36, 21 + index * 21, 106, 18, 9, Cream);
+            AddText(parent, identifier + "Score" + index,
+                fastest ? FormatDuration(player.BestClearTimeMilliseconds) : player.Completions.ToString("N0"),
+                139, 21 + index * 21, 60, 18, 9, Cream, centered: true);
         }
     }
 
-    private Label AddText(
-        Base parent,
-        string name,
-        string text,
-        int x,
-        int y,
-        int width,
-        int height,
-        int size,
-        Color color,
-        bool bold = false,
-        bool center = false)
+    private static Label AddText(
+        Base parent, string id, string content,
+        int x, int y, int width, int height, int size, Color color, bool centered = false)
     {
-        var label = new Label(parent, name)
+        var label = new Label(parent, id)
         {
+            Text = content,
             AutoSizeToContents = false,
-            Font = GameContentManager.Current.GetFont(bold ? "sourcesansproblack" : "sourcesanspro") ??
-                   Skin.DefaultFont,
+            Font = GameContentManager.Current.GetFont("empire7") ??
+                   GameContentManager.Current.GetFont("sourcesansproblack") ?? parent.Skin.DefaultFont,
             FontSize = size,
             TextColorOverride = color,
-            TextAlign = center ? Pos.Center : Pos.Left | Pos.CenterV,
-            Text = text,
+            TextAlign = centered ? Pos.Center : Pos.Left | Pos.CenterV,
             MouseInputEnabled = false,
         };
         label.SetBounds(x, y, width, height);
         return label;
     }
 
-    private static string Shorten(string? value, int maxLength)
+    private static string Shorten(string? text, int maximum)
     {
-        var trimmed = (value ?? string.Empty)
-            .Replace("\r", " ")
-            .Replace("\n", " ")
-            .Trim();
-        return trimmed.Length <= maxLength
-            ? trimmed
-            : trimmed[..Math.Max(0, maxLength - 3)] + "...";
+        var value = (text ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+        return value.Length <= maximum ? value : value[..Math.Max(0, maximum - 3)] + "...";
     }
 
     private static string FormatDuration(long milliseconds)
     {
         if (milliseconds <= 0)
-            return "NO RECORD";
-
+            return "--:--";
         var duration = TimeSpan.FromMilliseconds(milliseconds);
         return duration.TotalHours >= 1
             ? $"{(long)duration.TotalHours:00}:{duration.Minutes:00}:{duration.Seconds:00}"
@@ -403,7 +441,6 @@ internal sealed class DungeonPanelWindow : Window
     {
         if (unixMilliseconds <= 0)
             return "NEVER";
-
         try
         {
             return DateTimeOffset.FromUnixTimeMilliseconds(unixMilliseconds)
@@ -415,225 +452,9 @@ internal sealed class DungeonPanelWindow : Window
         }
     }
 
-    private static string BuildTransitionText(DungeonStatusEntry status)
-    {
-        if (status.NextChangeUnixMilliseconds <= 0)
-            return status.Available ? "GATE OPEN" : "GATE SEALED";
-
-        var next = DateTimeOffset.FromUnixTimeMilliseconds(status.NextChangeUnixMilliseconds);
-        var remaining = next - DateTimeOffset.Now;
-        if (remaining <= TimeSpan.Zero)
-            return "Updating gate state...";
-
-        var prefix = status.Available ? "Closes in" : "Opens in";
-        if (remaining.TotalDays >= 1)
-            return $"{prefix} {(int)remaining.TotalDays}d {remaining.Hours:00}h";
-        if (remaining.TotalHours >= 1)
-            return $"{prefix} {(int)remaining.TotalHours:00}h {remaining.Minutes:00}m";
-        return $"{prefix} {Math.Max(0, remaining.Minutes):00}m";
-    }
-
-    private static Color RankColor(DungeonRank rank) =>
-        rank switch
-        {
-            DungeonRank.S => new Color(a: 255, r: 228, g: 92, b: 92),
-            DungeonRank.A => new Color(a: 255, r: 224, g: 142, b: 68),
-            DungeonRank.B => new Color(a: 255, r: 211, g: 185, b: 74),
-            DungeonRank.C => new Color(a: 255, r: 111, g: 191, b: 115),
-            DungeonRank.D => new Color(a: 255, r: 87, g: 161, b: 207),
-            DungeonRank.E => new Color(a: 255, r: 139, g: 139, b: 201),
-            _ => new Color(a: 255, r: 175, g: 175, b: 175),
-        };
-
-    private static Color PodiumColor(int index) =>
-        index switch
-        {
-            0 => new Color(a: 255, r: 245, g: 211, b: 112),
-            1 => new Color(a: 255, r: 211, g: 216, b: 227),
-            _ => new Color(a: 255, r: 214, g: 158, b: 118),
-        };
-
     public void ShowWindow()
     {
         Show();
         BringToFront();
-    }
-
-    private enum ChromeStyle
-    {
-        Window,
-        Ribbon,
-        Card,
-        Preview,
-        Refresh,
-    }
-
-    /// <summary>
-    /// Draws a restrained pixel-art gold frame using rectangles. This uses
-    /// no icon fonts or new art files, and stays compatible with Gwen skins.
-    /// </summary>
-    private sealed class DungeonChrome : Base
-    {
-        private static readonly Color OuterGold = new(a: 255, r: 158, g: 112, b: 51);
-        private static readonly Color BrightGold = new(a: 255, r: 224, g: 179, b: 88);
-        private static readonly Color InnerGold = new(a: 255, r: 100, g: 69, b: 40);
-        private static readonly Color Darkest = new(a: 255, r: 24, g: 15, b: 14);
-        private static readonly Color Dark = new(a: 255, r: 38, g: 23, b: 19);
-        private static readonly Color Card = new(a: 255, r: 49, g: 31, b: 25);
-        private static readonly Color Band = new(a: 255, r: 77, g: 46, b: 34);
-        private static readonly Color Stripe = new(a: 255, r: 54, g: 35, b: 29);
-
-        private readonly ChromeStyle _style;
-
-        public DungeonChrome(Base parent, string name, ChromeStyle style) : base(parent, name)
-        {
-            _style = style;
-            MouseInputEnabled = false;
-            KeyboardInputEnabled = false;
-        }
-
-        protected override void Render(SkinBase skin)
-        {
-            var bounds = RenderBounds;
-            switch (_style)
-            {
-                case ChromeStyle.Window:
-                    Fill(skin, bounds, Darkest);
-                    Border(skin, bounds, OuterGold, 2);
-                    Border(skin, Inset(bounds, 5), InnerGold, 1);
-                    Fill(skin, bounds.X + 14, bounds.Y + 6, 34, 2, BrightGold);
-                    Fill(skin, bounds.Right - 48, bounds.Y + 6, 34, 2, BrightGold);
-                    Fill(skin, bounds.X + 18, bounds.Y + 103, bounds.Width - 36, 1, InnerGold);
-                    Fill(skin, bounds.X + 12, bounds.Bottom - 9, bounds.Width - 24, 2, InnerGold);
-                    Corners(skin, bounds, BrightGold);
-                    break;
-
-                case ChromeStyle.Ribbon:
-                    Fill(skin, bounds, Dark);
-                    Border(skin, bounds, OuterGold, 1);
-                    Fill(skin, bounds.X + 7, bounds.Y + 4, 3, bounds.Height - 8, BrightGold);
-                    Fill(skin, bounds.Right - 10, bounds.Y + 4, 3, bounds.Height - 8, BrightGold);
-                    break;
-
-                case ChromeStyle.Refresh:
-                    // A custom gold-edged bronze button and a small refresh
-                    // glyph painted with rectangles: no missing font icons.
-                    Fill(skin, bounds, Band);
-                    Border(skin, bounds, BrightGold, 2);
-                    Border(skin, Inset(bounds, 3), InnerGold, 1);
-                    Fill(skin, bounds.X + 7, bounds.Y + 7, 39, bounds.Height - 14, Darkest);
-                    Border(skin, new UiRectangle(bounds.X + 7, bounds.Y + 7,
-                        39, bounds.Height - 14), InnerGold, 1);
-                    Fill(skin, bounds.X + 16, bounds.Y + 15, 4, 13, BrightGold);
-                    Fill(skin, bounds.X + 20, bounds.Y + 11, 15, 4, BrightGold);
-                    Fill(skin, bounds.X + 34, bounds.Y + 15, 4, 9, BrightGold);
-                    Fill(skin, bounds.X + 22, bounds.Y + 28, 13, 4, BrightGold);
-                    Fill(skin, bounds.X + 35, bounds.Y + 9, 4, 10, BrightGold);
-                    Fill(skin, bounds.X + 39, bounds.Y + 16, 5, 4, BrightGold);
-                    Fill(skin, bounds.X + 49, bounds.Y + 7, 1,
-                        bounds.Height - 14, InnerGold);
-                    Fill(skin, bounds.X + 57, bounds.Y + 5, bounds.Width - 68, 1,
-                        InnerGold);
-                    break;
-
-                case ChromeStyle.Card:
-                    Fill(skin, bounds, Card);
-                    Border(skin, bounds, OuterGold, 2);
-                    Border(skin, Inset(bounds, 4), InnerGold, 1);
-                    Corners(skin, bounds, BrightGold);
-
-                    // Header and rank band
-                    Fill(skin, bounds.X + 152, bounds.Y + 13, bounds.Width - 168, 34, Band);
-                    Fill(skin, bounds.X + 152, bounds.Y + 45, bounds.Width - 168, 1, OuterGold);
-                    Fill(skin, bounds.X + 654, bounds.Y + 13, 54, 34, Darkest);
-                    Border(skin, new UiRectangle(bounds.X + 654, bounds.Y + 13, 54, 34), InnerGold, 1);
-                    Fill(skin, bounds.X + 152, bounds.Y + 128, bounds.Width - 168, 1, OuterGold);
-
-                    // Alternating quest, level, objective and reward rows
-                    for (var index = 0; index < 4; index++)
-                    {
-                        var rowY = bounds.Y + 133 + index * 31;
-                        Fill(skin, bounds.X + 17, rowY, bounds.Width - 34, 29,
-                            index % 2 == 0 ? Dark : Stripe);
-                        Fill(skin, bounds.X + 17, rowY + 29, bounds.Width - 34, 1, InnerGold);
-                        Fill(skin, bounds.X + 35, rowY + 10, 9, 9, OuterGold);
-                        Fill(skin, bounds.X + 38, rowY + 13, 3, 3, BrightGold);
-                        Fill(skin, bounds.X + 184, rowY + 5, 1, 19, InnerGold);
-                    }
-
-                    // Personal statistics inset, separated from dungeon details.
-                    var record = new UiRectangle(bounds.X + 17, bounds.Y + 266, bounds.Width - 34, 82);
-                    Fill(skin, record, Darkest);
-                    Border(skin, record, InnerGold, 1);
-                    Fill(skin, bounds.X + 25, bounds.Y + 317, bounds.Width - 50, 1, InnerGold);
-                    Fill(skin, bounds.X + 25, bounds.Y + 276, 5, 8, BrightGold);
-
-                    // Independent Top 3 boxes for victories and fastest clears.
-                    var first = new UiRectangle(bounds.X + 17, bounds.Y + 355, 341, 89);
-                    var second = new UiRectangle(bounds.X + 366, bounds.Y + 355, 341, 89);
-                    Fill(skin, first, Dark);
-                    Fill(skin, second, Dark);
-                    Border(skin, first, InnerGold, 1);
-                    Border(skin, second, InnerGold, 1);
-                    Fill(skin, first.X + 10, first.Y + 25, first.Width - 20, 1, InnerGold);
-                    Fill(skin, second.X + 10, second.Y + 25, second.Width - 20, 1, InnerGold);
-                    break;
-
-                case ChromeStyle.Preview:
-                    Fill(skin, bounds, Darkest);
-                    Border(skin, bounds, BrightGold, 2);
-                    Border(skin, Inset(bounds, 4), InnerGold, 1);
-
-                    // A tiny dungeon entrance is the fallback for missing images.
-                    Fill(skin, bounds.X + 14, bounds.Y + 17, 96, 74, new Color(a: 255, r: 61, g: 55, b: 53));
-                    Fill(skin, bounds.X + 22, bounds.Y + 11, 80, 14, new Color(a: 255, r: 103, g: 91, b: 77));
-                    Fill(skin, bounds.X + 31, bounds.Y + 30, 62, 64, new Color(a: 255, r: 39, g: 36, b: 36));
-                    Fill(skin, bounds.X + 41, bounds.Y + 40, 42, 54, Darkest);
-                    Fill(skin, bounds.X + 28, bounds.Y + 26, 8, 58, new Color(a: 255, r: 120, g: 101, b: 78));
-                    Fill(skin, bounds.X + 88, bounds.Y + 26, 8, 58, new Color(a: 255, r: 120, g: 101, b: 78));
-                    Fill(skin, bounds.X + 27, bounds.Y + 47, 6, 15, BrightGold);
-                    Fill(skin, bounds.X + 91, bounds.Y + 47, 6, 15, BrightGold);
-                    Fill(skin, bounds.X + 18, bounds.Y + 91, 88, 4, InnerGold);
-                    break;
-            }
-        }
-
-        private static UiRectangle Inset(UiRectangle rectangle, int size) =>
-            new(rectangle.X + size, rectangle.Y + size,
-                rectangle.Width - size * 2, rectangle.Height - size * 2);
-
-        private static void Fill(SkinBase skin, UiRectangle rectangle, Color color) =>
-            Fill(skin, rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height, color);
-
-        private static void Fill(
-            SkinBase skin, int x, int y, int width, int height, Color color)
-        {
-            if (width <= 0 || height <= 0)
-                return;
-
-            skin.Renderer.DrawColor = color;
-            skin.Renderer.DrawFilledRect(new UiRectangle(x, y, width, height));
-        }
-
-        private static void Border(SkinBase skin, UiRectangle rectangle, Color color, int thickness)
-        {
-            Fill(skin, rectangle.X, rectangle.Y, rectangle.Width, thickness, color);
-            Fill(skin, rectangle.X, rectangle.Bottom - thickness, rectangle.Width, thickness, color);
-            Fill(skin, rectangle.X, rectangle.Y, thickness, rectangle.Height, color);
-            Fill(skin, rectangle.Right - thickness, rectangle.Y, thickness, rectangle.Height, color);
-        }
-
-        private static void Corners(SkinBase skin, UiRectangle rectangle, Color color)
-        {
-            const int length = 14;
-            Fill(skin, rectangle.X + 5, rectangle.Y + 5, length, 2, color);
-            Fill(skin, rectangle.X + 5, rectangle.Y + 5, 2, length, color);
-            Fill(skin, rectangle.Right - length - 5, rectangle.Y + 5, length, 2, color);
-            Fill(skin, rectangle.Right - 7, rectangle.Y + 5, 2, length, color);
-            Fill(skin, rectangle.X + 5, rectangle.Bottom - 7, length, 2, color);
-            Fill(skin, rectangle.X + 5, rectangle.Bottom - length - 5, 2, length, color);
-            Fill(skin, rectangle.Right - length - 5, rectangle.Bottom - 7, length, 2, color);
-            Fill(skin, rectangle.Right - 7, rectangle.Bottom - length - 5, 2, length, color);
-        }
     }
 }
