@@ -216,9 +216,9 @@ internal sealed class MarketplaceWindow : Window
     public void Apply(MarketplaceStatePacket state)
     {
         _state = state;
-        _balance.Text = $"${Shorten(state.CurrencyName, 27).ToUpperInvariant()}: ${state.CurrencyBalance:N0}";
+        _balance.Text = $"{Shorten(state.CurrencyName, 27).ToUpperInvariant()}: {state.CurrencyBalance:N0}";
         _pending.Text = state.PendingCurrency > 0
-            ? $"${state.PendingCurrency:N0} PENDING DELIVERY"
+            ? $"{state.PendingCurrency:N0} PENDING DELIVERY"
             : "SECURE PLAYER TRADING";
         _status.Text = string.IsNullOrWhiteSpace(state.Message)
             ? "Trade equipment and supplies directly with other players."
@@ -227,8 +227,8 @@ internal sealed class MarketplaceWindow : Window
             ? Muted
             : state.OperationSucceeded ? Good : Bad;
 
-        _listingCount.Text = $"${state.Listings.Length:N0} ACTIVE LISTING${(state.Listings.Length == 1 ? "" : "S")}";
-        _sellableCount.Text = $"${state.SellableItems.Length:N0} SELLABLE ITEM${(state.SellableItems.Length == 1 ? "" : "S")}";
+        _listingCount.Text = $"{state.Listings.Length:N0} ACTIVE LISTING{(state.Listings.Length == 1 ? "" : "S")}";
+        _sellableCount.Text = $"{state.SellableItems.Length:N0} SELLABLE ITEM{(state.SellableItems.Length == 1 ? "" : "S")}";
         RenderListings();
         RenderSellableItems();
     }
@@ -379,7 +379,7 @@ internal sealed class MarketplaceWindow : Window
             }
 
             AddText(this, "ItemName",
-                Shorten($"${listing.Quantity:N0} x {ItemDescriptor.GetName(listing.ItemId)}", 36),
+                Shorten($"{listing.Quantity:N0} x {ItemDescriptor.GetName(listing.ItemId)}", 36),
                 78, 8, 249, 24, 11, Cream, bold: true);
             AddText(this, "OfferType", listing.IsAuction ? "LIVE AUCTION" : "FIXED PRICE",
                 78, 33, 237, 18, 10, Gold, bold: true);
@@ -389,7 +389,7 @@ internal sealed class MarketplaceWindow : Window
             var priceValue = listing.IsAuction && listing.CurrentBid > 0
                 ? listing.CurrentBid
                 : listing.AskingPrice;
-            AddText(this, "OfferPrice", $"${priceValue:N0} {Shorten(currency, 14)}",
+            AddText(this, "OfferPrice", $"{priceValue:N0} {Shorten(currency, 14)}",
                 339, 7, 253, 25, 12, Gold, bold: true);
 
             var expires = listing.ExpiresAtUnixMilliseconds > 0
@@ -458,7 +458,7 @@ internal sealed class MarketplaceWindow : Window
     private sealed class SellableRow : Base
     {
         public SellableRow(Base parent, MarketplaceOwnedItemState owned, Action create)
-            : base(parent, $"${owned.Source}_{owned.Slot}")
+            : base(parent, $"Owned_{owned.Source}_{owned.Slot}")
         {
             var card = new MarketChrome(this, "OwnedFrame", FrameStyle.Card);
             card.SetBounds(0, 0, 792, 58);
@@ -480,7 +480,7 @@ internal sealed class MarketplaceWindow : Window
             }
 
             AddText(this, "OwnedName",
-                Shorten($"${:N0} x {ItemDescriptor.GetName(owned.ItemId)}", 52),
+                Shorten($"{owned.Quantity:N0} x {ItemDescriptor.GetName(owned.ItemId)}", 52),
                 74, 6, 517, 23, 11, Cream, bold: true);
             AddText(this, "OwnedSource",
                 owned.Source == MarketplaceItemSource.Bank ? "STORED IN BANK" : "IN INVENTORY",
