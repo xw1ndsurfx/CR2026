@@ -112,6 +112,8 @@ public partial class FrmNpc
                 .Where(pair => pair.Value?.Combat != null &&
                     pair.Value.SpellType == SpellType.CombatSpell &&
                     !pair.Value.Combat.Friendly)
+                .Where(pair => pair.Value!.Combat.VitalDiff.Length > (int)Vital.Health &&
+                    pair.Value.Combat.VitalDiff[(int)Vital.Health] > 0)
                 .Where(pair => role.SelectedIndex == 1
                     ? pair.Value!.Combat.Projectile != null
                     : pair.Value!.Combat.CastRange >= 2 ||
@@ -208,12 +210,22 @@ public partial class FrmNpc
             {
                 3 => 0.7d, 4 => 1.35d, _ => 1.0d
             };
+            // Ranged NPCs need sufficient mana for their first few casts.
+            // This intentionally does not mutate the SpellDescriptor itself.
+            var selectedSpell = spellPicker.SelectedIndex >= 0 &&
+                spellPicker.SelectedIndex < spellIds.Count
+                ? SpellDescriptor.Get(spellIds[spellPicker.SelectedIndex]) : null;
+            var manaCost = selectedSpell?.VitalCost != null &&
+                selectedSpell.VitalCost.Length > (int)Vital.Mana
+                ? Math.Max(0L, selectedSpell.VitalCost[(int)Vital.Mana]) : 0L;
+            var spellMana = Math.Min((double)nudMana.Maximum, manaCost * 4d);
             int Cap(NumericUpDown field, double value) =>
                 (int)Math.Clamp(Math.Round(value), (double)field.Minimum,
                     Math.Min((double)field.Maximum, 100_000_000d));
             return (
                 Cap(nudHp, (30d + 12d * lvl + lvl * lvl * 1.5d) * multiplier * hpWeight),
-                role.SelectedIndex == 2 ? Cap(nudMana, (20d + 7d * lvl) * multiplier) : 0,
+                Cap(nudMana, Math.Max(role.SelectedIndex == 2
+                    ? (20d + 7d * lvl) * multiplier : 0d, spellMana)),
                 role.SelectedIndex == 2 ? 0 : Cap(nudStr, (3d + 2.2d * lvl) * multiplier),
                 role.SelectedIndex == 2 ? Cap(nudMag, (3d + 2.2d * lvl) * multiplier) : 0,
                 Cap(nudDef, (2d + lvl * 1.1d) * multiplier * (role.SelectedIndex == 3 ? 1.5d : 1d)),
@@ -257,6 +269,7 @@ public partial class FrmNpc
 
         level.ValueChanged += (_, _) => InvalidatePreview();
         role.SelectedIndexChanged += (_, _) => { RefreshSpells(); InvalidatePreview(); };
+        spellPicker.SelectedIndexChanged += (_, _) => InvalidatePreview();
         difficulty.SelectedIndexChanged += (_, _) => InvalidatePreview();
         party.ValueChanged += (_, _) => InvalidatePreview();
 
@@ -383,6 +396,12 @@ public partial class FrmNpc
         {
             mEditorItem.Spells.Add(selectedSpellId);
             RefreshNpcSpellList(mEditorItem.Spells.Count - 1);
+            // At 30s (index 0), the NPC may never cast during an 8-second fight.
+            // Use an existing 4-second frequency for generated casters/archers.
+            if (role.SelectedIndex is 1 or 2 && cmbFreq.Items.Count > 3)
+            {
+                cmbFreq.SelectedIndex = 3;
+            }
         }
 
         MessageBox.Show(this,
