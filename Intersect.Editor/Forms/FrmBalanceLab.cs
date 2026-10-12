@@ -4965,6 +4965,10 @@ public sealed class FrmBalanceLab : DarkForm
         double averageTtk = 0;
         double averageHpLoss = 0;
         int sampleCount = 0;
+        // Equipment lookup can be costly on projects with large item libraries:
+        // prepare each class loadout once rather than rebuilding it every iteration.
+        var loadouts = classList.ToDictionary(playerClass => playerClass,
+            playerClass => BuildLoadout(playerClass, 2));
 
         // Alternating damped corrections converge much more reliably than
         // fitting health and damage independently from one unadjusted result.
@@ -4973,7 +4977,8 @@ public sealed class FrmBalanceLab : DarkForm
             var samples = classList.Select(playerClass =>
                     SimulateClassVsNpc(playerClass, probe, safeLevel, safePartySize,
                         gearProfile: 2, includeClassSpells: true,
-                        sustainWindowSeconds: targetTtk))
+                        sustainWindowSeconds: targetTtk,
+                        cachedLoadout: loadouts[playerClass]))
                 .Where(sample => sample != null)
                 .Cast<CombatSimulation>().ToArray();
             if (samples.Length == 0)
