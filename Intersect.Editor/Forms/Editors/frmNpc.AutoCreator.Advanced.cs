@@ -208,9 +208,9 @@ public partial class FrmNpc
         if (options.Drops.Checked)
         {
             var chosenId = options.LootIds[Math.Max(0, options.LootItem.SelectedIndex)];
-            if (chosenId == Guid.Empty)
-            {
-                var eligible = ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>()
+            var eligible = chosenId != Guid.Empty
+                ? new[] { ItemDescriptor.Get(chosenId) }.OfType<ItemDescriptor>().ToArray()
+                : ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>()
                     .Where(item => item.ItemType == ItemType.Consumable &&
                         item.CanTrade && item.EventId == Guid.Empty &&
                         item.UsageRequirements.Lists.All(list => list.Conditions.Count == 0) &&
@@ -218,23 +218,30 @@ public partial class FrmNpc
                         item.Rarity <= difficulty + 1)
                     .OrderBy(item => Math.Abs(item.Price - level * 10))
                     .ThenBy(item => item.Name)
+                    .Take(difficulty switch { 3 => 3, 2 => 2, _ => 1 })
                     .ToArray();
-                chosenId = eligible.FirstOrDefault()?.Id ?? Guid.Empty;
-            }
 
-            if (chosenId != Guid.Empty)
+            if (eligible.Length > 0)
             {
                 if (!options.KeepDrops.Checked) mEditorItem.Drops.Clear();
-                if (!mEditorItem.Drops.Any(drop => drop.ItemId == chosenId))
+                for (var index = 0; index < eligible.Length; index++)
                 {
+                    var item = eligible[index];
+                    if (mEditorItem.Drops.Any(drop => drop.ItemId == item.Id))
+                    {
+                        continue;
+                    }
+
+                    var tierChance = difficulty switch
+                    {
+                        0 => 5d, 2 => 35d, 3 => 65d, _ => 15d
+                    };
                     mEditorItem.Drops.Add(new Drop
                     {
-                        ItemId = chosenId, MinQuantity = 1,
-                        MaxQuantity = difficulty == 3 ? 3 : 1,
-                        Chance = difficulty switch
-                        {
-                            0 => 5d, 2 => 35d, 3 => 65d, _ => 15d
-                        }
+                        ItemId = item.Id, MinQuantity = 1,
+                        MaxQuantity = difficulty == 3 && index == 0 ? 3 : 1,
+                        Chance = Math.Clamp(tierChance /
+                            (1d + Math.Max(0, item.Rarity) * 0.5d + index), 0.1d, 100d)
                     });
                 }
                 UpdateDropValues();
