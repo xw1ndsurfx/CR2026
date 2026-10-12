@@ -5015,7 +5015,9 @@ public sealed class FrmBalanceLab : DarkForm
         long initialHealth, int initialDamage, int[] stats, int damageType,
         int scalingStat, int scaling, long maxHealth, int maxDamage,
         int mana, IReadOnlyList<Guid> spells, int spellFrequency, bool spellFocused,
-        IReadOnlyList<int>? spellIntervalsMs = null)
+        IReadOnlyList<int>? spellIntervalsMs = null,
+        int critChance = 0, double critMultiplier = 1.5d,
+        int attackSpeedModifier = 0, int attackSpeedValue = 0)
     {
         var classList = ClassDescriptor.Lookup.Values.Where(value => value != null)
             .Cast<object>().ToArray();
@@ -5041,6 +5043,10 @@ public sealed class FrmBalanceLab : DarkForm
             DamageType = damageType,
             ScalingStat = Math.Clamp(scalingStat, 0, 4),
             Scaling = scaling,
+            CritChance = Math.Clamp(critChance, 0, 100),
+            CritMultiplier = Math.Max(1.0d, critMultiplier),
+            AttackSpeedModifier = attackSpeedModifier,
+            AttackSpeedValue = attackSpeedValue,
         };
         if (spellFocused &&
             EstimateGeneratedNpcSpellDps(probe,
