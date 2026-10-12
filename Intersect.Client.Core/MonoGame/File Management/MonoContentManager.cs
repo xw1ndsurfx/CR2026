@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Diagnostics;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
