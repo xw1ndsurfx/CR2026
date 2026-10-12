@@ -1,5 +1,7 @@
 using System;
 using System.Drawing;
+using Color = System.Drawing.Color;
+using Point = System.Drawing.Point;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Linq;
@@ -108,24 +110,25 @@ public partial class FrmNpc
             spellIds.Clear();
             spellPicker.Items.Add("None / Keep existing spells");
             spellIds.Add(Guid.Empty);
-            var candidates = SpellDescriptor.Lookup
-                .Where(pair => pair.Value?.Combat != null &&
-                    pair.Value.SpellType == SpellType.CombatSpell &&
-                    !pair.Value.Combat.Friendly)
-                .Where(pair => pair.Value!.Combat.VitalDiff.Length > (int)Vital.Health &&
-                    pair.Value.Combat.VitalDiff[(int)Vital.Health] > 0)
-                .Where(pair => role.SelectedIndex == 1
-                    ? pair.Value!.Combat.Projectile != null
-                    : pair.Value!.Combat.CastRange >= 2 ||
-                      pair.Value.Combat.Projectile != null)
-                .OrderBy(pair => SpellDescriptor.GetName(pair.Key))
+            var candidates = SpellDescriptor.Lookup.Values
+                .OfType<SpellDescriptor>()
+                .Where(spell => spell.Combat != null &&
+                    spell.SpellType == SpellType.CombatSpell &&
+                    !spell.Combat.Friendly)
+                .Where(spell => spell.Combat.VitalDiff.Length > (int)Vital.Health &&
+                    spell.Combat.VitalDiff[(int)Vital.Health] > 0)
+                .Where(spell => role.SelectedIndex == 1
+                    ? spell.Combat.Projectile != null
+                    : spell.Combat.CastRange >= 2 ||
+                      spell.Combat.Projectile != null)
+                .OrderBy(spell => spell.Name)
                 .ToArray();
 
             var bestIndex = 0;
-            foreach (var pair in candidates)
+            foreach (var spell in candidates)
             {
-                var spellName = SpellDescriptor.GetName(pair.Key);
-                spellIds.Add(pair.Key);
+                var spellName = spell.Name;
+                spellIds.Add(spell.Id);
                 spellPicker.Items.Add(spellName);
                 var lower = spellName.ToLowerInvariant();
                 var appropriate = role.SelectedIndex switch
@@ -420,7 +423,7 @@ public partial class FrmNpc
         MessageBox.Show(this,
             $"NPC profile applied. Simulation: {calibration.TtkSeconds:0.0}s TTK, " +
             $"{calibration.HpLossPercent:0.0}% HP loss. Review and click Save to persist. " +
-            "NPC spell damage is not included in this simulation. Review combat spells and scripted encounters in-game.",
+            "NPC spell damage is estimated. Review combat spells and scripted encounters in-game.",
             "NPC Auto Creator", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 }
