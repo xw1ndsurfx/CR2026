@@ -4905,6 +4905,122 @@ public sealed class FrmBalanceLab : DarkForm
             : sorted[middle];
     }
 
+    // Reuse the exact same class, equipment, spells and attack math as the Balance Lab.
+    // The probe is deliberately not an NPCDescriptor: previews never mutate live game objects.
+    public sealed class NpcAutoBalanceResult
+    {
+        public bool Calibrated { get; init; }
+        public long Health { get; init; }
+        public int Damage { get; init; }
+        public double TtkSeconds { get; init; }
+        public double HpLossPercent { get; init; }
+        public int ClassCount { get; init; }
+        public string Message { get; init; } = string.Empty;
+    }
+
+    private sealed class NpcAutoBalanceProbe
+    {
+        public long[] MaxVitals { get; init; } = new long[2];
+        public int[] Stats { get; init; } = new int[5];
+        public int Damage { get; set; }
+        public int DamageType { get; init; }
+        public int ScalingStat { get; init; }
+        public int Scaling { get; init; }
+        public int CritChance { get; init; }
+        public double CritMultiplier { get; init; } = 1.5d;
+        public int AttackSpeedModifier { get; init; }
+        public int AttackSpeedValue { get; init; }
+    }
+
+    public static NpcAutoBalanceResult CalibrateGeneratedNpc(
+        int level, int partySize, double targetTtkSeconds, double targetHpLossPercent,
+        long initialHealth, int initialDamage, int[] stats, int damageType,
+        int scalingStat, int scaling)
+    {
+        var classList = ClassDescriptor.Lookup.Values.Where(value => value != null)
+            .Cast<object>().ToArray();
+        if (classList.Length == 0)
+        {
+            return new NpcAutoBalanceResult
+            {
+                Health = initialHealth,
+                Damage = initialDamage,
+                Message = "No player classes loaded. Calibration unavailable."
+            };
+        }
+
+        var probe = new NpcAutoBalanceProbe
+        {
+            MaxVitals = [Math.Max(1, initialHealth), 0],
+            Stats = (int[])stats.Clone(),
+            Damage = Math.Max(1, initialDamage),
+            DamageType = damageType,
+            ScalingStat = Math.Clamp(scalingStat, 0, 4),
+            Scaling = scaling,
+        };
+        var safePartySize = Math.Clamp(partySize, 1, 5);
+        var safeLevel = Math.Clamp(level, 1, Math.Max(1, Options.Instance.Player.MaxLevel));
+        var targetTtk = Math.Max(0.5d, targetTtkSeconds);
+        var targetHpLoss = Math.Clamp(targetHpLossPercent, 1d, 95d);
+        double averageTtk = 0;
+        double averageHpLoss = 0;
+        int sampleCount = 0;
+
+        // Alternating damped corrections converge much more reliably than
+        // fitting health and damage independently from one unadjusted result.
+        for (var iteration = 0; iteration < 5; iteration++)
+        {
+            var samples = classList.Select(playerClass =>
+                    SimulateClassVsNpc(playerClass, probe, safeLevel, safePartySize,
+                        gearProfile: 2, includeClassSpells: true,
+                        sustainWindowSeconds: targetTtk))
+                .Where(sample => sample != null)
+                .Cast<CombatSimulation>().ToArray();
+            if (samples.Length == 0)
+            {
+                return new NpcAutoBalanceResult
+                {
+                    Health = probe.MaxVitals[0], Damage = probe.Damage,
+                    Message = "Combat simulation returned no usable results."
+                };
+            }
+
+            sampleCount = samples.Length;
+            averageTtk = samples.Average(sample => sample.TtkSeconds);
+            averageHpLoss = samples.Average(sample => sample.HpLossPercent);
+            if (iteration == 4)
+            {
+                break;
+            }
+
+            var hpRatio = Math.Clamp(targetTtk / Math.Max(0.01d, averageTtk), 0.25d, 4d);
+            probe.MaxVitals[0] = (long)Math.Clamp(
+                Math.Round(probe.MaxVitals[0] * hpRatio), 1d, 2_000_000_000d);
+
+            // Health also changes the fight duration, so correct the health-loss
+            // target after accounting for the new estimated TTK.
+            if (averageHpLoss > 0.0001d)
+            {
+                var lossRatio = Math.Clamp(
+                    (targetHpLoss / averageHpLoss) / hpRatio, 0.25d, 4d);
+                probe.Damage = (int)Math.Clamp(
+                    Math.Round(probe.Damage * lossRatio), 1d, 1_000_000_000d);
+            }
+        }
+
+        return new NpcAutoBalanceResult
+        {
+            Calibrated = true,
+            Health = probe.MaxVitals[0],
+            Damage = probe.Damage,
+            TtkSeconds = averageTtk,
+            HpLossPercent = averageHpLoss,
+            ClassCount = sampleCount,
+            Message = "Calibrated against median equipment and learned class spells. " +
+                      "Movement, status effects and custom combat rules still need playtesting."
+        };
+    }
+
     private static object? Property(object source, string name)
     {
         return source.GetType().GetProperty(name)?.GetValue(source);
