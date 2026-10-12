@@ -45,6 +45,7 @@ internal sealed class DungeonPanelWindow : Window
 
         var backdrop = new DungeonChrome(this, "DungeonWindowFrame", ChromeStyle.Window);
         backdrop.SetBounds(13, 27, 794, 642);
+        AdmurinGuiArt.Add(this, "AdmurinDungeonWindow", "dungeon_gates_0a", 13, 27, 794, 642);
 
         AddText(this, "DungeonPanelTitle", "DUNGEON GATES",
             125, 43, 570, 31, 21, Gold, bold: true, center: true);
