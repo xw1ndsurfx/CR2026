@@ -72,6 +72,7 @@ public partial class FrmNpc : EditorForm
         BuildPetControls();
         BuildNpcSpellTimingControls();
         BuildNpcAutoCreator();
+        BuildResponsiveNpcEditor();
         Icon = Program.Icon;
         _btnSave = btnSave;
         _btnCancel = btnCancel;
