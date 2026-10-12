@@ -4935,7 +4935,7 @@ public sealed class FrmBalanceLab : DarkForm
     public static NpcAutoBalanceResult CalibrateGeneratedNpc(
         int level, int partySize, double targetTtkSeconds, double targetHpLossPercent,
         long initialHealth, int initialDamage, int[] stats, int damageType,
-        int scalingStat, int scaling)
+        int scalingStat, int scaling, long maxHealth, int maxDamage)
     {
         var classList = ClassDescriptor.Lookup.Values.Where(value => value != null)
             .Cast<object>().ToArray();
@@ -4951,9 +4951,9 @@ public sealed class FrmBalanceLab : DarkForm
 
         var probe = new NpcAutoBalanceProbe
         {
-            MaxVitals = [Math.Max(1, initialHealth), 0],
+            MaxVitals = [Math.Clamp(initialHealth, 1, maxHealth), 0],
             Stats = (int[])stats.Clone(),
-            Damage = Math.Max(1, initialDamage),
+            Damage = Math.Clamp(initialDamage, 1, maxDamage),
             DamageType = damageType,
             ScalingStat = Math.Clamp(scalingStat, 0, 4),
             Scaling = scaling,
@@ -4995,7 +4995,7 @@ public sealed class FrmBalanceLab : DarkForm
 
             var hpRatio = Math.Clamp(targetTtk / Math.Max(0.01d, averageTtk), 0.25d, 4d);
             probe.MaxVitals[0] = (long)Math.Clamp(
-                Math.Round(probe.MaxVitals[0] * hpRatio), 1d, 2_000_000_000d);
+                Math.Round(probe.MaxVitals[0] * hpRatio), 1d, maxHealth);
 
             // Health also changes the fight duration, so correct the health-loss
             // target after accounting for the new estimated TTK.
@@ -5004,7 +5004,7 @@ public sealed class FrmBalanceLab : DarkForm
                 var lossRatio = Math.Clamp(
                     (targetHpLoss / averageHpLoss) / hpRatio, 0.25d, 4d);
                 probe.Damage = (int)Math.Clamp(
-                    Math.Round(probe.Damage * lossRatio), 1d, 1_000_000_000d);
+                    Math.Round(probe.Damage * lossRatio), 1d, maxDamage);
             }
         }
 
