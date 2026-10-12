@@ -141,8 +141,8 @@ public partial class FrmNpc
 
         dialog.Controls.Add(new Label
         {
-            Text = "Aurons and Auragems are searched by exact item name. If they are not " +
-                   "ItemDescriptors, the tool cannot add them as item drops. Custom drops are preserved.",
+            Text = "Aurons ~40-90%; Auragems ~0.03-0.15% (if named items exist). " +
+                   "Check BasicOne event rewards to avoid paying currencies twice.",
             ForeColor = System.Drawing.Color.Khaki,
             Location = new System.Drawing.Point(20, 970),
             Size = new Size(450, 62)
@@ -248,6 +248,46 @@ public partial class FrmNpc
 
         if (options.Drops.Checked)
         {
+            // Currency names originate in the game's item database, not the source
+            // code. Never substitute an unrelated item when a name is absent.
+            var itemRecords = ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>()
+                .Where(item => item.ItemType is ItemType.Currency or ItemType.Consumable)
+                .ToArray();
+            ItemDescriptor? FindCurrency(params string[] names) =>
+                itemRecords.FirstOrDefault(item => names.Contains(
+                    item.Name.Trim(), StringComparer.OrdinalIgnoreCase));
+
+            if (!options.KeepDrops.Checked)
+            {
+                mEditorItem.Drops.Clear();
+            }
+
+            // Auron/Aureon loot: common. Auragem loot: exceptionally rare.
+            // These are percentages as displayed in the NPC editor, not ratios.
+            void AddCurrencyDrop(ItemDescriptor? item, double chance, int maxAmount)
+            {
+                if (item == null || mEditorItem.Drops.Any(drop => drop.ItemId == item.Id))
+                {
+                    return;
+                }
+                mEditorItem.Drops.Add(new Drop
+                {
+                    ItemId = item.Id, MinQuantity = 1,
+                    MaxQuantity = Math.Max(1, maxAmount),
+                    Chance = chance
+                });
+            }
+            var aurons = FindCurrency("Aurons", "Auron", "Aureons", "Aureon");
+            var auragems = FindCurrency("Auragems", "Auragem", "Aureagems", "Aureagem");
+            AddCurrencyDrop(aurons, difficulty switch
+            {
+                0 => 40d, 2 => 75d, 3 => 90d, _ => 60d
+            }, 1 + Math.Max(1, level) / 10);
+            AddCurrencyDrop(auragems, difficulty switch
+            {
+                2 => 0.07d, 3 => 0.15d, _ => 0.03d
+            }, 1);
+
             var chosenId = options.LootIds[Math.Max(0, options.LootItem.SelectedIndex)];
             var eligible = chosenId != Guid.Empty
                 ? new[] { ItemDescriptor.Get(chosenId) }.OfType<ItemDescriptor>().ToArray()
@@ -264,7 +304,6 @@ public partial class FrmNpc
 
             if (eligible.Length > 0)
             {
-                if (!options.KeepDrops.Checked) mEditorItem.Drops.Clear();
                 for (var index = 0; index < eligible.Length; index++)
                 {
                     var item = eligible[index];
@@ -285,8 +324,8 @@ public partial class FrmNpc
                             (1d + Math.Max(0, item.Rarity) * 0.5d + index), 0.1d, 100d)
                     });
                 }
-                UpdateDropValues();
             }
+            UpdateDropValues();
             if (difficulty == 3 && options.IndividualLoot.Checked)
                 chkIndividualLoot.Checked = true;
         }
