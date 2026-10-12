@@ -92,7 +92,7 @@ internal sealed class DungeonPanelWindow : Window
 
         _gateStrip = new Base(this, "DungeonGateStrip");
         _gateStrip.SetBounds(54, 140, 398, 83);
-        _gateStrip.MouseInputEnabled = false;
+        // Keep the strip hit-testable so its three gate buttons receive clicks.
 
         _previous = new Button(this, "DungeonPagePrevious") { Text = string.Empty };
         _previous.SetBounds(21, 164, 29, 33);
