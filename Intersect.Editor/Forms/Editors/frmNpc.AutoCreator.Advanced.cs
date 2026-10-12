@@ -51,8 +51,6 @@ public partial class FrmNpc
             1 => 105, 2 => 115, 3 => 85, 4 => 125, _ => 100
         };
 
-        // The existing index 1 speed mode allows a value on the NPC Editor.
-        // We only enable it for faster attack archetypes.
         // Mode 1 is a fixed attack interval IN MILLISECONDS, not a %.
         // Setting 10 or 20 previously caused 50-ms-clamped attacks.
         public int SpeedModifier(int role) => 1;
@@ -147,7 +145,7 @@ public partial class FrmNpc
             Location = new System.Drawing.Point(20, 970),
             Size = new Size(450, 62)
         });
-        dialog.AutoScrollMinSize = new Size(500, 1115);
+        dialog.AutoScrollMinSize = new Size(500, 1190);
         return options;
     }
 
@@ -231,17 +229,25 @@ public partial class FrmNpc
                 3 => role == 3 ? 35 : 25,
                 _ => 0
             });
-            // Add appropriate immunities instead of removing authored boss
-            // mechanics. A normal NPC receives no automatic immunities.
+            // Normal NPCs get at most one thematic immunity depending on
+            // their archetype; weak creatures have none. Existing hand-authored
+            // boss immunities are never removed.
+            if (difficulty >= 1)
+            {
+                if (role == 3) chkKnockback.Checked = true;  // Tank
+                if (role == 2) chkSilence.Checked = true;    // Mage
+                if (role == 1) chkBlind.Checked = true;      // Archer
+                if (role == 4) chkSnare.Checked = true;      // Assassin
+            }
             if (difficulty >= 2)
             {
-                chkKnockback.Checked = role == 3 || difficulty == 3 ||
-                    chkKnockback.Checked;
+                if (role == 0) chkKnockback.Checked = true;  // Elite Warrior
+                if (role == 3) chkStun.Checked = true;
             }
             if (difficulty == 3)
             {
+                chkKnockback.Checked = true;
                 chkStun.Checked = true;
-                if (role == 2) chkSilence.Checked = true;
                 if (role == 3) chkSnare.Checked = true;
             }
         }
