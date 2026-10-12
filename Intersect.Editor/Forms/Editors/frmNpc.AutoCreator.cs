@@ -160,23 +160,23 @@ public partial class FrmNpc
         {
             Text = "Calibrated with the Balance Lab's class simulation and median-per-slot equipment. " +
                    "NPC spell DPS is estimated using frequency, mana cost and cooldowns. " +
-                   "Drops, events, pets and scripted invasion logic are preserved.",
+                   "Drop and NPC hostility changes are opt-in. Scripted events, pets and invasion objectives are preserved.",
             Location = new System.Drawing.Point(20, 508), Size = new Size(452, 74),
             ForeColor = System.Drawing.Color.Khaki
         };
         var simulate = new Button
         {
-            Text = "Simulate & Calibrate", Location = new System.Drawing.Point(20, 602),
+            Text = "Simulate & Calibrate", Location = new System.Drawing.Point(20, 992),
             Size = new Size(193, 32)
         };
         var apply = new Button
         {
-            Text = "Apply to selected NPC", Location = new System.Drawing.Point(267, 602),
+            Text = "Apply to selected NPC", Location = new System.Drawing.Point(267, 992),
             Size = new Size(205, 32), DialogResult = DialogResult.None
         };
         var cancel = new Button
         {
-            Text = "Cancel", Location = new System.Drawing.Point(20, 640),
+            Text = "Cancel", Location = new System.Drawing.Point(20, 1032),
             Size = new Size(115, 28), DialogResult = DialogResult.Cancel
         };
         dialog.Controls.AddRange(new Control[]
@@ -189,6 +189,7 @@ public partial class FrmNpc
             MakeLabel("Spells (check several)", 212), spellPicker,
             preview, warning, simulate, apply, cancel
         });
+        var advanced = BuildNpcAutoAdvancedOptions(dialog);
         dialog.CancelButton = cancel;
         dialog.AcceptButton = apply;
 
@@ -270,6 +271,8 @@ public partial class FrmNpc
             RefreshPreview();
         }
 
+        advanced.Changed = InvalidatePreview;
+
         level.ValueChanged += (_, _) => InvalidatePreview();
         role.SelectedIndexChanged += (_, _) => { RefreshSpells(); InvalidatePreview(); };
         spellPicker.ItemCheck += (_, _) =>
@@ -323,7 +326,15 @@ public partial class FrmNpc
                     role.SelectedIndex == 2 ? (int)Stat.AbilityPower : (int)Stat.Attack,
                     100, (long)nudHp.Maximum, (int)nudDamage.Maximum,
                     proposed.mana, simulationSpells, frequency, role.SelectedIndex is 1 or 2,
-                    simulationIntervals);
+                    simulationIntervals,
+                    advanced.Combat.Checked ? advanced.CritChance(role.SelectedIndex, difficulty.SelectedIndex)
+                        : (int)nudCritChance.Value,
+                    advanced.Combat.Checked ? (double)advanced.CritMultiplier(role.SelectedIndex)
+                        : (double)nudCritMultiplier.Value,
+                    advanced.Combat.Checked ? advanced.SpeedModifier(role.SelectedIndex)
+                        : cmbAttackSpeedModifier.SelectedIndex,
+                    advanced.Combat.Checked ? advanced.SpeedValue(role.SelectedIndex)
+                        : (int)nudAttackSpeedValue.Value);
             }
             catch (Exception ex)
             {
@@ -387,13 +398,10 @@ public partial class FrmNpc
         Assign(nudSpd, result.speed);
         Assign(nudDamage, calibration.Damage);
         Assign(nudExp, result.exp);
-        Assign(nudScaling, 100);
-        Assign(nudCritChance, 0);
-        Assign(nudCritMultiplier, 1.50m);
-        cmbAttackSpeedModifier.SelectedIndex = 0;
-        Assign(nudAttackSpeedValue, 0);
-        Assign(nudHpRegen, 0);
-        Assign(nudMpRegen, 0);
+        if (!advanced.Combat.Checked)
+        {
+            // Preserve handcrafted crit, scaling, attack speed and animations.
+        }
         cmbDamageType.SelectedIndex = role.SelectedIndex == 2
             ? (int)DamageType.Magic : (int)DamageType.Physical;
         cmbScalingStat.SelectedIndex = role.SelectedIndex == 2
@@ -431,6 +439,8 @@ public partial class FrmNpc
             });
         }
         RefreshNpcSpellList(Math.Max(0, mEditorItem.Spells.Count - 1));
+        ApplyNpcAutoAdvancedOptions(advanced, role.SelectedIndex,
+            difficulty.SelectedIndex, (int)level.Value);
 
         MessageBox.Show(this,
             $"NPC profile applied. Simulation: {calibration.TtkSeconds:0.0}s TTK, " +
