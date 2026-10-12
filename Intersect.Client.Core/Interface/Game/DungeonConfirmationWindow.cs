@@ -170,6 +170,8 @@ internal sealed class DungeonConfirmationWindow : Window
         Hide();
     }
 
+    protected override void EnsureInitialized() { }
+
     private Label ValueText(string name, int row) =>
         AddText(this, $"DungeonGate{name}Value", string.Empty,
             266, 169 + row * 24, 403, 23, 12, Cream);
