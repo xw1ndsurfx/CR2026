@@ -161,6 +161,8 @@ internal sealed class LogiCoinShopWindow : Window
         Hide();
     }
 
+    protected override void EnsureInitialized() { }
+
     public void Apply(LogiCoinShopStatePacket state)
     {
         LogiCoinShopConfiguration.Load(state.ConfigurationJson);
