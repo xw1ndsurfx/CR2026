@@ -96,7 +96,8 @@ internal sealed class DailyRewardWindow : Window
                 : _claimed
                     ? new Color(a:255,r:48,g:66,b:44)
                     : new Color(a:255,r:42,g:29,b:27);
-            if (GameContentManager.Current.GetTexture(TextureType.Gui, "admurin/daily_1.png") != null)
+            if (GameContentManager.Current.GetTexture(TextureType.Gui, "admurin/daily_1.png") != null ||
+                GameContentManager.Current.GetTexture(TextureType.Gui, "daily_1.png") != null)
                 return;
             renderer.DrawFilledRect(RenderBounds);
             renderer.DrawColor = _active
