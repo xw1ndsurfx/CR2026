@@ -238,7 +238,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
             _offerList.Items.Add(
                 new OfferChoice(
                     offer,
-                    $"[{availability}] {offer.Name} | {type} | {priceText}"
+                    $"[{availability}] [{offer.Category}] {offer.Name} | {type} | {priceText}"
                 )
             );
         }
