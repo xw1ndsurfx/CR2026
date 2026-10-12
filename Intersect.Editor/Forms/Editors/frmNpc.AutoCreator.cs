@@ -1,7 +1,5 @@
 using System;
 using System.Drawing;
-using Color = System.Drawing.Color;
-using Point = System.Drawing.Point;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +20,7 @@ public partial class FrmNpc
         {
             Text = "Auto Create NPC",
             Size = new Size(186, 31),
-            Location = new Point(btnSave.Left - 198, btnSave.Top),
+            Location = new System.Drawing.Point(btnSave.Left - 198, btnSave.Top),
             Anchor = AnchorStyles.Bottom | AnchorStyles.Right
         };
         button.Click += (_, _) => ShowNpcAutoCreator();
@@ -56,29 +54,29 @@ public partial class FrmNpc
             FormBorderStyle = FormBorderStyle.FixedDialog,
             MaximizeBox = false,
             MinimizeBox = false,
-            BackColor = Color.FromArgb(45, 45, 48),
-            ForeColor = Color.Gainsboro
+            BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
+            ForeColor = System.Drawing.Color.Gainsboro
         };
 
         static Label MakeLabel(string text, int y) => new()
         {
-            Text = text, Location = new Point(20, y),
-            Size = new Size(170, 25), ForeColor = Color.Gainsboro
+            Text = text, Location = new System.Drawing.Point(20, y),
+            Size = new Size(170, 25), ForeColor = System.Drawing.Color.Gainsboro
         };
 
         var name = new TextBox
         {
-            Location = new Point(202, 20), Width = 270, Text = txtName.Text
+            Location = new System.Drawing.Point(202, 20), Width = 270, Text = txtName.Text
         };
         var level = new NumericUpDown
         {
-            Location = new Point(202, 58), Width = 270,
+            Location = new System.Drawing.Point(202, 58), Width = 270,
             Minimum = 1, Maximum = Math.Min(nudLevel.Maximum, Math.Max(1, Options.Instance.Player.MaxLevel)),
             Value = Math.Clamp(nudLevel.Value, 1, Math.Min(nudLevel.Maximum, Math.Max(1, Options.Instance.Player.MaxLevel)))
         };
         var role = new ComboBox
         {
-            Location = new Point(202, 96), Width = 270,
+            Location = new System.Drawing.Point(202, 96), Width = 270,
             DropDownStyle = ComboBoxStyle.DropDownList
         };
         role.Items.AddRange(new object[]
@@ -88,19 +86,19 @@ public partial class FrmNpc
         role.SelectedIndex = 0;
         var difficulty = new ComboBox
         {
-            Location = new Point(202, 134), Width = 270,
+            Location = new System.Drawing.Point(202, 134), Width = 270,
             DropDownStyle = ComboBoxStyle.DropDownList
         };
         difficulty.Items.AddRange(new object[] { "Weak", "Normal", "Elite", "Boss" });
         difficulty.SelectedIndex = mEditorItem.IsBoss ? 3 : 1;
         var party = new NumericUpDown
         {
-            Location = new Point(202, 172), Width = 270,
+            Location = new System.Drawing.Point(202, 172), Width = 270,
             Minimum = 1, Maximum = 5, Value = 1
         };
         var spellPicker = new ComboBox
         {
-            Location = new Point(202, 210), Width = 270,
+            Location = new System.Drawing.Point(202, 210), Width = 270,
             DropDownStyle = ComboBoxStyle.DropDownList
         };
         var spellIds = new List<Guid>();
@@ -152,8 +150,8 @@ public partial class FrmNpc
 
         var preview = new Label
         {
-            Location = new Point(20, 253), Size = new Size(452, 170),
-            ForeColor = Color.Gainsboro, BorderStyle = BorderStyle.FixedSingle,
+            Location = new System.Drawing.Point(20, 253), Size = new Size(452, 170),
+            ForeColor = System.Drawing.Color.Gainsboro, BorderStyle = BorderStyle.FixedSingle,
             Padding = new Padding(10)
         };
         var warning = new Label
@@ -161,22 +159,22 @@ public partial class FrmNpc
             Text = "Calibrated with the Balance Lab's class simulation and median-per-slot equipment. " +
                    "NPC spell DPS is estimated using frequency, mana cost and cooldowns. " +
                    "Drops, events, pets and scripted invasion logic are preserved.",
-            Location = new Point(20, 432), Size = new Size(452, 74),
-            ForeColor = Color.Khaki
+            Location = new System.Drawing.Point(20, 432), Size = new Size(452, 74),
+            ForeColor = System.Drawing.Color.Khaki
         };
         var simulate = new Button
         {
-            Text = "Simulate & Calibrate", Location = new Point(20, 527),
+            Text = "Simulate & Calibrate", Location = new System.Drawing.Point(20, 527),
             Size = new Size(193, 32)
         };
         var apply = new Button
         {
-            Text = "Apply to selected NPC", Location = new Point(267, 527),
+            Text = "Apply to selected NPC", Location = new System.Drawing.Point(267, 527),
             Size = new Size(205, 32), DialogResult = DialogResult.None
         };
         var cancel = new Button
         {
-            Text = "Cancel", Location = new Point(20, 566),
+            Text = "Cancel", Location = new System.Drawing.Point(20, 566),
             Size = new Size(115, 28), DialogResult = DialogResult.Cancel
         };
         dialog.Controls.AddRange(new Control[]
