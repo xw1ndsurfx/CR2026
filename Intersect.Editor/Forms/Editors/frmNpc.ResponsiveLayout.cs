@@ -14,6 +14,8 @@ namespace Intersect.Editor.Forms.Editors;
 public partial class FrmNpc
 {
     private static Size _lastNpcEditorSize = Size.Empty;
+    private bool _awaitingNewNpcForAutoCreator;
+    private readonly HashSet<Guid> _existingNpcIdsBeforeAutoCreate = [];
     private readonly TabControl _npcTabs = new();
     private readonly List<(Panel Page, Control[] Groups)> _npcTabPanels = [];
 
@@ -72,6 +74,22 @@ public partial class FrmNpc
             openCreator.Click += (_, _) => ShowNpcAutoCreator();
             autoTab.Controls.Add(autoMessage);
             autoTab.Controls.Add(openCreator);
+            var createAndOpen = new DarkButton
+            {
+                Text = "New NPC + Auto Creator",
+                Location = new System.Drawing.Point(16, 147),
+                Size = new Size(220, 34)
+            };
+            createAndOpen.Click += (_, _) => BeginNewNpcAutoCreate();
+            autoTab.Controls.Add(createAndOpen);
+            autoTab.Controls.Add(new Label
+            {
+                Text = "A new entry is created by the game server first, then the " +
+                       "Auto Creator opens for that NPC.",
+                Location = new System.Drawing.Point(16, 197),
+                Size = new Size(410, 54),
+                ForeColor = System.Drawing.Color.Silver
+            });
             _npcTabs.TabPages.Add(autoTab);
 
             Resize += (_, _) => ResizeResponsiveNpcEditor();
@@ -91,6 +109,49 @@ public partial class FrmNpc
         finally
         {
             ResumeLayout(true);
+        }
+    }
+
+    private void BeginNewNpcAutoCreate()
+    {
+        if (_awaitingNewNpcForAutoCreator)
+        {
+            return;
+        }
+
+        _existingNpcIdsBeforeAutoCreate.Clear();
+        foreach (var npc in Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor.Lookup
+                     .Values.OfType<Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor>())
+        {
+            _existingNpcIdsBeforeAutoCreate.Add(npc.Id);
+        }
+        _awaitingNewNpcForAutoCreator = true;
+        toolStripItemNew_Click(this, EventArgs.Empty);
+    }
+
+    private void OpenNewNpcCreatorIfReady()
+    {
+        if (!_awaitingNewNpcForAutoCreator)
+        {
+            return;
+        }
+        var created = Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor.Lookup
+            .Values.OfType<Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor>()
+            .Where(npc => !_existingNpcIdsBeforeAutoCreate.Contains(npc.Id))
+            .Select(npc => npc.Id).ToArray();
+
+        // Never guess which NPC was created when multiple editors/users changed
+        // the NPC list at the same time. In that case require manual selection.
+        if (created.Length != 1)
+        {
+            return;
+        }
+
+        _awaitingNewNpcForAutoCreator = false;
+        _existingNpcIdsBeforeAutoCreate.Clear();
+        if (lstGameObjects.SelectObject(created[0]) && IsHandleCreated && !IsDisposed)
+        {
+            BeginInvoke(new Action(ShowNpcAutoCreator));
         }
     }
 
