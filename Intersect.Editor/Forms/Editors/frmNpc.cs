@@ -593,6 +593,8 @@ public partial class FrmNpc : EditorForm
                 mEditorItem = null;
                 UpdateEditor();
             }
+
+            OpenNewNpcCreatorIfReady();
         }
     }
 
