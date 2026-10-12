@@ -46,6 +46,16 @@ internal static class ProfessionConfigurationRuntime
 
         lock (Gate)
         {
+            // Remove legacy banked EXP using the OLD maximum levels before
+            // administrators increase the profession limits.
+            var previous = Current;
+            var increasing = previous.Professions
+                .Where(old => configuration.Find(old.Id) is { } next &&
+                    next.MaximumLevel > old.MaximumLevel)
+                .ToArray();
+            if (increasing.Length > 0)
+                ProfessionRuntime.ClampStoredExperienceAtCaps(increasing);
+
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(PathName))!);
             var temp = PathName + ".tmp";
             File.WriteAllText(temp, configuration.ToJson());

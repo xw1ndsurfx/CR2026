@@ -2,7 +2,9 @@ using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.Professions;
 using Intersect.Network.Packets.Server;
+using Intersect.Server.Database;
 using Intersect.Server.Entities;
+using Microsoft.EntityFrameworkCore;
 using Intersect.Server.Achievements;
 using Intersect.Server.Networking;
 
@@ -18,18 +20,23 @@ internal static class ProfessionRuntime
     internal static int GetLevel(Player player, Guid id)
     {
         var definition = ProfessionConfigurationRuntime.Current.Find(id);
-        return definition == null || !IsLearned(player, id) ? 0 : definition.LevelForExperience(Total(player, id));
+        return definition == null || !IsLearned(player, id) ? 0 : definition.LevelForExperience(GetExperience(player, id));
     }
 
-    internal static long GetExperience(Player player, Guid id) =>
-        IsLearned(player, id) ? Total(player, id) : 0L;
+    internal static long GetExperience(Player player, Guid id)
+    {
+        var definition = ProfessionConfigurationRuntime.Current.Find(id);
+        return definition == null || !IsLearned(player, id)
+            ? 0L
+            : definition.ClampExperience(Total(player, id));
+    }
 
     internal static long GetExperienceToNextLevel(Player player, Guid id)
     {
         var definition = ProfessionConfigurationRuntime.Current.Find(id);
         if (definition == null || !IsLearned(player, id)) return -1;
 
-        var total = Total(player, id);
+        var total = GetExperience(player, id);
         var level = definition.LevelForExperience(total);
         if (level >= definition.MaximumLevel) return -1;
 
@@ -73,8 +80,8 @@ internal static class ProfessionRuntime
         if (!IsLearned(player, id)) Learn(player, id);
 
         var oldLevel = GetLevel(player, id);
-        var total = Math.Max(0L, experience);
-        player.SetVariableValue(id, total == long.MaxValue ? long.MaxValue : total + 1L);
+        var total = definition.ClampExperience(experience);
+        player.SetVariableValue(id, total + 1L);
         var newLevel = definition.LevelForExperience(total);
         AchievementRuntime.SetAbsoluteProgress(
             player,
@@ -101,10 +108,14 @@ internal static class ProfessionRuntime
             Learn(player, id);
         }
 
-        var oldTotal = Total(player, id);
+        var oldTotal = GetExperience(player, id);
         var oldLevel = definition.LevelForExperience(oldTotal);
-        var newTotal = amount > 0 && oldTotal > long.MaxValue - amount ? long.MaxValue : Math.Max(0L, oldTotal + amount);
-        player.SetVariableValue(id, newTotal == long.MaxValue ? long.MaxValue : newTotal + 1L);
+        var proposedTotal = amount > 0 && oldTotal > long.MaxValue - amount
+            ? long.MaxValue
+            : Math.Max(0L, oldTotal + amount);
+        var newTotal = definition.ClampExperience(proposedTotal);
+        if (Raw(player, id) != newTotal + 1L)
+            player.SetVariableValue(id, newTotal + 1L);
         var newLevel = definition.LevelForExperience(newTotal);
         AchievementRuntime.SetAbsoluteProgress(
             player,
@@ -113,8 +124,9 @@ internal static class ProfessionRuntime
             id
         );
 
-        if (amount > 0)
-            PacketSender.SendChatMsg(player, $"[{definition.Name}] +{amount:N0} profession XP.", ChatMessageType.Notice);
+        var experienceGranted = Math.Max(0L, newTotal - oldTotal);
+        if (experienceGranted > 0)
+            PacketSender.SendChatMsg(player, $"[{definition.Name}] +{experienceGranted:N0} profession XP.", ChatMessageType.Notice);
 
         if (newLevel > oldLevel)
         {
@@ -129,8 +141,10 @@ internal static class ProfessionRuntime
         if (definition == null || amount <= 0) return;
 
         var oldLevel = GetLevel(player, professionId);
+        var previousExperience = GetExperience(player, professionId);
         AddExperience(player, professionId, amount);
-        SendHarvestProgress(player, definition, amount, oldLevel);
+        var experienceGranted = Math.Max(0L, GetExperience(player, professionId) - previousExperience);
+        SendHarvestProgress(player, definition, experienceGranted, oldLevel);
     }
 
     internal static bool CanHarvest(Player player, ResourceDescriptor resource, out string error)
@@ -155,13 +169,15 @@ internal static class ProfessionRuntime
 
         var (profession, link) = match.Value;
         var oldLevel = GetLevel(player, profession.Id);
+        var previousExperience = GetExperience(player, profession.Id);
 
         if (link.Experience > 0)
             AddExperience(player, profession.Id, link.Experience);
         else if (!IsLearned(player, profession.Id))
             Learn(player, profession.Id);
 
-        SendHarvestProgress(player, profession, link.Experience, oldLevel);
+        var experienceGranted = Math.Max(0L, GetExperience(player, profession.Id) - previousExperience);
+        SendHarvestProgress(player, profession, experienceGranted, oldLevel);
     }
 
     private static void SendHarvestProgress(
@@ -223,6 +239,82 @@ internal static class ProfessionRuntime
                 MaximumLevelReached = maximumLevelReached,
             }
         );
+    }
+
+    /// <summary>
+    /// Normalize experience stored as cumulative XP + 1 in player variables.
+    /// The limit is the XP required for the maximum profession level, not zero.
+    /// </summary>
+    internal static void ClampPlayerExperienceAtCaps(Player player, IEnumerable<ProfessionDefinition>? definitions = null)
+    {
+        foreach (var definition in definitions ?? ProfessionConfigurationRuntime.Current.Professions)
+        {
+            var variable = player.GetVariable(definition.Id);
+            if (variable == null || variable.Value.Integer <= 0)
+                continue;
+
+            var current = Math.Max(0L, variable.Value.Integer - 1L);
+            var capped = definition.ClampExperience(current);
+            if (capped != current)
+                player.SetVariableValue(definition.Id, capped + 1L);
+        }
+    }
+
+    /// <summary>
+    /// Repair already-banked profession XP on inactive characters as well.
+    /// Run at startup and before raising a profession cap in the editor.
+    /// </summary>
+    internal static int ClampStoredExperienceAtCaps(IEnumerable<ProfessionDefinition> definitions)
+    {
+        var byId = definitions.ToDictionary(definition => definition.Id);
+        if (byId.Count == 0)
+            return 0;
+
+        const int batchSize = 500;
+        var professionIds = byId.Keys.ToArray();
+        var processed = 0;
+        var updated = 0;
+
+        while (true)
+        {
+            using var context = DbInterface.CreatePlayerContext(
+                readOnly: false, queryTrackingBehavior: QueryTrackingBehavior.TrackAll
+            );
+            var batch = context.Player_Variables
+                .Where(variable => professionIds.Contains(variable.VariableId))
+                .OrderBy(variable => variable.Id)
+                .Skip(processed)
+                .Take(batchSize)
+                .ToList();
+            if (batch.Count == 0)
+                break;
+
+            foreach (var variable in batch)
+            {
+                var currentRaw = variable.Value.Integer;
+                if (currentRaw <= 0)
+                    continue;
+
+                var definition = byId[variable.VariableId];
+                var current = currentRaw - 1L;
+                var capped = definition.ClampExperience(current);
+                if (capped == current)
+                    continue;
+
+                variable.Value.Integer = capped + 1L;
+                context.Entry(variable).Property(entry => entry.Json).IsModified = true;
+                updated++;
+            }
+
+            context.SaveChanges();
+            processed += batch.Count;
+        }
+
+        // Keep online in-memory characters synchronized with persisted data.
+        foreach (var player in Player.OnlinePlayersSnapshot())
+            ClampPlayerExperienceAtCaps(player, byId.Values);
+
+        return updated;
     }
 
     private static void GrantLevelRewards(Player player, ProfessionDefinition definition, int oldLevel, int newLevel)

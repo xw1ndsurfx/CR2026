@@ -35,6 +35,7 @@ using Intersect.Server.General;
 using Intersect.Server.Localization;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
+using Intersect.Server.Professions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -431,8 +432,39 @@ public static partial class DbInterface
         CacheUserVariableEventTextLookups();
 
         CheckPlayerDatabaseCaseInsensitiveCollisions();
+        ClearBankedExperienceAtLevelCap();
+        var normalizedProfessions = ProfessionRuntime.ClampStoredExperienceAtCaps(
+            ProfessionConfigurationRuntime.Current.Professions
+        );
+        if (normalizedProfessions > 0)
+            ApplicationContext.Context.Value?.Logger.LogInformation(
+                "Normalized saved EXP for {Count} capped profession records.", normalizedProfessions
+            );
 
         return true;
+    }
+
+    /// <summary>
+    /// Remove EXP already saved by the old behavior for *offline* players.
+    /// This runs after migrations and before players can log in, so raising the
+    /// cap in a later update cannot reveal any previously banked experience.
+    /// </summary>
+    private static void ClearBankedExperienceAtLevelCap()
+    {
+        var maxLevel = Options.Instance.Player.MaxLevel;
+        using var playerContext = CreatePlayerContext(readOnly: false);
+        var affectedPlayers = playerContext.Players
+            .Where(player => player.Level >= maxLevel && player.Exp != 0)
+            .ExecuteUpdate(setters => setters.SetProperty(player => player.Exp, 0L));
+
+        if (affectedPlayers > 0)
+        {
+            ApplicationContext.Context.Value?.Logger.LogInformation(
+                "Cleared banked EXP for {Count} characters at or above level cap {MaxLevel}.",
+                affectedPlayers,
+                maxLevel
+            );
+        }
     }
 
     private static void CheckPlayerDatabaseCaseInsensitiveCollisions()

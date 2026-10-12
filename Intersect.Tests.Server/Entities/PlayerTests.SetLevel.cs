@@ -17,8 +17,9 @@ public partial class PlayerTests
             yield return [1, 1, 2, true, 2, 0];
             yield return [2, 1, 1, false, 1, 1];
             yield return [2, 1, 1, true, 1, 0];
-            yield return [1, 1, Options.Instance.Player.MaxLevel + 1, false, Options.Instance.Player.MaxLevel, 1];
+            yield return [1, 1, Options.Instance.Player.MaxLevel + 1, false, Options.Instance.Player.MaxLevel, 0];
             yield return [1, 1, Options.Instance.Player.MaxLevel + 1, true, Options.Instance.Player.MaxLevel, 0];
+            yield return [Options.Instance.Player.MaxLevel, 500, Options.Instance.Player.MaxLevel, false, Options.Instance.Player.MaxLevel, 0];
         }
     }
 

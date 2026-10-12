@@ -65,6 +65,14 @@ public sealed class ProfessionDefinition
         return total;
     }
 
+    /// <summary>
+    /// Maximum cumulative experience attainable at the current level cap.
+    /// The server stores a learned profession as total EXP + 1, so reserve
+    /// the final long value for that marker without overflowing.
+    /// </summary>
+    public long ClampExperience(long totalExperience) =>
+        Math.Min(Math.Max(0L, totalExperience), Math.Min(ExperienceToReachLevel(MaximumLevel), long.MaxValue - 1L));
+
     public int LevelForExperience(long totalExperience)
     {
         var level = 1;
