@@ -35,7 +35,7 @@
 	</ItemGroup>
 
 	<ItemGroup Label="Admurin GUI Art">
-		<Content Include="..\\resources\\gui\\admurin-ui.b64">
+		<Content Include="..\\resources\\gui\\admurin-ui.b64" Condition="Exists('..\\resources\\gui\\admurin-ui.b64')">
 			<Link>resources\\gui\\admurin-ui.b64</Link>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
