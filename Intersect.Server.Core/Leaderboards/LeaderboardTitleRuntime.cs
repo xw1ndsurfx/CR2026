@@ -19,8 +19,8 @@ internal static class LeaderboardTitleRuntime
     internal const int QualificationDays = 3;
     internal const int FirstPlaceExperienceBonusPercent = 20;
     internal const int OtherTopThreeExperienceBonusPercent = 15;
-    internal const string FirstPlaceTitle = "Champion du Royaume";
-    internal const string OtherTopThreeTitle = "Élite du Royaume";
+    internal const string FirstPlaceTitle = "Champion of the Realm";
+    internal const string OtherTopThreeTitle = "Royal Elite";
 
     private static readonly object Gate = new();
     private static readonly string StatePath = Path.Combine("resources", "leaderboard-title-state.json");
@@ -165,17 +165,17 @@ internal static class LeaderboardTitleRuntime
             {
                 PacketSender.SendChatMsg(
                     player,
-                    $"[Classement] Titre retiré : {change.Before.Title}.",
+                     $"[Leaderboard] Title removed: {change.Before.Title}.",
                     ChatMessageType.Notice,
                     Color.White
                 );
             }
             else if (change.After != null)
             {
-                var verb = change.Before == null ? "Titre obtenu" : "Titre mis à jour";
+                var verb = change.Before == null ? "Title earned" : "Title updated";
                 PacketSender.SendChatMsg(
                     player,
-                    $"[Classement] {verb} : {change.After.Title} (+{change.After.ExperienceBonusPercent}% EXP).",
+                     $"[Leaderboard] {verb}: {change.After.Title} (+{change.After.ExperienceBonusPercent}% EXP).",
                     ChatMessageType.Notice,
                     Color.White
                 );

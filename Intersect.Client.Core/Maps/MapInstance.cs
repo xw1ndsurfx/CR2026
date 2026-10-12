@@ -1715,7 +1715,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         {
             var actionMessage = ActionMessages[n];
             var x = (X + actionMessage.X * _tileWidth + actionMessage.XOffset);
-            var y = Y + actionMessage.Y * _tileHeight - _tileHeight * 2 *
+            var y = Y + actionMessage.Y * _tileHeight + actionMessage.YOffset - _tileHeight * 2 *
                 (1000 - (int)(actionMessage.TransmissionTimer - Timing.Global.MillisecondsUtc)) / 1000;
             var textWidth = Graphics.Renderer.MeasureText(
                     actionMessage.Text,

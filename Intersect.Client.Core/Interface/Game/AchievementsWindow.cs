@@ -16,10 +16,14 @@ internal sealed class AchievementsWindow : Window
     private static readonly Color Cream = new(a: 255, r: 246, g: 229, b: 202);
     private static readonly Color Muted = new(a: 255, r: 193, g: 180, b: 161);
     private readonly Label _summary;
+    private readonly bool _readOnly;
     private readonly ScrollControl _scroll;
 
-    public AchievementsWindow(Canvas parent) : base(parent, "Achievements", false, nameof(AchievementsWindow))
+    public AchievementsWindow(Canvas parent, bool readOnly = false) : base(parent,
+        readOnly ? "Player Achievements" : "Achievements", false,
+        readOnly ? "InspectedAchievementsWindow" : nameof(AchievementsWindow))
     {
+        _readOnly = readOnly;
         SetSize(760, 620);
         Alignment = [Alignments.Center];
         DeleteOnClose = false;
@@ -35,7 +39,7 @@ internal sealed class AchievementsWindow : Window
             FontSize = 17,
             TextAlign = Pos.Center,
             TextColorOverride = new Color(a: 255, r: 236, g: 210, b: 153),
-            Text = "ACHIEVEMENTS",
+            Text = readOnly ? "PLAYER ACHIEVEMENTS" : "ACHIEVEMENTS",
         };
         title.SetBounds(20, 36, 720, 34);
 
@@ -81,7 +85,7 @@ internal sealed class AchievementsWindow : Window
             .ToArray();
 
         var completedCount = state.Values.Count(entry => entry.Completed);
-        _summary.Text =
+        _summary.Text = (_readOnly ? packet.InspectedPlayerName + "  |  VIEW ONLY  |  " : "") +
             $"{completedCount:N0} / {AchievementConfiguration.Instance.Achievements.Length:N0} completed";
 
         _scroll.DeleteAll();
@@ -169,7 +173,9 @@ internal sealed class AchievementsWindow : Window
         AddText(card, $"AchievementDescription{definition.Id}", definition.Description,
             110, 39, 383, 37, 9, Muted);
 
-        var statusText = progress.Claimed ? "REWARD CLAIMED"
+        var statusText = _readOnly
+            ? (progress.Completed ? "COMPLETED" : "IN PROGRESS")
+            : progress.Claimed ? "REWARD CLAIMED"
             : progress.Completed ? "READY TO CLAIM" : "IN PROGRESS";
         var statusColor = progress.Claimed
             ? new Color(a: 255, r: 151, g: 196, b: 132)
@@ -198,20 +204,26 @@ internal sealed class AchievementsWindow : Window
         AddText(card, $"AchievementReward{definition.Id}", rewardText,
             100, 126, 377, 22, 9, Cream);
 
-        var claim = new Button(card, $"AchievementClaim{definition.Id}")
+        // The inspection window never creates reward-claim controls.
+        if (!_readOnly)
         {
-            Text = string.Empty,
-            IsDisabled = !progress.Completed || progress.Claimed,
-        };
-        claim.SetBounds(500, 113, 148, 36);
-        var claimFrame = new AchievementChrome(claim, $"AchievementClaimFrame{definition.Id}",
-            progress.Completed && !progress.Claimed ? ChromeStyle.PrimaryButton : ChromeStyle.SecondaryButton);
-        claimFrame.SetBounds(0, 0, 148, 36);
-        AddText(claim, $"AchievementClaimLabel{definition.Id}",
-            progress.Claimed ? "CLAIMED" : progress.Completed ? "CLAIM REWARD" : "LOCKED",
-            4, 0, 140, 36, 10, Cream, bold: true, center: true).BringToFront();
-        claim.Clicked += (_, _) =>
-            Networking.PacketSender.SendClaimAchievementReward(definition.Id);
+            var claim = new Button(card, $"AchievementClaim{definition.Id}")
+            {
+                Text = string.Empty,
+                IsDisabled = !progress.Completed || progress.Claimed,
+            };
+            claim.SetBounds(500, 113, 148, 36);
+            var claimFrame = new AchievementChrome(claim, $"AchievementClaimFrame{definition.Id}",
+                progress.Completed && !progress.Claimed ? ChromeStyle.PrimaryButton : ChromeStyle.SecondaryButton);
+            claimFrame.SetBounds(0, 0, 148, 36);
+            AddText(claim, $"AchievementClaimLabel{definition.Id}",
+                progress.Claimed ? "CLAIMED" : progress.Completed ? "CLAIM REWARD" : "LOCKED",
+                4, 0, 140, 36, 10, Cream, bold: true, center: true).BringToFront();
+            claim.Clicked += (_, _) =>
+                Networking.PacketSender.SendClaimAchievementReward(definition.Id);
+    
+    
+        }
 
         return y + height + 12;
     }

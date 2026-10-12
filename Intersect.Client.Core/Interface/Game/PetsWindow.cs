@@ -17,10 +17,14 @@ internal sealed class PetsWindow : Window
     private static readonly Color Cream = new(a: 255, r: 246, g: 229, b: 202);
     private static readonly Color Muted = new(a: 255, r: 193, g: 180, b: 161);
     private readonly Label _summary;
+    private readonly bool _readOnly;
     private readonly ScrollControl _scroll;
 
-    public PetsWindow(Canvas parent) : base(parent, "Pets", false, nameof(PetsWindow))
+    public PetsWindow(Canvas parent, bool readOnly = false) : base(parent,
+        readOnly ? "Player Familiars" : "Pets", false,
+        readOnly ? "InspectedPetsWindow" : nameof(PetsWindow))
     {
+        _readOnly = readOnly;
         SetSize(735, 560);
         Alignment = [Alignments.Center];
         DeleteOnClose = false;
@@ -36,7 +40,7 @@ internal sealed class PetsWindow : Window
             FontSize = 17,
             TextAlign = Pos.Center,
             TextColorOverride = new Color(a: 255, r: 236, g: 210, b: 153),
-            Text = "PETS",
+            Text = readOnly ? "PLAYER FAMILIARS" : "PETS",
         };
         title.SetBounds(20, 39, 695, 32);
 
@@ -67,10 +71,11 @@ internal sealed class PetsWindow : Window
     {
         _scroll.DeleteAll();
         var pets = packet.Pets ?? [];
-        _summary.Text = pets.Length == 0
-            ? "No pets unlocked. Use a pet summoning item."
-            : pets.Length + " pets unlocked  -  " +
-              (pets.Any(p => p.IsActive) ? "1 summoned" : "none summoned");
+        _summary.Text = (_readOnly ? packet.InspectedPlayerName + "  |  VIEW ONLY  |  " : "") +
+            (pets.Length == 0
+                ? (_readOnly ? "No familiars" : "No pets unlocked. Use a pet summoning item.")
+                : pets.Length + " familiars  -  " +
+                  (pets.Any(p => p.IsActive) ? "1 summoned" : "none summoned"));
 
         var y = 10;
         foreach (var pet in pets)
@@ -80,9 +85,9 @@ internal sealed class PetsWindow : Window
             {
                 MouseInputEnabled = false,
             };
-            card.SetBounds(5, y, 644, 378);
+            card.SetBounds(5, y, 644, _readOnly ? 312 : 378);
             var cardFrame = new PetChrome(card, "PetCardFrame" + pet.PetId, PetChromeStyle.Card);
-            cardFrame.SetBounds(0, 0, 644, 378);
+            cardFrame.SetBounds(0, 0, 644, _readOnly ? 312 : 378);
             var portraitFrame = new PetChrome(card, "PetPortraitFrame" + pet.PetId, PetChromeStyle.Portrait);
             portraitFrame.SetBounds(13, 12, 85, 85);
             var statsFrame = new PetChrome(card, "PetStatsFrame" + pet.PetId, PetChromeStyle.Section);
@@ -160,60 +165,67 @@ internal sealed class PetsWindow : Window
                 22, 274, 602, 20, 10, true,
                 pet.AutoLoot ? new Color(a: 255, r: 147, g: 225, b: 161) : Color.White);
 
-            AddText(card, "PetRenameLabel" + pet.PetId, "Name:", 18, 301, 53, 25, 10);
-            var nameInput = new TextBox(card, "PetNameInput" + pet.PetId)
+            // Observed familiars are informational only; never create
+            // rename, summon, dismiss, or auto-loot actions for another player.
+            if (!_readOnly)
             {
-                Text = pet.Name,
-                PlaceholderText = "Pet name",
-                Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
-                FontSize = 10,
-                TextColorOverride = Color.White,
-                TextAlign = Pos.Left | Pos.CenterV,
-            };
-            nameInput.SetBounds(70, 299, 316, 29);
-            nameInput.SetMaxLength(24);
+                AddText(card, "PetRenameLabel" + pet.PetId, "Name:", 18, 301, 53, 25, 10);
+                var nameInput = new TextBox(card, "PetNameInput" + pet.PetId)
+                {
+                    Text = pet.Name,
+                    PlaceholderText = "Pet name",
+                    Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                    FontSize = 10,
+                    TextColorOverride = Color.White,
+                    TextAlign = Pos.Left | Pos.CenterV,
+                };
+                nameInput.SetBounds(70, 299, 316, 29);
+                nameInput.SetMaxLength(24);
+    
+                void SubmitName() => Networking.PacketSender.SendPetAction(
+                    PetActionKind.Rename, pet.PetId, nameInput.Text);
+                nameInput.SubmitPressed += (_, _) => SubmitName();
+    
+                var rename = new Button(card, "PetRename" + pet.PetId)
+                {
+                    Text = "Rename",
+                    Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                    FontSize = 10,
+                };
+                rename.SetBounds(400, 299, 226, 29);
+                StyleButton(rename, "PetRenameStyle" + pet.PetId, "RENAME", 226, 29, false);
+                rename.Clicked += (_, _) => SubmitName();
+    
+                var summon = new Button(card, "PetSummon" + pet.PetId)
+                {
+                    Text = pet.IsActive ? "Dismiss" : "Summon",
+                    Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                    FontSize = 10,
+                };
+                summon.SetBounds(18, 337, 296, 32);
+                StyleButton(summon, "PetSummonStyle" + pet.PetId,
+                    pet.IsActive ? "DISMISS" : "SUMMON", 296, 32, !pet.IsActive);
+                summon.Clicked += (_, _) => Networking.PacketSender.SendPetAction(
+                    pet.IsActive ? PetActionKind.Dismiss : PetActionKind.Summon, pet.PetId);
+    
+                var loot = new Button(card, "PetLoot" + pet.PetId)
+                {
+                    Text = pet.AutoLoot ? "Disable auto-loot" : "Enable auto-loot",
+                    Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
+                    FontSize = 10,
+                    IsDisabled = !pet.IsActive,
+                };
+                loot.SetBounds(330, 337, 296, 32);
+                StyleButton(loot, "PetLootStyle" + pet.PetId,
+                    pet.AutoLoot ? "DISABLE AUTO-LOOT" : "ENABLE AUTO-LOOT",
+                    296, 32, pet.IsActive && !pet.AutoLoot);
+                loot.Clicked += (_, _) => Networking.PacketSender.SendPetAction(
+                    PetActionKind.ToggleAutoLoot, pet.PetId);
+    
+    
+            }
 
-            void SubmitName() => Networking.PacketSender.SendPetAction(
-                PetActionKind.Rename, pet.PetId, nameInput.Text);
-            nameInput.SubmitPressed += (_, _) => SubmitName();
-
-            var rename = new Button(card, "PetRename" + pet.PetId)
-            {
-                Text = "Rename",
-                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-                FontSize = 10,
-            };
-            rename.SetBounds(400, 299, 226, 29);
-            StyleButton(rename, "PetRenameStyle" + pet.PetId, "RENAME", 226, 29, false);
-            rename.Clicked += (_, _) => SubmitName();
-
-            var summon = new Button(card, "PetSummon" + pet.PetId)
-            {
-                Text = pet.IsActive ? "Dismiss" : "Summon",
-                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-                FontSize = 10,
-            };
-            summon.SetBounds(18, 337, 296, 32);
-            StyleButton(summon, "PetSummonStyle" + pet.PetId,
-                pet.IsActive ? "DISMISS" : "SUMMON", 296, 32, !pet.IsActive);
-            summon.Clicked += (_, _) => Networking.PacketSender.SendPetAction(
-                pet.IsActive ? PetActionKind.Dismiss : PetActionKind.Summon, pet.PetId);
-
-            var loot = new Button(card, "PetLoot" + pet.PetId)
-            {
-                Text = pet.AutoLoot ? "Disable auto-loot" : "Enable auto-loot",
-                Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-                FontSize = 10,
-                IsDisabled = !pet.IsActive,
-            };
-            loot.SetBounds(330, 337, 296, 32);
-            StyleButton(loot, "PetLootStyle" + pet.PetId,
-                pet.AutoLoot ? "DISABLE AUTO-LOOT" : "ENABLE AUTO-LOOT",
-                296, 32, pet.IsActive && !pet.AutoLoot);
-            loot.Clicked += (_, _) => Networking.PacketSender.SendPetAction(
-                PetActionKind.ToggleAutoLoot, pet.PetId);
-
-            y += 392;
+            y += _readOnly ? 324 : 392;
         }
         _scroll.SetInnerSize(661, Math.Max(400, y + 10));
         _scroll.UpdateScrollBars();

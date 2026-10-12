@@ -5,9 +5,21 @@ namespace Intersect.Client.Interface.Game;
 public partial class GameInterface
 {
     private PetsWindow? _petsWindow;
+    private PetsWindow? _observedPetsWindow;
 
     public void ApplyPetState(PetStatePacket packet)
     {
+        if (packet.InspectedPlayerId != Guid.Empty)
+        {
+            if (!packet.OpenWindow)
+                return;
+            _observedPetsWindow ??= new PetsWindow(GameCanvas, readOnly: true);
+            _observedPetsWindow.Apply(packet);
+            _observedPetsWindow.Show();
+            _observedPetsWindow.BringToFront();
+            return;
+        }
+
         _petsWindow?.Apply(packet);
         if (!packet.OpenWindow) return;
         GameMenu?.HideWindows();

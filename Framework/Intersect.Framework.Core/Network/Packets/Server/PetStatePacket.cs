@@ -81,4 +81,10 @@ public partial class PetStatePacket : IntersectPacket
 
     [Key(2)]
     public bool OpenWindow { get; set; }
+
+    [Key(3)]
+    public Guid InspectedPlayerId { get; set; }
+
+    [Key(4)]
+    public string InspectedPlayerName { get; set; } = string.Empty;
 }

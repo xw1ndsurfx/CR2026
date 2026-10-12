@@ -8,6 +8,7 @@ public interface IActionMessage
     long TransmissionTimer { get; init; }
     int X { get; init; }
     int XOffset { get; init; }
+    int YOffset { get; init; }
     int Y { get; init; }
 
     void TryRemove();

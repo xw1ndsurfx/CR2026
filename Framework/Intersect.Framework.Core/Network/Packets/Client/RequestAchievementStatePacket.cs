@@ -9,11 +9,15 @@ public partial class RequestAchievementStatePacket : IntersectPacket
     {
     }
 
-    public RequestAchievementStatePacket(bool openWindow)
+    public RequestAchievementStatePacket(bool openWindow, Guid playerId = default)
     {
         OpenWindow = openWindow;
+        PlayerId = playerId;
     }
 
     [Key(0)]
     public bool OpenWindow { get; set; }
+
+    [Key(1)]
+    public Guid PlayerId { get; set; }
 }

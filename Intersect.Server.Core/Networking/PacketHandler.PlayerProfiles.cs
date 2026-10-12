@@ -98,6 +98,24 @@ internal sealed partial class PacketHandler
             );
         }
 
+        // Use the same directional layer order as the Character Window.
+        // Sending the resolved sprites avoids relying on other players'
+        // inventory state being available to the observing client.
+        var paperdollSprites = Options.Instance.Equipment.Paperdoll.Directions[1]
+            .Select(slot =>
+            {
+                var equipmentSlot = Options.Instance.Equipment.Slots.IndexOf(slot);
+                if (equipmentSlot < 0 ||
+                    !target.TryGetEquippedItem(equipmentSlot, out var equipped) ||
+                    equipped.Descriptor == null)
+                    return string.Empty;
+
+                return ((int)target.Gender == 0
+                    ? equipped.Descriptor.MalePaperdoll
+                    : equipped.Descriptor.FemalePaperdoll) ?? string.Empty;
+            })
+            .ToArray();
+
         var rankingTitle = LeaderboardTitleRuntime.GetStatus(target.Id);
 
         client.Send(
@@ -121,6 +139,9 @@ internal sealed partial class PacketHandler
                 RankingExperienceBonusPercent = rankingTitle?.ExperienceBonusPercent ?? 0,
                 RankingPosition = rankingTitle?.Rank ?? 0,
                 RankingConsecutiveDays = rankingTitle?.ConsecutiveDays ?? 0,
+                Sprite = target.Sprite ?? string.Empty,
+                PaperdollSprites = paperdollSprites,
+                LevelExperienceRequired = target.ExperienceToNextLevel,
             }
         );
     }

@@ -23,6 +23,18 @@ namespace Intersect.Client.Interface.Game;
 
 public partial class QuestsWindow
 {
+    // Match the dungeon registry's drawn pixel-gold and dark bronze design.
+    // Decorative elements use Gwen rectangles, never font icons or Unicode glyphs.
+    private static readonly Color JournalGold = new(a: 255, r: 220, g: 188, b: 111);
+    private static readonly Color JournalCream = new(a: 255, r: 241, g: 225, b: 195);
+    private static readonly Color JournalMuted = new(a: 255, r: 184, g: 171, b: 151);
+    private static readonly Color JournalGood = new(a: 255, r: 135, g: 213, b: 143);
+
+    private readonly QuestJournalChrome mQuestJournalChrome;
+    private readonly Label mQuestJournalHeading;
+    private readonly Label mQuestJournalSubtitle;
+    private readonly Label mQuestJournalSummary;
+    private readonly Label mQuestDetailsProgress;
 
     private readonly Button mBackButton;
 
@@ -51,7 +63,6 @@ public partial class QuestsWindow
     private Label mQuestTaskHudHeader;
     private Label mQuestTaskHudTitle;
     private Label mQuestTaskHudProgressLabel;
-    private ImagePanel mQuestTaskHudIcon;
     private Guid _lastHudQuestId = Guid.Empty;
     private Guid _lastHudTaskId = Guid.Empty;
     private int _lastHudProgress = -1;
@@ -65,7 +76,6 @@ public partial class QuestsWindow
         mQuestTaskHudHeader = null;
         mQuestTaskHudTitle = null;
         mQuestTaskHudProgressLabel = null;
-        mQuestTaskHudIcon = null;
 
         mQuestTaskHudPanel?.Dispose();
         mQuestTaskHudPanel = null;
@@ -107,9 +117,81 @@ public partial class QuestsWindow
 
         mQuestsWindow.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
 
-        // Override stupid decisions in the JSON
+        // Keep the saved JSON skin for input/close behavior while giving the
+        // quest journal its own fixed, readable dungeon-registry layout.
+        mQuestsWindow.SetSize(820, 680);
+        mQuestsWindow.Alignment = [Alignments.Center];
+        mQuestsWindow.TitleLabel.Font =
+            GameContentManager.Current.GetFont("sourcesansproblack") ?? mQuestsWindow.TitleLabel.Font;
+        mQuestsWindow.TitleLabel.FontSize = 12;
+        mQuestsWindow.TitleLabel.TextColorOverride = JournalGold;
+
+        // Painted behind the original interactive widgets: the quest selection
+        // and abandon confirmation code below remains unchanged.
+        mQuestJournalChrome = new QuestJournalChrome(mQuestsWindow, "RoyalQuestJournalFrame");
+        mQuestJournalChrome.SetBounds(12, 9, 796, 612);
+        mQuestJournalChrome.SendToBack();
+
+        mQuestJournalHeading = AddJournalText(mQuestsWindow, "QuestJournalHeading",
+            "ROYAL QUEST JOURNAL", 130, 36, 557, 35, 21, JournalGold, bold: true, center: true);
+        mQuestJournalSubtitle = AddJournalText(mQuestsWindow, "QuestJournalSubtitle",
+            "CHRONICLES OF YOUR ADVENTURES",
+            120, 73, 576, 22, 10, JournalMuted, center: true);
+        mQuestJournalSummary = AddJournalText(mQuestsWindow, "QuestJournalSummary",
+            "SELECT A QUEST TO REVIEW ITS OBJECTIVES",
+            48, 114, 723, 27, 11, JournalCream, bold: true, center: true);
+        mQuestDetailsProgress = AddJournalText(mQuestsWindow, "QuestJournalProgress",
+            string.Empty, 48, 114, 723, 27, 11, JournalGold, bold: true, center: true);
+        mQuestDetailsProgress.Hide();
+
         _questList.IsDisabled = false;
         _questList.IsVisibleInTree = true;
+        _questList.EnableScroll(false, true);
+        _questList.FontName = "sourcesanspro";
+        _questList.FontSize = 12;
+        _questList.SetBounds(43, 170, 730, 406);
+
+        mQuestTitle.AutoSizeToContents = false;
+        mQuestTitle.Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mQuestTitle.Font;
+        mQuestTitle.FontSize = 17;
+        mQuestTitle.TextColorOverride = JournalCream;
+        mQuestTitle.TextAlign = Pos.Left | Pos.CenterV;
+        mQuestTitle.SetBounds(58, 174, 690, 36);
+
+        mQuestStatus.AutoSizeToContents = false;
+        mQuestStatus.Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mQuestStatus.Font;
+        mQuestStatus.FontSize = 11;
+        mQuestStatus.TextAlign = Pos.Left | Pos.CenterV;
+        mQuestStatus.SetBounds(58, 210, 680, 25);
+
+        mQuestDescArea.SetBounds(53, 244, 713, 302);
+        mQuestDescArea.OverflowX = OverflowBehavior.Hidden;
+        mQuestDescArea.OverflowY = OverflowBehavior.Scroll;
+        mQuestDescArea.AutoHideBars = true;
+
+        mQuestDescTemplateLabel.Font =
+            GameContentManager.Current.GetFont("sourcesanspro") ?? mQuestDescTemplateLabel.Font;
+        mQuestDescTemplateLabel.FontSize = 11;
+        mQuestDescTemplateLabel.SetTextColor(JournalCream, ComponentState.Normal);
+        mQuestDescTemplateLabel.Hide();
+
+        mBackButton.SetBounds(59, 565, 204, 42);
+        mBackButton.Text = string.Empty;
+        AddJournalButtonChrome(mBackButton, "Back", "BACK TO QUESTS",
+            204, 42, primary: false);
+
+        mQuitButton.SetBounds(547, 565, 210, 42);
+        mQuitButton.Text = string.Empty;
+        AddJournalButtonChrome(mQuitButton, "Abandon", "ABANDON QUEST",
+            210, 42, primary: true);
+
+        // All native controls stay above the decorative Gwen background.
+        _questList.BringToFront();
+        mQuestTitle.BringToFront();
+        mQuestStatus.BringToFront();
+        mQuestDescArea.BringToFront();
+        mBackButton.BringToFront();
+        mQuitButton.BringToFront();
 
         // === Quest Tracker HUD ===
         // Small WorldMap-style window: dark translucent body, brown header,
@@ -122,15 +204,6 @@ public partial class QuestsWindow
         };
         mQuestTaskHudPanel.MouseInputEnabled = false;
 
-        mQuestTaskHudIcon = new ImagePanel(mQuestTaskHudPanel, "QuestTrackerIcon")
-        {
-            TextureFilename = "questsicon.png",
-            MaintainAspectRatio = true,
-            MouseInputEnabled = false,
-            RenderColor = new Color(a: 245, r: 255, g: 255, b: 255),
-        };
-        mQuestTaskHudIcon.SetBounds(23, 42, 36, 36);
-
         var trackerFont = GameContentManager.Current.GetFont("sourcesansproblack") ??
                           GameContentManager.Current.GetFont("sourcesanspro") ??
                           mQuestDescTemplateLabel.Font;
@@ -140,7 +213,7 @@ public partial class QuestsWindow
             AutoSizeToContents = false,
             Font = trackerFont,
             FontSize = 8,
-            TextColorOverride = Color.White,
+            TextColorOverride = JournalGold,
             Text = "CURRENT QUEST",
             TextAlign = Pos.Left | Pos.CenterV,
             MouseInputEnabled = false,
@@ -152,7 +225,7 @@ public partial class QuestsWindow
             AutoSizeToContents = false,
             Font = trackerFont,
             FontSize = 11,
-            TextColorOverride = new Color(a: 255, r: 244, g: 236, b: 219),
+            TextColorOverride = JournalCream,
             TextAlign = Pos.Left | Pos.CenterV,
             MouseInputEnabled = false,
         };
@@ -177,7 +250,7 @@ public partial class QuestsWindow
             AutoSizeToContents = false,
             Font = trackerFont,
             FontSize = 8,
-            TextColorOverride = new Color(a: 255, r: 170, g: 220, b: 145),
+            TextColorOverride = JournalGood,
             TextAlign = Pos.Left | Pos.CenterV,
             MouseInputEnabled = false,
         };
@@ -185,7 +258,7 @@ public partial class QuestsWindow
 
         mQuestTaskHudTemplate = new Label(null)
         {
-            TextColor = new Color(a: 255, r: 229, g: 225, b: 214),
+            TextColor = JournalCream,
             Font = trackerFont,
             FontSize = 8,
             Width = 248,
@@ -387,8 +460,8 @@ public partial class QuestsWindow
         var questPercent = GetQuestCompletionPercent(mSelectedQuest, playerQuest);
         var completedTasks = GetCompletedTaskCount(mSelectedQuest, playerQuest);
         progressText = string.IsNullOrEmpty(progressText)
-            ? $"Quest {completedTasks}/{mSelectedQuest.Tasks.Count} • {questPercent}%"
-            : $"{progressText} • Quest {questPercent}%";
+            ? $"QUEST {completedTasks}/{mSelectedQuest.Tasks.Count}  /  {questPercent}%"
+            : $"{progressText}  /  QUEST {questPercent}%";
 
         mQuestTaskHudProgressLabel.Text = progressText;
         mQuestTaskHudProgressLabel.IsHidden = false;
@@ -499,11 +572,29 @@ public partial class QuestsWindow
             base.Render(skin);
             var renderer = skin.Renderer;
 
-            Fill(renderer, new Color(a: 220, r: 24, g: 14, b: 15), 0, 0, Width, Height);
-            Fill(renderer, new Color(a: 242, r: 94, g: 60, b: 49), 0, 0, Width, 30);
-            Fill(renderer, new Color(a: 255, r: 126, g: 82, b: 62), 0, 29, Width, 1);
-            Outline(renderer, new Color(a: 255, r: 72, g: 43, b: 35), 0, 0, Width, Height, 2);
-            Fill(renderer, new Color(a: 72, r: 12, g: 10, b: 10), 82, 39, Width - 94, Height - 52);
+            var darkest = new Color(a: 234, r: 24, g: 15, b: 14);
+            var bronze = new Color(a: 255, r: 77, g: 46, b: 34);
+            var gold = new Color(a: 255, r: 158, g: 112, b: 51);
+            var brightGold = new Color(a: 255, r: 224, g: 179, b: 88);
+
+            Fill(renderer, darkest, 0, 0, Width, Height);
+            Fill(renderer, bronze, 2, 2, Width - 4, 28);
+            Fill(renderer, gold, 12, 29, Width - 24, 1);
+            Outline(renderer, gold, 0, 0, Width, Height, 2);
+            Fill(renderer, brightGold, 8, 5, 17, 2);
+            Fill(renderer, brightGold, Width - 25, 5, 17, 2);
+            Fill(renderer, new Color(a: 100, r: 12, g: 10, b: 10),
+                82, 39, Width - 94, Height - 52);
+
+            // Pixel-art quest scroll: no external quest icon or unsupported font.
+            Fill(renderer, darkest, 17, 39, 52, 57);
+            Outline(renderer, brightGold, 17, 39, 52, 57, 2);
+            Fill(renderer, new Color(a: 255, r: 194, g: 165, b: 111), 28, 49, 30, 37);
+            Fill(renderer, new Color(a: 255, r: 93, g: 64, b: 40), 32, 57, 22, 2);
+            Fill(renderer, new Color(a: 255, r: 93, g: 64, b: 40), 32, 65, 19, 2);
+            Fill(renderer, new Color(a: 255, r: 93, g: 64, b: 40), 32, 73, 21, 2);
+            Fill(renderer, brightGold, 26, 47, 34, 3);
+            Fill(renderer, brightGold, 26, 85, 34, 3);
 
             if (ShowProgressBar)
             {
@@ -584,6 +675,13 @@ public partial class QuestsWindow
                 }
             }
 
+            var entries = dict.Values.SelectMany(group => group).ToArray();
+            var activeCount = entries.Count(entry => entry.Item2 == 1);
+            var availableCount = entries.Count(entry => entry.Item2 == 2);
+            var completedCount = entries.Count(entry => entry.Item2 == 3);
+            mQuestJournalSummary.Text =
+                $"ACTIVE {activeCount:N0}  /  AVAILABLE {availableCount:N0}  /  COMPLETED {completedCount:N0}";
+
             if (dict.ContainsKey(""))
             {
                 var sortedList = dict[""].OrderBy(l => l.Item2).ThenBy(l => l.Item1.OrderValue).ToList();
@@ -627,7 +725,7 @@ public partial class QuestsWindow
             {
                 add = true;
                 category = !TextUtils.IsNone(quest.InProgressCategory) ? quest.InProgressCategory : "";
-                color = CustomColors.QuestWindow.InProgress;
+                color = JournalGold;
                 orderVal = 1;
             }
             else
@@ -638,7 +736,7 @@ public partial class QuestsWindow
                     {
                         add = true;
                         category = !TextUtils.IsNone(quest.CompletedCategory) ? quest.CompletedCategory : "";
-                        color = CustomColors.QuestWindow.Completed;
+                        color = JournalGood;
                         orderVal = 3;
                     }
                 }
@@ -648,7 +746,7 @@ public partial class QuestsWindow
                     {
                         add = true;
                         category = !TextUtils.IsNone(quest.UnstartedCategory) ? quest.UnstartedCategory : "";
-                        color = CustomColors.QuestWindow.NotStarted;
+                        color = JournalCream;
                         orderVal = 2;
                     }
                 }
@@ -660,7 +758,7 @@ public partial class QuestsWindow
             {
                 add = true;
                 category = !TextUtils.IsNone(quest.UnstartedCategory) ? quest.UnstartedCategory : "";
-                color = CustomColors.QuestWindow.NotStarted;
+                color = JournalCream;
                 orderVal = 2;
             }
         }
@@ -685,7 +783,7 @@ public partial class QuestsWindow
             name += $" [{GetQuestCompletionPercent(quest, progress)}%]";
         }
 
-        var item = _questList.AddRow((indented ? "\t\t\t" : "") + name);
+        var item = _questList.AddRow((indented ? "    " : "") + name);
         item.UserData = questId;
         item.Clicked += QuestListItem_Clicked;
         item.Selected += Item_Selected;
@@ -695,7 +793,7 @@ public partial class QuestsWindow
 
     private void AddCategoryToList(string name, Color clr)
     {
-        var item = _questList.AddRow(name);
+        var item = _questList.AddRow(name.ToUpperInvariant());
         item.MouseInputEnabled = false;
         item.SetTextColor(clr);
         item.RenderColor = new Color(0, 255, 255, 255);
@@ -725,6 +823,15 @@ public partial class QuestsWindow
 
     private void UpdateSelectedQuest()
     {
+        var detail = mSelectedQuest != null;
+        mQuestJournalChrome.IsDetail = detail;
+        mQuestJournalHeading.Text = detail ? "QUEST DETAILS" : "ROYAL QUEST JOURNAL";
+        mQuestJournalSubtitle.Text = detail
+            ? "TRACK YOUR OBJECTIVES AND PROGRESS"
+            : "CHRONICLES OF YOUR ADVENTURES";
+        mQuestJournalSummary.IsHidden = detail;
+        mQuestDetailsProgress.IsHidden = !detail;
+
         if (mSelectedQuest == null)
         {
             _questList.Show();
@@ -747,8 +854,8 @@ public partial class QuestsWindow
                 {
                     //In Progress
                     mQuestStatus.SetText(Strings.QuestLog.InProgress);
-                    mQuestStatus.SetTextColor(CustomColors.QuestWindow.InProgress, ComponentState.Normal);
-                    mQuestDescTemplateLabel.SetTextColor(CustomColors.QuestWindow.QuestDesc, ComponentState.Normal);
+                    mQuestStatus.SetTextColor(JournalGold, ComponentState.Normal);
+                    mQuestDescTemplateLabel.SetTextColor(JournalCream, ComponentState.Normal);
 
                     if (mSelectedQuest.InProgressDescription.Length > 0)
                     {
@@ -871,7 +978,7 @@ public partial class QuestsWindow
                         if (mSelectedQuest.LogAfterComplete)
                         {
                             mQuestStatus.SetText(Strings.QuestLog.Completed);
-                            mQuestStatus.SetTextColor(CustomColors.QuestWindow.Completed, ComponentState.Normal);
+                            mQuestStatus.SetTextColor(JournalGood, ComponentState.Normal);
                             mQuestDescLabel.AddText(mSelectedQuest.EndDescription, mQuestDescTemplateLabel);
                         }
                     }
@@ -881,7 +988,7 @@ public partial class QuestsWindow
                         if (mSelectedQuest.LogBeforeOffer)
                         {
                             mQuestStatus.SetText(Strings.QuestLog.NotStarted);
-                            mQuestStatus.SetTextColor(CustomColors.QuestWindow.NotStarted, ComponentState.Normal);
+                            mQuestStatus.SetTextColor(JournalMuted, ComponentState.Normal);
                             mQuestDescLabel.AddText(mSelectedQuest.BeforeDescription, mQuestDescTemplateLabel);
 
                             mQuitButton?.Hide();
@@ -895,20 +1002,187 @@ public partial class QuestsWindow
                 if (mSelectedQuest.LogBeforeOffer)
                 {
                     mQuestStatus.SetText(Strings.QuestLog.NotStarted);
-                    mQuestStatus.SetTextColor(CustomColors.QuestWindow.NotStarted, ComponentState.Normal);
+                    mQuestStatus.SetTextColor(JournalMuted, ComponentState.Normal);
                     mQuestDescLabel.AddText(mSelectedQuest.BeforeDescription, mQuestDescTemplateLabel);
                 }
+            }
+
+            if (Globals.Me?.QuestProgress.TryGetValue(mSelectedQuest.Id, out var currentProgress) == true)
+            {
+                var percent = GetQuestCompletionPercent(mSelectedQuest, currentProgress);
+                var completed = GetCompletedTaskCount(mSelectedQuest, currentProgress);
+                mQuestDetailsProgress.Text =
+                    $"PROGRESS {percent}%  /  {completed:N0} OF {mSelectedQuest.Tasks.Count:N0} TASKS";
+            }
+            else
+            {
+                mQuestDetailsProgress.Text = "QUEST NOT STARTED";
             }
 
             _questList.Hide();
             mQuestTitle.IsHidden = false;
             mQuestTitle.Text = mSelectedQuest.Name;
             mQuestDescArea.IsHidden = false;
-            mQuestDescLabel.Width = mQuestDescArea.Width - mQuestDescArea.VerticalScrollBar.Width;
+            mQuestDescLabel.Width = mQuestDescArea.Width - mQuestDescArea.VerticalScrollBar.Width - 8;
             mQuestDescLabel.SizeToChildren(false, true);
             mQuestStatus.Show();
             mBackButton.Show();
-            mQuitButton.Show();
+
+            // An unavailable "abandon" action should not look clickable.
+            var canAbandon = Globals.Me?.QuestProgress.TryGetValue(mSelectedQuest.Id, out var abandonQuestProgress) == true
+                && abandonQuestProgress.TaskId != Guid.Empty && mSelectedQuest.Quitable;
+            if (canAbandon)
+                mQuitButton.Show();
+            else
+                mQuitButton.Hide();
+        }
+    }
+
+    private static Label AddJournalText(
+        Base parent, string name, string text, int x, int y, int width, int height,
+        int fontSize, Color color, bool bold = false, bool center = false)
+    {
+        var label = new Label(parent, name)
+        {
+            AutoSizeToContents = false,
+            Font = GameContentManager.Current.GetFont(bold ? "sourcesansproblack" : "sourcesanspro")
+                   ?? parent.Skin.DefaultFont,
+            FontSize = fontSize,
+            TextColorOverride = color,
+            TextAlign = center ? Pos.Center : Pos.Left | Pos.CenterV,
+            Text = text,
+            MouseInputEnabled = false,
+        };
+        label.SetBounds(x, y, width, height);
+        return label;
+    }
+
+    private static void AddJournalButtonChrome(
+        Button button, string suffix, string label, int width, int height, bool primary)
+    {
+        var frame = new QuestActionChrome(button, "QuestAction" + suffix, primary);
+        frame.SetBounds(0, 0, width, height);
+        AddJournalText(button, "QuestActionLabel" + suffix, label,
+            5, 4, width - 10, height - 8, 12, JournalCream, bold: true, center: true);
+    }
+
+    private sealed class QuestActionChrome : Base
+    {
+        private readonly bool _primary;
+
+        public QuestActionChrome(Base parent, string name, bool primary) : base(parent, name)
+        {
+            _primary = primary;
+            MouseInputEnabled = false;
+            KeyboardInputEnabled = false;
+        }
+
+        protected override void Render(SkinBase skin)
+        {
+            var rect = RenderBounds;
+            var face = _primary
+                ? new Color(a: 255, r: 77, g: 46, b: 34)
+                : new Color(a: 255, r: 38, g: 23, b: 19);
+            QuestJournalChrome.Fill(skin, rect, face);
+            QuestJournalChrome.Border(skin, rect, JournalGold, 2);
+            QuestJournalChrome.Border(skin, QuestJournalChrome.Inset(rect, 3),
+                new Color(a: 255, r: 100, g: 69, b: 40), 1);
+        }
+    }
+
+    /// <summary>
+    /// Gold-edged dungeon-registry background for both the journal and quest
+    /// detail page. All quest actions remain native Gwen controls above it.
+    /// </summary>
+    private sealed class QuestJournalChrome : Base
+    {
+        private static readonly Color OuterGold = new(a: 255, r: 158, g: 112, b: 51);
+        private static readonly Color BrightGold = new(a: 255, r: 224, g: 179, b: 88);
+        private static readonly Color InnerGold = new(a: 255, r: 100, g: 69, b: 40);
+        private static readonly Color Darkest = new(a: 255, r: 24, g: 15, b: 14);
+        private static readonly Color Dark = new(a: 255, r: 38, g: 23, b: 19);
+        private static readonly Color Bronze = new(a: 255, r: 77, g: 46, b: 34);
+
+        public bool IsDetail { get; set; }
+
+        public QuestJournalChrome(Base parent, string name) : base(parent, name)
+        {
+            MouseInputEnabled = false;
+            KeyboardInputEnabled = false;
+        }
+
+        protected override void Render(SkinBase skin)
+        {
+            var bounds = RenderBounds;
+            Fill(skin, bounds, Darkest);
+            Border(skin, bounds, OuterGold, 2);
+            Border(skin, Inset(bounds, 5), InnerGold, 1);
+            Fill(skin, bounds.X + 14, bounds.Y + 6, 34, 2, BrightGold);
+            Fill(skin, bounds.Right - 48, bounds.Y + 6, 34, 2, BrightGold);
+            Fill(skin, bounds.X + 18, bounds.Y + 92, bounds.Width - 36, 1, InnerGold);
+            Fill(skin, bounds.X + 12, bounds.Bottom - 9, bounds.Width - 24, 2, InnerGold);
+            Corners(skin, bounds);
+
+            var summary = new Rectangle(bounds.X + 18, bounds.Y + 103, bounds.Width - 36, 34);
+            Fill(skin, summary, Dark);
+            Border(skin, summary, OuterGold, 1);
+            Fill(skin, summary.X + 8, summary.Y + 5, 3, summary.Height - 10, BrightGold);
+            Fill(skin, summary.Right - 11, summary.Y + 5, 3, summary.Height - 10, BrightGold);
+
+            var content = new Rectangle(bounds.X + 18, bounds.Y + 152,
+                bounds.Width - 36, IsDetail ? 396 : 429);
+            Fill(skin, content, Dark);
+            Border(skin, content, OuterGold, 1);
+            Border(skin, Inset(content, 4), InnerGold, 1);
+
+            if (!IsDetail)
+            {
+                Fill(skin, content.X + 6, content.Y + 5, content.Width - 12, 3, Bronze);
+                return;
+            }
+
+            // Distinct detail header and scrolling parchment text section.
+            Fill(skin, content.X + 7, content.Y + 8, content.Width - 14, 70, Bronze);
+            Fill(skin, content.X + 18, content.Y + 82, content.Width - 36, 1, OuterGold);
+            Fill(skin, content.X + 8, content.Bottom - 10, content.Width - 16, 1, InnerGold);
+            Fill(skin, bounds.X + 22, bounds.Y + 554, bounds.Width - 44, 1, InnerGold);
+        }
+
+        public static Rectangle Inset(Rectangle rect, int amount) =>
+            new(rect.X + amount, rect.Y + amount,
+                rect.Width - amount * 2, rect.Height - amount * 2);
+
+        public static void Fill(SkinBase skin, Rectangle rect, Color color) =>
+            Fill(skin, rect.X, rect.Y, rect.Width, rect.Height, color);
+
+        private static void Fill(SkinBase skin, int x, int y, int width, int height, Color color)
+        {
+            if (width <= 0 || height <= 0)
+                return;
+
+            skin.Renderer.DrawColor = color;
+            skin.Renderer.DrawFilledRect(new Rectangle(x, y, width, height));
+        }
+
+        public static void Border(SkinBase skin, Rectangle rect, Color color, int thickness)
+        {
+            Fill(skin, rect.X, rect.Y, rect.Width, thickness, color);
+            Fill(skin, rect.X, rect.Bottom - thickness, rect.Width, thickness, color);
+            Fill(skin, rect.X, rect.Y, thickness, rect.Height, color);
+            Fill(skin, rect.Right - thickness, rect.Y, thickness, rect.Height, color);
+        }
+
+        private static void Corners(SkinBase skin, Rectangle rect)
+        {
+            const int length = 14;
+            Fill(skin, rect.X + 5, rect.Y + 5, length, 2, BrightGold);
+            Fill(skin, rect.X + 5, rect.Y + 5, 2, length, BrightGold);
+            Fill(skin, rect.Right - length - 5, rect.Y + 5, length, 2, BrightGold);
+            Fill(skin, rect.Right - 7, rect.Y + 5, 2, length, BrightGold);
+            Fill(skin, rect.X + 5, rect.Bottom - 7, length, 2, BrightGold);
+            Fill(skin, rect.X + 5, rect.Bottom - length - 5, 2, length, BrightGold);
+            Fill(skin, rect.Right - length - 5, rect.Bottom - 7, length, 2, BrightGold);
+            Fill(skin, rect.Right - 7, rect.Bottom - length - 5, 2, length, BrightGold);
         }
     }
 

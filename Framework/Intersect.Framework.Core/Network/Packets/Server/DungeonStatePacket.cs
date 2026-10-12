@@ -178,4 +178,10 @@ public partial class DungeonStatePacket : IntersectPacket
     // a valid but empty snapshot. Only explicit window opens fetch podium data.
     [Key(5)]
     public DungeonPodiumEntry[]? Podiums { get; set; }
+
+    [Key(6)]
+    public Guid InspectedPlayerId { get; set; }
+
+    [Key(7)]
+    public string InspectedPlayerName { get; set; } = string.Empty;
 }
