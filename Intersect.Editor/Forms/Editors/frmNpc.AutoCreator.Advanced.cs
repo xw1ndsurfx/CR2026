@@ -234,6 +234,7 @@ public partial class FrmNpc
             // boss immunities are never removed.
             if (difficulty >= 1)
             {
+                if (role == 0) chkKnockback.Checked = true;  // Warrior
                 if (role == 3) chkKnockback.Checked = true;  // Tank
                 if (role == 2) chkSilence.Checked = true;    // Mage
                 if (role == 1) chkBlind.Checked = true;      // Archer
@@ -272,8 +273,15 @@ public partial class FrmNpc
             // These are percentages as displayed in the NPC editor, not ratios.
             void AddCurrencyDrop(ItemDescriptor? item, double chance, int maxAmount)
             {
-                if (item == null || mEditorItem.Drops.Any(drop => drop.ItemId == item.Id))
+                if (item == null) return;
+                var existing = mEditorItem.Drops.FirstOrDefault(drop => drop.ItemId == item.Id);
+                if (existing != null)
                 {
+                    // Rebalance only the two explicitly requested currencies.
+                    // All unrelated authored loot stays untouched.
+                    existing.Chance = chance;
+                    existing.MinQuantity = 1;
+                    existing.MaxQuantity = Math.Max(1, maxAmount);
                     return;
                 }
                 mEditorItem.Drops.Add(new Drop
