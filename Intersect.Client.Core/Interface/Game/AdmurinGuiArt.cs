@@ -16,7 +16,11 @@ internal static class AdmurinGuiArt
         int x, int y, int width, int height,
         int sourceX = 0, int sourceY = 0, int sourceWidth = 0, int sourceHeight = 0)
     {
-        var texture = GameContentManager.Current.GetTexture(TextureType.Gui, $"admurin/{file}.png");
+        // Packaged builds use gui/admurin; an existing local game may already
+        // have the artist sprites directly in resources/gui.
+        var manager = GameContentManager.Current;
+        var texture = manager.GetTexture(TextureType.Gui, $"admurin/{file}.png") ??
+                      manager.GetTexture(TextureType.Gui, $"{file}.png");
         if (texture == null)
             return null;
 
