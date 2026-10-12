@@ -57,6 +57,12 @@ public partial class FrmNpc : EditorForm
     private bool _refreshingNpcSpellList;
     private bool _updatingPetSpellRequiredLevel;
 
+    private static readonly int[] NpcSpellIntervalOptions = [0, 2000, 4000, 8000, 15000, 30000, 60000];
+    private readonly Label _lblNpcSpellInterval = new();
+    private readonly DarkComboBox _cmbNpcSpellInterval = new();
+    private readonly Label _lblNpcSpellIntervalHint = new();
+    private bool _updatingNpcSpellInterval;
+
     public FrmNpc()
     {
         ApplyHooks();
@@ -64,6 +70,7 @@ public partial class FrmNpc : EditorForm
         BuildBossControls();
         BuildCombatAiControls();
         BuildPetControls();
+        BuildNpcSpellTimingControls();
         BuildNpcAutoCreator();
         Icon = Program.Icon;
         _btnSave = btnSave;
@@ -71,6 +78,73 @@ public partial class FrmNpc : EditorForm
 
         lstGameObjects.Init(UpdateToolStripItems, AssignEditorItem, toolStripItemNew_Click, toolStripItemCopy_Click, toolStripItemUndo_Click, toolStripItemPaste_Click, toolStripItemDelete_Click);
     }
+    private void BuildNpcSpellTimingControls()
+    {
+        // Keep all spell settings in the existing panel; the NPC editor already
+        // scrolls vertically, including on low-resolution laptops.
+        grpSpells.Height = 331;
+        grpDrops.Top = grpSpells.Bottom + 12;
+
+        _lblNpcSpellInterval.Text = "Selected spell interval:";
+        _lblNpcSpellInterval.Location = new System.Drawing.Point(14, 248);
+        _lblNpcSpellInterval.Size = new Size(234, 20);
+        _lblNpcSpellInterval.ForeColor = System.Drawing.Color.Gainsboro;
+
+        _cmbNpcSpellInterval.Location = new System.Drawing.Point(18, 269);
+        _cmbNpcSpellInterval.Size = new Size(236, 24);
+        _cmbNpcSpellInterval.DropDownStyle = ComboBoxStyle.DropDownList;
+        _cmbNpcSpellInterval.Items.AddRange(new object[]
+        {
+            "Inherit global frequency", "Every 2 seconds", "Every 4 seconds",
+            "Every 8 seconds", "Every 15 seconds", "Every 30 seconds",
+            "Every 60 seconds"
+        });
+        _cmbNpcSpellInterval.SelectedIndexChanged += (_, _) =>
+        {
+            if (_updatingNpcSpellInterval || _refreshingNpcSpellList ||
+                mEditorItem == null || mEditorItem.IsPet ||
+                lstSpells.SelectedIndex < 0 || _cmbNpcSpellInterval.SelectedIndex < 0)
+            {
+                return;
+            }
+
+            mEditorItem.SetSpellCastIntervalMs(
+                lstSpells.SelectedIndex,
+                NpcSpellIntervalOptions[_cmbNpcSpellInterval.SelectedIndex]);
+            RefreshNpcSpellList(lstSpells.SelectedIndex);
+        };
+
+        _lblNpcSpellIntervalHint.Text = "Global frequency applies when inherited.";
+        _lblNpcSpellIntervalHint.Location = new System.Drawing.Point(14, 301);
+        _lblNpcSpellIntervalHint.Size = new Size(238, 20);
+        _lblNpcSpellIntervalHint.ForeColor = System.Drawing.Color.Silver;
+        grpSpells.Controls.AddRange(new Control[]
+        {
+            _lblNpcSpellInterval, _cmbNpcSpellInterval, _lblNpcSpellIntervalHint
+        });
+        UpdateSelectedNpcSpellTimingControls();
+    }
+
+    private void UpdateSelectedNpcSpellTimingControls()
+    {
+        var slot = lstSpells.SelectedIndex;
+        var enabled = mEditorItem != null && !mEditorItem.IsPet &&
+                      slot >= 0 && slot < mEditorItem.Spells.Count;
+        _cmbNpcSpellInterval.Enabled = enabled;
+        _lblNpcSpellInterval.Enabled = enabled;
+        _updatingNpcSpellInterval = true;
+        try
+        {
+            var value = enabled ? mEditorItem.GetSpellCastIntervalOverrideMs(slot) : 0;
+            var index = Array.IndexOf(NpcSpellIntervalOptions, value);
+            _cmbNpcSpellInterval.SelectedIndex = Math.Max(0, index);
+        }
+        finally
+        {
+            _updatingNpcSpellInterval = false;
+        }
+    }
+
     private void BuildBossControls()
     {
         _grpBoss.Text = "Boss";
@@ -434,6 +508,14 @@ public partial class FrmNpc : EditorForm
                     var auto = !mEditorItem.HasCustomPetSpellLevel(index) ? " auto" : "";
                     label += $"  (Lv. {level}{auto})";
                 }
+                else
+                {
+                    var intervalMs = mEditorItem.GetSpellCastIntervalOverrideMs(index);
+                    if (intervalMs > 0)
+                    {
+                        label += $"  ({intervalMs / 1000.0:0.#}s)";
+                    }
+                }
 
                 lstSpells.Items.Add(label);
             }
@@ -455,6 +537,7 @@ public partial class FrmNpc : EditorForm
         }
 
         UpdateSelectedPetSpellControls();
+        UpdateSelectedNpcSpellTimingControls();
     }
 
     private void UpdateSelectedPetSpellControls()
@@ -983,11 +1066,13 @@ public partial class FrmNpc : EditorForm
             mEditorItem.EnsurePetSpellLevelSlots();
         }
 
+        mEditorItem.EnsureSpellCastIntervalSlots();
         mEditorItem.Spells.Add(SpellDescriptor.IdFromList(cmbSpell.SelectedIndex));
         if (hasPetLevelSettings)
         {
             mEditorItem.EnsurePetSpellLevelSlots();
         }
+        mEditorItem.EnsureSpellCastIntervalSlots();
 
         RefreshNpcSpellList(mEditorItem.Spells.Count - 1);
     }
@@ -1007,6 +1092,11 @@ public partial class FrmNpc : EditorForm
             mEditorItem.PetSpellRequiredLevels.RemoveAt(slot);
         }
 
+        if (mEditorItem.SpellCastIntervalsMs is { Count: > 0 })
+        {
+            mEditorItem.EnsureSpellCastIntervalSlots();
+            mEditorItem.SpellCastIntervalsMs.RemoveAt(slot);
+        }
         mEditorItem.Spells.RemoveAt(slot);
         RefreshNpcSpellList(Math.Min(slot, mEditorItem.Spells.Count - 1));
     }
@@ -1170,6 +1260,7 @@ public partial class FrmNpc : EditorForm
         }
 
         UpdateSelectedPetSpellControls();
+        UpdateSelectedNpcSpellTimingControls();
     }
 
     private void cmbSpell_SelectedIndexChanged(object sender, EventArgs e)
