@@ -414,6 +414,76 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
 
     public int SpellFrequency { get; set; } = 2;
 
+    /// <summary>
+    /// Optional per-slot spell intervals (milliseconds). 0 inherits SpellFrequency.
+    /// Existing NPCs with no values keep their original random global-frequency AI.
+    /// Slots track the Spells list, including duplicate spell IDs.
+    /// </summary>
+    [NotMapped]
+    public List<int> SpellCastIntervalsMs { get; set; } = [];
+
+    [JsonIgnore]
+    [Column("SpellCastIntervalsMs")]
+    public string SpellCastIntervalsMsJson
+    {
+        get => JsonConvert.SerializeObject(SpellCastIntervalsMs ?? []);
+        set => SpellCastIntervalsMs = string.IsNullOrWhiteSpace(value)
+            ? []
+            : JsonConvert.DeserializeObject<List<int>>(value) ?? [];
+    }
+
+    public static int SpellFrequencyToIntervalMs(int frequency) => frequency switch
+    {
+        0 => 30000,
+        1 => 15000,
+        2 => 8000,
+        3 => 4000,
+        4 => 2000,
+        _ => 8000,
+    };
+
+    public bool HasIndividualSpellFrequencies =>
+        SpellCastIntervalsMs?.Any(interval => interval > 0) == true;
+
+    public int GetSpellCastIntervalMs(int index)
+    {
+        var interval = index >= 0 && SpellCastIntervalsMs is { } intervals &&
+            index < intervals.Count ? intervals[index] : 0;
+        return interval > 0 ? Math.Clamp(interval, 1000, 120000)
+            : SpellFrequencyToIntervalMs(SpellFrequency);
+    }
+
+    public int GetSpellCastIntervalOverrideMs(int index) =>
+        index >= 0 && SpellCastIntervalsMs is { } intervals &&
+        index < intervals.Count ? Math.Max(0, intervals[index]) : 0;
+
+    public void EnsureSpellCastIntervalSlots()
+    {
+        SpellCastIntervalsMs ??= [];
+        var count = Spells?.Count ?? 0;
+        if (SpellCastIntervalsMs.Count > count)
+        {
+            SpellCastIntervalsMs.RemoveRange(count, SpellCastIntervalsMs.Count - count);
+        }
+
+        while (SpellCastIntervalsMs.Count < count)
+        {
+            SpellCastIntervalsMs.Add(0);
+        }
+    }
+
+    public void SetSpellCastIntervalMs(int spellIndex, int milliseconds)
+    {
+        if (spellIndex < 0 || spellIndex >= (Spells?.Count ?? 0))
+        {
+            return;
+        }
+
+        EnsureSpellCastIntervalSlots();
+        SpellCastIntervalsMs[spellIndex] = milliseconds <= 0
+            ? 0 : Math.Clamp(milliseconds, 1000, 120000);
+    }
+
     //Spells
     [JsonIgnore]
     [Column("Spells")]

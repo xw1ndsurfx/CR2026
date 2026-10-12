@@ -32,6 +32,9 @@ public partial class Npc : Entity
     //Spell casting
     public long CastFreq;
 
+    // Used only by ordinary NPCs with per-spell intervals configured.
+    private long[] _nextIndividualSpellCastAt = [];
+
     /// <summary>
     /// Damage Map - Keep track of who is doing the most damage to this npc and focus accordingly
     /// </summary>
@@ -764,17 +767,39 @@ public partial class Npc : Entity
             return;
         }
 
-        // Preserve the original random spell selection for ALL ordinary NPCs.
-        // Only player-owned companions filter spell slots by their configured levels.
+        // NPCs with no overrides and pets retain their original random-casting behavior.
+        // Only opted-in ordinary NPCs use independent per-slot cooldowns.
+        var independentSpells = PetOwner == null && Descriptor.HasIndividualSpellFrequencies;
         int spellIndex;
         if (PetOwner == null)
         {
-            if (Spells.Count == 0)
+            var slotCount = Math.Min(Spells.Count, Descriptor.Spells.Count);
+            if (slotCount == 0)
             {
                 return;
             }
 
-            spellIndex = Randomization.Next(0, Spells.Count);
+            if (independentSpells)
+            {
+                if (_nextIndividualSpellCastAt.Length != slotCount)
+                {
+                    Array.Resize(ref _nextIndividualSpellCastAt, slotCount);
+                }
+
+                var availableSlots = Enumerable.Range(0, slotCount)
+                    .Where(index => _nextIndividualSpellCastAt[index] <= Timing.Global.Milliseconds)
+                    .ToArray();
+                if (availableSlots.Length == 0)
+                {
+                    return;
+                }
+
+                spellIndex = availableSlots[Randomization.Next(0, availableSlots.Length)];
+            }
+            else
+            {
+                spellIndex = Randomization.Next(0, Spells.Count);
+            }
         }
         else
         {
@@ -850,6 +875,16 @@ public partial class Npc : Entity
             CastTarget = target;
         }
 
+        if (independentSpells)
+        {
+            var intervalMs = Descriptor.GetSpellCastIntervalMs(spellIndex);
+            _nextIndividualSpellCastAt[spellIndex] = Timing.Global.Milliseconds + intervalMs;
+            // Avoid casting several ready spells in the same server tick. Each
+            // spell's actual interval is independent of this brief global gap.
+            CastFreq = Timing.Global.Milliseconds + Math.Clamp(intervalMs / 4, 500, 1000);
+        }
+        else
+        {
         switch (Descriptor.SpellFrequency)
         {
             case 0:
@@ -876,6 +911,8 @@ public partial class Npc : Entity
                 CastFreq = Timing.Global.Milliseconds + 2000;
 
                 break;
+        }
+
         }
 
         SpellCastSlot = spellIndex;
