@@ -139,6 +139,8 @@ internal sealed class DungeonPanelWindow : Window
         Hide();
     }
 
+    protected override void EnsureInitialized() { }
+
     public void Apply(DungeonStatePacket packet)
     {
         DungeonConfiguration.Load(packet.ConfigurationJson);
