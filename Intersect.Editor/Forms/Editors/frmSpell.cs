@@ -45,6 +45,7 @@ public partial class FrmSpell : EditorForm
         }
 
         lstGameObjects.Init(UpdateToolStripItems, AssignEditorItem, toolStripItemNew_Click, toolStripItemCopy_Click, toolStripItemUndo_Click, toolStripItemPaste_Click, toolStripItemDelete_Click);
+        BuildResponsiveSpellEditor();
     }
     private void AssignEditorItem(Guid id)
     {
@@ -67,6 +68,7 @@ public partial class FrmSpell : EditorForm
                 mEditorItem = null;
                 UpdateEditor();
             }
+            OpenNewSpellAutoCreatorIfReady();
         }
     }
 
@@ -347,7 +349,8 @@ public partial class FrmSpell : EditorForm
         cmbTargetType.Enabled = true;
 
         // Reset our combat data location, since event type spells can move it.
-        grpCombat.Location = new System.Drawing.Point(grpEvent.Location.X, grpEvent.Location.Y);
+        if (!_spellTabsReady)
+            grpCombat.Location = new System.Drawing.Point(grpEvent.Location.X, grpEvent.Location.Y);
 
         if (cmbType.SelectedIndex == (int)SpellType.CombatSpell ||
             cmbType.SelectedIndex == (int)SpellType.WarpTo ||
@@ -419,7 +422,8 @@ public partial class FrmSpell : EditorForm
             grpEvent.Show();
             cmbEvent.SelectedIndex = EventDescriptor.ListIndex(mEditorItem.EventId) + 1;
             // Move our combat data down a little bit, it's not a very clean solution but it'll let us display it properly.
-            grpCombat.Location = new System.Drawing.Point(grpEvent.Location.X, grpEvent.Location.Y + grpEvent.Size.Height + 5);
+            if (!_spellTabsReady)
+                grpCombat.Location = new System.Drawing.Point(grpEvent.Location.X, grpEvent.Location.Y + grpEvent.Size.Height + 5);
         }
 
         if (cmbType.SelectedIndex == (int)SpellType.WarpTo)
@@ -429,6 +433,8 @@ public partial class FrmSpell : EditorForm
             cmbTargetType.Enabled = false;
             UpdateTargetTypePanel();
         }
+
+        ArrangeSpellSections();
     }
 
     private void UpdateTargetTypePanel()
