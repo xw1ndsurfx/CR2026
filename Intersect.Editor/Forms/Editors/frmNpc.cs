@@ -64,6 +64,7 @@ public partial class FrmNpc : EditorForm
         BuildBossControls();
         BuildCombatAiControls();
         BuildPetControls();
+        BuildNpcAutoCreator();
         Icon = Program.Icon;
         _btnSave = btnSave;
         _btnCancel = btnCancel;
