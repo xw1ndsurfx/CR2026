@@ -166,17 +166,17 @@ public partial class FrmNpc
         };
         var simulate = new Button
         {
-            Text = "Simulate & Calibrate", Location = new System.Drawing.Point(20, 992),
+            Text = "Simulate & Calibrate", Location = new System.Drawing.Point(20, 1060),
             Size = new Size(193, 32)
         };
         var apply = new Button
         {
-            Text = "Apply to selected NPC", Location = new System.Drawing.Point(267, 992),
+            Text = "Apply to selected NPC", Location = new System.Drawing.Point(267, 1060),
             Size = new Size(205, 32), DialogResult = DialogResult.None
         };
         var cancel = new Button
         {
-            Text = "Cancel", Location = new System.Drawing.Point(20, 1032),
+            Text = "Cancel", Location = new System.Drawing.Point(20, 1100),
             Size = new Size(115, 28), DialogResult = DialogResult.Cancel
         };
         dialog.Controls.AddRange(new Control[]
@@ -398,12 +398,11 @@ public partial class FrmNpc
         Assign(nudDef, result.defense);
         Assign(nudMR, result.resist);
         Assign(nudSpd, result.speed);
-        Assign(nudDamage, calibration.Damage);
+        Assign(nudDamage, Math.Max(calibration.Damage,
+            Math.Max(2, result.damage / 3)));
         Assign(nudExp, result.exp);
-        if (!advanced.Combat.Checked)
-        {
-            // Preserve handcrafted crit, scaling, attack speed and animations.
-        }
+        // Handcrafted crit, scaling, speed and animation remain unchanged
+        // when Auto Combat is disabled.
         cmbDamageType.SelectedIndex = role.SelectedIndex == 2
             ? (int)DamageType.Magic : (int)DamageType.Physical;
         cmbScalingStat.SelectedIndex = role.SelectedIndex == 2
