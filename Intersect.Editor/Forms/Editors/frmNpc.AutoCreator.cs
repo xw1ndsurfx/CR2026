@@ -1,7 +1,10 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Collections.Generic;
+using System.Linq;
 using DarkUI.Controls;
+using Intersect.GameObjects;
 using Intersect.Editor.Forms;
 using Intersect.Enums;
 
@@ -44,9 +47,9 @@ public partial class FrmNpc
         using var dialog = new Form
         {
             Text = "NPC Auto Creator - Combat Simulation",
-            Size = new Size(510, 600),
-            MinimumSize = new Size(510, 600),
-            MaximumSize = new Size(510, 600),
+            Size = new Size(510, 662),
+            MinimumSize = new Size(510, 662),
+            MaximumSize = new Size(510, 662),
             StartPosition = FormStartPosition.CenterParent,
             FormBorderStyle = FormBorderStyle.FixedDialog,
             MaximizeBox = false,
@@ -93,33 +96,82 @@ public partial class FrmNpc
             Location = new Point(202, 172), Width = 270,
             Minimum = 1, Maximum = 5, Value = 1
         };
+        var spellPicker = new ComboBox
+        {
+            Location = new Point(202, 210), Width = 270,
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
+        var spellIds = new List<Guid>();
+        void RefreshSpells()
+        {
+            spellPicker.Items.Clear();
+            spellIds.Clear();
+            spellPicker.Items.Add("None / Keep existing spells");
+            spellIds.Add(Guid.Empty);
+            var candidates = SpellDescriptor.Lookup
+                .Where(pair => pair.Value?.Combat != null &&
+                    pair.Value.SpellType == SpellType.CombatSpell &&
+                    !pair.Value.Combat.Friendly)
+                .Where(pair => role.SelectedIndex == 1
+                    ? pair.Value!.Combat.Projectile != null
+                    : pair.Value!.Combat.CastRange >= 2 ||
+                      pair.Value.Combat.Projectile != null)
+                .OrderBy(pair => SpellDescriptor.GetName(pair.Key))
+                .ToArray();
+
+            var bestIndex = 0;
+            foreach (var pair in candidates)
+            {
+                var spellName = SpellDescriptor.GetName(pair.Key);
+                spellIds.Add(pair.Key);
+                spellPicker.Items.Add(spellName);
+                var lower = spellName.ToLowerInvariant();
+                var appropriate = role.SelectedIndex switch
+                {
+                    1 => lower.Contains("arrow") || lower.Contains("bow") ||
+                         lower.Contains("shot") || lower.Contains("archer"),
+                    2 => lower.Contains("magic") || lower.Contains("arcane") ||
+                         lower.Contains("fire") || lower.Contains("frost") ||
+                         lower.Contains("ice") || lower.Contains("bolt"),
+                    _ => false,
+                };
+                if (appropriate && bestIndex == 0)
+                {
+                    bestIndex = spellPicker.Items.Count - 1;
+                }
+            }
+            spellPicker.SelectedIndex = role.SelectedIndex is 1 or 2 ? bestIndex : 0;
+            spellPicker.Enabled = role.SelectedIndex is 1 or 2;
+        }
+        RefreshSpells();
+
         var preview = new Label
         {
-            Location = new Point(20, 214), Size = new Size(452, 170),
+            Location = new Point(20, 253), Size = new Size(452, 170),
             ForeColor = Color.Gainsboro, BorderStyle = BorderStyle.FixedSingle,
             Padding = new Padding(10)
         };
         var warning = new Label
         {
             Text = "Calibrated with the Balance Lab's class simulation and median-per-slot equipment. " +
-                   "Ranged/mage NPCs still need suitable damaging spells configured. " +
+                   "NPC spells are not included in the enemy DPS simulation. " +
                    "Drops, events, pets and scripted invasion logic are preserved.",
-            Location = new Point(20, 395), Size = new Size(452, 74),
+            Location = new Point(20, 432), Size = new Size(452, 74),
             ForeColor = Color.Khaki
         };
         var simulate = new Button
         {
-            Text = "Simulate & Calibrate", Location = new Point(20, 483),
+            Text = "Simulate & Calibrate", Location = new Point(20, 527),
             Size = new Size(193, 32)
         };
         var apply = new Button
         {
-            Text = "Apply to selected NPC", Location = new Point(267, 483),
+            Text = "Apply to selected NPC", Location = new Point(267, 527),
             Size = new Size(205, 32), DialogResult = DialogResult.None
         };
         var cancel = new Button
         {
-            Text = "Cancel", Location = new Point(20, 522),
+            Text = "Cancel", Location = new Point(20, 566),
             Size = new Size(115, 28), DialogResult = DialogResult.Cancel
         };
         dialog.Controls.AddRange(new Control[]
@@ -129,6 +181,7 @@ public partial class FrmNpc
             MakeLabel("Combat Class", 98), role,
             MakeLabel("Difficulty", 136), difficulty,
             MakeLabel("Party size (1 = solo)", 174), party,
+            MakeLabel("Optional combat spell", 212), spellPicker,
             preview, warning, simulate, apply, cancel
         });
         dialog.CancelButton = cancel;
@@ -203,7 +256,7 @@ public partial class FrmNpc
         }
 
         level.ValueChanged += (_, _) => InvalidatePreview();
-        role.SelectedIndexChanged += (_, _) => InvalidatePreview();
+        role.SelectedIndexChanged += (_, _) => { RefreshSpells(); InvalidatePreview(); };
         difficulty.SelectedIndexChanged += (_, _) => InvalidatePreview();
         party.ValueChanged += (_, _) => InvalidatePreview();
 
@@ -325,10 +378,17 @@ public partial class FrmNpc
         _chkIsBoss.Checked = difficulty.SelectedIndex == 3;
         chkAggressive.Checked = true;
 
+        var selectedSpellId = spellIds[spellPicker.SelectedIndex];
+        if (selectedSpellId != Guid.Empty && !mEditorItem.Spells.Contains(selectedSpellId))
+        {
+            mEditorItem.Spells.Add(selectedSpellId);
+            RefreshNpcSpellList(mEditorItem.Spells.Count - 1);
+        }
+
         MessageBox.Show(this,
             $"NPC profile applied. Simulation: {calibration.TtkSeconds:0.0}s TTK, " +
             $"{calibration.HpLossPercent:0.0}% HP loss. Review and click Save to persist. " +
-            "Ranged/caster NPCs require appropriate combat spells, and scripted encounters require playtesting.",
+            "NPC spell damage is not included in this simulation. Review combat spells and scripted encounters in-game.",
             "NPC Auto Creator", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 }
