@@ -324,7 +324,9 @@ public partial class FrmNpc
                     proposed.hp, proposed.damage, stats,
                     role.SelectedIndex == 2 ? (int)DamageType.Magic : (int)DamageType.Physical,
                     role.SelectedIndex == 2 ? (int)Stat.AbilityPower : (int)Stat.Attack,
-                    100, (long)nudHp.Maximum, (int)nudDamage.Maximum,
+                    advanced.Combat.Checked ? advanced.Scaling(role.SelectedIndex)
+                        : (int)nudScaling.Value,
+                    (long)nudHp.Maximum, (int)nudDamage.Maximum,
                     proposed.mana, simulationSpells, frequency, role.SelectedIndex is 1 or 2,
                     simulationIntervals,
                     advanced.Combat.Checked ? advanced.CritChance(role.SelectedIndex, difficulty.SelectedIndex)
