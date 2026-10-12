@@ -121,7 +121,13 @@ public partial class FrmItem
         var applyLevel = Option("Set a real minimum-level usage requirement", 391, true);
         var replaceRequirements = Option(
             "Replace existing usage requirements (otherwise preserve)", 421, false);
-        var preserveArt = Option("Keep existing icons, animations and paperdolls", 451, true);
+        var preserveArt = new Label
+        {
+            Text = "Icons, animations, paperdolls and event links are always preserved.",
+            ForeColor = System.Drawing.Color.Gainsboro,
+            Location = new System.Drawing.Point(18, 452),
+            Size = new System.Drawing.Size(515, 25)
+        };
 
         var warning = new Label
         {
@@ -238,7 +244,9 @@ public partial class FrmItem
             var hasConditions = HasCustomItemRequirements();
             preview.Text =
                 $"{p.Summary}\n" +
-                $"Price: {p.Price:N0}  |  Weapon Damage: {p.Damage:N0}\n" +
+                $"Price: {(autoPrice.Checked ? p.Price : mEditorItem.Price):N0}" +
+                    (autoPrice.Checked ? " (generated)" : " (preserved)") +
+                    $"  |  Weapon Damage: {p.Damage:N0}\n" +
                 $"Main/Secondary Stats: +{p.MainStat} / +{p.SecondaryStat}\n" +
                 $"HP: +{p.Hp}  |  MP: +{p.Mana}\n" +
                 $"Regen HP/MP: {p.HpRegen}% / {p.MpRegen}%\n" +
@@ -247,9 +255,10 @@ public partial class FrmItem
                     $"{p.BlockAmount}% / {p.BlockAbsorption}%\n" +
                 $"Consumable value: {p.ConsumableValue}  |  Bag slots: {p.BagSlots}\n" +
                 $"Minimum level: {(int)level.Value}" +
-                (hasConditions && !replaceRequirements.Checked
+                (!applyLevel.Checked ? " (unchanged)" :
+                    hasConditions && !replaceRequirements.Checked
                     ? " (existing conditions preserved; level NOT installed)"
-                    : " (will be installed if selected)") +
+                    : " (will be installed)") +
                 "\nNo changes until Apply.";
         }
         type.SelectedIndexChanged += (_, _) => UpdatePreview();
@@ -258,6 +267,8 @@ public partial class FrmItem
         rarity.SelectedIndexChanged += (_, _) => UpdatePreview();
         build.SelectedIndexChanged += (_, _) => UpdatePreview();
         replaceRequirements.CheckedChanged += (_, _) => UpdatePreview();
+        autoPrice.CheckedChanged += (_, _) => UpdatePreview();
+        applyLevel.CheckedChanged += (_, _) => UpdatePreview();
         UpdatePreview();
 
         apply.Click += (_, _) =>
