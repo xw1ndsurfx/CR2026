@@ -248,6 +248,9 @@ public partial class Player
             return false;
         }
 
+        // Normalize legacy saved characters before they are used again.
+        player.ClearExperienceAtLevelCap();
+
         if (player.ValidateLists(playerContext))
         {
             return false;

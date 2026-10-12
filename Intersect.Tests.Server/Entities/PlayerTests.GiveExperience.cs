@@ -19,9 +19,26 @@ public partial class PlayerTests
             yield return [2, 0, -1, 2, 0]; // Because GiveExperience() has no "enable losing levels" boolean
             yield return [2, 1, -1, 2, 0];
             yield return [2, 1, -2, 2, 0];  // Because GiveExperience() has no "enable losing levels" boolean
-            yield return [Options.Instance.Player.MaxLevel - 1, 1, 1000, Options.Instance.Player.MaxLevel, 901];
-            yield return [Options.Instance.Player.MaxLevel, 1, 1000, Options.Instance.Player.MaxLevel, 1001];
+            yield return [Options.Instance.Player.MaxLevel - 1, 1, 1000, Options.Instance.Player.MaxLevel, 0];
+            yield return [Options.Instance.Player.MaxLevel, 1, 1000, Options.Instance.Player.MaxLevel, 0];
+            yield return [Options.Instance.Player.MaxLevel, 0, 1000, Options.Instance.Player.MaxLevel, 0];
+            yield return [Options.Instance.Player.MaxLevel, 25, 1, Options.Instance.Player.MaxLevel, 0];
         }
+    }
+
+    [Test]
+    public void TestValidateClearsBankedExperienceAtLevelCap()
+    {
+        var player = new Player
+        {
+            Level = Options.Instance.Player.MaxLevel,
+            Exp = 12345,
+            MapId = _mapId,
+        };
+
+        Player.Validate(player);
+
+        Assert.That(player.Exp, Is.Zero);
     }
 
     [TestCaseSource(nameof(DataGiveExperience))]

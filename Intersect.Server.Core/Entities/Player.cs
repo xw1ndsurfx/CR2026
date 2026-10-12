@@ -397,6 +397,8 @@ public partial class Player : Entity
     {
         IsDisposed = false;
         mSentMap = false;
+        // Clean up old capped characters when they next enter the game.
+        ClearExperienceAtLevelCap();
         if (OnlinePlayersById.TryGetValue(Id, out var player))
         {
             if (player != this)
@@ -1379,6 +1381,21 @@ public partial class Player : Entity
     #region Leveling
 
     /// <summary>
+    /// Clears leftover experience at the configured level cap so an increase to
+    /// MaxLevel in a future update never grants levels from previously banked EXP.
+    /// </summary>
+    private bool ClearExperienceAtLevelCap()
+    {
+        if (Level < Options.Instance.Player.MaxLevel || Exp == 0)
+        {
+            return false;
+        }
+
+        Exp = 0;
+        return true;
+    }
+
+    /// <summary>
     /// Sets the player's level to a sepecific value. Then sends all relevent data through <see cref="PacketSender"/>
     /// </summary>
     /// <param name="newLevel">Does nothing if less than 1. Clamped to <see cref="Options"/> MaxLevel</param>
@@ -1392,7 +1409,7 @@ public partial class Player : Entity
         }
 
         Level = Math.Min(Options.Instance.Player.MaxLevel, newLevel);
-        if (resetExperience)
+        if (resetExperience || Level >= Options.Instance.Player.MaxLevel)
         {
             Exp = 0;
         }
@@ -1536,6 +1553,19 @@ public partial class Player : Entity
             return;
         }
 
+        // EXP from NPC kills, quests, items, and bonuses must never be
+        // banked by a player who has already reached the configured cap.
+        if (Level >= Options.Instance.Player.MaxLevel)
+        {
+            if (ClearExperienceAtLevelCap())
+            {
+                PacketSender.SendExperience(this);
+                LeaderboardTitleRuntime.MarkRankingDirty();
+            }
+
+            return;
+        }
+
         var equipmentBonusPercent = GetEquipmentBonusEffect(ItemEffect.EXP);
         var equipmentBonus = (long)Math.Round(
             amount * equipmentBonusPercent / 100d,
@@ -1630,7 +1660,9 @@ public partial class Player : Entity
             experienceToNextLevel = GetExperienceToNextLevel(Level + levelCount);
         }
 
-        if (Exp < 0)
+        // Discard the excess award on the kill/action that reaches MaxLevel.
+        // Otherwise it would become free levels when the cap increases.
+        if (Exp < 0 || Level + levelCount >= Options.Instance.Player.MaxLevel)
         {
             Exp = 0;
         }
