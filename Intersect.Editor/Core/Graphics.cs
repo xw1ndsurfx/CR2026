@@ -1652,9 +1652,10 @@ public static partial class Graphics
                         width = (eventTex.Width / Options.Instance.Sprites.NormalFrames);
                         height = (eventTex.Height / Options.Instance.Sprites.Directions);
 
-                        // Match the runtime entity renderer's sprite Y offset so event previews
-                        // are drawn on the same logical tile as their editor "E" marker.
-                        destinationY += 32;
+                        // Keep the runtime sprite offset, but move the editor preview down
+                        // one map tile so its visible feet sit on the event's "E" tile
+                        // instead of the tile directly above it. This is preview-only.
+                        destinationY += 32 + Options.Instance.Map.TileHeight;
 
                         break;
                     case EventGraphicType.Tileset: //Tile
