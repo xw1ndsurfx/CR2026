@@ -2511,7 +2511,12 @@ public sealed class FrmBalanceLab : DarkForm
         );
 
         var npcAttackSeconds = Math.Max(0.05, npcAttackMs / 1000d);
-        var npcDps = npcHit / npcAttackSeconds;
+        var npcAutoDps = npcHit / npcAttackSeconds;
+        var npcSpellDps = npc is NpcAutoBalanceProbe probe
+            ? EstimateGeneratedNpcSpellDps(probe, npcStats, stats) : 0d;
+        var npcDps = npc is NpcAutoBalanceProbe { SpellFocused: true }
+            ? npcSpellDps
+            : npcAutoDps + npcSpellDps * 0.65d;
 
         var ttk = npcHp / partyDps;
         var pooledPartyHp = playerHp * Math.Max(1, partySize);
@@ -4934,12 +4939,71 @@ public sealed class FrmBalanceLab : DarkForm
         public double CritMultiplier { get; init; } = 1.5d;
         public int AttackSpeedModifier { get; init; }
         public int AttackSpeedValue { get; init; }
+        public IReadOnlyList<Guid> Spells { get; init; } = [];
+        public int SpellFrequency { get; init; }
+        public bool SpellFocused { get; init; }
+    }
+
+    // Conservative NPC spell estimate: NPCs pick a random spell at their configured
+    // frequency, unlike player rotations. Each slot is weighted equally and
+    // uncastable/non-damaging spells lower the expected output.
+    private static double EstimateGeneratedNpcSpellDps(
+        NpcAutoBalanceProbe npc, double[] npcStats, double[] playerStats)
+    {
+        if (npc.Spells.Count == 0)
+        {
+            return 0d;
+        }
+
+        var intervalMs = npc.SpellFrequency switch
+        {
+            0 => 30000d, 1 => 15000d, 2 => 8000d,
+            3 => 4000d, 4 => 2000d, _ => 30000d
+        };
+        double totalDps = 0d;
+        foreach (var spellId in npc.Spells)
+        {
+            var spell = SpellDescriptor.Get(spellId);
+            if (spell == null || spell.SpellType != SpellType.CombatSpell ||
+                spell.Combat == null || spell.Combat.Friendly ||
+                spell.Combat.VitalDiff.Length <= (int)Vital.Health ||
+                spell.Combat.VitalDiff[(int)Vital.Health] <= 0)
+            {
+                continue;
+            }
+
+            if (spell.VitalCost.Length > (int)Vital.Mana &&
+                Math.Max(0L, spell.VitalCost[(int)Vital.Mana]) > npc.MaxVitals[(int)Vital.Mana])
+            {
+                continue;
+            }
+
+            var combat = spell.Combat;
+            var scalingStat = Math.Clamp(combat.ScalingStat, 0, npcStats.Length - 1);
+            var damage = AverageDamage(
+                Math.Max(0d, combat.VitalDiff[(int)Vital.Health]),
+                (DamageType)combat.DamageType,
+                npcStats[scalingStat], combat.Scaling,
+                combat.CritChance, combat.CritMultiplier,
+                playerStats[(int)Stat.Defense], playerStats[(int)Stat.MagicResist]);
+            if (combat.HoTDoT && combat.Duration > 0 && combat.HotDotInterval > 0)
+            {
+                damage *= 1d + Math.Ceiling((double)combat.Duration / combat.HotDotInterval);
+            }
+
+            var cycleMs = Math.Max(intervalMs,
+                Math.Max(250d, spell.CastDuration + spell.CooldownDuration));
+            totalDps += damage * 1000d / cycleMs;
+        }
+
+        return totalDps / npc.Spells.Count;
     }
 
     public static NpcAutoBalanceResult CalibrateGeneratedNpc(
         int level, int partySize, double targetTtkSeconds, double targetHpLossPercent,
         long initialHealth, int initialDamage, int[] stats, int damageType,
-        int scalingStat, int scaling, long maxHealth, int maxDamage)
+        int scalingStat, int scaling, long maxHealth, int maxDamage,
+        int mana, IReadOnlyList<Guid> spells, int spellFrequency, bool spellFocused)
     {
         var classList = ClassDescriptor.Lookup.Values.Where(value => value != null)
             .Cast<object>().ToArray();
@@ -4955,8 +5019,11 @@ public sealed class FrmBalanceLab : DarkForm
 
         var probe = new NpcAutoBalanceProbe
         {
-            MaxVitals = [Math.Clamp(initialHealth, 1, maxHealth), 0],
+            MaxVitals = [Math.Clamp(initialHealth, 1, maxHealth), Math.Max(0, mana)],
             Stats = (int[])stats.Clone(),
+            Spells = spells.Distinct().ToArray(),
+            SpellFrequency = spellFrequency,
+            SpellFocused = spellFocused,
             Damage = Math.Clamp(initialDamage, 1, maxDamage),
             DamageType = damageType,
             ScalingStat = Math.Clamp(scalingStat, 0, 4),
@@ -5026,7 +5093,8 @@ public sealed class FrmBalanceLab : DarkForm
             HpLossPercent = averageHpLoss,
             ClassCount = sampleCount,
             Message = "Calibrated against unrestricted median equipment and learned class spells. " +
-                      "Movement, status effects and custom combat rules still need playtesting."
+                      "NPC spell DPS is approximate (random casting and cooldowns). " +
+                      "Movement, controls and custom combat rules still need playtesting."
         };
     }
 
