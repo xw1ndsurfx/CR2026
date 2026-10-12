@@ -56,6 +56,7 @@ public partial class FrmItem : EditorForm
         _btnCancel = btnCancel;
 
         lstGameObjects.Init(UpdateToolStripItems, AssignEditorItem, toolStripItemNew_Click, toolStripItemCopy_Click, toolStripItemUndo_Click, toolStripItemPaste_Click, toolStripItemDelete_Click);
+        BuildResponsiveItemEditor();
     }
     private void AssignEditorItem(Guid id)
     {
@@ -74,6 +75,7 @@ public partial class FrmItem : EditorForm
         {
             InitEditor();
             TryApplyPendingGeneratedItem();
+            OpenNewItemAutoCreatorIfReady();
 
             if (mEditorItem != null && !ItemDescriptor.Lookup.Values.Contains(mEditorItem))
             {
