@@ -158,15 +158,15 @@ public partial class MenuContainer : Panel
             MinimumSize = new Point(x: 71, y: 55),
             Padding = new Padding(size: 0),
             Size = new Point(x: 71, y: 55),
-            TextureFilename = "menuitem.png",
         };
-        _dungeonsButton = new Button(parent: _dungeonsButtonContainer, name: nameof(_dungeonsButton), disableText: false)
+        _dungeonsButton = new Button(parent: _dungeonsButtonContainer, name: nameof(_dungeonsButton), disableText: true)
         {
             Alignment = [Alignments.Center],
             Size = new Point(x: 71, y: 55),
-            Text = "DG",
-            FontSize = 13,
         };
+        _dungeonsButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Dungeon.png");
+        _dungeonsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Dungeon_over.png");
+        _dungeonsButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_Dungeon_down.png");
         _dungeonsButton.SetToolTipText(text: "Dungeon Gates");
         _dungeonsButton.Clicked += DungeonsButton_Clicked;
 
@@ -215,15 +215,15 @@ public partial class MenuContainer : Panel
             MinimumSize = new Point(x: 71, y: 55),
             Padding = new Padding(size: 0),
             Size = new Point(x: 71, y: 55),
-            TextureFilename = "menuitem.png",
         };
-        _logiCoinShopButton = new Button(parent: _logiCoinShopButtonContainer, name: nameof(_logiCoinShopButton), disableText: false)
+        _logiCoinShopButton = new Button(parent: _logiCoinShopButtonContainer, name: nameof(_logiCoinShopButton), disableText: true)
         {
             Alignment = [Alignments.Center],
             Size = new Point(x: 71, y: 55),
-            Text = "LC",
-            FontSize = 13,
         };
+        _logiCoinShopButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Shop.png");
+        _logiCoinShopButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Shop_over.png");
+        _logiCoinShopButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_Shop_down.png");
         _logiCoinShopButton.SetToolTipText(text: "LogiCoin Shop");
         _logiCoinShopButton.Clicked += LogiCoinShopButton_Clicked;
 
@@ -415,6 +415,20 @@ public partial class MenuContainer : Panel
 
         // Dedicated Corps Royaux GUI art supplied with the client.
         // Reapply after LoadJsonUi so layout overrides cannot replace the custom textures.
+        // These 71x55 pixel images already include their own frames.
+        _dungeonsButtonContainer.TextureFilename = null;
+        _logiCoinShopButtonContainer.TextureFilename = null;
+
+        _dungeonsButton.Text = string.Empty;
+        _dungeonsButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Dungeon.png");
+        _dungeonsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Dungeon_over.png");
+        _dungeonsButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_Dungeon_down.png");
+
+        _logiCoinShopButton.Text = string.Empty;
+        _logiCoinShopButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Shop.png");
+        _logiCoinShopButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Shop_over.png");
+        _logiCoinShopButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_Shop_down.png");
+
         _newsButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_News.png");
         _newsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_News_over.png");
         _newsButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_News_down.png");
