@@ -47,12 +47,12 @@ public partial class FrmNpc
         using var dialog = new Form
         {
             Text = "NPC Auto Creator - Combat Simulation",
-            Size = new Size(510, 662),
-            MinimumSize = new Size(510, 662),
-            MaximumSize = new Size(510, 662),
+            Size = new Size(510, 715),
+            MinimumSize = new Size(440, 390),
+            AutoScroll = true,
             StartPosition = FormStartPosition.CenterParent,
-            FormBorderStyle = FormBorderStyle.FixedDialog,
-            MaximizeBox = false,
+            FormBorderStyle = FormBorderStyle.Sizable,
+            MaximizeBox = true,
             MinimizeBox = false,
             BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
             ForeColor = System.Drawing.Color.Gainsboro
@@ -96,61 +96,63 @@ public partial class FrmNpc
             Location = new System.Drawing.Point(202, 172), Width = 270,
             Minimum = 1, Maximum = 5, Value = 1
         };
-        var spellPicker = new ComboBox
+        var spellPicker = new CheckedListBox
         {
-            Location = new System.Drawing.Point(202, 210), Width = 270,
-            DropDownStyle = ComboBoxStyle.DropDownList
+            Location = new System.Drawing.Point(202, 210),
+            Size = new Size(270, 108), CheckOnClick = true,
+            BackColor = System.Drawing.Color.FromArgb(53, 53, 56),
+            ForeColor = System.Drawing.Color.Gainsboro
         };
         var spellIds = new List<Guid>();
+        List<Guid> SelectedSpells() => spellPicker.CheckedIndices.Cast<int>()
+            .Where(index => index >= 0 && index < spellIds.Count)
+            .Select(index => spellIds[index]).Distinct().ToList();
+
         void RefreshSpells()
         {
             spellPicker.Items.Clear();
             spellIds.Clear();
-            spellPicker.Items.Add("None / Keep existing spells");
-            spellIds.Add(Guid.Empty);
             var candidates = SpellDescriptor.Lookup.Values
                 .OfType<SpellDescriptor>()
                 .Where(spell => spell.Combat != null &&
                     spell.SpellType == SpellType.CombatSpell &&
-                    !spell.Combat.Friendly)
-                .Where(spell => spell.Combat.VitalDiff.Length > (int)Vital.Health &&
+                    !spell.Combat.Friendly &&
+                    spell.Combat.VitalDiff.Length > (int)Vital.Health &&
                     spell.Combat.VitalDiff[(int)Vital.Health] > 0)
                 .Where(spell => role.SelectedIndex == 1
                     ? spell.Combat.Projectile != null
-                    : spell.Combat.CastRange >= 2 ||
-                      spell.Combat.Projectile != null)
-                .OrderBy(spell => spell.Name)
+                    : spell.Combat.CastRange >= 2 || spell.Combat.Projectile != null)
+                .OrderBy(spell => spell.Name, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
-
-            var bestIndex = 0;
             foreach (var spell in candidates)
             {
-                var spellName = spell.Name;
                 spellIds.Add(spell.Id);
-                spellPicker.Items.Add(spellName);
-                var lower = spellName.ToLowerInvariant();
-                var appropriate = role.SelectedIndex switch
-                {
-                    1 => lower.Contains("arrow") || lower.Contains("bow") ||
-                         lower.Contains("shot") || lower.Contains("archer"),
-                    2 => lower.Contains("magic") || lower.Contains("arcane") ||
-                         lower.Contains("fire") || lower.Contains("frost") ||
-                         lower.Contains("ice") || lower.Contains("bolt"),
-                    _ => false,
-                };
-                if (appropriate && bestIndex == 0)
-                {
-                    bestIndex = spellPicker.Items.Count - 1;
-                }
+                spellPicker.Items.Add(spell.Name);
             }
-            spellPicker.SelectedIndex = role.SelectedIndex is 1 or 2 ? bestIndex : 0;
+
+            // Mage offers three distinct offensive spells; archer offers two.
+            // Players can check/uncheck any entry before generating the NPC.
+            var count = role.SelectedIndex switch { 1 => 2, 2 => 3, _ => 0 };
+            var preferred = Enumerable.Range(0, candidates.Length)
+                .OrderByDescending(index =>
+                {
+                    var text = candidates[index].Name.ToLowerInvariant();
+                    return role.SelectedIndex == 1
+                        ? (text.Contains("arrow") || text.Contains("bow") ||
+                           text.Contains("shot") ? 1 : 0)
+                        : (text.Contains("magic") || text.Contains("arcane") ||
+                           text.Contains("lightning") || text.Contains("fire") ||
+                           text.Contains("frost") || text.Contains("ice") ||
+                           text.Contains("bolt") ? 1 : 0);
+                }).Take(count).ToArray();
+            foreach (var index in preferred) spellPicker.SetItemChecked(index, true);
             spellPicker.Enabled = role.SelectedIndex is 1 or 2;
         }
         RefreshSpells();
 
         var preview = new Label
         {
-            Location = new System.Drawing.Point(20, 253), Size = new Size(452, 170),
+            Location = new System.Drawing.Point(20, 332), Size = new Size(452, 170),
             ForeColor = System.Drawing.Color.Gainsboro, BorderStyle = BorderStyle.FixedSingle,
             Padding = new Padding(10)
         };
@@ -159,22 +161,22 @@ public partial class FrmNpc
             Text = "Calibrated with the Balance Lab's class simulation and median-per-slot equipment. " +
                    "NPC spell DPS is estimated using frequency, mana cost and cooldowns. " +
                    "Drops, events, pets and scripted invasion logic are preserved.",
-            Location = new System.Drawing.Point(20, 432), Size = new Size(452, 74),
+            Location = new System.Drawing.Point(20, 508), Size = new Size(452, 74),
             ForeColor = System.Drawing.Color.Khaki
         };
         var simulate = new Button
         {
-            Text = "Simulate & Calibrate", Location = new System.Drawing.Point(20, 527),
+            Text = "Simulate & Calibrate", Location = new System.Drawing.Point(20, 602),
             Size = new Size(193, 32)
         };
         var apply = new Button
         {
-            Text = "Apply to selected NPC", Location = new System.Drawing.Point(267, 527),
+            Text = "Apply to selected NPC", Location = new System.Drawing.Point(267, 602),
             Size = new Size(205, 32), DialogResult = DialogResult.None
         };
         var cancel = new Button
         {
-            Text = "Cancel", Location = new System.Drawing.Point(20, 566),
+            Text = "Cancel", Location = new System.Drawing.Point(20, 640),
             Size = new Size(115, 28), DialogResult = DialogResult.Cancel
         };
         dialog.Controls.AddRange(new Control[]
@@ -184,7 +186,7 @@ public partial class FrmNpc
             MakeLabel("Combat Class", 98), role,
             MakeLabel("Difficulty", 136), difficulty,
             MakeLabel("Party size (1 = solo)", 174), party,
-            MakeLabel("Optional combat spell", 212), spellPicker,
+            MakeLabel("Spells (check several)", 212), spellPicker,
             preview, warning, simulate, apply, cancel
         });
         dialog.CancelButton = cancel;
@@ -213,13 +215,13 @@ public partial class FrmNpc
             };
             // Ranged NPCs need sufficient mana for their first few casts.
             // This intentionally does not mutate the SpellDescriptor itself.
-            var selectedSpell = spellPicker.SelectedIndex >= 0 &&
-                spellPicker.SelectedIndex < spellIds.Count
-                ? SpellDescriptor.Get(spellIds[spellPicker.SelectedIndex]) : null;
-            var manaCost = selectedSpell?.VitalCost != null &&
-                selectedSpell.VitalCost.Length > (int)Vital.Mana
-                ? Math.Max(0L, selectedSpell.VitalCost[(int)Vital.Mana]) : 0L;
-            var spellMana = Math.Min((double)nudMana.Maximum, manaCost * 4d);
+            var maxManaCost = SelectedSpells()
+                .Select(SpellDescriptor.Get)
+                .Where(spell => spell?.VitalCost != null &&
+                    spell.VitalCost.Length > (int)Vital.Mana)
+                .Select(spell => Math.Max(0L, spell!.VitalCost[(int)Vital.Mana]))
+                .DefaultIfEmpty(0L).Max();
+            var spellMana = Math.Min((double)nudMana.Maximum, maxManaCost * 4d);
             int Cap(NumericUpDown field, double value) =>
                 (int)Math.Clamp(Math.Round(value), (double)field.Minimum,
                     Math.Min((double)field.Maximum, 100_000_000d));
@@ -270,7 +272,11 @@ public partial class FrmNpc
 
         level.ValueChanged += (_, _) => InvalidatePreview();
         role.SelectedIndexChanged += (_, _) => { RefreshSpells(); InvalidatePreview(); };
-        spellPicker.SelectedIndexChanged += (_, _) => InvalidatePreview();
+        spellPicker.ItemCheck += (_, _) =>
+        {
+            calibration = null;
+            preview.Text = "Spell selection changed. Simulate again before applying.";
+        };
         difficulty.SelectedIndexChanged += (_, _) => InvalidatePreview();
         party.ValueChanged += (_, _) => InvalidatePreview();
 
@@ -294,25 +300,30 @@ public partial class FrmNpc
             dialog.UseWaitCursor = true;
             try
             {
-                var selectedSpellId = spellPicker.SelectedIndex >= 0
-                    ? spellIds[spellPicker.SelectedIndex] : Guid.Empty;
-                var selectedNewSpell = selectedSpellId != Guid.Empty &&
-                    !mEditorItem.Spells.Contains(selectedSpellId);
-                var simulationSpells = mEditorItem.Spells
-                    .Where(id => id != Guid.Empty).ToList();
-                if (selectedNewSpell)
+                var selectedIds = SelectedSpells();
+                var simulationSpells = new List<Guid>();
+                var simulationIntervals = new List<int>();
+                for (var slot = 0; slot < mEditorItem.Spells.Count; slot++)
                 {
-                    simulationSpells.Add(selectedSpellId);
+                    if (mEditorItem.Spells[slot] == Guid.Empty) continue;
+                    simulationSpells.Add(mEditorItem.Spells[slot]);
+                    simulationIntervals.Add(mEditorItem.GetSpellCastIntervalOverrideMs(slot));
                 }
-                var frequency = selectedNewSpell && role.SelectedIndex is 1 or 2
-                    ? 3 : mEditorItem.SpellFrequency;
+                foreach (var spellId in selectedIds.Where(id => !simulationSpells.Contains(id)))
+                {
+                    var number = selectedIds.IndexOf(spellId);
+                    simulationSpells.Add(spellId);
+                    simulationIntervals.Add(number switch { 0 => 4000, 1 => 8000, _ => 15000 });
+                }
+                var frequency = mEditorItem.SpellFrequency;
                 calibration = FrmBalanceLab.CalibrateGeneratedNpc(
                     (int)level.Value, (int)party.Value, targets.ttk, targets.loss,
                     proposed.hp, proposed.damage, stats,
                     role.SelectedIndex == 2 ? (int)DamageType.Magic : (int)DamageType.Physical,
                     role.SelectedIndex == 2 ? (int)Stat.AbilityPower : (int)Stat.Attack,
                     100, (long)nudHp.Maximum, (int)nudDamage.Maximum,
-                    proposed.mana, simulationSpells, frequency, role.SelectedIndex is 1 or 2);
+                    proposed.mana, simulationSpells, frequency, role.SelectedIndex is 1 or 2,
+                    simulationIntervals);
             }
             catch (Exception ex)
             {
@@ -405,18 +416,21 @@ public partial class FrmNpc
         _chkIsBoss.Checked = difficulty.SelectedIndex == 3;
         chkAggressive.Checked = true;
 
-        var selectedSpellId = spellIds[spellPicker.SelectedIndex];
-        if (selectedSpellId != Guid.Empty && !mEditorItem.Spells.Contains(selectedSpellId))
+        var selectedIds = SelectedSpells();
+        for (var index = 0; index < selectedIds.Count; index++)
         {
-            mEditorItem.Spells.Add(selectedSpellId);
-            RefreshNpcSpellList(mEditorItem.Spells.Count - 1);
-            // At 30s (index 0), the NPC may never cast during an 8-second fight.
-            // Use an existing 4-second frequency for generated casters/archers.
-            if (role.SelectedIndex is 1 or 2 && cmbFreq.Items.Count > 3)
+            var spellId = selectedIds[index];
+            // Existing spells and their configured intervals are preserved.
+            if (mEditorItem.Spells.Contains(spellId)) continue;
+            mEditorItem.EnsureSpellCastIntervalSlots();
+            mEditorItem.Spells.Add(spellId);
+            var slot = mEditorItem.Spells.Count - 1;
+            mEditorItem.SetSpellCastIntervalMs(slot, index switch
             {
-                cmbFreq.SelectedIndex = 3;
-            }
+                0 => 4000, 1 => 8000, _ => 15000
+            });
         }
+        RefreshNpcSpellList(Math.Max(0, mEditorItem.Spells.Count - 1));
 
         MessageBox.Show(this,
             $"NPC profile applied. Simulation: {calibration.TtkSeconds:0.0}s TTK, " +
