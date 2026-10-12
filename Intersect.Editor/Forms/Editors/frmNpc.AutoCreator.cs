@@ -2,13 +2,15 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 using DarkUI.Controls;
+using Intersect.Editor.Forms;
+using Intersect.Enums;
 
 namespace Intersect.Editor.Forms.Editors;
 
 public partial class FrmNpc
 {
-    // This generator only adjusts the base combat numbers. It intentionally leaves
-    // spell lists, drops, events, pets and invasion-specific behavior unchanged.
+    // Only base combat stats are generated. Special NPC behavior, pet configuration,
+    // scripted encounters, spells, drops, events and immunities are not rewritten.
     private void BuildNpcAutoCreator()
     {
         var button = new DarkButton
@@ -31,12 +33,20 @@ public partial class FrmNpc
             return;
         }
 
+        if (mEditorItem.IsPet)
+        {
+            MessageBox.Show(this,
+                "Pet stats are managed separately. The NPC generator cannot modify a pet.",
+                "NPC Auto Creator", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
         using var dialog = new Form
         {
-            Text = "NPC Auto Creator",
-            Size = new Size(440, 450),
-            MinimumSize = new Size(440, 450),
-            MaximumSize = new Size(440, 450),
+            Text = "NPC Auto Creator - Combat Simulation",
+            Size = new Size(510, 600),
+            MinimumSize = new Size(510, 600),
+            MaximumSize = new Size(510, 600),
             StartPosition = FormStartPosition.CenterParent,
             FormBorderStyle = FormBorderStyle.FixedDialog,
             MaximizeBox = false,
@@ -48,50 +58,69 @@ public partial class FrmNpc
         static Label MakeLabel(string text, int y) => new()
         {
             Text = text, Location = new Point(20, y),
-            Size = new Size(150, 25), ForeColor = Color.Gainsboro
+            Size = new Size(170, 25), ForeColor = Color.Gainsboro
         };
 
-        var name = new TextBox { Location = new Point(176, 20), Width = 220, Text = txtName.Text };
+        var name = new TextBox
+        {
+            Location = new Point(202, 20), Width = 270, Text = txtName.Text
+        };
         var level = new NumericUpDown
         {
-            Location = new Point(176, 58), Width = 220,
-            Minimum = 1, Maximum = nudLevel.Maximum, Value = nudLevel.Value
+            Location = new Point(202, 58), Width = 270,
+            Minimum = 1, Maximum = Math.Min(nudLevel.Maximum, Math.Max(1, Options.Instance.Player.MaxLevel)),
+            Value = Math.Clamp(nudLevel.Value, 1, Math.Min(nudLevel.Maximum, Math.Max(1, Options.Instance.Player.MaxLevel)))
         };
         var role = new ComboBox
         {
-            Location = new Point(176, 96), Width = 220,
+            Location = new Point(202, 96), Width = 270,
             DropDownStyle = ComboBoxStyle.DropDownList
         };
-        role.Items.AddRange(new object[] { "Warrior / Melee", "Archer / Ranged", "Mage / Magic", "Tank", "Assassin" });
+        role.Items.AddRange(new object[]
+        {
+            "Warrior / Melee", "Archer / Ranged", "Mage / Magic", "Tank", "Assassin"
+        });
         role.SelectedIndex = 0;
         var difficulty = new ComboBox
         {
-            Location = new Point(176, 134), Width = 220,
+            Location = new Point(202, 134), Width = 270,
             DropDownStyle = ComboBoxStyle.DropDownList
         };
         difficulty.Items.AddRange(new object[] { "Weak", "Normal", "Elite", "Boss" });
-        difficulty.SelectedIndex = 1;
+        difficulty.SelectedIndex = mEditorItem.IsBoss ? 3 : 1;
+        var party = new NumericUpDown
+        {
+            Location = new Point(202, 172), Width = 270,
+            Minimum = 1, Maximum = 5, Value = 1
+        };
         var preview = new Label
         {
-            Location = new Point(20, 184), Size = new Size(376, 132),
+            Location = new Point(20, 214), Size = new Size(452, 170),
             ForeColor = Color.Gainsboro, BorderStyle = BorderStyle.FixedSingle,
             Padding = new Padding(10)
         };
         var warning = new Label
         {
-            Text = "Experimental presets: review combat results before using them in production. Existing drops, spells and events are preserved.",
-            Location = new Point(20, 328), Size = new Size(376, 42),
+            Text = "Calibrated with the Balance Lab's class simulation and median-per-slot equipment. " +
+                   "Ranged/mage NPCs still need suitable damaging spells configured. " +
+                   "Drops, events, pets and scripted invasion logic are preserved.",
+            Location = new Point(20, 395), Size = new Size(452, 74),
             ForeColor = Color.Khaki
+        };
+        var simulate = new Button
+        {
+            Text = "Simulate & Calibrate", Location = new Point(20, 483),
+            Size = new Size(193, 32)
         };
         var apply = new Button
         {
-            Text = "Apply to selected NPC", Location = new Point(196, 375),
-            Size = new Size(200, 30), DialogResult = DialogResult.OK
+            Text = "Apply to selected NPC", Location = new Point(267, 483),
+            Size = new Size(205, 32), DialogResult = DialogResult.OK
         };
         var cancel = new Button
         {
-            Text = "Cancel", Location = new Point(20, 375),
-            Size = new Size(110, 30), DialogResult = DialogResult.Cancel
+            Text = "Cancel", Location = new Point(20, 522),
+            Size = new Size(115, 28), DialogResult = DialogResult.Cancel
         };
         dialog.Controls.AddRange(new Control[]
         {
@@ -99,81 +128,191 @@ public partial class FrmNpc
             MakeLabel("Level", 60), level,
             MakeLabel("Combat Class", 98), role,
             MakeLabel("Difficulty", 136), difficulty,
-            preview, warning, apply, cancel
+            MakeLabel("Party size (1 = solo)", 174), party,
+            preview, warning, simulate, apply, cancel
         });
-        dialog.AcceptButton = apply;
         dialog.CancelButton = cancel;
+        dialog.AcceptButton = apply;
 
-        (int hp, int mana, int attack, int magic, int defense, int resist, int damage, int exp) Calculate()
+        // Initial numbers supply a stable starting point. The actual HP and
+        // damage calibration is delegated to the Balance Lab's combat simulator.
+        (int hp, int mana, int attack, int magic, int defense, int resist,
+            int speed, int damage, int exp) CalculatePreset()
         {
             var lvl = (double)level.Value;
             var multiplier = difficulty.SelectedIndex switch
             {
-                0 => 0.65,
-                2 => 1.8,
-                3 => 4.0,
-                _ => 1.0
+                0 => 0.65d,
+                2 => 1.8d,
+                3 => 4.0d,
+                _ => 1.0d
             };
             var hpWeight = role.SelectedIndex switch
             {
-                3 => 1.8, 4 => 0.7, 1 or 2 => 0.8, _ => 1.0
+                3 => 1.8d, 4 => 0.7d, 1 or 2 => 0.8d, _ => 1.0d
             };
             var damageWeight = role.SelectedIndex switch
             {
-                3 => 0.7, 4 => 1.35, _ => 1.0
+                3 => 0.7d, 4 => 1.35d, _ => 1.0d
             };
-            int Scale(double value) => (int)Math.Clamp(Math.Round(value), 0, 100000000);
+            int Scale(double value) => (int)Math.Clamp(Math.Round(value), 0d, 100_000_000d);
             return (
-                Scale((30 + 12 * lvl + lvl * lvl * 1.5) * multiplier * hpWeight),
-                role.SelectedIndex == 2 ? Scale((20 + 7 * lvl) * multiplier) : 0,
-                role.SelectedIndex == 2 ? 0 : Scale((3 + 2.2 * lvl) * multiplier),
-                role.SelectedIndex == 2 ? Scale((3 + 2.2 * lvl) * multiplier) : 0,
-                Scale((2 + lvl * 1.1) * multiplier * (role.SelectedIndex == 3 ? 1.5 : 1.0)),
-                Scale((2 + lvl * 1.1) * multiplier * (role.SelectedIndex == 2 ? 1.4 : 1.0)),
-                Scale((3 + 1.8 * lvl) * multiplier * damageWeight),
-                Scale((5 + 3 * lvl + lvl * lvl * 0.5) * multiplier)
+                Scale((30d + 12d * lvl + lvl * lvl * 1.5d) * multiplier * hpWeight),
+                role.SelectedIndex == 2 ? Scale((20d + 7d * lvl) * multiplier) : 0,
+                role.SelectedIndex == 2 ? 0 : Scale((3d + 2.2d * lvl) * multiplier),
+                role.SelectedIndex == 2 ? Scale((3d + 2.2d * lvl) * multiplier) : 0,
+                Scale((2d + lvl * 1.1d) * multiplier * (role.SelectedIndex == 3 ? 1.5d : 1d)),
+                Scale((2d + lvl * 1.1d) * multiplier * (role.SelectedIndex == 2 ? 1.4d : 1d)),
+                Scale(2d + lvl * 0.8d),
+                Scale((3d + 1.8d * lvl) * multiplier * damageWeight),
+                Scale((5d + 3d * lvl + lvl * lvl * 0.5d) * multiplier)
             );
         }
 
+        FrmBalanceLab.NpcAutoBalanceResult? calibration = null;
+        (double ttk, double loss) Targets() => difficulty.SelectedIndex switch
+        {
+            0 => (4d, 10d),
+            2 => (18d, 35d),
+            3 => (40d, 65d),
+            _ => (8d, 20d)
+        };
+
         void RefreshPreview()
         {
-            var s = Calculate();
+            var s = CalculatePreset();
+            var hp = calibration?.Calibrated == true ? calibration.Health : s.hp;
+            var damage = calibration?.Calibrated == true ? calibration.Damage : s.damage;
             preview.Text =
-                $"HP: {s.hp:N0}    Mana: {s.mana:N0}\n" +
-                $"Attack: {s.attack:N0}    Magic: {s.magic:N0}\n" +
+                $"HP: {hp:N0}    Mana: {s.mana:N0}\n" +
+                $"Attack: {s.attack:N0}    Magic: {s.magic:N0}    Speed: {s.speed:N0}\n" +
                 $"Defense: {s.defense:N0}    Magic Resist: {s.resist:N0}\n" +
-                $"Base Damage: {s.damage:N0}    EXP: {s.exp:N0}\n" +
-                "Preview only. No changes until Apply.";
+                $"Base Damage: {damage:N0}    EXP: {s.exp:N0}\n" +
+                (calibration?.Calibrated == true
+                    ? $"Simulated TTK: {calibration.TtkSeconds:0.0}s, HP lost: {calibration.HpLossPercent:0.0}%\n" +
+                      $"Based on {calibration.ClassCount} player classes."
+                    : "Not calibrated - select Simulate & Calibrate.");
         }
-        level.ValueChanged += (_, _) => RefreshPreview();
-        role.SelectedIndexChanged += (_, _) => RefreshPreview();
-        difficulty.SelectedIndexChanged += (_, _) => RefreshPreview();
+
+        void InvalidatePreview()
+        {
+            calibration = null;
+            RefreshPreview();
+        }
+
+        level.ValueChanged += (_, _) => InvalidatePreview();
+        role.SelectedIndexChanged += (_, _) => InvalidatePreview();
+        difficulty.SelectedIndexChanged += (_, _) => InvalidatePreview();
+        party.ValueChanged += (_, _) => InvalidatePreview();
+
+        bool EnsureCalibrated()
+        {
+            if (calibration?.Calibrated == true)
+            {
+                return true;
+            }
+
+            var proposed = CalculatePreset();
+            var stats = new int[5];
+            stats[(int)Stat.Attack] = proposed.attack;
+            stats[(int)Stat.AbilityPower] = proposed.magic;
+            stats[(int)Stat.Defense] = proposed.defense;
+            stats[(int)Stat.MagicResist] = proposed.resist;
+            stats[(int)Stat.Speed] = proposed.speed;
+            var targets = Targets();
+
+            simulate.Enabled = false;
+            dialog.UseWaitCursor = true;
+            try
+            {
+                calibration = FrmBalanceLab.CalibrateGeneratedNpc(
+                    (int)level.Value, (int)party.Value, targets.ttk, targets.loss,
+                    proposed.hp, proposed.damage, stats,
+                    role.SelectedIndex == 2 ? (int)DamageType.Magic : (int)DamageType.Physical,
+                    role.SelectedIndex == 2 ? (int)Stat.AbilityPower : (int)Stat.Attack,
+                    100);
+            }
+            catch (Exception ex)
+            {
+                calibration = null;
+                MessageBox.Show(dialog, $"Could not simulate combat: {ex.Message}",
+                    "NPC Auto Creator", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+            finally
+            {
+                dialog.UseWaitCursor = false;
+                simulate.Enabled = true;
+            }
+
+            RefreshPreview();
+            if (calibration.Calibrated)
+            {
+                return true;
+            }
+            MessageBox.Show(dialog, calibration.Message,
+                "NPC Auto Creator", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+
+        simulate.Click += (_, _) => EnsureCalibrated();
         RefreshPreview();
+
         if (dialog.ShowDialog(this) != DialogResult.OK)
         {
             return;
         }
 
-        var stats = Calculate();
-        static void Assign(NumericUpDown field, int value)
+        // Refuse silently falling back to level-only heuristic guesses.
+        if (!EnsureCalibrated())
         {
-            field.Value = Math.Clamp((decimal)value, field.Minimum, field.Maximum);
+            return;
+        }
+
+        var result = CalculatePreset();
+        static void Assign(NumericUpDown field, decimal value)
+        {
+            field.Value = Math.Clamp(value, field.Minimum, field.Maximum);
         }
 
         txtName.Text = name.Text;
-        Assign(nudLevel, (int)level.Value);
-        Assign(nudHp, stats.hp);
-        Assign(nudMana, stats.mana);
-        Assign(nudStr, stats.attack);
-        Assign(nudMag, stats.magic);
-        Assign(nudDef, stats.defense);
-        Assign(nudMR, stats.resist);
-        Assign(nudDamage, stats.damage);
-        Assign(nudExp, stats.exp);
+        Assign(nudLevel, level.Value);
+        Assign(nudHp, calibration!.Health);
+        Assign(nudMana, result.mana);
+        Assign(nudStr, result.attack);
+        Assign(nudMag, result.magic);
+        Assign(nudDef, result.defense);
+        Assign(nudMR, result.resist);
+        Assign(nudSpd, result.speed);
+        Assign(nudDamage, calibration.Damage);
+        Assign(nudExp, result.exp);
+        Assign(nudScaling, 100);
+        cmbDamageType.SelectedIndex = role.SelectedIndex == 2
+            ? (int)DamageType.Magic : (int)DamageType.Physical;
+        cmbScalingStat.SelectedIndex = role.SelectedIndex == 2
+            ? (int)Stat.AbilityPower : (int)Stat.Attack;
+
+        // Use existing tested NPC combat movement modes. Merely selecting
+        // Ranged/Caster does NOT create attacks or spells; see dialog warning.
+        _chkSmartCombatMovement.Checked = true;
+        _cmbCombatMovementMode.SelectedIndex = role.SelectedIndex switch
+        {
+            1 => 2, // Ranged
+            2 => 3, // Caster
+            4 => 4, // Kite
+            _ => 1, // Melee (including Tank)
+        };
+        Assign(_nudPreferredCombatRange, role.SelectedIndex switch
+        {
+            1 => 5, 2 => 5, 4 => 3, _ => 1
+        });
         _chkIsBoss.Checked = difficulty.SelectedIndex == 3;
         chkAggressive.Checked = true;
+
         MessageBox.Show(this,
-            "Preset applied. Review the values and click Save to persist the NPC. Combat formulas have not yet been calibrated.",
-            "NPC Auto Creator");
+            $"NPC profile applied. Simulation: {calibration.TtkSeconds:0.0}s TTK, " +
+            $"{calibration.HpLossPercent:0.0}% HP loss. Review and click Save to persist. " +
+            "Ranged/caster NPCs require appropriate combat spells, and scripted encounters require playtesting.",
+            "NPC Auto Creator", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 }
