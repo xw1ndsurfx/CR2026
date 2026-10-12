@@ -25,6 +25,15 @@
 	  <ProjectReference Include="..\Intersect.Client.Core\Intersect.Client.Core.csproj" />
 	</ItemGroup>
 
+	<ItemGroup Label="Corps Royaux Menu Button Art">
+		<!-- Keep the new menu sprites alongside the built game, including Steam publish output. -->
+		<Content Include="..\resources\gui\Btn_Dungeon*.png;..\resources\gui\Btn_Shop*.png">
+			<Link>resources\gui\%(Filename)%(Extension)</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
+	</ItemGroup>
+
 	<ItemGroup Label="Steam Resources" Condition="'$(INTERSECT_STEAMWORKS)' != ''">
 	  <Content Include="..\Intersect.Client.Core\steam_appid.txt" Link="steam_appid.txt">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
