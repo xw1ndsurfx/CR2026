@@ -204,6 +204,8 @@ internal sealed class DailyRewardWindow : Window
         Hide();
     }
 
+    protected override void EnsureInitialized() { }
+
     private void DrawMilestones(DailyRewardStatePacket state)
     {
         _milestones.DeleteAll();
