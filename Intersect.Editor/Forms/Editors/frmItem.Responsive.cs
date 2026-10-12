@@ -11,7 +11,7 @@ public partial class FrmItem
 {
     private static System.Drawing.Size _savedItemEditorSize = System.Drawing.Size.Empty;
     private readonly TabControl _itemEditorTabs = new();
-    private readonly List<(Panel Panel, Control Group)> _itemTabGroups = [];
+    private readonly List<(Panel Panel, Control[] Groups)> _itemTabGroups = [];
     private readonly DarkButton _btnNewItemAuto = new();
     private readonly DarkButton _btnItemAuto = new();
     private bool _itemResponsiveReady;
@@ -40,7 +40,15 @@ public partial class FrmItem
             pnlContainer.Controls.Add(_itemEditorTabs);
 
             AddItemEditorTab("General / Trading", grpGeneral);
-            AddItemEditorTab("Equipment / Bonuses", grpEquipment);
+            // Equipment controls are moved, not recreated: their existing event
+            // handlers and item bindings are all preserved.
+            grpEquipment.Height = 90; // Slot selector only, details live in other tabs.
+            grpEquipment.Width = 610;
+            AddItemEditorTab("Equipment Slot", grpEquipment);
+            AddItemEditorTab("Vital & Stat Bonuses", grpVitalBonuses,
+                grpRegen, grpStatBonuses, grpStatRanges, grpEffects);
+            AddItemEditorTab("Paperdolls", grpPaperdoll);
+            AddItemEditorTab("Weapon & Shield", grpWeaponProperties, grpShieldProperties);
 
             var creatorTab = new TabPage("Auto Creator")
             {
@@ -90,7 +98,7 @@ public partial class FrmItem
         }
     }
 
-    private void AddItemEditorTab(string name, Control group)
+    private void AddItemEditorTab(string name, params Control[] groups)
     {
         var tab = new TabPage(name)
         {
@@ -102,23 +110,41 @@ public partial class FrmItem
             AutoScroll = true,
             BackColor = System.Drawing.Color.FromArgb(45, 45, 48)
         };
-        group.Parent = page;
-        group.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-        group.Location = new System.Drawing.Point(8, 8);
+        foreach (var group in groups)
+        {
+            group.Parent = page;
+            group.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+        }
         tab.Controls.Add(page);
         _itemEditorTabs.TabPages.Add(tab);
-        _itemTabGroups.Add((page, group));
-        page.Resize += (_, _) => ArrangeItemEditorGroup(page, group);
+        _itemTabGroups.Add((page, groups));
+        page.Resize += (_, _) => ArrangeItemEditorGroups(page, groups);
     }
 
-    private static void ArrangeItemEditorGroup(Panel page, Control group)
+    private static void ArrangeItemEditorGroups(Panel page, Control[] groups)
     {
-        if (page.IsDisposed) return;
-        group.Location = new System.Drawing.Point(8, 8);
-        // Preserve the existing item/paperdoll/property controls and their data
-        // binding. On small screens both axes scroll rather than cropping fields.
-        page.AutoScrollMinSize = new System.Drawing.Size(
-            group.Width + 20, group.Height + 20);
+        if (page.IsDisposed || groups.Length == 0) return;
+        page.SuspendLayout();
+        try
+        {
+            var maxWidth = Math.Max(1, groups.Max(group => group.Width));
+            var columns = groups.Length == 1 ? 1 :
+                page.ClientSize.Width >= (maxWidth + 15) * 2 + 12 ? 2 : 1;
+            var heights = new int[columns];
+            foreach (var group in groups)
+            {
+                var column = Array.IndexOf(heights, heights.Min());
+                group.Location = new System.Drawing.Point(
+                    8 + column * (maxWidth + 15), 8 + heights[column]);
+                heights[column] += group.Height + 12;
+            }
+            page.AutoScrollMinSize = new System.Drawing.Size(
+                columns * (maxWidth + 15) + 12, heights.Max() + 12);
+        }
+        finally
+        {
+            page.ResumeLayout(true);
+        }
     }
 
     private void ArrangeResponsiveItemEditor()
@@ -142,8 +168,8 @@ public partial class FrmItem
             footer, 180, 31);
 
         toolStrip.Width = ClientSize.Width;
-        foreach (var (page, group) in _itemTabGroups)
-            ArrangeItemEditorGroup(page, group);
+        foreach (var (page, groups) in _itemTabGroups)
+            ArrangeItemEditorGroups(page, groups);
     }
 
     private void BeginNewItemAutoCreator()
