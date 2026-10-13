@@ -30,15 +30,9 @@ internal sealed partial class UserListWindow
                 return;
             }
 
-            AddLabel(_body, "GuildHeading", "FIND A GUILD", 0, 40, 459, 45,
-                19, Gold, true);
-            AddLabel(_body, "GuildInviteOnly",
-                "Search for an active guild and request an invitation.\n" +
-                "Guild officers must approve you before you can join.",
-                24, 145, 412, 90, 12, Cream, true);
             _body.SetInnerSize(466, 426);
-            AddAction(_footer, "FindGuild", "FIND A GUILD",
-                153, 7, 180, 49, OpenGuildDirectory);
+            AddAction(_body, "FindGuild", "Find a Guild",
+                153, 40, 180, 39, OpenGuildDirectory);
             return;
         }
 

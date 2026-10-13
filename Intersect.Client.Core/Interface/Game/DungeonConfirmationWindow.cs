@@ -40,7 +40,7 @@ internal sealed class DungeonConfirmationWindow : Window
             skin.Renderer.DrawFilledRect(new UiRectangle(rect.X + 3, rect.Y + 3,
                 rect.Width - 6, rect.Height - 6));
             skin.Renderer.DrawColor = new Color(a: 255, r: 118, g: 89, b: 49);
-            skin.Renderer.DrawFilledRect(new UiRectangle(rect.X + 228, rect.Y + 11,
+            skin.Renderer.DrawFilledRect(new UiRectangle(rect.X + 184, rect.Y + 11,
                 1, rect.Height - 22));
         }
     }
@@ -96,29 +96,24 @@ internal sealed class DungeonConfirmationWindow : Window
     public DungeonConfirmationWindow(Canvas parent)
         : base(parent, "Dungeon Gate", false, nameof(DungeonConfirmationWindow))
     {
-        SetSize(716, 568);
+        SetSize(506, 396);
         Alignment = [Alignments.Center];
         DeleteOnClose = false;
         DisableResizing();
 
-        if (AdmurinGuiArt.Add(this, "DungeonGateFrame", "dungeon_gates_0b",
-                10, 27, 696, 531) == null)
-        {
-            var fallback = new GateDataFrame(this);
-            fallback.SetBounds(10, 27, 696, 531);
-        }
+        // The native Window supplies the only outer frame and title bar.
 
         AdmurinGuiArt.Add(this, "DungeonGateHeaderIcon", "dungeon_gates_1",
-            340, 41, 36, 35, 0, 0, 32, 32);
+            236, 4, 32, 32, 0, 0, 32, 32);
 
-        AddText(this, "DungeonGateTitle", "DUNGEON", 100, 77, 516, 31, 25, Gold, center: true);
+        AddText(this, "DungeonGateTitle", "DUNGEON", 40, 36, 426, 25, 23, Gold, center: true);
         _heading = AddText(this, "DungeonGateHeading", "DUNGEON GATE DETECTED",
-            95, 110, 526, 22, 15, Gold, center: true);
+            40, 61, 426, 16, 11, Gold, center: true);
         AddText(this, "DungeonGateSubtitle", "ROYAL GATE REGISTRY - REVIEW YOUR DESTINATION",
-            67, 133, 581, 18, 11, Cream, center: true);
+            20, 77, 466, 14, 9, Cream, center: true);
 
         var detailsFrame = new GateDataFrame(this);
-        detailsFrame.SetBounds(32, 160, 652, 282);
+        detailsFrame.SetBounds(18, 93, 470, 173);
 
         string[] captions =
         [
@@ -128,7 +123,7 @@ internal sealed class DungeonConfirmationWindow : Window
         for (var i = 0; i < captions.Length; i++)
         {
             AddText(this, $"DungeonGateLabel{i}", captions[i],
-                46, 169 + i * 24, 204, 23, 12, Gold);
+                26, 99 + i * 16, 174, 16, 10, Gold);
         }
         _name = ValueText("Name", 0);
         _location = ValueText("Location", 1);
@@ -141,7 +136,7 @@ internal sealed class DungeonConfirmationWindow : Window
         _objectives = ValueText("Objective", 8);
         _rewards = ValueText("Rewards", 9);
         _extra = AddText(this, "DungeonGateExtra", string.Empty,
-            47, 420, 619, 20, 9, Cream);
+            20, 268, 466, 15, 9, Cream);
 
         _icon = new ImagePanel(this, "DungeonCustomIcon")
         {
@@ -149,27 +144,27 @@ internal sealed class DungeonConfirmationWindow : Window
             ShouldDrawBackground = false,
             MouseInputEnabled = false,
         };
-        _icon.SetBounds(341, 43, 34, 33);
+        _icon.SetBounds(236, 4, 32, 32);
         _icon.Hide();
 
         _enter = new Button(this, "EnterDungeon") { Text = string.Empty };
-        _enter.SetBounds(33, 449, 650, 46);
+        _enter.SetBounds(18, 289, 470, 32);
         var enterFrame = new GateActionFrame(_enter, "EnterDungeonArt", primary: true);
-        enterFrame.SetBounds(0, 0, 650, 46);
+        enterFrame.SetBounds(0, 0, 470, 32);
         AdmurinGuiArt.Add(_enter, "DungeonEnterBadge", "dungeon_gates_5",
-            13, 13, 19, 19, 0, 0, 12, 12);
+            13, 7, 19, 19, 0, 0, 12, 12);
         _enterCaption = AddText(_enter, "EnterCaption", "ENTER DUNGEON",
-            10, 2, 630, 42, 14, Cream, center: true);
+            10, 2, 450, 28, 11, Cream, center: true);
         _enter.Clicked += (_, _) => Respond(accept: true);
 
         _cancel = new Button(this, "CancelDungeon") { Text = string.Empty };
-        _cancel.SetBounds(33, 499, 650, 46);
+        _cancel.SetBounds(18, 326, 470, 32);
         var cancelFrame = new GateActionFrame(_cancel, "CancelDungeonArt", primary: false);
-        cancelFrame.SetBounds(0, 0, 650, 46);
+        cancelFrame.SetBounds(0, 0, 470, 32);
         AdmurinGuiArt.Add(_cancel, "DungeonCancelBadge", "dungeon_gates_5",
-            13, 13, 19, 19, 12, 0, 12, 12);
+            13, 7, 19, 19, 12, 0, 12, 12);
         AddText(_cancel, "CancelCaption", "CANCEL",
-            10, 2, 630, 42, 14, Cream, center: true);
+            10, 2, 450, 28, 11, Cream, center: true);
         _cancel.Clicked += (_, _) => Respond(accept: false);
 
         Hide();
@@ -179,7 +174,7 @@ internal sealed class DungeonConfirmationWindow : Window
 
     private Label ValueText(string name, int row) =>
         AddText(this, $"DungeonGate{name}Value", string.Empty,
-            266, 169 + row * 24, 403, 23, 12, Cream);
+            208, 99 + row * 16, 274, 16, 10, Cream);
 
     private static Label AddText(
         Base parent, string id, string text, int x, int y, int width, int height,

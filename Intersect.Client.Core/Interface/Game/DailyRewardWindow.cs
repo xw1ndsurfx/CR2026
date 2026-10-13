@@ -52,11 +52,11 @@ internal sealed class DailyRewardWindow : Window
 
         public RewardCard(Base parent, int day) : base(parent, $"DailyRewardCard{day}")
         {
-            SetSize(78, 78);
+            SetSize(64, 64);
             MouseInputEnabled = false;
 
             _slot = AdmurinGuiArt.Add(this, $"DailyRewardSlot{day}", "daily_1",
-                0, 0, 78, 78);
+                0, 0, 64, 64);
             _day = new Label(this, "Day")
             {
                 AutoSizeToContents = false,
@@ -75,7 +75,7 @@ internal sealed class DailyRewardWindow : Window
                 ShouldDrawBackground = false,
                 MouseInputEnabled = false,
             };
-            _icon.SetBounds(18, 12, 44, 44);
+            _icon.SetBounds(14, 8, 36, 36);
 
             _count = new Label(this, "Count")
             {
@@ -86,10 +86,10 @@ internal sealed class DailyRewardWindow : Window
                 TextAlign = Pos.Center,
                 MouseInputEnabled = false,
             };
-            _count.SetBounds(5, 56, 69, 17);
+            _count.SetBounds(4, 48, 56, 14);
 
             _claimedTick = AdmurinGuiArt.Add(this, $"DailyRewardClaimed{day}", "daily_2",
-                15, 12, 48, 47);
+                10, 5, 42, 42);
             _claimedTick?.Hide();
         }
 
@@ -154,7 +154,7 @@ internal sealed class DailyRewardWindow : Window
     {
         // Child coordinates are relative to the content below the native title bar.
         // Include that bar in the outer height so the claim button remains inside.
-        SetSize(350, 584);
+        SetSize(286, 480);
         Alignment = [Alignments.Center];
         DeleteOnClose = false;
         DisableResizing();
@@ -162,15 +162,15 @@ internal sealed class DailyRewardWindow : Window
         // Chest sprites are 48x32 cells in a 5x8 sheet; draw selected cells
         // rather than scaling the entire 240x256 spritesheet into the panel.
         _milestones = new Base(this, "DailyMilestones");
-        _milestones.SetBounds(23, 36, 304, 122);
+        _milestones.SetBounds(14, 8, 258, 82);
         _milestones.MouseInputEnabled = false;
 
         var frame = new RewardBoard(this);
-        frame.SetBounds(24, 165, 302, 314);
+        frame.SetBounds(24, 88, 238, 298);
         // Original 16x16 gold-bordered item container, sliced so the two-pixel
         // border remains sharp around the variable-length reward grid.
         AdmurinGuiArt.AddNineSlice(frame, "AdmurinDailyBoard", "bordered_container",
-            0, 0, 302, 314, 16, 16,
+            0, 0, 238, 298, 16, 16,
             2, 2, 2, 2, 3, 3, 3, 3);
 
         _cards = new ScrollControl(this, "Cards")
@@ -179,7 +179,7 @@ internal sealed class DailyRewardWindow : Window
             OverflowY = OverflowBehavior.Scroll,
             AutoHideBars = true,
         };
-        _cards.SetBounds(36, 175, 280, 296);
+        _cards.SetBounds(32, 96, 224, 282);
 
         _status = new Label(this, "Status")
         {
@@ -190,7 +190,7 @@ internal sealed class DailyRewardWindow : Window
             TextColorOverride = Muted,
             MouseInputEnabled = false,
         };
-        _status.SetBounds(18, 480, 314, 24);
+        _status.SetBounds(10, 388, 266, 24);
 
         _claim = new Button(this, "Claim")
         {
@@ -198,7 +198,7 @@ internal sealed class DailyRewardWindow : Window
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 12,
         };
-        _claim.SetBounds(108, 506, 134, 35);
+        _claim.SetBounds(76, 417, 134, 35);
         _claim.Clicked += (_, _) =>
         {
             if (!_claim.IsDisabled)
@@ -218,8 +218,8 @@ internal sealed class DailyRewardWindow : Window
         _milestones.DeleteAllChildren();
 
         const int barX = 10;
-        const int barY = 51;
-        const int barWidth = 278;
+        const int barY = 44;
+        const int barWidth = 238;
 
         AdmurinGuiArt.Add(_milestones, "DailyProgressTrack", "daily_4",
             barX, barY, barWidth, 16, 0, 0, 240, 16);
@@ -236,7 +236,7 @@ internal sealed class DailyRewardWindow : Window
         }
 
         int[] markers = [1, Math.Max(2, (int)Math.Ceiling(cycle / 2d)), cycle];
-        int[] positions = [27, 144, 267];
+        int[] positions = [27, 128, 231];
         int[] chestRows = [0, 64, 128];
 
         for (var i = 0; i < markers.Length; i++)
@@ -250,7 +250,7 @@ internal sealed class DailyRewardWindow : Window
                 0, chestRows[i] + (done ? 32 : 0), 48, 32);
 
             AdmurinGuiArt.Add(_milestones, $"MilestoneDot{i}", "daily_3",
-                positions[i] - 11, 58, 22, 22,
+                positions[i] - 11, 44, 22, 22,
                 done || active ? 32 : 0, 0, 32, 32);
 
             var dayLabel = new Label(_milestones, $"MilestoneDay{i}")
@@ -263,7 +263,7 @@ internal sealed class DailyRewardWindow : Window
                 FontSize = 9,
                 MouseInputEnabled = false,
             };
-            dayLabel.SetBounds(positions[i] - 17, 85, 34, 22);
+            dayLabel.SetBounds(positions[i] - 17, 66, 34, 22);
         }
     }
 
@@ -279,7 +279,7 @@ internal sealed class DailyRewardWindow : Window
                 : state.Message;
             _claim.IsDisabled = true;
             _claim.Text = "Unavailable";
-            _cards.SetInnerSize(260, 286);
+            _cards.SetInnerSize(216, 280);
             _cards.UpdateScrollBars();
             return;
         }
@@ -289,10 +289,10 @@ internal sealed class DailyRewardWindow : Window
             .ToDictionary(group => group.Key, group => group.ToArray());
 
         const int columns = 3;
-        const int cardWidth = 78;
+        const int cardWidth = 64;
         const int spacing = 8;
-        const int viewportWidth = 264;
-        const int rowHeight = 85;
+        const int viewportWidth = 216;
+        const int rowHeight = 70;
 
         var count = Math.Max(0, state.CycleDays);
         for (var index = 0; index < count; index++)
@@ -313,7 +313,7 @@ internal sealed class DailyRewardWindow : Window
         }
 
         var rowCountTotal = (int)Math.Ceiling(count / (double)columns);
-        _cards.SetInnerSize(viewportWidth, Math.Max(288, 9 + rowCountTotal * rowHeight));
+        _cards.SetInnerSize(viewportWidth, Math.Max(280, 9 + rowCountTotal * rowHeight));
         _cards.UpdateScrollBars();
 
         _status.Text = string.IsNullOrWhiteSpace(state.Message)

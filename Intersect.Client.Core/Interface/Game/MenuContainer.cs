@@ -563,8 +563,8 @@ public partial class MenuContainer : Panel
     public void HideGuildWindow()
     {
         _guildWindow.Hide();
-        if (_userListWindow.IsShowing(UserListWindow.Page.Guild))
-            _userListWindow.Hide();
+        // Players without a guild still need the User List's guild directory.
+        // Only the legacy member-only management panel must be closed.
     }
 
     private void OpenGuildManagement()

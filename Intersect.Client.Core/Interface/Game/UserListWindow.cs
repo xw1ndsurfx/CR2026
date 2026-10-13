@@ -37,6 +37,7 @@ internal sealed partial class UserListWindow : Window
     private static readonly Color Offline = new(a: 255, r: 136, g: 132, b: 129);
 
     private readonly ScrollControl _body;
+    private readonly RosterFrame _rosterFrame;
     private readonly Base _footer;
     private readonly Action _openGuildManagement;
     private readonly Dictionary<Page, Label> _tabCaptions = [];
@@ -65,13 +66,15 @@ internal sealed partial class UserListWindow : Window
         for (var i = 0; i < names.Length; i++)
         {
             var page = (Page)i;
-            var tab = new Button(this, "UserListTab" + page) { Text = string.Empty };
+            var tab = new Button(this, "UserListTab" + page) { Text = string.Empty, ShouldDrawBackground = false };
             tab.SetBounds(39 + i * 118, 12, 117, 33);
             var caption = AddLabel(tab, "Caption", names[i], 0, 1, 116, 30, 13, Muted, true);
             _tabCaptions[page] = caption;
             tab.Clicked += (_, _) => OpenPage(page);
         }
 
+        _rosterFrame = new RosterFrame(this, "UserListRosterFrame");
+        _rosterFrame.SetBounds(31, 56, 491, 465);
         _body = new ScrollControl(this, "UserListBody")
         {
             OverflowX = OverflowBehavior.Hidden,
@@ -164,6 +167,8 @@ internal sealed partial class UserListWindow : Window
         var savedScroll = resetScroll ? 0f : _body.VerticalScrollBar.ScrollAmount;
         _body.DeleteAll();
         _footer.DeleteAllChildren();
+        _rosterFrame.IsHidden = _currentPage == Page.Guild &&
+            string.IsNullOrWhiteSpace(Globals.Me?.Guild) && !_guildDirectoryOpen;
 
         foreach (var (page, caption) in _tabCaptions)
             caption.TextColorOverride = page == _currentPage ? Gold : Muted;
@@ -197,21 +202,11 @@ internal sealed partial class UserListWindow : Window
         var offline = friends.Where(friend => !friend.Online)
             .OrderBy(friend => friend.Name, StringComparer.OrdinalIgnoreCase).ToArray();
 
-        AddLabel(_body, "OnlineHeading", "ONLINE  " + online.Length,
-            9, 7, 216, 23, 12, Gold, true);
-        AddLabel(_body, "OfflineHeading", "OFFLINE  " + offline.Length,
-            247, 7, 216, 23, 12, Gold, true);
-        var divider = new VerticalDivider(_body, "FriendColumnDivider");
-        divider.IsHidden = friends.Length == 0;
-        var count = Math.Max(online.Length, offline.Length);
+        var count = friends.Length;
         var listHeight = Math.Max(420, 41 + count * 41);
-        divider.SetBounds(233, 31, 2, listHeight - 38);
-
-        for (var index = 0; index < online.Length; index++)
-            DrawFriend(online[index], 6, 36 + index * 41);
-
-        for (var index = 0; index < offline.Length; index++)
-            DrawFriend(offline[index], 245, 36 + index * 41);
+        var ordered = online.Concat(offline).ToArray();
+        for (var index = 0; index < ordered.Length; index++)
+            DrawFriend(ordered[index], 6, 6 + index * 41);
 
         if (friends.Length == 0)
             AddLabel(_body, "FriendsEmpty", "No friends yet. Use ADD FRIEND below.",
@@ -226,15 +221,15 @@ internal sealed partial class UserListWindow : Window
     private void DrawFriend(IFriendInstance friend, int x, int y)
     {
         var panel = new Base(_body, "Friend" + x + y);
-        panel.SetBounds(x, y, 221, 35);
+        panel.SetBounds(x, y, 460, 35);
         var online = friend.Online;
 
         AdmurinGuiArt.Add(panel, "PlayerIcon", "userlist_2",
             3, 8, 22, 21, online ? 0 : 16, 0, 16, 16);
 
-        var name = Shorten(friend.Name, 15);
+        var name = Shorten(friend.Name, 35);
         var nameLabel = AddLabel(panel, "FriendName", name,
-            29, 4, 124, 27, 12, online ? Cream : Muted);
+            29, 4, 365, 27, 12, online ? Cream : Muted);
         if (online)
         {
             nameLabel.MouseInputEnabled = true;
@@ -247,7 +242,7 @@ internal sealed partial class UserListWindow : Window
         }
 
         var profile = new Button(panel, "ViewFriendInfo") { Text = string.Empty, IsDisabled = !online };
-        profile.SetBounds(161, 6, 25, 25);
+        profile.SetBounds(401, 6, 25, 25);
         AdmurinGuiArt.Add(profile, "InfoIcon", "userlist_1", 0, 0, 25, 25,
             online ? 0 : 20, 0, 20, 20);
         profile.SetToolTipText(online
@@ -256,7 +251,7 @@ internal sealed partial class UserListWindow : Window
         profile.Clicked += (_, _) => PacketSender.SendRequestPlayerProfile(friend.Name, openWindow: true);
 
         var remove = new Button(panel, "RemoveFriend") { Text = string.Empty };
-        remove.SetBounds(190, 6, 27, 25);
+        remove.SetBounds(430, 6, 27, 25);
         AddLabel(remove, "RemoveCaption", "X", 0, 0, 27, 25, 14,
             new Color(a: 255, r: 248, g: 117, b: 112), true);
         remove.SetToolTipText("Remove friend " + friend.Name);
@@ -413,9 +408,9 @@ internal sealed partial class UserListWindow : Window
         }
     }
 
-    private sealed class VerticalDivider : Base
+    private sealed class RosterFrame : Base
     {
-        public VerticalDivider(Base parent, string name) : base(parent, name)
+        public RosterFrame(Base parent, string name) : base(parent, name)
         {
             MouseInputEnabled = false;
         }
@@ -424,6 +419,9 @@ internal sealed partial class UserListWindow : Window
         {
             skin.Renderer.DrawColor = new Color(a: 255, r: 166, g: 134, b: 80);
             skin.Renderer.DrawFilledRect(RenderBounds);
+            var rect = RenderBounds;
+            skin.Renderer.DrawColor = new Color(a: 255, r: 12, g: 18, b: 9);
+            skin.Renderer.DrawFilledRect(new UiRectangle(rect.X + 2, rect.Y + 2, rect.Width - 4, rect.Height - 4));
         }
     }
 }
