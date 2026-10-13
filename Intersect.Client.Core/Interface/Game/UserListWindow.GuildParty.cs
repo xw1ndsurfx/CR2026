@@ -102,8 +102,12 @@ internal sealed partial class UserListWindow
         AddAction(_footer, "GuildInvite", "INVITE", 6, 13, 104, 42,
             canInvite ? InviteGuildMember : null,
             canInvite ? null : "Your guild rank cannot invite members.");
-        AddAction(_footer, "GuildManage", "MANAGE", 119, 13, 126, 42,
+        var manage = AddAction(_footer, "GuildManage", "MANAGE", 119, 13, 126, 42,
             _openGuildManagement, "Open the existing guild administration menu.");
+        // The artist's pen icon opens the already working guild administration
+        // panel. It is not a fake Edit button without a server-side action.
+        AdmurinGuiArt.Add(manage, "GuildManagePencil", "userlist_3",
+            6, 10, 22, 23, 0, 0, 20, 20);
         AddAction(_footer, "GuildLeave", "LEAVE", 254, 13, 112, 42,
             player.Rank == 0 ? null : LeaveGuild,
             player.Rank == 0 ? "The guild owner must transfer ownership before leaving." : null);
