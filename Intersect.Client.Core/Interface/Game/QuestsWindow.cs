@@ -126,22 +126,26 @@ public partial class QuestsWindow
         mQuestsWindow.TitleLabel.FontSize = 12;
         mQuestsWindow.TitleLabel.TextColorOverride = JournalGold;
 
-        // Painted behind the original interactive widgets: the quest selection
-        // and abandon confirmation code below remains unchanged.
+        // Admurin's 464x388 panel has a quest column and a separate details
+        // column. Keep the actual list and buttons above it and interactive.
+        // The old drawn frame is retained only as an asset-free fallback.
         mQuestJournalChrome = new QuestJournalChrome(mQuestsWindow, "RoyalQuestJournalFrame");
-        mQuestJournalChrome.SetBounds(12, 9, 796, 612);
+        mQuestJournalChrome.SetBounds(12, 9, 796, 652);
+        var questArt = AdmurinGuiArt.Add(mQuestJournalChrome, "AdmurinQuestJournal",
+            "questlog_0", 0, 0, 796, 652);
+        mQuestJournalChrome.HasArtistFrame = questArt != null;
         mQuestJournalChrome.SendToBack();
 
         mQuestJournalHeading = AddJournalText(mQuestsWindow, "QuestJournalHeading",
-            "ROYAL QUEST JOURNAL", 130, 36, 557, 35, 21, JournalGold, bold: true, center: true);
+            "ROYAL QUEST JOURNAL", 130, 14, 557, 33, 21, JournalCream, bold: true, center: true);
         mQuestJournalSubtitle = AddJournalText(mQuestsWindow, "QuestJournalSubtitle",
             "CHRONICLES OF YOUR ADVENTURES",
-            120, 73, 576, 22, 10, JournalMuted, center: true);
+            390, 60, 383, 20, 10, JournalMuted, center: true);
         mQuestJournalSummary = AddJournalText(mQuestsWindow, "QuestJournalSummary",
             "SELECT A QUEST TO REVIEW ITS OBJECTIVES",
-            48, 114, 723, 27, 11, JournalCream, bold: true, center: true);
+            395, 88, 372, 43, 11, JournalCream, bold: true, center: true);
         mQuestDetailsProgress = AddJournalText(mQuestsWindow, "QuestJournalProgress",
-            string.Empty, 48, 114, 723, 27, 11, JournalGold, bold: true, center: true);
+            string.Empty, 395, 88, 372, 43, 11, JournalGold, bold: true, center: true);
         mQuestDetailsProgress.Hide();
 
         _questList.IsDisabled = false;
@@ -149,22 +153,23 @@ public partial class QuestsWindow
         _questList.EnableScroll(false, true);
         _questList.FontName = "sourcesanspro";
         _questList.FontSize = 12;
-        _questList.SetBounds(43, 170, 730, 406);
+        _questList.ShouldDrawBackground = false;
+        _questList.SetBounds(34, 85, 323, 536);
 
         mQuestTitle.AutoSizeToContents = false;
         mQuestTitle.Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mQuestTitle.Font;
         mQuestTitle.FontSize = 17;
         mQuestTitle.TextColorOverride = JournalCream;
         mQuestTitle.TextAlign = Pos.Left | Pos.CenterV;
-        mQuestTitle.SetBounds(58, 174, 690, 36);
+        mQuestTitle.SetBounds(394, 136, 365, 41);
 
         mQuestStatus.AutoSizeToContents = false;
         mQuestStatus.Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mQuestStatus.Font;
         mQuestStatus.FontSize = 11;
         mQuestStatus.TextAlign = Pos.Left | Pos.CenterV;
-        mQuestStatus.SetBounds(58, 210, 680, 25);
+        mQuestStatus.SetBounds(394, 175, 365, 26);
 
-        mQuestDescArea.SetBounds(53, 244, 713, 302);
+        mQuestDescArea.SetBounds(392, 211, 382, 337);
         mQuestDescArea.OverflowX = OverflowBehavior.Hidden;
         mQuestDescArea.OverflowY = OverflowBehavior.Scroll;
         mQuestDescArea.AutoHideBars = true;
@@ -175,15 +180,19 @@ public partial class QuestsWindow
         mQuestDescTemplateLabel.SetTextColor(JournalCream, ComponentState.Normal);
         mQuestDescTemplateLabel.Hide();
 
-        mBackButton.SetBounds(59, 565, 204, 42);
+        mBackButton.SetBounds(392, 569, 178, 43);
         mBackButton.Text = string.Empty;
-        AddJournalButtonChrome(mBackButton, "Back", "BACK TO QUESTS",
-            204, 42, primary: false);
+        AddJournalButtonChrome(mBackButton, "Back", "CLEAR SELECTION",
+            178, 43, primary: false);
+        // The artist's tiny right-facing quest arrow is flipped for Back.
+        var returnArrow = AdmurinGuiArt.Add(mBackButton, "QuestBackArrow",
+            "questlog_1", 14, 12, 9, 19);
+        returnArrow?.SetUVs(1f, 0f, 0f, 1f);
 
-        mQuitButton.SetBounds(547, 565, 210, 42);
+        mQuitButton.SetBounds(582, 569, 192, 43);
         mQuitButton.Text = string.Empty;
         AddJournalButtonChrome(mQuitButton, "Abandon", "ABANDON QUEST",
-            210, 42, primary: true);
+            192, 43, primary: true);
 
         // All native controls stay above the decorative Gwen background.
         _questList.BringToFront();
@@ -203,6 +212,9 @@ public partial class QuestsWindow
             IsHidden = true,
         };
         mQuestTaskHudPanel.MouseInputEnabled = false;
+        var trackerArt = AdmurinGuiArt.Add(mQuestTaskHudPanel, "AdmurinTrackerBadge",
+            "questlog_2", 23, 49, 43, 43);
+        mQuestTaskHudPanel.HasArtistBadge = trackerArt != null;
 
         var trackerFont = GameContentManager.Current.GetFont("sourcesansproblack") ??
                           GameContentManager.Current.GetFont("sourcesanspro") ??
@@ -561,6 +573,8 @@ public partial class QuestsWindow
 
         public bool ShowProgressBar { get; set; }
 
+        public bool HasArtistBadge { get; set; }
+
         public float ProgressRatio
         {
             get => _progressRatio;
@@ -586,15 +600,18 @@ public partial class QuestsWindow
             Fill(renderer, new Color(a: 100, r: 12, g: 10, b: 10),
                 82, 39, Width - 94, Height - 52);
 
-            // Pixel-art quest scroll: no external quest icon or unsupported font.
-            Fill(renderer, darkest, 17, 39, 52, 57);
-            Outline(renderer, brightGold, 17, 39, 52, 57, 2);
-            Fill(renderer, new Color(a: 255, r: 194, g: 165, b: 111), 28, 49, 30, 37);
-            Fill(renderer, new Color(a: 255, r: 93, g: 64, b: 40), 32, 57, 22, 2);
-            Fill(renderer, new Color(a: 255, r: 93, g: 64, b: 40), 32, 65, 19, 2);
-            Fill(renderer, new Color(a: 255, r: 93, g: 64, b: 40), 32, 73, 21, 2);
-            Fill(renderer, brightGold, 26, 47, 34, 3);
-            Fill(renderer, brightGold, 26, 85, 34, 3);
+            if (!HasArtistBadge)
+            {
+                // Legacy fallback when Admurin's original tracker tile is missing.
+                Fill(renderer, darkest, 17, 39, 52, 57);
+                Outline(renderer, brightGold, 17, 39, 52, 57, 2);
+                Fill(renderer, new Color(a: 255, r: 194, g: 165, b: 111), 28, 49, 30, 37);
+                Fill(renderer, new Color(a: 255, r: 93, g: 64, b: 40), 32, 57, 22, 2);
+                Fill(renderer, new Color(a: 255, r: 93, g: 64, b: 40), 32, 65, 19, 2);
+                Fill(renderer, new Color(a: 255, r: 93, g: 64, b: 40), 32, 73, 21, 2);
+                Fill(renderer, brightGold, 26, 47, 34, 3);
+                Fill(renderer, brightGold, 26, 85, 34, 3);
+            }
 
             if (ShowProgressBar)
             {
@@ -1019,7 +1036,9 @@ public partial class QuestsWindow
                 mQuestDetailsProgress.Text = "QUEST NOT STARTED";
             }
 
-            _questList.Hide();
+            // Keep the list visible in the artist's left pane while the
+            // selected quest occupies the right pane, without losing focus.
+            _questList.Show();
             mQuestTitle.IsHidden = false;
             mQuestTitle.Text = mSelectedQuest.Name;
             mQuestDescArea.IsHidden = false;
@@ -1105,6 +1124,8 @@ public partial class QuestsWindow
 
         public bool IsDetail { get; set; }
 
+        public bool HasArtistFrame { get; set; }
+
         public QuestJournalChrome(Base parent, string name) : base(parent, name)
         {
             MouseInputEnabled = false;
@@ -1113,6 +1134,9 @@ public partial class QuestsWindow
 
         protected override void Render(SkinBase skin)
         {
+            if (HasArtistFrame)
+                return;
+
             var bounds = RenderBounds;
             Fill(skin, bounds, Darkest);
             Border(skin, bounds, OuterGold, 2);
