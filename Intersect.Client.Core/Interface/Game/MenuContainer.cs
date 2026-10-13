@@ -477,6 +477,11 @@ public partial class MenuContainer : Panel
         _userListWindow.RefreshIfShowing(UserListWindow.Page.Friends);
     }
 
+    public void ApplyBlockedUsers(Intersect.Network.Packets.Server.BlockedUsersPacket packet)
+    {
+        _userListWindow.ApplyBlockedUsers(packet);
+    }
+
     public void ApplyOwnPlayerProfile(Intersect.Network.Packets.Server.PlayerProfilePacket packet)
     {
         _characterWindow.ApplyPlayerProfile(packet);

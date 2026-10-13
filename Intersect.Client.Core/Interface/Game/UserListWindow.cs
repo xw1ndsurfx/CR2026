@@ -42,6 +42,7 @@ internal sealed partial class UserListWindow : Window
     private readonly Dictionary<Page, Label> _tabCaptions = [];
     private Page _currentPage = Page.Friends;
     private string _lastSnapshot = string.Empty;
+    private Intersect.Network.Packets.Server.BlockedUserEntry[] _blockedUsers = [];
     private long _nextUpdateTime;
 
     public bool IsVisible => !IsHidden;
@@ -97,6 +98,8 @@ internal sealed partial class UserListWindow : Window
         // The existing roster packets are still authoritative.
         if (page == Page.Friends)
             PacketSender.SendRequestFriends();
+        if (page == Page.Blocked)
+            PacketSender.SendRequestBlockedUsers();
         if (page == Page.Guild && !string.IsNullOrWhiteSpace(Globals.Me?.Guild))
             PacketSender.SendRequestGuild();
     }
@@ -137,7 +140,8 @@ internal sealed partial class UserListWindow : Window
                     .Select(member => member.Id + ":" + member.Level + ":" +
                                       string.Join(",", member.Vital) + ":" +
                                       string.Join(",", member.MaxVital))),
-            _ => "blocked:server-unavailable",
+            Page.Blocked => "blocked:" + string.Join("|", _blockedUsers.Select(entry => entry.Id + ":" + entry.Name)),
+            _ => string.Empty,
         };
     }
 
@@ -199,10 +203,7 @@ internal sealed partial class UserListWindow : Window
         _body.SetInnerSize(470, listHeight);
 
         AddAction(_footer, "AddFriend", "ADD FRIEND", 98, 9, 140, 46, AddFriend);
-        // The blocked list is NOT backed by the game's existing BlockPacket:
-        // that packet blocks movement, not messages from an individual user.
-        AddAction(_footer, "BlockUserUnavailable", "BLOCK USER", 248, 9, 140, 46,
-            null, "A player-block system has not been implemented on this server.");
+        AddAction(_footer, "BlockUser", "BLOCK USER", 248, 9, 140, 46, BlockUser);
     }
 
     private void DrawFriend(IFriendInstance friend, int x, int y)
@@ -245,17 +246,64 @@ internal sealed partial class UserListWindow : Window
         remove.Clicked += (_, _) => ConfirmRemoveFriend(friend.Name);
     }
 
+    public void ApplyBlockedUsers(Intersect.Network.Packets.Server.BlockedUsersPacket packet)
+    {
+        _blockedUsers = packet.Users ?? [];
+        RefreshIfShowing(Page.Blocked);
+    }
+
     private void DrawBlocked()
     {
         AddLabel(_body, "BlockedHeading", "BLOCKED USERS",
-            0, 15, 462, 37, 17, Gold, true);
-        AddLabel(_body, "BlockedExplanation",
-            "Your server does not yet support per-player blocks.\n" +
-            "No blocked-user list can be retrieved or changed safely.",
-            20, 106, 422, 79, 12, Muted, true);
-        _body.SetInnerSize(468, 426);
-        AddAction(_footer, "BlockUnavailable", "BLOCK USER", 170, 9, 144, 46,
-            null, "Requires a server-side block/unblock feature.");
+            0, 8, 462, 33, 16, Gold, true);
+
+        var users = _blockedUsers.OrderBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase).ToArray();
+        if (users.Length == 0)
+            AddLabel(_body, "NoBlockedUsers", "No blocked characters.", 0, 171, 459, 31, 12, Muted, true);
+
+        for (var i = 0; i < users.Length; i++)
+        {
+            var entry = users[i];
+            var y = 45 + i * 38;
+            AdmurinGuiArt.Add(_body, "BlockedIcon" + i, "userlist_2",
+                12, y + 4, 23, 22, 32, 0, 16, 16);
+            AddLabel(_body, "BlockedName" + i, Shorten(entry.Name, 32),
+                45, y, 351, 29, 12, Muted);
+            var unblock = new Button(_body, "Unblock" + i) { Text = string.Empty };
+            unblock.SetBounds(405, y + 2, 31, 27);
+            AddLabel(unblock, "UnblockCaption", "X", 0, 0, 31, 25, 14,
+                new Color(a: 255, r: 245, g: 113, b: 105), true);
+            unblock.SetToolTipText("Unblock " + entry.Name);
+            unblock.Clicked += (_, _) => ConfirmUnblock(entry.Id, entry.Name);
+        }
+
+        _body.SetInnerSize(468, Math.Max(426, 56 + users.Length * 38));
+        AddAction(_footer, "BlockAnotherPlayer", "BLOCK USER", 167, 9, 149, 46, BlockUser);
+    }
+
+    private static void BlockUser()
+    {
+        _ = new InputBox(
+            title: "Block Character",
+            prompt: "Enter the character name to block.",
+            inputType: InputType.TextInput,
+            onSubmit: (control, args) =>
+            {
+                if (control is not InputBox || args.Value is not StringSubmissionValue value)
+                    return;
+                var name = value.Value?.Trim();
+                if (name is { Length: >= 3 })
+                    PacketSender.SendUpdateBlockedUser(true, name);
+            });
+    }
+
+    private static void ConfirmUnblock(Guid id, string name)
+    {
+        _ = new InputBox(
+            title: "Unblock Character",
+            prompt: "Unblock " + name + "?",
+            inputType: InputType.YesNo,
+            onSubmit: (_, _) => PacketSender.SendUpdateBlockedUser(false, string.Empty, id));
     }
 
     private void AddFriend()
