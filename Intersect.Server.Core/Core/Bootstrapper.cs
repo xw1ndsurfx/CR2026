@@ -65,6 +65,7 @@ internal static class Bootstrapper
 
         if (!PreContextSetup(args))
         {
+            StartupDiagnostics.Mark("PreContextSetup returned false; startup will return");
             Console.Error.WriteLine("[FATAL] Pre-context setup failed.");
             return;
         }
@@ -78,10 +79,12 @@ internal static class Bootstrapper
         );
 
         PlatformStatistics.Logger = loggerFactory.CreateLogger<PlatformStatistics>();
+        StartupDiagnostics.SetLogger(logger);
 
         var packetTypeRegistry = new PacketTypeRegistry(logger, typeof(IntersectPacket).Assembly);
         if (!packetTypeRegistry.TryRegisterBuiltIn())
         {
+            StartupDiagnostics.Mark("Built-in packet registration failed; startup will return");
             logger.LogCritical("[FATAL] Failed to load built-in packet types.");
             return;
         }
@@ -109,25 +112,29 @@ internal static class Bootstrapper
         );
 
         Context = context;
+        StartupDiagnostics.Mark("Server context created");
 
         var noHaltOnError = Context?.StartupOptions.DoNotHaltOnError ?? false;
 
         if (!PostContextSetup())
         {
+            StartupDiagnostics.Mark("PostContextSetup returned false; startup will return");
             Console.Error.WriteLine("[FATAL] Post-context setup failed.");
             return;
         }
 
-        OnPostContextSetupCompleted?.Invoke();
+        StartupDiagnostics.Run("OnPostContextSetupCompleted", () => OnPostContextSetupCompleted?.Invoke());
 
         Console.WriteLine("Finished post-context setup.");
 
         Console.WriteLine("Starting main thread...");
-        MainThread = context.StartWithActionQueue();
+        StartupDiagnostics.Run("StartWithActionQueue", () => MainThread = context.StartWithActionQueue());
+        StartupDiagnostics.Mark("Main action queue entered");
         while (MainThread.NextAction is { } action)
         {
             action.Invoke();
         }
+        StartupDiagnostics.Mark($"Main action queue ended; HasErrors={context.HasErrors}");
 
         ApplicationContext.Context.Value?.Logger.LogTrace("Bootstrapper exited.");
 
@@ -283,8 +290,11 @@ internal static class Bootstrapper
 
         ThreadPool.SetMinThreads(minWorkerThreads, minCompletionPortThreads);
 
-        if (!DbInterface.InitDatabase(Context))
+        var databaseInitialized = false;
+        StartupDiagnostics.Run("InitDatabase", () => databaseInitialized = DbInterface.InitDatabase(Context));
+        if (!databaseInitialized)
         {
+            StartupDiagnostics.Mark("InitDatabase returned false; startup will return");
             Console.Error.WriteLine("Failed to initialize the database.");
 
             Console.ReadKey();
@@ -292,7 +302,8 @@ internal static class Bootstrapper
             return false;
         }
 
-        Time.Update();
+        StartupDiagnostics.Run("Time.Update", Time.Update);
+        StartupDiagnostics.Mark("BEGIN server statistics");
 
         Console.WriteLine();
         Console.WriteLine(Strings.Commandoutput.ServerInfo);
@@ -307,11 +318,12 @@ internal static class Bootstrapper
         Console.WriteLine(Strings.Commandoutput.GameTime.ToString(Time.GetTime().ToString("F")));
         Console.WriteLine();
 
-        PacketSender.CacheGameDataPacket();
+        StartupDiagnostics.Mark("END server statistics");
+        StartupDiagnostics.Run("CacheGameDataPacket", PacketSender.CacheGameDataPacket);
 
         if (Options.Instance.Guild.DeleteStaleGuildsAfterDays > 0)
         {
-            Guild.WipeStaleGuilds();
+            StartupDiagnostics.Run("WipeStaleGuilds", Guild.WipeStaleGuilds);
         }
 
         return true;

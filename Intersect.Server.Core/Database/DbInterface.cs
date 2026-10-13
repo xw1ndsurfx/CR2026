@@ -420,21 +420,24 @@ public static partial class DbInterface
 
         LoadAllGameObjects();
 
-        ValidateMapEvents();
-        ValidateResourceStates();
+        StartupDiagnostics.Run("ValidateMapEvents", ValidateMapEvents);
+        StartupDiagnostics.Run("ValidateResourceStates", ValidateResourceStates);
 
-        LoadTime();
-        OnClassesLoaded();
-        OnMapsLoaded();
-        CacheServerVariableEventTextLookups();
-        CachePlayerVariableEventTextLookups();
-        CacheGuildVariableEventTextLookups();
-        CacheUserVariableEventTextLookups();
+        StartupDiagnostics.Run("LoadTime", LoadTime);
+        StartupDiagnostics.Run("OnClassesLoaded", OnClassesLoaded);
+        StartupDiagnostics.Run("OnMapsLoaded", OnMapsLoaded);
+        StartupDiagnostics.Run("CacheServerVariableEventTextLookups", CacheServerVariableEventTextLookups);
+        StartupDiagnostics.Run("CachePlayerVariableEventTextLookups", CachePlayerVariableEventTextLookups);
+        StartupDiagnostics.Run("CacheGuildVariableEventTextLookups", CacheGuildVariableEventTextLookups);
+        StartupDiagnostics.Run("CacheUserVariableEventTextLookups", CacheUserVariableEventTextLookups);
 
-        CheckPlayerDatabaseCaseInsensitiveCollisions();
-        ClearBankedExperienceAtLevelCap();
-        var normalizedProfessions = ProfessionRuntime.ClampStoredExperienceAtCaps(
-            ProfessionConfigurationRuntime.Current.Professions
+        StartupDiagnostics.Run("CheckPlayerDatabaseCaseInsensitiveCollisions", CheckPlayerDatabaseCaseInsensitiveCollisions);
+        StartupDiagnostics.Run("ClearBankedExperienceAtLevelCap", ClearBankedExperienceAtLevelCap);
+        var normalizedProfessions = 0;
+        StartupDiagnostics.Run("ClampStoredExperienceAtCaps", () =>
+            normalizedProfessions = ProfessionRuntime.ClampStoredExperienceAtCaps(
+                ProfessionConfigurationRuntime.Current.Professions
+            )
         );
         if (normalizedProfessions > 0)
             ApplicationContext.Context.Value?.Logger.LogInformation(

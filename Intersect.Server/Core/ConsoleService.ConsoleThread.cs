@@ -93,6 +93,7 @@ namespace Intersect.Server.Core
 
                         if (line == null)
                         {
+                            StartupDiagnostics.Mark($"Console EOF requested shutdown; inputRedirected={System.Console.IsInputRedirected}");
                             ServerContext.Instance.RequestShutdown();
 
                             break;
