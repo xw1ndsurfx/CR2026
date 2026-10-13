@@ -1,3 +1,4 @@
+using Intersect.GameObjects;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
@@ -129,7 +130,7 @@ internal sealed class DungeonPanelWindow : Window
         refresh.SetToolTipText("Refresh dungeon rankings");
         refresh.Clicked += (_, _) =>
         {
-            var now = Timing.Global.Milliseconds;
+            var now = Environment.TickCount64;
             if (now < _nextPodiumRefreshAt)
                 return;
             _nextPodiumRefreshAt = now + 3_000;
@@ -206,7 +207,7 @@ internal sealed class DungeonPanelWindow : Window
 
     private void BuildGateStrip()
     {
-        _gateStrip.DeleteAll();
+        _gateStrip.DeleteAllChildren();
         _gateCards.Clear();
 
         _previous.IsDisabled = _pageStart == 0;
@@ -289,10 +290,10 @@ internal sealed class DungeonPanelWindow : Window
     private void RenderSelection()
     {
         HighlightSelection();
-        _details.DeleteAll();
-        _record.DeleteAll();
-        _clearsRanking.DeleteAll();
-        _fastestRanking.DeleteAll();
+        _details.DeleteAllChildren();
+        _record.DeleteAllChildren();
+        _clearsRanking.DeleteAllChildren();
+        _fastestRanking.DeleteAllChildren();
 
         var selected = _definitions.FirstOrDefault(definition => definition.Id == _selectedId);
         if (selected == null)

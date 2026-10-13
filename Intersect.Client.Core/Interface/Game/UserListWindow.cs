@@ -109,10 +109,10 @@ internal sealed partial class UserListWindow : Window
 
     public void Update()
     {
-        if (!IsVisible || Timing.Global.Milliseconds < _nextUpdateTime)
+        if (!IsVisible || Environment.TickCount64 < _nextUpdateTime)
             return;
 
-        _nextUpdateTime = Timing.Global.Milliseconds + 800;
+        _nextUpdateTime = Environment.TickCount64 + 800;
         var snapshot = Snapshot();
         if (snapshot != _lastSnapshot)
             Refresh();
@@ -143,8 +143,8 @@ internal sealed partial class UserListWindow : Window
 
     private void Refresh()
     {
-        _body.DeleteAll();
-        _footer.DeleteAll();
+        _body.DeleteAllChildren();
+        _footer.DeleteAllChildren();
 
         foreach (var (page, caption) in _tabCaptions)
             caption.TextColorOverride = page == _currentPage ? Gold : Muted;

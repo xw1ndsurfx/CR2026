@@ -208,7 +208,7 @@ internal sealed class DailyRewardWindow : Window
 
     private void DrawMilestones(DailyRewardStatePacket state)
     {
-        _milestones.DeleteAll();
+        _milestones.DeleteAllChildren();
 
         const int barX = 10;
         const int barY = 51;
@@ -262,7 +262,7 @@ internal sealed class DailyRewardWindow : Window
 
     public void Apply(DailyRewardStatePacket state)
     {
-        _cards.DeleteAll();
+        _cards.DeleteAllChildren();
         DrawMilestones(state);
 
         if (!state.Enabled)

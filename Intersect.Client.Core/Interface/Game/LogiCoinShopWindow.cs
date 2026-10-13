@@ -1,3 +1,4 @@
+using Intersect.Utilities;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
@@ -200,7 +201,7 @@ internal sealed class LogiCoinShopWindow : Window
 
     private void RebuildCatalog()
     {
-        _tiles.DeleteAll();
+        _tiles.DeleteAllChildren();
 
         foreach (var (category, label) in _tabs)
             label.TextColorOverride = category == _selectedCategory ? Gold : Muted;
