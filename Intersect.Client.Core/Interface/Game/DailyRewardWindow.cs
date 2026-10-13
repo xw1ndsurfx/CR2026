@@ -152,7 +152,9 @@ internal sealed class DailyRewardWindow : Window
     public DailyRewardWindow(Canvas parent)
         : base(parent, "Daily Reward", false, nameof(DailyRewardWindow))
     {
-        SetSize(350, 552);
+        // Child coordinates are relative to the content below the native title bar.
+        // Include that bar in the outer height so the claim button remains inside.
+        SetSize(350, 584);
         Alignment = [Alignments.Center];
         DeleteOnClose = false;
         DisableResizing();

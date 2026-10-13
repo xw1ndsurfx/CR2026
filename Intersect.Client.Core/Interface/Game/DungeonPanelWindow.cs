@@ -68,63 +68,56 @@ internal sealed class DungeonPanelWindow : Window
     public DungeonPanelWindow(Canvas parent)
         : base(parent, "Dungeons", false, nameof(DungeonPanelWindow))
     {
-        SetSize(506, 689);
+        SetSize(506, 675);
         Alignment = [Alignments.Center];
         DeleteOnClose = false;
         DisableResizing();
 
-        // The complete frame is one authored 544x725 sprite. Render it as one
-        // image, not on top of an extra hand-painted competing frame.
-        if (AdmurinGuiArt.Add(this, "AdmurinDungeonFrame", "dungeon_gates_0a",
-                10, 26, 486, 646) == null)
-        {
-            var fallback = new DataFrame(this, "DungeonFallbackFrame");
-            fallback.SetBounds(10, 26, 486, 646);
-        }
+        // Native Window provides the sole outer frame and title bar.
 
-        AddText(this, "Heading", "DUNGEON GATES", 72, 43, 361, 26, 20, Gold, centered: true);
+        AddText(this, "Heading", "DUNGEON GATES", 72, 13, 361, 26, 20, Gold, centered: true);
         AddText(this, "Subtitle", "ROYAL GATE REGISTRY - DETECTED DUNGEONS",
-            47, 72, 412, 16, 9, Cream, centered: true);
-        _summary = AddText(this, "Summary", "", 55, 89, 399, 15, 9, Cream, centered: true);
+            47, 42, 412, 16, 9, Cream, centered: true);
+        _summary = AddText(this, "Summary", "", 55, 59, 399, 15, 9, Cream, centered: true);
 
         var ribbon = new DataFrame(this, "RecordRibbon");
-        ribbon.SetBounds(38, 108, 430, 23);
+        ribbon.SetBounds(38, 78, 430, 23);
         _personalSummary = AddText(ribbon, "RecordText", "", 9, 2, 413, 18, 9, Gold, centered: true);
 
         _gateStrip = new Base(this, "DungeonGateStrip");
-        _gateStrip.SetBounds(54, 140, 398, 83);
+        _gateStrip.SetBounds(54, 110, 398, 83);
         // Keep the strip hit-testable so its three gate buttons receive clicks.
 
         _previous = new Button(this, "DungeonPagePrevious") { Text = string.Empty };
-        _previous.SetBounds(21, 164, 29, 33);
+        _previous.SetBounds(21, 134, 29, 33);
         AdmurinGuiArt.Add(_previous, "PreviousArrow", "dungeon_gates_4",
             4, 0, 18, 32, 0, 0, 16, 32);
         _previous.Clicked += (_, _) => ChangePage(-3);
 
         _next = new Button(this, "DungeonPageNext") { Text = string.Empty };
-        _next.SetBounds(459, 164, 28, 33);
+        _next.SetBounds(459, 134, 28, 33);
         var nextArrow = AdmurinGuiArt.Add(_next, "NextArrow", "dungeon_gates_4",
             4, 0, 18, 32, 0, 0, 16, 32);
         // The artist supplied left arrows; mirrored UVs produce the right arrow.
         nextArrow?.SetUVs(16f / 64f, 0f, 0f, 1f);
         _next.Clicked += (_, _) => ChangePage(3);
 
-        AddText(this, "DetailsHeading", "DETAILS", 61, 224, 388, 21, 17, Gold, centered: true);
+        AddText(this, "DetailsHeading", "DETAILS", 61, 194, 388, 21, 17, Gold, centered: true);
         _details = new DataFrame(this, "DungeonDetails");
-        _details.SetBounds(38, 248, 430, 154);
+        _details.SetBounds(38, 218, 430, 154);
 
-        AddText(this, "RecordHeading", "RECORD", 62, 404, 386, 21, 17, Gold, centered: true);
+        AddText(this, "RecordHeading", "RECORD", 62, 374, 386, 21, 17, Gold, centered: true);
         _record = new DataFrame(this, "DungeonRecord");
-        _record.SetBounds(38, 429, 430, 111);
+        _record.SetBounds(38, 399, 430, 111);
 
-        AddText(this, "RankingHeading", "RANKINGS", 62, 541, 386, 20, 17, Gold, centered: true);
+        AddText(this, "RankingHeading", "RANKINGS", 62, 511, 386, 20, 17, Gold, centered: true);
         _clearsRanking = new DataFrame(this, "MostClears");
-        _clearsRanking.SetBounds(38, 567, 208, 91);
+        _clearsRanking.SetBounds(38, 537, 208, 91);
         _fastestRanking = new DataFrame(this, "Fastest");
-        _fastestRanking.SetBounds(259, 567, 209, 91);
+        _fastestRanking.SetBounds(259, 537, 209, 91);
 
         var refresh = new Button(this, "DungeonRankingsRefresh") { Text = string.Empty };
-        refresh.SetBounds(443, 542, 25, 24);
+        refresh.SetBounds(443, 512, 25, 24);
         AdmurinGuiArt.Add(refresh, "RefreshIcon", "dungeon_gates_3",
             0, 0, 24, 24, 48, 0, 24, 24);
         refresh.SetToolTipText("Refresh dungeon rankings");

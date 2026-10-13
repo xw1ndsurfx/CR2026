@@ -117,6 +117,13 @@ public partial class QuestsWindow
 
         mQuestsWindow.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
 
+        // Saved legacy alignments otherwise move these controls back on the next layout pass.
+        foreach (var control in new Base[] { _questList, mQuestTitle, mQuestStatus, mQuestDescArea, mBackButton, mQuitButton })
+        {
+            control.Alignment = [];
+            control.Dock = Pos.None;
+        }
+
         // Keep the saved JSON skin for input/close behavior while giving the
         // quest journal its own fixed, readable dungeon-registry layout.
         mQuestsWindow.SetSize(820, 680);
@@ -126,14 +133,9 @@ public partial class QuestsWindow
         mQuestsWindow.TitleLabel.FontSize = 12;
         mQuestsWindow.TitleLabel.TextColorOverride = JournalGold;
 
-        // Admurin's 464x388 panel has a quest column and a separate details
-        // column. Keep the actual list and buttons above it and interactive.
-        // The old drawn frame is retained only as an asset-free fallback.
+        // Keep separate quest and detail columns inside the single native window.
         mQuestJournalChrome = new QuestJournalChrome(mQuestsWindow, "RoyalQuestJournalFrame");
-        mQuestJournalChrome.SetBounds(12, 9, 796, 652);
-        var questArt = AdmurinGuiArt.Add(mQuestJournalChrome, "AdmurinQuestJournal",
-            "questlog_0", 0, 0, 796, 652);
-        mQuestJournalChrome.HasArtistFrame = questArt != null;
+        mQuestJournalChrome.SetBounds(12, 0, 796, 630);
         mQuestJournalChrome.SendToBack();
 
         mQuestJournalHeading = AddJournalText(mQuestsWindow, "QuestJournalHeading",
@@ -848,7 +850,6 @@ public partial class QuestsWindow
     private void UpdateSelectedQuest()
     {
         var detail = mSelectedQuest != null;
-        mQuestJournalChrome.IsDetail = detail;
         mQuestJournalHeading.Text = detail ? "QUEST DETAILS" : "ROYAL QUEST JOURNAL";
         mQuestJournalSubtitle.Text = detail
             ? "TRACK YOUR OBJECTIVES AND PROGRESS"
@@ -858,6 +859,7 @@ public partial class QuestsWindow
 
         if (mSelectedQuest == null)
         {
+            mQuestsWindow.Title = Strings.QuestLog.Title;
             _questList.Show();
             mQuestTitle.Hide();
             mQuestDescArea.Hide();
@@ -1043,10 +1045,11 @@ public partial class QuestsWindow
                 mQuestDetailsProgress.Text = "QUEST NOT STARTED";
             }
 
-            // Keep the list visible in the artist's left pane while the
+            // Keep the list visible in the left pane while the
             // selected quest occupies the right pane, without losing focus.
             _questList.Show();
-            mQuestTitle.IsHidden = false;
+            mQuestsWindow.Title = $"{Strings.QuestLog.Title} - {mSelectedQuest.Name}";
+            mQuestTitle.IsHidden = true;
             mQuestTitle.Text = mSelectedQuest.Name;
             mQuestDescArea.IsHidden = false;
             mQuestDescLabel.Width = mQuestDescArea.Width - mQuestDescArea.VerticalScrollBar.Width - 8;
@@ -1117,21 +1120,12 @@ public partial class QuestsWindow
     }
 
     /// <summary>
-    /// Gold-edged dungeon-registry background for both the journal and quest
-    /// detail page. All quest actions remain native Gwen controls above it.
+    /// Background and column divider inside the native quest journal window.
     /// </summary>
     private sealed class QuestJournalChrome : Base
     {
-        private static readonly Color OuterGold = new(a: 255, r: 158, g: 112, b: 51);
-        private static readonly Color BrightGold = new(a: 255, r: 224, g: 179, b: 88);
         private static readonly Color InnerGold = new(a: 255, r: 100, g: 69, b: 40);
         private static readonly Color Darkest = new(a: 255, r: 24, g: 15, b: 14);
-        private static readonly Color Dark = new(a: 255, r: 38, g: 23, b: 19);
-        private static readonly Color Bronze = new(a: 255, r: 77, g: 46, b: 34);
-
-        public bool IsDetail { get; set; }
-
-        public bool HasArtistFrame { get; set; }
 
         public QuestJournalChrome(Base parent, string name) : base(parent, name)
         {
@@ -1141,42 +1135,12 @@ public partial class QuestsWindow
 
         protected override void Render(SkinBase skin)
         {
-            if (HasArtistFrame)
-                return;
-
             var bounds = RenderBounds;
             Fill(skin, bounds, Darkest);
-            Border(skin, bounds, OuterGold, 2);
-            Border(skin, Inset(bounds, 5), InnerGold, 1);
-            Fill(skin, bounds.X + 14, bounds.Y + 6, 34, 2, BrightGold);
-            Fill(skin, bounds.Right - 48, bounds.Y + 6, 34, 2, BrightGold);
-            Fill(skin, bounds.X + 18, bounds.Y + 92, bounds.Width - 36, 1, InnerGold);
-            Fill(skin, bounds.X + 12, bounds.Bottom - 9, bounds.Width - 24, 2, InnerGold);
-            Corners(skin, bounds);
-
-            var summary = new Rectangle(bounds.X + 18, bounds.Y + 103, bounds.Width - 36, 34);
-            Fill(skin, summary, Dark);
-            Border(skin, summary, OuterGold, 1);
-            Fill(skin, summary.X + 8, summary.Y + 5, 3, summary.Height - 10, BrightGold);
-            Fill(skin, summary.Right - 11, summary.Y + 5, 3, summary.Height - 10, BrightGold);
-
-            var content = new Rectangle(bounds.X + 18, bounds.Y + 152,
-                bounds.Width - 36, IsDetail ? 396 : 429);
-            Fill(skin, content, Dark);
-            Border(skin, content, OuterGold, 1);
-            Border(skin, Inset(content, 4), InnerGold, 1);
-
-            if (!IsDetail)
-            {
-                Fill(skin, content.X + 6, content.Y + 5, content.Width - 12, 3, Bronze);
-                return;
-            }
-
-            // Distinct detail header and scrolling parchment text section.
-            Fill(skin, content.X + 7, content.Y + 8, content.Width - 14, 70, Bronze);
-            Fill(skin, content.X + 18, content.Y + 82, content.Width - 36, 1, OuterGold);
-            Fill(skin, content.X + 8, content.Bottom - 10, content.Width - 16, 1, InnerGold);
-            Fill(skin, bounds.X + 22, bounds.Y + 554, bounds.Width - 44, 1, InnerGold);
+            // Content columns, not a second window with its own header and border.
+            Fill(skin, bounds.X + 2, bounds.Y + 64, 355, bounds.Height - 66,
+                new Color(a: 255, r: 12, g: 18, b: 9));
+            Fill(skin, bounds.X + 365, bounds.Y + 64, 1, bounds.Height - 66, InnerGold);
         }
 
         public static Rectangle Inset(Rectangle rect, int amount) =>
@@ -1203,18 +1167,6 @@ public partial class QuestsWindow
             Fill(skin, rect.Right - thickness, rect.Y, thickness, rect.Height, color);
         }
 
-        private static void Corners(SkinBase skin, Rectangle rect)
-        {
-            const int length = 14;
-            Fill(skin, rect.X + 5, rect.Y + 5, length, 2, BrightGold);
-            Fill(skin, rect.X + 5, rect.Y + 5, 2, length, BrightGold);
-            Fill(skin, rect.Right - length - 5, rect.Y + 5, length, 2, BrightGold);
-            Fill(skin, rect.Right - 7, rect.Y + 5, 2, length, BrightGold);
-            Fill(skin, rect.X + 5, rect.Bottom - 7, length, 2, BrightGold);
-            Fill(skin, rect.X + 5, rect.Bottom - length - 5, 2, length, BrightGold);
-            Fill(skin, rect.Right - length - 5, rect.Bottom - 7, length, 2, BrightGold);
-            Fill(skin, rect.Right - 7, rect.Bottom - length - 5, 2, length, BrightGold);
-        }
     }
 
     public void Show()

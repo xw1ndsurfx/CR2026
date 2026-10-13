@@ -58,19 +58,15 @@ internal sealed partial class UserListWindow : Window
         DeleteOnClose = false;
         DisableResizing();
 
-        // Scale only the straight edges and center: the 336x327 original
-        // has a 24px title bar and thin corner details that otherwise become
-        // uneven when enlarged to this panel's aspect ratio.
-        AdmurinGuiArt.AddNineSlice(this, "AdmurinUserListFrame", "userlist_0",
-            12, 27, 526, 586, 336, 327,
-            4, 24, 4, 4, 7, 38, 7, 7);
+        // Window already supplies the title bar and frame. Keep artist icons,
+        // but do not place a second complete window inside the native frame.
 
         string[] names = ["Friends", "Blocked", "Guild", "Party"];
         for (var i = 0; i < names.Length; i++)
         {
             var page = (Page)i;
             var tab = new Button(this, "UserListTab" + page) { Text = string.Empty };
-            tab.SetBounds(39 + i * 118, 48, 117, 33);
+            tab.SetBounds(39 + i * 118, 12, 117, 33);
             var caption = AddLabel(tab, "Caption", names[i], 0, 1, 116, 30, 13, Muted, true);
             _tabCaptions[page] = caption;
             tab.Clicked += (_, _) => OpenPage(page);
@@ -82,7 +78,7 @@ internal sealed partial class UserListWindow : Window
             OverflowY = OverflowBehavior.Scroll,
             AutoHideBars = true,
         };
-        _body.SetBounds(31, 91, 491, 430);
+        _body.SetBounds(31, 56, 491, 465);
 
         _footer = new Base(this, "UserListActions");
         _footer.SetBounds(32, 526, 486, 71);
@@ -206,6 +202,7 @@ internal sealed partial class UserListWindow : Window
         AddLabel(_body, "OfflineHeading", "OFFLINE  " + offline.Length,
             247, 7, 216, 23, 12, Gold, true);
         var divider = new VerticalDivider(_body, "FriendColumnDivider");
+        divider.IsHidden = friends.Length == 0;
         var count = Math.Max(online.Length, offline.Length);
         var listHeight = Math.Max(420, 41 + count * 41);
         divider.SetBounds(233, 31, 2, listHeight - 38);
