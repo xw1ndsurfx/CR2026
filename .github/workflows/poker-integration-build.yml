@@ -6,6 +6,7 @@ on:
     paths:
       - 'Framework/Intersect.Framework.Core/**'
       - 'Intersect.Server.Core/**'
+      - 'Intersect.Tests.Server/**'
       - 'Intersect.Server/Web/**'
       - 'Intersect.Client.Core/**'
       - 'Intersect.Client.Framework/**'
@@ -78,6 +79,22 @@ jobs:
         id: protocol
         shell: pwsh
         run: ./Utilities/PokerCi/run.ps1 -Project Utilities/PokerNetworkTests/Intersect.PokerNetworkTests.csproj -Configuration Release
+  userlist-privacy-tests:
+    name: User List privacy regression tests
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Verify blocked-player storage, malformed data and character isolation
+        shell: pwsh
+        run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj --configuration Release --filter "FullyQualifiedName~BlockedUsersTests" --verbosity minimal
+
   client-diagnostics:
     name: 'Client build: ${{ needs.build.outputs.client }} | UI: ${{ needs.build.outputs.ui }}'
     needs: build
