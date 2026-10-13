@@ -165,6 +165,11 @@ internal sealed class DailyRewardWindow : Window
 
         var frame = new RewardBoard(this);
         frame.SetBounds(24, 165, 302, 314);
+        // Original 16x16 gold-bordered item container, sliced so the two-pixel
+        // border remains sharp around the variable-length reward grid.
+        AdmurinGuiArt.AddNineSlice(frame, "AdmurinDailyBoard", "bordered_container",
+            0, 0, 302, 314, 16, 16,
+            2, 2, 2, 2, 3, 3, 3, 3);
 
         _cards = new ScrollControl(this, "Cards")
         {
