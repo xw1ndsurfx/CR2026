@@ -143,7 +143,7 @@ internal sealed partial class UserListWindow : Window
 
     private void Refresh()
     {
-        _body.DeleteAllChildren();
+        _body.DeleteAll();
         _footer.DeleteAllChildren();
 
         foreach (var (page, caption) in _tabCaptions)
