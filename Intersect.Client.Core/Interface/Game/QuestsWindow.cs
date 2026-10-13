@@ -215,6 +215,13 @@ public partial class QuestsWindow
         var trackerArt = AdmurinGuiArt.Add(mQuestTaskHudPanel, "AdmurinTrackerBadge",
             "questlog_2", 23, 49, 43, 43);
         mQuestTaskHudPanel.HasArtistBadge = trackerArt != null;
+        if (trackerArt != null)
+        {
+            // questlog_2 is a blank 34x34 medallion. The companion arrow
+            // gives it a readable "current objective" symbol.
+            AdmurinGuiArt.Add(mQuestTaskHudPanel, "AdmurinTrackerMarker",
+                "questlog_1", 36, 59, 15, 23);
+        }
 
         var trackerFont = GameContentManager.Current.GetFont("sourcesansproblack") ??
                           GameContentManager.Current.GetFont("sourcesanspro") ??
