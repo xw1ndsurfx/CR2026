@@ -5,6 +5,8 @@ using Intersect.Network.Packets.Server;
 using Intersect.Server.Database;
 using Intersect.Server.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+using Intersect.Server.Database.PlayerData.Players;
 using Intersect.Server.Achievements;
 using Intersect.Server.Networking;
 
@@ -281,7 +283,7 @@ internal static class ProfessionRuntime
                 readOnly: false, queryTrackingBehavior: QueryTrackingBehavior.TrackAll
             );
             var batch = context.Player_Variables
-                .Where(variable => professionIds.Contains(variable.VariableId))
+                .Where(StoredProfessionVariableFilter(professionIds))
                 .OrderBy(variable => variable.Id)
                 .Skip(processed)
                 .Take(batchSize)
@@ -316,6 +318,11 @@ internal static class ProfessionRuntime
 
         return updated;
     }
+
+    private static Expression<Func<PlayerVariable, bool>> StoredProfessionVariableFilter(Guid[] professionIds) =>
+        // C# 14 can bind array.Contains to MemoryExtensions.Contains (ReadOnlySpan),
+        // which EF Core 8 cannot interpret. Keep the translatable Enumerable overload explicit.
+        variable => Enumerable.Contains(professionIds, variable.VariableId);
 
     private static void GrantLevelRewards(Player player, ProfessionDefinition definition, int oldLevel, int newLevel)
     {

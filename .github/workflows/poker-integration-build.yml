@@ -95,6 +95,28 @@ jobs:
         shell: pwsh
         run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj --configuration Release --filter "FullyQualifiedName~BlockedUsersTests" --verbosity minimal
 
+  profession-startup-query-tests:
+    name: Profession startup query (SDK ${{ matrix.sdk }})
+    runs-on: windows-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: ['8.0.x', '10.0.x']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            ${{ matrix.sdk }}
+      - name: Interpret and translate the startup filter without database access
+        shell: pwsh
+        run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj --configuration Release --filter "FullyQualifiedName~ProfessionStoredVariableQueryTests" --verbosity minimal
+
   client-diagnostics:
     name: 'Client build: ${{ needs.build.outputs.client }} | UI: ${{ needs.build.outputs.ui }}'
     needs: build
