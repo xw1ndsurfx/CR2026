@@ -156,6 +156,8 @@ internal sealed class DungeonConfirmationWindow : Window
         _enter.SetBounds(33, 449, 650, 46);
         var enterFrame = new GateActionFrame(_enter, "EnterDungeonArt", primary: true);
         enterFrame.SetBounds(0, 0, 650, 46);
+        AdmurinGuiArt.Add(_enter, "DungeonEnterBadge", "dungeon_gates_5",
+            13, 13, 19, 19, 0, 0, 12, 12);
         _enterCaption = AddText(_enter, "EnterCaption", "ENTER DUNGEON",
             10, 2, 630, 42, 14, Cream, center: true);
         _enter.Clicked += (_, _) => Respond(accept: true);
@@ -164,6 +166,8 @@ internal sealed class DungeonConfirmationWindow : Window
         _cancel.SetBounds(33, 499, 650, 46);
         var cancelFrame = new GateActionFrame(_cancel, "CancelDungeonArt", primary: false);
         cancelFrame.SetBounds(0, 0, 650, 46);
+        AdmurinGuiArt.Add(_cancel, "DungeonCancelBadge", "dungeon_gates_5",
+            13, 13, 19, 19, 12, 0, 12, 12);
         AddText(_cancel, "CancelCaption", "CANCEL",
             10, 2, 630, 42, 14, Cream, center: true);
         _cancel.Clicked += (_, _) => Respond(accept: false);
