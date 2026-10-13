@@ -78,9 +78,21 @@ internal sealed class ShopProductRow : Base
         if (buttonArt != null)
         {
             _action.ShouldDrawBackground = false;
-            _action.Font = Skin.DefaultFont;
-            _action.FontSize = 11;
-            _action.TextColorOverride = Color.White;
+            // Gwen buttons paint their own label before child sprites. Draw a
+            // separate caption above the sprite so BUY / SELL stays legible.
+            _action.Text = string.Empty;
+            var caption = new Label(_action, "MerchantButtonCaption")
+            {
+                Text = action,
+                Font = Skin.DefaultFont,
+                FontSize = 11,
+                TextColorOverride = enabled ? Color.White :
+                    new Color(a: 255, r: 180, g: 162, b: 150),
+                TextAlign = Pos.Center,
+                AutoSizeToContents = false,
+                MouseInputEnabled = false,
+            };
+            caption.SetBounds(0, 0, 95, 36);
         }
         _action.Clicked += (_, _) =>
         {
