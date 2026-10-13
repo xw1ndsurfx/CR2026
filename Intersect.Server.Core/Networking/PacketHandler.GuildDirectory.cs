@@ -87,7 +87,7 @@ internal sealed partial class PacketHandler
         var recipients = guild.Members.Values
             .Where(member => member.Rank >= 0 &&
                 member.Rank < Options.Instance.Guild.Ranks.Length &&
-                Options.Instance.Guild.Ranks[member.Rank].Permissions.Invite)
+                (member.Rank == 0 || Options.Instance.Guild.Ranks[member.Rank].Permissions.Invite))
             .Select(member => Player.FindOnline(member.Id))
             .Where(officer => officer != null && officer.IsValidPlayer && !officer.Blocks(player.Id))
             .DistinctBy(officer => officer!.Id)
