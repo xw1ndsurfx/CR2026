@@ -24,6 +24,39 @@ internal sealed class LogiCoinShopWindow : Window
     private static readonly Color Muted = new(a: 255, r: 175, g: 153, b: 138);
     private static readonly Color Good = new(a: 255, r: 143, g: 228, b: 148);
 
+    private sealed class ShopSections : Base
+    {
+        public ShopSections(Base parent) : base(parent, "LogiCoinShopSections")
+        {
+            MouseInputEnabled = false;
+            KeyboardInputEnabled = false;
+            SetBounds(0, 0, 767, 520);
+        }
+
+        protected override void Render(SkinBase skin)
+        {
+            var renderer = skin.Renderer;
+            var bounds = RenderBounds;
+            renderer.DrawColor = new Color(a: 255, r: 105, g: 71, b: 58);
+            renderer.DrawFilledRect(new UiRectangle(bounds.X + 530, bounds.Y + 8, 3, 503));
+            renderer.DrawColor = new Color(a: 255, r: 166, g: 134, b: 80);
+            renderer.DrawFilledRect(new UiRectangle(bounds.X + 29, bounds.Y + 62, 491, 1));
+            renderer.DrawFilledRect(new UiRectangle(bounds.X + 29, bounds.Y + 475, 491, 1));
+            foreach (var rect in new[]
+                     {
+                         new UiRectangle(bounds.X + 540, bounds.Y + 15, 206, 45),
+                         new UiRectangle(bounds.X + 540, bounds.Y + 152, 206, 97),
+                         new UiRectangle(bounds.X + 540, bounds.Y + 255, 206, 257),
+                     })
+            {
+                renderer.DrawColor = new Color(a: 255, r: 166, g: 134, b: 80);
+                renderer.DrawFilledRect(rect);
+                renderer.DrawColor = new Color(a: 255, r: 12, g: 18, b: 9);
+                renderer.DrawFilledRect(new UiRectangle(rect.X + 2, rect.Y + 2, rect.Width - 4, rect.Height - 4));
+            }
+        }
+    }
+
     private sealed class CatalogCardBackground : Base
     {
         public CatalogCardBackground(Base parent) : base(parent, "CatalogCardArt")
@@ -70,15 +103,12 @@ internal sealed class LogiCoinShopWindow : Window
     public LogiCoinShopWindow(Canvas parent)
         : base(parent, "LogiCoin Shop", false, nameof(LogiCoinShopWindow))
     {
-        SetSize(767, 585);
+        SetSize(767, 555);
         Alignment = [Alignments.Center];
         DeleteOnClose = false;
         DisableResizing();
 
-        // Artist-authored frame includes the left catalogue and three separate
-        // right-hand boxes; keep its original aspect ratio when scaling.
-        AdmurinGuiArt.Add(this, "AdmurinShopFrame", "logicoin_0",
-            12, 27, 742, 539);
+        // Window already supplies the title bar and outer frame.
 
         var categories = Enum.GetValues<LogiCoinOfferCategory>();
         int[] tabXs = [31, 131, 243, 360, 425];
@@ -176,6 +206,12 @@ internal sealed class LogiCoinShopWindow : Window
 
         _status = AddText(this, "ShopStatus", string.Empty,
             543, 480, 202, 63, 10, Good, center: true);
+
+        // Remove the space previously reserved for the sprite's second title bar.
+        // Only immediate content children move; card/icon coordinates stay local.
+        foreach (var child in Children.ToArray())
+            child.SetPosition(child.X, child.Y - 30);
+        new ShopSections(this).SendToBack();
 
         Hide();
     }

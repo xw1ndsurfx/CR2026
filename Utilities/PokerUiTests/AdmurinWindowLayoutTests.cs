@@ -13,7 +13,7 @@ internal static class AdmurinWindowLayoutTests
         _ = new TestContentManager();
         var assembly = typeof(GameInterface).Assembly;
         var layout = typeof(ControlBase).GetMethod("RecurseLayout", BindingFlags.NonPublic | BindingFlags.Instance)!;
-        foreach (var name in new[] { "DailyRewardWindow", "DungeonPanelWindow", "DungeonConfirmationWindow", "UserListWindow" })
+        foreach (var name in new[] { "DailyRewardWindow", "DungeonPanelWindow", "DungeonConfirmationWindow", "LogiCoinShopWindow", "UserListWindow" })
         {
             using var renderer = new MetricsRenderer();
             using var skin = new TestSkin(renderer);
@@ -38,6 +38,7 @@ internal static class AdmurinWindowLayoutTests
                 "DailyRewardWindow" => new[] { "Claim", "Status", "Cards" },
                 "DungeonPanelWindow" => new[] { "Heading", "Subtitle", "MostClears", "Fastest", "DungeonPageNext" },
                 "DungeonConfirmationWindow" => new[] { "DungeonGateTitle", "DungeonGateNameValue", "EnterDungeon", "CancelDungeon" },
+                "LogiCoinShopWindow" => new[] { "ShopCatalog", "BuyLogiCoins", "ShopBalance", "CatalogPrevious", "CatalogNext", "ShopStatus" },
                 _ => new[] { "UserListTabFriends", "UserListTabParty", "UserListBody", "UserListActions" },
             };
             foreach (var target in targets)
@@ -48,7 +49,7 @@ internal static class AdmurinWindowLayoutTests
                     position.X + control.Width > window.Width || position.Y + control.Height > window.Height - 4)
                     throw new InvalidOperationException($"{name}/{target} escapes the native window after layout: pos={position.X},{position.Y}, size={control.Width},{control.Height}, window={window.Width},{window.Height}, title={window.Titlebar.Height}");
             }
-            if (controls.Any(child => child.Name is "AdmurinUserListFrame" or "AdmurinDungeonFrame" or "DungeonFallbackFrame" or "DungeonGateFrame"))
+            if (controls.Any(child => child.Name is "AdmurinUserListFrame" or "AdmurinDungeonFrame" or "DungeonFallbackFrame" or "DungeonGateFrame" or "AdmurinShopFrame"))
                 throw new InvalidOperationException(name + " has a second outer frame");
             if (name == "UserListWindow")
             {
