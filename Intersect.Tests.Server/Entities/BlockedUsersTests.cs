@@ -12,6 +12,9 @@ namespace Intersect.Tests.Server.Entities;
 [TestFixture]
 public sealed class BlockedUsersTests
 {
+    [SetUp]
+    public void Setup() => Options.EnsureCreated();
+
     [TestCase("")]
     [TestCase("null")]
     [TestCase("{not valid json")]
