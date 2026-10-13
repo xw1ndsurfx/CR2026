@@ -583,6 +583,10 @@ namespace Intersect.Server.Migrations.MySql.Player
                         .HasColumnType("longtext")
                         .HasColumnName("Appearance");
 
+                    b.Property<string>("BlockedUsersJson")
+                        .HasColumnType("longtext")
+                        .HasColumnName("BlockedUsers");
+
                     b.Property<DateTime?>("CreationDate")
                         .HasColumnType("datetime(6)");
 
