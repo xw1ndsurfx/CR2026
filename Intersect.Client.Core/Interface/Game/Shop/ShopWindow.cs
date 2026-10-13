@@ -7,6 +7,8 @@ using Intersect.Client.General;
 using Intersect.Client.Localization;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.GameObjects;
+using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
+using UiRectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
 
 namespace Intersect.Client.Interface.Game.Shop;
 
@@ -38,8 +40,10 @@ public partial class ShopWindow : Window
         IsResizable = false;
         IsClosable = true;
 
+        TitleLabel.Font = GameContentManager.Current.GetFont("empire7") ??
+                          GameContentManager.Current.GetFont("sourcesansproblack") ?? TitleLabel.Font;
         TitleLabel.FontSize = 14;
-        TitleLabel.TextColorOverride = Color.White;
+        TitleLabel.TextColorOverride = new Color(a: 255, r: 225, g: 189, b: 119);
 
         _search = new TextBox(this, "ShopSearch")
         {
@@ -94,16 +98,29 @@ public partial class ShopWindow : Window
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
         SetSize(780, 620);
 
+        // Merchant-panel bronze/green framing follows the same palette as
+        // Admurin's item and button art, without obscuring the controls.
+        var buyPanel = new MerchantPanelChrome(this, "BuyMerchantPane");
+        buyPanel.SetBounds(16, 48, 363, 512);
+        buyPanel.SendToBack();
+        var sellPanel = new MerchantPanelChrome(this, "SellMerchantPane");
+        sellPanel.SetBounds(398, 48, 365, 512);
+        sellPanel.SendToBack();
+
         _search.SetBounds(24, 18, 732, 30);
         _buyHeader.SetBounds(24, 56, 350, 28);
         _sellHeader.SetBounds(406, 56, 350, 28);
         _buyContainer.SetBounds(24, 90, 350, 468);
         _sellContainer.SetBounds(406, 90, 350, 468);
+        _buyContainer.ShouldDrawBackground = false;
+        _sellContainer.ShouldDrawBackground = false;
         ConfigureNativeScrollbar(_buyContainer);
         ConfigureNativeScrollbar(_sellContainer);
         _buyEmpty.SetBounds(38, 112, 300, 50);
         _sellEmpty.SetBounds(420, 112, 300, 50);
         _hint.SetBounds(24, 570, 732, 28);
+        _hint.Font = GameContentManager.Current.GetFont("sourcesanspro") ?? _hint.Font;
+        _hint.TextColorOverride = new Color(a: 255, r: 193, g: 178, b: 152);
 
         RefreshBuyRows();
         RefreshSellRows();
@@ -129,7 +146,7 @@ public partial class ShopWindow : Window
         AutoSizeToContents = false,
         Font = Skin.DefaultFont,
         FontSize = 16,
-        TextColorOverride = Color.White,
+        TextColorOverride = new Color(a: 255, r: 232, g: 199, b: 135),
         Text = text,
     };
 
@@ -288,6 +305,31 @@ public partial class ShopWindow : Window
         }
 
         bar.BringToFront();
+    }
+
+    /// <summary>
+    /// Backing for the two scrollable merchant columns, rendered beneath all
+    /// native inputs and sprites. The product cards are original shop_1 art.
+    /// </summary>
+    private sealed class MerchantPanelChrome : Base
+    {
+        public MerchantPanelChrome(Base parent, string name) : base(parent, name)
+        {
+            MouseInputEnabled = false;
+            KeyboardInputEnabled = false;
+        }
+
+        protected override void Render(SkinBase skin)
+        {
+            var r = RenderBounds;
+            var renderer = skin.Renderer;
+            renderer.DrawColor = new Color(a: 255, r: 94, g: 64, b: 51);
+            renderer.DrawFilledRect(r);
+            renderer.DrawColor = new Color(a: 255, r: 15, g: 20, b: 12);
+            renderer.DrawFilledRect(new UiRectangle(r.X + 3, r.Y + 3, r.Width - 6, r.Height - 6));
+            renderer.DrawColor = new Color(a: 255, r: 174, g: 135, b: 84);
+            renderer.DrawFilledRect(new UiRectangle(r.X + 7, r.Y + 36, r.Width - 14, 2));
+        }
     }
 
     private bool MatchesSearch(string itemName)
