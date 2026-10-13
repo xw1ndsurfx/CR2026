@@ -58,13 +58,14 @@ internal sealed class ShopProductRow : Base
         _icon.HoverLeave += (_, _) => Interface.GameUi.ItemDescriptionWindow?.Hide();
 
         _name = Label("Name", 91, 5, 137, 24, 12, new Color(a: 255, r: 245, g: 231, b: 210));
-        _name.Text = item.Name;
+        _name.Text = Shorten(item.Name, 19);
 
         _detail = Label("Detail", 91, 29, 137, 18, 9, new Color(a: 255, r: 191, g: 174, b: 152));
-        _detail.Text = detail;
+        _detail.Text = Shorten(detail, 24);
 
         _price = Label("Price", 91, 49, 137, 20, 10, new Color(a: 255, r: 231, g: 194, b: 112));
-        _price.Text = price;
+        _price.Text = Shorten(price, 21);
+        SetToolTipText(item.Name + "\n" + detail + "\n" + price);
 
         _action = new Button(this, "Action")
         {
@@ -141,6 +142,12 @@ internal sealed class ShopProductRow : Base
         true,
         action
     );
+
+    private static string Shorten(string? value, int maximum)
+    {
+        var text = (value ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+        return text.Length <= maximum ? text : text[..Math.Max(0, maximum - 3)] + "...";
+    }
 
     private static string Price(int amount, string currency) => amount <= 0 ? Strings.Shop.Free.ToString() : $"{amount} {currency}";
 
