@@ -263,7 +263,7 @@ public partial class MenuContainer : Panel
         };
         _partyButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "partyicon.png");
         _partyButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "partyicon_hovered.png");
-        _partyButton.SetToolTipText(text: Strings.GameMenu.Party);
+        _partyButton.SetToolTipText(text: "Party HUD (left click) / User List - Party (right click)");
         _partyButton.Clicked += PartyBtn_Clicked;
 
         _guildButtonContainer = new ImagePanel(parent: this, name: nameof(_guildButtonContainer))
