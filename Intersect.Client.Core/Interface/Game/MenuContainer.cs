@@ -482,6 +482,11 @@ public partial class MenuContainer : Panel
         _userListWindow.ApplyBlockedUsers(packet);
     }
 
+    public void ApplyGuildDirectory(Intersect.Network.Packets.Server.GuildDirectoryPacket packet)
+    {
+        _userListWindow.ApplyGuildDirectory(packet);
+    }
+
     public void ApplyOwnPlayerProfile(Intersect.Network.Packets.Server.PlayerProfilePacket packet)
     {
         _characterWindow.ApplyPlayerProfile(packet);

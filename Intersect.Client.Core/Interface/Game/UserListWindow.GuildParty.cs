@@ -19,17 +19,21 @@ internal sealed partial class UserListWindow
         var player = Globals.Me;
         if (player == null || string.IsNullOrWhiteSpace(player.Guild))
         {
+            if (_guildDirectoryOpen)
+            {
+                DrawGuildDirectory();
+                return;
+            }
+
             AddLabel(_body, "GuildHeading", "FIND A GUILD", 0, 40, 459, 45,
                 19, Gold, true);
             AddLabel(_body, "GuildInviteOnly",
-                "Joining a guild currently requires a guild invitation.\n" +
-                "The in-game server doesn't provide a public guild directory\n" +
-                "or an application/join-by-name packet yet.",
+                "Search for an active guild and request an invitation.\n" +
+                "Guild officers must approve you before you can join.",
                 24, 145, 412, 90, 12, Cream, true);
             _body.SetInnerSize(466, 426);
-            AddAction(_footer, "FindGuildUnavailable", "FIND A GUILD",
-                153, 7, 180, 49, null,
-                "Guild search and public joining are not available in the current game protocol.");
+            AddAction(_footer, "FindGuild", "FIND A GUILD",
+                153, 7, 180, 49, OpenGuildDirectory);
             return;
         }
 
