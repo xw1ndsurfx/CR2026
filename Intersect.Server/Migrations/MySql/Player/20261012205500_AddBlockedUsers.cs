@@ -12,12 +12,26 @@ public partial class AddBlockedUsers : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+        // MySQL 5.7 and some 8.0 variants reject DEFAULT values for
+        // LONGTEXT columns. Add as nullable, populate all existing players,
+        // then enforce NOT NULL without declaring a database default.
         migrationBuilder.AddColumn<string>(
             name: "BlockedUsers",
             table: "Players",
             type: "longtext",
+            nullable: true);
+
+        migrationBuilder.Sql(
+            "UPDATE `Players` SET `BlockedUsers` = '{}' WHERE `BlockedUsers` IS NULL");
+
+        migrationBuilder.AlterColumn<string>(
+            name: "BlockedUsers",
+            table: "Players",
+            type: "longtext",
             nullable: false,
-            defaultValue: "{}");
+            oldClrType: typeof(string),
+            oldType: "longtext",
+            oldNullable: true);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
