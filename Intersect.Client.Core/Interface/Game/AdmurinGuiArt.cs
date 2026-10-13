@@ -24,6 +24,16 @@ internal static class AdmurinGuiArt
         if (texture == null)
             return null;
 
+        // Invalid sprite-sheet coordinates used to silently fall back to the
+        // entire image in ImagePanel.SetTextureRect. Never draw a whole sprite
+        // sheet in place of a tiny icon when an asset changes.
+        if ((sourceWidth > 0 || sourceHeight > 0) &&
+            (sourceWidth <= 0 || sourceHeight <= 0 ||
+             sourceX < 0 || sourceY < 0 ||
+             (long)sourceX + sourceWidth > texture.Width ||
+             (long)sourceY + sourceHeight > texture.Height))
+            return null;
+
         var panel = new ImagePanel(parent, name)
         {
             Texture = texture,
@@ -50,11 +60,14 @@ internal static class AdmurinGuiArt
         int drawLeft, int drawTop, int drawRight, int drawBottom)
     {
         var manager = GameContentManager.Current;
-        if (manager.GetTexture(TextureType.Gui, $"admurin/{file}.png") == null &&
-            manager.GetTexture(TextureType.Gui, $"{file}.png") == null)
+        var texture = manager.GetTexture(TextureType.Gui, $"admurin/{file}.png") ??
+                      manager.GetTexture(TextureType.Gui, $"{file}.png");
+        if (texture == null || texture.Width < sourceWidth || texture.Height < sourceHeight)
             return null;
 
-        if (width <= drawLeft + drawRight || height <= drawTop + drawBottom ||
+        if (left < 0 || top < 0 || right < 0 || bottom < 0 ||
+            drawLeft < 0 || drawTop < 0 || drawRight < 0 || drawBottom < 0 ||
+            width <= drawLeft + drawRight || height <= drawTop + drawBottom ||
             sourceWidth <= left + right || sourceHeight <= top + bottom)
             return null;
 
