@@ -262,7 +262,7 @@ internal sealed class DailyRewardWindow : Window
 
     public void Apply(DailyRewardStatePacket state)
     {
-        _cards.DeleteAllChildren();
+        _cards.DeleteAll();
         DrawMilestones(state);
 
         if (!state.Enabled)
