@@ -58,8 +58,12 @@ internal sealed partial class UserListWindow : Window
         DeleteOnClose = false;
         DisableResizing();
 
-        // userlist_0.png is the actual 336x327 artist frame, not a placeholder.
-        AdmurinGuiArt.Add(this, "AdmurinUserListFrame", "userlist_0", 12, 27, 526, 586);
+        // Scale only the straight edges and center: the 336x327 original
+        // has a 24px title bar and thin corner details that otherwise become
+        // uneven when enlarged to this panel's aspect ratio.
+        AdmurinGuiArt.AddNineSlice(this, "AdmurinUserListFrame", "userlist_0",
+            12, 27, 526, 586, 336, 327,
+            4, 24, 4, 4, 7, 38, 7, 7);
 
         string[] names = ["Friends", "Blocked", "Guild", "Party"];
         for (var i = 0; i < names.Length; i++)
@@ -89,9 +93,10 @@ internal sealed partial class UserListWindow : Window
 
     public void OpenPage(Page page)
     {
+        var changedPage = page != _currentPage;
         _currentPage = page;
         _lastSnapshot = string.Empty;
-        Refresh();
+        Refresh(resetScroll: changedPage);
         Show();
         BringToFront();
 
@@ -151,8 +156,12 @@ internal sealed partial class UserListWindow : Window
         };
     }
 
-    private void Refresh()
+    private void Refresh(bool resetScroll = false)
     {
+        // Party vitals and friend presence can update while the player is
+        // scrolling. Rebuilding the rows must not jump them back to the top.
+        // Tab changes intentionally start at the beginning of the new list.
+        var savedScroll = resetScroll ? 0f : _body.VerticalScrollBar.ScrollAmount;
         _body.DeleteAll();
         _footer.DeleteAllChildren();
 
@@ -176,6 +185,7 @@ internal sealed partial class UserListWindow : Window
         }
 
         _body.UpdateScrollBars();
+        _body.VerticalScrollBar.SetScrollAmount(savedScroll, forceUpdate: true);
         _lastSnapshot = Snapshot();
     }
 
