@@ -15,10 +15,15 @@ internal sealed partial class UserListWindow
     private int _directoryPage;
     private string _directoryQuery = string.Empty;
     private Guid _selectedGuild;
+    private bool _directoryRequestPending;
+    private long _nextDirectoryRequestAt;
 
     public void ApplyGuildDirectory(GuildDirectoryPacket packet)
     {
-        if (!string.Equals(packet.Search, _directoryQuery, StringComparison.Ordinal))
+        // Rapid pagination/search can leave prior requests in flight. Ignore
+        // responses for any page other than the one the player now wants.
+        if (!string.Equals(packet.Search, _directoryQuery, StringComparison.Ordinal) ||
+            packet.Page != _directoryPage)
             return;
 
         _directoryEntries = packet.Entries ?? [];
@@ -44,6 +49,20 @@ internal sealed partial class UserListWindow
 
     private void RequestGuildDirectory()
     {
+        // Coalesce fast input so the last page/search is always delivered,
+        // rather than dropping a click and leaving an empty panel.
+        _directoryRequestPending = true;
+        PumpGuildDirectory();
+    }
+
+    private void PumpGuildDirectory()
+    {
+        if (!_directoryRequestPending || !IsShowing(Page.Guild) ||
+            !_guildDirectoryOpen || Environment.TickCount64 < _nextDirectoryRequestAt)
+            return;
+
+        _directoryRequestPending = false;
+        _nextDirectoryRequestAt = Environment.TickCount64 + 400;
         PacketSender.SendRequestGuildDirectory(_directoryQuery, _directoryPage);
     }
 

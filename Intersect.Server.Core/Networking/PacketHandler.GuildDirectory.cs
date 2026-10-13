@@ -16,6 +16,7 @@ namespace Intersect.Server.Networking;
 internal sealed partial class PacketHandler
 {
     private static readonly ConcurrentDictionary<Guid, long> GuildJoinRequestCooldowns = new();
+    private static readonly ConcurrentDictionary<Guid, long> GuildDirectoryQueryCooldowns = new();
     private const int GuildDirectoryPageSize = 12;
 
     public void HandlePacket(Client client, RequestGuildDirectoryPacket packet)
@@ -23,10 +24,28 @@ internal sealed partial class PacketHandler
         if (client?.Entity is not { } player)
             return;
 
+        // Do not allow network packets to trigger unbounded DB searches.
+        // The client coalesces consecutive navigation actions to 400ms.
+        var now = Environment.TickCount64;
+        while (true)
+        {
+            if (GuildDirectoryQueryCooldowns.TryGetValue(player.Id, out var nextAllowed))
+            {
+                if (now < nextAllowed)
+                    return;
+                if (GuildDirectoryQueryCooldowns.TryUpdate(player.Id, now + 250, nextAllowed))
+                    break;
+            }
+            else if (GuildDirectoryQueryCooldowns.TryAdd(player.Id, now + 250))
+                break;
+        }
+
         var search = (packet.Search ?? string.Empty).Trim();
         if (search.Length > 50)
             search = search[..50];
-        var page = Math.Clamp(packet.Page, 0, 100);
+        // Keep multiplication in range without artificially truncating a
+        // directory at page 100 if many guilds are registered.
+        var page = Math.Clamp(packet.Page, 0, 10_000);
         var results = Guild.List(
             search, "name", SortDirection.Ascending, page * GuildDirectoryPageSize,
             GuildDirectoryPageSize, out var total);

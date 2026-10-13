@@ -100,8 +100,13 @@ internal sealed partial class UserListWindow : Window
             PacketSender.SendRequestFriends();
         if (page == Page.Blocked)
             PacketSender.SendRequestBlockedUsers();
-        if (page == Page.Guild && !string.IsNullOrWhiteSpace(Globals.Me?.Guild))
-            PacketSender.SendRequestGuild();
+        if (page == Page.Guild)
+        {
+            if (!string.IsNullOrWhiteSpace(Globals.Me?.Guild))
+                PacketSender.SendRequestGuild();
+            else if (_guildDirectoryOpen)
+                RequestGuildDirectory();
+        }
     }
 
     public void RefreshIfShowing(Page page)
@@ -112,6 +117,7 @@ internal sealed partial class UserListWindow : Window
 
     public void Update()
     {
+        PumpGuildDirectory();
         if (!IsVisible || Environment.TickCount64 < _nextUpdateTime)
             return;
 
