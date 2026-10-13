@@ -37,11 +37,14 @@ internal sealed class ShopProductRow : Base
         Margin = new Margin(0, 0, 0, 1);
         ShouldDrawBackground = false;
 
-        // The sprite includes the item recess and the merchant card border.
-        // Drawn before the native item/icon/button children so actions remain
-        // interactive and the pixel-art skin never captures mouse events.
-        _admurinArt = AdmurinGuiArt.Add(this, "AdmurinMerchantOffer", "shop_1",
-            0, 0, 346, 74) != null;
+        // The original card is 185x54. Full-image scaling distorted the
+        // square item recess and extended 13px underneath the native scroll
+        // bar (350px viewport minus its 17px gutter). Nine-slice keeps the
+        // pixel-art corners/recess sharp inside the 333px content column.
+        _admurinArt = AdmurinGuiArt.AddNineSlice(
+            this, "AdmurinMerchantOffer", "shop_1",
+            0, 0, 332, 74,
+            185, 54, 50, 5, 7, 5, 75, 7, 9, 7) != null;
 
         _icon = new ImagePanel(this, "Icon")
         {
@@ -54,13 +57,13 @@ internal sealed class ShopProductRow : Base
         _icon.HoverEnter += (_, _) => Interface.GameUi.ItemDescriptionWindow?.Show(item, 1);
         _icon.HoverLeave += (_, _) => Interface.GameUi.ItemDescriptionWindow?.Hide();
 
-        _name = Label("Name", 91, 5, 142, 24, 12, new Color(a: 255, r: 245, g: 231, b: 210));
+        _name = Label("Name", 91, 5, 137, 24, 12, new Color(a: 255, r: 245, g: 231, b: 210));
         _name.Text = item.Name;
 
-        _detail = Label("Detail", 91, 29, 145, 18, 9, new Color(a: 255, r: 191, g: 174, b: 152));
+        _detail = Label("Detail", 91, 29, 137, 18, 9, new Color(a: 255, r: 191, g: 174, b: 152));
         _detail.Text = detail;
 
-        _price = Label("Price", 91, 49, 145, 20, 10, new Color(a: 255, r: 231, g: 194, b: 112));
+        _price = Label("Price", 91, 49, 137, 20, 10, new Color(a: 255, r: 231, g: 194, b: 112));
         _price.Text = price;
 
         _action = new Button(this, "Action")
@@ -70,7 +73,7 @@ internal sealed class ShopProductRow : Base
             Text = action,
             IsDisabled = !enabled,
         };
-        _action.SetBounds(241, 19, 95, 36);
+        _action.SetBounds(232, 19, 95, 36);
         var buttonArt = AdmurinGuiArt.Add(_action, "AdmurinMerchantButton", "shop_2",
             0, 0, 95, 36,
             enabled ? 0 : 56, enabled ? (action == Strings.Shop.SellItem.ToString() ? 54 : 0) : 54,
