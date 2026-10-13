@@ -45,6 +45,7 @@ internal sealed class RoyalStylistWindow : Window
     private readonly Panel _previewPanel;
     private ImagePanel[]? _renderLayers;
     private int _previewDirection;
+    private readonly ImagePanel?[] _directionSprites = new ImagePanel?[4];
 
     private readonly LabeledComboBox _hair;
     private readonly LabeledComboBox _hairColor;
@@ -77,6 +78,15 @@ internal sealed class RoyalStylistWindow : Window
         DeleteOnClose = false;
         DisableResizing();
 
+        // Admurin supplied one 403x426 full-frame sprite. Nine-slice keeps
+        // the original bronze corners, header and borders crisp at the wider
+        // 860x640 game layout instead of stretching them disproportionately.
+        var artistFrame = AdmurinGuiArt.AddNineSlice(
+            this, "AdmurinRoyalStylist", "stylist_0",
+            10, 27, 840, 602,
+            403, 426, 10, 28, 10, 9, 20, 41, 20, 15);
+        artistFrame?.SendToBack();
+
         var titleFont =
             GameContentManager.Current.GetFont("sourcesansproblack") ??
             Skin.DefaultFont;
@@ -89,9 +99,9 @@ internal sealed class RoyalStylistWindow : Window
             AutoSizeToContents = false,
             Font = bodyFont,
             FontSize = 10,
-            TextColorOverride = Color.White,
+            TextColorOverride = new Color(a: 255, r: 242, g: 224, b: 192),
         };
-        _description.SetBounds(24, 42, 812, 40);
+        _description.SetBounds(26, 62, 808, 38);
 
         _message = new Label(this, "Message")
         {
@@ -101,16 +111,16 @@ internal sealed class RoyalStylistWindow : Window
             TextColorOverride =
                 new Color(a: 255, r: 220, g: 196, b: 135),
         };
-        _message.SetBounds(24, 83, 812, 28);
+        _message.SetBounds(26, 98, 808, 26);
 
         _premiumStatus = new Label(this, "PremiumStatus")
         {
             AutoSizeToContents = false,
             Font = titleFont,
             FontSize = 9,
-            TextColorOverride = Color.White,
+            TextColorOverride = new Color(a: 255, r: 225, g: 189, b: 121),
         };
-        _premiumStatus.SetBounds(24, 111, 390, 26);
+        _premiumStatus.SetBounds(26, 121, 388, 24);
 
         _priceStatus = new Label(this, "PriceStatus")
         {
@@ -120,7 +130,7 @@ internal sealed class RoyalStylistWindow : Window
             TextAlign = Pos.Right | Pos.CenterV,
             TextColorOverride = Color.White,
         };
-        _priceStatus.SetBounds(430, 111, 406, 26);
+        _priceStatus.SetBounds(429, 121, 406, 24);
 
         _previewPanel = new Panel(this, "PreviewPanel")
         {
@@ -398,12 +408,46 @@ internal sealed class RoyalStylistWindow : Window
                 ) ?? Skin.DefaultFont,
             FontSize = 8,
         };
-        button.SetBounds(x, 356, 76, 30);
+        // The artist's 112x112 sheet is 4 columns of interaction states and
+        // 4 rows of direction arrows (Up, Right, Down, Left).
+        const int arrowSize = 28;
+        var arrowRow = DirectionSpriteRow(direction);
+        button.SetBounds(x + 17, 351, 44, 39);
+        var art = AdmurinGuiArt.Add(button, "AdmurinDirection" + direction, "stylist_1",
+            0, 0, 44, 39, 0, arrowRow * arrowSize, arrowSize, arrowSize);
+        _directionSprites[direction] = art;
+        if (art != null)
+        {
+            button.Text = string.Empty;
+            button.ShouldDrawBackground = false;
+            button.SetToolTipText("Preview: " + text);
+            button.HoverEnter += (_, _) =>
+                art.SetTextureRect(3 * arrowSize, arrowRow * arrowSize, arrowSize, arrowSize);
+            button.HoverLeave += (_, _) => UpdateDirectionButtonArts();
+        }
         button.Clicked += (_, _) =>
         {
             _previewDirection = direction;
             UpdatePreview();
         };
+    }
+
+    private static int DirectionSpriteRow(int direction) => direction switch
+    {
+        0 => 2, // Down
+        1 => 3, // Left
+        2 => 1, // Right
+        _ => 0, // Up
+    };
+
+    private void UpdateDirectionButtonArts()
+    {
+        for (var direction = 0; direction < _directionSprites.Length; direction++)
+        {
+            _directionSprites[direction]?.SetTextureRect(
+                direction == _previewDirection ? 56 : 0,
+                DirectionSpriteRow(direction) * 28, 28, 28);
+        }
     }
 
     private void EnsureRenderLayers()
@@ -438,6 +482,7 @@ internal sealed class RoyalStylistWindow : Window
 
     private void UpdatePreview()
     {
+        UpdateDirectionButtonArts();
         if (_renderLayers == null ||
             Globals.Me == null)
         {
