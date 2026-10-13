@@ -60,6 +60,7 @@ internal sealed class LogiCoinShopWindow : Window
     private readonly Button _next;
     private readonly Button _buyMore;
     private readonly List<(LogiCoinOfferCategory Category, Label Label)> _tabs = [];
+    private readonly ImagePanel?[] _sidebarIcons = new ImagePanel?[3];
     private LogiCoinOfferCategory _selectedCategory = LogiCoinOfferCategory.Special;
     private LogiCoinShopOffer[] _offers = [];
     private long _balance;
@@ -133,6 +134,23 @@ internal sealed class LogiCoinShopWindow : Window
         _premiumLabel = AddText(this, "PremiumStatus", "Premium inactive",
             546, 125, 195, 16, 10, Muted);
 
+        // Gift / bag / refresh from Admurin's 4x3 toolbar sprite. The icons
+        // have real actions and never cover the adjacent Buy LogiCoins button.
+        AddSidebarShortcut(0, "Special Offers", 544, () =>
+        {
+            _selectedCategory = LogiCoinOfferCategory.Special;
+            _pageIndex = 0;
+            RebuildCatalog();
+        });
+        AddSidebarShortcut(1, "Equipment", 572, () =>
+        {
+            _selectedCategory = LogiCoinOfferCategory.Equipment;
+            _pageIndex = 0;
+            RebuildCatalog();
+        });
+        AddSidebarShortcut(2, "Refresh Shop", 600, () =>
+            Networking.PacketSender.SendRequestLogiCoinShopState());
+
         _buyMore = new Button(this, "BuyLogiCoins") { Text = string.Empty };
         _buyMore.SetBounds(629, 145, 105, 30);
         AdmurinGuiArt.Add(_buyMore, "BuyLogiCoinsArt", "logicoin_10",
@@ -160,6 +178,39 @@ internal sealed class LogiCoinShopWindow : Window
             543, 480, 202, 63, 10, Good, center: true);
 
         Hide();
+    }
+
+    private void AddSidebarShortcut(int row, string tooltip, int x, Action action)
+    {
+        var button = new Button(this, $"SidebarShortcut{row}") { Text = string.Empty };
+        button.SetBounds(x, 145, 26, 29);
+        var art = AdmurinGuiArt.Add(button, $"SidebarIcon{row}", "logicoin_11",
+            0, 0, 26, 29, 0, row * 28, 28, 28);
+        _sidebarIcons[row] = art;
+        if (art != null)
+        {
+            button.ShouldDrawBackground = false;
+            button.HoverEnter += (_, _) =>
+                art.SetTextureRect(84, row * 28, 28, 28);
+            button.HoverLeave += (_, _) => UpdateSidebarIcons();
+        }
+        button.SetToolTipText(tooltip);
+        button.Clicked += (_, _) => action();
+    }
+
+    private void UpdateSidebarIcons()
+    {
+        for (var row = 0; row < _sidebarIcons.Length; row++)
+        {
+            var active = row switch
+            {
+                0 => _selectedCategory == LogiCoinOfferCategory.Special,
+                1 => _selectedCategory == LogiCoinOfferCategory.Equipment,
+                _ => false,
+            };
+            _sidebarIcons[row]?.SetTextureRect(active ? 56 : 0,
+                row * 28, 28, 28);
+        }
     }
 
     protected override void EnsureInitialized() { }
@@ -205,6 +256,7 @@ internal sealed class LogiCoinShopWindow : Window
 
         foreach (var (category, label) in _tabs)
             label.TextColorOverride = category == _selectedCategory ? Gold : Muted;
+        UpdateSidebarIcons();
 
         if (!_enabled)
         {
