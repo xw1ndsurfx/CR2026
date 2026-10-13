@@ -14,6 +14,10 @@ namespace Intersect.Client.Interface.Game;
 
 internal sealed partial class UserListWindow
 {
+    // Stable GUI controls avoid rebuilding the party list whenever combat changes
+    // a health/mana value. In particular, this keeps member/kick clicks intact.
+    private readonly List<(Guid Id, VitalBar Hp, VitalBar Mp, Label HpText, Label MpText)> _partyVitals = [];
+
     private void DrawGuild()
     {
         var player = Globals.Me;
@@ -144,6 +148,7 @@ internal sealed partial class UserListWindow
         var player = Globals.Me;
         var members = player?.Party;
         var count = members?.Count ?? 0;
+        _partyVitals.Clear();
 
         AddLabel(_body, "PartyHeader",
             count > 0 ? "PARTY   " + count + " / " + Options.Instance.Party.MaximumMembers
@@ -207,10 +212,13 @@ internal sealed partial class UserListWindow
                 manaBar.SetBounds(236, y + 33, 215, 21);
                 manaBar.SetToolTipText("MP: " + mp.ToString("N0") + " / " + mpMax.ToString("N0"));
 
-                AddLabel(_body, "HpCaption" + index, hp.ToString("N0") + " / " + hpMax.ToString("N0"),
+                var hpText = AddLabel(_body, "HpCaption" + index,
+                    hp.ToString("N0") + " / " + hpMax.ToString("N0"),
                     14, y + 59, 213, 17, 9, Muted, true);
-                AddLabel(_body, "MpCaption" + index, mp.ToString("N0") + " / " + mpMax.ToString("N0"),
+                var mpText = AddLabel(_body, "MpCaption" + index,
+                    mp.ToString("N0") + " / " + mpMax.ToString("N0"),
                     236, y + 59, 215, 17, 9, Muted, true);
+                _partyVitals.Add((member.Id, healthBar, manaBar, hpText, mpText));
             }
         }
 
@@ -226,6 +234,42 @@ internal sealed partial class UserListWindow
         AddAction(_footer, "LeaveParty", "LEAVE PARTY", 241, 12, 139, 43,
             count > 0 ? LeaveParty : null,
             count > 0 ? null : "You aren't currently in a party.");
+    }
+
+    private void UpdatePartyVitals()
+    {
+        var members = Globals.Me?.Party;
+        if (members == null || _partyVitals.Count == 0)
+            return;
+
+        foreach (var (id, hpBar, mpBar, hpText, mpText) in _partyVitals)
+        {
+            var member = members.FirstOrDefault(current => current.Id == id);
+            if (member == null)
+                continue;
+
+            var hpMax = member.MaxVital.Length > (int)Vital.Health
+                ? member.MaxVital[(int)Vital.Health] : 0L;
+            var hp = member.Vital.Length > (int)Vital.Health
+                ? member.Vital[(int)Vital.Health] : 0L;
+            var mpMax = member.MaxVital.Length > (int)Vital.Mana
+                ? member.MaxVital[(int)Vital.Mana] : 0L;
+            var mp = member.Vital.Length > (int)Vital.Mana
+                ? member.Vital[(int)Vital.Mana] : 0L;
+
+            hpBar.UpdateRatio(hpMax > 0 ? (double)hp / hpMax : 0);
+            mpBar.UpdateRatio(mpMax > 0 ? (double)mp / mpMax : 0);
+
+            var hpLabel = hp.ToString("N0") + " / " + hpMax.ToString("N0");
+            var mpLabel = mp.ToString("N0") + " / " + mpMax.ToString("N0");
+            if (hpText.Text != hpLabel)
+                hpText.Text = hpLabel;
+            if (mpText.Text != mpLabel)
+                mpText.Text = mpLabel;
+
+            hpBar.SetToolTipText("HP: " + hpLabel);
+            mpBar.SetToolTipText("MP: " + mpLabel);
+        }
     }
 
     private static void InvitePartyMember()
@@ -256,7 +300,7 @@ internal sealed partial class UserListWindow
 
     private sealed class VitalBar : Base
     {
-        private readonly double _ratio;
+        private double _ratio;
         private readonly Color _fill;
         private readonly Color _empty;
 
@@ -267,6 +311,16 @@ internal sealed partial class UserListWindow
             _fill = fill;
             _empty = empty;
             MouseInputEnabled = false;
+        }
+
+        public void UpdateRatio(double ratio)
+        {
+            ratio = Math.Clamp(ratio, 0, 1);
+            if (Math.Abs(_ratio - ratio) < 0.00001)
+                return;
+
+            _ratio = ratio;
+            Invalidate();
         }
 
         protected override void Render(SkinBase skin)

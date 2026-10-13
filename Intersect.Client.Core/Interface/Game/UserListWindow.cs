@@ -130,6 +130,9 @@ internal sealed partial class UserListWindow : Window
         var snapshot = Snapshot();
         if (snapshot != _lastSnapshot)
             Refresh();
+
+        if (_currentPage == Page.Party)
+            UpdatePartyVitals();
     }
 
     private string Snapshot()
@@ -146,11 +149,12 @@ internal sealed partial class UserListWindow : Window
             Page.Guild => "guild:" + player.Guild + ":" + string.Join("|",
                 (player.GuildMembers ?? [])
                     .Select(member => member.Id + ":" + member.Level + ":" + member.Rank + ":" + member.Online)),
+            // Stable member/level changes rebuild the roster. Vital changes
+            // update the already-painted gauge controls without recreating
+            // their click targets during combat.
             Page.Party => "party:" + string.Join("|",
                 (player.Party ?? [])
-                    .Select(member => member.Id + ":" + member.Level + ":" +
-                                      string.Join(",", member.Vital) + ":" +
-                                      string.Join(",", member.MaxVital))),
+                    .Select(member => member.Id + ":" + member.Name + ":" + member.Level)),
             Page.Blocked => "blocked:" + string.Join("|", _blockedUsers.Select(entry => entry.Id + ":" + entry.Name)),
             _ => string.Empty,
         };
