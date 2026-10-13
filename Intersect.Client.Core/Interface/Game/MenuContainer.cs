@@ -58,6 +58,7 @@ public partial class MenuContainer : Panel
     private readonly ImagePanel _guildButtonContainer;
     private readonly Button _guildButton;
     private readonly GuildWindow _guildWindow;
+    private readonly UserListWindow _userListWindow;
 
     private readonly ImagePanel _escapeMenuButtonContainer;
     private readonly Button _escapeMenuButton;
@@ -354,6 +355,7 @@ public partial class MenuContainer : Panel
         _questsWindow = new QuestsWindow(gameCanvas: gameCanvas);
         _mapItemWindow = new MapItemWindow(gameCanvas: gameCanvas);
         _guildWindow = new GuildWindow(gameCanvas: gameCanvas);
+        _userListWindow = new UserListWindow(gameCanvas, OpenGuildManagement);
     }
 
     private void ApplyCorpsRoyauxVerticalMenuLayout()
@@ -465,11 +467,13 @@ public partial class MenuContainer : Panel
         _questsWindow.Update(updateQuestLog);
         _mapItemWindow.Update();
         _guildWindow.Update();
+        _userListWindow.Update();
     }
 
     public void UpdateFriendsList()
     {
         _friendsWindow.UpdateList();
+        _userListWindow.RefreshIfShowing(UserListWindow.Page.Friends);
     }
 
     public void ApplyOwnPlayerProfile(Intersect.Network.Packets.Server.PlayerProfilePacket packet)
@@ -480,6 +484,7 @@ public partial class MenuContainer : Panel
     public void UpdateGuildList()
     {
         _guildWindow.UpdateList();
+        _userListWindow.RefreshIfShowing(UserListWindow.Page.Guild);
     }
 
     // ReSharper disable once MemberCanBePrivate.Global
@@ -492,6 +497,7 @@ public partial class MenuContainer : Panel
 
         _characterWindow.Hide();
         _friendsWindow.Hide();
+        _userListWindow.Hide();
         _inventoryWindow.Hide();
         _partyWindow.Hide();
         _questsWindow.Hide();
@@ -519,41 +525,55 @@ public partial class MenuContainer : Panel
 
     public bool ToggleFriendsWindow()
     {
-        if (_friendsWindow.IsVisible)
-        {
-            _friendsWindow.Hide();
-        }
+        if (_userListWindow.IsShowing(UserListWindow.Page.Friends))
+            _userListWindow.Hide();
         else
         {
             HideWindows();
-            PacketSender.SendRequestFriends();
-            _friendsWindow.UpdateList();
-            _friendsWindow.Show();
+            _userListWindow.OpenPage(UserListWindow.Page.Friends);
         }
 
-        return _friendsWindow.IsVisible;
+        return _userListWindow.IsVisible;
     }
 
     public bool ToggleGuildWindow()
     {
-        if (!_guildWindow.IsHidden)
-        {
-            _guildWindow.Hide();
-        }
+        if (_userListWindow.IsShowing(UserListWindow.Page.Guild))
+            _userListWindow.Hide();
         else
         {
             HideWindows();
-            PacketSender.SendRequestGuild();
-            _guildWindow.UpdateList();
-            _guildWindow.Show();
+            _userListWindow.OpenPage(UserListWindow.Page.Guild);
         }
 
-        return !_guildWindow.IsHidden;
+        return _userListWindow.IsVisible;
     }
 
     public void HideGuildWindow()
     {
         _guildWindow.Hide();
+        if (_userListWindow.IsShowing(UserListWindow.Page.Guild))
+            _userListWindow.Hide();
+    }
+
+    private void OpenGuildManagement()
+    {
+        // Keep all existing guild rank/kick/context-menu features reachable.
+        _userListWindow.Hide();
+        PacketSender.SendRequestGuild();
+        _guildWindow.UpdateList();
+        _guildWindow.Show();
+    }
+
+    private void ToggleUserListPartyWindow()
+    {
+        if (_userListWindow.IsShowing(UserListWindow.Page.Party))
+            _userListWindow.Hide();
+        else
+        {
+            HideWindows();
+            _userListWindow.OpenPage(UserListWindow.Page.Party);
+        }
     }
 
     public void ToggleInventoryWindow()
@@ -622,6 +642,7 @@ public partial class MenuContainer : Panel
         _characterWindow.Hide();
 
         _friendsWindow.Hide();
+        _userListWindow.Hide();
 
         _inventoryWindow.Hide();
 
@@ -644,6 +665,7 @@ public partial class MenuContainer : Panel
     {
         var windowsOpen = _characterWindow.IsVisible() ||
                           _friendsWindow.IsVisible ||
+                          _userListWindow.IsVisible ||
                           _inventoryWindow.IsVisibleInTree ||
                           _questsWindow.IsVisible() ||
                           _spellsWindow.IsVisibleInTree ||
@@ -674,7 +696,12 @@ public partial class MenuContainer : Panel
 
     private void PartyBtn_Clicked(Base sender, MouseButtonState arguments)
     {
-        TogglePartyWindow();
+        // Left-click retains the existing party HUD. Right-click opens the
+        // Admurin User List's Party tab without removing HUD access.
+        if (arguments.MouseButton == MouseButton.Right)
+            ToggleUserListPartyWindow();
+        else
+            TogglePartyWindow();
     }
 
     private void FriendsBtn_Clicked(Base sender, MouseButtonState arguments)
@@ -684,14 +711,9 @@ public partial class MenuContainer : Panel
 
     private void GuildBtn_Clicked(Base sender, MouseButtonState arguments)
     {
-        if (!string.IsNullOrEmpty(Globals.Me?.Guild))
-        {
-            ToggleGuildWindow();
-        }
-        else
-        {
-            ChatboxMsg.AddMessage(new ChatboxMsg(Strings.Guilds.NotInGuild, CustomColors.Alerts.Error, ChatMessageType.Guild));
-        }
+        // Players without a guild see the honest invite-only state instead
+        // of having the Guild tab blocked from the menu.
+        ToggleGuildWindow();
     }
 
     private void QuestBtn_Clicked(Base sender, MouseButtonState arguments)
