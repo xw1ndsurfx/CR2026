@@ -17,6 +17,8 @@ internal sealed class TestContentManager : GameContentManager
     {
         // The base constructor installs Current. Named resolution still uses the real lookup.
         mFontDict.Add("sourcesansproblack", new TestFont());
+        mFontDict.Add("sourcesanspro", new TestFont());
+        mFontDict.Add("empire7", new TestFont());
     }
 
     // Code-only text measurements must not import or generate the game's disk UI layouts.

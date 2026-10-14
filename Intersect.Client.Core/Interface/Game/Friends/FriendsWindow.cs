@@ -70,6 +70,7 @@ partial class FriendsWindow
 
         var headerFrame = new FriendsHeaderChrome(mWindow, "FriendsRosterHeader");
         headerFrame.SetBounds(21, 37, 655, 127);
+        AdmurinGuiArt.Add(mWindow, "AdmurinUserListPanel", "userlist_0", 21, 174, 655, 396);
         headerFrame.SendToBack();
 
         var heading = AddText(mWindow, "FriendsRosterHeading", "FRIENDS",

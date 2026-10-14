@@ -93,6 +93,7 @@ internal partial class ServerContext : ApplicationContext<ServerContext, ServerC
 
     protected override void Dispose(bool disposing)
     {
+        StartupDiagnostics.Mark($"ServerContext.Dispose disposing={disposing}; exitCode={ExitCode}; HasErrors={HasErrors}; caller={Environment.StackTrace}");
         var stopwatch = new Stopwatch();
         stopwatch.Start();
 
@@ -200,6 +201,7 @@ internal partial class ServerContext : ApplicationContext<ServerContext, ServerC
 
     internal static void Exit(int exitCode)
     {
+        StartupDiagnostics.Mark($"ServerContext.Exit code={exitCode}; caller={Environment.StackTrace}");
         Environment.Exit(exitCode);
     }
 

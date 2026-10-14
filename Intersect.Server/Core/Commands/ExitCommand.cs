@@ -13,6 +13,7 @@ namespace Intersect.Server.Core.Commands
 
         protected override void HandleValue(ServerContext context, ParserResult result)
         {
+            StartupDiagnostics.Mark("Exit command requested shutdown");
             context.RequestShutdown();
         }
 

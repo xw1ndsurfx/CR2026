@@ -16,6 +16,15 @@ public sealed record LogiCoinBundleItem(Guid ItemId, int Quantity)
         Quantity is >= 1 and <= 1_000_000_000;
 }
 
+public enum LogiCoinOfferCategory
+{
+    Special = 0,
+    Equipment = 1,
+    Accessory = 2,
+    Pet = 3,
+    Ticket = 4,
+}
+
 public sealed class LogiCoinShopOffer
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -30,6 +39,9 @@ public sealed class LogiCoinShopOffer
     public string Image { get; set; } = string.Empty;
 
     public LogiCoinOfferType Type { get; set; }
+
+    // Existing offers remain in the Special tab. Admins can reassign them in the Editor.
+    public LogiCoinOfferCategory Category { get; set; } = LogiCoinOfferCategory.Special;
 
     public int PriceLogiCoins { get; set; }
 
@@ -91,6 +103,7 @@ public sealed class LogiCoinShopOffer
         !(Image ?? string.Empty).Contains("..", StringComparison.Ordinal) &&
         PriceLogiCoins is >= 0 and <= 1_000_000_000 &&
         DiscountPercent is >= 0 and <= 100 &&
+        Enum.IsDefined(Category) &&
         SortOrder is >= -1_000_000 and <= 1_000_000 &&
         (PromotionStartsAtUtc == null || PromotionEndsAtUtc == null || PromotionStartsAtUtc <= PromotionEndsAtUtc) &&
         Type switch

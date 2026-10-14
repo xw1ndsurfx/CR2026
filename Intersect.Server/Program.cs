@@ -18,6 +18,7 @@ internal static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        StartupDiagnostics.Initialize();
         CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-US");
 
         try
@@ -43,9 +44,12 @@ internal static class Program
             Client.EnqueueNetworkTask = action => ServerNetwork.Pool.QueueWorkItem(action);
 
             Bootstrapper.Start(executingAssembly, args, ExtractWwwroot);
+            StartupDiagnostics.Mark("Bootstrapper.Start returned; Main returning");
         }
         catch (Exception exception)
         {
+            // The dispatcher runs asynchronously; capture the full exception before Main can return.
+            StartupDiagnostics.Failure("Main", exception);
             ServerContext.DispatchUnhandledException(exception.InnerException ?? exception);
         }
     }

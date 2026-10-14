@@ -1129,6 +1129,12 @@ internal sealed partial class PacketHandler
 
             if (target != null)
             {
+                if (target.Blocks(player.Id) || player.Blocks(target.Id))
+                {
+                    PacketSender.SendChatMsg(player, "This private message could not be delivered.", ChatMessageType.Notice);
+                    return;
+                }
+
                 PacketSender.SendChatMsg(
                     player, Strings.Chat.PrivateTo.ToString(target.Name, msg), ChatMessageType.PM, CustomColors.Chat.PrivateChatTo,
                     player.Name
@@ -1157,6 +1163,12 @@ internal sealed partial class PacketHandler
 
             if (player.ChatTarget != null && Player.FindOnline(player.ChatTarget.Id) != null)
             {
+                if (player.ChatTarget.Blocks(player.Id) || player.Blocks(player.ChatTarget.Id))
+                {
+                    PacketSender.SendChatMsg(player, "This private message could not be delivered.", ChatMessageType.Notice);
+                    return;
+                }
+
                 PacketSender.SendChatMsg(
                     player, Strings.Chat.PrivateTo.ToString(player.ChatTarget.Name, msg), ChatMessageType.PM, CustomColors.Chat.PrivateChatTo,
                     player.Name
@@ -2133,6 +2145,8 @@ internal sealed partial class PacketHandler
 
         if (target != null && target.Id != player.Id)
         {
+            if (target.Blocks(player.Id))
+                return;
             target.InviteToParty(player);
 
             return;
@@ -2503,6 +2517,8 @@ internal sealed partial class PacketHandler
                 var target = Player.FindOnline(packet.Name);
                 if (target != null)
                 {
+                    if (target.Blocks(player.Id))
+                        return;
                     if (target.CombatTimer < Timing.Global.Milliseconds)
                     {
                         target.FriendRequest(client.Entity);
@@ -2890,6 +2906,8 @@ internal sealed partial class PacketHandler
                 var target = Player.Find(packet.Name);
                 if (target != null)
                 {
+                    if (target.Blocks(player.Id))
+                        return;
                     // Are we already in a guild? or have a pending invite?
                     if (target.Guild == null && target.PendingGuildInvite == default)
                     {

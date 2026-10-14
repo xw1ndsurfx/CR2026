@@ -1,4 +1,5 @@
 using Intersect.Client.Framework.Gwen;
+using Intersect.Client.Interface.Game;
 using Intersect.Client.Framework.Gwen.Control;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 using Intersect.Client.General;
@@ -17,6 +18,7 @@ internal sealed class ShopProductRow : Base
     private readonly Label _detail;
     private readonly Label _price;
     private readonly Button _action;
+    private readonly bool _admurinArt;
 
     private ShopProductRow(
         Base parent,
@@ -30,30 +32,40 @@ internal sealed class ShopProductRow : Base
     ) : base(parent, name)
     {
         _item = item;
-        Height = 70;
-        MinimumSize = new Point(320, 70);
-        Margin = new Margin(0, 0, 0, 6);
+        Height = 75;
+        MinimumSize = new Point(320, 75);
+        Margin = new Margin(0, 0, 0, 1);
         ShouldDrawBackground = false;
+
+        // The original card is 185x54. Full-image scaling distorted the
+        // square item recess and extended 13px underneath the native scroll
+        // bar (350px viewport minus its 17px gutter). Nine-slice keeps the
+        // pixel-art corners/recess sharp inside the 333px content column.
+        _admurinArt = AdmurinGuiArt.AddNineSlice(
+            this, "AdmurinMerchantOffer", "shop_1",
+            0, 0, 332, 74,
+            185, 54, 50, 5, 7, 5, 75, 7, 9, 7) != null;
 
         _icon = new ImagePanel(this, "Icon")
         {
             ShouldDrawBackground = false,
             MouseInputEnabled = true,
         };
-        _icon.SetBounds(10, 11, 48, 48);
+        _icon.SetBounds(15, 12, 52, 52);
         _icon.Texture = Globals.ContentManager?.GetTexture(Framework.Content.TextureType.Item, item.Icon);
         _icon.RenderColor = item.Color;
         _icon.HoverEnter += (_, _) => Interface.GameUi.ItemDescriptionWindow?.Show(item, 1);
         _icon.HoverLeave += (_, _) => Interface.GameUi.ItemDescriptionWindow?.Hide();
 
-        _name = Label("Name", 70, 8, 154, 23, 12, Color.White);
-        _name.Text = item.Name;
+        _name = Label("Name", 91, 5, 137, 24, 12, new Color(a: 255, r: 245, g: 231, b: 210));
+        _name.Text = Shorten(item.Name, 19);
 
-        _detail = Label("Detail", 70, 31, 154, 19, 9, new Color(180, 180, 180));
-        _detail.Text = detail;
+        _detail = Label("Detail", 91, 29, 137, 18, 9, new Color(a: 255, r: 191, g: 174, b: 152));
+        _detail.Text = Shorten(detail, 24);
 
-        _price = Label("Price", 70, 50, 154, 18, 10, new Color(231, 194, 112));
-        _price.Text = price;
+        _price = Label("Price", 91, 49, 137, 20, 10, new Color(a: 255, r: 231, g: 194, b: 112));
+        _price.Text = Shorten(price, 21);
+        SetToolTipText(item.Name + "\n" + detail + "\n" + price);
 
         _action = new Button(this, "Action")
         {
@@ -62,8 +74,35 @@ internal sealed class ShopProductRow : Base
             Text = action,
             IsDisabled = !enabled,
         };
-        _action.SetBounds(232, 19, 100, 32);
-        _action.Clicked += (_, _) => onAction();
+        _action.SetBounds(232, 19, 95, 36);
+        var buttonArt = AdmurinGuiArt.Add(_action, "AdmurinMerchantButton", "shop_2",
+            0, 0, 95, 36,
+            enabled ? 0 : 56, enabled ? (action == Strings.Shop.SellItem.ToString() ? 54 : 0) : 54,
+            56, 54);
+        if (buttonArt != null)
+        {
+            _action.ShouldDrawBackground = false;
+            // Gwen buttons paint their own label before child sprites. Draw a
+            // separate caption above the sprite so BUY / SELL stays legible.
+            _action.Text = string.Empty;
+            var caption = new Label(_action, "MerchantButtonCaption")
+            {
+                Text = action,
+                Font = Skin.DefaultFont,
+                FontSize = 11,
+                TextColorOverride = enabled ? Color.White :
+                    new Color(a: 255, r: 180, g: 162, b: 150),
+                TextAlign = Pos.Center,
+                AutoSizeToContents = false,
+                MouseInputEnabled = false,
+            };
+            caption.SetBounds(0, 0, 95, 36);
+        }
+        _action.Clicked += (_, _) =>
+        {
+            if (!_action.IsDisabled)
+                onAction();
+        };
     }
 
     public static ShopProductRow Buy(
@@ -104,6 +143,12 @@ internal sealed class ShopProductRow : Base
         action
     );
 
+    private static string Shorten(string? value, int maximum)
+    {
+        var text = (value ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+        return text.Length <= maximum ? text : text[..Math.Max(0, maximum - 3)] + "...";
+    }
+
     private static string Price(int amount, string currency) => amount <= 0 ? Strings.Shop.Free.ToString() : $"{amount} {currency}";
 
     private Label Label(string name, int x, int y, int width, int height, int size, Color color)
@@ -122,6 +167,9 @@ internal sealed class ShopProductRow : Base
 
     protected override void Render(SkinBase skin)
     {
+        if (_admurinArt)
+            return;
+
         skin.Renderer.DrawColor = new Color(34, 38, 42);
         skin.Renderer.DrawFilledRect(new Rectangle(0, 0, Width, Height - 1));
         skin.Renderer.DrawColor = new Color(70, 74, 79);

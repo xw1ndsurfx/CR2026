@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Diagnostics;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
@@ -213,7 +214,62 @@ public partial class MonoContentManager : GameContentManager
 
     public override void LoadGui()
     {
+        // The supplied pixel-art sprites live in a versioned bundle. Unpack
+        // them before building the GUI texture index (Steam builds included).
+        ExtractAdmurinGuiBundle();
         LoadTextureGroup("gui", mGuiDict);
+    }
+
+    private static void ExtractAdmurinGuiBundle()
+    {
+        var root = Path.Combine(ClientConfiguration.ResourcesDirectory, "gui");
+        var bundlePath = Path.Combine(root, "admurin-ui.b64");
+        if (!File.Exists(bundlePath))
+            return;
+
+        try
+        {
+            var encoded = File.ReadAllText(bundlePath).Trim();
+            var fingerprint = Convert.ToHexString(
+                System.Security.Cryptography.SHA256.HashData(
+                    System.Text.Encoding.UTF8.GetBytes(encoded)));
+            var output = Path.Combine(root, "admurin");
+            var stamp = Path.Combine(output, ".bundle-version");
+            if (File.Exists(stamp) && File.ReadAllText(stamp) == fingerprint)
+                return;
+
+            using var compressed = new MemoryStream(Convert.FromBase64String(encoded));
+            using var decompressor =
+                new System.IO.Compression.BrotliStream(
+                    compressed, System.IO.Compression.CompressionMode.Decompress);
+            using var zip = new System.IO.Compression.ZipArchive(
+                decompressor, System.IO.Compression.ZipArchiveMode.Read);
+
+            var expectedRoot = Path.GetFullPath(output) + Path.DirectorySeparatorChar;
+            foreach (var entry in zip.Entries)
+            {
+                var entryName = entry.FullName.Replace('\\', '/');
+                if (!entryName.StartsWith("admurin/", StringComparison.Ordinal) ||
+                    !entryName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var path = Path.GetFullPath(Path.Combine(root, entryName));
+                // Reject absolute paths and traversal regardless of ZIP origin.
+                if (!path.StartsWith(expectedRoot, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                entry.ExtractToFile(path, overwrite: true);
+            }
+
+            Directory.CreateDirectory(output);
+            File.WriteAllText(stamp, fingerprint);
+        }
+        catch (Exception exception)
+        {
+            ApplicationContext.Context.Value?.Logger.LogWarning(
+                exception, "Failed to load the Admurin GUI art bundle. Existing GUI skin will be used.");
+        }
     }
 
     public override void LoadMisc()

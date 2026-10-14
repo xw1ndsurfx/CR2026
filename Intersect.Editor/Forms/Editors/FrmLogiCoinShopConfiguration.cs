@@ -238,7 +238,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
             _offerList.Items.Add(
                 new OfferChoice(
                     offer,
-                    $"[{availability}] {offer.Name} | {type} | {priceText}"
+                    $"[{availability}] [{offer.Category}] {offer.Name} | {type} | {priceText}"
                 )
             );
         }
@@ -285,6 +285,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
             Description = source.Description,
             Image = source.Image ?? string.Empty,
             Type = source.Type,
+            Category = source.Category,
             PriceLogiCoins = source.PriceLogiCoins,
             ItemId = source.ItemId,
             ItemQuantity = source.ItemQuantity,
@@ -308,6 +309,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
         private readonly TextBox _description = new() { Width = 480, Multiline = true, Height = 70 };
         private readonly ComboBox _image = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
         private readonly ComboBox _type = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 180 };
+        private readonly ComboBox _category = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 140 };
         private readonly NumericUpDown _price = new() { Minimum = 0, Maximum = 1_000_000_000, Width = 140, ThousandsSeparator = true };
         private readonly NumericUpDown _sortOrder = new() { Minimum = -1_000_000, Maximum = 1_000_000, Width = 100 };
         private readonly CheckBox _enabled = new() { Text = "Enabled", AutoSize = true };
@@ -339,6 +341,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
 
             _id = source?.Id ?? Guid.NewGuid();
             _type.Items.AddRange(Enum.GetValues<LogiCoinOfferType>().Cast<object>().ToArray());
+            _category.Items.AddRange(Enum.GetValues<LogiCoinOfferCategory>().Cast<object>().ToArray());
             FillItems(_item);
             FillItems(_bundleItem);
             FillImages(_image);
@@ -349,6 +352,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
                 _description.Text = source.Description;
                 _image.Text = source.Image ?? string.Empty;
                 _type.SelectedItem = source.Type;
+                _category.SelectedItem = source.Category;
                 _price.Value = source.PriceLogiCoins;
                 _sortOrder.Value = source.SortOrder;
                 _enabled.Checked = source.Enabled;
@@ -385,6 +389,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
             else
             {
                 _type.SelectedItem = LogiCoinOfferType.Item;
+                _category.SelectedItem = LogiCoinOfferCategory.Special;
                 _enabled.Checked = true;
                 _promoStart.Checked = false;
                 _promoEnd.Checked = false;
@@ -402,7 +407,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
             root.Controls.Add(Row("Name", _name), 0, 0);
             root.Controls.Add(Row("Description", _description), 0, 1);
             root.Controls.Add(Row("Image (resources/images)", _image), 0, 2);
-            root.Controls.Add(Row("Type", _type, "Price (LogiCoins)", _price, "Sort", _sortOrder, _enabled), 0, 3);
+            root.Controls.Add(Row("Type", _type, "Category", _category, "Price (LogiCoins)", _price, "Sort", _sortOrder, _enabled), 0, 3);
             root.Controls.Add(Row("Discount %", _discount, "Starts (local)", _promoStart, "Ends (local)", _promoEnd), 0, 4);
             root.Controls.Add(new Label
             {
@@ -537,6 +542,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
                 Description = _description.Text.Trim(),
                 Image = _image.Text.Trim(),
                 Type = type,
+                Category = _category.SelectedItem is LogiCoinOfferCategory category ? category : LogiCoinOfferCategory.Special,
                 PriceLogiCoins = (int)_price.Value,
                 ItemId = itemId,
                 ItemQuantity = (int)_itemQuantity.Value,

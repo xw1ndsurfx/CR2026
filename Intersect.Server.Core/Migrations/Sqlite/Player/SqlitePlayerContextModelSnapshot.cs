@@ -528,6 +528,10 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                         .HasColumnType("TEXT")
                         .HasColumnName("Appearance");
 
+                    b.Property<string>("BlockedUsersJson")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("BlockedUsers");
+
                     b.Property<DateTime?>("CreationDate")
                         .HasColumnType("TEXT");
 
