@@ -2208,12 +2208,13 @@ public partial class Player : Entity, IPlayer
                         {
                             foreach (var en in eventMap.LocalEntities)
                             {
-                                if (en.Value == null || en.Value.MapId != mapId || ((Event)en.Value).DisablePreview)
+                                if (en.Value == null || en.Value.MapId != mapId || ((Event)en.Value).DisablePreview ||
+                                    !en.Value.HitTest(mouseInWorld.X, mouseInWorld.Y))
                                 {
                                     continue;
                                 }
 
-                                var intersectRect = FloatRect.Intersect(en.Value.WorldPos, targetRect);
+                                var intersectRect = FloatRect.Intersect(en.Value.InteractionBounds, targetRect);
                                 if (intersectRect.Width * intersectRect.Height > bestAreaMatch)
                                 {
                                     bestAreaMatch = intersectRect.Width * intersectRect.Height;
@@ -3011,7 +3012,7 @@ public partial class Player : Entity, IPlayer
                                 !en.Value.HideName &&
                                 (!en.Value.IsStealthed ||
                                  en.Value is Player player && Globals.Me?.IsInMyParty(player) == true) &&
-                                en.Value.WorldPos.Contains(mouseInWorld.X, mouseInWorld.Y))
+                                en.Value.HitTest(mouseInWorld.X, mouseInWorld.Y))
                             {
                                 if (en.Value is not (Projectile or Resource))
                                 {
@@ -3038,7 +3039,7 @@ public partial class Player : Entity, IPlayer
                                     !en.Value.IsHidden &&
                                     (!en.Value.IsStealthed ||
                                      en.Value is Player player && Globals.Me?.IsInMyParty(player) == true) &&
-                                    en.Value.WorldPos.Contains(mouseInWorld.X, mouseInWorld.Y))
+                                    en.Value.HitTest(mouseInWorld.X, mouseInWorld.Y))
                                 {
                                     if (TargetType != 1 || TargetId != en.Value.Id)
                                     {

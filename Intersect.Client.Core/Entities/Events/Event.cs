@@ -24,6 +24,17 @@ public partial class Event : Entity
 
     public EventGraphic Graphic { get; set; } = new EventGraphic();
 
+    // The E tile owns interaction; drawing offsets and transparent sprite margins do not.
+    public override FloatRect InteractionBounds
+    {
+        get
+        {
+            var map = LatestMap?.Id == MapId ? LatestMap : MapInstance;
+            return map == null || map.IsDisposed ? new FloatRect() :
+                new FloatRect(map.X + X * TileWidth, map.Y + Y * TileHeight, TileWidth, TileHeight);
+        }
+    }
+
     public int RenderLevel { get; set; } = 1;
 
     public bool WalkingAnim { get; set; } = true;

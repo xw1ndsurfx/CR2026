@@ -178,10 +178,33 @@ internal static class InterfaceRefreshTests
                 "Visible event feet must sit on E instead of the transparent frame boundary");
             var eventFixture = (Intersect.Client.Entities.Events.Event)RuntimeHelpers.GetUninitializedObject(typeof(Intersect.Client.Entities.Events.Event));
             GC.SuppressFinalize(eventFixture);
+            typeof(Intersect.Client.Entities.Entity).GetField("TileWidth", Hidden)!.SetValue(eventFixture, Options.Instance.Map.TileWidth);
+            typeof(Intersect.Client.Entities.Entity).GetField("TileHeight", Hidden)!.SetValue(eventFixture, Options.Instance.Map.TileHeight);
             var destination = (Intersect.Client.Framework.GenericClasses.FloatRect)eventFixture.GetType()
                 .GetMethod("SpriteDestination", Hidden)!.Invoke(eventFixture, [padded, frame])!;
             Check(destination.X + bounds.X + bounds.Width / 2f == 0 && destination.Y + bounds.Y + bounds.Height == 0,
                 "Client event drawing must use the shared visible anchor");
+            var eventMap = DispatchProxy.Create<Intersect.Client.Framework.Maps.IMapInstance, EventInteractionMapFixture>();
+            eventFixture.MapId = ((EventInteractionMapFixture)(object)eventMap).MapId;
+            eventFixture.LatestMap = eventMap; eventFixture.X = 3; eventFixture.Y = 4;
+            eventFixture.WorldPos = new(-5000, -5000, 10000, 10000);
+            var tileWidth = Options.Instance.Map.TileWidth; var tileHeight = Options.Instance.Map.TileHeight;
+            var tileX = 1000 + 3 * tileWidth; var tileY = -640 + 4 * tileHeight;
+            var hit = eventFixture.InteractionBounds;
+            Check(hit.X == tileX && hit.Y == tileY && hit.Width == tileWidth && hit.Height == tileHeight,
+                "Event selection must be exactly the E tile regardless of oversized/padded drawing bounds");
+            Check(eventFixture.HitTest(tileX, tileY) && eventFixture.HitTest(tileX + tileWidth - 1, tileY + tileHeight - 1) &&
+                !eventFixture.HitTest(tileX - 1, tileY) && !eventFixture.HitTest(tileX, tileY - 1) &&
+                !eventFixture.HitTest(tileX + tileWidth, tileY) && !eventFixture.HitTest(tileX, tileY + tileHeight),
+                "Adjacent tiles and transparent sprite margins must not select the event");
+            eventFixture.WorldPos.Reset(); eventFixture.Graphic = new() { Type = EventGraphicType.None };
+            Check(eventFixture.HitTest(tileX + 1, tileY + 1), "Events without graphics remain anchored to their tile before drawing");
+            eventFixture.X++;
+            Check(!eventFixture.HitTest(tileX, tileY) && eventFixture.HitTest(tileX + tileWidth, tileY),
+                "Moving an event must move its interaction cell with its logical coordinates");
+            var ordinary = (Intersect.Client.Entities.Entity)RuntimeHelpers.GetUninitializedObject(typeof(Intersect.Client.Entities.Entity));
+            GC.SuppressFinalize(ordinary); ordinary.WorldPos = new(10, 20, 80, 90);
+            Check(ordinary.HitTest(15, 25) && !ordinary.HitTest(9, 25), "Ordinary entity hit testing remains based on its graphic");
             System.Console.WriteLine("PASS interface refresh: persisted display options, HUD collapse, cooking gestures/input gates, advancing clock, responsive controls and event anchors");
         }
         finally { Globals.Database = oldDatabase; }
@@ -244,4 +267,17 @@ public class CpuFrameTexture : DispatchProxy
         }
         return null;
     }
+}
+
+public class EventInteractionMapFixture : DispatchProxy
+{
+    public Guid MapId = Guid.NewGuid();
+    protected override object? Invoke(MethodInfo? method, object?[]? args) => method?.Name switch
+    {
+        "get_Id" => MapId,
+        "get_X" => 1000,
+        "get_Y" => -640,
+        "get_IsDisposed" => false,
+        _ => null,
+    };
 }
