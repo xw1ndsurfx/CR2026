@@ -1,13 +1,16 @@
 using System.Runtime.CompilerServices;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Graphics;
+using Intersect.Framework.Core.GameObjects.Events;
 
 namespace Intersect.Client.Entities;
 
 internal static class SpriteVisibleBounds
 {
-    private static readonly ConditionalWeakTable<IGameTexture, Dictionary<(int X, int Y, int W, int H), int>> Cache = new();
-    internal static int TopPadding(IGameTexture texture, FloatRect source)
+    private static readonly ConditionalWeakTable<IGameTexture, Dictionary<(int X, int Y, int W, int H), GraphicBounds>> Cache = new();
+    internal static int TopPadding(IGameTexture texture, FloatRect source) => Get(texture, source).Y;
+
+    internal static GraphicBounds Get(IGameTexture texture, FloatRect source)
     {
         var key = ((int)source.X, (int)source.Y, (int)source.Width, (int)source.Height);
         var cache = Cache.GetOrCreateValue(texture);
@@ -27,30 +30,25 @@ internal static class SpriteVisibleBounds
                 (width, height) = (height, width);
             }
             if (width < 1 || height < 1 || x < 0 || y < 0 || x + width > native.Width || y + height > native.Height)
-                return 0;
+                return new(0, 0, key.Item3, key.Item4);
             try
             {
                 var pixels = new Microsoft.Xna.Framework.Color[width * height];
                 native.GetData(0, new Microsoft.Xna.Framework.Rectangle(x, y, width, height), pixels, 0, pixels.Length);
-                for (var row = 0; row < key.Item4; ++row)
-                    for (var column = 0; column < key.Item3; ++column)
-                        if (pixels[rotated ? column * width + width - 1 - row : row * width + column].A > 0)
-                        { cache[key] = row; return row; }
+                var bounds = GraphicBounds.Read(key.Item3, key.Item4,
+                    (column, row) => pixels[rotated ? column * width + width - 1 - row : row * width + column].A > 0);
+                cache[key] = bounds;
+                return bounds;
             }
             catch { /* A texture being reloaded uses its frame bounds until it is available again. */ }
-            cache[key] = 0;
-            return 0;
+            return new(0, 0, key.Item3, key.Item4);
         }
-        for (var y = 0; y < key.Item4; ++y)
+        var result = GraphicBounds.Read(key.Item3, key.Item4, (x, y) =>
         {
-            for (var x = 0; x < key.Item3; ++x)
-            {
-                var sx = key.Item1 + x; var sy = key.Item2 + y;
-                if (sx >= 0 && sx < texture.Width && sy >= 0 && sy < texture.Height && texture.GetPixel(sx, sy).A > 0)
-                { cache[key] = y; return y; }
-            }
-        }
-        cache[key] = 0;
-        return 0;
+            var sx = key.Item1 + x; var sy = key.Item2 + y;
+            return sx >= 0 && sx < texture.Width && sy >= 0 && sy < texture.Height && texture.GetPixel(sx, sy).A > 0;
+        });
+        cache[key] = result;
+        return result;
     }
 }

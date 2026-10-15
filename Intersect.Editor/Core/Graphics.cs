@@ -1672,7 +1672,8 @@ public static partial class Graphics
                         break;
                 }
 
-                var topLeft = EventGraphicPlacement.TopLeft(destinationX, destinationY, width, height,
+                var visible = TextureVisibleBounds.Get(eventTex, new Microsoft.Xna.Framework.Rectangle(sourceX, sourceY, width, height));
+                var topLeft = EventGraphicPlacement.VisibleTopLeft(destinationX, destinationY, visible,
                     Options.Instance.Map.TileWidth, Options.Instance.Map.TileHeight);
                 destinationX = (int)Math.Ceiling(topLeft.X);
                 destinationY = (int)Math.Ceiling(topLeft.Y);

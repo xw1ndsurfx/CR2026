@@ -166,6 +166,22 @@ internal static class InterfaceRefreshTests
             var calls = ((CpuFrameTexture)(object)texture).Reads;
             paddingMethod.Invoke(null, [texture, source]);
             Check(((CpuFrameTexture)(object)texture).Reads == calls, "Visible sprite bounds must be cached per frame");
+            var padded = DispatchProxy.Create<Intersect.Client.Framework.Graphics.IGameTexture, CpuFrameTexture>();
+            var pixels = (CpuFrameTexture)(object)padded;
+            pixels.Left = 22; pixels.Top = 12; pixels.Right = 46; pixels.Bottom = 43;
+            var frame = new Intersect.Client.Framework.GenericClasses.FloatRect(0, 0, 64, 64);
+            var bounds = (GraphicBounds)assembly.GetType("Intersect.Client.Entities.SpriteVisibleBounds", true)!
+                .GetMethod("Get", BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, [padded, frame])!;
+            Check(bounds == new GraphicBounds(22, 12, 24, 31), "Visible bounds include transparent side and bottom margins");
+            var placed = EventGraphicPlacement.VisibleTopLeft(100, 200, bounds, 32, 32);
+            Check(placed.X + bounds.X + bounds.Width / 2f == 116 && placed.Y + bounds.Y + bounds.Height == 232,
+                "Visible event feet must sit on E instead of the transparent frame boundary");
+            var eventFixture = (Intersect.Client.Entities.Events.Event)RuntimeHelpers.GetUninitializedObject(typeof(Intersect.Client.Entities.Events.Event));
+            GC.SuppressFinalize(eventFixture);
+            var destination = (Intersect.Client.Framework.GenericClasses.FloatRect)eventFixture.GetType()
+                .GetMethod("SpriteDestination", Hidden)!.Invoke(eventFixture, [padded, frame])!;
+            Check(destination.X + bounds.X + bounds.Width / 2f == 0 && destination.Y + bounds.Y + bounds.Height == 0,
+                "Client event drawing must use the shared visible anchor");
             System.Console.WriteLine("PASS interface refresh: persisted display options, HUD collapse, cooking gestures/input gates, advancing clock, responsive controls and event anchors");
         }
         finally { Globals.Database = oldDatabase; }
@@ -217,10 +233,15 @@ internal static class InterfaceRefreshTests
 public class CpuFrameTexture : DispatchProxy
 {
     public int Reads;
+    public int Left, Top = 10, Right = 64, Bottom = 64;
     protected override object? Invoke(MethodInfo? method, object?[]? args)
     {
         if (method?.Name is "get_Width" or "get_Height") return 64;
-        if (method?.Name == "GetPixel") { ++Reads; return new Color((int)args![1]! >= 10 ? 255 : 0, 255, 255, 255); }
+        if (method?.Name == "GetPixel")
+        {
+            ++Reads; var x = (int)args![0]!; var y = (int)args[1]!;
+            return new Color(x >= Left && x < Right && y >= Top && y < Bottom ? 255 : 0, 255, 255, 255);
+        }
         return null;
     }
 }

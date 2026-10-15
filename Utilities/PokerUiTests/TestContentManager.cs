@@ -13,6 +13,9 @@ internal static class TestContentBootstrap
 
 internal sealed class TestContentManager : GameContentManager
 {
+    internal void AddAnimationTexture(string name, Intersect.Client.Framework.Graphics.IGameTexture texture) =>
+        mAnimationDict[name.ToLowerInvariant()] = texture;
+
     public TestContentManager()
     {
         // The base constructor installs Current. Named resolution still uses the real lookup.

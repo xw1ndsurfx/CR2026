@@ -18,6 +18,12 @@ internal static class Program
     private static void Run()
     {
         typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, new Options());
+        var paddedBounds = GraphicBounds.Read(128, 128, (x, y) => x >= 48 && x < 80 && y >= 30 && y < 78);
+        var anchored = EventGraphicPlacement.VisibleTopLeft(320, 640, paddedBounds, 32, 32);
+        Check(anchored.X + paddedBounds.X + paddedBounds.Width / 2f == 336 &&
+            anchored.Y + paddedBounds.Y + paddedBounds.Height == 672, "Editor graphics must sit visibly on the E tile despite transparent padding");
+        var empty = GraphicBounds.Read(32, 32, (_, _) => false);
+        Check(empty == new GraphicBounds(0, 0, 32, 32), "Empty graphic fallback must keep a finite tile anchor");
         using var editor = new FrmEvent(new MapDescriptor(Guid.NewGuid()));
         editor.CurrentPage = new EventPage { WorldMapOffsetX = 48, WorldMapOffsetY = -16 };
         var flags = BindingFlags.Instance | BindingFlags.NonPublic;

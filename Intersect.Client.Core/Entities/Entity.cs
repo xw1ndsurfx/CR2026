@@ -1301,7 +1301,7 @@ public partial class Entity : IEntity
         }
 
         var srcRectangle = new FloatRect(frame * frameWidth, spriteRow * frameHeight, frameWidth, frameHeight);
-        var destRectangle = SpriteDestination(srcRectangle.Width, srcRectangle.Height);
+        var destRectangle = SpriteDestination(texture, srcRectangle);
 
         WorldPos = destRectangle;
         RenderedGraphicTop = destRectangle.Y + SpriteVisibleBounds.TopPadding(texture, srcRectangle);
@@ -1547,7 +1547,7 @@ public partial class Entity : IEntity
         }
 
         var srcRectangle = new FloatRect(frame * frameWidth, spriteRow * frameHeight, frameWidth, frameHeight);
-        var destRectangle = SpriteDestination(srcRectangle.Width, srcRectangle.Height);
+        var destRectangle = SpriteDestination(paperdollTex, srcRectangle);
 
         // Draw the paperdoll texture using: source and destination rectangles along with the render color.
         Graphics.DrawGameTexture(paperdollTex, srcRectangle, destRectangle, renderColor);
@@ -1555,8 +1555,9 @@ public partial class Entity : IEntity
         RenderedGraphicTop = Math.Min(RenderedGraphicTop ?? equipmentTop, equipmentTop);
     }
 
-    private FloatRect SpriteDestination(float width, float height)
+    protected virtual FloatRect SpriteDestination(IGameTexture texture, FloatRect source)
     {
+        var width = source.Width; var height = source.Height;
         var position = EventGraphicPlacement.TopLeft(Origin.X - TileWidth / 2f, Origin.Y - TileHeight,
             width, height, TileWidth, TileHeight);
         return new FloatRect((int)Math.Ceiling(position.X), (int)Math.Ceiling(position.Y), width, height);

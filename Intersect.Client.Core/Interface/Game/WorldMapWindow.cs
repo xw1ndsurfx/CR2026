@@ -760,15 +760,19 @@ internal sealed class WorldMapWindow : Window
                 var markerX = (int)Math.Round(_panX + (gridPosition.X + localX) * cellWidth);
                 var markerY = (int)Math.Round(_panY + (gridPosition.Y + localY) * cellHeight);
 
-                if (markerX < -64 || markerY < -64 || markerX > Width + 64 || markerY > Height + 64)
+                var size = EventMarkerSize(_zoom);
+                var radius = size / 2 + 1;
+                if (markerX < -radius || markerY < -radius || markerX > Width + radius || markerY > Height + radius)
                 {
                     continue;
                 }
 
-                DrawAnimationLayerMarker(renderer, animationDescriptor.Lower, markerX, markerY);
-                DrawAnimationLayerMarker(renderer, animationDescriptor.Upper, markerX, markerY);
+                DrawAnimationLayerMarker(renderer, animationDescriptor.Lower, markerX, markerY, size);
+                DrawAnimationLayerMarker(renderer, animationDescriptor.Upper, markerX, markerY, size);
             }
         }
+
+        internal static int EventMarkerSize(float zoom) => Math.Clamp((int)Math.Round(28f * zoom / 0.78f), 28, 160);
 
         internal static void DrawAnimationLayerMarker(
             RendererBase renderer,
