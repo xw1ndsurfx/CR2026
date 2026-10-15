@@ -150,8 +150,8 @@ public partial class Event : Entity
 
         var map = Maps.MapInstance.Get(MapId);
 
-        var topLeft = EventGraphicPlacement.TopLeft(map.X + X * Options.Instance.Map.TileWidth + OffsetX,
-            map.Y + Y * Options.Instance.Map.TileHeight + OffsetY, srcRectangle.Width, srcRectangle.Height,
+        var topLeft = EventGraphicPlacement.VisibleTopLeft(map.X + X * Options.Instance.Map.TileWidth + OffsetX,
+            map.Y + Y * Options.Instance.Map.TileHeight + OffsetY, SpriteVisibleBounds.Get(texture!, srcRectangle),
             Options.Instance.Map.TileWidth, Options.Instance.Map.TileHeight);
         var destRectangle = new FloatRect(topLeft.X, topLeft.Y, srcRectangle.Width, srcRectangle.Height);
 
@@ -169,6 +169,13 @@ public partial class Event : Entity
         }
 
         Graphics.DrawGameTexture(texture, srcRectangle, destRectangle, Color.White);
+    }
+
+    protected override FloatRect SpriteDestination(IGameTexture texture, FloatRect source)
+    {
+        var position = EventGraphicPlacement.VisibleTopLeft(Origin.X - TileWidth / 2f, Origin.Y - TileHeight,
+            SpriteVisibleBounds.Get(texture, source), TileWidth, TileHeight);
+        return new FloatRect((int)Math.Ceiling(position.X), (int)Math.Ceiling(position.Y), source.Width, source.Height);
     }
 
     public override void LoadTextures(string textureName)

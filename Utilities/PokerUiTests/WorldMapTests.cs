@@ -10,6 +10,8 @@ using Intersect.Framework.Core.WorldMaps;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
 using MessagePack;
+using Intersect.Client.Framework.Graphics;
+using Intersect.Framework.Core.GameObjects.Animations;
 using ControlBase = Intersect.Client.Framework.Gwen.Control.Base;
 using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
 
@@ -18,21 +20,30 @@ internal static class WorldMapTests
     [ModuleInitializer]
     internal static void Run()
     {
-        _ = new TestContentManager();
+        try { RunCore(); } catch (Exception exception) { System.Console.Error.WriteLine(exception); Environment.Exit(1); }
+    }
+
+    private static void RunCore()
+    {
+        var content = new TestContentManager();
         const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
         var assembly = typeof(GameInterface).Assembly;
         var type = assembly.GetType("Intersect.Client.Interface.Game.WorldMapWindow+WorldMapCanvas", true)!;
         var oldOptions = Options.Instance;
+        var oldContent = Globals.ContentManager;
         var oldMe = Globals.Me;
         var oldGrid = Globals.MapGrid;
         var oldGridMaps = Globals.GridMaps.ToDictionary(pair => pair.Key, pair => pair.Value);
         var oldMarkers = Globals.WorldMapSocialMarkers;
+        var oldEventMarkers = Globals.WorldMapEventMarkers;
+        var animation = new AnimationDescriptor(Guid.NewGuid()) { Lower = new() { Sprite = "marker-test", XFrames = 1, YFrames = 1 } };
         var oldLegend = Globals.WorldMapLegend;
         var oldReceived = Globals.WorldMapStateReceivedAt;
         var throttle = typeof(PacketSender).GetField("_nextWorldMapStateRequest", BindingFlags.NonPublic | BindingFlags.Static)!;
         var oldThrottle = throttle.GetValue(null);
         try
         {
+            Globals.ContentManager = content;
             typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, new Options());
             throttle.SetValue(null, long.MaxValue); // Exercise drawing without a real network connection.
             var mapId = Guid.NewGuid();
@@ -54,8 +65,25 @@ internal static class WorldMapTests
             var map = (ControlBase)Activator.CreateInstance(type, [canvas, "TestMap", true, false, false, false, false, 0.78f, false])!;
             map.SetSize(660, 584);
             var zoom = type.GetField("_zoom", flags)!;
+            var markerSize = type.GetMethod("EventMarkerSize", BindingFlags.Static | BindingFlags.NonPublic)!;
+            int SizeAt(float value) => (int)markerSize.Invoke(null, [value])!;
+            Check(SizeAt(.3f) >= 28 && SizeAt(2f) > SizeAt(.78f) && SizeAt(12f) >= 128,
+                "Animation markers must grow with close zoom and stay readable when zoomed out");
             var panX = type.GetField("_panX", flags)!;
             var panY = type.GetField("_panY", flags)!;
+            AnimationDescriptor.Lookup[animation.Id] = animation;
+            content.AddAnimationTexture("marker-test", DispatchProxy.Create<IGameTexture, CpuFrameTexture>());
+            Globals.WorldMapEventMarkers = [new(Guid.NewGuid(), mapId, 10, 8, animation.Id)];
+            var drawMarkers = type.GetMethod("DrawWorldMapEventMarkers", flags)!;
+            panX.SetValue(map, 0f); panY.SetValue(map, 0f);
+            foreach (var testZoom in new[] { .3f, .78f, 2f, 12f })
+            {
+                zoom.SetValue(map, testZoom); renderer.Textures.Clear();
+                drawMarkers.Invoke(map, [renderer, 200, 160]);
+                var drawn = renderer.Textures.Single();
+                Check(drawn.Width == SizeAt(testZoom) && drawn.Height == SizeAt(testZoom),
+                    "Actual event animation rendering must apply zoom-dependent size");
+            }
             void Zoom(float delta) => type.GetMethod("ZoomBy")!.Invoke(map, [delta]);
             void CheckCentered()
             {
@@ -117,8 +145,10 @@ internal static class WorldMapTests
         finally
         {
             Globals.Me = oldMe; Globals.MapGrid = oldGrid;
+            Globals.ContentManager = oldContent;
             Globals.GridMaps.Clear(); foreach (var pair in oldGridMaps) Globals.GridMaps[pair.Key] = pair.Value;
             Globals.WorldMapSocialMarkers = oldMarkers; Globals.WorldMapLegend = oldLegend;
+            Globals.WorldMapEventMarkers = oldEventMarkers; AnimationDescriptor.Lookup.DeleteAt(animation.Id);
             Globals.WorldMapStateReceivedAt = oldReceived; throttle.SetValue(null, oldThrottle);
             typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, oldOptions);
         }
@@ -131,6 +161,9 @@ internal static class WorldMapTests
     private sealed class MapRenderer : RendererBase
     {
         internal readonly List<(Color Color, Rectangle Bounds)> Calls = [];
+        internal readonly List<Rectangle> Textures = [];
+        public override void DrawTexturedRect(IGameTexture? texture, Rectangle targetBounds, Color color,
+            float u1 = 0, float v1 = 0, float u2 = 1, float v2 = 1) => Textures.Add(targetBounds);
         public override void DrawFilledRect(Rectangle rectangle) => Calls.Add((new Color(DrawColor), rectangle));
         public override Point MeasureText(Intersect.Client.Framework.Graphics.IFont? font, int fontSize, string? text, float scale = 1f) =>
             new((int)Math.Ceiling((text?.Length ?? 0) * fontSize * 0.6f * scale), (int)Math.Ceiling((fontSize + 3) * scale));
