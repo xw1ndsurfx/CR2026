@@ -42,6 +42,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         _valueLabel = valueLabel;
 
         SetupDescriptionWindow();
+        ShouldCacheToTexture = false; // The rarity halo is animated on every frame.
         PositionToHoveredControl();
 
         // If a spell, also display the spell description!

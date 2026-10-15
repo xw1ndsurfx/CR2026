@@ -33,30 +33,35 @@ internal static class ItemRarityGlow
         }
 
         // Draw beneath the window, before its content clip, so the halo never covers text.
-        var pulse = 0.72 + 0.28 * Math.Sin(milliseconds % 2400 * (2 * Math.PI / 2400));
-        const int radius = 9;
-        for (var distance = radius; distance >= 1; --distance)
+        var pulse = 0.68 + 0.32 * Math.Sin(milliseconds % 2400 * (2 * Math.PI / 2400));
+        var radius = 24;
+        var previous = renderer.DrawColor;
+        try
         {
-            var falloff = (radius + 1.0 - distance) / radius;
-            var opacity = distance == 1 ? 170 : 65 * falloff * falloff;
-            var alpha = (int)Math.Round(opacity * pulse * color.A / 255.0);
-            renderer.PushDrawColor(new Color(alpha, color.R, color.G, color.B));
-            try
+            for (var distance = radius; distance >= 1; --distance)
             {
-                var x = -distance;
-                var y = -distance;
-                var outerWidth = width + 2 * distance;
-                var outerHeight = height + 2 * distance;
-                // Non-overlapping strips keep corner brightness consistent with the edges.
-                renderer.DrawFilledRect(new Rectangle(x, y, outerWidth, 1));
-                renderer.DrawFilledRect(new Rectangle(x, height + distance - 1, outerWidth, 1));
-                renderer.DrawFilledRect(new Rectangle(x, y + 1, 1, outerHeight - 2));
-                renderer.DrawFilledRect(new Rectangle(width + distance - 1, y + 1, 1, outerHeight - 2));
-            }
-            finally
-            {
-                renderer.PopDrawColor();
+                var falloff = Math.Exp(-Math.Pow(distance / (8.0 + 2 * pulse), 2) / 2);
+                var alpha = (int)Math.Round(105 * pulse * falloff * color.A / 255.0);
+                if (alpha < 1) continue;
+                // The concrete renderer overrides DrawColor; its color-stack helpers do not set it.
+                var tint = new Color(alpha, color.R, color.G, color.B);
+                renderer.DrawColor = tint;
+                renderer.PushDrawColor(tint);
+                try
+                {
+                    var x = -distance;
+                    var y = -distance;
+                    var outerWidth = width + 2 * distance;
+                    var outerHeight = height + 2 * distance;
+                    // Non-overlapping strips keep corner brightness consistent with the edges.
+                    renderer.DrawFilledRect(new Rectangle(x, y, outerWidth, 1));
+                    renderer.DrawFilledRect(new Rectangle(x, height + distance - 1, outerWidth, 1));
+                    renderer.DrawFilledRect(new Rectangle(x, y + 1, 1, outerHeight - 2));
+                    renderer.DrawFilledRect(new Rectangle(width + distance - 1, y + 1, 1, outerHeight - 2));
+                }
+                finally { renderer.PopDrawColor(); }
             }
         }
+        finally { renderer.DrawColor = previous; }
     }
 }

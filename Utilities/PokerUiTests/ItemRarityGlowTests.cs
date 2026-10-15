@@ -9,6 +9,11 @@ internal static class ItemRarityGlowTests
     [ModuleInitializer]
     internal static void Run()
     {
+        try { RunCore(); } catch (Exception exception) { System.Console.Error.WriteLine(exception); Environment.Exit(1); }
+    }
+
+    private static void RunCore()
+    {
         var type = typeof(ItemDescriptionWindow).Assembly.GetType(
             "Intersect.Client.Interface.Game.DescriptionWindows.ItemRarityGlow", true)!;
         var resolve = type.GetMethod("ResolveColor", BindingFlags.NonPublic | BindingFlags.Static)!;
@@ -31,7 +36,7 @@ internal static class ItemRarityGlowTests
 
         using var renderer = new RecordingRenderer();
         var original = new Color(10, 20, 30);
-        renderer.PushDrawColor(original);
+        renderer.DrawColor = original;
         draw.Invoke(null, [renderer, 200, 150, red, 600L]);
         var brightAlpha = renderer.Calls.Max(call => call.Color.A);
         Check(ReferenceEquals(renderer.DrawColor, original), "Drawing must restore the renderer color stack");
@@ -40,11 +45,12 @@ internal static class ItemRarityGlowTests
             call.Bounds.X >= 200 || call.Bounds.Y >= 150), "Halo must stay outside the tooltip content");
         Check(renderer.Calls.All(call => call.Color.R == red.R && call.Color.G == red.G && call.Color.B == red.B),
             "Glow must retain the configured rarity hue");
+        Check(brightAlpha < 120 && renderer.Calls.Select(call => call.Color.A).Distinct().Count() > 12,
+            "Halo must use a soft translucent gradient instead of an opaque outline");
         renderer.Calls.Clear();
         draw.Invoke(null, [renderer, 200, 150, red, 1800L]);
         Check(renderer.Calls.Max(call => call.Color.A) < brightAlpha, "Halo must pulse over time");
         Check(red.A == 255 && red.R == 220, "Shared rarity colors must not be mutated");
-        renderer.PopDrawColor();
         System.Console.WriteLine("PASS item rarity glow: tiers, configured colors, outer bounds, pulse and renderer state");
     }
 
@@ -55,6 +61,8 @@ internal static class ItemRarityGlowTests
 
     private sealed class RecordingRenderer : RendererBase
     {
+        // Match IntersectRenderer: its actual draw color is independent of Base's stack.
+        public override Color DrawColor { get; set; } = Color.White;
         internal readonly List<(Color Color, Rectangle Bounds)> Calls = [];
         public override void DrawFilledRect(Rectangle rectangle) => Calls.Add((new Color(DrawColor), rectangle));
     }
