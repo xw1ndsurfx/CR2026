@@ -1827,7 +1827,8 @@ internal sealed partial class PacketHandler
     //PlaySoundPacket
     public void HandlePacket(IPacketSender packetSender, PlaySoundPacket packet)
     {
-        Audio.AddGameSound(packet.Sound, false);
+        if (packet.VoiceSound) Audio.AddVoiceSound(packet.Sound);
+        else Audio.AddGameSound(packet.Sound, false);
     }
 
     //StopSoundsPacket
@@ -2069,7 +2070,8 @@ internal sealed partial class PacketHandler
         Time.LoadTime(
             packet.Time,
             Color.FromArgb(packet.Color.A, packet.Color.R, packet.Color.G, packet.Color.B),
-            packet.Rate
+            packet.Rate,
+            packet.DayPhasesJson
         );
     }
 

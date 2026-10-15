@@ -285,6 +285,7 @@ public partial class SettingsWindow : Window
         _displayOptions["ShowMinimap"] = new LabeledCheckBox(_informationSettings, "ShowMinimap")
         { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show minimap" };
 
+
         // Game Settings - Information: Friends.
         _friendOverheadInfoCheckbox = new LabeledCheckBox(parent: _informationSettings, name: nameof(_friendOverheadInfoCheckbox))
         {
@@ -530,6 +531,9 @@ public partial class SettingsWindow : Window
             DockChildSpacing = new Padding(0, 4, 0, 0),
             InnerPanelPadding = new Padding(4),
         };
+
+        _displayOptions["EnableVoiceSounds"] = new LabeledCheckBox(_audioContainer, "EnableVoiceSounds")
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Enable voice sounds" };
 
         // Audio Settings - Music Slider
         _musicSlider = new LabeledSlider(parent: _audioContainer, name: nameof(_musicSlider))

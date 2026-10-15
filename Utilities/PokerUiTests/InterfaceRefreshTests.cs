@@ -33,9 +33,12 @@ internal static class InterfaceRefreshTests
             Check(database.ShowMyLevel && database.ShowQuestHud && database.ShowWorldBossHud, "New settings default to visible");
             database.ShowPlayerLevels = false; database.ShowMyGuild = false; database.ShowQuestHud = false;
             database.ShowInvasionHud = false; database.SavePreferences();
+            database.EnableVoiceSounds = false; database.SavePreferences();
             var restored = new MemoryPreferences(database.Values); restored.LoadPreferences();
             Check(!restored.ShowPlayerLevels && !restored.ShowMyGuild && !restored.ShowQuestHud && !restored.ShowInvasionHud,
                 "Display settings must survive reload");
+            Check(!restored.EnableVoiceSounds && Intersect.Client.Core.Audio.AddVoiceSound("dialog.wav") == null,
+                "Voice preference must persist and prevent muted voice playback");
             using var renderer = new MetricsRenderer(); using var skin = new TestSkin(renderer);
             using var canvas = new Canvas(skin) { Size = new Point(1024, 720) };
             Check(!Intersect.Client.Interface.Interface.HasInGameUI, "Login regression fixture must precede GameUi assignment");

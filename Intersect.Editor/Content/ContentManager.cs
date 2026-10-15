@@ -367,6 +367,7 @@ public static partial class GameContentManager
 
     public static void LoadSounds()
     {
+        Directory.CreateDirectory(Path.Combine("resources", VoiceSoundFiles.Folder));
         sSoundDict.Clear();
         if (!Directory.Exists("resources/" + "sounds"))
         {

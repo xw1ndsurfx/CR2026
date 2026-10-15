@@ -36,6 +36,15 @@ internal static class Program
                 "Loading/saving must preserve one percent animation scale");
         }
         using var editor = new FrmEvent(new MapDescriptor(Guid.NewGuid()));
+        using (var voiceEditor = new Intersect.Editor.Forms.Editors.Events.Event_Commands.EventCommandPlayBgs(
+            new Intersect.Framework.Core.GameObjects.Events.Commands.PlaySoundCommand { VoiceSound = true, File = "dialog.wav" }, editor))
+        {
+            var voiceFlag = (CheckBox)voiceEditor.GetType().GetField("_voiceSound", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(voiceEditor)!;
+            var group = (GroupBox)voiceEditor.GetType().GetField("grpPlayBGS", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(voiceEditor)!;
+            Check(voiceFlag.Checked && group.Text == "Play Voice Sound", "Event sound editor restores voice mode");
+            voiceFlag.Checked = false;
+            Check(group.Text == "Play Sound", "Event sound editor switches back to normal effects");
+        }
         editor.CurrentPage = new EventPage { WorldMapOffsetX = 48, WorldMapOffsetY = -16 };
         var flags = BindingFlags.Instance | BindingFlags.NonPublic;
         typeof(FrmEvent).GetMethod("LoadWorldMapOffsets", flags)!.Invoke(editor, null);

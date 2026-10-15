@@ -1707,9 +1707,9 @@ public static partial class PacketSender
     }
 
     //PlaySoundPacket
-    public static void SendPlaySound(Player player, string sound)
+    public static void SendPlaySound(Player player, string sound, bool voiceSound = false)
     {
-        player.SendPacket(new PlaySoundPacket(sound));
+        player.SendPacket(new PlaySoundPacket(sound) { VoiceSound = voiceSound });
     }
 
     //StopSoundPacket

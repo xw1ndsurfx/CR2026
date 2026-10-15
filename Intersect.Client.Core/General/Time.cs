@@ -19,8 +19,15 @@ public static partial class Time
 
     private static long sUpdateTime;
 
-    public static void LoadTime(DateTime timeUpdate, Color clr, float rate)
+    private static Intersect.GameObjects.DayPhaseSchedule _phaseSchedule = new();
+    public static bool HasServerTime { get; private set; }
+    public static Intersect.GameObjects.DayPhase CurrentPhase => _phaseSchedule.GetPhase(sServerTime);
+
+    public static void LoadTime(DateTime timeUpdate, Color clr, float rate, string dayPhasesJson = "")
     {
+        HasServerTime = true;
+        try { _phaseSchedule = Newtonsoft.Json.JsonConvert.DeserializeObject<Intersect.GameObjects.DayPhaseSchedule>(dayPhasesJson) ?? new(); }
+        catch { _phaseSchedule = new(); }
         sServerTime = timeUpdate;
         sTargetColor = clr;
         sUpdateTime = 0;

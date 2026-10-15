@@ -333,7 +333,22 @@ public partial class Entity : IEntity
 
     public Vector2 Origin => LatestMap == default ? Vector2.Zero : mOrigin;
 
-    protected virtual Vector2 CenterOffset => (Texture == default) ? Vector2.Zero : (Vector2.UnitY * Texture.Center.Y / Options.Instance.Sprites.Directions);
+    protected virtual Vector2 CenterOffset
+    {
+        get
+        {
+            if (Texture is not { } texture) return Vector2.Zero;
+            var frames = Math.Max(1, Options.Instance.Sprites.NormalFrames);
+            var width = texture.Width / frames;
+            var height = texture.Height / Math.Max(1, Options.Instance.Sprites.Directions);
+            for (var frame = 0; frame < frames; frame++)
+            {
+                var visible = SpriteVisibleBounds.Get(texture, new FloatRect(frame * width, PickSpriteRow(DirectionFacing) * height, width, height));
+                if (!visible.IsEmpty) return Vector2.UnitY * visible.Height / 2f;
+            }
+            return Vector2.UnitY * TileHeight / 2f;
+        }
+    }
 
     public Vector2 Center => Origin - CenterOffset;
 
@@ -1787,7 +1802,13 @@ public partial class Entity : IEntity
         if (Graphics.Renderer == default) return 0f;
         float Height(string text) => Graphics.Renderer.MeasureText(
             text, Graphics.EntityNameFont, Graphics.EntityNameFontSize, NameplateScale).Y;
-        var layout = NameplateLayout.Create(GetTop(), this is not Event && ShouldDrawHpBar ? GetBoundingHpBarTexture().Height : 0,
+        var labelTop = GetTop();
+        if (this is not Event && ShouldDrawHpBar)
+        {
+            var bar = GetBoundingHpBarTexture();
+            labelTop = Math.Min(labelTop, GetHpBarPosition(bar).Y - bar.Height / 2f);
+        }
+        var layout = NameplateLayout.Create(labelTop, 0,
             Height(DisplayedName), ShowTitle && !string.IsNullOrWhiteSpace(FooterLabel.Text) ? Height(FooterLabel.Text) : 0,
             ShowTitle && !string.IsNullOrWhiteSpace(HeaderLabel.Text) ? Height(HeaderLabel.Text) : 0,
             this is Player { IsAfk: true } ? Height("AFK") : 0,

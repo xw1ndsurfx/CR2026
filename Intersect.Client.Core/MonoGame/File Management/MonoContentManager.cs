@@ -498,6 +498,16 @@ public partial class MonoContentManager : GameContentManager
             }
         }
 
+        Directory.CreateDirectory(Path.Combine(ClientConfiguration.ResourcesDirectory, VoiceSoundFiles.Folder));
+        foreach (var voice in VoiceSoundFiles.List(ClientConfiguration.ResourcesDirectory))
+        {
+            if (VoiceSoundFiles.Key(voice) is { } key)
+            {
+                var path = Path.Combine(ClientConfiguration.ResourcesDirectory, VoiceSoundFiles.Folder, voice);
+                mSoundDict[key] = new MonoSoundSource(key, path);
+            }
+        }
+
         // If we have a sound index file, load from it!
         if (File.Exists(Path.Combine(ClientConfiguration.ResourcesDirectory, "packs", "sound.index")))
         {
