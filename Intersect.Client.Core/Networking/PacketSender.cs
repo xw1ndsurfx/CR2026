@@ -90,6 +90,16 @@ public static partial class PacketSender
         Network.SendPacket(new RequestWorldMapPacket());
     }
 
+    private static long _nextWorldMapStateRequest;
+
+    public static void RefreshWorldMapState()
+    {
+        var now = Environment.TickCount64;
+        if (Globals.Me == null || now < _nextWorldMapStateRequest) return;
+        _nextWorldMapStateRequest = now + 1000;
+        Network.SendPacket(new RequestWorldMapPacket { StateOnly = true });
+    }
+
     public static void SendNeedMapForGrid(MapInstance? mapInstance = default)
     {
         if (mapInstance == default && !MapInstance.TryGet(Globals.Me.MapId, out mapInstance))

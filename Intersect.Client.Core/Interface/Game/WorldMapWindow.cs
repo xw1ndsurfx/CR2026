@@ -36,6 +36,7 @@ internal sealed class WorldMapWindow : Window
 {
     private readonly WorldMapCanvas _mapCanvas;
     private readonly Label _hint;
+    private readonly WorldMapLegendView _legend;
     private bool _initialized;
 
     public WorldMapWindow(Canvas parent) : base(parent, "World Map", false, nameof(WorldMapWindow))
@@ -46,7 +47,7 @@ internal sealed class WorldMapWindow : Window
         IsResizable = false;
         IsClosable = true;
 
-        var zoomOut = new Button(this, "WorldMapZoomOut") { Text = "−", Font = Skin.DefaultFont, FontSize = 12 };
+        var zoomOut = new Button(this, "WorldMapZoomOut") { Text = "-", Font = Skin.DefaultFont, FontSize = 12 };
         var zoomIn = new Button(this, "WorldMapZoomIn") { Text = "+", Font = Skin.DefaultFont, FontSize = 12 };
         var center = new Button(this, "WorldMapCenter") { Text = "Center on player", Font = Skin.DefaultFont, FontSize = 10 };
 
@@ -56,10 +57,11 @@ internal sealed class WorldMapWindow : Window
             Font = Skin.DefaultFont,
             FontSize = 9,
             TextColorOverride = new Color(200, 200, 200),
-            Text = "Drag to move • Mouse wheel or +/- to zoom • Gold marker = you • Gold route = quest path",
+            Text = "Drag to move / Mouse wheel or +/- to zoom / Zoom centers on you",
         };
 
         _mapCanvas = new WorldMapCanvas(this, "WorldMapCanvas");
+        _legend = new WorldMapLegendView(this);
         zoomOut.Clicked += (_, _) => _mapCanvas.ZoomBy(-0.15f);
         zoomIn.Clicked += (_, _) => _mapCanvas.ZoomBy(0.15f);
         center.Clicked += (_, _) => _mapCanvas.CenterOnPlayer();
@@ -68,7 +70,8 @@ internal sealed class WorldMapWindow : Window
         zoomIn.SetBounds(60, 16, 34, 28);
         center.SetBounds(104, 16, 130, 28);
         _hint.SetBounds(250, 18, 640, 24);
-        _mapCanvas.SetBounds(20, 54, 880, 584);
+        _mapCanvas.SetBounds(20, 54, 660, 584);
+        _legend.SetBounds(690, 54, 210, 584);
 
         SetSize(920, 680);
 
@@ -124,7 +127,6 @@ internal sealed class WorldMapWindow : Window
         private const int BaseCellWidth = 180;
         private const int PreviewWidth = 288;
         private const int PreviewBuildsPerFrame = 4;
-        private const int ReRequestIntervalFrames = 120;
 
         private readonly Dictionary<Guid, IGameRenderTexture> _previews = [];
         private readonly Dictionary<Guid, int> _previewRevisions = [];
@@ -146,7 +148,7 @@ internal sealed class WorldMapWindow : Window
         private float _panX;
         private float _panY;
         private bool _dragging;
-        private int _requestRefreshCounter;
+        private long _nextMapRefreshAt = Environment.TickCount64 + 30_000;
 
         public WorldMapCanvas(Base parent, string name) : this(
             parent,
@@ -180,7 +182,7 @@ internal sealed class WorldMapWindow : Window
             _showEnemies = showEnemies;
             _preloadWorld = preloadWorld;
             _autoCenterOnPlayer = autoCenterOnPlayer;
-            _zoom = Math.Clamp(initialZoom, 0.30f, 2.25f);
+            _zoom = Math.Clamp(initialZoom, 0.30f, 12f);
 
             MouseInputEnabled = interactive;
             KeyboardInputEnabled = false;
@@ -208,8 +210,8 @@ internal sealed class WorldMapWindow : Window
                 return;
             }
 
-            _zoom = Math.Clamp(_zoom + delta, 0.30f, 2.25f);
-            Invalidate();
+            _zoom = Math.Clamp(_zoom * MathF.Pow(1.25f, delta / 0.15f), 0.30f, 12f);
+            CenterOnPlayer();
         }
 
         public void CenterOnPlayer()
@@ -248,6 +250,7 @@ internal sealed class WorldMapWindow : Window
             }
 
             var renderer = skin.Renderer;
+            PacketSender.RefreshWorldMapState();
 
             Fill(renderer, new Color(a: 252, r: 7, g: 10, b: 13), 0, 0, Width, Height);
 
@@ -264,13 +267,24 @@ internal sealed class WorldMapWindow : Window
             var gridWidth = grid.GetLength(0);
             var gridHeight = grid.GetLength(1);
 
-            // Keep asking for any maps that are still missing. SendNeedMap filters maps that
-            // are already loaded or already requested, so this is safe and lets the World Map
-            // recover if a distant map was not delivered on the first request.
-            if (_preloadWorld && ++_requestRefreshCounter >= ReRequestIntervalFrames)
+            // Refresh map revisions periodically. Social positions use their own small,
+            // once-per-second snapshot without retransmitting all map tiles.
+            if (_preloadWorld && Environment.TickCount64 >= _nextMapRefreshAt)
             {
-                _requestRefreshCounter = 0;
+                _nextMapRefreshAt = Environment.TickCount64 + 30_000;
                 PacketSender.SendWorldMapRequest();
+            }
+
+            // Detailed previews are only useful in the viewport; release them when panning away.
+            foreach (var (id, cached) in _previews.ToArray())
+            {
+                if (cached.Width <= PreviewWidth || !Globals.GridMaps.TryGetValue(id, out var position)) continue;
+                var x = _panX + position.X * cellWidth;
+                var y = _panY + position.Y * cellHeight;
+                if (x <= Width && y <= Height && x + cellWidth >= 0 && y + cellHeight >= 0) continue;
+                cached.Dispose();
+                _previews.Remove(id);
+                _previewRevisions.Remove(id);
             }
 
             // The full World Map preloads every cell. The minimap deliberately skips this
@@ -315,13 +329,15 @@ internal sealed class WorldMapWindow : Window
 
                     var map = MapInstance.Get(mapId);
                     var preview = GetValidPreview(mapId, map);
+                    var desiredWidth = DesiredPreviewWidth;
 
                     // A visible cell gets priority if the preload budget has not been used up.
-                    if (preview == null && previewsBuiltThisFrame < PreviewBuildsPerFrame)
+                    if ((preview == null || preview.Width < desiredWidth) && previewsBuiltThisFrame < PreviewBuildsPerFrame)
                     {
-                        preview = BuildPreviewForMap(mapId);
-                        if (preview != null)
+                        var upgraded = BuildPreviewForMap(mapId, desiredWidth);
+                        if (upgraded != null)
                         {
+                            preview = upgraded;
                             ++previewsBuiltThisFrame;
                         }
                     }
@@ -344,15 +360,6 @@ internal sealed class WorldMapWindow : Window
                         // No GUIDs and no bright debug-blue cells.
                         Fill(renderer, new Color(a: 255, r: 18, g: 23, b: 27), x, y, cellWidth + 1, cellHeight + 1);
                     }
-
-                    // Keep a very subtle editor-style cell boundary so adjacent maps remain
-                    // distinguishable without bringing back the old debug-grid appearance.
-                    Outline(renderer, new Color(a: 150, r: 86, g: 96, b: 104), x, y, cellWidth, cellHeight, 1);
-
-                    if (Globals.Me?.MapId == mapId)
-                    {
-                        Outline(renderer, new Color(a: 255, r: 255, g: 214, b: 92), x, y, cellWidth, cellHeight, 2);
-                    }
                 }
             }
 
@@ -371,6 +378,7 @@ internal sealed class WorldMapWindow : Window
                 DrawWorldMapEventMarkers(renderer, cellWidth, cellHeight);
             }
 
+            DrawSocialMarkers(renderer);
             DrawPlayerMarker(renderer);
         }
 
@@ -762,11 +770,12 @@ internal sealed class WorldMapWindow : Window
             }
         }
 
-        private void DrawAnimationLayerMarker(
+        internal static void DrawAnimationLayerMarker(
             RendererBase renderer,
             AnimationLayer layer,
             int markerX,
-            int markerY
+            int markerY,
+            int markerHeight = 28
         )
         {
             if (layer == null ||
@@ -796,8 +805,9 @@ internal sealed class WorldMapWindow : Window
             var frameX = frame % layer.XFrames;
             var frameY = frame / layer.XFrames;
 
-            var markerHeight = Math.Clamp((int)Math.Round(30 * _zoom), 20, 52);
-            var markerWidth = Math.Max(12, (int)Math.Round(markerHeight * (frameWidth / (float)frameHeight)));
+            var scale = Math.Min(markerHeight / (float)frameHeight, markerHeight / (float)frameWidth);
+            var markerWidth = Math.Max(1, (int)Math.Round(frameWidth * scale));
+            markerHeight = Math.Max(1, (int)Math.Round(frameHeight * scale));
 
             var u1 = frameX / (float)layer.XFrames;
             var v1 = frameY / (float)layer.YFrames;
@@ -828,7 +838,12 @@ internal sealed class WorldMapWindow : Window
                 return null;
             }
 
-            if (map == null || !_previewRevisions.TryGetValue(mapId, out var revision) || revision == map.Revision)
+            int? currentRevision;
+            lock (Globals.GameLock)
+            {
+                currentRevision = Globals.WorldMapMapData.TryGetValue(mapId, out var packet) ? packet.Revision : map?.Revision;
+            }
+            if (currentRevision == null || !_previewRevisions.TryGetValue(mapId, out var revision) || revision == currentRevision)
             {
                 return preview;
             }
@@ -873,7 +888,12 @@ internal sealed class WorldMapWindow : Window
             return map;
         }
 
-        private IGameRenderTexture? BuildPreviewForMap(Guid mapId)
+        private int DesiredPreviewWidth => Math.Min(
+            Math.Max(PreviewWidth, Options.Instance.Map.MapWidth * Options.Instance.Map.TileWidth),
+            CellWidth <= PreviewWidth ? PreviewWidth : CellWidth <= 576 ? 576 : CellWidth <= 1152 ? 1152 : 2304
+        );
+
+        private IGameRenderTexture? BuildPreviewForMap(Guid mapId, int previewWidth = PreviewWidth)
         {
             // Prefer the dedicated World Map source packet. It is not subject to the
             // gameplay 3x3 map lifecycle and therefore remains available for every cell.
@@ -890,7 +910,7 @@ internal sealed class WorldMapWindow : Window
                 var previewMap = CreateDetachedWorldMapInstance(sourcePacket, loadTiles: true);
                 previewMap.Autotiles.InitAutotiles(previewMap.GenerateAutotileGrid());
 
-                var preview = BuildPreview(previewMap);
+                var preview = BuildPreview(previewMap, previewWidth);
                 if (preview != null)
                 {
                     _previewRevisions[mapId] = sourcePacket.Revision;
@@ -901,10 +921,10 @@ internal sealed class WorldMapWindow : Window
 
             // Fallback for the player's local area while the dedicated packets arrive.
             var liveMap = MapInstance.Get(mapId);
-            return liveMap is { IsLoaded: true } ? BuildPreview(liveMap) : null;
+            return liveMap is { IsLoaded: true } ? BuildPreview(liveMap, previewWidth) : null;
         }
 
-        private IGameRenderTexture? BuildPreview(MapInstance map)
+        private IGameRenderTexture? BuildPreview(MapInstance map, int previewWidth)
         {
             if (CoreGraphics.Renderer == null ||
                 !GameContentManager.Current.TilesetsLoaded ||
@@ -917,7 +937,6 @@ internal sealed class WorldMapWindow : Window
             var mapOptions = Options.Instance.Map;
             var sourceWidth = Math.Max(1, mapOptions.MapWidth * mapOptions.TileWidth);
             var sourceHeight = Math.Max(1, mapOptions.MapHeight * mapOptions.TileHeight);
-            var previewWidth = PreviewWidth;
             var previewHeight = Math.Max(1, (int)Math.Round(previewWidth * (sourceHeight / (float)sourceWidth)));
 
             var preview = CoreGraphics.Renderer.CreateRenderTexture(previewWidth, previewHeight);
@@ -1089,8 +1108,49 @@ internal sealed class WorldMapWindow : Window
             var px = (int)Math.Round(_panX + (grid.X + localX) * CellWidth);
             var py = (int)Math.Round(_panY + (grid.Y + localY) * CellHeight);
 
-            Fill(renderer, new Color(a: 255, r: 255, g: 214, b: 92), px - 6, py - 6, 12, 12);
-            Outline(renderer, new Color(a: 255, r: 35, g: 30, b: 18), px - 7, py - 7, 14, 14, 2);
+            DrawLocationMarker(renderer, px, py, Color.White);
+        }
+
+        private void DrawSocialMarkers(RendererBase renderer)
+        {
+            var player = Globals.Me;
+            if (player == null || Environment.TickCount64 - Globals.WorldMapStateReceivedAt > 5000) return;
+            foreach (var marker in Globals.WorldMapSocialMarkers)
+            {
+                if (marker.PlayerId == player.Id || !Globals.GridMaps.TryGetValue(marker.MapId, out var grid)) continue;
+                // Live nearby entities are smoother than the once-per-second distant snapshot.
+                var entity = Globals.Entities.GetValueOrDefault(marker.PlayerId);
+                if (entity != null && !entity.ShouldDraw) continue;
+                var mapId = entity?.MapId ?? marker.MapId;
+                if (!Globals.GridMaps.TryGetValue(mapId, out grid)) continue;
+                var x = entity?.X ?? marker.X;
+                var y = entity?.Y ?? marker.Y;
+                var px = (int)Math.Round(_panX + (grid.X + (x + 0.5f) / Math.Max(1, Options.Instance.Map.MapWidth)) * CellWidth);
+                var py = (int)Math.Round(_panY + (grid.Y + (y + 0.5f) / Math.Max(1, Options.Instance.Map.MapHeight)) * CellHeight);
+                if (px < -10 || py < -10 || px > Width + 10 || py > Height + 10) continue;
+                DrawLocationMarker(renderer, px, py, marker.Party ? PartyMarkerColor : FriendMarkerColor);
+                if (_interactive)
+                {
+                    renderer.DrawColor = Color.Black;
+                    renderer.RenderText(Skin.DefaultFont, 9, new Point(px + 10, py - 6), marker.Name);
+                    renderer.DrawColor = Color.White;
+                    renderer.RenderText(Skin.DefaultFont, 9, new Point(px + 9, py - 7), marker.Name);
+                }
+            }
+        }
+
+        internal static Color PartyMarkerColor => new(75, 185, 255);
+        internal static Color FriendMarkerColor => new(95, 225, 125);
+
+        internal static void DrawLocationMarker(RendererBase renderer, int x, int y, Color color)
+        {
+            // A small diamond keeps the location visible without a large square hiding tiles.
+            for (var row = -5; row <= 5; ++row)
+            {
+                var halfWidth = 5 - Math.Abs(row);
+                Fill(renderer, new Color(20, 22, 25), x - halfWidth - 1, y + row, halfWidth * 2 + 3, 1);
+                Fill(renderer, color, x - halfWidth, y + row, halfWidth * 2 + 1, 1);
+            }
         }
 
         protected override void OnMouseDown(MouseButton mouseButton, Point mousePosition, bool userAction = true)
@@ -1116,7 +1176,7 @@ internal sealed class WorldMapWindow : Window
 
         protected override bool OnMouseWheeled(int delta)
         {
-            if (!_interactive)
+            if (!_interactive || delta == 0)
             {
                 return false;
             }

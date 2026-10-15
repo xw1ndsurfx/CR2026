@@ -79,6 +79,10 @@ public static partial class Globals
 
     public static WorldMapEventMarker[] WorldMapEventMarkers = [];
 
+    public static WorldMapSocialMarker[] WorldMapSocialMarkers = [];
+    public static Intersect.Framework.Core.WorldMaps.WorldMapLegend WorldMapLegend = new();
+    public static long WorldMapStateReceivedAt;
+
     public static readonly Dictionary<Guid, WorldMapMapDataPacket> WorldMapMapData = [];
 
     public static long MapGridHeight;

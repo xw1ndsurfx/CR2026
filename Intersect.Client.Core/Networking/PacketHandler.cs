@@ -2032,6 +2032,8 @@ internal sealed partial class PacketHandler
         Globals.MapGrid = new Guid[Globals.MapGridWidth, Globals.MapGridHeight];
         if (clearKnownMaps)
         {
+            Globals.WorldMapSocialMarkers = [];
+            Globals.WorldMapStateReceivedAt = 0;
             foreach (var map in MapInstance.Lookup.Values.ToArray())
             {
                 ((MapInstance) map).Dispose();

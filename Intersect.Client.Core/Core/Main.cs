@@ -313,6 +313,9 @@ internal static partial class Main
 
         //Dump Game Objects
         Globals.Me = null;
+        Globals.WorldMapSocialMarkers = [];
+        Globals.WorldMapLegend = new();
+        Globals.WorldMapStateReceivedAt = 0;
         Globals.HasGameData = false;
         foreach (var map in MapInstance.Lookup)
         {

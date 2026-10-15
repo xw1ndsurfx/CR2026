@@ -357,7 +357,7 @@ public partial class Player : Entity
 
     public static Player FindOnline(Guid id)
     {
-        return OnlinePlayersById.ContainsKey(id) ? OnlinePlayersById[id] : null;
+        return OnlinePlayersById.TryGetValue(id, out var player) ? player : null;
     }
 
     public static Player FindOnline(string charName)

@@ -34,6 +34,10 @@ public partial class FrmMapGrid : DockContent
         InitializeComponent();
         Icon = Program.Icon;
 
+        var legend = new ToolStripButton("Legend...") { DisplayStyle = ToolStripItemDisplayStyle.Text };
+        legend.Click += (_, _) => Networking.Network.SendPacket(new Intersect.Network.Packets.Editor.RequestWorldMapLegendPacket());
+        toolStrip1.Items.Add(legend);
+
         pnlMapGrid.MouseWheel += PnlMapGrid_MouseWheel;
     }
 
