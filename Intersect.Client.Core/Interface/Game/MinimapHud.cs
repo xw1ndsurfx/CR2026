@@ -18,7 +18,7 @@ namespace Intersect.Client.Interface.Game;
 
 /// <summary>
 /// Lightweight top-right RPG minimap/compass rendered entirely from client-known map data.
-/// Part 2 adds party/quest markers and a larger local-map mode.
+/// Shares seamless map tiles, social markers and quest guidance with the World Map.
 /// </summary>
 internal sealed class MinimapHud : Base
 {
