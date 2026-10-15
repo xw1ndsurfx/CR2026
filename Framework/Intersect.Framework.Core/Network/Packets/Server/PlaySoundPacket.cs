@@ -18,4 +18,6 @@ public partial class PlaySoundPacket : IntersectPacket
     [Key(0)]
     public string Sound { get; set; }
 
+    [Key(1)] public bool VoiceSound { get; set; }
+
 }

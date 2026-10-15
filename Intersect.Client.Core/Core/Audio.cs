@@ -51,6 +51,8 @@ public static partial class Audio
         _activeMusicSource?.Update();
         for (var i = 0; i < sGameSounds.Count; i++)
         {
+            if (Globals.Database?.EnableVoiceSounds == false && sGameSounds[i].Filename?.StartsWith(VoiceSoundFiles.Folder + "/", StringComparison.OrdinalIgnoreCase) == true)
+                sGameSounds[i].Stop();
             _ = sGameSounds[i].Update();
             if (!sGameSounds[i].Loaded)
             {
@@ -103,6 +105,8 @@ public static partial class Audio
 
         for (var i = 0; i < sGameSounds.Count; i++)
         {
+            if (Globals.Database?.EnableVoiceSounds == false && sGameSounds[i].Filename?.StartsWith(VoiceSoundFiles.Folder + "/", StringComparison.OrdinalIgnoreCase) == true)
+                sGameSounds[i].Stop();
             _ = sGameSounds[i].Update();
             if (!sGameSounds[i].Loaded)
             {
@@ -268,6 +272,10 @@ public static partial class Audio
 
         return sound;
     }
+
+    public static Sound? AddVoiceSound(string filename) =>
+        Globals.Database?.EnableVoiceSounds != false && VoiceSoundFiles.Key(filename) is { } key
+            ? AddGameSound(key, false) : null;
 
     public static void StopSound(IMapSound sound)
     {

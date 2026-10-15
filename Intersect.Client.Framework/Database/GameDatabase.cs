@@ -8,6 +8,7 @@ namespace Intersect.Client.Framework.Database;
 public abstract partial class GameDatabase
 {
     public bool ShowMyLevel { get; set; } = true;
+    public bool EnableVoiceSounds { get; set; } = true;
     public bool ShowPlayerLevels { get; set; } = true;
     public bool ShowNpcLevels { get; set; } = true;
     public bool ShowMyGuild { get; set; } = true;
@@ -164,6 +165,7 @@ public abstract partial class GameDatabase
         ShowManaAsPercentage = LoadPreference(nameof(ShowManaAsPercentage), false);
         SimplifiedEscapeMenu = LoadPreference(nameof(SimplifiedEscapeMenu), false);
         ShowMyLevel = LoadPreference(nameof(ShowMyLevel), true);
+        EnableVoiceSounds = LoadPreference(nameof(EnableVoiceSounds), true);
         ShowPlayerLevels = LoadPreference(nameof(ShowPlayerLevels), true);
         ShowNpcLevels = LoadPreference(nameof(ShowNpcLevels), true);
         ShowMyGuild = LoadPreference(nameof(ShowMyGuild), true);
@@ -220,6 +222,7 @@ public abstract partial class GameDatabase
         SavePreference(nameof(ShowManaAsPercentage), ShowManaAsPercentage);
         SavePreference(nameof(SimplifiedEscapeMenu), SimplifiedEscapeMenu);
         SavePreference(nameof(ShowMyLevel), ShowMyLevel);
+        SavePreference(nameof(EnableVoiceSounds), EnableVoiceSounds);
         SavePreference(nameof(ShowPlayerLevels), ShowPlayerLevels);
         SavePreference(nameof(ShowNpcLevels), ShowNpcLevels);
         SavePreference(nameof(ShowMyGuild), ShowMyGuild);

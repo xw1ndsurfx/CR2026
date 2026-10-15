@@ -15,7 +15,8 @@ namespace Intersect.Client.Interface.Game;
 
 internal sealed class ItemChangeNotificationWindow : Base
 {
-    private readonly Queue<ItemChangeNotificationPacket> _pending = [];
+    private sealed record Notification(ItemChangeNotificationPacket? Item, DayPhase? Phase);
+    private readonly Queue<Notification> _pending = [];
     private readonly ImagePanel _icon;
     private readonly Label _name;
     private readonly Label _quantity;
@@ -23,6 +24,8 @@ internal sealed class ItemChangeNotificationWindow : Base
     private Color? _rarityColor;
     private bool _celebrating;
     private ItemChangeNotificationPacket? _current;
+    private bool _hasCurrent;
+    private Color? _phaseColor;
     private long _hideAt;
 
     public ItemChangeNotificationWindow(Canvas parent) : base(parent, nameof(ItemChangeNotificationWindow))
@@ -34,7 +37,7 @@ internal sealed class ItemChangeNotificationWindow : Base
         _heading = new Label(this, "LootCongratulations")
         {
             AutoSizeToContents = false, Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-            FontSize = 13, Text = "Félicitations, vous avez obtenu :", MouseInputEnabled = false,
+            FontSize = 13, Text = "Congratulations! You received:", MouseInputEnabled = false,
             TextAlign = Pos.Center, TextColorOverride = Color.White, IsHidden = true,
         };
 
@@ -74,34 +77,62 @@ internal sealed class ItemChangeNotificationWindow : Base
         if (packet.IsLoot && (packet.SignedQuantity <= 0 ||
             ItemDescriptor.Get(packet.ItemId) is not { } item ||
             ItemRarityGlow.ResolveColor(item.Rarity, Options.Instance.Items.RarityTiers, CustomColors.Items.Rarities) == null)) return;
-        if (_current == null)
+        if (!_hasCurrent)
         {
             ShowPacket(packet);
             return;
         }
 
-        _pending.Enqueue(packet);
+        _pending.Enqueue(new(packet, null));
+    }
+
+    public void EnqueuePhase(DayPhase phase)
+    {
+        if (_hasCurrent) _pending.Enqueue(new(null, phase));
+        else ShowPhase(phase);
+    }
+
+    private void ShowPhase(DayPhase phase)
+    {
+        _hasCurrent = true; _current = null; _celebrating = false; _rarityColor = null;
+        _phaseColor = phase switch
+        {
+            DayPhase.Sunrise => new Color(245, 185, 105), DayPhase.Day => new Color(250, 225, 135),
+            DayPhase.Sunset => new Color(235, 125, 95), _ => new Color(155, 165, 245),
+        };
+        SetSize(Math.Min(420, Math.Max(200, (Parent?.Width ?? 640) - 64)), 92);
+        _icon.Texture = null; _icon.Hide(); _heading.Hide();
+        _name.SetBounds(20, 15, Width - 40, 28); _name.FontSize = 16;
+        _name.Text = phase.ToString(); _name.TextColorOverride = _phaseColor;
+        _quantity.SetBounds(20, 47, Width - 40, 26); _quantity.FontSize = 12;
+        _quantity.Text = "has arrived"; _quantity.TextColorOverride = Color.White;
+        _hideAt = Timing.Global.Milliseconds + 3_500;
+        PositionWindow(); Show(); BringToFront();
     }
 
     public void Update()
     {
-        if (_current != null) PositionWindow();
-        if (_current == null || Timing.Global.Milliseconds < _hideAt)
+        if (_hasCurrent) PositionWindow();
+        if (!_hasCurrent || Timing.Global.Milliseconds < _hideAt)
             return;
 
         if (_pending.Count > 0)
         {
-            ShowPacket(_pending.Dequeue());
+            var next = _pending.Dequeue();
+            if (next.Item is { } item) ShowPacket(item);
+            else if (next.Phase is { } phase) ShowPhase(phase);
             return;
         }
 
         _current = null;
+        _hasCurrent = false;
         Hide();
     }
 
     private void ShowPacket(ItemChangeNotificationPacket packet)
     {
         _current = packet;
+        _hasCurrent = true; _phaseColor = null;
         var descriptor = ItemDescriptor.Get(packet.ItemId);
         _rarityColor = descriptor == null ? null : ItemRarityGlow.ResolveColor(
             descriptor.Rarity, Options.Instance.Items.RarityTiers, CustomColors.Items.Rarities);
@@ -128,7 +159,7 @@ internal sealed class ItemChangeNotificationWindow : Base
         {
             var rarity = Options.Instance.Items.TryGetRarityName(descriptor.Rarity, out var rarityName) ? rarityName : "Rare";
             if (Intersect.Client.Localization.Strings.ItemDescription.Rarity.TryGetValue(rarity, out var localized)) rarity = localized;
-            _quantity.Text = $"Rareté : {rarity} - x{packet.SignedQuantity:N0}";
+            _quantity.Text = $"Rarity: {rarity} - x{packet.SignedQuantity:N0}";
             _quantity.TextColorOverride = _rarityColor!;
         }
 
@@ -165,7 +196,7 @@ internal sealed class ItemChangeNotificationWindow : Base
 
     protected override void Render(SkinBase skin)
     {
-        if (_current == null)
+        if (!_hasCurrent)
             return;
 
         var renderer = skin.Renderer;
@@ -180,9 +211,9 @@ internal sealed class ItemChangeNotificationWindow : Base
             renderer.DrawFilledRect(new Rectangle(bounds.X + 2, bounds.Y + 2, bounds.Width - 4, 38));
         }
 
-        renderer.DrawColor = _celebrating ? _rarityColor! : _current.SignedQuantity >= 0
+        renderer.DrawColor = _phaseColor ?? (_celebrating ? _rarityColor! : _current?.SignedQuantity >= 0
             ? new Color(a: 255, r: 95, g: 175, b: 95)
-            : new Color(a: 255, r: 195, g: 75, b: 65);
+            : new Color(a: 255, r: 195, g: 75, b: 65));
 
         renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, 2));
         renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Bottom - 2, bounds.Width, 2));

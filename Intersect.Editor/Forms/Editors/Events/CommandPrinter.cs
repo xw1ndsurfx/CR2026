@@ -1204,7 +1204,7 @@ public static partial class CommandPrinter
 
     private static string GetCommandText(PlaySoundCommand command, MapInstance map)
     {
-        return Strings.EventCommandList.playsound.ToString(command.File);
+        return command.VoiceSound ? $"Play Voice Sound: {command.File}" : Strings.EventCommandList.playsound.ToString(command.File);
     }
 
     private static string GetCommandText(StopSoundsCommand command, MapInstance map)

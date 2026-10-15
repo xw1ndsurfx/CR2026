@@ -15,6 +15,7 @@ public partial class TimePacket : IntersectPacket
         Time = time;
         Rate = rate;
         Color = color;
+        DayPhasesJson = Newtonsoft.Json.JsonConvert.SerializeObject(Intersect.GameObjects.DaylightCycleDescriptor.Instance.DayPhases);
     }
 
     [Key(0)]
@@ -25,5 +26,7 @@ public partial class TimePacket : IntersectPacket
 
     [Key(2)]
     public Color Color { get; set; }
+
+    [Key(3)] public string DayPhasesJson { get; set; } = string.Empty;
 
 }

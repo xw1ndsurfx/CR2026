@@ -12,6 +12,7 @@ public partial class EventCommandPlayBgs : UserControl
     private readonly FrmEvent mEventEditor;
 
     private PlaySoundCommand mMyCommand;
+    private readonly CheckBox _voiceSound = new() { Text = "Voice Sound", AutoSize = true, Location = new System.Drawing.Point(7, 54) };
 
     public EventCommandPlayBgs(PlaySoundCommand refCommand, FrmEvent editor)
     {
@@ -19,9 +20,19 @@ public partial class EventCommandPlayBgs : UserControl
         mMyCommand = refCommand;
         mEventEditor = editor;
         InitLocalization();
+        _voiceSound.Checked = mMyCommand.VoiceSound;
+        grpPlayBGS.Controls.Add(_voiceSound);
+        cmbSound.DropDownWidth = 350;
+        _voiceSound.CheckedChanged += (_, _) => ReloadSoundList();
+        ReloadSoundList();
+    }
+
+    private void ReloadSoundList()
+    {
+        grpPlayBGS.Text = _voiceSound.Checked ? "Play Voice Sound" : "Play Sound";
         cmbSound.Items.Clear();
         cmbSound.Items.Add(Strings.General.None);
-        cmbSound.Items.AddRange(GameContentManager.SmartSortedSoundNames);
+        cmbSound.Items.AddRange(_voiceSound.Checked ? VoiceSoundFiles.List("resources") : GameContentManager.SmartSortedSoundNames);
         if (cmbSound.Items.IndexOf(TextUtils.NullToNone(mMyCommand.File)) > -1)
         {
             cmbSound.SelectedIndex = cmbSound.Items.IndexOf(TextUtils.NullToNone(mMyCommand.File));
@@ -43,6 +54,7 @@ public partial class EventCommandPlayBgs : UserControl
     private void btnSave_Click(object sender, EventArgs e)
     {
         mMyCommand.File = TextUtils.SanitizeNone(cmbSound?.Text);
+        mMyCommand.VoiceSound = _voiceSound.Checked;
         mEventEditor.FinishCommandEdit();
     }
 

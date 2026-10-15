@@ -1244,7 +1244,7 @@ public static partial class CommandProcessing
         Stack<CommandInstance> callStack
     )
     {
-        PacketSender.SendPlaySound(player, command.File);
+        PacketSender.SendPlaySound(player, command.File, command.VoiceSound);
     }
 
     //Stop Sounds Command

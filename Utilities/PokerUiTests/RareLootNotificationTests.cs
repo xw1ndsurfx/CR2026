@@ -43,7 +43,7 @@ internal static class RareLootNotificationTests
             var heading = (Label)type.GetField("_heading", Hidden)!.GetValue(window)!;
             var name = (Label)type.GetField("_name", Hidden)!.GetValue(window)!;
             var quantity = (Label)type.GetField("_quantity", Hidden)!.GetValue(window)!;
-            Check(!window.IsHidden && !heading.IsHidden && heading.Text.Contains("Félicitations") && name.Text == rare.Name && quantity.Text.Contains("2"),
+            Check(!window.IsHidden && !heading.IsHidden && heading.Text.Contains("Congratulations") && name.Text == rare.Name && quantity.Text.Contains("2"),
                 "Confirmed rare loot must identify the actual reward and quantity");
             Check(name.TextColorOverride == configured && quantity.TextColorOverride == configured && window.Height == 150,
                 "Congratulations must use the exact configured rarity hue");

@@ -26,6 +26,9 @@ internal static class EntityAnchorTests
         typeof(Entity).GetField("TileHeight", Hidden)!.SetValue(body, Options.Instance.Map.TileHeight);
         typeof(Entity).GetField("mOrigin", Hidden)!.SetValue(body, new Vector2(116, 232));
         var texture = DispatchProxy.Create<IGameTexture, DirectionalBodyFixture>();
+        body.Texture = texture;
+        Check(body.Center.Y > 200 && body.Center.Y < 232,
+            "Camera focus must follow the visible body instead of the transparent 128px frame center");
         var empty = DispatchProxy.Create<IGameTexture, CpuFrameTexture>();
         ((CpuFrameTexture)(object)empty).Right = 0;
         var destinationMethod = typeof(Entity).GetMethod("SpriteDestination", Hidden)!;
@@ -69,11 +72,11 @@ public class DirectionalBodyFixture : DispatchProxy
 {
     protected override object? Invoke(MethodInfo? method, object?[]? args)
     {
-        if (method?.Name == "get_Width") return 128;
+        if (method?.Name == "get_Width") return 128 * Options.Instance.Sprites.NormalFrames;
         if (method?.Name == "get_Height") return 512;
         if (method?.Name == "GetPixel")
         {
-            var x = (int)args![0]!; var y = (int)args[1]!; var row = y / 128; var localY = y % 128;
+            var x = (int)args![0]! % 128; var y = (int)args[1]!; var row = y / 128; var localY = y % 128;
             return new Color(x >= 55 && x < 73 && localY >= 40 + row && localY < 80 - row ? 255 : 0, 255, 255, 255);
         }
         return null;
