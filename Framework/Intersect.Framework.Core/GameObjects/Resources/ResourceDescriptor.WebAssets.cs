@@ -5,6 +5,9 @@ namespace Intersect.Framework.Core.GameObjects.Resources;
 
 public partial class ResourceDescriptor
 {
+    /// <summary>
+    /// Safe public image endpoint for the resource's primary visual state.
+    /// </summary>
     [NotMapped]
     [JsonProperty]
     public string? ImageUrl =>

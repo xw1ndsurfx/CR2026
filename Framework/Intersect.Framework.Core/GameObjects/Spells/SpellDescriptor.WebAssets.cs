@@ -5,6 +5,9 @@ namespace Intersect.GameObjects;
 
 public partial class SpellDescriptor
 {
+    /// <summary>
+    /// Safe public image endpoint for this spell's configured icon.
+    /// </summary>
     [NotMapped]
     [JsonProperty]
     public string? ImageUrl =>

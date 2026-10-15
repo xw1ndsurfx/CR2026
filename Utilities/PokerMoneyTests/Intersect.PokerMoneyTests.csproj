@@ -4,6 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><WarningsAsErrors>nullable</WarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../Intersect.Server.Core/Core/ServerCrashLog.cs" Link="ServerCrashLog.cs" />
     <Compile Include="../../Intersect.Server.Core/MiniGames/Poker/*.cs" Link="Poker/%(Filename)%(Extension)" />
     <Compile Include="../../Intersect.Server.Core/MiniGames/Progression/MiniGameProgressStore.cs" Link="MiniGameProgressStore.cs" />
     <Compile Include="../../Intersect.Server.Core/MiniGames/Currency/PokerMoneyLedger.cs" Link="PokerMoneyLedger.cs" />

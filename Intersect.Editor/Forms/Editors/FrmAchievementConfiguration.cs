@@ -2,12 +2,14 @@ using DarkUI.Controls;
 using DarkUI.Forms;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.Achievements;
+using Intersect.Framework.Core.Dungeons;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.Professions;
+using Intersect.Framework.Core.WorldEvents.Invasions;
 using Intersect.GameObjects;
 using DrawingColor = System.Drawing.Color;
 
@@ -243,10 +245,10 @@ public sealed class FrmAchievementConfiguration : DarkForm
         AddRow(table, "Name", _name);
         AddRow(table, "Description", _description, 78);
         AddRow(table, "Category", _category);
-        AddRow(table, "Image / icon file", _icon);
+        AddRow(table, "Image / icon (resources/achievements)", _icon);
         AddRow(table, "Objective type", _objective);
         AddRow(table, "Target", _target);
-        AddRow(table, "Target key", _targetKey);
+        AddRow(table, "Target key (CustomCounter/code)", _targetKey);
         AddRow(table, "Required amount", _targetAmount);
         AddRow(table, "Sort order", _sortOrder);
         AddRow(table, "Visibility", _hidden);
@@ -401,6 +403,17 @@ public sealed class FrmAchievementConfiguration : DarkForm
 
                 AchievementObjectiveType.ProfessionLevel =>
                     ProfessionConfiguration.Instance.Professions
+                        .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+                        .Select(x => new IdChoice(x.Id, x.Name)),
+
+                AchievementObjectiveType.DungeonCompletions =>
+                    DungeonConfiguration.Instance.Dungeons
+                        .OrderBy(x => x.SortOrder)
+                        .ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+                        .Select(x => new IdChoice(x.Id, x.Name)),
+
+                AchievementObjectiveType.InvasionCompletions =>
+                    InvasionConfiguration.Instance.Invasions
                         .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
                         .Select(x => new IdChoice(x.Id, x.Name)),
 

@@ -83,6 +83,9 @@ internal partial class ServerContext : ApplicationContext<ServerContext, ServerC
 
     #region Dispose
 
+    protected override void OnShutdownRequested() =>
+        ServerCrashLog.Record($"Shutdown requested; HasErrors={HasErrors}; caller={Environment.StackTrace}");
+
     internal int ExitCode { get; set; }
 
     internal bool DisposeWithoutExiting { get; set; }
@@ -275,6 +278,8 @@ internal partial class ServerContext : ApplicationContext<ServerContext, ServerC
 
     internal static void DispatchUnhandledException(Exception exception, bool isTerminating = true)
     {
+        // The async handler may run after Main returns or after another thread starts disposal.
+        StartupDiagnostics.CaptureFailure($"DispatchUnhandledException terminating={isTerminating}", exception);
         var sender = Thread.CurrentThread;
         Task.Factory.StartNew(
             () => HandleUnhandledException(sender, new UnhandledExceptionEventArgs(exception, isTerminating))

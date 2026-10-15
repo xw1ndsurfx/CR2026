@@ -1,3 +1,5 @@
+#nullable enable
+
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 
@@ -7,12 +9,37 @@ namespace Intersect.Server.Core;
 internal static class StartupDiagnostics
 {
     private static string _lastStage = "Main entered";
-    private static ILogger _logger;
+    private static ILogger? _logger;
+    private static int _initialized;
 
-    internal static void Initialize() => AppDomain.CurrentDomain.ProcessExit += (_, _) =>
-        WriteConsole($"ProcessExit code={Environment.ExitCode}; lastStage={Volatile.Read(ref _lastStage)}");
+    internal static void Initialize()
+    {
+        if (Interlocked.Exchange(ref _initialized, 1) != 0)
+            return;
+
+        SetLogDirectory();
+        // Subscribe before the application's shutdown handlers so the original failure is durable first.
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            CaptureFailure($"UnhandledException terminating={args.IsTerminating}",
+                args.ExceptionObject as Exception ?? new Exception("Non-Exception unhandled object"));
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+            CaptureFailure("UnobservedTaskException", args.Exception);
+        AppDomain.CurrentDomain.ProcessExit += (_, _) =>
+            WriteConsole($"ProcessExit code={Environment.ExitCode}; lastStage={Volatile.Read(ref _lastStage)}");
+    }
+
+    // Bootstrapper can change the working directory after Main has installed the early handlers.
+    internal static void SetLogDirectory() =>
+        ServerCrashLog.SetDirectory(Path.Combine(Environment.CurrentDirectory, "logs"));
 
     internal static void SetLogger(ILogger logger) => _logger = logger;
+
+    internal static void CaptureFailure(string stage, Exception exception)
+    {
+        Volatile.Write(ref _lastStage, $"FAILED {stage}");
+        // Do not call application logging providers from this early exception handler.
+        ServerCrashLog.Record($"FAILED {stage}", exception);
+    }
 
     internal static void Mark(string stage)
     {
@@ -49,6 +76,8 @@ internal static class StartupDiagnostics
 
     private static void WriteConsole(string message)
     {
+        // Persist before touching stderr or logging providers, either of which can fail independently.
+        ServerCrashLog.Record(message);
         try
         {
             System.Console.Error.WriteLine(
