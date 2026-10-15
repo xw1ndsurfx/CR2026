@@ -51,6 +51,12 @@ public sealed record PotionDropResult(
     int ScoreGained,
     bool RecipeCompleted);
 
+public enum PotionBoardStepKind { Placement, Merge, Gravity }
+
+public sealed record PotionBoardStep(PotionBoardStepKind Kind, PotionPiece?[] Board);
+
+public sealed record PotionDropPreview(PotionDropResult Result, PotionBoardStep[] Steps);
+
 /// <summary>
 /// Deterministic 8x10 merge board inspired by classic potion-brewing puzzle games.
 /// The rules are engine-agnostic so the authoritative server can reuse this model later.
@@ -104,7 +110,10 @@ public sealed class PotionPuzzle
 
     public PotionDropResult Drop(int column) => Drop(column, PotionPairOrientation.Vertical);
 
-    public PotionDropResult Drop(int column, PotionPairOrientation orientation)
+    public PotionDropResult Drop(int column, PotionPairOrientation orientation) => Drop(column, orientation, null);
+
+    private PotionDropResult Drop(
+        int column, PotionPairOrientation orientation, ICollection<PotionBoardStep>? steps)
     {
         if (Complete) return new(false, "RecipeComplete", [], 0, true);
         if (GameOver) return new(false, "BoardFull", [], 0, false);
@@ -140,8 +149,9 @@ public sealed class PotionPuzzle
                 break;
         }
 
+        CaptureStep(steps, PotionBoardStepKind.Placement);
         var merges = new List<PotionMerge>();
-        var gained = Resolve(merges);
+        var gained = Resolve(merges, steps);
         Score += gained;
 
         Current = Next;
@@ -156,6 +166,26 @@ public sealed class PotionPuzzle
 
         GameOver = !Complete && !HasAnyPlacement();
         return new(true, string.Empty, merges.ToArray(), gained + (Complete ? 100 : 0), Complete);
+    }
+
+    /// <summary>Replays only board rules on a private copy; never awards items or changes a live game.</summary>
+    public static PotionDropPreview PreviewDrop(
+        PotionRecipe recipe, PotionPiece?[] board, PotionPair current, int[] progress,
+        int column, PotionPairOrientation orientation)
+    {
+        if (!recipe.IsValid || board.Length != Columns * Rows ||
+            board.Any(piece => piece is { IsValid: false }) ||
+            !current.First.IsValid || !current.Second.IsValid ||
+            progress.Length != recipe.Requirements.Length ||
+            progress.Where((value, index) => value < 0 || value > recipe.Requirements[index].Needed).Any())
+            throw new ArgumentException("Invalid potion preview state.");
+
+        var preview = new PotionPuzzle(1, recipe) { Current = current, _progress = progress.ToArray() };
+        for (var row = 0; row < Rows; row++)
+        for (var col = 0; col < Columns; col++)
+            preview._cells[col, row] = board[row * Columns + col];
+        var steps = new List<PotionBoardStep>();
+        return new(preview.Drop(column, orientation, steps), steps.ToArray());
     }
 
     public void BeginNextRecipe() => BeginNextRecipe(RollRecipe());
@@ -208,7 +238,7 @@ public sealed class PotionPuzzle
         }
     }
 
-    private int Resolve(List<PotionMerge> output)
+    private int Resolve(List<PotionMerge> output, ICollection<PotionBoardStep>? steps)
     {
         var score = 0;
         var chain = 0;
@@ -225,10 +255,22 @@ public sealed class PotionPuzzle
 
             score += group.Count * upgraded.Level * 5 * chain;
             output.Add(new(upgraded, group.Count, chain, consumed));
+            CaptureStep(steps, PotionBoardStepKind.Merge);
             ApplyGravity();
+            CaptureStep(steps, PotionBoardStepKind.Gravity);
         }
 
         return score;
+    }
+
+    private void CaptureStep(ICollection<PotionBoardStep>? steps, PotionBoardStepKind kind)
+    {
+        if (steps == null) return;
+        var board = new PotionPiece?[Columns * Rows];
+        for (var row = 0; row < Rows; row++)
+        for (var column = 0; column < Columns; column++)
+            board[row * Columns + column] = _cells[column, row];
+        steps.Add(new(kind, board));
     }
 
     private bool ConsumeRequirement(PotionPiece piece)

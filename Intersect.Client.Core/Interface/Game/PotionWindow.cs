@@ -20,15 +20,13 @@ namespace Intersect.Client.Interface.Game;
 internal sealed class PotionWindow : Base
 {
     private sealed record Placement(Base Control, int X, int Y, int W, int H, int Font = 0);
-    private sealed record PieceMotion(PotionPiece Piece, int Column, int Row, int StartY, long Started, int Duration);
-    private sealed record CellPulse(int Column, int Row, long Started, int Duration);
 
     private sealed class PotionBoardInput : Base
     {
         private readonly Action<int> _hover;
         private readonly Action<int> _drop;
         private readonly Action _rotate;
-        private long _lastRightRotateAt = long.MinValue;
+        private bool _rightPressHandled;
 
         public PotionBoardInput(Base parent, Action<int> hover, Action<int> drop, Action rotate)
             : base(parent, nameof(PotionBoardInput))
@@ -64,10 +62,12 @@ internal sealed class PotionWindow : Base
             bool userAction = true)
         {
             base.OnMouseDown(mouseButton, mousePosition, userAction);
+            if (IsDisabledByTree) return;
 
             if (mouseButton == MouseButton.Right)
             {
-                TryRotate();
+                _rightPressHandled = true;
+                _rotate();
                 return;
             }
 
@@ -90,20 +90,16 @@ internal sealed class PotionWindow : Base
         {
             base.OnMouseClicked(mouseButton, mousePosition, userAction);
 
-            // Some backends only surface the right button here. Try both paths,
-            // but debounce them so one physical click can rotate at most once.
-            if (mouseButton == MouseButton.Right)
-                TryRotate();
+            // A long press must not rotate again on release. Keep the click-only fallback.
+            if (mouseButton == MouseButton.Right && !_rightPressHandled && !IsDisabledByTree)
+                _rotate();
         }
 
-        private void TryRotate()
+        protected override void OnMouseUp(
+            MouseButton mouseButton, Intersect.Point mousePosition, bool userAction = true)
         {
-            var now = Environment.TickCount64;
-            if (now - _lastRightRotateAt < 150)
-                return;
-
-            _lastRightRotateAt = now;
-            _rotate();
+            base.OnMouseUp(mouseButton, mousePosition, userAction);
+            if (mouseButton == MouseButton.Right) _rightPressHandled = false;
         }
     }
 
@@ -133,8 +129,7 @@ internal sealed class PotionWindow : Base
     private readonly List<Placement> _placements = [];
     private readonly Button[] _dropButtons = new Button[PotionPuzzle.Columns];
     private readonly PotionBoardInput _boardInput;
-    private readonly List<PieceMotion> _motions = [];
-    private readonly List<CellPulse> _pulses = [];
+    private readonly PotionBoardPresentation _presentation = new();
 
     private readonly Label _title;
     private readonly ImagePanel _rewardIcon;
@@ -161,12 +156,11 @@ internal sealed class PotionWindow : Base
 
     private PokerSceneLayout _layout;
     private PotionSessionState? _state;
-    private int[] _lastBoard = [];
+    private Guid _sessionId;
     private long _lastRevision = -1;
     private long _lastExperience;
     private long _fxStarted;
     private long _fxUntil;
-    private long _dropAnimationUntil;
     private long _orientationRevision = -1;
     private PotionPairOrientation _localOrientation = PotionPairOrientation.Vertical;
     private string _error = string.Empty;
@@ -339,7 +333,7 @@ internal sealed class PotionWindow : Base
                 BoardX + column * CellW + 2,
                 BoardY + PotionPuzzle.Rows * CellH + 18,
                 CellW - 5,
-                () => Send(PotionRequestKind.Drop, captured)
+                () => DropFromBoard(captured)
             );
             // The old 1-8 controls remain available to tests but interaction is now directly on the board.
             _dropButtons[column].IsHidden = true;
@@ -347,11 +341,7 @@ internal sealed class PotionWindow : Base
 
         _boardInput = new PotionBoardInput(
             this,
-            column =>
-            {
-                _hoverColumn = column;
-                if (_previewColumn < 0 && column >= 0) _previewColumn = column;
-            },
+            SelectColumn,
             DropFromBoard,
             RotatePairLocal
         );
@@ -376,6 +366,13 @@ internal sealed class PotionWindow : Base
         if (Width != _canvas.Width || Height != _canvas.Height) ResizeToCanvas();
 
         var nextState = model.Current?.State;
+        if (model.Current?.SessionId != _sessionId)
+        {
+            _lastRevision = -1;
+            _orientationRevision = -1;
+            _lastExperience = 0;
+            _fxUntil = 0;
+        }
         if (nextState != null && nextState.Revision != _lastRevision)
             CapturePresentationEffects(nextState);
 
@@ -385,12 +382,13 @@ internal sealed class PotionWindow : Base
             _orientationRevision = nextState.Revision;
         }
 
-        if (nextState != null && nextState.Board.All(value => value == 0) &&
-            (_state == null || _state.Board.Any(value => value != 0)))
+        if (nextState != null && (!ReferenceEquals(nextState, _state) ||
+                                 (!model.Pending && model.ErrorCode.Length > 0)))
         {
-            _motions.Clear();
-            _pulses.Clear();
-            _dropAnimationUntil = 0;
+            var sessionId = model.Current!.SessionId;
+            _presentation.Accept(nextState, _sessionId != sessionId ||
+                (!model.Pending && model.ErrorCode.Length > 0));
+            _sessionId = sessionId;
         }
 
         _state = nextState;
@@ -436,7 +434,6 @@ internal sealed class PotionWindow : Base
 
         UpdatePreviewMotion();
         UpdateFx();
-        PruneEffects();
     }
 
     public void ResizeToCanvas()
@@ -529,10 +526,7 @@ internal sealed class PotionWindow : Base
             renderer.DrawFilledRect(new Rectangle(hover.X + 1, hover.Y, Math.Max(1, hover.Width - 2), hover.Height));
         }
 
-        var movingTargets = _motions
-            .Where(motion => now - motion.Started < motion.Duration)
-            .Select(motion => motion.Row * PotionPuzzle.Columns + motion.Column)
-            .ToHashSet();
+        var visual = _presentation.Sample(now);
 
         for (var row = 0; row < PotionPuzzle.Rows; ++row)
         for (var column = 0; column < PotionPuzzle.Columns; ++column)
@@ -542,12 +536,13 @@ internal sealed class PotionWindow : Base
             renderer.DrawFilledRect(new Rectangle(cell.X, cell.Y, cell.Width, 1));
             renderer.DrawFilledRect(new Rectangle(cell.X, cell.Y, 1, cell.Height));
 
-            if (!movingTargets.Contains(row * PotionPuzzle.Columns + column) && PieceAt(column, row) is { } piece)
-                DrawPiece(renderer, cell, piece);
+            var index = row * PotionPuzzle.Columns + column;
+            if (!visual.HiddenCells.Contains(index) && visual.Board[index] is { } piece)
+                DrawPiece(renderer, cell, piece,
+                    visual.FadingCells.Contains(index) ? (byte)(255 * (1 - visual.Progress)) : (byte)255);
         }
 
-        DrawPulses(renderer, now);
-        DrawFallingPieces(renderer, now);
+        DrawFallingPieces(renderer, visual);
         DrawHoverPair(renderer);
     }
 
@@ -736,7 +731,6 @@ internal sealed class PotionWindow : Base
             return;
 
         var orientation = _localOrientation;
-        if (!CanPlace(_hoverColumn, orientation)) return;
 
         var first = PotionStateEncoding.Decode(state.CurrentFirst);
         var second = PotionStateEncoding.Decode(state.CurrentSecond);
@@ -772,38 +766,14 @@ internal sealed class PotionWindow : Base
         DrawPiece(renderer, secondRect, second, 215);
     }
 
-    private void DrawFallingPieces(RendererBase renderer, long now)
+    private void DrawFallingPieces(RendererBase renderer, PotionBoardVisual visual)
     {
-        foreach (var motion in _motions)
+        foreach (var fall in visual.Falls)
         {
-            var elapsed = now - motion.Started;
-            if (elapsed < 0 || elapsed >= motion.Duration) continue;
-
-            var t = Math.Clamp(elapsed / (double)motion.Duration, 0d, 1d);
-            var eased = 1d - Math.Pow(1d - t, 3d);
-            var startY = motion.StartY;
-            var targetY = BoardY + motion.Row * CellH;
-            var y = startY + (int)((targetY - startY) * eased);
-            var rect = _layout.Rect(BoardX + motion.Column * CellW, y, CellW, CellH);
-            DrawPiece(renderer, rect, motion.Piece);
-        }
-    }
-
-    private void DrawPulses(RendererBase renderer, long now)
-    {
-        foreach (var pulse in _pulses)
-        {
-            var elapsed = now - pulse.Started;
-            if (elapsed < 0 || elapsed >= pulse.Duration) continue;
-
-            var cell = _layout.Rect(BoardX + pulse.Column * CellW, BoardY + pulse.Row * CellH, CellW, CellH);
-            var progress = elapsed / (double)pulse.Duration;
-            var pad = Math.Max(1, (int)(5 * (1d - progress)));
-            renderer.DrawColor = new Color((byte)Math.Max(30, 210 - (int)(180 * progress)), 245, 218, 116);
-            renderer.DrawFilledRect(new Rectangle(cell.X - pad, cell.Y - pad, cell.Width + pad * 2, 2));
-            renderer.DrawFilledRect(new Rectangle(cell.X - pad, cell.Y + cell.Height + pad - 2, cell.Width + pad * 2, 2));
-            renderer.DrawFilledRect(new Rectangle(cell.X - pad, cell.Y - pad, 2, cell.Height + pad * 2));
-            renderer.DrawFilledRect(new Rectangle(cell.X + cell.Width + pad - 2, cell.Y - pad, 2, cell.Height + pad * 2));
+            var progress = visual.Progress * visual.Progress;
+            var row = fall.FromRow + (fall.ToRow - fall.FromRow) * progress;
+            var rect = _layout.Rect(BoardX + fall.Column * CellW, BoardY + (int)(row * CellH), CellW, CellH);
+            DrawPiece(renderer, rect, fall.Piece);
         }
     }
 
@@ -951,37 +921,20 @@ internal sealed class PotionWindow : Base
     private void CapturePresentationEffects(PotionSessionState next)
     {
         var now = Environment.TickCount64;
-        if (_lastRevision >= 0 && _lastBoard.Length == next.Board.Length)
+        if (_lastRevision >= 0)
         {
-            for (var index = 0; index < next.Board.Length; ++index)
-            {
-                var before = _lastBoard[index];
-                var after = next.Board[index];
-                if (after == 0 || after == before) continue;
-
-                var row = index / PotionPuzzle.Columns;
-                var column = index % PotionPuzzle.Columns;
-                if (!IsDropAnimating() && _motions.Count < 32)
-                    QueueMotion(PotionStateEncoding.Decode(after), column, row, now, 420 + row * 28);
-
-                if (before != 0)
-                    _pulses.Add(new(column, row, now, 650));
-            }
-
             var xpGain = Math.Max(0, next.Experience - _lastExperience);
             if (next.LastScoreGain > 0 || xpGain > 0)
             {
                 var chain = next.LastChain > 1 ? $"CHAIN x{next.LastChain}   " : string.Empty;
                 var xp = xpGain > 0 ? $"   +{xpGain:N0} XP" : string.Empty;
                 _fx.Text = $"{chain}+{next.LastScoreGain:N0} SCORE{xp}";
-                _fxStarted = now;
-                _fxUntil = now + 1_250;
+                _fxStarted = Math.Max(now, _presentation.EndsAt);
+                _fxUntil = _fxStarted + 1_250;
                 _fx.IsHidden = false;
                 _fx.BringToFront();
             }
         }
-
-        _lastBoard = next.Board.ToArray();
         _lastRevision = next.Revision;
         _lastExperience = next.Experience;
     }
@@ -989,125 +942,39 @@ internal sealed class PotionWindow : Base
     private void UpdateFx()
     {
         var now = Environment.TickCount64;
-        if (_fxUntil <= now)
+        if (_fxUntil <= now || now < _fxStarted)
         {
             _fx.IsHidden = true;
             return;
         }
 
         var elapsed = now - _fxStarted;
+        _fx.IsHidden = false;
         var rise = Math.Min(24, (int)(elapsed * 24 / 1_250));
         var rect = _layout.Rect(BoardX, 300 - rise, PotionPuzzle.Columns * CellW, 46);
         _fx.SetBounds(rect.X, rect.Y, rect.Width, rect.Height);
         _fx.FontSize = _layout.FontSize(20);
     }
 
-    private void PruneEffects()
+    private void SelectColumn(int column)
     {
-        var now = Environment.TickCount64;
-        _motions.RemoveAll(motion => now - motion.Started >= motion.Duration);
-        _pulses.RemoveAll(pulse => now - pulse.Started >= pulse.Duration);
+        _hoverColumn = IsHorizontal(_localOrientation)
+            ? Math.Clamp(column, 0, PotionPuzzle.Columns - 2)
+            : Math.Clamp(column, 0, PotionPuzzle.Columns - 1);
+        _previewColumn = _hoverColumn;
     }
 
     private void DropFromBoard(int column)
     {
         if (_pending || IsDropAnimating() || _state is not { Complete: false, GameOver: false } state)
             return;
-
-        var orientation = _localOrientation;
-        if (!CanPlace(column, orientation))
-            return;
-
-        AnimateLocalDrop(column, orientation, state);
-        Send(PotionRequestKind.Drop, column, Guid.Empty, (int)orientation);
+        SelectColumn(column);
+        if (!CanPlace(_hoverColumn, _localOrientation)) return;
+        if (!_presentation.BeginDrop(state, _hoverColumn, _localOrientation, Environment.TickCount64)) return;
+        Send(PotionRequestKind.Drop, _hoverColumn, Guid.Empty, (int)_localOrientation);
     }
 
-    private void AnimateLocalDrop(int column, PotionPairOrientation orientation, PotionSessionState state)
-    {
-        var now = Environment.TickCount64;
-        var first = PotionStateEncoding.Decode(state.CurrentFirst);
-        var second = PotionStateEncoding.Decode(state.CurrentSecond);
-        var longest = 0;
-
-        switch (orientation)
-        {
-            case PotionPairOrientation.Vertical:
-            {
-                var empty = EmptyCells(column);
-                var firstDuration = 560 + (empty - 1) * 30;
-                var secondDuration = 560 + (empty - 2) * 30;
-                QueueMotion(first, column, empty - 1, now, firstDuration, BoardY - 52);
-                QueueMotion(second, column, empty - 2, now + 45, secondDuration, BoardY - 92);
-                longest = Math.Max(firstDuration, 45 + secondDuration);
-                break;
-            }
-
-            case PotionPairOrientation.VerticalReversed:
-            {
-                var empty = EmptyCells(column);
-                var secondDuration = 560 + (empty - 1) * 30;
-                var firstDuration = 560 + (empty - 2) * 30;
-                QueueMotion(second, column, empty - 1, now, secondDuration, BoardY - 52);
-                QueueMotion(first, column, empty - 2, now + 45, firstDuration, BoardY - 92);
-                longest = Math.Max(secondDuration, 45 + firstDuration);
-                break;
-            }
-
-            case PotionPairOrientation.Horizontal:
-            {
-                var leftDuration = 560 + (EmptyCells(column) - 1) * 30;
-                var rightDuration = 560 + (EmptyCells(column + 1) - 1) * 30;
-                QueueMotion(first, column, EmptyCells(column) - 1, now, leftDuration, BoardY - 66);
-                QueueMotion(second, column + 1, EmptyCells(column + 1) - 1, now + 35, rightDuration, BoardY - 66);
-                longest = Math.Max(leftDuration, 35 + rightDuration);
-                break;
-            }
-
-            case PotionPairOrientation.HorizontalReversed:
-            {
-                var leftDuration = 560 + (EmptyCells(column) - 1) * 30;
-                var rightDuration = 560 + (EmptyCells(column + 1) - 1) * 30;
-                QueueMotion(second, column, EmptyCells(column) - 1, now, leftDuration, BoardY - 66);
-                QueueMotion(first, column + 1, EmptyCells(column + 1) - 1, now + 35, rightDuration, BoardY - 66);
-                longest = Math.Max(leftDuration, 35 + rightDuration);
-                break;
-            }
-        }
-
-        // Keep the just-dropped pair as the only "live" visual until it reaches
-        // the board. The server can already advance Current -> Next, but the next
-        // pair must not become interactive while the previous pair is still falling.
-        _dropAnimationUntil = now + Math.Max(420, longest) + 40;
-    }
-
-    private bool IsDropAnimating() => Environment.TickCount64 < _dropAnimationUntil;
-
-    private void QueueMotion(
-        PotionPiece piece,
-        int column,
-        int row,
-        long started,
-        int duration,
-        int startY = BoardY - CellH)
-    {
-        if (row is < 0 or >= PotionPuzzle.Rows || column is < 0 or >= PotionPuzzle.Columns)
-            return;
-
-        var duplicate = _motions.Any(motion =>
-            motion.Column == column &&
-            motion.Row == row &&
-            motion.Piece == piece &&
-            started - motion.Started < 900 &&
-            started - motion.Started > -900);
-
-        if (duplicate)
-            return;
-
-        if (_motions.Count >= 32)
-            _motions.RemoveAt(0);
-
-        _motions.Add(new(piece, column, row, startY, started, Math.Max(360, duration)));
-    }
+    private bool IsDropAnimating() => _presentation.IsAnimating(Environment.TickCount64);
 
     private void UpdatePreviewMotion()
     {
