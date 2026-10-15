@@ -755,8 +755,8 @@ internal sealed class WorldMapWindow : Window
                     continue;
                 }
 
-                var localX = (marker.X + 0.5f) / mapWidth;
-                var localY = (marker.Y + 0.5f) / mapHeight;
+                var localX = (marker.X + 0.5f + marker.OffsetX / (float)Math.Max(1, Options.Instance.Map.TileWidth)) / mapWidth;
+                var localY = (marker.Y + 0.5f + marker.OffsetY / (float)Math.Max(1, Options.Instance.Map.TileHeight)) / mapHeight;
                 var markerX = (int)Math.Round(_panX + (gridPosition.X + localX) * cellWidth);
                 var markerY = (int)Math.Round(_panY + (gridPosition.Y + localY) * cellHeight);
 

@@ -1,4 +1,4 @@
-﻿using Intersect.Framework.Core.GameObjects.Conditions;
+using Intersect.Framework.Core.GameObjects.Conditions;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Newtonsoft.Json;
 
@@ -19,6 +19,9 @@ public partial class EventPage
     public Guid AnimationId { get; set; }
 
     public bool ShowAnimationOnWorldMap { get; set; }
+
+    public int WorldMapOffsetX { get; set; }
+    public int WorldMapOffsetY { get; set; }
 
     public Dictionary<Guid, List<EventCommand>> CommandLists { get; set; } = new();
 

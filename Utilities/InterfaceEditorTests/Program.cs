@@ -1,0 +1,67 @@
+using System.Reflection;
+using Intersect;
+using Intersect.Editor.Forms.Editors.Events;
+using Intersect.Editor.Maps;
+using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Maps;
+using MessagePack;
+using Intersect.Network.Packets.Server;
+
+internal static class Program
+{
+    [STAThread]
+    private static void Main()
+    {
+        try { Run(); } catch (Exception exception) { System.Console.Error.WriteLine(exception); Environment.Exit(1); }
+    }
+    private static void Run()
+    {
+        typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, new Options());
+        using var editor = new FrmEvent(new MapDescriptor(Guid.NewGuid()));
+        editor.CurrentPage = new EventPage { WorldMapOffsetX = 48, WorldMapOffsetY = -16 };
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        typeof(FrmEvent).GetMethod("LoadWorldMapOffsets", flags)!.Invoke(editor, null);
+        var x = (NumericUpDown)typeof(FrmEvent).GetField("_worldMapX", flags)!.GetValue(editor)!;
+        var y = (NumericUpDown)typeof(FrmEvent).GetField("_worldMapY", flags)!.GetValue(editor)!;
+        Check(x.Value == 48 && y.Value == -16, "Page offsets must load");
+        x.Value = -64; y.Value = 32;
+        Check(editor.CurrentPage.WorldMapOffsetX == -64 && editor.CurrentPage.WorldMapOffsetY == 32, "Page offsets must save");
+        editor.Size = new Size(1500, 950); editor.PerformLayout();
+        var split = editor.Controls.OfType<SplitContainer>().Single();
+        Check(split.Width > 1400 && split.Height > 700 && split.Panel2.Width > 800, "Event command area must grow with the window");
+        var save = (Control)typeof(FrmEvent).GetField("btnSave", flags)!.GetValue(editor)!;
+        Check(save.Parent!.Bottom <= editor.ClientSize.Height && save.Parent.Height >= save.Bottom, "Save controls remain accessible");
+        editor.ShowInTaskbar = false; editor.Opacity = 0; editor.StartPosition = FormStartPosition.Manual;
+        editor.Location = new System.Drawing.Point(-30000, -30000); editor.Show(); Application.DoEvents();
+        using (var bitmap = new Bitmap(editor.Width, editor.Height))
+        {
+            editor.DrawToBitmap(bitmap, new Rectangle(0, 0, bitmap.Width, bitmap.Height));
+            if (Environment.GetEnvironmentVariable("CR2026_EDITOR_PREVIEW") is { Length: > 0 } preview) bitmap.Save(preview);
+        }
+        var toggle = typeof(FrmEvent).GetMethod("ToggleEventFullscreen", flags)!;
+        toggle.Invoke(editor, null); Check(editor.FormBorderStyle == FormBorderStyle.None, "Full screen mode");
+        toggle.Invoke(editor, null); Check(editor.FormBorderStyle == FormBorderStyle.Sizable, "Restore resizable window");
+        var root = new TreeNode("Effects"); root.Nodes.Add(new TreeNode("Play animation") { Tag = 42 });
+        root.Nodes.Add(new TreeNode("Play sound") { Tag = 43 });
+        var filtered = (TreeNode)typeof(FrmEvent).GetMethod("FilterCommands", BindingFlags.NonPublic | BindingFlags.Static)!
+            .Invoke(null, [root, "animation"])!;
+        Check(filtered.Nodes.Count == 1 && (int)filtered.Nodes[0].Tag! == 42 && root.Nodes.Count == 2, "Command search preserves command identity and source tree");
+
+        foreach (var zoom in new[] { .25f, .5f, 1f, 2f, 4f })
+        {
+            var view = new Rectangle(125, -80, 1000, 700); var cursor = new System.Drawing.Point(333, 221);
+            var next = MapEditorViewport.ZoomAt(zoom, view, cursor, new Size(1000, 700), 120);
+            Check(Math.Abs((cursor.X / zoom - view.X) - (cursor.X / next.Zoom - next.View.X)) <= .5f &&
+                Math.Abs((cursor.Y / zoom - view.Y) - (cursor.Y / next.Zoom - next.View.Y)) <= .5f,
+                "Map Editor wheel zoom must preserve the world point under the cursor");
+            Check(next.Zoom is >= .25f and <= 4f, "Map zoom bounds");
+        }
+        var marker = new WorldMapEventMarker(Guid.NewGuid(), Guid.NewGuid(), 5, 8, Guid.NewGuid(), -64, 32);
+        var copy = MessagePackSerializer.Deserialize<WorldMapEventMarker>(MessagePackSerializer.Serialize(marker));
+        Check(copy.OffsetX == -64 && copy.OffsetY == 32, "Marker offsets must survive the network packet");
+        var page = Newtonsoft.Json.JsonConvert.DeserializeObject<EventPage>(Newtonsoft.Json.JsonConvert.SerializeObject(editor.CurrentPage))!;
+        Check(page.WorldMapOffsetX == -64 && page.WorldMapOffsetY == 32, "Marker offsets must survive event page persistence");
+        System.Console.WriteLine("PASS editor refresh: responsive Event Editor, full screen, command search, per-page offsets, cursor-anchored wheel zoom and packet/persistence round-trips");
+    }
+    private static void Check(bool value, string message) { if (!value) throw new InvalidOperationException(message); }
+}

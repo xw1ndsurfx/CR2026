@@ -65,6 +65,9 @@ public partial class FrmMapEditor : DockContent
     {
         InitializeComponent();
         Icon = Program.Icon;
+        picMap.MouseWheel += MapEditorMouseWheel;
+        pnlMapContainer.MouseWheel += MapContainerMouseWheel;
+        picMap.MouseEnter += (_, _) => picMap.Focus();
         picMap.MouseLeave += (_sender, _args) => tooltipMapAttribute?.Hide();
 
         Globals.ToolChanged += Globals_ToolChanged;
@@ -88,10 +91,7 @@ public partial class FrmMapEditor : DockContent
             (Options.Instance.Map.MapWidth + 2) * Options.Instance.Map.TileWidth, (Options.Instance.Map.MapHeight + 2) * Options.Instance.Map.TileHeight
         );
 
-        Core.Graphics.CurrentView = new Rectangle(
-            (picMap.Size.Width - Options.Instance.Map.MapWidth * Options.Instance.Map.TileWidth) / 2,
-            (picMap.Size.Height - Options.Instance.Map.MapHeight * Options.Instance.Map.TileHeight) / 2, picMap.Size.Width, picMap.Size.Height
-        );
+        ResetMapViewport();
 
         CreateSwapChain();
         InitLocalization();
@@ -111,11 +111,7 @@ public partial class FrmMapEditor : DockContent
                 (Options.Instance.Map.MapWidth + 2) * Options.Instance.Map.TileWidth, (Options.Instance.Map.MapHeight + 2) * Options.Instance.Map.TileHeight
             );
 
-            Core.Graphics.CurrentView = new Rectangle(
-                (picMap.Size.Width - Options.Instance.Map.MapWidth * Options.Instance.Map.TileWidth) / 2,
-                (picMap.Size.Height - Options.Instance.Map.MapHeight * Options.Instance.Map.TileHeight) / 2, picMap.Size.Width,
-                picMap.Size.Height
-            );
+            ResetMapViewport();
 
             CreateSwapChain();
             Globals.MapLayersWindow.RefreshNpcList();
@@ -206,6 +202,7 @@ public partial class FrmMapEditor : DockContent
     //PicMap Functions
     private void picMap_MouseDown(object sender, MouseEventArgs e)
     {
+        e = LogicalMapMouse(e);
         if (!Globals.MapEditorWindow.DockPanel.Focused)
         {
             Globals.MapEditorWindow.DockPanel.Focus();
@@ -537,6 +534,7 @@ public partial class FrmMapEditor : DockContent
 
     private void picMap_MouseMove(object sender, MouseEventArgs e)
     {
+        e = LogicalMapMouse(e);
         if (Globals.EditingLight != null)
         {
             return;
@@ -556,14 +554,14 @@ public partial class FrmMapEditor : DockContent
                 Core.Graphics.CurrentView.Y = Options.Instance.Map.MapHeight * Options.Instance.Map.TileHeight;
             }
 
-            if (Core.Graphics.CurrentView.X - picMap.Width < -Options.Instance.Map.TileWidth * Options.Instance.Map.MapWidth * 2)
+            if (Core.Graphics.CurrentView.X - Core.Graphics.CurrentView.Width < -Options.Instance.Map.TileWidth * Options.Instance.Map.MapWidth * 2)
             {
-                Core.Graphics.CurrentView.X = -Options.Instance.Map.TileWidth * Options.Instance.Map.MapWidth * 2 + picMap.Width;
+                Core.Graphics.CurrentView.X = -Options.Instance.Map.TileWidth * Options.Instance.Map.MapWidth * 2 + Core.Graphics.CurrentView.Width;
             }
 
-            if (Core.Graphics.CurrentView.Y - picMap.Height < -Options.Instance.Map.TileHeight * Options.Instance.Map.MapHeight * 2)
+            if (Core.Graphics.CurrentView.Y - Core.Graphics.CurrentView.Height < -Options.Instance.Map.TileHeight * Options.Instance.Map.MapHeight * 2)
             {
-                Core.Graphics.CurrentView.Y = -Options.Instance.Map.TileHeight * Options.Instance.Map.MapHeight * 2 + picMap.Height;
+                Core.Graphics.CurrentView.Y = -Options.Instance.Map.TileHeight * Options.Instance.Map.MapHeight * 2 + Core.Graphics.CurrentView.Height;
             }
         }
 
@@ -2348,10 +2346,7 @@ public partial class FrmMapEditor : DockContent
             (Options.Instance.Map.MapWidth + 2) * Options.Instance.Map.TileWidth, (Options.Instance.Map.MapHeight + 2) * Options.Instance.Map.TileHeight
         );
 
-        Core.Graphics.CurrentView = new Rectangle(
-            (picMap.Size.Width - Options.Instance.Map.MapWidth * Options.Instance.Map.TileWidth) / 2,
-            (picMap.Size.Height - Options.Instance.Map.MapHeight * Options.Instance.Map.TileHeight) / 2, picMap.Size.Width, picMap.Size.Height
-        );
+        ResetMapViewport();
 
         CreateSwapChain();
     }

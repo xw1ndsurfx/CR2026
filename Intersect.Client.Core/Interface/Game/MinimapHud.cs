@@ -29,6 +29,7 @@ internal sealed class MinimapHud : Base
     private const int MapViewportWidth = 212;
     private const int MapViewportHeight = 178;
 
+    private readonly HudDisclosure _disclosure;
     private readonly Label _mapName;
     private readonly Label _coords;
     private readonly Label _north;
@@ -102,6 +103,7 @@ internal sealed class MinimapHud : Base
         // guidance can continue across unloaded/distant maps.
         PacketSender.SendWorldMapRequest();
 
+        _disclosure = new HudDisclosure(this, _mapName, "MinimapCollapsed");
         UpdateLayout();
         Update();
     }
@@ -124,7 +126,7 @@ internal sealed class MinimapHud : Base
 
     private void UpdateLayout()
     {
-        _mapName.SetBounds(14, 5, Width - 28, 22);
+        _mapName.SetBounds(14, 5, Width - 52, 22);
         _coords.SetBounds(112, Height - 29, Width - 124, 18);
         _worldMapButton.SetBounds(14, Height - 51, 90, 24);
         // Keep the map canvas inside the compass rails and above the footer controls.
@@ -139,7 +141,8 @@ internal sealed class MinimapHud : Base
 
         var player = Globals.Me;
         var map = player?.MapInstance as MapInstance;
-        IsHidden = player == null || map == null || !map.IsLoaded;
+        IsHidden = Globals.Database?.ShowMinimap == false || Interface.GameUi?.SuppressStatusHuds == true || player == null || map == null || !map.IsLoaded;
+        UpdateLayout();
         if (IsHidden || player == null || map == null) return;
 
         _mapName.Text = map.Name;
@@ -159,6 +162,8 @@ internal sealed class MinimapHud : Base
         Fill(renderer, new Color(a: 246, r: 94, g: 60, b: 49), 0, 0, Width, 32);
         Fill(renderer, new Color(a: 255, r: 126, g: 82, b: 62), 0, 31, Width, 1);
         Outline(renderer, new Color(a: 255, r: 72, g: 43, b: 35), 0, 0, Width, Height, 2);
+
+        if (_disclosure.Collapsed) return;
 
         Outline(
             renderer,

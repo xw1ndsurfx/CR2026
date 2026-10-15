@@ -1,4 +1,5 @@
 using Intersect.Client.Framework.File_Management;
+using Intersect.Client.General;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Framework.Core;
@@ -11,6 +12,7 @@ namespace Intersect.Client.Interface.Game;
 
 internal sealed class InvasionStatusWindow : Base
 {
+    private readonly HudDisclosure _disclosure;
     private readonly Label _title;
     private readonly Label _wave;
     private readonly Label _objective;
@@ -54,11 +56,14 @@ internal sealed class InvasionStatusWindow : Base
         };
         _objective.SetBounds(12, 84, 416, 20);
 
+        _disclosure = new HudDisclosure(this, _title, "InvasionHudCollapsed");
         Hide();
     }
 
     public void Update()
     {
+        IsHidden = (!_reminderMode && _state?.Active != true) || Globals.Database?.ShowInvasionHud == false || Interface.GameUi?.SuppressStatusHuds == true;
+        PositionAtTop();
         if (!_reminderMode || _reminderHideAt <= 0 || Timing.Global.Milliseconds <= _reminderHideAt)
             return;
 
@@ -131,6 +136,8 @@ internal sealed class InvasionStatusWindow : Base
         renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Bottom - 2, bounds.Width, 2));
         renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, 2, bounds.Height));
         renderer.DrawFilledRect(new Rectangle(bounds.Right - 2, bounds.Y, 2, bounds.Height));
+
+        if (_disclosure.Collapsed) return;
 
         if (_reminderMode)
         {

@@ -1,4 +1,4 @@
-﻿using MessagePack;
+using MessagePack;
 
 namespace Intersect.Network.Packets.Server;
 
@@ -44,13 +44,15 @@ public sealed class WorldMapEventMarker
     {
     }
 
-    public WorldMapEventMarker(Guid eventId, Guid mapId, int x, int y, Guid animationId)
+    public WorldMapEventMarker(Guid eventId, Guid mapId, int x, int y, Guid animationId, int offsetX = 0, int offsetY = 0)
     {
         EventId = eventId;
         MapId = mapId;
         X = x;
         Y = y;
         AnimationId = animationId;
+        OffsetX = offsetX;
+        OffsetY = offsetY;
     }
 
     [Key(0)]
@@ -67,4 +69,7 @@ public sealed class WorldMapEventMarker
 
     [Key(4)]
     public Guid AnimationId { get; set; }
+
+    [Key(5)] public int OffsetX { get; set; }
+    [Key(6)] public int OffsetY { get; set; }
 }

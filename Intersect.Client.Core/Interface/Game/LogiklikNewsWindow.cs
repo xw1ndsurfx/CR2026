@@ -17,7 +17,7 @@ namespace Intersect.Client.Interface.Game;
 /// In-game reader for Corps Royaux announcements published through Logiklik News.
 /// The public feed is scoped to the Logiklik tenant and the CR category.
 /// </summary>
-internal sealed class LogiklikNewsWindow : Window
+internal sealed partial class LogiklikNewsWindow : Window
 {
     private const string NewsBaseUrl = "https://news.logiklik.com";
     private const string RequiredTenant = "logiklik";
