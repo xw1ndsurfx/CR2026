@@ -34,7 +34,8 @@ internal sealed class WorldMapLegendView : ScrollControl
         AddRow("You", Guid.Empty, Color.White, 28);
         AddRow("Party", Guid.Empty, WorldMapWindow.WorldMapCanvas.PartyMarkerColor, 56);
         AddRow("Friends", Guid.Empty, WorldMapWindow.WorldMapCanvas.FriendMarkerColor, 84);
-        var y = 116;
+        AddRow("Guild", Guid.Empty, WorldMapWindow.WorldMapCanvas.GuildMarkerColor, 112);
+        var y = 144;
         foreach (var entry in Globals.WorldMapLegend.Entries)
         {
             AddRow(entry.Label, entry.AnimationId, null, y);
@@ -69,7 +70,8 @@ internal sealed class WorldMapLegendView : ScrollControl
         protected override void Render(SkinBase skin)
         {
             if (color != null)
-                WorldMapWindow.WorldMapCanvas.DrawLocationMarker(skin.Renderer, 17, 14, color);
+                WorldMapWindow.WorldMapCanvas.DrawSocialLocation(skin.Renderer, 17, 14, color,
+                    color == WorldMapWindow.WorldMapCanvas.GuildMarkerColor);
             else if (AnimationDescriptor.TryGet(animationId, out var animation))
             {
                 WorldMapWindow.WorldMapCanvas.DrawAnimationLayerMarker(skin.Renderer, animation.Lower, 26, 26, 48, fitVisible: true);

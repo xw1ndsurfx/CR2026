@@ -24,6 +24,17 @@ internal static class Program
             anchored.Y + paddedBounds.Y + paddedBounds.Height == 672, "Editor graphics must sit visibly on the E tile despite transparent padding");
         var empty = GraphicBounds.Read(32, 32, (_, _) => false);
         Check(empty == new GraphicBounds(0, 0, 32, 32, true), "Empty graphic fallback must keep a finite tile anchor and empty flag");
+        using (var animationEditor = new Intersect.Editor.Forms.Editors.FrmAnimation())
+        {
+            var animationType = animationEditor.GetType();
+            foreach (var field in new[] { "_nudLowerScale", "_nudUpperScale" })
+            {
+                var scale = (NumericUpDown)animationType.GetField(field, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(animationEditor)!;
+                Check(scale.Minimum == 1 && scale.Increment == 1, "Animation editor supports precise scaling down to 1 percent");
+            }
+            Check((int)animationType.GetMethod("NormalizeAnimationScale", BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, [1])! == 1,
+                "Loading/saving must preserve one percent animation scale");
+        }
         using var editor = new FrmEvent(new MapDescriptor(Guid.NewGuid()));
         editor.CurrentPage = new EventPage { WorldMapOffsetX = 48, WorldMapOffsetY = -16 };
         var flags = BindingFlags.Instance | BindingFlags.NonPublic;

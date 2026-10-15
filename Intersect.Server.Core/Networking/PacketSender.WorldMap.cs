@@ -17,7 +17,10 @@ public static partial class PacketSender
     {
         var maps = mapIds.ToHashSet();
         var party = player.Party.Select(member => member.Id).ToHashSet();
-        var ids = party.Concat(player.CachedFriends.Keys).Distinct().Where(id => id != player.Id);
+        var guild = player.GuildId is { } guildId && guildId != Guid.Empty
+            ? Player.OnlinePlayersSnapshot().Where(other => other.GuildId == guildId).Select(other => other.Id).ToHashSet()
+            : new HashSet<Guid>();
+        var ids = party.Concat(player.CachedFriends.Keys).Concat(guild).Distinct().Where(id => id != player.Id);
         var markers = new List<WorldMapSocialMarker>();
         foreach (var id in ids)
         {
@@ -28,7 +31,7 @@ public static partial class PacketSender
             markers.Add(new WorldMapSocialMarker
             {
                 PlayerId = id, Name = other.Name, MapId = other.MapId,
-                X = other.X, Y = other.Y, Party = inParty,
+                X = other.X, Y = other.Y, Party = inParty, Guild = guild.Contains(id),
             });
         }
         return markers.ToArray();

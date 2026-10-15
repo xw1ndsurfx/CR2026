@@ -18,6 +18,8 @@ using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Mapping.Tilesets;
 using Intersect.Framework.Core.GameObjects.Maps;
+using Intersect.Framework.Core.GameObjects.Maps.Attributes;
+using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.Serialization;
 using Intersect.Network.Packets.Server;
 using Newtonsoft.Json;
@@ -1025,6 +1027,7 @@ internal sealed class WorldMapWindow : Window
                 }
             }
 
+            drewAnyTile |= DrawResourcePreviews(map, preview, scaleX, scaleY);
             preview.End();
 
             // Cache any usable preview. A map may reference an old/missing texture on one
@@ -1043,6 +1046,54 @@ internal sealed class WorldMapWindow : Window
             _previews[map.Id] = preview;
             _previewRevisions[map.Id] = map.Revision;
             return preview;
+        }
+
+        internal static IEnumerable<(IGameTexture Texture, FloatRect Source, float Scale)> ResourcePreviewGraphics(Guid resourceId)
+        {
+            if (!ResourceDescriptor.TryGet(resourceId, out var resource)) yield break;
+            var state = resource.States.Values.OrderByDescending(state => state.MaximumHealth).FirstOrDefault();
+            if (state == null) yield break;
+            if (state.TextureType == ResourceTextureSource.Animation)
+            {
+                if (!AnimationDescriptor.TryGet(state.AnimationId, out var animation)) yield break;
+                foreach (var layer in new[] { animation.Lower, animation.Upper })
+                {
+                    var texture = GameContentManager.Current.GetTexture(TextureType.Animation, layer.Sprite);
+                    if (texture == null || layer.XFrames < 1 || layer.YFrames < 1) continue;
+                    var width = texture.Width / layer.XFrames; var height = texture.Height / layer.YFrames;
+                    var frame = Math.Max(0, Math.Min(layer.FrameCount, layer.XFrames * layer.YFrames) - 1) / 2;
+                    yield return (texture, new FloatRect(frame % layer.XFrames * width, frame / layer.XFrames * height, width, height), Math.Clamp(layer.ScalePercent, 1, 1000) / 100f);
+                }
+                yield break;
+            }
+            var sourceTexture = GameContentManager.Current.GetTexture(
+                state.TextureType == ResourceTextureSource.Tileset ? TextureType.Tileset : TextureType.Resource, state.TextureName);
+            if (sourceTexture == null) yield break;
+            var tiles = Options.Instance.Map;
+            var source = state.TextureType == ResourceTextureSource.Tileset
+                ? new FloatRect(state.X * tiles.TileWidth, state.Y * tiles.TileHeight, (state.Width + 1) * tiles.TileWidth, (state.Height + 1) * tiles.TileHeight)
+                : new FloatRect(0, 0, sourceTexture.Width, sourceTexture.Height);
+            yield return (sourceTexture, source, 1f);
+        }
+
+        private static bool DrawResourcePreviews(MapInstance map, IGameRenderTexture preview, float scaleX, float scaleY)
+        {
+            if (map.Attributes == null) return false;
+            var drewAny = false;
+            var options = Options.Instance.Map;
+            for (var y = 0; y < options.MapHeight; y++)
+                for (var x = 0; x < options.MapWidth; x++)
+                    if (map.Attributes[x, y] is MapResourceAttribute attribute)
+                        foreach (var (texture, source, scale) in ResourcePreviewGraphics(attribute.ResourceId))
+                        {
+                            var bounds = SpriteVisibleBounds.Get(texture, source);
+                            var position = EventGraphicPlacement.VisibleTopLeft(x * options.TileWidth, y * options.TileHeight,
+                                new GraphicBounds((int)(bounds.X * scale), (int)(bounds.Y * scale), (int)(bounds.Width * scale), (int)(bounds.Height * scale)), options.TileWidth, options.TileHeight);
+                            CoreGraphics.DrawGameTexture(texture, source,
+                                new FloatRect(position.X * scaleX, position.Y * scaleY, source.Width * scale * scaleX, source.Height * scale * scaleY), Color.White, preview);
+                            drewAny = true;
+                        }
+            return drewAny;
         }
 
         private static void DrawAutotilePreview(
@@ -1128,8 +1179,11 @@ internal sealed class WorldMapWindow : Window
         private void DrawSocialMarkers(RendererBase renderer)
         {
             var player = Globals.Me;
-            if (player == null || Environment.TickCount64 - Globals.WorldMapStateReceivedAt > 5000) return;
-            foreach (var marker in Globals.WorldMapSocialMarkers)
+            if (player == null) return;
+            var displayed = new HashSet<Guid>();
+            var markers = Environment.TickCount64 - Globals.WorldMapStateReceivedAt <= 5000
+                ? Globals.WorldMapSocialMarkers : [];
+            foreach (var marker in markers)
             {
                 if (marker.PlayerId == player.Id || !Globals.GridMaps.TryGetValue(marker.MapId, out var grid)) continue;
                 // Live nearby entities are smoother than the once-per-second distant snapshot.
@@ -1142,7 +1196,8 @@ internal sealed class WorldMapWindow : Window
                 var px = (int)Math.Round(_panX + (grid.X + (x + 0.5f) / Math.Max(1, Options.Instance.Map.MapWidth)) * CellWidth);
                 var py = (int)Math.Round(_panY + (grid.Y + (y + 0.5f) / Math.Max(1, Options.Instance.Map.MapHeight)) * CellHeight);
                 if (px < -10 || py < -10 || px > Width + 10 || py > Height + 10) continue;
-                DrawLocationMarker(renderer, px, py, marker.Party ? PartyMarkerColor : FriendMarkerColor);
+                DrawSocialLocation(renderer, px, py, marker.Party ? PartyMarkerColor : marker.Guild ? GuildMarkerColor : FriendMarkerColor, marker.Guild && !marker.Party);
+                displayed.Add(marker.PlayerId);
                 if (_interactive)
                 {
                     renderer.DrawColor = Color.Black;
@@ -1151,10 +1206,33 @@ internal sealed class WorldMapWindow : Window
                     renderer.RenderText(Skin.DefaultFont, 9, new Point(px + 9, py - 7), marker.Name);
                 }
             }
+            if (!_interactive)
+            {
+                foreach (var other in Globals.Entities.Values.OfType<Player>())
+                {
+                    if (other.Id == player.Id || displayed.Contains(other.Id) || other.IsHidden || other.IsStealthed ||
+                        !Globals.GridMaps.TryGetValue(other.MapId, out var grid)) continue;
+                    var px = (int)Math.Round(_panX + (grid.X + (other.X + .5f) / Math.Max(1, Options.Instance.Map.MapWidth)) * CellWidth);
+                    var py = (int)Math.Round(_panY + (grid.Y + (other.Y + .5f) / Math.Max(1, Options.Instance.Map.MapHeight)) * CellHeight);
+                    if (px < -10 || py < -10 || px > Width + 10 || py > Height + 10) continue;
+                    var guild = !string.IsNullOrWhiteSpace(player.Guild) && string.Equals(player.Guild, other.Guild, StringComparison.OrdinalIgnoreCase);
+                    var party = player.Party?.Any(member => member.Id == other.Id) == true;
+                    var friend = player.Friends?.Any(member => string.Equals(member.Name, other.Name, StringComparison.OrdinalIgnoreCase)) == true;
+                    DrawSocialLocation(renderer, px, py, party ? PartyMarkerColor : guild ? GuildMarkerColor : friend ? FriendMarkerColor : OtherPlayerMarkerColor, guild && !party);
+                }
+            }
         }
 
         internal static Color PartyMarkerColor => new(75, 185, 255);
         internal static Color FriendMarkerColor => new(95, 225, 125);
+        internal static Color GuildMarkerColor => new(195, 125, 255);
+        internal static Color OtherPlayerMarkerColor => new(210, 210, 215);
+
+        internal static void DrawSocialLocation(RendererBase renderer, int x, int y, Color color, bool guild)
+        {
+            DrawLocationMarker(renderer, x, y, color);
+            if (guild) Fill(renderer, Color.White, x - 1, y - 1, 3, 3);
+        }
 
         internal static void DrawLocationMarker(RendererBase renderer, int x, int y, Color color)
         {

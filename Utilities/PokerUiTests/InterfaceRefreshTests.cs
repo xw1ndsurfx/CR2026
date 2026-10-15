@@ -150,10 +150,10 @@ internal static class InterfaceRefreshTests
                 "All event graphic sizes must share the event tile's bottom-center anchor");
             var layoutType = assembly.GetType("Intersect.Client.Entities.NameplateLayout", true)!;
             var create = layoutType.GetMethod("Create", BindingFlags.NonPublic | BindingFlags.Static)!;
-            var compact = create.Invoke(null, [100f, 0, 12f, 0f, 0f, 0f, 0f])!;
+            var compact = create.Invoke(null, [100f, 0, 12f, 0f, 0f, 0f, 0f, 1f])!;
             float Row(object layout, string key) => (float)layoutType.GetProperty(key)!.GetValue(layout)!;
             Check(Row(compact, "Name") == 84, "Names must sit four pixels above the graphic");
-            var stacked = create.Invoke(null, [100f, 8, 12f, 10f, 11f, 9f, 10f])!;
+            var stacked = create.Invoke(null, [100f, 8, 12f, 10f, 11f, 9f, 10f, 1f])!;
             Check(Row(stacked, "Footer") + 10 <= 86 && Row(stacked, "Name") + 12 < Row(stacked, "Footer") &&
                 Row(stacked, "Header") + 11 < Row(stacked, "Name") && Row(stacked, "Afk") + 9 < Row(stacked, "Header") &&
                 Row(stacked, "Guild") + 10 < Row(stacked, "Afk"), "Visible labels and HP bar must form a compact non-overlapping stack");
@@ -205,6 +205,15 @@ internal static class InterfaceRefreshTests
             var ordinary = (Intersect.Client.Entities.Entity)RuntimeHelpers.GetUninitializedObject(typeof(Intersect.Client.Entities.Entity));
             GC.SuppressFinalize(ordinary); ordinary.WorldPos = new(10, 20, 80, 90);
             Check(ordinary.HitTest(15, 25) && !ordinary.HitTest(9, 25), "Ordinary entity hit testing remains based on its graphic");
+            var textScale = typeof(Intersect.Client.Entities.Entity).GetProperty("NameplateScale", Hidden)!;
+            var oldZoom = database.WorldZoom;
+            foreach (var zoom in new[] { .5f, 1f, 2f, 4f, 8f, 16f })
+            {
+                database.WorldZoom = zoom;
+                Check(Math.Abs((float)textScale.GetValue(ordinary)! * zoom - 1f) < .001f,
+                    "World Scale must not enlarge on-screen nameplates");
+            }
+            database.WorldZoom = oldZoom;
             System.Console.WriteLine("PASS interface refresh: persisted display options, HUD collapse, cooking gestures/input gates, advancing clock, responsive controls and event anchors");
         }
         finally { Globals.Database = oldDatabase; }
@@ -237,6 +246,9 @@ internal static class InterfaceRefreshTests
                 var card = (Button)shopType.GetField("_newsCard", Hidden)!.GetValue(shop)!;
                 Check(caption.Text == "Latest news" && card.Width > 190 && card.MouseInputEnabled,
                     "News banner must use the latest title and remain clickable without an image");
+                var image = (ImagePanel)shopType.GetField("_newsImage", Hidden)!.GetValue(shop)!;
+                Check(caption.IsHidden && image.Height == card.Height - 4 && image.Width == card.Width - 4 && !image.MaintainAspectRatio,
+                    "Shop news image fills the card and only its hover tooltip displays the title");
             }
             finally { canvas.RemoveChild(shop, false); shop.Dispose(); }
         }

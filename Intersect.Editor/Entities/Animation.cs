@@ -76,6 +76,7 @@ public partial class Animation
                     {
                         var frameWidth = (int) tex.Width / Descriptor.Lower.XFrames;
                         var frameHeight = (int) tex.Height / Descriptor.Lower.YFrames;
+                        var scale = Math.Clamp(Descriptor.Lower.ScalePercent, 1, 1000) / 100f;
                         Core.Graphics.DrawTexture(
                             tex,
                             new RectangleF(
@@ -84,7 +85,7 @@ public partial class Animation
                                 frameWidth, frameHeight
                             ),
                             new RectangleF(
-                                mRenderX - frameWidth / 2, mRenderY - frameHeight / 2, frameWidth, frameHeight
+                                mRenderX - frameWidth * scale / 2, mRenderY - frameHeight * scale / 2, frameWidth * scale, frameHeight * scale
                             ), System.Drawing.Color.White, target, BlendState.NonPremultiplied
                         );
                     }
@@ -119,6 +120,7 @@ public partial class Animation
                     {
                         var frameWidth = (int) tex.Width / Descriptor.Upper.XFrames;
                         var frameHeight = (int) tex.Height / Descriptor.Upper.YFrames;
+                        var scale = Math.Clamp(Descriptor.Upper.ScalePercent, 1, 1000) / 100f;
                         Core.Graphics.DrawTexture(
                             tex,
                             new RectangleF(
@@ -127,7 +129,7 @@ public partial class Animation
                                 frameWidth, frameHeight
                             ),
                             new RectangleF(
-                                mRenderX - frameWidth / 2, mRenderY - frameHeight / 2, frameWidth, frameHeight
+                                mRenderX - frameWidth * scale / 2, mRenderY - frameHeight * scale / 2, frameWidth * scale, frameHeight * scale
                             ), System.Drawing.Color.White, target, BlendState.NonPremultiplied
                         );
                     }

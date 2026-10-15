@@ -1667,11 +1667,11 @@ public partial class Entity : IEntity
             textColor = labelColor;
         }
 
-        var textSize = Graphics.Renderer.MeasureText(label, Graphics.EntityNameFont, Graphics.EntityNameFontSize, 1);
+        var textSize = Graphics.Renderer.MeasureText(label, Graphics.EntityNameFont, Graphics.EntityNameFontSize, NameplateScale);
 
         var x = (int)Math.Ceiling(Origin.X);
         var y = position == 2
-            ? GetLabelLocation(LabelType.Header) - textSize.Y - 2
+            ? GetLabelLocation(LabelType.Header) - textSize.Y - 2 * NameplateScale
             : position == 0 ? GetLabelLocation(LabelType.Header) : GetLabelLocation(LabelType.Footer);
 
         if (backgroundColor != Color.Transparent)
@@ -1679,7 +1679,7 @@ public partial class Entity : IEntity
             Graphics.DrawGameTexture(
                 Graphics.Renderer.WhitePixel,
                 new FloatRect(0, 0, 1, 1),
-                new FloatRect(x - textSize.X / 2f - 4, y, textSize.X + 8, textSize.Y),
+                new FloatRect(x - textSize.X / 2f - 4 * NameplateScale, y, textSize.X + 8 * NameplateScale, textSize.Y),
                 backgroundColor
             );
         }
@@ -1690,7 +1690,7 @@ public partial class Entity : IEntity
             Graphics.EntityNameFontSize,
             x - (int)Math.Ceiling(textSize.X / 2f),
             (int)y,
-            1,
+            NameplateScale,
             Color.FromArgb(textColor.ToArgb()),
             true,
             null,
@@ -1738,7 +1738,7 @@ public partial class Entity : IEntity
 
         var name = DisplayedName;
 
-        var textSize = Graphics.Renderer.MeasureText(name, Graphics.EntityNameFont, Graphics.EntityNameFontSize, 1);
+        var textSize = Graphics.Renderer.MeasureText(name, Graphics.EntityNameFont, Graphics.EntityNameFontSize, NameplateScale);
 
         var x = (int)Math.Ceiling(Origin.X);
         var y = GetLabelLocation(LabelType.Name);
@@ -1749,7 +1749,7 @@ public partial class Entity : IEntity
             Graphics.DrawGameTexture(
                 Graphics.Renderer.WhitePixel,
                 new FloatRect(0, 0, 1, 1),
-                new FloatRect(x - textSize.X / 2f - 4, y, textSize.X + 8, textSize.Y),
+                new FloatRect(x - textSize.X / 2f - 4 * NameplateScale, y, textSize.X + 8 * NameplateScale, textSize.Y),
                 backgroundColor
             );
         }
@@ -1760,7 +1760,7 @@ public partial class Entity : IEntity
             Graphics.EntityNameFontSize,
             x - (int)Math.Ceiling(textSize.X / 2f),
             (int)y,
-            1,
+            NameplateScale,
             textColor,
             true,
             null,
@@ -1780,16 +1780,18 @@ public partial class Entity : IEntity
          (Type == EntityType.GlobalEntity && Options.Instance.Npc.ShowLevelByName && (Globals.Database?.ShowNpcLevels ?? true)))
             ? Strings.GameWindow.EntityNameAndLevel.ToString(Name, Level) : Name;
 
+    protected float NameplateScale => 1f / Math.Clamp(Globals.Database?.WorldZoom ?? 1f, 0.25f, 16f);
+
     public float GetLabelLocation(LabelType type)
     {
         if (Graphics.Renderer == default) return 0f;
         float Height(string text) => Graphics.Renderer.MeasureText(
-            text, Graphics.EntityNameFont, Graphics.EntityNameFontSize, 1).Y;
+            text, Graphics.EntityNameFont, Graphics.EntityNameFontSize, NameplateScale).Y;
         var layout = NameplateLayout.Create(GetTop(), this is not Event && ShouldDrawHpBar ? GetBoundingHpBarTexture().Height : 0,
             Height(DisplayedName), ShowTitle && !string.IsNullOrWhiteSpace(FooterLabel.Text) ? Height(FooterLabel.Text) : 0,
             ShowTitle && !string.IsNullOrWhiteSpace(HeaderLabel.Text) ? Height(HeaderLabel.Text) : 0,
             this is Player { IsAfk: true } ? Height("AFK") : 0,
-            this is Player player && ShowGuild && !string.IsNullOrWhiteSpace(player.Guild) ? Height(player.Guild) : 0);
+            this is Player player && ShowGuild && !string.IsNullOrWhiteSpace(player.Guild) ? Height(player.Guild) : 0, NameplateScale);
         return type switch
         {
             LabelType.Footer => layout.Footer,
