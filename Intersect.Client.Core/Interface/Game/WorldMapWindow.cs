@@ -750,9 +750,7 @@ internal sealed class WorldMapWindow : Window
             foreach (var marker in Globals.WorldMapEventMarkers)
             {
                 if (marker.MapId == Guid.Empty ||
-                    marker.AnimationId == Guid.Empty ||
-                    !Globals.GridMaps.TryGetValue(marker.MapId, out var gridPosition) ||
-                    !AnimationDescriptor.TryGet(marker.AnimationId, out var animationDescriptor))
+                    !Globals.GridMaps.TryGetValue(marker.MapId, out var gridPosition))
                 {
                     continue;
                 }
@@ -769,8 +767,20 @@ internal sealed class WorldMapWindow : Window
                     continue;
                 }
 
-                DrawAnimationLayerMarker(renderer, animationDescriptor.Lower, markerX, markerY, size);
-                DrawAnimationLayerMarker(renderer, animationDescriptor.Upper, markerX, markerY, size);
+                if (AnimationDescriptor.TryGet(marker.AnimationId, out var animationDescriptor))
+                {
+                    DrawAnimationLayerMarker(renderer, animationDescriptor.Lower, markerX, markerY, size);
+                    DrawAnimationLayerMarker(renderer, animationDescriptor.Upper, markerX, markerY, size);
+                }
+                if (!string.IsNullOrWhiteSpace(marker.Name))
+                {
+                    var textY = markerY + (marker.AnimationId == Guid.Empty ? 0 : radius);
+                    var textX = markerX - renderer.MeasureText(Skin.DefaultFont, 9, marker.Name).X / 2;
+                    renderer.DrawColor = Color.Black;
+                    renderer.RenderText(Skin.DefaultFont, 9, new Point(textX + 1, textY + 1), marker.Name);
+                    renderer.DrawColor = Color.White;
+                    renderer.RenderText(Skin.DefaultFont, 9, new Point(textX, textY), marker.Name);
+                }
             }
         }
 

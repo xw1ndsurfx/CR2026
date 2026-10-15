@@ -72,4 +72,5 @@ public sealed class WorldMapEventMarker
 
     [Key(5)] public int OffsetX { get; set; }
     [Key(6)] public int OffsetY { get; set; }
+    [Key(7)] public string Name { get; set; } = string.Empty;
 }

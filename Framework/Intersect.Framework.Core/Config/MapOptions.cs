@@ -1,4 +1,4 @@
-﻿using System.Runtime.Serialization;
+using System.Runtime.Serialization;
 using Intersect.Framework.Annotations;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Newtonsoft.Json;
@@ -208,12 +208,25 @@ public partial class MapOptions
         RecalculateWorldScale();
     }
 
+    [JsonIgnore]
+    public float[] WorldScaleSteps
+    {
+        get
+        {
+            var steps = new List<float> { MinimumWorldScale };
+            while (steps[^1] > 0 && steps[^1] * 2 < MaximumWorldScale)
+                steps.Add(steps[^1] * 2);
+            if (MaximumWorldScale > steps[^1]) steps.Add(MaximumWorldScale);
+            return steps.ToArray();
+        }
+    }
+
     private void RecalculateWorldScale()
     {
         var tileRatio = 32f / Math.Min(TileWidth, TileHeight);
         var mapRatio = Math.Min(DefaultMapWidth / Math.Max(1f, _mapWidth), DefaultMapHeight / Math.Max(1f, _mapHeight));
         var combinedRatio = tileRatio * mapRatio;
         MinimumWorldScale = combinedRatio;
-        MaximumWorldScale = Math.Max(MinimumWorldScale * 4, tileRatio * 4);
+        MaximumWorldScale = Math.Max(MinimumWorldScale * 6, tileRatio * 6);
     }
 }

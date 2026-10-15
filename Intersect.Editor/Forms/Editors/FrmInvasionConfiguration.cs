@@ -84,7 +84,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
 
     private readonly CheckBox _scaleNpcToPlayers = new()
     {
-        Text = "Scale invasion NPCs to connected players",
+        Text = "Adapt levels to overworld players",
         AutoSize = true,
     };
     private readonly NumericUpDown _scalingMinimumLevel = new() { Minimum = 1, Maximum = 1_000, Width = 90 };
@@ -574,7 +574,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         levels.Controls.Add(_scalingLevelOffset);
         AddRow(table, "NPC target level", levels);
 
-        AddRow(table, "Extra HP / extra player (%)", _extraPlayerHealthPercent);
+        AddRow(table, "Population HP growth (%, capped at 25)", _extraPlayerHealthPercent);
         AddRow(table, "Boss HP (%)", _bossHealthPercent);
         AddRow(table, "Boss damage (%)", _bossDamagePercent);
 
@@ -583,9 +583,9 @@ public sealed class FrmInvasionConfiguration : DarkForm
             AutoSize = true,
             MaximumSize = new Size(650, 0),
             Text =
-                "At the start of every wave, the server takes a fresh snapshot of connected players and uses their median level. " +
-                "Only NPC instances spawned by this invasion are scaled; the NPC definition and every normal NPC elsewhere in the world stay unchanged. " +
-                "HP also grows with the number of connected players. Players joining later affect the next wave, not enemies already in combat.",
+                "Each wave uses the average level of overworld players; dungeon and other private instances are excluded. " +
+                "Invaders always use a weak horde profile, capped from the Auto NPC Creator preset. Normal NPC definitions stay unchanged. " +
+                "Population growth is gradual: at most double HP and 25% extra damage. Boss percentages apply to the weak profile. Changes affect the next wave, not enemies already in combat.",
         };
         AddRow(table, "Behavior", help);
 

@@ -235,8 +235,8 @@ public partial class MapGrid
                 // Only the ACTIVE page controls the marker. If this page is not marked
                 // for the World Map, the event must not appear even if another page is.
                 if (activePage == null ||
-                    !activePage.ShowAnimationOnWorldMap ||
-                    activePage.AnimationId == Guid.Empty)
+                    ((!activePage.ShowAnimationOnWorldMap || activePage.AnimationId == Guid.Empty) &&
+                     !activePage.ShowNameOnWorldMap))
                 {
                     continue;
                 }
@@ -250,10 +250,10 @@ public partial class MapGrid
                         mapId,
                         markerX,
                         markerY,
-                        activePage.AnimationId,
+                        activePage.ShowAnimationOnWorldMap ? activePage.AnimationId : Guid.Empty,
                         Math.Clamp(activePage.WorldMapOffsetX, -2048, 2048),
                         Math.Clamp(activePage.WorldMapOffsetY, -2048, 2048)
-                    )
+                    ) { Name = activePage.ShowNameOnWorldMap ? eventDescriptor.Name : string.Empty }
                 );
             }
         }

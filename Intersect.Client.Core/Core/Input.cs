@@ -41,26 +41,16 @@ public static partial class Input
 
     public static void HandleZoomOut(bool wrap = true)
     {
-        var nextZoom = Globals.Database.WorldZoom / 2;
-
-        if (nextZoom < Graphics.MinimumWorldScale)
-        {
-            nextZoom = wrap ? Graphics.MaximumWorldScale : Graphics.MinimumWorldScale;
-        }
-
-        Globals.Database.WorldZoom = nextZoom;
+        var steps = Options.Instance.Map.WorldScaleSteps;
+        Globals.Database.WorldZoom = steps.LastOrDefault(step => step < Globals.Database.WorldZoom,
+            wrap ? steps[^1] : steps[0]);
     }
 
     public static void HandleZoomIn(bool wrap = true)
     {
-        var nextZoom = Globals.Database.WorldZoom * 2;
-
-        if (nextZoom > Graphics.MaximumWorldScale)
-        {
-            nextZoom = wrap ? Graphics.MinimumWorldScale : Graphics.MaximumWorldScale;
-        }
-
-        Globals.Database.WorldZoom = nextZoom;
+        var steps = Options.Instance.Map.WorldScaleSteps;
+        Globals.Database.WorldZoom = steps.FirstOrDefault(step => step > Globals.Database.WorldZoom,
+            wrap ? steps[0] : steps[^1]);
     }
 
     public static void OnKeyPressed(Keys modifier, Keys key)

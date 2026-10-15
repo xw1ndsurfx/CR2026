@@ -20,6 +20,8 @@ public partial class EventPage
 
     public bool ShowAnimationOnWorldMap { get; set; }
 
+    public bool ShowNameOnWorldMap { get; set; }
+
     public int WorldMapOffsetX { get; set; }
     public int WorldMapOffsetY { get; set; }
 
