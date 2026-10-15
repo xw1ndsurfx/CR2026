@@ -30,7 +30,7 @@ internal static class SpriteVisibleBounds
                 (width, height) = (height, width);
             }
             if (width < 1 || height < 1 || x < 0 || y < 0 || x + width > native.Width || y + height > native.Height)
-                return new(0, 0, key.Item3, key.Item4);
+                return new(0, 0, key.Item3, key.Item4, true);
             try
             {
                 var pixels = new Microsoft.Xna.Framework.Color[width * height];
@@ -41,7 +41,7 @@ internal static class SpriteVisibleBounds
                 return bounds;
             }
             catch { /* A texture being reloaded uses its frame bounds until it is available again. */ }
-            return new(0, 0, key.Item3, key.Item4);
+            return new(0, 0, key.Item3, key.Item4, true);
         }
         var result = GraphicBounds.Read(key.Item3, key.Item4, (x, y) =>
         {

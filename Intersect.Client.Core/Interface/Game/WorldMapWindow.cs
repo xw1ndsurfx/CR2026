@@ -779,7 +779,8 @@ internal sealed class WorldMapWindow : Window
             AnimationLayer layer,
             int markerX,
             int markerY,
-            int markerHeight = 28
+            int markerHeight = 28,
+            bool fitVisible = false
         )
         {
             if (layer == null ||
@@ -809,14 +810,23 @@ internal sealed class WorldMapWindow : Window
             var frameX = frame % layer.XFrames;
             var frameY = frame / layer.XFrames;
 
+            var sourceX = frameX * frameWidth; var sourceY = frameY * frameHeight;
+            if (fitVisible)
+            {
+                var visible = SpriteVisibleBounds.Get(texture, new FloatRect(sourceX, sourceY, frameWidth, frameHeight));
+                if (visible.IsEmpty) return;
+                sourceX += visible.X; sourceY += visible.Y;
+                frameWidth = visible.Width; frameHeight = visible.Height;
+            }
+
             var scale = Math.Min(markerHeight / (float)frameHeight, markerHeight / (float)frameWidth);
             var markerWidth = Math.Max(1, (int)Math.Round(frameWidth * scale));
             markerHeight = Math.Max(1, (int)Math.Round(frameHeight * scale));
 
-            var u1 = frameX / (float)layer.XFrames;
-            var v1 = frameY / (float)layer.YFrames;
-            var u2 = (frameX + 1) / (float)layer.XFrames;
-            var v2 = (frameY + 1) / (float)layer.YFrames;
+            var u1 = sourceX / (float)texture.Width;
+            var v1 = sourceY / (float)texture.Height;
+            var u2 = (sourceX + frameWidth) / (float)texture.Width;
+            var v2 = (sourceY + frameHeight) / (float)texture.Height;
 
             renderer.DrawColor = Color.White;
             renderer.DrawTexturedRect(

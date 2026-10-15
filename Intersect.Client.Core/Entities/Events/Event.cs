@@ -182,13 +182,6 @@ public partial class Event : Entity
         Graphics.DrawGameTexture(texture, srcRectangle, destRectangle, Color.White);
     }
 
-    protected override FloatRect SpriteDestination(IGameTexture texture, FloatRect source)
-    {
-        var position = EventGraphicPlacement.VisibleTopLeft(Origin.X - TileWidth / 2f, Origin.Y - TileHeight,
-            SpriteVisibleBounds.Get(texture, source), TileWidth, TileHeight);
-        return new FloatRect((int)Math.Ceiling(position.X), (int)Math.Ceiling(position.Y), source.Width, source.Height);
-    }
-
     public override void LoadTextures(string textureName)
     {
         switch (Graphic.Type)
