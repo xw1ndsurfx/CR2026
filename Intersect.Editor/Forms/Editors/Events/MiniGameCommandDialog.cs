@@ -133,18 +133,18 @@ internal sealed class MiniGameCommandDialog : Form
         var lockpickFastBonus = Number(command.LockpickFastExperienceBonusPercent, 0, 500);
         var lockpickFastSeconds = Number(command.LockpickFastThresholdSeconds, 1, 180);
         var lockpickMinTool = EnumPicker<LockpickToolQuality>(command.LockpickMinimumToolQuality);
-        var lockpickBasicItem = RewardItemPicker(command.LockpickBasicToolItemId);
+        var lockpickBasicItem = LockpickItemPicker(command.LockpickBasicToolItemId, "BasicLockpickItem");
         var lockpickBasicBreak = Number(command.LockpickBasicBreakChancePercent, 0, 100);
-        var lockpickReinforcedItem = RewardItemPicker(command.LockpickReinforcedToolItemId);
+        var lockpickReinforcedItem = LockpickItemPicker(command.LockpickReinforcedToolItemId, "ReinforcedLockpickItem");
         var lockpickReinforcedBreak = Number(command.LockpickReinforcedBreakChancePercent, 0, 100);
-        var lockpickRoyalItem = RewardItemPicker(command.LockpickRoyalToolItemId);
+        var lockpickRoyalItem = LockpickItemPicker(command.LockpickRoyalToolItemId, "RoyalLockpickItem");
         var lockpickRoyalBreak = Number(command.LockpickRoyalBreakChancePercent, 0, 100);
-        var lockpickMasterItem = RewardItemPicker(command.LockpickMasterToolItemId);
+        var lockpickMasterItem = LockpickItemPicker(command.LockpickMasterToolItemId, "MasterLockpickItem");
         var lockpickMasterBreak = Number(command.LockpickMasterBreakChancePercent, 0, 100);
-        var lockpickKeyItem = RewardItemPicker(command.LockpickKeyItemId);
+        var lockpickKeyItem = LockpickItemPicker(command.LockpickKeyItemId, "AlternativeKeyItem");
         var lockpickConsumeKey = new CheckBox { Text = "Consume key when used", Checked = command.LockpickConsumeKey, AutoSize = true };
-        var lockpickMistakeEvent = CommonEventPicker(command.LockpickMistakeCommonEventId);
-        var lockpickFailureEvent = CommonEventPicker(command.LockpickFailureCommonEventId);
+        var lockpickMistakeEvent = CommonEventPicker(command.LockpickMistakeCommonEventId, "MistakeCommonEvent");
+        var lockpickFailureEvent = CommonEventPicker(command.LockpickFailureCommonEventId, "FailureCommonEvent");
         var lockpickFailureCooldown = Number(command.LockpickFailureCooldownSeconds, 0, 86_400);
         var lockpickInvasionBonus = Number(command.LockpickInvasionDifficultyBonus, 0, 4);
         var lockpickFailureChoices = new CheckBox
@@ -159,8 +159,8 @@ internal sealed class MiniGameCommandDialog : Form
             Checked = command.LockpickFailureChoicesAffectCrew,
             AutoSize = true,
         };
-        var lockpickKeySearchEvent = CommonEventPicker(command.LockpickKeySearchCommonEventId);
-        var lockpickGuardianEvent = CommonEventPicker(command.LockpickGuardianCommonEventId);
+        var lockpickKeySearchEvent = CommonEventPicker(command.LockpickKeySearchCommonEventId, "KeySearchCommonEvent");
+        var lockpickGuardianEvent = CommonEventPicker(command.LockpickGuardianCommonEventId, "GuardianCommonEvent");
         var lockpickLootDraft = CloneLockpickLoot(command.LockpickLootTable ?? []);
         var lockpickLootButton = new Button
         {
@@ -781,14 +781,29 @@ internal sealed class MiniGameCommandDialog : Form
         if (selected == null) { selected = new CurrencyChoice(id, "Missing / incompatible item: " + id); picker.Items.Add(selected); }
         picker.SelectedItem = selected; return picker;
     }
-    private static ComboBox RewardItemPicker(Guid id)
+    private static ComboBox RewardItemPicker(Guid id) => ItemPicker(id, "RewardItem", "Choose reward item...");
+
+    private static ComboBox LockpickItemPicker(Guid id, string name) => ItemPicker(id, name, "Choose lockpick item...");
+
+    private static ComboBox ItemPicker(Guid id, string name, string placeholder)
     {
-        var picker = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, DropDownWidth = 420 };
-        picker.Items.Add(new RewardItemChoice(Guid.Empty, "Choose reward item..."));
+        var picker = new ComboBox
+        {
+            Name = name,
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Dock = DockStyle.Fill,
+            DropDownWidth = 500,
+        };
+        picker.Items.Add(new RewardItemChoice(Guid.Empty, placeholder));
         foreach (var item in ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().OrderBy(i => i.Name, StringComparer.OrdinalIgnoreCase))
             picker.Items.Add(new RewardItemChoice(item.Id, string.IsNullOrWhiteSpace(item.Folder) ? item.Name : $"[{item.Folder}] / {item.Name}"));
-        var selected = picker.Items.Cast<RewardItemChoice>().FirstOrDefault(choice => choice.Id == id) ?? (RewardItemChoice)picker.Items[0]!;
-        picker.SelectedItem = selected;
+        var selected = picker.Items.Cast<RewardItemChoice>().FirstOrDefault(choice => choice.Id == id);
+        if (selected == null && id != Guid.Empty)
+        {
+            selected = new RewardItemChoice(id, "Missing item: " + id);
+            picker.Items.Add(selected);
+        }
+        picker.SelectedItem = selected ?? picker.Items[0];
         return picker;
     }
 
@@ -831,9 +846,9 @@ internal sealed class MiniGameCommandDialog : Form
         return picker;
     }
 
-    private static ComboBox CommonEventPicker(Guid id)
+    private static ComboBox CommonEventPicker(Guid id, string name)
     {
-        var picker = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill, DropDownWidth = 480 };
+        var picker = new ComboBox { Name = name, DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill, DropDownWidth = 480 };
         picker.Items.Add(new EventChoice(Guid.Empty, "None"));
         foreach (var evt in EventDescriptor.Lookup.Values
                      .OfType<EventDescriptor>()
@@ -841,7 +856,13 @@ internal sealed class MiniGameCommandDialog : Form
                      .OrderBy(evt => evt.Name, StringComparer.OrdinalIgnoreCase))
             picker.Items.Add(new EventChoice(evt.Id, evt.Name));
 
-        picker.SelectedItem = picker.Items.Cast<EventChoice>().FirstOrDefault(choice => choice.Id == id) ?? picker.Items[0];
+        var selected = picker.Items.Cast<EventChoice>().FirstOrDefault(choice => choice.Id == id);
+        if (selected == null && id != Guid.Empty)
+        {
+            selected = new EventChoice(id, "Missing Common Event: " + id);
+            picker.Items.Add(selected);
+        }
+        picker.SelectedItem = selected ?? picker.Items[0];
         return picker;
     }
 

@@ -137,6 +137,10 @@ public sealed partial class PokerMoneyLedger : IDisposable
                     catch (Exception verificationError)
                     {
                         var fatal = new AggregateException("Cannot resolve a poker inventory commit; restart is required.", error, verificationError);
+                        Core.ServerCrashLog.Record(
+                            $"Unverifiable monetary commit; kind={kind}; receipt={receipt}; " +
+                            $"character={character}; currency={currency}; amount={amount}; " +
+                            $"failFast={UnverifiableCommit == null}", fatal);
                         if (UnverifiableCommit != null) UnverifiableCommit(fatal); else Environment.FailFast(fatal.Message, fatal);
                         throw fatal;
                     }

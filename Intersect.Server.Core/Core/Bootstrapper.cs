@@ -58,6 +58,8 @@ internal static class Bootstrapper
             }
         }
 
+        StartupDiagnostics.SetLogDirectory();
+
         foreach (var configureAction in configuredActions)
         {
             configureAction(parsedArguments.CommandLineOptions);
