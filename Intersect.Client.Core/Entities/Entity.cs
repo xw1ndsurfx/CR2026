@@ -228,6 +228,10 @@ public partial class Entity : IEntity
 
     public FloatRect WorldPos { get; set; } = new FloatRect();
 
+    public virtual FloatRect InteractionBounds => WorldPos;
+
+    public bool HitTest(float worldX, float worldY) => InteractionBounds.Contains(worldX, worldY);
+
     public bool IsHovered { get; set; }
 
     private Vector3 _position;
@@ -1045,7 +1049,7 @@ public partial class Entity : IEntity
             var mousePos = Graphics.ConvertToWorldPoint(Globals.InputManager.MousePosition);
 
             // Entity is considered hovered if the mouse is over its world position and not hovering over the GUI.
-            IsHovered = WorldPos.Contains(mousePos.X, mousePos.Y) && !Interface.Interface.DoesMouseHitInterface();
+            IsHovered = HitTest(mousePos.X, mousePos.Y) && !Interface.Interface.DoesMouseHitInterface();
 
             // Check the type of entity and return whether its name should be drawn based on settings and conditions.
             switch (this)
@@ -1979,9 +1983,10 @@ public partial class Entity : IEntity
             targetTexture.Height
         );
 
+        var bounds = InteractionBounds;
         var destRectangle = new FloatRect(
-            (float)Math.Ceiling(WorldPos.X + (WorldPos.Width - targetTexture.Width / 2) / 2),
-            (float)Math.Ceiling(WorldPos.Y + (WorldPos.Height - targetTexture.Height) / 2),
+            (float)Math.Ceiling(bounds.X + (bounds.Width - targetTexture.Width / 2) / 2),
+            (float)Math.Ceiling(bounds.Y + (bounds.Height - targetTexture.Height) / 2),
             srcRectangle.Width,
             srcRectangle.Height
         );
