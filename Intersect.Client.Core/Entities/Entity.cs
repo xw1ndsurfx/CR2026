@@ -1306,9 +1306,12 @@ public partial class Entity : IEntity
 
         var srcRectangle = new FloatRect(frame * frameWidth, spriteRow * frameHeight, frameWidth, frameHeight);
         var destRectangle = SpriteDestination(texture, srcRectangle);
+        var framePosition = EventGraphicPlacement.TopLeft(Origin.X - TileWidth / 2f, Origin.Y - TileHeight,
+            srcRectangle.Width, srcRectangle.Height, TileWidth, TileHeight);
+        _spriteAnchorOffset = new Vector2(destRectangle.X - framePosition.X, destRectangle.Y - framePosition.Y);
 
         WorldPos = destRectangle;
-        RenderedGraphicTop = destRectangle.Y + SpriteVisibleBounds.TopPadding(texture, srcRectangle);
+        IncludeVisibleGraphicTop(texture, srcRectangle, destRectangle);
 
         //Order the layers of paperdolls and sprites
         for (var z = 0; z < Options.Instance.Equipment.Paperdoll.Directions[(int)_lastDirection].Count; z++)
@@ -1551,20 +1554,37 @@ public partial class Entity : IEntity
         }
 
         var srcRectangle = new FloatRect(frame * frameWidth, spriteRow * frameHeight, frameWidth, frameHeight);
-        var destRectangle = SpriteDestination(paperdollTex, srcRectangle);
+        // Equipment shares the body's anchor, including empty frames and different canvas sizes.
+        var position = EventGraphicPlacement.TopLeft(Origin.X - TileWidth / 2f, Origin.Y - TileHeight,
+            srcRectangle.Width, srcRectangle.Height, TileWidth, TileHeight) + _spriteAnchorOffset;
+        var destRectangle = new FloatRect(position.X, position.Y, srcRectangle.Width, srcRectangle.Height);
 
         // Draw the paperdoll texture using: source and destination rectangles along with the render color.
         Graphics.DrawGameTexture(paperdollTex, srcRectangle, destRectangle, renderColor);
-        var equipmentTop = destRectangle.Y + SpriteVisibleBounds.TopPadding(paperdollTex, srcRectangle);
-        RenderedGraphicTop = Math.Min(RenderedGraphicTop ?? equipmentTop, equipmentTop);
+        IncludeEquipmentGraphicTop(paperdollTex, srcRectangle, destRectangle);
     }
 
     protected virtual FloatRect SpriteDestination(IGameTexture texture, FloatRect source)
     {
-        var width = source.Width; var height = source.Height;
-        var position = EventGraphicPlacement.TopLeft(Origin.X - TileWidth / 2f, Origin.Y - TileHeight,
-            width, height, TileWidth, TileHeight);
-        return new FloatRect((int)Math.Ceiling(position.X), (int)Math.Ceiling(position.Y), width, height);
+        var position = EventGraphicPlacement.VisibleTopLeft(Origin.X - TileWidth / 2f, Origin.Y - TileHeight,
+            SpriteVisibleBounds.Get(texture, source), TileWidth, TileHeight);
+        return new FloatRect((int)Math.Ceiling(position.X), (int)Math.Ceiling(position.Y), source.Width, source.Height);
+    }
+
+    private Vector2 _spriteAnchorOffset;
+
+    private void IncludeEquipmentGraphicTop(IGameTexture texture, FloatRect source, FloatRect destination)
+    {
+        // Names follow the character's head; raised weapons must not lift the whole label stack.
+        if (RenderedGraphicTop == null) IncludeVisibleGraphicTop(texture, source, destination);
+    }
+
+    private void IncludeVisibleGraphicTop(IGameTexture texture, FloatRect source, FloatRect destination)
+    {
+        var visible = SpriteVisibleBounds.Get(texture, source);
+        if (visible.IsEmpty) return;
+        var top = destination.Y + visible.Y;
+        RenderedGraphicTop = Math.Min(RenderedGraphicTop ?? top, top);
     }
 
     protected float? RenderedGraphicTop { get; set; }

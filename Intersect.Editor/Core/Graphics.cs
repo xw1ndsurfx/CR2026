@@ -1425,15 +1425,9 @@ public static partial class Graphics
                                     continue;
                                 }
 
-                                if (texture.Height > tileHeight)
-                                {
-                                    ypos -= texture.Height - tileHeight;
-                                }
-
-                                if (texture.Width > tileWidth)
-                                {
-                                    xpos -= (texture.Width - tileWidth) / 2;
-                                }
+                                var visible = TextureVisibleBounds.Get(texture, new Microsoft.Xna.Framework.Rectangle(0, 0, texture.Width, texture.Height));
+                                var placed = EventGraphicPlacement.VisibleTopLeft(xpos, ypos, visible, tileWidth, tileHeight);
+                                xpos = placed.X; ypos = placed.Y;
 
                                 DrawTexture(
                                     texture,
@@ -1459,15 +1453,11 @@ public static partial class Graphics
                                     continue;
                                 }
 
-                                if ((resourceGraphic.Height + 1) * tileHeight > tileHeight)
-                                {
-                                    ypos -= (resourceGraphic.Height + 1) * tileHeight - tileHeight;
-                                }
-
-                                if ((resourceGraphic.Width + 1) * tileWidth > tileWidth)
-                                {
-                                    xpos -= ((resourceGraphic.Width + 1) * tileWidth - tileWidth) / 2;
-                                }
+                                var visible = TextureVisibleBounds.Get(texture, new Microsoft.Xna.Framework.Rectangle(
+                                    resourceGraphic.X * tileWidth, resourceGraphic.Y * tileHeight,
+                                    (resourceGraphic.Width + 1) * tileWidth, (resourceGraphic.Height + 1) * tileHeight));
+                                var placed = EventGraphicPlacement.VisibleTopLeft(xpos, ypos, visible, tileWidth, tileHeight);
+                                xpos = placed.X; ypos = placed.Y;
 
                                 DrawTexture(
                                     texture,

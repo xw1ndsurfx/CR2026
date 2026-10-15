@@ -123,7 +123,7 @@ internal static class WorldMapTests
             player.X++; render.Invoke(mini, [skin]);
             Check((float)panX.GetValue(mini)! < beforePan, "Minimap must follow player movement");
 
-            var legend = new WorldMapLegend { Entries = [new() { AnimationId = Guid.NewGuid(), Label = "Potion shop" }] };
+            var legend = new WorldMapLegend { Entries = [new() { AnimationId = animation.Id, Label = "Potion shop" }] };
             Globals.WorldMapLegend = WorldMapLegend.FromJson(legend.ToJson());
             var legendType = assembly.GetType("Intersect.Client.Interface.Game.WorldMapLegendView", true)!;
             var view = (ControlBase)Activator.CreateInstance(legendType, [canvas])!;
@@ -132,6 +132,13 @@ internal static class WorldMapTests
             update.Invoke(view, [skin]);
             var rows = (System.Collections.ICollection)legendType.GetField("_rows", flags)!.GetValue(view)!;
             Check(rows.Count == 5, "Legend must include location keys and configured animation entries");
+            var legendRow = rows.Cast<ControlBase>().Last();
+            var legendIcon = legendRow.Children.Single(child => child.GetType().Name == "LegendIcon");
+            Check(legendRow.Height == 52 && legendIcon.Width == 52 && legendRow.Children.All(child => child.Bottom <= legendRow.Height),
+                "Legend rows must fit larger icons without excessive empty space or overflowing labels");
+            renderer.Textures.Clear(); legendIcon.GetType().GetMethod("Render", flags)!.Invoke(legendIcon, [skin]);
+            Check(renderer.Textures.Count == 1 && Math.Max(renderer.Textures[0].Width, renderer.Textures[0].Height) == 48,
+                "Legend animation must fill a 48px icon using visible pixels");
             Globals.WorldMapLegend = new(); update.Invoke(view, [skin]);
             Check(rows.Count == 4, "Live legend changes must rebuild without stale controls");
             var state = new WorldMapStatePacket { Players = Globals.WorldMapSocialMarkers, LegendJson = legend.ToJson() };

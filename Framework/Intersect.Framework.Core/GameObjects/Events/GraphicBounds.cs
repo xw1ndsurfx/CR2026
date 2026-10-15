@@ -1,6 +1,6 @@
 namespace Intersect.Framework.Core.GameObjects.Events;
 
-public readonly record struct GraphicBounds(int X, int Y, int Width, int Height)
+public readonly record struct GraphicBounds(int X, int Y, int Width, int Height, bool IsEmpty = false)
 {
     public static GraphicBounds Read(int width, int height, Func<int, int, bool> opaque)
     {
@@ -12,6 +12,6 @@ public readonly record struct GraphicBounds(int X, int Y, int Width, int Height)
                     left = Math.Min(left, x); top = Math.Min(top, y);
                     right = Math.Max(right, x); bottom = Math.Max(bottom, y);
                 }
-        return right < 0 ? new(0, 0, width, height) : new(left, top, right - left + 1, bottom - top + 1);
+        return right < 0 ? new(0, 0, width, height, true) : new(left, top, right - left + 1, bottom - top + 1);
     }
 }

@@ -31,14 +31,14 @@ internal sealed class WorldMapLegendView : ScrollControl
         foreach (var row in _rows) RemoveChild(row, true);
         _rows.Clear();
         AddRow("Legend", Guid.Empty, null, 0);
-        AddRow("You", Guid.Empty, Color.White, 36);
-        AddRow("Party", Guid.Empty, WorldMapWindow.WorldMapCanvas.PartyMarkerColor, 72);
-        AddRow("Friends", Guid.Empty, WorldMapWindow.WorldMapCanvas.FriendMarkerColor, 108);
-        var y = 148;
+        AddRow("You", Guid.Empty, Color.White, 28);
+        AddRow("Party", Guid.Empty, WorldMapWindow.WorldMapCanvas.PartyMarkerColor, 56);
+        AddRow("Friends", Guid.Empty, WorldMapWindow.WorldMapCanvas.FriendMarkerColor, 84);
+        var y = 116;
         foreach (var entry in Globals.WorldMapLegend.Entries)
         {
             AddRow(entry.Label, entry.AnimationId, null, y);
-            y += 82;
+            y += 54;
         }
         SetInnerSize(190, y);
     }
@@ -46,12 +46,12 @@ internal sealed class WorldMapLegendView : ScrollControl
     private void AddRow(string text, Guid animationId, Color? color, int y)
     {
         var row = new Base(this) { MouseInputEnabled = false };
-        row.SetBounds(0, y, 190, animationId == Guid.Empty ? 34 : 80);
+        row.SetBounds(0, y, 190, animationId == Guid.Empty ? 28 : 52);
         _rows.Add(row);
         if (animationId != Guid.Empty || color != null)
         {
             var icon = new LegendIcon(row, animationId, color);
-            icon.SetBounds(0, 0, 34, 34);
+            icon.SetBounds(0, 0, animationId == Guid.Empty ? 34 : 52, row.Height);
         }
         var label = new Label(row)
         {
@@ -59,7 +59,9 @@ internal sealed class WorldMapLegendView : ScrollControl
             AutoSizeToContents = false, WrappingBehavior = WrappingBehavior.Wrapped,
             TextColorOverride = Color.White, MouseInputEnabled = false,
         };
-        label.SetBounds(animationId == Guid.Empty && color == null ? 4 : 38, 7, 148, row.Height - 7);
+        var labelX = animationId == Guid.Empty && color == null ? 4 : animationId == Guid.Empty ? 38 : 56;
+        var labelY = animationId == Guid.Empty ? 5 : 17;
+        label.SetBounds(labelX, labelY, 190 - labelX, row.Height - labelY);
     }
 
     private sealed class LegendIcon(Base parent, Guid animationId, Color? color) : Base(parent)
@@ -67,11 +69,11 @@ internal sealed class WorldMapLegendView : ScrollControl
         protected override void Render(SkinBase skin)
         {
             if (color != null)
-                WorldMapWindow.WorldMapCanvas.DrawLocationMarker(skin.Renderer, 17, 17, color);
+                WorldMapWindow.WorldMapCanvas.DrawLocationMarker(skin.Renderer, 17, 14, color);
             else if (AnimationDescriptor.TryGet(animationId, out var animation))
             {
-                WorldMapWindow.WorldMapCanvas.DrawAnimationLayerMarker(skin.Renderer, animation.Lower, 17, 17);
-                WorldMapWindow.WorldMapCanvas.DrawAnimationLayerMarker(skin.Renderer, animation.Upper, 17, 17);
+                WorldMapWindow.WorldMapCanvas.DrawAnimationLayerMarker(skin.Renderer, animation.Lower, 26, 26, 48, fitVisible: true);
+                WorldMapWindow.WorldMapCanvas.DrawAnimationLayerMarker(skin.Renderer, animation.Upper, 26, 26, 48, fitVisible: true);
             }
         }
     }
