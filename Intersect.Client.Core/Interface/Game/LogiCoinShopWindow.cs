@@ -17,7 +17,7 @@ namespace Intersect.Client.Interface.Game;
 /// in the existing editor configuration; legacy offers remain in SPECIAL.
 /// Every BUY control still sends the original purchase packet.
 /// </summary>
-internal sealed class LogiCoinShopWindow : Window
+internal sealed partial class LogiCoinShopWindow : Window
 {
     private static readonly Color Gold = new(a: 255, r: 237, g: 202, b: 136);
     private static readonly Color Cream = new(a: 255, r: 244, g: 232, b: 207);
@@ -194,10 +194,7 @@ internal sealed class LogiCoinShopWindow : Window
                 BrowserUtils.Open(url);
         };
 
-        AddText(this, "PromotionCaption", "PREMIUM & SPECIAL OFFERS",
-            541, 189, 201, 25, 11, Gold, center: true);
-        AddText(this, "PromotionHelp", "Explore the royal catalogue\nfor exclusive items and bundles.",
-            544, 221, 198, 38, 10, Cream, center: true);
+        AddNewsBanner();
 
         _detailsTitle = AddText(this, "OfferDetailsTitle", "",
             545, 295, 200, 31, 12, Gold, center: true);
@@ -253,6 +250,7 @@ internal sealed class LogiCoinShopWindow : Window
 
     public void Apply(LogiCoinShopStatePacket state)
     {
+        _ = RefreshNewsBannerAsync();
         LogiCoinShopConfiguration.Load(state.ConfigurationJson);
         var configuration = LogiCoinShopConfiguration.Instance;
 
@@ -342,6 +340,7 @@ internal sealed class LogiCoinShopWindow : Window
         Show();
         BringToFront();
         Networking.PacketSender.SendRequestLogiCoinShopState();
+        _ = RefreshNewsBannerAsync();
     }
 
     private static Label AddText(

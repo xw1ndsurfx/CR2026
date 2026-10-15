@@ -250,7 +250,9 @@ public partial class MapGrid
                         mapId,
                         markerX,
                         markerY,
-                        activePage.AnimationId
+                        activePage.AnimationId,
+                        Math.Clamp(activePage.WorldMapOffsetX, -2048, 2048),
+                        Math.Clamp(activePage.WorldMapOffsetY, -2048, 2048)
                     )
                 );
             }

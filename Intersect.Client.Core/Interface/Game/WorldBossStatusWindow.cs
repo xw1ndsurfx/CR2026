@@ -1,4 +1,5 @@
 using Intersect.Client.Framework.File_Management;
+using Intersect.Client.General;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Framework.Core;
@@ -10,6 +11,7 @@ namespace Intersect.Client.Interface.Game;
 
 internal sealed class WorldBossStatusWindow : Base
 {
+    private readonly HudDisclosure _disclosure;
     private readonly Label _title;
     private readonly Label _health;
     private readonly Label _place;
@@ -29,6 +31,7 @@ internal sealed class WorldBossStatusWindow : Base
         _place = Label("WorldBossPlace", 8, 93, 442, 20, 9);
         _ranking = Label("WorldBossRanking", 15, 120, 428, 92, 9);
         _timer = Label("WorldBossTimer", 8, 211, 442, 19, 9);
+        _disclosure = new HudDisclosure(this, _title, "WorldBossHudCollapsed");
         Hide();
     }
 
@@ -63,7 +66,7 @@ internal sealed class WorldBossStatusWindow : Base
             "\n" + string.Join("\n", lines);
         _ranking.FontSize = 8;
         X = Math.Max(8, (Parent?.Width ?? Width) - Width - 18);
-        Y = 18;
+        Y = (Interface.GameUi?.MinimapBottom ?? 10) + 8;
         Show();
         BringToFront();
         Update();
@@ -71,7 +74,9 @@ internal sealed class WorldBossStatusWindow : Base
 
     public void Update()
     {
-        if (_status == null || !_status.Active) return;
+        IsHidden = _status == null || !_status.Active || Globals.Database?.ShowWorldBossHud == false || Interface.GameUi?.SuppressStatusHuds == true;
+        Y = (Interface.GameUi?.MinimapBottom ?? 10) + 8;
+        if (IsHidden) return;
         var remaining = DateTimeOffset.FromUnixTimeMilliseconds(
             _status.ExpiresAtUnixMilliseconds) - DateTimeOffset.UtcNow;
         _timer.Text = remaining > TimeSpan.Zero
@@ -89,6 +94,8 @@ internal sealed class WorldBossStatusWindow : Base
         renderer.DrawColor = new Color(a: 255, r: 208, g: 150, b: 68);
         renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, 3));
         renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Bottom - 2, bounds.Width, 2));
+
+        if (_disclosure.Collapsed) return;
 
         var track = new Rectangle(bounds.X + 30, bounds.Y + 72, bounds.Width - 60, 13);
         renderer.DrawColor = new Color(a: 255, r: 54, g: 37, b: 38);

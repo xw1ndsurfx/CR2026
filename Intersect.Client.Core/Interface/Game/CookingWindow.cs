@@ -1,1814 +1,228 @@
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.GenericClasses;
+using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
+using Intersect.Client.Framework.Input;
 using Intersect.Client.MiniGames;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.MiniGames.Cooking;
 using Intersect.Network.Packets.MiniGames;
+using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 
 namespace Intersect.Client.Interface.Game;
 
-internal sealed class CookingWindow : Base
+internal sealed partial class CookingWindow : Base
 {
     private readonly Canvas _canvas;
     private readonly Action<CookingRequestKind, Guid, Guid, bool, CookingActionInput> _send;
-    private readonly Label _title;
-    private readonly Label _recipe;
-    private readonly Label _ingredients;
-    private readonly Label _partner;
-    private readonly Label _stage;
-    private readonly Label _status;
-    private readonly Label _score;
-    private readonly Label _players;
-    private readonly Label _interactionTitle;
-    private readonly Label _interactionHelp;
-    private readonly CookingInteractionPad _interactionPad;
-    private readonly Label _feedbackBanner;
-    private readonly Label _feedbackCombo;
-    private readonly Label _professionXp;
-    private readonly Label _recipeHeader;
-    private readonly Label _stationHeader;
-    private readonly CookingRecipePickerPanel _recipePicker;
-    private readonly CookingResultPanel _resultPanel;
-    private readonly Label _resultTitle;
-    private readonly Label _resultQuality;
-    private readonly Label _resultScore;
-    private readonly Label _resultReward;
-    private readonly Label _resultXp;
-    private readonly Label _resultStats;
-    private readonly Button _resultAgain;
-    private readonly Button _resultLeave;
-    private readonly Label _recipePickerTitle;
-    private readonly Label _recipePickerPage;
-    private readonly Button[] _recipeCards = new Button[6];
-    private readonly Button _recipePagePrevious;
-    private readonly Button _recipePageNext;
-    private readonly Dictionary<Base, int> _fontSizes = [];
-    private readonly Button _previousRecipe;
-    private readonly Button _nextRecipe;
-    private readonly Button _solo;
-    private readonly Button _coop;
-    private readonly Button _previousPartner;
-    private readonly Button _nextPartner;
-    private readonly Button _action;
-    private readonly Button _actionSecondary;
-    private readonly Button _actionTertiary;
-    private readonly Button _accept;
-    private readonly Button _decline;
-    private readonly Button _leave;
-
+    private readonly Dictionary<Base, Rectangle> _layout = [];
+    private readonly Label _recipe, _step, _help, _progress, _feedback, _partner, _result, _profession;
+    private readonly Button _solo, _coop, _partnerNext, _accept, _decline, _again, _previous, _next;
+    private readonly Button[] _cards = new Button[6];
+    private readonly Label[] _cardLabels = new Label[6];
+    private readonly ImagePanel[] _cardImages = new ImagePanel[6];
+    private readonly ScrollControl _ingredientScroll;
+    private readonly IngredientList _ingredients;
+    private readonly CookingWorktop _worktop;
     private CookingSessionState? _state;
+    private CookingClientModel? _model;
+    private int _selected, _page, _partnerIndex;
+    private long _actionSequence = -1, _feedbackUntil;
     private long _serverOffset;
-    private int _recipeIndex;
-    private int _recipePage;
-    private int _partnerIndex;
-    private long _lastActionSequence;
-    private long _lastComicEventSequence;
-    private long _feedbackUntil;
-    private long _comicUntil;
-    private int _feedbackScore;
-    private int _feedbackComboValue;
-    private CookingStageType _feedbackStage;
-    private CookingComicEventType _comicEventType;
-    private string _comicEventText = string.Empty;
-    private bool _stateTransitionsInitialized;
-    private bool _previousSelecting;
-    private bool _previousWaitingForPartner;
-    private bool _previousInvitePending;
-    private bool _previousComplete;
-    private Guid _previousPartnerId;
+    private long _packetSequence = -1, _comicSequence = -1;
+    private readonly Dictionary<Label, int> _fonts = [];
     private bool _destroyed;
-
     public bool ExitRequested { get; private set; }
 
-    public CookingWindow(
-        Canvas canvas,
-        Action<CookingRequestKind, Guid, Guid, bool, CookingActionInput> send
-    ) : base(canvas, nameof(CookingWindow))
+    public CookingWindow(Canvas canvas, Action<CookingRequestKind, Guid, Guid, bool, CookingActionInput> send)
+        : base(canvas, nameof(CookingWindow))
     {
-        _canvas = canvas;
-        _send = send;
-        ShouldDrawBackground = false;
-        MouseInputEnabled = true;
-
-        _title = MakeLabel("CookingTitle", 82, 20, 860, 42, 22);
-        _title.Text = "ROYAL KITCHEN";
-        _title.TextAlign = Pos.Center;
-        _title.TextColorOverride = new Color(255, 236, 210, 117);
-
-        _recipeHeader = MakeLabel("CookingRecipeHeader", 62, 101, 286, 18, 10);
-        _recipeHeader.Text = "RECIPE";
-        _recipeHeader.TextColorOverride = new Color(255, 202, 166, 96);
-
-        _stationHeader = MakeLabel("CookingStationHeader", 420, 101, 530, 18, 10);
-        _stationHeader.Text = "KITCHEN STATION";
-        _stationHeader.TextAlign = Pos.Center;
-        _stationHeader.TextColorOverride = new Color(255, 202, 166, 96);
-
-        _recipe = MakeLabel("CookingRecipe", 62, 115, 286, 92, 15);
-        _ingredients = MakeLabel("CookingIngredients", 62, 228, 286, 198, 11);
-        _ingredients.TextColorOverride = new Color(255, 239, 232, 214);
-        _partner = MakeLabel("CookingPartner", 62, 448, 286, 78, 11);
-        _partner.TextColorOverride = new Color(255, 220, 205, 176);
-
-        _stage = MakeLabel("CookingStage", 420, 112, 530, 86, 18);
-        _stage.TextAlign = Pos.Center;
-        _stage.TextColorOverride = new Color(255, 236, 210, 117);
-        _status = MakeLabel("CookingStatus", 420, 210, 530, 92, 12);
-        _status.TextAlign = Pos.Center;
-        _score = MakeLabel("CookingScore", 420, 306, 530, 30, 11);
-        _score.TextAlign = Pos.Center;
-        _score.TextColorOverride = new Color(255, 235, 224, 198);
-        _players = MakeLabel("CookingPlayers", 420, 390, 530, 72, 11);
-        _players.TextAlign = Pos.Center;
-        _players.IsHidden = true;
-
-        _interactionTitle = MakeLabel("CookingInteractionTitle", 420, 340, 530, 25, 14);
-        _interactionTitle.TextAlign = Pos.Center;
-        _interactionTitle.TextColorOverride = new Color(255, 236, 210, 117);
-        _interactionTitle.IsHidden = true;
-
-        _interactionHelp = MakeLabel("CookingInteractionHelp", 420, 365, 530, 24, 10);
-        _interactionHelp.TextAlign = Pos.Center;
-        _interactionHelp.TextColorOverride = new Color(255, 226, 214, 187);
-        _interactionHelp.IsHidden = true;
-
-        _interactionPad = new CookingInteractionPad(this, DoAction)
+        _canvas = canvas; _send = send; MouseInputEnabled = true;
+        Text("KitchenHeading", "ROYAL KITCHEN", 35, 22, 920, 40, 22);
+        Text("RecipeBookHeading", "RECIPE BOOK", 35, 95, 255, 28, 13);
+        _recipe = Text("RecipeName", "Choose your dish", 35, 128, 255, 65, 16);
+        _ingredientScroll = Place(new ScrollControl(this, "RecipeIngredients"), 35, 207, 255, 298);
+        _ingredientScroll.EnableScroll(false, true);
+        _ingredientScroll.MouseInputEnabled = true;
+        _ingredients = new IngredientList(_ingredientScroll);
+        _partner = Text("KitchenPartner", "", 35, 511, 255, 42, 10);
+        _partnerNext = Button("PartnerNext", "Choose partner >", 35, 560, 255, () => { ++_partnerIndex; });
+        _solo = Button("StartSolo", "COOK SOLO", 35, 603, 122, () => Start(false));
+        _coop = Button("StartTogether", "COOK TOGETHER", 165, 603, 125, () => Start(true));
+        _step = Text("KitchenStep", "Choose a recipe", 330, 98, 650, 34, 18);
+        _help = Text("KitchenHelp", "Pick a dish, check the ingredients, then start cooking.", 330, 138, 650, 65, 12);
+        _worktop = Place(new CookingWorktop(this, Submit), 330, 207, 650, 350);
+        _progress = Text("KitchenProgress", "", 330, 566, 650, 30, 11);
+        _feedback = Text("KitchenFeedback", "", 330, 603, 650, 30, 15);
+        _result = Text("KitchenResult", "", 350, 250, 610, 220, 16);
+        _accept = Button("AcceptKitchenInvite", "ACCEPT", 420, 491, 180,
+            () => _send(CookingRequestKind.RespondInvite, Guid.Empty, Guid.Empty, true, CookingActionInput.Primary));
+        _decline = Button("DeclineKitchenInvite", "DECLINE", 620, 491, 180,
+            () => _send(CookingRequestKind.RespondInvite, Guid.Empty, Guid.Empty, false, CookingActionInput.Primary));
+        _again = Button("CookAnotherDish", "CHOOSE ANOTHER RECIPE", 450, 494, 400,
+            () => _send(CookingRequestKind.ReturnToRecipes, Guid.Empty, Guid.Empty, false, CookingActionInput.Primary));
+        for (var index = 0; index < _cards.Length; ++index)
         {
-            UserData = new Rectangle(430, 392, 510, 82),
-            IsHidden = true,
-            MouseInputEnabled = true,
-            KeyboardInputEnabled = false,
-        };
-        _interactionPad.SetBounds(430, 392, 510, 82);
-
-        _feedbackBanner = MakeLabel("CookingFeedbackBanner", 510, 320, 350, 54, 28);
-        _feedbackBanner.TextAlign = Pos.Center;
-        _feedbackBanner.TextColorOverride = new Color(255, 236, 210, 117);
-        _feedbackBanner.IsHidden = true;
-
-        _feedbackCombo = MakeLabel("CookingFeedbackCombo", 560, 372, 250, 28, 14);
-        _feedbackCombo.TextAlign = Pos.Center;
-        _feedbackCombo.TextColorOverride = new Color(255, 226, 214, 187);
-        _feedbackCombo.IsHidden = true;
-
-        _professionXp = MakeLabel("CookingProfessionXp", 55, 626, 700, 28, 11);
-        _professionXp.TextColorOverride = new Color(255, 236, 210, 117);
-
-        _recipePicker = new CookingRecipePickerPanel(this)
-        {
-            IsHidden = true,
-            MouseInputEnabled = true,
-            KeyboardInputEnabled = false,
-        };
-
-        _resultPanel = new CookingResultPanel(this)
-        {
-            IsHidden = true,
-            MouseInputEnabled = true,
-            KeyboardInputEnabled = false,
-        };
-
-        _resultTitle = new Label(_resultPanel, "CookingResultTitle")
-        {
-            AutoSizeToContents = false,
-            Font = Skin.DefaultFont,
-            FontSize = 16,
-            Text = "DINNER IS READY!",
-            TextAlign = Pos.Center,
-            TextColorOverride = new Color(255, 236, 210, 117),
-            MouseInputEnabled = false,
-            KeyboardInputEnabled = false,
-        };
-
-        _resultQuality = new Label(_resultPanel, "CookingResultQuality")
-        {
-            AutoSizeToContents = false,
-            Font = Skin.DefaultFont,
-            FontSize = 30,
-            TextAlign = Pos.Center,
-            TextColorOverride = Color.White,
-            MouseInputEnabled = false,
-            KeyboardInputEnabled = false,
-        };
-
-        _resultScore = new Label(_resultPanel, "CookingResultScore")
-        {
-            AutoSizeToContents = false,
-            Font = Skin.DefaultFont,
-            FontSize = 15,
-            TextAlign = Pos.Center,
-            TextColorOverride = new Color(255, 235, 224, 198),
-            MouseInputEnabled = false,
-            KeyboardInputEnabled = false,
-        };
-
-        _resultReward = new Label(_resultPanel, "CookingResultReward")
-        {
-            AutoSizeToContents = false,
-            Font = Skin.DefaultFont,
-            FontSize = 11,
-            TextAlign = Pos.Center,
-            TextColorOverride = Color.White,
-            MouseInputEnabled = false,
-            KeyboardInputEnabled = false,
-        };
-
-        _resultXp = new Label(_resultPanel, "CookingResultXp")
-        {
-            AutoSizeToContents = false,
-            Font = Skin.DefaultFont,
-            FontSize = 13,
-            TextAlign = Pos.Center,
-            TextColorOverride = new Color(255, 236, 210, 117),
-            MouseInputEnabled = false,
-            KeyboardInputEnabled = false,
-        };
-
-        _resultStats = new Label(_resultPanel, "CookingResultStats")
-        {
-            AutoSizeToContents = false,
-            Font = Skin.DefaultFont,
-            FontSize = 10,
-            TextAlign = Pos.Center,
-            TextColorOverride = new Color(255, 216, 205, 182),
-            MouseInputEnabled = false,
-            KeyboardInputEnabled = false,
-        };
-
-        _resultAgain = new Button(_resultPanel, "CookingResultAgain")
-        {
-            Font = Skin.DefaultFont,
-            FontSize = 11,
-            Text = "CHOOSE ANOTHER RECIPE",
-            TextColorOverride = new Color(255, 236, 210, 117),
-        };
-        _resultAgain.Clicked += (_, _) =>
-            _send(CookingRequestKind.ReturnToRecipes, Guid.Empty, Guid.Empty, false, CookingActionInput.Primary);
-
-        _resultLeave = new Button(_resultPanel, "CookingResultLeave")
-        {
-            Font = Skin.DefaultFont,
-            FontSize = 11,
-            Text = "LEAVE KITCHEN",
-        };
-        _resultLeave.Clicked += (_, _) => ExitRequested = true;
-
-        _recipePickerTitle = new Label(_recipePicker, "CookingRecipePickerTitle")
-        {
-            AutoSizeToContents = false,
-            Font = Skin.DefaultFont,
-            FontSize = 17,
-            Text = "CHOOSE A RECIPE",
-            TextAlign = Pos.Center,
-            TextColorOverride = new Color(255, 236, 210, 117),
-            MouseInputEnabled = false,
-            KeyboardInputEnabled = false,
-        };
-
-        _recipePickerPage = new Label(_recipePicker, "CookingRecipePickerPage")
-        {
-            AutoSizeToContents = false,
-            Font = Skin.DefaultFont,
-            FontSize = 10,
-            TextAlign = Pos.Center,
-            TextColorOverride = new Color(255, 211, 188, 137),
-            MouseInputEnabled = false,
-            KeyboardInputEnabled = false,
-        };
-
-        for (var slot = 0; slot < _recipeCards.Length; ++slot)
-        {
-            var captured = slot;
-            var card = new Button(_recipePicker, "CookingRecipeCard" + slot)
+            var slot = index;
+            var card = Button("RecipeCard" + index, "", 330 + index % 2 * 330, 210 + index / 2 * 108, 320,
+                () => { _selected = _page * 6 + slot; });
+            _layout[card] = new Rectangle(330 + index % 2 * 330, 210 + index / 2 * 108, 320, 96);
+            _cards[index] = card;
+            _cardImages[index] = new ImagePanel(card) { MaintainAspectRatio = true, MouseInputEnabled = false };
+            _cardLabels[index] = new Label(card)
             {
-                Font = Skin.DefaultFont,
-                FontSize = 11,
-                Text = string.Empty,
-                TextColorOverride = Color.White,
+                AutoSizeToContents = false, Font = Skin.DefaultFont, FontSize = 11, MouseInputEnabled = false,
+                WrappingBehavior = WrappingBehavior.Wrapped, TextColorOverride = Color.White,
             };
-            card.Clicked += (_, _) => SelectRecipeCard(captured);
-            _recipeCards[slot] = card;
         }
-
-        _recipePagePrevious = new Button(_recipePicker, "CookingRecipePagePrevious")
-        {
-            Font = Skin.DefaultFont,
-            FontSize = 11,
-            Text = "< Previous",
-        };
-        _recipePagePrevious.Clicked += (_, _) =>
-        {
-            if (_recipePage > 0) --_recipePage;
-            RefreshRecipePicker();
-        };
-
-        _recipePageNext = new Button(_recipePicker, "CookingRecipePageNext")
-        {
-            Font = Skin.DefaultFont,
-            FontSize = 11,
-            Text = "Next >",
-        };
-        _recipePageNext.Clicked += (_, _) =>
-        {
-            ++_recipePage;
-            RefreshRecipePicker();
-        };
-
-        _previousRecipe = MakeButton("CookingPreviousRecipe", "< Recipe", 55, 538, 92, () =>
-        {
-            _recipeIndex = Math.Max(0, _recipeIndex - 1);
-            RefreshSelection();
-        });
-        _nextRecipe = MakeButton("CookingNextRecipe", "Recipe >", 154, 538, 92, () =>
-        {
-            if (_state != null)
-                _recipeIndex = Math.Min(Math.Max(0, _state.Recipes.Length - 1), _recipeIndex + 1);
-            RefreshSelection();
-        });
-        _solo = MakeButton("CookingSolo", "COOK SOLO", 55, 538, 142, StartSolo);
-
-        _previousPartner = MakeButton("CookingPreviousPartner", "< Friend", 55, 578, 92, () =>
-        {
-            _partnerIndex = Math.Max(0, _partnerIndex - 1);
-            RefreshSelection();
-        });
-        _nextPartner = MakeButton("CookingNextPartner", "Friend >", 154, 578, 92, () =>
-        {
-            if (_state != null)
-                _partnerIndex = Math.Min(Math.Max(0, _state.PartyCandidates.Length - 1), _partnerIndex + 1);
-            RefreshSelection();
-        });
-        _coop = MakeButton("CookingCoop", "COOK TOGETHER", 206, 538, 147, StartCoop);
-
-        _action = MakeButton("CookingAction", "DO IT!", 435, 528, 160, () => DoAction(CookingActionInput.Primary));
-        _actionSecondary = MakeButton("CookingActionSecondary", "SECONDARY", 606, 528, 160, () => DoAction(CookingActionInput.Secondary));
-        _actionTertiary = MakeButton("CookingActionTertiary", "TERTIARY", 777, 528, 160, () => DoAction(CookingActionInput.Tertiary));
-        _accept = MakeButton("CookingAccept", "ACCEPT COOKING INVITE", 500, 528, 220, () =>
-            _send(CookingRequestKind.RespondInvite, Guid.Empty, Guid.Empty, true, CookingActionInput.Primary)
-        );
-        _decline = MakeButton("CookingDecline", "DECLINE", 730, 528, 140, () =>
-            _send(CookingRequestKind.RespondInvite, Guid.Empty, Guid.Empty, false, CookingActionInput.Primary)
-        );
-        _leave = MakeButton("CookingLeave", "Leave Kitchen", 805, 650, 145, () => ExitRequested = true);
-
-        _solo.TextColorOverride = new Color(255, 236, 210, 117);
-        _coop.TextColorOverride = new Color(255, 236, 210, 117);
-        _action.TextColorOverride = new Color(255, 236, 210, 117);
-        _actionSecondary.TextColorOverride = Color.White;
-        _actionTertiary.TextColorOverride = Color.White;
-
+        _previous = Button("PreviousRecipes", "<", 330, 566, 52, () => _page = Math.Max(0, _page - 1));
+        _next = Button("NextRecipes", ">", 928, 566, 52, () => ++_page);
+        _profession = Text("KitchenProfession", "", 35, 663, 720, 26, 11);
+        Button("LeaveKitchen", "LEAVE KITCHEN", 790, 661, 190, () => ExitRequested = true);
         ResizeToCanvas();
+    }
+
+    private T Place<T>(T control, int x, int y, int width, int height) where T : Base
+    { _layout[control] = new Rectangle(x, y, width, height); return control; }
+
+    private Label Text(string name, string text, int x, int y, int width, int height, int size)
+    {
+        var label = Place(new Label(this, name)
+        {
+            Text = text, Font = Skin.DefaultFont, FontSize = size, AutoSizeToContents = false,
+            WrappingBehavior = WrappingBehavior.Wrapped, TextColorOverride = Color.White, MouseInputEnabled = false,
+        }, x, y, width, height);
+        _fonts[label] = size;
+        return label;
+    }
+
+    private Button Button(string name, string text, int x, int y, int width, Action action)
+    {
+        var button = Place(new Button(this, name) { Text = text, Font = Skin.DefaultFont, FontSize = 11 }, x, y, width, 36);
+        button.Clicked += (_, _) => action(); return button;
     }
 
     public void ResizeToCanvas()
     {
-        SetPosition(0, 0);
-        SetSize(_canvas.Width, _canvas.Height);
-
-        var scaleX = Width / 1024f;
-        var scaleY = Height / 720f;
-        var scale = Math.Min(scaleX, scaleY);
-        var offsetX = (int)((Width - 1024 * scale) / 2f);
-        var offsetY = (int)((Height - 720 * scale) / 2f);
-
-        foreach (var control in Children)
+        SetBounds(0, 0, _canvas.Width, _canvas.Height);
+        var scale = Math.Min(Width / 1024f, Height / 720f);
+        var left = (Width - 1024 * scale) / 2; var top = (Height - 720 * scale) / 2;
+        foreach (var (control, rectangle) in _layout)
+            control.SetBounds((int)(left + rectangle.X * scale), (int)(top + rectangle.Y * scale),
+                Math.Max(1, (int)(rectangle.Width * scale)), Math.Max(1, (int)(rectangle.Height * scale)));
+        foreach (var (label, size) in _fonts) label.FontSize = Math.Max(8, (int)(size * scale));
+        foreach (var control in _layout.Keys.OfType<Button>()) control.FontSize = Math.Max(8, (int)(11 * scale));
+        foreach (var label in _cardLabels) label.FontSize = Math.Max(8, (int)(11 * scale));
+        foreach (var (card, index) in _cards.Select((card, index) => (card, index)))
         {
-            if (control.UserData is not Rectangle design) continue;
-            control.SetBounds(
-                offsetX + (int)(design.X * scale),
-                offsetY + (int)(design.Y * scale),
-                Math.Max(1, (int)(design.Width * scale)),
-                Math.Max(1, (int)(design.Height * scale))
-            );
-
-            if (control is Label label && _fontSizes.TryGetValue(control, out var baseFont))
-                label.FontSize = Math.Max(8, (int)Math.Round(baseFont * scale));
+            _cardImages[index].SetBounds(8, 12, Math.Max(20, card.Height - 24), Math.Max(20, card.Height - 24));
+            _cardLabels[index].SetBounds(card.Height, 8, Math.Max(1, card.Width - card.Height - 8), card.Height - 16);
         }
-
-        var pickerX = offsetX + (int)(405 * scale);
-        var pickerY = offsetY + (int)(118 * scale);
-        var pickerW = Math.Max(1, (int)(550 * scale));
-        var pickerH = Math.Max(1, (int)(390 * scale));
-        _recipePicker.SetBounds(pickerX, pickerY, pickerW, pickerH);
-
-        int PX(int value) => (int)Math.Round(value * pickerW / 550d);
-        int PY(int value) => (int)Math.Round(value * pickerH / 390d);
-
-        _recipePickerTitle.SetBounds(PX(18), PY(14), PX(514), PY(32));
-        _recipePickerTitle.FontSize = Math.Max(9, (int)Math.Round(17 * scale));
-
-        for (var slot = 0; slot < _recipeCards.Length; ++slot)
-        {
-            var column = slot % 2;
-            var row = slot / 2;
-            var card = _recipeCards[slot];
-            card.SetBounds(
-                PX(20 + column * 258),
-                PY(58 + row * 82),
-                PX(246),
-                PY(70)
-            );
-            card.FontSize = Math.Max(8, (int)Math.Round(11 * scale));
-        }
-
-        _recipePagePrevious.SetBounds(PX(20), PY(322), PX(108), PY(34));
-        _recipePagePrevious.FontSize = Math.Max(8, (int)Math.Round(11 * scale));
-        _recipePickerPage.SetBounds(PX(138), PY(322), PX(274), PY(34));
-        _recipePickerPage.FontSize = Math.Max(8, (int)Math.Round(10 * scale));
-        _recipePageNext.SetBounds(PX(422), PY(322), PX(108), PY(34));
-        _recipePageNext.FontSize = Math.Max(8, (int)Math.Round(11 * scale));
-
-        var resultX = offsetX + (int)(425 * scale);
-        var resultY = offsetY + (int)(130 * scale);
-        var resultW = Math.Max(1, (int)(520 * scale));
-        var resultH = Math.Max(1, (int)(410 * scale));
-        _resultPanel.SetBounds(resultX, resultY, resultW, resultH);
-
-        int RX(int value) => (int)Math.Round(value * resultW / 520d);
-        int RY(int value) => (int)Math.Round(value * resultH / 410d);
-
-        _resultTitle.SetBounds(RX(18), RY(18), RX(484), RY(28));
-        _resultTitle.FontSize = Math.Max(9, (int)Math.Round(16 * scale));
-        _resultQuality.SetBounds(RX(18), RY(56), RX(484), RY(62));
-        _resultQuality.FontSize = Math.Max(14, (int)Math.Round(30 * scale));
-        _resultScore.SetBounds(RX(18), RY(126), RX(484), RY(34));
-        _resultScore.FontSize = Math.Max(9, (int)Math.Round(15 * scale));
-        _resultReward.SetBounds(RX(35), RY(176), RX(450), RY(64));
-        _resultReward.FontSize = Math.Max(8, (int)Math.Round(11 * scale));
-        _resultXp.SetBounds(RX(18), RY(250), RX(484), RY(34));
-        _resultXp.FontSize = Math.Max(8, (int)Math.Round(13 * scale));
-        _resultStats.SetBounds(RX(18), RY(292), RX(484), RY(42));
-        _resultStats.FontSize = Math.Max(8, (int)Math.Round(10 * scale));
-        _resultAgain.SetBounds(RX(58), RY(350), RX(250), RY(38));
-        _resultAgain.FontSize = Math.Max(8, (int)Math.Round(11 * scale));
-        _resultLeave.SetBounds(RX(320), RY(350), RX(142), RY(38));
-        _resultLeave.FontSize = Math.Max(8, (int)Math.Round(11 * scale));
     }
 
     public void Update(CookingClientModel model)
     {
-        ResizeToCanvas();
-
-        if (model.Current?.State is not { } state)
-            return;
-
-        _state = state;
-        _serverOffset = model.Current.ServerUnixMs - Environment.TickCount64;
-        HandleStateSounds(state);
-        HandleActionFeedback(state);
-        HandleComicEvent(state);
-
-        if (_recipeIndex >= state.Recipes.Length) _recipeIndex = Math.Max(0, state.Recipes.Length - 1);
-        if (_partnerIndex >= state.PartyCandidates.Length) _partnerIndex = Math.Max(0, state.PartyCandidates.Length - 1);
-
+        ResizeToCanvas(); _model = model;
+        if (model.Current is not { State: { } state } packet) return;
+        var previous = _state; _state = state;
+        if (_packetSequence != packet.Sequence)
+        {
+            _packetSequence = packet.Sequence;
+            _serverOffset = packet.ServerUnixMs - Environment.TickCount64;
+        }
+        if (previous?.RecipeId != state.RecipeId && state.RecipeId != Guid.Empty)
+            Play(state.StartSound);
+        if (state.Complete && previous?.Complete != true)
+            Play(state.Quality switch { CookingQuality.Perfect => state.PerfectSoundRecipe,
+                CookingQuality.Great => state.GreatSound, CookingQuality.Burnt => state.BurntSound, _ => state.CompleteSound });
+        if (state.ActionSequence != _actionSequence)
+        {
+            if (_actionSequence >= 0)
+            {
+                _feedback.Text = state.LastActionScore >= 90 ? "PERFECT!" : state.LastActionScore >= 70 ? "NICELY DONE!" : "Keep practicing!";
+                _feedback.TextColorOverride = state.LastActionScore >= 70 ? new Color(110, 230, 135) : new Color(245, 160, 90);
+                _feedbackUntil = Environment.TickCount64 + 1100;
+                Play(state.LastActionScore >= 90 ? state.PerfectSound : state.LastActionScore < 40 ? state.MishapSound : state.ActionSound);
+            }
+            _actionSequence = state.ActionSequence;
+        }
+        if (_comicSequence != state.ComicEventSequence)
+        {
+            if (_comicSequence >= 0 && !string.IsNullOrWhiteSpace(state.ComicEventText))
+            { _feedback.Text = state.ComicEventText; _feedbackUntil = Environment.TickCount64 + 1700; }
+            _comicSequence = state.ComicEventSequence;
+        }
+        if (previous?.InvitePendingForYou != true && state.InvitePendingForYou) Play(state.InviteSound);
+        if (previous?.PartnerId != state.PartnerId && state.PartnerId != Guid.Empty) Play(state.PartnerJoinedSound);
         var selecting = state.RecipeSelectionRequired;
-        _recipePicker.IsHidden = !selecting;
-        if (selecting) _recipePicker.BringToFront();
-
-        _resultPanel.IsHidden = !state.Complete;
-        if (state.Complete)
+        _selected = Math.Clamp(_selected, 0, Math.Max(0, state.Recipes.Length - 1));
+        _page = Math.Clamp(_page, 0, Math.Max(0, (state.Recipes.Length - 1) / 6));
+        _partnerIndex %= Math.Max(1, state.PartyCandidates.Length);
+        var recipe = selecting ? state.Recipes.ElementAtOrDefault(_selected) : null;
+        _recipe.Text = recipe?.Name ?? state.RecipeName;
+        _ingredients.Items = recipe?.Ingredients ?? state.RecipeIngredients;
+        _ingredients.SetSize(230, Math.Max(1, _ingredients.Items.Length * 48));
+        _ingredientScroll.SetInnerSize(230, _ingredients.Height);
+        _partner.Text = !selecting ? state.PartnerId == Guid.Empty ? "Cooking solo" : "Cooking with " + state.PartnerName
+            : state.PartyCandidates.ElementAtOrDefault(_partnerIndex)?.Name is { } partner ? "Partner: " + partner : "No party partner available";
+        _profession.Text = selecting && recipe != null
+            ? $"{recipe.ProfessionName} level {recipe.ProfessionLevel} / {recipe.ProfessionMaximumLevel}  -  {recipe.ProfessionExperiencePercent}% XP"
+            : $"{state.ProfessionName} level {state.ProfessionLevel} / {state.ProfessionMaximumLevel}  -  {state.ProfessionExperiencePercent}% XP";
+        _solo.IsHidden = _coop.IsHidden = _partnerNext.IsHidden = !selecting;
+        _solo.IsDisabled = model.Pending || recipe == null || !recipe.Unlocked || !recipe.AllowSolo || recipe.RequireCoop;
+        _coop.IsDisabled = model.Pending || recipe == null || !recipe.Unlocked || !recipe.AllowCoop || state.PartyCandidates.Length == 0;
+        for (var index = 0; index < _cards.Length; ++index)
         {
-            RefreshResultPanel(state);
-            _resultPanel.BringToFront();
+            var choice = state.Recipes.ElementAtOrDefault(_page * 6 + index);
+            _cards[index].IsHidden = !selecting || choice == null;
+            if (choice == null) continue;
+            _cardLabels[index].Text = (choice.Id == recipe?.Id ? "> " : "") + choice.Name + "\nLevel " + choice.RequiredLevel +
+                (choice.Unlocked ? "" : "\n" + choice.LockedReason);
+            _cardImages[index].Texture = CookingArt.ItemTexture(choice.Ingredients.FirstOrDefault()?.ItemId ?? Guid.Empty);
         }
-        else
-        {
-            _resultPanel.CelebrationStartedAt = 0;
-        }
-
-        _previousRecipe.IsHidden = true;
-        _nextRecipe.IsHidden = true;
-        _solo.IsHidden = _coop.IsHidden = !selecting;
-        _previousPartner.IsHidden = _nextPartner.IsHidden = !selecting;
-        var hideActions = selecting || state.WaitingForPartner || state.InvitePendingForYou || state.Complete;
-
-        // Royal Kitchen is gesture-driven now. The old click buttons remain instantiated for
-        // compatibility with the existing layout code, but are intentionally hidden.
-        _action.IsHidden = true;
-        _actionSecondary.IsHidden = true;
-        _actionTertiary.IsHidden = true;
-
-        var showInteraction = !hideActions;
-        _interactionTitle.IsHidden = !showInteraction;
-        _interactionHelp.IsHidden = !showInteraction;
-        _interactionPad.IsHidden = !showInteraction;
-        _interactionPad.Configure(state, showInteraction && state.YourTurn && !model.Pending);
-        _interactionPad.Tick();
-
+        _previous.IsHidden = _next.IsHidden = !selecting;
+        _previous.IsDisabled = _page == 0; _next.IsDisabled = (_page + 1) * 6 >= state.Recipes.Length;
+        _result.IsHidden = !state.Complete;
+        _again.IsHidden = !state.Complete || !state.IsHost;
         _accept.IsHidden = _decline.IsHidden = !state.InvitePendingForYou;
-        _leave.IsHidden = state.Complete;
-
-        _action.IsDisabled = true;
-        _actionSecondary.IsDisabled = true;
-        _actionTertiary.IsDisabled = true;
-        _solo.IsDisabled = model.Pending;
-        _coop.IsDisabled = model.Pending;
-
-        RefreshSelection();
-        RefreshRecipePicker();
-
-        // RefreshSelection computes availability; pending always wins.
-        if (selecting)
-        {
-            _solo.IsDisabled = _solo.IsDisabled || model.Pending;
-            _coop.IsDisabled = _coop.IsDisabled || model.Pending;
-        }
-
-        if (!selecting)
-        {
-            _recipe.Text =
-                $"{state.RecipeName}\n{state.ProfessionName} Lv {state.ProfessionLevel}\n" +
-                $"{(state.PartnerId == Guid.Empty ? "Solo kitchen" : "Two-player kitchen")}";
-
-            var stageIngredientIds = state.StageIngredientItemIds.ToHashSet();
-            var stageIngredients = state.RecipeIngredients
-                .Where(ingredient => stageIngredientIds.Contains(ingredient.ItemId))
-                .ToArray();
-            var activeStageIngredientIndex = stageIngredients.Length == 0
-                ? -1
-                : Math.Clamp(state.CompletedActions, 0, stageIngredients.Length - 1);
-            var activeStageIngredientId = activeStageIngredientIndex >= 0
-                ? stageIngredients[activeStageIngredientIndex].ItemId
-                : Guid.Empty;
-
-            _ingredients.Text = state.RecipeIngredients.Length == 0
-                ? "INGREDIENTS\nNo ingredient data."
-                : "INGREDIENTS\n" + string.Join(
-                    "\n",
-                    state.RecipeIngredients.Select(ingredient =>
-                    {
-                        var prefix = ingredient.ItemId == activeStageIngredientId
-                            ? "> "
-                            : stageIngredientIds.Contains(ingredient.ItemId)
-                                ? "+ "
-                                : "  ";
-                        return $"{prefix}{ingredient.Needed:N0} x {ingredient.Name}";
-                    })
-                );
-
-            var stageNumber = Math.Min(state.StageCount, state.StageIndex + 1);
-            _stage.Text = state.Complete
-                ? $"DINNER IS READY!\n{state.Quality}"
-                : state.WaitingForPartner
-                    ? $"Waiting for {state.PartnerName}..."
-                    : $"STAGE {stageNumber}/{state.StageCount}\n{StageName(state.StageType)}\n" +
-                      $"{state.CompletedActions}/{state.RequiredActions} actions";
-
-            var comicText = _comicUntil > Environment.TickCount64 && !string.IsNullOrWhiteSpace(_comicEventText)
-                ? $"\nWARNING: {_comicEventText}"
-                : string.Empty;
-            _status.Text = string.IsNullOrWhiteSpace(model.ErrorCode)
-                ? $"{state.Status}{comicText}"
-                : ErrorText(model.ErrorCode);
-
-            _score.Text = state.Complete
-                ? $"TEAM SCORE: {state.TeamScore}% | {state.Quality}"
-                : $"Stage {state.StageScore}% | Combo x{state.Combo} | Mishaps {state.Mishaps}";
-
-            _players.IsHidden = true;
-            _partner.Text = state.PartnerId == Guid.Empty
-                ? "MODE\nSolo kitchen"
-                : "CO-OP TEAM\n" + string.Join(
-                    "\n",
-                    state.Participants.Select(player =>
-                        $"{player.Name}: {player.Actions} actions | {player.Score}%"
-                    )
-                );
-
-            if (showInteraction)
-            {
-                _interactionTitle.Text = !state.YourTurn
-                    ? "PARTNER AT THE STATION"
-                    : _interactionPad.WaitingForPlacement
-                        ? _interactionPad.PlacementTitle
-                        : InteractionTitle(state);
-                _interactionHelp.Text = !state.YourTurn
-                    ? "Watch the station. Your turn will come on the next assigned step."
-                    : model.Pending
-                        ? "Checking your move..."
-                        : _interactionPad.WaitingForPlacement
-                            ? _interactionPad.PlacementHelp
-                            : state.ActionHint;
-            }
-
-            _professionXp.Text = FormatProfessionProgress(
-                state.ProfessionName,
-                state.ProfessionLevel,
-                state.ProfessionMaximumLevel,
-                state.ProfessionExperienceIntoLevel,
-                state.ProfessionExperienceRequiredForLevel,
-                state.ProfessionExperienceToNextLevel,
-                state.ProfessionExperiencePercent,
-                state.ProfessionMaximumLevelReached
-            );
-        }
+        _accept.IsDisabled = _decline.IsDisabled = model.Pending;
+        var playing = !selecting && !state.Complete && !state.WaitingForPartner && !state.InvitePendingForYou;
+        _worktop.IsHidden = !playing;
+        _worktop.Configure(state, playing && state.YourTurn && !model.Pending, _serverOffset);
+        _step.Text = selecting ? "CHOOSE YOUR DISH" : state.Complete ? "DINNER IS READY!" : state.WaitingForPartner || state.InvitePendingForYou
+            ? "COOK TOGETHER" : $"{state.StageIndex + 1}/{state.StageCount}  {state.StageType.ToString().ToUpperInvariant()}";
+        _help.Text = selecting ? recipe?.LockedReason is { Length: > 0 } reason ? reason : "Choose a recipe on the right. Check your ingredients, then cook solo or with a partner."
+            : state.Complete ? "Your dish is ready. Try another recipe to improve your technique."
+            : state.InvitePendingForYou ? state.HostName + " invites you to cook " + state.RecipeName
+            : state.WaitingForPartner ? "Waiting for your partner to accept..."
+            : !state.YourTurn ? "Your partner is working at this station. Watch them prepare the dish."
+            : _worktop.Instruction;
+        var remaining = Math.Max(0, state.StageDurationMs - (Environment.TickCount64 + _serverOffset - state.StageStartedUnixMs));
+        _progress.Text = selecting ? $"Recipe page {_page + 1} / {Math.Max(1, (state.Recipes.Length + 5) / 6)}" : playing
+            ? $"{state.CompletedActions} / {state.RequiredActions} actions   |   {(remaining + 999) / 1000}s   |   Combo x{state.Combo}"
+            : state.Status;
+        _feedback.IsHidden = Environment.TickCount64 >= _feedbackUntil || !playing;
+        _result.Text = state.Complete ? $"{state.Quality.ToString().ToUpperInvariant()}\n\n{state.RewardText}\n\n+{state.ProfessionExperienceAwarded} {state.ProfessionName} XP\nTeam score: {state.TeamScore}" : "";
+        if (model.ErrorCode.Length > 0) _progress.Text = ErrorText(model.ErrorCode);
     }
 
-    private void RefreshSelection()
+    private void Start(bool coop)
     {
-        if (_state == null || !_state.RecipeSelectionRequired)
-            return;
-
-        _interactionTitle.IsHidden = true;
-        _interactionHelp.IsHidden = true;
-        _interactionPad.IsHidden = true;
-        _players.IsHidden = true;
-
-        if (_state.Recipes.Length == 0)
-        {
-            _recipe.Text = "No Royal Kitchen recipes have been created in Game Editor.";
-            _ingredients.Text = string.Empty;
-            _partner.Text = string.Empty;
-            _solo.IsDisabled = _coop.IsDisabled = true;
-            return;
-        }
-
-        var recipe = _state.Recipes[Math.Clamp(_recipeIndex, 0, _state.Recipes.Length - 1)];
-        var lockText = recipe.Unlocked ? "READY" : $"LOCKED - {recipe.LockedReason}";
-        _recipe.Text =
-            $"{recipe.Name}\n{recipe.ProfessionName} Lv {Math.Max(1, recipe.ProfessionLevel)}/{Math.Max(1, recipe.ProfessionMaximumLevel)} | " +
-            $"{recipe.Experience:N0} base XP\n{lockText}";
-
-        _ingredients.Text =
-            "INGREDIENTS\n" +
-            string.Join(
-                "\n",
-                recipe.Ingredients.Select(ingredient =>
-                    $"{(ingredient.Available >= ingredient.Needed ? "[OK]" : "[MISSING]")} " +
-                    $"{ingredient.Name}: {ingredient.Available}/{ingredient.Needed}"
-                )
-            );
-
-        var hasIngredients = recipe.Ingredients.All(value => value.Available >= value.Needed);
-        _solo.IsDisabled = !recipe.Unlocked || !recipe.AllowSolo || recipe.RequireCoop || !hasIngredients;
-        _coop.IsDisabled = !recipe.Unlocked || !recipe.AllowCoop || _state.PartyCandidates.Length == 0;
-
-        if (_state.PartyCandidates.Length == 0)
-        {
-            _partner.Text = "CO-OP\nNo nearby party member is available.";
-            _previousPartner.IsDisabled = _nextPartner.IsDisabled = true;
-        }
-        else
-        {
-            var candidate = _state.PartyCandidates[
-                Math.Clamp(_partnerIndex, 0, _state.PartyCandidates.Length - 1)
-            ];
-            _partner.Text =
-                $"CO-OP PARTNER\n{candidate.Name}\nParty member | nearby | ready to invite";
-            _previousPartner.IsDisabled = _partnerIndex <= 0;
-            _nextPartner.IsDisabled = _partnerIndex >= _state.PartyCandidates.Length - 1;
-        }
-
-        _previousRecipe.IsDisabled = _recipeIndex <= 0;
-        _nextRecipe.IsDisabled = _recipeIndex >= _state.Recipes.Length - 1;
-        _stage.Text = "CHOOSE A RECIPE";
-        _status.Text = hasIngredients
-            ? "Everything is ready. Cook solo or invite a nearby Party member."
-            : "Gather the missing ingredients before starting the kitchen.";
-        _score.Text = string.Empty;
-        _players.Text = string.Empty;
-        _professionXp.Text = FormatProfessionProgress(
-            recipe.ProfessionName,
-            recipe.ProfessionLevel,
-            recipe.ProfessionMaximumLevel,
-            recipe.ProfessionExperienceIntoLevel,
-            recipe.ProfessionExperienceRequiredForLevel,
-            recipe.ProfessionExperienceToNextLevel,
-            recipe.ProfessionExperiencePercent,
-            recipe.ProfessionMaximumLevelReached
-        );
+        if (_state?.Recipes.ElementAtOrDefault(_selected) is not { Unlocked: true } recipe || _model?.Pending == true) return;
+        _send(CookingRequestKind.StartRecipe, recipe.Id,
+            coop ? _state.PartyCandidates.ElementAtOrDefault(_partnerIndex)?.PlayerId ?? Guid.Empty : Guid.Empty,
+            false, CookingActionInput.Primary);
     }
 
-    private void SelectRecipeCard(int slot)
+    private void Submit(CookingActionInput input)
     {
-        if (_state?.RecipeSelectionRequired != true)
-            return;
-
-        var index = _recipePage * _recipeCards.Length + slot;
-        if (index < 0 || index >= _state.Recipes.Length)
-            return;
-
-        _recipeIndex = index;
-        RefreshSelection();
-        RefreshRecipePicker();
-    }
-
-    private void RefreshRecipePicker()
-    {
-        if (_state == null)
-            return;
-
-        var recipes = _state.Recipes;
-        var pageCount = Math.Max(1, (recipes.Length + _recipeCards.Length - 1) / _recipeCards.Length);
-        _recipePage = Math.Clamp(_recipePage, 0, pageCount - 1);
-
-        if (_recipeIndex >= 0 && _recipeIndex < recipes.Length)
-        {
-            var selectedPage = _recipeIndex / _recipeCards.Length;
-            if (_recipePage < 0 || _recipePage >= pageCount)
-                _recipePage = selectedPage;
-        }
-
-        _recipePickerTitle.Text =
-            recipes.Length == 0
-                ? "NO RECIPES AVAILABLE"
-                : $"CHOOSE A RECIPE   |   {recipes.Length} AVAILABLE";
-
-        for (var slot = 0; slot < _recipeCards.Length; ++slot)
-        {
-            var card = _recipeCards[slot];
-            var index = _recipePage * _recipeCards.Length + slot;
-
-            if (index >= recipes.Length)
-            {
-                card.IsHidden = true;
-                continue;
-            }
-
-            var recipe = recipes[index];
-            var missingCount = recipe.Ingredients.Count(
-                ingredient => ingredient.Available < ingredient.Needed
-            );
-            var mode = recipe.RequireCoop
-                ? "2P REQUIRED"
-                : recipe.AllowSolo && recipe.AllowCoop
-                    ? "SOLO / 2P"
-                    : recipe.AllowCoop
-                        ? "2P"
-                        : "SOLO";
-
-            var selected = index == _recipeIndex;
-            var stateText = !recipe.Unlocked
-                ? $"LOCKED | {recipe.LockedReason}"
-                : missingCount > 0
-                    ? $"MISSING {missingCount} INGREDIENT{(missingCount == 1 ? "" : "S")}"
-                    : "READY TO COOK";
-
-            card.IsHidden = false;
-            card.IsDisabled = false;
-            card.Text =
-                $"{(selected ? "> " : "")}{recipe.Name}\n" +
-                $"Lv {recipe.RequiredLevel} | +{recipe.Experience:N0} XP | {mode}\n" +
-                stateText;
-
-            card.TextColorOverride = !recipe.Unlocked
-                ? new Color(255, 157, 128, 113)
-                : selected
-                    ? new Color(255, 236, 210, 117)
-                    : missingCount > 0
-                        ? new Color(255, 221, 177, 108)
-                        : Color.White;
-        }
-
-        _recipePickerPage.Text = $"Page {_recipePage + 1} / {pageCount}";
-        _recipePagePrevious.IsDisabled = _recipePage <= 0;
-        _recipePageNext.IsDisabled = _recipePage >= pageCount - 1;
-        _recipePicker.SelectedSlot = _recipeIndex - _recipePage * _recipeCards.Length;
-    }
-
-    private void RefreshResultPanel(CookingSessionState state)
-    {
-        _resultPanel.Quality = state.Quality;
-        if (_resultPanel.CelebrationStartedAt <= 0)
-            _resultPanel.CelebrationStartedAt = Environment.TickCount64;
-
-        var revealAge = Environment.TickCount64 - _resultPanel.CelebrationStartedAt;
-
-        _resultQuality.Text = state.Quality.ToString().ToUpperInvariant();
-        _resultQuality.TextColorOverride = state.Quality switch
-        {
-            CookingQuality.Perfect => new Color(255, 250, 216, 104),
-            CookingQuality.Great => new Color(255, 111, 207, 123),
-            CookingQuality.Decent => new Color(255, 225, 198, 142),
-            _ => new Color(255, 203, 103, 82),
-        };
-
-        _resultScore.Text = $"TEAM SCORE   {state.TeamScore}%";
-        _resultReward.Text = string.IsNullOrWhiteSpace(state.RewardText)
-            ? "No meal reward was delivered."
-            : $"REWARD\n{state.RewardText}";
-
-        var professionName = string.IsNullOrWhiteSpace(state.ProfessionName)
-            ? "Cooking"
-            : state.ProfessionName;
-        _resultXp.Text =
-            $"+{state.ProfessionExperienceAwarded:N0} {professionName} XP   |   " +
-            $"Lv {Math.Max(1, state.ProfessionLevel)}/{Math.Max(1, state.ProfessionMaximumLevel)}   |   " +
-            $"{state.ProfessionExperiencePercent}%";
-
-        var actionCount = state.Participants
-            .FirstOrDefault(participant => participant.PlayerId == Intersect.Client.General.Globals.Me?.Id)?.Actions ?? 0;
-
-        _resultStats.Text =
-            $"Peak Combo x{state.PeakCombo}   |   Mishaps {state.Mishaps}   |   Your actions {actionCount}";
-
-        _resultTitle.IsHidden = false;
-        _resultQuality.IsHidden = revealAge < 250;
-        _resultScore.IsHidden = revealAge < 500;
-        _resultReward.IsHidden = revealAge < 720;
-        _resultXp.IsHidden = revealAge < 900;
-        _resultStats.IsHidden = revealAge < 1_020;
-
-        var controlsReady = revealAge >= 1_150;
-        _resultAgain.IsHidden = !state.IsHost || !controlsReady;
-        _resultAgain.IsDisabled = !state.IsHost || !controlsReady;
-        _resultLeave.IsHidden = !controlsReady;
-        _resultLeave.IsDisabled = !controlsReady;
-
-        if (state.IsHost)
-            _resultTitle.Text = "DINNER IS READY!";
-        else
-            _resultTitle.Text = "DINNER IS READY! | HOST CONTROLS NEXT ROUND";
-    }
-
-    private void StartSolo()
-    {
-        if (_state?.Recipes is not { Length: > 0 }) return;
-        var recipe = _state.Recipes[Math.Clamp(_recipeIndex, 0, _state.Recipes.Length - 1)];
-        _send(CookingRequestKind.StartRecipe, recipe.Id, Guid.Empty, false, CookingActionInput.Primary);
-    }
-
-    private void StartCoop()
-    {
-        if (_state?.Recipes is not { Length: > 0 } ||
-            _state.PartyCandidates is not { Length: > 0 })
-            return;
-
-        var recipe = _state.Recipes[Math.Clamp(_recipeIndex, 0, _state.Recipes.Length - 1)];
-        var partner = _state.PartyCandidates[
-            Math.Clamp(_partnerIndex, 0, _state.PartyCandidates.Length - 1)
-        ];
-        _send(CookingRequestKind.StartRecipe, recipe.Id, partner.PlayerId, false, CookingActionInput.Primary);
-    }
-
-    private void DoAction(CookingActionInput input) =>
+        if (_model?.Pending == true || _state?.YourTurn != true) return;
         _send(CookingRequestKind.Action, Guid.Empty, Guid.Empty, false, input);
-
-    private void HandleStateSounds(CookingSessionState state)
-    {
-        if (!_stateTransitionsInitialized)
-        {
-            _stateTransitionsInitialized = true;
-            _previousSelecting = state.RecipeSelectionRequired;
-            _previousWaitingForPartner = state.WaitingForPartner;
-            _previousInvitePending = state.InvitePendingForYou;
-            _previousComplete = state.Complete;
-            _previousPartnerId = state.PartnerId;
-
-            if (state.InvitePendingForYou)
-                PlayCookingSound(state.InviteSound);
-            else if (!state.RecipeSelectionRequired && !state.WaitingForPartner && !state.Complete)
-                PlayCookingSound(state.StartSound);
-
-            return;
-        }
-
-        if (!_previousInvitePending && state.InvitePendingForYou)
-            PlayCookingSound(state.InviteSound);
-
-        if (_previousWaitingForPartner &&
-            !state.WaitingForPartner &&
-            state.PartnerId != Guid.Empty)
-        {
-            PlayCookingSound(state.PartnerJoinedSound);
-            PlayCookingSound(state.StartSound);
-        }
-        else if (_previousSelecting &&
-                 !state.RecipeSelectionRequired &&
-                 !state.WaitingForPartner)
-        {
-            PlayCookingSound(state.StartSound);
-        }
-
-        if (!_previousComplete && state.Complete)
-        {
-            PlayCookingSound(state.CompleteSound);
-            switch (state.Quality)
-            {
-                case CookingQuality.Burnt:
-                    PlayCookingSound(state.BurntSound);
-                    break;
-                case CookingQuality.Great:
-                    PlayCookingSound(state.GreatSound);
-                    break;
-                case CookingQuality.Perfect:
-                    PlayCookingSound(state.PerfectSoundRecipe);
-                    break;
-            }
-        }
-
-        _previousSelecting = state.RecipeSelectionRequired;
-        _previousWaitingForPartner = state.WaitingForPartner;
-        _previousInvitePending = state.InvitePendingForYou;
-        _previousComplete = state.Complete;
-        _previousPartnerId = state.PartnerId;
     }
-
-    private void HandleComicEvent(CookingSessionState state)
-    {
-        if (state.ComicEventSequence <= _lastComicEventSequence)
-            return;
-
-        _lastComicEventSequence = state.ComicEventSequence;
-        _comicEventType = state.ComicEventType;
-        _comicEventText = state.ComicEventText;
-        _comicUntil = Environment.TickCount64 + 1_650;
-    }
-
-    private void HandleActionFeedback(CookingSessionState state)
-    {
-        if (state.ActionSequence <= _lastActionSequence)
-            return;
-
-        _lastActionSequence = state.ActionSequence;
-        _feedbackScore = state.LastActionScore;
-        _feedbackComboValue = state.Combo;
-        _feedbackStage = state.StageType;
-        _feedbackUntil = Environment.TickCount64 + (
-            _feedbackScore >= 90 || _feedbackScore < 40
-                ? 1_450
-                : _feedbackScore >= 70
-                    ? 1_100
-                    : 900
-        );
-
-        _feedbackBanner.Text = _feedbackScore switch
-        {
-            >= 90 => $"PERFECT!  {_feedbackScore}",
-            >= 70 => $"GREAT!  {_feedbackScore}",
-            >= 40 => $"GOOD  {_feedbackScore}",
-            _ => $"MISS  {_feedbackScore}",
-        };
-        _feedbackBanner.TextColorOverride = _feedbackScore switch
-        {
-            >= 90 => new Color(255, 250, 216, 104),
-            >= 70 => new Color(255, 111, 207, 123),
-            >= 40 => new Color(255, 226, 190, 118),
-            _ => new Color(255, 224, 105, 83),
-        };
-
-        _feedbackCombo.Text = _feedbackScore < 40
-            ? "COMBO BROKEN"
-            : _feedbackComboValue >= 2
-                ? $"COMBO x{_feedbackComboValue}"
-                : string.Empty;
-        _feedbackCombo.TextColorOverride = _feedbackScore < 40
-            ? new Color(255, 224, 105, 83)
-            : new Color(255, 236, 210, 117);
-
-        PlayCookingSound(state.ActionSound);
-        if (_feedbackScore >= 90)
-            PlayCookingSound(state.PerfectSound);
-        else if (_feedbackScore < 40)
-            PlayCookingSound(state.MishapSound);
-    }
-
-    private static void PlayCookingSound(string? file)
-    {
-        if (!string.IsNullOrWhiteSpace(file))
-            Intersect.Client.Core.Audio.AddGameSound(file, false);
-    }
-
-    private static string InteractionTitle(CookingSessionState state)
-    {
-        var actionNumber = Math.Max(0, state.CompletedActions);
-        var stageIds = state.StageIngredientItemIds.ToHashSet();
-        var ingredients = state.RecipeIngredients
-            .Where(ingredient => stageIds.Count == 0 || stageIds.Contains(ingredient.ItemId))
-            .ToArray();
-        var active = ingredients.Length == 0
-            ? "INGREDIENT"
-            : ingredients[Math.Clamp(actionNumber, 0, ingredients.Length - 1)].Name.ToUpperInvariant();
-
-        return state.StageType switch
-        {
-            CookingStageType.Chop => $"GRAB {active} AND SLICE DOWN",
-            CookingStageType.Stir => actionNumber % 2 == 0
-                ? "STIR CLOCKWISE"
-                : "STIR COUNTER-CLOCKWISE",
-            CookingStageType.Heat => state.MeterPermille < state.TargetPermille - state.TolerancePermille / 3
-                ? "RAISE THE HEAT"
-                : state.MeterPermille > state.TargetPermille + state.TolerancePermille / 3
-                    ? "LOWER THE HEAT"
-                    : "HOLD THE HEAT STEADY",
-            CookingStageType.Flip => $"GRAB {active} AND FLICK UP",
-            CookingStageType.Season => state.MeterPermille < state.TargetPermille - state.TolerancePermille / 3
-                ? "ADD SEASONING"
-                : state.MeterPermille > state.TargetPermille + state.TolerancePermille / 3
-                    ? "REMOVE SEASONING"
-                    : "SEASONING IS ON TARGET",
-            CookingStageType.Knead => actionNumber % 2 == 0
-                ? $"GRAB {active} AND PUSH LEFT"
-                : $"GRAB {active} AND PUSH RIGHT",
-            CookingStageType.Plate => state.TargetPermille < 350
-                ? $"DRAG {active} TO THE LEFT"
-                : state.TargetPermille > 650
-                    ? $"DRAG {active} TO THE RIGHT"
-                    : $"DRAG {active} TO THE CENTER",
-            _ => "COOK",
-        };
-    }
-
-    private void ConfigureStageButtons(CookingSessionState state)
-    {
-        _action.IsHidden = _action.IsHidden;
-        _actionSecondary.IsHidden = _actionSecondary.IsHidden;
-        _actionTertiary.IsHidden = _actionTertiary.IsHidden;
-
-        switch (state.StageType)
-        {
-            case CookingStageType.Chop:
-                _action.Text = "CHOP!";
-                _actionSecondary.IsHidden = true;
-                _actionTertiary.IsHidden = true;
-                break;
-
-            case CookingStageType.Stir:
-                _action.Text = "CLOCKWISE";
-                _actionSecondary.Text = "COUNTER";
-                _actionSecondary.IsHidden = _action.IsHidden;
-                _actionTertiary.IsHidden = true;
-                break;
-
-            case CookingStageType.Heat:
-                _action.Text = "MORE HEAT";
-                _actionSecondary.Text = "LESS HEAT";
-                _actionSecondary.IsHidden = _action.IsHidden;
-                _actionTertiary.IsHidden = true;
-                break;
-
-            case CookingStageType.Flip:
-                _action.Text = "FLIP!";
-                _actionSecondary.IsHidden = true;
-                _actionTertiary.IsHidden = true;
-                break;
-
-            case CookingStageType.Season:
-                _action.Text = "ADD";
-                _actionSecondary.Text = "REMOVE";
-                _actionSecondary.IsHidden = _action.IsHidden;
-                _actionTertiary.IsHidden = true;
-                break;
-
-            case CookingStageType.Knead:
-                _action.Text = "LEFT";
-                _actionSecondary.Text = "RIGHT";
-                _actionSecondary.IsHidden = _action.IsHidden;
-                _actionTertiary.IsHidden = true;
-                break;
-
-            case CookingStageType.Plate:
-                _action.Text = "LEFT";
-                _actionSecondary.Text = "CENTER";
-                _actionTertiary.Text = "RIGHT";
-                _actionSecondary.IsHidden = _action.IsHidden;
-                _actionTertiary.IsHidden = _action.IsHidden;
-                break;
-        }
-    }
-
-    protected override void Render(SkinBase skin)
-    {
-        var renderer = skin.Renderer;
-        renderer.DrawColor = new Color(a: 245, r: 20, g: 14, b: 10);
-        renderer.DrawFilledRect(new Rectangle(0, 0, Width, Height));
-
-        var scaleX = Width / 1024f;
-        var scaleY = Height / 720f;
-        var scale = Math.Min(scaleX, scaleY);
-        var offsetX = (int)((Width - 1024 * scale) / 2f);
-        var offsetY = (int)((Height - 720 * scale) / 2f);
-
-        void Fill(int x, int y, int w, int h, Color color)
-        {
-            renderer.DrawColor = color;
-            renderer.DrawFilledRect(
-                new Rectangle(
-                    offsetX + (int)(x * scale),
-                    offsetY + (int)(y * scale),
-                    Math.Max(1, (int)(w * scale)),
-                    Math.Max(1, (int)(h * scale))
-                )
-            );
-        }
-
-        void Panel(int x, int y, int w, int h, Color body, Color border)
-        {
-            Fill(x - 3, y - 3, w + 6, h + 6, new Color(a: 255, r: 49, g: 28, b: 17));
-            Fill(x - 2, y - 2, w + 4, h + 4, border);
-            Fill(x, y, w, h, body);
-            Fill(x + 5, y + 5, w - 10, 2, new Color(a: 115, r: 255, g: 222, b: 153));
-        }
-
-        // The mini-game is now staged as a real kitchen first, with the UI sitting on top
-        // like Poker's table instead of filling the whole screen with flat panels.
-        DrawKitchenEnvironment(Fill, Environment.TickCount64);
-
-        // Carved wooden title sign.
-        Panel(
-            248,
-            10,
-            528,
-            58,
-            new Color(a: 245, r: 73, g: 31, b: 20),
-            new Color(a: 255, r: 178, g: 117, b: 52)
-        );
-        Fill(270, 60, 484, 6, new Color(a: 255, r: 101, g: 54, b: 29));
-
-        // Recipe book / pantry board.
-        Panel(
-            28,
-            82,
-            338,
-            526,
-            new Color(a: 238, r: 46, g: 28, b: 19),
-            new Color(a: 255, r: 151, g: 93, b: 46)
-        );
-        Fill(43, 99, 308, 6, new Color(a: 255, r: 196, g: 137, b: 66));
-        Fill(48, 212, 298, 2, new Color(a: 255, r: 94, g: 56, b: 34));
-        Fill(48, 437, 298, 2, new Color(a: 255, r: 94, g: 56, b: 34));
-
-        // Parchment-style status / stage board suspended above the work station.
-        Panel(
-            405,
-            90,
-            552,
-            215,
-            new Color(a: 232, r: 45, g: 31, b: 23),
-            new Color(a: 255, r: 141, g: 90, b: 45)
-        );
-        Fill(419, 103, 524, 5, new Color(a: 255, r: 207, g: 158, b: 84));
-        Fill(433, 195, 496, 2, new Color(a: 170, r: 116, g: 73, b: 40));
-
-        // XP plaque built into the lower cabinetry.
-        Panel(
-            40,
-            615,
-            740,
-            84,
-            new Color(a: 244, r: 54, g: 31, b: 20),
-            new Color(a: 255, r: 140, g: 91, b: 43)
-        );
-
-        DrawStageProgress(Fill);
-
-        if (_state is { RecipeSelectionRequired: false, Complete: false, WaitingForPartner: false, StageDurationMs: > 0 } state)
-        {
-            var nowServer = Environment.TickCount64 + _serverOffset;
-            var elapsed = Math.Clamp(nowServer - state.StageStartedUnixMs, 0, state.StageDurationMs);
-
-            const int meterX = 476;
-            const int meterY = 488;
-            const int meterW = 392;
-            const int meterH = 26;
-
-            // A brass-edged control rail mounted to the kitchen counter.
-            Fill(meterX - 10, meterY - 8, meterW + 20, meterH + 26, new Color(a: 235, r: 45, g: 29, b: 19));
-            Fill(meterX - 7, meterY - 5, meterW + 14, meterH + 20, new Color(a: 255, r: 132, g: 83, b: 39));
-            Fill(meterX, meterY, meterW, meterH, new Color(a: 255, r: 24, g: 20, b: 17));
-
-            if (state.StageType == CookingStageType.Plate)
-            {
-                Fill(meterX, meterY + 3, meterW / 3 - 3, meterH - 6, new Color(a: 255, r: 66, g: 64, b: 55));
-                Fill(meterX + meterW / 3 + 2, meterY + 3, meterW / 3 - 4, meterH - 6, new Color(a: 255, r: 74, g: 70, b: 56));
-                Fill(meterX + meterW * 2 / 3 + 2, meterY + 3, meterW / 3 - 2, meterH - 6, new Color(a: 255, r: 66, g: 64, b: 55));
-                var targetZone = CookingStageRules.PlateZoneFromTarget(state.TargetPermille);
-                Fill(
-                    meterX + targetZone * meterW / 3 + 4,
-                    meterY + 5,
-                    meterW / 3 - 8,
-                    meterH - 10,
-                    new Color(a: 255, r: 80, g: 151, b: 74)
-                );
-            }
-            else
-            {
-                var targetX = meterX + (int)(meterW * state.TargetPermille / 1000d);
-                var toleranceW = Math.Max(8, (int)(meterW * state.TolerancePermille / 1000d));
-                Fill(
-                    targetX - toleranceW / 2,
-                    meterY + 3,
-                    toleranceW,
-                    meterH - 6,
-                    new Color(a: 255, r: 80, g: 151, b: 74)
-                );
-
-                var meter = state.StageType is CookingStageType.Heat or CookingStageType.Season
-                    ? state.MeterPermille
-                    : CookingStageRules.TimingCursorPermille(
-                        elapsed,
-                        state.StageDurationMs,
-                        Math.Max(1, state.StageDifficulty)
-                    );
-                var cursorX = meterX + (int)(meterW * meter / 1000d);
-                Fill(cursorX - 3, meterY - 5, 6, meterH + 10, Color.White);
-            }
-
-            var remaining = Math.Max(0, state.StageDurationMs - elapsed);
-            var timeWidth = (int)(meterW * remaining / Math.Max(1d, state.StageDurationMs));
-            Fill(meterX, meterY + 34, timeWidth, 5, new Color(a: 255, r: 214, g: 169, b: 77));
-
-            DrawStageProp(Fill, state, elapsed);
-        }
-
-        DrawProfessionXpBar(Fill);
-        DrawActionFeedback(Fill);
-        DrawComicEvent(Fill);
-        UpdateActionFeedbackOverlay();
-        base.Render(skin);
-    }
-
-    private void DrawKitchenEnvironment(
-        Action<int, int, int, int, Color> fill,
-        long now
-    )
-    {
-        // Warm stone/plaster back wall.
-        fill(0, 0, 1024, 720, new Color(a: 255, r: 42, g: 29, b: 21));
-        fill(0, 74, 1024, 318, new Color(a: 255, r: 78, g: 64, b: 50));
-
-        // Hand-built tile/brick backsplash.
-        for (var row = 0; row < 10; ++row)
-        {
-            var brickY = 80 + row * 31;
-            var offset = row % 2 == 0 ? 0 : 23;
-            for (var column = -1; column < 24; ++column)
-            {
-                var brickX = column * 48 + offset;
-                var shade = 86 + ((row + column + 12) % 3) * 7;
-                fill(
-                    brickX,
-                    brickY,
-                    45,
-                    28,
-                    new Color(a: 255, r: shade, g: shade - 18, b: shade - 31)
-                );
-                fill(brickX, brickY + 27, 45, 1, new Color(a: 175, r: 44, g: 35, b: 29));
-            }
-        }
-
-        // Left stone hearth, deliberately behind the recipe board so it reads as room depth.
-        fill(0, 150, 224, 290, new Color(a: 255, r: 65, g: 45, b: 34));
-        fill(18, 184, 186, 226, new Color(a: 255, r: 36, g: 24, b: 19));
-        fill(28, 200, 166, 200, new Color(a: 255, r: 25, g: 18, b: 15));
-
-        // Animated oven fire.
-        for (var flame = 0; flame < 9; ++flame)
-        {
-            var wave = (int)((now / 85 + flame * 17) % 22);
-            var height = 22 + (wave % 14);
-            var x = 42 + flame * 16;
-            fill(x, 371 - height, 12, height, new Color(a: 220, r: 232, g: 110, b: 39));
-            fill(x + 3, 371 - height + 8, 7, Math.Max(5, height - 12), new Color(a: 230, r: 251, g: 182, b: 65));
-        }
-
-        // Back counter and lower cabinets.
-        fill(0, 390, 1024, 330, new Color(a: 255, r: 49, g: 29, b: 19));
-        fill(0, 390, 1024, 20, new Color(a: 255, r: 133, g: 79, b: 40));
-        fill(0, 410, 1024, 25, new Color(a: 255, r: 91, g: 52, b: 29));
-
-        for (var cabinet = 0; cabinet < 7; ++cabinet)
-        {
-            var x = cabinet * 146;
-            fill(x + 4, 455, 136, 248, new Color(a: 255, r: 73, g: 41, b: 25));
-            fill(x + 10, 466, 124, 225, new Color(a: 255, r: 91, g: 53, b: 30));
-            fill(x + 18, 477, 108, 203, new Color(a: 255, r: 61, g: 35, b: 23));
-            fill(x + 67, 470, 7, 7, new Color(a: 255, r: 194, g: 133, b: 58));
-        }
-
-        // Large center preparation island.
-        fill(376, 354, 604, 151, new Color(a: 255, r: 66, g: 38, b: 23));
-        fill(386, 362, 584, 133, new Color(a: 255, r: 125, g: 78, b: 42));
-        fill(386, 362, 584, 10, new Color(a: 255, r: 197, g: 141, b: 74));
-        fill(398, 475, 560, 12, new Color(a: 255, r: 72, g: 43, b: 27));
-
-        // Cutting board.
-        fill(446, 390, 222, 76, new Color(a: 255, r: 85, g: 51, b: 29));
-        fill(452, 396, 210, 64, new Color(a: 255, r: 162, g: 106, b: 57));
-        fill(458, 402, 198, 4, new Color(a: 160, r: 232, g: 178, b: 103));
-
-        // Stove embedded in the island.
-        fill(700, 378, 230, 90, new Color(a: 255, r: 54, g: 49, b: 44));
-        fill(710, 387, 210, 70, new Color(a: 255, r: 36, g: 32, b: 29));
-
-        for (var burner = 0; burner < 3; ++burner)
-        {
-            var bx = 728 + burner * 60;
-            fill(bx, 404, 42, 42, new Color(a: 255, r: 21, g: 20, b: 19));
-            fill(bx + 7, 411, 28, 28, new Color(a: 255, r: 76, g: 61, b: 48));
-            fill(bx + 12, 416, 18, 18, new Color(a: 255, r: 29, g: 25, b: 22));
-        }
-
-        // Pantry shelves on the right wall.
-        fill(838, 104, 160, 220, new Color(a: 255, r: 63, g: 38, b: 24));
-        for (var shelf = 0; shelf < 3; ++shelf)
-        {
-            var sy = 141 + shelf * 63;
-            fill(848, sy, 140, 8, new Color(a: 255, r: 136, g: 83, b: 41));
-
-            for (var jar = 0; jar < 5; ++jar)
-            {
-                var jx = 854 + jar * 27;
-                var body = (jar % 3) switch
-                {
-                    0 => new Color(a: 255, r: 126, g: 78, b: 42),
-                    1 => new Color(a: 255, r: 94, g: 108, b: 57),
-                    _ => new Color(a: 255, r: 157, g: 118, b: 64),
-                };
-                fill(jx, sy - 27, 18, 23, body);
-                fill(jx + 3, sy - 31, 12, 5, new Color(a: 255, r: 207, g: 178, b: 122));
-            }
-        }
-
-        // Hanging copper cookware.
-        fill(594, 80, 226, 7, new Color(a: 255, r: 91, g: 56, b: 33));
-        for (var pan = 0; pan < 5; ++pan)
-        {
-            var px = 612 + pan * 41;
-            var length = 42 + (pan % 3) * 12;
-            fill(px + 12, 86, 4, length, new Color(a: 255, r: 102, g: 66, b: 40));
-            fill(px, 86 + length, 28, 24, new Color(a: 255, r: 155, g: 83, b: 42));
-            fill(px + 5, 91 + length, 18, 14, new Color(a: 255, r: 196, g: 108, b: 50));
-        }
-
-        // Small kitchen window with cool outside light to contrast the warm room.
-        fill(934, 114, 80, 186, new Color(a: 255, r: 47, g: 34, b: 27));
-        fill(942, 123, 64, 166, new Color(a: 255, r: 64, g: 97, b: 107));
-        fill(972, 123, 5, 166, new Color(a: 255, r: 58, g: 39, b: 28));
-        fill(942, 202, 64, 5, new Color(a: 255, r: 58, g: 39, b: 28));
-
-        // Lanterns and warm light pools.
-        for (var lantern = 0; lantern < 2; ++lantern)
-        {
-            var lx = lantern == 0 ? 112 : 900;
-            fill(lx, 12, 34, 42, new Color(a: 255, r: 55, g: 34, b: 23));
-            fill(lx + 6, 18, 22, 28, new Color(a: 255, r: 239, g: 163, b: 67));
-            fill(lx + 10, 22, 14, 20, new Color(a: 235, r: 255, g: 211, b: 98));
-        }
-
-        // Pots / ingredients on the work surface.
-        fill(770, 324, 132, 55, new Color(a: 255, r: 79, g: 50, b: 34));
-        fill(782, 310, 108, 21, new Color(a: 255, r: 101, g: 61, b: 39));
-
-        for (var item = 0; item < 8; ++item)
-        {
-            var ix = 402 + item * 32;
-            var iy = 345 - (item % 3) * 7;
-            var ingredient = (item % 4) switch
-            {
-                0 => new Color(a: 255, r: 210, g: 95, b: 38),
-                1 => new Color(a: 255, r: 99, g: 132, b: 57),
-                2 => new Color(a: 255, r: 222, g: 204, b: 151),
-                _ => new Color(a: 255, r: 150, g: 54, b: 36),
-            };
-            fill(ix, iy, 18, 15, ingredient);
-            fill(ix + 6, iy - 5, 5, 7, new Color(a: 255, r: 73, g: 114, b: 54));
-        }
-
-        // Steam above the main pot.
-        for (var puff = 0; puff < 5; ++puff)
-        {
-            var rise = (int)((now / 28 + puff * 23) % 72);
-            var px = 806 + puff * 12 + ((puff % 2 == 0 ? 1 : -1) * rise / 14);
-            fill(
-                px,
-                304 - rise,
-                12 + puff % 2 * 5,
-                10 + puff % 3 * 5,
-                new Color(a: 58, r: 226, g: 222, b: 211)
-            );
-        }
-
-        // Foreground shadow/vignette anchors the kitchen in the room.
-        fill(0, 704, 1024, 16, new Color(a: 190, r: 10, g: 7, b: 5));
-        fill(0, 0, 18, 720, new Color(a: 140, r: 8, g: 6, b: 5));
-        fill(1006, 0, 18, 720, new Color(a: 140, r: 8, g: 6, b: 5));
-    }
-
-    private void DrawStageProgress(Action<int, int, int, int, Color> fill)
-    {
-        if (_state == null)
-            return;
-
-        const int x = 420;
-        const int y = 96;
-        const int width = 530;
-        const int height = 7;
-
-        if (_state.RecipeSelectionRequired || _state.StageCount <= 0)
-        {
-            fill(x, y, width, height, new Color(a: 255, r: 57, g: 43, b: 32));
-            return;
-        }
-
-        var count = Math.Clamp(_state.StageCount, 1, 12);
-        var gap = 5;
-        var segmentWidth = Math.Max(8, (width - gap * (count - 1)) / count);
-
-        for (var index = 0; index < count; ++index)
-        {
-            var segmentX = x + index * (segmentWidth + gap);
-            var color = index < _state.StageIndex
-                ? new Color(a: 255, r: 74, g: 157, b: 91)
-                : index == _state.StageIndex && !_state.Complete
-                    ? new Color(a: 255, r: 231, g: 194, b: 112)
-                    : _state.Complete
-                        ? new Color(a: 255, r: 74, g: 157, b: 91)
-                        : new Color(a: 255, r: 70, g: 52, b: 39);
-
-            fill(segmentX, y, segmentWidth, height, color);
-
-            if (index == _state.StageIndex && !_state.Complete)
-                fill(segmentX, y - 2, segmentWidth, 2, new Color(a: 255, r: 255, g: 232, b: 165));
-        }
-    }
-
-    private void DrawProfessionXpBar(Action<int, int, int, int, Color> fill)
-    {
-        if (_state == null)
-            return;
-
-        int percent;
-        bool maximumLevelReached;
-
-        if (_state.RecipeSelectionRequired && _state.Recipes.Length > 0)
-        {
-            var recipe = _state.Recipes[Math.Clamp(_recipeIndex, 0, _state.Recipes.Length - 1)];
-            percent = recipe.ProfessionExperiencePercent;
-            maximumLevelReached = recipe.ProfessionMaximumLevelReached;
-        }
-        else
-        {
-            percent = _state.ProfessionExperiencePercent;
-            maximumLevelReached = _state.ProfessionMaximumLevelReached;
-        }
-
-        percent = Math.Clamp(percent, 0, 100);
-
-        const int x = 55;
-        const int y = 662;
-        const int width = 700;
-        const int height = 16;
-
-        fill(x, y, width, height, new Color(a: 255, r: 28, g: 24, b: 20));
-
-        var fillWidth = maximumLevelReached
-            ? width
-            : (int)Math.Round(width * percent / 100d);
-
-        if (fillWidth > 0)
-        {
-            fill(
-                x + 2,
-                y + 2,
-                Math.Max(1, fillWidth - 4),
-                height - 4,
-                new Color(a: 255, r: 190, g: 145, b: 66)
-            );
-        }
-    }
-
-    private static string FormatProfessionProgress(
-        string name,
-        int level,
-        int maximumLevel,
-        long experienceIntoLevel,
-        long experienceRequiredForLevel,
-        long experienceToNextLevel,
-        int percent,
-        bool maximumLevelReached
-    )
-    {
-        var displayName = string.IsNullOrWhiteSpace(name) ? "Cooking" : name;
-        var displayLevel = Math.Max(1, level);
-        var displayMaximum = Math.Max(displayLevel, maximumLevel);
-
-        if (maximumLevelReached)
-            return $"{displayName} Lv {displayLevel}/{displayMaximum} | MAX LEVEL | 100%";
-
-        return $"{displayName} Lv {displayLevel}/{displayMaximum} | " +
-               $"{Math.Clamp(percent, 0, 100)}% | " +
-               $"{experienceIntoLevel:N0}/{Math.Max(1L, experienceRequiredForLevel):N0} XP | " +
-               $"{experienceToNextLevel:N0} XP to next level";
-    }
-
-    private void DrawStageProp(
-        Action<int, int, int, int, Color> fill,
-        CookingSessionState state,
-        long elapsed
-    )
-    {
-        var pulse = (int)((elapsed / 120) % 6);
-        switch (state.StageType)
-        {
-            case CookingStageType.Chop:
-                fill(650 + pulse * 4, 380 - pulse * 2, 12, 70, new Color(a: 255, r: 210, g: 210, b: 205));
-                fill(615, 445, 160, 14, new Color(a: 255, r: 122, g: 82, b: 48));
-                break;
-
-            case CookingStageType.Stir:
-                fill(640, 392, 155, 70, new Color(a: 255, r: 113, g: 76, b: 50));
-                fill(660 + pulse * 4, 365, 10, 82, new Color(a: 255, r: 195, g: 165, b: 110));
-                break;
-
-            case CookingStageType.Heat:
-                for (var flame = 0; flame < 5; ++flame)
-                {
-                    var height = 18 + ((pulse + flame) % 4) * 8;
-                    fill(635 + flame * 30, 458 - height, 18, height, new Color(a: 230, r: 219, g: 105, b: 45));
-                }
-                fill(610, 388, 190, 35, new Color(a: 255, r: 72, g: 66, b: 58));
-                break;
-
-            case CookingStageType.Flip:
-            {
-                var arc = (int)((elapsed / 45) % 110);
-                var rise = 55 - Math.Abs(55 - arc);
-                fill(690 + arc / 3, 420 - rise, 42, 18, new Color(a: 255, r: 218, g: 169, b: 91));
-                fill(620, 445, 175, 20, new Color(a: 255, r: 74, g: 68, b: 60));
-                break;
-            }
-
-            case CookingStageType.Season:
-                fill(705 + pulse * 2, 375, 28, 65, new Color(a: 255, r: 213, g: 203, b: 180));
-                for (var grain = 0; grain < 6; ++grain)
-                    fill(690 + grain * 16, 440 + ((grain + pulse) % 3) * 6, 4, 4, Color.White);
-                break;
-
-            case CookingStageType.Knead:
-                fill(640, 415, 160, 48, new Color(a: 255, r: 218, g: 185, b: 137));
-                fill(625 + pulse * 8, 390, 60, 24, new Color(a: 255, r: 196, g: 166, b: 128));
-                break;
-
-            case CookingStageType.Plate:
-                fill(645, 378, 170, 90, new Color(a: 255, r: 224, g: 220, b: 202));
-                fill(662, 394, 136, 58, new Color(a: 255, r: 47, g: 58, b: 47));
-                break;
-        }
-    }
-
-    private void DrawComicEvent(Action<int, int, int, int, Color> fill)
-    {
-        var remaining = _comicUntil - Environment.TickCount64;
-        if (remaining <= 0)
-            return;
-
-        var age = 1_650 - remaining;
-        switch (_comicEventType)
-        {
-            case CookingComicEventType.PanOverflow:
-                for (var drop = 0; drop < 9; ++drop)
-                {
-                    var x = 610 + ((drop * 41 + (int)(age / 7)) % 300);
-                    var y = 360 + ((drop * 29 + (int)(age / 12)) % 120);
-                    fill(x, y, 9, 9, new Color(a: 220, r: 211, g: 151, b: 78));
-                }
-                break;
-
-            case CookingComicEventType.EscapingIngredient:
-            {
-                var run = (int)Math.Min(360, age / 3);
-                fill(540 + run, 420 - (run % 80) / 4, 34, 22, new Color(a: 255, r: 224, g: 138, b: 65));
-                break;
-            }
-
-            case CookingComicEventType.SauceSplash:
-                for (var splash = 0; splash < 11; ++splash)
-                {
-                    var x = 530 + ((splash * 53) % 390);
-                    var y = 120 + ((splash * 71) % 330);
-                    var size = 8 + splash % 4 * 4;
-                    fill(x, y, size, size, new Color(a: 190, r: 159, g: 54, b: 37));
-                }
-                break;
-
-            case CookingComicEventType.SmokeCloud:
-                for (var cloud = 0; cloud < 10; ++cloud)
-                {
-                    var drift = (int)(age / 25);
-                    fill(
-                        560 + cloud * 34 + (cloud % 2 == 0 ? drift : -drift / 2),
-                        430 - cloud * 13 - drift,
-                        30 + cloud % 3 * 9,
-                        30 + cloud % 3 * 9,
-                        new Color(a: 115, r: 92, g: 90, b: 84)
-                    );
-                }
-                break;
-
-            case CookingComicEventType.FlyingFood:
-            {
-                var travel = (int)Math.Min(390, age / 3);
-                var rise = 120 - Math.Abs(195 - travel) / 2;
-                fill(520 + travel, 420 - Math.Max(0, rise), 42, 22, new Color(a: 255, r: 215, g: 140, b: 67));
-                break;
-            }
-
-            case CookingComicEventType.WobblyPlate:
-            {
-                var wobble = ((int)(age / 80) % 2 == 0) ? -12 : 12;
-                fill(665 + wobble, 390, 180, 80, new Color(a: 210, r: 232, g: 228, b: 208));
-                fill(684 + wobble, 407, 142, 48, new Color(a: 210, r: 48, g: 62, b: 48));
-                break;
-            }
-        }
-    }
-
-    private void DrawActionFeedback(Action<int, int, int, int, Color> fill)
-    {
-        var remaining = _feedbackUntil - Environment.TickCount64;
-        if (remaining <= 0)
-            return;
-
-        var age = Math.Max(0, 1_450 - remaining);
-        var accent = _feedbackScore switch
-        {
-            >= 90 => new Color(a: 210, r: 245, g: 218, b: 123),
-            >= 70 => new Color(a: 190, r: 111, g: 207, b: 123),
-            >= 40 => new Color(a: 175, r: 226, g: 190, b: 118),
-            _ => new Color(a: 205, r: 224, g: 105, b: 83),
-        };
-
-        var plaquePulse = _feedbackScore >= 90
-            ? 8 + (int)((remaining / 70) % 8)
-            : _feedbackScore < 40
-                ? ((int)(Environment.TickCount64 / 45) % 2 == 0 ? 7 : -7)
-                : 2;
-        fill(
-            505 - Math.Abs(plaquePulse),
-            315,
-            360 + Math.Abs(plaquePulse) * 2,
-            88,
-            new Color(a: 75, r: accent.R, g: accent.G, b: accent.B)
-        );
-
-        if (_feedbackScore >= 90)
-        {
-            var pulse = 8 + (int)((remaining / 70) % 8);
-            fill(492 - pulse, 60 - pulse, 456 + pulse * 2, 444 + pulse * 2, new Color(a: 28, r: 236, g: 208, b: 113));
-            for (var spark = 0; spark < 16; ++spark)
-            {
-                var travel = (int)(age / 18);
-                var x = 535 + ((spark * 47 + travel * (spark % 3 + 1)) % 395);
-                var y = 100 + ((spark * 59 + travel * (spark % 2 + 1)) % 350);
-                var size = 4 + spark % 3 * 2;
-                fill(x, y, size, size, new Color(a: 235, r: 245, g: 218, b: 123));
-            }
-        }
-        else if (_feedbackScore >= 70)
-        {
-            for (var spark = 0; spark < 9; ++spark)
-            {
-                var x = 565 + ((spark * 57 + (int)(age / 16)) % 320);
-                var y = 170 + ((spark * 43 + (int)(age / 22)) % 225);
-                fill(x, y, 5, 5, new Color(a: 205, r: 111, g: 207, b: 123));
-            }
-        }
-        else if (_feedbackScore >= 40)
-        {
-            var width = 120 + (int)((remaining / 18) % 70);
-            fill(685 - width / 2, 405, width, 4, new Color(a: 190, r: 226, g: 190, b: 118));
-        }
-        else
-        {
-            var shake = ((int)(Environment.TickCount64 / 45) % 2 == 0) ? -8 : 8;
-            fill(400 + shake, 86, 565, 5, new Color(a: 170, r: 175, g: 64, b: 48));
-            fill(400 + shake, 306, 565, 5, new Color(a: 170, r: 175, g: 64, b: 48));
-            fill(400 + shake, 86, 5, 225, new Color(a: 170, r: 175, g: 64, b: 48));
-            fill(960 + shake, 86, 5, 225, new Color(a: 170, r: 175, g: 64, b: 48));
-
-            for (var cloud = 0; cloud < 7; ++cloud)
-            {
-                var drift = (int)(age / 22);
-                var x = 610 + cloud * 40 + (cloud % 2 == 0 ? drift : -drift / 2);
-                var y = 405 - cloud * 9 - drift;
-                var size = 24 + (cloud % 3) * 8;
-                fill(x, y, size, size, new Color(a: 125, r: 72, g: 70, b: 66));
-            }
-
-            if (_feedbackStage is CookingStageType.Flip or CookingStageType.Chop)
-            {
-                var fly = (int)(age / 8);
-                fill(575 + fly, 390 - Math.Min(95, fly / 2), 38, 18, new Color(a: 245, r: 190, g: 120, b: 67));
-            }
-        }
-
-        if (_feedbackScore >= 40 && _feedbackComboValue >= 2)
-        {
-            var visiblePips = Math.Min(8, _feedbackComboValue);
-            for (var pip = 0; pip < visiblePips; ++pip)
-            {
-                fill(
-                    635 + pip * 18,
-                    402,
-                    12,
-                    5,
-                    pip == visiblePips - 1
-                        ? accent
-                        : new Color(a: 175, r: 191, g: 143, b: 71)
-                );
-            }
-        }
-    }
-
-    private void UpdateActionFeedbackOverlay()
-    {
-        var remaining = _feedbackUntil - Environment.TickCount64;
-        if (remaining <= 0)
-        {
-            _feedbackBanner.IsHidden = true;
-            _feedbackCombo.IsHidden = true;
-            return;
-        }
-
-        var scaleX = Width / 1024f;
-        var scaleY = Height / 720f;
-        var scale = Math.Min(scaleX, scaleY);
-        var offsetX = (int)((Width - 1024 * scale) / 2f);
-        var offsetY = (int)((Height - 720 * scale) / 2f);
-
-        var shake = _feedbackScore < 40
-            ? ((int)(Environment.TickCount64 / 45) % 2 == 0 ? -7 : 7)
-            : 0;
-        var rise = _feedbackScore >= 90
-            ? (int)Math.Round(6 * Math.Sin(Environment.TickCount64 / 80d))
-            : 0;
-
-        _feedbackBanner.IsHidden = false;
-        _feedbackBanner.SetBounds(
-            offsetX + (int)((510 + shake) * scale),
-            offsetY + (int)((320 + rise) * scale),
-            Math.Max(1, (int)(350 * scale)),
-            Math.Max(1, (int)(54 * scale))
-        );
-        _feedbackBanner.FontSize = Math.Max(
-            14,
-            (int)Math.Round((_feedbackScore >= 90 ? 32 : 28) * scale)
-        );
-        _feedbackBanner.BringToFront();
-
-        var showCombo = !string.IsNullOrWhiteSpace(_feedbackCombo.Text);
-        _feedbackCombo.IsHidden = !showCombo;
-        if (showCombo)
-        {
-            _feedbackCombo.SetBounds(
-                offsetX + (int)((560 + shake) * scale),
-                offsetY + (int)(372 * scale),
-                Math.Max(1, (int)(250 * scale)),
-                Math.Max(1, (int)(28 * scale))
-            );
-            _feedbackCombo.FontSize = Math.Max(9, (int)Math.Round(14 * scale));
-            _feedbackCombo.BringToFront();
-        }
-    }
-
-    private Label MakeLabel(string name, int x, int y, int w, int h, int font)
-    {
-        var label = new Label(this, name)
-        {
-            Font = Skin.DefaultFont,
-            FontSize = font,
-            AutoSizeToContents = false,
-            TextColorOverride = Color.White,
-            MouseInputEnabled = false,
-            KeyboardInputEnabled = false,
-            UserData = new Rectangle(x, y, w, h),
-        };
-        label.SetBounds(x, y, w, h);
-        _fontSizes[label] = font;
-        return label;
-    }
-
-    private Button MakeButton(string name, string text, int x, int y, int w, Action action)
-    {
-        var button = new Button(this, name)
-        {
-            Font = Skin.DefaultFont,
-            FontSize = 11,
-            Text = text,
-            UserData = new Rectangle(x, y, w, 36),
-        };
-        button.SetBounds(x, y, w, 36);
-        _fontSizes[button] = 11;
-        button.Clicked += (_, _) => action();
-        return button;
-    }
-
-    private static string StageName(CookingStageType type) => type switch
-    {
-        CookingStageType.Chop => "CHOP THE INGREDIENTS",
-        CookingStageType.Stir => "STIR THE SAUCE",
-        CookingStageType.Heat => "CONTROL THE HEAT",
-        CookingStageType.Flip => "FLIP THE PAN",
-        CookingStageType.Season => "SEASON IT",
-        CookingStageType.Knead => "KNEAD THE DOUGH",
-        _ => "PLATE THE MEAL",
-    };
-
+    private static void Play(string? sound) { if (!string.IsNullOrWhiteSpace(sound)) Intersect.Client.Core.Audio.AddGameSound(sound, false); }
     private static string ErrorText(string code) => code switch
     {
         "RecipeNotFound" => "That recipe no longer exists.",
@@ -1825,1774 +239,287 @@ internal sealed class CookingWindow : Base
         _ => code,
     };
 
-    public void Destroy()
-    {
-        if (_destroyed) return;
-        _destroyed = true;
-        Hide();
-        Parent?.RemoveChild(this, false);
-        Dispose();
-    }
-}
-
-
-internal sealed class CookingRecipePickerPanel(Base parent) : Base(parent, "CookingRecipePicker")
-{
-    public int SelectedSlot { get; set; } = -1;
+    public void Destroy() { if (_destroyed) return; _destroyed = true; Parent?.RemoveChild(this, false); Dispose(); }
 
     protected override void Render(SkinBase skin)
     {
-        var renderer = skin.Renderer;
-        var bounds = RenderBounds;
+        CookingArt.Fill(skin.Renderer, new Color(245, 20, 16, 15), 0, 0, Width, Height);
+        var scale = Math.Min(Width / 1024f, Height / 720f);
+        var x = (int)((Width - 1024 * scale) / 2); var y = (int)((Height - 720 * scale) / 2);
+        void Fill(int bx, int by, int width, int height, Color color) => CookingArt.Fill(skin.Renderer, color,
+            x + (int)(bx * scale), y + (int)(by * scale), (int)(width * scale), (int)(height * scale));
+        DrawKitchenEnvironment(Fill, Environment.TickCount64);
+        Fill(20, 85, 285, 560, new Color(246, 58, 39, 29));
+        Fill(318, 85, 674, 560, new Color(242, 35, 28, 22));
+    }
 
-        renderer.DrawColor = new Color(242, 18, 13, 10);
-        renderer.DrawFilledRect(bounds);
-
-        renderer.DrawColor = new Color(255, 148, 101, 54);
-        renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, 2));
-        renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y + bounds.Height - 2, bounds.Width, 2));
-        renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, 2, bounds.Height));
-        renderer.DrawFilledRect(new Rectangle(bounds.X + bounds.Width - 2, bounds.Y, 2, bounds.Height));
-
-        int SX(int value) => bounds.X + (int)Math.Round(value * bounds.Width / 550d);
-        int SY(int value) => bounds.Y + (int)Math.Round(value * bounds.Height / 390d);
-        int SW(int value) => Math.Max(1, (int)Math.Round(value * bounds.Width / 550d));
-        int SH(int value) => Math.Max(1, (int)Math.Round(value * bounds.Height / 390d));
-
-        for (var slot = 0; slot < 6; ++slot)
+    private sealed class IngredientList(Base parent) : Base(parent)
+    {
+        internal CookingIngredientState[] Items = [];
+        protected override void Render(SkinBase skin)
         {
-            var column = slot % 2;
-            var row = slot / 2;
-            var x = SX(17 + column * 258);
-            var y = SY(55 + row * 82);
-            var w = SW(252);
-            var h = SH(76);
-
-            renderer.DrawColor = slot == SelectedSlot
-                ? new Color(255, 231, 194, 112)
-                : new Color(255, 91, 62, 39);
-            renderer.DrawFilledRect(new Rectangle(x, y, w, h));
-
-            renderer.DrawColor = new Color(255, 42, 30, 24);
-            renderer.DrawFilledRect(
-                new Rectangle(x + SW(2), y + SH(2), Math.Max(1, w - SW(4)), Math.Max(1, h - SH(4)))
-            );
-
-            renderer.DrawColor = slot == SelectedSlot
-                ? new Color(255, 184, 129, 65)
-                : new Color(255, 78, 54, 36);
-            renderer.DrawFilledRect(new Rectangle(x + SW(5), y + SH(5), Math.Max(1, w - SW(10)), SH(4)));
+            for (var i = 0; i < Items.Length; ++i)
+            {
+                var item = Items[i];
+                CookingArt.DrawItem(skin.Renderer, item.ItemId, new Rectangle(4, i * 48 + 5, 36, 36), item.Name, skin);
+                skin.Renderer.DrawColor = item.Available >= item.Needed ? Color.White : new Color(245, 135, 100);
+                skin.Renderer.RenderText(Skin.DefaultFont, 9, new Point(48, i * 48 + 4), item.Name.Length > 23 ? item.Name[..22] + "..." : item.Name);
+                skin.Renderer.RenderText(Skin.DefaultFont, 9, new Point(48, i * 48 + 22), $"{item.Available} / {item.Needed}");
+            }
         }
-
-        renderer.DrawColor = new Color(255, 90, 62, 39);
-        renderer.DrawFilledRect(new Rectangle(SX(18), SY(309), SW(514), SH(2)));
     }
 }
 
-
-internal sealed class CookingResultPanel(Base parent) : Base(parent, "CookingResultPanel")
+internal static class CookingArt
 {
-    public CookingQuality Quality { get; set; }
-
-    public long CelebrationStartedAt { get; set; }
-
-    protected override void Render(SkinBase skin)
+    internal static IGameTexture? ItemTexture(Guid id) => ItemDescriptor.TryGet(id, out var item) && !string.IsNullOrWhiteSpace(item.Icon)
+        ? GameContentManager.Current.GetTexture(TextureType.Item, item.Icon) : null;
+    internal static void Fill(RendererBase renderer, Color color, int x, int y, int w, int h)
+    { if (w <= 0 || h <= 0) return; renderer.DrawColor = color; renderer.DrawFilledRect(new Rectangle(x, y, w, h)); }
+    internal static void Disc(RendererBase renderer, Color color, int x, int y, int radius)
     {
-        var renderer = skin.Renderer;
-        var bounds = RenderBounds;
-
-        var accent = Quality switch
+        for (var row = -radius; row <= radius; ++row)
         {
-            CookingQuality.Perfect => new Color(255, 238, 201, 88),
-            CookingQuality.Great => new Color(255, 86, 169, 100),
-            CookingQuality.Decent => new Color(255, 185, 147, 86),
-            _ => new Color(255, 158, 67, 53),
-        };
-
-        renderer.DrawColor = accent;
-        renderer.DrawFilledRect(bounds);
-
-        renderer.DrawColor = new Color(250, 23, 17, 13);
-        renderer.DrawFilledRect(
-            new Rectangle(bounds.X + 3, bounds.Y + 3, Math.Max(1, bounds.Width - 6), Math.Max(1, bounds.Height - 6))
-        );
-
-        int SX(int value) => bounds.X + (int)Math.Round(value * bounds.Width / 520d);
-        int SY(int value) => bounds.Y + (int)Math.Round(value * bounds.Height / 410d);
-        int SW(int value) => Math.Max(1, (int)Math.Round(value * bounds.Width / 520d));
-        int SH(int value) => Math.Max(1, (int)Math.Round(value * bounds.Height / 410d));
-
-        var celebrationAge = CelebrationStartedAt <= 0
-            ? 2_000L
-            : Math.Max(0, Environment.TickCount64 - CelebrationStartedAt);
-        var plateDrop = celebrationAge < 520
-            ? (int)Math.Round((1d - celebrationAge / 520d) * 58d)
-            : 0;
-        var plateBounce = celebrationAge is >= 520 and < 760
-            ? (int)Math.Round(Math.Sin((celebrationAge - 520) / 240d * Math.PI) * -10d)
-            : 0;
-        var plateOffsetY = plateDrop + plateBounce;
-
-        if (celebrationAge < 900)
-        {
-            var ray = Math.Clamp((int)(celebrationAge / 9), 0, 90);
-            renderer.DrawColor = new Color(a: 125, r: accent.R, g: accent.G, b: accent.B);
-            renderer.DrawFilledRect(new Rectangle(SX(255 - ray), SY(137), SW(ray), SH(3)));
-            renderer.DrawFilledRect(new Rectangle(SX(265), SY(137), SW(ray), SH(3)));
-            renderer.DrawFilledRect(new Rectangle(SX(258), SY(137 - ray / 2), SW(3), SH(ray / 2)));
+            var half = (int)Math.Sqrt(radius * radius - row * row);
+            Fill(renderer, color, x - half, y + row, half * 2 + 1, 1);
         }
-
-        // Decorative plate / meal behind the text, deliberately built from primitives so it
-        // matches the rest of the current mini-game without requiring external art.
-        renderer.DrawColor = new Color(255, 216, 209, 183);
-        renderer.DrawFilledRect(new Rectangle(SX(190), SY(119 + plateOffsetY), SW(140), SH(46)));
-        renderer.DrawColor = new Color(255, 57, 63, 43);
-        renderer.DrawFilledRect(new Rectangle(SX(211), SY(129 + plateOffsetY), SW(98), SH(26)));
-
-        // Quality pips act like a simple result rating.
-        var pips = Quality switch
+    }
+    internal static void DrawItem(RendererBase renderer, Guid id, Rectangle bounds, string name, SkinBase skin)
+    {
+        if (ItemTexture(id) is { } texture)
         {
-            CookingQuality.Perfect => 4,
-            CookingQuality.Great => 3,
-            CookingQuality.Decent => 2,
-            _ => 1,
-        };
-
-        for (var index = 0; index < 4; ++index)
-        {
-            renderer.DrawColor = index < pips
-                ? accent
-                : new Color(255, 66, 49, 38);
-            renderer.DrawFilledRect(new Rectangle(SX(204 + index * 30), SY(166), SW(18), SH(5)));
+            var scale = Math.Min(bounds.Width / (float)texture.Width, bounds.Height / (float)texture.Height);
+            var w = Math.Max(1, (int)(texture.Width * scale)); var h = Math.Max(1, (int)(texture.Height * scale));
+            renderer.DrawColor = Color.White;
+            renderer.DrawTexturedRect(texture, new Rectangle(bounds.X + (bounds.Width - w) / 2, bounds.Y + (bounds.Height - h) / 2, w, h), Color.White);
         }
-
-        // Perfect/Great results get a restrained celebratory sparkle field; Burnt gets smoke.
-        var now = Environment.TickCount64;
-        if ((Quality is CookingQuality.Perfect or CookingQuality.Great) && celebrationAge >= 500)
+        else
         {
-            for (var spark = 0; spark < 10; ++spark)
-            {
-                var x = 70 + ((spark * 43 + (int)(now / 30)) % 380);
-                var y = 48 + ((spark * 61 + (int)(now / 45)) % 225);
-                renderer.DrawColor = new Color(
-                    a: 190,
-                    r: accent.R,
-                    g: accent.G,
-                    b: accent.B
-                );
-                renderer.DrawFilledRect(new Rectangle(SX(x), SY(y), SW(4), SH(4)));
-            }
+            Disc(renderer, new Color(220, 162, 77), bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2, Math.Max(3, bounds.Width / 3));
+            renderer.DrawColor = Color.Black;
+            renderer.RenderText(skin.DefaultFont, 10, new Point(bounds.X + bounds.Width / 2 - 3, bounds.Y + bounds.Height / 2 - 6), name.Length > 0 ? name[..1] : "?");
         }
-        else if (Quality == CookingQuality.Burnt)
-        {
-            for (var cloud = 0; cloud < 6; ++cloud)
-            {
-                var drift = (int)((now / 35 + cloud * 17) % 45);
-                renderer.DrawColor = new Color(a: 105, r: 90, g: 86, b: 80);
-                renderer.DrawFilledRect(
-                    new Rectangle(
-                        SX(205 + cloud * 26 + drift / 4),
-                        SY(125 - drift),
-                        SW(20 + cloud % 3 * 6),
-                        SH(20 + cloud % 3 * 6)
-                    )
-                );
-            }
-        }
-
-        renderer.DrawColor = new Color(255, 84, 59, 39);
-        renderer.DrawFilledRect(new Rectangle(SX(28), SY(335), SW(464), SH(2)));
     }
 }
 
-
-internal sealed class CookingInteractionPad : Base
+internal sealed class CookingWorktop(Base parent, Action<CookingActionInput> submit) : Base(parent, "CookingWorktop")
 {
-    private enum IngredientVisualState
-    {
-        Raw = 0,
-        Prepared = 1,
-        Cooking = 2,
-        Cooked = 3,
-        Burnt = 4,
-    }
-
-    private readonly Action<CookingActionInput> _submit;
-    private readonly Dictionary<Guid, IngredientVisualState> _ingredientVisualStates = [];
-    private readonly Dictionary<Guid, int> _ingredientCookProgress = [];
-    private readonly HashSet<Guid> _choppedIngredients = [];
-    private readonly HashSet<Guid> _kneadedIngredients = [];
-    private readonly HashSet<Guid> _stationIngredientIds = [];
-    private readonly Dictionary<Guid, int> _platedIngredientZones = [];
     private CookingSessionState? _state;
-    private bool _enabled;
-    private bool _dragging;
-    private bool _inputLocked;
-    private bool _sentThisDrag;
-    private bool _ingredientGrabbed;
-    private bool _placingIngredient;
-    private bool _ingredientPlaced;
-    private Guid _activeIngredientId;
-    private string _activeStation = string.Empty;
-    private Point _lastPoint;
-    private Point _grabOffset;
-    private long _dragStartedAt;
-    private double _linearAccumulator;
-    private double _rotationAccumulator;
-    private double _lastAngle;
-    private int _visualProgressPermille;
-    private int _cursorXPermille = 500;
-    private int _lastStageIndex = -1;
-    private long _lastActionSequence = -1;
-    private Guid _lastRecipeId;
-
-    public CookingInteractionPad(Base parent, Action<CookingActionInput> submit)
-        : base(parent, "CookingInteractionPad")
-    {
-        _submit = submit;
-        ShouldDrawBackground = false;
-        MouseInputEnabled = true;
-        KeyboardInputEnabled = false;
-        KeepFocusOnMouseExit = true;
-    }
-
-    public bool WaitingForPlacement =>
-        _enabled &&
-        _state is not null &&
-        _state.StageType != CookingStageType.Plate &&
-        TryGetActiveIngredient(out var ingredient, out _) &&
-        !_stationIngredientIds.Contains(ingredient.ItemId);
-
-    public string PlacementTitle
-    {
-        get
+    private bool _enabled, _placed, _dragging, _locked;
+    private int _stage = -2;
+    private Point _point, _start, _last;
+    private double _rotation, _lastAngle;
+    private int _distance;
+    private long _offset, _flash;
+    private Rectangle Source => new(12, Height / 2 - 40, 80, 80);
+    private Rectangle Station => new(Width / 4, 24, Width * 3 / 4 - 20, Height - 85);
+    private Point Center => new(Station.X + Station.Width / 2, Station.Y + Station.Height / 2);
+    internal string Instruction => !_placed && _state?.StageType != CookingStageType.Plate
+        ? "Drag the ingredient from the tray onto the highlighted work surface."
+        : _state?.StageType switch
         {
-            if (!TryGetActiveIngredient(out var ingredient, out _))
-                return "PREPARE THE STATION";
-
-            return $"MOVE {ingredient.Name.ToUpperInvariant()} TO {PlacementStation(_state?.StageType ?? CookingStageType.Chop)}";
-        }
-    }
-
-    public string PlacementHelp =>
-        "Drag the highlighted ingredient from the tray into the glowing station, then perform the cooking motion.";
-
-    public void Configure(CookingSessionState state, bool enabled)
-    {
-        var previousState = _state;
-        var stageChanged = _lastStageIndex != state.StageIndex;
-        var actionChanged = _lastActionSequence != state.ActionSequence;
-        var previousIngredientId = _activeIngredientId;
-        var previousStation = _activeStation;
-
-        if (_lastRecipeId != state.RecipeId)
-        {
-            _ingredientVisualStates.Clear();
-            _ingredientCookProgress.Clear();
-            _choppedIngredients.Clear();
-            _kneadedIngredients.Clear();
-            _stationIngredientIds.Clear();
-            _platedIngredientZones.Clear();
-            _ingredientPlaced = false;
-            _lastRecipeId = state.RecipeId;
-        }
-
-        if (actionChanged && state.ActionSequence > 0)
-        {
-            // When the last action completed a stage, the packet already points at the
-            // next stage. Attribute that score to the stage that actually produced it.
-            ApplyActionVisual(
-                stageChanged && previousState != null ? previousState : state,
-                state.LastActionScore,
-                stateAlreadyAdvanced: !stageChanged
-            );
-        }
-
-        if (stageChanged && previousState != null)
-            FinalizeStageVisual(previousState);
-
-        if (state.Complete)
-            FinalizeRecipeVisual(state);
-
-        _state = state;
-        _enabled = enabled;
-
-        var currentIngredientId = CurrentActiveIngredientId();
-        var currentStation = PlacementStation(state.StageType);
-        var ingredientChanged = previousIngredientId != currentIngredientId;
-
-        if (stageChanged || ingredientChanged)
-        {
-            if (stageChanged)
-            {
-                if (!string.Equals(previousStation, currentStation, StringComparison.Ordinal) ||
-                    state.StageType == CookingStageType.Plate)
-                {
-                    _stationIngredientIds.Clear();
-                }
-                else
-                {
-                    var allowed = StageIngredients(state)
-                        .Select(ingredient => ingredient.ItemId)
-                        .ToHashSet();
-                    _stationIngredientIds.IntersectWith(allowed);
-                }
-
-                if (state.StageType == CookingStageType.Plate &&
-                    previousState?.StageType != CookingStageType.Plate)
-                {
-                    _platedIngredientZones.Clear();
-                }
-            }
-
-            CancelGesture();
-            _inputLocked = false;
-            _cursorXPermille = 500;
-            _ingredientPlaced =
-                currentIngredientId != Guid.Empty &&
-                _stationIngredientIds.Contains(currentIngredientId);
-        }
-        else if (actionChanged)
-        {
-            _inputLocked = false;
-            _linearAccumulator = 0;
-            _rotationAccumulator = 0;
-            _visualProgressPermille = 0;
-
-            if (_dragging)
-            {
-                _lastPoint = CanvasPosToLocal(
-                    Intersect.Client.Framework.Gwen.Input.InputHandler.MousePosition
-                );
-                _lastAngle = AngleFromCenter(_lastPoint);
-            }
-        }
-
-        _activeIngredientId = currentIngredientId;
-        _activeStation = currentStation;
-        _lastStageIndex = state.StageIndex;
-        _lastActionSequence = state.ActionSequence;
-    }
-
-    public void Tick()
-    {
-        if (!_dragging || !_enabled || _inputLocked || _state == null)
-            return;
-
-        var current = CanvasPosToLocal(
-            Intersect.Client.Framework.Gwen.Input.InputHandler.MousePosition
-        );
-        _cursorXPermille = Width <= 0
-            ? 500
-            : Math.Clamp((int)Math.Round(current.X * 1000d / Width), 0, 1000);
-
-        var dx = current.X - _lastPoint.X;
-        var dy = current.Y - _lastPoint.Y;
-
-        if (_placingIngredient)
-        {
-            _lastPoint = current;
-            return;
-        }
-
-        switch (_state.StageType)
-        {
-            case CookingStageType.Chop:
-                TickChop(dx, dy);
-                break;
-
-            case CookingStageType.Stir:
-                TickStir(current);
-                break;
-
-            case CookingStageType.Heat:
-            case CookingStageType.Season:
-            case CookingStageType.Knead:
-                TickHorizontal(dx);
-                break;
-
-            case CookingStageType.Flip:
-                TickFlip(dx, dy);
-                break;
-
-            case CookingStageType.Plate:
-                _visualProgressPermille = _cursorXPermille;
-                break;
-        }
-
-        _lastPoint = current;
-    }
-
-    protected override void OnMouseDown(
-        Intersect.Client.Framework.Input.MouseButton mouseButton,
-        Point mousePosition,
-        bool userAction = true
-    )
-    {
-        base.OnMouseDown(mouseButton, mousePosition, userAction);
-
-        if (mouseButton != Intersect.Client.Framework.Input.MouseButton.Left ||
-            !_enabled ||
-            _state == null)
-        {
-            return;
-        }
-
-        var localPoint = CanvasPosToLocal(mousePosition);
-        var ingredientRect = ActiveIngredientRectLocal();
-        var needsPlacement = WaitingForPlacement;
-
-        if (needsPlacement && !Contains(ingredientRect, localPoint))
-            return;
-
-        var requiresIngredientGrab = GestureRequiresIngredientGrab(_state.StageType);
-        if (!needsPlacement &&
-            requiresIngredientGrab &&
-            !Contains(ingredientRect, localPoint))
-        {
-            return;
-        }
-
-        _dragging = true;
-        _placingIngredient = needsPlacement;
-        _ingredientGrabbed = needsPlacement || requiresIngredientGrab;
-        _sentThisDrag = false;
-        _linearAccumulator = 0;
-        _rotationAccumulator = 0;
-        _visualProgressPermille = 0;
-        _dragStartedAt = Environment.TickCount64;
-        _lastPoint = localPoint;
-        _grabOffset = _ingredientGrabbed
-            ? new Point(localPoint.X - ingredientRect.X, localPoint.Y - ingredientRect.Y)
-            : new Point(0, 0);
-        _cursorXPermille = Width <= 0
-            ? 500
-            : Math.Clamp((int)Math.Round(_lastPoint.X * 1000d / Width), 0, 1000);
-        _lastAngle = AngleFromCenter(_lastPoint);
-    }
-
-    protected override void OnMouseUp(
-        Intersect.Client.Framework.Input.MouseButton mouseButton,
-        Point mousePosition,
-        bool userAction = true
-    )
-    {
-        base.OnMouseUp(mouseButton, mousePosition, userAction);
-
-        if (mouseButton != Intersect.Client.Framework.Input.MouseButton.Left)
-            return;
-
-        var local = CanvasPosToLocal(mousePosition);
-
-        if (_dragging && _placingIngredient)
-        {
-            _ingredientPlaced = Contains(IngredientDropZoneLocal(), local);
-            if (_ingredientPlaced && TryGetActiveIngredient(out var placedIngredient, out _))
-                _stationIngredientIds.Add(placedIngredient.ItemId);
-
-            ResetDragMotion();
-            return;
-        }
-
-        if (_dragging &&
-            _enabled &&
-            !_inputLocked &&
-            !_sentThisDrag &&
-            _ingredientGrabbed &&
-            _state?.StageType == CookingStageType.Plate)
-        {
-            var zone = PlateZoneAt(local);
-            if (zone >= 0)
-            {
-                if (TryGetActiveIngredient(out var platedIngredient, out _))
-                    _platedIngredientZones[platedIngredient.ItemId] = zone;
-
-                Submit(
-                    zone switch
-                    {
-                        0 => CookingActionInput.Primary,
-                        1 => CookingActionInput.Secondary,
-                        _ => CookingActionInput.Tertiary,
-                    },
-                    oneShot: true
-                );
-            }
-        }
-
-        ResetDragMotion();
-        _linearAccumulator = 0;
-        _rotationAccumulator = 0;
-        _visualProgressPermille = 0;
-    }
-
-    private void TickChop(int dx, int dy)
-    {
-        if (_sentThisDrag)
-            return;
-
-        if (dy > 0 && Math.Abs(dy) >= Math.Abs(dx) / 2)
-            _linearAccumulator += dy;
-        else if (dy < 0)
-            _linearAccumulator = Math.Max(0, _linearAccumulator + dy * 0.6d);
-
-        var threshold = Math.Max(30d, Height * 0.55d);
-        _visualProgressPermille = Math.Clamp(
-            (int)Math.Round(_linearAccumulator * 1000d / threshold),
-            0,
-            1000
-        );
-
-        if (_linearAccumulator >= threshold)
-            Submit(CookingActionInput.Primary, oneShot: true);
-    }
-
-    private void TickStir(Point current)
-    {
-        var angle = AngleFromCenter(current);
-        var delta = NormalizeAngle(angle - _lastAngle);
-        _lastAngle = angle;
-
-        // Ignore teleports across the circle center while keeping deliberate circular motion.
-        if (Math.Abs(delta) <= 1.15d)
-            _rotationAccumulator += delta;
-
-        var threshold = Math.PI * 1.15d;
-        _visualProgressPermille = Math.Clamp(
-            (int)Math.Round(Math.Abs(_rotationAccumulator) * 1000d / threshold),
-            0,
-            1000
-        );
-
-        if (Math.Abs(_rotationAccumulator) < threshold)
-            return;
-
-        // Screen-space Y grows downward, so positive angular motion is clockwise.
-        Submit(
-            _rotationAccumulator > 0
-                ? CookingActionInput.Primary
-                : CookingActionInput.Secondary,
-            oneShot: false
-        );
-    }
-
-    private void TickHorizontal(int dx)
-    {
-        _linearAccumulator += dx;
-        var threshold = Math.Max(28d, Width * 0.11d);
-        _visualProgressPermille = Math.Clamp(
-            (int)Math.Round(Math.Abs(_linearAccumulator) * 1000d / threshold),
-            0,
-            1000
-        );
-
-        if (_linearAccumulator >= threshold)
-            Submit(CookingActionInput.Primary, oneShot: false);
-        else if (_linearAccumulator <= -threshold)
-            Submit(CookingActionInput.Secondary, oneShot: false);
-    }
-
-    private void TickFlip(int dx, int dy)
-    {
-        if (_sentThisDrag)
-            return;
-
-        if (dy < 0 && Math.Abs(dy) >= Math.Abs(dx) / 2)
-            _linearAccumulator += -dy;
-        else if (dy > 0)
-            _linearAccumulator = Math.Max(0, _linearAccumulator - dy * 0.35d);
-
-        var threshold = Math.Max(30d, Height * 0.45d);
-        _visualProgressPermille = Math.Clamp(
-            (int)Math.Round(_linearAccumulator * 1000d / threshold),
-            0,
-            1000
-        );
-
-        if (_linearAccumulator >= threshold &&
-            Environment.TickCount64 - _dragStartedAt <= 1_100)
-        {
-            Submit(CookingActionInput.Primary, oneShot: true);
-        }
-    }
-
-    private void Submit(CookingActionInput input, bool oneShot)
-    {
-        if (!_enabled || _inputLocked)
-            return;
-
-        _inputLocked = true;
-        _sentThisDrag |= oneShot;
-        _visualProgressPermille = 1000;
-        _linearAccumulator = 0;
-        _rotationAccumulator = 0;
-        _submit(input);
-    }
-
-    private CookingIngredientState[] StageIngredients() =>
-        _state == null ? [] : StageIngredients(_state);
-
-    private int ActiveIngredientIndex
-    {
-        get
-        {
-            var ingredients = StageIngredients();
-            return ingredients.Length == 0
-                ? -1
-                : Math.Clamp(_state?.CompletedActions ?? 0, 0, ingredients.Length - 1);
-        }
-    }
-
-    private bool TryGetActiveIngredient(
-        out CookingIngredientState ingredient,
-        out ItemDescriptor descriptor
-    )
-    {
-        ingredient = default!;
-        descriptor = default!;
-
-        var ingredients = StageIngredients();
-        var index = ActiveIngredientIndex;
-        if (index < 0 || index >= ingredients.Length)
-            return false;
-
-        ingredient = ingredients[index];
-        return ItemDescriptor.TryGet(ingredient.ItemId, out descriptor);
-    }
-
-    private void ApplyActionVisual(
-        CookingSessionState actionState,
-        int score,
-        bool stateAlreadyAdvanced
-    )
-    {
-        var ingredients = StageIngredients(actionState);
-        if (ingredients.Length == 0)
-            return;
-
-        var actionIndex = stateAlreadyAdvanced
-            ? Math.Max(0, actionState.CompletedActions - 1)
-            : actionState.CompletedActions;
-        var index = Math.Clamp(actionIndex, 0, ingredients.Length - 1);
-        var itemId = ingredients[index].ItemId;
-        if (itemId == Guid.Empty)
-            return;
-
-        var current = VisualState(itemId);
-        if (current == IngredientVisualState.Burnt)
-            return;
-
-        switch (actionState.StageType)
-        {
-            case CookingStageType.Chop:
-                _choppedIngredients.Add(itemId);
-                _ingredientVisualStates[itemId] = IngredientVisualState.Prepared;
-                break;
-
-            case CookingStageType.Knead:
-                _kneadedIngredients.Add(itemId);
-                _ingredientVisualStates[itemId] = IngredientVisualState.Prepared;
-                break;
-
-            case CookingStageType.Stir:
-            case CookingStageType.Season:
-                if (current == IngredientVisualState.Raw)
-                    _ingredientVisualStates[itemId] = IngredientVisualState.Prepared;
-                break;
-
-            case CookingStageType.Heat:
-            case CookingStageType.Flip:
-            {
-                var progress = _ingredientCookProgress.GetValueOrDefault(itemId);
-                progress = Math.Clamp(
-                    progress + Math.Clamp(10 + score / 4, 10, 35),
-                    0,
-                    100
-                );
-                _ingredientCookProgress[itemId] = progress;
-
-                if (score < 40 && progress >= 55)
-                {
-                    _ingredientVisualStates[itemId] = IngredientVisualState.Burnt;
-                }
-                else
-                {
-                    _ingredientVisualStates[itemId] = progress >= 78
-                        ? IngredientVisualState.Cooked
-                        : IngredientVisualState.Cooking;
-                }
-
-                break;
-            }
-        }
-    }
-
-    private void FinalizeStageVisual(CookingSessionState previousState)
-    {
-        var ingredients = StageIngredients(previousState);
-        foreach (var ingredient in ingredients)
-        {
-            var itemId = ingredient.ItemId;
-            if (itemId == Guid.Empty || VisualState(itemId) == IngredientVisualState.Burnt)
-                continue;
-
-            switch (previousState.StageType)
-            {
-                case CookingStageType.Chop:
-                    _choppedIngredients.Add(itemId);
-                    _ingredientVisualStates[itemId] = IngredientVisualState.Prepared;
-                    break;
-
-                case CookingStageType.Knead:
-                    _kneadedIngredients.Add(itemId);
-                    _ingredientVisualStates[itemId] = IngredientVisualState.Prepared;
-                    break;
-
-                case CookingStageType.Heat:
-                case CookingStageType.Flip:
-                    _ingredientCookProgress[itemId] = Math.Max(
-                        80,
-                        _ingredientCookProgress.GetValueOrDefault(itemId)
-                    );
-                    _ingredientVisualStates[itemId] = IngredientVisualState.Cooked;
-                    break;
-
-                case CookingStageType.Stir:
-                case CookingStageType.Season:
-                    if (VisualState(itemId) == IngredientVisualState.Raw)
-                        _ingredientVisualStates[itemId] = IngredientVisualState.Prepared;
-                    break;
-            }
-        }
-    }
-
-    private void FinalizeRecipeVisual(CookingSessionState state)
-    {
-        foreach (var ingredient in state.RecipeIngredients)
-        {
-            if (state.Quality == CookingQuality.Burnt)
-            {
-                _ingredientVisualStates[ingredient.ItemId] = IngredientVisualState.Burnt;
-                continue;
-            }
-
-            var current = VisualState(ingredient.ItemId);
-            if (current == IngredientVisualState.Cooking)
-                _ingredientVisualStates[ingredient.ItemId] = IngredientVisualState.Cooked;
-        }
-    }
-
-    private IngredientVisualState VisualState(Guid itemId)
-    {
-        return _ingredientVisualStates.TryGetValue(itemId, out var state)
-            ? state
-            : IngredientVisualState.Raw;
-    }
-
-    private static CookingIngredientState[] StageIngredients(CookingSessionState state)
-    {
-        if (state.RecipeIngredients.Length == 0)
-            return [];
-
-        var ids = state.StageIngredientItemIds.ToHashSet();
-        if (ids.Count == 0)
-            return state.RecipeIngredients;
-
-        return state.RecipeIngredients
-            .Where(ingredient => ids.Contains(ingredient.ItemId))
-            .ToArray();
-    }
-
-    private Guid CurrentActiveIngredientId()
-    {
-        var ingredients = StageIngredients();
-        var index = ingredients.Length == 0
-            ? -1
-            : Math.Clamp(_state?.CompletedActions ?? 0, 0, ingredients.Length - 1);
-        return index >= 0 && index < ingredients.Length
-            ? ingredients[index].ItemId
-            : Guid.Empty;
-    }
-
-    private static bool GestureRequiresIngredientGrab(CookingStageType type) =>
-        type is CookingStageType.Chop or
-            CookingStageType.Flip or
-            CookingStageType.Knead or
-            CookingStageType.Plate;
-
-    private static string PlacementStation(CookingStageType type) =>
-        type switch
-        {
-            CookingStageType.Chop => "CUTTING BOARD",
-            CookingStageType.Stir => "POT",
-            CookingStageType.Heat => "PAN",
-            CookingStageType.Flip => "PAN",
-            CookingStageType.Season => "PAN",
-            CookingStageType.Knead => "WORK BOARD",
-            CookingStageType.Plate => "PLATE",
-            _ => "STATION",
+            CookingStageType.Chop => "Click the food to chop when the knife marker enters the green zone.",
+            CookingStageType.Stir => "Hold the spoon and draw circles in the bowl. Work with the green rhythm.",
+            CookingStageType.Heat => "Use the mouse wheel or - / + on the stove. Match the heat to the green zone.",
+            CookingStageType.Flip => "Grab the food, flick it upward, then release when the marker is green.",
+            CookingStageType.Season => "Drag the shaker over the dish to add seasoning. Right-click to remove some.",
+            CookingStageType.Knead => _state.CompletedActions % 2 == 0
+                ? "Hold the dough and drag LEFT when the marker enters the green zone."
+                : "Now knead RIGHT when the marker enters the green zone.",
+            CookingStageType.Plate => "Drag the ingredient onto the highlighted plate.",
+            _ => "Prepare the dish.",
         };
 
-    private static bool Contains(Rectangle rectangle, Point point) =>
-        point.X >= rectangle.X &&
-        point.Y >= rectangle.Y &&
-        point.X < rectangle.X + rectangle.Width &&
-        point.Y < rectangle.Y + rectangle.Height;
-
-    private Rectangle ActiveIngredientRectLocal()
+    internal void Configure(CookingSessionState state, bool enabled, long offset)
     {
-        var activeId = CurrentActiveIngredientId();
-        var atStation = activeId != Guid.Empty && _stationIngredientIds.Contains(activeId);
-        var plated = activeId != Guid.Empty && _platedIngredientZones.ContainsKey(activeId);
-
-        var design = _state?.StageType == CookingStageType.Plate
-            ? plated
-                ? PlatedIngredientRectLocal(activeId, _platedIngredientZones[activeId])
-                : IngredientSourceRectLocal(activeId)
-            : atStation
-                ? StationIngredientRectLocal(activeId)
-                : IngredientSourceRectLocal(activeId);
-
-        if (!_dragging || !_ingredientGrabbed)
-            return design;
-
-        var x = Math.Clamp(_lastPoint.X - _grabOffset.X, 0, Math.Max(0, Width - design.Width));
-        var y = Math.Clamp(_lastPoint.Y - _grabOffset.Y, 0, Math.Max(0, Height - design.Height));
-        return new Rectangle(x, y, design.Width, design.Height);
-    }
-
-    private Rectangle SourceTrayRectLocal()
-    {
-        int X(int value) => (int)Math.Round(value * Width / 510d);
-        int Y(int value) => (int)Math.Round(value * Height / 82d);
-        int W(int value) => Math.Max(1, (int)Math.Round(value * Width / 510d));
-        int H(int value) => Math.Max(1, (int)Math.Round(value * Height / 82d));
-
-        return new Rectangle(X(8), Y(7), W(112), H(68));
-    }
-
-    private Rectangle IngredientSourceRectLocal() =>
-        IngredientSourceRectLocal(CurrentActiveIngredientId());
-
-    private Rectangle IngredientSourceRectLocal(Guid itemId)
-    {
-        var tray = SourceTrayRectLocal();
-        var ingredients = StageIngredients();
-        var index = Array.FindIndex(ingredients, ingredient => ingredient.ItemId == itemId);
-        if (index < 0) index = 0;
-
-        var count = Math.Max(1, ingredients.Length);
-        var columns = count <= 4 ? count : Math.Min(4, count);
-        var rows = Math.Max(1, (int)Math.Ceiling(count / (double)columns));
-        var column = index % columns;
-        var row = index / columns;
-        var cellWidth = Math.Max(1, tray.Width / columns);
-        var cellHeight = Math.Max(1, tray.Height / rows);
-        var width = Math.Max(12, Math.Min(42, cellWidth - 6));
-        var height = Math.Max(10, Math.Min(36, cellHeight - 5));
-
-        return new Rectangle(
-            tray.X + column * cellWidth + (cellWidth - width) / 2,
-            tray.Y + row * cellHeight + (cellHeight - height) / 2,
-            width,
-            height
-        );
-    }
-
-    private Rectangle StationIngredientRectLocal() =>
-        StationIngredientRectLocal(CurrentActiveIngredientId());
-
-    private Rectangle StationIngredientRectLocal(Guid itemId)
-    {
-        var zone = IngredientDropZoneLocal();
-        var ingredients = StageIngredients();
-        var index = Array.FindIndex(ingredients, ingredient => ingredient.ItemId == itemId);
-        if (index < 0) index = 0;
-
-        var count = Math.Max(1, ingredients.Length);
-        var columns = count <= 3 ? count : Math.Min(6, count);
-        var rows = Math.Max(1, (int)Math.Ceiling(count / (double)columns));
-        var column = index % columns;
-        var row = index / columns;
-        var cellWidth = Math.Max(1, zone.Width / columns);
-        var cellHeight = Math.Max(1, zone.Height / rows);
-        var width = Math.Max(12, Math.Min(52, cellWidth - 7));
-        var height = Math.Max(10, Math.Min(44, cellHeight - 6));
-
-        return new Rectangle(
-            zone.X + column * cellWidth + (cellWidth - width) / 2,
-            zone.Y + row * cellHeight + (cellHeight - height) / 2,
-            width,
-            height
-        );
-    }
-
-    private Rectangle PlatedIngredientRectLocal(Guid itemId, int zone)
-    {
-        var plate = PlateZoneRectLocal(zone);
-        var sameZone = StageIngredients()
-            .Where(ingredient =>
-                _platedIngredientZones.TryGetValue(ingredient.ItemId, out var placedZone) &&
-                placedZone == zone
-            )
-            .Select(ingredient => ingredient.ItemId)
-            .ToArray();
-
-        var index = Array.IndexOf(sameZone, itemId);
-        if (index < 0) index = 0;
-        var count = Math.Max(1, sameZone.Length);
-        var columns = Math.Min(3, count);
-        var rows = Math.Max(1, (int)Math.Ceiling(count / (double)columns));
-        var column = index % columns;
-        var row = index / columns;
-        var cellWidth = Math.Max(1, plate.Width / columns);
-        var cellHeight = Math.Max(1, plate.Height / rows);
-        var width = Math.Max(12, Math.Min(40, cellWidth - 6));
-        var height = Math.Max(10, Math.Min(32, cellHeight - 5));
-
-        return new Rectangle(
-            plate.X + column * cellWidth + (cellWidth - width) / 2,
-            plate.Y + row * cellHeight + (cellHeight - height) / 2,
-            width,
-            height
-        );
-    }
-
-    private Rectangle IngredientDropZoneLocal()
-    {
-        int X(int value) => (int)Math.Round(value * Width / 510d);
-        int Y(int value) => (int)Math.Round(value * Height / 82d);
-        int W(int value) => Math.Max(1, (int)Math.Round(value * Width / 510d));
-        int H(int value) => Math.Max(1, (int)Math.Round(value * Height / 82d));
-
-        return _state?.StageType switch
+        if (_stage != state.StageIndex || _state?.RecipeId != state.RecipeId)
         {
-            CookingStageType.Chop => new Rectangle(X(105), Y(7), W(300), H(68)),
-            CookingStageType.Stir => new Rectangle(X(160), Y(11), W(190), H(58)),
-            CookingStageType.Heat => new Rectangle(X(182), Y(3), W(146), H(53)),
-            CookingStageType.Flip => new Rectangle(X(168), Y(20), W(174), H(51)),
-            CookingStageType.Season => new Rectangle(X(188), Y(3), W(134), H(53)),
-            CookingStageType.Knead => new Rectangle(X(124), Y(10), W(262), H(62)),
-            _ => StationIngredientRectLocal(CurrentActiveIngredientId()),
-        };
-    }
-
-    private Rectangle PlateZoneRectLocal(int zone)
-    {
-        int X(int value) => (int)Math.Round(value * Width / 510d);
-        int Y(int value) => (int)Math.Round(value * Height / 82d);
-        int W(int value) => Math.Max(1, (int)Math.Round(value * Width / 510d));
-        int H(int value) => Math.Max(1, (int)Math.Round(value * Height / 82d));
-
-        zone = Math.Clamp(zone, 0, 2);
-        return new Rectangle(X(100 + zone * 132), Y(12), W(124), H(58));
-    }
-
-    private int PlateZoneAt(Point point)
-    {
-        for (var zone = 0; zone < 3; ++zone)
-        {
-            if (Contains(PlateZoneRectLocal(zone), point))
-                return zone;
+            _stage = state.StageIndex; _dragging = false; _rotation = 0; _distance = 0;
+            _placed = state.StageType is CookingStageType.Heat or CookingStageType.Season;
         }
-
-        return -1;
+        if (_state != null && _state.ActionSequence != state.ActionSequence && state.CompletedActions > 0) _flash = Environment.TickCount64 + 350;
+        if (state.CompletedActions > 0) _placed = true;
+        _state = state; _enabled = enabled; _locked = !enabled; _offset = offset;
+        if (!state.YourTurn || state.Complete) _dragging = false;
     }
-
-    private static Rectangle FitTexture(Rectangle target, int textureWidth, int textureHeight)
+    private static bool Contains(Rectangle rect, Point p) => p.X >= rect.X && p.Y >= rect.Y && p.X < rect.X + rect.Width && p.Y < rect.Y + rect.Height;
+    private void Send(CookingActionInput input)
     {
-        if (textureWidth <= 0 || textureHeight <= 0)
-            return target;
-
-        var ratio = Math.Min(
-            target.Width / (double)textureWidth,
-            target.Height / (double)textureHeight
-        );
-        var width = Math.Max(1, (int)Math.Round(textureWidth * ratio));
-        var height = Math.Max(1, (int)Math.Round(textureHeight * ratio));
-        return new Rectangle(
-            target.X + (target.Width - width) / 2,
-            target.Y + (target.Height - height) / 2,
-            width,
-            height
-        );
+        if (!_enabled || _locked) return;
+        _locked = true; _flash = Environment.TickCount64 + 350; _distance = 0; _rotation = 0; submit(input);
     }
-
-    private Color IngredientTint(ItemDescriptor descriptor, Guid itemId)
+    protected override void OnMouseDown(MouseButton button, Point mousePosition, bool userAction = true)
     {
-        var state = VisualState(itemId);
-
-        // An item actively sitting over heat should already look like it is cooking,
-        // even before the first scored heat action.
-        if (_stationIngredientIds.Contains(itemId) &&
-            _state?.StageType is CookingStageType.Heat or CookingStageType.Flip &&
-            state is IngredientVisualState.Raw or IngredientVisualState.Prepared)
+        base.OnMouseDown(button, mousePosition, userAction);
+        if (!_enabled || _locked || _state == null) return;
+        _point = _start = _last = CanvasPosToLocal(mousePosition);
+        if (button == MouseButton.Right && _state.StageType == CookingStageType.Season) { Send(CookingActionInput.Secondary); return; }
+        if (button != MouseButton.Left) return;
+        if (!_placed || _state.StageType == CookingStageType.Plate)
+        { _dragging = Contains(Source, _point); return; }
+        if (!Contains(Station, _point))
         {
-            state = IngredientVisualState.Cooking;
-        }
-
-        static int Scale(byte value, double factor) =>
-            Math.Clamp((int)Math.Round(value * factor), 0, 255);
-
-        return state switch
-        {
-            IngredientVisualState.Prepared => new Color(
-                a: descriptor.Color.A,
-                r: Math.Min(255, Scale(descriptor.Color.R, 1.08)),
-                g: Math.Min(255, Scale(descriptor.Color.G, 1.04)),
-                b: Scale(descriptor.Color.B, 0.92)
-            ),
-            IngredientVisualState.Cooking => new Color(
-                a: descriptor.Color.A,
-                r: Math.Min(255, Scale(descriptor.Color.R, 1.12)),
-                g: Scale(descriptor.Color.G, 0.78),
-                b: Scale(descriptor.Color.B, 0.58)
-            ),
-            IngredientVisualState.Cooked => new Color(
-                a: descriptor.Color.A,
-                r: Scale(descriptor.Color.R, 0.86),
-                g: Scale(descriptor.Color.G, 0.67),
-                b: Scale(descriptor.Color.B, 0.48)
-            ),
-            IngredientVisualState.Burnt => new Color(
-                a: descriptor.Color.A,
-                r: Scale(descriptor.Color.R, 0.34),
-                g: Scale(descriptor.Color.G, 0.31),
-                b: Scale(descriptor.Color.B, 0.28)
-            ),
-            _ => descriptor.Color,
-        };
-    }
-
-    private void DrawFoodTexture(
-        SkinBase skin,
-        ItemDescriptor descriptor,
-        Guid itemId,
-        Rectangle target
-    )
-    {
-        var texture = GameContentManager.Current?.GetTexture(TextureType.Item, descriptor.Icon);
-        if (texture == null)
+            if (_state.StageType == CookingStageType.Heat && _point.Y >= Height - 70)
+                Send(_point.X < Station.X + Station.Width / 2 ? CookingActionInput.Secondary : CookingActionInput.Primary);
             return;
-
-        var tint = IngredientTint(descriptor, itemId);
-
-        if (_choppedIngredients.Contains(itemId) && !_dragging)
+        }
+        if (_state.StageType == CookingStageType.Chop) { Send(CookingActionInput.Primary); return; }
+        _dragging = true; _lastAngle = Math.Atan2(_point.Y - Center.Y, _point.X - Center.X);
+    }
+    protected override void OnMouseMoved(int x, int y, int dx, int dy)
+    {
+        base.OnMouseMoved(x, y, dx, dy);
+        _point = CanvasPosToLocal(new Point(x, y));
+        if (!_dragging || !_placed || _state == null || _locked) { _last = _point; return; }
+        if (_state.StageType == CookingStageType.Stir)
         {
-            // Reuse the actual item sprite as smaller pieces instead of requiring duplicate assets.
-            var pieceWidth = Math.Max(6, target.Width / 3);
-            var pieceHeight = Math.Max(6, target.Height * 2 / 3);
-            for (var piece = 0; piece < 3; ++piece)
+            var angle = Math.Atan2(_point.Y - Center.Y, _point.X - Center.X);
+            var change = Math.IEEERemainder(angle - _lastAngle, Math.PI * 2);
+            if (Math.Abs(change) < Math.PI / 2) _rotation += Math.Abs(change);
+            _lastAngle = angle;
+            if (_rotation >= Math.PI / 2) Send(_state.CompletedActions % 2 == 0 ? CookingActionInput.Primary : CookingActionInput.Secondary);
+        }
+        else if (_state.StageType is CookingStageType.Knead or CookingStageType.Season)
+        {
+            _distance += _point.X - _last.X;
+            var threshold = Math.Max(20, Width / 10);
+            if (_state.StageType == CookingStageType.Season && Math.Abs(_distance) >= threshold) Send(CookingActionInput.Primary);
+            else if (_state.StageType == CookingStageType.Knead && Math.Abs(_distance) >= threshold)
+                Send(_distance < 0 ? CookingActionInput.Primary : CookingActionInput.Secondary);
+        }
+        _last = _point;
+    }
+    protected override void OnMouseUp(MouseButton button, Point mousePosition, bool userAction = true)
+    {
+        base.OnMouseUp(button, mousePosition, userAction);
+        if (button != MouseButton.Left) return;
+        var point = CanvasPosToLocal(mousePosition);
+        if (_dragging && _enabled && !_locked && _state != null)
+        {
+            if (_state.StageType == CookingStageType.Plate && Contains(Station, point))
             {
-                var pieceTarget = new Rectangle(
-                    target.X + piece * Math.Max(1, (target.Width - pieceWidth) / 2),
-                    target.Y + (piece % 2 == 0 ? target.Height - pieceHeight : 0),
-                    pieceWidth,
-                    pieceHeight
-                );
-                var fittedPiece = FitTexture(pieceTarget, texture.Width, texture.Height);
-                skin.Renderer.DrawTexturedRect(texture, fittedPiece, tint, 0f, 0f, 1f, 1f);
+                var zone = Math.Clamp((point.X - Station.X) * 3 / Math.Max(1, Station.Width), 0, 2);
+                Send((CookingActionInput)zone);
             }
-            return;
+            else if (!_placed) _placed = Contains(Station, point);
+            else if (_state.StageType == CookingStageType.Flip && _start.Y - point.Y >= Math.Max(25, Height / 6)) Send(CookingActionInput.Primary);
         }
-
-        if (_kneadedIngredients.Contains(itemId) && !_dragging)
-        {
-            // Kneaded dough reads flatter and wider without needing a second sprite.
-            var kneaded = new Rectangle(
-                target.X - target.Width / 8,
-                target.Y + target.Height / 8,
-                target.Width + target.Width / 4,
-                Math.Max(4, target.Height * 3 / 4)
-            );
-            var fittedKneaded = FitTexture(kneaded, texture.Width, texture.Height);
-            skin.Renderer.DrawTexturedRect(texture, fittedKneaded, tint, 0f, 0f, 1f, 1f);
-            return;
-        }
-
-        var fitted = FitTexture(target, texture.Width, texture.Height);
-        skin.Renderer.DrawTexturedRect(texture, fitted, tint, 0f, 0f, 1f, 1f);
+        _dragging = false; _distance = 0; _rotation = 0;
     }
-
-    private void DrawFoodEffects(
-        SkinBase skin,
-        Rectangle padBounds,
-        Guid itemId,
-        Rectangle localTarget
-    )
+    protected override bool OnMouseWheeled(int delta)
     {
-        var visual = VisualState(itemId);
-        var activelyHeating =
-            _stationIngredientIds.Contains(itemId) &&
-            _state?.StageType is CookingStageType.Heat or CookingStageType.Flip;
-
-        if (!activelyHeating &&
-            visual is not IngredientVisualState.Cooking and not IngredientVisualState.Cooked and not IngredientVisualState.Burnt)
-        {
-            return;
-        }
-
-        var now = Environment.TickCount64;
-        var target = new Rectangle(
-            padBounds.X + localTarget.X,
-            padBounds.Y + localTarget.Y,
-            localTarget.Width,
-            localTarget.Height
-        );
-
-        var burnt = visual == IngredientVisualState.Burnt;
-        var particleCount = burnt ? 6 : 4;
-        for (var particle = 0; particle < particleCount; ++particle)
-        {
-            var drift = (int)((now / (burnt ? 38 : 28) + particle * 17) % 28);
-            var x = target.X + 4 + (particle * 13 % Math.Max(8, target.Width - 8));
-            var y = target.Y - 2 - drift;
-            var size = burnt ? 7 + particle % 3 * 2 : 3 + particle % 2 * 2;
-
-            skin.Renderer.DrawColor = burnt
-                ? new Color(a: 120, r: 76, g: 72, b: 67)
-                : new Color(a: 125, r: 220, g: 220, b: 205);
-            skin.Renderer.DrawFilledRect(new Rectangle(x, y, size, size));
-        }
-
-        if (activelyHeating)
-        {
-            // Tiny gold/orange sizzle flecks make the heat station feel alive.
-            for (var spark = 0; spark < 4; ++spark)
-            {
-                var x = target.X + ((spark * 19 + (int)(now / 22)) % Math.Max(8, target.Width));
-                var y = target.Y + target.Height - 3 - spark * 2;
-                skin.Renderer.DrawColor = new Color(a: 205, r: 235, g: 168, b: 70);
-                skin.Renderer.DrawFilledRect(new Rectangle(x, y, 2, 2));
-            }
-        }
+        if (_state?.StageType != CookingStageType.Heat || delta == 0) return false;
+        Send(delta > 0 ? CookingActionInput.Primary : CookingActionInput.Secondary); return true;
     }
-
-    private void DrawIngredientAt(
-        SkinBase skin,
-        Rectangle padBounds,
-        CookingIngredientState ingredient,
-        Rectangle local,
-        Color frameColor,
-        bool framed = true
-    )
-    {
-        if (!ItemDescriptor.TryGet(ingredient.ItemId, out var descriptor))
-            return;
-
-        if (GameContentManager.Current?.GetTexture(TextureType.Item, descriptor.Icon) == null)
-            return;
-
-        var target = new Rectangle(
-            padBounds.X + local.X,
-            padBounds.Y + local.Y,
-            local.Width,
-            local.Height
-        );
-
-        if (framed)
-        {
-            skin.Renderer.DrawColor = frameColor;
-            skin.Renderer.DrawFilledRect(new Rectangle(target.X - 2, target.Y - 2, target.Width + 4, 2));
-            skin.Renderer.DrawFilledRect(new Rectangle(target.X - 2, target.Y + target.Height, target.Width + 4, 2));
-            skin.Renderer.DrawFilledRect(new Rectangle(target.X - 2, target.Y - 2, 2, target.Height + 4));
-            skin.Renderer.DrawFilledRect(new Rectangle(target.X + target.Width, target.Y - 2, 2, target.Height + 4));
-        }
-
-        DrawFoodTexture(skin, descriptor, ingredient.ItemId, target);
-        DrawFoodEffects(skin, padBounds, ingredient.ItemId, local);
-    }
-
-    private void DrawSourceIngredients(
-        SkinBase skin,
-        Rectangle padBounds,
-        Color activeFrame,
-        Color passiveFrame
-    )
-    {
-        var activeId = CurrentActiveIngredientId();
-        foreach (var ingredient in StageIngredients())
-        {
-            var alreadyPlaced = _state?.StageType == CookingStageType.Plate
-                ? _platedIngredientZones.ContainsKey(ingredient.ItemId)
-                : _stationIngredientIds.Contains(ingredient.ItemId);
-            if (alreadyPlaced)
-                continue;
-
-            if (_dragging && _ingredientGrabbed && ingredient.ItemId == activeId)
-                continue;
-
-            DrawIngredientAt(
-                skin,
-                padBounds,
-                ingredient,
-                IngredientSourceRectLocal(ingredient.ItemId),
-                ingredient.ItemId == activeId ? activeFrame : passiveFrame
-            );
-        }
-    }
-
-    private void DrawStationIngredients(
-        SkinBase skin,
-        Rectangle padBounds,
-        Color activeFrame,
-        Color passiveFrame
-    )
-    {
-        var activeId = CurrentActiveIngredientId();
-        foreach (var ingredient in StageIngredients())
-        {
-            if (!_stationIngredientIds.Contains(ingredient.ItemId))
-                continue;
-
-            if (_dragging && _ingredientGrabbed && ingredient.ItemId == activeId)
-                continue;
-
-            DrawIngredientAt(
-                skin,
-                padBounds,
-                ingredient,
-                StationIngredientRectLocal(ingredient.ItemId),
-                ingredient.ItemId == activeId ? activeFrame : passiveFrame
-            );
-        }
-    }
-
-    private void DrawPlatedIngredients(
-        SkinBase skin,
-        Rectangle padBounds,
-        Color activeFrame,
-        Color passiveFrame
-    )
-    {
-        var activeId = CurrentActiveIngredientId();
-        foreach (var ingredient in StageIngredients())
-        {
-            if (!_platedIngredientZones.TryGetValue(ingredient.ItemId, out var zone))
-                continue;
-
-            if (_dragging && _ingredientGrabbed && ingredient.ItemId == activeId)
-                continue;
-
-            DrawIngredientAt(
-                skin,
-                padBounds,
-                ingredient,
-                PlatedIngredientRectLocal(ingredient.ItemId, zone),
-                ingredient.ItemId == activeId ? activeFrame : passiveFrame
-            );
-        }
-    }
-
-    private bool DrawActiveIngredient(
-        SkinBase skin,
-        Rectangle padBounds,
-        Color frameColor
-    )
-    {
-        if (!TryGetActiveIngredient(out var ingredient, out var descriptor))
-            return false;
-
-        var alreadyPlaced = _state?.StageType == CookingStageType.Plate
-            ? _platedIngredientZones.ContainsKey(ingredient.ItemId)
-            : _stationIngredientIds.Contains(ingredient.ItemId);
-
-        if (alreadyPlaced && !_dragging)
-            return false;
-
-        if (GameContentManager.Current?.GetTexture(TextureType.Item, descriptor.Icon) == null)
-            return false;
-
-        var local = ActiveIngredientRectLocal();
-        var target = new Rectangle(
-            padBounds.X + local.X,
-            padBounds.Y + local.Y,
-            local.Width,
-            local.Height
-        );
-
-        skin.Renderer.DrawColor = frameColor;
-        skin.Renderer.DrawFilledRect(new Rectangle(target.X - 2, target.Y - 2, target.Width + 4, 2));
-        skin.Renderer.DrawFilledRect(new Rectangle(target.X - 2, target.Y + target.Height, target.Width + 4, 2));
-        skin.Renderer.DrawFilledRect(new Rectangle(target.X - 2, target.Y - 2, 2, target.Height + 4));
-        skin.Renderer.DrawFilledRect(new Rectangle(target.X + target.Width, target.Y - 2, 2, target.Height + 4));
-
-        DrawFoodTexture(skin, descriptor, ingredient.ItemId, target);
-        DrawFoodEffects(skin, padBounds, ingredient.ItemId, local);
-        return true;
-    }
-
-    private double AngleFromCenter(Point point) =>
-        Math.Atan2(point.Y - Height / 2d, point.X - Width / 2d);
-
-    private static double NormalizeAngle(double angle)
-    {
-        while (angle > Math.PI) angle -= Math.PI * 2d;
-        while (angle < -Math.PI) angle += Math.PI * 2d;
-        return angle;
-    }
-
-    private void ResetDragMotion()
-    {
-        _dragging = false;
-        _ingredientGrabbed = false;
-        _placingIngredient = false;
-        _sentThisDrag = false;
-        _linearAccumulator = 0;
-        _rotationAccumulator = 0;
-        _visualProgressPermille = 0;
-    }
-
-    private void CancelGesture()
-    {
-        ResetDragMotion();
-    }
-
     protected override void Render(SkinBase skin)
     {
+        if (_state is not { } state) return;
         var renderer = skin.Renderer;
-        var bounds = RenderBounds;
-
-        renderer.DrawColor = new Color(a: 150, r: 27, g: 19, b: 14);
-        renderer.DrawFilledRect(bounds);
-
-        renderer.DrawColor = _enabled
-            ? new Color(a: 255, r: 180, g: 125, b: 61)
-            : new Color(a: 255, r: 83, g: 64, b: 48);
-        renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, 2));
-        renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y + bounds.Height - 2, bounds.Width, 2));
-        renderer.DrawFilledRect(new Rectangle(bounds.X, bounds.Y, 2, bounds.Height));
-        renderer.DrawFilledRect(new Rectangle(bounds.X + bounds.Width - 2, bounds.Y, 2, bounds.Height));
-
-        if (_state == null)
-            return;
-
-        int SX(int value) => bounds.X + (int)Math.Round(value * bounds.Width / 510d);
-        int SY(int value) => bounds.Y + (int)Math.Round(value * bounds.Height / 82d);
-        int SW(int value) => Math.Max(1, (int)Math.Round(value * bounds.Width / 510d));
-        int SH(int value) => Math.Max(1, (int)Math.Round(value * bounds.Height / 82d));
-
-        var muted = new Color(a: 255, r: 86, g: 63, b: 44);
-        var gold = new Color(a: 255, r: 224, g: 180, b: 83);
-        var green = new Color(a: 255, r: 79, g: 153, b: 82);
-        var pale = new Color(a: 255, r: 226, g: 214, b: 188);
-
-        Rectangle ToRender(Rectangle local) =>
-            new(bounds.X + local.X, bounds.Y + local.Y, local.Width, local.Height);
-
-        void Outline(Rectangle rectangle, Color color, int thickness = 2)
+        CookingArt.Fill(renderer, new Color(83, 55, 35), 0, 0, Width, Height);
+        for (var y = 5; y < Height; y += 28) CookingArt.Fill(renderer, new Color(96, 64, 41), 0, y, Width, 2);
+        CookingArt.Fill(renderer, new Color(45, 33, 26), 6, 12, 98, Height - 75);
+        var ingredientIds = state.StageIngredientItemIds.Length > 0 ? state.StageIngredientItemIds : state.RecipeIngredients.Select(item => item.ItemId).ToArray();
+        var id = ingredientIds.ElementAtOrDefault(state.CompletedActions % Math.Max(1, ingredientIds.Length));
+        var ingredientName = state.RecipeIngredients.FirstOrDefault(item => item.ItemId == id)?.Name ?? "Ingredient";
+        CookingArt.DrawItem(renderer, id, Source, ingredientName, skin);
+        renderer.DrawColor = Color.White; renderer.RenderText(Skin.DefaultFont, 9, new Point(12, 20), "INGREDIENTS");
+        var center = Center;
+        var radius = Math.Max(15, Math.Min(Station.Width, Station.Height) / 2 - 12);
+        if (state.StageType is CookingStageType.Chop or CookingStageType.Knead)
         {
-            var t = Math.Max(1, thickness);
-            renderer.DrawColor = color;
-            renderer.DrawFilledRect(new Rectangle(rectangle.X, rectangle.Y, rectangle.Width, t));
-            renderer.DrawFilledRect(new Rectangle(rectangle.X, rectangle.Y + rectangle.Height - t, rectangle.Width, t));
-            renderer.DrawFilledRect(new Rectangle(rectangle.X, rectangle.Y, t, rectangle.Height));
-            renderer.DrawFilledRect(new Rectangle(rectangle.X + rectangle.Width - t, rectangle.Y, t, rectangle.Height));
+            CookingArt.Fill(renderer, new Color(188, 141, 85), Station.X, Station.Y, Station.Width, Station.Height);
+            for (var y = Station.Y + 12; y < Station.Y + Station.Height; y += 24)
+                CookingArt.Fill(renderer, new Color(168, 119, 70), Station.X + 8, y, Station.Width - 16, 1);
         }
-
-        Point ToolPoint(int idleX, int idleY)
+        else if (state.StageType == CookingStageType.Plate)
         {
-            if (_dragging && !_placingIngredient)
-                return new Point(bounds.X + _lastPoint.X, bounds.Y + _lastPoint.Y);
-
-            return new Point(SX(idleX), SY(idleY));
-        }
-
-        void DrawKnife()
-        {
-            var point = ToolPoint(322, 20);
-            var bob = _dragging
-                ? (int)Math.Round(SH(8) * _visualProgressPermille / 1000d)
-                : 0;
-
-            // Dark wooden handle.
-            renderer.DrawColor = new Color(a: 255, r: 92, g: 55, b: 32);
-            renderer.DrawFilledRect(
-                new Rectangle(point.X - SW(5), point.Y - SH(19) + bob, SW(10), SH(15))
-            );
-
-            // Steel blade with a pale cutting edge.
-            renderer.DrawColor = new Color(a: 255, r: 184, g: 189, b: 184);
-            renderer.DrawFilledRect(
-                new Rectangle(point.X - SW(3), point.Y - SH(4) + bob, SW(7), SH(27))
-            );
-            renderer.DrawColor = new Color(a: 255, r: 230, g: 229, b: 211);
-            renderer.DrawFilledRect(
-                new Rectangle(point.X + SW(3), point.Y - SH(1) + bob, SW(2), SH(24))
-            );
-        }
-
-        void DrawSpoon()
-        {
-            var point = ToolPoint(274, 32);
-            var wobble = _dragging
-                ? (int)Math.Round(Math.Sin(Environment.TickCount64 / 70d) * SW(3))
-                : 0;
-
-            renderer.DrawColor = new Color(a: 255, r: 126, g: 82, b: 45);
-            renderer.DrawFilledRect(
-                new Rectangle(point.X + wobble - SW(2), point.Y - SH(28), SW(5), SH(28))
-            );
-            renderer.DrawColor = new Color(a: 255, r: 160, g: 107, b: 57);
-            renderer.DrawFilledRect(
-                new Rectangle(point.X + wobble - SW(7), point.Y - SH(3), SW(15), SH(9))
-            );
-        }
-
-        void DrawHeatFlames()
-        {
-            var intensity = Math.Clamp((_state.MeterPermille + 199) / 200, 1, 5);
-            var now = Environment.TickCount64;
-
-            for (var flame = 0; flame < intensity; ++flame)
+            var target = CookingStageRules.PlateZoneFromTarget(state.TargetPermille);
+            for (var zone = 0; zone < 3; ++zone)
             {
-                var flicker = (int)((now / 65 + flame * 3) % 5);
-                var x = SX(205 + flame * 24);
-                var y = SY(50 - flicker);
-                var height = SH(9 + flicker);
-
-                renderer.DrawColor = flame % 2 == 0
-                    ? new Color(a: 220, r: 232, g: 142, b: 48)
-                    : new Color(a: 220, r: 201, g: 78, b: 36);
-                renderer.DrawFilledRect(
-                    new Rectangle(x, y, SW(10), Math.Max(2, height))
-                );
+                var px = Station.X + (zone * 2 + 1) * Station.Width / 6;
+                var r = Math.Max(10, Math.Min(Station.Width / 7, Station.Height / 3));
+                CookingArt.Disc(renderer, zone == target ? new Color(95, 220, 130) : new Color(175, 163, 145), px, center.Y, r + 4);
+                CookingArt.Disc(renderer, new Color(230, 223, 206), px, center.Y, r);
+                if (state.CompletedActions > 0 && zone == CookingStageRules.PlateZoneFromTarget(state.MeterPermille)) CookingArt.DrawItem(renderer, ingredientIds.ElementAtOrDefault((state.CompletedActions - 1) % Math.Max(1, ingredientIds.Length)), new Rectangle(px - 20, center.Y - 20, 40, 40), ingredientName, skin);
             }
         }
-
-        void DrawPanHandle(int verticalOffset = 0)
+        else
         {
-            renderer.DrawColor = new Color(a: 255, r: 66, g: 58, b: 52);
-            renderer.DrawFilledRect(
-                new Rectangle(SX(315), SY(28) + verticalOffset, SW(105), SH(9))
-            );
-            renderer.DrawColor = new Color(a: 255, r: 112, g: 96, b: 82);
-            renderer.DrawFilledRect(
-                new Rectangle(SX(410), SY(26) + verticalOffset, SW(48), SH(13))
-            );
-        }
-
-        void DrawSaltShaker()
-        {
-            var point = ToolPoint(260, 18);
-            var shake = _dragging
-                ? ((Environment.TickCount64 / 45) % 2 == 0 ? -SW(4) : SW(4))
-                : 0;
-
-            renderer.DrawColor = new Color(a: 255, r: 176, g: 168, b: 149);
-            renderer.DrawFilledRect(
-                new Rectangle(point.X + shake - SW(8), point.Y - SH(7), SW(17), SH(22))
-            );
-            renderer.DrawColor = new Color(a: 255, r: 100, g: 92, b: 79);
-            renderer.DrawFilledRect(
-                new Rectangle(point.X + shake - SW(9), point.Y - SH(11), SW(19), SH(6))
-            );
-
-            if (_dragging && !_placingIngredient)
-            {
-                for (var grain = 0; grain < 5; ++grain)
+            CookingArt.Disc(renderer, new Color(136, 142, 145), center.X, center.Y, radius + 6);
+            CookingArt.Disc(renderer, new Color(39, 42, 43), center.X, center.Y, radius);
+            CookingArt.Fill(renderer, new Color(35, 34, 31), center.X + radius - 4, center.Y - 10, 45, 20);
+            if (state.StageType is CookingStageType.Heat or CookingStageType.Flip)
+                for (var flame = 0; flame < 7; ++flame)
                 {
-                    var fall = (int)((Environment.TickCount64 / 35 + grain * 5) % 17);
-                    renderer.DrawColor = new Color(a: 210, r: 236, g: 228, b: 198);
-                    renderer.DrawFilledRect(
-                        new Rectangle(
-                            point.X + shake - SW(8) + grain * SW(4),
-                            point.Y + SH(13 + fall),
-                            Math.Max(1, SW(2)),
-                            Math.Max(1, SH(2))
-                        )
-                    );
+                    var h = 10 + (int)(8 * (1 + Math.Sin(Environment.TickCount64 / 120.0 + flame)));
+                    CookingArt.Fill(renderer, new Color(244, 130 + flame * 8, 30), center.X - 65 + flame * 20, center.Y + radius - 8, 10, h);
                 }
-            }
         }
-
-        void DrawRollingPin()
+        if (_placed && state.StageType != CookingStageType.Plate)
         {
-            var point = ToolPoint(255, 30);
-            var x = point.X - SW(48);
-
-            renderer.DrawColor = new Color(a: 255, r: 102, g: 62, b: 34);
-            renderer.DrawFilledRect(
-                new Rectangle(x - SW(18), point.Y - SH(3), SW(18), SH(7))
-            );
-            renderer.DrawFilledRect(
-                new Rectangle(x + SW(96), point.Y - SH(3), SW(18), SH(7))
-            );
-
-            renderer.DrawColor = new Color(a: 255, r: 185, g: 122, b: 65);
-            renderer.DrawFilledRect(
-                new Rectangle(x, point.Y - SH(6), SW(96), SH(13))
-            );
-            renderer.DrawColor = new Color(a: 255, r: 218, g: 154, b: 87);
-            renderer.DrawFilledRect(
-                new Rectangle(x + SW(6), point.Y - SH(4), SW(84), SH(3))
-            );
+            var foodY = center.Y - 35;
+            if (state.StageType == CookingStageType.Flip)
+            {
+                if (_dragging) foodY += Math.Clamp(_point.Y - _start.Y, -100, 0);
+                else if (_flash > Environment.TickCount64) foodY -= (int)(Math.Sin(Math.PI * (350 - (_flash - Environment.TickCount64)) / 350d) * 80);
+            }
+            CookingArt.DrawItem(renderer, id, new Rectangle(center.X - 35, foodY, 70, 70), ingredientName, skin);
+            if (state.StageType == CookingStageType.Chop)
+            {
+                for (var piece = 0; piece < Math.Min(6, state.CompletedActions); ++piece)
+                    CookingArt.DrawItem(renderer, ingredientIds.ElementAtOrDefault(piece % Math.Max(1, ingredientIds.Length)), new Rectangle(center.X - 75 + piece * 25, center.Y + 35, 24, 24), ingredientName, skin);
+                var knifeX = center.X + 38; var knifeY = center.Y - 60 + (_flash > Environment.TickCount64 ? 40 : 0);
+                CookingArt.Fill(renderer, new Color(225, 231, 230), knifeX, knifeY, 9, 65);
+                CookingArt.Fill(renderer, new Color(65, 38, 24), knifeX, knifeY - 24, 10, 24);
+            }
+            else if (state.StageType == CookingStageType.Stir)
+            {
+                var a = _dragging ? Math.Atan2(_point.Y - center.Y, _point.X - center.X) : Environment.TickCount64 / 900d;
+                var px = center.X + (int)(Math.Cos(a) * radius * .55); var py = center.Y + (int)(Math.Sin(a) * radius * .55);
+                renderer.DrawColor = new Color(204, 173, 120); renderer.DrawLine(px, py, px + 30, py - 45);
+                CookingArt.Disc(renderer, new Color(204, 173, 120), px, py, 9);
+            }
+            if (state.StageType is CookingStageType.Heat or CookingStageType.Stir)
+                for (var steam = 0; steam < 4; ++steam)
+                {
+                    var travel = (Environment.TickCount64 / 35 + steam * 12) % 45;
+                    CookingArt.Disc(renderer, new Color(100, 220, 220, 215), center.X - 35 + steam * 22, center.Y - 48 - (int)travel, 3);
+                }
         }
-
-        // Every non-plating stage now begins by physically moving the real item sprite
-        // from the ingredient tray to the station. Wrong drops snap back to the tray.
-        if (WaitingForPlacement)
+        if (_placed && state.StageType == CookingStageType.Knead && _dragging)
         {
-            var tray = ToRender(SourceTrayRectLocal());
-            var source = ToRender(IngredientSourceRectLocal());
-            var target = ToRender(IngredientDropZoneLocal());
-            renderer.DrawColor = new Color(a: 200, r: 52, g: 38, b: 27);
-            renderer.DrawFilledRect(tray);
-            Outline(tray, muted);
-            Outline(source, gold, 3);
-            Outline(target, green, 3);
+            CookingArt.Disc(renderer, new Color(218, 171, 128), center.X - 45 + (_point.X - _start.X) / 5, center.Y, 15);
+            CookingArt.Disc(renderer, new Color(218, 171, 128), center.X + 45 + (_point.X - _start.X) / 5, center.Y, 15);
         }
-
-        switch (_state.StageType)
+        if (_placed && state.StageType == CookingStageType.Season && (_dragging || _flash > Environment.TickCount64))
         {
-            case CookingStageType.Chop:
-            {
-                renderer.DrawColor = new Color(a: 255, r: 143, g: 91, b: 49);
-                renderer.DrawFilledRect(new Rectangle(SX(95), SY(10), SW(320), SH(62)));
-                renderer.DrawColor = new Color(a: 180, r: 225, g: 169, b: 92);
-                renderer.DrawFilledRect(new Rectangle(SX(103), SY(16), SW(304), SH(3)));
-
-                DrawSourceIngredients(skin, bounds, gold, muted);
-                DrawStationIngredients(skin, bounds, gold, muted);
-                DrawActiveIngredient(skin, bounds, _ingredientGrabbed ? pale : gold);
-
-                if (_ingredientPlaced)
-                {
-                    var ingredient = ActiveIngredientRectLocal();
-                    for (var cut = 1; cut <= 3; ++cut)
-                    {
-                        var x = bounds.X + ingredient.X + ingredient.Width * cut / 4;
-                        renderer.DrawColor = cut <= Math.Min(3, _state.CompletedActions)
-                            ? green
-                            : new Color(a: 205, r: 244, g: 226, b: 178);
-                        renderer.DrawFilledRect(
-                            new Rectangle(
-                                x,
-                                bounds.Y + ingredient.Y + SH(5),
-                                Math.Max(1, SW(2)),
-                                Math.Max(1, ingredient.Height - SH(10))
-                            )
-                        );
-                    }
-
-                    DrawKnife();
-                }
-                break;
-            }
-
-            case CookingStageType.Stir:
-            {
-                var cx = SX(255);
-                var cy = SY(41);
-                var radiusX = Math.Max(8, SW(92));
-                var radiusY = Math.Max(8, SH(31));
-
-                renderer.DrawColor = new Color(a: 255, r: 102, g: 69, b: 45);
-                renderer.DrawFilledRect(new Rectangle(SX(165), SY(15), SW(180), SH(52)));
-                renderer.DrawColor = new Color(a: 255, r: 58, g: 42, b: 31);
-                renderer.DrawFilledRect(new Rectangle(SX(176), SY(21), SW(158), SH(40)));
-
-                DrawSourceIngredients(skin, bounds, gold, muted);
-                DrawStationIngredients(skin, bounds, gold, muted);
-                DrawActiveIngredient(skin, bounds, gold);
-
-                for (var dot = 0; dot < 16; ++dot)
-                {
-                    var angle = dot / 16d * Math.PI * 2d;
-                    renderer.DrawColor = dot % 4 == 0 ? gold : muted;
-                    renderer.DrawFilledRect(
-                        new Rectangle(
-                            cx + (int)Math.Round(Math.Cos(angle) * radiusX) - SW(3),
-                            cy + (int)Math.Round(Math.Sin(angle) * radiusY) - SH(3),
-                            SW(6),
-                            SH(6)
-                        )
-                    );
-                }
-
-                var direction = _state.CompletedActions % 2 == 0 ? 1d : -1d;
-                var markerAngle = direction * _visualProgressPermille / 1000d * Math.PI * 1.5d;
-                renderer.DrawColor = pale;
-                renderer.DrawFilledRect(
-                    new Rectangle(
-                        cx + (int)Math.Round(Math.Cos(markerAngle) * radiusX) - SW(5),
-                        cy + (int)Math.Round(Math.Sin(markerAngle) * radiusY) - SH(5),
-                        SW(10),
-                        SH(10)
-                    )
-                );
-
-                if (_stationIngredientIds.Count > 0)
-                    DrawSpoon();
-                break;
-            }
-
-            case CookingStageType.Heat:
-            {
-                DrawHeatFlames();
-                renderer.DrawColor = new Color(a: 255, r: 69, g: 62, b: 55);
-                renderer.DrawFilledRect(new Rectangle(SX(188), SY(5), SW(134), SH(48)));
-                renderer.DrawColor = new Color(a: 255, r: 31, g: 29, b: 27);
-                renderer.DrawFilledRect(new Rectangle(SX(199), SY(11), SW(112), SH(35)));
-                DrawPanHandle();
-                DrawSourceIngredients(skin, bounds, gold, muted);
-                DrawStationIngredients(skin, bounds, gold, muted);
-                DrawActiveIngredient(skin, bounds, gold);
-
-                var railX = SX(65);
-                var railY = SY(61);
-                var railW = SW(380);
-                var railH = SH(10);
-                renderer.DrawColor = muted;
-                renderer.DrawFilledRect(new Rectangle(railX, railY, railW, railH));
-
-                var targetX = railX + (int)Math.Round(railW * _state.TargetPermille / 1000d);
-                var toleranceW = Math.Max(SW(10), (int)Math.Round(railW * _state.TolerancePermille / 1000d));
-                renderer.DrawColor = green;
-                renderer.DrawFilledRect(
-                    new Rectangle(targetX - toleranceW / 2, railY + SH(1), toleranceW, Math.Max(1, railH - SH(2)))
-                );
-
-                var knobX = railX + (int)Math.Round(railW * _state.MeterPermille / 1000d);
-                renderer.DrawColor = pale;
-                renderer.DrawFilledRect(new Rectangle(knobX - SW(4), SY(55), SW(8), SH(22)));
-
-                if (TryGetActiveIngredient(out var heatIngredient, out _))
-                {
-                    var cooked = _ingredientCookProgress.GetValueOrDefault(heatIngredient.ItemId);
-                    renderer.DrawColor = new Color(a: 255, r: 49, g: 37, b: 27);
-                    renderer.DrawFilledRect(new Rectangle(SX(345), SY(8), SW(135), SH(8)));
-                    renderer.DrawColor = VisualState(heatIngredient.ItemId) == IngredientVisualState.Burnt
-                        ? new Color(a: 255, r: 82, g: 72, b: 67)
-                        : new Color(a: 255, r: 207, g: 132, b: 55);
-                    renderer.DrawFilledRect(
-                        new Rectangle(SX(345), SY(8), SW(135 * cooked / 100), SH(8))
-                    );
-                }
-                break;
-            }
-
-            case CookingStageType.Flip:
-            {
-                var panLift = _dragging && !_placingIngredient
-                    ? -(int)Math.Round(SH(22) * _visualProgressPermille / 1000d)
-                    : 0;
-
-                renderer.DrawColor = new Color(a: 255, r: 82, g: 72, b: 61);
-                renderer.DrawFilledRect(new Rectangle(SX(145), SY(62) + panLift, SW(220), SH(8)));
-                renderer.DrawColor = new Color(a: 255, r: 48, g: 44, b: 39);
-                renderer.DrawFilledRect(new Rectangle(SX(174), SY(54) + panLift, SW(162), SH(11)));
-                DrawPanHandle(panLift);
-
-                DrawSourceIngredients(skin, bounds, gold, muted);
-                DrawStationIngredients(skin, bounds, gold, muted);
-                DrawActiveIngredient(skin, bounds, _ingredientGrabbed ? pale : gold);
-
-                renderer.DrawColor = gold;
-                for (var step = 0; step < 4; ++step)
-                {
-                    var y = 48 - step * 10;
-                    renderer.DrawFilledRect(new Rectangle(SX(250), SY(y), SW(9), SH(4)));
-                }
-
-                if (TryGetActiveIngredient(out var flipIngredient, out _))
-                {
-                    var cooked = _ingredientCookProgress.GetValueOrDefault(flipIngredient.ItemId);
-                    renderer.DrawColor = new Color(a: 255, r: 49, g: 37, b: 27);
-                    renderer.DrawFilledRect(new Rectangle(SX(345), SY(8), SW(135), SH(8)));
-                    renderer.DrawColor = VisualState(flipIngredient.ItemId) == IngredientVisualState.Burnt
-                        ? new Color(a: 255, r: 82, g: 72, b: 67)
-                        : new Color(a: 255, r: 207, g: 132, b: 55);
-                    renderer.DrawFilledRect(
-                        new Rectangle(SX(345), SY(8), SW(135 * cooked / 100), SH(8))
-                    );
-                }
-                break;
-            }
-
-            case CookingStageType.Season:
-            {
-                renderer.DrawColor = new Color(a: 255, r: 203, g: 194, b: 172);
-                renderer.DrawFilledRect(new Rectangle(SX(194), SY(5), SW(122), SH(48)));
-                renderer.DrawColor = new Color(a: 255, r: 62, g: 68, b: 52);
-                renderer.DrawFilledRect(new Rectangle(SX(207), SY(12), SW(96), SH(33)));
-                DrawSourceIngredients(skin, bounds, gold, muted);
-                DrawStationIngredients(skin, bounds, gold, muted);
-                DrawActiveIngredient(skin, bounds, gold);
-                if (_stationIngredientIds.Count > 0)
-                    DrawSaltShaker();
-
-                var railX = SX(65);
-                var railY = SY(61);
-                var railW = SW(380);
-                var railH = SH(10);
-                renderer.DrawColor = muted;
-                renderer.DrawFilledRect(new Rectangle(railX, railY, railW, railH));
-
-                var targetX = railX + (int)Math.Round(railW * _state.TargetPermille / 1000d);
-                var toleranceW = Math.Max(SW(10), (int)Math.Round(railW * _state.TolerancePermille / 1000d));
-                renderer.DrawColor = green;
-                renderer.DrawFilledRect(
-                    new Rectangle(targetX - toleranceW / 2, railY + SH(1), toleranceW, Math.Max(1, railH - SH(2)))
-                );
-                var knobX = railX + (int)Math.Round(railW * _state.MeterPermille / 1000d);
-                renderer.DrawColor = pale;
-                renderer.DrawFilledRect(new Rectangle(knobX - SW(4), SY(55), SW(8), SH(22)));
-                break;
-            }
-
-            case CookingStageType.Knead:
-            {
-                renderer.DrawColor = new Color(a: 255, r: 159, g: 108, b: 62);
-                renderer.DrawFilledRect(new Rectangle(SX(130), SY(14), SW(250), SH(55)));
-                DrawSourceIngredients(skin, bounds, gold, muted);
-                DrawStationIngredients(skin, bounds, gold, muted);
-                DrawActiveIngredient(skin, bounds, _ingredientGrabbed ? pale : gold);
-
-                var left = _state.CompletedActions % 2 == 0;
-                renderer.DrawColor = left ? gold : muted;
-                renderer.DrawFilledRect(new Rectangle(SX(55), SY(35), SW(70), SH(10)));
-                renderer.DrawColor = left ? muted : gold;
-                renderer.DrawFilledRect(new Rectangle(SX(385), SY(35), SW(70), SH(10)));
-
-                if (_stationIngredientIds.Count > 0)
-                    DrawRollingPin();
-                break;
-            }
-
-            case CookingStageType.Plate:
-            {
-                var tray = ToRender(SourceTrayRectLocal());
-                var source = ToRender(IngredientSourceRectLocal());
-                renderer.DrawColor = new Color(a: 200, r: 52, g: 38, b: 27);
-                renderer.DrawFilledRect(tray);
-                Outline(tray, muted);
-                Outline(source, gold, 3);
-
-                var target = CookingStageRules.PlateZoneFromTarget(_state.TargetPermille);
-                for (var zone = 0; zone < 3; ++zone)
-                {
-                    var zoneRect = ToRender(PlateZoneRectLocal(zone));
-                    renderer.DrawColor = zone == target
-                        ? new Color(a: 160, r: 56, g: 111, b: 61)
-                        : new Color(a: 160, r: 70, g: 51, b: 37);
-                    renderer.DrawFilledRect(zoneRect);
-                    Outline(zoneRect, zone == target ? green : muted, zone == target ? 3 : 2);
-                }
-
-                DrawSourceIngredients(skin, bounds, gold, muted);
-                DrawPlatedIngredients(skin, bounds, gold, muted);
-                DrawActiveIngredient(skin, bounds, _ingredientGrabbed ? pale : gold);
-                break;
-            }
+            CookingArt.DrawItem(renderer, id, new Rectangle(_point.X - 24, _point.Y - 50, 48, 48), ingredientName, skin);
+            for (var grain = 0; grain < 7; ++grain)
+                CookingArt.Fill(renderer, new Color(234, 209, 142), center.X - 25 + grain * 8,
+                    center.Y - 48 + (int)((Environment.TickCount64 / 12 + grain * 7) % 50), 3, 3);
         }
-
-        if (_dragging &&
-            !_placingIngredient &&
-            _state.StageType is not CookingStageType.Plate)
+        if (_dragging && (!_placed || state.StageType == CookingStageType.Plate))
+            CookingArt.DrawItem(renderer, id, new Rectangle(_point.X - 26, _point.Y - 26, 52, 52), ingredientName, skin);
+        if (!_placed && state.StageType != CookingStageType.Plate)
         {
-            renderer.DrawColor = gold;
-            var width = Math.Max(SW(2), (int)Math.Round(SW(470) * _visualProgressPermille / 1000d));
-            renderer.DrawFilledRect(new Rectangle(SX(20), SY(76), width, SH(3)));
+            CookingArt.Fill(renderer, new Color(100, 100, 230, 130), Station.X, Station.Y, Station.Width, 4);
+            renderer.DrawColor = Color.White;
+            renderer.RenderText(Skin.DefaultFont, 11, new Point(center.X - 50, center.Y + 50), "DROP HERE");
+        }
+        var meter = state.StageType is CookingStageType.Heat or CookingStageType.Season ? state.MeterPermille
+            : CookingStageRules.TimingCursorPermille(Environment.TickCount64 + _offset - state.StageStartedUnixMs, state.StageDurationMs, state.StageDifficulty);
+        var barX = Station.X; var barY = Height - 36; var barWidth = Station.Width;
+        CookingArt.Fill(renderer, new Color(30, 25, 21), barX, barY, barWidth, 18);
+        var tolerance = CookingStageRules.TargetTolerance(state.StageDifficulty);
+        var targetLeft = Math.Max(0, state.TargetPermille - tolerance / 2);
+        var targetRight = Math.Min(1000, state.TargetPermille + tolerance / 2);
+        CookingArt.Fill(renderer, new Color(83, 181, 100), barX + targetLeft * barWidth / 1000, barY, Math.Max(1, (targetRight - targetLeft) * barWidth / 1000), 18);
+        CookingArt.Fill(renderer, Color.White, barX + meter * (barWidth - 3) / 1000, barY - 3, 3, 24);
+        if (state.StageType == CookingStageType.Heat)
+        {
+            renderer.DrawColor = Color.White;
+            renderer.RenderText(Skin.DefaultFont, 14, new Point(Station.X + 20, Height - 61), "-  LOWER HEAT");
+            renderer.RenderText(Skin.DefaultFont, 14, new Point(Width / 2 + 20, Height - 61), "+  RAISE HEAT");
         }
     }
 }

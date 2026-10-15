@@ -18,6 +18,7 @@ using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Maps.Attributes;
@@ -1219,6 +1220,7 @@ public partial class Entity : IEntity
         }
 
         WorldPos.Reset();
+        RenderedGraphicTop = null;
 
         if (!Globals.GridMaps.ContainsKey(MapId) || !Maps.MapInstance.TryGet(MapId, out var map))
         {
@@ -1299,14 +1301,10 @@ public partial class Entity : IEntity
         }
 
         var srcRectangle = new FloatRect(frame * frameWidth, spriteRow * frameHeight, frameWidth, frameHeight);
-        var destRectangle = new FloatRect(
-            (int)Math.Ceiling(Origin.X - frameWidth / 2f),
-            (int)Math.Ceiling(Origin.Y - frameHeight) +32,
-            srcRectangle.Width,
-            srcRectangle.Height
-        );
+        var destRectangle = SpriteDestination(srcRectangle.Width, srcRectangle.Height);
 
         WorldPos = destRectangle;
+        RenderedGraphicTop = destRectangle.Y + SpriteVisibleBounds.TopPadding(texture, srcRectangle);
 
         //Order the layers of paperdolls and sprites
         for (var z = 0; z < Options.Instance.Equipment.Paperdoll.Directions[(int)_lastDirection].Count; z++)
@@ -1549,16 +1547,22 @@ public partial class Entity : IEntity
         }
 
         var srcRectangle = new FloatRect(frame * frameWidth, spriteRow * frameHeight, frameWidth, frameHeight);
-        var destRectangle = new FloatRect(
-            (int)Math.Ceiling(Center.X - frameWidth / 2f),
-            (int)Math.Ceiling(Center.Y - frameHeight / 2f) +32,
-            srcRectangle.Width,
-            srcRectangle.Height
-        );
+        var destRectangle = SpriteDestination(srcRectangle.Width, srcRectangle.Height);
 
         // Draw the paperdoll texture using: source and destination rectangles along with the render color.
         Graphics.DrawGameTexture(paperdollTex, srcRectangle, destRectangle, renderColor);
+        var equipmentTop = destRectangle.Y + SpriteVisibleBounds.TopPadding(paperdollTex, srcRectangle);
+        RenderedGraphicTop = Math.Min(RenderedGraphicTop ?? equipmentTop, equipmentTop);
     }
+
+    private FloatRect SpriteDestination(float width, float height)
+    {
+        var position = EventGraphicPlacement.TopLeft(Origin.X - TileWidth / 2f, Origin.Y - TileHeight,
+            width, height, TileWidth, TileHeight);
+        return new FloatRect((int)Math.Ceiling(position.X), (int)Math.Ceiling(position.Y), width, height);
+    }
+
+    protected float? RenderedGraphicTop { get; set; }
 
     protected virtual void CalculateOrigin()
     {
@@ -1586,6 +1590,7 @@ public partial class Entity : IEntity
             return 0f;
         }
 
+        if (overrideHeight < 0 && RenderedGraphicTop is { } renderedTop) return renderedTop;
         var y = (int)Math.Ceiling(Origin.Y);
 
         if (overrideHeight > -1)
@@ -1610,7 +1615,7 @@ public partial class Entity : IEntity
     )
     {
         // Are we supposed to hide this Label?
-        if (!ShouldDrawName || string.IsNullOrWhiteSpace(label) || Graphics.Renderer == default)
+        if (!ShouldDrawName || (position != 2 && !ShowTitle) || string.IsNullOrWhiteSpace(label) || Graphics.Renderer == default)
         {
             return;
         }
@@ -1640,7 +1645,9 @@ public partial class Entity : IEntity
         var textSize = Graphics.Renderer.MeasureText(label, Graphics.EntityNameFont, Graphics.EntityNameFontSize, 1);
 
         var x = (int)Math.Ceiling(Origin.X);
-        var y = position == 0 ? GetLabelLocation(LabelType.Header) : GetLabelLocation(LabelType.Footer);
+        var y = position == 2
+            ? GetLabelLocation(LabelType.Header) - textSize.Y - 2
+            : position == 0 ? GetLabelLocation(LabelType.Header) : GetLabelLocation(LabelType.Footer);
 
         if (backgroundColor != Color.Transparent)
         {
@@ -1704,20 +1711,13 @@ public partial class Entity : IEntity
             backgroundColor = Color.Transparent;
         }
 
-        var name = Name;
-        if ((this is Player && Options.Instance.Player.ShowLevelByName) ||
-            (Type == EntityType.GlobalEntity && Options.Instance.Npc.ShowLevelByName))
-        {
-            name = Strings.GameWindow.EntityNameAndLevel.ToString(Name, Level);
-        }
+        var name = DisplayedName;
 
         var textSize = Graphics.Renderer.MeasureText(name, Graphics.EntityNameFont, Graphics.EntityNameFontSize, 1);
 
         var x = (int)Math.Ceiling(Origin.X);
         var y = GetLabelLocation(LabelType.Name);
 
-        // Décaler le nom vers le bas de 32 pixels
-        y += 38;
 
         if (backgroundColor != Color.Transparent)
         {
@@ -1743,114 +1743,37 @@ public partial class Entity : IEntity
         );
     }
 
+    protected bool ShowTitle => this is not Player || (this == Globals.Me
+        ? Globals.Database?.ShowMyTitle ?? true : Globals.Database?.ShowPlayerTitles ?? true);
+
+    protected bool ShowGuild => this is Player && Options.Instance.Guild.ShowGuildNameTagsOverMembers &&
+        (this == Globals.Me ? Globals.Database?.ShowMyGuild ?? true : Globals.Database?.ShowPlayerGuilds ?? true);
+
+    protected string DisplayedName =>
+        ((this is Player && Options.Instance.Player.ShowLevelByName &&
+            (this == Globals.Me ? Globals.Database?.ShowMyLevel ?? true : Globals.Database?.ShowPlayerLevels ?? true)) ||
+         (Type == EntityType.GlobalEntity && Options.Instance.Npc.ShowLevelByName && (Globals.Database?.ShowNpcLevels ?? true)))
+            ? Strings.GameWindow.EntityNameAndLevel.ToString(Name, Level) : Name;
+
     public float GetLabelLocation(LabelType type)
     {
-        if (Graphics.Renderer == default)
+        if (Graphics.Renderer == default) return 0f;
+        float Height(string text) => Graphics.Renderer.MeasureText(
+            text, Graphics.EntityNameFont, Graphics.EntityNameFontSize, 1).Y;
+        var layout = NameplateLayout.Create(GetTop(), this is not Event && ShouldDrawHpBar ? GetBoundingHpBarTexture().Height : 0,
+            Height(DisplayedName), ShowTitle && !string.IsNullOrWhiteSpace(FooterLabel.Text) ? Height(FooterLabel.Text) : 0,
+            ShowTitle && !string.IsNullOrWhiteSpace(HeaderLabel.Text) ? Height(HeaderLabel.Text) : 0,
+            this is Player { IsAfk: true } ? Height("AFK") : 0,
+            this is Player player && ShowGuild && !string.IsNullOrWhiteSpace(player.Guild) ? Height(player.Guild) : 0);
+        return type switch
         {
-            return 0f;
-        }
-
-        var y = GetTop() + 0;
-
-        y -= 16;
-
-        //Need room for HP bar if not an event.
-        if (this is not Event && ShouldDrawHpBar)
-        {
-            y -= GetBoundingHpBarTexture().Height + 2;
-            // Décaler le nom vers le bas de 6 pixels
-            y -= 6;
-        }
-
-        switch (type)
-        {
-            case LabelType.Header:
-                y = GetLabelLocation(LabelType.Name);
-
-                if (string.IsNullOrWhiteSpace(HeaderLabel.Text))
-                {
-                    break;
-                }
-
-                var headerSize = Graphics.Renderer.MeasureText(
-                    HeaderLabel.Text,
-                    Graphics.EntityNameFont,
-                    Graphics.EntityNameFontSize,
-                    1
-                );
-                y -= headerSize.Y + -6;
-                // Décaler le nom vers le bas de 10 pixels
-                y += 10;
-                break;
-
-            case LabelType.Footer:
-                if (string.IsNullOrWhiteSpace(FooterLabel.Text))
-                {
-                    break;
-                }
-
-                var footerSize = Graphics.Renderer.MeasureText(
-                    FooterLabel.Text,
-                    Graphics.EntityNameFont,
-                    Graphics.EntityNameFontSize,
-                    1
-                );
-                y -= footerSize.Y - 6;
-                // Décaler le nom vers le bas de 56 pixels
-                y += 50;
-                break;
-
-            case LabelType.Name:
-                y = GetLabelLocation(LabelType.Footer);
-                var nameSize = Graphics.Renderer.MeasureText(
-                    Name,
-                    Graphics.EntityNameFont,
-                    Graphics.EntityNameFontSize,
-                    1
-                );
-                y -= nameSize.Y + (string.IsNullOrEmpty(FooterLabel.Text) ? -6 : 2);
-
-                break;
-
-            case LabelType.ChatBubble:
-                y = GetLabelLocation(LabelType.Guild) - 2;
-                // Décaler le nom vers le bas de 48 pixels
-                y += 48;
-                break;
-
-            case LabelType.Guild:
-                if (this is Player player)
-                {
-                    // Do we have a header? If so, slightly change the position!
-                    if (string.IsNullOrWhiteSpace(HeaderLabel.Text))
-                    {
-                        y = GetLabelLocation(LabelType.Name);
-                    }
-                    else
-                    {
-                        y = GetLabelLocation(LabelType.Header);
-                    }
-
-                    if (string.IsNullOrWhiteSpace(player.Guild))
-                    {
-                        break;
-                    }
-
-                    var guildSize = Graphics.Renderer.MeasureText(
-                        player.Guild,
-                        Graphics.EntityNameFont,
-                        Graphics.EntityNameFontSize,
-                        1
-                    );
-                    y -= 2 + guildSize.Y;
-                    // Décaler le nom vers le bas de 56 pixels
-                    y += 64;
-                }
-
-                break;
-        }
-
-        return y;
+            LabelType.Footer => layout.Footer,
+            LabelType.Name => layout.Name,
+            LabelType.Header => layout.Header,
+            LabelType.Guild => layout.Guild,
+            LabelType.ChatBubble => layout.ChatBubble,
+            _ => layout.Name,
+        };
     }
 
     public long ShieldSize =>
@@ -1904,23 +1827,7 @@ public partial class Entity : IEntity
 
     protected virtual (int X, int Y) GetHpBarPosition(IGameTexture boundingTexture)
     {
-        var x = (int)Math.Ceiling(Origin.X);
-        var y = (int)Math.Ceiling(Origin.Y);
-
-        var sprite = Globals.ContentManager.GetTexture(TextureType.Entity, Sprite);
-        if (sprite != null)
-        {
-            y -= sprite.Height / Options.Instance.Sprites.Directions;
-            y -= boundingTexture.Height + 2;
-        }
-
-        y += boundingTexture.Height / 2;
-
-        // Preserve the existing entity/NPC offset. Resources override this and
-        // anchor the bar to their actual rendered sprite bounds.
-        y += 128;
-
-        return (x, y);
+        return ((int)Math.Ceiling(Origin.X), (int)Math.Ceiling(GetTop() - boundingTexture.Height / 2f - 2));
     }
 
     public virtual void DrawHpBar()

@@ -841,6 +841,7 @@ public partial class FrmEvent : Form
         AddDungeonCommands();
         AddProfessionCommands();
         InitializeQuestArrowControls();
+        InitializeModernLayout();
         Icon = Program.Icon;
 
         mCurrentMap = currentMap;
@@ -1072,53 +1073,19 @@ public partial class FrmEvent : Form
             (_questArrowQuest.SelectedItem as QuestArrowChoice)?.Id != Guid.Empty;
     }
 
-    private Size _defaultFormSize;
-    private Size _defaultEditorComponentsSize;
-    private System.Drawing.Point _defaultSaveButtonPosition;
-    private System.Drawing.Point _defaultCancelButtonPosition;
-
     private void frmEvent_Load(object sender, EventArgs e)
     {
         grpNewCommands.BringToFront();
         grpCreateCommands.BringToFront();
         InitLocalization();
+        _commandRoots.Clear();
+        _commandRoots.AddRange(lstCommands.Nodes.Cast<TreeNode>().Select(node => (TreeNode)node.Clone()));
         lstCommands.ExpandAll();
 
-        _defaultFormSize = new Size(967, 757);
-        _defaultEditorComponentsSize = pnlEditorComponents.Size;
-        _defaultSaveButtonPosition = btnSave.Location;
-        _defaultCancelButtonPosition = btnCancel.Location;
-        MinimumSize = default;
-
-        FrmEvent_Move(sender, e);
+        MinimumSize = new Size(1000, 620);
     }
 
-    private void FrmEvent_Move(object? sender, EventArgs e)
-    {
-        if (_defaultFormSize == default)
-        {
-            return;
-        }
-
-        var currentScreen = Screen.FromControl(this);
-        var workingAreaBounds = currentScreen.WorkingArea;
-        var maximumHeight = Math.Min(workingAreaBounds.Height - 40, Math.Max(Height, _defaultFormSize.Height));
-
-        if (maximumHeight >= Size.Height)
-        {
-            return;
-        }
-
-        Size = new Size(Width, maximumHeight);
-        MaximumSize = new Size(Width, maximumHeight);
-        pnlEditorComponents.MaximumSize = new Size(
-            _defaultEditorComponentsSize.Width,
-            _defaultEditorComponentsSize.Height + (maximumHeight - _defaultFormSize.Height)
-        );
-        var buttonY = _defaultSaveButtonPosition.Y + (pnlEditorComponents.MaximumSize.Height - _defaultEditorComponentsSize.Height);
-        btnSave.Location = new System.Drawing.Point(_defaultSaveButtonPosition.X, buttonY);
-        btnCancel.Location = new System.Drawing.Point(_defaultCancelButtonPosition.X, buttonY);
-    }
+    private void FrmEvent_Move(object? sender, EventArgs e) { }
 
     /// <summary>
     ///     Intercepts the form closing event to ask the user if they want to save their changes or not.
@@ -1380,6 +1347,7 @@ public partial class FrmEvent : Form
 
         cmbAnimation.SelectedIndex = AnimationDescriptor.ListIndex(CurrentPage.AnimationId) + 1;
         chkWorldMapAnimation.Checked = CurrentPage.ShowAnimationOnWorldMap;
+        LoadWorldMapOffsets();
         chkHideName.Checked = Convert.ToBoolean(CurrentPage.HideName);
         chkDisableInspector.Checked = Convert.ToBoolean(CurrentPage.DisablePreview);
         chkDirectionFix.Checked = Convert.ToBoolean(CurrentPage.DirectionFix);

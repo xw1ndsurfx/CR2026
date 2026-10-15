@@ -11,7 +11,7 @@ public partial class GameInterface
             (_worldMapWindow is { IsHidden: false }) ||
             _pokerWindow != null ||
             _blackjackWindow != null ||
-            _potionWindow != null;
+            _potionWindow != null || _cookingWindow != null;
         guidance.Update();
     }
 

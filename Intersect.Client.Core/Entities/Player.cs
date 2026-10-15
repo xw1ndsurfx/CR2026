@@ -2751,7 +2751,7 @@ public partial class Player : Entity, IPlayer
         base.DrawName(textColor, borderColor, backgroundColor);
         if (IsAfk)
         {
-            DrawLabels("AFK", 0, new Color(255, 255, 215, 0), textColor, borderColor, backgroundColor);
+            DrawLabels("AFK", 2, new Color(255, 255, 215, 0), textColor, borderColor, backgroundColor);
         }
         DrawBadge();
         DrawLabels(HeaderLabel.Text, 0, HeaderLabel.Color, textColor, borderColor, backgroundColor);
@@ -2776,9 +2776,7 @@ public partial class Player : Entity, IPlayer
             return;
         }
 
-        var displayedName = Options.Instance.Player.ShowLevelByName
-            ? Strings.GameWindow.EntityNameAndLevel.ToString(Name, Level)
-            : Name;
+        var displayedName = DisplayedName;
 
         var textSize = Graphics.Renderer.MeasureText(
             displayedName,
@@ -2794,7 +2792,7 @@ public partial class Player : Entity, IPlayer
         var badgeHeight = badgeTexture.Height * scale;
 
         var x = (int)Math.Ceiling(Origin.X);
-        var y = GetLabelLocation(LabelType.Name) + 38;
+        var y = GetLabelLocation(LabelType.Name);
 
         Graphics.DrawGameTexture(
             badgeTexture,
@@ -2819,7 +2817,7 @@ public partial class Player : Entity, IPlayer
         var guildLabel = Guild?.Trim();
         if (!ShouldDrawName ||
             string.IsNullOrWhiteSpace(guildLabel) ||
-            !Options.Instance.Guild.ShowGuildNameTagsOverMembers)
+            !ShowGuild)
         {
             return;
         }

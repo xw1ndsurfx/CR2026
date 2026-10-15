@@ -120,6 +120,7 @@ public partial class Event : Entity
     public override void Draw()
     {
         WorldPos.Reset();
+        RenderedGraphicTop = null;
         if (MapInstance == default || !Globals.GridMaps.ContainsKey(MapId) || !TryEnsureTexture(out var texture))
         {
             return;
@@ -149,23 +150,10 @@ public partial class Event : Entity
 
         var map = Maps.MapInstance.Get(MapId);
 
-        var destRectangle = new FloatRect
-        {
-            X = map.X + X * Options.Instance.Map.TileWidth + OffsetX,
-            Y = map.Y + Y * Options.Instance.Map.TileHeight + OffsetY,
-            Width = Math.Max(Options.Instance.Map.TileWidth, srcRectangle.Width),
-            Height = Math.Max(Options.Instance.Map.TileHeight, srcRectangle.Height),
-        };
-
-        if (srcRectangle.Width > Options.Instance.Map.TileWidth)
-        {
-            destRectangle.X -= (srcRectangle.Width - Options.Instance.Map.TileWidth) / 2;
-        }
-
-        if (srcRectangle.Height > Options.Instance.Map.TileHeight)
-        {
-            destRectangle.Y -= srcRectangle.Height - Options.Instance.Map.TileHeight;
-        }
+        var topLeft = EventGraphicPlacement.TopLeft(map.X + X * Options.Instance.Map.TileWidth + OffsetX,
+            map.Y + Y * Options.Instance.Map.TileHeight + OffsetY, srcRectangle.Width, srcRectangle.Height,
+            Options.Instance.Map.TileWidth, Options.Instance.Map.TileHeight);
+        var destRectangle = new FloatRect(topLeft.X, topLeft.Y, srcRectangle.Width, srcRectangle.Height);
 
         destRectangle.X = (int)Math.Ceiling(destRectangle.X);
         destRectangle.Y = (int)Math.Ceiling(destRectangle.Y);
@@ -173,6 +161,7 @@ public partial class Event : Entity
         // Set up our targetting rectangle.
         // If we're smaller than a tile, force the target size to a tile.
         WorldPos = destRectangle;
+        RenderedGraphicTop = texture == null ? null : destRectangle.Y + SpriteVisibleBounds.TopPadding(texture, srcRectangle);
 
         if (texture == default)
         {
@@ -263,6 +252,7 @@ public partial class Event : Entity
 
     public override float GetTop(int overrideHeight = -1)
     {
+        if (overrideHeight < 0 && RenderedGraphicTop is { } renderedTop) return renderedTop;
         float heightScale;
         switch (Graphic.Type)
         {

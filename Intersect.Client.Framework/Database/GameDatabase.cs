@@ -7,6 +7,21 @@ namespace Intersect.Client.Framework.Database;
 /// </summary>
 public abstract partial class GameDatabase
 {
+    public bool ShowMyLevel { get; set; } = true;
+    public bool ShowPlayerLevels { get; set; } = true;
+    public bool ShowNpcLevels { get; set; } = true;
+    public bool ShowMyGuild { get; set; } = true;
+    public bool ShowPlayerGuilds { get; set; } = true;
+    public bool ShowMyTitle { get; set; } = true;
+    public bool ShowPlayerTitles { get; set; } = true;
+    public bool ShowQuestHud { get; set; } = true;
+    public bool ShowWorldBossHud { get; set; } = true;
+    public bool ShowInvasionHud { get; set; } = true;
+    public bool ShowMinimap { get; set; } = true;
+    public bool MinimapCollapsed { get; set; }
+    public bool WorldBossHudCollapsed { get; set; }
+    public bool InvasionHudCollapsed { get; set; }
+
     public bool FullScreen { get; set; }
 
     public bool HideOthersOnWindowOpen { get; set; }
@@ -148,6 +163,20 @@ public abstract partial class GameDatabase
         ShowHealthAsPercentage = LoadPreference(nameof(ShowHealthAsPercentage), false);
         ShowManaAsPercentage = LoadPreference(nameof(ShowManaAsPercentage), false);
         SimplifiedEscapeMenu = LoadPreference(nameof(SimplifiedEscapeMenu), false);
+        ShowMyLevel = LoadPreference(nameof(ShowMyLevel), true);
+        ShowPlayerLevels = LoadPreference(nameof(ShowPlayerLevels), true);
+        ShowNpcLevels = LoadPreference(nameof(ShowNpcLevels), true);
+        ShowMyGuild = LoadPreference(nameof(ShowMyGuild), true);
+        ShowPlayerGuilds = LoadPreference(nameof(ShowPlayerGuilds), true);
+        ShowMyTitle = LoadPreference(nameof(ShowMyTitle), true);
+        ShowPlayerTitles = LoadPreference(nameof(ShowPlayerTitles), true);
+        ShowQuestHud = LoadPreference(nameof(ShowQuestHud), true);
+        ShowWorldBossHud = LoadPreference(nameof(ShowWorldBossHud), true);
+        ShowInvasionHud = LoadPreference(nameof(ShowInvasionHud), true);
+        ShowMinimap = LoadPreference(nameof(ShowMinimap), true);
+        MinimapCollapsed = LoadPreference(nameof(MinimapCollapsed), false);
+        WorldBossHudCollapsed = LoadPreference(nameof(WorldBossHudCollapsed), false);
+        InvasionHudCollapsed = LoadPreference(nameof(InvasionHudCollapsed), false);
         ShowQuestGuidanceArrow = LoadPreference(nameof(ShowQuestGuidanceArrow), true);
         TypewriterBehavior = LoadPreference(nameof(TypewriterBehavior), TypewriterBehavior.Word);
         UIScale = LoadPreference(nameof(UIScale), 1.0f);
@@ -190,6 +219,20 @@ public abstract partial class GameDatabase
         SavePreference(nameof(ShowHealthAsPercentage), ShowHealthAsPercentage);
         SavePreference(nameof(ShowManaAsPercentage), ShowManaAsPercentage);
         SavePreference(nameof(SimplifiedEscapeMenu), SimplifiedEscapeMenu);
+        SavePreference(nameof(ShowMyLevel), ShowMyLevel);
+        SavePreference(nameof(ShowPlayerLevels), ShowPlayerLevels);
+        SavePreference(nameof(ShowNpcLevels), ShowNpcLevels);
+        SavePreference(nameof(ShowMyGuild), ShowMyGuild);
+        SavePreference(nameof(ShowPlayerGuilds), ShowPlayerGuilds);
+        SavePreference(nameof(ShowMyTitle), ShowMyTitle);
+        SavePreference(nameof(ShowPlayerTitles), ShowPlayerTitles);
+        SavePreference(nameof(ShowQuestHud), ShowQuestHud);
+        SavePreference(nameof(ShowWorldBossHud), ShowWorldBossHud);
+        SavePreference(nameof(ShowInvasionHud), ShowInvasionHud);
+        SavePreference(nameof(ShowMinimap), ShowMinimap);
+        SavePreference(nameof(MinimapCollapsed), MinimapCollapsed);
+        SavePreference(nameof(WorldBossHudCollapsed), WorldBossHudCollapsed);
+        SavePreference(nameof(InvasionHudCollapsed), InvasionHudCollapsed);
         SavePreference(nameof(ShowQuestGuidanceArrow), ShowQuestGuidanceArrow);
         SavePreference(nameof(TypewriterBehavior), TypewriterBehavior);
         SavePreference(nameof(UIScale), UIScale);

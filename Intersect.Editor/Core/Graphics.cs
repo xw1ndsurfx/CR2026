@@ -33,6 +33,8 @@ public static partial class Graphics
     //Editor Viewing Rect
     public static System.Drawing.Rectangle CurrentView;
 
+    public static float MapEditorZoom { get; set; } = 1f;
+
     public static RenderTarget2D DarknessTexture;
 
     public static object GraphicsLock = new object();
@@ -1652,11 +1654,6 @@ public static partial class Graphics
                         width = (eventTex.Width / Options.Instance.Sprites.NormalFrames);
                         height = (eventTex.Height / Options.Instance.Sprites.Directions);
 
-                        // Keep the runtime sprite offset, but move the editor preview down
-                        // one map tile so its visible feet sit on the event's "E" tile
-                        // instead of the tile directly above it. This is preview-only.
-                        destinationY += 32 + Options.Instance.Map.TileHeight;
-
                         break;
                     case EventGraphicType.Tileset: //Tile
                         eventTex = GameContentManager.GetTexture(
@@ -1675,15 +1672,10 @@ public static partial class Graphics
                         break;
                 }
 
-                if (height > Options.Instance.Map.TileHeight)
-                {
-                    destinationY -= (height - Options.Instance.Map.TileHeight);
-                }
-
-                if (width > Options.Instance.Map.TileWidth)
-                {
-                    destinationX -= (width  - Options.Instance.Map.TileWidth) / 2;
-                }
+                var topLeft = EventGraphicPlacement.TopLeft(destinationX, destinationY, width, height,
+                    Options.Instance.Map.TileWidth, Options.Instance.Map.TileHeight);
+                destinationX = (int)Math.Ceiling(topLeft.X);
+                destinationY = (int)Math.Ceiling(topLeft.Y);
 
                 DrawTexture(eventTex, destinationX, destinationY, sourceX, sourceY, width, height, renderTarget);
             }
@@ -2367,11 +2359,13 @@ public static partial class Graphics
 
             if (shader != null)
             {
-                sSpriteBatch.Begin(SpriteSortMode.Immediate, mode, null, null, rs, shader);
+                sSpriteBatch.Begin(SpriteSortMode.Immediate, mode, SamplerState.PointClamp, null, rs, shader,
+                    target == null || target == sMapEditorChain ? Matrix.CreateScale(MapEditorZoom, MapEditorZoom, 1) : Matrix.Identity);
             }
             else
             {
-                sSpriteBatch.Begin(SpriteSortMode.Deferred, mode, null, null, rs, shader);
+                sSpriteBatch.Begin(SpriteSortMode.Deferred, mode, SamplerState.PointClamp, null, rs, shader,
+                    target == null || target == sMapEditorChain ? Matrix.CreateScale(MapEditorZoom, MapEditorZoom, 1) : Matrix.Identity);
             }
 
             sCurrentBlendmode = mode;

@@ -49,6 +49,7 @@ public partial class SettingsWindow : Window
     // Game Settings - Information
     private readonly TabButton _gameSettingsTabInformation;
     private readonly ScrollControl _informationSettings;
+    private readonly Dictionary<string, LabeledCheckBox> _displayOptions = [];
     private readonly LabeledCheckBox _friendOverheadInfoCheckbox;
     private readonly LabeledCheckBox _guildMemberOverheadInfoCheckbox;
     private readonly LabeledCheckBox _myOverheadInfoCheckbox;
@@ -260,6 +261,29 @@ public partial class SettingsWindow : Window
             Text = Strings.Settings.ShowPingCounter,
         };
         _showPingCounterCheckbox.CheckChanged += ShowPingCounterCheckboxOnCheckChanged;
+
+        _displayOptions["ShowMyLevel"] = new LabeledCheckBox(_informationSettings, "ShowMyLevel")
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show my level" };
+        _displayOptions["ShowPlayerLevels"] = new LabeledCheckBox(_informationSettings, "ShowPlayerLevels")
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show other player levels" };
+        _displayOptions["ShowNpcLevels"] = new LabeledCheckBox(_informationSettings, "ShowNpcLevels")
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show monster levels" };
+        _displayOptions["ShowMyGuild"] = new LabeledCheckBox(_informationSettings, "ShowMyGuild")
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show my guild" };
+        _displayOptions["ShowPlayerGuilds"] = new LabeledCheckBox(_informationSettings, "ShowPlayerGuilds")
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show other player guilds" };
+        _displayOptions["ShowMyTitle"] = new LabeledCheckBox(_informationSettings, "ShowMyTitle")
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show my titles" };
+        _displayOptions["ShowPlayerTitles"] = new LabeledCheckBox(_informationSettings, "ShowPlayerTitles")
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show other player titles" };
+        _displayOptions["ShowQuestHud"] = new LabeledCheckBox(_informationSettings, "ShowQuestHud")
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show quest HUD" };
+        _displayOptions["ShowWorldBossHud"] = new LabeledCheckBox(_informationSettings, "ShowWorldBossHud")
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show World Boss HUD" };
+        _displayOptions["ShowInvasionHud"] = new LabeledCheckBox(_informationSettings, "ShowInvasionHud")
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show invasion HUD" };
+        _displayOptions["ShowMinimap"] = new LabeledCheckBox(_informationSettings, "ShowMinimap")
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show minimap" };
 
         // Game Settings - Information: Friends.
         _friendOverheadInfoCheckbox = new LabeledCheckBox(parent: _informationSettings, name: nameof(_friendOverheadInfoCheckbox))
@@ -1021,6 +1045,8 @@ public partial class SettingsWindow : Window
         _showExperienceAsPercentageCheckbox.IsChecked = Globals.Database.ShowExperienceAsPercentage;
         _simplifiedEscapeMenu.IsChecked = Globals.Database.SimplifiedEscapeMenu;
         _showQuestGuidanceArrowCheckbox.IsChecked = Globals.Database.ShowQuestGuidanceArrow;
+        foreach (var (key, checkbox) in _displayOptions)
+            checkbox.IsChecked = (bool)Globals.Database.GetType().GetProperty(key)!.GetValue(Globals.Database)!;
         _friendOverheadInfoCheckbox.IsChecked = Globals.Database.FriendOverheadInfo;
         _guildMemberOverheadInfoCheckbox.IsChecked = Globals.Database.GuildMemberOverheadInfo;
         _myOverheadInfoCheckbox.IsChecked = Globals.Database.MyOverheadInfo;
@@ -1203,6 +1229,8 @@ public partial class SettingsWindow : Window
         Globals.Database.ShowManaAsPercentage = _showManaAsPercentageCheckbox.IsChecked;
         Globals.Database.SimplifiedEscapeMenu = _simplifiedEscapeMenu.IsChecked;
         Globals.Database.ShowQuestGuidanceArrow = _showQuestGuidanceArrowCheckbox.IsChecked;
+        foreach (var (key, checkbox) in _displayOptions)
+            Globals.Database.GetType().GetProperty(key)!.SetValue(Globals.Database, checkbox.IsChecked);
         Globals.Database.FriendOverheadInfo = _friendOverheadInfoCheckbox.IsChecked;
         Globals.Database.GuildMemberOverheadInfo = _guildMemberOverheadInfoCheckbox.IsChecked;
         Globals.Database.MyOverheadInfo = _myOverheadInfoCheckbox.IsChecked;
