@@ -62,7 +62,7 @@ internal sealed class InvasionStatusWindow : Base
 
     public void Update()
     {
-        IsHidden = (!_reminderMode && _state?.Active != true) || Globals.Database?.ShowInvasionHud == false || Interface.GameUi?.SuppressStatusHuds == true;
+        IsHidden = (!_reminderMode && _state?.Active != true) || Globals.Database?.ShowInvasionHud == false || Interface.InGameUiOrNull?.SuppressStatusHuds == true;
         PositionAtTop();
         if (!_reminderMode || _reminderHideAt <= 0 || Timing.Global.Milliseconds <= _reminderHideAt)
             return;

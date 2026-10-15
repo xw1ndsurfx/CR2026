@@ -31,7 +31,7 @@ namespace Intersect.Editor.Forms.DockingElements
         private void InitializeComponent()
         {
             this.pnlMapContainer = new System.Windows.Forms.Panel();
-            this.picMap = new System.Windows.Forms.PictureBox();
+            this.picMap = new MapEditorCanvas();
             this.tooltipMapAttribute = new MapAttributeTooltip();
             this.pnlMapContainer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picMap)).BeginInit();

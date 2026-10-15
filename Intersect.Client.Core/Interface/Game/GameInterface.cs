@@ -174,6 +174,7 @@ public partial class GameInterface : MutableInterface
         mMapItemWindow = new MapItemWindow(GameCanvas);
         _minimapHud = new MinimapHud(GameCanvas, ToggleWorldMap);
         _minimapHud.SendToBack();
+        PacketSender.SendWorldMapRequest();
         PacketSender.SendRequestDailyRewardState(autoOpen: true);
         PacketSender.SendRequestAchievementState(openWindow: false);
         PacketSender.SendRequestWorldBossStatus();

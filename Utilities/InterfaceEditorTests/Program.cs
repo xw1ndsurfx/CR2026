@@ -1,6 +1,7 @@
 using System.Reflection;
 using Intersect;
 using Intersect.Editor.Forms.Editors.Events;
+using Intersect.Editor.Forms.DockingElements;
 using Intersect.Editor.Maps;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Maps;
@@ -55,13 +56,48 @@ internal static class Program
                 Math.Abs((cursor.Y / zoom - view.Y) - (cursor.Y / next.Zoom - next.View.Y)) <= .5f,
                 "Map Editor wheel zoom must preserve the world point under the cursor");
             Check(next.Zoom is >= .25f and <= 4f, "Map zoom bounds");
+            var moved = MapEditorViewport.PanFrom(view, new System.Drawing.Point(80, 60), new System.Drawing.Point(180, 110), zoom);
+            Check(Math.Abs((moved.X - view.X) * zoom - 100) <= zoom / 2 &&
+                Math.Abs((moved.Y - view.Y) * zoom - 50) <= zoom / 2, "Map dragging must follow the pointer at every zoom");
+        }
+        using (var mapEditor = new FrmMapEditor())
+        {
+            var mapType = typeof(FrmMapEditor);
+            Intersect.Editor.Core.Graphics.MapEditorZoom = 2;
+            Intersect.Editor.Core.Graphics.CurrentView = new Rectangle(100, 80, 500, 350);
+            mapType.GetMethod("picMap_MouseDown", flags)!.Invoke(mapEditor,
+                [mapEditor.picMap, new MouseEventArgs(MouseButtons.Middle, 1, -100, -80, 0)]);
+            mapType.GetMethod("picMap_MouseMove", flags)!.Invoke(mapEditor,
+                [mapEditor.picMap, new MouseEventArgs(MouseButtons.Middle, 0, 0, -20, 0)]);
+            Check(Intersect.Editor.Core.Graphics.CurrentView.Location == new System.Drawing.Point(150, 110),
+                "Middle drag starts outside map and moves without accessing map/edit state");
+            mapEditor.picMap_MouseUp(mapEditor.picMap, new MouseEventArgs(MouseButtons.Middle, 1, 0, -20, 0));
+            mapType.GetField("_spaceHeld", flags)!.SetValue(mapEditor, true);
+            mapType.GetMethod("picMap_MouseDown", flags)!.Invoke(mapEditor,
+                [mapEditor.picMap, new MouseEventArgs(MouseButtons.Left, 1, 40, 40, 0)]);
+            mapType.GetMethod("picMap_MouseMove", flags)!.Invoke(mapEditor,
+                [mapEditor.picMap, new MouseEventArgs(MouseButtons.Left, 0, 0, 0, 0)]);
+            Check(Intersect.Editor.Core.Graphics.CurrentView.Location == new System.Drawing.Point(130, 90), "Space-left drag moves the view");
+            mapEditor.picMap_MouseUp(mapEditor.picMap, new MouseEventArgs(MouseButtons.Left, 1, 0, 0, 0));
+            Check(Intersect.Editor.General.Globals.MouseButton == -1 && mapEditor.MapUndoStates.Count == 0,
+                "Navigation must not draw or create undo entries");
+            Check((MouseButtons)mapType.GetField("_panButton", flags)!.GetValue(mapEditor)! == MouseButtons.None,
+                "Release ends pan capture");
+            mapType.GetMethod("picMap_MouseDown", flags)!.Invoke(mapEditor,
+                [mapEditor.picMap, new MouseEventArgs(MouseButtons.Left, 1, 40, 40, 0)]);
+            mapEditor.picMap.Capture = false;
+            mapEditor.picMap_MouseUp(mapEditor.picMap, new MouseEventArgs(MouseButtons.Left, 1, 40, 40, 0));
+            Check(Intersect.Editor.General.Globals.MouseButton == -1 && mapEditor.MapUndoStates.Count == 0,
+                "Lost capture must not turn a pan release into a painting action");
+            Check((bool)typeof(Control).GetMethod("GetStyle", flags)!.Invoke(mapEditor.picMap, [ControlStyles.Selectable])!,
+                "Map canvas must accept keyboard focus for Space navigation");
         }
         var marker = new WorldMapEventMarker(Guid.NewGuid(), Guid.NewGuid(), 5, 8, Guid.NewGuid(), -64, 32);
         var copy = MessagePackSerializer.Deserialize<WorldMapEventMarker>(MessagePackSerializer.Serialize(marker));
         Check(copy.OffsetX == -64 && copy.OffsetY == 32, "Marker offsets must survive the network packet");
         var page = Newtonsoft.Json.JsonConvert.DeserializeObject<EventPage>(Newtonsoft.Json.JsonConvert.SerializeObject(editor.CurrentPage))!;
         Check(page.WorldMapOffsetX == -64 && page.WorldMapOffsetY == 32, "Marker offsets must survive event page persistence");
-        System.Console.WriteLine("PASS editor refresh: responsive Event Editor, full screen, command search, per-page offsets, cursor-anchored wheel zoom and packet/persistence round-trips");
+        System.Console.WriteLine("PASS editor refresh: responsive Event Editor, full screen, command search, per-page offsets, cursor-anchored wheel zoom, middle/Space map navigation, capture cancellation and packet/persistence round-trips");
     }
     private static void Check(bool value, string message) { if (!value) throw new InvalidOperationException(message); }
 }

@@ -38,6 +38,23 @@ internal static class InterfaceRefreshTests
                 "Display settings must survive reload");
             using var renderer = new MetricsRenderer(); using var skin = new TestSkin(renderer);
             using var canvas = new Canvas(skin) { Size = new Point(1024, 720) };
+            Check(!Intersect.Client.Interface.Interface.HasInGameUI, "Login regression fixture must precede GameUi assignment");
+            // Exercise the actual constructor and its first Update, as during login.
+            var minimap = (ControlBase)Activator.CreateInstance(
+                assembly.GetType("Intersect.Client.Interface.Game.MinimapHud", true)!, [canvas, new Action(() => { })])!;
+            Check(minimap.IsHidden, "Minimap must initialize safely before GameUi/player exists");
+            var boss = (ControlBase)Activator.CreateInstance(
+                assembly.GetType("Intersect.Client.Interface.Game.WorldBossStatusWindow", true)!, [canvas])!;
+            boss.GetType().GetMethod("Update")!.Invoke(boss, null);
+            boss.GetType().GetMethod("Apply")!.Invoke(boss,
+                [new Intersect.Network.Packets.WorldEvents.WorldBossStatusPacket
+                { Active = true, ExpiresAtUnixMilliseconds = DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeMilliseconds() }, 1]);
+            var invasion = (ControlBase)Activator.CreateInstance(
+                assembly.GetType("Intersect.Client.Interface.Game.InvasionStatusWindow", true)!, [canvas])!;
+            invasion.GetType().GetMethod("Update")!.Invoke(invasion, null);
+            invasion.GetType().GetMethod("ShowReminder")!.Invoke(invasion, ["Invasion soon", 30_000L]);
+            database.ShowInvasionHud = true;
+            invasion.GetType().GetMethod("Update")!.Invoke(invasion, null);
             var hud = new ControlBase(canvas) { Size = new Point(280, 315) };
             var title = new Label(hud) { Size = new Point(220, 24) };
             var content = new Label(hud); var initiallyHidden = new Label(hud) { IsHidden = true };

@@ -99,10 +99,6 @@ internal sealed class MinimapHud : Base
             KeyboardInputEnabled = false,
         };
 
-        // Fetch the same detached map data used by the World Map so quest
-        // guidance can continue across unloaded/distant maps.
-        PacketSender.SendWorldMapRequest();
-
         _disclosure = new HudDisclosure(this, _mapName, "MinimapCollapsed");
         UpdateLayout();
         Update();
@@ -141,7 +137,7 @@ internal sealed class MinimapHud : Base
 
         var player = Globals.Me;
         var map = player?.MapInstance as MapInstance;
-        IsHidden = Globals.Database?.ShowMinimap == false || Interface.GameUi?.SuppressStatusHuds == true || player == null || map == null || !map.IsLoaded;
+        IsHidden = Globals.Database?.ShowMinimap == false || Interface.InGameUiOrNull?.SuppressStatusHuds == true || player == null || map == null || !map.IsLoaded;
         UpdateLayout();
         if (IsHidden || player == null || map == null) return;
 
