@@ -306,6 +306,11 @@ public abstract partial class ApplicationContext<TContext, TStartupOptions> : IA
     protected abstract void InternalStart();
 
     /// <summary>
+    /// Record diagnostics before shutdown moves to a disposal task.
+    /// </summary>
+    protected virtual void OnShutdownRequested() { }
+
+    /// <summary>
     /// Request shutdown of the application.
     /// </summary>
     /// <param name="join">optionally join the current thread, default false</param>
@@ -321,6 +326,9 @@ public abstract partial class ApplicationContext<TContext, TStartupOptions> : IA
             }
 
             IsShutdownRequested = true;
+            // A diagnostic failure must not prevent disposal.
+            try { OnShutdownRequested(); }
+            catch { }
             disposeTask = new Task(
                 () =>
                 {
