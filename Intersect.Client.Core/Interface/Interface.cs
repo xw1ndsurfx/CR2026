@@ -45,6 +45,9 @@ public static partial class Interface
 
     public static bool HasInGameUI => _uiInGame != null;
 
+    // HUD constructors can run before GameInterface has been assigned to GameUi.
+    internal static GameInterface? InGameUiOrNull => _uiInGame;
+
     public static bool HasMainMenuUI => _uiMainMenu != null;
 
     public static GameInterface GameUi

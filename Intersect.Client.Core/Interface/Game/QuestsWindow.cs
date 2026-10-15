@@ -377,7 +377,7 @@ public partial class QuestsWindow
             return;
         }
 
-        if (Globals.Database?.ShowQuestHud == false || Interface.GameUi?.SuppressStatusHuds == true) { HideQuestTracker(); return; }
+        if (Globals.Database?.ShowQuestHud == false || Interface.InGameUiOrNull?.SuppressStatusHuds == true) { HideQuestTracker(); return; }
         UpdateQuestTrackerPosition();
         mQuestTaskHudPanel.BringToFront();
 

@@ -66,7 +66,7 @@ internal sealed class WorldBossStatusWindow : Base
             "\n" + string.Join("\n", lines);
         _ranking.FontSize = 8;
         X = Math.Max(8, (Parent?.Width ?? Width) - Width - 18);
-        Y = (Interface.GameUi?.MinimapBottom ?? 10) + 8;
+        Y = (Interface.InGameUiOrNull?.MinimapBottom ?? 10) + 8;
         Show();
         BringToFront();
         Update();
@@ -74,8 +74,8 @@ internal sealed class WorldBossStatusWindow : Base
 
     public void Update()
     {
-        IsHidden = _status == null || !_status.Active || Globals.Database?.ShowWorldBossHud == false || Interface.GameUi?.SuppressStatusHuds == true;
-        Y = (Interface.GameUi?.MinimapBottom ?? 10) + 8;
+        IsHidden = _status == null || !_status.Active || Globals.Database?.ShowWorldBossHud == false || Interface.InGameUiOrNull?.SuppressStatusHuds == true;
+        Y = (Interface.InGameUiOrNull?.MinimapBottom ?? 10) + 8;
         if (IsHidden) return;
         var remaining = DateTimeOffset.FromUnixTimeMilliseconds(
             _status.ExpiresAtUnixMilliseconds) - DateTimeOffset.UtcNow;

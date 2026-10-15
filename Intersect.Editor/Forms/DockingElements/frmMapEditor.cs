@@ -66,6 +66,7 @@ public partial class FrmMapEditor : DockContent
         InitializeComponent();
         Icon = Program.Icon;
         picMap.MouseWheel += MapEditorMouseWheel;
+        InitializeMapNavigation();
         pnlMapContainer.MouseWheel += MapContainerMouseWheel;
         picMap.MouseEnter += (_, _) => picMap.Focus();
         picMap.MouseLeave += (_sender, _args) => tooltipMapAttribute?.Hide();
@@ -202,6 +203,7 @@ public partial class FrmMapEditor : DockContent
     //PicMap Functions
     private void picMap_MouseDown(object sender, MouseEventArgs e)
     {
+        if (BeginMapPan(e)) return;
         e = LogicalMapMouse(e);
         if (!Globals.MapEditorWindow.DockPanel.Focused)
         {
@@ -534,35 +536,11 @@ public partial class FrmMapEditor : DockContent
 
     private void picMap_MouseMove(object sender, MouseEventArgs e)
     {
+        if (MoveMapPan(e.Location)) return;
         e = LogicalMapMouse(e);
         if (Globals.EditingLight != null)
         {
             return;
-        }
-
-        if (e.Button == MouseButtons.Middle)
-        {
-            Core.Graphics.CurrentView.X -= Globals.MouseX - e.X;
-            Core.Graphics.CurrentView.Y -= Globals.MouseY - e.Y;
-            if (Core.Graphics.CurrentView.X > Options.Instance.Map.MapWidth * Options.Instance.Map.TileWidth)
-            {
-                Core.Graphics.CurrentView.X = Options.Instance.Map.MapWidth * Options.Instance.Map.TileWidth;
-            }
-
-            if (Core.Graphics.CurrentView.Y > Options.Instance.Map.MapHeight * Options.Instance.Map.TileHeight)
-            {
-                Core.Graphics.CurrentView.Y = Options.Instance.Map.MapHeight * Options.Instance.Map.TileHeight;
-            }
-
-            if (Core.Graphics.CurrentView.X - Core.Graphics.CurrentView.Width < -Options.Instance.Map.TileWidth * Options.Instance.Map.MapWidth * 2)
-            {
-                Core.Graphics.CurrentView.X = -Options.Instance.Map.TileWidth * Options.Instance.Map.MapWidth * 2 + Core.Graphics.CurrentView.Width;
-            }
-
-            if (Core.Graphics.CurrentView.Y - Core.Graphics.CurrentView.Height < -Options.Instance.Map.TileHeight * Options.Instance.Map.MapHeight * 2)
-            {
-                Core.Graphics.CurrentView.Y = -Options.Instance.Map.TileHeight * Options.Instance.Map.MapHeight * 2 + Core.Graphics.CurrentView.Height;
-            }
         }
 
         Globals.MouseX = e.X;
@@ -836,6 +814,15 @@ public partial class FrmMapEditor : DockContent
 
     public void picMap_MouseUp(object sender, MouseEventArgs e)
     {
+        if (_panReleaseButton != MouseButtons.None)
+        {
+            if (e.Button == _panReleaseButton)
+            {
+                _panReleaseButton = MouseButtons.None;
+                EndMapPan();
+            }
+            return;
+        }
         if (Globals.EditingLight != null || e.Button == MouseButtons.Middle)
         {
             return;
@@ -1000,6 +987,7 @@ public partial class FrmMapEditor : DockContent
 
     private void picMap_DoubleClick(object sender, EventArgs e)
     {
+        if (_panButton != MouseButtons.None || _spaceHeld) return;
         var currentMap = Globals.CurrentMap;
 
         if (currentMap == null)

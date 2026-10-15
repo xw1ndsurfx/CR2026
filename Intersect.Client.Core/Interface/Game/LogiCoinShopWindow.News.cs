@@ -21,7 +21,7 @@ internal sealed partial class LogiCoinShopWindow
         _newsCard = new Button(this, "LatestLogiklikNews") { Text = "Logiklik News", Font = Skin.DefaultFont, FontSize = 11 };
         _newsCard.SetBounds(541, 187, 201, 101);
         _newsCard.SetToolTipText("Read the latest Corps Royaux news");
-        _newsCard.Clicked += (_, _) => Interface.GameUi?.OpenLogiklikNews();
+        _newsCard.Clicked += (_, _) => Interface.InGameUiOrNull?.OpenLogiklikNews();
         _newsImage = new ImagePanel(_newsCard, "LatestNewsImage") { MaintainAspectRatio = true, MouseInputEnabled = false, IsHidden = true };
         _newsImage.SetBounds(2, 2, 197, 78);
         _newsCaption = AddText(_newsCard, "LatestNewsTitle", "", 3, 81, 195, 18, 8, Cream, center: true);

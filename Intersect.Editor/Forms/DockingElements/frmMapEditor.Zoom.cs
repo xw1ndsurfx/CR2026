@@ -31,7 +31,7 @@ public partial class FrmMapEditor
 
     private void MapEditorMouseWheel(object? sender, MouseEventArgs e)
     {
-        if (!Options.IsLoaded || e.Delta == 0 || Globals.EditingLight != null) return;
+        if (!Options.IsLoaded || e.Delta == 0 || Globals.EditingLight != null || _panButton != MouseButtons.None) return;
         lock (Graphics.GraphicsLock)
         {
             var next = MapEditorViewport.ZoomAt(Graphics.MapEditorZoom, Graphics.CurrentView, e.Location, picMap.Size, e.Delta);
