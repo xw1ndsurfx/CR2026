@@ -1793,6 +1793,10 @@ internal sealed partial class PacketHandler
         }
 
         // Go through each item we're trying to give our player and see if we can do so.
+        int CountOwnedLoot(Guid itemId) => player.CountItems(itemId) + player.Bags
+            .Where(bag => bag != null).DistinctBy(bag => bag.Id).SelectMany(bag => bag.Slots)
+            .Where(slot => slot?.ItemId == itemId).Sum(slot => Math.Max(0, slot.Quantity));
+
         foreach (var (mapWithItems, value) in giveItems)
         {
             if (!mapWithItems.TryGetInstance(player.MapInstanceId, out var mapInstanceWithItems))
@@ -1817,7 +1821,12 @@ internal sealed partial class PacketHandler
                 mapInstanceWithItems.RemoveItem(mapItem);
 
                 // Try to give the item to our player.
-                if (!player.TryGiveItem(mapItem, ItemHandling.Overflow, false, -1, true, mapItem.X, mapItem.Y))
+                var quantityBeforePickup = CountOwnedLoot(mapItem.ItemId);
+                var pickupSucceeded = player.TryGiveItem(mapItem, ItemHandling.Overflow, false, -1, true, mapItem.X, mapItem.Y);
+                var received = CountOwnedLoot(mapItem.ItemId) - quantityBeforePickup;
+                if (received > 0)
+                    player.SendPacket(new ItemChangeNotificationPacket(mapItem.ItemId, received) { IsLoot = true });
+                if (!pickupSucceeded)
                 {
                     // We couldn't give the player their item, notify them.
                     PacketSender.SendChatMsg(

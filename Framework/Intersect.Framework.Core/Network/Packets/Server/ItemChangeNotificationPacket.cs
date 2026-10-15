@@ -20,4 +20,7 @@ public partial class ItemChangeNotificationPacket : IntersectPacket
 
     [Key(1)]
     public int SignedQuantity { get; set; }
+
+    [Key(2)]
+    public bool IsLoot { get; set; }
 }
