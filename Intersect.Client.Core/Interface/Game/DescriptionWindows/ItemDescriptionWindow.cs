@@ -18,6 +18,17 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
     private int _amount;
     private string? _valueLabel;
 
+    protected override void RenderUnder(Intersect.Client.Framework.Gwen.Skin.Base skin)
+    {
+        base.RenderUnder(skin);
+        if (_itemDescriptor is { } item && ItemRarityGlow.ResolveColor(
+                item.Rarity, Options.Instance.Items.RarityTiers, CustomColors.Items.Rarities
+            ) is { } color)
+        {
+            ItemRarityGlow.Draw(skin.Renderer, Width, Height, color, Environment.TickCount64);
+        }
+    }
+
     public void Show(
         ItemDescriptor item,
         int amount,
