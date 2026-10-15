@@ -106,6 +106,14 @@ internal static class WorldMapTests
                 Check(drawn.Width == SizeAt(testZoom) && drawn.Height == SizeAt(testZoom),
                     "Actual event animation rendering must apply zoom-dependent size");
             }
+            renderer.Texts.Clear(); renderer.Textures.Clear();
+            Globals.WorldMapEventMarkers = [new(Guid.NewGuid(), mapId, 10, 8, Guid.Empty) { Name = "Harbor master" }];
+            drawMarkers.Invoke(map, [renderer, 200, 160]);
+            Check(renderer.Texts.Contains("Harbor master") && renderer.Textures.Count == 0,
+                "World Map renders event names independently of animation markers");
+            var namedMarker = MessagePackSerializer.Deserialize<WorldMapEventMarker>(MessagePackSerializer.Serialize(Globals.WorldMapEventMarkers[0]));
+            Check(namedMarker.Name == "Harbor master", "Event names survive the map packet roundtrip");
+            Globals.WorldMapEventMarkers = [];
             void Zoom(float delta) => type.GetMethod("ZoomBy")!.Invoke(map, [delta]);
             void CheckCentered()
             {
@@ -210,6 +218,8 @@ internal static class WorldMapTests
     {
         internal readonly List<(Color Color, Rectangle Bounds)> Calls = [];
         internal readonly List<Rectangle> Textures = [];
+        internal readonly List<string> Texts = [];
+        public override void RenderText(IFont? font, int fontSize, Point position, string text, float scale = 1f) => Texts.Add(text);
         public override void DrawTexturedRect(IGameTexture? texture, Rectangle targetBounds, Color color,
             float u1 = 0, float v1 = 0, float u2 = 1, float v2 = 1) => Textures.Add(targetBounds);
         public override void DrawFilledRect(Rectangle rectangle) => Calls.Add((new Color(DrawColor), rectangle));

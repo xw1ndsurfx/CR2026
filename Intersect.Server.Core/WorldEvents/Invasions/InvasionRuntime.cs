@@ -8,6 +8,7 @@ using Intersect.Framework.Core.WorldEvents.Invasions;
 using Intersect.Network.Packets.WorldEvents;
 using Intersect.Server.Achievements;
 using Intersect.Server.Entities;
+using Intersect.Server.Dungeons;
 using Intersect.Server.Maps;
 using Intersect.Server.Networking;
 using Intersect.Utilities;
@@ -20,7 +21,7 @@ internal static class InvasionRuntime
     private readonly record struct ScalingSnapshot(
         bool Enabled,
         int PlayerCount,
-        int MedianLevel,
+        int AverageLevel,
         int TargetLevel,
         double PopulationHealthMultiplier
     );
@@ -504,11 +505,11 @@ internal static class InvasionRuntime
         if (scaling.Enabled)
         {
             ApplicationContext.Context.Value?.Logger.LogInformation(
-                "Invasion {InvasionName} wave {Wave} scaling to level {TargetLevel} from median level {MedianLevel} across {PlayerCount} online player(s); population HP multiplier {HealthMultiplier:0.##}x.",
+                "Invasion {InvasionName} wave {Wave} scaling to level {TargetLevel} from average level {AverageLevel} across {PlayerCount} overworld player(s); population HP multiplier {HealthMultiplier:0.##}x.",
                 session.Definition.Name,
                 waveIndex + 1,
                 scaling.TargetLevel,
-                scaling.MedianLevel,
+                scaling.AverageLevel,
                 scaling.PlayerCount,
                 scaling.PopulationHealthMultiplier
             );
@@ -572,33 +573,31 @@ internal static class InvasionRuntime
         if (!definition.ScaleNpcToPlayers)
             return default;
 
-        var levels = Player.OnlinePlayers
-            .Where(player => player != null && !player.IsDisposed && player.Level > 0)
+        var levels = Player.OnlinePlayersSnapshot()
+            .Where(player => player != null && !player.IsDisposed && player.Level > 0 &&
+                player.MapInstanceId == MapInstance.OverworldInstanceId &&
+                !DungeonRunRuntime.IsPlayerInActiveRun(player))
             .Select(player => player!.Level)
-            .OrderBy(level => level)
             .ToArray();
 
         if (levels.Length == 0)
             return default;
 
-        var middle = levels.Length / 2;
-        var medianLevel = levels.Length % 2 == 1
-            ? levels[middle]
-            : (int)(((long)levels[middle - 1] + levels[middle]) / 2L);
+        var averageLevel = InvasionBalance.AverageLevel(levels);
 
         var targetLevel = Math.Clamp(
-            medianLevel + definition.ScalingLevelOffset,
+            averageLevel + definition.ScalingLevelOffset,
             definition.ScalingMinimumLevel,
             definition.ScalingMaximumLevel
         );
 
         var populationHealthMultiplier =
-            1d + Math.Max(0, levels.Length - 1) * (definition.ExtraPlayerHealthPercent / 100d);
+            InvasionBalance.PopulationHealth(levels.Length, definition.ExtraPlayerHealthPercent);
 
         return new ScalingSnapshot(
             Enabled: true,
             PlayerCount: levels.Length,
-            MedianLevel: medianLevel,
+            AverageLevel: averageLevel,
             TargetLevel: targetLevel,
             PopulationHealthMultiplier: populationHealthMultiplier
         );
@@ -620,8 +619,9 @@ internal static class InvasionRuntime
         npc.InvasionObjectiveDamage = spawn.ObjectiveDamage;
         npc.InvasionScaledLevel = npc.Level;
 
+        // Disabling level adaptation still keeps the horde's weak individual profile.
         if (!scaling.Enabled)
-            return;
+            scaling = new ScalingSnapshot(true, 0, npc.Level, Math.Max(1, npc.Level), 1d);
 
         ApplyAdaptiveScaling(npc, session.Definition, spawn.IsBoss, scaling);
     }
@@ -636,22 +636,27 @@ internal static class InvasionRuntime
         var baseLevel = Math.Max(1, npc.Descriptor.Level);
         var levelRatio = Math.Max(0.01d, (double)scaling.TargetLevel / baseLevel);
         var bossHealthMultiplier = isBoss ? definition.BossHealthPercent / 100d : 1d;
-        var healthMultiplier =
-            levelRatio * scaling.PopulationHealthMultiplier * bossHealthMultiplier;
+        var healthMultiplier = Math.Min(
+            levelRatio * 0.5d,
+            InvasionBalance.HealthLimit(scaling.TargetLevel) / Math.Max(1d, npc.Descriptor.MaxVitals[(int)Vital.Health])
+        ) * scaling.PopulationHealthMultiplier * bossHealthMultiplier;
 
         npc.Level = scaling.TargetLevel;
         npc.InvasionScaledLevel = scaling.TargetLevel;
         npc.InvasionScalingPlayerCount = scaling.PlayerCount;
         npc.InvasionHealthMultiplier = healthMultiplier;
-        npc.InvasionBaseDamageMultiplier = levelRatio;
-        npc.InvasionDamageMultiplier = isBoss ? definition.BossDamagePercent / 100d : 1d;
+        npc.InvasionBaseDamageMultiplier = Math.Min(levelRatio,
+            InvasionBalance.DamageLimit(scaling.TargetLevel) / Math.Max(1d, npc.Descriptor.Damage));
+        npc.InvasionDamageMultiplier = 0.45d * InvasionBalance.PopulationDamage(scaling.PlayerCount) *
+            (isBoss ? definition.BossDamagePercent / 100d : 1d);
 
         var maxStat = Math.Max(1, Options.Instance.Player.MaxStat);
         for (var statIndex = 0; statIndex < Enum.GetValues<Stat>().Length; ++statIndex)
         {
             var baseStat = Math.Max(0, npc.Descriptor.Stats[statIndex]);
             var scaledStat = (int)Math.Round(
-                baseStat * levelRatio,
+                Math.Min(baseStat * levelRatio * (statIndex == (int)Stat.Speed ? 1d : 0.65d),
+                InvasionBalance.StatLimit(scaling.TargetLevel, (Stat)statIndex)),
                 MidpointRounding.AwayFromZero
             );
             npc.BaseStats[statIndex] = Math.Clamp(scaledStat, 0, maxStat);

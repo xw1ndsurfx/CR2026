@@ -257,7 +257,7 @@ internal static class InterfaceRefreshTests
         }
         finally { preview.SetValue(null, oldPreview); expires.SetValue(null, oldExpires); }
     }
-    private sealed class MemoryPreferences(Dictionary<string, string>? values = null) : GameDatabase
+    internal sealed class MemoryPreferences(Dictionary<string, string>? values = null) : GameDatabase
     {
         internal readonly Dictionary<string, string> Values = values ?? [];
         public override bool LoadConfig() => true;

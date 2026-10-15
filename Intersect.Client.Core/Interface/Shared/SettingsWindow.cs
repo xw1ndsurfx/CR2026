@@ -887,18 +887,7 @@ public partial class SettingsWindow : Window
             (minScale, maxScale) = (maxScale, minScale);
         }
 
-        // Générer des notches: puissances de 2 entre minScale et maxScale
-        var worldScaleNotches = new List<double>();
-
-        // Option A: si tu veux que les notches soient strictement basées sur minScale (x2,x4, etc)
-        worldScaleNotches.Add(minScale);
-        while (worldScaleNotches.Last() * 2 <= maxScale)
-        {
-            worldScaleNotches.Add(worldScaleNotches.Last() * 2);
-        }
-
-        // Sécurité (au cas où maxScale == minScale)
-        worldScaleNotches = worldScaleNotches.Distinct().OrderBy(x => x).ToList();
+        var worldScaleNotches = Options.Instance.Map.WorldScaleSteps.Select(value => (double)value).ToList();
 
         var minNotch = worldScaleNotches.First();
         var maxNotch = worldScaleNotches.Last();

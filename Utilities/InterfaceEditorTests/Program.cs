@@ -45,12 +45,16 @@ internal static class Program
             voiceFlag.Checked = false;
             Check(group.Text == "Play Sound", "Event sound editor switches back to normal effects");
         }
-        editor.CurrentPage = new EventPage { WorldMapOffsetX = 48, WorldMapOffsetY = -16 };
+        editor.CurrentPage = new EventPage { WorldMapOffsetX = 48, WorldMapOffsetY = -16, ShowNameOnWorldMap = true };
         var flags = BindingFlags.Instance | BindingFlags.NonPublic;
         typeof(FrmEvent).GetMethod("LoadWorldMapOffsets", flags)!.Invoke(editor, null);
         var x = (NumericUpDown)typeof(FrmEvent).GetField("_worldMapX", flags)!.GetValue(editor)!;
         var y = (NumericUpDown)typeof(FrmEvent).GetField("_worldMapY", flags)!.GetValue(editor)!;
         Check(x.Value == 48 && y.Value == -16, "Page offsets must load");
+        var showMapName = (CheckBox)typeof(FrmEvent).GetField("_worldMapName", flags)!.GetValue(editor)!;
+        Check(showMapName.Checked, "World Map event name option restores per-page state");
+        showMapName.Checked = false;
+        Check(!editor.CurrentPage.ShowNameOnWorldMap, "World Map event name option saves immediately");
         x.Value = -64; y.Value = 32;
         Check(editor.CurrentPage.WorldMapOffsetX == -64 && editor.CurrentPage.WorldMapOffsetY == 32, "Page offsets must save");
         editor.Size = new Size(1500, 950); editor.PerformLayout();
