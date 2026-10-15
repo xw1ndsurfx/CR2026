@@ -15,6 +15,10 @@ internal sealed class TestContentManager : GameContentManager
 {
     internal void AddAnimationTexture(string name, Intersect.Client.Framework.Graphics.IGameTexture texture) =>
         mAnimationDict[name.ToLowerInvariant()] = texture;
+    internal void AddResourceTexture(string name, Intersect.Client.Framework.Graphics.IGameTexture texture) =>
+        mResourceDict[name.ToLowerInvariant()] = texture;
+    internal void AddTilesetTexture(string name, Intersect.Client.Framework.Graphics.IGameTexture texture) =>
+        mTilesetDict[name.ToLowerInvariant()] = texture;
 
     public TestContentManager()
     {

@@ -186,7 +186,7 @@ public partial class Animation : IAnimation
                     var frameHeight = tex.Height / Descriptor.Lower.YFrames;
                     var scale = Math.Clamp(
                         Descriptor.Lower.ScalePercent,
-                        10,
+                        1,
                         1000
                     ) / 100f;
                     var drawWidth = frameWidth * scale;
@@ -242,7 +242,7 @@ public partial class Animation : IAnimation
                     var frameHeight = tex.Height / Descriptor.Upper.YFrames;
                     var scale = Math.Clamp(
                         Descriptor.Upper.ScalePercent,
-                        10,
+                        1,
                         1000
                     ) / 100f;
                     var drawWidth = frameWidth * scale;
@@ -443,7 +443,7 @@ public partial class Animation : IAnimation
             {
                 var scale = Math.Clamp(
                     Descriptor.Lower.ScalePercent,
-                    10,
+                    1,
                     1000
                 ) / 100f;
                 var frameWidth = (int)Math.Ceiling(
@@ -471,7 +471,7 @@ public partial class Animation : IAnimation
             {
                 var scale = Math.Clamp(
                     Descriptor.Upper.ScalePercent,
-                    10,
+                    1,
                     1000
                 ) / 100f;
                 var frameWidth = (int)Math.Ceiling(

@@ -47,6 +47,7 @@ internal static class RareLootNotificationTests
                 "Confirmed rare loot must identify the actual reward and quantity");
             Check(name.TextColorOverride == configured && quantity.TextColorOverride == configured && window.Height == 150,
                 "Congratulations must use the exact configured rarity hue");
+            Check(quantity.Text.Contains("x2") && !quantity.Text.Contains('×'), "Quantity must use the bitmap-font-supported x glyph");
             Check(window.Bottom <= canvas.Height && window.Right <= canvas.Width && window.Children.All(child => child.Right <= window.Width && child.Bottom <= window.Height),
                 "Loot notification remains visible at 640x480");
             Add(common.Id, -3, loot: false);

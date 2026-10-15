@@ -131,9 +131,9 @@ public partial class FrmAnimation : EditorForm
 
         number.Location = new System.Drawing.Point(154, 65);
         number.Size = new Size(88, 23);
-        number.Minimum = 10;
+        number.Minimum = 1;
         number.Maximum = 1000;
-        number.Increment = 5;
+        number.Increment = 1;
         number.Value = 100;
         number.DecimalPlaces = 0;
         number.BackColor = System.Drawing.Color.FromArgb(69, 73, 74);
@@ -159,7 +159,7 @@ public partial class FrmAnimation : EditorForm
 
     private static int NormalizeAnimationScale(int value)
     {
-        return Math.Clamp(value <= 0 ? 100 : value, 10, 1000);
+        return Math.Clamp(value <= 0 ? 100 : value, 1, 1000);
     }
 
     private void AssignEditorItem(Guid id)

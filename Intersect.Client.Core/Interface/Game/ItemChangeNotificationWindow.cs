@@ -128,7 +128,7 @@ internal sealed class ItemChangeNotificationWindow : Base
         {
             var rarity = Options.Instance.Items.TryGetRarityName(descriptor.Rarity, out var rarityName) ? rarityName : "Rare";
             if (Intersect.Client.Localization.Strings.ItemDescription.Rarity.TryGetValue(rarity, out var localized)) rarity = localized;
-            _quantity.Text = $"Rareté : {rarity}  ·  ×{packet.SignedQuantity:N0}";
+            _quantity.Text = $"Rareté : {rarity} - x{packet.SignedQuantity:N0}";
             _quantity.TextColorOverride = _rarityColor!;
         }
 

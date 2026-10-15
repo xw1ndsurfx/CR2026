@@ -22,10 +22,11 @@ internal sealed partial class LogiCoinShopWindow
         _newsCard.SetBounds(541, 187, 201, 101);
         _newsCard.SetToolTipText("Read the latest Corps Royaux news");
         _newsCard.Clicked += (_, _) => Interface.InGameUiOrNull?.OpenLogiklikNews();
-        _newsImage = new ImagePanel(_newsCard, "LatestNewsImage") { MaintainAspectRatio = true, MouseInputEnabled = false, IsHidden = true };
-        _newsImage.SetBounds(2, 2, 197, 78);
+        _newsImage = new ImagePanel(_newsCard, "LatestNewsImage") { MaintainAspectRatio = false, MouseInputEnabled = false, IsHidden = true };
+        _newsImage.SetBounds(2, 2, 197, 97);
         _newsCaption = AddText(_newsCard, "LatestNewsTitle", "", 3, 81, 195, 18, 8, Cream, center: true);
         _newsCaption.MouseInputEnabled = false;
+        _newsCaption.IsHidden = true;
     }
 
     private async Task RefreshNewsBannerAsync()

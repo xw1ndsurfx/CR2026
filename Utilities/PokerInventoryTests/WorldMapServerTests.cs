@@ -31,17 +31,19 @@ internal static class WorldMapServerTests
             var stranger = NewPlayer("Stranger"); var hidden = NewPlayer("Hidden friend");
             var separate = NewPlayer("Different instance"); var distant = NewPlayer("Different grid");
             self.Party = [self, member];
+            self.GuildId = Guid.NewGuid(); stranger.GuildId = self.GuildId;
             self.CachedFriends = new[] { friend, member, hidden, separate, distant }.ToDictionary(p => p.Id, p => p.Name);
             hidden.HideEntity = true; separate.MapInstanceId = Guid.NewGuid(); distant.MapId = Guid.NewGuid();
             var method = typeof(PacketSender).GetMethod("BuildWorldMapMarkers", BindingFlags.Static | BindingFlags.NonPublic)!;
             WorldMapSocialMarker[] Build() => (WorldMapSocialMarker[])method.Invoke(null, [self, new[] { map }])!;
             var markers = Build();
-            Check(markers.Length == 2 && markers.Any(m => m.PlayerId == friend.Id && !m.Party) &&
+            Check(markers.Length == 3 && markers.Any(m => m.PlayerId == stranger.Id && m.Guild) && markers.Any(m => m.PlayerId == friend.Id && !m.Party) &&
                 markers.Any(m => m.PlayerId == member.Id && m.Party), "Only eligible friends and party; no duplicates");
             Check(markers.All(m => m.X == 12 && m.Y == 17 && m.MapId == map), "Authoritative positions");
             online.TryRemove(friend.Id, out _);
-            Check(Build().Length == 1, "Disconnected friend must disappear");
+            Check(Build().Length == 2, "Disconnected friend must disappear while guild member remains");
             self.Party = []; self.CachedFriends.Clear();
+            self.GuildId = null;
             Check(Build().Length == 0, "Removed friends / party must disappear");
 
             var legend = new WorldMapLegend { Entries = [new() { AnimationId = Guid.NewGuid(), Label = " Potion shop " }] };

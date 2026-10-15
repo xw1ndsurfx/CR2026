@@ -2783,11 +2783,11 @@ public partial class Player : Entity, IPlayer
             displayedName,
             Graphics.EntityNameFont,
             Graphics.EntityNameFontSize,
-            1
+            NameplateScale
         );
 
-        const float maximumBadgeHeight = 16f;
-        const float badgeSpacing = 4f;
+        var maximumBadgeHeight = 16f * NameplateScale;
+        var badgeSpacing = 4f * NameplateScale;
         var scale = Math.Min(1f, maximumBadgeHeight / badgeTexture.Height);
         var badgeWidth = badgeTexture.Width * scale;
         var badgeHeight = badgeTexture.Height * scale;
@@ -2838,7 +2838,7 @@ public partial class Player : Entity, IPlayer
             guildLabel,
             Graphics.EntityNameFont,
             Graphics.EntityNameFontSize,
-            1
+            NameplateScale
         );
 
         var x = (int)Math.Ceiling(Origin.X);
@@ -2850,7 +2850,7 @@ public partial class Player : Entity, IPlayer
             Graphics.DrawGameTexture(
                 Graphics.Renderer.WhitePixel,
                 new FloatRect(0, 0, 1, 1),
-                new FloatRect(x - textSize.X / 2f - 4, y, textSize.X + 8, textSize.Y),
+                new FloatRect(x - textSize.X / 2f - 4 * NameplateScale, y, textSize.X + 8 * NameplateScale, textSize.Y),
                 backgroundColor
             );
         }
@@ -2862,7 +2862,7 @@ public partial class Player : Entity, IPlayer
             Graphics.EntityNameFontSize,
             x - (int)Math.Ceiling(textSize.X / 2f),
             (int)y,
-            1,
+            NameplateScale,
             Color.FromArgb(textColor.ToArgb()),
             true,
             default,

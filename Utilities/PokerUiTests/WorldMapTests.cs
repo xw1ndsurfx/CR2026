@@ -12,6 +12,7 @@ using Intersect.Network.Packets.Server;
 using MessagePack;
 using Intersect.Client.Framework.Graphics;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Resources;
 using ControlBase = Intersect.Client.Framework.Gwen.Control.Base;
 using RendererBase = Intersect.Client.Framework.Gwen.Renderer.Base;
 
@@ -37,6 +38,8 @@ internal static class WorldMapTests
         var oldMarkers = Globals.WorldMapSocialMarkers;
         var oldEventMarkers = Globals.WorldMapEventMarkers;
         var animation = new AnimationDescriptor(Guid.NewGuid()) { Lower = new() { Sprite = "marker-test", XFrames = 1, YFrames = 1 } };
+        var resource = new ResourceDescriptor(Guid.NewGuid());
+        var strangerId = Guid.NewGuid();
         var oldLegend = Globals.WorldMapLegend;
         var oldReceived = Globals.WorldMapStateReceivedAt;
         var throttle = typeof(PacketSender).GetField("_nextWorldMapStateRequest", BindingFlags.NonPublic | BindingFlags.Static)!;
@@ -73,6 +76,25 @@ internal static class WorldMapTests
             var panY = type.GetField("_panY", flags)!;
             AnimationDescriptor.Lookup[animation.Id] = animation;
             content.AddAnimationTexture("marker-test", DispatchProxy.Create<IGameTexture, CpuFrameTexture>());
+            animation.Lower.ScalePercent = 1;
+            var runtimeAnimation = (Intersect.Client.Entities.Animation)RuntimeHelpers.GetUninitializedObject(typeof(Intersect.Client.Entities.Animation));
+            GC.SuppressFinalize(runtimeAnimation); runtimeAnimation.Descriptor = animation;
+            var tinySize = runtimeAnimation.CalculateAnimationSize();
+            Check(tinySize.X == 1 && tinySize.Y == 1, "Client animation bounds must allow one percent scale");
+            animation.Lower.ScalePercent = 100;
+            var resourceTexture = DispatchProxy.Create<IGameTexture, CpuFrameTexture>();
+            content.AddResourceTexture("resource-test", resourceTexture); content.AddTilesetTexture("resource-test", resourceTexture);
+            ResourceDescriptor.Lookup[resource.Id] = resource;
+            var resourceGraphic = type.GetMethod("ResourcePreviewGraphics", BindingFlags.Static | BindingFlags.NonPublic)!;
+            foreach (var sourceType in new[] { ResourceTextureSource.Resource, ResourceTextureSource.Tileset, ResourceTextureSource.Animation })
+            {
+                resource.States.Clear(); resource.States[Guid.NewGuid()] = new()
+                { TextureName = "resource-test", TextureType = sourceType, MaximumHealth = 100, X = 1, AnimationId = animation.Id };
+                var graphics = ((IEnumerable<(IGameTexture Texture, Intersect.Client.Framework.GenericClasses.FloatRect Source, float Scale)>)resourceGraphic.Invoke(null, [resource.Id])!).ToArray();
+                Check(graphics.Length == 1 && ReferenceEquals(graphics[0].Texture, sourceType == ResourceTextureSource.Animation ? content.GetTexture(Intersect.Client.Framework.Content.TextureType.Animation, "marker-test") : resourceTexture),
+                    "World Map previews must resolve standalone, tileset and animated resource graphics");
+                if (sourceType == ResourceTextureSource.Tileset) Check(graphics[0].Source.X == Options.Instance.Map.TileWidth, "Resource preview uses the selected tileset cell");
+            }
             Globals.WorldMapEventMarkers = [new(Guid.NewGuid(), mapId, 10, 8, animation.Id)];
             var drawMarkers = type.GetMethod("DrawWorldMapEventMarkers", flags)!;
             panX.SetValue(map, 0f); panY.SetValue(map, 0f);
@@ -103,6 +125,11 @@ internal static class WorldMapTests
             render.Invoke(map, [skin]);
             Check(renderer.Calls.Any(call => SameRgb(call.Color, 75, 185, 255)), "Party marker missing");
             Check(renderer.Calls.Any(call => SameRgb(call.Color, 95, 225, 125)), "Friend marker missing");
+            var social = Globals.WorldMapSocialMarkers;
+            Globals.WorldMapSocialMarkers = [..social, new() { PlayerId = strangerId, MapId = mapId, X = player.X + 1, Y = player.Y, Guild = true }];
+            renderer.Calls.Clear(); render.Invoke(map, [skin]);
+            Check(renderer.Calls.Any(call => SameRgb(call.Color, 195, 125, 255)), "World Map guild marker missing");
+            Globals.WorldMapSocialMarkers = social;
             Check(!renderer.Calls.Any(call => SameRgb(call.Color, 86, 96, 104) || SameRgb(call.Color, 255, 214, 92)),
                 "Map grid lines / yellow selection square must not be rendered");
             renderer.Calls.Clear();
@@ -122,6 +149,18 @@ internal static class WorldMapTests
             var beforePan = (float)panX.GetValue(mini)!;
             player.X++; render.Invoke(mini, [skin]);
             Check((float)panX.GetValue(mini)! < beforePan, "Minimap must follow player movement");
+            var nearby = (Player)RuntimeHelpers.GetUninitializedObject(typeof(Player)); GC.SuppressFinalize(nearby);
+            nearby.Id = strangerId; nearby.MapId = mapId; nearby.X = (byte)(player.X + 1); nearby.Y = player.Y;
+            typeof(Intersect.Client.Entities.Entity).GetProperty("Status")!.SetValue(nearby, new List<Intersect.Client.Framework.Entities.IStatus>());
+            Globals.Entities[strangerId] = nearby;
+            renderer.Calls.Clear(); render.Invoke(mini, [skin]);
+            Check(renderer.Calls.Any(call => SameRgb(call.Color, 210, 210, 215)), "Minimap must display visible nearby players outside social groups");
+            player.Guild = "Test guild"; nearby.Guild = "Test guild";
+            renderer.Calls.Clear(); render.Invoke(mini, [skin]);
+            Check(renderer.Calls.Any(call => SameRgb(call.Color, 195, 125, 255)), "Minimap must distinguish guild members");
+            nearby.IsHidden = true; renderer.Calls.Clear(); render.Invoke(mini, [skin]);
+            Check(!renderer.Calls.Any(call => SameRgb(call.Color, 195, 125, 255)), "Hidden players must not leak onto the minimap");
+            Globals.Entities.Remove(strangerId); player.Guild = null;
 
             var legend = new WorldMapLegend { Entries = [new() { AnimationId = animation.Id, Label = "Potion shop" }] };
             Globals.WorldMapLegend = WorldMapLegend.FromJson(legend.ToJson());
@@ -131,7 +170,7 @@ internal static class WorldMapTests
             var update = legendType.GetMethod("OnPreDraw", flags)!;
             update.Invoke(view, [skin]);
             var rows = (System.Collections.ICollection)legendType.GetField("_rows", flags)!.GetValue(view)!;
-            Check(rows.Count == 5, "Legend must include location keys and configured animation entries");
+            Check(rows.Count == 6, "Legend must include guild and configured animation entries");
             var legendRow = rows.Cast<ControlBase>().Last();
             var legendIcon = legendRow.Children.Single(child => child.GetType().Name == "LegendIcon");
             Check(legendRow.Height == 52 && legendIcon.Width == 52 && legendRow.Children.All(child => child.Bottom <= legendRow.Height),
@@ -140,10 +179,11 @@ internal static class WorldMapTests
             Check(renderer.Textures.Count == 1 && Math.Max(renderer.Textures[0].Width, renderer.Textures[0].Height) == 48,
                 "Legend animation must fill a 48px icon using visible pixels");
             Globals.WorldMapLegend = new(); update.Invoke(view, [skin]);
-            Check(rows.Count == 4, "Live legend changes must rebuild without stale controls");
+            Check(rows.Count == 5, "Live legend changes must rebuild without stale controls");
             var state = new WorldMapStatePacket { Players = Globals.WorldMapSocialMarkers, LegendJson = legend.ToJson() };
+            state.Players[0].Guild = true;
             var decoded = MessagePackSerializer.Deserialize<WorldMapStatePacket>(MessagePackSerializer.Serialize(state));
-            Check(decoded.Players.Length == 2 && decoded.Players[0].Party && decoded.LegendJson == state.LegendJson,
+            Check(decoded.Players.Length == 2 && decoded.Players[0].Party && decoded.Players[0].Guild && decoded.LegendJson == state.LegendJson,
                 "World Map state wire round-trip");
             Check(!MessagePackSerializer.Deserialize<RequestWorldMapPacket>(new byte[] { 0x90 }).StateOnly,
                 "Existing full World Map requests must remain supported");
@@ -156,6 +196,7 @@ internal static class WorldMapTests
             Globals.GridMaps.Clear(); foreach (var pair in oldGridMaps) Globals.GridMaps[pair.Key] = pair.Value;
             Globals.WorldMapSocialMarkers = oldMarkers; Globals.WorldMapLegend = oldLegend;
             Globals.WorldMapEventMarkers = oldEventMarkers; AnimationDescriptor.Lookup.DeleteAt(animation.Id);
+            ResourceDescriptor.Lookup.DeleteAt(resource.Id); Globals.Entities.Remove(strangerId);
             Globals.WorldMapStateReceivedAt = oldReceived; throttle.SetValue(null, oldThrottle);
             typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, oldOptions);
         }

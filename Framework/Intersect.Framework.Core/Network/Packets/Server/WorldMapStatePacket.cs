@@ -18,4 +18,5 @@ public sealed class WorldMapSocialMarker
     [Key(3)] public int X { get; set; }
     [Key(4)] public int Y { get; set; }
     [Key(5)] public bool Party { get; set; }
+    [Key(6)] public bool Guild { get; set; }
 }

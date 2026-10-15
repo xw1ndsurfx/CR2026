@@ -517,10 +517,11 @@ internal partial class MonoRenderer : GameRenderer
         if (borderColor != null && borderColor != Color.Transparent)
         {
             var platformBorderColor = ConvertColor(borderColor);
+            var outlineOffset = Math.Clamp(fontScale, 0.0625f, 4f);
             _spriteBatch.DrawString(
                 spriteFont,
                 text,
-                new Vector2(x, y - 1),
+                new Vector2(x, y - outlineOffset),
                 platformBorderColor,
                 0f,
                 Vector2.Zero,
@@ -532,7 +533,7 @@ internal partial class MonoRenderer : GameRenderer
             _spriteBatch.DrawString(
                 spriteFont,
                 text,
-                new Vector2(x - 1, y),
+                new Vector2(x - outlineOffset, y),
                 platformBorderColor,
                 0f,
                 Vector2.Zero,
@@ -544,7 +545,7 @@ internal partial class MonoRenderer : GameRenderer
             _spriteBatch.DrawString(
                 spriteFont,
                 text,
-                new Vector2(x + 1, y),
+                new Vector2(x + outlineOffset, y),
                 platformBorderColor,
                 0f,
                 Vector2.Zero,
@@ -556,7 +557,7 @@ internal partial class MonoRenderer : GameRenderer
             _spriteBatch.DrawString(
                 spriteFont,
                 text,
-                new Vector2(x, y + 1),
+                new Vector2(x, y + outlineOffset),
                 platformBorderColor,
                 0f,
                 Vector2.Zero,
