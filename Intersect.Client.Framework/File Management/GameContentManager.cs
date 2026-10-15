@@ -33,6 +33,8 @@ public abstract partial class GameContentManager : IContentManager
 
     protected readonly Dictionary<string, IAsset> mAnimationDict = [];
 
+    protected readonly Dictionary<string, IAsset> mBadgeDict = [];
+
     protected readonly Dictionary<string, IAsset> mEntityDict = [];
 
     protected readonly Dictionary<string, IAsset> mFaceDict = [];
@@ -114,6 +116,7 @@ public abstract partial class GameContentManager : IContentManager
     public void LoadAll()
     {
         LoadTexturePacks();
+        LoadBadges();
         LoadEntities();
         LoadItems();
         LoadAnimations();
@@ -131,6 +134,10 @@ public abstract partial class GameContentManager : IContentManager
     }
 
     public abstract void LoadTexturePacks();
+
+    public virtual void LoadBadges()
+    {
+    }
 
     public abstract void LoadTilesets(string[] tilesetnames);
 
@@ -231,6 +238,9 @@ public abstract partial class GameContentManager : IContentManager
 
             case TextureType.Misc:
                 return mMiscDict.Keys.ToArray();
+
+            case TextureType.Badge:
+                return mBadgeDict.Keys.ToArray();
         }
 
         return null;
@@ -320,6 +330,11 @@ public abstract partial class GameContentManager : IContentManager
 
             case TextureType.Misc:
                 textureDict = mMiscDict;
+
+                break;
+
+            case TextureType.Badge:
+                textureDict = mBadgeDict;
 
                 break;
 

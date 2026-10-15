@@ -1,4 +1,4 @@
-﻿using Intersect.Enums;
+using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Events;
 using MessagePack;
@@ -46,4 +46,7 @@ public partial class PlayerEntityPacket : EntityPacket
 
     [Key(32)]
     public bool IsAfk { get; set; }
+
+    [Key(33)]
+    public int BadgeId { get; set; }
 }
