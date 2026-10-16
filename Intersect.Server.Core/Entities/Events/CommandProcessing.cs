@@ -51,7 +51,7 @@ public static partial class CommandProcessing
     )
     {
         PacketSender.SendEventDialog(
-            player, ParseEventText(command.Text, player, instance), command.Face, instance.PageInstance.Id
+            player, ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Text, player.Client?.LanguageCode ?? "en"), player, instance), command.Face, instance.PageInstance.Id
         );
 
         stackInfo.WaitingForResponse = CommandInstance.EventResponse.Dialogue;
@@ -66,11 +66,11 @@ public static partial class CommandProcessing
         Stack<CommandInstance> callStack
     )
     {
-        var txt = ParseEventText(command.Text, player, instance);
-        var opt1 = ParseEventText(command.Options[0], player, instance);
-        var opt2 = ParseEventText(command.Options[1], player, instance);
-        var opt3 = ParseEventText(command.Options[2], player, instance);
-        var opt4 = ParseEventText(command.Options[3], player, instance);
+        var txt = ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Text, player.Client?.LanguageCode ?? "en"), player, instance);
+        var opt1 = ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Options[0], player.Client?.LanguageCode ?? "en"), player, instance);
+        var opt2 = ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Options[1], player.Client?.LanguageCode ?? "en"), player, instance);
+        var opt3 = ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Options[2], player.Client?.LanguageCode ?? "en"), player, instance);
+        var opt4 = ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Options[3], player.Client?.LanguageCode ?? "en"), player, instance);
         PacketSender.SendEventDialog(player, txt, opt1, opt2, opt3, opt4, command.Face, instance.PageInstance.Id);
         stackInfo.WaitingForResponse = CommandInstance.EventResponse.Dialogue;
         stackInfo.WaitingOnCommand = command;
@@ -86,8 +86,8 @@ public static partial class CommandProcessing
         Stack<CommandInstance> callStack
     )
     {
-        var title = ParseEventText(command.Title, player, instance);
-        var txt = ParseEventText(command.Text, player, instance);
+        var title = ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Title, player.Client?.LanguageCode ?? "en"), player, instance);
+        var txt = ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Text, player.Client?.LanguageCode ?? "en"), player, instance);
         var type = -1;
 
         if (command.VariableType == VariableType.PlayerVariable)
@@ -143,6 +143,7 @@ public static partial class CommandProcessing
         switch (command.Channel)
         {
             case ChatboxChannel.Player:
+                txt = ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Text, player.Client?.LanguageCode ?? "en"), player, instance);
                 PacketSender.SendChatMsg(player, txt, command.MessageType, color);
 
                 break;

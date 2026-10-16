@@ -1,0 +1,4634 @@
+{
+  "Entries": {
+    "Access": {
+      "en": "Access",
+      "fr": "Accès",
+      "es": "Acceso"
+    },
+    "Moderator": {
+      "en": "Moderator",
+      "fr": "Modérateur",
+      "es": "Moderador"
+    },
+    "Admin": {
+      "en": "Admin",
+      "fr": "Administrateur",
+      "es": "Administrador"
+    },
+    "Ban": {
+      "en": "Ban",
+      "fr": "Bannir",
+      "es": "Expulsar"
+    },
+    "Ban {00}": {
+      "en": "Ban {00}",
+      "fr": "Bannir {00}",
+      "es": "Expulsar a {00}"
+    },
+    "Banning {00} will not allow them to access this game for the duration you set!": {
+      "en": "Banning {00} will not allow them to access this game for the duration you set!",
+      "fr": "Bannir {00} lui interdira l'accès au jeu pendant la durée choisie !",
+      "es": "¡Expulsar a {00} le impedirá acceder al juego durante el tiempo indicado!"
+    },
+    "Face": {
+      "en": "Face",
+      "fr": "Portrait",
+      "es": "Retrato"
+    },
+    "Kick": {
+      "en": "Kick",
+      "fr": "Déconnecter",
+      "es": "Desconectar"
+    },
+    "Kill": {
+      "en": "Kill",
+      "fr": "Tuer",
+      "es": "Matar"
+    },
+    "Leave Instance": {
+      "en": "Leave Instance",
+      "fr": "Quitter l'instance",
+      "es": "Salir de la instancia"
+    },
+    "Map List": {
+      "en": "Map List",
+      "fr": "Liste des cartes",
+      "es": "Lista de mapas"
+    },
+    "Mute": {
+      "en": "Mute",
+      "fr": "Rendre muet",
+      "es": "Silenciar"
+    },
+    "Mute {00}": {
+      "en": "Mute {00}",
+      "fr": "Rendre {00} muet",
+      "es": "Silenciar a {00}"
+    },
+    "Muting {00} will not allow them to chat in game for the duration you set!": {
+      "en": "Muting {00} will not allow them to chat in game for the duration you set!",
+      "fr": "Rendre {00} muet l'empêchera de discuter pendant la durée choisie !",
+      "es": "¡Silenciar a {00} le impedirá chatear durante el tiempo indicado!"
+    },
+    "Name": {
+      "en": "Name",
+      "fr": "Nom",
+      "es": "Nombre"
+    },
+    "Player Name": {
+      "en": "Player Name",
+      "fr": "Nom du joueur",
+      "es": "Nombre del jugador"
+    },
+    "None": {
+      "en": "None",
+      "fr": "Aucun",
+      "es": "Ninguno"
+    },
+    "Set Face": {
+      "en": "Set Face",
+      "fr": "Définir le portrait",
+      "es": "Definir retrato"
+    },
+    "Set Power": {
+      "en": "Set Power",
+      "fr": "Définir les droits",
+      "es": "Definir permisos"
+    },
+    "Set Sprite": {
+      "en": "Set Sprite",
+      "fr": "Définir l'apparence",
+      "es": "Definir apariencia"
+    },
+    "Sort map list": {
+      "en": "Sort map list",
+      "fr": "Trier les cartes",
+      "es": "Ordenar mapas"
+    },
+    "Order maps in a flat hierarchy in alphanumeric order according to the computer locale.": {
+      "en": "Order maps in a flat hierarchy in alphanumeric order according to the computer locale.",
+      "fr": "Trier les cartes par ordre alphanumérique selon la langue de l'ordinateur.",
+      "es": "Ordenar los mapas alfanuméricamente según el idioma del equipo."
+    },
+    "Sprite:": {
+      "en": "Sprite:",
+      "fr": "Apparence :",
+      "es": "Apariencia:"
+    },
+    "Administration": {
+      "en": "Administration",
+      "fr": "Administration",
+      "es": "Administración"
+    },
+    "Unban": {
+      "en": "Unban",
+      "fr": "Débannir",
+      "es": "Revocar expulsión"
+    },
+    "Unban {00}": {
+      "en": "Unban {00}",
+      "fr": "Débannir {00}",
+      "es": "Revocar expulsión de {00}"
+    },
+    "Are you sure that you want to unban {00}?": {
+      "en": "Are you sure that you want to unban {00}?",
+      "fr": "Veux-tu vraiment débannir {00} ?",
+      "es": "¿Seguro que quieres revocar la expulsión de {00}?"
+    },
+    "Unmute": {
+      "en": "Unmute",
+      "fr": "Rétablir la parole",
+      "es": "Quitar silencio"
+    },
+    "Unmute {00}": {
+      "en": "Unmute {00}",
+      "fr": "Rétablir la parole de {00}",
+      "es": "Quitar silencio a {00}"
+    },
+    "Are you sure that you want to unmute {00}?": {
+      "en": "Are you sure that you want to unmute {00}?",
+      "fr": "Veux-tu vraiment rétablir la parole de {00} ?",
+      "es": "¿Seguro que quieres quitar el silencio a {00}?"
+    },
+    "Warp Me To": {
+      "en": "Warp Me To",
+      "fr": "Me téléporter vers",
+      "es": "Teletransportarme a"
+    },
+    "Warp To Me": {
+      "en": "Warp To Me",
+      "fr": "Téléporter vers moi",
+      "es": "Teletransportar hacia mí"
+    },
+    "Alert": {
+      "en": "Alert",
+      "fr": "Alerte",
+      "es": "Alerta"
+    },
+    "Error": {
+      "en": "Error",
+      "fr": "Erreur",
+      "es": "Error"
+    },
+    "Warning": {
+      "en": "Warning",
+      "fr": "Avertissement",
+      "es": "Advertencia"
+    },
+    "Withdraw {00}": {
+      "en": "Withdraw {00}",
+      "fr": "Retirer {00}",
+      "es": "Retirar {00}"
+    },
+    "Retrieve Item": {
+      "en": "Retrieve Item",
+      "fr": "Récupérer l'objet",
+      "es": "Recuperar objeto"
+    },
+    "How many/much {00} would you like to retrieve?": {
+      "en": "How many/much {00} would you like to retrieve?",
+      "fr": "Combien de {00} veux-tu récupérer ?",
+      "es": "¿Cuántos {00} quieres recuperar?"
+    },
+    "Store Item": {
+      "en": "Store Item",
+      "fr": "Ranger l'objet",
+      "es": "Guardar objeto"
+    },
+    "How many/much {00} would you like to store?": {
+      "en": "How many/much {00} would you like to store?",
+      "fr": "Combien de {00} veux-tu ranger ?",
+      "es": "¿Cuántos {00} quieres guardar?"
+    },
+    "Bag": {
+      "en": "Bag",
+      "fr": "Sac",
+      "es": "Bolsa"
+    },
+    "Cancel": {
+      "en": "Cancel",
+      "fr": "Annuler",
+      "es": "Cancelar"
+    },
+    "Duration:": {
+      "en": "Duration:",
+      "fr": "Durée :",
+      "es": "Duración:"
+    },
+    "5 days": {
+      "en": "5 days",
+      "fr": "5 jours",
+      "es": "5 días"
+    },
+    "Indefinitely": {
+      "en": "Indefinitely",
+      "fr": "Indéfiniment",
+      "es": "Indefinidamente"
+    },
+    "4 days": {
+      "en": "4 days",
+      "fr": "4 jours",
+      "es": "4 días"
+    },
+    "Include IP:": {
+      "en": "Include IP:",
+      "fr": "Inclure l'IP :",
+      "es": "Incluir IP:"
+    },
+    "Okay": {
+      "en": "Okay",
+      "fr": "OK",
+      "es": "Aceptar"
+    },
+    "1 day": {
+      "en": "1 day",
+      "fr": "1 jour",
+      "es": "1 día"
+    },
+    "1 month": {
+      "en": "1 month",
+      "fr": "1 mois",
+      "es": "1 mes"
+    },
+    "1 week": {
+      "en": "1 week",
+      "fr": "1 semaine",
+      "es": "1 semana"
+    },
+    "1 year": {
+      "en": "1 year",
+      "fr": "1 an",
+      "es": "1 año"
+    },
+    "Reason:": {
+      "en": "Reason:",
+      "fr": "Raison :",
+      "es": "Motivo:"
+    },
+    "6 months": {
+      "en": "6 months",
+      "fr": "6 mois",
+      "es": "6 meses"
+    },
+    "3 days": {
+      "en": "3 days",
+      "fr": "3 jours",
+      "es": "3 días"
+    },
+    "2 days": {
+      "en": "2 days",
+      "fr": "2 jours",
+      "es": "2 días"
+    },
+    "2 months": {
+      "en": "2 months",
+      "fr": "2 mois",
+      "es": "2 meses"
+    },
+    "2 weeks": {
+      "en": "2 weeks",
+      "fr": "2 semaines",
+      "es": "2 semanas"
+    },
+    "Deposit Item": {
+      "en": "Deposit Item",
+      "fr": "Déposer l'objet",
+      "es": "Depositar objeto"
+    },
+    "How many/much {00} would you like to deposit?": {
+      "en": "How many/much {00} would you like to deposit?",
+      "fr": "Combien de {00} veux-tu déposer ?",
+      "es": "¿Cuántos {00} quieres depositar?"
+    },
+    "There is no space left in your bank for that item!": {
+      "en": "There is no space left in your bank for that item!",
+      "fr": "Il n'y a plus de place pour cet objet dans ta banque !",
+      "es": "¡No hay espacio para ese objeto en tu banco!"
+    },
+    "Bank": {
+      "en": "Bank",
+      "fr": "Banque",
+      "es": "Banco"
+    },
+    "Withdraw Item": {
+      "en": "Withdraw Item",
+      "fr": "Retirer l'objet",
+      "es": "Retirar objeto"
+    },
+    "There is no space left in your inventory for that item!": {
+      "en": "There is no space left in your inventory for that item!",
+      "fr": "Il n'y a plus de place pour cet objet dans ton inventaire !",
+      "es": "¡No hay espacio para ese objeto en tu inventario!"
+    },
+    "How many/much {00} would you like to withdraw?": {
+      "en": "How many/much {00} would you like to withdraw?",
+      "fr": "Combien de {00} veux-tu retirer ?",
+      "es": "¿Cuántos {00} quieres retirar?"
+    },
+    "Attack Speed: {00}s": {
+      "en": "Attack Speed: {00}s",
+      "fr": "Vitesse d'attaque : {00}s",
+      "es": "Velocidad de ataque: {00}s"
+    },
+    "Cooldown Reduction: {00}%": {
+      "en": "Cooldown Reduction: {00}%",
+      "fr": "Réduction des délais : {00}%",
+      "es": "Reducción de enfriamiento: {00}%"
+    },
+    "Equipment:": {
+      "en": "Equipment:",
+      "fr": "Équipement :",
+      "es": "Equipo:"
+    },
+    "Details": {
+      "en": "Details",
+      "fr": "Détails",
+      "es": "Detalles"
+    },
+    "Bonus EXP: {00}%": {
+      "en": "Bonus EXP: {00}%",
+      "fr": "EXP bonus : {00}%",
+      "es": "EXP adicional: {00}%"
+    },
+    "Health Regen: {00}%": {
+      "en": "Health Regen: {00}%",
+      "fr": "Régénération de vie : {00}%",
+      "es": "Regeneración de salud: {00}%"
+    },
+    "Level: {00}, Class: {01}": {
+      "en": "Level: {00}, Class: {01}",
+      "fr": "Niveau : {00}, Classe : {01}",
+      "es": "Nivel: {00}, Clase: {01}"
+    },
+    "Lifesteal: {00}%": {
+      "en": "Lifesteal: {00}%",
+      "fr": "Vol de vie : {00}%",
+      "es": "Robo de vida: {00}%"
+    },
+    "Luck: {00}%": {
+      "en": "Luck: {00}%",
+      "fr": "Chance : {00}%",
+      "es": "Suerte: {00}%"
+    },
+    "Mana Regen: {00}%": {
+      "en": "Mana Regen: {00}%",
+      "fr": "Régénération de mana : {00}%",
+      "es": "Regeneración de maná: {00}%"
+    },
+    "Manasteal: {00}%": {
+      "en": "Manasteal: {00}%",
+      "fr": "Vol de mana : {00}%",
+      "es": "Robo de maná: {00}%"
+    },
+    "Points: {00}": {
+      "en": "Points: {00}",
+      "fr": "Points : {00}",
+      "es": "Puntos: {00}"
+    },
+    "{00}: {01}": {
+      "en": "{00}: {01}",
+      "fr": "{00} : {01}",
+      "es": "{00}: {01}"
+    },
+    "Stats:": {
+      "en": "Stats:",
+      "fr": "Statistiques :",
+      "es": "Estadísticas:"
+    },
+    "Tenacity: {00}%": {
+      "en": "Tenacity: {00}%",
+      "fr": "Ténacité : {00}%",
+      "es": "Tenacidad: {00}%"
+    },
+    "Character Information": {
+      "en": "Character Information",
+      "fr": "Informations du personnage",
+      "es": "Información del personaje"
+    },
+    "Back": {
+      "en": "Back",
+      "fr": "Retour",
+      "es": "Volver"
+    },
+    "Class": {
+      "en": "Class",
+      "fr": "Classe",
+      "es": "Clase"
+    },
+    "Create": {
+      "en": "Create",
+      "fr": "Créer",
+      "es": "Crear"
+    },
+    "Female": {
+      "en": "Female",
+      "fr": "Femme",
+      "es": "Mujer"
+    },
+    "Gender": {
+      "en": "Gender",
+      "fr": "Genre",
+      "es": "Género"
+    },
+    "Customize": {
+      "en": "Customize",
+      "fr": "Personnaliser",
+      "es": "Personalizar"
+    },
+    "Your Character": {
+      "en": "Your Character",
+      "fr": "Ton personnage",
+      "es": "Tu personaje"
+    },
+    "Character name is invalid. Please use alphanumeric characters with a length between 2 and 20.": {
+      "en": "Character name is invalid. Please use alphanumeric characters with a length between 2 and 20.",
+      "fr": "Nom de personnage invalide. Utilise entre 2 et 20 caractères alphanumériques.",
+      "es": "Nombre de personaje no válido. Usa entre 2 y 20 caracteres alfanuméricos."
+    },
+    "Male": {
+      "en": "Male",
+      "fr": "Homme",
+      "es": "Hombre"
+    },
+    "Create a New Character": {
+      "en": "Create a New Character",
+      "fr": "Créer un personnage",
+      "es": "Crear un personaje"
+    },
+    "Change Password": {
+      "en": "Change Password",
+      "fr": "Changer le mot de passe",
+      "es": "Cambiar contraseña"
+    },
+    "Delete": {
+      "en": "Delete",
+      "fr": "Supprimer",
+      "es": "Eliminar"
+    },
+    "Are you sure you want to delete {00}? This action is irreversible!": {
+      "en": "Are you sure you want to delete {00}? This action is irreversible!",
+      "fr": "Veux-tu vraiment supprimer {00} ? Cette action est irréversible !",
+      "es": "¿Seguro que quieres eliminar a {00}? ¡Esta acción es irreversible!"
+    },
+    "Delete {00}": {
+      "en": "Delete {00}",
+      "fr": "Supprimer {00}",
+      "es": "Eliminar a {00}"
+    },
+    "Empty Character Slot": {
+      "en": "Empty Character Slot",
+      "fr": "Emplacement vide",
+      "es": "Espacio vacío"
+    },
+    "Logout": {
+      "en": "Logout",
+      "fr": "Déconnexion",
+      "es": "Cerrar sesión"
+    },
+    "{00}": {
+      "en": "{00}",
+      "fr": "{00}",
+      "es": "{00}"
+    },
+    "New": {
+      "en": "New",
+      "fr": "Nouveau",
+      "es": "Nuevo"
+    },
+    "Play": {
+      "en": "Play",
+      "fr": "Jouer",
+      "es": "Jugar"
+    },
+    "Select a Character to Play": {
+      "en": "Select a Character to Play",
+      "fr": "Choisir un personnage",
+      "es": "Seleccionar un personaje"
+    },
+    "Send Friend request to {00}": {
+      "en": "Send Friend request to {00}",
+      "fr": "Demander {00} en ami",
+      "es": "Enviar solicitud de amistad a {00}"
+    },
+    "Invite {00} to Guild": {
+      "en": "Invite {00} to Guild",
+      "fr": "Inviter {00} dans la guilde",
+      "es": "Invitar a {00} al gremio"
+    },
+    "Send Private Message to {00}": {
+      "en": "Send Private Message to {00}",
+      "fr": "Envoyer un message privé à {00}",
+      "es": "Enviar mensaje privado a {00}"
+    },
+    "Invite {00} to Party": {
+      "en": "Invite {00} to Party",
+      "fr": "Inviter {00} dans le groupe",
+      "es": "Invitar a {00} al grupo"
+    },
+    "Channel:": {
+      "en": "Channel:",
+      "fr": "Canal :",
+      "es": "Canal:"
+    },
+    "admin": {
+      "en": "admin",
+      "fr": "admin",
+      "es": "admin"
+    },
+    "local": {
+      "en": "local",
+      "fr": "local",
+      "es": "local"
+    },
+    "global": {
+      "en": "global",
+      "fr": "global",
+      "es": "global"
+    },
+    "party": {
+      "en": "party",
+      "fr": "groupe",
+      "es": "grupo"
+    },
+    "guild": {
+      "en": "guild",
+      "fr": "guilde",
+      "es": "gremio"
+    },
+    "All": {
+      "en": "All",
+      "fr": "Tout",
+      "es": "Todo"
+    },
+    "Global": {
+      "en": "Global",
+      "fr": "Global",
+      "es": "Global"
+    },
+    "Guild": {
+      "en": "Guild",
+      "fr": "Guilde",
+      "es": "Gremio"
+    },
+    "Local": {
+      "en": "Local",
+      "fr": "Local",
+      "es": "Local"
+    },
+    "Party": {
+      "en": "Party",
+      "fr": "Groupe",
+      "es": "Grupo"
+    },
+    "System": {
+      "en": "System",
+      "fr": "Système",
+      "es": "Sistema"
+    },
+    "Clear chat log messages": {
+      "en": "Clear chat log messages",
+      "fr": "Effacer l'historique de discussion",
+      "es": "Borrar historial del chat"
+    },
+    "Click here to chat.": {
+      "en": "Click here to chat.",
+      "fr": "Clique ici pour discuter.",
+      "es": "Haz clic aquí para chatear."
+    },
+    "Press '{00}' to chat.": {
+      "en": "Press '{00}' to chat.",
+      "fr": "Appuie sur « {00} » pour discuter.",
+      "es": "Pulsa «{00}» para chatear."
+    },
+    "Press '{00}' or '{01}' to chat.": {
+      "en": "Press '{00}' or '{01}' to chat.",
+      "fr": "Appuie sur « {00} » ou « {01} » pour discuter.",
+      "es": "Pulsa «{00}» o «{01}» para chatear."
+    },
+    "Send": {
+      "en": "Send",
+      "fr": "Envoyer",
+      "es": "Enviar"
+    },
+    "Chat": {
+      "en": "Chat",
+      "fr": "Discussion",
+      "es": "Chat"
+    },
+    "Toggle chat log visibility": {
+      "en": "Toggle chat log visibility",
+      "fr": "Afficher ou masquer l'historique",
+      "es": "Mostrar u ocultar historial"
+    },
+    "You are chatting too fast!": {
+      "en": "You are chatting too fast!",
+      "fr": "Tu envoies des messages trop vite !",
+      "es": "¡Estás enviando mensajes demasiado rápido!"
+    },
+    "It appears you are not able to copy/paste on this platform. Please make sure you have either the 'xclip' or 'wl-clipboard' packages installed if you are running Linux.": {
+      "en": "It appears you are not able to copy/paste on this platform. Please make sure you have either the 'xclip' or 'wl-clipboard' packages installed if you are running Linux.",
+      "fr": "Le copier-coller semble indisponible. Sous Linux, vérifie que « xclip » ou « wl-clipboard » est installé.",
+      "es": "Parece que no puedes copiar y pegar. En Linux, comprueba que «xclip» o «wl-clipboard» esté instalado."
+    },
+    "You cannot attack while casting a spell.": {
+      "en": "You cannot attack while casting a spell.",
+      "fr": "Tu ne peux pas attaquer pendant une incantation.",
+      "es": "No puedes atacar mientras lanzas un hechizo."
+    },
+    "Ability Power": {
+      "en": "Ability Power",
+      "fr": "Puissance magique",
+      "es": "Poder mágico"
+    },
+    "Attack": {
+      "en": "Attack",
+      "fr": "Attaque",
+      "es": "Ataque"
+    },
+    "Defense": {
+      "en": "Defense",
+      "fr": "Défense",
+      "es": "Defensa"
+    },
+    "Magic Resist": {
+      "en": "Magic Resist",
+      "fr": "Résistance magique",
+      "es": "Resistencia mágica"
+    },
+    "Speed": {
+      "en": "Speed",
+      "fr": "Vitesse",
+      "es": "Velocidad"
+    },
+    "You are attempting to logout while in combat! Your character will remain in-game until combat has ended. Are you sure you want to logout now?": {
+      "en": "You are attempting to logout while in combat! Your character will remain in-game until combat has ended. Are you sure you want to logout now?",
+      "fr": "Tu te déconnectes pendant un combat ! Ton personnage restera en jeu jusqu'à la fin du combat. Continuer ?",
+      "es": "¡Estás cerrando sesión en combate! Tu personaje permanecerá en el juego hasta que termine. ¿Continuar?"
+    },
+    "You are attempting to exit while in combat! Your character will remain in-game until combat has ended. Are you sure you want to quit now?": {
+      "en": "You are attempting to exit while in combat! Your character will remain in-game until combat has ended. Are you sure you want to quit now?",
+      "fr": "Tu quittes pendant un combat ! Ton personnage restera en jeu jusqu'à la fin du combat. Continuer ?",
+      "es": "¡Estás saliendo en combate! Tu personaje permanecerá en el juego hasta que termine. ¿Continuar?"
+    },
+    "Combat Warning!": {
+      "en": "Combat Warning!",
+      "fr": "Attention : combat !",
+      "es": "¡Advertencia de combate!"
+    },
+    "Animation": {
+      "en": "Animation",
+      "fr": "Animation",
+      "es": "Animación"
+    },
+    "Entity": {
+      "en": "Entity",
+      "fr": "Entité",
+      "es": "Entidad"
+    },
+    "Fog": {
+      "en": "Fog",
+      "fr": "Brouillard",
+      "es": "Niebla"
+    },
+    "Font": {
+      "en": "Font",
+      "fr": "Police",
+      "es": "Fuente"
+    },
+    "Interface (gui)": {
+      "en": "Interface (gui)",
+      "fr": "Interface (gui)",
+      "es": "Interfaz (gui)"
+    },
+    "Image": {
+      "en": "Image",
+      "fr": "Image",
+      "es": "Imagen"
+    },
+    "Item": {
+      "en": "Item",
+      "fr": "Objet",
+      "es": "Objeto"
+    },
+    "Miscellaneous": {
+      "en": "Miscellaneous",
+      "fr": "Divers",
+      "es": "Varios"
+    },
+    "Music": {
+      "en": "Music",
+      "fr": "Musique",
+      "es": "Música"
+    },
+    "Paperdoll": {
+      "en": "Paperdoll",
+      "fr": "Apparence d'équipement",
+      "es": "Apariencia del equipo"
+    },
+    "Resource": {
+      "en": "Resource",
+      "fr": "Ressource",
+      "es": "Recurso"
+    },
+    "Shader": {
+      "en": "Shader",
+      "fr": "Shader",
+      "es": "Shader"
+    },
+    "Sound": {
+      "en": "Sound",
+      "fr": "Son",
+      "es": "Sonido"
+    },
+    "Spell": {
+      "en": "Spell",
+      "fr": "Sort",
+      "es": "Hechizo"
+    },
+    "Texture Atlas": {
+      "en": "Texture Atlas",
+      "fr": "Atlas de textures",
+      "es": "Atlas de texturas"
+    },
+    "Tileset": {
+      "en": "Tileset",
+      "fr": "Jeu de tuiles",
+      "es": "Conjunto de tiles"
+    },
+    "Hot Key {00}:": {
+      "en": "Hot Key {00}:",
+      "fr": "Raccourci {00} :",
+      "es": "Atajo {00}:"
+    },
+    "Attack/Interact:": {
+      "en": "Attack/Interact:",
+      "fr": "Attaquer/Interagir :",
+      "es": "Atacar/Interactuar:"
+    },
+    "Auto Target:": {
+      "en": "Auto Target:",
+      "fr": "Ciblage automatique :",
+      "es": "Objetivo automático:"
+    },
+    "Block:": {
+      "en": "Block:",
+      "fr": "Bloquer :",
+      "es": "Bloquear:"
+    },
+    "Chat:": {
+      "en": "Chat:",
+      "fr": "Discussion :",
+      "es": "Chat:"
+    },
+    "Hold to Soft-Retarget on Self-Cast:": {
+      "en": "Hold to Soft-Retarget on Self-Cast:",
+      "fr": "Maintenir pour recibler un sort sur soi :",
+      "es": "Mantener para redirigir un hechizo propio:"
+    },
+    "Hold to Zoom In:": {
+      "en": "Hold to Zoom In:",
+      "fr": "Maintenir pour zoomer :",
+      "es": "Mantener para acercar:"
+    },
+    "Hold to Zoom Out:": {
+      "en": "Hold to Zoom Out:",
+      "fr": "Maintenir pour dézoomer :",
+      "es": "Mantener para alejar:"
+    },
+    "Hot Key 1:": {
+      "en": "Hot Key 1:",
+      "fr": "Raccourci 1 :",
+      "es": "Atajo 1:"
+    },
+    "Hot Key 10:": {
+      "en": "Hot Key 10:",
+      "fr": "Raccourci 10 :",
+      "es": "Atajo 10:"
+    },
+    "Hot Key 2:": {
+      "en": "Hot Key 2:",
+      "fr": "Raccourci 2 :",
+      "es": "Atajo 2:"
+    },
+    "Hot Key 3:": {
+      "en": "Hot Key 3:",
+      "fr": "Raccourci 3 :",
+      "es": "Atajo 3:"
+    },
+    "Hot Key 4:": {
+      "en": "Hot Key 4:",
+      "fr": "Raccourci 4 :",
+      "es": "Atajo 4:"
+    },
+    "Hot Key 5:": {
+      "en": "Hot Key 5:",
+      "fr": "Raccourci 5 :",
+      "es": "Atajo 5:"
+    },
+    "Hot Key 6:": {
+      "en": "Hot Key 6:",
+      "fr": "Raccourci 6 :",
+      "es": "Atajo 6:"
+    },
+    "Hot Key 7:": {
+      "en": "Hot Key 7:",
+      "fr": "Raccourci 7 :",
+      "es": "Atajo 7:"
+    },
+    "Hot Key 8:": {
+      "en": "Hot Key 8:",
+      "fr": "Raccourci 8 :",
+      "es": "Atajo 8:"
+    },
+    "Hot Key 9:": {
+      "en": "Hot Key 9:",
+      "fr": "Raccourci 9 :",
+      "es": "Atajo 9:"
+    },
+    "Down:": {
+      "en": "Down:",
+      "fr": "Bas :",
+      "es": "Abajo:"
+    },
+    "Left:": {
+      "en": "Left:",
+      "fr": "Gauche :",
+      "es": "Izquierda:"
+    },
+    "Right:": {
+      "en": "Right:",
+      "fr": "Droite :",
+      "es": "Derecha:"
+    },
+    "Up:": {
+      "en": "Up:",
+      "fr": "Haut :",
+      "es": "Arriba:"
+    },
+    "Open Admin Panel:": {
+      "en": "Open Admin Panel:",
+      "fr": "Ouvrir l'administration :",
+      "es": "Abrir administración:"
+    },
+    "Open Character Info:": {
+      "en": "Open Character Info:",
+      "fr": "Ouvrir le personnage :",
+      "es": "Abrir personaje:"
+    },
+    "Open Debugger:": {
+      "en": "Open Debugger:",
+      "fr": "Ouvrir le débogueur :",
+      "es": "Abrir depurador:"
+    },
+    "Open Friends:": {
+      "en": "Open Friends:",
+      "fr": "Ouvrir les amis :",
+      "es": "Abrir amigos:"
+    },
+    "Open Guild:": {
+      "en": "Open Guild:",
+      "fr": "Ouvrir la guilde :",
+      "es": "Abrir gremio:"
+    },
+    "Open Inventory:": {
+      "en": "Open Inventory:",
+      "fr": "Ouvrir l'inventaire :",
+      "es": "Abrir inventario:"
+    },
+    "Open Menu:": {
+      "en": "Open Menu:",
+      "fr": "Ouvrir le menu :",
+      "es": "Abrir menú:"
+    },
+    "Open Parties:": {
+      "en": "Open Parties:",
+      "fr": "Ouvrir les groupes :",
+      "es": "Abrir grupos:"
+    },
+    "Open Quests:": {
+      "en": "Open Quests:",
+      "fr": "Ouvrir les quêtes :",
+      "es": "Abrir misiones:"
+    },
+    "Open Settings:": {
+      "en": "Open Settings:",
+      "fr": "Ouvrir les paramètres :",
+      "es": "Abrir ajustes:"
+    },
+    "Open Spells:": {
+      "en": "Open Spells:",
+      "fr": "Ouvrir les sorts :",
+      "es": "Abrir hechizos:"
+    },
+    "Pick Up:": {
+      "en": "Pick Up:",
+      "fr": "Ramasser :",
+      "es": "Recoger:"
+    },
+    "Screenshot:": {
+      "en": "Screenshot:",
+      "fr": "Capture d'écran :",
+      "es": "Captura de pantalla:"
+    },
+    "Toggle Auto Soft-Retarget on Self-Cast:": {
+      "en": "Toggle Auto Soft-Retarget on Self-Cast:",
+      "fr": "Activer le reciblage des sorts sur soi :",
+      "es": "Alternar redirección de hechizos propios:"
+    },
+    "Toggle Fullscreen:": {
+      "en": "Toggle Fullscreen:",
+      "fr": "Plein écran :",
+      "es": "Pantalla completa:"
+    },
+    "Toggle Interface:": {
+      "en": "Toggle Interface:",
+      "fr": "Afficher l'interface :",
+      "es": "Mostrar interfaz:"
+    },
+    "Toggle Zoom In:": {
+      "en": "Toggle Zoom In:",
+      "fr": "Zoom avant :",
+      "es": "Acercar:"
+    },
+    "Toggle Zoom Out:": {
+      "en": "Toggle Zoom Out:",
+      "fr": "Zoom arrière :",
+      "es": "Alejar:"
+    },
+    "Hold to turn around:": {
+      "en": "Hold to turn around:",
+      "fr": "Maintenir pour se tourner :",
+      "es": "Mantener para girar:"
+    },
+    "Listening": {
+      "en": "Listening",
+      "fr": "En attente",
+      "es": "Esperando entrada"
+    },
+    "Craft 1": {
+      "en": "Craft 1",
+      "fr": "Fabriquer 1",
+      "es": "Fabricar 1"
+    },
+    "Craft {00}": {
+      "en": "Craft {00}",
+      "fr": "Fabriquer {00}",
+      "es": "Fabricar {00}"
+    },
+    "Chance of failure: {00}%": {
+      "en": "Chance of failure: {00}%",
+      "fr": "Risque d'échec : {00}%",
+      "es": "Probabilidad de fallo: {00}%"
+    },
+    "Stop": {
+      "en": "Stop",
+      "fr": "Arrêter",
+      "es": "Detener"
+    },
+    "Crafting time: {00}s": {
+      "en": "Crafting time: {00}s",
+      "fr": "Temps de fabrication : {00}s",
+      "es": "Tiempo de fabricación: {00}s"
+    },
+    "Chance to destroy materials: {00}%": {
+      "en": "Chance to destroy materials: {00}%",
+      "fr": "Risque de destruction des matériaux : {00}%",
+      "es": "Probabilidad de destruir materiales: {00}%"
+    },
+    "You do not have the necessary resources to craft this item.": {
+      "en": "You do not have the necessary resources to craft this item.",
+      "fr": "Tu n'as pas les ressources nécessaires pour cet objet.",
+      "es": "No tienes los recursos necesarios para fabricar este objeto."
+    },
+    "Required:": {
+      "en": "Required:",
+      "fr": "Nécessaire :",
+      "es": "Necesario:"
+    },
+    "Crafting:": {
+      "en": "Crafting:",
+      "fr": "Fabrication :",
+      "es": "Fabricación:"
+    },
+    "{00}) {01}": {
+      "en": "{00}) {01}",
+      "fr": "{00}) {01}",
+      "es": "{00}) {01}"
+    },
+    "Recipes:": {
+      "en": "Recipes:",
+      "fr": "Recettes :",
+      "es": "Recetas:"
+    },
+    "Back to Main Menu": {
+      "en": "Back to Main Menu",
+      "fr": "Retour au menu principal",
+      "es": "Volver al menú principal"
+    },
+    "Credits": {
+      "en": "Credits",
+      "fr": "Crédits",
+      "es": "Créditos"
+    },
+    "Filter assets...": {
+      "en": "Filter assets...",
+      "fr": "Filtrer les ressources…",
+      "es": "Filtrar recursos…"
+    },
+    "Control Under Cursor": {
+      "en": "Control Under Cursor",
+      "fr": "Contrôle sous le curseur",
+      "es": "Control bajo el cursor"
+    },
+    "Draw Debug Outlines": {
+      "en": "Draw Debug Outlines",
+      "fr": "Tracer les contours de débogage",
+      "es": "Dibujar bordes de depuración"
+    },
+    "Draws": {
+      "en": "Draws",
+      "fr": "Appels de rendu",
+      "es": "Llamadas de dibujo"
+    },
+    "Enable Experimental Layout Hot Reloading": {
+      "en": "Enable Experimental Layout Hot Reloading",
+      "fr": "Activer le rechargement expérimental des interfaces",
+      "es": "Activar recarga experimental de interfaces"
+    },
+    "Entities Drawn": {
+      "en": "Entities Drawn",
+      "fr": "Entités affichées",
+      "es": "Entidades dibujadas"
+    },
+    "{00} (from atlas)": {
+      "en": "{00} (from atlas)",
+      "fr": "{00} (depuis l'atlas)",
+      "es": "{00} (del atlas)"
+    },
+    "FPS": {
+      "en": "FPS",
+      "fr": "FPS",
+      "es": "FPS"
+    },
+    "Free RAM (Physical)": {
+      "en": "Free RAM (Physical)",
+      "fr": "RAM physique libre",
+      "es": "RAM física libre"
+    },
+    "Free VRAM": {
+      "en": "Free VRAM",
+      "fr": "Mémoire vidéo libre",
+      "es": "Memoria de vídeo libre"
+    },
+    "Free RAM (Virtual)": {
+      "en": "Free RAM (Virtual)",
+      "fr": "RAM virtuelle libre",
+      "es": "RAM virtual libre"
+    },
+    "Include Text Nodes in Hover": {
+      "en": "Include Text Nodes in Hover",
+      "fr": "Inclure les nœuds de texte au survol",
+      "es": "Incluir nodos de texto al pasar el cursor"
+    },
+    "Interface Objects": {
+      "en": "Interface Objects",
+      "fr": "Objets d'interface",
+      "es": "Objetos de interfaz"
+    },
+    "Known Entities": {
+      "en": "Known Entities",
+      "fr": "Entités connues",
+      "es": "Entidades conocidas"
+    },
+    "Known Maps": {
+      "en": "Known Maps",
+      "fr": "Cartes connues",
+      "es": "Mapas conocidos"
+    },
+    "Lights Drawn": {
+      "en": "Lights Drawn",
+      "fr": "Lumières affichées",
+      "es": "Luces dibujadas"
+    },
+    "Map": {
+      "en": "Map",
+      "fr": "Carte",
+      "es": "Mapa"
+    },
+    "Maps Drawn": {
+      "en": "Maps Drawn",
+      "fr": "Cartes affichées",
+      "es": "Mapas dibujados"
+    },
+    "Ping": {
+      "en": "Ping",
+      "fr": "Latence",
+      "es": "Latencia"
+    },
+    "Reload Asset": {
+      "en": "Reload Asset",
+      "fr": "Recharger la ressource",
+      "es": "Recargar recurso"
+    },
+    "Render Target Allocations": {
+      "en": "Render Target Allocations",
+      "fr": "Allocations des cibles de rendu",
+      "es": "Asignaciones de destinos de renderizado"
+    },
+    "GPU Allocations": {
+      "en": "GPU Allocations",
+      "fr": "Allocations GPU",
+      "es": "Asignaciones de GPU"
+    },
+    "GPU Statistics": {
+      "en": "GPU Statistics",
+      "fr": "Statistiques GPU",
+      "es": "Estadísticas de GPU"
+    },
+    "System Statistics": {
+      "en": "System Statistics",
+      "fr": "Statistiques système",
+      "es": "Estadísticas del sistema"
+    },
+    "Shutdown Server": {
+      "en": "Shutdown Server",
+      "fr": "Arrêter le serveur",
+      "es": "Apagar servidor"
+    },
+    "Shutdown Server and Exit": {
+      "en": "Shutdown Server and Exit",
+      "fr": "Arrêter le serveur et quitter",
+      "es": "Apagar servidor y salir"
+    },
+    "Assets": {
+      "en": "Assets",
+      "fr": "Ressources",
+      "es": "Recursos"
+    },
+    "Info": {
+      "en": "Info",
+      "fr": "Infos",
+      "es": "Información"
+    },
+    "Texture Allocations": {
+      "en": "Texture Allocations",
+      "fr": "Allocations des textures",
+      "es": "Asignaciones de texturas"
+    },
+    "Texture Assets": {
+      "en": "Texture Assets",
+      "fr": "Textures",
+      "es": "Texturas"
+    },
+    "Time": {
+      "en": "Time",
+      "fr": "Heure",
+      "es": "Hora"
+    },
+    "Debug": {
+      "en": "Debug",
+      "fr": "Débogage",
+      "es": "Depuración"
+    },
+    "Debug #{0}": {
+      "en": "Debug #{0}",
+      "fr": "Débogage nº {0}",
+      "es": "Depuración n.º {0}"
+    },
+    "Total RAM (Physical)": {
+      "en": "Total RAM (Physical)",
+      "fr": "RAM physique totale",
+      "es": "RAM física total"
+    },
+    "Total VRAM": {
+      "en": "Total VRAM",
+      "fr": "Mémoire vidéo totale",
+      "es": "Memoria de vídeo total"
+    },
+    "Total RAM (Virtual)": {
+      "en": "Total RAM (Virtual)",
+      "fr": "RAM virtuelle totale",
+      "es": "RAM virtual total"
+    },
+    "Used VRAM": {
+      "en": "Used VRAM",
+      "fr": "Mémoire vidéo utilisée",
+      "es": "Memoria de vídeo usada"
+    },
+    "View Clicked Node in Debugger": {
+      "en": "View Clicked Node in Debugger",
+      "fr": "Voir le nœud dans le débogueur",
+      "es": "Ver nodo en el depurador"
+    },
+    "Hold Alt to temporarily turn this off (so you can turn off this option)": {
+      "en": "Hold Alt to temporarily turn this off (so you can turn off this option)",
+      "fr": "Maintenir Alt pour désactiver temporairement cette option",
+      "es": "Mantén Alt para desactivar temporalmente esta opción"
+    },
+    "EXP:": {
+      "en": "EXP:",
+      "fr": "EXP :",
+      "es": "EXP:"
+    },
+    "{00} / {01}": {
+      "en": "{00} / {01}",
+      "fr": "{00} / {01}",
+      "es": "{00} / {01}"
+    },
+    "Lv. {00}": {
+      "en": "Lv. {00}",
+      "fr": "Niv. {00}",
+      "es": "Niv. {00}"
+    },
+    "Max Level": {
+      "en": "Max Level",
+      "fr": "Niveau maximal",
+      "es": "Nivel máximo"
+    },
+    "{00}    {01}": {
+      "en": "{00}    {01}",
+      "fr": "{00}    {01}",
+      "es": "{00}    {01}"
+    },
+    "HP:": {
+      "en": "HP:",
+      "fr": "PV :",
+      "es": "PS:"
+    },
+    "MP:": {
+      "en": "MP:",
+      "fr": "PM :",
+      "es": "PM:"
+    },
+    "Add Friend": {
+      "en": "Add Friend",
+      "fr": "Ajouter un ami",
+      "es": "Añadir amigo"
+    },
+    "Invite to Guild": {
+      "en": "Invite to Guild",
+      "fr": "Inviter dans la guilde",
+      "es": "Invitar al gremio"
+    },
+    "Invite to Party": {
+      "en": "Invite to Party",
+      "fr": "Inviter dans le groupe",
+      "es": "Invitar al grupo"
+    },
+    "Private Message": {
+      "en": "Private Message",
+      "fr": "Message privé",
+      "es": "Mensaje privado"
+    },
+    "Trade": {
+      "en": "Trade",
+      "fr": "Échanger",
+      "es": "Intercambiar"
+    },
+    "Please provide this message to your administrator: {0}": {
+      "en": "Please provide this message to your administrator: {0}",
+      "fr": "Transmets ce message à l'administrateur : {0}",
+      "es": "Envía este mensaje al administrador: {0}"
+    },
+    "Invalid Display Configuration!": {
+      "en": "Invalid Display Configuration!",
+      "fr": "Configuration d'affichage invalide !",
+      "es": "¡Configuración de pantalla no válida!"
+    },
+    "Fullscreen {00} resolution is not supported on this device!": {
+      "en": "Fullscreen {00} resolution is not supported on this device!",
+      "fr": "La résolution plein écran {00} n'est pas prise en charge !",
+      "es": "¡La resolución de pantalla completa {00} no es compatible!"
+    },
+    "DNS resolution error, please report this to the game administrator.": {
+      "en": "DNS resolution error, please report this to the game administrator.",
+      "fr": "Erreur DNS. Signale ce problème à l'administrateur du jeu.",
+      "es": "Error de DNS. Informa al administrador del juego."
+    },
+    "An invalid state was detected and we had to return to the main menu.": {
+      "en": "An invalid state was detected and we had to return to the main menu.",
+      "fr": "Une erreur nous a forcés à revenir au menu principal.",
+      "es": "Un error nos obligó a volver al menú principal."
+    },
+    "Failed to load a {00}. Please send the game administrator a copy of your errors log file in the logs directory.": {
+      "en": "Failed to load a {00}. Please send the game administrator a copy of your errors log file in the logs directory.",
+      "fr": "Impossible de charger : {00}. Transmets le journal d'erreurs du dossier logs à l'administrateur.",
+      "es": "No se pudo cargar: {00}. Envía el registro de errores de la carpeta logs al administrador."
+    },
+    "Lost connection to the game server. Please make sure you're connected to the internet and try again!": {
+      "en": "Lost connection to the game server. Please make sure you're connected to the internet and try again!",
+      "fr": "Connexion au serveur perdue. Vérifie ta connexion Internet et réessaie !",
+      "es": "Se perdió la conexión con el servidor. ¡Comprueba tu conexión a Internet e inténtalo de nuevo!"
+    },
+    "Not connected to the game server. Is it online?": {
+      "en": "Not connected to the game server. Is it online?",
+      "fr": "Aucune connexion au serveur. Est-il en ligne ?",
+      "es": "Sin conexión con el servidor. ¿Está en línea?"
+    },
+    "https://goo.gl/Nbx6hx": {
+      "en": "https://goo.gl/Nbx6hx",
+      "fr": "https://goo.gl/Nbx6hx",
+      "es": "https://goo.gl/Nbx6hx"
+    },
+    "https://goo.gl/RSP3ts": {
+      "en": "https://goo.gl/RSP3ts",
+      "fr": "https://goo.gl/RSP3ts",
+      "es": "https://goo.gl/RSP3ts"
+    },
+    "Password is invalid. Please use alphanumeric characters with a length between 4 and 20.": {
+      "en": "Password is invalid. Please use alphanumeric characters with a length between 4 and 20.",
+      "fr": "Mot de passe invalide. Utilise entre 4 et 20 caractères alphanumériques.",
+      "es": "Contraseña no válida. Usa entre 4 y 20 caracteres alfanuméricos."
+    },
+    "The resources directory could not be found! Corps Royaux will now close.": {
+      "en": "The resources directory could not be found! Corps Royaux will now close.",
+      "fr": "Le dossier resources est introuvable ! Corps Royaux va se fermer.",
+      "es": "¡No se encontró la carpeta resources! Corps Royaux se cerrará."
+    },
+    "Error!": {
+      "en": "Error!",
+      "fr": "Erreur !",
+      "es": "¡Error!"
+    },
+    "Username is invalid. Please use alphanumeric characters with a length between 2 and 20.": {
+      "en": "Username is invalid. Please use alphanumeric characters with a length between 2 and 20.",
+      "fr": "Identifiant invalide. Utilise entre 2 et 20 caractères alphanumériques.",
+      "es": "Nombre de usuario no válido. Usa entre 2 y 20 caracteres alfanuméricos."
+    },
+    "Characters": {
+      "en": "Characters",
+      "fr": "Personnages",
+      "es": "Personajes"
+    },
+    "Close": {
+      "en": "Close",
+      "fr": "Fermer",
+      "es": "Cerrar"
+    },
+    "Desktop": {
+      "en": "Desktop",
+      "fr": "Bureau",
+      "es": "Escritorio"
+    },
+    "Settings": {
+      "en": "Settings",
+      "fr": "Paramètres",
+      "es": "Ajustes"
+    },
+    "Menu": {
+      "en": "Menu",
+      "fr": "Menu",
+      "es": "Menú"
+    },
+    "Continue": {
+      "en": "Continue",
+      "fr": "Continuer",
+      "es": "Continuar"
+    },
+    "If an account exists with the provided username or email address, an email with a password reset code will be sent to the email address associated with the account.": {
+      "en": "If an account exists with the provided username or email address, an email with a password reset code will be sent to the email address associated with the account.",
+      "fr": "Si ce compte existe, un courriel contenant un code de réinitialisation sera envoyé à l'adresse associée.",
+      "es": "Si la cuenta existe, se enviará un correo con un código de restablecimiento a la dirección asociada."
+    },
+    "Submit": {
+      "en": "Submit",
+      "fr": "Valider",
+      "es": "Enviar"
+    },
+    "Password Reset": {
+      "en": "Password Reset",
+      "fr": "Réinitialisation du mot de passe",
+      "es": "Restablecer contraseña"
+    },
+    "Username or Email Address": {
+      "en": "Username or Email Address",
+      "fr": "Identifiant ou courriel",
+      "es": "Usuario o correo electrónico"
+    },
+    "Who would you like to add as a friend?": {
+      "en": "Who would you like to add as a friend?",
+      "fr": "Qui souhaites-tu ajouter en ami ?",
+      "es": "¿A quién quieres añadir como amigo?"
+    },
+    "You are currently in a fight!": {
+      "en": "You are currently in a fight!",
+      "fr": "Tu es en combat !",
+      "es": "¡Estás en combate!"
+    },
+    "Offline": {
+      "en": "Offline",
+      "fr": "Hors ligne",
+      "es": "Desconectado"
+    },
+    "Remove Friend": {
+      "en": "Remove Friend",
+      "fr": "Retirer l'ami",
+      "es": "Eliminar amigo"
+    },
+    "Do you wish to remove {00} from your friends list?": {
+      "en": "Do you wish to remove {00} from your friends list?",
+      "fr": "Veux-tu retirer {00} de tes amis ?",
+      "es": "¿Quieres eliminar a {00} de tus amigos?"
+    },
+    "Friend Request": {
+      "en": "Friend Request",
+      "fr": "Demande d'amitié",
+      "es": "Solicitud de amistad"
+    },
+    "{00} has sent you a friend request. Do you accept?": {
+      "en": "{00} has sent you a friend request. Do you accept?",
+      "fr": "{00} souhaite devenir ton ami. Acceptes-tu ?",
+      "es": "{00} quiere ser tu amigo. ¿Aceptas?"
+    },
+    "Friends": {
+      "en": "Friends",
+      "fr": "Amis",
+      "es": "Amigos"
+    },
+    "Inventory": {
+      "en": "Inventory",
+      "fr": "Inventaire",
+      "es": "Inventario"
+    },
+    "Open Menu": {
+      "en": "Open Menu",
+      "fr": "Ouvrir le menu",
+      "es": "Abrir menú"
+    },
+    "Quest Log": {
+      "en": "Quest Log",
+      "fr": "Journal de quêtes",
+      "es": "Diario de misiones"
+    },
+    "Spell Book": {
+      "en": "Spell Book",
+      "fr": "Livre de sorts",
+      "es": "Libro de hechizos"
+    },
+    "{00} [Lv. {01}]": {
+      "en": "{00} [Lv. {01}]",
+      "fr": "{00} [Niv. {01}]",
+      "es": "{00} [Niv. {01}]"
+    },
+    "{0}fps": {
+      "en": "{0}fps",
+      "fr": "{0}fps",
+      "es": "{0}fps"
+    },
+    "{01} {00}": {
+      "en": "{01} {00}",
+      "fr": "{01} {00}",
+      "es": "{01} {00}"
+    },
+    "{0}ms": {
+      "en": "{0}ms",
+      "fr": "{0}ms",
+      "es": "{0}ms"
+    },
+    "+": {
+      "en": "+",
+      "fr": "+",
+      "es": "+"
+    },
+    "{00} Guild Bank": {
+      "en": "{00} Guild Bank",
+      "fr": "Banque de guilde : {00}",
+      "es": "Banco del gremio {00}"
+    },
+    "Demote to {00}": {
+      "en": "Demote to {00}",
+      "fr": "Rétrograder au rang {00}",
+      "es": "Degradar a {00}"
+    },
+    "Are you sure you want to demote {00} to rank {01}?": {
+      "en": "Are you sure you want to demote {00} to rank {01}?",
+      "fr": "Veux-tu rétrograder {00} au rang {01} ?",
+      "es": "¿Quieres degradar a {00} al rango {01}?"
+    },
+    "Demote Guild Member": {
+      "en": "Demote Guild Member",
+      "fr": "Rétrograder un membre",
+      "es": "Degradar miembro"
+    },
+    "Send {00} an invite to your guild.": {
+      "en": "Send {00} an invite to your guild.",
+      "fr": "Inviter {00} dans ta guilde.",
+      "es": "Invitar a {00} a tu gremio."
+    },
+    "Invite": {
+      "en": "Invite",
+      "fr": "Inviter",
+      "es": "Invitar"
+    },
+    "The player you're trying to invite is already in a guild or has a pending invite.": {
+      "en": "The player you're trying to invite is already in a guild or has a pending invite.",
+      "fr": "Ce joueur est déjà dans une guilde ou attend une invitation.",
+      "es": "Ese jugador ya pertenece a un gremio o tiene una invitación pendiente."
+    },
+    "Who would you like to invite to {00}?": {
+      "en": "Who would you like to invite to {00}?",
+      "fr": "Qui souhaites-tu inviter dans {00} ?",
+      "es": "¿A quién quieres invitar a {00}?"
+    },
+    "Invite Player": {
+      "en": "Invite Player",
+      "fr": "Inviter un joueur",
+      "es": "Invitar jugador"
+    },
+    "{00} would like to invite you to join their guild, {01}. Do you accept?": {
+      "en": "{00} would like to invite you to join their guild, {01}. Do you accept?",
+      "fr": "{00} t'invite à rejoindre sa guilde, {01}. Acceptes-tu ?",
+      "es": "{00} te invita a su gremio, {01}. ¿Aceptas?"
+    },
+    "{00} would like to invite you to join their guild. Do you accept?": {
+      "en": "{00} would like to invite you to join their guild. Do you accept?",
+      "fr": "{00} t'invite à rejoindre sa guilde. Acceptes-tu ?",
+      "es": "{00} te invita a su gremio. ¿Aceptas?"
+    },
+    "Guild Invite": {
+      "en": "Guild Invite",
+      "fr": "Invitation de guilde",
+      "es": "Invitación de gremio"
+    },
+    "Are you sure you want to kick {00}?": {
+      "en": "Are you sure you want to kick {00}?",
+      "fr": "Veux-tu vraiment expulser {00} ?",
+      "es": "¿Seguro que quieres expulsar a {00}?"
+    },
+    "Kick Guild Member": {
+      "en": "Kick Guild Member",
+      "fr": "Expulser un membre",
+      "es": "Expulsar miembro"
+    },
+    "Leave": {
+      "en": "Leave",
+      "fr": "Quitter",
+      "es": "Salir"
+    },
+    "Are you sure you want to leave your guild?": {
+      "en": "Are you sure you want to leave your guild?",
+      "fr": "Veux-tu vraiment quitter ta guilde ?",
+      "es": "¿Seguro que quieres salir de tu gremio?"
+    },
+    "Leave Guild": {
+      "en": "Leave Guild",
+      "fr": "Quitter la guilde",
+      "es": "Salir del gremio"
+    },
+    "You do not have permission to deposit items into {00}'s guild bank.": {
+      "en": "You do not have permission to deposit items into {00}'s guild bank.",
+      "fr": "Tu n'as pas le droit de déposer dans la banque de {00}.",
+      "es": "No tienes permiso para depositar en el banco de {00}."
+    },
+    "You do not have permission to swap items within {00}'s guild bank.": {
+      "en": "You do not have permission to swap items within {00}'s guild bank.",
+      "fr": "Tu n'as pas le droit de déplacer les objets dans la banque de {00}.",
+      "es": "No tienes permiso para mover objetos en el banco de {00}."
+    },
+    "You do not have permission to withdraw from {00}'s guild bank.": {
+      "en": "You do not have permission to withdraw from {00}'s guild bank.",
+      "fr": "Tu n'as pas le droit de retirer dans la banque de {00}.",
+      "es": "No tienes permiso para retirar del banco de {00}."
+    },
+    "You are not currently in a guild!": {
+      "en": "You are not currently in a guild!",
+      "fr": "Tu n'es pas dans une guilde !",
+      "es": "¡No perteneces a un gremio!"
+    },
+    "[{00}] {01} - {02}": {
+      "en": "[{00}] {01} - {02}",
+      "fr": "[{00}] {01} - {02}",
+      "es": "[{00}] {01} - {02}"
+    },
+    "PM": {
+      "en": "PM",
+      "fr": "MP",
+      "es": "MP"
+    },
+    "Promote to {00}": {
+      "en": "Promote to {00}",
+      "fr": "Promouvoir au rang {00}",
+      "es": "Ascender a {00}"
+    },
+    "Are you sure you want to promote {00} to rank {01}?": {
+      "en": "Are you sure you want to promote {00} to rank {01}?",
+      "fr": "Veux-tu promouvoir {00} au rang {01} ?",
+      "es": "¿Quieres ascender a {00} al rango {01}?"
+    },
+    "Promote Guild Member": {
+      "en": "Promote Guild Member",
+      "fr": "Promouvoir un membre",
+      "es": "Ascender miembro"
+    },
+    "Lv. {00} {01}": {
+      "en": "Lv. {00} {01}",
+      "fr": "Niv. {00} {01}",
+      "es": "Niv. {00} {01}"
+    },
+    "Transfer": {
+      "en": "Transfer",
+      "fr": "Transférer",
+      "es": "Transferir"
+    },
+    "Transfer Guild": {
+      "en": "Transfer Guild",
+      "fr": "Transférer la guilde",
+      "es": "Transferir gremio"
+    },
+    "This action will completely transfer all ownership of your guild to \\c{{#80ff80}}{00}\\c{{}} and you will lose your rank of \\c{{#ff9f40}}{01}\\c{{}}.\n\nIf you are sure you want to hand over your guild enter '\\c{{#ff8080}}{02}\\c{{}}' below.": {
+      "en": "This action will completely transfer all ownership of your guild to \\c{{#80ff80}}{00}\\c{{}} and you will lose your rank of \\c{{#ff9f40}}{01}\\c{{}}.\n\nIf you are sure you want to hand over your guild enter '\\c{{#ff8080}}{02}\\c{{}}' below.",
+      "fr": "Cette action transfère ta guilde à \\c{{#80ff80}}{00}\\c{{}}. Tu perdras ton rang de \\c{{#ff9f40}}{01}\\c{{}}.\n\nPour confirmer, saisis « \\c{{#ff8080}}{02}\\c{{}} » ci-dessous.",
+      "es": "Esta acción transfiere tu gremio a \\c{{#80ff80}}{00}\\c{{}}. Perderás el rango de \\c{{#ff9f40}}{01}\\c{{}}.\n\nPara confirmar, escribe «\\c{{#ff8080}}{02}\\c{{}}» abajo."
+    },
+    "No": {
+      "en": "No",
+      "fr": "Non",
+      "es": "No"
+    },
+    "Yes": {
+      "en": "Yes",
+      "fr": "Oui",
+      "es": "Sí"
+    },
+    "Alignment": {
+      "en": "Alignment",
+      "fr": "Alignement",
+      "es": "Alineación"
+    },
+    "AutoSizeToContentHeight": {
+      "en": "AutoSizeToContentHeight",
+      "fr": "Hauteur automatique selon le contenu",
+      "es": "Altura automática según el contenido"
+    },
+    "ASTH on Child Resize": {
+      "en": "ASTH on Child Resize",
+      "fr": "Hauteur auto au redimensionnement enfant",
+      "es": "Altura automática al redimensionar un hijo"
+    },
+    "AutoSizeToContentWidth": {
+      "en": "AutoSizeToContentWidth",
+      "fr": "Largeur automatique selon le contenu",
+      "es": "Anchura automática según el contenido"
+    },
+    "ASTW on Child Resize": {
+      "en": "ASTW on Child Resize",
+      "fr": "Largeur auto au redimensionnement enfant",
+      "es": "Anchura automática al redimensionar un hijo"
+    },
+    "AutoSizeToContents": {
+      "en": "AutoSizeToContents",
+      "fr": "Taille automatique selon le contenu",
+      "es": "Tamaño automático según el contenido"
+    },
+    "Bounds": {
+      "en": "Bounds",
+      "fr": "Limites",
+      "es": "Límites"
+    },
+    "Color": {
+      "en": "Color",
+      "fr": "Couleur",
+      "es": "Color"
+    },
+    "Color Override": {
+      "en": "Color Override",
+      "fr": "Couleur forcée",
+      "es": "Color forzado"
+    },
+    "X": {
+      "en": "X",
+      "fr": "X",
+      "es": "X"
+    },
+    "Y": {
+      "en": "Y",
+      "fr": "Y",
+      "es": "Y"
+    },
+    "Z": {
+      "en": "Z",
+      "fr": "Z",
+      "es": "Z"
+    },
+    "Dock": {
+      "en": "Dock",
+      "fr": "Ancrage",
+      "es": "Acoplamiento"
+    },
+    "This feature is experimental and may cause issues when enabled.": {
+      "en": "This feature is experimental and may cause issues when enabled.",
+      "fr": "Cette fonction est expérimentale et peut causer des problèmes.",
+      "es": "Esta función es experimental y puede causar problemas."
+    },
+    "Font Size": {
+      "en": "Font Size",
+      "fr": "Taille de police",
+      "es": "Tamaño de fuente"
+    },
+    "Global {00}": {
+      "en": "Global {00}",
+      "fr": "Global {00}",
+      "es": "Global {00}"
+    },
+    "Inner Bounds": {
+      "en": "Inner Bounds",
+      "fr": "Limites intérieures",
+      "es": "Límites internos"
+    },
+    "IsDisabled": {
+      "en": "IsDisabled",
+      "fr": "Désactivé",
+      "es": "Desactivado"
+    },
+    "IsDisabledByTree": {
+      "en": "IsDisabledByTree",
+      "fr": "Désactivé par un parent",
+      "es": "Desactivado por un padre"
+    },
+    "IsVisibleInParent": {
+      "en": "IsVisibleInParent",
+      "fr": "Visible dans le parent",
+      "es": "Visible en el padre"
+    },
+    "IsVisibleInTree": {
+      "en": "IsVisibleInTree",
+      "fr": "Visible dans l'arborescence",
+      "es": "Visible en el árbol"
+    },
+    "Local {00}": {
+      "en": "Local {00}",
+      "fr": "Local {00}",
+      "es": "Local {00}"
+    },
+    "Margin": {
+      "en": "Margin",
+      "fr": "Marge",
+      "es": "Margen"
+    },
+    "N/A": {
+      "en": "N/A",
+      "fr": "S.O.",
+      "es": "N/D"
+    },
+    "Outer Bounds": {
+      "en": "Outer Bounds",
+      "fr": "Limites extérieures",
+      "es": "Límites externos"
+    },
+    "Padding": {
+      "en": "Padding",
+      "fr": "Espacement intérieur",
+      "es": "Relleno"
+    },
+    "{0}x{1}": {
+      "en": "{0}x{1}",
+      "fr": "{0}x{1}",
+      "es": "{0}x{1}"
+    },
+    "Text Align": {
+      "en": "Text Align",
+      "fr": "Alignement du texte",
+      "es": "Alineación del texto"
+    },
+    "Type": {
+      "en": "Type",
+      "fr": "Type",
+      "es": "Tipo"
+    },
+    "How many units of {00} would you like to discard?": {
+      "en": "How many units of {00} would you like to discard?",
+      "fr": "Combien de {00} veux-tu jeter ?",
+      "es": "¿Cuántas unidades de {00} quieres desechar?"
+    },
+    "Drop Item": {
+      "en": "Drop Item",
+      "fr": "Jeter l'objet",
+      "es": "Tirar objeto"
+    },
+    "Do you wish to drop the item: {00}?": {
+      "en": "Do you wish to drop the item: {00}?",
+      "fr": "Veux-tu jeter l'objet : {00} ?",
+      "es": "¿Quieres tirar el objeto: {00}?"
+    },
+    "E": {
+      "en": "E",
+      "fr": "E",
+      "es": "E"
+    },
+    "Bag {00}": {
+      "en": "Bag {00}",
+      "fr": "Sac {00}",
+      "es": "Bolsa {00}"
+    },
+    "Bank {00}": {
+      "en": "Bank {00}",
+      "fr": "Déposer {00}",
+      "es": "Depositar {00}"
+    },
+    "Cast {00}": {
+      "en": "Cast {00}",
+      "fr": "Lancer {00}",
+      "es": "Lanzar {00}"
+    },
+    "Drop {00}": {
+      "en": "Drop {00}",
+      "fr": "Jeter {00}",
+      "es": "Tirar {00}"
+    },
+    "Equip {00}": {
+      "en": "Equip {00}",
+      "fr": "Équiper {00}",
+      "es": "Equipar {00}"
+    },
+    "Learn {00}": {
+      "en": "Learn {00}",
+      "fr": "Apprendre {00}",
+      "es": "Aprender {00}"
+    },
+    "Open {00}": {
+      "en": "Open {00}",
+      "fr": "Ouvrir {00}",
+      "es": "Abrir {00}"
+    },
+    "Sell {00}": {
+      "en": "Sell {00}",
+      "fr": "Vendre {00}",
+      "es": "Vender {00}"
+    },
+    "Offer {00}": {
+      "en": "Offer {00}",
+      "fr": "Offrir {00}",
+      "es": "Ofrecer {00}"
+    },
+    "Unequip {00}": {
+      "en": "Unequip {00}",
+      "fr": "Déséquiper {00}",
+      "es": "Desequipar {00}"
+    },
+    "Use {00}": {
+      "en": "Use {00}",
+      "fr": "Utiliser {00}",
+      "es": "Usar {00}"
+    },
+    "Amount:": {
+      "en": "Amount:",
+      "fr": "Quantité :",
+      "es": "Cantidad:"
+    },
+    "Attack Speed:": {
+      "en": "Attack Speed:",
+      "fr": "Vitesse d'attaque :",
+      "es": "Velocidad de ataque:"
+    },
+    "Bag Slots:": {
+      "en": "Bag Slots:",
+      "fr": "Places dans le sac :",
+      "es": "Espacios en la bolsa:"
+    },
+    "Bagged": {
+      "en": "Bagged",
+      "fr": "rangé dans un sac",
+      "es": "guardado en una bolsa"
+    },
+    "Banked": {
+      "en": "Banked",
+      "fr": "rangé en banque",
+      "es": "depositado en el banco"
+    },
+    "Base Damage:": {
+      "en": "Base Damage:",
+      "fr": "Dégâts de base :",
+      "es": "Daño base:"
+    },
+    "Damage Type:": {
+      "en": "Damage Type:",
+      "fr": "Type de dégâts :",
+      "es": "Tipo de daño:"
+    },
+    "Block Absorption:": {
+      "en": "Block Absorption:",
+      "fr": "Absorption du blocage :",
+      "es": "Absorción de bloqueo:"
+    },
+    "Block Amount:": {
+      "en": "Block Amount:",
+      "fr": "Réduction du blocage :",
+      "es": "Reducción de bloqueo:"
+    },
+    "Block Chance:": {
+      "en": "Block Chance:",
+      "fr": "Chance de blocage :",
+      "es": "Probabilidad de bloqueo:"
+    },
+    "": {
+      "en": "",
+      "fr": "",
+      "es": ""
+    },
+    "Cooldown Reduction:": {
+      "en": "Cooldown Reduction:",
+      "fr": "Réduction des délais :",
+      "es": "Reducción de enfriamiento:"
+    },
+    "Lifesteal:": {
+      "en": "Lifesteal:",
+      "fr": "Vol de vie :",
+      "es": "Robo de vida:"
+    },
+    "Tenacity:": {
+      "en": "Tenacity:",
+      "fr": "Ténacité :",
+      "es": "Tenacidad:"
+    },
+    "Luck:": {
+      "en": "Luck:",
+      "fr": "Chance :",
+      "es": "Suerte:"
+    },
+    "Bonus Experience:": {
+      "en": "Bonus Experience:",
+      "fr": "EXP bonus :",
+      "es": "Experiencia adicional:"
+    },
+    "Manasteal:": {
+      "en": "Manasteal:",
+      "fr": "Vol de mana :",
+      "es": "Robo de maná:"
+    },
+    "Casts Spell: {00}": {
+      "en": "Casts Spell: {00}",
+      "fr": "Lance le sort : {00}",
+      "es": "Lanza el hechizo: {00}"
+    },
+    "Restores HP:": {
+      "en": "Restores HP:",
+      "fr": "Restaure les PV :",
+      "es": "Restaura PS:"
+    },
+    "Restores MP:": {
+      "en": "Restores MP:",
+      "fr": "Restaure les PM :",
+      "es": "Restaura PM:"
+    },
+    "Grants Experience:": {
+      "en": "Grants Experience:",
+      "fr": "Accorde de l'EXP :",
+      "es": "Otorga experiencia:"
+    },
+    "Critical Chance:": {
+      "en": "Critical Chance:",
+      "fr": "Chance critique :",
+      "es": "Probabilidad de crítico:"
+    },
+    "Critical Multiplier:": {
+      "en": "Critical Multiplier:",
+      "fr": "Multiplicateur critique :",
+      "es": "Multiplicador crítico:"
+    },
+    "Physical": {
+      "en": "Physical",
+      "fr": "Physique",
+      "es": "Físico"
+    },
+    "Magic": {
+      "en": "Magic",
+      "fr": "Magique",
+      "es": "Mágico"
+    },
+    "True": {
+      "en": "True",
+      "fr": "Brut",
+      "es": "Puro"
+    },
+    "Drop chance on death:": {
+      "en": "Drop chance on death:",
+      "fr": "Perte à la mort :",
+      "es": "Pérdida al morir:"
+    },
+    "Dropped": {
+      "en": "Dropped",
+      "fr": "jeté",
+      "es": "tirado"
+    },
+    "Guild Banked": {
+      "en": "Guild Banked",
+      "fr": "rangé en banque de guilde",
+      "es": "depositado en el banco del gremio"
+    },
+    "Cannot be {00}": {
+      "en": "Cannot be {00}",
+      "fr": "Ne peut pas être {00}",
+      "es": "No puede ser {00}"
+    },
+    "Equipment": {
+      "en": "Equipment",
+      "fr": "Équipement",
+      "es": "Equipo"
+    },
+    "Consumable": {
+      "en": "Consumable",
+      "fr": "Consommable",
+      "es": "Consumible"
+    },
+    "Currency": {
+      "en": "Currency",
+      "fr": "Monnaie",
+      "es": "Moneda"
+    },
+    "Special": {
+      "en": "Special",
+      "fr": "Spécial",
+      "es": "Especial"
+    },
+    "{00}x": {
+      "en": "{00}x",
+      "fr": "{00}x",
+      "es": "{00}x"
+    },
+    "{00}%": {
+      "en": "{00}%",
+      "fr": "{00}%",
+      "es": "{00}%"
+    },
+    "Common": {
+      "en": "Common",
+      "fr": "Commun",
+      "es": "Común"
+    },
+    "Epic": {
+      "en": "Epic",
+      "fr": "Épique",
+      "es": "Épico"
+    },
+    "Legendary": {
+      "en": "Legendary",
+      "fr": "Légendaire",
+      "es": "Legendario"
+    },
+    "Rare": {
+      "en": "Rare",
+      "fr": "Rare",
+      "es": "Raro"
+    },
+    "Uncommon": {
+      "en": "Uncommon",
+      "fr": "Peu commun",
+      "es": "Poco común"
+    },
+    "3:Famed": {
+      "en": "3:Famed",
+      "fr": "3:Renommé",
+      "es": "3:Renombrado"
+    },
+    "5:Mythic": {
+      "en": "5:Mythic",
+      "fr": "5:Mythique",
+      "es": "5:Mítico"
+    },
+    "{00} + {01}%": {
+      "en": "{00} + {01}%",
+      "fr": "{00} + {01}%",
+      "es": "{00} + {01}%"
+    },
+    "Scaling Percentage:": {
+      "en": "Scaling Percentage:",
+      "fr": "Pourcentage d'échelle :",
+      "es": "Porcentaje de escala:"
+    },
+    "Scaling Stat:": {
+      "en": "Scaling Stat:",
+      "fr": "Statistique d'échelle :",
+      "es": "Estadística de escala:"
+    },
+    "Single use": {
+      "en": "Single use",
+      "fr": "Usage unique",
+      "es": "Un solo uso"
+    },
+    "Sold": {
+      "en": "Sold",
+      "fr": "vendu",
+      "es": "vendido"
+    },
+    "Attack:": {
+      "en": "Attack:",
+      "fr": "Attaque :",
+      "es": "Ataque:"
+    },
+    "Ability Power:": {
+      "en": "Ability Power:",
+      "fr": "Puissance magique :",
+      "es": "Poder mágico:"
+    },
+    "Defense:": {
+      "en": "Defense:",
+      "fr": "Défense :",
+      "es": "Defensa:"
+    },
+    "Magic Resist:": {
+      "en": "Magic Resist:",
+      "fr": "Résistance magique :",
+      "es": "Resistencia mágica:"
+    },
+    "Speed:": {
+      "en": "Speed:",
+      "fr": "Vitesse :",
+      "es": "Velocidad:"
+    },
+    "{00} to {01}": {
+      "en": "{00} to {01}",
+      "fr": "{00} à {01}",
+      "es": "{00} a {01}"
+    },
+    "Teaches Spell: {00}": {
+      "en": "Teaches Spell: {00}",
+      "fr": "Enseigne le sort : {00}",
+      "es": "Enseña el hechizo: {00}"
+    },
+    "Traded": {
+      "en": "Traded",
+      "fr": "échangé",
+      "es": "intercambiado"
+    },
+    "2H": {
+      "en": "2H",
+      "fr": "2M",
+      "es": "2M"
+    },
+    "HP Regen:": {
+      "en": "HP Regen:",
+      "fr": "Régénération des PV :",
+      "es": "Regeneración de PS:"
+    },
+    "MP Regen:": {
+      "en": "MP Regen:",
+      "fr": "Régénération des PM :",
+      "es": "Regeneración de PM:"
+    },
+    "Forgot Password?": {
+      "en": "Forgot Password?",
+      "fr": "Mot de passe oublié ?",
+      "es": "¿Olvidaste tu contraseña?"
+    },
+    "Login": {
+      "en": "Login",
+      "fr": "Connexion",
+      "es": "Iniciar sesión"
+    },
+    "Password": {
+      "en": "Password",
+      "fr": "Mot de passe",
+      "es": "Contraseña"
+    },
+    "Save Password": {
+      "en": "Save Password",
+      "fr": "Mémoriser le mot de passe",
+      "es": "Recordar contraseña"
+    },
+    "Username": {
+      "en": "Username",
+      "fr": "Identifiant",
+      "es": "Usuario"
+    },
+    "Corps Royaux": {
+      "en": "Corps Royaux",
+      "fr": "Corps Royaux",
+      "es": "Corps Royaux"
+    },
+    "Exit": {
+      "en": "Exit",
+      "fr": "Quitter",
+      "es": "Salir"
+    },
+    "Register": {
+      "en": "Register",
+      "fr": "S'inscrire",
+      "es": "Registrarse"
+    },
+    "Start": {
+      "en": "Start",
+      "fr": "Commencer",
+      "es": "Empezar"
+    },
+    "Main Menu": {
+      "en": "Main Menu",
+      "fr": "Menu principal",
+      "es": "Menú principal"
+    },
+    "Loot All": {
+      "en": "Loot All",
+      "fr": "Tout ramasser",
+      "es": "Recoger todo"
+    },
+    "Loot": {
+      "en": "Loot",
+      "fr": "Butin",
+      "es": "Botín"
+    },
+    "b": {
+      "en": "b",
+      "fr": "G",
+      "es": "G"
+    },
+    ",": {
+      "en": ",",
+      "fr": ",",
+      "es": ","
+    },
+    ".": {
+      "en": ".",
+      "fr": ".",
+      "es": "."
+    },
+    "m": {
+      "en": "m",
+      "fr": "M",
+      "es": "M"
+    },
+    "k": {
+      "en": "k",
+      "fr": "k",
+      "es": "k"
+    },
+    "You are currently fighting!": {
+      "en": "You are currently fighting!",
+      "fr": "Tu es en combat !",
+      "es": "¡Estás en combate!"
+    },
+    "{00} has invited you to their party. Do you accept?": {
+      "en": "{00} has invited you to their party. Do you accept?",
+      "fr": "{00} t'invite dans son groupe. Acceptes-tu ?",
+      "es": "{00} te invita a su grupo. ¿Aceptas?"
+    },
+    "Kick {00}": {
+      "en": "Kick {00}",
+      "fr": "Expulser {00}",
+      "es": "Expulsar a {00}"
+    },
+    "Leader": {
+      "en": "Leader",
+      "fr": "Chef",
+      "es": "Líder"
+    },
+    "Party Leader": {
+      "en": "Party Leader",
+      "fr": "Chef du groupe",
+      "es": "Líder del grupo"
+    },
+    "Leave Party": {
+      "en": "Leave Party",
+      "fr": "Quitter le groupe",
+      "es": "Salir del grupo"
+    },
+    "Leave Tip": {
+      "en": "Leave Tip",
+      "fr": "Conseil de départ",
+      "es": "Consejo de salida"
+    },
+    "{00} - Lv. {01}": {
+      "en": "{00} - Lv. {01}",
+      "fr": "{00} - Niv. {01}",
+      "es": "{00} - Niv. {01}"
+    },
+    "Party Invite": {
+      "en": "Party Invite",
+      "fr": "Invitation de groupe",
+      "es": "Invitación de grupo"
+    },
+    "Success!": {
+      "en": "Success!",
+      "fr": "Réussi !",
+      "es": "¡Éxito!"
+    },
+    "Confirm New Password": {
+      "en": "Confirm New Password",
+      "fr": "Confirmer le nouveau mot de passe",
+      "es": "Confirmar nueva contraseña"
+    },
+    "Please enter your new password": {
+      "en": "Please enter your new password",
+      "fr": "Saisis ton nouveau mot de passe",
+      "es": "Introduce tu nueva contraseña"
+    },
+    "Please confirm your new password": {
+      "en": "Please confirm your new password",
+      "fr": "Confirme ton nouveau mot de passe",
+      "es": "Confirma tu nueva contraseña"
+    },
+    "Please enter your previous password": {
+      "en": "Please enter your previous password",
+      "fr": "Saisis ton ancien mot de passe",
+      "es": "Introduce tu contraseña anterior"
+    },
+    "Please enter your reset code": {
+      "en": "Please enter your reset code",
+      "fr": "Saisis ton code de réinitialisation",
+      "es": "Introduce tu código de restablecimiento"
+    },
+    "Old Password": {
+      "en": "Old Password",
+      "fr": "Ancien mot de passe",
+      "es": "Contraseña anterior"
+    },
+    "Reset code": {
+      "en": "Reset code",
+      "fr": "Code de réinitialisation",
+      "es": "Código de restablecimiento"
+    },
+    "New Password": {
+      "en": "New Password",
+      "fr": "Nouveau mot de passe",
+      "es": "Nueva contraseña"
+    },
+    "Unable to change the password because the request was invalid.": {
+      "en": "Unable to change the password because the request was invalid.",
+      "fr": "Impossible de changer le mot de passe : demande invalide.",
+      "es": "No se pudo cambiar la contraseña: solicitud no válida."
+    },
+    "Unable to change the password because the reset token or password was invalid or expired.": {
+      "en": "Unable to change the password because the reset token or password was invalid or expired.",
+      "fr": "Impossible de changer le mot de passe : code ou mot de passe invalide ou expiré.",
+      "es": "No se pudo cambiar la contraseña: código o contraseña no válidos o caducados."
+    },
+    "Unable to change the password because the user could not be found.": {
+      "en": "Unable to change the password because the user could not be found.",
+      "fr": "Impossible de changer le mot de passe : utilisateur introuvable.",
+      "es": "No se pudo cambiar la contraseña: usuario no encontrado."
+    },
+    "Successfully changed the password.": {
+      "en": "Successfully changed the password.",
+      "fr": "Mot de passe modifié.",
+      "es": "Contraseña cambiada."
+    },
+    "An unknown error occurred while changing the password.": {
+      "en": "An unknown error occurred while changing the password.",
+      "fr": "Une erreur inconnue est survenue pendant le changement du mot de passe.",
+      "es": "Ocurrió un error desconocido al cambiar la contraseña."
+    },
+    "Abandon": {
+      "en": "Abandon",
+      "fr": "Abandonner",
+      "es": "Abandonar"
+    },
+    "Are you sure that you want to quit the quest \"{00}\"?": {
+      "en": "Are you sure that you want to quit the quest \"{00}\"?",
+      "fr": "Veux-tu abandonner la quête « {00} » ?",
+      "es": "¿Quieres abandonar la misión «{00}»?"
+    },
+    "Abandon Quest: {00}": {
+      "en": "Abandon Quest: {00}",
+      "fr": "Abandonner la quête : {00}",
+      "es": "Abandonar misión: {00}"
+    },
+    "Quest Completed": {
+      "en": "Quest Completed",
+      "fr": "Quête terminée",
+      "es": "Misión completada"
+    },
+    "Current Task:": {
+      "en": "Current Task:",
+      "fr": "Objectif actuel :",
+      "es": "Objetivo actual:"
+    },
+    "Quest In Progress": {
+      "en": "Quest In Progress",
+      "fr": "Quête en cours",
+      "es": "Misión en curso"
+    },
+    "Quest Not Started": {
+      "en": "Quest Not Started",
+      "fr": "Quête non commencée",
+      "es": "Misión sin comenzar"
+    },
+    "{00}/{01} {02}(s) gathered.": {
+      "en": "{00}/{01} {02}(s) gathered.",
+      "fr": "{00}/{01} {02} récoltés.",
+      "es": "{00}/{01} {02} recogidos."
+    },
+    "{00}/{01} {02}(s) slain.": {
+      "en": "{00}/{01} {02}(s) slain.",
+      "fr": "{00}/{01} {02} vaincus.",
+      "es": "{00}/{01} {02} derrotados."
+    },
+    "Accept": {
+      "en": "Accept",
+      "fr": "Accepter",
+      "es": "Aceptar"
+    },
+    "Decline": {
+      "en": "Decline",
+      "fr": "Refuser",
+      "es": "Rechazar"
+    },
+    "Quest Offer": {
+      "en": "Quest Offer",
+      "fr": "Proposition de quête",
+      "es": "Oferta de misión"
+    },
+    "Confirm Password:": {
+      "en": "Confirm Password:",
+      "fr": "Confirmer le mot de passe :",
+      "es": "Confirmar contraseña:"
+    },
+    "Email:": {
+      "en": "Email:",
+      "fr": "Courriel :",
+      "es": "Correo electrónico:"
+    },
+    "The email is invalid.": {
+      "en": "The email is invalid.",
+      "fr": "Adresse courriel invalide.",
+      "es": "Correo electrónico no válido."
+    },
+    "Password:": {
+      "en": "Password:",
+      "fr": "Mot de passe :",
+      "es": "Contraseña:"
+    },
+    "The passwords do not match.": {
+      "en": "The passwords do not match.",
+      "fr": "Les mots de passe ne correspondent pas.",
+      "es": "Las contraseñas no coinciden."
+    },
+    "Username:": {
+      "en": "Username:",
+      "fr": "Identifiant :",
+      "es": "Usuario:"
+    },
+    "Connecting...": {
+      "en": "Connecting...",
+      "fr": "Connexion…",
+      "es": "Conectando…"
+    },
+    "Network Error": {
+      "en": "Network Error",
+      "fr": "Erreur réseau",
+      "es": "Error de red"
+    },
+    "Handshake Error": {
+      "en": "Handshake Error",
+      "fr": "Erreur de connexion initiale",
+      "es": "Error de negociación"
+    },
+    "Online": {
+      "en": "Online",
+      "fr": "En ligne",
+      "es": "En línea"
+    },
+    "Server is Full": {
+      "en": "Server is Full",
+      "fr": "Serveur complet",
+      "es": "Servidor lleno"
+    },
+    "Server Status: {00}": {
+      "en": "Server Status: {00}",
+      "fr": "État du serveur : {00}",
+      "es": "Estado del servidor: {00}"
+    },
+    "Unknown": {
+      "en": "Unknown",
+      "fr": "Inconnu",
+      "es": "Desconocido"
+    },
+    "Version Mismatch": {
+      "en": "Version Mismatch",
+      "fr": "Versions incompatibles",
+      "es": "Versiones incompatibles"
+    },
+    "Apply": {
+      "en": "Apply",
+      "fr": "Appliquer",
+      "es": "Aplicar"
+    },
+    "Audio": {
+      "en": "Audio",
+      "fr": "Audio",
+      "es": "Audio"
+    },
+    "Auto-close Windows": {
+      "en": "Auto-close Windows",
+      "fr": "Fermer automatiquement les fenêtres",
+      "es": "Cerrar ventanas automáticamente"
+    },
+    "Auto Soft-Retarget on Self-Cast": {
+      "en": "Auto Soft-Retarget on Self-Cast",
+      "fr": "Recibler automatiquement les sorts sur soi",
+      "es": "Redirigir hechizos propios automáticamente"
+    },
+    "When this is enabled and an enemy is targeted and a single-target friendly spell is used, the spell will be self-cast without removing the target on the enemy.": {
+      "en": "When this is enabled and an enemy is targeted and a single-target friendly spell is used, the spell will be self-cast without removing the target on the enemy.",
+      "fr": "Quand un ennemi est ciblé, un sort amical à cible unique sera lancé sur toi sans perdre ta cible.",
+      "es": "Al apuntar a un enemigo, un hechizo amistoso de objetivo único se lanzará sobre ti sin perder el objetivo."
+    },
+    "Auto-toggle chat log visibility": {
+      "en": "Auto-toggle chat log visibility",
+      "fr": "Afficher ou masquer automatiquement l'historique",
+      "es": "Alternar historial del chat automáticamente"
+    },
+    "Auto-turn to target": {
+      "en": "Auto-turn to target",
+      "fr": "Se tourner vers la cible",
+      "es": "Girar hacia el objetivo"
+    },
+    "Controls": {
+      "en": "Controls",
+      "fr": "Commandes",
+      "es": "Controles"
+    },
+    "Enable Light Effects": {
+      "en": "Enable Light Effects",
+      "fr": "Activer les effets lumineux",
+      "es": "Activar efectos de luz"
+    },
+    "Enable scrolling to change World Scale in game": {
+      "en": "Enable scrolling to change World Scale in game",
+      "fr": "Changer le zoom du monde avec la molette",
+      "es": "Cambiar escala del mundo con la rueda"
+    },
+    "{00}x{01}": {
+      "en": "{00}x{01}",
+      "fr": "{00}x{01}",
+      "es": "{00}x{01}"
+    },
+    "120": {
+      "en": "120",
+      "fr": "120",
+      "es": "120"
+    },
+    "30": {
+      "en": "30",
+      "fr": "30",
+      "es": "30"
+    },
+    "60": {
+      "en": "60",
+      "fr": "60",
+      "es": "60"
+    },
+    "90": {
+      "en": "90",
+      "fr": "90",
+      "es": "90"
+    },
+    "Fullscreen": {
+      "en": "Fullscreen",
+      "fr": "Plein écran",
+      "es": "Pantalla completa"
+    },
+    "Game": {
+      "en": "Game",
+      "fr": "Jeu",
+      "es": "Juego"
+    },
+    "Information": {
+      "en": "Information",
+      "fr": "Informations",
+      "es": "Información"
+    },
+    "Interface": {
+      "en": "Interface",
+      "fr": "Interface",
+      "es": "Interfaz"
+    },
+    "Language": {
+      "en": "Language",
+      "fr": "Langue",
+      "es": "Idioma"
+    },
+    "Music Volume: {00}%": {
+      "en": "Music Volume: {00}%",
+      "fr": "Volume de la musique : {00}%",
+      "es": "Volumen de música: {00}%"
+    },
+    "Resolution": {
+      "en": "Resolution",
+      "fr": "Résolution",
+      "es": "Resolución"
+    },
+    "Custom Resolution": {
+      "en": "Custom Resolution",
+      "fr": "Résolution personnalisée",
+      "es": "Resolución personalizada"
+    },
+    "Restore Defaults": {
+      "en": "Restore Defaults",
+      "fr": "Valeurs par défaut",
+      "es": "Restaurar valores"
+    },
+    "Volume": {
+      "en": "Volume",
+      "fr": "Volume",
+      "es": "Volumen"
+    },
+    "Show experience as percentage": {
+      "en": "Show experience as percentage",
+      "fr": "Afficher l'expérience en pourcentage",
+      "es": "Mostrar experiencia como porcentaje"
+    },
+    "Show FPS Counter": {
+      "en": "Show FPS Counter",
+      "fr": "Afficher les FPS",
+      "es": "Mostrar FPS"
+    },
+    "Show friends overhead HP bar": {
+      "en": "Show friends overhead HP bar",
+      "fr": "Afficher les PV des amis",
+      "es": "Mostrar barra de salud de amigos"
+    },
+    "Show friends overhead information": {
+      "en": "Show friends overhead information",
+      "fr": "Afficher les informations des amis",
+      "es": "Mostrar información de amigos"
+    },
+    "Show guild member overhead HP bar": {
+      "en": "Show guild member overhead HP bar",
+      "fr": "Afficher les PV des membres de guilde",
+      "es": "Mostrar barra de salud del gremio"
+    },
+    "Show guild member overhead information": {
+      "en": "Show guild member overhead information",
+      "fr": "Afficher les informations de guilde",
+      "es": "Mostrar información del gremio"
+    },
+    "Show health as percentage": {
+      "en": "Show health as percentage",
+      "fr": "Afficher la vie en pourcentage",
+      "es": "Mostrar salud como porcentaje"
+    },
+    "Show mana as percentage": {
+      "en": "Show mana as percentage",
+      "fr": "Afficher le mana en pourcentage",
+      "es": "Mostrar maná como porcentaje"
+    },
+    "Show my overhead HP bar": {
+      "en": "Show my overhead HP bar",
+      "fr": "Afficher mes PV au-dessus du personnage",
+      "es": "Mostrar mi barra de salud"
+    },
+    "Show my overhead information": {
+      "en": "Show my overhead information",
+      "fr": "Afficher mes informations",
+      "es": "Mostrar mi información"
+    },
+    "Show NPC overhead HP bar": {
+      "en": "Show NPC overhead HP bar",
+      "fr": "Afficher les PV des PNJ",
+      "es": "Mostrar barra de salud de PNJ"
+    },
+    "Show NPC overhead information": {
+      "en": "Show NPC overhead information",
+      "fr": "Afficher les informations des PNJ",
+      "es": "Mostrar información de PNJ"
+    },
+    "Show party member overhead HP bar": {
+      "en": "Show party member overhead HP bar",
+      "fr": "Afficher les PV du groupe",
+      "es": "Mostrar barra de salud del grupo"
+    },
+    "Show party member overhead information": {
+      "en": "Show party member overhead information",
+      "fr": "Afficher les informations du groupe",
+      "es": "Mostrar información del grupo"
+    },
+    "Show Ping Counter": {
+      "en": "Show Ping Counter",
+      "fr": "Afficher la latence",
+      "es": "Mostrar latencia"
+    },
+    "Show players overhead HP bar": {
+      "en": "Show players overhead HP bar",
+      "fr": "Afficher les PV des joueurs",
+      "es": "Mostrar barra de salud de jugadores"
+    },
+    "Show players overhead information": {
+      "en": "Show players overhead information",
+      "fr": "Afficher les informations des joueurs",
+      "es": "Mostrar información de jugadores"
+    },
+    "Simplified escape menu": {
+      "en": "Simplified escape menu",
+      "fr": "Menu Échap simplifié",
+      "es": "Menú Esc simplificado"
+    },
+    "Sound Volume: {00}%": {
+      "en": "Sound Volume: {00}%",
+      "fr": "Volume des sons : {00}%",
+      "es": "Volumen de sonido: {00}%"
+    },
+    "Sticky Target": {
+      "en": "Sticky Target",
+      "fr": "Conserver la cible",
+      "es": "Mantener objetivo"
+    },
+    "Targeting": {
+      "en": "Targeting",
+      "fr": "Ciblage",
+      "es": "Selección de objetivo"
+    },
+    "Typewriter Text": {
+      "en": "Typewriter Text",
+      "fr": "Texte progressif",
+      "es": "Texto progresivo"
+    },
+    "UI Scale": {
+      "en": "UI Scale",
+      "fr": "Échelle de l'interface",
+      "es": "Escala de interfaz"
+    },
+    "No Limit": {
+      "en": "No Limit",
+      "fr": "Sans limite",
+      "es": "Sin límite"
+    },
+    "Video": {
+      "en": "Video",
+      "fr": "Vidéo",
+      "es": "Vídeo"
+    },
+    "Sound Effects": {
+      "en": "Sound Effects",
+      "fr": "Effets sonores",
+      "es": "Efectos de sonido"
+    },
+    "V-Sync": {
+      "en": "V-Sync",
+      "fr": "Synchronisation verticale",
+      "es": "Sincronización vertical"
+    },
+    "World Scale": {
+      "en": "World Scale",
+      "fr": "Échelle du monde",
+      "es": "Escala del mundo"
+    },
+    "World Scale is only available after connecting to the server.": {
+      "en": "World Scale is only available after connecting to the server.",
+      "fr": "L'échelle du monde est disponible après connexion au serveur.",
+      "es": "La escala del mundo está disponible tras conectarse al servidor."
+    },
+    "Show quest objective arrow": {
+      "en": "Show quest objective arrow",
+      "fr": "Afficher la flèche d'objectif",
+      "es": "Mostrar flecha de objetivo"
+    },
+    "Buy Item": {
+      "en": "Buy Item",
+      "fr": "Acheter l'objet",
+      "es": "Comprar objeto"
+    },
+    "How many units of {00} would you like to buy?": {
+      "en": "How many units of {00} would you like to buy?",
+      "fr": "Combien de {00} veux-tu acheter ?",
+      "es": "¿Cuántas unidades de {00} quieres comprar?"
+    },
+    "This shop does not accept that item!": {
+      "en": "This shop does not accept that item!",
+      "fr": "Cette boutique n'accepte pas cet objet !",
+      "es": "¡Esta tienda no acepta ese objeto!"
+    },
+    "Costs {00} {01}(s)": {
+      "en": "Costs {00} {01}(s)",
+      "fr": "Coûte {00} {01}",
+      "es": "Cuesta {00} {01}"
+    },
+    "Sell Item": {
+      "en": "Sell Item",
+      "fr": "Vendre l'objet",
+      "es": "Vender objeto"
+    },
+    "How many units of {00} would you like to sell?": {
+      "en": "How many units of {00} would you like to sell?",
+      "fr": "Combien de {00} veux-tu vendre ?",
+      "es": "¿Cuántas unidades de {00} quieres vender?"
+    },
+    "Do you wish to sell the item: {00}?": {
+      "en": "Do you wish to sell the item: {00}?",
+      "fr": "Veux-tu vendre l'objet : {00} ?",
+      "es": "¿Quieres vender el objeto: {00}?"
+    },
+    "Sells for {00} {01}(s)": {
+      "en": "Sells for {00} {01}(s)",
+      "fr": "Se vend pour {00} {01}",
+      "es": "Se vende por {00} {01}"
+    },
+    "Shop": {
+      "en": "Shop",
+      "fr": "Boutique",
+      "es": "Tienda"
+    },
+    "Shop Will Not Buy This Item": {
+      "en": "Shop Will Not Buy This Item",
+      "fr": "La boutique n'achète pas cet objet",
+      "es": "La tienda no compra este objeto"
+    },
+    "Available": {
+      "en": "Available",
+      "fr": "Disponible",
+      "es": "Disponible"
+    },
+    "Not enough currency": {
+      "en": "Not enough currency",
+      "fr": "Monnaie insuffisante",
+      "es": "Moneda insuficiente"
+    },
+    "Owned: {00}": {
+      "en": "Owned: {00}",
+      "fr": "Possédés : {00}",
+      "es": "En posesión: {00}"
+    },
+    "Free": {
+      "en": "Free",
+      "fr": "Gratuit",
+      "es": "Gratis"
+    },
+    "This shop has no items for sale.": {
+      "en": "This shop has no items for sale.",
+      "fr": "Cette boutique n'a rien à vendre.",
+      "es": "Esta tienda no tiene nada a la venta."
+    },
+    "This shop is not buying anything from your inventory.": {
+      "en": "This shop is not buying anything from your inventory.",
+      "fr": "Cette boutique n'achète aucun objet de ton inventaire.",
+      "es": "Esta tienda no compra nada de tu inventario."
+    },
+    "Prices and actions are shown directly. Double-click and right-click shortcuts still work in your inventory.": {
+      "en": "Prices and actions are shown directly. Double-click and right-click shortcuts still work in your inventory.",
+      "fr": "Les prix et actions sont affichés directement. Les raccourcis par double-clic et clic droit restent disponibles.",
+      "es": "Los precios y acciones se muestran directamente. Los atajos de doble clic y clic derecho siguen disponibles."
+    },
+    "currency": {
+      "en": "currency",
+      "fr": "monnaie",
+      "es": "moneda"
+    },
+    "Search items...": {
+      "en": "Search items...",
+      "fr": "Chercher des objets…",
+      "es": "Buscar objetos…"
+    },
+    "Buy {00}": {
+      "en": "Buy {00}",
+      "fr": "Acheter {00}",
+      "es": "Comprar {00}"
+    },
+    "Forget {00}": {
+      "en": "Forget {00}",
+      "fr": "Oublier {00}",
+      "es": "Olvidar {00}"
+    },
+    "Cannot be unlearned.": {
+      "en": "Cannot be unlearned.",
+      "fr": "Ne peut pas être oublié.",
+      "es": "No se puede olvidar."
+    },
+    "Cast Time:": {
+      "en": "Cast Time:",
+      "fr": "Incantation :",
+      "es": "Tiempo de lanzamiento:"
+    },
+    "Cooldown:": {
+      "en": "Cooldown:",
+      "fr": "Délai de recharge :",
+      "es": "Enfriamiento:"
+    },
+    "Cooldown Group:": {
+      "en": "Cooldown Group:",
+      "fr": "Groupe de recharge :",
+      "es": "Grupo de enfriamiento:"
+    },
+    "Distance:": {
+      "en": "Distance:",
+      "fr": "Distance :",
+      "es": "Distancia:"
+    },
+    "Damages over Time": {
+      "en": "Damages over Time",
+      "fr": "Dégâts périodiques",
+      "es": "Daño periódico"
+    },
+    "Effect:": {
+      "en": "Effect:",
+      "fr": "Effet :",
+      "es": "Efecto:"
+    },
+    "Silence": {
+      "en": "Silence",
+      "fr": "Silence",
+      "es": "Silencio"
+    },
+    "Sleep": {
+      "en": "Sleep",
+      "fr": "Sommeil",
+      "es": "Sueño"
+    },
+    "On-Hit": {
+      "en": "On-Hit",
+      "fr": "À l'impact",
+      "es": "Al golpear"
+    },
+    "Taunt": {
+      "en": "Taunt",
+      "fr": "Provocation",
+      "es": "Provocación"
+    },
+    "Stun": {
+      "en": "Stun",
+      "fr": "Étourdissement",
+      "es": "Aturdimiento"
+    },
+    "Snare": {
+      "en": "Snare",
+      "fr": "Immobilisation",
+      "es": "Inmovilización"
+    },
+    "Blind": {
+      "en": "Blind",
+      "fr": "Aveuglement",
+      "es": "Ceguera"
+    },
+    "Stealth": {
+      "en": "Stealth",
+      "fr": "Furtivité",
+      "es": "Sigilo"
+    },
+    "Transforms": {
+      "en": "Transforms",
+      "fr": "Transformation",
+      "es": "Transformación"
+    },
+    "Cleanse": {
+      "en": "Cleanse",
+      "fr": "Purification",
+      "es": "Purificación"
+    },
+    "Invulnerable": {
+      "en": "Invulnerable",
+      "fr": "Invulnérable",
+      "es": "Invulnerable"
+    },
+    "Shield": {
+      "en": "Shield",
+      "fr": "Bouclier",
+      "es": "Escudo"
+    },
+    "Support Spell": {
+      "en": "Support Spell",
+      "fr": "Sort de soutien",
+      "es": "Hechizo de apoyo"
+    },
+    "Heals over Time": {
+      "en": "Heals over Time",
+      "fr": "Soins périodiques",
+      "es": "Curación periódica"
+    },
+    "Ignores Consumed Resources": {
+      "en": "Ignores Consumed Resources",
+      "fr": "Ignore les ressources consommées",
+      "es": "Ignora recursos consumidos"
+    },
+    "Ignores Cooldown Reduction": {
+      "en": "Ignores Cooldown Reduction",
+      "fr": "Ignore la réduction des délais",
+      "es": "Ignora reducción de enfriamiento"
+    },
+    "Ignores Global Cooldown": {
+      "en": "Ignores Global Cooldown",
+      "fr": "Ignore le délai global",
+      "es": "Ignora enfriamiento global"
+    },
+    "Ignores Map Blocks": {
+      "en": "Ignores Map Blocks",
+      "fr": "Ignore les obstacles",
+      "es": "Ignora obstáculos del mapa"
+    },
+    "Ignores Active Resources": {
+      "en": "Ignores Active Resources",
+      "fr": "Ignore les ressources actives",
+      "es": "Ignora recursos activos"
+    },
+    "Ignores Height Differences": {
+      "en": "Ignores Height Differences",
+      "fr": "Ignore les différences de hauteur",
+      "es": "Ignora diferencias de altura"
+    },
+    "Instant": {
+      "en": "Instant",
+      "fr": "Instantané",
+      "es": "Instantáneo"
+    },
+    "Combat Spell": {
+      "en": "Combat Spell",
+      "fr": "Sort de combat",
+      "es": "Hechizo de combate"
+    },
+    "Warp to Map": {
+      "en": "Warp to Map",
+      "fr": "Téléportation vers une carte",
+      "es": "Teletransporte a un mapa"
+    },
+    "Warp to Target": {
+      "en": "Warp to Target",
+      "fr": "Téléportation vers la cible",
+      "es": "Teletransporte al objetivo"
+    },
+    "Dash": {
+      "en": "Dash",
+      "fr": "Ruée",
+      "es": "Impulso"
+    },
+    "Stat Buff": {
+      "en": "Stat Buff",
+      "fr": "Bonus de statistique",
+      "es": "Mejora de estadística"
+    },
+    "Self Cast": {
+      "en": "Self Cast",
+      "fr": "Sur soi",
+      "es": "Sobre uno mismo"
+    },
+    "Targetted - Range: {00} Tiles": {
+      "en": "Targetted - Range: {00} Tiles",
+      "fr": "Ciblé - Portée : {00} cases",
+      "es": "Dirigido - Alcance: {00} casillas"
+    },
+    "AOE": {
+      "en": "AOE",
+      "fr": "Zone d'effet",
+      "es": "Área de efecto"
+    },
+    "Projectile - Range: {00} Tiles": {
+      "en": "Projectile - Range: {00} Tiles",
+      "fr": "Projectile - Portée : {00} cases",
+      "es": "Proyectil - Alcance: {00} casillas"
+    },
+    "On Hit": {
+      "en": "On Hit",
+      "fr": "À l'impact",
+      "es": "Al golpear"
+    },
+    "Trap": {
+      "en": "Trap",
+      "fr": "Piège",
+      "es": "Trampa"
+    },
+    "Ticks every:": {
+      "en": "Ticks every:",
+      "fr": "Intervalle :",
+      "es": "Intervalo:"
+    },
+    "{00} Tiles": {
+      "en": "{00} Tiles",
+      "fr": "{00} cases",
+      "es": "{00} casillas"
+    },
+    "Damaging Spell": {
+      "en": "Damaging Spell",
+      "fr": "Sort offensif",
+      "es": "Hechizo ofensivo"
+    },
+    "HP Cost:": {
+      "en": "HP Cost:",
+      "fr": "Coût en PV :",
+      "es": "Coste de PS:"
+    },
+    "MP Cost:": {
+      "en": "MP Cost:",
+      "fr": "Coût en PM :",
+      "es": "Coste de PM:"
+    },
+    "HP Damage:": {
+      "en": "HP Damage:",
+      "fr": "Dégâts aux PV :",
+      "es": "Daño a PS:"
+    },
+    "MP Damage:": {
+      "en": "MP Damage:",
+      "fr": "Dégâts aux PM :",
+      "es": "Daño a PM:"
+    },
+    "HP Recovery:": {
+      "en": "HP Recovery:",
+      "fr": "Récupération des PV :",
+      "es": "Recuperación de PS:"
+    },
+    "MP Recovery:": {
+      "en": "MP Recovery:",
+      "fr": "Récupération des PM :",
+      "es": "Recuperación de PM:"
+    },
+    "Forget Spell": {
+      "en": "Forget Spell",
+      "fr": "Oublier le sort",
+      "es": "Olvidar hechizo"
+    },
+    "Are you sure you want to forget {00}?": {
+      "en": "Are you sure you want to forget {00}?",
+      "fr": "Veux-tu vraiment oublier {00} ?",
+      "es": "¿Seguro que quieres olvidar {00}?"
+    },
+    "Spells": {
+      "en": "Spells",
+      "fr": "Sorts",
+      "es": "Hechizos"
+    },
+    "Revoke {00}": {
+      "en": "Revoke {00}",
+      "fr": "Retirer {00}",
+      "es": "Retirar {00}"
+    },
+    "Offer Item": {
+      "en": "Offer Item",
+      "fr": "Offrir l'objet",
+      "es": "Ofrecer objeto"
+    },
+    "How many units of {00} would you like to offer?": {
+      "en": "How many units of {00} would you like to offer?",
+      "fr": "Combien de {00} veux-tu offrir ?",
+      "es": "¿Cuántas unidades de {00} quieres ofrecer?"
+    },
+    "Pending": {
+      "en": "Pending",
+      "fr": "En attente",
+      "es": "Pendiente"
+    },
+    "{00} has invited you to trade items with them. Do you accept?": {
+      "en": "{00} has invited you to trade items with them. Do you accept?",
+      "fr": "{00} te propose un échange. Acceptes-tu ?",
+      "es": "{00} te propone un intercambio. ¿Aceptas?"
+    },
+    "Revoke Item": {
+      "en": "Revoke Item",
+      "fr": "Retirer l'objet",
+      "es": "Retirar objeto"
+    },
+    "How many units of {00} would you like to revoke?": {
+      "en": "How many units of {00} would you like to revoke?",
+      "fr": "Combien de {00} veux-tu retirer ?",
+      "es": "¿Cuántas unidades de {00} quieres retirar?"
+    },
+    "Their Offer:": {
+      "en": "Their Offer:",
+      "fr": "Son offre :",
+      "es": "Su oferta:"
+    },
+    "Trading with {00}": {
+      "en": "Trading with {00}",
+      "fr": "Échange avec {00}",
+      "es": "Intercambio con {00}"
+    },
+    "Trading Invite": {
+      "en": "Trading Invite",
+      "fr": "Demande d'échange",
+      "es": "Solicitud de intercambio"
+    },
+    "Value: {00}": {
+      "en": "Value: {00}",
+      "fr": "Valeur : {00}",
+      "es": "Valor: {00}"
+    },
+    "Your Offer:": {
+      "en": "Your Offer:",
+      "fr": "Ton offre :",
+      "es": "Tu oferta:"
+    },
+    "Checking for updates, please wait.": {
+      "en": "Checking for updates, please wait.",
+      "fr": "Recherche de mises à jour…",
+      "es": "Buscando actualizaciones…"
+    },
+    "Update complete! Launching game.": {
+      "en": "Update complete! Launching game.",
+      "fr": "Mise à jour terminée ! Lancement du jeu.",
+      "es": "¡Actualización completa! Iniciando juego."
+    },
+    "Update Error! Check logs for more information.": {
+      "en": "Update Error! Check logs for more information.",
+      "fr": "Erreur de mise à jour ! Consulte les journaux.",
+      "es": "¡Error de actualización! Consulta los registros."
+    },
+    "{00} Files Remaining": {
+      "en": "{00} Files Remaining",
+      "fr": "{00} fichiers restants",
+      "es": "{00} archivos restantes"
+    },
+    "{00} Left": {
+      "en": "{00} Left",
+      "fr": "{00} restants",
+      "es": "{00} restantes"
+    },
+    "Update complete! Relaunch {00} to play.": {
+      "en": "Update complete! Relaunch {00} to play.",
+      "fr": "Mise à jour terminée ! Relance {00} pour jouer.",
+      "es": "¡Actualización completa! Reinicia {00} para jugar."
+    },
+    "Downloading updates, please wait.": {
+      "en": "Downloading updates, please wait.",
+      "fr": "Téléchargement des mises à jour…",
+      "es": "Descargando actualizaciones…"
+    },
+    "sound": {
+      "en": "sound",
+      "fr": "son",
+      "es": "sonido"
+    },
+    "sprite": {
+      "en": "sprite",
+      "fr": "apparence",
+      "es": "apariencia"
+    },
+    "All-in": {
+      "en": "All-in",
+      "fr": "Tapis",
+      "es": "Todo dentro"
+    },
+    "C = clubs, D = diamonds, H = hearts, S = spades. (B) = rotating betting button.": {
+      "en": "C = clubs, D = diamonds, H = hearts, S = spades. (B) = rotating betting button.",
+      "fr": "C = trèfle, D = carreau, H = cœur, S = pique. (B) = bouton tournant des mises.",
+      "es": "C = tréboles, D = diamantes, H = corazones, S = picas. (B) = botón rotatorio de apuestas."
+    },
+    "The next hand starts automatically after a short pause.": {
+      "en": "The next hand starts automatically after a short pause.",
+      "fr": "La prochaine main commence après une courte pause.",
+      "es": "La siguiente mano empieza tras una breve pausa."
+    },
+    "Call {00}": {
+      "en": "Call {00}",
+      "fr": "Suivre {00}",
+      "es": "Igualar {00}"
+    },
+    "Check": {
+      "en": "Check",
+      "fr": "Parole",
+      "es": "Pasar"
+    },
+    "Dealer": {
+      "en": "Dealer",
+      "fr": "Donneur",
+      "es": "Repartidor"
+    },
+    "Seat {00}: empty": {
+      "en": "Seat {00}: empty",
+      "fr": "Siège {00} : vide",
+      "es": "Asiento {00}: vacío"
+    },
+    "A hand is already in progress.": {
+      "en": "A hand is already in progress.",
+      "fr": "Une main est déjà en cours.",
+      "es": "Ya hay una mano en curso."
+    },
+    "That action is not available now.": {
+      "en": "That action is not available now.",
+      "fr": "Cette action n'est pas disponible.",
+      "es": "Esa acción no está disponible."
+    },
+    "That wager is not allowed.": {
+      "en": "That wager is not allowed.",
+      "fr": "Cette mise n'est pas autorisée.",
+      "es": "Esa apuesta no está permitida."
+    },
+    "No hand is in progress.": {
+      "en": "No hand is in progress.",
+      "fr": "Aucune main en cours.",
+      "es": "No hay ninguna mano en curso."
+    },
+    "At least two players with chips are required.": {
+      "en": "At least two players with chips are required.",
+      "fr": "Il faut au moins deux joueurs avec des jetons.",
+      "es": "Se necesitan al menos dos jugadores con fichas."
+    },
+    "You are no longer seated.": {
+      "en": "You are no longer seated.",
+      "fr": "Tu n'es plus assis.",
+      "es": "Ya no estás sentado."
+    },
+    "It is not your turn.": {
+      "en": "It is not your turn.",
+      "fr": "Ce n'est pas ton tour.",
+      "es": "No es tu turno."
+    },
+    "The table changed. Review the new state before acting again.": {
+      "en": "The table changed. Review the new state before acting again.",
+      "fr": "La table a changé. Vérifie son nouvel état.",
+      "es": "La mesa ha cambiado. Revisa su nuevo estado."
+    },
+    "You left the table or are no longer on the same map.": {
+      "en": "You left the table or are no longer on the same map.",
+      "fr": "Tu as quitté la table ou changé de carte.",
+      "es": "Has dejado la mesa o cambiado de mapa."
+    },
+    "Fold": {
+      "en": "Fold",
+      "fr": "Se coucher",
+      "es": "Retirarse"
+    },
+    "Folded": {
+      "en": "Folded",
+      "fr": "Couché",
+      "es": "Retirado"
+    },
+    "Enter a valid total wager. Use Minimum or All-in for a short stack.": {
+      "en": "Enter a valid total wager. Use Minimum or All-in for a short stack.",
+      "fr": "Saisis une mise totale valide. Utilise Minimum ou Tapis si tu as peu de jetons.",
+      "es": "Introduce una apuesta total válida. Usa Mínimo o Todo dentro si tienes pocas fichas."
+    },
+    "Leave table": {
+      "en": "Leave table",
+      "fr": "Quitter la table",
+      "es": "Dejar la mesa"
+    },
+    "Leaving after this hand": {
+      "en": "Leaving after this hand",
+      "fr": "Départ après cette main",
+      "es": "Salida después de esta mano"
+    },
+    "Cards: C = clubs, D = diamonds, H = hearts, S = spades. D beside a name = dealer.": {
+      "en": "Cards: C = clubs, D = diamonds, H = hearts, S = spades. D beside a name = dealer.",
+      "fr": "Cartes : C = trèfle, D = carreau, H = cœur, S = pique. D près d'un nom = donneur.",
+      "es": "Cartas: C = tréboles, D = diamantes, H = corazones, S = picas. D junto al nombre = repartidor."
+    },
+    "Minimum": {
+      "en": "Minimum",
+      "fr": "Minimum",
+      "es": "Mínimo"
+    },
+    "At least two funded players are needed. Press Start hand when ready.": {
+      "en": "At least two funded players are needed. Press Start hand when ready.",
+      "fr": "Il faut deux joueurs avec des jetons. Appuie sur Commencer la main.",
+      "es": "Se necesitan dos jugadores con fichas. Pulsa Empezar mano."
+    },
+    "No test chips left. Leave and rejoin to test again.": {
+      "en": "No test chips left. Leave and rejoin to test again.",
+      "fr": "Plus de jetons de test. Quitte la table et reviens.",
+      "es": "No quedan fichas de prueba. Sal y vuelve a entrar."
+    },
+    " [NPC]": {
+      "en": " [NPC]",
+      "fr": " [PNJ]",
+      "es": " [PNJ]"
+    },
+    "Waiting for another player - {00}s": {
+      "en": "Waiting for another player - {00}s",
+      "fr": "En attente d'un joueur - {00}s",
+      "es": "Esperando a otro jugador - {00}s"
+    },
+    "Your cards: {00}": {
+      "en": "Your cards: {00}",
+      "fr": "Tes cartes : {00}",
+      "es": "Tus cartas: {00}"
+    },
+    "Winnings: {00}": {
+      "en": "Winnings: {00}",
+      "fr": "Gains : {00}",
+      "es": "Ganancias: {00}"
+    },
+    "Waiting for the server...": {
+      "en": "Waiting for the server...",
+      "fr": "En attente du serveur…",
+      "es": "Esperando al servidor…"
+    },
+    "In hand": {
+      "en": "In hand",
+      "fr": "Dans la main",
+      "es": "En la mano"
+    },
+    "Raise / Bet": {
+      "en": "Raise / Bet",
+      "fr": "Relancer / Miser",
+      "es": "Subir / Apostar"
+    },
+    "Total street wager:": {
+      "en": "Total street wager:",
+      "fr": "Mise totale de ce tour :",
+      "es": "Apuesta total de esta ronda:"
+    },
+    "Press Start hand when ready.": {
+      "en": "Press Start hand when ready.",
+      "fr": "Appuie sur Commencer la main.",
+      "es": "Pulsa Empezar mano."
+    },
+    "Refresh": {
+      "en": "Refresh",
+      "fr": "Actualiser",
+      "es": "Actualizar"
+    },
+    "Action refused: {00}": {
+      "en": "Action refused: {00}",
+      "fr": "Action refusée : {00}",
+      "es": "Acción rechazada: {00}"
+    },
+    "Chips: {00}   Bet: {01}": {
+      "en": "Chips: {00}   Bet: {01}",
+      "fr": "Jetons : {00}   Mise : {01}",
+      "es": "Fichas: {00}   Apuesta: {01}"
+    },
+    "Waiting": {
+      "en": "Waiting",
+      "fr": "En attente",
+      "es": "Esperando"
+    },
+    "Pre-flop": {
+      "en": "Pre-flop",
+      "fr": "Préflop",
+      "es": "Preflop"
+    },
+    "Flop": {
+      "en": "Flop",
+      "fr": "Flop",
+      "es": "Flop"
+    },
+    "Turn": {
+      "en": "Turn",
+      "fr": "Tournant",
+      "es": "Turn"
+    },
+    "River": {
+      "en": "River",
+      "fr": "Rivière",
+      "es": "River"
+    },
+    "Hand finished": {
+      "en": "Hand finished",
+      "fr": "Main terminée",
+      "es": "Mano terminada"
+    },
+    "Start hand": {
+      "en": "Start hand",
+      "fr": "Commencer la main",
+      "es": "Empezar mano"
+    },
+    "Table: {00}   |   Hand: {01}   |   Pot: {02}": {
+      "en": "Table: {00}   |   Hand: {01}   |   Pot: {02}",
+      "fr": "Table : {00}   /   Main : {01}   /   Pot : {02}",
+      "es": "Mesa: {00}   /   Mano: {01}   /   Bote: {02}"
+    },
+    "Temporary test chips only. No game currency, items or rewards.": {
+      "en": "Temporary test chips only. No game currency, items or rewards.",
+      "fr": "Jetons de test uniquement. Aucune monnaie, objet ou récompense du jeu.",
+      "es": "Solo fichas de prueba. Sin moneda, objetos ni recompensas del juego."
+    },
+    "Poker - test chips": {
+      "en": "Poker - test chips",
+      "fr": "Poker - jetons de test",
+      "es": "Póker - fichas de prueba"
+    },
+    "Waiting for next hand": {
+      "en": "Waiting for next hand",
+      "fr": "En attente de la prochaine main",
+      "es": "Esperando la siguiente mano"
+    },
+    "Your turn - {00}s": {
+      "en": "Your turn - {00}s",
+      "fr": "À toi de jouer - {00}s",
+      "es": "Tu turno - {00}s"
+    },
+    "Classic": {
+      "en": "Classic",
+      "fr": "Classique",
+      "es": "Clásico"
+    },
+    "Royal": {
+      "en": "Royal",
+      "fr": "Royal",
+      "es": "Real"
+    },
+    "Pirate": {
+      "en": "Pirate",
+      "fr": "Pirate",
+      "es": "Pirata"
+    },
+    "Halloween": {
+      "en": "Halloween",
+      "fr": "Halloween",
+      "es": "Halloween"
+    },
+    "Card back: {00} (change)": {
+      "en": "Card back: {00} (change)",
+      "fr": "Dos des cartes : {00} (changer)",
+      "es": "Reverso: {00} (cambiar)"
+    },
+    "Artwork missing: showing the classic back.": {
+      "en": "Artwork missing: showing the classic back.",
+      "fr": "Image manquante : dos classique affiché.",
+      "es": "Falta la imagen: se muestra el reverso clásico."
+    },
+    "Your net gain: +{00}": {
+      "en": "Your net gain: +{00}",
+      "fr": "Ton gain net : +{00}",
+      "es": "Tu ganancia neta: +{00}"
+    },
+    "Applies to your next hand.": {
+      "en": "Applies to your next hand.",
+      "fr": "S'applique à la prochaine main.",
+      "es": "Se aplica a tu próxima mano."
+    },
+    "Visible to the other players.": {
+      "en": "Visible to the other players.",
+      "fr": "Visible par les autres joueurs.",
+      "es": "Visible para otros jugadores."
+    },
+    "Currency: {00} | At table: {01} | Balance returned after leaving and settling the hand.": {
+      "en": "Currency: {00} | At table: {01} | Balance returned after leaving and settling the hand.",
+      "fr": "Monnaie : {00} / À table : {01} / Solde rendu après le départ et la fin de la main.",
+      "es": "Moneda: {00} / En mesa: {01} / Saldo devuelto al salir y finalizar la mano."
+    },
+    "+{00} {01} net": {
+      "en": "+{00} {01} net",
+      "fr": "+{00} {01} nets",
+      "es": "+{00} {01} netos"
+    },
+    "Saving table balances. Please wait.": {
+      "en": "Saving table balances. Please wait.",
+      "fr": "Enregistrement des soldes. Patiente.",
+      "es": "Guardando saldos. Espera."
+    },
+    "Balance: {00}  Bet: {01}": {
+      "en": "Balance: {00}  Bet: {01}",
+      "fr": "Solde : {00}  Mise : {01}",
+      "es": "Saldo: {00}  Apuesta: {01}"
+    },
+    "Calls {00}": {
+      "en": "Calls {00}",
+      "fr": "Suit {00}",
+      "es": "Iguala {00}"
+    },
+    "Checks": {
+      "en": "Checks",
+      "fr": "Parole",
+      "es": "Pasa"
+    },
+    "Deals the cards": {
+      "en": "Deals the cards",
+      "fr": "Distribue les cartes",
+      "es": "Reparte las cartas"
+    },
+    "Folds": {
+      "en": "Folds",
+      "fr": "Se couche",
+      "es": "Se retira"
+    },
+    "Leaves the table": {
+      "en": "Leaves the table",
+      "fr": "Quitte la table",
+      "es": "Deja la mesa"
+    },
+    "Raises to {00}": {
+      "en": "Raises to {00}",
+      "fr": "Relance à {00}",
+      "es": "Sube a {00}"
+    },
+    "Wins +{00} net": {
+      "en": "Wins +{00} net",
+      "fr": "Gagne +{00} nets",
+      "es": "Gana +{00} netos"
+    },
+    "Card backs - B{00}": {
+      "en": "Card backs - B{00}",
+      "fr": "Dos de cartes - B{00}",
+      "es": "Reversos - B{00}"
+    },
+    "B{00} - Lv. {01}": {
+      "en": "B{00} - Lv. {01}",
+      "fr": "B{00} - Niv. {01}",
+      "es": "B{00} - Niv. {01}"
+    },
+    "{00} - Dealer": {
+      "en": "{00} - Dealer",
+      "fr": "{00} - Donneur",
+      "es": "{00} - Repartidor"
+    },
+    "POKER LEVEL {00}!": {
+      "en": "POKER LEVEL {00}!",
+      "fr": "NIVEAU DE POKER {00} !",
+      "es": "¡NIVEL DE PÓKER {00}!"
+    },
+    "This card back requires poker level {00}.": {
+      "en": "This card back requires poker level {00}.",
+      "fr": "Ce dos de cartes exige le niveau de poker {00}.",
+      "es": "Este reverso requiere el nivel de póker {00}."
+    },
+    "Poker level {00} - Mastered": {
+      "en": "Poker level {00} - Mastered",
+      "fr": "Niveau de poker {00} - Maîtrisé",
+      "es": "Nivel de póker {00} - Dominado"
+    },
+    "+{00} net": {
+      "en": "+{00} net",
+      "fr": "+{00} nets",
+      "es": "+{00} netos"
+    },
+    "POT  {00}": {
+      "en": "POT  {00}",
+      "fr": "POT  {00}",
+      "es": "BOTE  {00}"
+    },
+    "Poker level {00}  |  {01} / {02} XP": {
+      "en": "Poker level {00}  |  {01} / {02} XP",
+      "fr": "Niveau de poker {00}  /  {01} / {02} EXP",
+      "es": "Nivel de póker {00}  /  {01} / {02} EXP"
+    },
+    "Poker progression is unavailable. Please try again later.": {
+      "en": "Poker progression is unavailable. Please try again later.",
+      "fr": "La progression du poker est indisponible. Réessaie plus tard.",
+      "es": "La progresión del póker no está disponible. Inténtalo más tarde."
+    },
+    "Saving poker experience. The next hand will wait.": {
+      "en": "Saving poker experience. The next hand will wait.",
+      "fr": "Enregistrement de l'EXP de poker. La prochaine main attendra.",
+      "es": "Guardando experiencia de póker. La siguiente mano esperará."
+    },
+    "Test chips and test progression only. No Aureons are taken or paid.": {
+      "en": "Test chips and test progression only. No Aureons are taken or paid.",
+      "fr": "Jetons et progression de test uniquement. Aucun Aureon n'est retiré ni gagné.",
+      "es": "Solo fichas y progresión de prueba. No se retiran ni pagan Aureons."
+    },
+    "POKER  /  {00}  /  Hand {01}": {
+      "en": "POKER  /  {00}  /  Hand {01}",
+      "fr": "POKER  /  {00}  /  Main {01}",
+      "es": "PÓKER  /  {00}  /  Mano {01}"
+    },
+    "{00} wins": {
+      "en": "{00} wins",
+      "fr": "{00} gagne",
+      "es": "{00} gana"
+    },
+    "{00} - You": {
+      "en": "{00} - You",
+      "fr": "{00} - Toi",
+      "es": "{00} - Tú"
+    },
+    "Language (restart required)": {
+      "en": "Language (restart required)",
+      "fr": "Langue (redémarrage requis)",
+      "es": "Idioma (requiere reiniciar)"
+    },
+    "< Previous": {
+      "en": "< Previous",
+      "fr": "< Précédent",
+      "es": "< Anterior"
+    },
+    "APPLY CHANGES": {
+      "en": "APPLY CHANGES",
+      "fr": "APPLIQUER",
+      "es": "APLICAR CAMBIOS"
+    },
+    "APPLYING...": {
+      "en": "APPLYING...",
+      "fr": "APPLICATION…",
+      "es": "APLICANDO…"
+    },
+    "AUCTION": {
+      "en": "AUCTION",
+      "fr": "ENCHÈRES",
+      "es": "SUBASTA"
+    },
+    "AVAILABLE": {
+      "en": "AVAILABLE",
+      "fr": "DISPONIBLE",
+      "es": "DISPONIBLE"
+    },
+    "Achievements": {
+      "en": "Achievements",
+      "fr": "Succès",
+      "es": "Logros"
+    },
+    "Allocated": {
+      "en": "Allocated",
+      "fr": "Alloué",
+      "es": "Asignado"
+    },
+    "Back to game": {
+      "en": "Back to game",
+      "fr": "Retour au jeu",
+      "es": "Volver al juego"
+    },
+    "Blackjack has its own XP and levels. Leaving after the deal stands; it does not cancel the wager.": {
+      "en": "Blackjack has its own XP and levels. Leaving after the deal stands; it does not cancel the wager.",
+      "fr": "Le blackjack possède son EXP et ses niveaux. Partir après la distribution ne rembourse pas la mise.",
+      "es": "El blackjack tiene su propia EXP y niveles. Salir tras el reparto no anula la apuesta."
+    },
+    "CANCEL": {
+      "en": "CANCEL",
+      "fr": "ANNULER",
+      "es": "CANCELAR"
+    },
+    "CHOOSE A RECIPE": {
+      "en": "CHOOSE A RECIPE",
+      "fr": "CHOISIR UNE RECETTE",
+      "es": "ELIGE UNA RECETA"
+    },
+    "CREW": {
+      "en": "CREW",
+      "fr": "ÉQUIPAGE",
+      "es": "TRIPULACIÓN"
+    },
+    "CURRENT QUEST": {
+      "en": "CURRENT QUEST",
+      "fr": "QUÊTE ACTUELLE",
+      "es": "MISIÓN ACTUAL"
+    },
+    "Center on player": {
+      "en": "Center on player",
+      "fr": "Centrer sur le joueur",
+      "es": "Centrar en el jugador"
+    },
+    "Choose a bet and spin.": {
+      "en": "Choose a bet and spin.",
+      "fr": "Choisis une mise et lance la roue.",
+      "es": "Elige una apuesta y gira."
+    },
+    "Claim": {
+      "en": "Claim",
+      "fr": "Récupérer",
+      "es": "Reclamar"
+    },
+    "Class:": {
+      "en": "Class:",
+      "fr": "Classe :",
+      "es": "Clase:"
+    },
+    "Congratulations! You received:": {
+      "en": "Congratulations! You received:",
+      "fr": "Félicitations ! Tu as obtenu :",
+      "es": "¡Felicidades! Has obtenido:"
+    },
+    "Corps Royaux News": {
+      "en": "Corps Royaux News",
+      "fr": "Actualités de Corps Royaux",
+      "es": "Noticias de Corps Royaux"
+    },
+    "DUNGEON FAILED": {
+      "en": "DUNGEON FAILED",
+      "fr": "DONJON ÉCHOUÉ",
+      "es": "MAZMORRA FALLIDA"
+    },
+    "DUNGEON GATE DETECTED": {
+      "en": "DUNGEON GATE DETECTED",
+      "fr": "ENTRÉE DE DONJON DÉTECTÉE",
+      "es": "ENTRADA DE MAZMORRA DETECTADA"
+    },
+    "Drag to move / Mouse wheel or +/- to zoom / Zoom centers on you": {
+      "en": "Drag to move / Mouse wheel or +/- to zoom / Zoom centers on you",
+      "fr": "Glisser pour déplacer / Molette ou +/- pour zoomer / Centré sur toi",
+      "es": "Arrastra para mover / Rueda o +/- para zoom / Centrado en ti"
+    },
+    "Dungeons": {
+      "en": "Dungeons",
+      "fr": "Donjons",
+      "es": "Mazmorras"
+    },
+    "ENTER DUNGEON": {
+      "en": "ENTER DUNGEON",
+      "fr": "ENTRER DANS LE DONJON",
+      "es": "ENTRAR EN LA MAZMORRA"
+    },
+    "EQUIPMENT": {
+      "en": "EQUIPMENT",
+      "fr": "ÉQUIPEMENT",
+      "es": "EQUIPO"
+    },
+    "Enable voice sounds": {
+      "en": "Enable voice sounds",
+      "fr": "Activer les voix",
+      "es": "Activar voces"
+    },
+    "Familiers": {
+      "en": "Familiers",
+      "fr": "Familiers",
+      "es": "Mascotas"
+    },
+    "Freed": {
+      "en": "Freed",
+      "fr": "Libéré",
+      "es": "Liberado"
+    },
+    "Guild:": {
+      "en": "Guild:",
+      "fr": "Guilde :",
+      "es": "Gremio:"
+    },
+    "Guild: ": {
+      "en": "Guild: ",
+      "fr": "Guilde : ",
+      "es": "Gremio: "
+    },
+    "HP": {
+      "en": "HP",
+      "fr": "PV",
+      "es": "PS"
+    },
+    "HP: ": {
+      "en": "HP: ",
+      "fr": "PV : ",
+      "es": "PS: "
+    },
+    "Hover an equipped item to view its full description, stats and bonuses.": {
+      "en": "Hover an equipped item to view its full description, stats and bonuses.",
+      "fr": "Survole un objet équipé pour voir sa description, ses statistiques et ses bonus.",
+      "es": "Pasa el cursor sobre un objeto equipado para ver su descripción, estadísticas y bonificaciones."
+    },
+    "INGREDIENTS": {
+      "en": "INGREDIENTS",
+      "fr": "INGRÉDIENTS",
+      "es": "INGREDIENTES"
+    },
+    "Image unavailable": {
+      "en": "Image unavailable",
+      "fr": "Image indisponible",
+      "es": "Imagen no disponible"
+    },
+    "Insert your credits here!": {
+      "en": "Insert your credits here!",
+      "fr": "Insère tes crédits ici !",
+      "es": "¡Introduce tus créditos aquí!"
+    },
+    "KICK": {
+      "en": "KICK",
+      "fr": "EXPULSER",
+      "es": "EXPULSAR"
+    },
+    "LEAVE": {
+      "en": "LEAVE",
+      "fr": "QUITTER",
+      "es": "SALIR"
+    },
+    "LEAVE CREW": {
+      "en": "LEAVE CREW",
+      "fr": "QUITTER L'ÉQUIPAGE",
+      "es": "DEJAR TRIPULACIÓN"
+    },
+    "Level:": {
+      "en": "Level:",
+      "fr": "Niveau :",
+      "es": "Nivel:"
+    },
+    "Loading Corps Royaux news...": {
+      "en": "Loading Corps Royaux news...",
+      "fr": "Chargement des actualités de Corps Royaux…",
+      "es": "Cargando noticias de Corps Royaux…"
+    },
+    "Loading image...": {
+      "en": "Loading image...",
+      "fr": "Chargement de l'image…",
+      "es": "Cargando imagen…"
+    },
+    "Location: ": {
+      "en": "Location: ",
+      "fr": "Lieu : ",
+      "es": "Lugar: "
+    },
+    "Logiklik News": {
+      "en": "Logiklik News",
+      "fr": "Logiklik News",
+      "es": "Logiklik News"
+    },
+    "MAX LEVEL": {
+      "en": "MAX LEVEL",
+      "fr": "NIVEAU MAXIMAL",
+      "es": "NIVEL MÁXIMO"
+    },
+    "MP": {
+      "en": "MP",
+      "fr": "PM",
+      "es": "PM"
+    },
+    "MP: ": {
+      "en": "MP: ",
+      "fr": "PM : ",
+      "es": "PM: "
+    },
+    "Marlow - Dealer": {
+      "en": "Marlow - Dealer",
+      "fr": "Marlow - Donneur",
+      "es": "Marlow - Repartidor"
+    },
+    "NO CREW FORMED": {
+      "en": "NO CREW FORMED",
+      "fr": "AUCUN ÉQUIPAGE",
+      "es": "SIN TRIPULACIÓN"
+    },
+    "NO OFFERS": {
+      "en": "NO OFFERS",
+      "fr": "AUCUNE OFFRE",
+      "es": "SIN OFERTAS"
+    },
+    "Name:": {
+      "en": "Name:",
+      "fr": "Nom :",
+      "es": "Nombre:"
+    },
+    "Next >": {
+      "en": "Next >",
+      "fr": "Suivant >",
+      "es": "Siguiente >"
+    },
+    "No achievements are configured yet.": {
+      "en": "No achievements are configured yet.",
+      "fr": "Aucun succès n'est configuré.",
+      "es": "No hay logros configurados."
+    },
+    "No equipment information.": {
+      "en": "No equipment information.",
+      "fr": "Aucune information d'équipement.",
+      "es": "Sin información de equipo."
+    },
+    "No published news found in category Corps Royaux.": {
+      "en": "No published news found in category Corps Royaux.",
+      "fr": "Aucune actualité publiée dans la catégorie Corps Royaux.",
+      "es": "No hay noticias publicadas en la categoría Corps Royaux."
+    },
+    "No quests are currently offered here.": {
+      "en": "No quests are currently offered here.",
+      "fr": "Aucune quête n'est proposée ici.",
+      "es": "No se ofrecen misiones aquí."
+    },
+    "OPENING...": {
+      "en": "OPENING...",
+      "fr": "OUVERTURE…",
+      "es": "ABRIENDO…"
+    },
+    "Offline: ": {
+      "en": "Offline: ",
+      "fr": "Hors ligne : ",
+      "es": "Desconectado: "
+    },
+    "PARTY": {
+      "en": "PARTY",
+      "fr": "GROUPE",
+      "es": "GRUPO"
+    },
+    "Pets": {
+      "en": "Pets",
+      "fr": "Familiers",
+      "es": "Mascotas"
+    },
+    "Powered by Logiklik News � Category: Corps Royaux": {
+      "en": "Powered by Logiklik News - Category: Corps Royaux",
+      "fr": "Propulsé par Logiklik News - Catégorie : Corps Royaux",
+      "es": "Por Logiklik News - Categoría: Corps Royaux"
+    },
+    "Premium inactive": {
+      "en": "Premium inactive",
+      "fr": "Premium inactif",
+      "es": "Prémium inactivo"
+    },
+    "Prepare your defenses.": {
+      "en": "Prepare your defenses.",
+      "fr": "Prépare tes défenses.",
+      "es": "Prepara tus defensas."
+    },
+    "Preview unavailable": {
+      "en": "Preview unavailable",
+      "fr": "Aperçu indisponible",
+      "es": "Vista previa no disponible"
+    },
+    "Preview: ": {
+      "en": "Preview: ",
+      "fr": "Aperçu : ",
+      "es": "Vista previa: "
+    },
+    "QUEST NOT STARTED": {
+      "en": "QUEST NOT STARTED",
+      "fr": "QUÊTE NON COMMENCÉE",
+      "es": "MISIÓN SIN COMENZAR"
+    },
+    "RANDOMIZE": {
+      "en": "RANDOMIZE",
+      "fr": "ALÉATOIRE",
+      "es": "ALEATORIO"
+    },
+    "RESET": {
+      "en": "RESET",
+      "fr": "RÉINITIALISER",
+      "es": "RESTABLECER"
+    },
+    "RETRY AVAILABLE": {
+      "en": "RETRY AVAILABLE",
+      "fr": "NOUVEL ESSAI DISPONIBLE",
+      "es": "REINTENTO DISPONIBLE"
+    },
+    "RETRY DUNGEON": {
+      "en": "RETRY DUNGEON",
+      "fr": "RÉESSAYER LE DONJON",
+      "es": "REINTENTAR MAZMORRA"
+    },
+    "ROYAL ALCHEMY": {
+      "en": "ROYAL ALCHEMY",
+      "fr": "ALCHIMIE ROYALE",
+      "es": "ALQUIMIA REAL"
+    },
+    "Randomize Appearance": {
+      "en": "Randomize Appearance",
+      "fr": "Apparence aléatoire",
+      "es": "Apariencia aleatoria"
+    },
+    "Read the latest Corps Royaux news": {
+      "en": "Read the latest Corps Royaux news",
+      "fr": "Lire les dernières actualités de Corps Royaux",
+      "es": "Leer las últimas noticias de Corps Royaux"
+    },
+    "Refresh dungeon rankings": {
+      "en": "Refresh dungeon rankings",
+      "fr": "Actualiser le classement des donjons",
+      "es": "Actualizar clasificación de mazmorras"
+    },
+    "Remove ": {
+      "en": "Remove ",
+      "fr": "Retirer ",
+      "es": "Eliminar "
+    },
+    "Remove friend ": {
+      "en": "Remove friend ",
+      "fr": "Retirer l'ami ",
+      "es": "Eliminar amigo "
+    },
+    "Rename": {
+      "en": "Rename",
+      "fr": "Renommer",
+      "es": "Renombrar"
+    },
+    "Rewards delivered": {
+      "en": "Rewards delivered",
+      "fr": "Récompenses reçues",
+      "es": "Recompensas entregadas"
+    },
+    "Royal Roulette � European 0-36": {
+      "en": "Royal Roulette - European 0-36",
+      "fr": "Roulette royale - Européenne 0-36",
+      "es": "Ruleta real - Europea 0-36"
+    },
+    "SHOP UNAVAILABLE": {
+      "en": "SHOP UNAVAILABLE",
+      "fr": "BOUTIQUE INDISPONIBLE",
+      "es": "TIENDA NO DISPONIBLE"
+    },
+    "Send a friend request": {
+      "en": "Send a friend request",
+      "fr": "Envoyer une demande d'amitié",
+      "es": "Enviar solicitud de amistad"
+    },
+    "Show World Boss HUD": {
+      "en": "Show World Boss HUD",
+      "fr": "Afficher le suivi du boss mondial",
+      "es": "Mostrar panel del jefe mundial"
+    },
+    "Show invasion HUD": {
+      "en": "Show invasion HUD",
+      "fr": "Afficher le suivi d'invasion",
+      "es": "Mostrar panel de invasión"
+    },
+    "Show minimap": {
+      "en": "Show minimap",
+      "fr": "Afficher la minicarte",
+      "es": "Mostrar minimapa"
+    },
+    "Show monster levels": {
+      "en": "Show monster levels",
+      "fr": "Afficher les niveaux des monstres",
+      "es": "Mostrar niveles de monstruos"
+    },
+    "Show my guild": {
+      "en": "Show my guild",
+      "fr": "Afficher ma guilde",
+      "es": "Mostrar mi gremio"
+    },
+    "Show my level": {
+      "en": "Show my level",
+      "fr": "Afficher mon niveau",
+      "es": "Mostrar mi nivel"
+    },
+    "Show my titles": {
+      "en": "Show my titles",
+      "fr": "Afficher mes titres",
+      "es": "Mostrar mis títulos"
+    },
+    "Show other player guilds": {
+      "en": "Show other player guilds",
+      "fr": "Afficher les guildes des autres joueurs",
+      "es": "Mostrar gremios de otros jugadores"
+    },
+    "Show other player levels": {
+      "en": "Show other player levels",
+      "fr": "Afficher les niveaux des autres joueurs",
+      "es": "Mostrar niveles de otros jugadores"
+    },
+    "Show other player titles": {
+      "en": "Show other player titles",
+      "fr": "Afficher les titres des autres joueurs",
+      "es": "Mostrar títulos de otros jugadores"
+    },
+    "Show quest HUD": {
+      "en": "Show quest HUD",
+      "fr": "Afficher le suivi de quête",
+      "es": "Mostrar panel de misiones"
+    },
+    "Straight numbers pay 35:1": {
+      "en": "Straight numbers pay 35:1",
+      "fr": "Un numéro plein paie 35:1",
+      "es": "Los números plenos pagan 35:1"
+    },
+    "TOP DAMAGE  ": {
+      "en": "TOP DAMAGE  ",
+      "fr": "MEILLEURS DÉGÂTS  ",
+      "es": "MAYOR DAÑO  "
+    },
+    "The LogiCoin Shop is currently disabled.": {
+      "en": "The LogiCoin Shop is currently disabled.",
+      "fr": "La boutique LogiCoin est désactivée.",
+      "es": "La tienda LogiCoin está desactivada."
+    },
+    "This category has no configured offers yet.": {
+      "en": "This category has no configured offers yet.",
+      "fr": "Aucune offre dans cette catégorie.",
+      "es": "No hay ofertas en esta categoría."
+    },
+    "Title: ": {
+      "en": "Title: ",
+      "fr": "Titre : ",
+      "es": "Título: "
+    },
+    "Unable to load Logiklik News. Try Refresh.": {
+      "en": "Unable to load Logiklik News. Try Refresh.",
+      "fr": "Impossible de charger Logiklik News. Essaie Actualiser.",
+      "es": "No se pudo cargar Logiklik News. Pulsa Actualizar."
+    },
+    "Unavailable": {
+      "en": "Unavailable",
+      "fr": "Indisponible",
+      "es": "No disponible"
+    },
+    "Unblock ": {
+      "en": "Unblock ",
+      "fr": "Débloquer ",
+      "es": "Desbloquear "
+    },
+    "View Character Information": {
+      "en": "View Character Information",
+      "fr": "Voir le personnage",
+      "es": "Ver personaje"
+    },
+    "View Character Information: ": {
+      "en": "View Character Information: ",
+      "fr": "Voir le personnage : ",
+      "es": "Ver personaje: "
+    },
+    "WORLD BOSS  �  ": {
+      "en": "WORLD BOSS  -  ",
+      "fr": "BOSS MONDIAL  -  ",
+      "es": "JEFE MUNDIAL  -  "
+    },
+    "Wager": {
+      "en": "Wager",
+      "fr": "Mise",
+      "es": "Apuesta"
+    },
+    "Wager (even)": {
+      "en": "Wager (even)",
+      "fr": "Mise (paire)",
+      "es": "Apuesta (par)"
+    },
+    "Waiting for Royal Alchemy...": {
+      "en": "Waiting for Royal Alchemy...",
+      "fr": "En attente d'Alchimie royale…",
+      "es": "Esperando Alquimia real…"
+    },
+    "Whisper to ": {
+      "en": "Whisper to ",
+      "fr": "Message privé à ",
+      "es": "Susurrar a "
+    },
+    "World Map": {
+      "en": "World Map",
+      "fr": "Carte du monde",
+      "es": "Mapa del mundo"
+    },
+    "World scale range invalid.": {
+      "en": "World scale range invalid.",
+      "fr": "Échelle du monde invalide.",
+      "es": "Rango de escala del mundo no válido."
+    },
+    "has arrived": {
+      "en": "has arrived",
+      "fr": "est arrivé",
+      "es": "ha llegado"
+    },
+    "Sunrise": {
+      "en": "Sunrise",
+      "fr": "Lever du soleil",
+      "es": "Amanecer"
+    },
+    "Day": {
+      "en": "Day",
+      "fr": "Jour",
+      "es": "Día"
+    },
+    "Sunset": {
+      "en": "Sunset",
+      "fr": "Coucher du soleil",
+      "es": "Atardecer"
+    },
+    "Night": {
+      "en": "Night",
+      "fr": "Nuit",
+      "es": "Noche"
+    },
+    "Legend": {
+      "en": "Legend",
+      "fr": "Légende",
+      "es": "Leyenda"
+    },
+    "You": {
+      "en": "You",
+      "fr": "Toi",
+      "es": "Tú"
+    },
+    "Rarity: {0} - x{1:N0}": {
+      "en": "Rarity: {0} - x{1:N0}",
+      "fr": "Rareté : {0} - x{1:N0}",
+      "es": "Rareza: {0} - x{1:N0}"
+    },
+    "Intersect": {
+      "en": "Intersect",
+      "fr": "Intersect",
+      "es": "Intersect"
+    },
+    "The resources directory could not be found! Intersect will now close.": {
+      "en": "The resources directory could not be found! Intersect will now close.",
+      "fr": "Le dossier resources est introuvable ! Intersect va se fermer.",
+      "es": "¡No se encontró la carpeta resources! Intersect se cerrará."
+    },
+    "\nLevel up! Blackjack {0}": {
+      "en": "\nLevel up! Blackjack {0}",
+      "fr": "\nNiveau supérieur ! Blackjack {0}",
+      "es": "\n¡Nuevo nivel! Blackjack {0}"
+    },
+    "-  LOWER HEAT": {
+      "en": "-  LOWER HEAT",
+      "fr": "-  BAISSER LE FEU",
+      "es": "-  BAJAR FUEGO"
+    },
+    "{0:N0} ACTIVE LISTING{1}": {
+      "en": "{0:N0} ACTIVE LISTING{1}",
+      "fr": "{0:N0} ANNONCE{1} EN COURS",
+      "es": "{0:N0} ANUNCIO{1} EN CURSO"
+    },
+    "{0:N0} SELLABLE ITEM{1}": {
+      "en": "{0:N0} SELLABLE ITEM{1}",
+      "fr": "{0:N0} OBJET{1} À VENDRE",
+      "es": "{0:N0} OBJETO{1} A LA VENTA"
+    },
+    "{0}  •  Level {1}/{2}{3}": {
+      "en": "{0}  •  Level {1}/{2}{3}",
+      "fr": "{0} - Niveau {1}/{2}{3}",
+      "es": "{0} - Nivel {1}/{2}{3}"
+    },
+    "{0} / {1} CREW MEMBERS": {
+      "en": "{0} / {1} CREW MEMBERS",
+      "fr": "{0} / {1} MEMBRES D'ÉQUIPAGE",
+      "es": "{0} / {1} TRIPULANTES"
+    },
+    "{0} / RECOMMENDED {1}+": {
+      "en": "{0} / RECOMMENDED {1}+",
+      "fr": "{0} / RECOMMANDÉ {1}+",
+      "es": "{0} / RECOMENDADO {1}+"
+    },
+    "{0} ACTIVE GATE{1}  /  {2} REGISTERED": {
+      "en": "{0} ACTIVE GATE{1}  /  {2} REGISTERED",
+      "fr": "{0} ENTRÉE{1} EN ACTIVITÉ / {2} INSCRITS",
+      "es": "{0} ENTRADA{1} EN USO / {2} REGISTRADAS"
+    },
+    "{0} Corps Royaux news item{1}": {
+      "en": "{0} Corps Royaux news item{1}",
+      "fr": "{0} actualité{1} Corps Royaux",
+      "es": "{0} noticia{1} de Corps Royaux"
+    },
+    "{0} x{1:N0}": {
+      "en": "{0} x{1:N0}",
+      "fr": "{0} x{1:N0}",
+      "es": "{0} x{1:N0}"
+    },
+    "{0}: {1:N0}": {
+      "en": "{0}: {1:N0}",
+      "fr": "{0} : {1:N0}",
+      "es": "{0}: {1:N0}"
+    },
+    "{0}{1:N0}": {
+      "en": "{0}{1:N0}",
+      "fr": "{0}{1:N0}",
+      "es": "{0}{1:N0}"
+    },
+    "{0}{1}  Lv. {2}": {
+      "en": "{0}{1}  Lv. {2}",
+      "fr": "{0}{1}  Niv. {2}",
+      "es": "{0}{1}  Niv. {2}"
+    },
+    "{0}+{1:N0} SCORE{2}": {
+      "en": "{0}+{1:N0} SCORE{2}",
+      "fr": "{0}+{1:N0} POINTS{2}",
+      "es": "{0}+{1:N0} PUNTOS{2}"
+    },
+    "+  RAISE HEAT": {
+      "en": "+  RAISE HEAT",
+      "fr": "+  AUGMENTER LE FEU",
+      "es": "+  SUBIR FUEGO"
+    },
+    "+{0:N0}% EXP": {
+      "en": "+{0:N0}% EXP",
+      "fr": "+{0:N0}% EXP",
+      "es": "+{0:N0}% EXP"
+    },
+    "ACTIVE {0:N0}  /  AVAILABLE {1:N0}  /  COMPLETED {2:N0}": {
+      "en": "ACTIVE {0:N0}  /  AVAILABLE {1:N0}  /  COMPLETED {2:N0}",
+      "fr": "EN COURS {0:N0} / DISPONIBLES {1:N0} / TERMINÉES {2:N0}",
+      "es": "ACTIVAS {0:N0} / DISPONIBLES {1:N0} / COMPLETADAS {2:N0}"
+    },
+    "B{0} / Lv {1}": {
+      "en": "B{0} / Lv {1}",
+      "fr": "B{0} / Niv {1}",
+      "es": "B{0} / Niv {1}"
+    },
+    "BLACKJACK | {0} | Round {1} | {2}": {
+      "en": "BLACKJACK | {0} | Round {1} | {2}",
+      "fr": "BLACKJACK / {0} / Manche {1} / {2}",
+      "es": "BLACKJACK / {0} / Ronda {1} / {2}"
+    },
+    "Block Character": {
+      "en": "Block Character",
+      "fr": "Bloquer le personnage",
+      "es": "Bloquear personaje"
+    },
+    "CURRENT PAIR ({0})\n{1}  +  {2}": {
+      "en": "CURRENT PAIR ({0})\n{1}  +  {2}",
+      "fr": "PAIRE ACTUELLE ({0})\n{1}  +  {2}",
+      "es": "PAREJA ACTUAL ({0})\n{1}  +  {2}"
+    },
+    "Daily Reward": {
+      "en": "Daily Reward",
+      "fr": "Récompense quotidienne",
+      "es": "Recompensa diaria"
+    },
+    "Dealer bankroll: {0} {1}": {
+      "en": "Dealer bankroll: {0} {1}",
+      "fr": "Caisse du donneur : {0} {1}",
+      "es": "Fondos del repartidor: {0} {1}"
+    },
+    "Defense target: {0:N0} / {1:N0} HP": {
+      "en": "Defense target: {0:N0} / {1:N0} HP",
+      "fr": "Objectif à défendre : {0:N0} / {1:N0} PV",
+      "es": "Objetivo de defensa: {0:N0} / {1:N0} PS"
+    },
+    "DROP HERE": {
+      "en": "DROP HERE",
+      "fr": "DÉPOSER ICI",
+      "es": "DEPOSITAR AQUÍ"
+    },
+    "DUNGEON CLEARED • {0}": {
+      "en": "DUNGEON CLEARED • {0}",
+      "fr": "DONJON TERMINÉ - {0}",
+      "es": "MAZMORRA COMPLETADA - {0}"
+    },
+    "Dungeon Gates": {
+      "en": "Dungeon Gates",
+      "fr": "Entrées de donjons",
+      "es": "Entradas de mazmorras"
+    },
+    "Find a Guild": {
+      "en": "Find a Guild",
+      "fr": "Trouver une guilde",
+      "es": "Buscar gremio"
+    },
+    "HP: {0:N0} / {1:N0}": {
+      "en": "HP: {0:N0} / {1:N0}",
+      "fr": "PV : {0:N0} / {1:N0}",
+      "es": "PS: {0:N0} / {1:N0}"
+    },
+    "Invite Guild Member": {
+      "en": "Invite Guild Member",
+      "fr": "Inviter un membre de guilde",
+      "es": "Invitar miembro al gremio"
+    },
+    "LEVEL {0:N0}  |  {1}": {
+      "en": "LEVEL {0:N0}  |  {1}",
+      "fr": "NIVEAU {0:N0} / {1}",
+      "es": "NIVEL {0:N0} / {1}"
+    },
+    "LogiCoin Shop": {
+      "en": "LogiCoin Shop",
+      "fr": "Boutique LogiCoin",
+      "es": "Tienda LogiCoin"
+    },
+    "LogiCoins: {0:N0}": {
+      "en": "LogiCoins: {0:N0}",
+      "fr": "LogiCoins : {0:N0}",
+      "es": "LogiCoins: {0:N0}"
+    },
+    "Natural BLACKJACK pays 3:2\nOther wins 1:1 | {0}\nOne split | No insurance or surrender": {
+      "en": "Natural BLACKJACK pays 3:2\nOther wins 1:1 | {0}\nOne split | No insurance or surrender",
+      "fr": "Blackjack naturel : gain 3:2\nAutres victoires : 1:1 / {0}\nUne séparation / Sans assurance ni abandon",
+      "es": "Blackjack natural paga 3:2\nOtras victorias 1:1 / {0}\nUna división / Sin seguro ni rendición"
+    },
+    "NEXT\n{0}  +  {1}": {
+      "en": "NEXT\n{0}  +  {1}",
+      "fr": "SUIVANTE\n{0}  +  {1}",
+      "es": "SIGUIENTE\n{0}  +  {1}"
+    },
+    "Page {0} / {1}": {
+      "en": "Page {0} / {1}",
+      "fr": "Page {0} / {1}",
+      "es": "Página {0} / {1}"
+    },
+    "PARTY  {0}/{1}": {
+      "en": "PARTY  {0}/{1}",
+      "fr": "GROUPE  {0}/{1}",
+      "es": "GRUPO  {0}/{1}"
+    },
+    "Party HUD (left click) / User List - Party (right click)": {
+      "en": "Party HUD (left click) / User List - Party (right click)",
+      "fr": "Groupe (clic gauche) / Liste du groupe (clic droit)",
+      "es": "Grupo (clic izquierdo) / Lista del grupo (clic derecho)"
+    },
+    "Pick angle: {0:+0;-0;0}°": {
+      "en": "Pick angle: {0:+0;-0;0}°",
+      "fr": "Angle de la pioche : {0:+0;-0;0}°",
+      "es": "Ángulo del pico: {0:+0;-0;0}°"
+    },
+    "Powered by Logiklik News • Category: Corps Royaux": {
+      "en": "Powered by Logiklik News • Category: Corps Royaux",
+      "fr": "Propulsé par Logiklik News - Catégorie : Corps Royaux",
+      "es": "Por Logiklik News - Categoría: Corps Royaux"
+    },
+    "Premium until {0:yyyy-MM-dd}": {
+      "en": "Premium until {0:yyyy-MM-dd}",
+      "fr": "Premium jusqu'au {0:yyyy-MM-dd}",
+      "es": "Prémium hasta {0:yyyy-MM-dd}"
+    },
+    "Prerequisites: {0}": {
+      "en": "Prerequisites: {0}",
+      "fr": "Prérequis : {0}",
+      "es": "Requisitos: {0}"
+    },
+    "PROGRESS {0}%  /  {1:N0} OF {2:N0} TASKS": {
+      "en": "PROGRESS {0}%  /  {1:N0} OF {2:N0} TASKS",
+      "fr": "PROGRESSION {0}% / {1:N0} SUR {2:N0} OBJECTIFS",
+      "es": "PROGRESO {0}% / {1:N0} DE {2:N0} OBJETIVOS"
+    },
+    "RANK {0} • {1}": {
+      "en": "RANK {0} • {1}",
+      "fr": "RANG {0} - {1}",
+      "es": "RANGO {0} - {1}"
+    },
+    "Requires Alchemy Lv {0}.": {
+      "en": "Requires Alchemy Lv {0}.",
+      "fr": "Exige le niv. d'alchimie {0}.",
+      "es": "Requiere alquimia niv. {0}."
+    },
+    "Royal Roulette • European 0-36": {
+      "en": "Royal Roulette • European 0-36",
+      "fr": "Roulette royale - Européenne 0-36",
+      "es": "Ruleta real - Europea 0-36"
+    },
+    "Score: {0:N0}   |   Brewed: {1:N0}": {
+      "en": "Score: {0:N0}   |   Brewed: {1:N0}",
+      "fr": "Score : {0:N0} / Potions : {1:N0}",
+      "es": "Puntos: {0:N0} / Pociones: {1:N0}"
+    },
+    "Show / Hide menu": {
+      "en": "Show / Hide menu",
+      "fr": "Afficher / Masquer le menu",
+      "es": "Mostrar / Ocultar menú"
+    },
+    "Time: {0:0.0}s": {
+      "en": "Time: {0:0.0}s",
+      "fr": "Temps : {0:0.0}s",
+      "es": "Tiempo: {0:0.0}s"
+    },
+    "Unblock Character": {
+      "en": "Unblock Character",
+      "fr": "Débloquer le personnage",
+      "es": "Desbloquear personaje"
+    },
+    "UP TO +{0:0.#}% EXP": {
+      "en": "UP TO +{0:0.#}% EXP",
+      "fr": "JUSQU'À +{0:0.#}% EXP",
+      "es": "HASTA +{0:0.#}% EXP"
+    },
+    "World map data is not available yet.": {
+      "en": "World map data is not available yet.",
+      "fr": "Les données de la carte du monde ne sont pas encore disponibles.",
+      "es": "Los datos del mapa del mundo aún no están disponibles."
+    },
+    "YOUR RECORD  {0:N0} CLEARS / {1:N0} RUNS / {2:N0} FAILURES / {3:N0} DEATHS": {
+      "en": "YOUR RECORD  {0:N0} CLEARS / {1:N0} RUNS / {2:N0} FAILURES / {3:N0} DEATHS",
+      "fr": "TON BILAN {0:N0} RÉUSSITES / {1:N0} TENTATIVES / {2:N0} ÉCHECS / {3:N0} MORTS",
+      "es": "TU HISTORIAL {0:N0} VICTORIAS / {1:N0} INTENTOS / {2:N0} FALLOS / {3:N0} MUERTES"
+    },
+    "Account already exists!": {
+      "en": "Account already exists!",
+      "fr": "Ce compte existe déjà !",
+      "es": "¡La cuenta ya existe!"
+    },
+    "Account does not exist.": {
+      "en": "Account does not exist.",
+      "fr": "Ce compte n'existe pas.",
+      "es": "La cuenta no existe."
+    },
+    "The server is currently allowing only admins to connect. Please come back later!": {
+      "en": "The server is currently allowing only admins to connect. Please come back later!",
+      "fr": "Le serveur n'accepte que les administrateurs pour le moment. Reviens plus tard !",
+      "es": "El servidor solo permite administradores por ahora. ¡Vuelve más tarde!"
+    },
+    "Access denied! Invalid power level!": {
+      "en": "Access denied! Invalid power level!",
+      "fr": "Accès refusé ! Droits insuffisants !",
+      "es": "¡Acceso denegado! ¡Permisos insuficientes!"
+    },
+    "Username or password incorrect.": {
+      "en": "Username or password incorrect.",
+      "fr": "Identifiant ou mot de passe incorrect.",
+      "es": "Usuario o contraseña incorrectos."
+    },
+    "An account with this character name already exists. Please choose another.": {
+      "en": "An account with this character name already exists. Please choose another.",
+      "fr": "Ce nom de personnage est déjà utilisé. Choisis-en un autre.",
+      "es": "Ese nombre de personaje ya está en uso. Elige otro."
+    },
+    "The character has been deleted.": {
+      "en": "The character has been deleted.",
+      "fr": "Le personnage a été supprimé.",
+      "es": "Se ha eliminado el personaje."
+    },
+    "This character cannot be deleted, they may be stuck online in combat.": {
+      "en": "This character cannot be deleted, they may be stuck online in combat.",
+      "fr": "Ce personnage ne peut pas être supprimé. Il est peut-être encore en combat.",
+      "es": "No se puede eliminar este personaje. Quizá siga en combate."
+    },
+    "An account with this email address already exists.": {
+      "en": "An account with this email address already exists.",
+      "fr": "Un compte utilise déjà ce courriel.",
+      "es": "Ya existe una cuenta con ese correo."
+    },
+    "Failed to send your password reset email at this time. Please try again later.": {
+      "en": "Failed to send your password reset email at this time. Please try again later.",
+      "fr": "Impossible d'envoyer le courriel de réinitialisation. Réessaie plus tard.",
+      "es": "No se pudo enviar el correo de restablecimiento. Inténtalo más tarde."
+    },
+    "Invalid class selected. Please try again.": {
+      "en": "Invalid class selected. Please try again.",
+      "fr": "Classe invalide. Réessaie.",
+      "es": "Clase no válida. Inténtalo de nuevo."
+    },
+    "The chosen email does not meet the requirements set by the server.": {
+      "en": "The chosen email does not meet the requirements set by the server.",
+      "fr": "Ce courriel ne respecte pas les critères du serveur.",
+      "es": "Ese correo no cumple los requisitos del servidor."
+    },
+    "The chosen name does not meet the requirements set by the server.": {
+      "en": "The chosen name does not meet the requirements set by the server.",
+      "fr": "Ce nom ne respecte pas les critères du serveur.",
+      "es": "Ese nombre no cumple los requisitos del servidor."
+    },
+    "Failed to load account. Please try logging in again.": {
+      "en": "Failed to load account. Please try logging in again.",
+      "fr": "Impossible de charger le compte. Essaie de te reconnecter.",
+      "es": "No se pudo cargar la cuenta. Intenta iniciar sesión de nuevo."
+    },
+    "You have already created the maximum number of characters. Delete one before creating a new one.": {
+      "en": "You have already created the maximum number of characters. Delete one before creating a new one.",
+      "fr": "Tu as atteint le nombre maximal de personnages. Supprime-en un pour en créer un autre.",
+      "es": "Has alcanzado el máximo de personajes. Elimina uno para crear otro."
+    },
+    "You do not have the permission to do this.": {
+      "en": "You do not have the permission to do this.",
+      "fr": "Tu n'as pas la permission de faire cela.",
+      "es": "No tienes permiso para hacer eso."
+    },
+    "Account registrations are currently blocked by the server.": {
+      "en": "Account registrations are currently blocked by the server.",
+      "fr": "Les inscriptions sont désactivées sur le serveur.",
+      "es": "El registro de cuentas está desactivado en el servidor."
+    },
+    "Too many failed requests. Please wait and try again!": {
+      "en": "Too many failed requests. Please wait and try again!",
+      "fr": "Trop de tentatives échouées. Patiente avant de réessayer !",
+      "es": "Demasiados intentos fallidos. ¡Espera antes de intentarlo de nuevo!"
+    },
+    "Notice": {
+      "en": "Notice",
+      "fr": "Avis",
+      "es": "Aviso"
+    },
+    "Error Notice": {
+      "en": "Error Notice",
+      "fr": "Avis d'erreur",
+      "es": "Aviso de error"
+    },
+    "An unknown error occurred, please try again.": {
+      "en": "An unknown error occurred, please try again.",
+      "fr": "Une erreur inconnue est survenue. Réessaie.",
+      "es": "Ocurrió un error desconocido. Inténtalo de nuevo."
+    },
+    "has arrived (night)": {
+      "en": "has arrived",
+      "fr": "est arrivée",
+      "es": "ha llegado"
+    }
+  }
+}

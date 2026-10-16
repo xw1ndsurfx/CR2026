@@ -48,7 +48,7 @@ internal sealed class InvasionResultWindow : Window
 
         _close = new Button(this, "Close")
         {
-            Text = "Continue",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("Continue"),
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 13,
         };

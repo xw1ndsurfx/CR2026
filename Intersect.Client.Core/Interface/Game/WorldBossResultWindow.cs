@@ -19,7 +19,7 @@ internal sealed class WorldBossResultWindow : Window
         _title = MakeLabel("WorldBossResultTitle", 18, 45, 504, 45, 21);
         _content = MakeLabel("WorldBossResultDetails", 32, 110, 476, 220, 11);
         _experience = MakeLabel("WorldBossExperience", 32, 340, 476, 35, 18);
-        var close = new Button(this, "Continue") { Text = "Continue" };
+        var close = new Button(this, "Continue") { Text = Intersect.Client.Localization.ClientLanguages.Text("Continue") };
         close.SetBounds(180, 390, 180, 34);
         close.Clicked += (_, _) => Hide();
         Hide();

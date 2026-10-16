@@ -74,6 +74,7 @@ public partial class SettingsWindow : Window
     // Video Settings
     private readonly TabButton _videoSettingsTab;
     private readonly ScrollControl _videoContainer;
+    private readonly LabeledComboBox _languageList;
     private readonly LabeledComboBox _resolutionList;
     private readonly LabeledComboBox _fpsList;
     private readonly LabeledCheckBox _showFPSCounterCheckbox;
@@ -179,6 +180,12 @@ public partial class SettingsWindow : Window
 
         // Game Settings - Interface.
 
+        _languageList = new LabeledComboBox(_interfaceSettings, nameof(_languageList))
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Label = ClientLanguages.Text("Language (restart required)"), TextPadding = new Padding(8, 4, 0, 4) };
+        _languageList.AddItem("English", userData: "en");
+        _languageList.AddItem("Français", userData: "fr");
+        _languageList.AddItem("Español", userData: "es");
+
         // Game Settings - Interface: Auto-close Windows.
         _autoCloseWindowsCheckbox = new LabeledCheckBox(parent: _interfaceSettings, name: nameof(_autoCloseWindowsCheckbox))
         {
@@ -263,27 +270,27 @@ public partial class SettingsWindow : Window
         _showPingCounterCheckbox.CheckChanged += ShowPingCounterCheckboxOnCheckChanged;
 
         _displayOptions["ShowMyLevel"] = new LabeledCheckBox(_informationSettings, "ShowMyLevel")
-        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show my level" };
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Show my level") };
         _displayOptions["ShowPlayerLevels"] = new LabeledCheckBox(_informationSettings, "ShowPlayerLevels")
-        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show other player levels" };
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Show other player levels") };
         _displayOptions["ShowNpcLevels"] = new LabeledCheckBox(_informationSettings, "ShowNpcLevels")
-        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show monster levels" };
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Show monster levels") };
         _displayOptions["ShowMyGuild"] = new LabeledCheckBox(_informationSettings, "ShowMyGuild")
-        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show my guild" };
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Show my guild") };
         _displayOptions["ShowPlayerGuilds"] = new LabeledCheckBox(_informationSettings, "ShowPlayerGuilds")
-        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show other player guilds" };
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Show other player guilds") };
         _displayOptions["ShowMyTitle"] = new LabeledCheckBox(_informationSettings, "ShowMyTitle")
-        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show my titles" };
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Show my titles") };
         _displayOptions["ShowPlayerTitles"] = new LabeledCheckBox(_informationSettings, "ShowPlayerTitles")
-        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show other player titles" };
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Show other player titles") };
         _displayOptions["ShowQuestHud"] = new LabeledCheckBox(_informationSettings, "ShowQuestHud")
-        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show quest HUD" };
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Show quest HUD") };
         _displayOptions["ShowWorldBossHud"] = new LabeledCheckBox(_informationSettings, "ShowWorldBossHud")
-        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show World Boss HUD" };
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Show World Boss HUD") };
         _displayOptions["ShowInvasionHud"] = new LabeledCheckBox(_informationSettings, "ShowInvasionHud")
-        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show invasion HUD" };
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Show invasion HUD") };
         _displayOptions["ShowMinimap"] = new LabeledCheckBox(_informationSettings, "ShowMinimap")
-        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Show minimap" };
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Show minimap") };
 
 
         // Game Settings - Information: Friends.
@@ -533,7 +540,7 @@ public partial class SettingsWindow : Window
         };
 
         _displayOptions["EnableVoiceSounds"] = new LabeledCheckBox(_audioContainer, "EnableVoiceSounds")
-        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = "Enable voice sounds" };
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Enable voice sounds") };
 
         // Audio Settings - Music Slider
         _musicSlider = new LabeledSlider(parent: _audioContainer, name: nameof(_musicSlider))
@@ -900,7 +907,7 @@ public partial class SettingsWindow : Window
             );
 
             _worldScale.IsHidden = true;
-            _worldScale.SetToolTipText("World scale range invalid.");
+            _worldScale.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("World scale range invalid."));
             return;
         }
 
@@ -1031,6 +1038,7 @@ public partial class SettingsWindow : Window
         }
 
         // Game Settings.
+        _languageList.SelectByUserData(Globals.Database.LanguageCode);
         _autoCloseWindowsCheckbox.IsChecked = Globals.Database.HideOthersOnWindowOpen;
         _autoToggleChatLogCheckbox.IsChecked = Globals.Database.AutoToggleChatLog;
         _showHealthAsPercentageCheckbox.IsChecked = Globals.Database.ShowHealthAsPercentage;
@@ -1307,6 +1315,7 @@ public partial class SettingsWindow : Window
         activeControls.TrySave();
 
         // Save Preferences.
+        Globals.Database.LanguageCode = Intersect.Localization.GameTextCatalog.NormalizeLanguage(_languageList.SelectedItem?.UserData as string);
         Globals.Database.SavePreferences();
 
         if (shouldReset && Graphics.Renderer != default)

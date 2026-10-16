@@ -194,7 +194,7 @@ internal sealed class DailyRewardWindow : Window
 
         _claim = new Button(this, "Claim")
         {
-            Text = "Claim",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("Claim"),
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 12,
         };
@@ -278,7 +278,7 @@ internal sealed class DailyRewardWindow : Window
                 ? "Daily rewards are disabled in the Game Editor."
                 : state.Message;
             _claim.IsDisabled = true;
-            _claim.Text = "Unavailable";
+            _claim.Text = Intersect.Client.Localization.ClientLanguages.Text("Unavailable");
             _cards.SetInnerSize(216, 280);
             _cards.UpdateScrollBars();
             return;

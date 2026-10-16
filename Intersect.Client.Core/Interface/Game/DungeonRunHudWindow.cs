@@ -73,7 +73,7 @@ internal sealed class DungeonRunHudWindow : Base
         _state = state;
         _resultHideAt = 0;
 
-        _title.Text = $"RANK {state.DungeonRank} • {state.DungeonName}";
+        _title.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"RANK {state.DungeonRank} • {state.DungeonName}");
         _objective.Text = state.Message;
         _lives.Text = state.MaxLives > 0
             ? $"LIVES {Math.Max(0, state.LivesRemaining)} / {state.MaxLives}"

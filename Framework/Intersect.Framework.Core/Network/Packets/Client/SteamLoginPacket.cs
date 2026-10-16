@@ -16,4 +16,5 @@ public partial class SteamLoginPacket : IntersectPacket
 
     [Key(0)]
     public string Ticket { get; set; } = string.Empty;
+    [Key(1)] public string LanguageCode { get; set; } = "en";
 }

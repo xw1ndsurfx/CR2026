@@ -58,7 +58,7 @@ internal sealed class RouletteWindow : Base
         KeyboardInputEnabled = false;
 
         _title = Label("RouletteTitle", 30, 14, 520, 34, 22);
-        _title.Text = "Royal Roulette • European 0-36";
+        _title.Text = Intersect.Client.Localization.ClientLanguages.Text("Royal Roulette • European 0-36");
 
         _balance = Label("RouletteBalance", 30, 54, 520, 28, 14);
         _selection = Label("RouletteSelection", 30, 86, 520, 30, 13);
@@ -67,7 +67,7 @@ internal sealed class RouletteWindow : Base
         _xp = Label("RouletteExperience", 30, 520, 520, 30, 12);
         _error = Label("RouletteError", 30, 555, 520, 42, 11);
 
-        Label("RouletteWagerLabel", 30, 614, 120, 30, 12).Text = "Wager";
+        Label("RouletteWagerLabel", 30, 614, 120, 30, 12).Text = Intersect.Client.Localization.ClientLanguages.Text("Wager");
         _amount = new TextBox(this, "RouletteWager")
         {
             Font = Skin.DefaultFont,
@@ -131,7 +131,7 @@ internal sealed class RouletteWindow : Base
         }
 
         Label("RouletteBoardHint", 585, 24, 380, 28, 12).Text =
-            "Straight numbers pay 35:1";
+            Intersect.Client.Localization.ClientLanguages.Text("Straight numbers pay 35:1");
     }
 
     private void BuildOutsideBets()
@@ -249,7 +249,7 @@ internal sealed class RouletteWindow : Base
         }
         else
         {
-            _result.Text = "Choose a bet and spin.";
+            _result.Text = Intersect.Client.Localization.ClientLanguages.Text("Choose a bet and spin.");
         }
 
         _history.Text =

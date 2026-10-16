@@ -37,7 +37,7 @@ internal sealed partial class BlackjackWindow : Base
         ShouldDrawBackground=false;MouseInputEnabled=true;KeyboardInputEnabled=false;
         _title=Label("BlackjackTitle",24,10,740,30,20);
         _status=Label("BlackjackTurn",24,46,940,30,14);
-        Label("BlackjackDealer",408,81,260,27,18).Text="Marlow - Dealer";
+        Label("BlackjackDealer",408,81,260,27,18).Text=Intersect.Client.Localization.ClientLanguages.Text("Marlow - Dealer");
         _bank=Label("BlackjackBank",380,109,360,26);
         _dealer=new(this,"BlackjackDealerCards");_dealerTotal=Label("BlackjackDealerTotal",380,211,340,26,14);
         _rules=Label("BlackjackRules",324,248,360,76);
@@ -55,7 +55,7 @@ internal sealed partial class BlackjackWindow : Base
                 _totals[slot,h]=Label($"BlackjackTotal{slot}_{h}",x+h*w/2,y+(slot==0?138:128),w/2,28);
             }
         }
-        Label("BlackjackBetLabel",40,582,112,28).Text="Wager (even)";
+        Label("BlackjackBetLabel",40,582,112,28).Text=Intersect.Client.Localization.ClientLanguages.Text("Wager (even)");
         _amount=new TextBox(this,"BlackjackBetAmount"){Font=Skin.DefaultFont,FontSize=12,Text="10"};Place(_amount,154,580,120,32,12);
         Interface.FocusComponents.Add(_amount);
         _bet=Button("BlackjackBet","Place bet",290,580,120,Bet);
@@ -77,12 +77,12 @@ internal sealed partial class BlackjackWindow : Base
         if(_portraitTray is {IsHidden:false})_portraitTray.BringToFront();
         });
         _backStatus=Label("BlackjackBackStatus",620,711,342,30);
-        Label("BlackjackNotice",40,744,922,27).Text="Blackjack has its own XP and levels. Leaving after the deal stands; it does not cancel the wager.";
+        Label("BlackjackNotice",40,744,922,27).Text=Intersect.Client.Localization.ClientLanguages.Text("Blackjack has its own XP and levels. Leaving after the deal stands; it does not cancel the wager.");
         for(var i=0;i<6;i++)
         {
             var id=i;
             _backImages[i]=new ImagePanel(_tray,"BlackjackBackPreview"+i){ShouldDrawBackground=false,MouseInputEnabled=false,IsHidden=true};
-            var b=new Button(_tray,"BlackjackBack"+i){Font=Skin.DefaultFont,FontSize=12,Text=$"B{i+1} / Lv {MiniGameProgression.BackLevel(i)}"};
+            var b=new Button(_tray,"BlackjackBack"+i){Font=Skin.DefaultFont,FontSize=12,Text=Intersect.Client.Localization.ClientLanguages.Interpolated($"B{i+1} / Lv {MiniGameProgression.BackLevel(i)}")};
             b.Clicked+=(_,_)=>{if(_state!=null && MiniGameProgression.IsUnlocked(id,_state.Experience)){Send(BlackjackRequestKind.SelectBack,id);_tray.IsHidden=true;}};
             _backButtons[i]=b;
         }
@@ -107,7 +107,7 @@ internal sealed partial class BlackjackWindow : Base
         var me=s.Seats.Single(p=>p.PlayerId==model.Current.PlayerId);_localSeat=me.Seat;
         var currency=s.CurrencyItemId==Guid.Empty?"test chips":ItemDescriptor.GetName(s.CurrencyItemId);
         var now=Environment.TickCount64;var busy=s.Stage is BlackjackStage.Betting or BlackjackStage.Players or BlackjackStage.Dealer;
-        _title.Text=$"BLACKJACK | {model.Current.TableName} | Round {s.HandId} | {currency}";
+        _title.Text=Intersect.Client.Localization.ClientLanguages.Interpolated($"BLACKJACK | {model.Current.TableName} | Round {s.HandId} | {currency}");
         _status.Text=s.Pending?"Saving balances - please wait":model.Pending?"Waiting for server":s.Stage switch
         {
             BlackjackStage.Waiting=>s.AutoStart?"Next betting window opens automatically":"Press Start round to open betting",
@@ -118,8 +118,8 @@ internal sealed partial class BlackjackWindow : Base
             BlackjackStage.Dealer=>s.DealerTotal<17 || s.DealerTotal==17 && s.DealerSoft && s.HitSoft17?"Marlow: Hit":"Marlow: Stand / settle",
             _=>s.AutoStart?"Round finished - next betting window shortly":"Round finished",
         };
-        _bank.Text=$"Dealer bankroll: {s.Bank} {currency}";
-        _rules.Text=$"Natural BLACKJACK pays 3:2\nOther wins 1:1 | {(s.HitSoft17?"Dealer hits soft 17":"Dealer stands on all 17")}\nOne split | No insurance or surrender";
+        _bank.Text=Intersect.Client.Localization.ClientLanguages.Interpolated($"Dealer bankroll: {s.Bank} {currency}");
+        _rules.Text=Intersect.Client.Localization.ClientLanguages.Interpolated($"Natural BLACKJACK pays 3:2\nOther wins 1:1 | {(s.HitSoft17?"Dealer hits soft 17":"Dealer stands on all 17")}\nOne split | No insurance or surrender");
         _dealer.Update(s.DealerCards,s.DealerHoleHidden,s.DealerBackId,_layout,420,168,220,70);
         _dealerTotal.Text=s.DealerCards.Length==0?"":s.DealerHoleHidden?$"Showing {s.DealerTotal} + hidden card":
             $"Total: {s.DealerTotal}"+(s.DealerTotal>21?" - BUST":s.DealerCards.Length==2 && s.DealerTotal==21?" - BLACKJACK":"");
@@ -178,7 +178,7 @@ internal sealed partial class BlackjackWindow : Base
         _fraction=level==MiniGameProgression.MaximumLevel?1:(s.Experience-baseXp)/(float)required;
         _xp.Text=level==MiniGameProgression.MaximumLevel?$"Blackjack - Level {level} - MASTERED":$"Blackjack - Level {level} | XP {s.Experience-baseXp} / {required}";
         if(_lastLevel>0 && level>_lastLevel)_levelUpUntil=now+5000;_lastLevel=level;
-        if(now<_levelUpUntil)_result.Text+=$"\nLevel up! Blackjack {level}";
+        if(now<_levelUpUntil)_result.Text+=Intersect.Client.Localization.ClientLanguages.Interpolated($"\nLevel up! Blackjack {level}");
         _backStatus.Text=$"B{me.SelectedBackId+1}"+(me.SelectedBackId!=me.CardBackId?" - applies next round":" - selected");
         for(var i=0;i<6;i++)
         {

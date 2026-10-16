@@ -235,7 +235,7 @@ public partial class QuestsWindow
             Font = trackerFont,
             FontSize = 8,
             TextColorOverride = JournalGold,
-            Text = "CURRENT QUEST",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("CURRENT QUEST"),
             TextAlign = Pos.Left | Pos.CenterV,
             MouseInputEnabled = false,
         };
@@ -707,7 +707,7 @@ public partial class QuestsWindow
             var availableCount = entries.Count(entry => entry.Item2 == 2);
             var completedCount = entries.Count(entry => entry.Item2 == 3);
             mQuestJournalSummary.Text =
-                $"ACTIVE {activeCount:N0}  /  AVAILABLE {availableCount:N0}  /  COMPLETED {completedCount:N0}";
+                Intersect.Client.Localization.ClientLanguages.Interpolated($"ACTIVE {activeCount:N0}  /  AVAILABLE {availableCount:N0}  /  COMPLETED {completedCount:N0}");
 
             if (dict.ContainsKey(""))
             {
@@ -1042,11 +1042,11 @@ public partial class QuestsWindow
                 var percent = GetQuestCompletionPercent(mSelectedQuest, currentProgress);
                 var completed = GetCompletedTaskCount(mSelectedQuest, currentProgress);
                 mQuestDetailsProgress.Text =
-                    $"PROGRESS {percent}%  /  {completed:N0} OF {mSelectedQuest.Tasks.Count:N0} TASKS";
+                    Intersect.Client.Localization.ClientLanguages.Interpolated($"PROGRESS {percent}%  /  {completed:N0} OF {mSelectedQuest.Tasks.Count:N0} TASKS");
             }
             else
             {
-                mQuestDetailsProgress.Text = "QUEST NOT STARTED";
+                mQuestDetailsProgress.Text = Intersect.Client.Localization.ClientLanguages.Text("QUEST NOT STARTED");
             }
 
             // Keep the list visible in the left pane while the

@@ -20,6 +20,7 @@ internal sealed partial class PacketHandler
 {
     public void HandlePacket(Client client, SteamLoginPacket packet)
     {
+        client.LanguageCode = Intersect.Localization.GameTextCatalog.NormalizeLanguage(packet.LanguageCode);
         if (client.AccountAttempts > 3 && client.TimeoutMs > Timing.Global.Milliseconds)
         {
             PacketSender.SendError(client, Strings.Errors.ErrorTimeout, Strings.General.NoticeError);

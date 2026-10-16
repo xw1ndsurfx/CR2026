@@ -26,12 +26,12 @@ public static partial class PacketSender
 
     public static void SendLogin(string username, string password)
     {
-        Network.SendPacket(new LoginPacket(username, password));
+        Network.SendPacket(new LoginPacket(username, password) { LanguageCode = Intersect.Client.Localization.ClientLanguages.Current });
     }
 
     public static void SendSteamLogin(string ticket)
     {
-        Network.SendPacket(new SteamLoginPacket(ticket));
+        Network.SendPacket(new SteamLoginPacket(ticket) { LanguageCode = Intersect.Client.Localization.ClientLanguages.Current });
     }
 
     public static void SendLogout(bool characterSelect = false)
@@ -208,7 +208,7 @@ public static partial class PacketSender
 
     public static void SendUserRegistration(string username, string password, string email)
     {
-        Network.SendPacket(new UserRegistrationRequestPacket(username, password, email));
+        Network.SendPacket(new UserRegistrationRequestPacket(username, password, email) { LanguageCode = Intersect.Client.Localization.ClientLanguages.Current });
     }
 
     public static void SendCreateCharacter(

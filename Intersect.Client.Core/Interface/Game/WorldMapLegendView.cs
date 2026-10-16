@@ -25,20 +25,20 @@ internal sealed class WorldMapLegendView : ScrollControl
         base.OnPreDraw(skin);
         if (ReferenceEquals(_source, Globals.WorldMapLegend)) return;
         _source = Globals.WorldMapLegend;
-        var json = Globals.WorldMapLegend.ToJson();
+        var json = Globals.WorldMapLegend.ToJson() + ":" + Intersect.Client.Localization.ClientLanguages.ContentRevision;
         if (json == _displayedJson) return;
         _displayedJson = json;
         foreach (var row in _rows) RemoveChild(row, true);
         _rows.Clear();
-        AddRow("Legend", Guid.Empty, null, 0);
-        AddRow("You", Guid.Empty, Color.White, 28);
-        AddRow("Party", Guid.Empty, WorldMapWindow.WorldMapCanvas.PartyMarkerColor, 56);
-        AddRow("Friends", Guid.Empty, WorldMapWindow.WorldMapCanvas.FriendMarkerColor, 84);
-        AddRow("Guild", Guid.Empty, WorldMapWindow.WorldMapCanvas.GuildMarkerColor, 112);
+        AddRow(Intersect.Client.Localization.ClientLanguages.Text("Legend"), Guid.Empty, null, 0);
+        AddRow(Intersect.Client.Localization.ClientLanguages.Text("You"), Guid.Empty, Color.White, 28);
+        AddRow(Intersect.Client.Localization.ClientLanguages.Text("Party"), Guid.Empty, WorldMapWindow.WorldMapCanvas.PartyMarkerColor, 56);
+        AddRow(Intersect.Client.Localization.ClientLanguages.Text("Friends"), Guid.Empty, WorldMapWindow.WorldMapCanvas.FriendMarkerColor, 84);
+        AddRow(Intersect.Client.Localization.ClientLanguages.Text("Guild"), Guid.Empty, WorldMapWindow.WorldMapCanvas.GuildMarkerColor, 112);
         var y = 144;
         foreach (var entry in Globals.WorldMapLegend.Entries)
         {
-            AddRow(entry.Label, entry.AnimationId, null, y);
+            AddRow(Intersect.Client.Localization.ClientLanguages.ContentText(entry.Label), entry.AnimationId, null, y);
             y += 54;
         }
         SetInnerSize(190, y);

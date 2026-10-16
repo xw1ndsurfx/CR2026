@@ -195,7 +195,7 @@ internal sealed class PotionWindow : Base
         // Keep the title entirely inside the brown board header. The upcoming
         // pair is intentionally not rendered so only the live pair is visible.
         _title = Label("PotionTitle", BoardX, BoardY - 58, PotionPuzzle.Columns * CellW, 42, 19);
-        _title.Text = "ROYAL ALCHEMY";
+        _title.Text = Intersect.Client.Localization.ClientLanguages.Text("ROYAL ALCHEMY");
         _title.TextAlign = Pos.Center;
         _title.TextColorOverride = Color.White;
 
@@ -212,7 +212,7 @@ internal sealed class PotionWindow : Base
         _recipe = Label("PotionRecipe", 136, 118, 240, 52, 17);
         _recipe.TextAlign = Pos.Left | Pos.CenterV;
         _requirements = Label("PotionRequirements", 118, 198, 250, 24, 13);
-        _requirements.Text = "INGREDIENTS";
+        _requirements.Text = Intersect.Client.Localization.ClientLanguages.Text("INGREDIENTS");
         for (var i = 0; i < _requirementRows.Length; ++i)
         {
             _requirementRows[i] = Label("PotionRequirementRow" + i, 118, 224 + i * 34, 250, 30, 12);
@@ -262,7 +262,7 @@ internal sealed class PotionWindow : Base
             AutoSizeToContents = false,
             Font = Skin.DefaultFont,
             FontSize = 18,
-            Text = "CHOOSE A RECIPE",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("CHOOSE A RECIPE"),
             TextAlign = Pos.Center,
             TextColorOverride = Color.White,
         };
@@ -292,7 +292,7 @@ internal sealed class PotionWindow : Base
         {
             Font = Skin.DefaultFont,
             FontSize = 12,
-            Text = "< Previous",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("< Previous"),
         };
         _recipePrev.Clicked += (_, _) =>
         {
@@ -304,7 +304,7 @@ internal sealed class PotionWindow : Base
         {
             Font = Skin.DefaultFont,
             FontSize = 12,
-            Text = "Next >",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("Next >"),
         };
         _recipeNextPage.Clicked += (_, _) =>
         {
@@ -316,7 +316,7 @@ internal sealed class PotionWindow : Base
         {
             Font = Skin.DefaultFont,
             FontSize = 12,
-            Text = "Back to game",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("Back to game"),
         };
         _recipeBack.Clicked += (_, _) =>
         {
@@ -587,7 +587,7 @@ internal sealed class PotionWindow : Base
         var recipe = _state.RecipeChoices[index];
         if (!recipe.Unlocked)
         {
-            _status.Text = $"Requires Alchemy Lv {recipe.RequiredLevel}.";
+            _status.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"Requires Alchemy Lv {recipe.RequiredLevel}.");
             return;
         }
 
@@ -639,7 +639,7 @@ internal sealed class PotionWindow : Base
                 : new Color(255, 145, 125, 110);
         }
 
-        _recipePickerPage.Text = $"Page {_recipePage + 1} / {pageCount}";
+        _recipePickerPage.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"Page {_recipePage + 1} / {pageCount}");
         _recipePrev.IsDisabled = _pending || _recipePage <= 0;
         _recipeNextPage.IsDisabled = _pending || _recipePage >= pageCount - 1;
     }
@@ -928,7 +928,7 @@ internal sealed class PotionWindow : Base
             {
                 var chain = next.LastChain > 1 ? $"CHAIN x{next.LastChain}   " : string.Empty;
                 var xp = xpGain > 0 ? $"   +{xpGain:N0} XP" : string.Empty;
-                _fx.Text = $"{chain}+{next.LastScoreGain:N0} SCORE{xp}";
+                _fx.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"{chain}+{next.LastScoreGain:N0} SCORE{xp}");
                 _fxStarted = Math.Max(now, _presentation.EndsAt);
                 _fxUntil = _fxStarted + 1_250;
                 _fx.IsHidden = false;
@@ -1041,8 +1041,8 @@ internal sealed class PotionWindow : Base
         {
             _rewardIcon.IsHidden = true;
             _rewardIcon.Texture = null;
-            _recipe.Text = "Waiting for Royal Alchemy...";
-            _requirements.Text = "INGREDIENTS";
+            _recipe.Text = Intersect.Client.Localization.ClientLanguages.Text("Waiting for Royal Alchemy...");
+            _requirements.Text = Intersect.Client.Localization.ClientLanguages.Text("INGREDIENTS");
             foreach (var row in _requirementRows) row.IsHidden = true;
             _current.Text = string.Empty;
             _next.Text = string.Empty;
@@ -1069,7 +1069,7 @@ internal sealed class PotionWindow : Base
             _rewardIcon.IsHidden = true;
         }
 
-        _requirements.Text = "INGREDIENTS";
+        _requirements.Text = Intersect.Client.Localization.ClientLanguages.Text("INGREDIENTS");
         for (var i = 0; i < _requirementRows.Length; ++i)
         {
             var row = _requirementRows[i];
@@ -1095,9 +1095,9 @@ internal sealed class PotionWindow : Base
         var nextSecond = PotionStateEncoding.Decode(_state.NextSecond);
 
         var orientation = _localOrientation;
-        _current.Text = $"CURRENT PAIR ({OrientationName(orientation)})\n{PieceName(currentFirst)}  +  {PieceName(currentSecond)}";
-        _next.Text = $"NEXT\n{PieceName(nextFirst)}  +  {PieceName(nextSecond)}";
-        _score.Text = $"Score: {_state.Score:N0}   |   Brewed: {_state.RecipesCompleted:N0}";
+        _current.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"CURRENT PAIR ({OrientationName(orientation)})\n{PieceName(currentFirst)}  +  {PieceName(currentSecond)}");
+        _next.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"NEXT\n{PieceName(nextFirst)}  +  {PieceName(nextSecond)}");
+        _score.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"Score: {_state.Score:N0}   |   Brewed: {_state.RecipesCompleted:N0}");
 
         var levelStart = MiniGameProgression.ExperienceAtLevel(_state.Level);
         var nextLevel = _state.Level >= MiniGameProgression.MaximumLevel

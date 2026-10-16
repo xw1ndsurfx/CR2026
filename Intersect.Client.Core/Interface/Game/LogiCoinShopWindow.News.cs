@@ -18,9 +18,9 @@ internal sealed partial class LogiCoinShopWindow
 
     private void AddNewsBanner()
     {
-        _newsCard = new Button(this, "LatestLogiklikNews") { Text = "Logiklik News", Font = Skin.DefaultFont, FontSize = 11 };
+        _newsCard = new Button(this, "LatestLogiklikNews") { Text = Intersect.Client.Localization.ClientLanguages.Text("Logiklik News"), Font = Skin.DefaultFont, FontSize = 11 };
         _newsCard.SetBounds(541, 187, 201, 101);
-        _newsCard.SetToolTipText("Read the latest Corps Royaux news");
+        _newsCard.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("Read the latest Corps Royaux news"));
         _newsCard.Clicked += (_, _) => Interface.InGameUiOrNull?.OpenLogiklikNews();
         _newsImage = new ImagePanel(_newsCard, "LatestNewsImage") { MaintainAspectRatio = false, MouseInputEnabled = false, IsHidden = true };
         _newsImage.SetBounds(2, 2, 197, 97);
@@ -44,7 +44,7 @@ internal sealed partial class LogiCoinShopWindow
                 if (version != _newsVersion || news == null) return;
                 _newsCaption.Text = news.Title;
                 _newsCard.SetToolTipText(news.Title + "\nOpen Logiklik News");
-                _newsImage.Texture = null; _newsImage.IsHidden = true; _newsCard.Text = "Logiklik News";
+                _newsImage.Texture = null; _newsImage.IsHidden = true; _newsCard.Text = Intersect.Client.Localization.ClientLanguages.Text("Logiklik News");
                 if (news.Image is not { Length: > 0 } image) return;
                 try
                 {
@@ -54,7 +54,7 @@ internal sealed partial class LogiCoinShopWindow
                     _newsImage.IsHidden = false;
                     _newsCard.Text = string.Empty;
                 }
-                catch { _newsCard.Text = "Logiklik News"; }
+                catch { _newsCard.Text = Intersect.Client.Localization.ClientLanguages.Text("Logiklik News"); }
             });
         }
         catch { /* The news shortcut remains usable when the feed is offline. */ }

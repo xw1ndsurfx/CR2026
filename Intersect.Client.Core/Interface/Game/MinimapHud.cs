@@ -71,7 +71,7 @@ internal sealed class MinimapHud : Base
 
         _worldMapButton = new Button(this, "WorldMapButton")
         {
-            Text = "World Map",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("World Map"),
             Font = Skin.DefaultFont,
             FontSize = 9,
             MouseInputEnabled = true,
@@ -141,7 +141,7 @@ internal sealed class MinimapHud : Base
         UpdateLayout();
         if (IsHidden || player == null || map == null) return;
 
-        _mapName.Text = map.Name;
+        _mapName.Text = Intersect.Client.Localization.ClientLanguages.ContentText(map.Name);
         _coords.Text = $"{player.X}, {player.Y}";
     }
 

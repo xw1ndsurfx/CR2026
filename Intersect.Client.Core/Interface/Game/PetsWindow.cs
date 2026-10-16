@@ -188,7 +188,7 @@ internal sealed class PetsWindow : Window
     
                 var rename = new Button(card, "PetRename" + pet.PetId)
                 {
-                    Text = "Rename",
+                    Text = Intersect.Client.Localization.ClientLanguages.Text("Rename"),
                     Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
                     FontSize = 10,
                 };

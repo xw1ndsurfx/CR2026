@@ -64,7 +64,7 @@ internal sealed partial class UserListWindow
             if (member.Online)
             {
                 name.MouseInputEnabled = true;
-                name.SetToolTipText("View Character Information");
+                name.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("View Character Information"));
                 name.Clicked += (_, _) => PacketSender.SendRequestPlayerProfile(member.Id, openWindow: true);
             }
             AddLabel(_body, "GuildLevel" + member.Id, member.Level.ToString(),
@@ -115,7 +115,7 @@ internal sealed partial class UserListWindow
     private static void InviteGuildMember()
     {
         _ = new InputBox(
-            title: "Invite Guild Member",
+            title: Intersect.Client.Localization.ClientLanguages.Text("Invite Guild Member"),
             prompt: "Enter the character name to invite into your guild.",
             inputType: InputType.TextInput,
             onSubmit: (control, args) =>
@@ -132,7 +132,7 @@ internal sealed partial class UserListWindow
     private static void LeaveGuild()
     {
         _ = new InputBox(
-            title: "Leave Guild",
+            title: Intersect.Client.Localization.ClientLanguages.Text("Leave Guild"),
             prompt: "Are you sure you want to leave your guild?",
             inputType: InputType.YesNo,
             onSubmit: (_, _) => PacketSender.SendLeaveGuild());
@@ -169,7 +169,7 @@ internal sealed partial class UserListWindow
                 AddLabel(nameButton, "Name",
                     Shorten(member.Name, 23) + " - Lv. " + member.Level,
                     0, 0, 281, 27, 12, Cream);
-                nameButton.SetToolTipText("View Character Information: " + member.Name);
+                nameButton.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("View Character Information: ") + member.Name);
                 nameButton.Clicked += (_, _) =>
                     PacketSender.SendRequestPlayerProfile(member.Id, openWindow: true);
 
@@ -199,13 +199,13 @@ internal sealed partial class UserListWindow
                     new Color(a: 255, r: 225, g: 56, b: 77),
                     new Color(a: 255, r: 88, g: 18, b: 31));
                 healthBar.SetBounds(14, y + 33, 214, 21);
-                healthBar.SetToolTipText("HP: " + hp.ToString("N0") + " / " + hpMax.ToString("N0"));
+                healthBar.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("HP: ") + hp.ToString("N0") + " / " + hpMax.ToString("N0"));
 
                 var manaBar = new VitalBar(_body, "PartyMP" + index, mpMax > 0 ? (double)mp / mpMax : 0,
                     new Color(a: 255, r: 74, g: 204, b: 220),
                     new Color(a: 255, r: 19, g: 75, b: 82));
                 manaBar.SetBounds(236, y + 33, 215, 21);
-                manaBar.SetToolTipText("MP: " + mp.ToString("N0") + " / " + mpMax.ToString("N0"));
+                manaBar.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("MP: ") + mp.ToString("N0") + " / " + mpMax.ToString("N0"));
 
                 var hpText = AddLabel(_body, "HpCaption" + index,
                     hp.ToString("N0") + " / " + hpMax.ToString("N0"),
@@ -262,15 +262,15 @@ internal sealed partial class UserListWindow
             if (mpText.Text != mpLabel)
                 mpText.Text = mpLabel;
 
-            hpBar.SetToolTipText("HP: " + hpLabel);
-            mpBar.SetToolTipText("MP: " + mpLabel);
+            hpBar.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("HP: ") + hpLabel);
+            mpBar.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("MP: ") + mpLabel);
         }
     }
 
     private static void InvitePartyMember()
     {
         _ = new InputBox(
-            title: "Invite to Party",
+            title: Intersect.Client.Localization.ClientLanguages.Text("Invite to Party"),
             prompt: "Enter the character name to invite to your party.",
             inputType: InputType.TextInput,
             onSubmit: (control, args) =>
@@ -287,7 +287,7 @@ internal sealed partial class UserListWindow
     private static void LeaveParty()
     {
         _ = new InputBox(
-            title: "Leave Party",
+            title: Intersect.Client.Localization.ClientLanguages.Text("Leave Party"),
             prompt: "Are you sure you want to leave the party?",
             inputType: InputType.YesNo,
             onSubmit: (_, _) => PacketSender.SendPartyLeave());

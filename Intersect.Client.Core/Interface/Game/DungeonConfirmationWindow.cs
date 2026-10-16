@@ -213,12 +213,12 @@ internal sealed class DungeonConfirmationWindow : Window
 
         _eventId = packet.EventId;
         _retryId = Guid.Empty;
-        _heading.Text = "DUNGEON GATE DETECTED";
-        _enterCaption.Text = "ENTER DUNGEON";
+        _heading.Text = Intersect.Client.Localization.ClientLanguages.Text("DUNGEON GATE DETECTED");
+        _enterCaption.Text = Intersect.Client.Localization.ClientLanguages.Text("ENTER DUNGEON");
 
         _name.Text = Shorten(dungeon.Name, 49);
         _location.Text = Shorten(string.IsNullOrWhiteSpace(dungeon.Location) ? "UNKNOWN" : dungeon.Location, 49);
-        _availability.Text = "AVAILABLE";
+        _availability.Text = Intersect.Client.Localization.ClientLanguages.Text("AVAILABLE");
         _availability.TextColorOverride = Good;
         _rank.Text = dungeon.Rank.ToString();
         _rank.TextColorOverride = RankColor(dungeon.Rank);
@@ -245,7 +245,7 @@ internal sealed class DungeonConfirmationWindow : Window
         var levelRange = dungeon.MaximumLevel > 0
             ? $"{dungeon.MinimumLevel}-{dungeon.MaximumLevel}"
             : $"{dungeon.MinimumLevel}+";
-        _level.Text = $"{levelRange} / RECOMMENDED {dungeon.RecommendedLevel}+";
+        _level.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"{levelRange} / RECOMMENDED {dungeon.RecommendedLevel}+");
         _party.Text = $"{dungeon.MinimumPartySize}-{dungeon.MaximumPartySize}";
         _lives.Text = Math.Max(1, dungeon.MaxLives).ToString();
 
@@ -285,9 +285,9 @@ internal sealed class DungeonConfirmationWindow : Window
         Apply(new DungeonConfirmationPacket(Guid.Empty, packet.DungeonId, packet.ConfigurationJson));
         _eventId = Guid.Empty;
         _retryId = packet.RetryId;
-        _heading.Text = "DUNGEON FAILED";
-        _enterCaption.Text = "RETRY DUNGEON";
-        _availability.Text = "RETRY AVAILABLE";
+        _heading.Text = Intersect.Client.Localization.ClientLanguages.Text("DUNGEON FAILED");
+        _enterCaption.Text = Intersect.Client.Localization.ClientLanguages.Text("RETRY DUNGEON");
+        _availability.Text = Intersect.Client.Localization.ClientLanguages.Text("RETRY AVAILABLE");
         Show();
         BringToFront();
     }

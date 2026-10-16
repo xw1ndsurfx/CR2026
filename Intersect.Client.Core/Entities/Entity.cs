@@ -160,7 +160,12 @@ public partial class Entity : IEntity
 
     public int[] MyEquipment { get; set; } = new int[Options.Instance.Equipment.Slots.Count];
 
-    public string Name { get; set; } = string.Empty;
+    private string _originalName = string.Empty;
+    public string Name
+    {
+        get => this is Player ? _originalName : Intersect.Client.Localization.ClientLanguages.ContentText(_originalName);
+        set => _originalName = value;
+    }
 
     public Color? NameColor { get; set; } = null;
 

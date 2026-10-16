@@ -233,12 +233,12 @@ internal sealed partial class UserListWindow : Window
         if (online)
         {
             nameLabel.MouseInputEnabled = true;
-            nameLabel.SetToolTipText("Whisper to " + friend.Name);
+            nameLabel.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("Whisper to ") + friend.Name);
             nameLabel.Clicked += (_, _) => Interface.GameUi.SetChatboxText("/pm " + friend.Name + " ");
         }
         else
         {
-            nameLabel.SetToolTipText("Offline: " + friend.Name);
+            nameLabel.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("Offline: ") + friend.Name);
         }
 
         var profile = new Button(panel, "ViewFriendInfo") { Text = string.Empty, IsDisabled = !online };
@@ -254,7 +254,7 @@ internal sealed partial class UserListWindow : Window
         remove.SetBounds(430, 6, 27, 25);
         AddLabel(remove, "RemoveCaption", "X", 0, 0, 27, 25, 14,
             new Color(a: 255, r: 248, g: 117, b: 112), true);
-        remove.SetToolTipText("Remove friend " + friend.Name);
+        remove.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("Remove friend ") + friend.Name);
         remove.Clicked += (_, _) => ConfirmRemoveFriend(friend.Name);
     }
 
@@ -285,7 +285,7 @@ internal sealed partial class UserListWindow : Window
             unblock.SetBounds(405, y + 2, 31, 27);
             AddLabel(unblock, "UnblockCaption", "X", 0, 0, 31, 25, 14,
                 new Color(a: 255, r: 245, g: 113, b: 105), true);
-            unblock.SetToolTipText("Unblock " + entry.Name);
+            unblock.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("Unblock ") + entry.Name);
             unblock.Clicked += (_, _) => ConfirmUnblock(entry.Id, entry.Name);
         }
 
@@ -296,7 +296,7 @@ internal sealed partial class UserListWindow : Window
     private static void BlockUser()
     {
         _ = new InputBox(
-            title: "Block Character",
+            title: Intersect.Client.Localization.ClientLanguages.Text("Block Character"),
             prompt: "Enter the character name to block.",
             inputType: InputType.TextInput,
             onSubmit: (control, args) =>
@@ -312,7 +312,7 @@ internal sealed partial class UserListWindow : Window
     private static void ConfirmUnblock(Guid id, string name)
     {
         _ = new InputBox(
-            title: "Unblock Character",
+            title: Intersect.Client.Localization.ClientLanguages.Text("Unblock Character"),
             prompt: "Unblock " + name + "?",
             inputType: InputType.YesNo,
             onSubmit: (_, _) => PacketSender.SendUpdateBlockedUser(false, string.Empty, id));

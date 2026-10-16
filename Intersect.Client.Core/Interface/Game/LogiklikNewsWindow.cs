@@ -62,7 +62,7 @@ internal sealed partial class LogiklikNewsWindow : Window
             AutoSizeToContents = false,
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 16,
-            Text = "Corps Royaux News",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("Corps Royaux News"),
             TextColorOverride = Color.White,
             TextAlign = Pos.Left | Pos.CenterV,
         };
@@ -73,7 +73,7 @@ internal sealed partial class LogiklikNewsWindow : Window
             AutoSizeToContents = false,
             Font = Skin.DefaultFont,
             FontSize = 10,
-            Text = "Powered by Logiklik News • Category: Corps Royaux",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("Powered by Logiklik News • Category: Corps Royaux"),
             TextColorOverride = new Color(a: 255, r: 210, g: 210, b: 210),
             TextAlign = Pos.Left | Pos.CenterV,
         };
@@ -81,7 +81,7 @@ internal sealed partial class LogiklikNewsWindow : Window
 
         _refreshButton = new Button(this, "NewsRefresh")
         {
-            Text = "Refresh",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("Refresh"),
             Font = Skin.DefaultFont,
             FontSize = 10,
         };
@@ -210,7 +210,7 @@ internal sealed partial class LogiklikNewsWindow : Window
         RunOnMainThread(
             () =>
             {
-                _status.Text = "Loading Corps Royaux news...";
+                _status.Text = Intersect.Client.Localization.ClientLanguages.Text("Loading Corps Royaux news...");
                 _refreshButton.IsDisabled = true;
             }
         );
@@ -235,7 +235,7 @@ internal sealed partial class LogiklikNewsWindow : Window
             RunOnMainThread(
                 () =>
                 {
-                    _status.Text = "Unable to load Logiklik News. Try Refresh.";
+                    _status.Text = Intersect.Client.Localization.ClientLanguages.Text("Unable to load Logiklik News. Try Refresh.");
                     _refreshButton.IsDisabled = false;
                     _loading = false;
                     SetEmptyDetail("Logiklik News is temporarily unavailable.");
@@ -284,12 +284,12 @@ internal sealed partial class LogiklikNewsWindow : Window
 
         if (_items.Count == 0)
         {
-            _status.Text = "No published news found in category Corps Royaux.";
+            _status.Text = Intersect.Client.Localization.ClientLanguages.Text("No published news found in category Corps Royaux.");
             SetEmptyDetail("No Corps Royaux news is currently available.");
             return;
         }
 
-        _status.Text = $"{_items.Count} Corps Royaux news item{(_items.Count == 1 ? string.Empty : "s")}";
+        _status.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"{_items.Count} Corps Royaux news item{(_items.Count == 1 ? string.Empty : "s")}");
         SelectItem(_items[0]);
     }
 
@@ -351,7 +351,7 @@ internal sealed partial class LogiklikNewsWindow : Window
 
                 _detailImage.Texture = null;
                 _detailImage.IsHidden = true;
-                _imageStatus.Text = "Loading image...";
+                _imageStatus.Text = Intersect.Client.Localization.ClientLanguages.Text("Loading image...");
                 _imageStatus.IsHidden = false;
                 SetDetailAreaHasImage(true);
             }
@@ -418,7 +418,7 @@ internal sealed partial class LogiklikNewsWindow : Window
 
                 _detailImage.Texture = null;
                 _detailImage.IsHidden = true;
-                _imageStatus.Text = "Image unavailable";
+                _imageStatus.Text = Intersect.Client.Localization.ClientLanguages.Text("Image unavailable");
                 _imageStatus.IsHidden = false;
                 SetDetailAreaHasImage(true);
             }

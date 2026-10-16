@@ -78,7 +78,7 @@ internal sealed class ProfessionProgressHud : Base
 
         var levelUpSuffix = packet.LeveledUp ? "  •  LEVEL UP!" : string.Empty;
         _title.Text =
-            $"{packet.ProfessionName}  •  Level {packet.Level}/{packet.MaximumLevel}{levelUpSuffix}";
+            Intersect.Client.Localization.ClientLanguages.Interpolated($"{packet.ProfessionName}  •  Level {packet.Level}/{packet.MaximumLevel}{levelUpSuffix}");
 
         if (packet.MaximumLevelReached)
         {
@@ -86,7 +86,7 @@ internal sealed class ProfessionProgressHud : Base
                 packet.ExperienceGained > 0
                     ? $"+{packet.ExperienceGained:N0} XP  •  Maximum level reached"
                     : "Maximum level reached";
-            _barText.Text = "MAX LEVEL";
+            _barText.Text = Intersect.Client.Localization.ClientLanguages.Text("MAX LEVEL");
             _progress = 1f;
         }
         else

@@ -20,7 +20,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        AchievementConfiguration.Load(packet.ConfigurationJson);
+        AchievementConfiguration.Load(Intersect.Client.Localization.ClientLanguages.ContentJson(packet.ConfigurationJson));
 
         var completed = (packet.Progress ?? [])
             .Where(entry => entry.Completed)

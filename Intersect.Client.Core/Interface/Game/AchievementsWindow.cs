@@ -125,7 +125,7 @@ internal sealed class AchievementsWindow : Window
                 FontSize = 11,
                 TextAlign = Pos.Center,
                 TextColorOverride = Color.White,
-                Text = "No achievements are configured yet.",
+                Text = Intersect.Client.Localization.ClientLanguages.Text("No achievements are configured yet."),
             };
             empty.SetBounds(20, 80, 640, 40);
             y = 140;

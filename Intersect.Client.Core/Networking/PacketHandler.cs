@@ -674,7 +674,7 @@ internal sealed partial class PacketHandler
     {
         ChatboxMsg.AddMessage(
             new ChatboxMsg(
-                packet.Message ?? "", new Color(packet.Color.A, packet.Color.R, packet.Color.G, packet.Color.B), packet.Type,
+                packet.Localize ? Intersect.Client.Localization.ClientLanguages.Expanded(packet.Message ?? "") : packet.Message ?? "", new Color(packet.Color.A, packet.Color.R, packet.Color.G, packet.Color.B), packet.Type,
                 packet.Target
             )
         );
@@ -1316,7 +1316,7 @@ internal sealed partial class PacketHandler
         Fade.FadeIn(ClientConfiguration.Instance.FadeDurationMs);
         Globals.WaitingOnServer = false;
         Interface.Interface.MenuUi?.MainMenu.CancelSteamAutoLogin();
-        Interface.Interface.ShowAlert(packet.Error, packet.Header, alertType: AlertType.Error);
+        Interface.Interface.ShowAlert(Intersect.Client.Localization.ClientLanguages.Expanded(packet.Error), Intersect.Client.Localization.ClientLanguages.Expanded(packet.Header), alertType: AlertType.Error);
         Interface.Interface.MenuUi?.Reset();
     }
 
@@ -1868,7 +1868,7 @@ internal sealed partial class PacketHandler
         if (packet.ShopData != null)
         {
             Globals.GameShop = new ShopDescriptor();
-            Globals.GameShop.Load(packet.ShopData);
+            Globals.GameShop.Load(Intersect.Client.Localization.ClientLanguages.ContentJson(packet.ShopData));
             Interface.Interface.EnqueueInGame(gameInterface => gameInterface.NotifyOpenShop());
         }
         else
@@ -1961,8 +1961,10 @@ internal sealed partial class PacketHandler
         var json = string.Empty;
         if (!deleted)
         {
-            json = packet.Data;
+            _originalContent[(type, objectId)] = packet.Data;
+            json = Intersect.Localization.GameTextCatalog.IsDisplayObject(type) ? Intersect.Client.Localization.ClientLanguages.ContentJson(packet.Data) : packet.Data;
         }
+        else _originalContent.TryRemove((type, objectId), out _);
 
         switch (type)
         {

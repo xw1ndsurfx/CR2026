@@ -207,7 +207,7 @@ internal sealed partial class DebugWindow : Window
             return;
         }
 
-        statusLabel.Text = "Freed";
+        statusLabel.Text = Intersect.Client.Localization.ClientLanguages.Text("Freed");
         statusLabel.TextColorOverride = new Color(255, 63, 63);
     }
 
@@ -220,7 +220,7 @@ internal sealed partial class DebugWindow : Window
             return;
         }
 
-        statusLabel.Text = "Allocated";
+        statusLabel.Text = Intersect.Client.Localization.ClientLanguages.Text("Allocated");
         statusLabel.TextColorOverride = new Color(63, 255, 63);
     }
 

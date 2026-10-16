@@ -50,8 +50,8 @@ internal sealed class WorldMapWindow : Window
         IsClosable = true;
 
         var zoomOut = new Button(this, "WorldMapZoomOut") { Text = "-", Font = Skin.DefaultFont, FontSize = 12 };
-        var zoomIn = new Button(this, "WorldMapZoomIn") { Text = "+", Font = Skin.DefaultFont, FontSize = 12 };
-        var center = new Button(this, "WorldMapCenter") { Text = "Center on player", Font = Skin.DefaultFont, FontSize = 10 };
+        var zoomIn = new Button(this, "WorldMapZoomIn") { Text = Intersect.Client.Localization.ClientLanguages.Text("+"), Font = Skin.DefaultFont, FontSize = 12 };
+        var center = new Button(this, "WorldMapCenter") { Text = Intersect.Client.Localization.ClientLanguages.Text("Center on player"), Font = Skin.DefaultFont, FontSize = 10 };
 
         _hint = new Label(this, "WorldMapHint")
         {
@@ -59,7 +59,7 @@ internal sealed class WorldMapWindow : Window
             Font = Skin.DefaultFont,
             FontSize = 9,
             TextColorOverride = new Color(200, 200, 200),
-            Text = "Drag to move / Mouse wheel or +/- to zoom / Zoom centers on you",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("Drag to move / Mouse wheel or +/- to zoom / Zoom centers on you"),
         };
 
         _mapCanvas = new WorldMapCanvas(this, "WorldMapCanvas");
@@ -260,7 +260,7 @@ internal sealed class WorldMapWindow : Window
             if (grid == null)
             {
                 renderer.DrawColor = Color.White;
-                renderer.RenderText(Skin.DefaultFont, 12, new Point(20, 20), "World map data is not available yet.");
+                renderer.RenderText(Skin.DefaultFont,12,new Point(20, 20),Intersect.Client.Localization.ClientLanguages.Text("World map data is not available yet."));
                 return;
             }
 
@@ -775,11 +775,11 @@ internal sealed class WorldMapWindow : Window
                 if (!string.IsNullOrWhiteSpace(marker.Name))
                 {
                     var textY = markerY + (marker.AnimationId == Guid.Empty ? 0 : radius);
-                    var textX = markerX - renderer.MeasureText(Skin.DefaultFont, 9, marker.Name).X / 2;
+                    var textX = markerX - renderer.MeasureText(Skin.DefaultFont, 9, Intersect.Client.Localization.ClientLanguages.ContentText(marker.Name)).X / 2;
                     renderer.DrawColor = Color.Black;
-                    renderer.RenderText(Skin.DefaultFont, 9, new Point(textX + 1, textY + 1), marker.Name);
+                    renderer.RenderText(Skin.DefaultFont,9,new Point(textX + 1, textY + 1),Intersect.Client.Localization.ClientLanguages.ContentText(marker.Name));
                     renderer.DrawColor = Color.White;
-                    renderer.RenderText(Skin.DefaultFont, 9, new Point(textX, textY), marker.Name);
+                    renderer.RenderText(Skin.DefaultFont,9,new Point(textX, textY),Intersect.Client.Localization.ClientLanguages.ContentText(marker.Name));
                 }
             }
         }
@@ -1211,9 +1211,9 @@ internal sealed class WorldMapWindow : Window
                 if (_interactive)
                 {
                     renderer.DrawColor = Color.Black;
-                    renderer.RenderText(Skin.DefaultFont, 9, new Point(px + 10, py - 6), marker.Name);
+                    renderer.RenderText(Skin.DefaultFont,9,new Point(px + 10, py - 6),marker.Name);
                     renderer.DrawColor = Color.White;
-                    renderer.RenderText(Skin.DefaultFont, 9, new Point(px + 9, py - 7), marker.Name);
+                    renderer.RenderText(Skin.DefaultFont,9,new Point(px + 9, py - 7),marker.Name);
                 }
             }
             if (!_interactive)

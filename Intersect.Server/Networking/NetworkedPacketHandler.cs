@@ -200,6 +200,7 @@ internal sealed partial class NetworkedPacketHandler
             }
 
             map.Load(packet.JsonData, map.Revision + 1);
+            Intersect.Server.Localization.ContentTranslationRuntime.QueueJson(packet.JsonData);
             MapList.List.UpdateMap(packet.MapId);
 
             //Event Fixing
@@ -1131,6 +1132,9 @@ internal sealed partial class NetworkedPacketHandler
             }
         }
 
+        public void HandlePacket(Client client, Network.Packets.Editor.TranslationSettingsRequestPacket packet)
+            => Intersect.Server.Localization.ContentTranslationRuntime.HandleEditor(client, packet);
+
         //SaveGameObjectPacket
         public void HandlePacket(Client client, Network.Packets.Editor.SaveGameObjectPacket packet)
         {
@@ -1260,6 +1264,7 @@ internal sealed partial class NetworkedPacketHandler
                     }
 
                     obj.Load(packet.Data);
+                    if (Intersect.Localization.GameTextCatalog.IsDisplayObject(type)) Intersect.Server.Localization.ContentTranslationRuntime.QueueJson(packet.Data);
 
                     if (type == GameObjectType.Quest)
                     {

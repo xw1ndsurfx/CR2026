@@ -85,7 +85,7 @@ partial class FriendsWindow
 
         mAdd.SetBounds(496, 70, 161, 42);
         mAdd.Text = string.Empty;
-        mAdd.SetToolTipText("Send a friend request");
+        mAdd.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("Send a friend request"));
         var addFrame = new FriendsAddButtonChrome(mAdd, "FriendsAddButtonFrame");
         addFrame.SetBounds(0, 0, 161, 42);
         addFrame.SendToBack();

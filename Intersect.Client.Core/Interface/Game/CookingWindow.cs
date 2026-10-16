@@ -263,8 +263,8 @@ internal sealed partial class CookingWindow : Base
                 var item = Items[i];
                 CookingArt.DrawItem(skin.Renderer, item.ItemId, new Rectangle(4, i * 48 + 5, 36, 36), item.Name, skin);
                 skin.Renderer.DrawColor = item.Available >= item.Needed ? Color.White : new Color(245, 135, 100);
-                skin.Renderer.RenderText(Skin.DefaultFont, 9, new Point(48, i * 48 + 4), item.Name.Length > 23 ? item.Name[..22] + "..." : item.Name);
-                skin.Renderer.RenderText(Skin.DefaultFont, 9, new Point(48, i * 48 + 22), $"{item.Available} / {item.Needed}");
+                skin.Renderer.RenderText(Skin.DefaultFont,9,new Point(48, i * 48 + 4),item.Name.Length > 23 ? item.Name[..22] + "..." : item.Name);
+                skin.Renderer.RenderText(Skin.DefaultFont,9,new Point(48, i * 48 + 22),$"{item.Available} / {item.Needed}");
             }
         }
     }
@@ -297,7 +297,7 @@ internal static class CookingArt
         {
             Disc(renderer, new Color(220, 162, 77), bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2, Math.Max(3, bounds.Width / 3));
             renderer.DrawColor = Color.Black;
-            renderer.RenderText(skin.DefaultFont, 10, new Point(bounds.X + bounds.Width / 2 - 3, bounds.Y + bounds.Height / 2 - 6), name.Length > 0 ? name[..1] : "?");
+            renderer.RenderText(skin.DefaultFont,10,new Point(bounds.X + bounds.Width / 2 - 3, bounds.Y + bounds.Height / 2 - 6),name.Length > 0 ? name[..1] : "?");
         }
     }
 }
@@ -422,7 +422,7 @@ internal sealed class CookingWorktop(Base parent, Action<CookingActionInput> sub
         var id = ingredientIds.ElementAtOrDefault(state.CompletedActions % Math.Max(1, ingredientIds.Length));
         var ingredientName = state.RecipeIngredients.FirstOrDefault(item => item.ItemId == id)?.Name ?? "Ingredient";
         CookingArt.DrawItem(renderer, id, Source, ingredientName, skin);
-        renderer.DrawColor = Color.White; renderer.RenderText(Skin.DefaultFont, 9, new Point(12, 20), "INGREDIENTS");
+        renderer.DrawColor = Color.White; renderer.RenderText(Skin.DefaultFont,9,new Point(12, 20),Intersect.Client.Localization.ClientLanguages.Text("INGREDIENTS"));
         var center = Center;
         var radius = Math.Max(15, Math.Min(Station.Width, Station.Height) / 2 - 12);
         if (state.StageType is CookingStageType.Chop or CookingStageType.Knead)
@@ -504,7 +504,7 @@ internal sealed class CookingWorktop(Base parent, Action<CookingActionInput> sub
         {
             CookingArt.Fill(renderer, new Color(100, 100, 230, 130), Station.X, Station.Y, Station.Width, 4);
             renderer.DrawColor = Color.White;
-            renderer.RenderText(Skin.DefaultFont, 11, new Point(center.X - 50, center.Y + 50), "DROP HERE");
+            renderer.RenderText(Skin.DefaultFont,11,new Point(center.X - 50, center.Y + 50),Intersect.Client.Localization.ClientLanguages.Text("DROP HERE"));
         }
         var meter = state.StageType is CookingStageType.Heat or CookingStageType.Season ? state.MeterPermille
             : CookingStageRules.TimingCursorPermille(Environment.TickCount64 + _offset - state.StageStartedUnixMs, state.StageDurationMs, state.StageDifficulty);
@@ -518,8 +518,8 @@ internal sealed class CookingWorktop(Base parent, Action<CookingActionInput> sub
         if (state.StageType == CookingStageType.Heat)
         {
             renderer.DrawColor = Color.White;
-            renderer.RenderText(Skin.DefaultFont, 14, new Point(Station.X + 20, Height - 61), "-  LOWER HEAT");
-            renderer.RenderText(Skin.DefaultFont, 14, new Point(Width / 2 + 20, Height - 61), "+  RAISE HEAT");
+            renderer.RenderText(Skin.DefaultFont,14,new Point(Station.X + 20, Height - 61),Intersect.Client.Localization.ClientLanguages.Text("-  LOWER HEAT"));
+            renderer.RenderText(Skin.DefaultFont,14,new Point(Width / 2 + 20, Height - 61),Intersect.Client.Localization.ClientLanguages.Text("+  RAISE HEAT"));
         }
     }
 }

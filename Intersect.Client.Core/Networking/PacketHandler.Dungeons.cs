@@ -9,7 +9,7 @@ internal sealed partial class PacketHandler
 {
     public void HandlePacket(IPacketSender packetSender, DungeonStatePacket packet)
     {
-        DungeonConfiguration.Load(packet.ConfigurationJson);
+        DungeonConfiguration.Load(Intersect.Client.Localization.ClientLanguages.ContentJson(packet.ConfigurationJson));
         Interface.Interface.EnqueueInGame(
             gameInterface => gameInterface.ApplyDungeonState(packet)
         );

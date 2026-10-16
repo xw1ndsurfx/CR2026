@@ -55,7 +55,7 @@ internal sealed class WorldBossStatusWindow : Base
         _activeCount = activeCount;
         _title.Text = "WORLD BOSS  •  " + packet.Name +
             (activeCount > 1 ? $"  (+{activeCount - 1} active)" : "");
-        _health.Text = $"HP: {packet.Health:N0} / {packet.MaxHealth:N0}";
+        _health.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"HP: {packet.Health:N0} / {packet.MaxHealth:N0}");
         _place.Text = $"{packet.MapName} ({packet.SpawnX}, {packet.SpawnY})  •  " +
             $"{packet.ParticipantCount} participants";
         var lines = (packet.TopDamagers ?? [])

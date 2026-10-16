@@ -137,7 +137,7 @@ internal sealed partial class UserListWindow
     private void SearchGuildDirectory()
     {
         _ = new InputBox(
-            title: "Find a Guild",
+            title: Intersect.Client.Localization.ClientLanguages.Text("Find a Guild"),
             prompt: "Search guild names. Leave blank to list all guilds.",
             inputType: InputType.TextInput,
             onSubmit: (control, args) =>

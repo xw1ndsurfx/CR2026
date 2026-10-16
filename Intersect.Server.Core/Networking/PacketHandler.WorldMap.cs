@@ -20,6 +20,7 @@ internal sealed partial class PacketHandler
             if (packet.LegendJson is not { Length: > 0 and <= 100_000 })
                 throw new InvalidDataException("World Map legend is empty or too large.");
             WorldMapLegendStore.Save(packet.LegendJson);
+            Intersect.Server.Localization.ContentTranslationRuntime.QueueJson(packet.LegendJson);
             client.Send(new WorldMapLegendPacket { LegendJson = WorldMapLegendStore.Json });
         }
         catch (Exception exception)
