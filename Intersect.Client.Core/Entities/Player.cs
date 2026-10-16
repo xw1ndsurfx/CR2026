@@ -255,7 +255,9 @@ public partial class Player : Entity, IPlayer
 
     public bool IsInMyGuild(IPlayer player) => IsInGuild && player != null && player.GuildName == Guild;
 
-    public bool IsBusy => !(Globals.EventHolds.Count == 0 &&
+    public bool PendingDeath { get; private set; }
+
+    public bool IsBusy => PendingDeath || !(Globals.EventHolds.Count == 0 &&
                  !Globals.MoveRouteActive &&
                  Globals.GameShop == null &&
                  Globals.InBank == false &&
@@ -356,6 +358,7 @@ public partial class Player : Entity, IPlayer
         }
 
         IsAfk = playerPacket.IsAfk;
+        PendingDeath = playerPacket.PendingDeath;
         Gender = playerPacket.Gender;
         Class = playerPacket.ClassId;
         Appearance = playerPacket.Appearance ?? new CharacterAppearance();
@@ -1981,7 +1984,7 @@ public partial class Player : Entity, IPlayer
 
     public bool TryAttack()
     {
-        if (IsAttacking || IsBlocking || (IsMoving && !Options.Instance.Player.AllowCombatMovement) || Globals.Me == default)
+        if (PendingDeath || IsAttacking || IsBlocking || (IsMoving && !Options.Instance.Player.AllowCombatMovement) || Globals.Me == default)
         {
             return false;
         }

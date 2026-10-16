@@ -35,6 +35,8 @@ public partial class Event : Entity
         }
     }
 
+    public int AnimationOffsetX { get; private set; }
+    public int AnimationOffsetY { get; private set; }
     public int RenderLevel { get; set; } = 1;
 
     public bool WalkingAnim { get; set; } = true;
@@ -88,6 +90,8 @@ public partial class Event : Entity
         Desc = eventEntityPacket.Description;
         Graphic = eventEntityPacket.Graphic;
         RenderLevel = eventEntityPacket.RenderLayer;
+        AnimationOffsetX = eventEntityPacket.AnimationOffsetX;
+        AnimationOffsetY = eventEntityPacket.AnimationOffsetY;
         Trigger = eventEntityPacket.Trigger;
         QuestArrowEnabled = eventEntityPacket.QuestArrowEnabled;
         QuestArrowQuestId = eventEntityPacket.QuestArrowQuestId;
@@ -130,6 +134,7 @@ public partial class Event : Entity
 
     public override void Draw()
     {
+        if (!ShouldDraw) return;
         WorldPos.Reset();
         RenderedGraphicTop = null;
         if (MapInstance == default || !Globals.GridMaps.ContainsKey(MapId) || !TryEnsureTexture(out var texture))

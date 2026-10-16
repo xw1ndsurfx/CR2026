@@ -47,6 +47,8 @@ public partial class PlayerEntityPacket : EntityPacket
     [Key(32)]
     public bool IsAfk { get; set; }
 
+    [Key(34)] public bool PendingDeath { get; set; }
+
     [Key(33)]
     public int BadgeId { get; set; }
 }

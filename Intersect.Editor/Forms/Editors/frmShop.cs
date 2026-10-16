@@ -28,6 +28,7 @@ public partial class FrmShop : EditorForm
         ApplyHooks();
         InitializeComponent();
         Icon = Program.Icon;
+        InitializePriceSuggestions();
         _btnSave = btnSave;
         _btnCancel = btnCancel;
 

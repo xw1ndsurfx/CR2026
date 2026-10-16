@@ -134,6 +134,7 @@ public partial class FrmMain : Form
         AddSoundImportEditorMenu();
         AddBalanceLabEditorMenu();
         AddWorldEventsEditorMenu();
+        AddSystemEditorMenu();
         AddWorldMapEditorMenu();
         Show();
 

@@ -18,6 +18,9 @@ public partial class EventPage
 
     public Guid AnimationId { get; set; }
 
+    public int AnimationOffsetX { get; set; }
+    public int AnimationOffsetY { get; set; }
+
     public bool ShowAnimationOnWorldMap { get; set; }
 
     public bool ShowNameOnWorldMap { get; set; }

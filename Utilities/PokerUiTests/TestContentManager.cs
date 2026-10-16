@@ -13,6 +13,13 @@ internal static class TestContentBootstrap
 
 internal sealed class TestContentManager : GameContentManager
 {
+    internal Action<TextureType, string>? TextureRequested;
+    public override Intersect.Client.Framework.Graphics.IGameTexture? GetTexture(TextureType type, string name)
+    {
+        TextureRequested?.Invoke(type, name);
+        return base.GetTexture(type, name);
+    }
+
     internal void AddAnimationTexture(string name, Intersect.Client.Framework.Graphics.IGameTexture texture) =>
         mAnimationDict[name.ToLowerInvariant()] = texture;
     internal void AddResourceTexture(string name, Intersect.Client.Framework.Graphics.IGameTexture texture) =>
