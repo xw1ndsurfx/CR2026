@@ -61,7 +61,7 @@ internal static class VoiceAndDayTests
             hudType.GetMethod("UpdatePhase")!.Invoke(hud, [phase, true]);
             Check(!hud.IsHidden && hud.Text == phase.ToString(), "Persistent phase HUD displays the current server phase");
         }
-        Check(hud.X == 8 && hud.Y == 4 && hud.Height <= 20 && hud.FontSize <= 10 && !hud.MouseInputEnabled,
+        Check(hud.X == 8 && hud.Y == 4 && hud.Height <= 20 && hud.FontSize <= 10 && hud.Font != null && !hud.AutoSizeToContents && !hud.MouseInputEnabled,
             "Current phase is a small non-interactive label at the top-left");
         hudType.GetMethod("UpdatePhase")!.Invoke(hud, [DayPhase.Day, false]);
         Check(hud.IsHidden, "Phase HUD stays hidden until server time is available");

@@ -4909,6 +4909,86 @@
       "en": "View profile or visit house",
       "fr": "Voir le profil ou visiter la maison",
       "es": "Ver perfil o visitar casa"
+    },
+    "Storage": {
+      "en": "Storage",
+      "fr": "Stockage",
+      "es": "Almacenamiento"
+    },
+    "Premium storage": {
+      "en": "Premium storage",
+      "fr": "Stockage Premium",
+      "es": "Almacenamiento Premium"
+    },
+    "Auto sort": {
+      "en": "Auto sort",
+      "fr": "Tri automatique",
+      "es": "Ordenar automáticamente"
+    },
+    "Premium benefits active": {
+      "en": "Premium benefits active",
+      "fr": "Avantages Premium actifs",
+      "es": "Ventajas Premium activas"
+    },
+    "Premium storage: withdrawals only after expiry": {
+      "en": "Premium storage: withdrawals only after expiry",
+      "fr": "Stockage Premium : retrait seulement après expiration",
+      "es": "Almacenamiento Premium: solo retiros tras caducar"
+    },
+    "Bank access requires level {0}.": {
+      "en": "Bank access requires level {0}.",
+      "fr": "Le coffre nécessite le niveau {0}.",
+      "es": "El banco requiere el nivel {0}."
+    },
+    "Opening a bank account costs {0} Auragems.": {
+      "en": "Opening a bank account costs {0} Auragems.",
+      "fr": "L’ouverture d’un compte coûte {0} Auragems.",
+      "es": "Abrir una cuenta cuesta {0} Auragems."
+    },
+    "Your bank account could not be saved. Please try again.": {
+      "en": "Your bank account could not be saved. Please try again.",
+      "fr": "Impossible de sauvegarder votre compte. Réessayez.",
+      "es": "No se pudo guardar tu cuenta. Inténtalo de nuevo."
+    },
+    "Experience event: {0} (+{1}% XP)": {
+      "en": "Experience event: {0} (+{1}% XP)",
+      "fr": "Événement EXP : {0} (+{1}% EXP)",
+      "es": "Evento de experiencia: {0} (+{1}% EXP)"
+    },
+    "The experience event has ended.": {
+      "en": "The experience event has ended.",
+      "fr": "L’événement EXP est terminé.",
+      "es": "El evento de experiencia ha terminado."
+    },
+    "QUEST EXCHANGE": {
+      "en": "QUEST EXCHANGE",
+      "fr": "COMPTOIR DES QUÊTES",
+      "es": "INTERCAMBIO DE MISIONES"
+    },
+    "CHOOSE A RECIPE - ALCHEMY LV {0}": {
+      "en": "CHOOSE A RECIPE - ALCHEMY LV {0}",
+      "fr": "CHOISISSEZ UNE RECETTE - ALCHIMIE NIV {0}",
+      "es": "ELIGE UNA RECETA - ALQUIMIA NIV {0}"
+    },
+    "Lv {0} {1}\n{2:N0} x {3} - +{4} XP": {
+      "en": "Lv {0} {1}\n{2:N0} x {3} - +{4} XP",
+      "fr": "Niv {0} {1}\n{2:N0} x {3} - +{4} EXP",
+      "es": "Niv {0} {1}\n{2:N0} x {3} - +{4} EXP"
+    },
+    "[LOCKED - EVENT] {0}\n{1:N0} x {2}": {
+      "en": "[LOCKED - EVENT] {0}\n{1:N0} x {2}",
+      "fr": "[VERROUILLÉ - ÉVÉNEMENT] {0}\n{1:N0} x {2}",
+      "es": "[BLOQUEADA - EVENTO] {0}\n{1:N0} x {2}"
+    },
+    "[LOCKED - Lv {0}] {1}\n{2:N0} x {3}": {
+      "en": "[LOCKED - Lv {0}] {1}\n{2:N0} x {3}",
+      "fr": "[VERROUILLÉ - Niv {0}] {1}\n{2:N0} x {3}",
+      "es": "[BLOQUEADA - Niv {0}] {1}\n{2:N0} x {3}"
+    },
+    "Opening a bank account costs {0} {1}.": {
+      "en": "Opening a bank account costs {0} {1}.",
+      "fr": "L’ouverture d’un compte coûte {0} {1}.",
+      "es": "Abrir una cuenta cuesta {0} {1}."
     }
   }
 }

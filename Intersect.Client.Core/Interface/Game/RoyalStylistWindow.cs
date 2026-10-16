@@ -522,7 +522,7 @@ internal sealed class RoyalStylistWindow : Window
                 container.Texture =
                     Globals.ContentManager.GetTexture(
                         TextureType.Paperdoll,
-                        style
+                        Intersect.Client.Core.AppearancePaperdolls.Resolve(style, (int)Globals.Me.Gender == 1)
                     );
                 container.RenderColor = color;
             }
@@ -579,7 +579,7 @@ internal sealed class RoyalStylistWindow : Window
                     style,
                     prefix
                 ) &&
-                !string.IsNullOrWhiteSpace(style))
+                !string.IsNullOrWhiteSpace(style) && CharacterAppearance.SupportsGender(style, (int)Globals.Me.Gender == 1))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(
                 style => style,

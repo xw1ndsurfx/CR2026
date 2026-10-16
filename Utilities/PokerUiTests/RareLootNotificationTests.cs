@@ -55,6 +55,8 @@ internal static class RareLootNotificationTests
             Check(heading.IsHidden && window.Height == 92 && quantity.Text.Contains("-3"), "Ordinary Change Item notifications retain their behavior and queue order");
             type.GetField("_hideAt", Hidden)!.SetValue(window, 0L); type.GetMethod("Update")!.Invoke(window, null);
             Check(window.IsHidden, "Notification must dismiss automatically when the queue ends");
+            Add(rare.Id, 3, loot: false);
+            Check(!heading.IsHidden && window.Height == 150 && name.TextColorOverride == configured, "Rare Change Item and potion gains use the same congratulations presentation as rare loot");
             var packet = new ItemChangeNotificationPacket(rare.Id, 2) { IsLoot = true };
             var copy = MessagePackSerializer.Deserialize<ItemChangeNotificationPacket>(MessagePackSerializer.Serialize(packet));
             Check(copy.IsLoot && copy.ItemId == rare.Id && copy.SignedQuantity == 2, "Loot confirmation wire round-trip");

@@ -16,7 +16,11 @@ internal sealed class QuestShopWindow : Window
     public QuestShopWindow(Canvas parent)
         : base(parent, "Quest Shop", false, nameof(QuestShopWindow))
     {
-        SetSize(720, 570);
+        SetSize(740, 620);
+        TitleLabel.Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont;
+        TitleLabel.FontSize = 14; TitleLabel.TextColorOverride = new Color(230, 200, 135);
+        var subtitle = new Label(this, "QuestExchangeHeading") { Text = Intersect.Client.Localization.ClientLanguages.Text("QUEST EXCHANGE"), Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont, FontSize = 16, TextColorOverride = new Color(240, 215, 160) };
+        subtitle.SetBounds(24, 10, 660, 28);
         Alignment = [Alignments.Center];
         DeleteOnClose = false;
         DisableResizing();
@@ -45,7 +49,7 @@ internal sealed class QuestShopWindow : Window
             OverflowY = OverflowBehavior.Scroll,
             AutoHideBars = false,
         };
-        _quests.SetBounds(24, 134, 666, 405);
+        _quests.SetBounds(24, 134, 686, 424);
 
         Hide();
     }
@@ -57,17 +61,17 @@ internal sealed class QuestShopWindow : Window
     public void Apply(QuestShopStatePacket state)
     {
         _shopId = state.ShopId;
-        Title = string.IsNullOrWhiteSpace(state.ShopName) ? "Quest Shop" : state.ShopName;
-        _description.Text = state.Description ?? string.Empty;
-        _message.Text = state.Message ?? string.Empty;
+        Title = string.IsNullOrWhiteSpace(state.ShopName) ? Intersect.Client.Localization.ClientLanguages.Text("Quest Shop") : Intersect.Client.Localization.ClientLanguages.ContentText(state.ShopName);
+        _description.Text = Intersect.Client.Localization.ClientLanguages.ContentText(state.Description ?? string.Empty);
+        _message.Text = Intersect.Client.Localization.ClientLanguages.Expanded(state.Message ?? string.Empty);
         _quests.DeleteAll();
 
         var y = 4;
         foreach (var entry in state.Entries ?? [])
         {
             var row = new QuestRow(_quests, state.ShopId, entry);
-            row.SetBounds(4, y, 638, 156);
-            y += 162;
+            row.SetBounds(4, y, 654, 184);
+            y += 192;
         }
 
         if ((state.Entries?.Length ?? 0) == 0)
@@ -82,7 +86,7 @@ internal sealed class QuestShopWindow : Window
             empty.SetBounds(20, 80, 590, 50);
         }
 
-        _quests.SetInnerSize(646, Math.Max(405, y + 4));
+        _quests.SetInnerSize(662, Math.Max(424, y + 4));
         _quests.UpdateScrollBars();
     }
 
@@ -97,7 +101,7 @@ internal sealed class QuestShopWindow : Window
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
                 FontSize = 12,
                 TextColorOverride = Color.White,
-                Text = entry.Name,
+                Text = Intersect.Client.Localization.ClientLanguages.ContentText(entry.Name),
             };
             title.SetBounds(14, 8, 390, 24);
 
@@ -107,9 +111,10 @@ internal sealed class QuestShopWindow : Window
                 Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
                 FontSize = 9,
                 TextColorOverride = new Color(a: 255, r: 200, g: 205, b: 210),
-                Text = entry.Description ?? string.Empty,
+                Text = Intersect.Client.Localization.ClientLanguages.ContentText(entry.Description ?? string.Empty),
             };
-            description.SetBounds(14, 34, 430, 38);
+            description.SetBounds(18, 40, 414, 54);
+            description.TooltipText = entry.Description;
 
             var requirements = new Label(this, "Requirements")
             {
@@ -121,7 +126,8 @@ internal sealed class QuestShopWindow : Window
                     : new Color(a: 255, r: 225, g: 165, b: 145),
                 Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"Prerequisites: {entry.Requirements}"),
             };
-            requirements.SetBounds(14, 76, 430, 68);
+            requirements.SetBounds(18, 100, 414, 72);
+            requirements.TooltipText = entry.Requirements;
 
             var status = new Label(this, "Status")
             {
@@ -130,13 +136,13 @@ internal sealed class QuestShopWindow : Window
                 FontSize = 9,
                 TextAlign = Pos.Center,
                 TextColorOverride = StatusColor(entry.Status),
-                Text = entry.Status,
+                Text = Intersect.Client.Localization.ClientLanguages.Text(entry.Status),
             };
             status.SetBounds(460, 12, 160, 26);
 
             var accept = new Button(this, "ViewQuest")
             {
-                Text = entry.CanAccept ? "VIEW QUEST" : entry.Status,
+                Text = Intersect.Client.Localization.ClientLanguages.Text(entry.CanAccept ? "VIEW QUEST" : entry.Status),
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
                 FontSize = 9,
                 IsDisabled = !entry.CanAccept,
@@ -152,6 +158,14 @@ internal sealed class QuestShopWindow : Window
             };
         }
 
+        protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
+        {
+            var renderer=skin.Renderer;var bounds=RenderBounds;
+            renderer.DrawColor=new Color(245,48,34,27);renderer.DrawFilledRect(bounds);
+            renderer.DrawColor=new Color(255,128,94,56);renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(bounds.X,bounds.Y,bounds.Width,2));
+            renderer.DrawColor=new Color(255,214,177,100);renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(bounds.X,bounds.Y,4,bounds.Height));
+            renderer.DrawColor=new Color(255,96,68,43);renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(bounds.X+452,bounds.Y+12,1,bounds.Height-24));
+        }
         private static Color StatusColor(string? status) =>
             status switch
             {

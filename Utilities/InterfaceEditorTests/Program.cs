@@ -19,6 +19,7 @@ internal static class Program
     {
         typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, new Options());
         SoundImportTests.Run();
+        ActivitiesEditorTests.Run();
         MiniGameEditorTests.Run();
         using (var housing = new Intersect.Editor.Forms.Editors.FrmHousingConfiguration("{}"))
         {

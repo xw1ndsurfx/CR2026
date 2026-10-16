@@ -112,7 +112,7 @@ internal sealed class ItemChangeNotificationWindow : Base
 
     public void Update()
     {
-        if (_hasCurrent) PositionWindow();
+        if (_hasCurrent) { PositionWindow(); BringToFront(); }
         if (!_hasCurrent || Timing.Global.Milliseconds < _hideAt)
             return;
 
@@ -136,7 +136,7 @@ internal sealed class ItemChangeNotificationWindow : Base
         var descriptor = ItemDescriptor.Get(packet.ItemId);
         _rarityColor = descriptor == null ? null : ItemRarityGlow.ResolveColor(
             descriptor.Rarity, Options.Instance.Items.RarityTiers, CustomColors.Items.Rarities);
-        _celebrating = packet.IsLoot && _rarityColor != null;
+        _celebrating = packet.SignedQuantity > 0 && _rarityColor != null;
         _hideAt = Timing.Global.Milliseconds + (_celebrating ? 5_000 : 2_800);
         SetSize(Math.Min(_celebrating ? 480 : 420, Math.Max(200, (Parent?.Width ?? 640) - 64)), _celebrating ? 150 : 92);
         _heading.IsHidden = !_celebrating;
@@ -148,7 +148,7 @@ internal sealed class ItemChangeNotificationWindow : Base
         _quantity.FontSize = _celebrating ? 12 : 16;
         _name.TextColorOverride = _celebrating ? _rarityColor! : Color.White;
         _heading.TextColorOverride = _celebrating ? _rarityColor! : Color.White;
-        _name.Text = descriptor?.Name ?? "Item";
+        _name.Text = Intersect.Client.Localization.ClientLanguages.ContentText(descriptor?.Name ?? "Item");
 
         var sign = packet.SignedQuantity > 0 ? "+" : string.Empty;
         _quantity.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"{sign}{packet.SignedQuantity:N0}");

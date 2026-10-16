@@ -42,6 +42,7 @@ internal static class InvasionEnvironmentManager
     internal static void Reset()
     {
         Active.Clear();
+        Intersect.Client.WorldEvents.WorldMusic.Reset();
         Graphics.GridSwitched = true;
     }
 
@@ -94,30 +95,16 @@ internal static class InvasionEnvironmentManager
 
     internal static void ApplyMapMusic(MapInstance map)
     {
-        var environment = Current;
-        if (environment != null && !string.IsNullOrWhiteSpace(environment.Music))
-        {
-            Audio.PlayMusic(
-                environment.Music,
-                ClientConfiguration.Instance.MusicFadeTimer,
-                ClientConfiguration.Instance.MusicFadeTimer,
-                true
-            );
-            return;
-        }
-
-        Audio.PlayMusic(
-            map.Music,
-            ClientConfiguration.Instance.MusicFadeTimer,
-            ClientConfiguration.Instance.MusicFadeTimer,
-            true
-        );
+        Intersect.Client.WorldEvents.WorldMusic.MapChanged();
     }
 
     internal static bool SuppressScriptedMusicChange()
     {
         if (!HasMusicOverride)
-            return false;
+        {
+            if (!Intersect.Client.WorldEvents.WorldMusic.HasCombatOverride) return false;
+            Intersect.Client.WorldEvents.WorldMusic.Update(); return true;
+        }
 
         EnsureInvasionMusic();
         return true;

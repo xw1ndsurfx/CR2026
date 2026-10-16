@@ -30,9 +30,10 @@ public partial class CharacterPacket : IntersectPacket
         string className,
         EquipmentFragment[] equipment,
         string guildName,
-        CharacterAppearance? appearance = null
+        CharacterAppearance? appearance = null, int gender = 0
     )
     {
+        Gender = gender;
         Id = id;
         Name = name;
         Sprite = sprite;
@@ -67,6 +68,8 @@ public partial class CharacterPacket : IntersectPacket
 
     [Key(7)]
     public string GuildName { get; set; } = string.Empty;
+
+    [Key(9)] public int Gender { get; set; }
 
     [Key(8)]
     public CharacterAppearance Appearance { get; set; } = new();

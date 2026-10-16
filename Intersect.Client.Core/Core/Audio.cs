@@ -64,6 +64,7 @@ public static partial class Audio
     //Update
     public static void Update()
     {
+        Intersect.Client.WorldEvents.WorldMusic.Update();
         if (_activeMusicSource != null)
         {
             _activeMusicSource.Update();
@@ -139,6 +140,8 @@ public static partial class Audio
             return;
         }
 
+        if (_activeMusicSource?.State == GameAudioInstance.AudioInstanceState.Playing && !sFadingOut &&
+            string.Equals(sCurrentSong, GameContentManager.RemoveExtension(filename), StringComparison.OrdinalIgnoreCase)) return;
         ClearQueue();
 
         filename = GameContentManager.RemoveExtension(filename);

@@ -56,6 +56,8 @@ public partial class QuestOfferWindow
         mDeclineButton.Clicked += _declineButton_Clicked;
 
         mQuestOfferWindow.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
+        mQuestPromptTemplate.Hide();
+        QuestTextScroller.Configure(mQuestPromptArea, mQuestPromptLabel);
         Interface.InputBlockingComponents.Add(mQuestOfferWindow);
     }
 

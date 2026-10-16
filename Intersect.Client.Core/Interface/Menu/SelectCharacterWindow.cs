@@ -387,7 +387,7 @@ public partial class SelectCharacterWindow : Window
                 {
                     paperdollContainer.Texture = Globals.ContentManager.GetTexture(
                         TextureType.Paperdoll,
-                        baseStyle
+                        Intersect.Client.Core.AppearancePaperdolls.Resolve(baseStyle, selectedPreviewMetadata.Gender == 1)
                     );
                     paperdollContainer.RenderColor = baseColor;
                 }

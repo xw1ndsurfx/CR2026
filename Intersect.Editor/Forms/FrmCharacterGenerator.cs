@@ -7,7 +7,7 @@ using Intersect.Editor.Content;
 
 namespace Intersect.Editor.Forms;
 
-public sealed class FrmCharacterGenerator : DarkForm
+public sealed partial class FrmCharacterGenerator : DarkForm
 {
     private enum CharacterAnimation
     {
@@ -40,6 +40,8 @@ public sealed class FrmCharacterGenerator : DarkForm
         public bool MaleCompatible { get; init; }
 
         public bool FemaleCompatible { get; init; }
+        public string? MalePaperdollFile { get; init; }
+        public string? FemalePaperdollFile { get; init; }
     }
 
     private sealed class CharacterProject
@@ -1540,6 +1542,8 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private bool IsPartCompatibleWithGender(string partName)
     {
+        if (partName.StartsWith("Female_", StringComparison.OrdinalIgnoreCase)) return _selectedGender == CharacterGender.Female;
+        if (partName.StartsWith("Male_", StringComparison.OrdinalIgnoreCase)) return _selectedGender == CharacterGender.Male;
         if (partName.StartsWith("F_", StringComparison.OrdinalIgnoreCase))
         {
             return _selectedGender == CharacterGender.Female;
@@ -1710,7 +1714,7 @@ public sealed class FrmCharacterGenerator : DarkForm
         _selectedPartByCategory.Clear();
 
         PickRandomPart("Base", required: true);
-        PickRandomPart("Body", required: true);
+        PickRandomPart("Body", chance: 0.05);
         PickPresetPart("Hair", new[] { preset }, chance: 0.90);
         PickRandomPart("Feet", chance: 0.95);
 
@@ -1976,7 +1980,7 @@ public sealed class FrmCharacterGenerator : DarkForm
 
         // Character foundation.
         PickRandomPart("Base", required: true);
-        PickRandomPart("Body", required: true);
+        PickRandomPart("Body", chance: 0.05);
 
         // Identity / face.
         PickRandomPart("Hair", chance: 0.92);
@@ -2238,6 +2242,12 @@ public sealed class FrmCharacterGenerator : DarkForm
                 _partsByCategory[category] = DiscoverFamilies(directory);
             }
 
+            if (_partsByCategory.TryGetValue("Body", out var bodyParts))
+            {
+                if (!_partsByCategory.TryGetValue("Base", out var baseParts)) _partsByCategory["Base"] = baseParts = new();
+                foreach (var part in bodyParts.Where(p => !p.Name.Split('_').Contains("Ape", StringComparer.OrdinalIgnoreCase)).ToArray())
+                { if (!baseParts.Any(p => p.Name.Equals(part.Name, StringComparison.OrdinalIgnoreCase))) baseParts.Add(part); bodyParts.Remove(part); }
+            }
             ReloadCategoryList();
 
             _status.Text = $"Watching {_charagenRoot} — {_partsByCategory.Values.Sum(parts => parts.Count)} paperdoll sets detected.";
@@ -2287,7 +2297,7 @@ public sealed class FrmCharacterGenerator : DarkForm
 
     private static string GetFriendlyPartName(string partName)
     {
-        var displayName = partName;
+        var displayName = StripExplicitGender(partName);
 
         if (displayName.Length > 2 &&
             displayName[1] == '_' &&
@@ -2328,6 +2338,9 @@ public sealed class FrmCharacterGenerator : DarkForm
             }
 
             var animation = DetectAnimation(relative, category, out var cleanName, out var depth);
+            var folders = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var explicitGender = folders.FirstOrDefault(p => p.Equals("Female", StringComparison.OrdinalIgnoreCase) || p.Equals("Male", StringComparison.OrdinalIgnoreCase));
+            if (explicitGender != null) cleanName = explicitGender + "_" + cleanName;
             if (string.IsNullOrWhiteSpace(cleanName))
             {
                 cleanName = Path.GetFileNameWithoutExtension(file);
@@ -3013,52 +3026,7 @@ public sealed class FrmCharacterGenerator : DarkForm
                 _watcher.EnableRaisingEvents = false;
             }
 
-            using var archive = ZipFile.OpenRead(dialog.FileName);
-            foreach (var entry in archive.Entries)
-            {
-                if (!entry.FullName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                var pieces = entry.FullName
-                    .Replace('\\', '/')
-                    .Split('/', StringSplitOptions.RemoveEmptyEntries);
-
-                var paperdollsIndex = Array.FindIndex(
-                    pieces,
-                    piece => string.Equals(piece, "Paperdolls", StringComparison.OrdinalIgnoreCase)
-                );
-
-                if (paperdollsIndex < 0 || paperdollsIndex + 2 >= pieces.Length)
-                {
-                    continue;
-                }
-
-                var category = pieces[paperdollsIndex + 1];
-                var fileName = Path.GetFileName(pieces[^1]);
-
-                if (string.IsNullOrWhiteSpace(category) ||
-                    string.IsNullOrWhiteSpace(fileName) ||
-                    !string.Equals(category, Path.GetFileName(category), StringComparison.Ordinal))
-                {
-                    invalid++;
-                    continue;
-                }
-
-                var categoryDirectory = Path.Combine(_charagenRoot, category);
-                Directory.CreateDirectory(categoryDirectory);
-
-                var destination = Path.Combine(categoryDirectory, fileName);
-                if (File.Exists(destination))
-                {
-                    skipped++;
-                    continue;
-                }
-
-                entry.ExtractToFile(destination, overwrite: false);
-                imported++;
-            }
+            (imported, skipped, invalid) = CharacterArchiveImporter.Import(dialog.FileName, _charagenRoot, PreferredLayerOrder);
 
             ReloadAssets();
 
@@ -3103,10 +3071,6 @@ public sealed class FrmCharacterGenerator : DarkForm
             warnings.Add("No Base paperdoll is selected.");
         }
 
-        if (!_selectedPartByCategory.ContainsKey("Body"))
-        {
-            warnings.Add("No Body paperdoll is selected.");
-        }
 
         if (_selectedPartByCategory.ContainsKey("Pants") &&
             _selectedPartByCategory.ContainsKey("Skirt"))
@@ -3443,6 +3407,10 @@ public sealed class FrmCharacterGenerator : DarkForm
         }
 
         var creationStem = MakeCharacterCreationStem(category, partName);
+        var variants = ResolveExportGenders(category, family);
+        if (variants == null) return;
+        if (variants.Value.Male == null) creationStem += "_femaleonly";
+        else if (variants.Value.Female == null) creationStem += "_maleonly";
         Directory.CreateDirectory(_paperdollsRoot);
 
         var written = new List<string>();
@@ -3467,6 +3435,7 @@ public sealed class FrmCharacterGenerator : DarkForm
                 written.Add(fileName);
             }
 
+            ExportGenderVariants(variants.Value, creationStem);
             GameContentManager.ReloadPaperdollAndItemTextures();
 
             _status.Text =
@@ -3554,6 +3523,8 @@ public sealed class FrmCharacterGenerator : DarkForm
         Directory.CreateDirectory(_paperdollsRoot);
         Directory.CreateDirectory(_itemsRoot);
 
+        var variants = ResolveExportGenders(category, family);
+        if (variants == null) return;
         var writtenPaperdolls = new List<string>();
         try
         {
@@ -3596,13 +3567,10 @@ public sealed class FrmCharacterGenerator : DarkForm
 
             File.Move(itemTemporary, itemDestination, true);
 
+            ExportGenderVariants(variants.Value, paperdollName);
             GameContentManager.ReloadPaperdollAndItemTextures();
-
-            var maleCompatible =
-                !partName.StartsWith("F_", StringComparison.OrdinalIgnoreCase);
-            var femaleCompatible =
-                !partName.StartsWith("B_", StringComparison.OrdinalIgnoreCase) &&
-                !partName.StartsWith("M_", StringComparison.OrdinalIgnoreCase);
+            var maleCompatible = variants.Value.Male != null;
+            var femaleCompatible = variants.Value.Female != null;
 
             if (_createItemAfterPaperdollExport.Checked && _afterPaperdollExport != null)
             {
@@ -3612,6 +3580,8 @@ public sealed class FrmCharacterGenerator : DarkForm
                         ItemName = itemName,
                         IconFile = itemIconFile,
                         PaperdollFile = paperdollName + ".png",
+                        MalePaperdollFile = maleCompatible ? paperdollName + "_male.png" : "",
+                        FemalePaperdollFile = femaleCompatible ? paperdollName + "_female.png" : "",
                         SourceCategory = category,
                         SourcePartName = partName,
                         MaleCompatible = maleCompatible,
