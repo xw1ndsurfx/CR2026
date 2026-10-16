@@ -220,28 +220,39 @@ public partial class FrmMain : Form
         timeEditorToolStripMenuItem.Text = Strings.MainForm.timeeditor;
     }
 
+    private Intersect.Framework.Core.GameObjects.Events.Commands.MiniGameType? _requestedMiniGame;
+    private FrmRewardConfiguration? _rewardEditor;
+
+    private void RequestMiniGameEditor(Intersect.Framework.Core.GameObjects.Events.Commands.MiniGameType? game)
+    {
+        _requestedMiniGame = game;
+        if (_rewardEditor is { IsDisposed: false }) { OpenRewardConfigurationEditor(); return; }
+        PacketSender.SendRequestRewardConfiguration();
+    }
+
     private void AddRewardConfigurationEditorMenu()
     {
-        if (contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>().Any(item => item.Name == "rewardConfigurationEditorToolStripMenuItem"))
+        if (contentEditorsToolStripMenuItem.DropDownItems.Cast<ToolStripItem>().Any(item => item.Name == "rewardConfigurationEditorToolStripMenuItem")) return;
+        var daily = new ToolStripMenuItem("Daily Rewards Editor") { Name = "rewardConfigurationEditorToolStripMenuItem" };
+        daily.Click += (_, _) => RequestMiniGameEditor(null);
+        contentEditorsToolStripMenuItem.DropDownItems.Add(daily);
+        var games = new ToolStripMenuItem("Mini-Game") { Name = "miniGameEditorsToolStripMenuItem" };
+        foreach (var game in Intersect.Framework.Core.MiniGames.Configuration.MiniGameCatalog.All)
         {
-            return;
+            var entry = new ToolStripMenuItem(game.DisplayName);
+            entry.Click += (_, _) => RequestMiniGameEditor(game.Type);
+            games.DropDownItems.Add(entry);
         }
-
-        var rewardEditor = new ToolStripMenuItem
-        {
-            Name = "rewardConfigurationEditorToolStripMenuItem",
-            Text = "Daily & Level Rewards Editor",
-            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
-        };
-        rewardEditor.Click += (_, _) => PacketSender.SendRequestRewardConfiguration();
-        contentEditorsToolStripMenuItem.DropDownItems.Add(rewardEditor);
+        menuStrip.Items.Insert(menuStrip.Items.IndexOf(contentEditorsToolStripMenuItem) + 1, games);
     }
 
     public void OpenRewardConfigurationEditor()
     {
-        var editor = new FrmRewardConfiguration();
-        editor.Show();
-        editor.BringToFront();
+        if (_rewardEditor == null || _rewardEditor.IsDisposed) _rewardEditor = new FrmRewardConfiguration();
+        _rewardEditor.NavigateGame(_requestedMiniGame);
+        _rewardEditor.Show();
+        if (_rewardEditor.WindowState == FormWindowState.Minimized) _rewardEditor.WindowState = FormWindowState.Normal;
+        _rewardEditor.BringToFront();
     }
 
     private void AddLogiCoinShopEditorMenu()

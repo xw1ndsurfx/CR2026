@@ -40,7 +40,7 @@ internal static class DeathSystemTests
             Check(DeathConfiguration.AnimationDuration(animation) > 60000, "Malformed animation timing is detectable for rejection without overflowing");
             var item = new ItemDescriptor(Guid.NewGuid()) { Price = 251 }; var currency = new ItemDescriptor(Guid.NewGuid()) { Price = 10 };
             Check(ShopPriceSuggestion.Suggest(item, currency, false) == 26 && ShopPriceSuggestion.Suggest(item, currency, true) == 12, "Shop suggestions convert currency value and retain a buyback margin");
-            currency.Price = 0; Check(ShopPriceSuggestion.Suggest(item, currency, false) == null, "Unknown currency values never invent a conversion");
+            currency.Price = 0; Check(ShopPriceSuggestion.Suggest(item, currency, false) == 251 && ShopPriceSuggestion.Suggest(item, currency, true) == 125, "Unvalued currency falls back to the editable base item price");
             currency.Price = 1; item.Price = int.MaxValue;
             Check(ShopPriceSuggestion.Suggest(item, currency, false) == int.MaxValue && ShopPriceSuggestion.Suggest(item, item, true) == null, "Price overflow and self-currency are handled");
             var pendingPlayer = (Intersect.Server.Entities.Player)RuntimeHelpers.GetUninitializedObject(typeof(Intersect.Server.Entities.Player)); GC.SuppressFinalize(pendingPlayer);

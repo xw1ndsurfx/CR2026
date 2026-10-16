@@ -19,6 +19,7 @@ internal static class Program
     {
         typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, new Options());
         SoundImportTests.Run();
+        MiniGameEditorTests.Run();
         using (var translations = new Intersect.Editor.Forms.FrmTranslations())
         {
             var catalog = new Intersect.Localization.GameTextCatalog(); catalog.Entries["Hello"] = new() { ["en"] = "Hello", ["fr"] = "Bonjour", ["es"] = "Hola" };

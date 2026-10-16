@@ -28,7 +28,7 @@ internal sealed class MiniGameCommandDialog : Form
         Text = "Start " + MiniGameCatalog.Get(fixedGame ?? command.Game).DisplayName; StartPosition = FormStartPosition.CenterParent;
         FormBorderStyle = FormBorderStyle.Sizable; MaximizeBox = MinimizeBox = false;
         ShowInTaskbar = false; AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(660, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
+        ClientSize = new Size(900, Math.Min(740, Math.Max(480, (Screen.PrimaryScreen?.WorkingArea.Height ?? 900) - 140)));
         MinimumSize = new Size(580, 420);
         BackColor = DrawingColor.FromArgb(45, 45, 48); ForeColor = DrawingColor.Gainsboro;
         var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(12), ColumnCount = 2, RowCount = 81, AutoScroll = true };
@@ -622,7 +622,7 @@ internal sealed class MiniGameCommandDialog : Form
         ShowSummary();
         var cancel = new Button { Name = "Cancel", Text = "Cancel", AutoSize = true, DialogResult = DialogResult.Cancel };
         var save = new Button { Name = "Save", Text = "Save", AutoSize = true };
-        buttons.Controls.Add(cancel); buttons.Controls.Add(save); AcceptButton = save; CancelButton = cancel;
+        buttons.Controls.Add(cancel); buttons.Controls.Add(save); MiniGameEditorTheme.Apply(this); AcceptButton = save; CancelButton = cancel;
         save.Click += (_, _) =>
         {
             EnsureBlackjackReserve();
