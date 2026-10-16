@@ -34,6 +34,7 @@ internal sealed class MarketplaceWindow : Window
     private readonly MarketChrome _sellTabFrame;
     private readonly ScrollControl _listings;
     private readonly ScrollControl _sellable;
+    private readonly TextBox _search;
     private readonly TextBox _price;
     private readonly TextBox _quantity;
     private readonly TextBox _duration;
@@ -104,7 +105,11 @@ internal sealed class MarketplaceWindow : Window
             OverflowY = OverflowBehavior.Scroll,
             AutoHideBars = true,
         };
-        _listings.SetBounds(15, 54, 834, 360);
+        _search = new TextBox(_browsePanel, "MarketplaceSearch") { Text = string.Empty, Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 11 };
+        _search.SetBounds(170, 48, 670, 30);
+        AddText(_browsePanel, "MarketplaceSearchLabel", Intersect.Client.Localization.ClientLanguages.Text("Search items or sellers"), 23, 48, 143, 30, 10, Cream);
+        _search.TextChanged += (_, _) => { RenderListings(); _listings.ScrollToTop(); };
+        _listings.SetBounds(15, 86, 834, 328);
 
         _sellPanel = new Base(this, "MarketplaceSellPanel");
         _sellPanel.SetBounds(28, 238, 864, 428);
@@ -238,17 +243,23 @@ internal sealed class MarketplaceWindow : Window
         _listings.DeleteAll();
         var y = 4;
 
-        foreach (var listing in _state.Listings)
+        var query = (_search.Text ?? string.Empty).Trim();
+        var filtered = _state.Listings.Where(listing => query.Length == 0 ||
+            (ItemDescriptor.Get(listing.ItemId)?.Name ?? "").Contains(query, StringComparison.OrdinalIgnoreCase) ||
+            Intersect.Client.Localization.ClientLanguages.ContentText((ItemDescriptor.Get(listing.ItemId)?.Name ?? "")).Contains(query, StringComparison.OrdinalIgnoreCase) ||
+            listing.SellerName.Contains(query, StringComparison.OrdinalIgnoreCase)).ToArray();
+        _listingCount.Text = Intersect.Client.Localization.ClientLanguages.Format("Listings: {0} / {1}", filtered.Length, _state.Listings.Length);
+        foreach (var listing in filtered)
         {
             var row = new ListingRow(_listings, listing, _state.CurrencyName, SetStatus);
             row.SetBounds(5, y, 792, 84);
             y += 90;
         }
 
-        if (_state.Listings.Length == 0)
+        if (filtered.Length == 0)
         {
             AddText(_listings, "MarketplaceEmptyListings",
-                "NO ACTIVE LISTINGS - BE THE FIRST TO OPEN THE MARKET!",
+                Intersect.Client.Localization.ClientLanguages.Text(query.Length > 0 ? "No listings match your search." : "NO ACTIVE LISTINGS - BE THE FIRST TO OPEN THE MARKET!"),
                 27, 125, 746, 38, 12, Muted, bold: true, center: true);
             y = 340;
         }

@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 namespace Intersect.Client.Interface.Game;
 public partial class GameInterface
 {
+    private readonly Dictionary<Guid, FurnitureUseHotspot> _furnitureUseTargets = [];
     private HousingWindow? _housingWindow;
     private HousePlacementOverlay? _housePlacement;
     private Button? _houseButton, _houseExit;
@@ -39,6 +40,44 @@ public partial class GameInterface
         EnsureHousing();
         _houseExit!.IsHidden = HousingWorld.View is not { Inside: true };
         _housePlacement!.SetSize(GameCanvas.Width, GameCanvas.Height);
+        UpdateFurnitureUseTargets();
+    }
+    private void UpdateFurnitureUseTargets()
+    {
+        var view = HousingWorld.View;
+        var current = view is { Inside: true } && Globals.Me?.MapId == view.MapId && _housePlacement!.IsHidden;
+        var ids = new HashSet<Guid>();
+        if (current && Globals.Me?.MapInstance is { } map)
+        {
+            var tw = Options.Instance.Map.TileWidth; var th = Options.Instance.Map.TileHeight;
+            var zoom = Globals.Database.WorldZoom;
+            foreach (var place in view!.House.Placements)
+            {
+                if (!view.House.Furniture.TryGetValue(place.FurnitureId, out var owned) || owned.Definition.CommonEventId == Guid.Empty) continue;
+                ids.Add(place.Id);
+                if (!_furnitureUseTargets.TryGetValue(place.Id, out var target))
+                {
+                    target = new FurnitureUseHotspot(GameCanvas, view.OwnerId, place.Id);
+                    target.SendToBack(); _furnitureUseTargets.Add(place.Id, target);
+                }
+                var width = owned.Definition.Width * tw; var height = owned.Definition.Height * th;
+                var cx = map.X + (place.X + .5f) * tw; var cy = map.Y + (place.Y + 1) * th - height / 2f;
+                if (place.Rotation % 2 != 0) (width, height) = (height, width);
+                target.SetBounds((int)((cx - width / 2f - Graphics.CurrentView.Left) * zoom),
+                    (int)((cy - height / 2f - Graphics.CurrentView.Top) * zoom), Math.Max(1, (int)(width * zoom)), Math.Max(1, (int)(height * zoom)));
+                target.SetToolTipText(ClientLanguages.Format("Use {0}", ClientLanguages.ContentText(owned.Definition.Name)));
+            }
+        }
+        foreach (var id in _furnitureUseTargets.Keys.Where(id => !ids.Contains(id)).ToArray())
+        { GameCanvas.RemoveChild(_furnitureUseTargets[id], dispose: true); _furnitureUseTargets.Remove(id); }
+    }
+    private sealed class FurnitureUseHotspot(Base parent, Guid owner, Guid placement) : Base(parent)
+    {
+        protected override void OnMouseClicked(MouseButton button, Point position, bool userAction = true)
+        {
+            if (userAction && button == MouseButton.Left && Globals.Me is { IsBusy: false })
+                PacketSender.SendHouseAction(HouseAction.Interact, owner, placement: placement);
+        }
     }
     private sealed class HousePlacementOverlay : Base
     {

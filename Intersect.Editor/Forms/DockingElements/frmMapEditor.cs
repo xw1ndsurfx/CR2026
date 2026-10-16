@@ -204,6 +204,7 @@ public partial class FrmMapEditor : DockContent
     private void picMap_MouseDown(object sender, MouseEventArgs e)
     {
         if (BeginMapPan(e)) return;
+        Globals.MapLayersWindow.BeginResourceStroke();
         e = LogicalMapMouse(e);
         if (!Globals.MapEditorWindow.DockPanel.Focused)
         {
@@ -347,7 +348,7 @@ public partial class FrmMapEditor : DockContent
                 {
                     if (Globals.CurrentLayer == LayerOptions.Attributes) //Attributes
                     {
-                        Globals.MapLayersWindow.PlaceAttribute(
+                        Globals.MapLayersWindow.PaintAttribute(
                             Globals.CurrentMap, Globals.CurTileX, Globals.CurTileY
                         );
 
@@ -646,7 +647,7 @@ public partial class FrmMapEditor : DockContent
                 {
                     if (Globals.CurrentLayer == LayerOptions.Attributes)
                     {
-                        Globals.MapLayersWindow.PlaceAttribute(tmpMap, Globals.CurTileX, Globals.CurTileY);
+                        Globals.MapLayersWindow.PaintAttribute(tmpMap, Globals.CurTileX, Globals.CurTileY);
                     }
                     else if (Globals.CurrentLayer == LayerOptions.Lights)
                     {
@@ -1304,7 +1305,7 @@ public partial class FrmMapEditor : DockContent
 
                     if (Globals.CurrentLayer == LayerOptions.Attributes)
                     {
-                        Globals.MapLayersWindow.PlaceAttribute(
+                        Globals.MapLayersWindow.PaintAttribute(
                             Globals.CurrentMap, Globals.CurTileX, Globals.CurTileY
                         );
                     }

@@ -10,6 +10,8 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands;
 public partial class EventGraphicSelector : UserControl
 {
 
+    public event Action<bool>? SelectionClosed;
+    private readonly bool _tilesetOnly;
     private EventGraphic mEditingGraphic;
 
     private FrmEvent mEventEditor;
@@ -32,15 +34,18 @@ public partial class EventGraphicSelector : UserControl
         EventGraphic editingGraphic,
         FrmEvent eventEditor,
         EventMoveRouteDesigner moveRouteDesigner = null,
-        bool newMoveRouteAction = false
+        bool newMoveRouteAction = false,
+        bool tilesetOnly = false
     )
     {
+        _tilesetOnly = tilesetOnly;
         InitializeComponent();
         InitLocalization();
         mEditingGraphic = editingGraphic;
         mEventEditor = eventEditor;
         mLoading = true;
-        cmbGraphicType.SelectedIndex = (int)mEditingGraphic.Type;
+        cmbGraphicType.SelectedIndex = _tilesetOnly ? 2 : (int)mEditingGraphic.Type;
+        cmbGraphicType.Enabled = !_tilesetOnly;
         UpdateGraphicList();
         if (cmbGraphic.Items.Contains(mEditingGraphic.Filename))
         {
@@ -366,7 +371,8 @@ public partial class EventGraphicSelector : UserControl
     private void btnOk_Click(object sender, EventArgs e)
     {
         mEditingGraphic.CopyFrom(mTmpGraphic);
-        mEventEditor.CloseGraphicSelector(this);
+        if (mEventEditor != null) mEventEditor.CloseGraphicSelector(this);
+        else SelectionClosed?.Invoke(true);
     }
 
     private void btnCancel_Click(object sender, EventArgs e)
@@ -376,7 +382,8 @@ public partial class EventGraphicSelector : UserControl
             mRouteDesigner.RemoveLastAction();
         }
 
-        mEventEditor.CloseGraphicSelector(this);
+        if (mEventEditor != null) mEventEditor.CloseGraphicSelector(this);
+        else SelectionClosed?.Invoke(false);
     }
 
 }

@@ -7,5 +7,5 @@ namespace Intersect.Editor.Networking;
 internal sealed partial class PacketHandler
 {
     public void HandlePacket(IPacketSender sender, WorldActivitiesPacket packet)
-    { if (packet.OpenEditor) Globals.MainForm.BeginInvoke((Action)(() => new FrmWorldActivities(packet.Json).Show(Globals.MainForm))); }
+    { if (packet.OpenEditor) Globals.MainForm.BeginInvoke((Action)(() => new FrmWorldActivities(packet.Json, packet.Section).Show(Globals.MainForm))); }
 }

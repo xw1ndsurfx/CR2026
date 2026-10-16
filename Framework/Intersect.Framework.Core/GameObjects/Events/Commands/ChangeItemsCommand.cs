@@ -1,4 +1,4 @@
-﻿using Intersect.Enums;
+using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
 
 namespace Intersect.Framework.Core.GameObjects.Events.Commands;
@@ -59,7 +59,7 @@ public partial class ChangeItemsCommand : EventCommand
     {
         foreach (var branch in BranchIds)
         {
-            if (branch != Guid.Empty && commandLists.ContainsKey(branch))
+            if (branch != Guid.Empty && commandLists.ContainsKey(branch) && !copyLists.ContainsKey(branch))
             {
                 copyLists.Add(branch, commandLists[branch]);
                 foreach (var cmd in commandLists[branch])

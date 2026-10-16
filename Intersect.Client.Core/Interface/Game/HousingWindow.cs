@@ -81,6 +81,8 @@ internal sealed class HousingWindow : Window
             foreach (var placed in _view.House.Placements)
             {
                 if (!_view.House.Furniture.TryGetValue(placed.FurnitureId, out var owned)) continue;
+                if (_view.Inside && owned.Definition.CommonEventId != Guid.Empty)
+                    Row(ClientLanguages.ContentText(owned.Definition.Name), owned.Definition, "Use", () => PacketSender.SendHouseAction(HouseAction.Interact, _view.OwnerId, placement: placed.Id));
                 Row(ClientLanguages.ContentText(owned.Definition.Name) + $" ({placed.X}, {placed.Y})", owned.Definition, "Move", _view.IsOwner && _view.Inside ? () => { PlaceRequested?.Invoke(placed.FurnitureId, placed.Id); Hide(); } : null,
                     "Store", _view.IsOwner ? () => PacketSender.SendHouseAction(HouseAction.Remove, _view.OwnerId, placement: placed.Id) : null);
             }

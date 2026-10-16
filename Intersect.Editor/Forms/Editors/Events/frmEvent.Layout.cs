@@ -11,6 +11,7 @@ public partial class FrmEvent
     private readonly NumericUpDown _animationX = new() { Minimum = -2048, Maximum = 2048, Width = 100 };
     private readonly NumericUpDown _animationY = new() { Minimum = -2048, Maximum = 2048, Width = 100 };
     private readonly DarkComboBox _animationLayer = new() { Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
+    private readonly DarkCheckBox _chatEmote = new() { Text = "Allow this event in the chat emote menu", AutoSize = true };
     private bool _loadingOffsets;
     private FormBorderStyle _normalBorder;
     private FormWindowState _normalWindowState;
@@ -56,6 +57,12 @@ public partial class FrmEvent
         {
             group.Margin = new Padding(4); group.Width = 380; properties.Controls.Add(group);
         }
+        var emoteGroup = new DarkGroupBox { Name = "ChatEmoteOptions", Text = "Chat emote", Width = 380, Height = 100 };
+        _chatEmote.SetBounds(12, 25, 350, 24);
+        _chatEmote.CheckedChanged += (_, _) => { if (!_loadingOffsets && MyEvent is { CommonEvent: true } && MyEvent.Pages.Count > 0) MyEvent.Pages[0].ShowInChatEmoteMenu = _chatEmote.Checked; };
+        emoteGroup.Controls.Add(_chatEmote);
+        emoteGroup.Controls.Add(new Label { Text = "Common events only. Selection runs this event with its usual page conditions.", Location = new System.Drawing.Point(12, 52), Size = new Size(350, 40) });
+        properties.Controls.Add(emoteGroup);
         var animationLayerGroup = new DarkGroupBox { Text = "Animation layer", Width = 380, Height = 80 };
         _animationLayer.SetBounds(12, 30, 340, 24);
         _animationLayer.Items.AddRange(["Over Character (above all decor)", "Same as Character", "Behind Character"]);
@@ -142,6 +149,8 @@ public partial class FrmEvent
     private void LoadWorldMapOffsets()
     {
         _loadingOffsets = true;
+        _chatEmote.Parent.Visible = MyEvent?.CommonEvent == true;
+        _chatEmote.Checked = MyEvent?.IsChatEmote == true;
         _animationLayer.SelectedIndex = Enum.IsDefined(CurrentPage.AnimationRenderLayer) ? (int)CurrentPage.AnimationRenderLayer : 0;
         _animationX.Value = Math.Clamp(CurrentPage.AnimationOffsetX, -2048, 2048);
         _animationY.Value = Math.Clamp(CurrentPage.AnimationOffsetY, -2048, 2048);

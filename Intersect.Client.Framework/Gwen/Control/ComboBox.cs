@@ -651,10 +651,10 @@ public partial class ComboBox : Button
     public void ClearItems()
     {
         mSelectedItem = null;
-        var items = Children.OfType<MenuItem>().ToArray();
+        var items = _menu.Children.OfType<MenuItem>().ToArray();
         foreach (var item in items)
         {
-            RemoveChild(item, dispose: true);
+            _menu.RemoveChild(item, dispose: true);
         }
     }
 }

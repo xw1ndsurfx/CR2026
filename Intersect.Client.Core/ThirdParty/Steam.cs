@@ -43,8 +43,10 @@ public static partial class Steam
 
         try
         {
-            var initializing = SteamAPI_InitSafe();
-            initializing &= CSteamAPIContext_Init();
+            // Standalone distributions may not contain the optional native Steam library.
+            if (SteamAPI_InitSafe is null || !SteamAPI_InitSafe()) return;
+            var initializing = CSteamAPIContext_Init();
+            if (!initializing) return;
             if (initializing)
             {
                 CallbackDispatcher_Initialize();

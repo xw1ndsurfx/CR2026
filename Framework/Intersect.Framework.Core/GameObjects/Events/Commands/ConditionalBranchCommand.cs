@@ -1,4 +1,4 @@
-﻿using Intersect.Framework.Core.GameObjects.Conditions;
+using Intersect.Framework.Core.GameObjects.Conditions;
 
 namespace Intersect.Framework.Core.GameObjects.Events.Commands;
 
@@ -32,7 +32,7 @@ public partial class ConditionalBranchCommand : EventCommand
     {
         foreach (var branch in BranchIds)
         {
-            if (branch != Guid.Empty && commandLists.ContainsKey(branch))
+            if (branch != Guid.Empty && commandLists.ContainsKey(branch) && !copyLists.ContainsKey(branch))
             {
                 copyLists.Add(branch, commandLists[branch]);
                 foreach (var cmd in commandLists[branch])

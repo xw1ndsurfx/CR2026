@@ -1963,6 +1963,7 @@ public partial class FrmEvent : Form
                 mCopyData,
                 new JsonSerializerSettings()
                 {
+                    SerializationBinder = new Intersect.Framework.Core.Serialization.IntersectTypeSerializationBinder(),
                     Formatting = Formatting.None,
                     TypeNameHandling = TypeNameHandling.Auto,
                     DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate,
@@ -1974,6 +1975,7 @@ public partial class FrmEvent : Form
                 mCopyLists,
                 new JsonSerializerSettings()
                 {
+                    SerializationBinder = new Intersect.Framework.Core.Serialization.IntersectTypeSerializationBinder(),
                     Formatting = Formatting.None,
                     TypeNameHandling = TypeNameHandling.Auto,
                     DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate,

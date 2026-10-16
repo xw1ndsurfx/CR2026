@@ -1,4 +1,5 @@
 using Intersect.Enums;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Maps;
 using System.Collections.Concurrent;
 using Intersect.Framework.Core.Housing;
@@ -14,6 +15,7 @@ using Newtonsoft.Json;
 namespace Intersect.Server.Housing;
 internal static class HousingRuntime
 {
+    private static readonly ConcurrentDictionary<Guid, long> LastUse = new();
     private static readonly object Gate = new();
     private static readonly string FileName = Path.Combine("resources", "housing.json");
     private static HousingConfiguration? _config;
@@ -46,6 +48,7 @@ internal static class HousingRuntime
         var config = JsonConvert.DeserializeObject<HousingConfiguration>(json);
         if (config is not { IsValid: true } || config.Enabled && (MapController.Get(config.TemplateMapId) == null ||
             config.EntryX >= Options.Instance.Map.MapWidth || config.EntryY >= Options.Instance.Map.MapHeight) ||
+            config.Catalog.Any(f => f.CommonEventId != Guid.Empty && EventDescriptor.Get(f.CommonEventId) is not { CommonEvent: true }) ||
             config.Catalog.Any(f => ItemDescriptor.Get(f.CurrencyItemId) is not { } currency || (!currency.Stackable && currency.ItemType != ItemType.Currency)))
             throw new InvalidDataException("Choose an existing map, valid coordinates and stackable catalog currencies.");
         lock (Gate)
@@ -56,6 +59,7 @@ internal static class HousingRuntime
         }
         foreach (var visit in Visits.Values)
             if (!config.Enabled || visit.Map != config.TemplateMapId) Evictions[visit.Player.Id] = 1;
+            else Send(visit.Player, visit.Owner, false);
         Intersect.Server.Localization.ContentTranslationRuntime.QueueJson(json);
     }
     internal static void Handle(Player player, HouseActionPacket request)
@@ -69,6 +73,7 @@ internal static class HousingRuntime
                 if (request.Action == HouseAction.Leave) { Leave(player); return; }
                 if (!Configuration.Enabled) { Send(player, player.Id, true, "Housing is not available yet."); return; }
                 if (request.Action == HouseAction.Visit) { Enter(player, request.OwnerId == Guid.Empty ? player.Id : request.OwnerId); return; }
+                if (request.Action == HouseAction.Interact) { Interact(player, request); return; }
                 if (request.OwnerId != Guid.Empty && request.OwnerId != player.Id) throw new InvalidOperationException("Only the owner can decorate this house.");
                 var before = player.HousingJson; var beforePets = player.PetsJson;
                 var inventory = player.Items.Select(slot => slot.Clone()).ToArray();
@@ -187,6 +192,7 @@ internal static class HousingRuntime
     internal static void Disconnect(Player player)
     {
         Visits.TryRemove(player.Id, out _);
+        LastUse.TryRemove(player.Id, out _);
         Evictions.TryRemove(player.Id, out _);
         // Keep the persisted return location for the next login.
     }
@@ -196,13 +202,37 @@ internal static class HousingRuntime
         Snapshots[owner.Id] = new(owner.HousingJson, owner.House.Public);
         foreach (var visit in Visits.Values.Where(v => v.Owner == owner.Id).ToArray()) Send(visit.Player, owner.Id, false);
     }
+    private static void Interact(Player player, HouseActionPacket request)
+    {
+        if (!Visits.TryGetValue(player.Id, out var visit) || player.MapId != visit.Map || player.MapInstanceId != visit.Instance ||
+            request.OwnerId != visit.Owner || LastUse.GetValueOrDefault(player.Id) > Environment.TickCount64) return;
+        var owner = Player.FindOnline(visit.Owner) ?? Player.Find(visit.Owner);
+        if (owner == null) return;
+        var snapshot = Snapshots.GetOrAdd(owner.Id, _ => new(owner.HousingJson, owner.House.Public));
+        if (owner.Id != player.Id && !snapshot.Public) return;
+        var house = HouseProfile.Read(owner.Id == player.Id ? player.HousingJson : snapshot.Json);
+        ApplyInteractionLinks(house);
+        var placed = house.Placements.FirstOrDefault(p => p.Id == request.PlacementId);
+        if (placed == null || !house.Furniture.TryGetValue(placed.FurnitureId, out var owned) ||
+            EventDescriptor.Get(owned.Definition.CommonEventId) is not { CommonEvent: true } common) return;
+        if (Math.Abs(player.X - placed.X) > 2 || Math.Abs(player.Y - placed.Y) > 2)
+            throw new InvalidOperationException("Move closer to this furniture to use it.");
+        LastUse[player.Id] = Environment.TickCount64 + 1500;
+        player.TryRunMenuEvent(common);
+    }
+    private static void ApplyInteractionLinks(HouseProfile house)
+    {
+        var definitions = Configuration.Catalog.ToDictionary(f => f.Id);
+        foreach (var (id, owned) in house.Furniture)
+            if (definitions.TryGetValue(id, out var definition)) owned.Definition.CommonEventId = definition.CommonEventId;
+    }
     private static void Send(Player requester, Guid ownerId, bool open, string message = "")
     {
         if (ownerId == Guid.Empty) ownerId = Visits.TryGetValue(requester.Id, out var visiting) ? visiting.Owner : requester.Id;
         var owner = ownerId == requester.Id ? requester : Player.FindOnline(ownerId) ?? Player.Find(ownerId);
         if (owner == null || ownerId != requester.Id && !Snapshots.GetOrAdd(ownerId, _ => new(owner.HousingJson, owner.House.Public)).Public) { requester.SendPacket(new HouseStatePacket { Message = "This house is private.", OpenWindow = true }); return; }
         var inside = Visits.TryGetValue(requester.Id, out var visit) && visit.Owner == ownerId;
-        var profile = HouseProfile.Read(ownerId == requester.Id ? owner.HousingJson : Snapshots.GetOrAdd(ownerId, _ => new(owner.HousingJson, owner.House.Public)).Json); profile.ReturnLocation = null;
+        var profile = HouseProfile.Read(ownerId == requester.Id ? owner.HousingJson : Snapshots.GetOrAdd(ownerId, _ => new(owner.HousingJson, owner.House.Public)).Json); profile.ReturnLocation = null; ApplyInteractionLinks(profile);
         if (ownerId != requester.Id)
             profile.Furniture = profile.Furniture.Where(kv => profile.Placements.Any(p => p.FurnitureId == kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
         var view = new HouseView
@@ -217,7 +247,7 @@ internal static class HousingRuntime
             {
                 var house = HouseProfile.Read(Snapshots.GetOrAdd(host.Id, _ => new(host.HousingJson, host.House.Public)).Json); house.ReturnLocation = null;
                 if (host.Id == requester.Id) house = HouseProfile.Read(requester.HousingJson);
-                house.ReturnLocation = null;
+                house.ReturnLocation = null; ApplyInteractionLinks(house);
                 house.Furniture = house.Furniture.Where(kv => house.Placements.Any(p => p.FurnitureId == kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
                 world = JsonConvert.SerializeObject(new HouseView { OwnerId = host.Id, OwnerName = host.Name, Inside = true, IsOwner = host.Id == requester.Id, Enabled = true, MapId = current.Map, House = house });
             }
