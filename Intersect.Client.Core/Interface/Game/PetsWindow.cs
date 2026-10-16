@@ -217,8 +217,9 @@ internal sealed class PetsWindow : Window
                 summon.Clicked += (_, _) => Networking.PacketSender.SendPetAction(
                     pet.IsActive ? PetActionKind.Dismiss : PetActionKind.Summon, pet.PetId);
     
-                var home = new Button(card, "PetHome" + pet.PetId) { Text = Intersect.Client.Localization.ClientLanguages.Text(pet.Housed ? "Collect pet" : "Send pet home"), FontSize = 10 };
+                var home = new Button(card, "PetHome" + pet.PetId) { Text = Intersect.Client.Localization.ClientLanguages.Text(pet.Housed ? "Collect pet" : "Send pet home"), Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont, FontSize = 10 };
                 home.SetBounds(18, 376, 608, 28);
+                StyleButton(home, "PetHomeStyle" + pet.PetId, Intersect.Client.Localization.ClientLanguages.Text(pet.Housed ? "Collect pet" : "Send pet home"), 608, 28, !pet.Housed);
                 home.Clicked += (_, _) => Networking.PacketSender.SendHouseAction(pet.Housed ? Intersect.Network.Packets.Housing.HouseAction.CollectPet : Intersect.Network.Packets.Housing.HouseAction.StorePet, id: pet.PetId);
                 var loot = new Button(card, "PetLoot" + pet.PetId)
                 {

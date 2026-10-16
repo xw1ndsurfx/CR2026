@@ -4398,7 +4398,7 @@
     "HP: {0:N0} / {1:N0}": {
       "en": "HP: {0:N0} / {1:N0}",
       "fr": "PV : {0:N0} / {1:N0}",
-      "es": "PS: {0:N0} / {1:N0}"
+      "es": "PV: {0:N0} / {1:N0}"
     },
     "Invite Guild Member": {
       "en": "Invite Guild Member",
@@ -5029,6 +5029,251 @@
       "en": "Move closer to this furniture to use it.",
       "fr": "Approchez-vous de ce meuble pour l’utiliser.",
       "es": "Acércate a este mueble para usarlo."
+    },
+    "CATEGORIES": {
+      "en": "CATEGORIES",
+      "fr": "CATÉGORIES",
+      "es": "CATEGORÍAS"
+    },
+    "QUESTS": {
+      "en": "QUESTS",
+      "fr": "QUÊTES",
+      "es": "MISIONES"
+    },
+    "QUEST DETAILS": {
+      "en": "QUEST DETAILS",
+      "fr": "DÉTAILS DE LA QUÊTE",
+      "es": "DETALLES DE LA MISIÓN"
+    },
+    "Search quests...": {
+      "en": "Search quests...",
+      "fr": "Rechercher une quête...",
+      "es": "Buscar misiones..."
+    },
+    "All statuses": {
+      "en": "All statuses",
+      "fr": "Tous les statuts",
+      "es": "Todos los estados"
+    },
+    "All categories": {
+      "en": "All categories",
+      "fr": "Toutes les catégories",
+      "es": "Todas las categorías"
+    },
+    "Repeatable": {
+      "en": "Repeatable",
+      "fr": "Répétable",
+      "es": "Repetible"
+    },
+    "General": {
+      "en": "General",
+      "fr": "Général",
+      "es": "General"
+    },
+    "Reset filters": {
+      "en": "Reset filters",
+      "fr": "Réinitialiser",
+      "es": "Restablecer filtros"
+    },
+    "Back to quests": {
+      "en": "Back to quests",
+      "fr": "Retour aux quêtes",
+      "es": "Volver a misiones"
+    },
+    "No quests match your filters.": {
+      "en": "No quests match your filters.",
+      "fr": "Aucune quête ne correspond aux filtres.",
+      "es": "Ninguna misión coincide con los filtros."
+    },
+    "Select a quest to view its story and requirements.": {
+      "en": "Select a quest to view its story and requirements.",
+      "fr": "Sélectionnez une quête pour lire son histoire et ses conditions.",
+      "es": "Selecciona una misión para ver su historia y requisitos."
+    },
+    "PREREQUISITES": {
+      "en": "PREREQUISITES",
+      "fr": "CONDITIONS REQUISES",
+      "es": "REQUISITOS"
+    },
+    "{0} quests": {
+      "en": "{0} quests",
+      "fr": "{0} quêtes",
+      "es": "{0} misiones"
+    },
+    "Quests: {0} / {1}": {
+      "en": "Quests: {0} / {1}",
+      "fr": "Quêtes : {0} / {1}",
+      "es": "Misiones: {0} / {1}"
+    },
+    "WORLD BOSS - {0}": {
+      "en": "WORLD BOSS - {0}",
+      "fr": "BOSS MONDIAL - {0}",
+      "es": "JEFE MUNDIAL - {0}"
+    },
+    "{0} (+{1} active)": {
+      "en": "{0} (+{1} active)",
+      "fr": "{0} (+{1} actifs)",
+      "es": "{0} (+{1} activos)"
+    },
+    "{0} ({1}, {2}) | {3} participants": {
+      "en": "{0} ({1}, {2}) | {3} participants",
+      "fr": "{0} ({1}, {2}) | {3} participants",
+      "es": "{0} ({1}, {2}) | {3} participantes"
+    },
+    "TOP DAMAGE | YOUR RANK: #{0} ({1:N0})": {
+      "en": "TOP DAMAGE | YOUR RANK: #{0} ({1:N0})",
+      "fr": "MEILLEURS DÉGÂTS | VOTRE RANG : #{0} ({1:N0})",
+      "es": "MAYOR DAÑO | TU PUESTO: #{0} ({1:N0})"
+    },
+    "TOP DAMAGE | No contribution yet": {
+      "en": "TOP DAMAGE | No contribution yet",
+      "fr": "MEILLEURS DÉGÂTS | Aucune contribution",
+      "es": "MAYOR DAÑO | Aún sin contribución"
+    },
+    "DESPAWNS IN {0:00}:{1:00}": {
+      "en": "DESPAWNS IN {0:00}:{1:00}",
+      "fr": "DISPARITION DANS {0:00}:{1:00}",
+      "es": "DESAPARECE EN {0:00}:{1:00}"
+    },
+    "TIME EXPIRED": {
+      "en": "TIME EXPIRED",
+      "fr": "TEMPS ÉCOULÉ",
+      "es": "TIEMPO AGOTADO"
+    },
+    "ISLAND DEFENDED!": {
+      "en": "ISLAND DEFENDED!",
+      "fr": "ÎLE DÉFENDUE !",
+      "es": "¡ISLA DEFENDIDA!"
+    },
+    "INVASION LOST": {
+      "en": "INVASION LOST",
+      "fr": "INVASION PERDUE",
+      "es": "INVASIÓN PERDIDA"
+    },
+    "WORLD BOSS DEFEATED!": {
+      "en": "WORLD BOSS DEFEATED!",
+      "fr": "BOSS MONDIAL VAINCU !",
+      "es": "¡JEFE MUNDIAL DERROTADO!"
+    },
+    "WORLD BOSS ESCAPED": {
+      "en": "WORLD BOSS ESCAPED",
+      "fr": "LE BOSS MONDIAL A FUI",
+      "es": "EL JEFE MUNDIAL ESCAPÓ"
+    },
+    "Waves: {0}/{1}": {
+      "en": "Waves: {0}/{1}",
+      "fr": "Vagues : {0}/{1}",
+      "es": "Oleadas: {0}/{1}"
+    },
+    "Objective HP remaining: {0:N0}": {
+      "en": "Objective HP remaining: {0:N0}",
+      "fr": "PV restants de l’objectif : {0:N0}",
+      "es": "PV restantes del objetivo: {0:N0}"
+    },
+    "Defenders: {0:N0}": {
+      "en": "Defenders: {0:N0}",
+      "fr": "Défenseurs : {0:N0}",
+      "es": "Defensores: {0:N0}"
+    },
+    "Damage: {0:N0}": {
+      "en": "Damage: {0:N0}",
+      "fr": "Dégâts : {0:N0}",
+      "es": "Daño: {0:N0}"
+    },
+    "Effective healing: {0:N0}": {
+      "en": "Effective healing: {0:N0}",
+      "fr": "Soins effectifs : {0:N0}",
+      "es": "Curación efectiva: {0:N0}"
+    },
+    "Your contribution: {0}%": {
+      "en": "Your contribution: {0}%",
+      "fr": "Votre contribution : {0}%",
+      "es": "Tu contribución: {0}%"
+    },
+    "Effort reward: {0}% of base EXP": {
+      "en": "Effort reward: {0}% of base EXP",
+      "fr": "Récompense d’effort : {0}% de l’EXP de base",
+      "es": "Recompensa por esfuerzo: {0}% de la EXP base"
+    },
+    "Effort recorded - no victory EXP": {
+      "en": "Effort recorded - no victory EXP",
+      "fr": "Effort enregistré - aucune EXP de victoire",
+      "es": "Esfuerzo registrado - sin EXP de victoria"
+    },
+    "+{0:N0} EXP": {
+      "en": "+{0:N0} EXP",
+      "fr": "+{0:N0} EXP",
+      "es": "+{0:N0} EXP"
+    },
+    "No EXP reward": {
+      "en": "No EXP reward",
+      "fr": "Aucune récompense d’EXP",
+      "es": "Sin recompensa de EXP"
+    },
+    "NO EXP REWARD": {
+      "en": "NO EXP REWARD",
+      "fr": "AUCUNE RÉCOMPENSE D’EXP",
+      "es": "SIN RECOMPENSA DE EXP"
+    },
+    "Damage dealt: {0:N0} ({1}%)": {
+      "en": "Damage dealt: {0:N0} ({1}%)",
+      "fr": "Dégâts infligés : {0:N0} ({1}%)",
+      "es": "Daño infligido: {0:N0} ({1}%)"
+    },
+    "Your rank: #{0} / {1}": {
+      "en": "Your rank: #{0} / {1}",
+      "fr": "Votre rang : #{0} / {1}",
+      "es": "Tu puesto: #{0} / {1}"
+    },
+    "Reward: {0}% of base EXP": {
+      "en": "Reward: {0}% of base EXP",
+      "fr": "Récompense : {0}% de l’EXP de base",
+      "es": "Recompensa: {0}% de la EXP base"
+    },
+    "No participation EXP earned": {
+      "en": "No participation EXP earned",
+      "fr": "Aucune EXP de participation obtenue",
+      "es": "No se obtuvo EXP de participación"
+    },
+    "BOSS INVASION - {0}": {
+      "en": "BOSS INVASION - {0}",
+      "fr": "INVASION DE BOSS - {0}",
+      "es": "INVASIÓN DE JEFE - {0}"
+    },
+    "INVASION - {0}": {
+      "en": "INVASION - {0}",
+      "fr": "INVASION - {0}",
+      "es": "INVASIÓN - {0}"
+    },
+    "Preparing - {0} wave(s)": {
+      "en": "Preparing - {0} wave(s)",
+      "fr": "Préparation - {0} vague(s)",
+      "es": "Preparando - {0} oleada(s)"
+    },
+    "Wave {0}/{1}": {
+      "en": "Wave {0}/{1}",
+      "fr": "Vague {0}/{1}",
+      "es": "Oleada {0}/{1}"
+    },
+    "The house map has no usable tiles.": {
+      "en": "The house map has no usable tiles.",
+      "fr": "La maison ne contient aucune case utilisable.",
+      "es": "La casa no tiene casillas utilizables."
+    },
+    "There is no free tile for this pet in the house.": {
+      "en": "There is no free tile for this pet in the house.",
+      "fr": "Il n’y a pas de place libre pour cet animal dans la maison.",
+      "es": "No hay una casilla libre para esta mascota en la casa."
+    },
+    "Invasion Result": {
+      "en": "Invasion Result",
+      "fr": "Bilan de l’invasion",
+      "es": "Resultado de la invasión"
+    },
+    "World Boss Results": {
+      "en": "World Boss Results",
+      "fr": "Bilan du boss mondial",
+      "es": "Resultados del jefe mundial"
     }
   }
 }

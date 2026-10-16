@@ -9,7 +9,7 @@ internal sealed class HudDisclosure
     private readonly Base _title;
     private readonly Button _toggle;
     private readonly string _preference;
-    private readonly int _expandedHeight;
+    private int _expandedHeight;
     private readonly Dictionary<Base, bool> _visibility = [];
     internal bool Collapsed { get; private set; }
 
@@ -21,6 +21,13 @@ internal sealed class HudDisclosure
         _toggle.Clicked += (_, _) => SetCollapsed(!Collapsed);
         title.Width = Math.Min(title.Width, panel.Width - title.X - 34);
         SetCollapsed(Globals.Database?.LoadPreference(preference, false) ?? false);
+    }
+
+    internal void Resize(int expandedHeight)
+    {
+        _expandedHeight = expandedHeight;
+        _toggle.SetBounds(_panel.Width - 29, 5, 24, 24);
+        _panel.Height = Collapsed ? 36 : expandedHeight;
     }
 
     private void SetCollapsed(bool collapsed)

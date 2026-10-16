@@ -133,7 +133,7 @@ internal static class QuestShopRuntime
                     status,
                     canStart,
                     QuestShopRequirementFormatter.Build(player, quest)
-                );
+                ) { Category = quest.Folder ?? string.Empty, Repeatable = quest.Repeatable };
             })
             .ToArray();
 

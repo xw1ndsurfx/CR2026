@@ -108,8 +108,8 @@ internal static class HousingRuntime
                             var pet = house.Pets.FirstOrDefault(p => p.Id == request.Id);
                             if (pet == null && house.Pets.Count >= Configuration.MaximumPets) throw new InvalidOperationException("This house has no room for another pet.");
                             var inside = Visits.TryGetValue(player.Id, out var visit) && visit.Owner == player.Id;
-                            var px = inside ? request.X : Configuration.EntryX; var py = inside ? request.Y : Configuration.EntryY;
-                            ValidateTile(px, py);
+                            var tile = FindPetTile(house, request.Id, inside ? player.X : Configuration.EntryX, inside ? player.Y : Configuration.EntryY);
+                            var px = tile.X; var py = tile.Y;
                             pet ??= new() { Id = request.Id };
                             pet.Name = player.GetPetDisplayName(descriptor); pet.Sprite = descriptor.Sprite ?? ""; pet.X = px; pet.Y = py;
                             if (!house.Pets.Contains(pet)) house.Pets.Add(pet);
@@ -220,8 +220,30 @@ internal static class HousingRuntime
         LastUse[player.Id] = Environment.TickCount64 + 1500;
         player.TryRunMenuEvent(common);
     }
+    private static (int X, int Y) FindPetTile(HouseProfile house, Guid petId, int x, int y)
+    {
+        var map = MapController.Get(Configuration.TemplateMapId);
+        var occupied = house.Pets.Where(p => p.Id != petId).Select(p => (p.X, p.Y))
+            .Concat(house.Placements.Select(p => (p.X, p.Y))).Append((x, y)).ToHashSet();
+        return HousePetPlacement.Find(x, y, Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight,
+            (px, py) => !occupied.Contains((px, py)) && (map?.Attributes[px, py] == null || map.Attributes[px, py].Type == MapAttributeType.Walkable));
+    }
     private static void ApplyInteractionLinks(HouseProfile house)
     {
+        var petPositions = new HashSet<(int, int)>();
+        foreach (var pet in house.Pets)
+        {
+            if (NPCDescriptor.Get(pet.Id) is { IsPet: true } descriptor && !string.IsNullOrWhiteSpace(descriptor.Sprite)) pet.Sprite = descriptor.Sprite;
+            var map = MapController.Get(Configuration.TemplateMapId);
+            var invalid = pet.X < 0 || pet.Y < 0 || pet.X >= Options.Instance.Map.MapWidth || pet.Y >= Options.Instance.Map.MapHeight;
+            var legacyCorner = pet.X == 0 && pet.Y == 0 && (Configuration.EntryX != 0 || Configuration.EntryY != 0);
+            if (invalid || legacyCorner || petPositions.Contains((pet.X, pet.Y)) || map?.Attributes[pet.X, pet.Y] is { Type: MapAttributeType.Blocked })
+            {
+                try { var tile = FindPetTile(house, pet.Id, Configuration.EntryX, Configuration.EntryY); pet.X = tile.X; pet.Y = tile.Y; }
+                catch (InvalidOperationException) { } // Preserve the saved position if the interior is completely occupied.
+            }
+            petPositions.Add((pet.X, pet.Y));
+        }
         var definitions = Configuration.Catalog.ToDictionary(f => f.Id);
         foreach (var (id, owned) in house.Furniture)
             if (definitions.TryGetValue(id, out var definition)) owned.Definition.CommonEventId = definition.CommonEventId;
