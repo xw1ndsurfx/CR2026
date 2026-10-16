@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.GameObjects.Events;
 using DarkUI.Controls;
 
 namespace Intersect.Editor.Forms.Editors.Events;
@@ -9,6 +10,7 @@ public partial class FrmEvent
     private readonly DarkCheckBox _worldMapName = new() { Text = "Show Name in World Map", AutoSize = true };
     private readonly NumericUpDown _animationX = new() { Minimum = -2048, Maximum = 2048, Width = 100 };
     private readonly NumericUpDown _animationY = new() { Minimum = -2048, Maximum = 2048, Width = 100 };
+    private readonly DarkComboBox _animationLayer = new() { Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
     private bool _loadingOffsets;
     private FormBorderStyle _normalBorder;
     private FormWindowState _normalWindowState;
@@ -54,6 +56,15 @@ public partial class FrmEvent
         {
             group.Margin = new Padding(4); group.Width = 380; properties.Controls.Add(group);
         }
+        var animationLayerGroup = new DarkGroupBox { Text = "Animation layer", Width = 380, Height = 80 };
+        _animationLayer.SetBounds(12, 30, 340, 24);
+        _animationLayer.Items.AddRange(["Over Character (above all decor)", "Same as Character", "Behind Character"]);
+        _animationLayer.SelectedIndexChanged += (_, _) =>
+        {
+            if (!_loadingOffsets && CurrentPage != null && _animationLayer.SelectedIndex >= 0)
+                CurrentPage.AnimationRenderLayer = (EventAnimationLayer)_animationLayer.SelectedIndex;
+        };
+        animationLayerGroup.Controls.Add(_animationLayer); properties.Controls.Add(animationLayerGroup);
         var animationOffsets = new DarkGroupBox { Text = "In-game animation offset (pixels)", Width = 380, Height = 85 };
         var animationRow = new FlowLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(8, 20, 0, 0) };
         animationRow.Controls.AddRange([new DarkLabel { Text = "X", AutoSize = true }, _animationX,
@@ -131,6 +142,7 @@ public partial class FrmEvent
     private void LoadWorldMapOffsets()
     {
         _loadingOffsets = true;
+        _animationLayer.SelectedIndex = Enum.IsDefined(CurrentPage.AnimationRenderLayer) ? (int)CurrentPage.AnimationRenderLayer : 0;
         _animationX.Value = Math.Clamp(CurrentPage.AnimationOffsetX, -2048, 2048);
         _animationY.Value = Math.Clamp(CurrentPage.AnimationOffsetY, -2048, 2048);
         _worldMapName.Checked = CurrentPage.ShowNameOnWorldMap;

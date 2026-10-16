@@ -285,6 +285,7 @@ public partial class EventPageInstance : Entity
         pkt.RenderLayer = (byte)mRenderLayer;
         pkt.AnimationOffsetX = MyPage.AnimationOffsetX;
         pkt.AnimationOffsetY = MyPage.AnimationOffsetY;
+        pkt.AnimationRenderLayer = MyPage.AnimationRenderLayer;
         pkt.Trigger = Trigger;
         pkt.QuestArrowEnabled = MyPage.QuestArrowEnabled;
         pkt.QuestArrowQuestId = MyPage.QuestArrowQuestId;

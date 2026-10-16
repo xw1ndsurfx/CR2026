@@ -51,6 +51,20 @@ internal static class AnimationAndPotionProfessionTests
             command.CommandText = "SELECT Lower_OffsetX, Lower_OffsetY, Lower_TransparencyPercent, Upper_OffsetX, Upper_OffsetY, Upper_TransparencyPercent FROM Animations WHERE Id='existing'";
             using var reader = command.ExecuteReader(); Check(reader.Read() && Enumerable.Range(0, 6).All(i => reader.GetInt32(i) == 0), "Real SQLite migration preserves old animations with zero offsets and full opacity");
         }
+        using (var command = connection.CreateCommand()) { command.CommandText = "CREATE TABLE Spells (Id TEXT PRIMARY KEY, Name TEXT); INSERT INTO Spells VALUES ('existing', 'Old spell');"; command.ExecuteNonQuery(); }
+        var rarityMigration = new Intersect.Server.Migrations.Sqlite.Game.SpellRarity();
+        var rarityBuilder = new MigrationBuilder("Microsoft.EntityFrameworkCore.Sqlite");
+        rarityMigration.GetType().GetMethod("Up", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(rarityMigration, [rarityBuilder]);
+        foreach (var generated in context.GetService<IMigrationsSqlGenerator>().Generate(rarityBuilder.Operations))
+        { using var command = connection.CreateCommand(); command.CommandText = generated.CommandText; command.ExecuteNonQuery(); }
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT Rarity, Name FROM Spells WHERE Id='existing'";
+            using var reader = command.ExecuteReader(); Check(reader.Read() && reader.GetInt32(0) == 0 && reader.GetString(1) == "Old spell", "Spell rarity migration preserves existing spells with the default tier");
+        }
+        var spell = new Intersect.GameObjects.SpellDescriptor(Guid.NewGuid()) { Rarity = 4 };
+        var restored = Newtonsoft.Json.JsonConvert.DeserializeObject<Intersect.GameObjects.SpellDescriptor>(Newtonsoft.Json.JsonConvert.SerializeObject(spell))!;
+        Check(restored.Rarity == 4, "Spell rarity survives descriptor JSON used for saves and client delivery");
         System.Console.WriteLine("PASS potion profession XP integration and real animation visuals schema migration");
     }
     private static void Check(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }

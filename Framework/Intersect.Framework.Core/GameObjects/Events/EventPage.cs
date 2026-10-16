@@ -20,6 +20,7 @@ public partial class EventPage
 
     public int AnimationOffsetX { get; set; }
     public int AnimationOffsetY { get; set; }
+    public EventAnimationLayer AnimationRenderLayer { get; set; }
 
     public bool ShowAnimationOnWorldMap { get; set; }
 

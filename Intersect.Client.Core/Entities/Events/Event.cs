@@ -37,6 +37,7 @@ public partial class Event : Entity
 
     public int AnimationOffsetX { get; private set; }
     public int AnimationOffsetY { get; private set; }
+    public EventAnimationLayer AnimationRenderLayer { get; private set; }
     public int RenderLevel { get; set; } = 1;
 
     public bool WalkingAnim { get; set; } = true;
@@ -92,6 +93,8 @@ public partial class Event : Entity
         RenderLevel = eventEntityPacket.RenderLayer;
         AnimationOffsetX = eventEntityPacket.AnimationOffsetX;
         AnimationOffsetY = eventEntityPacket.AnimationOffsetY;
+        AnimationRenderLayer = Enum.IsDefined(eventEntityPacket.AnimationRenderLayer)
+            ? eventEntityPacket.AnimationRenderLayer : EventAnimationLayer.OverCharacter;
         Trigger = eventEntityPacket.Trigger;
         QuestArrowEnabled = eventEntityPacket.QuestArrowEnabled;
         QuestArrowQuestId = eventEntityPacket.QuestArrowQuestId;

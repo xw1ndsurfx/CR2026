@@ -34,6 +34,9 @@ public partial class SpellDescriptor : DatabaseObject<SpellDescriptor>, IFoldera
 
     public SpellType SpellType { get; set; }
 
+    // Shares the configured item rarity tiers and colors. Existing spells default to tier zero.
+    public int Rarity { get; set; }
+
     public string Description { get; set; } = string.Empty;
 
     public string Icon { get; set; } = string.Empty;

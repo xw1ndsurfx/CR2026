@@ -51,6 +51,22 @@ internal static class ItemRarityGlowTests
         draw.Invoke(null, [renderer, 200, 150, red, 1800L]);
         Check(renderer.Calls.Max(call => call.Color.A) < brightAlpha, "Halo must pulse over time");
         Check(red.A == 255 && red.R == 220, "Shared rarity colors must not be mutated");
+        var spellWindow = (SpellDescriptionWindow)RuntimeHelpers.GetUninitializedObject(typeof(SpellDescriptionWindow));
+        GC.SuppressFinalize(spellWindow);
+        var spell = new Intersect.GameObjects.SpellDescriptor(Guid.NewGuid()) { Rarity = 3 };
+        var field = typeof(SpellDescriptionWindow).GetField("_spellDescriptor", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var glow = typeof(SpellDescriptionWindow).GetProperty("RarityGlowColor", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        field.SetValue(spellWindow, spell);
+        var sharedColors = CustomColors.Items.Rarities;
+        var previousColor = sharedColors.GetValueOrDefault(3);
+        try
+        {
+            sharedColors[3] = red;
+            Check(ReferenceEquals(glow.GetValue(spellWindow), red), "Rare spell tooltip uses the same exact configured color as items");
+            spell.Rarity = 1;
+            Check(glow.GetValue(spellWindow) == null, "Common spell tooltip has no rarity halo");
+        }
+        finally { if (previousColor == null) sharedColors.Remove(3); else sharedColors[3] = previousColor; }
         System.Console.WriteLine("PASS item rarity glow: tiers, configured colors, outer bounds, pulse and renderer state");
     }
 

@@ -40,7 +40,7 @@ public partial class FrmSpell
             _spellTabs.Multiline = true;
             pnlContainer.Controls.Add(_spellTabs);
 
-            AddSpellTab("General", grpGeneral, grpRequirements);
+            AddSpellTab("General", grpGeneral, grpRequirements, _spellRarityGroup);
             AddSpellTab("Cost & Targeting", grpSpellCost, grpTargetInfo);
             AddSpellTab("Combat & Effects", grpCombat);
             AddSpellTab("Special", grpEvent, grpWarp, grpDash);

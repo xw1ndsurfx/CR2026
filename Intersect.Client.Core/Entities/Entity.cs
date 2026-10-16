@@ -951,6 +951,12 @@ public partial class Entity : IEntity
         return true;
     }
 
+    public void DrawEventAnimations(bool upper)
+    {
+        if (this is not Events.Event) return;
+        foreach (var animation in _animations) animation.DrawEventAtCharacter(upper);
+    }
+
     internal Vector2 AnimationAnchor(bool aboveParent)
     {
         if (!aboveParent) return Center;
