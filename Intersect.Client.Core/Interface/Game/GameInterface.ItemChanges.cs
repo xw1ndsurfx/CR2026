@@ -1,3 +1,4 @@
+using Intersect.Client.General;
 using Intersect.Network.Packets.Server;
 
 namespace Intersect.Client.Interface.Game;
@@ -5,6 +6,7 @@ namespace Intersect.Client.Interface.Game;
 public partial class GameInterface
 {
     private ItemChangeNotificationWindow? _itemChangeNotificationWindow;
+    private DayPhaseHud? _dayPhaseHud;
     private readonly DayPhaseNotificationTracker _dayPhaseTracker = new();
 
     public void ShowItemChangeNotification(ItemChangeNotificationPacket packet)
@@ -15,6 +17,9 @@ public partial class GameInterface
 
     public void UpdateItemChangeNotifications()
     {
+        _dayPhaseHud ??= new DayPhaseHud(GameCanvas);
+        _dayPhaseHud.UpdatePhase(Intersect.Client.General.Time.CurrentPhase,
+            Globals.Me != null && Intersect.Client.General.Time.HasServerTime);
         if (Intersect.Client.General.Time.HasServerTime && _dayPhaseTracker.Observe(Intersect.Client.General.Time.CurrentPhase))
         {
             _itemChangeNotificationWindow ??= new ItemChangeNotificationWindow(GameCanvas);

@@ -45,6 +45,7 @@ public partial class FrmSpell : EditorForm
         }
 
         lstGameObjects.Init(UpdateToolStripItems, AssignEditorItem, toolStripItemNew_Click, toolStripItemCopy_Click, toolStripItemUndo_Click, toolStripItemPaste_Click, toolStripItemDelete_Click);
+        InitializeSpellRarity();
         BuildResponsiveSpellEditor();
     }
     private void AssignEditorItem(Guid id)
@@ -289,6 +290,7 @@ public partial class FrmSpell : EditorForm
         {
             pnlContainer.Show();
 
+            _spellRarity.SelectedIndex = mEditorItem.Rarity >= 0 && mEditorItem.Rarity < _spellRarity.Items.Count ? mEditorItem.Rarity : -1;
             txtName.Text = mEditorItem.Name;
             cmbFolder.Text = mEditorItem.Folder;
             txtDesc.Text = mEditorItem.Description;

@@ -1,3 +1,6 @@
+using Intersect.Framework.Core.GameObjects.Events;
+using MessagePack;
+using Intersect.Network.Packets.Server;
 ﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using Intersect.Client.Entities;
@@ -29,6 +32,24 @@ internal static class EventAnimationLayerTests
         anim.DrawEventOverlay();
         Check(requests.SequenceEqual(new[] { "below-event", "above-event" }),
             "Both event animation layers render once in the foreground, including alternate layers");
+        foreach (var mode in new[] { EventAnimationLayer.SameAsCharacter, EventAnimationLayer.BehindCharacter })
+        {
+            typeof(Intersect.Client.Entities.Events.Event).GetProperty("AnimationRenderLayer")!.SetValue(parent, mode);
+            requests.Clear(); anim.DrawEventOverlay();
+            Check(requests.Count == 0, "Other event modes cannot leak into the foreground pass");
+            if (mode == EventAnimationLayer.SameAsCharacter)
+            {
+                anim.DrawEventAtCharacter(false);
+                Check(requests.SequenceEqual(new[] { "below-event" }), "Same as character draws lower effects before the event");
+                anim.DrawEventAtCharacter(true);
+            }
+            else anim.DrawEventBehind();
+            Check(requests.SequenceEqual(new[] { "below-event", "above-event" }), "Each event mode renders each layer exactly once");
+            var packet = MessagePackSerializer.Deserialize<EventEntityPacket>(MessagePackSerializer.Serialize(new EventEntityPacket { AnimationRenderLayer = mode }));
+            Check(packet.AnimationRenderLayer == mode, "Event layer survives network serialization");
+        }
+        Check(new EventPage().AnimationRenderLayer == EventAnimationLayer.OverCharacter, "Legacy event pages retain foreground rendering");
+        typeof(Intersect.Client.Entities.Events.Event).GetProperty("AnimationRenderLayer")!.SetValue(parent, EventAnimationLayer.OverCharacter);
         requests.Clear(); parent.IsHidden = true; anim.DrawEventOverlay();
         Check(requests.Count == 0, "Hidden events cannot leak foreground animations before the next update");
         parent.IsHidden = false; anim.Hidden = true; anim.DrawEventOverlay();

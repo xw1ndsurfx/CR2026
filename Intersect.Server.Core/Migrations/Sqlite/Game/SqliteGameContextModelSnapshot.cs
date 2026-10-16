@@ -1075,6 +1075,9 @@ namespace Intersect.Server.Migrations.Sqlite.Game
 
             modelBuilder.Entity("Intersect.GameObjects.SpellDescriptor", b =>
                 {
+                    b.Property<int>("Rarity")
+                        .HasColumnType("INTEGER");
+
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT");
 

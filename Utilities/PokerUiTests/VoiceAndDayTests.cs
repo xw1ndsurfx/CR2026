@@ -54,6 +54,17 @@ internal static class VoiceAndDayTests
         Check(Intersect.Client.General.Time.CurrentPhase == DayPhase.Sunset, "Client notifications follow the configured server phase intervals");
         _ = new TestContentManager(); using var renderer = new MetricsRenderer(); using var skin = new TestSkin(renderer);
         using var canvas = new Canvas(skin) { Size = new Point(640, 480) };
+        var hudType = assembly.GetType("Intersect.Client.Interface.Game.DayPhaseHud", true)!;
+        var hud = (Label)Activator.CreateInstance(hudType, [canvas])!;
+        foreach (var phase in Enum.GetValues<DayPhase>())
+        {
+            hudType.GetMethod("UpdatePhase")!.Invoke(hud, [phase, true]);
+            Check(!hud.IsHidden && hud.Text == phase.ToString(), "Persistent phase HUD displays the current server phase");
+        }
+        Check(hud.X == 8 && hud.Y == 4 && hud.Height <= 20 && hud.FontSize <= 10 && !hud.MouseInputEnabled,
+            "Current phase is a small non-interactive label at the top-left");
+        hudType.GetMethod("UpdatePhase")!.Invoke(hud, [DayPhase.Day, false]);
+        Check(hud.IsHidden, "Phase HUD stays hidden until server time is available");
         var type = assembly.GetType("Intersect.Client.Interface.Game.ItemChangeNotificationWindow", true)!;
         var panel = (ControlBase)Activator.CreateInstance(type, [canvas])!;
         var flags = BindingFlags.Instance | BindingFlags.NonPublic;

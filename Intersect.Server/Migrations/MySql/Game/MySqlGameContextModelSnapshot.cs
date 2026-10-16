@@ -1116,6 +1116,9 @@ namespace Intersect.Server.Migrations.MySql.Game
 
             modelBuilder.Entity("Intersect.GameObjects.SpellDescriptor", b =>
                 {
+                    b.Property<int>("Rarity")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("Id")
                         .HasColumnType("char(36)")
                         .UseCollation("ascii_general_ci");

@@ -10,6 +10,16 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
 {
     private SpellDescriptor? _spellDescriptor;
 
+    internal Color? RarityGlowColor => _spellDescriptor is { } spell
+        ? ItemRarityGlow.ResolveColor(spell.Rarity, Options.Instance.Items.RarityTiers, CustomColors.Items.Rarities) : null;
+
+    protected override void RenderUnder(Intersect.Client.Framework.Gwen.Skin.Base skin)
+    {
+        base.RenderUnder(skin);
+        if (RarityGlowColor is { } color)
+            ItemRarityGlow.Draw(skin.Renderer, Width, Height, color, Environment.TickCount64);
+    }
+
     public void Show(Guid spellId, ItemDescriptionWindow? itemDecriptionContainer = default)
     {
         _spellDescriptor = SpellDescriptor.Get(spellId);
@@ -94,11 +104,14 @@ public partial class SpellDescriptionWindow() : DescriptionWindowBase(Interface.
         }
 
         // Set up the header as the item name.
-        header.SetTitle(_spellDescriptor.Name, Color.White);
+        CustomColors.Items.Rarities.TryGetValue(_spellDescriptor.Rarity, out var rarityColor);
+        header.SetTitle(_spellDescriptor.Name, rarityColor ?? Color.White);
 
         // Set up the spell type description.
         Strings.SpellDescription.SpellTypes.TryGetValue((int)_spellDescriptor.SpellType, out var spellType);
-        header.SetSubtitle(spellType, Color.White);
+        var rarity = Options.Instance.Items.TryGetRarityName(_spellDescriptor.Rarity, out var rarityName)
+            ? Strings.ItemDescription.Rarity.GetValueOrDefault(rarityName)?.ToString() ?? ClientLanguages.Text(rarityName) : string.Empty;
+        header.SetSubtitle(string.IsNullOrEmpty(rarity) ? spellType : $"{spellType} - {rarity}", rarityColor ?? Color.White);
 
         // Set up the spelldescription based on what kind of spell it is.
         if (_spellDescriptor.SpellType == (int)SpellType.CombatSpell)

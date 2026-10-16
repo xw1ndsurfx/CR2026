@@ -15,6 +15,7 @@ public partial class EventEntityPacket : EntityPacket
 
     [Key(34)] public int AnimationOffsetX { get; set; }
     [Key(35)] public int AnimationOffsetY { get; set; }
+    [Key(36)] public EventAnimationLayer AnimationRenderLayer { get; set; }
 
     [Key(24)]
     public bool DirectionFix { get; set; }

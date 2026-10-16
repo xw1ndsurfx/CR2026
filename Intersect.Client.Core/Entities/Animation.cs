@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Client.Core;
 using Intersect.Client.Core.Sounds;
 using Intersect.Client.Framework.Entities;
@@ -106,11 +107,15 @@ public partial class Animation : IAnimation
         }
     }
 
-    public void DrawEventOverlay()
+    public void DrawEventOverlay() => DrawEventLayer(EventAnimationLayer.OverCharacter);
+    public void DrawEventBehind() => DrawEventLayer(EventAnimationLayer.BehindCharacter);
+    public void DrawEventAtCharacter(bool upper) => DrawEventLayer(EventAnimationLayer.SameAsCharacter, upper);
+
+    private void DrawEventLayer(EventAnimationLayer layer, bool? upper = null)
     {
-        if (mParent is not Events.Event eventEntity || !eventEntity.ShouldDraw || Descriptor == null || IsDisposed) return;
-        Draw(false, Descriptor.Lower.AlternateRenderLayer, eventPass: true);
-        Draw(true, Descriptor.Upper.AlternateRenderLayer, eventPass: true);
+        if (mParent is not Events.Event evt || evt.AnimationRenderLayer != layer || !evt.ShouldDraw || Descriptor == null || IsDisposed) return;
+        if (upper != true) Draw(false, Descriptor.Lower.AlternateRenderLayer, eventPass: true);
+        if (upper != false) Draw(true, Descriptor.Upper.AlternateRenderLayer, eventPass: true);
     }
 
     public void Draw(bool upper = false, bool alternate = false, bool eventPass = false)
