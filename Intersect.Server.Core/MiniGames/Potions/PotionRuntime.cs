@@ -326,6 +326,7 @@ internal static class PotionRuntime
                         );
                         rewardLevel = session.Progress.Level;
                         session.RewardGranted = true;
+                        Intersect.Server.Professions.ProfessionRuntime.AwardPotionCompletion(player, session.Recipe.CompletionExperience);
                         session.Status = $"Brewed {session.Recipe.OutputQuantity:N0} x {item.Name} • +{session.Recipe.CompletionExperience} Alchemy XP";
                         questUpdate = new PotionQuestUpdate(
                             true,

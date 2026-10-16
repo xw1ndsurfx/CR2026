@@ -840,16 +840,17 @@ internal sealed class WorldMapWindow : Window
             var u2 = (sourceX + frameWidth) / (float)texture.Width;
             var v2 = (sourceY + frameHeight) / (float)texture.Height;
 
-            renderer.DrawColor = Color.White;
+            var tint = new Color(layer.Opacity, 255, 255, 255);
+            renderer.DrawColor = tint;
             renderer.DrawTexturedRect(
                 texture,
                 new Rectangle(
-                    markerX - markerWidth / 2,
-                    markerY - markerHeight / 2,
+                    markerX - markerWidth / 2 + (fitVisible ? 0 : (int)Math.Round(layer.OffsetX * scale)),
+                    markerY - markerHeight / 2 + (fitVisible ? 0 : (int)Math.Round(layer.OffsetY * scale)),
                     markerWidth,
                     markerHeight
                 ),
-                Color.White,
+                tint,
                 u1,
                 v1,
                 u2,

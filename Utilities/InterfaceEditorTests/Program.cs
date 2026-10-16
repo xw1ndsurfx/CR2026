@@ -45,6 +45,12 @@ internal static class Program
                 var scale = (NumericUpDown)animationType.GetField(field, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(animationEditor)!;
                 Check(scale.Minimum == 1 && scale.Increment == 1, "Animation editor supports precise scaling down to 1 percent");
             }
+            foreach (var field in new[] { "_lowerVisuals", "_upperVisuals" })
+            {
+                var visuals = (NumericUpDown[])animationType.GetField(field, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(animationEditor)!;
+                Check(visuals.Length == 3 && visuals[0].Minimum == -4096 && visuals[2].Maximum == 100 && visuals[2].Minimum == 0,
+                    "Animation Editor exposes signed X/Y offsets and full transparency range for each layer");
+            }
             Check((int)animationType.GetMethod("NormalizeAnimationScale", BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, [1])! == 1,
                 "Loading/saving must preserve one percent animation scale");
         }

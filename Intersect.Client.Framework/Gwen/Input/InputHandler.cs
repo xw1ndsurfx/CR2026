@@ -420,7 +420,7 @@ public static partial class InputHandler
 
         if (KeyData.SetMouseButtonState(mouseButton, pressed))
         {
-            hoveredControl.InputMouseButtonState(MouseButton.Left, mousePosition, pressed);
+            hoveredControl.InputMouseButtonState(mouseButton, mousePosition, pressed);
         }
 
         // Double click.

@@ -176,10 +176,6 @@ public partial class Animation : IAnimation
             }
         }
 
-        // Map/tile animations keep the legacy offset. Animations attached to an entity
-        // must follow the same +32px visual shift as entity sprites, otherwise they render
-        // noticeably above the character/event they are attached to.
-        var spriteYOffset = mParent is Events.Event ? 0f : mParent == null ? -16f : 32f;
 
         if (!upper && mShowLower && mZDimension < 1 || !upper && mShowLower && mZDimension > 0)
         {
@@ -209,13 +205,8 @@ public partial class Animation : IAnimation
                             (float)Math.Floor((double)mLowerFrame / Descriptor.Lower.XFrames) * frameHeight,
                             frameWidth, frameHeight
                         ),
-                        new FloatRect(
-                            mRenderX - drawWidth / 2,
-                            mRenderY - drawHeight / 2 + spriteYOffset,
-                            drawWidth,
-                            drawHeight
-                        ),
-                        Color.White,
+                        FrameBounds(Descriptor.Lower, drawWidth, drawHeight),
+                        new Color(Descriptor.Lower.Opacity, 255, 255, 255),
                         null,
                         GameBlendModes.None,
                         null,
@@ -231,7 +222,7 @@ public partial class Animation : IAnimation
             );
 
             Graphics.AddLight(
-                (int)mRenderX - offset.X, (int)mRenderY - offset.Y, Descriptor.Lower.Lights[mLowerFrame].Size,
+                (int)mRenderX + Descriptor.Lower.OffsetX - offset.X, (int)mRenderY + Descriptor.Lower.OffsetY - offset.Y, Descriptor.Lower.Lights[mLowerFrame].Size,
                 Descriptor.Lower.Lights[mLowerFrame].Intensity, Descriptor.Lower.Lights[mLowerFrame].Expand,
                 Descriptor.Lower.Lights[mLowerFrame].Color
             );
@@ -265,13 +256,8 @@ public partial class Animation : IAnimation
                             (float)Math.Floor((double)mUpperFrame / Descriptor.Upper.XFrames) * frameHeight,
                             frameWidth, frameHeight
                         ),
-                        new FloatRect(
-                            mRenderX - drawWidth / 2,
-                            mRenderY - drawHeight / 2 + spriteYOffset,
-                            drawWidth,
-                            drawHeight
-                        ),
-                        Color.White,
+                        FrameBounds(Descriptor.Upper, drawWidth, drawHeight),
+                        new Color(Descriptor.Upper.Opacity, 255, 255, 255),
                         null,
                         GameBlendModes.None,
                         null,
@@ -287,7 +273,7 @@ public partial class Animation : IAnimation
             );
 
             Graphics.AddLight(
-                (int)mRenderX - offset.X, (int)mRenderY - offset.Y, Descriptor.Upper.Lights[mUpperFrame].Size,
+                (int)mRenderX + Descriptor.Upper.OffsetX - offset.X, (int)mRenderY + Descriptor.Upper.OffsetY - offset.Y, Descriptor.Upper.Lights[mUpperFrame].Size,
                 Descriptor.Upper.Lights[mUpperFrame].Intensity, Descriptor.Upper.Lights[mUpperFrame].Expand,
                 Descriptor.Upper.Lights[mUpperFrame].Color
             );
@@ -318,6 +304,15 @@ public partial class Animation : IAnimation
                        cosTheta * (pointToRotate.Y - centerPoint.Y) +
                        centerPoint.Y)
         };
+    }
+
+    private FloatRect FrameBounds(AnimationLayer layer, float width, float height)
+    {
+        // Entity.Center already follows the visible body. Only legacy map effects
+        // retain a tile-specific vertical anchor; never shift attached spells again.
+        var tileOffset = mParent == null ? -16f : 0f;
+        return new FloatRect(mRenderX - width / 2 + layer.OffsetX,
+            mRenderY - height / 2 + tileOffset + layer.OffsetY, width, height);
     }
 
     public void Hide()
@@ -462,6 +457,8 @@ public partial class Animation : IAnimation
                 var frameHeight = (int)Math.Ceiling(
                     tex.Height / (double)Descriptor.Lower.YFrames * scale
                 );
+                frameWidth = (int)Math.Min(int.MaxValue, frameWidth + 2L * Math.Abs((long)Descriptor.Lower.OffsetX));
+                frameHeight = (int)Math.Min(int.MaxValue, frameHeight + 2L * Math.Abs((long)Descriptor.Lower.OffsetY));
                 if (frameWidth > size.X)
                 {
                     size.X = frameWidth;
@@ -490,6 +487,8 @@ public partial class Animation : IAnimation
                 var frameHeight = (int)Math.Ceiling(
                     tex.Height / (double)Descriptor.Upper.YFrames * scale
                 );
+                frameWidth = (int)Math.Min(int.MaxValue, frameWidth + 2L * Math.Abs((long)Descriptor.Upper.OffsetX));
+                frameHeight = (int)Math.Min(int.MaxValue, frameHeight + 2L * Math.Abs((long)Descriptor.Upper.OffsetY));
                 if (frameWidth > size.X)
                 {
                     size.X = frameWidth;

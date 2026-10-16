@@ -78,14 +78,7 @@ internal sealed class RoyalStylistWindow : Window
         DeleteOnClose = false;
         DisableResizing();
 
-        // Admurin supplied one 403x426 full-frame sprite. Nine-slice keeps
-        // the original bronze corners, header and borders crisp at the wider
-        // 860x640 game layout instead of stretching them disproportionately.
-        var artistFrame = AdmurinGuiArt.AddNineSlice(
-            this, "AdmurinRoyalStylist", "stylist_0",
-            10, 27, 840, 602,
-            403, 426, 10, 28, 10, 9, 20, 41, 20, 15);
-        artistFrame?.SendToBack();
+        Intersect.Client.Interface.Shared.AppearanceWindowLayout.Apply(this);
 
         var titleFont =
             GameContentManager.Current.GetFont("sourcesansproblack") ??

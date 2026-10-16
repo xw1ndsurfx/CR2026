@@ -25,6 +25,7 @@ public sealed class FrmProfessionConfiguration : DarkForm
     private ProfessionDefinition? _selected;
 
     private readonly ListBox _professionsList = CreateDarkListBox();
+    private readonly DarkCheckBox _potionExperience = new() { Text = "Receive profession XP from completed potion recipes", AutoSize = true };
     private readonly DarkTextBox _name = new() { Dock = DockStyle.Fill };
     private readonly DarkTextBox _description = new()
     {
@@ -315,6 +316,15 @@ public sealed class FrmProfessionConfiguration : DarkForm
             "Optional internal description for this profession.",
             _description
         ));
+
+        root.Controls.Add(_potionExperience);
+        _potionExperience.CheckedChanged += (_, _) =>
+        {
+            if (_selected == null) return;
+            _selected.PotionExperience = _potionExperience.Checked;
+            if (_potionExperience.Checked)
+                foreach (var profession in _professions.Where(profession => profession != _selected)) profession.PotionExperience = false;
+        };
 
         var progression = CreateGroup("Progression");
         progression.Dock = DockStyle.Top;
@@ -705,6 +715,7 @@ public sealed class FrmProfessionConfiguration : DarkForm
             return;
         }
 
+        _potionExperience.Checked = _selected.PotionExperience;
         _name.Text = _selected.Name;
         _description.Text = _selected.Description;
         _maxLevel.Value = Math.Clamp(_selected.MaximumLevel, 1, 500);
@@ -733,6 +744,7 @@ public sealed class FrmProfessionConfiguration : DarkForm
             ? "Profession"
             : _name.Text.Trim();
         _selected.Description = _description.Text ?? string.Empty;
+        _selected.PotionExperience = _potionExperience.Checked;
         _selected.MaximumLevel = (int)_maxLevel.Value;
         _selected.BaseExperience = (long)_baseXp.Value;
         _selected.ExperienceGrowth = (double)_growth.Value / 100d;

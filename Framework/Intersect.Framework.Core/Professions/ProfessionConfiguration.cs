@@ -24,6 +24,7 @@ public sealed class ProfessionDefinition
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = "New Profession";
     public string Description { get; set; } = string.Empty;
+    public bool PotionExperience { get; set; }
     public int MaximumLevel { get; set; } = 100;
     public long BaseExperience { get; set; } = 100;
     public double ExperienceGrowth { get; set; } = 1.12d;
@@ -95,10 +96,18 @@ public sealed class ProfessionConfiguration
 
     public bool IsStructurallyValid =>
         (Professions ?? []).Length <= 512 &&
+        (Professions ?? []).Count(profession => profession?.PotionExperience == true) <= 1 &&
         (Professions ?? []).All(profession => profession is { IsStructurallyValid: true }) &&
         (Professions ?? []).Select(profession => profession.Id).Distinct().Count() == (Professions ?? []).Length &&
         (Professions ?? []).SelectMany(profession => profession.Resources ?? []).Select(link => link.ResourceId).Distinct().Count() ==
         (Professions ?? []).SelectMany(profession => profession.Resources ?? []).Count();
+
+    public ProfessionDefinition? FindPotionProfession() =>
+        (Professions ?? []).FirstOrDefault(profession => profession.PotionExperience) ??
+        (Professions ?? []).FirstOrDefault(profession =>
+            profession.Name.StartsWith("Alchem", StringComparison.OrdinalIgnoreCase) ||
+            profession.Name.StartsWith("Alchim", StringComparison.OrdinalIgnoreCase) ||
+            profession.Name.StartsWith("Alquim", StringComparison.OrdinalIgnoreCase));
 
     public ProfessionDefinition? Find(Guid id) =>
         (Professions ?? []).FirstOrDefault(profession => profession.Id == id);
