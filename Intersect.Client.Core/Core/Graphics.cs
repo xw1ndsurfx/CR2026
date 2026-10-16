@@ -361,9 +361,7 @@ public static partial class Graphics
                     // Handle our plugin drawing.
                     Globals.OnGameDraw(DrawStates.BeforeEntity, entity, deltaTime);
 
-                    entity.DrawEventAnimations(false);
                     entity.Draw();
-                    entity.DrawEventAnimations(true);
 
                     // Handle our plugin drawing.
                     Globals.OnGameDraw(DrawStates.AfterEntity, entity, deltaTime);
@@ -419,9 +417,7 @@ public static partial class Graphics
                     // Handle our plugin drawing.
                     Globals.OnGameDraw(DrawStates.BeforeEntity, entity, deltaTime);
 
-                    entity.DrawEventAnimations(false);
                     entity.Draw();
-                    entity.DrawEventAnimations(true);
 
                     // Handle our plugin drawing.
                     Globals.OnGameDraw(DrawStates.AfterEntity, entity, deltaTime);
@@ -475,6 +471,13 @@ public static partial class Graphics
                 map.DrawOverlayGraphic();
                 map.DrawItemNames();
             }
+        }
+
+        // Event banners and attached effects must stay readable over characters,
+        // fringe tiles, weather and map overlays, independently of the event graphic's layer.
+        foreach (var animInstance in animations)
+        {
+            animInstance.DrawEventOverlay();
         }
 
         //Draw the players targets

@@ -102,10 +102,17 @@ public partial class Animation : IAnimation
         }
     }
 
+    public void DrawEventOverlay()
+    {
+        if (mParent is not Events.Event eventEntity || !eventEntity.ShouldDraw || Descriptor == null || IsDisposed) return;
+        Draw(false, Descriptor.Lower.AlternateRenderLayer, eventPass: true);
+        Draw(true, Descriptor.Upper.AlternateRenderLayer, eventPass: true);
+    }
+
     public void Draw(bool upper = false, bool alternate = false, bool eventPass = false)
     {
-        // Event animations belong to the event's sorted render slot, not the global
-        // above-player pass. This also makes movement-route layer changes apply.
+        // Attached event effects have their own foreground pass after the map decor.
+        // Other animations retain their ordinary lower/upper layer behavior.
         if (mParent is Events.Event && !eventPass) return;
         if (Hidden || Descriptor == default)
         {
