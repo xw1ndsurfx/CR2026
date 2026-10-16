@@ -1396,7 +1396,7 @@ public partial class Entity : IEntity
                         this is Player player &&
                         player.Appearance.TryGetLayer(paperdoll, out var baseStyle, out var baseColor))
                     {
-                        DrawEquipment(baseStyle, baseColor * renderColor);
+                        DrawEquipment(Intersect.Client.Core.AppearancePaperdolls.Resolve(baseStyle, (int)player.Gender == 1), baseColor * renderColor);
                     }
                 }
             }

@@ -10,6 +10,11 @@ namespace Intersect.Client.Interface.Game.Bank;
 
 public partial class BankWindow : Window
 {
+    public static int BaseSlotCount { get; set; }
+    public static bool Premium { get; set; }
+    private int _tab;
+    private Base? _bankHeader;
+    private Label? _premiumHint;
     public List<SlotItem> Items = [];
     private readonly ScrollControl _slotContainer;
     private readonly ContextMenu _contextMenu;
@@ -60,6 +65,18 @@ public partial class BankWindow : Window
     protected override void EnsureInitialized()
     {
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
+        var header = _bankHeader = new Base(this, "BankAccountTabs") { Dock = Pos.Top, Height = 64 };
+        var regular = new Button(header) { Text = ClientLanguages.Text("Storage"), FontSize = 10 };
+        regular.SetBounds(6, 3, 115, 28); regular.Clicked += (_, _) => SelectTab(0);
+        var premium = new Button(header) { Text = ClientLanguages.Text("Premium storage"), FontSize = 10, IsDisabled = Globals.IsGuildBank || Globals.BankSlotCount <= BaseSlotCount };
+        premium.SetBounds(125, 3, 150, 28); premium.Clicked += (_, _) => SelectTab(1);
+        var sort = new Button(header) { Text = ClientLanguages.Text("Auto sort"), FontSize = 10, IsDisabled = !Premium || Globals.IsGuildBank };
+        sort.SetBounds(279, 3, 120, 28); sort.Clicked += (_, _) => Intersect.Client.Networking.Network.SendPacket(new Intersect.Network.Packets.Client.SortBankPacket());
+        _premiumHint = new Label(header) { Text = ClientLanguages.Text(Premium ? "Premium benefits active" : "Premium storage: withdrawals only after expiry"), FontSize = 9, MouseInputEnabled = false };
+        _premiumHint.SetBounds(8, 34, 395, 24);
+        foreach (var label in header.Children.OfType<Label>()) label.Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont;
+        header.IsHidden = Globals.IsGuildBank;
+        if (Premium && !Globals.IsGuildBank) TitleLabel.TextColorOverride = new Color(240, 205, 115);
         InitItemContainer();
     }
 
@@ -70,7 +87,17 @@ public partial class BankWindow : Window
             Items.Add(new BankItem(this, _slotContainer, slotIndex, _contextMenu));
         }
 
-        PopulateSlotContainer.Populate(_slotContainer, Items);
+        SelectTab(0);
+    }
+
+    private void SelectTab(int tab)
+    {
+        _tab=tab;
+        var baseSlots=BaseSlotCount>0 ? BaseSlotCount : Globals.BankSlotCount;
+        foreach(var item in Items) item.IsHidden = !Globals.IsGuildBank && (tab==0 ? item.SlotIndex>=baseSlots : item.SlotIndex<baseSlots);
+        var visible=Items.Where(i=>!i.IsHidden).ToList();
+        PopulateSlotContainer.Populate(_slotContainer,visible);
+        _slotContainer.ScrollToTop(); _slotContainer.UpdateScrollBars();
     }
 
     public void Update()
@@ -89,6 +116,16 @@ public partial class BankWindow : Window
         }
     }
 
+    protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
+    {
+        base.Render(skin);
+        if(!Premium || Globals.IsGuildBank) return;
+        var r=skin.Renderer;var b=RenderBounds;r.DrawColor=new Color(255,215,175,80);
+        r.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(b.X,b.Y,b.Width,2));
+        r.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(b.X,b.Bottom-2,b.Width,2));
+        r.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(b.X,b.Y,2,b.Height));
+        r.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(b.Right-2,b.Y,2,b.Height));
+    }
     public override void Hide()
     {
         _contextMenu?.Close();

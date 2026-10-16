@@ -17,6 +17,9 @@ public partial class BankPacket : IntersectPacket
         Items = items;
     }
 
+    [Key(4)] public int BaseSlots { get; set; }
+    [Key(5)] public bool Premium { get; set; }
+
     [Key(0)]
     public bool Close { get; set; }
 

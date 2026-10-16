@@ -5,6 +5,7 @@ namespace Intersect.Server.Entities;
 public interface IBankInterface : IDisposable
 {
     void SendOpenBank();
+    bool SortItems();
     void SendBankUpdate(int slot, bool sendToAll = true);
     void SendCloseBank();
 

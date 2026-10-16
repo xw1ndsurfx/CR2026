@@ -17,6 +17,9 @@ public partial class FrmMain
             Intersect.Editor.Networking.Network.SendPacket(new DeathConfigurationRequestPacket());
         };
         system.DropDownItems.Add(death);
+        var activities = new ToolStripMenuItem("Combat Music & Experience Events...");
+        activities.Click += (_, _) => Intersect.Editor.Networking.Network.SendPacket(new Intersect.Network.Packets.WorldEvents.RequestWorldActivitiesPacket());
+        system.DropDownItems.Add(activities);
         var events = menuStrip.Items.Cast<ToolStripItem>().FirstOrDefault(item => item.Name == "worldEventsToolStripMenuItem");
         menuStrip.Items.Insert(events == null ? menuStrip.Items.Count : menuStrip.Items.IndexOf(events) + 1, system);
     }

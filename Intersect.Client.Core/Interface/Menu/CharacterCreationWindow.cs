@@ -365,7 +365,7 @@ public partial class CharacterCreationWindow : Window
             }
             else if (appearance.TryGetLayer(layerType, out var style, out var color))
             {
-                container.Texture = Globals.ContentManager.GetTexture(TextureType.Paperdoll, style);
+                container.Texture = Globals.ContentManager.GetTexture(TextureType.Paperdoll, Intersect.Client.Core.AppearancePaperdolls.Resolve(style, _genderFemaleCheckbox.IsChecked));
                 container.RenderColor = color;
             }
 
@@ -605,7 +605,7 @@ public partial class CharacterCreationWindow : Window
             return false;
         }
 
-        return !name.EndsWith("_attack.png", StringComparison.OrdinalIgnoreCase) &&
+        return !name.EndsWith("_male.png", StringComparison.OrdinalIgnoreCase) && !name.EndsWith("_female.png", StringComparison.OrdinalIgnoreCase) && !name.EndsWith("_attack.png", StringComparison.OrdinalIgnoreCase) &&
                !name.EndsWith("_cast.png", StringComparison.OrdinalIgnoreCase) &&
                !name.EndsWith("_idle.png", StringComparison.OrdinalIgnoreCase) &&
                !name.EndsWith("_shoot.png", StringComparison.OrdinalIgnoreCase) &&
@@ -635,16 +635,16 @@ public partial class CharacterCreationWindow : Window
 
         var names = GameContentManager.Current.GetTextureNames(TextureType.Paperdoll) ?? [];
         foreach (var name in names
-                     .Where(value => IsBaseAppearanceTexture(value, prefix))
+                     .Where(value => IsBaseAppearanceTexture(value, prefix) && CharacterAppearance.SupportsGender(value, _genderFemaleCheckbox.IsChecked))
                      .OrderBy(value => value, StringComparer.OrdinalIgnoreCase))
         {
             combo.AddItem(FriendlyAppearanceName(name, prefix), userData: name);
         }
 
-        if (names.Any(value => IsBaseAppearanceTexture(value, prefix)))
+        if (names.Any(value => IsBaseAppearanceTexture(value, prefix) && CharacterAppearance.SupportsGender(value, _genderFemaleCheckbox.IsChecked)))
         {
             var first = names
-                .Where(value => IsBaseAppearanceTexture(value, prefix))
+                .Where(value => IsBaseAppearanceTexture(value, prefix) && CharacterAppearance.SupportsGender(value, _genderFemaleCheckbox.IsChecked))
                 .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
                 .First();
             combo.SelectByUserData(first);
@@ -737,7 +737,7 @@ public partial class CharacterCreationWindow : Window
     private void RandomizeStyle(LabeledComboBox combo, string prefix)
     {
         var values = (GameContentManager.Current.GetTextureNames(TextureType.Paperdoll) ?? [])
-            .Where(value => IsBaseAppearanceTexture(value, prefix))
+            .Where(value => IsBaseAppearanceTexture(value, prefix) && CharacterAppearance.SupportsGender(value, _genderFemaleCheckbox.IsChecked))
             .ToArray();
 
         if (values.Length > 0)
@@ -784,10 +784,21 @@ public partial class CharacterCreationWindow : Window
         UpdateDisplay();
     }
 
+    private void RefreshGenderStyles()
+    {
+        foreach(var pair in new[]{(_hairCombobox,CharacterAppearance.HairPrefix),(_shirtCombobox,CharacterAppearance.ShirtPrefix),(_pantsCombobox,CharacterAppearance.PantsPrefix),(_bootsCombobox,CharacterAppearance.BootsPrefix)})
+        {
+            var previous=pair.Item1.SelectedItem?.UserData;
+            PopulateStyleCombo(pair.Item1,pair.Item2);
+            if(previous is string style && CharacterAppearance.SupportsGender(style,_genderFemaleCheckbox.IsChecked)) pair.Item1.SelectByUserData(previous);
+        }
+    }
+
     void MaleCheckboxGenderChecked(ICheckbox sender, EventArgs arguments)
     {
         _genderMaleCheckbox.IsChecked = true;
         _genderFemaleCheckbox.IsChecked = false;
+        RefreshGenderStyles();
         ResetSprite();
         UpdateDisplay();
     }
@@ -796,6 +807,7 @@ public partial class CharacterCreationWindow : Window
     {
         _genderFemaleCheckbox.IsChecked = true;
         _genderMaleCheckbox.IsChecked = false;
+        RefreshGenderStyles();
         ResetSprite();
         UpdateDisplay();
     }

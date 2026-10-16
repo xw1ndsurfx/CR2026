@@ -326,6 +326,7 @@ internal static class PotionRuntime
                         );
                         rewardLevel = session.Progress.Level;
                         session.RewardGranted = true;
+                        player.SendPacket(new Intersect.Network.Packets.Server.ItemChangeNotificationPacket(session.Recipe.OutputItemId, session.Recipe.OutputQuantity));
                         Intersect.Server.Professions.ProfessionRuntime.AwardPotionCompletion(player, session.Recipe.CompletionExperience);
                         session.Status = $"Brewed {session.Recipe.OutputQuantity:N0} x {item.Name} • +{session.Recipe.CompletionExperience} Alchemy XP";
                         questUpdate = new PotionQuestUpdate(
@@ -457,6 +458,7 @@ Send:
                         Name = recipe.Name,
                         RequiredLevel = recipe.RequiredLevel,
                         OutputItemName = ItemDescriptor.GetName(recipe.OutputItemId),
+                        OutputItemId = recipe.OutputItemId,
                         OutputQuantity = recipe.OutputQuantity,
                         CompletionExperience = recipe.CompletionExperience,
                         Unlocked = IsRecipeUnlocked(session.Player, recipe, session.Progress.Level),

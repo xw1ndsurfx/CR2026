@@ -364,7 +364,8 @@ public partial class Player : Entity, IPlayer
         Appearance = playerPacket.Appearance ?? new CharacterAppearance();
         AccessLevel = playerPacket.AccessLevel;
         BadgeId = playerPacket.BadgeId;
-        CombatTimer = playerPacket.CombatTimeRemaining + Timing.Global.Milliseconds;
+        if (playerPacket.CombatTimeRemaining > 0) CombatTimer = playerPacket.CombatTimeRemaining + Timing.Global.Milliseconds;
+        else if (CombatTimer > Timing.Global.Milliseconds) CombatTimer = Timing.Global.Milliseconds;
         Guild = playerPacket.Guild;
         Rank = playerPacket.GuildRank;
 

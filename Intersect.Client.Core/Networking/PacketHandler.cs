@@ -1904,6 +1904,8 @@ internal sealed partial class PacketHandler
         if (!packet.Close)
         {
             Globals.IsGuildBank = packet.Guild;
+            Intersect.Client.Interface.Game.Bank.BankWindow.BaseSlotCount = packet.BaseSlots;
+            Intersect.Client.Interface.Game.Bank.BankWindow.Premium = packet.Premium;
             Globals.BankSlots = new Item[packet.Slots];
             foreach (var itm in packet.Items)
             {
@@ -2408,7 +2410,7 @@ internal sealed partial class PacketHandler
                     characterPacket.ClassName,
                     characterPacket.Equipment,
                     characterPacket.GuildName,
-                    characterPacket.Appearance ?? new CharacterAppearance()
+                    characterPacket.Appearance ?? new CharacterAppearance(), characterPacket.Gender
                 )
             ),
         ];

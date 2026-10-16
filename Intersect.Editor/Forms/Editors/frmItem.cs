@@ -193,8 +193,8 @@ public partial class FrmItem : EditorForm
         mEditorItem.Name = request.ItemName;
         mEditorItem.Icon = request.IconFile;
         mEditorItem.ItemType = ItemType.Equipment;
-        mEditorItem.MalePaperdoll = request.MaleCompatible ? request.PaperdollFile : string.Empty;
-        mEditorItem.FemalePaperdoll = request.FemaleCompatible ? request.PaperdollFile : string.Empty;
+        mEditorItem.MalePaperdoll = request.MalePaperdollFile ?? (request.MaleCompatible ? request.PaperdollFile : string.Empty);
+        mEditorItem.FemalePaperdoll = request.FemalePaperdollFile ?? (request.FemaleCompatible ? request.PaperdollFile : string.Empty);
 
         var generatedSlot = ResolveGeneratedEquipmentSlot(request.SourceCategory);
         if (generatedSlot >= 0)

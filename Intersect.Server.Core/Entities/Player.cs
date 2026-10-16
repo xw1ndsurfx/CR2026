@@ -1591,7 +1591,9 @@ public partial class Player : Entity
             ? (long)Math.Round(amount * rankingBonusPercent / 100d, MidpointRounding.AwayFromZero)
             : 0L;
 
-        var totalAward = amount + equipmentBonus + rankingBonus;
+        var eventBonus = Intersect.Framework.Core.WorldEvents.WorldActivitiesConfiguration.AwardBonus(amount,
+            Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.BonusAt(DateTimeOffset.Now));
+        var totalAward = (long)Math.Min(long.MaxValue, (decimal)amount + equipmentBonus + rankingBonus + eventBonus);
         if (fromNpcKill)
         {
             PendingNpcExperienceGain = new NpcExperienceGainBreakdown
@@ -1609,7 +1611,7 @@ public partial class Player : Entity
 
         try
         {
-            Exp += totalAward;
+            Exp = (long)Math.Min(long.MaxValue, (decimal)Exp + totalAward);
             // CheckLevelUp sends an ExperiencePacket even when the XP crosses
             // a level boundary; that packet carries the unconsumed award.
             CheckLevelUp();
@@ -4734,6 +4736,7 @@ public partial class Player : Entity
         }
         else
         {
+            if (!EnsureBankAccess()) return false;
             BankInterface = new BankInterface<BankSlot>(this, Bank);
         }
 

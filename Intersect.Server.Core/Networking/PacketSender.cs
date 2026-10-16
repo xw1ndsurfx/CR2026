@@ -109,6 +109,7 @@ public static partial class PacketSender
             }
 
             player.LoginWarp();
+            client.Send(new Intersect.Network.Packets.WorldEvents.WorldActivitiesPacket { Json = Newtonsoft.Json.JsonConvert.SerializeObject(Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current) });
 
             SendEntityDataTo(client.Entity, player);
 
@@ -1433,7 +1434,7 @@ public static partial class PacketSender
                     ClassDescriptor.GetName(character.ClassId),
                     equipment,
                     character.Guild?.Name ?? string.Empty,
-                    character.Appearance?.SanitizedCopy() ?? new CharacterAppearance()
+                    character.Appearance?.SanitizedCopy() ?? new CharacterAppearance(), (int)character.Gender
                 )
             );
         }

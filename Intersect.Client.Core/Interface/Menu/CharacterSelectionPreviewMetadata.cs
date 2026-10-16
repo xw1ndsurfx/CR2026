@@ -12,5 +12,6 @@ public record struct CharacterSelectionPreviewMetadata(
     string Class,
     EquipmentFragment[] Equipment,
     string Guild,
-    CharacterAppearance Appearance
+    CharacterAppearance Appearance,
+    int Gender = 0
 );

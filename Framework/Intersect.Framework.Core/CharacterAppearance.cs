@@ -91,6 +91,10 @@ public partial class CharacterAppearance
         return !string.IsNullOrWhiteSpace(style);
     }
 
+    public static bool SupportsGender(string style, bool female) =>
+        !(female && style.Contains("_maleonly", StringComparison.OrdinalIgnoreCase)) &&
+        !(!female && style.Contains("_femaleonly", StringComparison.OrdinalIgnoreCase));
+
     public static bool IsCatalogStyle(string? style, string expectedPrefix)
     {
         if (string.IsNullOrWhiteSpace(style))
@@ -113,6 +117,7 @@ public partial class CharacterAppearance
             return false;
         }
 
+        if (value.EndsWith("_male.png", StringComparison.OrdinalIgnoreCase) || value.EndsWith("_female.png", StringComparison.OrdinalIgnoreCase)) return false;
         return !AnimationSuffixes.Any(suffix =>
             value.EndsWith(suffix, StringComparison.OrdinalIgnoreCase));
     }

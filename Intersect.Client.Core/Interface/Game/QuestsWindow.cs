@@ -174,7 +174,7 @@ public partial class QuestsWindow
         mQuestDescArea.SetBounds(224, 114, 225, 188);
         mQuestDescArea.OverflowX = OverflowBehavior.Hidden;
         mQuestDescArea.OverflowY = OverflowBehavior.Scroll;
-        mQuestDescArea.AutoHideBars = true;
+        QuestTextScroller.Configure(mQuestDescArea, mQuestDescLabel);
 
         mQuestDescTemplateLabel.Font =
             GameContentManager.Current.GetFont("sourcesanspro") ?? mQuestDescTemplateLabel.Font;

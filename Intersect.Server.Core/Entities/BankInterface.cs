@@ -33,6 +33,7 @@ public partial class BankInterface<TSlot> : IBankInterface where TSlot : Item, I
 
     public void SendOpenBank()
     {
+        if (_guild == null) _player.EnsureBankCapacity();
         var slotUpdatePackets = new List<BankUpdatePacket>();
 
         for (var slot = 0; slot < _bank.Capacity; slot++)
@@ -55,7 +56,7 @@ public partial class BankInterface<TSlot> : IBankInterface where TSlot : Item, I
                 _guild != null,
                 _bank.Capacity,
                 slotUpdatePackets.ToArray()
-            )
+            ) { BaseSlots = _guild == null ? _player.BaseBankSlots : _bank.Capacity, Premium = _guild == null && _player.HasBankPremium }
         );
     }
 
@@ -126,9 +127,10 @@ public partial class BankInterface<TSlot> : IBankInterface where TSlot : Item, I
         var maximumStack = itemDescriptor.Stackable ? itemDescriptor.MaxBankStack : 1;
         var sourceQuantity = giveItem ? quantityHint : Item.FindQuantityOfItem(itemDescriptor.Id, sourceSlots);
 
+        var allowedSlots = _guild == null ? _player.EnsureBankCapacity() : _bank.Capacity;
         _bank.FillToCapacity();
-
-        var targetSlots = _bank.ToArray();
+        if (bankSlotIndex >= allowedSlots) return false;
+        var targetSlots = _bank.Take(allowedSlots).ToArray();
 
         lock (_lock)
         {
@@ -548,6 +550,7 @@ public partial class BankInterface<TSlot> : IBankInterface where TSlot : Item, I
 
     public void SwapBankItems(int slotFrom, int slotTo)
     {
+        if (_guild == null && !_player.HasBankPremium && (slotFrom >= _player.BaseBankSlots || slotTo >= _player.BaseBankSlots)) return;
         var bank = _bank;
         if (bank == null)
         {
@@ -654,6 +657,21 @@ public partial class BankInterface<TSlot> : IBankInterface where TSlot : Item, I
         SendBankUpdate(slotTo);
     }
 
+
+    public bool SortItems()
+    {
+        if (_guild != null || !_player.HasBankPremium || !_player.InBank) return false;
+        lock (_lock)
+        {
+            _bank.FillToCapacity();
+            var before = _bank.Select(i=>i.Clone()).ToArray();
+            var sorted = before.Where(i=>i.ItemId!=Guid.Empty && i.Quantity>0).OrderBy(i=>ItemDescriptor.Get(i.ItemId)?.Name ?? "").ThenByDescending(i=>ItemDescriptor.Get(i.ItemId)?.Rarity ?? 0).ToArray();
+            for(var i=0;i<before.Length;i++) _bank[i].Set(i<sorted.Length ? sorted[i] : Item.None);
+            if(_player.User?.Save(force:true)!=Intersect.Server.Database.PlayerData.UserSaveResult.Completed)
+            { for(var i=0;i<before.Length;i++)_bank[i].Set(before[i]);return false; }
+        }
+        for(var i=0;i<_bank.Capacity;i++) SendBankUpdate(i);return true;
+    }
 
     public void Dispose()
     {

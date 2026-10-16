@@ -233,6 +233,7 @@ internal sealed partial class LogicService
                     Time.Update();
                     InvasionRuntime.Update(startTime);
                     WorldBossRuntime.Update(startTime);
+                    Intersect.Server.WorldEvents.WorldActivitiesRuntime.Update(startTime);
                     DungeonRunRuntime.Update(startTime);
                     swCps++;
 

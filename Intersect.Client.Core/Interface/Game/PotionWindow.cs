@@ -146,6 +146,7 @@ internal sealed class PotionWindow : Base
     private readonly Label _recipePickerTitle;
     private readonly Label _recipePickerPage;
     private readonly Button[] _recipeButtons = new Button[8];
+    private readonly ImagePanel[] _recipeIcons = new ImagePanel[8];
     private readonly Button _recipePrev;
     private readonly Button _recipeNextPage;
     private readonly Button _recipeBack;
@@ -286,6 +287,8 @@ internal sealed class PotionWindow : Base
             };
             button.Clicked += (_, _) => SelectRecipeSlot(slot);
             _recipeButtons[i] = button;
+            button.Padding = new Padding(48, 4, 4, 4);
+            _recipeIcons[i] = new ImagePanel(button) { MaintainAspectRatio = true, MouseInputEnabled = false };
         }
 
         _recipePrev = new Button(_recipePicker, "PotionRecipePrev")
@@ -466,6 +469,7 @@ internal sealed class PotionWindow : Base
             var button = _layout.LocalRect(24 + column * 286, 72 + row * 92, 270, 78);
             _recipeButtons[i].SetBounds(button.X, button.Y, button.Width, button.Height);
             _recipeButtons[i].FontSize = _layout.FontSize(11);
+            _recipeIcons[i].SetBounds(Math.Max(2, button.Width * 6 / 270), Math.Max(2, button.Height * 20 / 78), Math.Max(12, button.Width * 40 / 270), Math.Max(12, button.Height * 40 / 78));
         }
 
         var prev = _layout.LocalRect(24, 454, 130, 38);
@@ -613,8 +617,8 @@ internal sealed class PotionWindow : Base
         _recipePage = Math.Clamp(_recipePage, 0, pageCount - 1);
 
         _recipePickerTitle.Text = _state == null
-            ? "CHOOSE A RECIPE"
-            : $"CHOOSE A RECIPE   •   ALCHEMY LV {_state.Level}";
+            ? Intersect.Client.Localization.ClientLanguages.Text("CHOOSE A RECIPE")
+            : Intersect.Client.Localization.ClientLanguages.Format("CHOOSE A RECIPE - ALCHEMY LV {0}", _state.Level);
 
         for (var slot = 0; slot < _recipeButtons.Length; ++slot)
         {
@@ -627,13 +631,17 @@ internal sealed class PotionWindow : Base
             }
 
             var recipe = choices[index];
+            var output = ItemDescriptor.Get(recipe.OutputItemId);
+            _recipeIcons[slot].Texture = output == null ? null : GameContentManager.Current.GetTexture(Framework.Content.TextureType.Item, output.Icon);
+            _recipeIcons[slot].RenderColor = output?.Color ?? Color.White;
+            _recipeIcons[slot].IsHidden = _recipeIcons[slot].Texture == null;
             button.IsHidden = false;
             button.IsDisabled = _pending || _recipeSelectionRequested || !recipe.Unlocked;
             button.Text = recipe.Unlocked
-                ? $"Lv {recipe.RequiredLevel}  {recipe.Name}\n{recipe.OutputQuantity:N0} x {recipe.OutputItemName}   •   +{recipe.CompletionExperience} XP"
+                ? Intersect.Client.Localization.ClientLanguages.Format("Lv {0} {1}\n{2:N0} x {3} - +{4} XP", recipe.RequiredLevel, Intersect.Client.Localization.ClientLanguages.ContentText(recipe.Name), recipe.OutputQuantity, Intersect.Client.Localization.ClientLanguages.ContentText(recipe.OutputItemName), recipe.CompletionExperience)
                 : recipe.EventLocked && recipe.RequiredLevel <= (_state?.Level ?? 0)
-                    ? $"[LOCKED - EVENT]  {recipe.Name}\n{recipe.OutputQuantity:N0} x {recipe.OutputItemName}"
-                    : $"[LOCKED - Lv {recipe.RequiredLevel}]  {recipe.Name}\n{recipe.OutputQuantity:N0} x {recipe.OutputItemName}";
+                    ? Intersect.Client.Localization.ClientLanguages.Format("[LOCKED - EVENT] {0}\n{1:N0} x {2}", Intersect.Client.Localization.ClientLanguages.ContentText(recipe.Name), recipe.OutputQuantity, Intersect.Client.Localization.ClientLanguages.ContentText(recipe.OutputItemName))
+                    : Intersect.Client.Localization.ClientLanguages.Format("[LOCKED - Lv {0}] {1}\n{2:N0} x {3}", recipe.RequiredLevel, Intersect.Client.Localization.ClientLanguages.ContentText(recipe.Name), recipe.OutputQuantity, Intersect.Client.Localization.ClientLanguages.ContentText(recipe.OutputItemName));
             button.TextColorOverride = recipe.Unlocked
                 ? Color.White
                 : new Color(255, 145, 125, 110);
