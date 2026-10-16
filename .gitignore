@@ -228,3 +228,6 @@ Custom*.props
 
 # Local Steamworks.NET native runtime cache
 .steam-runtime/
+
+# Private translation provider credentials
+**/translation-service.private.json*

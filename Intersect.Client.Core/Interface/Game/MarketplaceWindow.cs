@@ -157,7 +157,7 @@ internal sealed class MarketplaceWindow : Window
 
         _auction = new LabeledCheckBox(_sellPanel, "MarketplaceAuction")
         {
-            Text = "AUCTION",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("AUCTION"),
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 11,
             TextColorOverride = Gold,
@@ -216,7 +216,7 @@ internal sealed class MarketplaceWindow : Window
     public void Apply(MarketplaceStatePacket state)
     {
         _state = state;
-        _balance.Text = $"{Shorten(state.CurrencyName, 27).ToUpperInvariant()}: {state.CurrencyBalance:N0}";
+        _balance.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"{Shorten(state.CurrencyName, 27).ToUpperInvariant()}: {state.CurrencyBalance:N0}");
         _pending.Text = state.PendingCurrency > 0
             ? $"{state.PendingCurrency:N0} PENDING DELIVERY"
             : "SECURE PLAYER TRADING";
@@ -227,8 +227,8 @@ internal sealed class MarketplaceWindow : Window
             ? Muted
             : state.OperationSucceeded ? Good : Bad;
 
-        _listingCount.Text = $"{state.Listings.Length:N0} ACTIVE LISTING{(state.Listings.Length == 1 ? "" : "S")}";
-        _sellableCount.Text = $"{state.SellableItems.Length:N0} SELLABLE ITEM{(state.SellableItems.Length == 1 ? "" : "S")}";
+        _listingCount.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"{state.Listings.Length:N0} ACTIVE LISTING{(state.Listings.Length == 1 ? "" : "S")}");
+        _sellableCount.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"{state.SellableItems.Length:N0} SELLABLE ITEM{(state.SellableItems.Length == 1 ? "" : "S")}");
         RenderListings();
         RenderSellableItems();
     }

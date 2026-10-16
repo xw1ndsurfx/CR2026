@@ -85,7 +85,7 @@ internal sealed class InvasionStatusWindow : Base
         _title.Text = lines.Length > 0 ? lines[0] : "INVASION APPROACHING";
         _wave.Text = lines.Length > 1 ? string.Join(" ", lines.Skip(1)) : "Prepare for battle.";
         _wave.FontSize = 9;
-        _objective.Text = "Prepare your defenses.";
+        _objective.Text = Intersect.Client.Localization.ClientLanguages.Text("Prepare your defenses.");
 
         PositionAtTop();
         Show();
@@ -109,7 +109,7 @@ internal sealed class InvasionStatusWindow : Base
             ? $"Preparing • {state.WaveCount} wave(s)"
             : $"Wave {state.Wave}/{state.WaveCount}" +
               (string.IsNullOrWhiteSpace(state.Message) ? string.Empty : $" • {state.Message}");
-        _objective.Text = $"Defense target: {state.ObjectiveHealth:N0} / {state.ObjectiveMaxHealth:N0} HP";
+        _objective.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"Defense target: {state.ObjectiveHealth:N0} / {state.ObjectiveMaxHealth:N0} HP");
 
         PositionAtTop();
         Show();

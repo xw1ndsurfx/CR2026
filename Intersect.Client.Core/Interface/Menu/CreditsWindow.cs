@@ -80,7 +80,7 @@ public partial class CreditsWindow : Window, IMainMenuWindow
         {
             var line = new Credits.CreditsLine
             {
-                Text = "Insert your credits here!",
+                Text = Intersect.Client.Localization.ClientLanguages.Text("Insert your credits here!"),
                 Alignment = "center",
                 Size = 12,
                 TextColor = Color.White,

@@ -54,7 +54,7 @@ public partial class FriendsRow
         nameLabel.MouseInputEnabled = online;
         if (online)
         {
-            nameLabel.SetToolTipText("View Character Information: " + _friendName);
+            nameLabel.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("View Character Information: ") + _friendName);
             nameLabel.Clicked += OpenProfile;
         }
 
@@ -83,7 +83,7 @@ public partial class FriendsRow
 
         var remove = AddAction(_row, "FriendRemove", "REMOVE", 522, 22, 78, 35,
             true, isPrimary: false);
-        remove.SetToolTipText("Remove " + _friendName + " from friends");
+        remove.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("Remove ") + _friendName + " from friends");
         remove.Clicked += RemoveFriend;
     }
 

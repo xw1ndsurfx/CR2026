@@ -169,7 +169,7 @@ public partial class MenuContainer : Panel
         _dungeonsButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Dungeon.png");
         _dungeonsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Dungeon_over.png");
         _dungeonsButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_Dungeon_down.png");
-        _dungeonsButton.SetToolTipText(text: "Dungeon Gates");
+        _dungeonsButton.SetToolTipText(text: Intersect.Client.Localization.ClientLanguages.Text("Dungeon Gates"));
         _dungeonsButton.Clicked += DungeonsButton_Clicked;
 
         _newsButtonContainer = new ImagePanel(parent: this, name: nameof(_newsButtonContainer))
@@ -188,7 +188,7 @@ public partial class MenuContainer : Panel
         _newsButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_News.png");
         _newsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_News_over.png");
         _newsButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_News_down.png");
-        _newsButton.SetToolTipText(text: "Corps Royaux News");
+        _newsButton.SetToolTipText(text: Intersect.Client.Localization.ClientLanguages.Text("Corps Royaux News"));
         _newsButton.Clicked += NewsButton_Clicked;
 
         _dailyRewardButtonContainer = new ImagePanel(parent: this, name: nameof(_dailyRewardButtonContainer))
@@ -207,7 +207,7 @@ public partial class MenuContainer : Panel
         _dailyRewardButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Daily.png");
         _dailyRewardButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Daily_over.png");
         _dailyRewardButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_Daily_down.png");
-        _dailyRewardButton.SetToolTipText(text: "Daily Reward");
+        _dailyRewardButton.SetToolTipText(text: Intersect.Client.Localization.ClientLanguages.Text("Daily Reward"));
         _dailyRewardButton.Clicked += DailyRewardButton_Clicked;
 
         _logiCoinShopButtonContainer = new ImagePanel(parent: this, name: nameof(_logiCoinShopButtonContainer))
@@ -226,7 +226,7 @@ public partial class MenuContainer : Panel
         _logiCoinShopButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Shop.png");
         _logiCoinShopButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Shop_over.png");
         _logiCoinShopButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_Shop_down.png");
-        _logiCoinShopButton.SetToolTipText(text: "LogiCoin Shop");
+        _logiCoinShopButton.SetToolTipText(text: Intersect.Client.Localization.ClientLanguages.Text("LogiCoin Shop"));
         _logiCoinShopButton.Clicked += LogiCoinShopButton_Clicked;
 
         _friendsButtonContainer = new ImagePanel(parent: this, name: nameof(_friendsButtonContainer))
@@ -264,7 +264,7 @@ public partial class MenuContainer : Panel
         };
         _partyButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "partyicon.png");
         _partyButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "partyicon_hovered.png");
-        _partyButton.SetToolTipText(text: "Party HUD (left click) / User List - Party (right click)");
+        _partyButton.SetToolTipText(text: Intersect.Client.Localization.ClientLanguages.Text("Party HUD (left click) / User List - Party (right click)"));
         _partyButton.Clicked += PartyBtn_Clicked;
 
         _guildButtonContainer = new ImagePanel(parent: this, name: nameof(_guildButtonContainer))
@@ -323,7 +323,7 @@ public partial class MenuContainer : Panel
         };
         _menuToggleButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Toggle.png");
         _menuToggleButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Toggle_down.png");
-        _menuToggleButton.SetToolTipText(text: "Show / Hide menu");
+        _menuToggleButton.SetToolTipText(text: Intersect.Client.Localization.ClientLanguages.Text("Show / Hide menu"));
         _menuToggleButton.Clicked += MenuToggleButton_Clicked;
 
         var x = 0;

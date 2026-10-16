@@ -120,7 +120,7 @@ internal sealed class DungeonPanelWindow : Window
         refresh.SetBounds(443, 512, 25, 24);
         AdmurinGuiArt.Add(refresh, "RefreshIcon", "dungeon_gates_3",
             0, 0, 24, 24, 48, 0, 24, 24);
-        refresh.SetToolTipText("Refresh dungeon rankings");
+        refresh.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("Refresh dungeon rankings"));
         refresh.Clicked += (_, _) =>
         {
             var now = Environment.TickCount64;
@@ -165,14 +165,14 @@ internal sealed class DungeonPanelWindow : Window
 
         var openCount = _definitions.Count(dungeon =>
             _statuses.TryGetValue(dungeon.Id, out var status) && status.Available);
-        _summary.Text = $"{openCount} ACTIVE GATE{(openCount == 1 ? "" : "S")}  /  {_definitions.Length} REGISTERED";
+        _summary.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"{openCount} ACTIVE GATE{(openCount == 1 ? "" : "S")}  /  {_definitions.Length} REGISTERED");
 
         var clears = _playerStats.Values.Sum(value => value.Completions);
         var attempts = _playerStats.Values.Sum(value => value.Attempts);
         var failures = _playerStats.Values.Sum(value => value.Failures);
         var deaths = _playerStats.Values.Sum(value => value.Deaths);
         _personalSummary.Text =
-            $"YOUR RECORD  {clears:N0} CLEARS / {attempts:N0} RUNS / {failures:N0} FAILURES / {deaths:N0} DEATHS";
+            Intersect.Client.Localization.ClientLanguages.Interpolated($"YOUR RECORD  {clears:N0} CLEARS / {attempts:N0} RUNS / {failures:N0} FAILURES / {deaths:N0} DEATHS");
 
         var selectedIndex = Array.FindIndex(_definitions, definition => definition.Id == _selectedId);
         if (selectedIndex < 0)

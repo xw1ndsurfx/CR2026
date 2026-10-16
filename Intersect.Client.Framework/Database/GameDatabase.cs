@@ -7,6 +7,7 @@ namespace Intersect.Client.Framework.Database;
 /// </summary>
 public abstract partial class GameDatabase
 {
+    public string LanguageCode { get; set; } = "en";
     public bool ShowMyLevel { get; set; } = true;
     public bool EnableVoiceSounds { get; set; } = true;
     public bool ShowPlayerLevels { get; set; } = true;
@@ -165,6 +166,7 @@ public abstract partial class GameDatabase
         ShowManaAsPercentage = LoadPreference(nameof(ShowManaAsPercentage), false);
         SimplifiedEscapeMenu = LoadPreference(nameof(SimplifiedEscapeMenu), false);
         ShowMyLevel = LoadPreference(nameof(ShowMyLevel), true);
+        LanguageCode = Intersect.Localization.GameTextCatalog.NormalizeLanguage(LoadPreference(nameof(LanguageCode), "en"));
         EnableVoiceSounds = LoadPreference(nameof(EnableVoiceSounds), true);
         ShowPlayerLevels = LoadPreference(nameof(ShowPlayerLevels), true);
         ShowNpcLevels = LoadPreference(nameof(ShowNpcLevels), true);
@@ -191,6 +193,7 @@ public abstract partial class GameDatabase
     /// </summary>
     public virtual void SavePreferences()
     {
+        SavePreference(nameof(LanguageCode), Intersect.Localization.GameTextCatalog.NormalizeLanguage(LanguageCode));
         SavePreference(nameof(MusicVolume), MusicVolume);
         SavePreference(nameof(SoundVolume), SoundVolume);
         SavePreference(nameof(TargetResolution), TargetResolution);

@@ -75,7 +75,7 @@ internal sealed class QuestShopWindow : Window
             var empty = new Label(_quests, "Empty")
             {
                 AutoSizeToContents = false,
-                Text = "No quests are currently offered here.",
+                Text = Intersect.Client.Localization.ClientLanguages.Text("No quests are currently offered here."),
                 TextAlign = Pos.Center,
                 TextColorOverride = Color.White,
             };
@@ -119,7 +119,7 @@ internal sealed class QuestShopWindow : Window
                 TextColorOverride = entry.CanAccept
                     ? new Color(a: 255, r: 160, g: 220, b: 165)
                     : new Color(a: 255, r: 225, g: 165, b: 145),
-                Text = $"Prerequisites: {entry.Requirements}",
+                Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"Prerequisites: {entry.Requirements}"),
             };
             requirements.SetBounds(14, 76, 430, 68);
 
@@ -147,7 +147,7 @@ internal sealed class QuestShopWindow : Window
                 if (!entry.CanAccept)
                     return;
                 accept.IsDisabled = true;
-                accept.Text = "OPENING...";
+                accept.Text = Intersect.Client.Localization.ClientLanguages.Text("OPENING...");
                 Networking.PacketSender.SendRequestQuestShopOffer(shopId, entry.QuestId);
             };
         }

@@ -21,6 +21,7 @@ namespace Intersect.Server.Networking;
 
 public partial class Client : IPacketSender
 {
+    public string LanguageCode { get; set; } = "en";
     public static readonly object GlobalLock = new();
 
     public static readonly Dictionary<Guid, Client> LookupByConnectionId = [];

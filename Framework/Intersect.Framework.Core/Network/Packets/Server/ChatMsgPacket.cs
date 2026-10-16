@@ -1,4 +1,4 @@
-﻿using Intersect.Enums;
+using Intersect.Enums;
 using MessagePack;
 
 namespace Intersect.Network.Packets.Server;
@@ -27,4 +27,5 @@ public partial class ChatMsgPacket : IntersectPacket
     [Key(3)]
     public string Target { get; set; }
 
+    [Key(4)] public bool Localize { get; set; }
 }

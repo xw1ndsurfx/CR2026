@@ -126,7 +126,7 @@ internal sealed class PlayerProfileWindow : Window
             FontSize = 11,
             TextAlign = Pos.Center,
             TextColorOverride = Cream,
-            Text = "Preview unavailable",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("Preview unavailable"),
             MouseInputEnabled = false,
         };
         _previewFallback.SetBounds(49, 108, 145, 55);
@@ -148,13 +148,13 @@ internal sealed class PlayerProfileWindow : Window
             return;
 
         _headline.Text = profile.Name;
-        _subtitle.Text = $"LEVEL {profile.Level:N0}  |  {Fallback(profile.ClassName)}";
-        _guildLine.Text = "Guild: " + Fallback(profile.GuildName);
-        _locationLine.Text = "Location: " + Fallback(profile.MapName);
-        _titleLine.Text = "Title: " + Fallback(profile.RankingTitle);
+        _subtitle.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"LEVEL {profile.Level:N0}  |  {Fallback(profile.ClassName)}");
+        _guildLine.Text = Intersect.Client.Localization.ClientLanguages.Text("Guild: ") + Fallback(profile.GuildName);
+        _locationLine.Text = Intersect.Client.Localization.ClientLanguages.Text("Location: ") + Fallback(profile.MapName);
+        _titleLine.Text = Intersect.Client.Localization.ClientLanguages.Text("Title: ") + Fallback(profile.RankingTitle);
         if (!string.IsNullOrWhiteSpace(profile.RankingTitle))
         {
-            _rankingBonusLabel.Text = $"+{profile.RankingExperienceBonusPercent:N0}% EXP";
+            _rankingBonusLabel.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"+{profile.RankingExperienceBonusPercent:N0}% EXP");
             _rankingBonusLabel.Show();
         }
         else
@@ -207,7 +207,7 @@ internal sealed class PlayerProfileWindow : Window
         var observedId = profile.IsSelf ? Guid.Empty : profile.PlayerId;
         var achievements = new Button(_scroll, "OpenProfileAchievementsButton")
         {
-            Text = "Achievements",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("Achievements"),
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 11,
         };
@@ -217,7 +217,7 @@ internal sealed class PlayerProfileWindow : Window
 
         var familiars = new Button(_scroll, "OpenProfileFamiliarsButton")
         {
-            Text = "Familiers",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("Familiers"),
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 11,
         };
@@ -227,7 +227,7 @@ internal sealed class PlayerProfileWindow : Window
 
         var dungeons = new Button(_scroll, "OpenProfileDungeonsButton")
         {
-            Text = "Dungeons",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("Dungeons"),
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 11,
         };
@@ -457,7 +457,7 @@ internal sealed class PlayerProfileWindow : Window
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 13,
             TextColorOverride = new Color(a: 255, r: 236, g: 210, b: 153),
-            Text = "EQUIPMENT",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("EQUIPMENT"),
         };
         titleLabel.SetBounds(8, y, 510, 24);
         y += 26;
@@ -468,7 +468,7 @@ internal sealed class PlayerProfileWindow : Window
             Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
             FontSize = 9,
             TextColorOverride = new Color(a: 255, r: 205, g: 195, b: 175),
-            Text = "Hover an equipped item to view its full description, stats and bonuses.",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("Hover an equipped item to view its full description, stats and bonuses."),
         };
         hint.SetBounds(18, y, 580, 20);
         y += 24;
@@ -485,7 +485,7 @@ internal sealed class PlayerProfileWindow : Window
                 Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
                 FontSize = 10,
                 TextColorOverride = Color.White,
-                Text = "No equipment information.",
+                Text = Intersect.Client.Localization.ClientLanguages.Text("No equipment information."),
             };
             empty.SetBounds(18, y, 500, 24);
             return y + 42;

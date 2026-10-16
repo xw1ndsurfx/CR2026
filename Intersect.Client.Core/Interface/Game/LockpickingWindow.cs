@@ -128,7 +128,7 @@ internal sealed class LockpickingWindow : Base
             _hint.Text = state.Hint + " — adjust the pick and try again.";
 
         var remaining = model.RemainingMilliseconds(now);
-        _timer.Text = $"Time: {remaining / 1000.0:0.0}s";
+        _timer.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"Time: {remaining / 1000.0:0.0}s");
     }
 
     private void Move(int delta)
@@ -139,7 +139,7 @@ internal sealed class LockpickingWindow : Base
 
     private void RefreshAngle()
     {
-        _angleText.Text = $"Pick angle: {_angle:+0;-0;0}°";
+        _angleText.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"Pick angle: {_angle:+0;-0;0}°");
     }
 
     private void Attempt()

@@ -143,6 +143,7 @@ public static partial class Strings
 
     public static void Load()
     {
+        ClientLanguages.RestoreEnglish();
         SynchronizeConfigurableStrings();
 
         try
@@ -294,6 +295,7 @@ public static partial class Strings
             Save();
         }
 
+        ClientLanguages.Apply();
         PostLoad();
     }
 

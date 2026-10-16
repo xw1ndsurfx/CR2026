@@ -1,4 +1,4 @@
-﻿using Intersect.Client.Core;
+using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Content;
@@ -150,7 +150,7 @@ public partial class PartyWindow
                 }
                 else
                 {
-                    mKickButtons[i].SetToolTipText("");
+                    mKickButtons[i].SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text(""));
                 }
 
                 mKickButtons[i].Hide();
@@ -198,7 +198,7 @@ public partial class PartyWindow
             FontSize = 16,
             TextAlign = Pos.Center,
             TextColorOverride = new Color(a:255,r:236,g:210,b:153),
-            Text = "PARTY",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("PARTY"),
             MouseInputEnabled = false,
         };
         title.SetBounds(30, 39, 455, 27);
@@ -243,11 +243,11 @@ public partial class PartyWindow
             mLblnames[i].Clicked += PartyWindow_Clicked;
 
             mHpLabel[i].SetBounds(43, top + 29, 48, 19);
-            mHpLabel[i].Text = "HP";
+            mHpLabel[i].Text = Intersect.Client.Localization.ClientLanguages.Text("HP");
             mHpValue[i].SetBounds(310, top + 29, 153, 19);
             mHpValue[i].TextAlign = Pos.Right | Pos.CenterV;
             mMpLabel[i].SetBounds(43, top + 54, 48, 19);
-            mMpLabel[i].Text = "MP";
+            mMpLabel[i].Text = Intersect.Client.Localization.ClientLanguages.Text("MP");
             mMpValue[i].SetBounds(310, top + 54, 153, 19);
             mMpValue[i].TextAlign = Pos.Right | Pos.CenterV;
             foreach (var label in new[] { mHpLabel[i], mHpValue[i], mMpLabel[i], mMpValue[i] })
@@ -260,7 +260,7 @@ public partial class PartyWindow
             if (i > 0)
             {
                 mKickButtons[i].SetBounds(354, top + 7, 99, 25);
-                mKickButtons[i].Text = "KICK";
+                mKickButtons[i].Text = Intersect.Client.Localization.ClientLanguages.Text("KICK");
                 mKickButtons[i].Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mLeaveButton.Font;
                 mKickButtons[i].FontSize = 9;
                 role.SetBounds(304, top + 7, 49, 23);
@@ -280,7 +280,7 @@ public partial class PartyWindow
             FontSize = 11,
             TextAlign = Pos.Center,
             TextColorOverride = Color.White,
-            Text = "LEAVE CREW",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("LEAVE CREW"),
             MouseInputEnabled = false,
         };
         _leaveCaption.SetBounds(3, 0, 239, 35);
@@ -300,7 +300,7 @@ public partial class PartyWindow
             AutoSizeToContents = false,
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mLeaveButton.Font,
             FontSize = 11,
-            Text = "CREW",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("CREW"),
             TextColorOverride = new Color(a:255,r:236,g:210,b:153),
             MouseInputEnabled = false,
         };
@@ -317,7 +317,7 @@ public partial class PartyWindow
 
         _hudLeaveButton = new Button(_rosterHud, "PartyHudLeave")
         {
-            Text = "LEAVE",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("LEAVE"),
             Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mLeaveButton.Font,
             FontSize = 9,
         };
@@ -352,7 +352,7 @@ public partial class PartyWindow
 
             var kick = new Button(_rosterHud, "PartyHudKick" + i)
             {
-                Text = "KICK",
+                Text = Intersect.Client.Localization.ClientLanguages.Text("KICK"),
                 Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? mLeaveButton.Font,
                 FontSize = 8,
             };
@@ -390,13 +390,13 @@ public partial class PartyWindow
         _rosterHud.SetSize(258, 46 + count * 42);
         _hudLeaveButton.Show();
         _rosterHud.VisibleMembers = count;
-        _hudHeading.Text = $"PARTY  {count}/{Options.Instance.Party.MaximumMembers}";
+        _hudHeading.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"PARTY  {count}/{Options.Instance.Party.MaximumMembers}");
         // Only other nearby party members count and EXP goes to the killer.
         // This is the maximum potential bonus; actual kills require nearby,
         // alive companions, which the server validates authoritatively.
         var maximumBonus = Math.Max(0, count - 1) *
             Math.Max(0f, Options.Instance.Party.BonusExperiencePercentPerMember);
-        _hudExpBonus.Text = $"UP TO +{maximumBonus:0.#}% EXP";
+        _hudExpBonus.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"UP TO +{maximumBonus:0.#}% EXP");
         for (var i = 0; i < _hudNames.Count; i++)
         {
             if (i >= count)
@@ -408,7 +408,7 @@ public partial class PartyWindow
             }
 
             var member = Globals.Me.Party[i];
-            _hudNames[i].Text = $"{(i == 0 ? "[L] " : "")}{member.Name}  Lv. {member.Level}";
+            _hudNames[i].Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"{(i == 0 ? "[L] " : "")}{member.Name}  Lv. {member.Level}");
             // Sprites are available when the member's entity is loaded locally.
             var portrait = _hudPortraits[i];
             portrait.UserData = member.Id;
@@ -518,7 +518,7 @@ public partial class PartyWindow
         mLeaderText.Hide();
         mLeaveButton.Hide();
         _leaveCaption.Hide();
-        _partySummary.Text = "NO CREW FORMED";
+        _partySummary.Text = Intersect.Client.Localization.ClientLanguages.Text("NO CREW FORMED");
         for (var i = 0; i < Options.Instance.Party.MaximumMembers; i++)
         {
             mHpBarContainer[i].Hide();
@@ -542,7 +542,7 @@ public partial class PartyWindow
             mLeaderText.Show();
             mLeaveButton.Show();
             _leaveCaption.Show();
-            _partySummary.Text = $"{Globals.Me.Party.Count} / {Options.Instance.Party.MaximumMembers} CREW MEMBERS";
+            _partySummary.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"{Globals.Me.Party.Count} / {Options.Instance.Party.MaximumMembers} CREW MEMBERS");
 
             for (var i = 0; i < Options.Instance.Party.MaximumMembers; i++)
             {
@@ -655,7 +655,7 @@ public partial class PartyWindow
                 {
                     if (i > 0)
                     {
-                        mKickButtons[i].SetToolTipText("");
+                        mKickButtons[i].SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text(""));
                     }
 
                     mLblnames[i].Text = string.Empty;

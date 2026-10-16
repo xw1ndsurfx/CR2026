@@ -371,6 +371,7 @@ public static partial class PacketSender
 
     public static void SendSaveTime(string timeJson)
     {
+        Network.SendPacket(new TranslationSettingsRequestPacket { Action = "queue", CatalogJson = timeJson });
         Network.SendPacket(new SaveTimeDataPacket(timeJson));
     }
 
@@ -381,6 +382,7 @@ public static partial class PacketSender
 
     public static void SendSaveRewardConfiguration(string configurationJson)
     {
+        Network.SendPacket(new TranslationSettingsRequestPacket { Action = "queue", CatalogJson = configurationJson });
         Network.SendPacket(new SaveRewardConfigurationPacket(configurationJson));
     }
 
@@ -391,6 +393,7 @@ public static partial class PacketSender
 
     public static void SendSaveLogiCoinShopConfiguration(string configurationJson)
     {
+        Network.SendPacket(new TranslationSettingsRequestPacket { Action = "queue", CatalogJson = configurationJson });
         Network.SendPacket(new SaveLogiCoinShopConfigurationPacket(configurationJson));
     }
 
@@ -401,6 +404,7 @@ public static partial class PacketSender
 
     public static void SendSaveProfessionConfiguration(string configurationJson)
     {
+        Network.SendPacket(new TranslationSettingsRequestPacket { Action = "queue", CatalogJson = configurationJson });
         Network.SendPacket(new SaveProfessionConfigurationPacket(configurationJson));
     }
 
@@ -411,6 +415,7 @@ public static partial class PacketSender
 
     public static void SendSaveAchievementConfiguration(string configurationJson)
     {
+        Network.SendPacket(new TranslationSettingsRequestPacket { Action = "queue", CatalogJson = configurationJson });
         Network.SendPacket(new SaveAchievementConfigurationPacket(configurationJson));
     }
 
@@ -421,6 +426,7 @@ public static partial class PacketSender
 
     public static void SendSaveWorldBossConfiguration(string configurationJson)
     {
+        Network.SendPacket(new TranslationSettingsRequestPacket { Action = "queue", CatalogJson = configurationJson });
         Network.SendPacket(new SaveWorldBossConfigurationPacket(configurationJson));
     }
 
@@ -436,6 +442,7 @@ public static partial class PacketSender
 
     public static void SendSaveInvasionConfiguration(string configurationJson)
     {
+        Network.SendPacket(new TranslationSettingsRequestPacket { Action = "queue", CatalogJson = configurationJson });
         Network.SendPacket(new SaveInvasionConfigurationPacket(configurationJson));
     }
 

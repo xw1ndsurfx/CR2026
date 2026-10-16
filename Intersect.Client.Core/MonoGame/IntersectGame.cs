@@ -103,6 +103,7 @@ internal partial class IntersectGame : Game
         Globals.Database = new JsonDatabase();
 
         Globals.Database.LoadPreferences();
+        Strings.Load();
 
         // Default WorldZoom (x4) si prefs absentes / invalides
         if (Globals.Database.WorldZoom <= 1f) // force 4 même si c'était 1

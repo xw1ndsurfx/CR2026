@@ -507,6 +507,7 @@ internal sealed partial class PacketHandler
     //LoginPacket
     public void HandlePacket(Client client, LoginPacket packet)
     {
+        client.LanguageCode = Intersect.Localization.GameTextCatalog.NormalizeLanguage(packet.LanguageCode);
         if (client.AccountAttempts > 3 && client.TimeoutMs > Timing.Global.Milliseconds)
         {
             PacketSender.SendError(client, Strings.Errors.ErrorTimeout, Strings.General.NoticeError);
@@ -1550,6 +1551,7 @@ internal sealed partial class PacketHandler
     //CreateAccountPacket
     public void HandlePacket(Client client, UserRegistrationRequestPacket packet)
     {
+        client.LanguageCode = Intersect.Localization.GameTextCatalog.NormalizeLanguage(packet.LanguageCode);
         if (client.TimeoutMs > Timing.Global.Milliseconds)
         {
             PacketSender.SendError(client, Strings.Errors.ErrorTimeout, Strings.General.NoticeError);

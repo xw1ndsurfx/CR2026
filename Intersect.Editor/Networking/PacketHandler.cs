@@ -32,6 +32,9 @@ namespace Intersect.Editor.Networking;
 
 internal sealed partial class PacketHandler
 {
+    public void HandlePacket(IPacketSender sender, TranslationSettingsPacket packet) => Intersect.Editor.Forms.FrmTranslations.Receive(packet);
+    public void HandlePacket(IPacketSender sender, ContentTranslationsPacket packet) { }
+
     private sealed partial class VirtualPacketSender : IPacketSender
     {
         public IApplicationContext ApplicationContext { get; }

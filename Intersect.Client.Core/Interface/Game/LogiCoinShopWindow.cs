@@ -255,7 +255,7 @@ internal sealed partial class LogiCoinShopWindow : Window
         var configuration = LogiCoinShopConfiguration.Instance;
 
         _balance = state.Balance;
-        _balanceLabel.Text = $"LogiCoins: {_balance:N0}";
+        _balanceLabel.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"LogiCoins: {_balance:N0}");
         _buyMore.IsDisabled = string.IsNullOrWhiteSpace(configuration.ShopUrl);
 
         var nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -263,12 +263,12 @@ internal sealed partial class LogiCoinShopWindow : Window
         {
             var until = DateTimeOffset.FromUnixTimeMilliseconds(state.PremiumUntilUnixMilliseconds)
                 .ToLocalTime();
-            _premiumLabel.Text = $"Premium until {until:yyyy-MM-dd}";
+            _premiumLabel.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"Premium until {until:yyyy-MM-dd}");
             _premiumLabel.TextColorOverride = Good;
         }
         else
         {
-            _premiumLabel.Text = "Premium inactive";
+            _premiumLabel.Text = Intersect.Client.Localization.ClientLanguages.Text("Premium inactive");
             _premiumLabel.TextColorOverride = Muted;
         }
 
@@ -295,8 +295,8 @@ internal sealed partial class LogiCoinShopWindow : Window
         if (!_enabled)
         {
             _pageLabel.Text = "0 / 0";
-            _detailsTitle.Text = "SHOP UNAVAILABLE";
-            _detailsBody.Text = "The LogiCoin Shop is currently disabled.";
+            _detailsTitle.Text = Intersect.Client.Localization.ClientLanguages.Text("SHOP UNAVAILABLE");
+            _detailsBody.Text = Intersect.Client.Localization.ClientLanguages.Text("The LogiCoin Shop is currently disabled.");
             _previous.IsDisabled = true;
             _next.IsDisabled = true;
             return;
@@ -329,7 +329,7 @@ internal sealed partial class LogiCoinShopWindow : Window
         }
         else
         {
-            _detailsTitle.Text = "NO OFFERS";
+            _detailsTitle.Text = Intersect.Client.Localization.ClientLanguages.Text("NO OFFERS");
             _detailsBody.Text = "This category has no configured offers yet.\n\n" +
                 "Add an offer in the Game Editor and select its category.";
         }

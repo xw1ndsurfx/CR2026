@@ -37,7 +37,7 @@ internal sealed class ItemChangeNotificationWindow : Base
         _heading = new Label(this, "LootCongratulations")
         {
             AutoSizeToContents = false, Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-            FontSize = 13, Text = "Congratulations! You received:", MouseInputEnabled = false,
+            FontSize = 13, Text = Intersect.Client.Localization.ClientLanguages.Text("Congratulations! You received:"), MouseInputEnabled = false,
             TextAlign = Pos.Center, TextColorOverride = Color.White, IsHidden = true,
         };
 
@@ -103,9 +103,9 @@ internal sealed class ItemChangeNotificationWindow : Base
         SetSize(Math.Min(420, Math.Max(200, (Parent?.Width ?? 640) - 64)), 92);
         _icon.Texture = null; _icon.Hide(); _heading.Hide();
         _name.SetBounds(20, 15, Width - 40, 28); _name.FontSize = 16;
-        _name.Text = phase.ToString(); _name.TextColorOverride = _phaseColor;
+        _name.Text = Intersect.Client.Localization.ClientLanguages.Text(phase.ToString()); _name.TextColorOverride = _phaseColor;
         _quantity.SetBounds(20, 47, Width - 40, 26); _quantity.FontSize = 12;
-        _quantity.Text = "has arrived"; _quantity.TextColorOverride = Color.White;
+        _quantity.Text = Intersect.Client.Localization.ClientLanguages.Text(phase == DayPhase.Night ? "has arrived (night)" : "has arrived"); _quantity.TextColorOverride = Color.White;
         _hideAt = Timing.Global.Milliseconds + 3_500;
         PositionWindow(); Show(); BringToFront();
     }
@@ -151,7 +151,7 @@ internal sealed class ItemChangeNotificationWindow : Base
         _name.Text = descriptor?.Name ?? "Item";
 
         var sign = packet.SignedQuantity > 0 ? "+" : string.Empty;
-        _quantity.Text = $"{sign}{packet.SignedQuantity:N0}";
+        _quantity.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"{sign}{packet.SignedQuantity:N0}");
         _quantity.TextColorOverride = packet.SignedQuantity >= 0
             ? new Color(a: 255, r: 115, g: 215, b: 125)
             : new Color(a: 255, r: 225, g: 95, b: 85);
@@ -159,7 +159,7 @@ internal sealed class ItemChangeNotificationWindow : Base
         {
             var rarity = Options.Instance.Items.TryGetRarityName(descriptor.Rarity, out var rarityName) ? rarityName : "Rare";
             if (Intersect.Client.Localization.Strings.ItemDescription.Rarity.TryGetValue(rarity, out var localized)) rarity = localized;
-            _quantity.Text = $"Rarity: {rarity} - x{packet.SignedQuantity:N0}";
+            _quantity.Text = Intersect.Client.Localization.ClientLanguages.Format("Rarity: {0} - x{1:N0}", rarity, packet.SignedQuantity);
             _quantity.TextColorOverride = _rarityColor!;
         }
 

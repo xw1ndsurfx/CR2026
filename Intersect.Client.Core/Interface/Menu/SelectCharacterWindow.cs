@@ -255,10 +255,10 @@ public partial class SelectCharacterWindow : Window
         PlaceProfileLabel(_guildCaptionLabel, captionX, firstRowY + rowGap * 3, captionWidth, captionColor);
         PlaceProfileLabel(_guildValueLabel, valueX, firstRowY + rowGap * 3, valueWidth, Color.White);
 
-        _infoLabel.Text = "Name:";
-        _levelCaptionLabel.Text = "Level:";
-        _classCaptionLabel.Text = "Class:";
-        _guildCaptionLabel.Text = "Guild:";
+        _infoLabel.Text = Intersect.Client.Localization.ClientLanguages.Text("Name:");
+        _levelCaptionLabel.Text = Intersect.Client.Localization.ClientLanguages.Text("Level:");
+        _classCaptionLabel.Text = Intersect.Client.Localization.ClientLanguages.Text("Class:");
+        _guildCaptionLabel.Text = Intersect.Client.Localization.ClientLanguages.Text("Guild:");
 
         // Change Password is intentionally not exposed from Character Select.
         // Keep the three remaining primary actions evenly spaced across the bottom row.
@@ -333,13 +333,13 @@ public partial class SelectCharacterWindow : Window
             return;
         }
 
-        _infoLabel.Text = "Name:";
+        _infoLabel.Text = Intersect.Client.Localization.ClientLanguages.Text("Name:");
         _nameLabel.Text = selectedPreviewMetadata.Name;
-        _levelCaptionLabel.Text = "Level:";
+        _levelCaptionLabel.Text = Intersect.Client.Localization.ClientLanguages.Text("Level:");
         _levelValueLabel.Text = selectedPreviewMetadata.Level.ToString();
-        _classCaptionLabel.Text = "Class:";
+        _classCaptionLabel.Text = Intersect.Client.Localization.ClientLanguages.Text("Class:");
         _classValueLabel.Text = selectedPreviewMetadata.Class;
-        _guildCaptionLabel.Text = "Guild:";
+        _guildCaptionLabel.Text = Intersect.Client.Localization.ClientLanguages.Text("Guild:");
         _guildValueLabel.Text = string.IsNullOrWhiteSpace(selectedPreviewMetadata.Guild) ? "-" : selectedPreviewMetadata.Guild;
 
         _buttonPlay.Show();

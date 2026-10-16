@@ -1,4 +1,4 @@
-﻿using MessagePack;
+using MessagePack;
 
 namespace Intersect.Network.Packets.Client;
 
@@ -26,4 +26,5 @@ public partial class UserRegistrationRequestPacket : IntersectPacket
     [Key(2)]
     public string Email { get; set; }
 
+    [Key(3)] public string LanguageCode { get; set; } = "en";
 }

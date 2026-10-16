@@ -508,6 +508,9 @@ public partial class FrmMain : Form
         };
 
         contentEditorsToolStripMenuItem.DropDownItems.Add(soundImport);
+        var translations = new ToolStripMenuItem { Text = "Game Translations..." };
+        translations.Click += (_, _) => new FrmTranslations().Show(this);
+        contentEditorsToolStripMenuItem.DropDownItems.Add(translations);
     }
 
     private void BeginGeneratedAnimationCreation(

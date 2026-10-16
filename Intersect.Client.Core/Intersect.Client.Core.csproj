@@ -87,4 +87,5 @@
     <PackageReference Include="Steamworks.NET" Version="2024.8.0" />
   </ItemGroup>
 
+  <ItemGroup><EmbeddedResource Include="Localization/Locales/ui.json" LogicalName="Intersect.Client.Localization.Locales.ui.json" /></ItemGroup>
 </Project>

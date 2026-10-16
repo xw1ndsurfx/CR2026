@@ -162,7 +162,7 @@ public partial class CharacterCreationWindow : Window
             Font = _defaultFont,
             FontSize = 11,
             MinimumSize = new Point(240, 26),
-            Text = "Randomize Appearance",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("Randomize Appearance"),
         };
         _randomizeAppearanceButton.Clicked += (_, _) => RandomizeAppearance();
 

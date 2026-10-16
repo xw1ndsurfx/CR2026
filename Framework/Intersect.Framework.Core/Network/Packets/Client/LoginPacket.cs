@@ -1,4 +1,4 @@
-﻿using MessagePack;
+using MessagePack;
 
 namespace Intersect.Network.Packets.Client;
 
@@ -22,4 +22,5 @@ public partial class LoginPacket : IntersectPacket
     [Key(1)]
     public string Password { get; set; }
 
+    [Key(2)] public string LanguageCode { get; set; } = "en";
 }

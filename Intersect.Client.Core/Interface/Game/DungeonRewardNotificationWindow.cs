@@ -102,7 +102,7 @@ internal sealed class DungeonRewardNotificationWindow : Base
         _current = packet;
         _hideAt = Timing.Global.Milliseconds + 4_500;
 
-        _title.Text = $"DUNGEON CLEARED • {packet.DungeonName}";
+        _title.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"DUNGEON CLEARED • {packet.DungeonName}");
 
         var item = packet.ItemId == Guid.Empty ? null : ItemDescriptor.Get(packet.ItemId);
         _icon.Texture = null;
@@ -121,7 +121,7 @@ internal sealed class DungeonRewardNotificationWindow : Base
 
         if (item != null && packet.ItemQuantity > 0)
         {
-            _primary.Text = $"{item.Name} x{packet.ItemQuantity:N0}";
+            _primary.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"{item.Name} x{packet.ItemQuantity:N0}");
             _secondary.Text = packet.Experience > 0
                 ? $"+{packet.Experience:N0} EXP"
                 : "Reward received";
@@ -131,7 +131,7 @@ internal sealed class DungeonRewardNotificationWindow : Base
             _primary.Text = packet.Experience > 0
                 ? $"+{packet.Experience:N0} EXP"
                 : "Dungeon completed";
-            _secondary.Text = "Rewards delivered";
+            _secondary.Text = Intersect.Client.Localization.ClientLanguages.Text("Rewards delivered");
         }
 
         PositionWindow();

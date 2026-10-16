@@ -219,7 +219,7 @@ internal sealed class RoyalStylistWindow : Window
 
         _randomize = new Button(this, "Randomize")
         {
-            Text = "RANDOMIZE",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("RANDOMIZE"),
             Font = titleFont,
             FontSize = 9,
         };
@@ -232,7 +232,7 @@ internal sealed class RoyalStylistWindow : Window
 
         _reset = new Button(this, "Reset")
         {
-            Text = "RESET",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("RESET"),
             Font = titleFont,
             FontSize = 9,
         };
@@ -245,7 +245,7 @@ internal sealed class RoyalStylistWindow : Window
 
         _apply = new Button(this, "Apply")
         {
-            Text = "APPLY CHANGES",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("APPLY CHANGES"),
             Font = titleFont,
             FontSize = 10,
         };
@@ -254,7 +254,7 @@ internal sealed class RoyalStylistWindow : Window
 
         _cancel = new Button(this, "Cancel")
         {
-            Text = "CANCEL",
+            Text = Intersect.Client.Localization.ClientLanguages.Text("CANCEL"),
             Font = titleFont,
             FontSize = 9,
         };
@@ -420,7 +420,7 @@ internal sealed class RoyalStylistWindow : Window
         {
             button.Text = string.Empty;
             button.ShouldDrawBackground = false;
-            button.SetToolTipText("Preview: " + text);
+            button.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("Preview: ") + text);
             button.HoverEnter += (_, _) =>
                 art.SetTextureRect(3 * arrowSize, arrowRow * arrowSize, arrowSize, arrowSize);
             button.HoverLeave += (_, _) => UpdateDirectionButtonArts();
@@ -874,7 +874,7 @@ internal sealed class RoyalStylistWindow : Window
         }
 
         _apply.IsDisabled = true;
-        _apply.Text = "APPLYING...";
+        _apply.Text = Intersect.Client.Localization.ClientLanguages.Text("APPLYING...");
 
         PacketSender.SendApplyRoyalStylistAppearance(
             _state.StylistId,

@@ -699,7 +699,7 @@ public static partial class PacketSender
             return;
         }
 
-        player.SendPacket(new ChatMsgPacket(message, type, color, target), TransmissionMode.All);
+        player.SendPacket(new ChatMsgPacket(message, type, color, target) { Localize = (int)type >= 20 || (type is ChatMessageType.Guild or ChatMessageType.Party or ChatMessageType.Admin or ChatMessageType.Global && string.IsNullOrEmpty(target)) }, TransmissionMode.All);
     }
 
     //GameDataPacket
@@ -731,6 +731,8 @@ public static partial class PacketSender
                 }
             }
         }
+
+        Intersect.Server.Localization.ContentTranslationRuntime.SendTo(client);
 
         //Now send the cached game data that we send to all clients
         if (!client.Send(CachedGameDataPacket))
@@ -791,7 +793,7 @@ public static partial class PacketSender
     /// <param name="type">The type of message we are sending.</param>
     public static void SendGlobalMsg(string message, Color color, string target = "", ChatMessageType type = ChatMessageType.Global)
     {
-        SendDataToAllPlayers(new ChatMsgPacket(message, type, color, target));
+        SendDataToAllPlayers(new ChatMsgPacket(message, type, color, target) { Localize = (int)type >= 20 || (type is ChatMessageType.Guild or ChatMessageType.Party or ChatMessageType.Admin or ChatMessageType.Global && string.IsNullOrEmpty(target)) });
     }
 
     /// <summary>
@@ -818,7 +820,7 @@ public static partial class PacketSender
     /// <returns></returns>
     public static bool SendProximityMsg(string message, ChatMessageType type, Guid mapId, Color color, string target = "")
     {
-        return SendDataAcrossMapInstancesInProximity(mapId, new ChatMsgPacket(message, type, color, target));
+        return SendDataAcrossMapInstancesInProximity(mapId, new ChatMsgPacket(message, type, color, target) { Localize = (int)type >= 20 || (type is ChatMessageType.Guild or ChatMessageType.Party or ChatMessageType.Admin or ChatMessageType.Global && string.IsNullOrEmpty(target)) });
     }
 
     /// <summary>
@@ -833,7 +835,7 @@ public static partial class PacketSender
     /// <returns></returns>
     public static bool SendProximityMsgToLayer(string message, ChatMessageType type, Guid mapId, Guid mapInstanceId, Color color, string target = "")
     {
-        return SendDataToProximityOnMapInstance(mapId, mapInstanceId, new ChatMsgPacket(message, type, color, target));
+        return SendDataToProximityOnMapInstance(mapId, mapInstanceId, new ChatMsgPacket(message, type, color, target) { Localize = (int)type >= 20 || (type is ChatMessageType.Guild or ChatMessageType.Party or ChatMessageType.Admin or ChatMessageType.Global && string.IsNullOrEmpty(target)) });
     }
 
     /// <summary>
