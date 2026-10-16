@@ -927,10 +927,11 @@ public partial class Entity : IEntity
             }
 
             var animationDirection = animation.AutoRotate ? DirectionFacing : default;
+            var anchor = AnimationAnchor(animation.AboveParent);
             var eventOffset = this is Events.Event evt ? new Vector2(evt.AnimationOffsetX, evt.AnimationOffsetY) : Vector2.Zero;
             animation.SetPosition(
-                (int)Math.Ceiling(Center.X + eventOffset.X),
-                (int)Math.Ceiling(Center.Y + eventOffset.Y),
+                (int)Math.Ceiling(anchor.X + eventOffset.X),
+                (int)Math.Ceiling(anchor.Y + eventOffset.Y),
                 X,
                 Y,
                 MapId,
@@ -948,6 +949,15 @@ public partial class Entity : IEntity
         UpdateSpriteAnimation();
 
         return true;
+    }
+
+    internal Vector2 AnimationAnchor(bool aboveParent)
+    {
+        if (!aboveParent) return Center;
+        // NPCs can move between render passes: derive the head from their current origin,
+        // never the previous frame's cached label position or the full padded sprite canvas.
+        var top = this is Resource or Events.Event ? GetTop() : Origin.Y - CenterOffset.Y * 2;
+        return new Vector2(Center.X, top);
     }
 
     public bool TryAddAnimation(Animation animation, AnimationSource animationSource = default)

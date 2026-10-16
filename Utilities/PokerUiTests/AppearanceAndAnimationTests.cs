@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Intersect;
 using Intersect.Client.Entities;
@@ -29,6 +29,13 @@ internal static class AppearanceAndAnimationTests
             Check(frame.X + frame.Width / 2 == 110 && frame.Y + frame.Height / 2 == 185,
                 "Attached animations use visible body center plus authored offsets, without the legacy 32px shift");
         }
+        anim.AboveParent = true;
+        var overhead = (Intersect.Client.Framework.GenericClasses.FloatRect)bounds.Invoke(anim, [layer, 32f, 48f])!;
+        Check(overhead.X + overhead.Width / 2 == 110 && overhead.Y + overhead.Height == 200 - 4 - 15,
+            "Quest marker bottom sits just above the head and respects authored layer offsets");
+        var taller = (Intersect.Client.Framework.GenericClasses.FloatRect)bounds.Invoke(anim, [layer, 64f, 96f])!;
+        Check(taller.Y + taller.Height == overhead.Y + overhead.Height, "Changing marker scale does not move its bottom into the NPC");
+        anim.AboveParent = false;
         Check(layer.Opacity == 26, "90% transparency must retain only 10% alpha");
         var old = JsonConvert.DeserializeObject<AnimationLayer>("{\"ScalePercent\":100}")!;
         Check(old.Opacity == 255 && old.OffsetX == 0 && old.OffsetY == 0, "Existing animations remain opaque with no author offsets");
@@ -93,6 +100,29 @@ internal static class AppearanceAndAnimationTests
             Check(body.X >= 0 && body.Y >= 0 && body.Right <= preview.Width, "Maximum zoom fits the available viewport");
             Check(Descendants(window).OfType<Button>().Where(b => b.Name?.StartsWith("PreviewDirection") == true)
                 .All(b => !b.Text.Contains('?') && !b.Text.Any(c => c > 127)), "Direction labels use font-compatible text");
+        }
+        var guidanceType = typeof(CharacterCreationWindow).Assembly.GetType("Intersect.Client.Interface.Game.QuestGuidanceManager", true)!;
+        var guidance = Activator.CreateInstance(guidanceType, [canvas])!;
+        var npc = (Entity)RuntimeHelpers.GetUninitializedObject(typeof(Entity)); GC.SuppressFinalize(npc);
+        foreach (var fieldName in new[] { "_animations", "_animationsBySource" })
+        {
+            var field = typeof(Entity).GetField(fieldName, flags)!;
+            field.SetValue(npc, Activator.CreateInstance(field.FieldType));
+        }
+        var descriptor = new AnimationDescriptor(Guid.NewGuid());
+        AnimationDescriptor.Lookup[descriptor.Id] = descriptor;
+        try
+        {
+            var desired = new Dictionary<Guid, (Guid TaskId, Guid AnimationId, Entity Entity)>
+                { [Guid.NewGuid()] = (Guid.NewGuid(), descriptor.Id, npc) };
+            guidanceType.GetMethod("SynchronizeMarkers", flags)!.Invoke(guidance, [desired]);
+            var attached = (List<Animation>)typeof(Entity).GetField("_animations", flags)!.GetValue(npc)!;
+            Check(attached.Count == 1 && attached[0].AboveParent, "Real quest guidance registration uses the overhead anchor");
+        }
+        finally
+        {
+            guidanceType.GetMethod("Clear")!.Invoke(guidance, null);
+            AnimationDescriptor.Lookup.DeleteAt(descriptor.Id);
         }
         System.Console.WriteLine("PASS animation visual geometry/transparency and actual Character Creation/Royal Stylist layout");
     }

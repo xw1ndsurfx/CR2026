@@ -331,7 +331,7 @@ internal sealed class QuestGuidanceManager
                 -1,
                 target.Entity,
                 source
-            );
+            ) { AboveParent = true };
 
             if (!target.Entity.TryAddAnimation(animation, source))
             {
