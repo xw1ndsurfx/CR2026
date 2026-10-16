@@ -95,6 +95,8 @@ public static partial class GameContentManager
 
     public static string[] SmartSortedSoundNames => SmartSort(SoundNames);
 
+    public static string[] SmartSortedVoiceSoundNames => SmartSort(VoiceSoundFiles.List("resources"));
+
     //Resource Downloader
     public static void CheckForResources()
     {

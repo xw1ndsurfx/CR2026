@@ -497,7 +497,7 @@ public partial class FrmMain : Form
         var soundImport = new ToolStripMenuItem
         {
             Name = "soundImportEditorToolStripMenuItem",
-            Text = "Sounds Import...",
+            Text = "Sound / Voice Sound Import...",
             ForeColor = System.Drawing.Color.FromArgb(220, 220, 220),
         };
 

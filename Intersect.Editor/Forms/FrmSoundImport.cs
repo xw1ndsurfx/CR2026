@@ -6,7 +6,7 @@ using Intersect.Editor.Content;
 
 namespace Intersect.Editor.Forms;
 
-public sealed class FrmSoundImport : DarkForm
+public sealed partial class FrmSoundImport : DarkForm
 {
     private sealed class SoundAsset
     {
@@ -17,6 +17,7 @@ public sealed class FrmSoundImport : DarkForm
         public required string SuggestedName { get; init; }
 
         public required string Category { get; init; }
+        public SoundImportKind Kind { get; init; }
 
         public long FileSize { get; init; }
 
@@ -147,7 +148,9 @@ public sealed class FrmSoundImport : DarkForm
 
     private readonly string _gameRoot;
     private readonly string _importRoot;
-    private readonly string _soundsRoot;
+    private readonly ComboBox _libraryKind = new();
+    private readonly ComboBox _targetKind = new();
+    private readonly Label _destination = new();
     private readonly string _favoritesPath;
 
     private readonly ListBox _categoryList = new();
@@ -187,14 +190,14 @@ public sealed class FrmSoundImport : DarkForm
     {
         _gameRoot = ResolveGameRoot();
         _importRoot = Path.Combine(_gameRoot, "soundimport");
-        _soundsRoot = Path.Combine(_gameRoot, "resources", "sounds");
+
         _favoritesPath = Path.Combine(
             _gameRoot,
             ".soundimport-cache",
             "favorites.txt"
         );
 
-        Text = "Sounds Import";
+        Text = "Sound / Voice Sound Import";
         StartPosition = FormStartPosition.CenterParent;
         MinimumSize = new Size(1080, 700);
         Size = new Size(1380, 860);
@@ -202,11 +205,13 @@ public sealed class FrmSoundImport : DarkForm
         ForeColor = System.Drawing.Color.Gainsboro;
 
         Directory.CreateDirectory(_importRoot);
-        Directory.CreateDirectory(_soundsRoot);
+        foreach (var kind in Enum.GetValues<SoundImportKind>())
+            Directory.CreateDirectory(SoundImporter.GameFolder(_gameRoot, kind));
         LoadFavorites();
         foreach (var categoryName in Categories)
         {
-            Directory.CreateDirectory(Path.Combine(_importRoot, categoryName));
+            foreach (var kind in Enum.GetValues<SoundImportKind>())
+                Directory.CreateDirectory(Path.Combine(SoundImporter.LibraryFolder(_importRoot, kind), categoryName));
         }
 
         BuildInterface();
@@ -258,16 +263,19 @@ public sealed class FrmSoundImport : DarkForm
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 3,
+            RowCount = 4,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
             BackColor = System.Drawing.Color.FromArgb(18, 18, 18),
         };
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 122));
         Controls.Add(root);
+
+        BuildTypeBar(root);
 
         var toolbar = new FlowLayoutPanel
         {
@@ -322,7 +330,7 @@ public sealed class FrmSoundImport : DarkForm
         toolbar.Controls.Add(_cancelButton);
         toolbar.Controls.Add(_progressBar);
         toolbar.Controls.Add(_progressLabel);
-        root.Controls.Add(toolbar, 0, 0);
+        root.Controls.Add(toolbar, 0, 1);
 
         var body = new TableLayoutPanel
         {
@@ -336,9 +344,9 @@ public sealed class FrmSoundImport : DarkForm
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190));
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 57));
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 43));
-        root.Controls.Add(body, 0, 1);
+        root.Controls.Add(body, 0, 2);
 
-        var categoryPanel = CreateSection("CATEGORIES");
+        var categoryPanel = CreateSection("SUBCATEGORIES");
         StyleListBox(_categoryList);
         _categoryList.Dock = DockStyle.Fill;
         _categoryList.SelectedIndexChanged += (_, _) =>
@@ -434,6 +442,7 @@ public sealed class FrmSoundImport : DarkForm
         _soundList.ForeColor = System.Drawing.Color.Gainsboro;
         _soundList.Columns.Add("Name", 245);
         _soundList.Columns.Add("Category", 100);
+        _soundList.Columns.Add("Type", 100);
         _soundList.Columns.Add("Duration", 80);
         _soundList.Columns.Add("Size", 80);
         _soundList.SelectedIndexChanged += async (_, _) =>
@@ -533,7 +542,7 @@ public sealed class FrmSoundImport : DarkForm
             Dock = DockStyle.Fill,
             BackColor = System.Drawing.Color.FromArgb(25, 22, 23),
         };
-        root.Controls.Add(footer, 0, 2);
+        root.Controls.Add(footer, 0, 3);
 
         AddFooterLabel(footer, "Name:", 14, 17);
         _name.Location = new System.Drawing.Point(62, 11);
@@ -570,9 +579,9 @@ public sealed class FrmSoundImport : DarkForm
             await ImportFilteredToGameAsync();
         footer.Controls.Add(_importFilteredButton);
 
-        var openGame = CreateDarkButton("OPEN GAME SOUNDS", 180);
+        var openGame = CreateDarkButton("OPEN DESTINATION", 180);
         openGame.Location = new System.Drawing.Point(1120, 9);
-        openGame.Click += (_, _) => OpenFolder(_soundsRoot);
+        openGame.Click += (_, _) => OpenFolder(SoundImporter.GameFolder(_gameRoot, TargetKind));
         footer.Controls.Add(openGame);
 
         _status.AutoSize = false;
@@ -722,6 +731,7 @@ public sealed class FrmSoundImport : DarkForm
                         FileName = fileName,
                         SuggestedName = FriendlyName(stem),
                         Category = categoryName,
+                        Kind = SoundImporter.LibraryKind(_importRoot, file),
                         FileSize = new FileInfo(file).Length,
                         LastWriteTimeUtc = File.GetLastWriteTimeUtc(file),
                     }
@@ -746,6 +756,11 @@ public sealed class FrmSoundImport : DarkForm
     private IEnumerable<SoundAsset> GetFilteredAssets()
     {
         IEnumerable<SoundAsset> query = _assets;
+        if (_libraryKind.SelectedIndex > 0)
+        {
+            var kind = (SoundImportKind)(_libraryKind.SelectedIndex - 1);
+            query = query.Where(asset => asset.Kind == kind);
+        }
 
         var categoryName = _categoryList.SelectedItem?.ToString();
         if (string.Equals(
@@ -890,6 +905,7 @@ public sealed class FrmSoundImport : DarkForm
                     Tag = asset,
                 };
                 item.SubItems.Add(asset.Category);
+                item.SubItems.Add(SoundImporter.DisplayName(asset.Kind));
                 item.SubItems.Add(
                     asset.MetadataLoaded
                         ? FormatDuration(asset.Duration)
@@ -943,6 +959,7 @@ public sealed class FrmSoundImport : DarkForm
         var cancellationToken = _selectionCancellation.Token;
 
         _selectedAsset = asset;
+        _targetKind.SelectedIndex = (int)asset.Kind;
         UpdateFavoriteButton();
         _name.Text = asset.SuggestedName;
         _category.Text = asset.Category;
@@ -973,6 +990,7 @@ public sealed class FrmSoundImport : DarkForm
 
             _details.Text =
                 $"File: {asset.FileName}\r\n" +
+                $"Type: {SoundImporter.DisplayName(asset.Kind)}\r\n" +
                 $"Category: {asset.Category}\r\n" +
                 $"Duration: {FormatDuration(asset.Duration)}\r\n" +
                 $"Sample rate: {asset.SampleRate:N0} Hz\r\n" +
@@ -984,7 +1002,7 @@ public sealed class FrmSoundImport : DarkForm
 
             if (_soundList.SelectedItems.Count > 0)
             {
-                _soundList.SelectedItems[0].SubItems[2].Text =
+                _soundList.SelectedItems[0].SubItems[3].Text =
                     FormatDuration(asset.Duration);
             }
         }
@@ -1101,6 +1119,7 @@ public sealed class FrmSoundImport : DarkForm
 
     private async Task ImportZipAsync()
     {
+        if (!ChooseImportKind(out var kind)) return;
         using var dialog = new OpenFileDialog
         {
             Filter = "ZIP archives (*.zip)|*.zip",
@@ -1118,14 +1137,16 @@ public sealed class FrmSoundImport : DarkForm
                 ProcessZipImport(
                     dialog.FileName,
                     progress,
-                    cancellationToken
+                    cancellationToken,
+                    kind
                 ),
-            "Importing sound ZIP..."
+            $"Importing {SoundImporter.DisplayName(kind)} ZIP..."
         );
     }
 
     private async Task ImportFilesAsync()
     {
+        if (!ChooseImportKind(out var kind)) return;
         using var dialog = new OpenFileDialog
         {
             Filter = SoundImporter.FileFilter,
@@ -1145,7 +1166,8 @@ public sealed class FrmSoundImport : DarkForm
                 ProcessFileImport(
                     files,
                     progress,
-                    cancellationToken
+                    cancellationToken,
+                    kind
                 ),
             $"Importing {files.Length:N0} audio file(s) as WAV..."
         );
@@ -1263,7 +1285,8 @@ public sealed class FrmSoundImport : DarkForm
     private SoundImportResult ProcessZipImport(
         string zipPath,
         IProgress<SoundImportProgress> progress,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        SoundImportKind kind
     )
     {
         var result = new SoundImportResult();
@@ -1303,7 +1326,7 @@ public sealed class FrmSoundImport : DarkForm
                         $"{sourceName} {folderHint}"
                     );
                     var categoryDirectory =
-                        Path.Combine(_importRoot, categoryName);
+                        Path.Combine(SoundImporter.LibraryFolder(_importRoot, kind), categoryName);
                     Directory.CreateDirectory(categoryDirectory);
 
                     var fileName = Path.ChangeExtension(Path.GetFileName(entry.Name), ".wav");
@@ -1361,7 +1384,8 @@ public sealed class FrmSoundImport : DarkForm
     private SoundImportResult ProcessFileImport(
         IReadOnlyList<string> files,
         IProgress<SoundImportProgress> progress,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        SoundImportKind kind
     )
     {
         var result = new SoundImportResult();
@@ -1388,7 +1412,7 @@ public sealed class FrmSoundImport : DarkForm
                     var sourceName = Path.GetFileNameWithoutExtension(file);
                     var categoryName = ClassifySound(sourceName);
                     var categoryDirectory =
-                        Path.Combine(_importRoot, categoryName);
+                        Path.Combine(SoundImporter.LibraryFolder(_importRoot, kind), categoryName);
                     Directory.CreateDirectory(categoryDirectory);
 
                     var requestedDestination = Path.Combine(
@@ -1471,7 +1495,7 @@ public sealed class FrmSoundImport : DarkForm
 
         var confirmation = MessageBox.Show(
             this,
-            $"Import {assets.Length:N0} filtered sound(s) into resources\\sounds?\n\n" +
+            $"Import {assets.Length:N0} filtered sound(s) as {SoundImporter.DisplayName(TargetKind)} into resources/{SoundImporter.Folder(TargetKind)}?\n\n" +
             "All sounds are imported as PCM WAV. Duplicate filenames receive a numeric prefix; existing files are preserved.",
             "Import Sounds To Game",
             MessageBoxButtons.YesNo,
@@ -1500,7 +1524,9 @@ public sealed class FrmSoundImport : DarkForm
         _operationCancellation = new CancellationTokenSource();
         var cancellationToken = _operationCancellation.Token;
 
-        SetOperationUi(true, "Importing sounds to game...");
+        var kind = TargetKind;
+        var destinationRoot = SoundImporter.GameFolder(_gameRoot, kind);
+        SetOperationUi(true, $"Importing {SoundImporter.DisplayName(kind)} to game...");
 
         var imported = 0;
         var skipped = 0;
@@ -1518,7 +1544,7 @@ public sealed class FrmSoundImport : DarkForm
 
                         var (asset, fileName) = assets[i];
                         var requestedDestination =
-                            Path.Combine(_soundsRoot, fileName);
+                            Path.Combine(destinationRoot, fileName);
                         try
                         {
                             var destination = SoundImporter.Import(asset.FilePath, requestedDestination, cancellationToken);
@@ -1555,7 +1581,7 @@ public sealed class FrmSoundImport : DarkForm
                                 _progressLabel.Text =
                                     $"{percent}% | {completed:N0}/{assets.Count:N0}";
                                 _status.Text =
-                                    $"Copying to resources/sounds | {asset.FileName}";
+                                    $"Copying to resources/{SoundImporter.Folder(kind)} | {asset.FileName}";
                             }
                         );
                     }
@@ -1568,7 +1594,7 @@ public sealed class FrmSoundImport : DarkForm
             _progressBar.Value = 100;
             _progressLabel.Text = "100%";
             _status.Text =
-                $"Game sounds refreshed: {imported:N0} imported, {skipped:N0} skipped, " +
+                $"{SoundImporter.DisplayName(kind)} refreshed: {imported:N0} imported, {skipped:N0} skipped, " +
                 $"{renamedDuplicates:N0} duplicate name(s) prefixed.";
             if (errors.Count > 0) MessageBox.Show(this, string.Join(Environment.NewLine, errors), "Audio import - files skipped", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
@@ -1591,6 +1617,7 @@ public sealed class FrmSoundImport : DarkForm
         _importFilesButton.Enabled = !running;
         _importSelectedButton.Enabled = !running;
         _importFilteredButton.Enabled = !running;
+        _targetKind.Enabled = _libraryKind.Enabled = !running;
         _cancelButton.Enabled = running;
         _cancelButton.Text = "CANCEL";
         _progressBar.Visible = running || _progressBar.Value > 0;

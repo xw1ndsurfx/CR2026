@@ -4,6 +4,7 @@ using System.Text;
 using SharpDX.MediaFoundation;
 using System.Runtime.InteropServices;
 using Intersect.Editor.Content;
+using Intersect;
 using Intersect.Editor.Forms;
 
 internal static class SoundImportTests
@@ -58,15 +59,43 @@ internal static class SoundImportTests
             }
             var progressType = typeof(FrmSoundImport).GetNestedType("SoundImportProgress", BindingFlags.NonPublic)!;
             var progress = Activator.CreateInstance(typeof(QuietProgress<>).MakeGenericType(progressType))!;
-            var result = typeof(FrmSoundImport).GetMethod("ProcessZipImport", flags)!.Invoke(form, [zip, progress, CancellationToken.None])!;
+            var result = typeof(FrmSoundImport).GetMethod("ProcessZipImport", flags)!.Invoke(form, [zip, progress, CancellationToken.None, SoundImportKind.Sound])!;
             int Count(string name) => (int)result.GetType().GetProperty(name)!.GetValue(result)!;
             Check(Count("Imported") == 3 && Count("RenamedDuplicates") == 1 && Count("Skipped") == 1 && Count("Converted") == 1,
                 "ZIP imports convert audio, prefix duplicates and report corrupt files");
             var errors = (System.Collections.ICollection)result.GetType().GetProperty("Errors")!.GetValue(result)!;
             Check(errors.Count == 1, "Import reports individual conversion failures");
-            var loose = typeof(FrmSoundImport).GetMethod("ProcessFileImport", flags)!.Invoke(form, [new[] { mp3 }, progress, CancellationToken.None])!;
+            var loose = typeof(FrmSoundImport).GetMethod("ProcessFileImport", flags)!.Invoke(form, [new[] { mp3 }, progress, CancellationToken.None, SoundImportKind.VoiceSound])!;
             Check((int)loose.GetType().GetProperty("Imported")!.GetValue(loose)! == 1 &&
                 (int)loose.GetType().GetProperty("Converted")!.GetValue(loose)! == 1, "Loose MP3 import converts automatically");
+            var libraryRoot = Path.Combine(root, "library");
+            Check(Directory.GetFiles(Path.Combine(libraryRoot, "sounds"), "*.wav", SearchOption.AllDirectories).Length == 3 &&
+                Directory.GetFiles(Path.Combine(libraryRoot, "voicesound"), "*.wav", SearchOption.AllDirectories).Length == 1,
+                "ZIP effects and loose dialogue imports stay in separate typed library folders");
+            var voiceZip = typeof(FrmSoundImport).GetMethod("ProcessZipImport", flags)!.Invoke(form, [zip, progress, CancellationToken.None, SoundImportKind.VoiceSound])!;
+            Check((int)voiceZip.GetType().GetProperty("Imported")!.GetValue(voiceZip)! == 3, "ZIP import also supports the explicit Voice Sound type");
+            foreach (var kind in Enum.GetValues<SoundImportKind>())
+            {
+                var folder = SoundImporter.GameFolder(root, kind);
+                var requested = Path.Combine(folder, "same-name.wav");
+                var imported = SoundImporter.Import(input, requested, default); Validate(imported);
+                var duplicate = SoundImporter.Import(input, requested, default); Validate(duplicate);
+                Check(Path.GetFileName(imported) == "same-name.wav" && Path.GetFileName(duplicate) == "2_same-name.wav", "Duplicate prefixes apply independently in each game audio category");
+            }
+            Check(VoiceSoundFiles.List(Path.Combine(root, "resources")).SequenceEqual(new[] { "2_same-name.wav", "same-name.wav" }), "Voice picker lists only files in resources/voicesound");
+            Check(SoundImporter.LibraryKind(libraryRoot, Path.Combine(libraryRoot, "Voice", "legacy.wav")) == SoundImportKind.Sound &&
+                SoundImporter.LibraryKind(libraryRoot, Path.Combine(libraryRoot, "voicesound", "Misc", "dialogue.wav")) == SoundImportKind.VoiceSound,
+                "Legacy staging stays accessible as Sound while explicit Voice Sound imports keep their type");
+            var libraryType = (System.Windows.Forms.ComboBox)typeof(FrmSoundImport).GetField("_libraryKind", flags)!.GetValue(form)!;
+            var targetType = (System.Windows.Forms.ComboBox)typeof(FrmSoundImport).GetField("_targetKind", flags)!.GetValue(form)!;
+            Check(libraryType.Items.Count == 3 && targetType.Items.Count == 2, "Library filtering and import destination are explicit independent choices");
+            var indexed = (System.Collections.IEnumerable)typeof(FrmSoundImport).GetMethod("BuildAssetIndex", flags)!.Invoke(form, [new QuietProgress<int>(), CancellationToken.None])!;
+            var assets = (System.Collections.IList)typeof(FrmSoundImport).GetField("_assets", flags)!.GetValue(form)!;
+            foreach (var asset in indexed) assets.Add(asset);
+            int FilteredCount() => ((System.Collections.IEnumerable)typeof(FrmSoundImport).GetMethod("GetFilteredAssets", flags)!.Invoke(form, null)!).Cast<object>().Count();
+            libraryType.SelectedIndex = 1; Check(FilteredCount() == 3, "Sound library excludes dialogue files");
+            libraryType.SelectedIndex = 2; Check(FilteredCount() == 4 && targetType.SelectedIndex == 1, "Voice Sound library excludes effects and defaults to the voice destination");
+            libraryType.SelectedIndex = 0; Check(FilteredCount() == 7, "All audio can display both explicit types together");
             var ogg = Environment.GetEnvironmentVariable("CR2026_TEST_OGG");
             if (!string.IsNullOrWhiteSpace(ogg))
             {

@@ -5,9 +5,27 @@ using SharpDX.MediaFoundation;
 
 namespace Intersect.Editor.Content;
 
+public enum SoundImportKind { Sound, VoiceSound }
+
 /// <summary>Produces game-compatible PCM WAV files without overwriting existing assets.</summary>
 public static class SoundImporter
 {
+    public static string Folder(SoundImportKind kind) => kind switch
+    {
+        SoundImportKind.Sound => "sounds",
+        SoundImportKind.VoiceSound => VoiceSoundFiles.Folder,
+        _ => throw new ArgumentOutOfRangeException(nameof(kind)),
+    };
+    public static string DisplayName(SoundImportKind kind) => kind == SoundImportKind.VoiceSound ? "Voice Sound" : "Sound";
+    public static string GameFolder(string gameRoot, SoundImportKind kind) => Path.Combine(gameRoot, "resources", Folder(kind));
+    public static string LibraryFolder(string libraryRoot, SoundImportKind kind) => Path.Combine(libraryRoot, Folder(kind));
+    public static SoundImportKind LibraryKind(string libraryRoot, string file)
+    {
+        var first = Path.GetRelativePath(libraryRoot, file).Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)[0];
+        // Existing untyped staging folders remain effects; never silently relocate old assets.
+        return first.Equals(VoiceSoundFiles.Folder, StringComparison.OrdinalIgnoreCase) ? SoundImportKind.VoiceSound : SoundImportKind.Sound;
+    }
+
     public const string FileFilter = "Audio files|*.wav;*.mp3;*.ogg;*.flac;*.m4a;*.aac;*.wma;*.aif;*.aiff|All files|*.*";
     private static readonly HashSet<string> Extensions = new(StringComparer.OrdinalIgnoreCase)
         { ".wav", ".mp3", ".ogg", ".flac", ".m4a", ".aac", ".wma", ".aif", ".aiff" };
