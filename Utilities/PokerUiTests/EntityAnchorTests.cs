@@ -50,6 +50,15 @@ internal static class EntityAnchorTests
             Check(body.GetTop() == top, "Raised weapons must not lift the name away from the character's head");
         }
 
+        var animationAnchor = typeof(Entity).GetMethod("AnimationAnchor", Hidden)!;
+        var currentHead = (Vector2)animationAnchor.Invoke(body, [true])!;
+        var previousOrigin = body.Origin;
+        typeof(Entity).GetField("mOrigin", Hidden)!.SetValue(body, previousOrigin + new Vector2(17, -23));
+        var movedHead = (Vector2)animationAnchor.Invoke(body, [true])!;
+        Check(movedHead - currentHead == new Vector2(17, -23), "Quest marker follows movement immediately without using stale label bounds");
+        Check((Vector2)animationAnchor.Invoke(body, [false])! == body.Center, "Spells and ordinary effects retain their body center");
+        typeof(Entity).GetField("mOrigin", Hidden)!.SetValue(body, previousOrigin);
+
         var resource = (Resource)RuntimeHelpers.GetUninitializedObject(typeof(Resource)); GC.SuppressFinalize(resource);
         resource.X = 3; resource.Y = 4;
         var resourceType = typeof(Resource);

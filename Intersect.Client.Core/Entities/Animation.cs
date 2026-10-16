@@ -33,6 +33,10 @@ public partial class Animation : IAnimation
 
     public float ParentOffsetY { get; set; }
 
+    /// <summary>Quest markers sit above the visible head; ordinary effects remain body-centered.</summary>
+    public bool AboveParent { get; set; }
+    internal const float OverheadGap = 4f;
+
     private bool mDisposeNextDraw;
 
     private int mLowerFrame;
@@ -179,6 +183,7 @@ public partial class Animation : IAnimation
 
         if (!upper && mShowLower && mZDimension < 1 || !upper && mShowLower && mZDimension > 0)
         {
+            var lightY = mRenderY;
             //Draw Lower
             var tex = Globals.ContentManager.GetTexture(
                 Framework.Content.TextureType.Animation, Descriptor.Lower.Sprite
@@ -197,6 +202,7 @@ public partial class Animation : IAnimation
                     ) / 100f;
                     var drawWidth = frameWidth * scale;
                     var drawHeight = frameHeight * scale;
+                    if (AboveParent) lightY -= OverheadGap + drawHeight / 2;
 
                     Graphics.DrawGameTexture(
                         tex,
@@ -222,7 +228,7 @@ public partial class Animation : IAnimation
             );
 
             Graphics.AddLight(
-                (int)mRenderX + Descriptor.Lower.OffsetX - offset.X, (int)mRenderY + Descriptor.Lower.OffsetY - offset.Y, Descriptor.Lower.Lights[mLowerFrame].Size,
+                (int)mRenderX + Descriptor.Lower.OffsetX - offset.X, (int)lightY + Descriptor.Lower.OffsetY - offset.Y, Descriptor.Lower.Lights[mLowerFrame].Size,
                 Descriptor.Lower.Lights[mLowerFrame].Intensity, Descriptor.Lower.Lights[mLowerFrame].Expand,
                 Descriptor.Lower.Lights[mLowerFrame].Color
             );
@@ -230,6 +236,7 @@ public partial class Animation : IAnimation
 
         if (upper && mShowUpper && mZDimension != 0 || upper && mShowUpper && mZDimension == 0)
         {
+            var lightY = mRenderY;
             //Draw Upper
             var tex = Globals.ContentManager.GetTexture(
                 Framework.Content.TextureType.Animation, Descriptor.Upper.Sprite
@@ -248,6 +255,7 @@ public partial class Animation : IAnimation
                     ) / 100f;
                     var drawWidth = frameWidth * scale;
                     var drawHeight = frameHeight * scale;
+                    if (AboveParent) lightY -= OverheadGap + drawHeight / 2;
 
                     Graphics.DrawGameTexture(
                         tex,
@@ -273,7 +281,7 @@ public partial class Animation : IAnimation
             );
 
             Graphics.AddLight(
-                (int)mRenderX + Descriptor.Upper.OffsetX - offset.X, (int)mRenderY + Descriptor.Upper.OffsetY - offset.Y, Descriptor.Upper.Lights[mUpperFrame].Size,
+                (int)mRenderX + Descriptor.Upper.OffsetX - offset.X, (int)lightY + Descriptor.Upper.OffsetY - offset.Y, Descriptor.Upper.Lights[mUpperFrame].Size,
                 Descriptor.Upper.Lights[mUpperFrame].Intensity, Descriptor.Upper.Lights[mUpperFrame].Expand,
                 Descriptor.Upper.Lights[mUpperFrame].Color
             );
@@ -312,7 +320,7 @@ public partial class Animation : IAnimation
         // retain a tile-specific vertical anchor; never shift attached spells again.
         var tileOffset = mParent == null ? -16f : 0f;
         return new FloatRect(mRenderX - width / 2 + layer.OffsetX,
-            mRenderY - height / 2 + tileOffset + layer.OffsetY, width, height);
+            mRenderY - (AboveParent ? height + OverheadGap : height / 2) + tileOffset + layer.OffsetY, width, height);
     }
 
     public void Hide()
