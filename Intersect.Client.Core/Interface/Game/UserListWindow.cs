@@ -241,13 +241,11 @@ internal sealed partial class UserListWindow : Window
             nameLabel.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("Offline: ") + friend.Name);
         }
 
-        var profile = new Button(panel, "ViewFriendInfo") { Text = string.Empty, IsDisabled = !online };
+        var profile = new Button(panel, "ViewFriendInfo") { Text = string.Empty };
         profile.SetBounds(401, 6, 25, 25);
         AdmurinGuiArt.Add(profile, "InfoIcon", "userlist_1", 0, 0, 25, 25,
             online ? 0 : 20, 0, 20, 20);
-        profile.SetToolTipText(online
-            ? "View Character Information: " + friend.Name
-            : "Character Information is available while the friend is online.");
+        profile.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("View profile or visit house"));
         profile.Clicked += (_, _) => PacketSender.SendRequestPlayerProfile(friend.Name, openWindow: true);
 
         var remove = new Button(panel, "RemoveFriend") { Text = string.Empty };

@@ -7,6 +7,9 @@ namespace Intersect.Config;
 /// </summary>
 public partial class NpcOptions
 {
+    /// <summary>Seconds before a defeated owned pet can be summoned again.</summary>
+    public int PetRecoverySeconds { get; set; } = 300;
+
     /// <summary>
     /// If NPCs are allowed to reset after moving out of a specified radius when starting to fight another entity.
     /// </summary>

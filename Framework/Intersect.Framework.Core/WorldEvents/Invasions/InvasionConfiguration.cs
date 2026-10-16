@@ -110,6 +110,9 @@ public sealed class InvasionDefinition
     public Guid PreStartCinematicEventId { get; set; }
     public int PreStartCinematicLeadSeconds { get; set; } = 15;
 
+    public string DefeatMessage { get; set; } = string.Empty;
+    public string DefeatSoundFirst { get; set; } = string.Empty;
+    public string DefeatSoundSecond { get; set; } = string.Empty;
     public long RewardExperience { get; set; } = 500;
     public InvasionWaveDefinition[] Waves { get; set; } = [];
 
@@ -154,6 +157,7 @@ public sealed class InvasionDefinition
         Reminder5Sound.Length <= 260 &&
         PreStartCinematicLeadSeconds is >= 1 and <= 300 &&
         (!PreStartCinematicEnabled || PreStartCinematicEventId != Guid.Empty) &&
+        DefeatMessage.Length <= 512 && DefeatSoundFirst.Length <= 260 && DefeatSoundSecond.Length <= 260 &&
         RewardExperience is >= 0 and <= 2_000_000_000 &&
         Waves is { Length: > 0 and <= 128 } &&
         Waves.All(wave => wave is { IsStructurallyValid: true }) &&

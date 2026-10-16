@@ -28,6 +28,14 @@ internal sealed partial class PacketHandler
 
         if (target == null)
         {
+            var offline = packet.PlayerId != Guid.Empty ? Player.Find(packet.PlayerId)
+                : !string.IsNullOrWhiteSpace(packet.PlayerName) ? Player.Find(packet.PlayerName) : null;
+            if (offline != null)
+            {
+                client.Send(new PlayerProfilePacket { Found = true, OpenWindow = packet.OpenWindow, PlayerId = offline.Id,
+                    Name = offline.Name, OfflineHouseProfile = true, PublicHouse = Intersect.Server.Housing.HousingRuntime.PublicHouse(offline) });
+                return;
+            }
             client.Send(
                 new PlayerProfilePacket
                 {
@@ -135,6 +143,7 @@ internal sealed partial class PacketHandler
                 Equipment = equipment.ToArray(),
                 Professions = professions.ToArray(),
                 IsSelf = requester.Id == target.Id,
+                PublicHouse = Intersect.Server.Housing.HousingRuntime.PublicHouse(target),
                 RankingTitle = rankingTitle?.Title ?? string.Empty,
                 RankingExperienceBonusPercent = rankingTitle?.ExperienceBonusPercent ?? 0,
                 RankingPosition = rankingTitle?.Rank ?? 0,

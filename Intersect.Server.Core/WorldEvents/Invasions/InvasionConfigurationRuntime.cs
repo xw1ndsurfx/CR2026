@@ -75,6 +75,7 @@ internal static class InvasionConfigurationRuntime
             File.Move(temp, PathName, overwrite: true);
             _current = configuration;
         }
+        Intersect.Server.Localization.ContentTranslationRuntime.QueueJson(json);
     }
 
     private static InvasionConfiguration LoadCore()

@@ -19,6 +19,8 @@ public sealed class PetProgress
     public int Level { get; set; } = 1;
     public long Experience { get; set; }
     public bool AutoLoot { get; set; } = true;
+    public long RecoveryUntilUtc { get; set; }
+    public bool Housed { get; set; }
 
     /// <summary>Custom name per character; blank means the NPC's original name.</summary>
     public string Nickname { get; set; } = string.Empty;
@@ -85,6 +87,25 @@ public partial class Player
             SendPetState();
             return;
         }
+        var progress = PetCollection.OwnedPets[npcId];
+        var remaining = Math.Max(0, progress.RecoveryUntilUtc - DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        if (remaining > 0)
+        {
+            PetNotice("Your pet is recovering.");
+            SendPetState(); return;
+        }
+        if (progress.Housed)
+        {
+            var resident = House.Pets.FirstOrDefault(p => p.Id == npcId);
+            House.Pets.RemoveAll(p => p.Id == npcId); progress.Housed = false;
+            if (User?.Save(force: true) != Intersect.Server.Database.PlayerData.UserSaveResult.Completed)
+            {
+                progress.Housed = true;
+                if (resident != null) House.Pets.Add(resident);
+                PetNotice("Your house could not be saved. Please try again."); SendPetState(); return;
+            }
+            Intersect.Server.Housing.HousingRuntime.BroadcastOwner(this);
+        }
         DismissPetRuntime();
         PetCollection.ActivePetId = npcId;
         SpawnPetRuntime(descriptor);
@@ -100,6 +121,7 @@ public partial class Player
         if (descriptor == null || !descriptor.IsPet ||
             !PetCollection.OwnedPets.TryGetValue(descriptor.Id, out var progress) ||
             !MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var instance)) return;
+        if (progress.Housed || progress.RecoveryUntilUtc > DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) return;
 
         var pet = new Npc(descriptor, despawnable: true)
         {
@@ -127,9 +149,13 @@ public partial class Player
     public void OnPetDied(Npc pet)
     {
         if (ActivePet != pet) return;
+        var id = PetCollection.ActivePetId;
         ActivePet = null;
         PetCollection.ActivePetId = Guid.Empty;
-        PetNotice("Your pet was defeated. Use /pet summon to call it back.");
+        if (PetCollection.OwnedPets.TryGetValue(id, out var progress))
+            progress.RecoveryUntilUtc = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + Math.Clamp(Options.Instance.Npc.PetRecoverySeconds, 0, 86400) * 1000L;
+        User?.Save(force: true);
+        PetNotice("Your pet was defeated and needs time to recover.");
         SendPetState();
     }
 

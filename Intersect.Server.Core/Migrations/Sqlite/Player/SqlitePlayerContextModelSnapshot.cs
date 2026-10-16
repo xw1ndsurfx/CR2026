@@ -517,6 +517,8 @@ namespace Intersect.Server.Migrations.Sqlite.Player
 
             modelBuilder.Entity("Intersect.Server.Entities.Player", b =>
                 {
+                    b.Property<string>("HousingJson").HasColumnType("TEXT").HasColumnName("Housing");
+
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT")
                         .HasColumnOrder(0);

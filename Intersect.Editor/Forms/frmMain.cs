@@ -127,6 +127,9 @@ public partial class FrmMain : Form
         PacketSender.SendRequestDungeonConfiguration(openEditor: false);
         AddQuestShopEditorMenu();
         PacketSender.SendRequestQuestShopConfiguration(openEditor: false);
+        var housingEditor = new ToolStripMenuItem("Housing & Furniture Catalog");
+        housingEditor.Click += (_, _) => PacketSender.RequestHousingConfiguration();
+        contentEditorsToolStripMenuItem.DropDownItems.Add(housingEditor);
         AddRoyalStylistEditorMenu();
         PacketSender.SendRequestRoyalStylistConfiguration(openEditor: false);
         AddCharacterGeneratorEditorMenu();

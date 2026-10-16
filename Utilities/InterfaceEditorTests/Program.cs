@@ -20,6 +20,18 @@ internal static class Program
         typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, new Options());
         SoundImportTests.Run();
         MiniGameEditorTests.Run();
+        using (var housing = new Intersect.Editor.Forms.Editors.FrmHousingConfiguration("{}"))
+        {
+            var type = housing.GetType();
+            var grid = (DataGridView)type.GetField("_catalog", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(housing)!;
+            Check(housing.MaximizeBox && grid.Columns.Count >= 10 && grid.Columns.Cast<DataGridViewColumn>().Any(c => c.DataPropertyName == "Months"), "Housing Editor exposes monthly offers, currencies and furniture graphics");
+        }
+        using (var invasion = new Intersect.Editor.Forms.Editors.FrmInvasionConfiguration())
+        {
+            foreach (var name in new[] { "_defeatFirst", "_defeatSecond" })
+                Check(invasion.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(invasion) is Intersect.Editor.Forms.Editors.EditorSoundPicker, "Invasion defeat audio uses actual WAV file dropdowns");
+        }
+
         using (var translations = new Intersect.Editor.Forms.FrmTranslations())
         {
             var catalog = new Intersect.Localization.GameTextCatalog(); catalog.Entries["Hello"] = new() { ["en"] = "Hello", ["fr"] = "Bonjour", ["es"] = "Hola" };

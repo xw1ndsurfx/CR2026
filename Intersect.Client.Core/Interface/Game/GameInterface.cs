@@ -469,6 +469,9 @@ public partial class GameInterface : MutableInterface
         UpdateProfessionProgress();
         _shopWindow?.Update();
         UpdateInvasionUi();
+        UpdateSoundSequence();
+        UpdateHousing();
+        _petsWindow?.UpdateRecovery();
         UpdateWorldBossUi();
         UpdateDungeonRunUi();
         UpdateDungeonRewardNotifications();
@@ -767,6 +770,8 @@ public partial class GameInterface : MutableInterface
         DisposeRoulette();
         DisposeLockpicking();
         DisposeQuestGuidance();
+        DisposeSoundSequence();
+        HousingWorld.View = null;
 
         // GameCanvas is the lifetime owner for normal Gwen controls. During logout /
         // character-select transitions, calling Close() or Dispose() on individual
