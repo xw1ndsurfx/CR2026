@@ -42,10 +42,11 @@ internal sealed class PotionRecipeDialog : DarkForm
     {
         Text = existing == null ? "Add Potion Recipe" : "Edit Potion Recipe";
         StartPosition = FormStartPosition.CenterParent;
-        Width = 660;
-        Height = 600;
+        Width = 900;
+        Height = 730;
         MinimizeBox = false;
-        MaximizeBox = false;
+        MaximizeBox = true;
+        MinimumSize = new Size(740, 600);
 
         foreach (var family in Enum.GetValues<PotionFamily>()) _family.Items.Add(family);
         _family.SelectedIndex = 0;
@@ -134,6 +135,7 @@ internal sealed class PotionRecipeDialog : DarkForm
 
         Controls.Add(root);
         Controls.Add(buttons);
+        MiniGameEditorTheme.Apply(this);
         AcceptButton = save;
         CancelButton = cancel;
         RefreshRequirements();

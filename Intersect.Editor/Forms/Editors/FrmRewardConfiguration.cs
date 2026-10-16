@@ -8,7 +8,7 @@ using Intersect.Framework.Core.MiniGames.Potions;
 
 namespace Intersect.Editor.Forms.Editors;
 
-public sealed class FrmRewardConfiguration : DarkForm
+public sealed partial class FrmRewardConfiguration : DarkForm
 {
     private sealed record ItemChoice(Guid Id, string Name)
     {
@@ -61,10 +61,11 @@ public sealed class FrmRewardConfiguration : DarkForm
     {
         Text = "Daily & Level Rewards Editor";
         StartPosition = FormStartPosition.CenterScreen;
-        Width = 760;
-        Height = 560;
+        Width = 1120;
+        Height = 760;
+        MinimumSize = new Size(960, 640);
         MinimizeBox = false;
-        MaximizeBox = false;
+        MaximizeBox = true;
 
         _working = RewardConfiguration.FromJson(RewardConfiguration.Instance.ToJson());
         _poker = (_working.PokerLevelRewards ?? []).ToList();
@@ -77,13 +78,10 @@ public sealed class FrmRewardConfiguration : DarkForm
         _showOnLogin.Checked = _working.ShowDailyRewardsOnLogin;
         _cycleDays.Value = _working.DailyCycleDays;
 
-        var tabs = new TabControl { Dock = DockStyle.Fill };
-        tabs.TabPages.Add(BuildDailyTab());
-        tabs.TabPages.Add(BuildLevelTab("Poker Level Rewards", _poker, _pokerList));
-        tabs.TabPages.Add(BuildLevelTab("Blackjack Level Rewards", _blackjack, _blackjackList));
-        tabs.TabPages.Add(BuildLevelTab("Alchemy Level Rewards", _potionLevels, _potionLevelList));
-        tabs.TabPages.Add(BuildPotionTab());
-        tabs.TabPages.Add(BuildCookingTab());
+        _pages = [BuildDailyTab(), BuildLevelTab("Level rewards", _poker, _pokerList),
+            BuildLevelTab("Level rewards", _blackjack, _blackjackList),
+            BuildLevelTab("Alchemy rewards", _potionLevels, _potionLevelList), BuildPotionTab(), BuildCookingTab()];
+        InitializeNavigation();
 
         var buttons = new FlowLayoutPanel
         {
@@ -93,14 +91,16 @@ public sealed class FrmRewardConfiguration : DarkForm
             Padding = new Padding(8),
         };
         var cancel = new Button { Text = "Cancel", Width = 100 };
-        var save = new Button { Text = "Save", Width = 100 };
+        var save = new Button { Text = "Save all changes", Width = 145 };
         cancel.Click += (_, _) => Close();
         save.Click += (_, _) => SaveConfiguration();
         buttons.Controls.Add(cancel);
         buttons.Controls.Add(save);
 
-        Controls.Add(tabs);
+        Controls.Add(_workspace);
         Controls.Add(buttons);
+        MiniGameEditorTheme.Apply(this);
+        NavigateGame(null);
         RefreshDaily();
         RefreshLevels(_poker, _pokerList);
         RefreshLevels(_blackjack, _blackjackList);

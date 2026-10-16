@@ -49,13 +49,13 @@ internal sealed class CookingRecipeDialog : DarkForm
     private readonly CheckBox _coop = new() { Text = "2-player co-op allowed", AutoSize = true };
     private readonly CheckBox _requireCoop = new() { Text = "Require two players", AutoSize = true };
 
-    private readonly TextBox _startSound = new() { Width = 145, MaxLength = CookingRecipeSoundSet.MaximumFileLength };
-    private readonly TextBox _completeSound = new() { Width = 145, MaxLength = CookingRecipeSoundSet.MaximumFileLength };
-    private readonly TextBox _burntSound = new() { Width = 145, MaxLength = CookingRecipeSoundSet.MaximumFileLength };
-    private readonly TextBox _greatSound = new() { Width = 145, MaxLength = CookingRecipeSoundSet.MaximumFileLength };
-    private readonly TextBox _perfectRecipeSound = new() { Width = 145, MaxLength = CookingRecipeSoundSet.MaximumFileLength };
-    private readonly TextBox _inviteSound = new() { Width = 145, MaxLength = CookingRecipeSoundSet.MaximumFileLength };
-    private readonly TextBox _partnerJoinedSound = new() { Width = 145, MaxLength = CookingRecipeSoundSet.MaximumFileLength };
+    private readonly EditorSoundPicker _startSound = new();
+    private readonly EditorSoundPicker _completeSound = new();
+    private readonly EditorSoundPicker _burntSound = new();
+    private readonly EditorSoundPicker _greatSound = new();
+    private readonly EditorSoundPicker _perfectRecipeSound = new();
+    private readonly EditorSoundPicker _inviteSound = new();
+    private readonly EditorSoundPicker _partnerJoinedSound = new();
     private readonly NumericUpDown _comicChance = new() { Minimum = 0, Maximum = 100, Width = 70, Value = 18 };
     private readonly CheckedListBox _comicEvents = new() { Width = 520, Height = 90, CheckOnClick = true };
 
@@ -70,9 +70,9 @@ internal sealed class CookingRecipeDialog : DarkForm
     private readonly NumericUpDown _actions = new() { Minimum = 1, Maximum = 20, Width = 70 };
     private readonly ComboBox _assignment = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 110 };
     private readonly CheckedListBox _stageIngredients = new() { Width = 520, Height = 90, CheckOnClick = true };
-    private readonly TextBox _actionSound = new() { Width = 150, MaxLength = CookingStageDefinition.MaximumSoundFileLength };
-    private readonly TextBox _perfectSound = new() { Width = 150, MaxLength = CookingStageDefinition.MaximumSoundFileLength };
-    private readonly TextBox _mishapSound = new() { Width = 150, MaxLength = CookingStageDefinition.MaximumSoundFileLength };
+    private readonly EditorSoundPicker _actionSound = new();
+    private readonly EditorSoundPicker _perfectSound = new();
+    private readonly EditorSoundPicker _mishapSound = new();
 
     private readonly ListBox _outputs = new() { Width = 520, Height = 100 };
     private readonly ComboBox _quality = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 110 };
@@ -89,11 +89,11 @@ internal sealed class CookingRecipeDialog : DarkForm
     {
         Text = existing == null ? "Add Cooking Recipe" : "Edit Cooking Recipe";
         StartPosition = FormStartPosition.CenterParent;
-        Width = 800;
-        Height = 760;
+        Width = 1060;
+        Height = 820;
         MinimumSize = new Size(720, 620);
         MinimizeBox = false;
-        MaximizeBox = false;
+        MaximizeBox = true;
 
         FillItems(_ingredientItem, "Choose ingredient...");
         FillItems(_outputItem, "Choose output item...");
@@ -126,13 +126,13 @@ internal sealed class CookingRecipeDialog : DarkForm
             _solo.Checked = existing.AllowSolo;
             _coop.Checked = existing.AllowCoop;
             _requireCoop.Checked = existing.RequireCoop;
-            _startSound.Text = existing.Sounds?.Start ?? string.Empty;
-            _completeSound.Text = existing.Sounds?.Complete ?? string.Empty;
-            _burntSound.Text = existing.Sounds?.Burnt ?? string.Empty;
-            _greatSound.Text = existing.Sounds?.Great ?? string.Empty;
-            _perfectRecipeSound.Text = existing.Sounds?.Perfect ?? string.Empty;
-            _inviteSound.Text = existing.Sounds?.Invite ?? string.Empty;
-            _partnerJoinedSound.Text = existing.Sounds?.PartnerJoined ?? string.Empty;
+            _startSound.FileName = existing.Sounds?.Start ?? string.Empty;
+            _completeSound.FileName = existing.Sounds?.Complete ?? string.Empty;
+            _burntSound.FileName = existing.Sounds?.Burnt ?? string.Empty;
+            _greatSound.FileName = existing.Sounds?.Great ?? string.Empty;
+            _perfectRecipeSound.FileName = existing.Sounds?.Perfect ?? string.Empty;
+            _inviteSound.FileName = existing.Sounds?.Invite ?? string.Empty;
+            _partnerJoinedSound.FileName = existing.Sounds?.PartnerJoined ?? string.Empty;
             _comicChance.Value = Math.Clamp(existing.ComicEventChancePercent, 0, 100);
 
             var enabledComics = (existing.ComicEvents ?? []).ToHashSet();
@@ -170,7 +170,7 @@ internal sealed class CookingRecipeDialog : DarkForm
         AddRow(root, 0, "Recipe name", _name);
         AddRow(root, 1, "Profession", _profession);
 
-        var progression = new FlowLayoutPanel { AutoSize = true, WrapContents = true };
+        var progression = new FlowLayoutPanel { AutoSize = true, WrapContents = true, Dock = DockStyle.Fill };
         progression.Controls.Add(new Label { Text = "Required level", AutoSize = true, Margin = new Padding(3, 8, 3, 3) });
         progression.Controls.Add(_requiredLevel);
         progression.Controls.Add(new Label { Text = "Base profession XP", AutoSize = true, Margin = new Padding(14, 8, 3, 3) });
@@ -179,13 +179,13 @@ internal sealed class CookingRecipeDialog : DarkForm
 
         AddRow(root, 3, "Event unlock", _unlockVariable);
 
-        var players = new FlowLayoutPanel { AutoSize = true, WrapContents = true };
+        var players = new FlowLayoutPanel { AutoSize = true, WrapContents = true, Dock = DockStyle.Fill };
         players.Controls.Add(_solo);
         players.Controls.Add(_coop);
         players.Controls.Add(_requireCoop);
         AddRow(root, 4, "Players", players);
 
-        var recipeSounds = new FlowLayoutPanel { AutoSize = true, WrapContents = true };
+        var recipeSounds = new FlowLayoutPanel { AutoSize = true, WrapContents = true, Dock = DockStyle.Fill };
         AddSoundField(recipeSounds, "Start", _startSound);
         AddSoundField(recipeSounds, "Complete", _completeSound);
         AddSoundField(recipeSounds, "Burnt", _burntSound);
@@ -195,13 +195,13 @@ internal sealed class CookingRecipeDialog : DarkForm
         AddSoundField(recipeSounds, "Partner joined", _partnerJoinedSound);
         AddRow(root, 5, "Recipe sounds", recipeSounds);
 
-        var comicControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true };
+        var comicControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true, Dock = DockStyle.Fill };
         comicControls.Controls.Add(new Label { Text = "Chance %", AutoSize = true, Margin = new Padding(3, 8, 3, 3) });
         comicControls.Controls.Add(_comicChance);
         comicControls.Controls.Add(_comicEvents);
         AddRow(root, 6, "Comic events", comicControls);
 
-        var ingredientControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true };
+        var ingredientControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true, Dock = DockStyle.Fill };
         ingredientControls.Controls.Add(_ingredientItem);
         ingredientControls.Controls.Add(_ingredientQuantity);
         var ingredientAdd = new Button { Text = "Add ingredient", AutoSize = true };
@@ -218,7 +218,7 @@ internal sealed class CookingRecipeDialog : DarkForm
         AddRow(root, 7, "Ingredient", ingredientControls);
         AddRow(root, 8, "Ingredients", _ingredients);
 
-        var stageControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true };
+        var stageControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true, Dock = DockStyle.Fill };
         stageControls.Controls.Add(_stageType);
         stageControls.Controls.Add(new Label { Text = "Difficulty", AutoSize = true, Margin = new Padding(8, 8, 3, 3) });
         stageControls.Controls.Add(_difficulty);
@@ -244,18 +244,15 @@ internal sealed class CookingRecipeDialog : DarkForm
         AddRow(root, 9, "Cooking stage", stageControls);
         AddRow(root, 10, "Stage ingredients", _stageIngredients);
 
-        var soundControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true };
-        soundControls.Controls.Add(new Label { Text = "Action", AutoSize = true, Margin = new Padding(3, 8, 3, 3) });
-        soundControls.Controls.Add(_actionSound);
-        soundControls.Controls.Add(new Label { Text = "Perfect", AutoSize = true, Margin = new Padding(8, 8, 3, 3) });
-        soundControls.Controls.Add(_perfectSound);
-        soundControls.Controls.Add(new Label { Text = "Mishap", AutoSize = true, Margin = new Padding(8, 8, 3, 3) });
-        soundControls.Controls.Add(_mishapSound);
+        var soundControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true, Dock = DockStyle.Fill };
+        AddSoundField(soundControls, "Action", _actionSound);
+        AddSoundField(soundControls, "Perfect", _perfectSound);
+        AddSoundField(soundControls, "Mishap", _mishapSound);
         AddRow(root, 11, "Stage sounds", soundControls);
 
         AddRow(root, 12, "Stages", _stages);
 
-        var outputControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true };
+        var outputControls = new FlowLayoutPanel { AutoSize = true, WrapContents = true, Dock = DockStyle.Fill };
         outputControls.Controls.Add(_quality);
         outputControls.Controls.Add(_outputItem);
         outputControls.Controls.Add(_outputQuantity);
@@ -285,7 +282,7 @@ internal sealed class CookingRecipeDialog : DarkForm
                 "When several are selected, actions advance through them in order; old stages with no assignment fall back to all recipe ingredients. " +
                 "Quality is scored 0-100: Burnt <40, Decent 40-69, Great 70-89, Perfect 90-100. " +
                 "Auto stage assignment alternates players in co-op. Partner/Both stages require co-op. " +
-                "Sound fields use filenames from resources/sounds. Comic-event chance is rolled by the server after actions.",
+                "Choose WAV effects from resources/sounds. New imports appear when you reopen a sound list. Comic-event chance is rolled by the server after actions.",
         };
         AddRow(root, 15, "Rules", help);
 
@@ -302,8 +299,9 @@ internal sealed class CookingRecipeDialog : DarkForm
         buttons.Controls.Add(cancel);
         buttons.Controls.Add(save);
 
-        Controls.Add(root);
+        Controls.Add(BuildSections(root));
         Controls.Add(buttons);
+        MiniGameEditorTheme.Apply(this);
         AcceptButton = save;
         CancelButton = cancel;
 
@@ -421,9 +419,9 @@ internal sealed class CookingRecipeDialog : DarkForm
             (int)_duration.Value,
             (int)_actions.Value,
             assignment,
-            _actionSound.Text.Trim(),
-            _perfectSound.Text.Trim(),
-            _mishapSound.Text.Trim(),
+            _actionSound.FileName.Trim(),
+            _perfectSound.FileName.Trim(),
+            _mishapSound.FileName.Trim(),
             ingredientIds
         );
     }
@@ -467,9 +465,9 @@ internal sealed class CookingRecipeDialog : DarkForm
         _duration.Value = Math.Clamp(stage.DurationSeconds, 4, 60);
         _actions.Value = Math.Clamp(stage.RequiredActions, 1, 20);
         _assignment.SelectedItem = stage.Assignment;
-        _actionSound.Text = stage.ActionSound;
-        _perfectSound.Text = stage.PerfectSound;
-        _mishapSound.Text = stage.MishapSound;
+        _actionSound.FileName = stage.ActionSound;
+        _perfectSound.FileName = stage.PerfectSound;
+        _mishapSound.FileName = stage.MishapSound;
         RefreshStageIngredientPicker(stage.IngredientItemIds ?? []);
     }
 
@@ -602,13 +600,13 @@ internal sealed class CookingRecipeDialog : DarkForm
             _requireCoop.Checked,
             (_unlockVariable.SelectedItem as VariableChoice)?.Id ?? Guid.Empty,
             new CookingRecipeSoundSet(
-                _startSound.Text.Trim(),
-                _completeSound.Text.Trim(),
-                _burntSound.Text.Trim(),
-                _greatSound.Text.Trim(),
-                _perfectRecipeSound.Text.Trim(),
-                _inviteSound.Text.Trim(),
-                _partnerJoinedSound.Text.Trim()
+                _startSound.FileName.Trim(),
+                _completeSound.FileName.Trim(),
+                _burntSound.FileName.Trim(),
+                _greatSound.FileName.Trim(),
+                _perfectRecipeSound.FileName.Trim(),
+                _inviteSound.FileName.Trim(),
+                _partnerJoinedSound.FileName.Trim()
             ),
             (int)_comicChance.Value,
             _comicEvents.CheckedItems.Cast<CookingComicEventType>().ToArray()
@@ -631,12 +629,41 @@ internal sealed class CookingRecipeDialog : DarkForm
         Close();
     }
 
-    private static void AddSoundField(FlowLayoutPanel panel, string label, TextBox box)
+    private static void AddSoundField(FlowLayoutPanel panel, string label, EditorSoundPicker box)
     {
-        panel.Controls.Add(
-            new Label { Text = label, AutoSize = true, Margin = new Padding(6, 8, 3, 3) }
-        );
-        panel.Controls.Add(box);
+        var field = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true,
+            WrapContents = false, Margin = new Padding(3, 3, 10, 6) };
+        field.Controls.Add(new Label { Text = label, AutoSize = true });
+        field.Controls.Add(box);
+        panel.Controls.Add(field);
+    }
+
+    private static TabControl BuildSections(TableLayoutPanel source)
+    {
+        var tabs = new TabControl { Dock = DockStyle.Fill };
+        foreach (var section in new[] { ("Recipe & audio", 0, 6), ("Ingredients", 7, 8), ("Cooking stages", 9, 12), ("Results & rules", 13, 15) })
+        {
+            var page = new TabPage(section.Item1);
+            var grid = new TableLayoutPanel { Dock = DockStyle.Fill, AutoScroll = true, ColumnCount = 2,
+                RowCount = section.Item3 - section.Item2 + 2, Padding = new Padding(12) };
+            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 145));
+            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            for (var row = section.Item2; row <= section.Item3; row++)
+            {
+                grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                for (var col = 0; col < 2; col++)
+                {
+                    var control = source.GetControlFromPosition(col, row);
+                    if (control == null) continue;
+                    if (control is ListBox) control.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
+                    grid.Controls.Add(control, col, row - section.Item2);
+                }
+            }
+            grid.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            page.Controls.Add(grid); tabs.TabPages.Add(page);
+        }
+        source.Dispose();
+        return tabs;
     }
 
     private static void AddRow(TableLayoutPanel layout, int row, string text, Control control)
