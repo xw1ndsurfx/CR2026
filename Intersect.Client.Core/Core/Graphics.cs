@@ -417,6 +417,7 @@ public static partial class Graphics
         {
             for (var x = 3; x < 6; x++)
             {
+                if (x == 4) Intersect.Client.Interface.Game.HousingWorld.DrawRow(y, true);
                 foreach (var entity in RenderingEntities[x, y])
                 {
                     // Handle our plugin drawing.
@@ -518,6 +519,7 @@ public static partial class Graphics
         {
             for (var x = 3; x < 6; x++)
             {
+                if (x == 4) Intersect.Client.Interface.Game.HousingWorld.DrawRow(y, true);
                 foreach (var entity in RenderingEntities[x, y])
                 {
                     entity.DrawName(null);

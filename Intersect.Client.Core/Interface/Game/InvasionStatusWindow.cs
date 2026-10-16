@@ -1,5 +1,6 @@
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.General;
+using Intersect.Client.Localization;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Framework.Core;
@@ -87,6 +88,9 @@ internal sealed class InvasionStatusWindow : Base
         _wave.FontSize = 9;
         _objective.Text = Intersect.Client.Localization.ClientLanguages.Text("Prepare your defenses.");
 
+        EventPanelText.Fit(_title, _title.Text, 12);
+        EventPanelText.Fit(_wave, _wave.Text, 10);
+        EventPanelText.Fit(_objective, _objective.Text, 10);
         PositionAtTop();
         Show();
         BringToFront();
@@ -104,13 +108,16 @@ internal sealed class InvasionStatusWindow : Base
             return;
         }
 
-        _title.Text = state.BossWave ? $"BOSS INVASION • {state.Name}" : $"INVASION • {state.Name}";
+        _title.Text = ClientLanguages.Format(state.BossWave ? "BOSS INVASION - {0}" : "INVASION - {0}", ClientLanguages.ContentText(state.Name));
         _wave.Text = state.Wave <= 0
-            ? $"Preparing • {state.WaveCount} wave(s)"
-            : $"Wave {state.Wave}/{state.WaveCount}" +
-              (string.IsNullOrWhiteSpace(state.Message) ? string.Empty : $" • {state.Message}");
+            ? ClientLanguages.Format("Preparing - {0} wave(s)", state.WaveCount)
+            : ClientLanguages.Format("Wave {0}/{1}", state.Wave, state.WaveCount) +
+              (string.IsNullOrWhiteSpace(state.Message) ? string.Empty : " - " + ClientLanguages.ContentText(state.Message));
         _objective.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"Defense target: {state.ObjectiveHealth:N0} / {state.ObjectiveMaxHealth:N0} HP");
 
+        EventPanelText.Fit(_title, _title.Text, 12);
+        EventPanelText.Fit(_wave, _wave.Text, 10);
+        EventPanelText.Fit(_objective, _objective.Text, 10);
         PositionAtTop();
         Show();
         BringToFront();

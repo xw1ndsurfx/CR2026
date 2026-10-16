@@ -13,12 +13,13 @@ namespace Intersect.Client.Interface.Game;
 internal static class HousingWorld
 {
     internal static HouseView? View { get; set; }
-    internal static void DrawFloor() => Draw(-1);
-    internal static void DrawRow(int row) => Draw(row);
-    private static void Draw(int row)
+    internal static void DrawFloor() => Draw(-1, false);
+    internal static void DrawRow(int row, bool upper = false) => Draw(row, upper);
+    private static void Draw(int row, bool upper)
     {
         var view = View;
         if (view is not { Inside: true } || Globals.Me?.MapId != view.MapId || !MapInstance.TryGet(view.MapId, out var map)) return;
+        if (row >= 0 && upper != (Globals.Me.Z != 0)) return;
         var tw = Options.Instance.Map.TileWidth; var th = Options.Instance.Map.TileHeight;
         foreach (var place in view.House.Placements.OrderBy(p => p.Y))
         {

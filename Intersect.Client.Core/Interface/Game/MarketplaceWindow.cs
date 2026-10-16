@@ -502,7 +502,7 @@ internal sealed class MarketplaceWindow : Window
         }
     }
 
-    private enum FrameStyle
+    internal enum FrameStyle
     {
         Window,
         Ribbon,
@@ -516,7 +516,7 @@ internal sealed class MarketplaceWindow : Window
     }
 
     /// <summary>Pixel-framed brown and gold controls matching DungeonPanelWindow.</summary>
-    private sealed class MarketChrome : Base
+    internal sealed class MarketChrome : Base
     {
         private static readonly Color OuterGold = new(a: 255, r: 158, g: 112, b: 51);
         private static readonly Color BrightGold = new(a: 255, r: 224, g: 179, b: 88);

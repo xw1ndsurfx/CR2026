@@ -51,4 +51,6 @@ public partial class QuestShopEntryPacket
     [Key(3)] public string Status { get; set; } = string.Empty;
     [Key(4)] public bool CanAccept { get; set; }
     [Key(5)] public string Requirements { get; set; } = string.Empty;
+    [Key(6)] public string Category { get; set; } = string.Empty;
+    [Key(7)] public bool Repeatable { get; set; }
 }

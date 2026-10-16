@@ -26,6 +26,8 @@ internal static class InterfaceRefreshTests
         _ = new TestContentManager();
         var assembly = typeof(GameInterface).Assembly;
         var oldDatabase = Globals.Database;
+        var oldApplicationContext = Intersect.Core.ApplicationContext.Context.Value;
+        Intersect.Core.ApplicationContext.Context.Value = DispatchProxy.Create<Intersect.Core.IApplicationContext, ActivitiesLogProxy>();
         try
         {
             var database = new MemoryPreferences(); Globals.Database = database;
@@ -219,7 +221,7 @@ internal static class InterfaceRefreshTests
             database.WorldZoom = oldZoom;
             System.Console.WriteLine("PASS interface refresh: persisted display options, HUD collapse, cooking gestures/input gates, advancing clock, responsive controls and event anchors");
         }
-        finally { Globals.Database = oldDatabase; }
+        finally { Globals.Database = oldDatabase; Intersect.Core.ApplicationContext.Context.Value = oldApplicationContext; }
     }
 
     private static void Check(bool value, string message) { if (!value) throw new InvalidOperationException(message); }

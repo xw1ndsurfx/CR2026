@@ -74,6 +74,9 @@ internal static class HousingSoundTests
         petsType.GetMethod("Apply")!.Invoke(pets,[new PetStatePacket { Pets=[pet] }]);
         var summon=Desc(pets).OfType<Button>().Single(b=>b.Name=="PetSummon"+pet.PetId);
         Check(summon.IsDisabled&&Desc(pets).OfType<Button>().Any(b=>b.Name=="PetHome"+pet.PetId),"Recovering pets cannot be summoned and owned pets can be sent home");
+        var home=Desc(pets).OfType<Button>().Single(b=>b.Name=="PetHome"+pet.PetId);
+        var homeCaption=home.Children.OfType<Label>().Single();
+        Check(homeCaption.Font!=null&&homeCaption.FontSize>=10&&homeCaption.Text.Length>0&&renderer.MeasureText(homeCaption.Font,homeCaption.FontSize,homeCaption.Text).X<=homeCaption.Width,"Send pet home has an explicit readable font and enough caption width");
         System.Console.WriteLine("PASS house UI ownership controls, native layout, snapshot persistence, pet recovery controls and actual sequential sound completion");
     }
 }

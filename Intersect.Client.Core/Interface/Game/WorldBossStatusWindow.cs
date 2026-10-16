@@ -1,5 +1,6 @@
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.General;
+using Intersect.Client.Localization;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Framework.Core;
@@ -15,21 +16,25 @@ internal sealed class WorldBossStatusWindow : Base
     private readonly Label _title;
     private readonly Label _health;
     private readonly Label _place;
-    private readonly Label _ranking;
+    private readonly RichLabel _ranking;
+    private readonly ScrollControl _rankings;
+    private string _rankingText = string.Empty;
+    private string _titleText = string.Empty, _placeText = string.Empty;
     private readonly Label _timer;
     private WorldBossStatusPacket? _status;
     private int _activeCount;
 
     public WorldBossStatusWindow(Canvas parent) : base(parent, nameof(WorldBossStatusWindow))
     {
-        SetSize(458, 236);
+        SetSize(486, 304);
         MouseInputEnabled = false;
         KeyboardInputEnabled = false;
 
         _title = Label("WorldBossTitle", 8, 8, 442, 25, 15);
         _health = Label("WorldBossHealth", 8, 43, 442, 20, 10);
         _place = Label("WorldBossPlace", 8, 93, 442, 20, 9);
-        _ranking = Label("WorldBossRanking", 15, 120, 428, 92, 9);
+        _rankings = new ScrollControl(this, "WorldBossRankings") { ShouldDrawBackground = false };
+        _ranking = EventPanelText.CreateBody(_rankings, "WorldBossRanking", 10);
         _timer = Label("WorldBossTimer", 8, 211, 442, 19, 9);
         _disclosure = new HudDisclosure(this, _title, "WorldBossHudCollapsed");
         Hide();
@@ -53,20 +58,15 @@ internal sealed class WorldBossStatusWindow : Base
     {
         _status = packet;
         _activeCount = activeCount;
-        _title.Text = "WORLD BOSS  •  " + packet.Name +
-            (activeCount > 1 ? $"  (+{activeCount - 1} active)" : "");
-        _health.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"HP: {packet.Health:N0} / {packet.MaxHealth:N0}");
-        _place.Text = $"{packet.MapName} ({packet.SpawnX}, {packet.SpawnY})  •  " +
-            $"{packet.ParticipantCount} participants";
-        var lines = (packet.TopDamagers ?? [])
-            .Take(5).Select((entry, i) =>
-                $"{i + 1}. {entry.PlayerName}  —  {entry.Damage:N0}");
-        _ranking.Text = "TOP DAMAGE  |  " +
-            (packet.YourRank > 0 ? $"YOU #{packet.YourRank}: {packet.YourDamage:N0}" : "No contribution yet") +
-            "\n" + string.Join("\n", lines);
-        _ranking.FontSize = 8;
-        X = Math.Max(8, (Parent?.Width ?? Width) - Width - 18);
-        Y = (Interface.InGameUiOrNull?.MinimapBottom ?? 10) + 8;
+        _titleText = ClientLanguages.Format("WORLD BOSS - {0}", ClientLanguages.ContentText(packet.Name));
+        if (activeCount > 1) _titleText = ClientLanguages.Format("{0} (+{1} active)", _titleText, activeCount - 1);
+        _health.Text = ClientLanguages.Format("HP: {0:N0} / {1:N0}", packet.Health, packet.MaxHealth);
+        _placeText = ClientLanguages.Format("{0} ({1}, {2}) | {3} participants", ClientLanguages.ContentText(packet.MapName), packet.SpawnX, packet.SpawnY, packet.ParticipantCount);
+        var lines = (packet.TopDamagers ?? []).Take(5).Select((entry, i) => $"{i + 1}. {entry.PlayerName} - {entry.Damage:N0}");
+        _rankingText = (packet.YourRank > 0 ? ClientLanguages.Format("TOP DAMAGE | YOUR RANK: #{0} ({1:N0})", packet.YourRank, packet.YourDamage) : ClientLanguages.Text("TOP DAMAGE | No contribution yet")) + "\n\n" + string.Join("\n", lines);
+        Arrange();
+        EventPanelText.SetBody(_rankings, _ranking, _rankingText);
+        _rankings.ScrollToTop();
         Show();
         BringToFront();
         Update();
@@ -75,13 +75,31 @@ internal sealed class WorldBossStatusWindow : Base
     public void Update()
     {
         IsHidden = _status == null || !_status.Active || Globals.Database?.ShowWorldBossHud == false || Interface.InGameUiOrNull?.SuppressStatusHuds == true;
-        Y = (Interface.InGameUiOrNull?.MinimapBottom ?? 10) + 8;
         if (IsHidden) return;
+        Arrange();
         var remaining = DateTimeOffset.FromUnixTimeMilliseconds(
             _status.ExpiresAtUnixMilliseconds) - DateTimeOffset.UtcNow;
         _timer.Text = remaining > TimeSpan.Zero
-            ? $"DESPAWNS IN {Math.Max(0, (int)remaining.TotalMinutes):00}:{remaining.Seconds:00}"
-            : "TIME EXPIRED";
+            ? ClientLanguages.Format("DESPAWNS IN {0:00}:{1:00}", Math.Max(0, (int)remaining.TotalMinutes), remaining.Seconds)
+            : ClientLanguages.Text("TIME EXPIRED");
+    }
+
+    private void Arrange()
+    {
+        var width = Math.Max(240, Math.Min(486, (Parent?.Width ?? 502) - 16));
+        var availableHeight = Parent?.Height ?? 720;
+        var top = (Interface.InGameUiOrNull?.MinimapBottom ?? 10) + 8;
+        var height = Math.Min(304, Math.Max(180, availableHeight - top - 8));
+        var changed = Width != width || _rankings.Height != height - 160;
+        Width = width; _disclosure.Resize(height);
+        X = Math.Max(8, (Parent?.Width ?? Width + 16) - Width - 8);
+        Y = Math.Max(8, Math.Min(top, availableHeight - Height - 8));
+        _title.SetBounds(8, 8, width - 46, 26); _health.SetBounds(8, 43, width - 16, 24);
+        _place.SetBounds(8, 92, width - 16, 26);
+        _rankings.SetBounds(10, 124, width - 20, height - 160); _timer.SetBounds(8, height - 27, width - 16, 21);
+        EventPanelText.Fit(_title, _titleText, 12); EventPanelText.Fit(_place, _placeText, 10);
+        if (_status != null) EventPanelText.Fit(_health, ClientLanguages.Format("HP: {0:N0} / {1:N0}", _status.Health, _status.MaxHealth), 11);
+        if (changed) EventPanelText.SetBody(_rankings, _ranking, _rankingText);
     }
 
     protected override void Render(SkinBase skin)
