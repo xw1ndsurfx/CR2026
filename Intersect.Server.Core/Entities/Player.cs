@@ -517,6 +517,7 @@ public partial class Player : Entity
     private void Logout(bool softLogout = false, TaskCompletionSource? logoutCompletionSource = null)
     {
         CompleteConfiguredDeath();
+        Intersect.Server.Housing.HousingRuntime.Disconnect(this);
         lock (_savingLock)
         {
             lock (_pendingLogoutLock)
@@ -851,6 +852,7 @@ public partial class Player : Entity
 
 
                 if (!HasPendingDeath) base.Update(timeMs);
+                Intersect.Server.Housing.HousingRuntime.Update(this);
                 UpdateActivePet(timeMs);
 
                 if (mAutorunCommonEventTimer < Timing.Global.Milliseconds)
@@ -2454,6 +2456,7 @@ public partial class Player : Entity
     /// </summary>
     public void LoginWarp()
     {
+        Intersect.Server.Housing.HousingRuntime.RestoreLoginLocation(this);
         if (MapId == null || MapId == Guid.Empty)
         {
             WarpToSpawn();

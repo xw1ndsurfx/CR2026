@@ -147,6 +147,7 @@ internal sealed class PlayerProfileWindow : Window
         if (!profile.Found)
             return;
 
+        if (profile.OfflineHouseProfile) { ApplyOfflineHouse(profile); return; }
         _headline.Text = profile.Name;
         _subtitle.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"LEVEL {profile.Level:N0}  |  {Fallback(profile.ClassName)}");
         _guildLine.Text = Intersect.Client.Localization.ClientLanguages.Text("Guild: ") + Fallback(profile.GuildName);
@@ -235,6 +236,10 @@ internal sealed class PlayerProfileWindow : Window
         dungeons.Clicked += (_, _) =>
             PacketSender.SendRequestDungeonPanel(openWindow: true, playerId: observedId);
         y += 50;
+        var visitHouse = new Button(_scroll, "VisitProfileHouse") { Text = ClientLanguages.Text(profile.IsSelf ? "My house" : "Visit house"), FontSize = 11, IsDisabled = !profile.IsSelf && !profile.PublicHouse };
+        visitHouse.SetBounds(12, y, 580, 32);
+        visitHouse.Clicked += (_, _) => PacketSender.SendHouseAction(Intersect.Network.Packets.Housing.HouseAction.Visit, profile.PlayerId);
+        y += 44;
 
         y = AddKeyValueSection("CHARACTER",
             new (string, string)[]
@@ -263,6 +268,21 @@ internal sealed class PlayerProfileWindow : Window
 
         Show();
         BringToFront();
+    }
+
+    private void ApplyOfflineHouse(PlayerProfilePacket profile)
+    {
+        _headline.Text = profile.Name; _subtitle.Text = ClientLanguages.Text("Offline");
+        _guildLine.Text = _titleLine.Text = _expLine.Text = string.Empty;
+        _locationLine.Text = ClientLanguages.Text(profile.PublicHouse ? "Public house" : "This house is private.");
+        _rankingBonusLabel.Hide(); _expBar.Progress = 0;
+        _playerPreview.Hide(); foreach (var layer in _paperdollLayers) layer.Hide();
+        _previewFallback.Show(); _scroll.DeleteAll();
+        var description = new Label(_scroll) { Text = ClientLanguages.Text("Offline character. House visits are available when public."), FontSize = 11 };
+        description.SetBounds(12, 12, 580, 64);
+        var visit = new Button(_scroll, "VisitOfflineHouse") { Text = ClientLanguages.Text("Visit house"), FontSize = 11, IsDisabled = !profile.PublicHouse };
+        visit.SetBounds(12, 90, 580, 36); visit.Clicked += (_, _) => PacketSender.SendHouseAction(Intersect.Network.Packets.Housing.HouseAction.Visit, profile.PlayerId);
+        _scroll.SetInnerSize(610, 345); _scroll.UpdateScrollBars(); Show(); BringToFront();
     }
 
     private int AddProfessionCards(PlayerProfilePacket profile, int y)

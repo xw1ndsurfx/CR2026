@@ -130,4 +130,6 @@ public partial class PlayerProfilePacket : IntersectPacket
 
     [Key(21)]
     public long LevelExperienceRequired { get; set; }
+    [Key(22)] public bool PublicHouse { get; set; }
+    [Key(23)] public bool OfflineHouseProfile { get; set; }
 }

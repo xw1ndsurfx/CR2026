@@ -68,6 +68,8 @@ public sealed class PetProfileEntry
 
     [Key(16)]
     public string SpeciesName { get; set; } = string.Empty;
+    [Key(17)] public int RecoverySeconds { get; set; }
+    [Key(18)] public bool Housed { get; set; }
 }
 
 [MessagePackObject]

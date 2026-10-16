@@ -711,7 +711,13 @@ internal static class InvasionRuntime
                 ? "The invasion could not be started because no configured invaders could spawn."
                 : "The objective was destroyed.";
             PacketSender.SendGlobalMsg($"[Invasion] {session.Definition.Name} failed. {reason}");
-            PacketSender.SendGameAnnouncement($"INVASION LOST\n{session.Definition.Name}", 6_000);
+            var message = string.IsNullOrWhiteSpace(session.Definition.DefeatMessage)
+                ? $"INVASION LOST\n{session.Definition.Name}"
+                : session.Definition.DefeatMessage.Replace("{name}", session.Definition.Name).Replace("{island}", (MapController.Get(session.Definition.TargetMapId)?.Name ?? "")).Replace("{target}", ResolveObjective(session.Definition).Item4);
+            PacketSender.SendGameAnnouncement(message, 6_000);
+            if (!configurationFailure)
+                PacketSender.SendDataToAllPlayers(new Intersect.Network.Packets.Server.PlaySoundSequencePacket
+                { First = session.Definition.DefeatSoundFirst, Second = session.Definition.DefeatSoundSecond });
         }
 
         var wavesCompleted = Math.Max(0, session.WaveIndex + (victory ? 1 : 0));

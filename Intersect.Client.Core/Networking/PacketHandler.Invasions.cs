@@ -6,6 +6,11 @@ namespace Intersect.Client.Networking;
 
 internal sealed partial class PacketHandler
 {
+    public void HandlePacket(IPacketSender sender, Intersect.Network.Packets.Server.PlaySoundSequencePacket packet)
+    {
+        if (Intersect.Client.Interface.Interface.HasInGameUI) Intersect.Client.Interface.Interface.GameUi.PlaySoundSequence(packet);
+    }
+
     public void HandlePacket(IPacketSender packetSender, InvasionStatusPacket packet)
     {
         InvasionEnvironmentManager.ApplyStatus(packet);

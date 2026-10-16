@@ -4669,6 +4669,246 @@
       "en": "Scroll to zoom",
       "fr": "Molette pour zoomer",
       "es": "Usa la rueda para acercar o alejar"
+    },
+    "My house": {
+      "en": "My house",
+      "fr": "Ma maison",
+      "es": "Mi casa"
+    },
+    "Visit house": {
+      "en": "Visit house",
+      "fr": "Visiter la maison",
+      "es": "Visitar casa"
+    },
+    "Go home": {
+      "en": "Go home",
+      "fr": "Aller chez moi",
+      "es": "Ir a casa"
+    },
+    "Leave house": {
+      "en": "Leave house",
+      "fr": "Quitter la maison",
+      "es": "Salir de casa"
+    },
+    "Open to public": {
+      "en": "Open to public",
+      "fr": "Ouvrir au public",
+      "es": "Abrir al público"
+    },
+    "Make private": {
+      "en": "Make private",
+      "fr": "Rendre privée",
+      "es": "Hacer privada"
+    },
+    "Monthly catalog": {
+      "en": "Monthly catalog",
+      "fr": "Catalogue mensuel",
+      "es": "Catálogo mensual"
+    },
+    "Furniture storage": {
+      "en": "Furniture storage",
+      "fr": "Meubles rangés",
+      "es": "Muebles guardados"
+    },
+    "Placed furniture": {
+      "en": "Placed furniture",
+      "fr": "Meubles placés",
+      "es": "Muebles colocados"
+    },
+    "House pets": {
+      "en": "House pets",
+      "fr": "Pets à la maison",
+      "es": "Mascotas en casa"
+    },
+    "Buy": {
+      "en": "Buy",
+      "fr": "Acheter",
+      "es": "Comprar"
+    },
+    "Place": {
+      "en": "Place",
+      "fr": "Placer",
+      "es": "Colocar"
+    },
+    "Move": {
+      "en": "Move",
+      "fr": "Déplacer",
+      "es": "Mover"
+    },
+    "Store": {
+      "en": "Store",
+      "fr": "Ranger",
+      "es": "Guardar"
+    },
+    "Collect pet": {
+      "en": "Collect pet",
+      "fr": "Récupérer le pet",
+      "es": "Recoger mascota"
+    },
+    "Send pet home": {
+      "en": "Send pet home",
+      "fr": "Envoyer le pet chez moi",
+      "es": "Enviar mascota a casa"
+    },
+    "Nothing here yet.": {
+      "en": "Nothing here yet.",
+      "fr": "Rien pour le moment.",
+      "es": "Todavía no hay nada."
+    },
+    "Send pets home from the Pets window.": {
+      "en": "Send pets home from the Pets window.",
+      "fr": "Envoie tes pets à la maison depuis la fenêtre Pets.",
+      "es": "Envía tus mascotas a casa desde la ventana Mascotas."
+    },
+    "{0}'s house - {1}": {
+      "en": "{0}'s house - {1}",
+      "fr": "Maison de {0} - {1}",
+      "es": "Casa de {0} - {1}"
+    },
+    "{0} - stored: {1}": {
+      "en": "{0} - stored: {1}",
+      "fr": "{0} - rangés : {1}",
+      "es": "{0} - guardados: {1}"
+    },
+    "Click to place. Mouse wheel: rotate. Right click: finish.": {
+      "en": "Click to place. Mouse wheel: rotate. Right click: finish.",
+      "fr": "Clique pour placer. Molette : tourner. Clic droit : terminer.",
+      "es": "Haz clic para colocar. Rueda: girar. Clic derecho: terminar."
+    },
+    "Rotation: {0} - click to place, wheel to rotate, right click to finish.": {
+      "en": "Rotation: {0} - click to place, wheel to rotate, right click to finish.",
+      "fr": "Rotation : {0} - clic pour placer, molette pour tourner, clic droit pour terminer.",
+      "es": "Rotación: {0} - clic para colocar, rueda para girar, clic derecho para terminar."
+    },
+    "Recovering: {0}s": {
+      "en": "Recovering: {0}s",
+      "fr": "Récupération : {0}s",
+      "es": "Recuperación: {0}s"
+    },
+    "Your pet is recovering.": {
+      "en": "Your pet is recovering.",
+      "fr": "Ton pet est en récupération.",
+      "es": "Tu mascota se está recuperando."
+    },
+    "Your pet was defeated and needs time to recover.": {
+      "en": "Your pet was defeated and needs time to recover.",
+      "fr": "Ton pet a été vaincu et doit récupérer.",
+      "es": "Tu mascota fue derrotada y necesita recuperarse."
+    },
+    "Housing is not available yet.": {
+      "en": "Housing is not available yet.",
+      "fr": "Les maisons ne sont pas encore disponibles.",
+      "es": "Las casas aún no están disponibles."
+    },
+    "Only the owner can decorate this house.": {
+      "en": "Only the owner can decorate this house.",
+      "fr": "Seul le propriétaire peut décorer cette maison.",
+      "es": "Solo el propietario puede decorar esta casa."
+    },
+    "This offer is unavailable or you do not have enough currency.": {
+      "en": "This offer is unavailable or you do not have enough currency.",
+      "fr": "Cette offre est indisponible ou tu n'as pas assez de monnaie.",
+      "es": "Esta oferta no está disponible o no tienes suficiente dinero."
+    },
+    "Furniture storage is full.": {
+      "en": "Furniture storage is full.",
+      "fr": "Le rangement de meubles est plein.",
+      "es": "El almacén de muebles está lleno."
+    },
+    "The purchase could not be completed.": {
+      "en": "The purchase could not be completed.",
+      "fr": "L'achat n'a pas pu être effectué.",
+      "es": "No se pudo completar la compra."
+    },
+    "You do not own this furniture.": {
+      "en": "You do not own this furniture.",
+      "fr": "Tu ne possèdes pas ce meuble.",
+      "es": "No tienes este mueble."
+    },
+    "Invalid furniture placement.": {
+      "en": "Invalid furniture placement.",
+      "fr": "Placement de meuble invalide.",
+      "es": "Colocación de mueble no válida."
+    },
+    "No stored copy of this furniture is available.": {
+      "en": "No stored copy of this furniture is available.",
+      "fr": "Aucun exemplaire rangé de ce meuble n'est disponible.",
+      "es": "No hay ninguna copia guardada de este mueble."
+    },
+    "Invalid furniture rotation.": {
+      "en": "Invalid furniture rotation.",
+      "fr": "Rotation de meuble invalide.",
+      "es": "Rotación de mueble no válida."
+    },
+    "Furniture placement not found.": {
+      "en": "Furniture placement not found.",
+      "fr": "Meuble placé introuvable.",
+      "es": "No se encontró el mueble colocado."
+    },
+    "This pet has not been unlocked.": {
+      "en": "This pet has not been unlocked.",
+      "fr": "Ce pet n'a pas été débloqué.",
+      "es": "Esta mascota no se ha desbloqueado."
+    },
+    "This house has no room for another pet.": {
+      "en": "This house has no room for another pet.",
+      "fr": "Cette maison n'a plus de place pour un autre pet.",
+      "es": "No hay espacio para otra mascota en esta casa."
+    },
+    "Invalid house action.": {
+      "en": "Invalid house action.",
+      "fr": "Action de maison invalide.",
+      "es": "Acción de casa no válida."
+    },
+    "Your house could not be saved. Please try again.": {
+      "en": "Your house could not be saved. Please try again.",
+      "fr": "Ta maison n'a pas pu être sauvegardée. Réessaie.",
+      "es": "No se pudo guardar tu casa. Inténtalo de nuevo."
+    },
+    "House saved.": {
+      "en": "House saved.",
+      "fr": "Maison sauvegardée.",
+      "es": "Casa guardada."
+    },
+    "Choose a tile inside the house.": {
+      "en": "Choose a tile inside the house.",
+      "fr": "Choisis une case dans la maison.",
+      "es": "Elige una casilla dentro de la casa."
+    },
+    "Enter your house before decorating.": {
+      "en": "Enter your house before decorating.",
+      "fr": "Entre dans ta maison avant de la décorer.",
+      "es": "Entra en tu casa antes de decorarla."
+    },
+    "Leave the dungeon before visiting a house.": {
+      "en": "Leave the dungeon before visiting a house.",
+      "fr": "Quitte le donjon avant de visiter une maison.",
+      "es": "Sal de la mazmorra antes de visitar una casa."
+    },
+    "This house is private.": {
+      "en": "This house is private.",
+      "fr": "Cette maison est privée.",
+      "es": "Esta casa es privada."
+    },
+    "The house could not be entered.": {
+      "en": "The house could not be entered.",
+      "fr": "Impossible d'entrer dans la maison.",
+      "es": "No se pudo entrar en la casa."
+    },
+    "Public house": {
+      "en": "Public house",
+      "fr": "Maison publique",
+      "es": "Casa pública"
+    },
+    "Offline character. House visits are available when public.": {
+      "en": "Offline character. House visits are available when public.",
+      "fr": "Personnage hors ligne. Sa maison est visitable si elle est publique.",
+      "es": "Personaje desconectado. Puedes visitar su casa si es pública."
+    },
+    "View profile or visit house": {
+      "en": "View profile or visit house",
+      "fr": "Voir le profil ou visiter la maison",
+      "es": "Ver perfil o visitar casa"
     }
   }
 }

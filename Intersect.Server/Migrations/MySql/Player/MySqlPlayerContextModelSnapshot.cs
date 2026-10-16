@@ -570,6 +570,8 @@ namespace Intersect.Server.Migrations.MySql.Player
 
             modelBuilder.Entity("Intersect.Server.Entities.Player", b =>
                 {
+                    b.Property<string>("HousingJson").HasColumnType("longtext").HasColumnName("Housing");
+
                     b.Property<Guid>("Id")
                         .HasColumnType("char(36)")
                         .HasColumnOrder(0)

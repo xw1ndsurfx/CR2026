@@ -53,6 +53,9 @@ public sealed class FrmInvasionConfiguration : DarkForm
     };
 
     private readonly CheckBox _reminder60Enabled = new() { Text = "Enabled", AutoSize = true };
+    private readonly TextBox _defeatMessage = new() { Width = 430 };
+    private readonly EditorSoundPicker _defeatFirst = new();
+    private readonly EditorSoundPicker _defeatSecond = new();
     private readonly TextBox _reminder60Message = new() { Width = 430 };
     private readonly ComboBox _reminder60Sound = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
     private readonly CheckBox _reminder30Enabled = new() { Text = "Enabled", AutoSize = true };
@@ -391,6 +394,9 @@ public sealed class FrmInvasionConfiguration : DarkForm
         AddReminderEditor(table, "30 minutes before", _reminder30Enabled, _reminder30Message, _reminder30Sound);
         AddReminderEditor(table, "15 minutes before", _reminder15Enabled, _reminder15Message, _reminder15Sound);
         AddReminderEditor(table, "5 minutes before", _reminder5Enabled, _reminder5Message, _reminder5Sound);
+        AddRow(table, "Defeat message", _defeatMessage);
+        AddRow(table, "Defeat sound 1", _defeatFirst);
+        AddRow(table, "Defeat sound 2 (after 1)", _defeatSecond);
 
         var help = new Label
         {
@@ -658,6 +664,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         _participationMaximumRewardPercent.Value = invasion.ParticipationMaximumRewardPercent;
         _healingContributionPercent.Value = invasion.HealingContributionPercent;
 
+        _defeatMessage.Text = invasion.DefeatMessage; _defeatFirst.FileName = invasion.DefeatSoundFirst; _defeatSecond.FileName = invasion.DefeatSoundSecond;
         _reminder60Enabled.Checked = invasion.Reminder60Enabled;
         _reminder60Message.Text = invasion.Reminder60Message ?? string.Empty;
         _reminder60Sound.Text = invasion.Reminder60Sound ?? string.Empty;
@@ -751,6 +758,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         invasion.ParticipationMaximumRewardPercent = (int)_participationMaximumRewardPercent.Value;
         invasion.HealingContributionPercent = (int)_healingContributionPercent.Value;
 
+        invasion.DefeatMessage = _defeatMessage.Text.Trim(); invasion.DefeatSoundFirst = _defeatFirst.FileName; invasion.DefeatSoundSecond = _defeatSecond.FileName;
         invasion.Reminder60Enabled = _reminder60Enabled.Checked;
         invasion.Reminder60Message = _reminder60Message.Text?.Trim() ?? string.Empty;
         invasion.Reminder60Sound = _reminder60Sound.Text?.Trim() ?? string.Empty;

@@ -72,6 +72,8 @@ public partial class Player
                 Experience = Math.Max(0, saved.Experience),
                 ExperienceToNextLevel = level >= maximumLevel ? 0 : saved.ExperienceToNextLevel,
                 IsActive = active,
+                Housed = saved.Housed,
+                RecoverySeconds = (int)Math.Clamp((saved.RecoveryUntilUtc - DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + 999) / 1000, 0, 86400),
                 AutoLoot = saved.AutoLoot,
                 LootRadius = Math.Clamp(descriptor.PetLootRadius, 0, 8),
                 Stats = stats,
@@ -149,6 +151,8 @@ public partial class Player
                 }
 
                 renamedPet.Nickname = newName;
+                var resident = House.Pets.FirstOrDefault(p => p.Id == petId);
+                if (resident != null) { resident.Name = GetPetDisplayName(petDescriptor); Intersect.Server.Housing.HousingRuntime.BroadcastOwner(this); }
                 if (ActivePet is { } activeCompanion && activeCompanion.Descriptor.Id == petId)
                 {
                     activeCompanion.RefreshPetDisplayName();

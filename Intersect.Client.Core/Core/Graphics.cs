@@ -340,6 +340,7 @@ public static partial class Graphics
             }
         }
 
+        Intersect.Client.Interface.Game.HousingWorld.DrawFloor();
         // Handle our plugin drawing.
         Globals.OnGameDraw(DrawStates.GroundLayers, deltaTime);
 
@@ -357,6 +358,7 @@ public static partial class Graphics
         {
             for (var x = 0; x < 3; x++)
             {
+                if (x == 1) Intersect.Client.Interface.Game.HousingWorld.DrawRow(y);
                 foreach (var entity in RenderingEntities[x, y])
                 {
                     // Handle our plugin drawing.

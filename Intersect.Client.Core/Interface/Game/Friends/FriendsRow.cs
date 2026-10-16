@@ -70,10 +70,8 @@ public partial class FriendsRow
             36, 43, 280, 19, 10, Muted);
 
         var profile = AddAction(_row, "FriendViewProfile", "PROFILE", 326, 22, 88, 35,
-            online, isPrimary: true);
-        profile.SetToolTipText(online
-            ? "View Character Information for " + _friendName
-            : "Character Information is available when this friend is online");
+            true, isPrimary: true);
+        profile.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("View profile or visit house"));
         profile.Clicked += OpenProfile;
 
         var message = AddAction(_row, "FriendSendMessage", "MESSAGE", 420, 22, 96, 35,
@@ -95,8 +93,7 @@ public partial class FriendsRow
 
     private void OpenProfile(Base sender, MouseButtonState args)
     {
-        // Never request an unavailable offline character profile.
-        if (_online && !string.IsNullOrWhiteSpace(_friendName))
+        if (!string.IsNullOrWhiteSpace(_friendName))
             PacketSender.SendRequestPlayerProfile(_friendName, openWindow: true);
     }
 

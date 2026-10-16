@@ -19,6 +19,7 @@ internal sealed class PetsWindow : Window
     private readonly Label _summary;
     private readonly bool _readOnly;
     private readonly ScrollControl _scroll;
+    private readonly List<(Button Button, Label Caption, long Until)> _recoveries = [];
 
     public PetsWindow(Canvas parent, bool readOnly = false) : base(parent,
         readOnly ? "Player Familiars" : "Pets", false,
@@ -69,6 +70,7 @@ internal sealed class PetsWindow : Window
 
     public void Apply(PetStatePacket packet)
     {
+        _recoveries.Clear();
         _scroll.DeleteAll();
         var pets = packet.Pets ?? [];
         _summary.Text = (_readOnly ? packet.InspectedPlayerName + "  |  VIEW ONLY  |  " : "") +
@@ -85,9 +87,9 @@ internal sealed class PetsWindow : Window
             {
                 MouseInputEnabled = false,
             };
-            card.SetBounds(5, y, 644, _readOnly ? 312 : 378);
+            card.SetBounds(5, y, 644, _readOnly ? 312 : 414);
             var cardFrame = new PetChrome(card, "PetCardFrame" + pet.PetId, PetChromeStyle.Card);
-            cardFrame.SetBounds(0, 0, 644, _readOnly ? 312 : 378);
+            cardFrame.SetBounds(0, 0, 644, _readOnly ? 312 : 414);
             var portraitFrame = new PetChrome(card, "PetPortraitFrame" + pet.PetId, PetChromeStyle.Portrait);
             portraitFrame.SetBounds(13, 12, 85, 85);
             var statsFrame = new PetChrome(card, "PetStatsFrame" + pet.PetId, PetChromeStyle.Section);
@@ -205,9 +207,19 @@ internal sealed class PetsWindow : Window
                 summon.SetBounds(18, 337, 296, 32);
                 StyleButton(summon, "PetSummonStyle" + pet.PetId,
                     pet.IsActive ? "DISMISS" : "SUMMON", 296, 32, !pet.IsActive);
+                if (!pet.IsActive && pet.RecoverySeconds > 0)
+                {
+                    summon.IsDisabled = true;
+                    var caption = summon.Children.OfType<Label>().Last();
+                    _recoveries.Add((summon, caption, Environment.TickCount64 + pet.RecoverySeconds * 1000L));
+                    caption.Text = Intersect.Client.Localization.ClientLanguages.Format("Recovering: {0}s", pet.RecoverySeconds);
+                }
                 summon.Clicked += (_, _) => Networking.PacketSender.SendPetAction(
                     pet.IsActive ? PetActionKind.Dismiss : PetActionKind.Summon, pet.PetId);
     
+                var home = new Button(card, "PetHome" + pet.PetId) { Text = Intersect.Client.Localization.ClientLanguages.Text(pet.Housed ? "Collect pet" : "Send pet home"), FontSize = 10 };
+                home.SetBounds(18, 376, 608, 28);
+                home.Clicked += (_, _) => Networking.PacketSender.SendHouseAction(pet.Housed ? Intersect.Network.Packets.Housing.HouseAction.CollectPet : Intersect.Network.Packets.Housing.HouseAction.StorePet, id: pet.PetId);
                 var loot = new Button(card, "PetLoot" + pet.PetId)
                 {
                     Text = pet.AutoLoot ? "Disable auto-loot" : "Enable auto-loot",
@@ -225,10 +237,21 @@ internal sealed class PetsWindow : Window
     
             }
 
-            y += _readOnly ? 324 : 392;
+            y += _readOnly ? 324 : 428;
         }
         _scroll.SetInnerSize(661, Math.Max(400, y + 10));
         _scroll.UpdateScrollBars();
+    }
+
+    public void UpdateRecovery()
+    {
+        foreach (var (button, caption, until) in _recoveries)
+        {
+            var remaining = Math.Max(0, (until - Environment.TickCount64 + 999) / 1000);
+            button.IsDisabled = remaining > 0;
+            caption.Text = remaining > 0 ? Intersect.Client.Localization.ClientLanguages.Format("Recovering: {0}s", remaining)
+                : Intersect.Client.Localization.ClientLanguages.Text("Summon");
+        }
     }
 
     private static void StyleButton(Button button, string id, string caption,
