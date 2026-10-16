@@ -1,3 +1,4 @@
+using Intersect.Client.Interface.Shared;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
@@ -41,7 +42,7 @@ internal sealed class RoyalStylistWindow : Window
     private readonly Label _premiumStatus;
     private readonly Label _priceStatus;
 
-    private readonly ImagePanel _preview;
+    private readonly AppearancePreview _preview;
     private readonly Panel _previewPanel;
     private ImagePanel[]? _renderLayers;
     private int _previewDirection;
@@ -131,20 +132,14 @@ internal sealed class RoyalStylistWindow : Window
         };
         _previewPanel.SetBounds(24, 145, 352, 410);
 
-        _preview = new ImagePanel(
-            _previewPanel,
-            "CharacterPreview"
-        )
-        {
-            MaintainAspectRatio = true,
-            TextureFilename = "character_preview_background.png",
-        };
-        _preview.SetBounds(26, 12, 300, 330);
+        _preview = new AppearancePreview(_previewPanel, "CharacterPreview");
+        _preview.ZoomChanged += UpdatePreview;
+        _preview.SetBounds(26, 0, 300, 330);
 
-        AddDirectionButton("DOWN", 0, 10);
-        AddDirectionButton("LEFT", 1, 92);
-        AddDirectionButton("RIGHT", 2, 174);
-        AddDirectionButton("UP", 3, 256);
+        AddDirectionButton("Down", 0, 10);
+        AddDirectionButton("Left", 1, 92);
+        AddDirectionButton("Right", 2, 174);
+        AddDirectionButton("Up", 3, 256);
 
         var x = 398;
         var y = 148;
@@ -394,7 +389,7 @@ internal sealed class RoyalStylistWindow : Window
             "Direction" + direction
         )
         {
-            Text = text,
+            Text = Intersect.Client.Localization.ClientLanguages.Text(text),
             Font =
                 GameContentManager.Current.GetFont(
                     "sourcesansproblack"
@@ -413,7 +408,7 @@ internal sealed class RoyalStylistWindow : Window
         {
             button.Text = string.Empty;
             button.ShouldDrawBackground = false;
-            button.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("Preview: ") + text);
+            button.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("Preview: ") + Intersect.Client.Localization.ClientLanguages.Text(text));
             button.HoverEnter += (_, _) =>
                 art.SetTextureRect(3 * arrowSize, arrowRow * arrowSize, arrowSize, arrowSize);
             button.HoverLeave += (_, _) => UpdateDirectionButtonArts();
@@ -467,7 +462,7 @@ internal sealed class RoyalStylistWindow : Window
         {
             _renderLayers[i] = new ImagePanel(_preview)
             {
-                Alignment = [Alignments.Center],
+                Alignment = [],
                 RestrictToParent = false,
             };
         }
@@ -486,6 +481,8 @@ internal sealed class RoyalStylistWindow : Window
             Options.Instance.Equipment.Paperdoll
                 .Directions[_previewDirection];
 
+        var body = Globals.ContentManager.GetTexture(TextureType.Entity, Globals.Me.Sprite);
+        if (body != null) _preview.SetBodyFrame(body, body.Width / Options.Instance.Sprites.NormalFrames, body.Height / Options.Instance.Sprites.Directions, _previewDirection);
         var appearance = CurrentAppearance();
 
         for (var layerIndex = 0;
@@ -556,14 +553,7 @@ internal sealed class RoyalStylistWindow : Window
                 textureWidth,
                 textureHeight
             );
-            _ = container.SetSize(
-                textureWidth,
-                textureHeight
-            );
-            container.SetPosition(
-                (_preview.Width - textureWidth) / 2,
-                (_preview.Height - textureHeight) / 2
-            );
+            _preview.PlaceLayer(container, textureWidth, textureHeight);
             container.Show();
         }
     }
