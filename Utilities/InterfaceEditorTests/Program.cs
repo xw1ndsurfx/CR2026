@@ -18,6 +18,7 @@ internal static class Program
     private static void Run()
     {
         typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, new Options());
+        SoundImportTests.Run();
         var paddedBounds = GraphicBounds.Read(128, 128, (x, y) => x >= 48 && x < 80 && y >= 30 && y < 78);
         var anchored = EventGraphicPlacement.VisibleTopLeft(320, 640, paddedBounds, 32, 32);
         Check(anchored.X + paddedBounds.X + paddedBounds.Width / 2f == 336 &&

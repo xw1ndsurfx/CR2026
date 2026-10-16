@@ -10,4 +10,5 @@
     <AssemblyName>Intersect.Tests.Editor</AssemblyName>
   </PropertyGroup>
   <ItemGroup><ProjectReference Include="../../Intersect.Editor/Intersect.Editor.csproj" /></ItemGroup>
+  <ItemGroup><Reference Include="DarkUI"><HintPath>../../Intersect.Editor/DarkUI.dll</HintPath></Reference></ItemGroup>
 </Project>
