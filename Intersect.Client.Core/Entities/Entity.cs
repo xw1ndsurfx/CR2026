@@ -927,9 +927,10 @@ public partial class Entity : IEntity
             }
 
             var animationDirection = animation.AutoRotate ? DirectionFacing : default;
+            var eventOffset = this is Events.Event evt ? new Vector2(evt.AnimationOffsetX, evt.AnimationOffsetY) : Vector2.Zero;
             animation.SetPosition(
-                (int)Math.Ceiling(Center.X),
-                (int)Math.Ceiling(Center.Y),
+                (int)Math.Ceiling(Center.X + eventOffset.X),
+                (int)Math.Ceiling(Center.Y + eventOffset.Y),
                 X,
                 Y,
                 MapId,
@@ -1233,6 +1234,17 @@ public partial class Entity : IEntity
         }
 
         return existingRenderSet;
+    }
+
+    public void DrawEventAnimations(bool upper)
+    {
+        if (this is not Events.Event || !ShouldDraw) return;
+        foreach (var animation in _animations)
+        {
+            animation.Draw(upper,
+                upper ? animation.Descriptor.Upper.AlternateRenderLayer : animation.Descriptor.Lower.AlternateRenderLayer,
+                eventPass: true);
+        }
     }
 
     //Rendering Functions

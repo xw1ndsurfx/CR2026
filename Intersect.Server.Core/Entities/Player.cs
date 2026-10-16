@@ -516,6 +516,7 @@ public partial class Player : Entity
 
     private void Logout(bool softLogout = false, TaskCompletionSource? logoutCompletionSource = null)
     {
+        CompleteConfiguredDeath();
         lock (_savingLock)
         {
             lock (_pendingLogoutLock)
@@ -849,7 +850,7 @@ public partial class Player : Entity
                 }
 
 
-                base.Update(timeMs);
+                if (!HasPendingDeath) base.Update(timeMs);
                 UpdateActivePet(timeMs);
 
                 if (mAutorunCommonEventTimer < Timing.Global.Milliseconds)
@@ -1059,6 +1060,7 @@ public partial class Player : Entity
                         RemoveEvent(evt.Value.Id);
                     }
                 }
+                AdvanceConfiguredDeath();
             }
         }
         finally
@@ -1127,6 +1129,7 @@ public partial class Player : Entity
 
         var pkt = (PlayerEntityPacket)packet;
         pkt.IsAfk = _isAfk;
+        pkt.PendingDeath = HasPendingDeath;
         pkt.Gender = Gender;
         pkt.ClassId = ClassId;
         pkt.Appearance = Appearance?.SanitizedCopy() ?? new CharacterAppearance();
@@ -1210,6 +1213,7 @@ public partial class Player : Entity
 
     public override void Die(bool dropItems = true, Entity killer = null)
     {
+        if (IsDead || HasPendingDeath) return;
         var dungeonDeath = DungeonRunRuntime.IsPlayerInActiveRun(this);
 
         CastTime = 0;
@@ -1255,7 +1259,7 @@ public partial class Player : Entity
             }
         }
         PacketSender.SendEntityDie(this);
-        if (!DungeonRunRuntime.TryHandlePlayerDeath(this))
+        if (!DungeonRunRuntime.TryHandlePlayerDeath(this) && !TryBeginConfiguredDeath())
         {
             Respawn();
         }
@@ -7590,6 +7594,11 @@ public partial class Player : Entity
     {
         entityType = default;
 
+        if (IsDead || HasPendingDeath)
+        {
+            blockerType = MovementBlockerType.OutOfBounds;
+            return false;
+        }
         // If crafting or locked by event return blocked
         if (OpenCraftingTableId != default && CraftingState != default)
         {

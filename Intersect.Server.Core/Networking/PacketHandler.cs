@@ -834,6 +834,11 @@ internal sealed partial class PacketHandler
             return;
         }
 
+        if (player.IsDead || player.HasPendingDeath)
+        {
+            PacketSender.SendEntityPositionTo(client, player);
+            return;
+        }
         player.RegisterAfkActivity();
 
         //check if player is stunned or snared, if so don't let them move.
@@ -1265,6 +1270,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
+        if (player.IsDead || player.HasPendingDeath) return;
         var unequippedAttack = false;
         var target = packet.Target;
 
@@ -1514,7 +1520,7 @@ internal sealed partial class PacketHandler
     public void HandlePacket(Client client, ActivateEventPacket packet)
     {
         var player = client?.Entity;
-        if (player == null)
+        if (player == null || player.IsDead || player.HasPendingDeath)
         {
             return;
         }
@@ -1876,7 +1882,7 @@ internal sealed partial class PacketHandler
     public void HandlePacket(Client client, UseItemPacket packet)
     {
         var player = client?.Entity;
-        if (player == null)
+        if (player == null || player.IsDead || player.HasPendingDeath)
         {
             return;
         }
@@ -1929,7 +1935,7 @@ internal sealed partial class PacketHandler
     public void HandlePacket(Client client, UseSpellPacket packet)
     {
         var player = client?.Entity;
-        if (player == null)
+        if (player == null || player.IsDead || player.HasPendingDeath)
         {
             return;
         }

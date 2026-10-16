@@ -48,6 +48,12 @@ internal static class Program
             Check((int)animationType.GetMethod("NormalizeAnimationScale", BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, [1])! == 1,
                 "Loading/saving must preserve one percent animation scale");
         }
+        using (var deathEditor = new Intersect.Editor.Forms.Editors.FrmDeathConfiguration(new Intersect.Framework.Core.Systems.Deaths.DeathConfiguration().ToJson()))
+        {
+            Check(deathEditor.MinimumSize.Width >= 900 && deathEditor.MaximizeBox, "Death Editor can maximize and keeps a readable minimum layout");
+            var maps = (CheckedListBox)deathEditor.GetType().GetField("_maps", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(deathEditor)!;
+            Check(maps.CheckOnClick, "Death rules use checked map selections like Dungeon Editor");
+        }
         using var editor = new FrmEvent(new MapDescriptor(Guid.NewGuid()));
         using (var voiceEditor = new Intersect.Editor.Forms.Editors.Events.Event_Commands.EventCommandPlayBgs(
             new Intersect.Framework.Core.GameObjects.Events.Commands.PlaySoundCommand { VoiceSound = true, File = "dialog.wav" }, editor))
@@ -58,9 +64,14 @@ internal static class Program
             voiceFlag.Checked = false;
             Check(group.Text == "Play Sound", "Event sound editor switches back to normal effects");
         }
-        editor.CurrentPage = new EventPage { WorldMapOffsetX = 48, WorldMapOffsetY = -16, ShowNameOnWorldMap = true };
+        editor.CurrentPage = new EventPage { AnimationOffsetX = -25, AnimationOffsetY = 38, WorldMapOffsetX = 48, WorldMapOffsetY = -16, ShowNameOnWorldMap = true };
         var flags = BindingFlags.Instance | BindingFlags.NonPublic;
         typeof(FrmEvent).GetMethod("LoadWorldMapOffsets", flags)!.Invoke(editor, null);
+        var animationX = (NumericUpDown)typeof(FrmEvent).GetField("_animationX", flags)!.GetValue(editor)!;
+        var animationY = (NumericUpDown)typeof(FrmEvent).GetField("_animationY", flags)!.GetValue(editor)!;
+        Check(animationX.Value == -25 && animationY.Value == 38, "Event page restores separate in-game animation offsets");
+        animationX.Value = 100;
+        Check(editor.CurrentPage.AnimationOffsetX == 100 && editor.CurrentPage.WorldMapOffsetX == 48, "In-game animation settings must not change the World Map marker");
         var x = (NumericUpDown)typeof(FrmEvent).GetField("_worldMapX", flags)!.GetValue(editor)!;
         var y = (NumericUpDown)typeof(FrmEvent).GetField("_worldMapY", flags)!.GetValue(editor)!;
         Check(x.Value == 48 && y.Value == -16, "Page offsets must load");

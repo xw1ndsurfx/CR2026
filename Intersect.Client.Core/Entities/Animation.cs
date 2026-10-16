@@ -102,8 +102,11 @@ public partial class Animation : IAnimation
         }
     }
 
-    public void Draw(bool upper = false, bool alternate = false)
+    public void Draw(bool upper = false, bool alternate = false, bool eventPass = false)
     {
+        // Event animations belong to the event's sorted render slot, not the global
+        // above-player pass. This also makes movement-route layer changes apply.
+        if (mParent is Events.Event && !eventPass) return;
         if (Hidden || Descriptor == default)
         {
             return;
@@ -169,7 +172,7 @@ public partial class Animation : IAnimation
         // Map/tile animations keep the legacy offset. Animations attached to an entity
         // must follow the same +32px visual shift as entity sprites, otherwise they render
         // noticeably above the character/event they are attached to.
-        var spriteYOffset = mParent == null || mParent is Events.Event ? -16f : 32f;
+        var spriteYOffset = mParent is Events.Event ? 0f : mParent == null ? -16f : 32f;
 
         if (!upper && mShowLower && mZDimension < 1 || !upper && mShowLower && mZDimension > 0)
         {

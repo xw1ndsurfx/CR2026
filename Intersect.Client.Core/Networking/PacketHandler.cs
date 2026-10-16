@@ -1661,13 +1661,18 @@ internal sealed partial class PacketHandler
                     return;
                 }
 
-                map.AddTileAnimation(
+                var tileAnimation = map.AddTileAnimation(
                     animationDescriptorId,
                     packet.X,
                     packet.Y,
                     packet.Direction,
                     source: animationSource
                 );
+                if (tileAnimation is Animation positionedAnimation)
+                {
+                    positionedAnimation.ParentOffsetX = packet.OffsetX;
+                    positionedAnimation.ParentOffsetY = packet.OffsetY;
+                }
 
                 break;
             }

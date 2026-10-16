@@ -7,6 +7,8 @@ public partial class FrmEvent
     private readonly NumericUpDown _worldMapX = new() { Minimum = -2048, Maximum = 2048, Width = 100 };
     private readonly NumericUpDown _worldMapY = new() { Minimum = -2048, Maximum = 2048, Width = 100 };
     private readonly DarkCheckBox _worldMapName = new() { Text = "Show Name in World Map", AutoSize = true };
+    private readonly NumericUpDown _animationX = new() { Minimum = -2048, Maximum = 2048, Width = 100 };
+    private readonly NumericUpDown _animationY = new() { Minimum = -2048, Maximum = 2048, Width = 100 };
     private bool _loadingOffsets;
     private FormBorderStyle _normalBorder;
     private FormWindowState _normalWindowState;
@@ -52,6 +54,13 @@ public partial class FrmEvent
         {
             group.Margin = new Padding(4); group.Width = 380; properties.Controls.Add(group);
         }
+        var animationOffsets = new DarkGroupBox { Text = "In-game animation offset (pixels)", Width = 380, Height = 85 };
+        var animationRow = new FlowLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(8, 20, 0, 0) };
+        animationRow.Controls.AddRange([new DarkLabel { Text = "X", AutoSize = true }, _animationX,
+            new DarkLabel { Text = "Y", AutoSize = true }, _animationY]);
+        animationOffsets.Controls.Add(animationRow); properties.Controls.Add(animationOffsets);
+        _animationX.ValueChanged += (_, _) => { if (!_loadingOffsets && CurrentPage != null) CurrentPage.AnimationOffsetX = (int)_animationX.Value; };
+        _animationY.ValueChanged += (_, _) => { if (!_loadingOffsets && CurrentPage != null) CurrentPage.AnimationOffsetY = (int)_animationY.Value; };
         var offsets = new DarkGroupBox { Text = "World Map marker offset (map pixels)", Width = 380, Height = 100 };
         var offsetRow = new FlowLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(8, 20, 0, 0) };
         offsetRow.Controls.AddRange([new DarkLabel { Text = "X", AutoSize = true }, _worldMapX,
@@ -122,6 +131,8 @@ public partial class FrmEvent
     private void LoadWorldMapOffsets()
     {
         _loadingOffsets = true;
+        _animationX.Value = Math.Clamp(CurrentPage.AnimationOffsetX, -2048, 2048);
+        _animationY.Value = Math.Clamp(CurrentPage.AnimationOffsetY, -2048, 2048);
         _worldMapName.Checked = CurrentPage.ShowNameOnWorldMap;
         _worldMapX.Value = Math.Clamp(CurrentPage.WorldMapOffsetX, -2048, 2048);
         _worldMapY.Value = Math.Clamp(CurrentPage.WorldMapOffsetY, -2048, 2048);
