@@ -9,6 +9,22 @@ public sealed class ExperienceEventDefinition
     public int StartMinute { get; set; }
     public int DurationMinutes { get; set; } = 60;
     public int BonusPercent { get; set; } = 50;
+    // Keep duration on disk so existing schedules remain compatible. End-time editing supports overnight windows.
+    [Newtonsoft.Json.JsonIgnore] public int EndHour
+    {
+        get => (StartHour + (StartMinute + DurationMinutes) / 60) % 24;
+        set { if (value is < 0 or > 23) throw new ArgumentOutOfRangeException(nameof(value)); SetEnd(value, EndMinute); }
+    }
+    [Newtonsoft.Json.JsonIgnore] public int EndMinute
+    {
+        get => (StartMinute + DurationMinutes) % 60;
+        set { if (value is < 0 or > 59) throw new ArgumentOutOfRangeException(nameof(value)); SetEnd(EndHour, value); }
+    }
+    private void SetEnd(int hour, int minute)
+    {
+        DurationMinutes = (hour * 60 + minute - StartHour * 60 - StartMinute + 1440) % 1440;
+        if (DurationMinutes == 0) DurationMinutes = 1440;
+    }
     public bool IsValid => Id != Guid.Empty && Name is { Length: > 0 and <= 96 } && Days is >= 1 and <= 127 && StartHour is >= 0 and <= 23 && StartMinute is >= 0 and <= 59 && DurationMinutes is >= 1 and <= 10080 && BonusPercent is >= 1 and <= 1000;
     public bool IsActive(DateTimeOffset now)
     {
@@ -23,6 +39,7 @@ public sealed class ExperienceEventDefinition
         return false;
     }
 }
+public enum WorldActivitiesSection { All, Experience, CombatMusic, Bank }
 public sealed class WorldActivitiesConfiguration
 {
     public int BankRequiredLevel { get; set; } = 14;
@@ -32,6 +49,16 @@ public sealed class WorldActivitiesConfiguration
     public int CombatMusicGraceSeconds { get; set; } = 8;
     public List<ExperienceEventDefinition> ExperienceEvents { get; set; } = [];
     public bool IsValid => BankRequiredLevel is >= 1 and <= 10000 && BankOpeningCost is >= 0 and <= 1000000 && CombatMusic is { Length: <= 260 } && CombatMusic == Path.GetFileName(CombatMusic) && CombatMusicGraceSeconds is >= 0 and <= 120 && ExperienceEvents is { Count: <= 200 } && ExperienceEvents.All(e => e is { IsValid: true }) && ExperienceEvents.Select(e => e.Id).Distinct().Count() == ExperienceEvents.Count;
+    public void ApplySection(WorldActivitiesConfiguration source, WorldActivitiesSection section)
+    {
+        switch (section)
+        {
+            case WorldActivitiesSection.Experience: ExperienceEvents = source.ExperienceEvents; break;
+            case WorldActivitiesSection.CombatMusic: CombatMusic = source.CombatMusic; CombatMusicGraceSeconds = source.CombatMusicGraceSeconds; break;
+            case WorldActivitiesSection.Bank: BankRequiredLevel = source.BankRequiredLevel; BankOpeningCost = source.BankOpeningCost; BankOpeningCurrencyId = source.BankOpeningCurrencyId; break;
+            default: throw new ArgumentOutOfRangeException(nameof(section));
+        }
+    }
     public int BonusAt(DateTimeOffset now) => ExperienceEvents.Where(e => e.IsActive(now)).Select(e => e.BonusPercent).DefaultIfEmpty(0).Max();
     public static long AwardBonus(long amount, int percent) => (long)Math.Min(long.MaxValue, decimal.Round((decimal)Math.Max(0, amount) * Math.Clamp(percent, 0, 1000) / 100, 0, MidpointRounding.AwayFromZero));
 }

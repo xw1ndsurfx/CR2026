@@ -1,4 +1,4 @@
-﻿namespace Intersect.Framework.Core.GameObjects.Events.Commands;
+namespace Intersect.Framework.Core.GameObjects.Events.Commands;
 
 public partial class DisbandGuildCommand : EventCommand
 {
@@ -28,7 +28,7 @@ public partial class DisbandGuildCommand : EventCommand
     {
         foreach (var branch in BranchIds)
         {
-            if (branch != Guid.Empty && commandLists.ContainsKey(branch))
+            if (branch != Guid.Empty && commandLists.ContainsKey(branch) && !copyLists.ContainsKey(branch))
             {
                 copyLists.Add(branch, commandLists[branch]);
                 foreach (var cmd in commandLists[branch])

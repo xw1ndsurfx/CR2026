@@ -328,207 +328,41 @@ public partial class RichLabel : Base
         int availableWidth
     )
     {
-        if (string.IsNullOrEmpty(text))
+        if (string.IsNullOrEmpty(text)) return;
+
+        // Iterative wrapping must consume at least one text element every pass. The old
+        // recursive word splitter could recurse forever on leading spaces or a narrow viewport.
+        var elements = System.Globalization.StringInfo.ParseCombiningCharacters(text);
+        int Offset(int element) => element == elements.Length ? text.Length : elements[element];
+        var first = 0;
+        while (first < elements.Length)
         {
-            return;
-        }
+            var start = Offset(first);
+            var firstGlyph = text[start..Offset(first + 1)];
+            if (x > initialX && Skin.Renderer.MeasureText(font, fontSize, firstGlyph).X > availableWidth - x)
+                CreateNewline(ref x, ref y, Math.Max(1, lineHeight), initialX);
 
-        var spaceLeft = availableWidth - x;
-
-        // Measure full string
-        var stringSize = Skin.Renderer.MeasureText(font, fontSize, text);
-
-        // If the whole text fits, just create one label.
-        if (spaceLeft > stringSize.X)
-        {
-            CreateLabel(
-                text,
-                block,
-                ref x,
-                ref y,
-                ref lineHeight,
-                initialX,
-                availableWidth,
-                true
-            );
-
-            return;
-        }
-
-        // Try normal word-based splitting first
-        var spaced = Util.SplitAndKeep(text, " ");
-        // If there are no spaces, or the first "word" is already wider than available space,
-        // fall back to character-based splitting.
-        if (spaced.Length == 0)
-        {
-            SplitLabelByChars(
-                text,
-                font,
-                fontSize,
-                block,
-                ref x,
-                ref y,
-                ref lineHeight,
-                initialX,
-                availableWidth
-            );
-
-            return;
-        }
-
-        var firstWordSize = Skin.Renderer.MeasureText(font, fontSize, spaced[0]);
-        if (firstWordSize.X >= spaceLeft && spaced[0].Length >= text.Length)
-        {
-            // Single long chunk with no spaces that does not fit → char-based split.
-            SplitLabelByChars(
-                text,
-                font,
-                fontSize,
-                block,
-                ref x,
-                ref y,
-                ref lineHeight,
-                initialX,
-                availableWidth
-            );
-
-            return;
-        }
-
-        // Original word-based logic (unchanged, but using availableWidth)
-        string leftOver;
-        if (firstWordSize.X >= spaceLeft)
-        {
-            CreateLabel(
-                spaced[0],
-                block,
-                ref x,
-                ref y,
-                ref lineHeight,
-                initialX,
-                availableWidth,
-                true
-            );
-            if (spaced[0].Length >= text.Length)
+            var low = first + 1;
+            var high = elements.Length;
+            var end = first;
+            while (low <= high)
             {
-                return;
+                var middle = low + (high - low) / 2;
+                var width = Skin.Renderer.MeasureText(font, fontSize, text[start..Offset(middle)]).X;
+                if (width <= availableWidth - x) { end = middle; low = middle + 1; }
+                else high = middle - 1;
             }
-
-            leftOver = text.Substring(spaced[0].Length + 1);
-            SplitLabel(
-                leftOver,
-                font,
-                fontSize,
-                block,
-                ref x,
-                ref y,
-                ref lineHeight,
-                initialX,
-                availableWidth
-            );
-
-            return;
-        }
-
-        var newString = string.Empty;
-        for (var i = 0; i < spaced.Length; i++)
-        {
-            var wordSize = Skin.Renderer.MeasureText(font, fontSize, newString + spaced[i]);
-            if (wordSize.X > spaceLeft)
+            // A glyph wider than the viewport still gets emitted once; never retry it indefinitely.
+            end = Math.Max(first + 1, end);
+            if (end < elements.Length)
             {
-                CreateLabel(
-                    newString,
-                    block,
-                    ref x,
-                    ref y,
-                    ref lineHeight,
-                    initialX,
-                    availableWidth,
-                    true
-                );
-                x = 0;
-                y += lineHeight;
-
-                break;
+                for (var boundary = end; boundary > first; boundary--)
+                    if (char.IsWhiteSpace(text[Offset(boundary) - 1])) { end = boundary; break; }
             }
-
-            newString += spaced[i];
-        }
-
-        var newstrLen = newString.Length;
-        if (newstrLen < text.Length)
-        {
-            leftOver = text.Substring(newstrLen);
-            SplitLabel(
-                leftOver,
-                font,
-                fontSize,
-                block,
-                ref x,
-                ref y,
-                ref lineHeight,
-                initialX,
-                availableWidth
-            );
-        }
-    }
-
-    private void SplitLabelByChars(
-        string text,
-        IFont font,
-        int fontSize,
-        TextBlock block,
-        ref int x,
-        ref int y,
-        ref int lineHeight,
-        int initialX,
-        int availableWidth
-    )
-    {
-        var current = string.Empty;
-
-        for (var i = 0; i < text.Length; i++)
-        {
-            var next = current + text[i];
-            var size = Skin.Renderer.MeasureText(font, fontSize, next);
-
-            if (size.X > availableWidth - x && current.Length > 0)
-            {
-                // Commit current chunk
-                CreateLabel(
-                    current,
-                    block,
-                    ref x,
-                    ref y,
-                    ref lineHeight,
-                    initialX,
-                    availableWidth,
-                    true
-                );
-
-                // New line
-                x = initialX;
-                y += lineHeight;
-                current = text[i].ToString();
-            }
-            else
-            {
-                current = next;
-            }
-        }
-
-        if (current.Length > 0)
-        {
-            CreateLabel(
-                current,
-                block,
-                ref x,
-                ref y,
-                ref lineHeight,
-                initialX,
-                availableWidth,
-                true
-            );
+            CreateLabel(text[start..Offset(end)], block, ref x, ref y, ref lineHeight, initialX, availableWidth, true);
+            first = end;
+            if (first < elements.Length && x > initialX)
+                CreateNewline(ref x, ref y, Math.Max(1, lineHeight), initialX);
         }
     }
 
@@ -562,7 +396,7 @@ public partial class RichLabel : Base
 
         if (!noSplit)
         {
-            if (x + textSize.X > Width)
+            if (x + textSize.X > availableWidth)
             {
                 SplitLabel(
                     text,
@@ -580,8 +414,8 @@ public partial class RichLabel : Base
             }
         }
 
-        // Wrap
-        if (x + textSize.X > Width)
+        // Wrap only after existing content; oversized single glyphs must not add an empty line.
+        if (x > initialX && x + textSize.X > availableWidth)
         {
             CreateNewline(ref x, ref y, lineHeight, initialX);
         }
@@ -595,7 +429,7 @@ public partial class RichLabel : Base
             Font = font,
             FontSize = block.FontSize,
             RestrictToParent = false,
-            Text = x == 0 ? text.TrimStart(' ') : text,
+            Text = x == initialX ? text.TrimStart(' ') : text,
             TextAlign = Pos.None,
             TextColorOverride = block.Color,
         };
@@ -616,7 +450,7 @@ public partial class RichLabel : Base
     protected void CreateNewline(ref int x, ref int y, int lineHeight, int initialX)
     {
         x = initialX;
-        y += lineHeight;
+        y += Math.Max(1, lineHeight);
     }
 
     public void ClearText()
@@ -635,7 +469,9 @@ public partial class RichLabel : Base
         var bounds = Bounds;
         var padding = Padding;
         var initialX = padding.Left;
-        var availableWidth = bounds.Width - (initialX + padding.Right);
+        // availableWidth is the right content edge, in the same coordinate system as x.
+        var availableWidth = bounds.Width - padding.Right;
+        if (availableWidth <= initialX) { Rebuilt?.Invoke(this, EventArgs.Empty); return; }
         var x = initialX;
         var y = padding.Top;
         var lineHeight = -1;

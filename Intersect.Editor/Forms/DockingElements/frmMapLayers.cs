@@ -59,6 +59,7 @@ public partial class FrmMapLayers : DockContent
     {
         InitializeComponent();
         Icon = Program.Icon;
+        InitializeResourceBrush();
 
         mMapLayers.Add(picLayer1);
         mMapLayers.Add(picLayer2);

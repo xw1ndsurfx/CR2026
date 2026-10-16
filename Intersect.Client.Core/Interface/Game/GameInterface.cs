@@ -181,6 +181,8 @@ public partial class GameInterface : MutableInterface
     }
 
     //Chatbox
+    public void ApplyChatEmotes(Intersect.Network.Packets.ChatEmotes.ChatEmoteMenuPacket packet) => mChatBox.ApplyEmotes(packet);
+
     public void SetChatboxText(string msg)
     {
         mChatBox.SetChatboxText(msg);

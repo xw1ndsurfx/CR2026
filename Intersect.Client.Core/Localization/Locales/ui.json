@@ -4989,6 +4989,46 @@
       "en": "Opening a bank account costs {0} {1}.",
       "fr": "L’ouverture d’un compte coûte {0} {1}.",
       "es": "Abrir una cuenta cuesta {0} {1}."
+    },
+    "Search items or sellers": {
+      "en": "Search items or sellers",
+      "fr": "Rechercher un objet ou vendeur",
+      "es": "Buscar objetos o vendedores"
+    },
+    "Listings: {0} / {1}": {
+      "en": "Listings: {0} / {1}",
+      "fr": "Annonces : {0} / {1}",
+      "es": "Anuncios: {0} / {1}"
+    },
+    "No listings match your search.": {
+      "en": "No listings match your search.",
+      "fr": "Aucune annonce ne correspond.",
+      "es": "Ningún anuncio coincide con tu búsqueda."
+    },
+    "Use": {
+      "en": "Use",
+      "fr": "Utiliser",
+      "es": "Usar"
+    },
+    "Emotes": {
+      "en": "Emotes",
+      "fr": "Émoticônes",
+      "es": "Emoticonos"
+    },
+    "No emotes configured": {
+      "en": "No emotes configured",
+      "fr": "Aucune émoticône configurée",
+      "es": "No hay emoticonos configurados"
+    },
+    "Use {0}": {
+      "en": "Use {0}",
+      "fr": "Utiliser {0}",
+      "es": "Usar {0}"
+    },
+    "Move closer to this furniture to use it.": {
+      "en": "Move closer to this furniture to use it.",
+      "fr": "Approchez-vous de ce meuble pour l’utiliser.",
+      "es": "Acércate a este mueble para usarlo."
     }
   }
 }

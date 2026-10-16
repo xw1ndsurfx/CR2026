@@ -1,4 +1,4 @@
-﻿using Intersect.Editor.Forms.Editors;
+using Intersect.Editor.Forms.Editors;
 using Intersect.Editor.Networking;
 using Intersect.Network.Packets.Editor;
 using Intersect.Network.Packets.Server;
@@ -17,9 +17,15 @@ public partial class FrmMain
             Intersect.Editor.Networking.Network.SendPacket(new DeathConfigurationRequestPacket());
         };
         system.DropDownItems.Add(death);
-        var activities = new ToolStripMenuItem("Combat Music & Experience Events...");
-        activities.Click += (_, _) => Intersect.Editor.Networking.Network.SendPacket(new Intersect.Network.Packets.WorldEvents.RequestWorldActivitiesPacket());
-        system.DropDownItems.Add(activities);
+        void AddSection(ToolStripMenuItem menu, string title, Intersect.Framework.Core.WorldEvents.WorldActivitiesSection section)
+        {
+            var item = new ToolStripMenuItem(title);
+            item.Click += (_, _) => Intersect.Editor.Networking.Network.SendPacket(new Intersect.Network.Packets.WorldEvents.RequestWorldActivitiesPacket { Section = section });
+            menu.DropDownItems.Add(item);
+        }
+        AddSection(system, "Combat Music...", Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.CombatMusic);
+        AddSection(system, "Bank Settings...", Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.Bank);
+        AddSection(menuStrip.Items.Cast<ToolStripItem>().OfType<ToolStripMenuItem>().Single(i => i.Name == "worldEventsToolStripMenuItem"), "Experience Events...", Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.Experience);
         var events = menuStrip.Items.Cast<ToolStripItem>().FirstOrDefault(item => item.Name == "worldEventsToolStripMenuItem");
         menuStrip.Items.Insert(events == null ? menuStrip.Items.Count : menuStrip.Items.IndexOf(events) + 1, system);
     }

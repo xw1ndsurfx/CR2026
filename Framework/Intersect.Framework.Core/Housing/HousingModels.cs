@@ -13,6 +13,7 @@ public sealed class FurnitureDefinition
     public int SourceY { get; set; }
     public int Width { get; set; } = 1;
     public int Height { get; set; } = 1;
+    public Guid CommonEventId { get; set; }
     public bool FloorDecoration { get; set; }
     public bool Available(DateTime utc) => Months.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
         .Contains(utc.ToString("yyyy-MM", CultureInfo.InvariantCulture));

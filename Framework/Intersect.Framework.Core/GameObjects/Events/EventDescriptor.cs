@@ -7,6 +7,8 @@ namespace Intersect.Framework.Core.GameObjects.Events;
 
 public partial class EventDescriptor : DatabaseObject<EventDescriptor>, IFolderable
 {
+    [NotMapped, JsonIgnore] public bool IsChatEmote => CommonEvent && Pages.Count > 0 && Pages[0].ShowInChatEmoteMenu;
+
     //Cached Pages Data
     private string mCachedPagesData = null;
 

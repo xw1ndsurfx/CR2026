@@ -357,6 +357,7 @@ public partial class Chatbox
     //Update
     private void Update()
     {
+        UpdateEmotePicker();
         var vScrollBar = mChatboxMessages.GetVerticalScrollBar();
         var scrollAmount = vScrollBar.ScrollAmount;
         var scrollBarVisible = vScrollBar.ContentSize > mChatboxMessages.Height;

@@ -16,6 +16,7 @@ public partial class EventPage
     {
     }
 
+    public bool ShowInChatEmoteMenu { get; set; }
     public Guid AnimationId { get; set; }
 
     public int AnimationOffsetX { get; set; }

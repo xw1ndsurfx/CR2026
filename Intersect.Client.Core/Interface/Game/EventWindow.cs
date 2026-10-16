@@ -172,7 +172,13 @@ public partial class EventWindow : Panel
 
             if (show)
             {
-                _faceImage.SizeToContents();
+                var size = Math.Clamp(Math.Min(_promptPanel.Width / 4, _promptPanel.Y - 12), 32, 96);
+                _faceImage.MinimumSize = new Point(0, 0);
+                _faceImage.MaximumSize = new Point(size, size);
+                _faceImage.SetSize(size, size);
+                _faceImage.SetPosition(_promptPanel.X + (_promptPanel.Width - size) / 2,
+                    Math.Max(0, _promptPanel.Y - size - 8));
+                _faceImage.MaintainAspectRatio = true;
             }
         }
         else
