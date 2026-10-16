@@ -35,6 +35,12 @@ public partial class AnimationLayer
     /// Visual size of this layer at runtime. 100 is the source frame size.
     /// </summary>
     public int ScalePercent { get; set; } = 100;
+    public int OffsetX { get; set; }
+    public int OffsetY { get; set; }
+    // Zero preserves existing assets; 90 means only 10% visible.
+    public int TransparencyPercent { get; set; }
+    [NotMapped, JsonIgnore]
+    public byte Opacity => (byte)Math.Round(255 * (100 - Math.Clamp(TransparencyPercent, 0, 100)) / 100d);
 
     public bool DisableRotations { get; set; }
 

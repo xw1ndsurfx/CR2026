@@ -74,11 +74,15 @@ internal static class PotionMouseInputTests
             sceneType.GetMethod("Update")!.Invoke(scene, [model]);
             var board = (ControlBase)sceneType.GetField("_boardInput", flags)!.GetValue(scene)!;
             var position = new Point(board.X + board.Width / 16, board.Y + board.Height / 2);
-            down.Invoke(board, [MouseButton.Right, position, true]);
-            clicked.Invoke(board, [MouseButton.Right, position, true]);
-            up.Invoke(board, [MouseButton.Right, position, true]);
+            var oldHovered = Intersect.Client.Framework.Gwen.Input.InputHandler.HoveredControl;
+            Intersect.Client.Framework.Gwen.Input.InputHandler.HoveredControl = board;
+            Intersect.Client.Framework.Gwen.Input.InputHandler.MousePosition = position;
+            canvas.Input_MouseButton(MouseButton.Right, true);
+            canvas.Input_MouseButton(MouseButton.Right, false);
+            Intersect.Client.Framework.Gwen.Input.InputHandler.HoveredControl = oldHovered;
+
             Check((PotionPairOrientation)sceneType.GetField("_localOrientation", flags)!.GetValue(scene)! ==
-                  PotionPairOrientation.Horizontal, "Real window did not rotate the pair");
+                  PotionPairOrientation.Horizontal, "Real Canvas input did not deliver a right click to rotate the pair");
             down.Invoke(board, [MouseButton.Left, position, true]);
             Check(requests.SequenceEqual(new[] { (PotionRequestKind.Drop, 0, 1) }),
                 "Real window sent a wrong column/orientation or extra action");

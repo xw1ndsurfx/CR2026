@@ -137,6 +137,12 @@ internal static class ProfessionRuntime
         }
     }
 
+    internal static void AwardPotionCompletion(Player player, long experience)
+    {
+        if (ProfessionConfigurationRuntime.Current.FindPotionProfession() is { } profession)
+            AwardActivity(player, profession.Id, experience);
+    }
+
     internal static void AwardActivity(Player player, Guid professionId, long amount)
     {
         var definition = ProfessionConfigurationRuntime.Current.Find(professionId);

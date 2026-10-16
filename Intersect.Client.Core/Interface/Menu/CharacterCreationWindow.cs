@@ -257,6 +257,7 @@ public partial class CharacterCreationWindow : Window
         SizeToChildren(recursive: true);
 
         LoadJsonUi(GameContentManager.UI.Menu, Graphics.Renderer?.GetResolutionString());
+        ApplyAppearanceLayout();
 
         _classCombobox.ClearItems();
 
@@ -318,6 +319,7 @@ public partial class CharacterCreationWindow : Window
 
         UpdateDisplay();
         base.Show();
+        ApplyAppearanceLayout();
     }
 
     //Methods
@@ -541,6 +543,32 @@ public partial class CharacterCreationWindow : Window
         UpdateDisplay();
     }
 
+    private void ApplyAppearanceLayout()
+    {
+        AppearanceWindowLayout.Apply(this);
+        _propertiesPanel.Dock = _previewPanel.Dock = _buttonsPanel.Dock = Pos.None;
+        _propertiesPanel.Margin = Margin.Zero;
+        _propertiesPanel.DockChildSpacing = new Padding(0);
+        _propertiesPanel.SetBounds(398, 38, 438, 500);
+        _previewPanel.SetBounds(24, 38, 352, 500);
+        _buttonsPanel.SetBounds(24, 570, 812, 34);
+        var fields = new Base[] { _nameInput, _classCombobox, _hairCombobox, _hairColorCombobox, _shirtCombobox,
+            _shirtColorCombobox, _pantsCombobox, _pantsColorCombobox, _bootsCombobox, _bootsColorCombobox,
+            _randomizeAppearanceButton, _genderInputPanel };
+        for (var i = 0; i < fields.Length; i++)
+        {
+            fields[i].Dock = Pos.None; fields[i].Margin = Margin.Zero;
+            fields[i].SetBounds(0, i * 39, 438, 31);
+        }
+        _previewContainer.Dock = _directionPanel.Dock = Pos.None;
+        _previewContainer.SetBounds(32, 10, 288, 410);
+        _preview.Alignment = [Alignments.Center]; _preview.SetSize(280, 380);
+        _directionPanel.Margin = Margin.Zero;
+        _directionPanel.SetBounds(8, 440, 336, 36);
+        _createButton.SetSize(360, 34); _backButton.SetSize(360, 34);
+        Alignment = [Alignments.Center];
+    }
+
     private LabeledComboBox CreateAppearanceCombo(string name, string label)
     {
         var combo = new LabeledComboBox(_propertiesPanel, name: name)
@@ -549,7 +577,7 @@ public partial class CharacterCreationWindow : Window
             Dock = Pos.Top,
             Font = _defaultFont,
             FontSize = 11,
-            Label = label,
+            Label = ClientLanguages.Text(label),
             MinimumSize = new Point(240, 28),
         };
         combo.ItemSelected += (_, _) => UpdateDisplay();

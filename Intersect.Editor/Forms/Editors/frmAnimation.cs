@@ -63,6 +63,7 @@ public partial class FrmAnimation : EditorForm
         ApplyHooks();
         InitializeComponent();
         BuildScaleControls();
+        BuildVisualControls();
         Icon = Program.Icon;
 
         lstGameObjects.Init(UpdateToolStripItems, AssignEditorItem, toolStripItemNew_Click, toolStripItemCopy_Click, toolStripItemUndo_Click, toolStripItemPaste_Click, toolStripItemDelete_Click);
@@ -449,6 +450,7 @@ public partial class FrmAnimation : EditorForm
             mEditorItem.Lower.ScalePercent =
                 NormalizeAnimationScale(mEditorItem.Lower.ScalePercent);
             _nudLowerScale.Value = mEditorItem.Lower.ScalePercent;
+            LoadVisualControls(false);
 
             cmbUpperGraphic.SelectedIndex =
                 cmbUpperGraphic.FindString(TextUtils.NullToNone(mEditorItem.Upper.Sprite));
@@ -464,6 +466,7 @@ public partial class FrmAnimation : EditorForm
             mEditorItem.Upper.ScalePercent =
                 NormalizeAnimationScale(mEditorItem.Upper.ScalePercent);
             _nudUpperScale.Value = mEditorItem.Upper.ScalePercent;
+            LoadVisualControls(true);
 
             chkDisableLowerRotations.Checked = mEditorItem.Lower.DisableRotations;
             chkDisableUpperRotations.Checked = mEditorItem.Upper.DisableRotations;
@@ -620,8 +623,8 @@ public partial class FrmAnimation : EditorForm
         if (mLowerFrame < mEditorItem.Lower.Lights.Length)
         {
             Core.Graphics.DrawLight(
-                picLowerAnimation.Width / 2 + mEditorItem.Lower.Lights[mLowerFrame].OffsetX,
-                picLowerAnimation.Height / 2 + mEditorItem.Lower.Lights[mLowerFrame].OffsetY,
+                picLowerAnimation.Width / 2 + mEditorItem.Lower.OffsetX + mEditorItem.Lower.Lights[mLowerFrame].OffsetX,
+                picLowerAnimation.Height / 2 + mEditorItem.Lower.OffsetY + mEditorItem.Lower.Lights[mLowerFrame].OffsetY,
                 mEditorItem.Lower.Lights[mLowerFrame], mLowerDarkness
             );
         }
@@ -661,11 +664,12 @@ public partial class FrmAnimation : EditorForm
                 animTexture,
                 new RectangleF(x, y, w, h),
                 new RectangleF(
-                    picLowerAnimation.Width / 2f - drawWidth / 2f,
-                    picLowerAnimation.Height / 2f - drawHeight / 2f,
+                    picLowerAnimation.Width / 2f - drawWidth / 2f + mEditorItem.Lower.OffsetX,
+                    picLowerAnimation.Height / 2f - drawHeight / 2f + mEditorItem.Lower.OffsetY,
                     drawWidth,
                     drawHeight
                 ),
+                System.Drawing.Color.FromArgb(mEditorItem.Lower.Opacity, 255, 255, 255),
                 mLowerWindow
             );
         }
@@ -694,8 +698,8 @@ public partial class FrmAnimation : EditorForm
         if (mUpperFrame < mEditorItem.Upper.Lights.Length)
         {
             Core.Graphics.DrawLight(
-                picUpperAnimation.Width / 2 + mEditorItem.Upper.Lights[mUpperFrame].OffsetX,
-                picUpperAnimation.Height / 2 + mEditorItem.Upper.Lights[mUpperFrame].OffsetY,
+                picUpperAnimation.Width / 2 + mEditorItem.Upper.OffsetX + mEditorItem.Upper.Lights[mUpperFrame].OffsetX,
+                picUpperAnimation.Height / 2 + mEditorItem.Upper.OffsetY + mEditorItem.Upper.Lights[mUpperFrame].OffsetY,
                 mEditorItem.Upper.Lights[mUpperFrame], mUpperDarkness
             );
         }
@@ -735,11 +739,12 @@ public partial class FrmAnimation : EditorForm
                 animTexture,
                 new RectangleF(x, y, w, h),
                 new RectangleF(
-                    picUpperAnimation.Width / 2f - drawWidth / 2f,
-                    picUpperAnimation.Height / 2f - drawHeight / 2f,
+                    picUpperAnimation.Width / 2f - drawWidth / 2f + mEditorItem.Upper.OffsetX,
+                    picUpperAnimation.Height / 2f - drawHeight / 2f + mEditorItem.Upper.OffsetY,
                     drawWidth,
                     drawHeight
                 ),
+                System.Drawing.Color.FromArgb(mEditorItem.Upper.Opacity, 255, 255, 255),
                 mUpperWindow
             );
         }
@@ -867,6 +872,8 @@ public partial class FrmAnimation : EditorForm
         var lowerAnimFrameSpeed = mEditorItem.Lower.FrameSpeed;
         var lowerAnimLoopCount = mEditorItem.Lower.LoopCount;
         var lowerAnimScalePercent = mEditorItem.Lower.ScalePercent;
+        var lowerOffsetX = mEditorItem.Lower.OffsetX; var lowerOffsetY = mEditorItem.Lower.OffsetY;
+        var lowerTransparency = mEditorItem.Lower.TransparencyPercent;
         var disableLowerRotations = mEditorItem.Lower.DisableRotations;
         var lowerLights = mEditorItem.Lower.Lights;
         mEditorItem.Lower.Sprite = mEditorItem.Upper.Sprite;
@@ -876,6 +883,8 @@ public partial class FrmAnimation : EditorForm
         mEditorItem.Lower.FrameSpeed = mEditorItem.Upper.FrameSpeed;
         mEditorItem.Lower.LoopCount = mEditorItem.Upper.LoopCount;
         mEditorItem.Lower.ScalePercent = mEditorItem.Upper.ScalePercent;
+        mEditorItem.Lower.OffsetX = mEditorItem.Upper.OffsetX; mEditorItem.Lower.OffsetY = mEditorItem.Upper.OffsetY;
+        mEditorItem.Lower.TransparencyPercent = mEditorItem.Upper.TransparencyPercent;
         mEditorItem.Lower.Lights = mEditorItem.Upper.Lights;
         mEditorItem.Lower.DisableRotations = mEditorItem.Upper.DisableRotations;
 
@@ -886,6 +895,8 @@ public partial class FrmAnimation : EditorForm
         mEditorItem.Upper.FrameSpeed = lowerAnimFrameSpeed;
         mEditorItem.Upper.LoopCount = lowerAnimLoopCount;
         mEditorItem.Upper.ScalePercent = lowerAnimScalePercent;
+        mEditorItem.Upper.OffsetX = lowerOffsetX; mEditorItem.Upper.OffsetY = lowerOffsetY;
+        mEditorItem.Upper.TransparencyPercent = lowerTransparency;
         mEditorItem.Upper.Lights = lowerLights;
         mEditorItem.Upper.DisableRotations = disableLowerRotations;
 
