@@ -52,6 +52,9 @@ public sealed class FrmSoundImport : DarkForm
 
         public int RenamedDuplicates { get; set; }
 
+        public int Converted { get; set; }
+        public List<string> Errors { get; } = [];
+
         public bool Cancelled { get; set; }
     }
 
@@ -278,7 +281,7 @@ public sealed class FrmSoundImport : DarkForm
         ConfigureAccentButton(_importZipButton, "IMPORT ZIP", 126);
         _importZipButton.Click += async (_, _) => await ImportZipAsync();
 
-        ConfigureDarkButton(_importFilesButton, "IMPORT WAV FILES", 155);
+        ConfigureDarkButton(_importFilesButton, "IMPORT AUDIO FILES", 155);
         _importFilesButton.Click += async (_, _) => await ImportFilesAsync();
 
         var refresh = CreateDarkButton("REFRESH", 105);
@@ -1125,8 +1128,8 @@ public sealed class FrmSoundImport : DarkForm
     {
         using var dialog = new OpenFileDialog
         {
-            Filter = "Wave audio (*.wav)|*.wav",
-            Title = "Import WAV files",
+            Filter = SoundImporter.FileFilter,
+            Title = "Import audio files (automatic WAV conversion)",
             CheckFileExists = true,
             Multiselect = true,
         };
@@ -1144,7 +1147,7 @@ public sealed class FrmSoundImport : DarkForm
                     progress,
                     cancellationToken
                 ),
-            $"Importing {files.Length:N0} WAV file(s)..."
+            $"Importing {files.Length:N0} audio file(s) as WAV..."
         );
     }
 
@@ -1220,7 +1223,8 @@ public sealed class FrmSoundImport : DarkForm
                   $"{result.RenamedDuplicates:N0} duplicate name(s) safely renamed."
                 : $"Operation complete. {result.Imported:N0} sound(s) imported; " +
                   $"{result.Skipped:N0} skipped; " +
-                  $"{result.RenamedDuplicates:N0} duplicate name(s) safely renamed.";
+                  $"{result.RenamedDuplicates:N0} duplicate name(s) prefixed; {result.Converted:N0} converted to WAV.";
+            if (result.Errors.Count > 0) MessageBox.Show(this, string.Join(Environment.NewLine, result.Errors), "Audio import - files skipped", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
         catch (OperationCanceledException)
         {
@@ -1270,10 +1274,7 @@ public sealed class FrmSoundImport : DarkForm
             var entries = archive.Entries
                 .Where(entry =>
                     entry.Length > 0 &&
-                    entry.FullName.EndsWith(
-                        ".wav",
-                        StringComparison.OrdinalIgnoreCase
-                    ))
+                    SoundImporter.Supports(entry.Name))
                 .ToArray();
 
             for (var i = 0; i < entries.Length; i++)
@@ -1286,7 +1287,7 @@ public sealed class FrmSoundImport : DarkForm
                     {
                         Completed = i,
                         Total = entries.Length,
-                        Stage = "Extracting WAV sounds",
+                        Stage = "Extracting / converting sounds to WAV",
                         CurrentItem = entry.FullName,
                     }
                 );
@@ -1305,7 +1306,7 @@ public sealed class FrmSoundImport : DarkForm
                         Path.Combine(_importRoot, categoryName);
                     Directory.CreateDirectory(categoryDirectory);
 
-                    var fileName = Path.GetFileName(entry.Name);
+                    var fileName = Path.ChangeExtension(Path.GetFileName(entry.Name), ".wav");
                     if (string.IsNullOrWhiteSpace(fileName))
                     {
                         result.Skipped++;
@@ -1314,26 +1315,18 @@ public sealed class FrmSoundImport : DarkForm
 
                     var requestedDestination =
                         Path.Combine(categoryDirectory, fileName);
-                    var destination = GetUniquePath(
-                        requestedDestination
-                    );
-
-                    if (!string.Equals(
-                            destination,
-                            requestedDestination,
-                            StringComparison.OrdinalIgnoreCase
-                        ))
+                    var temporary = Path.Combine(Path.GetTempPath(), $"CR2026-sound-{Guid.NewGuid():N}{Path.GetExtension(entry.Name)}");
+                    string destination;
+                    try
                     {
-                        result.RenamedDuplicates++;
+                        using (var input = entry.Open())
+                        using (var output = new FileStream(temporary, FileMode.CreateNew))
+                            CopyStreamWithCancellation(input, output, cancellationToken);
+                        destination = SoundImporter.Import(temporary, requestedDestination, cancellationToken);
                     }
-
-                    using var input = entry.Open();
-                    using var output = File.Create(destination);
-                    CopyStreamWithCancellation(
-                        input,
-                        output,
-                        cancellationToken
-                    );
+                    finally { if (File.Exists(temporary)) File.Delete(temporary); }
+                    if (!string.Equals(destination, requestedDestination, StringComparison.OrdinalIgnoreCase)) result.RenamedDuplicates++;
+                    if (!entry.Name.EndsWith(".wav", StringComparison.OrdinalIgnoreCase)) result.Converted++;
 
                     result.Imported++;
                 }
@@ -1341,9 +1334,10 @@ public sealed class FrmSoundImport : DarkForm
                 {
                     throw;
                 }
-                catch
+                catch (Exception exception)
                 {
                     result.Skipped++;
+                    if (result.Errors.Count < 20) result.Errors.Add($"{entry.FullName}: {exception.Message}");
                 }
             }
 
@@ -1384,7 +1378,7 @@ public sealed class FrmSoundImport : DarkForm
                     {
                         Completed = i,
                         Total = files.Count,
-                        Stage = "Copying WAV sounds",
+                        Stage = "Importing / converting sounds to WAV",
                         CurrentItem = Path.GetFileName(file),
                     }
                 );
@@ -1399,28 +1393,11 @@ public sealed class FrmSoundImport : DarkForm
 
                     var requestedDestination = Path.Combine(
                         categoryDirectory,
-                        Path.GetFileName(file)
+                        Path.ChangeExtension(Path.GetFileName(file), ".wav")
                     );
-                    var destination = GetUniquePath(
-                        requestedDestination
-                    );
-
-                    if (!string.Equals(
-                            destination,
-                            requestedDestination,
-                            StringComparison.OrdinalIgnoreCase
-                        ))
-                    {
-                        result.RenamedDuplicates++;
-                    }
-
-                    using var input = File.OpenRead(file);
-                    using var output = File.Create(destination);
-                    CopyStreamWithCancellation(
-                        input,
-                        output,
-                        cancellationToken
-                    );
+                    var destination = SoundImporter.Import(file, requestedDestination, cancellationToken);
+                    if (!string.Equals(destination, requestedDestination, StringComparison.OrdinalIgnoreCase)) result.RenamedDuplicates++;
+                    if (!file.EndsWith(".wav", StringComparison.OrdinalIgnoreCase)) result.Converted++;
 
                     result.Imported++;
                 }
@@ -1428,9 +1405,10 @@ public sealed class FrmSoundImport : DarkForm
                 {
                     throw;
                 }
-                catch
+                catch (Exception exception)
                 {
                     result.Skipped++;
+                    if (result.Errors.Count < 20) result.Errors.Add($"{Path.GetFileName(file)}: {exception.Message}");
                 }
             }
 
@@ -1494,7 +1472,7 @@ public sealed class FrmSoundImport : DarkForm
         var confirmation = MessageBox.Show(
             this,
             $"Import {assets.Length:N0} filtered sound(s) into resources\\sounds?\n\n" +
-            "The game sound folder is flat, so duplicate filenames will be renamed safely.",
+            "All sounds are imported as PCM WAV. Duplicate filenames receive a numeric prefix; existing files are preserved.",
             "Import Sounds To Game",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Question
@@ -1527,6 +1505,7 @@ public sealed class FrmSoundImport : DarkForm
         var imported = 0;
         var skipped = 0;
         var renamedDuplicates = 0;
+        var errors = new List<string>();
 
         try
         {
@@ -1540,37 +1519,20 @@ public sealed class FrmSoundImport : DarkForm
                         var (asset, fileName) = assets[i];
                         var requestedDestination =
                             Path.Combine(_soundsRoot, fileName);
-                        var destination = GetUniquePath(
-                            requestedDestination
-                        );
-
-                        if (!string.Equals(
-                                destination,
-                                requestedDestination,
-                                StringComparison.OrdinalIgnoreCase
-                            ))
-                        {
-                            renamedDuplicates++;
-                        }
-
                         try
                         {
-                            using var input = File.OpenRead(asset.FilePath);
-                            using var output = File.Create(destination);
-                            CopyStreamWithCancellation(
-                                input,
-                                output,
-                                cancellationToken
-                            );
+                            var destination = SoundImporter.Import(asset.FilePath, requestedDestination, cancellationToken);
+                            if (!string.Equals(destination, requestedDestination, StringComparison.OrdinalIgnoreCase)) renamedDuplicates++;
                             imported++;
                         }
                         catch (OperationCanceledException)
                         {
                             throw;
                         }
-                        catch
+                        catch (Exception exception)
                         {
                             skipped++;
+                            if (errors.Count < 20) errors.Add($"{asset.FileName}: {exception.Message}");
                         }
 
                         var completed = i + 1;
@@ -1607,7 +1569,8 @@ public sealed class FrmSoundImport : DarkForm
             _progressLabel.Text = "100%";
             _status.Text =
                 $"Game sounds refreshed: {imported:N0} imported, {skipped:N0} skipped, " +
-                $"{renamedDuplicates:N0} duplicate name(s) safely renamed.";
+                $"{renamedDuplicates:N0} duplicate name(s) prefixed.";
+            if (errors.Count > 0) MessageBox.Show(this, string.Join(Environment.NewLine, errors), "Audio import - files skipped", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
         catch (OperationCanceledException)
         {
@@ -1832,35 +1795,6 @@ public sealed class FrmSoundImport : DarkForm
         var normalized = fullName.Replace('\\', '/');
         var slash = normalized.LastIndexOf('/');
         return slash < 0 ? string.Empty : normalized[..slash];
-    }
-
-    private static string GetUniquePath(string path)
-    {
-        if (!File.Exists(path))
-        {
-            return path;
-        }
-
-        var directory = Path.GetDirectoryName(path) ?? string.Empty;
-        var stem = Path.GetFileNameWithoutExtension(path);
-        var extension = Path.GetExtension(path);
-
-        for (var i = 2; i < 100000; i++)
-        {
-            var candidate = Path.Combine(
-                directory,
-                $"{stem}_{i}{extension}"
-            );
-            if (!File.Exists(candidate))
-            {
-                return candidate;
-            }
-        }
-
-        return Path.Combine(
-            directory,
-            $"{stem}_{Guid.NewGuid():N}{extension}"
-        );
     }
 
     private static void CopyStreamWithCancellation(
