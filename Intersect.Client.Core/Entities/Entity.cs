@@ -1236,17 +1236,6 @@ public partial class Entity : IEntity
         return existingRenderSet;
     }
 
-    public void DrawEventAnimations(bool upper)
-    {
-        if (this is not Events.Event || !ShouldDraw) return;
-        foreach (var animation in _animations)
-        {
-            animation.Draw(upper,
-                upper ? animation.Descriptor.Upper.AlternateRenderLayer : animation.Descriptor.Lower.AlternateRenderLayer,
-                eventPass: true);
-        }
-    }
-
     //Rendering Functions
     public virtual void Draw()
     {

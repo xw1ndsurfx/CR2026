@@ -2,7 +2,7 @@
 
 ## Event animations
 
-The event page layer (below / same as / above player) now also controls its attached animations. Both animation layers render in the event's sorted slot instead of the global above-player pass. Movement-route layer changes apply as well.
+Animations attached to events render in a dedicated foreground pass, above characters, trees, buildings, fringe tiles, fog and map overlays. Both animation layers are included once, including alternate layers. The event page layer (below / same as / above player) still controls the event graphic; it does not bury attached banners behind scenery. Hidden events also hide their animations. Other animations (map effects, spells and equipment) keep their existing lower/upper behavior.
 
 Event Editor has **In-game animation offset (pixels)** X/Y controls. Positive X moves right; positive Y moves down. These offsets do not move the event's graphic, collision or interaction tile. **World Map marker offset** remains separate.
 

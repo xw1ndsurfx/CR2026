@@ -18,20 +18,32 @@ internal static class EventAnimationLayerTests
         Globals.Database = new InterfaceRefreshTests.MemoryPreferences { EnableLighting = false };
         var content = new TestContentManager(); Globals.ContentManager = content; var requests = new List<string>();
         content.TextureRequested = (_, name) => requests.Add(name);
-        var parent = (Intersect.Client.Entities.Events.Event)RuntimeHelpers.GetUninitializedObject(typeof(Intersect.Client.Entities.Events.Event)); GC.SuppressFinalize(parent);
+        var parent = (Intersect.Client.Entities.Events.Event)RuntimeHelpers.GetUninitializedObject(typeof(Intersect.Client.Entities.Events.Event)); GC.SuppressFinalize(parent); typeof(Entity).GetProperty(nameof(Entity.Status))!.SetValue(parent, new List<Intersect.Client.Framework.Entities.IStatus>());
         var anim = (Animation)RuntimeHelpers.GetUninitializedObject(typeof(Animation)); GC.SuppressFinalize(anim);
         anim.Descriptor = new AnimationDescriptor(Guid.NewGuid()) { Lower = new() { Sprite = "below-event", AlternateRenderLayer = true }, Upper = new() { Sprite = "above-event" } };
         typeof(Animation).GetField("mParent", flags)!.SetValue(anim, parent);
         typeof(Animation).GetField("mShowLower", flags)!.SetValue(anim, true);
         typeof(Animation).GetField("mShowUpper", flags)!.SetValue(anim, true);
         foreach (var upper in new[] { false, true }) foreach (var alternate in new[] { false, true }) anim.Draw(upper, alternate);
-        Check(requests.Count == 0, "Attached event animations must never leak into global above-player rendering");
-        anim.Draw(false, true, eventPass: true); anim.Draw(true, false, eventPass: true);
-        Check(requests.SequenceEqual(new[] { "below-event", "above-event" }), "Both animation layers render inside the event slot, including alternate layers");
-        requests.Clear(); anim.Hidden = true; anim.Draw(true, false, eventPass: true);
-        Check(requests.Count == 0, "Hidden event animations remain hidden in the event pass");
+        Check(requests.Count == 0, "Event overlays must not draw early in the ground/entity animation passes");
+        anim.DrawEventOverlay();
+        Check(requests.SequenceEqual(new[] { "below-event", "above-event" }),
+            "Both event animation layers render once in the foreground, including alternate layers");
+        requests.Clear(); parent.IsHidden = true; anim.DrawEventOverlay();
+        Check(requests.Count == 0, "Hidden events cannot leak foreground animations before the next update");
+        parent.IsHidden = false; anim.Hidden = true; anim.DrawEventOverlay();
+        Check(requests.Count == 0, "Individually hidden animations remain hidden in the foreground pass");
+        anim.Hidden = false;
+        typeof(Animation).GetField("mParent", flags)!.SetValue(anim, null);
+        anim.DrawEventOverlay(); Check(requests.Count == 0, "Map effects must not be promoted to the event foreground");
+        anim.Draw(false, true); anim.Draw(true, false);
+        Check(requests.SequenceEqual(new[] { "below-event", "above-event" }), "Ordinary map animations keep their configured rendering passes");
+        requests.Clear();
+        typeof(Animation).GetField("mParent", flags)!.SetValue(anim, parent);
+        typeof(Animation).GetField("_disposed", flags)!.SetValue(anim, true);
+        anim.DrawEventOverlay(); Check(requests.Count == 0, "Disposed animations cannot reappear in the foreground snapshot");
         content.TextureRequested = null; Globals.ContentManager = previousContent; Globals.Database = previousPreferences;
-        System.Console.WriteLine("PASS event animation render slots: global exclusion, lower/upper and alternate layers, visibility");
+        System.Console.WriteLine("PASS event animation foreground: foreground routing, both layers, alternate layers, hidden/disposed guards and ordinary animation isolation");
     }
     private static void Check(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
 }
