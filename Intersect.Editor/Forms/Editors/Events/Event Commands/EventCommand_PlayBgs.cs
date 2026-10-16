@@ -32,7 +32,7 @@ public partial class EventCommandPlayBgs : UserControl
         grpPlayBGS.Text = _voiceSound.Checked ? "Play Voice Sound" : "Play Sound";
         cmbSound.Items.Clear();
         cmbSound.Items.Add(Strings.General.None);
-        cmbSound.Items.AddRange(_voiceSound.Checked ? VoiceSoundFiles.List("resources") : GameContentManager.SmartSortedSoundNames);
+        cmbSound.Items.AddRange(_voiceSound.Checked ? GameContentManager.SmartSortedVoiceSoundNames : GameContentManager.SmartSortedSoundNames);
         if (cmbSound.Items.IndexOf(TextUtils.NullToNone(mMyCommand.File)) > -1)
         {
             cmbSound.SelectedIndex = cmbSound.Items.IndexOf(TextUtils.NullToNone(mMyCommand.File));
