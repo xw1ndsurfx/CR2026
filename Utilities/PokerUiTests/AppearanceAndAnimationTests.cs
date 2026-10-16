@@ -57,6 +57,43 @@ internal static class AppearanceAndAnimationTests
                     "Appearance controls and action buttons remain inside the window after real layout: " + control.Name);
             }
         }
+        foreach (var window in new WindowControl[] { creation, stylist })
+        {
+            var preview = (ImagePanel)window.GetType().GetField("_preview", flags)!.GetValue(window)!;
+            var previewType = preview.GetType();
+            preview.LoadJson(Newtonsoft.Json.Linq.JObject.Parse("{\"Texture\":\"character_preview_background.png\"}"));
+            Check(preview.Texture == null, "Floor is a separate child, never an image behind the whole preview viewport");
+            Check((int)previewType.GetProperty("Zoom")!.GetValue(preview)! == 4, "Character preview starts enlarged at 4x");
+            previewType.GetMethod("SetBodySize")!.Invoke(preview, [32, 48]);
+            var body = new ImagePanel(preview);
+            previewType.GetMethod("PlaceLayer")!.Invoke(preview, [body, 32, 48]);
+            for (var pass = 0; pass < 3; pass++) layout.Invoke(window, [skin]);
+            var floor = preview.Children.Single(c => c.Name == "PreviewFloor");
+            var feet = (int)previewType.GetProperty("FeetY")!.GetValue(preview)!;
+            Check(body.Width == 128 && body.Height == 192 && body.Bottom == feet,
+                "Paperdoll uses enlarged destination bounds and keeps feet fixed through real layout");
+            Check(body.X + body.Width / 2 == floor.X + floor.Width / 2 && Math.Abs(floor.Y + floor.Height / 2 - feet) <= 1,
+                "Floor is centered directly underneath the character's feet");
+            var wheel = typeof(Base).GetMethod("InputMouseWheeled", flags | BindingFlags.Public)!;
+            Check((bool)wheel.Invoke(body, [-120])!, "Mouse wheel over the character bubbles to preview zoom");
+            Check((int)previewType.GetProperty("Zoom")!.GetValue(preview)! == 3, "Wheel decreases zoom");
+            previewType.GetMethod("PlaceLayer")!.Invoke(preview, [body, 32, 48]);
+            Check(body.Width == 96 && body.Bottom == feet, "Zoom changes size without shifting the foot anchor");
+            var padded = DispatchProxy.Create<Intersect.Client.Framework.Graphics.IGameTexture, CpuFrameTexture>();
+            var pixels = (CpuFrameTexture)(object)padded;
+            pixels.Left = 8; pixels.Right = 24; pixels.Top = 4; pixels.Bottom = 40;
+            previewType.GetMethod("SetBodyFrame")!.Invoke(preview, [padded, 32, 48, 0]);
+            previewType.GetMethod("PlaceLayer")!.Invoke(preview, [body, 32, 48]);
+            Check(body.Y + 40 * 3 == feet, "Transparent bottom padding does not lift the visible feet off the floor");
+            previewType.GetMethod("SetBodySize")!.Invoke(preview, [32, 48]);
+            previewType.GetMethod("ChangeZoom")!.Invoke(preview, [-100]);
+            Check((int)previewType.GetProperty("Zoom")!.GetValue(preview)! == 1, "Zoom cannot become zero or negative");
+            previewType.GetMethod("ChangeZoom")!.Invoke(preview, [100]);
+            previewType.GetMethod("PlaceLayer")!.Invoke(preview, [body, 32, 48]);
+            Check(body.X >= 0 && body.Y >= 0 && body.Right <= preview.Width, "Maximum zoom fits the available viewport");
+            Check(Descendants(window).OfType<Button>().Where(b => b.Name?.StartsWith("PreviewDirection") == true)
+                .All(b => !b.Text.Contains('?') && !b.Text.Any(c => c > 127)), "Direction labels use font-compatible text");
+        }
         System.Console.WriteLine("PASS animation visual geometry/transparency and actual Character Creation/Royal Stylist layout");
     }
     private static IEnumerable<Base> Descendants(Base root) { foreach (var child in root.Children) { yield return child; foreach (var nested in Descendants(child)) yield return nested; } }

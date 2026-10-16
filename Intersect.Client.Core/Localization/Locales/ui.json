@@ -4629,6 +4629,46 @@
       "en": "has arrived",
       "fr": "est arrivée",
       "es": "ha llegado"
+    },
+    "Down": {
+      "en": "Down",
+      "fr": "Face",
+      "es": "Frente"
+    },
+    "Up": {
+      "en": "Up",
+      "fr": "Dos",
+      "es": "Espalda"
+    },
+    "Left": {
+      "en": "Left",
+      "fr": "Gauche",
+      "es": "Izquierda"
+    },
+    "Right": {
+      "en": "Right",
+      "fr": "Droite",
+      "es": "Derecha"
+    },
+    "Zoom": {
+      "en": "Zoom",
+      "fr": "Zoom",
+      "es": "Zoom"
+    },
+    "Zoom in": {
+      "en": "Zoom in",
+      "fr": "Agrandir",
+      "es": "Acercar"
+    },
+    "Zoom out": {
+      "en": "Zoom out",
+      "fr": "Réduire",
+      "es": "Alejar"
+    },
+    "Scroll to zoom": {
+      "en": "Scroll to zoom",
+      "fr": "Molette pour zoomer",
+      "es": "Usa la rueda para acercar o alejar"
     }
   }
 }

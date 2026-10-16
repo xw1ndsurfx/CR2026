@@ -53,7 +53,7 @@ public partial class CharacterCreationWindow : Window
     private readonly LabeledCheckBox _genderMaleCheckbox;
     private readonly LabeledCheckBox _genderFemaleCheckbox;
 
-    private readonly ImagePanel _preview;
+    private readonly AppearancePreview _preview;
     private ImagePanel[]? _renderLayers;
     private readonly Button _nextSpriteButton;
     private readonly Button _prevSpriteButton;
@@ -226,12 +226,8 @@ public partial class CharacterCreationWindow : Window
         _nextSpriteButton.SetStateTexture(ComponentState.Hovered, "button.arrow_right.hovered.png");
         _nextSpriteButton.SetStateTexture(ComponentState.Active, "button.arrow_right.active.png");
 
-        _preview = new ImagePanel(_previewContainer, name: nameof(_preview))
-        {
-            Alignment = [Alignments.Center],
-            MaintainAspectRatio = true,
-            TextureFilename = "character_preview_background.png",
-        };
+        _preview = new AppearancePreview(_previewContainer, nameof(_preview));
+        _preview.ZoomChanged += UpdateDisplay;
 
         _directionPanel = new Panel(_previewPanel, name: nameof(_directionPanel))
         {
@@ -242,10 +238,10 @@ public partial class CharacterCreationWindow : Window
             ShouldDrawBackground = false,
         };
 
-        AddDirectionButton("↓ Down", 0);
-        AddDirectionButton("← Left", 1);
-        AddDirectionButton("→ Right", 2);
-        AddDirectionButton("↑ Up", 3);
+        AddDirectionButton("Down", 0);
+        AddDirectionButton("Left", 1);
+        AddDirectionButton("Right", 2);
+        AddDirectionButton("Up", 3);
         _directionPanel.SizeToChildren(recursive: true);
 
         _buttonsPanel.SizeToChildren(recursive: true);
@@ -311,7 +307,7 @@ public partial class CharacterCreationWindow : Window
             {
                 _renderLayers[i] = new ImagePanel(_preview)
                 {
-                    Alignment = [Alignments.Center],
+                    Alignment = [],
                     RestrictToParent = false,
                 };
             }
@@ -345,6 +341,8 @@ public partial class CharacterCreationWindow : Window
             ? _maleSprites[_displaySpriteIndex]
             : _femaleSprites[_displaySpriteIndex];
 
+        var body = Globals.ContentManager.GetTexture(TextureType.Entity, source.Value.Sprite);
+        if (body != null) _preview.SetBodyFrame(body, body.Width / Options.Instance.Sprites.NormalFrames, body.Height / Options.Instance.Sprites.Directions, _previewDirection);
         var paperdollOrder = Options.Instance.Equipment.Paperdoll.Directions[_previewDirection];
         var appearance = GetCurrentAppearance();
 
@@ -387,11 +385,7 @@ public partial class CharacterCreationWindow : Window
             }
 
             container.SetTextureRect(0, _previewDirection * textureHeight, textureWidth, textureHeight);
-            _ = container.SetSize(textureWidth, textureHeight);
-            container.SetPosition(
-                (_preview.Width - textureWidth) / 2,
-                (_preview.Height - textureHeight) / 2
-            );
+            _preview.PlaceLayer(container, textureWidth, textureHeight);
             container.Show();
         }
     }
@@ -562,11 +556,13 @@ public partial class CharacterCreationWindow : Window
         }
         _previewContainer.Dock = _directionPanel.Dock = Pos.None;
         _previewContainer.SetBounds(32, 10, 288, 410);
-        _preview.Alignment = [Alignments.Center]; _preview.SetSize(280, 380);
+        _preview.Dock = Pos.None;
+        _preview.Alignment = []; _preview.SetBounds(4, 0, 280, 380);
         _directionPanel.Margin = Margin.Zero;
         _directionPanel.SetBounds(8, 440, 336, 36);
         _createButton.SetSize(360, 34); _backButton.SetSize(360, 34);
         Alignment = [Alignments.Center];
+        UpdateDisplay();
     }
 
     private LabeledComboBox CreateAppearanceCombo(string name, string label)
@@ -586,12 +582,12 @@ public partial class CharacterCreationWindow : Window
 
     private void AddDirectionButton(string text, int direction)
     {
-        var button = new Button(_directionPanel)
+        var button = new Button(_directionPanel, name: "PreviewDirection" + direction)
         {
             Font = _defaultFont,
             FontSize = 10,
             MinimumSize = new Point(72, 24),
-            Text = text,
+            Text = ClientLanguages.Text(text),
         };
         button.Clicked += (_, _) =>
         {
