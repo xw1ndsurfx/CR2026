@@ -3,6 +3,8 @@ using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
+using Intersect.Client.Localization;
+using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.Achievements;
 using Intersect.Network.Packets.Server;
 using UiRectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
@@ -142,7 +144,7 @@ internal sealed class AchievementsWindow : Window
     )
     {
         const int width = 660;
-        const int height = 160;
+        var height = 160;
 
         var card = new Base(_scroll, $"AchievementCard{definition.Id}")
         {
@@ -201,8 +203,16 @@ internal sealed class AchievementsWindow : Window
         var rewardText = BuildRewardText(definition.Reward);
         AddText(card, $"AchievementRewardCaption{definition.Id}", "REWARD",
             14, 126, 83, 22, 9, Gold, bold: true);
-        AddText(card, $"AchievementReward{definition.Id}", rewardText,
-            100, 126, 377, 22, 9, Cream);
+        var rewardLabel = new RichLabel(card, $"AchievementReward{definition.Id}")
+        {
+            Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+            FontSize = 9, ShouldDrawBackground = false, MouseInputEnabled = false
+        };
+        rewardLabel.SetBounds(100, 126, 377, 22);
+        rewardLabel.AddText(rewardText, Cream);
+        rewardLabel.ForceImmediateRebuild();
+        height = Math.Max(height, 126 + rewardLabel.Height + 14);
+        card.Height = frame.Height = height;
 
         // The inspection window never creates reward-claim controls.
         if (!_readOnly)
@@ -252,18 +262,18 @@ internal sealed class AchievementsWindow : Window
         var parts = new List<string>();
 
         if (reward.ItemId != Guid.Empty && reward.ItemQuantity > 0)
-            parts.Add($"{reward.ItemQuantity:N0} item");
+            parts.Add(ClientLanguages.Format("{0:N0} x {1}", reward.ItemQuantity, ClientLanguages.ContentText(ItemDescriptor.Get(reward.ItemId)?.Name ?? ClientLanguages.Text("Unknown item"))));
 
         if (reward.CurrencyItemId != Guid.Empty && reward.CurrencyQuantity > 0)
-            parts.Add($"{reward.CurrencyQuantity:N0} currency");
+            parts.Add(ClientLanguages.Format("{0:N0} x {1}", reward.CurrencyQuantity, ClientLanguages.ContentText(ItemDescriptor.Get(reward.CurrencyItemId)?.Name ?? ClientLanguages.Text("Unknown currency"))));
 
         if (reward.Experience > 0)
-            parts.Add($"{reward.Experience:N0} XP");
+            parts.Add(ClientLanguages.Format("{0:N0} XP", reward.Experience));
 
         if (reward.CommonEventId != Guid.Empty)
-            parts.Add("event reward");
+            parts.Add(ClientLanguages.Text("Additional reward"));
 
-        return parts.Count == 0 ? "No reward" : string.Join(" + ", parts);
+        return parts.Count == 0 ? ClientLanguages.Text("No reward") : string.Join("\n", parts);
     }
 
     public void ShowWindow()
@@ -316,7 +326,7 @@ internal sealed class AchievementsWindow : Window
                         bounds.Width - 119, 65, Copper);
                     Fill(skin, bounds.X + 105, bounds.Y + 75,
                         bounds.Width - 119, 1, Highlight);
-                    Fill(skin, bounds.X + 12, bounds.Bottom - 40,
+                    Fill(skin, bounds.X + 12, bounds.Y + 120,
                         bounds.Width - 24, 1, Copper);
                     break;
                 case ChromeStyle.Portrait:
