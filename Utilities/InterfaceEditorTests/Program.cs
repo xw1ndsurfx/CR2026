@@ -13,6 +13,7 @@ internal static class Program
     [STAThread]
     private static void Main()
     {
+        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
         try { Run(); } catch (Exception exception) { System.Console.Error.WriteLine(exception); Environment.Exit(1); }
     }
     private static void Run()
@@ -39,10 +40,12 @@ internal static class Program
         }
         System.Console.WriteLine("PASS editor login creates map layers before server options; resource brush initializes once after configuration");
         optionsProperty.SetValue(null, new Options());
+        if (Environment.GetCommandLineArgs().Contains("--housing-picker-only")) { HousingPickerTests.Run(); return; }
         SoundImportTests.Run();
         ActivitiesEditorTests.Run();
         EventToolsTests.Run();
         MiniGameEditorTests.Run();
+        HousingPickerTests.Run();
         using (var housing = new Intersect.Editor.Forms.Editors.FrmHousingConfiguration("{}"))
         {
             var type = housing.GetType();
