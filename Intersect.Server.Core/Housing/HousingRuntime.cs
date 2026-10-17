@@ -1,4 +1,5 @@
 using Intersect.Enums;
+using Intersect.Server.LogiCoins;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Maps;
 using System.Collections.Concurrent;
@@ -85,7 +86,9 @@ internal static class HousingRuntime
                         case HouseAction.SetPublic: house.Public = request.Public; break;
                         case HouseAction.Buy:
                             var offer = Configuration.Catalog.FirstOrDefault(f => f.Id == request.Id && f.Available(DateTime.UtcNow));
-                            if (offer == null || !player.CanTakeItem(offer.CurrencyItemId, offer.Price)) throw new InvalidOperationException("This offer is unavailable or you do not have enough currency.");
+                            if (offer == null) throw new InvalidOperationException("This offer is unavailable or you do not have enough currency.");
+                            RequireFurniturePremium(offer, player.User != null && LogiCoinPurchaseRuntime.HasActivePremium(player));
+                            if (!player.CanTakeItem(offer.CurrencyItemId, offer.Price)) throw new InvalidOperationException("This offer is unavailable or you do not have enough currency.");
                             if (!house.Furniture.TryGetValue(offer.Id, out var owned))
                             {
                                 if (house.Furniture.Count >= 1000) throw new InvalidOperationException("Furniture storage is full.");
@@ -96,6 +99,8 @@ internal static class HousingRuntime
                             owned.Quantity++; break;
                         case HouseAction.Place:
                             RequireInside(player);
+                            if (!house.Furniture.TryGetValue(request.Id, out var toPlace)) throw new InvalidOperationException("You do not own this furniture.");
+                            RequireFurniturePremium(toPlace.Definition, player.User != null && LogiCoinPurchaseRuntime.HasActivePremium(player));
                             house.PlaceFurniture(request.Id, request.PlacementId, request.X, request.Y, request.Rotation,
                                 Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight, Configuration.MaximumFurniture);
                             break;
@@ -134,6 +139,11 @@ internal static class HousingRuntime
             }
             catch (Exception exception) { Send(player, player.Id, true, exception is InvalidOperationException ? exception.Message : "Your house could not be saved. Please try again."); }
         }
+    }
+    private static void RequireFurniturePremium(FurnitureDefinition furniture, bool premiumActive)
+    {
+        var premiumRequired = Configuration.Catalog.FirstOrDefault(f => f.Id == furniture.Id)?.PremiumRequired ?? furniture.PremiumRequired;
+        if (premiumRequired && !premiumActive) throw new InvalidOperationException("Premium is required to buy or place this furniture.");
     }
     private static void ValidateTile(int x, int y)
     {
@@ -246,7 +256,11 @@ internal static class HousingRuntime
         }
         var definitions = Configuration.Catalog.ToDictionary(f => f.Id);
         foreach (var (id, owned) in house.Furniture)
-            if (definitions.TryGetValue(id, out var definition)) owned.Definition.CommonEventId = definition.CommonEventId;
+            if (definitions.TryGetValue(id, out var definition))
+            {
+                owned.Definition.CommonEventId = definition.CommonEventId;
+                owned.Definition.PremiumRequired = definition.PremiumRequired;
+            }
     }
     private static void Send(Player requester, Guid ownerId, bool open, string message = "")
     {
@@ -258,7 +272,7 @@ internal static class HousingRuntime
         if (ownerId != requester.Id)
             profile.Furniture = profile.Furniture.Where(kv => profile.Placements.Any(p => p.FurnitureId == kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
         var view = new HouseView
-        { OwnerId = ownerId, OwnerName = owner.Name, IsOwner = ownerId == requester.Id, Inside = inside, Enabled = Configuration.Enabled,
+        { OwnerId = ownerId, OwnerName = owner.Name, IsOwner = ownerId == requester.Id, PremiumActive = requester.User != null && LogiCoinPurchaseRuntime.HasActivePremium(requester), Inside = inside, Enabled = Configuration.Enabled,
             MapId = inside ? visit!.Map : Configuration.TemplateMapId, Month = DateTime.UtcNow.ToString("yyyy-MM"), House = profile,
             Catalog = ownerId == requester.Id ? Configuration.Catalog.Where(f => f.Available(DateTime.UtcNow)).ToList() : [] };
         var world = "";

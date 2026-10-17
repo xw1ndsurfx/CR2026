@@ -63,8 +63,15 @@ internal sealed class HousingWindow : Window
                 image.SetBounds(4, 6, 62, 62); image.Texture = GameContentManager.Current.GetTexture(TextureType.Tileset, furniture.Tileset);
                 if (image.Texture != null) image.SetTextureRect(furniture.SourceX, furniture.SourceY, furniture.Width * Options.Instance.Map.TileWidth, furniture.Height * Options.Instance.Map.TileHeight);
             }
+            if (furniture?.PremiumRequired == true) text += " - " + ClientLanguages.Text("Premium furniture");
             var label = new Label(card) { Text = text, Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 11, TextColorOverride = Color.White }; label.SetBounds(78, 8, 450, 60);
-            if (click != null) AddButton(card, action, 540, 10, 110, click);
+            if (click != null)
+            {
+                var locked = furniture?.PremiumRequired == true && !_view.PremiumActive && action is "Buy" or "Place" or "Move";
+                var button = AddButton(card, locked ? "Premium required" : action, 540, 10, 110, click);
+                button.IsDisabled = locked;
+                if (locked) { button.FontSize = 9; button.SetToolTipText(ClientLanguages.Text("Premium is required to buy or place this furniture.")); }
+            }
             if (other != null) AddButton(card, second ?? "", 655, 10, 110, other);
             y += 82;
         }
