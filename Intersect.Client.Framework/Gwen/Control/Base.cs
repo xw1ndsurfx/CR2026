@@ -3795,13 +3795,16 @@ public partial class Base : IDisposable
             skin = _skin;
         }
 
-        if (ShouldSkipLayout)
+        if (_disposed || ShouldSkipLayout)
         {
             return;
         }
 
-        foreach (var child in _children)
+        // Layout callbacks may reorder, add, remove or reparent siblings.
+        // Traverse a stable stage snapshot and ignore nodes no longer owned here.
+        foreach (var child in _children.ToArray())
         {
+            if (child._disposed || child._parent != this || !_children.Contains(child)) continue;
             child.DoPrelayout(skin);
 
             _preLayoutActionsParent.IsExecuting = true;
@@ -3959,6 +3962,7 @@ public partial class Base : IDisposable
 
                 foreach (var child in directionalDockChildren)
                 {
+                    if (child._disposed || child._parent != this || !_children.Contains(child) || child.ShouldSkipLayout) continue;
                     var childDock = child.Dock;
 
                     var childMargin = child.Margin;
@@ -4173,6 +4177,7 @@ public partial class Base : IDisposable
                 //
                 foreach (var child in dockFillChildren)
                 {
+                    if (child._disposed || child._parent != this || !_children.Contains(child) || child.ShouldSkipLayout) continue;
                     var dock = child.Dock;
 
                     var childMargin = child.Margin;
@@ -4283,9 +4288,9 @@ public partial class Base : IDisposable
         }
         else
         {
-            foreach (var child in _children)
+            foreach (var child in _children.ToArray())
             {
-                if (child.ShouldSkipLayout)
+                if (child._disposed || child._parent != this || !_children.Contains(child) || child.ShouldSkipLayout)
                 {
                     continue;
                 }
