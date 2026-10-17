@@ -35,16 +35,30 @@ public sealed class FrmHousingConfiguration : DarkForm
         _catalog.Columns.Add(new DataGridViewComboBoxColumn { HeaderText = "On interaction (optional)", DataPropertyName = "CommonEventId", DataSource = events, DisplayMember = "Name", ValueMember = "Id" });
         _catalog.CellContentClick += (_, e) =>
         {
-            if (e.RowIndex < 0 || e.ColumnIndex < 0 || _catalog.Columns[e.ColumnIndex].Name != "ChooseGraphic") return;
+            if (e.RowIndex < 0 || e.ColumnIndex < 0 || _catalog.Columns[e.ColumnIndex].Name is not ("ChooseGraphic" or "ChooseTileset")) return;
             _catalog.EndEdit();
-            if (_catalog.Rows[e.RowIndex].DataBoundItem is FurnitureDefinition furniture) ChooseGraphic(furniture);
+            var furniture = _catalog.Rows[e.RowIndex].DataBoundItem as FurnitureDefinition;
+            if (furniture == null && _catalog.Rows[e.RowIndex].IsNewRow && _catalog.DataSource is BindingList<FurnitureDefinition> catalog)
+                furniture = catalog.AddNew();
+            if (furniture != null) ChooseGraphic(furniture);
         };
         TextColumn("Name", "Furniture"); TextColumn("Months", "Catalog months"); TextColumn("Price", "Price");
         var currencies = ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().Where(i => i.Stackable || i.ItemType == ItemType.Currency).OrderBy(i => i.Name).Select(i => new Choice(i.Id, i.Name)).ToList();
         _catalog.Columns.Add(new DataGridViewComboBoxColumn { HeaderText = "Currency", DataPropertyName = "CurrencyItemId", DataSource = currencies, DisplayMember = "Name", ValueMember = "Id" });
-        var tilesets = Directory.Exists("resources/tilesets") ? Directory.GetFiles("resources/tilesets").Select(Path.GetFileName).OfType<string>().OrderBy(n => n).ToArray() : [];
-        foreach (var name in _draft.Catalog.Select(f => f.Tileset).Where(n => !string.IsNullOrEmpty(n))) if (!tilesets.Contains(name)) tilesets = [..tilesets, name];
-        _catalog.Columns.Add(new DataGridViewComboBoxColumn { HeaderText = "Tileset", DataPropertyName = "Tileset", DataSource = tilesets });
+        // Open the same visual tile-rectangle picker as Event Editor directly from the Tileset cell.
+        _catalog.Columns.Add(new DataGridViewButtonColumn
+        {
+            Name = "ChooseTileset", HeaderText = "Tileset", DataPropertyName = "Tileset", MinimumWidth = 180,
+            UseColumnTextForButtonValue = false
+        });
+        _catalog.CellFormatting += (_, e) =>
+        {
+            if (e.ColumnIndex >= 0 && _catalog.Columns[e.ColumnIndex].Name == "ChooseTileset" && string.IsNullOrWhiteSpace(e.Value as string))
+            {
+                e.Value = "Select graphic...";
+                e.FormattingApplied = true;
+            }
+        };
         TextColumn("SourceX", "Source X"); TextColumn("SourceY", "Source Y"); TextColumn("Width", "Tiles wide"); TextColumn("Height", "Tiles tall");
         _catalog.Columns.Add(new DataGridViewCheckBoxColumn { HeaderText = "Floor decoration", DataPropertyName = "FloorDecoration" });
         TextColumn("Id", "Stable ID", true);
