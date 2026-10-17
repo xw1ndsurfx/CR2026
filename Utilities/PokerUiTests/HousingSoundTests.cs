@@ -62,7 +62,7 @@ internal static class HousingSoundTests
             worldView.SetValue(null, view);
             var overlayType = typeof(GameInterface).GetNestedType("HousePlacementOverlay", BindingFlags.NonPublic)!;
             using var overlay = (ControlBase)Activator.CreateInstance(overlayType, [canvas])!;
-            overlayType.GetMethod("Begin")!.Invoke(overlay, [furniture.Id, Guid.Empty]);
+            overlayType.GetMethod("Begin")!.Invoke(overlay, [furniture.Id, Guid.Empty, furniture]);
             Check(!overlay.IsHidden && preview.GetValue(null) != null, "Choosing Place activates the furniture preview");
             overlayType.GetMethod("OnMouseWheeled", flags)!.Invoke(overlay, [120]);
             var active = preview.GetValue(null)!;
@@ -70,11 +70,26 @@ internal static class HousingSoundTests
             overlayType.GetMethod("OnMouseClicked", flags)!.Invoke(overlay, [Intersect.Client.Framework.Input.MouseButton.Right, new Point(), true]);
             Check(overlay.IsHidden && preview.GetValue(null) == null, "Right click cancels both placement and its ghost");
             var placed = view.House.Placements.Single();
-            overlayType.GetMethod("Begin")!.Invoke(overlay, [furniture.Id, placed.Id]);
+            overlayType.GetMethod("Begin")!.Invoke(overlay, [furniture.Id, placed.Id, furniture]);
             active = preview.GetValue(null)!;
             Check((int)active.GetType().GetProperty("Rotation")!.GetValue(active)! == placed.Rotation, "Moving furniture starts at its existing rotation");
+            // WorldJson intentionally contains only placed furniture, while the storage window
+            // receives the full owner inventory. Reproduce store -> replace with that filtered view.
+            view.House.Placements.Clear();
+            view.House.Furniture.Clear();
+            overlayType.GetMethod("Begin")!.Invoke(overlay, [furniture.Id, Guid.Empty, furniture]);
+            active = preview.GetValue(null)!;
+            Check(!overlay.IsHidden && active != null && ReferenceEquals(active.GetType().GetProperty("Definition")!.GetValue(active), furniture), "A stored object absent from WorldJson still starts a placement preview from the storage definition");
+            for (var repeat = 0; repeat < 3; repeat++)
+            {
+                overlayType.GetMethod("Cancel")!.Invoke(overlay, null);
+                overlayType.GetMethod("Begin")!.Invoke(overlay, [furniture.Id, Guid.Empty, furniture]);
+                Check(!overlay.IsHidden && preview.GetValue(null) != null, "Stored furniture can be selected repeatedly after cancellation");
+            }
+            view.House.Furniture[furniture.Id] = new() { Definition = furniture, Quantity = 2 };
+            view.House.PlaceFurniture(furniture.Id, Guid.Empty, 2, 3, 1, 32, 26, 100);
             view.IsOwner = false;
-            overlayType.GetMethod("Begin")!.Invoke(overlay, [furniture.Id, Guid.Empty]);
+            overlayType.GetMethod("Begin")!.Invoke(overlay, [furniture.Id, Guid.Empty, furniture]);
             Check(overlay.IsHidden && preview.GetValue(null) == null, "Visitors cannot activate a house placement preview");
             view.IsOwner = true;
             canvas.RemoveChild(overlay, false); // The using scope disposes this overlay before the canvas.
