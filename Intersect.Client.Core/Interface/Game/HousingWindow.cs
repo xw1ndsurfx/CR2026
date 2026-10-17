@@ -54,7 +54,7 @@ internal sealed class HousingWindow : Window
         _rows.DeleteAll();
         if (_view == null) return;
         var y = 4;
-        void Row(string text, FurnitureDefinition? furniture, string action, Action? click, string? second = null, Action? other = null)
+        void Row(string text, FurnitureDefinition? furniture, string action, Action? click, string? second = null, Action? other = null, HousePet? pet = null)
         {
             var card = new Base(_rows); card.SetBounds(0, y, 780, 76);
             if (furniture != null)
@@ -62,6 +62,21 @@ internal sealed class HousingWindow : Window
                 var image = new ImagePanel(card) { MaintainAspectRatio = true, MouseInputEnabled = false };
                 image.SetBounds(4, 6, 62, 62); image.Texture = GameContentManager.Current.GetTexture(TextureType.Tileset, furniture.Tileset);
                 if (image.Texture != null) image.SetTextureRect(furniture.SourceX, furniture.SourceY, furniture.Width * Options.Instance.Map.TileWidth, furniture.Height * Options.Instance.Map.TileHeight);
+            }
+            if (pet != null)
+            {
+                var portrait = new ImagePanel(card, "HousePetPortrait" + pet.Id) { MaintainAspectRatio = true, MouseInputEnabled = false };
+                portrait.SetBounds(4, 6, 62, 62);
+                if (!string.IsNullOrWhiteSpace(pet.Sprite)) portrait.Texture = GameContentManager.Current.GetTexture(TextureType.Entity, pet.Sprite);
+                if (portrait.Texture is { } texture)
+                {
+                    // Show the facing-down frame, rather than the full entity sprite sheet.
+                    var width = texture.Width / Math.Max(1, Options.Instance.Sprites.NormalFrames);
+                    var height = texture.Height / Math.Max(1, Options.Instance.Sprites.Directions);
+                    if (width > 0 && height > 0) portrait.SetTextureRect(0, 0, width, height);
+                    else portrait.Hide();
+                }
+                else portrait.Hide();
             }
             if (furniture?.PremiumRequired == true) text += " - " + ClientLanguages.Text("Premium furniture");
             var label = new Label(card) { Text = text, Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 11, TextColorOverride = Color.White }; label.SetBounds(78, 8, 450, 60);
@@ -95,7 +110,7 @@ internal sealed class HousingWindow : Window
             }
         else
             foreach (var pet in _view.House.Pets)
-                Row(pet.Name, null, "Collect pet", _view.IsOwner ? () => PacketSender.SendHouseAction(HouseAction.CollectPet, _view.OwnerId, pet.Id) : null);
+                Row(pet.Name, null, "Collect pet", _view.IsOwner ? () => PacketSender.SendHouseAction(HouseAction.CollectPet, _view.OwnerId, pet.Id) : null, pet: pet);
         if (y == 4)
         {
             var empty = new Label(_rows) { Text = ClientLanguages.Text(_tab == 3 ? "Send pets home from the Pets window." : "Nothing here yet."), Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 11, TextColorOverride = Color.White };
