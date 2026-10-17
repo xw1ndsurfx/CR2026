@@ -5289,6 +5289,36 @@
       "en": "Premium is required to buy or place this furniture.",
       "fr": "Un abonnement Premium est requis pour acheter ou placer ce meuble.",
       "es": "Se requiere una suscripción Premium para comprar o colocar este mueble."
+    },
+    "{0:N0} x {1}": {
+      "en": "{0:N0} x {1}",
+      "fr": "{0:N0} x {1}",
+      "es": "{0:N0} x {1}"
+    },
+    "{0:N0} XP": {
+      "en": "{0:N0} XP",
+      "fr": "{0:N0} EXP",
+      "es": "{0:N0} EXP"
+    },
+    "Unknown item": {
+      "en": "Unknown item",
+      "fr": "Objet inconnu",
+      "es": "Objeto desconocido"
+    },
+    "Unknown currency": {
+      "en": "Unknown currency",
+      "fr": "Monnaie inconnue",
+      "es": "Moneda desconocida"
+    },
+    "Additional reward": {
+      "en": "Additional reward",
+      "fr": "Récompense supplémentaire",
+      "es": "Recompensa adicional"
+    },
+    "No reward": {
+      "en": "No reward",
+      "fr": "Aucune récompense",
+      "es": "Sin recompensa"
     }
   }
 }
