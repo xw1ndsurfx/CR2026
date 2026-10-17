@@ -17,8 +17,10 @@ public sealed class FrmHousingConfiguration : DarkForm
     private readonly NumericUpDown _max = new() { Minimum = 1, Maximum = 500, Width = 70 };
     private readonly NumericUpDown _pets = new() { Minimum = 1, Maximum = 50, Width = 70 };
     private readonly DataGridView _catalog = new() { Dock = DockStyle.Fill, AutoGenerateColumns = false, AllowUserToAddRows = true, AllowUserToDeleteRows = true, RowHeadersWidth = 30, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells };
-    public FrmHousingConfiguration(string json)
+    public FrmHousingConfiguration(string json) : this(json, null) { }
+    internal FrmHousingConfiguration(string json, Action<FurnitureDefinition>? graphicPicker)
     {
+        graphicPicker ??= ChooseGraphic;
         _draft = JsonConvert.DeserializeObject<HousingConfiguration>(json) ?? new();
         Text = "Housing & Monthly Furniture Catalog"; Size = new Size(1160, 760); MinimumSize = new Size(960, 620); StartPosition = FormStartPosition.CenterParent;
         foreach (var map in MapDescriptor.Lookup.Values.OfType<MapDescriptor>().OrderBy(m => m.Name)) _map.Items.Add(new Choice(map.Id, map.Name));
@@ -36,11 +38,7 @@ public sealed class FrmHousingConfiguration : DarkForm
         _catalog.CellContentClick += (_, e) =>
         {
             if (e.RowIndex < 0 || e.ColumnIndex < 0 || _catalog.Columns[e.ColumnIndex].Name is not ("ChooseGraphic" or "ChooseTileset")) return;
-            _catalog.EndEdit();
-            var furniture = _catalog.Rows[e.RowIndex].DataBoundItem as FurnitureDefinition;
-            if (furniture == null && _catalog.Rows[e.RowIndex].IsNewRow && _catalog.DataSource is BindingList<FurnitureDefinition> catalog)
-                furniture = catalog.AddNew();
-            if (furniture != null) ChooseGraphic(furniture);
+            QueueGraphicSelection(e.RowIndex, graphicPicker);
         };
         TextColumn("Name", "Furniture"); TextColumn("Months", "Catalog months"); TextColumn("Price", "Price");
         var currencies = ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().Where(i => i.Stackable || i.ItemType == ItemType.Currency).OrderBy(i => i.Name).Select(i => new Choice(i.Id, i.Name)).ToList();
@@ -77,6 +75,39 @@ public sealed class FrmHousingConfiguration : DarkForm
         footer.Controls.Add(cancel); footer.Controls.Add(save); Controls.Add(_catalog); Controls.Add(header); Controls.Add(footer);
         MiniGameEditorTheme.Apply(this);
         _catalog.BackgroundColor = System.Drawing.Color.FromArgb(45, 45, 48); _catalog.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(57, 60, 62); _catalog.DefaultCellStyle.ForeColor = System.Drawing.Color.Gainsboro;
+    }
+    private bool _graphicSelectionPending;
+    private void QueueGraphicSelection(int rowIndex, Action<FurnitureDefinition> graphicPicker)
+    {
+        if (_graphicSelectionPending) return;
+        _graphicSelectionPending = true;
+        // Finish the button mouse-up before changing the grid's new-record state or opening a modal.
+        BeginInvoke(new Action(() =>
+        {
+            try
+            {
+                if (IsDisposed || _catalog.IsDisposed || rowIndex >= _catalog.Rows.Count) return;
+                if (!_catalog.EndEdit()) return;
+                var row = _catalog.Rows[rowIndex];
+                FurnitureDefinition? furniture = row.DataBoundItem as FurnitureDefinition;
+                if (row.IsNewRow && _catalog.DataSource is BindingList<FurnitureDefinition> catalog)
+                {
+                    // Remove the placeholder while inserting a regular record. AddNew would
+                    // start a second pending-row transaction inside DataGridView's own one.
+                    _catalog.CurrentCell = null;
+                    _catalog.AllowUserToAddRows = false;
+                    try
+                    {
+                        furniture = new FurnitureDefinition();
+                        catalog.Add(furniture);
+                        BindingContext[catalog].EndCurrentEdit();
+                    }
+                    finally { _catalog.AllowUserToAddRows = true; }
+                }
+                if (furniture != null) graphicPicker(furniture);
+            }
+            finally { _graphicSelectionPending = false; }
+        }));
     }
     private void ChooseGraphic(FurnitureDefinition furniture)
     {
