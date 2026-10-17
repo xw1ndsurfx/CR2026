@@ -3,6 +3,7 @@ using DarkUI.Forms;
 using Intersect.Framework.Core.Housing;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
+using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Intersect.Network.Packets.Housing;
 using Newtonsoft.Json;
 namespace Intersect.Editor.Forms.Editors;
@@ -23,7 +24,13 @@ public sealed class FrmHousingConfiguration : DarkForm
         graphicPicker ??= ChooseGraphic;
         _draft = JsonConvert.DeserializeObject<HousingConfiguration>(json) ?? new();
         Text = "Housing & Monthly Furniture Catalog"; Size = new Size(1160, 760); MinimumSize = new Size(960, 620); StartPosition = FormStartPosition.CenterParent;
-        foreach (var map in MapDescriptor.Lookup.Values.OfType<MapDescriptor>().OrderBy(m => m.Name)) _map.Items.Add(new Choice(map.Id, map.Name));
+        // Map descriptors are loaded on demand; the project map list includes unopened maps.
+        var maps = MapList.OrderedMaps.Select(m => new Choice(m.MapId, m.Name))
+            .Concat(MapDescriptor.Lookup.Values.OfType<MapDescriptor>().Select(m => new Choice(m.Id, m.Name)))
+            .DistinctBy(m => m.Id).OrderBy(m => m.Name).ToList();
+        if (_draft.TemplateMapId != Guid.Empty && maps.All(m => m.Id != _draft.TemplateMapId))
+            maps.Add(new Choice(_draft.TemplateMapId, _draft.TemplateMapId.ToString()));
+        _map.Items.AddRange(maps.Cast<object>().ToArray());
         _map.SelectedItem = _map.Items.Cast<Choice>().FirstOrDefault(m => m.Id == _draft.TemplateMapId);
         _enabled.Checked = _draft.Enabled; _x.Value = _draft.EntryX; _y.Value = _draft.EntryY; _max.Value = _draft.MaximumFurniture; _pets.Value = _draft.MaximumPets;
         var header = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 102, Padding = new Padding(12), AutoScroll = true };
