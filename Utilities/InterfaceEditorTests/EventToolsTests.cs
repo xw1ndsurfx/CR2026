@@ -46,6 +46,9 @@ internal static class EventToolsTests
         Check(!new EventDescriptor(Guid.NewGuid(), true) { Pages = [new()] }.IsChatEmote, "Common events are private by default");
         editor.MyEvent.Pages[0].ShowInChatEmoteMenu = true;
         Check(editor.MyEvent.IsChatEmote && JsonConvert.DeserializeObject<EventPage>(JsonConvert.SerializeObject(page, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto }), new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto })!.ShowInChatEmoteMenu, "Chat permission survives existing page JSON storage");
+        var legacyEmote = new EventDescriptor(Guid.NewGuid(), true) { Folder = "[SHOUTBOX] - Emoticons", Pages = [new()] };
+        Check(legacyEmote.IsChatEmote && !legacyEmote.Pages[0].ShowInChatEmoteMenu, "Legacy SHOUTBOX folder is recognized without modifying pages");
+        Check(JsonConvert.DeserializeObject<EventDescriptor>(JsonConvert.SerializeObject(legacyEmote))!.IsChatEmote, "Emote folder discovery survives event serialization");
         editor.MyEvent.CommonEvent = false;
         Check(!editor.MyEvent.IsChatEmote, "Map events cannot be executed from chat");
         var config = new WorldActivitiesConfiguration { CombatMusic = "old.ogg", BankOpeningCost = 3 };

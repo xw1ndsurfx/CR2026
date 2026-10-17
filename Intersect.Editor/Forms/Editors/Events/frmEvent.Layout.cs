@@ -151,6 +151,7 @@ public partial class FrmEvent
         _loadingOffsets = true;
         _chatEmote.Parent.Visible = MyEvent?.CommonEvent == true;
         _chatEmote.Checked = MyEvent?.IsChatEmote == true;
+        _chatEmote.Enabled = MyEvent?.IsInChatEmoteFolder != true;
         _animationLayer.SelectedIndex = Enum.IsDefined(CurrentPage.AnimationRenderLayer) ? (int)CurrentPage.AnimationRenderLayer : 0;
         _animationX.Value = Math.Clamp(CurrentPage.AnimationOffsetX, -2048, 2048);
         _animationY.Value = Math.Clamp(CurrentPage.AnimationOffsetY, -2048, 2048);
