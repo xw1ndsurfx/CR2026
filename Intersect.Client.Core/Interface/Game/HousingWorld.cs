@@ -13,19 +13,19 @@ namespace Intersect.Client.Interface.Game;
 internal static class HousingWorld
 {
     internal static HouseView? View { get; set; }
-    internal sealed record PlacementPreview(Guid OwnerId, Guid MapId, Guid FurnitureId, int Rotation);
+    internal sealed record PlacementPreview(Guid OwnerId, Guid MapId, Guid FurnitureId, int Rotation, FurnitureDefinition Definition);
     internal static PlacementPreview? Preview { get; set; }
     internal static void DrawPreview()
     {
         var view = View; var preview = Preview;
         if (preview == null || view is not { Inside: true, IsOwner: true } ||
             view.OwnerId != preview.OwnerId || view.MapId != preview.MapId || Globals.Me?.MapId != view.MapId ||
-            Globals.Me.MapInstance is not { } map || !view.House.Furniture.TryGetValue(preview.FurnitureId, out var owned)) return;
+            Globals.Me.MapInstance is not { } map) return;
         var world = Graphics.ConvertToWorldPoint(Globals.InputManager.MousePosition);
         var x = (int)Math.Floor((world.X - map.X) / Options.Instance.Map.TileWidth);
         var y = (int)Math.Floor((world.Y - map.Y) / Options.Instance.Map.TileHeight);
         if (x < 0 || y < 0 || x >= Options.Instance.Map.MapWidth || y >= Options.Instance.Map.MapHeight) return;
-        DrawFurniture(owned.Definition, map.X, map.Y, x, y, preview.Rotation, new Color(150, 160, 160, 160));
+        DrawFurniture(preview.Definition, map.X, map.Y, x, y, preview.Rotation, new Color(150, 160, 160, 160));
     }
     private static void DrawFurniture(FurnitureDefinition item, float mapX, float mapY, int x, int y, int rotation, Color color)
     {

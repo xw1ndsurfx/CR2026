@@ -18,7 +18,7 @@ internal sealed class HousingWindow : Window
     private readonly Button[] _tabs;
     private HouseView? _view;
     private int _tab;
-    public event Action<Guid, Guid>? PlaceRequested;
+    public event Action<Guid, Guid, FurnitureDefinition>? PlaceRequested;
     public HousingWindow(Canvas canvas) : base(canvas, ClientLanguages.Text("My house"), false, nameof(HousingWindow))
     {
         SetSize(850, 670); Alignment = [Alignments.Center]; DeleteOnClose = false; DisableResizing();
@@ -75,7 +75,7 @@ internal sealed class HousingWindow : Window
             foreach (var (id, owned) in _view.House.Furniture)
             {
                 var stored = owned.Quantity - _view.House.Placements.Count(p => p.FurnitureId == id);
-                Row(ClientLanguages.Format("{0} - stored: {1}", ClientLanguages.ContentText(owned.Definition.Name), stored), owned.Definition, "Place", stored > 0 && _view.Inside ? () => { PlaceRequested?.Invoke(id, Guid.Empty); Hide(); } : null);
+                Row(ClientLanguages.Format("{0} - stored: {1}", ClientLanguages.ContentText(owned.Definition.Name), stored), owned.Definition, "Place", stored > 0 && _view.Inside ? () => { PlaceRequested?.Invoke(id, Guid.Empty, owned.Definition); Hide(); } : null);
             }
         else if (_tab == 2)
             foreach (var placed in _view.House.Placements)
@@ -83,7 +83,7 @@ internal sealed class HousingWindow : Window
                 if (!_view.House.Furniture.TryGetValue(placed.FurnitureId, out var owned)) continue;
                 if (_view.Inside && owned.Definition.CommonEventId != Guid.Empty)
                     Row(ClientLanguages.ContentText(owned.Definition.Name), owned.Definition, "Use", () => PacketSender.SendHouseAction(HouseAction.Interact, _view.OwnerId, placement: placed.Id));
-                Row(ClientLanguages.ContentText(owned.Definition.Name) + $" ({placed.X}, {placed.Y})", owned.Definition, "Move", _view.IsOwner && _view.Inside ? () => { PlaceRequested?.Invoke(placed.FurnitureId, placed.Id); Hide(); } : null,
+                Row(ClientLanguages.ContentText(owned.Definition.Name) + $" ({placed.X}, {placed.Y})", owned.Definition, "Move", _view.IsOwner && _view.Inside ? () => { PlaceRequested?.Invoke(placed.FurnitureId, placed.Id, owned.Definition); Hide(); } : null,
                     "Store", _view.IsOwner ? () => PacketSender.SendHouseAction(HouseAction.Remove, _view.OwnerId, placement: placed.Id) : null);
             }
         else

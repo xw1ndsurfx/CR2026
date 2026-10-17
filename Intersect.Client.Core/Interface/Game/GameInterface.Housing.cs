@@ -29,7 +29,7 @@ public partial class GameInterface
         if (_housingWindow != null) return;
         _housingWindow = new HousingWindow(GameCanvas);
         _housePlacement = new HousePlacementOverlay(GameCanvas);
-        _housingWindow.PlaceRequested += (id, placement) => _housePlacement.Begin(id, placement);
+        _housingWindow.PlaceRequested += (id, placement, definition) => _housePlacement.Begin(id, placement, definition);
         _houseButton = new Button(GameCanvas, "MyHouse") { Text = ClientLanguages.Text("My house"), Font = GameContentManager.Current.GetFont("sourcesanspro") ?? GameCanvas.Skin.DefaultFont, FontSize = 9 };
         _houseButton.SetBounds(8, 28, 110, 24); _houseButton.Clicked += (_, _) => PacketSender.SendHouseAction(HouseAction.Open, Globals.Me?.Id ?? Guid.Empty);
         _houseExit = new Button(GameCanvas, "ExitHouse") { Text = ClientLanguages.Text("Leave house"), Font = GameContentManager.Current.GetFont("sourcesanspro") ?? GameCanvas.Skin.DefaultFont, FontSize = 9 };
@@ -84,6 +84,7 @@ public partial class GameInterface
     {
         private Guid _furniture, _placement;
         private int _rotation;
+        private FurnitureDefinition? _definition;
         private readonly Label _help;
         public HousePlacementOverlay(Base parent) : base(parent, "HousePlacement")
         {
@@ -91,17 +92,17 @@ public partial class GameInterface
             _help = new Label(this) { Text = ClientLanguages.Text("Click to place. Mouse wheel: rotate. Right click: finish."), Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 12, TextColorOverride = Color.White, MouseInputEnabled = false };
             _help.SetBounds(280, 20, 760, 30);
         }
-        public void Begin(Guid furniture, Guid placement)
+        public void Begin(Guid furniture, Guid placement, FurnitureDefinition definition)
         {
-            if (HousingWorld.View is not { Inside: true, IsOwner: true } view || !view.House.Furniture.ContainsKey(furniture)) { Cancel(); return; }
-            _furniture = furniture; _placement = placement;
+            if (HousingWorld.View is not { Inside: true, IsOwner: true } view || definition.Id != furniture) { Cancel(); return; }
+            _furniture = furniture; _placement = placement; _definition = definition;
             _rotation = view.House.Placements.FirstOrDefault(p => p.Id == placement)?.Rotation ?? 0;
             UpdatePreview(); IsHidden = false; BringToFront();
         }
         public void Cancel() { IsHidden = true; HousingWorld.Preview = null; }
         private void UpdatePreview()
         {
-            if (HousingWorld.View is { } view) HousingWorld.Preview = new(view.OwnerId, view.MapId, _furniture, _rotation);
+            if (HousingWorld.View is { } view && _definition != null) HousingWorld.Preview = new(view.OwnerId, view.MapId, _furniture, _rotation, _definition);
             _help.Text = ClientLanguages.Format("Rotation: {0} - click to place, wheel to rotate, right click to finish.", _rotation * 90);
         }
         protected override void Dispose(bool disposing) { HousingWorld.Preview = null; base.Dispose(disposing); }
