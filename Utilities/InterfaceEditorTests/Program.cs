@@ -17,7 +17,28 @@ internal static class Program
     }
     private static void Run()
     {
-        typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, new Options());
+        // Login constructs the docking windows before server options arrive.
+        var optionsProperty = typeof(Options).GetProperty(nameof(Options.Instance))!;
+        optionsProperty.SetValue(null, null);
+        using (var layers = new FrmMapLayers())
+        {
+            var brushFlags = BindingFlags.Instance | BindingFlags.NonPublic;
+            var group = (GroupBox)typeof(FrmMapLayers).GetField("grpResource", brushFlags)!.GetValue(layers)!;
+            var originalControls = group.Controls.Count;
+            var initializeBrush = typeof(FrmMapLayers).GetMethod("InitializeResourceBrush", brushFlags)!;
+            foreach (var showZ in new[] { false, true })
+            {
+                var options = new Options(); options.Map.ZDimensionVisible = showZ;
+                optionsProperty.SetValue(null, options);
+                initializeBrush.Invoke(layers, null);
+                initializeBrush.Invoke(layers, null);
+                Check(group.Controls.Count == originalControls + 1, "Resource brush initialization must not duplicate controls");
+                var row = group.Controls.OfType<FlowLayoutPanel>().Single();
+                Check(row.Top == (showZ ? 116 : 70), "Resource brush follows received server elevation options");
+            }
+        }
+        System.Console.WriteLine("PASS editor login creates map layers before server options; resource brush initializes once after configuration");
+        optionsProperty.SetValue(null, new Options());
         SoundImportTests.Run();
         ActivitiesEditorTests.Run();
         EventToolsTests.Run();
