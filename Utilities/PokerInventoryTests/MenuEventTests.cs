@@ -35,12 +35,24 @@ internal static class MenuEventTests
         {
             Request(emote.Id); Request(mapEvent.Id); Request(Guid.NewGuid());
             Check(Count() == 0, "Client cannot execute unlisted, map-only or nonexistent events");
-            emote.Pages[0].ShowInChatEmoteMenu = true;
+            foreach (var folder in new[] { "[SHOUTBOX] - Emoticons", "[shoutbox]-emoticons", " [SHOUTBOX] - Emoticons " })
+            {
+                emote.Folder = folder;
+                Check(emote.IsChatEmote && !emote.Pages[0].ShowInChatEmoteMenu, "Existing SHOUTBOX emoticons are listed without individual migration");
+            }
+            emote.Folder = "[SHOUTBOX] - Emoticons - Private";
+            Check(!emote.IsChatEmote, "Other SHOUTBOX folders are not automatically exposed");
+            mapEvent.Folder = "[SHOUTBOX] - Emoticons";
+            Check(!mapEvent.IsChatEmote, "Map events remain excluded even with the emote folder name");
+            emote.Folder = "[SYSTEM]";
+            Check(!emote.IsChatEmote, "Ordinary common events remain private");
+            emote.Folder = "[SHOUTBOX] - Emoticons";
+
             client.IsEditor = true; Request(emote.Id); client.IsEditor = false;
             player.IsDead = true; Request(emote.Id); player.IsDead = false;
             player.InShop = new Intersect.GameObjects.ShopDescriptor(); Request(emote.Id); player.InShop = null;
             Check(Count() == 0, "Editor sessions, dead players and busy transactions cannot run menu events");
-            Request(emote.Id); Check(Count() == 1, "An authorized emote queues the actual common event");
+            Request(emote.Id); Check(Count() == 1, "A legacy folder emote queues the actual common event through the packet handler");
             Request(emote.Id); Check(Count() == 1, "Repeated emote packets are throttled before adding events");
         }
         finally { EventDescriptor.Lookup.DeleteAt(emote.Id); EventDescriptor.Lookup.DeleteAt(mapEvent.Id); }

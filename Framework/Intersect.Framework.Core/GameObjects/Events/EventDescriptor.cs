@@ -7,7 +7,12 @@ namespace Intersect.Framework.Core.GameObjects.Events;
 
 public partial class EventDescriptor : DatabaseObject<EventDescriptor>, IFolderable
 {
-    [NotMapped, JsonIgnore] public bool IsChatEmote => CommonEvent && Pages.Count > 0 && Pages[0].ShowInChatEmoteMenu;
+    [NotMapped, JsonIgnore]
+    public bool IsInChatEmoteFolder => string.Equals(
+        string.Concat((Folder ?? string.Empty).Where(char.IsLetterOrDigit)), "SHOUTBOXEmoticons", StringComparison.OrdinalIgnoreCase);
+
+    [NotMapped, JsonIgnore]
+    public bool IsChatEmote => CommonEvent && Pages.Count > 0 && (Pages[0].ShowInChatEmoteMenu || IsInChatEmoteFolder);
 
     //Cached Pages Data
     private string mCachedPagesData = null;
