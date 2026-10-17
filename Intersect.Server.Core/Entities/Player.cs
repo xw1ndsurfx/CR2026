@@ -2295,10 +2295,6 @@ public partial class Player : Entity
         {
             UpdateLastOverworldLocation(MapId, X, Y);
         }
-        if (PreviousMapInstanceId != MapInstanceId)
-        {
-            PacketSender.SendChatMsg(this, Strings.Player.InstanceUpdate.ToString(PreviousMapInstanceId.ToString(), MapInstanceId.ToString()), ChatMessageType.Admin, CustomColors.Alerts.Info);
-        }
 
         Warp(newMapId, newX, newY, Direction.Up, forceInstanceChange: force);
     }
