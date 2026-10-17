@@ -2,13 +2,39 @@ using System.ComponentModel;
 using System.Reflection;
 using Intersect.Editor.Forms.Editors;
 using Intersect.Framework.Core.Housing;
+using Intersect.Framework.Core.GameObjects.Maps;
+using Intersect.Framework.Core.GameObjects.Maps.MapList;
 using Newtonsoft.Json;
 
 internal static class HousingPickerTests
 {
     private static void Check(bool ok, string message) { if (!ok) throw new Exception(message); }
+    private static void VerifyUnloadedMaps()
+    {
+        var previous = MapList.OrderedMaps.ToArray();
+        var houseId = Guid.NewGuid(); var otherId = Guid.NewGuid(); var missingId = Guid.NewGuid();
+        try
+        {
+            MapList.OrderedMaps.Clear();
+            MapList.OrderedMaps.AddRange([new MapListMap { MapId = houseId, Name = "Player House" }, new MapListMap { MapId = otherId, Name = "Unopened interior" }]);
+            Check(MapDescriptor.Get(houseId) == null && MapDescriptor.Get(otherId) == null, "Regression fixture maps must not be loaded in the descriptor cache");
+            using var form = new FrmHousingConfiguration(JsonConvert.SerializeObject(new HousingConfiguration { TemplateMapId = houseId }));
+            var combo = (ComboBox)typeof(FrmHousingConfiguration).GetField("_map", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(form)!;
+            Guid Id(object choice) => (Guid)choice.GetType().GetProperty("Id")!.GetValue(choice)!;
+            Check(combo.Items.Cast<object>().Any(c => Id(c) == houseId && c.ToString() == "Player House") && combo.Items.Cast<object>().Any(c => Id(c) == otherId), "Interior selector includes maps that have never been opened");
+            Check(combo.SelectedItem != null && Id(combo.SelectedItem) == houseId, "Saved Player House selection survives opening the editor");
+            combo.SelectedItem = combo.Items.Cast<object>().Single(c => Id(c) == otherId);
+            Check(Id(combo.SelectedItem) == otherId, "Unloaded interior maps can be selected normally");
+            using var unresolved = new FrmHousingConfiguration(JsonConvert.SerializeObject(new HousingConfiguration { TemplateMapId = missingId }));
+            var unresolvedCombo = (ComboBox)typeof(FrmHousingConfiguration).GetField("_map", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(unresolved)!;
+            Check(unresolvedCombo.SelectedItem != null && Id(unresolvedCombo.SelectedItem) == missingId, "An unresolved saved map ID must not silently become an empty selection");
+        }
+        finally { MapList.OrderedMaps.Clear(); MapList.OrderedMaps.AddRange(previous); }
+        System.Console.WriteLine("PASS Housing interior maps: complete project list, unopened maps, saved selection and unresolved ID preservation");
+    }
     internal static void Run()
     {
+        VerifyUnloadedMaps();
         foreach (var existing in new[] { false, true })
         foreach (var columnName in new[] { "ChooseGraphic", "ChooseTileset" })
         {
