@@ -617,6 +617,7 @@ public static partial class Graphics
 
             case GameStates.InGame:
                 DrawInGame(deltaTime);
+                Intersect.Client.Interface.Game.HousingWorld.DrawPreview();
                 break;
 
             case GameStates.Error:

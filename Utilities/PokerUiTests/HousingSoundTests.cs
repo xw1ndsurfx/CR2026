@@ -53,6 +53,34 @@ internal static class HousingSoundTests
         var window=(WindowControl)Activator.CreateInstance(windowType,[canvas])!;
         windowType.GetMethod("Apply")!.Invoke(window,[view,"House saved."]);window.Show();
         var flags=BindingFlags.Instance|BindingFlags.NonPublic;
+        var housingWorld = assembly.GetType("Intersect.Client.Interface.Game.HousingWorld", true)!;
+        var worldView = housingWorld.GetProperty("View", BindingFlags.Static | BindingFlags.NonPublic)!;
+        var preview = housingWorld.GetProperty("Preview", BindingFlags.Static | BindingFlags.NonPublic)!;
+        var oldView = worldView.GetValue(null); var oldPreview = preview.GetValue(null);
+        try
+        {
+            worldView.SetValue(null, view);
+            var overlayType = typeof(GameInterface).GetNestedType("HousePlacementOverlay", BindingFlags.NonPublic)!;
+            using var overlay = (ControlBase)Activator.CreateInstance(overlayType, [canvas])!;
+            overlayType.GetMethod("Begin")!.Invoke(overlay, [furniture.Id, Guid.Empty]);
+            Check(!overlay.IsHidden && preview.GetValue(null) != null, "Choosing Place activates the furniture preview");
+            overlayType.GetMethod("OnMouseWheeled", flags)!.Invoke(overlay, [120]);
+            var active = preview.GetValue(null)!;
+            Check((int)active.GetType().GetProperty("Rotation")!.GetValue(active)! == 1, "Mouse wheel rotates the live placement preview");
+            overlayType.GetMethod("OnMouseClicked", flags)!.Invoke(overlay, [Intersect.Client.Framework.Input.MouseButton.Right, new Point(), true]);
+            Check(overlay.IsHidden && preview.GetValue(null) == null, "Right click cancels both placement and its ghost");
+            var placed = view.House.Placements.Single();
+            overlayType.GetMethod("Begin")!.Invoke(overlay, [furniture.Id, placed.Id]);
+            active = preview.GetValue(null)!;
+            Check((int)active.GetType().GetProperty("Rotation")!.GetValue(active)! == placed.Rotation, "Moving furniture starts at its existing rotation");
+            view.IsOwner = false;
+            overlayType.GetMethod("Begin")!.Invoke(overlay, [furniture.Id, Guid.Empty]);
+            Check(overlay.IsHidden && preview.GetValue(null) == null, "Visitors cannot activate a house placement preview");
+            view.IsOwner = true;
+            canvas.RemoveChild(overlay, false); // The using scope disposes this overlay before the canvas.
+        }
+        finally { worldView.SetValue(null, oldView); preview.SetValue(null, oldPreview); }
+
         var layout=typeof(ControlBase).GetMethod("RecurseLayout",flags)!;
         for(var pass=0;pass<4;pass++)layout.Invoke(window,[skin]);
         var origin=window.ToCanvas(0,0);
