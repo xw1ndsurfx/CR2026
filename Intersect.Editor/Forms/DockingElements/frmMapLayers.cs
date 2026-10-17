@@ -59,7 +59,6 @@ public partial class FrmMapLayers : DockContent
     {
         InitializeComponent();
         Icon = Program.Icon;
-        InitializeResourceBrush();
 
         mMapLayers.Add(picLayer1);
         mMapLayers.Add(picLayer2);
@@ -70,6 +69,8 @@ public partial class FrmMapLayers : DockContent
 
     public void Init()
     {
+        // Server options are available here, but not when login creates the docking windows.
+        InitializeResourceBrush();
         cmbAutotile.SelectedIndex = 0;
 
         // Selected Npc highlight color from preferences
