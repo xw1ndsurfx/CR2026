@@ -13,6 +13,30 @@ namespace Intersect.Client.Interface.Game;
 internal static class HousingWorld
 {
     internal static HouseView? View { get; set; }
+    internal sealed record PlacementPreview(Guid OwnerId, Guid MapId, Guid FurnitureId, int Rotation);
+    internal static PlacementPreview? Preview { get; set; }
+    internal static void DrawPreview()
+    {
+        var view = View; var preview = Preview;
+        if (preview == null || view is not { Inside: true, IsOwner: true } ||
+            view.OwnerId != preview.OwnerId || view.MapId != preview.MapId || Globals.Me?.MapId != view.MapId ||
+            Globals.Me.MapInstance is not { } map || !view.House.Furniture.TryGetValue(preview.FurnitureId, out var owned)) return;
+        var world = Graphics.ConvertToWorldPoint(Globals.InputManager.MousePosition);
+        var x = (int)Math.Floor((world.X - map.X) / Options.Instance.Map.TileWidth);
+        var y = (int)Math.Floor((world.Y - map.Y) / Options.Instance.Map.TileHeight);
+        if (x < 0 || y < 0 || x >= Options.Instance.Map.MapWidth || y >= Options.Instance.Map.MapHeight) return;
+        DrawFurniture(owned.Definition, map.X, map.Y, x, y, preview.Rotation, new Color(150, 160, 160, 160));
+    }
+    private static void DrawFurniture(FurnitureDefinition item, float mapX, float mapY, int x, int y, int rotation, Color color)
+    {
+        var tw = Options.Instance.Map.TileWidth; var th = Options.Instance.Map.TileHeight;
+        var texture = Globals.ContentManager.GetTexture(TextureType.Tileset, item.Tileset);
+        var width = item.Width * tw; var height = item.Height * th;
+        if (texture == null || item.SourceX < 0 || item.SourceY < 0 || item.SourceX + width > texture.Width || item.SourceY + height > texture.Height) return;
+        Graphics.DrawGameTexture(texture, new FloatRect(item.SourceX, item.SourceY, width, height),
+            new FloatRect(mapX + (x + .5f) * tw - width / 2f, mapY + (y + 1) * th - height, width, height),
+            color, null, GameBlendModes.None, null, rotation * 90f);
+    }
     internal static void DrawFloor() => Draw(-1, false);
     internal static void DrawRow(int row, bool upper = false) => Draw(row, upper);
     private static void Draw(int row, bool upper)
@@ -26,12 +50,7 @@ internal static class HousingWorld
             if (!view.House.Furniture.TryGetValue(place.FurnitureId, out var owned)) continue;
             var item = owned.Definition;
             if (item.FloorDecoration ? row != -1 : row != Options.Instance.Map.MapHeight * 2 + place.Y) continue;
-            var texture = Globals.ContentManager.GetTexture(TextureType.Tileset, item.Tileset);
-            var width = item.Width * tw; var height = item.Height * th;
-            if (texture == null || item.SourceX + width > texture.Width || item.SourceY + height > texture.Height) continue;
-            Graphics.DrawGameTexture(texture, new FloatRect(item.SourceX, item.SourceY, width, height),
-                new FloatRect(map.X + (place.X + .5f) * tw - width / 2f, map.Y + (place.Y + 1) * th - height, width, height),
-                Color.White, null, GameBlendModes.None, null, place.Rotation * 90f);
+            DrawFurniture(item, map.X, map.Y, place.X, place.Y, place.Rotation, Color.White);
         }
         if (row < 0) return;
         foreach (var pet in view.House.Pets.Where(p => row == Options.Instance.Map.MapHeight * 2 + p.Y))

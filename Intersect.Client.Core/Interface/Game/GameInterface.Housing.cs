@@ -22,7 +22,7 @@ public partial class GameInterface
         EnsureHousing();
         _housingWindow!.Apply(view, packet.Message);
         if (packet.OpenWindow) { _housingWindow.Show(); _housingWindow.BringToFront(); }
-        if (HousingWorld.View == null) { _housePlacement!.IsHidden = true; if (!packet.OpenWindow) _housingWindow.Hide(); }
+        if (HousingWorld.View == null) { _housePlacement!.Cancel(); if (!packet.OpenWindow) _housingWindow.Hide(); }
     }
     private void EnsureHousing()
     {
@@ -40,6 +40,7 @@ public partial class GameInterface
         EnsureHousing();
         _houseExit!.IsHidden = HousingWorld.View is not { Inside: true };
         _housePlacement!.SetSize(GameCanvas.Width, GameCanvas.Height);
+        if (_housePlacement.IsHidden || HousingWorld.View is not { Inside: true, IsOwner: true }) _housePlacement.Cancel();
         UpdateFurnitureUseTargets();
     }
     private void UpdateFurnitureUseTargets()
@@ -90,17 +91,30 @@ public partial class GameInterface
             _help = new Label(this) { Text = ClientLanguages.Text("Click to place. Mouse wheel: rotate. Right click: finish."), Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 12, TextColorOverride = Color.White, MouseInputEnabled = false };
             _help.SetBounds(280, 20, 760, 30);
         }
-        public void Begin(Guid furniture, Guid placement) { _furniture = furniture; _placement = placement; _rotation = 0; _help.Text = ClientLanguages.Format("Rotation: {0} - click to place, wheel to rotate, right click to finish.", 0); IsHidden = false; BringToFront(); }
+        public void Begin(Guid furniture, Guid placement)
+        {
+            if (HousingWorld.View is not { Inside: true, IsOwner: true } view || !view.House.Furniture.ContainsKey(furniture)) { Cancel(); return; }
+            _furniture = furniture; _placement = placement;
+            _rotation = view.House.Placements.FirstOrDefault(p => p.Id == placement)?.Rotation ?? 0;
+            UpdatePreview(); IsHidden = false; BringToFront();
+        }
+        public void Cancel() { IsHidden = true; HousingWorld.Preview = null; }
+        private void UpdatePreview()
+        {
+            if (HousingWorld.View is { } view) HousingWorld.Preview = new(view.OwnerId, view.MapId, _furniture, _rotation);
+            _help.Text = ClientLanguages.Format("Rotation: {0} - click to place, wheel to rotate, right click to finish.", _rotation * 90);
+        }
+        protected override void Dispose(bool disposing) { HousingWorld.Preview = null; base.Dispose(disposing); }
         protected override void OnMouseClicked(MouseButton button, Point mousePosition, bool userAction = true)
         {
-            if (button == MouseButton.Right) { IsHidden = true; return; }
+            if (button == MouseButton.Right) { Cancel(); return; }
             if (button != MouseButton.Left || HousingWorld.View is not { Inside: true, IsOwner: true } view || Globals.Me?.MapInstance is not { } map) return;
             var world = Graphics.ConvertToWorldPoint(Globals.InputManager.MousePosition);
             var x = (int)Math.Floor((world.X - map.X) / Options.Instance.Map.TileWidth);
             var y = (int)Math.Floor((world.Y - map.Y) / Options.Instance.Map.TileHeight);
             PacketSender.SendHouseAction(HouseAction.Place, view.OwnerId, _furniture, _placement, x, y, _rotation);
-            IsHidden = true;
+            Cancel();
         }
-        protected override bool OnMouseWheeled(int delta) { _rotation = (_rotation + (delta > 0 ? 1 : 3)) % 4; _help.Text = ClientLanguages.Format("Rotation: {0} - click to place, wheel to rotate, right click to finish.", _rotation * 90); return true; }
+        protected override bool OnMouseWheeled(int delta) { _rotation = (_rotation + (delta > 0 ? 1 : 3)) % 4; UpdatePreview(); return true; }
     }
 }
