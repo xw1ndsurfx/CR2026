@@ -48,6 +48,8 @@ internal static class Program
             var type = housing.GetType();
             var grid = (DataGridView)type.GetField("_catalog", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(housing)!;
             Check(housing.MaximizeBox && grid.Columns.Count >= 10 && grid.Columns.Cast<DataGridViewColumn>().Any(c => c.DataPropertyName == "Months"), "Housing Editor exposes monthly offers, currencies and furniture graphics");
+            Check(grid.Columns.Cast<DataGridViewColumn>().Single(c => c.DataPropertyName == "Tileset") is DataGridViewButtonColumn { Name: "ChooseTileset", UseColumnTextForButtonValue: false },
+                "Housing tileset field opens the Event Editor visual picker instead of a filename dropdown");
         }
         using (var invasion = new Intersect.Editor.Forms.Editors.FrmInvasionConfiguration())
         {
