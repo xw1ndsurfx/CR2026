@@ -5274,6 +5274,21 @@
       "en": "World Boss Results",
       "fr": "Bilan du boss mondial",
       "es": "Resultados del jefe mundial"
+    },
+    "Premium furniture": {
+      "en": "Premium furniture",
+      "fr": "Meuble Premium",
+      "es": "Mueble Premium"
+    },
+    "Premium required": {
+      "en": "Premium required",
+      "fr": "Premium requis",
+      "es": "Requiere Premium"
+    },
+    "Premium is required to buy or place this furniture.": {
+      "en": "Premium is required to buy or place this furniture.",
+      "fr": "Un abonnement Premium est requis pour acheter ou placer ce meuble.",
+      "es": "Se requiere una suscripción Premium para comprar o colocar este mueble."
     }
   }
 }

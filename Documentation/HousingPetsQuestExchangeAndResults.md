@@ -27,3 +27,9 @@ Quest category and repeatability fields are appended to the existing packet keys
 ## Verification
 
 Regression coverage exercises real Gwen windows at 1920x1080, 1280x720 and 640x480 in all three languages, long result summaries with wheel scrolling, viewport/button bounds, long boss names and damage rankings, quest search/category/status/repeatability combinations, packet round-trips, home-action text metrics, free-tile placement and old resident sprite/position repair. UI fixtures use synthetic rendering metrics; final artwork and live gameplay still need checking in the rebuilt game.
+
+## Premium furniture
+
+The Housing catalog has a Premium required checkbox per furniture definition. Existing definitions default to false. The server checks the account's active Premium status before charging a purchase and before placing or moving furniture, using the current catalog requirement when the owned snapshot is older. A retired definition retains the requirement saved with ownership.
+
+Expiry preserves quantities and placed decoration. Owners can still store their furniture; buying, placing and moving restricted furniture require renewal. Client catalog/storage actions display the restriction in English, French and Spanish. The owner view carries the server's current Premium status for presentation; the server remains authoritative. No database migration is needed.

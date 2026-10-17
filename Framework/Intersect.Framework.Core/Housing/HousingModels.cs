@@ -15,6 +15,7 @@ public sealed class FurnitureDefinition
     public int Height { get; set; } = 1;
     public Guid CommonEventId { get; set; }
     public bool FloorDecoration { get; set; }
+    public bool PremiumRequired { get; set; }
     public bool Available(DateTime utc) => Months.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
         .Contains(utc.ToString("yyyy-MM", CultureInfo.InvariantCulture));
     public bool IsValid => Id != Guid.Empty && Name.Length is > 0 and <= 96 && Price is >= 1 and <= 1000000000 && CurrencyItemId != Guid.Empty &&
@@ -91,6 +92,7 @@ public sealed class HouseView
     public Guid OwnerId { get; set; }
     public string OwnerName { get; set; } = string.Empty;
     public bool IsOwner { get; set; }
+    public bool PremiumActive { get; set; }
     public bool Inside { get; set; }
     public bool Enabled { get; set; }
     public Guid MapId { get; set; }

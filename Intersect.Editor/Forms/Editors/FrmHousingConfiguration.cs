@@ -47,6 +47,7 @@ public sealed class FrmHousingConfiguration : DarkForm
             if (e.RowIndex < 0 || e.ColumnIndex < 0 || _catalog.Columns[e.ColumnIndex].Name is not ("ChooseGraphic" or "ChooseTileset")) return;
             QueueGraphicSelection(e.RowIndex, graphicPicker);
         };
+        _catalog.Columns.Add(new DataGridViewCheckBoxColumn { HeaderText = "Premium required", DataPropertyName = "PremiumRequired" });
         TextColumn("Name", "Furniture"); TextColumn("Months", "Catalog months"); TextColumn("Price", "Price");
         var currencies = ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().Where(i => i.Stackable || i.ItemType == ItemType.Currency).OrderBy(i => i.Name).Select(i => new Choice(i.Id, i.Name)).ToList();
         _catalog.Columns.Add(new DataGridViewComboBoxColumn { HeaderText = "Currency", DataPropertyName = "CurrencyItemId", DataSource = currencies, DisplayMember = "Name", ValueMember = "Id" });
