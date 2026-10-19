@@ -359,6 +359,7 @@ public static partial class Graphics
             for (var x = 0; x < 3; x++)
             {
                 if (x == 1) Intersect.Client.Interface.Game.HousingWorld.DrawRow(y);
+                if (x == 1) Naval.NavalWorld.DrawRow(y);
                 foreach (var entity in RenderingEntities[x, y])
                 {
                     // Handle our plugin drawing.
@@ -959,9 +960,10 @@ public static partial class Graphics
         var w = x1 - x;
         var h = y1 - y;
         var restrictView = new FloatRect(x, y, w, h );
+        var navalCamera = Naval.NavalWorld.TryCamera(out var navalX, out var navalY);
         var newView = new FloatRect(
-            (int)Math.Ceiling(en.Center.X - Renderer.ScreenWidth / scale / 2f),
-            (int)Math.Ceiling(en.Center.Y - Renderer.ScreenHeight / scale / 2f),
+            (int)Math.Ceiling((navalCamera ? navalX : en.Center.X) - Renderer.ScreenWidth / scale / 2f),
+            (int)Math.Ceiling((navalCamera ? navalY : en.Center.Y) - Renderer.ScreenHeight / scale / 2f),
             Renderer.ScreenWidth / scale,
             Renderer.ScreenHeight / scale
         );

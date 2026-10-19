@@ -437,6 +437,9 @@ internal sealed partial class PacketHandler
 
     public bool ProcessPacket(IPacket packet, Client client)
     {
+        if (client.Entity is { CaptainedShipId: var shipId } && shipId != Guid.Empty &&
+            packet is MovePacket or AttackPacket or BlockPacket or DirectionPacket or UseSpellPacket or UseItemPacket or ActivateEventPacket)
+            return true;
         if (!Registry.TryGetHandler(packet, out HandlePacketGeneric handler))
         {
             Logger.LogError($"No registered handler for {packet.GetType().FullName}!");
@@ -910,6 +913,12 @@ internal sealed partial class PacketHandler
 
         var msg = packet.Message;
         var channel = packet.Channel;
+
+        if (string.Equals(msg?.Trim(), "/naval", StringComparison.OrdinalIgnoreCase))
+        {
+            Intersect.Server.Naval.NavalSystem.Helm(player);
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(msg))
         {

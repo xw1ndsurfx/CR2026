@@ -1,5 +1,30 @@
 {
   "Entries": {
+    "Naval navigation is unavailable.": {
+      "en": "Naval navigation is unavailable.",
+      "fr": "La navigation navale est indisponible.",
+      "es": "La navegación naval no está disponible."
+    },
+    "Stop near the helm dock to disembark safely.": {
+      "en": "Stop near the helm dock to disembark safely.",
+      "fr": "Arrêtez-vous près du quai de la barre pour débarquer en sécurité.",
+      "es": "Detente cerca del muelle del timón para desembarcar con seguridad."
+    },
+    "You have left the helm.": {
+      "en": "You have left the helm.",
+      "fr": "Vous avez quitté la barre.",
+      "es": "Has dejado el timón."
+    },
+    "No available ship near this helm dock.": {
+      "en": "No available ship near this helm dock.",
+      "fr": "Aucun navire disponible près de ce quai de barre.",
+      "es": "No hay ningún barco disponible cerca de este muelle."
+    },
+    "Helm acquired. W/S: thrust/brake, A/D: turn, Space: anchor. /naval: leave at dock.": {
+      "en": "Helm acquired. W/S: thrust/brake, A/D: turn, Space: anchor. /naval: leave at dock.",
+      "fr": "À la barre. W/S : accélérer/freiner, A/D : tourner, Espace : ancre. /naval : quitter au quai.",
+      "es": "Al timón. W/S: acelerar/frenar, A/D: girar, Espacio: ancla. /naval: salir en el muelle."
+    },
     "Access": {
       "en": "Access",
       "fr": "Accès",

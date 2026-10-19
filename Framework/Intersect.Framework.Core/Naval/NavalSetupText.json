@@ -1,0 +1,41 @@
+{
+  "Entries": {
+    "Naval setup": { "en": "Naval setup", "fr": "Configuration navale", "es": "Configuración naval" },
+    "Prepare a test ship automatically": { "en": "Prepare a test ship automatically", "fr": "Préparer un navire de test automatiquement", "es": "Preparar un barco de prueba automáticamente" },
+    "Ship ready on {0}. Ship: ({1}, {2}); boarding point: ({3}, {4}). Navigation is enabled. Use /naval near the boarding point.": {
+      "en": "Ship ready on {0}. Ship: ({1}, {2}); boarding point: ({3}, {4}). Navigation is enabled. Use /naval near the boarding point.",
+      "fr": "Navire prêt sur {0}. Navire : ({1}, {2}); point d’embarquement : ({3}, {4}). La navigation est activée. Utilisez /naval près du point d’embarquement.",
+      "es": "Barco listo en {0}. Barco: ({1}, {2}); punto de embarque: ({3}, {4}). La navegación está activada. Usa /naval cerca del punto de embarque."
+    },
+    "Existing ship on {0} kept. Boarding point: ({1}, {2}). Navigation is enabled.": {
+      "en": "Existing ship on {0} kept. Boarding point: ({1}, {2}). Navigation is enabled.",
+      "fr": "Navire existant conservé sur {0}. Point d’embarquement : ({1}, {2}). La navigation est activée.",
+      "es": "Barco existente conservado en {0}. Punto de embarque: ({1}, {2}). La navegación está activada."
+    },
+    "Select a saved map inside the Ocean folder or one of its subfolders.": {
+      "en": "Select a saved map inside the Ocean folder or one of its subfolders.",
+      "fr": "Sélectionnez une map enregistrée dans le dossier Ocean ou l’un de ses sous-dossiers.",
+      "es": "Selecciona un mapa guardado dentro de la carpeta Ocean o una de sus subcarpetas."
+    },
+    "No free area was found for the full hull and a boarding point. Check the map collision attributes and existing obstacles.": {
+      "en": "No free area was found for the full hull and a boarding point. Check the map collision attributes and existing obstacles.",
+      "fr": "Aucune zone libre n’a été trouvée pour la coque entière et un point d’embarquement. Vérifiez les attributs de collision et les obstacles de la map.",
+      "es": "No se encontró una zona libre para todo el casco y un punto de embarque. Revisa los atributos de colisión y los obstáculos del mapa."
+    },
+    "The naval configuration could not be read or saved. Existing data was preserved.": {
+      "en": "The naval configuration could not be read or saved. Existing data was preserved.",
+      "fr": "La configuration navale n’a pas pu être lue ou enregistrée. Les données existantes ont été préservées.",
+      "es": "No se pudo leer o guardar la configuración naval. Los datos existentes se han conservado."
+    },
+    "The naval configuration already contains the maximum of 64 ships.": {
+      "en": "The naval configuration already contains the maximum of 64 ships.",
+      "fr": "La configuration navale contient déjà le maximum de 64 navires.",
+      "es": "La configuración naval ya contiene el máximo de 64 barcos."
+    },
+    "Save the selected map before preparing a ship. Placement uses the collision data saved on the server.": {
+      "en": "Save the selected map before preparing a ship. Placement uses the collision data saved on the server.",
+      "fr": "Enregistrez la map sélectionnée avant de préparer un navire. Le placement utilise les collisions enregistrées sur le serveur.",
+      "es": "Guarda el mapa seleccionado antes de preparar un barco. La colocación usa las colisiones guardadas en el servidor."
+    }
+  }
+}

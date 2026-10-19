@@ -71,6 +71,7 @@
 
     <ItemGroup>
       <Folder Include="Network\Handlers\" />
+      <EmbeddedResource Include="Naval/NavalSetupText.json" LogicalName="Intersect.Naval.SetupText" />
     </ItemGroup>
 
 </Project>

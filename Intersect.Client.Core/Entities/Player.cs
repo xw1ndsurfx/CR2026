@@ -274,10 +274,11 @@ public partial class Player : Entity, IPlayer
 
         if (Globals.Me == this)
         {
-            HandleInput();
+            if (Naval.NavalWorld.IsCaptain(Id)) Naval.NavalWorld.Input(IsBusy);
+            else HandleInput();
         }
 
-        if (!IsBusy)
+        if (!IsBusy && !Naval.NavalWorld.IsCaptain(Id))
         {
             if (this == Globals.Me && IsMoving == false)
             {

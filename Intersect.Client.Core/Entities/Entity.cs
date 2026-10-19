@@ -1067,7 +1067,7 @@ public partial class Entity : IEntity
     /// <summary>
     /// Returns whether this entity should be drawn.
     /// </summary>
-    public virtual bool ShouldDraw => !IsHidden && (!IsStealthed || this == Globals.Me || Globals.Me?.IsInMyParty(Id) == true);
+    public virtual bool ShouldDraw => !Naval.NavalWorld.IsCaptain(Id) && !IsHidden && (!IsStealthed || this == Globals.Me || Globals.Me?.IsInMyParty(Id) == true);
 
     /// <summary>
     /// Returns whether the name of this entity should be drawn.
@@ -1255,6 +1255,7 @@ public partial class Entity : IEntity
     //Rendering Functions
     public virtual void Draw()
     {
+        if (Naval.NavalWorld.IsCaptain(Id)) { WorldPos.Reset(); return; }
         if (IsHidden)
         {
             return; //Don't draw if the entity is hidden

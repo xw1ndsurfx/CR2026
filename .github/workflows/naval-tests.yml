@@ -1,0 +1,34 @@
+name: Naval phase 1 tests
+on:
+  pull_request:
+    paths:
+      - 'Framework/Intersect.Framework.Core/Naval/**'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/Editor/PrepareNavalMapPacket.cs'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/Server/NavalSetupResultPacket.cs'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/EditorPacket.cs'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/Client/ShipInputPacket.cs'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/Server/NavalSnapshotPacket.cs'
+      - 'Intersect.Server.Core/Naval/**'
+      - 'Intersect.Server.Core/Entities/Player*'
+      - 'Intersect.Server.Core/Networking/PacketHandler*'
+      - 'Intersect.Tests.Server/Naval/**'
+      - 'Intersect.Client.Core/Naval/**'
+      - 'Intersect.Client.Core/Localization/Locales/ui.json'
+      - 'Intersect.Editor/Forms/DockingElements/frmMapList.cs'
+      - 'Intersect.Editor/Networking/PacketHandler.Naval.cs'
+      - 'Intersect.Editor/Localization/Strings.Naval.cs'
+      - 'Utilities/InterfaceEditorTests/NavalMapListTests.cs'
+      - '.github/workflows/naval-tests.yml'
+  workflow_dispatch:
+jobs:
+  naval:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Debug --filter FullyQualifiedName~NavalTests --nologo
+      - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -- --naval-only
