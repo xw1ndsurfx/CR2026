@@ -111,15 +111,19 @@ public sealed class InvasionDefinition
     public bool Reminder60Enabled { get; set; } = true;
     public string Reminder60Message { get; set; } = "{name} will begin in 1 hour near {island}.";
     public string Reminder60Sound { get; set; } = string.Empty;
+    public Guid Reminder60CommonEventId { get; set; }
     public bool Reminder30Enabled { get; set; } = true;
     public string Reminder30Message { get; set; } = "{name} will begin in 30 minutes near {island}.";
     public string Reminder30Sound { get; set; } = string.Empty;
+    public Guid Reminder30CommonEventId { get; set; }
     public bool Reminder15Enabled { get; set; } = true;
     public string Reminder15Message { get; set; } = "{name} will begin in 15 minutes near {island}.";
     public string Reminder15Sound { get; set; } = string.Empty;
+    public Guid Reminder15CommonEventId { get; set; }
     public bool Reminder5Enabled { get; set; } = true;
     public string Reminder5Message { get; set; } = "{name} will begin in 5 minutes near {island}.";
     public string Reminder5Sound { get; set; } = string.Empty;
+    public Guid Reminder5CommonEventId { get; set; }
 
     public bool PreStartCinematicEnabled { get; set; }
     public Guid PreStartCinematicEventId { get; set; }
@@ -180,6 +184,15 @@ public sealed class InvasionDefinition
         Waves is { Length: > 0 and <= 128 } &&
         Waves.All(wave => wave is { IsStructurallyValid: true }) &&
         Waves.Select(wave => wave.Id).Distinct().Count() == Waves.Length;
+
+    public Guid GetReminderCommonEventId(int minutesBefore) => minutesBefore switch
+    {
+        60 => Reminder60CommonEventId,
+        30 => Reminder30CommonEventId,
+        15 => Reminder15CommonEventId,
+        5 => Reminder5CommonEventId,
+        _ => Guid.Empty,
+    };
 
     public int FirstReminderMinutes => Reminder60Enabled ? 60 : Reminder30Enabled ? 30 : Reminder15Enabled ? 15 : Reminder5Enabled ? 5 : 0;
 

@@ -49,6 +49,13 @@ internal static class InvasionConfigurationRuntime
                     return false;
             }
 
+            foreach (var minutes in new[] { 60, 30, 15, 5 })
+            {
+                var eventId = invasion.GetReminderCommonEventId(minutes);
+                if (eventId != Guid.Empty && EventDescriptor.Get(eventId) is not { CommonEvent: true })
+                    return false;
+            }
+
             foreach (var target in invasion.AdditionalTargets)
             {
                 if (MapController.Get(target.MapId) == null) return false;
@@ -72,7 +79,7 @@ internal static class InvasionConfigurationRuntime
     {
         var configuration = InvasionConfiguration.FromJson(json);
         if (!IsValid(configuration))
-            throw new InvalidDataException("Invasion configuration references missing maps or NPCs.");
+            throw new InvalidDataException("Invasion configuration references missing maps/NPCs or invalid events.");
 
         lock (Gate)
         {
