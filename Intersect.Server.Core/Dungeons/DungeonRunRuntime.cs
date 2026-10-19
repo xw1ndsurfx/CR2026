@@ -244,6 +244,8 @@ internal static class DungeonRunRuntime
             RunsByInstance[instanceId] = run;
         }
 
+        Intersect.Server.PartyLobbies.PartyLobbyRuntime.MarkDungeonStarted(run.Participants.Keys);
+
         // Register an attempt for every player actually inside this instance.
         foreach (var participant in GetParticipants(run))
             DungeonStatisticsRuntime.RecordAttempt(participant, run.Dungeon.Id);

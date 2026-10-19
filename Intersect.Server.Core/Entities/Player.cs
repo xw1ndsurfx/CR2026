@@ -5524,6 +5524,11 @@ public partial class Player : Entity
 
     public bool TryAddParty(Player target)
     {
+        lock (PartyMembershipLock) { return TryAddPartyCore(target); }
+    }
+
+    private bool TryAddPartyCore(Player target)
+    {
         //If a new party, make yourself the leader
         if (Party.Count == 0)
         {
@@ -5572,6 +5577,11 @@ public partial class Player : Entity
 
     public void KickParty(Guid target)
     {
+        lock (PartyMembershipLock) { KickPartyCore(target); }
+    }
+
+    private void KickPartyCore(Guid target)
+    {
         if (Party.Count > 0 && Party[0] == this)
         {
             if (target != Guid.Empty)
@@ -5618,6 +5628,11 @@ public partial class Player : Entity
     }
 
     public void LeaveParty()
+    {
+        lock (PartyMembershipLock) { LeavePartyCore(); }
+    }
+
+    private void LeavePartyCore()
     {
         if (Options.Instance.Instancing.KickPartyMembersOnKick && InstanceType == MapInstanceType.Shared)
         {

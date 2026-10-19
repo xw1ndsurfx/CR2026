@@ -5419,6 +5419,271 @@
       "en": "Alchemy",
       "fr": "Alchimie",
       "es": "Alquimia"
+    },
+    "Adventure lobbies": {
+      "en": "Adventure lobbies",
+      "fr": "Lobbies d’aventure",
+      "es": "Salas de aventura"
+    },
+    "All activities": {
+      "en": "All activities",
+      "fr": "Toutes les activités",
+      "es": "Todas las actividades"
+    },
+    "Dungeon": {
+      "en": "Dungeon",
+      "fr": "Donjon",
+      "es": "Mazmorra"
+    },
+    "Invasion": {
+      "en": "Invasion",
+      "fr": "Invasion",
+      "es": "Invasión"
+    },
+    "World Boss": {
+      "en": "World Boss",
+      "fr": "Boss mondial",
+      "es": "Jefe mundial"
+    },
+    "Lumberjack": {
+      "en": "Lumberjack",
+      "fr": "Bûcheronnage",
+      "es": "Tala de árboles"
+    },
+    "House Party": {
+      "en": "House Party",
+      "fr": "Fête à la maison",
+      "es": "Fiesta en casa"
+    },
+    "Looting": {
+      "en": "Looting",
+      "fr": "Chasse au butin",
+      "es": "Búsqueda de botín"
+    },
+    "Cooking": {
+      "en": "Cooking",
+      "fr": "Cuisine",
+      "es": "Cocina"
+    },
+    "Search host, lobby or dungeon": {
+      "en": "Search host, lobby or dungeon",
+      "fr": "Rechercher un hôte, un lobby ou un donjon",
+      "es": "Buscar anfitrión, sala o mazmorra"
+    },
+    "Create a lobby for your next adventure": {
+      "en": "Create a lobby for your next adventure",
+      "fr": "Créez un lobby pour votre prochaine aventure",
+      "es": "Crea una sala para tu próxima aventura"
+    },
+    "Optional lobby title": {
+      "en": "Optional lobby title",
+      "fr": "Titre du lobby (facultatif)",
+      "es": "Título de la sala (opcional)"
+    },
+    "Create lobby": {
+      "en": "Create lobby",
+      "fr": "Créer un lobby",
+      "es": "Crear sala"
+    },
+    "Close my lobby": {
+      "en": "Close my lobby",
+      "fr": "Fermer mon lobby",
+      "es": "Cerrar mi sala"
+    },
+    "{0} (Lv. {1}+)": {
+      "en": "{0} (Lv. {1}+)",
+      "fr": "{0} (Niv. {1}+)",
+      "es": "{0} (Niv. {1}+)"
+    },
+    "{0} lobbies - Find companions and use party chat": {
+      "en": "{0} lobbies - Find companions and use party chat",
+      "fr": "{0} lobbies - Trouvez des compagnons et utilisez le chat de groupe",
+      "es": "{0} salas - Encuentra compañeros y usa el chat de grupo"
+    },
+    "Meet host": {
+      "en": "Meet host",
+      "fr": "Rejoindre l’hôte",
+      "es": "Ir con el anfitrión"
+    },
+    "Join lobby": {
+      "en": "Join lobby",
+      "fr": "Rejoindre",
+      "es": "Unirse"
+    },
+    "Started - locked": {
+      "en": "Started - locked",
+      "fr": "Débuté - fermé",
+      "es": "Iniciada - cerrada"
+    },
+    "Full": {
+      "en": "Full",
+      "fr": "Complet",
+      "es": "Llena"
+    },
+    "Recruiting": {
+      "en": "Recruiting",
+      "fr": "Recrutement",
+      "es": "Buscando grupo"
+    },
+    "No matching lobbies. Create one to gather your party.": {
+      "en": "No matching lobbies. Create one to gather your party.",
+      "fr": "Aucun lobby correspondant. Créez-en un pour réunir votre groupe.",
+      "es": "No hay salas coincidentes. Crea una para reunir a tu grupo."
+    },
+    "Lobby request is not available.": {
+      "en": "Lobby request is not available.",
+      "fr": "Cette demande de lobby est indisponible.",
+      "es": "Esta solicitud de sala no está disponible."
+    },
+    "Please wait before another lobby request.": {
+      "en": "Please wait before another lobby request.",
+      "fr": "Veuillez patienter avant une autre demande.",
+      "es": "Espera antes de enviar otra solicitud."
+    },
+    "Lobby closed. Your party is unchanged.": {
+      "en": "Lobby closed. Your party is unchanged.",
+      "fr": "Lobby fermé. Votre groupe est conservé.",
+      "es": "Sala cerrada. Tu grupo se conserva."
+    },
+    "Only the host can close this lobby.": {
+      "en": "Only the host can close this lobby.",
+      "fr": "Seul l’hôte peut fermer ce lobby.",
+      "es": "Solo el anfitrión puede cerrar esta sala."
+    },
+    "Join this lobby before meeting its host.": {
+      "en": "Join this lobby before meeting its host.",
+      "fr": "Rejoignez ce lobby avant de rejoindre son hôte.",
+      "es": "Únete a esta sala antes de ir con su anfitrión."
+    },
+    "Only the party leader can create a lobby.": {
+      "en": "Only the party leader can create a lobby.",
+      "fr": "Seul le chef du groupe peut créer un lobby.",
+      "es": "Solo el líder del grupo puede crear una sala."
+    },
+    "You already belong to a lobby.": {
+      "en": "You already belong to a lobby.",
+      "fr": "Vous êtes déjà dans un lobby.",
+      "es": "Ya perteneces a una sala."
+    },
+    "The lobby directory is full. Try again later.": {
+      "en": "The lobby directory is full. Try again later.",
+      "fr": "La liste des lobbies est pleine. Réessayez plus tard.",
+      "es": "El directorio de salas está lleno. Inténtalo más tarde."
+    },
+    "A dungeon has already started. Lobby travel is locked.": {
+      "en": "A dungeon has already started. Lobby travel is locked.",
+      "fr": "Un donjon a déjà commencé. La téléportation du lobby est verrouillée.",
+      "es": "Una mazmorra ya ha comenzado. El viaje de la sala está bloqueado."
+    },
+    "Create your lobby in the open world or in your own house.": {
+      "en": "Create your lobby in the open world or in your own house.",
+      "fr": "Créez votre lobby dans le monde ouvert ou dans votre maison.",
+      "es": "Crea tu sala en el mundo abierto o en tu propia casa."
+    },
+    "Use a lobby title of at most 64 characters.": {
+      "en": "Use a lobby title of at most 64 characters.",
+      "fr": "Le titre du lobby doit contenir au plus 64 caractères.",
+      "es": "El título de la sala debe tener como máximo 64 caracteres."
+    },
+    "Choose an available dungeon.": {
+      "en": "Choose an available dungeon.",
+      "fr": "Choisissez un donjon disponible.",
+      "es": "Elige una mazmorra disponible."
+    },
+    "Open your house to the public before creating a House Party.": {
+      "en": "Open your house to the public before creating a House Party.",
+      "fr": "Ouvrez votre maison au public avant de créer une fête.",
+      "es": "Abre tu casa al público antes de crear una fiesta."
+    },
+    "Your party is too large for this lobby.": {
+      "en": "Your party is too large for this lobby.",
+      "fr": "Votre groupe est trop grand pour ce lobby.",
+      "es": "Tu grupo es demasiado grande para esta sala."
+    },
+    "Lobby created. Players can now find your party.": {
+      "en": "Lobby created. Players can now find your party.",
+      "fr": "Lobby créé. Les joueurs peuvent maintenant trouver votre groupe.",
+      "es": "Sala creada. Los jugadores ya pueden encontrar tu grupo."
+    },
+    "This lobby is no longer available.": {
+      "en": "This lobby is no longer available.",
+      "fr": "Ce lobby n’est plus disponible.",
+      "es": "Esta sala ya no está disponible."
+    },
+    "You already belong to this lobby.": {
+      "en": "You already belong to this lobby.",
+      "fr": "Vous êtes déjà dans ce lobby.",
+      "es": "Ya perteneces a esta sala."
+    },
+    "Leave your current party or close your lobby first.": {
+      "en": "Leave your current party or close your lobby first.",
+      "fr": "Quittez votre groupe actuel ou fermez d’abord votre lobby.",
+      "es": "Sal de tu grupo actual o cierra primero tu sala."
+    },
+    "Return to the open world before joining a lobby.": {
+      "en": "Return to the open world before joining a lobby.",
+      "fr": "Retournez dans le monde ouvert avant de rejoindre un lobby.",
+      "es": "Vuelve al mundo abierto antes de unirte a una sala."
+    },
+    "This lobby is full.": {
+      "en": "This lobby is full.",
+      "fr": "Ce lobby est complet.",
+      "es": "Esta sala está llena."
+    },
+    "This lobby is not available to you.": {
+      "en": "This lobby is not available to you.",
+      "fr": "Ce lobby ne vous est pas accessible.",
+      "es": "Esta sala no está disponible para ti."
+    },
+    "Your level does not meet this dungeon's requirements.": {
+      "en": "Your level does not meet this dungeon's requirements.",
+      "fr": "Votre niveau ne correspond pas aux critères de ce donjon.",
+      "es": "Tu nivel no cumple los requisitos de esta mazmorra."
+    },
+    "This dungeon requires Premium.": {
+      "en": "This dungeon requires Premium.",
+      "fr": "Ce donjon nécessite Premium.",
+      "es": "Esta mazmorra requiere Premium."
+    },
+    "You need the required quest before joining this dungeon lobby.": {
+      "en": "You need the required quest before joining this dungeon lobby.",
+      "fr": "Vous devez avoir la quête requise avant de rejoindre ce lobby de donjon.",
+      "es": "Necesitas la misión requerida antes de unirte a esta sala de mazmorra."
+    },
+    "You joined the lobby. Use party chat to plan your adventure.": {
+      "en": "You joined the lobby. Use party chat to plan your adventure.",
+      "fr": "Vous avez rejoint le lobby. Préparez votre aventure dans le chat de groupe.",
+      "es": "Te has unido a la sala. Usa el chat de grupo para planear tu aventura."
+    },
+    "The party could not be joined.": {
+      "en": "The party could not be joined.",
+      "fr": "Impossible de rejoindre le groupe.",
+      "es": "No se pudo entrar en el grupo."
+    },
+    "Finish combat, dialogue or your current activity before travelling.": {
+      "en": "Finish combat, dialogue or your current activity before travelling.",
+      "fr": "Terminez le combat, le dialogue ou votre activité avant de voyager.",
+      "es": "Termina el combate, el diálogo o tu actividad antes de viajar."
+    },
+    "Meet the host in the open world. Private instances and dungeon interiors cannot be joined by lobby teleport.": {
+      "en": "Meet the host in the open world. Private instances and dungeon interiors cannot be joined by lobby teleport.",
+      "fr": "Rejoignez l’hôte dans le monde ouvert. La téléportation du lobby ne permet pas d’entrer dans une instance privée ou un donjon.",
+      "es": "Reúnete con el anfitrión en el mundo abierto. El teletransporte de la sala no permite entrar en instancias privadas ni mazmorras."
+    },
+    "{0} (Lv. {1}-{2})": {
+      "en": "{0} (Lv. {1}-{2})",
+      "fr": "{0} (Niv. {1}-{2})",
+      "es": "{0} (Niv. {1}-{2})"
+    },
+    "Leave party": {
+      "en": "Leave party",
+      "fr": "Quitter le groupe",
+      "es": "Salir del grupo"
+    },
+    "You left the lobby and party.": {
+      "en": "You left the lobby and party.",
+      "fr": "Vous avez quitté le lobby et le groupe.",
+      "es": "Has salido de la sala y del grupo."
     }
   }
 }

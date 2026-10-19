@@ -206,6 +206,7 @@ internal static class HousingRuntime
         Evictions.TryRemove(player.Id, out _);
         // Keep the persisted return location for the next login.
     }
+    internal static bool IsInsideOwnHouse(Player player) => Visits.TryGetValue(player.Id, out var visit) && visit.Owner == player.Id && visit.Instance == player.MapInstanceId && visit.Map == player.MapId;
     internal static bool PublicHouse(Player player) => Configuration.Enabled && player.House.Public;
     internal static void BroadcastOwner(Player owner)
     {
