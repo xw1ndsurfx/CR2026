@@ -49,6 +49,7 @@ public static partial class PacketSender
 
     public static void SendMap(MapInstance map)
     {
+        EditorMapSaveTracker.Sent(map);
         Network.SendPacket(new MapUpdatePacket(map.Id, map.JsonData, map.GenerateTileData(), map.AttributeData));
 
         if (Globals.CurrentMap?.Id != map.Id)

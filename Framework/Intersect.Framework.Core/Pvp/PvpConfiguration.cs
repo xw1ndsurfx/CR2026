@@ -47,6 +47,8 @@ public sealed class PvpConfiguration
     public int MinimumMatchSeconds { get; set; } = 60;
     public int MaximumLevelDifference { get; set; } = 20;
     public bool BlockSameIp { get; set; } = true;
+    // Replace initialized defaults; populating them duplicates the ten grades on every round trip.
+    [Newtonsoft.Json.JsonProperty(ObjectCreationHandling = Newtonsoft.Json.ObjectCreationHandling.Replace)]
     public List<PvpGrade> Grades { get; set; } = new[] { ("Recruit", 0), ("Soldier", 100), ("Veteran", 250), ("Sergeant", 500), ("Lieutenant", 900), ("Captain", 1400), ("Commander", 2000), ("Warlord", 2800), ("Champion", 3800), ("Grand Marshal", 5000) }.Select(g => new PvpGrade { Name = g.Item1, Points = g.Item2 }).ToList();
     public List<CaptureChestArena> Arenas { get; set; } = [];
     public bool IsValid => Grades is { Count: 10 } && Grades.All(g => g != null && g.Name is { Length: > 0 and <= 64 } && g.Points is >= 0 and <= 10000000) && Grades[0].Points == 0 && Grades.Select(g => g.Points).SequenceEqual(Grades.Select(g => g.Points).Distinct().OrderBy(p => p)) && RankedMaps is { Length: <= 2048 } && RankedMaps.All(id => id != Guid.Empty) && RankedMaps.Distinct().Count() == RankedMaps.Length && KillPoints is >= 1 and <= 10000 && DeathPenalty is >= 0 and <= 10000 && MatchWinPoints is >= 1 and <= 10000 && MatchLossPenalty is >= 0 and <= 10000 && RepeatOpponentSeconds is >= 60 and <= 86400 && MinimumMatchSeconds is >= 30 and <= 3600 && MaximumLevelDifference is >= 0 and <= 10000 && Arenas is { Count: <= 100 } && Arenas.All(a => a is { IsValid: true }) && Arenas.Select(a => a.Id).Distinct().Count() == Arenas.Count;

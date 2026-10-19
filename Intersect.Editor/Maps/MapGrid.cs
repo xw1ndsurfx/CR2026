@@ -242,6 +242,7 @@ public partial class MapGrid
             }
         }
 
+        Intersect.Editor.Forms.FrmMain.TryCaptureBeforeExit();
         PacketSender.SendMap(Globals.CurrentMap);
     }
 

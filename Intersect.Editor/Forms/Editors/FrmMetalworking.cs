@@ -10,6 +10,7 @@ namespace Intersect.Editor.Forms.Editors;
 
 public sealed class FrmMetalworking : DarkForm
 {
+    internal Func<(SaveWorldActivitiesPacket? Packet, string? Error)> PrepareSave { get; }
     private sealed record Choice(Guid Id, string Name)
     {
         public override string ToString() => Name;
@@ -24,6 +25,7 @@ public sealed class FrmMetalworking : DarkForm
         StartPosition = FormStartPosition.CenterParent;
         var sidebar = new Panel { Dock = DockStyle.Left, Width = 250 };
         var kind = new ComboBox { Dock = DockStyle.Top, DropDownStyle = ComboBoxStyle.DropDownList, DataSource = Enum.GetValues<MetalworkKind>() };
+        kind.BindingContext = BindingContext;
         kind.SelectedItem = initial;
         var list = new ListBox { Dock = DockStyle.Fill, DisplayMember = "Name" };
         sidebar.Controls.Add(list);
@@ -40,15 +42,16 @@ public sealed class FrmMetalworking : DarkForm
         items.Insert(0, new Choice(Guid.Empty, "None"));
         ComboBox ItemCombo(List<Choice> values) => new()
         {
+            BindingContext = BindingContext,
             Dock = DockStyle.Fill,
             DropDownStyle = ComboBoxStyle.DropDownList,
             DataSource = values.ToList(),
             DisplayMember = "Name",
             ValueMember = "Id"
         };
-        var name = new TextBox { Dock = DockStyle.Fill };
-        var enabled = new CheckBox { Text = "Enabled", Dock = DockStyle.Fill };
-        var output = ItemCombo(items);
+        var name = new TextBox { Name = "RecipeName", Dock = DockStyle.Fill };
+        var enabled = new CheckBox { Name = "RecipeEnabled", Text = "Enabled", Dock = DockStyle.Fill };
+        var output = ItemCombo(items); output.Name = "RecipeOutput";
         var quantity = new NumericUpDown { Minimum = 1, Maximum = 100, Dock = DockStyle.Fill };
         var professions = ProfessionConfiguration.Instance.Professions.Select(p => new Choice(p.Id, p.Name)).OrderBy(p => p.Name).ToList();
         professions.Insert(0, new Choice(Guid.Empty, "No profession XP"));
@@ -85,10 +88,11 @@ public sealed class FrmMetalworking : DarkForm
         Field("Bellows sound", pump);
         Field("Pour / hammer / quench sound", strike);
         Field("Success sound", success);
-        var materials = new DataGridView { Dock = DockStyle.Fill, AutoGenerateColumns = false, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill };
+        var materials = new DataGridView { Name = "Materials", Dock = DockStyle.Fill, AutoGenerateColumns = false, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill };
         materials.Columns.Add(new DataGridViewComboBoxColumn { HeaderText = "Required item", DataPropertyName = "ItemId", DataSource = items.ToList(), DisplayMember = "Name", ValueMember = "Id" });
         materials.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Quantity", DataPropertyName = "Quantity", FillWeight = 30 });
-        materials.DataError += (_, e) => e.ThrowException = false;
+        materials.DataError += (_, e) => ActivityEditorValidation.ReportGridError(materials, e);
+        materials.CellValidated += (_, e) => materials.Rows[e.RowIndex].Cells[e.ColumnIndex].ErrorText = "";
         body.Controls.Add(fields, 0, 0);
         body.Controls.Add(materials, 1, 0);
         var help = new Label { Dock = DockStyle.Fill, Text = "Foundry: heat and three timed pours. Forge: heat, four timed hammer strikes, then quench. Materials are consumed only after a successful result and a saved inventory transaction. Level 1 recipes can teach the selected profession. Use ores as inputs for ingots, then ingots as inputs for weapons.", AutoSize = false };
@@ -133,8 +137,21 @@ public sealed class FrmMetalworking : DarkForm
         add.Click += (_, _) => { Store(); current = null; var recipe = new MetalworkRecipe { Kind = (MetalworkKind)kind.SelectedItem!, ProfessionId = professions.FirstOrDefault(p => p.Name.Contains("smith", StringComparison.OrdinalIgnoreCase) || p.Name.Contains("forgeron", StringComparison.OrdinalIgnoreCase))?.Id ?? Guid.Empty }; recipes.Add(recipe); Refresh(); list.SelectedItem = recipe; };
         var delete = new Button { Text = "Delete recipe", Width = 150 };
         delete.Click += (_, _) => { if (current != null) recipes.Remove(current); current = null; Refresh(); };
-        var save = new Button { Text = "Save recipes", Width = 180 };
-        save.Click += (_, _) => { Store(); if (!draft.Metalworking.IsValid) { MessageBox.Show(this, "Enabled recipes need valid materials, output and quantities. Maximum 8 distinct materials per recipe."); return; } Intersect.Editor.Networking.Network.SendPacket(new SaveWorldActivitiesPacket { Section = WorldActivitiesSection.Metalworking, Json = JsonConvert.SerializeObject(draft) }); Close(); };
+        var save = new Button { Name = "SaveRecipes", Text = "Save recipes", Width = 180 };
+        PrepareSave = () =>
+        {
+            if (!ActivityEditorValidation.CommitGrid(materials)) return (null, Intersect.Editor.Localization.EditorSafetyText.Get("Correct the highlighted table cell before saving."));
+            Store();
+            var error = ActivityEditorValidation.Metalworking(draft.Metalworking);
+            return error != null ? (null, error) : (new SaveWorldActivitiesPacket { Section = WorldActivitiesSection.Metalworking, Json = JsonConvert.SerializeObject(draft) }, null);
+        };
+        var saveSession = new ActivitySaveSession(this);
+        save.Click += (_, _) =>
+        {
+            var result = PrepareSave();
+            if (result.Error != null) { MessageBox.Show(this, result.Error); return; }
+            saveSession.Send(result.Packet!);
+        };
         buttons.Controls.AddRange([add, delete, save]);
         Controls.Add(body);
         Controls.Add(sidebar);

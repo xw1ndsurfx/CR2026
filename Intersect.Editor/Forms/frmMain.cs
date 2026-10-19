@@ -139,6 +139,7 @@ public partial class FrmMain : Form
         AddWorldEventsEditorMenu();
         AddSystemEditorMenu();
         AddWorldMapEditorMenu();
+        InitializeSaveProtection();
         Show();
 
         //Init Forms with RenderTargets
@@ -970,6 +971,7 @@ public partial class FrmMain : Form
             return;
         }
 
+        TryCaptureBeforeExit();
         Globals.CurrentMap = MapInstance.Get(mapId);
         Globals.LoadingMap = mapId;
         if (Globals.CurrentMap == null)
@@ -1469,6 +1471,7 @@ public partial class FrmMain : Form
     {
         if (!Globals.ClosingEditor)
         {
+            TryCaptureBeforeExit();
             Globals.ClosingEditor = true;
 
             //Offer to export map
@@ -1532,6 +1535,7 @@ public partial class FrmMain : Form
             }
         }
 
+        TryCaptureBeforeExit();
         PacketSender.SendMap(Globals.CurrentMap);
     }
 
@@ -2249,25 +2253,32 @@ public partial class FrmMain : Form
 
     private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
     {
-        if (!Globals.ClosingEditor &&
-            Globals.CurrentMap != null &&
-            Globals.CurrentMap.Changed() &&
-            DarkMessageBox.ShowWarning(
-                Strings.Mapping.maphaschangesdialog,
-                Strings.Mapping.mapnotsaved,
-                DarkDialogButton.YesNo,
-                Icon
-            ) ==
-            DialogResult.No)
+        var recovered = TryCaptureBeforeExit();
+        if (!Globals.ClosingEditor && Globals.CurrentMap?.Changed() == true)
         {
-            e.Cancel = true;
-
-            return;
+            if (_closeAfterSave.HasValue) { e.Cancel = true; return; }
+            var choice = MessageBox.Show(this,
+                EditorSafetyText.Get("Save changes to this map before closing? Yes saves to the server, No keeps only a local recovery copy, Cancel returns to editing."),
+                EditorSafetyText.Get("Save protection"), MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
+            if (choice == DialogResult.Cancel) { e.Cancel = true; return; }
+            if (choice == DialogResult.No && !recovered)
+            {
+                e.Cancel = true;
+                MessageBox.Show(this, _saveStatus.Text, EditorSafetyText.Get("Save protection"));
+                return;
+            }
+            if (choice == DialogResult.Yes)
+            {
+                e.Cancel = true;
+                _closeAfterSave = Globals.CurrentMap.Id;
+                _closeDeadline = DateTime.UtcNow.AddSeconds(15);
+                _saveStatus.Text = EditorSafetyText.Get("Waiting for the server to confirm the save...");
+                SaveMap();
+                return;
+            }
         }
-
         Globals.ClosingEditor = true;
     }
-
     private void toolStripBtnFlipVertical_Click(object sender, EventArgs e)
     {
         Globals.MapEditorWindow.FlipVertical();

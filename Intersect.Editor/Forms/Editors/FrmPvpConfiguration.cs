@@ -10,6 +10,7 @@ namespace Intersect.Editor.Forms.Editors;
 
 public sealed class FrmPvpConfiguration : DarkForm
 {
+    internal Func<(SaveWorldActivitiesPacket? Packet, string? Error)> PrepareSave { get; }
     private sealed record Choice(Guid Id, string Name);
     public FrmPvpConfiguration(string json)
     {
@@ -52,7 +53,8 @@ public sealed class FrmPvpConfiguration : DarkForm
         DataGridView Grid(TabPage tab, object source)
         {
             var g = new DataGridView { Dock = DockStyle.Fill, AutoGenerateColumns = false, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells, DataSource = source };
-            g.DataError += (_, e) => e.ThrowException = false;
+            g.DataError += (_, e) => ActivityEditorValidation.ReportGridError(g, e);
+            g.CellValidated += (_, e) => g.Rows[e.RowIndex].Cells[e.ColumnIndex].ErrorText = "";
             tab.Controls.Add(g);
             return g;
         }
@@ -76,22 +78,22 @@ public sealed class FrmPvpConfiguration : DarkForm
         icons.Insert(0, new Choice(Guid.Empty, "Text chest marker"));
         arenas.Columns.Add(new DataGridViewComboBoxColumn { HeaderText = "Chest icon item", DataPropertyName = "ChestItemId", DataSource = icons, DisplayMember = "Name", ValueMember = "Id" });
         var save = new Button { Dock = DockStyle.Bottom, Height = 40, Text = "Save PvP configuration" };
-        save.Click += (_, _) =>
+        PrepareSave = () =>
         {
-            grades.EndEdit();
-            arenas.EndEdit();
-            BindingContext[grades.DataSource].EndCurrentEdit();
-            BindingContext[arenas.DataSource].EndCurrentEdit();
+            if (!ActivityEditorValidation.CommitGrid(grades) || !ActivityEditorValidation.CommitGrid(arenas))
+                return (null, Intersect.Editor.Localization.EditorSafetyText.Get("Correct the highlighted table cell before saving."));
             config.Enabled = enabled.Checked;
             config.BlockSameIp = ip.Checked;
             config.RankedMaps = maps.CheckedItems.Cast<Choice>().Select(m => m.Id).ToArray();
-            if (!config.IsValid)
-            {
-                MessageBox.Show(this, "Keep exactly 10 grades with increasing thresholds starting at zero. Check arena bases, team sizes and time limits.");
-                return;
-            }
-            Intersect.Editor.Networking.Network.SendPacket(new SaveWorldActivitiesPacket { Section = WorldActivitiesSection.Pvp, Json = JsonConvert.SerializeObject(draft) });
-            Close();
+            var error = ActivityEditorValidation.Pvp(config);
+            return error != null ? (null, error) : (new SaveWorldActivitiesPacket { Section = WorldActivitiesSection.Pvp, Json = JsonConvert.SerializeObject(draft) }, null);
+        };
+        var saveSession = new ActivitySaveSession(this);
+        save.Click += (_, _) =>
+        {
+            var result = PrepareSave();
+            if (result.Error != null) { MessageBox.Show(this, result.Error); return; }
+            saveSession.Send(result.Packet!);
         };
         Controls.Add(tabs);
         Controls.Add(save);
