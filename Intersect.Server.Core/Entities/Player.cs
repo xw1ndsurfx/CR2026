@@ -481,6 +481,7 @@ public partial class Player : Entity
         }
 
         Guild?.NotifyPlayerDisposed(this);
+        Intersect.Server.Naval.NavalSystem.Release(this);
 
         base.Dispose();
     }
@@ -495,6 +496,7 @@ public partial class Player : Entity
 
     public void TryLogout(bool force = false, bool softLogout = false, TaskCompletionSource? logoutCompletionSource = null)
     {
+        Intersect.Server.Naval.NavalSystem.Release(this);
         LastOnline = DateTime.Now;
         Client = default;
 
@@ -854,6 +856,7 @@ public partial class Player : Entity
                 if (!HasPendingDeath) base.Update(timeMs);
                 Intersect.Server.Housing.HousingRuntime.Update(this);
                 UpdateActivePet(timeMs);
+                Intersect.Server.Naval.NavalSystem.Update(this, timeMs);
 
                 if (mAutorunCommonEventTimer < Timing.Global.Milliseconds)
                 {
@@ -1216,6 +1219,7 @@ public partial class Player : Entity
 
     public override void Die(bool dropItems = true, Entity killer = null)
     {
+        Intersect.Server.Naval.NavalSystem.Release(this);
         if (IsDead || HasPendingDeath) return;
         if(Intersect.Server.Pvp.PvpRuntime.HandleDeath(this,killer))return;
         var dungeonDeath = DungeonRunRuntime.IsPlayerInActiveRun(this);
@@ -2328,6 +2332,7 @@ public partial class Player : Entity
         bool fromLogin = false,
         bool forceInstanceChange = false)
     {
+        if (!NavalWarpInProgress) Intersect.Server.Naval.NavalSystem.Release(this);
         #region shortcircuit exits
         // First, deny the warp entirely if we CAN'T, for some reason, warp to the requested instance type. ONly do this if we're not forcing a change
         if (!forceInstanceChange && !CanChangeToInstanceType(mapInstanceType, fromLogin, newMapId))
@@ -7718,6 +7723,7 @@ public partial class Player : Entity
     {
         lock (EntityLock)
         {
+            if (CaptainedShipId != Guid.Empty) return;
             var oldMap = MapId;
             base.Move(moveDir, forPlayer, dontUpdate, correction);
 
