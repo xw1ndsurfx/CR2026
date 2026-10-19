@@ -121,7 +121,7 @@ public sealed class SqliteMiniGameProgressStore : IMiniGameProgressStore
             using var transaction = connection.BeginTransaction();
             var progress = Read(connection, transaction, character, game);
             var before = progress.Experience;
-            var percent = _experienceEvents ? Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.BonusAt(DateTimeOffset.Now) : 0;
+            var percent = _experienceEvents ? Intersect.Server.Entities.Player.FindOnline(character)?.ActivityExperienceBonus ?? Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.BonusAt(DateTimeOffset.Now) : 0;
             var bonus = Intersect.Framework.Core.WorldEvents.WorldActivitiesConfiguration.AwardBonus(experience, percent);
             using var receipt = Command(connection, transaction, character, game, """
                 INSERT INTO MiniGameWinReceipts(CharacterId,GameKey,TableId,HandId)

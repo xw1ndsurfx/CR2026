@@ -44,6 +44,7 @@ internal static class Program
         SoundImportTests.Run();
         ActivitiesEditorTests.Run();
         CombatPvpMetalworkEditorTests.Run();
+        BoosterEditorTests.Run();
         CharacterWeaponPaperdollTests.Run();
         EventToolsTests.Run();
         InvasionEditorTests.Run();

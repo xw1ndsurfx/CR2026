@@ -64,4 +64,6 @@ public sealed class NpcExperienceGainBreakdown
 
     [Key(8)] public long EventBonusExperience { get; set; }
     [Key(9)] public int EventBonusPercent { get; set; }
+    [Key(10)] public long PotionBonusExperience {get;set;}
+    [Key(11)] public int PotionBonusPercent {get;set;}
 }

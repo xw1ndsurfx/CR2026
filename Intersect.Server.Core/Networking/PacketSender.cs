@@ -110,6 +110,8 @@ public static partial class PacketSender
 
             player.LoginWarp();
             client.Send(Intersect.Server.WorldEvents.WorldActivitiesRuntime.Snapshot(DateTimeOffset.Now, silent: true));
+            client.Send(Intersect.Server.WorldEvents.WorldActivitiesRuntime.LootSnapshot(DateTimeOffset.Now,silent:true));
+            player.SendExperienceBoostStatus();
             client.Send(new Intersect.Network.Packets.WorldEvents.WorldActivitiesPacket { Json = Newtonsoft.Json.JsonConvert.SerializeObject(Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current) });
 
             SendEntityDataTo(client.Entity, player);

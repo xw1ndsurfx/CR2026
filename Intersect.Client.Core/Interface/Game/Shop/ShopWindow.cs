@@ -347,7 +347,7 @@ public partial class ShopWindow : Window
         if (shop.BuyingWhitelist)
         {
             if (configured == null) return false;
-            amount = configured.CostItemQuantity;
+            amount = shop.BuybackPrice(configured.CostItemQuantity);
             currencyName = ItemDescriptor.GetName(configured.CostItemId);
             return true;
         }
@@ -356,7 +356,7 @@ public partial class ShopWindow : Window
         if (configured != null) return false;
         if (!ItemDescriptor.TryGet(shop.DefaultCurrencyId, out var defaultCurrency)) return false;
 
-        amount = item.Price;
+        amount = shop.BuybackPrice(item.Price);
         currencyName = defaultCurrency.Name;
         return true;
     }

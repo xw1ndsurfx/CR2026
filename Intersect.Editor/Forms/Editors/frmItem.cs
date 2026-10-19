@@ -272,6 +272,8 @@ public partial class FrmItem : EditorForm
 
     private void btnSave_Click(object sender, EventArgs e)
     {
+        if(mChanged.Any(item=>item.ItemType==ItemType.Consumable && item.Consumable.Type==ConsumableType.ExperienceBoost && (item.Consumable.Value is <1 or >604800 || item.Consumable.Percentage is <1 or >1000)))
+        {MessageBox.Show(this,"EXP boost potions require 1-604800 seconds and a bonus of 1-1000%.");return;}
         //Send Changed items
         foreach (var item in mChanged)
         {
@@ -495,6 +497,7 @@ public partial class FrmItem : EditorForm
         }
 
         cmbConsume.Items.Add(Strings.Combat.exp);
+        cmbConsume.Items.Add("EXP boost potion");
 
         grpRequirements.Text = Strings.ItemEditor.requirementsgroup;
         lblCannotUse.Text = Strings.ItemEditor.cannotuse;
@@ -808,6 +811,12 @@ public partial class FrmItem : EditorForm
     private void cmbConsume_SelectedIndexChanged(object sender, EventArgs e)
     {
         mEditorItem.Consumable.Type = (ConsumableType)cmbConsume.SelectedIndex;
+        var boost=mEditorItem.Consumable.Type==ConsumableType.ExperienceBoost;
+        lblVital.Text="Consumable effect:";
+        lblPlus3.Text=boost?"/":"+";
+        lblInterval.Text=boost?"Seconds / EXP bonus (%)":"Interval:";
+        nudInterval.Maximum=boost?604800:Math.Max(10000,nudInterval.Value);
+        nudIntervalPercentage.Maximum=boost?1000:Math.Max(100,nudIntervalPercentage.Value);
     }
 
     private void cmbPaperdoll_SelectedIndexChanged(object sender, EventArgs e)

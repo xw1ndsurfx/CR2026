@@ -12,7 +12,6 @@ namespace Intersect.Editor.Forms.Editors;
 
 public partial class FrmItem
 {
-    private const string GeneratedSummaryMarker = "[Item Auto Creator]";
     private const string AutoLevelListName = "Auto Creator - Minimum Level";
     private readonly record struct GeneratedItemPreview(
         int Price, int Damage, int Crit, int AttackSpeedMs,
@@ -117,7 +116,7 @@ public partial class FrmItem
         var autoStats = Option("Generate combat / stats / vital bonuses", 271, true);
         var autoRegen = Option("Generate regen, shield defense and attack speed", 301, true);
         var autoPrice = Option("Generate price using level and rarity", 331, true);
-        var autoDescription = Option("Write level, rarity, stats and value in description", 361, true);
+        var autoDescription = Option("Write an object-specific flavor description (replaces existing text)", 361, true);
         var applyLevel = Option("Set a real minimum-level usage requirement", 391, true);
         var replaceRequirements = Option(
             "Replace existing usage requirements (otherwise preserve)", 421, false);
@@ -352,7 +351,7 @@ public partial class FrmItem
                     Set(nudAttackSpeedValue, p.AttackSpeedMs);
                 }
             }
-            if (autoStats.Checked && itemType == ItemType.Consumable)
+            if (autoStats.Checked && itemType == ItemType.Consumable && mEditorItem.Consumable.Type!=ConsumableType.ExperienceBoost)
             {
                 // Health by default; users can change to Mana or other types.
                 cmbConsume.SelectedIndex = (int)ConsumableType.Health;
@@ -394,30 +393,7 @@ public partial class FrmItem
             }
 
             if (autoDescription.Checked)
-            {
-                var old = txtDesc.Text ?? "";
-                var markerIndex = old.IndexOf(GeneratedSummaryMarker,
-                    StringComparison.Ordinal);
-                if (markerIndex >= 0)
-                    old = old[..markerIndex].TrimEnd();
-                var levelInfo = realRequirement
-                    ? $"Requires level {(int)level.Value}"
-                    : "Custom usage requirements preserved";
-                var summary = $"{GeneratedSummaryMarker}\n" +
-                    $"Rarity: {rarity.Text} | Recommended level: {(int)level.Value}\n" +
-                    $"{levelInfo}\n" +
-                    $"Value: {p.Price:N0} Aurons\n" +
-                    (itemType == ItemType.Equipment
-                        ? $"Damage: {p.Damage} | Bonus stats: +{p.MainStat}/+{p.SecondaryStat}" +
-                          $" | HP: +{p.Hp} | MP: +{p.Mana}"
-                        : itemType == ItemType.Consumable
-                            ? $"Effect: +{p.ConsumableValue} HP"
-                            : itemType == ItemType.Bag
-                                ? $"Bag capacity: {p.BagSlots} slots"
-                                : $"Type: {itemType}");
-                txtDesc.Text = string.IsNullOrWhiteSpace(old) ? summary
-                    : old.TrimEnd() + "\n\n" + summary;
-            }
+                txtDesc.Text=ItemFlavorDescription.Build(mEditorItem.Name,itemType,mEditorItem.Consumable?.Type ?? ConsumableType.Health);
 
             UpdateEditor();
             MessageBox.Show(this,

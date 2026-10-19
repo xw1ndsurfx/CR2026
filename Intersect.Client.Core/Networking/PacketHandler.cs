@@ -1592,7 +1592,7 @@ internal sealed partial class PacketHandler
         if (gain.PartyBonusPercent == 0 && gain.EquipmentBonusPercent == 0 &&
             gain.TitleBonusPercent == 0 && gain.PartyBonusExperience == 0 &&
             gain.EquipmentBonusExperience == 0 && gain.TitleBonusExperience == 0 &&
-            gain.EventBonusPercent == 0 && gain.EventBonusExperience == 0)
+            gain.EventBonusPercent == 0 && gain.EventBonusExperience == 0 && gain.PotionBonusPercent==0)
         {
             lines.Add(($"+{gain.TotalExperience:N0} EXP", totalColor));
             return lines;
@@ -1607,6 +1607,8 @@ internal sealed partial class PacketHandler
             lines.Add(($"TITLE +{gain.TitleBonusPercent}%  {Signed(gain.TitleBonusExperience)}", bonusColor));
         if (gain.EventBonusPercent > 0)
             lines.Add((Intersect.Client.Localization.ClientLanguages.Format("EVENT +{0}%  +{1} EXP", gain.EventBonusPercent, gain.EventBonusExperience.ToString("N0")), bonusColor));
+        if(gain.PotionBonusPercent>0)
+            lines.Add((Intersect.Client.Localization.ClientLanguages.Format("POTION +{0}%  +{1} EXP",gain.PotionBonusPercent,gain.PotionBonusExperience.ToString("N0")),bonusColor));
         lines.Add(($"TOTAL +{gain.TotalExperience:N0} EXP", totalColor));
         return lines;
     }

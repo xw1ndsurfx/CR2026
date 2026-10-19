@@ -6034,6 +6034,121 @@
       "en": "Finish your current activity before opening the foundry or forge.",
       "fr": "Terminez votre activité avant d’ouvrir la fonderie ou la forge.",
       "es": "Termina tu actividad antes de abrir la fundición o la forja."
+    },
+    "A carefully balanced blade, forged for steady hands and decisive strikes.": {
+      "en": "A carefully balanced blade, forged for steady hands and decisive strikes.",
+      "fr": "Une lame soigneusement équilibrée, forgée pour les mains sûres et les frappes décisives.",
+      "es": "Una hoja cuidadosamente equilibrada, forjada para manos firmes y golpes decisivos."
+    },
+    "A sturdy axe with a keen edge, ready for hard work or a hard-fought battle.": {
+      "en": "A sturdy axe with a keen edge, ready for hard work or a hard-fought battle.",
+      "fr": "Une hache robuste au tranchant affûté, prête pour le travail exigeant comme pour les batailles acharnées.",
+      "es": "Un hacha resistente y afilada, lista para el trabajo duro o una batalla reñida."
+    },
+    "A finely strung bow, crafted for patient hunters and watchful adventurers.": {
+      "en": "A finely strung bow, crafted for patient hunters and watchful adventurers.",
+      "fr": "Un arc finement tendu, conçu pour les chasseurs patients et les aventuriers vigilants.",
+      "es": "Un arco de cuerda fina, creado para cazadores pacientes y aventureros atentos."
+    },
+    "An enchanted focus that hums softly when magic stirs nearby.": {
+      "en": "An enchanted focus that hums softly when magic stirs nearby.",
+      "fr": "Un catalyseur enchanté qui vibre doucement lorsque la magie s’éveille à proximité.",
+      "es": "Un foco encantado que zumba suavemente cuando la magia despierta cerca."
+    },
+    "A dependable shield, made to stand between its bearer and danger.": {
+      "en": "A dependable shield, made to stand between its bearer and danger.",
+      "fr": "Un bouclier fiable, conçu pour se dresser entre son porteur et le danger.",
+      "es": "Un escudo fiable, hecho para interponerse entre su portador y el peligro."
+    },
+    "Well-made boots, ready to carry their wearer along unfamiliar paths.": {
+      "en": "Well-made boots, ready to carry their wearer along unfamiliar paths.",
+      "fr": "Des bottes bien confectionnées, prêtes à accompagner leur porteur sur des chemins inconnus.",
+      "es": "Unas botas bien hechas, listas para llevar a su dueño por caminos desconocidos."
+    },
+    "A carefully fitted helm, bearing the marks of a patient craftsperson.": {
+      "en": "A carefully fitted helm, bearing the marks of a patient craftsperson.",
+      "fr": "Un casque soigneusement ajusté, portant la marque d’un artisan patient.",
+      "es": "Un yelmo cuidadosamente ajustado que lleva la huella de un artesano paciente."
+    },
+    "A finely worked ornament, carrying a quiet air of distinction.": {
+      "en": "A finely worked ornament, carrying a quiet air of distinction.",
+      "fr": "Un ornement finement ouvragé, empreint d’une discrète élégance.",
+      "es": "Un adorno finamente trabajado que transmite una elegancia discreta."
+    },
+    "Dependable equipment, carefully made to accompany an adventurer through the trials ahead.": {
+      "en": "Dependable equipment, carefully made to accompany an adventurer through the trials ahead.",
+      "fr": "Un équipement fiable, confectionné avec soin pour accompagner un aventurier dans les épreuves à venir.",
+      "es": "Un equipo fiable, elaborado con esmero para acompañar a un aventurero en los desafíos venideros."
+    },
+    "A refreshing draught, carefully prepared to restore a weary adventurer.": {
+      "en": "A refreshing draught, carefully prepared to restore a weary adventurer.",
+      "fr": "Un breuvage revigorant, préparé avec soin pour restaurer un aventurier épuisé.",
+      "es": "Un brebaje reconfortante, preparado con cuidado para restaurar a un aventurero fatigado."
+    },
+    "A shimmering draught that clears the mind and kindles a thirst for discovery.": {
+      "en": "A shimmering draught that clears the mind and kindles a thirst for discovery.",
+      "fr": "Un breuvage scintillant qui éclaircit l’esprit et éveille la soif de découverte.",
+      "es": "Un brebaje brillante que despeja la mente y despierta la sed de descubrimiento."
+    },
+    "A practical bag with sturdy stitching, made to keep an adventurer’s belongings close at hand.": {
+      "en": "A practical bag with sturdy stitching, made to keep an adventurer’s belongings close at hand.",
+      "fr": "Un sac pratique aux coutures solides, conçu pour garder les affaires d’un aventurier à portée de main.",
+      "es": "Una bolsa práctica de costuras resistentes, hecha para mantener a mano las pertenencias de un aventurero."
+    },
+    "A valued token of exchange, passed between merchants and adventurers across the kingdom.": {
+      "en": "A valued token of exchange, passed between merchants and adventurers across the kingdom.",
+      "fr": "Une précieuse monnaie d’échange, qui circule entre marchands et aventuriers à travers le royaume.",
+      "es": "Una valiosa moneda de cambio que circula entre mercaderes y aventureros de todo el reino."
+    },
+    "A curious find, worth keeping close for the adventures still to come.": {
+      "en": "A curious find, worth keeping close for the adventures still to come.",
+      "fr": "Une trouvaille intrigante, à conserver pour les aventures à venir.",
+      "es": "Un hallazgo curioso que merece guardarse para las aventuras venideras."
+    },
+    "EXP boost": {
+      "en": "EXP boost",
+      "fr": "Bonus d’EXP",
+      "es": "Bonificación de EXP"
+    },
+    "+{0}% EXP for {1} minutes": {
+      "en": "+{0}% EXP for {1} minutes",
+      "fr": "+{0}% d’EXP pendant {1} minutes",
+      "es": "+{0}% de EXP durante {1} minutos"
+    },
+    "This EXP potion cannot replace a stronger or fully extended boost.": {
+      "en": "This EXP potion cannot replace a stronger or fully extended boost.",
+      "fr": "Cette potion d’EXP ne peut pas remplacer un bonus plus puissant ou prolongé au maximum.",
+      "es": "Esta poción de EXP no puede sustituir una bonificación más fuerte o prolongada al máximo."
+    },
+    "EXP potion +{0}% - Remaining: {1}": {
+      "en": "EXP potion +{0}% - Remaining: {1}",
+      "fr": "Potion d’EXP +{0}% - Temps restant : {1}",
+      "es": "Poción de EXP +{0}% - Tiempo restante: {1}"
+    },
+    "Loot event +{0}% - Remaining: {1}": {
+      "en": "Loot event +{0}% - Remaining: {1}",
+      "fr": "Événement de butin +{0}% - Temps restant : {1}",
+      "es": "Evento de botín +{0}% - Tiempo restante: {1}"
+    },
+    "Loot event: {0} (+{1}% drop chance)": {
+      "en": "Loot event: {0} (+{1}% drop chance)",
+      "fr": "Événement de butin : {0} (+{1}% de chances de butin)",
+      "es": "Evento de botín: {0} (+{1}% de probabilidad de botín)"
+    },
+    "The loot event has ended.": {
+      "en": "The loot event has ended.",
+      "fr": "L’événement de butin est terminé.",
+      "es": "El evento de botín ha terminado."
+    },
+    "POTION +{0}%  +{1} EXP": {
+      "en": "POTION +{0}%  +{1} EXP",
+      "fr": "POTION +{0}%  +{1} EXP",
+      "es": "POCIÓN +{0}%  +{1} EXP"
+    },
+    "{0}: +{1} EXP (bonus +{2}%: +{3})": {
+      "en": "{0}: +{1} EXP (bonus +{2}%: +{3})",
+      "fr": "{0} : +{1} EXP (bonus +{2}% : +{3})",
+      "es": "{0}: +{1} EXP (bonificación +{2}%: +{3})"
     }
   }
 }

@@ -280,7 +280,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
 
         // Add the actual description.
         var description = AddDescription();
-        description.AddText(Strings.ItemDescription.Description.ToString(_itemDescriptor.Description), Color.White);
+        description.AddText(Strings.ItemDescription.Description.ToString(Intersect.Client.Localization.ClientLanguages.Text(Intersect.Client.Localization.ClientLanguages.ContentText(_itemDescriptor.Description))), Color.White);
     }
 
     protected void SetupEquipmentInfo()
@@ -504,7 +504,11 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         // Consumable data.
         if (_itemDescriptor.Consumable != null)
         {
-            if (_itemDescriptor.Consumable.Value > 0 && _itemDescriptor.Consumable.Percentage > 0)
+            if(_itemDescriptor.Consumable.Type==Intersect.Framework.Core.GameObjects.Items.ConsumableType.ExperienceBoost)
+            {
+                rows.AddKeyValueRow(Intersect.Client.Localization.ClientLanguages.Text("EXP boost"),Intersect.Client.Localization.ClientLanguages.Format("+{0}% EXP for {1} minutes",_itemDescriptor.Consumable.Percentage,(_itemDescriptor.Consumable.Value/60d).ToString("0.##")));
+            }
+            else if (_itemDescriptor.Consumable.Value > 0 && _itemDescriptor.Consumable.Percentage > 0)
             {
                 rows.AddKeyValueRow(Strings.ItemDescription.ConsumableTypes[(int)_itemDescriptor.Consumable.Type], Strings.ItemDescription.RegularAndPercentage.ToString(_itemDescriptor.Consumable.Value, _itemDescriptor.Consumable.Percentage));
             }

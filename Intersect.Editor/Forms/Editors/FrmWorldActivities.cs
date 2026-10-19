@@ -12,8 +12,9 @@ public sealed class FrmWorldActivities : DarkForm
     {
         var draft = JsonConvert.DeserializeObject<WorldActivitiesConfiguration>(json) ?? new();
         if (section == WorldActivitiesSection.All) section = WorldActivitiesSection.Experience;
-        Text = section switch { WorldActivitiesSection.Experience => "Experience Events", WorldActivitiesSection.CombatMusic => "Combat Music", _ => "Bank Settings" }; Size = new Size(1100, 650); MinimumSize = new Size(900, 540); StartPosition = FormStartPosition.CenterParent;
-        var top = new FlowLayoutPanel { Dock = DockStyle.Top, Height = section == WorldActivitiesSection.Experience ? 74 : 162, Padding = new Padding(12), AutoScroll = true };
+        var scheduled=section is WorldActivitiesSection.Experience or WorldActivitiesSection.Loot;
+        Text = section switch { WorldActivitiesSection.Experience => "Experience Events", WorldActivitiesSection.Loot=>"Loot Booster Events", WorldActivitiesSection.CombatMusic => "Combat Music", _ => "Bank Settings" }; Size = new Size(1100, 650); MinimumSize = new Size(900, 540); StartPosition = FormStartPosition.CenterParent;
+        var top = new FlowLayoutPanel { Dock = DockStyle.Top, Height = scheduled ? 74 : 162, Padding = new Padding(12), AutoScroll = true };
         var music = new ComboBox { Width = 300, DropDownStyle = ComboBoxStyle.DropDownList };
         music.Items.Add("");
         if (Directory.Exists("resources/music")) foreach (var file in Directory.GetFiles("resources/music").Select(Path.GetFileName).OfType<string>().OrderBy(n => n)) music.Items.Add(file);
@@ -37,14 +38,15 @@ public sealed class FrmWorldActivities : DarkForm
         top.SetFlowBreak(currency, true);
         top.Controls.Add(new Label { AutoSize = true, MaximumSize = new Size(1040, 0), Text = section switch
         {
-            WorldActivitiesSection.Experience => "Schedules use server-local time and repeat on the selected days. Until times earlier than From continue the next day; equal times mean 24 hours. Overlaps use the highest bonus. Character XP only.",
+            WorldActivitiesSection.Experience => "Schedules use server-local time and repeat on the selected days. Until times earlier than From continue the next day; equal times mean 24 hours. Overlaps use the highest bonus. Character, profession and mini-game XP.",
+            WorldActivitiesSection.Loot => "Schedules use server-local time. Overlaps use the strongest bonus. +50% turns a 20% drop chance into 30%, capped at 100%. Applies to NPC loot and harvested resources; item quantities, shops and PvP death drops are unchanged.",
             WorldActivitiesSection.CombatMusic => "Combat music continues across map changes and nearby fights. The grace period bridges short pauses. Invasion music has priority.",
             _ => "Requirements apply when opening an account. Premium adds a storage tab, automatic sorting and a golden appearance; expired Premium storage remains withdrawable."
         } });
         var grid = new DataGridView { Dock = DockStyle.Fill, AutoGenerateColumns = false, AllowUserToAddRows = true, AllowUserToDeleteRows = true, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill };
         grid.Columns.Add(new DataGridViewCheckBoxColumn { DataPropertyName = "Enabled", HeaderText = "Enabled" });
-        foreach (var pair in new[] { ("Name", "Event"), ("Days", "Days mask"), ("StartHour", "From hour"), ("StartMinute", "From minute"), ("EndHour", "Until hour"), ("EndMinute", "Until minute"), ("BonusPercent", "Extra XP (%)") }) grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = pair.Item1, HeaderText = pair.Item2 });
-        grid.DataSource = new BindingList<ExperienceEventDefinition>(draft.ExperienceEvents);
+        foreach (var pair in new[] { ("Name", "Event"), ("Days", "Days mask"), ("StartHour", "From hour"), ("StartMinute", "From minute"), ("EndHour", "Until hour"), ("EndMinute", "Until minute"), ("BonusPercent", "Extra XP (%)") }) grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = pair.Item1, HeaderText = pair.Item1=="BonusPercent" && section==WorldActivitiesSection.Loot ? "Extra loot chance (%)" : pair.Item2 });
+        grid.DataSource = new BindingList<ExperienceEventDefinition>(section==WorldActivitiesSection.Loot?draft.LootEvents:draft.ExperienceEvents);
         var daysPanel = new Panel { Dock = DockStyle.Right, Width = 155, Padding = new Padding(8) };
         var dayTitle = new Label { Text = "Selected event: days", Dock = DockStyle.Top, Height = 30 };
         var days = new CheckedListBox { Dock = DockStyle.Fill, CheckOnClick = true };
@@ -65,6 +67,6 @@ public sealed class FrmWorldActivities : DarkForm
         var bottom = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 48, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(8) };
         var cancel = new Button { Text = "Cancel", Width = 110 }; cancel.Click += (_, _) => Close();
         var save = new Button { Text = "Save", Width = 110 }; save.Click += (_, _) => { grid.EndEdit(); BindingContext[grid.DataSource].EndCurrentEdit(); draft.BankRequiredLevel = (int)bankLevel.Value; draft.BankOpeningCost = (int)bankCost.Value; draft.BankOpeningCurrencyId = (currency.SelectedItem as Intersect.Framework.Core.GameObjects.Items.ItemDescriptor)?.Id ?? Guid.Empty; draft.CombatMusic = music.SelectedItem?.ToString() ?? ""; draft.CombatMusicGraceSeconds = (int)grace.Value; if (!draft.IsValid) { MessageBox.Show(this, "Check event names, schedules, durations and percentages."); return; } Intersect.Editor.Networking.Network.SendPacket(new SaveWorldActivitiesPacket { Json = JsonConvert.SerializeObject(draft), Section = section }); Close(); };
-        bottom.Controls.AddRange([cancel, save]); if (section == WorldActivitiesSection.Experience) { Controls.Add(grid); Controls.Add(daysPanel); } Controls.Add(top); Controls.Add(bottom); MiniGameEditorTheme.Apply(this);
+        bottom.Controls.AddRange([cancel, save]); if (scheduled) { Controls.Add(grid); Controls.Add(daysPanel); } Controls.Add(top); Controls.Add(bottom); MiniGameEditorTheme.Apply(this);
     }
 }

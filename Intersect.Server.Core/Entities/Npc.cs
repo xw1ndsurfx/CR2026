@@ -260,7 +260,8 @@ public partial class Npc : Entity
     protected override bool ShouldDropItem(Entity killer, ItemDescriptor itemDescriptor, Item item, float dropRateModifier, out Guid lootOwner)
     {
         lootOwner = (killer as Player)?.Id ?? (killer as Npc)?.PetOwner?.Id ?? Id;
-        return base.ShouldDropItem(killer, itemDescriptor, item, dropRateModifier, out _);
+        var bonus=Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.LootBonusAt(DateTimeOffset.Now);
+        return base.ShouldDropItem(killer, itemDescriptor, item, dropRateModifier*(1+bonus/100f), out _);
     }
 
     public bool TargetHasStealth(Entity target)
