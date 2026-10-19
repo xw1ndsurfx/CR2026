@@ -88,7 +88,7 @@ internal static class NavalWorld
             var currentMap = Globals.Me?.MapInstance;
             if (currentMap == null || row != (int)Math.Floor((y - currentMap.Y) / th) + Options.Instance.Map.MapHeight * 2) continue;
             var s = view.Current;
-            var texture = Globals.ContentManager.GetTexture(TextureType.Entity, s.Graphics);
+            var texture = Globals.ContentManager?.GetTexture(TextureType.Entity, s.Graphics);
             if (texture != null && s.Frames > 0 && texture.Width % s.Frames == 0 && texture.Height % 8 == 0)
             {
                 var w = texture.Width / s.Frames; var h = texture.Height / 8;

@@ -1,7 +1,7 @@
 using MessagePack;
 namespace Intersect.Network.Packets.Server;
 
-[MessagePackObject]
+[MessagePackObject(AllowPrivate = true)]
 public partial class NavalSnapshotPacket : IntersectPacket
 {
     [Key(0)] public ShipSnapshot[] Ships { get; set; } = [];
