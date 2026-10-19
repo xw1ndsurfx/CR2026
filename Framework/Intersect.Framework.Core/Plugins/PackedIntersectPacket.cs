@@ -18,6 +18,9 @@ public partial class PackedIntersectPacket
 
     public static readonly Dictionary<ushort, Type> KnownKeys = new();
 
+    [IgnoreMember]
+    public static byte[] CurrentProtocolFingerprint { get; private set; } = [];
+
     private static IEnumerable<Type> FindTypes(IEnumerable<string> nameSpaces) => nameSpaces.SelectMany(FindTypes);
 
     private static IEnumerable<Type> FindTypes(string nameSpace) =>
@@ -37,6 +40,7 @@ public partial class PackedIntersectPacket
 
             key++;
         }
+        CurrentProtocolFingerprint = PacketProtocolFingerprint.Compute(KnownKeys);
     }
 
     [Key(0)]
@@ -45,6 +49,9 @@ public partial class PackedIntersectPacket
 
     [Key(1)]
     public byte[] Data { get; set; }
+
+    [Key(2)]
+    public byte[] ProtocolFingerprint { get; set; } = [];
 
     [IgnoreMember]
     public Type PacketType => KnownKeys[Key];
@@ -62,5 +69,6 @@ public partial class PackedIntersectPacket
         }
 
         Key = key;
+        ProtocolFingerprint = CurrentProtocolFingerprint;
     }
 }

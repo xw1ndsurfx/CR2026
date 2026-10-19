@@ -1,0 +1,37 @@
+name: Server network stability
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Framework/Intersect.Framework.Core/Network/**'
+      - 'Framework/Intersect.Framework.Core/Plugins/PackedIntersectPacket.cs'
+      - 'Intersect.Network/**'
+      - 'Intersect.Server.Core/Core/**'
+      - 'Intersect.Tests.Server/**'
+      - '.github/workflows/server-network-stability.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: server-network-stability-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  network-stability:
+    name: network-stability-${{ matrix.os }}-${{ matrix.configuration }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        configuration: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: '8.0.x'
+      - name: Server, transport, protocol and crash diagnostics tests
+        run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c ${{ matrix.configuration }} --nologo

@@ -66,11 +66,13 @@ public sealed class AesAlgorithm : SymmetricAlgorithm
         _keyHandle.Dispose();
     }
 
-    public override bool SetKey(ReadOnlySpan<byte> key) => key.TryCopyTo(_key.Span);
+    public override bool SetKey(ReadOnlySpan<byte> key) => key.Length == _key.Length && key.TryCopyTo(_key.Span);
 
     public override EncryptionResult TryDecrypt(ReadOnlySpan<byte> cipherdata, out ReadOnlySpan<byte> plaindata)
     {
         plaindata = default;
+
+        if (cipherdata.Length < HeaderSize) return EncryptionResult.NoHeader;
 
         try
         {
@@ -86,15 +88,24 @@ public sealed class AesAlgorithm : SymmetricAlgorithm
             aes.Key = _key.ToArray();
 
             var plaindataLength = BinaryPrimitives.ReadInt32LittleEndian(cipherdata);
+            if (plaindataLength < 1) return EncryptionResult.EmptyInput;
             cipherdata = cipherdata[sizeof(int)..];
 
             var nonceLength = cipherdata[0];
             cipherdata = cipherdata[1..];
 
+            if (!LegalBlockSizes.Any(size => IsValidSize(size, nonceLength))) return EncryptionResult.InvalidNonce;
+            if (cipherdata.Length < nonceLength) return EncryptionResult.SizeMismatch;
+
             var nonce = cipherdata[..nonceLength];
             cipherdata = cipherdata[nonceLength..];
 
             aes.IV = nonce.ToArray();
+
+            var blockLength = aes.BlockSize / 8;
+            if (cipherdata.Length == 0 || cipherdata.Length % blockLength != 0 ||
+                plaindataLength >= cipherdata.Length || plaindataLength < cipherdata.Length - blockLength)
+                return EncryptionResult.SizeMismatch;
 
             var cryptoTransform = aes.CreateDecryptor(aes.Key, aes.IV);
 
@@ -102,6 +113,7 @@ public sealed class AesAlgorithm : SymmetricAlgorithm
             using CryptoStream cryptoStream = new(memoryStream, cryptoTransform, CryptoStreamMode.Read);
             var plaindataBuffer = new byte[plaindataLength];
             cryptoStream.ReadExactly(plaindataBuffer);
+            if (cryptoStream.ReadByte() != -1) return EncryptionResult.SizeMismatch;
             plaindata = plaindataBuffer;
 
 #if DIAGNOSTIC
@@ -117,8 +129,13 @@ public sealed class AesAlgorithm : SymmetricAlgorithm
         }
     }
 
-    public override EncryptionResult TryDecrypt(ReadOnlySpan<byte> cipherdata, int offset, int length, out ReadOnlySpan<byte> plaindata) =>
-        TryDecrypt(cipherdata[offset..(offset + length)], out plaindata);
+    public override EncryptionResult TryDecrypt(ReadOnlySpan<byte> cipherdata, int offset, int length, out ReadOnlySpan<byte> plaindata)
+    {
+        plaindata = default;
+        if ((uint)offset > (uint)cipherdata.Length || (uint)length > (uint)(cipherdata.Length - offset))
+            return EncryptionResult.SizeMismatch;
+        return TryDecrypt(cipherdata.Slice(offset, length), out plaindata);
+    }
 
     public override EncryptionResult TryEncrypt(ReadOnlySpan<byte> plaindata, out ReadOnlySpan<byte> cipherdata)
     {
@@ -173,6 +190,11 @@ public sealed class AesAlgorithm : SymmetricAlgorithm
     }
 #endif
 
-    public override EncryptionResult TryEncrypt(ReadOnlySpan<byte> plaindata, int offset, int length, out ReadOnlySpan<byte> cipherdata) =>
-        TryEncrypt(plaindata[offset..(offset + length)], out cipherdata);
+    public override EncryptionResult TryEncrypt(ReadOnlySpan<byte> plaindata, int offset, int length, out ReadOnlySpan<byte> cipherdata)
+    {
+        cipherdata = default;
+        if ((uint)offset > (uint)plaindata.Length || (uint)length > (uint)(plaindata.Length - offset))
+            return EncryptionResult.SizeMismatch;
+        return TryEncrypt(plaindata.Slice(offset, length), out cipherdata);
+    }
 }
