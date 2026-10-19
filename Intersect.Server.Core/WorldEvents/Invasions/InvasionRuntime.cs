@@ -443,6 +443,7 @@ internal static class InvasionRuntime
             StartTime = scheduledStart.ToString("HH:mm")
         };
         foreach (var player in Player.OnlinePlayers) player?.SendPacket(alert);
+        RunReminderCommonEvent(definition, minutesBefore);
 
         if (string.IsNullOrWhiteSpace(sound))
             return;
@@ -452,6 +453,22 @@ internal static class InvasionRuntime
             if (player != null)
                 PacketSender.SendPlaySound(player, sound.Trim());
         }
+    }
+
+    private static void RunReminderCommonEvent(InvasionDefinition definition, int minutesBefore)
+    {
+        var eventId = definition.GetReminderCommonEventId(minutesBefore);
+        if (eventId == Guid.Empty) return;
+        if (EventDescriptor.Get(eventId) is not { CommonEvent: true } commonEvent)
+        {
+            ApplicationContext.Context.Value?.Logger.LogWarning(
+                "Invasion {InvasionName} skipped missing or non-common event {EventId} for its {MinutesBefore}-minute alert.",
+                definition.Name, eventId, minutesBefore);
+            return;
+        }
+        foreach (var player in Player.OnlinePlayers)
+            if (player is { IsDisposed: false })
+                player.EnqueueStartCommonEvent(commonEvent, CommonEventTrigger.None);
     }
 
     private static void Start(InvasionDefinition definition, long nowMs)

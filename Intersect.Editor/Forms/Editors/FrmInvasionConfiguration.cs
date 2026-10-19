@@ -59,15 +59,19 @@ public sealed class FrmInvasionConfiguration : DarkForm
     private readonly EditorSoundPicker _defeatSecond = new();
     private readonly TextBox _reminder60Message = new() { Width = 430 };
     private readonly ComboBox _reminder60Sound = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
+    private readonly ComboBox _reminder60CommonEvent = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 430 };
     private readonly CheckBox _reminder30Enabled = new() { Text = "Enabled", AutoSize = true };
     private readonly TextBox _reminder30Message = new() { Width = 430 };
     private readonly ComboBox _reminder30Sound = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
+    private readonly ComboBox _reminder30CommonEvent = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 430 };
     private readonly CheckBox _reminder15Enabled = new() { Text = "Enabled", AutoSize = true };
     private readonly TextBox _reminder15Message = new() { Width = 430 };
     private readonly ComboBox _reminder15Sound = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
+    private readonly ComboBox _reminder15CommonEvent = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 430 };
     private readonly CheckBox _reminder5Enabled = new() { Text = "Enabled", AutoSize = true };
     private readonly TextBox _reminder5Message = new() { Width = 430 };
     private readonly ComboBox _reminder5Sound = new() { DropDownStyle = ComboBoxStyle.DropDown, Width = 330 };
+    private readonly ComboBox _reminder5CommonEvent = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 430 };
 
     private readonly CheckBox _preStartCinematicEnabled = new()
     {
@@ -200,6 +204,13 @@ public sealed class FrmInvasionConfiguration : DarkForm
             _preStartCinematicEvent.Items.Add(new Choice(pair.Key, pair.Value));
 
         _preStartCinematicEvent.SelectedIndex = 0;
+        foreach (var combo in new[] { _reminder60CommonEvent, _reminder30CommonEvent, _reminder15CommonEvent, _reminder5CommonEvent })
+        {
+            combo.Items.Add(new Choice(Guid.Empty, "None"));
+            foreach (var pair in EventDescriptor.ItemPairs.Where(pair => EventDescriptor.Get(pair.Key)?.CommonEvent == true).OrderBy(pair => pair.Value))
+                combo.Items.Add(new Choice(pair.Key, pair.Value));
+            combo.SelectedIndex = 0;
+        }
     }
 
     private void FillTargetEvents(Guid mapId, Guid selectedEventId)
@@ -429,10 +440,10 @@ public sealed class FrmInvasionConfiguration : DarkForm
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180));
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-        AddReminderEditor(table, "1 hour before", _reminder60Enabled, _reminder60Message, _reminder60Sound);
-        AddReminderEditor(table, "30 minutes before", _reminder30Enabled, _reminder30Message, _reminder30Sound);
-        AddReminderEditor(table, "15 minutes before", _reminder15Enabled, _reminder15Message, _reminder15Sound);
-        AddReminderEditor(table, "5 minutes before", _reminder5Enabled, _reminder5Message, _reminder5Sound);
+        AddReminderEditor(table, "1 hour before", _reminder60Enabled, _reminder60Message, _reminder60Sound, _reminder60CommonEvent);
+        AddReminderEditor(table, "30 minutes before", _reminder30Enabled, _reminder30Message, _reminder30Sound, _reminder30CommonEvent);
+        AddReminderEditor(table, "15 minutes before", _reminder15Enabled, _reminder15Message, _reminder15Sound, _reminder15CommonEvent);
+        AddReminderEditor(table, "5 minutes before", _reminder5Enabled, _reminder5Message, _reminder5Sound, _reminder5CommonEvent);
         AddRow(table, "Defeat message", _defeatMessage);
         AddRow(table, "Defeat sound 1", _defeatFirst);
         AddRow(table, "Defeat sound 2 (after 1)", _defeatSecond);
@@ -444,6 +455,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
             Text =
                 "Each enabled warning is broadcast to every connected player exactly once before the scheduled invasion. " +
                 "The optional sound is played as a normal game sound, so it can be a recorded narrator voice placed in resources/sounds. " +
+                "Each optional Common Event runs once for every connected player when its alert starts. " +
                 "Message placeholders: {name}, {island}, {target}, {minutes}, {remaining}, {time}.",
         };
         AddRow(table, "Behavior", help);
@@ -457,7 +469,8 @@ public sealed class FrmInvasionConfiguration : DarkForm
         string label,
         CheckBox enabled,
         TextBox message,
-        ComboBox sound
+        ComboBox sound,
+        ComboBox commonEvent
     )
     {
         var panel = new FlowLayoutPanel
@@ -488,6 +501,10 @@ public sealed class FrmInvasionConfiguration : DarkForm
         });
         soundRow.Controls.Add(sound);
         panel.Controls.Add(soundRow);
+        var eventRow = new FlowLayoutPanel { AutoSize = true };
+        eventRow.Controls.Add(new Label { Text = "Common Event (optional)", AutoSize = true, Padding = new Padding(0, 5, 0, 0) });
+        eventRow.Controls.Add(commonEvent);
+        panel.Controls.Add(eventRow);
 
         AddRow(table, label, panel);
     }
@@ -711,15 +728,19 @@ public sealed class FrmInvasionConfiguration : DarkForm
         _reminder60Enabled.Checked = invasion.Reminder60Enabled;
         _reminder60Message.Text = invasion.Reminder60Message ?? string.Empty;
         _reminder60Sound.Text = invasion.Reminder60Sound ?? string.Empty;
+        SelectReminderEvent(_reminder60CommonEvent, invasion.Reminder60CommonEventId);
         _reminder30Enabled.Checked = invasion.Reminder30Enabled;
         _reminder30Message.Text = invasion.Reminder30Message ?? string.Empty;
         _reminder30Sound.Text = invasion.Reminder30Sound ?? string.Empty;
+        SelectReminderEvent(_reminder30CommonEvent, invasion.Reminder30CommonEventId);
         _reminder15Enabled.Checked = invasion.Reminder15Enabled;
         _reminder15Message.Text = invasion.Reminder15Message ?? string.Empty;
         _reminder15Sound.Text = invasion.Reminder15Sound ?? string.Empty;
+        SelectReminderEvent(_reminder15CommonEvent, invasion.Reminder15CommonEventId);
         _reminder5Enabled.Checked = invasion.Reminder5Enabled;
         _reminder5Message.Text = invasion.Reminder5Message ?? string.Empty;
         _reminder5Sound.Text = invasion.Reminder5Sound ?? string.Empty;
+        SelectReminderEvent(_reminder5CommonEvent, invasion.Reminder5CommonEventId);
 
         _preStartCinematicEnabled.Checked = invasion.PreStartCinematicEnabled;
         SelectChoice(_preStartCinematicEvent, invasion.PreStartCinematicEventId);
@@ -808,15 +829,19 @@ public sealed class FrmInvasionConfiguration : DarkForm
         invasion.Reminder60Enabled = _reminder60Enabled.Checked;
         invasion.Reminder60Message = _reminder60Message.Text?.Trim() ?? string.Empty;
         invasion.Reminder60Sound = _reminder60Sound.Text?.Trim() ?? string.Empty;
+        invasion.Reminder60CommonEventId = (_reminder60CommonEvent.SelectedItem as Choice)?.Id ?? Guid.Empty;
         invasion.Reminder30Enabled = _reminder30Enabled.Checked;
         invasion.Reminder30Message = _reminder30Message.Text?.Trim() ?? string.Empty;
         invasion.Reminder30Sound = _reminder30Sound.Text?.Trim() ?? string.Empty;
+        invasion.Reminder30CommonEventId = (_reminder30CommonEvent.SelectedItem as Choice)?.Id ?? Guid.Empty;
         invasion.Reminder15Enabled = _reminder15Enabled.Checked;
         invasion.Reminder15Message = _reminder15Message.Text?.Trim() ?? string.Empty;
         invasion.Reminder15Sound = _reminder15Sound.Text?.Trim() ?? string.Empty;
+        invasion.Reminder15CommonEventId = (_reminder15CommonEvent.SelectedItem as Choice)?.Id ?? Guid.Empty;
         invasion.Reminder5Enabled = _reminder5Enabled.Checked;
         invasion.Reminder5Message = _reminder5Message.Text?.Trim() ?? string.Empty;
         invasion.Reminder5Sound = _reminder5Sound.Text?.Trim() ?? string.Empty;
+        invasion.Reminder5CommonEventId = (_reminder5CommonEvent.SelectedItem as Choice)?.Id ?? Guid.Empty;
 
         invasion.PreStartCinematicEnabled = _preStartCinematicEnabled.Checked;
         invasion.PreStartCinematicEventId =
@@ -1047,6 +1072,14 @@ public sealed class FrmInvasionConfiguration : DarkForm
 
         if (combo.Items.Count > 0)
             combo.SelectedIndex = 0;
+    }
+
+    private static void SelectReminderEvent(ComboBox combo, Guid id)
+    {
+        // Preserve a saved reference if the common-event list has not arrived yet.
+        if (id != Guid.Empty && !combo.Items.Cast<Choice>().Any(choice => choice.Id == id))
+            combo.Items.Add(new Choice(id, $"Configured Common Event ({id})"));
+        SelectChoice(combo, id);
     }
 
     private static void SelectChoice(ComboBox combo, Guid id)
