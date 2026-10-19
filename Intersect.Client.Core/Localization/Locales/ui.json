@@ -5319,6 +5319,46 @@
       "en": "No reward",
       "fr": "Aucune récompense",
       "es": "Sin recompensa"
+    },
+    "Defense Objective": {
+      "en": "Defense Objective",
+      "fr": "Objectif à défendre",
+      "es": "Objetivo que defender"
+    },
+    "Royal alert": {
+      "en": "Royal alert",
+      "fr": "Alerte royale",
+      "es": "Alerta real"
+    },
+    "ROYAL ALERT - {0}": {
+      "en": "ROYAL ALERT - {0}",
+      "fr": "ALERTE ROYALE - {0}",
+      "es": "ALERTA REAL - {0}"
+    },
+    "1 hour": {
+      "en": "1 hour",
+      "fr": "1 heure",
+      "es": "1 hora"
+    },
+    "{0} minutes": {
+      "en": "{0} minutes",
+      "fr": "{0} minutes",
+      "es": "{0} minutos"
+    },
+    "{name} will begin in {remaining} near {island}.": {
+      "en": "{name} will begin in {remaining} near {island}.",
+      "fr": "{name} débutera dans {remaining} près de {island}.",
+      "es": "{name} comenzará en {remaining} cerca de {island}."
+    },
+    "Defense targets: {0}/{1} | {2:N0} / {3:N0} HP": {
+      "en": "Defense targets: {0}/{1} | {2:N0} / {3:N0} HP",
+      "fr": "Objectifs : {0}/{1} | {2:N0} / {3:N0} PV",
+      "es": "Objetivos: {0}/{1} | {2:N0} / {3:N0} PV"
+    },
+    "{0}: {1:N0} / {2:N0} HP": {
+      "en": "{0}: {1:N0} / {2:N0} HP",
+      "fr": "{0} : {1:N0} / {2:N0} PV",
+      "es": "{0}: {1:N0} / {2:N0} PV"
     }
   }
 }

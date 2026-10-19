@@ -5,6 +5,12 @@ namespace Intersect.Client.Interface.Game;
 
 public partial class GameInterface
 {
+    private InvasionAlertWindow? _invasionAlertWindow;
+    public void ShowInvasionAlert(InvasionAlertPacket packet)
+    {
+        _invasionAlertWindow ??= new InvasionAlertWindow(GameCanvas);
+        _invasionAlertWindow.Apply(packet);
+    }
     private InvasionStatusWindow? _invasionStatusWindow;
     private InvasionResultWindow? _invasionResultWindow;
     private bool _targetBoxMovedForInvasion;
@@ -13,6 +19,7 @@ public partial class GameInterface
 
     public void UpdateInvasionStatus(InvasionStatusPacket packet)
     {
+        if (packet.Prelude) return;
         _invasionStatusWindow ??= new InvasionStatusWindow(GameCanvas);
         _invasionStatusWindow.Apply(packet);
 

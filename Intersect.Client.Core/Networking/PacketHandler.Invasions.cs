@@ -11,6 +11,11 @@ internal sealed partial class PacketHandler
         if (Intersect.Client.Interface.Interface.HasInGameUI) Intersect.Client.Interface.Interface.GameUi.PlaySoundSequence(packet);
     }
 
+    public void HandlePacket(IPacketSender sender, InvasionAlertPacket packet)
+    {
+        Intersect.Client.Interface.Interface.EnqueueInGame(ui => ui.ShowInvasionAlert(packet));
+    }
+
     public void HandlePacket(IPacketSender packetSender, InvasionStatusPacket packet)
     {
         InvasionEnvironmentManager.ApplyStatus(packet);

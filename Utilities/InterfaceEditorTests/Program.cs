@@ -44,6 +44,7 @@ internal static class Program
         SoundImportTests.Run();
         ActivitiesEditorTests.Run();
         EventToolsTests.Run();
+        InvasionEditorTests.Run();
         MiniGameEditorTests.Run();
         HousingPickerTests.Run();
         using (var housing = new Intersect.Editor.Forms.Editors.FrmHousingConfiguration("{}"))

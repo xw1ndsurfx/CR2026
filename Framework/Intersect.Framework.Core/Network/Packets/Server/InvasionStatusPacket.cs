@@ -29,4 +29,18 @@ public partial class InvasionStatusPacket : IntersectPacket
     [Key(18)] public int FogXSpeed { get; set; } = 3;
     [Key(19)] public int FogYSpeed { get; set; } = -3;
     [Key(20)] public bool EnvironmentOutdoorsOnly { get; set; } = true;
+    [Key(21)] public bool Prelude { get; set; }
+    [Key(22)] public InvasionTargetStatus[] Targets { get; set; } = [];
+}
+
+[MessagePackObject]
+public sealed class InvasionTargetStatus
+{
+    [Key(0)] public Guid Id { get; set; }
+    [Key(1)] public string Name { get; set; } = "";
+    [Key(2)] public Guid MapId { get; set; }
+    [Key(3)] public int X { get; set; }
+    [Key(4)] public int Y { get; set; }
+    [Key(5)] public int Health { get; set; }
+    [Key(6)] public int MaxHealth { get; set; }
 }

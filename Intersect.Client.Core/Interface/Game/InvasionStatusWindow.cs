@@ -17,6 +17,8 @@ internal sealed class InvasionStatusWindow : Base
     private readonly Label _title;
     private readonly Label _wave;
     private readonly Label _objective;
+    private readonly ScrollControl _targets;
+    private readonly RichLabel _targetText;
     private InvasionStatusPacket? _state;
     private bool _reminderMode;
     private long _reminderHideAt;
@@ -57,6 +59,10 @@ internal sealed class InvasionStatusWindow : Base
         };
         _objective.SetBounds(12, 84, 416, 20);
 
+        _targets = new ScrollControl(this, "InvasionTargets") { ShouldDrawBackground = false };
+        _targets.SetBounds(12, 112, 416, 116);
+        _targetText = EventPanelText.CreateBody(_targets, "InvasionTargetDetails", 10);
+        _targets.Hide();
         _disclosure = new HudDisclosure(this, _title, "InvasionHudCollapsed");
         Hide();
     }
@@ -64,6 +70,7 @@ internal sealed class InvasionStatusWindow : Base
     public void Update()
     {
         IsHidden = (!_reminderMode && _state?.Active != true) || Globals.Database?.ShowInvasionHud == false || Interface.InGameUiOrNull?.SuppressStatusHuds == true;
+        _targets.IsHidden = _reminderMode || (_state?.Targets?.Length ?? 0) <= 1 || _disclosure.Collapsed;
         PositionAtTop();
         if (!_reminderMode || _reminderHideAt <= 0 || Timing.Global.Milliseconds <= _reminderHideAt)
             return;
@@ -76,6 +83,8 @@ internal sealed class InvasionStatusWindow : Base
     public void ShowReminder(string announcementText, long displayTime)
     {
         _state = null;
+        _targets.Hide();
+        _disclosure.Resize(118);
         _reminderMode = true;
         _reminderHideAt = Timing.Global.Milliseconds + Math.Max(1_000L, displayTime);
 
@@ -114,6 +123,15 @@ internal sealed class InvasionStatusWindow : Base
             : ClientLanguages.Format("Wave {0}/{1}", state.Wave, state.WaveCount) +
               (string.IsNullOrWhiteSpace(state.Message) ? string.Empty : " - " + ClientLanguages.ContentText(state.Message));
         _objective.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"Defense target: {state.ObjectiveHealth:N0} / {state.ObjectiveMaxHealth:N0} HP");
+        var targets = state.Targets ?? [];
+        _disclosure.Resize(targets.Length > 1 ? 242 : 118);
+        _targets.IsHidden = targets.Length <= 1 || _disclosure.Collapsed;
+        if (targets.Length > 1)
+        {
+            _objective.Text = ClientLanguages.Format("Defense targets: {0}/{1} | {2:N0} / {3:N0} HP", targets.Count(t => t.Health > 0), targets.Length, state.ObjectiveHealth, state.ObjectiveMaxHealth);
+            EventPanelText.SetBody(_targets, _targetText, string.Join("\n", targets.Select(t => ClientLanguages.Format("{0}: {1:N0} / {2:N0} HP", t.Name == "Defense Objective" ? ClientLanguages.Text("Defense Objective") : ClientLanguages.ContentText(t.Name), t.Health, t.MaxHealth))));
+        }
+
 
         EventPanelText.Fit(_title, _title.Text, 12);
         EventPanelText.Fit(_wave, _wave.Text, 10);

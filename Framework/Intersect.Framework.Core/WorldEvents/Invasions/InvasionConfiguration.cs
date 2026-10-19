@@ -51,6 +51,18 @@ public sealed class InvasionWaveDefinition
         Spawns.All(spawn => spawn is { IsStructurallyValid: true });
 }
 
+public sealed class InvasionTargetDefinition
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Name { get; set; } = "";
+    public Guid MapId { get; set; }
+    public Guid EventId { get; set; }
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Health { get; set; } = 2500;
+    public bool IsStructurallyValid => Id != Guid.Empty && Name is { Length: <= 96 } && MapId != Guid.Empty && X is >= 0 and <= 255 && Y is >= 0 and <= 255 && Health is >= 1 and <= 1000000000;
+}
+
 public sealed class InvasionDefinition
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -65,8 +77,11 @@ public sealed class InvasionDefinition
     public int TargetX { get; set; }
     public int TargetY { get; set; }
     public int TargetHealth { get; set; } = 2_500;
+    public InvasionTargetDefinition[] AdditionalTargets { get; set; } = [];
+    public bool DefeatOnAnyTargetDestroyed { get; set; }
     public int ObjectiveHitIntervalMs { get; set; } = 1_000;
 
+    public int EnvironmentLeadSeconds { get; set; }
     public string InvasionMusic { get; set; } = string.Empty;
     public int NightBrightness { get; set; } = 20;
     public int OverlayAlpha { get; set; } = 120;
@@ -127,7 +142,10 @@ public sealed class InvasionDefinition
         TargetX is >= 0 and <= 255 &&
         TargetY is >= 0 and <= 255 &&
         TargetHealth is >= 1 and <= 1_000_000_000 &&
+        AdditionalTargets is { Length: <= 31 } && AdditionalTargets.All(t => t is { IsStructurallyValid: true } && t.Id != Id) &&
+        AdditionalTargets.Select(t => t.Id).Distinct().Count() == AdditionalTargets.Length &&
         ObjectiveHitIntervalMs is >= 250 and <= 60_000 &&
+        EnvironmentLeadSeconds is >= 0 and <= 3600 &&
         NightBrightness is >= 0 and <= 100 &&
         OverlayAlpha is >= 0 and <= 255 &&
         OverlayRed is >= 0 and <= 255 &&
@@ -147,13 +165,13 @@ public sealed class InvasionDefinition
         ParticipationMaximumRewardPercent is >= 1 and <= 500 &&
         ParticipationMinimumRewardPercent <= ParticipationMaximumRewardPercent &&
         HealingContributionPercent is >= 0 and <= 500 &&
-        Reminder60Message.Length <= 512 &&
+        Reminder60Message.Length <= 16384 &&
         Reminder60Sound.Length <= 260 &&
-        Reminder30Message.Length <= 512 &&
+        Reminder30Message.Length <= 16384 &&
         Reminder30Sound.Length <= 260 &&
-        Reminder15Message.Length <= 512 &&
+        Reminder15Message.Length <= 16384 &&
         Reminder15Sound.Length <= 260 &&
-        Reminder5Message.Length <= 512 &&
+        Reminder5Message.Length <= 16384 &&
         Reminder5Sound.Length <= 260 &&
         PreStartCinematicLeadSeconds is >= 1 and <= 300 &&
         (!PreStartCinematicEnabled || PreStartCinematicEventId != Guid.Empty) &&
@@ -162,6 +180,23 @@ public sealed class InvasionDefinition
         Waves is { Length: > 0 and <= 128 } &&
         Waves.All(wave => wave is { IsStructurallyValid: true }) &&
         Waves.Select(wave => wave.Id).Distinct().Count() == Waves.Length;
+
+    public int FirstReminderMinutes => Reminder60Enabled ? 60 : Reminder30Enabled ? 30 : Reminder15Enabled ? 15 : Reminder5Enabled ? 5 : 0;
+
+    public bool TryGetPreludeOccurrence(DateTimeOffset now, out DateTimeOffset start)
+    {
+        start = default;
+        if (!Enabled) return false;
+        for (var offset = 0; offset <= 1; offset++)
+        {
+            var date = now.Date.AddDays(offset);
+            var candidate = new DateTimeOffset(date.Year, date.Month, date.Day, StartHour, StartMinute, 0, now.Offset);
+            var lead = Math.Max(FirstReminderMinutes * 60, PreStartCinematicEnabled ? PreStartCinematicLeadSeconds : 0) + EnvironmentLeadSeconds;
+            if (RunsOn(candidate.DayOfWeek) && now >= candidate.AddSeconds(-lead) && now < candidate)
+            { start = candidate; return true; }
+        }
+        return false;
+    }
 
     public bool RunsOn(DayOfWeek day)
     {
@@ -216,6 +251,7 @@ public sealed class InvasionConfiguration
             invasion.Reminder15Sound ??= string.Empty;
             invasion.Reminder5Message ??= string.Empty;
             invasion.Reminder5Sound ??= string.Empty;
+            invasion.AdditionalTargets ??= [];
             invasion.Waves ??= [];
             foreach (var wave in invasion.Waves)
                 wave.Spawns ??= [];

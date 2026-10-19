@@ -55,7 +55,7 @@ public partial class GameInterface : MutableInterface
 
     private WorldMapWindow? _worldMapWindow;
     public bool IsWorldMapVisible => _worldMapWindow is { IsHidden: false };
-    public bool SuppressStatusHuds => IsWorldMapVisible || _cookingWindow != null || _pokerWindow != null || _blackjackWindow != null || _potionWindow != null;
+    public bool SuppressStatusHuds => _invasionAlertWindow?.IsVisibleInTree == true || IsWorldMapVisible || _cookingWindow != null || _pokerWindow != null || _blackjackWindow != null || _potionWindow != null;
     public int MinimapBottom => _minimapHud is { IsVisibleInTree: true } ? _minimapHud.Bottom : 10;
     private LogiklikNewsWindow? _logiklikNewsWindow;
     private DailyRewardWindow? _dailyRewardWindow;

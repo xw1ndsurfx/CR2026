@@ -19,6 +19,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
     private readonly List<InvasionDefinition> _invasions;
     private readonly ListBox _list = new() { Dock = DockStyle.Fill };
 
+    private readonly NumericUpDown _environmentLead = new() { Minimum = 0, Maximum = 3600, Value = 0, Width = 100 };
     private readonly TextBox _name = new() { Width = 320 };
     private readonly CheckBox _enabled = new() { Text = "Enabled", AutoSize = true };
     private readonly CheckedListBox _days = new() { Height = 88, CheckOnClick = true };
@@ -97,6 +98,8 @@ public sealed class FrmInvasionConfiguration : DarkForm
     private readonly NumericUpDown _bossHealthPercent = new() { Minimum = 1, Maximum = 2_000, Width = 90 };
     private readonly NumericUpDown _bossDamagePercent = new() { Minimum = 1, Maximum = 1_000, Width = 90 };
 
+    private readonly ListBox _additionalTargets = new() { Width = 650, Height = 250 };
+    private readonly CheckBox _loseAnyTarget = new() { Text = "Defeat if any objective is destroyed (otherwise, all objectives must fall)", AutoSize = true };
     private readonly ListBox _waves = new() { Dock = DockStyle.Fill };
 
     private int _selectedIndex = -1;
@@ -281,6 +284,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
 
         var tabs = new TabControl { Dock = DockStyle.Fill };
         tabs.TabPages.Add(BuildGeneralTab());
+        tabs.TabPages.Add(BuildTargetsTab());
         tabs.TabPages.Add(BuildRemindersTab());
         tabs.TabPages.Add(BuildCinematicTab());
         tabs.TabPages.Add(BuildEnvironmentTab());
@@ -377,9 +381,44 @@ public sealed class FrmInvasionConfiguration : DarkForm
         return page;
     }
 
+    private TabPage BuildTargetsTab()
+    {
+        var page = new TabPage("Defense objectives") { AutoScroll = true };
+        var panel = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, Padding = new Padding(14) };
+        panel.Controls.Add(new Label { Text = "The primary objective is configured in General. Add up to 31 further objectives, each with its own map, event/tile and HP.", AutoSize = true, MaximumSize = new Size(650,0) });
+        panel.Controls.Add(_additionalTargets); panel.Controls.Add(_loseAnyTarget);
+        var buttons = new FlowLayoutPanel { AutoSize = true };
+        buttons.Controls.Add(Button("Add objective", (_,_) => EditAdditionalTarget(false)));
+        buttons.Controls.Add(Button("Edit objective", (_,_) => EditAdditionalTarget(true)));
+        buttons.Controls.Add(Button("Remove objective", (_,_) =>
+        {
+            if (_selectedIndex < 0 || _additionalTargets.SelectedIndex < 0) return;
+            var invasion = _invasions[_selectedIndex]; var index = _additionalTargets.SelectedIndex;
+            invasion.AdditionalTargets = invasion.AdditionalTargets.Where((_,i) => i != index).ToArray(); RefreshAdditionalTargets();
+        }));
+        panel.Controls.Add(buttons); page.Controls.Add(panel); return page;
+    }
+    private void RefreshAdditionalTargets()
+    {
+        _additionalTargets.Items.Clear();
+        if (_selectedIndex < 0 || _selectedIndex >= _invasions.Count) return;
+        foreach (var target in _invasions[_selectedIndex].AdditionalTargets)
+            _additionalTargets.Items.Add($"{(string.IsNullOrWhiteSpace(target.Name) ? (EventDescriptor.Get(target.EventId)?.Name ?? "Defense objective") : target.Name)} | {MapList.OrderedMaps.FirstOrDefault(m => m.MapId == target.MapId)?.Name ?? target.MapId.ToString()} ({target.X},{target.Y}) | HP {target.Health:N0}");
+    }
+    private void EditAdditionalTarget(bool edit)
+    {
+        if (_selectedIndex < 0 || edit && _additionalTargets.SelectedIndex < 0) return;
+        PersistCurrent(); var invasion = _invasions[_selectedIndex]; var index = _additionalTargets.SelectedIndex;
+        if (!edit && invasion.AdditionalTargets.Length >= 31) return;
+        using var dialog = new InvasionTargetDialog(edit ? invasion.AdditionalTargets[index] : null, invasion.TargetMapId);
+        if (dialog.ShowDialog(this) != DialogResult.OK || dialog.Result == null) return;
+        if (edit) invasion.AdditionalTargets[index] = dialog.Result; else invasion.AdditionalTargets = [..invasion.AdditionalTargets, dialog.Result];
+        RefreshAdditionalTargets();
+    }
+
     private TabPage BuildRemindersTab()
     {
-        var page = new TabPage("Pre-Invasion Alerts");
+        var page = new TabPage("Pre-Invasion Alerts") { AutoScroll = true };
         var table = new TableLayoutPanel
         {
             Dock = DockStyle.Top,
@@ -428,6 +467,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
             WrapContents = false,
         };
 
+        message.Multiline = true; message.AcceptsReturn = true; message.ScrollBars = ScrollBars.Vertical; message.MaxLength = 16384; message.Size = new Size(580, 155);
         var messageRow = new FlowLayoutPanel { AutoSize = true };
         messageRow.Controls.Add(enabled);
         messageRow.Controls.Add(new Label
@@ -514,6 +554,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 210));
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
+        AddRow(table, "Seconds before first alert", _environmentLead);
         AddRow(table, "Invasion music", _invasionMusic);
         AddRow(table, "Night brightness (%)", _nightBrightness);
 
@@ -546,7 +587,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
             AutoSize = true,
             MaximumSize = new Size(650, 0),
             Text =
-                "During the invasion, the selected music overrides map/event music everywhere. " +
+                "The environment and music begin before the first enabled alert using the lead above (0 seconds by default). Music overrides map/event music everywhere. " +
                 "Outdoor maps use the configured night brightness, color overlay and fog. " +
                 "When the invasion ends, the current map's normal music, daylight tint, overlay and fog resume automatically.",
         };
@@ -658,6 +699,8 @@ public sealed class FrmInvasionConfiguration : DarkForm
         _targetX.Value = invasion.TargetX;
         _targetY.Value = invasion.TargetY;
         _targetHealth.Value = invasion.TargetHealth;
+        _loseAnyTarget.Checked = invasion.DefeatOnAnyTargetDestroyed;
+        RefreshAdditionalTargets();
         _hitInterval.Value = invasion.ObjectiveHitIntervalMs;
         _rewardExp.Value = invasion.RewardExperience;
         _participationMinimumRewardPercent.Value = invasion.ParticipationMinimumRewardPercent;
@@ -698,6 +741,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         _fogXSpeed.Value = invasion.FogXSpeed;
         _fogYSpeed.Value = invasion.FogYSpeed;
         _environmentOutdoorsOnly.Checked = invasion.EnvironmentOutdoorsOnly;
+        _environmentLead.Value = invasion.EnvironmentLeadSeconds;
         _scaleNpcToPlayers.Checked = invasion.ScaleNpcToPlayers;
         _scalingMinimumLevel.Value = invasion.ScalingMinimumLevel;
         _scalingMaximumLevel.Value = invasion.ScalingMaximumLevel;
@@ -735,6 +779,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         invasion.TargetX = (int)_targetX.Value;
         invasion.TargetY = (int)_targetY.Value;
         invasion.TargetHealth = (int)_targetHealth.Value;
+        invasion.DefeatOnAnyTargetDestroyed = _loseAnyTarget.Checked;
         invasion.ObjectiveHitIntervalMs = (int)_hitInterval.Value;
         invasion.InvasionMusic = _invasionMusic.Text?.Trim() ?? string.Empty;
         invasion.NightBrightness = (int)_nightBrightness.Value;
@@ -747,6 +792,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
         invasion.FogXSpeed = (int)_fogXSpeed.Value;
         invasion.FogYSpeed = (int)_fogYSpeed.Value;
         invasion.EnvironmentOutdoorsOnly = _environmentOutdoorsOnly.Checked;
+        invasion.EnvironmentLeadSeconds = (int)_environmentLead.Value;
         invasion.ScaleNpcToPlayers = _scaleNpcToPlayers.Checked;
         invasion.ScalingMinimumLevel = (int)_scalingMinimumLevel.Value;
         invasion.ScalingMaximumLevel = (int)_scalingMaximumLevel.Value;
