@@ -14,10 +14,12 @@ public sealed class SqliteMiniGameProgressStore : IMiniGameProgressStore
 {
     private readonly object _gate = new();
     private readonly string _path;
-    public SqliteMiniGameProgressStore(string path)
+    private readonly bool _experienceEvents;
+    public SqliteMiniGameProgressStore(string path, bool experienceEvents = false)
     {
         if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("A database path is required.", nameof(path));
         _path = Path.GetFullPath(path);
+        _experienceEvents = experienceEvents;
     }
     private SqliteConnection Open()
     {
@@ -106,27 +108,7 @@ public sealed class SqliteMiniGameProgressStore : IMiniGameProgressStore
     }
     public MiniGameProgress AwardWin(Guid character, string game, Guid tableInstance, long hand)
     {
-        MiniGameProgressKeys.Validate(character, game);
-        MiniGameProgressKeys.ValidateReceipt(tableInstance, hand);
-        lock (_gate)
-        {
-            using var connection = Open();
-            using var transaction = connection.BeginTransaction();
-            var progress = Read(connection, transaction, character, game);
-            using var receipt = Command(connection, transaction, character, game, """
-                INSERT INTO MiniGameWinReceipts(CharacterId,GameKey,TableId,HandId)
-                VALUES($character,$game,$table,$hand) ON CONFLICT DO NOTHING;
-                """);
-            receipt.Parameters.AddWithValue("$table", tableInstance.ToString("N"));
-            receipt.Parameters.AddWithValue("$hand", hand);
-            if (receipt.ExecuteNonQuery() == 1)
-            {
-                progress = progress.WithWin();
-                Write(connection, transaction, character, game, progress);
-            }
-            transaction.Commit();
-            return progress;
-        }
+        return AwardExperience(character, game, tableInstance, hand, MiniGameProgression.ExperiencePerWin);
     }
     public MiniGameProgress AwardExperience(Guid character, string game, Guid receiptGroup, long receiptId, long experience)
     {
@@ -138,6 +120,9 @@ public sealed class SqliteMiniGameProgressStore : IMiniGameProgressStore
             using var connection = Open();
             using var transaction = connection.BeginTransaction();
             var progress = Read(connection, transaction, character, game);
+            var before = progress.Experience;
+            var percent = _experienceEvents ? Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.BonusAt(DateTimeOffset.Now) : 0;
+            var bonus = Intersect.Framework.Core.WorldEvents.WorldActivitiesConfiguration.AwardBonus(experience, percent);
             using var receipt = Command(connection, transaction, character, game, """
                 INSERT INTO MiniGameWinReceipts(CharacterId,GameKey,TableId,HandId)
                 VALUES($character,$game,$table,$hand) ON CONFLICT DO NOTHING;
@@ -146,10 +131,11 @@ public sealed class SqliteMiniGameProgressStore : IMiniGameProgressStore
             receipt.Parameters.AddWithValue("$hand", receiptId);
             if (receipt.ExecuteNonQuery() == 1)
             {
-                progress = progress.WithExperience(experience);
+                progress = progress.WithExperience(experience + bonus);
                 Write(connection, transaction, character, game, progress);
             }
             transaction.Commit();
+            Intersect.Server.WorldEvents.WorldActivitiesRuntime.NotifyGain(Intersect.Server.Entities.Player.FindOnline(character), game, experience, progress.Experience - before, percent);
             return progress;
         }
     }

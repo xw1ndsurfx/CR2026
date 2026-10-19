@@ -17,6 +17,7 @@ public partial class GameInterface
 
     public void UpdateItemChangeNotifications()
     {
+        UpdateExperienceEventHud();
         _dayPhaseHud ??= new DayPhaseHud(GameCanvas);
         _dayPhaseHud.UpdatePhase(Intersect.Client.General.Time.CurrentPhase,
             Globals.Me != null && Intersect.Client.General.Time.HasServerTime);

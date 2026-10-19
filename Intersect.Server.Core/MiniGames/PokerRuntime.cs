@@ -33,8 +33,7 @@ internal static class PokerRuntime
     private sealed record Delivery(View? View, PokerStatePacket? Packet, PokerWinNotice? Win = null,
         PokerLevelRewardNotice? LevelReward = null, PokerLevelNotice? Level = null,
         PokerQuestNotice? Quest = null, string? LocalMessage = null);
-    private static readonly PokerTableRegistry Tables = new(new SqliteMiniGameProgressStore(
-        Path.Combine("resources", "minigames-test.db")));
+    private static readonly PokerTableRegistry Tables = new(new SqliteMiniGameProgressStore(Path.Combine("resources", "minigames-test.db"), experienceEvents: true));
     private static readonly object Gate = new();
     private static readonly Dictionary<PokerSession, View> Views = new();
     private static long _sequence;

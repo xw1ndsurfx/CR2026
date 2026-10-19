@@ -1,4 +1,4 @@
-﻿using MessagePack;
+using MessagePack;
 
 namespace Intersect.Network.Packets.Server;
 
@@ -22,8 +22,8 @@ public partial class ExperiencePacket : IntersectPacket
     [Key(1)]
     public long ExperienceToNextLevel { get; set; }
 
-    // Only populated for an NPC kill. The normal EXP sync stays backward-
-    // compatible and retains its existing packet keys.
+    // Authoritative award for NPC kills and event-boosted character XP.
+    // The historical key/name is retained for protocol compatibility.
     [Key(2)]
     public NpcExperienceGainBreakdown? NpcGain { get; set; }
 
@@ -61,4 +61,7 @@ public sealed class NpcExperienceGainBreakdown
 
     [Key(7)]
     public long TotalExperience { get; set; }
+
+    [Key(8)] public long EventBonusExperience { get; set; }
+    [Key(9)] public int EventBonusPercent { get; set; }
 }

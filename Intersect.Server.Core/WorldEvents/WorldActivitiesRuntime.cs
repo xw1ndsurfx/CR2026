@@ -36,15 +36,34 @@ internal static class WorldActivitiesRuntime
         Intersect.Server.Localization.ContentTranslationRuntime.QueueJson(json);
         PacketSender.SendDataToAllPlayers(new WorldActivitiesPacket { Json = JsonConvert.SerializeObject(config) });
     }
+    internal static ExperienceEventAnnouncementPacket Snapshot(DateTimeOffset now, bool silent = false)
+    {
+        var config = Current;
+        var active = config.ExperienceEvents.Where(e => e.IsActive(now)).ToArray();
+        var bonus = config.BonusAt(now);
+        return new ExperienceEventAnnouncementPacket {
+            Names = active.Select(e => e.Name).ToArray(), BonusPercent = bonus,
+            ServerTimeUnixMs = now.ToUnixTimeMilliseconds(), Silent = silent,
+            EndsAtUnixMs = active.Where(e => e.BonusPercent == bonus).Select(e => e.ActiveUntil(now)!.Value.ToUnixTimeMilliseconds()).DefaultIfEmpty(0).Max(),
+        };
+    }
+    internal static void NotifyGain(Intersect.Server.Entities.Player? player, string activity, long baseExperience, long total, int percent)
+    {
+        if (player == null || total <= 0 || percent <= 0) return;
+        player.SendPacket(new Intersect.Network.Packets.Server.ActivityExperienceGainPacket {
+            Activity = activity, TotalExperience = total, EventBonusPercent = percent,
+            EventBonusExperience = Math.Max(0L, total - Math.Max(0L, baseExperience)),
+        });
+    }
     internal static void Update(long nowMs)
     {
         if (nowMs < _nextCheck) return;
         _nextCheck = nowMs + 1000;
         var now = DateTimeOffset.Now;
-        var active = Current.ExperienceEvents.Where(e => e.IsActive(now)).ToArray();
-        var key = string.Join(",", active.Select(e => e.Id));
+        var snapshot = Snapshot(now);
+        var key = snapshot.BonusPercent <= 0 ? "" : string.Join(",", snapshot.Names) + ":" + snapshot.BonusPercent + ":" + snapshot.EndsAtUnixMs;
         if (key == _active) return;
         var hadActive = _active.Length > 0; _active = key;
-        if (active.Length > 0 || hadActive) PacketSender.SendDataToAllPlayers(new ExperienceEventAnnouncementPacket { Names = active.Select(e => e.Name).ToArray(), BonusPercent = Current.BonusAt(now) });
+        if (snapshot.BonusPercent > 0 || hadActive) PacketSender.SendDataToAllPlayers(snapshot);
     }
 }

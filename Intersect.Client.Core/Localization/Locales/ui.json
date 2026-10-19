@@ -5384,6 +5384,41 @@
       "en": "{0} / {1} invasion defeats - {2}",
       "fr": "{0} / {1} défaites d’invasion - {2}",
       "es": "{0} / {1} derrotas de invasión - {2}"
+    },
+    "EXP event +{0}% - Remaining: {1}": {
+      "en": "EXP event +{0}% - Remaining: {1}",
+      "fr": "Événement EXP +{0}% - Temps restant : {1}",
+      "es": "Evento EXP +{0}% - Tiempo restante: {1}"
+    },
+    "{0}: +{1} EXP (event +{2}%: +{3})": {
+      "en": "{0}: +{1} EXP (event +{2}%: +{3})",
+      "fr": "{0} : +{1} EXP (événement +{2}% : +{3})",
+      "es": "{0}: +{1} EXP (evento +{2}%: +{3})"
+    },
+    "EVENT +{0}%  +{1} EXP": {
+      "en": "EVENT +{0}%  +{1} EXP",
+      "fr": "ÉVÉNEMENT +{0}%  +{1} EXP",
+      "es": "EVENTO +{0}%  +{1} EXP"
+    },
+    "Poker": {
+      "en": "Poker",
+      "fr": "Poker",
+      "es": "Póquer"
+    },
+    "Blackjack": {
+      "en": "Blackjack",
+      "fr": "Blackjack",
+      "es": "Blackjack"
+    },
+    "Roulette": {
+      "en": "Roulette",
+      "fr": "Roulette",
+      "es": "Ruleta"
+    },
+    "Alchemy": {
+      "en": "Alchemy",
+      "fr": "Alchimie",
+      "es": "Alquimia"
     }
   }
 }
