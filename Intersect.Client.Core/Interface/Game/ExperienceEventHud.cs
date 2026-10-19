@@ -38,13 +38,14 @@ internal sealed class ExperienceEventHud : Label
 }
 public partial class GameInterface
 {
-    private ExperienceEventHud? _experienceEventHud, _experienceGainHud;
+    private ExperienceEventHud? _experienceEventHud, _experienceGainHud, _potionHud, _lootHud;
     private readonly Queue<ActivityExperienceGainPacket> _experienceGains = new();
     private long _experienceGainUntil;
     public void ShowExperienceEventGain(ActivityExperienceGainPacket packet)
     {
         if (packet.TotalExperience > 0 && packet.EventBonusPercent > 0 && _experienceGains.Count < 32) _experienceGains.Enqueue(packet);
     }
+    private static string Duration(long ms){var seconds=(long)Math.Ceiling(ms/1000d);return $"{seconds/3600:00}:{seconds/60%60:00}:{seconds%60:00}";}
     private void UpdateExperienceEventHud()
     {
         _experienceEventHud ??= new ExperienceEventHud(GameCanvas, "ExperienceEventStatus");
@@ -52,13 +53,20 @@ public partial class GameInterface
         _experienceEventHud.IsHidden = Globals.Me == null || ExperienceEventState.Bonus <= 0;
         if (!_experienceEventHud.IsHidden)
             _experienceEventHud.ShowLine(ExperienceEventHud.FormatStatus(ExperienceEventState.Bonus, ExperienceEventState.RemainingMilliseconds), 56);
+        _potionHud??=new ExperienceEventHud(GameCanvas,"ExperiencePotionStatus");
+        _lootHud??=new ExperienceEventHud(GameCanvas,"LootBoosterStatus");
+        _potionHud.IsHidden=Globals.Me==null || BoosterState.Potion<=0;
+        _lootHud.IsHidden=Globals.Me==null || BoosterState.Loot<=0;
+        var nextY=ExperienceEventState.Bonus>0?84:56;
+        if(!_potionHud.IsHidden){_potionHud.ShowLine(ClientLanguages.Format("EXP potion +{0}% - Remaining: {1}",BoosterState.Potion,Duration(BoosterState.PotionRemaining)),nextY);nextY+=28;}
+        if(!_lootHud.IsHidden){_lootHud.ShowLine(ClientLanguages.Format("Loot event +{0}% - Remaining: {1}",BoosterState.Loot,Duration(BoosterState.LootRemaining)),nextY);nextY+=28;}
         if (Timing.Global.Milliseconds >= _experienceGainUntil)
         {
             _experienceGainHud.IsHidden = true;
             if (_experienceGains.TryDequeue(out var gain))
             {
                 var activity = gain.Activity switch { "poker" => ClientLanguages.Text("Poker"), "blackjack" => ClientLanguages.Text("Blackjack"), "roulette" => ClientLanguages.Text("Roulette"), "potions" => ClientLanguages.Text("Alchemy"), _ => ClientLanguages.ContentText(gain.Activity) };
-                _experienceGainHud.ShowLine(ClientLanguages.Format("{0}: +{1} EXP (event +{2}%: +{3})", activity, gain.TotalExperience.ToString("N0"), gain.EventBonusPercent, gain.EventBonusExperience.ToString("N0")), 84);
+                _experienceGainHud.ShowLine(ClientLanguages.Format("{0}: +{1} EXP (bonus +{2}%: +{3})", activity, gain.TotalExperience.ToString("N0"), gain.EventBonusPercent, gain.EventBonusExperience.ToString("N0")), nextY);
                 _experienceGainUntil = Timing.Global.Milliseconds + 4000;
             }
         }

@@ -25,6 +25,8 @@ public partial class ShopDescriptor : DatabaseObject<ShopDescriptor>, IFolderabl
         Name = "New Shop";
     }
 
+    public int BuybackDiscountPercent {get;set;}
+    public int BuybackPrice(int price) => price<=0 ? 0 : Math.Max(1,(int)((decimal)price*(100-Math.Clamp(BuybackDiscountPercent,0,99))/100));
     public bool BuyingWhitelist { get; set; } = true;
 
     //Spawn Info

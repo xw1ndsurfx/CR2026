@@ -112,7 +112,7 @@ internal static class ProfessionRuntime
 
         var oldTotal = GetExperience(player, id);
         var baseAmount = amount;
-        var eventPercent = amount > 0 ? Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.BonusAt(DateTimeOffset.Now) : 0;
+        var eventPercent = amount > 0 ? player.ActivityExperienceBonus : 0;
         var eventBonus = Intersect.Framework.Core.WorldEvents.WorldActivitiesConfiguration.AwardBonus(amount, eventPercent);
         if (amount > 0) amount = (long)Math.Min(long.MaxValue, (decimal)amount + eventBonus);
         var oldLevel = definition.LevelForExperience(oldTotal);

@@ -67,7 +67,7 @@ public sealed class ExperienceEventDefinition
 }
 public enum WorldActivitiesSection
 {
-    All, Experience, CombatMusic, Bank, Pvp, Metalworking
+    All, Experience, CombatMusic, Bank, Pvp, Metalworking, Loot
 }
 public sealed class CombatMusicRule
 {
@@ -91,8 +91,9 @@ public sealed class WorldActivitiesConfiguration
     public static bool ValidTrack(string track) => track is { Length: > 0 and <= 260 } && track == Path.GetFileName(track);
     public string[] CombatTracksFor(Guid mapId) => CombatMusicRules.FirstOrDefault(r => r.MapIds.Contains(mapId))?.Tracks ?? (string.IsNullOrWhiteSpace(CombatMusic) ? [] : [CombatMusic]);
     public int CombatMusicGraceSeconds { get; set; } = 8;
+    public List<ExperienceEventDefinition> LootEvents { get; set; } = [];
     public List<ExperienceEventDefinition> ExperienceEvents { get; set; } = [];
-    public bool IsValid => Metalworking is { IsValid: true } && Pvp is { IsValid: true } && CombatMusicRules is { Count: <= 128 } && CombatMusicRules.All(r => r is { IsValid: true }) && CombatMusicRules.SelectMany(r => r.MapIds).Distinct().Count() == CombatMusicRules.Sum(r => r.MapIds.Length) && BankRequiredLevel is >= 1 and <= 10000 && BankOpeningCost is >= 0 and <= 1000000 && CombatMusic is { Length: <= 260 } && CombatMusic == Path.GetFileName(CombatMusic) && CombatMusicGraceSeconds is >= 0 and <= 120 && ExperienceEvents is { Count: <= 200 } && ExperienceEvents.All(e => e is { IsValid: true }) && ExperienceEvents.Select(e => e.Id).Distinct().Count() == ExperienceEvents.Count;
+    public bool IsValid => LootEvents is {Count: <=200} && LootEvents.All(e=>e is {IsValid:true}) && LootEvents.Select(e=>e.Id).Distinct().Count()==LootEvents.Count && Metalworking is { IsValid: true } && Pvp is { IsValid: true } && CombatMusicRules is { Count: <= 128 } && CombatMusicRules.All(r => r is { IsValid: true }) && CombatMusicRules.SelectMany(r => r.MapIds).Distinct().Count() == CombatMusicRules.Sum(r => r.MapIds.Length) && BankRequiredLevel is >= 1 and <= 10000 && BankOpeningCost is >= 0 and <= 1000000 && CombatMusic is { Length: <= 260 } && CombatMusic == Path.GetFileName(CombatMusic) && CombatMusicGraceSeconds is >= 0 and <= 120 && ExperienceEvents is { Count: <= 200 } && ExperienceEvents.All(e => e is { IsValid: true }) && ExperienceEvents.Select(e => e.Id).Distinct().Count() == ExperienceEvents.Count;
     public void ApplySection(WorldActivitiesConfiguration source, WorldActivitiesSection section)
     {
         switch (section)
@@ -102,6 +103,9 @@ public sealed class WorldActivitiesConfiguration
                 break;
             case WorldActivitiesSection.Pvp:
                 Pvp = source.Pvp;
+                break;
+            case WorldActivitiesSection.Loot:
+                LootEvents=source.LootEvents;
                 break;
             case WorldActivitiesSection.Experience:
                 ExperienceEvents = source.ExperienceEvents;
@@ -120,6 +124,8 @@ public sealed class WorldActivitiesConfiguration
                 throw new ArgumentOutOfRangeException(nameof(section));
         }
     }
+    public int LootBonusAt(DateTimeOffset now) => LootEvents.Where(e=>e.IsActive(now)).Select(e=>e.BonusPercent).DefaultIfEmpty(0).Max();
+    public static double LootChance(double chance,int bonus) => Math.Clamp(Math.Clamp(chance,0,100)*(1+Math.Clamp(bonus,0,1000)/100d),0,100);
     public int BonusAt(DateTimeOffset now) => ExperienceEvents.Where(e => e.IsActive(now)).Select(e => e.BonusPercent).DefaultIfEmpty(0).Max();
-    public static long AwardBonus(long amount, int percent) => (long)Math.Min(long.MaxValue, decimal.Round((decimal)Math.Max(0, amount) * Math.Clamp(percent, 0, 1000) / 100, 0, MidpointRounding.AwayFromZero));
+    public static long AwardBonus(long amount, int percent) => (long)Math.Min(long.MaxValue, decimal.Round((decimal)Math.Max(0, amount) * Math.Clamp(percent, 0, 2000) / 100, 0, MidpointRounding.AwayFromZero));
 }

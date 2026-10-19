@@ -23,6 +23,7 @@ internal static class WorldMusic
     }
     internal static void Reset()
     {
+        BoosterState.Reset();
         _selected = null;
         _combatTrack = "";
         _playlist = "";

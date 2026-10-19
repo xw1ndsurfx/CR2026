@@ -1595,12 +1595,16 @@ public partial class Player : Entity
 
         var eventBonusPercent = Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.BonusAt(DateTimeOffset.Now);
         var eventBonus = Intersect.Framework.Core.WorldEvents.WorldActivitiesConfiguration.AwardBonus(amount, eventBonusPercent);
-        var totalAward = (long)Math.Min(long.MaxValue, (decimal)amount + equipmentBonus + rankingBonus + eventBonus);
-        if (fromNpcKill || eventBonusPercent > 0)
+        var potionPercent=PersonalExperienceBonus;
+        var potionBonus=Intersect.Framework.Core.WorldEvents.WorldActivitiesConfiguration.AwardBonus(amount,potionPercent);
+        var totalAward = (long)Math.Min(long.MaxValue, (decimal)amount + equipmentBonus + rankingBonus + eventBonus+potionBonus);
+        if (fromNpcKill || eventBonusPercent > 0 || potionPercent>0)
         {
             PendingNpcExperienceGain = new NpcExperienceGainBreakdown
             {
                 BaseExperience = fromNpcKill ? npcBaseExperience : amount,
+                PotionBonusExperience=potionBonus,
+                PotionBonusPercent=potionPercent,
                 EventBonusExperience = eventBonus,
                 EventBonusPercent = eventBonusPercent,
                 PartyBonusExperience = npcPartyBonusExperience,
@@ -3731,6 +3735,13 @@ public partial class Player : Entity
 
                     return;
                 case ItemType.Consumable:
+                    if(itemBase.Consumable.Type==ConsumableType.ExperienceBoost)
+                    {
+                        if(!ActivateExperienceBoost(slot,itemBase.Consumable.Percentage,itemBase.Consumable.Value))
+                            PacketSender.SendChatMsg(this,"This EXP potion cannot replace a stronger or fully extended boost.",ChatMessageType.Error);
+                        else if(useEvent!=default)EnqueueStartCommonEvent(useEvent);
+                        break;
+                    }
                     var color = CustomColors.Items.ConsumeHp;
                     var die = false;
                     long value;
@@ -4322,6 +4333,7 @@ public partial class Player : Entity
                     }
                 }
 
+                rewardItemVal=shop.BuybackPrice(rewardItemVal);
                 var amountInInventory = FindInventoryItemQuantity(itemInSlot.ItemId);
 
                 var amountRemaining = Math.Min(amountInInventory, amount);

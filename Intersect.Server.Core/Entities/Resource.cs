@@ -83,12 +83,21 @@ public partial class Resource : Entity
         Passable = Descriptor.WalkableBefore;
         Items.Clear();
 
+        IsDead = false;
+        PacketSender.SendEntityDataToProximity(this);
+        PacketSender.SendEntityPositionToAll(this);
+    }
+
+    private void GenerateHarvestLoot()
+    {
+        var lootBonus=Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.LootBonusAt(DateTimeOffset.Now);
+        Items.Clear();
         // Give Resource Drops
         var itemSlot = 0;
         foreach (var drop in Descriptor.Drops)
         {
             var roll = Randomization.Next(1, 10001);
-            var maximumRoll = drop.Chance * 100;
+            var maximumRoll = Intersect.Framework.Core.WorldEvents.WorldActivitiesConfiguration.LootChance(drop.Chance,lootBonus)*100;
 
             if (roll > maximumRoll || !ItemDescriptor.TryGet(drop.ItemId, out _))
             {
@@ -104,13 +113,11 @@ public partial class Resource : Entity
             itemSlot++;
         }
 
-        IsDead = false;
-        PacketSender.SendEntityDataToProximity(this);
-        PacketSender.SendEntityPositionToAll(this);
     }
 
     private void SpawnResourceItems(Entity killer)
     {
+        GenerateHarvestLoot();
         //Find tile to spawn items
         var tiles = new List<TileHelper>();
         for (var x = X - 1; x <= X + 1; x++)

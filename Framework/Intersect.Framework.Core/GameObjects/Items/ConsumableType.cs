@@ -7,4 +7,6 @@ public enum ConsumableType : byte
     Mana = 1,
 
     Experience = 2,
+
+    ExperienceBoost = 3,
 }

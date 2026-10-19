@@ -3207,7 +3207,7 @@ public abstract partial class Entity : IEntity
 
         var dropRate = item.DropChance * 1000 * dropRateModifier;
         var dropResult = Randomization.Next(1, 100001);
-        if (dropResult >= dropRate)
+        if (dropResult > Math.Min(100000,dropRate))
         {
             return false;
         }

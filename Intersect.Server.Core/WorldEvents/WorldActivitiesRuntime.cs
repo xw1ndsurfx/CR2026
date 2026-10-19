@@ -10,6 +10,7 @@ internal static class WorldActivitiesRuntime
     private static WorldActivitiesConfiguration? _current;
     private static long _nextCheck;
     private static string _active = "";
+    private static string _lootActive="";
     private static readonly string FileName = Path.Combine("resources", "world-activities.json");
     internal static WorldActivitiesConfiguration Current
     {
@@ -59,6 +60,11 @@ internal static class WorldActivitiesRuntime
             EndsAtUnixMs = active.Where(e => e.BonusPercent == bonus).Select(e => e.ActiveUntil(now)!.Value.ToUnixTimeMilliseconds()).DefaultIfEmpty(0).Max(),
         };
     }
+    internal static LootEventAnnouncementPacket LootSnapshot(DateTimeOffset now,bool silent=false)
+    {
+        var config=Current;var bonus=config.LootBonusAt(now);var events=config.LootEvents.Where(e=>e.IsActive(now)).ToArray();
+        return new LootEventAnnouncementPacket {Names=events.Select(e=>e.Name).ToArray(),BonusPercent=bonus,ServerTimeUnixMs=now.ToUnixTimeMilliseconds(),EndsAtUnixMs=events.Where(e=>e.BonusPercent==bonus).Select(e=>e.ActiveUntil(now)!.Value.ToUnixTimeMilliseconds()).DefaultIfEmpty(0).Max(),Silent=silent};
+    }
     internal static void NotifyGain(Intersect.Server.Entities.Player? player, string activity, long baseExperience, long total, int percent)
     {
         if (player == null || total <= 0 || percent <= 0) return;
@@ -72,6 +78,9 @@ internal static class WorldActivitiesRuntime
         if (nowMs < _nextCheck) return;
         _nextCheck = nowMs + 1000;
         var now = DateTimeOffset.Now;
+        var loot=LootSnapshot(now);
+        var lootKey=loot.BonusPercent<=0?"":string.Join(",",loot.Names)+":"+loot.BonusPercent+":"+loot.EndsAtUnixMs;
+        if(lootKey!=_lootActive){var previous=_lootActive;_lootActive=lootKey;if(loot.BonusPercent>0 || previous.Length>0)PacketSender.SendDataToAllPlayers(loot);}
         var snapshot = Snapshot(now);
         var key = snapshot.BonusPercent <= 0 ? "" : string.Join(",", snapshot.Names) + ":" + snapshot.BonusPercent + ":" + snapshot.EndsAtUnixMs;
         if (key == _active) return;

@@ -29,6 +29,7 @@ public partial class FrmShop : EditorForm
         InitializeComponent();
         Icon = Program.Icon;
         InitializePriceSuggestions();
+        InitializeBuybackDiscount();
         _btnSave = btnSave;
         _btnCancel = btnCancel;
 
@@ -175,6 +176,7 @@ public partial class FrmShop : EditorForm
         if (mEditorItem != null)
         {
             pnlContainer.Show();
+            _buybackDiscount.Value=Math.Clamp(mEditorItem.BuybackDiscountPercent,0,99);
 
             txtName.Text = mEditorItem.Name;
             cmbFolder.Text = mEditorItem.Folder;

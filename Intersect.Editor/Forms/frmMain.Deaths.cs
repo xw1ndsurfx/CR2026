@@ -28,6 +28,7 @@ public partial class FrmMain
         AddSection(system, "PvP & Capture the Chest...", Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.Pvp);
         AddSection(system, "Bank Settings...", Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.Bank);
         AddSection(menuStrip.Items.Cast<ToolStripItem>().OfType<ToolStripMenuItem>().Single(i => i.Name == "worldEventsToolStripMenuItem"), "Experience Events...", Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.Experience);
+        AddSection(menuStrip.Items.Cast<ToolStripItem>().OfType<ToolStripMenuItem>().Single(i=>i.Name=="worldEventsToolStripMenuItem"),"Loot Booster Events...",Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.Loot);
         var events = menuStrip.Items.Cast<ToolStripItem>().FirstOrDefault(item => item.Name == "worldEventsToolStripMenuItem");
         menuStrip.Items.Insert(events == null ? menuStrip.Items.Count : menuStrip.Items.IndexOf(events) + 1, system);
     }
