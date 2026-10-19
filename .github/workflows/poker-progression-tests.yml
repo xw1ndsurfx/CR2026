@@ -25,6 +25,8 @@ jobs:
       result: ${{ steps.tests.outputs.summary }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
