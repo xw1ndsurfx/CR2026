@@ -16,7 +16,7 @@ using Intersect.Server.Entities;
 namespace Intersect.Tests.Server.Naval;
 
 [TestFixture, NonParallelizable]
-public sealed class NavalTests
+public sealed partial class NavalTests
 {
     private static readonly Guid Map = Guid.NewGuid();
     private static ShipDefinition Definition() => new() { MapId = Map };

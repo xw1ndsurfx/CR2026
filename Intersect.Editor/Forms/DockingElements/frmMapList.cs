@@ -4,6 +4,7 @@ using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.GameObjects.Maps.MapList;
+using Intersect.Network.Packets.Editor;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace Intersect.Editor.Forms.DockingElements;
@@ -11,11 +12,15 @@ namespace Intersect.Editor.Forms.DockingElements;
 
 public partial class FrmMapList : DockContent
 {
+    private readonly ToolStripMenuItem _prepareNaval = new();
 
     public FrmMapList()
     {
         InitializeComponent();
         Icon = Program.Icon;
+        _prepareNaval.Text = Strings.Naval.Prepare;
+        _prepareNaval.Click += (_, _) => PrepareNavalMap();
+        contextMenuStrip1.Items.Add(_prepareNaval);
 
         //Enable Editting of the list
         mapTreeList.EnableEditing(contextMenuStrip1);
@@ -75,6 +80,7 @@ public partial class FrmMapList : DockContent
         newFolderToolStripMenuItem.Text = Strings.MapList.newfolder;
         deleteToolStripMenuItem.Text = Strings.MapList.delete;
         copyIdToolStripMenuItem.Text = Strings.MapList.copyid;
+        _prepareNaval.Text = Strings.Naval.Prepare;
     }
 
     private void btnRefreshList_Click(object sender, EventArgs e)
@@ -171,6 +177,7 @@ public partial class FrmMapList : DockContent
     {
         var node = mapTreeList.list.SelectedNode;
         copyIdToolStripMenuItem.Visible = node != null && node.Tag is MapListMap;
+        _prepareNaval.Visible = node?.Tag is MapListMap;
     }
 
     private void copyIdToolStripMenuItem_Click(object sender, EventArgs e)
@@ -181,6 +188,17 @@ public partial class FrmMapList : DockContent
             var id = map.MapId;
             Clipboard.SetText(id.ToString());
         }
+    }
+
+    private void PrepareNavalMap()
+    {
+        if (mapTreeList.list.SelectedNode?.Tag is not MapListMap map) return;
+        if (Globals.CurrentMap?.Id == map.MapId && Globals.CurrentMap.Changed())
+        {
+            DarkMessageBox.ShowInformation(Strings.Naval.SaveFirst, Strings.Naval.Title, DarkDialogButton.Ok, Icon);
+            return;
+        }
+        Intersect.Editor.Networking.Network.SendPacket(new PrepareNavalMapPacket { MapId = map.MapId });
     }
 
 }

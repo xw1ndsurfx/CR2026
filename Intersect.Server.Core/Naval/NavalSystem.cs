@@ -2,6 +2,7 @@ using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Maps.Attributes;
+using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.Naval;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
@@ -15,11 +16,6 @@ namespace Intersect.Server.Naval;
 /// <summary>Opt-in overworld prototype. All mutation happens under the captain's entity lock then Gate.</summary>
 internal static class NavalSystem
 {
-    private sealed class Settings
-    {
-        public bool Enabled { get; set; }
-        public ShipDefinition[] Ships { get; set; } = [];
-    }
     private sealed class Vessel(ShipDefinition definition)
     {
         internal readonly ShipDefinition Definition = definition;
@@ -30,23 +26,74 @@ internal static class NavalSystem
     }
     private static readonly object Gate = new();
     private static readonly Dictionary<Guid, Vessel> Ships = [];
-    private static readonly Lazy<bool> Enabled = new(() =>
-    {
-        // Missing/invalid configuration fails closed; never create or modify live map data.
-        var path = Path.Combine("resources", "naval.json");
-        if (!File.Exists(path)) return false;
-        var settings = JsonConvert.DeserializeObject<Settings>(File.ReadAllText(path));
-        if (settings is not { Enabled: true } || settings.Ships == null || settings.Ships.Length > 64 ||
-            settings.Ships.Any(d => d == null || !d.IsValid() || d.X >= Options.Instance.Map.MapWidth ||
-                d.Y >= Options.Instance.Map.MapHeight || d.DockX >= Options.Instance.Map.MapWidth || d.DockY >= Options.Instance.Map.MapHeight) ||
-            settings.Ships.Select(d => d.Id).Distinct().Count() != settings.Ships.Length) return false;
-        foreach (var definition in settings.Ships) Ships.Add(definition.Id, new Vessel(definition));
-        return true;
-    });
+    private static readonly NavalConfigurationStore Configuration = new(Path.Combine("resources", "naval.json"));
+    private static bool _loaded, _enabled;
     private static bool IsEnabled()
     {
-        try { return Enabled.Value; }
+        try
+        {
+            if (!_loaded) ApplyConfiguration(Configuration.Load());
+            return _enabled;
+        }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException or ArgumentException) { return false; }
+    }
+
+    private static void ApplyConfiguration(NavalConfiguration settings)
+    {
+        // Adding a definition never resets the position or ownership of an existing vessel.
+        foreach (var definition in settings.Ships)
+            if (!Ships.ContainsKey(definition.Id)) Ships.Add(definition.Id, new Vessel(definition));
+        _enabled = settings.Enabled; _loaded = true;
+    }
+
+    internal static NavalSetupResultPacket PrepareMap(Guid mapId)
+    {
+        lock (Gate)
+        {
+            var map = MapController.Get(mapId);
+            if (map == null || !OceanMapResolver.Maps().Contains(mapId))
+                return new() { Outcome = NavalSetupOutcome.NotOcean };
+            try
+            {
+                _ = IsEnabled();
+                var prepared = Configuration.Prepare(mapId, configured => FindPlacement(map, configured));
+                ApplyConfiguration(prepared.Configuration);
+                var ship = prepared.Ship;
+                return new() { Outcome = prepared.Created ? NavalSetupOutcome.Created : NavalSetupOutcome.Existing,
+                    MapName = map.Name, ShipId = ship.Id, X = ship.X, Y = ship.Y, DockX = ship.DockX, DockY = ship.DockY };
+            }
+            catch (NoShipPlacementException) { return new() { Outcome = NavalSetupOutcome.NoSpace }; }
+            catch (ShipLimitException) { return new() { Outcome = NavalSetupOutcome.ShipLimit }; }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException or ArgumentException)
+            { return new() { Outcome = NavalSetupOutcome.ConfigurationError }; }
+        }
+    }
+
+    private static ShipDefinition FindPlacement(MapController map, IReadOnlyList<ShipDefinition> configured)
+    {
+        var blocked = map.GetEntitiesOnAllInstances().Where(e => e.MapInstanceId == MapInstance.OverworldInstanceId && e.Z == 0 && !e.IsPassable())
+            .Select(e => (e.X, e.Y)).ToHashSet();
+        foreach (var evt in EventDescriptor.Lookup.Values.OfType<EventDescriptor>().Where(e => !e.CommonEvent && e.MapId == map.Id && e.Pages.Any(p => !p.Passable)))
+            blocked.Add((evt.SpawnX, evt.SpawnY));
+        foreach (var spawn in map.Spawns.Where(s => s.X >= 0 && s.Y >= 0)) blocked.Add((spawn.X, spawn.Y));
+        if (map.TryGetInstance(MapInstance.OverworldInstanceId, out var instance))
+            foreach (var page in instance.GlobalEventInstances.Values.SelectMany(e => e.GlobalPageInstance).Where(p => p != null && !p.Passable && p.Z == 0))
+                blocked.Add((page.X, page.Y));
+        var ocean = OceanMapResolver.Maps();
+        foreach (var vessel in Ships.Values)
+        {
+            foreach (var tile in HullTiles(vessel, ocean, vessel.State.MapId, vessel.State.X, vessel.State.Y))
+                if (tile.Map == map.Id) blocked.Add((tile.X, tile.Y));
+            if (vessel.Definition.MapId == map.Id) blocked.Add((vessel.Definition.DockX, vessel.Definition.DockY));
+        }
+        foreach (var ship in configured.Where(d => !Ships.ContainsKey(d.Id) && d.MapId == map.Id))
+        {
+            blocked.UnionWith(ShipFootprint.Tiles(ship.Width, ship.Length, ship.X, ship.Y));
+            blocked.Add((ship.DockX, ship.DockY));
+        }
+        return ShipPlacement.Find(map.Id, Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight,
+            (x, y) => map.Attributes == null || x >= map.Attributes.GetLength(0) || y >= map.Attributes.GetLength(1) ||
+                blocked.Contains((x, y)) || IsBlockingAttribute(map.Attributes[x, y]));
     }
 
     internal static void Helm(Player player)
