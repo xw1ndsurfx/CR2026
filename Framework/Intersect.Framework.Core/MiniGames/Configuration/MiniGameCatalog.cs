@@ -22,6 +22,8 @@ public static class MiniGameCatalog
         new(MiniGameType.Potions, "Potions - Royal Alchemy", 1, 6, "potions-1"),
         new(MiniGameType.Roulette, "Roulette - European (0-36)", 1, 1, "roulette-1"),
         new(MiniGameType.Cooking, "Royal Kitchen - Cooking", 1, 2, "cooking-1"),
+        new(MiniGameType.Smelting, "Royal Foundry - Smelting",1,1,"smelting-1"),
+        new(MiniGameType.Smithing, "Royal Forge - Smithing",1,1,"smithing-1"),
         new(MiniGameType.Lockpicking, "Lockpicking - Dungeon Lock", 1, 1, "lock-1"),
     ];
 

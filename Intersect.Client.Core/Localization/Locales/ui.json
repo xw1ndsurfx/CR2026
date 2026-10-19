@@ -5684,6 +5684,356 @@
       "en": "You left the lobby and party.",
       "fr": "Vous avez quitté le lobby et le groupe.",
       "es": "Has salido de la sala y del grupo."
+    },
+    "Show PvP grades beside names": {
+      "en": "Show PvP grades beside names",
+      "fr": "Afficher les grades PvP à côté des noms",
+      "es": "Mostrar grados PvP junto a los nombres"
+    },
+    "PvP: {0} - {1} points": {
+      "en": "PvP: {0} - {1} points",
+      "fr": "PvP : {0} - {1} points",
+      "es": "PvP: {0} - {1} puntos"
+    },
+    "PvP grade": {
+      "en": "PvP grade",
+      "fr": "Grade PvP",
+      "es": "Grado PvP"
+    },
+    "PvP points": {
+      "en": "PvP points",
+      "fr": "Points PvP",
+      "es": "Puntos PvP"
+    },
+    "PvP & Capture the Chest": {
+      "en": "PvP & Capture the Chest",
+      "fr": "PvP et capture du coffre",
+      "es": "PvP y captura del cofre"
+    },
+    "Capture the Chest": {
+      "en": "Capture the Chest",
+      "fr": "Capture du coffre",
+      "es": "Captura del cofre"
+    },
+    "PvP ranking": {
+      "en": "PvP ranking",
+      "fr": "Classement PvP",
+      "es": "Clasificación PvP"
+    },
+    "Leave queue / match": {
+      "en": "Leave queue / match",
+      "fr": "Quitter la file / partie",
+      "es": "Salir de la cola / partida"
+    },
+    "#{0}  {1} - {2} - {3} points": {
+      "en": "#{0}  {1} - {2} - {3} points",
+      "fr": "#{0}  {1} - {2} - {3} points",
+      "es": "#{0}  {1} - {2} - {3} puntos"
+    },
+    "No ranked PvP results yet.": {
+      "en": "No ranked PvP results yet.",
+      "fr": "Aucun résultat PvP classé pour le moment.",
+      "es": "Aún no hay resultados de PvP clasificado."
+    },
+    "{0}/{1} queued - {2} min - Lv. {3}+": {
+      "en": "{0}/{1} queued - {2} min - Lv. {3}+",
+      "fr": "{0}/{1} en file - {2} min - Niv. {3}+",
+      "es": "{0}/{1} en cola - {2} min - Niv. {3}+"
+    },
+    "Join PvP queue": {
+      "en": "Join PvP queue",
+      "fr": "Rejoindre la file PvP",
+      "es": "Entrar en cola PvP"
+    },
+    "No Capture the Chest arenas are available yet.": {
+      "en": "No Capture the Chest arenas are available yet.",
+      "fr": "Aucune arène de capture du coffre n’est disponible.",
+      "es": "Todavía no hay arenas de captura del cofre disponibles."
+    },
+    "Leave match": {
+      "en": "Leave match",
+      "fr": "Quitter la partie",
+      "es": "Salir de la partida"
+    },
+    "Capture the Chest [{0}] - Red {1} : {2} Blue - {3}:{4}": {
+      "en": "Capture the Chest [{0}] - Red {1} : {2} Blue - {3}:{4}",
+      "fr": "Capture du coffre [{0}] - Rouge {1} : {2} Bleu - {3}:{4}",
+      "es": "Captura del cofre [{0}] - Rojo {1} : {2} Azul - {3}:{4}"
+    },
+    "Red team": {
+      "en": "Red team",
+      "fr": "Équipe rouge",
+      "es": "Equipo rojo"
+    },
+    "Blue team": {
+      "en": "Blue team",
+      "fr": "Équipe bleue",
+      "es": "Equipo azul"
+    },
+    "Respawning in {0}s": {
+      "en": "Respawning in {0}s",
+      "fr": "Réapparition dans {0}s",
+      "es": "Reaparición en {0}s"
+    },
+    "Bring the enemy chest home while your own is at base. First to {0} wins.": {
+      "en": "Bring the enemy chest home while your own is at base. First to {0} wins.",
+      "fr": "Ramenez le coffre ennemi lorsque le vôtre est à la base. Premier à {0} : victoire.",
+      "es": "Lleva el cofre enemigo a tu base mientras el tuyo esté allí. Gana el primero en llegar a {0}."
+    },
+    "Red chest": {
+      "en": "Red chest",
+      "fr": "Coffre rouge",
+      "es": "Cofre rojo"
+    },
+    "Blue chest": {
+      "en": "Blue chest",
+      "fr": "Coffre bleu",
+      "es": "Cofre azul"
+    },
+    "Unranked": {
+      "en": "Unranked",
+      "fr": "Non classé",
+      "es": "Sin clasificar"
+    },
+    "Recruit": {
+      "en": "Recruit",
+      "fr": "Recrue",
+      "es": "Recluta"
+    },
+    "Soldier": {
+      "en": "Soldier",
+      "fr": "Soldat",
+      "es": "Soldado"
+    },
+    "Veteran": {
+      "en": "Veteran",
+      "fr": "Vétéran",
+      "es": "Veterano"
+    },
+    "Sergeant": {
+      "en": "Sergeant",
+      "fr": "Sergent",
+      "es": "Sargento"
+    },
+    "Lieutenant": {
+      "en": "Lieutenant",
+      "fr": "Lieutenant",
+      "es": "Teniente"
+    },
+    "Captain": {
+      "en": "Captain",
+      "fr": "Capitaine",
+      "es": "Capitán"
+    },
+    "Commander": {
+      "en": "Commander",
+      "fr": "Commandant",
+      "es": "Comandante"
+    },
+    "Warlord": {
+      "en": "Warlord",
+      "fr": "Seigneur de guerre",
+      "es": "Señor de la guerra"
+    },
+    "Champion": {
+      "en": "Champion",
+      "fr": "Champion",
+      "es": "Campeón"
+    },
+    "Grand Marshal": {
+      "en": "Grand Marshal",
+      "fr": "Grand maréchal",
+      "es": "Gran mariscal"
+    },
+    "Please wait before another PvP request.": {
+      "en": "Please wait before another PvP request.",
+      "fr": "Veuillez patienter avant une autre demande PvP.",
+      "es": "Espera antes de enviar otra solicitud PvP."
+    },
+    "PvP request is unavailable.": {
+      "en": "PvP request is unavailable.",
+      "fr": "Cette demande PvP est indisponible.",
+      "es": "Esta solicitud PvP no está disponible."
+    },
+    "You left the PvP queue or match.": {
+      "en": "You left the PvP queue or match.",
+      "fr": "Vous avez quitté la file ou la partie PvP.",
+      "es": "Has salido de la cola o partida PvP."
+    },
+    "Choose an available Capture the Chest arena.": {
+      "en": "Choose an available Capture the Chest arena.",
+      "fr": "Choisissez une arène de capture du coffre disponible.",
+      "es": "Elige una arena de captura del cofre disponible."
+    },
+    "Return to the open world and finish your current activity before joining PvP.": {
+      "en": "Return to the open world and finish your current activity before joining PvP.",
+      "fr": "Retournez dans le monde ouvert et terminez votre activité avant de rejoindre le PvP.",
+      "es": "Vuelve al mundo abierto y termina tu actividad antes de entrar en PvP."
+    },
+    "Queued for Capture the Chest. The match starts when both teams are full.": {
+      "en": "Queued for Capture the Chest. The match starts when both teams are full.",
+      "fr": "En file pour la capture du coffre. La partie commence lorsque les deux équipes sont complètes.",
+      "es": "En cola para captura del cofre. La partida comienza cuando ambos equipos estén completos."
+    },
+    "The PvP match could not start.": {
+      "en": "The PvP match could not start.",
+      "fr": "La partie PvP n’a pas pu démarrer.",
+      "es": "No se pudo iniciar la partida PvP."
+    },
+    "Capture the Chest has begun!": {
+      "en": "Capture the Chest has begun!",
+      "fr": "La capture du coffre a commencé !",
+      "es": "¡Ha comenzado la captura del cofre!"
+    },
+    "Capture the Chest ended in a draw.": {
+      "en": "Capture the Chest ended in a draw.",
+      "fr": "La capture du coffre se termine à égalité.",
+      "es": "La captura del cofre terminó en empate."
+    },
+    "Victory! Your team captured the chests.": {
+      "en": "Victory! Your team captured the chests.",
+      "fr": "Victoire ! Votre équipe a capturé les coffres.",
+      "es": "¡Victoria! Tu equipo capturó los cofres."
+    },
+    "Defeat. The other team won Capture the Chest.": {
+      "en": "Defeat. The other team won Capture the Chest.",
+      "fr": "Défaite. L’autre équipe remporte la capture du coffre.",
+      "es": "Derrota. El otro equipo ganó la captura del cofre."
+    },
+    "The PvP match was cancelled.": {
+      "en": "The PvP match was cancelled.",
+      "fr": "La partie PvP a été annulée.",
+      "es": "La partida PvP fue cancelada."
+    },
+    "Royal Foundry & Forge": {
+      "en": "Royal Foundry & Forge",
+      "fr": "Fonderie et forge royales",
+      "es": "Fundición y forja reales"
+    },
+    "Metalworking recipes": {
+      "en": "Metalworking recipes",
+      "fr": "Recettes de métallurgie",
+      "es": "Recetas de metalurgia"
+    },
+    "Start recipe": {
+      "en": "Start recipe",
+      "fr": "Commencer",
+      "es": "Comenzar receta"
+    },
+    "Pump bellows": {
+      "en": "Pump bellows",
+      "fr": "Actionner le soufflet",
+      "es": "Accionar el fuelle"
+    },
+    "Strike": {
+      "en": "Strike",
+      "fr": "Frapper",
+      "es": "Golpear"
+    },
+    "Collect reward": {
+      "en": "Collect reward",
+      "fr": "Récupérer",
+      "es": "Recoger recompensa"
+    },
+    "Choose a metalworking recipe.": {
+      "en": "Choose a metalworking recipe.",
+      "fr": "Choisissez une recette de métallurgie.",
+      "es": "Elige una receta de metalurgia."
+    },
+    "Prepare your materials": {
+      "en": "Prepare your materials",
+      "fr": "Préparez vos matériaux",
+      "es": "Prepara tus materiales"
+    },
+    "Heat the metal": {
+      "en": "Heat the metal",
+      "fr": "Chauffez le métal",
+      "es": "Calienta el metal"
+    },
+    "Pour into the moulds": {
+      "en": "Pour into the moulds",
+      "fr": "Versez dans les moules",
+      "es": "Vierte en los moldes"
+    },
+    "Hammer the marked zone": {
+      "en": "Hammer the marked zone",
+      "fr": "Martelez la zone indiquée",
+      "es": "Martilla la zona indicada"
+    },
+    "Quench at the right temperature": {
+      "en": "Quench at the right temperature",
+      "fr": "Trempez à la bonne température",
+      "es": "Templa a la temperatura correcta"
+    },
+    "Work completed": {
+      "en": "Work completed",
+      "fr": "Travail terminé",
+      "es": "Trabajo terminado"
+    },
+    "Quality: {0}%": {
+      "en": "Quality: {0}%",
+      "fr": "Qualité : {0}%",
+      "es": "Calidad: {0}%"
+    },
+    "Keep the heat in the green zone with the bellows.": {
+      "en": "Keep the heat in the green zone with the bellows.",
+      "fr": "Maintenez la chaleur dans la zone verte avec le soufflet.",
+      "es": "Mantén el calor en la zona verde con el fuelle."
+    },
+    "Press when the white marker enters the green zone.": {
+      "en": "Press when the white marker enters the green zone.",
+      "fr": "Appuyez lorsque le repère blanc entre dans la zone verte.",
+      "es": "Pulsa cuando el marcador blanco entre en la zona verde."
+    },
+    "Pour": {
+      "en": "Pour",
+      "fr": "Verser",
+      "es": "Verter"
+    },
+    "Quench": {
+      "en": "Quench",
+      "fr": "Tremper",
+      "es": "Templar"
+    },
+    "Hammer": {
+      "en": "Hammer",
+      "fr": "Marteler",
+      "es": "Martillar"
+    },
+    "No metalworking recipes are available yet.": {
+      "en": "No metalworking recipes are available yet.",
+      "fr": "Aucune recette de métallurgie n’est disponible.",
+      "es": "Todavía no hay recetas de metalurgia disponibles."
+    },
+    "Required materials must be in your main inventory.": {
+      "en": "Required materials must be in your main inventory.",
+      "fr": "Les matériaux requis doivent être dans votre inventaire principal.",
+      "es": "Los materiales requeridos deben estar en tu inventario principal."
+    },
+    "Your profession level is too low for this recipe.": {
+      "en": "Your profession level is too low for this recipe.",
+      "fr": "Votre niveau de métier est insuffisant pour cette recette.",
+      "es": "Tu nivel de oficio es demasiado bajo para esta receta."
+    },
+    "The work failed. Your materials were not consumed.": {
+      "en": "The work failed. Your materials were not consumed.",
+      "fr": "Le travail a échoué. Vos matériaux n’ont pas été consommés.",
+      "es": "El trabajo falló. No se consumieron tus materiales."
+    },
+    "Crafting could not be saved. Check materials and inventory space, then collect again.": {
+      "en": "Crafting could not be saved. Check materials and inventory space, then collect again.",
+      "fr": "La fabrication n’a pas pu être enregistrée. Vérifiez vos matériaux et l’espace libre, puis réessayez de récupérer.",
+      "es": "No se pudo guardar la fabricación. Comprueba los materiales y el espacio libre e intenta recogerla de nuevo."
+    },
+    "Craft completed! Your reward is in your inventory.": {
+      "en": "Craft completed! Your reward is in your inventory.",
+      "fr": "Fabrication terminée ! Votre récompense est dans votre inventaire.",
+      "es": "¡Fabricación completada! Tu recompensa está en el inventario."
+    },
+    "Finish your current activity before opening the foundry or forge.": {
+      "en": "Finish your current activity before opening the foundry or forge.",
+      "fr": "Terminez votre activité avant d’ouvrir la fonderie ou la forge.",
+      "es": "Termina tu actividad antes de abrir la fundición o la forja."
     }
   }
 }

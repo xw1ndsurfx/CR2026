@@ -1130,6 +1130,7 @@ public partial class Player : Entity
         packet = base.EntityPacket(packet, forPlayer);
 
         var pkt = (PlayerEntityPacket)packet;
+        pkt.PvpGrade=Intersect.Server.Pvp.PvpRuntime.Grade(this);pkt.PvpPoints=Intersect.Server.Pvp.PvpRuntime.Points(this);pkt.PvpMatchId=Intersect.Server.Pvp.PvpRuntime.MatchId(this);pkt.PvpTeam=Intersect.Server.Pvp.PvpRuntime.Team(this);
         pkt.IsAfk = _isAfk;
         pkt.PendingDeath = HasPendingDeath;
         pkt.Gender = Gender;
@@ -1216,6 +1217,7 @@ public partial class Player : Entity
     public override void Die(bool dropItems = true, Entity killer = null)
     {
         if (IsDead || HasPendingDeath) return;
+        if(Intersect.Server.Pvp.PvpRuntime.HandleDeath(this,killer))return;
         var dungeonDeath = DungeonRunRuntime.IsPlayerInActiveRun(this);
 
         CastTime = 0;
@@ -1693,8 +1695,10 @@ public partial class Player : Entity
     //Combat
     public override void KilledEntity(Entity entity)
     {
-        if (entity is Npc { PetOwner: null } monster)
-            AwardPetExperience(monster.Descriptor.Experience);
+        if(entity is Player victim)Intersect.Server.Pvp.PvpRuntime.RecordKill(this,victim);
+        var rolledNpcExperience=entity is Npc killedNpc ? killedNpc.Descriptor.RollExperience() : 0L;
+        if (entity is Npc { PetOwner: null })
+            AwardPetExperience(rolledNpcExperience);
 
         switch (entity)
         {
@@ -1714,7 +1718,7 @@ public partial class Player : Entity
                         member.InRangeOf(this, Options.Instance.Party.SharedXpRange)) ?? 0;
                     var partyBonusPercent = nearbyAllies *
                         Math.Max(0f, Options.Instance.Party.BonusExperiencePercentPerMember);
-                    var baseExperience = Math.Max(0L, descriptor.Experience);
+                    var baseExperience = rolledNpcExperience;
                     var partyBonusExperience = partyBonusPercent > 0
                         ? (long)Math.Round(baseExperience * partyBonusPercent / 100d,
                             MidpointRounding.AwayFromZero)
@@ -2072,6 +2076,13 @@ public partial class Player : Entity
 
     public override bool CanAttack(Entity entity, SpellDescriptor spell)
     {
+        if(entity is Player pvpTarget && (Intersect.Server.Pvp.PvpRuntime.InMatch(this) || Intersect.Server.Pvp.PvpRuntime.InMatch(pvpTarget)))
+        {
+            if(Intersect.Server.Pvp.PvpRuntime.Protected(this) || Intersect.Server.Pvp.PvpRuntime.Protected(pvpTarget))return false;
+            if(spell?.Combat?.TargetType is SpellTargetType.Self or SpellTargetType.Projectile || spell?.SpellType==SpellType.Dash)return !IsCasting;
+            if(Intersect.Server.Pvp.PvpRuntime.MatchId(this)!=Intersect.Server.Pvp.PvpRuntime.MatchId(pvpTarget))return false;
+            return !IsCasting && (spell?.Combat?.Friendly==true)==(Intersect.Server.Pvp.PvpRuntime.Allies(this,pvpTarget)==true);
+        }
         var npc = entity as Npc;
         if (npc != default && !npc.CanPlayerAttack(this))
         {
@@ -2456,6 +2467,7 @@ public partial class Player : Entity
     /// </summary>
     public void LoginWarp()
     {
+        if(Intersect.Server.Pvp.PvpRuntime.RecoverLogin(this))return;
         Intersect.Server.Housing.HousingRuntime.RestoreLoginLocation(this);
         if (MapId == null || MapId == Guid.Empty)
         {
@@ -5860,6 +5872,7 @@ public partial class Player : Entity
 
     public virtual bool IsAllyOf(Player otherPlayer)
     {
+        if(Intersect.Server.Pvp.PvpRuntime.Allies(this,otherPlayer) is bool teamAlly)return teamAlly;
         if (Id == otherPlayer.Id)
         {
             return true;
@@ -7613,7 +7626,7 @@ public partial class Player : Entity
     {
         entityType = default;
 
-        if (IsDead || HasPendingDeath)
+        if (IsDead || HasPendingDeath || Intersect.Server.Pvp.PvpRuntime.Respawning(this) || Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Contains(Id))
         {
             blockerType = MovementBlockerType.OutOfBounds;
             return false;

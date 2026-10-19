@@ -249,6 +249,8 @@ internal sealed class PlayerProfileWindow : Window
                 ("Class", Fallback(profile.ClassName)),
                 ("Guild", Fallback(profile.GuildName)),
                 ("Ranking title", Fallback(profile.RankingTitle)),
+                (Intersect.Client.Localization.ClientLanguages.Text("PvP grade"),Intersect.Client.Localization.ClientLanguages.Text(Intersect.Client.Localization.ClientLanguages.ContentText(profile.PvpGrade))),
+                (Intersect.Client.Localization.ClientLanguages.Text("PvP points"),profile.PvpPoints.ToString("N0")),
                 ("Experience", profile.Experience.ToString("N0")),
                 ("XP to next", profile.ExperienceToNextLevel < 0 ? "MAX" :
                     profile.ExperienceToNextLevel.ToString("N0")),

@@ -28,6 +28,15 @@ internal static class WorldActivitiesRuntime
             if (!config.IsValid) throw new InvalidDataException("Check music, schedules, duration and XP percentages.");
             if (config.BankOpeningCurrencyId != Guid.Empty && Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(config.BankOpeningCurrencyId) == null)
                 throw new InvalidDataException("Choose an existing bank currency.");
+            if(section==WorldActivitiesSection.Metalworking && config.Metalworking.Recipes.Where(r=>r.Enabled).Any(r=>Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(r.OutputItemId)==null || r.Ingredients.Any(i=>Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(i.ItemId)==null) || r.ProfessionId!=Guid.Empty && Intersect.Server.Professions.ProfessionConfigurationRuntime.Current.Find(r.ProfessionId)==null))
+                throw new InvalidDataException("Select existing materials, output items and professions for enabled metalworking recipes.");
+            if(section==WorldActivitiesSection.Pvp)
+            {
+                foreach(var arena in config.Pvp.Arenas.Where(a=>a.Enabled))
+                    if(Intersect.Server.Maps.MapController.Get(arena.MapId)?.ZoneType!=Intersect.Framework.Core.GameObjects.Maps.MapZone.Arena || arena.RedX>=Options.Instance.Map.MapWidth || arena.BlueX>=Options.Instance.Map.MapWidth || arena.RedY>=Options.Instance.Map.MapHeight || arena.BlueY>=Options.Instance.Map.MapHeight || arena.ChestItemId!=Guid.Empty && Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(arena.ChestItemId)==null)
+                        throw new InvalidDataException("Choose Arena-zone maps, valid base coordinates and an existing chest icon item.");
+                if(config.Pvp.RankedMaps.Any(id=>Intersect.Server.Maps.MapController.Get(id) is not {} map || map.ZoneType==Intersect.Framework.Core.GameObjects.Maps.MapZone.Safe))throw new InvalidDataException("Ranked maps must exist and permit PvP.");
+            }
             Directory.CreateDirectory("resources");
             File.WriteAllText(FileName + ".tmp", JsonConvert.SerializeObject(config, Formatting.Indented));
             File.Move(FileName + ".tmp", FileName, true);
@@ -35,6 +44,9 @@ internal static class WorldActivitiesRuntime
         }
         Intersect.Server.Localization.ContentTranslationRuntime.QueueJson(json);
         PacketSender.SendDataToAllPlayers(new WorldActivitiesPacket { Json = JsonConvert.SerializeObject(config) });
+        if(section==WorldActivitiesSection.Pvp)
+            foreach(var player in Intersect.Server.Entities.Player.OnlinePlayersSnapshot())
+                if(player.Map!=null)PacketSender.SendEntityDataToProximity(player);
     }
     internal static ExperienceEventAnnouncementPacket Snapshot(DateTimeOffset now, bool silent = false)
     {

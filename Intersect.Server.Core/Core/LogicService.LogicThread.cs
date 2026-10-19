@@ -234,6 +234,8 @@ internal sealed partial class LogicService
                     InvasionRuntime.Update(startTime);
                     WorldBossRuntime.Update(startTime);
                     Intersect.Server.WorldEvents.WorldActivitiesRuntime.Update(startTime);
+                    Intersect.Server.Pvp.PvpRuntime.Update(startTime);
+                    Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Update(startTime);
                     DungeonRunRuntime.Update(startTime);
                     swCps++;
 

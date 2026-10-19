@@ -8,6 +8,7 @@ namespace Intersect.Client.Framework.Database;
 public abstract partial class GameDatabase
 {
     public string LanguageCode { get; set; } = "en";
+    public bool ShowPvpGrades {get;set;}=true;
     public bool ShowMyLevel { get; set; } = true;
     public bool EnableVoiceSounds { get; set; } = true;
     public bool ShowPlayerLevels { get; set; } = true;
@@ -165,6 +166,7 @@ public abstract partial class GameDatabase
         ShowHealthAsPercentage = LoadPreference(nameof(ShowHealthAsPercentage), false);
         ShowManaAsPercentage = LoadPreference(nameof(ShowManaAsPercentage), false);
         SimplifiedEscapeMenu = LoadPreference(nameof(SimplifiedEscapeMenu), false);
+        ShowPvpGrades=LoadPreference(nameof(ShowPvpGrades),true);
         ShowMyLevel = LoadPreference(nameof(ShowMyLevel), true);
         LanguageCode = Intersect.Localization.GameTextCatalog.NormalizeLanguage(LoadPreference(nameof(LanguageCode), "en"));
         EnableVoiceSounds = LoadPreference(nameof(EnableVoiceSounds), true);
@@ -224,6 +226,7 @@ public abstract partial class GameDatabase
         SavePreference(nameof(ShowHealthAsPercentage), ShowHealthAsPercentage);
         SavePreference(nameof(ShowManaAsPercentage), ShowManaAsPercentage);
         SavePreference(nameof(SimplifiedEscapeMenu), SimplifiedEscapeMenu);
+        SavePreference(nameof(ShowPvpGrades),ShowPvpGrades);
         SavePreference(nameof(ShowMyLevel), ShowMyLevel);
         SavePreference(nameof(EnableVoiceSounds), EnableVoiceSounds);
         SavePreference(nameof(ShowPlayerLevels), ShowPlayerLevels);

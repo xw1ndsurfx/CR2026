@@ -72,6 +72,7 @@ public partial class FrmNpc : EditorForm
         BuildPetControls();
         BuildNpcSpellTimingControls();
         BuildNpcAutoCreator();
+        BuildExperienceRange();
         BuildResponsiveNpcEditor();
         Icon = Program.Icon;
         _btnSave = btnSave;
@@ -920,7 +921,9 @@ public partial class FrmNpc : EditorForm
             nudSpd.Value = mEditorItem.Stats[(int)Stat.Speed];
             nudHp.Value = mEditorItem.MaxVitals[(int)Vital.Health];
             nudMana.Value = mEditorItem.MaxVitals[(int)Vital.Mana];
+            var savedMaximumExperience=mEditorItem.ExperienceMaximum;
             nudExp.Value = mEditorItem.Experience;
+            _experienceMaximum.Value=Math.Clamp(Math.Max(mEditorItem.Experience,savedMaximumExperience),0,(long)_experienceMaximum.Maximum);
             chkAttackAllies.Checked = mEditorItem.AttackAllies;
             chkEnabled.Checked = mEditorItem.NpcVsNpcEnabled;
 
@@ -1345,7 +1348,8 @@ public partial class FrmNpc : EditorForm
 
     private void nudExp_ValueChanged(object sender, EventArgs e)
     {
-        mEditorItem.Experience = (int)nudExp.Value;
+        mEditorItem.Experience = (long)nudExp.Value;
+        if(_experienceMaximum!=null)_experienceMaximum.Minimum=nudExp.Value;
     }
 
     private void lstDrops_SelectedIndexChanged(object sender, EventArgs e)

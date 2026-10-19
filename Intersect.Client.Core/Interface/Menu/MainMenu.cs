@@ -231,6 +231,7 @@ public partial class MainMenu : MutableInterface
     //Methods
     public void Update(TimeSpan elapsed, TimeSpan total)
     {
+        UpdateMenuAnimations();
         if (_steamAutoLoginInProgress &&
             _steamAutoLoginStartedAt > 0 &&
             Timing.Global.MillisecondsUtc - _steamAutoLoginStartedAt >= SteamAutoLoginTimeoutMilliseconds)

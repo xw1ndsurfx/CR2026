@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Intersect;
 using Intersect.Editor.Forms.Editors.Events;
 using Intersect.Editor.Forms.DockingElements;
@@ -43,6 +43,7 @@ internal static class Program
         if (Environment.GetCommandLineArgs().Contains("--housing-picker-only")) { HousingPickerTests.Run(); return; }
         SoundImportTests.Run();
         ActivitiesEditorTests.Run();
+        CombatPvpMetalworkEditorTests.Run();
         CharacterWeaponPaperdollTests.Run();
         EventToolsTests.Run();
         InvasionEditorTests.Run();

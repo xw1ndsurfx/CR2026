@@ -385,9 +385,17 @@ public partial class NPCDescriptor : DatabaseObject<NPCDescriptor>, IFolderable
     /// <summary>
     /// If true this npc will drop individual loot for all of those who helped slay it.
     /// </summary>
-    public bool IndividualizedLoot { get; set; }
+    public bool IndividualizedLoot { get; set; } = true;
 
     public long Experience { get; set; }
+    // Zero keeps old NPC definitions at their existing fixed reward.
+    public long ExperienceMaximum { get; set; }
+    public long RollExperience()
+    {
+        var minimum=Math.Max(0,Experience);var maximum=Math.Max(minimum,ExperienceMaximum);
+        if(maximum==minimum)return minimum;
+        return maximum==long.MaxValue ? Random.Shared.NextInt64(minimum-1,maximum)+1 : Random.Shared.NextInt64(minimum,maximum+1);
+    }
 
     public int Level { get; set; } = 1;
 

@@ -478,6 +478,7 @@ public partial class GameInterface : MutableInterface
         UpdateDungeonRunUi();
         UpdateDungeonRewardNotifications();
         UpdateItemChangeNotifications();
+        UpdatePvpHud();
         AnnouncementWindow?.Update();
         mPictureWindow?.Update();
         UpdatePotions();

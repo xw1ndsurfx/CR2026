@@ -51,4 +51,8 @@ public partial class PlayerEntityPacket : EntityPacket
 
     [Key(33)]
     public int BadgeId { get; set; }
+    [Key(35)] public string PvpGrade {get;set;}="";
+    [Key(36)] public long PvpPoints {get;set;}
+    [Key(37)] public Guid PvpMatchId {get;set;}
+    [Key(38)] public int PvpTeam {get;set;}=-1;
 }

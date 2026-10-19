@@ -64,6 +64,10 @@ public partial class Player : Entity, IPlayer
     public CharacterAppearance Appearance { get; set; } = new();
 
     public bool IsAfk { get; private set; }
+    public string PvpGrade {get;set;}="";
+    public long PvpPoints {get;set;}
+    public Guid PvpMatchId {get;set;}
+    public int PvpTeam {get;set;}=-1;
     public int BadgeId { get; set; }
 
     public long Experience { get; set; } = 0;
@@ -364,6 +368,7 @@ public partial class Player : Entity, IPlayer
         Appearance = playerPacket.Appearance ?? new CharacterAppearance();
         AccessLevel = playerPacket.AccessLevel;
         BadgeId = playerPacket.BadgeId;
+        PvpGrade=playerPacket.PvpGrade;PvpPoints=playerPacket.PvpPoints;PvpMatchId=playerPacket.PvpMatchId;PvpTeam=playerPacket.PvpTeam;
         if (playerPacket.CombatTimeRemaining > 0) CombatTimer = playerPacket.CombatTimeRemaining + Timing.Global.Milliseconds;
         else if (CombatTimer > Timing.Global.Milliseconds) CombatTimer = Timing.Global.Milliseconds;
         Guild = playerPacket.Guild;
@@ -2743,6 +2748,7 @@ public partial class Player : Entity, IPlayer
 
     public override bool IsAllyOf(Player en)
     {
+        if(PvpMatchId!=Guid.Empty || en.PvpMatchId!=Guid.Empty)return PvpMatchId==en.PvpMatchId && PvpTeam==en.PvpTeam;
         if (base.IsAllyOf(en))
         {
             return true;
