@@ -276,6 +276,7 @@ public static partial class Interface
 
     public static void DestroyGwen(bool exiting = false)
     {
+        Naval.NavalWorld.Clear();
         if (!exiting)
         {
             // Preserve the debug window if not exiting
