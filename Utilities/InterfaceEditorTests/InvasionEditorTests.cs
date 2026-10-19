@@ -24,6 +24,7 @@ internal static class InvasionEditorTests
         foreach (var evt in events.Append(mapEvent)) EventDescriptor.Lookup[evt.Id] = evt;
         for (var i = 0; i < reminders.Length; i++)
             typeof(InvasionDefinition).GetProperty($"Reminder{reminders[i]}CommonEventId")!.SetValue(invasion, events[i].Id);
+        invasion.Waves[0].AfterClearCommonEventId = events[0].Id;
         try
         {
             InvasionConfiguration.Load(new InvasionConfiguration { Invasions = [invasion] }.ToJson());
@@ -53,6 +54,21 @@ internal static class InvasionEditorTests
             var json = new InvasionConfiguration { Invasions = [stored] }.ToJson();
             Check(InvasionConfiguration.FromJson(json).Invasions[0].AdditionalTargets[0].Health == 900,
                 "Configuration round trip retains individual target HP");
+            Check(InvasionConfiguration.FromJson(json).Invasions[0].Waves[0].AfterClearCommonEventId == events[0].Id,
+                "Configuration round trip retains the between-wave Common Event");
+            var waveType = typeof(FrmInvasionConfiguration).Assembly.GetType("Intersect.Editor.Forms.Editors.InvasionWaveDialog", true)!;
+            using (var waveDialog = (Form)Activator.CreateInstance(waveType, [stored.Waves[0], map])!)
+            {
+                var picker = (ComboBox)waveType.GetField("_afterClearEvent", flags)!.GetValue(waveDialog)!;
+                Guid Id(object choice) => (Guid)choice.GetType().GetProperty("Id")!.GetValue(choice)!;
+                Check(Id(picker.SelectedItem!) == events[0].Id && picker.Items.Cast<object>().All(choice => Id(choice) != mapEvent.Id),
+                    "Wave dialog loads its Common Event and excludes map events");
+                picker.SelectedIndex = 0;
+                waveType.GetMethod("Save", flags)!.Invoke(waveDialog, null);
+                var result = (InvasionWaveDefinition)waveType.GetProperty("Result")!.GetValue(waveDialog)!;
+                Check(result.AfterClearCommonEventId == Guid.Empty && stored.Waves[0].AfterClearCommonEventId == events[0].Id && result.Id == stored.Waves[0].Id,
+                    "Removing a wave event is saved without mutating the source draft");
+            }
             var dialogType = typeof(FrmInvasionConfiguration).Assembly.GetType("Intersect.Editor.Forms.Editors.InvasionTargetDialog", true)!;
             using var dialog = (Form)Activator.CreateInstance(dialogType, flags, null, [stored.AdditionalTargets[0], map], null)!;
             dialogType.GetMethod("Save", flags)!.Invoke(dialog, null);
@@ -61,6 +77,6 @@ internal static class InvasionEditorTests
                 "Objective editor preserves event IDs and coordinates for maps not currently loaded");
         }
         finally { InvasionConfiguration.Load(previous); foreach (var evt in events.Append(mapEvent)) EventDescriptor.Lookup.DeleteAt(evt.Id); }
-        System.Console.WriteLine("PASS invasion editor multiline alerts, first-warning ambience, multiple targets, persistence, unloaded map event IDs and independent alert Common Event selectors");
+        System.Console.WriteLine("PASS invasion editor multiline alerts, first-warning ambience, multiple targets, persistence, unloaded map event IDs and independent alert/wave Common Event selectors");
     }
 }

@@ -104,7 +104,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
 
     private readonly ListBox _additionalTargets = new() { Width = 650, Height = 250 };
     private readonly CheckBox _loseAnyTarget = new() { Text = "Defeat if any objective is destroyed (otherwise, all objectives must fall)", AutoSize = true };
-    private readonly ListBox _waves = new() { Dock = DockStyle.Fill };
+    private readonly ListBox _waves = new() { Dock = DockStyle.Fill, HorizontalScrollbar = true };
 
     private int _selectedIndex = -1;
     private bool _loading;
@@ -684,8 +684,8 @@ public sealed class FrmInvasionConfiguration : DarkForm
         var help = new Label
         {
             Dock = DockStyle.Top,
-            Height = 44,
-            Text = "Waves launch in order. Delay is counted after the previous wave is cleared. Mark any NPC spawn as Boss to create a boss wave.",
+            Height = 64,
+            Text = "Waves launch in order. Delay is counted after the previous wave is cleared. Each wave can run a Common Event during the pause before the next wave. Mark any NPC spawn as Boss to create a boss wave.",
             Padding = new Padding(8),
         };
 
@@ -973,6 +973,7 @@ public sealed class FrmInvasionConfiguration : DarkForm
             var bosses = wave.Spawns.Where(spawn => spawn.IsBoss).Sum(spawn => spawn.Count);
             _waves.Items.Add(
                 $"{index + 1}. {wave.Name} | delay {wave.DelaySeconds}s | {total} NPC(s)" +
+                (wave.AfterClearCommonEventId == Guid.Empty ? string.Empty : $" | after clear: {EventDescriptor.GetName(wave.AfterClearCommonEventId)}") +
                 (bosses > 0 ? $" | {bosses} boss(es)" : string.Empty)
             );
         }

@@ -40,6 +40,7 @@ public sealed class InvasionWaveDefinition
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = "Wave";
     public int DelaySeconds { get; set; } = 10;
+    public Guid AfterClearCommonEventId { get; set; }
     public InvasionSpawnDefinition[] Spawns { get; set; } = [];
 
     public bool IsStructurallyValid =>
