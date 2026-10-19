@@ -64,6 +64,8 @@ internal static class LockpickingRuntime
     private static readonly System.Threading.Timer SweepTimer =
         new(_ => Sweep(), null, TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(500));
 
+    internal static bool Contains(Guid playerId) { lock (Gate) return Sessions.ContainsKey(playerId); }
+
     internal static bool IsUnlockedFor(
         Player player,
         StartMiniGameCommand command,
