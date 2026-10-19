@@ -14,6 +14,9 @@ namespace Intersect.Server.Entities.Events;
 
 public static partial class Conditions
 {
+    public static bool MeetsCondition(InvasionCondition condition, Player player, Event eventInstance, QuestDescriptor questDescriptor) =>
+        Intersect.Server.WorldEvents.Invasions.InvasionRuntime.MatchesCondition(player, condition);
+
     public static bool CanSpawnPage(EventPage page, Player player, Event activeInstance)
     {
         return MeetsConditionLists(page.ConditionLists, player, activeInstance);

@@ -714,6 +714,10 @@ public static partial class PacketSender
         //If this is an editor, send the shops, events, variables, etc
         if (client.IsEditor)
         {
+            // Conditions, quests and achievements need these choices without
+            // requiring the invasion configuration window to be opened first.
+            client.Send(new Intersect.Network.Packets.WorldEvents.InvasionConfigurationPacket(
+                Intersect.Server.WorldEvents.Invasions.InvasionConfigurationRuntime.Json, openEditor: false));
             foreach (var val in Enum.GetValues(typeof(GameObjectType)))
             {
                 if ((GameObjectType)val == GameObjectType.Map)
