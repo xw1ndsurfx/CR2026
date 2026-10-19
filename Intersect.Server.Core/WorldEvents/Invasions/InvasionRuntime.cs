@@ -457,13 +457,17 @@ internal static class InvasionRuntime
 
     private static void RunReminderCommonEvent(InvasionDefinition definition, int minutesBefore)
     {
-        var eventId = definition.GetReminderCommonEventId(minutesBefore);
+        RunInvasionCommonEvent(definition, definition.GetReminderCommonEventId(minutesBefore), $"{minutesBefore}-minute alert");
+    }
+
+    private static void RunInvasionCommonEvent(InvasionDefinition definition, Guid eventId, string phase)
+    {
         if (eventId == Guid.Empty) return;
         if (EventDescriptor.Get(eventId) is not { CommonEvent: true } commonEvent)
         {
             ApplicationContext.Context.Value?.Logger.LogWarning(
-                "Invasion {InvasionName} skipped missing or non-common event {EventId} for its {MinutesBefore}-minute alert.",
-                definition.Name, eventId, minutesBefore);
+                "Invasion {InvasionName} skipped missing or non-common event {EventId} for {Phase}.",
+                definition.Name, eventId, phase);
             return;
         }
         foreach (var player in Player.OnlinePlayers)
@@ -549,12 +553,7 @@ internal static class InvasionRuntime
                 return;
             }
 
-            if (session.NextWaveAtMs == long.MaxValue)
-            {
-                var nextIndex = session.WaveIndex + 1;
-                var delay = session.Definition.Waves[nextIndex].DelaySeconds;
-                session.NextWaveAtMs = nowMs + delay * 1_000L;
-            }
+            ScheduleNextWave(session, nowMs);
 
             if (nowMs >= session.NextWaveAtMs)
             {
@@ -569,6 +568,18 @@ internal static class InvasionRuntime
             session.LastStatusAtMs = nowMs;
             BroadcastStatus(session, string.Empty);
         }
+    }
+
+    private static void ScheduleNextWave(Session session, long nowMs)
+    {
+        // Set the deadline before queuing the event, so subsequent update ticks
+        // cannot replay it while the next wave is waiting to spawn.
+        if (session.Completed || session.ActiveNpcs.Count != 0 || session.NextWaveAtMs != long.MaxValue ||
+            session.WaveIndex < 0 || session.WaveIndex >= session.Definition.Waves.Length - 1)
+            return;
+        session.NextWaveAtMs = nowMs + session.Definition.Waves[session.WaveIndex + 1].DelaySeconds * 1_000L;
+        RunInvasionCommonEvent(session.Definition, session.Definition.Waves[session.WaveIndex].AfterClearCommonEventId,
+            $"after wave {session.WaveIndex + 1}");
     }
 
     private static void SpawnWave(Session session, int waveIndex)

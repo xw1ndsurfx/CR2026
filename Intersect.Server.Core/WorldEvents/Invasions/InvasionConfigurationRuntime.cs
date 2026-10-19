@@ -64,11 +64,15 @@ internal static class InvasionConfigurationRuntime
             }
 
             foreach (var wave in invasion.Waves)
-            foreach (var spawn in wave.Spawns)
             {
-                if (NPCDescriptor.Get(spawn.NpcId) == null ||
-                    MapController.Get(spawn.SpawnMapId) == null)
+                if (wave.AfterClearCommonEventId != Guid.Empty &&
+                    EventDescriptor.Get(wave.AfterClearCommonEventId) is not { CommonEvent: true })
                     return false;
+                foreach (var spawn in wave.Spawns)
+                {
+                    if (NPCDescriptor.Get(spawn.NpcId) == null || MapController.Get(spawn.SpawnMapId) == null)
+                        return false;
+                }
             }
         }
 
