@@ -5359,6 +5359,31 @@
       "en": "{0}: {1:N0} / {2:N0} HP",
       "fr": "{0} : {1:N0} / {2:N0} PV",
       "es": "{0}: {1:N0} / {2:N0} PV"
+    },
+    "All invasions": {
+      "en": "All invasions",
+      "fr": "Toutes les invasions",
+      "es": "Todas las invasiones"
+    },
+    "{0} / {1} invasion victories - {2}": {
+      "en": "{0} / {1} invasion victories - {2}",
+      "fr": "{0} / {1} victoires d’invasion - {2}",
+      "es": "{0} / {1} victorias de invasión - {2}"
+    },
+    "{0} / {1} invasion participations - {2}": {
+      "en": "{0} / {1} invasion participations - {2}",
+      "fr": "{0} / {1} participations aux invasions - {2}",
+      "es": "{0} / {1} participaciones en invasiones - {2}"
+    },
+    "{0} / {1} invasion waves cleared - {2}": {
+      "en": "{0} / {1} invasion waves cleared - {2}",
+      "fr": "{0} / {1} vagues d’invasion terminées - {2}",
+      "es": "{0} / {1} oleadas de invasión superadas - {2}"
+    },
+    "{0} / {1} invasion defeats - {2}": {
+      "en": "{0} / {1} invasion defeats - {2}",
+      "fr": "{0} / {1} défaites d’invasion - {2}",
+      "es": "{0} / {1} derrotas de invasión - {2}"
     }
   }
 }

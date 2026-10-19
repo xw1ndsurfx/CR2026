@@ -46,6 +46,7 @@ internal static class Program
         CharacterWeaponPaperdollTests.Run();
         EventToolsTests.Run();
         InvasionEditorTests.Run();
+        InvasionConditionEditorTests.Run();
         MiniGameEditorTests.Run();
         HousingPickerTests.Run();
         using (var housing = new Intersect.Editor.Forms.Editors.FrmHousingConfiguration("{}"))

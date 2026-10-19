@@ -3,6 +3,7 @@ using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.Achievements;
+using Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.WorldEvents.Invasions;
 using Intersect.Network.Packets.WorldEvents;
@@ -74,21 +75,36 @@ internal static class InvasionRuntime
     private static readonly Dictionary<Guid, PendingStart> PendingStarts = [];
     private sealed record Prelude(InvasionDefinition Definition, long ScheduledAt, long EnvironmentAt, long LastBroadcastAt);
     private static readonly Dictionary<Guid, Prelude> Preludes = [];
+    private static readonly ConcurrentDictionary<Guid, byte> PreparingInvasions = [];
     private static long _nextScheduleCheckAt;
 
-    internal static bool IsActiveOnMap(Guid mapId)
+    internal static bool MatchesCondition(Player player, InvasionCondition condition)
     {
-        lock (Gate)
+        var mode = condition.Mode;
+        var id = condition.InvasionId;
+        var amount = Math.Max(1, condition.Amount);
+        var sessions = SessionsById.Values.Where(s => !s.Completed && (id == Guid.Empty || s.Definition.Id == id));
+        return mode switch
         {
-            return Sessions.Values.Any(session =>
-                !session.Completed &&
-                (session.Objectives.Any(t => t.MapId == mapId) ||
-                 session.Definition.Waves.Any(wave =>
-                     wave.Spawns.Any(spawn => spawn.SpawnMapId == mapId)
-                 ))
-            );
-        }
+            InvasionConditionMode.Active => sessions.Any(),
+            InvasionConditionMode.Preparing => id == Guid.Empty ? !PreparingInvasions.IsEmpty : PreparingInvasions.ContainsKey(id),
+            InvasionConditionMode.PlayerParticipating => sessions.Any(s => s.Participants.ContainsKey(player.Id)),
+            InvasionConditionMode.WaveAtLeast => sessions.Any(s => s.WaveIndex + 1 >= amount),
+            InvasionConditionMode.VictoriesAtLeast => InvasionProgressRuntime.Get(player, id, InvasionProgressMetric.Victories) >= amount,
+            InvasionConditionMode.ParticipationsAtLeast => InvasionProgressRuntime.Get(player, id, InvasionProgressMetric.Participations) >= amount,
+            InvasionConditionMode.WavesClearedAtLeast => InvasionProgressRuntime.Get(player, id, InvasionProgressMetric.WavesCleared) >= amount,
+            InvasionConditionMode.DefeatsAtLeast => InvasionProgressRuntime.Get(player, id, InvasionProgressMetric.Defeats) >= amount,
+            _ => false,
+        };
     }
+
+    // Queries can run while a player lock is held. Do not acquire the simulation
+    // gate here: wave/result progression takes that gate before a player lock.
+    internal static bool IsActiveOnMap(Guid mapId) =>
+        SessionsById.Values.Any(session =>
+            !session.Completed &&
+            (session.Objectives.Any(t => t.MapId == mapId) ||
+             session.Definition.Waves.Any(wave => wave.Spawns.Any(spawn => spawn.SpawnMapId == mapId))));
 
     internal static void Update(long nowMs)
     {
@@ -330,11 +346,13 @@ internal static class InvasionRuntime
             if (now.ToUnixTimeMilliseconds() >= pair.Value.ScheduledAt && now.ToUnixTimeMilliseconds() < pair.Value.ScheduledAt + 60000 &&
                 InvasionConfigurationRuntime.Current.Invasions.Any(d => d.Id == pair.Key && d.Enabled)) continue;
             Preludes.Remove(pair.Key);
+            PreparingInvasions.TryRemove(pair.Key, out _);
             foreach (var player in Player.OnlinePlayers) player?.SendPacket(new InvasionStatusPacket { InvasionId = pair.Key, Active = false });
         }
     }
     private static void BroadcastPrelude(InvasionDefinition definition, long environmentAt)
     {
+        PreparingInvasions[definition.Id] = 0;
         var packet = new InvasionStatusPacket
         {
             Active = true, Prelude = true, InvasionId = definition.Id, Name = definition.Name,
@@ -477,6 +495,7 @@ internal static class InvasionRuntime
 
     private static void Start(InvasionDefinition definition, long nowMs)
     {
+        PreparingInvasions.TryRemove(definition.Id, out _);
         var (targetMapId, targetX, targetY, targetName) = ResolveObjective(definition);
 
         var session = new Session
@@ -578,8 +597,16 @@ internal static class InvasionRuntime
             session.WaveIndex < 0 || session.WaveIndex >= session.Definition.Waves.Length - 1)
             return;
         session.NextWaveAtMs = nowMs + session.Definition.Waves[session.WaveIndex + 1].DelaySeconds * 1_000L;
+        CreditClearedWave(session);
         RunInvasionCommonEvent(session.Definition, session.Definition.Waves[session.WaveIndex].AfterClearCommonEventId,
             $"after wave {session.WaveIndex + 1}");
+    }
+
+    private static void CreditClearedWave(Session session)
+    {
+        foreach (var id in session.Participants.Keys)
+            if (Player.FindOnline(id) is { IsDisposed: false } player)
+                InvasionProgressRuntime.Record(player, session.Definition.Id, InvasionProgressMetric.WavesCleared);
     }
 
     private static void SpawnWave(Session session, int waveIndex)
@@ -850,14 +877,11 @@ internal static class InvasionRuntime
                 )
                 : 0;
 
-            if (victory && !configurationFailure)
+            if (!configurationFailure)
             {
-                AchievementRuntime.AddProgress(
-                    player,
-                    AchievementObjectiveType.InvasionCompletions,
-                    1,
-                    session.Definition.Id
-                );
+                if (victory) InvasionProgressRuntime.Record(player, session.Definition.Id, InvasionProgressMetric.WavesCleared);
+                InvasionProgressRuntime.Record(player, session.Definition.Id, InvasionProgressMetric.Participations);
+                InvasionProgressRuntime.Record(player, session.Definition.Id, victory ? InvasionProgressMetric.Victories : InvasionProgressMetric.Defeats);
             }
 
             var rewardPercent = 0;

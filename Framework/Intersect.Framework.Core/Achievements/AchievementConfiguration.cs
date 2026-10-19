@@ -21,6 +21,9 @@ public enum AchievementObjectiveType
     LockpickingNoBreakPicks = 13,
     DungeonCompletions = 14,
     InvasionCompletions = 15,
+    InvasionParticipations = 16,
+    InvasionWavesCleared = 17,
+    InvasionDefeats = 18,
 }
 
 public sealed class AchievementRewardDefinition

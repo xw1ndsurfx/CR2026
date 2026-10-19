@@ -21,7 +21,7 @@ internal sealed partial class PacketHandler
                 throw new InvalidDataException("Invasion configuration is empty or too large.");
 
             InvasionConfigurationRuntime.Save(packet.ConfigurationJson);
-            client.Send(new InvasionConfigurationPacket(InvasionConfigurationRuntime.Json, openEditor: false));
+            PacketSender.SendDataToEditors(new InvasionConfigurationPacket(InvasionConfigurationRuntime.Json, openEditor: false));
         }
         catch (Exception exception)
         {

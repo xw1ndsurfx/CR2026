@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Conditions;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -309,6 +309,12 @@ public partial class QuestTaskDescriptor
                 break;
             case QuestObjective.LockpickWithoutBreaking:
                 taskString = $"Pick {Quantity} lock(s) without breaking a pick. {Description}".Trim();
+                break;
+            case QuestObjective.WinInvasions:
+            case QuestObjective.ParticipateInInvasions:
+            case QuestObjective.ClearInvasionWaves:
+            case QuestObjective.LoseInvasions:
+                taskString = $"{Objective}: {Quantity} ({(TargetId == Guid.Empty ? "All invasions" : TargetName)}). {Description}".Trim();
                 break;
             case QuestObjective.LockpickInDungeon:
                 taskString = $"Pick {Quantity} lock(s) while inside a Dungeon. {Description}".Trim();

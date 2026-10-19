@@ -1,4 +1,4 @@
-﻿namespace Intersect.Framework.Core.GameObjects.Quests;
+namespace Intersect.Framework.Core.GameObjects.Quests;
 
 public enum QuestObjective
 {
@@ -51,4 +51,9 @@ public enum QuestObjective
     LockpickWithoutBreaking,
 
     LockpickInDungeon,
+
+    WinInvasions,
+    ParticipateInInvasions,
+    ClearInvasionWaves,
+    LoseInvasions,
 }

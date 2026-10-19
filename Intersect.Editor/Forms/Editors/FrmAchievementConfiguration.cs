@@ -412,7 +412,8 @@ public sealed class FrmAchievementConfiguration : DarkForm
                         .ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
                         .Select(x => new IdChoice(x.Id, x.Name)),
 
-                AchievementObjectiveType.InvasionCompletions =>
+                AchievementObjectiveType.InvasionCompletions or AchievementObjectiveType.InvasionParticipations or
+                AchievementObjectiveType.InvasionWavesCleared or AchievementObjectiveType.InvasionDefeats =>
                     InvasionConfiguration.Instance.Invasions
                         .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
                         .Select(x => new IdChoice(x.Id, x.Name)),

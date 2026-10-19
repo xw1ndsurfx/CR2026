@@ -31,6 +31,7 @@ public partial class EventCommandConditionalBranch : UserControl
     private readonly ConditionControl_PlayerStat _playerStatControl;
     private readonly ConditionControl_Profession _professionControl;
     private readonly ConditionControl_Premium _premiumControl;
+    private readonly ConditionControl_Invasion _invasionControl;
     private readonly ConditionControl_QuestCanStart _questCanStartControl;
     private readonly ConditionControl_QuestCompleted _questCompletedControl;
     private readonly ConditionControl_QuestInProgress _questInProgressControl;
@@ -69,6 +70,7 @@ public partial class EventCommandConditionalBranch : UserControl
         _playerStatControl = new();
         _professionControl = new();
         _premiumControl = new();
+        _invasionControl = new();
         _questCanStartControl = new();
         _questCompletedControl = new();
         _questInProgressControl = new();
@@ -91,6 +93,7 @@ public partial class EventCommandConditionalBranch : UserControl
         pnlConditionControl.Controls.Add(_playerStatControl);
         pnlConditionControl.Controls.Add(_professionControl);
         pnlConditionControl.Controls.Add(_premiumControl);
+        pnlConditionControl.Controls.Add(_invasionControl);
         pnlConditionControl.Controls.Add(_questCanStartControl);
         pnlConditionControl.Controls.Add(_questCompletedControl);
         pnlConditionControl.Controls.Add(_questInProgressControl);
@@ -114,7 +117,9 @@ public partial class EventCommandConditionalBranch : UserControl
             typeIndex++;
         }
 
-        if (Condition.Type == ConditionType.ProfessionLevel)
+        if (Condition.Type == ConditionType.Invasion)
+            cmbConditionType.SelectedItem = "Invasion...";
+        else if (Condition.Type == ConditionType.ProfessionLevel)
             cmbConditionType.SelectedItem = "Profession Level";
         else if (Condition.Type == ConditionType.PremiumStatus)
             cmbConditionType.SelectedItem = "Premium...";
@@ -143,6 +148,7 @@ public partial class EventCommandConditionalBranch : UserControl
         }
         cmbConditionType.Items.Add("Profession Level");
         cmbConditionType.Items.Add("Premium...");
+        cmbConditionType.Items.Add("Invasion...");
         cmbConditionType.Items.Add("Time Phase...");
         cmbConditionType.Items.Add("Clock Time...");
         cmbConditionType.Items.Add("Calendar Date...");
@@ -170,6 +176,7 @@ public partial class EventCommandConditionalBranch : UserControl
         _playerStatControl.Hide();
         _professionControl.Hide();
         _premiumControl.Hide();
+        _invasionControl.Hide();
         _questCanStartControl.Hide();
         _questCompletedControl.Hide();
         _questInProgressControl.Hide();
@@ -264,6 +271,10 @@ public partial class EventCommandConditionalBranch : UserControl
             case ConditionType.ClockTime:
             case ConditionType.CalendarDate:
                 _calendarControl.ShowFor(type);
+                break;
+
+            case ConditionType.Invasion:
+                _invasionControl.Show();
                 break;
 
             case ConditionType.VariableIs:
@@ -372,6 +383,10 @@ public partial class EventCommandConditionalBranch : UserControl
                 _calendarControl.SetupFormValues(date);
                 break;
 
+            case InvasionCondition invasion:
+                _invasionControl.SetupFormValues(invasion);
+                break;
+
             case VariableIsCondition variableIsCondition:
                 _variableControl.SetupFormValues(variableIsCondition);
                 break;
@@ -478,6 +493,10 @@ public partial class EventCommandConditionalBranch : UserControl
                 _calendarControl.SaveFormValues(date);
                 break;
 
+            case InvasionCondition invasion:
+                _invasionControl.SaveFormValues(invasion);
+                break;
+
             case VariableIsCondition variableIsCondition:
                 _variableControl.SaveFormValues(variableIsCondition);
                 break;
@@ -528,6 +547,7 @@ public partial class EventCommandConditionalBranch : UserControl
         {
             "Profession Level" => ConditionType.ProfessionLevel,
             "Premium..." => ConditionType.PremiumStatus,
+            "Invasion..." => ConditionType.Invasion,
             "Time Phase..." => ConditionType.TimePhase,
             "Clock Time..." => ConditionType.ClockTime,
             "Calendar Date..." => ConditionType.CalendarDate,
@@ -631,6 +651,9 @@ public partial class EventCommandConditionalBranch : UserControl
                     break;
                 case ConditionType.ClockTime:
                     Condition = new ClockTimeCondition();
+                    break;
+                case ConditionType.Invasion:
+                    Condition = new InvasionCondition();
                     break;
                 case ConditionType.CalendarDate:
                     Condition = new CalendarDateCondition();

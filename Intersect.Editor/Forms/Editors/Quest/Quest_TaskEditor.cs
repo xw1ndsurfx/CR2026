@@ -1,4 +1,4 @@
-﻿using Intersect.Editor.Forms.Editors.Events;
+using Intersect.Editor.Forms.Editors.Events;
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Enums;
@@ -9,6 +9,7 @@ using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.Dungeons;
+using Intersect.Framework.Core.WorldEvents.Invasions;
 using Intersect.Framework.Core.GameObjects.Quests;
 using Intersect.Framework.Core.MiniGames;
 using Intersect.Framework.Core.MiniGames.Potions;
@@ -30,6 +31,7 @@ public partial class QuestTaskEditor : UserControl
 
     private QuestTaskDescriptor mMyTask;
 
+    private (Guid Id, string Name)[] _invasionChoices = [];
     private readonly GroupBox _guidanceGroup = new();
     private readonly ComboBox _guideAnimation = new();
     private readonly ComboBox _guideResource = new();
@@ -98,6 +100,13 @@ public partial class QuestTaskEditor : UserControl
                 cmbItem.SelectedIndex = PotionRecipeListIndex(mMyTask?.TargetId ?? Guid.Empty);
                 nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
                 break;
+            case 25:
+            case 26:
+            case 27:
+            case 28:
+                cmbItem.SelectedIndex = Math.Max(0, Array.FindIndex(_invasionChoices, i => i.Id == mMyTask.TargetId));
+                nudItemAmount.Value = Math.Max(1, mMyTask.Quantity);
+                break;
             case 18:
                 cmbItem.SelectedIndex = DungeonListIndex(mMyTask?.TargetId ?? Guid.Empty);
                 nudItemAmount.Value = Math.Max(1, mMyTask?.Quantity ?? 1);
@@ -150,6 +159,10 @@ public partial class QuestTaskEditor : UserControl
         cmbTaskType.Items.Add("Lockpicking - Perfect picks");
         cmbTaskType.Items.Add("Lockpicking - Pick without breaking");
         cmbTaskType.Items.Add("Lockpicking - Pick inside Dungeon");
+        cmbTaskType.Items.Add("Invasions - Win invasions");
+        cmbTaskType.Items.Add("Invasions - Participate in resolved invasions");
+        cmbTaskType.Items.Add("Invasions - Clear waves");
+        cmbTaskType.Items.Add("Invasions - Lose invasions");
 
         lblDesc.Text = Strings.TaskEditor.desc;
 
@@ -326,6 +339,18 @@ public partial class QuestTaskEditor : UserControl
                 nudItemAmount.Value = 1;
                 break;
 
+            case 25:
+            case 26:
+            case 27:
+            case 28:
+                grpGatherItems.Show(); grpGatherItems.Text = cmbTaskType.SelectedItem?.ToString();
+                cmbItem.Show(); lblItem.Show(); lblItem.Text = "Invasion:"; lblItemQuantity.Text = "Count:";
+                _invasionChoices = new[] { (Guid.Empty, "All invasions") }.Concat(InvasionConfiguration.Instance.Invasions.OrderBy(i => i.Name).Select(i => (i.Id, i.Name))).ToArray();
+                if (mMyTask.TargetId != Guid.Empty && !_invasionChoices.Any(i => i.Id == mMyTask.TargetId))
+                    _invasionChoices = [.._invasionChoices, (mMyTask.TargetId, string.IsNullOrWhiteSpace(mMyTask.TargetName) ? mMyTask.TargetId.ToString() : mMyTask.TargetName)];
+                cmbItem.Items.Clear(); cmbItem.Items.AddRange(_invasionChoices.Select(i => i.Name).ToArray()); cmbItem.SelectedIndex = 0;
+                nudItemAmount.Maximum = 1000000000; nudItemAmount.Value = 1;
+                break;
             case 24:
                 grpGatherItems.Show();
                 grpGatherItems.Text = "Lockpicking - Pick inside Dungeon";
@@ -397,6 +422,14 @@ public partial class QuestTaskEditor : UserControl
                 mMyTask.Quantity = (int) nudItemAmount.Value;
                 break;
 
+            case QuestObjective.WinInvasions:
+            case QuestObjective.ParticipateInInvasions:
+            case QuestObjective.ClearInvasionWaves:
+            case QuestObjective.LoseInvasions:
+                var invasion = _invasionChoices.ElementAtOrDefault(cmbItem.SelectedIndex);
+                mMyTask.TargetId = invasion.Id; mMyTask.TargetName = invasion.Name ?? "All invasions";
+                mMyTask.Quantity = (int)nudItemAmount.Value;
+                break;
             case QuestObjective.CompleteDungeon:
                 mMyTask.TargetId = DungeonIdFromList(cmbItem.SelectedIndex);
                 mMyTask.TargetName = DungeonNameFromList(cmbItem.SelectedIndex);

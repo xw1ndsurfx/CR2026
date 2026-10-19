@@ -444,6 +444,8 @@ public partial class QuestsWindow
                 $"{playerQuest.TaskProgress} / {currentTask.Quantity} {(string.IsNullOrWhiteSpace(currentTask.TargetName) ? "dungeon completions" : currentTask.TargetName)}",
             QuestObjective.LockpickLocks =>
                 $"{playerQuest.TaskProgress} / {currentTask.Quantity} locks picked",
+            QuestObjective.WinInvasions or QuestObjective.ParticipateInInvasions or QuestObjective.ClearInvasionWaves or QuestObjective.LoseInvasions =>
+                InvasionQuestText.Format(currentTask, playerQuest.TaskProgress),
             QuestObjective.LockpickSpecificLock =>
                 $"{playerQuest.TaskProgress} / {currentTask.Quantity} {(string.IsNullOrWhiteSpace(currentTask.TargetName) ? "required lock" : currentTask.TargetName)}",
             QuestObjective.LockpickMinimumDifficulty =>
@@ -944,6 +946,10 @@ public partial class QuestsWindow
                                         NPCDescriptor.GetName(mSelectedQuest.Tasks[i].TargetId)
                                     ), mQuestDescTemplateLabel
                                 );
+                            }
+                            else if (mSelectedQuest.Tasks[i].Objective is QuestObjective.WinInvasions or QuestObjective.ParticipateInInvasions or QuestObjective.ClearInvasionWaves or QuestObjective.LoseInvasions)
+                            {
+                                mQuestDescLabel.AddText(InvasionQuestText.Format(mSelectedQuest.Tasks[i], Globals.Me.QuestProgress[mSelectedQuest.Id].TaskProgress), mQuestDescTemplateLabel);
                             }
                             else if (mSelectedQuest.Tasks[i].Objective == QuestObjective.CompleteDungeon)
                             {

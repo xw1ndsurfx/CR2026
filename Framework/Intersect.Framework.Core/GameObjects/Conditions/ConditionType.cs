@@ -52,4 +52,6 @@ public enum ConditionType
     ClockTime = 1003,
 
     CalendarDate = 1004,
+
+    Invasion = 1005,
 }
