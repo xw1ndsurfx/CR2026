@@ -310,19 +310,19 @@ public sealed class LiteNetLibInterface : INetworkLayerInterface, INetEventListe
                 return;
             }
 
-            if (reader.GetByte() != 0x21)
+            if (!reader.TryGetByte(out var marker21) || marker21 != 0x21)
             {
                 ApplicationContext.Context.Value?.Logger.LogWarning($"Invalid packet code from {peer} / {connection.Guid}");
                 return;
             }
 
-            if (reader.GetByte() != 0x22)
+            if (!reader.TryGetByte(out var marker22) || marker22 != 0x22)
             {
                 ApplicationContext.Context.Value?.Logger.LogWarning($"Invalid packet code from {peer} / {connection.Guid}");
                 return;
             }
 
-            if (reader.GetByte() != 0x23)
+            if (!reader.TryGetByte(out var marker23) || marker23 != 0x23)
             {
                 ApplicationContext.Context.Value?.Logger.LogWarning($"Invalid packet code from {peer} / {connection.Guid}");
                 return;
@@ -520,7 +520,14 @@ public sealed class LiteNetLibInterface : INetworkLayerInterface, INetEventListe
         NetDataWriter response = new();
 
         var inboundBuffer = new LiteNetLibInboundBuffer(request.Data);
-        var deserializedBuffer = MessagePacker.Instance.Deserialize(inboundBuffer);
+        var deserializedBuffer = MessagePacker.Instance.Deserialize(inboundBuffer, out var decodeFailure);
+        if (decodeFailure == PacketDecodeFailure.ProtocolMismatch)
+        {
+            response.Put((ushort)400);
+            response.Put(NetworkStatus.VersionMismatch.ToString());
+            request.Reject(response);
+            return;
+        }
         if (deserializedBuffer is not HailPacket hail || !hail.Decrypt(_asymmetricServer))
         {
             ApplicationContext.Context.Value?.Logger.LogDebug($"Rejecting (bad hail) {request.RemoteEndPoint}");

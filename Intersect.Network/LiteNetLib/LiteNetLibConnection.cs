@@ -93,29 +93,7 @@ public sealed class LiteNetLibConnection : AbstractConnection
     {
         buffer = default;
 
-        reader.Get(out int cipherdataLength);
-        var cipherdata = new byte[cipherdataLength];
-        reader.GetBytes(cipherdata, cipherdataLength);
-
-#if DEBUG
-        byte[]? debugPlaindata = null;
-        int debugPlaindataLength;
-        if (Debugger.IsAttached)
-        {
-            if (!reader.EndOfData)
-            {
-                reader.Get(out debugPlaindataLength);
-                debugPlaindata = new byte[debugPlaindataLength];
-                reader.GetBytes(debugPlaindata, debugPlaindataLength);
-            }
-        }
-#endif
-
-        if (cipherdata == default)
-        {
-            return false;
-        }
-
+        if (!TryReadCipherData(reader, out var cipherdata)) return false;
 #if DIAGNOSTIC
         ApplicationContext.Context.Value?.Logger.LogDebug($"TryProcessInboundMessage() cipherdata({cipherdata.Length})={Convert.ToHexString(cipherdata)}");
 #endif
@@ -135,11 +113,7 @@ public sealed class LiteNetLibConnection : AbstractConnection
                 ApplicationContext.Context.Value?.Logger.LogWarning($"SDER: {Guid} {decryptionResult}");
                 return false;
             case EncryptionResult.Error:
-#if DEBUG
-                var cipherNonce = cipherdata[7..][..12];
-                var debugEncryptionResult = _symmetric.TryEncrypt(debugPlaindata, cipherNonce, out var debugCipherdata);
-                var expectedMessage = MessagePacker.Instance.Deserialize(debugPlaindata);
-#endif
+
                 // Symmetric Decryption Error Result
                 ApplicationContext.Context.Value?.Logger.LogWarning($"SDER: {Guid} {decryptionResult}");
                 return false;
@@ -151,6 +125,15 @@ public sealed class LiteNetLibConnection : AbstractConnection
         return true;
     }
 
+    internal static bool TryReadCipherData(NetDataReader reader, out byte[] cipherdata)
+    {
+        cipherdata = [];
+        if (!reader.TryGetInt(out var length) || length <= 0 || length > reader.AvailableBytes)
+            return false;
+        cipherdata = new byte[length];
+        reader.GetBytes(cipherdata, length);
+        return true;
+    }
     public override bool Send(IPacket packet, TransmissionMode transmissionMode = TransmissionMode.All)
     {
         var packetData = packet.Data;
