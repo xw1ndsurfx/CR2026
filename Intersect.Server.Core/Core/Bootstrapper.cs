@@ -132,6 +132,7 @@ internal static class Bootstrapper
         Console.WriteLine("Starting main thread...");
         StartupDiagnostics.Run("StartWithActionQueue", () => MainThread = context.StartWithActionQueue());
         StartupDiagnostics.Mark("Main action queue entered");
+        RuntimeDiagnostics.Start();
         while (MainThread.NextAction is { } action)
         {
             action.Invoke();
