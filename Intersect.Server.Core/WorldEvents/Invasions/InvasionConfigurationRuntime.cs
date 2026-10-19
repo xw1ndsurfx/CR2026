@@ -49,6 +49,13 @@ internal static class InvasionConfigurationRuntime
                     return false;
             }
 
+            foreach (var target in invasion.AdditionalTargets)
+            {
+                if (MapController.Get(target.MapId) == null) return false;
+                if (target.EventId != Guid.Empty && EventDescriptor.Get(target.EventId) is not { CommonEvent: false, Global: true }) return false;
+                if (target.EventId != Guid.Empty && EventDescriptor.Get(target.EventId)!.MapId != target.MapId) return false;
+            }
+
             foreach (var wave in invasion.Waves)
             foreach (var spawn in wave.Spawns)
             {

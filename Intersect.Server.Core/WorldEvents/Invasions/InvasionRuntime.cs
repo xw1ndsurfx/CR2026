@@ -31,6 +31,16 @@ internal static class InvasionRuntime
         long StartAtMs
     );
 
+    private sealed class DefenseTarget
+    {
+        public Guid Id { get; init; }
+        public Guid MapId { get; init; }
+        public int X { get; init; }
+        public int Y { get; init; }
+        public string Name { get; init; } = "";
+        public int MaxHealth { get; init; }
+        public int Health { get; set; }
+    }
     private sealed class Session
     {
         public required InvasionDefinition Definition { get; init; }
@@ -42,7 +52,9 @@ internal static class InvasionRuntime
         public int TargetX { get; init; }
         public int TargetY { get; init; }
         public string TargetName { get; init; } = "Defense Objective";
-        public int ObjectiveHealth { get; set; }
+        public required List<DefenseTarget> Objectives { get; init; }
+        public int ObjectiveHealth => (int)Math.Min(int.MaxValue, Objectives.Sum(t => (long)t.Health));
+        public int ObjectiveMaxHealth => (int)Math.Min(int.MaxValue, Objectives.Sum(t => (long)t.MaxHealth));
         public long NextWaveAtMs { get; set; }
         public long LastStatusAtMs { get; set; }
         public ConcurrentDictionary<Guid, byte> Participants { get; } = [];
@@ -60,6 +72,8 @@ internal static class InvasionRuntime
     private static readonly Dictionary<(Guid InvasionId, int MinutesBefore), string> LastReminderKeys = [];
     private static readonly Dictionary<Guid, string> LastCinematicKeys = [];
     private static readonly Dictionary<Guid, PendingStart> PendingStarts = [];
+    private sealed record Prelude(InvasionDefinition Definition, long ScheduledAt, long EnvironmentAt, long LastBroadcastAt);
+    private static readonly Dictionary<Guid, Prelude> Preludes = [];
     private static long _nextScheduleCheckAt;
 
     internal static bool IsActiveOnMap(Guid mapId)
@@ -68,7 +82,7 @@ internal static class InvasionRuntime
         {
             return Sessions.Values.Any(session =>
                 !session.Completed &&
-                (session.TargetMapId == mapId ||
+                (session.Objectives.Any(t => t.MapId == mapId) ||
                  session.Definition.Waves.Any(wave =>
                      wave.Spawns.Any(spawn => spawn.SpawnMapId == mapId)
                  ))
@@ -126,6 +140,7 @@ internal static class InvasionRuntime
             }
 
             var nowMs = Timing.Global.Milliseconds;
+            BroadcastPrelude(definition, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             if (TryLaunchCinematic(definition))
             {
                 PendingStarts[definition.Id] = new PendingStart(
@@ -186,6 +201,7 @@ internal static class InvasionRuntime
     private static void CheckSchedules(long nowMs)
     {
         var now = DateTimeOffset.Now;
+        CheckPreludes(now);
         CheckPreInvasionReminders(now);
         CheckPreStartCinematics(now);
 
@@ -289,6 +305,48 @@ internal static class InvasionRuntime
         return true;
     }
 
+    private static void CheckPreludes(DateTimeOffset now)
+    {
+        var wanted = new HashSet<Guid>();
+        foreach (var definition in InvasionConfigurationRuntime.Current.Invasions)
+        {
+            if (Sessions.ContainsKey(definition.Id)) { Preludes.Remove(definition.Id); continue; }
+            if (!definition.TryGetPreludeOccurrence(now, out var start)) continue;
+            if (LastScheduleKeys.TryGetValue(definition.Id, out var used) && used == start.ToString("yyyy-MM-dd-HH-mm")) continue;
+            wanted.Add(definition.Id);
+            var environmentAt = start.AddSeconds(-Math.Max(definition.FirstReminderMinutes * 60, definition.PreStartCinematicEnabled ? definition.PreStartCinematicLeadSeconds : 0) - definition.EnvironmentLeadSeconds).ToUnixTimeMilliseconds();
+            var nowMs = now.ToUnixTimeMilliseconds();
+            if (!Preludes.TryGetValue(definition.Id, out var previous) || previous.ScheduledAt != start.ToUnixTimeMilliseconds() || nowMs - previous.LastBroadcastAt >= 5000)
+            {
+                Preludes[definition.Id] = new(definition, start.ToUnixTimeMilliseconds(), environmentAt, nowMs);
+                // Repeat the state for late joiners; alerts themselves remain once-only.
+                BroadcastPrelude(definition, environmentAt);
+            }
+        }
+        foreach (var pair in Preludes.ToArray())
+        {
+            if (wanted.Contains(pair.Key) || PendingStarts.ContainsKey(pair.Key)) continue;
+            if (Sessions.ContainsKey(pair.Key)) { Preludes.Remove(pair.Key); continue; }
+            if (now.ToUnixTimeMilliseconds() >= pair.Value.ScheduledAt && now.ToUnixTimeMilliseconds() < pair.Value.ScheduledAt + 60000 &&
+                InvasionConfigurationRuntime.Current.Invasions.Any(d => d.Id == pair.Key && d.Enabled)) continue;
+            Preludes.Remove(pair.Key);
+            foreach (var player in Player.OnlinePlayers) player?.SendPacket(new InvasionStatusPacket { InvasionId = pair.Key, Active = false });
+        }
+    }
+    private static void BroadcastPrelude(InvasionDefinition definition, long environmentAt)
+    {
+        var packet = new InvasionStatusPacket
+        {
+            Active = true, Prelude = true, InvasionId = definition.Id, Name = definition.Name,
+            StartedAtUnixMilliseconds = environmentAt, Music = definition.InvasionMusic,
+            NightBrightness = definition.NightBrightness, OverlayAlpha = definition.OverlayAlpha,
+            OverlayRed = definition.OverlayRed, OverlayGreen = definition.OverlayGreen, OverlayBlue = definition.OverlayBlue,
+            Fog = definition.Fog, FogAlpha = definition.FogAlpha, FogXSpeed = definition.FogXSpeed, FogYSpeed = definition.FogYSpeed,
+            EnvironmentOutdoorsOnly = definition.EnvironmentOutdoorsOnly
+        };
+        foreach (var player in Player.OnlinePlayers) player?.SendPacket(packet);
+    }
+
     private static void CheckPreInvasionReminders(DateTimeOffset now)
     {
         foreach (var definition in InvasionConfigurationRuntime.Current.Invasions)
@@ -376,10 +434,15 @@ internal static class InvasionRuntime
             .Replace("{time}", scheduledStart.ToString("HH:mm"));
 
         PacketSender.SendGlobalMsg($"[Invasion] {text}");
-        PacketSender.SendGameAnnouncement(
-            $"INVASION IN {remaining.ToUpperInvariant()}\n{text}",
-            6_000
-        );
+        // Ensure newly connected recipients receive the ambience before the warning too.
+        BroadcastPrelude(definition, Preludes.TryGetValue(definition.Id, out var prelude) ? prelude.EnvironmentAt : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        var alert = new InvasionAlertPacket
+        {
+            InvasionId = definition.Id, Name = definition.Name, Message = message,
+            MinutesBefore = minutesBefore, Island = islandName, Target = targetName,
+            StartTime = scheduledStart.ToString("HH:mm")
+        };
+        foreach (var player in Player.OnlinePlayers) player?.SendPacket(alert);
 
         if (string.IsNullOrWhiteSpace(sound))
             return;
@@ -404,12 +467,13 @@ internal static class InvasionRuntime
             TargetX = targetX,
             TargetY = targetY,
             TargetName = targetName,
-            ObjectiveHealth = definition.TargetHealth,
+            Objectives = CreateDefenseTargets(definition),
             NextWaveAtMs = nowMs + definition.Waves[0].DelaySeconds * 1_000L,
         };
         Sessions[definition.Id] = session;
         SessionsById[session.SessionId] = session;
 
+        BroadcastStatus(session, "Invasion starting...");
         var islandName = MapController.Get(session.TargetMapId)?.Name ?? "the island";
         PacketSender.SendGlobalMsg(
             $"[Invasion] {definition.Name} is attacking {islandName}! Defend {session.TargetName}."
@@ -418,7 +482,6 @@ internal static class InvasionRuntime
             $"INVASION: {definition.Name}\nDefend {session.TargetName}!",
             6_000
         );
-        BroadcastStatus(session, "Invasion starting...");
     }
 
     private static void UpdateSession(Session session, long nowMs)
@@ -436,26 +499,25 @@ internal static class InvasionRuntime
                 continue;
             }
 
-            if (npc.Target != null ||
-                npc.MapId != session.TargetMapId ||
-                Math.Abs(npc.X - session.TargetX) > 1 ||
-                Math.Abs(npc.Y - session.TargetY) > 1)
+            var objective = AssignDefenseTarget(npc, session);
+            if (objective == null || npc.Target != null ||
+                npc.MapId != objective.MapId ||
+                Math.Abs(npc.X - objective.X) > 1 ||
+                Math.Abs(npc.Y - objective.Y) > 1)
                 continue;
 
             if (session.NextObjectiveHitAt.TryGetValue(npc.Id, out var nextHit) && nowMs < nextHit)
                 continue;
 
             session.NextObjectiveHitAt[npc.Id] = nowMs + session.Definition.ObjectiveHitIntervalMs;
-            FaceObjective(npc, session.TargetX, session.TargetY);
+            FaceObjective(npc, objective.X, objective.Y);
             PacketSender.SendEntityAttack(
                 npc,
                 Math.Max(250, session.Definition.ObjectiveHitIntervalMs)
             );
 
             var damage = Math.Max(1, npc.InvasionObjectiveDamage);
-            session.ObjectiveHealth = Math.Max(0, session.ObjectiveHealth - damage);
-
-            if (session.ObjectiveHealth <= 0)
+            if (DamageDefenseTarget(session, objective, damage))
             {
                 Finish(session, victory: false);
                 return;
@@ -613,9 +675,7 @@ internal static class InvasionRuntime
         npc.InvasionSessionId = session.SessionId;
         npc.InvasionDefinitionId = session.Definition.Id;
         npc.InvasionBoss = spawn.IsBoss;
-        npc.InvasionTargetMapId = session.TargetMapId;
-        npc.InvasionTargetX = session.TargetX;
-        npc.InvasionTargetY = session.TargetY;
+        AssignDefenseTarget(npc, session);
         npc.InvasionObjectiveDamage = spawn.ObjectiveDamage;
         npc.InvasionScaledLevel = npc.Level;
 
@@ -830,7 +890,7 @@ internal static class InvasionRuntime
             Wave = Math.Max(0, session.WaveIndex + 1),
             WaveCount = session.Definition.Waves.Length,
             ObjectiveHealth = session.ObjectiveHealth,
-            ObjectiveMaxHealth = session.Definition.TargetHealth,
+            ObjectiveMaxHealth = session.ObjectiveMaxHealth,
             BossWave = boss,
             Message = message,
             StartedAtUnixMilliseconds = session.StartedAtUnixMilliseconds,
@@ -845,6 +905,7 @@ internal static class InvasionRuntime
             FogXSpeed = session.Definition.FogXSpeed,
             FogYSpeed = session.Definition.FogYSpeed,
             EnvironmentOutdoorsOnly = session.Definition.EnvironmentOutdoorsOnly,
+            Targets = session.Objectives.Select(t => new InvasionTargetStatus { Id = t.Id, Name = t.Name, MapId = t.MapId, X = t.X, Y = t.Y, Health = t.Health, MaxHealth = t.MaxHealth }).ToArray(),
         };
 
         foreach (var player in Player.OnlinePlayers)
@@ -861,7 +922,7 @@ internal static class InvasionRuntime
             Wave = Math.Max(0, session.WaveIndex + 1),
             WaveCount = session.Definition.Waves.Length,
             ObjectiveHealth = session.ObjectiveHealth,
-            ObjectiveMaxHealth = session.Definition.TargetHealth,
+            ObjectiveMaxHealth = session.ObjectiveMaxHealth,
         };
 
         foreach (var player in Player.OnlinePlayers)
@@ -885,16 +946,51 @@ internal static class InvasionRuntime
             npc.ChangeDir(direction);
     }
 
+    private static List<DefenseTarget> CreateDefenseTargets(InvasionDefinition definition)
+    {
+        var (map, x, y, name) = ResolveObjective(definition);
+        var targets = new List<DefenseTarget> { new() { Id = definition.Id, MapId = map, X = x, Y = y, Name = name, MaxHealth = definition.TargetHealth, Health = definition.TargetHealth } };
+        foreach (var target in definition.AdditionalTargets)
+        {
+            var resolved = ResolveObjective(target.MapId, target.EventId, target.X, target.Y);
+            targets.Add(new() { Id = target.Id, MapId = resolved.MapId, X = resolved.X, Y = resolved.Y, Name = string.IsNullOrWhiteSpace(target.Name) ? resolved.Name : target.Name, MaxHealth = target.Health, Health = target.Health });
+        }
+        return targets;
+    }
+    private static DefenseTarget? AssignDefenseTarget(Npc npc, Session session)
+    {
+        var target = session.Objectives.FirstOrDefault(t => t.Health > 0 && t.MapId == npc.InvasionTargetMapId && t.X == npc.InvasionTargetX && t.Y == npc.InvasionTargetY);
+        if (target == null)
+        {
+            var map = MapController.Get(npc.MapId);
+            target = session.Objectives.Where(t => t.Health > 0)
+                .OrderBy(t => t.MapId == npc.MapId ? 0 : 1)
+                .ThenBy(t => { var destination = MapController.Get(t.MapId); return Math.Abs((destination?.MapGridX ?? 0) * Options.Instance.Map.MapWidth + t.X - (map?.MapGridX ?? 0) * Options.Instance.Map.MapWidth - npc.X) + Math.Abs((destination?.MapGridY ?? 0) * Options.Instance.Map.MapHeight + t.Y - (map?.MapGridY ?? 0) * Options.Instance.Map.MapHeight - npc.Y); })
+                .FirstOrDefault(t => InvasionNavigation.CanReach(npc.MapId, t.MapId));
+            target ??= session.Objectives.FirstOrDefault(t => t.Health > 0);
+        }
+        if (target != null) { npc.InvasionTargetMapId = target.MapId; npc.InvasionTargetX = target.X; npc.InvasionTargetY = target.Y; }
+        return target;
+    }
+    private static bool DamageDefenseTarget(Session session, DefenseTarget target, int damage)
+    {
+        target.Health = Math.Max(0, target.Health - Math.Max(0, damage));
+        return session.Definition.DefeatOnAnyTargetDestroyed ? session.Objectives.Any(t => t.Health <= 0) : session.Objectives.All(t => t.Health <= 0);
+    }
+
     private static (Guid MapId, int X, int Y, string Name) ResolveObjective(
         InvasionDefinition definition
     )
+        => ResolveObjective(definition.TargetMapId, definition.TargetEventId, definition.TargetX, definition.TargetY);
+
+    private static (Guid MapId, int X, int Y, string Name) ResolveObjective(Guid targetMapId, Guid targetEventId, int targetX, int targetY)
     {
-        if (definition.TargetEventId != Guid.Empty)
+        if (targetEventId != Guid.Empty)
         {
-            var targetEvent = EventDescriptor.Get(definition.TargetEventId);
+            var targetEvent = EventDescriptor.Get(targetEventId);
             if (targetEvent != null &&
                 !targetEvent.CommonEvent &&
-                targetEvent.MapId == definition.TargetMapId &&
+                targetEvent.MapId == targetMapId &&
                 targetEvent.SpawnX >= 0 &&
                 targetEvent.SpawnY >= 0)
             {
@@ -908,9 +1004,9 @@ internal static class InvasionRuntime
         }
 
         return (
-            definition.TargetMapId,
-            definition.TargetX,
-            definition.TargetY,
+            targetMapId,
+            targetX,
+            targetY,
             "Defense Objective"
         );
     }

@@ -50,6 +50,8 @@ internal static class InvasionNavigation
         return true;
     }
 
+    internal static bool CanReach(Guid start, Guid destination) => start == destination || TryFindNextMap(start, destination, out _);
+
     private static bool TryFindNextMap(Guid startMapId, Guid destinationMapId, out Guid nextMapId)
     {
         nextMapId = Guid.Empty;
