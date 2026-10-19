@@ -10,6 +10,8 @@ using Intersect.Server.Maps;
 using Intersect.Server.Naval;
 using MessagePack;
 using NUnit.Framework;
+using System.Runtime.CompilerServices;
+using Intersect.Server.Entities;
 
 namespace Intersect.Tests.Server.Naval;
 
@@ -128,6 +130,15 @@ public sealed class NavalTests
         Assert.That(first.Accept(one, one.CaptainId, true, packet, 1000), Is.True);
         Assert.That(second.Accept(two, one.CaptainId, true, packet, 1000), Is.False);
         Assert.That(second.Input.Anchor, Is.True);
+    }
+
+    [Test]
+    public void OrdinaryPlayerLifecycleDoesNotRequireNavalInitialization()
+    {
+        var player = (Player)RuntimeHelpers.GetUninitializedObject(typeof(Player));
+        GC.SuppressFinalize(player);
+        Assert.That(player.CaptainedShipId, Is.EqualTo(Guid.Empty));
+        Assert.DoesNotThrow(() => NavalSystem.Release(player));
     }
 
     [Test]

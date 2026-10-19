@@ -168,6 +168,8 @@ internal static class NavalSystem
 
     internal static void Release(Player player)
     {
+        // Ordinary players need no naval cleanup (including constructor-free test fixtures).
+        if (player.CaptainedShipId == Guid.Empty) return;
         lock (player.EntityLock)
         lock (Gate) ReleaseLocked(player);
     }
