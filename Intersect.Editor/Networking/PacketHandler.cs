@@ -175,6 +175,11 @@ internal sealed partial class PacketHandler
     //MapPacket
     public void HandlePacket(IPacketSender packetSender, MapPacket packet)
     {
+        if (Globals.MainForm is { IsHandleCreated: true, InvokeRequired: true } main)
+        {
+            main.Invoke((Action)(() => HandlePacket(packetSender, packet)));
+            return;
+        }
         if (packet.Deleted)
         {
             if (!MapInstance.TryGet(packet.MapId, out var existingMapToDelete))
@@ -203,6 +208,18 @@ internal sealed partial class PacketHandler
         
         if (MapInstance.TryGet(packet.MapId, out var existingMap))
         {
+            if (existingMap is MapInstance editable)
+            {
+                try { Intersect.Editor.Forms.FrmMain.CaptureMapRecovery(editable); }
+                catch (Exception e) when (e is IOException or InvalidDataException or UnauthorizedAccessException or Newtonsoft.Json.JsonException) { }
+                EditorMapSaveTracker.PreserveNewerEdits(editable, receivedMap);
+            }
+            foreach (var editor in System.Windows.Forms.Application.OpenForms.OfType<Intersect.Editor.Forms.Editors.Events.FrmEvent>())
+            {
+                if (editor.MyMap?.Id != packet.MapId || editor.MyEvent == null) continue;
+                editor.MyMap = receivedMap;
+                receivedMap.LocalEvents[editor.MyEvent.Id] = editor.MyEvent;
+            }
             lock (existingMap.MapLock)
             {
                 if (Globals.CurrentMap == existingMap)

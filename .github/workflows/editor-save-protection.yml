@@ -1,0 +1,34 @@
+name: Editor save protection
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Intersect.Editor/**'
+      - 'Framework/Intersect.Framework.Core/Pvp/**'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/WorldActivitiesPackets.cs'
+      - 'Intersect.Server.Core/Networking/PacketHandler.WorldActivities.cs'
+      - 'Intersect.Tests.Server/WorldActivitiesRoundTripTests.cs'
+      - 'Utilities/InterfaceEditorTests/**'
+      - '.github/workflows/editor-save-protection.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: editor-save-protection-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  save-protection:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: '8.0.x'
+      - name: Server tests and configuration round trips
+        run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Debug --nologo
+      - name: Real editor save and recovery controls
+        run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -- --save-protection-only

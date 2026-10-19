@@ -1198,7 +1198,7 @@ public partial class FrmEvent : Form
         btnCopy.Text = Strings.EventEditor.copycommand;
         btnCut.Text = Strings.EventEditor.cutcommand;
         btnPaste.Text = Strings.EventEditor.pastecommand;
-        btnSave.Text = Strings.EventEditor.save;
+        btnSave.Text = MyMap != null ? EditorSafetyText.Get("Save event and map") : Strings.EventEditor.save;
         btnCancel.Text = Strings.EventEditor.cancel;
 
         for (var i = 0; i < lstCommands.Nodes.Count; i++)
@@ -1232,6 +1232,7 @@ public partial class FrmEvent : Form
     public void InitEditor(bool disableNaming, bool disableTriggers, bool questEvent)
     {
         mEventBackup = MyEvent.JsonData;
+        if (MyMap != null) btnSave.Text = EditorSafetyText.Get("Save event and map");
         txtEventname.Text = MyEvent.Name;
         if (disableNaming)
         {
@@ -1386,6 +1387,12 @@ public partial class FrmEvent : Form
         if (grpCreateCommands.Visible)
         {
             CancelCommandEdit();
+        }
+
+        FrmMain.TryCaptureBeforeExit();
+        if (MyMap != null && Intersect.Editor.Networking.Network.Connected)
+        {
+            PacketSender.SendMap(MyMap);
         }
 
         if (MyEvent.CommonEvent && MyEvent.Id != Guid.Empty)

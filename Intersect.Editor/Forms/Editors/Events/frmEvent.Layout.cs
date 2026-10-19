@@ -39,11 +39,12 @@ public partial class FrmEvent
         tabs.Controls.Add(pnlTabsContainer); tabs.Controls.Add(btnTabsLeft); tabs.Controls.Add(btnTabsRight);
         pnlTabsContainer.Dock = DockStyle.Fill;
         btnTabsLeft.Dock = DockStyle.Left; btnTabsRight.Dock = DockStyle.Right;
-        var footer = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 42, Padding = new Padding(8) };
+        var footer = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 72, Padding = new Padding(8) };
         footer.Controls.AddRange([btnSave, btnCancel]);
         var fullscreen = new DarkButton { Text = "Full screen (F11)", AutoSize = true };
         fullscreen.Click += (_, _) => ToggleEventFullscreen();
         footer.Controls.Add(fullscreen);
+        InitializeEventRecovery(footer);
 
         var split = new SplitContainer { Dock = DockStyle.Fill, SplitterWidth = 8, FixedPanel = FixedPanel.Panel1 };
         split.Size = new Size(1120, 600); split.SplitterDistance = 410;
