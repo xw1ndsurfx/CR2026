@@ -112,6 +112,7 @@ public sealed partial class FrmCharacterGenerator : DarkForm
 
         public bool Has(CharacterAnimation animation)
         {
+            if (animation == CharacterAnimation.Weapon) animation = CharacterAnimation.Attack;
             return Files.ContainsKey(animation) ||
                    BackFiles.ContainsKey(animation) ||
                    FrontFiles.ContainsKey(animation);
@@ -122,6 +123,10 @@ public sealed partial class FrmCharacterGenerator : DarkForm
             CharacterAnimation animation
         )
         {
+            // Equipped melee attacks select Weapon in the client. The artist's
+            // Use pose is a different action: keep the body and every paperdoll
+            // on the same Attack pose in previews and all exported variants.
+            if (animation == CharacterAnimation.Weapon) animation = CharacterAnimation.Attack;
             if (files.TryGetValue(animation, out var exact))
             {
                 return exact;
