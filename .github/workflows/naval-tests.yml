@@ -1,0 +1,26 @@
+name: Naval phase 1 tests
+on:
+  pull_request:
+    paths:
+      - 'Framework/Intersect.Framework.Core/Naval/**'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/Client/ShipInputPacket.cs'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/Server/NavalSnapshotPacket.cs'
+      - 'Intersect.Server.Core/Naval/**'
+      - 'Intersect.Server.Core/Entities/Player*'
+      - 'Intersect.Server.Core/Networking/PacketHandler*'
+      - 'Intersect.Tests.Server/Naval/**'
+      - 'Intersect.Client.Core/Naval/**'
+      - 'Intersect.Client.Core/Localization/Locales/ui.json'
+      - '.github/workflows/naval-tests.yml'
+  workflow_dispatch:
+jobs:
+  naval:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Debug --filter FullyQualifiedName~NavalTests --nologo
