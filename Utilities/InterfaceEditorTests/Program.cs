@@ -43,6 +43,7 @@ internal static class Program
         if (Environment.GetCommandLineArgs().Contains("--housing-picker-only")) { HousingPickerTests.Run(); return; }
         SoundImportTests.Run();
         ActivitiesEditorTests.Run();
+        CharacterWeaponPaperdollTests.Run();
         EventToolsTests.Run();
         InvasionEditorTests.Run();
         MiniGameEditorTests.Run();
