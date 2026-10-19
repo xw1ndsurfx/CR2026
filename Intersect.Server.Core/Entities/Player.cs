@@ -1591,14 +1591,16 @@ public partial class Player : Entity
             ? (long)Math.Round(amount * rankingBonusPercent / 100d, MidpointRounding.AwayFromZero)
             : 0L;
 
-        var eventBonus = Intersect.Framework.Core.WorldEvents.WorldActivitiesConfiguration.AwardBonus(amount,
-            Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.BonusAt(DateTimeOffset.Now));
+        var eventBonusPercent = Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.BonusAt(DateTimeOffset.Now);
+        var eventBonus = Intersect.Framework.Core.WorldEvents.WorldActivitiesConfiguration.AwardBonus(amount, eventBonusPercent);
         var totalAward = (long)Math.Min(long.MaxValue, (decimal)amount + equipmentBonus + rankingBonus + eventBonus);
-        if (fromNpcKill)
+        if (fromNpcKill || eventBonusPercent > 0)
         {
             PendingNpcExperienceGain = new NpcExperienceGainBreakdown
             {
-                BaseExperience = npcBaseExperience,
+                BaseExperience = fromNpcKill ? npcBaseExperience : amount,
+                EventBonusExperience = eventBonus,
+                EventBonusPercent = eventBonusPercent,
                 PartyBonusExperience = npcPartyBonusExperience,
                 PartyBonusPercent = npcPartyBonusPercent,
                 EquipmentBonusExperience = equipmentBonus,

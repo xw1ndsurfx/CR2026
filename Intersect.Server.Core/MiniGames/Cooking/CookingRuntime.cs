@@ -767,8 +767,9 @@ internal static class CookingRuntime
                 )
             );
 
+            var beforeXp = ProfessionRuntime.GetExperience(player, session.Recipe.ProfessionId);
             ProfessionRuntime.AwardActivity(player, session.Recipe.ProfessionId, xp);
-            session.AwardedExperience[player.Id] = xp;
+            session.AwardedExperience[player.Id] = Math.Max(0L, ProfessionRuntime.GetExperience(player, session.Recipe.ProfessionId) - beforeXp);
         }
 
         session.RewardText = rewardParts.Count == 0

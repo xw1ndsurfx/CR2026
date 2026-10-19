@@ -14,4 +14,7 @@ namespace Intersect.Network.Packets.WorldEvents;
 {
     [Key(0)] public string[] Names { get; set; } = [];
     [Key(1)] public int BonusPercent { get; set; }
+    [Key(2)] public long ServerTimeUnixMs { get; set; }
+    [Key(3)] public long EndsAtUnixMs { get; set; }
+    [Key(4)] public bool Silent { get; set; }
 }

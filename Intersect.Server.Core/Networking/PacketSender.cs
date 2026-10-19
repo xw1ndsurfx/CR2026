@@ -109,6 +109,7 @@ public static partial class PacketSender
             }
 
             player.LoginWarp();
+            client.Send(Intersect.Server.WorldEvents.WorldActivitiesRuntime.Snapshot(DateTimeOffset.Now, silent: true));
             client.Send(new Intersect.Network.Packets.WorldEvents.WorldActivitiesPacket { Json = Newtonsoft.Json.JsonConvert.SerializeObject(Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current) });
 
             SendEntityDataTo(client.Entity, player);
@@ -1605,7 +1606,7 @@ public static partial class PacketSender
     {
         var packet = new ExperiencePacket(player.Exp, player.ExperienceToNextLevel)
         {
-            // Populated only while an NPC kill award is being processed.
+            // Populated while an NPC or event-boosted character award is processed.
             // No guessing from the difference between level XP snapshots.
             NpcGain = player.PendingNpcExperienceGain,
         };

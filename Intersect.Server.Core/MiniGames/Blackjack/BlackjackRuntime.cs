@@ -32,7 +32,7 @@ internal static class BlackjackRuntime
     private static readonly object Gate=new();
     private static readonly Dictionary<BlackjackKey,BlackjackSessionTable> Tables=new();
     private static readonly Dictionary<Guid,View> Views=new();
-    private static readonly IMiniGameProgressStore TestProgress=new SqliteMiniGameProgressStore(Path.Combine("resources","minigames-test.db"));
+    private static readonly IMiniGameProgressStore TestProgress=new SqliteMiniGameProgressStore(Path.Combine("resources","minigames-test.db"), experienceEvents: true);
     internal static bool Contains(Guid player){lock(Gate)return Views.ContainsKey(player);}
     internal static PokerRegistryResult Join(Player player,StartMiniGameCommand command)
     {

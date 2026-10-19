@@ -26,17 +26,20 @@ public sealed class ExperienceEventDefinition
         if (DurationMinutes == 0) DurationMinutes = 1440;
     }
     public bool IsValid => Id != Guid.Empty && Name is { Length: > 0 and <= 96 } && Days is >= 1 and <= 127 && StartHour is >= 0 and <= 23 && StartMinute is >= 0 and <= 59 && DurationMinutes is >= 1 and <= 10080 && BonusPercent is >= 1 and <= 1000;
-    public bool IsActive(DateTimeOffset now)
+    public bool IsActive(DateTimeOffset now) => ActiveUntil(now).HasValue;
+    public DateTimeOffset? ActiveUntil(DateTimeOffset now)
     {
-        if (!Enabled || !IsValid) return false;
+        if (!Enabled || !IsValid) return null;
+        DateTimeOffset? until = null;
         for (var days = 0; days <= 7; days++)
         {
             var date = now.Date.AddDays(-days);
             if ((Days & (1 << (int)date.DayOfWeek)) == 0) continue;
             var start = new DateTimeOffset(date.AddHours(StartHour).AddMinutes(StartMinute), now.Offset);
-            if (now >= start && now < start.AddMinutes(DurationMinutes)) return true;
+            var end = start.AddMinutes(DurationMinutes);
+            if (now >= start && now < end && (until == null || end > until)) until = end;
         }
-        return false;
+        return until;
     }
 }
 public enum WorldActivitiesSection { All, Experience, CombatMusic, Bank }

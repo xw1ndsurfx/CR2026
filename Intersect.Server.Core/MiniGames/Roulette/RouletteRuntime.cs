@@ -51,7 +51,7 @@ internal static class RouletteRuntime
     private static readonly object Gate = new();
     private static readonly Dictionary<Guid, View> Views = new();
     private static readonly IMiniGameProgressStore TestProgress =
-        new SqliteMiniGameProgressStore(Path.Combine("resources", "minigames-test.db"));
+        new SqliteMiniGameProgressStore(Path.Combine("resources", "minigames-test.db"), experienceEvents: true);
 
     private static readonly System.Threading.Timer SweepTimer =
         new(_ => Sweep(), null, TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(500));

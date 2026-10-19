@@ -43,7 +43,7 @@ internal static class PotionRuntime
     private static readonly object Gate = new();
     private static readonly Dictionary<Guid, Session> Sessions = new();
     private static readonly IMiniGameProgressStore Progress =
-        new SqliteMiniGameProgressStore(Path.Combine("resources", "minigames-test.db"));
+        new SqliteMiniGameProgressStore(Path.Combine("resources", "minigames-test.db"), experienceEvents: true);
     private static long _sequence;
 
     internal static bool Contains(Guid playerId)
@@ -317,6 +317,7 @@ internal static class PotionRuntime
                     }
                     else
                     {
+                        var previousAlchemyXp = session.Progress.Experience;
                         session.Progress = Progress.AwardExperience(
                             player.Id,
                             MiniGameProgression.Potions,
@@ -328,7 +329,7 @@ internal static class PotionRuntime
                         session.RewardGranted = true;
                         player.SendPacket(new Intersect.Network.Packets.Server.ItemChangeNotificationPacket(session.Recipe.OutputItemId, session.Recipe.OutputQuantity));
                         Intersect.Server.Professions.ProfessionRuntime.AwardPotionCompletion(player, session.Recipe.CompletionExperience);
-                        session.Status = $"Brewed {session.Recipe.OutputQuantity:N0} x {item.Name} • +{session.Recipe.CompletionExperience} Alchemy XP";
+                        session.Status = $"Brewed {session.Recipe.OutputQuantity:N0} x {item.Name} • +{session.Progress.Experience - previousAlchemyXp} Alchemy XP";
                         questUpdate = new PotionQuestUpdate(
                             true,
                             session.Recipe.Id,
