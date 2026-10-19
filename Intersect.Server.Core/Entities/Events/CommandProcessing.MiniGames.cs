@@ -28,6 +28,13 @@ public static partial class CommandProcessing
                 ChatMessageType.Error, Color.White);
             return;
         }
+        if(command.Game is MiniGameType.Smelting or MiniGameType.Smithing)
+        {
+            if(!Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Open(player,command.Game==MiniGameType.Smelting?Intersect.Framework.Core.Metalworking.MetalworkKind.Smelting:Intersect.Framework.Core.Metalworking.MetalworkKind.Smithing))
+                PacketSender.SendChatMsg(player,"Finish your current activity before opening the foundry or forge.",ChatMessageType.Error,Color.White);
+            return;
+        }
+        if(Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Contains(player.Id))return;
         if (command.Game == MiniGameType.Lockpicking)
         {
             var eventId = instance.PageInstance?.Id ?? Guid.Empty;
@@ -149,6 +156,7 @@ public static partial class CommandProcessing
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
         if (player == null) return;
+        if(Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Leave(player))return;
         if (LockpickingRuntime.Leave(player)) return;
         if (PotionRuntime.Leave(player)) return;
         if (CookingRuntime.Leave(player)) return;

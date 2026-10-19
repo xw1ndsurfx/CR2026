@@ -26,6 +26,12 @@ public sealed class FrmWorldActivities : DarkForm
         var bankLevel = new NumericUpDown { Minimum = 1, Maximum = 10000, Value = draft.BankRequiredLevel, Width = 70 };
         var bankCost = new NumericUpDown { Minimum = 0, Maximum = 1000000, Value = draft.BankOpeningCost, Width = 70 };
         if (section == WorldActivitiesSection.CombatMusic) top.Controls.AddRange([new Label { Text = "Combat music", AutoSize = true }, music, new Label { Text = "After-combat grace (seconds)", AutoSize = true }, grace]);
+        if(section==WorldActivitiesSection.CombatMusic)
+        {
+            var playlists=new Button {Text="Map combat playlists...",Width=230};
+            playlists.Click+=(_,_)=>{using var dialog=new FrmCombatPlaylists(draft.CombatMusicRules);if(dialog.ShowDialog(this)==DialogResult.OK)draft.CombatMusicRules=dialog.Rules;};
+            top.Controls.Add(playlists);
+        }
         top.SetFlowBreak(grace, true);
         if (section == WorldActivitiesSection.Bank) top.Controls.AddRange([new Label { Text = "Bank opening: level / fee / currency (blank = Auragems)", AutoSize = true }, bankLevel, bankCost, currency]);
         top.SetFlowBreak(currency, true);

@@ -283,7 +283,8 @@ public partial class CharacterWindow
             return;
         }
 
-        mCharacterName.Text = Globals.Me.Name;
+        mCharacterName.Text = Globals.Me.Name+(string.IsNullOrWhiteSpace(Globals.Me.PvpGrade)?"":" ["+ClientLanguages.Text(ClientLanguages.ContentText(Globals.Me.PvpGrade))+"]");
+        mCharacterName.SetToolTipText(ClientLanguages.Format("PvP: {0} - {1} points",ClientLanguages.Text(ClientLanguages.ContentText(Globals.Me.PvpGrade)),Globals.Me.PvpPoints));
         mCharacterLevelAndClass.Text = Strings.Character.LevelAndClass.ToString(
             Globals.Me.Level, ClassDescriptor.GetName(Globals.Me.Class)
         );

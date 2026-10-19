@@ -39,7 +39,7 @@ internal sealed class MiniGameCommandDialog : Form
         var hint = new Label { AutoSize = true, MaximumSize = new Size(590, 0), Margin = new Padding(3, 3, 3, 12),
             Text = fixedGame == MiniGameType.Lockpicking
                 ? "Configure this lock's difficulty, profession XP, tools and Crew unlock scope."
-                : fixedGame is MiniGameType.Potions or MiniGameType.Cooking
+                : fixedGame is MiniGameType.Potions or MiniGameType.Cooking or MiniGameType.Smelting or MiniGameType.Smithing
                     ? "Recipes and rewards are configured in the content editor."
                     : "Same map instance + Table ID = shared table. Use identical settings on all access events. " +
                       "Show the buy-in amount in a confirmation event before this command." };
@@ -177,7 +177,8 @@ internal sealed class MiniGameCommandDialog : Form
             lockpickLootButton.Text = $"Edit Locksmith Chest Loot ({lockpickLootDraft.Length})";
         };
         bool IsBlackjack() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Blackjack;
-        bool IsPotions() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Potions;
+        bool IsPotions() => (game.SelectedItem as GameChoice)?.Type is MiniGameType.Potions or MiniGameType.Smelting or MiniGameType.Smithing;
+        bool IsMetalworking() => (game.SelectedItem as GameChoice)?.Type is MiniGameType.Smelting or MiniGameType.Smithing;
         bool IsRoulette() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Roulette;
         bool IsCooking() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Cooking;
         bool IsLockpicking() => (game.SelectedItem as GameChoice)?.Type == MiniGameType.Lockpicking;
@@ -292,6 +293,7 @@ internal sealed class MiniGameCommandDialog : Form
             }
             if (potions)
             {
+                if(IsMetalworking())seats.Value=1;
                 dealer.Checked = false;
                 npcs.Value = 0;
                 unlimitedNpcBankroll.Checked = false;
@@ -478,7 +480,7 @@ internal sealed class MiniGameCommandDialog : Form
             var selectedGame = (game.SelectedItem as GameChoice)?.Type ?? MiniGameType.Poker;
             var definition = MiniGameCatalog.Get(selectedGame);
             var blackjack = selectedGame == MiniGameType.Blackjack;
-            var potions = selectedGame == MiniGameType.Potions;
+            var potions = selectedGame is MiniGameType.Potions or MiniGameType.Smelting or MiniGameType.Smithing;
             var roulette = selectedGame == MiniGameType.Roulette;
             var lockpicking = selectedGame == MiniGameType.Lockpicking;
             var dealerSeats = blackjack ? 1 : (dealer.Checked ? 1 : 0);
@@ -486,6 +488,12 @@ internal sealed class MiniGameCommandDialog : Form
             var funded = ((currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty) != Guid.Empty;
             var tableValid = MiniGameCatalog.IsValidTableId(table.Text);
 
+            if(IsMetalworking())
+            {
+                summary.ForeColor=DrawingColor.LightSkyBlue;
+                summary.Text=definition.DisplayName+" | Solo server-timed workshop | Recipes, materials, output items and profession XP: Mini-Game > Royal Foundry / Royal Forge.";
+                return;
+            }
             if (potions)
             {
                 summary.ForeColor = DrawingColor.LightSkyBlue;
@@ -527,6 +535,12 @@ internal sealed class MiniGameCommandDialog : Form
             var id = (currency.SelectedItem as CurrencyChoice)?.Id ?? Guid.Empty;
             var blackjack = IsBlackjack();
             var roulette = IsRoulette();
+            if(IsMetalworking())
+            {
+                chipsLabel.Text="No currency wager";status.ForeColor=DrawingColor.Gold;
+                status.Text="Heat and work real inventory materials. Successful recipes grant the configured item and profession XP; failed attempts preserve ingredients.";
+                return;
+            }
             if (IsPotions())
             {
                 chipsLabel.Text = "Not used by Potions";

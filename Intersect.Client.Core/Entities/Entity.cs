@@ -1811,7 +1811,9 @@ public partial class Entity : IEntity
     protected bool ShowGuild => this is Player && Options.Instance.Guild.ShowGuildNameTagsOverMembers &&
         (this == Globals.Me ? Globals.Database?.ShowMyGuild ?? true : Globals.Database?.ShowPlayerGuilds ?? true);
 
-    protected string DisplayedName =>
+    protected string DisplayedName => BaseDisplayedName + (this is Player {PvpGrade.Length:>0} p && (Globals.Database?.ShowPvpGrades ?? true) ? " ["+Intersect.Client.Localization.ClientLanguages.Text(Intersect.Client.Localization.ClientLanguages.ContentText(p.PvpGrade))+"]":"");
+
+    private string BaseDisplayedName =>
         ((this is Player && Options.Instance.Player.ShowLevelByName &&
             (this == Globals.Me ? Globals.Database?.ShowMyLevel ?? true : Globals.Database?.ShowPlayerLevels ?? true)) ||
          (Type == EntityType.GlobalEntity && Options.Instance.Npc.ShowLevelByName && (Globals.Database?.ShowNpcLevels ?? true)))

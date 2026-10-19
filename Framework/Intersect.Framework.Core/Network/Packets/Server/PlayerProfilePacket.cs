@@ -132,4 +132,6 @@ public partial class PlayerProfilePacket : IntersectPacket
     public long LevelExperienceRequired { get; set; }
     [Key(22)] public bool PublicHouse { get; set; }
     [Key(23)] public bool OfflineHouseProfile { get; set; }
+    [Key(24)] public string PvpGrade {get;set;}="";
+    [Key(25)] public long PvpPoints {get;set;}
 }

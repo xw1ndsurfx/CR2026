@@ -26,7 +26,7 @@ internal static class Program
         {
             ("Shared mini-game catalog exposes Poker, Blackjack, Potions, Roulette, Cooking and Lockpicking", () =>
             {
-                Check(MiniGameCatalog.All.Count == 6);
+                Check(MiniGameCatalog.All.Count == 8);
                 var poker = MiniGameCatalog.Get(MiniGameType.Poker);
                 var blackjack = MiniGameCatalog.Get(MiniGameType.Blackjack);
                 var potions = MiniGameCatalog.Get(MiniGameType.Potions);

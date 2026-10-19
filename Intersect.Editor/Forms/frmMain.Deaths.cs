@@ -17,6 +17,7 @@ public partial class FrmMain
             Intersect.Editor.Networking.Network.SendPacket(new DeathConfigurationRequestPacket());
         };
         system.DropDownItems.Add(death);
+        var menuAnimations=new ToolStripMenuItem("Main Menu Animations...");menuAnimations.Click+=(_,_)=>{using var dialog=new FrmMenuAnimations();dialog.ShowDialog(this);};system.DropDownItems.Add(menuAnimations);
         void AddSection(ToolStripMenuItem menu, string title, Intersect.Framework.Core.WorldEvents.WorldActivitiesSection section)
         {
             var item = new ToolStripMenuItem(title);
@@ -24,6 +25,7 @@ public partial class FrmMain
             menu.DropDownItems.Add(item);
         }
         AddSection(system, "Combat Music...", Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.CombatMusic);
+        AddSection(system, "PvP & Capture the Chest...", Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.Pvp);
         AddSection(system, "Bank Settings...", Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.Bank);
         AddSection(menuStrip.Items.Cast<ToolStripItem>().OfType<ToolStripMenuItem>().Single(i => i.Name == "worldEventsToolStripMenuItem"), "Experience Events...", Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.Experience);
         var events = menuStrip.Items.Cast<ToolStripItem>().FirstOrDefault(item => item.Name == "worldEventsToolStripMenuItem");

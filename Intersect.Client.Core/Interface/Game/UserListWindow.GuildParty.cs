@@ -224,13 +224,14 @@ internal sealed partial class UserListWindow
 
         _body.SetInnerSize(468, Math.Max(426, 38 + count * 86));
 
-        AddAction(_footer, "InviteParty", "INVITE", 4, 12, 126, 43,
+        AddAction(_footer, "InviteParty", "INVITE", 0, 12, 100, 43,
             InvitePartyMember);
-        AddAction(_footer, "LeaveParty", "LEAVE PARTY", 139, 12, 139, 43,
+        AddAction(_footer, "LeaveParty", "LEAVE PARTY", 108, 12, 110, 43,
             count > 0 ? LeaveParty : null,
             count > 0 ? null : "You aren't currently in a party.");
-        AddAction(_footer, "PartyLobbies", Intersect.Client.Localization.ClientLanguages.Text("Adventure lobbies"), 287, 12, 180, 43,
+        AddAction(_footer, "PartyLobbies", Intersect.Client.Localization.ClientLanguages.Text("Adventure lobbies"), 226, 12, 160, 43,
             () => Intersect.Client.Interface.Interface.EnqueueInGame(ui => ui.OpenPartyLobbies()));
+        AddAction(_footer,"PvpArena","PvP",394,12,80,43,()=>Intersect.Client.Interface.Interface.EnqueueInGame(ui=>ui.OpenPvp()));
     }
 
     private void UpdatePartyVitals()

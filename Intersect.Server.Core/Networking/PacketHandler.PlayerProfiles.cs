@@ -144,6 +144,7 @@ internal sealed partial class PacketHandler
                 Professions = professions.ToArray(),
                 IsSelf = requester.Id == target.Id,
                 PublicHouse = Intersect.Server.Housing.HousingRuntime.PublicHouse(target),
+                PvpGrade=Intersect.Server.Pvp.PvpRuntime.Grade(target),PvpPoints=Intersect.Server.Pvp.PvpRuntime.Points(target),
                 RankingTitle = rankingTitle?.Title ?? string.Empty,
                 RankingExperienceBonusPercent = rankingTitle?.ExperienceBonusPercent ?? 0,
                 RankingPosition = rankingTitle?.Rank ?? 0,

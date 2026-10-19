@@ -400,7 +400,9 @@ public partial class FrmNpc
         Assign(nudSpd, result.speed);
         Assign(nudDamage, Math.Max(calibration.Damage,
             Math.Max(2, result.damage / 3)));
-        Assign(nudExp, result.exp);
+        Assign(nudExp, Math.Max(0,(long)Math.Round(result.exp*0.8)));
+        Assign(_experienceMaximum, Math.Max(0,(long)Math.Round(result.exp*1.2)));
+        chkIndividualLoot.Checked=true;
         // Handcrafted crit, scaling, speed and animation remain unchanged
         // when Auto Combat is disabled.
         cmbDamageType.SelectedIndex = role.SelectedIndex == 2

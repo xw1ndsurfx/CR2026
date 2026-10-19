@@ -269,6 +269,7 @@ public partial class SettingsWindow : Window
         };
         _showPingCounterCheckbox.CheckChanged += ShowPingCounterCheckboxOnCheckChanged;
 
+        _displayOptions["ShowPvpGrades"]=new LabeledCheckBox(_informationSettings,"ShowPvpGrades") {Dock=Pos.Top,Font=_defaultFont,FontSize=12,Text=Intersect.Client.Localization.ClientLanguages.Text("Show PvP grades beside names")};
         _displayOptions["ShowMyLevel"] = new LabeledCheckBox(_informationSettings, "ShowMyLevel")
         { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Show my level") };
         _displayOptions["ShowPlayerLevels"] = new LabeledCheckBox(_informationSettings, "ShowPlayerLevels")

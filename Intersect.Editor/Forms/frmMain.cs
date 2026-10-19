@@ -225,10 +225,16 @@ public partial class FrmMain : Form
 
     private Intersect.Framework.Core.GameObjects.Events.Commands.MiniGameType? _requestedMiniGame;
     private FrmRewardConfiguration? _rewardEditor;
+    internal Intersect.Framework.Core.Metalworking.MetalworkKind RequestedMetalworkKind =>
+        _requestedMiniGame==Intersect.Framework.Core.GameObjects.Events.Commands.MiniGameType.Smithing
+        ? Intersect.Framework.Core.Metalworking.MetalworkKind.Smithing
+        : Intersect.Framework.Core.Metalworking.MetalworkKind.Smelting;
 
     private void RequestMiniGameEditor(Intersect.Framework.Core.GameObjects.Events.Commands.MiniGameType? game)
     {
         _requestedMiniGame = game;
+        if(game is Intersect.Framework.Core.GameObjects.Events.Commands.MiniGameType.Smelting or Intersect.Framework.Core.GameObjects.Events.Commands.MiniGameType.Smithing)
+        { Intersect.Editor.Networking.Network.SendPacket(new Intersect.Network.Packets.WorldEvents.RequestWorldActivitiesPacket {Section=Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.Metalworking});return; }
         if (_rewardEditor is { IsDisposed: false }) { OpenRewardConfigurationEditor(); return; }
         PacketSender.SendRequestRewardConfiguration();
     }
