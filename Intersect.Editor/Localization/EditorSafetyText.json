@@ -1,0 +1,294 @@
+{
+  "Entries": {
+    "Save protection": {
+      "en": "Save protection",
+      "fr": "Protection des sauvegardes",
+      "es": "Protección de guardado"
+    },
+    "Save protection...": {
+      "en": "Save protection...",
+      "fr": "Protection des sauvegardes...",
+      "es": "Protección de guardado..."
+    },
+    "Remind me after five minutes of unsaved changes": {
+      "en": "Remind me after five minutes of unsaved changes",
+      "fr": "Me rappeler après cinq minutes sans sauvegarde",
+      "es": "Recordarme tras cinco minutos sin guardar"
+    },
+    "Automatically save maps and completed map events to the server": {
+      "en": "Automatically save maps and completed map events to the server",
+      "fr": "Sauvegarder automatiquement les maps et leurs événements terminés sur le serveur",
+      "es": "Guardar automáticamente mapas y sus eventos terminados en el servidor"
+    },
+    "Automatic save interval (minutes)": {
+      "en": "Automatic save interval (minutes)",
+      "fr": "Intervalle de sauvegarde automatique (minutes)",
+      "es": "Intervalo de guardado automático (minutos)"
+    },
+    "Save settings": {
+      "en": "Save settings",
+      "fr": "Enregistrer les réglages",
+      "es": "Guardar ajustes"
+    },
+    "Recover local map copy...": {
+      "en": "Recover local map copy...",
+      "fr": "Récupérer une copie locale de la map...",
+      "es": "Recuperar copia local del mapa..."
+    },
+    "Local recovery ready": {
+      "en": "Local recovery ready",
+      "fr": "Récupération locale prête",
+      "es": "Recuperación local lista"
+    },
+    "Unsaved changes: save your map and finish open event edits.": {
+      "en": "Unsaved changes: save your map and finish open event edits.",
+      "fr": "Modifications non sauvegardées : enregistrer la map et terminer les événements ouverts.",
+      "es": "Cambios sin guardar: guardar el mapa y terminar los eventos abiertos."
+    },
+    "Save now": {
+      "en": "Save now",
+      "fr": "Sauvegarder maintenant",
+      "es": "Guardar ahora"
+    },
+    "Local recovery: {0}": {
+      "en": "Local recovery: {0}",
+      "fr": "Copie locale : {0}",
+      "es": "Copia local: {0}"
+    },
+    "Local copy saved; server autosave waits for open editors.": {
+      "en": "Local copy saved; server autosave waits for open editors.",
+      "fr": "Copie locale enregistrée ; la sauvegarde serveur attend la fermeture des éditeurs.",
+      "es": "Copia local guardada; el servidor espera al cierre de los editores."
+    },
+    "Automatic save sent to server at {0}": {
+      "en": "Automatic save sent to server at {0}",
+      "fr": "Sauvegarde automatique envoyée au serveur à {0}",
+      "es": "Guardado automático enviado al servidor a las {0}"
+    },
+    "Local recovery failed: {0}": {
+      "en": "Local recovery failed: {0}",
+      "fr": "Échec de la copie locale : {0}",
+      "es": "Error de copia local: {0}"
+    },
+    "Close the event editor before restoring a map copy.": {
+      "en": "Close the event editor before restoring a map copy.",
+      "fr": "Fermer l’éditeur d’événement avant de récupérer la map.",
+      "es": "Cerrar el editor de eventos antes de recuperar el mapa."
+    },
+    "No local recovery copy for this map.": {
+      "en": "No local recovery copy for this map.",
+      "fr": "Aucune copie locale disponible pour cette map.",
+      "es": "No hay copia local de este mapa."
+    },
+    "Restore the local copy of {0} from {1}? Current edits will be replaced locally. Save the map to publish it.": {
+      "en": "Restore the local copy of {0} from {1}? Current edits will be replaced locally. Save the map to publish it.",
+      "fr": "Récupérer la copie locale de {0} du {1} ? Les modifications actuelles seront remplacées localement. Sauvegarder la map pour les publier.",
+      "es": "¿Recuperar la copia local de {0} del {1}? Se reemplazarán los cambios locales actuales. Guardar el mapa para publicarlos."
+    },
+    "Local copy restored; save to publish.": {
+      "en": "Local copy restored; save to publish.",
+      "fr": "Copie locale récupérée ; sauvegarder pour publier.",
+      "es": "Copia local recuperada; guardar para publicar."
+    },
+    "Recovery failed: {0}": {
+      "en": "Recovery failed: {0}",
+      "fr": "Échec de la récupération : {0}",
+      "es": "Error de recuperación: {0}"
+    },
+    "Recover local event copy...": {
+      "en": "Recover local event copy...",
+      "fr": "Récupérer une copie locale de l’événement...",
+      "es": "Recuperar copia local del evento..."
+    },
+    "Local copy: {0}": {
+      "en": "Local copy: {0}",
+      "fr": "Copie locale : {0}",
+      "es": "Copia local: {0}"
+    },
+    "Unsaved event: confirm commands, then Save.": {
+      "en": "Unsaved event: confirm commands, then Save.",
+      "fr": "Événement non sauvegardé : valider les commandes puis enregistrer.",
+      "es": "Evento sin guardar: confirmar comandos y guardar."
+    },
+    "No local recovery copy for this event.": {
+      "en": "No local recovery copy for this event.",
+      "fr": "Aucune copie locale disponible pour cet événement.",
+      "es": "No hay copia local de este evento."
+    },
+    "Restore the event copy from {0}? Current event edits will be replaced locally.": {
+      "en": "Restore the event copy from {0}? Current event edits will be replaced locally.",
+      "fr": "Récupérer la copie de l’événement du {0} ? Les modifications actuelles seront remplacées localement.",
+      "es": "¿Recuperar la copia del evento del {0}? Se reemplazarán los cambios locales actuales."
+    },
+    "Save event and map": {
+      "en": "Save event and map",
+      "fr": "Sauvegarder l’événement et la map",
+      "es": "Guardar evento y mapa"
+    },
+    "Maximum {0} recipes.": {
+      "en": "Maximum {0} recipes.",
+      "fr": "Maximum de {0} recettes.",
+      "es": "Máximo de {0} recetas."
+    },
+    "Recipe {0} ({1}): {2}": {
+      "en": "Recipe {0} ({1}): {2}",
+      "fr": "Recette {0} ({1}) : {2}",
+      "es": "Receta {0} ({1}): {2}"
+    },
+    "Enter a name of 1 to {0} characters.": {
+      "en": "Enter a name of 1 to {0} characters.",
+      "fr": "Saisir un nom de 1 à {0} caractères.",
+      "es": "Introducir un nombre de 1 a {0} caracteres."
+    },
+    "Maximum {0} distinct materials.": {
+      "en": "Maximum {0} distinct materials.",
+      "fr": "Maximum de {0} matériaux distincts.",
+      "es": "Máximo de {0} materiales distintos."
+    },
+    "Material row {0}: select an item.": {
+      "en": "Material row {0}: select an item.",
+      "fr": "Matériau, ligne {0} : sélectionner un objet.",
+      "es": "Material, fila {0}: seleccionar un objeto."
+    },
+    "Material row {0}: quantity must be 1 to 1000.": {
+      "en": "Material row {0}: quantity must be 1 to 1000.",
+      "fr": "Matériau, ligne {0} : la quantité doit être de 1 à 1000.",
+      "es": "Material, fila {0}: la cantidad debe ser de 1 a 1000."
+    },
+    "Each material must appear once; combine its quantities.": {
+      "en": "Each material must appear once; combine its quantities.",
+      "fr": "Chaque matériau doit apparaître une seule fois ; regrouper ses quantités.",
+      "es": "Cada material debe aparecer una vez; sumar sus cantidades."
+    },
+    "An enabled recipe needs an output item and at least one material.": {
+      "en": "An enabled recipe needs an output item and at least one material.",
+      "fr": "Une recette activée doit produire un objet et avoir au moins un matériau.",
+      "es": "Una receta activa necesita un objeto resultante y al menos un material."
+    },
+    "Duplicate or missing identifier. Remove this duplicate and add a new entry.": {
+      "en": "Duplicate or missing identifier. Remove this duplicate and add a new entry.",
+      "fr": "Identifiant manquant ou en double. Supprimer ce doublon et ajouter une nouvelle entrée.",
+      "es": "Identificador ausente o duplicado. Eliminar el duplicado y añadir otra entrada."
+    },
+    "Check quantity (1–100), level (1–1000), XP (0–5000), quality (1–100) and sound filenames.": {
+      "en": "Check quantity (1–100), level (1–1000), XP (0–5000), quality (1–100) and sound filenames.",
+      "fr": "Vérifier quantité (1–100), niveau (1–1000), XP (0–5000), qualité (1–100) et noms des fichiers audio.",
+      "es": "Revisar cantidad (1–100), nivel (1–1000), XP (0–5000), calidad (1–100) y nombres de archivos de sonido."
+    },
+    "Exactly ten PvP grades are required; found {0}.": {
+      "en": "Exactly ten PvP grades are required; found {0}.",
+      "fr": "Il faut exactement dix grades PvP ; {0} trouvés.",
+      "es": "Se requieren exactamente diez rangos PvP; se encontraron {0}."
+    },
+    "Grade {0}: enter a name of 1 to 64 characters.": {
+      "en": "Grade {0}: enter a name of 1 to 64 characters.",
+      "fr": "Grade {0} : saisir un nom de 1 à 64 caractères.",
+      "es": "Rango {0}: introducir un nombre de 1 a 64 caracteres."
+    },
+    "Grade {0}: thresholds must start at zero and strictly increase (maximum 10000000).": {
+      "en": "Grade {0}: thresholds must start at zero and strictly increase (maximum 10000000).",
+      "fr": "Grade {0} : les seuils doivent commencer à zéro et augmenter strictement (maximum 10000000).",
+      "es": "Rango {0}: los umbrales deben empezar en cero y aumentar estrictamente (máximo 10000000)."
+    },
+    "Maximum {0} arenas.": {
+      "en": "Maximum {0} arenas.",
+      "fr": "Maximum de {0} arènes.",
+      "es": "Máximo de {0} arenas."
+    },
+    "Arena {0} ({1}): {2}": {
+      "en": "Arena {0} ({1}): {2}",
+      "fr": "Arène {0} ({1}) : {2}",
+      "es": "Arena {0} ({1}): {2}"
+    },
+    "Select an Arena-zone map for this enabled arena.": {
+      "en": "Select an Arena-zone map for this enabled arena.",
+      "fr": "Sélectionner une map de zone Arena pour cette arène activée.",
+      "es": "Seleccionar un mapa de zona Arena para esta arena activa."
+    },
+    "Base coordinates must fit the map: X 0–{0}, Y 0–{1}.": {
+      "en": "Base coordinates must fit the map: X 0–{0}, Y 0–{1}.",
+      "fr": "Les coordonnées des bases doivent tenir dans la map : X 0–{0}, Y 0–{1}.",
+      "es": "Las bases deben estar dentro del mapa: X 0–{0}, Y 0–{1}."
+    },
+    "Separate the bases by at least four tiles (X distance + Y distance).": {
+      "en": "Separate the bases by at least four tiles (X distance + Y distance).",
+      "fr": "Éloigner les bases d’au moins quatre cases (distance X + distance Y).",
+      "es": "Separar las bases al menos cuatro casillas (distancia X + distancia Y)."
+    },
+    "Check team size (1–8), minutes (1–60), score (1–100) and minimum level (1–10000).": {
+      "en": "Check team size (1–8), minutes (1–60), score (1–100) and minimum level (1–10000).",
+      "fr": "Vérifier taille des équipes (1–8), minutes (1–60), score (1–100) et niveau minimum (1–10000).",
+      "es": "Revisar tamaño de equipos (1–8), minutos (1–60), puntuación (1–100) y nivel mínimo (1–10000)."
+    },
+    "Check ranked maps and the limits in Rules.": {
+      "en": "Check ranked maps and the limits in Rules.",
+      "fr": "Vérifier les maps classées et les limites dans les règles.",
+      "es": "Revisar mapas de clasificación y límites en Reglas."
+    },
+    "Select a listed value or enter a valid whole number.": {
+      "en": "Select a listed value or enter a valid whole number.",
+      "fr": "Sélectionner une valeur de la liste ou saisir un entier valide.",
+      "es": "Seleccionar un valor de la lista o introducir un entero válido."
+    },
+    "Correct the highlighted table cell before saving.": {
+      "en": "Correct the highlighted table cell before saving.",
+      "fr": "Corriger la cellule signalée dans le tableau avant d’enregistrer.",
+      "es": "Corregir la celda señalada antes de guardar."
+    },
+    "Save changes to this map before closing? Yes saves to the server, No keeps only a local recovery copy, Cancel returns to editing.": {
+      "en": "Save changes to this map before closing? Yes saves to the server, No keeps only a local recovery copy, Cancel returns to editing.",
+      "fr": "Sauvegarder cette map avant de fermer ? Oui envoie au serveur, Non conserve seulement une copie locale, Annuler reprend l’édition.",
+      "es": "¿Guardar este mapa antes de cerrar? Sí envía al servidor, No conserva solo una copia local, Cancelar vuelve al editor."
+    },
+    "Waiting for the server to confirm the save...": {
+      "en": "Waiting for the server to confirm the save...",
+      "fr": "En attente de confirmation du serveur...",
+      "es": "Esperando confirmación del servidor..."
+    },
+    "The server has not confirmed the save. The editor stays open; a local recovery copy is available.": {
+      "en": "The server has not confirmed the save. The editor stays open; a local recovery copy is available.",
+      "fr": "Le serveur n’a pas confirmé la sauvegarde. L’éditeur reste ouvert ; une copie locale est disponible.",
+      "es": "El servidor no ha confirmado el guardado. El editor sigue abierto; hay una copia local disponible."
+    },
+    "The server has not confirmed the save. Your edits remain in this window.": {
+      "fr": "Le serveur n’a pas confirmé la sauvegarde. Vos modifications restent dans cette fenêtre.",
+      "es": "El servidor no ha confirmado el guardado. Los cambios permanecen en esta ventana.",
+      "en": "The server has not confirmed the save. Your edits remain in this window."
+    },
+    "Save refused: {0}": {
+      "fr": "Sauvegarde refusée : {0}",
+      "es": "Guardado rechazado: {0}",
+      "en": "Save refused: {0}"
+    },
+    "Check music, schedules, duration and XP percentages.": {
+      "fr": "Vérifier musiques, horaires, durées et pourcentages d’XP.",
+      "es": "Revisar música, horarios, duración y porcentajes de XP.",
+      "en": "Check music, schedules, duration and XP percentages."
+    },
+    "Choose an existing bank currency.": {
+      "fr": "Choisir une monnaie de banque existante.",
+      "es": "Elegir una moneda bancaria existente.",
+      "en": "Choose an existing bank currency."
+    },
+    "Select existing materials, output items and professions for enabled metalworking recipes.": {
+      "fr": "Choisir des matériaux, objets produits et professions existants pour les recettes activées.",
+      "es": "Elegir materiales, objetos resultantes y profesiones existentes para las recetas activas.",
+      "en": "Select existing materials, output items and professions for enabled metalworking recipes."
+    },
+    "Choose Arena-zone maps, valid base coordinates and an existing chest icon item.": {
+      "fr": "Choisir des maps de zone Arena, des coordonnées de bases valides et un objet d’icône de coffre existant.",
+      "es": "Elegir mapas de zona Arena, coordenadas válidas y un objeto de icono de cofre existente.",
+      "en": "Choose Arena-zone maps, valid base coordinates and an existing chest icon item."
+    },
+    "Ranked maps must exist and permit PvP.": {
+      "fr": "Les maps classées doivent exister et autoriser le PvP.",
+      "es": "Los mapas de clasificación deben existir y permitir PvP.",
+      "en": "Ranked maps must exist and permit PvP."
+    },
+    "Local recovery copies are made every 30 seconds for changed maps and open events. Server autosave waits until event windows are closed and drawing or property editing has stopped. Changes become live on the server. Use File > Recover local map copy, or Recover in the event window. Unsaved command dialogs must be confirmed first.": {
+      "en": "Local recovery copies are made every 30 seconds for changed maps and open events. Server autosave waits until event windows are closed and drawing or property editing has stopped. Changes become live on the server. Use File > Recover local map copy, or Recover in the event window. Unsaved command dialogs must be confirmed first.",
+      "fr": "Des copies locales sont créées toutes les 30 secondes pour les maps modifiées et les événements ouverts. La sauvegarde serveur attend la fermeture des événements et la fin du dessin ou de la saisie des propriétés. Les modifications deviennent actives sur le serveur. Utiliser Fichier > Récupérer une copie locale de la map, ou Récupérer dans l’événement. Valider d’abord les commandes en cours de saisie.",
+      "es": "Se crean copias locales cada 30 segundos de mapas modificados y eventos abiertos. El guardado en servidor espera a que se cierren las ventanas de eventos y termine el dibujo o la edición de propiedades. Los cambios se activan en el servidor. Usar Archivo > Recuperar copia local del mapa, o Recuperar en el evento. Primero confirmar los comandos en edición."
+    }
+  }
+}

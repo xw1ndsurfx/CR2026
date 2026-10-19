@@ -628,4 +628,7 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Localization/EditorSafetyText.json" LogicalName="Intersect.Editor.SafetyText" />
+  </ItemGroup>
 </Project>
