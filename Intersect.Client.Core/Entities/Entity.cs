@@ -233,7 +233,8 @@ public partial class Entity : IEntity
 
     public FloatRect WorldPos { get; set; } = new FloatRect();
 
-    public virtual FloatRect InteractionBounds => WorldPos;
+    public virtual FloatRect InteractionBounds => Naval.NavalWorld.IsCaptain(Id) ?
+        (Naval.NavalWorld.TryHullBounds(Id,out var hull) ? hull : default) : WorldPos;
 
     public bool HitTest(float worldX, float worldY) => InteractionBounds.Contains(worldX, worldY);
 
@@ -336,7 +337,8 @@ public partial class Entity : IEntity
 
     IReadOnlyList<IStatus> IEntity.Status => Status;
 
-    public Vector2 Origin => LatestMap == default ? Vector2.Zero : mOrigin;
+    public Vector2 Origin => Naval.NavalWorld.TryCaptainCenter(Id,out var navalX,out var navalY) ?
+        new Vector2(navalX,navalY) : LatestMap == default ? Vector2.Zero : mOrigin;
 
     protected virtual Vector2 CenterOffset
     {
@@ -1255,7 +1257,7 @@ public partial class Entity : IEntity
     //Rendering Functions
     public virtual void Draw()
     {
-        if (Naval.NavalWorld.IsCaptain(Id)) { WorldPos.Reset(); return; }
+        if (Naval.NavalWorld.IsCaptain(Id)) { WorldPos = InteractionBounds; return; }
         if (IsHidden)
         {
             return; //Don't draw if the entity is hidden

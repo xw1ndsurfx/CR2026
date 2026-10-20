@@ -110,35 +110,39 @@
     [
       {
         "X": 730,
-        "Y": 842,
+        "Y": 580,
         "Width": 180,
-        "Height": 244,
+        "Height": 262,
         "AnchorX": 90.0,
-        "AnchorY": 197.64000000000001
+        "AnchorY": 212.22000000000003,
+        "FlipHorizontal": true
       },
       {
         "X": 910,
-        "Y": 842,
+        "Y": 580,
         "Width": 180,
-        "Height": 244,
+        "Height": 262,
         "AnchorX": 90.0,
-        "AnchorY": 197.64000000000001
+        "AnchorY": 212.22000000000003,
+        "FlipHorizontal": true
       },
       {
         "X": 1090,
-        "Y": 842,
+        "Y": 580,
         "Width": 179,
-        "Height": 244,
+        "Height": 262,
         "AnchorX": 89.5,
-        "AnchorY": 197.64000000000001
+        "AnchorY": 212.22000000000003,
+        "FlipHorizontal": true
       },
       {
         "X": 1269,
-        "Y": 842,
+        "Y": 580,
         "Width": 179,
-        "Height": 244,
+        "Height": 262,
         "AnchorX": 89.5,
-        "AnchorY": 197.64000000000001
+        "AnchorY": 212.22000000000003,
+        "FlipHorizontal": true
       }
     ],
     [
@@ -279,5 +283,5 @@
     ]
   ],
   "SourceSha256": "d87387ac69cc667d1e1e7c14ac2fcdfe1420271f46768549b179eb645461bd12",
-  "ReviewNotes": "Prototype source selections; waterline anchors remain fixed during sinking. Adjacent wakes/sails touch or overlap. Direction and exact artistic alignment need in-game review."
+  "ReviewNotes": "Prototype source selections; waterline anchors remain fixed during sinking. Adjacent wakes/sails touch or overlap. Direction and exact artistic alignment need in-game review. SE uses the horizontally mirrored SW view to correct the supplied backwards-facing diagonal; source pixels unchanged."
 }

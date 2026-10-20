@@ -38,6 +38,7 @@ public sealed class ShipSpriteAtlas
 
 public sealed class ShipSpriteFrame
 {
+    public bool FlipHorizontal { get; set; }
     public int X { get; set; }
     public int Y { get; set; }
     public int Width { get; set; }

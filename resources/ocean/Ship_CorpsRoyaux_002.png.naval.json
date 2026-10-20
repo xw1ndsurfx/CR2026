@@ -108,36 +108,40 @@
     ],
     [
       {
-        "X": 761,
-        "Y": 840,
-        "Width": 148,
-        "Height": 211,
+        "X": 757,
+        "Y": 609,
+        "Width": 157,
+        "Height": 206,
+        "AnchorX": 81,
+        "AnchorY": 145,
+        "FlipHorizontal": true
+      },
+      {
+        "X": 929,
+        "Y": 609,
+        "Width": 160,
+        "Height": 202,
         "AnchorX": 76,
-        "AnchorY": 163
+        "AnchorY": 145,
+        "FlipHorizontal": true
       },
       {
-        "X": 923,
-        "Y": 842,
-        "Width": 166,
-        "Height": 209,
-        "AnchorX": 82,
-        "AnchorY": 161
-      },
-      {
-        "X": 1089,
-        "Y": 842,
-        "Width": 172,
-        "Height": 211,
-        "AnchorX": 84,
-        "AnchorY": 161
-      },
-      {
-        "X": 1267,
-        "Y": 842,
+        "X": 1091,
+        "Y": 609,
         "Width": 161,
-        "Height": 209,
-        "AnchorX": 75,
-        "AnchorY": 161
+        "Height": 204,
+        "AnchorX": 81,
+        "AnchorY": 145,
+        "FlipHorizontal": true
+      },
+      {
+        "X": 1260,
+        "Y": 608,
+        "Width": 158,
+        "Height": 203,
+        "AnchorX": 78,
+        "AnchorY": 146,
+        "FlipHorizontal": true
       }
     ],
     [
@@ -278,5 +282,5 @@
     ]
   ],
   "SourceSha256": "2cb41a3a2c5acceeda6910db97767541601b33b44b79b15c9f1484105c8ad9b9",
-  "ReviewNotes": "Initial manually reviewed rectangles and waterline anchors. Source water wakes touch adjacent poses; damaged sails overlap in side views. Fine artistic alignment remains to be reviewed in the preview before production use."
+  "ReviewNotes": "Initial manually reviewed rectangles and waterline anchors. Source water wakes touch adjacent poses; damaged sails overlap in side views. Fine artistic alignment remains to be reviewed in the preview before production use. SE uses the horizontally mirrored SW view to correct the supplied backwards-facing diagonal; source pixels unchanged."
 }

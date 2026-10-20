@@ -47,6 +47,13 @@ public sealed partial class NavalTests
         if (sinking) Assert.That(atlas.FrameIndex(long.MaxValue,180),Is.EqualTo(3));
         Assert.That(atlas.IsValid(width + 1, height, 4), Is.False);
         Assert.That(atlas.IsValid(width, height, 3), Is.False);
+        for (var frame=0;frame<4;frame++)
+        {
+            var southeast=atlas.Frame(135,frame*180,180);var southwest=atlas.Frame(225,frame*180,180);
+            Assert.That(southeast.FlipHorizontal,Is.True);
+            Assert.That((southeast.X,southeast.Y,southeast.Width,southeast.Height),
+                Is.EqualTo((southwest.X,southwest.Y,southwest.Width,southwest.Height)));
+        }
     }
 
     [Test]

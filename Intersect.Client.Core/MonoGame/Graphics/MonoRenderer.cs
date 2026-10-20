@@ -709,6 +709,15 @@ internal partial class MonoRenderer : GameRenderer
         return new MonoTileBuffer(this, _graphicsDevice);
     }
 
+    internal static bool NormalizeSignedTextureWidth(ref float x, ref float width)
+    {
+        if (width >= 0) return false;
+        x += width; width = -width; return true;
+    }
+
+    internal static SpriteEffects TextureMirrorEffects(bool mirrored, bool packRotated) =>
+        mirrored ? (packRotated ? SpriteEffects.FlipVertically : SpriteEffects.FlipHorizontally) : SpriteEffects.None;
+
     public override void DrawTexture(
         IGameTexture tex,
         float sx,
@@ -728,6 +737,8 @@ internal partial class MonoRenderer : GameRenderer
         bool drawImmediate = false
     )
     {
+        // A signed target width mirrors UVs without reversing triangle winding or changing source pixels.
+        var flipHorizontal = NormalizeSignedTextureWidth(ref tx,ref tw);
         var texture = tex?.GetTexture();
         if (texture == null)
         {
@@ -814,7 +825,7 @@ internal partial class MonoRenderer : GameRenderer
                 rotationDegrees,
                 origin,
                 new Vector2(tw / sw, th / sh),
-                SpriteEffects.None,
+                TextureMirrorEffects(flipHorizontal,packRotated),
                 0
             );
         }

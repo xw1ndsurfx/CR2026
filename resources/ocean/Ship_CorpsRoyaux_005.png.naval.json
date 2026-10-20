@@ -108,36 +108,40 @@
     ],
     [
       {
-        "X": 764,
-        "Y": 832,
-        "Width": 145,
-        "Height": 218,
-        "AnchorX": 73,
-        "AnchorY": 171
+        "X": 745,
+        "Y": 600,
+        "Width": 169,
+        "Height": 215,
+        "AnchorX": 93,
+        "AnchorY": 154,
+        "FlipHorizontal": true
       },
       {
-        "X": 931,
-        "Y": 834,
-        "Width": 158,
-        "Height": 218,
+        "X": 924,
+        "Y": 605,
+        "Width": 165,
+        "Height": 210,
+        "AnchorX": 81,
+        "AnchorY": 149,
+        "FlipHorizontal": true
+      },
+      {
+        "X": 1098,
+        "Y": 600,
+        "Width": 162,
+        "Height": 216,
         "AnchorX": 74,
-        "AnchorY": 169
+        "AnchorY": 154,
+        "FlipHorizontal": true
       },
       {
-        "X": 1094,
-        "Y": 833,
-        "Width": 173,
-        "Height": 217,
-        "AnchorX": 79,
-        "AnchorY": 170
-      },
-      {
-        "X": 1269,
-        "Y": 833,
-        "Width": 164,
-        "Height": 218,
-        "AnchorX": 73,
-        "AnchorY": 170
+        "X": 1260,
+        "Y": 599,
+        "Width": 176,
+        "Height": 216,
+        "AnchorX": 78,
+        "AnchorY": 155,
+        "FlipHorizontal": true
       }
     ],
     [
@@ -278,5 +282,5 @@
     ]
   ],
   "SourceSha256": "adb0a7e65331afc9c2898ca6083eb6211c6b17d8e0fa0cd1f28e5f921a1b1cbf",
-  "ReviewNotes": "Initial manually reviewed rectangles and waterline anchors. Source water wakes touch adjacent poses; damaged sails overlap in side views. Fine artistic alignment remains to be reviewed in the preview before production use."
+  "ReviewNotes": "Initial manually reviewed rectangles and waterline anchors. Source water wakes touch adjacent poses; damaged sails overlap in side views. Fine artistic alignment remains to be reviewed in the preview before production use. SE uses the horizontally mirrored SW view to correct the supplied backwards-facing diagonal; source pixels unchanged."
 }
