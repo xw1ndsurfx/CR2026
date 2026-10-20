@@ -42,6 +42,9 @@ public partial class FrmMain
         _saveReminder.Items.Add(save);
         Controls.Add(_saveReminder);
         _saveReminder.BringToFront();
+        // This form's designer leaves components null. Own the timer so normal
+        // form disposal also stops recovery and autosave callbacks.
+        components ??= new System.ComponentModel.Container();
         var timer = new System.Windows.Forms.Timer(components) { Interval = 1000 };
         timer.Tick += (_, _) => SaveProtectionTick();
         timer.Start();

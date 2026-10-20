@@ -22,6 +22,7 @@ internal static class SaveProtectionTests
         try
         {
             CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("en");
+            MainWindowTimer();
             RoundTripForms();
             RecoveryStore();
             SaveReceipt();
@@ -47,6 +48,20 @@ internal static class SaveProtectionTests
         }
         finally { CultureInfo.CurrentUICulture = language; }
         Console.WriteLine("PASS save protection: serialized PvP/workshop forms, pending grid edits, exact diagnostics, recovery generations/corruption, translations and settings layout");
+    }
+
+    private static void MainWindowTimer()
+    {
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        using var main = new FrmMain();
+        Check(typeof(FrmMain).GetField("components", flags)!.GetValue(main) == null,
+            "Regression setup: main window designer has no component container");
+        typeof(FrmMain).GetMethod("InitializeSaveProtection", flags)!.Invoke(main, null);
+        var container = (System.ComponentModel.IContainer)typeof(FrmMain).GetField("components", flags)!.GetValue(main)!;
+        var timer = container.Components.OfType<System.Windows.Forms.Timer>().Single();
+        Check(timer.Enabled && timer.Interval == 1000, "Main window starts its owned save protection timer");
+        main.Dispose();
+        Check(!timer.Enabled && container.Components.Count == 0, "Closing the main window disposes the timer");
     }
 
     private static void RoundTripForms()
