@@ -37,7 +37,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         Text = T("Naval System Editor"); Size = new(1050, 780); MinimumSize = new(850, 620);
         StartPosition = FormStartPosition.CenterParent;
         var general = Page("Navigation and harbour");
-        general.Controls.Add(Fields(_navigation, 0, ["Ships", "SourceJson", "AdditionalData", "Presentation", "Sailing"]));
+        general.Controls.Add(Fields(_navigation, 0, ["Ships", "SourceJson", "AdditionalData", "Presentation", "Sailing", "Herbonia"]));
         AddListPage("Test ships", _navigation.Ships.ToList(), 0, () => new ShipDefinition
             { Graphics = "Ship_CorpsRoyaux_002.png", DamagedGraphics = "Ship_CorpsRoyaux_005.png" },
             ships => _navigation.Ships = ships.ToArray());
@@ -47,6 +47,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             offers => _catalogue.Offers = offers.ToArray());
         Page("Sounds, icons and effects").Controls.Add(Fields(_navigation.Presentation,0,[]));
         Page("Sailing progression").Controls.Add(Fields(_navigation.Sailing,0,[]));
+        AddListPage("Herbonia AI patrols",_navigation.Herbonia.ToList(),0,()=>new HerboniaPatrol(),patrols=>_navigation.Herbonia=patrols.ToArray());
         var footer = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 44, FlowDirection = FlowDirection.RightToLeft };
         _save.Text = T("Save current section");
         var close = new Button { Text = T("Close"), AutoSize = true };
@@ -82,6 +83,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         var split = new SplitContainer { Dock = DockStyle.Fill, Size = new(1000, 620), SplitterDistance = 275 };
         var list = new ListBox { Dock = DockStyle.Fill };
         list.Format += (_, e) => e.Value = e.ListItem is HarbourOffer offer ? offer.Name :
+            e.ListItem is HerboniaPatrol patrol ? $"{patrol.Ship.Name} ({patrol.Ship.X}, {patrol.Ship.Y})" :
             e.ListItem is ShipDefinition ship ? $"{MapList.OrderedMaps.FirstOrDefault(m => m.MapId == ship.MapId)?.Name ?? ship.MapId.ToString()} ({ship.X}, {ship.Y})" : "";
         list.FormattingEnabled = true;
         var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 40 };
@@ -100,7 +102,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             UpdateRemove();
             foreach (Control control in split.Panel2.Controls.Cast<Control>().ToArray()) control.Dispose();
             if (list.SelectedItem is not TItem item) return;
-            var fields = Fields(item, section, item is HarbourOffer ? ["Ship", "AdditionalData"] : ["AdditionalData"]);
+            var fields = Fields(item, section, item is HarbourOffer or HerboniaPatrol ? ["Ship", "AdditionalData"] : ["AdditionalData"]);
             if (item is HarbourOffer offer)
             {
                 var model = Fields(offer.Ship, section, ["Id", "MapId", "X", "Y", "DockX", "DockY", "SinkingGraphics", "AdditionalData"]);
@@ -108,11 +110,18 @@ public sealed partial class FrmNavalConfiguration : DarkForm
                 var group = new GroupBox { Text = T("Ship model and movement"), Dock = DockStyle.Top, AutoSize = true, Padding = new(6, 24, 6, 6) };
                 group.Controls.Add(model); fields.Controls.Add(group, 0, fields.RowCount++); fields.SetColumnSpan(group, 2);
             }
+            if(item is HerboniaPatrol patrol)
+            {
+                var model=Fields(patrol.Ship,section,["AdditionalData","DockX","DockY"]);
+                model.Dock=DockStyle.Top;model.AutoSize=true;model.AutoSizeMode=AutoSizeMode.GrowAndShrink;
+                var group=new GroupBox {Text=T("Ship model and movement"),Dock=DockStyle.Top,AutoSize=true,Padding=new(6,24,6,6)};
+                group.Controls.Add(model);fields.Controls.Add(group,0,fields.RowCount++);fields.SetColumnSpan(group,2);
+            }
             split.Panel2.Controls.Add(fields); MiniGameEditorTheme.Apply(split.Panel2);
         };
         add.Click += (_, _) =>
         {
-            if (items.Count >= (section == 0 ? 64 : 32)) return;
+            if (items.Count >= (typeof(TItem)==typeof(ShipDefinition) ? 64 : 32)) return;
             var item = create(); items.Add(item); store(items); Changed(section); Populate(item);
         };
         remove.Click += (_, _) =>
@@ -187,7 +196,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             }
             field.Name = property.Name;
             panel.RowStyles.Add(new(SizeType.Absolute, target is NavalPresentation && property.Name.EndsWith("Icon")?78:35));
-            panel.Controls.Add(new Label { Text = T(property.Name), Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, row);
+            panel.Controls.Add(new Label { Text = T(target is HerboniaPatrol && property.Name=="Enabled" ? "Enable patrol" : property.Name), Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, row);
             panel.Controls.Add(field, 1, row);
         }
         return panel;

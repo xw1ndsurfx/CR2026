@@ -135,3 +135,6 @@ Le stockage naval existant du personnage contient désormais une enveloppe versi
 4. Tirer des deux côtés : les icônes choisies sont utilisées, les éclats se produisent aux canons, les boulets suivent leur direction. Tester une cible, un obstacle et un tir sans cible jusqu’à sa chute dans l’eau. Chaque type d’impact doit utiliser son son ; une bordée ne doit pas rejouer son son à chaque mise à jour.
 5. Observer Sailing : progresser en naviguant, s’arrêter contre un obstacle et à l’ancre pour vérifier l’absence de gains immobiles. Passer un niveau, débarquer, changer de bateau et se reconnecter : le niveau et l’EXP doivent rester présents. Vérifier aussi une traversée Ocean à Ocean.
 6. Les tests automatiques couvrent migration des données, noms et retour arrière de sauvegarde, seuils/cap d’EXP, distance fractionnaire, paquets, choix et aperçu d’icône, découpages et ancrages tournés, réception répétée d’un effet. Le rendu connecté et l’écoute des vrais sons sélectionnés restent à vérifier dans le jeu installé.
+
+
+Suite : [Patrouilles IA Herbonia et retour à l’embarquement](NavalHerbonia.fr.md).

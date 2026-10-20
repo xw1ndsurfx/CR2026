@@ -15,6 +15,8 @@ internal static partial class NavalSystem
         internal Guid Id = Guid.NewGuid(), ShipId, OwnerId, MapId;
         internal double X,Y,DirectionX,DirectionY,Remaining,Speed;
         internal int Damage;
+        internal bool Enemy;
+        internal double DockSafeRange;
         internal long Born;
         internal double Heading;
     }
@@ -82,7 +84,7 @@ internal static partial class NavalSystem
             var y=s.Y+direction.Y*radius+forwardY*gun*d.Length/4;
             if (!OceanMapResolver.Resolve(ocean,ref map,ref x,ref y) || BlocksCannonball(map,x,y)) continue;
             Emit(NavalEffectKind.Fire,map,x,y,ShipMovement.Normalize(s.Heading+(starboard?90:-90)),now,!sounded);sounded=true;
-            Cannonballs.Add(new() { Born=now,Heading=ShipMovement.Normalize(s.Heading+(starboard?90:-90)),ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
+            Cannonballs.Add(new() { Enemy=vessel.Enemy!=null,DockSafeRange=vessel.Enemy?.DockSafeRange??0,Born=now,Heading=ShipMovement.Normalize(s.Heading+(starboard?90:-90)),ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
                 DirectionX=direction.X,DirectionY=direction.Y,Remaining=_settings.CannonRange,Speed=_settings.CannonSpeed,Damage=_settings.CannonDamage });
         }
     }
@@ -123,8 +125,12 @@ internal static partial class NavalSystem
                 var tile=(map,(int)Math.Floor(x),(int)Math.Floor(y));
                 if (!hulls.TryGetValue(tile,out var target) || target.State.Id==ball.ShipId || target.SunkUntil>0) return true;
                 impact=NavalEffectKind.HullImpact;
+                var permitted=ShipEnemySteering.CanDamage(ball.Enemy,target.Enemy!=null,target.OwnerId!=Guid.Empty || target.State.CaptainId!=Guid.Empty,
+                    ball.OwnerId!=Guid.Empty && ball.OwnerId==target.OwnerId,_settings.PlayerShipDamage);
+                if(ball.Enemy && (DockProtected(map,x,y,ball.DockSafeRange) ||
+                    DockProtected(target.State.MapId,target.State.X,target.State.Y,ball.DockSafeRange))) permitted=false;
                 // Protected player hulls still intercept shots; no firing through another ship.
-                if (target.OwnerId==Guid.Empty && (target.State.CaptainId==Guid.Empty || _settings.PlayerShipDamage))
+                if (permitted && target.OwnerId==Guid.Empty)
                 {
                     target.Health=ShipFleetRules.AfterDamage(target.Health,ball.Damage);
                     target.State.DamageState=target.Health<100?1:0;
@@ -136,7 +142,7 @@ internal static partial class NavalSystem
                         Emit(NavalEffectKind.Sinking,target.State.MapId,target.State.X,target.State.Y,target.State.Heading,now);
                     }
                 }
-                else if (_settings.PlayerShipDamage && target.OwnerId!=ball.OwnerId)
+                else if (permitted && target.OwnerId!=Guid.Empty)
                     target.PendingDamage=Math.Min(100,target.PendingDamage+ball.Damage);
                 stopped=true;return false;
             });
@@ -144,7 +150,7 @@ internal static partial class NavalSystem
             if (stopped || ball.Remaining<=0) {Emit(impact,ball.MapId,ball.X,ball.Y,ball.Heading,now);Cannonballs.Remove(ball);}
         }
         // Unoccupied public test targets disappear after their sinking animation until server restart/configuration reload.
-        foreach (var vessel in Ships.Values.Where(v=>v.OwnerId==Guid.Empty && v.State.CaptainId==Guid.Empty && v.SunkUntil>0 && now>=v.SunkUntil).ToArray())
+        foreach (var vessel in Ships.Values.Where(v=>v.Enemy==null && v.OwnerId==Guid.Empty && v.State.CaptainId==Guid.Empty && v.SunkUntil>0 && now>=v.SunkUntil).ToArray())
             Ships.Remove(vessel.State.Id);
     }
 }

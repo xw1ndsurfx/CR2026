@@ -24,7 +24,7 @@ internal static class NavalSystemEditorTests
             using var editor = new FrmNavalConfiguration(packet);
             if (editor.Text != "Éditeur du système naval") throw new Exception("Naval editor must be localized.");
             var tabs = editor.Controls.OfType<TabControl>().Single();
-            if (tabs.TabPages.Count != 5) throw new Exception("Navigation, ships, shop, presentation and Sailing must be separate sections.");
+            if (tabs.TabPages.Count != 6) throw new Exception("Navigation, ships, shop, presentation Sailing and AI must be separate sections.");
             var cannonEnabled=Descendants(tabs.TabPages[0]).OfType<CheckBox>().Single(c=>c.Name=="CannonsEnabled");
             var cannonDamage=Descendants(tabs.TabPages[0]).OfType<NumericUpDown>().Single(c=>c.Name=="CannonDamage");
             cannonEnabled.Checked=true;cannonDamage.Value=17;
@@ -57,10 +57,34 @@ internal static class NavalSystemEditorTests
                 image.Save(preview, System.Drawing.Imaging.ImageFormat.Png);
                 editor.Hide();
             }
-            Console.WriteLine("PASS localized Naval System Editor opens five sections and keeps independent save versions");
+            Console.WriteLine("PASS localized Naval System Editor opens six sections and keeps independent save versions");
             CheckAssetPreview();
+            CheckHerboniaEditor();
         }
         finally { CultureInfo.CurrentUICulture = culture; }
+    }
+
+    private static void CheckHerboniaEditor()
+    {
+        var patrol=new HerboniaPatrol();patrol.Ship.MapId=Guid.NewGuid();patrol.Ship.X=10.5;patrol.Ship.Y=10.5;
+        using var editor=new FrmNavalConfiguration(new() {NavigationJson=JsonConvert.SerializeObject(new NavalConfiguration {Herbonia=[patrol]}),CatalogueJson="{}"});
+        var tabs=editor.Controls.OfType<TabControl>().Single();tabs.SelectedIndex=5;
+        if(tabs.TabPages[5].Text!="Patrouilles IA Herbonia") throw new Exception("Localize the AI section.");
+        Descendants(tabs.TabPages[5]).OfType<CheckBox>().Single(c=>c.Name=="Enabled").Checked=true;
+        Descendants(tabs.TabPages[5]).OfType<NumericUpDown>().Single(c=>c.Name=="DetectionRange").Value=15;
+        var save=(NavalConfigurationRequestPacket)typeof(FrmNavalConfiguration).GetMethod("PrepareSave",BindingFlags.NonPublic|BindingFlags.Instance)!.Invoke(editor,null)!;
+        var actual=JsonConvert.DeserializeObject<NavalConfiguration>(save.ConfigurationJson)!.Herbonia.Single();
+        if(save.Section!=1 || !actual.Enabled || actual.DetectionRange!=15 || actual.Ship.Id!=patrol.Ship.Id) throw new Exception("AI editor must preserve identity and save its patrol settings.");
+        var preview=Environment.GetEnvironmentVariable("NAVAL_HERBONIA_PREVIEW");
+        if(!string.IsNullOrEmpty(preview))
+        {
+            editor.StartPosition=FormStartPosition.Manual;editor.Location=new(-20000,-20000);editor.ShowInTaskbar=false;
+            editor.Show();Application.DoEvents();editor.PerformLayout();
+            using var bitmap=new System.Drawing.Bitmap(editor.Width,editor.Height);
+            editor.DrawToBitmap(bitmap,new System.Drawing.Rectangle(0,0,editor.Width,editor.Height));bitmap.Save(preview,System.Drawing.Imaging.ImageFormat.Png);
+            editor.Hide();
+        }
+        Console.WriteLine("PASS Herbonia AI editor controls save through authoritative navigation configuration");
     }
 
     private static void CheckAssetPreview()

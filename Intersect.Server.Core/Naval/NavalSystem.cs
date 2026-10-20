@@ -31,6 +31,11 @@ internal static partial class NavalSystem
         internal bool Anchored;
         internal double SailingRemainder;
         internal string Name=definition.Name;
+        internal HerboniaPatrol Enemy;
+        internal int Waypoint;
+        internal long RespawnAt, AvoidUntil;
+        internal Guid BoardingMap;
+        internal int BoardingX, BoardingY;
     }
     private static readonly object Gate = new();
     private static readonly Dictionary<Guid, Vessel> Ships = [];
@@ -117,6 +122,7 @@ internal static partial class NavalSystem
             if (!ApplyPendingDamage(player,Timing.Global.Milliseconds,force:true))
             { Notice(player,"Ship damage could not be saved. Try disembarking again shortly."); return; }
             ShipState anchor = null;
+            OwnedShip returnPoint = null;
             (Guid MapId, int X, int Y)? dock = null;
             lock (Gate)
             {
@@ -144,12 +150,15 @@ internal static partial class NavalSystem
                     if (exit == null)
                     { Notice(player, "No free exit near this dock. Move the ship slightly and try again."); return; }
                     Emit(NavalEffectKind.Disembark,s.MapId,s.X,s.Y,s.Heading,Timing.Global.Milliseconds);
+                    returnPoint = player.NavalFleet.FirstOrDefault(v => v.Id == s.Id) ?? new OwnedShip {
+                        ReturnMapId=active.BoardingMap, ReturnX=active.BoardingX, ReturnY=active.BoardingY,
+                        ReturnDockX=d.DockX, ReturnDockY=d.DockY };
                     ReleaseLocked(player);
                     dock = (s.MapId,exit.Value.X,exit.Value.Y);
                 }
                 else
                 {
-                    var vessel = Ships.Values.FirstOrDefault(v => v.OwnerId == Guid.Empty && v.State.CaptainId == Guid.Empty && v.SunkUntil == 0 &&
+                    var vessel = Ships.Values.FirstOrDefault(v => v.Enemy == null && v.OwnerId == Guid.Empty && v.State.CaptainId == Guid.Empty && v.SunkUntil == 0 &&
                         v.State.MapId == player.MapId &&
                         (Distance(v.State.X, v.State.Y, player.X + .5, player.Y + .5) <= _settings.DockInteractionRange ||
                         v.Definition.MapId == player.MapId &&
@@ -157,6 +166,7 @@ internal static partial class NavalSystem
                         Distance(v.State.X, v.State.Y, player.X + .5, player.Y + .5) <= 5));
                     if (vessel == null || !ClearHull(player, vessel, ocean, vessel.State.MapId, vessel.State.X, vessel.State.Y))
                     { Notice(player, "No available ship near this helm dock."); return; }
+                    vessel.BoardingMap=player.MapId; vessel.BoardingX=player.X; vessel.BoardingY=player.Y;
                     vessel.State.CaptainId = player.Id;
                     vessel.LastStep = 0; vessel.Controls.Reset(); vessel.Anchored = false;
                     player.CaptainedShipId = vessel.State.Id;
@@ -174,7 +184,8 @@ internal static partial class NavalSystem
             }
             else if (dock is { } landing)
             {
-                player.Warp(landing.MapId, landing.X, landing.Y);
+                if (returnPoint != null && returnPoint.ReturnMapId != Guid.Empty) ReturnToHarbour(player,returnPoint);
+                else player.Warp(landing.MapId, landing.X, landing.Y);
                 player.User?.Save(force:true);
                 Notice(player, "You have left the helm.");
             }

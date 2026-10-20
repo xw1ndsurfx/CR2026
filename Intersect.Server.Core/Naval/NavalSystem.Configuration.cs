@@ -74,7 +74,7 @@ internal static partial class NavalSystem
     {
         var ocean = OceanMapResolver.Maps();
         var occupied = new HashSet<(Guid, int, int)>();
-        foreach (var ship in configuration.Ships)
+        foreach (var ship in configuration.Ships.Concat(configuration.Herbonia.Where(p=>p.Enabled).Select(p=>p.Ship)))
         {
             if (!ocean.Contains(ship.MapId) || MapController.Get(ship.MapId) is not { } map)
                 throw new NavalPlacementException();
@@ -86,6 +86,7 @@ internal static partial class NavalSystem
                     tileMap.Spawns.Any(spawn => spawn.X == tile.X && spawn.Y == tile.Y) || !occupied.Add(tile))
                     throw new NavalPlacementException();
             }
+            if(configuration.Herbonia.Any(p=>p.Ship.Id==ship.Id)) continue;
             if (map.Attributes == null || ship.DockX >= map.Attributes.GetLength(0) || ship.DockY >= map.Attributes.GetLength(1))
                 throw new NavalPlacementException();
             var dockAttribute = map.Attributes[ship.DockX, ship.DockY];

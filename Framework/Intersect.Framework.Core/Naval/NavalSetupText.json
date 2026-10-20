@@ -579,6 +579,41 @@
       "en": "Use 1 to 32 letters, numbers, spaces, apostrophes, dots or hyphens for your ship name.",
       "fr": "Le nom du bateau doit contenir de 1 à 32 lettres, chiffres, espaces, apostrophes, points ou tirets.",
       "es": "El nombre debe tener de 1 a 32 letras, números, espacios, apóstrofos, puntos o guiones."
+    },
+    "Herbonia AI patrols": {
+      "en": "Herbonia AI patrols",
+      "fr": "Patrouilles IA Herbonia",
+      "es": "Patrullas IA Herbonia"
+    },
+    "DetectionRange": {
+      "en": "Detection range (tiles)",
+      "fr": "Portée de détection (cases)",
+      "es": "Alcance de detección (casillas)"
+    },
+    "LeashRadius": {
+      "en": "Maximum distance from home (tiles)",
+      "fr": "Distance maximale du point de départ",
+      "es": "Distancia máxima del punto de origen"
+    },
+    "PatrolRadius": {
+      "en": "Patrol radius (tiles)",
+      "fr": "Rayon de patrouille (cases)",
+      "es": "Radio de patrulla (casillas)"
+    },
+    "DockSafeRange": {
+      "en": "Protected dock radius (tiles)",
+      "fr": "Zone protégée autour des quais (cases)",
+      "es": "Zona protegida alrededor de muelles (casillas)"
+    },
+    "RespawnSeconds": {
+      "en": "Respawn delay (seconds)",
+      "fr": "Réapparition après naufrage (secondes)",
+      "es": "Reaparición tras hundimiento (segundos)"
+    },
+    "Enable patrol": {
+      "en": "Enable patrol",
+      "fr": "Activer cette patrouille",
+      "es": "Activar esta patrulla"
     }
   }
 }

@@ -187,6 +187,7 @@ internal static partial class NavalSystem
             vessel.State.DamageState = owned.Health < 100 ? 1 : 0;
             var fleetBefore = player.NavalFleetJson;
             owned.AtSea = true; owned.ReturnMapId = player.MapId; owned.ReturnDockX = dock.X; owned.ReturnDockY = dock.Y;
+            owned.ReturnX=player.X; owned.ReturnY=player.Y;
             // Persist a rescue marker before moving the avatar; a crash must not strand it at sea.
             if (player.User.Save(force: true) != UserSaveResult.Completed)
             {
@@ -243,9 +244,15 @@ internal static partial class NavalSystem
         var map = MapController.Get(ship.ReturnMapId);
         map?.TryCreateInstance(MapInstance.OverworldInstanceId, out _, player);
         (int X, int Y)? exit;
-        lock (Gate) exit = ShipDock.FindLanding(map?.Attributes, ship.ReturnDockX + .5, ship.ReturnDockY + .5, 3,
+        lock (Gate)
+        {
+            bool ClearReturn(int x,int y) => ClearTile(player,ship.ReturnMapId,x,y) && !Ships.Values.Any(v =>
+                HullTiles(v,OceanMapResolver.Maps(),v.State.MapId,v.State.X,v.State.Y).Contains((ship.ReturnMapId,x,y)));
+            exit=ShipReturnPoint.Exact(ship,map?.Attributes?.GetLength(0)??0,map?.Attributes?.GetLength(1)??0,ClearReturn);
+            exit ??= ShipDock.FindLanding(map?.Attributes, ship.ReturnDockX + .5, ship.ReturnDockY + .5, 3,
             (x,y) => ClearTile(player, ship.ReturnMapId, x,y) && !Ships.Values.Any(v =>
                 HullTiles(v, OceanMapResolver.Maps(), v.State.MapId,v.State.X,v.State.Y).Contains((ship.ReturnMapId,x,y))));
+        }
         if (exit is { } landing)
         {
             player.NavalWarpInProgress = true;

@@ -12,6 +12,8 @@ public sealed class OwnedShip
     public int Health { get; set; } = 100;
     public bool AtSea { get; set; }
     public Guid ReturnMapId { get; set; }
+    public int? ReturnX { get; set; }
+    public int? ReturnY { get; set; }
     public int ReturnDockX { get; set; }
     public int ReturnDockY { get; set; }
     public bool Sunk => Health == 0;
