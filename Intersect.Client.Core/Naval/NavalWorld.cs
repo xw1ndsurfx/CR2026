@@ -18,8 +18,9 @@ internal static partial class NavalWorld
     private sealed record View(ShipSnapshot Previous, ShipSnapshot Current, long Received, ShipAnimationClock Animation);
     private static Dictionary<Guid, View> _ships = [];
     private static Guid _viewer;
+    internal static NavalRewardFeed RewardFeed {get;}=new();
     private static long _received, _inputTime;
-    internal static void Clear() { _ships.Clear(); _viewer = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
+    internal static void Clear() {RewardFeed.Clear(); _ships.Clear(); _viewer = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
     internal static bool IsCaptain(Guid playerId) => playerId != Guid.Empty && Fresh && _ships.Values.Any(v => v.Current.CaptainId == playerId);
     private static bool Fresh => Globals.Me != null && _viewer == Globals.Me.Id && Environment.TickCount64 - _received < 1500;
 
@@ -35,6 +36,7 @@ internal static partial class NavalWorld
             animation.Observe(s.Graphics, now);
             next[s.Id] = new(previous, s, now, animation);
         }
+        RewardFeed.Observe(packet.Rewards??[],_viewer==Guid.Empty || _viewer!=Globals.Me?.Id,now);
         ApplyPresentation(packet,now);
         ApplyCannonballs(packet,now);
         _ships = next; _viewer = Globals.Me?.Id ?? Guid.Empty; _received = now;

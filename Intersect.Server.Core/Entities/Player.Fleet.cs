@@ -14,6 +14,7 @@ public partial class Player
         set {var data=NavalPlayerData.Parse(value);NavalFleet=data.Ships;SailingExperience=data.SailingExperience;PendingNavalCharacterExperience=data.PendingCharacterExperience;_navalExtra=data.AdditionalData;}
     }
     private IDictionary<string,Newtonsoft.Json.Linq.JToken>? _navalExtra;
+    [JsonIgnore, NotMapped] internal List<(NavalRewardReceipt Receipt,long Born)> NavalRewardNotices {get;set;}=[];
     [JsonIgnore, NotMapped] public long PendingNavalCharacterExperience {get;set;}
     [JsonIgnore, NotMapped] internal bool NavalCharacterRewardDirty {get;set;}
     [JsonIgnore, NotMapped] internal long NavalCharacterRewardRetryAt {get;set;}

@@ -11,19 +11,39 @@ namespace Intersect.Server.Naval;
 
 internal static partial class NavalSystem
 {
-    internal static bool CommitNavalReward(Player player,long experience,IEnumerable<(Guid ShipId,int Capacity,NavalCargoParcel Parcel)> cargo,Func<bool> save)
+    internal static bool CommitNavalReward(Player player,long experience,IEnumerable<(Guid ShipId,int Capacity,NavalCargoParcel Parcel)> cargo,Func<bool> save) =>
+        CommitNavalReward(player,experience,cargo,save,out _);
+
+    internal static bool CommitNavalReward(Player player,long experience,IEnumerable<(Guid ShipId,int Capacity,NavalCargoParcel Parcel)> cargo,Func<bool> save,out NavalRewardReceipt receipt)
     {
+        receipt=null;
         experience=Math.Clamp(experience,0,200000000000000L);
-        var previous=player.NavalFleetJson;var committed=false;
+        var previous=player.NavalFleetJson;var previousExperience=player.SailingExperience;var committed=false;
+        var before=player.NavalFleet.SelectMany(s=>s.Cargo).Select(p=>p.Id).ToHashSet();
+        var candidates=new HashSet<Guid>();var touched=new Dictionary<Guid,int>();
         try
         {
             if(player.SailingExperience<_settings.Sailing.Cap)
-                player.SailingExperience=Math.Min(_settings.Sailing.Cap,player.SailingExperience+Math.Max(0,experience));
-            player.PendingNavalCharacterExperience=Math.Min(200000000000000L,player.PendingNavalCharacterExperience+Math.Max(0,experience));
+                player.SailingExperience=Math.Min(_settings.Sailing.Cap,player.SailingExperience+experience);
+            player.PendingNavalCharacterExperience=Math.Min(200000000000000L,player.PendingNavalCharacterExperience+experience);
             foreach(var award in cargo)
-                if(player.NavalFleet.FirstOrDefault(s=>s.Id==award.ShipId) is {Sunk:false} ship)
+                if(player.NavalFleet.FirstOrDefault(s=>s.Id==award.ShipId) is {Sunk:false} ship && award.Capacity>0 && award.Parcel.IsValid())
+                {
+                    touched[ship.Id]=award.Capacity;
+                    if(!before.Contains(award.Parcel.Id)) candidates.Add(award.Parcel.Id);
                     NavalCargo.Add(ship.Cargo,award.Parcel,award.Capacity);
-            committed=save();return committed;
+                }
+            // Describe only what remains in the hold after the whole batch, including quality replacements.
+            var after=player.NavalFleet.SelectMany(s=>s.Cargo).ToArray();
+            var afterIds=after.Select(p=>p.Id).ToHashSet();
+            var kept=after.Where(p=>candidates.Contains(p.Id)).ToArray();
+            var result=new NavalRewardReceipt {
+                SailingExperience=Math.Max(0,player.SailingExperience-previousExperience),Cargo=kept,
+                ReplacedLots=before.Count(id=>!afterIds.Contains(id)),DiscardedLots=candidates.Count-kept.Length,
+                CargoFull=player.NavalFleet.Any(s=>touched.TryGetValue(s.Id,out var capacity) && s.Cargo.Count>=capacity)};
+            committed=save();
+            if(committed) receipt=result;
+            return committed;
         }
         finally {if(!committed) player.NavalFleetJson=previous;}
     }

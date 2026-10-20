@@ -809,6 +809,41 @@
       "en": "Choose an existing item for every naval loot entry.",
       "fr": "Choisissez un objet existant pour chaque entrée de butin naval.",
       "es": "Elige un objeto existente para cada entrada de botín naval."
+    },
+    "Enemy sunk · Sailing +{0:N0} EXP": {
+      "en": "Enemy sunk · Sailing +{0:N0} EXP",
+      "fr": "Ennemi coulé · Sailing +{0:N0} EXP",
+      "es": "Enemigo hundido · Sailing +{0:N0} EXP"
+    },
+    "Enemy sunk": {
+      "en": "Enemy sunk",
+      "fr": "Ennemi coulé",
+      "es": "Enemigo hundido"
+    },
+    "Cargo secured: {0} × {1:N0}": {
+      "en": "Cargo secured: {0} × {1:N0}",
+      "fr": "Butin en cale : {0} × {1:N0}",
+      "es": "Botín en bodega: {0} × {1:N0}"
+    },
+    "Better cargo replaced {0} lower-quality lots.": {
+      "en": "Better cargo replaced {0} lower-quality lots.",
+      "fr": "Meilleur butin : {0} lots de qualité inférieure remplacés.",
+      "es": "Mejor botín: {0} lotes de menor calidad reemplazados."
+    },
+    "Hold full · {0} lots could not be kept. Unload at Q.": {
+      "en": "Hold full · {0} lots could not be kept. Unload at Q.",
+      "fr": "Cale pleine · {0} lots écartés. Déchargez au Q.",
+      "es": "Bodega llena · {0} lotes descartados. Descarga en Q."
+    },
+    "Hold full · Unload your cargo at Q.": {
+      "en": "Hold full · Unload your cargo at Q.",
+      "fr": "Cale pleine · Déchargez votre cargaison au Q.",
+      "es": "Bodega llena · Descarga tu cargamento en Q."
+    },
+    "And {0} more item types in the hold.": {
+      "en": "And {0} more item types in the hold.",
+      "fr": "Et {0} autres types d’objets en cale.",
+      "es": "Y {0} tipos de objetos más en la bodega."
     }
   }
 }

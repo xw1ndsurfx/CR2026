@@ -335,7 +335,7 @@ internal static partial class NavalSystem
         var progress=_settings.Sailing.Progress(player.SailingExperience);
         var targetId=CombatTarget(player.CaptainedShipId,now,visible);
         Effects.RemoveAll(e=>now-e.Born>1500);
-        player.SendPacket(new NavalSnapshotPacket { CombatTargetId=targetId, Presentation=_settings.Presentation,
+        player.SendPacket(new NavalSnapshotPacket { Rewards=RewardReceipts(player,now),CombatTargetId=targetId, Presentation=_settings.Presentation,
             SailingLevel=progress.Level,SailingExperience=progress.Experience,SailingRequired=progress.Required,
             Effects=player.InstanceType!=MapInstanceType.Overworld?[]:Effects.Where(e=>visible.Contains(e.Snapshot.MapId)).Select(e=>new NavalEffectSnapshot {
                 Id=e.Snapshot.Id,MapId=e.Snapshot.MapId,X=e.Snapshot.X,Y=e.Snapshot.Y,Heading=e.Snapshot.Heading,Kind=e.Snapshot.Kind,

@@ -18,6 +18,7 @@ public partial class HotBarWindow
     private NavalSailingBar? _sailingBar;
     private NavalTargetHud? _targetHud;
     private NavalCargoWindow? _cargoWindow;
+    private NavalRewardHud? _rewardHud;
     private bool _wasSailing;
     private bool[] _hiddenBeforeSailing=[];
     private static string KeyCaption(int slot)
@@ -39,6 +40,9 @@ public partial class HotBarWindow
     private string N(string text)=>NavalSetupText.Get(text,ClientLanguages.Current);
     private void UpdateNavalBar()
     {
+        var reward=Naval.NavalWorld.RewardFeed.Current(Environment.TickCount64);
+        if(reward!=null && _rewardHud==null) _rewardHud=new NavalRewardHud(Parent);
+        _rewardHud?.Update(reward,Y-64,Interface.InGameUiOrNull?.SuppressStatusHuds==true);
         var own=Naval.NavalWorld.OwnShip;
         var sailing=own!=null;
         if(sailing && _cargoWindow==null) _cargoWindow=new NavalCargoWindow(Parent);

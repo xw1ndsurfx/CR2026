@@ -40,8 +40,8 @@ internal static partial class NavalSystem
             reward=pending;PendingSailingRewards.Remove(player.Id);
         }
         var before=_settings.Sailing.Progress(player.SailingExperience).Level;
-        var saved=false;
-        try {saved=CommitNavalReward(player,reward.Experience,(reward.Cargo??[]).Select(c=>(c.ShipId,c.Capacity,c.Parcel)),()=>player.User?.Save(force:true)==UserSaveResult.Completed);}
+        var saved=false;NavalRewardReceipt receipt=null;
+        try {saved=CommitNavalReward(player,reward.Experience,(reward.Cargo??[]).Select(c=>(c.ShipId,c.Capacity,c.Parcel)),()=>player.User?.Save(force:true)==UserSaveResult.Completed,out receipt);}
         catch(Exception exception) { ApplicationContext.Context.Value?.Logger.LogError(exception,"Could not save Sailing reward for {PlayerId}",player.Id); }
         finally
         {
@@ -56,6 +56,7 @@ internal static partial class NavalSystem
                     Emit(NavalEffectKind.LevelUp,player.MapId,player.X+.5,player.Y+.5,0,now);
             }
         }
+        if(saved && receipt!=null) PublishRewardReceipt(player,receipt,now);
         return saved;
     }
 

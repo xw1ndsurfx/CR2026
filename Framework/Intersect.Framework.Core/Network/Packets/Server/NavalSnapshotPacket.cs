@@ -5,6 +5,7 @@ namespace Intersect.Network.Packets.Server;
 [MessagePackObject(AllowPrivate = true)]
 public partial class NavalSnapshotPacket : IntersectPacket
 {
+    [Key(8)] public NavalRewardReceipt[] Rewards {get;set;}=[];
     [Key(7)] public Guid CombatTargetId {get;set;}
     [Key(0)] public ShipSnapshot[] Ships { get; set; } = [];
     [Key(2)] public NavalEffectSnapshot[] Effects {get;set;}=[];

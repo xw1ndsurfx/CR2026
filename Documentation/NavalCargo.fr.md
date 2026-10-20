@@ -33,3 +33,6 @@ Installer ensemble serveur, client et éditeur de cette version sur un environne
 Adaptation du principe de cargaison à revendre/décharger au port, inspiré du [document de conception Pirates Online préservé par TLOPO](https://tlopo-cdn.tlopo.com/preservation/9f1122fc-37cf-43c6-b748-349e50a41632.pdf). Pas de ramassage flottant ni de partage d’équipage à cette étape. Les tables de butin doivent être configurées avec les objets réels du projet. Supprimer ensuite un objet référencé rend son déchargement indisponible et conserve la cargaison; rétablir l’objet pour la récupérer.
 
 Tests automatisés : gain unique au naufrage, sérialisation des lots, tirages, capacité/qualité, sauvegarde/reprise EXP, perte au naufrage, transfert atomique, piles et inventaire à cases clairsemées. Fenêtre native de l’éditeur vérifiée avec une table et un aperçu enregistrable; rendu HUD, combat et déchargement connectés restent à confirmer dans le jeu installé.
+
+## Notifications de récompenses
+Voir [Bandeau EXP, butin et cale pleine](NavalRewardNotifications.fr.md).
