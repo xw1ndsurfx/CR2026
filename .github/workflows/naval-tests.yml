@@ -9,6 +9,8 @@ on:
       - 'Intersect.Tests.Client/HarbourUiRulesTests.cs'
       - 'Intersect.Tests.Client/ClientLoopDiagnosticsTests.cs'
       - 'Intersect.Client.Core/Core/ClientLoopDiagnostics.cs'
+      - 'Intersect.Client.Framework/Gwen/Control/Canvas.cs'
+      - 'Intersect.Client.Core/Interface/Menu/MenuGuiBase.cs'
       - 'Utilities/InterfaceEditorTests/HarbourDockEditorTests.cs'
       - 'Framework/Intersect.Framework.Core/Network/Packets/Editor/PrepareNavalMapPacket.cs'
       - 'Framework/Intersect.Framework.Core/Network/Packets/Server/NavalSetupResultPacket.cs'

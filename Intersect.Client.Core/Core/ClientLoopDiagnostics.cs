@@ -8,7 +8,8 @@ namespace Intersect.Client.Core;
 internal readonly record struct ClientLoopReport(string Kind, string Phase, long DelayMilliseconds, long Generation);
 
 /// <summary>Independent clock/progress probe; never invokes game, input or graphics APIs from the watcher thread.</summary>
-internal sealed class ClientLoopProgress(Func<long> clock, long threshold = 15_000)
+internal sealed class ClientLoopProgress(
+    Func<long> clock, long threshold = 15_000, Action<ClientLoopReport>? completedPhase = null)
 {
     private string _phase = "starting";
     private long _progressAt = clock();
@@ -18,9 +19,13 @@ internal sealed class ClientLoopProgress(Func<long> clock, long threshold = 15_0
     private bool _stalled;
     internal void Mark(string phase)
     {
+        var now = clock();
+        var previousPhase = Volatile.Read(ref _phase);
+        var duration = Math.Max(0, now - Interlocked.Exchange(ref _progressAt, now));
         Volatile.Write(ref _phase, phase);
-        Interlocked.Exchange(ref _progressAt, clock());
-        Interlocked.Increment(ref _generation);
+        var generation = Interlocked.Increment(ref _generation);
+        // Completed slow frames still make progress, so the 15-second stall detector alone cannot identify them.
+        if (duration >= 100) completedPhase?.Invoke(new("slow-phase", previousPhase, duration, generation));
     }
     // Only the watcher calls Poll; Mark is called on the game thread.
     internal ClientLoopReport? Poll()
@@ -53,7 +58,7 @@ internal sealed class ClientLoopProgress(Func<long> clock, long threshold = 15_0
 internal sealed class ClientLoopDiagnostics : IDisposable
 {
     private static ClientLoopDiagnostics? _current;
-    private readonly ClientLoopProgress _progress = new(() => Environment.TickCount64);
+    private readonly ClientLoopProgress _progress;
     private readonly ILogger _logger;
     private readonly string _path;
     private readonly ConcurrentQueue<string> _messages = new();
@@ -65,9 +70,11 @@ internal sealed class ClientLoopDiagnostics : IDisposable
     private ClientLoopDiagnostics(ILogger logger)
     {
         _logger = logger;
+        _progress = new ClientLoopProgress(() => Environment.TickCount64, completedPhase: report =>
+            Enqueue($"{report.Kind}: phase={report.Phase}; durationMs={report.DelayMilliseconds}; progress={report.Generation}"));
         _path = Path.Combine("logs", $"client-loop-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Environment.ProcessId}.log");
         var version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        Enqueue($"started version={version}; runtime={Environment.Version}; os={RuntimeInformation.OSDescription}; architecture={RuntimeInformation.ProcessArchitecture}; gameThread={_gameThread}");
+        Enqueue($"started diagnosticRevision=2; version={version}; runtime={Environment.Version}; os={RuntimeInformation.OSDescription}; architecture={RuntimeInformation.ProcessArchitecture}; gameThread={_gameThread}");
         logger.LogInformation("Client loop diagnostics: {Path}", _path);
         _timer = new Timer(_ => Poll(), null, 2000, 2000);
     }

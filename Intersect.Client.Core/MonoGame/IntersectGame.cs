@@ -181,6 +181,15 @@ internal partial class IntersectGame : Game
         ClientLoopDiagnostics.Mark("startup/graphics statistics provider");
 
         PlatformStatistics.GPUStatisticsProvider = GL.CreateGPUStatisticsProvider();
+        // Query the active context on its owning graphics thread, never on the diagnostic watcher.
+        try
+        {
+            ClientLoopDiagnostics.Note($"Graphics: vendor={GL.glGetString(GLenum.GL_VENDOR)}; renderer={GL.glGetString(GLenum.GL_RENDERER)}; version={GL.glGetString(GLenum.GL_VERSION)}; backbuffer={GraphicsDevice.PresentationParameters.BackBufferWidth}x{GraphicsDevice.PresentationParameters.BackBufferHeight}; profile={GraphicsDevice.GraphicsProfile}");
+        }
+        catch (Exception exception)
+        {
+            ClientLoopDiagnostics.Note($"Graphics identification unavailable: {exception.GetType().Name}");
+        }
 
         if (_updater != null)
         {

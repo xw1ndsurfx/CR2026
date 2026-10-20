@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen.Anim;
 using Intersect.Client.Framework.Gwen.DragDrop;
@@ -120,11 +120,16 @@ public partial class Canvas : Base
     /// <summary>
     ///     Renders the canvas. Call in your rendering loop.
     /// </summary>
-    public void RenderCanvas(TimeSpan elapsed, TimeSpan total)
+    public void RenderCanvas(TimeSpan elapsed, TimeSpan total) => RenderCanvas(elapsed, total, null);
+
+    /// <summary>Optional phase reporting for diagnosing a slow canvas; existing callers keep the original overload.</summary>
+    public void RenderCanvas(TimeSpan elapsed, TimeSpan total, Action<string>? reportPhase)
     {
+        reportPhase?.Invoke("UI/data providers");
         UpdateDataProviders(elapsed, total);
 
-        DoThink();
+        DoThink(reportPhase);
+        reportPhase?.Invoke("UI/renderer begin");
 
         var render = Skin.Renderer;
 
@@ -141,12 +146,15 @@ public partial class Canvas : Base
             render.DrawFilledRect(RenderBounds);
         }
 
+        reportPhase?.Invoke("UI/control rendering");
         DoRender(Skin);
 
+        reportPhase?.Invoke("UI/drag overlay and tooltip");
         DragAndDrop.RenderOverlay(this, Skin);
 
         ToolTip.RenderToolTip(Skin);
 
+        reportPhase?.Invoke("UI/renderer end");
         render.EndClip();
 
         render.End();
@@ -202,25 +210,30 @@ public partial class Canvas : Base
     /// <summary>
     ///     Processes input and layout. Also purges delayed delete queue.
     /// </summary>
-    private void DoThink()
+    private void DoThink(Action<string>? reportPhase = null)
     {
         if (IsHidden)
         {
             return;
         }
 
+        reportPhase?.Invoke("UI/sound cleanup");
         RemoveAndDisposeDeadSounds();
 
+        reportPhase?.Invoke("UI/widget animations");
         Animation.GlobalThink();
 
         // Reset tabbing
         mNextTab = null;
         mFirstTab = null;
 
+        reportPhase?.Invoke("UI/deferred deletes");
         ProcessDelayedDeletes();
 
+        reportPhase?.Invoke("UI/queued callbacks");
         InvokeThreadQueue();
 
+        reportPhase?.Invoke("UI/layout");
         RecurseLayout(Skin);
 
         // If we didn't have a next tab, cycle to the start.
@@ -229,6 +242,7 @@ public partial class Canvas : Base
             mNextTab = mFirstTab;
         }
 
+        reportPhase?.Invoke("UI/focus processing");
         InputHandler.OnCanvasThink(this);
     }
 

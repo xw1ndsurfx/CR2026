@@ -72,7 +72,7 @@ public partial class MenuGuiBase : IMutableInterface
 
     public void Draw(TimeSpan elapsed, TimeSpan total)
     {
-        _menuCanvas.RenderCanvas(elapsed, total);
+        _menuCanvas.RenderCanvas(elapsed, total, ClientLoopDiagnostics.Mark);
     }
 
     public void Reset()

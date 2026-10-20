@@ -38,4 +38,37 @@ public sealed class ClientLoopDiagnosticsTests
         probe.Mark("network");now=30_000;Assert.That(probe.Poll()?.Phase,Is.EqualTo("network"));
         Assert.That(probe.Poll(),Is.Null);
     }
+    [Test]
+    public void RepeatedSlowPhasesAreRecordedEvenWhenTheyNeverReachTheStallThreshold()
+    {
+        long now = 0;
+        var slow = new List<ClientLoopReport>();
+        var probe = new ClientLoopProgress(() => now, completedPhase: slow.Add);
+        for (var i = 0; i < 3; i++)
+        {
+            probe.Mark("UI/control rendering");
+            now += 7000;
+            probe.Mark("between frames");
+            Assert.That(probe.Poll(), Is.Null);
+        }
+        Assert.That(slow, Has.Count.EqualTo(3));
+        Assert.That(slow.All(report => report.Kind == "slow-phase" && report.Phase == "UI/control rendering" && report.DelayMilliseconds == 7000), Is.True);
+    }
+
+    [Test]
+    public void FastPhasesDoNotFillTheDiagnosticQueue()
+    {
+        long now = 0;
+        var slow = new List<ClientLoopReport>();
+        var probe = new ClientLoopProgress(() => now, completedPhase: slow.Add);
+        for (var i = 0; i < 1000; i++)
+        {
+            now += 16;
+            probe.Mark("normal frame");
+        }
+        Assert.That(slow, Is.Empty);
+        now += 100;
+        probe.Mark("next frame");
+        Assert.That(slow.Single().DelayMilliseconds, Is.EqualTo(100));
+    }
 }
