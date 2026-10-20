@@ -8,6 +8,10 @@ using Newtonsoft.Json;
 
 internal static class NavalSystemEditorTests
 {
+    private static IEnumerable<Control> Descendants(Control root)
+    {
+        foreach (Control control in root.Controls) { yield return control; foreach (var child in Descendants(control)) yield return child; }
+    }
     internal static void Run()
     {
         var culture = CultureInfo.CurrentUICulture;
@@ -22,6 +26,8 @@ internal static class NavalSystemEditorTests
             var tabs = editor.Controls.OfType<TabControl>().Single();
             if (tabs.TabPages.Count != 3) throw new Exception("Navigation, test ships and shop must be separate sections.");
             tabs.SelectedIndex = 2;
+            var remove = Descendants(tabs.TabPages[2]).OfType<Button>().Single(b => b.Text == "Retirer");
+            if (remove.Enabled) throw new Exception("Published models must be retired through For sale, preserving their owners' fleets.");
             var prepare = typeof(FrmNavalConfiguration).GetMethod("PrepareSave", BindingFlags.Instance | BindingFlags.NonPublic)!;
             var request = (NavalConfigurationRequestPacket)prepare.Invoke(editor, null)!;
             if (request.Section != 2 || request.ExpectedVersion != "shop-1") throw new Exception("Save the selected section.");

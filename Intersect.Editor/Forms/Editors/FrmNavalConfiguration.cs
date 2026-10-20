@@ -16,6 +16,8 @@ public sealed class FrmNavalConfiguration : DarkForm
     private sealed record Choice(Guid Id, string Name) { public override string ToString() => Name; }
     private readonly NavalConfiguration _navigation;
     private readonly HarbourCatalog _catalogue;
+    private readonly HashSet<string> _publishedModels;
+    private Action? _updateOfferRemove;
     private string _navigationVersion, _catalogueVersion;
     private readonly TabControl _tabs = new() { Dock = DockStyle.Fill };
     private readonly Label _status = new() { Dock = DockStyle.Bottom, Height = 45 };
@@ -30,6 +32,7 @@ public sealed class FrmNavalConfiguration : DarkForm
     {
         _navigation = JsonConvert.DeserializeObject<NavalConfiguration>(packet.NavigationJson) ?? new();
         _catalogue = JsonConvert.DeserializeObject<HarbourCatalog>(packet.CatalogueJson) ?? new();
+        _publishedModels = _catalogue.Offers.Select(o => o.Id).ToHashSet(StringComparer.Ordinal);
         _navigationVersion = packet.NavigationVersion; _catalogueVersion = packet.CatalogueVersion;
         Text = T("Naval System Editor"); Size = new(1050, 780); MinimumSize = new(850, 620);
         StartPosition = FormStartPosition.CenterParent;
@@ -87,8 +90,12 @@ public sealed class FrmNavalConfiguration : DarkForm
         {
             list.Items.Clear(); list.Items.AddRange(items.Cast<object>().ToArray()); list.SelectedItem = selected;
         }
+        void UpdateRemove() => remove.Enabled = list.SelectedItem is TItem selected &&
+            (selected is not HarbourOffer offer || !_publishedModels.Contains(offer.Id));
+        if (section == 1) _updateOfferRemove = UpdateRemove;
         list.SelectedIndexChanged += (_, _) =>
         {
+            UpdateRemove();
             foreach (Control control in split.Panel2.Controls.Cast<Control>().ToArray()) control.Dispose();
             if (list.SelectedItem is not TItem item) return;
             var fields = Fields(item, section, item is HarbourOffer ? ["Ship", "AdditionalData"] : ["AdditionalData"]);
@@ -109,6 +116,8 @@ public sealed class FrmNavalConfiguration : DarkForm
         remove.Click += (_, _) =>
         {
             if (list.SelectedItem is not TItem item) return;
+            if (item is HarbourOffer offer && _publishedModels.Contains(offer.Id))
+            { _status.Text = T("Keep existing model ids. Disable For sale to retire a model without losing fleets."); return; }
             items.Remove(item); store(items); Changed(section); Populate(items.FirstOrDefault());
         };
         tab.Controls.Add(split); Populate(items.FirstOrDefault());
@@ -211,7 +220,12 @@ public sealed class FrmNavalConfiguration : DarkForm
         if (packet.Error.Length > 0) { _status.Text = T(packet.Error); return; }
         if (packet.SavedSection is 1 or 2) _dirty[packet.SavedSection - 1] = false;
         if (packet.SavedSection == 1) _navigationVersion = packet.NavigationVersion;
-        if (packet.SavedSection == 2) _catalogueVersion = packet.CatalogueVersion;
+        if (packet.SavedSection == 2)
+        {
+            _catalogueVersion = packet.CatalogueVersion;
+            _publishedModels.UnionWith(_catalogue.Offers.Select(o => o.Id));
+            _updateOfferRemove?.Invoke();
+        }
         _status.Text = T("Saved on the server.");
     }
 }
