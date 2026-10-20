@@ -12,7 +12,8 @@ public static class ShipPlacement
                          select (X: x, Y: y);
         foreach (var center in candidates)
         {
-            var definition = new ShipDefinition { MapId = mapId, X = center.X + .5, Y = center.Y + .5 };
+            var definition = new ShipDefinition { MapId = mapId, X = center.X + .5, Y = center.Y + .5,
+                Graphics = "Ship_CorpsRoyaux_002.png", DamagedGraphics = "Ship_CorpsRoyaux_005.png" };
             var hull = ShipFootprint.Tiles(definition.Width, definition.Length, definition.X, definition.Y).ToHashSet();
             if (hull.Any(t => t.X < 0 || t.Y < 0 || t.X >= width || t.Y >= height || blocked(t.X, t.Y))) continue;
             var docks = from dy in Enumerable.Range(-5, 11)

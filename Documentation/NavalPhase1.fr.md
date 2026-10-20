@@ -22,7 +22,7 @@ Constats dans le code réel :
 
 Le serveur utilise une configuration opt-in `resources/naval.json`. L'éditeur peut maintenant la créer, y ajouter un navire et activer la navigation immédiatement, sans copie de fichier ni redémarrage. Jusqu'à 64 navires, chacun avec un identifiant stable, une coque et des paramètres propres. L'état en mémoire contient capitaine, map, position précise, cap continu, vitesse, accélération par manette progressive et état de dégâts réservé. Les composantes de vélocité sont dérivées du cap et de la vitesse.
 
-`/naval` prend la barre d'un navire libre à proximité du quai. Après une déconnexion, la même commande permet de reprendre un navire libre lorsqu'on se trouve près de son centre. Une seule acquisition à la fois est possible, sous verrou. Quitter la barre exige un navire presque arrêté, le quai configuré sur la même map à moins de cinq cases, une case de sortie libre et hors coque.
+`/naval` prend la barre d'un navire libre à proximité du quai. Après une déconnexion, la même commande permet de reprendre un navire libre lorsqu'on se trouve près de son centre. Une seule acquisition à la fois est possible, sous verrou. Quitter la barre exige un navire presque arrêté, le quai configuré sur la même map à moins de cinq cases, une case de sortie libre et hors coque. Si la coque couvre le point d'embarquement, une case libre voisine du quai est recherchée au lieu de bloquer systématiquement le débarquement (voir `NavalOceanSprites.fr.md`).
 
 W augmente progressivement la poussée; S réduit la poussée, freine, puis autorise un recul plafonné. A/D règlent la rotation, limitée en degrés/seconde. Espace applique le frein d'ancre. Les touches sont neutralisées quand l'interface ou un événement occupe le joueur. La manette revient progressivement au neutre lorsqu'on relâche les touches, avec inertie et frottement. Pas de touche F supplémentaire, pour éviter les raccourcis existants.
 
@@ -60,9 +60,13 @@ La configuration absente/invalide laisse le naval désactivé. Si la barre est i
 
 Pour un placement précis ou plusieurs bateaux sur la même map, l'ancienne méthode reste disponible : copier `resources/naval.example.json` vers `resources/naval.json` dans le répertoire de lancement du serveur, renseigner le vrai `MapId` et un `Id` unique, puis mettre `Enabled` à `true`. L'exemple place le centre en `(10.5,10.5)` et le point d'embarquement en case `(14,10)`; ces valeurs doivent être adaptées à la map réelle. Les coordonnées du centre sont précises, celles du point d'embarquement sont des indices de cases. Un redémarrage reste nécessaire après une modification manuelle des paramètres/positions de navires déjà chargés. L'action automatique de l'éditeur est réservée aux connexions Game Editor authentifiées et n'est jamais déclenchée par une simple ouverture de carte.
 
-## Sprites : format exact attendu
+## Sprites Ocean fournis
 
-Les planches royales bleu/or, endommagées et Herbonia citées dans la conversation ne sont pas accessibles dans les pièces jointes récupérées et ne sont pas présentes dans le dépôt inspecté. Aucune planche originale n'est intégrée ni déclarée alignée.
+Les ressources réelles fournies le 19 octobre sont maintenant prises en charge dans `resources/ocean`, avec des rectangles et ancrages explicites. Voir [NavalOceanSprites.fr.md](NavalOceanSprites.fr.md) pour les planches choisies, les limites artistiques constatées et les deux maps Ocean auditées. Les anciennes configurations sont conservées.
+
+## Ancien format régulier facultatif
+
+Le format ci-dessous reste disponible pour des PNG placés dans `resources/entities`. Il ne décrit pas les planches fournies dans `resources/ocean`, qui utilisent leurs métadonnées explicites et ne doivent pas être découpées avec cette grille.
 
 Fournir des PNG transparents aux chemins client :
 

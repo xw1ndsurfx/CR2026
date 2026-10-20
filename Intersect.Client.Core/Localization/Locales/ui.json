@@ -1,5 +1,20 @@
 {
   "Entries": {
+    "Anchor with Space and stop the ship before disembarking.": {
+      "en": "Anchor with Space and stop the ship before disembarking.",
+      "fr": "Utilisez Espace pour ancrer et arrêter le navire avant de débarquer.",
+      "es": "Usa Espacio para anclar y detener el barco antes de desembarcar."
+    },
+    "Return to the helm dock at ({0}, {1}) on its original map to disembark.": {
+      "en": "Return to the helm dock at ({0}, {1}) on its original map to disembark.",
+      "fr": "Revenez au quai de la barre en ({0}, {1}), sur sa carte d’origine, pour débarquer.",
+      "es": "Regresa al muelle del timón en ({0}, {1}), en su mapa original, para desembarcar."
+    },
+    "No free exit near this dock. Move the ship slightly and try again.": {
+      "en": "No free exit near this dock. Move the ship slightly and try again.",
+      "fr": "Aucune case de sortie libre près de ce quai. Déplacez légèrement le navire puis réessayez.",
+      "es": "No hay una salida libre cerca de este muelle. Mueve un poco el barco y vuelve a intentarlo."
+    },
     "Naval navigation is unavailable.": {
       "en": "Naval navigation is unavailable.",
       "fr": "La navigation navale est indisponible.",

@@ -32,4 +32,6 @@ public enum TextureType
     Achievement,
     Badge,
 
+    Ocean,
+
 }

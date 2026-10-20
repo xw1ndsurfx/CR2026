@@ -2206,7 +2206,7 @@ public partial class Player : Entity, IPlayer
                                 continue;
                             }
 
-                            var intersectRect = FloatRect.Intersect(en.Value.WorldPos, targetRect);
+                            var intersectRect = FloatRect.Intersect(en.Value.InteractionBounds, targetRect);
                             if (intersectRect.Width * intersectRect.Height > bestAreaMatch)
                             {
                                 bestAreaMatch = intersectRect.Width * intersectRect.Height;

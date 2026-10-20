@@ -2,7 +2,8 @@
 	"directories": [
 		"Client and Editor",
 		"Server",
-		"Server/wwwroot"
+		"Server/wwwroot",
+		"Client and Editor/resources/ocean"
 	],
 	"includes": [
 		{
@@ -32,6 +33,10 @@
 		{
 			"source": "Documentation/Intersect Documentation.url",
 			"target": "Intersect Documentation.url"
+		},
+		{
+			"source": "resources/ocean/**",
+			"target": "Client and Editor/resources/ocean"
 		}
 	],
 	"name": "full",

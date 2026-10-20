@@ -1,0 +1,287 @@
+{
+  "Version": 1,
+  "ImageWidth": 1448,
+  "ImageHeight": 1086,
+  "PixelsPerTile": 64,
+  "Loop": false,
+  "Directions": [
+    [
+      {
+        "X": 0,
+        "Y": 0,
+        "Width": 187,
+        "Height": 334,
+        "AnchorX": 93.5,
+        "AnchorY": 270.54
+      },
+      {
+        "X": 187,
+        "Y": 0,
+        "Width": 182,
+        "Height": 334,
+        "AnchorX": 91.0,
+        "AnchorY": 270.54
+      },
+      {
+        "X": 369,
+        "Y": 0,
+        "Width": 182,
+        "Height": 334,
+        "AnchorX": 91.0,
+        "AnchorY": 270.54
+      },
+      {
+        "X": 551,
+        "Y": 0,
+        "Width": 179,
+        "Height": 334,
+        "AnchorX": 89.5,
+        "AnchorY": 270.54
+      }
+    ],
+    [
+      {
+        "X": 730,
+        "Y": 0,
+        "Width": 180,
+        "Height": 334,
+        "AnchorX": 90.0,
+        "AnchorY": 270.54
+      },
+      {
+        "X": 910,
+        "Y": 0,
+        "Width": 180,
+        "Height": 334,
+        "AnchorX": 90.0,
+        "AnchorY": 270.54
+      },
+      {
+        "X": 1090,
+        "Y": 0,
+        "Width": 179,
+        "Height": 334,
+        "AnchorX": 89.5,
+        "AnchorY": 270.54
+      },
+      {
+        "X": 1269,
+        "Y": 0,
+        "Width": 179,
+        "Height": 334,
+        "AnchorX": 89.5,
+        "AnchorY": 270.54
+      }
+    ],
+    [
+      {
+        "X": 0,
+        "Y": 334,
+        "Width": 187,
+        "Height": 246,
+        "AnchorX": 93.5,
+        "AnchorY": 199.26000000000002
+      },
+      {
+        "X": 187,
+        "Y": 334,
+        "Width": 182,
+        "Height": 246,
+        "AnchorX": 91.0,
+        "AnchorY": 199.26000000000002
+      },
+      {
+        "X": 369,
+        "Y": 334,
+        "Width": 182,
+        "Height": 246,
+        "AnchorX": 91.0,
+        "AnchorY": 199.26000000000002
+      },
+      {
+        "X": 551,
+        "Y": 334,
+        "Width": 179,
+        "Height": 246,
+        "AnchorX": 89.5,
+        "AnchorY": 199.26000000000002
+      }
+    ],
+    [
+      {
+        "X": 730,
+        "Y": 580,
+        "Width": 180,
+        "Height": 266,
+        "AnchorX": 90.0,
+        "AnchorY": 215.46,
+        "FlipHorizontal": true
+      },
+      {
+        "X": 910,
+        "Y": 580,
+        "Width": 180,
+        "Height": 266,
+        "AnchorX": 90.0,
+        "AnchorY": 215.46,
+        "FlipHorizontal": true
+      },
+      {
+        "X": 1090,
+        "Y": 580,
+        "Width": 179,
+        "Height": 266,
+        "AnchorX": 89.5,
+        "AnchorY": 215.46,
+        "FlipHorizontal": true
+      },
+      {
+        "X": 1269,
+        "Y": 580,
+        "Width": 179,
+        "Height": 266,
+        "AnchorX": 89.5,
+        "AnchorY": 215.46,
+        "FlipHorizontal": true
+      }
+    ],
+    [
+      {
+        "X": 0,
+        "Y": 580,
+        "Width": 187,
+        "Height": 266,
+        "AnchorX": 93.5,
+        "AnchorY": 215.46
+      },
+      {
+        "X": 187,
+        "Y": 580,
+        "Width": 182,
+        "Height": 266,
+        "AnchorX": 91.0,
+        "AnchorY": 215.46
+      },
+      {
+        "X": 369,
+        "Y": 580,
+        "Width": 182,
+        "Height": 266,
+        "AnchorX": 91.0,
+        "AnchorY": 215.46
+      },
+      {
+        "X": 551,
+        "Y": 580,
+        "Width": 179,
+        "Height": 266,
+        "AnchorX": 89.5,
+        "AnchorY": 215.46
+      }
+    ],
+    [
+      {
+        "X": 730,
+        "Y": 580,
+        "Width": 180,
+        "Height": 266,
+        "AnchorX": 90.0,
+        "AnchorY": 215.46
+      },
+      {
+        "X": 910,
+        "Y": 580,
+        "Width": 180,
+        "Height": 266,
+        "AnchorX": 90.0,
+        "AnchorY": 215.46
+      },
+      {
+        "X": 1090,
+        "Y": 580,
+        "Width": 179,
+        "Height": 266,
+        "AnchorX": 89.5,
+        "AnchorY": 215.46
+      },
+      {
+        "X": 1269,
+        "Y": 580,
+        "Width": 179,
+        "Height": 266,
+        "AnchorX": 89.5,
+        "AnchorY": 215.46
+      }
+    ],
+    [
+      {
+        "X": 0,
+        "Y": 846,
+        "Width": 187,
+        "Height": 240,
+        "AnchorX": 93.5,
+        "AnchorY": 194.4
+      },
+      {
+        "X": 187,
+        "Y": 846,
+        "Width": 182,
+        "Height": 240,
+        "AnchorX": 91.0,
+        "AnchorY": 194.4
+      },
+      {
+        "X": 369,
+        "Y": 846,
+        "Width": 182,
+        "Height": 240,
+        "AnchorX": 91.0,
+        "AnchorY": 194.4
+      },
+      {
+        "X": 551,
+        "Y": 846,
+        "Width": 179,
+        "Height": 240,
+        "AnchorX": 89.5,
+        "AnchorY": 194.4
+      }
+    ],
+    [
+      {
+        "X": 730,
+        "Y": 334,
+        "Width": 180,
+        "Height": 246,
+        "AnchorX": 90.0,
+        "AnchorY": 199.26000000000002
+      },
+      {
+        "X": 910,
+        "Y": 334,
+        "Width": 180,
+        "Height": 246,
+        "AnchorX": 90.0,
+        "AnchorY": 199.26000000000002
+      },
+      {
+        "X": 1090,
+        "Y": 334,
+        "Width": 179,
+        "Height": 246,
+        "AnchorX": 89.5,
+        "AnchorY": 199.26000000000002
+      },
+      {
+        "X": 1269,
+        "Y": 334,
+        "Width": 179,
+        "Height": 246,
+        "AnchorX": 89.5,
+        "AnchorY": 199.26000000000002
+      }
+    ]
+  ],
+  "SourceSha256": "a7ffc3cc8653f38ee8ca3f789cb9cd95752b6e3059baaad7a84b567efa72396c",
+  "ReviewNotes": "Prototype source selections; waterline anchors remain fixed during sinking. Adjacent wakes/sails touch or overlap. Direction and exact artistic alignment need in-game review. SE uses the horizontally mirrored SW view to correct the supplied backwards-facing diagonal; source pixels unchanged."
+}

@@ -226,6 +226,9 @@ public sealed partial class NavalTests
         var catalog = GameTextCatalog.FromJson(File.ReadAllText(Path.Combine(root!.FullName, "Intersect.Client.Core", "Localization", "Locales", "ui.json")));
         var messages = new[] { "Naval navigation is unavailable.", "Stop near the helm dock to disembark safely.",
             "You have left the helm.", "No available ship near this helm dock.",
+            "Anchor with Space and stop the ship before disembarking.",
+            "Return to the helm dock at ({0}, {1}) on its original map to disembark.",
+            "No free exit near this dock. Move the ship slightly and try again.",
             "Helm acquired. W/S: thrust/brake, A/D: turn, Space: anchor. /naval: leave at dock." };
         foreach (var source in messages)
         {
@@ -237,6 +240,8 @@ public sealed partial class NavalTests
             }
             Assert.That(catalog.Get(source, "unsupported"), Is.EqualTo(source));
         }
+        Assert.That(catalog.GetExpanded("Return to the helm dock at (15, 9) on its original map to disembark.","fr"),
+            Is.EqualTo("Revenez au quai de la barre en (15, 9), sur sa carte d’origine, pour débarquer."));
     }
 
     [Test]

@@ -15,12 +15,12 @@ namespace Intersect.Client.Naval;
 
 internal static class NavalWorld
 {
-    private sealed record View(ShipSnapshot Previous, ShipSnapshot Current, long Received);
+    private sealed record View(ShipSnapshot Previous, ShipSnapshot Current, long Received, ShipAnimationClock Animation);
     private static Dictionary<Guid, View> _ships = [];
     private static Guid _viewer;
     private static long _received, _inputTime;
-    internal static void Clear() { _ships.Clear(); _viewer = Guid.Empty; _received = _inputTime = 0; }
-    internal static bool IsCaptain(Guid playerId) => Fresh && _ships.Values.Any(v => v.Current.CaptainId == playerId);
+    internal static void Clear() { _ships.Clear(); _viewer = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); }
+    internal static bool IsCaptain(Guid playerId) => playerId != Guid.Empty && Fresh && _ships.Values.Any(v => v.Current.CaptainId == playerId);
     private static bool Fresh => Globals.Me != null && _viewer == Globals.Me.Id && Environment.TickCount64 - _received < 1500;
 
     internal static void Apply(NavalSnapshotPacket packet)
@@ -29,8 +29,11 @@ internal static class NavalWorld
         var next = new Dictionary<Guid, View>();
         foreach (var s in packet.Ships.Take(64))
         {
-            var previous = _ships.TryGetValue(s.Id, out var v) && Fresh ? v.Current : s;
-            next[s.Id] = new(previous, s, now);
+            var continuing = _ships.TryGetValue(s.Id, out var v) && Fresh;
+            var previous = continuing ? v!.Current : s;
+            var animation = continuing ? v!.Animation : new ShipAnimationClock();
+            animation.Observe(s.Graphics, now);
+            next[s.Id] = new(previous, s, now, animation);
         }
         _ships = next; _viewer = Globals.Me?.Id ?? Guid.Empty; _received = now;
         // The engine's integer position remains an anchor for map loading and ordinary entity lookup.
@@ -77,6 +80,26 @@ internal static class NavalWorld
         return view != null && Position(view, out x, out y, out _);
     }
 
+    internal static bool TryCaptainCenter(Guid captainId, out float x, out float y)
+    {
+        x = y = 0;
+        if (!Fresh) return false;
+        var view = _ships.Values.FirstOrDefault(v => v.Current.CaptainId == captainId && captainId != Guid.Empty);
+        return view != null && Position(view,out x,out y,out _);
+    }
+
+    internal static bool TryHullBounds(Guid captainId, out FloatRect bounds)
+    {
+        bounds = default;
+        if (!Fresh) return false;
+        var view = _ships.Values.FirstOrDefault(v => v.Current.CaptainId == captainId && captainId != Guid.Empty);
+        if (view == null || !Position(view,out var x,out var y,out _)) return false;
+        var width = (float)view.Current.Width * Options.Instance.Map.TileWidth;
+        var length = (float)view.Current.Length * Options.Instance.Map.TileHeight;
+        bounds = new(x-width/2,y-length/2,width,length);
+        return true;
+    }
+
     internal static void DrawRow(int row)
     {
         if (!Fresh || Graphics.Renderer == null) return;
@@ -89,6 +112,28 @@ internal static class NavalWorld
             if (currentMap == null || row != (int)Math.Floor((y - currentMap.Y) / th) + Options.Instance.Map.MapHeight * 2) continue;
             var s = view.Current;
             var texture = Globals.ContentManager?.GetTexture(TextureType.Entity, s.Graphics);
+            var oceanName = s.Graphics;
+            var oceanTexture = Globals.ContentManager?.GetTexture(TextureType.Ocean, oceanName);
+            if (oceanTexture == null && texture == null)
+            {
+                oceanName = NavalSpriteCatalog.LegacyAlias(s.Graphics);
+                oceanTexture = Globals.ContentManager?.GetTexture(TextureType.Ocean, oceanName);
+            }
+            if (oceanTexture != null)
+            {
+                var atlas = NavalSpriteCatalog.Get(oceanName, oceanTexture.Width, oceanTexture.Height, s.Frames);
+                if (atlas != null)
+                {
+                    var pose = atlas.Frame(heading, view.Animation.Elapsed(Environment.TickCount64), s.FrameMilliseconds);
+                    var scale = (float)(tw / atlas.PixelsPerTile);
+                    Graphics.DrawGameTexture(oceanTexture, new FloatRect(pose.X, pose.Y, pose.Width, pose.Height),
+                        NavalSpriteGeometry.Destination(pose,x,y,scale), Color.White);
+                    continue;
+                }
+                // An ocean atlas is never silently interpreted as the legacy regular grid.
+                DrawPrototype(x, y, heading, (float)s.Width * tw, (float)s.Length * th, Math.Abs(s.Speed) > .05);
+                continue;
+            }
             if (texture != null && s.Frames > 0 && texture.Width % s.Frames == 0 && texture.Height % 8 == 0)
             {
                 var w = texture.Width / s.Frames; var h = texture.Height / 8;
