@@ -60,9 +60,13 @@ La configuration absente/invalide laisse le naval désactivé. Si la barre est i
 
 Pour un placement précis ou plusieurs bateaux sur la même map, l'ancienne méthode reste disponible : copier `resources/naval.example.json` vers `resources/naval.json` dans le répertoire de lancement du serveur, renseigner le vrai `MapId` et un `Id` unique, puis mettre `Enabled` à `true`. L'exemple place le centre en `(10.5,10.5)` et le point d'embarquement en case `(14,10)`; ces valeurs doivent être adaptées à la map réelle. Les coordonnées du centre sont précises, celles du point d'embarquement sont des indices de cases. Un redémarrage reste nécessaire après une modification manuelle des paramètres/positions de navires déjà chargés. L'action automatique de l'éditeur est réservée aux connexions Game Editor authentifiées et n'est jamais déclenchée par une simple ouverture de carte.
 
-## Sprites : format exact attendu
+## Sprites Ocean fournis
 
-Les planches royales bleu/or, endommagées et Herbonia citées dans la conversation ne sont pas accessibles dans les pièces jointes récupérées et ne sont pas présentes dans le dépôt inspecté. Aucune planche originale n'est intégrée ni déclarée alignée.
+Les ressources réelles fournies le 19 octobre sont maintenant prises en charge dans `resources/ocean`, avec des rectangles et ancrages explicites. Voir [NavalOceanSprites.fr.md](NavalOceanSprites.fr.md) pour les planches choisies, les limites artistiques constatées et les deux maps Ocean auditées. Les anciennes configurations sont conservées.
+
+## Ancien format régulier facultatif
+
+Le format ci-dessous reste disponible pour des PNG placés dans `resources/entities`. Il ne décrit pas les planches fournies dans `resources/ocean`, qui utilisent leurs métadonnées explicites et ne doivent pas être découpées avec cette grille.
 
 Fournir des PNG transparents aux chemins client :
 
