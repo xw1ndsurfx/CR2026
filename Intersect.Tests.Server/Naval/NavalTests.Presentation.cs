@@ -63,7 +63,7 @@ public sealed partial class NavalTests
         Assert.That(restored.Presentation.PortIcon,Is.EqualTo("broadside.png"));Assert.That(restored.SailingLevel,Is.EqualTo(12));
         Assert.That(restored.Effects[0].PlaySound,Is.False);Assert.That(restored.Ships[0].Name,Is.EqualTo("Étoile"));
         var config=new NavalConfiguration();config.Presentation.EffectPixelsPerTile=double.NaN;Assert.Throws<InvalidDataException>(()=>config.Validate(32,26));
-        config.Presentation.EffectPixelsPerTile=128;config.Sailing.ExperiencePerTile=-1;Assert.Throws<InvalidDataException>(()=>config.Validate(32,26));
+        config.Presentation.EffectPixelsPerTile=128;config.Sailing.ExperienceGrowth=-1;Assert.Throws<InvalidDataException>(()=>config.Validate(32,26));
     }
     [Test]
     public void ShippedEffectAtlasesHaveExplicitValidAnchorsAndExpectedSequences()
@@ -79,28 +79,4 @@ public sealed partial class NavalTests
         }
     }
 
-    [Test]
-    public void SailingAwardsOnlyMeasuredMovementAndKeepsFractionalDistanceUntilAnExperiencePointIsEarned()
-    {
-        const System.Reflection.BindingFlags flags=System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static;
-        var type=typeof(NavalSystem);var field=type.GetField("_settings",flags)!;var saved=field.GetValue(null);
-        var effects=(System.Collections.IList)type.GetField("Effects",flags)!.GetValue(null)!;var savedEffects=effects.Cast<object>().ToArray();
-        var player=(Player)RuntimeHelpers.GetUninitializedObject(typeof(Player));GC.SuppressFinalize(player);player.NavalFleetJson="[]";
-        try
-        {
-            field.SetValue(null,new NavalConfiguration {Sailing=new(){ExperiencePerTile=2,BaseExperience=5,ExperienceGrowth=1,MaximumLevel=3}});
-            var vessel=Activator.CreateInstance(type.GetNestedType("Vessel",System.Reflection.BindingFlags.NonPublic)!,
-                System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.Instance,null,
-                new object[]{new ShipDefinition {MapId=Map}},null)!;
-            var award=type.GetMethod("AwardSailing",flags)!;
-            award.Invoke(null,[player,vessel,0d,1000L]);award.Invoke(null,[player,vessel,double.NaN,1000L]);Assert.That(player.SailingExperience,Is.Zero);
-            award.Invoke(null,[player,vessel,.25d,1000L]);Assert.That(player.SailingExperience,Is.Zero);
-            award.Invoke(null,[player,vessel,.25d,1000L]);Assert.That(player.SailingExperience,Is.EqualTo(1));
-            award.Invoke(null,[player,vessel,4d,1000L]);Assert.That(player.SailingExperience,Is.EqualTo(9));
-            Assert.That(NavalPlayerData.Parse(player.NavalFleetJson).SailingExperience,Is.EqualTo(9));
-            award.Invoke(null,[player,vessel,1000d,1000L]);Assert.That(player.SailingExperience,Is.EqualTo(10));
-            player.SailingExperience=50;award.Invoke(null,[player,vessel,1d,1000L]);Assert.That(player.SailingExperience,Is.EqualTo(50));
-        }
-        finally {field.SetValue(null,saved);effects.Clear();foreach(var effect in savedEffects) effects.Add(effect);}
-    }
 }

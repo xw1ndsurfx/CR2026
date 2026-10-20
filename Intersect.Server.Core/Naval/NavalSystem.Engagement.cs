@@ -1,0 +1,94 @@
+using Intersect.Framework.Core.Naval;
+using Intersect.Core;
+using Microsoft.Extensions.Logging;
+using Intersect.Server.Database.PlayerData;
+using Intersect.Server.Entities;
+
+namespace Intersect.Server.Naval;
+
+internal static partial class NavalSystem
+{
+    private sealed record SailingReward(long Experience,long RetryAt=0);
+    private static readonly Dictionary<Guid,SailingReward> PendingSailingRewards=[];
+
+    // Gate is held. Credit the captain who fired the killing shot, only if still at this helm.
+    // Respawn constructs a new Vessel, so a second death earns its own single reward.
+    private static void CreditEnemySink(Vessel victim,Guid attackerId,Guid captainId)
+    {
+        if(victim.Enemy==null || victim.Health!=0 || victim.RewardClaimed) return;
+        victim.RewardClaimed=true;
+        foreach(var ship in Ships.Values.Where(s=>s.CombatTargetId==victim.State.Id))
+        {ship.CombatTargetId=Guid.Empty;ship.CombatUntil=0;}
+        if(captainId==Guid.Empty || !Ships.TryGetValue(attackerId,out var attacker) || attacker.Enemy!=null ||
+            attacker.State.CaptainId!=captainId || victim.Enemy.SailingExperienceReward<=0) return;
+        PendingSailingRewards.TryGetValue(captainId,out var pending);
+        PendingSailingRewards[captainId]=new(Math.Min(200000000000000L,(pending?.Experience??0)+victim.Enemy.SailingExperienceReward));
+    }
+
+    // Player lock is held before Gate. Never save a different captain from the world/combat loop.
+    private static bool ApplyPendingExperience(Player player,long now,bool force=false)
+    {
+        long earned;
+        lock(Gate)
+        {
+            if(!PendingSailingRewards.TryGetValue(player.Id,out var pending)) return true;
+            if(!force && now<pending.RetryAt) return false;
+            earned=pending.Experience;PendingSailingRewards.Remove(player.Id);
+        }
+        var before=_settings.Sailing.Progress(player.SailingExperience).Level;
+        var saved=false;
+        try {saved=CommitSailingExperience(player,earned,()=>player.User?.Save(force:true)==UserSaveResult.Completed);}
+        catch(Exception exception) { ApplicationContext.Context.Value?.Logger.LogError(exception,"Could not save Sailing reward for {PlayerId}",player.Id); }
+        finally
+        {
+            lock(Gate)
+            {
+                if(!saved)
+                {
+                    PendingSailingRewards.TryGetValue(player.Id,out var concurrent);
+                    PendingSailingRewards[player.Id]=new(Math.Min(200000000000000L,earned+(concurrent?.Experience??0)),now+1000);
+                }
+                else if(_settings.Sailing.Progress(player.SailingExperience).Level>before)
+                    Emit(NavalEffectKind.LevelUp,player.MapId,player.X+.5,player.Y+.5,0,now);
+            }
+        }
+        return saved;
+    }
+
+    internal static bool CommitSailingExperience(Player player,long earned,Func<bool> save)
+    {
+        if(earned<=0) return true;
+        var previous=player.SailingExperience;
+        if(previous>=_settings.Sailing.Cap) return true; // Preserve XP above a subsequently lowered cap.
+        var committed=false;
+        try
+        {
+            player.SailingExperience=Math.Min(_settings.Sailing.Cap,previous+Math.Min(earned,200000000000000L));
+            committed=save();return committed;
+        }
+        finally {if(!committed) player.SailingExperience=previous;}
+    }
+
+    private static void Engage(Vessel attacker,Vessel target,long now)
+    {
+        if(attacker.Enemy==null && attacker.State.CaptainId!=Guid.Empty && target.Enemy!=null)
+        {attacker.CombatTargetId=target.State.Id;attacker.CombatUntil=now+_settings.CombatTimeoutSeconds*1000L;}
+        else if(attacker.Enemy!=null && target.Enemy==null && target.State.CaptainId!=Guid.Empty)
+        {
+            // Keep the player's chosen outgoing target; incoming shots refresh that same engagement.
+            if(target.CombatTargetId==attacker.State.Id || target.CombatUntil<=now ||
+                !Ships.TryGetValue(target.CombatTargetId,out var old) || old.SunkUntil>0)
+            {target.CombatTargetId=attacker.State.Id;target.CombatUntil=now+_settings.CombatTimeoutSeconds*1000L;}
+        }
+    }
+
+    private static Guid CombatTarget(Guid ownId,long now,HashSet<Guid> visible)
+    {
+        if(!Ships.TryGetValue(ownId,out var own)) return Guid.Empty;
+        if(own.State.CaptainId==Guid.Empty || own.SunkUntil>0 || own.CombatUntil<=now ||
+            !Ships.TryGetValue(own.CombatTargetId,out var target) || target.Enemy==null || target.SunkUntil>0 || target.Health<=0 ||
+            !visible.Contains(target.State.MapId) || SafeDock(target,own.State.MapId,own.State.X,own.State.Y))
+        {own.CombatTargetId=Guid.Empty;own.CombatUntil=0;return Guid.Empty;}
+        return target.State.Id;
+    }
+}

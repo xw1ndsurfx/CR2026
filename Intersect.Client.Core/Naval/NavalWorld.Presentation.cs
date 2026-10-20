@@ -11,15 +11,17 @@ namespace Intersect.Client.Naval;
 internal static partial class NavalWorld
 {
     private sealed record EffectView(NavalEffectSnapshot Event,long Born);
+    private static Guid _combatTargetId;
     private static Dictionary<Guid,EffectView> _effects=[];
     private static readonly Dictionary<string,NavalEffectAtlas?> _effectAtlases=new(StringComparer.OrdinalIgnoreCase);
     internal static NavalPresentation Presentation {get;private set;}=new();
     internal static int SailingLevel {get;private set;}=1;
     internal static long SailingExperience {get;private set;}
     internal static long SailingRequired {get;private set;}
-    private static void ClearPresentation() {_effects=[];_effectAtlases.Clear();Presentation=new();SailingLevel=1;SailingExperience=SailingRequired=0;}
+    private static void ClearPresentation() {_combatTargetId=Guid.Empty;_effects=[];_effectAtlases.Clear();Presentation=new();SailingLevel=1;SailingExperience=SailingRequired=0;}
     private static void ApplyPresentation(NavalSnapshotPacket packet,long now)
     {
+        _combatTargetId=packet.CombatTargetId;
         Presentation=packet.Presentation?.IsValid()==true?packet.Presentation:new();
         SailingLevel=Math.Clamp(packet.SailingLevel,1,200);SailingExperience=Math.Max(0,packet.SailingExperience);SailingRequired=Math.Max(0,packet.SailingRequired);
         var effects=new Dictionary<Guid,EffectView>(_effects);
@@ -86,6 +88,14 @@ internal static partial class NavalWorld
             }
         }
     }
+    internal static ShipSnapshot? CombatTarget => OwnShip is {Sinking:false} && Fresh &&
+        _ships.TryGetValue(_combatTargetId,out var view) && view.Current.Enemy && !view.Current.Sinking && view.Current.Health>0
+            ? view.Current : null;
+    internal static string EnemyName(ShipSnapshot ship) => string.IsNullOrWhiteSpace(ship.Name)
+        ? NavalSetupText.Get("Herbonia ship",Intersect.Client.Localization.ClientLanguages.Current) : ship.Name;
+    internal static string ShipNameplate(ShipSnapshot ship) => ship.Enemy
+        ? string.Format(NavalSetupText.Get("{0} · Level {1}",Intersect.Client.Localization.ClientLanguages.Current),EnemyName(ship),ship.Level) : ship.Name;
+
     private static void DrawShipName(string name,float x,float y)
     {
         if(string.IsNullOrWhiteSpace(name) || Graphics.EntityNameFont==null) return;

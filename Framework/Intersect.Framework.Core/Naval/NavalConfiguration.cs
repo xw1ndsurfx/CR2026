@@ -11,6 +11,7 @@ public sealed class NavalConfiguration
     public double ShopInteractionRange { get; set; } = 4;
     public int ShopSessionSeconds { get; set; } = 120;
     public bool CannonsEnabled { get; set; }
+    public int CombatTimeoutSeconds { get; set; } = 12;
     public bool PlayerShipDamage { get; set; }
     public int CannonDamage { get; set; } = 10;
     public int CannonReloadMilliseconds { get; set; } = 4000;
@@ -25,7 +26,7 @@ public sealed class NavalConfiguration
 
     public void Validate(int width, int height)
     {
-        if (Herbonia==null || Herbonia.Length>32 || Herbonia.Any(p=>p?.IsValid()!=true || p.Ship.X>=width || p.Ship.Y>=height || p.Ship.DockX>=width || p.Ship.DockY>=height) ||
+        if (CombatTimeoutSeconds is <3 or >120 || Herbonia==null || Herbonia.Length>32 || Herbonia.Any(p=>p?.IsValid()!=true || p.Ship.X>=width || p.Ship.Y>=height || p.Ship.DockX>=width || p.Ship.DockY>=height) ||
             Herbonia.Select(p=>p.Ship.Id).Concat(Ships?.Where(p=>p!=null).Select(p=>p.Id)??[]).GroupBy(id=>id).Any(g=>g.Count()>1) || Presentation?.IsValid()!=true || Sailing?.IsValid()!=true || !double.IsFinite(DockInteractionRange) || DockInteractionRange is < 1 or > 5 ||
             LaunchSearchRadius is < 3 or > 10 || !double.IsFinite(ShopInteractionRange) ||
             ShopInteractionRange is < 1 or > 10 || ShopSessionSeconds is < 10 or > 600 ||

@@ -131,12 +131,12 @@ internal static partial class NavalWorld
                 {
                     var pose = atlas.Frame(heading, view.Animation.Elapsed(Environment.TickCount64), s.FrameMilliseconds);
                     var scale = (float)(tw / atlas.PixelsPerTile);
-                    DrawShipName(s.Name,x,y-(float)(pose.AnchorY*scale)-22);
+                    DrawShipName(ShipNameplate(s),x,y-(float)(pose.AnchorY*scale)-22);
                     Graphics.DrawGameTexture(oceanTexture, new FloatRect(pose.X, pose.Y, pose.Width, pose.Height),
                         NavalSpriteGeometry.Destination(pose,x,y,scale), Color.White);
                     continue;
                 }
-                DrawShipName(s.Name,x,y-(float)s.Length*th/2-22);
+                DrawShipName(ShipNameplate(s),x,y-(float)s.Length*th/2-22);
                 // An ocean atlas is never silently interpreted as the legacy regular grid.
                 DrawPrototype(x, y, heading, (float)s.Width * tw, (float)s.Length * th, Math.Abs(s.Speed) > .05);
                 continue;
@@ -145,12 +145,12 @@ internal static partial class NavalWorld
             {
                 var w = texture.Width / s.Frames; var h = texture.Height / 8;
                 var frame = (int)(Environment.TickCount64 / Math.Max(50, s.FrameMilliseconds) % s.Frames);
-                DrawShipName(s.Name,x,y-h/2f-22);
+                DrawShipName(ShipNameplate(s),x,y-h/2f-22);
                 Graphics.DrawGameTexture(texture, new FloatRect(frame * w, ShipMovement.DirectionRow(heading) * h, w, h),
                     new FloatRect(x - w / 2f, y - h / 2f, w, h), Color.White);
                 continue;
             }
-            DrawShipName(s.Name,x,y-(float)s.Length*th/2-22);
+            DrawShipName(ShipNameplate(s),x,y-(float)s.Length*th/2-22);
             DrawPrototype(x, y, heading, (float)s.Width * tw, (float)s.Length * th, Math.Abs(s.Speed) > .05);
         }
         DrawNavalEffects(row);

@@ -81,10 +81,11 @@ public sealed partial class NavalTests
     public void EnemySpawnsFromConfigurationOnceAndRejectsBlockedOrUnloadedHomes()
     {
         using var world=new EnemyTestWorld();
-        var config=new NavalConfiguration {Enabled=true,Herbonia=[new() {Enabled=true,Ship=new() {MapId=world.Map.Id,X=10.5,Y=10.5}}]};
+        var config=new NavalConfiguration {Enabled=true,Herbonia=[new() {Enabled=true,MaximumHealth=600,Ship=new() {MapId=world.Map.Id,X=10.5,Y=10.5}}]};
         world.Configure(config);
         world.Map.Attributes[10,10]=new MapBlockedAttribute();NavalSystem.WorldTick(1000);Assert.That(world.Ships.Count,Is.Zero);
         world.Map.Attributes[10,10]=null!;NavalSystem.WorldTick(1100);Assert.That(world.Ships.Count,Is.EqualTo(1));
+        Assert.That(world.Field<int>(world.Ships[config.Herbonia[0].Ship.Id]!,"Health"),Is.EqualTo(600));
         var state=world.State(world.Ships[config.Herbonia[0].Ship.Id]!);
         var x=state.X;var y=state.Y;NavalSystem.WorldTick(1100);
         Assert.That(world.Ships.Count,Is.EqualTo(1));Assert.That((state.X,state.Y),Is.EqualTo((x,y)));
@@ -133,6 +134,7 @@ public sealed partial class NavalTests
         private readonly Type type=typeof(NavalSystem),vessel=typeof(NavalSystem).GetNestedType("Vessel",BindingFlags.NonPublic)!;
         private readonly Dictionary<string,object?> saved=[];
         private readonly object[] balls,effects;
+        private readonly System.Collections.DictionaryEntry[] rewards;
         private readonly System.Collections.DictionaryEntry[] ships;
         private readonly Intersect.Framework.Core.GameObjects.Maps.MapList.MapList mapList;
         internal readonly MapController Map;
@@ -141,6 +143,7 @@ public sealed partial class NavalTests
         {
             Options.EnsureCreated();
             foreach(var name in new[]{"_settings","_loaded","_enabled","_lastEnemyStep","_lastCombatStep","_enemyEventTiles"}) saved[name]=type.GetField(name,Static)!.GetValue(null);
+            var pending=Rewards;rewards=pending.Keys.Cast<object>().Select(key=>new System.Collections.DictionaryEntry(key,pending[key])).ToArray();pending.Clear();
             ships=Ships.Keys.Cast<object>().Select(key=>new System.Collections.DictionaryEntry(key,Ships[key])).ToArray();Ships.Clear();
             balls=List("Cannonballs").Cast<object>().ToArray();effects=List("Effects").Cast<object>().ToArray();List("Cannonballs").Clear();List("Effects").Clear();
             type.GetField("_settings",Static)!.SetValue(null,new NavalConfiguration {Enabled=true,CannonsEnabled=true,PlayerShipDamage=false});
@@ -155,6 +158,9 @@ public sealed partial class NavalTests
             var events=typeof(MapInstance).GetField("GlobalEventInstances",Instance)!;events.SetValue(instance,Activator.CreateInstance(events.FieldType));
             ((System.Collections.IDictionary)typeof(MapController).GetField("mInstances",Instance)!.GetValue(Map)!)[Guid.Empty]=instance;
         }
+        internal System.Collections.IDictionary Rewards => (System.Collections.IDictionary)type.GetField("PendingSailingRewards",Static)!.GetValue(null)!;
+        internal object? Invoke(string name,params object[] args)=>type.GetMethod(name,Static)!.Invoke(null,args);
+        internal long Reward(Guid captain)=>Rewards[captain] is {} pending ? (long)pending.GetType().GetProperty("Experience")!.GetValue(pending)! : 0;
         private System.Collections.IList List(string name)=>(System.Collections.IList)type.GetField(name,Static)!.GetValue(null)!;
         internal void Configure(NavalConfiguration config)=>type.GetField("_settings",Static)!.SetValue(null,config);
         internal object Add(double x,double y,bool enemy)
@@ -170,6 +176,7 @@ public sealed partial class NavalTests
         internal ShipState State(object item)=>Field<ShipState>(item,"State");
         public void Dispose()
         {
+            Rewards.Clear();foreach(var entry in rewards) Rewards.Add(entry.Key,entry.Value);
             Ships.Clear();foreach(var entry in ships) Ships.Add(entry.Key,entry.Value);
             List("Cannonballs").Clear();foreach(var ball in balls) List("Cannonballs").Add(ball);
             List("Effects").Clear();foreach(var effect in effects) List("Effects").Add(effect);

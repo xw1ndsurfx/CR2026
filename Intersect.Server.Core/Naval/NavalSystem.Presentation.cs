@@ -21,15 +21,4 @@ internal static partial class NavalSystem
         try {ship.Name=normalized;committed=save();return committed;}
         finally {if(!committed) ship.Name=previous;}
     }
-    private static void AwardSailing(Player player,Vessel vessel,double distance,long now)
-    {
-        if(distance<=0 || !double.IsFinite(distance) || player.SailingExperience>=_settings.Sailing.Cap) return;
-        vessel.SailingRemainder+=distance*_settings.Sailing.ExperiencePerTile;
-        var earned=(long)Math.Floor(vessel.SailingRemainder);if(earned<=0) return;
-        vessel.SailingRemainder-=earned;
-        var before=_settings.Sailing.Progress(player.SailingExperience).Level;
-        player.SailingExperience=Math.Min(_settings.Sailing.Cap,player.SailingExperience+earned);
-        if(_settings.Sailing.Progress(player.SailingExperience).Level>before)
-            Emit(NavalEffectKind.LevelUp,vessel.State.MapId,vessel.State.X,vessel.State.Y,0,now);
-    }
 }

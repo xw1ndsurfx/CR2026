@@ -391,9 +391,9 @@
       "es": "Daño entre barcos de jugadores"
     },
     "CannonDamage": {
-      "en": "Damage per cannonball (hull out of 100)",
-      "fr": "Dégâts par boulet (coque sur 100)",
-      "es": "Daño por bala (casco sobre 100)"
+      "en": "Damage per cannonball",
+      "fr": "Dégâts par boulet",
+      "es": "Daño por bala de cañón"
     },
     "CannonReloadMilliseconds": {
       "en": "Broadside reload (ms)",
@@ -614,6 +614,51 @@
       "en": "Enable patrol",
       "fr": "Activer cette patrouille",
       "es": "Activar esta patrulla"
+    },
+    "Level": {
+      "en": "Enemy level",
+      "fr": "Niveau de l’ennemi",
+      "es": "Nivel del enemigo"
+    },
+    "MaximumHealth": {
+      "en": "Maximum hull health",
+      "fr": "PV maximum de la coque",
+      "es": "PV máximos del casco"
+    },
+    "SailingExperienceReward": {
+      "en": "Sailing EXP per sinking",
+      "fr": "EXP Sailing au naufrage",
+      "es": "EXP Sailing por hundimiento"
+    },
+    "CombatTimeoutSeconds": {
+      "en": "Combat HUD timeout (seconds)",
+      "fr": "Fin du combat sans impact (secondes)",
+      "es": "Fin del combate sin impactos (segundos)"
+    },
+    "Herbonia ship": {
+      "en": "Herbonia ship",
+      "fr": "Navire Herbonia",
+      "es": "Barco Herbonia"
+    },
+    "{0} · Level {1}": {
+      "en": "{0} · Level {1}",
+      "fr": "{0} · Niveau {1}",
+      "es": "{0} · Nivel {1}"
+    },
+    "Lv. {0}": {
+      "en": "Lv. {0}",
+      "fr": "Niv. {0}",
+      "es": "Nv. {0}"
+    },
+    "Hull: {0:N0} / {1:N0}": {
+      "en": "Hull: {0:N0} / {1:N0}",
+      "fr": "Coque : {0:N0} / {1:N0}",
+      "es": "Casco: {0:N0} / {1:N0}"
+    },
+    "Your Sailing reward could not be saved. Try again shortly.": {
+      "en": "Your Sailing reward could not be saved. Try again shortly.",
+      "fr": "Votre récompense Sailing n’a pas pu être sauvegardée. Réessayez dans quelques instants.",
+      "es": "No se pudo guardar tu recompensa de Sailing. Inténtalo de nuevo en unos instantes."
     }
   }
 }

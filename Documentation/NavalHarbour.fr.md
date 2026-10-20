@@ -101,7 +101,7 @@ Les effets utilisent maintenant les deux planches fournies : `Ship_Canon_Fire_An
 
 ## Sons, icônes, noms et progression Sailing
 
-Le System Editor naval comporte cinq onglets. Les nouveaux onglets **Sons, icônes et effets** et **Progression Sailing** se sauvegardent avec la configuration de navigation, indépendamment de la boutique. Comme pour cette configuration, tous les capitaines doivent quitter la barre avant l’enregistrement.
+Le System Editor naval comporte six onglets, dont Patrouilles IA Herbonia. Les nouveaux onglets **Sons, icônes et effets** et **Progression Sailing** se sauvegardent avec la configuration de navigation, indépendamment de la boutique. Comme pour cette configuration, tous les capitaines doivent quitter la barre avant l’enregistrement.
 
 ### Ressources sélectionnables
 
@@ -121,9 +121,9 @@ Dans **Ma flotte**, le bouton **Nommer le bateau** permet de choisir un nom avan
 
 La progression est **par personnage**, commune à ses bateaux. Une barre bleu/or avec le niveau et l’EXP se place juste au-dessus des actions navales. La coque et la vitesse restent au-dessus de cette barre.
 
-L’EXP vient uniquement de la distance réellement acceptée par le serveur pendant la navigation sur Ocean. Une rotation sur place, l’ancre, un obstacle qui empêche d’avancer, un changement de map par téléportation ou une requête client ne donnent pas d’EXP. Les fractions de distance sont cumulées pendant la sortie en mer. Il n’y a pas encore de bonus d’EXP de combat.
+L’EXP vient uniquement des navires ennemis Herbonia coulés. Chaque patrouille règle sa récompense dans l’éditeur. Le capitaine qui a tiré le coup fatal reçoit cette récompense une seule fois, à condition de piloter encore le même bateau. Naviguer, tirer sans couler une cible, toucher une coque protégée, couler un joueur ou un bateau public de test ne donnent aucune EXP. L’ancienne option ExperiencePerTile est ignorée à la lecture puis retirée lors de l’enregistrement; l’EXP déjà sauvegardée est conservée.
 
-Valeurs initiales : **1 EXP par case parcourue**, **100 EXP pour passer du niveau 1 au 2**, multiplication par **1,12** pour chaque niveau suivant, maximum **100 niveaux**. Tous ces paramètres se modifient dans Progression Sailing. Une valeur d’EXP par case à zéro suspend les gains. La progression se conserve lors d’un changement de bateau, d’une réparation ou d’un naufrage. Réduire temporairement le plafond ne détruit pas l’EXP déjà gagnée.
+Valeurs initiales : **100 EXP par ennemi coulé**, **100 EXP pour passer du niveau 1 au 2**, multiplication par **1,12** pour chaque niveau suivant, maximum **100 niveaux**. Les seuils se modifient dans Progression Sailing et la récompense dans chaque patrouille Herbonia. Une récompense à zéro désactive les gains pour cet ennemi. La progression se conserve lors d’un changement de bateau, d’une réparation ou d’un naufrage. Réduire temporairement le plafond ne détruit pas l’EXP déjà gagnée.
 
 Le stockage naval existant du personnage contient désormais une enveloppe version 2 avec les navires, leurs noms et l’EXP Sailing. Les anciennes listes de flotte sont lues sans perdre les identifiants, coques ou points de retour. Aucun changement de schéma SQL n’est nécessaire. Les sauvegardes natives incluent cette donnée ; une sauvegarde est également demandée à la sortie de la barre et lors du renommage. **Sauvegarder les bases avant la mise à jour et garder cette copie pour un éventuel retour à un ancien serveur**, qui ne connaît pas cette nouvelle enveloppe.
 
@@ -133,8 +133,8 @@ Le stockage naval existant du personnage contient désormais une enveloppe versi
 2. Dans Sons, icônes et effets, choisir une icône de resources/spells : vérifier son aperçu. Choisir un WAV, l’écouter, sélectionner les autres sons désirés, enregistrer, fermer et rouvrir pour vérifier les choix.
 3. À Q, nommer un bateau, fermer/rouvrir Ma flotte puis se reconnecter : le nom doit être conservé. Prendre la mer et vérifier son nom dans les huit directions, depuis un second client si disponible.
 4. Tirer des deux côtés : les icônes choisies sont utilisées, les éclats se produisent aux canons, les boulets suivent leur direction. Tester une cible, un obstacle et un tir sans cible jusqu’à sa chute dans l’eau. Chaque type d’impact doit utiliser son son ; une bordée ne doit pas rejouer son son à chaque mise à jour.
-5. Observer Sailing : progresser en naviguant, s’arrêter contre un obstacle et à l’ancre pour vérifier l’absence de gains immobiles. Passer un niveau, débarquer, changer de bateau et se reconnecter : le niveau et l’EXP doivent rester présents. Vérifier aussi une traversée Ocean à Ocean.
-6. Les tests automatiques couvrent migration des données, noms et retour arrière de sauvegarde, seuils/cap d’EXP, distance fractionnaire, paquets, choix et aperçu d’icône, découpages et ancrages tournés, réception répétée d’un effet. Le rendu connecté et l’écoute des vrais sons sélectionnés restent à vérifier dans le jeu installé.
+5. Observer Sailing : naviguer et toucher un ennemi sans le couler ne doivent donner aucune EXP. Couler un ennemi doit donner exactement sa récompense configurée au capitaine du coup fatal. Passer un niveau, débarquer, changer de bateau et se reconnecter : le niveau et l’EXP doivent rester présents. Vérifier aussi une traversée Ocean à Ocean.
+6. Les tests automatiques couvrent migration des données, noms et retour arrière de sauvegarde, seuils/cap d’EXP, récompense unique au naufrage, échec de sauvegarde, ciblage et expiration du HUD, paquets, choix et aperçu d’icône, découpages et ancrages tournés, réception répétée d’un effet. Le rendu connecté et l’écoute des vrais sons sélectionnés restent à vérifier dans le jeu installé.
 
 
 Suite : [Patrouilles IA Herbonia et retour à l’embarquement](NavalHerbonia.fr.md).

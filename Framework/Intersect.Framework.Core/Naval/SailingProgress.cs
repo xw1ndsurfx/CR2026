@@ -9,9 +9,8 @@ public sealed class SailingSettings
     public int MaximumLevel {get;set;}=100;
     public int BaseExperience {get;set;}=100;
     public double ExperienceGrowth {get;set;}=1.12;
-    public double ExperiencePerTile {get;set;}=1;
     public bool IsValid()=>MaximumLevel is >=1 and <=200 && BaseExperience is >=1 and <=1000000000 &&
-        double.IsFinite(ExperienceGrowth) && ExperienceGrowth is >=1 and <=2 && double.IsFinite(ExperiencePerTile) && ExperiencePerTile is >=0 and <=10000;
+        double.IsFinite(ExperienceGrowth) && ExperienceGrowth is >=1 and <=2;
     public long Required(int level)=>(long)Math.Clamp(Math.Round(BaseExperience*Math.Pow(ExperienceGrowth,level-1)),1,1000000000000d);
     public SailingProgress Progress(long total)
     {

@@ -29,7 +29,10 @@ internal static partial class NavalSystem
         internal int Health = 100, PendingDamage;
         internal long PortReady, StarboardReady, LastAction, NextDamageAttempt;
         internal bool Anchored;
-        internal double SailingRemainder;
+        internal Guid CombatTargetId;
+        internal long CombatUntil;
+        internal bool RewardClaimed;
+        internal int MaximumHealth => Enemy?.MaximumHealth??100;
         internal string Name=definition.Name;
         internal HerboniaPatrol Enemy;
         internal int Waypoint;
@@ -119,6 +122,8 @@ internal static partial class NavalSystem
             if (player.CaptainedShipId == Guid.Empty &&
                 ShipDock.Nearest(MapController.Get(player.MapId)?.Attributes, player.X + .5, player.Y + .5, _settings.DockInteractionRange) != null)
             { Harbour(player, new() { Action = HarbourAction.Open }); return; }
+            if (!ApplyPendingExperience(player,Timing.Global.Milliseconds,force:true))
+            { Notice(player,"Your Sailing reward could not be saved. Try again shortly."); return; }
             if (!ApplyPendingDamage(player,Timing.Global.Milliseconds,force:true))
             { Notice(player,"Ship damage could not be saved. Try disembarking again shortly."); return; }
             ShipState anchor = null;
@@ -208,6 +213,7 @@ internal static partial class NavalSystem
 
     internal static void Update(Player player, long now)
     {
+        ApplyPendingExperience(player,now);
         ApplyPendingDamage(player, now);
         ShipState pendingWarp = null;
         Vessel rescueVessel = null;
@@ -235,15 +241,11 @@ internal static partial class NavalSystem
                     vessel.LastStep = now;
                     var input = vessel.Anchored ? new ShipInput(0,0,true) : vessel.Controls.ForTick(now, player.NavalBusy);
                     oldMap = s.MapId; oldX = s.X; oldY = s.Y;
-                    var sailedDistance=0d;
                     ShipMovement.Step(s, vessel.Definition, input, dt, (map, x, y, heading) =>
                     {
-                        var attempted=Distance(s.X,s.Y,x,y);
                         var resolved = OceanMapResolver.Resolve(ocean, ref map, ref x, ref y) && ClearHull(player, vessel, ocean, map, x, y);
-                        if(resolved) sailedDistance+=attempted;
                         return (resolved, map, x, y);
                     });
-                    AwardSailing(player,vessel,sailedDistance,now);
                     if (oldMap != s.MapId) pendingWarp = s;
                     else { player.X = (int)Math.Floor(s.X); player.Y = (int)Math.Floor(s.Y); }
                 }
@@ -285,6 +287,7 @@ internal static partial class NavalSystem
         if (player.CaptainedShipId == Guid.Empty) return;
         lock (player.EntityLock)
         {
+            ApplyPendingExperience(player,Timing.Global.Milliseconds,force:true);
             ApplyPendingDamage(player,Timing.Global.Milliseconds,force:true);
             OwnedShip owned = null;
             lock (Gate)
@@ -327,15 +330,17 @@ internal static partial class NavalSystem
         var visible = player.Map?.GetSurroundingMapIds(true).ToHashSet() ?? [];
         visible.Add(player.MapId);
         var progress=_settings.Sailing.Progress(player.SailingExperience);
+        var targetId=CombatTarget(player.CaptainedShipId,now,visible);
         Effects.RemoveAll(e=>now-e.Born>1500);
-        player.SendPacket(new NavalSnapshotPacket { Presentation=_settings.Presentation,
+        player.SendPacket(new NavalSnapshotPacket { CombatTargetId=targetId, Presentation=_settings.Presentation,
             SailingLevel=progress.Level,SailingExperience=progress.Experience,SailingRequired=progress.Required,
             Effects=player.InstanceType!=MapInstanceType.Overworld?[]:Effects.Where(e=>visible.Contains(e.Snapshot.MapId)).Select(e=>new NavalEffectSnapshot {
                 Id=e.Snapshot.Id,MapId=e.Snapshot.MapId,X=e.Snapshot.X,Y=e.Snapshot.Y,Heading=e.Snapshot.Heading,Kind=e.Snapshot.Kind,
                 PlaySound=e.Snapshot.PlaySound,AgeMilliseconds=(int)Math.Clamp(now-e.Born,0,1500) }).ToArray(), Ships = player.InstanceType != MapInstanceType.Overworld ? [] :
             Ships.Values.Where(v => visible.Contains(v.State.MapId) && ocean.Contains(v.State.MapId) && MapController.Get(v.State.MapId) != null)
+                .OrderByDescending(v=>v.State.Id==player.CaptainedShipId?2:v.State.Id==targetId?1:0).Take(64)
                 .Select(v => new ShipSnapshot { Id = v.State.Id, CaptainId = v.State.CaptainId, MapId = v.State.MapId,
-                    Name=v.Name, X = v.State.X, Y = v.State.Y, Heading = v.State.Heading, Speed = v.State.Speed,
+                    Enemy=v.Enemy!=null,Level=v.Enemy?.Level??1,MaximumHealth=v.MaximumHealth,Name=v.Name, X = v.State.X, Y = v.State.Y, Heading = v.State.Heading, Speed = v.State.Speed,
                     Graphics = v.SunkUntil > 0 ? v.SinkingGraphics : v.State.DamageState > 0 ? v.Definition.DamagedGraphics : v.Definition.Graphics,
                     Frames = v.Definition.Frames, FrameMilliseconds = v.Definition.FrameMilliseconds,
                     Width = v.Definition.Width, Length = v.Definition.Length, Health = v.Health,

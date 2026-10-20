@@ -177,4 +177,30 @@ public sealed class NavalHelmRegressionTests
         }
         finally {NavalWorld.Clear();Globals.Me=previous;}
     }
+    [Test]
+    public void EnemyHudFollowsServerEngagementAndHidesForSinkingTimeoutOrLeavingTheHelm()
+    {
+        var previous=Globals.Me;var me=(Player)RuntimeHelpers.GetUninitializedObject(typeof(Player));GC.SuppressFinalize(me);me.Id=Guid.NewGuid();
+        try
+        {
+            Globals.Me=me;NavalWorld.Clear();
+            var own=new ShipSnapshot {Id=Guid.NewGuid(),CaptainId=me.Id};
+            var enemy=new ShipSnapshot {Id=Guid.NewGuid(),Enemy=true,Level=12,Health=440,MaximumHealth=700,Name="Herbonia"};
+            var packet=new NavalSnapshotPacket {CombatTargetId=enemy.Id,Ships=[own,enemy]};
+            NavalWorld.Apply(packet);Assert.That(NavalWorld.CombatTarget,Is.SameAs(enemy));
+            Assert.That(NavalWorld.ShipNameplate(enemy),Does.Contain("12").And.Contain("Herbonia"));
+            enemy.Sinking=true;NavalWorld.Apply(packet);Assert.That(NavalWorld.CombatTarget,Is.Null);
+            enemy.Sinking=false;enemy.Health=0;NavalWorld.Apply(packet);Assert.That(NavalWorld.CombatTarget,Is.Null);
+            enemy.Health=440;packet.CombatTargetId=Guid.Empty;NavalWorld.Apply(packet);Assert.That(NavalWorld.CombatTarget,Is.Null);
+            packet.CombatTargetId=enemy.Id;own.Sinking=true;NavalWorld.Apply(packet);Assert.That(NavalWorld.CombatTarget,Is.Null);
+            own.Sinking=false;own.CaptainId=Guid.Empty;NavalWorld.Apply(packet);Assert.That(NavalWorld.CombatTarget,Is.Null);
+            own.CaptainId=me.Id;packet.Ships=[own];NavalWorld.Apply(packet);Assert.That(NavalWorld.CombatTarget,Is.Null);
+            packet.Ships=[own,enemy];NavalWorld.Apply(packet);
+            typeof(NavalWorld).GetField("_received",BindingFlags.NonPublic|BindingFlags.Static)!.SetValue(null,Environment.TickCount64-2000);
+            Assert.That(NavalWorld.CombatTarget,Is.Null);
+            NavalWorld.Clear();Assert.That(NavalWorld.CombatTarget,Is.Null);
+        }
+        finally {NavalWorld.Clear();Globals.Me=previous;}
+    }
+
 }

@@ -12,7 +12,7 @@ internal static partial class NavalSystem
 {
     private sealed class Cannonball
     {
-        internal Guid Id = Guid.NewGuid(), ShipId, OwnerId, MapId;
+        internal Guid Id = Guid.NewGuid(), ShipId, OwnerId, MapId, CaptainId;
         internal double X,Y,DirectionX,DirectionY,Remaining,Speed;
         internal int Damage;
         internal bool Enemy;
@@ -84,8 +84,8 @@ internal static partial class NavalSystem
             var y=s.Y+direction.Y*radius+forwardY*gun*d.Length/4;
             if (!OceanMapResolver.Resolve(ocean,ref map,ref x,ref y) || BlocksCannonball(map,x,y)) continue;
             Emit(NavalEffectKind.Fire,map,x,y,ShipMovement.Normalize(s.Heading+(starboard?90:-90)),now,!sounded);sounded=true;
-            Cannonballs.Add(new() { Enemy=vessel.Enemy!=null,DockSafeRange=vessel.Enemy?.DockSafeRange??0,Born=now,Heading=ShipMovement.Normalize(s.Heading+(starboard?90:-90)),ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
-                DirectionX=direction.X,DirectionY=direction.Y,Remaining=_settings.CannonRange,Speed=_settings.CannonSpeed,Damage=_settings.CannonDamage });
+            Cannonballs.Add(new() { CaptainId=s.CaptainId,Enemy=vessel.Enemy!=null,DockSafeRange=vessel.Enemy?.DockSafeRange??0,Born=now,Heading=ShipMovement.Normalize(s.Heading+(starboard?90:-90)),ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
+                DirectionX=direction.X,DirectionY=direction.Y,Remaining=_settings.CannonRange,Speed=_settings.CannonSpeed,Damage=vessel.Enemy?.CannonDamage??_settings.CannonDamage });
         }
     }
 
@@ -129,13 +129,15 @@ internal static partial class NavalSystem
                     ball.OwnerId!=Guid.Empty && ball.OwnerId==target.OwnerId,_settings.PlayerShipDamage);
                 if(ball.Enemy && (DockProtected(map,x,y,ball.DockSafeRange) ||
                     DockProtected(target.State.MapId,target.State.X,target.State.Y,ball.DockSafeRange))) permitted=false;
+                if(permitted && Ships.TryGetValue(ball.ShipId,out var attacker)) Engage(attacker,target,now);
                 // Protected player hulls still intercept shots; no firing through another ship.
                 if (permitted && target.OwnerId==Guid.Empty)
                 {
-                    target.Health=ShipFleetRules.AfterDamage(target.Health,ball.Damage);
-                    target.State.DamageState=target.Health<100?1:0;
+                    target.Health=Math.Max(0,target.Health-ball.Damage);
+                    target.State.DamageState=target.Health<target.MaximumHealth?1:0;
                     if (target.Health==0)
                     {
+                        CreditEnemySink(target,ball.ShipId,ball.CaptainId);
                         target.State.Speed=target.State.Throttle=0;target.Controls.Reset();
                         target.SunkUntil=now+Math.Max(2000,target.Definition.FrameMilliseconds*4);
                         target.SinkingGraphics=target.Definition.SinkingGraphics;

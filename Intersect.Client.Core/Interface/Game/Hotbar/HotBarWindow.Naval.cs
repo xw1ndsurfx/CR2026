@@ -16,6 +16,7 @@ public partial class HotBarWindow
     private readonly List<NavalActionButton> _navalButtons=[];
     private Label? _navalStatus;
     private NavalSailingBar? _sailingBar;
+    private NavalTargetHud? _targetHud;
     private bool _wasSailing;
     private bool[] _hiddenBeforeSailing=[];
     private static string KeyCaption(int slot)
@@ -39,6 +40,8 @@ public partial class HotBarWindow
     {
         var own=Naval.NavalWorld.OwnShip;
         var sailing=own!=null;
+        if(sailing && _targetHud==null) _targetHud=new NavalTargetHud(Parent);
+        _targetHud?.Update(sailing && Interface.InGameUiOrNull?.SuppressStatusHuds!=true ? Naval.NavalWorld.CombatTarget : null);
         if(sailing && _navalButtons.Count==0)
         {
             for(var i=0;i<Math.Min(10,Items.Count);i++)

@@ -72,9 +72,11 @@ internal static class NavalSystemEditorTests
         if(tabs.TabPages[5].Text!="Patrouilles IA Herbonia") throw new Exception("Localize the AI section.");
         Descendants(tabs.TabPages[5]).OfType<CheckBox>().Single(c=>c.Name=="Enabled").Checked=true;
         Descendants(tabs.TabPages[5]).OfType<NumericUpDown>().Single(c=>c.Name=="DetectionRange").Value=15;
+        foreach(var value in new[]{("Level",8),("MaximumHealth",500),("CannonDamage",17),("SailingExperienceReward",275)})
+            Descendants(tabs.TabPages[5]).OfType<NumericUpDown>().Single(c=>c.Name==value.Item1).Value=value.Item2;
         var save=(NavalConfigurationRequestPacket)typeof(FrmNavalConfiguration).GetMethod("PrepareSave",BindingFlags.NonPublic|BindingFlags.Instance)!.Invoke(editor,null)!;
         var actual=JsonConvert.DeserializeObject<NavalConfiguration>(save.ConfigurationJson)!.Herbonia.Single();
-        if(save.Section!=1 || !actual.Enabled || actual.DetectionRange!=15 || actual.Ship.Id!=patrol.Ship.Id) throw new Exception("AI editor must preserve identity and save its patrol settings.");
+        if(save.Section!=1 || !actual.Enabled || actual.DetectionRange!=15 || actual.Ship.Id!=patrol.Ship.Id || actual.Level!=8 || actual.MaximumHealth!=500 || actual.CannonDamage!=17 || actual.SailingExperienceReward!=275) throw new Exception("AI editor must preserve identity and save its patrol settings.");
         var preview=Environment.GetEnvironmentVariable("NAVAL_HERBONIA_PREVIEW");
         if(!string.IsNullOrEmpty(preview))
         {

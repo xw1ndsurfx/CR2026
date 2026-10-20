@@ -34,7 +34,7 @@ internal static partial class NavalSystem
             foreach(var patrol in _settings.Herbonia.Where(p=>p.Enabled))
             {
                 if(Ships.ContainsKey(patrol.Ship.Id) || !ocean.Contains(patrol.Ship.MapId)) continue;
-                var spawned=new Vessel(patrol.Ship) { Enemy=patrol };
+                var spawned=new Vessel(patrol.Ship) { Enemy=patrol,Health=patrol.MaximumHealth };
                 if(ClearEnemyHull(spawned,ocean,spawned.State.MapId,spawned.State.X,spawned.State.Y))
                 {
                     Ships.Add(spawned.State.Id,spawned);
@@ -99,7 +99,7 @@ internal static partial class NavalSystem
         {
             if(enemy.RespawnAt==0) enemy.RespawnAt=enemy.SunkUntil+config.RespawnSeconds*1000L;
             if(now<enemy.RespawnAt) return;
-            var fresh=new Vessel(d) {Enemy=config};
+            var fresh=new Vessel(d) {Enemy=config,Health=config.MaximumHealth};
             if(ClearEnemyHull(fresh,ocean,d.MapId,d.X,d.Y)) Ships[s.Id]=fresh;
             return;
         }

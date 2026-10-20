@@ -6,12 +6,17 @@ public sealed class HerboniaPatrol
     public bool Enabled { get; set; }
     public ShipDefinition Ship { get; set; } = new() { Graphics="Ship_Herbonia_001.png",
         DamagedGraphics="Ship_Herbonia_001.png", SinkingGraphics="Ship_Herbonia_001_sink.png" };
+    public int Level { get; set; } = 1;
+    public int MaximumHealth { get; set; } = 100;
+    public int CannonDamage { get; set; } = 10;
+    public int SailingExperienceReward { get; set; } = 100;
     public double DetectionRange { get; set; } = 12;
     public double LeashRadius { get; set; } = 24;
     public double PatrolRadius { get; set; } = 5;
     public double DockSafeRange { get; set; } = 6;
     public int RespawnSeconds { get; set; } = 60;
-    public bool IsValid() => Ship?.IsValid()==true &&
+    public bool IsValid() => Ship?.IsValid()==true && Level is >=1 and <=200 && MaximumHealth is >=1 and <=100000 &&
+        CannonDamage is >=1 and <=100 && SailingExperienceReward is >=0 and <=1000000000 &&
         new[]{DetectionRange,LeashRadius,PatrolRadius,DockSafeRange}.All(double.IsFinite) &&
         DetectionRange is >=3 and <=40 && LeashRadius>=DetectionRange && LeashRadius<=80 &&
         PatrolRadius>=0 && PatrolRadius<=LeashRadius && DockSafeRange is >=3 and <=20 && RespawnSeconds is >=10 and <=3600;
