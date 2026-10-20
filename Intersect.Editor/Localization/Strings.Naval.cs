@@ -9,6 +9,7 @@ public static partial class Strings
     public static class Naval
     {
         private static LocalizedString Text(string source) => new(NavalSetupText.Get(source, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
+        public static LocalizedString Dock = Text("Q - Dock");
         public static LocalizedString Title = Text(NavalSetupText.Title);
         public static LocalizedString Prepare = Text(NavalSetupText.Menu);
         public static LocalizedString Created = Text(NavalSetupText.Created);
