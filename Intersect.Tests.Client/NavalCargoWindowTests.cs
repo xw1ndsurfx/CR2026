@@ -22,6 +22,31 @@ public sealed class NavalCargoWindowTests
     [SetUp] public void SetUp() {_previousContent=CurrentContent.GetValue(null);_content=new TestContent();}
     [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
 
+    [Test]
+    public void CrewViewportUsesMouseCoordinatesForAimAndShowsItsAmmoAndProgressControls()
+    {
+        var previous=Intersect.Client.General.Globals.Me;
+        var me=(Intersect.Client.Entities.Player)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(Intersect.Client.Entities.Player));
+        GC.SuppressFinalize(me);me.Id=Guid.NewGuid();
+        try
+        {
+            Intersect.Client.General.Globals.Me=me;Intersect.Client.Naval.NavalWorld.Clear();
+            using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);
+            using var canvas=new Canvas(skin) {Size=new Point(800,600)};
+            var window=new NavalCannonViewWindow(canvas);
+            var ship=new ShipSnapshot {Id=Guid.NewGuid(),CaptainId=Guid.NewGuid(),CrewIds=[me.Id]};
+            window.Update(ship,true);
+            var viewport=Descendants(window).Single(c=>c.Name=="CannonPerspectiveViewport");
+            var position=viewport.ToCanvas(viewport.Width*3/4,viewport.Height*3/4);
+            viewport.GetType().GetMethod("OnMouseMoved",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!.Invoke(viewport,[position.X,position.Y,1,1]);
+            Assert.That(Intersect.Client.Naval.NavalWorld.GunYaw,Is.GreaterThan(0));
+            Assert.That(Intersect.Client.Naval.NavalWorld.GunElevation,Is.LessThan(0));
+            Assert.That(Descendants(window).Single(c=>c.Name=="CannonAmmunition").IsHidden,Is.False);
+            Assert.That(Descendants(window).Single(c=>c.Name=="GunneryExperience").IsHidden,Is.False);
+        }
+        finally {Intersect.Client.Naval.NavalWorld.Clear();Intersect.Client.General.Globals.Me=previous;}
+    }
+
     [TestCase(1920,1080)]
     [TestCase(640,480)]
     public void PerspectiveWindowFitsTheNativeCanvasAndClosesWhenTheShipSinks(int width,int height)

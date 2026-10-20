@@ -5,7 +5,7 @@ Un bateau personnel peut embarquer un capitaine et des équipiers. La capacité 
 
 Les invitations utilisent le groupe existant du jeu. Le capitaine doit autoriser l’embarquement; l’équipier choisit ensuite son bateau depuis un quai Q. Les deux sont sur la même map Ocean, près du même bateau arrêté. Le serveur contrôle groupe, autorisation, distance, état et places disponibles. L’équipier n’a pas besoin d’acheter son propre bateau.
 
-Le capitaine conserve la navigation, l’ancre et les bordées. Les équipiers suivent la coque et ses transitions Ocean; leur personnage à pied est masqué et ses déplacements/attaques ordinaires sont désactivés uniquement pendant l’embarquement. Ils disposent de l’équipage (7), de leur cale personnelle (8) et du débarquement (0). Les contrôles ordinaires reviennent à terre. Cette V1 ne propose pas encore de pont où marcher ni de canon individuel.
+Le capitaine conserve la navigation, l’ancre et les bordées. Les équipiers suivent la coque et ses transitions Ocean; leur personnage à pied est masqué et ses déplacements/attaques ordinaires sont désactivés uniquement pendant l’embarquement. Ils disposent de l’équipage (7), de leur cale personnelle (8) et du débarquement (0). Les contrôles ordinaires reviennent à terre. Le pont où marcher reste à venir. Les postes de canon individuels sont accessibles via la vue 3, décrite dans NavalCrewGunnery.fr.md.
 
 Au naufrage d’Herbonia, le bateau du tir fatal récompense son capitaine et ses équipiers présents. Chacun reçoit la récompense de base complète en Sailing et EXP personnage, avec les plafonds et bonus natifs propres au personnage. Le butin est tiré une fois puis copié pour chaque membre : mêmes objets, quantités, catégories et qualités, avec identifiants de lots indépendants. Les autres membres du groupe à terre ou dans un autre bateau ne sont pas récompensés.
 
@@ -39,4 +39,4 @@ Tests automatisés : règles d’embarquement, groupe/consentement/arrêt/distan
 
 La présence de l’équipier doit être encore à jour dans la boucle serveur au moment du naufrage. Les files de récompenses avant leur première sauvegarde restent en mémoire comme auparavant. Les postes de canon, la marche sur un pont et les rôles spécialisés constituent une étape suivante, avec des points de raccord dans l’appartenance d’équipage et les contrôles serveur.
 
-La vue d’observation au canon est décrite dans [NavalCannonView.fr.md](NavalCannonView.fr.md). Elle conserve les bordées au capitaine ; elle ne crée pas encore de poste de canon individuel.
+La vue d’observation au canon est décrite dans [NavalCannonView.fr.md](NavalCannonView.fr.md). Elle conserve les bordées au capitaine ; les postes de canon individuels et la progression sont décrits dans [NavalCrewGunnery.fr.md](NavalCrewGunnery.fr.md).

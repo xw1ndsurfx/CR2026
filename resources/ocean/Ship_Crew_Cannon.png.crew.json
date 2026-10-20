@@ -1,0 +1,29 @@
+{
+  "Version": 1,
+  "ImageWidth": 1448,
+  "ImageHeight": 1086,
+  "Frame": {
+    "X": 488,
+    "Y": 363,
+    "Width": 476,
+    "Height": 358,
+    "AnchorX": 238,
+    "AnchorY": 358
+  },
+  "LeftFrame": {
+    "X": 0,
+    "Y": 363,
+    "Width": 484,
+    "Height": 358,
+    "AnchorX": 242,
+    "AnchorY": 358
+  },
+  "RightFrame": {
+    "X": 968,
+    "Y": 363,
+    "Width": 480,
+    "Height": 358,
+    "AnchorX": 240,
+    "AnchorY": 358
+  }
+}

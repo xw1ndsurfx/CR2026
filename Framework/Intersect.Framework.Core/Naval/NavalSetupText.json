@@ -691,9 +691,9 @@
       "es": "Calidad (1 a 5)"
     },
     "Kind": {
-      "en": "Cargo type",
-      "fr": "Type de cargaison",
-      "es": "Tipo de carga"
+      "en": "Kind",
+      "fr": "Type",
+      "es": "Tipo"
     },
     "CargoCapacity": {
       "en": "Cargo capacity (containers)",
@@ -1059,6 +1059,196 @@
       "en": "Perspective preview unavailable on this renderer.",
       "fr": "Aperçu en perspective indisponible sur ce moteur graphique.",
       "es": "Vista en perspectiva no disponible con este renderizador."
+    },
+    "Crew cannons and gunnery": {
+      "en": "Crew cannons and gunnery",
+      "fr": "Canons d’équipage et canonnier",
+      "es": "Cañones de tripulación y artillería"
+    },
+    "Cannon ammunition": {
+      "en": "Cannon ammunition",
+      "fr": "Munitions des canons",
+      "es": "Munición de cañón"
+    },
+    "Gunnery": {
+      "en": "Gunnery",
+      "fr": "Canonnier",
+      "es": "Artillería"
+    },
+    "Ammunition": {
+      "en": "Ammunition",
+      "fr": "Munitions",
+      "es": "Munición"
+    },
+    "CannonsPerSide": {
+      "en": "CannonsPerSide",
+      "fr": "Postes par flanc",
+      "es": "Puestos por costado"
+    },
+    "GunReloadMilliseconds": {
+      "en": "GunReloadMilliseconds",
+      "fr": "Recharge du poste (ms)",
+      "es": "Recarga del puesto (ms)"
+    },
+    "AimArcDegrees": {
+      "en": "AimArcDegrees",
+      "fr": "Angle de visée maximal (degrés)",
+      "es": "Ángulo máximo de puntería (grados)"
+    },
+    "ExperiencePerDamage": {
+      "en": "ExperiencePerDamage",
+      "fr": "EXP par dégât infligé à Herbonia",
+      "es": "EXP por daño infligido a Herbonia"
+    },
+    "RequiredLevel": {
+      "en": "RequiredLevel",
+      "fr": "Niveau requis",
+      "es": "Nivel requerido"
+    },
+    "RequiresItem": {
+      "en": "RequiresItem",
+      "fr": "Consommer un objet (boulets spéciaux)",
+      "es": "Consumir objeto (proyectiles especiales)"
+    },
+    "UnitsPerShot": {
+      "en": "UnitsPerShot",
+      "fr": "Objets consommés par tir",
+      "es": "Objetos consumidos por disparo"
+    },
+    "DamagePercent": {
+      "en": "DamagePercent",
+      "fr": "Dégâts (% du canon de base)",
+      "es": "Daño (% del cañón base)"
+    },
+    "RangePercent": {
+      "en": "RangePercent",
+      "fr": "Portée (% du canon de base)",
+      "es": "Alcance (% del cañón base)"
+    },
+    "ReloadPercent": {
+      "en": "ReloadPercent",
+      "fr": "Recharge (% du poste de base)",
+      "es": "Recarga (% del puesto base)"
+    },
+    "CrewCannonGraphic": {
+      "en": "CrewCannonGraphic",
+      "fr": "Décor du poste de canon",
+      "es": "Imagen del puesto de cañón"
+    },
+    "Standard cannonball": {
+      "en": "Standard cannonball",
+      "fr": "Boulet standard",
+      "es": "Bala estándar"
+    },
+    "Heavy cannonball": {
+      "en": "Heavy cannonball",
+      "fr": "Boulet lourd",
+      "es": "Bala pesada"
+    },
+    "Long-range cannonball": {
+      "en": "Long-range cannonball",
+      "fr": "Boulet longue portée",
+      "es": "Bala de largo alcance"
+    },
+    "Crew cannons are disabled.": {
+      "en": "Crew cannons are disabled.",
+      "fr": "Les canons d’équipage sont désactivés.",
+      "es": "Los cañones de tripulación están desactivados."
+    },
+    "All cannons on this side are occupied.": {
+      "en": "All cannons on this side are occupied.",
+      "fr": "Tous les canons de ce flanc sont occupés.",
+      "es": "Todos los cañones de este costado están ocupados."
+    },
+    "This ammunition requires a higher Gunnery level.": {
+      "en": "This ammunition requires a higher Gunnery level.",
+      "fr": "Cette munition demande un niveau de canonnier supérieur.",
+      "es": "Esta munición requiere un nivel de Artillería superior."
+    },
+    "The cannon muzzle is blocked.": {
+      "en": "The cannon muzzle is blocked.",
+      "fr": "La bouche du canon est obstruée.",
+      "es": "La boca del cañón está bloqueada."
+    },
+    "Ammunition could not be saved. No shot was fired.": {
+      "en": "Ammunition could not be saved. No shot was fired.",
+      "fr": "Impossible de sauvegarder la munition. Aucun tir effectué.",
+      "es": "No se pudo guardar la munición. No se disparó."
+    },
+    "Crew cannon station": {
+      "en": "Crew cannon station",
+      "fr": "Poste de canon d’équipage",
+      "es": "Puesto de cañón de tripulación"
+    },
+    "Cannon {0} · {1}": {
+      "en": "Cannon {0} · {1}",
+      "fr": "Canon {0} · {1}",
+      "es": "Cañón {0} · {1}"
+    },
+    "Gunnery · Level {0} · {1}/{2} EXP": {
+      "en": "Gunnery · Level {0} · {1}/{2} EXP",
+      "fr": "Canonnier · Niveau {0} · {1}/{2} EXP",
+      "es": "Artillería · Nivel {0} · {1}/{2} EXP"
+    },
+    "{0} · Level {1} · {2}": {
+      "en": "{0} · Level {1} · {2}",
+      "fr": "{0} · Niveau {1} · {2}",
+      "es": "{0} · Nivel {1} · {2}"
+    },
+    "Free": {
+      "en": "Free",
+      "fr": "Gratuit",
+      "es": "Gratis"
+    },
+    "{0} shots": {
+      "en": "{0} shots",
+      "fr": "{0} tirs",
+      "es": "{0} disparos"
+    },
+    "Ammunition unavailable.": {
+      "en": "Ammunition unavailable.",
+      "fr": "Munition indisponible.",
+      "es": "Munición no disponible."
+    },
+    "Damage {0}% · Range {1}% · Reload {2}%": {
+      "en": "Damage {0}% · Range {1}% · Reload {2}%",
+      "fr": "Dégâts {0}% · Portée {1}% · Recharge {2}%",
+      "es": "Daño {0}% · Alcance {1}% · Recarga {2}%"
+    },
+    "Take cannon": {
+      "en": "Take cannon",
+      "fr": "Prendre le canon",
+      "es": "Ocupar cañón"
+    },
+    "Fire cannon": {
+      "en": "Fire cannon",
+      "fr": "Tirer au canon",
+      "es": "Disparar cañón"
+    },
+    "Move the mouse to aim · Left click to fire": {
+      "en": "Move the mouse to aim · Left click to fire",
+      "fr": "Souris pour viser · Clic gauche pour tirer",
+      "es": "Mueve el ratón para apuntar · Clic izquierdo para disparar"
+    },
+    "Gunnery · Level {0} · MAX": {
+      "en": "Gunnery · Level {0} · MAX",
+      "fr": "Canonnier · Niveau {0} · MAX",
+      "es": "Artillería · Nivel {0} · MÁX."
+    },
+    "Not enough ammunition for this cannonball.": {
+      "en": "Not enough ammunition for this cannonball.",
+      "fr": "Munitions insuffisantes pour ce boulet.",
+      "es": "No hay suficiente munición para este proyectil."
+    },
+    "Enable crew cannons": {
+      "en": "Enable crew cannons",
+      "fr": "Activer les canons d’équipage",
+      "es": "Activar cañones de tripulación"
+    },
+    "Maximum Gunnery level": {
+      "en": "Maximum Gunnery level",
+      "fr": "Niveau de canonnier maximal",
+      "es": "Nivel máximo de Artillería"
     }
   }
 }

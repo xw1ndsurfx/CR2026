@@ -142,6 +142,7 @@ internal static partial class NavalSystem
     {
         lock(player.EntityLock)
         {
+            ApplyPendingGunnery(player,Timing.Global.Milliseconds);
             ApplyPendingExperience(player,Timing.Global.Milliseconds,force:true);ApplyCharacterExperience(player,Timing.Global.Milliseconds);
             var passage=player.NavalCrewPassage;
             lock(Gate)
@@ -149,6 +150,7 @@ internal static partial class NavalSystem
                 if(Ships.TryGetValue(player.BoardedShipId,out var ship))
                 {
                     if((ship.Health<=0 || ship.SunkUntil>0) && passage!=null) {passage.Ship.Health=0;passage.Ship.Cargo.Clear();}
+                    foreach(var gun in ship.Guns.Values.Where(g=>g.Owner==player.Id)) gun.Owner=gun.Lease=Guid.Empty;
                     ship.Crew.Remove(player.Id);
                     if(ship.Crew.Count==0 && ship.State.CaptainId==Guid.Empty && ship.OwnerId!=Guid.Empty) Ships.Remove(ship.State.Id);
                 }

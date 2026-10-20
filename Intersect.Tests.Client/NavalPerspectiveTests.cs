@@ -9,6 +9,34 @@ namespace Intersect.Tests.Client;
 [TestFixture]
 public sealed class NavalPerspectiveTests
 {
+    [Test]
+    public void CannonArtworkUsesExplicitAimPosesAndRejectsOutOfTextureRectangles()
+    {
+        var art=new CannonStationArtwork {Version=1,ImageWidth=1448,ImageHeight=1086,
+            Frame=new(){X=488,Y=363,Width=476,Height=358},LeftFrame=new(){X=0,Y=363,Width=484,Height=358},RightFrame=new(){X=968,Y=363,Width=480,Height=358}};
+        Assert.That(art.IsValid(1448,1086),Is.True);Assert.That(art.Pose(-30),Is.SameAs(art.LeftFrame));
+        Assert.That(art.Pose(0),Is.SameAs(art.Frame));Assert.That(art.Pose(30),Is.SameAs(art.RightFrame));
+        art.RightFrame.X=1440;Assert.That(art.IsValid(1448,1086),Is.False);
+    }
+    [TestCase(-.7,.6)]
+    [TestCase(0,0)]
+    [TestCase(.7,-.6)]
+    public void CursorRayRoundTripsThroughTheSameCameraProjection(double x,double y)
+    {
+        var aim=GunneryAim.FromViewport(x,y,16d/9,60);
+        var projected=GunneryAim.ToViewport(aim.Yaw,aim.Elevation,16d/9);
+        Assert.That(projected.X,Is.EqualTo(x).Within(.00001));Assert.That(projected.Y,Is.EqualTo(y).Within(.00001));
+        Assert.That(GunneryAim.Valid(aim.Yaw,aim.Elevation,60),Is.True);
+    }
+    [Test]
+    public void MouseAimIsBoundedAndLookingLowerProducesAShorterWaterTarget()
+    {
+        Assert.That(GunneryAim.Valid(double.NaN,0,45),Is.False);
+        Assert.That(GunneryAim.Valid(0,double.PositiveInfinity,45),Is.False);
+        Assert.That(GunneryAim.Valid(46,0,45),Is.False);
+        Assert.That(GunneryAim.Range(-30,20),Is.LessThan(GunneryAim.Range(-10,20)));
+        Assert.That(GunneryAim.Range(10,20),Is.EqualTo(20));
+    }
     [TestCase(0,false,-1,0)]
     [TestCase(0,true,1,0)]
     [TestCase(45,true,.70710678,.70710678)]

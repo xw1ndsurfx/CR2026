@@ -20,7 +20,7 @@ internal static partial class NavalWorld
     private static Guid _viewer;
     internal static NavalRewardFeed RewardFeed {get;}=new();
     private static long _received, _inputTime;
-    internal static void Clear() {CrewState=new();RewardFeed.Clear(); _ships.Clear(); _viewer = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
+    internal static void Clear() {ClearGunnery();CrewState=new();RewardFeed.Clear(); _ships.Clear(); _viewer = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
     internal static ShipCrewState CrewState {get;private set;}=new();
     internal static bool HasMember(ShipSnapshot ship,Guid playerId)=>playerId!=Guid.Empty && (ship.CaptainId==playerId || (ship.CrewIds??[]).Contains(playerId));
     internal static bool IsAboard(Guid playerId)=>Fresh && _ships.Values.Any(v=>HasMember(v.Current,playerId));
@@ -39,6 +39,7 @@ internal static partial class NavalWorld
             animation.Observe(s.Graphics, now);
             next[s.Id] = new(previous, s, now, animation);
         }
+        Gunner=packet.Gunnery??new();
         CrewState=packet.Crew??new();
         RewardFeed.Observe(packet.Rewards??[],_viewer==Guid.Empty || _viewer!=Globals.Me?.Id,now);
         ApplyPresentation(packet,now);

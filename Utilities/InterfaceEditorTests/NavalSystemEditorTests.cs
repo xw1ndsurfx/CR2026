@@ -24,7 +24,7 @@ internal static class NavalSystemEditorTests
             using var editor = new FrmNavalConfiguration(packet);
             if (editor.Text != "Éditeur du système naval") throw new Exception("Naval editor must be localized.");
             var tabs = editor.Controls.OfType<TabControl>().Single();
-            if (tabs.TabPages.Count != 6) throw new Exception("Navigation, ships, shop, presentation Sailing and AI must be separate sections.");
+            if (tabs.TabPages.Count != 8) throw new Exception("Navigation, ships, shop, presentation Sailing and AI must be separate sections.");
             var cannonEnabled=Descendants(tabs.TabPages[0]).OfType<CheckBox>().Single(c=>c.Name=="CannonsEnabled");
             var cannonDamage=Descendants(tabs.TabPages[0]).OfType<NumericUpDown>().Single(c=>c.Name=="CannonDamage");
             cannonEnabled.Checked=true;cannonDamage.Value=17;
@@ -57,10 +57,22 @@ internal static class NavalSystemEditorTests
                 image.Save(preview, System.Drawing.Imaging.ImageFormat.Png);
                 editor.Hide();
             }
-            Console.WriteLine("PASS localized Naval System Editor opens six sections and keeps independent save versions");
+            Console.WriteLine("PASS localized Naval System Editor opens eight sections and keeps independent save versions");
             CheckAssetPreview();
             CheckHerboniaEditor();
             CheckLootEditor();
+            using var gunEditor=new FrmNavalConfiguration(new(){NavigationJson="{}",CatalogueJson="{}"});
+            var gunTabs=gunEditor.Controls.OfType<TabControl>().Single();gunTabs.SelectedIndex=6;
+            Descendants(gunTabs.TabPages[6]).OfType<NumericUpDown>().Single(c=>c.Name=="CannonsPerSide").Value=2;
+            var gunSave=(NavalConfigurationRequestPacket)typeof(FrmNavalConfiguration).GetMethod("PrepareSave",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(gunEditor,null)!;
+            var gunConfig=JsonConvert.DeserializeObject<NavalConfiguration>(gunSave.ConfigurationJson)!;
+            if(gunSave.Section!=1 || gunConfig.Gunnery.CannonsPerSide!=2 || gunConfig.Ammunition.Length!=3) throw new Exception("Gunnery settings and ammunition must survive the navigation save.");
+            gunTabs.SelectedIndex=7;
+            var ammoList=Descendants(gunTabs.TabPages[7]).OfType<ListBox>().Single();ammoList.SelectedIndex=1;
+            Descendants(gunTabs.TabPages[7]).OfType<NumericUpDown>().Single(c=>c.Name=="RequiredLevel").Value=4;
+            gunSave=(NavalConfigurationRequestPacket)typeof(FrmNavalConfiguration).GetMethod("PrepareSave",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(gunEditor,null)!;
+            if(JsonConvert.DeserializeObject<NavalConfiguration>(gunSave.ConfigurationJson)!.Ammunition[1].RequiredLevel!=4) throw new Exception("Ammunition editor must save level gates.");
+            Console.WriteLine("PASS crew cannon and ammunition pages save with navigation revision");
         }
         finally { CultureInfo.CurrentUICulture = culture; }
     }

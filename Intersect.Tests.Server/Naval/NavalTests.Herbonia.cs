@@ -134,7 +134,7 @@ public sealed partial class NavalTests
         private readonly Type type=typeof(NavalSystem),vessel=typeof(NavalSystem).GetNestedType("Vessel",BindingFlags.NonPublic)!;
         private readonly Dictionary<string,object?> saved=[];
         private readonly object[] balls,effects;
-        private readonly System.Collections.DictionaryEntry[] rewards;
+        private readonly System.Collections.DictionaryEntry[] rewards,gunRewards;
         private readonly System.Collections.DictionaryEntry[] ships;
         private readonly Intersect.Framework.Core.GameObjects.Maps.MapList.MapList mapList;
         internal readonly MapController Map;
@@ -142,7 +142,9 @@ public sealed partial class NavalTests
         internal EnemyTestWorld()
         {
             Options.EnsureCreated();
-            foreach(var name in new[]{"_settings","_loaded","_enabled","_lastEnemyStep","_lastCombatStep","_enemyEventTiles"}) saved[name]=type.GetField(name,Static)!.GetValue(null);
+            foreach(var name in new[]{"_settings","_loaded","_enabled","_lastEnemyStep","_lastCombatStep","_enemyEventTiles","PendingCrewShots"}) saved[name]=type.GetField(name,Static)!.GetValue(null);
+            var gunners=(System.Collections.IDictionary)type.GetField("PendingGunnery",Static)!.GetValue(null)!;
+            gunRewards=gunners.Keys.Cast<object>().Select(key=>new System.Collections.DictionaryEntry(key,gunners[key])).ToArray();gunners.Clear();
             var pending=Rewards;rewards=pending.Keys.Cast<object>().Select(key=>new System.Collections.DictionaryEntry(key,pending[key])).ToArray();pending.Clear();
             ships=Ships.Keys.Cast<object>().Select(key=>new System.Collections.DictionaryEntry(key,Ships[key])).ToArray();Ships.Clear();
             balls=List("Cannonballs").Cast<object>().ToArray();effects=List("Effects").Cast<object>().ToArray();List("Cannonballs").Clear();List("Effects").Clear();
@@ -176,6 +178,7 @@ public sealed partial class NavalTests
         internal ShipState State(object item)=>Field<ShipState>(item,"State");
         public void Dispose()
         {
+            var gunners=(System.Collections.IDictionary)type.GetField("PendingGunnery",Static)!.GetValue(null)!;gunners.Clear();foreach(var entry in gunRewards) gunners.Add(entry.Key,entry.Value);
             Rewards.Clear();foreach(var entry in rewards) Rewards.Add(entry.Key,entry.Value);
             Ships.Clear();foreach(var entry in ships) Ships.Add(entry.Key,entry.Value);
             List("Cannonballs").Clear();foreach(var ball in balls) List("Cannonballs").Add(ball);

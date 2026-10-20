@@ -12,10 +12,30 @@ namespace Intersect.Client.Naval;
 
 internal static partial class NavalWorld
 {
+    internal static GunneryState Gunner {get;private set;}=new();
+    internal static CannonAmmoKind SelectedAmmo {get;set;}
+    internal static double GunYaw {get;set;}
+    internal static double GunElevation {get;set;}=-Math.Atan(.12)*180/Math.PI;
+    private static long _gunRenew,_gunFire;
+    internal static void RequestStation(CannonStationAction action)
+    {
+        if(OwnShip is not {Sinking:false} own || own.CaptainId==Globals.Me?.Id) return;
+        if(action==CannonStationAction.Fire && (Gunner.LeaseId==Guid.Empty || Gunner.Starboard!=CannonViewStarboard ||
+            Environment.TickCount64<_gunFire || Gunner.ReloadMilliseconds>100 || Globals.Me?.IsBusy!=false)) return;
+        if(action==CannonStationAction.Fire) _gunFire=Environment.TickCount64+300;
+        Intersect.Client.Networking.Network.SendPacket(new Intersect.Network.Packets.Client.CannonStationPacket {
+            ShipId=own.Id,LeaseId=Gunner.LeaseId,Starboard=CannonViewStarboard,Action=action,Ammunition=SelectedAmmo,Yaw=GunYaw,Elevation=GunElevation});
+    }
+    internal static void RenewStation()
+    {
+        if(Gunner.LeaseId==Guid.Empty || Environment.TickCount64<_gunRenew) return;
+        _gunRenew=Environment.TickCount64+1000;RequestStation(CannonStationAction.Renew);
+    }
+    internal static void ClearGunnery() {Gunner=new();SelectedAmmo=CannonAmmoKind.Standard;GunYaw=0;GunElevation=-Math.Atan(.12)*180/Math.PI;_gunRenew=_gunFire=0;}
     internal static bool CannonViewOpen { get; set; }
     internal static bool CannonViewStarboard { get; set; }
 
-    // Same beam as the server's existing broadside; the preview cannot redirect a shot.
+    // The camera stays aligned with the beam; individual crew shot yaw is validated separately by the server.
     internal static Vector2 CannonViewDirection(double heading, bool starboard)
     {
         var (x,y) = ShipActions.Direction(heading,starboard);
@@ -34,6 +54,11 @@ internal static partial class NavalWorld
         var beam=ShipMovement.Normalize(heading+(CannonViewStarboard?90:-90));
         // Place the eye just outside the hull; keep the exact floating position across map boundaries.
         var camera=new Vector2(x,y)+new Vector2(forward.X*tw,forward.Y*th)*(float)(own.Width/2+.1);
+        if(Gunner.LeaseId!=Guid.Empty && Gunner.ShipId==own.Id && Gunner.Starboard==CannonViewStarboard)
+        {
+            var offset=(float)GunneryAim.StationOffset(Gunner.Station,Gunner.CannonsPerSide,own.Length);
+            camera+=new Vector2((float)Math.Sin(heading*Math.PI/180)*tw,-(float)Math.Cos(heading*Math.PI/180)*th)*offset;
+        }
         var terrain=new List<GameTileBuffer>();
         // Only the actual grid received by this player. Do not fetch arbitrary maps or reveal distant enemies.
         var maps=Globals.GridMaps.Keys.Select(id=>MapInstance.TryGet(id,out var map)?map:null)

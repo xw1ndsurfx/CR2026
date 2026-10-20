@@ -26,6 +26,7 @@ public sealed class NavalPlayerData
 {
     public int Version {get;set;}=2;
     public List<OwnedShip> Ships {get;set;}=[];
+    public long GunneryExperience {get;set;}
     public long SailingExperience {get;set;}
     public ShipCrewPassage? CrewPassage {get;set;}
     public long PendingCharacterExperience {get;set;}
@@ -35,7 +36,7 @@ public sealed class NavalPlayerData
         if(string.IsNullOrWhiteSpace(json)) return new();
         var token=JToken.Parse(json);
         var data=token is JArray ? new NavalPlayerData {Ships=token.ToObject<List<OwnedShip>>()!} : token.ToObject<NavalPlayerData>()!;
-        if(data==null || data.Version!=2 || data.Ships==null || data.Ships.Count>32 || data.Ships.Any(s=>s==null || s.Cargo==null || s.Cargo.Count>200 || s.Cargo.Any(p=>p?.IsValid()!=true) || s.Cargo.Select(p=>p.Id).Distinct().Count()!=s.Cargo.Count) || data.SailingExperience is <0 or >200000000000000L || data.PendingCharacterExperience is <0 or >200000000000000L ||
+        if(data==null || data.Version!=2 || data.Ships==null || data.Ships.Count>32 || data.Ships.Any(s=>s==null || s.Cargo==null || s.Cargo.Count>200 || s.Cargo.Any(p=>p?.IsValid()!=true) || s.Cargo.Select(p=>p.Id).Distinct().Count()!=s.Cargo.Count) || data.GunneryExperience is <0 or >200000000000000L || data.SailingExperience is <0 or >200000000000000L || data.PendingCharacterExperience is <0 or >200000000000000L ||
             data.CrewPassage is {} passage && (passage.CaptainSinkingSerial<0 || passage.Capacity is <0 or >200 || passage.Ship==null || passage.Ship.Id==Guid.Empty || passage.Ship.Cargo==null || passage.Ship.Cargo.Count>200 || passage.Ship.Cargo.Any(p=>p?.IsValid()!=true) || passage.Ship.Cargo.Select(p=>p.Id).Distinct().Count()!=passage.Ship.Cargo.Count))
             throw new JsonException("Invalid naval player data");
         return data;

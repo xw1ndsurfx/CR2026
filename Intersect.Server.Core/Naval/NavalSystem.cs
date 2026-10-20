@@ -39,6 +39,7 @@ internal static partial class NavalSystem
         internal string CaptainName="";
         internal bool BoardingOpen;
         internal readonly Dictionary<Guid,CrewPresence> Crew=[];
+        internal readonly Dictionary<int,GunSeat> Guns=[];
         internal int Waypoint;
         internal long RespawnAt, AvoidUntil;
         internal Guid BoardingMap;
@@ -64,6 +65,9 @@ internal static partial class NavalSystem
         // Adding a definition never resets the position or ownership of an existing vessel.
         foreach (var definition in settings.Ships)
             if (!Ships.ContainsKey(definition.Id)) Ships.Add(definition.Id, new Vessel(definition));
+        if(_settings.Gunnery.CannonsPerSide!=settings.Gunnery.CannonsPerSide || !settings.Gunnery.Enabled || !settings.CannonsEnabled)
+            foreach(var vessel in Ships.Values)
+                foreach(var gun in vessel.Guns.Values) {gun.Owner=gun.Lease=Guid.Empty;gun.Until=0;}
         _settings = settings;
         _enabled = settings.Enabled; _loaded = true;
     }
@@ -219,6 +223,7 @@ internal static partial class NavalSystem
 
     internal static void Update(Player player, long now)
     {
+        ApplyPendingGunnery(player,now);
         ApplyPendingExperience(player,now);
         ApplyCharacterExperience(player,now);
         ApplyPendingDamage(player, now);
@@ -343,7 +348,7 @@ internal static partial class NavalSystem
         var progress=_settings.Sailing.Progress(player.SailingExperience);
         var targetId=CombatTarget(player.NavalShipId,now,visible);
         Effects.RemoveAll(e=>now-e.Born>1500);
-        player.SendPacket(new NavalSnapshotPacket { Crew=CrewState(player),Rewards=RewardReceipts(player,now),CombatTargetId=targetId, Presentation=_settings.Presentation,
+        player.SendPacket(new NavalSnapshotPacket { Gunnery=GunnerState(player,now),Crew=CrewState(player),Rewards=RewardReceipts(player,now),CombatTargetId=targetId, Presentation=_settings.Presentation,
             SailingLevel=progress.Level,SailingExperience=progress.Experience,SailingRequired=progress.Required,
             Effects=player.InstanceType!=MapInstanceType.Overworld?[]:Effects.Where(e=>visible.Contains(e.Snapshot.MapId)).Select(e=>new NavalEffectSnapshot {
                 Id=e.Snapshot.Id,MapId=e.Snapshot.MapId,X=e.Snapshot.X,Y=e.Snapshot.Y,Heading=e.Snapshot.Heading,Kind=e.Snapshot.Kind,

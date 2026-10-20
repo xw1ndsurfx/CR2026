@@ -4,6 +4,7 @@ namespace Intersect.Framework.Core.Naval;
 [MessagePackObject]
 public sealed class NavalPresentation
 {
+    [Key(21)] public string CrewCannonGraphic {get;set;}="Ship_Crew_Cannon.png";
     [Key(20)] public string CrewIcon {get;set;}="";
     [Key(19)] public string CargoIcon {get;set;}="";
     [Key(0)] public string PortIcon {get;set;}="";

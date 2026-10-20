@@ -12,6 +12,7 @@ internal static partial class NavalSystem
 {
     private sealed class Cannonball
     {
+        internal Guid GunnerId;
         internal Guid Id = Guid.NewGuid(), ShipId, OwnerId, MapId, CaptainId;
         internal double X,Y,DirectionX,DirectionY,Remaining,Speed;
         internal int Damage;
@@ -69,7 +70,7 @@ internal static partial class NavalSystem
     private static void Fire(Vessel vessel, bool starboard, long now)
     {
         var ready = starboard ? vessel.StarboardReady : vessel.PortReady;
-        if (!ShipActions.CanFire(_settings.CannonsEnabled,vessel.SunkUntil==0,false,now,ready) || Cannonballs.Count > 509) return;
+        if (!ShipActions.CanFire(_settings.CannonsEnabled,vessel.SunkUntil==0,false,now,ready) || Cannonballs.Count+PendingCrewShots > 509) return;
         if (starboard) vessel.StarboardReady = now + _settings.CannonReloadMilliseconds;
         else vessel.PortReady = now + _settings.CannonReloadMilliseconds;
         var s=vessel.State; var d=vessel.Definition;
@@ -133,6 +134,7 @@ internal static partial class NavalSystem
                 // Protected player hulls still intercept shots; no firing through another ship.
                 if (permitted && target.OwnerId==Guid.Empty)
                 {
+                    CreditGunner(ball,target,Math.Min(target.Health,ball.Damage));
                     target.Health=Math.Max(0,target.Health-ball.Damage);
                     target.State.DamageState=target.Health<target.MaximumHealth?1:0;
                     if (target.Health==0)
