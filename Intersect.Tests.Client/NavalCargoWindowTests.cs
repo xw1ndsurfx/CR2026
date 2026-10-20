@@ -1,0 +1,117 @@
+using Intersect.Client.Framework.Graphics;
+using Intersect.Client.Framework.Content;
+using Intersect.Client.Framework.File_Management;
+using Intersect.Client.Framework.Gwen.Control;
+using Intersect.Client.Interface.Game.Hotbar;
+using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.Naval;
+using Intersect.Network.Packets.Server;
+using NUnit.Framework;
+using ControlBase=Intersect.Client.Framework.Gwen.Control.Base;
+using RendererBase=Intersect.Client.Framework.Gwen.Renderer.Base;
+using SkinBase=Intersect.Client.Framework.Gwen.Skin.Base;
+namespace Intersect.Tests.Client;
+
+[TestFixture,NonParallelizable]
+public sealed class NavalCargoWindowTests
+{
+    private object? _previousContent;
+    private TestContent _content=null!;
+    private static readonly System.Reflection.FieldInfo CurrentContent=typeof(GameContentManager).GetField("_current",System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic)!;
+    [SetUp] public void SetUp() {_previousContent=CurrentContent.GetValue(null);_content=new TestContent();}
+    [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
+
+    [TestCase(1920,1080)]
+    [TestCase(800,600)]
+    [TestCase(640,480)]
+    public void NativeManifestScrollsAllLotsAndKeepsItsRowsAndScrollOnRepeatedSnapshots(int width,int height)
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);
+        using var canvas=new Canvas(skin) {Size=new Point(width,height)};
+        var window=new NavalCargoWindow(canvas);
+        var item=new ItemDescriptor(Guid.NewGuid()) {Name="Aureons",Icon="aureons.png"};ItemDescriptor.Lookup.Set(item.Id,item);
+        try
+        {
+            var ship=new ShipSnapshot {Id=Guid.NewGuid(),CargoCapacity=20,
+                Cargo=Enumerable.Range(0,20).Select(i=>new NavalCargoParcel {ItemId=item.Id,Quantity=1000000,Quality=i%5+1}).ToArray()};
+            window.Update(ship,true);
+            Assert.That(window.Width,Is.LessThan(width));Assert.That(window.Height,Is.LessThan(height));
+            var scroll=Descendants(window).OfType<ScrollControl>().Single();
+            Assert.That(scroll.Children.Count,Is.EqualTo(20));
+            Assert.That(scroll.VerticalScrollBar.ContentSize,Is.GreaterThan(scroll.Height));
+            Assert.That(scroll.HorizontalScrollBar.IsHidden,Is.True);
+            Assert.That(Descendants(window).OfType<ImagePanel>().Count(),Is.EqualTo(20));
+            Assert.That(_content.Requests.Count(r=>r==(TextureType.Item,"aureons.png")),Is.EqualTo(20));
+            Assert.That(Descendants(window).Any(c=>c.Name is "Previous" or "Next"),Is.False);
+            Assert.That(Descendants(window).OfType<Label>().Where(c=>!c.IsHidden).All(c=>!(c.Text??string.Empty).Contains('\n')),Is.True);
+            foreach(var card in scroll.Children)
+                foreach(var label in Descendants(card).OfType<Label>())
+                    Assert.That(label.X>=0 && label.Right<=card.Width && label.Width>0,Is.True,label.Name);
+            scroll.VerticalScrollBar.ScrollAmount=.6f;var first=scroll.Children[0];
+            // A new network array with unchanged values must not recreate widgets at every snapshot.
+            ship.Cargo=ship.Cargo.Select(p=>new NavalCargoParcel {Id=p.Id,ItemId=p.ItemId,Quantity=p.Quantity,Quality=p.Quality,Kind=p.Kind}).ToArray();
+            window.Update(ship,true);
+            Assert.That(scroll.Children[0],Is.SameAs(first));Assert.That(scroll.VerticalScrollBar.ScrollAmount,Is.EqualTo(.6f).Within(.01));
+            ship.Cargo[0].Quantity++;window.Update(ship,true);
+            Assert.That(scroll.VerticalScrollBar.ScrollAmount,Is.EqualTo(.6f).Within(.01));
+            ship.Id=Guid.NewGuid();window.Update(ship,true);Assert.That(scroll.VerticalScrollBar.ScrollAmount,Is.Zero);
+            ship.Sinking=true;window.Update(ship,true);Assert.That(window.IsHidden,Is.True);
+        }
+        finally {ItemDescriptor.Lookup.Delete(item);}
+    }
+    [Test]
+    public void EmptyAndUnknownItemsRemainReadableWithoutBreakingTheManifest()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);
+        using var canvas=new Canvas(skin) {Size=new Point(800,600)};var window=new NavalCargoWindow(canvas);
+        var ship=new ShipSnapshot {Id=Guid.NewGuid(),CargoCapacity=20};window.Update(ship,true);
+        Assert.That(Descendants(window).Single(c=>c.Name=="CargoEmpty").IsHidden,Is.False);
+        ship.Cargo=[new(){ItemId=Guid.NewGuid(),Quantity=3,Quality=5}];window.Update(ship,true);
+        Assert.That(Descendants(window).Single(c=>c.Name=="CargoEmpty").IsHidden,Is.True);
+        Assert.That(Descendants(window).OfType<Label>().Single(c=>c.Name=="CargoItemName").Text,Does.Contain("Unknown item"));
+        window.Update(null,true);Assert.That(window.IsHidden,Is.True);
+    }
+    private static IEnumerable<ControlBase> Descendants(ControlBase parent)
+    {foreach(var child in parent.Children) {yield return child;foreach(var descendant in Descendants(child)) yield return descendant;}}
+    private sealed class TestContent:GameContentManager
+    {
+        internal List<(TextureType,string)> Requests=[];
+        internal TestContent() {mFontDict["sourcesanspro"]=new TestFont();mFontDict["sourcesansproblack"]=new TestFont();}
+        public override IGameTexture? GetTexture(TextureType type,string name) {Requests.Add((type,name));return null;}
+        public override void LoadTilesets(string[] names)=>throw new InvalidOperationException();
+        public override void LoadTexturePacks()=>throw new InvalidOperationException();
+        public override void LoadItems()=>throw new InvalidOperationException();
+        public override void LoadEntities()=>throw new InvalidOperationException();
+        public override void LoadSpells()=>throw new InvalidOperationException();
+        public override void LoadAnimations()=>throw new InvalidOperationException();
+        public override void LoadFaces()=>throw new InvalidOperationException();
+        public override void LoadImages()=>throw new InvalidOperationException();
+        public override void LoadDungeons()=>throw new InvalidOperationException();
+        public override void LoadFogs()=>throw new InvalidOperationException();
+        public override void LoadResources()=>throw new InvalidOperationException();
+        public override void LoadPaperdolls()=>throw new InvalidOperationException();
+        public override void LoadGui()=>throw new InvalidOperationException();
+        public override void LoadMisc()=>throw new InvalidOperationException();
+        public override void LoadFonts()=>throw new InvalidOperationException();
+        public override void LoadShaders()=>throw new InvalidOperationException();
+        public override void LoadSounds()=>throw new InvalidOperationException();
+        public override void LoadMusic()=>throw new InvalidOperationException();
+        protected override TAsset Load<TAsset>(Dictionary<string,IAsset> lookup,ContentType type,string name,Func<Stream> stream)=>throw new InvalidOperationException();
+    }
+    private sealed class TestSkin:SkinBase
+    {
+        internal TestSkin(RendererBase renderer):base(renderer)
+        {DefaultFont=new TestFont();DefaultFontSize=12;Colors.Label.Normal=Colors.Label.Disabled=Color.White;}
+    }
+    private sealed class MetricsRenderer:RendererBase
+    {
+        public override Point MeasureText(IFont? font,int size,string? text,float scale=1f)=>new((int)Math.Ceiling((text?.Length??0)*size*.6*scale),(int)Math.Ceiling((size+3)*scale));
+    }
+    private sealed class TestFont:IFont
+    {
+        public string Name=>"naval-cargo-test";
+        public ICollection<int> SupportedSizes {get;}=new[]{10,12,18,22};
+        public int PickBestMatchFor(int size)=>size;
+        public int GetNextFontSize(int startSize,int direction,int limit=0)=>startSize+direction;
+    }
+}

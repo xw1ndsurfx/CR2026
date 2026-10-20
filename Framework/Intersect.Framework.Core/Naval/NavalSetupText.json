@@ -844,6 +844,41 @@
       "en": "And {0} more item types in the hold.",
       "fr": "Et {0} autres types d’objets en cale.",
       "es": "Y {0} tipos de objetos más en la bodega."
+    },
+    "SHIP'S HOLD": {
+      "en": "SHIP'S HOLD",
+      "fr": "CALE DU NAVIRE",
+      "es": "BODEGA DEL BARCO"
+    },
+    "YOUR SPOILS, SAFELY STOWED UNTIL PORT": {
+      "en": "YOUR SPOILS, SAFELY STOWED UNTIL PORT",
+      "fr": "VOTRE BUTIN, À RAPPORTER AU PORT",
+      "es": "TU BOTÍN, A SALVO HASTA LLEGAR A PUERTO"
+    },
+    "Unload at a Q dock from My fleet to claim these items.": {
+      "en": "Unload at a Q dock from My fleet to claim these items.",
+      "fr": "Déchargez au quai Q depuis Ma flotte pour récupérer ces objets.",
+      "es": "Descarga en un muelle Q desde Mi flota para recibir estos objetos."
+    },
+    "Cargo is lost if your ship sinks.": {
+      "en": "Cargo is lost if your ship sinks.",
+      "fr": "La cargaison est perdue si votre navire coule.",
+      "es": "El cargamento se pierde si tu barco se hunde."
+    },
+    "Cargo: {0}/{1} lots": {
+      "en": "Cargo: {0}/{1} lots",
+      "fr": "Cargaison : {0}/{1} lots",
+      "es": "Cargamento: {0}/{1} lotes"
+    },
+    "Qty: {0:N0}": {
+      "en": "Qty: {0:N0}",
+      "fr": "Qté : {0:N0}",
+      "es": "Cant.: {0:N0}"
+    },
+    "Quality {0}/5": {
+      "en": "Quality {0}/5",
+      "fr": "Qualité {0}/5",
+      "es": "Calidad {0}/5"
     }
   }
 }

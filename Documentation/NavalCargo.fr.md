@@ -36,3 +36,6 @@ Tests automatisés : gain unique au naufrage, sérialisation des lots, tirages, 
 
 ## Notifications de récompenses
 Voir [Bandeau EXP, butin et cale pleine](NavalRewardNotifications.fr.md).
+
+## Fenêtre de cale
+La cale utilise maintenant des cartes avec icônes et une scrollbar, dans le style du marketplace. Voir [Liste de cargaison](NavalCargoManifest.fr.md).
