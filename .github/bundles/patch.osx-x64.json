@@ -3,6 +3,7 @@
 		"Client and Editor",
 		"Server",
 		"Server/wwwroot",
+		"Server/resources",
 		"Client and Editor/resources/ocean"
 	],
 	"includes": [

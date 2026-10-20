@@ -120,6 +120,23 @@ public sealed class HarbourTests
     }
 
     [Test]
+    public void BundlesCreateTheServerResourcesDirectoryBeforeCopyingTheShopExample()
+    {
+        var root = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
+        while(root != null && !File.Exists(Path.Combine(root.FullName,"Intersect.sln"))) root=root.Parent;
+        Assert.That(root,Is.Not.Null);
+        var bundles=Directory.GetFiles(Path.Combine(root!.FullName,".github","bundles"),"*.json");
+        Assert.That(bundles,Has.Length.EqualTo(9));
+        foreach(var bundle in bundles)
+        {
+            var json=Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(bundle));
+            Assert.That(json["directories"]!.Values<string>(),Does.Contain("Server/resources"),bundle);
+            Assert.That(json["includes"]!.Any(i=>i["source"]?.ToString()=="resources/naval-shop.example.json" &&
+                i["target"]?.ToString()=="Server/resources/naval-shop.example.json"),Is.True,bundle);
+        }
+    }
+
+    [Test]
     public void CatalogueRejectsDuplicatesAndInvalidPricesAndMissingFileIsDisabled()
     {
         var path=Path.Combine(Path.GetTempPath(),"harbour-"+Guid.NewGuid()+".json");
