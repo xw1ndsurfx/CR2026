@@ -19,7 +19,7 @@ internal static class NavalWorld
     private static Dictionary<Guid, View> _ships = [];
     private static Guid _viewer;
     private static long _received, _inputTime;
-    internal static void Clear() { _ships.Clear(); _viewer = Guid.Empty; _received = _inputTime = 0; }
+    internal static void Clear() { _ships.Clear(); _viewer = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); }
     internal static bool IsCaptain(Guid playerId) => Fresh && _ships.Values.Any(v => v.Current.CaptainId == playerId);
     private static bool Fresh => Globals.Me != null && _viewer == Globals.Me.Id && Environment.TickCount64 - _received < 1500;
 
@@ -89,6 +89,29 @@ internal static class NavalWorld
             if (currentMap == null || row != (int)Math.Floor((y - currentMap.Y) / th) + Options.Instance.Map.MapHeight * 2) continue;
             var s = view.Current;
             var texture = Globals.ContentManager?.GetTexture(TextureType.Entity, s.Graphics);
+            var oceanName = s.Graphics;
+            var oceanTexture = Globals.ContentManager?.GetTexture(TextureType.Ocean, oceanName);
+            if (oceanTexture == null && texture == null)
+            {
+                oceanName = NavalSpriteCatalog.LegacyAlias(s.Graphics);
+                oceanTexture = Globals.ContentManager?.GetTexture(TextureType.Ocean, oceanName);
+            }
+            if (oceanTexture != null)
+            {
+                var atlas = NavalSpriteCatalog.Get(oceanName, oceanTexture.Width, oceanTexture.Height, s.Frames);
+                if (atlas != null)
+                {
+                    var pose = atlas.Frame(heading, Environment.TickCount64, s.FrameMilliseconds);
+                    var scale = (float)(tw / atlas.PixelsPerTile);
+                    Graphics.DrawGameTexture(oceanTexture, new FloatRect(pose.X, pose.Y, pose.Width, pose.Height),
+                        new FloatRect(x - (float)pose.AnchorX * scale, y - (float)pose.AnchorY * scale,
+                            pose.Width * scale, pose.Height * scale), Color.White);
+                    continue;
+                }
+                // An ocean atlas is never silently interpreted as the legacy regular grid.
+                DrawPrototype(x, y, heading, (float)s.Width * tw, (float)s.Length * th, Math.Abs(s.Speed) > .05);
+                continue;
+            }
             if (texture != null && s.Frames > 0 && texture.Width % s.Frames == 0 && texture.Height % 8 == 0)
             {
                 var w = texture.Width / s.Frames; var h = texture.Height / 8;

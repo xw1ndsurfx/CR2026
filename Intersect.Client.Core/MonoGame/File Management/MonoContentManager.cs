@@ -176,6 +176,11 @@ public partial class MonoContentManager : GameContentManager
         LoadTextureGroup("entities", mEntityDict);
     }
 
+    public override void LoadOcean()
+    {
+        LoadTextureGroup("ocean", mOceanDict);
+    }
+
     public override void LoadSpells()
     {
         LoadTextureGroup("spells", mSpellDict);

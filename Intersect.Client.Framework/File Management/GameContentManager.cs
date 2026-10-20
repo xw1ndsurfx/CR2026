@@ -37,6 +37,8 @@ public abstract partial class GameContentManager : IContentManager
 
     protected readonly Dictionary<string, IAsset> mEntityDict = [];
 
+    protected readonly Dictionary<string, IAsset> mOceanDict = [];
+
     protected readonly Dictionary<string, IAsset> mFaceDict = [];
 
     protected readonly Dictionary<string, IAsset> mFogDict = [];
@@ -118,6 +120,7 @@ public abstract partial class GameContentManager : IContentManager
         LoadTexturePacks();
         LoadBadges();
         LoadEntities();
+        LoadOcean();
         LoadItems();
         LoadAnimations();
         LoadSpells();
@@ -144,6 +147,9 @@ public abstract partial class GameContentManager : IContentManager
     public abstract void LoadItems();
 
     public abstract void LoadEntities();
+
+    // Optional for content managers without naval resources.
+    public virtual void LoadOcean() { }
 
     public abstract void LoadSpells();
 
@@ -205,6 +211,9 @@ public abstract partial class GameContentManager : IContentManager
 
             case TextureType.Entity:
                 return mEntityDict.Keys.ToArray();
+
+            case TextureType.Ocean:
+                return mOceanDict.Keys.ToArray();
 
             case TextureType.Spell:
                 return mSpellDict.Keys.ToArray();
@@ -275,6 +284,11 @@ public abstract partial class GameContentManager : IContentManager
 
             case TextureType.Entity:
                 textureDict = mEntityDict;
+
+                break;
+
+            case TextureType.Ocean:
+                textureDict = mOceanDict;
 
                 break;
 
