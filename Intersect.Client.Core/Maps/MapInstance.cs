@@ -937,6 +937,19 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         }
     }
 
+    // Reuse the exact animated/autotile buffers rather than guessing tileset layout in the naval camera.
+    internal IEnumerable<GameTileBuffer> PerspectiveBuffers()
+    {
+        if (!IsLoaded) yield break;
+        CacheTextures();
+        if (!mTexturesFound) yield break;
+        if (_tileBuffersPerLayer.Count == 0) BuildVBOs();
+        foreach (var layer in Options.Instance.Map.Layers.LowerLayers
+            .Concat(Options.Instance.Map.Layers.MiddleLayers).Concat(Options.Instance.Map.Layers.UpperLayers))
+            if (_tileBuffersPerLayer.TryGetValue(layer, out var frames))
+                foreach (var buffer in frames[Globals.AnimationFrame]) yield return buffer;
+    }
+
     public void DrawItemsAndLights()
     {
         // Calculate tile and map item dimensions.

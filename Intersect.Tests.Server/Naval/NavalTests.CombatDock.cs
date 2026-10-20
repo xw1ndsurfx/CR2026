@@ -68,6 +68,16 @@ public sealed partial class NavalTests
     }
 
     [Test]
+    public void LocalCannonPreviewAndForgedActionsCannotFallThroughToServerFire()
+    {
+        foreach(var action in new[]{ShipAction.CannonView,ShipAction.Crew,ShipAction.Cargo,ShipAction.None,(ShipAction)255})
+            Assert.That(ShipActions.IsServerAction(action),Is.False);
+        foreach(var action in new[]{ShipAction.PortCannons,ShipAction.StarboardCannons,ShipAction.Anchor,ShipAction.LeaveHelm})
+            Assert.That(ShipActions.IsServerAction(action),Is.True);
+        Assert.That((byte)ShipAction.Crew,Is.EqualTo(6));Assert.That((byte)ShipAction.CannonView,Is.EqualTo(7));
+    }
+
+    [Test]
     public void ReloadAndEligibilityAreIndependentPerBroadside()
     {
         Assert.That(ShipActions.CanFire(true,true,false,1000,5000),Is.False);

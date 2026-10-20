@@ -688,6 +688,9 @@ public abstract partial class GameRenderer : IGameRenderer, ITextHelper
         DrawBuffer(buffer.VertexBuffer, buffer.IndexBuffer);
     }
 
+    /// <summary>Optional offscreen perspective pass; unsupported renderers leave the ordinary view intact.</summary>
+    public virtual bool RenderMapPerspective(IGameRenderTexture target, MapPerspectiveScene scene) => false;
+
     public abstract void Close();
 
     public abstract GameShader LoadShader(string shaderName);

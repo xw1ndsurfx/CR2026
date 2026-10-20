@@ -67,6 +67,13 @@ public sealed class NavalHelmRegressionTests
             Assert.That(me.Origin.Y,Is.EqualTo(bounds.Y+bounds.Height/2));
             Assert.That(me.HitTest(me.Origin.X,me.Origin.Y),Is.True);
             Assert.That(me.HitTest(1,2),Is.False);
+            NavalWorld.CannonViewStarboard=true;
+            var scene=NavalWorld.CannonScene();
+            Assert.That(scene,Is.Not.Null);
+            Assert.That(scene!.Camera.X,Is.EqualTo((20.5+1.1)*Options.Instance.Map.TileWidth).Within(.001));
+            Assert.That(scene.Camera.Y,Is.EqualTo(11.5*Options.Instance.Map.TileHeight).Within(.001));
+            Assert.That(scene.Forward.X,Is.EqualTo(1).Within(.0001));
+
             me.Draw();Assert.That(me.WorldPos,Is.EqualTo(bounds));
             NavalWorld.Apply(new NavalSnapshotPacket { Ships=[Own(23.5,18.5),idle] });
             NavalWorld.Apply(new NavalSnapshotPacket { Ships=[Own(23.5,18.5),idle] });
@@ -102,9 +109,9 @@ public sealed class NavalHelmRegressionTests
             // Slot 1 is disabled because the server has not enabled cannons. It must never use an ordinary item.
             Assert.DoesNotThrow(()=>item.Activate());
             Assert.That(me.Hotbar,Is.SameAs(originalHotbar));
-            NavalWorld.CargoOpen=true;
+            NavalWorld.CargoOpen=true;NavalWorld.CannonViewOpen=true;
             NavalWorld.Apply(new NavalSnapshotPacket());
-            Assert.That(NavalWorld.CargoOpen,Is.False);
+            Assert.That(NavalWorld.CargoOpen,Is.False);Assert.That(NavalWorld.CannonViewOpen,Is.False);
             Assert.That(NavalWorld.OwnShip,Is.Null);Assert.That(NavalWorld.Cooldown(0),Is.Zero);
             Assert.That(me.Hotbar,Is.SameAs(originalHotbar));
             NavalWorld.Clear();Assert.That(NavalWorld.OwnShip,Is.Null);
@@ -116,7 +123,7 @@ public sealed class NavalHelmRegressionTests
     public void OnlyTheNavalActionsHaveBindingsAndAllCaptionsHaveThreeLanguages()
     {
         Assert.That(Enumerable.Range(0,10).Select(ShipActions.ForSlot),Is.EqualTo(new[] {
-            ShipAction.PortCannons,ShipAction.StarboardCannons,ShipAction.None,ShipAction.None,ShipAction.None,
+            ShipAction.PortCannons,ShipAction.StarboardCannons,ShipAction.CannonView,ShipAction.None,ShipAction.None,
             ShipAction.None,ShipAction.Crew,ShipAction.Cargo,ShipAction.Anchor,ShipAction.LeaveHelm }));
         foreach(var action in Enum.GetValues<ShipAction>())
         {

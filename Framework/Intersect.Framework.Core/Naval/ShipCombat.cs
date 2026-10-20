@@ -1,19 +1,21 @@
 namespace Intersect.Framework.Core.Naval;
 
-public enum ShipAction : byte { None, PortCannons, StarboardCannons, Anchor, LeaveHelm, Cargo, Crew }
+public enum ShipAction : byte { None, PortCannons, StarboardCannons, Anchor, LeaveHelm, Cargo, Crew, CannonView }
 
 public static class ShipActions
 {
     public static ShipAction ForSlot(int slot) => slot switch
-    { 0 => ShipAction.PortCannons, 1 => ShipAction.StarboardCannons, 6 => ShipAction.Crew, 7 => ShipAction.Cargo, 8 => ShipAction.Anchor, 9 => ShipAction.LeaveHelm, _ => ShipAction.None };
+    { 0 => ShipAction.PortCannons, 1 => ShipAction.StarboardCannons, 2 => ShipAction.CannonView, 6 => ShipAction.Crew, 7 => ShipAction.Cargo, 8 => ShipAction.Anchor, 9 => ShipAction.LeaveHelm, _ => ShipAction.None };
     public static string Caption(ShipAction action) => action switch
     { ShipAction.PortCannons => "Port cannons", ShipAction.StarboardCannons => "Starboard cannons",
-      ShipAction.Crew => "Ship crew", ShipAction.Cargo => "Cargo hold", ShipAction.Anchor => "Anchor", ShipAction.LeaveHelm => "Disembark", _ => "Reserved naval ability" };
+      ShipAction.CannonView => "Cannon view", ShipAction.Crew => "Ship crew", ShipAction.Cargo => "Cargo hold", ShipAction.Anchor => "Anchor", ShipAction.LeaveHelm => "Disembark", _ => "Reserved naval ability" };
     public static (double X, double Y) Direction(double heading, bool starboard)
     {
         var radians = (heading + (starboard ? 90 : -90)) * Math.PI / 180;
         return (Math.Sin(radians), -Math.Cos(radians));
     }
+    public static bool IsServerAction(ShipAction action) => action is ShipAction.PortCannons or ShipAction.StarboardCannons
+        or ShipAction.Anchor or ShipAction.LeaveHelm;
     public static bool CanFire(bool enabled, bool alive, bool busy, long now, long readyAt) =>
         enabled && alive && !busy && now >= readyAt;
 }

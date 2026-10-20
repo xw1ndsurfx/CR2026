@@ -1004,6 +1004,61 @@
       "en": "No party ship is currently open for boarding at this dock.",
       "fr": "Aucun bateau du groupe n’accepte d’équipiers à ce quai.",
       "es": "Ningún barco del grupo permite embarcar en este muelle."
+    },
+    "Cannon view": {
+      "en": "Cannon view",
+      "fr": "Vue canon",
+      "es": "Vista del cañón"
+    },
+    "Port": {
+      "en": "Port",
+      "fr": "Bâbord",
+      "es": "Babor"
+    },
+    "Starboard": {
+      "en": "Starboard",
+      "fr": "Tribord",
+      "es": "Estribor"
+    },
+    "Port cannon view": {
+      "en": "Port cannon view",
+      "fr": "Vue canon bâbord",
+      "es": "Vista del cañón de babor"
+    },
+    "Starboard cannon view": {
+      "en": "Starboard cannon view",
+      "fr": "Vue canon tribord",
+      "es": "Vista del cañón de estribor"
+    },
+    "Real loaded maps only · Terrain has no height data": {
+      "en": "Real loaded maps only · Terrain has no height data",
+      "fr": "Cartes réelles chargées uniquement · Terrain sans relief",
+      "es": "Solo mapas reales cargados · Terreno sin relieve"
+    },
+    "Shots follow the selected broadside · The captain keeps control": {
+      "en": "Shots follow the selected broadside · The captain keeps control",
+      "fr": "Tirs sur le flanc choisi · Le capitaine garde le contrôle",
+      "es": "Disparos por el costado elegido · El capitán mantiene el control"
+    },
+    "Reload: {0}s": {
+      "en": "Reload: {0}s",
+      "fr": "Recharge : {0}s",
+      "es": "Recarga: {0}s"
+    },
+    "Fire broadside": {
+      "en": "Fire broadside",
+      "fr": "Tirer la bordée",
+      "es": "Disparar andanada"
+    },
+    "Only the captain can fire the broadside in this preview.": {
+      "en": "Only the captain can fire the broadside in this preview.",
+      "fr": "Seul le capitaine peut tirer la bordée dans cet aperçu.",
+      "es": "Solo el capitán puede disparar la andanada en esta vista."
+    },
+    "Perspective preview unavailable on this renderer.": {
+      "en": "Perspective preview unavailable on this renderer.",
+      "fr": "Aperçu en perspective indisponible sur ce moteur graphique.",
+      "es": "Vista en perspectiva no disponible con este renderizador."
     }
   }
 }

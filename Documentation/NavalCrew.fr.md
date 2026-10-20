@@ -38,3 +38,5 @@ Après un redémarrage, une traversée d’équipier encore marquée en mer est 
 Tests automatisés : règles d’embarquement, groupe/consentement/arrêt/distance/capacité, tirage commun et récompense unique des membres présents, sauvegarde/retour arrière de la traversée et des gains, réconciliation après naufrage/réparation, compatibilité réseau, suivi de sélection/caméra des passagers, contrôles de fenêtre et localisation en/fr/es. Les contrôles UI utilisent les vrais widgets avec des mesures synthétiques; le rendu connecté et le parcours à deux clients ci-dessus restent à confirmer dans l’installation.
 
 La présence de l’équipier doit être encore à jour dans la boucle serveur au moment du naufrage. Les files de récompenses avant leur première sauvegarde restent en mémoire comme auparavant. Les postes de canon, la marche sur un pont et les rôles spécialisés constituent une étape suivante, avec des points de raccord dans l’appartenance d’équipage et les contrôles serveur.
+
+La vue d’observation au canon est décrite dans [NavalCannonView.fr.md](NavalCannonView.fr.md). Elle conserve les bordées au capitaine ; elle ne crée pas encore de poste de canon individuel.

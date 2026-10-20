@@ -1,0 +1,107 @@
+using System.Numerics;
+using Intersect.Client.Core;
+using Intersect.Client.Framework.Content;
+using Intersect.Client.Framework.GenericClasses;
+using Intersect.Client.Framework.Graphics;
+using Intersect.Client.General;
+using Intersect.Client.Maps;
+using Intersect.Framework.Core;
+using Intersect.Framework.Core.Naval;
+
+namespace Intersect.Client.Naval;
+
+internal static partial class NavalWorld
+{
+    internal static bool CannonViewOpen { get; set; }
+    internal static bool CannonViewStarboard { get; set; }
+
+    // Same beam as the server's existing broadside; the preview cannot redirect a shot.
+    internal static Vector2 CannonViewDirection(double heading, bool starboard)
+    {
+        var (x,y) = ShipActions.Direction(heading,starboard);
+        return new((float)x,(float)y);
+    }
+    internal static double CannonViewRelativeHeading(double heading,double cameraHeading) =>
+        ShipMovement.Normalize(heading-cameraHeading);
+
+    internal static MapPerspectiveScene? CannonScene()
+    {
+        var own=OwnShip;
+        if(own is not {Sinking:false} || !_ships.TryGetValue(own.Id,out var helm) ||
+            !Position(helm,out var x,out var y,out var heading)) return null;
+        var tw=Options.Instance.Map.TileWidth;var th=Options.Instance.Map.TileHeight;
+        var forward=CannonViewDirection(heading,CannonViewStarboard);
+        var beam=ShipMovement.Normalize(heading+(CannonViewStarboard?90:-90));
+        // Place the eye just outside the hull; keep the exact floating position across map boundaries.
+        var camera=new Vector2(x,y)+new Vector2(forward.X*tw,forward.Y*th)*(float)(own.Width/2+.1);
+        var terrain=new List<GameTileBuffer>();
+        // Only the actual grid received by this player. Do not fetch arbitrary maps or reveal distant enemies.
+        var maps=Globals.GridMaps.Keys.Select(id=>MapInstance.TryGet(id,out var map)?map:null)
+            .Where(map=>map?.IsLoaded==true).Select(map=>map!)
+            .OrderBy(map=>Vector2.DistanceSquared(camera,new Vector2(map.X+Options.Instance.Map.MapWidth*tw/2f,
+                map.Y+Options.Instance.Map.MapHeight*th/2f))).Take(25);
+        foreach(var map in maps) terrain.AddRange(map.PerspectiveBuffers());
+        var sprites=new List<MapPerspectiveSprite>();
+        foreach(var vessel in _ships.Values)
+        {
+            if(vessel.Current.Id==own.Id || !Position(vessel,out var sx,out var sy,out var sh)) continue;
+            var s=vessel.Current;var filename=s.Graphics;
+            var texture=Globals.ContentManager?.GetTexture(TextureType.Ocean,filename);
+            if(texture==null)
+            {
+                filename=NavalSpriteCatalog.LegacyAlias(filename);
+                texture=Globals.ContentManager?.GetTexture(TextureType.Ocean,filename);
+            }
+            var relative=CannonViewRelativeHeading(sh,beam);
+            if(texture!=null)
+            {
+                var atlas=NavalSpriteCatalog.Get(filename,texture.Width,texture.Height,s.Frames);
+                if(atlas==null) continue; // Never treat an unverified atlas as a regular grid.
+                Add(texture,atlas.Frame(relative,vessel.Animation.Elapsed(Environment.TickCount64),s.FrameMilliseconds),
+                    atlas.PixelsPerTile,sx,sy);
+            }
+            else if(Globals.ContentManager?.GetTexture(TextureType.Entity,s.Graphics) is {} entity &&
+                s.Frames>0 && entity.Width%s.Frames==0 && entity.Height%8==0)
+            {
+                var w=entity.Width/s.Frames;var h=entity.Height/8;
+                Add(entity,new ShipSpriteFrame {X=(int)(Environment.TickCount64/Math.Max(50,s.FrameMilliseconds)%s.Frames)*w,
+                    Y=ShipMovement.DirectionRow(relative)*h,Width=w,Height=h,AnchorX=w/2d,AnchorY=h/2d},tw,sx,sy);
+            }
+        }
+        foreach(var ball in _balls.Values)
+        {
+            if(!MapInstance.TryGet(ball.Current.MapId,out var map) || !Globals.GridMaps.ContainsKey(map.Id)) continue;
+            var t=Math.Clamp((Environment.TickCount64-ball.Received)/100f,0,1);
+            var bx=ball.Current.X;var by=ball.Current.Y;
+            if(ball.Previous.MapId==ball.Current.MapId)
+            {bx=ball.Previous.X+(bx-ball.Previous.X)*t;by=ball.Previous.Y+(by-ball.Previous.Y)*t;}
+            Effect(Presentation.CannonProjectileGraphic,"Projectile"+ShipMovement.DirectionRow(CannonViewRelativeHeading(ball.Current.Heading,beam)),
+                map.X+(float)bx*tw,map.Y+(float)by*th,ball.Current.AgeMilliseconds+Environment.TickCount64-ball.Received,true);
+        }
+        foreach(var effect in _effects.Values)
+        {
+            var e=effect.Event;
+            if(!MapInstance.TryGet(e.MapId,out var map) || !Globals.GridMaps.ContainsKey(map.Id)) continue;
+            var asset=e.Kind switch {NavalEffectKind.Fire=>Presentation.CannonFireGraphic,NavalEffectKind.WaterImpact=>Presentation.WaterImpactGraphic,
+                NavalEffectKind.HullImpact or NavalEffectKind.ObstacleImpact=>Presentation.HullImpactGraphic,_=>""};
+            var clip=e.Kind switch {NavalEffectKind.Fire=>"Fire",NavalEffectKind.WaterImpact=>"WaterImpact",_=>"HullImpact"};
+            Effect(asset,clip,map.X+(float)e.X*tw,map.Y+(float)e.Y*th,Environment.TickCount64-effect.Born,false);
+        }
+        return new(camera,forward,tw,th,terrain,sprites);
+
+        void Add(IGameTexture texture,ShipSpriteFrame frame,double pixelsPerTile,float sx,float sy)
+        {
+            var scale=(float)(1/pixelsPerTile);
+            sprites.Add(new(texture,new FloatRect(frame.X,frame.Y,frame.Width,frame.Height),new(sx,sy),
+                frame.Width*scale,frame.Height*scale,(float)frame.AnchorX*scale,(float)frame.AnchorY*scale,frame.FlipHorizontal));
+        }
+        void Effect(string filename,string clip,float sx,float sy,long age,bool hold)
+        {
+            if(!NavalPresentation.SafeAsset(filename) || filename.Length==0 ||
+                Globals.ContentManager?.GetTexture(TextureType.Ocean,filename) is not {} image) return;
+            var atlas=EffectAtlas(filename,image.Width,image.Height);
+            if(atlas==null || !atlas.Clips.TryGetValue(clip,out var frames) || (!hold && age>=frames.Length*Presentation.EffectFrameMilliseconds)) return;
+            if(atlas.Frame(clip,age,Presentation.EffectFrameMilliseconds) is {} frame) Add(image,frame,Presentation.EffectPixelsPerTile,sx,sy);
+        }
+    }
+}

@@ -23,6 +23,25 @@ public sealed class NavalCargoWindowTests
     [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
 
     [TestCase(1920,1080)]
+    [TestCase(640,480)]
+    public void PerspectiveWindowFitsTheNativeCanvasAndClosesWhenTheShipSinks(int width,int height)
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);
+        using var canvas=new Canvas(skin) {Size=new Point(width,height)};
+        var window=new NavalCannonViewWindow(canvas);
+        var ship=new ShipSnapshot {Id=Guid.NewGuid(),CaptainId=Guid.NewGuid(),CannonsEnabled=true};
+        window.Update(ship,true);
+        Assert.That(window.IsHidden,Is.False);
+        Assert.That(window.Width,Is.LessThan(width));Assert.That(window.Height,Is.LessThan(height));
+        foreach(var control in window.Children.Where(c=>c.Name is "CannonPerspectiveViewport" or "FireBroadside" or "PortView" or "StarboardView"))
+            Assert.That(control.X>=0 && control.Y>=0 && control.Right<=window.Width && control.Bottom<=window.Height,Is.True,control.Name);
+        Assert.That(Descendants(window).OfType<Button>().Single(b=>b.Name=="FireBroadside").IsDisabled,Is.True);
+        ship.Sinking=true;window.Update(ship,true);
+        Assert.That(window.IsHidden,Is.True);
+        Assert.That(Intersect.Client.Naval.NavalWorld.CannonViewOpen,Is.False);
+    }
+
+    [TestCase(1920,1080)]
     [TestCase(800,600)]
     [TestCase(640,480)]
     public void NativeManifestScrollsAllLotsAndKeepsItsRowsAndScrollOnRepeatedSnapshots(int width,int height)

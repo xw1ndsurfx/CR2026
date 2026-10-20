@@ -18,6 +18,7 @@ public partial class HotBarWindow
     private NavalSailingBar? _sailingBar;
     private NavalTargetHud? _targetHud;
     private NavalCargoWindow? _cargoWindow;
+    private NavalCannonViewWindow? _cannonWindow;
     private NavalRewardHud? _rewardHud;
     private bool _wasSailing;
     private bool[] _hiddenBeforeSailing=[];
@@ -46,6 +47,8 @@ public partial class HotBarWindow
         _rewardHud?.Update(reward,Y-64,Interface.InGameUiOrNull?.SuppressStatusHuds==true);
         var own=Naval.NavalWorld.OwnShip;
         var sailing=own!=null;
+        if(sailing && _cannonWindow==null) _cannonWindow=new NavalCannonViewWindow(Parent);
+        _cannonWindow?.Update(own,Naval.NavalWorld.CannonViewOpen);
         if(sailing && _cargoWindow==null) _cargoWindow=new NavalCargoWindow(Parent);
         _cargoWindow?.Update(own,Naval.NavalWorld.CargoOpen);
         if(sailing && _targetHud==null) _targetHud=new NavalTargetHud(Parent);
@@ -85,7 +88,7 @@ public partial class HotBarWindow
             button.TooltipText=N(ShipActions.Caption(action));
             button.TextColorOverride=i==8 && own!.Anchored?new Color(255,240,200,70):null;
             button.IsDisabled=own!.Sinking || action==ShipAction.None ||
-                (own.CaptainId!=Globals.Me?.Id && action is not (ShipAction.Crew or ShipAction.Cargo or ShipAction.LeaveHelm)) || Globals.Me?.IsBusy!=false ||
+                (own.CaptainId!=Globals.Me?.Id && action is not (ShipAction.CannonView or ShipAction.Crew or ShipAction.Cargo or ShipAction.LeaveHelm)) || Globals.Me?.IsBusy!=false ||
                 (action is ShipAction.PortCannons or ShipAction.StarboardCannons && (!own.CannonsEnabled || cooldown>0));
         }
         if(_sailingBar!=null)
