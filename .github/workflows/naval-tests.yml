@@ -3,6 +3,11 @@ on:
   pull_request:
     paths:
       - 'Framework/Intersect.Framework.Core/Naval/**'
+      - 'Framework/Intersect.Framework.Core/Configuration/**'
+      - 'Framework/Intersect.Framework.Core/GameObjects/Maps/**'
+      - 'Intersect.Tests.Server/ClientConfigurationSafetyTests.cs'
+      - 'Intersect.Tests.Client/HarbourUiRulesTests.cs'
+      - 'Utilities/InterfaceEditorTests/HarbourDockEditorTests.cs'
       - 'Framework/Intersect.Framework.Core/Network/Packets/Editor/PrepareNavalMapPacket.cs'
       - 'Framework/Intersect.Framework.Core/Network/Packets/Server/NavalSetupResultPacket.cs'
       - 'Framework/Intersect.Framework.Core/Network/Packets/EditorPacket.cs'
@@ -32,6 +37,7 @@ jobs:
       - uses: actions/setup-dotnet@v4.1.0
         with:
           dotnet-version: 8.0.x
-      - run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Debug --filter FullyQualifiedName~NavalTests --nologo
-      - run: dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug --filter FullyQualifiedName~Naval --nologo
+      - run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Debug --filter "FullyQualifiedName~Intersect.Tests.Server.Naval|FullyQualifiedName~ClientConfigurationSafetyTests" --nologo
+      - run: dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug --filter "FullyQualifiedName~Naval|FullyQualifiedName~HarbourUiRulesTests" --nologo
       - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -- --naval-only
+      - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --no-build -- --harbour-only
