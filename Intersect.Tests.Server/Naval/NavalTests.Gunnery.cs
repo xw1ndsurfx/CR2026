@@ -20,6 +20,9 @@ public sealed partial class NavalTests
         player.MapId=world.Map.Id;player.BoardedShipId=world.State(ship).Id;
         player.Items=new(Options.Instance.Player.MaxInventory,InventorySlot.Create);player.Items.FillToCapacity();
         player.Trading=new(player);player.EventLookup=new();player.CachedStatuses=[];
+        // This fixture must also work as the first test in a fresh process, before the 100 ms request window.
+        // Mark the previous request as old enough instead of relying on unrelated tests to warm up Timing.Global.
+        player.LastGunneryRequest=Timing.Global.Milliseconds-100;
         AddCrewPresence(world,ship,player.Id,Timing.Global.Milliseconds);
         return player;
     }
@@ -31,7 +34,7 @@ public sealed partial class NavalTests
         var a=GunnerPlayer(world,ship);var b=GunnerPlayer(world,ship);var time=Timing.Global.Milliseconds;
         GunneryState State(Player p)=>(GunneryState)world.Invoke("GunnerState",p,time)!;
         void Request(Player p,CannonStationAction action,Guid lease=default,double yaw=0,CannonAmmoKind kind=CannonAmmoKind.Standard)
-        {p.LastGunneryRequest=0;NavalSystem.Station(p,new(){Action=action,ShipId=world.State(ship).Id,LeaseId=lease,Yaw=yaw,Elevation=-5,Ammunition=kind},time);}
+        {p.LastGunneryRequest=time-100;NavalSystem.Station(p,new(){Action=action,ShipId=world.State(ship).Id,LeaseId=lease,Yaw=yaw,Elevation=-5,Ammunition=kind},time);}
         Request(a,CannonStationAction.Acquire);var active=State(a);Assert.That(active.LeaseId,Is.Not.EqualTo(Guid.Empty));
         Request(b,CannonStationAction.Acquire);Assert.That(State(b).LeaseId,Is.EqualTo(Guid.Empty));
         var balls=(System.Collections.IList)typeof(NavalSystem).GetField("Cannonballs",BindingFlags.Static|BindingFlags.NonPublic)!.GetValue(null)!;
@@ -48,13 +51,27 @@ public sealed partial class NavalTests
         Assert.That(State(a).LeaseId,Is.EqualTo(Guid.Empty),"Lost renewal frees the seat.");
     }
     [Test]
+    public void GunRequestRateLimitStillRejectsRapidFireAtClockOrigin()
+    {
+        using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);var player=GunnerPlayer(world,ship);
+        player.LastGunneryRequest=-100;
+        NavalSystem.Station(player,new(){Action=CannonStationAction.Acquire,ShipId=world.State(ship).Id},0);
+        var state=(GunneryState)world.Invoke("GunnerState",player,0L)!;
+        Assert.That(state.LeaseId,Is.Not.EqualTo(Guid.Empty));
+        var shot=new CannonStationPacket {Action=CannonStationAction.Fire,ShipId=world.State(ship).Id,LeaseId=state.LeaseId,Elevation=-5};
+        var balls=(System.Collections.IList)typeof(NavalSystem).GetField("Cannonballs",BindingFlags.Static|BindingFlags.NonPublic)!.GetValue(null)!;
+        NavalSystem.Station(player,shot,50);Assert.That(balls.Count,Is.Zero,"The request window must remain enforced.");
+        NavalSystem.Station(player,shot,100);Assert.That(balls.Count,Is.EqualTo(1));
+    }
+
+    [Test]
     public void ARealCrewShotCreditsOnlyActualEnemyDamageAndKeepsTheCrewSinkingRewards()
     {
         using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);var enemy=world.Add(18.5,10.5,true);
         var player=GunnerPlayer(world,ship);var time=Timing.Global.Milliseconds;
         NavalSystem.Station(player,new(){Action=CannonStationAction.Acquire,ShipId=world.State(ship).Id,Starboard=true},time);
         var state=(GunneryState)world.Invoke("GunnerState",player,time)!;
-        player.LastGunneryRequest=0;
+        player.LastGunneryRequest=time-100;
         world.Set(enemy,"Health",5);
         NavalSystem.Station(player,new(){Action=CannonStationAction.Fire,ShipId=world.State(ship).Id,LeaseId=state.LeaseId,Starboard=true,Elevation=-5},time);
         for(var step=time;step<time+2000;step+=50) world.Invoke("UpdateCannonballs",step);
@@ -95,7 +112,7 @@ public sealed partial class NavalTests
             var config=new NavalConfiguration {Enabled=true,CannonsEnabled=true};config.Ammunition[1].ItemId=item.Id;world.Configure(config);
             player.GunneryExperience=300;player.Items[1].Set(new Item(item.Id,3));var time=Timing.Global.Milliseconds;
             NavalSystem.Station(player,new(){Action=CannonStationAction.Acquire,ShipId=world.State(ship).Id},time);
-            var state=(GunneryState)world.Invoke("GunnerState",player,time)!;player.LastGunneryRequest=0;
+            var state=(GunneryState)world.Invoke("GunnerState",player,time)!;player.LastGunneryRequest=time-100;
             // No User means the real persistence callback fails; the normal station handler must roll back.
             NavalSystem.Station(player,new(){Action=CannonStationAction.Fire,ShipId=world.State(ship).Id,LeaseId=state.LeaseId,Ammunition=CannonAmmoKind.Heavy,Elevation=-5},time);
             Assert.That(player.Items[1].Quantity,Is.EqualTo(3));
