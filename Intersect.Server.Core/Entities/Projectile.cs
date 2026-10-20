@@ -356,7 +356,7 @@ public partial class Projectile : Entity
             }
 
             if (!spawn.ProjectileDescriptor.IgnoreMapBlocks &&
-                ((attribute.Type == MapAttributeType.Blocked) || (attribute.Type == MapAttributeType.Animation && ((MapAnimationAttribute)attribute).IsBlock)))
+                ((attribute.Type is MapAttributeType.Dock or MapAttributeType.Blocked) || (attribute.Type == MapAttributeType.Animation && ((MapAnimationAttribute)attribute).IsBlock)))
             {
                 killSpawn = true;
             }

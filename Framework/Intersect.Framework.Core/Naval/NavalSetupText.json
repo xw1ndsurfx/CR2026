@@ -349,6 +349,71 @@
       "en": "Choose an Ocean map and keep each hull and boarding point clear of obstacles and other ships.",
       "fr": "Choisissez une map Ocean et placez les coques et quais hors des obstacles et des autres navires.",
       "es": "Elige un mapa Ocean y coloca los cascos y muelles lejos de obstáculos y otros barcos."
+    },
+    "Port cannons": {
+      "en": "Port cannons",
+      "fr": "Canons bâbord",
+      "es": "Cañones de babor"
+    },
+    "Starboard cannons": {
+      "en": "Starboard cannons",
+      "fr": "Canons tribord",
+      "es": "Cañones de estribor"
+    },
+    "Anchor": {
+      "en": "Anchor",
+      "fr": "Ancre",
+      "es": "Ancla"
+    },
+    "Disembark": {
+      "en": "Disembark",
+      "fr": "Débarquer",
+      "es": "Desembarcar"
+    },
+    "Reserved naval ability": {
+      "en": "Reserved naval ability",
+      "fr": "Capacité navale à venir",
+      "es": "Habilidad naval futura"
+    },
+    "Hull: {0}%   Speed: {1:0.0}": {
+      "en": "Hull: {0}%   Speed: {1:0.0}",
+      "fr": "Coque : {0}%   Vitesse : {1:0.0}",
+      "es": "Casco: {0}%   Velocidad: {1:0.0}"
+    },
+    "CannonsEnabled": {
+      "en": "Enable cannons",
+      "fr": "Activer les canons",
+      "es": "Activar cañones"
+    },
+    "PlayerShipDamage": {
+      "en": "Damage between player ships",
+      "fr": "Dégâts entre bateaux de joueurs",
+      "es": "Daño entre barcos de jugadores"
+    },
+    "CannonDamage": {
+      "en": "Damage per cannonball (hull out of 100)",
+      "fr": "Dégâts par boulet (coque sur 100)",
+      "es": "Daño por bala (casco sobre 100)"
+    },
+    "CannonReloadMilliseconds": {
+      "en": "Broadside reload (ms)",
+      "fr": "Rechargement par bordée (ms)",
+      "es": "Recarga por andanada (ms)"
+    },
+    "CannonRange": {
+      "en": "Cannonball range (tiles)",
+      "fr": "Portée des boulets (cases)",
+      "es": "Alcance de balas (casillas)"
+    },
+    "CannonSpeed": {
+      "en": "Cannonball speed (tiles/s)",
+      "fr": "Vitesse des boulets (cases/s)",
+      "es": "Velocidad de balas (casillas/s)"
+    },
+    "Ship damage could not be saved. Try disembarking again shortly.": {
+      "en": "Ship damage could not be saved. Try disembarking again shortly.",
+      "fr": "Les dégâts du navire n’ont pas pu être enregistrés. Réessayez de débarquer dans quelques instants.",
+      "es": "No se pudo guardar el daño del barco. Intenta desembarcar de nuevo en unos instantes."
     }
   }
 }

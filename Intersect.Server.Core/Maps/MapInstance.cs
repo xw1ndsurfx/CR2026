@@ -1166,7 +1166,7 @@ public partial class MapInstance : IMapInstance
         }
 
         //Check if tile is a blocked attribute
-        if (mMapController.Attributes[x, y] != null && (mMapController.Attributes[x, y].Type == MapAttributeType.Blocked ||
+        if (mMapController.Attributes[x, y] != null && (mMapController.Attributes[x, y].Type is MapAttributeType.Dock or MapAttributeType.Blocked ||
             mMapController.Attributes[x, y].Type == MapAttributeType.Animation && ((MapAnimationAttribute)mMapController.Attributes[x, y]).IsBlock))
         {
             return true;
@@ -1232,7 +1232,7 @@ public partial class MapInstance : IMapInstance
             {
                 if (mMapController.Attributes[x, y] != null)
                 {
-                    if (mMapController.Attributes[x, y].Type == MapAttributeType.Blocked ||
+                    if (mMapController.Attributes[x, y].Type is MapAttributeType.Dock or MapAttributeType.Blocked ||
                         mMapController.Attributes[x, y].Type == MapAttributeType.GrappleStone ||
                         mMapController.Attributes[x, y].Type == MapAttributeType.Animation && ((MapAnimationAttribute)mMapController.Attributes[x, y]).IsBlock)
                     {

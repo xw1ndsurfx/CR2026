@@ -27,6 +27,7 @@ public sealed class ShipDefinition
     public string Graphics { get; set; } = "royal-ship.png";
     public int DockX { get; set; }
     public int DockY { get; set; }
+    public string SinkingGraphics { get; set; } = "Ship_CorpsRoyaux_002_Sink.png";
     public string DamagedGraphics { get; set; } = "royal-ship-damaged.png";
     public int Frames { get; set; } = 4;
     public int FrameMilliseconds { get; set; } = 180;
@@ -46,7 +47,7 @@ public sealed class ShipDefinition
         Acceleration > 0 && Acceleration <= 10 && Drag > 0 && Drag <= 10 && TurnRate > 0 && TurnRate <= 180 &&
         Frames is >= 1 and <= 16 && FrameMilliseconds is >= 50 and <= 2000 &&
         !string.IsNullOrWhiteSpace(Graphics) && Path.GetFileName(Graphics) == Graphics &&
-        Path.GetFileName(DamagedGraphics) == DamagedGraphics;
+        Path.GetFileName(DamagedGraphics) == DamagedGraphics && Path.GetFileName(SinkingGraphics) == SinkingGraphics;
 }
 
 public readonly record struct ShipInput(sbyte Thrust, sbyte Turn, bool Anchor);

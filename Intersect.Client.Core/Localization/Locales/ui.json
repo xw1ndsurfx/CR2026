@@ -6349,6 +6349,11 @@
       "en": "Choose one of your ships to set sail.",
       "fr": "Choisissez un de vos navires pour prendre la mer.",
       "es": "Elige uno de tus barcos para zarpar."
+    },
+    "Ship damage could not be saved. Try disembarking again shortly.": {
+      "en": "Ship damage could not be saved. Try disembarking again shortly.",
+      "fr": "Les dégâts du navire n’ont pas pu être enregistrés. Réessayez de débarquer dans quelques instants.",
+      "es": "No se pudo guardar el daño del barco. Intenta desembarcar de nuevo en unos instantes."
     }
   }
 }

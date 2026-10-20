@@ -10,6 +10,12 @@ public sealed class NavalConfiguration
     public int LaunchSearchRadius { get; set; } = 5;
     public double ShopInteractionRange { get; set; } = 4;
     public int ShopSessionSeconds { get; set; } = 120;
+    public bool CannonsEnabled { get; set; }
+    public bool PlayerShipDamage { get; set; }
+    public int CannonDamage { get; set; } = 10;
+    public int CannonReloadMilliseconds { get; set; } = 4000;
+    public double CannonRange { get; set; } = 12;
+    public double CannonSpeed { get; set; } = 12;
     public ShipDefinition[] Ships { get; set; } = [];
     [JsonExtensionData] public IDictionary<string, JToken>? AdditionalData { get; set; }
     [JsonIgnore] public string? SourceJson { get; set; }
@@ -19,7 +25,9 @@ public sealed class NavalConfiguration
         if (!double.IsFinite(DockInteractionRange) || DockInteractionRange is < 1 or > 5 ||
             LaunchSearchRadius is < 3 or > 10 || !double.IsFinite(ShopInteractionRange) ||
             ShopInteractionRange is < 1 or > 10 || ShopSessionSeconds is < 10 or > 600 ||
-            Ships == null || Ships.Length > 64 || Ships.Any(s => s == null || !s.IsValid() ||
+            CannonDamage is < 1 or > 100 || CannonReloadMilliseconds is < 1000 or > 60000 ||
+            !double.IsFinite(CannonRange) || CannonRange is < 1 or > 40 ||
+            !double.IsFinite(CannonSpeed) || CannonSpeed is < 1 or > 30 || Ships == null || Ships.Length > 64 || Ships.Any(s => s == null || !s.IsValid() ||
                 s.X >= width || s.Y >= height || s.DockX >= width || s.DockY >= height) ||
             Ships.Select(s => s.Id).Distinct().Count() != Ships.Length)
             throw new InvalidDataException("Invalid navigation settings. Check ship ids, map positions and movement settings.");

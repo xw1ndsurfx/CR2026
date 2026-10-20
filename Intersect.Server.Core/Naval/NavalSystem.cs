@@ -24,8 +24,11 @@ internal static partial class NavalSystem
         internal readonly ShipInputAuthority Controls = new();
         internal long LastStep;
         internal Guid OwnerId;
-        internal string SinkingGraphics = "";
+        internal string SinkingGraphics = definition.SinkingGraphics;
         internal long SunkUntil;
+        internal int Health = 100, PendingDamage;
+        internal long PortReady, StarboardReady, LastAction, NextDamageAttempt;
+        internal bool Anchored;
     }
     private static readonly object Gate = new();
     private static readonly Dictionary<Guid, Vessel> Ships = [];
@@ -109,6 +112,8 @@ internal static partial class NavalSystem
             if (player.CaptainedShipId == Guid.Empty &&
                 ShipDock.Nearest(MapController.Get(player.MapId)?.Attributes, player.X + .5, player.Y + .5, _settings.DockInteractionRange) != null)
             { Harbour(player, new() { Action = HarbourAction.Open }); return; }
+            if (!ApplyPendingDamage(player,Timing.Global.Milliseconds,force:true))
+            { Notice(player,"Ship damage could not be saved. Try disembarking again shortly."); return; }
             ShipState anchor = null;
             (Guid MapId, int X, int Y)? dock = null;
             lock (Gate)
@@ -132,7 +137,7 @@ internal static partial class NavalSystem
                             other.State.X, other.State.Y).Contains((s.MapId, x, y)));
                     var painted = ShipDock.Tiles(attributes).Any();
                     // A painted quay is an explicit safe shore: never choose unmarked sea around it.
-                    var exit = painted ? ShipDock.Nearest(attributes, s.X, s.Y, 5, ExitClear) :
+                    var exit = painted ? ShipDock.FindLanding(attributes, s.X, s.Y, 5, ExitClear) :
                         ShipDisembarkation.Find(s,d,Options.Instance.Map.MapWidth,Options.Instance.Map.MapHeight,ExitClear);
                     if (exit == null)
                     { Notice(player, "No free exit near this dock. Move the ship slightly and try again."); return; }
@@ -141,7 +146,7 @@ internal static partial class NavalSystem
                 }
                 else
                 {
-                    var vessel = Ships.Values.FirstOrDefault(v => v.OwnerId == Guid.Empty && v.State.CaptainId == Guid.Empty &&
+                    var vessel = Ships.Values.FirstOrDefault(v => v.OwnerId == Guid.Empty && v.State.CaptainId == Guid.Empty && v.SunkUntil == 0 &&
                         v.State.MapId == player.MapId &&
                         (Distance(v.State.X, v.State.Y, player.X + .5, player.Y + .5) <= _settings.DockInteractionRange ||
                         v.Definition.MapId == player.MapId &&
@@ -150,7 +155,7 @@ internal static partial class NavalSystem
                     if (vessel == null || !ClearHull(player, vessel, ocean, vessel.State.MapId, vessel.State.X, vessel.State.Y))
                     { Notice(player, "No available ship near this helm dock."); return; }
                     vessel.State.CaptainId = player.Id;
-                    vessel.LastStep = 0; vessel.Controls.Reset();
+                    vessel.LastStep = 0; vessel.Controls.Reset(); vessel.Anchored = false;
                     player.CaptainedShipId = vessel.State.Id;
                     player.CastTime = 0; player.IsBlocking = false;
                     anchor = vessel.State;
@@ -180,12 +185,14 @@ internal static partial class NavalSystem
             if (packet.ShipId != player.CaptainedShipId ||
                 !Ships.TryGetValue(packet.ShipId, out var vessel) || vessel.State.CaptainId != player.Id ||
                 !vessel.Controls.Accept(vessel.State, player.Id, player.InGame && !player.IsDead && !player.HasPendingDeath, packet, now)) return;
+            if (packet.Thrust != 0) vessel.Anchored = false;
             player.RegisterAfkActivity();
         }
     }
 
     internal static void Update(Player player, long now)
     {
+        ApplyPendingDamage(player, now);
         ShipState pendingWarp = null;
         Vessel rescueVessel = null;
         Guid oldMap = Guid.Empty;
@@ -193,6 +200,7 @@ internal static partial class NavalSystem
         lock (Gate)
         {
             if (!IsEnabled()) return;
+            UpdateCannonballs(now);
             if (Ships.TryGetValue(player.CaptainedShipId, out var vessel))
             {
                 var s = vessel.State;
@@ -209,7 +217,7 @@ internal static partial class NavalSystem
                 {
                     var dt = vessel.LastStep == 0 ? 0 : (now - vessel.LastStep) / 1000d;
                     vessel.LastStep = now;
-                    var input = vessel.Controls.ForTick(now, player.NavalBusy);
+                    var input = vessel.Anchored ? new ShipInput(0,0,true) : vessel.Controls.ForTick(now, player.NavalBusy);
                     oldMap = s.MapId; oldX = s.X; oldY = s.Y;
                     ShipMovement.Step(s, vessel.Definition, input, dt, (map, x, y, heading) =>
                     {
@@ -230,6 +238,11 @@ internal static partial class NavalSystem
                 ReleaseLocked(player);
             }
             if (owned != null) ReturnToHarbour(player, owned);
+            else if (rescueVessel != null)
+            {
+                player.WarpToSpawn();
+                lock (Gate) Ships.Remove(rescueVessel.State.Id);
+            }
         }
         if (pendingWarp != null)
         {
@@ -252,6 +265,7 @@ internal static partial class NavalSystem
         if (player.CaptainedShipId == Guid.Empty) return;
         lock (player.EntityLock)
         {
+            ApplyPendingDamage(player,Timing.Global.Milliseconds,force:true);
             OwnedShip owned = null;
             lock (Gate)
             {
@@ -287,6 +301,7 @@ internal static partial class NavalSystem
 
     private static void SendSnapshot(Player player)
     {
+        var now = Timing.Global.Milliseconds;
         var ocean = OceanMapResolver.Maps();
         var visible = player.Map?.GetSurroundingMapIds(true).ToHashSet() ?? [];
         visible.Add(player.MapId);
@@ -296,7 +311,14 @@ internal static partial class NavalSystem
                     X = v.State.X, Y = v.State.Y, Heading = v.State.Heading, Speed = v.State.Speed,
                     Graphics = v.SunkUntil > 0 ? v.SinkingGraphics : v.State.DamageState > 0 ? v.Definition.DamagedGraphics : v.Definition.Graphics,
                     Frames = v.Definition.Frames, FrameMilliseconds = v.Definition.FrameMilliseconds,
-                    Width = v.Definition.Width, Length = v.Definition.Length }).ToArray() });
+                    Width = v.Definition.Width, Length = v.Definition.Length, Health = v.Health,
+                    PortReloadMilliseconds = (int)Math.Clamp(v.PortReady-now,0,60000),
+                    StarboardReloadMilliseconds = (int)Math.Clamp(v.StarboardReady-now,0,60000),
+                    Anchored = v.Anchored, CannonsEnabled = _settings.CannonsEnabled, Sinking = v.SunkUntil > 0,
+                    PortFlash = v.PortReady-now > _settings.CannonReloadMilliseconds-200,
+                    StarboardFlash = v.StarboardReady-now > _settings.CannonReloadMilliseconds-200 }).ToArray(),
+            Cannonballs = player.InstanceType != MapInstanceType.Overworld ? [] : Cannonballs.Where(b=>visible.Contains(b.MapId))
+                .Select(b=>new CannonballSnapshot { Id=b.Id, MapId=b.MapId,X=b.X,Y=b.Y }).ToArray() });
     }
 
     // A conservative circumscribed disk contains the hull at every continuous heading.
@@ -316,18 +338,18 @@ internal static partial class NavalSystem
     private static bool ClearHull(Player player, Vessel vessel, HashSet<Guid> ocean, Guid map, double x, double y)
     {
         var tiles = HullTiles(vessel, ocean, map, x, y);
-        if (tiles.Any(t => !ClearTile(player, t.Map, t.X, t.Y, allowDock: false))) return false;
+        if (tiles.Any(t => !ClearTile(player, t.Map, t.X, t.Y))) return false;
         return !Ships.Values.Any(other => other != vessel &&
             tiles.Overlaps(HullTiles(other, ocean, other.State.MapId, other.State.X, other.State.Y)));
     }
 
-    private static bool ClearTile(Player player, Guid id, int x, int y, bool allowDock = true)
+    private static bool ClearTile(Player player, Guid id, int x, int y)
     {
         var map = MapController.Get(id);
         if (map?.Attributes == null || x < 0 || y < 0 || x >= map.Attributes.GetLength(0) || y >= map.Attributes.GetLength(1) ||
             !map.TryGetInstance(player.MapInstanceId, out var instance) || instance.IsDisposed) return false;
         var attribute = map.Attributes[x, y];
-        if (IsBlockingAttribute(attribute) && !(allowDock && attribute is MapDockAttribute)) return false;
+        if (IsBlockingAttribute(attribute)) return false;
         if (instance.GetCachedEntities().Any(e => e != player && !e.IsPassable() && e.X == x && e.Y == y && e.Z == player.Z)) return false;
         if (instance.GlobalEventInstances.Values.SelectMany(e => e.GlobalPageInstance)
             .Any(e => e != null && !e.Passable && e.X == x && e.Y == y && e.Z == player.Z)) return false;

@@ -81,4 +81,69 @@ public sealed class NavalHelmRegressionTests
             optionsProperty.SetValue(null,previousOptions);
         }
     }
+
+    [Test]
+    public void NavalActionsAreTemporaryAndLeaveThePersistedHotbarUntouched()
+    {
+        var previousMe=Globals.Me;
+        var me=(Player)RuntimeHelpers.GetUninitializedObject(typeof(Player));GC.SuppressFinalize(me);me.Id=Guid.NewGuid();
+        var originalHotbar=me.Hotbar;
+        try
+        {
+            Globals.Me=me;NavalWorld.Clear();
+            var ship=new ShipSnapshot {Id=Guid.NewGuid(),CaptainId=me.Id,PortReloadMilliseconds=4000,StarboardReloadMilliseconds=0};
+            NavalWorld.Apply(new NavalSnapshotPacket {Ships=[ship]});
+            Assert.That(NavalWorld.OwnShip?.Id,Is.EqualTo(ship.Id));
+            Assert.That(NavalWorld.Cooldown(0),Is.GreaterThan(3500));Assert.That(NavalWorld.Cooldown(1),Is.Zero);
+            var item=(Intersect.Client.Interface.Game.Hotbar.HotbarItem)RuntimeHelpers.GetUninitializedObject(typeof(Intersect.Client.Interface.Game.Hotbar.HotbarItem));
+            GC.SuppressFinalize(item);
+            // Slot 1 is disabled because the server has not enabled cannons. It must never use an ordinary item.
+            Assert.DoesNotThrow(()=>item.Activate());
+            Assert.That(me.Hotbar,Is.SameAs(originalHotbar));
+            NavalWorld.Apply(new NavalSnapshotPacket());
+            Assert.That(NavalWorld.OwnShip,Is.Null);Assert.That(NavalWorld.Cooldown(0),Is.Zero);
+            Assert.That(me.Hotbar,Is.SameAs(originalHotbar));
+            NavalWorld.Clear();Assert.That(NavalWorld.OwnShip,Is.Null);
+        }
+        finally { NavalWorld.Clear();Globals.Me=previousMe; }
+    }
+
+    [Test]
+    public void OnlyTheNavalActionsHaveBindingsAndAllCaptionsHaveThreeLanguages()
+    {
+        Assert.That(Enumerable.Range(0,10).Select(ShipActions.ForSlot),Is.EqualTo(new[] {
+            ShipAction.PortCannons,ShipAction.StarboardCannons,ShipAction.None,ShipAction.None,ShipAction.None,
+            ShipAction.None,ShipAction.None,ShipAction.None,ShipAction.Anchor,ShipAction.LeaveHelm }));
+        foreach(var action in Enum.GetValues<ShipAction>())
+        {
+            var caption=ShipActions.Caption(action);
+            foreach(var language in new[]{"fr","es"}) Assert.That(NavalSetupText.Get(caption,language),Is.Not.EqualTo(caption));
+        }
+        Assert.That(NavalSetupText.Get("Hull: {0}%   Speed: {1:0.0}","fr"),Does.Contain("{1:0.0}"));
+    }
+
+    [Test]
+    public void NavalBarShowsTheExistingKeyBindingInsteadOfEnumNames()
+    {
+        Assert.That(Intersect.Client.Interface.Game.Hotbar.HotBarWindow.NavalKeyCaption(new(Intersect.Client.Framework.GenericClasses.Keys.None,
+            Intersect.Client.Framework.GenericClasses.Keys.D1)),Is.EqualTo("1"));
+        Assert.That(Intersect.Client.Interface.Game.Hotbar.HotBarWindow.NavalKeyCaption(new(Intersect.Client.Framework.GenericClasses.Keys.None,
+            Intersect.Client.Framework.GenericClasses.Keys.D0)),Is.EqualTo("0"));
+        Assert.That(Intersect.Client.Interface.Game.Hotbar.HotBarWindow.NavalKeyCaption(null),Is.EqualTo("-"));
+        Assert.That(Intersect.Client.Interface.Game.Hotbar.HotBarWindow.NavalKeyCaption(new(Intersect.Client.Framework.GenericClasses.Keys.Control,
+            Intersect.Client.Framework.GenericClasses.Keys.D1)),Does.Contain("1").And.Not.Contain("D1"));
+    }
+
+    [Test]
+    public void NavalPixelIconsFitTheSlotsAndCannonsPointToOppositeSides()
+    {
+        foreach(var action in Enum.GetValues<ShipAction>())
+        {
+            var glyph=Intersect.Client.Interface.Game.Hotbar.NavalActionButton.Glyph(action);
+            Assert.That(glyph,Has.Length.EqualTo(8));Assert.That(glyph.Select(row=>row.Length),Is.All.EqualTo(11));
+        }
+        var port=Intersect.Client.Interface.Game.Hotbar.NavalActionButton.Glyph(ShipAction.PortCannons);
+        var starboard=Intersect.Client.Interface.Game.Hotbar.NavalActionButton.Glyph(ShipAction.StarboardCannons);
+        Assert.That(starboard,Is.EqualTo(port.Select(row=>new string(row.Reverse().ToArray())).ToArray()));
+    }
 }

@@ -211,7 +211,7 @@ internal static class InvasionNavigation
 
         var attribute = map.Attributes?[x, y];
         return attribute?.Type is
-            MapAttributeType.Blocked or
+            MapAttributeType.Dock or MapAttributeType.Blocked or
             MapAttributeType.NpcAvoid or
             MapAttributeType.Resource;
     }

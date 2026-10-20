@@ -101,7 +101,7 @@ public sealed class FrmNavalConfiguration : DarkForm
             var fields = Fields(item, section, item is HarbourOffer ? ["Ship", "AdditionalData"] : ["AdditionalData"]);
             if (item is HarbourOffer offer)
             {
-                var model = Fields(offer.Ship, section, ["Id", "MapId", "X", "Y", "DockX", "DockY", "AdditionalData"]);
+                var model = Fields(offer.Ship, section, ["Id", "MapId", "X", "Y", "DockX", "DockY", "SinkingGraphics", "AdditionalData"]);
                 model.Dock = DockStyle.Top; model.AutoSize = true; model.AutoSizeMode = AutoSizeMode.GrowAndShrink;
                 var group = new GroupBox { Text = T("Ship model and movement"), Dock = DockStyle.Top, AutoSize = true, Padding = new(6, 24, 6, 6) };
                 group.Controls.Add(model); fields.Controls.Add(group, 0, fields.RowCount++); fields.SetColumnSpan(group, 2);

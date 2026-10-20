@@ -13,13 +13,13 @@ using Intersect.Enums;
 
 namespace Intersect.Client.Naval;
 
-internal static class NavalWorld
+internal static partial class NavalWorld
 {
     private sealed record View(ShipSnapshot Previous, ShipSnapshot Current, long Received, ShipAnimationClock Animation);
     private static Dictionary<Guid, View> _ships = [];
     private static Guid _viewer;
     private static long _received, _inputTime;
-    internal static void Clear() { _ships.Clear(); _viewer = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); }
+    internal static void Clear() { _ships.Clear(); _viewer = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); }
     internal static bool IsCaptain(Guid playerId) => playerId != Guid.Empty && Fresh && _ships.Values.Any(v => v.Current.CaptainId == playerId);
     private static bool Fresh => Globals.Me != null && _viewer == Globals.Me.Id && Environment.TickCount64 - _received < 1500;
 
@@ -35,6 +35,7 @@ internal static class NavalWorld
             animation.Observe(s.Graphics, now);
             next[s.Id] = new(previous, s, now, animation);
         }
+        ApplyCannonballs(packet,now);
         _ships = next; _viewer = Globals.Me?.Id ?? Guid.Empty; _received = now;
         // The engine's integer position remains an anchor for map loading and ordinary entity lookup.
         // Rendering and camera use the independent interpolated ship center below.
@@ -47,6 +48,7 @@ internal static class NavalWorld
     internal static void Input(bool busy)
     {
         if (!Fresh || Globals.Me == null) return;
+        ReadActions(busy);
         var own = _ships.Values.FirstOrDefault(v => v.Current.CaptainId == Globals.Me.Id)?.Current;
         if (own == null || Environment.TickCount64 - _inputTime < 50) return;
         _inputTime = Environment.TickCount64;
@@ -104,6 +106,7 @@ internal static class NavalWorld
     {
         if (!Fresh || Graphics.Renderer == null) return;
         var tw = Options.Instance.Map.TileWidth; var th = Options.Instance.Map.TileHeight;
+        DrawCannonballs(row);
         foreach (var view in _ships.Values)
         {
             if (!Position(view, out var x, out var y, out var heading)) continue;
@@ -111,6 +114,7 @@ internal static class NavalWorld
             var currentMap = Globals.Me?.MapInstance;
             if (currentMap == null || row != (int)Math.Floor((y - currentMap.Y) / th) + Options.Instance.Map.MapHeight * 2) continue;
             var s = view.Current;
+            DrawMuzzleFlash(s,x,y,heading);
             var texture = Globals.ContentManager?.GetTexture(TextureType.Entity, s.Graphics);
             var oceanName = s.Graphics;
             var oceanTexture = Globals.ContentManager?.GetTexture(TextureType.Ocean, oceanName);

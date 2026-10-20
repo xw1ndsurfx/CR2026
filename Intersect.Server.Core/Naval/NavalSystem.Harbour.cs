@@ -76,7 +76,7 @@ internal static partial class NavalSystem
                 else
                 {
                     dock = ShipDock.Nearest(MapController.Get(player.MapId)?.Attributes, player.X + .5, player.Y + .5,
-                        _settings.DockInteractionRange, (x,y) => ClearTile(player, player.MapId, x, y));
+                        _settings.DockInteractionRange);
                     if (dock == null || !OceanMapResolver.Maps().Contains(player.MapId))
                     { player.SendPacket(new HarbourStatePacket { Message = "Stand beside a Q dock on Ocean to use the harbour." }); return; }
                 }
@@ -174,6 +174,7 @@ internal static partial class NavalSystem
             if (x < 0 || y < 0 || x >= Options.Instance.Map.MapWidth || y >= Options.Instance.Map.MapHeight ||
                 !ClearHull(player, vessel, ocean, player.MapId, x, y)) continue;
             d.X = vessel.State.X = x; d.Y = vessel.State.Y = y;
+            vessel.Health = owned.Health;
             vessel.State.DamageState = owned.Health < 100 ? 1 : 0;
             var fleetBefore = player.NavalFleetJson;
             owned.AtSea = true; owned.ReturnMapId = player.MapId; owned.ReturnDockX = dock.X; owned.ReturnDockY = dock.Y;
@@ -192,7 +193,7 @@ internal static partial class NavalSystem
         return null;
     }
 
-    // Server-only hook for future cannon/AI damage. Clients cannot set health or claim a sink.
+    // Server-only persisted damage hook for cannons and future AI. Clients cannot set health or claim a sink.
     internal static bool DamageOwnedShip(Player owner, Guid shipId, int damage)
     {
         lock (owner.EntityLock)
@@ -204,6 +205,7 @@ internal static partial class NavalSystem
             var before = owned.Health;
             owned.Health = ShipFleetRules.AfterDamage(before, damage);
             if (owner.User?.Save(force: true) != UserSaveResult.Completed) { owned.Health = before; return false; }
+            vessel.Health = owned.Health;
             vessel.State.DamageState = owned.Health < 100 ? 1 : 0;
             if (owned.Sunk)
             {
@@ -230,7 +232,7 @@ internal static partial class NavalSystem
         var map = MapController.Get(ship.ReturnMapId);
         map?.TryCreateInstance(MapInstance.OverworldInstanceId, out _, player);
         (int X, int Y)? exit;
-        lock (Gate) exit = ShipDock.Nearest(map?.Attributes, ship.ReturnDockX + .5, ship.ReturnDockY + .5, 3,
+        lock (Gate) exit = ShipDock.FindLanding(map?.Attributes, ship.ReturnDockX + .5, ship.ReturnDockY + .5, 3,
             (x,y) => ClearTile(player, ship.ReturnMapId, x,y) && !Ships.Values.Any(v =>
                 HullTiles(v, OceanMapResolver.Maps(), v.State.MapId,v.State.X,v.State.Y).Contains((ship.ReturnMapId,x,y))));
         if (exit is { } landing)

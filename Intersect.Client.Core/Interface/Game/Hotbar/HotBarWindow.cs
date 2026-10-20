@@ -47,9 +47,8 @@ public partial class HotBarWindow : ImagePanel
             return;
         }
 
-        foreach (var slot in Items)
-        {
-            slot.Update();
-        }
+        UpdateNavalBar();
+        if (Naval.NavalWorld.OwnShip != null) return;
+        foreach (var slot in Items) slot.Update();
     }
 }

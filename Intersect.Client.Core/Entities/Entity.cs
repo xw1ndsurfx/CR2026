@@ -2607,7 +2607,7 @@ public partial class Entity : IEntity
             {
                 if (gameMap.Attributes[tmpX, tmpY] != null)
                 {
-                    if (gameMap.Attributes[tmpX, tmpY].Type == MapAttributeType.Blocked || (gameMap.Attributes[tmpX, tmpY].Type == MapAttributeType.Animation && ((MapAnimationAttribute)gameMap.Attributes[tmpX, tmpY]).IsBlock))
+                    if (gameMap.Attributes[tmpX, tmpY].Type is MapAttributeType.Dock or MapAttributeType.Blocked || (gameMap.Attributes[tmpX, tmpY].Type == MapAttributeType.Animation && ((MapAnimationAttribute)gameMap.Attributes[tmpX, tmpY]).IsBlock))
                     {
                         return -2;
                     }

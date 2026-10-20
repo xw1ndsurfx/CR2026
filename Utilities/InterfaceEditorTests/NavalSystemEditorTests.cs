@@ -25,6 +25,12 @@ internal static class NavalSystemEditorTests
             if (editor.Text != "Éditeur du système naval") throw new Exception("Naval editor must be localized.");
             var tabs = editor.Controls.OfType<TabControl>().Single();
             if (tabs.TabPages.Count != 3) throw new Exception("Navigation, test ships and shop must be separate sections.");
+            var cannonEnabled=Descendants(tabs.TabPages[0]).OfType<CheckBox>().Single(c=>c.Name=="CannonsEnabled");
+            var cannonDamage=Descendants(tabs.TabPages[0]).OfType<NumericUpDown>().Single(c=>c.Name=="CannonDamage");
+            cannonEnabled.Checked=true;cannonDamage.Value=17;
+            var cannonSave=(NavalConfigurationRequestPacket)typeof(FrmNavalConfiguration).GetMethod("PrepareSave",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(editor,null)!;
+            var cannonSettings=JsonConvert.DeserializeObject<NavalConfiguration>(cannonSave.ConfigurationJson)!;
+            if(!cannonSettings.CannonsEnabled || cannonSettings.CannonDamage!=17) throw new Exception("The native naval editor must save the enabled flag and cannon damage.");
             tabs.SelectedIndex = 2;
             var remove = Descendants(tabs.TabPages[2]).OfType<Button>().Single(b => b.Text == "Retirer");
             if (remove.Enabled) throw new Exception("Published models must be retired through For sale, preserving their owners' fleets.");
