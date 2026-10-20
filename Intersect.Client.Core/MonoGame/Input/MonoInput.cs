@@ -297,6 +297,7 @@ public partial class MonoInput : GameInput
                 Steam.PumpEvents();
             }
 
+            Core.ClientLoopDiagnostics.Mark("input/gamepad capabilities");
             var gamePadCapabilities = Enumerable.Range(0, GamePad.MaximumGamePadCount)
                 .Select(GamePad.GetCapabilities)
                 .ToArray();
@@ -307,6 +308,7 @@ public partial class MonoInput : GameInput
                 Math.Min(gamePadCapabilities.Length, _gamePadCapabilities.Length)
             );
 
+            Core.ClientLoopDiagnostics.Mark("input/gamepad state");
             var gamePadState = Enumerable
                 .Range(0, GamePad.MaximumGamePadCount)
                 .Select(GamePad.GetState)
@@ -327,6 +329,7 @@ public partial class MonoInput : GameInput
                 Mouse.SetPosition(temporaryMouseState.X + deltaX, temporaryMouseState.Y + deltaY);
             }
 
+            Core.ClientLoopDiagnostics.Mark("input/keyboard and mouse");
             var keyboardState = Keyboard.GetState();
             var mouseState = Mouse.GetState();
 

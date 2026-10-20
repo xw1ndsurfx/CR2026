@@ -102,6 +102,7 @@ public partial class MainMenuWindow : Window
 
     private void _buttonLogin_Clicked(Base sender, MouseButtonState arguments)
     {
+        ClientLoopDiagnostics.Note($"Login menu click: steamPending={_mainMenu.SteamAutoLoginInProgress}; connected={Networking.Network.IsConnected}");
         if (_mainMenu.SteamAutoLoginInProgress)
         {
             return;
