@@ -15,6 +15,7 @@ public sealed partial class NavalTests
         return Path.Combine(path?.FullName ?? throw new DirectoryNotFoundException("Repository resources"), "resources", "ocean");
     }
 
+    [TestCase("Ship_Herbonia_001.png")]
     [TestCase("Ship_CorpsRoyaux_002.png")]
     [TestCase("Ship_CorpsRoyaux_005.png")]
     [TestCase("Ship_CorpsRoyaux_001_sink.png")]

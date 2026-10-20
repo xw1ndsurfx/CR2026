@@ -1,0 +1,315 @@
+{
+  "Version": 2,
+  "ImageWidth": 1448,
+  "ImageHeight": 1086,
+  "PixelsPerTile": 64,
+  "Loop": true,
+  "Directions": [
+    [
+      {
+        "X": 44,
+        "Y": 573,
+        "Width": 139,
+        "Height": 266,
+        "AnchorX": 69.5,
+        "AnchorY": 207.48000000000002,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 183,
+        "Y": 573,
+        "Width": 164,
+        "Height": 266,
+        "AnchorX": 82.0,
+        "AnchorY": 207.48000000000002,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 371,
+        "Y": 573,
+        "Width": 177,
+        "Height": 266,
+        "AnchorX": 88.5,
+        "AnchorY": 207.48000000000002,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 548,
+        "Y": 573,
+        "Width": 119,
+        "Height": 266,
+        "AnchorX": 59.5,
+        "AnchorY": 207.48000000000002,
+        "FlipHorizontal": false
+      }
+    ],
+    [
+      {
+        "X": 730,
+        "Y": 310,
+        "Width": 180,
+        "Height": 245,
+        "AnchorX": 90.0,
+        "AnchorY": 191.1,
+        "FlipHorizontal": true
+      },
+      {
+        "X": 910,
+        "Y": 310,
+        "Width": 180,
+        "Height": 263,
+        "AnchorX": 90.0,
+        "AnchorY": 205.14000000000001,
+        "FlipHorizontal": true
+      },
+      {
+        "X": 1090,
+        "Y": 310,
+        "Width": 180,
+        "Height": 263,
+        "AnchorX": 90.0,
+        "AnchorY": 205.14000000000001,
+        "FlipHorizontal": true
+      },
+      {
+        "X": 1270,
+        "Y": 310,
+        "Width": 164,
+        "Height": 263,
+        "AnchorX": 82.0,
+        "AnchorY": 205.14000000000001,
+        "FlipHorizontal": true
+      }
+    ],
+    [
+      {
+        "X": 20,
+        "Y": 310,
+        "Width": 163,
+        "Height": 263,
+        "AnchorX": 81.5,
+        "AnchorY": 205.14000000000001,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 183,
+        "Y": 310,
+        "Width": 182,
+        "Height": 263,
+        "AnchorX": 91.0,
+        "AnchorY": 205.14000000000001,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 365,
+        "Y": 310,
+        "Width": 183,
+        "Height": 263,
+        "AnchorX": 91.5,
+        "AnchorY": 205.14000000000001,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 548,
+        "Y": 310,
+        "Width": 182,
+        "Height": 263,
+        "AnchorX": 91.0,
+        "AnchorY": 205.14000000000001,
+        "FlipHorizontal": false
+      }
+    ],
+    [
+      {
+        "X": 735,
+        "Y": 575,
+        "Width": 175,
+        "Height": 264,
+        "AnchorX": 87.5,
+        "AnchorY": 205.92000000000002,
+        "FlipHorizontal": true
+      },
+      {
+        "X": 910,
+        "Y": 573,
+        "Width": 180,
+        "Height": 266,
+        "AnchorX": 90.0,
+        "AnchorY": 207.48000000000002,
+        "FlipHorizontal": true
+      },
+      {
+        "X": 1090,
+        "Y": 573,
+        "Width": 180,
+        "Height": 266,
+        "AnchorX": 90.0,
+        "AnchorY": 207.48000000000002,
+        "FlipHorizontal": true
+      },
+      {
+        "X": 1270,
+        "Y": 573,
+        "Width": 158,
+        "Height": 266,
+        "AnchorX": 79.0,
+        "AnchorY": 207.48000000000002,
+        "FlipHorizontal": true
+      }
+    ],
+    [
+      {
+        "X": 47,
+        "Y": 18,
+        "Width": 136,
+        "Height": 292,
+        "AnchorX": 68.0,
+        "AnchorY": 227.76000000000002,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 183,
+        "Y": 26,
+        "Width": 166,
+        "Height": 284,
+        "AnchorX": 83.0,
+        "AnchorY": 221.52,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 365,
+        "Y": 26,
+        "Width": 183,
+        "Height": 284,
+        "AnchorX": 91.5,
+        "AnchorY": 221.52,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 548,
+        "Y": 19,
+        "Width": 135,
+        "Height": 291,
+        "AnchorX": 67.5,
+        "AnchorY": 226.98000000000002,
+        "FlipHorizontal": false
+      }
+    ],
+    [
+      {
+        "X": 735,
+        "Y": 575,
+        "Width": 175,
+        "Height": 264,
+        "AnchorX": 87.5,
+        "AnchorY": 205.92000000000002,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 910,
+        "Y": 573,
+        "Width": 180,
+        "Height": 266,
+        "AnchorX": 90.0,
+        "AnchorY": 207.48000000000002,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 1090,
+        "Y": 573,
+        "Width": 180,
+        "Height": 266,
+        "AnchorX": 90.0,
+        "AnchorY": 207.48000000000002,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 1270,
+        "Y": 573,
+        "Width": 158,
+        "Height": 266,
+        "AnchorX": 79.0,
+        "AnchorY": 207.48000000000002,
+        "FlipHorizontal": false
+      }
+    ],
+    [
+      {
+        "X": 14,
+        "Y": 839,
+        "Width": 169,
+        "Height": 204,
+        "AnchorX": 84.5,
+        "AnchorY": 159.12,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 183,
+        "Y": 839,
+        "Width": 182,
+        "Height": 206,
+        "AnchorX": 91.0,
+        "AnchorY": 160.68,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 365,
+        "Y": 839,
+        "Width": 183,
+        "Height": 206,
+        "AnchorX": 91.5,
+        "AnchorY": 160.68,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 548,
+        "Y": 839,
+        "Width": 182,
+        "Height": 204,
+        "AnchorX": 91.0,
+        "AnchorY": 159.12,
+        "FlipHorizontal": false
+      }
+    ],
+    [
+      {
+        "X": 730,
+        "Y": 310,
+        "Width": 180,
+        "Height": 245,
+        "AnchorX": 90.0,
+        "AnchorY": 191.1,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 910,
+        "Y": 310,
+        "Width": 180,
+        "Height": 263,
+        "AnchorX": 90.0,
+        "AnchorY": 205.14000000000001,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 1090,
+        "Y": 310,
+        "Width": 180,
+        "Height": 263,
+        "AnchorX": 90.0,
+        "AnchorY": 205.14000000000001,
+        "FlipHorizontal": false
+      },
+      {
+        "X": 1270,
+        "Y": 310,
+        "Width": 164,
+        "Height": 263,
+        "AnchorX": 82.0,
+        "AnchorY": 205.14000000000001,
+        "FlipHorizontal": false
+      }
+    ]
+  ],
+  "SourceSha256": "8ec4f110a06ae28b102357ddd8692541557347ea563319658ba499b14a0d29ae",
+  "Notes": "Explicit inspected groups. N=row3-left, S=row1-left; NE mirrors NW=row2-right, SE mirrors SW=row3-right. Source cells have touching wake edges; no uniform grid is assumed."
+}
