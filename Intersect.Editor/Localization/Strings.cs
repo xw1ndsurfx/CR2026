@@ -928,6 +928,7 @@ public static partial class Strings
             {(int) MapAttributeType.Animation, @"Map Animation" },
             {(int) MapAttributeType.Blocked, @"Blocked" },
             {(int) MapAttributeType.Critter, @"Critter" },
+            {(int) MapAttributeType.Dock, Naval.Dock },
             {(int) MapAttributeType.GrappleStone, @"Grapple Stone" },
             {(int) MapAttributeType.Item, @"Item Spawn" },
             {(int) MapAttributeType.NpcAvoid, @"Npc Avoid" },

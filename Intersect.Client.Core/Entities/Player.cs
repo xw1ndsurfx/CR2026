@@ -2098,6 +2098,15 @@ public partial class Player : Entity, IPlayer
             }
         }
 
+        // Use the native interact control at a painted quay after ordinary event/NPC interaction.
+        if (this == Globals.Me && Intersect.Client.Maps.MapInstance.TryGet(MapId, out var harbourMap) &&
+            Intersect.Framework.Core.Naval.ShipDock.Nearest(harbourMap.Attributes, X + .5, Y + .5, 1.5) != null)
+        {
+            Intersect.Client.Networking.Network.SendPacket(new Intersect.Network.Packets.Client.HarbourRequestPacket());
+            AttackTimer = Timing.Global.Milliseconds + 500;
+            return true;
+        }
+
         //Projectile/empty swing for animations
         PacketSender.SendAttack(Guid.Empty);
         AttackTimer = Timing.Global.Milliseconds + CalculateAttackTime();

@@ -485,6 +485,7 @@ public partial class FrmMapLayers : DockContent
         {MapAttributeType.Animation, Strings.Attributes.MapAnimation},
         {MapAttributeType.Blocked,Strings.Attributes.Blocked},
         {MapAttributeType.Critter,Strings.Attributes.Critter},
+        {MapAttributeType.Dock,Strings.Naval.Dock},
         {MapAttributeType.GrappleStone,Strings.Attributes.Grapple},
         {MapAttributeType.Item,Strings.Attributes.ItemSpawn},
         {MapAttributeType.NpcAvoid,Strings.Attributes.NpcAvoid},
@@ -641,6 +642,7 @@ public partial class FrmMapLayers : DockContent
         switch (attributeType)
         {
             case MapAttributeType.Walkable:
+            case MapAttributeType.Dock:
             case MapAttributeType.Blocked:
             case MapAttributeType.GrappleStone:
             case MapAttributeType.NpcAvoid:

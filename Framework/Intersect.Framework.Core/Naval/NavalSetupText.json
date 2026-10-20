@@ -1,5 +1,6 @@
 {
   "Entries": {
+    "Q - Dock": { "en": "Q - Dock", "fr": "Q - Quai", "es": "Q - Muelle" },
     "Naval setup": { "en": "Naval setup", "fr": "Configuration navale", "es": "Configuración naval" },
     "Prepare a test ship automatically": { "en": "Prepare a test ship automatically", "fr": "Préparer un navire de test automatiquement", "es": "Preparar un barco de prueba automáticamente" },
     "Ship ready on {0}. Ship: ({1}, {2}); boarding point: ({3}, {4}). Navigation is enabled. Use /naval near the boarding point.": {

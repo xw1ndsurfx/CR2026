@@ -528,6 +528,8 @@ namespace Intersect.Server.Migrations.Sqlite.Player
                     b.Property<Guid>("ClassId")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("NavalFleetJson").HasColumnName("NavalFleet").HasColumnType("TEXT");
+
                     b.Property<string>("AppearanceJson")
                         .HasColumnType("TEXT")
                         .HasColumnName("Appearance");

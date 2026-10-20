@@ -936,7 +936,17 @@ public static partial class Graphics
                                 Options.Instance.Map.TileHeight
                             );
 
-                            if (attributesTex != null)
+                            if (attr?.Type == MapAttributeType.Dock)
+                            {
+                                string[] glyph = ["01110", "11011", "11011", "11011", "01110", "00011"];
+                                var size = Math.Min(tileBounds.Width / 7, tileBounds.Height / 8);
+                                for (var gy = 0; gy < glyph.Length; gy++)
+                                for (var gx = 0; gx < glyph[gy].Length; gx++)
+                                    if (glyph[gy][gx] == '1') DrawTexture(sWhiteTex, new RectangleF(0, 0, 1, 1),
+                                        new RectangleF(tileBounds.X + size * (gx + 1), tileBounds.Y + size * (gy + 1), size, size),
+                                        System.Drawing.Color.Gold, null);
+                            }
+                            else if (attributesTex != null)
                             {
                                 var blue = (attr is MapWarpAttribute warp && warp.ChangeInstance) ? 0 : 255;
                                 DrawTexture(

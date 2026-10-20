@@ -25,4 +25,6 @@ public enum MapAttributeType : byte
     Slide,
 
     Critter,
+
+    Dock = 12, // Append only: persisted map attribute values must stay stable.
 }
