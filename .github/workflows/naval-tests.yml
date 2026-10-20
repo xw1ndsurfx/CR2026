@@ -8,6 +8,9 @@ on:
       - 'Intersect.Tests.Server/ClientConfigurationSafetyTests.cs'
       - 'Intersect.Tests.Client/HarbourUiRulesTests.cs'
       - 'Intersect.Tests.Client/ClientLoopDiagnosticsTests.cs'
+      - 'Intersect.Tests.Client/ClientNetworkPingTests.cs'
+      - 'Intersect.Network/ClientNetwork.cs'
+      - 'Intersect.Network/Intersect.Network.csproj'
       - 'Intersect.Client.Core/Core/ClientLoopDiagnostics.cs'
       - 'Intersect.Client.Framework/Gwen/Control/Canvas.cs'
       - 'Intersect.Client.Core/Interface/Menu/MenuGuiBase.cs'
@@ -42,6 +45,6 @@ jobs:
         with:
           dotnet-version: 8.0.x
       - run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Debug --filter "FullyQualifiedName~Intersect.Tests.Server.Naval|FullyQualifiedName~ClientConfigurationSafetyTests" --nologo
-      - run: dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug --filter "FullyQualifiedName~Naval|FullyQualifiedName~HarbourUiRulesTests|FullyQualifiedName~ClientLoopDiagnosticsTests" --nologo
+      - run: dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug --filter "FullyQualifiedName~Naval|FullyQualifiedName~HarbourUiRulesTests|FullyQualifiedName~ClientLoopDiagnosticsTests|FullyQualifiedName~ClientNetworkPingTests" --nologo
       - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -- --naval-only
       - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --no-build -- --harbour-only

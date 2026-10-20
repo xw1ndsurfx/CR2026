@@ -74,7 +74,7 @@ internal sealed class ClientLoopDiagnostics : IDisposable
             Enqueue($"{report.Kind}: phase={report.Phase}; durationMs={report.DelayMilliseconds}; progress={report.Generation}"));
         _path = Path.Combine("logs", $"client-loop-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Environment.ProcessId}.log");
         var version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        Enqueue($"started diagnosticRevision=2; version={version}; runtime={Environment.Version}; os={RuntimeInformation.OSDescription}; architecture={RuntimeInformation.ProcessArchitecture}; gameThread={_gameThread}");
+        Enqueue($"started diagnosticRevision=3; version={version}; runtime={Environment.Version}; os={RuntimeInformation.OSDescription}; architecture={RuntimeInformation.ProcessArchitecture}; gameThread={_gameThread}");
         logger.LogInformation("Client loop diagnostics: {Path}", _path);
         _timer = new Timer(_ => Poll(), null, 2000, 2000);
     }

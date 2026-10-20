@@ -1,7 +1,5 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Net;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
 using System.Security.Cryptography;
 using Intersect.Core;
 using Intersect.Framework.Core.Security;
@@ -21,7 +19,6 @@ public partial class ClientNetwork : AbstractNetwork, IClient
     internal static NetworkLayerInterfaceFactory? NetworkLayerInterfaceFactory { get; set; }
 
     private readonly INetworkLayerInterface _interface;
-    private readonly Ping _ping = new();
     private bool _isConnected;
 
     public ClientNetwork(
@@ -61,57 +58,12 @@ public partial class ClientNetwork : AbstractNetwork, IClient
 
     public bool IsServerOnline => IsConnected;
 
-    public int Ping
-    {
-        get
-        {
-            if (Connection is { } connection)
-            {
-                return (int)connection.Statistics.Ping;
-            }
-
-            if (Configuration.Host is not { } hostNameOrAddress || UnresolvableHostNames.Contains(hostNameOrAddress))
-            {
-                return -1;
-            }
-
-            try
-            {
-                // TODO: Add feature-specific log filtering, this one gets annoying
-                // ApplicationContext.Logger.LogTrace("Sending ping to server");
-
-                // Send a ping to the server. Timeout: 5000ms (5 seconds). Packet size: 32 bytes. TTL: 64. Don't fragment.
-                var reply = _ping.Send(hostNameOrAddress, 5000, [], new PingOptions(64, true));
-                if (reply is { Status: IPStatus.Success })
-                {
-                    // Return the roundtrip time in milliseconds (ms) as an integer value (no decimals).
-                    return (int)reply.RoundtripTime;
-                }
-            }
-            catch (PingException pingException)
-            {
-                if (pingException.InnerException is SocketException { SocketErrorCode: SocketError.HostNotFound })
-                {
-                    UnresolvableHostNames.Add(hostNameOrAddress);
-                    ApplicationContext.Logger.LogWarning(
-                        pingException,
-                        "Invalid hostname '{HostNameOrAddress}' will not be pinged again",
-                        hostNameOrAddress
-                    );
-                }
-                else
-                {
-                    ApplicationContext.Logger.LogWarning(pingException, "Error sending ping request");
-                }
-            }
-            catch (Exception exception)
-            {
-                ApplicationContext.Logger.LogWarning(exception, "Unknown error sending ping request");
-            }
-
-            return -1;
-        }
-    }
+    /// <summary>
+    /// Latest transport round-trip time, or -1 before a connection exists.
+    /// UI reads must never perform DNS resolution or wait for an ICMP timeout.
+    /// Server reachability is checked separately through the unconnected game protocol.
+    /// </summary>
+    public int Ping => Connection is { } connection ? (int)connection.Statistics.Ping : -1;
 
     public bool Connect()
     {
