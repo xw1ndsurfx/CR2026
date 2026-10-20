@@ -16,13 +16,20 @@ public sealed partial class NavalTests
         using var world=new EnemyTestWorld();var shooter=world.Add(8.5,10.5,false);var enemy=world.Add(18.5,10.5,true);
         var captain=world.State(shooter).CaptainId;
         var patrol=world.Field<HerboniaPatrol>(enemy,"Enemy");patrol.SailingExperienceReward=350;patrol.MaximumHealth=500;patrol.Level=8;
+        patrol.Loot=[new(){ItemId=Guid.NewGuid(),MinimumQuantity=2,MaximumQuantity=2}];
         world.Set(enemy,"Health",30);
         world.Invoke("Fire",shooter,true,1000L);
         Assert.That(world.Reward(captain),Is.Zero,"No reward for sailing, firing or a nonfatal hit.");
         for(var now=1000L;now<=3000;now+=50) world.Invoke("UpdateCannonballs",now);
         Assert.That(world.Field<int>(enemy,"Health"),Is.Zero);
         Assert.That(world.Reward(captain),Is.EqualTo(350));
+        var reward=world.Rewards[captain]!;
+        var cargo=(Array)reward.GetType().GetProperty("Cargo")!.GetValue(reward)!;
+        Assert.That(cargo.Length,Is.EqualTo(1));
+        var parcel=(NavalCargoParcel)cargo.GetValue(0)!.GetType().GetProperty("Parcel")!.GetValue(cargo.GetValue(0))!;
+        Assert.That(parcel.Quantity,Is.EqualTo(2));
         world.Invoke("CreditEnemySink",enemy,world.State(shooter).Id,captain);
+        Assert.That(world.Rewards[captain],Is.SameAs(reward),"Repeated death callback cannot roll or queue cargo again.");
         Assert.That(world.Reward(captain),Is.EqualTo(350),"Three balls or a repeated death callback cannot duplicate XP.");
         world.Set(enemy,"Health",100);world.Set(enemy,"SunkUntil",0L); // Same id after respawn must not resurrect an old combat HUD.
         Assert.That(world.Invoke("CombatTarget",world.State(shooter).Id,3000L,new HashSet<Guid>{world.Map.Id}),Is.EqualTo(Guid.Empty));

@@ -27,13 +27,14 @@ public sealed class NavalPlayerData
     public int Version {get;set;}=2;
     public List<OwnedShip> Ships {get;set;}=[];
     public long SailingExperience {get;set;}
+    public long PendingCharacterExperience {get;set;}
     [JsonExtensionData] public IDictionary<string,JToken>? AdditionalData {get;set;}
     public static NavalPlayerData Parse(string? json)
     {
         if(string.IsNullOrWhiteSpace(json)) return new();
         var token=JToken.Parse(json);
         var data=token is JArray ? new NavalPlayerData {Ships=token.ToObject<List<OwnedShip>>()!} : token.ToObject<NavalPlayerData>()!;
-        if(data==null || data.Version!=2 || data.Ships==null || data.Ships.Count>32 || data.Ships.Any(s=>s==null) || data.SailingExperience is <0 or >200000000000000L)
+        if(data==null || data.Version!=2 || data.Ships==null || data.Ships.Count>32 || data.Ships.Any(s=>s==null || s.Cargo==null || s.Cargo.Count>200 || s.Cargo.Any(p=>p?.IsValid()!=true) || s.Cargo.Select(p=>p.Id).Distinct().Count()!=s.Cargo.Count) || data.SailingExperience is <0 or >200000000000000L || data.PendingCharacterExperience is <0 or >200000000000000L)
             throw new JsonException("Invalid naval player data");
         return data;
     }

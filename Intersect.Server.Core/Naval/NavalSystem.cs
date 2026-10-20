@@ -126,6 +126,7 @@ internal static partial class NavalSystem
             { Notice(player,"Your Sailing reward could not be saved. Try again shortly."); return; }
             if (!ApplyPendingDamage(player,Timing.Global.Milliseconds,force:true))
             { Notice(player,"Ship damage could not be saved. Try disembarking again shortly."); return; }
+            ApplyCharacterExperience(player,Timing.Global.Milliseconds);
             ShipState anchor = null;
             OwnedShip returnPoint = null;
             (Guid MapId, int X, int Y)? dock = null;
@@ -214,6 +215,7 @@ internal static partial class NavalSystem
     internal static void Update(Player player, long now)
     {
         ApplyPendingExperience(player,now);
+        ApplyCharacterExperience(player,now);
         ApplyPendingDamage(player, now);
         ShipState pendingWarp = null;
         Vessel rescueVessel = null;
@@ -288,6 +290,7 @@ internal static partial class NavalSystem
         lock (player.EntityLock)
         {
             ApplyPendingExperience(player,Timing.Global.Milliseconds,force:true);
+            ApplyCharacterExperience(player,Timing.Global.Milliseconds);
             ApplyPendingDamage(player,Timing.Global.Milliseconds,force:true);
             OwnedShip owned = null;
             lock (Gate)
@@ -340,6 +343,8 @@ internal static partial class NavalSystem
             Ships.Values.Where(v => visible.Contains(v.State.MapId) && ocean.Contains(v.State.MapId) && MapController.Get(v.State.MapId) != null)
                 .OrderByDescending(v=>v.State.Id==player.CaptainedShipId?2:v.State.Id==targetId?1:0).Take(64)
                 .Select(v => new ShipSnapshot { Id = v.State.Id, CaptainId = v.State.CaptainId, MapId = v.State.MapId,
+                    CargoCapacity=v.OwnerId==player.Id?v.Definition.CargoCapacity:0,
+                    Cargo=v.OwnerId==player.Id?(player.NavalFleet.FirstOrDefault(s=>s.Id==v.State.Id)?.Cargo.ToArray()??[]):[],
                     Enemy=v.Enemy!=null,Level=v.Enemy?.Level??1,MaximumHealth=v.MaximumHealth,Name=v.Name, X = v.State.X, Y = v.State.Y, Heading = v.State.Heading, Speed = v.State.Speed,
                     Graphics = v.SunkUntil > 0 ? v.SinkingGraphics : v.State.DamageState > 0 ? v.Definition.DamagedGraphics : v.Definition.Graphics,
                     Frames = v.Definition.Frames, FrameMilliseconds = v.Definition.FrameMilliseconds,

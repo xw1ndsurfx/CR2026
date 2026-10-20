@@ -38,6 +38,8 @@ public sealed class ShipSnapshot
     [Key(17)] public bool PortFlash { get; set; }
     [Key(18)] public bool StarboardFlash { get; set; }
     [Key(19)] public bool Anchored { get; set; }
+    [Key(24)] public NavalCargoParcel[] Cargo {get;set;}=[];
+    [Key(25)] public int CargoCapacity {get;set;}
     [Key(21)] public bool Enemy {get;set;}
     [Key(22)] public int Level {get;set;}=1;
     [Key(23)] public int MaximumHealth {get;set;}=100;

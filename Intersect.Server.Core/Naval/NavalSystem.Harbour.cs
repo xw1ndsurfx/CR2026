@@ -92,6 +92,7 @@ internal static partial class NavalSystem
                     message = "Ship already owned, fleet full or Premium required.";
                 else message = PurchaseOrRepair(player, offer, null);
             }
+            else if (packet.Action == HarbourAction.ClaimCargo) message=ClaimCargo(player,owned);
             else if (packet.Action == HarbourAction.Rename)
             {
                 var name=ShipNames.Normalize(packet.Name);
@@ -138,7 +139,7 @@ internal static partial class NavalSystem
         var currency = Currency(offer);
         if (currency == null) return "The ship currency is unavailable. Ask an administrator.";
         var fleetBefore = player.NavalFleetJson;
-        var inventory = player.Items.Select(i => i.Clone()).ToArray();
+        var inventory = SnapshotCargoInventory(player);
         try
         {
             var result = HarbourTrade.Commit(
@@ -163,7 +164,7 @@ internal static partial class NavalSystem
             var currency = Currency(o);
             return new HarbourEntry { ModelId = o.Id, Name = o.Name, ShipName=owned?.Name??"", Currency = currency?.Name ?? o.Currency,
                 Price = o.Price, RepairPrice = o.RepairPrice, PremiumRequired = o.PremiumRequired,
-                Owned = owned != null, Health = owned?.Health ?? 100, Balance = currency == null ? 0 : player.CountItems(currency.Id),
+                CargoCount=owned?.Cargo.Count??0,Owned = owned != null, Health = owned?.Health ?? 100, Balance = currency == null ? 0 : player.CountItems(currency.Id),
                 ForSale = o.ForSale, CurrencyAvailable = currency != null };
         }).ToArray() });
 
@@ -213,9 +214,7 @@ internal static partial class NavalSystem
             if (damage <= 0 || !Ships.TryGetValue(shipId, out var vessel) || vessel.OwnerId != owner.Id || vessel.SunkUntil > 0) return false;
             var owned = owner.NavalFleet.FirstOrDefault(s => s.Id == shipId);
             if (owned == null) return false;
-            var before = owned.Health;
-            owned.Health = ShipFleetRules.AfterDamage(before, damage);
-            if (owner.User?.Save(force: true) != UserSaveResult.Completed) { owned.Health = before; return false; }
+            if(!CommitOwnedHullDamage(owned,damage,()=>owner.User?.Save(force:true)==UserSaveResult.Completed)) return false;
             vessel.Health = owned.Health;
             vessel.State.DamageState = owned.Health < 100 ? 1 : 0;
             if (owned.Sunk)

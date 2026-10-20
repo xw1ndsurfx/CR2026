@@ -105,7 +105,7 @@ Le System Editor naval comporte six onglets, dont Patrouilles IA Herbonia. Les n
 
 ### Ressources sélectionnables
 
-- Les quatre icônes d’action (bâbord, tribord, ancre, débarquement) se choisissent dans **resources/spells**. Un aperçu de l’image sélectionnée apparaît à droite du choix. Un choix vide conserve l’icône native dessinée par le client.
+- Les cinq icônes d’action (bâbord, tribord, cale, ancre, débarquement) se choisissent dans **resources/spells**. Un aperçu de l’image sélectionnée apparaît à droite du choix. Un choix vide conserve l’icône native dessinée par le client.
 - Les sons se choisissent dans **resources/sounds** au format **WAV**, celui que charge le moteur pour ses effets sonores. Le bouton **Écouter** permet une écoute dans l’éditeur. Les fichiers OGG de musique ne sont pas proposés comme effets sonores.
 - Chaque événement a son choix : tir, impact sur coque, impact dans l’eau, impact sur obstacle, naufrage, ancre, mise à l’eau, débarquement et niveau Sailing. Un champ vide désactive ce son. Aucun fichier sonore absent n’a été inventé ou ajouté.
 - Une bordée joue son son de tir une fois, avec trois effets visuels. Les impacts ont leurs propres événements. Les sons utilisent la distance et les réglages audio natifs du client ; les événements répétés dans les mises à jour réseau ne rejouent pas leur son.
@@ -138,3 +138,5 @@ Le stockage naval existant du personnage contient désormais une enveloppe versi
 
 
 Suite : [Patrouilles IA Herbonia et retour à l’embarquement](NavalHerbonia.fr.md).
+
+Suite : [PV du bateau, EXP personnage et cargaison](NavalCargo.fr.md).

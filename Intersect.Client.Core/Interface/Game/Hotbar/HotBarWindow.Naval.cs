@@ -14,9 +14,10 @@ namespace Intersect.Client.Interface.Game.Hotbar;
 public partial class HotBarWindow
 {
     private readonly List<NavalActionButton> _navalButtons=[];
-    private Label? _navalStatus;
+    private NavalSailingBar? _navalStatus;
     private NavalSailingBar? _sailingBar;
     private NavalTargetHud? _targetHud;
+    private NavalCargoWindow? _cargoWindow;
     private bool _wasSailing;
     private bool[] _hiddenBeforeSailing=[];
     private static string KeyCaption(int slot)
@@ -40,6 +41,8 @@ public partial class HotBarWindow
     {
         var own=Naval.NavalWorld.OwnShip;
         var sailing=own!=null;
+        if(sailing && _cargoWindow==null) _cargoWindow=new NavalCargoWindow(Parent);
+        _cargoWindow?.Update(own,Naval.NavalWorld.CargoOpen);
         if(sailing && _targetHud==null) _targetHud=new NavalTargetHud(Parent);
         _targetHud?.Update(sailing && Interface.InGameUiOrNull?.SuppressStatusHuds!=true ? Naval.NavalWorld.CombatTarget : null);
         if(sailing && _navalButtons.Count==0)
@@ -53,7 +56,7 @@ public partial class HotBarWindow
             }
             _sailingBar=new NavalSailingBar(Parent) {AutoSizeToContents=false,Font=GameContentManager.Current.GetFont("sourcesansproblack")??Skin.DefaultFont,
                 FontSize=10,TextAlign=Pos.Center,MouseInputEnabled=false};
-            _navalStatus=new Label(Parent,"NavalHotbarStatus") { AutoSizeToContents=false,
+            _navalStatus=new NavalSailingBar(Parent,"NavalHullHealth") { Hull=true,AutoSizeToContents=false,
                 Font=GameContentManager.Current.GetFont("sourcesanspro")??Skin.DefaultFont,FontSize=11,
                 TextAlign=Pos.Center,MouseInputEnabled=false };
         }
@@ -96,8 +99,9 @@ public partial class HotBarWindow
             _navalStatus.IsHidden=!sailing;
             if(sailing)
             {
-                _navalStatus.SetBounds(X,Y-50,Width,22);
-                _navalStatus.Text=string.Format(N("Hull: {0}%   Speed: {1:0.0}"),own!.Health,Math.Abs(own.Speed));
+                _navalStatus.SetBounds(X,Y-54,Width,23);
+                _navalStatus.Value=own!.Health/(float)Math.Max(1,own.MaximumHealth);
+                _navalStatus.Text=string.Format(N("Hull: {0}/{1} · Cargo: {2}/{3} · Speed: {4:0.0}"),own!.Health,own.MaximumHealth,own.Cargo.Length,own.CargoCapacity,Math.Abs(own.Speed));
             }
         }
     }

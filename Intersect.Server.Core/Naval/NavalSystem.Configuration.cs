@@ -31,6 +31,8 @@ internal static partial class NavalSystem
                     edited.Validate(Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight);
                     if (Ships.Values.Any(v => v.State.CaptainId != Guid.Empty))
                         return new() { Error = "Stop all ships before changing navigation settings." };
+                    if(edited.Herbonia.SelectMany(p=>p.Loot).Any(e=>ItemDescriptor.Get(e.ItemId)==null))
+                        return new() {Error="Choose an existing item for every naval loot entry."};
                     ValidateEditorShips(edited);
                     Configuration.Replace(edited, request.ExpectedVersion);
                     // No live captain is moved. Idle test ships are replaced; personal vessels are retained.

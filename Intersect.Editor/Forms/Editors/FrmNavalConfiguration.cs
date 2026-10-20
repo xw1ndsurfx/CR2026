@@ -102,7 +102,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             UpdateRemove();
             foreach (Control control in split.Panel2.Controls.Cast<Control>().ToArray()) control.Dispose();
             if (list.SelectedItem is not TItem item) return;
-            var fields = Fields(item, section, item is HarbourOffer or HerboniaPatrol ? ["Ship", "AdditionalData"] : ["AdditionalData"]);
+            var fields = Fields(item, section, item is HarbourOffer or HerboniaPatrol ? ["Ship", "Loot", "AdditionalData"] : ["AdditionalData"]);
             if (item is HarbourOffer offer)
             {
                 var model = Fields(offer.Ship, section, ["Id", "MapId", "X", "Y", "DockX", "DockY", "SinkingGraphics", "AdditionalData"]);
@@ -112,6 +112,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             }
             if(item is HerboniaPatrol patrol)
             {
+                var loot=LootFields(patrol,section);fields.Controls.Add(loot,0,fields.RowCount++);fields.SetColumnSpan(loot,2);
                 var model=Fields(patrol.Ship,section,["AdditionalData","DockX","DockY"]);
                 model.Dock=DockStyle.Top;model.AutoSize=true;model.AutoSizeMode=AutoSizeMode.GrowAndShrink;
                 var group=new GroupBox {Text=T("Ship model and movement"),Dock=DockStyle.Top,AutoSize=true,Padding=new(6,24,6,6)};
@@ -141,6 +142,26 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         }
     }
 
+    private Control LootFields(HerboniaPatrol patrol,int section)
+    {
+        var group=new GroupBox {Text=T("Naval loot table"),Dock=DockStyle.Top,Height=340,Padding=new(6,20,6,6)};
+        var list=new ListBox {Dock=DockStyle.Left,Width=180,FormattingEnabled=true};
+        var detail=new Panel {Dock=DockStyle.Fill};
+        var buttons=new FlowLayoutPanel {Dock=DockStyle.Bottom,Height=36};
+        var add=new Button {Text=T("Add"),AutoSize=true};var remove=new Button {Text=T("Remove"),AutoSize=true};buttons.Controls.AddRange([add,remove]);
+        list.Format+=(_,e)=>e.Value=e.ListItem is NavalLootEntry entry ? ItemDescriptor.Get(entry.ItemId)?.Name??T("Automatic / not selected") : "";
+        void Populate(object selected) {list.Items.Clear();list.Items.AddRange(patrol.Loot);list.SelectedItem=selected;}
+        list.SelectedIndexChanged+=(_,_)=>
+        {
+            foreach(Control child in detail.Controls.Cast<Control>().ToArray()) child.Dispose();
+            if(list.SelectedItem is NavalLootEntry entry) detail.Controls.Add(Fields(entry,section,[]));
+            MiniGameEditorTheme.Apply(detail);
+        };
+        add.Click+=(_,_)=>{if(patrol.Loot.Length>=32) return;var entry=new NavalLootEntry();patrol.Loot=[..patrol.Loot,entry];Changed(section);Populate(entry);};
+        remove.Click+=(_,_)=>{if(list.SelectedItem is not NavalLootEntry entry) return;patrol.Loot=patrol.Loot.Where(e=>e!=entry).ToArray();Changed(section);Populate(patrol.Loot.FirstOrDefault());};
+        group.Controls.Add(detail);group.Controls.Add(list);group.Controls.Add(buttons);Populate(patrol.Loot.FirstOrDefault());return group;
+    }
+
     private TableLayoutPanel Fields(object target, int section, string[] skip)
     {
         var panel = new TableLayoutPanel { Dock = DockStyle.Fill, AutoScroll = true, ColumnCount = 2, Padding = new(12), AutoSize = false };
@@ -151,6 +172,12 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             void Set(object? changed) { property.SetValue(target, changed); Changed(section); }
             if (target is NavalPresentation && property.PropertyType==typeof(string))
                 field=AssetField(property.Name,value?.ToString()??"",changed=>Set(changed));
+            else if(property.PropertyType==typeof(NavalCargoKind))
+            {
+                var box=new ComboBox {DropDownStyle=ComboBoxStyle.DropDownList,Dock=DockStyle.Fill};
+                box.Items.AddRange(Enum.GetValues<NavalCargoKind>().Select(k=>T(NavalCargo.Caption(k))).ToArray());box.SelectedIndex=(int)(NavalCargoKind)value!;
+                box.SelectedIndexChanged+=(_,_)=>Set((NavalCargoKind)box.SelectedIndex);field=box;
+            }
             else if (property.PropertyType == typeof(bool))
             {
                 var box = new CheckBox { Checked = (bool)value!, Dock = DockStyle.Fill };
@@ -159,7 +186,8 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             else if (property.PropertyType == typeof(Guid) && property.Name != "Id")
             {
                 var choices = new List<Choice> { new(Guid.Empty, T("Automatic / not selected")) };
-                if (property.Name == "MapId") choices.AddRange(MapList.OrderedMaps.Select(m => new Choice(m.MapId, m.Name)));
+                if(property.Name=="ItemId") choices.AddRange(ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().OrderBy(i=>i.Name).Select(i=>new Choice(i.Id,i.Name)));
+                else if (property.Name == "MapId") choices.AddRange(MapList.OrderedMaps.Select(m => new Choice(m.MapId, m.Name)));
                 else choices.AddRange(ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().Where(i => i.ItemType == ItemType.Currency).OrderBy(i => i.Name).Select(i => new Choice(i.Id, i.Name)));
                 var id = (Guid)value!; if (!choices.Any(c => c.Id == id)) choices.Add(new(id, id.ToString()));
                 var box = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };

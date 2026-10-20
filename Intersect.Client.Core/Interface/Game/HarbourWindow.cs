@@ -42,14 +42,16 @@ internal sealed class HarbourWindow : Window
     }
     private static Button Button(Base parent, string id, string caption, int x, int y, int w, Action action)
     {
-        var button = new Button(parent, id) { Text = ClientLanguages.Text(caption),
+        var button = new Button(parent, id) { Text = caption=="Unload cargo"?NavalSetupText.Get(caption,ClientLanguages.Current):ClientLanguages.Text(caption),
             Font = GameContentManager.Current.GetFont("sourcesanspro") ?? parent.Skin.DefaultFont, FontSize = 11 };
         button.SetBounds(x,y,w,30); button.Clicked += (_,_) => action(); return button;
     }
     internal void Apply(HarbourStatePacket packet)
     {
         _state = packet; _state.Entries ??= []; _waiting = false;
-        _message.Text = ClientLanguages.Expanded(packet.Message.Length == 0 ? (_view == HarbourView.Shop ? "Buy a ship or fully repair a damaged or sunken ship." : "Choose one of your ships to set sail.") : packet.Message);
+        var message=packet.Message.Length==0 ? (_view==HarbourView.Shop ? "Buy a ship or fully repair a damaged or sunken ship." : "Choose one of your ships to set sail.") : packet.Message;
+        var translated=NavalSetupText.Get(message,ClientLanguages.Current);
+        _message.Text=translated==message?ClientLanguages.Expanded(message):translated;
         RenderEntries();
     }
     private void Request(HarbourAction action, string model,string name="")
@@ -92,6 +94,9 @@ internal sealed class HarbourWindow : Window
                     title:ClientLanguages.Text("Rename ship"),prompt:ClientLanguages.Text("Enter your ship name (1 to 32 characters)."),inputType:InputType.TextInput,
                     onSubmit:(_,args)=>{if(args.Value is StringSubmissionValue name) Request(HarbourAction.Rename,entry.ModelId,name.Value??"");}));
                 rename.IsDisabled=!entry.Owned;
+                var unload=Button(_cards,"Unload"+i,"Unload cargo",4,y+110,280,()=>Request(HarbourAction.ClaimCargo,entry.ModelId));
+                unload.IsDisabled=!entry.Owned || entry.CargoCount==0;
+                Text(_cards,"Cargo"+i,string.Format(NavalSetupText.Get("Cargo: {0}",ClientLanguages.Current),entry.CargoCount),310,y+113,280,24);
             }
 
         }

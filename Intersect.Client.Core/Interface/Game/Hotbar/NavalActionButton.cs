@@ -20,6 +20,7 @@ internal sealed class NavalActionButton(Base parent,string name) : Button(parent
         if(action==ShipAction.StarboardCannons) return cannon.Select(row=>new string(row.Reverse().ToArray())).ToArray();
         return action switch
         {
+            ShipAction.Cargo=>[" GGGGGGGGG "," G B G B G "," G B G B G "," GGGGGGGGG "," G B G B G "," G B G B G "," GGGGGGGGG ","           "],
             ShipAction.Anchor=>["    GGG    ","    G G    ","    GGG    ","     G     "," GGGGGGGGG "," G   G   G ","  GG G GG  ","    GGG    "],
             ShipAction.LeaveHelm=>[" BBBB      "," B  B  G   "," B  B  GG  "," B GGGGGGG "," B  B  GG  "," B  B  G   "," BBBB      "," SSSSSSSSS "],
             _=>["           ","    SSS    ","   S   S   ","  S     S  ","  S     S  ","   S   S   ","    SSS    ","           "]

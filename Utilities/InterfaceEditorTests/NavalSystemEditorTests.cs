@@ -60,6 +60,7 @@ internal static class NavalSystemEditorTests
             Console.WriteLine("PASS localized Naval System Editor opens six sections and keeps independent save versions");
             CheckAssetPreview();
             CheckHerboniaEditor();
+            CheckLootEditor();
         }
         finally { CultureInfo.CurrentUICulture = culture; }
     }
@@ -87,6 +88,40 @@ internal static class NavalSystemEditorTests
             editor.Hide();
         }
         Console.WriteLine("PASS Herbonia AI editor controls save through authoritative navigation configuration");
+    }
+
+    private static void CheckLootEditor()
+    {
+        var item=new Intersect.Framework.Core.GameObjects.Items.ItemDescriptor(Guid.NewGuid()) {Name="Naval loot test"};
+        Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Lookup.Set(item.Id,item);
+        try
+        {
+            var patrol=new HerboniaPatrol();patrol.Ship.MapId=Guid.NewGuid();patrol.Ship.X=patrol.Ship.Y=10.5;
+            patrol.Loot=[new(){ItemId=item.Id}];
+            using var editor=new FrmNavalConfiguration(new() {NavigationJson=JsonConvert.SerializeObject(new NavalConfiguration {Herbonia=[patrol]}),CatalogueJson="{}"});
+            var tabs=editor.Controls.OfType<TabControl>().Single();tabs.SelectedIndex=5;
+            var controls=Descendants(tabs.TabPages[5]).ToArray();
+            controls.OfType<NumericUpDown>().Single(c=>c.Name=="MinimumQuantity").Value=2;
+            controls.OfType<NumericUpDown>().Single(c=>c.Name=="MaximumQuantity").Value=5;
+            controls.OfType<NumericUpDown>().Single(c=>c.Name=="ChancePercent").Value=50;
+            controls.OfType<NumericUpDown>().Single(c=>c.Name=="Quality").Value=4;
+            controls.OfType<NumericUpDown>().Single(c=>c.Name=="CargoCapacity").Value=30;
+            controls.OfType<ComboBox>().Single(c=>c.Name=="Kind").SelectedIndex=(int)NavalCargoKind.RoyalChest;
+            var save=(NavalConfigurationRequestPacket)typeof(FrmNavalConfiguration).GetMethod("PrepareSave",BindingFlags.NonPublic|BindingFlags.Instance)!.Invoke(editor,null)!;
+            var actual=JsonConvert.DeserializeObject<NavalConfiguration>(save.ConfigurationJson)!.Herbonia.Single();
+            if(actual.Loot[0].ItemId!=item.Id || actual.Loot[0].MaximumQuantity!=5 || actual.Loot[0].Kind!=NavalCargoKind.RoyalChest || actual.Ship.CargoCapacity!=30)
+                throw new Exception("The loot table must persist actual item ids, quantities, type and hold capacity.");
+            var preview=Environment.GetEnvironmentVariable("NAVAL_LOOT_PREVIEW");
+            if(!string.IsNullOrEmpty(preview))
+            {
+                editor.StartPosition=FormStartPosition.Manual;editor.Location=new(-20000,-20000);editor.ShowInTaskbar=false;editor.Show();Application.DoEvents();
+                var group=controls.OfType<GroupBox>().Single(c=>c.Text=="Table de butin naval");((ScrollableControl)group.Parent!).ScrollControlIntoView(group);Application.DoEvents();
+                using var bitmap=new System.Drawing.Bitmap(editor.Width,editor.Height);editor.DrawToBitmap(bitmap,new System.Drawing.Rectangle(0,0,editor.Width,editor.Height));
+                bitmap.Save(preview,System.Drawing.Imaging.ImageFormat.Png);editor.Hide();
+            }
+            Console.WriteLine("PASS native naval loot table: existing items, probabilities, qualities, quantities and capacity");
+        }
+        finally {Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Lookup.Delete(item);}
     }
 
     private static void CheckAssetPreview()
