@@ -61,6 +61,7 @@ internal static class NavalSpriteCatalog
                         new JsonSerializerSettings { MaxDepth = 12, TypeNameHandling = TypeNameHandling.None });
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException or ArgumentException) { }
+            if (atlas?.IsValid(width, height, frames) == true) atlas.UpgradeLegacySoutheast(name);
             Atlases[name] = atlas;
         }
         return atlas?.IsValid(width, height, frames) == true ? atlas : null;
