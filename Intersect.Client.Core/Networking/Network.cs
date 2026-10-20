@@ -190,6 +190,8 @@ internal static partial class Network
         }
 
         Globals.WaitingOnServer = true;
+        Core.ClientLoopDiagnostics.Mark("network/connect request");
+        Core.ClientLoopDiagnostics.Note("Network connect requested from client UI.");
         Socket.Connect(ClientConfiguration.Instance.Host, ClientConfiguration.Instance.Port);
     }
 

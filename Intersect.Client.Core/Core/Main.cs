@@ -23,17 +23,22 @@ internal static partial class Main
     internal static void Start(IClientContext context)
     {
         //Load Graphics
+        ClientLoopDiagnostics.Mark("startup/graphics assets");
         Graphics.InitGraphics();
 
         //Load Sounds
+        ClientLoopDiagnostics.Mark("startup/audio device");
         Audio.Init();
+        ClientLoopDiagnostics.Mark("startup/menu music");
         Audio.PlayMusic(ClientConfiguration.Instance.MenuMusic, ClientConfiguration.Instance.MusicFadeTimer, ClientConfiguration.Instance.MusicFadeTimer, true);
 
         //Init Network
+        ClientLoopDiagnostics.Mark("startup/network initialization");
         Networking.Network.InitNetwork(context);
         Fade.FadeIn(ClientConfiguration.Instance.FadeDurationMs);
 
         //Make Json.Net Familiar with Our Object Types
+        ClientLoopDiagnostics.Mark("startup/descriptor warmup");
         var id = Guid.NewGuid();
         foreach (var val in Enum.GetValues(typeof(GameObjectType)))
         {
@@ -61,10 +66,13 @@ internal static partial class Main
     {
         lock (Globals.GameLock)
         {
+            ClientLoopDiagnostics.Mark("update/network");
             Networking.Network.Update();
+            ClientLoopDiagnostics.Mark("update/fade");
             Fade.Update();
             Interface.Interface.SetHandleInput(Globals.GameState != GameStates.Intro);
 
+            ClientLoopDiagnostics.Mark("update/game state");
             switch (Globals.GameState)
             {
                 case GameStates.Intro:
@@ -96,9 +104,12 @@ internal static partial class Main
                     );
             }
 
+            ClientLoopDiagnostics.Mark("update/input");
             Globals.InputManager.Update(deltaTime);
+            ClientLoopDiagnostics.Mark("update/audio");
             Audio.Update();
 
+            ClientLoopDiagnostics.Mark("update/plugin callbacks");
             Globals.OnGameUpdate(deltaTime);
         }
     }

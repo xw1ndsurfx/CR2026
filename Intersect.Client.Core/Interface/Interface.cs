@@ -334,11 +334,13 @@ public static partial class Interface
     {
         if (!_initialized)
         {
+            ClientLoopDiagnostics.Mark("UI/initialize GWEN");
             InitGwen();
         }
 
         if (Globals.GameState == GameStates.Menu)
         {
+            ClientLoopDiagnostics.Mark("UI/menu update");
             MenuUi.Update(elapsed, total);
         }
         else if (Globals.GameState == GameStates.InGame)
@@ -365,6 +367,7 @@ public static partial class Interface
 
         if (Globals.GameState == GameStates.Menu)
         {
+            ClientLoopDiagnostics.Mark("UI/menu draw");
             MenuUi.Draw(elapsed, total);
         }
         else if (Globals.GameState == GameStates.InGame)

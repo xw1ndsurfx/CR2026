@@ -36,6 +36,7 @@ namespace Intersect.Client.MonoGame;
 internal partial class IntersectGame : Game
 {
     private bool mInitialized;
+    private ClientLoopDiagnostics? _loopDiagnostics;
 
     private double mLastUpdateTime = 0;
 
@@ -69,6 +70,8 @@ internal partial class IntersectGame : Game
     {
         Context = context;
         PostStartupAction = postStartupAction;
+        _loopDiagnostics = ClientLoopDiagnostics.Start(context.Logger);
+        ClientLoopDiagnostics.Mark("startup/strings");
 
         try
         {
@@ -173,7 +176,9 @@ internal partial class IntersectGame : Game
     /// </summary>
     protected override void Initialize()
     {
+        ClientLoopDiagnostics.Mark("startup/MonoGame initialize");
         base.Initialize();
+        ClientLoopDiagnostics.Mark("startup/graphics statistics provider");
 
         PlatformStatistics.GPUStatisticsProvider = GL.CreateGPUStatisticsProvider();
 
@@ -206,6 +211,7 @@ internal partial class IntersectGame : Game
 
     private void IntersectInit()
     {
+        ClientLoopDiagnostics.Mark("startup/renderer");
         (Core.Graphics.Renderer as MonoRenderer)?.Init(GraphicsDevice);
 
         // TODO: Remove old netcode
@@ -243,7 +249,9 @@ internal partial class IntersectGame : Game
 
         mInitialized = true;
 
+        ClientLoopDiagnostics.Mark("startup/service callbacks");
         PostStartupAction();
+        ClientLoopDiagnostics.Note("Engine initialized; first frame pending.");
     }
 
     private TimeSpan _elapsedSincePlatformStatisticsRefresh;
@@ -258,12 +266,14 @@ internal partial class IntersectGame : Game
     {
         // Steam callbacks (including GetTicketForWebApiResponse_t) are only delivered
         // while RunCallbacks is pumped. Keep this in the main client update loop.
+        ClientLoopDiagnostics.Mark("update/Steam callbacks");
         Steam.PumpEvents();
 
         _elapsedSincePlatformStatisticsRefresh += gameTime.ElapsedGameTime;
         if (_elapsedSincePlatformStatisticsRefresh.TotalSeconds > 1)
         {
             _elapsedSincePlatformStatisticsRefresh = default;
+            ClientLoopDiagnostics.Mark("update/platform memory statistics");
             PlatformStatistics.Refresh();
         }
 
@@ -280,6 +290,7 @@ internal partial class IntersectGame : Game
                 {
                     if (mLastUpdateTime < gameTime.TotalGameTime.TotalMilliseconds)
                     {
+                        ClientLoopDiagnostics.Mark("update/waiting for GameLock");
                         lock (Globals.GameLock)
                         {
                             Main.Update(gameTime.ElapsedGameTime);
@@ -352,6 +363,7 @@ internal partial class IntersectGame : Game
     /// <param name="gameTime">Provides a snapshot of timing values.</param>
     protected override void Draw(GameTime gameTime)
     {
+        ClientLoopDiagnostics.Mark("draw/begin");
         GraphicsDevice.BlendState = BlendState.NonPremultiplied;
 
         GraphicsDevice.Clear(Microsoft.Xna.Framework.Color.Black);
@@ -382,14 +394,17 @@ internal partial class IntersectGame : Game
         {
             if (Globals.IsRunning && mInitialized)
             {
+                ClientLoopDiagnostics.Mark("draw/waiting for GameLock");
                 lock (Globals.GameLock)
                 {
+                    ClientLoopDiagnostics.Mark("draw/world and UI");
                     Core.Graphics.Render(gameTime.ElapsedGameTime, gameTime.TotalGameTime);
                 }
             }
         }
 
         base.Draw(gameTime);
+        ClientLoopDiagnostics.Mark("between frames/present or event pump");
     }
 
     protected override void OnExiting(object sender, ExitingEventArgs args)
@@ -626,6 +641,7 @@ internal partial class IntersectGame : Game
 
     protected override void Dispose(bool disposing)
     {
+        if (disposing) _loopDiagnostics?.Dispose();
         try
         {
             base.Dispose(disposing);
