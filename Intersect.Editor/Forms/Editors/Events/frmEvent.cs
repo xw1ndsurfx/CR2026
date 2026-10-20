@@ -790,6 +790,9 @@ public partial class FrmEvent : Form
                 tmpCommand = new StartDungeonCommand();
 
                 break;
+            case EventCommandType.OpenNavalShop:
+                tmpCommand = new OpenNavalShopCommand();
+                break;
             case EventCommandType.OpenQuestShop:
                 tmpCommand = new OpenQuestShopCommand();
 
@@ -837,6 +840,7 @@ public partial class FrmEvent : Form
         InitializeComponent();
         AddMarketplaceCommand();
         AddQuestShopCommand();
+        AddNavalShopCommand();
         AddRoyalStylistCommand();
         AddDungeonCommands();
         AddProfessionCommands();
@@ -865,6 +869,15 @@ public partial class FrmEvent : Form
         );
     }
 
+
+    private void AddNavalShopCommand()
+    {
+        var shops = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
+        if (shops != null && !shops.Nodes.Cast<TreeNode>().Any(n => n.Name == "opennavalshop"))
+            shops.Nodes.Add(new TreeNode(Intersect.Framework.Core.Naval.NavalSetupText.Get("Open ship shop and repairs",
+                System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
+                { Name = "opennavalshop", Tag = (int)EventCommandType.OpenNavalShop });
+    }
 
     private void AddQuestShopCommand()
     {
@@ -1675,6 +1688,8 @@ public partial class FrmEvent : Form
                 break;
             case EventCommandType.StartDungeon:
                 cmdWindow = new EventCommand_StartDungeon((StartDungeonCommand)command, this);
+                break;
+            case EventCommandType.OpenNavalShop:
                 break;
             case EventCommandType.OpenQuestShop:
                 cmdWindow = new EventCommand_OpenQuestShop((OpenQuestShopCommand)command, this);

@@ -1,12 +1,13 @@
-using Intersect.Framework.Core.Naval;
 using Newtonsoft.Json;
 
-namespace Intersect.Server.Naval;
+namespace Intersect.Framework.Core.Naval;
 
-internal sealed class HarbourOffer
+public sealed class HarbourOffer
 {
+    [JsonExtensionData] public IDictionary<string, Newtonsoft.Json.Linq.JToken>? AdditionalData { get; set; }
     public string Id { get; set; } = "";
     public string Name { get; set; } = "Royal ship";
+    public bool ForSale { get; set; } = true;
     public Guid CurrencyItemId { get; set; }
     public string Currency { get; set; } = "Aureons";
     public int Price { get; set; }
@@ -14,7 +15,7 @@ internal sealed class HarbourOffer
     public bool PremiumRequired { get; set; }
     public ShipDefinition Ship { get; set; } = new();
     public string SinkingGraphics { get; set; } = "Ship_CorpsRoyaux_002_Sink.png";
-    internal bool IsValid() => !string.IsNullOrWhiteSpace(Id) && Id.Length <= 64 &&
+    public bool IsValid() => !string.IsNullOrWhiteSpace(Id) && Id.Length <= 64 &&
         !string.IsNullOrWhiteSpace(Name) && Name.Length <= 120 && Price >= 0 && RepairPrice >= 0 &&
         Currency is "Aureons" or "Auragems" && Ship != null &&
         // Position and dock belong to the map, not the model.
@@ -28,17 +29,23 @@ internal sealed class HarbourOffer
     }
 }
 
-internal sealed class HarbourCatalog
+public sealed class HarbourCatalog
 {
+    [JsonExtensionData] public IDictionary<string, Newtonsoft.Json.Linq.JToken>? AdditionalData { get; set; }
     public bool Enabled { get; set; }
     public HarbourOffer[] Offers { get; set; } = [];
-    internal static HarbourCatalog Load(string path)
+    public void Validate()
+    {
+        if (Offers == null || Offers.Length > 32 || Offers.Any(o => o == null || !o.IsValid()) ||
+            Offers.Select(o => o.Id).Distinct(StringComparer.Ordinal).Count() != Offers.Length)
+            throw new InvalidDataException("Invalid ship catalogue. Check model ids, prices, currency and movement settings.");
+    }
+    public static HarbourCatalog Load(string path)
     {
         if (!File.Exists(path)) return new();
         if (new FileInfo(path).Length > 128_000) throw new InvalidDataException();
         var result = JsonConvert.DeserializeObject<HarbourCatalog>(File.ReadAllText(path)) ?? throw new InvalidDataException();
-        if (result.Offers == null || result.Offers.Length > 32 || result.Offers.Any(o => o == null || !o.IsValid()) ||
-            result.Offers.Select(o => o.Id).Distinct(StringComparer.Ordinal).Count() != result.Offers.Length) throw new InvalidDataException();
+        result.Validate();
         return result;
     }
 }

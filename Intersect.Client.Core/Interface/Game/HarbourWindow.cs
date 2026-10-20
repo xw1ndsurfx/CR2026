@@ -17,8 +17,12 @@ internal sealed class HarbourWindow : Window
     private int _page;
     private bool _waiting;
     private long _sent;
-    public HarbourWindow(Canvas parent) : base(parent, ClientLanguages.Text("Harbour"), false, nameof(HarbourWindow))
+    private readonly HarbourView _view;
+    public HarbourWindow(Canvas parent, HarbourView view) : base(parent,
+        ClientLanguages.Text(view == HarbourView.Shop ? "Ship shop and repairs" : "My fleet"), false,
+        view == HarbourView.Shop ? "ShipShopWindow" : nameof(HarbourWindow))
     {
+        _view = view;
         SetSize(660, 500); Alignment = [Alignments.Center]; DeleteOnClose = false; DisableResizing();
         _message = Text(this, "Status", "", 16, 36, 625, 58);
         _cards = new Base(this, "ShipCards"); _cards.SetBounds(16, 100, 625, 320);
@@ -43,7 +47,7 @@ internal sealed class HarbourWindow : Window
     internal void Apply(HarbourStatePacket packet)
     {
         _state = packet; _state.Entries ??= []; _waiting = false;
-        _message.Text = ClientLanguages.Expanded(packet.Message.Length == 0 ? "Choose a ship, buy one or fully repair your fleet." : packet.Message);
+        _message.Text = ClientLanguages.Expanded(packet.Message.Length == 0 ? (_view == HarbourView.Shop ? "Buy a ship or fully repair a damaged or sunken ship." : "Choose one of your ships to set sail.") : packet.Message);
         RenderEntries();
     }
     private void Request(HarbourAction action, string model)
@@ -51,7 +55,7 @@ internal sealed class HarbourWindow : Window
         // Retry is possible after a lost reply. The server revalidates every operation at the dock.
         if (_waiting && Environment.TickCount64 - _sent < 3000) return;
         _waiting = true; _sent = Environment.TickCount64;
-        Networking.Network.SendPacket(new HarbourRequestPacket { Action = action, ModelId = model });
+        Networking.Network.SendPacket(new HarbourRequestPacket { Action = action, ModelId = model, View = _view });
     }
     private void RenderEntries()
     {
@@ -67,23 +71,30 @@ internal sealed class HarbourWindow : Window
                 string.Format(ClientLanguages.Text("Hull: {0}/100"), entry.Health)) : ClientLanguages.Text("Not owned");
             if (entry.PremiumRequired) status += " · " + ClientLanguages.Text("Premium required");
             Text(_cards, "Condition" + i, status, 4, y+25, 610, 23);
-            Text(_cards, "Cost" + i, string.Format(ClientLanguages.Text("Purchase: {0} {1} · Balance: {2}"),
-                entry.Price, entry.Currency, entry.Balance), 4, y+49, 610, 24);
-            Text(_cards, "RepairCost" + i, string.Format(ClientLanguages.Text("Full repair: {0} {1}"),
-                entry.RepairPrice, entry.Currency), 4, y+75, 610, 24);
-            var buy = Button(_cards, "Buy" + i, "Buy ship", 4, y+110, 195, () => Request(HarbourAction.Buy, entry.ModelId));
-            buy.IsDisabled = !HarbourUiRules.CanBuy(entry, _state.Premium);
-            var launch = Button(_cards, "Launch" + i, "Set sail", 211, y+110, 195, () => Request(HarbourAction.Launch, entry.ModelId));
-            launch.IsDisabled = !HarbourUiRules.CanLaunch(entry, _state.Premium);
-            var repair = Button(_cards, "Repair" + i, "Fully repair", 418, y+110, 195, () => Request(HarbourAction.Repair, entry.ModelId));
-            repair.IsDisabled = !HarbourUiRules.CanRepair(entry);
+            if (_view == HarbourView.Shop)
+            {
+                Text(_cards, "Cost" + i, string.Format(ClientLanguages.Text("Purchase: {0} {1} · Balance: {2}"),
+                    entry.Price, entry.Currency, entry.Balance), 4, y+49, 610, 24);
+                Text(_cards, "RepairCost" + i, string.Format(ClientLanguages.Text("Full repair: {0} {1}"),
+                    entry.RepairPrice, entry.Currency), 4, y+75, 610, 24);
+                var buy = Button(_cards, "Buy" + i, "Buy ship", 4, y+110, 280, () => Request(HarbourAction.Buy, entry.ModelId));
+                buy.IsDisabled = !HarbourUiRules.CanBuy(entry, _state.Premium);
+                var repair = Button(_cards, "Repair" + i, "Fully repair", 310, y+110, 280, () => Request(HarbourAction.Repair, entry.ModelId));
+                repair.IsDisabled = !HarbourUiRules.CanRepair(entry);
+            }
+            else
+            {
+                var launch = Button(_cards, "Launch" + i, "Set sail", 4, y+75, 280, () => Request(HarbourAction.Launch, entry.ModelId));
+                launch.IsDisabled = !HarbourUiRules.CanLaunch(entry, _state.Premium);
+            }
+
         }
     }
 }
 
 internal static class HarbourUiRules
 {
-    internal static bool CanBuy(HarbourEntry e, bool premium) => !e.Owned && e.CurrencyAvailable && e.Balance >= e.Price && (!e.PremiumRequired || premium);
+    internal static bool CanBuy(HarbourEntry e, bool premium) => e.ForSale && !e.Owned && e.CurrencyAvailable && e.Balance >= e.Price && (!e.PremiumRequired || premium);
     internal static bool CanLaunch(HarbourEntry e, bool premium) => e.Owned && e.Health > 0 && (!e.PremiumRequired || premium);
     internal static bool CanRepair(HarbourEntry e) => e.Owned && e.Health < 100 && e.CurrencyAvailable && e.Balance >= e.RepairPrice;
 }

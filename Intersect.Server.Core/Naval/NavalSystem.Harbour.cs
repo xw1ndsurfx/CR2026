@@ -17,6 +17,25 @@ namespace Intersect.Server.Naval;
 
 internal static partial class NavalSystem
 {
+    internal static void OpenShopFromEvent(Player player, Entities.Events.Event instance)
+    {
+        lock (player.EntityLock)
+        {
+            lock (Gate)
+            {
+                if (!IsEnabled() || !player.InGame || player.IsDead || player.HasPendingDeath) return;
+                var map = instance.MapId == Guid.Empty ? player.MapId : instance.MapId;
+                var x = instance.MapId == Guid.Empty ? player.X : instance.X;
+                var y = instance.MapId == Guid.Empty ? player.Y : instance.Y;
+                if (!HarbourAccessRules.ShopSessionValid(player.MapId, player.X, player.Y,
+                    map, x, y, 0, 1, _settings.ShopInteractionRange)) return;
+                player.NavalShopMap = map; player.NavalShopX = x; player.NavalShopY = y;
+                player.NavalShopExpires = Timing.Global.Milliseconds + _settings.ShopSessionSeconds * 1000L;
+            }
+            Harbour(player, new() { Action = HarbourAction.Open, View = HarbourView.Shop }, fromEvent: true);
+        }
+    }
+
     private static ItemDescriptor Currency(HarbourOffer offer)
     {
         if (offer.CurrencyItemId != Guid.Empty)
@@ -26,28 +45,41 @@ internal static partial class NavalSystem
         return matches.Length == 1 ? matches[0] : null; // Ambiguous names must be configured by ID.
     }
 
-    internal static void Harbour(Player player, HarbourRequestPacket packet)
+    internal static void Harbour(Player player, HarbourRequestPacket packet, bool fromEvent = false)
     {
         lock (player.EntityLock)
         {
             var now = Timing.Global.Milliseconds;
-            if (now - player.LastHarbourRequest < 500) return;
+            if (!HarbourAccessRules.Allows(packet.View, packet.Action)) return;
+            if (!fromEvent && now - player.LastHarbourRequest < 500) return;
             player.LastHarbourRequest = now;
             HarbourCatalog catalog;
             try { catalog = HarbourCatalog.Load(Path.Combine("resources", "naval-shop.json")); }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException or ArgumentException)
-            { player.SendPacket(new HarbourStatePacket { Message = "The harbour catalogue is unavailable." }); return; }
-            (int X, int Y)? dock;
+            catch (Exception e) when (e is InvalidDataException or IOException or UnauthorizedAccessException or JsonException or ArgumentException)
+            { player.SendPacket(new HarbourStatePacket { View = packet.View, Message = "The harbour catalogue is unavailable." }); return; }
+            (int X, int Y)? dock = null;
             lock (Gate)
             {
-                dock = ShipDock.Nearest(MapController.Get(player.MapId)?.Attributes, player.X + .5, player.Y + .5, 1.5,
-                    (x,y) => ClearTile(player, player.MapId, x, y));
-                if (!IsEnabled() || !catalog.Enabled)
-                { player.SendPacket(new HarbourStatePacket { Message = "The harbour catalogue is unavailable." }); return; }
-                if (dock == null || !player.InGame || player.IsDead || player.HasPendingDeath ||
-                    player.Client == null || player.User == null || player.InstanceType != MapInstanceType.Overworld ||
-                    player.NavalBusy || player.Z != 0 || player.CaptainedShipId != Guid.Empty || !OceanMapResolver.Maps().Contains(player.MapId))
-                { player.SendPacket(new HarbourStatePacket { Message = "Stand beside a Q dock on Ocean to use the harbour." }); return; }
+                if (!IsEnabled() || packet.View == HarbourView.Shop && !catalog.Enabled)
+                { player.SendPacket(new HarbourStatePacket { View = packet.View, Message = "The harbour catalogue is unavailable." }); return; }
+                if (!player.InGame || player.IsDead || player.HasPendingDeath || player.Client == null ||
+                    player.User == null || player.InstanceType != MapInstanceType.Overworld ||
+                    (!fromEvent && player.NavalBusy) || player.Z != 0 || player.CaptainedShipId != Guid.Empty)
+                    return;
+                if (packet.View == HarbourView.Shop)
+                {
+                    if (!HarbourAccessRules.ShopSessionValid(player.MapId, player.X, player.Y,
+                        player.NavalShopMap, player.NavalShopX, player.NavalShopY, now, player.NavalShopExpires,
+                        _settings.ShopInteractionRange))
+                    { player.SendPacket(new HarbourStatePacket { View = HarbourView.Shop, Close = true }); return; }
+                }
+                else
+                {
+                    dock = ShipDock.Nearest(MapController.Get(player.MapId)?.Attributes, player.X + .5, player.Y + .5,
+                        _settings.DockInteractionRange, (x,y) => ClearTile(player, player.MapId, x, y));
+                    if (dock == null || !OceanMapResolver.Maps().Contains(player.MapId))
+                    { player.SendPacket(new HarbourStatePacket { Message = "Stand beside a Q dock on Ocean to use the harbour." }); return; }
+                }
             }
             var message = "";
             var offer = catalog.Offers.FirstOrDefault(o => o.Id == packet.ModelId);
@@ -56,7 +88,7 @@ internal static partial class NavalSystem
             if (packet.Action != HarbourAction.Open && offer == null) message = "This ship is unavailable.";
             else if (packet.Action == HarbourAction.Buy)
             {
-                if (!ShipFleetRules.CanBuy(player.NavalFleet, offer.Id, offer.PremiumRequired, premium))
+                if (!offer.ForSale || !ShipFleetRules.CanBuy(player.NavalFleet, offer.Id, offer.PremiumRequired, premium))
                     message = "Ship already owned, fleet full or Premium required.";
                 else message = PurchaseOrRepair(player, offer, null);
             }
@@ -87,7 +119,7 @@ internal static partial class NavalSystem
                 }
             }
             else if (packet.Action != HarbourAction.Open) message = "This ship is unavailable.";
-            SendHarbour(player, catalog, message, premium);
+            SendHarbour(player, catalog, message, premium, packet.View);
         }
     }
 
@@ -115,15 +147,15 @@ internal static partial class NavalSystem
         finally { PacketSender.SendInventory(player); }
     }
 
-    private static void SendHarbour(Player player, HarbourCatalog catalog, string message, bool premium) =>
-        player.SendPacket(new HarbourStatePacket { Message = message, Premium = premium, Entries = catalog.Offers.Select(o =>
+    private static void SendHarbour(Player player, HarbourCatalog catalog, string message, bool premium, HarbourView view) =>
+        player.SendPacket(new HarbourStatePacket { View = view, Message = message, Premium = premium, Entries = catalog.Offers.Where(o => view == HarbourView.Shop || player.NavalFleet.Any(s => s.ModelId == o.Id)).Select(o =>
         {
             var owned = player.NavalFleet.FirstOrDefault(s => s.ModelId == o.Id);
             var currency = Currency(o);
             return new HarbourEntry { ModelId = o.Id, Name = o.Name, Currency = currency?.Name ?? o.Currency,
                 Price = o.Price, RepairPrice = o.RepairPrice, PremiumRequired = o.PremiumRequired,
                 Owned = owned != null, Health = owned?.Health ?? 100, Balance = currency == null ? 0 : player.CountItems(currency.Id),
-                CurrencyAvailable = currency != null };
+                ForSale = o.ForSale, CurrencyAvailable = currency != null };
         }).ToArray() });
 
     private static ShipState TryLaunch(Player player, HarbourOffer offer, OwnedShip owned, (int X, int Y) dock, out string failure)
@@ -134,8 +166,8 @@ internal static partial class NavalSystem
         var vessel = new Vessel(d) { OwnerId = player.Id, SinkingGraphics = offer.SinkingGraphics };
         var ocean = OceanMapResolver.Maps();
         if (Ships.ContainsKey(owned.Id)) return null;
-        var candidates = from dy in Enumerable.Range(-5, 11) from dx in Enumerable.Range(-5, 11)
-                         let distance = dx*dx+dy*dy where distance > 0 && distance <= 25 orderby distance, dy, dx select (dx,dy);
+        var candidates = from dy in Enumerable.Range(-_settings.LaunchSearchRadius, _settings.LaunchSearchRadius * 2 + 1) from dx in Enumerable.Range(-_settings.LaunchSearchRadius, _settings.LaunchSearchRadius * 2 + 1)
+                         let distance = dx*dx+dy*dy where distance > 0 && distance <= _settings.LaunchSearchRadius * _settings.LaunchSearchRadius orderby distance, dy, dx select (dx,dy);
         foreach (var (dx,dy) in candidates)
         {
             var x = dock.X + dx + .5; var y = dock.Y + dy + .5;

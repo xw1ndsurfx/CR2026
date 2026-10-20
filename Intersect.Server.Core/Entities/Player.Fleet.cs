@@ -14,5 +14,9 @@ public partial class Player
         set => NavalFleet = string.IsNullOrWhiteSpace(value) ? [] : JsonConvert.DeserializeObject<List<OwnedShip>>(value) ?? [];
     }
     [JsonIgnore, NotMapped] public List<OwnedShip> NavalFleet { get; set; } = [];
+    [JsonIgnore, NotMapped] internal Guid NavalShopMap { get; set; }
+    [JsonIgnore, NotMapped] internal int NavalShopX { get; set; }
+    [JsonIgnore, NotMapped] internal int NavalShopY { get; set; }
+    [JsonIgnore, NotMapped] internal long NavalShopExpires { get; set; }
     [JsonIgnore, NotMapped] internal long LastHarbourRequest { get; set; }
 }

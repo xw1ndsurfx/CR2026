@@ -27,4 +27,13 @@ public sealed class HarbourUiRulesTests
         Assert.That(HarbourUiRules.CanLaunch(entry,false),Is.False);
         Assert.That(HarbourUiRules.CanLaunch(entry,true),Is.True);
     }
+    [Test]
+    public void RetiredModelCannotBeBoughtButOwnedShipsRemainUsableAndRepairable()
+    {
+        var entry = new HarbourEntry { ForSale=false, CurrencyAvailable=true, Balance=100, Price=10, RepairPrice=5, Health=50 };
+        Assert.That(HarbourUiRules.CanBuy(entry,true),Is.False);
+        entry.Owned=true;
+        Assert.That(HarbourUiRules.CanLaunch(entry,true),Is.True);
+        Assert.That(HarbourUiRules.CanRepair(entry),Is.True);
+    }
 }

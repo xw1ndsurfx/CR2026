@@ -31,6 +31,7 @@ internal static partial class NavalSystem
     private static readonly Dictionary<Guid, Vessel> Ships = [];
     private static readonly NavalConfigurationStore Configuration = new(Path.Combine("resources", "naval.json"));
     private static bool _loaded, _enabled;
+    private static NavalConfiguration _settings = new();
     private static bool IsEnabled()
     {
         try
@@ -38,7 +39,7 @@ internal static partial class NavalSystem
             if (!_loaded) ApplyConfiguration(Configuration.Load());
             return _enabled;
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException or ArgumentException) { return false; }
+        catch (Exception e) when (e is InvalidDataException or IOException or UnauthorizedAccessException or JsonException or ArgumentException) { return false; }
     }
 
     private static void ApplyConfiguration(NavalConfiguration settings)
@@ -46,6 +47,7 @@ internal static partial class NavalSystem
         // Adding a definition never resets the position or ownership of an existing vessel.
         foreach (var definition in settings.Ships)
             if (!Ships.ContainsKey(definition.Id)) Ships.Add(definition.Id, new Vessel(definition));
+        _settings = settings;
         _enabled = settings.Enabled; _loaded = true;
     }
 
@@ -67,7 +69,7 @@ internal static partial class NavalSystem
             }
             catch (NoShipPlacementException) { return new() { Outcome = NavalSetupOutcome.NoSpace }; }
             catch (ShipLimitException) { return new() { Outcome = NavalSetupOutcome.ShipLimit }; }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException or ArgumentException)
+            catch (Exception e) when (e is InvalidDataException or IOException or UnauthorizedAccessException or JsonException or ArgumentException)
             { return new() { Outcome = NavalSetupOutcome.ConfigurationError }; }
         }
     }
@@ -103,8 +105,9 @@ internal static partial class NavalSystem
     {
         lock (player.EntityLock)
         {
+            lock (Gate) { _ = IsEnabled(); }
             if (player.CaptainedShipId == Guid.Empty &&
-                ShipDock.Nearest(MapController.Get(player.MapId)?.Attributes, player.X + .5, player.Y + .5, 1.5) != null)
+                ShipDock.Nearest(MapController.Get(player.MapId)?.Attributes, player.X + .5, player.Y + .5, _settings.DockInteractionRange) != null)
             { Harbour(player, new() { Action = HarbourAction.Open }); return; }
             ShipState anchor = null;
             (Guid MapId, int X, int Y)? dock = null;
@@ -140,9 +143,9 @@ internal static partial class NavalSystem
                 {
                     var vessel = Ships.Values.FirstOrDefault(v => v.OwnerId == Guid.Empty && v.State.CaptainId == Guid.Empty &&
                         v.State.MapId == player.MapId &&
-                        (Distance(v.State.X, v.State.Y, player.X + .5, player.Y + .5) <= 1.5 ||
+                        (Distance(v.State.X, v.State.Y, player.X + .5, player.Y + .5) <= _settings.DockInteractionRange ||
                         v.Definition.MapId == player.MapId &&
-                        Distance(player.X + .5, player.Y + .5, v.Definition.DockX + .5, v.Definition.DockY + .5) <= 1.5 &&
+                        Distance(player.X + .5, player.Y + .5, v.Definition.DockX + .5, v.Definition.DockY + .5) <= _settings.DockInteractionRange &&
                         Distance(v.State.X, v.State.Y, player.X + .5, player.Y + .5) <= 5));
                     if (vessel == null || !ClearHull(player, vessel, ocean, vessel.State.MapId, vessel.State.X, vessel.State.Y))
                     { Notice(player, "No available ship near this helm dock."); return; }

@@ -5,14 +5,6 @@ using Newtonsoft.Json.Linq;
 
 namespace Intersect.Server.Naval;
 
-internal sealed class NavalConfiguration
-{
-    public bool Enabled { get; set; }
-    public ShipDefinition[] Ships { get; set; } = [];
-    [JsonExtensionData] public IDictionary<string, JToken> AdditionalData { get; set; }
-    internal string SourceJson { get; set; }
-}
-
 /// <summary>Append-only editor setup. Invalid data is never replaced with a blank configuration.</summary>
 internal sealed class NavalConfigurationStore(string path)
 {
@@ -31,6 +23,7 @@ internal sealed class NavalConfigurationStore(string path)
             settings.Ships.Any(d => d == null || !d.IsValid() || d.X >= Options.Instance.Map.MapWidth ||
                 d.Y >= Options.Instance.Map.MapHeight || d.DockX >= Options.Instance.Map.MapWidth || d.DockY >= Options.Instance.Map.MapHeight) ||
             settings.Ships.Select(d => d.Id).Distinct().Count() != settings.Ships.Length) throw new InvalidDataException();
+        settings.Validate(Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight);
         settings.SourceJson = source;
         return settings;
     }
@@ -52,6 +45,34 @@ internal sealed class NavalConfigurationStore(string path)
             Save(configuration);
             return (configuration, ship, existing == null);
         }
+    }
+
+    internal void Replace(NavalConfiguration configuration, string expectedVersion)
+    {
+        lock (_gate)
+        {
+            var current = Load();
+            if (Version(current.SourceJson) != expectedVersion) throw new IOException("The naval configuration changed. Reload before saving.");
+            configuration.Validate(Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight);
+            WriteAtomic(path, JsonConvert.SerializeObject(configuration, Formatting.Indented));
+        }
+    }
+    internal static string Version(string source) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+        System.Text.Encoding.UTF8.GetBytes(source ?? "")));
+    internal static void WriteAtomic(string destination, string json, int maximumBytes = 1_000_000)
+    {
+        if (System.Text.Encoding.UTF8.GetByteCount(json) > maximumBytes) throw new InvalidDataException();
+        var directory = Path.GetDirectoryName(Path.GetFullPath(destination))!;
+        Directory.CreateDirectory(directory);
+        var temporary = Path.Combine(directory, $".naval-editor-{Guid.NewGuid():N}.tmp");
+        try
+        {
+            using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            using (var writer = new StreamWriter(stream)) { writer.Write(json); writer.Flush(); stream.Flush(true); }
+            if (File.Exists(destination)) File.Replace(temporary, destination, null);
+            else File.Move(temporary, destination);
+        }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
 
     private void Save(NavalConfiguration configuration)

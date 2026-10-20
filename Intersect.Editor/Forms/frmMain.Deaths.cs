@@ -17,6 +17,7 @@ public partial class FrmMain
             Intersect.Editor.Networking.Network.SendPacket(new DeathConfigurationRequestPacket());
         };
         system.DropDownItems.Add(death);
+        AddNavalEditorMenu(system);
         var menuAnimations=new ToolStripMenuItem("Main Menu Animations...");menuAnimations.Click+=(_,_)=>{using var dialog=new FrmMenuAnimations();dialog.ShowDialog(this);};system.DropDownItems.Add(menuAnimations);
         void AddSection(ToolStripMenuItem menu, string title, Intersect.Framework.Core.WorldEvents.WorldActivitiesSection section)
         {

@@ -18,6 +18,7 @@ public sealed class ShipState
 
 public sealed class ShipDefinition
 {
+    [Newtonsoft.Json.JsonExtensionData] public IDictionary<string, Newtonsoft.Json.Linq.JToken>? AdditionalData { get; set; }
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid MapId { get; set; }
     public double X { get; set; }

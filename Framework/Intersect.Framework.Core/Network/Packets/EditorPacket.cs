@@ -1,4 +1,4 @@
-﻿using Intersect.Network.Packets.Editor;
+using Intersect.Network.Packets.Editor;
 using MessagePack;
 
 namespace Intersect.Network.Packets;
@@ -21,6 +21,7 @@ namespace Intersect.Network.Packets;
 [Union(12, typeof(SaveTimeDataPacket))]
 [Union(13, typeof(UnlinkMapPacket))]
 [Union(14, typeof(PrepareNavalMapPacket))]
+[Union(15, typeof(NavalConfigurationRequestPacket))]
 
 public abstract partial class EditorPacket : IntersectPacket
 {
