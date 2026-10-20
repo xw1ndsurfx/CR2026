@@ -36,8 +36,9 @@ public sealed class NavalHelmRegressionTests
         Assert.That(MonoRenderer.TextureMirrorEffects(false,false),Is.EqualTo(SpriteEffects.None));
     }
 
-    [Test]
-    public void SelectionAndOriginFollowTheActualCaptainShipWithAnotherShipInTheSnapshot()
+    [TestCase(false)]
+    [TestCase(true)]
+    public void SelectionAndOriginFollowTheActualCaptainShipWithAnotherShipInTheSnapshot(bool passenger)
     {
         var optionsProperty=typeof(Options).GetProperty(nameof(Options.Instance))!;
         var previousOptions=Options.Instance;
@@ -49,13 +50,14 @@ public sealed class NavalHelmRegressionTests
         typeof(Entity).GetField("<MapId>k__BackingField",BindingFlags.Instance|BindingFlags.NonPublic)!.SetValue(me,map.Id);
         var idle=new ShipSnapshot { Id=Guid.NewGuid(),MapId=map.Id,X=15.5,Y=12.5,Width=2,Length=4 };
         var shipId=Guid.NewGuid();
-        ShipSnapshot Own(double x,double y)=>new() { Id=shipId,CaptainId=me.Id,MapId=map.Id,X=x,Y=y,Width=2,Length=4 };
+        ShipSnapshot Own(double x,double y)=>new() { Id=shipId,CaptainId=passenger?Guid.NewGuid():me.Id,CrewIds=passenger?new[]{me.Id}:Array.Empty<Guid>(),MapId=map.Id,X=x,Y=y,Width=2,Length=4 };
         try
         {
             MapInstance.Lookup.Set(map.Id,map);Globals.GridMaps[map.Id]=new(0,0);
             Globals.Me=me;Globals.Entities[me.Id]=me;NavalWorld.Clear();
             NavalWorld.Apply(new NavalSnapshotPacket { Ships=[Own(20.5,11.5),idle] });
-            Assert.That(NavalWorld.IsCaptain(me.Id),Is.True);
+            Assert.That(NavalWorld.IsCaptain(me.Id),Is.EqualTo(!passenger));
+            Assert.That(NavalWorld.IsAboard(me.Id),Is.True);
             Assert.That(NavalWorld.IsCaptain(Guid.Empty),Is.False);
             Assert.That(NavalWorld.TryHullBounds(me.Id,out var bounds),Is.True);
             Assert.That(bounds.X+bounds.Width/2,Is.EqualTo(20.5*Options.Instance.Map.TileWidth));
@@ -115,7 +117,7 @@ public sealed class NavalHelmRegressionTests
     {
         Assert.That(Enumerable.Range(0,10).Select(ShipActions.ForSlot),Is.EqualTo(new[] {
             ShipAction.PortCannons,ShipAction.StarboardCannons,ShipAction.None,ShipAction.None,ShipAction.None,
-            ShipAction.None,ShipAction.None,ShipAction.Cargo,ShipAction.Anchor,ShipAction.LeaveHelm }));
+            ShipAction.None,ShipAction.Crew,ShipAction.Cargo,ShipAction.Anchor,ShipAction.LeaveHelm }));
         foreach(var action in Enum.GetValues<ShipAction>())
         {
             var caption=ShipActions.Caption(action);

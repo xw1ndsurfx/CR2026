@@ -879,6 +879,131 @@
       "en": "Quality {0}/5",
       "fr": "Qualité {0}/5",
       "es": "Calidad {0}/5"
+    },
+    "CrewCapacity": {
+      "en": "CrewCapacity",
+      "fr": "Capacité équipage (capitaine inclus)",
+      "es": "Capacidad de tripulación (incluye capitán)"
+    },
+    "CrewIcon": {
+      "en": "CrewIcon",
+      "fr": "Icône équipage",
+      "es": "Icono de tripulación"
+    },
+    "Ship crew": {
+      "en": "Ship crew",
+      "fr": "Équipage du navire",
+      "es": "Tripulación del barco"
+    },
+    "Only the captain of a personal ship can open boarding.": {
+      "en": "Only the captain of a personal ship can open boarding.",
+      "fr": "Seul le capitaine d’un bateau personnel peut autoriser l’embarquement.",
+      "es": "Solo el capitán de un barco personal puede permitir el embarque."
+    },
+    "Stop beside a Q dock before opening boarding.": {
+      "en": "Stop beside a Q dock before opening boarding.",
+      "fr": "Arrêtez-vous près d’un quai Q pour autoriser l’embarquement.",
+      "es": "Detente junto a un muelle Q antes de permitir el embarque."
+    },
+    "Boarding is unavailable. Join the captain's party and stand beside the Q dock.": {
+      "en": "Boarding is unavailable. Join the captain's party and stand beside the Q dock.",
+      "fr": "Embarquement indisponible. Rejoignez le groupe du capitaine et placez-vous près du quai Q.",
+      "es": "Embarque no disponible. Únete al grupo del capitán y acércate al muelle Q."
+    },
+    "Unload your previous crew cargo before joining another ship.": {
+      "en": "Unload your previous crew cargo before joining another ship.",
+      "fr": "Déchargez votre ancienne cargaison d’équipage avant de rejoindre un autre bateau.",
+      "es": "Descarga tu cargamento de tripulación anterior antes de subir a otro barco."
+    },
+    "Crew data could not be saved. Try again.": {
+      "en": "Crew data could not be saved. Try again.",
+      "fr": "Les données d’équipage n’ont pas pu être sauvegardées. Réessayez.",
+      "es": "No se pudieron guardar los datos de tripulación. Inténtalo de nuevo."
+    },
+    "You are not aboard as crew.": {
+      "en": "You are not aboard as crew.",
+      "fr": "Vous n’êtes pas embarqué comme équipier.",
+      "es": "No estás a bordo como tripulante."
+    },
+    "Stop beside a Q dock before disembarking.": {
+      "en": "Stop beside a Q dock before disembarking.",
+      "fr": "Arrêtez-vous près d’un quai Q pour débarquer.",
+      "es": "Detente junto a un muelle Q antes de desembarcar."
+    },
+    "Stand beside a Q dock to unload your crew cargo.": {
+      "en": "Stand beside a Q dock to unload your crew cargo.",
+      "fr": "Placez-vous près d’un quai Q pour décharger votre cargaison d’équipage.",
+      "es": "Acércate a un muelle Q para descargar tu cargamento de tripulación."
+    },
+    "Ship crew · {0}/{1}": {
+      "en": "Ship crew · {0}/{1}",
+      "fr": "Équipage du navire · {0}/{1}",
+      "es": "Tripulación del barco · {0}/{1}"
+    },
+    "The captain steers and fires. Every member keeps their own rewards.": {
+      "en": "The captain steers and fires. Every member keeps their own rewards.",
+      "fr": "Le capitaine pilote et tire. Chaque membre garde ses propres récompenses.",
+      "es": "El capitán navega y dispara. Cada miembro conserva sus recompensas."
+    },
+    "Join the captain's party, then board together at a Q dock.": {
+      "en": "Join the captain's party, then board together at a Q dock.",
+      "fr": "Rejoignez le groupe du capitaine, puis embarquez au quai Q.",
+      "es": "Únete al grupo del capitán y embarca en un muelle Q."
+    },
+    "Your crew cargo: {0} lots": {
+      "en": "Your crew cargo: {0} lots",
+      "fr": "Votre cargaison d’équipage : {0} lots",
+      "es": "Tu cargamento de tripulación: {0} lotes"
+    },
+    "Crew cargo is lost if the ship sinks. Unload your share at Q.": {
+      "en": "Crew cargo is lost if the ship sinks. Unload your share at Q.",
+      "fr": "Le butin d’équipage est perdu au naufrage. Déchargez votre part au Q.",
+      "es": "El botín de tripulación se pierde al hundirse. Descarga tu parte en Q."
+    },
+    "Close crew boarding": {
+      "en": "Close crew boarding",
+      "fr": "Fermer l’embarquement",
+      "es": "Cerrar embarque"
+    },
+    "Open crew boarding": {
+      "en": "Open crew boarding",
+      "fr": "Autoriser l’embarquement",
+      "es": "Permitir embarque"
+    },
+    "Unload my crew cargo": {
+      "en": "Unload my crew cargo",
+      "fr": "Décharger ma part d’équipage",
+      "es": "Descargar mi parte de tripulación"
+    },
+    "Captain": {
+      "en": "Captain",
+      "fr": "Capitaine",
+      "es": "Capitán"
+    },
+    "Crew member": {
+      "en": "Crew member",
+      "fr": "Équipier",
+      "es": "Tripulante"
+    },
+    "Unnamed ship": {
+      "en": "Unnamed ship",
+      "fr": "Navire sans nom",
+      "es": "Barco sin nombre"
+    },
+    "Captain: {0} · {1}/{2}": {
+      "en": "Captain: {0} · {1}/{2}",
+      "fr": "Capitaine : {0} · {1}/{2}",
+      "es": "Capitán: {0} · {1}/{2}"
+    },
+    "Board": {
+      "en": "Board",
+      "fr": "Embarquer",
+      "es": "Embarcar"
+    },
+    "No party ship is currently open for boarding at this dock.": {
+      "en": "No party ship is currently open for boarding at this dock.",
+      "fr": "Aucun bateau du groupe n’accepte d’équipiers à ce quai.",
+      "es": "Ningún barco del grupo permite embarcar en este muelle."
     }
   }
 }

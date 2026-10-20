@@ -1,8 +1,8 @@
 namespace Intersect.Framework.Core.Naval;
 
-public enum HarbourView : byte { Fleet, Shop }
+public enum HarbourView : byte { Fleet, Shop, Crew }
 
-public enum HarbourAction : byte { Open, Buy, Launch, Repair, Rename, ClaimCargo }
+public enum HarbourAction : byte { Open, Buy, Launch, Repair, Rename, ClaimCargo, JoinCrew, LeaveCrew, ToggleCrewBoarding }
 
 public sealed class OwnedShip
 {
@@ -11,6 +11,7 @@ public sealed class OwnedShip
     public List<NavalCargoParcel> Cargo {get;set;}=[];
     public string ModelId { get; set; } = "";
     public int Health { get; set; } = 100;
+    public int SinkingSerial {get;set;}
     public bool AtSea { get; set; }
     public Guid ReturnMapId { get; set; }
     public int? ReturnX { get; set; }
@@ -33,6 +34,7 @@ public static class HarbourAccessRules
     public static bool Allows(HarbourView view, HarbourAction action) => view switch
     {
         HarbourView.Fleet => action is HarbourAction.Open or HarbourAction.Launch or HarbourAction.Rename or HarbourAction.ClaimCargo,
+        HarbourView.Crew => action is HarbourAction.Open or HarbourAction.JoinCrew or HarbourAction.LeaveCrew or HarbourAction.ToggleCrewBoarding or HarbourAction.ClaimCargo,
         HarbourView.Shop => action is HarbourAction.Open or HarbourAction.Buy or HarbourAction.Repair,
         _ => false,
     };

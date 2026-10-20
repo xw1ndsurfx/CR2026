@@ -20,7 +20,10 @@ internal static partial class NavalWorld
     private static Guid _viewer;
     internal static NavalRewardFeed RewardFeed {get;}=new();
     private static long _received, _inputTime;
-    internal static void Clear() {RewardFeed.Clear(); _ships.Clear(); _viewer = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
+    internal static void Clear() {CrewState=new();RewardFeed.Clear(); _ships.Clear(); _viewer = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
+    internal static ShipCrewState CrewState {get;private set;}=new();
+    internal static bool HasMember(ShipSnapshot ship,Guid playerId)=>playerId!=Guid.Empty && (ship.CaptainId==playerId || (ship.CrewIds??[]).Contains(playerId));
+    internal static bool IsAboard(Guid playerId)=>Fresh && _ships.Values.Any(v=>HasMember(v.Current,playerId));
     internal static bool IsCaptain(Guid playerId) => playerId != Guid.Empty && Fresh && _ships.Values.Any(v => v.Current.CaptainId == playerId);
     private static bool Fresh => Globals.Me != null && _viewer == Globals.Me.Id && Environment.TickCount64 - _received < 1500;
 
@@ -36,6 +39,7 @@ internal static partial class NavalWorld
             animation.Observe(s.Graphics, now);
             next[s.Id] = new(previous, s, now, animation);
         }
+        CrewState=packet.Crew??new();
         RewardFeed.Observe(packet.Rewards??[],_viewer==Guid.Empty || _viewer!=Globals.Me?.Id,now);
         ApplyPresentation(packet,now);
         ApplyCannonballs(packet,now);
@@ -43,7 +47,8 @@ internal static partial class NavalWorld
         // The engine's integer position remains an anchor for map loading and ordinary entity lookup.
         // Rendering and camera use the independent interpolated ship center below.
         foreach (var view in next.Values)
-            if (view.Current.CaptainId != Guid.Empty && Globals.Entities.TryGetValue(view.Current.CaptainId, out var captain) &&
+            foreach(var member in (view.Current.CrewIds??[]).Prepend(view.Current.CaptainId).Where(id=>id!=Guid.Empty))
+            if (Globals.Entities.TryGetValue(member, out var captain) &&
                 captain.MapId == view.Current.MapId)
             { captain.X = (byte)Math.Floor(view.Current.X); captain.Y = (byte)Math.Floor(view.Current.Y); captain.OffsetX = captain.OffsetY = 0; }
     }
@@ -52,8 +57,8 @@ internal static partial class NavalWorld
     {
         if (!Fresh || Globals.Me == null) return;
         ReadActions(busy);
-        var own = _ships.Values.FirstOrDefault(v => v.Current.CaptainId == Globals.Me.Id)?.Current;
-        if (own == null || Environment.TickCount64 - _inputTime < 50) return;
+        var own = _ships.Values.FirstOrDefault(v => HasMember(v.Current,Globals.Me.Id))?.Current;
+        if (own == null || own.CaptainId!=Globals.Me.Id || Environment.TickCount64 - _inputTime < 50) return;
         _inputTime = Environment.TickCount64;
         bool Down(Keys key) => !busy && Globals.InputManager.IsKeyDown(key);
         Intersect.Client.Networking.Network.SendPacket(new ShipInputPacket { ShipId = own.Id,
@@ -81,7 +86,7 @@ internal static partial class NavalWorld
     {
         x = y = 0;
         if (!Fresh) return false;
-        var view = _ships.Values.FirstOrDefault(v => v.Current.CaptainId == _viewer);
+        var view = _ships.Values.FirstOrDefault(v => HasMember(v.Current,_viewer));
         return view != null && Position(view, out x, out y, out _);
     }
 
@@ -89,7 +94,7 @@ internal static partial class NavalWorld
     {
         x = y = 0;
         if (!Fresh) return false;
-        var view = _ships.Values.FirstOrDefault(v => v.Current.CaptainId == captainId && captainId != Guid.Empty);
+        var view = _ships.Values.FirstOrDefault(v => HasMember(v.Current,captainId));
         return view != null && Position(view,out x,out y,out _);
     }
 
@@ -97,7 +102,7 @@ internal static partial class NavalWorld
     {
         bounds = default;
         if (!Fresh) return false;
-        var view = _ships.Values.FirstOrDefault(v => v.Current.CaptainId == captainId && captainId != Guid.Empty);
+        var view = _ships.Values.FirstOrDefault(v => HasMember(v.Current,captainId));
         if (view == null || !Position(view,out var x,out var y,out _)) return false;
         var width = (float)view.Current.Width * Options.Instance.Map.TileWidth;
         var length = (float)view.Current.Length * Options.Instance.Map.TileHeight;

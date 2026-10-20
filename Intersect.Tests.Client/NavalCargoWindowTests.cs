@@ -3,6 +3,7 @@ using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Interface.Game.Hotbar;
+using Intersect.Client.Interface.Game;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.Naval;
 using Intersect.Network.Packets.Server;
@@ -70,6 +71,22 @@ public sealed class NavalCargoWindowTests
         Assert.That(Descendants(window).Single(c=>c.Name=="CargoEmpty").IsHidden,Is.True);
         Assert.That(Descendants(window).OfType<Label>().Single(c=>c.Name=="CargoItemName").Text,Does.Contain("Unknown item"));
         window.Update(null,true);Assert.That(window.IsHidden,Is.True);
+    }
+    [Test]
+    public void CrewRosterAndDockOffersUseRealScrollControlsWithoutRecreatingIdenticalRows()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);
+        using var canvas=new Canvas(skin) {Size=new Point(640,480)};var window=new NavalCrewWindow(canvas);
+        var state=new ShipCrewState {AtDock=true,PersonalCargoCount=2,Offers=Enumerable.Range(0,5).Select(i=>new ShipCrewOffer {
+            ShipId=Guid.NewGuid(),Name="Royal ship "+i,CaptainName="Captain "+i,Occupied=1,Capacity=4}).ToArray()};
+        window.Apply(new HarbourStatePacket {View=HarbourView.Crew,Crew=state});
+        var scroll=Descendants(window).OfType<ScrollControl>().Single();
+        Assert.That(Descendants(scroll).OfType<Button>().Count(),Is.EqualTo(5));
+        var first=scroll.Children[0];window.Update(state);Assert.That(scroll.Children[0],Is.SameAs(first));
+        state.ShipId=Guid.NewGuid();state.Members=[new(){PlayerId=Guid.NewGuid(),Name="Captain",Captain=true},new(){PlayerId=Guid.NewGuid(),Name="Sailor"}];
+        window.Update(state);Assert.That(scroll.Children.Count,Is.EqualTo(2));
+        foreach(var button in Descendants(window).OfType<Button>())
+            Assert.That(button.X>=0 && button.Y>=0 && button.Right<=button.Parent!.Width,Is.True,button.Name);
     }
     private static IEnumerable<ControlBase> Descendants(ControlBase parent)
     {foreach(var child in parent.Children) {yield return child;foreach(var descendant in Descendants(child)) yield return descendant;}}

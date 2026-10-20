@@ -105,7 +105,7 @@ Le System Editor naval comporte six onglets, dont Patrouilles IA Herbonia. Les n
 
 ### Ressources sélectionnables
 
-- Les cinq icônes d’action (bâbord, tribord, cale, ancre, débarquement) se choisissent dans **resources/spells**. Un aperçu de l’image sélectionnée apparaît à droite du choix. Un choix vide conserve l’icône native dessinée par le client.
+- Les six icônes d’action (bâbord, tribord, équipage, cale, ancre, débarquement) se choisissent dans **resources/spells**. Un aperçu de l’image sélectionnée apparaît à droite du choix. Un choix vide conserve l’icône native dessinée par le client.
 - Les sons se choisissent dans **resources/sounds** au format **WAV**, celui que charge le moteur pour ses effets sonores. Le bouton **Écouter** permet une écoute dans l’éditeur. Les fichiers OGG de musique ne sont pas proposés comme effets sonores.
 - Chaque événement a son choix : tir, impact sur coque, impact dans l’eau, impact sur obstacle, naufrage, ancre, mise à l’eau, débarquement et niveau Sailing. Un champ vide désactive ce son. Aucun fichier sonore absent n’a été inventé ou ajouté.
 - Une bordée joue son son de tir une fois, avec trois effets visuels. Les impacts ont leurs propres événements. Les sons utilisent la distance et les réglages audio natifs du client ; les événements répétés dans les mises à jour réseau ne rejouent pas leur son.
@@ -121,7 +121,7 @@ Dans **Ma flotte**, le bouton **Nommer le bateau** permet de choisir un nom avan
 
 La progression est **par personnage**, commune à ses bateaux. Une barre bleu/or avec le niveau et l’EXP se place juste au-dessus des actions navales. La coque et la vitesse restent au-dessus de cette barre.
 
-L’EXP vient uniquement des navires ennemis Herbonia coulés. Chaque patrouille règle sa récompense dans l’éditeur. Le capitaine qui a tiré le coup fatal reçoit cette récompense une seule fois, à condition de piloter encore le même bateau. Naviguer, tirer sans couler une cible, toucher une coque protégée, couler un joueur ou un bateau public de test ne donnent aucune EXP. L’ancienne option ExperiencePerTile est ignorée à la lecture puis retirée lors de l’enregistrement; l’EXP déjà sauvegardée est conservée.
+L’EXP vient uniquement des navires ennemis Herbonia coulés. Chaque patrouille règle sa récompense dans l’éditeur. Le capitaine qui a tiré le coup fatal reçoit cette récompense une seule fois, à condition de piloter encore le même bateau, ainsi que ses équipiers présents (NavalCrew.fr.md). Naviguer, tirer sans couler une cible, toucher une coque protégée, couler un joueur ou un bateau public de test ne donnent aucune EXP. L’ancienne option ExperiencePerTile est ignorée à la lecture puis retirée lors de l’enregistrement; l’EXP déjà sauvegardée est conservée.
 
 Valeurs initiales : **100 EXP par ennemi coulé**, **100 EXP pour passer du niveau 1 au 2**, multiplication par **1,12** pour chaque niveau suivant, maximum **100 niveaux**. Les seuils se modifient dans Progression Sailing et la récompense dans chaque patrouille Herbonia. Une récompense à zéro désactive les gains pour cet ennemi. La progression se conserve lors d’un changement de bateau, d’une réparation ou d’un naufrage. Réduire temporairement le plafond ne détruit pas l’EXP déjà gagnée.
 

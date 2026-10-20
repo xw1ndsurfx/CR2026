@@ -3,9 +3,9 @@
 ## Fonctionnement
 La barre verte au-dessus de Sailing affiche les PV actuels/maximum de votre coque, la cargaison occupée/capacité et la vitesse. La touche navale **8** ouvre/ferme la cale; son icône est configurable dans Sons, icônes et effets (resources/spells). Les raccourcis du personnage reviennent au débarquement.
 
-Un ennemi Herbonia coulé récompense une fois le capitaine du tir fatal encore à sa barre. La récompense EXP configurée sert de base au Sailing et à l’EXP personnage; cette dernière passe par GiveExperience, donc respecte les bonus, montées de niveau et plafond natifs. Atteindre le plafond Sailing ne supprime pas le gain personnage. Aucun gain pour la distance ou un simple impact. Les joueurs et bateaux publics de test coulés ne donnent pas de récompense.
+Un ennemi Herbonia coulé récompense une fois le capitaine du tir fatal encore à sa barre et les équipiers présents sur son bateau. La récompense EXP configurée sert de base au Sailing et à l’EXP personnage; cette dernière passe par GiveExperience, donc respecte les bonus, montées de niveau et plafond natifs. Atteindre le plafond Sailing ne supprime pas le gain personnage. Aucun gain pour la distance ou un simple impact. Les joueurs et bateaux publics de test coulés ne donnent pas de récompense.
 
-La cargaison est attachée au bateau personnel, conservée au débarquement et à la reconnexion, et **entièrement perdue au naufrage**, selon le choix demandé. L’EXP déjà obtenue reste acquise. Une réparation ne recrée pas la cargaison perdue. Les bateaux publics de test ne possèdent pas de cale persistante : utiliser un bateau de Ma flotte.
+La cargaison est attachée au bateau personnel, conservée au débarquement et à la reconnexion, et **entièrement perdue au naufrage**, selon le choix demandé. L’EXP déjà obtenue reste acquise. Une réparation ne recrée pas la cargaison perdue. Les équipiers possèdent une cale personnelle, déchargeable depuis la fenêtre Équipage. Les bateaux publics de test ne possèdent pas de cale persistante : utiliser un bateau de Ma flotte.
 
 ## Configuration dans System Editor
 1. Dans Boutique navale et réparations, choisir un modèle existant et sa **Capacité de cargaison** (0 désactive la collecte; 20 par défaut, maximum 200 lots). Enregistrer cette section.
@@ -27,10 +27,10 @@ Installer ensemble serveur, client et éditeur de cette version sur un environne
 3. Couler l’ennemi : Sailing +275 une seule fois; EXP personnage de base +275, avec ses bonus/plafonds habituels. Ouvrir 8 : voir un lot de quantité 2. Reconnecter, puis vérifier sa conservation.
 4. Remplir la cale, puis configurer/tester un butin de qualité supérieure : remplacement du moins bon lot. Une qualité égale ne remplace pas un lot existant.
 5. Débarquer au Q : retour au point d’embarquement. Décharger depuis Ma flotte : objets reçus une fois, cale vide. Réessayer : aucun doublon. Refaire avec inventaire principal plein : cargaison intacte.
-6. Collecter à nouveau et laisser couler le bateau hors protection Q : cale vide après naufrage, même après reconnexion/réparation; EXP acquise conservée. Refaire avec deux capitaines : seul le coup fatal reçoit cette récompense, chaque cale reste privée.
+6. Collecter à nouveau et laisser couler le bateau hors protection Q : cale vide après naufrage, même après reconnexion/réparation; EXP acquise conservée. Refaire avec deux capitaines : le bateau du coup fatal récompense son capitaine et son équipage présent; chaque cale reste privée.
 
 ## Limites et validation
-Adaptation du principe de cargaison à revendre/décharger au port, inspiré du [document de conception Pirates Online préservé par TLOPO](https://tlopo-cdn.tlopo.com/preservation/9f1122fc-37cf-43c6-b748-349e50a41632.pdf). Pas de ramassage flottant ni de partage d’équipage à cette étape. Les tables de butin doivent être configurées avec les objets réels du projet. Supprimer ensuite un objet référencé rend son déchargement indisponible et conserve la cargaison; rétablir l’objet pour la récupérer.
+Adaptation du principe de cargaison à revendre/décharger au port, inspiré du [document de conception Pirates Online préservé par TLOPO](https://tlopo-cdn.tlopo.com/preservation/9f1122fc-37cf-43c6-b748-349e50a41632.pdf). Pas de ramassage flottant. Le partage d’équipage est décrit dans NavalCrew.fr.md. Les tables de butin doivent être configurées avec les objets réels du projet. Supprimer ensuite un objet référencé rend son déchargement indisponible et conserve la cargaison; rétablir l’objet pour la récupérer.
 
 Tests automatisés : gain unique au naufrage, sérialisation des lots, tirages, capacité/qualité, sauvegarde/reprise EXP, perte au naufrage, transfert atomique, piles et inventaire à cases clairsemées. Fenêtre native de l’éditeur vérifiée avec une table et un aperçu enregistrable; rendu HUD, combat et déchargement connectés restent à confirmer dans le jeu installé.
 
@@ -39,3 +39,5 @@ Voir [Bandeau EXP, butin et cale pleine](NavalRewardNotifications.fr.md).
 
 ## Fenêtre de cale
 La cale utilise maintenant des cartes avec icônes et une scrollbar, dans le style du marketplace. Voir [Liste de cargaison](NavalCargoManifest.fr.md).
+
+Suite : [Équipage et récompenses personnelles](NavalCrew.fr.md).

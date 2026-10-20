@@ -30,6 +30,7 @@ public sealed class ShipDefinition
     public int DockY { get; set; }
     public string SinkingGraphics { get; set; } = "Ship_CorpsRoyaux_002_Sink.png";
     public string DamagedGraphics { get; set; } = "royal-ship-damaged.png";
+    public int CrewCapacity {get;set;}=4;
     public int CargoCapacity {get;set;}=20;
     public int Frames { get; set; } = 4;
     public int FrameMilliseconds { get; set; } = 180;
@@ -41,7 +42,7 @@ public sealed class ShipDefinition
     public double Drag { get; set; } = .5;
     public double TurnRate { get; set; } = 45;
 
-    public bool IsValid() => CargoCapacity is >=0 and <=200 && (Name=="" || ShipNames.Normalize(Name)!=null) && Id != Guid.Empty && MapId != Guid.Empty &&
+    public bool IsValid() => CrewCapacity is >=1 and <=8 && CargoCapacity is >=0 and <=200 && (Name=="" || ShipNames.Normalize(Name)!=null) && Id != Guid.Empty && MapId != Guid.Empty &&
         new[] { X, Y, Heading, Width, Length, MaxSpeed, ReverseSpeed, Acceleration, Drag, TurnRate }.All(double.IsFinite) &&
         X >= 0 && X < 256 && Y >= 0 && Y < 256 && DockX is >= 0 and < 256 && DockY is >= 0 and < 256 &&
         Width >= .5 && Width <= 16 && Length >= .5 && Length <= 16 &&

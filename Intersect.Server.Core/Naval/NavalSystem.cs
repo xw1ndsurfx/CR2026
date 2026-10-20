@@ -35,6 +35,10 @@ internal static partial class NavalSystem
         internal int MaximumHealth => Enemy?.MaximumHealth??100;
         internal string Name=definition.Name;
         internal HerboniaPatrol Enemy;
+        internal int SinkingSerial;
+        internal string CaptainName="";
+        internal bool BoardingOpen;
+        internal readonly Dictionary<Guid,CrewPresence> Crew=[];
         internal int Waypoint;
         internal long RespawnAt, AvoidUntil;
         internal Guid BoardingMap;
@@ -116,6 +120,7 @@ internal static partial class NavalSystem
 
     internal static void Helm(Player player)
     {
+        if(player.BoardedShipId!=Guid.Empty) {Crew(player,new(){View=HarbourView.Crew,Action=HarbourAction.LeaveCrew});return;}
         lock (player.EntityLock)
         {
             lock (Gate) { _ = IsEnabled(); }
@@ -217,6 +222,7 @@ internal static partial class NavalSystem
         ApplyPendingExperience(player,now);
         ApplyCharacterExperience(player,now);
         ApplyPendingDamage(player, now);
+        UpdateCrewPassenger(player,now);
         ShipState pendingWarp = null;
         Vessel rescueVessel = null;
         Guid oldMap = Guid.Empty;
@@ -286,6 +292,7 @@ internal static partial class NavalSystem
     internal static void Release(Player player, bool returnToHarbour = false)
     {
         // Ordinary players need no naval cleanup (including constructor-free test fixtures).
+        if(player.BoardedShipId!=Guid.Empty) {ReleaseCrew(player,true);return;}
         if (player.CaptainedShipId == Guid.Empty) return;
         lock (player.EntityLock)
         {
@@ -320,7 +327,8 @@ internal static partial class NavalSystem
             {
                 var owned = player.NavalFleet.FirstOrDefault(s => s.Id == vessel.State.Id);
                 if (owned != null) owned.AtSea = false;
-                Ships.Remove(vessel.State.Id);
+                vessel.BoardingOpen=false;
+                if(vessel.Crew.Count==0) Ships.Remove(vessel.State.Id);
             } // Stored in the character fleet, not a public boat.
         }
         player.CaptainedShipId = Guid.Empty;
@@ -333,18 +341,18 @@ internal static partial class NavalSystem
         var visible = player.Map?.GetSurroundingMapIds(true).ToHashSet() ?? [];
         visible.Add(player.MapId);
         var progress=_settings.Sailing.Progress(player.SailingExperience);
-        var targetId=CombatTarget(player.CaptainedShipId,now,visible);
+        var targetId=CombatTarget(player.NavalShipId,now,visible);
         Effects.RemoveAll(e=>now-e.Born>1500);
-        player.SendPacket(new NavalSnapshotPacket { Rewards=RewardReceipts(player,now),CombatTargetId=targetId, Presentation=_settings.Presentation,
+        player.SendPacket(new NavalSnapshotPacket { Crew=CrewState(player),Rewards=RewardReceipts(player,now),CombatTargetId=targetId, Presentation=_settings.Presentation,
             SailingLevel=progress.Level,SailingExperience=progress.Experience,SailingRequired=progress.Required,
             Effects=player.InstanceType!=MapInstanceType.Overworld?[]:Effects.Where(e=>visible.Contains(e.Snapshot.MapId)).Select(e=>new NavalEffectSnapshot {
                 Id=e.Snapshot.Id,MapId=e.Snapshot.MapId,X=e.Snapshot.X,Y=e.Snapshot.Y,Heading=e.Snapshot.Heading,Kind=e.Snapshot.Kind,
                 PlaySound=e.Snapshot.PlaySound,AgeMilliseconds=(int)Math.Clamp(now-e.Born,0,1500) }).ToArray(), Ships = player.InstanceType != MapInstanceType.Overworld ? [] :
             Ships.Values.Where(v => visible.Contains(v.State.MapId) && ocean.Contains(v.State.MapId) && MapController.Get(v.State.MapId) != null)
-                .OrderByDescending(v=>v.State.Id==player.CaptainedShipId?2:v.State.Id==targetId?1:0).Take(64)
-                .Select(v => new ShipSnapshot { Id = v.State.Id, CaptainId = v.State.CaptainId, MapId = v.State.MapId,
-                    CargoCapacity=v.OwnerId==player.Id?v.Definition.CargoCapacity:0,
-                    Cargo=v.OwnerId==player.Id?(player.NavalFleet.FirstOrDefault(s=>s.Id==v.State.Id)?.Cargo.ToArray()??[]):[],
+                .OrderByDescending(v=>v.State.Id==player.NavalShipId?2:v.State.Id==targetId?1:0).Take(64)
+                .Select(v => new ShipSnapshot { CrewIds=v.Crew.Keys.ToArray(),Id = v.State.Id, CaptainId = v.State.CaptainId, MapId = v.State.MapId,
+                    CargoCapacity=v.OwnerId==player.Id?v.Definition.CargoCapacity:player.BoardedShipId==v.State.Id?player.NavalCrewPassage?.Capacity??0:0,
+                    Cargo=v.OwnerId==player.Id?(player.NavalFleet.FirstOrDefault(s=>s.Id==v.State.Id)?.Cargo.ToArray()??[]):player.BoardedShipId==v.State.Id?(player.NavalCrewPassage?.Ship.Cargo.ToArray()??[]):[],
                     Enemy=v.Enemy!=null,Level=v.Enemy?.Level??1,MaximumHealth=v.MaximumHealth,Name=v.Name, X = v.State.X, Y = v.State.Y, Heading = v.State.Heading, Speed = v.State.Speed,
                     Graphics = v.SunkUntil > 0 ? v.SinkingGraphics : v.State.DamageState > 0 ? v.Definition.DamagedGraphics : v.Definition.Graphics,
                     Frames = v.Definition.Frames, FrameMilliseconds = v.Definition.FrameMilliseconds,
@@ -387,7 +395,7 @@ internal static partial class NavalSystem
             !map.TryGetInstance(player.MapInstanceId, out var instance) || instance.IsDisposed) return false;
         var attribute = map.Attributes[x, y];
         if (IsBlockingAttribute(attribute)) return false;
-        if (instance.GetCachedEntities().Any(e => e != player && !e.IsPassable() && e.X == x && e.Y == y && e.Z == player.Z)) return false;
+        if (instance.GetCachedEntities().Any(e => e != player && !(e is Player crew && player.NavalShipId!=Guid.Empty && crew.NavalShipId==player.NavalShipId) && !e.IsPassable() && e.X == x && e.Y == y && e.Z == player.Z)) return false;
         if (instance.GlobalEventInstances.Values.SelectMany(e => e.GlobalPageInstance)
             .Any(e => e != null && !e.Passable && e.X == x && e.Y == y && e.Z == player.Z)) return false;
         return !player.NavalEventBlocked(map, x, y);

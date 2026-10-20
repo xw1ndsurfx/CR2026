@@ -47,6 +47,7 @@ internal static partial class NavalSystem
 
     internal static void Harbour(Player player, HarbourRequestPacket packet, bool fromEvent = false)
     {
+        if(packet.View==HarbourView.Crew) {Crew(player,packet);return;}
         lock (player.EntityLock)
         {
             var now = Timing.Global.Milliseconds;
@@ -64,7 +65,7 @@ internal static partial class NavalSystem
                 { player.SendPacket(new HarbourStatePacket { View = packet.View, Message = "The harbour catalogue is unavailable." }); return; }
                 if (!player.InGame || player.IsDead || player.HasPendingDeath || player.Client == null ||
                     player.User == null || player.InstanceType != MapInstanceType.Overworld ||
-                    (!fromEvent && player.NavalBusy) || player.Z != 0 || player.CaptainedShipId != Guid.Empty)
+                    (!fromEvent && player.NavalBusy) || player.Z != 0 || player.NavalShipId != Guid.Empty)
                     return;
                 if (packet.View == HarbourView.Shop)
                 {
@@ -184,7 +185,7 @@ internal static partial class NavalSystem
             if (x < 0 || y < 0 || x >= Options.Instance.Map.MapWidth || y >= Options.Instance.Map.MapHeight ||
                 !ClearHull(player, vessel, ocean, player.MapId, x, y)) continue;
             d.X = vessel.State.X = x; d.Y = vessel.State.Y = y;
-            vessel.Health = owned.Health;
+            vessel.Health = owned.Health;vessel.SinkingSerial=owned.SinkingSerial;
             vessel.State.DamageState = owned.Health < 100 ? 1 : 0;
             var fleetBefore = player.NavalFleetJson;
             owned.AtSea = true; owned.ReturnMapId = player.MapId; owned.ReturnDockX = dock.X; owned.ReturnDockY = dock.Y;
@@ -197,7 +198,7 @@ internal static partial class NavalSystem
                 return null;
             }
             vessel.State.CaptainId = player.Id;
-            Ships.Add(owned.Id, vessel); player.CaptainedShipId = owned.Id;
+            vessel.CaptainName=player.Name;Ships.Add(owned.Id, vessel); player.CaptainedShipId = owned.Id;
             Emit(NavalEffectKind.Launch,player.MapId,x,y,d.Heading,Timing.Global.Milliseconds);
             player.CastTime = 0; player.IsBlocking = false;
             return vessel.State;
@@ -230,6 +231,12 @@ internal static partial class NavalSystem
 
     internal static bool RecoverLogin(Player player)
     {
+        if(player.NavalCrewPassage is {Ship.AtSea:true} passage)
+        {
+            using(var context=Intersect.Server.Database.DbInterface.CreatePlayerContext(readOnly:true))
+                ReconcileCrewCargo(passage,context.Players.Where(p=>p.Id==passage.CaptainId).Select(p=>p.NavalFleetJson).FirstOrDefault());
+            ReturnToHarbour(player,passage.Ship,fromLogin:true);passage.Ship.AtSea=false;player.User?.Save(force:true);return true;
+        }
         var pending = player.NavalFleet.FirstOrDefault(s => s.AtSea);
         if (pending == null) return false;
         ReturnToHarbour(player, pending, fromLogin: true);

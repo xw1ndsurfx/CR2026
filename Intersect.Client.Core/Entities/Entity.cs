@@ -233,7 +233,7 @@ public partial class Entity : IEntity
 
     public FloatRect WorldPos { get; set; } = new FloatRect();
 
-    public virtual FloatRect InteractionBounds => Naval.NavalWorld.IsCaptain(Id) ?
+    public virtual FloatRect InteractionBounds => Naval.NavalWorld.IsAboard(Id) ?
         (Naval.NavalWorld.TryHullBounds(Id,out var hull) ? hull : default) : WorldPos;
 
     public bool HitTest(float worldX, float worldY) => InteractionBounds.Contains(worldX, worldY);
@@ -1069,7 +1069,7 @@ public partial class Entity : IEntity
     /// <summary>
     /// Returns whether this entity should be drawn.
     /// </summary>
-    public virtual bool ShouldDraw => !Naval.NavalWorld.IsCaptain(Id) && !IsHidden && (!IsStealthed || this == Globals.Me || Globals.Me?.IsInMyParty(Id) == true);
+    public virtual bool ShouldDraw => !Naval.NavalWorld.IsAboard(Id) && !IsHidden && (!IsStealthed || this == Globals.Me || Globals.Me?.IsInMyParty(Id) == true);
 
     /// <summary>
     /// Returns whether the name of this entity should be drawn.
@@ -1257,7 +1257,7 @@ public partial class Entity : IEntity
     //Rendering Functions
     public virtual void Draw()
     {
-        if (Naval.NavalWorld.IsCaptain(Id)) { WorldPos = InteractionBounds; return; }
+        if (Naval.NavalWorld.IsAboard(Id)) { WorldPos = InteractionBounds; return; }
         if (IsHidden)
         {
             return; //Don't draw if the entity is hidden

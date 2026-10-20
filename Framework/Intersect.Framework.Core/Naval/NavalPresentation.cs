@@ -4,6 +4,7 @@ namespace Intersect.Framework.Core.Naval;
 [MessagePackObject]
 public sealed class NavalPresentation
 {
+    [Key(20)] public string CrewIcon {get;set;}="";
     [Key(19)] public string CargoIcon {get;set;}="";
     [Key(0)] public string PortIcon {get;set;}="";
     [Key(1)] public string StarboardIcon {get;set;}="";
@@ -29,7 +30,7 @@ public sealed class NavalPresentation
     public bool IsValid()=>GetType().GetProperties().Where(p=>p.PropertyType==typeof(string)).All(p=>SafeAsset((string?)p.GetValue(this))) &&
         EffectFrameMilliseconds is >=20 and <=1000 && double.IsFinite(EffectPixelsPerTile) && EffectPixelsPerTile is >=16 and <=1024;
     public string Icon(ShipAction action)=>action switch {ShipAction.PortCannons=>PortIcon,ShipAction.StarboardCannons=>StarboardIcon,
-        ShipAction.Cargo=>CargoIcon,ShipAction.Anchor=>AnchorIcon,ShipAction.LeaveHelm=>DisembarkIcon,_=>""};
+        ShipAction.Crew=>CrewIcon,ShipAction.Cargo=>CargoIcon,ShipAction.Anchor=>AnchorIcon,ShipAction.LeaveHelm=>DisembarkIcon,_=>""};
 }
 
 public enum NavalEffectKind : byte { Fire,WaterImpact,HullImpact,ObstacleImpact,Sinking,Anchor,Launch,Disembark,LevelUp }

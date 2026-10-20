@@ -7724,7 +7724,7 @@ public partial class Player : Entity
     {
         lock (EntityLock)
         {
-            if (CaptainedShipId != Guid.Empty) return;
+            if (NavalShipId != Guid.Empty) return;
             var oldMap = MapId;
             base.Move(moveDir, forPlayer, dontUpdate, correction);
 

@@ -51,7 +51,7 @@ internal static partial class NavalSystem
                     !Ships.TryGetValue(packet.ShipId,out var vessel) || vessel.State.CaptainId != player.Id ||
                     vessel.State.MapId != player.MapId || vessel.SunkUntil > 0 ||
                     (packet.Action is ShipAction.Anchor or ShipAction.LeaveHelm && now-vessel.LastAction < 150) ||
-                    !Enum.IsDefined(packet.Action) || packet.Action is ShipAction.None or ShipAction.Cargo) return;
+                    !Enum.IsDefined(packet.Action) || packet.Action is ShipAction.None or ShipAction.Cargo or ShipAction.Crew) return;
                 if (packet.Action is ShipAction.PortCannons or ShipAction.StarboardCannons &&
                     !ShipActions.CanFire(_settings.CannonsEnabled,true,false,now,
                         packet.Action==ShipAction.PortCannons?vessel.PortReady:vessel.StarboardReady)) return;

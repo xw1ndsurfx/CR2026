@@ -7,6 +7,8 @@ namespace Intersect.Server.Entities;
 
 public partial class Player
 {
+    [NotMapped, JsonIgnore] public Guid BoardedShipId {get;internal set;}
+    [NotMapped, JsonIgnore] public Guid NavalShipId => CaptainedShipId!=Guid.Empty?CaptainedShipId:BoardedShipId;
     [NotMapped, JsonIgnore] public Guid CaptainedShipId { get; internal set; }
     [NotMapped, JsonIgnore] internal long NavalSnapshotTime { get; set; }
     [NotMapped, JsonIgnore] internal bool NavalWarpInProgress { get; set; }

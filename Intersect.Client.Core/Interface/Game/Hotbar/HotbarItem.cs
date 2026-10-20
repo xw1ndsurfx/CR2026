@@ -126,7 +126,7 @@ public partial class HotbarItem : SlotItem
 
     public void Activate()
     {
-        if (Globals.Me != null && Naval.NavalWorld.IsCaptain(Globals.Me.Id)) { Naval.NavalWorld.ActivateSlot(SlotIndex); return; }
+        if (Globals.Me != null && Naval.NavalWorld.IsAboard(Globals.Me.Id)) { Naval.NavalWorld.ActivateSlot(SlotIndex); return; }
         if (Globals.InputManager.IsMouseButtonDown(MouseButton.Right))
         {
             return;
@@ -155,7 +155,7 @@ public partial class HotbarItem : SlotItem
 
     private void Icon_Clicked(Base sender, MouseButtonState arguments)
     {
-        if (Globals.Me != null && Naval.NavalWorld.IsCaptain(Globals.Me.Id)) return;
+        if (Globals.Me != null && Naval.NavalWorld.IsAboard(Globals.Me.Id)) return;
         if (arguments.MouseButton is MouseButton.Right)
         {
             Globals.Me?.AddToHotbar(SlotIndex, -1, -1);
@@ -206,7 +206,7 @@ public partial class HotbarItem : SlotItem
 
     public override bool DragAndDrop_HandleDrop(Package package, int x, int y)
     {
-        if (Globals.Me != null && Naval.NavalWorld.IsCaptain(Globals.Me.Id)) return false;
+        if (Globals.Me != null && Naval.NavalWorld.IsAboard(Globals.Me.Id)) return false;
         if (Globals.Me is not { } player)
         {
             return false;

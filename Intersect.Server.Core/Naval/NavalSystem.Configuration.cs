@@ -29,7 +29,7 @@ internal static partial class NavalSystem
                     var edited = JsonConvert.DeserializeObject<NavalConfiguration>(request.ConfigurationJson,
                         new JsonSerializerSettings { MaxDepth = 12, TypeNameHandling = TypeNameHandling.None }) ?? throw new InvalidDataException();
                     edited.Validate(Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight);
-                    if (Ships.Values.Any(v => v.State.CaptainId != Guid.Empty))
+                    if (Ships.Values.Any(v => v.State.CaptainId != Guid.Empty || v.Crew.Count>0))
                         return new() { Error = "Stop all ships before changing navigation settings." };
                     if(edited.Herbonia.SelectMany(p=>p.Loot).Any(e=>ItemDescriptor.Get(e.ItemId)==null))
                         return new() {Error="Choose an existing item for every naval loot entry."};

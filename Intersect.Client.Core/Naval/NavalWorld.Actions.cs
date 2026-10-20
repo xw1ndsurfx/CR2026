@@ -18,7 +18,7 @@ internal static partial class NavalWorld
     private static readonly HashSet<int> _pressedSlots = [];
     private sealed record BallView(CannonballSnapshot Previous,CannonballSnapshot Current,long Received);
     private static Dictionary<Guid,BallView> _balls = [];
-    internal static ShipSnapshot? OwnShip => Fresh ? _ships.Values.FirstOrDefault(v=>v.Current.CaptainId==_viewer)?.Current : null;
+    internal static ShipSnapshot? OwnShip => Fresh ? _ships.Values.FirstOrDefault(v=>HasMember(v.Current,_viewer))?.Current : null;
     private static void ClearActions() {CargoOpen=false; _actionShip=Guid.Empty;_pressedSlots.Clear();_balls.Clear(); }
 
     private static void ReadActions(bool busy)
@@ -46,6 +46,10 @@ internal static partial class NavalWorld
         var own=OwnShip;var action=ShipActions.ForSlot(slot);
         if(own==null || DragAndDrop.IsDragging || Globals.Me?.IsBusy!=false || own.Sinking || action==ShipAction.None ||
             (action is ShipAction.PortCannons or ShipAction.StarboardCannons && (!own.CannonsEnabled || Cooldown(slot)>0))) return;
+        if(action==ShipAction.Crew) {Networking.Network.SendPacket(new HarbourRequestPacket {View=HarbourView.Crew});return;}
+        if(own.CaptainId!=Globals.Me!.Id && action==ShipAction.LeaveHelm)
+        {Networking.Network.SendPacket(new HarbourRequestPacket {View=HarbourView.Crew,Action=HarbourAction.LeaveCrew});return;}
+        if(own.CaptainId!=Globals.Me!.Id && action!=ShipAction.Cargo) return;
         if(action==ShipAction.Cargo) {CargoOpen=!CargoOpen;return;}
         Networking.Network.SendPacket(new ShipActionPacket { ShipId=own.Id,Action=action });
     }
@@ -56,7 +60,7 @@ internal static partial class NavalWorld
         foreach(var ball in (packet.Cannonballs??[]).Take(512))
             next[ball.Id]=new(Fresh&&_balls.TryGetValue(ball.Id,out var before)?before.Current:ball,ball,now);
         _balls=next;
-        if(!packet.Ships.Any(s=>s.CaptainId==Globals.Me?.Id)) {CargoOpen=false; _actionShip=Guid.Empty;_pressedSlots.Clear(); }
+        if(!packet.Ships.Any(s=>HasMember(s,Globals.Me?.Id??Guid.Empty))) {CargoOpen=false; _actionShip=Guid.Empty;_pressedSlots.Clear(); }
     }
     private static void DrawCannonballs(int row)
     {

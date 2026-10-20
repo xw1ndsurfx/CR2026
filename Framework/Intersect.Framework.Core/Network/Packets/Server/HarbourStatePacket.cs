@@ -4,6 +4,7 @@ namespace Intersect.Network.Packets.Server;
 [MessagePackObject(AllowPrivate = true)]
 public partial class HarbourStatePacket : IntersectPacket
 {
+    [Key(5)] public ShipCrewState Crew {get;set;}=new();
     [Key(0)] public HarbourEntry[] Entries { get; set; } = [];
     [Key(1)] public string Message { get; set; } = "";
     [Key(2)] public bool Premium { get; set; }

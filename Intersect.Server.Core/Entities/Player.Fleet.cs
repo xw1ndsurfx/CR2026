@@ -10,9 +10,10 @@ public partial class Player
     [JsonIgnore, Column("NavalFleet")]
     public string NavalFleetJson
     {
-        get => JsonConvert.SerializeObject(new NavalPlayerData {Ships=NavalFleet,SailingExperience=SailingExperience,PendingCharacterExperience=PendingNavalCharacterExperience,AdditionalData=_navalExtra});
-        set {var data=NavalPlayerData.Parse(value);NavalFleet=data.Ships;SailingExperience=data.SailingExperience;PendingNavalCharacterExperience=data.PendingCharacterExperience;_navalExtra=data.AdditionalData;}
+        get => JsonConvert.SerializeObject(new NavalPlayerData {Ships=NavalFleet,CrewPassage=NavalCrewPassage,SailingExperience=SailingExperience,PendingCharacterExperience=PendingNavalCharacterExperience,AdditionalData=_navalExtra});
+        set {var data=NavalPlayerData.Parse(value);NavalFleet=data.Ships;NavalCrewPassage=data.CrewPassage;SailingExperience=data.SailingExperience;PendingNavalCharacterExperience=data.PendingCharacterExperience;_navalExtra=data.AdditionalData;}
     }
+    [JsonIgnore, NotMapped] public ShipCrewPassage NavalCrewPassage {get;set;}
     private IDictionary<string,Newtonsoft.Json.Linq.JToken>? _navalExtra;
     [JsonIgnore, NotMapped] internal List<(NavalRewardReceipt Receipt,long Born)> NavalRewardNotices {get;set;}=[];
     [JsonIgnore, NotMapped] public long PendingNavalCharacterExperience {get;set;}

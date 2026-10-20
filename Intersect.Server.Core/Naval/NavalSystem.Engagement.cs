@@ -22,11 +22,17 @@ internal static partial class NavalSystem
         {ship.CombatTargetId=Guid.Empty;ship.CombatUntil=0;}
         if(captainId==Guid.Empty || !Ships.TryGetValue(attackerId,out var attacker) || attacker.Enemy!=null ||
             attacker.State.CaptainId!=captainId) return;
-        PendingSailingRewards.TryGetValue(captainId,out var pending);
-        var loot=NavalCargo.Roll(victim.Enemy.Loot,Random.Shared.NextDouble,Random.Shared.Next)
-            .Select(p=>new CargoAward(attackerId,attacker.Definition.CargoCapacity,p));
-        PendingSailingRewards[captainId]=new(Math.Min(200000000000000L,(pending?.Experience??0)+victim.Enemy.SailingExperienceReward),
-            Cargo:(pending?.Cargo??[]).Concat(loot).Take(6400).ToArray());
+        var now=Intersect.Framework.Core.Timing.Global.Milliseconds;
+        var loot=NavalCargo.Roll(victim.Enemy.Loot,Random.Shared.NextDouble,Random.Shared.Next);
+        var participants=new[]{captainId}.Concat(attacker.Crew.Where(m=>now-m.Value.Seen<=1500).Select(m=>m.Key)).Distinct();
+        foreach(var participant in participants)
+        {
+            PendingSailingRewards.TryGetValue(participant,out var pending);
+            var awards=loot.Select(p=>new CargoAward(attackerId,attacker.Definition.CargoCapacity,new NavalCargoParcel {
+                ItemId=p.ItemId,Quantity=p.Quantity,Quality=p.Quality,Kind=p.Kind}));
+            PendingSailingRewards[participant]=new(Math.Min(200000000000000L,(pending?.Experience??0)+victim.Enemy.SailingExperienceReward),
+                Cargo:(pending?.Cargo??[]).Concat(awards).Take(6400).ToArray());
+        }
     }
 
     // Player lock is held before Gate. Never save a different captain from the world/combat loop.

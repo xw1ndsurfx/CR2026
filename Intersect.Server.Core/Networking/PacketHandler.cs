@@ -437,7 +437,7 @@ internal sealed partial class PacketHandler
 
     public bool ProcessPacket(IPacket packet, Client client)
     {
-        if (client.Entity is { CaptainedShipId: var shipId } && shipId != Guid.Empty &&
+        if (client.Entity is { NavalShipId: var shipId } && shipId != Guid.Empty &&
             packet is MovePacket or AttackPacket or BlockPacket or DirectionPacket or UseSpellPacket or UseItemPacket or ActivateEventPacket)
             return true;
         if (!Registry.TryGetHandler(packet, out HandlePacketGeneric handler))
@@ -914,6 +914,8 @@ internal sealed partial class PacketHandler
         var msg = packet.Message;
         var channel = packet.Channel;
 
+        if(string.Equals(msg?.Trim(),"/naval crew",StringComparison.OrdinalIgnoreCase))
+        { Intersect.Server.Naval.NavalSystem.Crew(player,new(){View=Intersect.Framework.Core.Naval.HarbourView.Crew});return; }
         if (string.Equals(msg?.Trim(), "/naval", StringComparison.OrdinalIgnoreCase))
         {
             Intersect.Server.Naval.NavalSystem.Helm(player);

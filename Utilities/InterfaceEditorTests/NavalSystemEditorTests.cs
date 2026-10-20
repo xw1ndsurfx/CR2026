@@ -106,10 +106,11 @@ internal static class NavalSystemEditorTests
             controls.OfType<NumericUpDown>().Single(c=>c.Name=="ChancePercent").Value=50;
             controls.OfType<NumericUpDown>().Single(c=>c.Name=="Quality").Value=4;
             controls.OfType<NumericUpDown>().Single(c=>c.Name=="CargoCapacity").Value=30;
+            controls.OfType<NumericUpDown>().Single(c=>c.Name=="CrewCapacity").Value=6;
             controls.OfType<ComboBox>().Single(c=>c.Name=="Kind").SelectedIndex=(int)NavalCargoKind.RoyalChest;
             var save=(NavalConfigurationRequestPacket)typeof(FrmNavalConfiguration).GetMethod("PrepareSave",BindingFlags.NonPublic|BindingFlags.Instance)!.Invoke(editor,null)!;
             var actual=JsonConvert.DeserializeObject<NavalConfiguration>(save.ConfigurationJson)!.Herbonia.Single();
-            if(actual.Loot[0].ItemId!=item.Id || actual.Loot[0].MaximumQuantity!=5 || actual.Loot[0].Kind!=NavalCargoKind.RoyalChest || actual.Ship.CargoCapacity!=30)
+            if(actual.Loot[0].ItemId!=item.Id || actual.Loot[0].MaximumQuantity!=5 || actual.Loot[0].Kind!=NavalCargoKind.RoyalChest || actual.Ship.CargoCapacity!=30 || actual.Ship.CrewCapacity!=6)
                 throw new Exception("The loot table must persist actual item ids, quantities, type and hold capacity.");
             var preview=Environment.GetEnvironmentVariable("NAVAL_LOOT_PREVIEW");
             if(!string.IsNullOrEmpty(preview))
@@ -119,7 +120,7 @@ internal static class NavalSystemEditorTests
                 using var bitmap=new System.Drawing.Bitmap(editor.Width,editor.Height);editor.DrawToBitmap(bitmap,new System.Drawing.Rectangle(0,0,editor.Width,editor.Height));
                 bitmap.Save(preview,System.Drawing.Imaging.ImageFormat.Png);editor.Hide();
             }
-            Console.WriteLine("PASS native naval loot table: existing items, probabilities, qualities, quantities and capacity");
+            Console.WriteLine("PASS native naval loot table: existing items, probabilities, qualities, quantities, cargo and crew capacity");
         }
         finally {Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Lookup.Delete(item);}
     }

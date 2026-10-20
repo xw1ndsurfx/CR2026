@@ -40,6 +40,7 @@ public partial class HotBarWindow
     private string N(string text)=>NavalSetupText.Get(text,ClientLanguages.Current);
     private void UpdateNavalBar()
     {
+        Interface.InGameUiOrNull?.UpdateNavalCrew();
         var reward=Naval.NavalWorld.RewardFeed.Current(Environment.TickCount64);
         if(reward!=null && _rewardHud==null) _rewardHud=new NavalRewardHud(Parent);
         _rewardHud?.Update(reward,Y-64,Interface.InGameUiOrNull?.SuppressStatusHuds==true);
@@ -83,7 +84,8 @@ public partial class HotBarWindow
             button.Text=cooldown>0?Math.Ceiling(cooldown/1000d)+"\n"+key:key;
             button.TooltipText=N(ShipActions.Caption(action));
             button.TextColorOverride=i==8 && own!.Anchored?new Color(255,240,200,70):null;
-            button.IsDisabled=own!.Sinking || action==ShipAction.None || Globals.Me?.IsBusy!=false ||
+            button.IsDisabled=own!.Sinking || action==ShipAction.None ||
+                (own.CaptainId!=Globals.Me?.Id && action is not (ShipAction.Crew or ShipAction.Cargo or ShipAction.LeaveHelm)) || Globals.Me?.IsBusy!=false ||
                 (action is ShipAction.PortCannons or ShipAction.StarboardCannons && (!own.CannonsEnabled || cooldown>0));
         }
         if(_sailingBar!=null)
