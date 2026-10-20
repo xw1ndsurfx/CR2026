@@ -18,7 +18,19 @@ Un fichier de métadonnées absent, invalide ou incompatible fait afficher la co
 
 Les anciennes configurations `royal-ship.png` et `royal-ship-damaged.png` trouvent ces deux planches si aucun PNG explicite de ces noms n'existe déjà. Les nouvelles préparations automatiques utilisent directement `002` et `005`. Les configurations existantes ne sont pas réécrites.
 
-Les autres planches royales, Herbonia et les effets de canon fournis ne sont pas activés par cette phase. Aucun tir, dégât jouable ou IA n'est ajouté. Les neuf configurations de distribution incluent les PNG et leurs métadonnées dans `Client and Editor/resources/ocean`.
+Les autres variantes de navigation royales, l’IA Herbonia et les effets de canon fournis ne sont pas activés par cette phase. Aucun tir, dégât jouable ou IA n'est ajouté. Les neuf configurations de distribution incluent les PNG et leurs métadonnées dans `Client and Editor/resources/ocean`.
+
+## Planches de naufrage ajoutées
+
+Les huit PNG de naufrage fournis sont conservés sans retouche : Corps Royaux `001` à `006` et Herbonia `001`/`002`. Le nom `Ship_CorpsRoyaux_002_Sink.png` conserve son `S` majuscule pour fonctionner aussi sous Linux. Chaque image a son propre fichier `.png.naval.json`; le catalogue `ships.sinking.json` associe chaque nom de bateau à son animation.
+
+Ces atlas ont `Loop: false`. Le lecteur avance sur quatre étapes, conserve la quatrième et ne recommence pas à chaque snapshot réseau. Chaque bateau garde sa propre horloge; changer de graphisme commence une nouvelle séquence. Le délai provient toujours de `FrameMilliseconds`. Les anciens atlas sans propriété `Loop` continuent à boucler.
+
+Le découpage reste un **prototype à revoir visuellement**, notamment les sillages jointifs et les morceaux de la pose voisine. `004_sink` présente cinq paires de groupes : les quatre premières paires sont décrites, la cinquième est explicitement indiquée comme région exclue dans les métadonnées. Les rectangles et les empreintes des fichiers sont vérifiés automatiquement; cela ne garantit pas le bon sens des proues ni des raccords parfaits.
+
+Les dernières poses contiennent encore des mâts/débris. Le lecteur ne les fait pas disparaître artificiellement. Le bouton **Rejouer** de l'aperçu relance volontairement la séquence pour inspection.
+
+**Aucun déclenchement par dégâts n'est actif.** `NavalSpriteCatalog.GetSinkingGraphics` prépare le raccord de ressource; le futur état serveur devra arrêter le bateau, fixer son cap, gérer capitaine/équipage, diffuser le début du naufrage puis retirer l'épave. L'horloge visuelle actuelle démarre au premier snapshot observé avec le nouveau graphisme : une arrivée tardive/reconnexion n'effectue pas encore de rattrapage temporel serveur. Les variantes Herbonia ne deviennent pas des navires IA par l'ajout de ces fichiers.
 
 ## Données Ocean examinées
 
@@ -35,7 +47,7 @@ Les liaisons sont réciproques. Aucun événement local, spawn de PNJ ou attribu
 
 ## Procédure exacte sur une copie de test
 
-1. Compiler les exécutables de cette branche; conserver les mêmes clés réseau et la même configuration de compilation pour serveur, client et éditeur. Copier les quatre fichiers de `resources/ocean` vers le même dossier du client de test.
+1. Compiler les exécutables de cette branche; conserver les mêmes clés réseau et la même configuration de compilation pour serveur, client et éditeur. Copier tous les fichiers de `resources/ocean` vers le même dossier du client de test.
 2. Utiliser une copie isolée de la base fournie et des ressources du serveur. Conserver l'original et la configuration navale actuelle séparément.
 3. Ouvrir l'éditeur de test et enregistrer les deux maps Ocean. Marquer une petite zone de collision pour l'essai d'obstacle, en laissant libre le corridor entre elles.
 4. Clic droit sur une map Ocean → **Préparer un navire de test automatiquement**. Avec les attributs de la copie examinée, la recherche de terrain propose le centre `(15.5, 12.5)` et l'embarquement en case `(15, 9)`. Le résultat réel du serveur fait foi si des entités ou des obstacles ont changé.

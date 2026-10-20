@@ -7,6 +7,7 @@ public sealed class ShipSpriteAtlas
     public int ImageWidth { get; set; }
     public int ImageHeight { get; set; }
     public double PixelsPerTile { get; set; } = 64;
+    public bool Loop { get; set; } = true;
     public ShipSpriteFrame[][] Directions { get; set; } = [];
 
     public bool IsValid(int textureWidth, int textureHeight, int frames) =>
@@ -23,8 +24,16 @@ public sealed class ShipSpriteAtlas
 
     // Call after validation; both the client and the preview use these same coordinates.
     public ShipSpriteFrame Frame(double heading, long milliseconds, int frameMilliseconds) =>
-        Directions[ShipMovement.DirectionRow(heading)][(int)(Math.Max(0, milliseconds) /
-            Math.Max(50, frameMilliseconds) % Directions[0].Length)];
+        Directions[ShipMovement.DirectionRow(heading)][FrameIndex(milliseconds, frameMilliseconds)];
+
+    public int FrameIndex(long milliseconds, int frameMilliseconds)
+    {
+        var position = Math.Max(0, milliseconds) / Math.Max(50, frameMilliseconds);
+        return (int)(Loop ? position % Directions[0].Length : Math.Min(position, Directions[0].Length - 1));
+    }
+
+    public bool IsFinished(long milliseconds, int frameMilliseconds) =>
+        !Loop && Math.Max(0, milliseconds) / Math.Max(50, frameMilliseconds) >= Directions[0].Length;
 }
 
 public sealed class ShipSpriteFrame

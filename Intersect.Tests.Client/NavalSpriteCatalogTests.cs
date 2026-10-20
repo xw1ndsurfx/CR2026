@@ -9,6 +9,24 @@ namespace Intersect.Tests.Client;
 public sealed class NavalSpriteCatalogTests
 {
     [Test]
+    public void SnapshotRefreshDoesNotRestartSinkingAndEachVesselHasItsOwnClock()
+    {
+        var clock = new ShipAnimationClock();
+        clock.Observe("normal.png",1000);
+        clock.Observe("normal.png",1100);
+        Assert.That(clock.Elapsed(1200),Is.EqualTo(200));
+        clock.Observe("sink.png",2000);
+        Assert.That(clock.Elapsed(2000),Is.Zero);
+        clock.Observe("SINK.png",2100);
+        Assert.That(clock.Elapsed(2500),Is.EqualTo(500));
+        var other = new ShipAnimationClock(); other.Observe("sink.png",2400);
+        Assert.That(other.Elapsed(2500),Is.EqualTo(100));
+        clock.Observe("normal.png",3000);
+        Assert.That(clock.Elapsed(3000),Is.Zero);
+        Assert.That(clock.Elapsed(2900),Is.Zero);
+    }
+
+    [Test]
     public void MissingOrInvalidOceanSidecarsFallBackAndCannotEscapeTheResourceDirectory()
     {
         var previous = ClientConfiguration.ResourcesDirectory;
@@ -18,6 +36,11 @@ public sealed class NavalSpriteCatalogTests
         {
             ClientConfiguration.ResourcesDirectory = directory;
             NavalSpriteCatalog.Clear();
+            File.WriteAllText(Path.Combine(directory,"ocean","ships.sinking.json"),
+                "{\"Ship_CorpsRoyaux_002.png\":\"Ship_CorpsRoyaux_002_Sink.png\",\"bad.png\":\"../escape.png\"}");
+            Assert.That(NavalSpriteCatalog.GetSinkingGraphics("royal-ship.png"),Is.EqualTo("Ship_CorpsRoyaux_002_Sink.png"));
+            Assert.That(NavalSpriteCatalog.GetSinkingGraphics("bad.png"),Is.Null);
+            Assert.That(NavalSpriteCatalog.GetSinkingGraphics("unknown.png"),Is.Null);
             Assert.That(NavalSpriteCatalog.LegacyAlias("royal-ship.png"),Is.EqualTo("Ship_CorpsRoyaux_002.png"));
             Assert.That(NavalSpriteCatalog.LegacyAlias("my-custom.png"),Is.EqualTo("my-custom.png"));
             Assert.That(NavalSpriteCatalog.Get("missing.png",100,100,4),Is.Null);

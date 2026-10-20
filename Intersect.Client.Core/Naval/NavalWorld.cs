@@ -15,7 +15,7 @@ namespace Intersect.Client.Naval;
 
 internal static class NavalWorld
 {
-    private sealed record View(ShipSnapshot Previous, ShipSnapshot Current, long Received);
+    private sealed record View(ShipSnapshot Previous, ShipSnapshot Current, long Received, ShipAnimationClock Animation);
     private static Dictionary<Guid, View> _ships = [];
     private static Guid _viewer;
     private static long _received, _inputTime;
@@ -29,8 +29,11 @@ internal static class NavalWorld
         var next = new Dictionary<Guid, View>();
         foreach (var s in packet.Ships.Take(64))
         {
-            var previous = _ships.TryGetValue(s.Id, out var v) && Fresh ? v.Current : s;
-            next[s.Id] = new(previous, s, now);
+            var continuing = _ships.TryGetValue(s.Id, out var v) && Fresh;
+            var previous = continuing ? v!.Current : s;
+            var animation = continuing ? v!.Animation : new ShipAnimationClock();
+            animation.Observe(s.Graphics, now);
+            next[s.Id] = new(previous, s, now, animation);
         }
         _ships = next; _viewer = Globals.Me?.Id ?? Guid.Empty; _received = now;
         // The engine's integer position remains an anchor for map loading and ordinary entity lookup.
@@ -101,7 +104,7 @@ internal static class NavalWorld
                 var atlas = NavalSpriteCatalog.Get(oceanName, oceanTexture.Width, oceanTexture.Height, s.Frames);
                 if (atlas != null)
                 {
-                    var pose = atlas.Frame(heading, Environment.TickCount64, s.FrameMilliseconds);
+                    var pose = atlas.Frame(heading, view.Animation.Elapsed(Environment.TickCount64), s.FrameMilliseconds);
                     var scale = (float)(tw / atlas.PixelsPerTile);
                     Graphics.DrawGameTexture(oceanTexture, new FloatRect(pose.X, pose.Y, pose.Width, pose.Height),
                         new FloatRect(x - (float)pose.AnchorX * scale, y - (float)pose.AnchorY * scale,
