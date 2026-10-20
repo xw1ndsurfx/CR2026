@@ -26,9 +26,10 @@ public static partial class ConfigurationHelper
 
         try
         {
-            var json = File.ReadAllText(filePath, Encoding.UTF8);
-
-            JsonConvert.PopulateObject(json, configuration);
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
+            using var text = new StreamReader(stream, Encoding.UTF8);
+            using var json = new JsonTextReader(text);
+            JsonSerializer.CreateDefault().Populate(json, configuration);
 
             return configuration;
         }
@@ -59,13 +60,19 @@ public static partial class ConfigurationHelper
             throw new DirectoryNotFoundException($"Directory does not exist: {directoryPath}");
         }
         
+        var temporary = Path.Combine(Path.GetFullPath(directoryPath), $".config-{Guid.NewGuid():N}.tmp");
         try
         {
-            var json = JsonConvert.SerializeObject(configuration, Formatting.Indented);
-            json = json.ReplaceLineEndings("\n");
-
-            File.WriteAllText(filePath, json, Encoding.UTF8);
-
+            // Stream to a sibling file. A locked target or interrupted write must preserve the previous configuration.
+            using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            using (var text = new StreamWriter(stream, new UTF8Encoding(false)) { NewLine = "\n" })
+            using (var json = new JsonTextWriter(text) { Formatting = Formatting.Indented })
+            {
+                JsonSerializer.CreateDefault().Serialize(json, configuration);
+                json.Flush(); text.Flush(); stream.Flush(flushToDisk: true);
+            }
+            if (File.Exists(filePath)) File.Replace(temporary, filePath, null);
+            else File.Move(temporary, filePath);
             return configuration;
         }
         catch (Exception exception)
@@ -79,6 +86,7 @@ public static partial class ConfigurationHelper
 
             throw;
         }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
 
     public static T LoadSafely<T>(T configuration, string filePath = null)
@@ -89,36 +97,24 @@ public static partial class ConfigurationHelper
             return configuration;
         }
 
-        try
+        // Only a missing file may be initialized from defaults. A failed read must never overwrite existing data.
+        if (File.Exists(filePath))
         {
-            configuration.Load(filePath);
-        }
-        catch (Exception exception)
-        {
-            ApplicationContext.Context.Value?.Logger.LogWarning(
-                exception,
-                "Error when reading {ConfigurationType} to {FilePath}",
-                typeof(T).GetName(qualified: true),
-                filePath
-            );
-        }
-        finally
-        {
-            try
-            {
-                configuration.Save(filePath);
-            }
+            try { configuration.Load(filePath); }
             catch (Exception exception)
             {
-                ApplicationContext.Context.Value?.Logger.LogError(
-                    exception,
-                    "Error when writing {ConfigurationType} to {FilePath}",
-                    typeof(T).GetName(qualified: true),
-                    filePath
-                );
+                ApplicationContext.Context.Value?.Logger.LogWarning(exception,
+                    "Error when reading {ConfigurationType} from {FilePath}; existing file preserved",
+                    typeof(T).GetName(qualified: true), filePath);
+                return configuration;
             }
         }
-
+        try { configuration.Save(filePath); }
+        catch (Exception exception)
+        {
+            ApplicationContext.Context.Value?.Logger.LogError(exception,
+                "Error when writing {ConfigurationType} to {FilePath}", typeof(T).GetName(qualified: true), filePath);
+        }
         return configuration;
     }
 }
