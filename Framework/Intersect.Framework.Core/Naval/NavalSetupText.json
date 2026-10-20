@@ -1,8 +1,20 @@
 {
   "Entries": {
-    "Q - Dock": { "en": "Q - Dock", "fr": "Q - Quai", "es": "Q - Muelle" },
-    "Naval setup": { "en": "Naval setup", "fr": "Configuration navale", "es": "Configuración naval" },
-    "Prepare a test ship automatically": { "en": "Prepare a test ship automatically", "fr": "Préparer un navire de test automatiquement", "es": "Preparar un barco de prueba automáticamente" },
+    "Q - Dock": {
+      "en": "Q - Dock",
+      "fr": "Q - Quai",
+      "es": "Q - Muelle"
+    },
+    "Naval setup": {
+      "en": "Naval setup",
+      "fr": "Configuration navale",
+      "es": "Configuración naval"
+    },
+    "Prepare a test ship automatically": {
+      "en": "Prepare a test ship automatically",
+      "fr": "Préparer un navire de test automatiquement",
+      "es": "Preparar un barco de prueba automáticamente"
+    },
     "Ship ready on {0}. Ship: ({1}, {2}); boarding point: ({3}, {4}). Navigation is enabled. Use /naval near the boarding point.": {
       "en": "Ship ready on {0}. Ship: ({1}, {2}); boarding point: ({3}, {4}). Navigation is enabled. Use /naval near the boarding point.",
       "fr": "Navire prêt sur {0}. Navire : ({1}, {2}); point d’embarquement : ({3}, {4}). La navigation est activée. Utilisez /naval près du point d’embarquement.",
@@ -37,6 +49,306 @@
       "en": "Save the selected map before preparing a ship. Placement uses the collision data saved on the server.",
       "fr": "Enregistrez la map sélectionnée avant de préparer un navire. Le placement utilise les collisions enregistrées sur le serveur.",
       "es": "Guarda el mapa seleccionado antes de preparar un barco. La colocación usa las colisiones guardadas en el servidor."
+    },
+    "Naval System Editor": {
+      "en": "Naval System Editor",
+      "fr": "Éditeur du système naval",
+      "es": "Editor del sistema naval"
+    },
+    "Navigation and harbour": {
+      "en": "Navigation and harbour",
+      "fr": "Navigation et capitainerie",
+      "es": "Navegación y capitanía"
+    },
+    "Test ships": {
+      "en": "Test ships",
+      "fr": "Navires de test",
+      "es": "Barcos de prueba"
+    },
+    "Ship shop and repairs": {
+      "en": "Ship shop and repairs",
+      "fr": "Boutique navale et réparations",
+      "es": "Tienda naval y reparaciones"
+    },
+    "Save current section": {
+      "en": "Save current section",
+      "fr": "Enregistrer cette section",
+      "es": "Guardar esta sección"
+    },
+    "Close": {
+      "en": "Close",
+      "fr": "Fermer",
+      "es": "Cerrar"
+    },
+    "Add": {
+      "en": "Add",
+      "fr": "Ajouter",
+      "es": "Añadir"
+    },
+    "Remove": {
+      "en": "Remove",
+      "fr": "Retirer",
+      "es": "Eliminar"
+    },
+    "Unsaved changes": {
+      "en": "Unsaved changes",
+      "fr": "Modifications non enregistrées",
+      "es": "Cambios sin guardar"
+    },
+    "Settings received from the server.": {
+      "en": "Settings received from the server.",
+      "fr": "Paramètres reçus du serveur.",
+      "es": "Configuración recibida del servidor."
+    },
+    "Saved on the server.": {
+      "en": "Saved on the server.",
+      "fr": "Enregistré sur le serveur.",
+      "es": "Guardado en el servidor."
+    },
+    "Saving...": {
+      "en": "Saving...",
+      "fr": "Enregistrement...",
+      "es": "Guardando..."
+    },
+    "Discard unsaved changes?": {
+      "en": "Discard unsaved changes?",
+      "fr": "Abandonner les modifications non enregistrées ?",
+      "es": "¿Descartar los cambios sin guardar?"
+    },
+    "No reply yet. Changes are kept; retry or reload the editor.": {
+      "en": "No reply yet. Changes are kept; retry or reload the editor.",
+      "fr": "Pas encore de réponse. Modifications conservées ; réessayez ou rouvrez cet éditeur.",
+      "es": "Aún no hay respuesta. Cambios conservados; reintenta o vuelve a abrir este editor."
+    },
+    "Enable shop": {
+      "en": "Enable shop",
+      "fr": "Activer la boutique",
+      "es": "Activar la tienda"
+    },
+    "Ship model and movement": {
+      "en": "Ship model and movement",
+      "fr": "Modèle et navigation du bateau",
+      "es": "Modelo y movimiento del barco"
+    },
+    "Automatic / not selected": {
+      "en": "Automatic / not selected",
+      "fr": "Automatique / non sélectionné",
+      "es": "Automático / sin seleccionar"
+    },
+    "Open ship shop and repairs": {
+      "en": "Open ship shop and repairs",
+      "fr": "Ouvrir la boutique navale et les réparations",
+      "es": "Abrir tienda naval y reparaciones"
+    },
+    "Id": {
+      "en": "Identifier",
+      "fr": "Identifiant",
+      "es": "Identificador"
+    },
+    "Name": {
+      "en": "Name",
+      "fr": "Nom",
+      "es": "Nombre"
+    },
+    "Enabled": {
+      "en": "Enable navigation",
+      "fr": "Activer la navigation",
+      "es": "Activar navegación"
+    },
+    "DockInteractionRange": {
+      "en": "Dock interaction range (tiles)",
+      "fr": "Portée au quai (cases)",
+      "es": "Alcance del muelle (casillas)"
+    },
+    "LaunchSearchRadius": {
+      "en": "Launch search radius (tiles)",
+      "fr": "Rayon de mise à l’eau (cases)",
+      "es": "Radio de botadura (casillas)"
+    },
+    "ShopInteractionRange": {
+      "en": "Shop interaction range (tiles)",
+      "fr": "Portée du PNJ de boutique (cases)",
+      "es": "Alcance del PNJ de tienda (casillas)"
+    },
+    "ShopSessionSeconds": {
+      "en": "Shop session duration (seconds)",
+      "fr": "Durée de session de boutique (secondes)",
+      "es": "Duración de sesión de tienda (segundos)"
+    },
+    "MapId": {
+      "en": "Ocean map",
+      "fr": "Map Ocean",
+      "es": "Mapa Ocean"
+    },
+    "X": {
+      "en": "Ship centre X (tiles)",
+      "fr": "Centre du navire X (cases)",
+      "es": "Centro del barco X (casillas)"
+    },
+    "Y": {
+      "en": "Ship centre Y (tiles)",
+      "fr": "Centre du navire Y (cases)",
+      "es": "Centro del barco Y (casillas)"
+    },
+    "DockX": {
+      "en": "Boarding point X (tile index)",
+      "fr": "Quai X (indice de case)",
+      "es": "Muelle X (índice de casilla)"
+    },
+    "DockY": {
+      "en": "Boarding point Y (tile index)",
+      "fr": "Quai Y (indice de case)",
+      "es": "Muelle Y (índice de casilla)"
+    },
+    "Heading": {
+      "en": "Heading (degrees clockwise)",
+      "fr": "Cap (degrés horaires)",
+      "es": "Rumbo (grados horarios)"
+    },
+    "Graphics": {
+      "en": "Normal sprite filename",
+      "fr": "Fichier du sprite normal",
+      "es": "Archivo del sprite normal"
+    },
+    "DamagedGraphics": {
+      "en": "Damaged sprite filename",
+      "fr": "Fichier du sprite endommagé",
+      "es": "Archivo del sprite dañado"
+    },
+    "SinkingGraphics": {
+      "en": "Sinking sprite filename",
+      "fr": "Fichier du sprite de naufrage",
+      "es": "Archivo del sprite de hundimiento"
+    },
+    "Frames": {
+      "en": "Frames per direction",
+      "fr": "Images par direction",
+      "es": "Fotogramas por dirección"
+    },
+    "FrameMilliseconds": {
+      "en": "Frame duration (milliseconds)",
+      "fr": "Durée par image (millisecondes)",
+      "es": "Duración por fotograma (milisegundos)"
+    },
+    "Width": {
+      "en": "Hull width (tiles)",
+      "fr": "Largeur de coque (cases)",
+      "es": "Ancho del casco (casillas)"
+    },
+    "Length": {
+      "en": "Hull length (tiles)",
+      "fr": "Longueur de coque (cases)",
+      "es": "Largo del casco (casillas)"
+    },
+    "MaxSpeed": {
+      "en": "Forward speed limit (tiles/second)",
+      "fr": "Vitesse maximale (cases/seconde)",
+      "es": "Velocidad máxima (casillas/segundo)"
+    },
+    "ReverseSpeed": {
+      "en": "Reverse speed limit (tiles/second)",
+      "fr": "Vitesse arrière (cases/seconde)",
+      "es": "Velocidad atrás (casillas/segundo)"
+    },
+    "Acceleration": {
+      "en": "Acceleration",
+      "fr": "Accélération",
+      "es": "Aceleración"
+    },
+    "Drag": {
+      "en": "Drag",
+      "fr": "Résistance de l’eau",
+      "es": "Resistencia del agua"
+    },
+    "TurnRate": {
+      "en": "Turn rate (degrees/second)",
+      "fr": "Vitesse de rotation (degrés/seconde)",
+      "es": "Giro (grados/segundo)"
+    },
+    "CurrencyItemId": {
+      "en": "Currency item",
+      "fr": "Objet monnaie",
+      "es": "Objeto moneda"
+    },
+    "Currency": {
+      "en": "Currency name",
+      "fr": "Nom de la monnaie",
+      "es": "Nombre de moneda"
+    },
+    "Price": {
+      "en": "Purchase price",
+      "fr": "Prix d’achat",
+      "es": "Precio de compra"
+    },
+    "RepairPrice": {
+      "en": "Full repair price",
+      "fr": "Prix de réparation complète",
+      "es": "Precio de reparación completa"
+    },
+    "PremiumRequired": {
+      "en": "Premium required",
+      "fr": "Premium requis",
+      "es": "Premium necesario"
+    },
+    "ForSale": {
+      "en": "For sale",
+      "fr": "En vente",
+      "es": "En venta"
+    },
+    "Stop all ships before changing navigation settings.": {
+      "en": "Stop all ships before changing navigation settings.",
+      "fr": "Quittez toutes les barres avant de modifier la navigation.",
+      "es": "Abandona todos los timones antes de cambiar la navegación."
+    },
+    "The naval configuration changed. Reload before saving.": {
+      "en": "The naval configuration changed. Reload before saving.",
+      "fr": "La configuration navale a changé. Rouvrez cet éditeur avant d’enregistrer.",
+      "es": "La configuración naval cambió. Vuelve a abrir este editor antes de guardar."
+    },
+    "Choose an existing currency item.": {
+      "en": "Choose an existing currency item.",
+      "fr": "Sélectionnez un objet monnaie existant.",
+      "es": "Selecciona un objeto moneda existente."
+    },
+    "Keep existing model ids. Disable For sale to retire a model without losing fleets.": {
+      "en": "Keep existing model ids. Disable For sale to retire a model without losing fleets.",
+      "fr": "Conservez les modèles existants. Désactivez En vente pour retirer un modèle de la vente sans perdre les flottes.",
+      "es": "Conserva los modelos existentes. Desactiva En venta para retirar un modelo sin perder las flotas."
+    },
+    "Invalid ship catalogue. Check model ids, prices, currency and movement settings.": {
+      "en": "Invalid ship catalogue. Check model ids, prices, currency and movement settings.",
+      "fr": "Catalogue invalide. Vérifiez les identifiants, prix, monnaies et paramètres de navigation.",
+      "es": "Catálogo inválido. Revisa identificadores, precios, monedas y parámetros de navegación."
+    },
+    "Invalid navigation settings. Check ship ids, map positions and movement settings.": {
+      "en": "Invalid navigation settings. Check ship ids, map positions and movement settings.",
+      "fr": "Configuration invalide. Vérifiez les identifiants, positions sur la map et paramètres de navigation.",
+      "es": "Configuración inválida. Revisa identificadores, posiciones y parámetros de navegación."
+    },
+    "My fleet": {
+      "en": "My fleet",
+      "fr": "Ma flotte",
+      "es": "Mi flota"
+    },
+    "Buy a ship or fully repair a damaged or sunken ship.": {
+      "en": "Buy a ship or fully repair a damaged or sunken ship.",
+      "fr": "Achetez un navire ou réparez entièrement un navire endommagé ou coulé.",
+      "es": "Compra un barco o repara por completo uno dañado o hundido."
+    },
+    "Choose one of your ships to set sail.": {
+      "en": "Choose one of your ships to set sail.",
+      "fr": "Choisissez un de vos navires pour prendre la mer.",
+      "es": "Elige uno de tus barcos para zarpar."
+    },
+    "Use Q docks for your fleet. In an NPC event, use Open ship shop and repairs.": {
+      "en": "Use Q docks for your fleet. In an NPC event, use Open ship shop and repairs.",
+      "fr": "Utilisez les quais Q pour votre flotte. Dans l’événement du PNJ, utilisez Ouvrir la boutique navale et les réparations.",
+      "es": "Usa los muelles Q para tu flota. En el evento del PNJ, usa Abrir tienda naval y reparaciones."
+    },
+    "Choose an Ocean map and keep each hull and boarding point clear of obstacles and other ships.": {
+      "en": "Choose an Ocean map and keep each hull and boarding point clear of obstacles and other ships.",
+      "fr": "Choisissez une map Ocean et placez les coques et quais hors des obstacles et des autres navires.",
+      "es": "Elige un mapa Ocean y coloca los cascos y muelles lejos de obstáculos y otros barcos."
     }
   }
 }

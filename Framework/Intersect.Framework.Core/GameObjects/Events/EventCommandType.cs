@@ -154,4 +154,6 @@ public enum EventCommandType
 
     // CR2026 premium character appearance shops.
     OpenRoyalStylist = 1040,
+
+    OpenNavalShop = 1050,
 }

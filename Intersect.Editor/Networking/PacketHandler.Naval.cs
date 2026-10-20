@@ -9,6 +9,11 @@ namespace Intersect.Editor.Networking;
 
 internal sealed partial class PacketHandler
 {
+    public void HandlePacket(IPacketSender sender, NavalConfigurationPacket packet)
+    {
+        if (Globals.MainForm is not { IsDisposed: false } main) return;
+        main.BeginInvoke((Action)(() => main.ReceiveNavalConfiguration(packet)));
+    }
     public void HandlePacket(IPacketSender sender, NavalSetupResultPacket packet)
     {
         if (Globals.MainForm is not { IsDisposed: false } main) return;

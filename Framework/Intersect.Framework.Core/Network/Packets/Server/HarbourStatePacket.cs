@@ -1,4 +1,5 @@
 using MessagePack;
+using Intersect.Framework.Core.Naval;
 namespace Intersect.Network.Packets.Server;
 [MessagePackObject(AllowPrivate = true)]
 public partial class HarbourStatePacket : IntersectPacket
@@ -6,6 +7,7 @@ public partial class HarbourStatePacket : IntersectPacket
     [Key(0)] public HarbourEntry[] Entries { get; set; } = [];
     [Key(1)] public string Message { get; set; } = "";
     [Key(2)] public bool Premium { get; set; }
+    [Key(4)] public HarbourView View { get; set; }
     [Key(3)] public bool Close { get; set; }
 }
 [MessagePackObject]
@@ -20,5 +22,6 @@ public sealed class HarbourEntry
     [Key(6)] public bool Owned { get; set; }
     [Key(7)] public int Health { get; set; }
     [Key(8)] public long Balance { get; set; }
+    [Key(10)] public bool ForSale { get; set; } = true;
     [Key(9)] public bool CurrencyAvailable { get; set; }
 }

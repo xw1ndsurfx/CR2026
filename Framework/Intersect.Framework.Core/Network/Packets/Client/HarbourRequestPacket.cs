@@ -5,5 +5,6 @@ namespace Intersect.Network.Packets.Client;
 public partial class HarbourRequestPacket : IntersectPacket
 {
     [Key(0)] public HarbourAction Action { get; set; }
+    [Key(2)] public HarbourView View { get; set; }
     [Key(1)] public string ModelId { get; set; } = "";
 }

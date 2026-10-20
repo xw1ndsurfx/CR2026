@@ -6329,6 +6329,26 @@
       "en": "{0}: +{1} EXP (bonus +{2}%: +{3})",
       "fr": "{0} : +{1} EXP (bonus +{2}% : +{3})",
       "es": "{0}: +{1} EXP (bonificación +{2}%: +{3})"
+    },
+    "Ship shop and repairs": {
+      "en": "Ship shop and repairs",
+      "fr": "Boutique navale et réparations",
+      "es": "Tienda naval y reparaciones"
+    },
+    "My fleet": {
+      "en": "My fleet",
+      "fr": "Ma flotte",
+      "es": "Mi flota"
+    },
+    "Buy a ship or fully repair a damaged or sunken ship.": {
+      "en": "Buy a ship or fully repair a damaged or sunken ship.",
+      "fr": "Achetez un navire ou réparez entièrement un navire endommagé ou coulé.",
+      "es": "Compra un barco o repara por completo uno dañado o hundido."
+    },
+    "Choose one of your ships to set sail.": {
+      "en": "Choose one of your ships to set sail.",
+      "fr": "Choisissez un de vos navires pour prendre la mer.",
+      "es": "Elige uno de tus barcos para zarpar."
     }
   }
 }
