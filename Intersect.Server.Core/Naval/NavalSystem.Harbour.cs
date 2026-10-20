@@ -92,6 +92,15 @@ internal static partial class NavalSystem
                     message = "Ship already owned, fleet full or Premium required.";
                 else message = PurchaseOrRepair(player, offer, null);
             }
+            else if (packet.Action == HarbourAction.Rename)
+            {
+                var name=ShipNames.Normalize(packet.Name);
+                if(owned==null || name==null) message="Use 1 to 32 letters, numbers, spaces, apostrophes, dots or hyphens for your ship name.";
+                else
+                {
+                    message=RenameOwnedShip(owned,name,()=>player.User.Save(force:true)==UserSaveResult.Completed)?"Ship renamed.":"The fleet could not be saved. No payment was kept.";
+                }
+            }
             else if (packet.Action == HarbourAction.Repair)
             {
                 if (owned == null || owned.Health >= 100) message = "Choose a damaged or sunken ship you own.";
@@ -152,7 +161,7 @@ internal static partial class NavalSystem
         {
             var owned = player.NavalFleet.FirstOrDefault(s => s.ModelId == o.Id);
             var currency = Currency(o);
-            return new HarbourEntry { ModelId = o.Id, Name = o.Name, Currency = currency?.Name ?? o.Currency,
+            return new HarbourEntry { ModelId = o.Id, Name = o.Name, ShipName=owned?.Name??"", Currency = currency?.Name ?? o.Currency,
                 Price = o.Price, RepairPrice = o.RepairPrice, PremiumRequired = o.PremiumRequired,
                 Owned = owned != null, Health = owned?.Health ?? 100, Balance = currency == null ? 0 : player.CountItems(currency.Id),
                 ForSale = o.ForSale, CurrencyAvailable = currency != null };
@@ -163,7 +172,7 @@ internal static partial class NavalSystem
         failure = "No room for this hull near the dock. Clear the water and try again.";
         var d = JsonConvert.DeserializeObject<ShipDefinition>(JsonConvert.SerializeObject(offer.Ship))!;
         d.Id = owned.Id; d.MapId = player.MapId; d.DockX = dock.X; d.DockY = dock.Y;
-        var vessel = new Vessel(d) { OwnerId = player.Id, SinkingGraphics = offer.SinkingGraphics };
+        var vessel = new Vessel(d) { OwnerId = player.Id, Name=owned.Name??"", SinkingGraphics = offer.SinkingGraphics };
         var ocean = OceanMapResolver.Maps();
         if (Ships.ContainsKey(owned.Id)) return null;
         var candidates = from dy in Enumerable.Range(-_settings.LaunchSearchRadius, _settings.LaunchSearchRadius * 2 + 1) from dx in Enumerable.Range(-_settings.LaunchSearchRadius, _settings.LaunchSearchRadius * 2 + 1)
@@ -187,6 +196,7 @@ internal static partial class NavalSystem
             }
             vessel.State.CaptainId = player.Id;
             Ships.Add(owned.Id, vessel); player.CaptainedShipId = owned.Id;
+            Emit(NavalEffectKind.Launch,player.MapId,x,y,d.Heading,Timing.Global.Milliseconds);
             player.CastTime = 0; player.IsBlocking = false;
             return vessel.State;
         }
@@ -211,6 +221,7 @@ internal static partial class NavalSystem
             {
                 vessel.State.Speed = vessel.State.Throttle = 0; vessel.Controls.Reset();
                 vessel.SunkUntil = Timing.Global.Milliseconds + Math.Max(2000, vessel.Definition.FrameMilliseconds * 4);
+                Emit(NavalEffectKind.Sinking,vessel.State.MapId,vessel.State.X,vessel.State.Y,vessel.State.Heading,Timing.Global.Milliseconds);
                 Notice(owner, "Your ship has sunk. Return to the harbour to repair it.");
             }
             return true;

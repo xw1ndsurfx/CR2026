@@ -10,10 +10,12 @@ public partial class Player
     [JsonIgnore, Column("NavalFleet")]
     public string NavalFleetJson
     {
-        get => JsonConvert.SerializeObject(NavalFleet);
-        set => NavalFleet = string.IsNullOrWhiteSpace(value) ? [] : JsonConvert.DeserializeObject<List<OwnedShip>>(value) ?? [];
+        get => JsonConvert.SerializeObject(new NavalPlayerData {Ships=NavalFleet,SailingExperience=SailingExperience,AdditionalData=_navalExtra});
+        set {var data=NavalPlayerData.Parse(value);NavalFleet=data.Ships;SailingExperience=data.SailingExperience;_navalExtra=data.AdditionalData;}
     }
-    [JsonIgnore, NotMapped] public List<OwnedShip> NavalFleet { get; set; } = [];
+    private IDictionary<string,Newtonsoft.Json.Linq.JToken>? _navalExtra;
+    [JsonIgnore, NotMapped] public long SailingExperience {get;set;}
+    [JsonIgnore, NotMapped] public List<OwnedShip> NavalFleet {get;set;}=[];
     [JsonIgnore, NotMapped] internal Guid NavalShopMap { get; set; }
     [JsonIgnore, NotMapped] internal int NavalShopX { get; set; }
     [JsonIgnore, NotMapped] internal int NavalShopY { get; set; }

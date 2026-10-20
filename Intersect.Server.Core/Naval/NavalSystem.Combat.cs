@@ -15,6 +15,8 @@ internal static partial class NavalSystem
         internal Guid Id = Guid.NewGuid(), ShipId, OwnerId, MapId;
         internal double X,Y,DirectionX,DirectionY,Remaining,Speed;
         internal int Damage;
+        internal long Born;
+        internal double Heading;
     }
     private static readonly List<Cannonball> Cannonballs = [];
     private static long _lastCombatStep;
@@ -54,7 +56,8 @@ internal static partial class NavalSystem
                 vessel.LastAction = now;
                 player.RegisterAfkActivity();
                 if (packet.Action == ShipAction.LeaveHelm) leave = true;
-                else if (packet.Action == ShipAction.Anchor) vessel.Anchored = !vessel.Anchored;
+                else if (packet.Action == ShipAction.Anchor)
+                {vessel.Anchored=!vessel.Anchored;Emit(NavalEffectKind.Anchor,vessel.State.MapId,vessel.State.X,vessel.State.Y,0,now);}
                 else Fire(vessel,packet.Action == ShipAction.StarboardCannons, now);
             }
             if (leave) Helm(player);
@@ -70,14 +73,16 @@ internal static partial class NavalSystem
         var s=vessel.State; var d=vessel.Definition;
         var direction=ShipActions.Direction(s.Heading,starboard);
         var forwardX=Math.Sin(s.Heading*Math.PI/180); var forwardY=-Math.Cos(s.Heading*Math.PI/180);
-        var radius=Math.Max(d.Width,d.Length)/2+.2;
+        var radius=d.Width/2+.2;
         var ocean=OceanMapResolver.Maps();
+        var sounded=false;
         for (var gun=-1;gun<=1;gun++)
         {
             var map=s.MapId; var x=s.X+direction.X*radius+forwardX*gun*d.Length/4;
             var y=s.Y+direction.Y*radius+forwardY*gun*d.Length/4;
             if (!OceanMapResolver.Resolve(ocean,ref map,ref x,ref y) || BlocksCannonball(map,x,y)) continue;
-            Cannonballs.Add(new() { ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
+            Emit(NavalEffectKind.Fire,map,x,y,ShipMovement.Normalize(s.Heading+(starboard?90:-90)),now,!sounded);sounded=true;
+            Cannonballs.Add(new() { Born=now,Heading=ShipMovement.Normalize(s.Heading+(starboard?90:-90)),ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
                 DirectionX=direction.X,DirectionY=direction.Y,Remaining=_settings.CannonRange,Speed=_settings.CannonSpeed,Damage=_settings.CannonDamage });
         }
     }
@@ -107,15 +112,17 @@ internal static partial class NavalSystem
         foreach (var ball in Cannonballs.ToArray())
         {
             if (!Ships.ContainsKey(ball.ShipId)) { Cannonballs.Remove(ball);continue; }
+            var impact=NavalEffectKind.WaterImpact;
             var originMap=ball.MapId;var originX=ball.X;var originY=ball.Y;var stopped=false;
             var travelled=ShipCannonSweep.Travel(ball.Speed,seconds,ball.Remaining,distance=>
             {
                 var map=originMap;var x=originX+ball.DirectionX*distance;var y=originY+ball.DirectionY*distance;
                 if (!OceanMapResolver.Resolve(ocean,ref map,ref x,ref y) || BlocksCannonball(map,x,y))
-                { stopped=true;return false; }
+                { impact=NavalEffectKind.ObstacleImpact;stopped=true;return false; }
                 ball.MapId=map;ball.X=x;ball.Y=y;
                 var tile=(map,(int)Math.Floor(x),(int)Math.Floor(y));
                 if (!hulls.TryGetValue(tile,out var target) || target.State.Id==ball.ShipId || target.SunkUntil>0) return true;
+                impact=NavalEffectKind.HullImpact;
                 // Protected player hulls still intercept shots; no firing through another ship.
                 if (target.OwnerId==Guid.Empty && (target.State.CaptainId==Guid.Empty || _settings.PlayerShipDamage))
                 {
@@ -126,6 +133,7 @@ internal static partial class NavalSystem
                         target.State.Speed=target.State.Throttle=0;target.Controls.Reset();
                         target.SunkUntil=now+Math.Max(2000,target.Definition.FrameMilliseconds*4);
                         target.SinkingGraphics=target.Definition.SinkingGraphics;
+                        Emit(NavalEffectKind.Sinking,target.State.MapId,target.State.X,target.State.Y,target.State.Heading,now);
                     }
                 }
                 else if (_settings.PlayerShipDamage && target.OwnerId!=ball.OwnerId)
@@ -133,7 +141,7 @@ internal static partial class NavalSystem
                 stopped=true;return false;
             });
             ball.Remaining-=travelled;
-            if (stopped || ball.Remaining<=0) Cannonballs.Remove(ball);
+            if (stopped || ball.Remaining<=0) {Emit(impact,ball.MapId,ball.X,ball.Y,ball.Heading,now);Cannonballs.Remove(ball);}
         }
         // Unoccupied public test targets disappear after their sinking animation until server restart/configuration reload.
         foreach (var vessel in Ships.Values.Where(v=>v.OwnerId==Guid.Empty && v.State.CaptainId==Guid.Empty && v.SunkUntil>0 && now>=v.SunkUntil).ToArray())

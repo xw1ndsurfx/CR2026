@@ -414,6 +414,171 @@
       "en": "Ship damage could not be saved. Try disembarking again shortly.",
       "fr": "Les dégâts du navire n’ont pas pu être enregistrés. Réessayez de débarquer dans quelques instants.",
       "es": "No se pudo guardar el daño del barco. Intenta desembarcar de nuevo en unos instantes."
+    },
+    "Sounds, icons and effects": {
+      "en": "Sounds, icons and effects",
+      "fr": "Sons, icônes et effets",
+      "es": "Sonidos, iconos y efectos"
+    },
+    "Sailing progression": {
+      "en": "Sailing progression",
+      "fr": "Progression Sailing",
+      "es": "Progresión de navegación"
+    },
+    "PortIcon": {
+      "en": "Port cannon icon",
+      "fr": "Icône des canons bâbord",
+      "es": "Icono de cañones de babor"
+    },
+    "StarboardIcon": {
+      "en": "Starboard cannon icon",
+      "fr": "Icône des canons tribord",
+      "es": "Icono de cañones de estribor"
+    },
+    "AnchorIcon": {
+      "en": "Anchor icon",
+      "fr": "Icône de l’ancre",
+      "es": "Icono del ancla"
+    },
+    "DisembarkIcon": {
+      "en": "Disembark icon",
+      "fr": "Icône de débarquement",
+      "es": "Icono de desembarco"
+    },
+    "CannonFireSound": {
+      "en": "Cannon firing sound",
+      "fr": "Son du tir de canon",
+      "es": "Sonido del disparo"
+    },
+    "HullImpactSound": {
+      "en": "Hull impact sound",
+      "fr": "Son d’impact sur coque",
+      "es": "Sonido de impacto en casco"
+    },
+    "WaterImpactSound": {
+      "en": "Water impact sound",
+      "fr": "Son d’impact dans l’eau",
+      "es": "Sonido de impacto en agua"
+    },
+    "ObstacleImpactSound": {
+      "en": "Obstacle impact sound",
+      "fr": "Son d’impact sur obstacle",
+      "es": "Sonido de impacto en obstáculo"
+    },
+    "SinkingSound": {
+      "en": "Sinking sound",
+      "fr": "Son du naufrage",
+      "es": "Sonido de hundimiento"
+    },
+    "AnchorSound": {
+      "en": "Anchor sound",
+      "fr": "Son de l’ancre",
+      "es": "Sonido del ancla"
+    },
+    "LaunchSound": {
+      "en": "Launch sound",
+      "fr": "Son de mise à l’eau",
+      "es": "Sonido de botadura"
+    },
+    "DisembarkSound": {
+      "en": "Disembark sound",
+      "fr": "Son de débarquement",
+      "es": "Sonido de desembarco"
+    },
+    "LevelUpSound": {
+      "en": "Sailing level up sound",
+      "fr": "Son de niveau Sailing",
+      "es": "Sonido de subida de nivel"
+    },
+    "CannonFireGraphic": {
+      "en": "Cannon fire animation",
+      "fr": "Animation de tir",
+      "es": "Animación de disparo"
+    },
+    "CannonProjectileGraphic": {
+      "en": "Cannonball animation",
+      "fr": "Animation du boulet",
+      "es": "Animación de la bala"
+    },
+    "WaterImpactGraphic": {
+      "en": "Water impact animation",
+      "fr": "Animation d’impact dans l’eau",
+      "es": "Animación de impacto en agua"
+    },
+    "HullImpactGraphic": {
+      "en": "Hull impact animation",
+      "fr": "Animation d’impact sur coque",
+      "es": "Animación de impacto en casco"
+    },
+    "EffectFrameMilliseconds": {
+      "en": "Effect frame duration (ms)",
+      "fr": "Durée d’image des effets (ms)",
+      "es": "Duración de fotograma (ms)"
+    },
+    "EffectPixelsPerTile": {
+      "en": "Effect scale (pixels/tile)",
+      "fr": "Échelle des effets (pixels/case)",
+      "es": "Escala de efectos (píxeles/casilla)"
+    },
+    "MaximumLevel": {
+      "en": "Maximum Sailing level",
+      "fr": "Niveau Sailing maximal",
+      "es": "Nivel máximo de navegación"
+    },
+    "BaseExperience": {
+      "en": "First level EXP requirement",
+      "fr": "EXP requise au premier niveau",
+      "es": "EXP requerida para el primer nivel"
+    },
+    "ExperienceGrowth": {
+      "en": "EXP growth per level",
+      "fr": "Multiplicateur d’EXP par niveau",
+      "es": "Multiplicador de EXP por nivel"
+    },
+    "ExperiencePerTile": {
+      "en": "EXP per tile actually sailed",
+      "fr": "EXP par case réellement parcourue",
+      "es": "EXP por casilla recorrida"
+    },
+    "Listen": {
+      "en": "Listen",
+      "fr": "Écouter",
+      "es": "Escuchar"
+    },
+    "The selected resource is unavailable.": {
+      "en": "The selected resource is unavailable.",
+      "fr": "La ressource sélectionnée est indisponible.",
+      "es": "El recurso seleccionado no está disponible."
+    },
+    "Sailing · Level {0} · {1}/{2} EXP": {
+      "en": "Sailing · Level {0} · {1}/{2} EXP",
+      "fr": "Sailing · Niveau {0} · {1}/{2} EXP",
+      "es": "Navegación · Nivel {0} · {1}/{2} EXP"
+    },
+    "Sailing · Level {0} · MAX": {
+      "en": "Sailing · Level {0} · MAX",
+      "fr": "Sailing · Niveau {0} · MAX",
+      "es": "Navegación · Nivel {0} · MÁX"
+    },
+    "Rename ship": {
+      "en": "Rename ship",
+      "fr": "Nommer le bateau",
+      "es": "Nombrar barco"
+    },
+    "Enter your ship name (1 to 32 characters).": {
+      "en": "Enter your ship name (1 to 32 characters).",
+      "fr": "Entrez le nom du bateau (1 à 32 caractères).",
+      "es": "Introduce el nombre del barco (1 a 32 caracteres)."
+    },
+    "Ship renamed.": {
+      "en": "Ship renamed.",
+      "fr": "Nom du bateau enregistré.",
+      "es": "Nombre del barco guardado."
+    },
+    "Use 1 to 32 letters, numbers, spaces, apostrophes, dots or hyphens for your ship name.": {
+      "en": "Use 1 to 32 letters, numbers, spaces, apostrophes, dots or hyphens for your ship name.",
+      "fr": "Le nom du bateau doit contenir de 1 à 32 lettres, chiffres, espaces, apostrophes, points ou tirets.",
+      "es": "El nombre debe tener de 1 a 32 letras, números, espacios, apóstrofos, puntos o guiones."
     }
   }
 }

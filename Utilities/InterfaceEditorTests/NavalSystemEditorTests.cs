@@ -24,7 +24,7 @@ internal static class NavalSystemEditorTests
             using var editor = new FrmNavalConfiguration(packet);
             if (editor.Text != "Éditeur du système naval") throw new Exception("Naval editor must be localized.");
             var tabs = editor.Controls.OfType<TabControl>().Single();
-            if (tabs.TabPages.Count != 3) throw new Exception("Navigation, test ships and shop must be separate sections.");
+            if (tabs.TabPages.Count != 5) throw new Exception("Navigation, ships, shop, presentation and Sailing must be separate sections.");
             var cannonEnabled=Descendants(tabs.TabPages[0]).OfType<CheckBox>().Single(c=>c.Name=="CannonsEnabled");
             var cannonDamage=Descendants(tabs.TabPages[0]).OfType<NumericUpDown>().Single(c=>c.Name=="CannonDamage");
             cannonEnabled.Checked=true;cannonDamage.Value=17;
@@ -44,6 +44,7 @@ internal static class NavalSystemEditorTests
             editor.AcceptResponse(new() { RequestId = acknowledgementId, SavedSection = 1, NavigationVersion = "nav-2", CatalogueVersion = "other-editor-shop-2" });
             request = (NavalConfigurationRequestPacket)prepare.Invoke(editor, null)!;
             if (request.ExpectedVersion != "shop-1") throw new Exception("A navigation acknowledgement must not authorize overwriting another editor's shop changes.");
+            if(int.TryParse(Environment.GetEnvironmentVariable("NAVAL_EDITOR_PREVIEW_SECTION"),out var previewSection)) tabs.SelectedIndex=previewSection;
             var preview = Environment.GetEnvironmentVariable("NAVAL_EDITOR_PREVIEW");
             if (!string.IsNullOrEmpty(preview))
             {
@@ -56,8 +57,38 @@ internal static class NavalSystemEditorTests
                 image.Save(preview, System.Drawing.Imaging.ImageFormat.Png);
                 editor.Hide();
             }
-            Console.WriteLine("PASS localized Naval System Editor opens three sections and keeps independent save versions");
+            Console.WriteLine("PASS localized Naval System Editor opens five sections and keeps independent save versions");
+            CheckAssetPreview();
         }
         finally { CultureInfo.CurrentUICulture = culture; }
+    }
+
+    private static void CheckAssetPreview()
+    {
+        var directory=Path.Combine(Path.GetTempPath(),"naval-assets-"+Guid.NewGuid().ToString("N"));
+        var previous=Environment.CurrentDirectory;
+        Directory.CreateDirectory(Path.Combine(directory,"resources","spells"));Directory.CreateDirectory(Path.Combine(directory,"resources","sounds"));
+        try
+        {
+            using(var bitmap=new System.Drawing.Bitmap(32,32)) bitmap.Save(Path.Combine(directory,"resources","spells","port.png"));
+            File.WriteAllBytes(Path.Combine(directory,"resources","sounds","fire.wav"),[]);
+            Environment.CurrentDirectory=directory;
+            using var editor=new FrmNavalConfiguration(new() {NavigationJson="{}",CatalogueJson="{}"});
+            var tabs=editor.Controls.OfType<TabControl>().Single();tabs.SelectedIndex=3;
+            var icons=Descendants(tabs.TabPages[3]).OfType<ComboBox>().Single(c=>c.Name=="PortIcon");icons.SelectedItem="port.png";
+            var image=Descendants(tabs.TabPages[3]).OfType<PictureBox>().Single(c=>c.Name=="PortIconPreview");
+            if(image.Image==null || image.Image.Width!=32) throw new Exception("The selected spell icon needs an actual image preview.");
+            var sounds=Descendants(tabs.TabPages[3]).OfType<ComboBox>().Single(c=>c.Name=="CannonFireSound");sounds.SelectedItem="fire.wav";
+            var save=(NavalConfigurationRequestPacket)typeof(FrmNavalConfiguration).GetMethod("PrepareSave",BindingFlags.NonPublic|BindingFlags.Instance)!.Invoke(editor,null)!;
+            var settings=JsonConvert.DeserializeObject<NavalConfiguration>(save.ConfigurationJson)!;
+            if(save.Section!=1 || settings.Presentation.PortIcon!="port.png" || settings.Presentation.CannonFireSound!="fire.wav") throw new Exception("Presentation must save in navigation, preserving shop independence.");
+            using var unlocked=File.Open(Path.Combine(directory,"resources","spells","port.png"),FileMode.Open,FileAccess.ReadWrite,FileShare.None);
+            Console.WriteLine("PASS spell icon selector, image preview, unlocked resource and sound selector save in navigation section");
+        }
+        finally
+        {
+            Environment.CurrentDirectory=previous;
+            if(Path.GetFullPath(directory).StartsWith(Path.GetFullPath(Path.GetTempPath()),StringComparison.OrdinalIgnoreCase)) Directory.Delete(directory,true);
+        }
     }
 }

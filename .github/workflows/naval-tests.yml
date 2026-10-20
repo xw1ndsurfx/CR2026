@@ -7,7 +7,7 @@ on:
       - 'Framework/Intersect.Framework.Core/GameObjects/Maps/**'
       - 'Intersect.Tests.Server/ClientConfigurationSafetyTests.cs'
       - 'Intersect.Tests.Client/HarbourUiRulesTests.cs'
-      - 'Intersect.Editor/Forms/Editors/FrmNavalConfiguration.cs'
+      - 'Intersect.Editor/Forms/Editors/FrmNavalConfiguration*.cs'
       - 'Intersect.Editor/Forms/frmMain.Naval.cs'
       - 'Utilities/InterfaceEditorTests/NavalSystemEditorTests.cs'
       - 'Framework/Intersect.Framework.Core/GameObjects/Events/Commands/OpenNavalShopCommand.cs'

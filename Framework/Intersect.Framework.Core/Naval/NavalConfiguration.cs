@@ -16,13 +16,15 @@ public sealed class NavalConfiguration
     public int CannonReloadMilliseconds { get; set; } = 4000;
     public double CannonRange { get; set; } = 12;
     public double CannonSpeed { get; set; } = 12;
+    public NavalPresentation Presentation {get;set;}=new();
+    public SailingSettings Sailing {get;set;}=new();
     public ShipDefinition[] Ships { get; set; } = [];
     [JsonExtensionData] public IDictionary<string, JToken>? AdditionalData { get; set; }
     [JsonIgnore] public string? SourceJson { get; set; }
 
     public void Validate(int width, int height)
     {
-        if (!double.IsFinite(DockInteractionRange) || DockInteractionRange is < 1 or > 5 ||
+        if (Presentation?.IsValid()!=true || Sailing?.IsValid()!=true || !double.IsFinite(DockInteractionRange) || DockInteractionRange is < 1 or > 5 ||
             LaunchSearchRadius is < 3 or > 10 || !double.IsFinite(ShopInteractionRange) ||
             ShopInteractionRange is < 1 or > 10 || ShopSessionSeconds is < 10 or > 600 ||
             CannonDamage is < 1 or > 100 || CannonReloadMilliseconds is < 1000 or > 60000 ||

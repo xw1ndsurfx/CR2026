@@ -1,4 +1,6 @@
 using Intersect.Client.Framework.Gwen;
+using Intersect.Client.Framework.File_Management;
+using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Framework.Core.Naval;
@@ -9,6 +11,7 @@ namespace Intersect.Client.Interface.Game.Hotbar;
 internal sealed class NavalActionButton(Base parent,string name) : Button(parent,name)
 {
     internal ShipAction NavalAction { get; set; }
+    internal string IconFilename {get;set;}="";
     internal int ReloadMilliseconds { get; set; }
     internal static string[] Glyph(ShipAction action)
     {
@@ -26,6 +29,10 @@ internal sealed class NavalActionButton(Base parent,string name) : Button(parent
     {
         base.Render(skin);
         if(ReloadMilliseconds>0) return;
+        if(NavalPresentation.SafeAsset(IconFilename) && IconFilename.Length>0 && GameContentManager.Current.GetTexture(TextureType.Spell,IconFilename) is {} icon)
+        {
+            var size=Math.Min(Width-8,Height-14);skin.Renderer.DrawTexturedRect(icon,new Rectangle((Width-size)/2,3,size,size),IsDisabled?new Color(100,255,255,255):Color.White);return;
+        }
         var glyph=Glyph(NavalAction);var scale=Math.Max(1,Math.Min(Width/13,(Height-12)/8));
         var ox=(Width-11*scale)/2;var oy=3;
         var previous=skin.Renderer.DrawColor;

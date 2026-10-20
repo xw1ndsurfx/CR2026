@@ -13,6 +13,7 @@ public partial class HarbourStatePacket : IntersectPacket
 [MessagePackObject]
 public sealed class HarbourEntry
 {
+    [Key(11)] public string ShipName {get;set;}="";
     [Key(0)] public string ModelId { get; set; } = "";
     [Key(1)] public string Name { get; set; } = "";
     [Key(2)] public string Currency { get; set; } = "";

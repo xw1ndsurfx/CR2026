@@ -6354,6 +6354,26 @@
       "en": "Ship damage could not be saved. Try disembarking again shortly.",
       "fr": "Les dégâts du navire n’ont pas pu être enregistrés. Réessayez de débarquer dans quelques instants.",
       "es": "No se pudo guardar el daño del barco. Intenta desembarcar de nuevo en unos instantes."
+    },
+    "Rename ship": {
+      "en": "Rename ship",
+      "fr": "Nommer le bateau",
+      "es": "Nombrar barco"
+    },
+    "Enter your ship name (1 to 32 characters).": {
+      "en": "Enter your ship name (1 to 32 characters).",
+      "fr": "Entrez le nom du bateau (1 à 32 caractères).",
+      "es": "Introduce el nombre del barco (1 a 32 caracteres)."
+    },
+    "Ship renamed.": {
+      "en": "Ship renamed.",
+      "fr": "Nom du bateau enregistré.",
+      "es": "Nombre del barco guardado."
+    },
+    "Use 1 to 32 letters, numbers, spaces, apostrophes, dots or hyphens for your ship name.": {
+      "en": "Use 1 to 32 letters, numbers, spaces, apostrophes, dots or hyphens for your ship name.",
+      "fr": "Le nom du bateau doit contenir de 1 à 32 lettres, chiffres, espaces, apostrophes, points ou tirets.",
+      "es": "El nombre debe tener de 1 a 32 letras, números, espacios, apóstrofos, puntos o guiones."
     }
   }
 }

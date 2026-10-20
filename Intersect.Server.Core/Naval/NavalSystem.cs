@@ -29,6 +29,8 @@ internal static partial class NavalSystem
         internal int Health = 100, PendingDamage;
         internal long PortReady, StarboardReady, LastAction, NextDamageAttempt;
         internal bool Anchored;
+        internal double SailingRemainder;
+        internal string Name=definition.Name;
     }
     private static readonly object Gate = new();
     private static readonly Dictionary<Guid, Vessel> Ships = [];
@@ -141,6 +143,7 @@ internal static partial class NavalSystem
                         ShipDisembarkation.Find(s,d,Options.Instance.Map.MapWidth,Options.Instance.Map.MapHeight,ExitClear);
                     if (exit == null)
                     { Notice(player, "No free exit near this dock. Move the ship slightly and try again."); return; }
+                    Emit(NavalEffectKind.Disembark,s.MapId,s.X,s.Y,s.Heading,Timing.Global.Milliseconds);
                     ReleaseLocked(player);
                     dock = (s.MapId,exit.Value.X,exit.Value.Y);
                 }
@@ -159,6 +162,7 @@ internal static partial class NavalSystem
                     player.CaptainedShipId = vessel.State.Id;
                     player.CastTime = 0; player.IsBlocking = false;
                     anchor = vessel.State;
+                    Emit(NavalEffectKind.Launch,anchor.MapId,anchor.X,anchor.Y,anchor.Heading,Timing.Global.Milliseconds);
                 }
             }
             // Native map/instance operations must not run under the global naval lock.
@@ -171,6 +175,7 @@ internal static partial class NavalSystem
             else if (dock is { } landing)
             {
                 player.Warp(landing.MapId, landing.X, landing.Y);
+                player.User?.Save(force:true);
                 Notice(player, "You have left the helm.");
             }
             lock (Gate) SendSnapshot(player);
@@ -219,11 +224,15 @@ internal static partial class NavalSystem
                     vessel.LastStep = now;
                     var input = vessel.Anchored ? new ShipInput(0,0,true) : vessel.Controls.ForTick(now, player.NavalBusy);
                     oldMap = s.MapId; oldX = s.X; oldY = s.Y;
+                    var sailedDistance=0d;
                     ShipMovement.Step(s, vessel.Definition, input, dt, (map, x, y, heading) =>
                     {
+                        var attempted=Distance(s.X,s.Y,x,y);
                         var resolved = OceanMapResolver.Resolve(ocean, ref map, ref x, ref y) && ClearHull(player, vessel, ocean, map, x, y);
+                        if(resolved) sailedDistance+=attempted;
                         return (resolved, map, x, y);
                     });
+                    AwardSailing(player,vessel,sailedDistance,now);
                     if (oldMap != s.MapId) pendingWarp = s;
                     else { player.X = (int)Math.Floor(s.X); player.Y = (int)Math.Floor(s.Y); }
                 }
@@ -274,6 +283,7 @@ internal static partial class NavalSystem
                 ReleaseLocked(player);
             }
             if (owned != null) ReturnToHarbour(player, owned);
+            player.User?.Save(force:true);
         }
     }
 
@@ -305,10 +315,16 @@ internal static partial class NavalSystem
         var ocean = OceanMapResolver.Maps();
         var visible = player.Map?.GetSurroundingMapIds(true).ToHashSet() ?? [];
         visible.Add(player.MapId);
-        player.SendPacket(new NavalSnapshotPacket { Ships = player.InstanceType != MapInstanceType.Overworld ? [] :
+        var progress=_settings.Sailing.Progress(player.SailingExperience);
+        Effects.RemoveAll(e=>now-e.Born>1500);
+        player.SendPacket(new NavalSnapshotPacket { Presentation=_settings.Presentation,
+            SailingLevel=progress.Level,SailingExperience=progress.Experience,SailingRequired=progress.Required,
+            Effects=player.InstanceType!=MapInstanceType.Overworld?[]:Effects.Where(e=>visible.Contains(e.Snapshot.MapId)).Select(e=>new NavalEffectSnapshot {
+                Id=e.Snapshot.Id,MapId=e.Snapshot.MapId,X=e.Snapshot.X,Y=e.Snapshot.Y,Heading=e.Snapshot.Heading,Kind=e.Snapshot.Kind,
+                PlaySound=e.Snapshot.PlaySound,AgeMilliseconds=(int)Math.Clamp(now-e.Born,0,1500) }).ToArray(), Ships = player.InstanceType != MapInstanceType.Overworld ? [] :
             Ships.Values.Where(v => visible.Contains(v.State.MapId) && ocean.Contains(v.State.MapId) && MapController.Get(v.State.MapId) != null)
                 .Select(v => new ShipSnapshot { Id = v.State.Id, CaptainId = v.State.CaptainId, MapId = v.State.MapId,
-                    X = v.State.X, Y = v.State.Y, Heading = v.State.Heading, Speed = v.State.Speed,
+                    Name=v.Name, X = v.State.X, Y = v.State.Y, Heading = v.State.Heading, Speed = v.State.Speed,
                     Graphics = v.SunkUntil > 0 ? v.SinkingGraphics : v.State.DamageState > 0 ? v.Definition.DamagedGraphics : v.Definition.Graphics,
                     Frames = v.Definition.Frames, FrameMilliseconds = v.Definition.FrameMilliseconds,
                     Width = v.Definition.Width, Length = v.Definition.Length, Health = v.Health,
@@ -318,7 +334,7 @@ internal static partial class NavalSystem
                     PortFlash = v.PortReady-now > _settings.CannonReloadMilliseconds-200,
                     StarboardFlash = v.StarboardReady-now > _settings.CannonReloadMilliseconds-200 }).ToArray(),
             Cannonballs = player.InstanceType != MapInstanceType.Overworld ? [] : Cannonballs.Where(b=>visible.Contains(b.MapId))
-                .Select(b=>new CannonballSnapshot { Id=b.Id, MapId=b.MapId,X=b.X,Y=b.Y }).ToArray() });
+                .Select(b=>new CannonballSnapshot { Id=b.Id, MapId=b.MapId,X=b.X,Y=b.Y,Heading=b.Heading,AgeMilliseconds=(int)Math.Clamp(now-b.Born,0,60000) }).ToArray() });
     }
 
     // A conservative circumscribed disk contains the hull at every continuous heading.

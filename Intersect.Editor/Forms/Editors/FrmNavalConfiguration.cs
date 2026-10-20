@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 
 namespace Intersect.Editor.Forms.Editors;
 
-public sealed class FrmNavalConfiguration : DarkForm
+public sealed partial class FrmNavalConfiguration : DarkForm
 {
     private sealed record Choice(Guid Id, string Name) { public override string ToString() => Name; }
     private readonly NavalConfiguration _navigation;
@@ -37,7 +37,7 @@ public sealed class FrmNavalConfiguration : DarkForm
         Text = T("Naval System Editor"); Size = new(1050, 780); MinimumSize = new(850, 620);
         StartPosition = FormStartPosition.CenterParent;
         var general = Page("Navigation and harbour");
-        general.Controls.Add(Fields(_navigation, 0, ["Ships", "SourceJson", "AdditionalData"]));
+        general.Controls.Add(Fields(_navigation, 0, ["Ships", "SourceJson", "AdditionalData", "Presentation", "Sailing"]));
         AddListPage("Test ships", _navigation.Ships.ToList(), 0, () => new ShipDefinition
             { Graphics = "Ship_CorpsRoyaux_002.png", DamagedGraphics = "Ship_CorpsRoyaux_005.png" },
             ships => _navigation.Ships = ships.ToArray());
@@ -45,6 +45,8 @@ public sealed class FrmNavalConfiguration : DarkForm
             () => new HarbourOffer { ForSale = false, Id = "ship-" + Guid.NewGuid().ToString("N")[..12],
                 Ship = new() { Graphics = "Ship_CorpsRoyaux_002.png", DamagedGraphics = "Ship_CorpsRoyaux_005.png" } },
             offers => _catalogue.Offers = offers.ToArray());
+        Page("Sounds, icons and effects").Controls.Add(Fields(_navigation.Presentation,0,[]));
+        Page("Sailing progression").Controls.Add(Fields(_navigation.Sailing,0,[]));
         var footer = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 44, FlowDirection = FlowDirection.RightToLeft };
         _save.Text = T("Save current section");
         var close = new Button { Text = T("Close"), AutoSize = true };
@@ -62,7 +64,7 @@ public sealed class FrmNavalConfiguration : DarkForm
             if (_dirty.Any(d => d) && MessageBox.Show(this, T("Discard unsaved changes?"), Text, MessageBoxButtons.YesNo) != DialogResult.Yes)
                 e.Cancel = true;
         };
-        FormClosed += (_, _) => _timeout.Dispose();
+        FormClosed += (_, _) => { _timeout.Dispose(); _navalSoundPreview?.Stop(); _navalSoundPreview?.Dispose(); };
         MiniGameEditorTheme.Apply(this); SetStatus();
     }
 
@@ -138,7 +140,9 @@ public sealed class FrmNavalConfiguration : DarkForm
         {
             var row = panel.RowCount++; var value = property.GetValue(target); Control field;
             void Set(object? changed) { property.SetValue(target, changed); Changed(section); }
-            if (property.PropertyType == typeof(bool))
+            if (target is NavalPresentation && property.PropertyType==typeof(string))
+                field=AssetField(property.Name,value?.ToString()??"",changed=>Set(changed));
+            else if (property.PropertyType == typeof(bool))
             {
                 var box = new CheckBox { Checked = (bool)value!, Dock = DockStyle.Fill };
                 box.CheckedChanged += (_, _) => Set(box.Checked); field = box;
@@ -182,7 +186,7 @@ public sealed class FrmNavalConfiguration : DarkForm
                 text.TextChanged += (_, _) => Set(text.Text); field = text;
             }
             field.Name = property.Name;
-            panel.RowStyles.Add(new(SizeType.Absolute, 35));
+            panel.RowStyles.Add(new(SizeType.Absolute, target is NavalPresentation && property.Name.EndsWith("Icon")?78:35));
             panel.Controls.Add(new Label { Text = T(property.Name), Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, row);
             panel.Controls.Add(field, 1, row);
         }
@@ -191,7 +195,7 @@ public sealed class FrmNavalConfiguration : DarkForm
 
     internal NavalConfigurationRequestPacket PrepareSave()
     {
-        var section = _tabs.SelectedIndex < 2 ? (byte)1 : (byte)2;
+        var section = _tabs.SelectedIndex == 2 ? (byte)2 : (byte)1;
         if (section == 1) _navigation.Validate(Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight);
         else _catalogue.Validate();
         return new() { Section = section, ExpectedVersion = section == 1 ? _navigationVersion : _catalogueVersion,

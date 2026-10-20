@@ -146,4 +146,35 @@ public sealed class NavalHelmRegressionTests
         var starboard=Intersect.Client.Interface.Game.Hotbar.NavalActionButton.Glyph(ShipAction.StarboardCannons);
         Assert.That(starboard,Is.EqualTo(port.Select(row=>new string(row.Reverse().ToArray())).ToArray()));
     }
+
+    [TestCase(0)]
+    [TestCase(45)]
+    [TestCase(90)]
+    [TestCase(180)]
+    [TestCase(270)]
+    public void RotatedCannonEffectKeepsItsAuthoredAnchorAtTheMuzzle(double degrees)
+    {
+        var frame=new ShipSpriteFrame {Width=160,Height=100,AnchorX=35,AnchorY=65};
+        var rect=NavalEffectGeometry.Destination(frame,50,80,.25,degrees);var angle=degrees*Math.PI/180;
+        var dx=(frame.AnchorX-frame.Width/2d)*.25;var dy=(frame.AnchorY-frame.Height/2d)*.25;
+        Assert.That(rect.X+rect.Width/2+Math.Cos(angle)*dx-Math.Sin(angle)*dy,Is.EqualTo(50).Within(.001));
+        Assert.That(rect.Y+rect.Height/2+Math.Sin(angle)*dx+Math.Cos(angle)*dy,Is.EqualTo(80).Within(.001));
+    }
+    [Test]
+    public void DuplicateEffectSnapshotsKeepOneAnimationAndExposeSailingAndIconSettings()
+    {
+        var previous=Globals.Me;var me=(Player)RuntimeHelpers.GetUninitializedObject(typeof(Player));GC.SuppressFinalize(me);me.Id=Guid.NewGuid();
+        try
+        {
+            Globals.Me=me;NavalWorld.Clear();
+            var packet=new NavalSnapshotPacket {Presentation=new() {PortIcon="port.png"},SailingLevel=7,SailingExperience=45,SailingRequired=120,
+                Effects=[new(){Id=Guid.NewGuid(),Kind=NavalEffectKind.Fire,AgeMilliseconds=100}]};
+            NavalWorld.Apply(packet);NavalWorld.Apply(packet);
+            var effects=(System.Collections.IDictionary)typeof(NavalWorld).GetField("_effects",BindingFlags.NonPublic|BindingFlags.Static)!.GetValue(null)!;
+            Assert.That(effects.Count,Is.EqualTo(1));Assert.That(NavalWorld.Presentation.PortIcon,Is.EqualTo("port.png"));
+            Assert.That(NavalWorld.SailingLevel,Is.EqualTo(7));Assert.That(NavalWorld.SailingExperience,Is.EqualTo(45));Assert.That(NavalWorld.SailingRequired,Is.EqualTo(120));
+            NavalWorld.Clear();Assert.That(((System.Collections.IDictionary)typeof(NavalWorld).GetField("_effects",BindingFlags.NonPublic|BindingFlags.Static)!.GetValue(null)!).Count,Is.Zero);
+        }
+        finally {NavalWorld.Clear();Globals.Me=previous;}
+    }
 }

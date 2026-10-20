@@ -18,6 +18,7 @@ public sealed class ShipState
 
 public sealed class ShipDefinition
 {
+    public string Name {get;set;}="";
     [Newtonsoft.Json.JsonExtensionData] public IDictionary<string, Newtonsoft.Json.Linq.JToken>? AdditionalData { get; set; }
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid MapId { get; set; }
@@ -39,7 +40,7 @@ public sealed class ShipDefinition
     public double Drag { get; set; } = .5;
     public double TurnRate { get; set; } = 45;
 
-    public bool IsValid() => Id != Guid.Empty && MapId != Guid.Empty &&
+    public bool IsValid() => (Name=="" || ShipNames.Normalize(Name)!=null) && Id != Guid.Empty && MapId != Guid.Empty &&
         new[] { X, Y, Heading, Width, Length, MaxSpeed, ReverseSpeed, Acceleration, Drag, TurnRate }.All(double.IsFinite) &&
         X >= 0 && X < 256 && Y >= 0 && Y < 256 && DockX is >= 0 and < 256 && DockY is >= 0 and < 256 &&
         Width >= .5 && Width <= 16 && Length >= .5 && Length <= 16 &&

@@ -71,20 +71,10 @@ internal static partial class NavalWorld
                 y=map.Y+(float)(ball.Previous.Y+(ball.Current.Y-ball.Previous.Y)*t)*th;
             }
             if(row!=(int)Math.Floor((y-current.Y)/th)+Options.Instance.Map.MapHeight*2) continue;
+            var age=ball.Current.AgeMilliseconds+Math.Max(0,Environment.TickCount64-ball.Received);
+            if(DrawEffectAsset(Presentation.CannonProjectileGraphic,"Projectile"+ShipMovement.DirectionRow(ball.Current.Heading),x,y,age,hold:true)) continue;
             Graphics.DrawGameTexture(Graphics.Renderer.WhitePixel,new FloatRect(0,0,1,1),new FloatRect(x-3,y-3,6,6),new Color(255,210,160,60));
             Graphics.DrawGameTexture(Graphics.Renderer.WhitePixel,new FloatRect(0,0,1,1),new FloatRect(x-2,y-2,4,4),new Color(255,30,30,35));
-        }
-    }
-    private static void DrawMuzzleFlash(ShipSnapshot ship,float x,float y,double heading)
-    {
-        foreach(var starboard in new[]{false,true})
-        {
-            if(!(starboard?ship.StarboardFlash:ship.PortFlash)) continue;
-            var direction=ShipActions.Direction(heading,starboard);
-            var radius=Math.Max(ship.Width,ship.Length)/2+.2;
-            var px=x+(float)(direction.X*radius*Options.Instance.Map.TileWidth);
-            var py=y+(float)(direction.Y*radius*Options.Instance.Map.TileHeight);
-            Graphics.DrawGameTexture(Graphics.Renderer.WhitePixel,new FloatRect(0,0,1,1),new FloatRect(px-5,py-5,10,10),new Color(255,255,200,70));
         }
     }
 }

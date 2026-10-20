@@ -2,11 +2,12 @@ namespace Intersect.Framework.Core.Naval;
 
 public enum HarbourView : byte { Fleet, Shop }
 
-public enum HarbourAction : byte { Open, Buy, Launch, Repair }
+public enum HarbourAction : byte { Open, Buy, Launch, Repair, Rename }
 
 public sealed class OwnedShip
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+    public string Name {get;set;}="";
     public string ModelId { get; set; } = "";
     public int Health { get; set; } = 100;
     public bool AtSea { get; set; }
@@ -28,7 +29,7 @@ public static class HarbourAccessRules
 {
     public static bool Allows(HarbourView view, HarbourAction action) => view switch
     {
-        HarbourView.Fleet => action is HarbourAction.Open or HarbourAction.Launch,
+        HarbourView.Fleet => action is HarbourAction.Open or HarbourAction.Launch or HarbourAction.Rename,
         HarbourView.Shop => action is HarbourAction.Open or HarbourAction.Buy or HarbourAction.Repair,
         _ => false,
     };

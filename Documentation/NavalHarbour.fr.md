@@ -86,7 +86,7 @@ Les positions, trajectoires, collisions, rechargements et dégâts sont calculé
 
 À zéro coque, le navire joue son naufrage. Un bateau personnel reste possédé, avec zéro coque, et doit être réparé au PNJ. Un navire public de test coulé disparaît après son animation ; recharger la configuration navale ou redémarrer le serveur le recrée. Le sprite de naufrage des navires de test est configurable ; celui des bateaux personnels reste défini dans le catalogue.
 
-Les boulets et éclairs de bouche utilisent pour cette tranche des formes dessinées par le client. **La planche `Ship_Canon_Fire_Animation.png` n’est pas intégrée : sa grille et ses ancrages restent à vérifier.** Il n’y a pas encore de munitions consommables, d’IA ennemie, de visée immersive, d’équipage ou de capacités sur les emplacements 3 à 8.
+Les effets utilisent maintenant les deux planches fournies : `Ship_Canon_Fire_Animation.png` et `Ship_Canon_Fire_impact.png`, avec leurs fichiers `.effects.json`. Les boulets gardent un rendu simple si leur ressource est absente. Il n’y a pas encore de munitions consommables, d’IA ennemie, de visée immersive, d’équipage ou de capacités sur les emplacements 3 à 8.
 
 ### Vérification connectée sur une copie
 
@@ -98,3 +98,40 @@ Les boulets et éclairs de bouche utilisent pour cette tranche des formes dessin
 6. Piloter puis tirer avec 1 et 2 : trois boulets par bordée, trajectoires latérales et rechargements indépendants. Les tirs répétés pendant le rechargement ne créent pas de boulets supplémentaires. Tester un obstacle et une liaison Ocean à Ocean.
 7. Toucher la cible publique jusqu’au naufrage. Pour vérifier les bateaux personnels et leur réparation, activer explicitement les dégâts entre joueurs sur la copie, puis tester avec deux capitaines : coque diminuée, naufrage, retour au quai, réparation au PNJ et reprise de la mer avec 100 de coque.
 8. Vérifier aussi l’ouverture du chat, les touches personnalisées et le retour de la barre normale après reconnexion. Le parcours connecté et le rendu réel du HUD restent à valider dans le jeu installé.
+
+## Sons, icônes, noms et progression Sailing
+
+Le System Editor naval comporte cinq onglets. Les nouveaux onglets **Sons, icônes et effets** et **Progression Sailing** se sauvegardent avec la configuration de navigation, indépendamment de la boutique. Comme pour cette configuration, tous les capitaines doivent quitter la barre avant l’enregistrement.
+
+### Ressources sélectionnables
+
+- Les quatre icônes d’action (bâbord, tribord, ancre, débarquement) se choisissent dans **resources/spells**. Un aperçu de l’image sélectionnée apparaît à droite du choix. Un choix vide conserve l’icône native dessinée par le client.
+- Les sons se choisissent dans **resources/sounds** au format **WAV**, celui que charge le moteur pour ses effets sonores. Le bouton **Écouter** permet une écoute dans l’éditeur. Les fichiers OGG de musique ne sont pas proposés comme effets sonores.
+- Chaque événement a son choix : tir, impact sur coque, impact dans l’eau, impact sur obstacle, naufrage, ancre, mise à l’eau, débarquement et niveau Sailing. Un champ vide désactive ce son. Aucun fichier sonore absent n’a été inventé ou ajouté.
+- Une bordée joue son son de tir une fois, avec trois effets visuels. Les impacts ont leurs propres événements. Les sons utilisent la distance et les réglages audio natifs du client ; les événements répétés dans les mises à jour réseau ne rejouent pas leur son.
+- Les animations se choisissent dans **resources/ocean** parmi les fichiers dotés d’un découpage `.effects.json` compatible avec le rôle choisi. La durée d’une image et l’échelle (pixels par case) sont modifiables dans l’éditeur. Une valeur élevée de pixels par case réduit la taille affichée.
+
+Les PNG fournis sont copiés sans modification. La première planche utilise ses **trois premiers éclats distincts** pour le tir, orientés autour de leur point d’ancrage. Les autres rangées de fumée de cette planche ne sont pas utilisées. La seconde fournit **huit directions de boulet, quatre images par direction**, puis **quatre images d’impact sur l’eau** et **quatre sur coque**. Les découpages sont explicites et compensent les ancrages différents ; aucune grille régulière n’est supposée. Les `.effects.json` font partie des ressources à livrer avec les PNG. Pour une nouvelle planche personnalisée, un découpage compatible doit également être créé ; le choix d’un fichier dans l’éditeur ne découpe pas automatiquement une image.
+
+### Nom du bateau
+
+Dans **Ma flotte**, le bouton **Nommer le bateau** permet de choisir un nom avant la mise à l’eau, près de Q. Le serveur vérifie le propriétaire et le quai, puis sauvegarde le nom. Un échec de sauvegarde conserve l’ancien nom. Le nom contient 1 à 32 lettres/chiffres, espaces, apostrophes, points ou tirets. Le client affiche ce nom au-dessus de la coque pour tous les observateurs. Il ne traduit pas les noms choisis par les joueurs. Les bateaux non nommés conservent le nom du modèle dans Ma flotte ; aucun nom personnel n’est inventé. Les navires publics de test ont aussi un champ Nom dans l’éditeur.
+
+### Sailing
+
+La progression est **par personnage**, commune à ses bateaux. Une barre bleu/or avec le niveau et l’EXP se place juste au-dessus des actions navales. La coque et la vitesse restent au-dessus de cette barre.
+
+L’EXP vient uniquement de la distance réellement acceptée par le serveur pendant la navigation sur Ocean. Une rotation sur place, l’ancre, un obstacle qui empêche d’avancer, un changement de map par téléportation ou une requête client ne donnent pas d’EXP. Les fractions de distance sont cumulées pendant la sortie en mer. Il n’y a pas encore de bonus d’EXP de combat.
+
+Valeurs initiales : **1 EXP par case parcourue**, **100 EXP pour passer du niveau 1 au 2**, multiplication par **1,12** pour chaque niveau suivant, maximum **100 niveaux**. Tous ces paramètres se modifient dans Progression Sailing. Une valeur d’EXP par case à zéro suspend les gains. La progression se conserve lors d’un changement de bateau, d’une réparation ou d’un naufrage. Réduire temporairement le plafond ne détruit pas l’EXP déjà gagnée.
+
+Le stockage naval existant du personnage contient désormais une enveloppe version 2 avec les navires, leurs noms et l’EXP Sailing. Les anciennes listes de flotte sont lues sans perdre les identifiants, coques ou points de retour. Aucun changement de schéma SQL n’est nécessaire. Les sauvegardes natives incluent cette donnée ; une sauvegarde est également demandée à la sortie de la barre et lors du renommage. **Sauvegarder les bases avant la mise à jour et garder cette copie pour un éventuel retour à un ancien serveur**, qui ne connaît pas cette nouvelle enveloppe.
+
+### Vérification de cette tranche
+
+1. Sur le serveur de test, sauvegarder les bases, puis installer ensemble serveur, client, éditeur, les deux PNG de canon et leurs `.effects.json`. Les ressources d’icônes/sons sélectionnées doivent exister sur le client et dans le dossier de ressources de l’éditeur.
+2. Dans Sons, icônes et effets, choisir une icône de resources/spells : vérifier son aperçu. Choisir un WAV, l’écouter, sélectionner les autres sons désirés, enregistrer, fermer et rouvrir pour vérifier les choix.
+3. À Q, nommer un bateau, fermer/rouvrir Ma flotte puis se reconnecter : le nom doit être conservé. Prendre la mer et vérifier son nom dans les huit directions, depuis un second client si disponible.
+4. Tirer des deux côtés : les icônes choisies sont utilisées, les éclats se produisent aux canons, les boulets suivent leur direction. Tester une cible, un obstacle et un tir sans cible jusqu’à sa chute dans l’eau. Chaque type d’impact doit utiliser son son ; une bordée ne doit pas rejouer son son à chaque mise à jour.
+5. Observer Sailing : progresser en naviguant, s’arrêter contre un obstacle et à l’ancre pour vérifier l’absence de gains immobiles. Passer un niveau, débarquer, changer de bateau et se reconnecter : le niveau et l’EXP doivent rester présents. Vérifier aussi une traversée Ocean à Ocean.
+6. Les tests automatiques couvrent migration des données, noms et retour arrière de sauvegarde, seuils/cap d’EXP, distance fractionnaire, paquets, choix et aperçu d’icône, découpages et ancrages tournés, réception répétée d’un effet. Le rendu connecté et l’écoute des vrais sons sélectionnés restent à vérifier dans le jeu installé.

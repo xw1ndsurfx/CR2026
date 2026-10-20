@@ -15,6 +15,7 @@ public partial class HotBarWindow
 {
     private readonly List<NavalActionButton> _navalButtons=[];
     private Label? _navalStatus;
+    private NavalSailingBar? _sailingBar;
     private bool _wasSailing;
     private bool[] _hiddenBeforeSailing=[];
     private static string KeyCaption(int slot)
@@ -47,6 +48,8 @@ public partial class HotBarWindow
                 button.Clicked+=(_,_)=>Naval.NavalWorld.ActivateSlot(slot);
                 _navalButtons.Add(button);
             }
+            _sailingBar=new NavalSailingBar(Parent) {AutoSizeToContents=false,Font=GameContentManager.Current.GetFont("sourcesansproblack")??Skin.DefaultFont,
+                FontSize=10,TextAlign=Pos.Center,MouseInputEnabled=false};
             _navalStatus=new Label(Parent,"NavalHotbarStatus") { AutoSizeToContents=false,
                 Font=GameContentManager.Current.GetFont("sourcesanspro")??Skin.DefaultFont,FontSize=11,
                 TextAlign=Pos.Center,MouseInputEnabled=false };
@@ -64,6 +67,7 @@ public partial class HotBarWindow
             var item=Items[i];button.SetBounds(item.X,item.Y,item.Width,item.Height);
             var action=ShipActions.ForSlot(i);var cooldown=Naval.NavalWorld.Cooldown(i);
             var key=KeyCaption(i);
+            button.IconFilename=Naval.NavalWorld.Presentation.Icon(action);
             button.NavalAction=action;button.ReloadMilliseconds=cooldown;
             button.TextAlign=cooldown>0?Pos.Center:Pos.Bottom|Pos.Right;
             button.Text=cooldown>0?Math.Ceiling(cooldown/1000d)+"\n"+key:key;
@@ -72,12 +76,24 @@ public partial class HotBarWindow
             button.IsDisabled=own!.Sinking || action==ShipAction.None || Globals.Me?.IsBusy!=false ||
                 (action is ShipAction.PortCannons or ShipAction.StarboardCannons && (!own.CannonsEnabled || cooldown>0));
         }
+        if(_sailingBar!=null)
+        {
+            _sailingBar.IsHidden=!sailing;
+            if(sailing)
+            {
+                _sailingBar.SetBounds(X,Y-27,Width,23);
+                var required=Naval.NavalWorld.SailingRequired;var xp=Naval.NavalWorld.SailingExperience;
+                _sailingBar.Value=required<=0?1:(float)Math.Clamp(xp/(double)required,0,1);
+                _sailingBar.Text=required<=0?string.Format(N("Sailing · Level {0} · MAX"),Naval.NavalWorld.SailingLevel):
+                    string.Format(N("Sailing · Level {0} · {1}/{2} EXP"),Naval.NavalWorld.SailingLevel,xp,required);
+            }
+        }
         if(_navalStatus!=null)
         {
             _navalStatus.IsHidden=!sailing;
             if(sailing)
             {
-                _navalStatus.SetBounds(X,Y-22,Width,22);
+                _navalStatus.SetBounds(X,Y-50,Width,22);
                 _navalStatus.Text=string.Format(N("Hull: {0}%   Speed: {1:0.0}"),own!.Health,Math.Abs(own.Speed));
             }
         }

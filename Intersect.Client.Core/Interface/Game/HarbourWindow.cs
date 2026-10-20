@@ -2,6 +2,8 @@ using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Localization;
+using Intersect.Client.Interface.Shared;
+using Intersect.Client.Framework.Gwen.Control.EventArguments.InputSubmissionEvent;
 using Intersect.Framework.Core.Naval;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
@@ -50,12 +52,12 @@ internal sealed class HarbourWindow : Window
         _message.Text = ClientLanguages.Expanded(packet.Message.Length == 0 ? (_view == HarbourView.Shop ? "Buy a ship or fully repair a damaged or sunken ship." : "Choose one of your ships to set sail.") : packet.Message);
         RenderEntries();
     }
-    private void Request(HarbourAction action, string model)
+    private void Request(HarbourAction action, string model,string name="")
     {
         // Retry is possible after a lost reply. The server revalidates every operation at the dock.
         if (_waiting && Environment.TickCount64 - _sent < 3000) return;
         _waiting = true; _sent = Environment.TickCount64;
-        Networking.Network.SendPacket(new HarbourRequestPacket { Action = action, ModelId = model, View = _view });
+        Networking.Network.SendPacket(new HarbourRequestPacket { Action = action, ModelId = model, View = _view,Name=name });
     }
     private void RenderEntries()
     {
@@ -66,7 +68,7 @@ internal sealed class HarbourWindow : Window
         foreach (var entry in _state.Entries.Skip(_page*2).Take(2))
         {
             var y = i++ * 155;
-            Text(_cards, "Name" + i, entry.Name is "Royal ship" or "Royal ship (Premium)" ? ClientLanguages.Text(entry.Name) : ClientLanguages.ContentText(entry.Name), 4, y, 610, 24);
+            Text(_cards, "Name" + i, entry.ShipName.Length>0?entry.ShipName:entry.Name is "Royal ship" or "Royal ship (Premium)" ? ClientLanguages.Text(entry.Name) : ClientLanguages.ContentText(entry.Name), 4, y, 610, 24);
             var status = entry.Owned ? (entry.Health == 0 ? ClientLanguages.Text("Sunken") :
                 string.Format(ClientLanguages.Text("Hull: {0}/100"), entry.Health)) : ClientLanguages.Text("Not owned");
             if (entry.PremiumRequired) status += " · " + ClientLanguages.Text("Premium required");
@@ -86,6 +88,10 @@ internal sealed class HarbourWindow : Window
             {
                 var launch = Button(_cards, "Launch" + i, "Set sail", 4, y+75, 280, () => Request(HarbourAction.Launch, entry.ModelId));
                 launch.IsDisabled = !HarbourUiRules.CanLaunch(entry, _state.Premium);
+                var rename=Button(_cards,"Rename"+i,"Rename ship",310,y+75,280,()=>new InputBox(
+                    title:ClientLanguages.Text("Rename ship"),prompt:ClientLanguages.Text("Enter your ship name (1 to 32 characters)."),inputType:InputType.TextInput,
+                    onSubmit:(_,args)=>{if(args.Value is StringSubmissionValue name) Request(HarbourAction.Rename,entry.ModelId,name.Value??"");}));
+                rename.IsDisabled=!entry.Owned;
             }
 
         }
