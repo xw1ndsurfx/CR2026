@@ -1,0 +1,33 @@
+{
+  "Version": 1,
+  "ImageWidth": 1448,
+  "ImageHeight": 1086,
+  "Clips": {
+    "Fire": [
+      {
+        "X": 42,
+        "Y": 262,
+        "Width": 114,
+        "Height": 69,
+        "AnchorX": 48,
+        "AnchorY": 28
+      },
+      {
+        "X": 192,
+        "Y": 252,
+        "Width": 115,
+        "Height": 79,
+        "AnchorX": 48,
+        "AnchorY": 33
+      },
+      {
+        "X": 349,
+        "Y": 228,
+        "Width": 166,
+        "Height": 124,
+        "AnchorX": 56,
+        "AnchorY": 62
+      }
+    ]
+  }
+}

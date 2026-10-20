@@ -1,0 +1,347 @@
+{
+  "Version": 1,
+  "ImageWidth": 1448,
+  "ImageHeight": 1086,
+  "Clips": {
+    "Projectile0": [
+      {
+        "X": 322,
+        "Y": 615,
+        "Width": 70,
+        "Height": 101,
+        "AnchorX": 35,
+        "AnchorY": 22
+      },
+      {
+        "X": 568,
+        "Y": 617,
+        "Width": 76,
+        "Height": 99,
+        "AnchorX": 39,
+        "AnchorY": 19
+      },
+      {
+        "X": 823,
+        "Y": 620,
+        "Width": 75,
+        "Height": 96,
+        "AnchorX": 40,
+        "AnchorY": 18
+      },
+      {
+        "X": 1064,
+        "Y": 627,
+        "Width": 65,
+        "Height": 89,
+        "AnchorX": 45,
+        "AnchorY": 17
+      }
+    ],
+    "Projectile1": [
+      {
+        "X": 296,
+        "Y": 716,
+        "Width": 135,
+        "Height": 96,
+        "AnchorX": 113,
+        "AnchorY": 35
+      },
+      {
+        "X": 533,
+        "Y": 716,
+        "Width": 149,
+        "Height": 112,
+        "AnchorX": 127,
+        "AnchorY": 38
+      },
+      {
+        "X": 782,
+        "Y": 716,
+        "Width": 154,
+        "Height": 94,
+        "AnchorX": 132,
+        "AnchorY": 37
+      },
+      {
+        "X": 1022,
+        "Y": 716,
+        "Width": 143,
+        "Height": 93,
+        "AnchorX": 123,
+        "AnchorY": 39
+      }
+    ],
+    "Projectile2": [
+      {
+        "X": 291,
+        "Y": 19,
+        "Width": 130,
+        "Height": 59,
+        "AnchorX": 107,
+        "AnchorY": 25
+      },
+      {
+        "X": 525,
+        "Y": 18,
+        "Width": 148,
+        "Height": 58,
+        "AnchorX": 125,
+        "AnchorY": 26
+      },
+      {
+        "X": 770,
+        "Y": 17,
+        "Width": 159,
+        "Height": 59,
+        "AnchorX": 138,
+        "AnchorY": 26
+      },
+      {
+        "X": 1016,
+        "Y": 26,
+        "Width": 145,
+        "Height": 43,
+        "AnchorX": 125,
+        "AnchorY": 18
+      }
+    ],
+    "Projectile3": [
+      {
+        "X": 303,
+        "Y": 93,
+        "Width": 128,
+        "Height": 89,
+        "AnchorX": 107,
+        "AnchorY": 61
+      },
+      {
+        "X": 537,
+        "Y": 98,
+        "Width": 141,
+        "Height": 77,
+        "AnchorX": 120,
+        "AnchorY": 54
+      },
+      {
+        "X": 779,
+        "Y": 102,
+        "Width": 154,
+        "Height": 72,
+        "AnchorX": 135,
+        "AnchorY": 52
+      },
+      {
+        "X": 1025,
+        "Y": 106,
+        "Width": 137,
+        "Height": 72,
+        "AnchorX": 115,
+        "AnchorY": 49
+      }
+    ],
+    "Projectile4": [
+      {
+        "X": 324,
+        "Y": 182,
+        "Width": 73,
+        "Height": 125,
+        "AnchorX": 44,
+        "AnchorY": 102
+      },
+      {
+        "X": 568,
+        "Y": 185,
+        "Width": 78,
+        "Height": 121,
+        "AnchorX": 46,
+        "AnchorY": 99
+      },
+      {
+        "X": 816,
+        "Y": 186,
+        "Width": 76,
+        "Height": 122,
+        "AnchorX": 45,
+        "AnchorY": 101
+      },
+      {
+        "X": 1058,
+        "Y": 188,
+        "Width": 64,
+        "Height": 121,
+        "AnchorX": 38,
+        "AnchorY": 98
+      }
+    ],
+    "Projectile5": [
+      {
+        "X": 292,
+        "Y": 326,
+        "Width": 133,
+        "Height": 88,
+        "AnchorX": 20,
+        "AnchorY": 62
+      },
+      {
+        "X": 540,
+        "Y": 326,
+        "Width": 136,
+        "Height": 89,
+        "AnchorX": 20,
+        "AnchorY": 65
+      },
+      {
+        "X": 788,
+        "Y": 327,
+        "Width": 140,
+        "Height": 87,
+        "AnchorX": 19,
+        "AnchorY": 63
+      },
+      {
+        "X": 1027,
+        "Y": 328,
+        "Width": 134,
+        "Height": 87,
+        "AnchorX": 20,
+        "AnchorY": 63
+      }
+    ],
+    "Projectile6": [
+      {
+        "X": 275,
+        "Y": 435,
+        "Width": 156,
+        "Height": 62,
+        "AnchorX": 23,
+        "AnchorY": 28
+      },
+      {
+        "X": 521,
+        "Y": 436,
+        "Width": 158,
+        "Height": 63,
+        "AnchorX": 21,
+        "AnchorY": 28
+      },
+      {
+        "X": 770,
+        "Y": 436,
+        "Width": 162,
+        "Height": 63,
+        "AnchorX": 24,
+        "AnchorY": 33
+      },
+      {
+        "X": 1017,
+        "Y": 441,
+        "Width": 145,
+        "Height": 50,
+        "AnchorX": 20,
+        "AnchorY": 27
+      }
+    ],
+    "Projectile7": [
+      {
+        "X": 285,
+        "Y": 517,
+        "Width": 139,
+        "Height": 86,
+        "AnchorX": 20,
+        "AnchorY": 23
+      },
+      {
+        "X": 537,
+        "Y": 520,
+        "Width": 138,
+        "Height": 93,
+        "AnchorX": 20,
+        "AnchorY": 20
+      },
+      {
+        "X": 784,
+        "Y": 523,
+        "Width": 142,
+        "Height": 91,
+        "AnchorX": 24,
+        "AnchorY": 25
+      },
+      {
+        "X": 1037,
+        "Y": 526,
+        "Width": 124,
+        "Height": 85,
+        "AnchorX": 16,
+        "AnchorY": 22
+      }
+    ],
+    "WaterImpact": [
+      {
+        "X": 209,
+        "Y": 838,
+        "Width": 245,
+        "Height": 102,
+        "AnchorX": 127,
+        "AnchorY": 72
+      },
+      {
+        "X": 472,
+        "Y": 828,
+        "Width": 249,
+        "Height": 110,
+        "AnchorX": 121,
+        "AnchorY": 82
+      },
+      {
+        "X": 736,
+        "Y": 837,
+        "Width": 256,
+        "Height": 102,
+        "AnchorX": 129,
+        "AnchorY": 73
+      },
+      {
+        "X": 1000,
+        "Y": 852,
+        "Width": 246,
+        "Height": 86,
+        "AnchorX": 131,
+        "AnchorY": 58
+      }
+    ],
+    "HullImpact": [
+      {
+        "X": 219,
+        "Y": 948,
+        "Width": 225,
+        "Height": 134,
+        "AnchorX": 144,
+        "AnchorY": 57
+      },
+      {
+        "X": 482,
+        "Y": 953,
+        "Width": 235,
+        "Height": 133,
+        "AnchorX": 133,
+        "AnchorY": 59
+      },
+      {
+        "X": 752,
+        "Y": 957,
+        "Width": 229,
+        "Height": 122,
+        "AnchorX": 137,
+        "AnchorY": 60
+      },
+      {
+        "X": 1018,
+        "Y": 957,
+        "Width": 222,
+        "Height": 120,
+        "AnchorX": 129,
+        "AnchorY": 60
+      }
+    ]
+  }
+}
