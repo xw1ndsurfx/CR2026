@@ -1,5 +1,145 @@
 {
   "Entries": {
+    "Purchase: {0} {1} · Balance: {2}": {
+      "en": "Purchase: {0} {1} · Balance: {2}",
+      "fr": "Achat : {0} {1} · Solde : {2}",
+      "es": "Compra: {0} {1} · Saldo: {2}"
+    },
+    "Full repair: {0} {1}": {
+      "en": "Full repair: {0} {1}",
+      "fr": "Réparation complète : {0} {1}",
+      "es": "Reparación completa: {0} {1}"
+    },
+    "Harbour": {
+      "en": "Harbour",
+      "fr": "Capitainerie",
+      "es": "Capitanía"
+    },
+    "Choose a ship, buy one or fully repair your fleet.": {
+      "en": "Choose a ship, buy one or fully repair your fleet.",
+      "fr": "Choisissez un bateau, achetez-en un ou réparez entièrement votre flotte.",
+      "es": "Elige un barco, compra uno o repara por completo tu flota."
+    },
+    "Sunken": {
+      "en": "Sunken",
+      "fr": "Coulé",
+      "es": "Hundido"
+    },
+    "Hull: {0}/100": {
+      "en": "Hull: {0}/100",
+      "fr": "Coque : {0}/100",
+      "es": "Casco: {0}/100"
+    },
+    "Not owned": {
+      "en": "Not owned",
+      "fr": "Non possédé",
+      "es": "No adquirido"
+    },
+    "Purchase: {0} · Full repair: {1} {2} · Balance: {3}": {
+      "en": "Purchase: {0} · Full repair: {1} {2} · Balance: {3}",
+      "fr": "Achat : {0} · Réparation complète : {1} {2} · Solde : {3}",
+      "es": "Compra: {0} · Reparación completa: {1} {2} · Saldo: {3}"
+    },
+    "Buy ship": {
+      "en": "Buy ship",
+      "fr": "Acheter le bateau",
+      "es": "Comprar barco"
+    },
+    "Set sail": {
+      "en": "Set sail",
+      "fr": "Prendre la mer",
+      "es": "Zarpar"
+    },
+    "Fully repair": {
+      "en": "Fully repair",
+      "fr": "Réparer entièrement",
+      "es": "Reparar por completo"
+    },
+    "The harbour catalogue is unavailable.": {
+      "en": "The harbour catalogue is unavailable.",
+      "fr": "Le catalogue de la capitainerie est indisponible.",
+      "es": "El catálogo de la capitanía no está disponible."
+    },
+    "Stand beside a Q dock on Ocean to use the harbour.": {
+      "en": "Stand beside a Q dock on Ocean to use the harbour.",
+      "fr": "Approchez-vous d’un quai Q sur Ocean pour ouvrir la capitainerie.",
+      "es": "Acércate a un muelle Q en Ocean para abrir la capitanía."
+    },
+    "This ship is unavailable.": {
+      "en": "This ship is unavailable.",
+      "fr": "Ce bateau est indisponible.",
+      "es": "Este barco no está disponible."
+    },
+    "Ship already owned, fleet full or Premium required.": {
+      "en": "Ship already owned, fleet full or Premium required.",
+      "fr": "Bateau déjà possédé, flotte complète ou Premium requis.",
+      "es": "Barco ya adquirido, flota llena o Premium requerido."
+    },
+    "Choose a damaged or sunken ship you own.": {
+      "en": "Choose a damaged or sunken ship you own.",
+      "fr": "Choisissez un de vos bateaux endommagés ou coulés.",
+      "es": "Elige uno de tus barcos dañados o hundidos."
+    },
+    "Repair this ship and check its Premium requirement before sailing.": {
+      "en": "Repair this ship and check its Premium requirement before sailing.",
+      "fr": "Réparez ce bateau et vérifiez sa condition Premium avant de prendre la mer.",
+      "es": "Repara este barco y comprueba su requisito Premium antes de zarpar."
+    },
+    "No room for this hull near the dock. Clear the water and try again.": {
+      "en": "No room for this hull near the dock. Clear the water and try again.",
+      "fr": "Aucune place pour cette coque près du quai. Libérez les abords puis réessayez.",
+      "es": "No hay espacio para este casco cerca del muelle. Despeja el agua y vuelve a intentarlo."
+    },
+    "The ship currency is unavailable. Ask an administrator.": {
+      "en": "The ship currency is unavailable. Ask an administrator.",
+      "fr": "La monnaie du bateau est indisponible. Contactez un administrateur.",
+      "es": "La moneda del barco no está disponible. Contacta con un administrador."
+    },
+    "Not enough currency.": {
+      "en": "Not enough currency.",
+      "fr": "Monnaie insuffisante.",
+      "es": "Moneda insuficiente."
+    },
+    "Ship purchased.": {
+      "en": "Ship purchased.",
+      "fr": "Bateau acheté.",
+      "es": "Barco comprado."
+    },
+    "Ship fully repaired.": {
+      "en": "Ship fully repaired.",
+      "fr": "Bateau entièrement réparé.",
+      "es": "Barco reparado por completo."
+    },
+    "The fleet could not be saved. No payment was kept.": {
+      "en": "The fleet could not be saved. No payment was kept.",
+      "fr": "La flotte n’a pas pu être sauvegardée. Aucun paiement n’a été conservé.",
+      "es": "No se pudo guardar la flota. No se ha conservado ningún pago."
+    },
+    "Your ship has sunk. Return to the harbour to repair it.": {
+      "en": "Your ship has sunk. Return to the harbour to repair it.",
+      "fr": "Votre bateau a coulé. Retournez à la capitainerie pour le réparer.",
+      "es": "Tu barco se ha hundido. Regresa a la capitanía para repararlo."
+    },
+    "Royal ship": {
+      "en": "Royal ship",
+      "fr": "Navire royal",
+      "es": "Navío real"
+    },
+    "Royal ship (Premium)": {
+      "en": "Royal ship (Premium)",
+      "fr": "Navire royal (Premium)",
+      "es": "Navío real (Premium)"
+    },
+    "Previous": {
+      "en": "Previous",
+      "fr": "Précédent",
+      "es": "Anterior"
+    },
+    "Next": {
+      "en": "Next",
+      "fr": "Suivant",
+      "es": "Siguiente"
+    },
     "Anchor with Space and stop the ship before disembarking.": {
       "en": "Anchor with Space and stop the ship before disembarking.",
       "fr": "Utilisez Espace pour ancrer et arrêter le navire avant de débarquer.",

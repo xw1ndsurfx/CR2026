@@ -35,6 +35,10 @@
 			"target": "Intersect Documentation.url"
 		},
 		{
+			"source": "resources/naval-shop.example.json",
+			"target": "Server/resources/naval-shop.example.json"
+		},
+		{
 			"source": "resources/ocean/**",
 			"target": "Client and Editor/resources/ocean"
 		}

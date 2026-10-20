@@ -1,0 +1,51 @@
+{
+  "Enabled": false,
+  "Offers": [
+    {
+      "Id": "royal-002",
+      "Name": "Royal ship",
+      "Currency": "Aureons",
+      "CurrencyItemId": "00000000-0000-0000-0000-000000000000",
+      "Price": 1000,
+      "RepairPrice": 100,
+      "PremiumRequired": false,
+      "Ship": {
+        "Graphics": "Ship_CorpsRoyaux_002.png",
+        "DamagedGraphics": "Ship_CorpsRoyaux_005.png",
+        "Frames": 4,
+        "FrameMilliseconds": 180,
+        "Width": 2,
+        "Length": 4,
+        "MaxSpeed": 3,
+        "ReverseSpeed": 0.6,
+        "Acceleration": 1,
+        "Drag": 0.5,
+        "TurnRate": 45
+      },
+      "SinkingGraphics": "Ship_CorpsRoyaux_002_Sink.png"
+    },
+    {
+      "Id": "royal-002-premium",
+      "Name": "Royal ship (Premium)",
+      "Currency": "Auragems",
+      "CurrencyItemId": "00000000-0000-0000-0000-000000000000",
+      "Price": 50,
+      "RepairPrice": 5,
+      "PremiumRequired": true,
+      "Ship": {
+        "Graphics": "Ship_CorpsRoyaux_002.png",
+        "DamagedGraphics": "Ship_CorpsRoyaux_005.png",
+        "Frames": 4,
+        "FrameMilliseconds": 180,
+        "Width": 2,
+        "Length": 4,
+        "MaxSpeed": 3,
+        "ReverseSpeed": 0.6,
+        "Acceleration": 1,
+        "Drag": 0.5,
+        "TurnRate": 45
+      },
+      "SinkingGraphics": "Ship_CorpsRoyaux_002_Sink.png"
+    }
+  ]
+}

@@ -517,6 +517,7 @@ public partial class MenuContainer : Panel
         Interface.GameUi.HideLogiklikNews();
         Interface.GameUi.HideDailyReward();
         Interface.GameUi.HideLogiCoinShop();
+        Interface.GameUi.HideHarbour();
         Interface.GameUi.HideMarketplace();
         Interface.GameUi.HideDungeonPanel();
     }
@@ -668,6 +669,7 @@ public partial class MenuContainer : Panel
         Interface.GameUi.HideLogiklikNews();
         Interface.GameUi.HideDailyReward();
         Interface.GameUi.HideLogiCoinShop();
+        Interface.GameUi.HideHarbour();
         Interface.GameUi.HideMarketplace();
         Interface.GameUi.HideDungeonPanel();
     }
@@ -685,6 +687,7 @@ public partial class MenuContainer : Panel
                           Interface.GameUi.IsLogiklikNewsVisible ||
                           Interface.GameUi.IsDailyRewardVisible ||
                           Interface.GameUi.IsLogiCoinShopVisible ||
+                          Interface.GameUi.IsHarbourVisible ||
                           Interface.GameUi.IsMarketplaceVisible ||
                           Interface.GameUi.IsDungeonPanelVisible;
         return windowsOpen;

@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 namespace Intersect.Server.Naval;
 
 /// <summary>Opt-in overworld prototype. All mutation happens under the captain's entity lock then Gate.</summary>
-internal static class NavalSystem
+internal static partial class NavalSystem
 {
     private sealed class Vessel(ShipDefinition definition)
     {
@@ -23,6 +23,9 @@ internal static class NavalSystem
             X = definition.X, Y = definition.Y, Heading = ShipMovement.Normalize(definition.Heading) };
         internal readonly ShipInputAuthority Controls = new();
         internal long LastStep;
+        internal Guid OwnerId;
+        internal string SinkingGraphics = "";
+        internal long SunkUntil;
     }
     private static readonly object Gate = new();
     private static readonly Dictionary<Guid, Vessel> Ships = [];
@@ -100,6 +103,9 @@ internal static class NavalSystem
     {
         lock (player.EntityLock)
         {
+            if (player.CaptainedShipId == Guid.Empty &&
+                ShipDock.Nearest(MapController.Get(player.MapId)?.Attributes, player.X + .5, player.Y + .5, 1.5) != null)
+            { Harbour(player, new() { Action = HarbourAction.Open }); return; }
             ShipState anchor = null;
             (Guid MapId, int X, int Y)? dock = null;
             lock (Gate)
@@ -115,19 +121,24 @@ internal static class NavalSystem
                     var d = active.Definition; var s = active.State;
                     if (Math.Abs(s.Speed) > .1)
                     { Notice(player, "Anchor with Space and stop the ship before disembarking."); return; }
-                    if (s.MapId != d.MapId || Distance(s.X,s.Y,d.DockX+.5,d.DockY+.5)>5)
-                    { Notice(player, $"Return to the helm dock at ({d.DockX}, {d.DockY}) on its original map to disembark."); return; }
-                    var exit = ShipDisembarkation.Find(s,d,Options.Instance.Map.MapWidth,Options.Instance.Map.MapHeight,
-                        (x,y) => ClearTile(player,d.MapId,x,y) && !Ships.Values.Any(other => other != active &&
-                            HullTiles(other,ocean,other.State.MapId,other.State.X,other.State.Y).Contains((d.MapId,x,y))));
+                    if (active.SunkUntil > 0) { Notice(player, "Your ship has sunk. Return to the harbour to repair it."); return; }
+                    var attributes = MapController.Get(s.MapId)?.Attributes;
+                    bool ExitClear(int x, int y) => ClearTile(player, s.MapId, x, y) &&
+                        !HullTiles(active, ocean, s.MapId, s.X, s.Y).Contains((s.MapId, x, y)) &&
+                        !Ships.Values.Any(other => other != active && HullTiles(other, ocean, other.State.MapId,
+                            other.State.X, other.State.Y).Contains((s.MapId, x, y)));
+                    var painted = ShipDock.Tiles(attributes).Any();
+                    // A painted quay is an explicit safe shore: never choose unmarked sea around it.
+                    var exit = painted ? ShipDock.Nearest(attributes, s.X, s.Y, 5, ExitClear) :
+                        ShipDisembarkation.Find(s,d,Options.Instance.Map.MapWidth,Options.Instance.Map.MapHeight,ExitClear);
                     if (exit == null)
                     { Notice(player, "No free exit near this dock. Move the ship slightly and try again."); return; }
                     ReleaseLocked(player);
-                    dock = (d.MapId,exit.Value.X,exit.Value.Y);
+                    dock = (s.MapId,exit.Value.X,exit.Value.Y);
                 }
                 else
                 {
-                    var vessel = Ships.Values.FirstOrDefault(v => v.State.CaptainId == Guid.Empty &&
+                    var vessel = Ships.Values.FirstOrDefault(v => v.OwnerId == Guid.Empty && v.State.CaptainId == Guid.Empty &&
                         v.State.MapId == player.MapId &&
                         (Distance(v.State.X, v.State.Y, player.X + .5, player.Y + .5) <= 1.5 ||
                         v.Definition.MapId == player.MapId &&
@@ -173,6 +184,7 @@ internal static class NavalSystem
     internal static void Update(Player player, long now)
     {
         ShipState pendingWarp = null;
+        Vessel rescueVessel = null;
         Guid oldMap = Guid.Empty;
         double oldX = 0, oldY = 0;
         lock (Gate)
@@ -186,6 +198,10 @@ internal static class NavalSystem
                     player.InstanceType != MapInstanceType.Overworld || player.MapId != s.MapId ||
                     !ocean.Contains(s.MapId) || MapController.Get(s.MapId) == null)
                     ReleaseLocked(player);
+                else if (vessel.SunkUntil > 0)
+                {
+                    if (now >= vessel.SunkUntil) rescueVessel = vessel;
+                }
                 else
                 {
                     var dt = vessel.LastStep == 0 ? 0 : (now - vessel.LastStep) / 1000d;
@@ -202,12 +218,22 @@ internal static class NavalSystem
                 }
             }
         }
+        if (rescueVessel != null)
+        {
+            OwnedShip owned;
+            lock (Gate)
+            {
+                owned = player.NavalFleet.FirstOrDefault(s => s.Id == rescueVessel.State.Id);
+                ReleaseLocked(player);
+            }
+            if (owned != null) ReturnToHarbour(player, owned);
+        }
         if (pendingWarp != null)
         {
             WarpAnchor(player, pendingWarp);
             if (player.MapId != pendingWarp.MapId)
                 lock (Gate)
-                { pendingWarp.MapId = oldMap; pendingWarp.X = oldX; pendingWarp.Y = oldY; ReleaseLocked(player); }
+                { if (oldMap != Guid.Empty) { pendingWarp.MapId = oldMap; pendingWarp.X = oldX; pendingWarp.Y = oldY; } ReleaseLocked(player); }
         }
         lock (Gate)
         {
@@ -217,12 +243,21 @@ internal static class NavalSystem
         }
     }
 
-    internal static void Release(Player player)
+    internal static void Release(Player player, bool returnToHarbour = false)
     {
         // Ordinary players need no naval cleanup (including constructor-free test fixtures).
         if (player.CaptainedShipId == Guid.Empty) return;
         lock (player.EntityLock)
-        lock (Gate) ReleaseLocked(player);
+        {
+            OwnedShip owned = null;
+            lock (Gate)
+            {
+                if (returnToHarbour && Ships.TryGetValue(player.CaptainedShipId, out var vessel) && vessel.OwnerId == player.Id)
+                    owned = player.NavalFleet.FirstOrDefault(s => s.Id == vessel.State.Id);
+                ReleaseLocked(player);
+            }
+            if (owned != null) ReturnToHarbour(player, owned);
+        }
     }
 
     private static void WarpAnchor(Player player, ShipState state)
@@ -237,6 +272,12 @@ internal static class NavalSystem
         {
             vessel.State.CaptainId = Guid.Empty; vessel.State.Speed = vessel.State.Throttle = 0;
             vessel.Controls.Reset();
+            if (vessel.OwnerId != Guid.Empty)
+            {
+                var owned = player.NavalFleet.FirstOrDefault(s => s.Id == vessel.State.Id);
+                if (owned != null) owned.AtSea = false;
+                Ships.Remove(vessel.State.Id);
+            } // Stored in the character fleet, not a public boat.
         }
         player.CaptainedShipId = Guid.Empty;
     }
@@ -250,7 +291,7 @@ internal static class NavalSystem
             Ships.Values.Where(v => visible.Contains(v.State.MapId) && ocean.Contains(v.State.MapId) && MapController.Get(v.State.MapId) != null)
                 .Select(v => new ShipSnapshot { Id = v.State.Id, CaptainId = v.State.CaptainId, MapId = v.State.MapId,
                     X = v.State.X, Y = v.State.Y, Heading = v.State.Heading, Speed = v.State.Speed,
-                    Graphics = v.State.DamageState > 0 ? v.Definition.DamagedGraphics : v.Definition.Graphics,
+                    Graphics = v.SunkUntil > 0 ? v.SinkingGraphics : v.State.DamageState > 0 ? v.Definition.DamagedGraphics : v.Definition.Graphics,
                     Frames = v.Definition.Frames, FrameMilliseconds = v.Definition.FrameMilliseconds,
                     Width = v.Definition.Width, Length = v.Definition.Length }).ToArray() });
     }
@@ -272,18 +313,18 @@ internal static class NavalSystem
     private static bool ClearHull(Player player, Vessel vessel, HashSet<Guid> ocean, Guid map, double x, double y)
     {
         var tiles = HullTiles(vessel, ocean, map, x, y);
-        if (tiles.Any(t => !ClearTile(player, t.Map, t.X, t.Y))) return false;
+        if (tiles.Any(t => !ClearTile(player, t.Map, t.X, t.Y, allowDock: false))) return false;
         return !Ships.Values.Any(other => other != vessel &&
             tiles.Overlaps(HullTiles(other, ocean, other.State.MapId, other.State.X, other.State.Y)));
     }
 
-    private static bool ClearTile(Player player, Guid id, int x, int y)
+    private static bool ClearTile(Player player, Guid id, int x, int y, bool allowDock = true)
     {
         var map = MapController.Get(id);
         if (map?.Attributes == null || x < 0 || y < 0 || x >= map.Attributes.GetLength(0) || y >= map.Attributes.GetLength(1) ||
             !map.TryGetInstance(player.MapInstanceId, out var instance) || instance.IsDisposed) return false;
         var attribute = map.Attributes[x, y];
-        if (IsBlockingAttribute(attribute)) return false;
+        if (IsBlockingAttribute(attribute) && !(allowDock && attribute is MapDockAttribute)) return false;
         if (instance.GetCachedEntities().Any(e => e != player && !e.IsPassable() && e.X == x && e.Y == y && e.Z == player.Z)) return false;
         if (instance.GlobalEventInstances.Values.SelectMany(e => e.GlobalPageInstance)
             .Any(e => e != null && !e.Passable && e.X == x && e.Y == y && e.Z == player.Z)) return false;
@@ -291,7 +332,7 @@ internal static class NavalSystem
     }
 
     internal static bool IsBlockingAttribute(MapAttribute attribute) =>
-        attribute is MapBlockedAttribute or MapWarpAttribute or MapResourceAttribute or MapSlideAttribute or MapGrappleStoneAttribute ||
+        attribute is MapDockAttribute or MapBlockedAttribute or MapWarpAttribute or MapResourceAttribute or MapSlideAttribute or MapGrappleStoneAttribute ||
             attribute is MapAnimationAttribute { IsBlock: true } ||
             attribute is MapZDimensionAttribute;
 

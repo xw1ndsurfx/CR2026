@@ -496,7 +496,7 @@ public partial class Player : Entity
 
     public void TryLogout(bool force = false, bool softLogout = false, TaskCompletionSource? logoutCompletionSource = null)
     {
-        Intersect.Server.Naval.NavalSystem.Release(this);
+        Intersect.Server.Naval.NavalSystem.Release(this, returnToHarbour: true);
         LastOnline = DateTime.Now;
         Client = default;
 
@@ -2477,6 +2477,7 @@ public partial class Player : Entity
     public void LoginWarp()
     {
         if(Intersect.Server.Pvp.PvpRuntime.RecoverLogin(this))return;
+        if(Intersect.Server.Naval.NavalSystem.RecoverLogin(this))return;
         Intersect.Server.Housing.HousingRuntime.RestoreLoginLocation(this);
         if (MapId == null || MapId == Guid.Empty)
         {
