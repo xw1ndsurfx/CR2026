@@ -101,7 +101,7 @@ internal static class NavalSystem
         lock (player.EntityLock)
         {
             ShipState anchor = null;
-            ShipDefinition dock = null;
+            (Guid MapId, int X, int Y)? dock = null;
             lock (Gate)
             {
                 if (!IsEnabled() || player.InstanceType != MapInstanceType.Overworld || !player.InGame ||
@@ -113,13 +113,17 @@ internal static class NavalSystem
                 {
                     if (!Ships.TryGetValue(player.CaptainedShipId, out var active)) return;
                     var d = active.Definition; var s = active.State;
-                    if (s.MapId != d.MapId || Math.Abs(s.Speed) > .1 ||
-                        Distance(s.X, s.Y, d.DockX + .5, d.DockY + .5) > 5 ||
-                        !ClearTile(player, d.MapId, d.DockX, d.DockY) ||
-                        HullTiles(active, ocean, s.MapId, s.X, s.Y).Contains((d.MapId, d.DockX, d.DockY)))
-                    { Notice(player, "Stop near the helm dock to disembark safely."); return; }
+                    if (Math.Abs(s.Speed) > .1)
+                    { Notice(player, "Anchor with Space and stop the ship before disembarking."); return; }
+                    if (s.MapId != d.MapId || Distance(s.X,s.Y,d.DockX+.5,d.DockY+.5)>5)
+                    { Notice(player, $"Return to the helm dock at ({d.DockX}, {d.DockY}) on its original map to disembark."); return; }
+                    var exit = ShipDisembarkation.Find(s,d,Options.Instance.Map.MapWidth,Options.Instance.Map.MapHeight,
+                        (x,y) => ClearTile(player,d.MapId,x,y) && !Ships.Values.Any(other => other != active &&
+                            HullTiles(other,ocean,other.State.MapId,other.State.X,other.State.Y).Contains((d.MapId,x,y))));
+                    if (exit == null)
+                    { Notice(player, "No free exit near this dock. Move the ship slightly and try again."); return; }
                     ReleaseLocked(player);
-                    dock = d;
+                    dock = (d.MapId,exit.Value.X,exit.Value.Y);
                 }
                 else
                 {
@@ -145,9 +149,9 @@ internal static class NavalSystem
                 if (player.MapId != anchor.MapId) { Release(player); return; }
                 Notice(player, "Helm acquired. W/S: thrust/brake, A/D: turn, Space: anchor. /naval: leave at dock.");
             }
-            else if (dock != null)
+            else if (dock is { } landing)
             {
-                player.Warp(dock.MapId, dock.DockX, dock.DockY);
+                player.Warp(landing.MapId, landing.X, landing.Y);
                 Notice(player, "You have left the helm.");
             }
             lock (Gate) SendSnapshot(player);

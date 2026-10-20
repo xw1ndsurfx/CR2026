@@ -13,7 +13,7 @@ on:
       - 'Intersect.Server.Core/Networking/PacketHandler*'
       - 'Intersect.Tests.Server/Naval/**'
       - 'Intersect.Client.Core/Naval/**'
-      - 'Intersect.Tests.Client/NavalSpriteCatalogTests.cs'
+      - 'Intersect.Tests.Client/Naval*.cs'
       - 'resources/ocean/**'
       - 'Intersect.Client.Core/Localization/Locales/ui.json'
       - 'Intersect.Editor/Forms/DockingElements/frmMapList.cs'
@@ -33,5 +33,5 @@ jobs:
         with:
           dotnet-version: 8.0.x
       - run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Debug --filter FullyQualifiedName~NavalTests --nologo
-      - run: dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug --filter FullyQualifiedName~NavalSpriteCatalogTests --nologo
+      - run: dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug --filter FullyQualifiedName~Naval --nologo
       - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -- --naval-only

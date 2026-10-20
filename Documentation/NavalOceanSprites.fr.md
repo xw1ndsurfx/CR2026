@@ -14,6 +14,8 @@ Les fichiers voisins `.png.naval.json` indiquent 32 rectangles et leurs ancrages
 
 Les rectangles ont été inspectés dans un aperçu animé et vérifiés automatiquement contre les dimensions et les empreintes SHA-256 des originaux. Cela ne certifie pas un alignement artistique parfait : sillages adjacents, fragments d'eau et voiles qui se touchent persistent dans les sources, particulièrement sur les profils endommagés. Les diagonales doivent encore être confrontées au sens de marche réel en jeu; certaines vues arrière se ressemblent beaucoup. Il s'agit de ressources de prototype à revoir, pas d'un atlas final annoncé sans défaut.
 
+La pose sud-est fournie pointait en sens inverse du déplacement. Les dix atlas utilisent maintenant la vue sud-ouest en miroir horizontal pour ce cap, y compris pendant les naufrages. `FlipHorizontal` décrit cette transformation dans les métadonnées; le moteur inverse les coordonnées de texture en conservant l'ancrage de coque. Les PNG restent inchangés. Le client corrigé et ses métadonnées Ocean doivent être installés ensemble.
+
 Un fichier de métadonnées absent, invalide ou incompatible fait afficher la coque provisoire. Une planche Ocean n'est jamais interprétée arbitrairement comme une grille régulière. Le cache est réinitialisé à la reconnexion; redémarrer le client après changement des PNG.
 
 Les anciennes configurations `royal-ship.png` et `royal-ship-damaged.png` trouvent ces deux planches si aucun PNG explicite de ces noms n'existe déjà. Les nouvelles préparations automatiques utilisent directement `002` et `005`. Les configurations existantes ne sont pas réécrites.
@@ -54,10 +56,14 @@ Les liaisons sont réciproques. Aucun événement local, spawn de PNJ ou attribu
 5. Rejoindre ce point avec les moyens habituels du jeu, puis `/naval`. Vérifier que le personnage est masqué et que le bateau royal est affiché. W accélère, S freine/recul lent, A/D tournent, Espace freine à l'ancre.
 6. Depuis la map ouest, prendre un cap vers l'est (D depuis le nord) et franchir le bord droit. Vérifier la continuité de la coque et de la caméra. Revenir par le bord gauche de la map est.
 7. Vérifier que les frontières extérieures d'Ocean et la zone bloquée arrêtent **toute** la coque. Le test de simulation de la base originale n'inclut pas cette zone ajoutée manuellement.
-8. Revenir presque à l'arrêt au point d'embarquement de départ, puis `/naval` pour débarquer. Avec un second client, vérifier l'observation du navire, le refus d'une deuxième prise de barre et la marche ordinaire de l'autre joueur.
+8. Revenir près du point d'embarquement de départ sur sa carte d'origine, maintenir Espace jusqu'à l'arrêt, puis `/naval` pour débarquer. La case exacte du quai est préférée; si la coque la couvre ou si elle est occupée, le serveur cherche une case libre à trois cases au plus du quai, à cinq cases au plus du centre du bateau, hors de toute coque et dans la même carte. Il conserve les contrôles de terrain, événements et entités. Un refus distingue désormais mouvement, éloignement du quai (avec ses coordonnées) et absence de case libre. Avec un second client, vérifier l'observation du navire, le refus d'une deuxième prise de barre et la marche ordinaire de l'autre joueur.
 9. Déconnecter/reconnecter le capitaine. Reprendre la barre près de la coque. Les positions navales ne sont toujours pas persistées après redémarrage serveur dans cette phase.
 
 Le fichier `naval-test-Ocean.json` livré séparément propose deux bateaux avec de nouveaux UUID sur les deux maps, pour un **serveur de test neuf uniquement**. Le renommer `naval.json` seulement dans cette copie de test, après vérification de l'absence de configuration à conserver. La commande de l'éditeur reste préférable si des navires existent déjà.
+
+Le paquet configure volontairement **deux navires**, un par carte : voir un second bateau près du passage ou après avoir rejoint l'autre carte est donc attendu. Une seule coque est dessinée par identifiant reçu; ces navires ne sont pas supprimés ni masqués arbitrairement. La copie de configuration cloud fournie confirme également deux identifiants distincts.
+
+La sélection du capitaine et son origine visuelle suivent désormais le centre interpolé du navire, même si son avatar humain n'est pas dessiné. Les tests couvrent un déplacement du bateau, une ancienne zone d'avatar encore en mémoire, un second navire sans capitaine et un joueur ordinaire. Le débarquement nécessite aussi le serveur corrigé; la mise à jour des seuls PNG ne corrige pas les contrôles serveur.
 
 ## Vérifications reproductibles
 
