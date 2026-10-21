@@ -404,6 +404,131 @@
       "en": "Remove selected animation",
       "fr": "Supprimer la sélection",
       "es": "Eliminar selección"
+    },
+    "Browse rewards": {
+      "en": "Browse rewards",
+      "fr": "Parcourir",
+      "es": "Explorar"
+    },
+    "Clear": {
+      "en": "Clear",
+      "fr": "Effacer",
+      "es": "Borrar"
+    },
+    "No item reward": {
+      "en": "No item reward",
+      "fr": "Aucun objet",
+      "es": "Ningún objeto"
+    },
+    "Missing item: {0}": {
+      "en": "Missing item: {0}",
+      "fr": "Objet introuvable : {0}",
+      "es": "Objeto no encontrado: {0}"
+    },
+    "Choose reward item": {
+      "en": "Choose reward item",
+      "fr": "Choisir une récompense",
+      "es": "Elegir recompensa"
+    },
+    "Search reward items": {
+      "en": "Search reward items",
+      "fr": "Rechercher un objet par son nom",
+      "es": "Buscar un objeto por nombre"
+    },
+    "Item": {
+      "en": "Item",
+      "fr": "Objet",
+      "es": "Objeto"
+    },
+    "Type": {
+      "en": "Type",
+      "fr": "Type",
+      "es": "Tipo"
+    },
+    "Use selected item": {
+      "en": "Use selected item",
+      "fr": "Choisir cet objet",
+      "es": "Elegir este objeto"
+    },
+    "{0} items found": {
+      "en": "{0} items found",
+      "fr": "{0} objets trouvés",
+      "es": "{0} objetos encontrados"
+    },
+    "No matching items": {
+      "en": "No matching items",
+      "fr": "Aucun objet correspondant",
+      "es": "No hay objetos coincidentes"
+    },
+    "Rewards": {
+      "en": "Rewards",
+      "fr": "Récompenses",
+      "es": "Recompensas"
+    },
+    "Item quantity": {
+      "en": "Item quantity",
+      "fr": "Quantité d’objets",
+      "es": "Cantidad de objetos"
+    },
+    "Character EXP": {
+      "en": "Character EXP",
+      "fr": "EXP du personnage",
+      "es": "EXP del personaje"
+    },
+    "Currency item": {
+      "en": "Currency item",
+      "fr": "Monnaie",
+      "es": "Moneda"
+    },
+    "Currency quantity": {
+      "en": "Currency quantity",
+      "fr": "Quantité de monnaie",
+      "es": "Cantidad de moneda"
+    },
+    "Common Event": {
+      "en": "Common Event",
+      "fr": "Événement commun",
+      "es": "Evento común"
+    },
+    "Browse the item list, search by name and check the icon before choosing a reward. A quantity of zero disables that reward. Changes apply when you save the achievement.": {
+      "en": "Browse the item list, search by name and check the icon before choosing a reward. A quantity of zero disables that reward. Changes apply when you save the achievement.",
+      "fr": "Parcourez la liste des objets, recherchez un nom et vérifiez l’icône avant de choisir. Une quantité de zéro désactive cette récompense. Les modifications sont appliquées à l’enregistrement du succès.",
+      "es": "Explora la lista de objetos, busca por nombre y comprueba el icono antes de elegir. Una cantidad de cero desactiva esa recompensa. Los cambios se aplican al guardar el logro."
+    },
+    "None": {
+      "en": "None",
+      "fr": "Aucun",
+      "es": "Ninguno"
+    },
+    "Equipment": {
+      "en": "Equipment",
+      "fr": "Équipement",
+      "es": "Equipo"
+    },
+    "Consumable": {
+      "en": "Consumable",
+      "fr": "Consommable",
+      "es": "Consumible"
+    },
+    "Currency": {
+      "en": "Currency",
+      "fr": "Monnaie",
+      "es": "Moneda"
+    },
+    "Spell": {
+      "en": "Spell",
+      "fr": "Sort",
+      "es": "Hechizo"
+    },
+    "Event": {
+      "en": "Event",
+      "fr": "Événement",
+      "es": "Evento"
+    },
+    "Bag": {
+      "en": "Bag",
+      "fr": "Sac",
+      "es": "Bolsa"
     }
   }
 }

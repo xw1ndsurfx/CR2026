@@ -40,7 +40,7 @@ internal static class Program
         }
         System.Console.WriteLine("PASS editor login creates map layers before server options; resource brush initializes once after configuration");
         optionsProperty.SetValue(null, new Options());
-        if (Environment.GetCommandLineArgs().Contains("--qol-only")) { BoosterEditorTests.Run();QualityOfLifeEditorTests.Run();MenuAnimationEditorTests.Run();NavalSystemEditorTests.Run();return; }
+        if (Environment.GetCommandLineArgs().Contains("--qol-only")) { BoosterEditorTests.Run();QualityOfLifeEditorTests.Run();MenuAnimationEditorTests.Run();AchievementRewardEditorTests.Run();NavalSystemEditorTests.Run();return; }
         if (Environment.GetCommandLineArgs().Contains("--harbour-only")) { HarbourDockEditorTests.Run(); NavalShopEditorTests.Run(); NavalSystemEditorTests.Run(); NavalCombatMusicEditorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--naval-only")) { NavalMapListTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--housing-picker-only")) { HousingPickerTests.Run(); return; }
@@ -52,6 +52,7 @@ internal static class Program
         ActivitiesEditorTests.Run();
         CombatPvpMetalworkEditorTests.Run();
         MenuAnimationEditorTests.Run();
+        AchievementRewardEditorTests.Run();
         BoosterEditorTests.Run();
         CharacterWeaponPaperdollTests.Run();
         EventToolsTests.Run();
