@@ -77,7 +77,7 @@ internal static partial class NavalWorld
         foreach(var ball in (packet.Cannonballs??[]).Take(512))
             next[ball.Id]=new(Fresh&&_balls.TryGetValue(ball.Id,out var before)?before.Current:ball,ball,now);
         _balls=next;
-        if(!packet.Ships.Any(s=>HasMember(s,Globals.Me?.Id??Guid.Empty))) {CannonViewOpen=false;CargoOpen=false; _actionShip=Guid.Empty;_pressedSlots.Clear(); }
+        if(!packet.Ships.Any(s=>HasMember(s,Globals.Me?.Id??Guid.Empty))) {CannonViewOpen=false;if(packet.ShoreCargo==null)CargoOpen=false; _actionShip=Guid.Empty;_pressedSlots.Clear(); }
     }
     private static void DrawCannonballs(int row)
     {

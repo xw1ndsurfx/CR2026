@@ -4,12 +4,37 @@ using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Framework.Core.Naval;
+using Intersect.Client.Localization;
 
 namespace Intersect.Client.Interface.Game.Hotbar;
 
 /// <summary>Small code-drawn pixel icons; no external asset or unverified cannon sheet is assumed.</summary>
-internal sealed class NavalActionButton(Base parent,string name) : Button(parent,name)
+internal sealed class NavalActionButton : Button
 {
+    private readonly Label _counter;
+    internal NavalActionButton(Base parent,string name):base(parent,name)
+    {
+        _counter=new Label(this,"NavalCounter") {AutoSizeToContents=false,MouseInputEnabled=false,KeyboardInputEnabled=false};
+        _counter.Hide();
+    }
+
+    internal static string AmmoQuantityCaption(int quantity)=>quantity<0?"-":quantity==0?"0":Strings.FormatQuantityAbbreviated(quantity);
+
+    internal void SetCaption(string key,string? counter=null,bool cooldown=false)
+    {
+        // A single-line button must never send a newline to bitmap-font sanitization.
+        Text=key;
+        TextAlign=Pos.Bottom|Pos.Right;
+        _counter.IsHidden=string.IsNullOrEmpty(counter);
+        if(_counter.IsHidden)return;
+        _counter.Font=Font??Skin.DefaultFont;
+        _counter.FontSize=cooldown?FontSize:8;
+        _counter.TextColorOverride=IsDisabled?new Color(150,210,210,210):TextColorOverride??Color.White;
+        _counter.TextAlign=cooldown?Pos.Center:Pos.Top|Pos.Left;
+        _counter.SetBounds(3,2,Math.Max(1,Width-6),cooldown?Math.Max(1,Height-14):12);
+        _counter.Text=counter;
+    }
+
     internal CannonAmmoKind? Ammunition {get;set;}
     internal bool SelectedAmmunition {get;set;}
     internal ShipAction NavalAction { get; set; }

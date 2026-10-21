@@ -144,7 +144,23 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         };
         if (typeof(TItem)==typeof(HerboniaPatrol))
         {
-            buttons.Height=76;
+            buttons.Height=116;
+            var auto=new Button {Name="NavalPatrolAutoCreator",Text=T("Naval Patrol Auto Creator"),AutoSize=true};
+            auto.Click+=(_,_)=>
+            {
+                var selected=list.SelectedItem as HerboniaPatrol;
+                using var creator=new FrmNavalPatrolCreator(selected,_navigation,Options.Instance.Map.MapWidth,Options.Instance.Map.MapHeight,items.Count<limit);
+                if(creator.ShowDialog(this)!=DialogResult.OK || creator.Result is not {} generated)return;
+                if(creator.ReplaceSelected && selected!=null)
+                    items[items.IndexOf((TItem)(object)selected)]=(TItem)(object)generated;
+                else
+                {
+                    if(items.Count>=limit)return;
+                    items.Add((TItem)(object)generated);
+                }
+                store(items);Changed(section);Populate((TItem)(object)generated);
+            };
+            buttons.Controls.Add(auto);
             var copy=new Button {Text=T("Copy patrol"), AutoSize=true};
             var paste=new Button {Text=T("Paste patrol"), AutoSize=true,Enabled=false};
             buttons.Controls.AddRange([copy,paste]);
@@ -205,7 +221,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         {
             var row = panel.RowCount++; var value = property.GetValue(target); Control field;
             void Set(object? changed) { property.SetValue(target, changed); Changed(section); }
-            if ((target is NavalPresentation || target is CannonAmmunition && property.Name is "Icon" or "ProjectileGraphic" or "WaterGraphic" or "HullGraphic" || target is NavalSkillDefinition && property.Name=="Icon") && property.PropertyType==typeof(string))
+            if ((target is NavalPresentation || target is CannonAmmunition && property.Name is "Icon" or "StatusIcon" or "ProjectileGraphic" or "WaterGraphic" or "HullGraphic" || target is NavalSkillDefinition && property.Name=="Icon") && property.PropertyType==typeof(string))
                 field=AssetField(property.Name,value?.ToString()??"",changed=>Set(changed));
             else if(property.PropertyType==typeof(NavalSkillKind))
             {
@@ -233,7 +249,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             else if (property.PropertyType == typeof(Guid) && property.Name != "Id")
             {
                 var choices = new List<Choice> { new(Guid.Empty, T("Automatic / not selected")) };
-                if(property.Name is "ImpactAnimationId" or "LevelUpAnimationId") choices.AddRange(AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().OrderBy(a=>a.Name).Select(a=>new Choice(a.Id,a.Name)));
+                if(property.Name is "ImpactAnimationId" or "HullImpactAnimationId" or "LevelUpAnimationId") choices.AddRange(AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().OrderBy(a=>a.Name).Select(a=>new Choice(a.Id,a.Name)));
                 else if(property.Name=="ItemId") choices.AddRange(ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().OrderBy(i=>i.Name).Select(i=>new Choice(i.Id,i.Name)));
                 else if(property.Name=="BoardingDungeonId") choices.AddRange(Intersect.Framework.Core.Dungeons.DungeonConfiguration.Instance.Dungeons.Select(d=>new Choice(d.Id,d.Name)));
                 else if (property.Name.EndsWith("MapId")) choices.AddRange(MapList.OrderedMaps.Select(m => new Choice(m.MapId, m.Name)));

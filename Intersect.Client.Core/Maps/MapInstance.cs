@@ -1543,6 +1543,18 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         {
             ClearWeather();return;
         }
+        if (WeatherEffects.GeneratedRain)
+        {
+            foreach (var particle in _weatherParticles) particle.Dispose();
+            _weatherParticles.Clear();
+            _removeParticles.Clear();
+            DrawGeneratedRain();
+            UpdateStormEffects();
+            return;
+        }
+
+        _generatedRain.Clear();
+        _generatedRainUpdated = 0;
         UpdateStormEffects();
         var anim = AnimationDescriptor.Get(WeatherAnimationId);
         if (anim == null || WeatherIntensity == 0)
@@ -1590,6 +1602,9 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
         _weatherParticles.Clear();
         ClearStormEffects();
+        _generatedRain.Clear();
+        _generatedRainUpdated = 0;
+        _removeParticles.Clear();
     }
 
     public void GridSwitched()

@@ -91,6 +91,16 @@ internal static class NavalSystemEditorTests
                 gunSave=(NavalConfigurationRequestPacket)typeof(FrmNavalConfiguration).GetMethod("PrepareSave",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(gunEditor,null)!;
                 if(JsonConvert.DeserializeObject<NavalConfiguration>(gunSave.ConfigurationJson)!.Ammunition[1].ImpactAnimationId!=animation.Id)
                     throw new Exception("Selected native animation identity must survive the ammunition save.");
+                var hullChoices=Descendants(gunTabs.TabPages[7]).OfType<ComboBox>().Single(c=>c.Name=="HullImpactAnimationId");
+                hullChoices.SelectedItem=hullChoices.Items.Cast<object>().Single(c=>c.ToString()==animation.Name);
+                foreach(var pair in new[]{("DamagePerTick",15m),("DamageTickSeconds",2m),("DamageDurationSeconds",8m)})
+                    Descendants(gunTabs.TabPages[7]).OfType<NumericUpDown>().Single(c=>c.Name==pair.Item1).Value=pair.Item2;
+                if(!Descendants(gunTabs.TabPages[7]).OfType<ComboBox>().Any(c=>c.Name=="StatusIcon"))
+                    throw new Exception("Cannon status icon must use the spell resource selector.");
+                gunSave=(NavalConfigurationRequestPacket)typeof(FrmNavalConfiguration).GetMethod("PrepareSave",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(gunEditor,null)!;
+                var burning=JsonConvert.DeserializeObject<NavalConfiguration>(gunSave.ConfigurationJson)!.Ammunition[1];
+                if(burning.HullImpactAnimationId!=animation.Id || burning.DamagePerTick!=15 || burning.DamageTickSeconds!=2 || burning.DamageDurationSeconds!=8)
+                    throw new Exception("Hull animation and damage-over-time settings must survive the ammunition save.");
             }
             finally {Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor.Lookup.Delete(animation);}
             Console.WriteLine("PASS crew cannon and ammunition pages save native impact animation selection with navigation revision");

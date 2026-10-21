@@ -17,6 +17,30 @@ namespace Intersect.Tests.Client;
 [TestFixture,NonParallelizable]
 public sealed class NavalHelmRegressionTests
 {
+    [TestCase(false)]
+    [TestCase(true)]
+    public void VoyageResultsOpenAfterDockingAndStayOpenAcrossShoreSnapshots(bool delayed)
+    {
+        var previous=Globals.Me;var me=(Player)RuntimeHelpers.GetUninitializedObject(typeof(Player));GC.SuppressFinalize(me);me.Id=Guid.NewGuid();
+        try
+        {
+            Globals.Me=me;NavalWorld.Clear();
+            var own=new ShipSnapshot {Id=Guid.NewGuid(),CaptainId=me.Id};
+            var hold=new ShipSnapshot {Id=own.Id,CaptainId=me.Id,Health=100,Cargo=[new(){Quantity=1}]};
+            NavalWorld.Apply(new(){Ships=[own]});
+            // Simulate the map-loading gap that used to make OwnShip too stale to detect a return.
+            typeof(NavalWorld).GetField("_received",BindingFlags.Static|BindingFlags.NonPublic)!.SetValue(null,Environment.TickCount64-2000);
+            if(delayed)NavalWorld.Apply(new());
+            NavalWorld.Apply(new(){ShoreCargo=hold});Assert.That(NavalWorld.CargoOpen,Is.True);
+            NavalWorld.Apply(new(){ShoreCargo=hold});Assert.That(NavalWorld.CargoOpen,Is.True);
+            NavalWorld.CargoOpen=false;NavalWorld.Apply(new(){ShoreCargo=hold});Assert.That(NavalWorld.CargoOpen,Is.False,"Manual close is respected.");
+            NavalWorld.CargoOpen=true;NavalWorld.Apply(new(){ShoreCargo=hold});Assert.That(NavalWorld.CargoOpen,Is.True,"Fleet reopening survives the next snapshot.");
+            NavalWorld.Apply(new());Assert.That(NavalWorld.CargoOpen,Is.False);
+            NavalWorld.Clear();NavalWorld.Apply(new(){ShoreCargo=hold});Assert.That(NavalWorld.CargoOpen,Is.False,"Login does not replay a voyage return.");
+        }
+        finally {NavalWorld.Clear();Globals.Me=previous;}
+    }
+
     [Test]
     public void NewCrewBoardingOpensCannonViewOnceWhileManualExitSurvivesFollowingSnapshots()
     {

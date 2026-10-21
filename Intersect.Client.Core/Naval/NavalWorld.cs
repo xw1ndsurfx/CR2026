@@ -19,8 +19,9 @@ internal static partial class NavalWorld
     private static Dictionary<Guid, View> _ships = [];
     private static Guid _viewer,_crewCannonShip;
     internal static NavalRewardFeed RewardFeed {get;}=new();
-    private static long _received, _inputTime;
-    internal static void Clear() {ClearGunnery();ShoreCargo=null;CrewState=new();RewardFeed.Clear(); _ships.Clear(); _viewer = _crewCannonShip = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
+    private static long _received, _inputTime,_voyageReturnUntil;
+    private static bool _lastAboard,_lastAboardSinking;
+    internal static void Clear() {ClearGunnery();_lastAboard=_lastAboardSinking=false;_voyageReturnUntil=0;ShoreCargo=null;CrewState=new();RewardFeed.Clear(); _ships.Clear(); _viewer = _crewCannonShip = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
     internal static ShipSnapshot? ShoreCargo {get;private set;}
     internal static ShipCrewState CrewState {get;private set;}=new();
     internal static Guid Driver(ShipSnapshot ship)=>ship.HelmsmanId==Guid.Empty?ship.CaptainId:ship.HelmsmanId;
@@ -32,9 +33,17 @@ internal static partial class NavalWorld
     internal static void Apply(NavalSnapshotPacket packet)
     {
         var now = Environment.TickCount64;
-        var returned=OwnShip!=null && packet.ShoreCargo!=null;
+        var sameViewer=_viewer!=Guid.Empty && _viewer==Globals.Me?.Id;
+        var aboard=packet.Ships.FirstOrDefault(s=>HasMember(s,Globals.Me?.Id??Guid.Empty));
+        if(!sameViewer)_voyageReturnUntil=0;
+        if(aboard!=null)
+        {
+            if(!_lastAboard || !sameViewer)CargoOpen=false;
+            _voyageReturnUntil=0;
+        }
+        else if(sameViewer && _lastAboard && !_lastAboardSinking)_voyageReturnUntil=now+30000;
+        _lastAboard=aboard!=null;_lastAboardSinking=aboard?.Sinking==true;
         ShoreCargo=packet.ShoreCargo;
-        if(returned)CargoOpen=true;
         var next = new Dictionary<Guid, View>();
         foreach (var s in packet.Ships.Take(64))
         {
@@ -49,6 +58,8 @@ internal static partial class NavalWorld
         RewardFeed.Observe(packet.Rewards??[],_viewer==Guid.Empty || _viewer!=Globals.Me?.Id,now);
         ApplyPresentation(packet,now);
         ApplyCannonballs(packet,now);
+        if(ShoreCargo!=null && _voyageReturnUntil>now)
+        {CargoOpen=true;_voyageReturnUntil=0;}
         _ships = next; _viewer = Globals.Me?.Id ?? Guid.Empty; _received = now;
         var crewShip=OwnShip;
         var crewId=crewShip!=null && Driver(crewShip)!=_viewer?crewShip.Id:Guid.Empty;

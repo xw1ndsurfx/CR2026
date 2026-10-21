@@ -1,5 +1,110 @@
 {
   "Entries": {
+    "Naval Patrol Auto Creator": {
+      "en": "Naval Patrol Auto Creator",
+      "fr": "Créateur auto de patrouilles",
+      "es": "Creador automático de patrullas"
+    },
+    "Patrol difficulty": {
+      "en": "Patrol difficulty",
+      "fr": "Difficulté de la patrouille",
+      "es": "Dificultad de patrulla"
+    },
+    "Normal": {
+      "en": "Normal",
+      "fr": "Normal",
+      "es": "Normal"
+    },
+    "Elite": {
+      "en": "Elite",
+      "fr": "Élite",
+      "es": "Élite"
+    },
+    "Boss": {
+      "en": "Boss",
+      "fr": "Boss",
+      "es": "Jefe"
+    },
+    "Naval patrol": {
+      "en": "Naval patrol",
+      "fr": "Patrouille navale",
+      "es": "Patrulla naval"
+    },
+    "Update selected patrol": {
+      "en": "Update selected patrol",
+      "fr": "Modifier la patrouille choisie",
+      "es": "Modificar patrulla seleccionada"
+    },
+    "Generated stat": {
+      "en": "Generated stat",
+      "fr": "Statistique calculée",
+      "es": "Estadística calculada"
+    },
+    "Generated value": {
+      "en": "Generated value",
+      "fr": "Valeur calculée",
+      "es": "Valor calculado"
+    },
+    "Apply patrol balance": {
+      "en": "Apply patrol balance",
+      "fr": "Appliquer les statistiques",
+      "es": "Aplicar estadísticas"
+    },
+    "Create patrol": {
+      "en": "Create patrol",
+      "fr": "Créer la patrouille",
+      "es": "Crear patrulla"
+    },
+    "Preview the generated stats. Artwork, loot and boarding settings are preserved. Save the naval section to publish your changes.": {
+      "en": "Preview the generated stats. Artwork, loot and boarding settings are preserved. Save the naval section to publish your changes.",
+      "fr": "Vérifiez les statistiques calculées. Les graphismes, le butin et l’abordage sont conservés. Enregistrez la section navale pour publier vos changements.",
+      "es": "Revise las estadísticas calculadas. Se conservan los gráficos, el botín y el abordaje. Guarde la sección naval para publicar los cambios."
+    },
+    "Set valid cannon and Sailing settings before using the creator.": {
+      "en": "Set valid cannon and Sailing settings before using the creator.",
+      "fr": "Configurez des valeurs valides pour les canons et Sailing avant d’utiliser le créateur.",
+      "es": "Configure valores válidos de cañones y Sailing antes de usar el creador."
+    },
+    "HullImpactAnimationId": {
+      "en": "Ship impact animation (Animations Editor)",
+      "fr": "Animation d’impact sur un bateau",
+      "es": "Impacto en barco (Animations Editor)"
+    },
+    "StatusIcon": {
+      "en": "Ongoing damage icon (spells)",
+      "fr": "Icône de l’effet (spells)",
+      "es": "Icono de daño continuo (spells)"
+    },
+    "DamagePerTick": {
+      "en": "Hull damage per tick (0 = disabled)",
+      "fr": "Dégâts par application (0 = désactivé)",
+      "es": "Daño al casco por aplicación (0 = desactivado)"
+    },
+    "DamageTickSeconds": {
+      "en": "Damage interval (seconds)",
+      "fr": "Intervalle des dégâts (secondes)",
+      "es": "Intervalo de daño (segundos)"
+    },
+    "DamageDurationSeconds": {
+      "en": "Damage duration (seconds)",
+      "fr": "Durée des dégâts (secondes)",
+      "es": "Duración del daño (segundos)"
+    },
+    "-{0:N0} hull every {1} s": {
+      "en": "-{0:N0} hull every {1} s",
+      "fr": "-{0:N0} PV de coque toutes les {1} s",
+      "es": "-{0:N0} PV de casco cada {1} s"
+    },
+    "Remaining: {0} s": {
+      "en": "Remaining: {0} s",
+      "fr": "Temps restant : {0} s",
+      "es": "Tiempo restante: {0} s"
+    },
+    "Repeated hits refresh this effect; it does not stack.": {
+      "en": "Repeated hits refresh this effect; it does not stack.",
+      "fr": "Les coups suivants renouvellent cet effet sans le cumuler.",
+      "es": "Los siguientes impactos renuevan este efecto sin acumularlo."
+    },
     "NO ENEMY CREW ON DECK": {
       "en": "No enemy crew on the boarding deck.",
       "fr": "Aucun ennemi sur le pont d’abordage.",

@@ -24,6 +24,73 @@ public sealed class NavalCargoWindowTests
     [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
 
     [Test]
+    public void FleetCardsShowEachShipAppearanceWithoutOverlappingTheirControls()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(1024,768)};
+        var window=new HarbourWindow(canvas,HarbourView.Fleet);
+        window.Apply(new(){Entries=[new(){ModelId="royal",Owned=true,Health=80,ShipName="Royal",Graphics="royal.png",Frames=4},
+            new(){ModelId="herbonia",Owned=true,Health=100,ShipName="Herbonia",Graphics="herbonia.png",Frames=1}]});
+        var previews=Descendants(window).OfType<NavalShipPreview>().ToArray();
+        Assert.That(previews.Select(p=>p.Graphic),Is.EqualTo(new[]{"royal.png","herbonia.png"}));
+        Assert.That(previews.Select(p=>p.Frames),Is.EqualTo(new[]{4,1}));
+        foreach(var preview in previews)
+        {
+            var name=Descendants(window).OfType<Label>().Single(c=>c.Name=="Name"+preview.Name.Last());
+            Assert.That(preview.Right,Is.LessThan(name.X));
+            var launch=Descendants(window).OfType<Button>().Single(c=>c.Name=="Launch"+preview.Name.Last());
+            Assert.That(preview.Right,Is.LessThan(launch.X));
+        }
+    }
+
+    [Test]
+    public void NavalAmmoQuantityAndShortcutUseSeparateSingleLineLabels()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(800,600)};
+        var button=new NavalActionButton(canvas,"AmmoFixture") {Font=skin.DefaultFont,FontSize=8};
+        button.SetBounds(0,0,36,36);
+        Assert.That(NavalActionButton.AmmoQuantityCaption(-1),Is.EqualTo("-"));
+        Assert.That(NavalActionButton.AmmoQuantityCaption(0),Is.EqualTo("0"));
+        Assert.That(NavalActionButton.AmmoQuantityCaption(87),Is.EqualTo("87"));
+        foreach(var quantity in new[]{"-","0","87","999K"})
+        {
+            button.SetCaption("4",quantity);
+            typeof(ControlBase).GetMethod("RecurseLayout",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!.Invoke(canvas,[skin]);
+            var count=button.Children.OfType<Label>().Single(c=>c.Name=="NavalCounter");
+            Assert.That(button.Text,Is.EqualTo("4"));Assert.That(count.Text,Is.EqualTo(quantity));
+            Assert.That(count.MouseInputEnabled,Is.False);Assert.That(count.Bottom,Is.LessThanOrEqualTo(button.TextY));
+            Assert.That(Descendants(button).OfType<Label>().All(c=>!c.Text!.Contains('\n') && !c.Text.Contains('\r')),Is.True);
+        }
+        button.SetCaption("1","3",true);
+        Assert.That(button.Text,Is.EqualTo("1"));
+        Assert.That(button.Children.OfType<Label>().Single().Text,Is.EqualTo("3"));
+        button.SetCaption("0");Assert.That(button.Children.OfType<Label>().Single().IsHidden,Is.True);
+    }
+
+    [Test]
+    public void NavalTargetShowsHoverableSpellEffectsWrapsThemAndClearsThemAfterCombat()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(240,300)};
+        Intersect.Client.Naval.NavalWorld.Clear();
+        try
+        {
+            var enemy=new ShipSnapshot {Id=Guid.NewGuid(),Enemy=true,Health=100,MaximumHealth=100,
+                CannonStatuses=Enum.GetValues<CannonAmmoKind>().Select(kind=>new NavalCannonStatus
+                {Kind=kind,Icon="fire.png",RemainingMilliseconds=30000,DamagePerTick=5,TickSeconds=2}).ToArray()};
+            Intersect.Client.Naval.NavalWorld.Apply(new(){Ships=[enemy]});
+            var hud=new NavalTargetHud(canvas);hud.Update(enemy);
+            var badges=hud.Children.OfType<Panel>().Where(c=>c.Name.StartsWith("CannonStatus")).ToArray();
+            Assert.That(badges,Has.Length.EqualTo(8));
+            Assert.That(badges.All(b=>b.MouseInputEnabled && !b.IsHidden),Is.True);
+            Assert.That(badges.All(b=>b.X>=0 && b.Right<=hud.Width && b.Bottom<=hud.Height),Is.True);
+            Assert.That(badges[0].TooltipText,Does.Contain("5"));
+            Assert.That(_content.Requests.Count(r=>r==(TextureType.Spell,"fire.png")),Is.EqualTo(8));
+            enemy.CannonStatuses=[];hud.Update(enemy);Assert.That(badges.All(b=>b.IsHidden),Is.True);
+            hud.Update(null);Assert.That(hud.IsHidden,Is.True);
+        }
+        finally {Intersect.Client.Naval.NavalWorld.Clear();}
+    }
+
+    [Test]
     public void PremiumTimerSupportsMoreThanAWeekExpiresAndClearsBetweenCharacters()
     {
         var old=System.Globalization.CultureInfo.CurrentUICulture;

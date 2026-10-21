@@ -22,6 +22,7 @@ public partial class NavalSnapshotPacket : IntersectPacket
 [MessagePackObject]
 public sealed class ShipSnapshot
 {
+    [Key(33)] public NavalCannonStatus[] CannonStatuses {get;set;}=[];
     [Key(32)] public Guid EnemyBoardingTargetId {get;set;}
     [Key(31)] public NavalActiveSkill[] ActiveSkills {get;set;}=[];
     [Key(30)] public bool RepairAvailable {get;set;}
@@ -91,4 +92,14 @@ public sealed class NavalActiveSkill
     [Key(0)] public NavalSkillKind Kind {get;set;}
     [Key(1)] public string Icon {get;set;}="";
     [Key(2)] public int RemainingMilliseconds {get;set;}
+}
+
+[MessagePackObject]
+public sealed class NavalCannonStatus
+{
+    [Key(0)] public CannonAmmoKind Kind {get;set;}
+    [Key(1)] public string Icon {get;set;}="";
+    [Key(2)] public int RemainingMilliseconds {get;set;}
+    [Key(3)] public int DamagePerTick {get;set;}
+    [Key(4)] public int TickSeconds {get;set;}
 }
