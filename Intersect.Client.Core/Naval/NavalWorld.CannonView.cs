@@ -16,7 +16,7 @@ internal static partial class NavalWorld
     internal static CannonAmmoKind SelectedAmmo {get;set;}
     internal static double GunYaw {get;set;}
     internal static double GunElevation {get;set;}=-Math.Atan(.12)*180/Math.PI;
-    private static long _gunRenew,_gunFire;
+    private static long _gunRenew,_gunFire,_gunAcquire;
     internal static void RequestStation(CannonStationAction action)
     {
         if(OwnShip is not {Sinking:false} own || own.CaptainId==Globals.Me?.Id) return;
@@ -26,12 +26,20 @@ internal static partial class NavalWorld
         Intersect.Client.Networking.Network.SendPacket(new Intersect.Network.Packets.Client.CannonStationPacket {
             ShipId=own.Id,LeaseId=Gunner.LeaseId,Starboard=CannonViewStarboard,Action=action,Ammunition=SelectedAmmo,Yaw=GunYaw,Elevation=GunElevation});
     }
+    internal static bool ShouldAcquireStation(long now,long next,bool enabled,bool busy,bool occupied)=>enabled && !busy && !occupied && now>=next;
+    internal static void EnsureStation()
+    {
+        var now=Environment.TickCount64;
+        if(ShouldAcquireStation(now,_gunAcquire,Gunner.Enabled,Globals.Me?.IsBusy!=false,Gunner.LeaseId!=Guid.Empty && Gunner.Starboard==CannonViewStarboard))
+        {_gunAcquire=now+1000;RequestStation(CannonStationAction.Acquire);}
+        RenewStation();
+    }
     internal static void RenewStation()
     {
         if(Gunner.LeaseId==Guid.Empty || Environment.TickCount64<_gunRenew) return;
         _gunRenew=Environment.TickCount64+1000;RequestStation(CannonStationAction.Renew);
     }
-    internal static void ClearGunnery() {Gunner=new();SelectedAmmo=CannonAmmoKind.Standard;GunYaw=0;GunElevation=-Math.Atan(.12)*180/Math.PI;_gunRenew=_gunFire=0;}
+    internal static void ClearGunnery() {Gunner=new();SelectedAmmo=CannonAmmoKind.Standard;GunYaw=0;GunElevation=-Math.Atan(.12)*180/Math.PI;_gunRenew=_gunFire=_gunAcquire=0;}
     internal static bool CannonViewOpen { get; set; }
     internal static bool CannonViewStarboard { get; set; }
 
@@ -59,13 +67,13 @@ internal static partial class NavalWorld
             var offset=(float)GunneryAim.StationOffset(Gunner.Station,Gunner.CannonsPerSide,own.Length);
             camera+=new Vector2((float)Math.Sin(heading*Math.PI/180)*tw,-(float)Math.Cos(heading*Math.PI/180)*th)*offset;
         }
-        var terrain=new List<GameTileBuffer>();
+        var terrain=new List<GameTileBuffer>();var decorations=new List<MapPerspectiveDecoration>();
         // Only the actual grid received by this player. Do not fetch arbitrary maps or reveal distant enemies.
         var maps=Globals.GridMaps.Keys.Select(id=>MapInstance.TryGet(id,out var map)?map:null)
             .Where(map=>map?.IsLoaded==true).Select(map=>map!)
             .OrderBy(map=>Vector2.DistanceSquared(camera,new Vector2(map.X+Options.Instance.Map.MapWidth*tw/2f,
                 map.Y+Options.Instance.Map.MapHeight*th/2f))).Take(25);
-        foreach(var map in maps) terrain.AddRange(map.PerspectiveBuffers());
+        foreach(var map in maps) {terrain.AddRange(map.PerspectiveBuffers());decorations.AddRange(map.PerspectiveDecorations());}
         var sprites=new List<MapPerspectiveSprite>();
         foreach(var vessel in _ships.Values)
         {
@@ -101,7 +109,8 @@ internal static partial class NavalWorld
             if(ball.Previous.MapId==ball.Current.MapId)
             {bx=ball.Previous.X+(bx-ball.Previous.X)*t;by=ball.Previous.Y+(by-ball.Previous.Y)*t;}
             Effect(Presentation.CannonProjectileGraphic,"Projectile"+ShipMovement.DirectionRow(CannonViewRelativeHeading(ball.Current.Heading,beam)),
-                map.X+(float)bx*tw,map.Y+(float)by*th,ball.Current.AgeMilliseconds+Environment.TickCount64-ball.Received,true);
+                map.X+(float)bx*tw,map.Y+(float)by*th,ball.Current.AgeMilliseconds+Environment.TickCount64-ball.Received,true,
+                (float)Math.Max(0,ball.Previous.Height+(ball.Current.Height-ball.Previous.Height)*t));
         }
         foreach(var effect in _effects.Values)
         {
@@ -112,21 +121,21 @@ internal static partial class NavalWorld
             var clip=e.Kind switch {NavalEffectKind.Fire=>"Fire",NavalEffectKind.WaterImpact=>"WaterImpact",_=>"HullImpact"};
             Effect(asset,clip,map.X+(float)e.X*tw,map.Y+(float)e.Y*th,Environment.TickCount64-effect.Born,false);
         }
-        return new(camera,forward,tw,th,terrain,sprites);
+        return new(camera,forward,tw,th,terrain,sprites,decorations.OrderBy(d=>Vector2.DistanceSquared(d.Anchor,camera)).Take(1024).ToArray());
 
-        void Add(IGameTexture texture,ShipSpriteFrame frame,double pixelsPerTile,float sx,float sy)
+        void Add(IGameTexture texture,ShipSpriteFrame frame,double pixelsPerTile,float sx,float sy,float elevation=0)
         {
             var scale=(float)(1/pixelsPerTile);
             sprites.Add(new(texture,new FloatRect(frame.X,frame.Y,frame.Width,frame.Height),new(sx,sy),
-                frame.Width*scale,frame.Height*scale,(float)frame.AnchorX*scale,(float)frame.AnchorY*scale,frame.FlipHorizontal));
+                frame.Width*scale,frame.Height*scale,(float)frame.AnchorX*scale,(float)frame.AnchorY*scale,frame.FlipHorizontal,elevation));
         }
-        void Effect(string filename,string clip,float sx,float sy,long age,bool hold)
+        void Effect(string filename,string clip,float sx,float sy,long age,bool hold,float elevation=0)
         {
             if(!NavalPresentation.SafeAsset(filename) || filename.Length==0 ||
                 Globals.ContentManager?.GetTexture(TextureType.Ocean,filename) is not {} image) return;
             var atlas=EffectAtlas(filename,image.Width,image.Height);
             if(atlas==null || !atlas.Clips.TryGetValue(clip,out var frames) || (!hold && age>=frames.Length*Presentation.EffectFrameMilliseconds)) return;
-            if(atlas.Frame(clip,age,Presentation.EffectFrameMilliseconds) is {} frame) Add(image,frame,Presentation.EffectPixelsPerTile,sx,sy);
+            if(atlas.Frame(clip,age,Presentation.EffectFrameMilliseconds) is {} frame) Add(image,frame,Presentation.EffectPixelsPerTile,sx,sy,elevation);
         }
     }
 }

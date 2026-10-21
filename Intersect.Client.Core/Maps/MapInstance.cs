@@ -165,6 +165,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
             _gridX = value;
             X = _gridX * _width * _tileWidth;
+            ClearPerspectiveTerrain();
         }
     }
 
@@ -180,6 +181,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
             _gridY = value;
             Y = _gridY * _height * _tileHeight;
+            ClearPerspectiveTerrain();
         }
     }
 
@@ -191,6 +193,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
     //Load
     public void Load(string json)
     {
+        ClearPerspectiveTerrain();
         LocalEntitiesToDispose.AddRange(LocalEntities.Keys.ToArray());
         JsonConvert.PopulateObject(
             json,
@@ -211,6 +214,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
     public void LoadTileData(byte[] packet)
     {
+        ClearPerspectiveTerrain();
         Layers = JsonConvert.DeserializeObject<Dictionary<string, Tile[,]>>(LZ4.UnPickleString(packet), mJsonSerializerSettings);
         foreach (var layer in Options.Instance.Map.Layers.All)
         {
@@ -440,6 +444,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
             }
         }
 
+        if(updatedBuffers.Count>0) ClearPerspectiveTerrain();
         foreach (var buffer in updatedBuffers)
         {
             buffer.SetData();
@@ -815,6 +820,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
     public void BuildVBOs()
     {
+        ClearPerspectiveTerrain();
         lock (_tileBuffersPerLayer)
         {
             if (_vboCompute != default)
@@ -866,6 +872,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
     public void DestroyVBOs()
     {
+        ClearPerspectiveTerrain();
         foreach (var layer in Options.Instance.Map.Layers.All)
         {
             if (_tileBuffersPerTexturePerLayer.Remove(layer, out var tileBuffersPerTextureForLayer))
@@ -944,10 +951,9 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         CacheTextures();
         if (!mTexturesFound) yield break;
         if (_tileBuffersPerLayer.Count == 0) BuildVBOs();
-        foreach (var layer in Options.Instance.Map.Layers.LowerLayers
-            .Concat(Options.Instance.Map.Layers.MiddleLayers).Concat(Options.Instance.Map.Layers.UpperLayers))
-            if (_tileBuffersPerLayer.TryGetValue(layer, out var frames))
-                foreach (var buffer in frames[Globals.AnimationFrame]) yield return buffer;
+        EnsurePerspectiveTerrain();
+        foreach(var frames in _perspectiveFloor)
+            foreach(var buffer in frames[Globals.AnimationFrame]) yield return buffer;
     }
 
     public void DrawItemsAndLights()
@@ -1208,7 +1214,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         }
     }
 
-    private GameTileBuffer[][]? DrawMapLayer(string layerName, int xOffset = 0, int yOffset = 0)
+    private GameTileBuffer[][]? DrawMapLayer(string layerName, int xOffset = 0, int yOffset = 0, Func<int,int,bool>? include = null)
     {
         if (!Layers.TryGetValue(layerName, out var layerTiles))
         {
@@ -1226,6 +1232,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         {
             for (var y = 0; y < _height; y++)
             {
+                if(include!=null && !include(x,y)) continue;
                 var layerTile = layerTiles[x, y];
                 if (layerTile.TilesetTexture is not IGameTexture tilesetTexture)
                 {
@@ -1380,7 +1387,8 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
             }
         }
 
-        _tileBuffersPerTexturePerLayer.Add(layerName, tileBuffersPerTexture);
+        // Filtered naval copies must never replace/register the ordinary world buffers.
+        if(include==null) _tileBuffersPerTexturePerLayer.Add(layerName, tileBuffersPerTexture);
 
         return outputBuffers;
     }

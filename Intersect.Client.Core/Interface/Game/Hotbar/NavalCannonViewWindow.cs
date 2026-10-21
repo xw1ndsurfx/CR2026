@@ -89,7 +89,7 @@ internal sealed class NavalCannonViewWindow : Window
         _fullscreen=crew;DrawShadow=!crew;Titlebar.IsHidden=crew;
         Alignment=crew?[]:[Alignments.Center];
         InnerPanel.Dock=crew?Pos.None:Pos.Fill;
-        if(crew) NavalWorld.RenewStation();
+        if(crew) NavalWorld.EnsureStation();
         var width=crew?Math.Max(1,Parent?.Width??800):Math.Min(880,Math.Max(300,(Parent?.Width??904)-24));
         var height=crew?Math.Max(1,Parent?.Height??600):Math.Min(640,Math.Max(330,(Parent?.Height??672)-32));
         if(crew) {SetBounds(0,0,width,height);InnerPanel.SetBounds(0,0,width,height);}else SetSize(width,height);
@@ -184,7 +184,9 @@ internal sealed class NavalCannonViewWindow : Window
             if(_art?.IsValid(texture.Width,texture.Height)!=true) return;
             var frame=_art.Pose(NavalWorld.GunYaw);var w=Math.Min((int)(Width*.6),(int)(Height*.7));var h=w*frame.Height/frame.Width;
             var offset=(int)(NavalWorld.GunYaw/NavalWorld.Gunner.AimArcDegrees*8);
-            skin.Renderer.DrawTexturedRect(texture,new Rectangle((Width-w)/2+offset,Height-h,w,h),Color.White,
+            var lift=(int)(Math.Sin(NavalWorld.GunElevation*Math.PI/180)*Height*.12);
+            skin.Renderer.DrawColor=Color.White;
+            skin.Renderer.DrawTexturedRect(texture,new Rectangle((Width-w)/2+offset,Height-h-lift,w,h+lift),Color.White,
                 frame.X/(float)texture.Width,frame.Y/(float)texture.Height,(frame.X+frame.Width)/(float)texture.Width,(frame.Y+frame.Height)/(float)texture.Height);
         }
         private IGameRenderTexture? _texture;
@@ -217,6 +219,7 @@ internal sealed class NavalCannonViewWindow : Window
                 }
                 if(_failed) {_texture?.Dispose();_texture=null;}
             }
+            draw.DrawColor=Color.White; // The Gwen renderer uses DrawColor, not the color argument, for textures.
             if(_texture!=null) draw.DrawTexturedRect(_texture,new Rectangle(0,0,Width,Height),Color.White);
             if(_failed)
             {

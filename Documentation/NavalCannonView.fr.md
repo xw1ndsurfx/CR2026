@@ -21,15 +21,15 @@ Polonya apparaît uniquement si sa carte fait partie de cette grille, qu’elle 
 
 ## Limites explicites du prototype
 
-Il s’agit d’un aperçu 2,5D : le sol réel est projeté en perspective et les navires/effets sont des images orientées vers la caméra. Les couches de décor sont actuellement projetées sur le sol, sans extrusion automatique. Les cartes Intersect ne donnent pas la hauteur des arbres, falaises ou bâtiments ; ils ne deviennent donc pas des volumes comme sur l’image de référence.
+Il s’agit d’un aperçu 2,5D : le sol réel est projeté en perspective et les navires/effets sont des images orientées vers la caméra. Les couches de décor sont désormais regroupées et redressées en billboards, avec leur pied ancré à la carte ; le calque de sol reste horizontal. Les cartes Intersect ne donnent pas la hauteur des arbres, falaises ou bâtiments ; ils ne deviennent donc pas des volumes comme sur l’image de référence.
 
-Les personnages/NPC à pied, animations d’attributs, lumières, météo et brouillards natifs ne sont pas encore projetés dans cette fenêtre. La luminosité ne reproduit pas encore le cycle jour/nuit. Les décors ne masquent pas un navire par leur hauteur ; les véritables collisions et lignes de tir continuent d’être décidées par le serveur. Les postes individuels ajoutent une visée à la souris bornée par le serveur ; les bordées du capitaine conservent leur direction fixe.
+Les personnages/NPC à pied, animations d’attributs, lumières, météo et brouillards natifs ne sont pas encore projetés dans cette fenêtre. La luminosité ne reproduit pas encore le cycle jour/nuit. Les décors et navires sont triés par profondeur pour une occlusion de billboards, sans volumes 3D ; les véritables collisions et lignes de tir continuent d’être décidées par le serveur. Les postes individuels ajoutent une visée à la souris bornée par le serveur ; les bordées du capitaine conservent leur direction fixe.
 
-La portée graphique maximale est de 96 cases, et seules les 25 cartes chargées les plus proches sont considérées. Le fond sombre signifie géographie non rendue, sans océan inventé. La vision à longue distance de toute une île nécessite ensuite des données de terrain distantes, des niveaux de détail et une politique serveur distincte de la visibilité des ennemis.
+La portée graphique maximale est de 96 cases, et seules les 25 cartes chargées les plus proches sont considérées. Le fond clair représente le ciel, sans ajouter de géographie inventée. La vision à longue distance de toute une île nécessite ensuite des données de terrain distantes, des niveaux de détail et une politique serveur distincte de la visibilité des ennemis.
 
 ## Performance et isolation
 
-Image réutilisée de 480 × 270, au maximum 20 mises à jour par seconde pendant l’ouverture. Buffers de terrain natifs réutilisés, sans lecture des pixels GPU vers le processeur. L’image est libérée à la fermeture. La passe restaure cible graphique, viewport, matrices, texture, shader, découpage et états de mélange. Le rendu 2D normal reste actif derrière la fenêtre.
+Image réutilisée bornée à 480 × 270 pour le capitaine et 960 × 540 en plein écran pour l’équipage, au maximum 20 mises à jour par seconde pendant l’ouverture. Buffers de terrain natifs réutilisés, sans lecture des pixels GPU vers le processeur. L’image est libérée à la fermeture. La passe restaure cible graphique, viewport, matrices, texture, shader, découpage et états de mélange. Le rendu 2D normal reste actif derrière la fenêtre.
 
 Les moteurs graphiques qui ne prennent pas en charge cette passe affichent un message localisé. Les erreurs prises en charge désactivent uniquement l’aperçu et produisent un avertissement dans le journal client. Les erreurs graves du périphérique graphique conservent le comportement du moteur natif.
 

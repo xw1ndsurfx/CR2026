@@ -14,7 +14,19 @@ internal static class WorldMusic
     private static string? _selected;
     private static string _combatTrack = "", _playlist = "";
     internal static bool ContinueCombat(long combatUntil, long now, int grace) => combatUntil > 0 && now < combatUntil + Math.Clamp(grace, 0, 120) * 1000L;
-    internal static bool HasCombatOverride => Globals.Me is { } me && Configuration.CombatTracksFor(me.MapId).Length > 0 && ContinueCombat(me.CombatTimer, Timing.Global.Milliseconds, Configuration.CombatMusicGraceSeconds);
+    private static long _navalUntil;
+    internal static bool NavalCombatActive
+    {
+        get
+        {
+            if(Naval.NavalWorld.OwnShip==null) {_navalUntil=0;return false;}
+            var now=Timing.Global.Milliseconds;var active=Naval.NavalWorld.CombatTarget!=null;
+            if(active) _navalUntil=now+Configuration.CombatMusicGraceSeconds*1000L;
+            return active || now<_navalUntil;
+        }
+    }
+    internal static string[] TracksFor(Guid mapId,bool naval)=>naval && !string.IsNullOrWhiteSpace(Configuration.NavalCombatMusic)?[Configuration.NavalCombatMusic]:Configuration.CombatTracksFor(mapId);
+    internal static bool HasCombatOverride => Globals.Me is { } me && TracksFor(me.MapId,NavalCombatActive).Length > 0 && (NavalCombatActive || ContinueCombat(me.CombatTimer, Timing.Global.Milliseconds, Configuration.CombatMusicGraceSeconds));
     internal static string Select(string ambient, string invasion, string combat, bool fighting) => !string.IsNullOrWhiteSpace(invasion) ? invasion : fighting && !string.IsNullOrWhiteSpace(combat) ? combat : ambient;
     internal static void MapChanged()
     {
@@ -23,7 +35,7 @@ internal static class WorldMusic
     }
     internal static void Reset()
     {
-        BoosterState.Reset();
+        BoosterState.Reset();_navalUntil=0;
         _selected = null;
         _combatTrack = "";
         _playlist = "";
@@ -33,7 +45,7 @@ internal static class WorldMusic
         if (Globals.GameState != GameStates.InGame || Globals.Me?.MapInstance is not MapInstance map)
             return;
         var fighting = HasCombatOverride;
-        var tracks = Configuration.CombatTracksFor(Globals.Me.MapId);
+        var tracks = TracksFor(Globals.Me.MapId,NavalCombatActive);
         var playlist = string.Join("|", tracks);
         if (!fighting)
         {

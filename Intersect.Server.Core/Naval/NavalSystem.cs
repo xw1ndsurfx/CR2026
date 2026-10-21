@@ -368,7 +368,7 @@ internal static partial class NavalSystem
                     PortFlash = v.PortReady-now > _settings.CannonReloadMilliseconds-200,
                     StarboardFlash = v.StarboardReady-now > _settings.CannonReloadMilliseconds-200 }).ToArray(),
             Cannonballs = player.InstanceType != MapInstanceType.Overworld ? [] : Cannonballs.Where(b=>visible.Contains(b.MapId))
-                .Select(b=>new CannonballSnapshot { Id=b.Id, MapId=b.MapId,X=b.X,Y=b.Y,Heading=b.Heading,AgeMilliseconds=(int)Math.Clamp(now-b.Born,0,60000) }).ToArray() });
+                .Select(b=>new CannonballSnapshot { Id=b.Id, MapId=b.MapId,X=b.X,Y=b.Y,Height=b.Height,Heading=b.Heading,AgeMilliseconds=(int)Math.Clamp(now-b.Born,0,60000) }).ToArray() });
     }
 
     // A conservative circumscribed disk contains the hull at every continuous heading.

@@ -27,6 +27,40 @@ public sealed partial class NavalTests
         return player;
     }
     [Test]
+    public void ElevationChangesFlightHeightAndRangeAndAllShotsLandWithinConfiguredRange()
+    {
+        var down=CannonFlight.Plan(-30,12,24);var level=CannonFlight.Plan(0,12,24);var up=CannonFlight.Plan(25,12,24);
+        Assert.That(down.Range,Is.LessThan(level.Range));Assert.That(up.Range,Is.GreaterThan(level.Range));
+        Assert.That(up.HeightAtDistance(3),Is.GreaterThan(level.HeightAtDistance(3)));
+        foreach(var angle in new[]{-75d,-30,-5,0,15,35})
+        {
+            var flight=CannonFlight.Plan(angle,12,24);
+            Assert.That(flight.Range,Is.InRange(.01,24));Assert.That(flight.HeightAtDistance(flight.Range),Is.Zero.Within(.000001));
+            Assert.That(flight.HeightAtDistance(0),Is.EqualTo(GunneryAim.EyeHeight));
+        }
+        Assert.Throws<ArgumentOutOfRangeException>(()=>CannonFlight.Plan(double.NaN,12,24));
+    }
+
+    [Test]
+    public void HighCrewShotsCanPassAboveALowEnemyHullWithoutAwardingDamageOrExperience()
+    {
+        using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);var enemy=world.Add(17.5,10.5,true);
+        world.Field<ShipDefinition>(enemy,"Definition").Length=2;
+        world.Configure(new(){Enabled=true,CannonsEnabled=true,CannonRange=16});
+        var player=GunnerPlayer(world,ship);var now=Timing.Global.Milliseconds;
+        NavalSystem.Station(player,new(){Action=CannonStationAction.Acquire,ShipId=world.State(ship).Id,Starboard=true},now);
+        var state=(GunneryState)world.Invoke("GunnerState",player,now)!;player.LastGunneryRequest=now-100;
+        var before=world.Field<int>(enemy,"Health");
+        NavalSystem.Station(player,new(){Action=CannonStationAction.Fire,ShipId=world.State(ship).Id,LeaseId=state.LeaseId,Starboard=true,Elevation=35},now);
+        var balls=(System.Collections.IList)typeof(NavalSystem).GetField("Cannonballs",BindingFlags.Static|BindingFlags.NonPublic)!.GetValue(null)!;
+        Assert.That(balls.Count,Is.EqualTo(1));
+        for(var step=now;step<now+5000;step+=50) world.Invoke("UpdateCannonballs",step);
+        Assert.That(world.Field<int>(enemy,"Health"),Is.EqualTo(before));
+        var rewards=(System.Collections.IDictionary)typeof(NavalSystem).GetField("PendingGunnery",BindingFlags.Static|BindingFlags.NonPublic)!.GetValue(null)!;
+        Assert.That(rewards.Contains(player.Id),Is.False);
+    }
+
+    [Test]
     public void CrewCannonsAreExclusiveAndRejectForgedLeasesAnglesAndLevelGates()
     {
         using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);

@@ -59,6 +59,7 @@ public sealed class CannonballSnapshot
     [Key(3)] public double Y { get; set; }
     [Key(4)] public double Heading {get;set;}
     [Key(5)] public int AgeMilliseconds {get;set;}
+    [Key(6)] public double Height {get;set;}
 }
 
 [MessagePackObject]

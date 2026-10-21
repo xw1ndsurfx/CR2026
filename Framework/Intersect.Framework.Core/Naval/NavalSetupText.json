@@ -1249,6 +1249,11 @@
       "en": "Maximum Gunnery level",
       "fr": "Niveau de canonnier maximal",
       "es": "Nivel máximo de Artillería"
+    },
+    "Naval combat music": {
+      "en": "Naval combat music",
+      "fr": "Musique de combat naval",
+      "es": "Música de combate naval"
     }
   }
 }

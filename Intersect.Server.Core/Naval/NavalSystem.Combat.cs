@@ -12,6 +12,9 @@ internal static partial class NavalSystem
 {
     private sealed class Cannonball
     {
+        internal CannonFlight Flight;
+        internal double Travelled;
+        internal double Height=>Flight?.HeightAtDistance(Travelled)??0;
         internal Guid GunnerId;
         internal Guid Id = Guid.NewGuid(), ShipId, OwnerId, MapId, CaptainId;
         internal double X,Y,DirectionX,DirectionY,Remaining,Speed;
@@ -123,8 +126,10 @@ internal static partial class NavalSystem
                 if (!OceanMapResolver.Resolve(ocean,ref map,ref x,ref y) || BlocksCannonball(map,x,y))
                 { impact=NavalEffectKind.ObstacleImpact;stopped=true;return false; }
                 ball.MapId=map;ball.X=x;ball.Y=y;
+                var height=ball.Flight?.HeightAtDistance(ball.Travelled+distance)??0;
                 var tile=(map,(int)Math.Floor(x),(int)Math.Floor(y));
-                if (!hulls.TryGetValue(tile,out var target) || target.State.Id==ball.ShipId || target.SunkUntil>0) return true;
+                if (!hulls.TryGetValue(tile,out var target) || target.State.Id==ball.ShipId || target.SunkUntil>0 ||
+                    height>Math.Max(2,target.Definition.Length)) return true;
                 impact=NavalEffectKind.HullImpact;
                 var permitted=ShipEnemySteering.CanDamage(ball.Enemy,target.Enemy!=null,target.OwnerId!=Guid.Empty || target.State.CaptainId!=Guid.Empty,
                     ball.OwnerId!=Guid.Empty && ball.OwnerId==target.OwnerId,_settings.PlayerShipDamage);
@@ -150,7 +155,7 @@ internal static partial class NavalSystem
                     target.PendingDamage=Math.Min(100,target.PendingDamage+ball.Damage);
                 stopped=true;return false;
             });
-            ball.Remaining-=travelled;
+            ball.Remaining-=travelled;ball.Travelled+=travelled;
             if (stopped || ball.Remaining<=0) {Emit(impact,ball.MapId,ball.X,ball.Y,ball.Heading,now);Cannonballs.Remove(ball);}
         }
         // Unoccupied public test targets disappear after their sinking animation until server restart/configuration reload.

@@ -24,6 +24,28 @@ public sealed class NavalCargoWindowTests
     [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
 
     [Test]
+    public void PerspectiveTextureIsDrawnWithWhiteTintAndRestoresTheIncomingRendererColor()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);
+        using var canvas=new Canvas(skin) {Size=new Point(800,600)};var window=new NavalCannonViewWindow(canvas);
+        window.Update(new(){Id=Guid.NewGuid(),CaptainId=Guid.NewGuid()},true);
+        var viewport=Descendants(window).Single(c=>c.Name=="CannonPerspectiveViewport");
+        var flags=System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance;
+        var texture=System.Reflection.DispatchProxy.Create<IGameRenderTexture,TextureProxy>();
+        viewport.GetType().GetField("_texture",flags)!.SetValue(viewport,texture);
+        viewport.GetType().GetField("_nextFrame",flags)!.SetValue(viewport,long.MaxValue);
+        var previous=new Color(255,27,40,53);renderer.DrawColor=previous;
+        viewport.GetType().GetMethod("Render",flags)!.Invoke(viewport,[skin]);
+        Assert.That(renderer.TexturedTints.Single(),Is.EqualTo(Color.White));
+        Assert.That(renderer.DrawColor,Is.EqualTo(previous));
+    }
+    public class TextureProxy:System.Reflection.DispatchProxy
+    {
+        protected override object? Invoke(System.Reflection.MethodInfo? method,object?[]? args)=>
+            method?.ReturnType==typeof(bool)?false:method?.ReturnType==typeof(int)?640:null;
+    }
+
+    [Test]
     public void CrewViewportUsesMouseCoordinatesForAimWithoutDuplicatingTheNativeAmmoAndProgressBars()
     {
         var previous=Intersect.Client.General.Globals.Me;
@@ -209,6 +231,8 @@ public sealed class NavalCargoWindowTests
     {
         internal List<(Rectangle Rect,Color Color)> Fills {get;}=[];
         public override void DrawFilledRect(Rectangle rect)=>Fills.Add((rect,DrawColor));
+        internal List<Color> TexturedTints {get;}=[];
+        public override void DrawTexturedRect(IGameTexture? texture,Rectangle bounds,Color color,float u1=0,float v1=0,float u2=1,float v2=1)=>TexturedTints.Add(DrawColor);
         public override Point MeasureText(IFont? font,int size,string? text,float scale=1f)=>new((int)Math.Ceiling((text?.Length??0)*size*.6*scale),(int)Math.Ceiling((size+3)*scale));
     }
     private sealed class TestFont:IFont

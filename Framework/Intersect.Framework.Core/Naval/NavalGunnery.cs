@@ -106,3 +106,26 @@ public sealed class CannonStationArtwork
         f.X>=0 && f.Y>=0 && f.Width>0 && f.Height>0 && f.X<=width-f.Width && f.Y<=height-f.Height;
     public ShipSpriteFrame Pose(double yaw)=>yaw< -12?LeftFrame??Frame!:yaw>12?RightFrame??Frame!:Frame!;
 }
+
+
+/// <summary>Server-computed flight in map tiles; configured range remains a strict upper bound.</summary>
+public sealed record CannonFlight(double HorizontalSpeed,double VerticalSpeed,double Gravity,double Range)
+{
+    public double HeightAtDistance(double distance)
+    {
+        var t=Math.Max(0,distance)/HorizontalSpeed;
+        return Math.Max(0,GunneryAim.EyeHeight+VerticalSpeed*t-Gravity*t*t/2);
+    }
+    public static CannonFlight Plan(double elevation,double speed,double range)
+    {
+        if(!double.IsFinite(elevation) || !double.IsFinite(speed) || !double.IsFinite(range) || speed<=0 || range<=0)
+            throw new ArgumentOutOfRangeException(nameof(elevation));
+        var angle=Math.Clamp(elevation,-75,35)*Math.PI/180;
+        var horizontal=speed*Math.Cos(angle);var vertical=speed*Math.Sin(angle);
+        var gravity=Math.Max(.05,speed*speed*.7/range);
+        // Steeper shots may rise higher, but cannot extend the configured ammunition range.
+        gravity=Math.Max(gravity,2*(GunneryAim.EyeHeight+range*Math.Tan(angle))*horizontal*horizontal/(range*range));
+        var duration=(vertical+Math.Sqrt(vertical*vertical+2*gravity*GunneryAim.EyeHeight))/gravity;
+        return new(horizontal,vertical,gravity,Math.Min(range,horizontal*duration));
+    }
+}

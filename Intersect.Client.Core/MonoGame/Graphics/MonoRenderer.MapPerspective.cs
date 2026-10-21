@@ -25,8 +25,8 @@ internal partial class MonoRenderer
         try
         {
             device.SetRenderTarget(output);
-            // Unknown/unloaded geography stays dark; no invented island or ocean panorama.
-            device.Clear(new Microsoft.Xna.Framework.Color(27, 40, 53));
+            // A plain sky background; only received map geometry supplies geography.
+            device.Clear(new Microsoft.Xna.Framework.Color(115, 166, 202));
             device.BlendState = _normalState;
             device.RasterizerState = RasterizerState.CullNone;
             device.DepthStencilState = DepthStencilState.None;
@@ -50,9 +50,18 @@ internal partial class MonoRenderer
             var quad = new VertexPositionTexture[4];
             short[] triangles = [0, 1, 2, 2, 1, 3];
             // Alpha sprites are painter-sorted; do not let transparent atlas corners hide other ships.
-            foreach (var sprite in scene.Sprites.OrderByDescending(s =>
-                System.Numerics.Vector2.Dot(s.Position - scene.Camera, scene.Forward)))
+            foreach (var entry in scene.Sprites.Select(s=>(Position:s.Position,Sprite:s,Decoration:(MapPerspectiveDecoration?)null))
+                .Concat((scene.Decorations??[]).Select(d=>(Position:d.Anchor,Sprite:(MapPerspectiveSprite)null!,Decoration:(MapPerspectiveDecoration?)d)))
+                .OrderByDescending(s=>System.Numerics.Vector2.Dot(s.Position-scene.Camera,scene.Forward)))
             {
+                if(entry.Decoration is {} decoration)
+                {
+                    effect.World=UprightPlane(decoration.Anchor,scene.Forward,scene.TileWidth,scene.TileHeight);
+                    effect.Texture=decoration.Buffer.Texture?.GetTexture<Texture2D>();
+                    if(effect.Texture!=null && decoration.Buffer.VertexBuffer.Count>0) DrawBuffer(decoration.Buffer.VertexBuffer,decoration.Buffer.IndexBuffer);
+                    continue;
+                }
+                effect.World=Matrix.Identity;var sprite=entry.Sprite;
                 if (sprite.Texture.GetTexture<Texture2D>() is not {} image) continue;
                 var source = sprite.Source;
                 var atlas = sprite.Texture.AtlasReference;
@@ -70,7 +79,7 @@ internal partial class MonoRenderer
                     ? [new(u1,v0), new(u0,v0), new(u1,v1), new(u0,v1)]
                     : [new(u0,v0), new(u0,v1), new(u1,v0), new(u1,v1)];
                 if (sprite.FlipHorizontal) (uv[0],uv[2],uv[1],uv[3]) = (uv[2],uv[0],uv[3],uv[1]);
-                var center = new Vector3(sprite.Position.X / scene.TileWidth, 0, sprite.Position.Y / scene.TileHeight);
+                var center = new Vector3(sprite.Position.X / scene.TileWidth, sprite.Elevation, sprite.Position.Y / scene.TileHeight);
                 var x0 = -sprite.AnchorX; var x1 = sprite.Width - sprite.AnchorX;
                 if (sprite.FlipHorizontal) (x0,x1) = (-x1,-x0);
                 quad[0] = new(center + right*x0 + Vector3.Up*sprite.AnchorY, uv[0]);
@@ -94,6 +103,13 @@ internal partial class MonoRenderer
             device.BlendState = blend; device.RasterizerState = rasterizer; device.DepthStencilState = depth;
             device.SamplerStates[0] = sampler; device.SetVertexBuffer(null); device.Indices = indices;
         }
+    }
+
+    internal static Matrix UprightPlane(System.Numerics.Vector2 anchor,System.Numerics.Vector2 forward,float tw,float th)
+    {
+        var right=new Vector3(-forward.Y,0,forward.X);
+        return new Matrix(right.X/tw,0,right.Z/tw,0, 0,-1/th,0,0, 0,0,0,0,
+            anchor.X/tw-right.X*anchor.X/tw,anchor.Y/th,anchor.Y/th-right.Z*anchor.X/tw,1);
     }
 
     internal static Matrix TerrainPlane(float tileWidth, float tileHeight) => new(
