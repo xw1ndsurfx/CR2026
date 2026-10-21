@@ -10,6 +10,8 @@ namespace Intersect.Client.Interface.Game.Hotbar;
 /// <summary>Small code-drawn pixel icons; no external asset or unverified cannon sheet is assumed.</summary>
 internal sealed class NavalActionButton(Base parent,string name) : Button(parent,name)
 {
+    internal CannonAmmoKind? Ammunition {get;set;}
+    internal bool SelectedAmmunition {get;set;}
     internal ShipAction NavalAction { get; set; }
     internal string IconFilename {get;set;}="";
     internal int ReloadMilliseconds { get; set; }
@@ -31,6 +33,24 @@ internal sealed class NavalActionButton(Base parent,string name) : Button(parent
     protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
     {
         base.Render(skin);
+        if(SelectedAmmunition)
+        {
+            var color=skin.Renderer.DrawColor;skin.Renderer.DrawColor=new Color(255,240,200,70);
+            skin.Renderer.DrawFilledRect(new Rectangle(1,1,Width-2,2));
+            skin.Renderer.DrawFilledRect(new Rectangle(1,Height-3,Width-2,2));skin.Renderer.DrawColor=color;
+        }
+        if(Ammunition is {} kind)
+        {
+            var color=skin.Renderer.DrawColor;
+            skin.Renderer.DrawColor=IsDisabled?new Color(100,150,160,170):kind switch {
+                CannonAmmoKind.Heavy=>new Color(255,195,115,55),CannonAmmoKind.LongRange=>new Color(255,75,160,230),_=>new Color(255,190,200,210)};
+            var size=kind==CannonAmmoKind.Heavy?14:10;var x=(Width-size)/2;
+            // Pixel-rounded ball, with a trail for the long-range variant.
+            skin.Renderer.DrawFilledRect(new Rectangle(x+2,5,size-4,size));
+            skin.Renderer.DrawFilledRect(new Rectangle(x,7,size,size-4));
+            if(kind==CannonAmmoKind.LongRange) skin.Renderer.DrawFilledRect(new Rectangle(x-4,9,4,2));
+            skin.Renderer.DrawColor=color;return;
+        }
         if(ReloadMilliseconds>0) return;
         if(NavalPresentation.SafeAsset(IconFilename) && IconFilename.Length>0 && GameContentManager.Current.GetTexture(TextureType.Spell,IconFilename) is {} icon)
         {

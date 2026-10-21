@@ -34,6 +34,13 @@ internal static partial class NavalWorld
         _pressedSlots.Clear();_pressedSlots.UnionWith(active);
     }
 
+    internal static bool CrewProgress => OwnShip is {} ship && ship.CaptainId!=Globals.Me?.Id;
+    internal static bool GunneryBarActive => CrewProgress && Gunner.LeaseId!=Guid.Empty && Gunner.ShipId==OwnShip?.Id;
+    internal static CannonAmmoView? SlotAmmunition(int slot) => slot is >=0 and <10
+        ? Gunner.Ammunition.FirstOrDefault(a=>(int)a.Kind==slot) : null;
+    internal static (int Level,long Experience,long Required,bool Gunnery) RoleProgress => CrewProgress
+        ? (Gunner.Level,Gunner.Experience,Gunner.Required,true) : (SailingLevel,SailingExperience,SailingRequired,false);
+
     internal static int Cooldown(int slot)
     {
         var own=OwnShip;if(own==null) return 0;
@@ -44,6 +51,13 @@ internal static partial class NavalWorld
     internal static void ActivateSlot(int slot)
     {
         var own=OwnShip;var action=ShipActions.ForSlot(slot);
+        if(GunneryBarActive)
+        {
+            // Selection only: mouse fire still uses the authoritative station request and reload.
+            if(!DragAndDrop.IsDragging && Globals.Me?.IsBusy==false && own is {Sinking:false} && SlotAmmunition(slot) is {Available:true} ammo)
+                SelectedAmmo=ammo.Kind;
+            return;
+        }
         if(own==null || DragAndDrop.IsDragging || Globals.Me?.IsBusy!=false || own.Sinking || action==ShipAction.None ||
             (action is ShipAction.PortCannons or ShipAction.StarboardCannons && (!own.CannonsEnabled || Cooldown(slot)>0))) return;
         if(action==ShipAction.CannonView) {CannonViewOpen=!CannonViewOpen;return;}

@@ -19,6 +19,19 @@ public sealed partial class NavalTests
         ((System.Collections.IDictionary)world.Field<object>(ship,"Crew")).Add(id,member);
     }
     [Test]
+    public void CrewRewardPreservesSailingAndStillCommitsCharacterExperienceCargoAndReceiptAtomically()
+    {
+        using var world=new EnemyTestWorld();var player=CargoPlayer();player.SailingExperience=80;
+        var ship=new OwnedShip {AtSea=true};player.NavalFleet.Add(ship);var parcel=Parcel(4);
+        Assert.That(NavalSystem.CommitNavalReward(player,275,new[]{(ship.Id,20,parcel)},()=>false,out _,0),Is.False);
+        Assert.That(player.SailingExperience,Is.EqualTo(80));Assert.That(player.PendingNavalCharacterExperience,Is.Zero);
+        Assert.That(player.NavalFleet.Single().Cargo,Is.Empty);
+        Assert.That(NavalSystem.CommitNavalReward(player,275,new[]{(ship.Id,20,parcel)},()=>true,out var receipt,0),Is.True);
+        Assert.That(player.SailingExperience,Is.EqualTo(80));Assert.That(player.PendingNavalCharacterExperience,Is.EqualTo(275));
+        Assert.That(receipt.SailingExperience,Is.Zero);Assert.That(receipt.Cargo.Single().Id,Is.EqualTo(parcel.Id));
+    }
+
+    [Test]
     public void BoardingRequiresCaptainConsentPartyDockStoppedShipAndCapacity()
     {
         using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);var captain=CargoPlayer();captain.Id=world.State(ship).CaptainId;
@@ -32,7 +45,7 @@ public sealed partial class NavalTests
         world.Field<ShipDefinition>(ship,"Definition").CrewCapacity=1;Assert.That(world.Invoke("EligibleCrewShip",member,ship),Is.False);
     }
     [Test]
-    public void EveryPresentCrewMemberGetsTheSameRolledLootAndExperienceOnce()
+    public void EveryPresentCrewMemberGetsTheSameLootAndCharacterExperienceButOnlyCaptainGetsSailing()
     {
         using var world=new EnemyTestWorld();var ship=world.Add(8.5,10.5,false);var enemy=world.Add(18.5,10.5,true);
         var captain=world.State(ship).CaptainId;var crew=Guid.NewGuid();var stale=Guid.NewGuid();var now=Timing.Global.Milliseconds;
@@ -41,6 +54,8 @@ public sealed partial class NavalTests
         var item=Guid.NewGuid();patrol.Loot=[new(){ItemId=item,MinimumQuantity=4,MaximumQuantity=4,ChancePercent=100}];
         world.Set(enemy,"Health",0);world.Invoke("CreditEnemySink",enemy,world.State(ship).Id,captain);
         Assert.That(world.Reward(captain),Is.EqualTo(275));Assert.That(world.Reward(crew),Is.EqualTo(275));Assert.That(world.Reward(stale),Is.Zero);
+        long SailingFor(Guid id)=>(long)world.Rewards[id]!.GetType().GetProperty("SailingExperience")!.GetValue(world.Rewards[id])!;
+        Assert.That(SailingFor(captain),Is.EqualTo(275));Assert.That(SailingFor(crew),Is.Zero);
         NavalCargoParcel ParcelFor(Guid id)
         {
             var reward=world.Rewards[id]!;var awards=(Array)reward.GetType().GetProperty("Cargo")!.GetValue(reward)!;

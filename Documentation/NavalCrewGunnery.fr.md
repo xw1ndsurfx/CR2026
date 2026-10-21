@@ -28,7 +28,7 @@ Sauvegarder les sections modifiées. Les deux nouvelles sections partagent la r�
 
 Le canonnier gagne l’EXP des dégâts réellement retirés aux navires Herbonia par ses propres tirs : 1 EXP par PV retiré par défaut. Pas d’EXP sur l’eau, les obstacles, les bateaux de test ou les joueurs. Les dégâts excédant les PV restants ne comptent pas. Une collision ne récompense pas plusieurs fois le même boulet. La barre Canonnier affiche un niveau et une EXP distincts de Sailing ; le niveau débloque les munitions mais ne multiplie pas implicitement les dégâts.
 
-La récompense de naufrage existante est conservée : le navire tireur garde son capitaine comme origine pour le partage Sailing/personnage et le tirage de butin à tous les membres présents. Le canonnier du tir fatal reçoit donc sa part normale d’équipage en plus de sa propre progression de canonnier.
+La récompense de naufrage existante est conservée : le navire tireur garde son capitaine comme origine. Sailing revient au capitaine ; l’EXP personnage et le tirage de butin restent partagés à tous les membres présents. Le canonnier du tir fatal reçoit donc sa part normale d’équipage en plus de sa propre progression de canonnier.
 
 L’EXP de canonnier est appliquée et sauvegardée sous le verrou du joueur concerné, en dehors du verrou du monde ; un échec restaure la valeur précédente et remet le gain en attente. Une récompense pas encore sauvegardée peut être perdue lors d’un arrêt brutal du serveur, comme l’attente Sailing existante.
 
@@ -45,3 +45,10 @@ Les limites de terrain et de visibilité du premier aperçu restent décrites da
 Tests automatisés : postes exclusifs, faux jetons et angles refusés, niveau requis, cadence, expiration, reprise sans recharge réinitialisée, consommation/restauration d’inventaire, sauvegarde/reprise de progression, sérialisation, impact/naufrage réel, partage des récompenses, projection aller-retour et déplacement natif de souris dans la fenêtre. Éditeur natif : huit sections, réglages et munitions sauvegardés dans la bonne révision. Traductions en/fr/es.
 
 À confirmer sur le serveur de test avec deux clients : visée sur un ennemi mobile pendant une rotation/traversée de map du capitaine, effets/sons, plusieurs postes simultanés, objets spéciaux réellement retirés une seule fois, fermeture/déconnexion/mort/naufrage et reprise de poste, progression et inventaire après reconnexion. Confirmer aussi le premier plan et les performances sur Intel HD 620. Les tests de contrôles et de calcul ne remplacent pas une vérification du rendu GPU connecté.
+
+
+### Barre et progression selon le rôle
+
+Lorsqu’un équipier occupe un poste de canon, les dix raccourcis temporaires sont réservés aux munitions : 1 = standard gratuit, 2 = lourd, 3 = longue portée. Les cases 4 à 0 restent désactivées tant qu’aucun autre type n’existe. La touche ou le clic sur la case sélectionne le boulet ; le clic gauche dans la vue canon tire. La quantité indique les tirs disponibles ; ∞ indique le standard gratuit. Les types indisponibles (niveau/stock/configuration) sont désactivés et la sélection est surlignée. Fermer la vue libère le poste et rétablit les actions d’équipage ; débarquer restaure les raccourcis ordinaires.
+
+La barre de progression au-dessus des raccourcis affiche Canonnier pour l’équipage et Sailing pour le capitaine. Seul le capitaine gagne l’EXP Sailing des naufrages ; les équipiers conservent le même butin et l’EXP personnage. Leur EXP Canonnier reste liée aux dégâts réels de leurs propres tirs. Les récompenses mémorisent la part Sailing au naufrage pour que le débarquement ou un changement de rôle avant sauvegarde ne change pas l’attribution.

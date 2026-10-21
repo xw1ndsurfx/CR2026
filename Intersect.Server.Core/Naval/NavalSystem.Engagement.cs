@@ -9,7 +9,7 @@ namespace Intersect.Server.Naval;
 internal static partial class NavalSystem
 {
     private sealed record CargoAward(Guid ShipId,int Capacity,NavalCargoParcel Parcel);
-    private sealed record SailingReward(long Experience,long RetryAt=0,CargoAward[] Cargo=null);
+    private sealed record SailingReward(long Experience,long RetryAt=0,CargoAward[] Cargo=null,long SailingExperience=0);
     private static readonly Dictionary<Guid,SailingReward> PendingSailingRewards=[];
 
     // Gate is held. Credit the captain who fired the killing shot, only if still at this helm.
@@ -31,7 +31,8 @@ internal static partial class NavalSystem
             var awards=loot.Select(p=>new CargoAward(attackerId,attacker.Definition.CargoCapacity,new NavalCargoParcel {
                 ItemId=p.ItemId,Quantity=p.Quantity,Quality=p.Quality,Kind=p.Kind}));
             PendingSailingRewards[participant]=new(Math.Min(200000000000000L,(pending?.Experience??0)+victim.Enemy.SailingExperienceReward),
-                Cargo:(pending?.Cargo??[]).Concat(awards).Take(6400).ToArray());
+                Cargo:(pending?.Cargo??[]).Concat(awards).Take(6400).ToArray(),
+                SailingExperience:Math.Min(200000000000000L,(pending?.SailingExperience??0)+(participant==captainId?victim.Enemy.SailingExperienceReward:0)));
         }
     }
 
@@ -47,7 +48,7 @@ internal static partial class NavalSystem
         }
         var before=_settings.Sailing.Progress(player.SailingExperience).Level;
         var saved=false;NavalRewardReceipt receipt=null;
-        try {saved=CommitNavalReward(player,reward.Experience,(reward.Cargo??[]).Select(c=>(c.ShipId,c.Capacity,c.Parcel)),()=>player.User?.Save(force:true)==UserSaveResult.Completed,out receipt);}
+        try {saved=CommitNavalReward(player,reward.Experience,(reward.Cargo??[]).Select(c=>(c.ShipId,c.Capacity,c.Parcel)),()=>player.User?.Save(force:true)==UserSaveResult.Completed,out receipt,reward.SailingExperience);}
         catch(Exception exception) { ApplicationContext.Context.Value?.Logger.LogError(exception,"Could not save Sailing reward for {PlayerId}",player.Id); }
         finally
         {
@@ -56,7 +57,8 @@ internal static partial class NavalSystem
                 if(!saved)
                 {
                     PendingSailingRewards.TryGetValue(player.Id,out var concurrent);
-                    PendingSailingRewards[player.Id]=new(Math.Min(200000000000000L,reward.Experience+(concurrent?.Experience??0)),now+1000,(reward.Cargo??[]).Concat(concurrent?.Cargo??[]).Take(6400).ToArray());
+                    PendingSailingRewards[player.Id]=new(Math.Min(200000000000000L,reward.Experience+(concurrent?.Experience??0)),now+1000,(reward.Cargo??[]).Concat(concurrent?.Cargo??[]).Take(6400).ToArray(),
+                        Math.Min(200000000000000L,reward.SailingExperience+(concurrent?.SailingExperience??0)));
                 }
                 else if(_settings.Sailing.Progress(player.SailingExperience).Level>before)
                     Emit(NavalEffectKind.LevelUp,player.MapId,player.X+.5,player.Y+.5,0,now);

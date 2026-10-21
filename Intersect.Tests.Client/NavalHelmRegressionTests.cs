@@ -18,6 +18,33 @@ namespace Intersect.Tests.Client;
 public sealed class NavalHelmRegressionTests
 {
     [Test]
+    public void GunnerHotbarSelectsAmmunitionAndRoleProgressRestoresForCaptainAndDisembarkation()
+    {
+        var previous=Globals.Me;var me=(Player)RuntimeHelpers.GetUninitializedObject(typeof(Player));GC.SuppressFinalize(me);me.Id=Guid.NewGuid();
+        try
+        {
+            Globals.Me=me;NavalWorld.Clear();
+            var ship=new ShipSnapshot {Id=Guid.NewGuid(),CaptainId=Guid.NewGuid(),CrewIds=[me.Id]};
+            var gun=new GunneryState {ShipId=ship.Id,LeaseId=Guid.NewGuid(),Level=4,Experience=30,Required=150,
+                Ammunition=[new(){Kind=CannonAmmoKind.Standard,Available=true,Quantity=-1},
+                    new(){Kind=CannonAmmoKind.Heavy,Available=true,Quantity=2},new(){Kind=CannonAmmoKind.LongRange,Available=false}]};
+            var packet=new NavalSnapshotPacket {Ships=[ship],Gunnery=gun,SailingLevel=9,SailingExperience=60,SailingRequired=300};
+            NavalWorld.Apply(packet);
+            Assert.That(NavalWorld.GunneryBarActive,Is.True);
+            Assert.That(NavalWorld.RoleProgress,Is.EqualTo((4,30L,150L,true)));
+            NavalWorld.ActivateSlot(1);Assert.That(NavalWorld.SelectedAmmo,Is.EqualTo(CannonAmmoKind.Heavy));
+            NavalWorld.ActivateSlot(2);Assert.That(NavalWorld.SelectedAmmo,Is.EqualTo(CannonAmmoKind.Heavy),"Unavailable ammo cannot be selected from the hotbar.");
+            NavalWorld.ActivateSlot(9);Assert.That(NavalWorld.SelectedAmmo,Is.EqualTo(CannonAmmoKind.Heavy));
+            gun.LeaseId=Guid.Empty;NavalWorld.Apply(packet);
+            Assert.That(NavalWorld.GunneryBarActive,Is.False);Assert.That(NavalWorld.RoleProgress.Gunnery,Is.True);
+            ship.CaptainId=me.Id;NavalWorld.Apply(packet);
+            Assert.That(NavalWorld.GunneryBarActive,Is.False);Assert.That(NavalWorld.RoleProgress,Is.EqualTo((9,60L,300L,false)));
+            NavalWorld.Apply(new());Assert.That(NavalWorld.GunneryBarActive,Is.False);
+        }
+        finally {NavalWorld.Clear();Globals.Me=previous;}
+    }
+
+    [Test]
     public void MirroredPoseKeepsTheHullAnchorAndUsesPositiveGeometryWithFlippedUvs()
     {
         var pose=new ShipSpriteFrame { Width=160,Height=220,AnchorX=60,AnchorY=180,FlipHorizontal=true };

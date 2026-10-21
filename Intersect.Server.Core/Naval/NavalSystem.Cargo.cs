@@ -15,7 +15,7 @@ internal static partial class NavalSystem
     internal static bool CommitNavalReward(Player player,long experience,IEnumerable<(Guid ShipId,int Capacity,NavalCargoParcel Parcel)> cargo,Func<bool> save) =>
         CommitNavalReward(player,experience,cargo,save,out _);
 
-    internal static bool CommitNavalReward(Player player,long experience,IEnumerable<(Guid ShipId,int Capacity,NavalCargoParcel Parcel)> cargo,Func<bool> save,out NavalRewardReceipt receipt)
+    internal static bool CommitNavalReward(Player player,long experience,IEnumerable<(Guid ShipId,int Capacity,NavalCargoParcel Parcel)> cargo,Func<bool> save,out NavalRewardReceipt receipt,long? sailingExperience=null)
     {
         receipt=null;
         experience=Math.Clamp(experience,0,200000000000000L);
@@ -25,7 +25,7 @@ internal static partial class NavalSystem
         try
         {
             if(player.SailingExperience<_settings.Sailing.Cap)
-                player.SailingExperience=Math.Min(_settings.Sailing.Cap,player.SailingExperience+experience);
+                player.SailingExperience=Math.Min(_settings.Sailing.Cap,player.SailingExperience+Math.Clamp(sailingExperience??experience,0,200000000000000L));
             player.PendingNavalCharacterExperience=Math.Min(200000000000000L,player.PendingNavalCharacterExperience+experience);
             foreach(var award in cargo)
                 if(RewardHolds(player).FirstOrDefault(s=>s.Id==award.ShipId) is {Sunk:false} ship && award.Capacity>0 && award.Parcel.IsValid())

@@ -79,6 +79,21 @@ public partial class HotBarWindow
             var button=_navalButtons[i];button.IsHidden=!sailing;
             if(!sailing) continue;
             var item=Items[i];button.SetBounds(item.X,item.Y,item.Width,item.Height);
+            if(Naval.NavalWorld.GunneryBarActive)
+            {
+                var ammo=Naval.NavalWorld.SlotAmmunition(i);
+                var selected=ammo!=null && ammo.Kind==Naval.NavalWorld.SelectedAmmo;
+                button.Ammunition=ammo?.Kind;button.IconFilename="";button.NavalAction=ShipAction.None;
+                button.ReloadMilliseconds=0;button.TextAlign=Pos.Bottom|Pos.Right;
+                button.Text=ammo==null?KeyCaption(i):(ammo.Quantity<0?"∞":ammo.Quantity.ToString())+"\n"+KeyCaption(i);
+                button.TextColorOverride=selected?new Color(255,240,200,70):null;
+                button.TooltipText=ammo==null?"":string.Format(N("{0} · Level {1} · {2}"),N(CannonAmmunition.Caption(ammo.Kind)),ammo.RequiredLevel,
+                    ammo.Quantity<0?N("Free"):string.Format(N("{0} shots"),ammo.Quantity));
+                button.IsDisabled=own!.Sinking || ammo?.Available!=true || Globals.Me?.IsBusy!=false;
+                button.SelectedAmmunition=selected;
+                continue;
+            }
+            button.Ammunition=null;button.SelectedAmmunition=false;
             var action=ShipActions.ForSlot(i);var cooldown=Naval.NavalWorld.Cooldown(i);
             var key=KeyCaption(i);
             button.IconFilename=Naval.NavalWorld.Presentation.Icon(action);
@@ -97,10 +112,10 @@ public partial class HotBarWindow
             if(sailing)
             {
                 _sailingBar.SetBounds(X,Y-27,Width,23);
-                var required=Naval.NavalWorld.SailingRequired;var xp=Naval.NavalWorld.SailingExperience;
+                var progress=Naval.NavalWorld.RoleProgress;var required=progress.Required;var xp=progress.Experience;
                 _sailingBar.Value=required<=0?1:(float)Math.Clamp(xp/(double)required,0,1);
-                _sailingBar.Text=required<=0?string.Format(N("Sailing · Level {0} · MAX"),Naval.NavalWorld.SailingLevel):
-                    string.Format(N("Sailing · Level {0} · {1}/{2} EXP"),Naval.NavalWorld.SailingLevel,xp,required);
+                _sailingBar.Text=required<=0?string.Format(N(progress.Gunnery?"Gunnery · Level {0} · MAX":"Sailing · Level {0} · MAX"),progress.Level):
+                    string.Format(N(progress.Gunnery?"Gunnery · Level {0} · {1}/{2} EXP":"Sailing · Level {0} · {1}/{2} EXP"),progress.Level,xp,required);
             }
         }
         if(_navalStatus!=null)
