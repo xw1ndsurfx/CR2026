@@ -144,7 +144,23 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         };
         if (typeof(TItem)==typeof(HerboniaPatrol))
         {
-            buttons.Height=76;
+            buttons.Height=116;
+            var auto=new Button {Name="NavalPatrolAutoCreator",Text=T("Naval Patrol Auto Creator"),AutoSize=true};
+            auto.Click+=(_,_)=>
+            {
+                var selected=list.SelectedItem as HerboniaPatrol;
+                using var creator=new FrmNavalPatrolCreator(selected,_navigation,Options.Instance.Map.MapWidth,Options.Instance.Map.MapHeight,items.Count<limit);
+                if(creator.ShowDialog(this)!=DialogResult.OK || creator.Result is not {} generated)return;
+                if(creator.ReplaceSelected && selected!=null)
+                    items[items.IndexOf((TItem)(object)selected)]=(TItem)(object)generated;
+                else
+                {
+                    if(items.Count>=limit)return;
+                    items.Add((TItem)(object)generated);
+                }
+                store(items);Changed(section);Populate((TItem)(object)generated);
+            };
+            buttons.Controls.Add(auto);
             var copy=new Button {Text=T("Copy patrol"), AutoSize=true};
             var paste=new Button {Text=T("Paste patrol"), AutoSize=true,Enabled=false};
             buttons.Controls.AddRange([copy,paste]);
