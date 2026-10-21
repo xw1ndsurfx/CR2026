@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Intersect.Core;
 using Intersect.Enums;
 using Intersect.Framework.Core;
@@ -260,7 +260,7 @@ public partial class Npc : Entity
     protected override bool ShouldDropItem(Entity killer, ItemDescriptor itemDescriptor, Item item, float dropRateModifier, out Guid lootOwner)
     {
         lootOwner = (killer as Player)?.Id ?? (killer as Npc)?.PetOwner?.Id ?? Id;
-        var bonus=Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.LootBonusAt(DateTimeOffset.Now);
+        var bonus=Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.LootBonusAt(DateTimeOffset.Now)+(((killer as Player)??(killer as Npc)?.PetOwner)?.PersonalLootBonus??0);
         return base.ShouldDropItem(killer, itemDescriptor, item, dropRateModifier*(1+bonus/100f), out _);
     }
 
@@ -2658,6 +2658,9 @@ public partial class Npc : Entity
         var pkt = (NpcEntityPacket)packet;
         pkt.Aggression = GetAggression(forPlayer);
         pkt.NpcId = Descriptor?.Id ?? Guid.Empty;
+        if(PetOwner is {} owner && owner.PetCollection.OwnedPets.TryGetValue(pkt.NpcId,out var pet) &&
+            Intersect.Server.RoyalStylist.RoyalStylistRuntime.Current.PetDecorations.FirstOrDefault(decoration=>decoration.Id==pet.DecorationId) is {} decoration)
+            pkt.PetDecorationJson=Newtonsoft.Json.JsonConvert.SerializeObject(decoration);
 
         return pkt;
     }

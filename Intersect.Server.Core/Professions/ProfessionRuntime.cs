@@ -1,4 +1,4 @@
-using Intersect.Framework.Core.Naval;
+﻿using Intersect.Framework.Core.Naval;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.Professions;
@@ -47,6 +47,20 @@ internal static class ProfessionRuntime
         if (level >= definition.MaximumLevel) return -1;
 
         return Math.Max(0L, definition.ExperienceToReachLevel(level + 1) - total);
+    }
+
+    internal static (long Experience, long Required) LevelProgress(Player player, Guid id)
+    {
+        if (NavalProfessions.IsNative(id))
+        {
+            var progress=Naval.NavalSystem.CareerProgress(player,id);
+            return (progress.Experience,progress.Required);
+        }
+        var definition=ProfessionConfigurationRuntime.Current.Find(id);
+        if (definition==null || !IsLearned(player,id)) return (0,0);
+        var level=GetLevel(player,id);
+        var floor=definition.ExperienceToReachLevel(level);
+        return (Math.Max(0,GetExperience(player,id)-floor),level>=definition.MaximumLevel?0:definition.ExperienceToReachLevel(level+1)-floor);
     }
 
     internal static void Learn(Player player, Guid id)

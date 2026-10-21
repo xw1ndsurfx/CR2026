@@ -1,8 +1,8 @@
-namespace Intersect.Framework.Core.Naval;
+﻿namespace Intersect.Framework.Core.Naval;
 
 public enum HarbourView : byte { Fleet, Shop, Crew }
 
-public enum HarbourAction : byte { Open, Buy, Launch, Repair, Rename, ClaimCargo, JoinCrew, LeaveCrew, ToggleCrewBoarding, DiscardCargo, Sell }
+public enum HarbourAction : byte { Open, Buy, Launch, Repair, Rename, ClaimCargo, JoinCrew, LeaveCrew, ToggleCrewBoarding, DiscardCargo, Sell, ClaimAllCargo }
 
 public sealed class OwnedShip
 {

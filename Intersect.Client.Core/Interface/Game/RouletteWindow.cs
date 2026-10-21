@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.MiniGames;
@@ -208,7 +208,7 @@ internal sealed class RouletteWindow : Base
         _balance.Text =
             state.CurrencyItemId == Guid.Empty
                 ? $"Balance: {state.Balance:N0} test chips"
-                : $"Balance: {state.Balance:N0} {ItemDescriptor.GetName(state.CurrencyItemId)}";
+                : $"Balance: {state.Balance:N0} {ItemDescriptor.GetName(state.CurrencyItemId)} | "+MiniGameInventoryBalance.Caption(state.CurrencyItemId);
 
         _spin.IsDisabled = model.Pending || state.Balance < state.MinimumBet;
 

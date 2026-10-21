@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Content;
+﻿using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -63,6 +63,7 @@ internal sealed class PetsWindow : Window
             AutoHideBars = true,
         };
         _scroll.SetBounds(31, 108, 673, 403);
+        if(!readOnly)NavalManagementWindow.Button(this,"PetAccessories",PremiumConvenienceWindow.T("Pet accessories"),31,514,250,30,()=>PremiumConvenienceWindow.Request());
         Hide();
     }
 

@@ -1,4 +1,4 @@
-using Intersect.Client.Core.Controls;
+﻿using Intersect.Client.Core.Controls;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen;
@@ -404,7 +404,7 @@ public partial class HotbarItem : SlotItem
             {
                 Icon.IsVisibleInTree = !isDragging;
                 Icon.Texture = GameContentManager.Current.GetTexture(
-                    Framework.Content.TextureType.Item, _currentItem.Icon
+                    _currentItem.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, _currentItem.DisplayIcon
                 );
 
                 _equipLabel.IsHidden = true;

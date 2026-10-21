@@ -1,4 +1,4 @@
-using Intersect.Utilities;
+﻿using Intersect.Utilities;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
@@ -478,7 +478,7 @@ internal sealed partial class LogiCoinShopWindow : Window
             for (var index = 0; index < valid.Length; index++)
             {
                 var item = valid[index]!;
-                var texture = GameContentManager.Current.GetTexture(TextureType.Item, item.Icon);
+                var texture = GameContentManager.Current.GetTexture(item.UsesSpellIcon?TextureType.Spell:TextureType.Item, item.DisplayIcon);
                 if (texture == null)
                     continue;
                 var panel = new ImagePanel(this, "BundleItem" + index)

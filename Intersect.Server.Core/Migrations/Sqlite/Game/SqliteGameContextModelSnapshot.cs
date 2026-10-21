@@ -287,6 +287,10 @@ namespace Intersect.Server.Migrations.Sqlite.Game
                         .HasColumnType("TEXT")
                         .HasColumnName("Color");
 
+                    b.Property<string>("JsonPresentation")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Presentation");
+
                     b.Property<string>("JsonUsageRequirements")
                         .HasColumnType("TEXT")
                         .HasColumnName("UsageRequirements");
@@ -678,6 +682,9 @@ namespace Intersect.Server.Migrations.Sqlite.Game
 
             modelBuilder.Entity("Intersect.Framework.Core.GameObjects.Resources.ResourceDescriptor", b =>
                 {
+                    b.Property<bool>("FallingTree")
+                        .HasColumnType("INTEGER");
+
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT");
 

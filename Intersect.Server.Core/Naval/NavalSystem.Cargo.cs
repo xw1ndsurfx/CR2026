@@ -1,4 +1,4 @@
-using Intersect.Core;
+﻿using Intersect.Core;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.Naval;
@@ -17,7 +17,7 @@ internal static partial class NavalSystem
         var hold=RewardHolds(p).FirstOrDefault(h=>!h.AtSea && h.Health>0 && h.Cargo.Count>0);
         if(hold==null)return null;
         var capacity=p.NavalCrewPassage?.Ship==hold?p.NavalCrewPassage.Capacity:hold.CargoCapacity;
-        return new() {Id=hold.Id,CaptainId=p.NavalFleet.Contains(hold)?p.Id:Guid.Empty,Health=hold.Health,Cargo=hold.Cargo.ToArray(),CargoCapacity=capacity};
+        return new() {Id=hold.Id,CaptainId=p.NavalFleet.Contains(hold)?p.Id:Guid.Empty,Name=hold.Name,Health=hold.Health,Cargo=hold.Cargo.ToArray(),CargoCapacity=capacity};
     }
     private static void ManageCargo(Player player,Intersect.Network.Packets.Client.HarbourRequestPacket packet)
     {
@@ -33,9 +33,9 @@ internal static partial class NavalSystem
             {
                 if(!IsEnabled()) return;
                 hold=packet.View==HarbourView.Crew?player.NavalCrewPassage?.Ship:player.NavalFleet.FirstOrDefault(s=>s.Id==packet.ShipId);
-                if(hold==null || hold.Id!=packet.ShipId || !hold.Cargo.Any(p=>p.Id==packet.ParcelId)) return;
+                if(hold==null || hold.Id!=packet.ShipId || !(packet.Action==HarbourAction.ClaimAllCargo?hold.Cargo.Count>0:hold.Cargo.Any(p=>p.Id==packet.ParcelId))) return;
                 if(player.NavalShipId!=Guid.Empty && player.NavalShipId!=hold.Id) return;
-                if(packet.Action==HarbourAction.ClaimCargo && (player.NavalShipId!=Guid.Empty || !BesideCrewDock(player)))
+                if(packet.Action is HarbourAction.ClaimCargo or HarbourAction.ClaimAllCargo && (player.NavalShipId!=Guid.Empty || !BesideCrewDock(player)))
                 {Notice(player,"Stand beside a Q dock to unload your crew cargo.");return;}
             }
             // The player's lock protects the personal hold. Never stall navigation on a database save.
@@ -53,7 +53,7 @@ internal static partial class NavalSystem
                     message="Cargo could not be saved. Nothing was changed.";
                 }
             }
-            else message=ClaimCargo(player,hold,packet.ParcelId);
+            else message=ClaimCargo(player,hold,packet.Action==HarbourAction.ClaimAllCargo?Guid.Empty:packet.ParcelId);
             Notice(player,message);
             lock(Gate) SendSnapshot(player);
         }

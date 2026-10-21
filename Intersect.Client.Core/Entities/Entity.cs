@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using Intersect.Client.Core;
 using Intersect.Client.Entities.Events;
@@ -421,6 +421,7 @@ public partial class Entity : IEntity
     public virtual Guid MapId { get; set; }
 
     //Deserializing
+    private Intersect.Framework.Core.QualityOfLife.PetDecorationDefinition? _petDecoration;
     public virtual void Load(EntityPacket? packet)
     {
         if (packet == null)
@@ -428,6 +429,13 @@ public partial class Entity : IEntity
             return;
         }
 
+        _petDecoration=null;
+        if(packet is NpcEntityPacket {PetDecorationJson.Length:>0 and <=1024} npc)
+        {
+            try {_petDecoration=Newtonsoft.Json.JsonConvert.DeserializeObject<Intersect.Framework.Core.QualityOfLife.PetDecorationDefinition>(npc.PetDecorationJson);}
+            catch(Newtonsoft.Json.JsonException) { }
+            if(_petDecoration?.IsValid!=true)_petDecoration=null;
+        }
         MapId = packet.MapId;
         Name = packet.Name;
         Sprite = packet.Sprite;
@@ -1404,6 +1412,10 @@ public partial class Entity : IEntity
                 }
             }
         }
+        if(_petDecoration is {} decoration && Intersect.Client.Framework.File_Management.GameContentManager.Current.GetTexture(TextureType.Item,decoration.Icon) is {} accessory)
+            Graphics.DrawGameTexture(accessory,new FloatRect(0,0,accessory.Width,accessory.Height),
+                new FloatRect(destRectangle.X+destRectangle.Width/2-decoration.Size/2+decoration.OffsetX,
+                    (RenderedGraphicTop??destRectangle.Y)+decoration.OffsetY-decoration.Size/2,decoration.Size,decoration.Size),renderColor);
     }
 
     private int NormalSpriteAnimationFrame

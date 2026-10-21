@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.Entities;
 using Intersect.Client.Framework.File_Management;
@@ -26,6 +26,9 @@ public partial class Resource : Entity, IResource
     private bool _recalculateRenderBounds;
 
     private bool _isDead;
+    private IGameTexture? _fallTexture;
+    private FloatRect _fallSource,_fallDestination;
+    private long _fallStarted;
     private int _maximumHealthForStates;
     private ResourceStateDescriptor? _currentState;
     private ResourceDescriptor? _descriptor;
@@ -162,6 +165,12 @@ public partial class Resource : Entity, IResource
 
     public override void Load(EntityPacket? packet)
     {
+        if(packet is ResourceEntityPacket {IsDead:true} && !IsDead && Descriptor?.FallingTree==true && Texture!=null && _renderBoundsDest.Height>0)
+        {
+            _fallTexture=Texture;_fallSource=_renderBoundsSrc;_fallDestination=_renderBoundsDest;
+            _fallStarted=Environment.TickCount64;
+        }
+        else if(packet is ResourceEntityPacket {IsDead:false})_fallTexture=null;
         base.Load(packet);
         _recalculateRenderBounds = true;
 
@@ -637,6 +646,22 @@ public partial class Resource : Entity, IResource
             return;
         }
 
+        if(_fallTexture is {} falling)
+        {
+            var elapsed=Environment.TickCount64-_fallStarted;
+            if(elapsed<1100)
+            {
+                var progress=Math.Clamp(elapsed/800f,0,1);
+                var angle=progress*progress*MathF.PI/2;
+                var dest=_fallDestination;
+                dest.X+=MathF.Sin(angle)*dest.Height/2;
+                dest.Y+=(1-MathF.Cos(angle))*dest.Height/2;
+                var alpha=(byte)(255*(1-Math.Clamp((elapsed-800)/300f,0,1)));
+                Graphics.DrawGameTexture(falling,_fallSource,dest,new Color(alpha,255,255,255),rotationDegrees:angle*180/MathF.PI);
+                return;
+            }
+            _fallTexture=null;
+        }
         // TODO: Add an option to show the exhausted sprite until the exhaustion animation is finished, but this is not necessary if the graphics line up like Blinkuz' sample provided to fix #2572
         if (_activeAnimation != null)
         {

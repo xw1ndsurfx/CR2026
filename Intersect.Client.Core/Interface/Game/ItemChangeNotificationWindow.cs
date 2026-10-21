@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Content;
+﻿using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -167,7 +167,7 @@ internal sealed class ItemChangeNotificationWindow : Base
         _icon.Hide();
         if (descriptor != null && !string.IsNullOrWhiteSpace(descriptor.Icon))
         {
-            var texture = GameContentManager.Current.GetTexture(TextureType.Item, descriptor.Icon);
+            var texture = GameContentManager.Current.GetTexture(descriptor.UsesSpellIcon?TextureType.Spell:TextureType.Item, descriptor.DisplayIcon);
             if (texture != null)
             {
                 _icon.Texture = texture;

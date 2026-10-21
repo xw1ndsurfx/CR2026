@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Entities;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen.Control;
@@ -25,6 +25,7 @@ public partial class CraftingWindow : Window
 
     private readonly ImagePanel mBarContainer;
 
+    private bool _favoriteCreated;
     private readonly Button mCraft;
 
     private readonly Button mCraftAll;
@@ -508,6 +509,14 @@ public partial class CraftingWindow : Window
     protected override void EnsureInitialized()
     {
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
+        if(!_favoriteCreated)
+        {
+            _favoriteCreated=true;
+            var favorite=NavalManagementWindow.Button(Titlebar,"FavoriteRecipe",PremiumConvenienceWindow.T("Favorite recipe"),Math.Max(12,Width-188),0,150,Math.Max(16,Titlebar.Height-2),()=>
+            {if(_craftRecipeDescriptorId!=Guid.Empty)PremiumConvenienceWindow.Request(Intersect.Network.Packets.Client.PremiumConvenienceAction.ToggleRecipeFavorite,_craftRecipeDescriptorId,open:true);});
+            TitleLabel.Width=Math.Max(40,Width-208);
+            favorite.BringToFront();
+        }
 
         if (Globals.ActiveCraftingTable.Crafts is not { Count: > 0 } craftRecipeDescriptorIds)
         {

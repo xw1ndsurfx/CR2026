@@ -1,4 +1,4 @@
-using Intersect.Admin.Actions;
+﻿using Intersect.Admin.Actions;
 using Intersect.Client.Entities;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Graphics;
@@ -391,8 +391,15 @@ public static partial class Input
                InvokeMouseButtonInterceptors(down ? MouseDownIntercept : MouseUpIntercept, modifier, mouseButton);
     }
 
+    private static long _lastMouseActivity;
     public static void OnMouseDown(Keys modifier, MouseButton mouseButton)
     {
+        var now = Environment.TickCount64;
+        if (Globals.GameState == GameStates.InGame && Globals.Me != null && now - _lastMouseActivity >= 1000)
+        {
+            _lastMouseActivity = now;
+            Intersect.Client.Networking.Network.SendPacket(new Intersect.Network.Packets.Client.PlayerActivityPacket());
+        }
         var key = Keys.None;
         switch (mouseButton)
         {

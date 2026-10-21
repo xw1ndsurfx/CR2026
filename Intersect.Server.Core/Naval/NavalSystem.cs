@@ -1,4 +1,4 @@
-using Intersect.Enums;
+﻿using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Maps.Attributes;
@@ -35,6 +35,8 @@ internal static partial class NavalSystem
         internal int Health = 100, PendingDamage;
         internal long PortReady, StarboardReady, LastAction, NextDamageAttempt;
         internal bool Anchored,DockRequested;
+        internal bool LeftLaunchDock;
+        internal long LaunchedAt=Timing.Global.Milliseconds;
         internal Guid CombatTargetId;
         internal long CombatUntil;
         internal bool RewardClaimed;
@@ -55,12 +57,34 @@ internal static partial class NavalSystem
     private static readonly Dictionary<Guid, Vessel> Ships = [];
     private static readonly NavalConfigurationStore Configuration = new(Path.Combine("resources", "naval.json"));
     private static bool _loaded, _enabled;
+    private static long _lastAmmoBinding;
     private static NavalConfiguration _settings = new();
     private static bool IsEnabled()
     {
         try
         {
             if (!_loaded) ApplyConfiguration(Configuration.Load());
+            var bindingNow=Environment.TickCount64;
+            if(bindingNow-_lastAmmoBinding>=1000)
+            {
+                _lastAmmoBinding=bindingNow;
+                var bindings=Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Lookup.Values.OfType<Intersect.Framework.Core.GameObjects.Items.ItemDescriptor>()
+                    .Where(item=>item.ItemType==Intersect.Framework.Core.GameObjects.Items.ItemType.Ammo && item.Presentation.NavalAmmoKind>=0)
+                    .GroupBy(item=>item.Presentation.NavalAmmoKind).ToDictionary(group=>group.Key,group=>group.ToArray());
+                var changed=false;
+                var resolved=_settings.Ammunition.Select(ammo=>
+                {
+                    if(!ammo.RequiresItem)return ammo;
+                    var target=ammo.ItemId;
+                    var descriptor=Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(target);
+                    if(descriptor?.ItemType==Intersect.Framework.Core.GameObjects.Items.ItemType.Ammo && descriptor.Presentation.NavalAmmoKind!=(int)ammo.Kind)target=Guid.Empty;
+                    if(bindings.TryGetValue((int)ammo.Kind,out var linked) && linked.Length==1)target=linked[0].Id;
+                    if(target==ammo.ItemId)return ammo;
+                    var copy=JsonConvert.DeserializeObject<CannonAmmunition>(JsonConvert.SerializeObject(ammo))!;
+                    copy.ItemId=target;changed=true;return copy;
+                }).ToArray();
+                if(changed)_settings.Ammunition=resolved;
+            }
             return _enabled;
         }
         catch (Exception e) when (e is InvalidDataException or IOException or UnauthorizedAccessException or JsonException or ArgumentException) { return false; }
@@ -74,6 +98,7 @@ internal static partial class NavalSystem
         if(_settings.Gunnery.CannonsPerSide!=settings.Gunnery.CannonsPerSide || !settings.Gunnery.Enabled || !settings.CannonsEnabled)
             foreach(var vessel in Ships.Values)
                 foreach(var gun in vessel.Guns.Values) {gun.Owner=gun.Lease=Guid.Empty;gun.Until=0;}
+        _lastAmmoBinding=0;
         _settings = settings;
         _enabled = settings.Enabled; _loaded = true;
     }
@@ -188,6 +213,7 @@ internal static partial class NavalSystem
                     if (vessel == null || !ClearHull(player, vessel, ocean, vessel.State.MapId, vessel.State.X, vessel.State.Y))
                     { Notice(player, "No available ship near this helm dock."); return; }
                     vessel.BoardingMap=player.MapId; vessel.BoardingX=player.X; vessel.BoardingY=player.Y;
+                    vessel.LeftLaunchDock=false;vessel.LaunchedAt=Timing.Global.Milliseconds;
                     vessel.State.CaptainId = player.Id;
                     vessel.LastStep = 0; vessel.Controls.Reset(); vessel.Anchored = false;
                     player.CaptainedShipId = vessel.State.Id;
@@ -251,6 +277,7 @@ internal static partial class NavalSystem
             UpdateCannonballs(now);
             if (Ships.TryGetValue(player.CaptainedShipId, out var vessel))
             {
+                if(!ByCrewDock(vessel))vessel.LeftLaunchDock=true;
                 var s = vessel.State;
                 var ocean = OceanMapResolver.Maps();
                 if (player.Client == null || player.IsDead || player.HasPendingDeath || !player.InGame ||
@@ -374,10 +401,10 @@ internal static partial class NavalSystem
                 Graphic=e.Snapshot.Graphic,AnimationId=e.Snapshot.AnimationId,PlaySound=e.Snapshot.PlaySound,AgeMilliseconds=(int)Math.Clamp(now-e.Born,0,1500) }).ToArray(), Ships = player.InstanceType != MapInstanceType.Overworld ? [] :
             Ships.Values.Where(v => visible.Contains(v.State.MapId) && ocean.Contains(v.State.MapId) && MapController.Get(v.State.MapId) != null)
                 .OrderByDescending(v=>v.State.Id==player.NavalShipId?2:v.State.Id==targetId?1:0).Take(64)
-                .Select(v => new ShipSnapshot { RepairAvailable=v.State.Id==player.NavalShipId && Driver(v)!=player.Id && v.State.CaptainId!=player.Id && !ByCrewDock(v) && v.Health is >0 and <100 && v.SunkUntil==0,HelmsmanId=Driver(v),DockAvailable=v.State.Id==player.NavalShipId && v.State.CaptainId==player.Id && ByCrewDock(v),
+                .Select(v => new ShipSnapshot { ActiveSkills=v.State.Id==player.NavalShipId?v.SkillUntil.Where(entry=>entry.Value>now).Select(entry=>new NavalActiveSkill {Kind=entry.Key,Icon=_settings.Skills.FirstOrDefault(def=>def.Kind==entry.Key)?.Icon??"",RemainingMilliseconds=(int)Math.Clamp(entry.Value-now,0,120000)}).ToArray():[], RepairAvailable=_settings.Repair.Enabled && v.State.Id==player.NavalShipId && Driver(v)!=player.Id && v.Health is >0 and <100 && v.SunkUntil==0,HelmsmanId=Driver(v),DockAvailable=v.State.Id==player.NavalShipId && v.State.CaptainId==player.Id && v.LeftLaunchDock && now-v.LaunchedAt>=8000 && ByCrewDock(v),
                     HelmOfferToken=v.HelmOfferTo==player.Id && v.HelmOfferUntil>now?v.HelmOfferToken:Guid.Empty,CrewIds=v.Crew.Keys.ToArray(),Id = v.State.Id, CaptainId = v.State.CaptainId, MapId = v.State.MapId,
                     CargoCapacity=v.OwnerId==player.Id?v.Definition.CargoCapacity:player.BoardedShipId==v.State.Id?player.NavalCrewPassage?.Capacity??0:0,
-                    Cargo=v.OwnerId==player.Id?(player.NavalFleet.FirstOrDefault(s=>s.Id==v.State.Id)?.Cargo.Select(NavalRewardSharing.Seal).ToArray()??[]):player.BoardedShipId==v.State.Id?(player.NavalCrewPassage?.Ship.Cargo.ToArray()??[]):[],
+                    Cargo=v.OwnerId==player.Id?(player.NavalFleet.FirstOrDefault(s=>s.Id==v.State.Id)?.Cargo.Select(NavalRewardSharing.Seal).ToArray()??[]):player.BoardedShipId==v.State.Id?(player.NavalCrewPassage?.Ship.Cargo.Select(NavalRewardSharing.Seal).ToArray()??[]):[],
                     Enemy=v.Enemy!=null,Level=v.Enemy?.Level??1,MaximumHealth=v.MaximumHealth,Name=v.Name, X = v.State.X, Y = v.State.Y, Heading = v.State.Heading, Speed = v.State.Speed,
                     Graphics = v.SunkUntil > 0 ? v.SinkingGraphics : v.State.DamageState > 0 ? v.Definition.DamagedGraphics : Math.Abs(v.State.Speed)<.05 && v.Definition.Frames==4?IdleGraphic(v.Definition):v.Definition.Graphics,
                     Frames = v.Definition.Frames, FrameMilliseconds = v.Definition.FrameMilliseconds,

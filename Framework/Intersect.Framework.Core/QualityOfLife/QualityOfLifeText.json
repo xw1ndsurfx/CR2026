@@ -1,0 +1,354 @@
+{
+  "Entries": {
+    "Grant EXP bonus": {
+      "en": "Grant EXP bonus",
+      "fr": "Accorder un bonus EXP",
+      "es": "Otorgar bonificación EXP"
+    },
+    "Grant loot bonus": {
+      "en": "Grant loot bonus",
+      "fr": "Accorder un bonus de butin",
+      "es": "Otorgar bonificación de botín"
+    },
+    "Bonus (%)": {
+      "en": "Bonus (%)",
+      "fr": "Bonus (%)",
+      "es": "Bonificación (%)"
+    },
+    "Duration (seconds)": {
+      "en": "Duration (seconds)",
+      "fr": "Durée (secondes)",
+      "es": "Duración (segundos)"
+    },
+    "Open adventure lobby": {
+      "en": "Open adventure lobby",
+      "fr": "Ouvrir le lobby d’aventure",
+      "es": "Abrir sala de aventura"
+    },
+    "Prompt room creation": {
+      "en": "Prompt room creation",
+      "fr": "Proposer de créer une salle",
+      "es": "Proponer crear una sala"
+    },
+    "Filter activity": {
+      "en": "Filter activity",
+      "fr": "Filtrer les activités",
+      "es": "Filtrar actividades"
+    },
+    "All activities": {
+      "en": "All activities",
+      "fr": "Toutes les activités",
+      "es": "Todas las actividades"
+    },
+    "Save": {
+      "en": "Save",
+      "fr": "Enregistrer",
+      "es": "Guardar"
+    },
+    "Cancel": {
+      "en": "Cancel",
+      "fr": "Annuler",
+      "es": "Cancelar"
+    },
+    "Crafting": {
+      "en": "Crafting",
+      "fr": "Artisanat",
+      "es": "Artesanía"
+    },
+    "Ammo": {
+      "en": "Ammo",
+      "fr": "Munitions",
+      "es": "Munición"
+    },
+    "Key": {
+      "en": "Key",
+      "fr": "Clé",
+      "es": "Llave"
+    },
+    "Show value": {
+      "en": "Show value",
+      "fr": "Afficher la valeur",
+      "es": "Mostrar valor"
+    },
+    "Show required level": {
+      "en": "Show required level",
+      "fr": "Afficher le niveau requis",
+      "es": "Mostrar nivel requerido"
+    },
+    "Naval ammunition": {
+      "en": "Naval ammunition",
+      "fr": "Munition navale",
+      "es": "Munición naval"
+    },
+    "Required level: {0}": {
+      "en": "Required level: {0}",
+      "fr": "Niveau requis : {0}",
+      "es": "Nivel requerido: {0}"
+    },
+    "New": {
+      "en": "New",
+      "fr": "Nouveau",
+      "es": "Nuevo"
+    },
+    "Level": {
+      "en": "Level",
+      "fr": "Niveau",
+      "es": "Nivel"
+    },
+    "Price": {
+      "en": "Price",
+      "fr": "Prix",
+      "es": "Precio"
+    },
+    "Dungeon": {
+      "en": "Dungeon",
+      "fr": "Donjon",
+      "es": "Mazmorra"
+    },
+    "Invasion": {
+      "en": "Invasion",
+      "fr": "Invasion",
+      "es": "Invasión"
+    },
+    "WorldBoss": {
+      "en": "World Boss",
+      "fr": "Boss mondial",
+      "es": "Jefe mundial"
+    },
+    "Alchemy": {
+      "en": "Alchemy",
+      "fr": "Alchimie",
+      "es": "Alquimia"
+    },
+    "Poker": {
+      "en": "Poker",
+      "fr": "Poker",
+      "es": "Póquer"
+    },
+    "Blackjack": {
+      "en": "Blackjack",
+      "fr": "Blackjack",
+      "es": "Blackjack"
+    },
+    "Roulette": {
+      "en": "Roulette",
+      "fr": "Roulette",
+      "es": "Ruleta"
+    },
+    "Lumberjack": {
+      "en": "Lumberjack",
+      "fr": "Bûcheronnage",
+      "es": "Leñador"
+    },
+    "HouseParty": {
+      "en": "House Party",
+      "fr": "Fête à la maison",
+      "es": "Fiesta en casa"
+    },
+    "Looting": {
+      "en": "Looting",
+      "fr": "Butin",
+      "es": "Botín"
+    },
+    "Cooking": {
+      "en": "Cooking",
+      "fr": "Cuisine",
+      "es": "Cocina"
+    },
+    "Naval": {
+      "en": "Naval",
+      "fr": "Équipage naval",
+      "es": "Tripulación naval"
+    },
+    "Mission of the Month": {
+      "en": "Mission of the Month",
+      "fr": "Mission du mois",
+      "es": "Misión del mes"
+    },
+    "Monthly missions": {
+      "en": "Monthly missions",
+      "fr": "Missions mensuelles",
+      "es": "Misiones mensuales"
+    },
+    "Mute announcements": {
+      "en": "Mute announcements",
+      "fr": "Masquer les annonces",
+      "es": "Silenciar anuncios"
+    },
+    "Falling tree": {
+      "en": "Falling tree",
+      "fr": "Arbre qui tombe",
+      "es": "Árbol que cae"
+    },
+    "Menu fog": {
+      "en": "Menu fog",
+      "fr": "Brouillard du menu",
+      "es": "Niebla del menú"
+    },
+    "Opacity": {
+      "en": "Opacity",
+      "fr": "Opacité",
+      "es": "Opacidad"
+    },
+    "Weather animation": {
+      "en": "Weather animation",
+      "fr": "Animation météo",
+      "es": "Animación meteorológica"
+    },
+    "Saved layouts": {
+      "en": "Saved layouts",
+      "fr": "Plans sauvegardés",
+      "es": "Diseños guardados"
+    },
+    "Save current layout": {
+      "en": "Save current layout",
+      "fr": "Sauvegarder ce plan",
+      "es": "Guardar este diseño"
+    },
+    "Load layout": {
+      "en": "Load layout",
+      "fr": "Appliquer le plan",
+      "es": "Aplicar diseño"
+    },
+    "Premium is required.": {
+      "en": "Premium is required.",
+      "fr": "Le Premium est requis.",
+      "es": "Se requiere Premium."
+    },
+    "Invalid saved layout.": {
+      "en": "Invalid saved layout.",
+      "fr": "Plan sauvegardé invalide.",
+      "es": "Diseño guardado no válido."
+    },
+    "Saved layout not found.": {
+      "en": "Saved layout not found.",
+      "fr": "Plan sauvegardé introuvable.",
+      "es": "No se encontró el diseño guardado."
+    },
+    "Premium conveniences": {
+      "en": "Premium conveniences",
+      "fr": "Avantages Premium",
+      "es": "Ventajas Premium"
+    },
+    "Saved outfits": {
+      "en": "Saved outfits",
+      "fr": "Tenues sauvegardées",
+      "es": "Atuendos guardados"
+    },
+    "Favorite recipes": {
+      "en": "Favorite recipes",
+      "fr": "Recettes favorites",
+      "es": "Recetas favoritas"
+    },
+    "Pet accessories": {
+      "en": "Pet accessories",
+      "fr": "Accessoires des familiers",
+      "es": "Accesorios de mascotas"
+    },
+    "Save current outfit": {
+      "en": "Save current outfit",
+      "fr": "Sauvegarder cette tenue",
+      "es": "Guardar este atuendo"
+    },
+    "Use outfit": {
+      "en": "Use outfit",
+      "fr": "Porter cette tenue",
+      "es": "Usar atuendo"
+    },
+    "Favorite recipe": {
+      "en": "Favorite recipe",
+      "fr": "Recette favorite",
+      "es": "Receta favorita"
+    },
+    "Remove accessory": {
+      "en": "Remove accessory",
+      "fr": "Retirer l’accessoire",
+      "es": "Quitar accesorio"
+    },
+    "Premium active": {
+      "en": "Premium active",
+      "fr": "Premium actif",
+      "es": "Premium activo"
+    },
+    "Invalid saved outfit.": {
+      "en": "Invalid saved outfit.",
+      "fr": "Tenue sauvegardée invalide.",
+      "es": "Atuendo guardado no válido."
+    },
+    "Saved outfit not found.": {
+      "en": "Saved outfit not found.",
+      "fr": "Tenue sauvegardée introuvable.",
+      "es": "No se encontró el atuendo."
+    },
+    "Recipe unavailable.": {
+      "en": "Recipe unavailable.",
+      "fr": "Recette indisponible.",
+      "es": "Receta no disponible."
+    },
+    "Pet accessory unavailable.": {
+      "en": "Pet accessory unavailable.",
+      "fr": "Accessoire de familier indisponible.",
+      "es": "Accesorio de mascota no disponible."
+    },
+    "Saved.": {
+      "en": "Saved.",
+      "fr": "Enregistré.",
+      "es": "Guardado."
+    },
+    "Changes could not be saved.": {
+      "en": "Changes could not be saved.",
+      "fr": "Les modifications n’ont pas pu être enregistrées.",
+      "es": "No se pudieron guardar los cambios."
+    },
+    "Choose an existing item icon for every accessory.": {
+      "en": "Choose an existing item icon for every accessory.",
+      "fr": "Choisissez une icône d’objet existante pour chaque accessoire.",
+      "es": "Elige un icono de objeto existente para cada accesorio."
+    },
+    "Name": {
+      "en": "Name",
+      "fr": "Nom",
+      "es": "Nombre"
+    },
+    "Icon": {
+      "en": "Icon",
+      "fr": "Icône",
+      "es": "Icono"
+    },
+    "Size": {
+      "en": "Size",
+      "fr": "Taille",
+      "es": "Tamaño"
+    },
+    "OffsetX": {
+      "en": "OffsetX",
+      "fr": "Décalage horizontal",
+      "es": "Desplazamiento horizontal"
+    },
+    "OffsetY": {
+      "en": "OffsetY",
+      "fr": "Décalage vertical",
+      "es": "Desplazamiento vertical"
+    },
+    "Unranked": {
+      "en": "Unranked",
+      "fr": "Non classé",
+      "es": "Sin rango"
+    },
+    "Trading and display": {
+      "en": "Trading and display",
+      "fr": "Commerce et affichage",
+      "es": "Comercio y presentación"
+    },
+    "Weather drift X": {
+      "en": "Weather drift X",
+      "fr": "Déplacement météo X",
+      "es": "Desplazamiento clima X"
+    },
+    "Weather drift Y": {
+      "en": "Weather drift Y",
+      "fr": "Déplacement météo Y",
+      "es": "Desplazamiento clima Y"
+    }
+  }
+}

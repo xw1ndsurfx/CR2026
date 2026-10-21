@@ -321,7 +321,8 @@ public static partial class Interface
 
     public static bool HasInputFocus()
     {
-        return FocusComponents.Any(component => component is { MouseInputEnabled: true, HasFocus: true }) ||
+        return InputHandler.KeyboardFocus is TextBox {IsVisibleInTree:true,KeyboardInputEnabled:true} ||
+               FocusComponents.Any(component => component is { MouseInputEnabled: true, HasFocus: true }) ||
                InputBlockingComponents.Any(component => component is { IsVisibleInTree: true, IsBlockingInput: true });
     }
 

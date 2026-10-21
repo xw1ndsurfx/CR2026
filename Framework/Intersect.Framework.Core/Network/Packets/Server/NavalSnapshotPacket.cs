@@ -1,4 +1,4 @@
-using MessagePack;
+﻿using MessagePack;
 using Intersect.Framework.Core.Naval;
 namespace Intersect.Network.Packets.Server;
 
@@ -22,6 +22,7 @@ public partial class NavalSnapshotPacket : IntersectPacket
 [MessagePackObject]
 public sealed class ShipSnapshot
 {
+    [Key(31)] public NavalActiveSkill[] ActiveSkills {get;set;}=[];
     [Key(30)] public bool RepairAvailable {get;set;}
     [Key(27)] public Guid HelmsmanId {get;set;}
     [Key(28)] public bool DockAvailable {get;set;}
@@ -81,4 +82,12 @@ public sealed class NavalEffectSnapshot
     [Key(9)] public string Graphic {get;set;}="";
     [Key(8)] public Guid AnimationId {get;set;}
     [Key(7)] public bool PlaySound {get;set;}=true;
+}
+
+[MessagePackObject]
+public sealed class NavalActiveSkill
+{
+    [Key(0)] public NavalSkillKind Kind {get;set;}
+    [Key(1)] public string Icon {get;set;}="";
+    [Key(2)] public int RemainingMilliseconds {get;set;}
 }

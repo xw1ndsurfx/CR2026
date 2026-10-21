@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Content;
+﻿using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -385,7 +385,7 @@ internal sealed class MarketplaceWindow : Window
             icon.SetBounds(18, 18, 42, 44);
             if (descriptor != null && !string.IsNullOrWhiteSpace(descriptor.Icon))
             {
-                icon.Texture = GameContentManager.Current.GetTexture(TextureType.Item, descriptor.Icon);
+                icon.Texture = GameContentManager.Current.GetTexture(descriptor.UsesSpellIcon?TextureType.Spell:TextureType.Item, descriptor.DisplayIcon);
                 icon.RenderColor = descriptor.Color;
             }
 
@@ -486,7 +486,7 @@ internal sealed class MarketplaceWindow : Window
             icon.SetBounds(16, 11, 36, 36);
             if (descriptor != null && !string.IsNullOrWhiteSpace(descriptor.Icon))
             {
-                icon.Texture = GameContentManager.Current.GetTexture(TextureType.Item, descriptor.Icon);
+                icon.Texture = GameContentManager.Current.GetTexture(descriptor.UsesSpellIcon?TextureType.Spell:TextureType.Item, descriptor.DisplayIcon);
                 icon.RenderColor = descriptor.Color;
             }
 

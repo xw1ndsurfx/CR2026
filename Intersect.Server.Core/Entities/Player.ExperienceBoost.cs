@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using Intersect.Framework.Core.WorldEvents;
 using Intersect.Network.Packets.WorldEvents;
 using Newtonsoft.Json;
@@ -10,6 +10,26 @@ public partial class Player
     internal static readonly Guid ExperienceBoostUntilId = new("c1026000-0000-4000-8000-000000000002");
     [NotMapped, JsonIgnore] internal int PersonalExperienceBonus => PersonalBonusAt(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
     internal int PersonalBonusAt(long now) => (GetVariable(ExperienceBoostUntilId)?.Value.Integer ?? 0) > now ? (int)Math.Clamp(GetVariable(ExperienceBoostPercentId)?.Value.Integer ?? 0, 0, 1000) : 0;
+    internal static readonly Guid LootBoostPercentId = new("c1026000-0000-4000-8000-000000000003");
+    internal static readonly Guid LootBoostUntilId = new("c1026000-0000-4000-8000-000000000004");
+    [NotMapped, JsonIgnore] internal int PersonalLootBonus => (GetVariable(LootBoostUntilId)?.Value.Integer ?? 0) > DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() ? (int)Math.Clamp(GetVariable(LootBoostPercentId)?.Value.Integer ?? 0,0,1000) : 0;
+    internal bool GrantEventBonus(bool loot,int percent,int seconds)
+    {
+        if(percent is <1 or >1000 || seconds is <1 or >604800) return false;
+        lock(EntityLock)
+        {
+            var percentId=loot?LootBoostPercentId:ExperienceBoostPercentId;
+            var untilId=loot?LootBoostUntilId:ExperienceBoostUntilId;
+            var now=DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var active=loot?PersonalLootBonus:PersonalBonusAt(now);
+            if(active>percent) return false;
+            var end=active==percent?Math.Max(now,GetVariable(untilId)?.Value.Integer??now)+seconds*1000L:now+seconds*1000L;
+            if(end>now+604800000L) return false;
+            SetVariableValue(percentId,(long)percent);SetVariableValue(untilId,end);
+            if(!loot)SendExperienceBoostStatus();
+            return true;
+        }
+    }
     internal bool ActivateExperienceBoost(int slot, int percent, long seconds)
     {
         if (percent is < 1 or > 1000 || seconds is < 1 or > 604800)

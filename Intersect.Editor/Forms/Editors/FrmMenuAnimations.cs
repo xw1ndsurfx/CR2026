@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using DarkUI.Forms;
 using Intersect.Configuration;
 using Intersect.Framework.Core.GameObjects.Animations;
@@ -24,6 +24,20 @@ public sealed class FrmMenuAnimations : DarkForm
         grid.DataSource = new BindingList<MenuAnimationDefinition>(draft);
         grid.DataError += (_, e) => e.ThrowException = false;
         var help = new Label { Dock = DockStyle.Top, Height = 60, Text = "Choose an existing animation. X/Y are screen percentages (50 = center). Foreground appears above menu graphics; clicks pass through. Definitions are copied into this installation's resources/config.json so they work before login. Distribute config.json and animation textures with the client." };
+        string T(string source)=>Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(source,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+        var weatherDraft=JsonConvert.DeserializeObject<MenuWeatherDefinition>(JsonConvert.SerializeObject(ClientConfiguration.Instance.MenuWeather))??new();
+        var weather=new FlowLayoutPanel {Dock=DockStyle.Bottom,Height=72};
+        var fog=new ComboBox {Width=190,DropDownStyle=ComboBoxStyle.DropDownList};fog.Items.Add("");
+        foreach(var texture in Intersect.Editor.Content.GameContentManager.FogTextures)fog.Items.Add(Path.GetFileName(texture.GetPath()));
+        fog.SelectedItem=weatherDraft.Fog;if(fog.SelectedIndex<0)fog.SelectedIndex=0;
+        var opacity=new NumericUpDown {Width=70,Minimum=0,Maximum=255,Value=Math.Clamp(weatherDraft.FogOpacity,0,255)};
+        var rain=new ComboBox {Width=220,DropDownStyle=ComboBoxStyle.DropDownList};rain.Items.Add("");
+        foreach(var animation in animations)rain.Items.Add(animation.Name);
+        rain.SelectedIndex=Math.Max(0,animations.FindIndex(animation=>animation.Id==weatherDraft.WeatherAnimationId)+1);
+        weather.Controls.AddRange([new Label {Text=T("Menu fog"),Width=100},fog,new Label {Text=T("Opacity"),Width=80},opacity,new Label {Text=T("Weather animation"),Width=140},rain]);
+        var wind=new NumericUpDown {Width=80,Minimum=-500,Maximum=500,Value=Math.Clamp(weatherDraft.WeatherSpeedX,-500,500)};
+        var fall=new NumericUpDown {Width=80,Minimum=-500,Maximum=500,Value=Math.Clamp(weatherDraft.WeatherSpeedY,-500,500)};
+        weather.Controls.AddRange([new Label {Text=T("Weather drift X"),Width=140},wind,new Label {Text=T("Weather drift Y"),Width=140},fall]);
         var save = new Button { Dock = DockStyle.Bottom, Height = 40, Text = "Save client menu animations" };
         save.Click += (_, _) =>
         {
@@ -47,12 +61,20 @@ public sealed class FrmMenuAnimations : DarkForm
                     return;
                 }
             }
+            weatherDraft.WeatherSpeedX=(int)wind.Value;weatherDraft.WeatherSpeedY=(int)fall.Value;
+            weatherDraft.Fog=fog.SelectedItem?.ToString()??"";weatherDraft.FogOpacity=(int)opacity.Value;
+            weatherDraft.WeatherAnimationId=rain.SelectedIndex>0?animations[rain.SelectedIndex-1].Id:Guid.Empty;
+            var weatherAnimation=AnimationDescriptor.Get(weatherDraft.WeatherAnimationId);
+            weatherDraft.Lower=weatherAnimation==null?null:JsonConvert.DeserializeObject<AnimationLayer>(JsonConvert.SerializeObject(weatherAnimation.Lower));
+            weatherDraft.Upper=weatherAnimation==null?null:JsonConvert.DeserializeObject<AnimationLayer>(JsonConvert.SerializeObject(weatherAnimation.Upper));
+            ClientConfiguration.Instance.MenuWeather=weatherDraft;
             ClientConfiguration.Instance.MenuAnimations = draft;
             ClientConfiguration.Instance.Save();
             Close();
         };
         Controls.Add(grid);
         Controls.Add(help);
+        Controls.Add(weather);
         Controls.Add(save);
         MiniGameEditorTheme.Apply(this);
     }

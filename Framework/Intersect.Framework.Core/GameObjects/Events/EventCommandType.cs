@@ -1,4 +1,4 @@
-namespace Intersect.Framework.Core.GameObjects.Events;
+﻿namespace Intersect.Framework.Core.GameObjects.Events;
 
 public enum EventCommandType
 {
@@ -157,4 +157,7 @@ public enum EventCommandType
 
     OpenNavalShop = 1050,
     OpenNavalAmmoShop = 1051,
+    GrantExperienceBonus = 1060,
+    GrantLootBonus = 1061,
+    OpenAdventureLobby = 1062,
 }

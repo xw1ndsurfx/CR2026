@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.File_Management;
+﻿using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
@@ -20,6 +20,7 @@ public partial class HotBarWindow
     private NavalCargoWindow? _cargoWindow;
     private NavalCannonViewWindow? _cannonWindow;
     private NavalRewardHud? _rewardHud;
+    private NavalActiveSkillHud? _activeSkillHud;
     private bool _wasSailing;
     private bool[] _hiddenBeforeSailing=[];
     private static string KeyCaption(int slot)
@@ -47,6 +48,8 @@ public partial class HotBarWindow
         _rewardHud?.Update(reward,Y-64,Interface.InGameUiOrNull?.SuppressStatusHuds==true);
         var own=Naval.NavalWorld.OwnShip;
         var sailing=own!=null;
+        if (sailing && _activeSkillHud==null) _activeSkillHud=new NavalActiveSkillHud(Parent);
+        _activeSkillHud?.Update(own,Interface.InGameUiOrNull?.SuppressStatusHuds==true);
         if(sailing && _cannonWindow==null) _cannonWindow=new NavalCannonViewWindow(Parent);
         _cannonWindow?.Update(own,Naval.NavalWorld.CannonViewOpen);
         if((sailing || Naval.NavalWorld.ShoreCargo!=null) && _cargoWindow==null) _cargoWindow=new NavalCargoWindow(Parent);

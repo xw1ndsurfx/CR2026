@@ -1,4 +1,4 @@
-using Intersect.Enums;
+﻿using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Reflection;
@@ -88,9 +88,9 @@ public partial class Resource : Entity
         PacketSender.SendEntityPositionToAll(this);
     }
 
-    private void GenerateHarvestLoot()
+    private void GenerateHarvestLoot(Entity killer)
     {
-        var lootBonus=Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.LootBonusAt(DateTimeOffset.Now);
+        var lootBonus=Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.LootBonusAt(DateTimeOffset.Now)+(((killer as Player)??(killer as Npc)?.PetOwner)?.PersonalLootBonus??0);
         Items.Clear();
         // Give Resource Drops
         var itemSlot = 0;
@@ -117,7 +117,7 @@ public partial class Resource : Entity
 
     private void SpawnResourceItems(Entity killer)
     {
-        GenerateHarvestLoot();
+        GenerateHarvestLoot(killer);
         //Find tile to spawn items
         var tiles = new List<TileHelper>();
         for (var x = X - 1; x <= X + 1; x++)

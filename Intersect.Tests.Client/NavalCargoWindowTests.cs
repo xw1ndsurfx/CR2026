@@ -1,4 +1,4 @@
-using Rectangle=Intersect.Client.Framework.GenericClasses.Rectangle;
+﻿using Rectangle=Intersect.Client.Framework.GenericClasses.Rectangle;
 using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
@@ -22,6 +22,25 @@ public sealed class NavalCargoWindowTests
     private static readonly System.Reflection.FieldInfo CurrentContent=typeof(GameContentManager).GetField("_current",System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic)!;
     [SetUp] public void SetUp() {_previousContent=CurrentContent.GetValue(null);_content=new TestContent();}
     [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
+
+    [Test]
+    public void FocusedTextInputBlocksGameplayAndHiddenInputReleasesIt()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(800,600)};
+        var input=new TextBox(canvas,"EventOpenedSearch");input.SetBounds(10,10,250,30);
+        var previous=Intersect.Client.Framework.Gwen.Input.InputHandler.KeyboardFocus;
+        try
+        {
+            Intersect.Client.Framework.Gwen.Input.InputHandler.KeyboardFocus=input;
+            Assert.That(Intersect.Client.Interface.Interface.HasInputFocus(),Is.True);
+            input.Hide();Assert.That(Intersect.Client.Interface.Interface.HasInputFocus(),Is.False);
+            input.Show();Assert.That(Intersect.Client.Interface.Interface.HasInputFocus(),Is.True);
+            Intersect.Client.Framework.Gwen.Input.InputHandler.KeyboardFocus=null;
+            Assert.That(Intersect.Client.Interface.Interface.HasInputFocus(),Is.False);
+        }
+        finally {Intersect.Client.Framework.Gwen.Input.InputHandler.KeyboardFocus=previous;}
+
+    }
 
     [Test]
     public void PerspectiveTextureIsDrawnWithWhiteTintAndRestoresTheIncomingRendererColor()
@@ -144,7 +163,7 @@ public sealed class NavalCargoWindowTests
                 Cargo=Enumerable.Range(0,20).Select(i=>new NavalCargoParcel {ItemId=item.Id,Quantity=1000000,Quality=i%5+1}).ToArray()};
             window.Update(ship,true);
             Assert.That(window.Width,Is.LessThan(width));Assert.That(window.Height,Is.LessThan(height));
-            var scroll=Descendants(window).OfType<ScrollControl>().Single();
+            var scroll=Descendants(window).OfType<ScrollControl>().Single(control=>control.Name=="CargoManifest");
             Assert.That(scroll.Children.Count,Is.EqualTo(20));
             Assert.That(scroll.VerticalScrollBar.ContentSize,Is.GreaterThan(scroll.Height));
             Assert.That(scroll.HorizontalScrollBar.IsHidden,Is.True);

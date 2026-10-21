@@ -102,7 +102,7 @@ internal sealed class NavalCannonViewWindow : Window
         _hint.SetBounds(16,88+pictureHeight,width-32,23);
         _ammo.IsHidden=_gunnery.IsHidden=!crew;
         _ammo.SetBounds(16,height-117,width-32,30);_gunnery.SetBounds(16,height-82,width-32,22);
-        _repair.IsHidden=ship.CaptainId==Globals.Me?.Id || !crew;
+        _repair.IsHidden=!crew;
         _repair.IsDisabled=!ship.RepairAvailable;_repair.Text=T("Ship repairs");
         var buttons=_repair.IsHidden?new[]{_port,_starboard,_fire,_close}:new[]{_port,_starboard,_fire,_repair,_close};var bw=(width-56)/buttons.Length;
         for(var i=0;i<buttons.Length;i++) buttons[i].SetBounds(16+i*(bw+6),height-51,bw,30);

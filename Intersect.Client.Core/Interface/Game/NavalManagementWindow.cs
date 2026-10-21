@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.File_Management;
+﻿using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
@@ -17,7 +17,7 @@ internal class NavalManagementWindow:Window
         Networking.Network.SendPacket(new NavalManagePacket {Action=action,Ammo=ammo,Quantity=quantity,Skill=skill,Repair=repair,TargetId=target,Token=token,Value=value});
     internal NavalManagementWindow(Canvas parent,NavalManageAction panel=NavalManageAction.Ammo):base(parent,T(panel==NavalManageAction.Repair?"Ship repairs":panel==NavalManageAction.OfferHelm?"Helm control":panel==NavalManageAction.Skills?"Sailing skills":"Ammunition inventory"),false,"Naval"+panel+"Window")
     {
-        SetSize(Math.Min(panel==NavalManageAction.Ammo?360:720,Math.Max(300,parent.Width-24)),Math.Min(panel==NavalManageAction.Ammo?480:590,Math.Max(360,parent.Height-32)));
+        SetSize(Math.Min(panel==NavalManageAction.Ammo?460:720,Math.Max(300,parent.Width-24)),Math.Min(panel==NavalManageAction.Ammo?560:590,Math.Max(360,parent.Height-32)));
         Alignment=[Alignments.Center];DeleteOnClose=false;DisableResizing();
         if(panel!=NavalManageAction.Ammo){var chrome=new Chrome(this,"NavalManagementFrame",Style.Window);chrome.SetBounds(12,8,Width-24,Height-35);}
         _status=Text(this,"Status","",24,38,Width-48,42,11);
@@ -95,7 +95,8 @@ internal class NavalManagementWindow:Window
                 var slot=new Button(_list,"AmmoSlot"+a.Kind) {Text="",TooltipText=T(CannonAmmunition.Caption(a.Kind))};slot.SetBounds(x,8+row*80,70,72);
                 var icon=new ImagePanel(slot,"AmmoIcon") {MaintainAspectRatio=true,ShouldDrawBackground=false,MouseInputEnabled=false};icon.SetBounds(10,6,48,48);
                 var item=Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(a.ItemId);
-                icon.Texture=item!=null?GameContentManager.Current.GetTexture(Intersect.Client.Framework.Content.TextureType.Item,item.Icon):GameContentManager.Current.GetTexture(Intersect.Client.Framework.Content.TextureType.Spell,a.Icon);
+                icon.Texture=!string.IsNullOrEmpty(a.Icon)?GameContentManager.Current.GetTexture(Intersect.Client.Framework.Content.TextureType.Spell,a.Icon):
+                    item==null?null:GameContentManager.Current.GetTexture(item.UsesSpellIcon?Intersect.Client.Framework.Content.TextureType.Spell:Intersect.Client.Framework.Content.TextureType.Item,item.DisplayIcon);
                 Text(slot,"AmmoQuantity",a.Quantity<0?T("Free"):a.Quantity.ToString(),4,52,62,18,10);
                 slot.Clicked+=(_,_)=>{state.SelectedAmmo=a.Kind;Apply(state);};
             }

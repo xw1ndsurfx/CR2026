@@ -1,4 +1,4 @@
-using DarkUI.Controls;
+﻿using DarkUI.Controls;
 using DarkUI.Forms;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.Achievements;
@@ -63,6 +63,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
         Maximum = 100000,
         Dock = DockStyle.Fill,
     };
+    private readonly DarkCheckBox _monthly=new() {Text=Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Mission of the Month",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),AutoSize=true};
     private readonly DarkCheckBox _hidden = new() { Text = "Hidden until completed", AutoSize = true };
     private readonly DarkTextBox _steamApi = new() { Dock = DockStyle.Fill };
 
@@ -253,6 +254,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
         AddRow(table, "Target key (CustomCounter/code)", _targetKey);
         AddRow(table, "Required amount", _targetAmount);
         AddRow(table, "Sort order", _sortOrder);
+        AddRow(table,Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Monthly missions",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),_monthly);
         AddRow(table, "Visibility", _hidden);
         AddRow(table, "Steam Achievement API Name", _steamApi);
 
@@ -513,6 +515,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
         _targetAmount.Value = Math.Clamp(_selected.TargetAmount, 1, 2_000_000_000);
         _sortOrder.Value = Math.Clamp(_selected.SortOrder, -100000, 100000);
         _hidden.Checked = _selected.HiddenUntilCompleted;
+        _monthly.Checked=_selected.Monthly;
         _steamApi.Text = _selected.SteamApiName;
 
         SelectId(_rewardItem, _selected.Reward.ItemId);
@@ -528,7 +531,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
         foreach (var control in new Control[]
                  {
                      _name, _description, _category, _icon, _objective, _target, _targetKey,
-                     _targetAmount, _sortOrder, _hidden, _steamApi, _rewardItem,
+                     _targetAmount, _sortOrder, _hidden, _monthly, _steamApi, _rewardItem,
                      _rewardItemQuantity, _rewardExperience, _rewardCurrency,
                      _rewardCurrencyQuantity, _rewardEvent,
                  })
@@ -554,7 +557,8 @@ public sealed class FrmAchievementConfiguration : DarkForm
         _selected.TargetAmount = (long)_targetAmount.Value;
         _selected.SortOrder = (int)_sortOrder.Value;
         _selected.HiddenUntilCompleted = _hidden.Checked;
-        _selected.SteamApiName = _steamApi.Text?.Trim() ?? string.Empty;
+        _selected.Monthly=_monthly.Checked;
+        _selected.SteamApiName = _monthly.Checked?string.Empty:_steamApi.Text?.Trim() ?? string.Empty;
 
         _selected.Reward = new AchievementRewardDefinition
         {

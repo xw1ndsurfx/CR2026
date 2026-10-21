@@ -1874,6 +1874,31 @@
       "en": "Level {0} - Duration {1}s - Recharge {2}s",
       "fr": "Niveau {0} - Durée {1}s - Recharge {2}s",
       "es": "Nivel {0} - Duración {1}s - Recarga {2}s"
+    },
+    "Copy patrol": {
+      "en": "Copy patrol",
+      "fr": "Copier la patrouille",
+      "es": "Copiar patrulla"
+    },
+    "Paste patrol": {
+      "en": "Paste patrol",
+      "fr": "Coller la patrouille",
+      "es": "Pegar patrulla"
+    },
+    "Voyage results": {
+      "en": "Voyage results",
+      "fr": "Résultats de navigation",
+      "es": "Resultados de navegación"
+    },
+    "Take all": {
+      "en": "Take all",
+      "fr": "Tout récupérer",
+      "es": "Recoger todo"
+    },
+    "Your cargo has been revealed. Collect your rewards.": {
+      "en": "Your cargo has been revealed. Collect your rewards.",
+      "fr": "Votre cargaison est dévoilée. Récupérez vos récompenses.",
+      "es": "Tu carga ha sido revelada. Recoge tus recompensas."
     }
   }
 }

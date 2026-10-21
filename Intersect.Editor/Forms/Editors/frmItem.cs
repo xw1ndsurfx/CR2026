@@ -1,4 +1,4 @@
-using System.Drawing.Imaging;
+﻿using System.Drawing.Imaging;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
@@ -370,11 +370,12 @@ public partial class FrmItem : EditorForm
         lblName.Text = Strings.ItemEditor.name;
         lblType.Text = Strings.ItemEditor.type;
         cmbType.Items.Clear();
-        for (var i = 0; i < Strings.ItemEditor.types.Count; i++)
+        for (var i = 0; i < Math.Min(7, Strings.ItemEditor.types.Count); i++)
         {
             cmbType.Items.Add(Strings.ItemEditor.types[i]);
         }
 
+        foreach(var type in new[]{"Crafting","Ammo","Key"})cmbType.Items.Add(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(type,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
         lblDesc.Text = Strings.ItemEditor.description;
         lblPic.Text = Strings.ItemEditor.picture;
         lblRed.Text = Strings.ItemEditor.Red;
@@ -573,6 +574,9 @@ public partial class FrmItem : EditorForm
             chkCanBag.Checked = Convert.ToBoolean(mEditorItem.CanBag);
             chkCanSell.Checked = Convert.ToBoolean(mEditorItem.CanSell);
             chkCanSellMarketplace.Checked = Convert.ToBoolean(mEditorItem.CanSellInMarketplace);
+            _showValue.Checked=mEditorItem.Presentation.ShowValue;
+            _showLevel.Checked=mEditorItem.Presentation.ShowRequiredLevel;
+            _chooseAmmo.Visible=mEditorItem.ItemType==ItemType.Ammo;
             chkCanTrade.Checked = Convert.ToBoolean(mEditorItem.CanTrade);
             chkStackable.Checked = Convert.ToBoolean(mEditorItem.Stackable);
             nudInvStackLimit.Value = mEditorItem.MaxInventoryStack;
@@ -789,6 +793,7 @@ public partial class FrmItem : EditorForm
     private void cmbType_SelectedIndexChanged(object sender, EventArgs e)
     {
         RefreshExtendedData();
+        _chooseAmmo.Visible=mEditorItem?.ItemType==ItemType.Ammo;
     }
 
     private void txtName_TextChanged(object sender, EventArgs e)

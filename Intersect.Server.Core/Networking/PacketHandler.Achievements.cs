@@ -1,4 +1,4 @@
-using Intersect.Network.Packets.Client;
+﻿using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Editor;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Achievements;
@@ -77,10 +77,11 @@ internal sealed partial class PacketHandler
         if (client.Entity is not { } player)
             return;
 
-        if (!AchievementRuntime.TryClaim(player, packet.AchievementId, out var error) &&
-            !string.IsNullOrWhiteSpace(error))
+        lock(player.EntityLock)
         {
-            PacketSender.SendChatMsg(player, error, Intersect.Enums.ChatMessageType.Error);
+            if (!AchievementRuntime.TryClaim(player, packet.AchievementId, out var error) &&
+                !string.IsNullOrWhiteSpace(error))
+                PacketSender.SendChatMsg(player, error, Intersect.Enums.ChatMessageType.Error);
         }
     }
 }

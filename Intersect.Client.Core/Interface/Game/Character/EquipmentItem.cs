@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen.Control;
@@ -127,7 +127,7 @@ public partial class EquipmentItem
         mCurrentItemId = currentItemId;
         mItemProperties = itemProperties;
 
-        if (GameContentManager.Current.GetTexture(Framework.Content.TextureType.Item, item.Icon) is not { } itemTexture)
+        if (GameContentManager.Current.GetTexture(item.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, item.DisplayIcon) is not { } itemTexture)
         {
             ContentPanel.Hide();
             _loadedTexture = default;

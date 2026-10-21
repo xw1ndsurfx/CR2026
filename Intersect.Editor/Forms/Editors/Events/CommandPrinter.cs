@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Intersect.Editor.Localization;
 using Intersect.Editor.Maps;
 using Intersect.Enums;
@@ -1252,6 +1252,9 @@ public static partial class CommandPrinter
         return Strings.EventCommandList.openshop.ToString(ShopDescriptor.GetName(command.ShopId));
     }
 
+    private static string GetCommandText(GrantExperienceBonusCommand command,MapInstance map)=>Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Grant EXP bonus",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)+$" +{command.Percent}% / {command.DurationSeconds}s";
+    private static string GetCommandText(GrantLootBonusCommand command,MapInstance map)=>Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Grant loot bonus",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)+$" +{command.Percent}% / {command.DurationSeconds}s";
+    private static string GetCommandText(OpenAdventureLobbyCommand command,MapInstance map)=>Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Open adventure lobby",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
     private static string GetCommandText(OpenNavalAmmoShopCommand command,MapInstance map)=>Intersect.Framework.Core.Naval.NavalSetupText.Get("Open cannon ammunition shop",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
     private static string GetCommandText(OpenNavalShopCommand command, MapInstance map) =>
         Intersect.Framework.Core.Naval.NavalSetupText.Get("Open ship shop and repairs",

@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Content;
+﻿using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -18,6 +18,9 @@ internal sealed class NavalCargoWindow : Window
     private readonly Chrome _frame,_ribbon,_section;
     private readonly Label _heading,_subtitle,_summary,_hint,_warning,_empty;
     private readonly ScrollControl _list;
+    private readonly ScrollControl _plunder;
+    private readonly Button _takeAll;
+    private bool _results;
     private readonly NavalSailingBar _capacity;
     private readonly Button _close;
     private readonly Label _closeText;
@@ -44,6 +47,13 @@ internal sealed class NavalCargoWindow : Window
         _capacity=new NavalSailingBar(this,"CargoCapacity") {MouseInputEnabled=false,KeyboardInputEnabled=false};
         _list=new ScrollControl(this,"CargoManifest") {
             OverflowX=OverflowBehavior.Hidden,OverflowY=OverflowBehavior.Scroll,AutoHideBars=true};
+        _plunder=new ScrollControl(this,"PlunderSummary") {OverflowX=OverflowBehavior.Hidden,OverflowY=OverflowBehavior.Scroll,AutoHideBars=true};
+        Shop.ShopWindow.ConfigureNativeScrollbar(_plunder);
+        _takeAll=NavalManagementWindow.Button(this,"TakeAll","Take all",34,530,150,35,()=>
+        {
+            if(Naval.NavalWorld.ShoreCargo is {} hold)
+                Act(hold,new NavalCargoParcel(),HarbourAction.ClaimAllCargo);
+        });
         _empty=Text(this,"CargoEmpty",13,Muted,center:true);
         _hint=Text(this,"CargoDockHint",10,Cream);
         _warning=Text(this,"CargoLossWarning",10,new Color(255,225,151,119));
@@ -62,7 +72,7 @@ internal sealed class NavalCargoWindow : Window
 
     private void LayoutManifest()
     {
-        var width=Math.Min(720,Math.Max(300,(Parent?.Width??744)-24));
+        var width=Math.Min(_results?900:720,Math.Max(300,(Parent?.Width??744)-24));
         var height=Math.Min(610,Math.Max(360,(Parent?.Height??642)-32));
         if(Width==width && Height==height && !_layoutChanged) return;
         SetSize(width,height);_layoutChanged=true;
@@ -71,7 +81,13 @@ internal sealed class NavalCargoWindow : Window
         _ribbon.SetBounds(28,110,width-56,58);_summary.SetBounds(42,115,width-84,25);
         _capacity.SetBounds(42,146,width-84,10);
         _section.SetBounds(28,180,width-56,height-284);
-        _list.SetBounds(38,190,width-76,height-304);
+        var contentWidth=width-76;
+        var leftWidth=_results?(int)(contentWidth*.56):contentWidth;
+        _list.SetBounds(38,190,leftWidth,height-304);
+        _plunder.SetBounds(50+leftWidth,190,Math.Max(1,contentWidth-leftWidth-12),height-304);
+        _plunder.IsHidden=!_results;
+        _takeAll.SetBounds(34,height-66,150,35);_takeAll.IsHidden=!_results;
+        _warning.IsHidden=_results;
         _empty.SetBounds(50,207,width-100,32);
         _hint.SetBounds(34,height-95,width-68,22);
         _warning.SetBounds(34,height-72,width-218,22);
@@ -83,6 +99,8 @@ internal sealed class NavalCargoWindow : Window
     internal void Update(ShipSnapshot? ship,bool open)
     {
         if(!open || ship==null || ship.Sinking) {Hide();return;}
+        var results=Naval.NavalWorld.OwnShip==null;
+        if(results!=_results){_results=results;_layoutChanged=true;}
         LayoutManifest();
         if(IsHidden) {Show();BringToFront();_layoutChanged=true;}
         var languageChanged=_language!=ClientLanguages.Current;
@@ -95,7 +113,10 @@ internal sealed class NavalCargoWindow : Window
             EventPanelText.Fit(_warning,T("Cargo is lost if your ship sinks."),10);
             _closeText.Text=T("Close");_empty.Text=T("The cargo hold is empty.");
         }
+        _heading.Text=T(_results?"Voyage results":"CARGO HOLD");
+        if(_results){_subtitle.Text=ClientLanguages.ContentText(ship.Name);_hint.Text=T("Your cargo has been revealed. Collect your rewards.");}
         var cargo=ship.Cargo??[];
+        _takeAll.IsDisabled=cargo.Length==0;
         var shipChanged=_shipId!=ship.Id;
         var changed=shipChanged || _contents.Length!=cargo.Length ||
             cargo.Where((parcel,index)=>index>=_contents.Length || _contents[index]!=new CargoStamp(parcel)).Any();
@@ -112,6 +133,24 @@ internal sealed class NavalCargoWindow : Window
             {
                 var row=new CargoRow(_list,parcel,width,()=>Act(ship,parcel,HarbourAction.ClaimCargo),()=>new InputBox(T("Discard cargo"),T("Discard this cargo lot permanently?"),InputType.YesNo,(_,_)=>Act(ship,parcel,HarbourAction.DiscardCargo)));row.SetBounds(4,y,width,120);y+=128;
             }
+            _plunder.DeleteAll();
+            if(_results)
+            {
+                var totalY=4;
+                foreach(var group in cargo.GroupBy(parcel=>parcel.ItemId).OrderBy(group=>ItemDescriptor.Get(group.Key)?.Name))
+                {
+                    var item=ItemDescriptor.Get(group.Key);
+                    var name=Text(_plunder,"RewardName"+group.Key,12,Cream,true);
+                    name.SetBounds(6,totalY,_plunder.Width-26,26);
+                    EventPanelText.Fit(name,ClientLanguages.ContentText(item?.Name??T("Unknown item")),12,9);
+                    var quantity=Text(_plunder,"RewardQuantity"+group.Key,12,Gold);
+                    quantity.SetBounds(6,totalY+27,_plunder.Width-26,26);
+                    quantity.Text=NavalSetupText.Display(string.Format(T("Qty: {0:N0}"),group.Sum(parcel=>(long)parcel.Quantity)));
+                    totalY+=64;
+                }
+                _plunder.SetInnerSize(_plunder.Width-20,totalY+8);_plunder.UpdateScrollBars();
+            }
+            _list.SetInnerSize(_list.Width-20,y+8);
             _list.UpdateScrollBars();
             if(shipChanged) _list.ScrollToTop();
             else _list.VerticalScrollBar.ScrollAmount=scroll;
@@ -137,7 +176,7 @@ internal sealed class NavalCargoWindow : Window
             icon.SetBounds(20,20,44,44);
             if(!string.IsNullOrWhiteSpace(descriptor?.Icon))
             {
-                icon.Texture=GameContentManager.Current.GetTexture(TextureType.Item,descriptor.Icon);
+                icon.Texture=GameContentManager.Current.GetTexture(descriptor.UsesSpellIcon?TextureType.Spell:TextureType.Item, descriptor.DisplayIcon);
                 icon.RenderColor=descriptor.Color;
             }
             // Missing resources keep a visible empty icon frame without substituting a different item.

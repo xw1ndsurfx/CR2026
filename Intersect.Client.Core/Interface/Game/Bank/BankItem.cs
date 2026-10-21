@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen;
@@ -270,7 +270,7 @@ public partial class BankItem : SlotItem
             return;
         }
 
-        var itemTexture = GameContentManager.Current.GetTexture(Framework.Content.TextureType.Item, descriptor.Icon);
+        var itemTexture = GameContentManager.Current.GetTexture(descriptor.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, descriptor.DisplayIcon);
         if (itemTexture != default)
         {
             Icon.Texture = itemTexture;

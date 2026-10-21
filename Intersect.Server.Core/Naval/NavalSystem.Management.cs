@@ -119,7 +119,7 @@ internal static partial class NavalSystem
             lock(Gate)if(!IsEnabled())return;
             var mode=packet.Action;var message="";
             if(mode==NavalManageAction.AmmoShop){lock(Gate)if(!p.NavalAmmoShop || !ShopValid(p,now))return;}
-            if(mode==NavalManageAction.RepairMenu){lock(Gate) {if(!Ships.TryGetValue(p.NavalShipId,out var repairShip) || Driver(repairShip)==p.Id || repairShip.State.CaptainId==p.Id || ByCrewDock(repairShip))return;}lock(Gate)SendManagement(p,NavalManageAction.Repair,now);return;}
+            if(mode==NavalManageAction.RepairMenu){lock(Gate) {if(!Ships.TryGetValue(p.NavalShipId,out var repairShip) || Driver(repairShip)==p.Id)return;}lock(Gate)SendManagement(p,NavalManageAction.Repair,now);return;}
 
             if(mode==NavalManageAction.Deposit)return;
             if(mode is NavalManageAction.Withdraw or NavalManageAction.BuyAmmo or NavalManageAction.SellAmmo)
@@ -197,7 +197,7 @@ internal static partial class NavalSystem
                     }
                     else if(mode==NavalManageAction.Repair)
                     {
-                        if(v==null || !_settings.Repair.Enabled || !Enum.IsDefined(packet.Repair) || v.Health is <=0 or >=100 || v.SunkUntil>0 || (Driver(v)==p.Id || v.State.CaptainId==p.Id || ByCrewDock(v)) ||
+                        if(v==null || !_settings.Repair.Enabled || !Enum.IsDefined(packet.Repair) || v.Health is <=0 or >=100 || v.SunkUntil>0 || (Driver(v)==p.Id) ||
                             RepairCooldown.GetValueOrDefault(p.Id)>now || Repairs.ContainsKey(p.Id) || p.NavalBusy)
                         {SendManagement(p,NavalManageAction.Repair,now,"Repair unavailable. Check hull, role and cooldown.");return;}
                         foreach(var gun in v.Guns.Values.Where(g=>g.Owner==p.Id))gun.Owner=gun.Lease=Guid.Empty;
@@ -207,7 +207,7 @@ internal static partial class NavalSystem
                     else if(mode==NavalManageAction.RepairInput)
                     {
                         if(!Repairs.TryGetValue(p.Id,out var r) || r.Token!=packet.Token)return;
-                        if(v==null || v.State.Id!=r.Ship || v.Health is <=0 or >=100 || (Driver(v)==p.Id || v.State.CaptainId==p.Id || ByCrewDock(v)) || now-r.Start>_settings.Repair.RoundSeconds*1000)
+                        if(v==null || v.State.Id!=r.Ship || v.Health is <=0 or >=100 || (Driver(v)==p.Id) || now-r.Start>_settings.Repair.RoundSeconds*1000)
                         {Repairs.Remove(p.Id);message="Repair cancelled.";}
                         else if(now-r.Last>=400)
                         {
@@ -307,7 +307,7 @@ internal static partial class NavalSystem
                 if(RepairRequests.Remove(v.State.Id,out requests) && v.Health>0 && v.SunkUntil==0)
                 {ship=v.State.Id;hull=Math.Min(100-v.Health,requests.Sum(r=>r.Hull)*(100+SkillPower(v,NavalSkillKind.RepairBonus,now))/100);}
             }
-            if(Repairs.TryGetValue(p.Id,out var r) && (r.Ship!=p.NavalShipId || !Ships.TryGetValue(r.Ship,out var active) || active.Health is <=0 or >=100 || Driver(active)==p.Id || active.State.CaptainId==p.Id || ByCrewDock(active) || now-r.Start>_settings.Repair.RoundSeconds*1000))Repairs.Remove(p.Id);
+            if(Repairs.TryGetValue(p.Id,out var r) && (r.Ship!=p.NavalShipId || !Ships.TryGetValue(r.Ship,out var active) || active.Health is <=0 or >=100 || Driver(active)==p.Id || now-r.Start>_settings.Repair.RoundSeconds*1000))Repairs.Remove(p.Id);
         }
         if(hull>0 && p.NavalFleet.FirstOrDefault(s=>s.Id==ship) is {} owned)
         {

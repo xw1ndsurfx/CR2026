@@ -1,4 +1,4 @@
-using Intersect.Enums;
+﻿using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Items;
@@ -60,7 +60,7 @@ internal static partial class NavalSystem
 
     internal static void Harbour(Player player, HarbourRequestPacket packet, bool fromEvent = false)
     {
-        if(packet.ParcelId!=Guid.Empty && packet.Action is HarbourAction.ClaimCargo or HarbourAction.DiscardCargo)
+        if(packet.Action==HarbourAction.ClaimAllCargo || packet.ParcelId!=Guid.Empty && packet.Action is HarbourAction.ClaimCargo or HarbourAction.DiscardCargo)
         {ManageCargo(player,packet);return;}
         if(packet.View==HarbourView.Crew) {Crew(player,packet);return;}
         lock (player.EntityLock)
@@ -276,6 +276,7 @@ internal static partial class NavalSystem
 
     private static void ReturnToHarbour(Player player, OwnedShip ship, bool fromLogin = false)
     {
+        player.NavalDockPromptSeen=true;
         var map = MapController.Get(ship.ReturnMapId);
         map?.TryCreateInstance(MapInstance.OverworldInstanceId, out _, player);
         (int X, int Y)? exit;

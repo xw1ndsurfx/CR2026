@@ -30,7 +30,7 @@ public partial class Chatbox
             };
             Intersect.Client.Networking.Network.SendPacket(new ChatEmoteRequestPacket());
         }
-        _emotes.SetBounds(mChatboxWindow.X + mChatboxWindow.Width - 100, Math.Max(0, mChatboxWindow.Y - 26), 96, 23);
+        _emotes.SetBounds(mChatboxWindow.X + mChatboxWindow.Width - 100, Math.Max(0, mChatboxMessages.IsHidden?mChatboxWindow.Y+mChatboxInput.Y-26:mChatboxWindow.Y-26), 96, 23);
         _emotes.IsHidden = !mChatboxWindow.IsVisibleInTree;
     }
     public void ApplyEmotes(ChatEmoteMenuPacket packet)

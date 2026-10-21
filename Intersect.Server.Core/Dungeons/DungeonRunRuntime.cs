@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.Achievements;
@@ -38,6 +38,7 @@ internal static class DungeonRunRuntime
         public bool Finished { get; set; }
     }
 
+    private static readonly Guid ResumeMarkerId=new("c1026000-0000-4000-8000-000000000012");
     private static readonly object Gate = new();
     private sealed class RetryOffer
     {
@@ -248,7 +249,10 @@ internal static class DungeonRunRuntime
 
         // Register an attempt for every player actually inside this instance.
         foreach (var participant in GetParticipants(run))
+        {
+            participant.SetVariableValue(ResumeMarkerId,run.MapInstanceId.ToString("N"));
             DungeonStatisticsRuntime.RecordAttempt(participant, run.Dungeon.Id);
+        }
 
         Broadcast(run, DungeonRunStatus.Active, BuildObjectiveText(run));
         EvaluateCompletion(run);
@@ -272,6 +276,29 @@ internal static class DungeonRunRuntime
 
     private static bool IsDungeonMap(Run run, Guid mapId) =>
         GetDungeonMapIds(run.Dungeon, run.EntryMapId).Contains(mapId);
+
+    internal static bool RecoverLogin(Player player)
+    {
+        if(player.InstanceType==MapInstanceType.Overworld){player.SetVariableValue(ResumeMarkerId,string.Empty);return false;}
+        Run? run;
+        lock(Gate)
+            run=RunsByInstance.Values.FirstOrDefault(candidate=>!candidate.Finished && candidate.Participants.ContainsKey(player.Id) && IsDungeonMap(candidate,player.MapId) &&
+                (candidate.EndAtUnixMilliseconds<=0 || candidate.EndAtUnixMilliseconds>DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
+        if(run!=null)
+        {
+            player.MapInstanceId=run.MapInstanceId;player.InstanceType=run.InstanceType;
+            player.Warp(player.MapId,player.X,player.Y,player.Dir,fromLogin:true,forceInstanceChange:true);
+            player.SendPacket(CreatePacket(run,DungeonRunStatus.Active,BuildObjectiveText(run)));
+            return true;
+        }
+        if(!string.IsNullOrEmpty(player.GetVariable(ResumeMarkerId)?.Value.String) || DungeonConfigurationRuntime.Current.Dungeons.Any(dungeon=>dungeon.MapIds.Contains(player.MapId)))
+        {
+            player.SetVariableValue(ResumeMarkerId,string.Empty);
+            player.WarpToLastOverworldLocation(true);
+            return true;
+        }
+        return false;
+    }
 
     internal static bool ShouldRespawnNpcs(Guid mapId, Guid mapInstanceId)
     {
@@ -638,6 +665,7 @@ internal static class DungeonRunRuntime
 
     private static void WarpToExit(Player player, Run run, bool reviveIfDead)
     {
+        player.SetVariableValue(ResumeMarkerId,string.Empty);
         if (run.Dungeon.ExitMapId != Guid.Empty)
         {
             var direction = run.Dungeon.ExitDirection == WarpDirection.Retain

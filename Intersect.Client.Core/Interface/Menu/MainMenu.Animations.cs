@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Content;
+﻿using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Configuration;
@@ -12,6 +12,7 @@ public partial class MainMenu
     private readonly long _animationStart = Environment.TickCount64;
     private void UpdateMenuAnimations()
     {
+        UpdateMenuWeather();
         if (!_animationsLoaded)
         {
             _animationsLoaded = true;

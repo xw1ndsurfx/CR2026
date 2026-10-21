@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Intersect.Framework.Core.GameObjects.Animations;
 using System.Reflection;
 using DarkUI.Forms;
@@ -15,6 +15,7 @@ namespace Intersect.Editor.Forms.Editors;
 public sealed partial class FrmNavalConfiguration : DarkForm
 {
     private sealed record Choice(Guid Id, string Name) { public override string ToString() => Name; }
+    private HerboniaPatrol? _copiedPatrol;
     private readonly NavalConfiguration _navigation;
     private readonly HarbourCatalog _catalogue;
     private readonly HashSet<string> _publishedModels;
@@ -141,6 +142,31 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             { _status.Text = T("Keep existing model ids. Disable For sale to retire a model without losing fleets."); return; }
             items.Remove(item); store(items); Changed(section); Populate(items.FirstOrDefault());
         };
+        if (typeof(TItem)==typeof(HerboniaPatrol))
+        {
+            buttons.Height=76;
+            var copy=new Button {Text=T("Copy patrol"), AutoSize=true};
+            var paste=new Button {Text=T("Paste patrol"), AutoSize=true,Enabled=false};
+            buttons.Controls.AddRange([copy,paste]);
+            copy.Click+=(_,_)=>
+            {
+                if (list.SelectedItem is HerboniaPatrol selected)
+                {
+                    _copiedPatrol=JsonConvert.DeserializeObject<HerboniaPatrol>(JsonConvert.SerializeObject(selected));
+                    paste.Enabled=_copiedPatrol!=null;
+                }
+            };
+            paste.Click+=(_,_)=>
+            {
+                if (_copiedPatrol==null || list.SelectedItem is not HerboniaPatrol selected) return;
+                var replacement=JsonConvert.DeserializeObject<HerboniaPatrol>(JsonConvert.SerializeObject(_copiedPatrol));
+                if (replacement==null) return;
+                replacement.Ship.Id=selected.Ship.Id;
+                var index=items.IndexOf((TItem)(object)selected);
+                items[index]=(TItem)(object)replacement;
+                store(items);Changed(section);Populate(items[index]);
+            };
+        }
         tab.Controls.Add(split); Populate(items.FirstOrDefault());
         // An empty catalogue must still be enableable before adding the first offer.
         if (section == 1)

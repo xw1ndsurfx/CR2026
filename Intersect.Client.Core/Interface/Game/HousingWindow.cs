@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Content;
+﻿using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -15,6 +15,7 @@ internal sealed class HousingWindow : Window
     private readonly Label _message;
     private readonly Button _enter;
     private readonly Button _privacy;
+    private readonly Button _layouts;
     private readonly Button[] _tabs;
     private HouseView? _view;
     private int _tab;
@@ -28,6 +29,7 @@ internal sealed class HousingWindow : Window
         _message.SetBounds(20, 558, 800, 26);
         _enter = AddButton(this, "Go home", 20, 78, 150, () => { if (_view != null) PacketSender.SendHouseAction(_view.Inside ? HouseAction.Leave : HouseAction.Visit, _view.OwnerId); });
         _privacy = AddButton(this, "Open to public", 180, 78, 180, () => { if (_view != null) PacketSender.SendHouseAction(HouseAction.SetPublic, _view.OwnerId, open: !_view.House.Public); });
+        _layouts=NavalManagementWindow.Button(this,"SavedHouseLayouts",Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Saved layouts",ClientLanguages.Current),370,78,190,30,()=>{_tab=4;RefreshRows();});
         _tabs = new[] { "Monthly catalog", "Furniture storage", "Placed furniture", "House pets" }.Select((text, index) =>
             AddButton(this, text, 20 + index * 202, 124, 194, () => { _tab = index; RefreshRows(); })).ToArray();
         _rows = new ScrollControl(this, "HouseRows") { OverflowX = OverflowBehavior.Hidden, OverflowY = OverflowBehavior.Scroll, AutoHideBars = true };
@@ -39,11 +41,12 @@ internal sealed class HousingWindow : Window
     public void Apply(HouseView? view, string message)
     {
         _view = view;
-        _message.Text = ClientLanguages.Text(message);
+        _message.Text = Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(ClientLanguages.Text(message),ClientLanguages.Current);
         if (view == null) { if (!string.IsNullOrEmpty(message)) Show(); return; }
         _heading.Text = ClientLanguages.Format("{0}'s house - {1}", view.OwnerName, view.Month);
         _enter.Text = ClientLanguages.Text(view.Inside ? "Leave house" : "Go home"); _enter.IsDisabled = !view.Enabled;
         _privacy.IsHidden = !view.IsOwner; _privacy.Text = ClientLanguages.Text(view.House.Public ? "Make private" : "Open to public");
+        _layouts.IsHidden=!view.IsOwner;
         _tabs[0].IsHidden = _tabs[1].IsHidden = !view.IsOwner;
         if (!view.IsOwner && _tab < 2) _tab = 2;
         if (!view.Enabled) _message.Text = ClientLanguages.Text("Housing is not available yet.");
@@ -54,6 +57,25 @@ internal sealed class HousingWindow : Window
         _rows.DeleteAll();
         if (_view == null) return;
         var y = 4;
+        if(_tab==4 && _view.IsOwner)
+        {
+            var save=NavalManagementWindow.Button(_rows,"SaveLayout",Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Save current layout",ClientLanguages.Current),8,y,300,32,()=>
+            {
+                _=new Intersect.Client.Interface.Shared.InputBox(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Save current layout",ClientLanguages.Current),ClientLanguages.Text("Name"),Intersect.Client.Interface.Shared.InputType.TextInput,onSubmit:(_,args)=>
+                {
+                    if(args.Value is Intersect.Client.Framework.Gwen.Control.EventArguments.InputSubmissionEvent.StringSubmissionValue value)
+                        PacketSender.SendHouseAction(HouseAction.SaveLayout,_view.OwnerId,name:value.Value);
+                });
+            });save.IsDisabled=!_view.PremiumActive;y+=44;
+            foreach(var layout in _view.House.SavedLayouts)
+            {
+                var caption=new Label(_rows) {Text=layout.Name,Font=GameContentManager.Current.GetFont("sourcesanspro")??Skin.DefaultFont,FontSize=12};caption.SetBounds(8,y,320,32);
+                var id=layout.Id;
+                var load=NavalManagementWindow.Button(_rows,"Load"+id,Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Load layout",ClientLanguages.Current),340,y,180,32,()=>PacketSender.SendHouseAction(HouseAction.LoadLayout,_view.OwnerId,id));load.IsDisabled=!_view.PremiumActive || !_view.Inside;
+                NavalManagementWindow.Button(_rows,"Delete"+id,ClientLanguages.Text("Delete"),540,y,180,32,()=>PacketSender.SendHouseAction(HouseAction.DeleteLayout,_view.OwnerId,id));y+=44;
+            }
+            _rows.SetInnerSize(_rows.Width-20,y+10);return;
+        }
         void Row(string text, FurnitureDefinition? furniture, string action, Action? click, string? second = null, Action? other = null, HousePet? pet = null)
         {
             var card = new Base(_rows); card.SetBounds(0, y, 780, 76);

@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -565,7 +565,8 @@ public partial class CharacterWindow
     {
         UpdateExtraBuffTooltip(null, null);
         _detailsScroll.DeleteAll();
-        var y = 8;
+        NavalManagementWindow.Button(_detailsScroll,"PremiumConvenience",PremiumConvenienceWindow.T("Premium conveniences"),24,8,530,32,()=>PremiumConvenienceWindow.Request());
+        var y = 48;
 
         void Heading(string title)
         {
@@ -640,6 +641,13 @@ public partial class CharacterWindow
                 Row("Experience to next",
                     profession.ExperienceToNextLevel < 0 ? "MAX" :
                         $"{profession.ExperienceToNextLevel:N0} XP");
+                var progressBar=new PlayerProfileWindow.ProfileProgressBar(_detailsScroll,"ProfessionProgress"+profession.ProfessionId)
+                {Progress=profession.LevelExperienceRequired<=0?1f:(float)((double)profession.LevelExperience/profession.LevelExperienceRequired)};
+                progressBar.SetBounds(24,y,530,20);
+                var experienceCaption=new Label(_detailsScroll,"ProfessionProgressCaption"+profession.ProfessionId)
+                {AutoSizeToContents=false,Font=GameContentManager.Current.GetFont("sourcesanspro")??_detailsButton.Font,FontSize=10,TextAlign=Pos.Center,MouseInputEnabled=false,
+                    Text=profession.LevelExperienceRequired<=0?"MAX":Intersect.Framework.Core.Naval.NavalSetupText.Display($"{profession.LevelExperience:N0} / {profession.LevelExperienceRequired:N0} EXP")};
+                experienceCaption.SetBounds(24,y,530,20);y+=28;
                 if (profession.LocksPicked > 0 || profession.PerfectPicks > 0 ||
                     profession.PicksBroken > 0 || profession.HighestLockDifficulty > 0)
                 {

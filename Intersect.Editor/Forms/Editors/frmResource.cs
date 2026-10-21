@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
@@ -28,12 +28,17 @@ public partial class FrmResource : EditorForm
     private Bitmap? _graphicBitmap;
     private Bitmap? _resourceGraphic;
     private bool _mouseDown;
+    private readonly DarkUI.Controls.DarkCheckBox _fallingTree=new();
 
     public FrmResource()
     {
         ApplyHooks();
         InitializeComponent();
         Icon = Program.Icon;
+        _fallingTree.Text=Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Falling tree",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+        _fallingTree.SetBounds(7,360,246,20);
+        _fallingTree.CheckedChanged+=(_,_)=>{if(_editorItem!=null)_editorItem.FallingTree=_fallingTree.Checked;};
+        grpGeneral.Controls.Add(_fallingTree);
 
         _btnSave = btnSave;
         _btnCancel = btnCancel;
@@ -298,6 +303,7 @@ public partial class FrmResource : EditorForm
             nudMinHp.Value = _editorItem.MinHp;
             nudMaxHp.Value = _editorItem.MaxHp;
             chkWalkableBefore.Checked = _editorItem.WalkableBefore;
+            _fallingTree.Checked=_editorItem.FallingTree;
             chkWalkableAfter.Checked = _editorItem.WalkableAfter;
             chkUseExplicitMaxHealthForResourceStates.Checked = _editorItem.UseExplicitMaxHealthForResourceStates;
             cmbEvent.SelectedIndex = EventDescriptor.ListIndex(_editorItem.EventId) + 1;

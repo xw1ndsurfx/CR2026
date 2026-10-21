@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Gwen;
+﻿using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Interface.Game;
 using Intersect.Client.Framework.Gwen.Control;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
@@ -54,7 +54,7 @@ internal sealed class ShopProductRow : Base
             MouseInputEnabled = true,
         };
         _icon.SetBounds(15, 12, 52, 52);
-        _icon.Texture = Globals.ContentManager?.GetTexture(item==null?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, item?.Icon??serviceIcon??"");
+        _icon.Texture = Globals.ContentManager?.GetTexture(item==null || item.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, item?.DisplayIcon??serviceIcon??"");
         _icon.RenderColor = item?.Color??Color.White;
         if(item!=null)_icon.HoverEnter += (_, _) => Interface.GameUi.ItemDescriptionWindow?.Show(item, 1);
         _icon.HoverLeave += (_, _) => Interface.GameUi.ItemDescriptionWindow?.Hide();
@@ -63,6 +63,8 @@ internal sealed class ShopProductRow : Base
         _name.Text = Shorten(serviceName??item?.Name, 19);
 
         _detail = Label("Detail", 91, 29, 137, 18, 9, new Color(a: 255, r: 191, g: 174, b: 152));
+        if(item?.Presentation.ShowRequiredLevel==true)
+            detail=string.Format(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Required level: {0}",ClientLanguages.Current),item.MinimumLevel);
         _detail.Text = Shorten(detail, 24);
 
         _price = Label("Price", 91, 49, 137, 20, 10, new Color(a: 255, r: 231, g: 194, b: 112));

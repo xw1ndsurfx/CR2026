@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Gwen.Control;
+﻿using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Localization;
 using Intersect.Client.MiniGames;
 using Intersect.Framework.Core.GameObjects.Items;
@@ -15,7 +15,7 @@ internal sealed partial class PokerWindow
         if (state.CurrencyItemId == Guid.Empty)
         { _currencyFooter.Text = Strings.PokerScene.TestProgress; return; }
         var currency = Short(ItemDescriptor.GetName(state.CurrencyItemId), 24);
-        _currencyFooter.Text = Strings.PokerCurrency.Funded.ToString(currency, me.Chips);
+        _currencyFooter.Text = Strings.PokerCurrency.Funded.ToString(currency, me.Chips)+" | "+MiniGameInventoryBalance.Caption(state.CurrencyItemId);
         for (var i = 0; i < 6; ++i)
         {
             var seat = state.Seats.FirstOrDefault(s => PokerSceneLayout.Slot(s.Seat, me.Seat) == i);

@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Collections.Concurrent;
 using Intersect.Client.Core;
 using Intersect.Client.Entities;
@@ -980,8 +980,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
                 // Set up all information we need to draw this name.
                 var itemTexture = GameContentManager.Current.GetTexture(
-                    Framework.Content.TextureType.Item,
-                    itemDescriptor.Icon
+                    itemDescriptor.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, itemDescriptor.DisplayIcon
                 );
 
                 if (itemTexture == null)

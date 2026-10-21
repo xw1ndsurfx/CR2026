@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.File_Management;
+﻿using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Localization;
@@ -15,6 +15,7 @@ internal sealed partial class HarbourWindow : Window
     private readonly Label _message, _pageLabel;
     private readonly ScrollControl _cards;
     private readonly Button _previous, _next,_refresh;
+    private readonly Button? _cargoResults;
     private HarbourStatePacket _state = new();
     private int _page;
     private bool _waiting;
@@ -35,10 +36,19 @@ internal sealed partial class HarbourWindow : Window
         _pageLabel = Text(this, "Page", "", 170, 440, 200, 28);
         _next = Button(this, "Next", "Next", 420, 435, 100, () => { _page++; RenderEntries(); });
         _refresh=Button(this, "Refresh", "Refresh", 530, 435, 110, () => Request(HarbourAction.Open, ""));
+        if(view==HarbourView.Fleet)_cargoResults=NavalManagementWindow.Button(this,"VoyageResults","Voyage results",24,435,260,30,()=>
+        {
+            if(Naval.NavalWorld.ShoreCargo!=null){Naval.NavalWorld.CargoOpen=true;Hide();}
+        });
         if(view==HarbourView.Shop)InitializeMerchant();
         else {_previous.Hide();_next.Hide();_pageLabel.Hide();Shop.ShopWindow.ConfigureNativeScrollbar(_cards); }
     }
     protected override void EnsureInitialized() { }
+    public override void Think()
+    {
+        base.Think();
+        if(_cargoResults!=null)_cargoResults.IsDisabled=Naval.NavalWorld.ShoreCargo==null;
+    }
     private static Label Text(Base parent, string id, string text, int x, int y, int w, int h)
     {
         var label = new Label(parent, id) { Text = text, AutoSizeToContents = false,
@@ -57,6 +67,7 @@ internal sealed partial class HarbourWindow : Window
         var message=packet.Message.Length==0 ? (_view==HarbourView.Shop ? "Buy a ship or fully repair a damaged or sunken ship." : "Choose one of your ships to set sail.") : packet.Message;
         var translated=NavalSetupText.Get(message,ClientLanguages.Current);
         _message.Text=translated==message?ClientLanguages.Expanded(message):translated;
+        if(_cargoResults!=null)_cargoResults.IsDisabled=Naval.NavalWorld.ShoreCargo==null;
         RenderEntries();
     }
     private void Request(HarbourAction action, string model,string name="")

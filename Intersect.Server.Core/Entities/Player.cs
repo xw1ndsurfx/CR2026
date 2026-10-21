@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
@@ -727,6 +727,18 @@ public partial class Player : Entity
     private int _lastAfkY;
     private Guid _lastAfkMapId;
     private bool _isAfk;
+
+    private long _lastMouseActivity;
+    internal void RegisterMouseActivity()
+    {
+        lock (EntityLock)
+        {
+            var now = Timing.Global.Milliseconds;
+            if (_lastMouseActivity != 0 && now - _lastMouseActivity < 750) return;
+            _lastMouseActivity = now;
+            RegisterAfkActivity();
+        }
+    }
 
     public void RegisterAfkActivity()
     {
@@ -2477,6 +2489,7 @@ public partial class Player : Entity
     public void LoginWarp()
     {
         if(Intersect.Server.Pvp.PvpRuntime.RecoverLogin(this))return;
+        if(DungeonRunRuntime.RecoverLogin(this))return;
         if(Intersect.Server.Naval.NavalSystem.RecoverLogin(this))return;
         Intersect.Server.Housing.HousingRuntime.RestoreLoginLocation(this);
         if (MapId == null || MapId == Guid.Empty)
