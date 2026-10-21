@@ -39,6 +39,10 @@ internal sealed class NavalActionButton(Base parent,string name) : Button(parent
             skin.Renderer.DrawFilledRect(new Rectangle(1,1,Width-2,2));
             skin.Renderer.DrawFilledRect(new Rectangle(1,Height-3,Width-2,2));skin.Renderer.DrawColor=color;
         }
+        if(NavalPresentation.SafeAsset(IconFilename) && IconFilename.Length>0 && GameContentManager.Current.GetTexture(TextureType.Spell,IconFilename) is {} icon)
+        {
+            var size=Math.Min(Width-8,Height-14);skin.Renderer.DrawTexturedRect(icon,new Rectangle((Width-size)/2,3,size,size),IsDisabled?new Color(100,255,255,255):Color.White);return;
+        }
         if(Ammunition is {} kind)
         {
             var color=skin.Renderer.DrawColor;
@@ -52,10 +56,6 @@ internal sealed class NavalActionButton(Base parent,string name) : Button(parent
             skin.Renderer.DrawColor=color;return;
         }
         if(ReloadMilliseconds>0) return;
-        if(NavalPresentation.SafeAsset(IconFilename) && IconFilename.Length>0 && GameContentManager.Current.GetTexture(TextureType.Spell,IconFilename) is {} icon)
-        {
-            var size=Math.Min(Width-8,Height-14);skin.Renderer.DrawTexturedRect(icon,new Rectangle((Width-size)/2,3,size,size),IsDisabled?new Color(100,255,255,255):Color.White);return;
-        }
         var glyph=Glyph(NavalAction);var scale=Math.Max(1,Math.Min(Width/13,(Height-12)/8));
         var ox=(Width-11*scale)/2;var oy=3;
         var previous=skin.Renderer.DrawColor;

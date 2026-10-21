@@ -29,7 +29,7 @@ internal sealed class NavalRewardHud : Base
         if(reward.ReplacedLots>0) lines.Add(T("Better cargo replaced {0} lower-quality lots.",reward.ReplacedLots));
         if(reward.DiscardedLots>0) lines.Add(T("Hold full · {0} lots could not be kept. Unload at Q.",reward.DiscardedLots));
         else if(reward.CargoFull) lines.Add(T("Hold full · Unload your cargo at Q."));
-        return lines.Take(7).ToArray();
+        return lines.Take(7).Select(s=>s.Replace('\u202f',' ').Replace('\u00a0',' ').Replace('×','x').Replace('·','-')).ToArray();
     }
     internal void Update(NavalRewardReceipt? reward,int anchorY,bool suppressed)
     {

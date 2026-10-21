@@ -17,6 +17,7 @@ public sealed partial class NavalTests
     private static Player GunnerPlayer(EnemyTestWorld world,object ship)
     {
         var player=CargoPlayer();player.Id=Guid.NewGuid();player.InGame=true;player.EntityLock=new();
+        var captain=CargoPlayer();captain.Id=world.State(ship).CaptainId;player.Party=[player,captain];
         player.MapId=world.Map.Id;player.BoardedShipId=world.State(ship).Id;
         player.Items=new(Options.Instance.Player.MaxInventory,InventorySlot.Create);player.Items.FillToCapacity();
         player.Trading=new(player);player.EventLookup=new();player.CachedStatuses=[];
@@ -166,7 +167,7 @@ public sealed partial class NavalTests
         try
         {
             var config=new NavalConfiguration {Enabled=true,CannonsEnabled=true};config.Ammunition[1].ItemId=item.Id;world.Configure(config);
-            player.GunneryExperience=300;player.Items[1].Set(new Item(item.Id,3));var time=Timing.Global.Milliseconds;
+            player.GunneryExperience=300;player.NavalCareer.Ammo.Add(new(){ItemId=item.Id,Quantity=3});player.Items[1].Set(new Item(item.Id,3));var time=Timing.Global.Milliseconds;
             NavalSystem.Station(player,new(){Action=CannonStationAction.Acquire,ShipId=world.State(ship).Id},time);
             var state=(GunneryState)world.Invoke("GunnerState",player,time)!;player.LastGunneryRequest=time-100;
             // No User means the real persistence callback fails; the normal station handler must roll back.

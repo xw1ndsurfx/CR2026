@@ -55,9 +55,10 @@ internal sealed class NavalCannonViewWindow : Window
             if(_viewport.CrewMode) NavalWorld.RequestStation(NavalWorld.Gunner.LeaseId==Guid.Empty?CannonStationAction.Acquire:CannonStationAction.Fire);
             else NavalWorld.ActivateSlot(NavalWorld.CannonViewStarboard?1:0);
         });
-        _ammo=Action("CannonAmmunition",()=>NavalWorld.SelectedAmmo=(CannonAmmoKind)(((int)NavalWorld.SelectedAmmo+1)%3));
+        _ammo=Action("CannonAmmunition",()=>NavalManagementWindow.Request(NavalManageAction.Ammo));
         _gunnery=new NavalSailingBar(this,"GunneryExperience") {AutoSizeToContents=false,
             Font=GameContentManager.Current.GetFont("sourcesansproblack")??Skin.DefaultFont,FontSize=10,TextAlign=Pos.Center,MouseInputEnabled=false};
+        var repair=NavalManagementWindow.Button(this,"CannonRepair","Ship repairs",16,166,150,30,()=>NavalManagementWindow.Request(NavalManageAction.RepairMenu));
         _close=Action("CloseCannonView",()=>NavalWorld.CannonViewOpen=false);
         Hide();
     }
@@ -84,7 +85,7 @@ internal sealed class NavalCannonViewWindow : Window
             _crewWasOpen=false;NavalWorld.CannonViewOpen=false;_ship=Guid.Empty;Hide();_viewport.Release();return;
         }
         if(_ship!=ship.Id) {_ship=ship.Id;NavalWorld.CannonViewStarboard=false;_viewport.Release();}
-        var crew=ship.CaptainId!=Globals.Me?.Id;
+        var crew=NavalWorld.Driver(ship)!=Globals.Me?.Id;
         _viewport.CrewMode=crew;_crewWasOpen=crew;
         _fullscreen=crew;DrawShadow=!crew;Titlebar.IsHidden=crew;
         Alignment=crew?[]:[Alignments.Center];
@@ -109,7 +110,7 @@ internal sealed class NavalCannonViewWindow : Window
         EventPanelText.Fit(_hint,T("Shots follow the selected broadside · The captain keeps control"),11,8);
         var slot=NavalWorld.CannonViewStarboard?1:0;var cooldown=NavalWorld.Cooldown(slot);
         _fire.Text=cooldown>0?string.Format(T("Reload: {0}s"),(int)Math.Ceiling(cooldown/1000d)):T("Fire broadside");
-        _fire.IsDisabled=ship.CaptainId!=Globals.Me?.Id || !ship.CannonsEnabled || cooldown>0 || Globals.Me?.IsBusy!=false;
+        _fire.IsDisabled=NavalWorld.Driver(ship)!=Globals.Me?.Id || !ship.CannonsEnabled || cooldown>0 || Globals.Me?.IsBusy!=false;
         _fire.TooltipText=T("Only the captain can fire the broadside in this preview.");
         if(crew)
         {

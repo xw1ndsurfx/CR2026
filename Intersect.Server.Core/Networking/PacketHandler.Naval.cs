@@ -23,6 +23,8 @@ internal sealed partial class PacketHandler
         if (!client.IsEditor && client.Entity is { InGame: true } player && (packet.ModelId?.Length ?? 0) <= 64 && (packet.Name?.Length??0)<=128)
             Naval.NavalSystem.Harbour(player, packet);
     }
+    public void HandlePacket(Client client, NavalManagePacket packet)
+    {if(!client.IsEditor && client.Entity is {InGame:true} player) Naval.NavalSystem.Manage(player,packet,Timing.Global.Milliseconds);}
     public void HandlePacket(Client client, CannonStationPacket packet)
     {
         if(!client.IsEditor && client.Entity is {InGame:true} player)

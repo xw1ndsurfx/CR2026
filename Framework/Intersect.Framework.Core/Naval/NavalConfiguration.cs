@@ -5,6 +5,7 @@ namespace Intersect.Framework.Core.Naval;
 
 public sealed class NavalConfiguration
 {
+    public int CareersVersion {get;set;}=1;
     public bool Enabled { get; set; }
     public double DockInteractionRange { get; set; } = 1.5;
     public int LaunchSearchRadius { get; set; } = 5;
@@ -20,6 +21,8 @@ public sealed class NavalConfiguration
     public NavalPresentation Presentation {get;set;}=new();
     public GunnerySettings Gunnery {get;set;}=new();
     public CannonAmmunition[] Ammunition {get;set;}=CannonAmmunition.Defaults();
+    public NavalRepairSettings Repair {get;set;}=new();
+    public NavalSkillDefinition[] Skills {get;set;}=NavalSkillDefinition.Defaults();
     public SailingSettings Sailing {get;set;}=new();
     public HerboniaPatrol[] Herbonia { get; set; } = [];
     public ShipDefinition[] Ships { get; set; } = [];
@@ -28,7 +31,7 @@ public sealed class NavalConfiguration
 
     public void Validate(int width, int height)
     {
-        if (Gunnery?.IsValid()!=true || Ammunition==null || Ammunition.Length is <1 or >3 || Ammunition.Any(a=>a?.IsValid()!=true || (a.Kind==CannonAmmoKind.Standard?a.RequiresItem || a.RequiredLevel!=1:!a.RequiresItem)) ||
+        if (Repair?.IsValid()!=true || Skills==null || Skills.Length>5 || Skills.Any(s=>s?.IsValid()!=true) || Skills.Select(s=>s.Kind).Distinct().Count()!=Skills.Length || Gunnery?.IsValid()!=true || Ammunition==null || Ammunition.Length is <1 or >10 || Ammunition.Any(a=>a?.IsValid()!=true || (a.Kind==CannonAmmoKind.Standard?a.RequiresItem || a.RequiredLevel!=1:!a.RequiresItem)) ||
             Ammunition.Select(a=>a.Kind).Distinct().Count()!=Ammunition.Length || !Ammunition.Any(a=>a.Kind==CannonAmmoKind.Standard) || CombatTimeoutSeconds is <3 or >120 || Herbonia==null || Herbonia.Length>32 || Herbonia.Any(p=>p?.IsValid()!=true || p.Ship.X>=width || p.Ship.Y>=height || p.Ship.DockX>=width || p.Ship.DockY>=height) ||
             Herbonia.Select(p=>p.Ship.Id).Concat(Ships?.Where(p=>p!=null).Select(p=>p.Id)??[]).GroupBy(id=>id).Any(g=>g.Count()>1) || Presentation?.IsValid()!=true || Sailing?.IsValid()!=true || !double.IsFinite(DockInteractionRange) || DockInteractionRange is < 1 or > 5 ||
             LaunchSearchRadius is < 3 or > 10 || !double.IsFinite(ShopInteractionRange) ||

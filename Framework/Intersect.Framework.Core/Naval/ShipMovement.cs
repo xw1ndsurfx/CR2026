@@ -18,6 +18,7 @@ public sealed class ShipState
 
 public sealed class ShipDefinition
 {
+    public string IdleGraphics {get;set;}="";
     public string Name {get;set;}="";
     [Newtonsoft.Json.JsonExtensionData] public IDictionary<string, Newtonsoft.Json.Linq.JToken>? AdditionalData { get; set; }
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -50,7 +51,7 @@ public sealed class ShipDefinition
         Acceleration > 0 && Acceleration <= 10 && Drag > 0 && Drag <= 10 && TurnRate > 0 && TurnRate <= 180 &&
         Frames is >= 1 and <= 16 && FrameMilliseconds is >= 50 and <= 2000 &&
         !string.IsNullOrWhiteSpace(Graphics) && Path.GetFileName(Graphics) == Graphics &&
-        Path.GetFileName(DamagedGraphics) == DamagedGraphics && Path.GetFileName(SinkingGraphics) == SinkingGraphics;
+        NavalPresentation.SafeAsset(IdleGraphics) && Path.GetFileName(DamagedGraphics) == DamagedGraphics && Path.GetFileName(SinkingGraphics) == SinkingGraphics;
 }
 
 public readonly record struct ShipInput(sbyte Thrust, sbyte Turn, bool Anchor);

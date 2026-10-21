@@ -45,6 +45,8 @@ public partial class InventoryWindow : Window
     {
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
         InitItemContainer();
+        var ammo=NavalManagementWindow.Button(this,"InventoryAmmo","Ammo",0,0,Width-24,32,()=>NavalManagementWindow.Request(Intersect.Framework.Core.Naval.NavalManageAction.Ammo));
+        ammo.Dock=Pos.Bottom;
     }
 
     public void OpenContextMenu(int slot)

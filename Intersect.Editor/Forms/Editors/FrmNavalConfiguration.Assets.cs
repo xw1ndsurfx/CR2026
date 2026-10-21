@@ -67,8 +67,8 @@ public sealed partial class FrmNavalConfiguration
             if(!File.Exists(path) || new FileInfo(path).Length>131072) return false;
             var atlas=Newtonsoft.Json.JsonConvert.DeserializeObject<NavalEffectAtlas>(File.ReadAllText(path));
             if(atlas?.IsValid(atlas.ImageWidth,atlas.ImageHeight)!=true) return false;
-            if(property=="CannonProjectileGraphic") return Enumerable.Range(0,8).All(i=>atlas.Clips.ContainsKey("Projectile"+i));
-            return atlas.Clips.ContainsKey(property=="CannonFireGraphic"?"Fire":property=="WaterImpactGraphic"?"WaterImpact":"HullImpact");
+            if(property is "CannonProjectileGraphic" or "ProjectileGraphic") return Enumerable.Range(0,8).All(i=>atlas.Clips.ContainsKey("Projectile"+i));
+            return atlas.Clips.ContainsKey(property=="CannonFireGraphic"?"Fire":property is "WaterImpactGraphic" or "WaterGraphic"?"WaterImpact":"HullImpact");
         }
         catch(Exception e) when(e is IOException or UnauthorizedAccessException or Newtonsoft.Json.JsonException) {return false;}
     }

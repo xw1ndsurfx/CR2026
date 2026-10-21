@@ -24,6 +24,8 @@ internal static partial class NavalSystem
             var dt=_lastEnemyStep==0?0:Math.Clamp((now-_lastEnemyStep)/1000d,0,.1);
             _lastEnemyStep=now;
             if(!IsEnabled()) return;
+            foreach(var id in Repairs.Where(p=>now-p.Value.Start>_settings.Repair.RoundSeconds*1000L).Select(p=>p.Key).ToArray())Repairs.Remove(id);
+            foreach(var id in RepairCooldown.Where(p=>p.Value<now-60000).Select(p=>p.Key).ToArray())RepairCooldown.Remove(id);
             var ocean=OceanMapResolver.Maps();
             EnemyDocks.Clear();
             EnemyHulls.Clear();
@@ -149,7 +151,7 @@ internal static partial class NavalSystem
         var nextMap=s.MapId;var nx=s.X+Math.Sin(s.Heading*Math.PI/180)*lookahead;var ny=s.Y-Math.Cos(s.Heading*Math.PI/180)*lookahead;
         if(!OceanMapResolver.Resolve(ocean,ref nextMap,ref nx,ref ny) || !ClearEnemyHull(enemy,ocean,nextMap,nx,ny)) enemy.AvoidUntil=now+1200;
         if(now<enemy.AvoidUntil) input=new(0,1,false);
-        ShipMovement.Step(s,d,input,dt,(map,x,y,heading)=>
+        ShipMovement.Step(s,MovementDefinition(enemy,now),input,dt,(map,x,y,heading)=>
         {
             var clear=OceanMapResolver.Resolve(ocean,ref map,ref x,ref y) && ClearEnemyHull(enemy,ocean,map,x,y);
             return (clear,map,x,y);

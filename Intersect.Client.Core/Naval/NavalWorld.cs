@@ -22,6 +22,7 @@ internal static partial class NavalWorld
     private static long _received, _inputTime;
     internal static void Clear() {ClearGunnery();CrewState=new();RewardFeed.Clear(); _ships.Clear(); _viewer = _crewCannonShip = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
     internal static ShipCrewState CrewState {get;private set;}=new();
+    internal static Guid Driver(ShipSnapshot ship)=>ship.HelmsmanId==Guid.Empty?ship.CaptainId:ship.HelmsmanId;
     internal static bool HasMember(ShipSnapshot ship,Guid playerId)=>playerId!=Guid.Empty && (ship.CaptainId==playerId || (ship.CrewIds??[]).Contains(playerId));
     internal static bool IsAboard(Guid playerId)=>Fresh && _ships.Values.Any(v=>HasMember(v.Current,playerId));
     internal static bool IsCaptain(Guid playerId) => playerId != Guid.Empty && Fresh && _ships.Values.Any(v => v.Current.CaptainId == playerId);
@@ -46,7 +47,7 @@ internal static partial class NavalWorld
         ApplyCannonballs(packet,now);
         _ships = next; _viewer = Globals.Me?.Id ?? Guid.Empty; _received = now;
         var crewShip=OwnShip;
-        var crewId=crewShip!=null && crewShip.CaptainId!=_viewer?crewShip.Id:Guid.Empty;
+        var crewId=crewShip!=null && Driver(crewShip)!=_viewer?crewShip.Id:Guid.Empty;
         if(crewId!=Guid.Empty && crewId!=_crewCannonShip && !crewShip!.Sinking)
             {CannonViewOpen=true;AutoPickCannonSide=true;}
         _crewCannonShip=crewId;
@@ -64,7 +65,7 @@ internal static partial class NavalWorld
         if (!Fresh || Globals.Me == null) return;
         ReadActions(busy);
         var own = _ships.Values.FirstOrDefault(v => HasMember(v.Current,Globals.Me.Id))?.Current;
-        if (own == null || own.CaptainId!=Globals.Me.Id || Environment.TickCount64 - _inputTime < 50) return;
+        if (own == null || Driver(own)!=Globals.Me.Id || Environment.TickCount64 - _inputTime < 50) return;
         _inputTime = Environment.TickCount64;
         bool Down(Keys key) => !busy && Globals.InputManager.IsKeyDown(key);
         Intersect.Client.Networking.Network.SendPacket(new ShipInputPacket { ShipId = own.Id,

@@ -5,6 +5,7 @@ namespace Intersect.Client.Networking;
 
 internal sealed partial class PacketHandler
 {
+    public void HandlePacket(IPacketSender sender,NavalManagementPacket packet)=>Intersect.Client.Interface.Interface.EnqueueInGame(ui=>ui.ApplyNavalManagement(packet.Json));
     public void HandlePacket(IPacketSender sender, HarbourStatePacket packet) =>
         Intersect.Client.Interface.Interface.EnqueueInGame(ui => ui.ApplyHarbourState(packet));
     public void HandlePacket(IPacketSender sender, NavalSnapshotPacket packet) =>

@@ -27,12 +27,13 @@ internal static partial class NavalSystem
         var participants=new[]{captainId}.Concat(attacker.Crew.Where(m=>now-m.Value.Seen<=1500).Select(m=>m.Key)).Distinct();
         foreach(var participant in participants)
         {
+            QueueNavalTask(participant,NavalTaskKind.ShipsSunk,1);
             PendingSailingRewards.TryGetValue(participant,out var pending);
             var awards=loot.Select(p=>new CargoAward(attackerId,attacker.Definition.CargoCapacity,new NavalCargoParcel {
                 ItemId=p.ItemId,Quantity=p.Quantity,Quality=p.Quality,Kind=p.Kind}));
             PendingSailingRewards[participant]=new(Math.Min(200000000000000L,(pending?.Experience??0)+victim.Enemy.SailingExperienceReward),
                 Cargo:(pending?.Cargo??[]).Concat(awards).Take(6400).ToArray(),
-                SailingExperience:Math.Min(200000000000000L,(pending?.SailingExperience??0)+(participant==captainId?victim.Enemy.SailingExperienceReward:0)));
+                SailingExperience:Math.Min(200000000000000L,(pending?.SailingExperience??0)+(participant==Driver(attacker)?victim.Enemy.SailingExperienceReward:0)));
         }
     }
 

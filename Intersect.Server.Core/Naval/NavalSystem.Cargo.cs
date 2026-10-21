@@ -197,7 +197,7 @@ internal static partial class NavalSystem
         finally
         {
             PacketSender.SendInventory(player);
-            if(committed) player.RefreshNavalCargoQuests(itemIds);
+            if(committed) {player.RefreshNavalCargoQuests(itemIds);player.UpdateNavalQuestTasks(NavalTaskKind.CargoUnloaded,selected.Length);}
         }
     }
 }

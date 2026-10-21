@@ -28,7 +28,7 @@ internal sealed class NavalCrewWindow:Window
         _hint=Text(this,"CrewHint",10);_hint.SetBounds(24,66,width-48,24);
         _status=Text(this,"CrewStatus",10);_status.SetBounds(24,102,width-48,24);
         _members=new ScrollControl(this,"CrewRoster") {OverflowX=OverflowBehavior.Hidden,OverflowY=OverflowBehavior.Scroll,AutoHideBars=true};
-        _members.SetBounds(24,142,width-48,height-296);
+        _members.SetBounds(24,142,width-48,height-342);
         _cargo=Text(this,"CrewCargo",11);_cargo.SetBounds(24,height-137,width-48,24);
         _action=new Button(this,"CrewAction") {Text=""};_action.SetBounds(24,height-95,width-200,34);
         var actionFrame=new Chrome(_action,"CrewActionFrame",Style.PrimaryAction);actionFrame.SetBounds(0,0,width-200,34);
@@ -37,6 +37,7 @@ internal sealed class NavalCrewWindow:Window
             _state.ShipId!=Guid.Empty?HarbourAction.LeaveCrew:HarbourAction.ClaimCargo);
         var close=new Button(this,"CrewClose") {Text=T("Close"),Font=GameContentManager.Current.GetFont("sourcesanspro")??Skin.DefaultFont,FontSize=11};
         close.SetBounds(width-164,height-95,140,34);close.Clicked+=(_,_)=>Hide();
+        NavalManagementWindow.Button(this,"NavalActivities","Naval activities",24,height-190,Width-48,32,()=>NavalManagementWindow.Request(NavalManageAction.Ammo));
         _footer=Text(this,"CrewFooter",10);_footer.SetBounds(24,height-49,width-48,22);Hide();
     }
     protected override void EnsureInitialized() { }
@@ -67,7 +68,9 @@ internal sealed class NavalCrewWindow:Window
             {
                 var row=new Chrome(_members,"CrewMember"+member.PlayerId,Style.Card);row.SetBounds(2,y,_members.Width-26,52);
                 var label=Text(row,"CrewName",12,true);label.SetBounds(12,10,row.Width-130,30);EventPanelText.Fit(label,member.Name,12);
-                var role=Text(row,"CrewRole",10);role.SetBounds(row.Width-112,12,104,26);role.Text=T(member.Captain?"Captain":"Crew member");y+=60;
+                var role=Text(row,"CrewRole",10);role.SetBounds(row.Width-112,12,104,26);role.Text=T(member.Captain?"Captain":"Crew member");
+                if(captain && !member.Captain){var id=member.PlayerId;role.Hide();NavalManagementWindow.Button(row,"OfferHelm","Offer helm",row.Width-126,9,112,32,()=>NavalManagementWindow.Request(NavalManageAction.OfferHelm,target:id));}
+                y+=60;
             }
         else foreach(var offer in state.Offers)
         {

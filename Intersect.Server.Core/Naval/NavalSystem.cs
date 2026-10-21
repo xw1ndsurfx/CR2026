@@ -24,11 +24,16 @@ internal static partial class NavalSystem
         internal readonly ShipInputAuthority Controls = new();
         internal long LastStep;
         internal Guid OwnerId;
+        internal Guid HelmsmanId,HelmOfferTo,HelmOfferToken;
+        internal long HelmOfferUntil,SlowUntil;
+        internal int SlowPercent;
+        internal readonly Dictionary<NavalSkillKind,long> SkillReady=[],SkillUntil=[];
+        internal readonly HashSet<Guid> RamTargets=[];
         internal string SinkingGraphics = definition.SinkingGraphics;
         internal long SunkUntil;
         internal int Health = 100, PendingDamage;
         internal long PortReady, StarboardReady, LastAction, NextDamageAttempt;
-        internal bool Anchored;
+        internal bool Anchored,DockRequested;
         internal Guid CombatTargetId;
         internal long CombatUntil;
         internal bool RewardClaimed;
@@ -202,6 +207,7 @@ internal static partial class NavalSystem
                 if (returnPoint != null && returnPoint.ReturnMapId != Guid.Empty) ReturnToHarbour(player,returnPoint);
                 else player.Warp(landing.MapId, landing.X, landing.Y);
                 player.User?.Save(force:true);
+                player.UpdateNavalQuestTasks(NavalTaskKind.Dockings,1);
                 Notice(player, "You have left the helm.");
             }
             lock (Gate) SendSnapshot(player);
@@ -213,9 +219,9 @@ internal static partial class NavalSystem
         lock (player.EntityLock)
         lock (Gate)
         {
-            if (packet.ShipId != player.CaptainedShipId ||
-                !Ships.TryGetValue(packet.ShipId, out var vessel) || vessel.State.CaptainId != player.Id ||
-                !vessel.Controls.Accept(vessel.State, player.Id, player.InGame && !player.IsDead && !player.HasPendingDeath, packet, now)) return;
+            if (player.NavalPartyExitRequested || packet.ShipId != player.NavalShipId ||
+                !Ships.TryGetValue(packet.ShipId, out var vessel) || Driver(vessel) != player.Id || player.Id!=vessel.State.CaptainId && !player.Party.Any(m=>m.Id==vessel.State.CaptainId) ||
+                !vessel.Controls.Accept(vessel.State, player.Id, player.InGame && !player.IsDead && !player.HasPendingDeath, packet, now, Driver(vessel))) return;
             if (packet.Thrust != 0) vessel.Anchored = false;
             player.RegisterAfkActivity();
         }
@@ -223,6 +229,7 @@ internal static partial class NavalSystem
 
     internal static void Update(Player player, long now)
     {
+        UpdateManagement(player,now);
         ApplyPendingGunnery(player,now);
         ApplyPendingExperience(player,now);
         ApplyCharacterExperience(player,now);
@@ -230,6 +237,7 @@ internal static partial class NavalSystem
         UpdateCrewPassenger(player,now);
         ShipState pendingWarp = null;
         Vessel rescueVessel = null;
+        var moor=false;
         Guid oldMap = Guid.Empty;
         double oldX = 0, oldY = 0;
         lock (Gate)
@@ -254,16 +262,19 @@ internal static partial class NavalSystem
                     vessel.LastStep = now;
                     var input = vessel.Anchored ? new ShipInput(0,0,true) : vessel.Controls.ForTick(now, player.NavalBusy);
                     oldMap = s.MapId; oldX = s.X; oldY = s.Y;
-                    ShipMovement.Step(s, vessel.Definition, input, dt, (map, x, y, heading) =>
+                    ShipMovement.Step(s, MovementDefinition(vessel,now), input, dt, (map, x, y, heading) =>
                     {
                         var resolved = OceanMapResolver.Resolve(ocean, ref map, ref x, ref y) && ClearHull(player, vessel, ocean, map, x, y);
                         return (resolved, map, x, y);
                     });
+                    if(vessel.DockRequested && NearCrewDock(vessel)){vessel.DockRequested=false;moor=true;}
+                    else if(vessel.DockRequested && !ByCrewDock(vessel))vessel.DockRequested=false;
                     if (oldMap != s.MapId) pendingWarp = s;
                     else { player.X = (int)Math.Floor(s.X); player.Y = (int)Math.Floor(s.Y); }
                 }
             }
         }
+        if(moor){Helm(player);return;}
         if (rescueVessel != null)
         {
             OwnedShip owned;
@@ -326,6 +337,9 @@ internal static partial class NavalSystem
     {
         if (Ships.TryGetValue(player.CaptainedShipId, out var vessel) && vessel.State.CaptainId == player.Id)
         {
+            vessel.HelmsmanId=vessel.HelmOfferTo=vessel.HelmOfferToken=Guid.Empty;vessel.DockRequested=false;
+            RepairRequests.Remove(vessel.State.Id);
+            foreach(var id in Repairs.Where(p=>p.Value.Ship==vessel.State.Id).Select(p=>p.Key).ToArray())Repairs.Remove(id);
             vessel.State.CaptainId = Guid.Empty; vessel.State.Speed = vessel.State.Throttle = 0;
             vessel.Controls.Reset();
             if (vessel.OwnerId != Guid.Empty)
@@ -352,14 +366,15 @@ internal static partial class NavalSystem
             SailingLevel=progress.Level,SailingExperience=progress.Experience,SailingRequired=progress.Required,
             Effects=player.InstanceType!=MapInstanceType.Overworld?[]:Effects.Where(e=>visible.Contains(e.Snapshot.MapId)).Select(e=>new NavalEffectSnapshot {
                 Id=e.Snapshot.Id,MapId=e.Snapshot.MapId,X=e.Snapshot.X,Y=e.Snapshot.Y,Heading=e.Snapshot.Heading,Kind=e.Snapshot.Kind,
-                AnimationId=e.Snapshot.AnimationId,PlaySound=e.Snapshot.PlaySound,AgeMilliseconds=(int)Math.Clamp(now-e.Born,0,1500) }).ToArray(), Ships = player.InstanceType != MapInstanceType.Overworld ? [] :
+                Graphic=e.Snapshot.Graphic,AnimationId=e.Snapshot.AnimationId,PlaySound=e.Snapshot.PlaySound,AgeMilliseconds=(int)Math.Clamp(now-e.Born,0,1500) }).ToArray(), Ships = player.InstanceType != MapInstanceType.Overworld ? [] :
             Ships.Values.Where(v => visible.Contains(v.State.MapId) && ocean.Contains(v.State.MapId) && MapController.Get(v.State.MapId) != null)
                 .OrderByDescending(v=>v.State.Id==player.NavalShipId?2:v.State.Id==targetId?1:0).Take(64)
-                .Select(v => new ShipSnapshot { CrewIds=v.Crew.Keys.ToArray(),Id = v.State.Id, CaptainId = v.State.CaptainId, MapId = v.State.MapId,
+                .Select(v => new ShipSnapshot { HelmsmanId=Driver(v),DockAvailable=v.State.Id==player.NavalShipId && v.State.CaptainId==player.Id && ByCrewDock(v),
+                    HelmOfferToken=v.HelmOfferTo==player.Id && v.HelmOfferUntil>now?v.HelmOfferToken:Guid.Empty,CrewIds=v.Crew.Keys.ToArray(),Id = v.State.Id, CaptainId = v.State.CaptainId, MapId = v.State.MapId,
                     CargoCapacity=v.OwnerId==player.Id?v.Definition.CargoCapacity:player.BoardedShipId==v.State.Id?player.NavalCrewPassage?.Capacity??0:0,
                     Cargo=v.OwnerId==player.Id?(player.NavalFleet.FirstOrDefault(s=>s.Id==v.State.Id)?.Cargo.ToArray()??[]):player.BoardedShipId==v.State.Id?(player.NavalCrewPassage?.Ship.Cargo.ToArray()??[]):[],
                     Enemy=v.Enemy!=null,Level=v.Enemy?.Level??1,MaximumHealth=v.MaximumHealth,Name=v.Name, X = v.State.X, Y = v.State.Y, Heading = v.State.Heading, Speed = v.State.Speed,
-                    Graphics = v.SunkUntil > 0 ? v.SinkingGraphics : v.State.DamageState > 0 ? v.Definition.DamagedGraphics : v.Definition.Graphics,
+                    Graphics = v.SunkUntil > 0 ? v.SinkingGraphics : v.State.DamageState > 0 ? v.Definition.DamagedGraphics : Math.Abs(v.State.Speed)<.05 && v.Definition.Frames==4?IdleGraphic(v.Definition):v.Definition.Graphics,
                     Frames = v.Definition.Frames, FrameMilliseconds = v.Definition.FrameMilliseconds,
                     Width = v.Definition.Width, Length = v.Definition.Length, Health = v.Health,
                     PortReloadMilliseconds = (int)Math.Clamp(v.PortReady-now,0,60000),
@@ -368,7 +383,7 @@ internal static partial class NavalSystem
                     PortFlash = v.PortReady-now > _settings.CannonReloadMilliseconds-200,
                     StarboardFlash = v.StarboardReady-now > _settings.CannonReloadMilliseconds-200 }).ToArray(),
             Cannonballs = player.InstanceType != MapInstanceType.Overworld ? [] : Cannonballs.Where(b=>visible.Contains(b.MapId))
-                .Select(b=>new CannonballSnapshot { Id=b.Id, MapId=b.MapId,X=b.X,Y=b.Y,Height=b.Height,Heading=b.Heading,AgeMilliseconds=(int)Math.Clamp(now-b.Born,0,60000) }).ToArray() });
+                .Select(b=>new CannonballSnapshot { Graphic=b.Ammo?.ProjectileGraphic??"",Id=b.Id, MapId=b.MapId,X=b.X,Y=b.Y,Height=b.Height,Heading=b.Heading,AgeMilliseconds=(int)Math.Clamp(now-b.Born,0,60000) }).ToArray() });
     }
 
     // A conservative circumscribed disk contains the hull at every continuous heading.
@@ -389,8 +404,9 @@ internal static partial class NavalSystem
     {
         var tiles = HullTiles(vessel, ocean, map, x, y);
         if (tiles.Any(t => !ClearTile(player, t.Map, t.X, t.Y))) return false;
-        return !Ships.Values.Any(other => other != vessel &&
-            tiles.Overlaps(HullTiles(other, ocean, other.State.MapId, other.State.X, other.State.Y)));
+        var collision=Ships.Values.FirstOrDefault(other=>other!=vessel && other.SunkUntil==0 && tiles.Overlaps(HullTiles(other,ocean,other.State.MapId,other.State.X,other.State.Y)));
+        if(collision!=null)TryRam(vessel,collision,Timing.Global.Milliseconds);
+        return collision==null;
     }
 
     private static bool ClearTile(Player player, Guid id, int x, int y)

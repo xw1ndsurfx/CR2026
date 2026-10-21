@@ -95,7 +95,7 @@ public sealed partial class NavalTests
         var roundtrip=MessagePackSerializer.Deserialize<ShipActionPacket>(MessagePackSerializer.Serialize(request));
         Assert.That(roundtrip.ShipId,Is.EqualTo(request.ShipId));Assert.That(roundtrip.Action,Is.EqualTo(ShipAction.PortCannons));
         Assert.That(typeof(ShipActionPacket).GetProperties().Where(p=>p.GetCustomAttribute<KeyAttribute>()!=null).Select(p=>p.Name),
-            Is.EquivalentTo(new[]{"ShipId","Action"}));
+            Is.EquivalentTo(new[]{"ShipId","Action","Ammunition"}));
         var snapshot=new NavalSnapshotPacket { Ships=[new(){Id=request.ShipId,Health=35,PortReloadMilliseconds=3500,StarboardReloadMilliseconds=0,
             CannonsEnabled=true,Anchored=true}],Cannonballs=[new(){Id=Guid.NewGuid(),MapId=Map,X=2.25,Y=7.75}] };
         var restored=MessagePackSerializer.Deserialize<NavalSnapshotPacket>(MessagePackSerializer.Serialize(snapshot));

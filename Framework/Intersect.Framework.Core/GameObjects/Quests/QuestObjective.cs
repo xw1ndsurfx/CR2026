@@ -56,4 +56,14 @@ public enum QuestObjective
     ParticipateInInvasions,
     ClearInvasionWaves,
     LoseInvasions,
+    NavalShipsSunk,
+    NavalCannonHits,
+    NavalHullDamage,
+    NavalRepairs,
+    NavalDockings,
+    NavalCargoUnloaded,
+    NavalSailingLevel,
+    NavalGunneryLevel,
+    NavalShipwrightLevel,
+
 }

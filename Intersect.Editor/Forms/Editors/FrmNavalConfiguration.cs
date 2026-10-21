@@ -38,7 +38,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         Text = T("Naval System Editor"); Size = new(1050, 780); MinimumSize = new(850, 620);
         StartPosition = FormStartPosition.CenterParent;
         var general = Page("Navigation and harbour");
-        general.Controls.Add(Fields(_navigation, 0, ["Ships", "SourceJson", "AdditionalData", "Presentation", "Sailing", "Herbonia", "Gunnery", "Ammunition"]));
+        general.Controls.Add(Fields(_navigation, 0, ["CareersVersion", "Ships", "SourceJson", "AdditionalData", "Presentation", "Sailing", "Herbonia", "Gunnery", "Ammunition", "Repair", "Skills"]));
         AddListPage("Test ships", _navigation.Ships.ToList(), 0, () => new ShipDefinition
             { Graphics = "Ship_CorpsRoyaux_002.png", DamagedGraphics = "Ship_CorpsRoyaux_005.png" },
             ships => _navigation.Ships = ships.ToArray());
@@ -50,7 +50,9 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         Page("Sailing progression").Controls.Add(Fields(_navigation.Sailing,0,[]));
         AddListPage("Herbonia AI patrols",_navigation.Herbonia.ToList(),0,()=>new HerboniaPatrol(),patrols=>_navigation.Herbonia=patrols.ToArray());
         Page("Crew cannons and gunnery").Controls.Add(Fields(_navigation.Gunnery,0,[]));
-        AddListPage("Cannon ammunition",_navigation.Ammunition.ToList(),0,()=>new CannonAmmunition(),ammo=>_navigation.Ammunition=ammo.ToArray());
+        AddListPage("Cannon ammunition",_navigation.Ammunition.ToList(),0,()=>CannonAmmunition.Defaults().FirstOrDefault(a=>!_navigation.Ammunition.Any(old=>old.Kind==a.Kind))??new CannonAmmunition(),ammo=>_navigation.Ammunition=ammo.ToArray());
+        Page("Ship repair activities").Controls.Add(Fields(_navigation.Repair,0,[]));
+        AddListPage("Sailing skills",_navigation.Skills.ToList(),0,()=>NavalSkillDefinition.Defaults().FirstOrDefault(a=>!_navigation.Skills.Any(old=>old.Kind==a.Kind))??new NavalSkillDefinition(),skills=>_navigation.Skills=skills.ToArray());
         var footer = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 44, FlowDirection = FlowDirection.RightToLeft };
         _save.Text = T("Save current section");
         var close = new Button { Text = T("Close"), AutoSize = true };
@@ -86,6 +88,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         var split = new SplitContainer { Dock = DockStyle.Fill, Size = new(1000, 620), SplitterDistance = 275 };
         var list = new ListBox { Dock = DockStyle.Fill };
         list.Format += (_, e) => e.Value = e.ListItem is HarbourOffer offer ? offer.Name :
+            e.ListItem is NavalSkillDefinition skill ? T(NavalSkillDefinition.Caption(skill.Kind)) :
             e.ListItem is CannonAmmunition ammunition ? T(CannonAmmunition.Caption(ammunition.Kind)) :
             e.ListItem is HerboniaPatrol patrol ? $"{patrol.Ship.Name} ({patrol.Ship.X}, {patrol.Ship.Y})" :
             e.ListItem is ShipDefinition ship ? $"{MapList.OrderedMaps.FirstOrDefault(m => m.MapId == ship.MapId)?.Name ?? ship.MapId.ToString()} ({ship.X}, {ship.Y})" : "";
@@ -94,8 +97,10 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         var add = new Button { Text = T("Add"), AutoSize = true };
         var remove = new Button { Text = T("Remove"), AutoSize = true };
         buttons.Controls.AddRange([add, remove]); split.Panel1.Controls.Add(list); split.Panel1.Controls.Add(buttons);
+        var limit=typeof(TItem)==typeof(NavalSkillDefinition)?5:typeof(TItem)==typeof(CannonAmmunition)?8:typeof(TItem)==typeof(ShipDefinition)?64:32;
         void Populate(TItem? selected)
         {
+            add.Enabled=items.Count<limit;
             list.Items.Clear(); list.Items.AddRange(items.Cast<object>().ToArray()); list.SelectedItem = selected;
         }
         void UpdateRemove() => remove.Enabled = list.SelectedItem is TItem selected &&
@@ -126,7 +131,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         };
         add.Click += (_, _) =>
         {
-            if (items.Count >= (typeof(TItem)==typeof(ShipDefinition) ? 64 : 32)) return;
+            if (items.Count >= limit) return;
             var item = create(); items.Add(item); store(items); Changed(section); Populate(item);
         };
         remove.Click += (_, _) =>
@@ -174,8 +179,14 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         {
             var row = panel.RowCount++; var value = property.GetValue(target); Control field;
             void Set(object? changed) { property.SetValue(target, changed); Changed(section); }
-            if (target is NavalPresentation && property.PropertyType==typeof(string))
+            if ((target is NavalPresentation || target is CannonAmmunition && property.Name is "Icon" or "ProjectileGraphic" or "WaterGraphic" or "HullGraphic" || target is NavalSkillDefinition && property.Name=="Icon") && property.PropertyType==typeof(string))
                 field=AssetField(property.Name,value?.ToString()??"",changed=>Set(changed));
+            else if(property.PropertyType==typeof(NavalSkillKind))
+            {
+                var box=new ComboBox {DropDownStyle=ComboBoxStyle.DropDownList,Dock=DockStyle.Fill};
+                box.Items.AddRange(Enum.GetValues<NavalSkillKind>().Select(k=>T(NavalSkillDefinition.Caption(k))).ToArray());box.SelectedIndex=(int)(NavalSkillKind)value!;
+                box.SelectedIndexChanged+=(_,_)=>Set((NavalSkillKind)box.SelectedIndex);field=box;
+            }
             else if(property.PropertyType==typeof(CannonAmmoKind))
             {
                 var box=new ComboBox {DropDownStyle=ComboBoxStyle.DropDownList,Dock=DockStyle.Fill};
@@ -212,7 +223,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
                 number.Value = Math.Clamp(Convert.ToDecimal(value, CultureInfo.InvariantCulture), number.Minimum, number.Maximum);
                 number.ValueChanged += (_, _) => { if (property.PropertyType == typeof(double)) Set((double)number.Value); else Set((int)number.Value); }; field = number;
             }
-            else if (property.Name is "Graphics" or "DamagedGraphics" or "SinkingGraphics")
+            else if (property.Name is "Graphics" or "DamagedGraphics" or "SinkingGraphics" or "IdleGraphics")
             {
                 var box = new ComboBox { Dock = DockStyle.Fill, Text = value?.ToString() ?? "" };
                 var directory = Path.Combine("resources", "ocean");
@@ -234,10 +245,11 @@ public sealed partial class FrmNavalConfiguration : DarkForm
                 text.TextChanged += (_, _) => Set(text.Text); field = text;
             }
             field.Name = property.Name;
-            panel.RowStyles.Add(new(SizeType.Absolute, target is NavalPresentation && (property.Name.EndsWith("Icon") || property.Name=="CrewCannonGraphic")?78:35));
+            panel.RowStyles.Add(new(SizeType.Absolute, (target is NavalPresentation or CannonAmmunition or NavalSkillDefinition) && (property.Name.EndsWith("Icon") || property.Name=="CrewCannonGraphic")?78:35));
             panel.Controls.Add(new Label { Text = T(target is HerboniaPatrol && property.Name=="Enabled" ? "Enable patrol" : target is GunnerySettings && property.Name=="Enabled"?"Enable crew cannons":target is GunnerySettings && property.Name=="MaximumLevel"?"Maximum Gunnery level":property.Name), Dock = DockStyle.Top, Height = 35, TextAlign = ContentAlignment.MiddleLeft }, 0, row);
             panel.Controls.Add(field, 1, row);
         }
+        panel.RowStyles.Add(new(SizeType.Percent,100));panel.RowCount++;
         return panel;
     }
 

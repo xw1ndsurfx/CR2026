@@ -20,7 +20,7 @@ internal static partial class NavalWorld
     private static long _gunRenew,_gunFire,_gunAcquire;
     internal static void RequestStation(CannonStationAction action)
     {
-        if(OwnShip is not {Sinking:false} own || own.CaptainId==Globals.Me?.Id) return;
+        if(OwnShip is not {Sinking:false} own || Driver(own)==Globals.Me?.Id) return;
         if(action==CannonStationAction.Fire && (Gunner.LeaseId==Guid.Empty || Gunner.Starboard!=CannonViewStarboard ||
             Environment.TickCount64<_gunFire || Gunner.ReloadMilliseconds>100 || Globals.Me?.IsBusy!=false)) return;
         if(action==CannonStationAction.Fire) _gunFire=Environment.TickCount64+300;
@@ -122,7 +122,7 @@ internal static partial class NavalWorld
             var bx=ball.Current.X;var by=ball.Current.Y;
             if(ball.Previous.MapId==ball.Current.MapId)
             {bx=ball.Previous.X+(bx-ball.Previous.X)*t;by=ball.Previous.Y+(by-ball.Previous.Y)*t;}
-            Effect(Presentation.CannonProjectileGraphic,"Projectile"+ShipMovement.DirectionRow(CannonViewRelativeHeading(ball.Current.Heading,beam)),
+            Effect(string.IsNullOrEmpty(ball.Current.Graphic)?Presentation.CannonProjectileGraphic:ball.Current.Graphic,"Projectile"+ShipMovement.DirectionRow(CannonViewRelativeHeading(ball.Current.Heading,beam)),
                 map.X+(float)bx*tw,map.Y+(float)by*th,ball.Current.AgeMilliseconds+Environment.TickCount64-ball.Received,true,
                 (float)Math.Max(0,ball.Previous.Height+(ball.Current.Height-ball.Previous.Height)*t));
         }
@@ -138,7 +138,7 @@ internal static partial class NavalWorld
                         frame.Height/2/th-frame.Layer.OffsetY/th,false,Opacity:frame.Layer.Opacity/255f));
                 continue;
             }
-            var asset=e.Kind switch {NavalEffectKind.Fire=>Presentation.CannonFireGraphic,NavalEffectKind.WaterImpact=>Presentation.WaterImpactGraphic,
+            var asset=!string.IsNullOrEmpty(e.Graphic)?e.Graphic:e.Kind switch {NavalEffectKind.Fire=>Presentation.CannonFireGraphic,NavalEffectKind.WaterImpact=>Presentation.WaterImpactGraphic,
                 NavalEffectKind.HullImpact or NavalEffectKind.ObstacleImpact=>Presentation.HullImpactGraphic,_=>""};
             var clip=e.Kind switch {NavalEffectKind.Fire=>"Fire",NavalEffectKind.WaterImpact=>"WaterImpact",_=>"HullImpact"};
             Effect(asset,clip,map.X+(float)e.X*tw,map.Y+(float)e.Y*th,Environment.TickCount64-effect.Born,false);

@@ -156,4 +156,5 @@ public enum EventCommandType
     OpenRoyalStylist = 1040,
 
     OpenNavalShop = 1050,
+    OpenNavalAmmoShop = 1051,
 }

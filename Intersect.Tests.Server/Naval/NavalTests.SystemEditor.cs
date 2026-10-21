@@ -82,6 +82,8 @@ public sealed partial class NavalTests
         Assert.That(new HarbourRequestPacket().View, Is.EqualTo(HarbourView.Fleet));
         Assert.That((int)EventCommandType.OpenRoyalStylist, Is.EqualTo(1040));
         Assert.That((int)new OpenNavalShopCommand().Type, Is.EqualTo(1050));
+        Assert.That((int)new OpenNavalAmmoShopCommand().Type,Is.EqualTo(1051));
+        Assert.That(JsonConvert.DeserializeObject<OpenNavalAmmoShopCommand>(JsonConvert.SerializeObject(new OpenNavalAmmoShopCommand()))!.Type,Is.EqualTo(EventCommandType.OpenNavalAmmoShop));
         var command = JsonConvert.DeserializeObject<OpenNavalShopCommand>(JsonConvert.SerializeObject(new OpenNavalShopCommand()));
         Assert.That(command!.Type, Is.EqualTo(EventCommandType.OpenNavalShop));
     }

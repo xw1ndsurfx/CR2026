@@ -1252,6 +1252,7 @@ public static partial class CommandPrinter
         return Strings.EventCommandList.openshop.ToString(ShopDescriptor.GetName(command.ShopId));
     }
 
+    private static string GetCommandText(OpenNavalAmmoShopCommand command,MapInstance map)=>Intersect.Framework.Core.Naval.NavalSetupText.Get("Open cannon ammunition shop",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
     private static string GetCommandText(OpenNavalShopCommand command, MapInstance map) =>
         Intersect.Framework.Core.Naval.NavalSetupText.Get("Open ship shop and repairs",
             System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);

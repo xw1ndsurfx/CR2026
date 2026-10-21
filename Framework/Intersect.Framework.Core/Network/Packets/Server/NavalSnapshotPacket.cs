@@ -21,6 +21,9 @@ public partial class NavalSnapshotPacket : IntersectPacket
 [MessagePackObject]
 public sealed class ShipSnapshot
 {
+    [Key(27)] public Guid HelmsmanId {get;set;}
+    [Key(28)] public bool DockAvailable {get;set;}
+    [Key(29)] public Guid HelmOfferToken {get;set;}
     [Key(26)] public Guid[] CrewIds {get;set;}=[];
     [Key(0)] public Guid Id { get; set; }
     [Key(1)] public Guid CaptainId { get; set; }
@@ -59,6 +62,7 @@ public sealed class CannonballSnapshot
     [Key(3)] public double Y { get; set; }
     [Key(4)] public double Heading {get;set;}
     [Key(5)] public int AgeMilliseconds {get;set;}
+    [Key(7)] public string Graphic {get;set;}="";
     [Key(6)] public double Height {get;set;}
 }
 
@@ -72,6 +76,7 @@ public sealed class NavalEffectSnapshot
     [Key(4)] public double Heading {get;set;}
     [Key(5)] public NavalEffectKind Kind {get;set;}
     [Key(6)] public int AgeMilliseconds {get;set;}
+    [Key(9)] public string Graphic {get;set;}="";
     [Key(8)] public Guid AnimationId {get;set;}
     [Key(7)] public bool PlaySound {get;set;}=true;
 }

@@ -69,8 +69,8 @@ internal static partial class NavalWorld
         if(!hold && elapsed>=frames.Length*Presentation.EffectFrameMilliseconds) return true;
         var frame=atlas.Frame(clip,elapsed,Presentation.EffectFrameMilliseconds)!;
         var scale=Options.Instance.Map.TileWidth/Presentation.EffectPixelsPerTile;
-        Graphics.DrawGameTexture(texture,new FloatRect(frame.X,frame.Y,frame.Width,frame.Height),
-            NavalEffectGeometry.Destination(frame,x,y,scale,rotation),Color.White,rotationDegrees:(float)rotation);
+        foreach(var part in NavalSpriteGeometry.Parts(frame)) Graphics.DrawGameTexture(texture,new FloatRect(part.X,part.Y,part.Width,part.Height),
+            NavalEffectGeometry.Destination(part,x,y,scale,rotation),Color.White,rotationDegrees:(float)rotation);
         return true;
     }
     private static void DrawNavalEffects(int row)
@@ -93,8 +93,8 @@ internal static partial class NavalWorld
             switch(e.Kind)
             {
                 case NavalEffectKind.Fire:DrawEffectAsset(Presentation.CannonFireGraphic,"Fire",x,y,elapsed,e.Heading-270);break;
-                case NavalEffectKind.WaterImpact:DrawEffectAsset(Presentation.WaterImpactGraphic,"WaterImpact",x,y,elapsed);break;
-                case NavalEffectKind.HullImpact:case NavalEffectKind.ObstacleImpact:DrawEffectAsset(Presentation.HullImpactGraphic,"HullImpact",x,y,elapsed);break;
+                case NavalEffectKind.WaterImpact:DrawEffectAsset(string.IsNullOrEmpty(e.Graphic)?Presentation.WaterImpactGraphic:e.Graphic,"WaterImpact",x,y,elapsed);break;
+                case NavalEffectKind.HullImpact:case NavalEffectKind.ObstacleImpact:DrawEffectAsset(string.IsNullOrEmpty(e.Graphic)?Presentation.HullImpactGraphic:e.Graphic,"HullImpact",x,y,elapsed);break;
             }
         }
     }

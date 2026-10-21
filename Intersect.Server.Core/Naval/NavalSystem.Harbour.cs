@@ -29,6 +29,7 @@ internal static partial class NavalSystem
                 var y = instance.MapId == Guid.Empty ? player.Y : instance.Y;
                 if (!HarbourAccessRules.ShopSessionValid(player.MapId, player.X, player.Y,
                     map, x, y, 0, 1, _settings.ShopInteractionRange)) return;
+                player.NavalAmmoShop=false;
                 player.NavalShopMap = map; player.NavalShopX = x; player.NavalShopY = y;
                 player.NavalShopExpires = Timing.Global.Milliseconds + _settings.ShopSessionSeconds * 1000L;
             }

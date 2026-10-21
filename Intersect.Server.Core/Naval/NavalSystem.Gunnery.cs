@@ -19,14 +19,15 @@ internal static partial class NavalSystem
     private sealed record GunReward(long Experience,long RetryAt=0);
     private static readonly Dictionary<Guid,GunReward> PendingGunnery=[];
     private static int PendingCrewShots;
-    private static bool GunnerEligible(Player player,Vessel vessel)=>player.BoardedShipId==vessel.State.Id &&
-        vessel.State.CaptainId!=Guid.Empty && vessel.Enemy==null && vessel.SunkUntil==0 && vessel.Health>0 &&
-        vessel.Crew.TryGetValue(player.Id,out var crew) && Timing.Global.Milliseconds-crew.Seen<=1500;
+    private static bool GunnerEligible(Player player,Vessel vessel)=>!player.NavalPartyExitRequested && player.NavalShipId==vessel.State.Id && Driver(vessel)!=player.Id &&
+        vessel.State.CaptainId!=Guid.Empty && (player.Id==vessel.State.CaptainId || player.Party.Any(m=>m.Id==vessel.State.CaptainId)) && vessel.Enemy==null && vessel.SunkUntil==0 && vessel.Health>0 && !Repairs.ContainsKey(player.Id) &&
+        (vessel.State.CaptainId==player.Id || vessel.Crew.TryGetValue(player.Id,out var crew) && Timing.Global.Milliseconds-crew.Seen<=1500);
     private static void PruneGuns(Vessel vessel,long now)
     {
         foreach(var entry in vessel.Guns)
             if(entry.Key>=_settings.Gunnery.CannonsPerSide*2 || entry.Value.Until<=now || vessel.SunkUntil>0 ||
-                vessel.State.CaptainId==Guid.Empty || !vessel.Crew.TryGetValue(entry.Value.Owner,out var crew) || now-crew.Seen>1500)
+                vessel.State.CaptainId==Guid.Empty || entry.Value.Owner==Driver(vessel) || Repairs.ContainsKey(entry.Value.Owner) ||
+                entry.Value.Owner!=vessel.State.CaptainId && (!vessel.Crew.TryGetValue(entry.Value.Owner,out var crew) || now-crew.Seen>1500))
             {entry.Value.Owner=entry.Value.Lease=Guid.Empty;entry.Value.Until=0;}
     }
     private static GunneryState GunnerState(Player player,long now)
@@ -35,7 +36,7 @@ internal static partial class NavalSystem
         var result=new GunneryState {Level=progress.Level,Experience=progress.Experience,Required=progress.Required,
             CannonsPerSide=settings.CannonsPerSide,AimArcDegrees=settings.AimArcDegrees,Message=player.GunneryMessage??"",
             Enabled=_settings.CannonsEnabled && settings.Enabled};
-        if(!Ships.TryGetValue(player.BoardedShipId,out var vessel) || !GunnerEligible(player,vessel)) return result;
+        if(!Ships.TryGetValue(player.NavalShipId,out var vessel) || !GunnerEligible(player,vessel)) return result;
         PruneGuns(vessel,now);result.ShipId=vessel.State.Id;
         var occupied=vessel.Guns.FirstOrDefault(g=>g.Value.Owner==player.Id);
         if(occupied.Value!=null)
@@ -44,11 +45,11 @@ internal static partial class NavalSystem
             result.Starboard=occupied.Key>=settings.CannonsPerSide;
             result.ReloadMilliseconds=(int)Math.Clamp(occupied.Value.ReadyAt-now,0,180000);
         }
-        result.Ammunition=_settings.Ammunition.Select(a=>new CannonAmmoView {Kind=a.Kind,RequiredLevel=a.RequiredLevel,
+        result.Ammunition=_settings.Ammunition.Select(a=>new CannonAmmoView {Icon=a.Icon,Kind=a.Kind,RequiredLevel=a.RequiredLevel,
             DamagePercent=a.DamagePercent,RangePercent=a.RangePercent,ReloadPercent=a.ReloadPercent,
-            Quantity=a.RequiresItem && a.ItemId!=Guid.Empty && ItemDescriptor.Get(a.ItemId)?.IsStackable==true?player.FindInventoryItemQuantity(a.ItemId)/a.UnitsPerShot:a.RequiresItem?0:-1,
+            Quantity=a.RequiresItem && a.ItemId!=Guid.Empty && ItemDescriptor.Get(a.ItemId)?.IsStackable==true?AmmoCount(player,a.ItemId)/a.UnitsPerShot:a.RequiresItem?0:-1,
             Available=progress.Level>=a.RequiredLevel && (!a.RequiresItem || a.ItemId!=Guid.Empty &&
-                ItemDescriptor.Get(a.ItemId)?.IsStackable==true && player.CanTakeItem(a.ItemId,a.UnitsPerShot))}).ToArray();
+                ItemDescriptor.Get(a.ItemId)?.IsStackable==true && AmmoCount(player,a.ItemId)>=a.UnitsPerShot)}).ToArray();
         return result;
     }
     internal static void Station(Player player,CannonStationPacket packet,long now)
@@ -92,7 +93,7 @@ internal static partial class NavalSystem
                 ammo=_settings.Ammunition.FirstOrDefault(a=>a.Kind==packet.Ammunition);
                 if(ammo==null || _settings.Gunnery.Curve().Progress(player.GunneryExperience).Level<ammo.RequiredLevel)
                 {player.GunneryMessage="This ammunition requires a higher Gunnery level.";SendSnapshot(player);return;}
-                if(ammo.RequiresItem && (ammo.ItemId==Guid.Empty || ItemDescriptor.Get(ammo.ItemId)?.IsStackable!=true || !player.CanTakeItem(ammo.ItemId,ammo.UnitsPerShot)))
+                if(ammo.RequiresItem && (ammo.ItemId==Guid.Empty || ItemDescriptor.Get(ammo.ItemId)?.IsStackable!=true || AmmoCount(player,ammo.ItemId)<ammo.UnitsPerShot))
                 {player.GunneryMessage="Not enough ammunition for this cannonball.";SendSnapshot(player);return;}
                 var s=vessel.State;var beam=ShipActions.Direction(s.Heading,packet.Starboard);
                 var offset=GunneryAim.StationOffset(current.Key%count,count,vessel.Definition.Length);
@@ -102,10 +103,10 @@ internal static partial class NavalSystem
                 {player.GunneryMessage="The cannon muzzle is blocked.";SendSnapshot(player);return;}
                 var heading=ShipMovement.Normalize(s.Heading+(packet.Starboard?90:-90)+packet.Yaw);var radians=heading*Math.PI/180;
                 var flight=CannonFlight.Plan(packet.Elevation,_settings.CannonSpeed,Math.Min(80,_settings.CannonRange*ammo.RangePercent/100d));
-                shot=new() {ImpactAnimationId=ammo.ImpactAnimationId,Flight=flight,GunnerId=player.Id,CaptainId=s.CaptainId,ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
+                shot=new() {Ammo=ammo,ImpactAnimationId=ammo.ImpactAnimationId,Flight=flight,GunnerId=player.Id,CaptainId=s.CaptainId,ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
                     DirectionX=Math.Sin(radians),DirectionY=-Math.Cos(radians),Heading=heading,Born=now,Speed=flight.HorizontalSpeed,
                     Remaining=flight.Range,
-                    Damage=Math.Clamp(_settings.CannonDamage*ammo.DamagePercent/100,1,300)};
+                    Damage=Math.Clamp(_settings.CannonDamage*ammo.DamagePercent/100*(100+SkillPower(vessel,NavalSkillKind.OpenFire,now))/100,1,900)};
                 reserved=current.Value;previousReady=reserved.ReadyAt;
                 reservation=reserved.Reservation=Guid.NewGuid();
                 reserved.ReadyAt=now+(long)_settings.Gunnery.GunReloadMilliseconds*ammo.ReloadPercent/100;
@@ -113,7 +114,7 @@ internal static partial class NavalSystem
             }
             // The owning player lock is held. Save ammunition outside the world lock; never lock/save another player.
             var consumed=false;
-            try {consumed=!ammo.RequiresItem || CommitGunAmmunition(player,ammo.ItemId,ammo.UnitsPerShot,()=>player.User?.Save(force:true)==UserSaveResult.Completed);}
+            try {consumed=!ammo.RequiresItem || CommitAmmo(player,ammo.ItemId,-ammo.UnitsPerShot,()=>player.User?.Save(force:true)==UserSaveResult.Completed);}
             catch(Exception e) {ApplicationContext.Context.Value?.Logger.LogError(e,"Could not save naval ammunition for {PlayerId}",player.Id);}
             lock(Gate)
             {
@@ -149,7 +150,8 @@ internal static partial class NavalSystem
     private static void CreditGunner(Cannonball ball,Vessel victim,int damage)
     {
         if(ball.GunnerId==Guid.Empty || victim.Enemy==null || damage<=0 || !Ships.TryGetValue(ball.ShipId,out var ship) ||
-            !ship.Crew.ContainsKey(ball.GunnerId)) return;
+            ship.State.CaptainId!=ball.GunnerId && !ship.Crew.ContainsKey(ball.GunnerId)) return;
+        QueueNavalTask(ball.GunnerId,NavalTaskKind.CannonHits,1);QueueNavalTask(ball.GunnerId,NavalTaskKind.HullDamage,damage);
         PendingGunnery.TryGetValue(ball.GunnerId,out var pending);
         PendingGunnery[ball.GunnerId]=new(Math.Min(200000000000000L,(pending?.Experience??0)+(long)damage*_settings.Gunnery.ExperiencePerDamage));
     }

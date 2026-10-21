@@ -146,13 +146,18 @@ internal sealed class NavalCargoWindow : Window
             var kind=Text(this,"CargoKind",10,Muted);kind.SetBounds(86,36,width-105,20);
             EventPanelText.Fit(kind,T(NavalCargo.Caption(parcel.Kind)),10);
             var quantity=Text(this,"CargoQuantity",12,Gold,true,true);quantity.SetBounds(width-150,12,138,28);
-            EventPanelText.Fit(quantity,string.Format(T("Qty: {0:N0}"),parcel.Quantity),12,9);
+            EventPanelText.Fit(quantity,NavalSetupText.Display(string.Format(T("Qty: {0:N0}"),parcel.Quantity)),12,9);
             var quality=Text(this,"CargoQuality",10,QualityColor(parcel.Quality),true);
             quality.SetBounds(156,59,width-170,19);quality.Text=string.Format(T("Quality {0}/5"),parcel.Quality);
             var marks=new QualityMarks(this,parcel.Quality);marks.SetBounds(86,64,60,9);
             var bx=width<330?12:86;var bw=Math.Max(60,Math.Min(110,(width-bx-20)/2));
-            var unloadButton=new Button(this,"CargoUnload") {Text=T("Unload")};unloadButton.SetBounds(bx,86,bw,26);
-            var discardButton=new Button(this,"CargoDiscard") {Text=T("Discard")};discardButton.SetBounds(bx+bw+8,86,bw,26);
+            var unloadButton=new Button(this,"CargoUnload") {Text=""};unloadButton.SetBounds(bx,86,bw,26);
+            var discardButton=new Button(this,"CargoDiscard") {Text=""};discardButton.SetBounds(bx+bw+8,86,bw,26);
+            foreach(var (button,caption) in new[]{(unloadButton,"Unload"),(discardButton,"Discard")})
+            {
+                var label=Text(button,"CargoActionCaption",11,Cream,true,true);label.SetBounds(4,2,bw-8,22);
+                EventPanelText.Fit(label,T(caption),11,9);
+            }
             unloadButton.Clicked+=(_,_)=>unload();discardButton.Clicked+=(_,_)=>discard();
             TooltipText=name;
         }

@@ -1,7 +1,7 @@
 using MessagePack;
 namespace Intersect.Framework.Core.Naval;
 
-public enum CannonAmmoKind : byte { Standard, Heavy, LongRange }
+public enum CannonAmmoKind : byte { Standard, Heavy, LongRange, Lightning, Chain, Explosive, Ice, Cursed }
 public enum CannonStationAction : byte { Acquire, Release, Renew, Fire }
 public sealed class GunnerySettings
 {
@@ -20,6 +20,16 @@ public sealed class GunnerySettings
 public sealed class CannonAmmunition
 {
     public CannonAmmoKind Kind {get;set;}
+    public int RequiredSailingLevel {get;set;}=1;
+    public string Icon {get;set;}="";
+    public string ProjectileGraphic {get;set;}="";
+    public string WaterGraphic {get;set;}="";
+    public string HullGraphic {get;set;}="";
+    public Guid ShopCurrencyItemId {get;set;}
+    public int ShopPrice {get;set;}=10;
+    public bool ForSale {get;set;}
+    public int SlowPercent {get;set;}
+    public int SlowSeconds {get;set;}=5;
     public int RequiredLevel {get;set;}=1;
     public bool RequiresItem {get;set;}
     public Guid ItemId {get;set;}
@@ -28,15 +38,20 @@ public sealed class CannonAmmunition
     public int DamagePercent {get;set;}=100;
     public int RangePercent {get;set;}=100;
     public int ReloadPercent {get;set;}=100;
-    public bool IsValid()=>Enum.IsDefined(Kind) && RequiredLevel is >=1 and <=200 && UnitsPerShot is >=1 and <=100 &&
+    public bool IsValid()=>RequiredSailingLevel is >=1 and <=200 && ShopPrice is >=0 and <=1000000000 && SlowPercent is >=0 and <=80 && SlowSeconds is >=1 and <=30 && new[]{Icon,ProjectileGraphic,WaterGraphic,HullGraphic}.All(NavalPresentation.SafeAsset) && Enum.IsDefined(Kind) && RequiredLevel is >=1 and <=200 && UnitsPerShot is >=1 and <=100 &&
         DamagePercent is >=10 and <=300 && RangePercent is >=25 and <=200 && ReloadPercent is >=25 and <=300;
-    public static CannonAmmunition[] Defaults()=>[new(),new(){Kind=CannonAmmoKind.Heavy,RequiredLevel=3,RequiresItem=true,DamagePercent=150,RangePercent=70,ReloadPercent=150},
-        new(){Kind=CannonAmmoKind.LongRange,RequiredLevel=5,RequiresItem=true,DamagePercent=80,RangePercent=140,ReloadPercent=120}];
-    public static string Caption(CannonAmmoKind kind)=>kind switch {CannonAmmoKind.Heavy=>"Heavy cannonball",CannonAmmoKind.LongRange=>"Long-range cannonball",_=>"Standard cannonball"};
+    public static CannonAmmunition[] Defaults()=>[new(),new(){Kind=CannonAmmoKind.Heavy,RequiredSailingLevel=3,RequiredLevel=3,RequiresItem=true,DamagePercent=150,RangePercent=70,ReloadPercent=150},
+        new(){Kind=CannonAmmoKind.LongRange,RequiredSailingLevel=5,RequiredLevel=5,RequiresItem=true,DamagePercent=80,RangePercent=140,ReloadPercent=120},
+        Special(CannonAmmoKind.Lightning,10,120,40),Special(CannonAmmoKind.Chain,5,70,60),Special(CannonAmmoKind.Explosive,15,180,0),
+        Special(CannonAmmoKind.Ice,8,80,50),Special(CannonAmmoKind.Cursed,20,140,25)];
+    private static CannonAmmunition Special(CannonAmmoKind kind,int level,int damage,int slow)=>new() {Kind=kind,RequiresItem=true,RequiredLevel=level,RequiredSailingLevel=level,DamagePercent=damage,SlowPercent=slow,
+        ProjectileGraphic="Cannon_"+kind+".png",WaterGraphic="Cannon_"+kind+".png",HullGraphic="Cannon_"+kind+".png"};
+    public static string Caption(CannonAmmoKind kind)=>kind switch {CannonAmmoKind.Heavy=>"Heavy cannonball",CannonAmmoKind.LongRange=>"Long-range cannonball",CannonAmmoKind.Lightning=>"Lightning cannonball",CannonAmmoKind.Chain=>"Chain shot",CannonAmmoKind.Explosive=>"Explosive cannonball",CannonAmmoKind.Ice=>"Ice cannonball",CannonAmmoKind.Cursed=>"Cursed cannonball",_=>"Standard cannonball"};
 }
 [MessagePackObject]
 public sealed class CannonAmmoView
 {
+    [Key(7)] public string Icon {get;set;}="";
     [Key(0)] public CannonAmmoKind Kind {get;set;}
     [Key(1)] public int RequiredLevel {get;set;}
     [Key(2)] public int Quantity {get;set;}

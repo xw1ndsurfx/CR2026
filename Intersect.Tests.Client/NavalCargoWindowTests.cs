@@ -195,6 +195,42 @@ public sealed class NavalCargoWindowTests
         foreach(var button in Descendants(window).OfType<Button>())
             Assert.That(button.X>=0 && button.Y>=0 && button.Right<=button.Parent!.Width,Is.True,button.Name);
     }
+    [TestCase(640,480)]
+    [TestCase(1920,1080)]
+    public void AmmoAndRepairPanelsScrollUseReadableCaptionsAndDoNotModifyLandInventory(int width,int height)
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(width,height)};
+        var window=new NavalManagementWindow(canvas);window.Apply(new(){Mode=NavalManageAction.Ammo,
+            Ammo=Enum.GetValues<CannonAmmoKind>().Select(k=>new NavalAmmoOffer {Kind=k,Quantity=15,MainQuantity=5,Available=true}).ToArray()});
+        var scroll=Descendants(window).OfType<ScrollControl>().Single();Assert.That(scroll.VerticalScrollBar.ContentSize,Is.GreaterThan(scroll.Height));
+        foreach(var b in Descendants(scroll).OfType<Button>())
+        {
+            var caption=Descendants(b).OfType<Label>().Single(l=>l.Name==b.Name+"Caption");Assert.That(caption.Text,Is.Not.Empty);
+            Assert.That(caption.Height,Is.GreaterThanOrEqualTo(22));Assert.That(caption.Right,Is.LessThanOrEqualTo(b.Width));
+        }
+        window.Apply(new(){Mode=NavalManageAction.Repair,RepairToken=Guid.NewGuid(),RepairTarget=1,RepairKind=NavalRepairKind.Caulking,RepairRequiredHits=5});
+        var targets=Descendants(window).OfType<Button>().Where(b=>b.Name.StartsWith("RepairTarget")).ToArray();
+        Assert.That(targets.Length,Is.EqualTo(3));Assert.That(targets.Count(b=>!b.IsDisabled),Is.EqualTo(1));
+        Assert.That(window.Width,Is.LessThan(width));Assert.That(window.Height,Is.LessThan(height));
+        window.Apply(new(){Mode=NavalManageAction.CancelRepair});Assert.That(window.IsHidden,Is.True);
+    }
+    [Test] public void CargoActionsHaveFullHeightReadableChildLabelsAndFormattedNumbersUseSupportedSpaces()
+    {
+        var previous=System.Globalization.CultureInfo.CurrentCulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture=System.Globalization.CultureInfo.GetCultureInfo("fr-CA");
+            using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(800,600)};
+            var window=new NavalCargoWindow(canvas);window.Update(new(){Id=Guid.NewGuid(),Cargo=[new(){ItemId=Guid.NewGuid(),Quantity=1000000}]},true);
+            foreach(var button in Descendants(window).OfType<Button>().Where(b=>b.Name is "CargoUnload" or "CargoDiscard"))
+            {
+                var label=Descendants(button).OfType<Label>().Single(l=>l.Name=="CargoActionCaption");Assert.That(label.Height,Is.EqualTo(22));Assert.That(label.Text,Is.Not.Empty);
+            }
+            var qty=Descendants(window).OfType<Label>().Single(l=>l.Name=="CargoQuantity");Assert.That(qty.Text,Does.Not.Contain("\u00a0").And.Not.Contain("\u202f"));
+        }
+        finally{System.Globalization.CultureInfo.CurrentCulture=previous;}
+    }
+
     private static IEnumerable<ControlBase> Descendants(ControlBase parent)
     {foreach(var child in parent.Children) {yield return child;foreach(var descendant in Descendants(child)) yield return descendant;}}
     private sealed class TestContent:GameContentManager

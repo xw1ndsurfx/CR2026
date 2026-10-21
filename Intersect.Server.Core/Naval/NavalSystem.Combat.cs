@@ -1,3 +1,5 @@
+using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Server.Database.PlayerData;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core;
@@ -12,6 +14,7 @@ internal static partial class NavalSystem
 {
     private sealed class Cannonball
     {
+        internal CannonAmmunition Ammo;
         internal CannonFlight Flight;
         internal double Travelled;
         internal double Height=>Flight?.HeightAtDistance(Travelled)??0;
@@ -46,37 +49,51 @@ internal static partial class NavalSystem
 
     internal static void Action(Player player, ShipActionPacket packet, long now)
     {
-        lock (player.EntityLock)
+        lock(player.EntityLock)
         {
-            var leave = false;
-            lock (Gate)
+            var leave=false;var shots=new List<Cannonball>();CannonAmmunition ammo=null;Vessel reserved=null;long ready=0;var starboard=packet.Action==ShipAction.StarboardCannons;
+            lock(Gate)
             {
-                if (!IsEnabled() || !player.InGame || player.IsDead || player.HasPendingDeath || player.NavalBusy || player.Z != 0 ||
-                    player.InstanceType != MapInstanceType.Overworld || player.CaptainedShipId != packet.ShipId ||
-                    !Ships.TryGetValue(packet.ShipId,out var vessel) || vessel.State.CaptainId != player.Id ||
-                    vessel.State.MapId != player.MapId || vessel.SunkUntil > 0 ||
-                    (packet.Action is ShipAction.Anchor or ShipAction.LeaveHelm && now-vessel.LastAction < 150) ||
-                    !ShipActions.IsServerAction(packet.Action)) return;
-                if (packet.Action is ShipAction.PortCannons or ShipAction.StarboardCannons &&
-                    !ShipActions.CanFire(_settings.CannonsEnabled,true,false,now,
-                        packet.Action==ShipAction.PortCannons?vessel.PortReady:vessel.StarboardReady)) return;
-                vessel.LastAction = now;
-                player.RegisterAfkActivity();
-                if (packet.Action == ShipAction.LeaveHelm) leave = true;
-                else if (packet.Action == ShipAction.Anchor)
-                {vessel.Anchored=!vessel.Anchored;Emit(NavalEffectKind.Anchor,vessel.State.MapId,vessel.State.X,vessel.State.Y,0,now);}
-                else Fire(vessel,packet.Action == ShipAction.StarboardCannons, now);
+                if(!IsEnabled() || player.NavalPartyExitRequested || !player.InGame || player.IsDead || player.HasPendingDeath || player.NavalBusy || player.Z!=0 ||
+                    player.InstanceType!=MapInstanceType.Overworld || player.NavalShipId!=packet.ShipId ||
+                    !Ships.TryGetValue(packet.ShipId,out var v) || Driver(v)!=player.Id || player.Id!=v.State.CaptainId && !player.Party.Any(m=>m.Id==v.State.CaptainId) || v.State.MapId!=player.MapId || v.SunkUntil>0 || !ShipActions.IsServerAction(packet.Action))return;
+                if(packet.Action==ShipAction.LeaveHelm){if(v.State.CaptainId!=player.Id){v.HelmsmanId=Guid.Empty;v.Controls.Reset();return;}leave=true;}
+                else if(packet.Action==ShipAction.Anchor)
+                {if(now-v.LastAction<150)return;v.LastAction=now;v.Anchored=!v.Anchored;Emit(NavalEffectKind.Anchor,v.State.MapId,v.State.X,v.State.Y,0,now);}
+                else
+                {
+                    ready=starboard?v.StarboardReady:v.PortReady;
+                    if(!ShipActions.CanFire(_settings.CannonsEnabled,true,false,now,ready) || Cannonballs.Count+PendingCrewShots>509)return;
+                    ammo=_settings.Ammunition.FirstOrDefault(a=>a.Kind==packet.Ammunition);
+                    if(ammo==null || _settings.Sailing.Progress(player.SailingExperience).Level<ammo.RequiredSailingLevel ||
+                        ammo.RequiresItem && (ItemDescriptor.Get(ammo.ItemId)?.IsStackable!=true || AmmoCount(player,ammo.ItemId)<ammo.UnitsPerShot*3))return;
+                    reserved=v;FireAmmunition(v,starboard,now,ammo,shots);PendingCrewShots+=shots.Count;
+                }
             }
-            if (leave) Helm(player);
+            if(leave){Helm(player);return;}
+            if(reserved==null)return;
+            var paid=false;
+            try {paid=shots.Count>0 && (!ammo.RequiresItem || CommitAmmo(player,ammo.ItemId,-ammo.UnitsPerShot*shots.Count,()=>player.User?.Save(force:true)==UserSaveResult.Completed));}
+            finally
+            {
+                lock(Gate)
+                {
+                    PendingCrewShots-=shots.Count;
+                    if(paid){Cannonballs.AddRange(shots);foreach(var shot in shots)Emit(NavalEffectKind.Fire,shot.MapId,shot.X,shot.Y,shot.Heading,now);player.RegisterAfkActivity();}
+                    else if(starboard)reserved.StarboardReady=ready;else reserved.PortReady=ready;
+                    SendSnapshot(player);
+                }
+            }
         }
     }
 
-    private static void Fire(Vessel vessel, bool starboard, long now)
+    private static void Fire(Vessel vessel,bool starboard,long now)=>FireAmmunition(vessel,starboard,now,null,null);
+    private static void FireAmmunition(Vessel vessel, bool starboard, long now,CannonAmmunition ammo,List<Cannonball> planned)
     {
         var ready = starboard ? vessel.StarboardReady : vessel.PortReady;
         if (!ShipActions.CanFire(_settings.CannonsEnabled,vessel.SunkUntil==0,false,now,ready) || Cannonballs.Count+PendingCrewShots > 509) return;
-        if (starboard) vessel.StarboardReady = now + _settings.CannonReloadMilliseconds;
-        else vessel.PortReady = now + _settings.CannonReloadMilliseconds;
+        if (starboard) vessel.StarboardReady = now + _settings.CannonReloadMilliseconds*(ammo?.ReloadPercent??100)/100;
+        else vessel.PortReady = now + _settings.CannonReloadMilliseconds*(ammo?.ReloadPercent??100)/100;
         var s=vessel.State; var d=vessel.Definition;
         var direction=ShipActions.Direction(s.Heading,starboard);
         var forwardX=Math.Sin(s.Heading*Math.PI/180); var forwardY=-Math.Cos(s.Heading*Math.PI/180);
@@ -88,9 +105,9 @@ internal static partial class NavalSystem
             var map=s.MapId; var x=s.X+direction.X*radius+forwardX*gun*d.Length/4;
             var y=s.Y+direction.Y*radius+forwardY*gun*d.Length/4;
             if (!OceanMapResolver.Resolve(ocean,ref map,ref x,ref y) || BlocksCannonball(map,x,y)) continue;
-            Emit(NavalEffectKind.Fire,map,x,y,ShipMovement.Normalize(s.Heading+(starboard?90:-90)),now,!sounded);sounded=true;
-            Cannonballs.Add(new() { ImpactAnimationId=_settings.Ammunition.FirstOrDefault(a=>a.Kind==CannonAmmoKind.Standard)?.ImpactAnimationId??Guid.Empty,CaptainId=s.CaptainId,Enemy=vessel.Enemy!=null,DockSafeRange=vessel.Enemy?.DockSafeRange??0,Born=now,Heading=ShipMovement.Normalize(s.Heading+(starboard?90:-90)),ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
-                DirectionX=direction.X,DirectionY=direction.Y,Remaining=_settings.CannonRange,Speed=_settings.CannonSpeed,Damage=vessel.Enemy?.CannonDamage??_settings.CannonDamage });
+            if(planned==null)Emit(NavalEffectKind.Fire,map,x,y,ShipMovement.Normalize(s.Heading+(starboard?90:-90)),now,!sounded);sounded=true;
+            (planned??Cannonballs).Add(new() { Ammo=ammo,ImpactAnimationId=ammo?.ImpactAnimationId??_settings.Ammunition.FirstOrDefault(a=>a.Kind==CannonAmmoKind.Standard)?.ImpactAnimationId??Guid.Empty,CaptainId=s.CaptainId,Enemy=vessel.Enemy!=null,DockSafeRange=vessel.Enemy?.DockSafeRange??0,Born=now,Heading=ShipMovement.Normalize(s.Heading+(starboard?90:-90)),ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
+                DirectionX=direction.X,DirectionY=direction.Y,Remaining=Math.Min(80,_settings.CannonRange*(ammo?.RangePercent??100)/100d),Speed=_settings.CannonSpeed,Damage=vessel.Enemy?.CannonDamage??Math.Clamp(_settings.CannonDamage*(ammo?.DamagePercent??100)/100*(100+SkillPower(vessel,NavalSkillKind.OpenFire,now))/100,1,900) });
         }
     }
 
@@ -136,7 +153,12 @@ internal static partial class NavalSystem
                     ball.OwnerId!=Guid.Empty && ball.OwnerId==target.OwnerId,_settings.PlayerShipDamage);
                 if(ball.Enemy && (DockProtected(map,x,y,ball.DockSafeRange) ||
                     DockProtected(target.State.MapId,target.State.X,target.State.Y,ball.DockSafeRange))) permitted=false;
-                if(permitted && Ships.TryGetValue(ball.ShipId,out var attacker)) Engage(attacker,target,now);
+                if(permitted && Ships.TryGetValue(ball.ShipId,out var attacker))
+                {
+                    Engage(attacker,target,now);
+                    if(ball.GunnerId==Guid.Empty && !ball.Enemy){QueueNavalTask(Driver(attacker),NavalTaskKind.CannonHits,1);QueueNavalTask(Driver(attacker),NavalTaskKind.HullDamage,Math.Min(target.Health,ball.Damage));}
+                    if(ball.Ammo is {SlowPercent:>0} slow){target.SlowPercent=slow.SlowPercent;target.SlowUntil=now+slow.SlowSeconds*1000L;}
+                }
                 // Protected player hulls still intercept shots; no firing through another ship.
                 if (permitted && target.OwnerId==Guid.Empty)
                 {
@@ -153,11 +175,11 @@ internal static partial class NavalSystem
                     }
                 }
                 else if (permitted && target.OwnerId!=Guid.Empty)
-                    target.PendingDamage=Math.Min(100,target.PendingDamage+ball.Damage);
+                    target.PendingDamage=Math.Min(100,target.PendingDamage+Math.Max(1,ball.Damage*100/(100+SkillPower(target,NavalSkillKind.TakeCover,now))));
                 stopped=true;return false;
             });
             ball.Remaining-=travelled;ball.Travelled+=travelled;
-            if (stopped || ball.Remaining<=0) {Emit(impact,ball.MapId,ball.X,ball.Y,ball.Heading,now,animationId:ball.ImpactAnimationId);Cannonballs.Remove(ball);}
+            if (stopped || ball.Remaining<=0) {Emit(impact,ball.MapId,ball.X,ball.Y,ball.Heading,now,animationId:ball.ImpactAnimationId,graphic:impact==NavalEffectKind.WaterImpact?ball.Ammo?.WaterGraphic:ball.Ammo?.HullGraphic);Cannonballs.Remove(ball);}
         }
         // Unoccupied public test targets disappear after their sinking animation until server restart/configuration reload.
         foreach (var vessel in Ships.Values.Where(v=>v.Enemy==null && v.OwnerId==Guid.Empty && v.State.CaptainId==Guid.Empty && v.SunkUntil>0 && now>=v.SunkUntil).ToArray())

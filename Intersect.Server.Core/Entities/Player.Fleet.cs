@@ -6,12 +6,17 @@ namespace Intersect.Server.Entities;
 
 public partial class Player
 {
+    [JsonIgnore, NotMapped] public NavalCareerData NavalCareer {get;set;}=new();
+    [JsonIgnore, NotMapped] internal CannonAmmoKind NavalSelectedAmmo {get;set;}
+    [JsonIgnore, NotMapped] internal long LastNavalManageRequest {get;set;}
+    [JsonIgnore, NotMapped] internal bool NavalPartyExitRequested {get;set;}
+    [JsonIgnore, NotMapped] internal bool NavalAmmoShop {get;set;}
     // Stored with the inventory in the same native account SaveChanges transaction.
     [JsonIgnore, Column("NavalFleet")]
     public string NavalFleetJson
     {
-        get => JsonConvert.SerializeObject(new NavalPlayerData {GunneryExperience=GunneryExperience,Ships=NavalFleet,CrewPassage=NavalCrewPassage,SailingExperience=SailingExperience,PendingCharacterExperience=PendingNavalCharacterExperience,AdditionalData=_navalExtra});
-        set {var data=NavalPlayerData.Parse(value);GunneryExperience=data.GunneryExperience;NavalFleet=data.Ships;NavalCrewPassage=data.CrewPassage;SailingExperience=data.SailingExperience;PendingNavalCharacterExperience=data.PendingCharacterExperience;_navalExtra=data.AdditionalData;}
+        get => JsonConvert.SerializeObject(new NavalPlayerData {Career=NavalCareer,GunneryExperience=GunneryExperience,Ships=NavalFleet,CrewPassage=NavalCrewPassage,SailingExperience=SailingExperience,PendingCharacterExperience=PendingNavalCharacterExperience,AdditionalData=_navalExtra});
+        set {var data=NavalPlayerData.Parse(value);NavalCareer=data.Career;GunneryExperience=data.GunneryExperience;NavalFleet=data.Ships;NavalCrewPassage=data.CrewPassage;SailingExperience=data.SailingExperience;PendingNavalCharacterExperience=data.PendingCharacterExperience;_navalExtra=data.AdditionalData;}
     }
     [JsonIgnore, NotMapped] public ShipCrewPassage NavalCrewPassage {get;set;}
     [JsonIgnore, NotMapped] public long GunneryExperience {get;set;}

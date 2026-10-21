@@ -28,6 +28,7 @@ internal sealed class HarbourWindow : Window
         SetSize(660, view==HarbourView.Fleet?540:500); Alignment = [Alignments.Center]; DeleteOnClose = false; DisableResizing();
         if(view==HarbourView.Fleet)
             Button(this,"FleetCrew","Ship crew",16,480,625,()=>Networking.Network.SendPacket(new HarbourRequestPacket {View=HarbourView.Crew}));
+        if(view==HarbourView.Shop) Button(this,"NavalSkills","Sailing skills",16,465,625,()=>NavalManagementWindow.Request(NavalManageAction.Skills));
         _message = Text(this, "Status", "", 16, 36, 625, 58);
         _cards = new Base(this, "ShipCards"); _cards.SetBounds(16, 100, 625, 320);
         _previous = Button(this, "Previous", "Previous", 16, 435, 110, () => { _page--; RenderEntries(); });
@@ -44,7 +45,7 @@ internal sealed class HarbourWindow : Window
     }
     private static Button Button(Base parent, string id, string caption, int x, int y, int w, Action action)
     {
-        var button = new Button(parent, id) { Text = caption is "Unload cargo" or "Ship crew"?NavalSetupText.Get(caption,ClientLanguages.Current):ClientLanguages.Text(caption),
+        var button = new Button(parent, id) { Text = caption is "Unload cargo" or "Ship crew" or "Sailing skills"?NavalSetupText.Get(caption,ClientLanguages.Current):ClientLanguages.Text(caption),
             Font = GameContentManager.Current.GetFont("sourcesanspro") ?? parent.Skin.DefaultFont, FontSize = 11 };
         button.SetBounds(x,y,w,30); button.Clicked += (_,_) => action(); return button;
     }

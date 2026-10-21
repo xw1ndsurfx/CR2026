@@ -1309,6 +1309,436 @@
       "en": "Cargo could not be saved. Nothing was changed.",
       "fr": "La cargaison n’a pas pu être sauvegardée. Rien n’a été modifié.",
       "es": "No se pudo guardar la carga. No se modificó nada."
+    },
+    "Naval activities": {
+      "en": "Naval activities",
+      "fr": "Activités navales",
+      "es": "Actividades navales"
+    },
+    "Ammo": {
+      "en": "Ammo",
+      "fr": "Ammo",
+      "es": "Munición"
+    },
+    "Sailing skills": {
+      "en": "Sailing skills",
+      "fr": "Compétences de navigation",
+      "es": "Habilidades de navegación"
+    },
+    "Ship repairs": {
+      "en": "Ship repairs",
+      "fr": "Réparer le navire",
+      "es": "Reparar el barco"
+    },
+    "Helm control": {
+      "en": "Helm control",
+      "fr": "Contrôle de la barre",
+      "es": "Control del timón"
+    },
+    "Sailing": {
+      "en": "Sailing",
+      "fr": "Navigation",
+      "es": "Navegación"
+    },
+    "Shipwright": {
+      "en": "Shipwright",
+      "fr": "Charpentier naval",
+      "es": "Carpintería naval"
+    },
+    "Naval progression": {
+      "en": "Naval progression",
+      "fr": "Progression navale",
+      "es": "Progresión naval"
+    },
+    "Sailing {0} - Gunnery {1} - Shipwright {2}": {
+      "en": "Sailing {0} - Gunnery {1} - Shipwright {2}",
+      "fr": "Navigation {0} - Canonnier {1} - Charpentier {2}",
+      "es": "Navegación {0} - Artillería {1} - Carpintería {2}"
+    },
+    "Leave the cannon and choose a repair activity.": {
+      "en": "Leave the cannon and choose a repair activity.",
+      "fr": "Quittez le canon et choisissez une réparation.",
+      "es": "Deja el cañón y elige una reparación."
+    },
+    "Hammering": {
+      "en": "Hammering",
+      "fr": "Martelage",
+      "es": "Martillado"
+    },
+    "Caulking": {
+      "en": "Caulking",
+      "fr": "Calfatage",
+      "es": "Calafateado"
+    },
+    "Pumping": {
+      "en": "Pumping",
+      "fr": "Pompage",
+      "es": "Bombeo"
+    },
+    "Strike the highlighted nail when the timing bar is green.": {
+      "en": "Strike the highlighted nail when the timing bar is green.",
+      "fr": "Frappez le clou indiqué quand la barre devient verte.",
+      "es": "Golpea el clavo indicado cuando la barra esté verde."
+    },
+    "Seal the highlighted leak.": {
+      "en": "Seal the highlighted leak.",
+      "fr": "Bouchez la fuite indiquée.",
+      "es": "Sella la fuga indicada."
+    },
+    "Pump left and right alternately.": {
+      "en": "Pump left and right alternately.",
+      "fr": "Pompez à gauche puis à droite, en alternance.",
+      "es": "Bombea a izquierda y derecha de forma alterna."
+    },
+    "Repairs: {0}/{1}": {
+      "en": "Repairs: {0}/{1}",
+      "fr": "Réparation : {0}/{1}",
+      "es": "Reparación: {0}/{1}"
+    },
+    "REPAIR": {
+      "en": "REPAIR",
+      "fr": "RÉPARER",
+      "es": "REPARAR"
+    },
+    "Time: {0}s": {
+      "en": "Time: {0}s",
+      "fr": "Temps : {0}s",
+      "es": "Tiempo: {0}s"
+    },
+    "Level {0} - {1} Auragems - {2}s - Recharge {3}s": {
+      "en": "Level {0} - {1} Auragems - {2}s - Recharge {3}s",
+      "fr": "Niv. {0} - {1} Auragems - {2}s - Recharge {3}s",
+      "es": "Nivel {0} - {1} Auragems - {2}s - Recarga {3}s"
+    },
+    "Activate": {
+      "en": "Activate",
+      "fr": "Activer",
+      "es": "Activar"
+    },
+    "Learn skill": {
+      "en": "Learn skill",
+      "fr": "Apprendre",
+      "es": "Aprender"
+    },
+    "Ammo: {0} - Inventory: {1} - Sailing {2} / Gunnery {3}": {
+      "en": "Ammo: {0} - Inventory: {1} - Sailing {2} / Gunnery {3}",
+      "fr": "Ammo : {0} - Inventaire : {1} - Navigation {2} / Canon {3}",
+      "es": "Munición: {0} - Inventario: {1} - Navegación {2} / Artillería {3}"
+    },
+    "Store 10": {
+      "en": "Store 10",
+      "fr": "Déposer 10",
+      "es": "Guardar 10"
+    },
+    "Take 10": {
+      "en": "Take 10",
+      "fr": "Retirer 10",
+      "es": "Retirar 10"
+    },
+    "Buy 10": {
+      "en": "Buy 10",
+      "fr": "Acheter 10",
+      "es": "Comprar 10"
+    },
+    "Select": {
+      "en": "Select",
+      "fr": "Choisir",
+      "es": "Elegir"
+    },
+    "Accept helm": {
+      "en": "Accept helm",
+      "fr": "Accepter la barre",
+      "es": "Aceptar el timón"
+    },
+    "Reclaim helm": {
+      "en": "Reclaim helm",
+      "fr": "Reprendre la barre",
+      "es": "Recuperar el timón"
+    },
+    "Offer helm": {
+      "en": "Offer helm",
+      "fr": "Offrir la barre",
+      "es": "Ofrecer el timón"
+    },
+    "Dock nearby": {
+      "en": "Dock nearby",
+      "fr": "Quai à proximité",
+      "es": "Muelle cercano"
+    },
+    "Moor ship": {
+      "en": "Moor ship",
+      "fr": "Amarrer le navire",
+      "es": "Amarrar el barco"
+    },
+    "Ammunition updated.": {
+      "en": "Ammunition updated.",
+      "fr": "Munitions mises à jour.",
+      "es": "Munición actualizada."
+    },
+    "Transaction failed. Nothing was changed.": {
+      "en": "Transaction failed. Nothing was changed.",
+      "fr": "Transaction impossible. Rien n'a changé.",
+      "es": "La transacción falló. No se ha cambiado nada."
+    },
+    "Skill learned.": {
+      "en": "Skill learned.",
+      "fr": "Compétence apprise.",
+      "es": "Habilidad aprendida."
+    },
+    "Repair cancelled.": {
+      "en": "Repair cancelled.",
+      "fr": "Réparation annulée.",
+      "es": "Reparación cancelada."
+    },
+    "Repair completed.": {
+      "en": "Repair completed.",
+      "fr": "Réparation terminée.",
+      "es": "Reparación terminada."
+    },
+    "Ramming speed": {
+      "en": "Ramming speed",
+      "fr": "Vitesse d'éperonnage",
+      "es": "Velocidad de embestida"
+    },
+    "Full sail": {
+      "en": "Full sail",
+      "fr": "Toutes voiles dehors",
+      "es": "A toda vela"
+    },
+    "Take cover": {
+      "en": "Take cover",
+      "fr": "À couvert",
+      "es": "A cubierto"
+    },
+    "Open fire": {
+      "en": "Open fire",
+      "fr": "Feu à volonté",
+      "es": "Fuego a discreción"
+    },
+    "Repair bonus": {
+      "en": "Repair bonus",
+      "fr": "Bonus de réparation",
+      "es": "Bonificación de reparación"
+    },
+    "Lightning cannonball": {
+      "en": "Lightning cannonball",
+      "fr": "Boulet de foudre",
+      "es": "Bala de rayo"
+    },
+    "Chain shot": {
+      "en": "Chain shot",
+      "fr": "Boulets chaînés",
+      "es": "Balas encadenadas"
+    },
+    "Explosive cannonball": {
+      "en": "Explosive cannonball",
+      "fr": "Boulet explosif",
+      "es": "Bala explosiva"
+    },
+    "Ice cannonball": {
+      "en": "Ice cannonball",
+      "fr": "Boulet de glace",
+      "es": "Bala de hielo"
+    },
+    "Cursed cannonball": {
+      "en": "Cursed cannonball",
+      "fr": "Boulet maudit",
+      "es": "Bala maldita"
+    },
+    "Open cannon ammunition shop": {
+      "en": "Open cannon ammunition shop",
+      "fr": "Ouvrir la boutique de munitions navales",
+      "es": "Abrir tienda de munición naval"
+    },
+    "Ship repair activities": {
+      "en": "Ship repair activities",
+      "fr": "Mini-jeux de réparation",
+      "es": "Minijuegos de reparación"
+    },
+    "RequiredSailingLevel": {
+      "en": "RequiredSailingLevel",
+      "fr": "Niveau de navigation requis",
+      "es": "Nivel de navegación requerido"
+    },
+    "ProjectileGraphic": {
+      "en": "ProjectileGraphic",
+      "fr": "Image du projectile",
+      "es": "Imagen del proyectil"
+    },
+    "WaterGraphic": {
+      "en": "WaterGraphic",
+      "fr": "Impact sur l'eau",
+      "es": "Impacto en el agua"
+    },
+    "HullGraphic": {
+      "en": "HullGraphic",
+      "fr": "Impact sur la coque",
+      "es": "Impacto en el casco"
+    },
+    "ShopCurrencyItemId": {
+      "en": "ShopCurrencyItemId",
+      "fr": "Monnaie de la boutique",
+      "es": "Moneda de la tienda"
+    },
+    "ShopPrice": {
+      "en": "ShopPrice",
+      "fr": "Prix unitaire",
+      "es": "Precio unitario"
+    },
+    "SlowPercent": {
+      "en": "SlowPercent",
+      "fr": "Ralentissement (%)",
+      "es": "Ralentización (%)"
+    },
+    "SlowSeconds": {
+      "en": "SlowSeconds",
+      "fr": "Durée du ralentissement (s)",
+      "es": "Duración de ralentización (s)"
+    },
+    "HullPerSuccess": {
+      "en": "HullPerSuccess",
+      "fr": "Coque réparée par réussite",
+      "es": "Casco reparado por éxito"
+    },
+    "ExperiencePerSuccess": {
+      "en": "ExperiencePerSuccess",
+      "fr": "EXP par réussite",
+      "es": "EXP por éxito"
+    },
+    "RoundSeconds": {
+      "en": "RoundSeconds",
+      "fr": "Durée de la partie (s)",
+      "es": "Duración de la partida (s)"
+    },
+    "RequiredHits": {
+      "en": "RequiredHits",
+      "fr": "Actions réussies requises",
+      "es": "Acciones correctas requeridas"
+    },
+    "CooldownSeconds": {
+      "en": "CooldownSeconds",
+      "fr": "Temps de recharge (s)",
+      "es": "Tiempo de recarga (s)"
+    },
+    "MinimumRoundMilliseconds": {
+      "en": "MinimumRoundMilliseconds",
+      "fr": "Durée minimale de partie (ms)",
+      "es": "Duración mínima de partida (ms)"
+    },
+    "DurationSeconds": {
+      "en": "DurationSeconds",
+      "fr": "Durée de l'effet (s)",
+      "es": "Duración del efecto (s)"
+    },
+    "PowerPercent": {
+      "en": "PowerPercent",
+      "fr": "Puissance (%)",
+      "es": "Potencia (%)"
+    },
+    "IdleGraphics": {
+      "en": "IdleGraphics",
+      "fr": "Image du navire à l'arrêt",
+      "es": "Imagen del barco detenido"
+    },
+    "Icon": {
+      "en": "Icon",
+      "fr": "Icône (resources/spells)",
+      "es": "Icono (resources/spells)"
+    },
+    "Naval - ShipsSunk": {
+      "en": "Naval - ShipsSunk",
+      "fr": "Naval - Couler des navires",
+      "es": "Naval - Hundir barcos"
+    },
+    "Naval - CannonHits": {
+      "en": "Naval - CannonHits",
+      "fr": "Naval - Réussir des impacts",
+      "es": "Naval - Acertar disparos"
+    },
+    "Naval - HullDamage": {
+      "en": "Naval - HullDamage",
+      "fr": "Naval - Infliger des dégâts",
+      "es": "Naval - Infligir daño"
+    },
+    "Naval - Repairs": {
+      "en": "Naval - Repairs",
+      "fr": "Naval - Réussir des réparations",
+      "es": "Naval - Completar reparaciones"
+    },
+    "Naval - Dockings": {
+      "en": "Naval - Dockings",
+      "fr": "Naval - Amarrer au quai",
+      "es": "Naval - Amarrar en el muelle"
+    },
+    "Naval - CargoUnloaded": {
+      "en": "Naval - CargoUnloaded",
+      "fr": "Naval - Décharger des lots",
+      "es": "Naval - Descargar lotes"
+    },
+    "Naval - SailingLevel": {
+      "en": "Naval - SailingLevel",
+      "fr": "Naval - Niveau de navigation",
+      "es": "Naval - Nivel de navegación"
+    },
+    "Naval - GunneryLevel": {
+      "en": "Naval - GunneryLevel",
+      "fr": "Naval - Niveau de canonnier",
+      "es": "Naval - Nivel de artillería"
+    },
+    "Naval - ShipwrightLevel": {
+      "en": "Naval - ShipwrightLevel",
+      "fr": "Naval - Niveau de charpentier naval",
+      "es": "Naval - Nivel de carpintería naval"
+    },
+    "Timing": {
+      "en": "Timing",
+      "fr": "Rythme",
+      "es": "Ritmo"
+    },
+    "Repair in progress": {
+      "en": "Repair in progress",
+      "fr": "Réparation en cours",
+      "es": "Reparación en curso"
+    },
+    "Repair activity ready.": {
+      "en": "Repair activity ready.",
+      "fr": "Mini-jeu de réparation prêt.",
+      "es": "Minijuego de reparación listo."
+    },
+    "Repair unavailable. Check hull, role and cooldown.": {
+      "en": "Repair unavailable. Check hull, role and cooldown.",
+      "fr": "Réparation indisponible. Vérifiez la coque, le rôle et la recharge.",
+      "es": "Reparación no disponible. Revisa el casco, el rol y la recarga."
+    },
+    "Helm offered for 30 seconds.": {
+      "en": "Helm offered for 30 seconds.",
+      "fr": "Barre offerte pendant 30 secondes.",
+      "es": "Timón ofrecido durante 30 segundos."
+    },
+    "Choose a crew member to offer the helm.": {
+      "en": "Choose a crew member to offer the helm.",
+      "fr": "Choisissez un membre à qui offrir la barre.",
+      "es": "Elige un tripulante para ofrecerle el timón."
+    },
+    "Only the ship owner can offer the helm.": {
+      "en": "Only the ship owner can offer the helm.",
+      "fr": "Seul le propriétaire peut offrir la barre.",
+      "es": "Solo el dueño puede ofrecer el timón."
+    },
+    "Use 1-0 to select ammunition.": {
+      "en": "Use 1-0 to select ammunition.",
+      "fr": "Utilisez 1 à 0 pour choisir un boulet.",
+      "es": "Usa 1-0 para elegir munición."
+    },
+    "Repair {0} - Level {1} - {2}/{3} EXP": {
+      "en": "Repair {0} - Level {1} - {2}/{3} EXP",
+      "fr": "Réparation {0} - Niv. {1} - {2}/{3} EXP",
+      "es": "Reparación {0} - Nivel {1} - {2}/{3} EXP"
+    },
+    "Naval profession settings are in Naval System Editor.": {
+      "en": "Naval profession settings are in Naval System Editor.",
+      "fr": "Les métiers navals se configurent dans Naval System Editor.",
+      "es": "Las profesiones navales se configuran en Naval System Editor."
     }
   }
 }

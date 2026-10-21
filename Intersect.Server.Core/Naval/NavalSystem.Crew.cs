@@ -12,7 +12,8 @@ namespace Intersect.Server.Naval;
 internal static partial class NavalSystem
 {
     private sealed record CrewPresence(string Name,long Seen);
-    private static bool NearCrewDock(Vessel vessel)=>Math.Abs(vessel.State.Speed)<=.1 && vessel.SunkUntil==0 &&
+    private static bool NearCrewDock(Vessel vessel)=>Math.Abs(vessel.State.Speed)<=.1 && ByCrewDock(vessel);
+    private static bool ByCrewDock(Vessel vessel)=>vessel.SunkUntil==0 &&
         ShipDock.Tiles(MapController.Get(vessel.State.MapId)?.Attributes).Any(t=>Distance(t.X+.5,t.Y+.5,vessel.State.X,vessel.State.Y)<=6);
     private static bool BesideCrewDock(Player player)=>OceanMapResolver.Maps().Contains(player.MapId) &&
         ShipDock.Nearest(MapController.Get(player.MapId)?.Attributes,player.X+.5,player.Y+.5,_settings.DockInteractionRange)!=null;
@@ -104,24 +105,31 @@ internal static partial class NavalSystem
     private static void UpdateCrewPassenger(Player player,long now)
     {
         if(player.BoardedShipId==Guid.Empty) return;
-        ShipState anchor=null;bool returnToShore=false,sunk=false,wait=false;
+        ShipState anchor=null;bool returnToShore=false,sunk=false,wait=false,leftParty=false;
         lock(Gate)
         {
             if(!Ships.TryGetValue(player.BoardedShipId,out var ship) || !ship.Crew.ContainsKey(player.Id)) returnToShore=true;
             else
             {
+                leftParty=player.NavalPartyExitRequested || !player.Party.Any(member=>member.Id==ship.State.CaptainId);
                 sunk=ship.Health<=0 || ship.SunkUntil>0;
                 wait=sunk && now<ship.SunkUntil;
-                returnToShore=ship.State.CaptainId==Guid.Empty || sunk || !player.InGame || player.IsDead || player.HasPendingDeath ||
+                returnToShore=leftParty || ship.State.CaptainId==Guid.Empty || sunk || !player.InGame || player.IsDead || player.HasPendingDeath ||
                     player.Client==null || player.InstanceType!=MapInstanceType.Overworld ||
                     !OceanMapResolver.Maps().Contains(ship.State.MapId) || MapController.Get(ship.State.MapId)==null;
                 if(!returnToShore) {ship.Crew[player.Id]=new(player.Name,now);anchor=CopyCrewAnchor(ship);}
             }
         }
+        if(leftParty)
+        {
+            ApplyPendingExperience(player,now,force:true);
+            if(!CommitCrewForfeit(player,()=>SaveManagement(player)))return;
+            lock(Gate)if(PendingSailingRewards.TryGetValue(player.Id,out var pending))PendingSailingRewards[player.Id]=pending with {Cargo=[]};
+        }
         if(sunk && player.NavalCrewPassage is {} passage && passage.Ship.Health>0 &&
             !CommitOwnedHullDamage(passage.Ship,100,()=>player.User?.Save(force:true)==UserSaveResult.Completed)) return;
         if(wait) return;
-        if(returnToShore) {ReleaseCrew(player,true);return;}
+        if(returnToShore) {ReleaseCrew(player,true);player.NavalPartyExitRequested=false;return;}
         if(anchor!=null)
         {
             if(player.MapId!=anchor.MapId) WarpAnchor(player,anchor);
@@ -153,7 +161,8 @@ internal static partial class NavalSystem
                 {
                     if((ship.Health<=0 || ship.SunkUntil>0) && passage!=null) {passage.Ship.Health=0;passage.Ship.Cargo.Clear();}
                     foreach(var gun in ship.Guns.Values.Where(g=>g.Owner==player.Id)) gun.Owner=gun.Lease=Guid.Empty;
-                    ship.Crew.Remove(player.Id);
+                    ship.Crew.Remove(player.Id);Repairs.Remove(player.Id);
+                    if(ship.HelmsmanId==player.Id){ship.HelmsmanId=Guid.Empty;ship.Controls.Reset();}
                     if(ship.Crew.Count==0 && ship.State.CaptainId==Guid.Empty && ship.OwnerId!=Guid.Empty) Ships.Remove(ship.State.Id);
                 }
                 player.BoardedShipId=Guid.Empty;

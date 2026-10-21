@@ -34,7 +34,7 @@ internal static partial class NavalWorld
         _pressedSlots.Clear();_pressedSlots.UnionWith(active);
     }
 
-    internal static bool CrewProgress => OwnShip is {} ship && ship.CaptainId!=Globals.Me?.Id;
+    internal static bool CrewProgress => OwnShip is {} ship && Driver(ship)!=Globals.Me?.Id;
     internal static bool GunneryBarActive => CrewProgress && Gunner.LeaseId!=Guid.Empty && Gunner.ShipId==OwnShip?.Id;
     internal static CannonAmmoView? SlotAmmunition(int slot) => slot is >=0 and <10
         ? Gunner.Ammunition.FirstOrDefault(a=>(int)a.Kind==slot) : null;
@@ -58,15 +58,17 @@ internal static partial class NavalWorld
                 SelectedAmmo=ammo.Kind;
             return;
         }
+        if(own!=null && Driver(own)==Globals.Me?.Id && slot is >=3 and <=5 && !DragAndDrop.IsDragging && Globals.Me?.IsBusy==false)
+        {Interface.Game.NavalManagementWindow.Request(slot==3?NavalManageAction.Skills:NavalManageAction.Ammo);return;}
         if(own==null || DragAndDrop.IsDragging || Globals.Me?.IsBusy!=false || own.Sinking || action==ShipAction.None ||
             (action is ShipAction.PortCannons or ShipAction.StarboardCannons && (!own.CannonsEnabled || Cooldown(slot)>0))) return;
         if(action==ShipAction.CannonView) {CannonViewOpen=!CannonViewOpen;return;}
         if(action==ShipAction.Crew) {Networking.Network.SendPacket(new HarbourRequestPacket {View=HarbourView.Crew});return;}
-        if(own.CaptainId!=Globals.Me!.Id && action==ShipAction.LeaveHelm)
+        if(Driver(own)!=Globals.Me!.Id && action==ShipAction.LeaveHelm)
         {Networking.Network.SendPacket(new HarbourRequestPacket {View=HarbourView.Crew,Action=HarbourAction.LeaveCrew});return;}
-        if(own.CaptainId!=Globals.Me!.Id && action!=ShipAction.Cargo) return;
+        if(Driver(own)!=Globals.Me!.Id && action!=ShipAction.Cargo) return;
         if(action==ShipAction.Cargo) {CargoOpen=!CargoOpen;return;}
-        Networking.Network.SendPacket(new ShipActionPacket { ShipId=own.Id,Action=action });
+        Networking.Network.SendPacket(new ShipActionPacket { ShipId=own.Id,Action=action,Ammunition=SelectedAmmo });
     }
 
     private static void ApplyCannonballs(NavalSnapshotPacket packet,long now)
@@ -93,7 +95,7 @@ internal static partial class NavalWorld
             }
             if(row!=(int)Math.Floor((y-current.Y)/th)+Options.Instance.Map.MapHeight*2) continue;
             var age=ball.Current.AgeMilliseconds+Math.Max(0,Environment.TickCount64-ball.Received);
-            if(DrawEffectAsset(Presentation.CannonProjectileGraphic,"Projectile"+ShipMovement.DirectionRow(ball.Current.Heading),x,y,age,hold:true)) continue;
+            if(DrawEffectAsset(string.IsNullOrEmpty(ball.Current.Graphic)?Presentation.CannonProjectileGraphic:ball.Current.Graphic,"Projectile"+ShipMovement.DirectionRow(ball.Current.Heading),x,y,age,hold:true)) continue;
             Graphics.DrawGameTexture(Graphics.Renderer.WhitePixel,new FloatRect(0,0,1,1),new FloatRect(x-3,y-3,6,6),new Color(255,210,160,60));
             Graphics.DrawGameTexture(Graphics.Renderer.WhitePixel,new FloatRect(0,0,1,1),new FloatRect(x-2,y-2,4,4),new Color(255,30,30,35));
         }

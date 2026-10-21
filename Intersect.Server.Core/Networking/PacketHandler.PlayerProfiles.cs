@@ -93,7 +93,7 @@ internal sealed partial class PacketHandler
                     ProfessionId = definition.Id,
                     Name = definition.Name,
                     Level = ProfessionRuntime.GetLevel(target, definition.Id),
-                    MaximumLevel = definition.MaximumLevel,
+                    MaximumLevel = Intersect.Framework.Core.Naval.NavalProfessions.IsNative(definition.Id)?Naval.NavalSystem.CareerMaximum(definition.Id):definition.MaximumLevel,
                     Experience = ProfessionRuntime.GetExperience(target, definition.Id),
                     ExperienceToNextLevel = ProfessionRuntime.GetExperienceToNextLevel(target, definition.Id),
                     LocksPicked = lockStats.LocksPicked,
