@@ -13,6 +13,7 @@ public partial class InventoryWindow : Window
     public List<SlotItem> Items { get; set; } = [];
     private readonly ScrollControl _slotContainer;
     private readonly ContextMenu _contextMenu;
+    private Button? _ammoButton;
 
     public InventoryWindow(Canvas gameCanvas) : base(gameCanvas, Strings.Inventory.Title, false, nameof(InventoryWindow))
     {
@@ -45,8 +46,18 @@ public partial class InventoryWindow : Window
     {
         LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
         InitItemContainer();
-        var ammo=NavalManagementWindow.Button(this,"InventoryAmmo","Ammo",0,0,Width-24,32,()=>NavalManagementWindow.Request(Intersect.Framework.Core.Naval.NavalManageAction.Ammo));
-        ammo.Dock=Pos.Bottom;ammo.BringToFront();_slotContainer.Margin=new Margin(0,0,0,38);
+        ConfigureAmmoFooter();
+    }
+
+    internal void ConfigureAmmoFooter()
+    {
+        _ammoButton??=NavalManagementWindow.Button(this,"InventoryAmmo","Ammo",0,0,Width-24,28,()=>NavalManagementWindow.Request(Intersect.Framework.Core.Naval.NavalManageAction.Ammo));
+        _ammoButton.Dock=Pos.Bottom;
+        _ammoButton.Margin=new Margin(0,4,0,0);
+        _ammoButton.BringToFront();
+        // Bottom docking already reserves the button height; a second bottom margin leaves an empty strip.
+        var margin=_slotContainer.Margin;
+        _slotContainer.Margin=new Margin(margin.Left,margin.Top,margin.Right,0);
     }
 
     public void OpenContextMenu(int slot)

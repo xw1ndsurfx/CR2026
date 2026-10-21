@@ -23,6 +23,42 @@ public sealed class NavalCargoWindowTests
     [SetUp] public void SetUp() {_previousContent=CurrentContent.GetValue(null);_content=new TestContent();}
     [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
 
+    [TestCase(530,20)]
+    [TestCase(560,24)]
+    [TestCase(400,10)]
+    public void ProfileExperienceBarsKeepAFullBackgroundAtZeroHalfAndFullExperience(int width,int height)
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(800,600)};
+        var bar=new PlayerProfileWindow.ProfileProgressBar(canvas,"ProfessionExperience");bar.SetBounds(0,0,width,height);
+        var draw=bar.GetType().GetMethod("Render",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!;
+        var previous=new Color(255,180,170,160);
+        foreach(var progress in new[]{0f,.5f,1f})
+        {
+            renderer.Fills.Clear();renderer.DrawColor=previous;bar.Progress=progress;draw.Invoke(bar,[skin]);
+            var border=height<12?1:2;
+            Assert.That(renderer.Fills[0].Rect.Width,Is.EqualTo(width));Assert.That(renderer.Fills[0].Rect.Height,Is.EqualTo(height));
+            Assert.That(renderer.Fills[1].Rect.Width,Is.EqualTo(width-border*2));
+            Assert.That(renderer.Fills[1].Color,Is.EqualTo(new Color(255,70,50,37)));
+            Assert.That(renderer.Fills.Count,Is.EqualTo(progress==0?2:3));
+            if(progress>0)Assert.That(renderer.Fills[2].Rect.Width,Is.EqualTo((int)((width-border*2)*progress)));
+            Assert.That(renderer.DrawColor,Is.EqualTo(previous));
+        }
+    }
+
+    [Test]
+    public void InventoryAmmoFooterDoesNotReserveTheButtonHeightTwice()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(800,600)};
+        var inventory=new Intersect.Client.Interface.Game.Inventory.InventoryWindow(canvas);inventory.SetSize(240,340);inventory.Show();
+        var items=Descendants(inventory).OfType<ScrollControl>().Single();items.Margin=new Intersect.Client.Framework.Gwen.Margin(3,5,7,38);
+        inventory.ConfigureAmmoFooter();inventory.ConfigureAmmoFooter();
+        typeof(ControlBase).GetMethod("RecurseLayout",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!.Invoke(canvas,[skin]);
+        var ammo=Descendants(inventory).OfType<Button>().Single(button=>button.Name=="InventoryAmmo");
+        Assert.That(items.Margin.Left,Is.EqualTo(3));Assert.That(items.Margin.Top,Is.EqualTo(5));Assert.That(items.Margin.Right,Is.EqualTo(7));
+        Assert.That(items.Margin.Bottom,Is.Zero);Assert.That(ammo.Y-items.Bottom,Is.InRange(0,6));
+        Assert.That(ammo.Height,Is.EqualTo(28));
+    }
+
     [Test]
     public void SailingSkillsScrollbarCanReachTheLastOwnedSkill()
     {
@@ -332,7 +368,7 @@ public sealed class NavalCargoWindowTests
     private sealed class TestSkin:SkinBase
     {
         internal TestSkin(RendererBase renderer):base(renderer)
-        {DefaultFont=new TestFont();DefaultFontSize=12;Colors.Label.Normal=Colors.Label.Disabled=Color.White;}
+        {DefaultFont=new TestFont();DefaultFontSize=12;Colors.Label.Normal=Colors.Label.Disabled=Color.White;Colors.Button.Normal=Colors.Button.Hover=Colors.Button.Active=Colors.Button.Disabled=Color.White;}
     }
     private sealed class MetricsRenderer:RendererBase
     {

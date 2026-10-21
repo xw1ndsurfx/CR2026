@@ -319,15 +319,27 @@ internal sealed class PlayerProfileWindow : Window
 
         protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
         {
-            var r = RenderBounds;
-            skin.Renderer.DrawColor = new Color(a:255,r:35,g:23,b:19);
-            skin.Renderer.DrawFilledRect(r);
-            skin.Renderer.DrawColor = new Color(a:255,r:106,g:76,b:43);
-            skin.Renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(
-                r.X, r.Y, r.Width, 2));
-            skin.Renderer.DrawColor = new Color(a:255,r:79,g:175,b:99);
-            skin.Renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(
-                r.X + 2, r.Y + 2, Math.Max(0, (int)((r.Width - 4) * Math.Clamp(Progress, 0f, 1f))), Math.Max(0, r.Height - 4)));
+            var renderer=skin.Renderer;
+            var previous=renderer.DrawColor;
+            var r=RenderBounds;
+            var border=r.Height<12?1:2;
+            var innerWidth=Math.Max(0,r.Width-border*2);
+            var innerHeight=Math.Max(0,r.Height-border*2);
+            var progress=float.IsFinite(Progress)?Math.Clamp(Progress,0f,1f):0f;
+            try
+            {
+                renderer.DrawColor=new Color(a:255,r:135,g:105,b:69);
+                renderer.DrawFilledRect(r);
+                renderer.DrawColor=new Color(a:255,r:70,g:50,b:37);
+                renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(r.X+border,r.Y+border,innerWidth,innerHeight));
+                var fill=(int)(innerWidth*progress);
+                if(fill>0 && innerHeight>0)
+                {
+                    renderer.DrawColor=new Color(a:255,r:79,g:175,b:99);
+                    renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(r.X+border,r.Y+border,fill,innerHeight));
+                }
+            }
+            finally {renderer.DrawColor=previous;}
         }
     }
 
