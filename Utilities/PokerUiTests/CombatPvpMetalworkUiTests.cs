@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using Intersect;
 using Intersect.Client.General;
@@ -47,7 +47,7 @@ internal static class CombatPvpMetalworkUiTests
             {
                 content.AddAnimationTexture("menu-fixture",DispatchProxy.Create<IGameTexture,CpuFrameTexture>());
                 ClientConfiguration.Instance.MenuAnimations=[new(){XPercent=50,YPercent=50,ScalePercent=200,TransparencyPercent=50,Lower=new AnimationLayer {Sprite="menu-fixture",XFrames=1,YFrames=1,FrameCount=1,FrameSpeed=100,ScalePercent=100,OffsetX=10,TransparencyPercent=20}}];
-                var menu=(MainMenu)RuntimeHelpers.GetUninitializedObject(typeof(MainMenu));typeof(MainMenu).GetField("_menuCanvas",Hidden)!.SetValue(menu,canvas);var list=typeof(MainMenu).GetField("_menuAnimations",Hidden)!;list.SetValue(menu,Activator.CreateInstance(list.FieldType));typeof(MainMenu).GetMethod("UpdateMenuAnimations",Hidden)!.Invoke(menu,null);
+                var menu=(MainMenu)RuntimeHelpers.GetUninitializedObject(typeof(MainMenu));typeof(MainMenu).GetField("_menuCanvas",Hidden)!.SetValue(menu,canvas);var list=typeof(MainMenu).GetField("_menuAnimations",Hidden)!;list.SetValue(menu,Activator.CreateInstance(list.FieldType));var weatherList=typeof(MainMenu).GetField("_weatherLayers",Hidden)!;weatherList.SetValue(menu,Activator.CreateInstance(weatherList.FieldType));typeof(MainMenu).GetMethod("UpdateMenuAnimations",Hidden)!.Invoke(menu,null);
                 var panel=canvas.Children.OfType<ImagePanel>().Single();Check(panel.Width==128 && panel.X==356 && panel.Y==236 && panel.RenderColor.A==102 && !panel.MouseInputEnabled,"Offline menu snapshots apply position, scale, offsets, alpha and pass input through");
             }
         }

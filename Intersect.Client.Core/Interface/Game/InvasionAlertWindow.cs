@@ -97,7 +97,7 @@ internal sealed class InvasionAlertWindow : Window
         base.Think();
         if(IsHidden)return;
         var elapsed=Environment.TickCount64-_started;
-        if(elapsed>Math.Clamp(_bodyText.Length*1000L/35+8000,12000,45000)){Next();return;}
+        if(elapsed>Math.Max(12000,_bodyText.Length*1000L/35+8000)){Next();return;}
         var count=Math.Clamp((int)(elapsed*35/1000),0,_bodyText.Length);
         if(count!=_shown)Arrange();
     }
