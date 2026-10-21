@@ -1,4 +1,4 @@
-using DarkUI.Controls;
+﻿using DarkUI.Controls;
 using DarkUI.Forms;
 using Intersect.Editor.Networking;
 using Intersect.Framework.Core.Achievements;
@@ -63,10 +63,11 @@ public sealed class FrmAchievementConfiguration : DarkForm
         Maximum = 100000,
         Dock = DockStyle.Fill,
     };
+    private readonly DarkCheckBox _monthly=new() {Text=Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Mission of the Month",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),AutoSize=true};
     private readonly DarkCheckBox _hidden = new() { Text = "Hidden until completed", AutoSize = true };
     private readonly DarkTextBox _steamApi = new() { Dock = DockStyle.Fill };
 
-    private readonly DarkComboBox _rewardItem = new() { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
+    private readonly AchievementRewardItemSelector _rewardItem = new() {Name="AchievementItemReward"};
     private readonly DarkNumericUpDown _rewardItemQuantity = new()
     {
         Minimum = 0,
@@ -81,7 +82,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
         Dock = DockStyle.Fill,
         ThousandsSeparator = true,
     };
-    private readonly DarkComboBox _rewardCurrency = new() { DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
+    private readonly AchievementRewardItemSelector _rewardCurrency = new() {Name="AchievementCurrencyReward"};
     private readonly DarkNumericUpDown _rewardCurrencyQuantity = new()
     {
         Minimum = 0,
@@ -107,6 +108,8 @@ public sealed class FrmAchievementConfiguration : DarkForm
         foreach (var value in Enum.GetValues<AchievementObjectiveType>())
             _objective.Items.Add(value);
 
+        _objective.FormattingEnabled=true;
+        _objective.Format+=(_,args)=>{if(args.ListItem is AchievementObjectiveType type && (int)type is >=19 and <=27)args.Value=Intersect.Framework.Core.Naval.NavalSetupText.Get("Naval - "+(Intersect.Framework.Core.Naval.NavalTaskKind)((int)type-19),System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);};
         FillRewardChoices();
         FillAchievementImages();
         BuildUi();
@@ -119,6 +122,8 @@ public sealed class FrmAchievementConfiguration : DarkForm
             LoadSelected();
         };
 
+        _rewardItem.SelectedIdChanged+=(_,_)=>{if(_rewardItem.SelectedId==Guid.Empty)_rewardItemQuantity.Value=0;else if(_rewardItemQuantity.Value==0)_rewardItemQuantity.Value=1;};
+        _rewardCurrency.SelectedIdChanged+=(_,_)=>{if(_rewardCurrency.SelectedId==Guid.Empty)_rewardCurrencyQuantity.Value=0;else if(_rewardCurrencyQuantity.Value==0)_rewardCurrencyQuantity.Value=1;};
         RefreshList();
     }
 
@@ -251,6 +256,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
         AddRow(table, "Target key (CustomCounter/code)", _targetKey);
         AddRow(table, "Required amount", _targetAmount);
         AddRow(table, "Sort order", _sortOrder);
+        AddRow(table,Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Monthly missions",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),_monthly);
         AddRow(table, "Visibility", _hidden);
         AddRow(table, "Steam Achievement API Name", _steamApi);
 
@@ -273,15 +279,15 @@ public sealed class FrmAchievementConfiguration : DarkForm
 
     private TabPage BuildRewardTab()
     {
-        var page = CreatePage("Reward");
+        string T(string source)=>AchievementRewardItemSelector.T(source);
+        var page = CreatePage(T("Rewards"));page.AutoScroll=true;
         var table = CreateTable();
-
-        AddRow(table, "Item", _rewardItem);
-        AddRow(table, "Item quantity", _rewardItemQuantity);
-        AddRow(table, "Character EXP", _rewardExperience);
-        AddRow(table, "Currency item", _rewardCurrency);
-        AddRow(table, "Currency quantity", _rewardCurrencyQuantity);
-        AddRow(table, "Common Event", _rewardEvent);
+        AddRow(table,T("Item"),_rewardItem,94);
+        AddRow(table,T("Item quantity"),_rewardItemQuantity);
+        AddRow(table,T("Character EXP"),_rewardExperience);
+        AddRow(table,T("Currency item"),_rewardCurrency,94);
+        AddRow(table,T("Currency quantity"),_rewardCurrencyQuantity);
+        AddRow(table,T("Common Event"),_rewardEvent);
 
         var help = new Label
         {
@@ -289,8 +295,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
             MaximumSize = new Size(700, 0),
             ForeColor = DrawingColor.Silver,
             Text =
-                "Rewards are server-authoritative and may be claimed only once. " +
-                "Items use inventory overflow protection; the Common Event can provide custom rewards such as titles, switches or variables.",
+                T("Browse the item list, search by name and check the icon before choosing a reward. A quantity of zero disables that reward. Changes apply when you save the achievement."),
             Margin = new Padding(8, 12, 8, 8),
         };
         table.Controls.Add(help);
@@ -344,22 +349,8 @@ public sealed class FrmAchievementConfiguration : DarkForm
 
     private void FillRewardChoices()
     {
-        Fill(
-            _rewardItem,
-            ItemDescriptor.Lookup.Values
-                .OfType<ItemDescriptor>()
-                .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
-                .Select(x => new IdChoice(x.Id, x.Name))
-        );
-
-        Fill(
-            _rewardCurrency,
-            ItemDescriptor.Lookup.Values
-                .OfType<ItemDescriptor>()
-                .Where(x => x.ItemType == ItemType.Currency)
-                .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
-                .Select(x => new IdChoice(x.Id, x.Name))
-        );
+        _rewardItem.SetItems(ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>());
+        _rewardCurrency.SetItems(ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().Where(item=>item.ItemType==ItemType.Currency));
 
         Fill(
             _rewardEvent,
@@ -431,7 +422,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
     private static void Fill(ComboBox combo, IEnumerable<IdChoice> choices)
     {
         combo.Items.Clear();
-        combo.Items.Add(new IdChoice(Guid.Empty, "None"));
+        combo.Items.Add(new IdChoice(Guid.Empty, AchievementRewardItemSelector.T("None")));
         foreach (var choice in choices)
             combo.Items.Add(choice);
         combo.SelectedIndex = 0;
@@ -511,12 +502,13 @@ public sealed class FrmAchievementConfiguration : DarkForm
         _targetAmount.Value = Math.Clamp(_selected.TargetAmount, 1, 2_000_000_000);
         _sortOrder.Value = Math.Clamp(_selected.SortOrder, -100000, 100000);
         _hidden.Checked = _selected.HiddenUntilCompleted;
+        _monthly.Checked=_selected.Monthly;
         _steamApi.Text = _selected.SteamApiName;
 
-        SelectId(_rewardItem, _selected.Reward.ItemId);
+        _rewardItem.SetSelectedId(_selected.Reward.ItemId);
         _rewardItemQuantity.Value = Math.Clamp(_selected.Reward.ItemQuantity, 0, 1_000_000_000);
         _rewardExperience.Value = Math.Clamp(_selected.Reward.Experience, 0, 2_000_000_000);
-        SelectId(_rewardCurrency, _selected.Reward.CurrencyItemId);
+        _rewardCurrency.SetSelectedId(_selected.Reward.CurrencyItemId);
         _rewardCurrencyQuantity.Value = Math.Clamp(_selected.Reward.CurrencyQuantity, 0, 1_000_000_000);
         SelectId(_rewardEvent, _selected.Reward.CommonEventId);
     }
@@ -526,7 +518,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
         foreach (var control in new Control[]
                  {
                      _name, _description, _category, _icon, _objective, _target, _targetKey,
-                     _targetAmount, _sortOrder, _hidden, _steamApi, _rewardItem,
+                     _targetAmount, _sortOrder, _hidden, _monthly, _steamApi, _rewardItem,
                      _rewardItemQuantity, _rewardExperience, _rewardCurrency,
                      _rewardCurrencyQuantity, _rewardEvent,
                  })
@@ -552,14 +544,15 @@ public sealed class FrmAchievementConfiguration : DarkForm
         _selected.TargetAmount = (long)_targetAmount.Value;
         _selected.SortOrder = (int)_sortOrder.Value;
         _selected.HiddenUntilCompleted = _hidden.Checked;
-        _selected.SteamApiName = _steamApi.Text?.Trim() ?? string.Empty;
+        _selected.Monthly=_monthly.Checked;
+        _selected.SteamApiName = _monthly.Checked?string.Empty:_steamApi.Text?.Trim() ?? string.Empty;
 
         _selected.Reward = new AchievementRewardDefinition
         {
-            ItemId = (_rewardItem.SelectedItem as IdChoice)?.Id ?? Guid.Empty,
+            ItemId = _rewardItem.SelectedId,
             ItemQuantity = (int)_rewardItemQuantity.Value,
             Experience = (long)_rewardExperience.Value,
-            CurrencyItemId = (_rewardCurrency.SelectedItem as IdChoice)?.Id ?? Guid.Empty,
+            CurrencyItemId = _rewardCurrency.SelectedId,
             CurrencyQuantity = (int)_rewardCurrencyQuantity.Value,
             CommonEventId = (_rewardEvent.SelectedItem as IdChoice)?.Id ?? Guid.Empty,
         };

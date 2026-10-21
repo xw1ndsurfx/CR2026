@@ -12,6 +12,7 @@ public partial class TimePacket : IntersectPacket
 
     public TimePacket(DateTime time, float rate, Color color)
     {
+        ServerUtcMilliseconds=DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         Time = time;
         Rate = rate;
         Color = color;
@@ -26,6 +27,8 @@ public partial class TimePacket : IntersectPacket
 
     [Key(2)]
     public Color Color { get; set; }
+
+    [Key(4)] public long ServerUtcMilliseconds {get;set;}
 
     [Key(3)] public string DayPhasesJson { get; set; } = string.Empty;
 

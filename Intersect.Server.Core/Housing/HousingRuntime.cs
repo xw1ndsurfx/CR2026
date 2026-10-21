@@ -1,4 +1,4 @@
-using Intersect.Enums;
+﻿using Intersect.Enums;
 using Intersect.Server.LogiCoins;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Maps;
@@ -70,6 +70,7 @@ internal static class HousingRuntime
         {
             try
             {
+                if (request.Action != HouseAction.Leave && (player.NavalShipId!=Guid.Empty || Intersect.Server.Dungeons.DungeonRunRuntime.IsPlayerInActiveRun(player))) return;
                 if (request.Action == HouseAction.Open) { Snapshots[player.Id] = new(player.HousingJson, player.House.Public); Send(player, request.OwnerId, true); return; }
                 if (request.Action == HouseAction.Leave) { Leave(player); return; }
                 if (!Configuration.Enabled) { Send(player, player.Id, true, "Housing is not available yet."); return; }
@@ -103,6 +104,26 @@ internal static class HousingRuntime
                             RequireFurniturePremium(toPlace.Definition, player.User != null && LogiCoinPurchaseRuntime.HasActivePremium(player));
                             house.PlaceFurniture(request.Id, request.PlacementId, request.X, request.Y, request.Rotation,
                                 Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight, Configuration.MaximumFurniture);
+                            break;
+                        case HouseAction.SaveLayout:
+                            if(!LogiCoinPurchaseRuntime.HasActivePremium(player))throw new InvalidOperationException("Premium is required.");
+                            if(house.SavedLayouts.Count>=10 || string.IsNullOrWhiteSpace(request.Name) || request.Name.Length>64 || request.Name.Any(char.IsControl))throw new InvalidOperationException("Invalid saved layout.");
+                            house.SavedLayouts.Add(new() {Name=request.Name.Trim(),Placements=JsonConvert.DeserializeObject<List<Intersect.Framework.Core.Housing.FurniturePlacement>>(JsonConvert.SerializeObject(house.Placements))??[]});
+                            break;
+                        case HouseAction.LoadLayout:
+                            RequireInside(player);
+                            if(!LogiCoinPurchaseRuntime.HasActivePremium(player))throw new InvalidOperationException("Premium is required.");
+                            var layout=house.SavedLayouts.FirstOrDefault(layout=>layout.Id==request.Id)??throw new InvalidOperationException("Saved layout not found.");
+                            house.Placements.Clear();
+                            foreach(var placement in layout.Placements)
+                            {
+                                if(!house.Furniture.TryGetValue(placement.FurnitureId,out var furniture))throw new InvalidOperationException("You do not own this furniture.");
+                                RequireFurniturePremium(furniture.Definition,true);
+                                house.PlaceFurniture(placement.FurnitureId,placement.Id,placement.X,placement.Y,placement.Rotation,Options.Instance.Map.MapWidth,Options.Instance.Map.MapHeight,Configuration.MaximumFurniture);
+                            }
+                            break;
+                        case HouseAction.DeleteLayout:
+                            if(house.SavedLayouts.RemoveAll(layout=>layout.Id==request.Id)==0)throw new InvalidOperationException("Saved layout not found.");
                             break;
                         case HouseAction.Remove:
                             if (house.Placements.RemoveAll(p => p.Id == request.PlacementId) == 0) throw new InvalidOperationException("Furniture placement not found.");

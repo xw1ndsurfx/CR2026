@@ -1,4 +1,4 @@
-using Intersect.Network.Packets.WorldEvents;
+﻿using Intersect.Network.Packets.WorldEvents;
 
 namespace Intersect.Client.Interface.Game;
 
@@ -40,11 +40,19 @@ public partial class GameInterface
 
     public void UpdateWorldBossUi()
     {
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var expired = _worldBossStatuses.Where(pair => pair.Value.Health <= 0 ||
+            pair.Value.ExpiresAtUnixMilliseconds > 0 && pair.Value.ExpiresAtUnixMilliseconds <= now)
+            .Select(pair => pair.Key).ToArray();
+        foreach (var id in expired) _worldBossStatuses.Remove(id);
+        if (expired.Length > 0) RefreshWorldBossUi();
         _worldBossStatusWindow?.Update();
     }
 
     public void ShowWorldBossResult(WorldBossResultPacket packet)
     {
+        _worldBossStatuses.Remove(packet.BossId);
+        RefreshWorldBossUi();
         _worldBossResultWindow ??= new WorldBossResultWindow(GameCanvas);
         _worldBossResultWindow.Apply(packet);
     }

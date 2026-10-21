@@ -237,6 +237,7 @@ internal sealed partial class LogicService
                     Intersect.Server.Pvp.PvpRuntime.Update(startTime);
                     Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Update(startTime);
                     DungeonRunRuntime.Update(startTime);
+                    lock (LogicLock) Intersect.Server.Naval.NavalSystem.WorldTick(startTime);
                     swCps++;
 
                     var endTime = Timing.Global.Milliseconds;

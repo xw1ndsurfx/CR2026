@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Core.Controls;
 using Intersect.Client.Entities.Events;
 using Intersect.Client.Framework.Content;
@@ -148,6 +148,12 @@ public partial class EventWindow : Panel
             );
         }
 
+        // Older layouts reserved space for a portrait on the left. The portrait is now above the text.
+        _promptScroller.Padding=new Padding(4,4,4,4);
+        _promptLabel.Padding=new Padding(8,8,8,8);
+        _promptLabel.Margin=Margin.Zero;
+        _promptLabel.X=0;
+        _promptPanel.X=0;
         ApplyFace();
         ApplyPromptAndTypewriter();
         RunOnMainThread(static @this => @this._promptScroller.ScrollToTop(), this);

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -20,6 +20,7 @@ public partial class FrmItem
 
     private void BuildResponsiveItemEditor()
     {
+        InitializePresentationControls();
         SuspendLayout();
         try
         {
@@ -40,6 +41,7 @@ public partial class FrmItem
             pnlContainer.Controls.Add(_itemEditorTabs);
 
             AddItemEditorTab("General / Trading", grpGeneral);
+            AddItemEditorTab(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Trading and display",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),_itemPresentationGroup);
             // Equipment controls are moved, not recreated: their existing event
             // handlers and item bindings are all preserved.
             grpEquipment.Height = 90; // Slot selector only, details live in other tabs.

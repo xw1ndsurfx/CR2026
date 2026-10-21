@@ -16,11 +16,12 @@ public sealed class ShipSpriteAtlas
         double.IsFinite(PixelsPerTile) && PixelsPerTile is >= 8 and <= 1024 &&
         frames is >= 1 and <= 16 && Directions is { Length: 8 } &&
         Directions.All(row => row != null && row.Length == frames && row.All(frame =>
-            frame != null && frame.X >= 0 && frame.Y >= 0 && frame.Width > 0 && frame.Height > 0 &&
+            frame != null && double.IsFinite(frame.RotationDegrees) && Math.Abs(frame.RotationDegrees)<=360 && frame.X >= 0 && frame.Y >= 0 && frame.Width > 0 && frame.Height > 0 &&
             frame.Width <= textureWidth && frame.Height <= textureHeight &&
             frame.X <= textureWidth - frame.Width && frame.Y <= textureHeight - frame.Height &&
             double.IsFinite(frame.AnchorX) && double.IsFinite(frame.AnchorY) &&
-            frame.AnchorX >= 0 && frame.AnchorX <= frame.Width && frame.AnchorY >= 0 && frame.AnchorY <= frame.Height));
+            frame.AnchorX >= 0 && frame.AnchorX <= frame.Width && frame.AnchorY >= 0 && frame.AnchorY <= frame.Height &&
+            (frame.Slices==null || frame.Slices.Length<=512 && frame.Slices.All(r=>r is {Length:4} && r[0]>=0 && r[1]>=0 && r[2]>0 && r[3]>0 && r[0]<=frame.Width-r[2] && r[1]<=frame.Height-r[3]))));
 
     public bool UpgradeLegacySoutheast(string name)
     {
@@ -52,6 +53,8 @@ public sealed class ShipSpriteAtlas
 
 public sealed class ShipSpriteFrame
 {
+    public double RotationDegrees {get;set;}
+    public int[][]? Slices {get;set;}
     public bool FlipHorizontal { get; set; }
     public int X { get; set; }
     public int Y { get; set; }

@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows.Forms;
 using DarkUI.Controls;
 
@@ -843,7 +843,7 @@ namespace Intersect.Editor.Forms.Editors
             // chkCanSellMarketplace
             // 
             chkCanSellMarketplace.AutoSize = true;
-            chkCanSellMarketplace.Location = new System.Drawing.Point(317, 410);
+            chkCanSellMarketplace.Location = new System.Drawing.Point(27, 443);
             chkCanSellMarketplace.Margin = new Padding(4, 3, 4, 3);
             chkCanSellMarketplace.Name = "chkCanSellMarketplace";
             chkCanSellMarketplace.Size = new Size(153, 19);

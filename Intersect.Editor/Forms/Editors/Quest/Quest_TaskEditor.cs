@@ -67,6 +67,7 @@ public partial class QuestTaskEditor : UserControl
         txtStartDesc.Text = mMyTask?.Description;
         UpdateFormElements();
         LoadGuidanceControls();
+        if(cmbTaskType.SelectedIndex>=29) nudItemAmount.Value=Math.Max(1,mMyTask?.Quantity??1);
         switch (cmbTaskType.SelectedIndex)
         {
             case 0: //Event Driven
@@ -163,6 +164,7 @@ public partial class QuestTaskEditor : UserControl
         cmbTaskType.Items.Add("Invasions - Participate in resolved invasions");
         cmbTaskType.Items.Add("Invasions - Clear waves");
         cmbTaskType.Items.Add("Invasions - Lose invasions");
+        foreach(var naval in Enum.GetValues<Intersect.Framework.Core.Naval.NavalTaskKind>())cmbTaskType.Items.Add(Intersect.Framework.Core.Naval.NavalSetupText.Get(Intersect.Framework.Core.Naval.NavalQuestProgress.Caption(naval),System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
 
         lblDesc.Text = Strings.TaskEditor.desc;
 
@@ -189,6 +191,8 @@ public partial class QuestTaskEditor : UserControl
         cmbItem.Show();
         lblItem.Show();
         lblItemQuantity.Text = Strings.TaskEditor.gatheramount;
+        if(cmbTaskType.SelectedIndex>=29)
+        {grpGatherItems.Show();cmbItem.Hide();lblItem.Hide();nudItemAmount.Value=Math.Max(1,mMyTask?.Quantity??1);return;}
         switch (cmbTaskType.SelectedIndex)
         {
             case 0: //Event Driven
@@ -392,6 +396,15 @@ public partial class QuestTaskEditor : UserControl
                 mMyTask.TargetName = string.Empty;
                 mMyTask.Quantity = (int) nudNpcQuantity.Value;
                 break;
+            case QuestObjective.NavalShipsSunk:
+            case QuestObjective.NavalCannonHits:
+            case QuestObjective.NavalHullDamage:
+            case QuestObjective.NavalRepairs:
+            case QuestObjective.NavalDockings:
+            case QuestObjective.NavalCargoUnloaded:
+            case QuestObjective.NavalSailingLevel:
+            case QuestObjective.NavalGunneryLevel:
+            case QuestObjective.NavalShipwrightLevel:
             case QuestObjective.PokerWinHands:
             case QuestObjective.PokerWinAmount:
             case QuestObjective.PokerReachLevel:

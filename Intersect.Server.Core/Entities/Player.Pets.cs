@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Server.Maps;
@@ -10,12 +10,14 @@ namespace Intersect.Server.Entities;
 
 public sealed class PetCollection
 {
+    public Intersect.Framework.Core.QualityOfLife.PremiumConvenienceProfile Convenience {get;set;}=new();
     public Guid ActivePetId { get; set; }
     public Dictionary<Guid, PetProgress> OwnedPets { get; set; } = [];
 }
 
 public sealed class PetProgress
 {
+    public Guid DecorationId {get;set;}
     public int Level { get; set; } = 1;
     public long Experience { get; set; }
     public bool AutoLoot { get; set; } = true;
@@ -43,6 +45,7 @@ public partial class Player
 
     [NotMapped, JsonIgnore]
     public Npc? ActivePet { get; private set; }
+    internal long LastConvenienceRequest;
 
     private void PetNotice(string message) =>
         PacketSender.SendChatMsg(this, message, ChatMessageType.Notice);

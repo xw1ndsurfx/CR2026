@@ -1,4 +1,4 @@
-using Intersect.Enums;
+﻿using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.PlayerClass;
 using Intersect.Framework.Core.GameObjects.Items;
@@ -93,9 +93,11 @@ internal sealed partial class PacketHandler
                     ProfessionId = definition.Id,
                     Name = definition.Name,
                     Level = ProfessionRuntime.GetLevel(target, definition.Id),
-                    MaximumLevel = definition.MaximumLevel,
+                    MaximumLevel = Intersect.Framework.Core.Naval.NavalProfessions.IsNative(definition.Id)?Naval.NavalSystem.CareerMaximum(definition.Id):definition.MaximumLevel,
                     Experience = ProfessionRuntime.GetExperience(target, definition.Id),
                     ExperienceToNextLevel = ProfessionRuntime.GetExperienceToNextLevel(target, definition.Id),
+                    LevelExperience = ProfessionRuntime.LevelProgress(target, definition.Id).Experience,
+                    LevelExperienceRequired = ProfessionRuntime.LevelProgress(target, definition.Id).Required,
                     LocksPicked = lockStats.LocksPicked,
                     PerfectPicks = lockStats.PerfectPicks,
                     PicksBroken = lockStats.PicksBroken,
@@ -106,6 +108,28 @@ internal sealed partial class PacketHandler
             );
         }
 
+        var miniGames=new Intersect.Server.MiniGames.Progression.SqliteMiniGameProgressStore(Path.Combine("resources","minigames-test.db"));
+        foreach(var (key,name,id) in new[]{("potions","Alchemy",1),("poker","Poker",2),("blackjack","Blackjack",3),("roulette","Roulette",4)})
+        {
+            var progress=miniGames.Load(target.Id,key);
+            if(key!="potions")
+            {
+                try
+                {
+                    var ledger=Intersect.Server.MiniGames.Currency.PokerInventoryBridge.Ledger;
+                    var funded=key=="poker"?ledger.Profile(target.Id):key=="blackjack"?ledger.BlackjackProfile(target.Id):ledger.RouletteProfile(target.Id);
+                    if(funded.Experience>progress.Experience)progress=funded;
+                }
+                catch(NotSupportedException) { /* Unfunded mini-game progression still exists on other database providers. */ }
+            }
+            var level=progress.Level;
+            var floor=Intersect.Framework.Core.MiniGames.MiniGameProgression.ExperienceAtLevel(level);
+            var required=level>=Intersect.Framework.Core.MiniGames.MiniGameProgression.MaximumLevel?0:Intersect.Framework.Core.MiniGames.MiniGameProgression.ExperienceAtLevel(level+1)-floor;
+            professions.Add(new PlayerProfessionProfilePacket {
+                ProfessionId=new Guid($"c1026000-0000-4000-8000-0000000001{id:00}"),Name=name,Level=level,
+                MaximumLevel=Intersect.Framework.Core.MiniGames.MiniGameProgression.MaximumLevel,Experience=progress.Experience,
+                ExperienceToNextLevel=required<=0?-1:required-(progress.Experience-floor),LevelExperience=progress.Experience-floor,LevelExperienceRequired=required});
+        }
         // Use the same directional layer order as the Character Window.
         // Sending the resolved sprites avoids relying on other players'
         // inventory state being available to the observing client.

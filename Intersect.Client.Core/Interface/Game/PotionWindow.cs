@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Gwen;
+﻿using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Input;
 using Intersect.Client.Framework.File_Management;
@@ -632,7 +632,7 @@ internal sealed class PotionWindow : Base
 
             var recipe = choices[index];
             var output = ItemDescriptor.Get(recipe.OutputItemId);
-            _recipeIcons[slot].Texture = output == null ? null : GameContentManager.Current.GetTexture(Framework.Content.TextureType.Item, output.Icon);
+            _recipeIcons[slot].Texture = output == null ? null : GameContentManager.Current.GetTexture(output.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, output.DisplayIcon);
             _recipeIcons[slot].RenderColor = output?.Color ?? Color.White;
             _recipeIcons[slot].IsHidden = _recipeIcons[slot].Texture == null;
             button.IsHidden = false;

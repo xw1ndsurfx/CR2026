@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Collections.Concurrent;
 using Intersect.Client.Core;
 using Intersect.Client.Entities;
@@ -165,6 +165,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
             _gridX = value;
             X = _gridX * _width * _tileWidth;
+            ClearPerspectiveTerrain();
         }
     }
 
@@ -180,6 +181,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
             _gridY = value;
             Y = _gridY * _height * _tileHeight;
+            ClearPerspectiveTerrain();
         }
     }
 
@@ -191,6 +193,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
     //Load
     public void Load(string json)
     {
+        ClearPerspectiveTerrain();
         LocalEntitiesToDispose.AddRange(LocalEntities.Keys.ToArray());
         JsonConvert.PopulateObject(
             json,
@@ -211,6 +214,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
     public void LoadTileData(byte[] packet)
     {
+        ClearPerspectiveTerrain();
         Layers = JsonConvert.DeserializeObject<Dictionary<string, Tile[,]>>(LZ4.UnPickleString(packet), mJsonSerializerSettings);
         foreach (var layer in Options.Instance.Map.Layers.All)
         {
@@ -440,6 +444,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
             }
         }
 
+        if(updatedBuffers.Count>0) ClearPerspectiveTerrain();
         foreach (var buffer in updatedBuffers)
         {
             buffer.SetData();
@@ -815,6 +820,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
     public void BuildVBOs()
     {
+        ClearPerspectiveTerrain();
         lock (_tileBuffersPerLayer)
         {
             if (_vboCompute != default)
@@ -866,6 +872,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
     public void DestroyVBOs()
     {
+        ClearPerspectiveTerrain();
         foreach (var layer in Options.Instance.Map.Layers.All)
         {
             if (_tileBuffersPerTexturePerLayer.Remove(layer, out var tileBuffersPerTextureForLayer))
@@ -937,6 +944,18 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         }
     }
 
+    // Reuse the exact animated/autotile buffers rather than guessing tileset layout in the naval camera.
+    internal IEnumerable<GameTileBuffer> PerspectiveBuffers()
+    {
+        if (!IsLoaded) yield break;
+        CacheTextures();
+        if (!mTexturesFound) yield break;
+        if (_tileBuffersPerLayer.Count == 0) BuildVBOs();
+        EnsurePerspectiveTerrain();
+        foreach(var frames in _perspectiveFloor)
+            foreach(var buffer in frames[Globals.AnimationFrame]) yield return buffer;
+    }
+
     public void DrawItemsAndLights()
     {
         // Calculate tile and map item dimensions.
@@ -961,8 +980,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
                 // Set up all information we need to draw this name.
                 var itemTexture = GameContentManager.Current.GetTexture(
-                    Framework.Content.TextureType.Item,
-                    itemDescriptor.Icon
+                    itemDescriptor.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, itemDescriptor.DisplayIcon
                 );
 
                 if (itemTexture == null)
@@ -1195,7 +1213,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         }
     }
 
-    private GameTileBuffer[][]? DrawMapLayer(string layerName, int xOffset = 0, int yOffset = 0)
+    private GameTileBuffer[][]? DrawMapLayer(string layerName, int xOffset = 0, int yOffset = 0, Func<int,int,bool>? include = null)
     {
         if (!Layers.TryGetValue(layerName, out var layerTiles))
         {
@@ -1213,6 +1231,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         {
             for (var y = 0; y < _height; y++)
             {
+                if(include!=null && !include(x,y)) continue;
                 var layerTile = layerTiles[x, y];
                 if (layerTile.TilesetTexture is not IGameTexture tilesetTexture)
                 {
@@ -1367,7 +1386,8 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
             }
         }
 
-        _tileBuffersPerTexturePerLayer.Add(layerName, tileBuffersPerTexture);
+        // Filtered naval copies must never replace/register the ordinary world buffers.
+        if(include==null) _tileBuffersPerTexturePerLayer.Add(layerName, tileBuffersPerTexture);
 
         return outputBuffers;
     }
@@ -1519,26 +1539,31 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
             return;
         }
 
+        if (Globals.Me.MapInstance!=this || !WeatherIsActive)
+        {
+            ClearWeather();return;
+        }
+        UpdateStormEffects();
         var anim = AnimationDescriptor.Get(WeatherAnimationId);
-
         if (anim == null || WeatherIntensity == 0)
         {
-            return;
+            foreach(var particle in _weatherParticles)particle.Dispose();
+            _weatherParticles.Clear();return;
         }
 
         _removeParticles.Clear();
 
         if ((WeatherXSpeed != 0 || WeatherYSpeed != 0) && Globals.Me.MapInstance == this)
         {
-            if (Timing.Global.MillisecondsUtc > _weatherParticleSpawnTime)
+            if (Timing.Global.MillisecondsUtc > _weatherParticleSpawnTime && _weatherParticles.Count<256)
             {
-                _weatherParticles.Add(new WeatherParticle(_removeParticles, WeatherXSpeed, WeatherYSpeed, anim));
-                var spawnTime = 25 + (int)(475 * (1f - WeatherIntensity / 100f));
+                _weatherParticles.Add(new WeatherParticle(_removeParticles, WeatherXSpeed, WeatherYSpeed, anim,WeatherEffects.GroundSplashes?SpawnRainSplash:null));
+                var spawnTime = 25 + (int)(475 * (1f - Math.Clamp(WeatherIntensity,0,100) / 100f));
                 spawnTime = (int)(spawnTime *
                                    (480000f /
                                     (Graphics.Renderer.ScreenWidth * Graphics.Renderer.ScreenHeight)));
 
-                _weatherParticleSpawnTime = Timing.Global.MillisecondsUtc + spawnTime;
+                _weatherParticleSpawnTime = Timing.Global.MillisecondsUtc + Math.Max(8,spawnTime);
             }
         }
 
@@ -1564,6 +1589,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         }
 
         _weatherParticles.Clear();
+        ClearStormEffects();
     }
 
     public void GridSwitched()

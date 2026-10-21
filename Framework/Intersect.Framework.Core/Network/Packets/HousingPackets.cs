@@ -1,9 +1,10 @@
-using MessagePack;
+﻿using MessagePack;
 namespace Intersect.Network.Packets.Housing;
-public enum HouseAction { Open, Visit, Leave, SetPublic, Buy, Place, Remove, StorePet, CollectPet, Interact }
+public enum HouseAction { Open, Visit, Leave, SetPublic, Buy, Place, Remove, StorePet, CollectPet, Interact, SaveLayout, LoadLayout, DeleteLayout }
 [MessagePackObject]
 public partial class HouseActionPacket : IntersectPacket
 {
+    [Key(8)] public string Name {get;set;}="";
     [Key(0)] public HouseAction Action { get; set; }
     [Key(1)] public Guid OwnerId { get; set; }
     [Key(2)] public Guid Id { get; set; }

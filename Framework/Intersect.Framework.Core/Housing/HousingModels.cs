@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.Globalization;
 namespace Intersect.Framework.Core.Housing;
 public sealed class FurnitureDefinition
@@ -64,8 +64,15 @@ public sealed class HouseReturnLocation
     public int X { get; set; }
     public int Y { get; set; }
 }
+public sealed class SavedHouseLayout
+{
+    public Guid Id {get;set;}=Guid.NewGuid();
+    public string Name {get;set;}="";
+    public List<FurniturePlacement> Placements {get;set;}=[];
+}
 public sealed class HouseProfile
 {
+    public List<SavedHouseLayout> SavedLayouts {get;set;}=[];
     public bool Public { get; set; }
     public Dictionary<Guid, OwnedFurniture> Furniture { get; set; } = [];
     public List<FurniturePlacement> Placements { get; set; } = [];

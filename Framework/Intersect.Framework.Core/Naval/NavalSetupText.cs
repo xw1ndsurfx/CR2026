@@ -21,5 +21,6 @@ public static class NavalSetupText
         using var reader = new StreamReader(stream);
         return GameTextCatalog.FromJson(reader.ReadToEnd());
     }
+    public static string Display(string text)=>text.Replace('\u202f',' ').Replace('\u00a0',' ').Replace('×','x').Replace('·','-');
     public static string Get(string source, string language) => Catalog.Get(source, language);
 }

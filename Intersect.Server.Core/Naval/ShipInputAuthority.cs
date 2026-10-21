@@ -8,9 +8,9 @@ internal sealed class ShipInputAuthority
     internal long LastInput { get; private set; }
     internal ShipInput Input { get; private set; } = new(0, 0, true);
     internal void Reset() { LastInput = 0; Input = new(0, 0, true); }
-    internal bool Accept(ShipState ship, Guid actor, bool alive, ShipInputPacket packet, long now)
+    internal bool Accept(ShipState ship, Guid actor, bool alive, ShipInputPacket packet, long now, Guid driver=default)
     {
-        if (!alive || actor == Guid.Empty || ship.CaptainId != actor || packet.ShipId != ship.Id ||
+        if (!alive || actor == Guid.Empty || (driver==Guid.Empty?ship.CaptainId:driver) != actor || packet.ShipId != ship.Id ||
             packet.Thrust is < -1 or > 1 || packet.Turn is < -1 or > 1 || now - LastInput < 25) return false;
         LastInput = now; Input = new(packet.Thrust, packet.Turn, packet.Anchor);
         return true;

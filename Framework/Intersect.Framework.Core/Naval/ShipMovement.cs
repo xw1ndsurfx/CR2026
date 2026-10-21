@@ -18,6 +18,8 @@ public sealed class ShipState
 
 public sealed class ShipDefinition
 {
+    public string IdleGraphics {get;set;}="";
+    public string Name {get;set;}="";
     [Newtonsoft.Json.JsonExtensionData] public IDictionary<string, Newtonsoft.Json.Linq.JToken>? AdditionalData { get; set; }
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid MapId { get; set; }
@@ -27,7 +29,10 @@ public sealed class ShipDefinition
     public string Graphics { get; set; } = "royal-ship.png";
     public int DockX { get; set; }
     public int DockY { get; set; }
+    public string SinkingGraphics { get; set; } = "Ship_CorpsRoyaux_002_Sink.png";
     public string DamagedGraphics { get; set; } = "royal-ship-damaged.png";
+    public int CrewCapacity {get;set;}=4;
+    public int CargoCapacity {get;set;}=20;
     public int Frames { get; set; } = 4;
     public int FrameMilliseconds { get; set; } = 180;
     public double Width { get; set; } = 2;
@@ -38,7 +43,7 @@ public sealed class ShipDefinition
     public double Drag { get; set; } = .5;
     public double TurnRate { get; set; } = 45;
 
-    public bool IsValid() => Id != Guid.Empty && MapId != Guid.Empty &&
+    public bool IsValid() => CrewCapacity is >=1 and <=8 && CargoCapacity is >=0 and <=200 && (Name=="" || ShipNames.Normalize(Name)!=null) && Id != Guid.Empty && MapId != Guid.Empty &&
         new[] { X, Y, Heading, Width, Length, MaxSpeed, ReverseSpeed, Acceleration, Drag, TurnRate }.All(double.IsFinite) &&
         X >= 0 && X < 256 && Y >= 0 && Y < 256 && DockX is >= 0 and < 256 && DockY is >= 0 and < 256 &&
         Width >= .5 && Width <= 16 && Length >= .5 && Length <= 16 &&
@@ -46,7 +51,7 @@ public sealed class ShipDefinition
         Acceleration > 0 && Acceleration <= 10 && Drag > 0 && Drag <= 10 && TurnRate > 0 && TurnRate <= 180 &&
         Frames is >= 1 and <= 16 && FrameMilliseconds is >= 50 and <= 2000 &&
         !string.IsNullOrWhiteSpace(Graphics) && Path.GetFileName(Graphics) == Graphics &&
-        Path.GetFileName(DamagedGraphics) == DamagedGraphics;
+        NavalPresentation.SafeAsset(IdleGraphics) && Path.GetFileName(DamagedGraphics) == DamagedGraphics && Path.GetFileName(SinkingGraphics) == SinkingGraphics;
 }
 
 public readonly record struct ShipInput(sbyte Thrust, sbyte Turn, bool Anchor);

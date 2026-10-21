@@ -1,6 +1,6 @@
-using MessagePack;
+﻿using MessagePack;
 namespace Intersect.Network.Packets.PartyLobbies;
-public enum LobbyActivity { Dungeon, Invasion, WorldBoss, Alchemy, Poker, Blackjack, Roulette, Lumberjack, HouseParty, Looting, Cooking }
+public enum LobbyActivity { Dungeon, Invasion, WorldBoss, Alchemy, Poker, Blackjack, Roulette, Lumberjack, HouseParty, Looting, Cooking, Naval }
 public enum LobbyAction { Browse, Create, Join, Close, Travel, Leave }
 [MessagePackObject]
 public partial class PartyLobbyRequestPacket : IntersectPacket
@@ -37,6 +37,9 @@ public sealed class LobbyDungeonChoice
 [MessagePackObject]
 public partial class PartyLobbyStatePacket : IntersectPacket
 {
+    [Key(4)] public bool OpenFromEvent {get;set;}
+    [Key(5)] public bool PromptCreation {get;set;}
+    [Key(6)] public int ActivityFilter {get;set;}=-1;
     [Key(0)] public PartyLobbyEntry[] Lobbies { get; set; } = [];
     [Key(1)] public LobbyDungeonChoice[] Dungeons { get; set; } = [];
     [Key(2)] public Guid CurrentLobbyId { get; set; }

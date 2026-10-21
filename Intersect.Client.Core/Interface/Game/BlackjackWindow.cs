@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.MiniGames;
@@ -129,7 +129,7 @@ internal sealed partial class BlackjackWindow : Base
             var p=s.Seats.FirstOrDefault(p=>(p.Seat-me.Seat+5)%5==slot);var(x,y,w)=Panel(slot);
             _names[slot].Text=p==null?(_tableSkin?.Texture==null?"Empty seat":""):Short(p.Name+(p.PlayerId==me.PlayerId?" (you)":p.Npc?" [NPC]":""),27);
             _names[slot].TextColorOverride=p?.Seat==s.ActingSeat?Gold:Color.White;
-            _balances[slot].Text=p==null?"":$"Balance: {p.Chips}";
+            _balances[slot].Text=p==null?"":$"Balance: {p.Chips:N0}"+(p.PlayerId==me.PlayerId && s.CurrencyItemId!=Guid.Empty?" | "+MiniGameInventoryBalance.Caption(s.CurrencyItemId):"");
             _decisions[slot].Text=p==null?"":p.Leaving?"Leaving":Short(p.LastAction,18);
             if(p!=null && s.Stage==BlackjackStage.Players && p.Seat==s.ActingSeat && string.IsNullOrWhiteSpace(_decisions[slot].Text))
                 _decisions[slot].Text=p.PlayerId==me.PlayerId?"TURN":"ACTING";

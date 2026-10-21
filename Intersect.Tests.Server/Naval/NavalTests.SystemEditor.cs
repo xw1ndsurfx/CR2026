@@ -50,9 +50,9 @@ public sealed partial class NavalTests
         foreach (var action in Enum.GetValues<HarbourAction>())
         {
             Assert.That(HarbourAccessRules.Allows(HarbourView.Fleet, action),
-                Is.EqualTo(action is HarbourAction.Open or HarbourAction.Launch));
+                Is.EqualTo(action is HarbourAction.Open or HarbourAction.Launch or HarbourAction.Rename or HarbourAction.ClaimCargo or HarbourAction.DiscardCargo));
             Assert.That(HarbourAccessRules.Allows(HarbourView.Shop, action),
-                Is.EqualTo(action is HarbourAction.Open or HarbourAction.Buy or HarbourAction.Repair));
+                Is.EqualTo(action is HarbourAction.Open or HarbourAction.Buy or HarbourAction.Repair or HarbourAction.Sell));
         }
         Assert.That(HarbourAccessRules.Allows((HarbourView)255, HarbourAction.Open), Is.False);
         Assert.That(HarbourAccessRules.Allows(HarbourView.Shop, (HarbourAction)255), Is.False);
@@ -82,6 +82,8 @@ public sealed partial class NavalTests
         Assert.That(new HarbourRequestPacket().View, Is.EqualTo(HarbourView.Fleet));
         Assert.That((int)EventCommandType.OpenRoyalStylist, Is.EqualTo(1040));
         Assert.That((int)new OpenNavalShopCommand().Type, Is.EqualTo(1050));
+        Assert.That((int)new OpenNavalAmmoShopCommand().Type,Is.EqualTo(1051));
+        Assert.That(JsonConvert.DeserializeObject<OpenNavalAmmoShopCommand>(JsonConvert.SerializeObject(new OpenNavalAmmoShopCommand()))!.Type,Is.EqualTo(EventCommandType.OpenNavalAmmoShop));
         var command = JsonConvert.DeserializeObject<OpenNavalShopCommand>(JsonConvert.SerializeObject(new OpenNavalShopCommand()));
         Assert.That(command!.Type, Is.EqualTo(EventCommandType.OpenNavalShop));
     }

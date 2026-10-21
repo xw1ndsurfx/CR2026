@@ -30,6 +30,10 @@ namespace Intersect.Network.Packets.WorldEvents;
     [Key(3)] public long EndsAtUnixMs {get;set;}
     [Key(4)] public bool Silent {get;set;}
 }
+[MessagePackObject] public partial class PremiumStatusPacket : IntersectPacket
+{
+    [Key(0)] public long RemainingMilliseconds {get;set;}
+}
 [MessagePackObject] public partial class ExperienceBoostStatusPacket : IntersectPacket
 {
     [Key(0)] public int BonusPercent {get;set;}

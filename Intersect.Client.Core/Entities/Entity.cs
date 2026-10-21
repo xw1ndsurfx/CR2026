@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using Intersect.Client.Core;
 using Intersect.Client.Entities.Events;
@@ -233,7 +233,7 @@ public partial class Entity : IEntity
 
     public FloatRect WorldPos { get; set; } = new FloatRect();
 
-    public virtual FloatRect InteractionBounds => Naval.NavalWorld.IsCaptain(Id) ?
+    public virtual FloatRect InteractionBounds => Naval.NavalWorld.IsAboard(Id) ?
         (Naval.NavalWorld.TryHullBounds(Id,out var hull) ? hull : default) : WorldPos;
 
     public bool HitTest(float worldX, float worldY) => InteractionBounds.Contains(worldX, worldY);
@@ -421,6 +421,7 @@ public partial class Entity : IEntity
     public virtual Guid MapId { get; set; }
 
     //Deserializing
+    private Intersect.Framework.Core.QualityOfLife.PetDecorationDefinition? _petDecoration;
     public virtual void Load(EntityPacket? packet)
     {
         if (packet == null)
@@ -428,6 +429,13 @@ public partial class Entity : IEntity
             return;
         }
 
+        _petDecoration=null;
+        if(packet is NpcEntityPacket {PetDecorationJson.Length:>0 and <=1024} npc)
+        {
+            try {_petDecoration=Newtonsoft.Json.JsonConvert.DeserializeObject<Intersect.Framework.Core.QualityOfLife.PetDecorationDefinition>(npc.PetDecorationJson);}
+            catch(Newtonsoft.Json.JsonException) { }
+            if(_petDecoration?.IsValid!=true)_petDecoration=null;
+        }
         MapId = packet.MapId;
         Name = packet.Name;
         Sprite = packet.Sprite;
@@ -1069,7 +1077,7 @@ public partial class Entity : IEntity
     /// <summary>
     /// Returns whether this entity should be drawn.
     /// </summary>
-    public virtual bool ShouldDraw => !Naval.NavalWorld.IsCaptain(Id) && !IsHidden && (!IsStealthed || this == Globals.Me || Globals.Me?.IsInMyParty(Id) == true);
+    public virtual bool ShouldDraw => !Naval.NavalWorld.IsAboard(Id) && !IsHidden && (!IsStealthed || this == Globals.Me || Globals.Me?.IsInMyParty(Id) == true);
 
     /// <summary>
     /// Returns whether the name of this entity should be drawn.
@@ -1257,7 +1265,7 @@ public partial class Entity : IEntity
     //Rendering Functions
     public virtual void Draw()
     {
-        if (Naval.NavalWorld.IsCaptain(Id)) { WorldPos = InteractionBounds; return; }
+        if (Naval.NavalWorld.IsAboard(Id)) { WorldPos = InteractionBounds; return; }
         if (IsHidden)
         {
             return; //Don't draw if the entity is hidden
@@ -1404,6 +1412,10 @@ public partial class Entity : IEntity
                 }
             }
         }
+        if(_petDecoration is {} decoration && Intersect.Client.Framework.File_Management.GameContentManager.Current.GetTexture(TextureType.Item,decoration.Icon) is {} accessory)
+            Graphics.DrawGameTexture(accessory,new FloatRect(0,0,accessory.Width,accessory.Height),
+                new FloatRect(destRectangle.X+destRectangle.Width/2-decoration.Size/2+decoration.OffsetX,
+                    (RenderedGraphicTop??destRectangle.Y)+decoration.OffsetY-decoration.Size/2,decoration.Size,decoration.Size),renderColor);
     }
 
     private int NormalSpriteAnimationFrame
@@ -2607,7 +2619,7 @@ public partial class Entity : IEntity
             {
                 if (gameMap.Attributes[tmpX, tmpY] != null)
                 {
-                    if (gameMap.Attributes[tmpX, tmpY].Type == MapAttributeType.Blocked || (gameMap.Attributes[tmpX, tmpY].Type == MapAttributeType.Animation && ((MapAnimationAttribute)gameMap.Attributes[tmpX, tmpY]).IsBlock))
+                    if (gameMap.Attributes[tmpX, tmpY].Type is MapAttributeType.Dock or MapAttributeType.Blocked || (gameMap.Attributes[tmpX, tmpY].Type == MapAttributeType.Animation && ((MapAnimationAttribute)gameMap.Attributes[tmpX, tmpY]).IsBlock))
                     {
                         return -2;
                     }

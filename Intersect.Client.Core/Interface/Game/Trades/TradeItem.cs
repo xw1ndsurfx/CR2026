@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.GenericClasses;
+﻿using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
 using Intersect.Client.Framework.Gwen.Input;
@@ -146,7 +146,7 @@ public partial class TradeItem
             var item = ItemDescriptor.Get(Globals.Trade[n, mMySlot].ItemId);
             if (item != null)
             {
-                var itemTex = Globals.ContentManager.GetTexture(Framework.Content.TextureType.Item, item.Icon);
+                var itemTex = Globals.ContentManager.GetTexture(item.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, item.DisplayIcon);
                 if (itemTex != null)
                 {
                     Pnl.Texture = itemTex;

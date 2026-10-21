@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Conditions;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -15,6 +15,8 @@ public partial class ResourceDescriptor : DatabaseObject<ResourceDescriptor>, IF
 
     [NotMapped]
     public ConditionLists HarvestingRequirements { get; set; } = new();
+
+    public bool FallingTree {get;set;}
 
     public string CannotHarvestMessage { get; set; } = string.Empty;
 

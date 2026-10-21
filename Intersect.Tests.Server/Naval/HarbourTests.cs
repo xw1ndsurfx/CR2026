@@ -20,6 +20,16 @@ namespace Intersect.Tests.Server.Naval;
 [TestFixture]
 public sealed class HarbourTests
 {
+    [TestCase(1000,100,0)]
+    [TestCase(1000,70,300)]
+    [TestCase(1000,1,990)]
+    [TestCase(1000,0,1000)]
+    [TestCase(1,1,0)]
+    [TestCase(0,0,0)]
+    [TestCase(int.MaxValue,50,1073741824)]
+    public void RepairChargesOnlyMissingHullAndSinkingChargesTheFullPrice(int full,int health,int expected) =>
+        Assert.That(ShipFleetRules.RepairCost(full,health),Is.EqualTo(expected));
+
     [Test]
     public void DockKeepsPersistedAttributeNumbersAndRoundTripsWithNativeMapSerializer()
     {

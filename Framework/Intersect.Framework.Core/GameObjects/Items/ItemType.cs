@@ -1,4 +1,4 @@
-namespace Intersect.Framework.Core.GameObjects.Items;
+﻿namespace Intersect.Framework.Core.GameObjects.Items;
 
 public enum ItemType
 {
@@ -15,4 +15,7 @@ public enum ItemType
     Event = 5,
 
     Bag = 6,
+    Crafting = 7,
+    Ammo = 8,
+    Key = 9,
 }

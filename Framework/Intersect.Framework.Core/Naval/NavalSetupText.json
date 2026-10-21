@@ -1,5 +1,160 @@
 {
   "Entries": {
+    "NO ENEMY CREW ON DECK": {
+      "en": "No enemy crew on the boarding deck.",
+      "fr": "Aucun ennemi sur le pont d’abordage.",
+      "es": "No hay enemigos en la cubierta de abordaje."
+    },
+    "Choose the wooden pieces for this repair puzzle.": {
+      "en": "Choose the wooden pieces for this repair puzzle.",
+      "fr": "Choisissez les pièces de bois pour réparer la coque.",
+      "es": "Elige las piezas de madera para reparar el casco."
+    },
+    "Hull panels (2 x 2)": {
+      "en": "Hull panels (2 x 2)",
+      "fr": "Panneaux de coque (2 x 2)",
+      "es": "Paneles de casco (2 x 2)"
+    },
+    "Sealing strips (3 cells)": {
+      "en": "Sealing strips (3 cells)",
+      "fr": "Bandes de calfatage (3 cases)",
+      "es": "Tiras de sellado (3 casillas)"
+    },
+    "Wooden planks (2 cells)": {
+      "en": "Wooden planks (2 cells)",
+      "fr": "Planches de bois (2 cases)",
+      "es": "Tablones de madera (2 casillas)"
+    },
+    "Fit the wooden pieces into the hull breaches. Rotate a piece before placing it; restart if it no longer fits.": {
+      "en": "Fit the wooden pieces into the hull breaches. Rotate a piece before placing it; restart if it no longer fits.",
+      "fr": "Ajustez les pièces de bois dans les brèches. Tournez-les avant de les placer ; recommencez si elles ne rentrent plus.",
+      "es": "Encaja las piezas de madera en las brechas. Gíralas antes de colocarlas; reinicia si ya no encajan."
+    },
+    "Rotate piece": {
+      "en": "Rotate piece",
+      "fr": "Tourner la pièce",
+      "es": "Girar pieza"
+    },
+    "Restart puzzle": {
+      "en": "Restart puzzle",
+      "fr": "Recommencer",
+      "es": "Reiniciar"
+    },
+    "Shipwrights at work": {
+      "en": "Shipwrights at work",
+      "fr": "Charpentiers au travail",
+      "es": "Carpinteros trabajando"
+    },
+    "{0} - Shipwright level {1}": {
+      "en": "{0} - Shipwright level {1}",
+      "fr": "{0} - Charpentier niveau {1}",
+      "es": "{0} - Carpintero nivel {1}"
+    },
+    "Maximum level": {
+      "en": "Maximum level",
+      "fr": "Niveau maximum",
+      "es": "Nivel máximo"
+    },
+    "{0}/{1} EXP": {
+      "en": "{0}/{1} EXP",
+      "fr": "{0}/{1} EXP",
+      "es": "{0}/{1} EXP"
+    },
+    "You": {
+      "en": "You",
+      "fr": "Vous",
+      "es": "Tú"
+    },
+    "Finish the repair after the minimum work time.": {
+      "en": "Finish the repair after the minimum work time.",
+      "fr": "Terminez la réparation après le temps minimum de travail.",
+      "es": "Termina la reparación tras el tiempo mínimo de trabajo."
+    },
+    "Enemy ship disabled": {
+      "en": "Enemy ship disabled",
+      "fr": "Navire ennemi immobilisé",
+      "es": "Barco enemigo inmovilizado"
+    },
+    "Board the enemy deck with your crew?": {
+      "en": "Board the enemy deck with your crew?",
+      "fr": "Aborder le pont ennemi avec votre équipage ?",
+      "es": "¿Abordar la cubierta enemiga con tu tripulación?"
+    },
+    "Board enemy ship": {
+      "en": "Board enemy ship",
+      "fr": "Aborder le navire ennemi",
+      "es": "Abordar barco enemigo"
+    },
+    "BoardingDungeonId": {
+      "en": "Boarding encounter (Dungeon Editor)",
+      "fr": "Combat d’abordage (Dungeon Editor)",
+      "es": "Encuentro de abordaje (Dungeon Editor)"
+    },
+    "BoardingEntryMapId": {
+      "en": "Boarding deck entry map",
+      "fr": "Carte d’entrée sur le pont",
+      "es": "Mapa de entrada a cubierta"
+    },
+    "BoardingEntryX": {
+      "en": "Deck entry X",
+      "fr": "Entrée du pont X",
+      "es": "Entrada a cubierta X"
+    },
+    "BoardingEntryY": {
+      "en": "Deck entry Y",
+      "fr": "Entrée du pont Y",
+      "es": "Entrada a cubierta Y"
+    },
+    "BoardingHealthPercent": {
+      "en": "Boarding hull threshold (%)",
+      "fr": "Seuil de coque pour aborder (%)",
+      "es": "Umbral del casco para abordar (%)"
+    },
+    "BoardingRange": {
+      "en": "Boarding distance (tiles)",
+      "fr": "Distance d’abordage (cases)",
+      "es": "Distancia de abordaje (casillas)"
+    },
+    "Configure the enemy boarding dungeon and deck entry in the naval editor.": {
+      "en": "Configure the enemy boarding dungeon and deck entry in the naval editor.",
+      "fr": "Configurez le combat d’abordage et l’entrée du pont dans l’éditeur naval.",
+      "es": "Configura el encuentro de abordaje y la entrada a cubierta en el editor naval."
+    },
+    "Boarding could not start. Check the deck, party requirements and dungeon configuration.": {
+      "en": "Boarding could not start. Check the deck, party requirements and dungeon configuration.",
+      "fr": "Abordage impossible. Vérifiez le pont, les conditions du groupe et le combat configuré.",
+      "es": "No se pudo iniciar el abordaje. Comprueba la cubierta, los requisitos del grupo y el encuentro."
+    },
+    "Rapid reload": {
+      "en": "Rapid reload",
+      "fr": "Rechargement rapide",
+      "es": "Recarga rápida"
+    },
+    "Long range": {
+      "en": "Long range",
+      "fr": "Portée accrue",
+      "es": "Alcance ampliado"
+    },
+    "Agile helm": {
+      "en": "Agile helm",
+      "fr": "Manœuvre agile",
+      "es": "Timón ágil"
+    },
+    "RapidReload": {
+      "en": "Rapid reload",
+      "fr": "Rechargement rapide",
+      "es": "Recarga rápida"
+    },
+    "LongRange": {
+      "en": "Long range",
+      "fr": "Portée accrue",
+      "es": "Alcance ampliado"
+    },
+    "AgileHelm": {
+      "en": "Agile helm",
+      "fr": "Manœuvre agile",
+      "es": "Timón ágil"
+    },
     "Q - Dock": {
       "en": "Q - Dock",
       "fr": "Q - Quai",
@@ -271,14 +426,14 @@
       "es": "Objeto moneda"
     },
     "Currency": {
-      "en": "Currency name",
-      "fr": "Nom de la monnaie",
-      "es": "Nombre de moneda"
+      "en": "Currency",
+      "fr": "Monnaie",
+      "es": "Moneda"
     },
     "Price": {
-      "en": "Purchase price",
-      "fr": "Prix d’achat",
-      "es": "Precio de compra"
+      "en": "Price",
+      "fr": "Prix",
+      "es": "Precio"
     },
     "RepairPrice": {
       "en": "Full repair price",
@@ -349,6 +504,1561 @@
       "en": "Choose an Ocean map and keep each hull and boarding point clear of obstacles and other ships.",
       "fr": "Choisissez une map Ocean et placez les coques et quais hors des obstacles et des autres navires.",
       "es": "Elige un mapa Ocean y coloca los cascos y muelles lejos de obstáculos y otros barcos."
+    },
+    "Port cannons": {
+      "en": "Port cannons",
+      "fr": "Canons bâbord",
+      "es": "Cañones de babor"
+    },
+    "Starboard cannons": {
+      "en": "Starboard cannons",
+      "fr": "Canons tribord",
+      "es": "Cañones de estribor"
+    },
+    "Anchor": {
+      "en": "Anchor",
+      "fr": "Ancre",
+      "es": "Ancla"
+    },
+    "Disembark": {
+      "en": "Disembark",
+      "fr": "Débarquer",
+      "es": "Desembarcar"
+    },
+    "Reserved naval ability": {
+      "en": "Reserved naval ability",
+      "fr": "Capacité navale à venir",
+      "es": "Habilidad naval futura"
+    },
+    "Hull: {0}%   Speed: {1:0.0}": {
+      "en": "Hull: {0}%   Speed: {1:0.0}",
+      "fr": "Coque : {0}%   Vitesse : {1:0.0}",
+      "es": "Casco: {0}%   Velocidad: {1:0.0}"
+    },
+    "CannonsEnabled": {
+      "en": "Enable cannons",
+      "fr": "Activer les canons",
+      "es": "Activar cañones"
+    },
+    "PlayerShipDamage": {
+      "en": "Damage between player ships",
+      "fr": "Dégâts entre bateaux de joueurs",
+      "es": "Daño entre barcos de jugadores"
+    },
+    "CannonDamage": {
+      "en": "Damage per cannonball",
+      "fr": "Dégâts par boulet",
+      "es": "Daño por bala de cañón"
+    },
+    "CannonReloadMilliseconds": {
+      "en": "Broadside reload (ms)",
+      "fr": "Rechargement par bordée (ms)",
+      "es": "Recarga por andanada (ms)"
+    },
+    "CannonRange": {
+      "en": "Cannonball range (tiles)",
+      "fr": "Portée des boulets (cases)",
+      "es": "Alcance de balas (casillas)"
+    },
+    "CannonSpeed": {
+      "en": "Cannonball speed (tiles/s)",
+      "fr": "Vitesse des boulets (cases/s)",
+      "es": "Velocidad de balas (casillas/s)"
+    },
+    "Ship damage could not be saved. Try disembarking again shortly.": {
+      "en": "Ship damage could not be saved. Try disembarking again shortly.",
+      "fr": "Les dégâts du navire n’ont pas pu être enregistrés. Réessayez de débarquer dans quelques instants.",
+      "es": "No se pudo guardar el daño del barco. Intenta desembarcar de nuevo en unos instantes."
+    },
+    "Sounds, icons and effects": {
+      "en": "Sounds, icons and effects",
+      "fr": "Sons, icônes et effets",
+      "es": "Sonidos, iconos y efectos"
+    },
+    "Sailing progression": {
+      "en": "Sailing progression",
+      "fr": "Progression Sailing",
+      "es": "Progresión de navegación"
+    },
+    "PortIcon": {
+      "en": "Port cannon icon",
+      "fr": "Icône des canons bâbord",
+      "es": "Icono de cañones de babor"
+    },
+    "StarboardIcon": {
+      "en": "Starboard cannon icon",
+      "fr": "Icône des canons tribord",
+      "es": "Icono de cañones de estribor"
+    },
+    "AnchorIcon": {
+      "en": "Anchor icon",
+      "fr": "Icône de l’ancre",
+      "es": "Icono del ancla"
+    },
+    "DisembarkIcon": {
+      "en": "Disembark icon",
+      "fr": "Icône de débarquement",
+      "es": "Icono de desembarco"
+    },
+    "CannonFireSound": {
+      "en": "Cannon firing sound",
+      "fr": "Son du tir de canon",
+      "es": "Sonido del disparo"
+    },
+    "HullImpactSound": {
+      "en": "Hull impact sound",
+      "fr": "Son d’impact sur coque",
+      "es": "Sonido de impacto en casco"
+    },
+    "WaterImpactSound": {
+      "en": "Water impact sound",
+      "fr": "Son d’impact dans l’eau",
+      "es": "Sonido de impacto en agua"
+    },
+    "ObstacleImpactSound": {
+      "en": "Obstacle impact sound",
+      "fr": "Son d’impact sur obstacle",
+      "es": "Sonido de impacto en obstáculo"
+    },
+    "SinkingSound": {
+      "en": "Sinking sound",
+      "fr": "Son du naufrage",
+      "es": "Sonido de hundimiento"
+    },
+    "AnchorSound": {
+      "en": "Anchor sound",
+      "fr": "Son de l’ancre",
+      "es": "Sonido del ancla"
+    },
+    "LaunchSound": {
+      "en": "Launch sound",
+      "fr": "Son de mise à l’eau",
+      "es": "Sonido de botadura"
+    },
+    "DisembarkSound": {
+      "en": "Disembark sound",
+      "fr": "Son de débarquement",
+      "es": "Sonido de desembarco"
+    },
+    "LevelUpAnimationId": {
+      "en": "Naval level-up animation",
+      "fr": "Animation de montée de niveau navale",
+      "es": "Animación de subida de nivel naval"
+    },
+    "LevelUpSound": {
+      "en": "Sailing level up sound",
+      "fr": "Son de niveau Sailing",
+      "es": "Sonido de subida de nivel"
+    },
+    "CannonFireGraphic": {
+      "en": "Cannon fire animation",
+      "fr": "Animation de tir",
+      "es": "Animación de disparo"
+    },
+    "CannonProjectileGraphic": {
+      "en": "Cannonball animation",
+      "fr": "Animation du boulet",
+      "es": "Animación de la bala"
+    },
+    "WaterImpactGraphic": {
+      "en": "Water impact animation",
+      "fr": "Animation d’impact dans l’eau",
+      "es": "Animación de impacto en agua"
+    },
+    "HullImpactGraphic": {
+      "en": "Hull impact animation",
+      "fr": "Animation d’impact sur coque",
+      "es": "Animación de impacto en casco"
+    },
+    "EffectFrameMilliseconds": {
+      "en": "Effect frame duration (ms)",
+      "fr": "Durée d’image des effets (ms)",
+      "es": "Duración de fotograma (ms)"
+    },
+    "EffectPixelsPerTile": {
+      "en": "Effect scale (pixels/tile)",
+      "fr": "Échelle des effets (pixels/case)",
+      "es": "Escala de efectos (píxeles/casilla)"
+    },
+    "MaximumLevel": {
+      "en": "Maximum Sailing level",
+      "fr": "Niveau Sailing maximal",
+      "es": "Nivel máximo de navegación"
+    },
+    "BaseExperience": {
+      "en": "First level EXP requirement",
+      "fr": "EXP requise au premier niveau",
+      "es": "EXP requerida para el primer nivel"
+    },
+    "ExperienceGrowth": {
+      "en": "EXP growth per level",
+      "fr": "Multiplicateur d’EXP par niveau",
+      "es": "Multiplicador de EXP por nivel"
+    },
+    "ExperiencePerTile": {
+      "en": "EXP per tile actually sailed",
+      "fr": "EXP par case réellement parcourue",
+      "es": "EXP por casilla recorrida"
+    },
+    "Listen": {
+      "en": "Listen",
+      "fr": "Écouter",
+      "es": "Escuchar"
+    },
+    "The selected resource is unavailable.": {
+      "en": "The selected resource is unavailable.",
+      "fr": "La ressource sélectionnée est indisponible.",
+      "es": "El recurso seleccionado no está disponible."
+    },
+    "Sailing · Level {0} · {1}/{2} EXP": {
+      "en": "Sailing · Level {0} · {1}/{2} EXP",
+      "fr": "Sailing · Niveau {0} · {1}/{2} EXP",
+      "es": "Navegación · Nivel {0} · {1}/{2} EXP"
+    },
+    "Sailing · Level {0} · MAX": {
+      "en": "Sailing · Level {0} · MAX",
+      "fr": "Sailing · Niveau {0} · MAX",
+      "es": "Navegación · Nivel {0} · MÁX"
+    },
+    "Rename ship": {
+      "en": "Rename ship",
+      "fr": "Nommer le bateau",
+      "es": "Nombrar barco"
+    },
+    "Enter your ship name (1 to 32 characters).": {
+      "en": "Enter your ship name (1 to 32 characters).",
+      "fr": "Entrez le nom du bateau (1 à 32 caractères).",
+      "es": "Introduce el nombre del barco (1 a 32 caracteres)."
+    },
+    "Ship renamed.": {
+      "en": "Ship renamed.",
+      "fr": "Nom du bateau enregistré.",
+      "es": "Nombre del barco guardado."
+    },
+    "Use 1 to 32 letters, numbers, spaces, apostrophes, dots or hyphens for your ship name.": {
+      "en": "Use 1 to 32 letters, numbers, spaces, apostrophes, dots or hyphens for your ship name.",
+      "fr": "Le nom du bateau doit contenir de 1 à 32 lettres, chiffres, espaces, apostrophes, points ou tirets.",
+      "es": "El nombre debe tener de 1 a 32 letras, números, espacios, apóstrofos, puntos o guiones."
+    },
+    "Herbonia AI patrols": {
+      "en": "Herbonia AI patrols",
+      "fr": "Patrouilles IA Herbonia",
+      "es": "Patrullas IA Herbonia"
+    },
+    "DetectionRange": {
+      "en": "Detection range (tiles)",
+      "fr": "Portée de détection (cases)",
+      "es": "Alcance de detección (casillas)"
+    },
+    "LeashRadius": {
+      "en": "Maximum distance from home (tiles)",
+      "fr": "Distance maximale du point de départ",
+      "es": "Distancia máxima del punto de origen"
+    },
+    "PatrolRadius": {
+      "en": "Patrol radius (tiles)",
+      "fr": "Rayon de patrouille (cases)",
+      "es": "Radio de patrulla (casillas)"
+    },
+    "DockSafeRange": {
+      "en": "Protected dock radius (tiles)",
+      "fr": "Zone protégée autour des quais (cases)",
+      "es": "Zona protegida alrededor de muelles (casillas)"
+    },
+    "RespawnSeconds": {
+      "en": "Respawn delay (seconds)",
+      "fr": "Réapparition après naufrage (secondes)",
+      "es": "Reaparición tras hundimiento (segundos)"
+    },
+    "Enable patrol": {
+      "en": "Enable patrol",
+      "fr": "Activer cette patrouille",
+      "es": "Activar esta patrulla"
+    },
+    "Level": {
+      "en": "Enemy level",
+      "fr": "Niveau de l’ennemi",
+      "es": "Nivel del enemigo"
+    },
+    "MaximumHealth": {
+      "en": "Maximum hull health",
+      "fr": "PV maximum de la coque",
+      "es": "PV máximos del casco"
+    },
+    "SailingExperienceReward": {
+      "en": "Sailing EXP per sinking",
+      "fr": "EXP Sailing au naufrage",
+      "es": "EXP Sailing por hundimiento"
+    },
+    "CombatTimeoutSeconds": {
+      "en": "Combat HUD timeout (seconds)",
+      "fr": "Fin du combat sans impact (secondes)",
+      "es": "Fin del combate sin impactos (segundos)"
+    },
+    "Herbonia ship": {
+      "en": "Herbonia ship",
+      "fr": "Navire Herbonia",
+      "es": "Barco Herbonia"
+    },
+    "{0} · Level {1}": {
+      "en": "{0} · Level {1}",
+      "fr": "{0} · Niveau {1}",
+      "es": "{0} · Nivel {1}"
+    },
+    "Lv. {0}": {
+      "en": "Lv. {0}",
+      "fr": "Niv. {0}",
+      "es": "Nv. {0}"
+    },
+    "Hull: {0:N0} / {1:N0}": {
+      "en": "Hull: {0:N0} / {1:N0}",
+      "fr": "Coque : {0:N0} / {1:N0}",
+      "es": "Casco: {0:N0} / {1:N0}"
+    },
+    "Your Sailing reward could not be saved. Try again shortly.": {
+      "en": "Your Sailing reward could not be saved. Try again shortly.",
+      "fr": "Votre récompense Sailing n’a pas pu être sauvegardée. Réessayez dans quelques instants.",
+      "es": "No se pudo guardar tu recompensa de Sailing. Inténtalo de nuevo en unos instantes."
+    },
+    "Naval loot table": {
+      "en": "Naval loot table",
+      "fr": "Table de butin naval",
+      "es": "Tabla de botín naval"
+    },
+    "ItemId": {
+      "en": "Existing item",
+      "fr": "Objet existant",
+      "es": "Objeto existente"
+    },
+    "ChancePercent": {
+      "en": "Drop chance (%)",
+      "fr": "Probabilité (%)",
+      "es": "Probabilidad (%)"
+    },
+    "MinimumQuantity": {
+      "en": "Minimum quantity",
+      "fr": "Quantité minimum",
+      "es": "Cantidad mínima"
+    },
+    "MaximumQuantity": {
+      "en": "Maximum quantity",
+      "fr": "Quantité maximum",
+      "es": "Cantidad máxima"
+    },
+    "Quality": {
+      "en": "Quality (1 to 5)",
+      "fr": "Qualité (1 à 5)",
+      "es": "Calidad (1 a 5)"
+    },
+    "Kind": {
+      "en": "Kind",
+      "fr": "Type",
+      "es": "Tipo"
+    },
+    "CargoCapacity": {
+      "en": "Cargo capacity (containers)",
+      "fr": "Capacité de cale (conteneurs)",
+      "es": "Capacidad de bodega (contenedores)"
+    },
+    "Cargo hold": {
+      "en": "Cargo hold",
+      "fr": "Cale du navire",
+      "es": "Bodega del barco"
+    },
+    "Cargo crate": {
+      "en": "Cargo crate",
+      "fr": "Caisse de cargaison",
+      "es": "Caja de carga"
+    },
+    "Treasure chest": {
+      "en": "Treasure chest",
+      "fr": "Coffre au trésor",
+      "es": "Cofre del tesoro"
+    },
+    "Royal chest": {
+      "en": "Royal chest",
+      "fr": "Coffre royal",
+      "es": "Cofre real"
+    },
+    "Ship materials": {
+      "en": "Ship materials",
+      "fr": "Matériaux navals",
+      "es": "Materiales navales"
+    },
+    "Equipment cargo": {
+      "en": "Equipment cargo",
+      "fr": "Cargaison d’équipement",
+      "es": "Carga de equipo"
+    },
+    "Cargo: {0}/{1}. Unload at a Q dock. Cargo is lost if your ship sinks.": {
+      "en": "Cargo: {0}/{1}. Unload at a Q dock. Cargo is lost if your ship sinks.",
+      "fr": "Cargaison : {0}/{1}. Déchargez à un quai Q. La cargaison est perdue au naufrage.",
+      "es": "Carga: {0}/{1}. Descarga en un muelle Q. La carga se pierde al hundirse."
+    },
+    "{0} · Quality {1}: {2} × {3}": {
+      "en": "{0} · Quality {1}: {2} × {3}",
+      "fr": "{0} · Qualité {1} : {2} × {3}",
+      "es": "{0} · Calidad {1}: {2} × {3}"
+    },
+    "Hull: {0}/{1} · Cargo: {2}/{3} · Speed: {4:0.0}": {
+      "en": "Hull: {0}/{1} · Cargo: {2}/{3} · Speed: {4:0.0}",
+      "fr": "Coque : {0}/{1} · Cale : {2}/{3} · Vitesse : {4:0.0}",
+      "es": "Casco: {0}/{1} · Carga: {2}/{3} · Velocidad: {4:0.0}"
+    },
+    "Cargo: {0}": {
+      "en": "Cargo: {0}",
+      "fr": "Cargaison : {0}",
+      "es": "Carga: {0}"
+    },
+    "Unload cargo": {
+      "en": "Unload cargo",
+      "fr": "Décharger la cale",
+      "es": "Descargar bodega"
+    },
+    "The cargo hold is empty.": {
+      "en": "The cargo hold is empty.",
+      "fr": "La cale est vide.",
+      "es": "La bodega está vacía."
+    },
+    "Unknown item": {
+      "en": "Unknown item",
+      "fr": "Objet inconnu",
+      "es": "Objeto desconocido"
+    },
+    "This ship has no cargo to unload.": {
+      "en": "This ship has no cargo to unload.",
+      "fr": "Ce bateau n’a pas de cargaison à décharger.",
+      "es": "Este barco no tiene carga para descargar."
+    },
+    "Make room in your main inventory before unloading. Cargo was kept.": {
+      "en": "Make room in your main inventory before unloading. Cargo was kept.",
+      "fr": "Libérez de la place dans l’inventaire principal avant de décharger. La cargaison est conservée.",
+      "es": "Libera espacio en el inventario principal antes de descargar. La carga se ha conservado."
+    },
+    "Cargo unloaded.": {
+      "en": "Cargo unloaded.",
+      "fr": "Cargaison déchargée.",
+      "es": "Carga descargada."
+    },
+    "Cargo could not be saved. Nothing was unloaded.": {
+      "en": "Cargo could not be saved. Nothing was unloaded.",
+      "fr": "Impossible de sauvegarder la cargaison. Rien n’a été déchargé.",
+      "es": "No se pudo guardar la carga. No se ha descargado nada."
+    },
+    "Previous": {
+      "en": "Previous",
+      "fr": "Précédent",
+      "es": "Anterior"
+    },
+    "Next": {
+      "en": "Next",
+      "fr": "Suivant",
+      "es": "Siguiente"
+    },
+    "CargoIcon": {
+      "en": "Cargo action icon",
+      "fr": "Icône de l’action Cale",
+      "es": "Icono de la acción Bodega"
+    },
+    "Cargo: {0}/{1}\nUnload at a Q dock. Cargo is lost if your ship sinks.": {
+      "en": "Cargo: {0}/{1}\nUnload at a Q dock. Cargo is lost if your ship sinks.",
+      "fr": "Cargaison : {0}/{1}\nDéchargez à un quai Q. La cargaison est perdue au naufrage.",
+      "es": "Carga: {0}/{1}\nDescarga en un muelle Q. La carga se pierde al hundirse."
+    },
+    "Choose an existing item for every naval loot entry.": {
+      "en": "Choose an existing item for every naval loot entry.",
+      "fr": "Choisissez un objet existant pour chaque entrée de butin naval.",
+      "es": "Elige un objeto existente para cada entrada de botín naval."
+    },
+    "Enemy sunk · Sailing +{0:N0} EXP": {
+      "en": "Enemy sunk · Sailing +{0:N0} EXP",
+      "fr": "Ennemi coulé · Sailing +{0:N0} EXP",
+      "es": "Enemigo hundido · Sailing +{0:N0} EXP"
+    },
+    "Enemy sunk": {
+      "en": "Enemy sunk",
+      "fr": "Ennemi coulé",
+      "es": "Enemigo hundido"
+    },
+    "Cargo secured: {0} × {1:N0}": {
+      "en": "Cargo secured: {0} × {1:N0}",
+      "fr": "Butin en cale : {0} × {1:N0}",
+      "es": "Botín en bodega: {0} × {1:N0}"
+    },
+    "Better cargo replaced {0} lower-quality lots.": {
+      "en": "Better cargo replaced {0} lower-quality lots.",
+      "fr": "Meilleur butin : {0} lots de qualité inférieure remplacés.",
+      "es": "Mejor botín: {0} lotes de menor calidad reemplazados."
+    },
+    "Hold full · {0} lots could not be kept. Unload at Q.": {
+      "en": "Hold full · {0} lots could not be kept. Unload at Q.",
+      "fr": "Cale pleine · {0} lots écartés. Déchargez au Q.",
+      "es": "Bodega llena · {0} lotes descartados. Descarga en Q."
+    },
+    "Hold full · Unload your cargo at Q.": {
+      "en": "Hold full · Unload your cargo at Q.",
+      "fr": "Cale pleine · Déchargez votre cargaison au Q.",
+      "es": "Bodega llena · Descarga tu cargamento en Q."
+    },
+    "And {0} more item types in the hold.": {
+      "en": "And {0} more item types in the hold.",
+      "fr": "Et {0} autres types d’objets en cale.",
+      "es": "Y {0} tipos de objetos más en la bodega."
+    },
+    "SHIP'S HOLD": {
+      "en": "SHIP'S HOLD",
+      "fr": "CALE DU NAVIRE",
+      "es": "BODEGA DEL BARCO"
+    },
+    "YOUR SPOILS, SAFELY STOWED UNTIL PORT": {
+      "en": "YOUR SPOILS, SAFELY STOWED UNTIL PORT",
+      "fr": "VOTRE BUTIN, À RAPPORTER AU PORT",
+      "es": "TU BOTÍN, A SALVO HASTA LLEGAR A PUERTO"
+    },
+    "Unload at a Q dock from My fleet to claim these items.": {
+      "en": "Unload at a Q dock from My fleet to claim these items.",
+      "fr": "Déchargez au quai Q depuis Ma flotte pour récupérer ces objets.",
+      "es": "Descarga en un muelle Q desde Mi flota para recibir estos objetos."
+    },
+    "Cargo is lost if your ship sinks.": {
+      "en": "Cargo is lost if your ship sinks.",
+      "fr": "La cargaison est perdue si votre navire coule.",
+      "es": "El cargamento se pierde si tu barco se hunde."
+    },
+    "Cargo: {0}/{1} lots": {
+      "en": "Cargo: {0}/{1} lots",
+      "fr": "Cargaison : {0}/{1} lots",
+      "es": "Cargamento: {0}/{1} lotes"
+    },
+    "Qty: {0:N0}": {
+      "en": "Qty: {0:N0}",
+      "fr": "Qté : {0:N0}",
+      "es": "Cant.: {0:N0}"
+    },
+    "Quality {0}/5": {
+      "en": "Quality {0}/5",
+      "fr": "Qualité {0}/5",
+      "es": "Calidad {0}/5"
+    },
+    "CrewCapacity": {
+      "en": "CrewCapacity",
+      "fr": "Capacité équipage (capitaine inclus)",
+      "es": "Capacidad de tripulación (incluye capitán)"
+    },
+    "CrewIcon": {
+      "en": "CrewIcon",
+      "fr": "Icône équipage",
+      "es": "Icono de tripulación"
+    },
+    "Ship crew": {
+      "en": "Ship crew",
+      "fr": "Équipage du navire",
+      "es": "Tripulación del barco"
+    },
+    "Only the captain of a personal ship can open boarding.": {
+      "en": "Only the captain of a personal ship can open boarding.",
+      "fr": "Seul le capitaine d’un bateau personnel peut autoriser l’embarquement.",
+      "es": "Solo el capitán de un barco personal puede permitir el embarque."
+    },
+    "Stop beside a Q dock before opening boarding.": {
+      "en": "Stop beside a Q dock before opening boarding.",
+      "fr": "Arrêtez-vous près d’un quai Q pour autoriser l’embarquement.",
+      "es": "Detente junto a un muelle Q antes de permitir el embarque."
+    },
+    "Boarding is unavailable. Join the captain's party and stand beside the Q dock.": {
+      "en": "Boarding is unavailable. Join the captain's party and stand beside the Q dock.",
+      "fr": "Embarquement indisponible. Rejoignez le groupe du capitaine et placez-vous près du quai Q.",
+      "es": "Embarque no disponible. Únete al grupo del capitán y acércate al muelle Q."
+    },
+    "Unload your previous crew cargo before joining another ship.": {
+      "en": "Unload your previous crew cargo before joining another ship.",
+      "fr": "Déchargez votre ancienne cargaison d’équipage avant de rejoindre un autre bateau.",
+      "es": "Descarga tu cargamento de tripulación anterior antes de subir a otro barco."
+    },
+    "Crew data could not be saved. Try again.": {
+      "en": "Crew data could not be saved. Try again.",
+      "fr": "Les données d’équipage n’ont pas pu être sauvegardées. Réessayez.",
+      "es": "No se pudieron guardar los datos de tripulación. Inténtalo de nuevo."
+    },
+    "You are not aboard as crew.": {
+      "en": "You are not aboard as crew.",
+      "fr": "Vous n’êtes pas embarqué comme équipier.",
+      "es": "No estás a bordo como tripulante."
+    },
+    "Stop beside a Q dock before disembarking.": {
+      "en": "Stop beside a Q dock before disembarking.",
+      "fr": "Arrêtez-vous près d’un quai Q pour débarquer.",
+      "es": "Detente junto a un muelle Q antes de desembarcar."
+    },
+    "Stand beside a Q dock to unload your crew cargo.": {
+      "en": "Stand beside a Q dock to unload your crew cargo.",
+      "fr": "Placez-vous près d’un quai Q pour décharger votre cargaison d’équipage.",
+      "es": "Acércate a un muelle Q para descargar tu cargamento de tripulación."
+    },
+    "Ship crew · {0}/{1}": {
+      "en": "Ship crew · {0}/{1}",
+      "fr": "Équipage du navire · {0}/{1}",
+      "es": "Tripulación del barco · {0}/{1}"
+    },
+    "The captain steers and fires. Every member keeps their own rewards.": {
+      "en": "The captain steers and fires. Every member keeps their own rewards.",
+      "fr": "Le capitaine pilote et tire. Chaque membre garde ses propres récompenses.",
+      "es": "El capitán navega y dispara. Cada miembro conserva sus recompensas."
+    },
+    "Join the captain's party, then board together at a Q dock.": {
+      "en": "Join the captain's party, then board together at a Q dock.",
+      "fr": "Rejoignez le groupe du capitaine, puis embarquez au quai Q.",
+      "es": "Únete al grupo del capitán y embarca en un muelle Q."
+    },
+    "Your crew cargo: {0} lots": {
+      "en": "Your crew cargo: {0} lots",
+      "fr": "Votre cargaison d’équipage : {0} lots",
+      "es": "Tu cargamento de tripulación: {0} lotes"
+    },
+    "Crew cargo is lost if the ship sinks. Unload your share at Q.": {
+      "en": "Crew cargo is lost if the ship sinks. Unload your share at Q.",
+      "fr": "Le butin d’équipage est perdu au naufrage. Déchargez votre part au Q.",
+      "es": "El botín de tripulación se pierde al hundirse. Descarga tu parte en Q."
+    },
+    "Close crew boarding": {
+      "en": "Close crew boarding",
+      "fr": "Fermer l’embarquement",
+      "es": "Cerrar embarque"
+    },
+    "Open crew boarding": {
+      "en": "Open crew boarding",
+      "fr": "Autoriser l’embarquement",
+      "es": "Permitir embarque"
+    },
+    "Unload my crew cargo": {
+      "en": "Unload my crew cargo",
+      "fr": "Décharger ma part d’équipage",
+      "es": "Descargar mi parte de tripulación"
+    },
+    "Captain": {
+      "en": "Captain",
+      "fr": "Capitaine",
+      "es": "Capitán"
+    },
+    "Crew member": {
+      "en": "Crew member",
+      "fr": "Équipier",
+      "es": "Tripulante"
+    },
+    "Unnamed ship": {
+      "en": "Unnamed ship",
+      "fr": "Navire sans nom",
+      "es": "Barco sin nombre"
+    },
+    "Captain: {0} · {1}/{2}": {
+      "en": "Captain: {0} · {1}/{2}",
+      "fr": "Capitaine : {0} · {1}/{2}",
+      "es": "Capitán: {0} · {1}/{2}"
+    },
+    "Board": {
+      "en": "Board",
+      "fr": "Embarquer",
+      "es": "Embarcar"
+    },
+    "No party ship is currently open for boarding at this dock.": {
+      "en": "No party ship is currently open for boarding at this dock.",
+      "fr": "Aucun bateau du groupe n’accepte d’équipiers à ce quai.",
+      "es": "Ningún barco del grupo permite embarcar en este muelle."
+    },
+    "Cannon view": {
+      "en": "Cannon view",
+      "fr": "Vue canon",
+      "es": "Vista del cañón"
+    },
+    "Port": {
+      "en": "Port",
+      "fr": "Bâbord",
+      "es": "Babor"
+    },
+    "Starboard": {
+      "en": "Starboard",
+      "fr": "Tribord",
+      "es": "Estribor"
+    },
+    "Port cannon view": {
+      "en": "Port cannon view",
+      "fr": "Vue canon bâbord",
+      "es": "Vista del cañón de babor"
+    },
+    "Starboard cannon view": {
+      "en": "Starboard cannon view",
+      "fr": "Vue canon tribord",
+      "es": "Vista del cañón de estribor"
+    },
+    "Real loaded maps only · Terrain has no height data": {
+      "en": "Real loaded maps only · Terrain has no height data",
+      "fr": "Cartes réelles chargées uniquement · Terrain sans relief",
+      "es": "Solo mapas reales cargados · Terreno sin relieve"
+    },
+    "Shots follow the selected broadside · The captain keeps control": {
+      "en": "Shots follow the selected broadside · The captain keeps control",
+      "fr": "Tirs sur le flanc choisi · Le capitaine garde le contrôle",
+      "es": "Disparos por el costado elegido · El capitán mantiene el control"
+    },
+    "Reload: {0}s": {
+      "en": "Reload: {0}s",
+      "fr": "Recharge : {0}s",
+      "es": "Recarga: {0}s"
+    },
+    "Fire broadside": {
+      "en": "Fire broadside",
+      "fr": "Tirer la bordée",
+      "es": "Disparar andanada"
+    },
+    "Only the captain can fire the broadside in this preview.": {
+      "en": "Only the captain can fire the broadside in this preview.",
+      "fr": "Seul le capitaine peut tirer la bordée dans cet aperçu.",
+      "es": "Solo el capitán puede disparar la andanada en esta vista."
+    },
+    "Perspective preview unavailable on this renderer.": {
+      "en": "Perspective preview unavailable on this renderer.",
+      "fr": "Aperçu en perspective indisponible sur ce moteur graphique.",
+      "es": "Vista en perspectiva no disponible con este renderizador."
+    },
+    "Crew cannons and gunnery": {
+      "en": "Crew cannons and gunnery",
+      "fr": "Canons d’équipage et canonnier",
+      "es": "Cañones de tripulación y artillería"
+    },
+    "Cannon ammunition": {
+      "en": "Cannon ammunition",
+      "fr": "Munitions des canons",
+      "es": "Munición de cañón"
+    },
+    "Gunnery": {
+      "en": "Gunnery",
+      "fr": "Canonnier",
+      "es": "Artillería"
+    },
+    "Ammunition": {
+      "en": "Ammunition",
+      "fr": "Munitions",
+      "es": "Munición"
+    },
+    "CannonsPerSide": {
+      "en": "CannonsPerSide",
+      "fr": "Postes par flanc",
+      "es": "Puestos por costado"
+    },
+    "GunReloadMilliseconds": {
+      "en": "GunReloadMilliseconds",
+      "fr": "Recharge du poste (ms)",
+      "es": "Recarga del puesto (ms)"
+    },
+    "AimArcDegrees": {
+      "en": "AimArcDegrees",
+      "fr": "Angle de visée maximal (degrés)",
+      "es": "Ángulo máximo de puntería (grados)"
+    },
+    "ExperiencePerDamage": {
+      "en": "ExperiencePerDamage",
+      "fr": "EXP par dégât infligé à Herbonia",
+      "es": "EXP por daño infligido a Herbonia"
+    },
+    "RequiredLevel": {
+      "en": "RequiredLevel",
+      "fr": "Niveau requis",
+      "es": "Nivel requerido"
+    },
+    "RequiresItem": {
+      "en": "RequiresItem",
+      "fr": "Consommer un objet (boulets spéciaux)",
+      "es": "Consumir objeto (proyectiles especiales)"
+    },
+    "UnitsPerShot": {
+      "en": "UnitsPerShot",
+      "fr": "Objets consommés par tir",
+      "es": "Objetos consumidos por disparo"
+    },
+    "DamagePercent": {
+      "en": "DamagePercent",
+      "fr": "Dégâts (% du canon de base)",
+      "es": "Daño (% del cañón base)"
+    },
+    "RangePercent": {
+      "en": "RangePercent",
+      "fr": "Portée (% du canon de base)",
+      "es": "Alcance (% del cañón base)"
+    },
+    "ReloadPercent": {
+      "en": "ReloadPercent",
+      "fr": "Recharge (% du poste de base)",
+      "es": "Recarga (% del puesto base)"
+    },
+    "CrewCannonGraphic": {
+      "en": "CrewCannonGraphic",
+      "fr": "Décor du poste de canon",
+      "es": "Imagen del puesto de cañón"
+    },
+    "Standard cannonball": {
+      "en": "Standard cannonball",
+      "fr": "Boulet standard",
+      "es": "Bala estándar"
+    },
+    "Heavy cannonball": {
+      "en": "Heavy cannonball",
+      "fr": "Boulet lourd",
+      "es": "Bala pesada"
+    },
+    "Long-range cannonball": {
+      "en": "Long-range cannonball",
+      "fr": "Boulet longue portée",
+      "es": "Bala de largo alcance"
+    },
+    "Crew cannons are disabled.": {
+      "en": "Crew cannons are disabled.",
+      "fr": "Les canons d’équipage sont désactivés.",
+      "es": "Los cañones de tripulación están desactivados."
+    },
+    "All cannons on this side are occupied.": {
+      "en": "All cannons on this side are occupied.",
+      "fr": "Tous les canons de ce flanc sont occupés.",
+      "es": "Todos los cañones de este costado están ocupados."
+    },
+    "This ammunition requires a higher Gunnery level.": {
+      "en": "This ammunition requires a higher Gunnery level.",
+      "fr": "Cette munition demande un niveau de canonnier supérieur.",
+      "es": "Esta munición requiere un nivel de Artillería superior."
+    },
+    "The cannon muzzle is blocked.": {
+      "en": "The cannon muzzle is blocked.",
+      "fr": "La bouche du canon est obstruée.",
+      "es": "La boca del cañón está bloqueada."
+    },
+    "Ammunition could not be saved. No shot was fired.": {
+      "en": "Ammunition could not be saved. No shot was fired.",
+      "fr": "Impossible de sauvegarder la munition. Aucun tir effectué.",
+      "es": "No se pudo guardar la munición. No se disparó."
+    },
+    "Crew cannon station": {
+      "en": "Crew cannon station",
+      "fr": "Poste de canon d’équipage",
+      "es": "Puesto de cañón de tripulación"
+    },
+    "Cannon {0} · {1}": {
+      "en": "Cannon {0} · {1}",
+      "fr": "Canon {0} · {1}",
+      "es": "Cañón {0} · {1}"
+    },
+    "Gunnery · Level {0} · {1}/{2} EXP": {
+      "en": "Gunnery · Level {0} · {1}/{2} EXP",
+      "fr": "Canonnier · Niveau {0} · {1}/{2} EXP",
+      "es": "Artillería · Nivel {0} · {1}/{2} EXP"
+    },
+    "{0} · Level {1} · {2}": {
+      "en": "{0} · Level {1} · {2}",
+      "fr": "{0} · Niveau {1} · {2}",
+      "es": "{0} · Nivel {1} · {2}"
+    },
+    "Free": {
+      "en": "Free",
+      "fr": "Gratuit",
+      "es": "Gratis"
+    },
+    "{0} shots": {
+      "en": "{0} shots",
+      "fr": "{0} tirs",
+      "es": "{0} disparos"
+    },
+    "Ammunition unavailable.": {
+      "en": "Ammunition unavailable.",
+      "fr": "Munition indisponible.",
+      "es": "Munición no disponible."
+    },
+    "Damage {0}% · Range {1}% · Reload {2}%": {
+      "en": "Damage {0}% · Range {1}% · Reload {2}%",
+      "fr": "Dégâts {0}% · Portée {1}% · Recharge {2}%",
+      "es": "Daño {0}% · Alcance {1}% · Recarga {2}%"
+    },
+    "Take cannon": {
+      "en": "Take cannon",
+      "fr": "Prendre le canon",
+      "es": "Ocupar cañón"
+    },
+    "Fire cannon": {
+      "en": "Fire cannon",
+      "fr": "Tirer au canon",
+      "es": "Disparar cañón"
+    },
+    "Move the mouse to aim · Left click to fire": {
+      "en": "Move the mouse to aim · Left click to fire",
+      "fr": "Souris pour viser · Clic gauche pour tirer",
+      "es": "Mueve el ratón para apuntar · Clic izquierdo para disparar"
+    },
+    "Gunnery · Level {0} · MAX": {
+      "en": "Gunnery · Level {0} · MAX",
+      "fr": "Canonnier · Niveau {0} · MAX",
+      "es": "Artillería · Nivel {0} · MÁX."
+    },
+    "Not enough ammunition for this cannonball.": {
+      "en": "Not enough ammunition for this cannonball.",
+      "fr": "Munitions insuffisantes pour ce boulet.",
+      "es": "No hay suficiente munición para este proyectil."
+    },
+    "Enable crew cannons": {
+      "en": "Enable crew cannons",
+      "fr": "Activer les canons d’équipage",
+      "es": "Activar cañones de tripulación"
+    },
+    "Maximum Gunnery level": {
+      "en": "Maximum Gunnery level",
+      "fr": "Niveau de canonnier maximal",
+      "es": "Nivel máximo de Artillería"
+    },
+    "Naval combat music": {
+      "en": "Naval combat music",
+      "fr": "Musique de combat naval",
+      "es": "Música de combate naval"
+    },
+    "Cargo discarded.": {
+      "en": "Cargo discarded.",
+      "fr": "Cargaison supprimée.",
+      "es": "Carga descartada."
+    },
+    "Unload": {
+      "en": "Unload",
+      "fr": "Décharger",
+      "es": "Descargar"
+    },
+    "Discard": {
+      "en": "Discard",
+      "fr": "Supprimer",
+      "es": "Descartar"
+    },
+    "Choose lots to unload at a Q dock, or discard unwanted cargo.": {
+      "en": "Choose lots to unload at a Q dock, or discard unwanted cargo.",
+      "fr": "Choisissez les lots à décharger au quai Q ou supprimez le butin indésirable.",
+      "es": "Elige lotes para descargar en un muelle Q o descarta la carga no deseada."
+    },
+    "Hull: {0}/{1} · Cargo: {2}/{3} · Speed: {4:0.0} · Crew: {5}/{6}": {
+      "en": "Hull: {0}/{1} · Cargo: {2}/{3} · Speed: {4:0.0} · Crew: {5}/{6}",
+      "fr": "Coque : {0}/{1} · Cale : {2}/{3} · Vitesse : {4:0.0} · À bord : {5}/{6}",
+      "es": "Casco: {0}/{1} · Bodega: {2}/{3} · Velocidad: {4:0.0} · Tripulación: {5}/{6}"
+    },
+    "Naval crew": {
+      "en": "Naval crew",
+      "fr": "Équipage naval",
+      "es": "Tripulación naval"
+    },
+    "The captain must stop beside a Q dock with a free crew seat before you can board.": {
+      "en": "The captain must stop beside a Q dock with a free crew seat before you can board.",
+      "fr": "Le capitaine doit s’arrêter près d’un quai Q avec une place libre pour vous embarquer.",
+      "es": "El capitán debe detenerse junto a un muelle Q con una plaza libre para embarcar."
+    },
+    "ImpactAnimationId": {
+      "en": "Impact animation",
+      "fr": "Animation d’impact",
+      "es": "Animación de impacto"
+    },
+    "Discard cargo": {
+      "en": "Discard cargo",
+      "fr": "Supprimer le butin",
+      "es": "Descartar carga"
+    },
+    "Discard this cargo lot permanently?": {
+      "en": "Discard this cargo lot permanently?",
+      "fr": "Supprimer définitivement ce lot de butin ?",
+      "es": "¿Descartar este lote de carga permanentemente?"
+    },
+    "Cargo could not be saved. Nothing was changed.": {
+      "en": "Cargo could not be saved. Nothing was changed.",
+      "fr": "La cargaison n’a pas pu être sauvegardée. Rien n’a été modifié.",
+      "es": "No se pudo guardar la carga. No se modificó nada."
+    },
+    "Naval activities": {
+      "en": "Naval activities",
+      "fr": "Activités navales",
+      "es": "Actividades navales"
+    },
+    "Ammo": {
+      "en": "Ammo",
+      "fr": "Ammo",
+      "es": "Munición"
+    },
+    "Sailing skills": {
+      "en": "Sailing skills",
+      "fr": "Compétences de navigation",
+      "es": "Habilidades de navegación"
+    },
+    "Ship repairs": {
+      "en": "Ship repairs",
+      "fr": "Réparer le navire",
+      "es": "Reparar el barco"
+    },
+    "Helm control": {
+      "en": "Helm control",
+      "fr": "Contrôle de la barre",
+      "es": "Control del timón"
+    },
+    "Sailing": {
+      "en": "Sailing",
+      "fr": "Navigation",
+      "es": "Navegación"
+    },
+    "Shipwright": {
+      "en": "Shipwright",
+      "fr": "Charpentier naval",
+      "es": "Carpintería naval"
+    },
+    "Naval progression": {
+      "en": "Naval progression",
+      "fr": "Progression navale",
+      "es": "Progresión naval"
+    },
+    "Sailing {0} - Gunnery {1} - Shipwright {2}": {
+      "en": "Sailing {0} - Gunnery {1} - Shipwright {2}",
+      "fr": "Navigation {0} - Canonnier {1} - Charpentier {2}",
+      "es": "Navegación {0} - Artillería {1} - Carpintería {2}"
+    },
+    "Leave the cannon and choose a repair activity.": {
+      "en": "Leave the cannon and choose a repair activity.",
+      "fr": "Quittez le canon et choisissez une réparation.",
+      "es": "Deja el cañón y elige una reparación."
+    },
+    "Hammering": {
+      "en": "Hammering",
+      "fr": "Martelage",
+      "es": "Martillado"
+    },
+    "Caulking": {
+      "en": "Caulking",
+      "fr": "Calfatage",
+      "es": "Calafateado"
+    },
+    "Pumping": {
+      "en": "Pumping",
+      "fr": "Pompage",
+      "es": "Bombeo"
+    },
+    "Strike the highlighted nail when the timing bar is green.": {
+      "en": "Strike the highlighted nail when the timing bar is green.",
+      "fr": "Frappez le clou indiqué quand la barre devient verte.",
+      "es": "Golpea el clavo indicado cuando la barra esté verde."
+    },
+    "Seal the highlighted leak.": {
+      "en": "Seal the highlighted leak.",
+      "fr": "Bouchez la fuite indiquée.",
+      "es": "Sella la fuga indicada."
+    },
+    "Pump left and right alternately.": {
+      "en": "Pump left and right alternately.",
+      "fr": "Pompez à gauche puis à droite, en alternance.",
+      "es": "Bombea a izquierda y derecha de forma alterna."
+    },
+    "Repairs: {0}/{1}": {
+      "en": "Repairs: {0}/{1}",
+      "fr": "Réparation : {0}/{1}",
+      "es": "Reparación: {0}/{1}"
+    },
+    "REPAIR": {
+      "en": "REPAIR",
+      "fr": "RÉPARER",
+      "es": "REPARAR"
+    },
+    "Time: {0}s": {
+      "en": "Time: {0}s",
+      "fr": "Temps : {0}s",
+      "es": "Tiempo: {0}s"
+    },
+    "Level {0} - {1} Auragems - {2}s - Recharge {3}s": {
+      "en": "Level {0} - {1} Auragems - {2}s - Recharge {3}s",
+      "fr": "Niv. {0} - {1} Auragems - {2}s - Recharge {3}s",
+      "es": "Nivel {0} - {1} Auragems - {2}s - Recarga {3}s"
+    },
+    "Activate": {
+      "en": "Activate",
+      "fr": "Activer",
+      "es": "Activar"
+    },
+    "Learn skill": {
+      "en": "Learn skill",
+      "fr": "Apprendre",
+      "es": "Aprender"
+    },
+    "Ammo: {0} - Inventory: {1} - Sailing {2} / Gunnery {3}": {
+      "en": "Ammo: {0} - Inventory: {1} - Sailing {2} / Gunnery {3}",
+      "fr": "Ammo : {0} - Inventaire : {1} - Navigation {2} / Canon {3}",
+      "es": "Munición: {0} - Inventario: {1} - Navegación {2} / Artillería {3}"
+    },
+    "Store 10": {
+      "en": "Store 10",
+      "fr": "Déposer 10",
+      "es": "Guardar 10"
+    },
+    "Take 10": {
+      "en": "Take 10",
+      "fr": "Retirer 10",
+      "es": "Retirar 10"
+    },
+    "Buy 10": {
+      "en": "Buy 10",
+      "fr": "Acheter 10",
+      "es": "Comprar 10"
+    },
+    "Select": {
+      "en": "Select",
+      "fr": "Choisir",
+      "es": "Elegir"
+    },
+    "Accept helm": {
+      "en": "Accept helm",
+      "fr": "Accepter la barre",
+      "es": "Aceptar el timón"
+    },
+    "Reclaim helm": {
+      "en": "Reclaim helm",
+      "fr": "Reprendre la barre",
+      "es": "Recuperar el timón"
+    },
+    "Offer helm": {
+      "en": "Offer helm",
+      "fr": "Offrir la barre",
+      "es": "Ofrecer el timón"
+    },
+    "Dock nearby": {
+      "en": "Dock nearby",
+      "fr": "Quai à proximité",
+      "es": "Muelle cercano"
+    },
+    "Moor ship": {
+      "en": "Moor ship",
+      "fr": "Amarrer le navire",
+      "es": "Amarrar el barco"
+    },
+    "Ammunition updated.": {
+      "en": "Ammunition updated.",
+      "fr": "Munitions mises à jour.",
+      "es": "Munición actualizada."
+    },
+    "Transaction failed. Nothing was changed.": {
+      "en": "Transaction failed. Nothing was changed.",
+      "fr": "Transaction impossible. Rien n'a changé.",
+      "es": "La transacción falló. No se ha cambiado nada."
+    },
+    "Skill learned.": {
+      "en": "Skill learned.",
+      "fr": "Compétence apprise.",
+      "es": "Habilidad aprendida."
+    },
+    "Repair cancelled.": {
+      "en": "Repair cancelled.",
+      "fr": "Réparation annulée.",
+      "es": "Reparación cancelada."
+    },
+    "Repair completed.": {
+      "en": "Repair completed.",
+      "fr": "Réparation terminée.",
+      "es": "Reparación terminada."
+    },
+    "Ramming speed": {
+      "en": "Ramming speed",
+      "fr": "Vitesse d'éperonnage",
+      "es": "Velocidad de embestida"
+    },
+    "Full sail": {
+      "en": "Full sail",
+      "fr": "Toutes voiles dehors",
+      "es": "A toda vela"
+    },
+    "Take cover": {
+      "en": "Take cover",
+      "fr": "À couvert",
+      "es": "A cubierto"
+    },
+    "Open fire": {
+      "en": "Open fire",
+      "fr": "Feu à volonté",
+      "es": "Fuego a discreción"
+    },
+    "Repair bonus": {
+      "en": "Repair bonus",
+      "fr": "Bonus de réparation",
+      "es": "Bonificación de reparación"
+    },
+    "Lightning cannonball": {
+      "en": "Lightning cannonball",
+      "fr": "Boulet de foudre",
+      "es": "Bala de rayo"
+    },
+    "Chain shot": {
+      "en": "Chain shot",
+      "fr": "Boulets chaînés",
+      "es": "Balas encadenadas"
+    },
+    "Explosive cannonball": {
+      "en": "Explosive cannonball",
+      "fr": "Boulet explosif",
+      "es": "Bala explosiva"
+    },
+    "Ice cannonball": {
+      "en": "Ice cannonball",
+      "fr": "Boulet de glace",
+      "es": "Bala de hielo"
+    },
+    "Cursed cannonball": {
+      "en": "Cursed cannonball",
+      "fr": "Boulet maudit",
+      "es": "Bala maldita"
+    },
+    "Open cannon ammunition shop": {
+      "en": "Open cannon ammunition shop",
+      "fr": "Ouvrir la boutique de munitions navales",
+      "es": "Abrir tienda de munición naval"
+    },
+    "Ship repair activities": {
+      "en": "Ship repair activities",
+      "fr": "Mini-jeux de réparation",
+      "es": "Minijuegos de reparación"
+    },
+    "RequiredSailingLevel": {
+      "en": "RequiredSailingLevel",
+      "fr": "Niveau de navigation requis",
+      "es": "Nivel de navegación requerido"
+    },
+    "ProjectileGraphic": {
+      "en": "ProjectileGraphic",
+      "fr": "Image du projectile",
+      "es": "Imagen del proyectil"
+    },
+    "WaterGraphic": {
+      "en": "WaterGraphic",
+      "fr": "Impact sur l'eau",
+      "es": "Impacto en el agua"
+    },
+    "HullGraphic": {
+      "en": "HullGraphic",
+      "fr": "Impact sur la coque",
+      "es": "Impacto en el casco"
+    },
+    "ShopCurrencyItemId": {
+      "en": "ShopCurrencyItemId",
+      "fr": "Monnaie de la boutique",
+      "es": "Moneda de la tienda"
+    },
+    "ShopPrice": {
+      "en": "ShopPrice",
+      "fr": "Prix unitaire",
+      "es": "Precio unitario"
+    },
+    "SlowPercent": {
+      "en": "SlowPercent",
+      "fr": "Ralentissement (%)",
+      "es": "Ralentización (%)"
+    },
+    "SlowSeconds": {
+      "en": "SlowSeconds",
+      "fr": "Durée du ralentissement (s)",
+      "es": "Duración de ralentización (s)"
+    },
+    "HullPerSuccess": {
+      "en": "HullPerSuccess",
+      "fr": "Coque réparée par réussite",
+      "es": "Casco reparado por éxito"
+    },
+    "ExperiencePerSuccess": {
+      "en": "ExperiencePerSuccess",
+      "fr": "EXP par réussite",
+      "es": "EXP por éxito"
+    },
+    "RoundSeconds": {
+      "en": "RoundSeconds",
+      "fr": "Durée de la partie (s)",
+      "es": "Duración de la partida (s)"
+    },
+    "RequiredHits": {
+      "en": "RequiredHits",
+      "fr": "Actions réussies requises",
+      "es": "Acciones correctas requeridas"
+    },
+    "CooldownSeconds": {
+      "en": "CooldownSeconds",
+      "fr": "Temps de recharge (s)",
+      "es": "Tiempo de recarga (s)"
+    },
+    "MinimumRoundMilliseconds": {
+      "en": "MinimumRoundMilliseconds",
+      "fr": "Durée minimale de partie (ms)",
+      "es": "Duración mínima de partida (ms)"
+    },
+    "DurationSeconds": {
+      "en": "DurationSeconds",
+      "fr": "Durée de l'effet (s)",
+      "es": "Duración del efecto (s)"
+    },
+    "PowerPercent": {
+      "en": "PowerPercent",
+      "fr": "Puissance (%)",
+      "es": "Potencia (%)"
+    },
+    "IdleGraphics": {
+      "en": "IdleGraphics",
+      "fr": "Image du navire à l'arrêt",
+      "es": "Imagen del barco detenido"
+    },
+    "Icon": {
+      "en": "Icon",
+      "fr": "Icône (resources/spells)",
+      "es": "Icono (resources/spells)"
+    },
+    "Naval - ShipsSunk": {
+      "en": "Naval - ShipsSunk",
+      "fr": "Naval - Couler des navires",
+      "es": "Naval - Hundir barcos"
+    },
+    "Naval - CannonHits": {
+      "en": "Naval - CannonHits",
+      "fr": "Naval - Réussir des impacts",
+      "es": "Naval - Acertar disparos"
+    },
+    "Naval - HullDamage": {
+      "en": "Naval - HullDamage",
+      "fr": "Naval - Infliger des dégâts",
+      "es": "Naval - Infligir daño"
+    },
+    "Naval - Repairs": {
+      "en": "Naval - Repairs",
+      "fr": "Naval - Réussir des réparations",
+      "es": "Naval - Completar reparaciones"
+    },
+    "Naval - Dockings": {
+      "en": "Naval - Dockings",
+      "fr": "Naval - Amarrer au quai",
+      "es": "Naval - Amarrar en el muelle"
+    },
+    "Naval - CargoUnloaded": {
+      "en": "Naval - CargoUnloaded",
+      "fr": "Naval - Décharger des lots",
+      "es": "Naval - Descargar lotes"
+    },
+    "Naval - SailingLevel": {
+      "en": "Naval - SailingLevel",
+      "fr": "Naval - Niveau de navigation",
+      "es": "Naval - Nivel de navegación"
+    },
+    "Naval - GunneryLevel": {
+      "en": "Naval - GunneryLevel",
+      "fr": "Naval - Niveau de canonnier",
+      "es": "Naval - Nivel de artillería"
+    },
+    "Naval - ShipwrightLevel": {
+      "en": "Naval - ShipwrightLevel",
+      "fr": "Naval - Niveau de charpentier naval",
+      "es": "Naval - Nivel de carpintería naval"
+    },
+    "Timing": {
+      "en": "Timing",
+      "fr": "Rythme",
+      "es": "Ritmo"
+    },
+    "Repair in progress": {
+      "en": "Repair in progress",
+      "fr": "Réparation en cours",
+      "es": "Reparación en curso"
+    },
+    "Repair activity ready.": {
+      "en": "Repair activity ready.",
+      "fr": "Mini-jeu de réparation prêt.",
+      "es": "Minijuego de reparación listo."
+    },
+    "Repair unavailable. Check hull, role and cooldown.": {
+      "en": "Repair unavailable. Check hull, role and cooldown.",
+      "fr": "Réparation indisponible. Vérifiez la coque, le rôle et la recharge.",
+      "es": "Reparación no disponible. Revisa el casco, el rol y la recarga."
+    },
+    "Helm offered for 30 seconds.": {
+      "en": "Helm offered for 30 seconds.",
+      "fr": "Barre offerte pendant 30 secondes.",
+      "es": "Timón ofrecido durante 30 segundos."
+    },
+    "Choose a crew member to offer the helm.": {
+      "en": "Choose a crew member to offer the helm.",
+      "fr": "Choisissez un membre à qui offrir la barre.",
+      "es": "Elige un tripulante para ofrecerle el timón."
+    },
+    "Only the ship owner can offer the helm.": {
+      "en": "Only the ship owner can offer the helm.",
+      "fr": "Seul le propriétaire peut offrir la barre.",
+      "es": "Solo el dueño puede ofrecer el timón."
+    },
+    "Use 1-0 to select ammunition.": {
+      "en": "Use 1-0 to select ammunition.",
+      "fr": "Utilisez 1 à 0 pour choisir un boulet.",
+      "es": "Usa 1-0 para elegir munición."
+    },
+    "Repair {0} - Level {1} - {2}/{3} EXP": {
+      "en": "Repair {0} - Level {1} - {2}/{3} EXP",
+      "fr": "Réparation {0} - Niv. {1} - {2}/{3} EXP",
+      "es": "Reparación {0} - Nivel {1} - {2}/{3} EXP"
+    },
+    "Naval profession settings are in Naval System Editor.": {
+      "en": "Naval profession settings are in Naval System Editor.",
+      "fr": "Les métiers navals se configurent dans Naval System Editor.",
+      "es": "Las profesiones navales se configuran en Naval System Editor."
+    },
+    "Sealed cargo": {
+      "en": "Sealed cargo",
+      "fr": "Cargaison scellée",
+      "es": "Carga sellada"
+    },
+    "Sealed cargo secured: {0}": {
+      "en": "Sealed cargo secured: {0}",
+      "fr": "Cargaisons scellées récupérées : {0}",
+      "es": "Cargas selladas obtenidas: {0}"
+    },
+    "Ammunition inventory": {
+      "en": "Ammunition inventory",
+      "fr": "Inventaire de munitions",
+      "es": "Inventario de munición"
+    },
+    "Naval ammunition shop": {
+      "en": "Naval ammunition shop",
+      "fr": "Boutique de munitions navales",
+      "es": "Tienda de munición naval"
+    },
+    "Use": {
+      "en": "Use",
+      "fr": "Utiliser",
+      "es": "Usar"
+    },
+    "Withdraw": {
+      "en": "Withdraw",
+      "fr": "Retirer",
+      "es": "Retirar"
+    },
+    "Owned": {
+      "en": "Owned",
+      "fr": "Acquis",
+      "es": "Adquirido"
+    },
+    "Normal shop configuration": {
+      "en": "Normal shop configuration",
+      "fr": "Configuration boutique normale",
+      "es": "Configuración de tienda normal"
+    },
+    "Naval ammunition shop configuration": {
+      "en": "Naval ammunition shop configuration",
+      "fr": "Configuration boutique de munitions navales",
+      "es": "Configuración de tienda de munición naval"
+    },
+    "Boat and Sailing skill shop configuration": {
+      "en": "Boat and Sailing skill shop configuration",
+      "fr": "Configuration boutique de bateaux et compétences navales",
+      "es": "Configuración de tienda de barcos y habilidades navales"
+    },
+    "Naval shops open on land. Configure ammunition buy and sell prices in the item lists; ship models and skill prices use the Naval System Editor.": {
+      "en": "Naval shops open on land. Configure ammunition buy and sell prices in the item lists; ship models and skill prices use the Naval System Editor.",
+      "fr": "Les boutiques navales ouvrent à terre. Configurez les prix des munitions dans les listes achat et vente; les modèles de bateaux et les compétences utilisent le System Editor naval.",
+      "es": "Las tiendas navales abren en tierra. Configure precios de munición en las listas de compra y venta; los barcos y habilidades usan el editor del sistema naval."
+    },
+    "Default naval catalogue": {
+      "en": "Default naval catalogue",
+      "fr": "Catalogue naval par défaut",
+      "es": "Catálogo naval predeterminado"
+    },
+    "Ship sold.": {
+      "en": "Ship sold.",
+      "fr": "Navire vendu.",
+      "es": "Barco vendido."
+    },
+    "Required level: {0}": {
+      "en": "Required level: {0}",
+      "fr": "Niveau requis : {0}",
+      "es": "Nivel requerido: {0}"
+    },
+    "Buy ship": {
+      "en": "Buy ship",
+      "fr": "Acheter",
+      "es": "Comprar"
+    },
+    "Fully repair": {
+      "en": "Fully repair",
+      "fr": "Réparer",
+      "es": "Reparar"
+    },
+    "Not owned": {
+      "en": "Not owned",
+      "fr": "Non acquis",
+      "es": "No adquirido"
+    },
+    "Save": {
+      "en": "Save",
+      "fr": "Enregistrer",
+      "es": "Guardar"
+    },
+    "Cancel": {
+      "en": "Cancel",
+      "fr": "Annuler",
+      "es": "Cancelar"
+    },
+    "Navigation and gunnery achievements": {
+      "en": "Navigation and gunnery achievements",
+      "fr": "Achievements de navigation et de canon",
+      "es": "Logros de navegación y artillería"
+    },
+    "Configure boats and skills": {
+      "en": "Configure boats and skills",
+      "fr": "Configurer les bateaux et compétences",
+      "es": "Configurar barcos y habilidades"
+    },
+    "Naval shops open on land. Use the item lists for ammunition prices, or Configure boats and skills for this shop.": {
+      "en": "Naval shops open on land. Use the item lists for ammunition prices, or Configure boats and skills for this shop.",
+      "fr": "Les boutiques navales ouvrent à terre. Utilisez les listes pour les prix des munitions ou Configurer les bateaux et compétences pour cette boutique.",
+      "es": "Las tiendas navales abren en tierra. Use las listas para los precios de munición o Configurar barcos y habilidades para esta tienda."
+    },
+    "For sale": {
+      "en": "For sale",
+      "fr": "En vente",
+      "es": "En venta"
+    },
+    "Default currency": {
+      "en": "Default currency",
+      "fr": "Monnaie par défaut",
+      "es": "Moneda predeterminada"
+    },
+    "Full repair price": {
+      "en": "Full repair price",
+      "fr": "Prix de réparation complète",
+      "es": "Precio de reparación completa"
+    },
+    "Character +{0:N0} EXP": {
+      "en": "Character +{0:N0} EXP",
+      "fr": "Personnage +{0:N0} EXP",
+      "es": "Personaje +{0:N0} EXP"
+    },
+    "Level {0} - Duration {1}s - Recharge {2}s": {
+      "en": "Level {0} - Duration {1}s - Recharge {2}s",
+      "fr": "Niveau {0} - Durée {1}s - Recharge {2}s",
+      "es": "Nivel {0} - Duración {1}s - Recarga {2}s"
+    },
+    "Copy patrol": {
+      "en": "Copy patrol",
+      "fr": "Copier la patrouille",
+      "es": "Copiar patrulla"
+    },
+    "Paste patrol": {
+      "en": "Paste patrol",
+      "fr": "Coller la patrouille",
+      "es": "Pegar patrulla"
+    },
+    "Voyage results": {
+      "en": "Voyage results",
+      "fr": "Résultats de navigation",
+      "es": "Resultados de navegación"
+    },
+    "Take all": {
+      "en": "Take all",
+      "fr": "Tout récupérer",
+      "es": "Recoger todo"
+    },
+    "Your cargo has been revealed. Collect your rewards.": {
+      "en": "Your cargo has been revealed. Collect your rewards.",
+      "fr": "Votre cargaison est dévoilée. Récupérez vos récompenses.",
+      "es": "Tu carga ha sido revelada. Recoge tus recompensas."
     }
   }
 }

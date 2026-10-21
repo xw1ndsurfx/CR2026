@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
@@ -402,6 +402,7 @@ public partial class FrmNpc
             Math.Max(2, result.damage / 3)));
         Assign(nudExp, Math.Max(0,(long)Math.Round(result.exp*0.8)));
         Assign(_experienceMaximum, Math.Max(0,(long)Math.Round(result.exp*1.2)));
+        Assign(nudSpawnDuration,difficulty.SelectedIndex switch {3=>300+level.Value*3,2=>60+level.Value,0=>15,_=>30+level.Value/2});
         chkIndividualLoot.Checked=true;
         // Handcrafted crit, scaling, speed and animation remain unchanged
         // when Auto Combat is disabled.

@@ -652,6 +652,7 @@ public abstract partial class Entity : IEntity
 
         switch (mapAttribute)
         {
+            case MapDockAttribute _:
             case MapBlockedAttribute _:
             case MapAnimationAttribute animationAttribute when animationAttribute.IsBlock:
             case MapNpcAvoidAttribute _ when !IgnoresNpcAvoid:

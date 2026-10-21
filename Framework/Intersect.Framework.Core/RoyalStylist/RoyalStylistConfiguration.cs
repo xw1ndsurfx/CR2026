@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Intersect.Framework.Core.RoyalStylist;
@@ -65,10 +65,12 @@ public sealed class RoyalStylistConfiguration
 {
     public static RoyalStylistConfiguration Instance { get; private set; } = new();
 
+    public Intersect.Framework.Core.QualityOfLife.PetDecorationDefinition[] PetDecorations {get;set;}=[];
     public RoyalStylistDefinition[] Stylists { get; set; } = [];
 
     [JsonIgnore]
     public bool IsStructurallyValid =>
+        PetDecorations is {Length:<=128} && PetDecorations.All(decoration=>decoration.IsValid) && PetDecorations.Select(decoration=>decoration.Id).Distinct().Count()==PetDecorations.Length &&
         (Stylists ?? []).Length <= 2048 &&
         (Stylists ?? []).All(stylist => stylist is { IsStructurallyValid: true }) &&
         (Stylists ?? []).Select(stylist => stylist.Id).Distinct().Count() ==

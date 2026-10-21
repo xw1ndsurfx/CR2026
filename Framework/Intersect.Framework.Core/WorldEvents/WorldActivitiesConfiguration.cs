@@ -86,6 +86,7 @@ public sealed class WorldActivitiesConfiguration
     {
         get; set;
     }
+    public string NavalCombatMusic {get;set;}="";
     public string CombatMusic { get; set; } = "";
     public List<CombatMusicRule> CombatMusicRules { get; set; } = [];
     public static bool ValidTrack(string track) => track is { Length: > 0 and <= 260 } && track == Path.GetFileName(track);
@@ -93,7 +94,7 @@ public sealed class WorldActivitiesConfiguration
     public int CombatMusicGraceSeconds { get; set; } = 8;
     public List<ExperienceEventDefinition> LootEvents { get; set; } = [];
     public List<ExperienceEventDefinition> ExperienceEvents { get; set; } = [];
-    public bool IsValid => LootEvents is {Count: <=200} && LootEvents.All(e=>e is {IsValid:true}) && LootEvents.Select(e=>e.Id).Distinct().Count()==LootEvents.Count && Metalworking is { IsValid: true } && Pvp is { IsValid: true } && CombatMusicRules is { Count: <= 128 } && CombatMusicRules.All(r => r is { IsValid: true }) && CombatMusicRules.SelectMany(r => r.MapIds).Distinct().Count() == CombatMusicRules.Sum(r => r.MapIds.Length) && BankRequiredLevel is >= 1 and <= 10000 && BankOpeningCost is >= 0 and <= 1000000 && CombatMusic is { Length: <= 260 } && CombatMusic == Path.GetFileName(CombatMusic) && CombatMusicGraceSeconds is >= 0 and <= 120 && ExperienceEvents is { Count: <= 200 } && ExperienceEvents.All(e => e is { IsValid: true }) && ExperienceEvents.Select(e => e.Id).Distinct().Count() == ExperienceEvents.Count;
+    public bool IsValid => NavalCombatMusic!=null && NavalCombatMusic.Length<=260 && NavalCombatMusic==Path.GetFileName(NavalCombatMusic) && !NavalCombatMusic.Any(c=>char.IsControl(c) || c is '/' or '\\' or ':') && LootEvents is {Count: <=200} && LootEvents.All(e=>e is {IsValid:true}) && LootEvents.Select(e=>e.Id).Distinct().Count()==LootEvents.Count && Metalworking is { IsValid: true } && Pvp is { IsValid: true } && CombatMusicRules is { Count: <= 128 } && CombatMusicRules.All(r => r is { IsValid: true }) && CombatMusicRules.SelectMany(r => r.MapIds).Distinct().Count() == CombatMusicRules.Sum(r => r.MapIds.Length) && BankRequiredLevel is >= 1 and <= 10000 && BankOpeningCost is >= 0 and <= 1000000 && CombatMusic is { Length: <= 260 } && CombatMusic == Path.GetFileName(CombatMusic) && CombatMusicGraceSeconds is >= 0 and <= 120 && ExperienceEvents is { Count: <= 200 } && ExperienceEvents.All(e => e is { IsValid: true }) && ExperienceEvents.Select(e => e.Id).Distinct().Count() == ExperienceEvents.Count;
     public void ApplySection(WorldActivitiesConfiguration source, WorldActivitiesSection section)
     {
         switch (section)
@@ -113,6 +114,7 @@ public sealed class WorldActivitiesConfiguration
             case WorldActivitiesSection.CombatMusic:
                 CombatMusicRules = source.CombatMusicRules;
                 CombatMusic = source.CombatMusic;
+                NavalCombatMusic=source.NavalCombatMusic;
                 CombatMusicGraceSeconds = source.CombatMusicGraceSeconds;
                 break;
             case WorldActivitiesSection.Bank:

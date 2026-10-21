@@ -459,5 +459,13 @@ render->RenderText( skin->GetDefaultFont(), Gwen::Point( 0, 0 ), Utility::Format
         VerticalScrollBar.ScrollToRight();
     }
 
-    public virtual void DeleteAll() => _scrollPanel.DeleteAllChildren();
+    /// <summary>Clear hosted content without removing the scrollbars or the scroll panel itself.</summary>
+    public override void DeleteAllChildren()
+    {
+        _scrollPanel.DeleteAllChildren();
+        SetInnerSize(0,0);
+        UpdateScrollBars();
+    }
+
+    public virtual void DeleteAll() => DeleteAllChildren();
 }

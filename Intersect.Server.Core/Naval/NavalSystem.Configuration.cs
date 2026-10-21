@@ -29,8 +29,10 @@ internal static partial class NavalSystem
                     var edited = JsonConvert.DeserializeObject<NavalConfiguration>(request.ConfigurationJson,
                         new JsonSerializerSettings { MaxDepth = 12, TypeNameHandling = TypeNameHandling.None }) ?? throw new InvalidDataException();
                     edited.Validate(Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight);
-                    if (Ships.Values.Any(v => v.State.CaptainId != Guid.Empty))
+                    if (Ships.Values.Any(v => v.State.CaptainId != Guid.Empty || v.Crew.Count>0))
                         return new() { Error = "Stop all ships before changing navigation settings." };
+                    if(edited.Herbonia.SelectMany(p=>p.Loot).Any(e=>ItemDescriptor.Get(e.ItemId)==null))
+                        return new() {Error="Choose an existing item for every naval loot entry."};
                     ValidateEditorShips(edited);
                     Configuration.Replace(edited, request.ExpectedVersion);
                     // No live captain is moved. Idle test ships are replaced; personal vessels are retained.
@@ -74,7 +76,7 @@ internal static partial class NavalSystem
     {
         var ocean = OceanMapResolver.Maps();
         var occupied = new HashSet<(Guid, int, int)>();
-        foreach (var ship in configuration.Ships)
+        foreach (var ship in configuration.Ships.Concat(configuration.Herbonia.Where(p=>p.Enabled).Select(p=>p.Ship)))
         {
             if (!ocean.Contains(ship.MapId) || MapController.Get(ship.MapId) is not { } map)
                 throw new NavalPlacementException();
@@ -86,6 +88,7 @@ internal static partial class NavalSystem
                     tileMap.Spawns.Any(spawn => spawn.X == tile.X && spawn.Y == tile.Y) || !occupied.Add(tile))
                     throw new NavalPlacementException();
             }
+            if(configuration.Herbonia.Any(p=>p.Ship.Id==ship.Id)) continue;
             if (map.Attributes == null || ship.DockX >= map.Attributes.GetLength(0) || ship.DockY >= map.Attributes.GetLength(1))
                 throw new NavalPlacementException();
             var dockAttribute = map.Attributes[ship.DockX, ship.DockY];

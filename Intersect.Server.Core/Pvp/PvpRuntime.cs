@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 using Intersect.Enums;
@@ -19,7 +19,7 @@ namespace Intersect.Server.Pvp;
 internal static class PvpRuntime
 {
     internal static PvpConfiguration Configuration => WorldActivitiesRuntime.Current.Pvp;
-    private static readonly Guid PointsId = Key("points"), WinsId = Key("wins"), LossesId = Key("losses");
+    private static readonly Guid PointsId = Key("points"), WinsId = Key("wins"), LossesId = Key("losses"),ReturnPendingId=Key("return-pending");
     private static Guid Key(string key) => new(SHA256.HashData(Encoding.UTF8.GetBytes("CR2026/PvP/" + key)).AsSpan(0, 16));
     internal static long Points(Player p) => Math.Max(0, p.GetVariable(PointsId)?.Value.Integer ?? 0);
     internal static string Grade(Player p) => Configuration.Enabled ? Configuration.Grade(Points(p)) : "";
@@ -104,8 +104,10 @@ internal static class PvpRuntime
     }
     internal static bool RecoverLogin(Player p)
     {
-        if (p.MapInstanceId == Guid.Empty || !Configuration.Arenas.Any(a => a.MapId == p.MapId) || InMatch(p))
-            return false;
+        if(Members.TryGetValue(p.Id,out var session) && ReferenceEquals(session.Player,p))return false;
+        var pending=(p.GetVariable(ReturnPendingId)?.Value.Integer??0)>0;
+        if(!pending && (p.MapInstanceId==Guid.Empty || !Configuration.Arenas.Any(a=>a.MapId==p.MapId)))return false;
+        p.SetVariableValue(ReturnPendingId,0L);
         p.HideEntity = false;
         p.WarpToLastOverworldLocation(true);
         return true;
@@ -201,6 +203,7 @@ internal static class PvpRuntime
         {
             for (var i = 0; i < m.Vitals.Length; i++)
                 p.SetVital((Vital)i, m.Vitals[i]);
+            p.SetVariableValue(ReturnPendingId,0L);
             p.AdminWarp(m.ReturnMap, m.ReturnX, m.ReturnY, Guid.Empty, MapInstanceType.Overworld, true);
             PacketSender.SendEntityDataToProximity(p);
         }
@@ -229,6 +232,7 @@ internal static class PvpRuntime
             Members[p.Id] = m;
             match.Members.Add(m);
             match.Roster.Add(m);
+            p.SetVariableValue(ReturnPendingId,1L);
             p.SetVital(Vital.Health, p.GetMaxVital(Vital.Health));
             p.SetVital(Vital.Mana, p.GetMaxVital(Vital.Mana));
             p.AdminWarp(arena.MapId, m.Team == 0 ? arena.RedX : arena.BlueX, m.Team == 0 ? arena.RedY : arena.BlueY, match.Id, MapInstanceType.Shared, true);
@@ -300,7 +304,7 @@ internal static class PvpRuntime
                 foreach (var m in match.Members.ToArray())
                 {
                     var p = m.Player;
-                    if (!p.InGame || Player.FindOnline(p.Id) != p || p.MapInstanceId != match.Id || p.MapId != match.Round.Arena.MapId)
+                    if (!p.InGame || p.Client==null || Player.FindOnline(p.Id) != p || p.MapInstanceId != match.Id || p.MapId != match.Round.Arena.MapId)
                     {
                         Remove(m, true);
                         continue;

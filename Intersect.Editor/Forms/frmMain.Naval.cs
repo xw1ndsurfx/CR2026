@@ -1,4 +1,4 @@
-using Intersect.Editor.Forms.Editors;
+﻿using Intersect.Editor.Forms.Editors;
 using Intersect.Network.Packets.Editor;
 using Intersect.Network.Packets.Server;
 namespace Intersect.Editor.Forms;
@@ -17,6 +17,8 @@ public partial class FrmMain
     }
     public void ReceiveNavalConfiguration(NavalConfigurationPacket packet)
     {
+        if(FrmItem.ReceiveItemAmmoConfiguration(packet))return;
+        if(FrmShop.ReceiveNavalShopConfiguration(packet))return;
         if (_navalEditor is { IsDisposed: false }) { _navalEditor.AcceptResponse(packet); return; }
         if (packet.Error.Length > 0) { MessageBox.Show(this, FrmNavalConfiguration.T(packet.Error), FrmNavalConfiguration.T("Naval System Editor")); return; }
         if (packet.SavedSection == 0) { _navalEditor = new FrmNavalConfiguration(packet); _navalEditor.Show(this); }

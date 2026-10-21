@@ -30,6 +30,7 @@ public partial class FrmShop : EditorForm
         Icon = Program.Icon;
         InitializePriceSuggestions();
         InitializeBuybackDiscount();
+        InitializeNavalShopType();
         _btnSave = btnSave;
         _btnCancel = btnCancel;
 
@@ -176,6 +177,7 @@ public partial class FrmShop : EditorForm
         if (mEditorItem != null)
         {
             pnlContainer.Show();
+            _navalType.SelectedIndex=(int)mEditorItem.ConfigurationKind;
             _buybackDiscount.Value=Math.Clamp(mEditorItem.BuybackDiscountPercent,0,99);
 
             txtName.Text = mEditorItem.Name;

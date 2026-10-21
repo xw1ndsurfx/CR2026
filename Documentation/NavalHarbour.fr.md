@@ -22,11 +22,11 @@ Pour retirer un modèle déjà publié, désactiver **En vente**. Le serveur con
 
 ## Fenêtre de flotte au quai
 
-Dans **Map Attributes**, peindre **Q - Quai** sur les cases de rive où le personnage peut se tenir et débarquer, puis enregistrer la map. Le marqueur Q est destiné à l’éditeur : dessiner également le décor du quai avec les tilesets. Le Q est praticable à pied mais bloque la coque. Il remplace l’attribut précédent de la case.
+Dans **Map Attributes**, peindre **Q - Quai** sur les cases solides du quai, à côté des cases de rive accessibles au personnage, puis enregistrer la map. Le marqueur Q est destiné à l’éditeur : dessiner également le décor du quai avec les tilesets. Le Q bloque les personnages et les coques. Il remplace l’attribut précédent de la case.
 
 La map doit être sous Ocean, sous-dossiers compris. À pied près du Q, utiliser l’interaction habituelle ou `/naval` pour ouvrir **Ma flotte**. Cette fenêtre contient uniquement les modèles possédés et l’action **Prendre la mer**. Elle ne propose aucun achat ni réparation. Le serveur choisit une zone libre près du quai, respecte les dimensions du navire et refuse les coques coulées et les restrictions Premium non satisfaites.
 
-En navigation, arrêter avec Espace puis utiliser `/naval` près d’un Q libre : l’avatar débarque sur une case Q hors des coques et obstacles. Le bateau personnel retourne dans sa flotte. Les bateaux de test publics ne deviennent pas la propriété du joueur ; leur embarquement historique reste disponible près de leur coque, hors de la portée d’un Q.
+En navigation, arrêter avec Espace puis utiliser `/naval` près d’un Q libre : l’avatar débarque sur une case libre voisine d’un Q, hors des coques et obstacles. Le bateau personnel retourne dans sa flotte. Les bateaux de test publics ne deviennent pas la propriété du joueur ; leur embarquement historique reste disponible près de leur coque, hors de la portée d’un Q.
 
 ## Boutique et réparations ouvertes par un PNJ
 
@@ -56,4 +56,87 @@ Les tests automatisés vérifient la sérialisation, les droits par fenêtre, l�
 
 ## Limites de la phase 1
 
-Les canons, navires IA, dégâts de collision et combats ne sont pas raccordés. Le point d’entrée serveur `NavalSystem.DamageOwnedShip` peut déclencher dégâts et naufrage, mais la navigation seule ne cause pas de dégâts. La réparation d’un bateau coulé est couverte automatiquement ; un essai de naufrage en jeu attend les futurs combats. Un observateur arrivant en cours de naufrage peut encore voir son animation depuis le début. Aucun asset absent n’est présenté comme intégré.
+Les canons V1 décrits plus bas déclenchent dégâts et naufrage avec `NavalSystem.DamageOwnedShip` pour les bateaux personnels. La navigation seule ne cause pas de dégâts. Les navires IA et dégâts de collision restent à développer. Un observateur arrivant en cours de naufrage peut encore voir son animation depuis le début. Aucun asset absent n’est présenté comme intégré.
+
+## Quais Q bloquants et barre navale
+
+Q se comporte désormais comme Block pour les personnages, les PNJ, les apparitions et les projectiles ordinaires. Les coques le respectaient déjà. On interagit avec le quai depuis une case voisine, sans marcher sur Q. Prévoir au moins une case **cardinale** libre à côté de Q, hors de la coque, pour débarquer. Le débarquement et le retour après naufrage choisissent une de ces cases voisines, jamais Q lui-même. Une zone Q complètement entourée d’obstacles ne permet pas de débarquer. Le recours au point de réapparition configuré reste utilisé si le quai de retour a été supprimé ou n’a plus de place.
+
+Pendant le pilotage, les dix emplacements de raccourcis sont recouverts par une barre navale temporaire :
+
+| Touche par défaut | Action |
+| --- | --- |
+| 1 | Bordée bâbord, à gauche du navire |
+| 2 | Bordée tribord, à droite du navire |
+| 3 à 8 | Réservées aux prochaines capacités navales |
+| 9 | Activer/désactiver l’ancre ; W/S permet aussi de repartir |
+| 0 | Quitter la barre, à l’arrêt près d’un quai accessible |
+
+Les touches déjà personnalisées dans les réglages sont respectées et affichées. Les boutons sont également cliquables. La coque, la vitesse et le rechargement de chaque bordée sont affichés. Aucun objet/sort du personnage n’est déplacé, supprimé ou remplacé dans ses raccourcis enregistrés. La barre habituelle revient après débarquement ou naufrage. La saisie dans le chat, les dialogues et le glisser-déposer ne déclenchent pas les attaques.
+
+## Canons V1
+
+Dans **System Editor → Éditeur du système naval → Navigation et capitainerie**, activer **Activer les canons**, puis sauvegarder la section. Les configurations existantes conservent les canons désactivés tant qu’un éditeur n’a pas activé ce réglage. Arrêter tous les capitaines avant de changer cette section, comme pour les autres réglages de navigation.
+
+Paramètres modifiables : dégâts par boulet (1 à 100), rechargement indépendant de chaque bordée (1 000 à 60 000 ms), portée (1 à 40 cases depuis la bouche du canon), vitesse (1 à 30 cases/s). Valeurs initiales : 10 dégâts, 4 000 ms, 12 cases, 12 cases/s. Chaque bordée tire trois boulets parallèles. Les canons utilisent le cap réel continu du navire ; le choix du sprite n’influence pas la trajectoire.
+
+**Dégâts entre bateaux de joueurs** est désactivé par défaut, séparément des canons. Les bateaux personnels et les navires publics pilotés sont alors protégés, mais interceptent les boulets. Les navires publics inoccupés servent de cibles de test. Activer cette option permet les dégâts navals entre capitaines sur Ocean ; elle n’ajoute pas de zones ou de règles de duel. Aucun dégât n’est appliqué directement aux personnages à pied.
+
+Les positions, trajectoires, collisions, rechargements et dégâts sont calculés par le serveur. Un client demande une action et un identifiant de bateau ; il ne fournit pas de position de tir, de cible, de prix ou de dégâts. Les boulets traversent les frontières de maps Ocean réellement reliées, s’arrêtent sur les obstacles/limites et effectuent des pas de collision courts. La collision de coque est conservatrice, comme pour la navigation. Les dégâts d’un bateau personnel passent par la sauvegarde de flotte existante sur son propriétaire, avant son prochain débarquement ; les impacts ne prennent pas le verrou d’un autre capitaine depuis le tireur. Un échec de sauvegarde entraîne une nouvelle tentative espacée.
+
+À zéro coque, le navire joue son naufrage. Un bateau personnel reste possédé, avec zéro coque, et doit être réparé au PNJ. Un navire public de test coulé disparaît après son animation ; recharger la configuration navale ou redémarrer le serveur le recrée. Le sprite de naufrage des navires de test est configurable ; celui des bateaux personnels reste défini dans le catalogue.
+
+Les effets utilisent maintenant les deux planches fournies : `Ship_Canon_Fire_Animation.png` et `Ship_Canon_Fire_impact.png`, avec leurs fichiers `.effects.json`. Les boulets gardent un rendu simple si leur ressource est absente. Il n’y a pas encore de munitions consommables, d’IA ennemie, de visée immersive, d’équipage ou de capacités sur les emplacements 3 à 8.
+
+### Vérification connectée sur une copie
+
+1. Mettre à jour ensemble le client, le serveur et l’éditeur de cette branche, les paquets réseau ayant changé. Ne pas modifier le serveur de production pour ce test.
+2. Peindre Q sur une map Ocean, enregistrer la map, puis vérifier qu’un personnage ne peut pas entrer dans Q. L’interaction depuis une case voisine doit toujours ouvrir Ma flotte.
+3. Enregistrer au moins une case voisine libre du Q. Mettre son bateau à l’eau : la barre navale apparaît, la coque et la vitesse sont visibles. Vérifier que 3 à 8 n’utilisent aucun objet ou sort habituel.
+4. Vérifier 9 pour l’ancre, puis W/S pour repartir. Revenir au Q et utiliser 0 à l’arrêt : débarquement sur une case libre voisine et retour des raccourcis habituels. Bloquer toutes les sorties et vérifier le refus de débarquer.
+5. Dans le System Editor, tous les capitaines à terre, activer les canons et garder les dégâts entre joueurs désactivés. Placer un deuxième navire public de test inoccupé, avec une coque libre d’obstacles, à portée latérale du bateau du joueur.
+6. Piloter puis tirer avec 1 et 2 : trois boulets par bordée, trajectoires latérales et rechargements indépendants. Les tirs répétés pendant le rechargement ne créent pas de boulets supplémentaires. Tester un obstacle et une liaison Ocean à Ocean.
+7. Toucher la cible publique jusqu’au naufrage. Pour vérifier les bateaux personnels et leur réparation, activer explicitement les dégâts entre joueurs sur la copie, puis tester avec deux capitaines : coque diminuée, naufrage, retour au quai, réparation au PNJ et reprise de la mer avec 100 de coque.
+8. Vérifier aussi l’ouverture du chat, les touches personnalisées et le retour de la barre normale après reconnexion. Le parcours connecté et le rendu réel du HUD restent à valider dans le jeu installé.
+
+## Sons, icônes, noms et progression Sailing
+
+Le System Editor naval comporte six onglets, dont Patrouilles IA Herbonia. Les nouveaux onglets **Sons, icônes et effets** et **Progression Sailing** se sauvegardent avec la configuration de navigation, indépendamment de la boutique. Comme pour cette configuration, tous les capitaines doivent quitter la barre avant l’enregistrement.
+
+### Ressources sélectionnables
+
+- Les six icônes d’action (bâbord, tribord, équipage, cale, ancre, débarquement) se choisissent dans **resources/spells**. Un aperçu de l’image sélectionnée apparaît à droite du choix. Un choix vide conserve l’icône native dessinée par le client.
+- Les sons se choisissent dans **resources/sounds** au format **WAV**, celui que charge le moteur pour ses effets sonores. Le bouton **Écouter** permet une écoute dans l’éditeur. Les fichiers OGG de musique ne sont pas proposés comme effets sonores.
+- Chaque événement a son choix : tir, impact sur coque, impact dans l’eau, impact sur obstacle, naufrage, ancre, mise à l’eau, débarquement et niveau Sailing. Un champ vide désactive ce son. Aucun fichier sonore absent n’a été inventé ou ajouté.
+- Une bordée joue son son de tir une fois, avec trois effets visuels. Les impacts ont leurs propres événements. Les sons utilisent la distance et les réglages audio natifs du client ; les événements répétés dans les mises à jour réseau ne rejouent pas leur son.
+- Les animations se choisissent dans **resources/ocean** parmi les fichiers dotés d’un découpage `.effects.json` compatible avec le rôle choisi. La durée d’une image et l’échelle (pixels par case) sont modifiables dans l’éditeur. Une valeur élevée de pixels par case réduit la taille affichée.
+
+Les PNG fournis sont copiés sans modification. La première planche utilise ses **trois premiers éclats distincts** pour le tir, orientés autour de leur point d’ancrage. Les autres rangées de fumée de cette planche ne sont pas utilisées. La seconde fournit **huit directions de boulet, quatre images par direction**, puis **quatre images d’impact sur l’eau** et **quatre sur coque**. Les découpages sont explicites et compensent les ancrages différents ; aucune grille régulière n’est supposée. Les `.effects.json` font partie des ressources à livrer avec les PNG. Pour une nouvelle planche personnalisée, un découpage compatible doit également être créé ; le choix d’un fichier dans l’éditeur ne découpe pas automatiquement une image.
+
+### Nom du bateau
+
+Dans **Ma flotte**, le bouton **Nommer le bateau** permet de choisir un nom avant la mise à l’eau, près de Q. Le serveur vérifie le propriétaire et le quai, puis sauvegarde le nom. Un échec de sauvegarde conserve l’ancien nom. Le nom contient 1 à 32 lettres/chiffres, espaces, apostrophes, points ou tirets. Le client affiche ce nom au-dessus de la coque pour tous les observateurs. Il ne traduit pas les noms choisis par les joueurs. Les bateaux non nommés conservent le nom du modèle dans Ma flotte ; aucun nom personnel n’est inventé. Les navires publics de test ont aussi un champ Nom dans l’éditeur.
+
+### Sailing
+
+La progression est **par personnage**, commune à ses bateaux. Une barre bleu/or avec le niveau et l’EXP se place juste au-dessus des actions navales. La coque et la vitesse restent au-dessus de cette barre.
+
+L’EXP vient uniquement des navires ennemis Herbonia coulés. Chaque patrouille règle sa récompense dans l’éditeur. Le capitaine qui a tiré le coup fatal reçoit cette récompense une seule fois, à condition de piloter encore le même bateau, ainsi que ses équipiers présents (NavalCrew.fr.md). Naviguer, tirer sans couler une cible, toucher une coque protégée, couler un joueur ou un bateau public de test ne donnent aucune EXP. L’ancienne option ExperiencePerTile est ignorée à la lecture puis retirée lors de l’enregistrement; l’EXP déjà sauvegardée est conservée.
+
+Valeurs initiales : **100 EXP par ennemi coulé**, **100 EXP pour passer du niveau 1 au 2**, multiplication par **1,12** pour chaque niveau suivant, maximum **100 niveaux**. Les seuils se modifient dans Progression Sailing et la récompense dans chaque patrouille Herbonia. Une récompense à zéro désactive les gains pour cet ennemi. La progression se conserve lors d’un changement de bateau, d’une réparation ou d’un naufrage. Réduire temporairement le plafond ne détruit pas l’EXP déjà gagnée.
+
+Le stockage naval existant du personnage contient désormais une enveloppe version 2 avec les navires, leurs noms et l’EXP Sailing. Les anciennes listes de flotte sont lues sans perdre les identifiants, coques ou points de retour. Aucun changement de schéma SQL n’est nécessaire. Les sauvegardes natives incluent cette donnée ; une sauvegarde est également demandée à la sortie de la barre et lors du renommage. **Sauvegarder les bases avant la mise à jour et garder cette copie pour un éventuel retour à un ancien serveur**, qui ne connaît pas cette nouvelle enveloppe.
+
+### Vérification de cette tranche
+
+1. Sur le serveur de test, sauvegarder les bases, puis installer ensemble serveur, client, éditeur, les deux PNG de canon et leurs `.effects.json`. Les ressources d’icônes/sons sélectionnées doivent exister sur le client et dans le dossier de ressources de l’éditeur.
+2. Dans Sons, icônes et effets, choisir une icône de resources/spells : vérifier son aperçu. Choisir un WAV, l’écouter, sélectionner les autres sons désirés, enregistrer, fermer et rouvrir pour vérifier les choix.
+3. À Q, nommer un bateau, fermer/rouvrir Ma flotte puis se reconnecter : le nom doit être conservé. Prendre la mer et vérifier son nom dans les huit directions, depuis un second client si disponible.
+4. Tirer des deux côtés : les icônes choisies sont utilisées, les éclats se produisent aux canons, les boulets suivent leur direction. Tester une cible, un obstacle et un tir sans cible jusqu’à sa chute dans l’eau. Chaque type d’impact doit utiliser son son ; une bordée ne doit pas rejouer son son à chaque mise à jour.
+5. Observer Sailing : naviguer et toucher un ennemi sans le couler ne doivent donner aucune EXP. Couler un ennemi doit donner exactement sa récompense configurée au capitaine du coup fatal. Passer un niveau, débarquer, changer de bateau et se reconnecter : le niveau et l’EXP doivent rester présents. Vérifier aussi une traversée Ocean à Ocean.
+6. Les tests automatiques couvrent migration des données, noms et retour arrière de sauvegarde, seuils/cap d’EXP, récompense unique au naufrage, échec de sauvegarde, ciblage et expiration du HUD, paquets, choix et aperçu d’icône, découpages et ancrages tournés, réception répétée d’un effet. Le rendu connecté et l’écoute des vrais sons sélectionnés restent à vérifier dans le jeu installé.
+
+
+Suite : [Patrouilles IA Herbonia et retour à l’embarquement](NavalHerbonia.fr.md).
+
+Suite : [PV du bateau, EXP personnage et cargaison](NavalCargo.fr.md).

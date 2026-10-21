@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Content;
+﻿using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -110,7 +110,7 @@ internal sealed class DungeonRewardNotificationWindow : Base
 
         if (item != null && !string.IsNullOrWhiteSpace(item.Icon))
         {
-            var texture = GameContentManager.Current.GetTexture(TextureType.Item, item.Icon);
+            var texture = GameContentManager.Current.GetTexture(item.UsesSpellIcon?TextureType.Spell:TextureType.Item, item.DisplayIcon);
             if (texture != null)
             {
                 _icon.Texture = texture;

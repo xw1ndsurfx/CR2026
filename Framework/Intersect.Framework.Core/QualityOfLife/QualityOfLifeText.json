@@ -1,0 +1,544 @@
+﻿{
+  "Entries": {
+    "Previous animation": {
+      "en": "Previous animation",
+      "fr": "Animation précédente",
+      "es": "Animación anterior"
+    },
+    "Next animation": {
+      "en": "Next animation",
+      "fr": "Animation suivante",
+      "es": "Animación siguiente"
+    },
+    "Grant EXP bonus": {
+      "en": "Grant EXP bonus",
+      "fr": "Accorder un bonus EXP",
+      "es": "Otorgar bonificación EXP"
+    },
+    "Grant loot bonus": {
+      "en": "Grant loot bonus",
+      "fr": "Accorder un bonus de butin",
+      "es": "Otorgar bonificación de botín"
+    },
+    "Bonus (%)": {
+      "en": "Bonus (%)",
+      "fr": "Bonus (%)",
+      "es": "Bonificación (%)"
+    },
+    "Duration (seconds)": {
+      "en": "Duration (seconds)",
+      "fr": "Durée (secondes)",
+      "es": "Duración (segundos)"
+    },
+    "Open adventure lobby": {
+      "en": "Open adventure lobby",
+      "fr": "Ouvrir le lobby d’aventure",
+      "es": "Abrir sala de aventura"
+    },
+    "Prompt room creation": {
+      "en": "Prompt room creation",
+      "fr": "Proposer de créer une salle",
+      "es": "Proponer crear una sala"
+    },
+    "Filter activity": {
+      "en": "Filter activity",
+      "fr": "Filtrer les activités",
+      "es": "Filtrar actividades"
+    },
+    "All activities": {
+      "en": "All activities",
+      "fr": "Toutes les activités",
+      "es": "Todas las actividades"
+    },
+    "Save": {
+      "en": "Save",
+      "fr": "Enregistrer",
+      "es": "Guardar"
+    },
+    "Cancel": {
+      "en": "Cancel",
+      "fr": "Annuler",
+      "es": "Cancelar"
+    },
+    "Crafting": {
+      "en": "Crafting",
+      "fr": "Artisanat",
+      "es": "Artesanía"
+    },
+    "Ammo": {
+      "en": "Ammo",
+      "fr": "Munitions",
+      "es": "Munición"
+    },
+    "Key": {
+      "en": "Key",
+      "fr": "Clé",
+      "es": "Llave"
+    },
+    "Show value": {
+      "en": "Show value",
+      "fr": "Afficher la valeur",
+      "es": "Mostrar valor"
+    },
+    "Show required level": {
+      "en": "Show required level",
+      "fr": "Afficher le niveau requis",
+      "es": "Mostrar nivel requerido"
+    },
+    "Naval ammunition": {
+      "en": "Naval ammunition",
+      "fr": "Munition navale",
+      "es": "Munición naval"
+    },
+    "Required level: {0}": {
+      "en": "Required level: {0}",
+      "fr": "Niveau requis : {0}",
+      "es": "Nivel requerido: {0}"
+    },
+    "New": {
+      "en": "New",
+      "fr": "Nouveau",
+      "es": "Nuevo"
+    },
+    "Level": {
+      "en": "Level",
+      "fr": "Niveau",
+      "es": "Nivel"
+    },
+    "Price": {
+      "en": "Price",
+      "fr": "Prix",
+      "es": "Precio"
+    },
+    "Dungeon": {
+      "en": "Dungeon",
+      "fr": "Donjon",
+      "es": "Mazmorra"
+    },
+    "Invasion": {
+      "en": "Invasion",
+      "fr": "Invasion",
+      "es": "Invasión"
+    },
+    "WorldBoss": {
+      "en": "World Boss",
+      "fr": "Boss mondial",
+      "es": "Jefe mundial"
+    },
+    "Alchemy": {
+      "en": "Alchemy",
+      "fr": "Alchimie",
+      "es": "Alquimia"
+    },
+    "Poker": {
+      "en": "Poker",
+      "fr": "Poker",
+      "es": "Póquer"
+    },
+    "Blackjack": {
+      "en": "Blackjack",
+      "fr": "Blackjack",
+      "es": "Blackjack"
+    },
+    "Roulette": {
+      "en": "Roulette",
+      "fr": "Roulette",
+      "es": "Ruleta"
+    },
+    "Lumberjack": {
+      "en": "Lumberjack",
+      "fr": "Bûcheronnage",
+      "es": "Leñador"
+    },
+    "HouseParty": {
+      "en": "House Party",
+      "fr": "Fête à la maison",
+      "es": "Fiesta en casa"
+    },
+    "Looting": {
+      "en": "Looting",
+      "fr": "Butin",
+      "es": "Botín"
+    },
+    "Cooking": {
+      "en": "Cooking",
+      "fr": "Cuisine",
+      "es": "Cocina"
+    },
+    "Naval": {
+      "en": "Naval",
+      "fr": "Équipage naval",
+      "es": "Tripulación naval"
+    },
+    "Mission of the Month": {
+      "en": "Mission of the Month",
+      "fr": "Mission du mois",
+      "es": "Misión del mes"
+    },
+    "Monthly missions": {
+      "en": "Monthly missions",
+      "fr": "Missions mensuelles",
+      "es": "Misiones mensuales"
+    },
+    "Mute announcements": {
+      "en": "Mute announcements",
+      "fr": "Masquer les annonces",
+      "es": "Silenciar anuncios"
+    },
+    "Falling tree": {
+      "en": "Falling tree",
+      "fr": "Arbre qui tombe",
+      "es": "Árbol que cae"
+    },
+    "Menu fog": {
+      "en": "Menu fog",
+      "fr": "Brouillard du menu",
+      "es": "Niebla del menú"
+    },
+    "Opacity": {
+      "en": "Opacity",
+      "fr": "Opacité",
+      "es": "Opacidad"
+    },
+    "Weather animation": {
+      "en": "Weather animation",
+      "fr": "Animation météo",
+      "es": "Animación meteorológica"
+    },
+    "Saved layouts": {
+      "en": "Saved layouts",
+      "fr": "Plans sauvegardés",
+      "es": "Diseños guardados"
+    },
+    "Save current layout": {
+      "en": "Save current layout",
+      "fr": "Sauvegarder ce plan",
+      "es": "Guardar este diseño"
+    },
+    "Load layout": {
+      "en": "Load layout",
+      "fr": "Appliquer le plan",
+      "es": "Aplicar diseño"
+    },
+    "Premium is required.": {
+      "en": "Premium is required.",
+      "fr": "Le Premium est requis.",
+      "es": "Se requiere Premium."
+    },
+    "Invalid saved layout.": {
+      "en": "Invalid saved layout.",
+      "fr": "Plan sauvegardé invalide.",
+      "es": "Diseño guardado no válido."
+    },
+    "Saved layout not found.": {
+      "en": "Saved layout not found.",
+      "fr": "Plan sauvegardé introuvable.",
+      "es": "No se encontró el diseño guardado."
+    },
+    "Premium conveniences": {
+      "en": "Premium conveniences",
+      "fr": "Avantages Premium",
+      "es": "Ventajas Premium"
+    },
+    "Saved outfits": {
+      "en": "Saved outfits",
+      "fr": "Tenues sauvegardées",
+      "es": "Atuendos guardados"
+    },
+    "Favorite recipes": {
+      "en": "Favorite recipes",
+      "fr": "Recettes favorites",
+      "es": "Recetas favoritas"
+    },
+    "Pet accessories": {
+      "en": "Pet accessories",
+      "fr": "Accessoires des familiers",
+      "es": "Accesorios de mascotas"
+    },
+    "Save current outfit": {
+      "en": "Save current outfit",
+      "fr": "Sauvegarder cette tenue",
+      "es": "Guardar este atuendo"
+    },
+    "Use outfit": {
+      "en": "Use outfit",
+      "fr": "Porter cette tenue",
+      "es": "Usar atuendo"
+    },
+    "Favorite recipe": {
+      "en": "Favorite recipe",
+      "fr": "Recette favorite",
+      "es": "Receta favorita"
+    },
+    "Remove accessory": {
+      "en": "Remove accessory",
+      "fr": "Retirer l’accessoire",
+      "es": "Quitar accesorio"
+    },
+    "Premium active": {
+      "en": "Premium active",
+      "fr": "Premium actif",
+      "es": "Premium activo"
+    },
+    "Invalid saved outfit.": {
+      "en": "Invalid saved outfit.",
+      "fr": "Tenue sauvegardée invalide.",
+      "es": "Atuendo guardado no válido."
+    },
+    "Saved outfit not found.": {
+      "en": "Saved outfit not found.",
+      "fr": "Tenue sauvegardée introuvable.",
+      "es": "No se encontró el atuendo."
+    },
+    "Recipe unavailable.": {
+      "en": "Recipe unavailable.",
+      "fr": "Recette indisponible.",
+      "es": "Receta no disponible."
+    },
+    "Pet accessory unavailable.": {
+      "en": "Pet accessory unavailable.",
+      "fr": "Accessoire de familier indisponible.",
+      "es": "Accesorio de mascota no disponible."
+    },
+    "Saved.": {
+      "en": "Saved.",
+      "fr": "Enregistré.",
+      "es": "Guardado."
+    },
+    "Changes could not be saved.": {
+      "en": "Changes could not be saved.",
+      "fr": "Les modifications n’ont pas pu être enregistrées.",
+      "es": "No se pudieron guardar los cambios."
+    },
+    "Choose an existing item icon for every accessory.": {
+      "en": "Choose an existing item icon for every accessory.",
+      "fr": "Choisissez une icône d’objet existante pour chaque accessoire.",
+      "es": "Elige un icono de objeto existente para cada accesorio."
+    },
+    "Name": {
+      "en": "Name",
+      "fr": "Nom",
+      "es": "Nombre"
+    },
+    "Icon": {
+      "en": "Icon",
+      "fr": "Icône",
+      "es": "Icono"
+    },
+    "Size": {
+      "en": "Size",
+      "fr": "Taille",
+      "es": "Tamaño"
+    },
+    "OffsetX": {
+      "en": "OffsetX",
+      "fr": "Décalage horizontal",
+      "es": "Desplazamiento horizontal"
+    },
+    "OffsetY": {
+      "en": "OffsetY",
+      "fr": "Décalage vertical",
+      "es": "Desplazamiento vertical"
+    },
+    "Unranked": {
+      "en": "Unranked",
+      "fr": "Non classé",
+      "es": "Sin rango"
+    },
+    "Trading and display": {
+      "en": "Trading and display",
+      "fr": "Commerce et affichage",
+      "es": "Comercio y presentación"
+    },
+    "Weather drift X": {
+      "en": "Weather drift X",
+      "fr": "Déplacement météo X",
+      "es": "Desplazamiento clima X"
+    },
+    "Weather drift Y": {
+      "en": "Weather drift Y",
+      "fr": "Déplacement météo Y",
+      "es": "Desplazamiento clima Y"
+    },
+    "Boarding invitation": {
+      "en": "Boarding invitation",
+      "fr": "Invitation à embarquer",
+      "es": "Invitación a embarcar"
+    },
+    "Board ship": {
+      "en": "Board ship",
+      "fr": "Embarquer",
+      "es": "Embarcar"
+    },
+    "{0} launched {1}. Board with your party?": {
+      "en": "{0} launched {1}.\nBoard with your party?",
+      "fr": "{0} a mis {1} à l’eau.\nEmbarquer avec le groupe ?",
+      "es": "{0} ha botado {1}.\n¿Embarcar con tu grupo?"
+    },
+    "Random weather (15 minutes)": {
+      "en": "Random weather (15 minutes)",
+      "fr": "Météo aléatoire (15 minutes)",
+      "es": "Clima aleatorio (15 minutos)"
+    },
+    "Storm flashes": {
+      "en": "Storm flashes",
+      "fr": "Flashs d’orage",
+      "es": "Destellos de tormenta"
+    },
+    "Flash opacity (%)": {
+      "en": "Flash opacity (%)",
+      "fr": "Opacité des flashs (%)",
+      "es": "Opacidad de los destellos (%)"
+    },
+    "Lightning bolts": {
+      "en": "Lightning bolts",
+      "fr": "Éclairs",
+      "es": "Rayos"
+    },
+    "Lightning animation": {
+      "en": "Lightning animation",
+      "fr": "Animation des éclairs",
+      "es": "Animación de rayos"
+    },
+    "Ground splashes": {
+      "en": "Ground splashes",
+      "fr": "Éclaboussures au sol",
+      "es": "Salpicaduras en el suelo"
+    },
+    "Splash animation": {
+      "en": "Splash animation",
+      "fr": "Animation des éclaboussures",
+      "es": "Animación de salpicaduras"
+    },
+    "Remove selected animation": {
+      "en": "Remove selected animation",
+      "fr": "Supprimer la sélection",
+      "es": "Eliminar selección"
+    },
+    "Browse rewards": {
+      "en": "Browse rewards",
+      "fr": "Parcourir",
+      "es": "Explorar"
+    },
+    "Clear": {
+      "en": "Clear",
+      "fr": "Effacer",
+      "es": "Borrar"
+    },
+    "No item reward": {
+      "en": "No item reward",
+      "fr": "Aucun objet",
+      "es": "Ningún objeto"
+    },
+    "Missing item: {0}": {
+      "en": "Missing item: {0}",
+      "fr": "Objet introuvable : {0}",
+      "es": "Objeto no encontrado: {0}"
+    },
+    "Choose reward item": {
+      "en": "Choose reward item",
+      "fr": "Choisir une récompense",
+      "es": "Elegir recompensa"
+    },
+    "Search reward items": {
+      "en": "Search reward items",
+      "fr": "Rechercher un objet par son nom",
+      "es": "Buscar un objeto por nombre"
+    },
+    "Item": {
+      "en": "Item",
+      "fr": "Objet",
+      "es": "Objeto"
+    },
+    "Type": {
+      "en": "Type",
+      "fr": "Type",
+      "es": "Tipo"
+    },
+    "Use selected item": {
+      "en": "Use selected item",
+      "fr": "Choisir cet objet",
+      "es": "Elegir este objeto"
+    },
+    "{0} items found": {
+      "en": "{0} items found",
+      "fr": "{0} objets trouvés",
+      "es": "{0} objetos encontrados"
+    },
+    "No matching items": {
+      "en": "No matching items",
+      "fr": "Aucun objet correspondant",
+      "es": "No hay objetos coincidentes"
+    },
+    "Rewards": {
+      "en": "Rewards",
+      "fr": "Récompenses",
+      "es": "Recompensas"
+    },
+    "Item quantity": {
+      "en": "Item quantity",
+      "fr": "Quantité d’objets",
+      "es": "Cantidad de objetos"
+    },
+    "Character EXP": {
+      "en": "Character EXP",
+      "fr": "EXP du personnage",
+      "es": "EXP del personaje"
+    },
+    "Currency item": {
+      "en": "Currency item",
+      "fr": "Monnaie",
+      "es": "Moneda"
+    },
+    "Currency quantity": {
+      "en": "Currency quantity",
+      "fr": "Quantité de monnaie",
+      "es": "Cantidad de moneda"
+    },
+    "Common Event": {
+      "en": "Common Event",
+      "fr": "Événement commun",
+      "es": "Evento común"
+    },
+    "Browse the item list, search by name and check the icon before choosing a reward. A quantity of zero disables that reward. Changes apply when you save the achievement.": {
+      "en": "Browse the item list, search by name and check the icon before choosing a reward. A quantity of zero disables that reward. Changes apply when you save the achievement.",
+      "fr": "Parcourez la liste des objets, recherchez un nom et vérifiez l’icône avant de choisir. Une quantité de zéro désactive cette récompense. Les modifications sont appliquées à l’enregistrement du succès.",
+      "es": "Explora la lista de objetos, busca por nombre y comprueba el icono antes de elegir. Una cantidad de cero desactiva esa recompensa. Los cambios se aplican al guardar el logro."
+    },
+    "None": {
+      "en": "None",
+      "fr": "Aucun",
+      "es": "Ninguno"
+    },
+    "Equipment": {
+      "en": "Equipment",
+      "fr": "Équipement",
+      "es": "Equipo"
+    },
+    "Consumable": {
+      "en": "Consumable",
+      "fr": "Consommable",
+      "es": "Consumible"
+    },
+    "Currency": {
+      "en": "Currency",
+      "fr": "Monnaie",
+      "es": "Moneda"
+    },
+    "Spell": {
+      "en": "Spell",
+      "fr": "Sort",
+      "es": "Hechizo"
+    },
+    "Event": {
+      "en": "Event",
+      "fr": "Événement",
+      "es": "Evento"
+    },
+    "Bag": {
+      "en": "Bag",
+      "fr": "Sac",
+      "es": "Bolsa"
+    }
+  }
+}

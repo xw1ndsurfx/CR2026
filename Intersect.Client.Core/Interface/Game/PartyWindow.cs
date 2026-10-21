@@ -292,7 +292,7 @@ public partial class PartyWindow
         // beyond them and never overlays their clickable area.
         const int leftMenuClearance = 86;
         _rosterHud = new PartyRosterHud(canvas, "PartyRosterHud");
-        _rosterHud.SetBounds(leftMenuClearance, 12, 258, 48 + Options.Instance.Party.MaximumMembers * 42);
+        _rosterHud.SetBounds(Math.Max(leftMenuClearance,130), 78, 258, 48 + Options.Instance.Party.MaximumMembers * 42);
         _rosterHud.Hide();
 
         _hudHeading = new Label(_rosterHud, "PartyRosterHeading")

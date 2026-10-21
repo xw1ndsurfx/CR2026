@@ -1,3 +1,4 @@
+﻿using Intersect.Framework.Core.Naval;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -16,10 +17,11 @@ internal sealed class PartyLobbyWindow : Window
     private readonly Button _create, _closeListing, _leaveParty;
     private PartyLobbyStatePacket _state = new();
     private bool _applying;
+    private bool _titleRequired;
     private long _nextRefresh;
     private static readonly Color Gold = new(255,231,199,135);
     private static readonly Color Cream = new(255,246,235,211);
-    internal static string ActivityName(LobbyActivity activity) => ClientLanguages.Text(activity switch {
+    internal static string ActivityName(LobbyActivity activity) => activity==LobbyActivity.Naval?NavalSetupText.Get("Naval crew",ClientLanguages.Current):ClientLanguages.Text(activity switch {
         LobbyActivity.Dungeon => "Dungeon", LobbyActivity.Invasion => "Invasion", LobbyActivity.WorldBoss => "World Boss",
         LobbyActivity.Alchemy => "Alchemy", LobbyActivity.Poker => "Poker", LobbyActivity.Blackjack => "Blackjack",
         LobbyActivity.Roulette => "Roulette", LobbyActivity.Lumberjack => "Lumberjack", LobbyActivity.HouseParty => "House Party",
@@ -49,6 +51,7 @@ internal sealed class PartyLobbyWindow : Window
         _dungeonLabel=Label(this,"DungeonCaption",16,baseY+65,175,26,Cream); _dungeonLabel.Text=ClientLanguages.Text("Dungeon");
         _dungeon=Combo(this,"DungeonChoice",199,baseY+65,width-183);
         _create=Button(this,"Create lobby",16,baseY+101,175,Create);
+        _title.TextChanged+=(_,_)=>{if(!_applying)UpdateCreation();};
         _closeListing=Button(this,"Close my lobby",199,baseY+101,175,()=>Request(LobbyAction.Close,_state.CurrentLobbyId));
         _leaveParty=Button(this,"Leave party",384,baseY+101,Math.Min(180,Width-400),()=>Request(LobbyAction.Leave));
         _message=Label(this,"LobbyMessage",16,baseY+139,width,44,Cream);
@@ -59,7 +62,7 @@ internal sealed class PartyLobbyWindow : Window
         Hide();
     }
     protected override void EnsureInitialized() { }
-    internal void Open() { Show(); BringToFront(); _nextRefresh=Intersect.Framework.Core.Timing.Global.Milliseconds+10000; Request(LobbyAction.Browse); }
+    internal void Open() {_titleRequired=false; Show(); BringToFront(); _nextRefresh=Intersect.Framework.Core.Timing.Global.Milliseconds+10000; Request(LobbyAction.Browse); }
     private static ComboBox Combo(Base parent,string name,int x,int y,int width)
     {
         var result=new ComboBox(parent,name) {Font=GameContentManager.Current.GetFont("sourcesanspro") ?? parent.Skin.DefaultFont,FontSize=11};
@@ -82,6 +85,7 @@ internal sealed class PartyLobbyWindow : Window
         var dungeon=(_activity.SelectedItem?.UserData as int? ?? 0)==(int)LobbyActivity.Dungeon;
         _dungeon.IsHidden=_dungeonLabel.IsHidden=!dungeon;
         _create.IsDisabled=_state.CurrentLobbyId!=Guid.Empty || Globals.Me?.Party is {Count:>0} party && party[0].Id!=Globals.Me.Id || dungeon && _dungeon.SelectedItem==null;
+        _create.IsDisabled|=_titleRequired && string.IsNullOrWhiteSpace(_title.Text);
         _leaveParty.IsDisabled=_state.CurrentLobbyId==Guid.Empty;
         _closeListing.IsDisabled=!_state.Lobbies.Any(l=>l.Id==_state.CurrentLobbyId && l.HostId==Globals.Me?.Id);
     }
@@ -93,8 +97,19 @@ internal sealed class PartyLobbyWindow : Window
         foreach(var dungeon in state.Dungeons) _dungeon.AddItem(dungeon.MaximumLevel>0 ? ClientLanguages.Format("{0} (Lv. {1}-{2})",ClientLanguages.ContentText(dungeon.Name),dungeon.MinimumLevel,dungeon.MaximumLevel) : ClientLanguages.Format("{0} (Lv. {1}+)",ClientLanguages.ContentText(dungeon.Name),dungeon.MinimumLevel),userData:dungeon.Id);
         if(selected.HasValue) _dungeon.SelectByUserData(selected.Value);
         if(_dungeon.SelectedItem==null && state.Dungeons.Length>0) _dungeon.SelectByUserData(state.Dungeons[0].Id);
-        _message.Text=ClientLanguages.Text(state.Message);
+        _message.Text=NavalSetupText.Get(ClientLanguages.Text(state.Message),ClientLanguages.Current);
+        if(state.OpenFromEvent)
+        {
+            _titleRequired=state.PromptCreation;
+            if(_titleRequired)_title.Text="";
+            _filter.SelectByUserData(state.ActivityFilter);
+            if(state.ActivityFilter>=0)_activity.SelectByUserData(state.ActivityFilter);
+            _search.Text="";
+            Show();BringToFront();
+            if(state.PromptCreation)_title.Focus();
+        }
         _applying=false; UpdateCreation(); RefreshRows();
+        if(!state.OpenFromEvent && Naval.NavalWorld.OwnShip is {} ship && ship.CaptainId!=Globals.Me?.Id && state.Message.Length==0) Hide();
     }
     internal static bool Matches(PartyLobbyEntry entry,int activity,string search) =>
         (activity<0 || (int)entry.Activity==activity) &&

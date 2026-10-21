@@ -1,4 +1,4 @@
-using Intersect.Framework.Core.GameObjects.Items;
+﻿using Intersect.Framework.Core.GameObjects.Items;
 using MessagePack;
 
 namespace Intersect.Network.Packets.Server;
@@ -6,6 +6,9 @@ namespace Intersect.Network.Packets.Server;
 [MessagePackObject]
 public partial class PlayerProfessionProfilePacket
 {
+    [Key(12)] public long LevelExperience { get; set; }
+    [Key(13)] public long LevelExperienceRequired { get; set; }
+
     [Key(0)]
     public Guid ProfessionId { get; set; }
 

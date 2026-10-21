@@ -708,7 +708,9 @@ public partial class GameInterface : MutableInterface
 
     public bool CloseAllWindows()
     {
-        var closedWindows = ClosePotionWindow();
+        var cannonWasOpen=Naval.NavalWorld.CannonViewOpen;
+        Naval.NavalWorld.CannonViewOpen=false;
+        var closedWindows = ClosePotionWindow() || cannonWasOpen;
         closedWindows = CloseCookingWindow() || closedWindows;
         closedWindows = CloseRouletteWindow() || closedWindows;
         closedWindows = CloseLockpickingWindow() || closedWindows;

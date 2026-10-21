@@ -1,4 +1,4 @@
-using Intersect.Enums;
+﻿using Intersect.Enums;
 using Intersect.Client.General;
 using Intersect.Client.Localization;
 using Intersect.Core;
@@ -170,7 +170,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         var header = AddHeader();
 
         // Set up the icon, if we can load it.
-        var tex = GameContentManager.Current.GetTexture(Framework.Content.TextureType.Item, _itemDescriptor.Icon);
+        var tex = GameContentManager.Current.GetTexture(_itemDescriptor.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, _itemDescriptor.DisplayIcon);
         if (tex != null)
         {
             header.SetIcon(tex, _itemDescriptor.Color);
@@ -183,6 +183,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         // Set up the description telling us what type of item this is.
         // if equipment, also list what kind.
         Strings.ItemDescription.ItemTypes.TryGetValue((int)_itemDescriptor.ItemType, out var typeDesc);
+        if(_itemDescriptor.ItemType is ItemType.Crafting or ItemType.Ammo or ItemType.Key)typeDesc=Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(_itemDescriptor.ItemType.ToString(),ClientLanguages.Current);
         if (_itemDescriptor.ItemType == ItemType.Equipment)
         {
             var equipSlot = Options.Instance.Equipment.Slots[_itemDescriptor.EquipmentSlot];
@@ -603,8 +604,12 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
             data.Add(new Tuple<string, string>(Strings.ItemDescription.DropOnDeath, Strings.ItemDescription.Percentage.ToString(_itemDescriptor.DropChanceOnDeath)));
         }
 
+        if(_itemDescriptor.Presentation.ShowRequiredLevel)
+            data.Add(new(ClientLanguages.Text("Level"),_itemDescriptor.MinimumLevel.ToString()));
+        if(_itemDescriptor.Presentation.ShowValue && string.IsNullOrWhiteSpace(_valueLabel))
+            data.Add(new(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Price",ClientLanguages.Current),_itemDescriptor.Price.ToString("N0")));
         // Display shop value if we have one.
-        if (!string.IsNullOrWhiteSpace(_valueLabel))
+        if (_itemDescriptor.Presentation.ShowValue && !string.IsNullOrWhiteSpace(_valueLabel))
         {
             data.Add(new Tuple<string, string>(_valueLabel, string.Empty));
         }

@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Content;
+﻿using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -17,6 +17,8 @@ internal sealed class AchievementsWindow : Window
     private static readonly Color Gold = new(a: 255, r: 224, g: 190, b: 113);
     private static readonly Color Cream = new(a: 255, r: 246, g: 229, b: 202);
     private static readonly Color Muted = new(a: 255, r: 193, g: 180, b: 161);
+    private AchievementStatePacket? _lastPacket;
+    private bool _monthlyOnly;
     private readonly Label _summary;
     private readonly bool _readOnly;
     private readonly ScrollControl _scroll;
@@ -43,7 +45,8 @@ internal sealed class AchievementsWindow : Window
             TextColorOverride = new Color(a: 255, r: 236, g: 210, b: 153),
             Text = readOnly ? "PLAYER ACHIEVEMENTS" : "ACHIEVEMENTS",
         };
-        title.SetBounds(20, 36, 720, 34);
+        title.SetBounds(20, 36, 510, 34);
+        NavalManagementWindow.Button(this,"MonthlyMissions",Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Mission of the Month",ClientLanguages.Current),535,38,195,30,()=>{_monthlyOnly=!_monthlyOnly;if(_lastPacket!=null)Apply(_lastPacket);});
 
         _summary = new Label(this, "AchievementsSummary")
         {
@@ -72,10 +75,12 @@ internal sealed class AchievementsWindow : Window
 
     public void Apply(AchievementStatePacket packet)
     {
+        _lastPacket=packet;
         AchievementConfiguration.Load(packet.ConfigurationJson);
         var state = (packet.Progress ?? []).ToDictionary(entry => entry.AchievementId);
 
         var definitions = AchievementConfiguration.Instance.Achievements
+            .Where(definition=>!_monthlyOnly || definition.Monthly)
             .Where(
                 definition =>
                     !definition.HiddenUntilCompleted ||
@@ -90,6 +95,7 @@ internal sealed class AchievementsWindow : Window
         _summary.Text = (_readOnly ? packet.InspectedPlayerName + "  |  VIEW ONLY  |  " : "") +
             $"{completedCount:N0} / {AchievementConfiguration.Instance.Achievements.Length:N0} completed";
 
+        if(_monthlyOnly)_summary.Text=Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Mission of the Month",ClientLanguages.Current)+" - "+DateTime.UtcNow.ToString("yyyy-MM");
         _scroll.DeleteAll();
 
         var y = 12;

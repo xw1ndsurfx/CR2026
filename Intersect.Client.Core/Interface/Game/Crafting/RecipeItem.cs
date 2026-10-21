@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Gwen.Control;
+﻿using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Input;
 using Intersect.Client.Framework.Input;
 using Intersect.Client.General;
@@ -55,7 +55,7 @@ public partial class RecipeItem
 
         if (item != null)
         {
-            var itemTex = Globals.ContentManager.GetTexture(Framework.Content.TextureType.Item, item.Icon);
+            var itemTex = Globals.ContentManager.GetTexture(item.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, item.DisplayIcon);
             if (itemTex != null)
             {
                 Pnl.Texture = itemTex;

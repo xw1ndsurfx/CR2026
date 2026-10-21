@@ -305,6 +305,10 @@ namespace Intersect.Server.Migrations.MySql.Game
                         .HasColumnType("longtext")
                         .HasColumnName("Color");
 
+                    b.Property<string>("JsonPresentation")
+                        .HasColumnType("longtext")
+                        .HasColumnName("Presentation");
+
                     b.Property<string>("JsonUsageRequirements")
                         .HasColumnType("longtext")
                         .HasColumnName("UsageRequirements");
@@ -707,6 +711,9 @@ namespace Intersect.Server.Migrations.MySql.Game
 
             modelBuilder.Entity("Intersect.Framework.Core.GameObjects.Resources.ResourceDescriptor", b =>
                 {
+                    b.Property<bool>("FallingTree")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<Guid>("Id")
                         .HasColumnType("char(36)")
                         .UseCollation("ascii_general_ci");
@@ -1318,6 +1325,11 @@ namespace Intersect.Server.Migrations.MySql.Game
                         .HasColumnType("char(36)")
                         .HasColumnName("WeatherAnimation")
                         .UseCollation("ascii_general_ci");
+
+                    b.Property<string>("WeatherEffectsJson")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("WeatherEffects");
 
                     b.Property<int>("WeatherIntensity")
                         .HasColumnType("int");

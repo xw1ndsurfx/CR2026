@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Intersect.Framework.Core.Achievements;
@@ -24,6 +24,16 @@ public enum AchievementObjectiveType
     InvasionParticipations = 16,
     InvasionWavesCleared = 17,
     InvasionDefeats = 18,
+    NavalShipsSunk = 19,
+    NavalCannonHits = 20,
+    NavalHullDamage = 21,
+    NavalRepairs = 22,
+    NavalDockings = 23,
+    NavalCargoUnloaded = 24,
+    NavalSailingLevel = 25,
+    NavalGunneryLevel = 26,
+    NavalShipwrightLevel = 27,
+
 }
 
 public sealed class AchievementRewardDefinition
@@ -55,6 +65,16 @@ public sealed class AchievementDefinition
     public Guid TargetId { get; set; } = Guid.Empty;
     public string TargetKey { get; set; } = string.Empty;
     public long TargetAmount { get; set; } = 1;
+    public bool Monthly { get; set; }
+    public Guid ProgressIdentity(DateTimeOffset now)
+    {
+        if(!Monthly)return Id;
+        var data=Id.ToByteArray();
+        var month=now.UtcDateTime.Year*12+now.UtcDateTime.Month;
+        for(var i=0;i<4;i++)data[8+i]^=(byte)(month>>(i*8));
+        data[12]^=0x6d;
+        return new Guid(data);
+    }
     public bool HiddenUntilCompleted { get; set; }
     public int SortOrder { get; set; }
     public string SteamApiName { get; set; } = string.Empty;
@@ -71,6 +91,7 @@ public sealed class AchievementDefinition
         (TargetKey?.Length ?? 0) <= 128 &&
         TargetAmount is >= 1 and <= 2_000_000_000 &&
         (SteamApiName?.Length ?? 0) <= 128 &&
+        (!Monthly || string.IsNullOrWhiteSpace(SteamApiName)) &&
         (Reward?.IsStructurallyValid ?? false) &&
         (ObjectiveType != AchievementObjectiveType.ProfessionLevel || TargetId != Guid.Empty);
 }

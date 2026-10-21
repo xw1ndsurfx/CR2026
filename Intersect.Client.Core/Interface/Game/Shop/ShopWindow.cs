@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Entities;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
@@ -26,6 +26,7 @@ public partial class ShopWindow : Window
     private readonly Label _sellEmpty;
     private readonly Label _hint;
     private readonly TextBox _search;
+    private readonly ComboBox _sort;
     private bool _shopInitialized;
     private bool _inventorySubscribed;
     private bool _refreshPending;
@@ -59,6 +60,9 @@ public partial class ShopWindow : Window
             RefreshSellRows();
         };
         Interface.FocusComponents.Add(_search);
+        _sort=new ComboBox(this,"ShopSort") {Font=GameContentManager.Current.GetFont("sourcesanspro")??Skin.DefaultFont,FontSize=11};
+        foreach(var sort in new[]{"New","Level","Price"})_sort.AddItem(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(sort,ClientLanguages.Current),userData:sort);
+        _sort.ItemSelected+=(_,_)=>{if(_shopInitialized)RefreshBuyRows();};
 
         _buyHeader = Header("BuyHeader", Strings.Shop.BuyItem.ToString(), 24, 56, 350);
         _sellHeader = Header("SellHeader", Strings.Shop.SellItem.ToString(), 406, 56, 350);
@@ -107,7 +111,8 @@ public partial class ShopWindow : Window
         sellPanel.SetBounds(398, 48, 365, 512);
         sellPanel.SendToBack();
 
-        _search.SetBounds(24, 18, 732, 30);
+        _search.SetBounds(24, 18, 552, 30);
+        _sort.SetBounds(590,18,166,30);
         _buyHeader.SetBounds(24, 56, 350, 28);
         _sellHeader.SetBounds(406, 56, 350, 28);
         _buyContainer.SetBounds(24, 90, 350, 468);
@@ -167,7 +172,14 @@ public partial class ShopWindow : Window
 
         if (Globals.GameShop is { } shop)
         {
-            for (var slot = 0; slot < shop.SellingItems.Count; ++slot)
+            var slots=Enumerable.Range(0,shop.SellingItems.Count);
+            slots=(_sort.SelectedItem?.UserData as string) switch
+            {
+                "Level"=>slots.OrderBy(slot=>ItemDescriptor.Get(shop.SellingItems[slot].ItemId)?.MinimumLevel??1).ThenBy(slot=>slot),
+                "Price"=>slots.OrderBy(slot=>shop.SellingItems[slot].CostItemQuantity).ThenBy(slot=>slot),
+                "New"=>slots.OrderByDescending(slot=>slot),_=>slots
+            };
+            foreach (var slot in slots)
             {
                 var offer = shop.SellingItems[slot];
                 if (!ItemDescriptor.TryGet(offer.ItemId, out var item)) continue;
@@ -253,7 +265,7 @@ public partial class ShopWindow : Window
         bar.SetScrollAmount(Math.Clamp(bar.ScrollAmount, 0f, 1f), forceUpdate: true);
     }
 
-    private static void ConfigureNativeScrollbar(ScrollControl container)
+    internal static void ConfigureNativeScrollbar(ScrollControl container)
     {
         var bar = container.VerticalScrollBar;
         bar.Width = 15;
@@ -311,7 +323,7 @@ public partial class ShopWindow : Window
     /// Backing for the two scrollable merchant columns, rendered beneath all
     /// native inputs and sprites. The product cards are original shop_1 art.
     /// </summary>
-    private sealed class MerchantPanelChrome : Base
+    internal sealed class MerchantPanelChrome : Base
     {
         public MerchantPanelChrome(Base parent, string name) : base(parent, name)
         {

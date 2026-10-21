@@ -1,3 +1,4 @@
+﻿using Intersect.Framework.Core.Naval;
 using Intersect.Enums;
 using Intersect.Framework.Core.GameObjects.Resources;
 using Intersect.Framework.Core.Professions;
@@ -17,16 +18,18 @@ internal static class ProfessionRuntime
     private static long Raw(Player player, Guid id) => Math.Max(0L, player.GetVariable(id)?.Value?.Integer ?? 0L);
     private static long Total(Player player, Guid id) => Math.Max(0L, Raw(player, id) - 1L);
 
-    internal static bool IsLearned(Player player, Guid id) => Raw(player, id) > 0;
+    internal static bool IsLearned(Player player, Guid id) => NavalProfessions.IsNative(id) || Raw(player, id) > 0;
 
     internal static int GetLevel(Player player, Guid id)
     {
+        if(NavalProfessions.IsNative(id))return Naval.NavalSystem.CareerProgress(player,id).Level;
         var definition = ProfessionConfigurationRuntime.Current.Find(id);
         return definition == null || !IsLearned(player, id) ? 0 : definition.LevelForExperience(GetExperience(player, id));
     }
 
     internal static long GetExperience(Player player, Guid id)
     {
+        if(NavalProfessions.IsNative(id))return Naval.NavalSystem.CareerExperience(player,id);
         var definition = ProfessionConfigurationRuntime.Current.Find(id);
         return definition == null || !IsLearned(player, id)
             ? 0L
@@ -35,6 +38,7 @@ internal static class ProfessionRuntime
 
     internal static long GetExperienceToNextLevel(Player player, Guid id)
     {
+        if(NavalProfessions.IsNative(id)){var progress=Naval.NavalSystem.CareerProgress(player,id);return progress.Required<=0?-1:progress.Required-progress.Experience;}
         var definition = ProfessionConfigurationRuntime.Current.Find(id);
         if (definition == null || !IsLearned(player, id)) return -1;
 
@@ -43,6 +47,20 @@ internal static class ProfessionRuntime
         if (level >= definition.MaximumLevel) return -1;
 
         return Math.Max(0L, definition.ExperienceToReachLevel(level + 1) - total);
+    }
+
+    internal static (long Experience, long Required) LevelProgress(Player player, Guid id)
+    {
+        if (NavalProfessions.IsNative(id))
+        {
+            var progress=Naval.NavalSystem.CareerProgress(player,id);
+            return (progress.Experience,progress.Required);
+        }
+        var definition=ProfessionConfigurationRuntime.Current.Find(id);
+        if (definition==null || !IsLearned(player,id)) return (0,0);
+        var level=GetLevel(player,id);
+        var floor=definition.ExperienceToReachLevel(level);
+        return (Math.Max(0,GetExperience(player,id)-floor),level>=definition.MaximumLevel?0:definition.ExperienceToReachLevel(level+1)-floor);
     }
 
     internal static void Learn(Player player, Guid id)
@@ -55,6 +73,7 @@ internal static class ProfessionRuntime
 
     internal static void Forget(Player player, Guid id)
     {
+        if(NavalProfessions.IsNative(id))return;
         var definition = ProfessionConfigurationRuntime.Current.Find(id);
         if (definition == null) return;
         player.SetVariableValue(id, 0L);
@@ -63,6 +82,7 @@ internal static class ProfessionRuntime
 
     internal static void SetLevel(Player player, Guid id, int level)
     {
+        if(NavalProfessions.IsNative(id))return;
         var definition = ProfessionConfigurationRuntime.Current.Find(id);
         if (definition == null) return;
         if (level <= 0) { Forget(player, id); return; }
@@ -76,6 +96,7 @@ internal static class ProfessionRuntime
 
     internal static void SetExperience(Player player, Guid id, long experience)
     {
+        if(NavalProfessions.IsNative(id))return;
         var definition = ProfessionConfigurationRuntime.Current.Find(id);
         if (definition == null) return;
 
@@ -101,6 +122,7 @@ internal static class ProfessionRuntime
 
     internal static void AddExperience(Player player, Guid id, long amount)
     {
+        if(NavalProfessions.IsNative(id))return;
         var definition = ProfessionConfigurationRuntime.Current.Find(id);
         if (definition == null || amount == 0) return;
 

@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -146,7 +146,14 @@ internal sealed partial class LogiklikNewsWindow : Window
         };
         _imageStatus.SetBounds(320, 162, 470, 180);
 
-        _detailArea = new ScrollControl(this, "NewsDetailArea");
+        var chrome=new MarketplaceWindow.MarketChrome(this,"NewsFrame",MarketplaceWindow.FrameStyle.Window);
+        chrome.SetBounds(8,4,804,548);chrome.SendToBack();
+        _detailArea = new ScrollControl(this, "NewsDetailArea") {OverflowX=OverflowBehavior.Hidden,OverflowY=OverflowBehavior.Scroll,AutoHideBars=false};
+        Shop.ShopWindow.ConfigureNativeScrollbar(_newsList);
+        Shop.ShopWindow.ConfigureNativeScrollbar(_detailArea);
+        _detailImage.Parent=_detailArea;_imageStatus.Parent=_detailArea;
+        _detailImage.SetBounds(4,4,438,180);_imageStatus.SetBounds(4,4,438,180);
+        NavalManagementWindow.StyleButton(_refreshButton);
         SetDetailAreaHasImage(false);
 
         _detailLabel = new RichLabel(_detailArea)
@@ -256,8 +263,8 @@ internal sealed partial class LogiklikNewsWindow : Window
                 ? item.PublishedAt.Value.ToLocalTime().ToString("yyyy-MM-dd")
                 : string.Empty;
 
-            var title = item.Title.Length > 34 ? item.Title[..31] + "..." : item.Title;
-            var row = new Button(_newsList, "NewsRow" + rowIndex)
+            var title = item.Title;
+            var row = new NewsTitleButton(_newsList, "NewsRow" + rowIndex)
             {
                 Dock = Pos.Top,
                 Height = 46,
@@ -314,6 +321,7 @@ internal sealed partial class LogiklikNewsWindow : Window
         _detailLabel.AddText(item.Summary, _detailTemplate);
         _detailLabel.SizeToChildren(false, true);
         _detailLabel.Invalidate();
+        _detailArea.ScrollToTop();
 
         _ = ShowArticleImageAsync(item);
     }
@@ -427,14 +435,8 @@ internal sealed partial class LogiklikNewsWindow : Window
 
     private void SetDetailAreaHasImage(bool hasImage)
     {
-        if (hasImage)
-        {
-            _detailArea.SetBounds(320, 350, 470, 182);
-        }
-        else
-        {
-            _detailArea.SetBounds(320, 162, 470, 370);
-        }
+        _detailArea.SetBounds(320,162,470,370);
+        if(_detailLabel!=null)_detailLabel.Y=hasImage?194:4;
 
         if (_detailTemplate != null)
         {
@@ -444,6 +446,8 @@ internal sealed partial class LogiklikNewsWindow : Window
         if (_detailLabel != null)
         {
             _detailLabel.Width = Math.Max(100, _detailArea.Width - _detailArea.VerticalScrollBar.Width - 8);
+            _detailArea.SetInnerSize(_detailLabel.Width+4,_detailLabel.Y+_detailLabel.Height+12);
+            _detailArea.UpdateScrollBars();
         }
     }
 

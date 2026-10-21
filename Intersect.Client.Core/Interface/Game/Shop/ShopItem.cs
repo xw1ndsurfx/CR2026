@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
@@ -141,7 +141,7 @@ public partial class ShopItem : SlotItem
             return;
         }
 
-        var itemTex = Globals.ContentManager?.GetTexture(Framework.Content.TextureType.Item, itemDescriptor.Icon);
+        var itemTex = Globals.ContentManager?.GetTexture(itemDescriptor.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, itemDescriptor.DisplayIcon);
         if (itemTex != null)
         {
             Icon.Texture = itemTex;

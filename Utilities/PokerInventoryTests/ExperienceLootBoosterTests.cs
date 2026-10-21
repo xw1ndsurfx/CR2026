@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using Intersect;
 using Intersect.Enums;
@@ -52,8 +52,14 @@ internal static class ExperienceLootBoosterTests
             var restored=new Player {Level=1};GC.SuppressFinalize(restored);restored.SetVariableValue(untilId,player.GetVariable(untilId)!.Value.Integer);var percentId=(Guid)typeof(Player).GetField("ExperienceBoostPercentId",flags)!.GetValue(null)!;restored.SetVariableValue(percentId,player.GetVariable(percentId)!.Value.Integer);Check((int)bonus.GetValue(restored)! ==50,"Reloaded character variables restore active potion");
             restored.SetVariableValue(untilId,DateTimeOffset.UtcNow.AddSeconds(-1).ToUnixTimeMilliseconds());Check((int)bonus.GetValue(restored)! ==0,"Expired potion cannot grant XP");
             var resource=new Resource(new ResourceDescriptor(Guid.NewGuid()){MinHp=1,MaxHp=1,Drops=[new(){ItemId=loot.Id,Chance=50,MinQuantity=2,MaxQuantity=2}]});GC.SuppressFinalize(resource);
-            typeof(Resource).GetMethod("GenerateHarvestLoot",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(resource,null);Check(resource.Items.Count==1 && resource.Items[0].Quantity==2,"Harvest uses event-time probability without changing quantities");
-            config.LootEvents.Clear();resource.Descriptor.Drops[0].Chance=0;typeof(Resource).GetMethod("GenerateHarvestLoot",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(resource,null);Check(resource.Items.Count==0,"No stale boosted harvest remains after a fresh roll");
+            typeof(Resource).GetMethod("GenerateHarvestLoot",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(resource,[null]);Check(resource.Items.Count==1 && resource.Items[0].Quantity==2,"Harvest uses event-time probability without changing quantities");
+            config.LootEvents.Clear();
+            var lootUntil=(Guid)typeof(Player).GetField("LootBoostUntilId",flags)!.GetValue(null)!;
+            var lootPercent=(Guid)typeof(Player).GetField("LootBoostPercentId",flags)!.GetValue(null)!;
+            restored.SetVariableValue(lootUntil,DateTimeOffset.UtcNow.AddMinutes(1).ToUnixTimeMilliseconds());restored.SetVariableValue(lootPercent,100L);
+            typeof(Resource).GetMethod("GenerateHarvestLoot",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(resource,[restored]);
+            Check(resource.Items.Count==1 && resource.Items[0].Quantity==2,"Personal loot bonus uses the authenticated harvester without changing quantities");
+            resource.Descriptor.Drops[0].Chance=0;typeof(Resource).GetMethod("GenerateHarvestLoot",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(resource,[null]);Check(resource.Items.Count==0,"No stale boosted harvest remains after a fresh roll");
             var shop=new ShopDescriptor {BuybackDiscountPercent=25};Check(shop.BuybackPrice(100)==75 && shop.BuybackPrice(1)==1 && shop.BuybackPrice(0)==0,"Buyback discount is bounded and rounds safely");shop.BuybackDiscountPercent=0;Check(shop.BuybackPrice(100)==100,"Old shop prices remain unchanged");
             using var connection=new SqliteConnection("Data Source=:memory:");connection.Open();using(var command=connection.CreateCommand()){command.CommandText="CREATE TABLE Shops (Id TEXT, Name TEXT);INSERT INTO Shops VALUES ('old','Existing shop')";command.ExecuteNonQuery();}
             using var db=new DbContext(new DbContextOptionsBuilder().UseSqlite(connection).Options);var migration=new Intersect.Server.Migrations.Sqlite.Game.ShopBuybackDiscount();var builder=new MigrationBuilder("Microsoft.EntityFrameworkCore.Sqlite");migration.GetType().GetMethod("Up",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(migration,[builder]);foreach(var sql in db.GetService<IMigrationsSqlGenerator>().Generate(builder.Operations)){using var command=connection.CreateCommand();command.CommandText=sql.CommandText;command.ExecuteNonQuery();}

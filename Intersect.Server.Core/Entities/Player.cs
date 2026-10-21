@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
@@ -728,6 +728,18 @@ public partial class Player : Entity
     private Guid _lastAfkMapId;
     private bool _isAfk;
 
+    private long _lastMouseActivity;
+    internal void RegisterMouseActivity()
+    {
+        lock (EntityLock)
+        {
+            var now = Timing.Global.Milliseconds;
+            if (_lastMouseActivity != 0 && now - _lastMouseActivity < 750) return;
+            _lastMouseActivity = now;
+            RegisterAfkActivity();
+        }
+    }
+
     public void RegisterAfkActivity()
     {
         lock (EntityLock)
@@ -856,6 +868,7 @@ public partial class Player : Entity
                 if (!HasPendingDeath) base.Update(timeMs);
                 Intersect.Server.Housing.HousingRuntime.Update(this);
                 UpdateActivePet(timeMs);
+                UpdatePremiumStatus(timeMs);
                 Intersect.Server.Naval.NavalSystem.Update(this, timeMs);
 
                 if (mAutorunCommonEventTimer < Timing.Global.Milliseconds)
@@ -2477,6 +2490,7 @@ public partial class Player : Entity
     public void LoginWarp()
     {
         if(Intersect.Server.Pvp.PvpRuntime.RecoverLogin(this))return;
+        if(DungeonRunRuntime.RecoverLogin(this))return;
         if(Intersect.Server.Naval.NavalSystem.RecoverLogin(this))return;
         Intersect.Server.Housing.HousingRuntime.RestoreLoginLocation(this);
         if (MapId == null || MapId == Guid.Empty)
@@ -5619,6 +5633,7 @@ public partial class Player : Entity
                 var oldMember = Party.Where(p => p.Id == target).FirstOrDefault();
                 if (oldMember != null)
                 {
+                    if(oldMember.NavalShipId!=Guid.Empty || Intersect.Server.Naval.NavalSystem.IsEnemyBoarding(oldMember))oldMember.NavalPartyExitRequested=true;
                     oldMember.Party = new List<Player>();
                     PacketSender.SendParty(oldMember);
                     PacketSender.SendChatMsg(oldMember, Strings.Parties.Kicked, ChatMessageType.Party, CustomColors.Alerts.Error);
@@ -5675,6 +5690,7 @@ public partial class Player : Entity
             return;
         }
 
+        if(NavalShipId!=Guid.Empty || Intersect.Server.Naval.NavalSystem.IsEnemyBoarding(this))NavalPartyExitRequested=true;
         var remainingPartyMembers = Party.Except([this]).ToList();
 
         var partyIsDisbanding = remainingPartyMembers.Count <= 1;
@@ -7724,7 +7740,7 @@ public partial class Player : Entity
     {
         lock (EntityLock)
         {
-            if (CaptainedShipId != Guid.Empty) return;
+            if (NavalShipId != Guid.Empty) return;
             var oldMap = MapId;
             base.Move(moveDir, forPlayer, dontUpdate, correction);
 

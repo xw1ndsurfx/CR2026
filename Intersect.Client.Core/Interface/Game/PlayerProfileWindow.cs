@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Content;
@@ -236,7 +236,8 @@ internal sealed class PlayerProfileWindow : Window
         dungeons.Clicked += (_, _) =>
             PacketSender.SendRequestDungeonPanel(openWindow: true, playerId: observedId);
         y += 50;
-        var visitHouse = new Button(_scroll, "VisitProfileHouse") { Text = ClientLanguages.Text(profile.IsSelf ? "My house" : "Visit house"), FontSize = 11, IsDisabled = !profile.IsSelf && !profile.PublicHouse };
+        var visitHouse = new Button(_scroll, "VisitProfileHouse") { Text = ClientLanguages.Text(profile.IsSelf ? "My house" : "Visit house"), Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont, FontSize = 11, IsDisabled = !profile.IsSelf && !profile.PublicHouse };
+        NavalManagementWindow.StyleButton(visitHouse);
         visitHouse.SetBounds(12, y, 580, 32);
         visitHouse.Clicked += (_, _) => PacketSender.SendHouseAction(Intersect.Network.Packets.Housing.HouseAction.Visit, profile.PlayerId);
         y += 44;
@@ -249,7 +250,7 @@ internal sealed class PlayerProfileWindow : Window
                 ("Class", Fallback(profile.ClassName)),
                 ("Guild", Fallback(profile.GuildName)),
                 ("Ranking title", Fallback(profile.RankingTitle)),
-                (Intersect.Client.Localization.ClientLanguages.Text("PvP grade"),Intersect.Client.Localization.ClientLanguages.Text(Intersect.Client.Localization.ClientLanguages.ContentText(profile.PvpGrade))),
+                (Intersect.Client.Localization.ClientLanguages.Text("PvP grade"),Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(Intersect.Client.Localization.ClientLanguages.Text(Intersect.Client.Localization.ClientLanguages.ContentText(string.IsNullOrWhiteSpace(profile.PvpGrade)?"Unranked":profile.PvpGrade)),ClientLanguages.Current)),
                 (Intersect.Client.Localization.ClientLanguages.Text("PvP points"),profile.PvpPoints.ToString("N0")),
                 ("Experience", profile.Experience.ToString("N0")),
                 ("XP to next", profile.ExperienceToNextLevel < 0 ? "MAX" :
@@ -282,7 +283,8 @@ internal sealed class PlayerProfileWindow : Window
         _previewFallback.Show(); _scroll.DeleteAll();
         var description = new Label(_scroll) { Text = ClientLanguages.Text("Offline character. House visits are available when public."), FontSize = 11 };
         description.SetBounds(12, 12, 580, 64);
-        var visit = new Button(_scroll, "VisitOfflineHouse") { Text = ClientLanguages.Text("Visit house"), FontSize = 11, IsDisabled = !profile.PublicHouse };
+        var visit = new Button(_scroll, "VisitOfflineHouse") { Text = ClientLanguages.Text("Visit house"), Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont, FontSize = 11, IsDisabled = !profile.PublicHouse };
+        NavalManagementWindow.StyleButton(visit);
         visit.SetBounds(12, 90, 580, 36); visit.Clicked += (_, _) => PacketSender.SendHouseAction(Intersect.Network.Packets.Housing.HouseAction.Visit, profile.PlayerId);
         _scroll.SetInnerSize(610, 345); _scroll.UpdateScrollBars(); Show(); BringToFront();
     }
@@ -293,18 +295,21 @@ internal sealed class PlayerProfileWindow : Window
         if (professions.Length == 0)
             return AddKeyValueSection("PROFESSIONS", [("Status", "No professions learned")], y);
 
-        var entries = professions.SelectMany(p =>
-            new (string Name, string Value)[]
-            {
-                (p.Name, $"Level {p.Level}/{p.MaximumLevel}"),
-                (p.Name + " EXP", p.ExperienceToNextLevel < 0
-                    ? "MAX" : $"{p.Experience:N0} total | {p.ExperienceToNextLevel:N0} to next"),
-            }).ToList();
-
-        return AddKeyValueSection("PROFESSIONS", entries.ToArray(), y);
+        y=AddKeyValueSection("PROFESSIONS", [], y);
+        foreach (var profession in professions)
+        {
+            var card=new ProfileFrame(_scroll,"Profession"+profession.ProfessionId);card.SetBounds(12,y,580,72);
+            var label=NavalManagementWindow.Text(card,"Name",ClientLanguages.Text(ClientLanguages.ContentText(profession.Name))+" - "+ClientLanguages.Text("Level")+" "+profession.Level+"/"+profession.MaximumLevel,10,4,560,24,12);
+            var progress=new ProfileProgressBar(card,"ExperienceBar") {Progress=profession.LevelExperienceRequired<=0?1f:(float)((double)profession.LevelExperience/profession.LevelExperienceRequired)};
+            progress.SetBounds(10,34,560,24);
+            var caption=NavalManagementWindow.Text(card,"Experience",profession.LevelExperienceRequired<=0?"MAX":Intersect.Framework.Core.Naval.NavalSetupText.Display($"{profession.LevelExperience:N0} / {profession.LevelExperienceRequired:N0} EXP"),10,34,560,24,11);
+            caption.TextAlign=Pos.Center;
+            y+=82;
+        }
+        return y+12;
     }
 
-    private sealed class ProfileProgressBar : Base
+    internal sealed class ProfileProgressBar : Base
     {
         public float Progress { get; set; }
         public ProfileProgressBar(Base parent, string name) : base(parent, name)
@@ -314,15 +319,27 @@ internal sealed class PlayerProfileWindow : Window
 
         protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
         {
-            var r = RenderBounds;
-            skin.Renderer.DrawColor = new Color(a:255,r:35,g:23,b:19);
-            skin.Renderer.DrawFilledRect(r);
-            skin.Renderer.DrawColor = new Color(a:255,r:106,g:76,b:43);
-            skin.Renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(
-                r.X, r.Y, r.Width, 2));
-            skin.Renderer.DrawColor = new Color(a:255,r:79,g:175,b:99);
-            skin.Renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(
-                r.X + 2, r.Y + 2, Math.Max(0, (int)((r.Width - 4) * Math.Clamp(Progress, 0f, 1f))), Math.Max(0, r.Height - 4)));
+            var renderer=skin.Renderer;
+            var previous=renderer.DrawColor;
+            var r=RenderBounds;
+            var border=r.Height<12?1:2;
+            var innerWidth=Math.Max(0,r.Width-border*2);
+            var innerHeight=Math.Max(0,r.Height-border*2);
+            var progress=float.IsFinite(Progress)?Math.Clamp(Progress,0f,1f):0f;
+            try
+            {
+                renderer.DrawColor=new Color(a:255,r:135,g:105,b:69);
+                renderer.DrawFilledRect(r);
+                renderer.DrawColor=new Color(a:255,r:70,g:50,b:37);
+                renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(r.X+border,r.Y+border,innerWidth,innerHeight));
+                var fill=(int)(innerWidth*progress);
+                if(fill>0 && innerHeight>0)
+                {
+                    renderer.DrawColor=new Color(a:255,r:79,g:175,b:99);
+                    renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(r.X+border,r.Y+border,fill,innerHeight));
+                }
+            }
+            finally {renderer.DrawColor=previous;}
         }
     }
 
@@ -573,8 +590,7 @@ internal sealed class PlayerProfileWindow : Window
             }
 
             if (GameContentManager.Current.GetTexture(
-                    Framework.Content.TextureType.Item,
-                    itemDescriptor.Icon
+                    itemDescriptor.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, itemDescriptor.DisplayIcon
                 ) is { } itemTexture)
             {
                 icon.Texture = itemTexture;
@@ -620,7 +636,7 @@ internal sealed class PlayerProfileWindow : Window
                 : $"{profession.ExperienceToNextLevel:N0} XP to next level";
 
             builder.Append(
-                $"{profession.Name}: Level {profession.Level}/{profession.MaximumLevel}  •  " +
+                $"{(Intersect.Framework.Core.Naval.NavalProfessions.IsNative(profession.ProfessionId)?Intersect.Framework.Core.Naval.NavalSetupText.Get(Intersect.Framework.Core.Naval.NavalProfessions.Caption(profession.ProfessionId),ClientLanguages.Current):profession.Name)}: Level {profession.Level}/{profession.MaximumLevel}  •  " +
                 $"{profession.Experience:N0} total XP  •  {progress}"
             );
         }

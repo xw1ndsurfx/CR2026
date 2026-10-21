@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -63,10 +63,10 @@ public partial class FrmItem
         var supportedTypes = new[]
         {
             ItemType.Equipment, ItemType.Consumable, ItemType.Bag,
-            ItemType.Currency, ItemType.Spell, ItemType.Event
+            ItemType.Currency, ItemType.Spell, ItemType.Event, ItemType.None, ItemType.Crafting, ItemType.Ammo, ItemType.Key
         };
         foreach (var itemType in supportedTypes)
-            type.Items.Add(itemType.ToString());
+            type.Items.Add(itemType is ItemType.Crafting or ItemType.Ammo or ItemType.Key ? Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(itemType.ToString(),System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName):itemType.ToString());
         type.SelectedIndex = Math.Max(0, Array.IndexOf(supportedTypes, mEditorItem.ItemType));
 
         var slot = new ComboBox
@@ -170,6 +170,16 @@ public partial class FrmItem
             applyLevel, replaceRequirements, preserveArt, warning, preview,
             apply, cancel
         });
+        var autoMarketplace=Option(Intersect.Editor.Localization.Strings.ItemEditor.CanSellMarketplace,451,true);
+        dialog.Controls.Add(autoMarketplace);
+        var stackLimit = new NumericUpDown
+        {
+            Location = new System.Drawing.Point(242, 481), Width = 290,
+            Minimum=1, Maximum=int.MaxValue,
+            Value=Math.Clamp(mEditorItem.MaxInventoryStack, 1, int.MaxValue)
+        };
+        foreach (var control in new Control[] {preserveArt, warning, preview, apply, cancel}) control.Top+=72;
+        dialog.Controls.AddRange([Label(Intersect.Editor.Localization.Strings.ItemEditor.InventoryStackLimit,483),stackLimit]);
         dialog.CancelButton = cancel;
 
         ItemType SelectedType() => supportedTypes[Math.Max(0, type.SelectedIndex)];
@@ -300,6 +310,7 @@ public partial class FrmItem
 
             cmbType.SelectedIndex = (int)itemType;
             txtName.Text = name.Text;
+            chkCanSellMarketplace.Checked = autoMarketplace.Checked;
             cmbRarity.SelectedIndex = Math.Clamp(rarity.SelectedIndex,
                 0, Math.Max(0, cmbRarity.Items.Count - 1));
             if (itemType == ItemType.Equipment && slot.SelectedIndex >= 0)
@@ -361,11 +372,11 @@ public partial class FrmItem
             if (autoStats.Checked && itemType == ItemType.Bag)
                 Set(nudBag, p.BagSlots);
 
-            if (itemType is ItemType.Currency or ItemType.Consumable)
+            if (itemType != ItemType.Equipment && itemType != ItemType.Bag)
             {
                 chkStackable.Checked = true;
-                Set(nudInvStackLimit, 1000000);
-                Set(nudBankStackLimit, 1000000);
+                Set(nudInvStackLimit, stackLimit.Value);
+                Set(nudBankStackLimit, stackLimit.Value);
             }
 
             if (realRequirement)

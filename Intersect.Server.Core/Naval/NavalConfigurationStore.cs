@@ -15,9 +15,19 @@ internal sealed class NavalConfigurationStore(string path)
         if (new FileInfo(path).Length > 1_000_000) throw new InvalidDataException();
         var source = File.ReadAllText(path);
         var settings = JsonConvert.DeserializeObject<NavalConfiguration>(source) ?? throw new InvalidDataException();
+        if(JObject.Parse(source).GetValue("CareersVersion",StringComparison.OrdinalIgnoreCase)==null && settings.Ammunition is {} oldAmmo)
+            settings.Ammunition=oldAmmo.Concat(CannonAmmunition.Defaults().Where(a=>(int)a.Kind>=3 && !oldAmmo.Any(old=>old.Kind==a.Kind))).ToArray();
+        if(JObject.Parse(source).GetValue("CareersVersion",StringComparison.OrdinalIgnoreCase)==null && JObject.Parse(source).GetValue("Ammunition",StringComparison.OrdinalIgnoreCase) is JArray rawAmmo)
+            foreach(var raw in rawAmmo.OfType<JObject>())
+                if(raw.GetValue("RequiredSailingLevel",StringComparison.OrdinalIgnoreCase)==null && Enum.TryParse<CannonAmmoKind>(raw.GetValue("Kind",StringComparison.OrdinalIgnoreCase)?.ToString(),out var kind) && settings.Ammunition.FirstOrDefault(a=>a.Kind==kind) is {} ammo)ammo.RequiredSailingLevel=ammo.RequiredLevel;
         var rawShips = JObject.Parse(source).Properties().FirstOrDefault(p => p.Name.Equals("Ships", StringComparison.OrdinalIgnoreCase))?.Value as JArray;
         if (rawShips != null && rawShips.Any(item => item is not JObject obj ||
             !Guid.TryParse(obj.Properties().FirstOrDefault(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase))?.Value.ToString(), out var id) || id == Guid.Empty))
+            throw new InvalidDataException();
+        var rawPatrols=JObject.Parse(source).Properties().FirstOrDefault(p=>p.Name.Equals("Herbonia",StringComparison.OrdinalIgnoreCase))?.Value as JArray;
+        if(rawPatrols!=null && rawPatrols.Any(p=>p is not JObject obj ||
+            obj.GetValue("Ship",StringComparison.OrdinalIgnoreCase) is not JObject ship ||
+            !Guid.TryParse(ship.GetValue("Id",StringComparison.OrdinalIgnoreCase)?.ToString(),out var id) || id==Guid.Empty))
             throw new InvalidDataException();
         if (settings.Ships == null || settings.Ships.Length > 64 ||
             settings.Ships.Any(d => d == null || !d.IsValid() || d.X >= Options.Instance.Map.MapWidth ||

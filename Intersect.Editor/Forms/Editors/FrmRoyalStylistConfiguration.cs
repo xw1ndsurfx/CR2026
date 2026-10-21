@@ -1,4 +1,4 @@
-using DarkUI.Controls;
+﻿using DarkUI.Controls;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Networking;
@@ -131,6 +131,8 @@ public sealed class FrmRoyalStylistConfiguration : DarkForm
         save.Click += (_, _) => Save();
         footer.Controls.Add(cancel);
         footer.Controls.Add(save);
+        var accessories=new DarkButton {Text=Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Pet accessories",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),Width=190,Height=30};
+        accessories.Click+=(_,_)=>EditPetAccessories();footer.Controls.Add(accessories);
 
         var root = new TableLayoutPanel
         {
@@ -671,4 +673,22 @@ public sealed class FrmRoyalStylistConfiguration : DarkForm
         RoyalStylistConfiguration.Load(_working.ToJson());
         Close();
     }
+    private void EditPetAccessories()
+    {
+        using var dialog=new Form {Text=Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Pet accessories",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),Width=900,Height=500,StartPosition=FormStartPosition.CenterParent};
+        var draft=Newtonsoft.Json.JsonConvert.DeserializeObject<List<Intersect.Framework.Core.QualityOfLife.PetDecorationDefinition>>(Newtonsoft.Json.JsonConvert.SerializeObject(_working.PetDecorations))??[];
+        var grid=new DataGridView {Dock=DockStyle.Fill,AutoGenerateColumns=false,AutoSizeColumnsMode=DataGridViewAutoSizeColumnsMode.Fill};
+        foreach(var name in new[]{"Name","Icon","Size","OffsetX","OffsetY"})grid.Columns.Add(new DataGridViewTextBoxColumn {HeaderText=Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(name,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),DataPropertyName=name});
+        grid.DataSource=new System.ComponentModel.BindingList<Intersect.Framework.Core.QualityOfLife.PetDecorationDefinition>(draft);
+        var save=new Button {Dock=DockStyle.Bottom,Height=36,Text=Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Save",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)};
+        save.Click+=(_,_)=>
+        {
+            grid.EndEdit();BindingContext[grid.DataSource].EndCurrentEdit();
+            if(draft.Count>128 || draft.Any(decoration=>!decoration.IsValid || !File.Exists(Path.Combine("resources","items",decoration.Icon))))
+            {MessageBox.Show(dialog,Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Choose an existing item icon for every accessory.",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));return;}
+            _working.PetDecorations=draft.ToArray();dialog.DialogResult=DialogResult.OK;
+        };
+        dialog.Controls.Add(grid);dialog.Controls.Add(save);dialog.ShowDialog(this);
+    }
+
 }

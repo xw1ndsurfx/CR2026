@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using Intersect;
 using Intersect.Core;
@@ -56,6 +56,15 @@ internal static class InvasionAlertTests
                 var packet = new InvasionAlertPacket { InvasionId = Guid.NewGuid(), Name = "Royal invasion", Message = message, Island = "Polonya", MinutesBefore = 60 };
                 packet = MessagePackSerializer.Deserialize<InvasionAlertPacket>(MessagePackSerializer.Serialize(packet));
                 type.GetMethod("Apply", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(panel, [packet]);
+                var bodyBefore=(RichLabel)Field(panel,"_body");
+                Check(!bodyBefore.Text.Contains("FOR POLONYA!"),"The announcement reveals text progressively instead of showing the entire message immediately");
+                void Reveal()
+                {
+                    var length=((string)Field(panel,"_bodyText")).Length;
+                    type.GetField("_started",BindingFlags.Instance|BindingFlags.NonPublic)!.SetValue(panel,Environment.TickCount64-length*1000L/35-100);
+                    type.GetMethod("Think")!.Invoke(panel,null);
+                }
+                Reveal();Check(!panel.IsHidden,"A long announcement remains visible until its complete text has been revealed");
                 var gameUi = (GameInterface)RuntimeHelpers.GetUninitializedObject(typeof(GameInterface));
                 typeof(GameInterface).GetField("_invasionAlertWindow", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(gameUi, panel);
                 Check(gameUi.SuppressStatusHuds, "Status HUDs yield to a royal alert so its paragraphs remain readable");
@@ -68,9 +77,15 @@ internal static class InvasionAlertTests
                 type.GetMethod("Apply", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(panel, [new InvasionAlertPacket { Name = "Second", Message = "Second warning" }]);
                 Check(body.Text.Contains("FOR POLONYA!"), "Simultaneous alerts queue instead of overwriting unread messages");
                 type.GetMethod("Next", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(panel, null);
+                Reveal();
                 Check(body.Text.Contains("Second warning"), "Continue opens the next queued alert");
                 type.GetMethod("Next", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(panel, null);
                 Check(!gameUi.SuppressStatusHuds, "Status HUDs return once the last alert is closed");
+                type.GetMethod("Apply",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(panel,[new InvasionAlertPacket {Name="Muted",Message="Another warning"}]);
+                var mute=(Button)Field(panel,"_mute");
+                typeof(ControlBase).GetMethod("EmitVirtualClick",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(mute,[Intersect.Client.Framework.Gwen.Control.EventArguments.MouseButtonState.Empty]);
+                type.GetMethod("Apply",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(panel,[packet]);
+                Check(panel.IsHidden,"Muting hides the banner and suppresses later announcements for this session");
             }
         }
         finally { ApplicationContext.Context.Value = oldContext; Globals.Database = oldDatabase; }

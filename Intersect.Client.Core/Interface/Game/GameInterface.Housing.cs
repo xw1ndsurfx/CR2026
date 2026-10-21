@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Input;
@@ -31,13 +31,15 @@ public partial class GameInterface
         _housePlacement = new HousePlacementOverlay(GameCanvas);
         _housingWindow.PlaceRequested += (id, placement, definition) => _housePlacement.Begin(id, placement, definition);
         _houseButton = new Button(GameCanvas, "MyHouse") { Text = ClientLanguages.Text("My house"), Font = GameContentManager.Current.GetFont("sourcesanspro") ?? GameCanvas.Skin.DefaultFont, FontSize = 9 };
-        _houseButton.SetBounds(8, 28, 110, 24); _houseButton.Clicked += (_, _) => PacketSender.SendHouseAction(HouseAction.Open, Globals.Me?.Id ?? Guid.Empty);
+        _houseButton.SetBounds(8, 28, 110, 24); _houseButton.Clicked += (_, _) => { if (!_houseButton.IsDisabled) PacketSender.SendHouseAction(HouseAction.Open, Globals.Me?.Id ?? Guid.Empty); };
         _houseExit = new Button(GameCanvas, "ExitHouse") { Text = ClientLanguages.Text("Leave house"), Font = GameContentManager.Current.GetFont("sourcesanspro") ?? GameCanvas.Skin.DefaultFont, FontSize = 9 };
         _houseExit.SetBounds(124, 28, 120, 24); _houseExit.Clicked += (_, _) => PacketSender.SendHouseAction(HouseAction.Leave);
     }
     private void UpdateHousing()
     {
         EnsureHousing();
+        _houseButton!.IsDisabled=_houseBlockedByDungeon || Naval.NavalWorld.OwnShip!=null;
+        if (_houseButton.IsDisabled) _housingWindow!.Hide();
         _houseExit!.IsHidden = HousingWorld.View is not { Inside: true };
         _housePlacement!.SetSize(GameCanvas.Width, GameCanvas.Height);
         if (_housePlacement.IsHidden || HousingWorld.View is not { Inside: true, IsOwner: true }) _housePlacement.Cancel();

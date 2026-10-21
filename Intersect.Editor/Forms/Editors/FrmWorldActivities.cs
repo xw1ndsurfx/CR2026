@@ -20,6 +20,10 @@ public sealed class FrmWorldActivities : DarkForm
         if (Directory.Exists("resources/music")) foreach (var file in Directory.GetFiles("resources/music").Select(Path.GetFileName).OfType<string>().OrderBy(n => n)) music.Items.Add(file);
         if (!music.Items.Contains(draft.CombatMusic)) music.Items.Add(draft.CombatMusic);
         music.SelectedItem = draft.CombatMusic;
+        var navalMusic=new ComboBox {Name="NavalCombatMusic",Width=300,DropDownStyle=ComboBoxStyle.DropDownList};
+        navalMusic.Items.AddRange(music.Items.Cast<object>().ToArray());
+        if(!navalMusic.Items.Contains(draft.NavalCombatMusic)) navalMusic.Items.Add(draft.NavalCombatMusic);
+        navalMusic.SelectedItem=draft.NavalCombatMusic;
         var grace = new NumericUpDown { Minimum = 0, Maximum = 120, Value = draft.CombatMusicGraceSeconds, Width = 70 };
         var currency = new ComboBox { Width = 220, DropDownStyle = ComboBoxStyle.DropDownList };
         var currencies = Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Lookup.Values.OfType<Intersect.Framework.Core.GameObjects.Items.ItemDescriptor>().OrderBy(i => i.Name).ToArray();
@@ -31,7 +35,8 @@ public sealed class FrmWorldActivities : DarkForm
         {
             var playlists=new Button {Text="Map combat playlists...",Width=230};
             playlists.Click+=(_,_)=>{using var dialog=new FrmCombatPlaylists(draft.CombatMusicRules);if(dialog.ShowDialog(this)==DialogResult.OK)draft.CombatMusicRules=dialog.Rules;};
-            top.Controls.Add(playlists);
+            top.Controls.Add(playlists);top.SetFlowBreak(playlists,true);
+            top.Controls.AddRange([new Label {Text=FrmNavalConfiguration.T("Naval combat music"),AutoSize=true},navalMusic]);
         }
         top.SetFlowBreak(grace, true);
         if (section == WorldActivitiesSection.Bank) top.Controls.AddRange([new Label { Text = "Bank opening: level / fee / currency (blank = Auragems)", AutoSize = true }, bankLevel, bankCost, currency]);
@@ -66,7 +71,7 @@ public sealed class FrmWorldActivities : DarkForm
         grid.DataError += (_, e) => { e.ThrowException = false; };
         var bottom = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 48, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(8) };
         var cancel = new Button { Text = "Cancel", Width = 110 }; cancel.Click += (_, _) => Close();
-        var save = new Button { Text = "Save", Width = 110 }; save.Click += (_, _) => { grid.EndEdit(); BindingContext[grid.DataSource].EndCurrentEdit(); draft.BankRequiredLevel = (int)bankLevel.Value; draft.BankOpeningCost = (int)bankCost.Value; draft.BankOpeningCurrencyId = (currency.SelectedItem as Intersect.Framework.Core.GameObjects.Items.ItemDescriptor)?.Id ?? Guid.Empty; draft.CombatMusic = music.SelectedItem?.ToString() ?? ""; draft.CombatMusicGraceSeconds = (int)grace.Value; if (!draft.IsValid) { MessageBox.Show(this, "Check event names, schedules, durations and percentages."); return; } Intersect.Editor.Networking.Network.SendPacket(new SaveWorldActivitiesPacket { Json = JsonConvert.SerializeObject(draft), Section = section }); Close(); };
+        var save = new Button { Text = "Save", Width = 110 }; save.Click += (_, _) => { grid.EndEdit(); BindingContext[grid.DataSource].EndCurrentEdit(); draft.BankRequiredLevel = (int)bankLevel.Value; draft.BankOpeningCost = (int)bankCost.Value; draft.BankOpeningCurrencyId = (currency.SelectedItem as Intersect.Framework.Core.GameObjects.Items.ItemDescriptor)?.Id ?? Guid.Empty; draft.CombatMusic = music.SelectedItem?.ToString() ?? ""; draft.CombatMusicGraceSeconds = (int)grace.Value; draft.NavalCombatMusic=navalMusic.SelectedItem?.ToString()??""; if (!draft.IsValid) { MessageBox.Show(this, "Check event names, schedules, durations and percentages."); return; } Intersect.Editor.Networking.Network.SendPacket(new SaveWorldActivitiesPacket { Json = JsonConvert.SerializeObject(draft), Section = section }); Close(); };
         bottom.Controls.AddRange([cancel, save]); if (scheduled) { Controls.Add(grid); Controls.Add(daysPanel); } Controls.Add(top); Controls.Add(bottom); MiniGameEditorTheme.Apply(this);
     }
 }

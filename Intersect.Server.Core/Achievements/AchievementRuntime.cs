@@ -1,4 +1,4 @@
-using Intersect.Enums;
+﻿using Intersect.Enums;
 using Intersect.Framework.Core.Achievements;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
@@ -16,9 +16,10 @@ internal static class AchievementRuntime
     private const byte ClaimedSalt = 0x79;
     private const byte CompletedAtSalt = 0x9B;
 
-    private static Guid StateId(Guid achievementId, byte salt)
+    private static Guid StateId(Guid achievementId, byte salt, DateTimeOffset? at=null)
     {
-        var bytes = achievementId.ToByteArray();
+        var effective=AchievementConfigurationRuntime.Current.Find(achievementId)?.ProgressIdentity(at??DateTimeOffset.UtcNow)??achievementId;
+        var bytes = effective.ToByteArray();
         bytes[0] ^= salt;
         bytes[5] ^= (byte)(salt * 3);
         bytes[10] ^= (byte)(salt * 5);
@@ -26,11 +27,11 @@ internal static class AchievementRuntime
         return new Guid(bytes);
     }
 
-    private static long GetRaw(Player player, Guid achievementId, byte salt) =>
-        Math.Max(0L, player.GetVariable(StateId(achievementId, salt))?.Value?.Integer ?? 0L);
+    private static long GetRaw(Player player, Guid achievementId, byte salt, DateTimeOffset? at=null) =>
+        Math.Max(0L, player.GetVariable(StateId(achievementId, salt,at))?.Value?.Integer ?? 0L);
 
-    private static void SetRaw(Player player, Guid achievementId, byte salt, long value) =>
-        player.SetVariableValue(StateId(achievementId, salt), Math.Max(0L, value));
+    private static void SetRaw(Player player, Guid achievementId, byte salt, long value, DateTimeOffset? at=null) =>
+        player.SetVariableValue(StateId(achievementId, salt,at), Math.Max(0L, value));
 
     internal static long GetProgress(Player player, Guid achievementId) =>
         GetRaw(player, achievementId, ProgressSalt);
@@ -51,6 +52,16 @@ internal static class AchievementRuntime
             if (IsCompleted(player, definition.Id))
                 continue;
 
+            if ((int)definition.ObjectiveType is >=19 and <=27)
+            {
+                var kind=(Intersect.Framework.Core.Naval.NavalTaskKind)((int)definition.ObjectiveType-19);
+                var value=kind switch {
+                    Intersect.Framework.Core.Naval.NavalTaskKind.SailingLevel=>Naval.NavalSystem.CareerProgress(player,Intersect.Framework.Core.Naval.NavalProfessions.Sailing).Level,
+                    Intersect.Framework.Core.Naval.NavalTaskKind.GunneryLevel=>Naval.NavalSystem.CareerProgress(player,Intersect.Framework.Core.Naval.NavalProfessions.Gunnery).Level,
+                    Intersect.Framework.Core.Naval.NavalTaskKind.ShipwrightLevel=>Naval.NavalSystem.CareerProgress(player,Intersect.Framework.Core.Naval.NavalProfessions.Shipwright).Level,
+                    _=>player.NavalCareer.Counters.GetValueOrDefault(kind)};
+                SetProgress(player,definition,value,sendState:false);continue;
+            }
             switch (definition.ObjectiveType)
             {
                 case AchievementObjectiveType.PlayerLevel:
@@ -173,6 +184,7 @@ internal static class AchievementRuntime
     internal static bool TryClaim(Player player, Guid achievementId, out string error)
     {
         error = string.Empty;
+        var period=DateTimeOffset.UtcNow;
 
         var definition = AchievementConfigurationRuntime.Current.Find(achievementId);
         if (definition == null)
@@ -181,13 +193,13 @@ internal static class AchievementRuntime
             return false;
         }
 
-        if (!IsCompleted(player, achievementId))
+        if (GetRaw(player,achievementId,CompletedSalt,period)<=0)
         {
             error = "This achievement is not completed yet.";
             return false;
         }
 
-        if (IsClaimed(player, achievementId))
+        if (GetRaw(player,achievementId,ClaimedSalt,period)>0)
         {
             error = "This achievement reward was already claimed.";
             return false;
@@ -210,7 +222,7 @@ internal static class AchievementRuntime
             EventDescriptor.Get(reward.CommonEventId) is { CommonEvent: true } commonEvent)
             player.EnqueueStartCommonEvent(commonEvent);
 
-        SetRaw(player, achievementId, ClaimedSalt, 1);
+        SetRaw(player, achievementId, ClaimedSalt, 1,period);
         PacketSender.SendChatMsg(
             player,
             $"Achievement reward claimed: {definition.Name}",

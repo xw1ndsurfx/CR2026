@@ -1,4 +1,4 @@
-using DarkUI.Controls;
+﻿using DarkUI.Controls;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
@@ -790,6 +790,15 @@ public partial class FrmEvent : Form
                 tmpCommand = new StartDungeonCommand();
 
                 break;
+            case EventCommandType.GrantExperienceBonus:
+                tmpCommand=new GrantExperienceBonusCommand();break;
+            case EventCommandType.GrantLootBonus:
+                tmpCommand=new GrantLootBonusCommand();break;
+            case EventCommandType.OpenAdventureLobby:
+                tmpCommand=new OpenAdventureLobbyCommand();break;
+            case EventCommandType.OpenNavalAmmoShop:
+                tmpCommand=new OpenNavalAmmoShopCommand();
+                break;
             case EventCommandType.OpenNavalShop:
                 tmpCommand = new OpenNavalShopCommand();
                 break;
@@ -873,6 +882,13 @@ public partial class FrmEvent : Form
     private void AddNavalShopCommand()
     {
         var shops = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
+        if(shops!=null)
+        {
+            foreach(var (id,caption) in new[]{(EventCommandType.GrantExperienceBonus,"Grant EXP bonus"),(EventCommandType.GrantLootBonus,"Grant loot bonus"),(EventCommandType.OpenAdventureLobby,"Open adventure lobby")})
+                if(!shops.Nodes.Cast<TreeNode>().Any(n=>n.Tag is int value && value==(int)id))
+                    shops.Nodes.Add(new TreeNode(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(caption,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)){Name=id.ToString(),Tag=(int)id});
+        }
+        if(shops!=null && !shops.Nodes.Cast<TreeNode>().Any(n=>n.Name=="opennavalammo")) shops.Nodes.Add(new TreeNode(Intersect.Framework.Core.Naval.NavalSetupText.Get("Open cannon ammunition shop",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)){Name="opennavalammo",Tag=(int)EventCommandType.OpenNavalAmmoShop});
         if (shops != null && !shops.Nodes.Cast<TreeNode>().Any(n => n.Name == "opennavalshop"))
             shops.Nodes.Add(new TreeNode(Intersect.Framework.Core.Naval.NavalSetupText.Get("Open ship shop and repairs",
                 System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
@@ -1689,8 +1705,14 @@ public partial class FrmEvent : Form
             case EventCommandType.StartDungeon:
                 cmdWindow = new EventCommand_StartDungeon((StartDungeonCommand)command, this);
                 break;
+            case EventCommandType.GrantExperienceBonus:
+            case EventCommandType.GrantLootBonus:
+            case EventCommandType.OpenAdventureLobby:
+                cmdWindow=new EventCommandPlayerConvenience(command,this);break;
+            case EventCommandType.OpenNavalAmmoShop:
+                cmdWindow=new EventCommandNavalShop(command,this);break;
             case EventCommandType.OpenNavalShop:
-                break;
+                cmdWindow=new EventCommandNavalShop(command,this);break;
             case EventCommandType.OpenQuestShop:
                 cmdWindow = new EventCommand_OpenQuestShop((OpenQuestShopCommand)command, this);
                 break;

@@ -1,10 +1,11 @@
-using Intersect.Network.Packets.Server;
+﻿using Intersect.Network.Packets.Server;
 
 namespace Intersect.Client.Interface.Game;
 
 public partial class GameInterface
 {
     private DungeonPanelWindow? _dungeonPanelWindow;
+    private bool _houseBlockedByDungeon;
     private ObservedDungeonStatsWindow? _observedDungeonStatsWindow;
     private DungeonRunHudWindow? _dungeonRunHudWindow;
     private DungeonConfirmationWindow? _dungeonConfirmationWindow;
@@ -68,6 +69,7 @@ public partial class GameInterface
 
     public void ApplyDungeonRunState(DungeonRunStatePacket packet)
     {
+        _houseBlockedByDungeon=packet.Status==DungeonRunStatus.Active;
         _dungeonRunHudWindow ??= new DungeonRunHudWindow(GameCanvas);
         _dungeonRunHudWindow.Apply(packet);
     }

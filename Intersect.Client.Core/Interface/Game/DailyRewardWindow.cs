@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
@@ -47,13 +47,16 @@ internal sealed class DailyRewardWindow : Window
         private readonly ImagePanel? _slot;
         private readonly Label _count;
         private readonly Label _day;
+        private ItemDescriptor? _hoverItem;
         private bool _active;
         private bool _claimed;
 
         public RewardCard(Base parent, int day) : base(parent, $"DailyRewardCard{day}")
         {
             SetSize(64, 64);
-            MouseInputEnabled = false;
+            MouseInputEnabled = true;
+            HoverEnter+=(_,_)=>{if(_hoverItem!=null)Interface.GameUi.ItemDescriptionWindow?.Show(_hoverItem,1);};
+            HoverLeave+=(_,_)=>Interface.GameUi.ItemDescriptionWindow?.Hide();
 
             _slot = AdmurinGuiArt.Add(this, $"DailyRewardSlot{day}", "daily_1",
                 0, 0, 64, 64);
@@ -109,10 +112,10 @@ internal sealed class DailyRewardWindow : Window
                     : Color.White;
 
             var first = entries.FirstOrDefault();
-            var item = first == null ? null : ItemDescriptor.Get(first.ItemId);
+            var item = first == null ? null : ItemDescriptor.Get(first.ItemId);_hoverItem=item;
             _icon.Texture = item == null || string.IsNullOrWhiteSpace(item.Icon)
                 ? null
-                : Globals.ContentManager.GetTexture(TextureType.Item, item.Icon);
+                : Globals.ContentManager.GetTexture(item.UsesSpellIcon?TextureType.Spell:TextureType.Item, item.DisplayIcon);
             _icon.RenderColor = item?.Color ?? Color.White;
 
             // The preview displays the quantity rather than a long item name.
