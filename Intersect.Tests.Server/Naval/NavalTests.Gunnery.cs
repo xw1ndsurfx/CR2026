@@ -27,6 +27,27 @@ public sealed partial class NavalTests
         return player;
     }
     [Test]
+    public void AmmunitionConfiguredAnimationTravelsWithTheAuthoritativeShotAndImpact()
+    {
+        using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);var animation=Guid.NewGuid();
+        var config=new NavalConfiguration {Enabled=true,CannonsEnabled=true};config.Ammunition[0].ImpactAnimationId=animation;world.Configure(config);
+        var player=GunnerPlayer(world,ship);var now=Timing.Global.Milliseconds;
+        NavalSystem.Station(player,new(){Action=CannonStationAction.Acquire,ShipId=world.State(ship).Id,Starboard=true},now);
+        var state=(GunneryState)world.Invoke("GunnerState",player,now)!;player.LastGunneryRequest=now-100;
+        NavalSystem.Station(player,new(){Action=CannonStationAction.Fire,ShipId=world.State(ship).Id,LeaseId=state.LeaseId,Starboard=true,Elevation=-60},now);
+        var flags=BindingFlags.Static|BindingFlags.NonPublic;
+        var balls=(System.Collections.IList)typeof(NavalSystem).GetField("Cannonballs",flags)!.GetValue(null)!;
+        Assert.That(balls.Count,Is.EqualTo(1));
+        for(var step=now;step<now+1000;step+=50) world.Invoke("UpdateCannonballs",step);
+        var effects=(System.Collections.IList)typeof(NavalSystem).GetField("Effects",flags)!.GetValue(null)!;
+        var events=effects.Cast<object>().Select(e=>(NavalEffectSnapshot)e.GetType().GetProperty("Snapshot")!.GetValue(e)!).ToArray();
+        var impact=events.Single(e=>e.Kind==NavalEffectKind.WaterImpact);
+        Assert.That(impact.AnimationId,Is.EqualTo(animation));
+        var wire=MessagePackSerializer.Deserialize<NavalEffectSnapshot>(MessagePackSerializer.Serialize(impact));
+        Assert.That(wire.AnimationId,Is.EqualTo(animation));
+    }
+
+    [Test]
     public void ElevationChangesFlightHeightAndRangeAndAllShotsLandWithinConfiguredRange()
     {
         var down=CannonFlight.Plan(-30,12,24);var level=CannonFlight.Plan(0,12,24);var up=CannonFlight.Plan(25,12,24);

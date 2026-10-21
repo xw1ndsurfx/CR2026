@@ -23,6 +23,7 @@ public sealed class CannonAmmunition
     public int RequiredLevel {get;set;}=1;
     public bool RequiresItem {get;set;}
     public Guid ItemId {get;set;}
+    public Guid ImpactAnimationId {get;set;}
     public int UnitsPerShot {get;set;}=1;
     public int DamagePercent {get;set;}=100;
     public int RangePercent {get;set;}=100;

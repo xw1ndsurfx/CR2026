@@ -9,6 +9,47 @@ namespace Intersect.Tests.Client;
 [TestFixture,NonParallelizable]
 public sealed class NavalPerspectiveTests
 {
+    [Test]
+    public void AtlasContinuityKeepsTheUnblockedFootOfAnObjectUprightWithoutLiftingAdjacentQuayPlanks()
+    {
+        var atlas=Guid.NewGuid();
+        var pieces=new Intersect.Client.Maps.MapInstance.PerspectivePiece[] {
+            new(2,4,2,atlas,10,20,true), // roof on fringe
+            new(1,4,3,atlas,10,21,false), // unblocked wall on mask
+            new(0,4,4,atlas,10,22,false), // lowest foot must anchor the entire house
+            new(0,5,4,atlas,30,40,false), // adjoining plank is a different atlas object
+            new(2,6,3,atlas,10,20,true),new(0,6,4,atlas,10,21,false)};
+        var groups=Intersect.Client.Maps.MapInstance.PerspectiveObjectGroups(pieces);
+        Assert.That(groups[0],Is.GreaterThan(0));Assert.That(groups[1],Is.EqualTo(groups[0]));
+        Assert.That(groups[2],Is.EqualTo(groups[0]));Assert.That(groups[3],Is.Zero);
+        Assert.That(groups[4],Is.EqualTo(groups[5]));Assert.That(groups[4],Is.Not.EqualTo(groups[0]));
+    }
+
+    [Test]
+    public void BlockedRepeatedDockPlanksAndTheirCapsStayFlatButSeparatePostsStandUp()
+    {
+        var atlas=Guid.NewGuid();
+        var pieces=new Intersect.Client.Maps.MapInstance.PerspectivePiece[] {
+            new(0,23,16,atlas,0,10,true,true),new(0,23,17,atlas,0,11,true,true),
+            new(0,23,18,atlas,0,11,true,true),new(0,23,19,atlas,0,12,true,true),
+            new(1,23,18,atlas,3,14,true),new(1,23,19,atlas,3,15,false)};
+        var groups=Intersect.Client.Maps.MapInstance.PerspectiveObjectGroups(pieces);
+        Assert.That(groups.Take(4),Is.All.Zero);Assert.That(groups[4],Is.GreaterThan(0));
+        Assert.That(groups[5],Is.EqualTo(groups[4]));
+    }
+
+    [Test]
+    public void OneHouseSplitAcrossReceivedMapsUsesTheSameCompleteWaterlineAnchor()
+    {
+        var key=new Intersect.Client.Framework.Graphics.MapPerspectiveObjectKey(Guid.NewGuid(),1,2);
+        var pieces=new Intersect.Client.Framework.Graphics.MapPerspectiveDecoration[] {
+            new(null!,new(96,160),key,new(64,0),new(128,160)),
+            new(null!,new(160,224),key,new(128,0),new(192,224))};
+        var result=NavalWorld.AlignSceneryFragments(pieces).ToArray();
+        Assert.That(result.Select(d=>d.Anchor),Is.All.EqualTo(new System.Numerics.Vector2(128,224)));
+        Assert.That(result[0].Buffer,Is.SameAs(pieces[0].Buffer));
+    }
+
     [TestCase(1920,1080)]
     [TestCase(800,600)]
     [TestCase(2560,1080)]
@@ -45,14 +86,6 @@ public sealed class NavalPerspectiveTests
         finally {map.DestroyVBOs();optionsProperty.SetValue(null,previous);}
     }
 
-    [Test]
-    public void ConnectedSceneryStaysTogetherAndGroundBetweenObjectsDoesNotJoinThem()
-    {
-        var occupied=new bool[6,5];occupied[0,1]=occupied[0,2]=occupied[1,2]=true;occupied[4,3]=true;
-        var groups=Intersect.Client.Maps.MapInstance.PerspectiveGroups(occupied);
-        Assert.That(groups[0,1],Is.GreaterThan(0));Assert.That(groups[0,1],Is.EqualTo(groups[1,2]));
-        Assert.That(groups[4,3],Is.Not.EqualTo(groups[0,1]));Assert.That(groups[3,3],Is.Zero);
-    }
     [TestCase(0,-1)]
     [TestCase(1,0)]
     [TestCase(.70710678f,.70710678f)]

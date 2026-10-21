@@ -1,8 +1,10 @@
+using Microsoft.Extensions.Logging;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Network.Packets.PartyLobbies;
 using Intersect.Server.Dungeons;
+using Intersect.Server.Naval;
 using Intersect.Server.Entities;
 using Intersect.Server.Housing;
 using Intersect.Server.LogiCoins;
@@ -17,6 +19,7 @@ internal static class PartyLobbyRuntime
         public required string Title;
         public LobbyActivity Activity;
         public Guid DungeonId;
+        public Guid ShipId;
         public bool Started;
     }
     private static readonly object Gate = new();
@@ -33,7 +36,7 @@ internal static class PartyLobbyRuntime
     {
         foreach (var item in Lobbies.Values.ToArray())
         {
-            if (!Online(item.Host) || !Leader(item.Host) || item.Activity == LobbyActivity.HouseParty && !HousingRuntime.PublicHouse(item.Host)) { Lobbies.Remove(item.Id); continue; }
+            if (!Online(item.Host) || !Leader(item.Host) || item.Activity==LobbyActivity.Naval && NavalSystem.LobbyShip(item.Host)?.ShipId!=item.ShipId || item.Activity == LobbyActivity.HouseParty && !HousingRuntime.PublicHouse(item.Host)) { Lobbies.Remove(item.Id); continue; }
             if (Members(item.Host).Any(DungeonRunRuntime.IsPlayerInActiveRun)) item.Started = true;
         }
         foreach (var id in LastRequest.Keys.Where(id => Player.FindOnline(id) == null).ToArray()) LastRequest.Remove(id);
@@ -48,6 +51,7 @@ internal static class PartyLobbyRuntime
     private static int Capacity(Lobby lobby)
     {
         var maximum = Math.Clamp(Options.Instance.Party.MaximumMembers, 1, 100);
+        if(lobby.Activity==LobbyActivity.Naval) return Math.Min(maximum,NavalSystem.LobbyShip(lobby.Host)?.Capacity??1);
         var dungeon = DungeonConfigurationRuntime.Current.Dungeons.FirstOrDefault(d => d.Id == lobby.DungeonId);
         return lobby.Activity == LobbyActivity.Dungeon && dungeon != null ? Math.Min(maximum, dungeon.MaximumPartySize) : maximum;
     }
@@ -55,6 +59,7 @@ internal static class PartyLobbyRuntime
     {
         // Travel acquires entity locks only after releasing the registry gate.
         Lobby? travel = null;
+        Lobby? navalJoin=null;
         string message;
         lock (Gate)
         {
@@ -69,7 +74,11 @@ internal static class PartyLobbyRuntime
             switch (request.Action)
             {
                 case LobbyAction.Create: message = Create(player, request); break;
-                case LobbyAction.Join: message = Join(player, request.LobbyId); break;
+                case LobbyAction.Join:
+                    message = Join(player, request.LobbyId);
+                    if(message=="You joined the lobby. Use party chat to plan your adventure." &&
+                        Lobbies.TryGetValue(request.LobbyId,out var joined) && joined.Activity==LobbyActivity.Naval) navalJoin=joined;
+                    break;
                 case LobbyAction.Close:
                     if (Lobbies.TryGetValue(request.LobbyId, out var own) && ReferenceEquals(own.Host, player))
                     { Lobbies.Remove(own.Id); message = "Lobby closed. Your party is unchanged."; }
@@ -91,6 +100,23 @@ internal static class PartyLobbyRuntime
                     break;
             }
         }
+        if(navalJoin!=null)
+        {
+            var valid=false;
+            lock(Gate) valid=Lobbies.TryGetValue(navalJoin.Id,out var current) && ReferenceEquals(current,navalJoin) && Online(navalJoin.Host);
+            var boarded=false;
+            try
+            {
+                message=valid?NavalSystem.BoardFromLobby(player,navalJoin.Host,navalJoin.ShipId):"This lobby is no longer available.";
+                boarded=message.Length==0;
+            }
+            catch(Exception exception)
+            {
+                Intersect.Core.ApplicationContext.Context.Value?.Logger.LogError(exception,"Could not board naval lobby {LobbyId}",navalJoin.Id);
+                message="Crew data could not be saved. Try again.";
+            }
+            finally {if(!boarded) lock(Player.PartyMembershipLock) if(player.Party.Contains(navalJoin.Host)) player.LeaveParty();}
+        }
         if (travel != null) message = Travel(player, travel);
         lock (Gate) { Cleanup(); return Snapshot(player, message); }
     }
@@ -110,7 +136,10 @@ internal static class PartyLobbyRuntime
             foreach (var member in Members(player))
             { var error = DungeonEligibility(member,dungeon); if (error.Length > 0) return error; }
         if (request.Activity == LobbyActivity.HouseParty && !HousingRuntime.PublicHouse(player)) return "Open your house to the public before creating a House Party.";
-        var lobby = new Lobby { Host=player, Title=title, Activity=request.Activity, DungeonId=request.Activity == LobbyActivity.Dungeon ? request.DungeonId : Guid.Empty };
+        var naval=request.Activity==LobbyActivity.Naval?NavalSystem.LobbyShip(player,atDock:true):null;
+        if(request.Activity==LobbyActivity.Naval && naval==null)
+            return "The captain must stop beside a Q dock with a free crew seat before you can board.";
+        var lobby = new Lobby { ShipId=naval?.ShipId??Guid.Empty, Host=player, Title=title, Activity=request.Activity, DungeonId=request.Activity == LobbyActivity.Dungeon ? request.DungeonId : Guid.Empty };
         if (Members(player).Length > Capacity(lobby)) return "Your party is too large for this lobby.";
         Lobbies.Add(lobby.Id,lobby);
         return "Lobby created. Players can now find your party.";
@@ -125,6 +154,8 @@ internal static class PartyLobbyRuntime
         if (player.MapInstanceId != Guid.Empty) return "Return to the open world before joining a lobby.";
         if (Members(lobby.Host).Length >= Capacity(lobby)) return "This lobby is full.";
         if (player.Blocks(lobby.Host.Id) || lobby.Host.Blocks(player.Id)) return "This lobby is not available to you.";
+        if(lobby.Activity==LobbyActivity.Naval && NavalSystem.LobbyShip(lobby.Host,atDock:true)?.ShipId!=lobby.ShipId)
+            return "The captain must stop beside a Q dock with a free crew seat before you can board.";
         if (lobby.Activity == LobbyActivity.Dungeon)
         {
             var dungeon= DungeonConfigurationRuntime.Current.Dungeons.FirstOrDefault(d => d.Id == lobby.DungeonId);
@@ -148,6 +179,11 @@ internal static class PartyLobbyRuntime
             if (lobby.Started) return "A dungeon has already started. Lobby travel is locked.";
         }
         if (DungeonRunRuntime.IsPlayerInActiveRun(player) || DungeonRunRuntime.IsPlayerInActiveRun(lobby.Host)) return "A dungeon has already started. Lobby travel is locked.";
+        if(lobby.Activity==LobbyActivity.Naval)
+        {
+            if(player.Id==lobby.Host.Id || player.BoardedShipId==lobby.ShipId) return "";
+            return NavalSystem.BoardFromLobby(player,lobby.Host,lobby.ShipId);
+        }
         if (!player.CanUseLobbyTravel || !lobby.Host.CanUseLobbyTravel) return "Finish combat, dialogue or your current activity before travelling.";
         if (lobby.Activity == LobbyActivity.HouseParty)
         {

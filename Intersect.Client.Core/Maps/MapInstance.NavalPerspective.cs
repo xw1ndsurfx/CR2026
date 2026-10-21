@@ -9,7 +9,7 @@ namespace Intersect.Client.Maps;
 public partial class MapInstance
 {
     private readonly List<GameTileBuffer[][]> _perspectiveFloor=[];
-    private readonly List<(Vector2 Anchor,GameTileBuffer[][] Frames)> _perspectiveDecorations=[];
+    private readonly List<(Vector2 Anchor,GameTileBuffer[][] Frames,MapPerspectiveObjectKey Key,Vector2 Min,Vector2 Max)> _perspectiveDecorations=[];
     private bool _perspectiveBuilt;
     private void ClearPerspectiveTerrain()
     {
@@ -23,29 +23,43 @@ public partial class MapInstance
         if(_perspectiveBuilt) return;
         var lower=Options.Instance.Map.Layers.LowerLayers;
         var upper=Options.Instance.Map.Layers.MiddleLayers.Concat(Options.Instance.Map.Layers.UpperLayers).ToHashSet();
-        var occupied=new bool[_width,_height];
-        bool Painted(string layer,int x,int y)=>Layers.TryGetValue(layer,out var tiles) && tiles[x,y].TilesetTexture!=null && tiles[x,y].X>=0 && tiles[x,y].Y>=0;
-        for(var x=0;x<_width;x++) for(var y=0;y<_height;y++)
-            occupied[x,y]=upper.Any(l=>Painted(l,x,y)) || Attributes[x,y] is MapBlockedAttribute && lower.Skip(1).Any(l=>Painted(l,x,y));
-        var groups=PerspectiveGroups(occupied);
+        // Match source coordinates as well as world adjacency: a roof and its walls remain
+        // one object across native layers, without swallowing an adjoining path or barrel.
+        var layers=lower.Skip(1).Concat(upper).Distinct().ToArray();
+        var pieces=new List<PerspectivePiece>();
+        for(var i=0;i<layers.Length;i++)
+            if(Layers.TryGetValue(layers[i],out var tiles))
+                for(var x=0;x<_width;x++) for(var y=0;y<_height;y++)
+                {
+                    var t=tiles[x,y];
+                    if(t.TilesetTexture!=null && t.X>=0 && t.Y>=0)
+                        pieces.Add(new(i,x,y,t.TilesetId,t.X,t.Y,upper.Contains(layers[i]) || Attributes[x,y] is MapBlockedAttribute,layers[i]==lower.Skip(1).FirstOrDefault()));
+                }
+        var groups=PerspectiveObjectGroups(pieces);
+        var byPosition=pieces.Select((p,i)=>(p,i)).Where(v=>groups[v.i]>0)
+            .ToDictionary(v=>(v.p.Layer,v.p.X,v.p.Y),v=>groups[v.i]);
+        int Group(string layer,int x,int y)=>byPosition.GetValueOrDefault((Array.IndexOf(layers,layer),x,y));
         try
         {
             foreach(var layer in lower)
             {
-                var frames=DrawMapLayer(layer,X,Y,(x,y)=>layer==lower.FirstOrDefault() || groups[x,y]==0);
+                var frames=DrawMapLayer(layer,X,Y,(x,y)=>layer==lower.FirstOrDefault() || Group(layer,x,y)==0);
                 if(frames!=null) {_perspectiveFloor.Add(frames);Upload(frames);}
             }
-            var ids=groups.Cast<int>().Where(id=>id>0).Distinct();
+            var ids=groups.Where(id=>id>0).Distinct();
             foreach(var id in ids)
             {
-                var minX=_width;var maxX=0;var bottom=0;
-                for(var x=0;x<_width;x++) for(var y=0;y<_height;y++) if(groups[x,y]==id)
-                {minX=Math.Min(minX,x);maxX=Math.Max(maxX,x+1);bottom=Math.Max(bottom,y+1);}
+                var minX=_width;var minY=_height;var maxX=0;var bottom=0;
+                foreach(var p in pieces.Where((_,i)=>groups[i]==id))
+                {minX=Math.Min(minX,p.X);minY=Math.Min(minY,p.Y);maxX=Math.Max(maxX,p.X+1);bottom=Math.Max(bottom,p.Y+1);}
                 var anchor=new Vector2(X+(minX+maxX)*_tileWidth/2f,Y+bottom*_tileHeight);
+                var first=pieces[Array.IndexOf(groups,id)];
+                var key=new MapPerspectiveObjectKey(first.Tileset,first.SourceX-first.X-(int)(X/_tileWidth),first.SourceY-first.Y-(int)(Y/_tileHeight));
+                var min=new Vector2(X+minX*_tileWidth,Y+minY*_tileHeight);var max=new Vector2(X+maxX*_tileWidth,Y+bottom*_tileHeight);
                 foreach(var layer in lower.Skip(1).Concat(upper))
                 {
-                    var frames=DrawMapLayer(layer,X,Y,(x,y)=>groups[x,y]==id);
-                    if(frames!=null) {_perspectiveDecorations.Add((anchor,frames));Upload(frames);}
+                    var frames=DrawMapLayer(layer,X,Y,(x,y)=>Group(layer,x,y)==id);
+                    if(frames!=null) {_perspectiveDecorations.Add((anchor,frames,key,min,max));Upload(frames);}
                 }
             }
             _perspectiveBuilt=true;
@@ -57,24 +71,40 @@ public partial class MapInstance
     internal IEnumerable<MapPerspectiveDecoration> PerspectiveDecorations()
     {
         if(!IsLoaded || !_perspectiveBuilt) yield break;
-        foreach(var (anchor,frames) in _perspectiveDecorations)
-            foreach(var buffer in frames[Globals.AnimationFrame]) yield return new(buffer,anchor);
+        foreach(var (anchor,frames,key,min,max) in _perspectiveDecorations)
+            foreach(var buffer in frames[Globals.AnimationFrame]) yield return new(buffer,anchor,key,min,max);
     }
-    internal static int[,] PerspectiveGroups(bool[,] occupied)
+    internal readonly record struct PerspectivePiece(int Layer,int X,int Y,Guid Tileset,int SourceX,int SourceY,bool Upright,bool Surface=false);
+    internal static int[] PerspectiveObjectGroups(IReadOnlyList<PerspectivePiece> pieces)
     {
-        var w=occupied.GetLength(0);var h=occupied.GetLength(1);var groups=new int[w,h];var id=0;
-        for(var x=0;x<w;x++) for(var y=0;y<h;y++)
+        var result=new int[pieces.Count];var visited=new bool[pieces.Count];var next=0;
+        var cells=pieces.Select((p,i)=>(p,i)).GroupBy(v=>(v.p.X,v.p.Y)).ToDictionary(g=>g.Key,g=>g.Select(v=>v.i).ToArray());
+        for(var i=0;i<pieces.Count;i++)
         {
-            if(!occupied[x,y] || groups[x,y]!=0) continue;
-            var queue=new Queue<(int X,int Y)>();queue.Enqueue((x,y));groups[x,y]=++id;
-            while(queue.TryDequeue(out var p))
-                foreach(var (dx,dy) in new[]{(-1,0),(1,0),(0,-1),(0,1)})
-                {
-                    var nx=p.X+dx;var ny=p.Y+dy;
-                    if(nx<0 || ny<0 || nx>=w || ny>=h || !occupied[nx,ny] || groups[nx,ny]!=0) continue;
-                    groups[nx,ny]=id;queue.Enqueue((nx,ny));
-                }
+            if(visited[i]) continue;
+            var repeatedGround=false;var component=new List<int>();var queue=new Queue<int>();queue.Enqueue(i);visited[i]=true;
+            while(queue.TryDequeue(out var index))
+            {
+                component.Add(index);var p=pieces[index];
+                foreach(var (dx,dy) in new[]{(0,0),(-1,0),(1,0),(0,-1),(0,1)})
+                    if(cells.TryGetValue((p.X+dx,p.Y+dy),out var neighbours))
+                        foreach(var j in neighbours)
+                        {
+                            var q=pieces[j];
+                            if(q.Tileset!=p.Tileset) continue;
+                            var repeat=p.Surface && q.Surface && dx==0 && dy!=0 && q.SourceX==p.SourceX && q.SourceY==p.SourceY;
+                            if(!repeat && (q.SourceX-p.SourceX!=dx || q.SourceY-p.SourceY!=dy)) continue;
+                            repeatedGround|=repeat;
+                            if(visited[j]) continue;
+                            visited[j]=true;queue.Enqueue(j);
+                        }
+            }
+            // Repeated floor planks include end caps. They stay flat even when the
+            // mapper blocked the quay; separate upper-mask posts still stand upright.
+            var sourceHeight=component.Max(j=>pieces[j].SourceY)-component.Min(j=>pieces[j].SourceY)+1;
+            if(repeatedGround && sourceHeight<=3 && component.All(j=>pieces[j].Surface) || !component.Any(j=>pieces[j].Upright)) continue;
+            next++;foreach(var j in component) result[j]=next;
         }
-        return groups;
+        return result;
     }
 }

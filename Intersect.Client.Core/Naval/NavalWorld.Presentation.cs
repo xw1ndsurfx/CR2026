@@ -1,4 +1,5 @@
 using Intersect.Client.Core;
+using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.General;
@@ -25,7 +26,7 @@ internal static partial class NavalWorld
         Presentation=packet.Presentation?.IsValid()==true?packet.Presentation:new();
         SailingLevel=Math.Clamp(packet.SailingLevel,1,200);SailingExperience=Math.Max(0,packet.SailingExperience);SailingRequired=Math.Max(0,packet.SailingRequired);
         var effects=new Dictionary<Guid,EffectView>(_effects);
-        foreach(var id in effects.Where(e=>now-e.Value.Born>Math.Max(2000,Presentation.EffectFrameMilliseconds*16)).Select(e=>e.Key).ToArray()) effects.Remove(id);
+        foreach(var id in effects.Where(e=>now-e.Value.Born>EffectLifetime(e.Value.Event.AnimationId)).Select(e=>e.Key).ToArray()) effects.Remove(id);
         foreach(var effect in (packet.Effects??[]).Take(512))
         {
             if(effects.ContainsKey(effect.Id) || !Enum.IsDefined(effect.Kind) || !double.IsFinite(effect.X) || !double.IsFinite(effect.Y)) continue;
@@ -36,6 +37,7 @@ internal static partial class NavalWorld
                 NavalEffectKind.WaterImpact=>Presentation.WaterImpactSound,NavalEffectKind.ObstacleImpact=>Presentation.ObstacleImpactSound,
                 NavalEffectKind.Sinking=>Presentation.SinkingSound,NavalEffectKind.Anchor=>Presentation.AnchorSound,NavalEffectKind.Launch=>Presentation.LaunchSound,
                 NavalEffectKind.Disembark=>Presentation.DisembarkSound,NavalEffectKind.LevelUp=>Presentation.LevelUpSound,_=>""};
+            if(AnimationDescriptor.Get(effect.AnimationId)?.Sound is {Length:>0} nativeSound) sound=nativeSound;
             if(NavalPresentation.SafeAsset(sound) && sound.Length>0 && Globals.ContentManager!=null)
                 Audio.AddMapSound(sound.ToLowerInvariant(),(int)Math.Floor(effect.X),(int)Math.Floor(effect.Y),effect.MapId,false,0,16);
         }
@@ -80,12 +82,44 @@ internal static partial class NavalWorld
             if(!Maps.MapInstance.TryGet(e.MapId,out var map) || !Globals.GridMaps.ContainsKey(e.MapId)) continue;
             var x=map.X+(float)e.X*Options.Instance.Map.TileWidth;var y=map.Y+(float)e.Y*Options.Instance.Map.TileHeight;
             if(row!=(int)Math.Floor((y-current.Y)/Options.Instance.Map.TileHeight)+Options.Instance.Map.MapHeight*2) continue;
+            if(e.AnimationId!=Guid.Empty && AnimationDescriptor.Get(e.AnimationId)!=null)
+            {
+                foreach(var frame in NativeImpactFrames(e.AnimationId,elapsed))
+                    Graphics.DrawGameTexture(frame.Texture,frame.Source,
+                        new FloatRect(x-frame.Width/2+frame.Layer.OffsetX,y-frame.Height/2+frame.Layer.OffsetY,frame.Width,frame.Height),
+                        new Color(frame.Layer.Opacity,255,255,255));
+                continue;
+            }
             switch(e.Kind)
             {
                 case NavalEffectKind.Fire:DrawEffectAsset(Presentation.CannonFireGraphic,"Fire",x,y,elapsed,e.Heading-270);break;
                 case NavalEffectKind.WaterImpact:DrawEffectAsset(Presentation.WaterImpactGraphic,"WaterImpact",x,y,elapsed);break;
                 case NavalEffectKind.HullImpact:case NavalEffectKind.ObstacleImpact:DrawEffectAsset(Presentation.HullImpactGraphic,"HullImpact",x,y,elapsed);break;
             }
+        }
+    }
+    private static long EffectLifetime(Guid id)
+    {
+        var minimum=Math.Max(2000,Presentation.EffectFrameMilliseconds*16);
+        if(AnimationDescriptor.Get(id) is not {} descriptor) return minimum;
+        return Math.Clamp(new[]{descriptor.Lower,descriptor.Upper}.Where(l=>l!=null)
+            .Select(l=>(long)Math.Clamp(l.FrameCount,1,10000)*Math.Clamp(l.FrameSpeed,1,60000)*(Math.Clamp(l.LoopCount,0,100)+1)).DefaultIfEmpty(minimum).Max(),minimum,20000);
+    }
+    private sealed record ImpactFrame(Intersect.Client.Framework.Graphics.IGameTexture Texture,FloatRect Source,float Width,float Height,AnimationLayer Layer);
+    private static IEnumerable<ImpactFrame> NativeImpactFrames(Guid animationId,long elapsed)
+    {
+        if(AnimationDescriptor.Get(animationId) is not {} descriptor) yield break;
+        foreach(var layer in new[]{descriptor.Lower,descriptor.Upper})
+        {
+            if(layer==null || layer.XFrames<=0 || layer.YFrames<=0 || layer.FrameCount<=0 || layer.FrameSpeed<=0 ||
+                !NavalPresentation.SafeAsset(layer.Sprite) || Globals.ContentManager?.GetTexture(TextureType.Animation,layer.Sprite) is not {} texture) continue;
+            var count=(int)Math.Min(layer.FrameCount,Math.Min(int.MaxValue,(long)layer.XFrames*layer.YFrames));
+            var index=Math.Max(0,elapsed)/layer.FrameSpeed;
+            if(count<=0 || index>=(long)count*(Math.Clamp(layer.LoopCount,0,100)+1)) continue;
+            var frame=(int)(index%count);var w=texture.Width/layer.XFrames;var h=texture.Height/layer.YFrames;
+            if(w<=0 || h<=0 || layer.Opacity==0) continue;
+            var scale=Math.Clamp(layer.ScalePercent,1,1000)/100f;
+            yield return new(texture,new FloatRect(frame%layer.XFrames*w,frame/layer.XFrames*h,w,h),w*scale,h*scale,layer);
         }
     }
     internal static ShipSnapshot? CombatTarget => OwnShip is {Sinking:false} && Fresh &&

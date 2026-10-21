@@ -3,6 +3,7 @@ using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Localization;
+using Intersect.Client.Interface.Shared;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.Naval;
 using Intersect.Network.Packets.Server;
@@ -89,7 +90,7 @@ internal sealed class NavalCargoWindow : Window
             _language=ClientLanguages.Current;Title=T("Cargo hold");
             EventPanelText.Fit(_heading,T("SHIP'S HOLD"),20,14);
             EventPanelText.Fit(_subtitle,T("YOUR SPOILS, SAFELY STOWED UNTIL PORT"),10);
-            EventPanelText.Fit(_hint,T("Unload at a Q dock from My fleet to claim these items."),10);
+            EventPanelText.Fit(_hint,T("Choose lots to unload at a Q dock, or discard unwanted cargo."),10);
             EventPanelText.Fit(_warning,T("Cargo is lost if your ship sinks."),10);
             _closeText.Text=T("Close");_empty.Text=T("The cargo hold is empty.");
         }
@@ -108,7 +109,7 @@ internal sealed class NavalCargoWindow : Window
             var width=Math.Max(180,_list.Width-26);var y=4;
             foreach(var parcel in cargo.OrderByDescending(c=>c.Quality))
             {
-                var row=new CargoRow(_list,parcel,width);row.SetBounds(4,y,width,86);y+=94;
+                var row=new CargoRow(_list,parcel,width,()=>Act(ship,parcel,HarbourAction.ClaimCargo),()=>new InputBox(T("Discard cargo"),T("Discard this cargo lot permanently?"),InputType.YesNo,(_,_)=>Act(ship,parcel,HarbourAction.DiscardCargo)));row.SetBounds(4,y,width,120);y+=128;
             }
             _list.UpdateScrollBars();
             if(shipChanged) _list.ScrollToTop();
@@ -118,12 +119,17 @@ internal sealed class NavalCargoWindow : Window
         }
     }
 
+    private static void Act(ShipSnapshot ship,NavalCargoParcel parcel,HarbourAction action) =>
+        Intersect.Client.Networking.Network.SendPacket(new Intersect.Network.Packets.Client.HarbourRequestPacket {
+            Action=action,ShipId=ship.Id,ParcelId=parcel.Id,
+            View=ship.CaptainId==Intersect.Client.General.Globals.Me?.Id?HarbourView.Fleet:HarbourView.Crew});
+
     private sealed class CargoRow : Base
     {
-        internal CargoRow(Base parent,NavalCargoParcel parcel,int width):base(parent,"CargoLot"+parcel.Id.ToString("N"))
+        internal CargoRow(Base parent,NavalCargoParcel parcel,int width,Action unload,Action discard):base(parent,"CargoLot"+parcel.Id.ToString("N"))
         {
-            SetSize(width,86);
-            var frame=new Chrome(this,"CargoCardFrame",Style.Card);frame.SetBounds(0,0,width,86);
+            SetSize(width,120);
+            var frame=new Chrome(this,"CargoCardFrame",Style.Card);frame.SetBounds(0,0,width,120);
             var portrait=new Chrome(this,"CargoIconFrame",Style.Preview);portrait.SetBounds(12,12,60,60);
             var descriptor=ItemDescriptor.Get(parcel.ItemId);
             var icon=new ImagePanel(this,"CargoItemIcon") {MaintainAspectRatio=true,ShouldDrawBackground=false,MouseInputEnabled=false};
@@ -144,6 +150,10 @@ internal sealed class NavalCargoWindow : Window
             var quality=Text(this,"CargoQuality",10,QualityColor(parcel.Quality),true);
             quality.SetBounds(156,59,width-170,19);quality.Text=string.Format(T("Quality {0}/5"),parcel.Quality);
             var marks=new QualityMarks(this,parcel.Quality);marks.SetBounds(86,64,60,9);
+            var bx=width<330?12:86;var bw=Math.Max(60,Math.Min(110,(width-bx-20)/2));
+            var unloadButton=new Button(this,"CargoUnload") {Text=T("Unload")};unloadButton.SetBounds(bx,86,bw,26);
+            var discardButton=new Button(this,"CargoDiscard") {Text=T("Discard")};discardButton.SetBounds(bx+bw+8,86,bw,26);
+            unloadButton.Clicked+=(_,_)=>unload();discardButton.Clicked+=(_,_)=>discard();
             TooltipText=name;
         }
     }

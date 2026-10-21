@@ -6,7 +6,7 @@ Une scrollbar verticale remplace Précédent/Suivant. Tous les lots sont accessi
 
 Les icônes utilisent l’icône et la couleur de l’objet existant via le même chargement resources/items que le marketplace. Une icône absente laisse son cadre vide; aucun autre objet n’est substitué. Aucun nouveau PNG ni fichier UI à copier. Le défilement est conservé lorsque le serveur répète ses snapshots et lorsque la cargaison change; un changement de bateau repart en haut. Les lignes sont reconstruites seulement sur changement de contenu, de langue ou de disposition, pas à chaque image.
 
-La fenêtre adapte sa taille à la résolution, avec une taille maximale de 720 × 610. Textes en français, anglais et espagnol. Déchargement, butin, EXP, perte au naufrage et autorité serveur conservent leurs règles.
+La fenêtre adapte sa taille à la résolution, avec une taille maximale de 720 × 610. Textes en français, anglais et espagnol. Chaque lot propose Décharger et Supprimer. Décharger transfère ce lot entier au sac si le bateau est arrêté près d’un Q ; les autres lots restent dans la cale. Supprimer demande confirmation et libère la place sans récompense. Les deux opérations ciblent votre propre cargaison et sont annulées si la sauvegarde échoue. Le bouton historique de capitainerie permet toujours de tout décharger à terre.
 
 ## Test dans votre client
 1. Installer le nouveau client avec les fichiers correspondants de cette version. Ouvrir la cale en navigation avec 8.

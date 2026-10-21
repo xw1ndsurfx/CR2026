@@ -72,5 +72,6 @@ public sealed class NavalEffectSnapshot
     [Key(4)] public double Heading {get;set;}
     [Key(5)] public NavalEffectKind Kind {get;set;}
     [Key(6)] public int AgeMilliseconds {get;set;}
+    [Key(8)] public Guid AnimationId {get;set;}
     [Key(7)] public bool PlaySound {get;set;}=true;
 }

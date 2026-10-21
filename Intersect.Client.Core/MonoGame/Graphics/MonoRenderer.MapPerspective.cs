@@ -21,9 +21,10 @@ internal partial class MonoRenderer
         var indices = device.Indices;
         var active = ActiveShader;
         var world = effect.World; var view = effect.View; var projection = effect.Projection;
-        var texture = effect.Texture;
+        var texture = effect.Texture;var alpha=effect.Alpha;
         try
         {
+            effect.Alpha=1;
             device.SetRenderTarget(output);
             // A plain sky background; only received map geometry supplies geography.
             device.Clear(new Microsoft.Xna.Framework.Color(115, 166, 202));
@@ -56,6 +57,7 @@ internal partial class MonoRenderer
             {
                 if(entry.Decoration is {} decoration)
                 {
+                    effect.Alpha=1;
                     effect.World=UprightPlane(decoration.Anchor,scene.Forward,scene.TileWidth,scene.TileHeight);
                     effect.Texture=decoration.Buffer.Texture?.GetTexture<Texture2D>();
                     if(effect.Texture!=null && decoration.Buffer.VertexBuffer.Count>0) DrawBuffer(decoration.Buffer.VertexBuffer,decoration.Buffer.IndexBuffer);
@@ -86,6 +88,7 @@ internal partial class MonoRenderer
                 quad[1] = new(center + right*x0 + Vector3.Up*(sprite.AnchorY-sprite.Height), uv[1]);
                 quad[2] = new(center + right*x1 + Vector3.Up*sprite.AnchorY, uv[2]);
                 quad[3] = new(center + right*x1 + Vector3.Up*(sprite.AnchorY-sprite.Height), uv[3]);
+                effect.Alpha=Math.Clamp(sprite.Opacity,0,1);
                 effect.Texture = image;
                 foreach (var pass in effect.CurrentTechnique.Passes)
                 {
@@ -97,6 +100,7 @@ internal partial class MonoRenderer
         }
         finally
         {
+            effect.Alpha=alpha;
             effect.World = world; effect.View = view; effect.Projection = projection; effect.Texture = texture;
             ActiveShader = active;
             device.SetRenderTargets(targets); device.Viewport = viewport; device.ScissorRectangle = scissor;

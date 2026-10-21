@@ -73,7 +73,7 @@ internal sealed class NavalCannonViewWindow : Window
     }
     private void ChooseSide(bool starboard)
     {
-        NavalWorld.CannonViewStarboard=starboard;
+        NavalWorld.AutoPickCannonSide=false;NavalWorld.CannonViewStarboard=starboard;
         if(_viewport.CrewMode && NavalWorld.Gunner.LeaseId!=Guid.Empty) NavalWorld.RequestStation(CannonStationAction.Acquire);
     }
     internal void Update(ShipSnapshot? ship,bool open)

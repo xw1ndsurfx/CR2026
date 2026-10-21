@@ -47,6 +47,8 @@ internal static partial class NavalSystem
 
     internal static void Harbour(Player player, HarbourRequestPacket packet, bool fromEvent = false)
     {
+        if(packet.ParcelId!=Guid.Empty && packet.Action is HarbourAction.ClaimCargo or HarbourAction.DiscardCargo)
+        {ManageCargo(player,packet);return;}
         if(packet.View==HarbourView.Crew) {Crew(player,packet);return;}
         lock (player.EntityLock)
         {
@@ -136,7 +138,7 @@ internal static partial class NavalSystem
 
     private static string PurchaseOrRepair(Player player, HarbourOffer offer, OwnedShip repair)
     {
-        var cost = repair == null ? offer.Price : offer.RepairPrice;
+        var cost = repair == null ? offer.Price : ShipFleetRules.RepairCost(offer.RepairPrice,repair.Health);
         var currency = Currency(offer);
         if (currency == null) return "The ship currency is unavailable. Ask an administrator.";
         var fleetBefore = player.NavalFleetJson;
@@ -164,7 +166,7 @@ internal static partial class NavalSystem
             var owned = player.NavalFleet.FirstOrDefault(s => s.ModelId == o.Id);
             var currency = Currency(o);
             return new HarbourEntry { ModelId = o.Id, Name = o.Name, ShipName=owned?.Name??"", Currency = currency?.Name ?? o.Currency,
-                Price = o.Price, RepairPrice = o.RepairPrice, PremiumRequired = o.PremiumRequired,
+                Price = o.Price, RepairPrice = ShipFleetRules.RepairCost(o.RepairPrice,owned?.Health??100), PremiumRequired = o.PremiumRequired,
                 CargoCount=owned?.Cargo.Count??0,Owned = owned != null, Health = owned?.Health ?? 100, Balance = currency == null ? 0 : player.CountItems(currency.Id),
                 ForSale = o.ForSale, CurrencyAvailable = currency != null };
         }).ToArray() });

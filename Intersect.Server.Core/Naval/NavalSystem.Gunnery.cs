@@ -102,7 +102,7 @@ internal static partial class NavalSystem
                 {player.GunneryMessage="The cannon muzzle is blocked.";SendSnapshot(player);return;}
                 var heading=ShipMovement.Normalize(s.Heading+(packet.Starboard?90:-90)+packet.Yaw);var radians=heading*Math.PI/180;
                 var flight=CannonFlight.Plan(packet.Elevation,_settings.CannonSpeed,Math.Min(80,_settings.CannonRange*ammo.RangePercent/100d));
-                shot=new() {Flight=flight,GunnerId=player.Id,CaptainId=s.CaptainId,ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
+                shot=new() {ImpactAnimationId=ammo.ImpactAnimationId,Flight=flight,GunnerId=player.Id,CaptainId=s.CaptainId,ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
                     DirectionX=Math.Sin(radians),DirectionY=-Math.Cos(radians),Heading=heading,Born=now,Speed=flight.HorizontalSpeed,
                     Remaining=flight.Range,
                     Damage=Math.Clamp(_settings.CannonDamage*ammo.DamagePercent/100,1,300)};

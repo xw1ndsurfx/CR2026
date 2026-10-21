@@ -18,6 +18,34 @@ public sealed partial class NavalTests
         player.NavalFleetJson="[]";player.Items=new(2,InventorySlot.Create);player.Items.FillToCapacity();return player;
     }
     [Test]
+    public void DiscardDestroysOnlyTheSelectedLotAfterSaveAndNeverAwardsInventory()
+    {
+        var player=CargoPlayer();var first=Parcel();var keep=Parcel();player.NavalFleet.Add(new(){Cargo=[first,keep]});
+        Assert.That(NavalSystem.CommitCargoDiscard(player,player.NavalFleet[0],first.Id,()=>false),Is.False);
+        Assert.That(player.NavalFleet[0].Cargo.Count,Is.EqualTo(2));
+        Assert.Throws<IOException>(()=>NavalSystem.CommitCargoDiscard(player,player.NavalFleet[0],first.Id,()=>throw new IOException()));
+        Assert.That(player.NavalFleet[0].Cargo.Count,Is.EqualTo(2));
+        Assert.That(NavalSystem.CommitCargoDiscard(player,player.NavalFleet[0],first.Id,()=>true),Is.True);
+        Assert.That(player.NavalFleet[0].Cargo.Single().Id,Is.EqualTo(keep.Id));
+        Assert.That(player.Items.All(i=>i.ItemId==Guid.Empty),Is.True);
+        var saved=false;Assert.That(NavalSystem.CommitCargoDiscard(player,player.NavalFleet[0],Guid.NewGuid(),()=>saved=true),Is.False);
+        Assert.That(saved,Is.False);
+    }
+
+    [Test]
+    public void UnloadingOneLotRetainsAllOtherLotsAndRollsBackOnFailure()
+    {
+        var player=CargoPlayer();var first=Parcel();var keep=Parcel();
+        var ship=new OwnedShip {Cargo=[first,keep]};player.NavalFleet.Add(ship);
+        var inventory=NavalSystem.SnapshotCargoInventory(player);inventory[0]=new Item(first.ItemId,first.Quantity);
+        Assert.That(NavalSystem.CommitCargoUnload(player,ship,inventory,()=>false,first.Id),Is.False);
+        Assert.That(player.NavalFleet[0].Cargo.Count,Is.EqualTo(2));Assert.That(player.Items[0].ItemId,Is.EqualTo(Guid.Empty));
+        Assert.That(NavalSystem.CommitCargoUnload(player,player.NavalFleet[0],inventory,()=>true,first.Id),Is.True);
+        Assert.That(player.NavalFleet[0].Cargo.Single().Id,Is.EqualTo(keep.Id));
+        Assert.That(player.Items[0].ItemId,Is.EqualTo(first.ItemId));
+    }
+
+    [Test]
     public void CargoSnapshotPreservesParcelIdentityAndQuantityAcrossTheWire()
     {
         var parcel=Parcel(4);

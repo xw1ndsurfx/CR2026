@@ -1,3 +1,4 @@
+using Intersect.Framework.Core.Naval;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -19,7 +20,7 @@ internal sealed class PartyLobbyWindow : Window
     private long _nextRefresh;
     private static readonly Color Gold = new(255,231,199,135);
     private static readonly Color Cream = new(255,246,235,211);
-    internal static string ActivityName(LobbyActivity activity) => ClientLanguages.Text(activity switch {
+    internal static string ActivityName(LobbyActivity activity) => activity==LobbyActivity.Naval?NavalSetupText.Get("Naval crew",ClientLanguages.Current):ClientLanguages.Text(activity switch {
         LobbyActivity.Dungeon => "Dungeon", LobbyActivity.Invasion => "Invasion", LobbyActivity.WorldBoss => "World Boss",
         LobbyActivity.Alchemy => "Alchemy", LobbyActivity.Poker => "Poker", LobbyActivity.Blackjack => "Blackjack",
         LobbyActivity.Roulette => "Roulette", LobbyActivity.Lumberjack => "Lumberjack", LobbyActivity.HouseParty => "House Party",
@@ -93,8 +94,9 @@ internal sealed class PartyLobbyWindow : Window
         foreach(var dungeon in state.Dungeons) _dungeon.AddItem(dungeon.MaximumLevel>0 ? ClientLanguages.Format("{0} (Lv. {1}-{2})",ClientLanguages.ContentText(dungeon.Name),dungeon.MinimumLevel,dungeon.MaximumLevel) : ClientLanguages.Format("{0} (Lv. {1}+)",ClientLanguages.ContentText(dungeon.Name),dungeon.MinimumLevel),userData:dungeon.Id);
         if(selected.HasValue) _dungeon.SelectByUserData(selected.Value);
         if(_dungeon.SelectedItem==null && state.Dungeons.Length>0) _dungeon.SelectByUserData(state.Dungeons[0].Id);
-        _message.Text=ClientLanguages.Text(state.Message);
+        _message.Text=NavalSetupText.Get(ClientLanguages.Text(state.Message),ClientLanguages.Current);
         _applying=false; UpdateCreation(); RefreshRows();
+        if(Naval.NavalWorld.OwnShip is {} ship && ship.CaptainId!=Globals.Me?.Id && state.Message.Length==0) Hide();
     }
     internal static bool Matches(PartyLobbyEntry entry,int activity,string search) =>
         (activity<0 || (int)entry.Activity==activity) &&

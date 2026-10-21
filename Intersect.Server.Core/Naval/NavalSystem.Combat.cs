@@ -16,6 +16,7 @@ internal static partial class NavalSystem
         internal double Travelled;
         internal double Height=>Flight?.HeightAtDistance(Travelled)??0;
         internal Guid GunnerId;
+        internal Guid ImpactAnimationId;
         internal Guid Id = Guid.NewGuid(), ShipId, OwnerId, MapId, CaptainId;
         internal double X,Y,DirectionX,DirectionY,Remaining,Speed;
         internal int Damage;
@@ -88,7 +89,7 @@ internal static partial class NavalSystem
             var y=s.Y+direction.Y*radius+forwardY*gun*d.Length/4;
             if (!OceanMapResolver.Resolve(ocean,ref map,ref x,ref y) || BlocksCannonball(map,x,y)) continue;
             Emit(NavalEffectKind.Fire,map,x,y,ShipMovement.Normalize(s.Heading+(starboard?90:-90)),now,!sounded);sounded=true;
-            Cannonballs.Add(new() { CaptainId=s.CaptainId,Enemy=vessel.Enemy!=null,DockSafeRange=vessel.Enemy?.DockSafeRange??0,Born=now,Heading=ShipMovement.Normalize(s.Heading+(starboard?90:-90)),ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
+            Cannonballs.Add(new() { ImpactAnimationId=_settings.Ammunition.FirstOrDefault(a=>a.Kind==CannonAmmoKind.Standard)?.ImpactAnimationId??Guid.Empty,CaptainId=s.CaptainId,Enemy=vessel.Enemy!=null,DockSafeRange=vessel.Enemy?.DockSafeRange??0,Born=now,Heading=ShipMovement.Normalize(s.Heading+(starboard?90:-90)),ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
                 DirectionX=direction.X,DirectionY=direction.Y,Remaining=_settings.CannonRange,Speed=_settings.CannonSpeed,Damage=vessel.Enemy?.CannonDamage??_settings.CannonDamage });
         }
     }
@@ -156,7 +157,7 @@ internal static partial class NavalSystem
                 stopped=true;return false;
             });
             ball.Remaining-=travelled;ball.Travelled+=travelled;
-            if (stopped || ball.Remaining<=0) {Emit(impact,ball.MapId,ball.X,ball.Y,ball.Heading,now);Cannonballs.Remove(ball);}
+            if (stopped || ball.Remaining<=0) {Emit(impact,ball.MapId,ball.X,ball.Y,ball.Heading,now,animationId:ball.ImpactAnimationId);Cannonballs.Remove(ball);}
         }
         // Unoccupied public test targets disappear after their sinking animation until server restart/configuration reload.
         foreach (var vessel in Ships.Values.Where(v=>v.Enemy==null && v.OwnerId==Guid.Empty && v.State.CaptainId==Guid.Empty && v.SunkUntil>0 && now>=v.SunkUntil).ToArray())

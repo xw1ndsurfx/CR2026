@@ -16,6 +16,7 @@ internal static partial class NavalWorld
     internal static CannonAmmoKind SelectedAmmo {get;set;}
     internal static double GunYaw {get;set;}
     internal static double GunElevation {get;set;}=-Math.Atan(.12)*180/Math.PI;
+    internal static bool AutoPickCannonSide {get;set;}
     private static long _gunRenew,_gunFire,_gunAcquire;
     internal static void RequestStation(CannonStationAction action)
     {
@@ -30,6 +31,9 @@ internal static partial class NavalWorld
     internal static void EnsureStation()
     {
         var now=Environment.TickCount64;
+        if(Gunner.LeaseId!=Guid.Empty) AutoPickCannonSide=false;
+        else if(AutoPickCannonSide && Gunner.Message=="All cannons on this side are occupied.")
+        {CannonViewStarboard=!CannonViewStarboard;AutoPickCannonSide=false;}
         if(ShouldAcquireStation(now,_gunAcquire,Gunner.Enabled,Globals.Me?.IsBusy!=false,Gunner.LeaseId!=Guid.Empty && Gunner.Starboard==CannonViewStarboard))
         {_gunAcquire=now+1000;RequestStation(CannonStationAction.Acquire);}
         RenewStation();
@@ -39,7 +43,7 @@ internal static partial class NavalWorld
         if(Gunner.LeaseId==Guid.Empty || Environment.TickCount64<_gunRenew) return;
         _gunRenew=Environment.TickCount64+1000;RequestStation(CannonStationAction.Renew);
     }
-    internal static void ClearGunnery() {Gunner=new();SelectedAmmo=CannonAmmoKind.Standard;GunYaw=0;GunElevation=-Math.Atan(.12)*180/Math.PI;_gunRenew=_gunFire=_gunAcquire=0;}
+    internal static void ClearGunnery() {AutoPickCannonSide=false;Gunner=new();SelectedAmmo=CannonAmmoKind.Standard;GunYaw=0;GunElevation=-Math.Atan(.12)*180/Math.PI;_gunRenew=_gunFire=_gunAcquire=0;}
     internal static bool CannonViewOpen { get; set; }
     internal static bool CannonViewStarboard { get; set; }
 
@@ -51,6 +55,16 @@ internal static partial class NavalWorld
     }
     internal static double CannonViewRelativeHeading(double heading,double cameraHeading) =>
         ShipMovement.Normalize(heading-cameraHeading);
+
+    internal static IEnumerable<MapPerspectiveDecoration> AlignSceneryFragments(IEnumerable<MapPerspectiveDecoration> source)
+    {
+        foreach(var group in source.GroupBy(d=>d.ObjectKey))
+        {
+            if(group.Key==null) {foreach(var d in group) yield return d;continue;}
+            var anchor=new Vector2((group.Min(d=>d.ObjectMin.X)+group.Max(d=>d.ObjectMax.X))/2,group.Max(d=>d.ObjectMax.Y));
+            foreach(var d in group) yield return d with {Anchor=anchor};
+        }
+    }
 
     internal static MapPerspectiveScene? CannonScene()
     {
@@ -116,18 +130,27 @@ internal static partial class NavalWorld
         {
             var e=effect.Event;
             if(!MapInstance.TryGet(e.MapId,out var map) || !Globals.GridMaps.ContainsKey(map.Id)) continue;
+            if(e.AnimationId!=Guid.Empty && Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor.Get(e.AnimationId)!=null)
+            {
+                foreach(var frame in NativeImpactFrames(e.AnimationId,Environment.TickCount64-effect.Born))
+                    sprites.Add(new(frame.Texture,frame.Source,new(map.X+(float)e.X*tw,map.Y+(float)e.Y*th),
+                        frame.Width/tw,frame.Height/th,frame.Width/2/tw-frame.Layer.OffsetX/tw,
+                        frame.Height/2/th-frame.Layer.OffsetY/th,false,Opacity:frame.Layer.Opacity/255f));
+                continue;
+            }
             var asset=e.Kind switch {NavalEffectKind.Fire=>Presentation.CannonFireGraphic,NavalEffectKind.WaterImpact=>Presentation.WaterImpactGraphic,
                 NavalEffectKind.HullImpact or NavalEffectKind.ObstacleImpact=>Presentation.HullImpactGraphic,_=>""};
             var clip=e.Kind switch {NavalEffectKind.Fire=>"Fire",NavalEffectKind.WaterImpact=>"WaterImpact",_=>"HullImpact"};
             Effect(asset,clip,map.X+(float)e.X*tw,map.Y+(float)e.Y*th,Environment.TickCount64-effect.Born,false);
         }
-        return new(camera,forward,tw,th,terrain,sprites,decorations.OrderBy(d=>Vector2.DistanceSquared(d.Anchor,camera)).Take(1024).ToArray());
+        return new(camera,forward,tw,th,terrain,sprites,AlignSceneryFragments(decorations).OrderBy(d=>Vector2.DistanceSquared(d.Anchor,camera)).Take(1024).ToArray());
 
         void Add(IGameTexture texture,ShipSpriteFrame frame,double pixelsPerTile,float sx,float sy,float elevation=0)
         {
             var scale=(float)(1/pixelsPerTile);
-            sprites.Add(new(texture,new FloatRect(frame.X,frame.Y,frame.Width,frame.Height),new(sx,sy),
-                frame.Width*scale,frame.Height*scale,(float)frame.AnchorX*scale,(float)frame.AnchorY*scale,frame.FlipHorizontal,elevation));
+            foreach(var part in NavalSpriteGeometry.Parts(frame))
+                sprites.Add(new(texture,new FloatRect(part.X,part.Y,part.Width,part.Height),new(sx,sy),
+                    part.Width*scale,part.Height*scale,(float)part.AnchorX*scale,(float)part.AnchorY*scale,part.FlipHorizontal,elevation));
         }
         void Effect(string filename,string clip,float sx,float sy,long age,bool hold,float elevation=0)
         {

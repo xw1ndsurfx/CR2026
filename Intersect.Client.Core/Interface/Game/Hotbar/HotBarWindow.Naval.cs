@@ -125,7 +125,8 @@ public partial class HotBarWindow
             {
                 _navalStatus.SetBounds(X,Y-54,Width,23);
                 _navalStatus.Value=own!.Health/(float)Math.Max(1,own.MaximumHealth);
-                _navalStatus.Text=string.Format(N("Hull: {0}/{1} · Cargo: {2}/{3} · Speed: {4:0.0}"),own!.Health,own.MaximumHealth,own.Cargo.Length,own.CargoCapacity,Math.Abs(own.Speed));
+                _navalStatus.Text=string.Format(N("Hull: {0}/{1} · Cargo: {2}/{3} · Speed: {4:0.0} · Crew: {5}/{6}"),own!.Health,own.MaximumHealth,own.Cargo.Length,own.CargoCapacity,Math.Abs(own.Speed),Naval.NavalWorld.CrewState.Members.Length,Naval.NavalWorld.CrewState.Capacity);
+                EventPanelText.Fit(_navalStatus,_navalStatus.Text,11,8);
             }
         }
     }

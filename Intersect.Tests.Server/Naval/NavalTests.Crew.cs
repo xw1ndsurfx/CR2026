@@ -19,6 +19,48 @@ public sealed partial class NavalTests
         ((System.Collections.IDictionary)world.Field<object>(ship,"Crew")).Add(id,member);
     }
     [Test]
+    public void NavalLobbyRollsBackNativePartyJoinWhenBoardingCannotComplete()
+    {
+        using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);
+        var captain=new Player {Id=world.State(ship).CaptainId,InGame=true,MapId=world.Map.Id,CaptainedShipId=world.State(ship).Id};
+        var guest=new Player {Id=Guid.NewGuid(),InGame=true,MapId=world.Map.Id};GC.SuppressFinalize(captain);GC.SuppressFinalize(guest);
+        world.Set(ship,"OwnerId",captain.Id);world.Map.Attributes[14,10]=new MapDockAttribute();
+        var flags=BindingFlags.Static|BindingFlags.NonPublic;
+        var online=(System.Collections.IDictionary)typeof(Player).GetField("OnlinePlayersById",flags)!.GetValue(null)!;
+        var runtime=typeof(NavalSystem).Assembly.GetType("Intersect.Server.PartyLobbies.PartyLobbyRuntime")!;
+        var limits=(System.Collections.IDictionary)runtime.GetField("LastRequest",flags)!.GetValue(null)!;
+        var directory=(System.Collections.IDictionary)runtime.GetField("Lobbies",flags)!.GetValue(null)!;Guid lobby=default;
+        Intersect.Network.Packets.PartyLobbies.PartyLobbyStatePacket Call(Player player,Intersect.Network.Packets.PartyLobbies.LobbyAction action)=>
+            (Intersect.Network.Packets.PartyLobbies.PartyLobbyStatePacket)runtime.GetMethod("Handle",flags)!.Invoke(null,[player,
+                new Intersect.Network.Packets.PartyLobbies.PartyLobbyRequestPacket {Action=action,LobbyId=lobby,Activity=Intersect.Network.Packets.PartyLobbies.LobbyActivity.Naval}])!;
+        online.Add(captain.Id,captain);online.Add(guest.Id,guest);
+        try
+        {
+            var created=Call(captain,Intersect.Network.Packets.PartyLobbies.LobbyAction.Create);lobby=created.CurrentLobbyId;
+            Assert.That(lobby,Is.Not.EqualTo(Guid.Empty));
+            var joined=Call(guest,Intersect.Network.Packets.PartyLobbies.LobbyAction.Join);
+            Assert.That(joined.Message,Is.Not.Empty);Assert.That(guest.Party,Is.Empty);
+            Assert.That(guest.BoardedShipId,Is.EqualTo(Guid.Empty));Assert.That(guest.MapId,Is.EqualTo(world.Map.Id));
+            Assert.That(((System.Collections.IDictionary)world.Field<object>(ship,"Crew")).Count,Is.Zero);
+        }
+        finally {directory.Remove(lobby);limits.Remove(captain.Id);limits.Remove(guest.Id);online.Remove(captain.Id);online.Remove(guest.Id);}
+    }
+
+    [Test]
+    public void NavalLobbyRequiresAnActivePersonalCaptainAndAnAvailableDock()
+    {
+        using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);var captain=CargoPlayer();
+        captain.Id=world.State(ship).CaptainId;captain.MapId=world.Map.Id;captain.InGame=true;captain.CaptainedShipId=world.State(ship).Id;
+        Assert.That(NavalSystem.LobbyShip(captain),Is.Null,"Public prototype ships cannot recruit a private crew.");
+        world.Set(ship,"OwnerId",captain.Id);
+        Assert.That(NavalSystem.LobbyShip(captain)?.ShipId,Is.EqualTo(captain.CaptainedShipId));
+        Assert.That(NavalSystem.LobbyShip(captain,true),Is.Null);
+        world.Map.Attributes[14,10]=new MapDockAttribute();Assert.That(NavalSystem.LobbyShip(captain,true),Is.Not.Null);
+        world.State(ship).Speed=1;Assert.That(NavalSystem.LobbyShip(captain,true),Is.Null);world.State(ship).Speed=0;
+        world.Set(ship,"Health",0);Assert.That(NavalSystem.LobbyShip(captain),Is.Null);
+    }
+
+    [Test]
     public void CrewRewardPreservesSailingAndStillCommitsCharacterExperienceCargoAndReceiptAtomically()
     {
         using var world=new EnemyTestWorld();var player=CargoPlayer();player.SailingExperience=80;

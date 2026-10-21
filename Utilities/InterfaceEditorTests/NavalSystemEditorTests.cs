@@ -72,7 +72,20 @@ internal static class NavalSystemEditorTests
             Descendants(gunTabs.TabPages[7]).OfType<NumericUpDown>().Single(c=>c.Name=="RequiredLevel").Value=4;
             gunSave=(NavalConfigurationRequestPacket)typeof(FrmNavalConfiguration).GetMethod("PrepareSave",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(gunEditor,null)!;
             if(JsonConvert.DeserializeObject<NavalConfiguration>(gunSave.ConfigurationJson)!.Ammunition[1].RequiredLevel!=4) throw new Exception("Ammunition editor must save level gates.");
-            Console.WriteLine("PASS crew cannon and ammunition pages save with navigation revision");
+            var animation=new Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor(Guid.NewGuid()) {Name="Test cannon impact"};
+            Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor.Lookup.Set(animation.Id,animation);
+            try
+            {
+                // Recreate the selected page so its choices reflect the actual editor animation database.
+                ammoList.SelectedIndex=0;ammoList.SelectedIndex=1;
+                var choices=Descendants(gunTabs.TabPages[7]).OfType<ComboBox>().Single(c=>c.Name=="ImpactAnimationId");
+                choices.SelectedItem=choices.Items.Cast<object>().Single(c=>c.ToString()==animation.Name);
+                gunSave=(NavalConfigurationRequestPacket)typeof(FrmNavalConfiguration).GetMethod("PrepareSave",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(gunEditor,null)!;
+                if(JsonConvert.DeserializeObject<NavalConfiguration>(gunSave.ConfigurationJson)!.Ammunition[1].ImpactAnimationId!=animation.Id)
+                    throw new Exception("Selected native animation identity must survive the ammunition save.");
+            }
+            finally {Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor.Lookup.Delete(animation);}
+            Console.WriteLine("PASS crew cannon and ammunition pages save native impact animation selection with navigation revision");
         }
         finally { CultureInfo.CurrentUICulture = culture; }
     }

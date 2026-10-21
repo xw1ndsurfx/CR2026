@@ -17,10 +17,10 @@ internal static partial class NavalWorld
 {
     private sealed record View(ShipSnapshot Previous, ShipSnapshot Current, long Received, ShipAnimationClock Animation);
     private static Dictionary<Guid, View> _ships = [];
-    private static Guid _viewer;
+    private static Guid _viewer,_crewCannonShip;
     internal static NavalRewardFeed RewardFeed {get;}=new();
     private static long _received, _inputTime;
-    internal static void Clear() {ClearGunnery();CrewState=new();RewardFeed.Clear(); _ships.Clear(); _viewer = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
+    internal static void Clear() {ClearGunnery();CrewState=new();RewardFeed.Clear(); _ships.Clear(); _viewer = _crewCannonShip = Guid.Empty; _received = _inputTime = 0; NavalSpriteCatalog.Clear(); ClearActions(); ClearPresentation(); }
     internal static ShipCrewState CrewState {get;private set;}=new();
     internal static bool HasMember(ShipSnapshot ship,Guid playerId)=>playerId!=Guid.Empty && (ship.CaptainId==playerId || (ship.CrewIds??[]).Contains(playerId));
     internal static bool IsAboard(Guid playerId)=>Fresh && _ships.Values.Any(v=>HasMember(v.Current,playerId));
@@ -45,6 +45,11 @@ internal static partial class NavalWorld
         ApplyPresentation(packet,now);
         ApplyCannonballs(packet,now);
         _ships = next; _viewer = Globals.Me?.Id ?? Guid.Empty; _received = now;
+        var crewShip=OwnShip;
+        var crewId=crewShip!=null && crewShip.CaptainId!=_viewer?crewShip.Id:Guid.Empty;
+        if(crewId!=Guid.Empty && crewId!=_crewCannonShip && !crewShip!.Sinking)
+            {CannonViewOpen=true;AutoPickCannonSide=true;}
+        _crewCannonShip=crewId;
         // The engine's integer position remains an anchor for map loading and ordinary entity lookup.
         // Rendering and camera use the independent interpolated ship center below.
         foreach (var view in next.Values)
@@ -140,8 +145,9 @@ internal static partial class NavalWorld
                     var pose = atlas.Frame(heading, view.Animation.Elapsed(Environment.TickCount64), s.FrameMilliseconds);
                     var scale = (float)(tw / atlas.PixelsPerTile);
                     DrawShipName(ShipNameplate(s),x,y-(float)(pose.AnchorY*scale)-22);
-                    Graphics.DrawGameTexture(oceanTexture, new FloatRect(pose.X, pose.Y, pose.Width, pose.Height),
-                        NavalSpriteGeometry.Destination(pose,x,y,scale), Color.White);
+                    foreach(var part in NavalSpriteGeometry.Parts(pose))
+                        Graphics.DrawGameTexture(oceanTexture, new FloatRect(part.X, part.Y, part.Width, part.Height),
+                            NavalSpriteGeometry.Destination(part,x,y,scale), Color.White);
                     continue;
                 }
                 DrawShipName(ShipNameplate(s),x,y-(float)s.Length*th/2-22);

@@ -8,11 +8,11 @@ internal static partial class NavalSystem
 {
     private sealed record Effect(NavalEffectSnapshot Snapshot,long Born);
     private static readonly List<Effect> Effects=[];
-    private static void Emit(NavalEffectKind kind,Guid map,double x,double y,double heading,long now,bool sound=true)
+    private static void Emit(NavalEffectKind kind,Guid map,double x,double y,double heading,long now,bool sound=true,Guid animationId=default)
     {
         Effects.RemoveAll(e=>now-e.Born>1500);
         if(Effects.Count>=512) Effects.RemoveAt(0);
-        Effects.Add(new(new() {Id=Guid.NewGuid(),Kind=kind,MapId=map,X=x,Y=y,Heading=heading,PlaySound=sound},now));
+        Effects.Add(new(new() {Id=Guid.NewGuid(),Kind=kind,MapId=map,X=x,Y=y,Heading=heading,PlaySound=sound,AnimationId=animationId},now));
     }
     internal static bool RenameOwnedShip(OwnedShip ship,string name,Func<bool> save)
     {

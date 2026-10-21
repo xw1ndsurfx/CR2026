@@ -1254,6 +1254,61 @@
       "en": "Naval combat music",
       "fr": "Musique de combat naval",
       "es": "Música de combate naval"
+    },
+    "Cargo discarded.": {
+      "en": "Cargo discarded.",
+      "fr": "Cargaison supprimée.",
+      "es": "Carga descartada."
+    },
+    "Unload": {
+      "en": "Unload",
+      "fr": "Décharger",
+      "es": "Descargar"
+    },
+    "Discard": {
+      "en": "Discard",
+      "fr": "Supprimer",
+      "es": "Descartar"
+    },
+    "Choose lots to unload at a Q dock, or discard unwanted cargo.": {
+      "en": "Choose lots to unload at a Q dock, or discard unwanted cargo.",
+      "fr": "Choisissez les lots à décharger au quai Q ou supprimez le butin indésirable.",
+      "es": "Elige lotes para descargar en un muelle Q o descarta la carga no deseada."
+    },
+    "Hull: {0}/{1} · Cargo: {2}/{3} · Speed: {4:0.0} · Crew: {5}/{6}": {
+      "en": "Hull: {0}/{1} · Cargo: {2}/{3} · Speed: {4:0.0} · Crew: {5}/{6}",
+      "fr": "Coque : {0}/{1} · Cale : {2}/{3} · Vitesse : {4:0.0} · À bord : {5}/{6}",
+      "es": "Casco: {0}/{1} · Bodega: {2}/{3} · Velocidad: {4:0.0} · Tripulación: {5}/{6}"
+    },
+    "Naval crew": {
+      "en": "Naval crew",
+      "fr": "Équipage naval",
+      "es": "Tripulación naval"
+    },
+    "The captain must stop beside a Q dock with a free crew seat before you can board.": {
+      "en": "The captain must stop beside a Q dock with a free crew seat before you can board.",
+      "fr": "Le capitaine doit s’arrêter près d’un quai Q avec une place libre pour vous embarquer.",
+      "es": "El capitán debe detenerse junto a un muelle Q con una plaza libre para embarcar."
+    },
+    "ImpactAnimationId": {
+      "en": "Impact animation",
+      "fr": "Animation d’impact",
+      "es": "Animación de impacto"
+    },
+    "Discard cargo": {
+      "en": "Discard cargo",
+      "fr": "Supprimer le butin",
+      "es": "Descartar carga"
+    },
+    "Discard this cargo lot permanently?": {
+      "en": "Discard this cargo lot permanently?",
+      "fr": "Supprimer définitivement ce lot de butin ?",
+      "es": "¿Descartar este lote de carga permanentemente?"
+    },
+    "Cargo could not be saved. Nothing was changed.": {
+      "en": "Cargo could not be saved. Nothing was changed.",
+      "fr": "La cargaison n’a pas pu être sauvegardée. Rien n’a été modifié.",
+      "es": "No se pudo guardar la carga. No se modificó nada."
     }
   }
 }

@@ -12,6 +12,7 @@ public partial class GameInterface
     {
         if(packet.View==HarbourView.Crew)
         {
+            if(packet.Close) {_navalCrewWindow?.Hide();return;}
             _navalCrewWindow??=new NavalCrewWindow(GameCanvas);
             _navalCrewWindow.Apply(packet);_navalCrewWindow.Show();_navalCrewWindow.BringToFront();return;
         }

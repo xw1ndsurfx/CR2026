@@ -18,6 +18,33 @@ namespace Intersect.Tests.Client;
 public sealed class NavalHelmRegressionTests
 {
     [Test]
+    public void NewCrewBoardingOpensCannonViewOnceWhileManualExitSurvivesFollowingSnapshots()
+    {
+        var previous=Globals.Me;var me=(Player)RuntimeHelpers.GetUninitializedObject(typeof(Player));GC.SuppressFinalize(me);me.Id=Guid.NewGuid();
+        try
+        {
+            Globals.Me=me;NavalWorld.Clear();var captain=Guid.NewGuid();var id=Guid.NewGuid();
+            NavalSnapshotPacket Snapshot()=>new(){Ships=[new(){Id=id,CaptainId=captain,CrewIds=[me.Id]}]};
+            NavalWorld.Apply(Snapshot());Assert.That(NavalWorld.CannonViewOpen,Is.True);
+            NavalWorld.CannonViewOpen=false;NavalWorld.Apply(Snapshot());Assert.That(NavalWorld.CannonViewOpen,Is.False);
+            NavalWorld.Apply(new());NavalWorld.Apply(Snapshot());Assert.That(NavalWorld.CannonViewOpen,Is.True);
+            NavalWorld.Clear();captain=me.Id;NavalWorld.Apply(Snapshot());Assert.That(NavalWorld.CannonViewOpen,Is.False);
+        }
+        finally {NavalWorld.Clear();Globals.Me=previous;}
+    }
+
+    [Test]
+    public void ClippedShipBandsKeepTheirWorldPositionIncludingMirroredPoses()
+    {
+        var frame=new ShipSpriteFrame {X=100,Y=200,Width=200,Height=250,AnchorX=90,AnchorY=180,Slices=[[20,40,120,8]]};
+        var part=NavalSpriteGeometry.Parts(frame).Single();
+        var bounds=NavalSpriteGeometry.Destination(part,500,600,.5f);
+        Assert.That(bounds.X,Is.EqualTo(465));Assert.That(bounds.Y,Is.EqualTo(530));
+        frame.FlipHorizontal=true;part=NavalSpriteGeometry.Parts(frame).Single();bounds=NavalSpriteGeometry.Destination(part,500,600,.5f);
+        Assert.That(bounds.X,Is.EqualTo(535));Assert.That(bounds.Width,Is.EqualTo(-60));
+    }
+
+    [Test]
     public void GunnerHotbarSelectsAmmunitionAndRoleProgressRestoresForCaptainAndDisembarkation()
     {
         var previous=Globals.Me;var me=(Player)RuntimeHelpers.GetUninitializedObject(typeof(Player));GC.SuppressFinalize(me);me.Id=Guid.NewGuid();

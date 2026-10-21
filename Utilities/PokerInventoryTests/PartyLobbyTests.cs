@@ -58,11 +58,12 @@ internal static class PartyLobbyTests
             host.LeaveParty(); foreach(var player in players)player.Party=[];
             foreach(var activity in Enum.GetValues<LobbyActivity>())
             {
-                if(activity==LobbyActivity.HouseParty)continue;
+                if(activity is LobbyActivity.HouseParty or LobbyActivity.Naval)continue;
                 var state=Call(host,LobbyAction.Create,activity:activity,dungeon:activity==LobbyActivity.Dungeon?dungeon.Id:Guid.Empty);
                 Check(state.CurrentLobbyId!=Guid.Empty,"Every supported activity can recruit a party: "+activity);
                 Call(host,LobbyAction.Close,state.CurrentLobbyId);
             }
+            Check(Call(host,LobbyAction.Create,activity:LobbyActivity.Naval).Lobbies.Length==0,"Naval recruiting requires the captain of an active personal ship stopped at a dock");
             Check(Call(host,LobbyAction.Create,activity:LobbyActivity.HouseParty).Lobbies.Length==0,"A private or unconfigured house cannot be advertised as a House Party");
             var leaveState=Call(host,LobbyAction.Create);Call(guest,LobbyAction.Join,leaveState.CurrentLobbyId);
             Check(Call(guest,LobbyAction.Leave).CurrentLobbyId==Guid.Empty && guest.Party.Count==0,"Leaving a lobby exits the actual party");

@@ -95,7 +95,9 @@ internal static partial class NavalSystem
                 WarpAnchor(player,anchor);
                 if(player.MapId!=anchor.MapId) ReleaseCrew(player,true);
             }
-            lock(Gate) player.SendPacket(new HarbourStatePacket {View=HarbourView.Crew,Crew=CrewState(player),Message=message});
+            lock(Gate) {if(anchor!=null) SendSnapshot(player);
+                player.SendPacket(new HarbourStatePacket {View=HarbourView.Crew,Crew=CrewState(player),Message=message,
+                    Close=anchor!=null && player.BoardedShipId!=Guid.Empty});}
         }
     }
     private static ShipState CopyCrewAnchor(Vessel vessel)=>new() {Id=vessel.State.Id,MapId=vessel.State.MapId,X=vessel.State.X,Y=vessel.State.Y};

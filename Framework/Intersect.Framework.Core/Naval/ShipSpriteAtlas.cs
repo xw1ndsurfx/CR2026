@@ -20,7 +20,8 @@ public sealed class ShipSpriteAtlas
             frame.Width <= textureWidth && frame.Height <= textureHeight &&
             frame.X <= textureWidth - frame.Width && frame.Y <= textureHeight - frame.Height &&
             double.IsFinite(frame.AnchorX) && double.IsFinite(frame.AnchorY) &&
-            frame.AnchorX >= 0 && frame.AnchorX <= frame.Width && frame.AnchorY >= 0 && frame.AnchorY <= frame.Height));
+            frame.AnchorX >= 0 && frame.AnchorX <= frame.Width && frame.AnchorY >= 0 && frame.AnchorY <= frame.Height &&
+            (frame.Slices==null || frame.Slices.Length<=512 && frame.Slices.All(r=>r is {Length:4} && r[0]>=0 && r[1]>=0 && r[2]>0 && r[3]>0 && r[0]<=frame.Width-r[2] && r[1]<=frame.Height-r[3]))));
 
     public bool UpgradeLegacySoutheast(string name)
     {
@@ -52,6 +53,7 @@ public sealed class ShipSpriteAtlas
 
 public sealed class ShipSpriteFrame
 {
+    public int[][]? Slices {get;set;}
     public bool FlipHorizontal { get; set; }
     public int X { get; set; }
     public int Y { get; set; }

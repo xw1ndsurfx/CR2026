@@ -11,6 +11,53 @@ namespace Intersect.Server.Naval;
 
 internal static partial class NavalSystem
 {
+    private static void ManageCargo(Player player,Intersect.Network.Packets.Client.HarbourRequestPacket packet)
+    {
+        lock(player.EntityLock)
+        {
+            var now=Timing.Global.Milliseconds;
+            if(packet.View is not (HarbourView.Fleet or HarbourView.Crew) || now-player.LastHarbourRequest<100 ||
+                player.InstanceType!=Intersect.Framework.Core.GameObjects.Maps.MapInstanceType.Overworld || player.Z!=0 ||
+                !player.InGame || player.User==null || player.IsDead || player.HasPendingDeath || player.NavalBusy) return;
+            player.LastHarbourRequest=now;
+            OwnedShip hold;
+            lock(Gate)
+            {
+                if(!IsEnabled()) return;
+                hold=packet.View==HarbourView.Crew?player.NavalCrewPassage?.Ship:player.NavalFleet.FirstOrDefault(s=>s.Id==packet.ShipId);
+                if(hold==null || hold.Id!=packet.ShipId || !hold.Cargo.Any(p=>p.Id==packet.ParcelId)) return;
+                if(player.NavalShipId!=Guid.Empty && player.NavalShipId!=hold.Id) return;
+                if(packet.Action==HarbourAction.ClaimCargo && (player.NavalShipId==Guid.Empty? !BesideCrewDock(player):
+                    !Ships.TryGetValue(player.NavalShipId,out var vessel) || !NearCrewDock(vessel)))
+                {Notice(player,"Stand beside a Q dock to unload your crew cargo.");return;}
+            }
+            // The player's lock protects the personal hold. Never stall navigation on a database save.
+            string message;
+            if(packet.Action==HarbourAction.DiscardCargo)
+            {
+                try
+                {
+                    message=CommitCargoDiscard(player,hold,packet.ParcelId,()=>player.User.Save(force:true)==UserSaveResult.Completed)
+                        ?"Cargo discarded.":"Cargo could not be saved. Nothing was changed.";
+                }
+                catch(Exception exception)
+                {
+                    ApplicationContext.Context.Value?.Logger.LogError(exception,"Could not discard naval cargo for {PlayerId}",player.Id);
+                    message="Cargo could not be saved. Nothing was changed.";
+                }
+            }
+            else message=ClaimCargo(player,hold,packet.ParcelId);
+            Notice(player,message);
+            lock(Gate) SendSnapshot(player);
+        }
+    }
+    internal static bool CommitCargoDiscard(Player player,OwnedShip hold,Guid parcelId,Func<bool> save)
+    {
+        if(parcelId==Guid.Empty || !hold.Cargo.Any(p=>p.Id==parcelId)) return false;
+        var before=player.NavalFleetJson;var committed=false;
+        try {hold.Cargo.RemoveAll(p=>p.Id==parcelId);committed=save();return committed;}
+        finally {if(!committed) player.NavalFleetJson=before;}
+    }
     private static IEnumerable<OwnedShip> RewardHolds(Player player)=>player.NavalCrewPassage is {} passage?player.NavalFleet.Concat(new[]{passage.Ship}):player.NavalFleet;
     internal static bool CommitNavalReward(Player player,long experience,IEnumerable<(Guid ShipId,int Capacity,NavalCargoParcel Parcel)> cargo,Func<bool> save) =>
         CommitNavalReward(player,experience,cargo,save,out _);
@@ -114,13 +161,13 @@ internal static partial class NavalSystem
         }
         finally {if(!committed) {ship.Health=before;ship.SinkingSerial=serial;ship.Cargo=cargo;}}
     }
-    internal static bool CommitCargoUnload(Player player,OwnedShip ship,Item[] planned,Func<bool> save)
+    internal static bool CommitCargoUnload(Player player,OwnedShip ship,Item[] planned,Func<bool> save,Guid parcelId=default)
     {
         var inventory=SnapshotCargoInventory(player);var before=player.NavalFleetJson;var committed=false;
         try
         {
             for(var i=0;i<planned.Length;i++) player.Items[i].Set(planned[i]);
-            ship.Cargo.Clear();committed=save();return committed;
+            ship.Cargo.RemoveAll(p=>parcelId==Guid.Empty || p.Id==parcelId);committed=save();return committed;
         }
         finally
         {
@@ -128,16 +175,18 @@ internal static partial class NavalSystem
             {player.NavalFleetJson=before;for(var i=0;i<inventory.Length;i++) player.Items[i].Set(inventory[i]);}
         }
     }
-    private static string ClaimCargo(Player player,OwnedShip ship)
+    private static string ClaimCargo(Player player,OwnedShip ship,Guid parcelId=default)
     {
         if(ship==null || ship.Cargo.Count==0) return "This ship has no cargo to unload.";
         var inventory=SnapshotCargoInventory(player);
-        var planned=PlanCargoInventory(inventory,ship.Cargo);
+        var selected=ship.Cargo.Where(p=>parcelId==Guid.Empty || p.Id==parcelId).ToArray();
+        if(selected.Length==0) return "This ship has no cargo to unload.";
+        var planned=PlanCargoInventory(inventory,selected);
         if(planned==null) return "Make room in your main inventory before unloading. Cargo was kept.";
-        var itemIds=ship.Cargo.Select(p=>p.ItemId).Distinct().ToArray();var committed=false;
+        var itemIds=selected.Select(p=>p.ItemId).Distinct().ToArray();var committed=false;
         try
         {
-            committed=CommitCargoUnload(player,ship,planned,()=>player.User.Save(force:true)==UserSaveResult.Completed);
+            committed=CommitCargoUnload(player,ship,planned,()=>player.User.Save(force:true)==UserSaveResult.Completed,parcelId);
             return committed?"Cargo unloaded.":"Cargo could not be saved. Nothing was unloaded.";
         }
         catch(Exception exception)
