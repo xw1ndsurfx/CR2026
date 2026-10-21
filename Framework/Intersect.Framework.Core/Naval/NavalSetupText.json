@@ -485,6 +485,11 @@
       "fr": "Son de débarquement",
       "es": "Sonido de desembarco"
     },
+    "LevelUpAnimationId": {
+      "en": "Naval level-up animation",
+      "fr": "Animation de montée de niveau navale",
+      "es": "Animación de subida de nivel naval"
+    },
     "LevelUpSound": {
       "en": "Sailing level up sound",
       "fr": "Son de niveau Sailing",

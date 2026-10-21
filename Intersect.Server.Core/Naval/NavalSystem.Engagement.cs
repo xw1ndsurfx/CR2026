@@ -74,8 +74,7 @@ internal static partial class NavalSystem
                     PendingSailingRewards[player.Id]=new(Math.Min(200000000000000L,reward.Experience+(concurrent?.Experience??0)),now+1000,(reward.Cargo??[]).Concat(concurrent?.Cargo??[]).Take(6400).ToArray(),
                         Math.Min(200000000000000L,reward.SailingExperience+(concurrent?.SailingExperience??0)));
                 }
-                else if(_settings.Sailing.Progress(player.SailingExperience).Level>before)
-                    Emit(NavalEffectKind.LevelUp,player.MapId,player.X+.5,player.Y+.5,0,now);
+                else EmitLevelUp(player,before,_settings.Sailing.Progress(player.SailingExperience).Level,now);
             }
         }
         if(saved && receipt!=null) PublishRewardReceipt(player,receipt,now);

@@ -56,14 +56,35 @@ public sealed partial class NavalTests
     public void AssetsRejectPathsAndSettingsSurviveThePacketSerializer()
     {
         foreach(var unsafeName in new[]{"../test.wav","C:\\test.wav","sub/test.png","a\nb.wav"}) Assert.That(NavalPresentation.SafeAsset(unsafeName),Is.False);
-        var packet=new NavalSnapshotPacket {Presentation=new() {PortIcon="broadside.png",CannonFireSound="fire.wav",HullImpactSound="hull.wav"},
+        var animationId=Guid.NewGuid();
+        var packet=new NavalSnapshotPacket {Presentation=new() {LevelUpAnimationId=animationId,PortIcon="broadside.png",CannonFireSound="fire.wav",HullImpactSound="hull.wav"},
             SailingLevel=12,SailingExperience=45,SailingRequired=200,Ships=[new() {Name="Étoile"}],
             Effects=[new(){Id=Guid.NewGuid(),Kind=NavalEffectKind.WaterImpact,AgeMilliseconds=100,PlaySound=false}]};
         var restored=MessagePackSerializer.Deserialize<NavalSnapshotPacket>(MessagePackSerializer.Serialize(packet));
+        Assert.That(restored.Presentation.LevelUpAnimationId,Is.EqualTo(animationId));
+        Assert.That(new NavalPresentation().LevelUpAnimationId,Is.EqualTo(Guid.Empty));
         Assert.That(restored.Presentation.PortIcon,Is.EqualTo("broadside.png"));Assert.That(restored.SailingLevel,Is.EqualTo(12));
         Assert.That(restored.Effects[0].PlaySound,Is.False);Assert.That(restored.Ships[0].Name,Is.EqualTo("Étoile"));
         var config=new NavalConfiguration();config.Presentation.EffectPixelsPerTile=double.NaN;Assert.Throws<InvalidDataException>(()=>config.Validate(32,26));
         config.Presentation.EffectPixelsPerTile=128;config.Sailing.ExperienceGrowth=-1;Assert.Throws<InvalidDataException>(()=>config.Validate(32,26));
+    }
+    [TestCase(false)]
+    [TestCase(true)]
+    public void NavalLevelUpUsesConfiguredAnimationAtTheActiveVesselForCaptainAndCrew(bool crew)
+    {
+        using var world=new EnemyTestWorld();var ship=world.Add(8.5,10.5,false);
+        var animationId=Guid.NewGuid();world.Configure(new() {Presentation=new(){LevelUpAnimationId=animationId}});
+        var player=crew?GunnerPlayer(world,ship):CargoPlayer();
+        if(!crew){player.Id=world.State(ship).CaptainId;player.CaptainedShipId=world.State(ship).Id;}
+        var effects=(System.Collections.IList)typeof(NavalSystem).GetField("Effects",System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic)!.GetValue(null)!;
+        world.Invoke("EmitLevelUp",player,1,1,1000L);Assert.That(effects.Count,Is.Zero);
+        world.Invoke("EmitLevelUp",player,1,3,1000L);Assert.That(effects.Count,Is.EqualTo(1));
+        var effect=(NavalEffectSnapshot)effects[0]!.GetType().GetProperty("Snapshot")!.GetValue(effects[0])!;
+        Assert.That(effect.AnimationId,Is.EqualTo(animationId));Assert.That(effect.Kind,Is.EqualTo(NavalEffectKind.LevelUp));
+        Assert.That((effect.MapId,effect.X,effect.Y),Is.EqualTo((world.Map.Id,8.5,10.5)));
+        effects.Clear();world.Set(ship,"Health",0);world.Invoke("EmitLevelUp",player,1,2,1000L);Assert.That(effects.Count,Is.Zero);
+        world.Set(ship,"Health",100);player.CaptainedShipId=player.BoardedShipId=Guid.Empty;
+        world.Invoke("EmitLevelUp",player,1,2,1000L);Assert.That(effects.Count,Is.Zero,"Delayed rewards on shore do not animate a departed vessel.");
     }
     [Test]
     public void ShippedEffectAtlasesHaveExplicitValidAnchorsAndExpectedSequences()

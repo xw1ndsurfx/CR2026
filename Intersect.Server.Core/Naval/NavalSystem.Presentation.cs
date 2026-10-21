@@ -14,6 +14,18 @@ internal static partial class NavalSystem
         if(Effects.Count>=512) Effects.RemoveAt(0);
         Effects.Add(new(new() {Id=Guid.NewGuid(),Kind=kind,MapId=map,X=x,Y=y,Heading=heading,PlaySound=sound,AnimationId=animationId,Graphic=graphic??""},now));
     }
+    // Only committed level changes call this helper. Gate protects both membership and effect publication.
+    private static void EmitLevelUp(Player player,int before,int after,long now)
+    {
+        if(after<=before) return;
+        lock(Gate)
+        {
+            if(!Ships.TryGetValue(player.NavalShipId,out var ship) || ship.Enemy!=null || ship.Health<=0 || ship.SunkUntil!=0 ||
+                ship.State.CaptainId!=player.Id && !ship.Crew.ContainsKey(player.Id)) return;
+            Emit(NavalEffectKind.LevelUp,ship.State.MapId,ship.State.X,ship.State.Y,ship.State.Heading,now,
+                animationId:_settings.Presentation.LevelUpAnimationId);
+        }
+    }
     internal static bool RenameOwnedShip(OwnedShip ship,string name,Func<bool> save)
     {
         var normalized=ShipNames.Normalize(name);if(normalized==null) return false;

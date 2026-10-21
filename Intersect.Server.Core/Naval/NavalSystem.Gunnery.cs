@@ -169,10 +169,12 @@ internal static partial class NavalSystem
             if(!PendingGunnery.TryGetValue(player.Id,out reward) || now<reward.RetryAt) return;
             PendingGunnery.Remove(player.Id);
         }
+        var before=_settings.Gunnery.Curve().Progress(player.GunneryExperience).Level;
         var saved=false;
         try {saved=CommitGunneryExperience(player,reward.Experience,()=>player.User?.Save(force:true)==UserSaveResult.Completed);}
         catch(Exception e) {ApplicationContext.Context.Value?.Logger.LogError(e,"Could not save Gunnery reward for {PlayerId}",player.Id);}
-        if(!saved) lock(Gate)
+        if(saved) EmitLevelUp(player,before,_settings.Gunnery.Curve().Progress(player.GunneryExperience).Level,now);
+        else lock(Gate)
         {
             PendingGunnery.TryGetValue(player.Id,out var pending);
             PendingGunnery[player.Id]=new(Math.Min(200000000000000L,reward.Experience+(pending?.Experience??0)),now+1000);

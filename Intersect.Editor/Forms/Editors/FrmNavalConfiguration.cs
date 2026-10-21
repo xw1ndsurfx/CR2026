@@ -233,7 +233,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
             else if (property.PropertyType == typeof(Guid) && property.Name != "Id")
             {
                 var choices = new List<Choice> { new(Guid.Empty, T("Automatic / not selected")) };
-                if(property.Name=="ImpactAnimationId") choices.AddRange(AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().OrderBy(a=>a.Name).Select(a=>new Choice(a.Id,a.Name)));
+                if(property.Name is "ImpactAnimationId" or "LevelUpAnimationId") choices.AddRange(AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().OrderBy(a=>a.Name).Select(a=>new Choice(a.Id,a.Name)));
                 else if(property.Name=="ItemId") choices.AddRange(ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().OrderBy(i=>i.Name).Select(i=>new Choice(i.Id,i.Name)));
                 else if (property.Name == "MapId") choices.AddRange(MapList.OrderedMaps.Select(m => new Choice(m.MapId, m.Name)));
                 else choices.AddRange(ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().Where(i => i.ItemType == ItemType.Currency).OrderBy(i => i.Name).Select(i => new Choice(i.Id, i.Name)));

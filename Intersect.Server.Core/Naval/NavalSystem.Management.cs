@@ -328,6 +328,7 @@ internal static partial class NavalSystem
         {
             var before=p.NavalCareer.RepairExperience;p.NavalCareer.RepairExperience=before>=_settings.Repair.Curve().Cap?before:Math.Min(_settings.Repair.Curve().Cap,before+xp);
             if(!SaveManagement(p)){p.NavalCareer.RepairExperience=before;lock(Gate)RepairRewards[p.Id]=RepairRewards.GetValueOrDefault(p.Id)+xp;}
+            else EmitLevelUp(p,_settings.Repair.Curve().Progress(before).Level,_settings.Repair.Curve().Progress(p.NavalCareer.RepairExperience).Level,now);
         }
     }
 }

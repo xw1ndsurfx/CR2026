@@ -76,6 +76,14 @@ internal static class NavalSystemEditorTests
             Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor.Lookup.Set(animation.Id,animation);
             try
             {
+                using(var levelEditor=new FrmNavalConfiguration(new(){NavigationJson="{}",CatalogueJson="{}"}))
+                {
+                    var levelChoices=Descendants(levelEditor).OfType<ComboBox>().Single(c=>c.Name=="LevelUpAnimationId");
+                    levelChoices.SelectedItem=levelChoices.Items.Cast<object>().Single(c=>c.ToString()==animation.Name);
+                    var levelSave=(NavalConfigurationRequestPacket)typeof(FrmNavalConfiguration).GetMethod("PrepareSave",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(levelEditor,null)!;
+                    if(levelSave.Section!=1 || JsonConvert.DeserializeObject<NavalConfiguration>(levelSave.ConfigurationJson)!.Presentation.LevelUpAnimationId!=animation.Id)
+                        throw new Exception("Selected level-up animation must save its native animation id in naval presentation.");
+                }
                 // Recreate the selected page so its choices reflect the actual editor animation database.
                 ammoList.SelectedIndex=0;ammoList.SelectedIndex=1;
                 var choices=Descendants(gunTabs.TabPages[7]).OfType<ComboBox>().Single(c=>c.Name=="ImpactAnimationId");
