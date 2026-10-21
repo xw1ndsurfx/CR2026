@@ -24,6 +24,25 @@ public sealed class NavalCargoWindowTests
     [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
 
     [Test]
+    public void FleetCardsShowEachShipAppearanceWithoutOverlappingTheirControls()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(1024,768)};
+        var window=new HarbourWindow(canvas,HarbourView.Fleet);
+        window.Apply(new(){Entries=[new(){ModelId="royal",Owned=true,Health=80,ShipName="Royal",Graphics="royal.png",Frames=4},
+            new(){ModelId="herbonia",Owned=true,Health=100,ShipName="Herbonia",Graphics="herbonia.png",Frames=1}]});
+        var previews=Descendants(window).OfType<NavalShipPreview>().ToArray();
+        Assert.That(previews.Select(p=>p.Graphic),Is.EqualTo(new[]{"royal.png","herbonia.png"}));
+        Assert.That(previews.Select(p=>p.Frames),Is.EqualTo(new[]{4,1}));
+        foreach(var preview in previews)
+        {
+            var name=Descendants(window).OfType<Label>().Single(c=>c.Name=="Name"+preview.Name.Last());
+            Assert.That(preview.Right,Is.LessThan(name.X));
+            var launch=Descendants(window).OfType<Button>().Single(c=>c.Name=="Launch"+preview.Name.Last());
+            Assert.That(preview.Right,Is.LessThan(launch.X));
+        }
+    }
+
+    [Test]
     public void NavalAmmoQuantityAndShortcutUseSeparateSingleLineLabels()
     {
         using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(800,600)};

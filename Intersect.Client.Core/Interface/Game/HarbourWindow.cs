@@ -87,11 +87,13 @@ internal sealed partial class HarbourWindow : Window
         foreach (var entry in _state.Entries)
         {
             var y = i++ * 155;
-            Text(_cards, "Name" + i, entry.ShipName.Length>0?entry.ShipName:entry.Name is "Royal ship" or "Royal ship (Premium)" ? ClientLanguages.Text(entry.Name) : ClientLanguages.ContentText(entry.Name), 4, y, 610, 24);
+            var preview=new NavalShipPreview(_cards,"FleetShipPreview"+i,entry.Graphics,entry.Frames);
+            preview.SetBounds(4,y+4,112,136);
+            Text(_cards, "Name" + i, entry.ShipName.Length>0?entry.ShipName:entry.Name is "Royal ship" or "Royal ship (Premium)" ? ClientLanguages.Text(entry.Name) : ClientLanguages.ContentText(entry.Name), 128, y, 480, 24);
             var status = entry.Owned ? (entry.Health == 0 ? ClientLanguages.Text("Sunken") :
                 string.Format(ClientLanguages.Text("Hull: {0}/100"), entry.Health)) : ClientLanguages.Text("Not owned");
             if (entry.PremiumRequired) status += " · " + ClientLanguages.Text("Premium required");
-            Text(_cards, "Condition" + i, status, 4, y+25, 610, 23);
+            Text(_cards, "Condition" + i, status, 128, y+25, 480, 23);
             if (_view == HarbourView.Shop)
             {
                 Text(_cards, "Cost" + i, string.Format(ClientLanguages.Text("Purchase: {0} {1} · Balance: {2}"),
@@ -105,15 +107,15 @@ internal sealed partial class HarbourWindow : Window
             }
             else
             {
-                var launch = Button(_cards, "Launch" + i, "Set sail", 4, y+75, 280, () => Request(HarbourAction.Launch, entry.ModelId));
+                var launch = Button(_cards, "Launch" + i, "Set sail", 128, y+75, 232, () => Request(HarbourAction.Launch, entry.ModelId));
                 launch.IsDisabled = !HarbourUiRules.CanLaunch(entry, _state.Premium);
-                var rename=Button(_cards,"Rename"+i,"Rename ship",310,y+75,280,()=>new InputBox(
+                var rename=Button(_cards,"Rename"+i,"Rename ship",370,y+75,232,()=>new InputBox(
                     title:ClientLanguages.Text("Rename ship"),prompt:ClientLanguages.Text("Enter your ship name (1 to 32 characters)."),inputType:InputType.TextInput,
                     onSubmit:(_,args)=>{if(args.Value is StringSubmissionValue name) Request(HarbourAction.Rename,entry.ModelId,name.Value??"");}));
                 rename.IsDisabled=!entry.Owned;
-                var unload=Button(_cards,"Unload"+i,"Unload cargo",4,y+110,280,()=>Request(HarbourAction.ClaimCargo,entry.ModelId));
+                var unload=Button(_cards,"Unload"+i,"Unload cargo",128,y+110,232,()=>Request(HarbourAction.ClaimCargo,entry.ModelId));
                 unload.IsDisabled=!entry.Owned || entry.CargoCount==0;
-                Text(_cards,"Cargo"+i,string.Format(NavalSetupText.Get("Cargo: {0}",ClientLanguages.Current),entry.CargoCount),310,y+113,280,24);
+                Text(_cards,"Cargo"+i,string.Format(NavalSetupText.Get("Cargo: {0}",ClientLanguages.Current),entry.CargoCount),370,y+113,232,24);
             }
 
         }
