@@ -28,7 +28,7 @@ internal static partial class NavalSystem
         try{foreach(var hold in holds)hold.Cargo.Clear();ok=save();return ok;}
         finally{if(!ok)p.NavalFleetJson=before;}
     }
-    private sealed class RepairRound {internal Guid Token=Guid.NewGuid(),Ship;internal NavalRepairKind Kind;internal long Start,Last;internal int Hits,Target;}
+    private sealed class RepairRound {internal Guid Token=Guid.NewGuid(),Ship;internal NavalRepairKind Kind;internal long Start,Last;internal int Hits,Target,Revision;internal byte[] Cells=[];internal string Name="";internal SailingProgress Progress;}
     private static readonly Dictionary<Guid,RepairRound> Repairs=[];
     private static readonly Dictionary<Guid,long> RepairCooldown=[];
     private static readonly Dictionary<Guid,long> RepairRewards=[];
@@ -103,9 +103,11 @@ internal static partial class NavalSystem
             SellPrice=AmmoTrade(p,a,true).Allowed?AmmoTrade(p,a,true).Price:-1,SellCurrency=NavalCurrency(AmmoTrade(p,a,true).Currency,"Aureons")?.Name??"",SailingLevel=a.RequiredSailingLevel,GunneryLevel=a.RequiredLevel,
             Icon=string.IsNullOrEmpty(a.Icon)?ItemDescriptor.Get(a.ItemId)?.Icon??"":a.Icon,
             Available=(v!=null && Driver(v)==p.Id?state.SailingLevel>=a.RequiredSailingLevel:state.GunneryLevel>=a.RequiredLevel)}).ToArray();
+        state.RepairParticipants=Repairs.Where(pair=>pair.Value.Ship==p.NavalShipId).Take(64).Select(pair=>new NavalRepairParticipant {
+            PlayerId=pair.Key,Name=pair.Value.Name,Progress=pair.Value.Progress}).ToArray();
         state.Skills=_settings.Skills.Select(d=>new NavalSkillView {Definition=d,Owned=p.NavalCareer.Skills.Contains(d.Kind),
             CooldownMilliseconds=v!=null && v.SkillReady.TryGetValue(d.Kind,out var ready)?(int)Math.Clamp(ready-now,0,3600000):0}).ToArray();
-        if(round!=null) {state.RepairToken=round.Token;state.RepairKind=round.Kind;state.RepairTarget=round.Target;state.RepairHits=round.Hits;
+        if(round!=null) {state.RepairToken=round.Token;state.RepairKind=round.Kind;state.RepairTarget=round.Target;state.RepairHits=round.Hits;state.RepairCells=round.Cells;state.RepairRevision=round.Revision;
             state.RepairRequiredHits=_settings.Repair.RequiredHits;state.RepairRemainingMilliseconds=(int)Math.Max(0,round.Start+_settings.Repair.RoundSeconds*1000-now);
             state.RepairElapsedMilliseconds=(int)Math.Max(0,now-round.Start);}
         p.SendPacket(new NavalManagementPacket {Json=JsonConvert.SerializeObject(state)});
@@ -117,6 +119,8 @@ internal static partial class NavalSystem
             if(!Enum.IsDefined(packet.Action) || !p.InGame || p.IsDead || p.HasPendingDeath || p.User==null || p.Z!=0)return;
             if(now-p.LastNavalManageRequest<100)return;p.LastNavalManageRequest=now;
             lock(Gate)if(!IsEnabled())return;
+            if(packet.Action==NavalManageAction.BoardEnemy){StartEnemyBoarding(p,packet.TargetId,now);return;}
+            lock(Gate)if(BoardingPlayers.ContainsKey(p.Id))return;
             var mode=packet.Action;var message="";
             if(mode==NavalManageAction.AmmoShop){lock(Gate)if(!p.NavalAmmoShop || !ShopValid(p,now))return;}
             if(mode==NavalManageAction.RepairMenu){lock(Gate) {if(!Ships.TryGetValue(p.NavalShipId,out var repairShip) || Driver(repairShip)==p.Id)return;}lock(Gate)SendManagement(p,NavalManageAction.Repair,now);return;}
@@ -198,10 +202,10 @@ internal static partial class NavalSystem
                     else if(mode==NavalManageAction.Repair)
                     {
                         if(v==null || !_settings.Repair.Enabled || !Enum.IsDefined(packet.Repair) || v.Health is <=0 or >=100 || v.SunkUntil>0 || (Driver(v)==p.Id) ||
-                            RepairCooldown.GetValueOrDefault(p.Id)>now || Repairs.ContainsKey(p.Id) || p.NavalBusy)
+                            RepairCooldown.GetValueOrDefault(p.Id)>now || p.NavalBusy)
                         {SendManagement(p,NavalManageAction.Repair,now,"Repair unavailable. Check hull, role and cooldown.");return;}
                         foreach(var gun in v.Guns.Values.Where(g=>g.Owner==p.Id))gun.Owner=gun.Lease=Guid.Empty;
-                        Repairs[p.Id]=new(){Ship=v.State.Id,Kind=packet.Repair,Start=now,Target=Random.Shared.Next(3)};
+                        Repairs[p.Id]=new(){Ship=v.State.Id,Kind=packet.Repair,Start=now,Name=p.Name,Progress=_settings.Repair.Curve().Progress(p.NavalCareer.RepairExperience),Cells=NavalRepairPuzzle.Create(packet.Repair,_settings.Repair.RequiredHits)};
                     }
                     else if(mode==NavalManageAction.CancelRepair) {Repairs.Remove(p.Id);RepairCooldown[p.Id]=now+1000;}
                     else if(mode==NavalManageAction.RepairInput)
@@ -212,10 +216,11 @@ internal static partial class NavalSystem
                         else if(now-r.Last>=400)
                         {
                             r.Last=now;
-                            var correct=NavalRepairRules.Matches(r.Kind,r.Target,packet.Value,now-r.Start);
-                            if(correct)r.Hits=Math.Min(_settings.Repair.RequiredHits,r.Hits+1);else r.Hits=Math.Max(0,r.Hits-1);
-                            r.Target=r.Kind==NavalRepairKind.Pumping?(r.Target==0?2:0):Random.Shared.Next(3);
-                            if(NavalRepairRules.Complete(_settings.Repair,r.Hits,now-r.Start))
+                            var cell=packet.Value&65535;var rotated=(packet.Value&65536)!=0;
+                            if(packet.Quantity!=r.Revision || packet.Value<0 || packet.Value>131071)return;
+                            if(r.Hits+1>=_settings.Repair.RequiredHits && now-r.Start<_settings.Repair.MinimumRoundMilliseconds){SendManagement(p,NavalManageAction.Repair,now,"Finish the repair after the minimum work time.");return;}
+                            if(NavalRepairPuzzle.Place(r.Cells,r.Kind,cell,rotated)){r.Hits++;r.Revision++;}
+                            if(!r.Cells.Contains((byte)1) && NavalRepairRules.Complete(_settings.Repair,r.Hits,now-r.Start))
                             {
                                 Repairs.Remove(p.Id);RepairCooldown[p.Id]=now+_settings.Repair.CooldownSeconds*1000L;
                                 if(!RepairRequests.TryGetValue(v.State.Id,out var requests))RepairRequests[v.State.Id]=requests=[];
@@ -253,7 +258,7 @@ internal static partial class NavalSystem
     private static void TryRam(Vessel v,Vessel target,long now)
     {
         var power=SkillPower(v,NavalSkillKind.RammingSpeed,now);
-        if(power==0 || target.Enemy==null || target.Health<=0 || target.SunkUntil>0 || Math.Abs(v.State.Speed)<1 || !v.RamTargets.Add(target.State.Id))return;
+        if(power==0 || v.EnemyBoardingEncounter!=Guid.Empty || target.EnemyBoardingEncounter!=Guid.Empty || target.Enemy==null || target.Health<=0 || target.SunkUntil>0 || Math.Abs(v.State.Speed)<1 || !v.RamTargets.Add(target.State.Id))return;
         var damage=Math.Min(target.Health,Math.Max(1,_settings.CannonDamage*(100+power)/100));
         target.Contributions[Driver(v)]=target.Contributions.GetValueOrDefault(Driver(v))+damage;
         target.Health-=damage;target.State.DamageState=1;Engage(v,target,now);
@@ -325,6 +330,7 @@ internal static partial class NavalSystem
                 else if(!saved){if(RepairRequests.TryGetValue(ship,out var waiting))requests.AddRange(waiting);RepairRequests[ship]=requests;}
             }
         }
+        lock(Gate)if(Repairs.TryGetValue(p.Id,out var ownRepair))ownRepair.Progress=_settings.Repair.Curve().Progress(p.NavalCareer.RepairExperience);
         long xp;lock(Gate){xp=RepairRewards.GetValueOrDefault(p.Id);RepairRewards.Remove(p.Id);}
         if(xp>0)
         {

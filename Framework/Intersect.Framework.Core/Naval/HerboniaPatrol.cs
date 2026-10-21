@@ -3,6 +3,12 @@ namespace Intersect.Framework.Core.Naval;
 /// <summary>One server-controlled enemy, with a home and four local patrol waypoints.</summary>
 public sealed class HerboniaPatrol
 {
+    public Guid BoardingDungeonId {get;set;}
+    public Guid BoardingEntryMapId {get;set;}
+    public int BoardingEntryX {get;set;}
+    public int BoardingEntryY {get;set;}
+    public int BoardingHealthPercent {get;set;}=25;
+    public double BoardingRange {get;set;}=4;
     public bool Enabled { get; set; }
     public ShipDefinition Ship { get; set; } = new() { Graphics="Ship_Herbonia_001.png",
         DamagedGraphics="Ship_Herbonia_001.png", SinkingGraphics="Ship_Herbonia_001_sink.png" };
@@ -16,7 +22,7 @@ public sealed class HerboniaPatrol
     public double PatrolRadius { get; set; } = 5;
     public double DockSafeRange { get; set; } = 6;
     public int RespawnSeconds { get; set; } = 60;
-    public bool IsValid() => Loot!=null && Loot.Length<=32 && Loot.All(e=>e?.IsValid()==true) && Ship?.IsValid()==true && Level is >=1 and <=200 && MaximumHealth is >=1 and <=100000 &&
+    public bool IsValid() => BoardingHealthPercent is >=1 and <=50 && double.IsFinite(BoardingRange) && BoardingRange is >=2 and <=8 && BoardingEntryX is >=0 and <=255 && BoardingEntryY is >=0 and <=255 && (BoardingDungeonId==Guid.Empty || BoardingEntryMapId!=Guid.Empty) && Loot!=null && Loot.Length<=32 && Loot.All(e=>e?.IsValid()==true) && Ship?.IsValid()==true && Level is >=1 and <=200 && MaximumHealth is >=1 and <=100000 &&
         CannonDamage is >=1 and <=100 && SailingExperienceReward is >=0 and <=1000000000 &&
         new[]{DetectionRange,LeashRadius,PatrolRadius,DockSafeRange}.All(double.IsFinite) &&
         DetectionRange is >=3 and <=40 && LeashRadius>=DetectionRange && LeashRadius<=80 &&

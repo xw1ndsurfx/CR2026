@@ -11,7 +11,7 @@ namespace Intersect.Client.Interface.Game;
 internal class NavalManagementWindow:Window
 {
     private readonly ScrollControl _list;private readonly Label _status;private readonly Label _timer;
-    private NavalManagementState _state=new();private long _received;private RepairMeter? _meter;private bool _expiredRefresh;
+    private NavalManagementState _state=new();private long _received;private bool _expiredRefresh;private bool _repairRotated;
     internal static string T(string text)=>NavalSetupText.Get(text,ClientLanguages.Current);
     internal static void Request(NavalManageAction action,CannonAmmoKind ammo=default,int quantity=1,NavalSkillKind skill=default,NavalRepairKind repair=default,Guid target=default,Guid token=default,int value=0)=>
         Networking.Network.SendPacket(new NavalManagePacket {Action=action,Ammo=ammo,Quantity=quantity,Skill=skill,Repair=repair,TargetId=target,Token=token,Value=value});
@@ -50,28 +50,35 @@ internal class NavalManagementWindow:Window
     internal void Apply(NavalManagementState state)
     {
         if(state.Mode==NavalManageAction.CancelRepair){Hide();return;}
-        _state=state;_received=Environment.TickCount64;_expiredRefresh=false;_meter=null;_list.DeleteAllChildren();
+        if(_state.RepairToken!=state.RepairToken)_repairRotated=false;
+        _state=state;_received=Environment.TickCount64;_expiredRefresh=false;_list.DeleteAllChildren();
         _status.Text=(string.IsNullOrEmpty(state.Message)?"":T(state.Message)+"\n")+(state.Mode==NavalManageAction.Ammo?T("Ammunition inventory"):string.Format(T("Sailing {0} - Gunnery {1} - Shipwright {2}"),state.SailingLevel,state.GunneryLevel,state.Shipwright.Level));
         var width=_list.Width-24;var y=4;
         if(state.Mode==NavalManageAction.Repair)
         {
+            void Progress(string id,string name,SailingProgress progress)
+            {
+                Text(_list,id+"Name",string.Format(T("{0} - Shipwright level {1}"),name,progress.Level),8,y,width-16,25,12);y+=27;
+                var bar=new PlayerProfileWindow.ProfileProgressBar(_list,id+"Experience"){Progress=progress.Required<=0?1:(float)progress.Experience/progress.Required};bar.SetBounds(8,y,width-16,18);
+                Text(bar,id+"ExperienceText",progress.Required<=0?T("Maximum level"):string.Format(T("{0}/{1} EXP"),progress.Experience,progress.Required),4,0,bar.Width-8,18,10);y+=26;
+            }
+            Progress("OwnShipwright",Globals.Me?.Name??T("You"),state.Shipwright);
+            Text(_list,"RepairCrewCaption",T("Shipwrights at work"),8,y,width-16,25,12);y+=28;
+            foreach(var member in state.RepairParticipants.Where(m=>m.PlayerId!=Globals.Me?.Id))Progress("Shipwright"+member.PlayerId,member.Name,member.Progress);
+
             if(state.RepairToken==Guid.Empty)
             {
-                Text(_list,"RepairChoice",T("Leave the cannon and choose a repair activity."),8,y,width-16,44,12);y+=54;
+                Text(_list,"RepairChoice",T("Choose the wooden pieces for this repair puzzle."),8,y,width-16,44,12);y+=54;
                 foreach(var kind in Enum.GetValues<NavalRepairKind>())
-                {var k=kind;Button(_list,"Repair"+k,k.ToString(),8,y,width-16,48,()=>Request(NavalManageAction.Repair,repair:k));y+=60;}
+                {var k=kind;Button(_list,"Repair"+k,NavalRepairPuzzle.Caption(k),8,y,width-16,48,()=>Request(NavalManageAction.Repair,repair:k));y+=60;}
             }
             else
             {
-                Text(_list,"RepairInstructions",T(state.RepairKind==NavalRepairKind.Hammering?"Strike the highlighted nail when the timing bar is green.":state.RepairKind==NavalRepairKind.Caulking?"Seal the highlighted leak.":"Pump left and right alternately."),8,y,width-16,50,12);y+=66;
-                Text(_list,"RepairHits",string.Format(T("Repairs: {0}/{1}"),state.RepairHits,state.RepairRequiredHits),8,y,width-16,30,14);y+=52;
-                for(var i=0;i<3;i++)
-                {
-                    var value=i;var b=Button(_list,"RepairTarget"+i,i==state.RepairTarget?"REPAIR":"-",8+i*(width-16)/3,y,(width-28)/3,100,()=>Request(NavalManageAction.RepairInput,token:state.RepairToken,value:value));
-                    b.IsDisabled=i!=state.RepairTarget;
-                }
-                _meter=new RepairMeter(_list);_meter.SetBounds(8,y+118,width-16,24);
-                Text(_list,"RepairTimingCaption",T("Timing"),8,y+146,width-16,24,11);
+                Text(_list,"RepairInstructions",T("Fit the wooden pieces into the hull breaches. Rotate a piece before placing it; restart if it no longer fits."),8,y,width-16,54,12);y+=58;
+                Text(_list,"RepairHits",T(NavalRepairPuzzle.Caption(state.RepairKind))+" - "+string.Format(T("Repairs: {0}/{1}"),state.RepairHits,state.RepairRequiredHits),8,y,width-16,28,14);y+=32;
+                Button(_list,"RotateRepairPiece","Rotate piece",8,y,(width-28)/2,32,()=>_repairRotated=!_repairRotated);
+                Button(_list,"RestartRepairPuzzle","Restart puzzle",16+(width-28)/2,y,(width-28)/2,32,()=>Request(NavalManageAction.Repair,repair:state.RepairKind));y+=40;
+                var board=new RepairPuzzleBoard(_list,state,()=>_repairRotated);board.SetBounds(8,y,width-16,Math.Max(1,state.RepairCells.Length/6)*36);y=board.Bottom+8;
             }
         }
         else if(state.Mode is NavalManageAction.Skills or NavalManageAction.UseSkill or NavalManageAction.BuySkill)
@@ -141,23 +148,9 @@ internal class NavalManagementWindow:Window
                 button.TooltipText=remaining>0?string.Format(T("Reload: {0}s"),(remaining+999)/1000):T(NavalSkillDefinition.Caption(entry.Definition.Kind));
             }
         }
+        if(_state.Mode==NavalManageAction.Repair && !_expiredRefresh && Environment.TickCount64-_received>=1000){_expiredRefresh=true;Request(NavalManageAction.RepairMenu);}
         if(_state.RepairToken==Guid.Empty)return;
-        var elapsed=_state.RepairElapsedMilliseconds+Environment.TickCount64-_received;var phase=elapsed%1600;
         _timer.Text=string.Format(T("Time: {0}s"),Math.Max(0,(_state.RepairRemainingMilliseconds-(Environment.TickCount64-_received))/1000));
-        if(_meter!=null)_meter.Phase=phase/1600f;
-        if(!_expiredRefresh && elapsed>=_state.RepairRemainingMilliseconds+_state.RepairElapsedMilliseconds){_expiredRefresh=true;Request(NavalManageAction.RepairMenu);}
-        _timer.TextColorOverride=phase is >=500 and <=1150?new Color(255,115,235,140):new Color(255,240,175,100);
-    }
-    private sealed class RepairMeter(Base parent):Base(parent,"RepairTimingBar")
-    {
-        internal float Phase;
-        protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
-        {
-            var old=skin.Renderer.DrawColor;
-            skin.Renderer.DrawColor=new Color(255,50,35,25);skin.Renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle(0,0,Width,Height));
-            skin.Renderer.DrawColor=new Color(255,65,145,90);skin.Renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle((int)(Width*.3125),2,(int)(Width*.40625),Height-4));
-            skin.Renderer.DrawColor=new Color(255,250,222,150);skin.Renderer.DrawFilledRect(new Intersect.Client.Framework.GenericClasses.Rectangle((int)((Width-4)*Phase),0,4,Height));skin.Renderer.DrawColor=old;
-        }
     }
 
 }

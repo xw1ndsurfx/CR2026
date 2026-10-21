@@ -25,6 +25,7 @@ internal static partial class NavalSystem
         internal readonly ShipInputAuthority Controls = new();
         internal long LastStep;
         internal Guid OwnerId;
+        internal Guid EnemyBoardingEncounter;
         internal Guid HelmsmanId,HelmOfferTo,HelmOfferToken;
         internal long HelmOfferUntil,SlowUntil;
         internal int SlowPercent;
@@ -247,7 +248,7 @@ internal static partial class NavalSystem
         lock (Gate)
         {
             if (player.NavalPartyExitRequested || packet.ShipId != player.NavalShipId ||
-                !Ships.TryGetValue(packet.ShipId, out var vessel) || Driver(vessel) != player.Id || player.Id!=vessel.State.CaptainId && !player.Party.Any(m=>m.Id==vessel.State.CaptainId) ||
+                !Ships.TryGetValue(packet.ShipId, out var vessel) || vessel.EnemyBoardingEncounter!=Guid.Empty || Driver(vessel) != player.Id || player.Id!=vessel.State.CaptainId && !player.Party.Any(m=>m.Id==vessel.State.CaptainId) ||
                 !vessel.Controls.Accept(vessel.State, player.Id, player.InGame && !player.IsDead && !player.HasPendingDeath, packet, now, Driver(vessel))) return;
             if (packet.Thrust != 0) vessel.Anchored = false;
             player.RegisterAfkActivity();
@@ -256,6 +257,7 @@ internal static partial class NavalSystem
 
     internal static void Update(Player player, long now)
     {
+        if(UpdateEnemyBoarding(player,now))return;
         var nearDock=player.NavalShipId==Guid.Empty && player.InGame && !player.IsDead && !player.HasPendingDeath && BesideCrewDock(player);
         if(!nearDock)player.NavalDockPromptSeen=false;
         else if(!player.NavalDockPromptSeen && !player.NavalBusy)
@@ -401,7 +403,7 @@ internal static partial class NavalSystem
                 Graphic=e.Snapshot.Graphic,AnimationId=e.Snapshot.AnimationId,PlaySound=e.Snapshot.PlaySound,AgeMilliseconds=(int)Math.Clamp(now-e.Born,0,1500) }).ToArray(), Ships = player.InstanceType != MapInstanceType.Overworld ? [] :
             Ships.Values.Where(v => visible.Contains(v.State.MapId) && ocean.Contains(v.State.MapId) && MapController.Get(v.State.MapId) != null)
                 .OrderByDescending(v=>v.State.Id==player.NavalShipId?2:v.State.Id==targetId?1:0).Take(64)
-                .Select(v => new ShipSnapshot { ActiveSkills=v.State.Id==player.NavalShipId?v.SkillUntil.Where(entry=>entry.Value>now).Select(entry=>new NavalActiveSkill {Kind=entry.Key,Icon=_settings.Skills.FirstOrDefault(def=>def.Kind==entry.Key)?.Icon??"",RemainingMilliseconds=(int)Math.Clamp(entry.Value-now,0,120000)}).ToArray():[], RepairAvailable=_settings.Repair.Enabled && v.State.Id==player.NavalShipId && Driver(v)!=player.Id && v.Health is >0 and <100 && v.SunkUntil==0,HelmsmanId=Driver(v),DockAvailable=v.State.Id==player.NavalShipId && v.State.CaptainId==player.Id && v.LeftLaunchDock && now-v.LaunchedAt>=8000 && ByCrewDock(v),
+                .Select(v => new ShipSnapshot { EnemyBoardingTargetId=v.State.Id==player.CaptainedShipId?EnemyBoardingTarget(player):Guid.Empty, ActiveSkills=v.State.Id==player.NavalShipId?v.SkillUntil.Where(entry=>entry.Value>now).Select(entry=>new NavalActiveSkill {Kind=entry.Key,Icon=_settings.Skills.FirstOrDefault(def=>def.Kind==entry.Key)?.Icon??"",RemainingMilliseconds=(int)Math.Clamp(entry.Value-now,0,120000)}).ToArray():[], RepairAvailable=_settings.Repair.Enabled && v.State.Id==player.NavalShipId && Driver(v)!=player.Id && v.Health is >0 and <100 && v.SunkUntil==0,HelmsmanId=Driver(v),DockAvailable=v.State.Id==player.NavalShipId && v.State.CaptainId==player.Id && v.LeftLaunchDock && now-v.LaunchedAt>=8000 && ByCrewDock(v),
                     HelmOfferToken=v.HelmOfferTo==player.Id && v.HelmOfferUntil>now?v.HelmOfferToken:Guid.Empty,CrewIds=v.Crew.Keys.ToArray(),Id = v.State.Id, CaptainId = v.State.CaptainId, MapId = v.State.MapId,
                     CargoCapacity=v.OwnerId==player.Id?v.Definition.CargoCapacity:player.BoardedShipId==v.State.Id?player.NavalCrewPassage?.Capacity??0:0,
                     Cargo=v.OwnerId==player.Id?(player.NavalFleet.FirstOrDefault(s=>s.Id==v.State.Id)?.Cargo.Select(NavalRewardSharing.Seal).ToArray()??[]):player.BoardedShipId==v.State.Id?(player.NavalCrewPassage?.Ship.Cargo.Select(NavalRewardSharing.Seal).ToArray()??[]):[],

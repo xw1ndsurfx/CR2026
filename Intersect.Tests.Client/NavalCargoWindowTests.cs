@@ -24,6 +24,20 @@ public sealed class NavalCargoWindowTests
     [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
 
     [Test]
+    public void RepairWindowShowsPersonalAndCrewExperienceAndASeparateHullPuzzle()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(1000,800)};
+        var window=new NavalManagementWindow(canvas,NavalManageAction.Repair);
+        window.Apply(new(){Mode=NavalManageAction.Repair,Shipwright=new(4,50,100),RepairToken=Guid.NewGuid(),RepairKind=NavalRepairKind.Hammering,
+            RepairCells=NavalRepairPuzzle.Create(NavalRepairKind.Hammering,5),RepairParticipants=[new(){PlayerId=Guid.NewGuid(),Name="Shipwright Test",Progress=new(9,75,150)}]});
+        var controls=Descendants(window).ToArray();
+        Assert.That(controls.OfType<PlayerProfileWindow.ProfileProgressBar>().Count(),Is.EqualTo(2));
+        Assert.That(controls.OfType<PlayerProfileWindow.ProfileProgressBar>().Select(p=>p.Progress),Is.All.EqualTo(.5f));
+        Assert.That(controls.OfType<Label>().Any(l=>l.Text?.Contains("Shipwright Test")==true),Is.True);
+        Assert.That(controls.OfType<RepairPuzzleBoard>().Count(),Is.EqualTo(1));
+        Assert.That(controls.OfType<Button>().Any(b=>b.Name=="RotateRepairPiece"),Is.True);
+    }
+    [Test]
     public void NewsTitleMarqueeKeepsTheFullTitleMovesLeftAndReturnsFromTheRight()
     {
         using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(800,600)};
@@ -300,9 +314,9 @@ public sealed class NavalCargoWindowTests
             if(b.Name.StartsWith("AmmoSlot"))continue;
             Assert.That(b.Text,Is.Not.Empty);Assert.That(b.Height,Is.GreaterThanOrEqualTo(30));
         }
-        window.Apply(new(){Mode=NavalManageAction.Repair,RepairToken=Guid.NewGuid(),RepairTarget=1,RepairKind=NavalRepairKind.Caulking,RepairRequiredHits=5});
-        var targets=Descendants(window).OfType<Button>().Where(b=>b.Name.StartsWith("RepairTarget")).ToArray();
-        Assert.That(targets.Length,Is.EqualTo(3));Assert.That(targets.Count(b=>!b.IsDisabled),Is.EqualTo(1));
+        window.Apply(new(){Mode=NavalManageAction.Repair,RepairToken=Guid.NewGuid(),RepairCells=NavalRepairPuzzle.Create(NavalRepairKind.Caulking,5),RepairKind=NavalRepairKind.Caulking,RepairRequiredHits=5});
+        var targets=Descendants(window).OfType<Button>().Where(b=>b.Name.StartsWith("HullCell")).ToArray();
+        Assert.That(targets.Length,Is.EqualTo(18));Assert.That(Descendants(window).OfType<RepairPuzzleBoard>().Count(),Is.EqualTo(1));
         Assert.That(window.Width,Is.LessThan(width));Assert.That(window.Height,Is.LessThan(height));
         window.Apply(new(){Mode=NavalManageAction.CancelRepair});Assert.That(window.IsHidden,Is.True);
     }

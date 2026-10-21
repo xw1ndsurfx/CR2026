@@ -4,7 +4,7 @@ namespace Intersect.Framework.Core.Naval;
 public enum NavalSkillKind : byte { RammingSpeed, FullSail, TakeCover, OpenFire, RepairBonus, RapidReload, LongRange, AgileHelm }
 public enum NavalRepairKind : byte { Hammering, Caulking, Pumping }
 public enum NavalTaskKind : byte { ShipsSunk, CannonHits, HullDamage, Repairs, Dockings, CargoUnloaded, SailingLevel, GunneryLevel, ShipwrightLevel }
-public enum NavalManageAction : byte { Ammo, Deposit, Withdraw, BuyAmmo, SelectAmmo, Skills, BuySkill, UseSkill, Repair, RepairInput, CancelRepair, OfferHelm, AcceptHelm, ReclaimHelm, Dock, RepairMenu, SellAmmo, AmmoShop }
+public enum NavalManageAction : byte { Ammo, Deposit, Withdraw, BuyAmmo, SelectAmmo, Skills, BuySkill, UseSkill, Repair, RepairInput, CancelRepair, OfferHelm, AcceptHelm, ReclaimHelm, Dock, RepairMenu, SellAmmo, AmmoShop, BoardEnemy }
 public sealed class NavalAmmoStack {public Guid ItemId {get;set;} public int Quantity {get;set;}}
 public sealed class NavalCareerData
 {
@@ -97,6 +97,9 @@ public sealed class NavalManagementState
     public SailingProgress Shipwright {get;set;}
     public Guid RepairToken {get;set;}
     public NavalRepairKind RepairKind {get;set;}
+    public NavalRepairParticipant[] RepairParticipants {get;set;}=[];
+    public byte[] RepairCells {get;set;}=[];
+    public int RepairRevision {get;set;}
     public int RepairHits {get;set;}
     public int RepairRequiredHits {get;set;}
     public int RepairTarget {get;set;}

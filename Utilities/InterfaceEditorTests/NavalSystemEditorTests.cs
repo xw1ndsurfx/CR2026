@@ -100,7 +100,7 @@ internal static class NavalSystemEditorTests
 
     private static void CheckHerboniaEditor()
     {
-        var patrol=new HerboniaPatrol();patrol.Ship.MapId=Guid.NewGuid();patrol.Ship.X=10.5;patrol.Ship.Y=10.5;
+        var patrol=new HerboniaPatrol {BoardingDungeonId=Guid.NewGuid(),BoardingEntryMapId=Guid.NewGuid(),BoardingEntryX=4,BoardingEntryY=5};patrol.Ship.MapId=Guid.NewGuid();patrol.Ship.X=10.5;patrol.Ship.Y=10.5;
         using var editor=new FrmNavalConfiguration(new() {NavigationJson=JsonConvert.SerializeObject(new NavalConfiguration {Herbonia=[patrol]}),CatalogueJson="{}"});
         var tabs=editor.Controls.OfType<TabControl>().Single();tabs.SelectedIndex=5;
         if(tabs.TabPages[5].Text!="Patrouilles IA Herbonia") throw new Exception("Localize the AI section.");
@@ -110,6 +110,7 @@ internal static class NavalSystemEditorTests
             Descendants(tabs.TabPages[5]).OfType<NumericUpDown>().Single(c=>c.Name==value.Item1).Value=value.Item2;
         var save=(NavalConfigurationRequestPacket)typeof(FrmNavalConfiguration).GetMethod("PrepareSave",BindingFlags.NonPublic|BindingFlags.Instance)!.Invoke(editor,null)!;
         var actual=JsonConvert.DeserializeObject<NavalConfiguration>(save.ConfigurationJson)!.Herbonia.Single();
+        if(actual.BoardingDungeonId!=patrol.BoardingDungeonId || actual.BoardingEntryMapId!=patrol.BoardingEntryMapId || actual.BoardingEntryX!=4 || actual.BoardingEntryY!=5)throw new Exception("The boarding encounter and deck entry must preserve authored identities.");
         if(save.Section!=1 || !actual.Enabled || actual.DetectionRange!=15 || actual.Ship.Id!=patrol.Ship.Id || actual.Level!=8 || actual.MaximumHealth!=500 || actual.CannonDamage!=17 || actual.SailingExperienceReward!=275) throw new Exception("AI editor must preserve identity and save its patrol settings.");
         var preview=Environment.GetEnvironmentVariable("NAVAL_HERBONIA_PREVIEW");
         if(!string.IsNullOrEmpty(preview))

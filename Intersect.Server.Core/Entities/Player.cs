@@ -5632,7 +5632,7 @@ public partial class Player : Entity
                 var oldMember = Party.Where(p => p.Id == target).FirstOrDefault();
                 if (oldMember != null)
                 {
-                    if(oldMember.NavalShipId!=Guid.Empty)oldMember.NavalPartyExitRequested=true;
+                    if(oldMember.NavalShipId!=Guid.Empty || Intersect.Server.Naval.NavalSystem.IsEnemyBoarding(oldMember))oldMember.NavalPartyExitRequested=true;
                     oldMember.Party = new List<Player>();
                     PacketSender.SendParty(oldMember);
                     PacketSender.SendChatMsg(oldMember, Strings.Parties.Kicked, ChatMessageType.Party, CustomColors.Alerts.Error);
@@ -5689,7 +5689,7 @@ public partial class Player : Entity
             return;
         }
 
-        if(NavalShipId!=Guid.Empty)NavalPartyExitRequested=true;
+        if(NavalShipId!=Guid.Empty || Intersect.Server.Naval.NavalSystem.IsEnemyBoarding(this))NavalPartyExitRequested=true;
         var remainingPartyMembers = Party.Except([this]).ToList();
 
         var partyIsDisbanding = remainingPartyMembers.Count <= 1;

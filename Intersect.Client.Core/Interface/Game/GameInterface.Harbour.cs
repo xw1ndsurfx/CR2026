@@ -1,4 +1,5 @@
 ﻿using Intersect.Network.Packets.Server;
+using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Framework.Core.Naval;
 namespace Intersect.Client.Interface.Game;
 public partial class GameInterface
@@ -7,7 +8,8 @@ public partial class GameInterface
     private NavalManagementWindow? _navalManagement;
     private NavalAmmoShopWindow? _navalAmmoShop;
     private NavalDockWindow? _navalDockPrompt;
-    private Guid _dockSuppressed,_helmOfferSeen;
+    private Window? _enemyBoardingPrompt;
+    private Guid _dockSuppressed,_helmOfferSeen,_enemyBoardingSuppressed;
     public void OpenNavalManagement(NavalManageAction mode=NavalManageAction.Ammo)=>NavalManagementWindow.Request(mode);
     public void ApplyNavalManagement(string json)
     {
@@ -27,6 +29,20 @@ public partial class GameInterface
         _boardingOffer?.Tick();foreach(var panel in _navalPanels.Values)panel.Tick();var ship=Naval.NavalWorld.OwnShip;
         if(ship!=null){_navalAmmoShop?.Hide();_shipShopWindow?.Hide();}
         else foreach(var mode in new[]{NavalManageAction.Repair,NavalManageAction.OfferHelm,NavalManageAction.Skills})if(_navalPanels.TryGetValue(mode,out var seaPanel))seaPanel.Hide();
+        if(ship is {EnemyBoardingTargetId:var target} && target!=Guid.Empty)
+        {
+            if(target==_enemyBoardingSuppressed)return;
+            if(_enemyBoardingPrompt==null)
+            {
+                _enemyBoardingPrompt=new EnemyBoardingPromptWindow(GameCanvas){DeleteOnClose=false,Alignment=[Intersect.Client.Framework.Gwen.Alignments.Center]};
+                _enemyBoardingPrompt.Closed+=(_,_)=>_enemyBoardingSuppressed=Naval.NavalWorld.OwnShip?.EnemyBoardingTargetId??Guid.Empty;
+                _enemyBoardingPrompt.SetSize(360,160);_enemyBoardingPrompt.DisableResizing();
+                NavalManagementWindow.Text(_enemyBoardingPrompt,"BoardingHint",NavalManagementWindow.T("Board the enemy deck with your crew?"),18,40,324,42,12);
+                NavalManagementWindow.Button(_enemyBoardingPrompt,"BoardEnemy","Board enemy ship",18,90,324,34,()=>NavalManagementWindow.Request(NavalManageAction.BoardEnemy,target:Naval.NavalWorld.OwnShip?.EnemyBoardingTargetId??Guid.Empty));
+            }
+            if(_enemyBoardingPrompt.IsHidden){_enemyBoardingPrompt.Show();_enemyBoardingPrompt.BringToFront();}
+        }
+        else{_enemyBoardingPrompt?.Hide();_enemyBoardingSuppressed=Guid.Empty;}
         if(ship?.HelmOfferToken is {} offer && offer!=Guid.Empty && offer!=_helmOfferSeen)
         {_helmOfferSeen=offer;OpenNavalManagement(NavalManageAction.OfferHelm);}
         if(ship is not {DockAvailable:true,Sinking:false}){_navalDockPrompt?.Hide();_dockSuppressed=Guid.Empty;return;}
@@ -44,7 +60,7 @@ public partial class GameInterface
     private NavalCrewWindow? _navalCrewWindow;
     public void UpdateNavalCrew() {UpdateNavalManagement();if(_navalCrewWindow is {IsHidden:false}) _navalCrewWindow.Update(Naval.NavalWorld.CrewState);}
     public bool IsHarbourVisible => _navalPanels.Values.Any(w=>!w.IsHidden) || _navalAmmoShop is {IsHidden:false} || _harbourWindow is { IsHidden: false } || _shipShopWindow is { IsHidden: false } || _navalCrewWindow is {IsHidden:false};
-    public void HideHarbour() { foreach(var panel in _navalPanels.Values)panel.Dismiss();_navalAmmoShop?.Hide();_navalDockPrompt?.Hide(); _harbourWindow?.Hide(); _shipShopWindow?.Hide();_navalCrewWindow?.Hide(); }
+    public void HideHarbour() { foreach(var panel in _navalPanels.Values)panel.Dismiss();_navalAmmoShop?.Hide();_navalDockPrompt?.Hide();_enemyBoardingPrompt?.Hide(); _harbourWindow?.Hide(); _shipShopWindow?.Hide();_navalCrewWindow?.Hide(); }
     public void ApplyHarbourState(HarbourStatePacket packet)
     {
         if(packet.View==HarbourView.Crew)

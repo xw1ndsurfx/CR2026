@@ -1,5 +1,130 @@
 {
   "Entries": {
+    "NO ENEMY CREW ON DECK": {
+      "en": "No enemy crew on the boarding deck.",
+      "fr": "Aucun ennemi sur le pont d’abordage.",
+      "es": "No hay enemigos en la cubierta de abordaje."
+    },
+    "Choose the wooden pieces for this repair puzzle.": {
+      "en": "Choose the wooden pieces for this repair puzzle.",
+      "fr": "Choisissez les pièces de bois pour réparer la coque.",
+      "es": "Elige las piezas de madera para reparar el casco."
+    },
+    "Hull panels (2 x 2)": {
+      "en": "Hull panels (2 x 2)",
+      "fr": "Panneaux de coque (2 x 2)",
+      "es": "Paneles de casco (2 x 2)"
+    },
+    "Sealing strips (3 cells)": {
+      "en": "Sealing strips (3 cells)",
+      "fr": "Bandes de calfatage (3 cases)",
+      "es": "Tiras de sellado (3 casillas)"
+    },
+    "Wooden planks (2 cells)": {
+      "en": "Wooden planks (2 cells)",
+      "fr": "Planches de bois (2 cases)",
+      "es": "Tablones de madera (2 casillas)"
+    },
+    "Fit the wooden pieces into the hull breaches. Rotate a piece before placing it; restart if it no longer fits.": {
+      "en": "Fit the wooden pieces into the hull breaches. Rotate a piece before placing it; restart if it no longer fits.",
+      "fr": "Ajustez les pièces de bois dans les brèches. Tournez-les avant de les placer ; recommencez si elles ne rentrent plus.",
+      "es": "Encaja las piezas de madera en las brechas. Gíralas antes de colocarlas; reinicia si ya no encajan."
+    },
+    "Rotate piece": {
+      "en": "Rotate piece",
+      "fr": "Tourner la pièce",
+      "es": "Girar pieza"
+    },
+    "Restart puzzle": {
+      "en": "Restart puzzle",
+      "fr": "Recommencer",
+      "es": "Reiniciar"
+    },
+    "Shipwrights at work": {
+      "en": "Shipwrights at work",
+      "fr": "Charpentiers au travail",
+      "es": "Carpinteros trabajando"
+    },
+    "{0} - Shipwright level {1}": {
+      "en": "{0} - Shipwright level {1}",
+      "fr": "{0} - Charpentier niveau {1}",
+      "es": "{0} - Carpintero nivel {1}"
+    },
+    "Maximum level": {
+      "en": "Maximum level",
+      "fr": "Niveau maximum",
+      "es": "Nivel máximo"
+    },
+    "{0}/{1} EXP": {
+      "en": "{0}/{1} EXP",
+      "fr": "{0}/{1} EXP",
+      "es": "{0}/{1} EXP"
+    },
+    "You": {
+      "en": "You",
+      "fr": "Vous",
+      "es": "Tú"
+    },
+    "Finish the repair after the minimum work time.": {
+      "en": "Finish the repair after the minimum work time.",
+      "fr": "Terminez la réparation après le temps minimum de travail.",
+      "es": "Termina la reparación tras el tiempo mínimo de trabajo."
+    },
+    "Enemy ship disabled": {
+      "en": "Enemy ship disabled",
+      "fr": "Navire ennemi immobilisé",
+      "es": "Barco enemigo inmovilizado"
+    },
+    "Board the enemy deck with your crew?": {
+      "en": "Board the enemy deck with your crew?",
+      "fr": "Aborder le pont ennemi avec votre équipage ?",
+      "es": "¿Abordar la cubierta enemiga con tu tripulación?"
+    },
+    "Board enemy ship": {
+      "en": "Board enemy ship",
+      "fr": "Aborder le navire ennemi",
+      "es": "Abordar barco enemigo"
+    },
+    "BoardingDungeonId": {
+      "en": "Boarding encounter (Dungeon Editor)",
+      "fr": "Combat d’abordage (Dungeon Editor)",
+      "es": "Encuentro de abordaje (Dungeon Editor)"
+    },
+    "BoardingEntryMapId": {
+      "en": "Boarding deck entry map",
+      "fr": "Carte d’entrée sur le pont",
+      "es": "Mapa de entrada a cubierta"
+    },
+    "BoardingEntryX": {
+      "en": "Deck entry X",
+      "fr": "Entrée du pont X",
+      "es": "Entrada a cubierta X"
+    },
+    "BoardingEntryY": {
+      "en": "Deck entry Y",
+      "fr": "Entrée du pont Y",
+      "es": "Entrada a cubierta Y"
+    },
+    "BoardingHealthPercent": {
+      "en": "Boarding hull threshold (%)",
+      "fr": "Seuil de coque pour aborder (%)",
+      "es": "Umbral del casco para abordar (%)"
+    },
+    "BoardingRange": {
+      "en": "Boarding distance (tiles)",
+      "fr": "Distance d’abordage (cases)",
+      "es": "Distancia de abordaje (casillas)"
+    },
+    "Configure the enemy boarding dungeon and deck entry in the naval editor.": {
+      "en": "Configure the enemy boarding dungeon and deck entry in the naval editor.",
+      "fr": "Configurez le combat d’abordage et l’entrée du pont dans l’éditeur naval.",
+      "es": "Configura el encuentro de abordaje y la entrada a cubierta en el editor naval."
+    },
+    "Boarding could not start. Check the deck, party requirements and dungeon configuration.": {
+      "en": "Boarding could not start. Check the deck, party requirements and dungeon configuration.",
+      "fr": "Abordage impossible. Vérifiez le pont, les conditions du groupe et le combat configuré.",
+      "es": "No se pudo iniciar el abordaje. Comprueba la cubierta, los requisitos del grupo y el encuentro."
+    },
     "Rapid reload": {
       "en": "Rapid reload",
       "fr": "Rechargement rapide",

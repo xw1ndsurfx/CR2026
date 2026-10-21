@@ -34,6 +34,7 @@ internal static class DungeonRunRuntime
         public required MapInstanceType InstanceType { get; init; }
         public required int LivesRemaining { get; set; }
         public ConcurrentDictionary<Guid, byte> Participants { get; } = [];
+        public Guid NavalEncounterId {get;init;}
         public bool BossDefeated { get; set; }
         public bool Finished { get; set; }
     }
@@ -67,7 +68,9 @@ internal static class DungeonRunRuntime
         WarpDirection direction,
         bool changeInstance,
         MapInstanceType instanceType,
-        out string error
+        out string error,
+        IReadOnlyList<Player>? navalParticipants=null,
+        Guid navalEncounterId=default
     )
     {
         error = string.Empty;
@@ -90,14 +93,14 @@ internal static class DungeonRunRuntime
             return false;
         }
 
-        var party = player.Party?.Where(member => member is { IsOnline: true }).ToList() ?? [];
+        var party = navalParticipants?.ToList() ?? player.Party?.Where(member => member is { IsOnline: true }).ToList() ?? [];
         if (party.Count == 0)
             party.Add(player);
 
-        var sharedParty = changeInstance && instanceType == MapInstanceType.Shared && party.Count > 1;
+        var sharedParty = navalEncounterId!=Guid.Empty || changeInstance && instanceType == MapInstanceType.Shared && party.Count > 1;
         List<Player> participants = sharedParty ? party : [player];
 
-        if (sharedParty && player.PartyLeader != player)
+        if (sharedParty && navalEncounterId==Guid.Empty && player.PartyLeader != player)
         {
             error = "Only the Party leader can open a shared dungeon gate.";
             return false;
@@ -149,7 +152,7 @@ internal static class DungeonRunRuntime
             }
         }
 
-        MapInstanceType? requestedInstanceType = changeInstance
+        MapInstanceType? requestedInstanceType = navalEncounterId!=Guid.Empty?MapInstanceType.Personal:changeInstance
             ? instanceType == MapInstanceType.Shared && !sharedParty
                 ? MapInstanceType.Personal
                 : instanceType
@@ -183,6 +186,7 @@ internal static class DungeonRunRuntime
                 if (member.Id == player.Id)
                     continue;
 
+                if(navalEncounterId!=Guid.Empty)member.PersonalMapInstanceId=instanceId;
                 member.Warp(
                     mapId,
                     x,
@@ -192,7 +196,8 @@ internal static class DungeonRunRuntime
                     zOverride: 0,
                     mapSave: false,
                     fromWarpEvent: true,
-                    mapInstanceType: MapInstanceType.Shared
+                    mapInstanceType: navalEncounterId!=Guid.Empty?MapInstanceType.Personal:MapInstanceType.Shared,
+                    fromLogin: navalEncounterId!=Guid.Empty
                 );
             }
         }
@@ -224,7 +229,8 @@ internal static class DungeonRunRuntime
             EndAtUnixMilliseconds = end,
             InitiatorId = player.Id,
             ChangeInstance = changeInstance,
-            InstanceType = instanceType,
+            InstanceType = navalEncounterId!=Guid.Empty?MapInstanceType.Personal:instanceType,
+            NavalEncounterId=navalEncounterId,
             LivesRemaining = Math.Max(1, dungeon.MaxLives),
         };
 
@@ -245,6 +251,11 @@ internal static class DungeonRunRuntime
             RunsByInstance[instanceId] = run;
         }
 
+        if(navalEncounterId!=Guid.Empty && CountAliveMonsters(run)==0)
+        {
+            Fail(run,"NO ENEMY CREW ON DECK",reviveDeadPlayers:false,offerRetry:false);
+            error="The boarding deck has no attackable enemies.";return false;
+        }
         Intersect.Server.PartyLobbies.PartyLobbyRuntime.MarkDungeonStarted(run.Participants.Keys);
 
         // Register an attempt for every player actually inside this instance.
@@ -291,10 +302,12 @@ internal static class DungeonRunRuntime
             player.SendPacket(CreatePacket(run,DungeonRunStatus.Active,BuildObjectiveText(run)));
             return true;
         }
+        if(Naval.NavalSystem.RecoverFinishedEnemyBoarding(player))return true;
         if(!string.IsNullOrEmpty(player.GetVariable(ResumeMarkerId)?.Value.String) || DungeonConfigurationRuntime.Current.Dungeons.Any(dungeon=>dungeon.MapIds.Contains(player.MapId)))
         {
             player.SetVariableValue(ResumeMarkerId,string.Empty);
             player.WarpToLastOverworldLocation(true);
+            Naval.NavalSystem.RecoverLogin(player);
             return true;
         }
         return false;
@@ -311,7 +324,7 @@ internal static class DungeonRunRuntime
         }
     }
 
-    internal static void OnNpcDied(Npc npc)
+    internal static void OnNpcDied(Npc npc,Entity killer=null)
     {
         if (npc == null || npc.MapInstanceId == Guid.Empty)
             return;
@@ -331,6 +344,11 @@ internal static class DungeonRunRuntime
             run.BossDefeated = true;
         }
 
+        if(run.NavalEncounterId!=Guid.Empty && (killer is Player actor || killer is Npc {PetOwner:Player}))
+        {
+            var participant=killer as Player ?? (killer as Npc)?.PetOwner;
+            if(participant!=null)Naval.NavalSystem.CreditBoardingKill(run.NavalEncounterId,participant.Id,npc.Id);
+        }
         EvaluateCompletion(run);
         if (!run.Finished)
             Broadcast(run, DungeonRunStatus.Active, BuildObjectiveText(run));
@@ -349,6 +367,11 @@ internal static class DungeonRunRuntime
         }
     }
 
+    internal static void LeaveNavalBoarding(Player player,Guid encounter)
+    {
+        lock(Gate)foreach(var run in RunsByInstance.Values.Where(r=>r.NavalEncounterId==encounter))run.Participants.TryRemove(player.Id,out _);
+        player.SetVariableValue(ResumeMarkerId,string.Empty);
+    }
     internal static bool TryHandlePlayerDeath(Player player)
     {
         if (player == null || player.MapInstanceId == Guid.Empty)
@@ -490,6 +513,7 @@ internal static class DungeonRunRuntime
             run.Finished = true;
         }
 
+        if(run.NavalEncounterId!=Guid.Empty)Naval.NavalSystem.FinishEnemyBoarding(run.NavalEncounterId,true);
         var participants = GetParticipants(run).ToArray();
         var clearTimeMs = Math.Max(1L,
             DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - run.StartedAtUnixMilliseconds);
@@ -556,6 +580,7 @@ internal static class DungeonRunRuntime
             run.Finished = true;
         }
 
+        if(run.NavalEncounterId!=Guid.Empty)Naval.NavalSystem.FinishEnemyBoarding(run.NavalEncounterId,false);
         var participants = GetParticipants(run).ToArray();
         foreach (var player in participants)
         {
@@ -567,7 +592,7 @@ internal static class DungeonRunRuntime
                 player.EnqueueStartCommonEvent(failureEvent);
             }
 
-            player.SendPacket(CreatePacket(run, DungeonRunStatus.Failed, reason));
+            player.SendPacket(CreatePacket(run, DungeonRunStatus.Failed, run.NavalEncounterId==Guid.Empty?reason:Intersect.Framework.Core.Naval.NavalSetupText.Get(reason,player.Client?.LanguageCode??"en")));
         }
 
         foreach (var player in participants)
@@ -579,7 +604,7 @@ internal static class DungeonRunRuntime
         lock (Gate)
             RunsByInstance.Remove(run.MapInstanceId);
 
-        if (offerRetry)
+        if (offerRetry && run.NavalEncounterId==Guid.Empty)
         {
             var initiator = participants.FirstOrDefault(player => player.Id == run.InitiatorId);
             if (initiator != null && initiator.IsOnline)
@@ -666,6 +691,7 @@ internal static class DungeonRunRuntime
     private static void WarpToExit(Player player, Run run, bool reviveIfDead)
     {
         player.SetVariableValue(ResumeMarkerId,string.Empty);
+        if(run.NavalEncounterId!=Guid.Empty && Naval.NavalSystem.ReturnFromEnemyBoarding(player,run.NavalEncounterId,reviveIfDead))return;
         if (run.Dungeon.ExitMapId != Guid.Empty)
         {
             var direction = run.Dungeon.ExitDirection == WarpDirection.Retain
@@ -709,7 +735,7 @@ internal static class DungeonRunRuntime
         foreach (var participantId in run.Participants.Keys)
         {
             var player = Player.FindOnline(participantId);
-            if (player != null)
+            if (player != null && (run.NavalEncounterId==Guid.Empty || Naval.NavalSystem.CanReceiveBoardingReward(player,run.NavalEncounterId)))
                 yield return player;
         }
     }

@@ -24,6 +24,7 @@ internal static partial class NavalSystem
             var dt=_lastEnemyStep==0?0:Math.Clamp((now-_lastEnemyStep)/1000d,0,.1);
             _lastEnemyStep=now;
             if(!IsEnabled()) return;
+            PruneEnemyBoardings(now);
             foreach(var id in Repairs.Where(p=>now-p.Value.Start>_settings.Repair.RoundSeconds*1000L).Select(p=>p.Key).ToArray())Repairs.Remove(id);
             foreach(var id in RepairCooldown.Where(p=>p.Value<now-60000).Select(p=>p.Key).ToArray())RepairCooldown.Remove(id);
             var ocean=OceanMapResolver.Maps();
@@ -97,6 +98,8 @@ internal static partial class NavalSystem
     private static void StepEnemy(Vessel enemy,HashSet<Guid> ocean,long now,double dt)
     {
         var config=enemy.Enemy;var s=enemy.State;var d=enemy.Definition;
+        if(enemy.EnemyBoardingEncounter!=Guid.Empty || enemy.SunkUntil==0 && config.BoardingDungeonId!=Guid.Empty && enemy.Health*100L<=enemy.MaximumHealth*(long)config.BoardingHealthPercent)
+        {s.Speed=s.Throttle=0;enemy.Controls.Reset();return;}
         if(enemy.SunkUntil>0)
         {
             if(enemy.RespawnAt==0) enemy.RespawnAt=enemy.SunkUntil+config.RespawnSeconds*1000L;
@@ -112,7 +115,7 @@ internal static partial class NavalSystem
         Vessel target=null; (double X,double Y) point=home.Value;
         var nearest=config.DetectionRange;
         if(homeDistance<=config.LeashRadius && !SafeDock(enemy,s.MapId,s.X,s.Y))
-            foreach(var candidate in Ships.Values.Where(v=>v.Enemy==null && v.State.CaptainId!=Guid.Empty && v.SunkUntil==0))
+            foreach(var candidate in Ships.Values.Where(v=>v.Enemy==null && v.State.CaptainId!=Guid.Empty && v.SunkUntil==0 && v.EnemyBoardingEncounter==Guid.Empty))
             {
                 var other=Relative(s.MapId,candidate.State.MapId,candidate.State.X,candidate.State.Y,ocean);
                 var fromHome=Relative(d.MapId,candidate.State.MapId,candidate.State.X,candidate.State.Y,ocean);

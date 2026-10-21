@@ -246,7 +246,7 @@ public partial class Npc : Entity
                 );
             }
 
-            DungeonRunRuntime.OnNpcDied(this);
+            DungeonRunRuntime.OnNpcDied(this,killer);
 
             if (MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var instance))
             {

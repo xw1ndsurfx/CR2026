@@ -90,6 +90,7 @@ internal static partial class NavalSystem
     private static void Fire(Vessel vessel,bool starboard,long now)=>FireAmmunition(vessel,starboard,now,null,null);
     private static void FireAmmunition(Vessel vessel, bool starboard, long now,CannonAmmunition ammo,List<Cannonball> planned)
     {
+        if(vessel.EnemyBoardingEncounter!=Guid.Empty)return;
         var ready = starboard ? vessel.StarboardReady : vessel.PortReady;
         if (!ShipActions.CanFire(_settings.CannonsEnabled,vessel.SunkUntil==0,false,now,ready) || Cannonballs.Count+PendingCrewShots > 509) return;
         if (starboard) vessel.StarboardReady = now + NavalSkillDefinition.Reload(_settings.CannonReloadMilliseconds,ammo?.ReloadPercent??100,SkillPower(vessel,NavalSkillKind.RapidReload,now));
@@ -146,7 +147,7 @@ internal static partial class NavalSystem
                 ball.MapId=map;ball.X=x;ball.Y=y;
                 var height=ball.Flight?.HeightAtDistance(ball.Travelled+distance)??0;
                 var tile=(map,(int)Math.Floor(x),(int)Math.Floor(y));
-                if (!hulls.TryGetValue(tile,out var target) || target.State.Id==ball.ShipId || target.SunkUntil>0 ||
+                if (!hulls.TryGetValue(tile,out var target) || target.State.Id==ball.ShipId || target.SunkUntil>0 || target.EnemyBoardingEncounter!=Guid.Empty ||
                     height>Math.Max(2,target.Definition.Length)) return true;
                 impact=NavalEffectKind.HullImpact;
                 var permitted=ShipEnemySteering.CanDamage(ball.Enemy,target.Enemy!=null,target.OwnerId!=Guid.Empty || target.State.CaptainId!=Guid.Empty,
