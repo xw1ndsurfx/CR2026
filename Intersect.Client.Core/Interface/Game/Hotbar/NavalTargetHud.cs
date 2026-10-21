@@ -1,4 +1,5 @@
 using Intersect.Client.Framework.File_Management;
+using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.GenericClasses;
@@ -9,11 +10,12 @@ using Intersect.Network.Packets.Server;
 
 namespace Intersect.Client.Interface.Game.Hotbar;
 
-/// <summary>Compact canvas-level combat target. No mouse capture and no changes to normal entity targeting.</summary>
+/// <summary>Compact combat target; only effect badges accept mouse input for their tooltips.</summary>
 internal sealed class NavalTargetHud : Base
 {
     private readonly Label _name,_health,_level;
     private ShipSnapshot? _target;
+    private readonly Dictionary<CannonAmmoKind,(Panel Panel,ImagePanel Icon,Label Timer)> _statuses=[];
     internal NavalTargetHud(Base parent):base(parent,nameof(NavalTargetHud))
     {
         MouseInputEnabled=KeyboardInputEnabled=false;
@@ -26,13 +28,35 @@ internal sealed class NavalTargetHud : Base
     internal void Update(ShipSnapshot? target)
     {
         _target=target;IsHidden=target==null;
-        if(target==null) return;
+        foreach(var row in _statuses.Values)row.Panel.Hide();
+        if(target==null)return;
+        var effects=(target.CannonStatuses??[]).Where(e=>NavalWorld.StatusRemaining(target.Id,e)>0).Take(8).ToArray();
         var width=Math.Max(200,Math.Min(380,(Parent?.Width??800)-24));
-        SetBounds(Math.Max(8,((Parent?.Width??800)-width)/2),22,width,76);
+        var columns=Math.Max(1,(width-24)/36);
+        SetBounds(Math.Max(8,((Parent?.Width??800)-width)/2),22,width,76+46*((effects.Length+columns-1)/columns));
         _name.SetBounds(64,7,width-74,24);_health.SetBounds(64,47,width-74,21);_level.SetBounds(7,24,46,24);
         EventPanelText.Fit(_name,NavalWorld.EnemyName(target),12);
         _level.Text=string.Format(NavalSetupText.Get("Lv. {0}",ClientLanguages.Current),target.Level);
         _health.Text=string.Format(NavalSetupText.Get("Hull: {0:N0} / {1:N0}",ClientLanguages.Current),target.Health,target.MaximumHealth);
+        for(var index=0;index<effects.Length;index++)
+        {
+            var effect=effects[index];
+            if(!_statuses.TryGetValue(effect.Kind,out var row))
+            {
+                var panel=new Panel(this,"CannonStatus"+effect.Kind) {BackgroundColor=new Color(240,65,32,24),MouseInputEnabled=true,KeyboardInputEnabled=false};
+                var icon=new ImagePanel(panel,"Icon") {MaintainAspectRatio=true,ShouldDrawBackground=false,MouseInputEnabled=false};
+                icon.SetBounds(2,2,26,26);
+                var timer= new Label(panel,"Remaining") {AutoSizeToContents=false,Font=Skin.DefaultFont,FontSize=9,TextColorOverride=new Color(255,240,220,165),TextAlign=Pos.Center,MouseInputEnabled=false};
+                timer.SetBounds(0,28,30,14);
+                _statuses[effect.Kind]=row=(panel,icon,timer);
+            }
+            var remaining=NavalWorld.StatusRemaining(target.Id,effect);
+            row.Panel.SetBounds(12+index%columns*36,77+index/columns*46,30,43);row.Panel.Show();
+            row.Icon.Texture=NavalPresentation.SafeAsset(effect.Icon) && !string.IsNullOrEmpty(effect.Icon)
+                ?GameContentManager.Current.GetTexture(TextureType.Spell,effect.Icon):null;
+            row.Timer.Text=((remaining+999)/1000).ToString();
+            row.Panel.SetToolTipText(NavalCannonStatusText.Tooltip(effect,remaining,ClientLanguages.Current));
+        }
     }
     protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
     {

@@ -147,11 +147,12 @@ internal static partial class NavalSystem
         }
         finally {if(!committed) for(var i=0;i<before.Length;i++) player.Items[i].Set(before[i]);}
     }
-    private static void CreditGunner(Cannonball ball,Vessel victim,int damage)
+    private static void CreditGunner(Cannonball ball,Vessel victim,int damage,bool cannonHit=true)
     {
         if(ball.GunnerId==Guid.Empty || victim.Enemy==null || damage<=0 || !Ships.TryGetValue(ball.ShipId,out var ship) ||
             ship.State.CaptainId!=ball.GunnerId && !ship.Crew.ContainsKey(ball.GunnerId)) return;
-        QueueNavalTask(ball.GunnerId,NavalTaskKind.CannonHits,1);QueueNavalTask(ball.GunnerId,NavalTaskKind.HullDamage,damage);
+        if(cannonHit)QueueNavalTask(ball.GunnerId,NavalTaskKind.CannonHits,1);
+        QueueNavalTask(ball.GunnerId,NavalTaskKind.HullDamage,damage);
         PendingGunnery.TryGetValue(ball.GunnerId,out var pending);
         PendingGunnery[ball.GunnerId]=new(Math.Min(200000000000000L,(pending?.Experience??0)+(long)damage*_settings.Gunnery.ExperiencePerDamage));
     }

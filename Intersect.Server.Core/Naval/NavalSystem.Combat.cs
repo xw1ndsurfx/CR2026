@@ -124,6 +124,7 @@ internal static partial class NavalSystem
 
     private static void UpdateCannonballs(long now)
     {
+        UpdateCannonStatuses(now);
         if (!_settings.CannonsEnabled) { Cannonballs.Clear(); _lastCombatStep=now; return; }
         if (_lastCombatStep==0) { _lastCombatStep=now; return; }
         var seconds=(now-_lastCombatStep)/1000d;
@@ -157,32 +158,24 @@ internal static partial class NavalSystem
                 if(permitted && Ships.TryGetValue(ball.ShipId,out var attacker))
                 {
                     Engage(attacker,target,now);
-                    if(ball.GunnerId==Guid.Empty && !ball.Enemy){QueueNavalTask(Driver(attacker),NavalTaskKind.CannonHits,1);QueueNavalTask(Driver(attacker),NavalTaskKind.HullDamage,Math.Min(target.Health,ball.Damage));}
+                    ApplyCannonStatus(ball,target,attacker,now);
                     if(ball.Ammo is {SlowPercent:>0} slow){target.SlowPercent=slow.SlowPercent;target.SlowUntil=now+slow.SlowSeconds*1000L;}
                 }
                 // Protected player hulls still intercept shots; no firing through another ship.
                 if (permitted && target.OwnerId==Guid.Empty)
                 {
-                    CreditGunner(ball,target,Math.Min(target.Health,ball.Damage));
-                    if(target.Enemy!=null && Ships.TryGetValue(ball.ShipId,out var firingShip))
-                    {var actor=ball.GunnerId==Guid.Empty?Driver(firingShip):ball.GunnerId;target.Contributions[actor]=target.Contributions.GetValueOrDefault(actor)+Math.Min(target.Health,ball.Damage);}
-                    target.Health=Math.Max(0,target.Health-ball.Damage);
-                    target.State.DamageState=target.Health<target.MaximumHealth?1:0;
-                    if (target.Health==0)
-                    {
-                        CreditEnemySink(target,ball.ShipId,ball.CaptainId);
-                        target.State.Speed=target.State.Throttle=0;target.Controls.Reset();
-                        target.SunkUntil=now+Math.Max(2000,target.Definition.FrameMilliseconds*4);
-                        target.SinkingGraphics=target.Definition.SinkingGraphics;
-                        Emit(NavalEffectKind.Sinking,target.State.MapId,target.State.X,target.State.Y,target.State.Heading,now);
-                    }
+                    DamageCannonTarget(ball,target,ball.Damage,now);
                 }
                 else if (permitted && target.OwnerId!=Guid.Empty)
+                {
+                    if(ball.GunnerId==Guid.Empty && !ball.Enemy && Ships.TryGetValue(ball.ShipId,out var firingShip))
+                    {QueueNavalTask(Driver(firingShip),NavalTaskKind.CannonHits,1);QueueNavalTask(Driver(firingShip),NavalTaskKind.HullDamage,Math.Min(target.Health,ball.Damage));}
                     target.PendingDamage=Math.Min(100,target.PendingDamage+Math.Max(1,ball.Damage*100/(100+SkillPower(target,NavalSkillKind.TakeCover,now))));
+                }
                 stopped=true;return false;
             });
             ball.Remaining-=travelled;ball.Travelled+=travelled;
-            if (stopped || ball.Remaining<=0) {Emit(impact,ball.MapId,ball.X,ball.Y,ball.Heading,now,animationId:ball.ImpactAnimationId,graphic:impact==NavalEffectKind.WaterImpact?ball.Ammo?.WaterGraphic:ball.Ammo?.HullGraphic);Cannonballs.Remove(ball);}
+            if (stopped || ball.Remaining<=0) {Emit(impact,ball.MapId,ball.X,ball.Y,ball.Heading,now,animationId:ball.Ammo?.ImpactAnimation(impact==NavalEffectKind.HullImpact)??ball.ImpactAnimationId,graphic:impact==NavalEffectKind.WaterImpact?ball.Ammo?.WaterGraphic:ball.Ammo?.HullGraphic);Cannonballs.Remove(ball);}
         }
         // Unoccupied public test targets disappear after their sinking animation until server restart/configuration reload.
         foreach (var vessel in Ships.Values.Where(v=>v.Enemy==null && v.OwnerId==Guid.Empty && v.State.CaptainId==Guid.Empty && v.SunkUntil>0 && now>=v.SunkUntil).ToArray())

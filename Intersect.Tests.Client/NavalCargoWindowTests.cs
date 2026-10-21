@@ -24,6 +24,30 @@ public sealed class NavalCargoWindowTests
     [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
 
     [Test]
+    public void NavalTargetShowsHoverableSpellEffectsWrapsThemAndClearsThemAfterCombat()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(240,300)};
+        Intersect.Client.Naval.NavalWorld.Clear();
+        try
+        {
+            var enemy=new ShipSnapshot {Id=Guid.NewGuid(),Enemy=true,Health=100,MaximumHealth=100,
+                CannonStatuses=Enum.GetValues<CannonAmmoKind>().Select(kind=>new NavalCannonStatus
+                {Kind=kind,Icon="fire.png",RemainingMilliseconds=30000,DamagePerTick=5,TickSeconds=2}).ToArray()};
+            Intersect.Client.Naval.NavalWorld.Apply(new(){Ships=[enemy]});
+            var hud=new NavalTargetHud(canvas);hud.Update(enemy);
+            var badges=hud.Children.OfType<Panel>().Where(c=>c.Name.StartsWith("CannonStatus")).ToArray();
+            Assert.That(badges,Has.Length.EqualTo(8));
+            Assert.That(badges.All(b=>b.MouseInputEnabled && !b.IsHidden),Is.True);
+            Assert.That(badges.All(b=>b.X>=0 && b.Right<=hud.Width && b.Bottom<=hud.Height),Is.True);
+            Assert.That(badges[0].TooltipText,Does.Contain("5"));
+            Assert.That(_content.Requests.Count(r=>r==(TextureType.Spell,"fire.png")),Is.EqualTo(8));
+            enemy.CannonStatuses=[];hud.Update(enemy);Assert.That(badges.All(b=>b.IsHidden),Is.True);
+            hud.Update(null);Assert.That(hud.IsHidden,Is.True);
+        }
+        finally {Intersect.Client.Naval.NavalWorld.Clear();}
+    }
+
+    [Test]
     public void PremiumTimerSupportsMoreThanAWeekExpiresAndClearsBetweenCharacters()
     {
         var old=System.Globalization.CultureInfo.CurrentUICulture;

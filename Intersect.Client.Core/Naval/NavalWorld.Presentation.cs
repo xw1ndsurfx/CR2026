@@ -123,6 +123,8 @@ internal static partial class NavalWorld
             yield return new(texture,new FloatRect(frame%layer.XFrames*w,frame/layer.XFrames*h,w,h),w*scale,h*scale,layer);
         }
     }
+    internal static int StatusRemaining(Guid ship,NavalCannonStatus effect)=>
+        _ships.TryGetValue(ship,out var view)?NavalCannonStatusText.Remaining(effect,Environment.TickCount64-view.Received):0;
     internal static ShipSnapshot? CombatTarget => OwnShip is {Sinking:false} && Fresh &&
         _ships.TryGetValue(_combatTargetId,out var view) && view.Current.Enemy && !view.Current.Sinking && view.Current.Health>0
             ? view.Current : null;

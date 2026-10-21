@@ -34,11 +34,19 @@ public sealed class CannonAmmunition
     public bool RequiresItem {get;set;}
     public Guid ItemId {get;set;}
     public Guid ImpactAnimationId {get;set;}
+    public Guid HullImpactAnimationId {get;set;}
+    public string StatusIcon {get;set;}="";
+    public int DamagePerTick {get;set;}
+    public int DamageTickSeconds {get;set;}=1;
+    public int DamageDurationSeconds {get;set;}=5;
     public int UnitsPerShot {get;set;}=1;
     public int DamagePercent {get;set;}=100;
     public int RangePercent {get;set;}=100;
     public int ReloadPercent {get;set;}=100;
-    public bool IsValid()=>RequiredSailingLevel is >=1 and <=200 && ShopPrice is >=0 and <=1000000000 && SlowPercent is >=0 and <=80 && SlowSeconds is >=1 and <=30 && new[]{Icon,ProjectileGraphic,WaterGraphic,HullGraphic}.All(NavalPresentation.SafeAsset) && Enum.IsDefined(Kind) && RequiredLevel is >=1 and <=200 && UnitsPerShot is >=1 and <=100 &&
+    public Guid ImpactAnimation(bool hull)=>hull && HullImpactAnimationId!=Guid.Empty ? HullImpactAnimationId : ImpactAnimationId;
+    public bool IsValid()=>DamagePerTick is >=0 and <=1000000 && DamageTickSeconds is >=1 and <=60 &&
+        DamageDurationSeconds is >=1 and <=300 && (DamagePerTick==0 || DamageDurationSeconds>=DamageTickSeconds) &&
+        NavalPresentation.SafeAsset(StatusIcon) && RequiredSailingLevel is >=1 and <=200 && ShopPrice is >=0 and <=1000000000 && SlowPercent is >=0 and <=80 && SlowSeconds is >=1 and <=30 && new[]{Icon,ProjectileGraphic,WaterGraphic,HullGraphic}.All(NavalPresentation.SafeAsset) && Enum.IsDefined(Kind) && RequiredLevel is >=1 and <=200 && UnitsPerShot is >=1 and <=100 &&
         DamagePercent is >=10 and <=300 && RangePercent is >=25 and <=200 && ReloadPercent is >=25 and <=300;
     public static CannonAmmunition[] Defaults()=>[Visual(new(),"Standard"),Visual(new(){Kind=CannonAmmoKind.Heavy,RequiredSailingLevel=3,RequiredLevel=3,RequiresItem=true,DamagePercent=150,RangePercent=70,ReloadPercent=150},"Heavy"),
         Visual(new(){Kind=CannonAmmoKind.LongRange,RequiredSailingLevel=5,RequiredLevel=5,RequiresItem=true,DamagePercent=80,RangePercent=140,ReloadPercent=120},"LongRange"),

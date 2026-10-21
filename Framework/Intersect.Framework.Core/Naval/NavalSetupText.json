@@ -1,5 +1,45 @@
 {
   "Entries": {
+    "HullImpactAnimationId": {
+      "en": "Ship impact animation (Animations Editor)",
+      "fr": "Animation d’impact sur un bateau",
+      "es": "Impacto en barco (Animations Editor)"
+    },
+    "StatusIcon": {
+      "en": "Ongoing damage icon (spells)",
+      "fr": "Icône de l’effet (spells)",
+      "es": "Icono de daño continuo (spells)"
+    },
+    "DamagePerTick": {
+      "en": "Hull damage per tick (0 = disabled)",
+      "fr": "Dégâts par application (0 = désactivé)",
+      "es": "Daño al casco por aplicación (0 = desactivado)"
+    },
+    "DamageTickSeconds": {
+      "en": "Damage interval (seconds)",
+      "fr": "Intervalle des dégâts (secondes)",
+      "es": "Intervalo de daño (segundos)"
+    },
+    "DamageDurationSeconds": {
+      "en": "Damage duration (seconds)",
+      "fr": "Durée des dégâts (secondes)",
+      "es": "Duración del daño (segundos)"
+    },
+    "-{0:N0} hull every {1} s": {
+      "en": "-{0:N0} hull every {1} s",
+      "fr": "-{0:N0} PV de coque toutes les {1} s",
+      "es": "-{0:N0} PV de casco cada {1} s"
+    },
+    "Remaining: {0} s": {
+      "en": "Remaining: {0} s",
+      "fr": "Temps restant : {0} s",
+      "es": "Tiempo restante: {0} s"
+    },
+    "Repeated hits refresh this effect; it does not stack.": {
+      "en": "Repeated hits refresh this effect; it does not stack.",
+      "fr": "Les coups suivants renouvellent cet effet sans le cumuler.",
+      "es": "Los siguientes impactos renuevan este efecto sin acumularlo."
+    },
     "NO ENEMY CREW ON DECK": {
       "en": "No enemy crew on the boarding deck.",
       "fr": "Aucun ennemi sur le pont d’abordage.",
