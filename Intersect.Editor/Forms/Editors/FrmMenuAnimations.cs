@@ -14,17 +14,32 @@ public sealed class FrmMenuAnimations : DarkForm
         MinimumSize = new Size(850, 450);
         StartPosition = FormStartPosition.CenterParent;
         var draft = JsonConvert.DeserializeObject<List<MenuAnimationDefinition>>(JsonConvert.SerializeObject(ClientConfiguration.Instance.MenuAnimations)) ?? [];
-        var grid = new DataGridView { Dock = DockStyle.Fill, AutoGenerateColumns = false, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill };
+        var grid = new DataGridView { Dock = DockStyle.Fill, AutoGenerateColumns = false, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill, Name="MenuAnimationsGrid", SelectionMode=DataGridViewSelectionMode.FullRowSelect, MultiSelect=true, AllowUserToDeleteRows=true };
         var animations = AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().OrderBy(a => a.Name).ToList();
         grid.Columns.Add(new DataGridViewComboBoxColumn { HeaderText = "Animation", DataPropertyName = "AnimationId", DataSource = animations, DisplayMember = "Name", ValueMember = "Id" });
         foreach (var name in new[] { "XPercent", "YPercent", "ScalePercent", "TransparencyPercent" })
             grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = name, DataPropertyName = name });
         foreach (var name in new[] { "Loop", "Foreground" })
             grid.Columns.Add(new DataGridViewCheckBoxColumn { HeaderText = name, DataPropertyName = name });
-        grid.DataSource = new BindingList<MenuAnimationDefinition>(draft);
+        var binding=new BindingList<MenuAnimationDefinition>(draft);
+        grid.DataSource = binding;
         grid.DataError += (_, e) => e.ThrowException = false;
         var help = new Label { Dock = DockStyle.Top, Height = 60, Text = "Choose an existing animation. X/Y are screen percentages (50 = center). Foreground appears above menu graphics; clicks pass through. Definitions are copied into this installation's resources/config.json so they work before login. Distribute config.json and animation textures with the client." };
         string T(string source)=>Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(source,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+        var actions=new FlowLayoutPanel {Dock=DockStyle.Top,Height=40,Padding=new Padding(4)};
+        var remove=new Button {Name="DeleteMenuAnimation",Text=T("Remove selected animation"),AutoSize=true,Height=30};
+        void UpdateRemove()=>remove.Enabled=grid.Rows.Cast<DataGridViewRow>().Any(row=>!row.IsNewRow);
+        remove.Click+=(_,_)=>
+        {
+            var selected=grid.SelectedRows.Cast<DataGridViewRow>().Where(row=>!row.IsNewRow).ToArray();
+            if(selected.Length==0 && grid.CurrentRow is {IsNewRow:false} current)selected=[current];
+            var entries=selected.Select(row=>row.DataBoundItem).OfType<MenuAnimationDefinition>().Distinct().ToArray();
+            grid.CancelEdit();BindingContext[binding].CancelCurrentEdit();
+            foreach(var entry in entries)binding.Remove(entry);
+            UpdateRemove();
+        };
+        grid.RowsAdded+=(_,_)=>UpdateRemove();grid.RowsRemoved+=(_,_)=>UpdateRemove();
+        actions.Controls.Add(remove);UpdateRemove();
         var weatherDraft=JsonConvert.DeserializeObject<MenuWeatherDefinition>(JsonConvert.SerializeObject(ClientConfiguration.Instance.MenuWeather))??new();
         var weather=new FlowLayoutPanel {Dock=DockStyle.Bottom,Height=72};
         var fog=new ComboBox {Width=190,DropDownStyle=ComboBoxStyle.DropDownList};fog.Items.Add("");
@@ -73,6 +88,7 @@ public sealed class FrmMenuAnimations : DarkForm
             Close();
         };
         Controls.Add(grid);
+        Controls.Add(actions);
         Controls.Add(help);
         Controls.Add(weather);
         Controls.Add(save);

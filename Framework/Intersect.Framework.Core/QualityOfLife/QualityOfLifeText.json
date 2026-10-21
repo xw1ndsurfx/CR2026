@@ -399,6 +399,11 @@
       "en": "Splash animation",
       "fr": "Animation des éclaboussures",
       "es": "Animación de salpicaduras"
+    },
+    "Remove selected animation": {
+      "en": "Remove selected animation",
+      "fr": "Supprimer la sélection",
+      "es": "Eliminar selección"
     }
   }
 }

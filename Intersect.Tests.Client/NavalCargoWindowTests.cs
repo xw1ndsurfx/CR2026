@@ -31,11 +31,19 @@ public sealed class NavalCargoWindowTests
         var entries=Enum.GetValues<NavalSkillKind>().Select(kind=>new NavalSkillView {Owned=true,Definition=new(){Kind=kind}}).ToArray();
         window.Apply(new(){Mode=NavalManageAction.Skills,Skills=entries});
         var scroll=Descendants(window).OfType<ScrollControl>().Single();
+        var hosted=(IReadOnlyList<ControlBase>)typeof(ControlBase).GetField("_children",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!.GetValue(scroll)!;
+        Assert.That(hosted.Contains(scroll.VerticalScrollBar),Is.True,"Rebuilding skills must keep the scrollbar in the actual rendered control tree");
         Assert.That(scroll.VerticalScrollBar.IsHidden,Is.False);
         Assert.That(scroll.VerticalScrollBar.ContentSize,Is.GreaterThan(scroll.Height));
         scroll.VerticalScrollBar.SetScrollAmount(1,true);scroll.UpdateScrollBars();
         Assert.That(scroll.VerticalScrollBar.ScrollAmount,Is.EqualTo(1));
         Assert.That(scroll.Children.Any(child=>child.Name=="SkillAction"+entries.Last().Definition.Kind),Is.True);
+        var inner=scroll.InnerPanel;
+        window.Apply(new(){Mode=NavalManageAction.Skills,Skills=entries});
+        Assert.That(scroll.InnerPanel,Is.SameAs(inner));
+        Assert.That(scroll.VerticalScrollBar.Parent,Is.SameAs(scroll));
+        Assert.That(scroll.HorizontalScrollBar.Parent,Is.SameAs(scroll));
+        Assert.That(scroll.Children.Count(child=>child.Name.StartsWith("SkillAction")),Is.EqualTo(entries.Length));
     }
 
     [Test]
