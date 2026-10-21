@@ -3,6 +3,8 @@ using System.Drawing.Imaging;
 using System.IO.Compression;
 using System.Text.RegularExpressions;
 using DarkUI.Forms;
+using Intersect.Framework.Core.QualityOfLife;
+using System.Globalization;
 using Intersect.Editor.Content;
 
 namespace Intersect.Editor.Forms;
@@ -279,6 +281,10 @@ public sealed class FrmAnimationImport : DarkForm
     private readonly TextBox _assetSearch = new();
     private readonly ComboBox _assetSort = new();
     private readonly Button _favoriteButton = new();
+    private readonly Button _previousAnimationButton = CreateDarkButton(
+        QualityOfLifeText.Get("Previous animation", CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
+    private readonly Button _nextAnimationButton = CreateDarkButton(
+        QualityOfLifeText.Get("Next animation", CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
     private readonly Button _previousPageButton = new();
     private readonly Button _nextPageButton = new();
     private readonly Label _pageLabel = new();
@@ -307,6 +313,7 @@ public sealed class FrmAnimationImport : DarkForm
 
     private readonly List<AnimationAsset> _assets = new();
     private readonly List<AnimationAsset> _visibleAssets = new();
+    private readonly List<AnimationAsset> _filteredAssets = new();
     private readonly HashSet<string> _favoriteAssetKeys =
         new(StringComparer.OrdinalIgnoreCase);
     private AnimationAsset? _selectedAsset;
@@ -555,7 +562,11 @@ public sealed class FrmAnimationImport : DarkForm
         _assetList.BackColor = System.Drawing.Color.FromArgb(38, 32, 34);
         _assetList.ForeColor = System.Drawing.Color.Gainsboro;
         _assetList.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9);
-        _assetList.SelectedIndexChanged += async (_, _) => await SelectAssetAsync();
+        _assetList.SelectedIndexChanged += async (_, _) =>
+        {
+            UpdateAnimationNavigation();
+            await SelectAssetAsync();
+        };
 
         var assetHost = new TableLayoutPanel
         {
@@ -703,7 +714,27 @@ public sealed class FrmAnimationImport : DarkForm
 
         _preview.Dock = DockStyle.Fill;
 
+        var animationNavigation = new TableLayoutPanel
+        {
+            Dock = DockStyle.Bottom,
+            Height = 42,
+            ColumnCount = 2,
+            RowCount = 1,
+            Padding = new Padding(4),
+        };
+        animationNavigation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+        animationNavigation.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+        _previousAnimationButton.Name = "PreviousAnimation";
+        _nextAnimationButton.Name = "NextAnimation";
+        _previousAnimationButton.Dock = _nextAnimationButton.Dock = DockStyle.Fill;
+        _previousAnimationButton.Enabled = _nextAnimationButton.Enabled = false;
+        _previousAnimationButton.Click += (_, _) => NavigateAnimation(-1);
+        _nextAnimationButton.Click += (_, _) => NavigateAnimation(1);
+        animationNavigation.Controls.Add(_previousAnimationButton, 0, 0);
+        animationNavigation.Controls.Add(_nextAnimationButton, 1, 0);
+
         previewHost.Controls.Add(_preview);
+        previewHost.Controls.Add(animationNavigation);
         previewHost.Controls.Add(_assetInfo);
         _assetInfo.BringToFront();
         previewPanel.Controls.Add(previewHost, 0, 1);
@@ -2127,7 +2158,55 @@ public sealed class FrmAnimationImport : DarkForm
         return assets;
     }
 
-    private void PopulateAssetList()
+    private void UpdateAnimationNavigation()
+    {
+        var asset = _assetList.SelectedItems.Count > 0
+            ? _assetList.SelectedItems[0].Tag as AnimationAsset
+            : null;
+        var index = asset == null ? -1 : _filteredAssets.IndexOf(asset);
+        _previousAnimationButton.Enabled = index > 0;
+        _nextAnimationButton.Enabled = index >= 0 && index + 1 < _filteredAssets.Count;
+    }
+
+    private void NavigateAnimation(int direction)
+    {
+        if (_assetList.SelectedItems.Count == 0 ||
+            _assetList.SelectedItems[0].Tag is not AnimationAsset asset)
+        {
+            return;
+        }
+
+        var index = _filteredAssets.IndexOf(asset);
+        var target = index + direction;
+        if (index < 0 || target < 0 || target >= _filteredAssets.Count)
+        {
+            return;
+        }
+
+        var page = target / AssetPageSize;
+        if (page != _assetPage)
+        {
+            _assetPage = page;
+            PopulateAssetListAt(target % AssetPageSize);
+            return;
+        }
+
+        _assetList.SelectedItems.Clear();
+        SelectVisibleAnimation(target % AssetPageSize);
+    }
+
+    private void SelectVisibleAnimation(int index)
+    {
+        var item = _assetList.Items[index];
+        item.Selected = true;
+        item.Focused = true;
+        item.EnsureVisible();
+        UpdateAnimationNavigation();
+    }
+
+    private void PopulateAssetList() => PopulateAssetListAt(0);
+
+    private void PopulateAssetListAt(int selectedIndex)
     {
         if (IsDisposed || Disposing)
         {
@@ -2249,6 +2328,8 @@ public sealed class FrmAnimationImport : DarkForm
         }
 
         var filtered = ordered.ToArray();
+        _filteredAssets.Clear();
+        _filteredAssets.AddRange(filtered);
 
         var pageCount = Math.Max(
             1,
@@ -2315,7 +2396,7 @@ public sealed class FrmAnimationImport : DarkForm
 
         if (_assetList.Items.Count > 0)
         {
-            _assetList.Items[0].Selected = true;
+            SelectVisibleAnimation(Math.Clamp(selectedIndex, 0, _assetList.Items.Count - 1));
         }
         else
         {
@@ -2325,6 +2406,7 @@ public sealed class FrmAnimationImport : DarkForm
             UpdateFavoriteButton();
         }
 
+        UpdateAnimationNavigation();
         _ = LoadPageThumbnailsAsync(cancellationToken);
     }
 

@@ -1,5 +1,15 @@
 ﻿{
   "Entries": {
+    "Previous animation": {
+      "en": "Previous animation",
+      "fr": "Animation précédente",
+      "es": "Animación anterior"
+    },
+    "Next animation": {
+      "en": "Next animation",
+      "fr": "Animation suivante",
+      "es": "Animación siguiente"
+    },
     "Grant EXP bonus": {
       "en": "Grant EXP bonus",
       "fr": "Accorder un bonus EXP",
