@@ -24,6 +24,30 @@ public sealed class NavalCargoWindowTests
     [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
 
     [Test]
+    public void NavalAmmoQuantityAndShortcutUseSeparateSingleLineLabels()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(800,600)};
+        var button=new NavalActionButton(canvas,"AmmoFixture") {Font=skin.DefaultFont,FontSize=8};
+        button.SetBounds(0,0,36,36);
+        Assert.That(NavalActionButton.AmmoQuantityCaption(-1),Is.EqualTo("-"));
+        Assert.That(NavalActionButton.AmmoQuantityCaption(0),Is.EqualTo("0"));
+        Assert.That(NavalActionButton.AmmoQuantityCaption(87),Is.EqualTo("87"));
+        foreach(var quantity in new[]{"-","0","87","999K"})
+        {
+            button.SetCaption("4",quantity);
+            typeof(ControlBase).GetMethod("RecurseLayout",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!.Invoke(canvas,[skin]);
+            var count=button.Children.OfType<Label>().Single(c=>c.Name=="NavalCounter");
+            Assert.That(button.Text,Is.EqualTo("4"));Assert.That(count.Text,Is.EqualTo(quantity));
+            Assert.That(count.MouseInputEnabled,Is.False);Assert.That(count.Bottom,Is.LessThanOrEqualTo(button.TextY));
+            Assert.That(Descendants(button).OfType<Label>().All(c=>!c.Text!.Contains('\n') && !c.Text.Contains('\r')),Is.True);
+        }
+        button.SetCaption("1","3",true);
+        Assert.That(button.Text,Is.EqualTo("1"));
+        Assert.That(button.Children.OfType<Label>().Single().Text,Is.EqualTo("3"));
+        button.SetCaption("0");Assert.That(button.Children.OfType<Label>().Single().IsHidden,Is.True);
+    }
+
+    [Test]
     public void NavalTargetShowsHoverableSpellEffectsWrapsThemAndClearsThemAfterCombat()
     {
         using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(240,300)};

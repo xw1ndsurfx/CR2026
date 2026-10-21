@@ -87,13 +87,13 @@ public partial class HotBarWindow
                 var ammo=Naval.NavalWorld.SlotAmmunition(i);
                 var selected=ammo!=null && ammo.Kind==Naval.NavalWorld.SelectedAmmo;
                 button.Ammunition=ammo?.Kind;button.IconFilename=ammo?.Icon??"";button.NavalAction=ShipAction.None;
-                button.ReloadMilliseconds=0;button.TextAlign=Pos.Bottom|Pos.Right;
-                button.Text=ammo==null?KeyCaption(i):(ammo.Quantity<0?"-":ammo.Quantity.ToString())+"\n"+KeyCaption(i);
+                button.ReloadMilliseconds=0;
                 button.TextColorOverride=selected?new Color(255,240,200,70):null;
                 button.TooltipText=ammo==null?"":string.Format(N("{0} · Level {1} · {2}"),N(CannonAmmunition.Caption(ammo.Kind)),ammo.RequiredLevel,
                     ammo.Quantity<0?N("Free"):string.Format(N("{0} shots"),ammo.Quantity));
                 button.IsDisabled=own!.Sinking || ammo?.Available!=true || Globals.Me?.IsBusy!=false;
                 button.SelectedAmmunition=selected;
+                button.SetCaption(KeyCaption(i),ammo==null?null:NavalActionButton.AmmoQuantityCaption(ammo.Quantity));
                 continue;
             }
             button.Ammunition=null;button.SelectedAmmunition=false;
@@ -101,13 +101,12 @@ public partial class HotBarWindow
             var key=KeyCaption(i);
             button.IconFilename=Naval.NavalWorld.Presentation.Icon(action);
             button.NavalAction=action;button.ReloadMilliseconds=cooldown;
-            button.TextAlign=cooldown>0?Pos.Center:Pos.Bottom|Pos.Right;
-            button.Text=cooldown>0?Math.Ceiling(cooldown/1000d)+"\n"+key:key;
             button.TooltipText=N(i==3?"Sailing skills":i==4?"Ammo":i==5?"Helm control":ShipActions.Caption(action));
             button.TextColorOverride=i==8 && own!.Anchored?new Color(255,240,200,70):null;
             button.IsDisabled=own!.Sinking || (action==ShipAction.None && !(i is >=3 and <=5 && Naval.NavalWorld.Driver(own)==Globals.Me?.Id)) ||
                 (Naval.NavalWorld.Driver(own)!=Globals.Me?.Id && action is not (ShipAction.CannonView or ShipAction.Crew or ShipAction.Cargo or ShipAction.LeaveHelm)) || Globals.Me?.IsBusy!=false ||
                 (action is ShipAction.PortCannons or ShipAction.StarboardCannons && (!own.CannonsEnabled || cooldown>0));
+            button.SetCaption(key,cooldown>0?Math.Ceiling(cooldown/1000d).ToString(System.Globalization.CultureInfo.InvariantCulture):null,true);
         }
         if(_sailingBar!=null)
         {
