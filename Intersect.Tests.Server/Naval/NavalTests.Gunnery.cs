@@ -51,17 +51,18 @@ public sealed partial class NavalTests
         Assert.That(State(a).LeaseId,Is.EqualTo(Guid.Empty),"Lost renewal frees the seat.");
     }
     [Test]
-    public void GunRequestRateLimitStillRejectsRapidFireAtClockOrigin()
+    public void GunRequestRateLimitStillRejectsRapidFireAfterAcquiringAStation()
     {
         using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);var player=GunnerPlayer(world,ship);
-        player.LastGunneryRequest=-100;
-        NavalSystem.Station(player,new(){Action=CannonStationAction.Acquire,ShipId=world.State(ship).Id},0);
-        var state=(GunneryState)world.Invoke("GunnerState",player,0L)!;
+        // Snapshot emission also uses the real clock to prune leases; keep both clocks aligned.
+        var now=Timing.Global.Milliseconds;player.LastGunneryRequest=now-100;
+        NavalSystem.Station(player,new(){Action=CannonStationAction.Acquire,ShipId=world.State(ship).Id},now);
+        var state=(GunneryState)world.Invoke("GunnerState",player,now)!;
         Assert.That(state.LeaseId,Is.Not.EqualTo(Guid.Empty));
         var shot=new CannonStationPacket {Action=CannonStationAction.Fire,ShipId=world.State(ship).Id,LeaseId=state.LeaseId,Elevation=-5};
         var balls=(System.Collections.IList)typeof(NavalSystem).GetField("Cannonballs",BindingFlags.Static|BindingFlags.NonPublic)!.GetValue(null)!;
-        NavalSystem.Station(player,shot,50);Assert.That(balls.Count,Is.Zero,"The request window must remain enforced.");
-        NavalSystem.Station(player,shot,100);Assert.That(balls.Count,Is.EqualTo(1));
+        NavalSystem.Station(player,shot,now+50);Assert.That(balls.Count,Is.Zero,"The request window must remain enforced.");
+        NavalSystem.Station(player,shot,now+100);Assert.That(balls.Count,Is.EqualTo(1));
     }
 
     [Test]
