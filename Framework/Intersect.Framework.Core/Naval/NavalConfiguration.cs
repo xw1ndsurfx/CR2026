@@ -5,6 +5,17 @@ namespace Intersect.Framework.Core.Naval;
 
 public sealed class NavalConfiguration
 {
+    public int SkillsVersion {get;set;}=1;
+    [System.Runtime.Serialization.OnDeserializing]
+    private void ReadSkillsVersion(System.Runtime.Serialization.StreamingContext context)=>SkillsVersion=0;
+    [System.Runtime.Serialization.OnDeserialized]
+    private void UpgradeSkills(System.Runtime.Serialization.StreamingContext context)
+    {
+        if(SkillsVersion>=1 || Skills==null) return;
+        // Append only the new abilities once; preserve authored prices, omissions and future removals.
+        Skills=Skills.Concat(NavalSkillDefinition.Defaults().Where(d=>(int)d.Kind>=5 && !Skills.Any(s=>s?.Kind==d.Kind))).ToArray();
+        SkillsVersion=1;
+    }
     public int CareersVersion {get;set;}=1;
     public bool Enabled { get; set; }
     public double DockInteractionRange { get; set; } = 1.5;
@@ -31,7 +42,7 @@ public sealed class NavalConfiguration
 
     public void Validate(int width, int height)
     {
-        if (Repair?.IsValid()!=true || Skills==null || Skills.Length>5 || Skills.Any(s=>s?.IsValid()!=true) || Skills.Select(s=>s.Kind).Distinct().Count()!=Skills.Length || Gunnery?.IsValid()!=true || Ammunition==null || Ammunition.Length is <1 or >10 || Ammunition.Any(a=>a?.IsValid()!=true || (a.Kind==CannonAmmoKind.Standard?a.RequiresItem || a.RequiredLevel!=1:!a.RequiresItem)) ||
+        if (Repair?.IsValid()!=true || Skills==null || Skills.Length>Enum.GetValues<NavalSkillKind>().Length || Skills.Any(s=>s?.IsValid()!=true) || Skills.Select(s=>s.Kind).Distinct().Count()!=Skills.Length || Gunnery?.IsValid()!=true || Ammunition==null || Ammunition.Length is <1 or >10 || Ammunition.Any(a=>a?.IsValid()!=true || (a.Kind==CannonAmmoKind.Standard?a.RequiresItem || a.RequiredLevel!=1:!a.RequiresItem)) ||
             Ammunition.Select(a=>a.Kind).Distinct().Count()!=Ammunition.Length || !Ammunition.Any(a=>a.Kind==CannonAmmoKind.Standard) || CombatTimeoutSeconds is <3 or >120 || Herbonia==null || Herbonia.Length>32 || Herbonia.Any(p=>p?.IsValid()!=true || p.Ship.X>=width || p.Ship.Y>=height || p.Ship.DockX>=width || p.Ship.DockY>=height) ||
             Herbonia.Select(p=>p.Ship.Id).Concat(Ships?.Where(p=>p!=null).Select(p=>p.Id)??[]).GroupBy(id=>id).Any(g=>g.Count()>1) || Presentation?.IsValid()!=true || Sailing?.IsValid()!=true || !double.IsFinite(DockInteractionRange) || DockInteractionRange is < 1 or > 5 ||
             LaunchSearchRadius is < 3 or > 10 || !double.IsFinite(ShopInteractionRange) ||

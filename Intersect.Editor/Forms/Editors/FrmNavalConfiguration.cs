@@ -39,7 +39,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         Text = T("Naval System Editor"); Size = new(1050, 780); MinimumSize = new(850, 620);
         StartPosition = FormStartPosition.CenterParent;
         var general = Page("Navigation and harbour");
-        general.Controls.Add(Fields(_navigation, 0, ["CareersVersion", "Ships", "SourceJson", "AdditionalData", "Presentation", "Sailing", "Herbonia", "Gunnery", "Ammunition", "Repair", "Skills"]));
+        general.Controls.Add(Fields(_navigation, 0, ["SkillsVersion", "CareersVersion", "Ships", "SourceJson", "AdditionalData", "Presentation", "Sailing", "Herbonia", "Gunnery", "Ammunition", "Repair", "Skills"]));
         AddListPage("Test ships", _navigation.Ships.ToList(), 0, () => new ShipDefinition
             { Graphics = "Ship_CorpsRoyaux_002.png", DamagedGraphics = "Ship_CorpsRoyaux_005.png" },
             ships => _navigation.Ships = ships.ToArray());

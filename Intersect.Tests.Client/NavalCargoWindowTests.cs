@@ -23,6 +23,19 @@ public sealed class NavalCargoWindowTests
     [SetUp] public void SetUp() {_previousContent=CurrentContent.GetValue(null);_content=new TestContent();}
     [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
 
+    [Test]
+    public void NewsTitleMarqueeKeepsTheFullTitleMovesLeftAndReturnsFromTheRight()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(800,600)};
+        var title="Corps Royaux Progress Update - A New Glimpse Awaits!";
+        var button=new LogiklikNewsWindow.NewsTitleButton(canvas,"NewsTest"){Text=title};
+        Assert.That(button.Text,Is.EqualTo(title));
+        Assert.That(LogiklikNewsWindow.NewsTitleButton.Offset(200,400,0),Is.EqualTo(8));
+        Assert.That(LogiklikNewsWindow.NewsTitleButton.Offset(200,400,1600),Is.EqualTo(-34));
+        Assert.That(LogiklikNewsWindow.NewsTitleButton.Offset(200,400,10600),Is.GreaterThan(180));
+        var loop=600L*1000/42;
+        Assert.That(Math.Abs(LogiklikNewsWindow.NewsTitleButton.Offset(200,400,12000)-LogiklikNewsWindow.NewsTitleButton.Offset(200,400,12000+loop)),Is.LessThanOrEqualTo(1));
+    }
     [TestCase(530,20)]
     [TestCase(560,24)]
     [TestCase(400,10)]

@@ -11,6 +11,44 @@ using NUnit.Framework;
 namespace Intersect.Tests.Server.Naval;
 public sealed partial class NavalTests
 {
+    [Test] public void OlderNavalSettingsAppendNewSkillsOnceAndPreserveAuthoredPricesAndRemovals()
+    {
+        var raw=Newtonsoft.Json.Linq.JObject.FromObject(new NavalConfiguration {Skills=[new(){Kind=NavalSkillKind.FullSail,Price=4321}]});
+        raw.Remove("SkillsVersion");
+        var upgraded=raw.ToObject<NavalConfiguration>()!;upgraded.Validate(32,26);
+        Assert.That(upgraded.Skills.Select(d=>d.Kind),Is.EqualTo(new[]{NavalSkillKind.FullSail,NavalSkillKind.RapidReload,NavalSkillKind.LongRange,NavalSkillKind.AgileHelm}));
+        Assert.That(upgraded.Skills[0].Price,Is.EqualTo(4321));
+        upgraded.Skills=upgraded.Skills.Where(d=>d.Kind!=NavalSkillKind.LongRange).ToArray();
+        var restored=JsonConvert.DeserializeObject<NavalConfiguration>(JsonConvert.SerializeObject(upgraded))!;
+        Assert.That(restored.Skills.Select(d=>d.Kind),Does.Not.Contain(NavalSkillKind.LongRange));
+        Assert.That(NavalSkillDefinition.Defaults(),Has.Length.EqualTo(8));
+    }
+    [Test] public void AgileHelmIncreasesTurningOnlyWhileActiveWithoutChangingTheShipModel()
+    {
+        using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);
+        var original=world.Field<ShipDefinition>(ship,"Definition");
+        world.Field<Dictionary<NavalSkillKind,long>>(ship,"SkillUntil")[NavalSkillKind.AgileHelm]=6000;
+        var active=(ShipDefinition)world.Invoke("MovementDefinition",ship,1000L)!;
+        Assert.That(active.TurnRate,Is.EqualTo(original.TurnRate*1.25));
+        Assert.That(active.MaxSpeed,Is.EqualTo(original.MaxSpeed));
+        Assert.That(world.Invoke("MovementDefinition",ship,6000L),Is.SameAs(original));
+    }
+    [Test] public void RangeAndReloadSkillsAffectBroadsidesAndExpireBeforeTheNextShot()
+    {
+        using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);
+        var active=world.Field<Dictionary<NavalSkillKind,long>>(ship,"SkillUntil");
+        active[NavalSkillKind.RapidReload]=active[NavalSkillKind.LongRange]=6000;
+        world.Invoke("Fire",ship,false,1000L);
+        Assert.That(world.Field<long>(ship,"PortReady"),Is.EqualTo(4200));
+        var balls=(System.Collections.IList)typeof(NavalSystem).GetField("Cannonballs",BindingFlags.Static|BindingFlags.NonPublic)!.GetValue(null)!;
+        Assert.That(balls,Has.Count.EqualTo(3));
+        var remaining=(double)balls[0]!.GetType().GetField("Remaining",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(balls[0])!;
+        Assert.That(remaining,Is.EqualTo(15));
+        world.Invoke("Fire",ship,true,6000L);
+        Assert.That(world.Field<long>(ship,"StarboardReady"),Is.EqualTo(10000));
+        Assert.That(NavalSkillDefinition.Reload(1000,25,200),Is.EqualTo(250));
+        Assert.That(NavalSkillDefinition.Range(40,200,200),Is.EqualTo(80));
+    }
     [Test] public void RepairChallengeEnforcesTimingTargetAndTheMinimumRoundDuration()
     {
         Assert.That(NavalRepairRules.Matches(NavalRepairKind.Hammering,1,1,800),Is.True);

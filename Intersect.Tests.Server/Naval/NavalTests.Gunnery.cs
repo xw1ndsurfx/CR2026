@@ -28,6 +28,26 @@ public sealed partial class NavalTests
         return player;
     }
     [Test]
+    public void CrewCannonsShareTheCaptainsRangeAndReloadBonusesWithoutBypassingReload()
+    {
+        using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);
+        var active=world.Field<Dictionary<NavalSkillKind,long>>(ship,"SkillUntil");
+        var player=GunnerPlayer(world,ship);var now=Timing.Global.Milliseconds;
+        active[NavalSkillKind.LongRange]=active[NavalSkillKind.RapidReload]=now+10000;
+        NavalSystem.Station(player,new(){Action=CannonStationAction.Acquire,ShipId=world.State(ship).Id,Starboard=true},now);
+        var state=(GunneryState)world.Invoke("GunnerState",player,now)!;player.LastGunneryRequest=now-100;
+        var request=new CannonStationPacket{Action=CannonStationAction.Fire,ShipId=state.ShipId,LeaseId=state.LeaseId,Starboard=true,Elevation=35};
+        NavalSystem.Station(player,request,now);
+        var balls=(System.Collections.IList)typeof(NavalSystem).GetField("Cannonballs",BindingFlags.Static|BindingFlags.NonPublic)!.GetValue(null)!;
+        Assert.That(balls.Count,Is.EqualTo(1));
+        var actual=(double)balls[0]!.GetType().GetField("Remaining",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(balls[0])!;
+        Assert.That(actual,Is.EqualTo(CannonFlight.Plan(35,12,15).Range).Within(.00001));
+        var reloading=(GunneryState)world.Invoke("GunnerState",player,now)!;
+        Assert.That(reloading.ReloadMilliseconds,Is.EqualTo(new GunnerySettings().GunReloadMilliseconds*100/125));
+        player.LastGunneryRequest=now-100;NavalSystem.Station(player,request,now+100);
+        Assert.That(balls.Count,Is.EqualTo(1),"An active skill reduces reload but never permits immediate repeat shots.");
+    }
+    [Test]
     public void AmmunitionConfiguredAnimationTravelsWithTheAuthoritativeShotAndImpact()
     {
         using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);var animation=Guid.NewGuid();

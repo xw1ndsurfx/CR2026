@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 namespace Intersect.Framework.Core.Naval;
 
-public enum NavalSkillKind : byte { RammingSpeed, FullSail, TakeCover, OpenFire, RepairBonus }
+public enum NavalSkillKind : byte { RammingSpeed, FullSail, TakeCover, OpenFire, RepairBonus, RapidReload, LongRange, AgileHelm }
 public enum NavalRepairKind : byte { Hammering, Caulking, Pumping }
 public enum NavalTaskKind : byte { ShipsSunk, CannonHits, HullDamage, Repairs, Dockings, CargoUnloaded, SailingLevel, GunneryLevel, ShipwrightLevel }
 public enum NavalManageAction : byte { Ammo, Deposit, Withdraw, BuyAmmo, SelectAmmo, Skills, BuySkill, UseSkill, Repair, RepairInput, CancelRepair, OfferHelm, AcceptHelm, ReclaimHelm, Dock, RepairMenu, SellAmmo, AmmoShop }
@@ -29,8 +29,11 @@ public sealed class NavalSkillDefinition
     [MessagePack.Key(7)] public string Icon {get;set;}="";
     public bool IsValid()=>Enum.IsDefined(Kind) && RequiredLevel is >=1 and <=200 && Price is >=0 and <=1000000000 && DurationSeconds is >=1 and <=120 &&
         CooldownSeconds is >=1 and <=3600 && PowerPercent is >=1 and <=200 && NavalPresentation.SafeAsset(Icon);
+    // Power increases firing rate rather than subtracting from duration, so even 200% stays positive.
+    public static long Reload(int milliseconds,int ammoPercent,int power)=>Math.Max(250,(long)milliseconds*ammoPercent/(100+Math.Clamp(power,0,200)));
+    public static double Range(double tiles,int ammoPercent,int power)=>Math.Min(80,tiles*ammoPercent/100d*(100+Math.Clamp(power,0,200))/100d);
     public static NavalSkillDefinition[] Defaults()=>Enum.GetValues<NavalSkillKind>().Select((k,i)=>new NavalSkillDefinition {Kind=k,RequiredLevel=1+i*5,Price=100*(i+1)}).ToArray();
-    public static string Caption(NavalSkillKind k)=>k switch {NavalSkillKind.RammingSpeed=>"Ramming speed",NavalSkillKind.FullSail=>"Full sail",NavalSkillKind.TakeCover=>"Take cover",NavalSkillKind.OpenFire=>"Open fire",_=>"Repair bonus"};
+    public static string Caption(NavalSkillKind k)=>k switch {NavalSkillKind.RammingSpeed=>"Ramming speed",NavalSkillKind.FullSail=>"Full sail",NavalSkillKind.TakeCover=>"Take cover",NavalSkillKind.OpenFire=>"Open fire",NavalSkillKind.RepairBonus=>"Repair bonus",NavalSkillKind.RapidReload=>"Rapid reload",NavalSkillKind.LongRange=>"Long range",NavalSkillKind.AgileHelm=>"Agile helm",_=>k.ToString()};
 }
 public sealed class NavalRepairSettings
 {

@@ -92,8 +92,8 @@ internal static partial class NavalSystem
     {
         var ready = starboard ? vessel.StarboardReady : vessel.PortReady;
         if (!ShipActions.CanFire(_settings.CannonsEnabled,vessel.SunkUntil==0,false,now,ready) || Cannonballs.Count+PendingCrewShots > 509) return;
-        if (starboard) vessel.StarboardReady = now + _settings.CannonReloadMilliseconds*(ammo?.ReloadPercent??100)/100;
-        else vessel.PortReady = now + _settings.CannonReloadMilliseconds*(ammo?.ReloadPercent??100)/100;
+        if (starboard) vessel.StarboardReady = now + NavalSkillDefinition.Reload(_settings.CannonReloadMilliseconds,ammo?.ReloadPercent??100,SkillPower(vessel,NavalSkillKind.RapidReload,now));
+        else vessel.PortReady = now + NavalSkillDefinition.Reload(_settings.CannonReloadMilliseconds,ammo?.ReloadPercent??100,SkillPower(vessel,NavalSkillKind.RapidReload,now));
         var s=vessel.State; var d=vessel.Definition;
         var direction=ShipActions.Direction(s.Heading,starboard);
         var forwardX=Math.Sin(s.Heading*Math.PI/180); var forwardY=-Math.Cos(s.Heading*Math.PI/180);
@@ -107,7 +107,7 @@ internal static partial class NavalSystem
             if (!OceanMapResolver.Resolve(ocean,ref map,ref x,ref y) || BlocksCannonball(map,x,y)) continue;
             if(planned==null)Emit(NavalEffectKind.Fire,map,x,y,ShipMovement.Normalize(s.Heading+(starboard?90:-90)),now,!sounded);sounded=true;
             (planned??Cannonballs).Add(new() { Ammo=ammo,ImpactAnimationId=ammo?.ImpactAnimationId??_settings.Ammunition.FirstOrDefault(a=>a.Kind==CannonAmmoKind.Standard)?.ImpactAnimationId??Guid.Empty,CaptainId=s.CaptainId,Enemy=vessel.Enemy!=null,DockSafeRange=vessel.Enemy?.DockSafeRange??0,Born=now,Heading=ShipMovement.Normalize(s.Heading+(starboard?90:-90)),ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
-                DirectionX=direction.X,DirectionY=direction.Y,Remaining=Math.Min(80,_settings.CannonRange*(ammo?.RangePercent??100)/100d),Speed=_settings.CannonSpeed,Damage=vessel.Enemy?.CannonDamage??Math.Clamp(_settings.CannonDamage*(ammo?.DamagePercent??100)/100*(100+SkillPower(vessel,NavalSkillKind.OpenFire,now))/100,1,900) });
+                DirectionX=direction.X,DirectionY=direction.Y,Remaining=NavalSkillDefinition.Range(_settings.CannonRange,ammo?.RangePercent??100,SkillPower(vessel,NavalSkillKind.LongRange,now)),Speed=_settings.CannonSpeed,Damage=vessel.Enemy?.CannonDamage??Math.Clamp(_settings.CannonDamage*(ammo?.DamagePercent??100)/100*(100+SkillPower(vessel,NavalSkillKind.OpenFire,now))/100,1,900) });
         }
     }
 

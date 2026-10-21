@@ -263,8 +263,8 @@ internal sealed partial class LogiklikNewsWindow : Window
                 ? item.PublishedAt.Value.ToLocalTime().ToString("yyyy-MM-dd")
                 : string.Empty;
 
-            var title = item.Title.Length > 34 ? item.Title[..31] + "..." : item.Title;
-            var row = new Button(_newsList, "NewsRow" + rowIndex)
+            var title = item.Title;
+            var row = new NewsTitleButton(_newsList, "NewsRow" + rowIndex)
             {
                 Dock = Pos.Top,
                 Height = 46,

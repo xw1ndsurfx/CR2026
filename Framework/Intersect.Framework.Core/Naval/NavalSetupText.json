@@ -1,5 +1,35 @@
 {
   "Entries": {
+    "Rapid reload": {
+      "en": "Rapid reload",
+      "fr": "Rechargement rapide",
+      "es": "Recarga rápida"
+    },
+    "Long range": {
+      "en": "Long range",
+      "fr": "Portée accrue",
+      "es": "Alcance ampliado"
+    },
+    "Agile helm": {
+      "en": "Agile helm",
+      "fr": "Manœuvre agile",
+      "es": "Timón ágil"
+    },
+    "RapidReload": {
+      "en": "Rapid reload",
+      "fr": "Rechargement rapide",
+      "es": "Recarga rápida"
+    },
+    "LongRange": {
+      "en": "Long range",
+      "fr": "Portée accrue",
+      "es": "Alcance ampliado"
+    },
+    "AgileHelm": {
+      "en": "Agile helm",
+      "fr": "Manœuvre agile",
+      "es": "Timón ágil"
+    },
     "Q - Dock": {
       "en": "Q - Dock",
       "fr": "Q - Quai",

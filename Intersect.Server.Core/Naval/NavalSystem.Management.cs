@@ -274,10 +274,12 @@ internal static partial class NavalSystem
     private static ShipDefinition MovementDefinition(Vessel v,long now)
     {
         var bonus=Math.Max(SkillPower(v,NavalSkillKind.FullSail,now),SkillPower(v,NavalSkillKind.RammingSpeed,now));
-        if(bonus==0 && v.SlowUntil<=now)return v.Definition;
+        var turnBonus=SkillPower(v,NavalSkillKind.AgileHelm,now);
+        if(bonus==0 && turnBonus==0 && v.SlowUntil<=now)return v.Definition;
         var d=JsonConvert.DeserializeObject<ShipDefinition>(JsonConvert.SerializeObject(v.Definition));
         var factor=(100+bonus)/100d*(v.SlowUntil>now?(100-v.SlowPercent)/100d:1);
-        d.MaxSpeed=Math.Min(20,d.MaxSpeed*factor);d.Acceleration*=Math.Max(1,factor);return d;
+        d.MaxSpeed=Math.Min(20,d.MaxSpeed*factor);d.Acceleration*=Math.Max(1,factor);
+        d.TurnRate=Math.Min(180,d.TurnRate*(100+turnBonus)/100d);return d;
     }
     private static int SkillPower(Vessel v,NavalSkillKind kind,long now)=>v.SkillUntil.GetValueOrDefault(kind)>now?_settings.Skills.FirstOrDefault(s=>s.Kind==kind)?.PowerPercent??0:0;
     private static void UpdateManagement(Player p,long now)

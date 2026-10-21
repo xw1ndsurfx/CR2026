@@ -102,14 +102,14 @@ internal static partial class NavalSystem
                 if(!OceanMapResolver.Resolve(OceanMapResolver.Maps(),ref map,ref x,ref y) || BlocksCannonball(map,x,y))
                 {player.GunneryMessage="The cannon muzzle is blocked.";SendSnapshot(player);return;}
                 var heading=ShipMovement.Normalize(s.Heading+(packet.Starboard?90:-90)+packet.Yaw);var radians=heading*Math.PI/180;
-                var flight=CannonFlight.Plan(packet.Elevation,_settings.CannonSpeed,Math.Min(80,_settings.CannonRange*ammo.RangePercent/100d));
+                var flight=CannonFlight.Plan(packet.Elevation,_settings.CannonSpeed,NavalSkillDefinition.Range(_settings.CannonRange,ammo.RangePercent,SkillPower(vessel,NavalSkillKind.LongRange,now)));
                 shot=new() {Ammo=ammo,ImpactAnimationId=ammo.ImpactAnimationId,Flight=flight,GunnerId=player.Id,CaptainId=s.CaptainId,ShipId=s.Id,OwnerId=vessel.OwnerId,MapId=map,X=x,Y=y,
                     DirectionX=Math.Sin(radians),DirectionY=-Math.Cos(radians),Heading=heading,Born=now,Speed=flight.HorizontalSpeed,
                     Remaining=flight.Range,
                     Damage=Math.Clamp(_settings.CannonDamage*ammo.DamagePercent/100*(100+SkillPower(vessel,NavalSkillKind.OpenFire,now))/100,1,900)};
                 reserved=current.Value;previousReady=reserved.ReadyAt;
                 reservation=reserved.Reservation=Guid.NewGuid();
-                reserved.ReadyAt=now+(long)_settings.Gunnery.GunReloadMilliseconds*ammo.ReloadPercent/100;
+                reserved.ReadyAt=now+NavalSkillDefinition.Reload(_settings.Gunnery.GunReloadMilliseconds,ammo.ReloadPercent,SkillPower(vessel,NavalSkillKind.RapidReload,now));
                 PendingCrewShots++;
             }
             // The owning player lock is held. Save ammunition outside the world lock; never lock/save another player.
