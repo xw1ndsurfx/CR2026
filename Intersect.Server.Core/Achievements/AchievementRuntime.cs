@@ -51,6 +51,16 @@ internal static class AchievementRuntime
             if (IsCompleted(player, definition.Id))
                 continue;
 
+            if ((int)definition.ObjectiveType is >=19 and <=27)
+            {
+                var kind=(Intersect.Framework.Core.Naval.NavalTaskKind)((int)definition.ObjectiveType-19);
+                var value=kind switch {
+                    Intersect.Framework.Core.Naval.NavalTaskKind.SailingLevel=>Naval.NavalSystem.CareerProgress(player,Intersect.Framework.Core.Naval.NavalProfessions.Sailing).Level,
+                    Intersect.Framework.Core.Naval.NavalTaskKind.GunneryLevel=>Naval.NavalSystem.CareerProgress(player,Intersect.Framework.Core.Naval.NavalProfessions.Gunnery).Level,
+                    Intersect.Framework.Core.Naval.NavalTaskKind.ShipwrightLevel=>Naval.NavalSystem.CareerProgress(player,Intersect.Framework.Core.Naval.NavalProfessions.Shipwright).Level,
+                    _=>player.NavalCareer.Counters.GetValueOrDefault(kind)};
+                SetProgress(player,definition,value,sendState:false);continue;
+            }
             switch (definition.ObjectiveType)
             {
                 case AchievementObjectiveType.PlayerLevel:

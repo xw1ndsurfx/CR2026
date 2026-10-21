@@ -23,8 +23,9 @@ internal sealed class NavalRewardHud : Base
     {
         string T(string source,params object[] values)=>string.Format(NavalSetupText.Get(source,language),values);
         var lines=new List<string> {reward.SailingExperience>0?T("Enemy sunk · Sailing +{0:N0} EXP",reward.SailingExperience):T("Enemy sunk")};
+        if(reward.CharacterExperience>0)lines.Add(T("Character +{0:N0} EXP",reward.CharacterExperience));
         var items=reward.Cargo.GroupBy(c=>c.ItemId).Select(g=>(Id:g.Key,Quantity:g.Sum(c=>(long)c.Quantity))).ToArray();
-        lines.AddRange(items.Take(3).Select(i=>T("Cargo secured: {0} × {1:N0}",itemName(i.Id),i.Quantity)));
+        lines.AddRange(items.Take(3).Select(i=>i.Id==Guid.Empty?T("Sealed cargo secured: {0}",reward.Cargo.Count(c=>c.ItemId==Guid.Empty)):T("Cargo secured: {0} × {1:N0}",itemName(i.Id),i.Quantity)));
         if(items.Length>3) lines.Add(T("And {0} more item types in the hold.",items.Length-3));
         if(reward.ReplacedLots>0) lines.Add(T("Better cargo replaced {0} lower-quality lots.",reward.ReplacedLots));
         if(reward.DiscardedLots>0) lines.Add(T("Hold full · {0} lots could not be kept. Unload at Q.",reward.DiscardedLots));

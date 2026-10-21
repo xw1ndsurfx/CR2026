@@ -10,6 +10,8 @@ public partial class Player
     [JsonIgnore, NotMapped] internal CannonAmmoKind NavalSelectedAmmo {get;set;}
     [JsonIgnore, NotMapped] internal long LastNavalManageRequest {get;set;}
     [JsonIgnore, NotMapped] internal bool NavalPartyExitRequested {get;set;}
+    [JsonIgnore, NotMapped] internal bool NavalDockPromptSeen {get;set;}
+    [JsonIgnore, NotMapped] internal Guid NavalShopId {get;set;}
     [JsonIgnore, NotMapped] internal bool NavalAmmoShop {get;set;}
     // Stored with the inventory in the same native account SaveChanges transaction.
     [JsonIgnore, Column("NavalFleet")]

@@ -271,14 +271,14 @@
       "es": "Objeto moneda"
     },
     "Currency": {
-      "en": "Currency name",
-      "fr": "Nom de la monnaie",
-      "es": "Nombre de moneda"
+      "en": "Currency",
+      "fr": "Monnaie",
+      "es": "Moneda"
     },
     "Price": {
-      "en": "Purchase price",
-      "fr": "Prix d’achat",
-      "es": "Precio de compra"
+      "en": "Price",
+      "fr": "Prix",
+      "es": "Precio"
     },
     "RepairPrice": {
       "en": "Full repair price",
@@ -1739,6 +1739,141 @@
       "en": "Naval profession settings are in Naval System Editor.",
       "fr": "Les métiers navals se configurent dans Naval System Editor.",
       "es": "Las profesiones navales se configuran en Naval System Editor."
+    },
+    "Sealed cargo": {
+      "en": "Sealed cargo",
+      "fr": "Cargaison scellée",
+      "es": "Carga sellada"
+    },
+    "Sealed cargo secured: {0}": {
+      "en": "Sealed cargo secured: {0}",
+      "fr": "Cargaisons scellées récupérées : {0}",
+      "es": "Cargas selladas obtenidas: {0}"
+    },
+    "Ammunition inventory": {
+      "en": "Ammunition inventory",
+      "fr": "Inventaire de munitions",
+      "es": "Inventario de munición"
+    },
+    "Naval ammunition shop": {
+      "en": "Naval ammunition shop",
+      "fr": "Boutique de munitions navales",
+      "es": "Tienda de munición naval"
+    },
+    "Use": {
+      "en": "Use",
+      "fr": "Utiliser",
+      "es": "Usar"
+    },
+    "Withdraw": {
+      "en": "Withdraw",
+      "fr": "Retirer",
+      "es": "Retirar"
+    },
+    "Owned": {
+      "en": "Owned",
+      "fr": "Acquis",
+      "es": "Adquirido"
+    },
+    "Normal shop configuration": {
+      "en": "Normal shop configuration",
+      "fr": "Configuration boutique normale",
+      "es": "Configuración de tienda normal"
+    },
+    "Naval ammunition shop configuration": {
+      "en": "Naval ammunition shop configuration",
+      "fr": "Configuration boutique de munitions navales",
+      "es": "Configuración de tienda de munición naval"
+    },
+    "Boat and Sailing skill shop configuration": {
+      "en": "Boat and Sailing skill shop configuration",
+      "fr": "Configuration boutique de bateaux et compétences navales",
+      "es": "Configuración de tienda de barcos y habilidades navales"
+    },
+    "Naval shops open on land. Configure ammunition buy and sell prices in the item lists; ship models and skill prices use the Naval System Editor.": {
+      "en": "Naval shops open on land. Configure ammunition buy and sell prices in the item lists; ship models and skill prices use the Naval System Editor.",
+      "fr": "Les boutiques navales ouvrent à terre. Configurez les prix des munitions dans les listes achat et vente; les modèles de bateaux et les compétences utilisent le System Editor naval.",
+      "es": "Las tiendas navales abren en tierra. Configure precios de munición en las listas de compra y venta; los barcos y habilidades usan el editor del sistema naval."
+    },
+    "Default naval catalogue": {
+      "en": "Default naval catalogue",
+      "fr": "Catalogue naval par défaut",
+      "es": "Catálogo naval predeterminado"
+    },
+    "Ship sold.": {
+      "en": "Ship sold.",
+      "fr": "Navire vendu.",
+      "es": "Barco vendido."
+    },
+    "Required level: {0}": {
+      "en": "Required level: {0}",
+      "fr": "Niveau requis : {0}",
+      "es": "Nivel requerido: {0}"
+    },
+    "Buy ship": {
+      "en": "Buy ship",
+      "fr": "Acheter",
+      "es": "Comprar"
+    },
+    "Fully repair": {
+      "en": "Fully repair",
+      "fr": "Réparer",
+      "es": "Reparar"
+    },
+    "Not owned": {
+      "en": "Not owned",
+      "fr": "Non acquis",
+      "es": "No adquirido"
+    },
+    "Save": {
+      "en": "Save",
+      "fr": "Enregistrer",
+      "es": "Guardar"
+    },
+    "Cancel": {
+      "en": "Cancel",
+      "fr": "Annuler",
+      "es": "Cancelar"
+    },
+    "Navigation and gunnery achievements": {
+      "en": "Navigation and gunnery achievements",
+      "fr": "Achievements de navigation et de canon",
+      "es": "Logros de navegación y artillería"
+    },
+    "Configure boats and skills": {
+      "en": "Configure boats and skills",
+      "fr": "Configurer les bateaux et compétences",
+      "es": "Configurar barcos y habilidades"
+    },
+    "Naval shops open on land. Use the item lists for ammunition prices, or Configure boats and skills for this shop.": {
+      "en": "Naval shops open on land. Use the item lists for ammunition prices, or Configure boats and skills for this shop.",
+      "fr": "Les boutiques navales ouvrent à terre. Utilisez les listes pour les prix des munitions ou Configurer les bateaux et compétences pour cette boutique.",
+      "es": "Las tiendas navales abren en tierra. Use las listas para los precios de munición o Configurar barcos y habilidades para esta tienda."
+    },
+    "For sale": {
+      "en": "For sale",
+      "fr": "En vente",
+      "es": "En venta"
+    },
+    "Default currency": {
+      "en": "Default currency",
+      "fr": "Monnaie par défaut",
+      "es": "Moneda predeterminada"
+    },
+    "Full repair price": {
+      "en": "Full repair price",
+      "fr": "Prix de réparation complète",
+      "es": "Precio de reparación completa"
+    },
+    "Character +{0:N0} EXP": {
+      "en": "Character +{0:N0} EXP",
+      "fr": "Personnage +{0:N0} EXP",
+      "es": "Personaje +{0:N0} EXP"
+    },
+    "Level {0} - Duration {1}s - Recharge {2}s": {
+      "en": "Level {0} - Duration {1}s - Recharge {2}s",
+      "fr": "Niveau {0} - Durée {1}s - Recharge {2}s",
+      "es": "Nivel {0} - Duración {1}s - Recarga {2}s"
     }
   }
 }

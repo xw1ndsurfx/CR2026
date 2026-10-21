@@ -22,7 +22,7 @@ internal sealed class NavalCannonViewWindow : Window
 {
     private readonly Viewport _viewport;
     private readonly Label _side,_limit,_hint;
-    private readonly Button _port,_starboard,_fire,_close,_ammo;
+    private readonly Button _port,_starboard,_fire,_close,_ammo,_repair;
     private readonly NavalSailingBar _gunnery;
     private bool _crewWasOpen;
     private Guid _ship;
@@ -58,7 +58,7 @@ internal sealed class NavalCannonViewWindow : Window
         _ammo=Action("CannonAmmunition",()=>NavalManagementWindow.Request(NavalManageAction.Ammo));
         _gunnery=new NavalSailingBar(this,"GunneryExperience") {AutoSizeToContents=false,
             Font=GameContentManager.Current.GetFont("sourcesansproblack")??Skin.DefaultFont,FontSize=10,TextAlign=Pos.Center,MouseInputEnabled=false};
-        var repair=NavalManagementWindow.Button(this,"CannonRepair","Ship repairs",16,166,150,30,()=>NavalManagementWindow.Request(NavalManageAction.RepairMenu));
+        _repair=Action("CannonRepair",()=>NavalManagementWindow.Request(NavalManageAction.RepairMenu));
         _close=Action("CloseCannonView",()=>NavalWorld.CannonViewOpen=false);
         Hide();
     }
@@ -70,7 +70,7 @@ internal sealed class NavalCannonViewWindow : Window
     private Button Action(string id,Action action)
     {
         var button=new Button(this,id) {Font=GameContentManager.Current.GetFont("sourcesansproblack")??Skin.DefaultFont,FontSize=10};
-        button.Clicked+=(_,_)=>action();return button;
+        NavalManagementWindow.StyleButton(button);button.Clicked+=(_,_)=>action();return button;
     }
     private void ChooseSide(bool starboard)
     {
@@ -102,7 +102,9 @@ internal sealed class NavalCannonViewWindow : Window
         _hint.SetBounds(16,88+pictureHeight,width-32,23);
         _ammo.IsHidden=_gunnery.IsHidden=!crew;
         _ammo.SetBounds(16,height-117,width-32,30);_gunnery.SetBounds(16,height-82,width-32,22);
-        var buttons=new[]{_port,_starboard,_fire,_close};var bw=(width-50)/4;
+        _repair.IsHidden=ship.CaptainId==Globals.Me?.Id || !crew;
+        _repair.IsDisabled=!ship.RepairAvailable;_repair.Text=T("Ship repairs");
+        var buttons=_repair.IsHidden?new[]{_port,_starboard,_fire,_close}:new[]{_port,_starboard,_fire,_repair,_close};var bw=(width-56)/buttons.Length;
         for(var i=0;i<buttons.Length;i++) buttons[i].SetBounds(16+i*(bw+6),height-51,bw,30);
         Title=T("Cannon view");_port.Text=T("Port");_starboard.Text=T("Starboard");_close.Text=T("Close");
         _side.Text=T(NavalWorld.CannonViewStarboard?"Starboard cannon view":"Port cannon view");
@@ -137,7 +139,7 @@ internal sealed class NavalCannonViewWindow : Window
             _limit.SetBounds(16,130,width-32,23);
             _limit.IsHidden=string.IsNullOrEmpty(NavalWorld.Gunner.Message);
             _hint.SetBounds(16,Math.Max(158,height-212),width-32,23);
-            var commandWidth=Math.Min(640,width-32);var commandX=(width-commandWidth)/2;var buttonWidth=(commandWidth-18)/4;
+            var commandWidth=Math.Min(640,width-32);var commandX=(width-commandWidth)/2;var buttonWidth=(commandWidth-6*(buttons.Length-1))/buttons.Length;
             for(var i=0;i<buttons.Length;i++) buttons[i].SetBounds(commandX+i*(buttonWidth+6),height-180,buttonWidth,30);
             // Ammo selection and Gunnery progress are already available in the native hotbar below.
             _ammo.Hide();_gunnery.Hide();

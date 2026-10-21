@@ -1351,7 +1351,10 @@ public static partial class CommandProcessing
         Stack<CommandInstance> callStack
     )
     {
-        player.OpenShop(ShopDescriptor.Get(command.ShopId));
+        var shop=ShopDescriptor.Get(command.ShopId);
+        if(shop?.ConfigurationKind==ShopConfigurationKind.NavalAmmunition) Naval.NavalSystem.OpenAmmoShopFromEvent(player,instance,shop.Id);
+        else if(shop?.ConfigurationKind==ShopConfigurationKind.NavalShipsAndSkills) Naval.NavalSystem.OpenShopFromEvent(player,instance,shop.Id);
+        else player.OpenShop(shop);
         callStack.Peek().WaitingForResponse = CommandInstance.EventResponse.Shop;
     }
 

@@ -52,7 +52,7 @@ public sealed partial class NavalTests
             Assert.That(HarbourAccessRules.Allows(HarbourView.Fleet, action),
                 Is.EqualTo(action is HarbourAction.Open or HarbourAction.Launch or HarbourAction.Rename or HarbourAction.ClaimCargo or HarbourAction.DiscardCargo));
             Assert.That(HarbourAccessRules.Allows(HarbourView.Shop, action),
-                Is.EqualTo(action is HarbourAction.Open or HarbourAction.Buy or HarbourAction.Repair));
+                Is.EqualTo(action is HarbourAction.Open or HarbourAction.Buy or HarbourAction.Repair or HarbourAction.Sell));
         }
         Assert.That(HarbourAccessRules.Allows((HarbourView)255, HarbourAction.Open), Is.False);
         Assert.That(HarbourAccessRules.Allows(HarbourView.Shop, (HarbourAction)255), Is.False);

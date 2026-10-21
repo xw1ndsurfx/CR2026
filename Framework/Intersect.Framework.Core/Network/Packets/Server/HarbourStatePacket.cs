@@ -4,6 +4,8 @@ namespace Intersect.Network.Packets.Server;
 [MessagePackObject(AllowPrivate = true)]
 public partial class HarbourStatePacket : IntersectPacket
 {
+    [Key(6)] public NavalSkillView[] Skills {get;set;}=[];
+    [Key(7)] public int SailingLevel {get;set;}=1;
     [Key(5)] public ShipCrewState Crew {get;set;}=new();
     [Key(0)] public HarbourEntry[] Entries { get; set; } = [];
     [Key(1)] public string Message { get; set; } = "";
@@ -14,6 +16,9 @@ public partial class HarbourStatePacket : IntersectPacket
 [MessagePackObject]
 public sealed class HarbourEntry
 {
+    [Key(14)] public string Graphics {get;set;}="";
+    [Key(15)] public int Frames {get;set;}=4;
+    [Key(13)] public int SellPrice {get;set;}
     [Key(12)] public int CargoCount {get;set;}
     [Key(11)] public string ShipName {get;set;}="";
     [Key(0)] public string ModelId { get; set; } = "";

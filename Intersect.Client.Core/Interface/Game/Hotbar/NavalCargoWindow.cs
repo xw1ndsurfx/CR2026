@@ -48,9 +48,10 @@ internal sealed class NavalCargoWindow : Window
         _hint=Text(this,"CargoDockHint",10,Cream);
         _warning=Text(this,"CargoLossWarning",10,new Color(255,225,151,119));
         _close=new Button(this,"CargoClose") {Text=""};
+        NavalManagementWindow.StyleButton(_close);
         _closeText=Text(_close,"CargoCloseCaption",11,Cream,true,true);
         _close.Clicked+=(_,_)=>Naval.NavalWorld.CargoOpen=false;
-        var closeFrame=new Chrome(_close,"CargoCloseFrame",Style.PrimaryAction);closeFrame.SendToBack();
+
         SetSize(720,610);Hide();
     }
     protected override void EnsureInitialized() { }
@@ -75,7 +76,7 @@ internal sealed class NavalCargoWindow : Window
         _hint.SetBounds(34,height-95,width-68,22);
         _warning.SetBounds(34,height-72,width-218,22);
         _close.SetBounds(width-164,height-66,128,35);
-        _close.Children.OfType<Chrome>().Single().SetBounds(0,0,128,35);
+
         _closeText.SetBounds(4,3,120,29);
     }
 
@@ -98,7 +99,7 @@ internal sealed class NavalCargoWindow : Window
         var shipChanged=_shipId!=ship.Id;
         var changed=shipChanged || _contents.Length!=cargo.Length ||
             cargo.Where((parcel,index)=>index>=_contents.Length || _contents[index]!=new CargoStamp(parcel)).Any();
-        _summary.Text=string.Format(T("Cargo: {0}/{1} lots"),cargo.Length,ship.CargoCapacity);
+        _summary.Text=string.Format(T("Cargo: {0}/{1} lots"),cargo.Length,ship.CargoCapacity)+(ship.CargoCapacity>0 && cargo.Length>=ship.CargoCapacity?" - MAX":"");
         _summary.TextColorOverride=ship.CargoCapacity>0 && cargo.Length>=ship.CargoCapacity?new Color(255,240,180,108):Cream;
         _capacity.Value=ship.CargoCapacity<=0?0:Math.Clamp(cargo.Length/(float)ship.CargoCapacity,0,1);
         _empty.IsHidden=cargo.Length>0;
@@ -140,13 +141,14 @@ internal sealed class NavalCargoWindow : Window
                 icon.RenderColor=descriptor.Color;
             }
             // Missing resources keep a visible empty icon frame without substituting a different item.
-            var name=ClientLanguages.ContentText(descriptor?.Name??T("Unknown item"));
+            var sealedCargo=parcel.ItemId==Guid.Empty;
+            var name=sealedCargo?T("Sealed cargo"):ClientLanguages.ContentText(descriptor?.Name??T("Unknown item"));
             var title=Text(this,"CargoItemName",13,Cream,true);title.SetBounds(86,9,width-240,25);
             EventPanelText.Fit(title,name,13,10);
             var kind=Text(this,"CargoKind",10,Muted);kind.SetBounds(86,36,width-105,20);
             EventPanelText.Fit(kind,T(NavalCargo.Caption(parcel.Kind)),10);
             var quantity=Text(this,"CargoQuantity",12,Gold,true,true);quantity.SetBounds(width-150,12,138,28);
-            EventPanelText.Fit(quantity,NavalSetupText.Display(string.Format(T("Qty: {0:N0}"),parcel.Quantity)),12,9);
+            EventPanelText.Fit(quantity,NavalSetupText.Display(string.Format(T("Qty: {0:N0}"),parcel.Quantity)),12,9);quantity.IsHidden=sealedCargo;
             var quality=Text(this,"CargoQuality",10,QualityColor(parcel.Quality),true);
             quality.SetBounds(156,59,width-170,19);quality.Text=string.Format(T("Quality {0}/5"),parcel.Quality);
             var marks=new QualityMarks(this,parcel.Quality);marks.SetBounds(86,64,60,9);
@@ -155,9 +157,11 @@ internal sealed class NavalCargoWindow : Window
             var discardButton=new Button(this,"CargoDiscard") {Text=""};discardButton.SetBounds(bx+bw+8,86,bw,26);
             foreach(var (button,caption) in new[]{(unloadButton,"Unload"),(discardButton,"Discard")})
             {
+                NavalManagementWindow.StyleButton(button);
                 var label=Text(button,"CargoActionCaption",11,Cream,true,true);label.SetBounds(4,2,bw-8,22);
                 EventPanelText.Fit(label,T(caption),11,9);
             }
+            unloadButton.IsDisabled=sealedCargo;
             unloadButton.Clicked+=(_,_)=>unload();discardButton.Clicked+=(_,_)=>discard();
             TooltipText=name;
         }

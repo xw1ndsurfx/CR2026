@@ -1694,8 +1694,9 @@ public partial class FrmEvent : Form
                 cmdWindow = new EventCommand_StartDungeon((StartDungeonCommand)command, this);
                 break;
             case EventCommandType.OpenNavalAmmoShop:
+                cmdWindow=new EventCommandNavalShop(command,this);break;
             case EventCommandType.OpenNavalShop:
-                break;
+                cmdWindow=new EventCommandNavalShop(command,this);break;
             case EventCommandType.OpenQuestShop:
                 cmdWindow = new EventCommand_OpenQuestShop((OpenQuestShopCommand)command, this);
                 break;

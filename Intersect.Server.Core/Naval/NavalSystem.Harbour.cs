@@ -17,19 +17,19 @@ namespace Intersect.Server.Naval;
 
 internal static partial class NavalSystem
 {
-    internal static void OpenShopFromEvent(Player player, Entities.Events.Event instance)
+    internal static void OpenShopFromEvent(Player player, Entities.Events.Event instance,Guid shopId=default)
     {
         lock (player.EntityLock)
         {
             lock (Gate)
             {
-                if (!IsEnabled() || !player.InGame || player.IsDead || player.HasPendingDeath) return;
+                if (!IsEnabled() || !player.InGame || player.IsDead || player.HasPendingDeath || player.NavalShipId!=Guid.Empty || shopId!=Guid.Empty && Intersect.GameObjects.ShopDescriptor.Get(shopId)?.ConfigurationKind!=Intersect.GameObjects.ShopConfigurationKind.NavalShipsAndSkills) return;
                 var map = instance.MapId == Guid.Empty ? player.MapId : instance.MapId;
                 var x = instance.MapId == Guid.Empty ? player.X : instance.X;
                 var y = instance.MapId == Guid.Empty ? player.Y : instance.Y;
                 if (!HarbourAccessRules.ShopSessionValid(player.MapId, player.X, player.Y,
                     map, x, y, 0, 1, _settings.ShopInteractionRange)) return;
-                player.NavalAmmoShop=false;
+                player.NavalAmmoShop=false;player.NavalShopId=shopId;
                 player.NavalShopMap = map; player.NavalShopX = x; player.NavalShopY = y;
                 player.NavalShopExpires = Timing.Global.Milliseconds + _settings.ShopSessionSeconds * 1000L;
             }
@@ -37,6 +37,18 @@ internal static partial class NavalSystem
         }
     }
 
+    private static HarbourCatalog ShopCatalogue(Player p)
+    {
+        var shop=Intersect.GameObjects.ShopDescriptor.Get(p.NavalShopId);
+        if(p.NavalShopId!=Guid.Empty && shop?.ConfigurationKind!=Intersect.GameObjects.ShopConfigurationKind.NavalShipsAndSkills)throw new InvalidDataException("Invalid naval shop session.");
+        var catalog=shop?.ConfigurationKind==Intersect.GameObjects.ShopConfigurationKind.NavalShipsAndSkills && shop.NavalCatalogue.Enabled?shop.NavalCatalogue:HarbourCatalog.Load(CataloguePath);
+        catalog.Validate();return catalog;
+    }
+    private static NavalSkillDefinition[] ShopSkills(Player p)
+    {
+        var shop=Intersect.GameObjects.ShopDescriptor.Get(p.NavalShopId);
+        return shop?.ConfigurationKind==Intersect.GameObjects.ShopConfigurationKind.NavalShipsAndSkills && shop.NavalCatalogue.Enabled?shop.NavalSkills.Where(d=>d.IsValid()).ToArray():_settings.Skills;
+    }
     private static ItemDescriptor Currency(HarbourOffer offer)
     {
         if (offer.CurrencyItemId != Guid.Empty)
@@ -58,7 +70,7 @@ internal static partial class NavalSystem
             if (!fromEvent && now - player.LastHarbourRequest < 500) return;
             player.LastHarbourRequest = now;
             HarbourCatalog catalog;
-            try { catalog = HarbourCatalog.Load(Path.Combine("resources", "naval-shop.json")); }
+            try { catalog = packet.View==HarbourView.Shop?ShopCatalogue(player):HarbourCatalog.Load(Path.Combine("resources", "naval-shop.json")); }
             catch (Exception e) when (e is InvalidDataException or IOException or UnauthorizedAccessException or JsonException or ArgumentException)
             { player.SendPacket(new HarbourStatePacket { View = packet.View, Message = "The harbour catalogue is unavailable." }); return; }
             (int X, int Y)? dock = null;
@@ -106,6 +118,20 @@ internal static partial class NavalSystem
                     message=RenameOwnedShip(owned,name,()=>player.User.Save(force:true)==UserSaveResult.Completed)?"Ship renamed.":"The fleet could not be saved. No payment was kept.";
                 }
             }
+            else if(packet.Action==HarbourAction.Sell)
+            {
+                var currency=offer==null?null:Currency(offer);
+                var proceeds=offer==null || owned==null?0:(int)((long)offer.Price*owned.Health/200);
+                if(owned==null || owned.AtSea || owned.Cargo.Count>0 || proceeds<=0 || currency==null)return;
+                var before=player.NavalFleetJson;var items=SnapshotCargoInventory(player);var saved=false;
+                try
+                {
+                    var plan=PlanCargoInventory(items,CurrencyParcels(currency.Id,proceeds));
+                    if(plan!=null) {for(var i=0;i<plan.Length;i++)player.Items[i].Set(plan[i]);player.NavalFleet.Remove(owned);saved=SaveManagement(player);}
+                }
+                finally {if(!saved){player.NavalFleetJson=before;for(var i=0;i<items.Length;i++)player.Items[i].Set(items[i]);}PacketSender.SendInventory(player);}
+                message=saved?"Ship sold.":"Transaction failed. Nothing was changed.";
+            }
             else if (packet.Action == HarbourAction.Repair)
             {
                 if (owned == null || owned.Health >= 100) message = "Choose a damaged or sunken ship you own.";
@@ -148,7 +174,7 @@ internal static partial class NavalSystem
         {
             var result = HarbourTrade.Commit(
                 () => cost == 0 || player.TryTakeItem(currency.Id, cost, sendUpdate: false),
-                () => { if (repair == null) player.NavalFleet.Add(new OwnedShip { ModelId = offer.Id }); else repair.Health = 100; },
+                () => { if (repair == null) player.NavalFleet.Add(new OwnedShip { ModelId = offer.Id,CargoCapacity=offer.Ship.CargoCapacity }); else repair.Health = 100; },
                 () => player.User.Save(force: true) == UserSaveResult.Completed,
                 () => { player.NavalFleetJson = fleetBefore; for (var i = 0; i < inventory.Length; i++) player.Items[i].Set(inventory[i]); });
             return result switch
@@ -162,11 +188,11 @@ internal static partial class NavalSystem
     }
 
     private static void SendHarbour(Player player, HarbourCatalog catalog, string message, bool premium, HarbourView view) =>
-        player.SendPacket(new HarbourStatePacket { View = view, Message = message, Premium = premium, Entries = catalog.Offers.Where(o => view == HarbourView.Shop || player.NavalFleet.Any(s => s.ModelId == o.Id)).Select(o =>
+        player.SendPacket(new HarbourStatePacket { Skills=view==HarbourView.Shop?ShopSkills(player).Select(d=>new NavalSkillView {Definition=d,Owned=player.NavalCareer.Skills.Contains(d.Kind),Currency=NavalCurrency(d.CurrencyItemId,"Auragems")?.Name??"Auragems",CurrencyAvailable=NavalCurrency(d.CurrencyItemId,"Auragems")!=null,Balance=NavalCurrency(d.CurrencyItemId,"Auragems") is {} money?player.CountItems(money.Id):0}).ToArray():[],SailingLevel=_settings.Sailing.Progress(player.SailingExperience).Level,View = view, Message = message, Premium = premium, Entries = catalog.Offers.Where(o => view == HarbourView.Shop || player.NavalFleet.Any(s => s.ModelId == o.Id)).Select(o =>
         {
             var owned = player.NavalFleet.FirstOrDefault(s => s.ModelId == o.Id);
             var currency = Currency(o);
-            return new HarbourEntry { ModelId = o.Id, Name = o.Name, ShipName=owned?.Name??"", Currency = currency?.Name ?? o.Currency,
+            return new HarbourEntry {Graphics=o.Ship.Graphics,Frames=o.Ship.Frames,SellPrice=owned is {AtSea:false,Cargo.Count:0}?(int)((long)o.Price*owned.Health/200):0,ModelId = o.Id, Name = o.Name, ShipName=owned?.Name??"", Currency = currency?.Name ?? o.Currency,
                 Price = o.Price, RepairPrice = ShipFleetRules.RepairCost(o.RepairPrice,owned?.Health??100), PremiumRequired = o.PremiumRequired,
                 CargoCount=owned?.Cargo.Count??0,Owned = owned != null, Health = owned?.Health ?? 100, Balance = currency == null ? 0 : player.CountItems(currency.Id),
                 ForSale = o.ForSale, CurrencyAvailable = currency != null };
@@ -191,7 +217,7 @@ internal static partial class NavalSystem
             vessel.Health = owned.Health;vessel.SinkingSerial=owned.SinkingSerial;
             vessel.State.DamageState = owned.Health < 100 ? 1 : 0;
             var fleetBefore = player.NavalFleetJson;
-            owned.AtSea = true; owned.ReturnMapId = player.MapId; owned.ReturnDockX = dock.X; owned.ReturnDockY = dock.Y;
+            owned.CargoCapacity=d.CargoCapacity;owned.AtSea = true; owned.ReturnMapId = player.MapId; owned.ReturnDockX = dock.X; owned.ReturnDockY = dock.Y;
             owned.ReturnX=player.X; owned.ReturnY=player.Y;
             // Persist a rescue marker before moving the avatar; a crash must not strand it at sea.
             if (player.User.Save(force: true) != UserSaveResult.Completed)

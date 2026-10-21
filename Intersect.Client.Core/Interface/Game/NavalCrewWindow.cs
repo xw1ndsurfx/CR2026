@@ -37,7 +37,7 @@ internal sealed class NavalCrewWindow:Window
             _state.ShipId!=Guid.Empty?HarbourAction.LeaveCrew:HarbourAction.ClaimCargo);
         var close=new Button(this,"CrewClose") {Text=T("Close"),Font=GameContentManager.Current.GetFont("sourcesanspro")??Skin.DefaultFont,FontSize=11};
         close.SetBounds(width-164,height-95,140,34);close.Clicked+=(_,_)=>Hide();
-        NavalManagementWindow.Button(this,"NavalActivities","Naval activities",24,height-190,Width-48,32,()=>NavalManagementWindow.Request(NavalManageAction.Ammo));
+        NavalManagementWindow.Button(this,"NavalHelmControl","Helm control",24,height-190,Width-48,32,()=>NavalManagementWindow.Request(NavalManageAction.OfferHelm));
         _footer=Text(this,"CrewFooter",10);_footer.SetBounds(24,height-49,width-48,22);Hide();
     }
     protected override void EnsureInitialized() { }

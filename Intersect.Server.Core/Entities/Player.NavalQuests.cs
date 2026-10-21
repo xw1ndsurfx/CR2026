@@ -9,6 +9,8 @@ public partial class Player
     {
         if(amount<=0)return;
         NavalCareer.Counters[kind]=kind>=NavalTaskKind.SailingLevel?Math.Max(NavalCareer.Counters.GetValueOrDefault(kind),amount):Math.Min(200000000000000L,NavalCareer.Counters.GetValueOrDefault(kind)+amount);
+        Intersect.Server.Achievements.AchievementRuntime.SetAbsoluteProgress(this,
+            (Intersect.Framework.Core.Achievements.AchievementObjectiveType)(19+(int)kind),NavalCareer.Counters[kind]);
         var changed=false;
         foreach(var progress in Quests.ToArray())
         {

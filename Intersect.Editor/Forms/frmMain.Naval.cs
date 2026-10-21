@@ -17,6 +17,7 @@ public partial class FrmMain
     }
     public void ReceiveNavalConfiguration(NavalConfigurationPacket packet)
     {
+        if(FrmShop.ReceiveNavalShopConfiguration(packet))return;
         if (_navalEditor is { IsDisposed: false }) { _navalEditor.AcceptResponse(packet); return; }
         if (packet.Error.Length > 0) { MessageBox.Show(this, FrmNavalConfiguration.T(packet.Error), FrmNavalConfiguration.T("Naval System Editor")); return; }
         if (packet.SavedSection == 0) { _navalEditor = new FrmNavalConfiguration(packet); _navalEditor.Show(this); }

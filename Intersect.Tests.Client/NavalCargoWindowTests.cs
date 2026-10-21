@@ -202,11 +202,12 @@ public sealed class NavalCargoWindowTests
         using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(width,height)};
         var window=new NavalManagementWindow(canvas);window.Apply(new(){Mode=NavalManageAction.Ammo,
             Ammo=Enum.GetValues<CannonAmmoKind>().Select(k=>new NavalAmmoOffer {Kind=k,Quantity=15,MainQuantity=5,Available=true}).ToArray()});
-        var scroll=Descendants(window).OfType<ScrollControl>().Single();Assert.That(scroll.VerticalScrollBar.ContentSize,Is.GreaterThan(scroll.Height));
+        var scroll=Descendants(window).OfType<ScrollControl>().Single();Assert.That(scroll.CanScrollV,Is.True);
+        Assert.That(Descendants(window).Any(c=>c.Name.Contains("Deposit") || c.Name.StartsWith("NavalTab")),Is.False);
         foreach(var b in Descendants(scroll).OfType<Button>())
         {
-            var caption=Descendants(b).OfType<Label>().Single(l=>l.Name==b.Name+"Caption");Assert.That(caption.Text,Is.Not.Empty);
-            Assert.That(caption.Height,Is.GreaterThanOrEqualTo(22));Assert.That(caption.Right,Is.LessThanOrEqualTo(b.Width));
+            if(b.Name.StartsWith("AmmoSlot"))continue;
+            Assert.That(b.Text,Is.Not.Empty);Assert.That(b.Height,Is.GreaterThanOrEqualTo(30));
         }
         window.Apply(new(){Mode=NavalManageAction.Repair,RepairToken=Guid.NewGuid(),RepairTarget=1,RepairKind=NavalRepairKind.Caulking,RepairRequiredHits=5});
         var targets=Descendants(window).OfType<Button>().Where(b=>b.Name.StartsWith("RepairTarget")).ToArray();
@@ -229,6 +230,34 @@ public sealed class NavalCargoWindowTests
             var qty=Descendants(window).OfType<Label>().Single(l=>l.Name=="CargoQuantity");Assert.That(qty.Text,Does.Not.Contain("\u00a0").And.Not.Contain("\u202f"));
         }
         finally{System.Globalization.CultureInfo.CurrentCulture=previous;}
+    }
+
+    [Test] public void SealedManifestHidesContentsDisablesUnloadingAndDisplaysMaximumCapacity()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(900,700)};
+        var window=new NavalCargoWindow(canvas);window.Update(new(){Id=Guid.NewGuid(),CargoCapacity=1,Cargo=[new(){ItemId=Guid.Empty,Quantity=0,Quality=3}]},true);
+        Assert.That(Descendants(window).OfType<Button>().Single(b=>b.Name=="CargoUnload").IsDisabled,Is.True);
+        Assert.That(Descendants(window).OfType<Label>().Single(l=>l.Name=="CargoQuantity").IsHidden,Is.True);
+        Assert.That(Descendants(window).OfType<Label>().Single(l=>l.Name=="CargoSummary").Text,Does.Contain("MAX"));
+        Assert.That(_content.Requests.Any(r=>r.Item1==TextureType.Item),Is.False);
+    }
+    [TestCase(800,600)][TestCase(1366,768)]
+    public void RepairControlFitsBesideTheBottomCannonButtons(int width,int height)
+    {
+        var previous=Intersect.Client.General.Globals.Me;
+        var me=(Intersect.Client.Entities.Player)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(Intersect.Client.Entities.Player));GC.SuppressFinalize(me);me.Id=Guid.NewGuid();
+        try
+        {
+            Intersect.Client.General.Globals.Me=me;Intersect.Client.Naval.NavalWorld.Clear();
+            using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(width,height)};
+            var window=new NavalCannonViewWindow(canvas);window.Update(new(){Id=Guid.NewGuid(),CaptainId=Guid.NewGuid(),CrewIds=[me.Id],RepairAvailable=true},true);
+            var controls=Descendants(window).OfType<Button>().Where(b=>new[]{"PortView","StarboardView","FireBroadside","CannonRepair","CloseCannonView"}.Contains(b.Name)).OrderBy(b=>b.X).ToArray();
+            Assert.That(controls.Length,Is.EqualTo(5));Assert.That(controls.Select(b=>b.Y).Distinct().Count(),Is.EqualTo(1));
+            Assert.That(controls.First().X,Is.GreaterThanOrEqualTo(0));Assert.That(controls.Last().Right,Is.LessThanOrEqualTo(width));
+            Assert.That(controls.Single(b=>b.Name=="CannonRepair").IsHidden,Is.False);
+            Assert.That(controls.Single(b=>b.Name=="CannonRepair").IsDisabled,Is.False);
+        }
+        finally{Intersect.Client.Naval.NavalWorld.Clear();Intersect.Client.General.Globals.Me=previous;}
     }
 
     private static IEnumerable<ControlBase> Descendants(ControlBase parent)

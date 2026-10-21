@@ -59,36 +59,48 @@ internal static partial class NavalSystem
     private static bool SkillShopValid(Player p,long now)
     {
         if(p.NavalAmmoShop || !ShopValid(p,now))return false;
-        try{return HarbourCatalog.Load(CataloguePath).Enabled;}
+        try{return ShopCatalogue(p).Enabled;}
         catch(Exception e) when(e is IOException or UnauthorizedAccessException or InvalidDataException or JsonException){return false;}
     }
-    internal static void OpenAmmoShopFromEvent(Player p,Entities.Events.Event instance)
+    internal static void OpenAmmoShopFromEvent(Player p,Entities.Events.Event instance,Guid shopId=default)
     {
         lock(p.EntityLock)
         {
             var now=Timing.Global.Milliseconds;
             lock(Gate)
             {
-                if(!IsEnabled() || !p.InGame || p.IsDead || p.HasPendingDeath || p.NavalShipId!=Guid.Empty) return;
+                if(!IsEnabled() || !p.InGame || p.IsDead || p.HasPendingDeath || p.NavalShipId!=Guid.Empty || shopId!=Guid.Empty && Intersect.GameObjects.ShopDescriptor.Get(shopId)?.ConfigurationKind!=Intersect.GameObjects.ShopConfigurationKind.NavalAmmunition) return;
                 var map=instance.MapId==Guid.Empty?p.MapId:instance.MapId;
                 var x=instance.MapId==Guid.Empty?p.X:instance.X;var y=instance.MapId==Guid.Empty?p.Y:instance.Y;
                 if(!HarbourAccessRules.ShopSessionValid(p.MapId,p.X,p.Y,map,x,y,0,1,_settings.ShopInteractionRange))return;
-                p.NavalShopMap=map;p.NavalShopX=x;p.NavalShopY=y;p.NavalShopExpires=now+_settings.ShopSessionSeconds*1000L;p.NavalAmmoShop=true;
-                SendManagement(p,NavalManageAction.Ammo,now);
+                p.NavalShopMap=map;p.NavalShopX=x;p.NavalShopY=y;p.NavalShopExpires=now+_settings.ShopSessionSeconds*1000L;p.NavalAmmoShop=true;p.NavalShopId=shopId;
+                SendManagement(p,NavalManageAction.AmmoShop,now);
             }
         }
+    }
+    private static (Guid Currency,int Price,bool Allowed) AmmoTrade(Player p,CannonAmmunition ammo,bool sell)
+    {
+        if(p.NavalShopId==Guid.Empty)return (ammo.ShopCurrencyItemId,sell?ammo.ShopPrice/2:ammo.ShopPrice,ammo.ForSale && ammo.RequiresItem);
+        var shop=Intersect.GameObjects.ShopDescriptor.Get(p.NavalShopId);
+        if(shop?.ConfigurationKind!=Intersect.GameObjects.ShopConfigurationKind.NavalAmmunition)return(default,0,false);
+        var entry=(sell?shop.BuyingItems:shop.SellingItems).FirstOrDefault(i=>i.ItemId==ammo.ItemId);
+        if(entry!=null)return (entry.CostItemId==Guid.Empty?shop.DefaultCurrencyId:entry.CostItemId,sell?shop.BuybackPrice(entry.CostItemQuantity):entry.CostItemQuantity,entry.CostItemQuantity>=0);
+        if(sell && !shop.BuyingWhitelist && ItemDescriptor.Get(ammo.ItemId) is {} item)return(shop.DefaultCurrencyId,shop.BuybackPrice(item.Price),true);
+        return(default,0,false);
     }
     private static void SendManagement(Player p,NavalManageAction mode,long now,string message="")
     {
         Ships.TryGetValue(p.NavalShipId,out var v);Repairs.TryGetValue(p.Id,out var round);
-        var state=new NavalManagementState {Mode=mode,Message=message,SkillShop=SkillShopValid(p,now),Shop=p.NavalAmmoShop && ShopValid(p,now),
+        var state=new NavalManagementState {Mode=mode,Message=message,SkillShop=SkillShopValid(p,now),Shop=mode==NavalManageAction.AmmoShop && p.NavalAmmoShop && ShopValid(p,now),
             ShipId=v?.State.Id??Guid.Empty,OwnerId=v?.State.CaptainId??Guid.Empty,HelmsmanId=v==null?Guid.Empty:Driver(v),
             HelmOfferId=v?.HelmOfferTo==p.Id && v.HelmOfferUntil>now?v.HelmOfferToken:Guid.Empty,
             SailingLevel=_settings.Sailing.Progress(p.SailingExperience).Level,GunneryLevel=_settings.Gunnery.Curve().Progress(p.GunneryExperience).Level,
             Shipwright=_settings.Repair.Curve().Progress(p.NavalCareer.RepairExperience),SelectedAmmo=p.NavalSelectedAmmo};
         state.Ammo=_settings.Ammunition.Select(a=>new NavalAmmoOffer {Kind=a.Kind,ItemId=a.ItemId,Quantity=a.RequiresItem?AmmoCount(p,a.ItemId):-1,
-            MainQuantity=a.RequiresItem && a.ItemId!=Guid.Empty?p.FindInventoryItemQuantity(a.ItemId):0,ForSale=a.ForSale && a.RequiresItem,
-            Price=a.ShopPrice,Currency=NavalCurrency(a.ShopCurrencyItemId,"Aureons")?.Name??"",SailingLevel=a.RequiredSailingLevel,GunneryLevel=a.RequiredLevel,
+            MainQuantity=a.RequiresItem && a.ItemId!=Guid.Empty?p.FindInventoryItemQuantity(a.ItemId):0,ForSale=AmmoTrade(p,a,false).Allowed,
+            Price=AmmoTrade(p,a,false).Price,Currency=NavalCurrency(AmmoTrade(p,a,false).Currency,"Aureons")?.Name??"",
+            CanBuy=AmmoTrade(p,a,false).Allowed && NavalCurrency(AmmoTrade(p,a,false).Currency,"Aureons") is {} money && p.CountItems(money.Id)>=AmmoTrade(p,a,false).Price,
+            SellPrice=AmmoTrade(p,a,true).Allowed?AmmoTrade(p,a,true).Price:-1,SellCurrency=NavalCurrency(AmmoTrade(p,a,true).Currency,"Aureons")?.Name??"",SailingLevel=a.RequiredSailingLevel,GunneryLevel=a.RequiredLevel,
             Icon=string.IsNullOrEmpty(a.Icon)?ItemDescriptor.Get(a.ItemId)?.Icon??"":a.Icon,
             Available=(v!=null && Driver(v)==p.Id?state.SailingLevel>=a.RequiredSailingLevel:state.GunneryLevel>=a.RequiredLevel)}).ToArray();
         state.Skills=_settings.Skills.Select(d=>new NavalSkillView {Definition=d,Owned=p.NavalCareer.Skills.Contains(d.Kind),
@@ -106,17 +118,18 @@ internal static partial class NavalSystem
             if(now-p.LastNavalManageRequest<100)return;p.LastNavalManageRequest=now;
             lock(Gate)if(!IsEnabled())return;
             var mode=packet.Action;var message="";
-            if(mode==NavalManageAction.RepairMenu){lock(Gate)SendManagement(p,NavalManageAction.Repair,now);return;}
+            if(mode==NavalManageAction.AmmoShop){lock(Gate)if(!p.NavalAmmoShop || !ShopValid(p,now))return;}
+            if(mode==NavalManageAction.RepairMenu){lock(Gate) {if(!Ships.TryGetValue(p.NavalShipId,out var repairShip) || Driver(repairShip)==p.Id || repairShip.State.CaptainId==p.Id || ByCrewDock(repairShip))return;}lock(Gate)SendManagement(p,NavalManageAction.Repair,now);return;}
 
-            if(mode is NavalManageAction.Deposit or NavalManageAction.Withdraw or NavalManageAction.BuyAmmo)
+            if(mode==NavalManageAction.Deposit)return;
+            if(mode is NavalManageAction.Withdraw or NavalManageAction.BuyAmmo or NavalManageAction.SellAmmo)
             {
                 var a=_settings.Ammunition.FirstOrDefault(a=>a.Kind==packet.Ammo);var count=packet.Quantity;
                 if(a==null || !a.RequiresItem || count is <1 or >10000 || ItemDescriptor.Get(a.ItemId)?.IsStackable!=true)return;
                 var json=p.NavalFleetJson;var inventory=SnapshotCargoInventory(p);var ok=false;
                 try
                 {
-                    if(mode==NavalManageAction.Deposit) ok=p.TryTakeItem(a.ItemId,count,sendUpdate:false) && AmmoAdd(p,a.ItemId,count);
-                    else if(mode==NavalManageAction.Withdraw)
+                    if(mode==NavalManageAction.Withdraw)
                     {
                         var planned=PlanCargoInventory(inventory,[new NavalCargoParcel {ItemId=a.ItemId,Quantity=count}]);
                         ok=planned!=null && AmmoAdd(p,a.ItemId,-count);
@@ -124,31 +137,50 @@ internal static partial class NavalSystem
                     }
                     else
                     {
-                        lock(Gate)ok=p.NavalAmmoShop && ShopValid(p,now) && a.ForSale;
-                        var currency=NavalCurrency(a.ShopCurrencyItemId,"Aureons");var cost=(long)a.ShopPrice*count;
-                        ok=ok && currency!=null && cost<=int.MaxValue && (cost==0 || p.TryTakeItem(currency.Id,(int)cost,sendUpdate:false)) && AmmoAdd(p,a.ItemId,count);
+                        var sell=mode==NavalManageAction.SellAmmo;var trade=AmmoTrade(p,a,sell);
+                        lock(Gate)ok=p.NavalAmmoShop && ShopValid(p,now) && trade.Allowed;
+                        var currency=NavalCurrency(trade.Currency,"Aureons");var cost=(long)trade.Price*count;
+                        if(sell)
+                        {
+                            var fromBag=Math.Min(count,AmmoCount(p,a.ItemId));
+                            ok=ok && currency!=null && cost>0 && cost<=int.MaxValue;
+                            if(ok)ok=(fromBag==0 || AmmoAdd(p,a.ItemId,-fromBag)) && (count==fromBag || p.TryTakeItem(a.ItemId,count-fromBag,sendUpdate:false));
+                            var planned=ok?PlanCargoInventory(SnapshotCargoInventory(p),CurrencyParcels(currency.Id,cost)):null;
+                            ok=ok && planned!=null;
+                            if(ok)for(var i=0;i<planned.Length;i++)p.Items[i].Set(planned[i]);
+                        }
+                        else ok=ok && currency!=null && cost>=0 && cost<=int.MaxValue && (cost==0 || p.TryTakeItem(currency.Id,(int)cost,sendUpdate:false)) && AmmoAdd(p,a.ItemId,count);
                     }
                     if(ok)ok=SaveManagement(p);
                 }
                 finally {if(!ok){p.NavalFleetJson=json;for(var i=0;i<inventory.Length;i++)p.Items[i].Set(inventory[i]);}}
-                message=ok?"Ammunition updated.":"Transaction failed. Nothing was changed.";mode=NavalManageAction.Ammo;PacketSender.SendInventory(p);if(ok)p.RefreshNavalCargoQuests([a.ItemId]);
+                message=ok?"Ammunition updated.":"Transaction failed. Nothing was changed.";mode=mode is NavalManageAction.BuyAmmo or NavalManageAction.SellAmmo?NavalManageAction.AmmoShop:NavalManageAction.Ammo;PacketSender.SendInventory(p);if(ok)p.RefreshNavalCargoQuests([a.ItemId]);
             }
             else if(mode==NavalManageAction.SelectAmmo)
             {
-                if(_settings.Ammunition.Any(a=>a.Kind==packet.Ammo))p.NavalSelectedAmmo=packet.Ammo;
+                var selected=_settings.Ammunition.FirstOrDefault(a=>a.Kind==packet.Ammo);
+                if(selected==null)return;
+                if(selected.RequiresItem && AmmoCount(p,selected.ItemId)<1000000000 && p.FindInventoryItemQuantity(selected.ItemId)>0)
+                {
+                    var json=p.NavalFleetJson;var items=SnapshotCargoInventory(p);var quantity=Math.Min(1000000000-AmmoCount(p,selected.ItemId),Math.Min(10000,p.FindInventoryItemQuantity(selected.ItemId)));var saved=false;
+                    try {saved=p.TryTakeItem(selected.ItemId,quantity,sendUpdate:false) && AmmoAdd(p,selected.ItemId,quantity) && SaveManagement(p);}
+                    finally {if(!saved){p.NavalFleetJson=json;for(var i=0;i<items.Length;i++)p.Items[i].Set(items[i]);}}
+                    PacketSender.SendInventory(p);if(!saved)return;
+                }
+                p.NavalSelectedAmmo=packet.Ammo;
                 if(packet.Value==1)return;
                 mode=NavalManageAction.Ammo;
             }
             else if(mode==NavalManageAction.BuySkill)
             {
-                var d=_settings.Skills.FirstOrDefault(d=>d.Kind==packet.Skill);
+                var d=ShopSkills(p).FirstOrDefault(d=>d.Kind==packet.Skill);
                 bool valid;lock(Gate)valid=SkillShopValid(p,now);
                 var currency=d==null?null:NavalCurrency(d.CurrencyItemId,"Auragems");
                 if(!valid || d==null || currency==null || p.NavalCareer.Skills.Contains(d.Kind) || _settings.Sailing.Progress(p.SailingExperience).Level<d.RequiredLevel)return;
                 var json=p.NavalFleetJson;var inventory=SnapshotCargoInventory(p);var ok=false;
                 try {ok=(d.Price==0 || p.TryTakeItem(currency.Id,d.Price,sendUpdate:false)) && p.NavalCareer.Skills.Add(d.Kind);if(ok)ok=SaveManagement(p);}
                 finally {if(!ok){p.NavalFleetJson=json;for(var i=0;i<inventory.Length;i++)p.Items[i].Set(inventory[i]);}}
-                message=ok?"Skill learned.":"Transaction failed. Nothing was changed.";mode=NavalManageAction.Skills;PacketSender.SendInventory(p);
+                message=ok?"Skill learned.":"Transaction failed. Nothing was changed.";PacketSender.SendInventory(p);SendHarbour(p,ShopCatalogue(p),message,Intersect.Server.LogiCoins.LogiCoinPurchaseRuntime.HasActivePremium(p),HarbourView.Shop);return;
             }
             else
             {
@@ -165,7 +197,7 @@ internal static partial class NavalSystem
                     }
                     else if(mode==NavalManageAction.Repair)
                     {
-                        if(v==null || !_settings.Repair.Enabled || !Enum.IsDefined(packet.Repair) || v.Health is <=0 or >=100 || v.SunkUntil>0 || Driver(v)==p.Id ||
+                        if(v==null || !_settings.Repair.Enabled || !Enum.IsDefined(packet.Repair) || v.Health is <=0 or >=100 || v.SunkUntil>0 || (Driver(v)==p.Id || v.State.CaptainId==p.Id || ByCrewDock(v)) ||
                             RepairCooldown.GetValueOrDefault(p.Id)>now || Repairs.ContainsKey(p.Id) || p.NavalBusy)
                         {SendManagement(p,NavalManageAction.Repair,now,"Repair unavailable. Check hull, role and cooldown.");return;}
                         foreach(var gun in v.Guns.Values.Where(g=>g.Owner==p.Id))gun.Owner=gun.Lease=Guid.Empty;
@@ -175,7 +207,7 @@ internal static partial class NavalSystem
                     else if(mode==NavalManageAction.RepairInput)
                     {
                         if(!Repairs.TryGetValue(p.Id,out var r) || r.Token!=packet.Token)return;
-                        if(v==null || v.State.Id!=r.Ship || v.Health is <=0 or >=100 || Driver(v)==p.Id || now-r.Start>_settings.Repair.RoundSeconds*1000)
+                        if(v==null || v.State.Id!=r.Ship || v.Health is <=0 or >=100 || (Driver(v)==p.Id || v.State.CaptainId==p.Id || ByCrewDock(v)) || now-r.Start>_settings.Repair.RoundSeconds*1000)
                         {Repairs.Remove(p.Id);message="Repair cancelled.";}
                         else if(now-r.Last>=400)
                         {
@@ -223,6 +255,7 @@ internal static partial class NavalSystem
         var power=SkillPower(v,NavalSkillKind.RammingSpeed,now);
         if(power==0 || target.Enemy==null || target.Health<=0 || target.SunkUntil>0 || Math.Abs(v.State.Speed)<1 || !v.RamTargets.Add(target.State.Id))return;
         var damage=Math.Min(target.Health,Math.Max(1,_settings.CannonDamage*(100+power)/100));
+        target.Contributions[Driver(v)]=target.Contributions.GetValueOrDefault(Driver(v))+damage;
         target.Health-=damage;target.State.DamageState=1;Engage(v,target,now);
         QueueNavalTask(Driver(v),NavalTaskKind.HullDamage,damage);
         Emit(NavalEffectKind.HullImpact,target.State.MapId,target.State.X,target.State.Y,v.State.Heading,now);
@@ -274,7 +307,7 @@ internal static partial class NavalSystem
                 if(RepairRequests.Remove(v.State.Id,out requests) && v.Health>0 && v.SunkUntil==0)
                 {ship=v.State.Id;hull=Math.Min(100-v.Health,requests.Sum(r=>r.Hull)*(100+SkillPower(v,NavalSkillKind.RepairBonus,now))/100);}
             }
-            if(Repairs.TryGetValue(p.Id,out var r) && (r.Ship!=p.NavalShipId || !Ships.TryGetValue(r.Ship,out var active) || active.Health is <=0 or >=100 || Driver(active)==p.Id || now-r.Start>_settings.Repair.RoundSeconds*1000))Repairs.Remove(p.Id);
+            if(Repairs.TryGetValue(p.Id,out var r) && (r.Ship!=p.NavalShipId || !Ships.TryGetValue(r.Ship,out var active) || active.Health is <=0 or >=100 || Driver(active)==p.Id || active.State.CaptainId==p.Id || ByCrewDock(active) || now-r.Start>_settings.Repair.RoundSeconds*1000))Repairs.Remove(p.Id);
         }
         if(hull>0 && p.NavalFleet.FirstOrDefault(s=>s.Id==ship) is {} owned)
         {
@@ -285,7 +318,7 @@ internal static partial class NavalSystem
                 if(saved && Ships.TryGetValue(ship,out var v) && v.Health>0 && v.SunkUntil==0)
                 {
                     v.Health=owned.Health;v.State.DamageState=v.Health<100?1:0;
-                    foreach(var actor in requests.Select(r=>r.Player).Distinct()) {QueueNavalTask(actor,NavalTaskKind.Repairs,1);RepairRewards[actor]=Math.Min(200000000000000L,RepairRewards.GetValueOrDefault(actor)+_settings.Repair.ExperiencePerSuccess);}
+                    foreach(var actor in requests.Select(r=>r.Player).Distinct()) {if(Ships.TryGetValue(v.CombatTargetId,out var target))target.Contributions[actor]=target.Contributions.GetValueOrDefault(actor)+Math.Max(1,hull/requests.Count);QueueNavalTask(actor,NavalTaskKind.Repairs,1);RepairRewards[actor]=Math.Min(200000000000000L,RepairRewards.GetValueOrDefault(actor)+_settings.Repair.ExperiencePerSuccess);}
                 }
                 else if(!saved){if(RepairRequests.TryGetValue(ship,out var waiting))requests.AddRange(waiting);RepairRequests[ship]=requests;}
             }

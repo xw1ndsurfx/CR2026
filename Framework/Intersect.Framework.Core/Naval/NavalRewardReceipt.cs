@@ -5,6 +5,7 @@ namespace Intersect.Framework.Core.Naval;
 [MessagePackObject]
 public sealed class NavalRewardReceipt
 {
+    [Key(7)] public long CharacterExperience {get;set;}
     [Key(0)] public Guid Id {get;set;}=Guid.NewGuid();
     [Key(1)] public long SailingExperience {get;set;}
     [Key(2)] public NavalCargoParcel[] Cargo {get;set;}=[];

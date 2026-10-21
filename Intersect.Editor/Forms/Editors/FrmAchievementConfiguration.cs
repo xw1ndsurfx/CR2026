@@ -107,6 +107,8 @@ public sealed class FrmAchievementConfiguration : DarkForm
         foreach (var value in Enum.GetValues<AchievementObjectiveType>())
             _objective.Items.Add(value);
 
+        _objective.FormattingEnabled=true;
+        _objective.Format+=(_,args)=>{if(args.ListItem is AchievementObjectiveType type && (int)type is >=19 and <=27)args.Value=Intersect.Framework.Core.Naval.NavalSetupText.Get("Naval - "+(Intersect.Framework.Core.Naval.NavalTaskKind)((int)type-19),System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);};
         FillRewardChoices();
         FillAchievementImages();
         BuildUi();

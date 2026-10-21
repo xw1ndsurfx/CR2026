@@ -2,7 +2,7 @@ namespace Intersect.Framework.Core.Naval;
 
 public enum HarbourView : byte { Fleet, Shop, Crew }
 
-public enum HarbourAction : byte { Open, Buy, Launch, Repair, Rename, ClaimCargo, JoinCrew, LeaveCrew, ToggleCrewBoarding, DiscardCargo }
+public enum HarbourAction : byte { Open, Buy, Launch, Repair, Rename, ClaimCargo, JoinCrew, LeaveCrew, ToggleCrewBoarding, DiscardCargo, Sell }
 
 public sealed class OwnedShip
 {
@@ -10,6 +10,7 @@ public sealed class OwnedShip
     public string Name {get;set;}="";
     public List<NavalCargoParcel> Cargo {get;set;}=[];
     public string ModelId { get; set; } = "";
+    public int CargoCapacity {get;set;}=20;
     public int Health { get; set; } = 100;
     public int SinkingSerial {get;set;}
     public bool AtSea { get; set; }
@@ -43,7 +44,7 @@ public static class HarbourAccessRules
     {
         HarbourView.Fleet => action is HarbourAction.Open or HarbourAction.Launch or HarbourAction.Rename or HarbourAction.ClaimCargo or HarbourAction.DiscardCargo,
         HarbourView.Crew => action is HarbourAction.Open or HarbourAction.JoinCrew or HarbourAction.LeaveCrew or HarbourAction.ToggleCrewBoarding or HarbourAction.ClaimCargo or HarbourAction.DiscardCargo,
-        HarbourView.Shop => action is HarbourAction.Open or HarbourAction.Buy or HarbourAction.Repair,
+        HarbourView.Shop => action is HarbourAction.Open or HarbourAction.Buy or HarbourAction.Repair or HarbourAction.Sell,
         _ => false,
     };
     public static bool ShopSessionValid(Guid map, double x, double y, Guid sessionMap, double anchorX,

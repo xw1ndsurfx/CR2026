@@ -18,6 +18,7 @@ internal static partial class NavalSystem
 {
     private sealed class Vessel(ShipDefinition definition)
     {
+        internal readonly Dictionary<Guid,long> Contributions=[];
         internal readonly ShipDefinition Definition = definition;
         internal readonly ShipState State = new() { Id = definition.Id, MapId = definition.MapId,
             X = definition.X, Y = definition.Y, Heading = ShipMovement.Normalize(definition.Heading) };
@@ -229,6 +230,10 @@ internal static partial class NavalSystem
 
     internal static void Update(Player player, long now)
     {
+        var nearDock=player.NavalShipId==Guid.Empty && player.InGame && !player.IsDead && !player.HasPendingDeath && BesideCrewDock(player);
+        if(!nearDock)player.NavalDockPromptSeen=false;
+        else if(!player.NavalDockPromptSeen && !player.NavalBusy)
+        {player.NavalDockPromptSeen=true;Harbour(player,new() {View=HarbourView.Fleet},fromEvent:true);}
         UpdateManagement(player,now);
         ApplyPendingGunnery(player,now);
         ApplyPendingExperience(player,now);
@@ -362,17 +367,17 @@ internal static partial class NavalSystem
         var progress=_settings.Sailing.Progress(player.SailingExperience);
         var targetId=CombatTarget(player.NavalShipId,now,visible);
         Effects.RemoveAll(e=>now-e.Born>1500);
-        player.SendPacket(new NavalSnapshotPacket { Gunnery=GunnerState(player,now),Crew=CrewState(player),Rewards=RewardReceipts(player,now),CombatTargetId=targetId, Presentation=_settings.Presentation,
+        player.SendPacket(new NavalSnapshotPacket { ShoreCargo=ShoreCargo(player),Gunnery=GunnerState(player,now),Crew=CrewState(player),Rewards=RewardReceipts(player,now),CombatTargetId=targetId, Presentation=_settings.Presentation,
             SailingLevel=progress.Level,SailingExperience=progress.Experience,SailingRequired=progress.Required,
             Effects=player.InstanceType!=MapInstanceType.Overworld?[]:Effects.Where(e=>visible.Contains(e.Snapshot.MapId)).Select(e=>new NavalEffectSnapshot {
                 Id=e.Snapshot.Id,MapId=e.Snapshot.MapId,X=e.Snapshot.X,Y=e.Snapshot.Y,Heading=e.Snapshot.Heading,Kind=e.Snapshot.Kind,
                 Graphic=e.Snapshot.Graphic,AnimationId=e.Snapshot.AnimationId,PlaySound=e.Snapshot.PlaySound,AgeMilliseconds=(int)Math.Clamp(now-e.Born,0,1500) }).ToArray(), Ships = player.InstanceType != MapInstanceType.Overworld ? [] :
             Ships.Values.Where(v => visible.Contains(v.State.MapId) && ocean.Contains(v.State.MapId) && MapController.Get(v.State.MapId) != null)
                 .OrderByDescending(v=>v.State.Id==player.NavalShipId?2:v.State.Id==targetId?1:0).Take(64)
-                .Select(v => new ShipSnapshot { HelmsmanId=Driver(v),DockAvailable=v.State.Id==player.NavalShipId && v.State.CaptainId==player.Id && ByCrewDock(v),
+                .Select(v => new ShipSnapshot { RepairAvailable=v.State.Id==player.NavalShipId && Driver(v)!=player.Id && v.State.CaptainId!=player.Id && !ByCrewDock(v) && v.Health is >0 and <100 && v.SunkUntil==0,HelmsmanId=Driver(v),DockAvailable=v.State.Id==player.NavalShipId && v.State.CaptainId==player.Id && ByCrewDock(v),
                     HelmOfferToken=v.HelmOfferTo==player.Id && v.HelmOfferUntil>now?v.HelmOfferToken:Guid.Empty,CrewIds=v.Crew.Keys.ToArray(),Id = v.State.Id, CaptainId = v.State.CaptainId, MapId = v.State.MapId,
                     CargoCapacity=v.OwnerId==player.Id?v.Definition.CargoCapacity:player.BoardedShipId==v.State.Id?player.NavalCrewPassage?.Capacity??0:0,
-                    Cargo=v.OwnerId==player.Id?(player.NavalFleet.FirstOrDefault(s=>s.Id==v.State.Id)?.Cargo.ToArray()??[]):player.BoardedShipId==v.State.Id?(player.NavalCrewPassage?.Ship.Cargo.ToArray()??[]):[],
+                    Cargo=v.OwnerId==player.Id?(player.NavalFleet.FirstOrDefault(s=>s.Id==v.State.Id)?.Cargo.Select(NavalRewardSharing.Seal).ToArray()??[]):player.BoardedShipId==v.State.Id?(player.NavalCrewPassage?.Ship.Cargo.ToArray()??[]):[],
                     Enemy=v.Enemy!=null,Level=v.Enemy?.Level??1,MaximumHealth=v.MaximumHealth,Name=v.Name, X = v.State.X, Y = v.State.Y, Heading = v.State.Heading, Speed = v.State.Speed,
                     Graphics = v.SunkUntil > 0 ? v.SinkingGraphics : v.State.DamageState > 0 ? v.Definition.DamagedGraphics : Math.Abs(v.State.Speed)<.05 && v.Definition.Frames==4?IdleGraphic(v.Definition):v.Definition.Graphics,
                     Frames = v.Definition.Frames, FrameMilliseconds = v.Definition.FrameMilliseconds,

@@ -11,6 +11,14 @@ namespace Intersect.Server.Naval;
 
 internal static partial class NavalSystem
 {
+    private static Intersect.Network.Packets.Server.ShipSnapshot ShoreCargo(Player p)
+    {
+        if(p.NavalShipId!=Guid.Empty || !BesideCrewDock(p))return null;
+        var hold=RewardHolds(p).FirstOrDefault(h=>!h.AtSea && h.Health>0 && h.Cargo.Count>0);
+        if(hold==null)return null;
+        var capacity=p.NavalCrewPassage?.Ship==hold?p.NavalCrewPassage.Capacity:hold.CargoCapacity;
+        return new() {Id=hold.Id,CaptainId=p.NavalFleet.Contains(hold)?p.Id:Guid.Empty,Health=hold.Health,Cargo=hold.Cargo.ToArray(),CargoCapacity=capacity};
+    }
     private static void ManageCargo(Player player,Intersect.Network.Packets.Client.HarbourRequestPacket packet)
     {
         lock(player.EntityLock)
@@ -27,8 +35,7 @@ internal static partial class NavalSystem
                 hold=packet.View==HarbourView.Crew?player.NavalCrewPassage?.Ship:player.NavalFleet.FirstOrDefault(s=>s.Id==packet.ShipId);
                 if(hold==null || hold.Id!=packet.ShipId || !hold.Cargo.Any(p=>p.Id==packet.ParcelId)) return;
                 if(player.NavalShipId!=Guid.Empty && player.NavalShipId!=hold.Id) return;
-                if(packet.Action==HarbourAction.ClaimCargo && (player.NavalShipId==Guid.Empty? !BesideCrewDock(player):
-                    !Ships.TryGetValue(player.NavalShipId,out var vessel) || !NearCrewDock(vessel)))
+                if(packet.Action==HarbourAction.ClaimCargo && (player.NavalShipId!=Guid.Empty || !BesideCrewDock(player)))
                 {Notice(player,"Stand beside a Q dock to unload your crew cargo.");return;}
             }
             // The player's lock protects the personal hold. Never stall navigation on a database save.
@@ -85,7 +92,7 @@ internal static partial class NavalSystem
             var after=RewardHolds(player).SelectMany(s=>s.Cargo).ToArray();
             var afterIds=after.Select(p=>p.Id).ToHashSet();
             var kept=after.Where(p=>candidates.Contains(p.Id)).ToArray();
-            var result=new NavalRewardReceipt {
+            var result=new NavalRewardReceipt {CharacterExperience=experience,
                 SailingExperience=Math.Max(0,player.SailingExperience-previousExperience),Cargo=kept,
                 ReplacedLots=before.Count(id=>!afterIds.Contains(id)),DiscardedLots=candidates.Count-kept.Length,
                 CargoFull=RewardHolds(player).Any(s=>touched.TryGetValue(s.Id,out var capacity) && s.Cargo.Count>=capacity)};
@@ -131,6 +138,10 @@ internal static partial class NavalSystem
 
     internal static Item[] SnapshotCargoInventory(Player player) => Enumerable.Range(0,Options.Instance.Player.MaxInventory)
         .Select(slot=>player.Items[slot].Clone()).ToArray();
+    private static IEnumerable<NavalCargoParcel> CurrencyParcels(Guid item,long amount)
+    {
+        while(amount>0) {var quantity=(int)Math.Min(1000000,amount);yield return new(){ItemId=item,Quantity=quantity};amount-=quantity;}
+    }
     internal static Item[] PlanCargoInventory(Item[] inventory,IEnumerable<NavalCargoParcel> cargo)
     {
         var planned=inventory.Select(i=>i.Clone()).ToArray();
@@ -177,6 +188,7 @@ internal static partial class NavalSystem
     }
     private static string ClaimCargo(Player player,OwnedShip ship,Guid parcelId=default)
     {
+        if(player.NavalShipId!=Guid.Empty || !BesideCrewDock(player))return "Stand beside a Q dock to unload your crew cargo.";
         if(ship==null || ship.Cargo.Count==0) return "This ship has no cargo to unload.";
         var inventory=SnapshotCargoInventory(player);
         var selected=ship.Cargo.Where(p=>parcelId==Guid.Empty || p.Id==parcelId).ToArray();

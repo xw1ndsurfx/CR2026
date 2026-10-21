@@ -3,21 +3,32 @@ using Intersect.Framework.Core.Naval;
 namespace Intersect.Client.Interface.Game;
 public partial class GameInterface
 {
+    private readonly Dictionary<NavalManageAction,NavalManagementWindow> _navalPanels=[];
     private NavalManagementWindow? _navalManagement;
+    private NavalAmmoShopWindow? _navalAmmoShop;
     private NavalDockWindow? _navalDockPrompt;
     private Guid _dockSuppressed,_helmOfferSeen;
     public void OpenNavalManagement(NavalManageAction mode=NavalManageAction.Ammo)=>NavalManagementWindow.Request(mode);
     public void ApplyNavalManagement(string json)
     {
         try {if(json.Length>131072)return;var state=Newtonsoft.Json.JsonConvert.DeserializeObject<NavalManagementState>(json);if(state==null)return;
-            _navalManagement??=new NavalManagementWindow(GameCanvas);_navalManagement.Apply(state);}
+            if(state.Shop) {if(_navalPanels.TryGetValue(NavalManageAction.Ammo,out var ammoPanel))ammoPanel.Hide();_navalAmmoShop??=new NavalAmmoShopWindow(GameCanvas);_navalAmmoShop.Apply(state);return;}
+            if(state.Mode is NavalManageAction.OfferHelm or NavalManageAction.AcceptHelm or NavalManageAction.ReclaimHelm && state.ShipId==Guid.Empty)return;
+            if(state.Mode==NavalManageAction.Ammo)_navalAmmoShop?.Hide();
+            var panel=state.Mode is NavalManageAction.Repair or NavalManageAction.RepairInput or NavalManageAction.RepairMenu or NavalManageAction.CancelRepair?NavalManageAction.Repair:
+                state.Mode is NavalManageAction.OfferHelm or NavalManageAction.AcceptHelm or NavalManageAction.ReclaimHelm?NavalManageAction.OfferHelm:
+                state.Mode is NavalManageAction.Skills or NavalManageAction.UseSkill or NavalManageAction.BuySkill?NavalManageAction.Skills:NavalManageAction.Ammo;
+            if(!_navalPanels.TryGetValue(panel,out var window))_navalPanels[panel]=window=new NavalManagementWindow(GameCanvas,panel);
+            _navalManagement=window;window.Apply(state);}
         catch(Newtonsoft.Json.JsonException) { }
     }
     private void UpdateNavalManagement()
     {
-        _navalManagement?.Tick();var ship=Naval.NavalWorld.OwnShip;
+        foreach(var panel in _navalPanels.Values)panel.Tick();var ship=Naval.NavalWorld.OwnShip;
+        if(ship!=null){_navalAmmoShop?.Hide();_shipShopWindow?.Hide();}
+        else foreach(var mode in new[]{NavalManageAction.Repair,NavalManageAction.OfferHelm,NavalManageAction.Skills})if(_navalPanels.TryGetValue(mode,out var seaPanel))seaPanel.Hide();
         if(ship?.HelmOfferToken is {} offer && offer!=Guid.Empty && offer!=_helmOfferSeen)
-        {_helmOfferSeen=offer;OpenNavalManagement();}
+        {_helmOfferSeen=offer;OpenNavalManagement(NavalManageAction.OfferHelm);}
         if(ship is not {DockAvailable:true,Sinking:false}){_navalDockPrompt?.Hide();_dockSuppressed=Guid.Empty;return;}
         if(_dockSuppressed==ship.Id)return;
         if(_navalDockPrompt==null)
@@ -32,8 +43,8 @@ public partial class GameInterface
     private HarbourWindow? _harbourWindow, _shipShopWindow;
     private NavalCrewWindow? _navalCrewWindow;
     public void UpdateNavalCrew() {UpdateNavalManagement();if(_navalCrewWindow is {IsHidden:false}) _navalCrewWindow.Update(Naval.NavalWorld.CrewState);}
-    public bool IsHarbourVisible => _navalManagement is {IsHidden:false} || _harbourWindow is { IsHidden: false } || _shipShopWindow is { IsHidden: false } || _navalCrewWindow is {IsHidden:false};
-    public void HideHarbour() { _navalManagement?.Dismiss();_navalDockPrompt?.Hide(); _harbourWindow?.Hide(); _shipShopWindow?.Hide();_navalCrewWindow?.Hide(); }
+    public bool IsHarbourVisible => _navalPanels.Values.Any(w=>!w.IsHidden) || _navalAmmoShop is {IsHidden:false} || _harbourWindow is { IsHidden: false } || _shipShopWindow is { IsHidden: false } || _navalCrewWindow is {IsHidden:false};
+    public void HideHarbour() { foreach(var panel in _navalPanels.Values)panel.Dismiss();_navalAmmoShop?.Hide();_navalDockPrompt?.Hide(); _harbourWindow?.Hide(); _shipShopWindow?.Hide();_navalCrewWindow?.Hide(); }
     public void ApplyHarbourState(HarbourStatePacket packet)
     {
         if(packet.View==HarbourView.Crew)

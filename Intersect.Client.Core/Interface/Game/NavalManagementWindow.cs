@@ -8,22 +8,20 @@ using Intersect.Network.Packets.Client;
 using Chrome=Intersect.Client.Interface.Game.MarketplaceWindow.MarketChrome;
 using Style=Intersect.Client.Interface.Game.MarketplaceWindow.FrameStyle;
 namespace Intersect.Client.Interface.Game;
-internal sealed class NavalManagementWindow:Window
+internal class NavalManagementWindow:Window
 {
     private readonly ScrollControl _list;private readonly Label _status;private readonly Label _timer;
     private NavalManagementState _state=new();private long _received;private RepairMeter? _meter;private bool _expiredRefresh;
     internal static string T(string text)=>NavalSetupText.Get(text,ClientLanguages.Current);
     internal static void Request(NavalManageAction action,CannonAmmoKind ammo=default,int quantity=1,NavalSkillKind skill=default,NavalRepairKind repair=default,Guid target=default,Guid token=default,int value=0)=>
         Networking.Network.SendPacket(new NavalManagePacket {Action=action,Ammo=ammo,Quantity=quantity,Skill=skill,Repair=repair,TargetId=target,Token=token,Value=value});
-    internal NavalManagementWindow(Canvas parent):base(parent,T("Naval activities"),false,nameof(NavalManagementWindow))
+    internal NavalManagementWindow(Canvas parent,NavalManageAction panel=NavalManageAction.Ammo):base(parent,T(panel==NavalManageAction.Repair?"Ship repairs":panel==NavalManageAction.OfferHelm?"Helm control":panel==NavalManageAction.Skills?"Sailing skills":"Ammunition inventory"),false,"Naval"+panel+"Window")
     {
-        SetSize(Math.Min(720,Math.Max(300,parent.Width-24)),Math.Min(590,Math.Max(360,parent.Height-32)));
+        SetSize(Math.Min(panel==NavalManageAction.Ammo?360:720,Math.Max(300,parent.Width-24)),Math.Min(panel==NavalManageAction.Ammo?480:590,Math.Max(360,parent.Height-32)));
         Alignment=[Alignments.Center];DeleteOnClose=false;DisableResizing();
-        var chrome=new Chrome(this,"NavalManagementFrame",Style.Window);chrome.SetBounds(12,8,Width-24,Height-35);
+        if(panel!=NavalManageAction.Ammo){var chrome=new Chrome(this,"NavalManagementFrame",Style.Window);chrome.SetBounds(12,8,Width-24,Height-35);}
         _status=Text(this,"Status","",24,38,Width-48,42,11);
-        var tabs=new[]{(NavalManageAction.Ammo,"Ammo"),(NavalManageAction.Skills,"Sailing skills"),(NavalManageAction.RepairMenu,"Ship repairs"),(NavalManageAction.OfferHelm,"Helm control")};
-        for(var i=0;i<tabs.Length;i++) {var tab=tabs[i];Button(this,"NavalTab"+i,tab.Item2,24+i*(Width-48)/4,85,(Width-60)/4,30,()=>Request(tab.Item1));}
-        _list=new ScrollControl(this,"NavalActivityList") {OverflowX=OverflowBehavior.Hidden,OverflowY=OverflowBehavior.Scroll,AutoHideBars=true};_list.SetBounds(24,128,Width-48,Height-210);
+        _list=new ScrollControl(this,"NavalActivityList") {OverflowX=OverflowBehavior.Hidden,OverflowY=OverflowBehavior.Scroll,AutoHideBars=true};_list.SetBounds(24,85,Width-48,Height-167);
         _timer=Text(this,"RepairTiming","",24,Height-76,Width-200,32,11);
         Button(this,"CloseNavalActivities","Close",Width-164,Height-72,136,32,()=>ClosePanel());
         Closed+=(_,_)=>{if(_state.RepairToken!=Guid.Empty)Request(NavalManageAction.CancelRepair);};Hide();
@@ -38,16 +36,21 @@ internal sealed class NavalManagementWindow:Window
     }
     internal static Button Button(Base parent,string id,string caption,int x,int y,int w,int h,Action action)
     {
-        var b=new Button(parent,id){Text=""};b.SetBounds(x,y,w,h);
-        var c=new Chrome(b,id+"Frame",Style.PrimaryAction);c.SetBounds(0,0,w,h);c.SendToBack();
-        var l=Text(b,id+"Caption",T(caption),4,2,w-8,h-4,11);EventPanelText.Fit(l,T(caption),11,8);
-        b.Clicked+=(_,_)=>action();return b;
+        var b=new Button(parent,id){Text=T(caption),Font=GameContentManager.Current.GetFont("sourcesanspro")??parent.Skin.DefaultFont,FontSize=11};b.SetBounds(x,y,w,h);
+        StyleButton(b);b.Clicked+=(_,_)=>action();return b;
+    }
+
+    internal static void StyleButton(Button button)
+    {
+        button.SetStateTexture(ComponentState.Normal,"control_button.png");
+        button.SetStateTexture(ComponentState.Hovered,"control_button_hovered.png");
+        button.SetStateTexture(ComponentState.Active,"control_button_clicked.png");
     }
     internal void Apply(NavalManagementState state)
     {
         if(state.Mode==NavalManageAction.CancelRepair){Hide();return;}
         _state=state;_received=Environment.TickCount64;_expiredRefresh=false;_meter=null;_list.DeleteAllChildren();
-        _status.Text=T(state.Message)+"\n"+string.Format(T("Sailing {0} - Gunnery {1} - Shipwright {2}"),state.SailingLevel,state.GunneryLevel,state.Shipwright.Level);
+        _status.Text=(string.IsNullOrEmpty(state.Message)?"":T(state.Message)+"\n")+(state.Mode==NavalManageAction.Ammo?T("Ammunition inventory"):string.Format(T("Sailing {0} - Gunnery {1} - Shipwright {2}"),state.SailingLevel,state.GunneryLevel,state.Shipwright.Level));
         var width=_list.Width-24;var y=4;
         if(state.Mode==NavalManageAction.Repair)
         {
@@ -72,12 +75,12 @@ internal sealed class NavalManagementWindow:Window
         }
         else if(state.Mode is NavalManageAction.Skills or NavalManageAction.UseSkill or NavalManageAction.BuySkill)
         {
-            foreach(var entry in state.Skills)
+            foreach(var entry in state.Skills.Where(s=>s.Owned))
             {
                 var d=entry.Definition;
                 Text(_list,"SkillName"+d.Kind,T(NavalSkillDefinition.Caption(d.Kind)),64,y,width-72,27,14);
                 if(!string.IsNullOrEmpty(d.Icon)){var icon=new ImagePanel(_list,"SkillIcon"+d.Kind){MaintainAspectRatio=true,ShouldDrawBackground=false,MouseInputEnabled=false};icon.SetBounds(8,y+4,42,42);icon.Texture=GameContentManager.Current.GetTexture(Intersect.Client.Framework.Content.TextureType.Spell,d.Icon);}
-                Text(_list,"SkillDetails"+d.Kind,string.Format(T("Level {0} - {1} Auragems - {2}s - Recharge {3}s"),d.RequiredLevel,d.Price,d.DurationSeconds,d.CooldownSeconds),8,y+29,width-16,26,11);
+                Text(_list,"SkillDetails"+d.Kind,string.Format(T("Level {0} - Duration {1}s - Recharge {2}s"),d.RequiredLevel,d.DurationSeconds,d.CooldownSeconds),8,y+29,width-16,26,11);
                 var button=Button(_list,"SkillAction"+d.Kind,entry.Owned?"Activate":"Learn skill",8,y+62,width-16,32,()=>Request(entry.Owned?NavalManageAction.UseSkill:NavalManageAction.BuySkill,skill:d.Kind));
                 button.IsDisabled=state.SailingLevel<d.RequiredLevel || !entry.Owned && !state.SkillShop || entry.Owned && (entry.CooldownMilliseconds>0 || state.HelmsmanId!=Globals.Me?.Id);
                 y+=112;
@@ -85,27 +88,29 @@ internal sealed class NavalManagementWindow:Window
         }
         else if(state.Mode is not (NavalManageAction.OfferHelm or NavalManageAction.AcceptHelm or NavalManageAction.ReclaimHelm))
         {
+            var columns=Math.Max(2,(width-16)/78);var index=0;
             foreach(var ammo in state.Ammo)
             {
-                var row=new Chrome(_list,"AmmoCard"+ammo.Kind,Style.Section);row.SetBounds(4,y,width-8,140);
-                Text(row,"AmmoName",T(CannonAmmunition.Caption(ammo.Kind)),68,6,width-90,26,14);
-                Text(row,"AmmoCount",string.Format(T("Ammo: {0} - Inventory: {1} - Sailing {2} / Gunnery {3}"),ammo.Quantity<0?T("Free"):ammo.Quantity.ToString(),ammo.MainQuantity,ammo.SailingLevel,ammo.GunneryLevel),68,34,width-90,35,10);
-                var descriptor=Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(ammo.ItemId);
-                if(!string.IsNullOrEmpty(ammo.Icon) || !string.IsNullOrEmpty(descriptor?.Icon))
-                {var icon=new ImagePanel(row,"AmmoIcon"){MaintainAspectRatio=true,ShouldDrawBackground=false,MouseInputEnabled=false};icon.SetBounds(12,12,44,44);icon.Texture=GameContentManager.Current.GetTexture(Intersect.Client.Framework.Content.TextureType.Spell,ammo.Icon)??(descriptor==null?null:GameContentManager.Current.GetTexture(Intersect.Client.Framework.Content.TextureType.Item,descriptor.Icon));}
-                if(ammo.Quantity>=0)
-                {
-                    var bw=(width-42)/3;
-                    var deposit=Button(row,"AmmoDeposit","Store 10",8,80,bw,32,()=>Request(NavalManageAction.Deposit,ammo.Kind,Math.Min(10,ammo.MainQuantity)));deposit.IsDisabled=ammo.MainQuantity<=0;
-                    var withdraw=Button(row,"AmmoWithdraw","Take 10",16+bw,80,bw,32,()=>Request(NavalManageAction.Withdraw,ammo.Kind,Math.Min(10,ammo.Quantity)));withdraw.IsDisabled=ammo.Quantity<=0;
-                    if(state.Shop){var buy=Button(row,"AmmoBuy","Buy 10",24+bw*2,80,bw,32,()=>Request(NavalManageAction.BuyAmmo,ammo.Kind,10));buy.IsDisabled=!ammo.ForSale || ammo.ItemId==Guid.Empty;buy.TooltipText=$"{(long)ammo.Price*10} {ammo.Currency}";}
-                    else {var select=Button(row,"AmmoSelect","Select",24+bw*2,80,bw,32,()=>{Naval.NavalWorld.SelectedAmmo=ammo.Kind;Request(NavalManageAction.SelectAmmo,ammo.Kind);});select.IsDisabled=!ammo.Available || ammo.Quantity<=0;}
-                }
-                else Button(row,"AmmoSelectStandard","Select",8,80,width-32,32,()=>{Naval.NavalWorld.SelectedAmmo=CannonAmmoKind.Standard;Request(NavalManageAction.SelectAmmo,CannonAmmoKind.Standard);});
-                y+=154;
+                var a=ammo;var x=8+index%columns*78;var row=index/columns;index++;
+                var slot=new Button(_list,"AmmoSlot"+a.Kind) {Text="",TooltipText=T(CannonAmmunition.Caption(a.Kind))};slot.SetBounds(x,8+row*80,70,72);
+                var icon=new ImagePanel(slot,"AmmoIcon") {MaintainAspectRatio=true,ShouldDrawBackground=false,MouseInputEnabled=false};icon.SetBounds(10,6,48,48);
+                var item=Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(a.ItemId);
+                icon.Texture=item!=null?GameContentManager.Current.GetTexture(Intersect.Client.Framework.Content.TextureType.Item,item.Icon):GameContentManager.Current.GetTexture(Intersect.Client.Framework.Content.TextureType.Spell,a.Icon);
+                Text(slot,"AmmoQuantity",a.Quantity<0?T("Free"):a.Quantity.ToString(),4,52,62,18,10);
+                slot.Clicked+=(_,_)=>{state.SelectedAmmo=a.Kind;Apply(state);};
+            }
+            y=20+((index+columns-1)/columns)*80;
+            var selected=state.Ammo.FirstOrDefault(a=>a.Kind==state.SelectedAmmo)??state.Ammo.FirstOrDefault();
+            if(selected!=null)
+            {
+                Text(_list,"AmmoSelected",T(CannonAmmunition.Caption(selected.Kind)),8,y,width-16,28,14);y+=34;
+                Text(_list,"AmmoRequirements",string.Format(T("Ammo: {0} - Inventory: {1} - Sailing {2} / Gunnery {3}"),selected.Quantity<0?T("Free"):selected.Quantity.ToString(),selected.MainQuantity,selected.SailingLevel,selected.GunneryLevel),8,y,width-16,42,11);y+=50;
+                var use=Button(_list,"AmmoUse","Use",8,y,(width-28)/2,34,()=>{Naval.NavalWorld.SelectedAmmo=selected.Kind;Request(NavalManageAction.SelectAmmo,selected.Kind);});use.IsDisabled=!selected.Available || selected.Quantity==0 && selected.MainQuantity==0;
+                var withdraw=Button(_list,"AmmoWithdraw","Withdraw",16+(width-28)/2,y,(width-28)/2,34,()=>Request(NavalManageAction.Withdraw,selected.Kind,Math.Min(10,selected.Quantity)));withdraw.IsDisabled=selected.Quantity<=0;
             }
         }
-        if(state.ShipId!=Guid.Empty)
+
+        if(state.ShipId!=Guid.Empty && state.Mode is NavalManageAction.OfferHelm or NavalManageAction.AcceptHelm or NavalManageAction.ReclaimHelm)
         {
             y+=8;
             if(state.HelmOfferId!=Guid.Empty){Button(_list,"AcceptHelm","Accept helm",8,y,width-16,34,()=>Request(NavalManageAction.AcceptHelm,token:state.HelmOfferId));y+=44;}

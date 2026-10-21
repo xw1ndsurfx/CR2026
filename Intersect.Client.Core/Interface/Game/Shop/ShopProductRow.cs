@@ -3,6 +3,7 @@ using Intersect.Client.Interface.Game;
 using Intersect.Client.Framework.Gwen.Control;
 using SkinBase = Intersect.Client.Framework.Gwen.Skin.Base;
 using Intersect.Client.General;
+using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Localization;
 using Intersect.Framework.Core.GameObjects.Items;
 using Rectangle = Intersect.Client.Framework.GenericClasses.Rectangle;
@@ -12,7 +13,7 @@ namespace Intersect.Client.Interface.Game.Shop;
 /// <summary>A readable merchant row with explicit price and action.</summary>
 internal sealed class ShopProductRow : Base
 {
-    private readonly ItemDescriptor _item;
+    private readonly ItemDescriptor? _item;
     private readonly ImagePanel _icon;
     private readonly Label _name;
     private readonly Label _detail;
@@ -23,12 +24,13 @@ internal sealed class ShopProductRow : Base
     private ShopProductRow(
         Base parent,
         string name,
-        ItemDescriptor item,
+        ItemDescriptor? item,
         string detail,
         string price,
         string action,
         bool enabled,
-        Action onAction
+        Action onAction,
+        string? serviceName=null,string? serviceIcon=null,bool nativeButton=false
     ) : base(parent, name)
     {
         _item = item;
@@ -52,20 +54,20 @@ internal sealed class ShopProductRow : Base
             MouseInputEnabled = true,
         };
         _icon.SetBounds(15, 12, 52, 52);
-        _icon.Texture = Globals.ContentManager?.GetTexture(Framework.Content.TextureType.Item, item.Icon);
-        _icon.RenderColor = item.Color;
-        _icon.HoverEnter += (_, _) => Interface.GameUi.ItemDescriptionWindow?.Show(item, 1);
+        _icon.Texture = Globals.ContentManager?.GetTexture(item==null?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, item?.Icon??serviceIcon??"");
+        _icon.RenderColor = item?.Color??Color.White;
+        if(item!=null)_icon.HoverEnter += (_, _) => Interface.GameUi.ItemDescriptionWindow?.Show(item, 1);
         _icon.HoverLeave += (_, _) => Interface.GameUi.ItemDescriptionWindow?.Hide();
 
         _name = Label("Name", 91, 5, 137, 24, 12, new Color(a: 255, r: 245, g: 231, b: 210));
-        _name.Text = Shorten(item.Name, 19);
+        _name.Text = Shorten(serviceName??item?.Name, 19);
 
         _detail = Label("Detail", 91, 29, 137, 18, 9, new Color(a: 255, r: 191, g: 174, b: 152));
         _detail.Text = Shorten(detail, 24);
 
         _price = Label("Price", 91, 49, 137, 20, 10, new Color(a: 255, r: 231, g: 194, b: 112));
         _price.Text = Shorten(price, 21);
-        SetToolTipText(item.Name + "\n" + detail + "\n" + price);
+        SetToolTipText((serviceName??item?.Name) + "\n" + detail + "\n" + price);
 
         _action = new Button(this, "Action")
         {
@@ -75,7 +77,8 @@ internal sealed class ShopProductRow : Base
             IsDisabled = !enabled,
         };
         _action.SetBounds(232, 19, 95, 36);
-        var buttonArt = AdmurinGuiArt.Add(_action, "AdmurinMerchantButton", "shop_2",
+        if(nativeButton)NavalManagementWindow.StyleButton(_action);
+        var buttonArt = nativeButton?null:AdmurinGuiArt.Add(_action, "AdmurinMerchantButton", "shop_2",
             0, 0, 95, 36,
             enabled ? 0 : 56, enabled ? (action == Strings.Shop.SellItem.ToString() ? 54 : 0) : 54,
             56, 54);
@@ -105,6 +108,17 @@ internal sealed class ShopProductRow : Base
         };
     }
 
+    internal void ShowShipPreview(string graphic,int frames)
+    {
+        var texture=GameContentManager.Current.GetTexture(Framework.Content.TextureType.Ocean,graphic);
+        var atlas=texture==null?null:Naval.NavalSpriteCatalog.Get(graphic,texture.Width,texture.Height,frames);
+        if(atlas==null)return;
+        var frame=atlas.Frame(180,0,180);_icon.Texture=texture;_icon.MaintainAspectRatio=true;
+        _icon.SetTextureRect(frame.X,frame.Y,frame.Width,frame.Height);
+    }
+    internal static ShopProductRow Service(Base parent,string id,string name,string detail,string price,string caption,bool enabled,Action action,string icon="")=>
+        new(parent,id,null,detail,price,caption,enabled,action,name,icon,true);
+
     public static ShopProductRow Buy(
         Base parent,
         int shopSlot,
@@ -112,7 +126,7 @@ internal sealed class ShopProductRow : Base
         int price,
         string currency,
         bool canAfford,
-        Action action
+        Action action,bool nativeButton=false
     ) => new(
         parent,
         "ShopBuy" + shopSlot,
@@ -121,7 +135,7 @@ internal sealed class ShopProductRow : Base
         Price(price, currency),
         Strings.Shop.BuyItem.ToString(),
         canAfford,
-        action
+        action,nativeButton:nativeButton
     );
 
     public static ShopProductRow Sell(
@@ -131,7 +145,7 @@ internal sealed class ShopProductRow : Base
         int owned,
         int price,
         string currency,
-        Action action
+        Action action,bool nativeButton=false
     ) => new(
         parent,
         "ShopSell" + inventorySlot,
@@ -140,7 +154,7 @@ internal sealed class ShopProductRow : Base
         Price(price, currency),
         Strings.Shop.SellItem.ToString(),
         true,
-        action
+        action,nativeButton:nativeButton
     );
 
     private static string Shorten(string? value, int maximum)

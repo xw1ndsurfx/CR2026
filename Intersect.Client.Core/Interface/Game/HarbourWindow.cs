@@ -10,11 +10,11 @@ using Intersect.Network.Packets.Server;
 
 namespace Intersect.Client.Interface.Game;
 
-internal sealed class HarbourWindow : Window
+internal sealed partial class HarbourWindow : Window
 {
     private readonly Label _message, _pageLabel;
-    private readonly Base _cards;
-    private readonly Button _previous, _next;
+    private readonly ScrollControl _cards;
+    private readonly Button _previous, _next,_refresh;
     private HarbourStatePacket _state = new();
     private int _page;
     private bool _waiting;
@@ -28,13 +28,15 @@ internal sealed class HarbourWindow : Window
         SetSize(660, view==HarbourView.Fleet?540:500); Alignment = [Alignments.Center]; DeleteOnClose = false; DisableResizing();
         if(view==HarbourView.Fleet)
             Button(this,"FleetCrew","Ship crew",16,480,625,()=>Networking.Network.SendPacket(new HarbourRequestPacket {View=HarbourView.Crew}));
-        if(view==HarbourView.Shop) Button(this,"NavalSkills","Sailing skills",16,465,625,()=>NavalManagementWindow.Request(NavalManageAction.Skills));
+
         _message = Text(this, "Status", "", 16, 36, 625, 58);
-        _cards = new Base(this, "ShipCards"); _cards.SetBounds(16, 100, 625, 320);
+        _cards = new ScrollControl(this, "ShipCards") {OverflowX=OverflowBehavior.Hidden,OverflowY=OverflowBehavior.Scroll,AutoHideBars=false}; _cards.SetBounds(16, 100, 625, 320);
         _previous = Button(this, "Previous", "Previous", 16, 435, 110, () => { _page--; RenderEntries(); });
         _pageLabel = Text(this, "Page", "", 170, 440, 200, 28);
         _next = Button(this, "Next", "Next", 420, 435, 100, () => { _page++; RenderEntries(); });
-        Button(this, "Refresh", "Refresh", 530, 435, 110, () => Request(HarbourAction.Open, ""));
+        _refresh=Button(this, "Refresh", "Refresh", 530, 435, 110, () => Request(HarbourAction.Open, ""));
+        if(view==HarbourView.Shop)InitializeMerchant();
+        else {_previous.Hide();_next.Hide();_pageLabel.Hide();Shop.ShopWindow.ConfigureNativeScrollbar(_cards); }
     }
     protected override void EnsureInitialized() { }
     private static Label Text(Base parent, string id, string text, int x, int y, int w, int h)
@@ -47,7 +49,7 @@ internal sealed class HarbourWindow : Window
     {
         var button = new Button(parent, id) { Text = caption is "Unload cargo" or "Ship crew" or "Sailing skills"?NavalSetupText.Get(caption,ClientLanguages.Current):ClientLanguages.Text(caption),
             Font = GameContentManager.Current.GetFont("sourcesanspro") ?? parent.Skin.DefaultFont, FontSize = 11 };
-        button.SetBounds(x,y,w,30); button.Clicked += (_,_) => action(); return button;
+        NavalManagementWindow.StyleButton(button);button.SetBounds(x,y,w,30); button.Clicked += (_,_) => action(); return button;
     }
     internal void Apply(HarbourStatePacket packet)
     {
@@ -66,11 +68,12 @@ internal sealed class HarbourWindow : Window
     }
     private void RenderEntries()
     {
+        if(_view==HarbourView.Shop){RenderMerchant();return;}
         _cards.DeleteAllChildren();
         var pages = Math.Max(1, (_state.Entries.Length + 1) / 2); _page = Math.Clamp(_page, 0, pages - 1);
         _pageLabel.Text = $"{_page+1} / {pages}"; _previous.IsDisabled = _page == 0; _next.IsDisabled = _page >= pages-1;
         var i = 0;
-        foreach (var entry in _state.Entries.Skip(_page*2).Take(2))
+        foreach (var entry in _state.Entries)
         {
             var y = i++ * 155;
             Text(_cards, "Name" + i, entry.ShipName.Length>0?entry.ShipName:entry.Name is "Royal ship" or "Royal ship (Premium)" ? ClientLanguages.Text(entry.Name) : ClientLanguages.ContentText(entry.Name), 4, y, 610, 24);

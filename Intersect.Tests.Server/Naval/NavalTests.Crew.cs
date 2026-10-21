@@ -87,15 +87,16 @@ public sealed partial class NavalTests
         world.Field<ShipDefinition>(ship,"Definition").CrewCapacity=1;Assert.That(world.Invoke("EligibleCrewShip",member,ship),Is.False);
     }
     [Test]
-    public void EveryPresentCrewMemberGetsTheSameLootAndCharacterExperienceButOnlyCaptainGetsSailing()
+    public void ActiveCrewSharesOneConservedLootAndCharacterPoolWithCaptainBonus()
     {
         using var world=new EnemyTestWorld();var ship=world.Add(8.5,10.5,false);var enemy=world.Add(18.5,10.5,true);
         var captain=world.State(ship).CaptainId;var crew=Guid.NewGuid();var stale=Guid.NewGuid();var now=Timing.Global.Milliseconds;
         AddCrewPresence(world,ship,crew,now);AddCrewPresence(world,ship,stale,now-3000);
         var patrol=world.Field<HerboniaPatrol>(enemy,"Enemy");patrol.SailingExperienceReward=275;
         var item=Guid.NewGuid();patrol.Loot=[new(){ItemId=item,MinimumQuantity=4,MaximumQuantity=4,ChancePercent=100}];
+        world.Field<Dictionary<Guid,long>>(enemy,"Contributions")[crew]=40;
         world.Set(enemy,"Health",0);world.Invoke("CreditEnemySink",enemy,world.State(ship).Id,captain);
-        Assert.That(world.Reward(captain),Is.EqualTo(275));Assert.That(world.Reward(crew),Is.EqualTo(275));Assert.That(world.Reward(stale),Is.Zero);
+        Assert.That(world.Reward(captain)+world.Reward(crew),Is.EqualTo(275));Assert.That(world.Reward(captain),Is.GreaterThan(world.Reward(crew)));Assert.That(world.Reward(stale),Is.Zero);
         long SailingFor(Guid id)=>(long)world.Rewards[id]!.GetType().GetProperty("SailingExperience")!.GetValue(world.Rewards[id])!;
         Assert.That(SailingFor(captain),Is.EqualTo(275));Assert.That(SailingFor(crew),Is.Zero);
         NavalCargoParcel ParcelFor(Guid id)
@@ -104,8 +105,8 @@ public sealed partial class NavalTests
             return (NavalCargoParcel)awards.GetValue(0)!.GetType().GetProperty("Parcel")!.GetValue(awards.GetValue(0))!;
         }
         var a=ParcelFor(captain);var b=ParcelFor(crew);
-        Assert.That((b.ItemId,b.Quantity,b.Quality),Is.EqualTo((a.ItemId,a.Quantity,a.Quality)));Assert.That(b.Id,Is.Not.EqualTo(a.Id));
-        world.Invoke("CreditEnemySink",enemy,world.State(ship).Id,captain);Assert.That(world.Reward(crew),Is.EqualTo(275));
+        Assert.That(b.ItemId,Is.EqualTo(a.ItemId));Assert.That(a.Quantity+b.Quantity,Is.EqualTo(4));Assert.That(a.Quantity,Is.GreaterThan(b.Quantity));Assert.That(b.Id,Is.Not.EqualTo(a.Id));
+        var prior=world.Reward(crew);world.Invoke("CreditEnemySink",enemy,world.State(ship).Id,captain);Assert.That(world.Reward(crew),Is.EqualTo(prior));
     }
     [Test]
     public void CrewBoardingAndPersonalRewardsPersistAndRollBackTogether()

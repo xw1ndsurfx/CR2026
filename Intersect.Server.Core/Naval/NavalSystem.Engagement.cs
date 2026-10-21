@@ -24,16 +24,29 @@ internal static partial class NavalSystem
             attacker.State.CaptainId!=captainId) return;
         var now=Intersect.Framework.Core.Timing.Global.Milliseconds;
         var loot=NavalCargo.Roll(victim.Enemy.Loot,Random.Shared.NextDouble,Random.Shared.Next);
-        var participants=new[]{captainId}.Concat(attacker.Crew.Where(m=>now-m.Value.Seen<=1500).Select(m=>m.Key)).Distinct();
-        foreach(var participant in participants)
+        var participants=new[]{captainId}.Concat(attacker.Crew.Where(m=>now-m.Value.Seen<=1500).Select(m=>m.Key)).Distinct().ToArray();
+        var leader=participants.Contains(Driver(attacker))?Driver(attacker):captainId;
+        var weights=participants.ToDictionary(id=>id,id=>victim.Contributions.GetValueOrDefault(id));
+        // The current helmsman receives a twofold leadership weight, which guarantees
+        // the captain is favoured without creating additional rewards.
+        weights[leader]=Math.Max(1,weights.Values.DefaultIfEmpty(0).Max())*2;
+        var experience=NavalRewardSharing.Divide(victim.Enemy.SailingExperienceReward,weights);
+        var awards=participants.ToDictionary(id=>id,_=>new List<CargoAward>());
+        var cargoQuota=NavalRewardSharing.Divide(loot.Sum(p=>(long)p.Quantity),weights);
+        foreach(var parcel in loot)
+            foreach(var share in NavalRewardSharing.Divide(parcel.Quantity,cargoQuota).Where(s=>s.Value>0))
+            {
+                cargoQuota[share.Key]-=share.Value;
+                awards[share.Key].Add(new(attackerId,attacker.Definition.CargoCapacity,new NavalCargoParcel {
+                    ItemId=parcel.ItemId,Quantity=(int)share.Value,Quality=parcel.Quality,Kind=parcel.Kind}));
+            }
+        foreach(var participant in participants.Where(id=>weights[id]>0))
         {
             QueueNavalTask(participant,NavalTaskKind.ShipsSunk,1);
             PendingSailingRewards.TryGetValue(participant,out var pending);
-            var awards=loot.Select(p=>new CargoAward(attackerId,attacker.Definition.CargoCapacity,new NavalCargoParcel {
-                ItemId=p.ItemId,Quantity=p.Quantity,Quality=p.Quality,Kind=p.Kind}));
-            PendingSailingRewards[participant]=new(Math.Min(200000000000000L,(pending?.Experience??0)+victim.Enemy.SailingExperienceReward),
-                Cargo:(pending?.Cargo??[]).Concat(awards).Take(6400).ToArray(),
-                SailingExperience:Math.Min(200000000000000L,(pending?.SailingExperience??0)+(participant==Driver(attacker)?victim.Enemy.SailingExperienceReward:0)));
+            PendingSailingRewards[participant]=new(Math.Min(200000000000000L,(pending?.Experience??0)+experience.GetValueOrDefault(participant)),
+                Cargo:(pending?.Cargo??[]).Concat(awards[participant]).Take(6400).ToArray(),
+                SailingExperience:Math.Min(200000000000000L,(pending?.SailingExperience??0)+(participant==leader?victim.Enemy.SailingExperienceReward:0)));
         }
     }
 

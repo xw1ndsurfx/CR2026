@@ -4,7 +4,7 @@ namespace Intersect.Framework.Core.Naval;
 public enum NavalSkillKind : byte { RammingSpeed, FullSail, TakeCover, OpenFire, RepairBonus }
 public enum NavalRepairKind : byte { Hammering, Caulking, Pumping }
 public enum NavalTaskKind : byte { ShipsSunk, CannonHits, HullDamage, Repairs, Dockings, CargoUnloaded, SailingLevel, GunneryLevel, ShipwrightLevel }
-public enum NavalManageAction : byte { Ammo, Deposit, Withdraw, BuyAmmo, SelectAmmo, Skills, BuySkill, UseSkill, Repair, RepairInput, CancelRepair, OfferHelm, AcceptHelm, ReclaimHelm, Dock, RepairMenu }
+public enum NavalManageAction : byte { Ammo, Deposit, Withdraw, BuyAmmo, SelectAmmo, Skills, BuySkill, UseSkill, Repair, RepairInput, CancelRepair, OfferHelm, AcceptHelm, ReclaimHelm, Dock, RepairMenu, SellAmmo, AmmoShop }
 public sealed class NavalAmmoStack {public Guid ItemId {get;set;} public int Quantity {get;set;}}
 public sealed class NavalCareerData
 {
@@ -16,16 +16,17 @@ public sealed class NavalCareerData
         Ammo.Select(a=>a.ItemId).Distinct().Count()==Ammo.Count && Skills!=null && Skills.All(Enum.IsDefined) && RepairExperience is >=0 and <=200000000000000L &&
         Counters is {Count:<=32} && Counters.All(p=>Enum.IsDefined(p.Key) && p.Value is >=0 and <=200000000000000L);
 }
+[MessagePack.MessagePackObject]
 public sealed class NavalSkillDefinition
 {
-    public NavalSkillKind Kind {get;set;}
-    public int RequiredLevel {get;set;}=1;
-    public Guid CurrencyItemId {get;set;}
-    public int Price {get;set;}=100;
-    public int DurationSeconds {get;set;}=10;
-    public int CooldownSeconds {get;set;}=60;
-    public int PowerPercent {get;set;}=25;
-    public string Icon {get;set;}="";
+    [MessagePack.Key(0)] public NavalSkillKind Kind {get;set;}
+    [MessagePack.Key(1)] public int RequiredLevel {get;set;}=1;
+    [MessagePack.Key(2)] public Guid CurrencyItemId {get;set;}
+    [MessagePack.Key(3)] public int Price {get;set;}=100;
+    [MessagePack.Key(4)] public int DurationSeconds {get;set;}=10;
+    [MessagePack.Key(5)] public int CooldownSeconds {get;set;}=60;
+    [MessagePack.Key(6)] public int PowerPercent {get;set;}=25;
+    [MessagePack.Key(7)] public string Icon {get;set;}="";
     public bool IsValid()=>Enum.IsDefined(Kind) && RequiredLevel is >=1 and <=200 && Price is >=0 and <=1000000000 && DurationSeconds is >=1 and <=120 &&
         CooldownSeconds is >=1 and <=3600 && PowerPercent is >=1 and <=200 && NavalPresentation.SafeAsset(Icon);
     public static NavalSkillDefinition[] Defaults()=>Enum.GetValues<NavalSkillKind>().Select((k,i)=>new NavalSkillDefinition {Kind=k,RequiredLevel=1+i*5,Price=100*(i+1)}).ToArray();
@@ -55,17 +56,24 @@ public sealed class NavalAmmoOffer
     public int MainQuantity {get;set;}
     public bool ForSale {get;set;}
     public int Price {get;set;}
+    public int SellPrice {get;set;}=-1;
+    public bool CanBuy {get;set;}
+    public string SellCurrency {get;set;}="";
     public string Currency {get;set;}="";
     public int SailingLevel {get;set;}
     public int GunneryLevel {get;set;}
     public bool Available {get;set;}
     public string Icon {get;set;}="";
 }
+[MessagePack.MessagePackObject]
 public sealed class NavalSkillView
 {
-    public NavalSkillDefinition Definition {get;set;}=new();
-    public bool Owned {get;set;}
-    public int CooldownMilliseconds {get;set;}
+    [MessagePack.Key(0)] public NavalSkillDefinition Definition {get;set;}=new();
+    [MessagePack.Key(1)] public bool Owned {get;set;}
+    [MessagePack.Key(2)] public int CooldownMilliseconds {get;set;}
+    [MessagePack.Key(3)] public string Currency {get;set;}="";
+    [MessagePack.Key(4)] public long Balance {get;set;}
+    [MessagePack.Key(5)] public bool CurrencyAvailable {get;set;}
 }
 public sealed class NavalManagementState
 {

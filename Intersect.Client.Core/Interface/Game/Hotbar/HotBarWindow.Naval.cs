@@ -49,8 +49,8 @@ public partial class HotBarWindow
         var sailing=own!=null;
         if(sailing && _cannonWindow==null) _cannonWindow=new NavalCannonViewWindow(Parent);
         _cannonWindow?.Update(own,Naval.NavalWorld.CannonViewOpen);
-        if(sailing && _cargoWindow==null) _cargoWindow=new NavalCargoWindow(Parent);
-        _cargoWindow?.Update(own,Naval.NavalWorld.CargoOpen);
+        if((sailing || Naval.NavalWorld.ShoreCargo!=null) && _cargoWindow==null) _cargoWindow=new NavalCargoWindow(Parent);
+        _cargoWindow?.Update(own??Naval.NavalWorld.ShoreCargo,Naval.NavalWorld.CargoOpen);
         if(sailing && _targetHud==null) _targetHud=new NavalTargetHud(Parent);
         _targetHud?.Update(sailing && Interface.InGameUiOrNull?.SuppressStatusHuds!=true ? Naval.NavalWorld.CombatTarget : null);
         if(sailing && _navalButtons.Count==0)
@@ -100,7 +100,7 @@ public partial class HotBarWindow
             button.NavalAction=action;button.ReloadMilliseconds=cooldown;
             button.TextAlign=cooldown>0?Pos.Center:Pos.Bottom|Pos.Right;
             button.Text=cooldown>0?Math.Ceiling(cooldown/1000d)+"\n"+key:key;
-            button.TooltipText=N(i==3?"Sailing skills":i==4?"Ammo":i==5?"Naval activities":ShipActions.Caption(action));
+            button.TooltipText=N(i==3?"Sailing skills":i==4?"Ammo":i==5?"Helm control":ShipActions.Caption(action));
             button.TextColorOverride=i==8 && own!.Anchored?new Color(255,240,200,70):null;
             button.IsDisabled=own!.Sinking || (action==ShipAction.None && !(i is >=3 and <=5 && Naval.NavalWorld.Driver(own)==Globals.Me?.Id)) ||
                 (Naval.NavalWorld.Driver(own)!=Globals.Me?.Id && action is not (ShipAction.CannonView or ShipAction.Crew or ShipAction.Cargo or ShipAction.LeaveHelm)) || Globals.Me?.IsBusy!=false ||
@@ -126,6 +126,7 @@ public partial class HotBarWindow
                 _navalStatus.SetBounds(X,Y-54,Width,23);
                 _navalStatus.Value=own!.Health/(float)Math.Max(1,own.MaximumHealth);
                 _navalStatus.Text=string.Format(N("Hull: {0}/{1} · Cargo: {2}/{3} · Speed: {4:0.0} · Crew: {5}/{6}"),own!.Health,own.MaximumHealth,own.Cargo.Length,own.CargoCapacity,Math.Abs(own.Speed),Naval.NavalWorld.CrewState.Members.Length,Naval.NavalWorld.CrewState.Capacity);
+                if(own!.CargoCapacity>0 && own.Cargo.Length>=own.CargoCapacity)_navalStatus.Text+=" - MAX";
                 EventPanelText.Fit(_navalStatus,_navalStatus.Text,11,8);
             }
         }

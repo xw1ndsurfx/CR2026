@@ -18,7 +18,7 @@ internal static partial class NavalSystem
         if(notices==null) return [];
         notices.RemoveAll(n=>now-n.Born>10000);
         return notices.Select(n=>new NavalRewardReceipt {
-            Id=n.Receipt.Id,SailingExperience=n.Receipt.SailingExperience,Cargo=n.Receipt.Cargo,
+            Id=n.Receipt.Id,CharacterExperience=n.Receipt.CharacterExperience,SailingExperience=n.Receipt.SailingExperience,Cargo=player.NavalShipId==Guid.Empty?n.Receipt.Cargo:n.Receipt.Cargo.Select(NavalRewardSharing.Seal).ToArray(),
             ReplacedLots=n.Receipt.ReplacedLots,DiscardedLots=n.Receipt.DiscardedLots,CargoFull=n.Receipt.CargoFull,
             AgeMilliseconds=(int)Math.Clamp(now-n.Born,0,10000)}).ToArray();
     }

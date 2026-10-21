@@ -59,7 +59,7 @@ internal static partial class NavalWorld
             return;
         }
         if(own!=null && Driver(own)==Globals.Me?.Id && slot is >=3 and <=5 && !DragAndDrop.IsDragging && Globals.Me?.IsBusy==false)
-        {Interface.Game.NavalManagementWindow.Request(slot==3?NavalManageAction.Skills:NavalManageAction.Ammo);return;}
+        {Interface.Game.NavalManagementWindow.Request(slot==3?NavalManageAction.Skills:slot==4?NavalManageAction.Ammo:NavalManageAction.OfferHelm);return;}
         if(own==null || DragAndDrop.IsDragging || Globals.Me?.IsBusy!=false || own.Sinking || action==ShipAction.None ||
             (action is ShipAction.PortCannons or ShipAction.StarboardCannons && (!own.CannonsEnabled || Cooldown(slot)>0))) return;
         if(action==ShipAction.CannonView) {CannonViewOpen=!CannonViewOpen;return;}

@@ -253,7 +253,7 @@ public partial class ShopWindow : Window
         bar.SetScrollAmount(Math.Clamp(bar.ScrollAmount, 0f, 1f), forceUpdate: true);
     }
 
-    private static void ConfigureNativeScrollbar(ScrollControl container)
+    internal static void ConfigureNativeScrollbar(ScrollControl container)
     {
         var bar = container.VerticalScrollBar;
         bar.Width = 15;
@@ -311,7 +311,7 @@ public partial class ShopWindow : Window
     /// Backing for the two scrollable merchant columns, rendered beneath all
     /// native inputs and sprites. The product cards are original shop_1 art.
     /// </summary>
-    private sealed class MerchantPanelChrome : Base
+    internal sealed class MerchantPanelChrome : Base
     {
         public MerchantPanelChrome(Base parent, string name) : base(parent, name)
         {

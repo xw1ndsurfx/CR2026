@@ -163,6 +163,8 @@ internal static partial class NavalSystem
                 if (permitted && target.OwnerId==Guid.Empty)
                 {
                     CreditGunner(ball,target,Math.Min(target.Health,ball.Damage));
+                    if(target.Enemy!=null && Ships.TryGetValue(ball.ShipId,out var firingShip))
+                    {var actor=ball.GunnerId==Guid.Empty?Driver(firingShip):ball.GunnerId;target.Contributions[actor]=target.Contributions.GetValueOrDefault(actor)+Math.Min(target.Health,ball.Damage);}
                     target.Health=Math.Max(0,target.Health-ball.Damage);
                     target.State.DamageState=target.Health<target.MaximumHealth?1:0;
                     if (target.Health==0)

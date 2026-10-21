@@ -24,6 +24,16 @@ public enum AchievementObjectiveType
     InvasionParticipations = 16,
     InvasionWavesCleared = 17,
     InvasionDefeats = 18,
+    NavalShipsSunk = 19,
+    NavalCannonHits = 20,
+    NavalHullDamage = 21,
+    NavalRepairs = 22,
+    NavalDockings = 23,
+    NavalCargoUnloaded = 24,
+    NavalSailingLevel = 25,
+    NavalGunneryLevel = 26,
+    NavalShipwrightLevel = 27,
+
 }
 
 public sealed class AchievementRewardDefinition

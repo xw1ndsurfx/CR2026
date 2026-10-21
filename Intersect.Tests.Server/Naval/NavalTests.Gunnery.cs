@@ -138,7 +138,8 @@ public sealed partial class NavalTests
         Assert.That((long)pending.GetType().GetProperty("Experience")!.GetValue(pending)!,Is.EqualTo(5),"Overkill and repeated ticks must not add extra Gunnery XP.");
         Assert.That(queue.Contains(world.State(ship).CaptainId),Is.False,"The gunner earns Gunnery, the captain keeps Sailing.");
         Assert.That(world.Reward(player.Id),Is.GreaterThan(0));
-        Assert.That(world.Reward(player.Id),Is.EqualTo(world.Reward(world.State(ship).CaptainId)));
+        Assert.That(world.Reward(player.Id),Is.LessThan(world.Reward(world.State(ship).CaptainId)));
+        Assert.That(world.Reward(player.Id)+world.Reward(world.State(ship).CaptainId),Is.EqualTo(world.Field<HerboniaPatrol>(enemy,"Enemy").SailingExperienceReward));
     }
 
     [Test]

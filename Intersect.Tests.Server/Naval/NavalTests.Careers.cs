@@ -76,10 +76,12 @@ public sealed partial class NavalTests
     {
         using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);var enemy=world.Add(16.5,10.5,true);
         var guest=Guid.NewGuid();AddCrewPresence(world,ship,guest,Timing.Global.Milliseconds);world.Set(ship,"HelmsmanId",guest);world.Set(enemy,"Health",0);
+        world.Field<Dictionary<Guid,long>>(enemy,"Contributions")[world.State(ship).CaptainId]=50;
         world.Invoke("CreditEnemySink",enemy,world.State(ship).Id,world.State(ship).CaptainId);
         long Sailing(Guid id)=>(long)world.Rewards[id]!.GetType().GetProperty("SailingExperience")!.GetValue(world.Rewards[id])!;
         Assert.That(Sailing(guest),Is.GreaterThan(0));Assert.That(Sailing(world.State(ship).CaptainId),Is.Zero);
-        Assert.That(world.Reward(guest),Is.EqualTo(world.Reward(world.State(ship).CaptainId)));
+        Assert.That(world.Reward(guest),Is.GreaterThan(world.Reward(world.State(ship).CaptainId)));
+        Assert.That(world.Reward(guest)+world.Reward(world.State(ship).CaptainId),Is.EqualTo(world.Field<HerboniaPatrol>(enemy,"Enemy").SailingExperienceReward));
     }
     [Test] public void NavalQuestTasksCountOnlyMatchingEventsAndLevelsUseAnAbsoluteTarget()
     {
