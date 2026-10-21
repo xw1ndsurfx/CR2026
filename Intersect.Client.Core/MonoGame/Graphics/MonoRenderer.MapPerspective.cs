@@ -84,10 +84,13 @@ internal partial class MonoRenderer
                 var center = new Vector3(sprite.Position.X / scene.TileWidth, sprite.Elevation, sprite.Position.Y / scene.TileHeight);
                 var x0 = -sprite.AnchorX; var x1 = sprite.Width - sprite.AnchorX;
                 if (sprite.FlipHorizontal) (x0,x1) = (-x1,-x0);
-                quad[0] = new(center + right*x0 + Vector3.Up*sprite.AnchorY, uv[0]);
-                quad[1] = new(center + right*x0 + Vector3.Up*(sprite.AnchorY-sprite.Height), uv[1]);
-                quad[2] = new(center + right*x1 + Vector3.Up*sprite.AnchorY, uv[2]);
-                quad[3] = new(center + right*x1 + Vector3.Up*(sprite.AnchorY-sprite.Height), uv[3]);
+                var radians=MathHelper.ToRadians(sprite.RotationDegrees);
+                var horizontal=right*(float)Math.Cos(radians)-Vector3.Up*(float)Math.Sin(radians);
+                var vertical=right*(float)Math.Sin(radians)+Vector3.Up*(float)Math.Cos(radians);
+                quad[0] = new(center + horizontal*x0 + vertical*sprite.AnchorY, uv[0]);
+                quad[1] = new(center + horizontal*x0 + vertical*(sprite.AnchorY-sprite.Height), uv[1]);
+                quad[2] = new(center + horizontal*x1 + vertical*sprite.AnchorY, uv[2]);
+                quad[3] = new(center + horizontal*x1 + vertical*(sprite.AnchorY-sprite.Height), uv[3]);
                 effect.Alpha=Math.Clamp(sprite.Opacity,0,1);
                 effect.Texture = image;
                 foreach (var pass in effect.CurrentTechnique.Passes)

@@ -24,6 +24,23 @@ public sealed class NavalCargoWindowTests
     [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
 
     [Test]
+    public void PremiumTimerSupportsMoreThanAWeekExpiresAndClearsBetweenCharacters()
+    {
+        var old=System.Globalization.CultureInfo.CurrentUICulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentUICulture=System.Globalization.CultureInfo.GetCultureInfo("fr");
+            Intersect.Client.WorldEvents.PremiumState.Apply(new(){RemainingMilliseconds=40L*86400000});
+            Assert.That(Intersect.Client.WorldEvents.PremiumState.Remaining,Is.GreaterThan(39L*86400000));
+            Assert.That(ExperienceEventHud.FormatPremium(40L*86400000),Does.Contain("40"));
+            Intersect.Client.WorldEvents.PremiumState.Apply(new(){RemainingMilliseconds=0});Assert.That(Intersect.Client.WorldEvents.PremiumState.Remaining,Is.Zero);
+            Intersect.Client.WorldEvents.PremiumState.Apply(new(){RemainingMilliseconds=long.MaxValue});
+            Assert.That(Intersect.Client.WorldEvents.PremiumState.Remaining,Is.LessThanOrEqualTo(3153600000000L));
+            Intersect.Client.WorldEvents.PremiumState.Reset();Assert.That(Intersect.Client.WorldEvents.PremiumState.Remaining,Is.Zero);
+        }
+        finally{System.Globalization.CultureInfo.CurrentUICulture=old;Intersect.Client.WorldEvents.PremiumState.Reset();}
+    }
+    [Test]
     public void RepairWindowShowsPersonalAndCrewExperienceAndASeparateHullPuzzle()
     {
         using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(1000,800)};

@@ -86,6 +86,32 @@ public sealed partial class NavalTests
         world.Set(ship,"Health",100);player.CaptainedShipId=player.BoardedShipId=Guid.Empty;
         world.Invoke("EmitLevelUp",player,1,2,1000L);Assert.That(effects.Count,Is.Zero,"Delayed rewards on shore do not animate a departed vessel.");
     }
+    [TestCase(CannonAmmoKind.Standard)]
+    [TestCase(CannonAmmoKind.Heavy)]
+    [TestCase(CannonAmmoKind.LongRange)]
+    public void NewBallVisualsHaveEightAnchoredDirectionsAndSeparateImpactFrames(CannonAmmoKind kind)
+    {
+        var root=new DirectoryInfo(TestContext.CurrentContext.TestDirectory);while(root!=null && !File.Exists(Path.Combine(root.FullName,"Intersect.sln")))root=root.Parent;
+        var ammo=CannonAmmunition.Defaults().Single(a=>a.Kind==kind);
+        Assert.That(ammo.ProjectileGraphic,Is.EqualTo("Cannon_"+kind+".png"));Assert.That(ammo.WaterGraphic,Is.EqualTo(ammo.ProjectileGraphic));Assert.That(ammo.HullGraphic,Is.EqualTo(ammo.ProjectileGraphic));
+        var file=Path.Combine(root!.FullName,"resources","ocean",ammo.ProjectileGraphic);
+        Assert.That(File.Exists(file),Is.True);
+        var atlas=JsonConvert.DeserializeObject<NavalEffectAtlas>(File.ReadAllText(file+".effects.json"))!;
+        Assert.That(atlas.IsValid(1448,1086),Is.True);
+        for(var i=0;i<8;i++)
+        {
+            var frames=atlas.Clips["Projectile"+i];Assert.That(frames,Has.Length.EqualTo(4));
+            Assert.That(frames.Select(f=>f.RotationDegrees),Is.All.EqualTo(i*45-90));
+            for(var f=0;f<4;f++)Assert.That(frames[f].X+frames[f].Width,Is.LessThanOrEqualTo((f+1)*362));
+        }
+        Assert.That(atlas.Clips["WaterImpact"],Has.Length.EqualTo(4));Assert.That(atlas.Clips["HullImpact"],Has.Length.EqualTo(4));
+        var raw=Newtonsoft.Json.Linq.JObject.FromObject(new NavalConfiguration());raw.Remove("AmmunitionVisualsVersion");
+        var entry=(Newtonsoft.Json.Linq.JObject)((Newtonsoft.Json.Linq.JArray)raw["Ammunition"]!)[(int)kind];
+        entry["ProjectileGraphic"]="Ship_Canon_Fire_impact.png";entry["WaterGraphic"]="";entry["HullGraphic"]="custom-impact.png";entry["ShopPrice"]=123;
+        var migrated=raw.ToObject<NavalConfiguration>()!.Ammunition.Single(a=>a.Kind==kind);
+        Assert.That(migrated.ProjectileGraphic,Is.EqualTo(ammo.ProjectileGraphic));Assert.That(migrated.WaterGraphic,Is.EqualTo(ammo.WaterGraphic));
+        Assert.That(migrated.HullGraphic,Is.EqualTo("custom-impact.png"));Assert.That(migrated.ShopPrice,Is.EqualTo(123));
+    }
     [Test]
     public void ShippedEffectAtlasesHaveExplicitValidAnchorsAndExpectedSequences()
     {

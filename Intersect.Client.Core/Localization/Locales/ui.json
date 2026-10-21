@@ -1,5 +1,15 @@
 {
   "Entries": {
+    "Premium - Remaining: {0}": {
+      "en": "Premium - Remaining: {0}",
+      "fr": "Premium - Temps restant : {0}",
+      "es": "Premium - Tiempo restante: {0}"
+    },
+    "{0}d {1}": {
+      "en": "{0}d {1}",
+      "fr": "{0}j {1}",
+      "es": "{0}d {1}"
+    },
     "Purchase: {0} {1} · Balance: {2}": {
       "en": "Purchase: {0} {1} · Balance: {2}",
       "fr": "Achat : {0} {1} · Solde : {2}",

@@ -13,6 +13,7 @@ internal sealed partial class PacketHandler
         var message = packet.Names.Length > 0 ? Intersect.Client.Localization.ClientLanguages.Format("Experience event: {0} (+{1}% XP)", string.Join(", ", packet.Names.Select(Intersect.Client.Localization.ClientLanguages.ContentText)), packet.BonusPercent) : Intersect.Client.Localization.ClientLanguages.Text("The experience event has ended.");
         Intersect.Client.Interface.Interface.EnqueueInGame(ui => ui.AnnouncementWindow.ShowAnnouncement(message, 6000));
     }
+    public void HandlePacket(IPacketSender sender,PremiumStatusPacket packet)=>Intersect.Client.WorldEvents.PremiumState.Apply(packet);
     public void HandlePacket(IPacketSender sender,ExperienceBoostStatusPacket packet) => Intersect.Client.WorldEvents.BoosterState.Apply(packet);
     public void HandlePacket(IPacketSender sender,LootEventAnnouncementPacket packet)
     {

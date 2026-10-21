@@ -5,16 +5,30 @@ namespace Intersect.Framework.Core.Naval;
 
 public sealed class NavalConfiguration
 {
+    public int AmmunitionVisualsVersion {get;set;}=1;
     public int SkillsVersion {get;set;}=1;
     [System.Runtime.Serialization.OnDeserializing]
-    private void ReadSkillsVersion(System.Runtime.Serialization.StreamingContext context)=>SkillsVersion=0;
+    private void ReadSkillsVersion(System.Runtime.Serialization.StreamingContext context){SkillsVersion=0;AmmunitionVisualsVersion=0;}
     [System.Runtime.Serialization.OnDeserialized]
     private void UpgradeSkills(System.Runtime.Serialization.StreamingContext context)
     {
-        if(SkillsVersion>=1 || Skills==null) return;
-        // Append only the new abilities once; preserve authored prices, omissions and future removals.
-        Skills=Skills.Concat(NavalSkillDefinition.Defaults().Where(d=>(int)d.Kind>=5 && !Skills.Any(s=>s?.Kind==d.Kind))).ToArray();
-        SkillsVersion=1;
+        if(SkillsVersion<1 && Skills!=null)
+        {
+            // Append only the new abilities once; preserve authored prices, omissions and future removals.
+            Skills=Skills.Concat(NavalSkillDefinition.Defaults().Where(d=>(int)d.Kind>=5 && !Skills.Any(s=>s?.Kind==d.Kind))).ToArray();
+            SkillsVersion=1;
+        }
+        if(AmmunitionVisualsVersion<1 && Ammunition!=null)
+        {
+            foreach(var ammo in Ammunition.Where(a=>a!=null && (int)a.Kind<=2))
+            {
+                var asset="Cannon_"+ammo.Kind+".png";
+                if(string.IsNullOrEmpty(ammo.ProjectileGraphic) || ammo.ProjectileGraphic=="Ship_Canon_Fire_impact.png")ammo.ProjectileGraphic=asset;
+                if(string.IsNullOrEmpty(ammo.WaterGraphic) || ammo.WaterGraphic=="Ship_Canon_Fire_impact.png")ammo.WaterGraphic=asset;
+                if(string.IsNullOrEmpty(ammo.HullGraphic) || ammo.HullGraphic=="Ship_Canon_Fire_impact.png")ammo.HullGraphic=asset;
+            }
+            AmmunitionVisualsVersion=1;
+        }
     }
     public int CareersVersion {get;set;}=1;
     public bool Enabled { get; set; }

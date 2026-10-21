@@ -16,7 +16,7 @@ public sealed class ShipSpriteAtlas
         double.IsFinite(PixelsPerTile) && PixelsPerTile is >= 8 and <= 1024 &&
         frames is >= 1 and <= 16 && Directions is { Length: 8 } &&
         Directions.All(row => row != null && row.Length == frames && row.All(frame =>
-            frame != null && frame.X >= 0 && frame.Y >= 0 && frame.Width > 0 && frame.Height > 0 &&
+            frame != null && double.IsFinite(frame.RotationDegrees) && Math.Abs(frame.RotationDegrees)<=360 && frame.X >= 0 && frame.Y >= 0 && frame.Width > 0 && frame.Height > 0 &&
             frame.Width <= textureWidth && frame.Height <= textureHeight &&
             frame.X <= textureWidth - frame.Width && frame.Y <= textureHeight - frame.Height &&
             double.IsFinite(frame.AnchorX) && double.IsFinite(frame.AnchorY) &&
@@ -53,6 +53,7 @@ public sealed class ShipSpriteAtlas
 
 public sealed class ShipSpriteFrame
 {
+    public double RotationDegrees {get;set;}
     public int[][]? Slices {get;set;}
     public bool FlipHorizontal { get; set; }
     public int X { get; set; }

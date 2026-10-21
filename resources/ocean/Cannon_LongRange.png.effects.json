@@ -1,0 +1,379 @@
+{
+  "Version": 1,
+  "ImageWidth": 1448,
+  "ImageHeight": 1086,
+  "Clips": {
+    "Projectile0": [
+      {
+        "X": 94,
+        "Y": 18,
+        "Width": 266,
+        "Height": 106,
+        "AnchorX": 230,
+        "AnchorY": 48.0,
+        "RotationDegrees": -90
+      },
+      {
+        "X": 458,
+        "Y": 24,
+        "Width": 252,
+        "Height": 100,
+        "AnchorX": 216,
+        "AnchorY": 47.0,
+        "RotationDegrees": -90
+      },
+      {
+        "X": 836,
+        "Y": 29,
+        "Width": 244,
+        "Height": 91,
+        "AnchorX": 208,
+        "AnchorY": 45.0,
+        "RotationDegrees": -90
+      },
+      {
+        "X": 1179,
+        "Y": 51,
+        "Width": 238,
+        "Height": 72,
+        "AnchorX": 202,
+        "AnchorY": 33.0,
+        "RotationDegrees": -90
+      }
+    ],
+    "Projectile1": [
+      {
+        "X": 94,
+        "Y": 18,
+        "Width": 266,
+        "Height": 106,
+        "AnchorX": 230,
+        "AnchorY": 48.0,
+        "RotationDegrees": -45
+      },
+      {
+        "X": 458,
+        "Y": 24,
+        "Width": 252,
+        "Height": 100,
+        "AnchorX": 216,
+        "AnchorY": 47.0,
+        "RotationDegrees": -45
+      },
+      {
+        "X": 836,
+        "Y": 29,
+        "Width": 244,
+        "Height": 91,
+        "AnchorX": 208,
+        "AnchorY": 45.0,
+        "RotationDegrees": -45
+      },
+      {
+        "X": 1179,
+        "Y": 51,
+        "Width": 238,
+        "Height": 72,
+        "AnchorX": 202,
+        "AnchorY": 33.0,
+        "RotationDegrees": -45
+      }
+    ],
+    "Projectile2": [
+      {
+        "X": 94,
+        "Y": 18,
+        "Width": 266,
+        "Height": 106,
+        "AnchorX": 230,
+        "AnchorY": 48.0,
+        "RotationDegrees": 0
+      },
+      {
+        "X": 458,
+        "Y": 24,
+        "Width": 252,
+        "Height": 100,
+        "AnchorX": 216,
+        "AnchorY": 47.0,
+        "RotationDegrees": 0
+      },
+      {
+        "X": 836,
+        "Y": 29,
+        "Width": 244,
+        "Height": 91,
+        "AnchorX": 208,
+        "AnchorY": 45.0,
+        "RotationDegrees": 0
+      },
+      {
+        "X": 1179,
+        "Y": 51,
+        "Width": 238,
+        "Height": 72,
+        "AnchorX": 202,
+        "AnchorY": 33.0,
+        "RotationDegrees": 0
+      }
+    ],
+    "Projectile3": [
+      {
+        "X": 94,
+        "Y": 18,
+        "Width": 266,
+        "Height": 106,
+        "AnchorX": 230,
+        "AnchorY": 48.0,
+        "RotationDegrees": 45
+      },
+      {
+        "X": 458,
+        "Y": 24,
+        "Width": 252,
+        "Height": 100,
+        "AnchorX": 216,
+        "AnchorY": 47.0,
+        "RotationDegrees": 45
+      },
+      {
+        "X": 836,
+        "Y": 29,
+        "Width": 244,
+        "Height": 91,
+        "AnchorX": 208,
+        "AnchorY": 45.0,
+        "RotationDegrees": 45
+      },
+      {
+        "X": 1179,
+        "Y": 51,
+        "Width": 238,
+        "Height": 72,
+        "AnchorX": 202,
+        "AnchorY": 33.0,
+        "RotationDegrees": 45
+      }
+    ],
+    "Projectile4": [
+      {
+        "X": 94,
+        "Y": 18,
+        "Width": 266,
+        "Height": 106,
+        "AnchorX": 230,
+        "AnchorY": 48.0,
+        "RotationDegrees": 90
+      },
+      {
+        "X": 458,
+        "Y": 24,
+        "Width": 252,
+        "Height": 100,
+        "AnchorX": 216,
+        "AnchorY": 47.0,
+        "RotationDegrees": 90
+      },
+      {
+        "X": 836,
+        "Y": 29,
+        "Width": 244,
+        "Height": 91,
+        "AnchorX": 208,
+        "AnchorY": 45.0,
+        "RotationDegrees": 90
+      },
+      {
+        "X": 1179,
+        "Y": 51,
+        "Width": 238,
+        "Height": 72,
+        "AnchorX": 202,
+        "AnchorY": 33.0,
+        "RotationDegrees": 90
+      }
+    ],
+    "Projectile5": [
+      {
+        "X": 94,
+        "Y": 18,
+        "Width": 266,
+        "Height": 106,
+        "AnchorX": 230,
+        "AnchorY": 48.0,
+        "RotationDegrees": 135
+      },
+      {
+        "X": 458,
+        "Y": 24,
+        "Width": 252,
+        "Height": 100,
+        "AnchorX": 216,
+        "AnchorY": 47.0,
+        "RotationDegrees": 135
+      },
+      {
+        "X": 836,
+        "Y": 29,
+        "Width": 244,
+        "Height": 91,
+        "AnchorX": 208,
+        "AnchorY": 45.0,
+        "RotationDegrees": 135
+      },
+      {
+        "X": 1179,
+        "Y": 51,
+        "Width": 238,
+        "Height": 72,
+        "AnchorX": 202,
+        "AnchorY": 33.0,
+        "RotationDegrees": 135
+      }
+    ],
+    "Projectile6": [
+      {
+        "X": 94,
+        "Y": 18,
+        "Width": 266,
+        "Height": 106,
+        "AnchorX": 230,
+        "AnchorY": 48.0,
+        "RotationDegrees": 180
+      },
+      {
+        "X": 458,
+        "Y": 24,
+        "Width": 252,
+        "Height": 100,
+        "AnchorX": 216,
+        "AnchorY": 47.0,
+        "RotationDegrees": 180
+      },
+      {
+        "X": 836,
+        "Y": 29,
+        "Width": 244,
+        "Height": 91,
+        "AnchorX": 208,
+        "AnchorY": 45.0,
+        "RotationDegrees": 180
+      },
+      {
+        "X": 1179,
+        "Y": 51,
+        "Width": 238,
+        "Height": 72,
+        "AnchorX": 202,
+        "AnchorY": 33.0,
+        "RotationDegrees": 180
+      }
+    ],
+    "Projectile7": [
+      {
+        "X": 94,
+        "Y": 18,
+        "Width": 266,
+        "Height": 106,
+        "AnchorX": 230,
+        "AnchorY": 48.0,
+        "RotationDegrees": 225
+      },
+      {
+        "X": 458,
+        "Y": 24,
+        "Width": 252,
+        "Height": 100,
+        "AnchorX": 216,
+        "AnchorY": 47.0,
+        "RotationDegrees": 225
+      },
+      {
+        "X": 836,
+        "Y": 29,
+        "Width": 244,
+        "Height": 91,
+        "AnchorX": 208,
+        "AnchorY": 45.0,
+        "RotationDegrees": 225
+      },
+      {
+        "X": 1179,
+        "Y": 51,
+        "Width": 238,
+        "Height": 72,
+        "AnchorX": 202,
+        "AnchorY": 33.0,
+        "RotationDegrees": 225
+      }
+    ],
+    "WaterImpact": [
+      {
+        "X": 32,
+        "Y": 693,
+        "Width": 330,
+        "Height": 189,
+        "AnchorX": 165.0,
+        "AnchorY": 160.65
+      },
+      {
+        "X": 362,
+        "Y": 693,
+        "Width": 362,
+        "Height": 187,
+        "AnchorX": 181.0,
+        "AnchorY": 158.95
+      },
+      {
+        "X": 724,
+        "Y": 701,
+        "Width": 362,
+        "Height": 181,
+        "AnchorX": 181.0,
+        "AnchorY": 153.85
+      },
+      {
+        "X": 1086,
+        "Y": 716,
+        "Width": 334,
+        "Height": 160,
+        "AnchorX": 167.0,
+        "AnchorY": 136.0
+      }
+    ],
+    "HullImpact": [
+      {
+        "X": 34,
+        "Y": 882,
+        "Width": 328,
+        "Height": 198,
+        "AnchorX": 164.0,
+        "AnchorY": 99.0
+      },
+      {
+        "X": 362,
+        "Y": 886,
+        "Width": 358,
+        "Height": 186,
+        "AnchorX": 179.0,
+        "AnchorY": 93.0
+      },
+      {
+        "X": 766,
+        "Y": 882,
+        "Width": 309,
+        "Height": 190,
+        "AnchorX": 154.5,
+        "AnchorY": 95.0
+      },
+      {
+        "X": 1126,
+        "Y": 890,
+        "Width": 295,
+        "Height": 177,
+        "AnchorX": 147.5,
+        "AnchorY": 88.5
+      }
+    ]
+  }
+}

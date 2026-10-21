@@ -35,7 +35,7 @@ internal static class WorldMusic
     }
     internal static void Reset()
     {
-        BoosterState.Reset();_navalUntil=0;
+        BoosterState.Reset();PremiumState.Reset();_navalUntil=0;
         _selected = null;
         _combatTrack = "";
         _playlist = "";

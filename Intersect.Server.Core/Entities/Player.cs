@@ -868,6 +868,7 @@ public partial class Player : Entity
                 if (!HasPendingDeath) base.Update(timeMs);
                 Intersect.Server.Housing.HousingRuntime.Update(this);
                 UpdateActivePet(timeMs);
+                UpdatePremiumStatus(timeMs);
                 Intersect.Server.Naval.NavalSystem.Update(this, timeMs);
 
                 if (mAutorunCommonEventTimer < Timing.Global.Milliseconds)

@@ -576,7 +576,7 @@ internal static class LogiCoinPurchaseRuntime
         return PremiumUntil(player) > DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
     }
 
-    private static long PremiumUntil(Player player)
+    internal static long PremiumUntil(Player player)
     {
         var variableId = LogiCoinShopRuntime.Current.PremiumUntilUserVariableId;
         return variableId == Guid.Empty ? 0 : player.User.GetVariableValue(variableId).Integer;

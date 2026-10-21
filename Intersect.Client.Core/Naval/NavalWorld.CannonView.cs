@@ -150,7 +150,7 @@ internal static partial class NavalWorld
             var scale=(float)(1/pixelsPerTile);
             foreach(var part in NavalSpriteGeometry.Parts(frame))
                 sprites.Add(new(texture,new FloatRect(part.X,part.Y,part.Width,part.Height),new(sx,sy),
-                    part.Width*scale,part.Height*scale,(float)part.AnchorX*scale,(float)part.AnchorY*scale,part.FlipHorizontal,elevation));
+                    part.Width*scale,part.Height*scale,(float)part.AnchorX*scale,(float)part.AnchorY*scale,part.FlipHorizontal,elevation,RotationDegrees:(float)part.RotationDegrees));
         }
         void Effect(string filename,string clip,float sx,float sy,long age,bool hold,float elevation=0)
         {

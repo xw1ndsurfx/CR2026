@@ -68,6 +68,7 @@ internal static partial class NavalWorld
         if(atlas==null || !atlas.Clips.TryGetValue(clip,out var frames)) return false;
         if(!hold && elapsed>=frames.Length*Presentation.EffectFrameMilliseconds) return true;
         var frame=atlas.Frame(clip,elapsed,Presentation.EffectFrameMilliseconds)!;
+        rotation+=frame.RotationDegrees;
         var scale=Options.Instance.Map.TileWidth/Presentation.EffectPixelsPerTile;
         foreach(var part in NavalSpriteGeometry.Parts(frame)) Graphics.DrawGameTexture(texture,new FloatRect(part.X,part.Y,part.Width,part.Height),
             NavalEffectGeometry.Destination(part,x,y,scale,rotation),Color.White,rotationDegrees:(float)rotation);

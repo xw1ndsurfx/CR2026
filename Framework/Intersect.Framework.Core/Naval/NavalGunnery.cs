@@ -40,10 +40,12 @@ public sealed class CannonAmmunition
     public int ReloadPercent {get;set;}=100;
     public bool IsValid()=>RequiredSailingLevel is >=1 and <=200 && ShopPrice is >=0 and <=1000000000 && SlowPercent is >=0 and <=80 && SlowSeconds is >=1 and <=30 && new[]{Icon,ProjectileGraphic,WaterGraphic,HullGraphic}.All(NavalPresentation.SafeAsset) && Enum.IsDefined(Kind) && RequiredLevel is >=1 and <=200 && UnitsPerShot is >=1 and <=100 &&
         DamagePercent is >=10 and <=300 && RangePercent is >=25 and <=200 && ReloadPercent is >=25 and <=300;
-    public static CannonAmmunition[] Defaults()=>[new(),new(){Kind=CannonAmmoKind.Heavy,RequiredSailingLevel=3,RequiredLevel=3,RequiresItem=true,DamagePercent=150,RangePercent=70,ReloadPercent=150},
-        new(){Kind=CannonAmmoKind.LongRange,RequiredSailingLevel=5,RequiredLevel=5,RequiresItem=true,DamagePercent=80,RangePercent=140,ReloadPercent=120},
+    public static CannonAmmunition[] Defaults()=>[Visual(new(),"Standard"),Visual(new(){Kind=CannonAmmoKind.Heavy,RequiredSailingLevel=3,RequiredLevel=3,RequiresItem=true,DamagePercent=150,RangePercent=70,ReloadPercent=150},"Heavy"),
+        Visual(new(){Kind=CannonAmmoKind.LongRange,RequiredSailingLevel=5,RequiredLevel=5,RequiresItem=true,DamagePercent=80,RangePercent=140,ReloadPercent=120},"LongRange"),
         Special(CannonAmmoKind.Lightning,10,120,40),Special(CannonAmmoKind.Chain,5,70,60),Special(CannonAmmoKind.Explosive,15,180,0),
         Special(CannonAmmoKind.Ice,8,80,50),Special(CannonAmmoKind.Cursed,20,140,25)];
+    private static CannonAmmunition Visual(CannonAmmunition ammo,string kind)
+    {ammo.ProjectileGraphic=ammo.WaterGraphic=ammo.HullGraphic="Cannon_"+kind+".png";return ammo;}
     private static CannonAmmunition Special(CannonAmmoKind kind,int level,int damage,int slow)=>new() {Kind=kind,RequiresItem=true,RequiredLevel=level,RequiredSailingLevel=level,DamagePercent=damage,SlowPercent=slow,
         ProjectileGraphic="Cannon_"+kind+".png",WaterGraphic="Cannon_"+kind+".png",HullGraphic="Cannon_"+kind+".png"};
     public static string Caption(CannonAmmoKind kind)=>kind switch {CannonAmmoKind.Heavy=>"Heavy cannonball",CannonAmmoKind.LongRange=>"Long-range cannonball",CannonAmmoKind.Lightning=>"Lightning cannonball",CannonAmmoKind.Chain=>"Chain shot",CannonAmmoKind.Explosive=>"Explosive cannonball",CannonAmmoKind.Ice=>"Ice cannonball",CannonAmmoKind.Cursed=>"Cursed cannonball",_=>"Standard cannonball"};
