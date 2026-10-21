@@ -4,6 +4,7 @@ namespace Intersect.Framework.Core.GameObjects.Maps;
 public sealed class MapWeatherEffects
 {
     public bool RandomWeather {get;set;}
+    public bool GeneratedRain {get;set;}
     public bool Flashes {get;set;}
     public int FlashOpacity {get;set;}=25;
     public bool Lightning {get;set;}
