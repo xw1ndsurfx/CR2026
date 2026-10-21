@@ -52,3 +52,12 @@ Tests automatisés : postes exclusifs, faux jetons et angles refusés, niveau re
 Lorsqu’un équipier occupe un poste de canon, les dix raccourcis temporaires sont réservés aux munitions : 1 = standard gratuit, 2 = lourd, 3 = longue portée. Les cases 4 à 0 restent désactivées tant qu’aucun autre type n’existe. La touche ou le clic sur la case sélectionne le boulet ; le clic gauche dans la vue canon tire. La quantité indique les tirs disponibles ; ∞ indique le standard gratuit. Les types indisponibles (niveau/stock/configuration) sont désactivés et la sélection est surlignée. Fermer la vue libère le poste et rétablit les actions d’équipage ; débarquer restaure les raccourcis ordinaires.
 
 La barre de progression au-dessus des raccourcis affiche Canonnier pour l’équipage et Sailing pour le capitaine. Seul le capitaine gagne l’EXP Sailing des naufrages ; les équipiers conservent le même butin et l’EXP personnage. Leur EXP Canonnier reste liée aux dégâts réels de leurs propres tirs. Les récompenses mémorisent la part Sailing au naufrage pour que le débarquement ou un changement de rôle avant sauvegarde ne change pas l’attribution.
+
+
+### Vue canonnier plein écran
+
+Pour les équipiers, ouvrir la vue canon affiche désormais la scène sur toute la surface du jeu, sans cadre de fenêtre ni carte top-down visible derrière. Les HUD de combat et la barre native de boulets restent au-dessus. Bâbord/tribord, prise du poste ou tir, et Fermer restent accessibles. Fermer ou la touche de menu (Échap par défaut) rend la vue normale et libère le poste ; perte du bateau ou naufrage ferme aussi la vue. L’aperçu du capitaine conserve sa fenêtre compacte.
+
+La surface s’adapte aux changements de taille et au rapport largeur/hauteur de l’écran. La texture de perspective reste bornée à 960 × 540 et à 20 images/s, avec le même rapport pour conserver la précision souris/réticule ; l’aperçu compact reste borné à 480 × 270. La passe top-down continue ses mises à jour derrière la couverture opaque pour préserver l’état du moteur. Si la scène ou le rendu n’est pas prêt, un fond opaque reste affiché ; aucun aperçu top-down ne transparaît.
+
+Test connecté : à bord comme équipier, ouvrir la vue, prendre un poste, sélectionner les boulets 1–3, viser/tirer, vérifier les HUD et les clics, redimensionner la fenêtre, fermer avec Fermer puis Échap, rouvrir, puis tester le naufrage. Contrôler que la carte normale revient et qu’un autre équipier peut reprendre le poste libéré. Les tests de contrôles natifs et de géométrie ne remplacent pas cette vérification GPU/connectée.

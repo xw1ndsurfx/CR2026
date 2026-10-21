@@ -1,3 +1,4 @@
+using Rectangle=Intersect.Client.Framework.GenericClasses.Rectangle;
 using Intersect.Client.Framework.Graphics;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
@@ -23,7 +24,7 @@ public sealed class NavalCargoWindowTests
     [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
 
     [Test]
-    public void CrewViewportUsesMouseCoordinatesForAimAndShowsItsAmmoAndProgressControls()
+    public void CrewViewportUsesMouseCoordinatesForAimWithoutDuplicatingTheNativeAmmoAndProgressBars()
     {
         var previous=Intersect.Client.General.Globals.Me;
         var me=(Intersect.Client.Entities.Player)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(Intersect.Client.Entities.Player));
@@ -41,15 +42,17 @@ public sealed class NavalCargoWindowTests
             viewport.GetType().GetMethod("OnMouseMoved",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!.Invoke(viewport,[position.X,position.Y,1,1]);
             Assert.That(Intersect.Client.Naval.NavalWorld.GunYaw,Is.GreaterThan(0));
             Assert.That(Intersect.Client.Naval.NavalWorld.GunElevation,Is.LessThan(0));
-            Assert.That(Descendants(window).Single(c=>c.Name=="CannonAmmunition").IsHidden,Is.False);
-            Assert.That(Descendants(window).Single(c=>c.Name=="GunneryExperience").IsHidden,Is.False);
+            Assert.That(Descendants(window).Single(c=>c.Name=="CannonAmmunition").IsHidden,Is.True);
+            Assert.That(Descendants(window).Single(c=>c.Name=="GunneryExperience").IsHidden,Is.True);
         }
         finally {Intersect.Client.Naval.NavalWorld.Clear();Intersect.Client.General.Globals.Me=previous;}
     }
 
     [TestCase(1920,1080)]
     [TestCase(640,480)]
-    public void PerspectiveWindowFitsTheNativeCanvasAndClosesWhenTheShipSinks(int width,int height)
+    [TestCase(800,600)]
+    [TestCase(2560,1080)]
+    public void CrewPerspectiveCoversTheEntireCanvasKeepsHudsAboveAndClosesWhenTheShipSinks(int width,int height)
     {
         using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);
         using var canvas=new Canvas(skin) {Size=new Point(width,height)};
@@ -57,13 +60,51 @@ public sealed class NavalCargoWindowTests
         var ship=new ShipSnapshot {Id=Guid.NewGuid(),CaptainId=Guid.NewGuid(),CannonsEnabled=true};
         window.Update(ship,true);
         Assert.That(window.IsHidden,Is.False);
-        Assert.That(window.Width,Is.LessThan(width));Assert.That(window.Height,Is.LessThan(height));
+        Assert.That(window.Bounds,Is.EqualTo(new Rectangle(0,0,width,height)));
+        Assert.That(window.Titlebar.IsHidden,Is.True);
+        var viewport=Descendants(window).Single(c=>c.Name=="CannonPerspectiveViewport");
+        Assert.That(viewport.Bounds,Is.EqualTo(new Rectangle(0,0,width,height)));
+        window.GetType().GetMethod("Layout",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!.Invoke(window,[skin]);
+        Assert.That(viewport.ToCanvas(0,0),Is.EqualTo(new Point(0,0)));
+        // The fullscreen control stays behind the actual hotbar/HUD, even after touching the world image.
+        var hud=new ControlBase(canvas,"TestNavalHud");hud.SetBounds(0,0,100,100);window.Touch();
+        Assert.That(canvas.Children.ToList().IndexOf(window),Is.LessThan(canvas.Children.ToList().IndexOf(hud)));
+        Assert.That(canvas.GetComponentAt(10,10),Is.SameAs(hud),"HUD clicks must win over the fullscreen scene.");
+        Assert.That(canvas.GetComponentAt(width*3/4,height/2),Is.SameAs(viewport),"World clicks must reach the aiming viewport.");
+        viewport.GetType().GetMethod("Render",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!.Invoke(viewport,[skin]);
+        Assert.That(renderer.Fills.Any(f=>f.Rect==new Rectangle(0,0,width,height) && f.Color.A==255),Is.True,"Opaque cover must remain present even without a ready map or GPU scene.");
+        canvas.SetSize(width/2,height/2);window.Update(ship,true);
+        Assert.That(window.Width,Is.EqualTo(width/2));Assert.That(viewport.Height,Is.EqualTo(height/2));
         foreach(var control in window.Children.Where(c=>c.Name is "CannonPerspectiveViewport" or "FireBroadside" or "PortView" or "StarboardView"))
             Assert.That(control.X>=0 && control.Y>=0 && control.Right<=window.Width && control.Bottom<=window.Height,Is.True,control.Name);
         Assert.That(Descendants(window).OfType<Button>().Single(b=>b.Name=="FireBroadside").IsDisabled,Is.True);
         ship.Sinking=true;window.Update(ship,true);
         Assert.That(window.IsHidden,Is.True);
         Assert.That(Intersect.Client.Naval.NavalWorld.CannonViewOpen,Is.False);
+    }
+
+    [Test]
+    public void CaptainKeepsTheCompactPreviewAndCloseReturnsToNormalView()
+    {
+        var previous=Intersect.Client.General.Globals.Me;
+        var me=(Intersect.Client.Entities.Player)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(Intersect.Client.Entities.Player));
+        GC.SuppressFinalize(me);me.Id=Guid.NewGuid();
+        try
+        {
+            Intersect.Client.General.Globals.Me=me;
+            using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);
+            using var canvas=new Canvas(skin) {Size=new Point(800,600)};var window=new NavalCannonViewWindow(canvas);
+            window.Update(new(){Id=Guid.NewGuid(),CaptainId=me.Id},true);
+            Assert.That(window.Width,Is.LessThan(800));Assert.That(window.Height,Is.LessThan(600));
+            Assert.That(window.Titlebar.IsHidden,Is.False);
+            Intersect.Client.Naval.NavalWorld.CannonViewOpen=true;
+            var close=Descendants(window).OfType<Button>().Single(b=>b.Name=="CloseCannonView");
+            typeof(ControlBase).GetMethod("EmitVirtualClick",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!.Invoke(close,
+                [Intersect.Client.Framework.Gwen.Control.EventArguments.MouseButtonState.Empty]);
+            Assert.That(Intersect.Client.Naval.NavalWorld.CannonViewOpen,Is.False);
+            window.Update(null,false);Assert.That(window.IsHidden,Is.True);
+        }
+        finally {Intersect.Client.Naval.NavalWorld.Clear();Intersect.Client.General.Globals.Me=previous;}
     }
 
     [TestCase(1920,1080)]
@@ -166,6 +207,8 @@ public sealed class NavalCargoWindowTests
     }
     private sealed class MetricsRenderer:RendererBase
     {
+        internal List<(Rectangle Rect,Color Color)> Fills {get;}=[];
+        public override void DrawFilledRect(Rectangle rect)=>Fills.Add((rect,DrawColor));
         public override Point MeasureText(IFont? font,int size,string? text,float scale=1f)=>new((int)Math.Ceiling((text?.Length??0)*size*.6*scale),(int)Math.Ceiling((size+3)*scale));
     }
     private sealed class TestFont:IFont

@@ -9,6 +9,17 @@ namespace Intersect.Tests.Client;
 [TestFixture]
 public sealed class NavalPerspectiveTests
 {
+    [TestCase(1920,1080)]
+    [TestCase(800,600)]
+    [TestCase(2560,1080)]
+    [TestCase(1080,1920)]
+    public void FullscreenRenderTargetIsBoundedAndKeepsTheMouseProjectionAspect(int width,int height)
+    {
+        var target=Intersect.Client.Interface.Game.Hotbar.NavalCannonViewWindow.PerspectiveResolution(width,height,true);
+        Assert.That(target.X,Is.InRange(1,960));Assert.That(target.Y,Is.InRange(1,540));
+        Assert.That(target.X/(double)target.Y,Is.EqualTo(width/(double)height).Within(.005));
+    }
+
     [Test]
     public void CannonArtworkUsesExplicitAimPosesAndRejectsOutOfTextureRectangles()
     {

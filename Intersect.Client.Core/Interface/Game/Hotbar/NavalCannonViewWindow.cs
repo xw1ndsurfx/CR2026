@@ -26,6 +26,22 @@ internal sealed class NavalCannonViewWindow : Window
     private readonly NavalSailingBar _gunnery;
     private bool _crewWasOpen;
     private Guid _ship;
+    private bool _fullscreen;
+    // Keep the world image below canvas-level HUDs, including after clicking the viewport.
+    public override void Touch() {if(_fullscreen) SendToBack();else base.Touch();}
+    protected override void Layout(Intersect.Client.Framework.Gwen.Skin.Base skin)
+    {
+        if(!_fullscreen) {base.Layout(skin);return;}
+        InnerPanel.Dock=Pos.None;InnerPanel.SetBounds(0,0,Width,Height);
+    }
+    protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
+    {if(!_fullscreen) base.Render(skin);}
+    internal static Point PerspectiveResolution(int width,int height,bool fullscreen)
+    {
+        width=Math.Max(1,width);height=Math.Max(1,height);
+        var scale=Math.Min(1,Math.Min((fullscreen?960d:480)/width,(fullscreen?540d:270)/height));
+        return new Point(Math.Max(1,(int)Math.Round(width*scale)),Math.Max(1,(int)Math.Round(height*scale)));
+    }
     internal NavalCannonViewWindow(Base parent):base(parent,T("Cannon view"),false,nameof(NavalCannonViewWindow))
     {
         Alignment=[Alignments.Center];DeleteOnClose=false;DisableResizing();
@@ -70,10 +86,13 @@ internal sealed class NavalCannonViewWindow : Window
         if(_ship!=ship.Id) {_ship=ship.Id;NavalWorld.CannonViewStarboard=false;_viewport.Release();}
         var crew=ship.CaptainId!=Globals.Me?.Id;
         _viewport.CrewMode=crew;_crewWasOpen=crew;
+        _fullscreen=crew;DrawShadow=!crew;Titlebar.IsHidden=crew;
+        Alignment=crew?[]:[Alignments.Center];
+        InnerPanel.Dock=crew?Pos.None:Pos.Fill;
         if(crew) NavalWorld.RenewStation();
-        var width=Math.Min(880,Math.Max(300,(Parent?.Width??904)-24));
-        var height=Math.Min(640,Math.Max(330,(Parent?.Height??672)-32));
-        SetSize(width,height);
+        var width=crew?Math.Max(1,Parent?.Width??800):Math.Min(880,Math.Max(300,(Parent?.Width??904)-24));
+        var height=crew?Math.Max(1,Parent?.Height??600):Math.Min(640,Math.Max(330,(Parent?.Height??672)-32));
+        if(crew) {SetBounds(0,0,width,height);InnerPanel.SetBounds(0,0,width,height);}else SetSize(width,height);
         var pictureHeight=Math.Min((width-32)*9/16,height-(crew?240:175));
         var pictureWidth=pictureHeight*16/9;
         _side.SetBounds(16,30,width-32,26);
@@ -110,7 +129,21 @@ internal sealed class NavalCannonViewWindow : Window
                 selected?.Available!=true?"Not enough ammunition for this cannonball.":"Move the mouse to aim · Left click to fire"),11,8);
             if(!string.IsNullOrEmpty(gun.Message)) EventPanelText.Fit(_limit,T(gun.Message),11,8);
         }
-        if(IsHidden) {Show();BringToFront();}
+        if(crew)
+        {
+            _viewport.SetBounds(0,0,width,height);_viewport.SendToBack();
+            _side.SetBounds(16,102,width-32,25);
+            _limit.SetBounds(16,130,width-32,23);
+            _limit.IsHidden=string.IsNullOrEmpty(NavalWorld.Gunner.Message);
+            _hint.SetBounds(16,Math.Max(158,height-212),width-32,23);
+            var commandWidth=Math.Min(640,width-32);var commandX=(width-commandWidth)/2;var buttonWidth=(commandWidth-18)/4;
+            for(var i=0;i<buttons.Length;i++) buttons[i].SetBounds(commandX+i*(buttonWidth+6),height-180,buttonWidth,30);
+            // Ammo selection and Gunnery progress are already available in the native hotbar below.
+            _ammo.Hide();_gunnery.Hide();
+        }
+        else _limit.Show();
+        if(IsHidden) Show();
+        if(crew) SendToBack();
     }
     private sealed class Viewport(Base parent):Base(parent,"CannonPerspectiveViewport")
     {
@@ -149,7 +182,7 @@ internal sealed class NavalCannonViewWindow : Window
                 catch(Exception e) when(e is IOException or JsonException or UnauthorizedAccessException) {_art=null;}
             }
             if(_art?.IsValid(texture.Width,texture.Height)!=true) return;
-            var frame=_art.Pose(NavalWorld.GunYaw);var w=Math.Min(Width,(int)(Height*.85));var h=w*frame.Height/frame.Width;
+            var frame=_art.Pose(NavalWorld.GunYaw);var w=Math.Min((int)(Width*.6),(int)(Height*.7));var h=w*frame.Height/frame.Width;
             var offset=(int)(NavalWorld.GunYaw/NavalWorld.Gunner.AimArcDegrees*8);
             skin.Renderer.DrawTexturedRect(texture,new Rectangle((Width-w)/2+offset,Height-h,w,h),Color.White,
                 frame.X/(float)texture.Width,frame.Y/(float)texture.Height,(frame.X+frame.Width)/(float)texture.Width,(frame.Y+frame.Height)/(float)texture.Height);
@@ -165,12 +198,14 @@ internal sealed class NavalCannonViewWindow : Window
             draw.DrawColor=new Color(255,27,40,53);draw.DrawFilledRect(new Rectangle(0,0,Width,Height));
             if(!_failed && Graphics.Renderer is {} renderer && Environment.TickCount64>=_nextFrame)
             {
-                _nextFrame=Environment.TickCount64+50; // 480x270 at <=20 Hz, no CPU texture readback.
+                _nextFrame=Environment.TickCount64+50; // Bounded to 960x540 at <=20 Hz; no CPU texture readback.
                 try
                 {
                     if(NavalWorld.CannonScene() is {} scene)
                     {
-                        _texture??=renderer.CreateRenderTexture(480,270);
+                        var size=PerspectiveResolution(Width,Height,CrewMode);
+                        if(_texture!=null && (_texture.Width!=size.X || _texture.Height!=size.Y)) {_texture.Dispose();_texture=null;}
+                        _texture??=renderer.CreateRenderTexture(size.X,size.Y);
                         _failed=!renderer.RenderMapPerspective(_texture,scene);
                     }
                     else {_texture?.Dispose();_texture=null;} // Map unloading must not leave an old island frozen in view.
