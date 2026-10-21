@@ -1,4 +1,4 @@
-{
+﻿{
   "Entries": {
     "Grant EXP bonus": {
       "en": "Grant EXP bonus",
@@ -349,6 +349,56 @@
       "en": "Weather drift Y",
       "fr": "Déplacement météo Y",
       "es": "Desplazamiento clima Y"
+    },
+    "Boarding invitation": {
+      "en": "Boarding invitation",
+      "fr": "Invitation à embarquer",
+      "es": "Invitación a embarcar"
+    },
+    "Board ship": {
+      "en": "Board ship",
+      "fr": "Embarquer",
+      "es": "Embarcar"
+    },
+    "{0} launched {1}. Board with your party?": {
+      "en": "{0} launched {1}.\nBoard with your party?",
+      "fr": "{0} a mis {1} à l’eau.\nEmbarquer avec le groupe ?",
+      "es": "{0} ha botado {1}.\n¿Embarcar con tu grupo?"
+    },
+    "Random weather (15 minutes)": {
+      "en": "Random weather (15 minutes)",
+      "fr": "Météo aléatoire (15 minutes)",
+      "es": "Clima aleatorio (15 minutos)"
+    },
+    "Storm flashes": {
+      "en": "Storm flashes",
+      "fr": "Flashs d’orage",
+      "es": "Destellos de tormenta"
+    },
+    "Flash opacity (%)": {
+      "en": "Flash opacity (%)",
+      "fr": "Opacité des flashs (%)",
+      "es": "Opacidad de los destellos (%)"
+    },
+    "Lightning bolts": {
+      "en": "Lightning bolts",
+      "fr": "Éclairs",
+      "es": "Rayos"
+    },
+    "Lightning animation": {
+      "en": "Lightning animation",
+      "fr": "Animation des éclairs",
+      "es": "Animación de rayos"
+    },
+    "Ground splashes": {
+      "en": "Ground splashes",
+      "fr": "Éclaboussures au sol",
+      "es": "Salpicaduras en el suelo"
+    },
+    "Splash animation": {
+      "en": "Splash animation",
+      "fr": "Animation des éclaboussures",
+      "es": "Animación de salpicaduras"
     }
   }
 }

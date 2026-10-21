@@ -1,4 +1,4 @@
-using Intersect.Network.Packets.Server;
+﻿using Intersect.Network.Packets.Server;
 using Intersect.Framework.Core.Naval;
 namespace Intersect.Client.Interface.Game;
 public partial class GameInterface
@@ -24,7 +24,7 @@ public partial class GameInterface
     }
     private void UpdateNavalManagement()
     {
-        foreach(var panel in _navalPanels.Values)panel.Tick();var ship=Naval.NavalWorld.OwnShip;
+        _boardingOffer?.Tick();foreach(var panel in _navalPanels.Values)panel.Tick();var ship=Naval.NavalWorld.OwnShip;
         if(ship!=null){_navalAmmoShop?.Hide();_shipShopWindow?.Hide();}
         else foreach(var mode in new[]{NavalManageAction.Repair,NavalManageAction.OfferHelm,NavalManageAction.Skills})if(_navalPanels.TryGetValue(mode,out var seaPanel))seaPanel.Hide();
         if(ship?.HelmOfferToken is {} offer && offer!=Guid.Empty && offer!=_helmOfferSeen)

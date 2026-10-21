@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Entities;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Maps;
@@ -35,11 +35,14 @@ public partial class WeatherParticle : IWeatherParticle, IDisposable
 
     private readonly int yVelocity;
 
+    private readonly Action<float,float>? _impact;
+    private readonly float _landingTime;
+
     public float X { get; set; }
 
     public float Y { get; set; }
 
-    public WeatherParticle(List<IWeatherParticle> RemoveParticle, int xvelocity, int yvelocity, AnimationDescriptor anim)
+    public WeatherParticle(List<IWeatherParticle> RemoveParticle, int xvelocity, int yvelocity, AnimationDescriptor anim, Action<float,float>? impact=null)
     {
         TransmittionTimer = Timing.Global.MillisecondsUtc;
         bounds = new Rectangle(0, 0, Graphics.Renderer.ScreenWidth, Graphics.Renderer.ScreenHeight);
@@ -122,6 +125,8 @@ public partial class WeatherParticle : IWeatherParticle, IDisposable
         cameraSpawnX = Graphics.Renderer.GetView().Left;
         cameraSpawnY = Graphics.Renderer.GetView().Top;
         _RemoveParticle = RemoveParticle;
+        _impact=impact;
+        _landingTime=yVelocity>0?(Globals.Random.Next(Math.Max(1,Graphics.Renderer.ScreenHeight/8),Math.Max(2,Graphics.Renderer.ScreenHeight))-originalY)/(float)yVelocity:float.MaxValue;
     }
 
     public void Update()
@@ -143,6 +148,11 @@ public partial class WeatherParticle : IWeatherParticle, IDisposable
         else
         {
             var timeScale = (Timing.Global.MillisecondsUtc - TransmittionTimer) / 10f;
+            if (_impact!=null && timeScale>=_landingTime)
+            {
+                _impact(cameraSpawnX+originalX+xVelocity*_landingTime,cameraSpawnY+originalY+yVelocity*_landingTime);
+                _RemoveParticle.Add(this);return;
+            }
             X = originalX + xVelocity * timeScale;
             Y = originalY + yVelocity * timeScale;
             animInstance.SetPosition(cameraSpawnX + X, cameraSpawnY + Y, -1, -1, Guid.Empty, Direction.None, 0);

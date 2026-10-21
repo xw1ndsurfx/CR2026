@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using Intersect.Client.Entities;
 using Intersect.Client.Entities.Events;
 using Intersect.Client.Framework.Content;
@@ -497,6 +497,7 @@ public static partial class Graphics
         // Draw lighting effects.
         GenerateLightMap();
         DrawDarkness();
+        (Globals.Me?.MapInstance as MapInstance)?.DrawStormFlash();
 
         for (var y = 0; y < mapHeight * 5; y++)
         {

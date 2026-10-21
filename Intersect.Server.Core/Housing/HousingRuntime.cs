@@ -70,6 +70,7 @@ internal static class HousingRuntime
         {
             try
             {
+                if (request.Action != HouseAction.Leave && (player.NavalShipId!=Guid.Empty || Intersect.Server.Dungeons.DungeonRunRuntime.IsPlayerInActiveRun(player))) return;
                 if (request.Action == HouseAction.Open) { Snapshots[player.Id] = new(player.HousingJson, player.House.Public); Send(player, request.OwnerId, true); return; }
                 if (request.Action == HouseAction.Leave) { Leave(player); return; }
                 if (!Configuration.Enabled) { Send(player, player.Id, true, "Housing is not available yet."); return; }

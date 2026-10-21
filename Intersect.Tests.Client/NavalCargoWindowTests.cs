@@ -24,6 +24,21 @@ public sealed class NavalCargoWindowTests
     [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
 
     [Test]
+    public void SailingSkillsScrollbarCanReachTheLastOwnedSkill()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(800,600)};
+        var window=new NavalManagementWindow(canvas,NavalManageAction.Skills);
+        var entries=Enum.GetValues<NavalSkillKind>().Select(kind=>new NavalSkillView {Owned=true,Definition=new(){Kind=kind}}).ToArray();
+        window.Apply(new(){Mode=NavalManageAction.Skills,Skills=entries});
+        var scroll=Descendants(window).OfType<ScrollControl>().Single();
+        Assert.That(scroll.VerticalScrollBar.IsHidden,Is.False);
+        Assert.That(scroll.VerticalScrollBar.ContentSize,Is.GreaterThan(scroll.Height));
+        scroll.VerticalScrollBar.SetScrollAmount(1,true);scroll.UpdateScrollBars();
+        Assert.That(scroll.VerticalScrollBar.ScrollAmount,Is.EqualTo(1));
+        Assert.That(scroll.Children.Any(child=>child.Name=="SkillAction"+entries.Last().Definition.Kind),Is.True);
+    }
+
+    [Test]
     public void FocusedTextInputBlocksGameplayAndHiddenInputReleasesIt()
     {
         using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(800,600)};

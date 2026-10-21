@@ -1,4 +1,4 @@
-using Intersect.Framework.Core;
+﻿using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.Naval;
 using Intersect.Network.Packets.Client;
@@ -11,6 +11,20 @@ namespace Intersect.Server.Naval;
 
 internal static partial class NavalSystem
 {
+    private static void InvitePartyToBoard(Player captain,Guid shipId)
+    {
+        var recipients=captain.Party.Where(member=>member.Id!=captain.Id).ToArray();
+        foreach(var member in recipients)
+        {
+            NavalBoardingOfferPacket offer=null;
+            lock(Gate)
+                if(member.InGame && member.Client!=null && member.NavalShipId==Guid.Empty && !member.IsDead &&
+                    !member.HasPendingDeath && member.InstanceType==MapInstanceType.Overworld && member.Z==0 && !member.NavalBusy &&
+                    Ships.TryGetValue(shipId,out var ship) && EligibleCrewShip(member,ship))
+                    offer=new(){ShipId=shipId,CaptainId=captain.Id,CaptainName=captain.Name,ShipName=string.IsNullOrWhiteSpace(ship.Name)?ship.Definition.Name:ship.Name};
+            if(offer!=null)member.SendPacket(offer);
+        }
+    }
     private sealed record CrewPresence(string Name,long Seen);
     private static bool NearCrewDock(Vessel vessel)=>Math.Abs(vessel.State.Speed)<=.1 && ByCrewDock(vessel);
     private static bool ByCrewDock(Vessel vessel)=>vessel.SunkUntil==0 &&

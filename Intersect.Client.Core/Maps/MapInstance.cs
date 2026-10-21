@@ -1539,26 +1539,31 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
             return;
         }
 
+        if (Globals.Me.MapInstance!=this || !WeatherIsActive)
+        {
+            ClearWeather();return;
+        }
+        UpdateStormEffects();
         var anim = AnimationDescriptor.Get(WeatherAnimationId);
-
         if (anim == null || WeatherIntensity == 0)
         {
-            return;
+            foreach(var particle in _weatherParticles)particle.Dispose();
+            _weatherParticles.Clear();return;
         }
 
         _removeParticles.Clear();
 
         if ((WeatherXSpeed != 0 || WeatherYSpeed != 0) && Globals.Me.MapInstance == this)
         {
-            if (Timing.Global.MillisecondsUtc > _weatherParticleSpawnTime)
+            if (Timing.Global.MillisecondsUtc > _weatherParticleSpawnTime && _weatherParticles.Count<256)
             {
-                _weatherParticles.Add(new WeatherParticle(_removeParticles, WeatherXSpeed, WeatherYSpeed, anim));
-                var spawnTime = 25 + (int)(475 * (1f - WeatherIntensity / 100f));
+                _weatherParticles.Add(new WeatherParticle(_removeParticles, WeatherXSpeed, WeatherYSpeed, anim,WeatherEffects.GroundSplashes?SpawnRainSplash:null));
+                var spawnTime = 25 + (int)(475 * (1f - Math.Clamp(WeatherIntensity,0,100) / 100f));
                 spawnTime = (int)(spawnTime *
                                    (480000f /
                                     (Graphics.Renderer.ScreenWidth * Graphics.Renderer.ScreenHeight)));
 
-                _weatherParticleSpawnTime = Timing.Global.MillisecondsUtc + spawnTime;
+                _weatherParticleSpawnTime = Timing.Global.MillisecondsUtc + Math.Max(8,spawnTime);
             }
         }
 
@@ -1584,6 +1589,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         }
 
         _weatherParticles.Clear();
+        ClearStormEffects();
     }
 
     public void GridSwitched()

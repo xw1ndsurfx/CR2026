@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Entities;
 using Intersect.Client.Entities.Events;
 using Intersect.Client.Entities.Projectiles;
@@ -2081,6 +2081,7 @@ internal sealed partial class PacketHandler
     //TimePacket
     public void HandlePacket(IPacketSender packetSender, TimePacket packet)
     {
+        Maps.MapWeatherClock.Synchronize(packet.ServerUtcMilliseconds);
         Time.LoadTime(
             packet.Time,
             Color.FromArgb(packet.Color.A, packet.Color.R, packet.Color.G, packet.Color.B),

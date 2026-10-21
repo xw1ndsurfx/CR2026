@@ -1326,6 +1326,11 @@ namespace Intersect.Server.Migrations.MySql.Game
                         .HasColumnName("WeatherAnimation")
                         .UseCollation("ascii_general_ci");
 
+                    b.Property<string>("WeatherEffectsJson")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("WeatherEffects");
+
                     b.Property<int>("WeatherIntensity")
                         .HasColumnType("int");
 

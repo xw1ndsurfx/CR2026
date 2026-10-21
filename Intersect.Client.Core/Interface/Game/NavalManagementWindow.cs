@@ -22,6 +22,7 @@ internal class NavalManagementWindow:Window
         if(panel!=NavalManageAction.Ammo){var chrome=new Chrome(this,"NavalManagementFrame",Style.Window);chrome.SetBounds(12,8,Width-24,Height-35);}
         _status=Text(this,"Status","",24,38,Width-48,42,11);
         _list=new ScrollControl(this,"NavalActivityList") {OverflowX=OverflowBehavior.Hidden,OverflowY=OverflowBehavior.Scroll,AutoHideBars=true};_list.SetBounds(24,85,Width-48,Height-167);
+        Shop.ShopWindow.ConfigureNativeScrollbar(_list);_list.AutoHideBars=false;
         _timer=Text(this,"RepairTiming","",24,Height-76,Width-200,32,11);
         Button(this,"CloseNavalActivities","Close",Width-164,Height-72,136,32,()=>ClosePanel());
         Closed+=(_,_)=>{if(_state.RepairToken!=Guid.Empty)Request(NavalManageAction.CancelRepair);};Hide();
@@ -125,7 +126,7 @@ internal class NavalManagementWindow:Window
                 }
             }
         }
-        _list.UpdateScrollBars();Show();BringToFront();
+        _list.SetInnerSize(width,Math.Max(_list.Height,_list.Children.Select(child=>child.Bottom+8).DefaultIfEmpty(0).Max()));_list.UpdateScrollBars();Show();BringToFront();
     }
     internal void Tick()
     {

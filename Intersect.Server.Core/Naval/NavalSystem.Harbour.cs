@@ -152,6 +152,7 @@ internal static partial class NavalSystem
                         player.X = (int)Math.Floor(launched.X); player.Y = (int)Math.Floor(launched.Y);
                         PacketSender.SendEntityDataToProximity(player);
                         lock (Gate) SendSnapshot(player);
+                        InvitePartyToBoard(player,launched.Id);
                         Notice(player, "Helm acquired. W/S: thrust/brake, A/D: turn, Space: anchor. /naval: leave at dock.");
                         return;
                     }
@@ -227,7 +228,7 @@ internal static partial class NavalSystem
                 return null;
             }
             vessel.State.CaptainId = player.Id;
-            vessel.CaptainName=player.Name;Ships.Add(owned.Id, vessel); player.CaptainedShipId = owned.Id;
+            vessel.BoardingOpen=true;vessel.CaptainName=player.Name;Ships.Add(owned.Id, vessel); player.CaptainedShipId = owned.Id;
             Emit(NavalEffectKind.Launch,player.MapId,x,y,d.Heading,Timing.Global.Milliseconds);
             player.CastTime = 0; player.IsBlocking = false;
             return vessel.State;

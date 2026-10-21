@@ -1274,6 +1274,11 @@ namespace Intersect.Server.Migrations.Sqlite.Game
                         .HasColumnType("TEXT")
                         .HasColumnName("WeatherAnimation");
 
+                    b.Property<string>("WeatherEffectsJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("WeatherEffects");
+
                     b.Property<int>("WeatherIntensity")
                         .HasColumnType("INTEGER");
 
