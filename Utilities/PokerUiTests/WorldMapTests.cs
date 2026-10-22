@@ -178,7 +178,13 @@ internal static class WorldMapTests
             var update = legendType.GetMethod("OnPreDraw", flags)!;
             update.Invoke(view, [skin]);
             var rows = (System.Collections.ICollection)legendType.GetField("_rows", flags)!.GetValue(view)!;
-            Check(rows.Count == 6, "Legend must include guild and configured animation entries");
+            Check(rows.Count == 8, "Legend must include guild, both ship factions and configured animation entries");
+            var legendLabels = rows.Cast<ControlBase>().SelectMany(row => row.Children).OfType<Label>().Select(label => label.Text).ToArray();
+            foreach (var source in new[] { "Player ships", "Enemy ships" })
+                Check(legendLabels.Contains(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(source,
+                    Intersect.Client.Localization.ClientLanguages.Current)), "Missing ship legend label: " + source);
+            Check(legendLabels.Contains(Intersect.Client.Localization.ClientLanguages.Text("Guild")) && legendLabels.Contains("Potion shop"),
+                "Ship entries must preserve existing social and configured legend labels");
             var legendRow = rows.Cast<ControlBase>().Last();
             var legendIcon = legendRow.Children.Single(child => child.GetType().Name == "LegendIcon");
             Check(legendRow.Height == 52 && legendIcon.Width == 52 && legendRow.Children.All(child => child.Bottom <= legendRow.Height),
@@ -187,7 +193,7 @@ internal static class WorldMapTests
             Check(renderer.Textures.Count == 1 && Math.Max(renderer.Textures[0].Width, renderer.Textures[0].Height) == 48,
                 "Legend animation must fill a 48px icon using visible pixels");
             Globals.WorldMapLegend = new(); update.Invoke(view, [skin]);
-            Check(rows.Count == 5, "Live legend changes must rebuild without stale controls");
+            Check(rows.Count == 7, "Live legend changes must rebuild without stale controls");
             var state = new WorldMapStatePacket { Players = Globals.WorldMapSocialMarkers, LegendJson = legend.ToJson() };
             state.Players[0].Guild = true;
             var decoded = MessagePackSerializer.Deserialize<WorldMapStatePacket>(MessagePackSerializer.Serialize(state));

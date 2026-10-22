@@ -34,7 +34,7 @@ internal static class QualityOfLifeEditorTests
         var map=new Intersect.Framework.Core.GameObjects.Maps.MapDescriptor(Guid.NewGuid());
         var mapProperties=Activator.CreateInstance(mapPropertiesType,map)!;
         var properties=System.ComponentModel.TypeDescriptor.GetProperties(mapProperties);
-        foreach(var name in new[]{"WeatherGeneratedRain","RandomWeather","WeatherFlashes","WeatherFlashOpacity","WeatherLightning","WeatherLightningAnimation","WeatherGroundSplashes","WeatherSplashAnimation"})
+        foreach(var name in new[]{"WeatherRainSound","WeatherThunderSound","WeatherPuddleDryMinutes","WeatherGeneratedRain","RandomWeather","WeatherFlashes","WeatherFlashOpacity","WeatherLightning","WeatherLightningAnimation","WeatherGroundSplashes","WeatherSplashAnimation"})
         {
             var property=properties[name]??throw new Exception("Missing map weather property: "+name);
             if(property.Category!=properties["Weather"]!.Category)throw new Exception("Weather settings must stay in Map Properties > Weather.");

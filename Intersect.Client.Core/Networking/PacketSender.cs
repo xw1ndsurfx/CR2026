@@ -91,13 +91,20 @@ public static partial class PacketSender
     }
 
     private static long _nextWorldMapStateRequest;
+    private static long _worldMapActiveUntil;
 
-    public static void RefreshWorldMapState()
+    public static void RefreshWorldMapState(bool worldMap = false)
     {
         var now = Environment.TickCount64;
+        if (worldMap)
+        {
+            _worldMapActiveUntil = now + 1000;
+            _nextWorldMapStateRequest = Math.Min(_nextWorldMapStateRequest, now + 250);
+        }
+        worldMap |= now < _worldMapActiveUntil;
         if (Globals.Me == null || now < _nextWorldMapStateRequest) return;
-        _nextWorldMapStateRequest = now + 1000;
-        Network.SendPacket(new RequestWorldMapPacket { StateOnly = true });
+        _nextWorldMapStateRequest = now + (worldMap ? 250 : 1000);
+        Network.SendPacket(new RequestWorldMapPacket { StateOnly = true, IncludeShips = worldMap });
     }
 
     public static void SendNeedMapForGrid(MapInstance? mapInstance = default)

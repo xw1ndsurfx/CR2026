@@ -325,6 +325,7 @@ internal static partial class Main
         //Dump Game Objects
         Globals.Me = null;
         Globals.WorldMapSocialMarkers = [];
+        Intersect.Client.Interface.Game.WorldMapShips.Clear();
         Globals.WorldMapLegend = new();
         Globals.WorldMapStateReceivedAt = 0;
         Globals.HasGameData = false;

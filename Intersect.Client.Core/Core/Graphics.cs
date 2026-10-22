@@ -676,6 +676,7 @@ public static partial class Graphics
         }
 
         map.Draw(layer);
+        if (layer == 0) map.DrawRainPuddles();
 
         if (layer == 0)
         {

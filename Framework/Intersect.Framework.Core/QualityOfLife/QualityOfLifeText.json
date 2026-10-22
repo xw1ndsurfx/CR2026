@@ -549,6 +549,36 @@
       "en": "Bag",
       "fr": "Sac",
       "es": "Bolsa"
+    },
+    "Rain sound (loop)": {
+      "en": "Rain sound (loop)",
+      "fr": "Son de pluie (en boucle)",
+      "es": "Sonido de lluvia (en bucle)"
+    },
+    "Thunder sound": {
+      "en": "Thunder sound",
+      "fr": "Son de tonnerre",
+      "es": "Sonido de trueno"
+    },
+    "Puddle drying time (minutes)": {
+      "en": "Puddle drying time (minutes)",
+      "fr": "Séchage des flaques (minutes)",
+      "es": "Secado de charcos (minutos)"
+    },
+    "Rain puddle": {
+      "en": "Rain puddle",
+      "fr": "Accumulation d'eau",
+      "es": "Acumulación de agua"
+    },
+    "Player ships": {
+      "en": "Player ships",
+      "fr": "Navires des joueurs",
+      "es": "Barcos de jugadores"
+    },
+    "Enemy ships": {
+      "en": "Enemy ships",
+      "fr": "Navires ennemis",
+      "es": "Barcos enemigos"
     }
   }
 }

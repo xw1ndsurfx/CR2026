@@ -2048,6 +2048,7 @@ internal sealed partial class PacketHandler
         if (clearKnownMaps)
         {
             Globals.WorldMapSocialMarkers = [];
+            Intersect.Client.Interface.Game.WorldMapShips.Clear();
             Globals.WorldMapStateReceivedAt = 0;
             foreach (var map in MapInstance.Lookup.Values.ToArray())
             {

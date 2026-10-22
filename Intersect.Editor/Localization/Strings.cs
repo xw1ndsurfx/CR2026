@@ -929,6 +929,7 @@ public static partial class Strings
             {(int) MapAttributeType.Blocked, @"Blocked" },
             {(int) MapAttributeType.Critter, @"Critter" },
             {(int) MapAttributeType.Dock, Naval.Dock },
+            {(int) MapAttributeType.RainPuddle, Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Rain puddle", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName) },
             {(int) MapAttributeType.GrappleStone, @"Grapple Stone" },
             {(int) MapAttributeType.Item, @"Item Spawn" },
             {(int) MapAttributeType.NpcAvoid, @"Npc Avoid" },

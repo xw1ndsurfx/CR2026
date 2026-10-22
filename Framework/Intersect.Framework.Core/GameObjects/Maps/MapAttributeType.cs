@@ -27,4 +27,5 @@ public enum MapAttributeType : byte
     Critter,
 
     Dock = 12, // Append only: persisted map attribute values must stay stable.
+    RainPuddle = 13,
 }

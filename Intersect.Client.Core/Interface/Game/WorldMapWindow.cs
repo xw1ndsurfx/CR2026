@@ -252,7 +252,7 @@ internal sealed class WorldMapWindow : Window
             }
 
             var renderer = skin.Renderer;
-            PacketSender.RefreshWorldMapState();
+            PacketSender.RefreshWorldMapState(_interactive);
 
             Fill(renderer, new Color(a: 252, r: 7, g: 10, b: 13), 0, 0, Width, Height);
 
@@ -382,6 +382,7 @@ internal sealed class WorldMapWindow : Window
 
             DrawSocialMarkers(renderer);
             DrawPlayerMarker(renderer);
+            DrawShipMarkers(renderer);
         }
 
         private void DrawQuestRoute(RendererBase renderer, int cellWidth, int cellHeight)
@@ -1165,6 +1166,27 @@ internal sealed class WorldMapWindow : Window
                     halfDestHeight
                 );
                 CoreGraphics.DrawGameTexture(texture, src, dst, Color.White, preview);
+            }
+        }
+
+        private void DrawShipMarkers(RendererBase renderer)
+        {
+            foreach (var (ship, x, y) in WorldMapShips.Positions(Environment.TickCount64))
+            {
+                var px = (int)Math.Round(_panX + x * CellWidth);
+                var py = (int)Math.Round(_panY + y * CellHeight);
+                if (px < -10 || py < -10 || px > Width + 10 || py > Height + 10) continue;
+                var color = ship.Enemy ? new Color(245, 100, 80) : new Color(80, 215, 245);
+                DrawLocationMarker(renderer, px, py, color);
+                // A mast and sail distinguish ships from social/player diamonds at every zoom.
+                Fill(renderer, Color.White, px, py - 10, 1, 8);
+                Fill(renderer, color, px + 1, py - 9, 4, 4);
+                if (!_interactive) continue;
+                var text = $"{ship.Name}  {Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Level", Intersect.Client.Localization.ClientLanguages.Current)} {ship.Level}";
+                renderer.DrawColor = Color.Black;
+                renderer.RenderText(Skin.DefaultFont, 9, new Point(px + 10, py - 7), text);
+                renderer.DrawColor = color;
+                renderer.RenderText(Skin.DefaultFont, 9, new Point(px + 9, py - 8), text);
             }
         }
 

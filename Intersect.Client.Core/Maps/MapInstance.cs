@@ -1539,6 +1539,11 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
             return;
         }
 
+        if (Globals.Me.MapInstance == this && _weatherSoundOwner != this)
+        {
+            _weatherSoundOwner?.StopWeatherSounds();
+            _weatherSoundOwner = this;
+        }
         if (Globals.Me.MapInstance!=this || !WeatherIsActive)
         {
             ClearWeather();return;
@@ -1602,6 +1607,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
         _weatherParticles.Clear();
         ClearStormEffects();
+        StopWeatherSounds();
         _generatedRain.Clear();
         _generatedRainUpdated = 0;
         _removeParticles.Clear();
