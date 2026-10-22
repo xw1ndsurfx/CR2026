@@ -31,6 +31,24 @@ partial class MapProperties
             if(value && mMyMap.WeatherIntensity==0)mMyMap.WeatherIntensity=50;
         });
     }
+    [CustomCategory("weather"),WeatherLabel("Rain sound (loop)"),TypeConverter(typeof(MapSoundProperty))]
+    public string WeatherRainSound
+    {
+        get=>string.IsNullOrWhiteSpace(mMyMap.WeatherEffects.RainSound)?Strings.General.None:mMyMap.WeatherEffects.RainSound;
+        set=>ChangeWeather(()=>mMyMap.WeatherEffects.RainSound=value==Strings.General.None?"":value);
+    }
+    [CustomCategory("weather"),WeatherLabel("Thunder sound"),TypeConverter(typeof(MapSoundProperty))]
+    public string WeatherThunderSound
+    {
+        get=>string.IsNullOrWhiteSpace(mMyMap.WeatherEffects.ThunderSound)?Strings.General.None:mMyMap.WeatherEffects.ThunderSound;
+        set=>ChangeWeather(()=>mMyMap.WeatherEffects.ThunderSound=value==Strings.General.None?"":value);
+    }
+    [CustomCategory("weather"),WeatherLabel("Puddle drying time (minutes)"),DefaultValue(3)]
+    public int WeatherPuddleDryMinutes
+    {
+        get=>mMyMap.WeatherEffects.PuddleDryMinutes;
+        set=>ChangeWeather(()=>mMyMap.WeatherEffects.PuddleDryMinutes=Math.Clamp(value,1,30));
+    }
     [CustomCategory("weather"),WeatherLabel("Storm flashes"),DefaultValue(false)]
     public bool WeatherFlashes {get=>mMyMap.WeatherEffects.Flashes;set=>ChangeWeather(()=>mMyMap.WeatherEffects.Flashes=value);}
     [CustomCategory("weather"),WeatherLabel("Flash opacity (%)"),DefaultValue(25)]

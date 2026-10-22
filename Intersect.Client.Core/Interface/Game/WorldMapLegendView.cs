@@ -35,7 +35,9 @@ internal sealed class WorldMapLegendView : ScrollControl
         AddRow(Intersect.Client.Localization.ClientLanguages.Text("Party"), Guid.Empty, WorldMapWindow.WorldMapCanvas.PartyMarkerColor, 56);
         AddRow(Intersect.Client.Localization.ClientLanguages.Text("Friends"), Guid.Empty, WorldMapWindow.WorldMapCanvas.FriendMarkerColor, 84);
         AddRow(Intersect.Client.Localization.ClientLanguages.Text("Guild"), Guid.Empty, WorldMapWindow.WorldMapCanvas.GuildMarkerColor, 112);
-        var y = 144;
+        AddRow(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Player ships", Intersect.Client.Localization.ClientLanguages.Current), Guid.Empty, new Color(80, 215, 245), 140);
+        AddRow(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Enemy ships", Intersect.Client.Localization.ClientLanguages.Current), Guid.Empty, new Color(245, 100, 80), 168);
+        var y = 200;
         foreach (var entry in Globals.WorldMapLegend.Entries)
         {
             AddRow(Intersect.Client.Localization.ClientLanguages.ContentText(entry.Label), entry.AnimationId, null, y);

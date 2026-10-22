@@ -752,7 +752,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        PacketSender.SendWorldMapState(client, grid.MapIds);
+        PacketSender.SendWorldMapState(client, grid.MapIds, packet.IncludeShips);
         if (packet.StateOnly) return;
 
         // Always refresh marker metadata when the World Map is opened.

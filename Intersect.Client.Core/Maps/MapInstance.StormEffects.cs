@@ -29,13 +29,19 @@ public partial class MapInstance
     }
     private void UpdateStormEffects()
     {
+        UpdateRainSound();
         var now=Environment.TickCount64;
-        if(WeatherEffects.Flashes || WeatherEffects.Lightning)
+        if(WeatherEffects.Flashes || WeatherEffects.Lightning || !string.IsNullOrWhiteSpace(WeatherEffects.ThunderSound))
         {
             if(_nextStrike==0)_nextStrike=now+Globals.Random.Next(10000,30001);
             if(now>=_nextStrike)
             {
                 _strikeAt=now;_nextStrike=now+Globals.Random.Next(20000,60001);
+                if (!string.IsNullOrWhiteSpace(WeatherEffects.ThunderSound))
+                {
+                    _thunderSound?.Stop();
+                    _thunderSound=Audio.AddGameSound(WeatherEffects.ThunderSound, false);
+                }
                 var view=Graphics.CurrentView;_strikeX=view.Left+view.Width*(float)(.15+Globals.Random.NextDouble()*.7);
                 _strikeY=view.Top+view.Height*(float)(.25+Globals.Random.NextDouble()*.45);
                 if(WeatherEffects.Lightning && AnimationDescriptor.Get(WeatherEffects.LightningAnimationId) is {} lightning)

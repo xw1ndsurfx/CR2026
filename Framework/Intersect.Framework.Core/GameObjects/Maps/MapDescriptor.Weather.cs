@@ -5,6 +5,9 @@ public sealed class MapWeatherEffects
 {
     public bool RandomWeather {get;set;}
     public bool GeneratedRain {get;set;}
+    public string RainSound {get;set;} = "";
+    public string ThunderSound {get;set;} = "";
+    public int PuddleDryMinutes {get;set;} = 3;
     public bool Flashes {get;set;}
     public int FlashOpacity {get;set;}=25;
     public bool Lightning {get;set;}

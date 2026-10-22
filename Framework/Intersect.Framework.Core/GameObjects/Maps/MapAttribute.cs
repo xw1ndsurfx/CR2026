@@ -36,6 +36,8 @@ public abstract partial class MapAttribute
                 return new MapGrappleStoneAttribute();
             case MapAttributeType.Slide:
                 return new MapSlideAttribute();
+            case MapAttributeType.RainPuddle:
+                return new MapRainPuddleAttribute();
             case MapAttributeType.Dock:
                 return new MapDockAttribute();
             case MapAttributeType.Critter:

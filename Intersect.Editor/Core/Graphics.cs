@@ -936,7 +936,13 @@ public static partial class Graphics
                                 Options.Instance.Map.TileHeight
                             );
 
-                            if (attr?.Type == MapAttributeType.Dock)
+                            if (attr?.Type == MapAttributeType.RainPuddle)
+                            {
+                                DrawTexture(sWhiteTex, new RectangleF(0, 0, 1, 1),
+                                    new RectangleF(tileBounds.X + 4, tileBounds.Y + 10, tileBounds.Width - 8, 10),
+                                    System.Drawing.Color.CornflowerBlue, null);
+                            }
+                            else if (attr?.Type == MapAttributeType.Dock)
                             {
                                 string[] glyph = ["01110", "11011", "11011", "11011", "01110", "00011"];
                                 var size = Math.Min(tileBounds.Width / 7, tileBounds.Height / 8);

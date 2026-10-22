@@ -17,6 +17,8 @@ internal static class HarbourDockEditorTests
             throw new InvalidOperationException("Painting a quay must create a saved Dock attribute.");
         if (layers.CreateAttribute(MapAttributeType.Blocked) is not MapBlockedAttribute)
             throw new InvalidOperationException("Existing blocked brush must remain unchanged.");
+        if (!names.ContainsKey(MapAttributeType.RainPuddle) || layers.CreateAttribute(MapAttributeType.RainPuddle) is not MapRainPuddleAttribute)
+            throw new InvalidOperationException("Rain puddle must be selectable and paintable without changing existing attributes.");
         Console.WriteLine("PASS Quai Q is selectable and paintable; existing blocked brush preserved");
     }
 }

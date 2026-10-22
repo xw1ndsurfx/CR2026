@@ -7,10 +7,10 @@ namespace Intersect.Server.Networking;
 
 public static partial class PacketSender
 {
-    public static void SendWorldMapState(Client client, IEnumerable<Guid> mapIds)
+    public static void SendWorldMapState(Client client, IEnumerable<Guid> mapIds, bool includeShips = true)
     {
         if (client.Entity is not { } player) return;
-        client.Send(new WorldMapStatePacket { Players = BuildWorldMapMarkers(player, mapIds), LegendJson = WorldMapLegendStore.Json });
+        client.Send(new WorldMapStatePacket { Players = BuildWorldMapMarkers(player, mapIds), Ships = includeShips ? Naval.NavalSystem.WorldMapShips(player, mapIds) : null, LegendJson = WorldMapLegendStore.Json });
     }
 
     internal static WorldMapSocialMarker[] BuildWorldMapMarkers(Player player, IEnumerable<Guid> mapIds)
