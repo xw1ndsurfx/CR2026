@@ -160,4 +160,5 @@ public enum EventCommandType
     GrantExperienceBonus = 1060,
     GrantLootBonus = 1061,
     OpenAdventureLobby = 1062,
+    ForceRain = 1063,
 }

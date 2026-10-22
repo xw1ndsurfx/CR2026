@@ -326,6 +326,7 @@ internal static partial class Main
         Globals.Me = null;
         Globals.WorldMapSocialMarkers = [];
         Intersect.Client.Interface.Game.WorldMapShips.Clear();
+        Intersect.Client.Maps.MapWeatherClock.SetForcedRain(0,0);
         Globals.WorldMapLegend = new();
         Globals.WorldMapStateReceivedAt = 0;
         Globals.HasGameData = false;

@@ -18,6 +18,7 @@ public partial class FrmMapProperties : DockContent
     {
         InitializeComponent();
         Icon = Program.Icon;
+        InitializeSectionClipboard();
 
         UpdatePropertiesDelegate = Update;
     }

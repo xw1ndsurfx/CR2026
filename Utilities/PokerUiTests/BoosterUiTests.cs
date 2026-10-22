@@ -33,6 +33,24 @@ internal static class BoosterUiTests
                 var labels=canvas.Children.OfType<Label>().Where(l=>!l.IsHidden).ToArray();Check(labels.Any(l=>l.Text.Contains(potionWord)) && labels.Any(l=>l.Text.Contains(lootWord)),"Both bonuses are localized and visible");Check(labels.All(l=>l.Right<=canvas.Width) && labels.Select(l=>l.Y).Distinct().Count()==labels.Length,"Stacked bonus HUD does not overlap on narrow screens");
                 Check(ClientLanguages.Text("A carefully balanced blade, forged for steady hands and decisive strikes.")!=(lang=="en"?"": "A carefully balanced blade, forged for steady hands and decisive strikes."),"Flavor templates have built-in translations");
             }
+            var premium=assembly.GetType("Intersect.Client.WorldEvents.PremiumState",true)!;
+            var receivePremium=premium.GetMethod("Apply",flags)!;
+            receivePremium.Invoke(null,[new PremiumStatusPacket{RemainingMilliseconds=40L*86400000}]);
+            try
+            {
+                using var premiumCanvas=new Canvas(skin){Size=new Point(640,480)};
+                var ui=(GameInterface)RuntimeHelpers.GetUninitializedObject(typeof(GameInterface));
+                typeof(GameInterface).GetField("<GameCanvas>k__BackingField",hidden)!.SetValue(ui,premiumCanvas);
+                typeof(GameInterface).GetField("_experienceGains",hidden)!.SetValue(ui,new Queue<ActivityExperienceGainPacket>());
+                typeof(GameInterface).GetMethod("UpdateExperienceEventHud",hidden)!.Invoke(ui,null);
+                var badge=(Label)typeof(GameInterface).GetField("_premiumHud",hidden)!.GetValue(ui)!;
+                Check(!badge.IsHidden && badge.X==196 && badge.Y==4 && badge.Height==20 && badge.Width<350 && badge.Right<=640,
+                    "Premium must be compact beside the day phase and fit narrow screens");
+                Globals.Database.ShowPremiumHud=false;
+                typeof(GameInterface).GetMethod("UpdateExperienceEventHud",hidden)!.Invoke(ui,null);
+                Check(badge.IsHidden,"Player preference must hide Premium status immediately");
+            }
+            finally{receivePremium.Invoke(null,[new PremiumStatusPacket()]);}
             var shopType=assembly.GetType("Intersect.Client.Interface.Game.Shop.ShopWindow",true)!;var offer=shopType.GetMethod("TrySellOffer",flags)!;var item=new ItemDescriptor(Guid.NewGuid()){Price=100};var currency=new ItemDescriptor(Guid.NewGuid()){Name="Test currency"};ItemDescriptor.Lookup[currency.Id]=currency;
             try
             {

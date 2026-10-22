@@ -107,6 +107,16 @@ public partial class Animation : IAnimation
         }
     }
 
+    internal static bool IsEmoteFolder(string? folder) => folder?.Replace('\\','/').Split('/')
+        .Any(part=>string.Equals(part.Trim(),"[X] - Emotes",StringComparison.OrdinalIgnoreCase))==true;
+    internal bool DrawsAboveLabels=>IsEmoteFolder(Descriptor?.Folder);
+    public void DrawAboveLabels()
+    {
+        if(!DrawsAboveLabels || IsDisposed || Descriptor==null || mParent is Entity entity && !entity.ShouldDraw)return;
+        Draw(false,Descriptor.Lower.AlternateRenderLayer,eventPass:true,aboveLabelsPass:true);
+        Draw(true,Descriptor.Upper.AlternateRenderLayer,eventPass:true,aboveLabelsPass:true);
+    }
+
     public void DrawEventOverlay() => DrawEventLayer(EventAnimationLayer.OverCharacter);
     public void DrawEventBehind() => DrawEventLayer(EventAnimationLayer.BehindCharacter);
     public void DrawEventAtCharacter(bool upper) => DrawEventLayer(EventAnimationLayer.SameAsCharacter, upper);
@@ -118,8 +128,9 @@ public partial class Animation : IAnimation
         if (upper != false) Draw(true, Descriptor.Upper.AlternateRenderLayer, eventPass: true);
     }
 
-    public void Draw(bool upper = false, bool alternate = false, bool eventPass = false)
+    public void Draw(bool upper = false, bool alternate = false, bool eventPass = false, bool aboveLabelsPass = false)
     {
+        if(DrawsAboveLabels && !aboveLabelsPass)return;
         // Attached event effects have their own foreground pass after the map decor.
         // Other animations retain their ordinary lower/upper layer behavior.
         if (mParent is Events.Event && !eventPass) return;

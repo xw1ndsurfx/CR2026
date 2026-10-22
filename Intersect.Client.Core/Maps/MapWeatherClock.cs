@@ -2,6 +2,13 @@
 internal static class MapWeatherClock
 {
     private static long _serverUtc,_received;
+    internal static long ForcedRainStartedUtc {get;private set;}
+    internal static long ForcedRainUntilUtc {get;private set;}
+    internal static void SetForcedRain(long started, long until)
+    {
+        ForcedRainStartedUtc = Math.Max(0,started);
+        ForcedRainUntilUtc = until > started ? until : 0;
+    }
     internal static void Synchronize(long utc)
     {
         if(utc<=0)return;

@@ -579,6 +579,76 @@
       "en": "Enemy ships",
       "fr": "Navires ennemis",
       "es": "Barcos enemigos"
+    },
+    "Change fog during rain": {
+      "en": "Change fog during rain",
+      "fr": "Changer le brouillard pendant la pluie",
+      "es": "Cambiar la niebla durante la lluvia"
+    },
+    "Rain fog": {
+      "en": "Rain fog",
+      "fr": "Brouillard de pluie",
+      "es": "Niebla de lluvia"
+    },
+    "Rain fog opacity (0-255)": {
+      "en": "Rain fog opacity (0-255)",
+      "fr": "Opacité du brouillard de pluie (0-255)",
+      "es": "Opacidad de niebla de lluvia (0-255)"
+    },
+    "Rain fog X speed": {
+      "en": "Rain fog X speed",
+      "fr": "Vitesse X du brouillard de pluie",
+      "es": "Velocidad X de niebla de lluvia"
+    },
+    "Rain fog Y speed": {
+      "en": "Rain fog Y speed",
+      "fr": "Vitesse Y du brouillard de pluie",
+      "es": "Velocidad Y de niebla de lluvia"
+    },
+    "Change brightness during rain": {
+      "en": "Change brightness during rain",
+      "fr": "Changer la luminosité pendant la pluie",
+      "es": "Cambiar el brillo durante la lluvia"
+    },
+    "Rain brightness (%)": {
+      "en": "Rain brightness (%)",
+      "fr": "Luminosité pendant la pluie (%)",
+      "es": "Brillo durante la lluvia (%)"
+    },
+    "Start rain on configured maps": {
+      "en": "Start rain on configured maps",
+      "fr": "Déclencher la pluie sur les maps configurées",
+      "es": "Iniciar lluvia en mapas configurados"
+    },
+    "Starts rain on all configured outdoor maps. Indoor maps stay dry.": {
+      "en": "Starts rain on all configured outdoor maps. Indoor maps stay dry.",
+      "fr": "Déclenche la pluie sur toutes les maps extérieures configurées. Les maps intérieures restent au sec.",
+      "es": "Inicia lluvia en todos los mapas exteriores configurados. Los interiores permanecen secos."
+    },
+    "Show Premium status": {
+      "en": "Show Premium status",
+      "fr": "Afficher le statut Premium",
+      "es": "Mostrar estado Premium"
+    },
+    "Copy section": {
+      "en": "Copy section",
+      "fr": "Copier la section",
+      "es": "Copiar sección"
+    },
+    "Paste section": {
+      "en": "Paste section",
+      "fr": "Coller la section",
+      "es": "Pegar sección"
+    },
+    "Paste section: {0}": {
+      "en": "Paste section: {0}",
+      "fr": "Coller la section : {0}",
+      "es": "Pegar sección: {0}"
+    },
+    "Weather": {
+      "en": "Weather",
+      "fr": "Météo",
+      "es": "Clima"
     }
   }
 }

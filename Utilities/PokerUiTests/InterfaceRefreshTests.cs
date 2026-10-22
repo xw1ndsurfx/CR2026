@@ -34,10 +34,10 @@ internal static class InterfaceRefreshTests
             database.LoadPreferences();
             Check(database.ShowMyLevel && database.ShowQuestHud && database.ShowWorldBossHud, "New settings default to visible");
             database.ShowPlayerLevels = false; database.ShowMyGuild = false; database.ShowQuestHud = false;
-            database.ShowInvasionHud = false; database.SavePreferences();
+            database.ShowInvasionHud = false; database.ShowPremiumHud = false; database.SavePreferences();
             database.EnableVoiceSounds = false; database.SavePreferences();
             var restored = new MemoryPreferences(database.Values); restored.LoadPreferences();
-            Check(!restored.ShowPlayerLevels && !restored.ShowMyGuild && !restored.ShowQuestHud && !restored.ShowInvasionHud,
+            Check(!restored.ShowPlayerLevels && !restored.ShowMyGuild && !restored.ShowQuestHud && !restored.ShowInvasionHud && !restored.ShowPremiumHud,
                 "Display settings must survive reload");
             Check(!restored.EnableVoiceSounds && Intersect.Client.Core.Audio.AddVoiceSound("dialog.wav") == null,
                 "Voice preference must persist and prevent muted voice playback");

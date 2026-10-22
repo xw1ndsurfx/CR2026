@@ -35,6 +35,14 @@ internal sealed class ExperienceEventHud : Label
         var duration=seconds>=86400?ClientLanguages.Format("{0}d {1}",seconds/86400,time):time;
         return ClientLanguages.Format("Premium - Remaining: {0}",duration);
     }
+    internal void ShowPremiumLine(string text, int x, int y, int height)
+    {
+        Text=text;
+        var measured=Skin.Renderer.MeasureText(Font,FontSize,text).X+12;
+        SetBounds(x,y,Math.Max(0,Math.Min(measured,Parent.Width-x-8)),height);
+        IsHidden=Width<80;
+        BringToFront();
+    }
     internal void ShowLine(string text, int y)
     {
         Text = text;
@@ -68,8 +76,10 @@ public partial class GameInterface
         if(!_potionHud.IsHidden){_potionHud.ShowLine(ClientLanguages.Format("EXP potion +{0}% - Remaining: {1}",BoosterState.Potion,Duration(BoosterState.PotionRemaining)),nextY);nextY+=28;}
         if(!_lootHud.IsHidden){_lootHud.ShowLine(ClientLanguages.Format("Loot event +{0}% - Remaining: {1}",BoosterState.Loot,Duration(BoosterState.LootRemaining)),nextY);nextY+=28;}
         _premiumHud??=new ExperienceEventHud(GameCanvas,"PremiumStatus");
-        _premiumHud.IsHidden=Globals.Me==null || PremiumState.Remaining<=0;
-        if(!_premiumHud.IsHidden){_premiumHud.ShowLine(ExperienceEventHud.FormatPremium(PremiumState.Remaining),nextY);nextY+=28;}
+        _premiumHud.IsHidden=Globals.Me==null || PremiumState.Remaining<=0 || Globals.Database?.ShowPremiumHud==false || SuppressStatusHuds;
+        if(!_premiumHud.IsHidden)
+            _premiumHud.ShowPremiumLine(ExperienceEventHud.FormatPremium(PremiumState.Remaining),
+                (_dayPhaseHud?.Right ?? 188)+8,_dayPhaseHud?.Y ?? 4,_dayPhaseHud?.Height ?? 20);
         if(!_experienceGainHud.IsHidden)_experienceGainHud.Y=nextY;
         if (Timing.Global.Milliseconds >= _experienceGainUntil)
         {

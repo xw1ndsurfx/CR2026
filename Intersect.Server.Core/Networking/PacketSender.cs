@@ -2077,10 +2077,10 @@ public static partial class PacketSender
     public static void SendTimeToAll()
     {
         SendDataToAllPlayers(
-            new TimePacket(
+            Intersect.Server.WorldEvents.ForcedRainRuntime.Apply(new TimePacket(
                 Time.GetTime(), DaylightCycleDescriptor.Instance.SyncTime ? 1 : DaylightCycleDescriptor.Instance.Rate,
                 Time.GetTimeColor()
-            )
+            ))
         );
     }
 
@@ -2088,10 +2088,10 @@ public static partial class PacketSender
     public static void SendTimeTo(Client client)
     {
         client?.Send(
-            new TimePacket(
+            Intersect.Server.WorldEvents.ForcedRainRuntime.Apply(new TimePacket(
                 Time.GetTime(), DaylightCycleDescriptor.Instance.SyncTime ? 1 : DaylightCycleDescriptor.Instance.Rate,
                 Time.GetTimeColor()
-            )
+            ))
         );
     }
 

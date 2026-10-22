@@ -1401,6 +1401,13 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         var desiredFogAlpha = FogTransparency;
         var desiredFogXSpeed = FogXSpeed;
         var desiredFogYSpeed = FogYSpeed;
+        if (IsRaining && WeatherEffects.OverrideRainFog)
+        {
+            desiredFogName = WeatherEffects.RainFog;
+            desiredFogAlpha = Math.Clamp(WeatherEffects.RainFogOpacity,0,255);
+            desiredFogXSpeed = Math.Clamp(WeatherEffects.RainFogXSpeed,-5,5);
+            desiredFogYSpeed = Math.Clamp(WeatherEffects.RainFogYSpeed,-5,5);
+        }
 
         if (InvasionEnvironmentManager.TryGetEnvironment(this, out var invasionEnvironment))
         {

@@ -352,7 +352,7 @@ public partial class MapDescriptor : DatabaseObject<MapDescriptor>
 
     public int WeatherYSpeed { get; set; }
 
-    public int WeatherIntensity { get; set; }
+    public int WeatherIntensity { get; set; } = 50;
 
     public bool HideEquipment { get; set; }
 

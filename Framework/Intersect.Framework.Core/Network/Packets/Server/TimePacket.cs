@@ -29,6 +29,8 @@ public partial class TimePacket : IntersectPacket
     public Color Color { get; set; }
 
     [Key(4)] public long ServerUtcMilliseconds {get;set;}
+    [Key(5)] public long ForcedRainStartedUtc {get;set;}
+    [Key(6)] public long ForcedRainUntilUtc {get;set;}
 
     [Key(3)] public string DayPhasesJson { get; set; } = string.Empty;
 
