@@ -20,7 +20,7 @@ public partial class GameInterface
         HouseView? view = string.IsNullOrWhiteSpace(packet.Json) ? null : JsonConvert.DeserializeObject<HouseView>(packet.Json);
         HousingWorld.View = string.IsNullOrWhiteSpace(packet.WorldJson) ? null : JsonConvert.DeserializeObject<HouseView>(packet.WorldJson);
         EnsureHousing();
-        _housingWindow!.Apply(view, packet.Message);
+        _housingWindow!.Apply(view, Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(packet.Message,ClientLanguages.Current));
         if (packet.OpenWindow) { _housingWindow.Show(); _housingWindow.BringToFront(); }
         if (HousingWorld.View == null) { _housePlacement!.Cancel(); if (!packet.OpenWindow) _housingWindow.Hide(); }
     }

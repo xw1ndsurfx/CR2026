@@ -1822,7 +1822,7 @@ public static partial class DbInterface
         lock (mapGrids)
         {
             mapGrids.Clear();
-            foreach (var map in MapController.Lookup.Values)
+            foreach (var map in MapController.Lookup.Values.OfType<MapController>().Where(map => !map.GeneratedBoardingDeck))
             {
                 if (mapGrids.Count < 1)
                 {
@@ -1846,7 +1846,7 @@ public static partial class DbInterface
                 }
             }
 
-            foreach (MapController map in MapController.Lookup.Values)
+            foreach (MapController map in MapController.Lookup.Values.OfType<MapController>().Where(map => !map.GeneratedBoardingDeck))
             {
                 lock (map.GetMapLock())
                 {
@@ -1897,7 +1897,7 @@ public static partial class DbInterface
     {
         lock (mapGrids)
         {
-            return mapGrids[index];
+            return index < 0 ? TemporaryMapGrids[index] : mapGrids[index];
         }
     }
 

@@ -41,7 +41,7 @@ public sealed class FrmMenuAnimations : DarkForm
         grid.RowsAdded+=(_,_)=>UpdateRemove();grid.RowsRemoved+=(_,_)=>UpdateRemove();
         actions.Controls.Add(remove);UpdateRemove();
         var weatherDraft=JsonConvert.DeserializeObject<MenuWeatherDefinition>(JsonConvert.SerializeObject(ClientConfiguration.Instance.MenuWeather))??new();
-        var weather=new FlowLayoutPanel {Dock=DockStyle.Bottom,Height=72};
+        var weather=new FlowLayoutPanel {Dock=DockStyle.Bottom,Height=110,AutoScroll=true};
         var fog=new ComboBox {Width=190,DropDownStyle=ComboBoxStyle.DropDownList};fog.Items.Add("");
         foreach(var texture in Intersect.Editor.Content.GameContentManager.FogTextures)fog.Items.Add(Path.GetFileName(texture.GetPath()));
         fog.SelectedItem=weatherDraft.Fog;if(fog.SelectedIndex<0)fog.SelectedIndex=0;
@@ -53,6 +53,8 @@ public sealed class FrmMenuAnimations : DarkForm
         var wind=new NumericUpDown {Width=80,Minimum=-500,Maximum=500,Value=Math.Clamp(weatherDraft.WeatherSpeedX,-500,500)};
         var fall=new NumericUpDown {Width=80,Minimum=-500,Maximum=500,Value=Math.Clamp(weatherDraft.WeatherSpeedY,-500,500)};
         weather.Controls.AddRange([new Label {Text=T("Weather drift X"),Width=140},wind,new Label {Text=T("Weather drift Y"),Width=140},fall]);
+        var brightness=new NumericUpDown {Name="MenuBrightness",Width=80,Minimum=0,Maximum=100,Value=Math.Clamp(weatherDraft.Brightness,0,100)};
+        weather.Controls.AddRange([new Label {Text=T("Menu brightness (%)"),Width=155},brightness]);
         var save = new Button { Dock = DockStyle.Bottom, Height = 40, Text = "Save client menu animations" };
         save.Click += (_, _) =>
         {
@@ -76,6 +78,7 @@ public sealed class FrmMenuAnimations : DarkForm
                     return;
                 }
             }
+            weatherDraft.Brightness=(int)brightness.Value;
             weatherDraft.WeatherSpeedX=(int)wind.Value;weatherDraft.WeatherSpeedY=(int)fall.Value;
             weatherDraft.Fog=fog.SelectedItem?.ToString()??"";weatherDraft.FogOpacity=(int)opacity.Value;
             weatherDraft.WeatherAnimationId=rain.SelectedIndex>0?animations[rain.SelectedIndex-1].Id:Guid.Empty;

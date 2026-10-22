@@ -23,7 +23,14 @@ internal sealed class PlayerProfileWindow : Window
     private readonly Label _expLine;
     private readonly ProfileProgressBar _expBar;
     private readonly List<ImagePanel> _paperdollLayers = new();
-    private readonly ScrollControl _scroll;
+    private readonly Base _scroll;
+    private readonly Base _profileActions;
+    private readonly Button[] _sectionButtons;
+    private readonly Button _previousPage,_nextPage;
+    private readonly Label _pageLabel;
+    private PlayerProfilePacket? _profile;
+    private int _section,_page;
+    private static string T(string text)=>Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(ClientLanguages.Text(text),ClientLanguages.Current);
     private readonly ImagePanel _playerPreview;
     private readonly Label _previewFallback;
     private static readonly Color Gold = new(a:255,r:236,g:210,b:153);
@@ -87,13 +94,19 @@ internal sealed class PlayerProfileWindow : Window
         _expBar = new ProfileProgressBar(this, "ProfileExpBar");
         _expBar.SetBounds(248, 213, 400, 10);
 
-        _scroll = new ScrollControl(this, "ProfileScroll")
+        _scroll = new Base(this,"ProfileContent");
+        _scroll.SetBounds(27,284,645,244);
+        _sectionButtons=new Button[3];
+        var sections=new[]{"Stats","Equipped items","Professions"};
+        for(var i=0;i<sections.Length;i++)
         {
-            OverflowX = OverflowBehavior.Hidden,
-            OverflowY = OverflowBehavior.Scroll,
-            AutoHideBars = true,
-        };
-        _scroll.SetBounds(27, 250, 645, 353);
+            var section=i;
+            _sectionButtons[i]=NavalManagementWindow.Button(this,"ProfileTab"+i,T(sections[i]),27+i*217,242,207,32,()=>{_section=section;_page=0;RenderSection();});
+        }
+        _previousPage=NavalManagementWindow.Button(this,"ProfilePreviousPage",T("Previous"),39,531,130,28,()=>{_page--;RenderSection();});
+        _nextPage=NavalManagementWindow.Button(this,"ProfileNextPage",T("Next"),526,531,130,28,()=>{_page++;RenderSection();});
+        _pageLabel=NavalManagementWindow.Text(this,"ProfilePage","",177,531,340,28,11);_pageLabel.TextAlign=Pos.Center;
+        _profileActions=new Base(this,"ProfileActions");_profileActions.SetBounds(27,568,645,36);
 
         var previewFrame = new ProfileFrame(this, "CharacterPreviewFrame");
         previewFrame.SetBounds(30, 39, 185, 194);
@@ -200,77 +213,45 @@ internal sealed class PlayerProfileWindow : Window
             layer.Show();
         }
 
-        _scroll.DeleteAll();
-
-        var y = 8;
-        // Profile tabs are available for both the local player and observed
-        // online characters. Remote requests are served in read-only mode.
-        var observedId = profile.IsSelf ? Guid.Empty : profile.PlayerId;
-        var achievements = new Button(_scroll, "OpenProfileAchievementsButton")
+        if(_profile?.PlayerId!=profile.PlayerId){_section=0;_page=0;}
+        _profile=profile;
+        _profileActions.Show();_profileActions.DeleteAllChildren();
+        var observedId=profile.IsSelf?Guid.Empty:profile.PlayerId;
+        var actions=new (string Name,string Caption,Action Action)[]{
+            ("OpenProfileAchievementsButton","Achievements",()=>PacketSender.SendRequestAchievementState(openWindow:true,playerId:observedId)),
+            ("OpenProfileFamiliarsButton","Familiers",()=>PacketSender.SendRequestPetState(openWindow:true,playerId:observedId)),
+            ("OpenProfileDungeonsButton","Dungeons",()=>PacketSender.SendRequestDungeonPanel(openWindow:true,playerId:observedId)),
+            ("VisitProfileHouse",profile.IsSelf?"My house":"Visit house",()=>PacketSender.SendHouseAction(Intersect.Network.Packets.Housing.HouseAction.Visit,profile.PlayerId))};
+        for(var i=0;i<actions.Length;i++)
         {
-            Text = Intersect.Client.Localization.ClientLanguages.Text("Achievements"),
-            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-            FontSize = 11,
-        };
-        achievements.SetBounds(12, y, 188, 36);
-        achievements.Clicked += (_, _) =>
-            PacketSender.SendRequestAchievementState(openWindow: true, playerId: observedId);
-
-        var familiars = new Button(_scroll, "OpenProfileFamiliarsButton")
-        {
-            Text = Intersect.Client.Localization.ClientLanguages.Text("Familiers"),
-            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-            FontSize = 11,
-        };
-        familiars.SetBounds(210, y, 187, 36);
-        familiars.Clicked += (_, _) =>
-            PacketSender.SendRequestPetState(openWindow: true, playerId: observedId);
-
-        var dungeons = new Button(_scroll, "OpenProfileDungeonsButton")
-        {
-            Text = Intersect.Client.Localization.ClientLanguages.Text("Dungeons"),
-            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
-            FontSize = 11,
-        };
-        dungeons.SetBounds(407, y, 185, 36);
-        dungeons.Clicked += (_, _) =>
-            PacketSender.SendRequestDungeonPanel(openWindow: true, playerId: observedId);
-        y += 50;
-        var visitHouse = new Button(_scroll, "VisitProfileHouse") { Text = ClientLanguages.Text(profile.IsSelf ? "My house" : "Visit house"), Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont, FontSize = 11, IsDisabled = !profile.IsSelf && !profile.PublicHouse };
-        NavalManagementWindow.StyleButton(visitHouse);
-        visitHouse.SetBounds(12, y, 580, 32);
-        visitHouse.Clicked += (_, _) => PacketSender.SendHouseAction(Intersect.Network.Packets.Housing.HouseAction.Visit, profile.PlayerId);
-        y += 44;
-
-        y = AddKeyValueSection("CHARACTER",
-            new (string, string)[]
-            {
-                ("Name", profile.Name),
-                ("Level", profile.Level.ToString("N0")),
-                ("Class", Fallback(profile.ClassName)),
-                ("Guild", Fallback(profile.GuildName)),
-                ("Ranking title", Fallback(profile.RankingTitle)),
-                (Intersect.Client.Localization.ClientLanguages.Text("PvP grade"),Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(Intersect.Client.Localization.ClientLanguages.Text(Intersect.Client.Localization.ClientLanguages.ContentText(string.IsNullOrWhiteSpace(profile.PvpGrade)?"Unranked":profile.PvpGrade)),ClientLanguages.Current)),
-                (Intersect.Client.Localization.ClientLanguages.Text("PvP points"),profile.PvpPoints.ToString("N0")),
-                ("Experience", profile.Experience.ToString("N0")),
-                ("XP to next", profile.ExperienceToNextLevel < 0 ? "MAX" :
-                    profile.ExperienceToNextLevel.ToString("N0")),
-                ("Location", Fallback(profile.MapName)),
-            }, y);
-        var stats = Enum.GetValues<Stat>();
-        y = AddKeyValueSection("STATS",
-            (profile.Stats ?? []).Select((value, index) => (value, index))
-                .Where(item => item.index < stats.Length)
-                .Select(item => (Strings.Combat.Stats[stats[item.index]].ToString(), item.value.ToString("N0")))
-                .ToArray(), y);
-        y = AddEquipmentSection(profile, y);
-        y = AddProfessionCards(profile, y);
-
-        _scroll.SetInnerSize(610, Math.Max(345, y + 16));
-        _scroll.UpdateScrollBars();
+            var action=actions[i];var button=NavalManagementWindow.Button(_profileActions,action.Name,ClientLanguages.Text(action.Caption),i*158,0,150,32,action.Action);
+            if(i==3)button.IsDisabled=!profile.IsSelf && !profile.PublicHouse;
+        }
+        RenderSection();
 
         Show();
         BringToFront();
+    }
+
+    private void RenderSection()
+    {
+        if(_profile is not {} profile)return;
+        if(Interface.HasInGameUI)Interface.GameUi.ItemDescriptionWindow?.Hide();
+        _scroll.DeleteAllChildren();
+        var count=_section==1?(profile.Equipment?.Length??0):_section==2?(profile.Professions?.Length??0):0;
+        var perPage=_section==1?4:3;var pages=Math.Max(1,(count+perPage-1)/perPage);
+        _page=Math.Clamp(_page,0,pages-1);
+        for(var i=0;i<_sectionButtons.Length;i++){_sectionButtons[i].Show();_sectionButtons[i].IsDisabled=i==_section;}
+        _previousPage.IsHidden=_nextPage.IsHidden=_pageLabel.IsHidden=pages<=1;
+        _previousPage.IsDisabled=_page==0;_nextPage.IsDisabled=_page==pages-1;_pageLabel.Text=$"{_page+1} / {pages}";
+        if(_section==1){AddEquipmentSection(profile,8);return;}
+        if(_section==2){AddProfessionCards(profile,8);return;}
+        var stats=Enum.GetValues<Stat>();
+        var fields=(profile.Stats??[]).Select((value,index)=>(value,index)).Where(item=>item.index<stats.Length)
+            .Select(item=>(Strings.Combat.Stats[stats[item.index]].ToString(),item.value.ToString("N0")))
+            .Concat(new[]{(ClientLanguages.Text("PvP grade"),Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(ClientLanguages.ContentText(string.IsNullOrWhiteSpace(profile.PvpGrade)?"Unranked":profile.PvpGrade),ClientLanguages.Current)),
+                (ClientLanguages.Text("PvP points"),profile.PvpPoints.ToString("N0"))}).ToArray();
+        AddKeyValueSection("STATS",fields,8);
     }
 
     private void ApplyOfflineHouse(PlayerProfilePacket profile)
@@ -280,31 +261,31 @@ internal sealed class PlayerProfileWindow : Window
         _locationLine.Text = ClientLanguages.Text(profile.PublicHouse ? "Public house" : "This house is private.");
         _rankingBonusLabel.Hide(); _expBar.Progress = 0;
         _playerPreview.Hide(); foreach (var layer in _paperdollLayers) layer.Hide();
-        _previewFallback.Show(); _scroll.DeleteAll();
+        _previewFallback.Show(); _scroll.DeleteAllChildren();_profile=null;_profileActions.Hide();
+        foreach(var button in _sectionButtons)button.Hide();_previousPage.Hide();_nextPage.Hide();_pageLabel.Hide();
         var description = new Label(_scroll) { Text = ClientLanguages.Text("Offline character. House visits are available when public."), FontSize = 11 };
         description.SetBounds(12, 12, 580, 64);
         var visit = new Button(_scroll, "VisitOfflineHouse") { Text = ClientLanguages.Text("Visit house"), Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont, FontSize = 11, IsDisabled = !profile.PublicHouse };
         NavalManagementWindow.StyleButton(visit);
         visit.SetBounds(12, 90, 580, 36); visit.Clicked += (_, _) => PacketSender.SendHouseAction(Intersect.Network.Packets.Housing.HouseAction.Visit, profile.PlayerId);
-        _scroll.SetInnerSize(610, 345); _scroll.UpdateScrollBars(); Show(); BringToFront();
+        Show(); BringToFront();
     }
 
     private int AddProfessionCards(PlayerProfilePacket profile, int y)
     {
-        var professions = (profile.Professions ?? []).OrderBy(p => p.Name).ToArray();
+        var professions = (profile.Professions ?? []).OrderBy(p => p.Name).Skip(_page*3).Take(3).ToArray();
         if (professions.Length == 0)
             return AddKeyValueSection("PROFESSIONS", [("Status", "No professions learned")], y);
 
-        y=AddKeyValueSection("PROFESSIONS", [], y);
         foreach (var profession in professions)
         {
-            var card=new ProfileFrame(_scroll,"Profession"+profession.ProfessionId);card.SetBounds(12,y,580,72);
+            var card=new ProfileFrame(_scroll,"Profession"+profession.ProfessionId);card.SetBounds(12,y,580,64);
             var label=NavalManagementWindow.Text(card,"Name",ClientLanguages.Text(ClientLanguages.ContentText(profession.Name))+" - "+ClientLanguages.Text("Level")+" "+profession.Level+"/"+profession.MaximumLevel,10,4,560,24,12);
             var progress=new ProfileProgressBar(card,"ExperienceBar") {Progress=profession.LevelExperienceRequired<=0?1f:(float)((double)profession.LevelExperience/profession.LevelExperienceRequired)};
             progress.SetBounds(10,34,560,24);
             var caption=NavalManagementWindow.Text(card,"Experience",profession.LevelExperienceRequired<=0?"MAX":Intersect.Framework.Core.Naval.NavalSetupText.Display($"{profession.LevelExperience:N0} / {profession.LevelExperienceRequired:N0} EXP"),10,34,560,24,11);
             caption.TextAlign=Pos.Center;
-            y+=82;
+            y+=72;
         }
         return y+12;
     }
@@ -514,7 +495,7 @@ internal sealed class PlayerProfileWindow : Window
 
         var equipmentEntries = (profile.Equipment ?? [])
             .OrderBy(entry => entry.SlotIndex)
-            .ToArray();
+            .Skip(_page*4).Take(4).ToArray();
 
         if (equipmentEntries.Length == 0)
         {

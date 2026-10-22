@@ -10,7 +10,7 @@ namespace Intersect.Client.Utilities
         public static List<ColorizedText> Parse(string text, Color? defaultColor)
         {
             var segments = ColorTagRegex.Split(text)
-                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Where(s => s.Length>0)
                 .ToArray();
 
             var output = new List<ColorizedText>(segments.Length);

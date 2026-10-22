@@ -6,6 +6,8 @@ public sealed class MapWeatherEffects
     public static MapWeatherEffects NewMapDefaults() => new()
     {
         RandomWeather = true, GeneratedRain = true, Flashes = true, Lightning = true,
+        OverrideRainFog = true, RainFog = "xyloop_cloud1_black.png", RainFogOpacity = 150,
+        RainFogXSpeed = 3, RainFogYSpeed = -3, OverrideRainBrightness = true, RainBrightness = 70,
         GroundSplashes = true, RainSound = "rain_medium.wav", ThunderSound = "thunder_crack_3.wav",
     };
     public bool OverrideRainFog {get;set;}
@@ -51,7 +53,7 @@ public partial class MapDescriptor
         set=>WeatherEffects=string.IsNullOrWhiteSpace(value)?new():JsonConvert.DeserializeObject<MapWeatherEffects>(value)??new();
     }
 }
-/// <summary>Map-seeded storms use server UTC, so reconnects and nearby clients share the same weather.</summary>
+/// <summary>Global storms use server UTC, so every outdoor map and reconnect shares the same weather.</summary>
 public static class MapWeatherCycle
 {
     public const long StormMilliseconds=15*60*1000;
@@ -60,7 +62,7 @@ public static class MapWeatherCycle
     {
         var cycle=Math.Max(0,utcMilliseconds)/CycleMilliseconds;
         ulong hash=14695981039346656037UL;
-        foreach(var b in mapId.ToByteArray())hash=unchecked((hash^b)*1099511628211UL);
+        // The schedule is shared worldwide; map IDs must not shift storm start/end times.
         hash=unchecked((hash^(ulong)cycle)*1099511628211UL);
         hash^=hash>>33;hash=unchecked(hash*0xff51afd7ed558ccdUL);hash^=hash>>33;
         // At least five clear minutes on either side; every episode lasts exactly fifteen minutes.

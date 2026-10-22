@@ -41,6 +41,18 @@ internal static class WeatherEnvironmentEditorTests
         var commandTree=(TreeView)typeof(FrmEvent).GetField("lstCommands",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(events)!;
         bool Contains(TreeNode node)=>node.Tag is int value && value==(int)EventCommandType.ForceRain || node.Nodes.Cast<TreeNode>().Any(Contains);
         if(!commandTree.Nodes.Cast<TreeNode>().Any(Contains))throw new Exception("Rain command must be selectable in the event command tree.");
+        var lobby=new OpenAdventureLobbyCommand{ActivityFilter=(int)Intersect.Network.Packets.PartyLobbies.LobbyActivity.PvP,PromptCreation=true};
+        using var lobbyControl=(Control)Activator.CreateInstance(commandType,BindingFlags.Instance|BindingFlags.NonPublic,null,[lobby,events],null)!;
+        var filter=lobbyControl.Controls.OfType<ComboBox>().Single();
+        if(filter.SelectedIndex!=(int)Intersect.Network.Packets.PartyLobbies.LobbyActivity.PvP+1 || !lobbyControl.Controls.OfType<CheckBox>().Single().Checked)throw new Exception("Event lobby must expose PvP for browsing and room creation.");
+        var restored=Newtonsoft.Json.JsonConvert.DeserializeObject<OpenAdventureLobbyCommand>(Newtonsoft.Json.JsonConvert.SerializeObject(lobby))!;
+        if(restored.ActivityFilter!=lobby.ActivityFilter || !restored.PromptCreation)throw new Exception("PvP event lobby settings must persist.");
+        var textCommand=new ShowTextCommand{Text="Before coloured after"};
+        using var textEditor=new Intersect.Editor.Forms.Editors.Events.Event_Commands.EventCommandText(textCommand,events);
+        var textField=(TextBox)textEditor.GetType().GetField("txtShowText",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(textEditor)!;
+        textEditor.GetType().GetMethod("ApplySelectionColor",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(textEditor,[7,8,Color.Red]);
+        if(!textField.Text.Contains(@"\c{255,255,0,0}coloured\c{}") || textCommand.Text!="Before coloured after")throw new Exception("Selected event text colour must preserve text, use runtime colour markup and wait for Save.");
+        Console.WriteLine("PASS selected Show Text colour picker markup and unsaved draft isolation");
         Console.WriteLine("PASS weather section copy/paste: category isolation, detached snapshots, stable IDs and event rain duration controls");
     }
 }

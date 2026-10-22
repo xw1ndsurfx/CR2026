@@ -9,6 +9,7 @@ public partial class LabeledComboBox : Base, IAutoSizeToContents, ITextContainer
     private readonly ComboBox _comboBox;
     private readonly Label _label;
     private bool _autoSizeToContents;
+    public int LabelColumnWidth {get;set;}
 
     public event GwenEventHandler<ItemSelectedEventArgs>? ItemSelected;
 
@@ -129,6 +130,15 @@ public partial class LabeledComboBox : Base, IAutoSizeToContents, ITextContainer
             SizeToChildren();
         }
 
+        if(LabelColumnWidth>0)
+        {
+            var labelWidth=Math.Min(LabelColumnWidth,Math.Max(0,Width-28));
+            _label.AutoSizeToContents=false;_label.Dock=Pos.None;_label.Alignment=[];
+            _label.SetBounds(0,0,labelWidth,Height);
+            _comboBox.AutoSizeToContents=false;_comboBox.Dock=Pos.None;_comboBox.Alignment=[];_comboBox.Margin=Margin.Zero;
+            _comboBox.TextAlign=Pos.Left|Pos.CenterV;
+            _comboBox.SetBounds(labelWidth+8,0,Math.Max(20,Width-labelWidth-8),Height);
+        }
         base.Layout(skin);
     }
 

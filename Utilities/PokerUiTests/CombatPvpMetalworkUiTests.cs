@@ -49,6 +49,21 @@ internal static class CombatPvpMetalworkUiTests
                 ClientConfiguration.Instance.MenuAnimations=[new(){XPercent=50,YPercent=50,ScalePercent=200,TransparencyPercent=50,Lower=new AnimationLayer {Sprite="menu-fixture",XFrames=1,YFrames=1,FrameCount=1,FrameSpeed=100,ScalePercent=100,OffsetX=10,TransparencyPercent=20}}];
                 var menu=(MainMenu)RuntimeHelpers.GetUninitializedObject(typeof(MainMenu));typeof(MainMenu).GetField("_menuCanvas",Hidden)!.SetValue(menu,canvas);var list=typeof(MainMenu).GetField("_menuAnimations",Hidden)!;list.SetValue(menu,Activator.CreateInstance(list.FieldType));var weatherList=typeof(MainMenu).GetField("_weatherLayers",Hidden)!;weatherList.SetValue(menu,Activator.CreateInstance(weatherList.FieldType));typeof(MainMenu).GetMethod("UpdateMenuAnimations",Hidden)!.Invoke(menu,null);
                 var panel=canvas.Children.OfType<ImagePanel>().Single();Check(panel.Width==128 && panel.X==356 && panel.Y==236 && panel.RenderColor.A==102 && !panel.MouseInputEnabled,"Offline menu snapshots apply position, scale, offsets, alpha and pass input through");
+                var weather=ClientConfiguration.Instance.MenuWeather;var brightness=weather.Brightness;
+                try
+                {
+                    foreach(var value in new[]{0,40,100})
+                    {
+                        weather.Brightness=value;
+                        typeof(MainMenu).GetMethod("UpdateMenuAnimations",Hidden)!.Invoke(menu,null);
+                        Check(panel.RenderColor.R==255*value/100 && panel.RenderColor.G==panel.RenderColor.R && panel.RenderColor.B==panel.RenderColor.R && panel.RenderColor.A==102,"Brightness must shade animations without changing transparency");
+                        var shade=canvas.Children.Single(c=>c.Name=="MenuBrightness");
+                        Check(shade.Width==canvas.Width && shade.Height==canvas.Height && !shade.MouseInputEnabled && !shade.KeyboardInputEnabled && shade.IsHidden==(value==100),"Background shade must resize, pass input and disappear at full brightness");
+                        Check(canvas.Children.ToList().IndexOf(shade)<canvas.Children.ToList().IndexOf(panel),"Background shade must stay behind the tinted animations");
+                    }
+                }
+                finally{weather.Brightness=brightness;}
+
             }
         }
         finally{ClientConfiguration.Instance.MenuAnimations=menuConfig;property.SetValue(null,previous);Globals.Database=database;Intersect.Core.ApplicationContext.Context.Value=context;}

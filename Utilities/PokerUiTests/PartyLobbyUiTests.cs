@@ -41,6 +41,15 @@ internal static class PartyLobbyUiTests
                 var matches=type.GetMethod("Matches",BindingFlags.Static|BindingFlags.NonPublic)!;
                 bool Match(int filter,string text)=>(bool)matches.Invoke(null,[state.Lobbies[0],filter,text])!;
                 if(!Match(-1,"nicolas") || !Match((int)LobbyActivity.Dungeon,"RAT") || Match((int)LobbyActivity.Poker,"") || Match(-1,"missing"))throw new Exception("Lobby search and activity filters must combine correctly");
+                var pvp=state.Lobbies.Single(l=>l.Activity==LobbyActivity.PvP);
+                if(!(bool)matches.Invoke(null,[pvp,(int)LobbyActivity.PvP,""])! || (bool)matches.Invoke(null,[pvp,(int)LobbyActivity.Dungeon,""])!)throw new Exception("PvP lobbies must use their own filter.");
+                state.OpenFromEvent=true;state.PromptCreation=true;state.ActivityFilter=(int)LobbyActivity.PvP;
+                type.GetMethod("Apply",flags)!.Invoke(window,[state]);
+                var activityControl=(ComboBox)type.GetField("_activity",flags)!.GetValue(window)!;
+                if((int)activityControl.SelectedItem!.UserData!=(int)LobbyActivity.PvP)throw new Exception("PvP event must select PvP room creation.");
+                state.OpenFromEvent=true;state.PromptCreation=false;state.ActivityFilter=-1;
+                type.GetMethod("Apply",flags)!.Invoke(window,[state]);state.OpenFromEvent=false;
+                activityControl.SelectByUserData((int)LobbyActivity.Dungeon);
                 foreach(var activity in Enum.GetValues<LobbyActivity>())
                 {
                     var title=(string)type.GetMethod("ActivityName",BindingFlags.Static|BindingFlags.NonPublic)!.Invoke(null,[activity])!;
@@ -55,6 +64,6 @@ internal static class PartyLobbyUiTests
             }
         }
         finally {Globals.Database=old;restore.Invoke(null,null);apply.Invoke(null,null);ApplicationContext.Context.Value=oldContext;}
-        System.Console.WriteLine("PASS party lobby UI: all 11 activities, EN/FR/ES, real window at 640x480/1920x1080, dungeon selection, membership controls, filters and refresh disposal");
+        System.Console.WriteLine("PASS party lobby UI: all activities including PvP, EN/FR/ES, real window at 640x480/1920x1080, dungeon selection, membership controls, filters and refresh disposal");
     }
 }

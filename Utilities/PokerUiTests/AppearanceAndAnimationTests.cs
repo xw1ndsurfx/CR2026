@@ -50,6 +50,7 @@ internal static class AppearanceAndAnimationTests
         var stylist = (WindowControl)Activator.CreateInstance(stylistType, [canvas])!;
         Check(creation.Width == stylist.Width && creation.Height == stylist.Height && creation.Width == 860 && creation.Height == 640,
             "Character Creation and Royal Stylist share the same native window dimensions");
+        stylist.Show();
         var layout = typeof(Base).GetMethod("RecurseLayout", flags)!;
         for (var pass = 0; pass < 4; pass++) { layout.Invoke(creation, [skin]); layout.Invoke(stylist, [skin]); }
         foreach (var window in new WindowControl[] { creation, stylist })
@@ -64,6 +65,16 @@ internal static class AppearanceAndAnimationTests
                     "Appearance controls and action buttons remain inside the window after real layout: " + control.Name);
             }
         }
+        foreach(var window in new WindowControl[]{creation,stylist})
+        {
+            var combos=Descendants(window).OfType<LabeledComboBox>().ToArray();
+            var inputs=combos.Select(c=>c.Children.OfType<ComboBox>().Single()).ToArray();
+            Check(inputs.All(c=>c.Width==246),"Appearance dropdown fields must use the same width: "+window.Name+" "+string.Join(", ",inputs.Select(c=>c.Parent!.Name+"="+c.Width+"/"+c.Parent.Width)));
+            Check(inputs.Select(c=>c.ToCanvas(0,0).X).Distinct().Count()==1,"Appearance dropdown fields must align in a single right column");
+        }
+        var comparerType=typeof(CharacterCreationWindow).Assembly.GetType("Intersect.Client.Interface.Shared.AppearanceStyleComparer",true)!;
+        var comparer=(IComparer<string>)comparerType.GetField("Instance",BindingFlags.Static|BindingFlags.NonPublic)!.GetValue(null)!;
+        Check(new[]{"Hair_11.png","Hair_2.png","Hair_10.png","Hair_1.png"}.OrderBy(s=>s,comparer).SequenceEqual(new[]{"Hair_1.png","Hair_2.png","Hair_10.png","Hair_11.png"}),"Appearance style lists must use numeric order");
         foreach (var window in new WindowControl[] { creation, stylist })
         {
             var preview = (ImagePanel)window.GetType().GetField("_preview", flags)!.GetValue(window)!;
@@ -81,6 +92,8 @@ internal static class AppearanceAndAnimationTests
                 "Paperdoll uses enlarged destination bounds and keeps feet fixed through real layout");
             Check(body.X + body.Width / 2 == floor.X + floor.Width / 2 && Math.Abs(floor.Y + floor.Height / 2 - feet) <= 1,
                 "Floor is centered directly underneath the character's feet");
+            Check(!body.MouseInputEnabled && !body.KeyboardInputEnabled,"Preview sprite layers cannot intercept controls");
+            Check(preview.Children.Any(c=>c.Name=="PreviewShadow"),"Both appearance windows need the same independent shadow");
             var wheel = typeof(Base).GetMethod("InputMouseWheeled", flags | BindingFlags.Public)!;
             Check((bool)wheel.Invoke(body, [-120])!, "Mouse wheel over the character bubbles to preview zoom");
             Check((int)previewType.GetProperty("Zoom")!.GetValue(preview)! == 3, "Wheel decreases zoom");
@@ -98,11 +111,14 @@ internal static class AppearanceAndAnimationTests
             previewType.GetMethod("ChangeZoom")!.Invoke(preview, [100]);
             previewType.GetMethod("PlaceLayer")!.Invoke(preview, [body, 32, 48]);
             Check(body.X >= 0 && body.Y >= 0 && body.Right <= preview.Width, "Maximum zoom fits the available viewport");
+            Check(((Button)preview.Children.Single(c=>c.Name=="PreviewZoomIn")).IsDisabled,"Zoom in must stop at the actual viewport limit instead of showing ineffective levels");
+
             Check(Descendants(window).OfType<Button>().Where(b => b.Name?.StartsWith("PreviewDirection") == true)
                 .All(b => !b.Text.Contains('?') && !b.Text.Any(c => c > 127)), "Direction labels use font-compatible text");
         }
         var guidanceType = typeof(CharacterCreationWindow).Assembly.GetType("Intersect.Client.Interface.Game.QuestGuidanceManager", true)!;
         var guidance = Activator.CreateInstance(guidanceType, [canvas])!;
+        Check(canvas.Children.First().Name=="QuestObjectiveArrow","Quest guidance must render behind every UI panel");
         var npc = (Entity)RuntimeHelpers.GetUninitializedObject(typeof(Entity)); GC.SuppressFinalize(npc);
         foreach (var fieldName in new[] { "_animations", "_animationsBySource" })
         {

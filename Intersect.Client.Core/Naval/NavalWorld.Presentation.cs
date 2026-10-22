@@ -131,7 +131,7 @@ internal static partial class NavalWorld
     internal static string EnemyName(ShipSnapshot ship) => string.IsNullOrWhiteSpace(ship.Name)
         ? NavalSetupText.Get("Herbonia ship",Intersect.Client.Localization.ClientLanguages.Current) : ship.Name;
     internal static string ShipNameplate(ShipSnapshot ship) => ship.Enemy
-        ? string.Format(NavalSetupText.Get("{0} · Level {1}",Intersect.Client.Localization.ClientLanguages.Current),EnemyName(ship),ship.Level) : ship.Name;
+        ? string.Format(NavalSetupText.Get("{0} · Level {1}",Intersect.Client.Localization.ClientLanguages.Current),EnemyName(ship),ship.Level)+(ship.BoardingReady?" - "+NavalSetupText.Get("Boardable",Intersect.Client.Localization.ClientLanguages.Current):"") : ship.Name;
 
     private static void DrawShipName(string name,float x,float y)
     {

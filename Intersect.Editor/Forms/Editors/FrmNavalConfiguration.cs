@@ -39,7 +39,7 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         Text = T("Naval System Editor"); Size = new(1050, 780); MinimumSize = new(850, 620);
         StartPosition = FormStartPosition.CenterParent;
         var general = Page("Navigation and harbour");
-        general.Controls.Add(Fields(_navigation, 0, ["AmmunitionVisualsVersion", "SkillsVersion", "CareersVersion", "Ships", "SourceJson", "AdditionalData", "Presentation", "Sailing", "Herbonia", "Gunnery", "Ammunition", "Repair", "Skills"]));
+        general.Controls.Add(Fields(_navigation, 0, ["AmmunitionVisualsVersion", "SkillsVersion", "CareersVersion", "Ships", "SourceJson", "AdditionalData", "Presentation", "Sailing", "Herbonia", "Gunnery", "Ammunition", "Repair", "Skills", "AmmoInventory"]));
         AddListPage("Test ships", _navigation.Ships.ToList(), 0, () => new ShipDefinition
             { Graphics = "Ship_CorpsRoyaux_002.png", DamagedGraphics = "Ship_CorpsRoyaux_005.png" },
             ships => _navigation.Ships = ships.ToArray());
@@ -50,7 +50,11 @@ public sealed partial class FrmNavalConfiguration : DarkForm
         Page("Sounds, icons and effects").Controls.Add(Fields(_navigation.Presentation,0,[]));
         Page("Sailing progression").Controls.Add(Fields(_navigation.Sailing,0,[]));
         AddListPage("Herbonia AI patrols",_navigation.Herbonia.ToList(),0,()=>new HerboniaPatrol(),patrols=>_navigation.Herbonia=patrols.ToArray());
-        Page("Crew cannons and gunnery").Controls.Add(Fields(_navigation.Gunnery,0,[]));
+        var gunnery=Page("Crew cannons and gunnery");
+        var split=new SplitContainer {Dock=DockStyle.Fill,Orientation=Orientation.Horizontal,Size=new(1000,620),SplitterDistance=220};
+        split.Panel1.Controls.Add(Fields(_navigation.Gunnery,0,[]));
+        var ammoInventory=new GroupBox {Text=T("Ammunition inventory capacity"),Dock=DockStyle.Fill,Padding=new(4,22,4,4)};
+        ammoInventory.Controls.Add(Fields(_navigation.AmmoInventory,0,[]));split.Panel2.Controls.Add(ammoInventory);gunnery.Controls.Add(split);
         AddListPage("Cannon ammunition",_navigation.Ammunition.ToList(),0,()=>CannonAmmunition.Defaults().FirstOrDefault(a=>!_navigation.Ammunition.Any(old=>old.Kind==a.Kind))??new CannonAmmunition(),ammo=>_navigation.Ammunition=ammo.ToArray());
         Page("Ship repair activities").Controls.Add(Fields(_navigation.Repair,0,[]));
         AddListPage("Sailing skills",_navigation.Skills.ToList(),0,()=>NavalSkillDefinition.Defaults().FirstOrDefault(a=>!_navigation.Skills.Any(old=>old.Kind==a.Kind))??new NavalSkillDefinition(),skills=>_navigation.Skills=skills.ToArray());
@@ -241,6 +245,12 @@ public sealed partial class FrmNavalConfiguration : DarkForm
                 box.Items.AddRange(Enum.GetValues<NavalCargoKind>().Select(k=>T(NavalCargo.Caption(k))).ToArray());box.SelectedIndex=(int)(NavalCargoKind)value!;
                 box.SelectedIndexChanged+=(_,_)=>Set((NavalCargoKind)box.SelectedIndex);field=box;
             }
+            else if(property.PropertyType==typeof(NavalAmmoUnlockRule))
+            {
+                var box=new ComboBox {DropDownStyle=ComboBoxStyle.DropDownList,Dock=DockStyle.Fill};
+                box.Items.AddRange(new[]{T("Gunnery level"),T("Completed quest"),T("Gunnery level or completed quest")});box.SelectedIndex=(int)(NavalAmmoUnlockRule)value!;
+                box.SelectedIndexChanged+=(_,_)=>Set((NavalAmmoUnlockRule)box.SelectedIndex);field=box;
+            }
             else if (property.PropertyType == typeof(bool))
             {
                 var box = new CheckBox { Checked = (bool)value!, Dock = DockStyle.Fill };
@@ -251,6 +261,8 @@ public sealed partial class FrmNavalConfiguration : DarkForm
                 var choices = new List<Choice> { new(Guid.Empty, T("Automatic / not selected")) };
                 if(property.Name is "ImpactAnimationId" or "HullImpactAnimationId" or "LevelUpAnimationId") choices.AddRange(AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().OrderBy(a=>a.Name).Select(a=>new Choice(a.Id,a.Name)));
                 else if(property.Name=="ItemId") choices.AddRange(ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().OrderBy(i=>i.Name).Select(i=>new Choice(i.Id,i.Name)));
+                else if(property.Name=="BoardingCrewNpcId") choices.AddRange(Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor.Lookup.Values.OfType<Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor>().OrderBy(n=>n.Name).Select(n=>new Choice(n.Id,n.Name)));
+                else if(property.Name=="UnlockQuestId") choices.AddRange(Intersect.GameObjects.QuestDescriptor.Lookup.Values.OrderBy(q=>q.Name).Select(q=>new Choice(q.Id,q.Name)));
                 else if(property.Name=="BoardingDungeonId") choices.AddRange(Intersect.Framework.Core.Dungeons.DungeonConfiguration.Instance.Dungeons.Select(d=>new Choice(d.Id,d.Name)));
                 else if (property.Name.EndsWith("MapId")) choices.AddRange(MapList.OrderedMaps.Select(m => new Choice(m.MapId, m.Name)));
                 else choices.AddRange(ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().Where(i => i.ItemType == ItemType.Currency).OrderBy(i => i.Name).Select(i => new Choice(i.Id, i.Name)));

@@ -26,6 +26,7 @@ internal sealed class RoyalStylistWindow : Window
 
     private static readonly (string Name, Color Color)[] ClothesPalette =
     [
+        ("Original colours",Color.White),
         ("Navy", new Color(42, 63, 104)),
         ("Burgundy", new Color(118, 48, 58)),
         ("Forest", new Color(55, 99, 63)),
@@ -34,7 +35,6 @@ internal sealed class RoyalStylistWindow : Window
         ("Gray", new Color(125, 127, 132)),
         ("Cream", new Color(222, 211, 178)),
         ("Gold", new Color(190, 151, 62)),
-        ("White", Color.White),
     ];
 
     private readonly Label _description;
@@ -169,7 +169,7 @@ internal sealed class RoyalStylistWindow : Window
         );
         y += rowHeight;
         _shirtColor = CreateCombo(
-            "Shirt Color",
+            "Shirt tint",
             x,
             y,
             width
@@ -184,7 +184,7 @@ internal sealed class RoyalStylistWindow : Window
         );
         y += rowHeight;
         _pantsColor = CreateCombo(
-            "Pants Color",
+            "Pants tint",
             x,
             y,
             width
@@ -199,7 +199,7 @@ internal sealed class RoyalStylistWindow : Window
         );
         y += rowHeight;
         _bootsColor = CreateCombo(
-            "Boots Color",
+            "Boots tint",
             x,
             y,
             width
@@ -353,6 +353,8 @@ internal sealed class RoyalStylistWindow : Window
         UpdatePreview();
     }
 
+    private static string AppearanceText(string text)=>Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(Intersect.Client.Localization.ClientLanguages.Text(text),Intersect.Client.Localization.ClientLanguages.Current);
+
     private LabeledComboBox CreateCombo(
         string label,
         int x,
@@ -366,7 +368,8 @@ internal sealed class RoyalStylistWindow : Window
         )
         {
             AutoSizeToContents = false,
-            Label = label,
+            Label = AppearanceText(label),
+            LabelColumnWidth=184,
             Font =
                 GameContentManager.Current.GetFont(
                     "sourcesansproblack"
@@ -374,6 +377,7 @@ internal sealed class RoyalStylistWindow : Window
             FontSize = 9,
         };
         combo.SetBounds(x, y, width, 31);
+        if(label.EndsWith(" tint"))combo.SetToolTipText(AppearanceText("Original colours preserves the artwork; other colours apply a tint."));
         combo.ItemSelected += (_, _) => UpdatePreview();
         return combo;
     }
@@ -464,6 +468,7 @@ internal sealed class RoyalStylistWindow : Window
             {
                 Alignment = [],
                 RestrictToParent = false,
+                MouseInputEnabled=false,KeyboardInputEnabled=false,ShouldDrawBackground=false,
             };
         }
     }
@@ -583,7 +588,7 @@ internal sealed class RoyalStylistWindow : Window
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(
                 style => style,
-                StringComparer.OrdinalIgnoreCase
+                AppearanceStyleComparer.Instance
             )
             .ToList();
 
@@ -635,7 +640,7 @@ internal sealed class RoyalStylistWindow : Window
         foreach (var entry in palette)
         {
             combo.AddItem(
-                entry.Name,
+                AppearanceText(entry.Name),
                 userData: new Color(entry.Color)
             );
 

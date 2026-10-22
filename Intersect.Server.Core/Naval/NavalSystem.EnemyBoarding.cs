@@ -7,6 +7,8 @@ using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Server.Dungeons;
 using Intersect.Server.Entities;
 using Intersect.Server.Maps;
+using Intersect.Server.Networking;
+using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Network.Packets.Server;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -16,7 +18,7 @@ internal static partial class NavalSystem
 {
     private sealed class EnemyBoardingRun
     {
-        internal Guid Id=Guid.NewGuid(),Ship,Enemy,Captain;
+        internal Guid Id=Guid.NewGuid(),Ship,Enemy,Captain,GeneratedMap;
         internal readonly HashSet<Guid> Members=[],DefeatedCrew=[];
         internal bool Starting=true,Finished,Won;
         internal long Started;
@@ -25,14 +27,8 @@ internal static partial class NavalSystem
     private static readonly Dictionary<Guid,Guid> BoardingPlayers=[];
     private static bool CanBoardEnemy(Vessel ship,Vessel enemy)
     {
-        var patrol=enemy.Enemy;
-        return patrol!=null && patrol.BoardingDungeonId!=Guid.Empty && patrol.BoardingEntryMapId!=Guid.Empty &&
-            ship.Enemy==null && ship.OwnerId!=Guid.Empty && ship.OwnerId==ship.State.CaptainId &&
-            ship.Health>0 && enemy.Health>0 && ship.SunkUntil==0 && enemy.SunkUntil==0 && !enemy.RewardClaimed &&
-            ship.EnemyBoardingEncounter==Guid.Empty && enemy.EnemyBoardingEncounter==Guid.Empty &&
-            ship.State.MapId==enemy.State.MapId && Math.Abs(ship.State.Speed)<=1 &&
-            enemy.Health*100L<=enemy.MaximumHealth*(long)patrol.BoardingHealthPercent &&
-            Distance(ship.State.X,ship.State.Y,enemy.State.X,enemy.State.Y)<=patrol.BoardingRange;
+        return EnemyBoardingReady(enemy) && ship.Enemy==null && ship.OwnerId!=Guid.Empty && ship.OwnerId==ship.State.CaptainId &&
+            ship.Health>0 && ship.SunkUntil==0 && ship.EnemyBoardingEncounter==Guid.Empty && BoardingDistance(ship,enemy)<=enemy.Enemy.BoardingRange;
     }
     private static Guid EnemyBoardingTarget(Player player)
     {
@@ -50,22 +46,29 @@ internal static partial class NavalSystem
             patrol=enemy.Enemy;
         }
         var authored=DungeonConfigurationRuntime.Current.Dungeons.FirstOrDefault(d=>d.Id==patrol.BoardingDungeonId);
-        var map=MapController.Get(patrol.BoardingEntryMapId);
-        if(authored==null || !authored.IsStructurallyValid || !authored.MapIds.Contains(patrol.BoardingEntryMapId) || map==null ||
-            patrol.BoardingEntryX>=Options.Instance.Map.MapWidth || patrol.BoardingEntryY>=Options.Instance.Map.MapHeight ||
+        var map=MapController.Get(patrol.BoardingEntryMapId);var entryX=patrol.BoardingEntryX;var entryY=patrol.BoardingEntryY;var generatedMap=Guid.Empty;
+        if(patrol.BoardingDungeonId==Guid.Empty && patrol.AutomaticBoardingDeck)
+        {
+            var generated=CreateBoardingDeck(patrol,now);
+            if(generated==null){lock(Gate)SendManagement(captain,NavalManageAction.Skills,now,"Choose a crew NPC with a sprite for the automatic boarding deck.");return;}
+            authored=generated.Value.Dungeon;map=generated.Value.Map;entryX=generated.Value.X;entryY=generated.Value.Y;generatedMap=map.Id;
+        }
+        if(authored==null || !authored.IsStructurallyValid || map==null || !authored.MapIds.Contains(map.Id) ||
+            entryX>=Options.Instance.Map.MapWidth || entryY>=Options.Instance.Map.MapHeight ||
             !authored.MapIds.Any(id=>MapController.Get(id)?.Spawns.Count>0) || authored.CompletionRequirements==DungeonCompletionRequirement.None ||
             authored.CompletionRequirements.HasFlag(DungeonCompletionRequirement.DefeatFinalBoss) && authored.FinalBossNpcId==Guid.Empty)
         {lock(Gate)SendManagement(captain,NavalManageAction.Skills,now,"Configure the enemy boarding dungeon and deck entry in the naval editor.");return;}
         var dungeon=JsonConvert.DeserializeObject<DungeonDefinition>(JsonConvert.SerializeObject(authored))!;
-        dungeon.NpcRespawnEnabled=false;dungeon.TimeLimitMinutes=Math.Clamp(dungeon.TimeLimitMinutes==0?5:dungeon.TimeLimitMinutes,1,20);
         var candidates=new[]{captain}.Concat(captain.Party).DistinctBy(p=>p.Id).Where(p=>p.IsOnline && p.InGame && !p.IsDead && !p.HasPendingDeath && p.NavalShipId==ship.State.Id && !p.NavalBusy).ToArray();
+        dungeon.MinimumPartySize=1;dungeon.MaximumPartySize=Math.Max(dungeon.MaximumPartySize,candidates.Length);
+        dungeon.NpcRespawnEnabled=false;dungeon.TimeLimitMinutes=Math.Clamp(dungeon.TimeLimitMinutes==0?5:dungeon.TimeLimitMinutes,1,20);
         EnemyBoardingRun run;
         lock(Gate)
         {
-            if(!CanBoardEnemy(ship,enemy) || candidates.Any(p=>BoardingPlayers.ContainsKey(p.Id)) || !candidates.Contains(captain))return;
+            if(generatedMap!=Guid.Empty && !GeneratedDecks.ContainsKey(generatedMap) || !CanBoardEnemy(ship,enemy) || candidates.Any(p=>BoardingPlayers.ContainsKey(p.Id)) || !candidates.Contains(captain))return;
             // No passengers are silently left behind during the transfer.
             if(ship.Crew.Keys.Any(id=>!candidates.Any(p=>p.Id==id)))return;
-            run=new(){Ship=ship.State.Id,Enemy=enemy.State.Id,Captain=captain.Id,Started=now};
+            run=new(){Ship=ship.State.Id,Enemy=enemy.State.Id,Captain=captain.Id,Started=now,GeneratedMap=generatedMap};
             EnemyBoardings.Add(run.Id,run);
             ship.EnemyBoardingEncounter=enemy.EnemyBoardingEncounter=run.Id;
             foreach(var vessel in new[]{ship,enemy}){vessel.State.Speed=vessel.State.Throttle=0;vessel.Controls.Reset();}
@@ -80,7 +83,12 @@ internal static partial class NavalSystem
         var started=false;
         try
         {
-            started=DungeonRunRuntime.TryStart(captain,dungeon,patrol.BoardingEntryMapId,(byte)patrol.BoardingEntryX,(byte)patrol.BoardingEntryY,
+            // Runtime crew definitions do not exist in the client's login data cache.
+            if (generatedMap != Guid.Empty)
+                foreach (var npcId in map.Spawns.Select(spawn => spawn.NpcId).Distinct())
+                    foreach (var member in candidates)
+                        PacketSender.SendGameObject(member.Client, NPCDescriptor.Get(npcId));
+            started=DungeonRunRuntime.TryStart(captain,dungeon,map.Id,(byte)entryX,(byte)entryY,
                 WarpDirection.Down,true,MapInstanceType.Personal,out _,candidates,run.Id);
         }
         catch(Exception error){ApplicationContext.Context.Value?.Logger.LogError(error,"Could not start naval boarding {EncounterId}",run.Id);}

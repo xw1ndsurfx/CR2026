@@ -154,6 +154,23 @@ internal static class WorldMapTests
                 renderer.Calls.Any(call => SameRgb(call.Color, 95, 225, 125)), "Minimap must also show friends and party");
             type.GetMethod("ZoomBy")!.Invoke(mini, [0.15f]);
             Check((float)zoom.GetValue(mini)! == 1.55f, "Minimap keeps its fixed zoom");
+            var shipsType=assembly.GetType("Intersect.Client.Interface.Game.WorldMapShips",true)!;
+            var receiveShips=shipsType.GetMethod("Receive",BindingFlags.Static|BindingFlags.NonPublic)!;
+            var clearShips=shipsType.GetMethod("Clear",BindingFlags.Static|BindingFlags.NonPublic)!;
+            var shipMarkers=type.GetMethod("DrawShipMarkers",flags)!;
+            var enemyShip=new WorldMapShipMarker{Id=Guid.NewGuid(),MapId=mapId,X=player.X+2,Y=player.Y,Enemy=true,Name="Enemy"};
+            try
+            {
+                receiveShips.Invoke(null,[new[]{enemyShip,new WorldMapShipMarker{Id=Guid.NewGuid(),MapId=mapId,X=player.X,Y=player.Y}},Environment.TickCount64-1100]);
+                renderer.Calls.Clear();shipMarkers.Invoke(mini,[renderer]);
+                var enemyMarker=renderer.Calls.Single(call=>SameRgb(call.Color,232,64,64));
+                Check(renderer.Calls.Count==1,"Minimap must show hostile ship squares without friendly ship duplicates");
+                enemyShip.X+=2;
+                receiveShips.Invoke(null,[new[]{enemyShip},Environment.TickCount64-1100]);
+                renderer.Calls.Clear();shipMarkers.Invoke(mini,[renderer]);
+                Check(renderer.Calls.Single(call=>SameRgb(call.Color,232,64,64)).Bounds.X>enemyMarker.Bounds.X,"Enemy ship minimap marker must follow fresh positions");
+            }
+            finally{clearShips.Invoke(null,null);}
             var beforePan = (float)panX.GetValue(mini)!;
             player.X++; render.Invoke(mini, [skin]);
             Check((float)panX.GetValue(mini)! < beforePan, "Minimap must follow player movement");

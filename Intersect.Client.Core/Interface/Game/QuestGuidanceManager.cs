@@ -50,41 +50,14 @@ internal sealed class QuestGuidanceManager
                 (TargetWorld.Y - view.Top) * zoom
             );
 
-            var player = new Vector2(
-                (Globals.Me.Center.X - view.Left) * zoom,
-                (Globals.Me.Center.Y - view.Top) * zoom
-            );
+            var sprite=Globals.Me.WorldPos;
+            var centre=sprite.Width>0 && sprite.Height>0?new Vector2(sprite.X+sprite.Width/2,sprite.Y+sprite.Height/2):Globals.Me.Center;
+            var player = new Vector2((centre.X-view.Left)*zoom,(centre.Y-view.Top)*zoom);
 
             var targetDeltaFromPlayer = target - player;
             if (targetDeltaFromPlayer.LengthSquared() < 16f) return;
 
-            // Start the arrow outside the player's sprite on the side that faces the
-            // objective. This guarantees that the shaft never crosses the player.
-            var playerWidth = Math.Max(
-                Options.Instance.Map.TileWidth,
-                (int)Math.Ceiling(Globals.Me.WorldPos.Width)
-            ) * zoom;
-            var playerHeight = Math.Max(
-                Options.Instance.Map.TileHeight,
-                (int)Math.Ceiling(Globals.Me.WorldPos.Height)
-            ) * zoom;
-            var halfWidth = playerWidth / 2f;
-            var halfHeight = playerHeight / 2f;
-            var playerGap = Math.Max(10f, 10f * zoom);
-
-            Vector2 origin;
-            if (Math.Abs(targetDeltaFromPlayer.Y) >= Math.Abs(targetDeltaFromPlayer.X))
-            {
-                origin = targetDeltaFromPlayer.Y < 0
-                    ? player + new Vector2(0f, -halfHeight - playerGap)
-                    : player + new Vector2(0f, halfHeight + playerGap);
-            }
-            else
-            {
-                origin = targetDeltaFromPlayer.X < 0
-                    ? player + new Vector2(-halfWidth - playerGap, 0f)
-                    : player + new Vector2(halfWidth + playerGap, 0f);
-            }
+            var origin = player;
 
             var delta = target - origin;
             if (delta.LengthSquared() < 16f) return;
@@ -119,13 +92,13 @@ internal sealed class QuestGuidanceManager
                 end = origin + direction * distance;
             }
 
-            var start = origin + direction * 16f;
+            var start = origin;
             var shaftEnd = end - direction * 18f;
             var normal = new Vector2(-direction.Y, direction.X);
 
             var renderer = skin.Renderer;
-            renderer.DrawColor = new Color(a: 245, r: 238, g: 203, b: 112);
-            DrawSegment(renderer, start, shaftEnd, 5);
+            renderer.DrawColor = new Color(a: 135, r: 238, g: 203, b: 112);
+            DrawSegment(renderer, start, shaftEnd, 2);
 
             renderer.DrawColor = new Color(a: 255, r: 255, g: 244, b: 185);
             DrawSegment(renderer, end, shaftEnd + normal * 13f, 6);
@@ -174,7 +147,7 @@ internal sealed class QuestGuidanceManager
             IsHidden = true,
         };
         _arrow.SetBounds(0, 0, Math.Max(1, canvas.Width), Math.Max(1, canvas.Height));
-        _arrow.BringToFront();
+        _arrow.SendToBack();
     }
 
     public void Update()
@@ -234,7 +207,7 @@ internal sealed class QuestGuidanceManager
             _arrow.HasTarget = true;
             _arrow.TargetWorld = nearestArrowTarget.Center;
             _arrow.IsHidden = false;
-            _arrow.BringToFront();
+            _arrow.SendToBack();
         }
         else
         {

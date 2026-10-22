@@ -227,9 +227,9 @@ internal sealed partial class UserListWindow : Window
         AdmurinGuiArt.Add(panel, "PlayerIcon", "userlist_2",
             3, 8, 22, 21, online ? 0 : 16, 0, 16, 16);
 
-        var name = Shorten(friend.Name, 35);
+        var name = Shorten(friend.Name, 26);
         var nameLabel = AddLabel(panel, "FriendName", name,
-            29, 4, 365, 27, 12, online ? Cream : Muted);
+            29, 4, 261, 27, 12, online ? Cream : Muted);
         if (online)
         {
             nameLabel.MouseInputEnabled = true;
@@ -241,6 +241,8 @@ internal sealed partial class UserListWindow : Window
             nameLabel.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("Offline: ") + friend.Name);
         }
 
+        var invite=NavalManagementWindow.Button(panel,"InviteFriendHome",GuildText("Invite home"),298,6,91,25,()=>PacketSender.SendHouseAction(Intersect.Network.Packets.Housing.HouseAction.InviteFriend,name:friend.Name));
+        invite.IsDisabled=!online;
         var profile = new Button(panel, "ViewFriendInfo") { Text = string.Empty };
         profile.SetBounds(401, 6, 25, 25);
         AdmurinGuiArt.Add(profile, "InfoIcon", "userlist_1", 0, 0, 25, 25,

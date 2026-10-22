@@ -1177,11 +1177,19 @@ internal sealed class WorldMapWindow : Window
                 var py = (int)Math.Round(_panY + y * CellHeight);
                 if (px < -10 || py < -10 || px > Width + 10 || py > Height + 10) continue;
                 var color = ship.Enemy ? new Color(245, 100, 80) : new Color(80, 215, 245);
+                if(!_interactive)
+                {
+                    if(ship.Enemy && _showEnemies)
+                    {
+                        var size=Math.Clamp((int)Math.Round(7f*_zoom),5,11);
+                        Fill(renderer,new Color(255,232,64,64),px-size/2,py-size/2,size,size);
+                    }
+                    continue;
+                }
                 DrawLocationMarker(renderer, px, py, color);
                 // A mast and sail distinguish ships from social/player diamonds at every zoom.
                 Fill(renderer, Color.White, px, py - 10, 1, 8);
                 Fill(renderer, color, px + 1, py - 9, 4, 4);
-                if (!_interactive) continue;
                 var text = $"{ship.Name}  {Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Level", Intersect.Client.Localization.ClientLanguages.Current)} {ship.Level}";
                 renderer.DrawColor = Color.Black;
                 renderer.RenderText(Skin.DefaultFont, 9, new Point(px + 10, py - 7), text);

@@ -41,12 +41,14 @@ public partial class MainMenu
             var scale = Math.Clamp(rule.ScalePercent, 1, 2000) / 100f * Math.Clamp(layer.ScalePercent, 1, 2000) / 100f;
             panel.SetTextureRect((int)(frame % layer.XFrames) * w, (int)(frame / layer.XFrames) * h, w, h);
             panel.SetBounds((int)(_menuCanvas.Width * Math.Clamp(rule.XPercent, 0, 100) / 100f - w * scale / 2 + layer.OffsetX * scale), (int)(_menuCanvas.Height * Math.Clamp(rule.YPercent, 0, 100) / 100f - h * scale / 2 + layer.OffsetY * scale), Math.Max(1, (int)(w * scale)), Math.Max(1, (int)(h * scale)));
-            panel.RenderColor = new Color((byte)(layer.Opacity * (100 - Math.Clamp(rule.TransparencyPercent, 0, 100)) / 100), 255, 255, 255);
+            var brightness=(ClientConfiguration.Instance.MenuWeather??new()).BrightnessChannel();
+            panel.RenderColor = new Color((byte)(layer.Opacity * (100 - Math.Clamp(rule.TransparencyPercent, 0, 100)) / 100), brightness, brightness, brightness);
 
         }
         foreach (var entry in _menuAnimations.Where(e => !e.Rule.Foreground).Reverse())
             entry.Panel.SendToBack();
         foreach (var entry in _menuAnimations.Where(e => e.Rule.Foreground))
             entry.Panel.BringToFront();
+        UpdateMenuBrightness();
     }
 }

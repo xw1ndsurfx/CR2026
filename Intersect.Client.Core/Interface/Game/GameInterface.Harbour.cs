@@ -29,20 +29,19 @@ public partial class GameInterface
         _boardingOffer?.Tick();foreach(var panel in _navalPanels.Values)panel.Tick();var ship=Naval.NavalWorld.OwnShip;
         if(ship!=null){_navalAmmoShop?.Hide();_shipShopWindow?.Hide();}
         else foreach(var mode in new[]{NavalManageAction.Repair,NavalManageAction.OfferHelm,NavalManageAction.Skills})if(_navalPanels.TryGetValue(mode,out var seaPanel))seaPanel.Hide();
-        if(ship is {EnemyBoardingTargetId:var target} && target!=Guid.Empty)
+        if(ship is {EnemyBoardingTargetId:var target} && target!=Guid.Empty && target!=_enemyBoardingSuppressed)
         {
-            if(target==_enemyBoardingSuppressed)return;
             if(_enemyBoardingPrompt==null)
             {
                 _enemyBoardingPrompt=new EnemyBoardingPromptWindow(GameCanvas){DeleteOnClose=false,Alignment=[Intersect.Client.Framework.Gwen.Alignments.Center]};
                 _enemyBoardingPrompt.Closed+=(_,_)=>_enemyBoardingSuppressed=Naval.NavalWorld.OwnShip?.EnemyBoardingTargetId??Guid.Empty;
                 _enemyBoardingPrompt.SetSize(360,160);_enemyBoardingPrompt.DisableResizing();
-                NavalManagementWindow.Text(_enemyBoardingPrompt,"BoardingHint",NavalManagementWindow.T("Board the enemy deck with your crew?"),18,40,324,42,12);
+                NavalManagementWindow.Text(_enemyBoardingPrompt,"BoardingHint",NavalManagementWindow.T("Board the enemy deck? You can board alone or with your crew."),18,40,324,42,12);
                 NavalManagementWindow.Button(_enemyBoardingPrompt,"BoardEnemy","Board enemy ship",18,90,324,34,()=>NavalManagementWindow.Request(NavalManageAction.BoardEnemy,target:Naval.NavalWorld.OwnShip?.EnemyBoardingTargetId??Guid.Empty));
             }
             if(_enemyBoardingPrompt.IsHidden){_enemyBoardingPrompt.Show();_enemyBoardingPrompt.BringToFront();}
         }
-        else{_enemyBoardingPrompt?.Hide();_enemyBoardingSuppressed=Guid.Empty;}
+        else{_enemyBoardingPrompt?.Hide();if(ship==null || ship.EnemyBoardingTargetId==Guid.Empty)_enemyBoardingSuppressed=Guid.Empty;}
         if(ship?.HelmOfferToken is {} offer && offer!=Guid.Empty && offer!=_helmOfferSeen)
         {_helmOfferSeen=offer;OpenNavalManagement(NavalManageAction.OfferHelm);}
         if(ship is not {DockAvailable:true,Sinking:false}){_navalDockPrompt?.Hide();_dockSuppressed=Guid.Empty;return;}

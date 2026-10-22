@@ -36,6 +36,8 @@ public partial class MapDescriptor : DatabaseObject<MapDescriptor>
     [NotMapped]
     public List<Guid> EventIds { get; set; } = [];
 
+    [NotMapped] public bool GeneratedBoardingDeck {get;set;}
+
     //Core Data
     [JsonIgnore]
     [NotMapped]
@@ -93,6 +95,7 @@ public partial class MapDescriptor : DatabaseObject<MapDescriptor>
             lock (mapDescriptor.MapLock ?? throw new ArgumentNullException(nameof(mapDescriptor.MapLock), nameof(mapDescriptor)))
             {
                 Name = mapDescriptor.Name;
+                GeneratedBoardingDeck=mapDescriptor.GeneratedBoardingDeck;
                 Brightness = mapDescriptor.Brightness;
                 IsIndoors = mapDescriptor.IsIndoors;
                 if (Layers != null && mapDescriptor.Layers != null)
