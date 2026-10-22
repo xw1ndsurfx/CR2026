@@ -231,3 +231,6 @@ Custom*.props
 
 # Private translation provider credentials
 **/translation-service.private.json*
+
+# Local per-executable build counters
+/.build-versions/

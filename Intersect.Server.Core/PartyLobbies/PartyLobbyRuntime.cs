@@ -179,6 +179,7 @@ internal static class PartyLobbyRuntime
             if (lobby.Started) return "A dungeon has already started. Lobby travel is locked.";
         }
         if (DungeonRunRuntime.IsPlayerInActiveRun(player) || DungeonRunRuntime.IsPlayerInActiveRun(lobby.Host)) return "A dungeon has already started. Lobby travel is locked.";
+        if(!Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.Teleports.Allows(player.MapId,lobby.Host.MapId,false))return "Lobby teleport is unavailable in this zone.";
         if(lobby.Activity==LobbyActivity.Naval)
         {
             if(player.Id==lobby.Host.Id || player.BoardedShipId==lobby.ShipId) return "";
@@ -198,7 +199,9 @@ internal static class PartyLobbyRuntime
         if (map == null || player.MapInstanceId != Guid.Empty || lobby.Host.MapInstanceId != Guid.Empty ||
             DungeonConfigurationRuntime.Current.Dungeons.Any(d => d.MapIds.Contains(mapId)))
             return "Meet the host in the open world. Private instances and dungeon interiors cannot be joined by lobby teleport.";
+        Intersect.Server.Travel.TeleportRuntime.Animate(player);
         player.Warp(mapId,x,y,direction,mapInstanceType:MapInstanceType.Overworld);
+        Intersect.Server.Travel.TeleportRuntime.Animate(player);
         return "";
     }
     private static PartyLobbyStatePacket Snapshot(Player player, string message)

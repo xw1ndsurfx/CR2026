@@ -17,6 +17,8 @@ public partial class CharactersPacket : IntersectPacket
         FreeSlot = freeSlot;
     }
 
+    [Key(3)] public int CharacterLimit {get;set;}
+
     [Key(0)]
     public string Username { get; set; }
 

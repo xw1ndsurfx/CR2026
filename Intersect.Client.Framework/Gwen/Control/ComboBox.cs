@@ -68,6 +68,8 @@ public partial class ComboBox : Button
     /// <summary>
     ///     Indicates whether the combo menu is open.
     /// </summary>
+    public IReadOnlyList<MenuItem> Items => _menu.MenuItems.ToArray();
+
     public bool IsOpen => _menu.IsVisibleInTree;
 
     /// <summary>

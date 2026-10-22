@@ -470,7 +470,7 @@ public partial class SelectCharacterWindow : Window
 
         if (CharacterSelectionPreviews == default)
         {
-            CharacterSelectionPreviews = new CharacterSelectionPreviewMetadata[Options.Instance.Player.MaxCharacters];
+            CharacterSelectionPreviews = new CharacterSelectionPreviewMetadata[AccountCharacterSlots.Limit];
         }
 
         _selectedCharacterIndex = 0;

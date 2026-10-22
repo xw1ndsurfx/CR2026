@@ -799,6 +799,621 @@
       "en": "Finish your current activity before visiting a house.",
       "fr": "Terminez votre activité avant de visiter une maison.",
       "es": "Termina tu actividad antes de visitar una casa."
+    },
+    "Campfire": {
+      "en": "Campfire",
+      "fr": "Feu de camp",
+      "es": "Fogata"
+    },
+    "Cook": {
+      "en": "Cook",
+      "fr": "Cuisiner",
+      "es": "Cocinar"
+    },
+    "Placed at your feet": {
+      "en": "Placed at your feet",
+      "fr": "Placé à vos pieds",
+      "es": "Colocado a tus pies"
+    },
+    "Recipe": {
+      "en": "Recipe",
+      "fr": "Recette",
+      "es": "Receta"
+    },
+    "Configure campfire result": {
+      "en": "Configure campfire result",
+      "fr": "Configurer le feu de camp",
+      "es": "Configurar la fogata"
+    },
+    "Campfire result configured": {
+      "en": "Campfire result configured",
+      "fr": "Feu de camp configuré",
+      "es": "Fogata configurada"
+    },
+    "Create a campfire instead of an item": {
+      "en": "Create a campfire instead of an item",
+      "fr": "Créer un feu de camp au lieu d’un objet",
+      "es": "Crear una fogata en lugar de un objeto"
+    },
+    "Fire animation": {
+      "en": "Fire animation",
+      "fr": "Animation du feu",
+      "es": "Animación del fuego"
+    },
+    "Ashes animation": {
+      "en": "Ashes animation",
+      "fr": "Animation des cendres",
+      "es": "Animación de las cenizas"
+    },
+    "Fire duration (seconds)": {
+      "en": "Fire duration (seconds)",
+      "fr": "Durée du feu (secondes)",
+      "es": "Duración del fuego (segundos)"
+    },
+    "Ashes duration (seconds)": {
+      "en": "Ashes duration (seconds)",
+      "fr": "Durée des cendres (secondes)",
+      "es": "Duración de las cenizas (segundos)"
+    },
+    "Choose both the fire and ashes animations.": {
+      "en": "Choose both the fire and ashes animations.",
+      "fr": "Choisissez les animations du feu et des cendres.",
+      "es": "Elige las animaciones del fuego y de las cenizas."
+    },
+    "A campfire cannot be placed here, or you already have one.": {
+      "en": "A campfire cannot be placed here, or you already have one.",
+      "fr": "Impossible de placer un feu de camp ici, ou vous en avez déjà un.",
+      "es": "No se puede colocar una fogata aquí, o ya tienes una."
+    },
+    "CAMPFIRE COOKING": {
+      "en": "CAMPFIRE COOKING",
+      "fr": "CUISINE AU FEU DE CAMP",
+      "es": "COCINA EN LA FOGATA"
+    },
+    "Completion chest": {
+      "en": "Completion chest",
+      "fr": "Coffre de fin de donjon",
+      "es": "Cofre de fin de mazmorra"
+    },
+    "Configure completion chest": {
+      "en": "Configure completion chest",
+      "fr": "Configurer le coffre de fin",
+      "es": "Configurar el cofre final"
+    },
+    "Wait for chest collection before leaving": {
+      "en": "Wait for chest collection before leaving",
+      "fr": "Attendre la récupération du coffre avant de partir",
+      "es": "Esperar a recoger el cofre antes de salir"
+    },
+    "Chest animation": {
+      "en": "Chest animation",
+      "fr": "Animation du coffre",
+      "es": "Animación del cofre"
+    },
+    "Completion animation": {
+      "en": "Completion animation",
+      "fr": "Animation de fin de donjon",
+      "es": "Animación de finalización"
+    },
+    "Collection time (seconds)": {
+      "en": "Collection time (seconds)",
+      "fr": "Temps de récupération (secondes)",
+      "es": "Tiempo para recoger (segundos)"
+    },
+    "Minimum quantity": {
+      "en": "Minimum quantity",
+      "fr": "Quantité minimale",
+      "es": "Cantidad mínima"
+    },
+    "Maximum quantity": {
+      "en": "Maximum quantity",
+      "fr": "Quantité maximale",
+      "es": "Cantidad máxima"
+    },
+    "Chance (%)": {
+      "en": "Chance (%)",
+      "fr": "Probabilité (%)",
+      "es": "Probabilidad (%)"
+    },
+    "Check item quantities and drop chances (0–100%).": {
+      "en": "Check item quantities and drop chances (0–100%).",
+      "fr": "Vérifiez les quantités et probabilités (0–100 %).",
+      "es": "Revisa las cantidades y probabilidades (0–100 %)."
+    },
+    "Dungeon cleared! Open the completion chest before leaving.": {
+      "en": "Dungeon cleared! Open the completion chest before leaving.",
+      "fr": "Donjon terminé ! Ouvrez le coffre avant de partir.",
+      "es": "¡Mazmorra completada! Abre el cofre antes de salir."
+    },
+    "The chest rewards could not be collected. Check inventory and bank space, then try again.": {
+      "en": "The chest rewards could not be collected. Check inventory and bank space, then try again.",
+      "fr": "Impossible de récupérer les récompenses. Vérifiez la place dans votre inventaire et votre banque, puis réessayez.",
+      "es": "No se pudieron recoger las recompensas. Revisa el espacio del inventario y del banco e inténtalo de nuevo."
+    },
+    "Open completion chest": {
+      "en": "Open completion chest",
+      "fr": "Ouvrir le coffre de fin",
+      "es": "Abrir el cofre final"
+    },
+    "Rewards collected": {
+      "en": "Rewards collected",
+      "fr": "Récompenses récupérées",
+      "es": "Recompensas recogidas"
+    },
+    "Automatic collection in {0}s": {
+      "en": "Automatic collection in {0}s",
+      "fr": "Récupération automatique dans {0}s",
+      "es": "Recogida automática en {0}s"
+    },
+    "Additional character slots": {
+      "en": "Additional character slots",
+      "fr": "Emplacements de personnage supplémentaires",
+      "es": "Espacios de personaje adicionales"
+    },
+    "Drag to move this HUD": {
+      "en": "Drag to move this HUD",
+      "fr": "Glissez pour déplacer cet affichage",
+      "es": "Arrastra para mover este panel"
+    },
+    "Friend teleport is unavailable in this zone or activity.": {
+      "en": "Friend teleport is unavailable in this zone or activity.",
+      "fr": "La téléportation vers un ami est indisponible dans cette zone ou activité.",
+      "es": "El teletransporte a un amigo no está disponible en esta zona o actividad."
+    },
+    "Gift a friend": {
+      "en": "Gift a friend",
+      "fr": "Offrir à un ami",
+      "es": "Regalar a un amigo"
+    },
+    "Purchase gift": {
+      "en": "Purchase gift",
+      "fr": "Acheter le cadeau",
+      "es": "Comprar regalo"
+    },
+    "Purchase history": {
+      "en": "Purchase history",
+      "fr": "Historique des achats",
+      "es": "Historial de compras"
+    },
+    "No previous purchases.": {
+      "en": "No previous purchases.",
+      "fr": "Aucun achat précédent.",
+      "es": "No hay compras anteriores."
+    },
+    "Recipient account": {
+      "en": "Recipient account",
+      "fr": "Compte destinataire",
+      "es": "Cuenta destinataria"
+    },
+    "Recipient account not found.": {
+      "en": "Recipient account not found.",
+      "fr": "Compte destinataire introuvable.",
+      "es": "No se encontró la cuenta destinataria."
+    },
+    "This offer cannot be gifted.": {
+      "en": "This offer cannot be gifted.",
+      "fr": "Cette offre ne peut pas être offerte.",
+      "es": "Esta oferta no se puede regalar."
+    },
+    "Delivered": {
+      "en": "Delivered",
+      "fr": "Livré",
+      "es": "Entregado"
+    },
+    "Pending delivery": {
+      "en": "Pending delivery",
+      "fr": "Livraison en attente",
+      "es": "Entrega pendiente"
+    },
+    "Delivered to the account": {
+      "en": "Delivered to the account",
+      "fr": "Livraison au compte",
+      "es": "Entrega a la cuenta"
+    },
+    "Recipient character": {
+      "en": "Recipient character",
+      "fr": "Personnage destinataire",
+      "es": "Personaje destinatario"
+    },
+    "Choose the recipient character.": {
+      "en": "Choose the recipient character.",
+      "fr": "Choisissez le personnage destinataire.",
+      "es": "Elige el personaje destinatario."
+    },
+    "Choose an offer to gift.": {
+      "en": "Choose an offer to gift.",
+      "fr": "Choisissez une offre à offrir.",
+      "es": "Elige una oferta para regalar."
+    },
+    "Choose an offer to purchase.": {
+      "en": "Choose an offer to purchase.",
+      "fr": "Choisissez une offre à acheter.",
+      "es": "Elige una oferta para comprar."
+    },
+    "Search": {
+      "en": "Search",
+      "fr": "Rechercher",
+      "es": "Buscar"
+    },
+    "Music": {
+      "en": "Music",
+      "fr": "Musique",
+      "es": "Música"
+    },
+    "Music for everyone in this zone": {
+      "en": "Music for everyone in this zone",
+      "fr": "Musique pour tous les joueurs de la zone",
+      "es": "Música para todos los jugadores de la zona"
+    },
+    "Premium required": {
+      "en": "Premium required",
+      "fr": "Premium requis",
+      "es": "Se requiere Premium"
+    },
+    "Shop currency": {
+      "en": "Shop currency",
+      "fr": "Monnaie de la boutique",
+      "es": "Moneda de la tienda"
+    },
+    "Check the shop offers and prices.": {
+      "en": "Check the shop offers and prices.",
+      "fr": "Vérifiez les offres et les prix de la boutique.",
+      "es": "Revisa las ofertas y los precios de la tienda."
+    },
+    "Music is already playing in this zone.": {
+      "en": "Music is already playing in this zone.",
+      "fr": "Une musique joue déjà dans cette zone.",
+      "es": "Ya se está reproduciendo música en esta zona."
+    },
+    "Music started for this zone.": {
+      "en": "Music started for this zone.",
+      "fr": "Musique lancée dans cette zone.",
+      "es": "Música iniciada en esta zona."
+    },
+    "Not enough currency.": {
+      "en": "Not enough currency.",
+      "fr": "Monnaie insuffisante.",
+      "es": "Moneda insuficiente."
+    },
+    "Skill learned.": {
+      "en": "Skill learned.",
+      "fr": "Compétence apprise.",
+      "es": "Habilidad aprendida."
+    },
+    "Teleport settings": {
+      "en": "Teleport settings",
+      "fr": "Réglages de téléportation",
+      "es": "Ajustes de teletransporte"
+    },
+    "Enable friend teleport": {
+      "en": "Enable friend teleport",
+      "fr": "Activer la téléportation vers les amis",
+      "es": "Activar teletransporte a amigos"
+    },
+    "Allow lobby teleport": {
+      "en": "Allow lobby teleport",
+      "fr": "Autoriser la téléportation des lobbys",
+      "es": "Permitir teletransporte de salas"
+    },
+    "Restrict lobby maps": {
+      "en": "Restrict lobby maps",
+      "fr": "Limiter les maps des lobbys",
+      "es": "Restringir mapas de salas"
+    },
+    "Require a permitted origin map": {
+      "en": "Require a permitted origin map",
+      "fr": "Exiger une map de départ autorisée",
+      "es": "Exigir un mapa de origen permitido"
+    },
+    "Allowed teleport maps": {
+      "en": "Allowed teleport maps",
+      "fr": "Maps de téléportation autorisées",
+      "es": "Mapas de teletransporte permitidos"
+    },
+    "Lobby teleport is unavailable in this zone.": {
+      "en": "Lobby teleport is unavailable in this zone.",
+      "fr": "La téléportation du lobby est indisponible dans cette zone.",
+      "es": "El teletransporte de la sala no está disponible en esta zona."
+    },
+    "Resource brush": {
+      "en": "Resource brush",
+      "fr": "Pinceau de ressources",
+      "es": "Pincel de recursos"
+    },
+    "Configure shop offers": {
+      "en": "Configure shop offers",
+      "fr": "Configurer les offres",
+      "es": "Configurar ofertas"
+    },
+    "Spell shop": {
+      "en": "Spell shop",
+      "fr": "Boutique de sorts",
+      "es": "Tienda de hechizos"
+    },
+    "Premium music shop": {
+      "en": "Premium music shop",
+      "fr": "Boutique musicale Premium",
+      "es": "Tienda de música Premium"
+    },
+    "Your world starts here": {
+      "en": "Your world starts here",
+      "fr": "Votre monde commence ici",
+      "es": "Tu mundo empieza aquí"
+    },
+    "Sign in to build, create and bring your game to life.": {
+      "en": "Sign in to build, create and bring your game to life.",
+      "fr": "Connectez-vous pour créer et donner vie à votre jeu.",
+      "es": "Inicia sesión para crear y dar vida a tu juego."
+    },
+    "Client": {
+      "en": "Client",
+      "fr": "Client",
+      "es": "Cliente"
+    },
+    "Server": {
+      "en": "Server",
+      "fr": "Serveur",
+      "es": "Servidor"
+    },
+    "Revealing cargo: {0}/{1}": {
+      "en": "Revealing cargo: {0}/{1}",
+      "fr": "Découverte de la cargaison : {0}/{1}",
+      "es": "Revelando carga: {0}/{1}"
+    },
+    "Premium: {0}": {
+      "en": "Premium: {0}",
+      "fr": "Premium : {0}",
+      "es": "Premium: {0}"
+    },
+    "Teleport": {
+      "en": "Teleport",
+      "fr": "Téléporter",
+      "es": "Teletransportar"
+    },
+    "Allow gifts": {
+      "en": "Allow gifts",
+      "fr": "Autoriser les cadeaux",
+      "es": "Permitir regalos"
+    },
+    "Maximum extra character slots": {
+      "en": "Maximum extra character slots",
+      "fr": "Maximum d’emplacements supplémentaires",
+      "es": "Máximo de espacios adicionales"
+    },
+    "Clothes": {
+      "en": "Clothes",
+      "fr": "Vêtements",
+      "es": "Ropa"
+    },
+    "Browse clothes": {
+      "en": "Browse clothes",
+      "fr": "Parcourir les vêtements",
+      "es": "Ver ropa"
+    },
+    "Search clothes by name": {
+      "en": "Search clothes by name",
+      "fr": "Rechercher un vêtement par nom",
+      "es": "Buscar ropa por nombre"
+    },
+    "Reset character": {
+      "en": "Reset character",
+      "fr": "Réinitialiser le personnage",
+      "es": "Restablecer personaje"
+    },
+    "UI Editor": {
+      "en": "UI Editor",
+      "fr": "Éditeur d’interfaces",
+      "es": "Editor de interfaces"
+    },
+    "Client resources folder": {
+      "en": "Client resources folder",
+      "fr": "Dossier des ressources du client",
+      "es": "Carpeta de recursos del cliente"
+    },
+    "Choose folder": {
+      "en": "Choose folder",
+      "fr": "Choisir un dossier",
+      "es": "Elegir carpeta"
+    },
+    "Edit directly in the running client: open any interface, select its controls, drag or resize them, change properties and sounds, then save.": {
+      "en": "Edit directly in the running client: open any interface, select its controls, drag or resize them, change properties and sounds, then save.",
+      "fr": "Modifiez directement dans le client ouvert : ouvrez une interface, sélectionnez ses éléments, déplacez-les ou redimensionnez-les, changez leurs propriétés et sons, puis enregistrez.",
+      "es": "Edita directamente en el cliente abierto: abre una interfaz, selecciona sus elementos, muévelos o cambia su tamaño, modifica sus propiedades y sonidos, y guarda."
+    },
+    "Choose the client resources folder containing gui.": {
+      "en": "Choose the client resources folder containing gui.",
+      "fr": "Choisissez le dossier des ressources du client qui contient gui.",
+      "es": "Elige la carpeta de recursos del cliente que contiene gui."
+    },
+    "Enable live editing": {
+      "en": "Enable live editing",
+      "fr": "Activer l’édition en direct",
+      "es": "Activar edición en directo"
+    },
+    "Finish editing": {
+      "en": "Finish editing",
+      "fr": "Terminer l’édition",
+      "es": "Finalizar edición"
+    },
+    "Select / interact": {
+      "en": "Select / interact",
+      "fr": "Sélectionner / interagir",
+      "es": "Seleccionar / interactuar"
+    },
+    "Refresh controls": {
+      "en": "Refresh controls",
+      "fr": "Actualiser les éléments",
+      "es": "Actualizar elementos"
+    },
+    "Parent": {
+      "en": "Parent",
+      "fr": "Parent",
+      "es": "Elemento superior"
+    },
+    "Apply property": {
+      "en": "Apply property",
+      "fr": "Appliquer la propriété",
+      "es": "Aplicar propiedad"
+    },
+    "Reset selected": {
+      "en": "Reset selected",
+      "fr": "Réinitialiser la sélection",
+      "es": "Restablecer selección"
+    },
+    "Original layout restored.": {
+      "en": "Original layout restored.",
+      "fr": "Disposition d’origine restaurée.",
+      "es": "Diseño original restaurado."
+    },
+    "Save UI": {
+      "en": "Save UI",
+      "fr": "Enregistrer l’interface",
+      "es": "Guardar interfaz"
+    },
+    "UI saved.": {
+      "en": "UI saved.",
+      "fr": "Interface enregistrée.",
+      "es": "Interfaz guardada."
+    },
+    "Open an interface, select a control, then drag it.": {
+      "en": "Open an interface, select a control, then drag it.",
+      "fr": "Ouvrez une interface, sélectionnez un élément, puis déplacez-le.",
+      "es": "Abre una interfaz, selecciona un elemento y arrástralo."
+    },
+    "Drag to move; drag the corner to resize.": {
+      "en": "Drag to move; drag the corner to resize.",
+      "fr": "Glissez pour déplacer ; glissez le coin pour redimensionner.",
+      "es": "Arrastra para mover; arrastra la esquina para cambiar el tamaño."
+    },
+    "Property applied.": {
+      "en": "Property applied.",
+      "fr": "Propriété appliquée.",
+      "es": "Propiedad aplicada."
+    },
+    "Invalid property value.": {
+      "en": "Invalid property value.",
+      "fr": "Valeur de propriété invalide.",
+      "es": "Valor de propiedad no válido."
+    },
+    "Hover sound": {
+      "en": "Hover sound",
+      "fr": "Son au survol",
+      "es": "Sonido al pasar el cursor"
+    },
+    "MouseDown sound": {
+      "en": "MouseDown sound",
+      "fr": "Son à l’appui",
+      "es": "Sonido al presionar"
+    },
+    "MouseUp sound": {
+      "en": "MouseUp sound",
+      "fr": "Son au relâchement",
+      "es": "Sonido al soltar"
+    },
+    "Enable lobby teleport": {
+      "en": "Enable lobby teleport",
+      "fr": "Activer la téléportation des lobbys",
+      "es": "Activar teletransporte de salas"
+    },
+    "Restrict lobby travel to allowed maps": {
+      "en": "Restrict lobby travel to allowed maps",
+      "fr": "Limiter les lobbys aux maps autorisées",
+      "es": "Restringir salas a mapas permitidos"
+    },
+    "The origin map must also be allowed": {
+      "en": "The origin map must also be allowed",
+      "fr": "La map de départ doit aussi être autorisée",
+      "es": "El mapa de origen también debe estar permitido"
+    },
+    "Play music": {
+      "en": "Play music",
+      "fr": "Jouer la musique",
+      "es": "Reproducir música"
+    },
+    "Learn spell": {
+      "en": "Learn spell",
+      "fr": "Apprendre le sort",
+      "es": "Aprender hechizo"
+    },
+    "Gift delivered successfully.": {
+      "en": "Gift delivered successfully.",
+      "fr": "Cadeau livré.",
+      "es": "Regalo entregado."
+    },
+    "Gift purchased. Delivery is queued for the recipient.": {
+      "en": "Gift purchased. Delivery is queued for the recipient.",
+      "fr": "Cadeau acheté. La livraison au destinataire est en attente.",
+      "es": "Regalo comprado. La entrega al destinatario está pendiente."
+    },
+    "Payment received. Delivery will retry automatically.": {
+      "en": "Payment received. Delivery will retry automatically.",
+      "fr": "Paiement reçu. La livraison sera retentée automatiquement.",
+      "es": "Pago recibido. La entrega se reintentará automáticamente."
+    },
+    "Purchase completed.": {
+      "en": "Purchase completed.",
+      "fr": "Achat terminé.",
+      "es": "Compra completada."
+    },
+    "Teleport animation": {
+      "en": "Teleport animation",
+      "fr": "Animation de téléportation",
+      "es": "Animación de teletransporte"
+    },
+    "Teleport cooldown (seconds)": {
+      "en": "Teleport cooldown (seconds)",
+      "fr": "Délai de téléportation (secondes)",
+      "es": "Tiempo entre teletransportes (segundos)"
+    },
+    "General": {
+      "en": "General",
+      "fr": "Général",
+      "es": "General"
+    },
+    "Appearance": {
+      "en": "Appearance",
+      "fr": "Apparence",
+      "es": "Apariencia"
+    },
+    "Required level": {
+      "en": "Required level",
+      "fr": "Niveau requis",
+      "es": "Nivel requerido"
+    },
+    "{0}d {1}": {
+      "en": "{0}d {1}",
+      "fr": "{0}j {1}",
+      "es": "{0}d {1}"
+    },
+    "Choose a character belonging to the recipient account.": {
+      "en": "Choose a character belonging to the recipient account.",
+      "fr": "Choisissez un personnage appartenant au compte destinataire.",
+      "es": "Elige un personaje de la cuenta destinataria."
+    },
+    "The account character slot limit has been reached.": {
+      "en": "The account character slot limit has been reached.",
+      "fr": "La limite d’emplacements de personnage du compte est atteinte.",
+      "es": "Se ha alcanzado el límite de espacios de personaje de la cuenta."
+    },
+    "The LogiCoin Shop is currently unavailable.": {
+      "en": "The LogiCoin Shop is currently unavailable.",
+      "fr": "La boutique LogiCoin est actuellement indisponible.",
+      "es": "La tienda LogiCoin no está disponible actualmente."
+    },
+    "Choose existing maps and a valid teleport animation.": {
+      "en": "Choose existing maps and a valid teleport animation.",
+      "fr": "Choisissez des maps existantes et une animation de téléportation valide.",
+      "es": "Elige mapas existentes y una animación de teletransporte válida."
+    },
+    "A chest reward item no longer exists.": {
+      "en": "A chest reward item no longer exists.",
+      "fr": "Un objet de récompense du coffre n’existe plus.",
+      "es": "Un objeto de recompensa del cofre ya no existe."
+    },
+    "A dungeon chest animation no longer exists.": {
+      "en": "A dungeon chest animation no longer exists.",
+      "fr": "Une animation du coffre de donjon n’existe plus.",
+      "es": "Una animación del cofre de mazmorra ya no existe."
     }
   }
 }

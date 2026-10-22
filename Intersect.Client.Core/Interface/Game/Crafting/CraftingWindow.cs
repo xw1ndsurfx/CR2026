@@ -153,6 +153,7 @@ public partial class CraftingWindow : Window
     private void LoadCraftRecipe(CraftingRecipeDescriptor craftDescriptor)
     {
         _craftRecipeDescriptorId = craftDescriptor.Id;
+        mCraftAll.IsHidden = mJournalMode || craftDescriptor.Campfire != null;
 
         if (_craftedItem is { } craftedItem)
         {
@@ -176,6 +177,17 @@ public partial class CraftingWindow : Window
         _craftedItem.Container.LoadJsonUi(GameContentManager.UI.InGame, Graphics.Renderer.GetResolutionString());
 
         _craftedItem.LoadItem();
+        if (craftDescriptor.Campfire is {} fireResult &&
+            Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor.Get(fireResult.FireAnimationId) is {} fireAnimation)
+        {
+            var layer = string.IsNullOrWhiteSpace(fireAnimation.Upper.Sprite) ? fireAnimation.Lower : fireAnimation.Upper;
+            var texture = Globals.ContentManager.GetTexture(Intersect.Client.Framework.Content.TextureType.Animation, layer.Sprite);
+            if (texture != null && _craftedItem.Pnl is {} preview)
+            {
+                preview.Texture = texture;
+                preview.SetTextureRect(0, 0, texture.Width / Math.Max(1, layer.XFrames), texture.Height / Math.Max(1, layer.YFrames));
+            }
+        }
         mCombinedValue.Show();
         var quantity = Math.Max(craftDescriptor.Quantity, 1);
         if (!ItemDescriptor.TryGet(craftedItemDescriptorId, out var craftedItemDescriptor) ||
@@ -184,7 +196,13 @@ public partial class CraftingWindow : Window
             quantity = 1;
         }
 
-        mCombinedValue.Text = quantity.ToString();
+        mCombinedValue.Text = craftDescriptor.Campfire != null ? ClientLanguages.Text("Campfire") : quantity.ToString();
+        if (craftDescriptor.Campfire != null)
+        {
+            mCombinedValue.SetBounds(0, 0, 130, 28);
+            mLblProduct.Text = ClientLanguages.Text("Placed at your feet");
+        }
+        else mLblProduct.Text = Strings.Crafting.Product;
 
         foreach (var recipeItem in mItems)
         {
@@ -415,6 +433,7 @@ public partial class CraftingWindow : Window
 
         if (CanCraft())
         {
+            if (CraftingRecipeDescriptor.Get(_craftRecipeDescriptorId)?.Campfire != null) count = 1;
             mRemainingCrafts = count;
             mBarTimer = Timing.Global.Milliseconds;
             PacketSender.SendCraftItem(_craftRecipeDescriptorId, count);
@@ -441,7 +460,7 @@ public partial class CraftingWindow : Window
         if (CanCraft())
         {
             DoCraft((int)mCraftAll.UserData);
-            _automaticCraftingDescriptorId = _craftRecipeDescriptorId;
+            _automaticCraftingDescriptorId = CraftingRecipeDescriptor.Get(_craftRecipeDescriptorId)?.Campfire != null ? Guid.Empty : _craftRecipeDescriptorId;
             mCraftAll.Disable();
         }
         else
@@ -473,10 +492,11 @@ public partial class CraftingWindow : Window
             return;
         }
 
+        var duration = Math.Max(100, craft.Time);
         var delta = Timing.Global.Milliseconds - mBarTimer;
-        if (delta > craft.Time)
+        if (delta > duration)
         {
-            delta = craft.Time;
+            delta = duration;
             mRemainingCrafts--;
             if (mRemainingCrafts < 1)
             {
@@ -493,7 +513,7 @@ public partial class CraftingWindow : Window
             }
         }
 
-        var ratio = craft.Time == 0 ? 0 : Convert.ToDecimal(delta) / Convert.ToDecimal(craft.Time);
+        var ratio = Convert.ToDecimal(delta) / duration;
         var width = ratio * mBarContainer?.Width ?? 0;
 
         if (mBar == null)

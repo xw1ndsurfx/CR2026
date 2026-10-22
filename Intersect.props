@@ -1,18 +1,23 @@
 <Project>
   <PropertyGroup Label="Package Properties">
-    <Authors>Ascension Game Development</Authors>
-    <Copyright>Copyright (c) 2022-2025 Ascension Game Dev</Copyright>
-    <Description>Intersect 2D Game Creation Suite</Description>
+    <Authors>Studio Logiklik; Ascension Game Development</Authors>
+    <Copyright>Studio Logiklik — based on Intersect, Copyright (c) 2022-2025 Ascension Game Dev</Copyright>
+    <Description>Logiklik 2D Engine · Corps Royaux</Description>
     <PackageIcon>$(IntersectRepoPath)\assets\intersect-logo-qu.png</PackageIcon>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-    <Product>Intersect Game Engine</Product>
+    <Product>Logiklik 2D Engine</Product>
+    <Product Condition="'$(MSBuildProjectName)' == 'Intersect.Client'">Corps Royaux</Product>
+    <Product Condition="'$(MSBuildProjectName)' == 'Intersect.Server'">Corps Royaux Server</Product>
+    <Company>Studio Logiklik</Company>
+    <AssemblyTitle>$(Product)</AssemblyTitle>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/AscensionGameDev/Intersect-Engine</RepositoryUrl>
+    <RepositoryUrl>https://github.com/xw1ndsurfx/CR2026</RepositoryUrl>
     <Version>0.8.0.0</Version>
   </PropertyGroup>
 
   <PropertyGroup Label="Assembly Properties">
-    <ApplicationIcon>$(IntersectRepoPath)\assets\intersect-logo-qu.ico</ApplicationIcon>
+    <ApplicationIcon Condition="'$(MSBuildProjectName)' == 'Intersect.Editor'">$(IntersectRepoPath)\assets\branding\studio-logiklik.ico</ApplicationIcon>
+    <ApplicationIcon Condition="'$(MSBuildProjectName)' == 'Intersect.Client' Or '$(MSBuildProjectName)' == 'Intersect.Server'">$(IntersectRepoPath)\assets\branding\corps-royaux.ico</ApplicationIcon>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>embedded</DebugType>
@@ -29,6 +34,8 @@
   </PropertyGroup>
 
   <ItemGroup Label="Embedded Resources">
+    <EmbeddedResource Include="$(IntersectRepoPath)\assets\branding\studio-logiklik.ico" Condition="'$(MSBuildProjectName)' == 'Intersect.Editor'" />
+    <EmbeddedResource Include="$(IntersectRepoPath)\assets\branding\studio-logiklik.png" Condition="'$(MSBuildProjectName)' == 'Intersect.Editor'" />
     <None Include="$(IntersectRepoPath)\assets\intersect-logo-qu.png" Pack="true" PackagePath="\" />
     <EmbeddedResource Include="$(IntersectRepoPath)\assets\intersect-logo-qu.ico" Pack="true" PackagePath="\" />
   </ItemGroup>

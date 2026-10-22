@@ -16,7 +16,7 @@ using Intersect.Server.Networking;
 
 namespace Intersect.Server.Dungeons;
 
-internal static class DungeonRunRuntime
+internal static partial class DungeonRunRuntime
 {
     private sealed class Run
     {
@@ -37,6 +37,15 @@ internal static class DungeonRunRuntime
         public Guid NavalEncounterId {get;init;}
         public bool BossDefeated { get; set; }
         public bool Finished { get; set; }
+        public bool CompletionStarted;
+        public Guid ChestMap;
+        public int ChestX, ChestY;
+        public long ChestUntil;
+        public long CompletedAtUnixMilliseconds;
+        public bool ChestPositionIsBoss;
+        public Dictionary<Guid, (Guid ItemId, int Quantity)[]> ChestLoot = [];
+        public HashSet<Guid> ChestClaimed = [];
+        public Dictionary<Guid,long> ChestRetryAt = [];
     }
 
     private static readonly Guid ResumeMarkerId=new("c1026000-0000-4000-8000-000000000012");
@@ -294,7 +303,7 @@ internal static class DungeonRunRuntime
         Run? run;
         lock(Gate)
             run=RunsByInstance.Values.FirstOrDefault(candidate=>!candidate.Finished && candidate.Participants.ContainsKey(player.Id) && IsDungeonMap(candidate,player.MapId) &&
-                (candidate.EndAtUnixMilliseconds<=0 || candidate.EndAtUnixMilliseconds>DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
+                (candidate.CompletionStarted || candidate.EndAtUnixMilliseconds<=0 || candidate.EndAtUnixMilliseconds>DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
         if(run!=null)
         {
             player.MapInstanceId=run.MapInstanceId;player.InstanceType=run.InstanceType;
@@ -320,7 +329,7 @@ internal static class DungeonRunRuntime
             return !RunsByInstance.TryGetValue(mapInstanceId, out var run) ||
                    run.Finished ||
                    !IsDungeonMap(run, mapId) ||
-                   run.Dungeon.NpcRespawnEnabled;
+                   !run.CompletionStarted && run.Dungeon.NpcRespawnEnabled;
         }
     }
 
@@ -333,7 +342,7 @@ internal static class DungeonRunRuntime
         lock (Gate)
         {
             if (!RunsByInstance.TryGetValue(npc.MapInstanceId, out run) ||
-                run.Finished ||
+                run.Finished || run.CompletionStarted ||
                 !IsDungeonMap(run, npc.MapId))
                 return;
         }
@@ -342,15 +351,19 @@ internal static class DungeonRunRuntime
             npc.Descriptor?.Id == run.Dungeon.FinalBossNpcId)
         {
             run.BossDefeated = true;
+            run.ChestPositionIsBoss = true;
+            run.ChestMap = npc.MapId; run.ChestX = npc.X; run.ChestY = npc.Y;
         }
 
+        if (!run.ChestPositionIsBoss)
+        { run.ChestMap = npc.MapId; run.ChestX = npc.X; run.ChestY = npc.Y; }
         if(run.NavalEncounterId!=Guid.Empty && (killer is Player actor || killer is Npc {PetOwner:Player}))
         {
             var participant=killer as Player ?? (killer as Npc)?.PetOwner;
             if(participant!=null)Naval.NavalSystem.CreditBoardingKill(run.NavalEncounterId,participant.Id,npc.Id);
         }
         EvaluateCompletion(run);
-        if (!run.Finished)
+        if (!run.Finished && !run.CompletionStarted)
             Broadcast(run, DungeonRunStatus.Active, BuildObjectiveText(run));
     }
 
@@ -419,6 +432,7 @@ internal static class DungeonRunRuntime
 
         _nextUpdateAt = nowMs + 500;
 
+        UpdateChests();
         Run[] expired;
         lock (Gate)
         {
@@ -433,7 +447,7 @@ internal static class DungeonRunRuntime
 
             expired = RunsByInstance.Values
                 .Where(run =>
-                    !run.Finished &&
+                    !run.Finished && !run.CompletionStarted &&
                     run.EndAtUnixMilliseconds > 0 &&
                     nowUnix >= run.EndAtUnixMilliseconds
                 )
@@ -446,7 +460,7 @@ internal static class DungeonRunRuntime
 
     private static void EvaluateCompletion(Run run)
     {
-        if (run.Finished)
+        if (run.Finished || run.CompletionStarted)
             return;
 
         var requirements = run.Dungeon.CompletionRequirements;
@@ -504,7 +518,7 @@ internal static class DungeonRunRuntime
         return parts.Count == 0 ? "Complete the dungeon." : string.Join(" • ", parts);
     }
 
-    private static void Complete(Run run)
+    private static void FinishComplete(Run run)
     {
         lock (Gate)
         {
@@ -516,7 +530,7 @@ internal static class DungeonRunRuntime
         if(run.NavalEncounterId!=Guid.Empty)Naval.NavalSystem.FinishEnemyBoarding(run.NavalEncounterId,true);
         var participants = GetParticipants(run).ToArray();
         var clearTimeMs = Math.Max(1L,
-            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - run.StartedAtUnixMilliseconds);
+            (run.CompletedAtUnixMilliseconds>0?run.CompletedAtUnixMilliseconds:DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) - run.StartedAtUnixMilliseconds);
 
         foreach (var player in participants)
         {
@@ -559,6 +573,7 @@ internal static class DungeonRunRuntime
             }
         }
 
+        SendChestClosed(run);
         Broadcast(run, DungeonRunStatus.Completed, "DUNGEON CLEARED");
 
         foreach (var player in participants)
@@ -580,6 +595,7 @@ internal static class DungeonRunRuntime
             run.Finished = true;
         }
 
+        SendChestClosed(run);
         if(run.NavalEncounterId!=Guid.Empty)Naval.NavalSystem.FinishEnemyBoarding(run.NavalEncounterId,false);
         var participants = GetParticipants(run).ToArray();
         foreach (var player in participants)
@@ -735,7 +751,7 @@ internal static class DungeonRunRuntime
         foreach (var participantId in run.Participants.Keys)
         {
             var player = Player.FindOnline(participantId);
-            if (player != null && (run.NavalEncounterId==Guid.Empty || Naval.NavalSystem.CanReceiveBoardingReward(player,run.NavalEncounterId)))
+            if (player != null && player.MapInstanceId==run.MapInstanceId && (run.NavalEncounterId==Guid.Empty || Naval.NavalSystem.CanReceiveBoardingReward(player,run.NavalEncounterId)))
                 yield return player;
         }
     }
@@ -757,7 +773,7 @@ internal static class DungeonRunRuntime
             run.Dungeon.Name,
             run.Dungeon.Rank.ToString(),
             status,
-            run.EndAtUnixMilliseconds,
+            run.CompletionStarted ? 0 : run.EndAtUnixMilliseconds,
             message,
             run.LivesRemaining,
             run.Dungeon.MaxLives,

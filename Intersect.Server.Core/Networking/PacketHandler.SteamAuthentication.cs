@@ -160,7 +160,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        if (Options.Instance.Player.MaxCharacters > 1 || !Options.Instance.Player.SkipCharacterSelect)
+        if (Intersect.Server.LogiCoins.LogiCoinPurchaseRuntime.CharacterLimit(client.User.Id) > 1 || !Options.Instance.Player.SkipCharacterSelect)
         {
             PacketSender.SendPlayerCharacters(client);
             return;

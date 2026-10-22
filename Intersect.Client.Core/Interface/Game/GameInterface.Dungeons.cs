@@ -70,6 +70,12 @@ public partial class GameInterface
     public void ApplyDungeonRunState(DungeonRunStatePacket packet)
     {
         _houseBlockedByDungeon=packet.Status==DungeonRunStatus.Active;
+        if(!_houseBlockedByDungeon) ApplyDungeonChest(new DungeonChestPacket());
+        if(_houseBlockedByDungeon)
+        {
+            HideHarbour();
+            Naval.NavalWorld.Clear();
+        }
         _dungeonRunHudWindow ??= new DungeonRunHudWindow(GameCanvas);
         _dungeonRunHudWindow.Apply(packet);
     }
@@ -77,5 +83,6 @@ public partial class GameInterface
     public void UpdateDungeonRunUi()
     {
         _dungeonRunHudWindow?.Update();
+        UpdateDungeonChest();
     }
 }

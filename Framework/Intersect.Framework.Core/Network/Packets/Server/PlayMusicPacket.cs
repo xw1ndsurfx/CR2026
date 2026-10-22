@@ -15,6 +15,8 @@ public partial class PlayMusicPacket : IntersectPacket
         BGM = bgm;
     }
 
+    [Key(1)] public int DurationSeconds {get;set;}
+
     [Key(0)]
     public string BGM { get; set; }
 

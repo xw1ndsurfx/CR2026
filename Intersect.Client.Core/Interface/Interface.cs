@@ -349,6 +349,8 @@ public static partial class Interface
             GameUi.Update(elapsed, total);
         }
 
+        Shared.UiDesignerRuntime.Update(Globals.GameState==GameStates.InGame?_canvasInGame:_canvasMainMenu);
+
         //Do not allow hiding of UI under several conditions
         var forceShowUi = Globals.InCraft ||
                           Globals.InBank ||

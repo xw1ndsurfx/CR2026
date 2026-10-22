@@ -20,7 +20,7 @@
 			"target": "Client and Editor/LICENSE.editor.md"
 		},
 		{
-			"source": "Intersect.Editor/bin/Release/**/win-x64/publish/Intersect Editor.exe",
+			"source": "Intersect.Editor/bin/Release/**/win-x64/publish/Logiklik 2D Engine.exe",
 			"target": "Client and Editor"
 		},
 		{

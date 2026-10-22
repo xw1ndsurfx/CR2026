@@ -29,6 +29,7 @@ internal static class CookingRuntime
     private sealed class Session
     {
         public required Guid Id;
+        public Guid CampfireId;
         public required Participant Host;
         public Participant? Partner;
         public CookingRecipeDefinition? Recipe;
@@ -74,7 +75,7 @@ internal static class CookingRuntime
         lock (Gate) return SessionsByPlayer.ContainsKey(playerId);
     }
 
-    internal static bool Join(Player player)
+    internal static bool Join(Player player, Guid campfireId = default)
     {
         _ = Timer;
 
@@ -101,6 +102,7 @@ internal static class CookingRuntime
                 var session = new Session
                 {
                     Id = Guid.NewGuid(),
+                    CampfireId = campfireId,
                     Host = new Participant { Player = player, Client = client },
                 };
                 SessionsByPlayer[player.Id] = session;
@@ -141,6 +143,7 @@ internal static class CookingRuntime
                 return;
             }
 
+            if (session.CampfireId != Guid.Empty && !Campfires.CampfireRuntime.CanCook(player, session.CampfireId)) return;
             var participant = GetParticipant(session, player.Id);
             if (participant == null || !ReferenceEquals(participant.Client, client))
                 return;
@@ -270,6 +273,7 @@ internal static class CookingRuntime
         var partner = player.Party.FirstOrDefault(member => member.Id == request.PartnerId);
         if (partner == null ||
             partner.Id == player.Id ||
+            (session.CampfireId != Guid.Empty && !Campfires.CampfireRuntime.CanCook(partner, session.CampfireId)) ||
             partner.Client is not { IsEditor: false } partnerClient ||
             partner.MapId != player.MapId ||
             partner.MapInstanceId != player.MapInstanceId ||
@@ -1027,6 +1031,7 @@ internal static class CookingRuntime
             State = new CookingSessionState
             {
                 Revision = session.Revision,
+                Campfire = session.CampfireId != Guid.Empty,
                 RecipeSelectionRequired = recipe == null,
                 WaitingForPartner = session.WaitingForPartner,
                 InvitePendingForYou =
@@ -1127,6 +1132,10 @@ internal static class CookingRuntime
             foreach (var session in SessionsByPlayer.Values.Distinct().ToArray())
             {
                 var participants = Participants(session).ToArray();
+                if (session.CampfireId != Guid.Empty && participants.Any(value =>
+                    !Campfires.CampfireRuntime.CanCook(value.Player, session.CampfireId)))
+                { close.Add(session); continue; }
+
                 if (participants.Any(value =>
                         value.Player.Client == null ||
                         !ReferenceEquals(value.Player.Client, value.Client) ||

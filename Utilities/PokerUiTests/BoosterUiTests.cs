@@ -44,11 +44,20 @@ internal static class BoosterUiTests
                 typeof(GameInterface).GetField("_experienceGains",hidden)!.SetValue(ui,new Queue<ActivityExperienceGainPacket>());
                 typeof(GameInterface).GetMethod("UpdateExperienceEventHud",hidden)!.Invoke(ui,null);
                 var badge=(Label)typeof(GameInterface).GetField("_premiumHud",hidden)!.GetValue(ui)!;
-                Check(!badge.IsHidden && badge.X==196 && badge.Y==4 && badge.Height==20 && badge.Width<350 && badge.Right<=640,
-                    "Premium must be compact beside the day phase and fit narrow screens");
+                Check(badge.IsHidden,"The old day-phase Premium banner must remain hidden.");
+                var minimapType=assembly.GetType("Intersect.Client.Interface.Game.MinimapHud",true)!;
+                var minimap=(Intersect.Client.Framework.Gwen.Control.Base)Activator.CreateInstance(minimapType,[premiumCanvas,new Action(()=>{})])!;
+                var updateBadge=minimapType.GetMethod("UpdatePremiumBadge",hidden)!;
+                updateBadge.Invoke(minimap,null);
+                var expiry=(Label)minimapType.GetField("_premium",hidden)!.GetValue(minimap)!;
+                Check(expiry.IsHidden,"Premium must stay hidden while at least seven days remain.");
+                receivePremium.Invoke(null,[new PremiumStatusPacket{RemainingMilliseconds=6L*86400000}]);
+                updateBadge.Invoke(minimap,null);
+                Check(!expiry.IsHidden && expiry.Right<=minimap.Width,"Short Premium expiry must fit inside the minimap.");
                 Globals.Database.ShowPremiumHud=false;
                 typeof(GameInterface).GetMethod("UpdateExperienceEventHud",hidden)!.Invoke(ui,null);
-                Check(badge.IsHidden,"Player preference must hide Premium status immediately");
+                updateBadge.Invoke(minimap,null);
+                Check(badge.IsHidden && expiry.IsHidden,"Player preference must hide Premium status immediately");
             }
             finally{receivePremium.Invoke(null,[new PremiumStatusPacket()]);}
             var shopType=assembly.GetType("Intersect.Client.Interface.Game.Shop.ShopWindow",true)!;var offer=shopType.GetMethod("TrySellOffer",flags)!;var item=new ItemDescriptor(Guid.NewGuid()){Price=100};var currency=new ItemDescriptor(Guid.NewGuid()){Name="Test currency"};ItemDescriptor.Lookup[currency.Id]=currency;

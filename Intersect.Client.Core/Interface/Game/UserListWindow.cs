@@ -229,7 +229,7 @@ internal sealed partial class UserListWindow : Window
 
         var name = Shorten(friend.Name, 26);
         var nameLabel = AddLabel(panel, "FriendName", name,
-            29, 4, 261, 27, 12, online ? Cream : Muted);
+            29, 4, 205, 27, 12, online ? Cream : Muted);
         if (online)
         {
             nameLabel.MouseInputEnabled = true;
@@ -241,6 +241,8 @@ internal sealed partial class UserListWindow : Window
             nameLabel.SetToolTipText(Intersect.Client.Localization.ClientLanguages.Text("Offline: ") + friend.Name);
         }
 
+        var teleport=NavalManagementWindow.Button(panel,"TeleportFriend",GuildText("Teleport"),238,6,54,25,()=>Networking.Network.SendPacket(new Intersect.Network.Packets.Client.TeleportToFriendPacket{FriendName=friend.Name}));
+        teleport.IsDisabled=!online;
         var invite=NavalManagementWindow.Button(panel,"InviteFriendHome",GuildText("Invite home"),298,6,91,25,()=>PacketSender.SendHouseAction(Intersect.Network.Packets.Housing.HouseAction.InviteFriend,name:friend.Name));
         invite.IsDisabled=!online;
         var profile = new Button(panel, "ViewFriendInfo") { Text = string.Empty };

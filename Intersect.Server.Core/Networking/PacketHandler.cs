@@ -437,7 +437,8 @@ internal sealed partial class PacketHandler
 
     public bool ProcessPacket(IPacket packet, Client client)
     {
-        if (client.Entity is { NavalShipId: var shipId } && shipId != Guid.Empty &&
+        if (client.Entity is { NavalShipId: var shipId } navalPlayer && shipId != Guid.Empty &&
+            !(navalPlayer.InstanceType!=Intersect.Framework.Core.GameObjects.Maps.MapInstanceType.Overworld && Intersect.Server.Naval.NavalSystem.IsEnemyBoarding(navalPlayer)) &&
             packet is MovePacket or AttackPacket or BlockPacket or DirectionPacket or UseSpellPacket or UseItemPacket or ActivateEventPacket)
             return true;
         if (!Registry.TryGetHandler(packet, out HandlePacketGeneric handler))
@@ -693,7 +694,7 @@ internal sealed partial class PacketHandler
         }
 
         // Show character select menu or login right away by following configuration preferences.
-        if (Options.Instance.Player.MaxCharacters > 1 || !Options.Instance.Player.SkipCharacterSelect)
+        if (Intersect.Server.LogiCoins.LogiCoinPurchaseRuntime.CharacterLimit(client.User.Id) > 1 || !Options.Instance.Player.SkipCharacterSelect)
         {
             PacketSender.SendPlayerCharacters(client);
         }
@@ -725,7 +726,7 @@ internal sealed partial class PacketHandler
                 : UserActivityHistory.UserAction.DisconnectLogout, $"{client.Name},{client.Entity?.Name}");
 
         if (packet.ReturningToCharSelect &&
-            (Options.Instance.Player.MaxCharacters > 1 || !Options.Instance.Player.SkipCharacterSelect))
+            (Intersect.Server.LogiCoins.LogiCoinPurchaseRuntime.CharacterLimit(client.User.Id) > 1 || !Options.Instance.Player.SkipCharacterSelect))
         {
             ApplicationContext.Context.Value?.Logger.LogDebug($"[{nameof(LogoutPacket)}] Returning to character select from player {client.Entity?.Id} ({client.User?.Id})");
             client.Entity?.TryLogout(false, true);
@@ -1665,6 +1666,13 @@ internal sealed partial class PacketHandler
             return;
         }
 
+        if(client.Entity!=null)return;
+        using(var accountContext=DbInterface.CreatePlayerContext(readOnly:true))
+        {
+            if(accountContext.Players.Count(character=>character.UserId==client.User.Id)>=Intersect.Server.LogiCoins.LogiCoinPurchaseRuntime.CharacterLimit(client.User.Id))
+            {PacketSender.SendError(client,Strings.Account.MaxCharacters,Strings.General.NoticeError);return;}
+        }
+
         if (!FieldChecking.IsValidUsername(packet.Name, Strings.Regex.Username))
         {
             PacketSender.SendError(client, Strings.Account.InvalidName, Strings.General.NoticeError);
@@ -2114,13 +2122,14 @@ internal sealed partial class PacketHandler
                 return;
             }
 
+            if (packet.Count is < 1 or > 10000) return;
             player.CraftingState = new CraftingState
             {
                 Id = packet.CraftId,
-                CraftCount = packet.Count,
-                RemainingCount = packet.Count,
-                DurationPerCraft = craftDescriptor.Time,
-                NextCraftCompletionTime = Timing.Global.Milliseconds + craftDescriptor.Time
+                CraftCount = craftDescriptor.Campfire != null ? 1 : packet.Count,
+                RemainingCount = craftDescriptor.Campfire != null ? 1 : packet.Count,
+                DurationPerCraft = Math.Max(100, craftDescriptor.Time),
+                NextCraftCompletionTime = Timing.Global.Milliseconds + Math.Max(100, craftDescriptor.Time)
             };
         }
     }
@@ -2767,7 +2776,7 @@ internal sealed partial class PacketHandler
     //NewCharacterPacket
     public void HandlePacket(Client client, NewCharacterPacket packet)
     {
-        if (client?.Characters?.Count < Options.Instance.Player.MaxCharacters)
+        if (client?.Characters?.Count < Intersect.Server.LogiCoins.LogiCoinPurchaseRuntime.CharacterLimit(client.User.Id))
         {
             PacketSender.SendGameObjects(client, GameObjectType.Class);
             PacketSender.SendCreateCharacter(client);

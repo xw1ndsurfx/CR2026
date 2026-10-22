@@ -32,6 +32,7 @@ internal sealed class MinimapHud : Base
     private readonly HudDisclosure _disclosure;
     private readonly Label _mapName;
     private readonly Label _coords;
+    private readonly Label _premium;
     private readonly Label _north;
     private readonly Label _east;
     private readonly Label _south;
@@ -47,6 +48,8 @@ internal sealed class MinimapHud : Base
         ShouldDrawBackground = false;
 
         _mapName = MakeLabel("MinimapMapName", 12, 5, 210, 24, 12);
+        _premium=MakeLabel("MinimapPremiumExpiry",110,264,158,22,9);
+        _premium.TextColorOverride=new Color(255,245,214,120);
         _coords = MakeLabel("MinimapCoords", 12, 281, 256, 18, 10);
         _north = MakeLabel("MinimapNorth", 124, 36, 32, 18, 12, "N");
         _east = MakeLabel("MinimapEast", 248, 138, 22, 18, 12, "E");
@@ -125,6 +128,7 @@ internal sealed class MinimapHud : Base
         _mapName.SetBounds(14, 5, Width - 52, 22);
         _coords.SetBounds(112, Height - 29, Width - 124, 18);
         _worldMapButton.SetBounds(14, Height - 51, 90, 24);
+        _premium.SetBounds(110,Height-51,158,24);
         // Keep the map canvas inside the compass rails and above the footer controls.
         // Child canvases render over earlier siblings, so never overlap labels or buttons.
         _mapCanvas.SetBounds(MapViewportX, MapViewportY, MapViewportWidth, MapViewportHeight);
@@ -143,6 +147,14 @@ internal sealed class MinimapHud : Base
 
         _mapName.Text = Intersect.Client.Localization.ClientLanguages.ContentText(map.Name);
         _coords.Text = $"{player.X}, {player.Y}";
+        UpdatePremiumBadge();
+    }
+
+    private void UpdatePremiumBadge()
+    {
+        var remaining=Intersect.Client.WorldEvents.PremiumState.Remaining;
+        _premium.IsHidden=remaining<=0 || remaining>=7L*86400000 || Globals.Database?.ShowPremiumHud==false || _disclosure.Collapsed;
+        if(!_premium.IsHidden)_premium.Text=Client.Localization.ClientLanguages.Format("Premium: {0}",Client.Localization.ClientLanguages.Format("{0}d {1}",remaining/86400000,$"{remaining/3600000%24:00}:{remaining/60000%60:00}"));
     }
 
     protected override void Render(SkinBase skin)

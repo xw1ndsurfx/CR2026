@@ -34,6 +34,14 @@ internal static class DungeonConfigurationRuntime
     internal static void Save(string json)
     {
         var configuration = DungeonConfiguration.FromJson(json);
+        foreach(var dungeon in configuration.Dungeons)
+        {
+            if(dungeon.Chest.Drops.Any(drop=>Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(drop.ItemId)==null))
+                throw new InvalidDataException("A chest reward item no longer exists.");
+            foreach(var animation in new[]{dungeon.Chest.AnimationId,dungeon.Chest.CompletionAnimationId})
+                if(animation!=Guid.Empty && Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor.Get(animation)==null)
+                    throw new InvalidDataException("A dungeon chest animation no longer exists.");
+        }
 
         lock (Gate)
         {

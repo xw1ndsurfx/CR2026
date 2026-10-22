@@ -135,6 +135,7 @@ public sealed partial class CookingSessionState
     [Key(60)] public int PeakCombo { get; set; }
     [Key(61)] public CookingIngredientState[] RecipeIngredients { get; set; } = [];
     [Key(62)] public Guid[] StageIngredientItemIds { get; set; } = [];
+    [Key(63)] public bool Campfire { get; set; }
 
     [IgnoreMember]
     public bool IsValid =>

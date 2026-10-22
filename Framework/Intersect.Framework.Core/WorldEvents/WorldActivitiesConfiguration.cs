@@ -67,7 +67,7 @@ public sealed class ExperienceEventDefinition
 }
 public enum WorldActivitiesSection
 {
-    All, Experience, CombatMusic, Bank, Pvp, Metalworking, Loot
+    All, Experience, CombatMusic, Bank, Pvp, Metalworking, Loot, Teleports
 }
 public sealed class CombatMusicRule
 {
@@ -78,6 +78,7 @@ public sealed class CombatMusicRule
 }
 public sealed class WorldActivitiesConfiguration
 {
+    public Intersect.Framework.Core.Travel.TeleportConfiguration Teleports {get;set;}=new();
     public Intersect.Framework.Core.Metalworking.MetalworkingConfiguration Metalworking { get; set; } = new();
     public Intersect.Framework.Core.Pvp.PvpConfiguration Pvp { get; set; } = new();
     public int BankRequiredLevel { get; set; } = 14;
@@ -94,7 +95,7 @@ public sealed class WorldActivitiesConfiguration
     public int CombatMusicGraceSeconds { get; set; } = 8;
     public List<ExperienceEventDefinition> LootEvents { get; set; } = [];
     public List<ExperienceEventDefinition> ExperienceEvents { get; set; } = [];
-    public bool IsValid => NavalCombatMusic!=null && NavalCombatMusic.Length<=260 && NavalCombatMusic==Path.GetFileName(NavalCombatMusic) && !NavalCombatMusic.Any(c=>char.IsControl(c) || c is '/' or '\\' or ':') && LootEvents is {Count: <=200} && LootEvents.All(e=>e is {IsValid:true}) && LootEvents.Select(e=>e.Id).Distinct().Count()==LootEvents.Count && Metalworking is { IsValid: true } && Pvp is { IsValid: true } && CombatMusicRules is { Count: <= 128 } && CombatMusicRules.All(r => r is { IsValid: true }) && CombatMusicRules.SelectMany(r => r.MapIds).Distinct().Count() == CombatMusicRules.Sum(r => r.MapIds.Length) && BankRequiredLevel is >= 1 and <= 10000 && BankOpeningCost is >= 0 and <= 1000000 && CombatMusic is { Length: <= 260 } && CombatMusic == Path.GetFileName(CombatMusic) && CombatMusicGraceSeconds is >= 0 and <= 120 && ExperienceEvents is { Count: <= 200 } && ExperienceEvents.All(e => e is { IsValid: true }) && ExperienceEvents.Select(e => e.Id).Distinct().Count() == ExperienceEvents.Count;
+    public bool IsValid => Teleports is {IsValid:true} && NavalCombatMusic!=null && NavalCombatMusic.Length<=260 && NavalCombatMusic==Path.GetFileName(NavalCombatMusic) && !NavalCombatMusic.Any(c=>char.IsControl(c) || c is '/' or '\\' or ':') && LootEvents is {Count: <=200} && LootEvents.All(e=>e is {IsValid:true}) && LootEvents.Select(e=>e.Id).Distinct().Count()==LootEvents.Count && Metalworking is { IsValid: true } && Pvp is { IsValid: true } && CombatMusicRules is { Count: <= 128 } && CombatMusicRules.All(r => r is { IsValid: true }) && CombatMusicRules.SelectMany(r => r.MapIds).Distinct().Count() == CombatMusicRules.Sum(r => r.MapIds.Length) && BankRequiredLevel is >= 1 and <= 10000 && BankOpeningCost is >= 0 and <= 1000000 && CombatMusic is { Length: <= 260 } && CombatMusic == Path.GetFileName(CombatMusic) && CombatMusicGraceSeconds is >= 0 and <= 120 && ExperienceEvents is { Count: <= 200 } && ExperienceEvents.All(e => e is { IsValid: true }) && ExperienceEvents.Select(e => e.Id).Distinct().Count() == ExperienceEvents.Count;
     public void ApplySection(WorldActivitiesConfiguration source, WorldActivitiesSection section)
     {
         switch (section)
@@ -108,6 +109,8 @@ public sealed class WorldActivitiesConfiguration
             case WorldActivitiesSection.Loot:
                 LootEvents=source.LootEvents;
                 break;
+            case WorldActivitiesSection.Teleports:
+                Teleports=source.Teleports;break;
             case WorldActivitiesSection.Experience:
                 ExperienceEvents = source.ExperienceEvents;
                 break;

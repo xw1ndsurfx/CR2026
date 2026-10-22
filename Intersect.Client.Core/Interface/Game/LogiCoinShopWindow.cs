@@ -166,18 +166,8 @@ internal sealed partial class LogiCoinShopWindow : Window
 
         // Gift / bag / refresh from Admurin's 4x3 toolbar sprite. The icons
         // have real actions and never cover the adjacent Buy LogiCoins button.
-        AddSidebarShortcut(0, "Special Offers", 544, () =>
-        {
-            _selectedCategory = LogiCoinOfferCategory.Special;
-            _pageIndex = 0;
-            RebuildCatalog();
-        });
-        AddSidebarShortcut(1, "Equipment", 572, () =>
-        {
-            _selectedCategory = LogiCoinOfferCategory.Equipment;
-            _pageIndex = 0;
-            RebuildCatalog();
-        });
+        AddSidebarShortcut(0,"Gift a friend",544,()=>{_gifting=!_gifting;UpdateSidebarIcons();_status.Text=Q(_gifting?"Choose an offer to gift.":"Choose an offer to purchase.");});
+        AddSidebarShortcut(1,"Purchase history",572,ShowPurchaseHistory);
         AddSidebarShortcut(2, "Refresh Shop", 600, () =>
             Networking.PacketSender.SendRequestLogiCoinShopState());
 
@@ -189,7 +179,7 @@ internal sealed partial class LogiCoinShopWindow : Window
             9, Cream, center: true);
         _buyMore.Clicked += (_, _) =>
         {
-            var url = LogiCoinShopConfiguration.Instance.ShopUrl;
+            var url = LogiCoinShopConfiguration.Instance.UrlForLanguage(Intersect.Client.Localization.ClientLanguages.Current);
             if (!string.IsNullOrWhiteSpace(url) && !Steam.OpenWebPageInOverlay(url))
                 BrowserUtils.Open(url);
         };
@@ -237,8 +227,8 @@ internal sealed partial class LogiCoinShopWindow : Window
         {
             var active = row switch
             {
-                0 => _selectedCategory == LogiCoinOfferCategory.Special,
-                1 => _selectedCategory == LogiCoinOfferCategory.Equipment,
+                0 => _gifting,
+                1 => false,
                 _ => false,
             };
             _sidebarIcons[row]?.SetTextureRect(active ? 56 : 0,
@@ -254,6 +244,7 @@ internal sealed partial class LogiCoinShopWindow : Window
         LogiCoinShopConfiguration.Load(state.ConfigurationJson);
         var configuration = LogiCoinShopConfiguration.Instance;
 
+        _history=state.History??[];
         _balance = state.Balance;
         _balanceLabel.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"LogiCoins: {_balance:N0}");
         _buyMore.IsDisabled = string.IsNullOrWhiteSpace(configuration.ShopUrl);
@@ -272,7 +263,7 @@ internal sealed partial class LogiCoinShopWindow : Window
             _premiumLabel.TextColorOverride = Muted;
         }
 
-        _status.Text = state.Message ?? string.Empty;
+        _status.Text = Q(state.Message ?? string.Empty);
         _status.TextColorOverride = state.PurchaseSucceeded ? Good : Cream;
         _enabled = configuration.Enabled;
         _offers = (configuration.Offers ?? [])
@@ -314,7 +305,7 @@ internal sealed partial class LogiCoinShopWindow : Window
         for (var i = 0; i < displayed.Length; i++)
         {
             var offer = displayed[i];
-            var tile = new OfferTile(_tiles, offer, DateTimeOffset.UtcNow, _balance);
+            var tile = new OfferTile(_tiles, offer, DateTimeOffset.UtcNow, _balance,RequestPurchase);
             tile.SetBounds(3 + i % 3 * 163, 3 + i / 3 * 132, 154, 126);
         }
 
@@ -370,7 +361,7 @@ internal sealed partial class LogiCoinShopWindow : Window
 
     private sealed class OfferTile : Base
     {
-        public OfferTile(Base parent, LogiCoinShopOffer offer, DateTimeOffset now, long balance)
+        public OfferTile(Base parent, LogiCoinShopOffer offer, DateTimeOffset now, long balance,Action<LogiCoinShopOffer> purchase)
             : base(parent, "OfferTile" + offer.Id.ToString("N"))
         {
             var frame = new CatalogCardBackground(this);
@@ -407,7 +398,7 @@ internal sealed partial class LogiCoinShopWindow : Window
                 if (buy.IsDisabled)
                     return;
                 buy.IsDisabled = true;
-                Networking.PacketSender.SendPurchaseLogiCoinOffer(offer.Id, Guid.NewGuid());
+                purchase(offer);
             };
             SetToolTipText(Shorten(offer.Description, 230) + "\n" + OfferContents(offer));
         }
@@ -500,6 +491,7 @@ internal sealed partial class LogiCoinShopWindow : Window
         {
             LogiCoinOfferType.Item =>
                 $"{offer.ItemQuantity:N0}x {ItemDescriptor.GetName(offer.ItemId)}",
+            LogiCoinOfferType.CharacterSlot => Intersect.Client.Localization.ClientLanguages.Format("Additional character slots: {0}",offer.CharacterSlots),
             LogiCoinOfferType.Premium =>
                 $"{offer.PremiumDays:N0} days Premium",
             LogiCoinOfferType.Bundle => string.Join(", ", (offer.Bundle ?? [])

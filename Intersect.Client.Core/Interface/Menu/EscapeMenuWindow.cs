@@ -45,7 +45,7 @@ public partial class EscapeMenuWindow : Window
 
         _returnToCharacterSelectionButton = new Button(this, nameof(_returnToCharacterSelectionButton))
         {
-            IsVisibleInParent = Options.Instance.Player.MaxCharacters > 1,
+            IsVisibleInParent = AccountCharacterSlots.Limit > 1,
             IsTabable = true,
             Text = Strings.EscapeMenu.CharacterSelect,
         };
@@ -130,6 +130,7 @@ public partial class EscapeMenuWindow : Window
 
     public void Update()
     {
+        _returnToCharacterSelectionButton.IsVisibleInParent = AccountCharacterSlots.Limit > 1;
         if (!IsHidden)
         {
             BringToFront();

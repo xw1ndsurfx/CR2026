@@ -27,6 +27,7 @@ public partial class FrmMain
         }
         AddSection(system, "Combat Music...", Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.CombatMusic);
         AddSection(system, "PvP & Capture the Chest...", Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.Pvp);
+        AddSection(system, Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Teleport settings",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName), Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.Teleports);
         AddSection(system, "Bank Settings...", Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.Bank);
         AddSection(menuStrip.Items.Cast<ToolStripItem>().OfType<ToolStripMenuItem>().Single(i => i.Name == "worldEventsToolStripMenuItem"), "Experience Events...", Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.Experience);
         AddSection(menuStrip.Items.Cast<ToolStripItem>().OfType<ToolStripMenuItem>().Single(i=>i.Name=="worldEventsToolStripMenuItem"),"Loot Booster Events...",Intersect.Framework.Core.WorldEvents.WorldActivitiesSection.Loot);

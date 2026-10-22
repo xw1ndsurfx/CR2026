@@ -14,7 +14,7 @@ using DrawingColor = System.Drawing.Color;
 
 namespace Intersect.Editor.Forms.Editors;
 
-public sealed class FrmDungeonConfiguration : DarkForm
+public sealed partial class FrmDungeonConfiguration : DarkForm
 {
     private sealed record IdChoice(Guid Id, string Text)
     {
@@ -457,6 +457,9 @@ public sealed class FrmDungeonConfiguration : DarkForm
         AddRow(table, "Objective", _requireFinalBoss);
         AddRow(table, "Objective", _requireAllMonsters);
         AddRow(table, "Final boss NPC", _finalBoss);
+        var chest = new Button { Text = ChestText("Configure completion chest"), Height = 32, Dock = DockStyle.Fill };
+        chest.Click += (_,_) => ConfigureChest();
+        AddRow(table, ChestText("Completion chest"), chest);
         AddRow(table, "Completion EXP", _completionExperience);
         AddRow(table, "Reward item", _completionItem);
         AddRow(table, "Reward item quantity", _completionItemQuantity);

@@ -130,12 +130,14 @@ internal static partial class NavalSystem
                     if(plan!=null) {for(var i=0;i<plan.Length;i++)player.Items[i].Set(plan[i]);player.NavalFleet.Remove(owned);saved=SaveManagement(player);}
                 }
                 finally {if(!saved){player.NavalFleetJson=before;for(var i=0;i<items.Length;i++)player.Items[i].Set(items[i]);}PacketSender.SendInventory(player);}
+                if(saved)PlayShopTradeSound(player,true);
                 message=saved?"Ship sold.":"Transaction failed. Nothing was changed.";
             }
             else if (packet.Action == HarbourAction.Repair)
             {
-                if (owned == null || owned.Health >= 100) message = "Choose a damaged or sunken ship you own.";
-                else message = PurchaseOrRepair(player, offer, owned);
+                if (packet.View == HarbourView.Fleet && !premium) return;
+                if (offer == null || owned == null || owned.Health >= 100) message = "Choose a damaged or sunken ship you own.";
+                else message = PurchaseOrRepair(player, offer, owned,packet.View==HarbourView.Shop);
             }
             else if (packet.Action == HarbourAction.Launch)
             {
@@ -164,7 +166,7 @@ internal static partial class NavalSystem
         }
     }
 
-    private static string PurchaseOrRepair(Player player, HarbourOffer offer, OwnedShip repair)
+    private static string PurchaseOrRepair(Player player, HarbourOffer offer, OwnedShip repair, bool shopSound=true)
     {
         var cost = repair == null ? offer.Price : ShipFleetRules.RepairCost(offer.RepairPrice,repair.Health);
         var currency = Currency(offer);
@@ -178,6 +180,7 @@ internal static partial class NavalSystem
                 () => { if (repair == null) player.NavalFleet.Add(new OwnedShip { ModelId = offer.Id,CargoCapacity=offer.Ship.CargoCapacity }); else repair.Health = 100; },
                 () => player.User.Save(force: true) == UserSaveResult.Completed,
                 () => { player.NavalFleetJson = fleetBefore; for (var i = 0; i < inventory.Length; i++) player.Items[i].Set(inventory[i]); });
+            if(result==HarbourTradeResult.Completed && shopSound)PlayShopTradeSound(player,false);
             return result switch
             {
                 HarbourTradeResult.Completed => repair == null ? "Ship purchased." : "Ship fully repaired.",

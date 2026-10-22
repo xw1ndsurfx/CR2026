@@ -13,7 +13,7 @@
 
   <PropertyGroup>
     <PackageId>AscensionGameDev.Intersect.Server</PackageId>
-    <Description>Library for the public Intersect Server API</Description>
+    <Description>Corps Royaux — Game Server</Description>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <RootNamespace>Intersect.Server</RootNamespace>
     <AssemblyName>Intersect Server</AssemblyName>

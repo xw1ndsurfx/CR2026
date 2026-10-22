@@ -24,6 +24,9 @@ public partial class LogiCoinShopStatePacket : IntersectPacket
         Message = message ?? string.Empty;
     }
 
+    [Key(6)]public int CharacterLimit {get;set;}
+    [Key(5)]public LogiCoinPurchaseHistoryRow[] History {get;set;}=[];
+
     [Key(0)]
     public string ConfigurationJson { get; set; } = string.Empty;
 

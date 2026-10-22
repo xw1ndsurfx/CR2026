@@ -14,6 +14,8 @@ public partial class InventoryWindow : Window
     private readonly ScrollControl _slotContainer;
     private readonly ContextMenu _contextMenu;
     private Button? _ammoButton;
+    private Base? _inventoryActions;
+    private Button? _campfireButton;
 
     public InventoryWindow(Canvas gameCanvas) : base(gameCanvas, Strings.Inventory.Title, false, nameof(InventoryWindow))
     {
@@ -51,10 +53,16 @@ public partial class InventoryWindow : Window
 
     internal void ConfigureAmmoFooter()
     {
-        _ammoButton??=NavalManagementWindow.Button(this,"InventoryAmmo","Ammo",0,0,Width-24,28,()=>NavalManagementWindow.Request(Intersect.Framework.Core.Naval.NavalManageAction.Ammo));
-        _ammoButton.Dock=Pos.Bottom;
-        _ammoButton.Margin=new Margin(0,4,0,0);
-        _ammoButton.BringToFront();
+        _inventoryActions ??= new Base(this, "InventoryActions") { Dock = Pos.Bottom, Height = 32 };
+        var width = Math.Max(70, (Width - 28) / 2);
+        _ammoButton ??= NavalManagementWindow.Button(_inventoryActions, "InventoryAmmo", "Ammo", 0, 0, width, 28,
+            () => NavalManagementWindow.Request(Intersect.Framework.Core.Naval.NavalManageAction.Ammo));
+        _campfireButton ??= NavalManagementWindow.Button(_inventoryActions, "InventoryCampfire", "Campfire", width + 4, 0, width, 28,
+            () => Intersect.Client.Networking.Network.SendPacket(new Intersect.Network.Packets.Client.CampfireRequestPacket()));
+        _ammoButton.SetBounds(0, 0, width, 28);
+        _campfireButton.SetBounds(width + 4, 0, width, 28);
+        _campfireButton.Text = Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Campfire", ClientLanguages.Current);
+        _inventoryActions.BringToFront();
         // Bottom docking already reserves the button height; a second bottom margin leaves an empty strip.
         var margin=_slotContainer.Margin;
         _slotContainer.Margin=new Margin(margin.Left,margin.Top,margin.Right,0);

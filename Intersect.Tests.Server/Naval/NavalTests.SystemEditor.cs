@@ -50,7 +50,7 @@ public sealed partial class NavalTests
         foreach (var action in Enum.GetValues<HarbourAction>())
         {
             Assert.That(HarbourAccessRules.Allows(HarbourView.Fleet, action),
-                Is.EqualTo(action is HarbourAction.Open or HarbourAction.Launch or HarbourAction.Rename or HarbourAction.ClaimCargo or HarbourAction.DiscardCargo));
+                Is.EqualTo(action is HarbourAction.Open or HarbourAction.Launch or HarbourAction.Rename or HarbourAction.ClaimCargo or HarbourAction.DiscardCargo or HarbourAction.Repair));
             Assert.That(HarbourAccessRules.Allows(HarbourView.Shop, action),
                 Is.EqualTo(action is HarbourAction.Open or HarbourAction.Buy or HarbourAction.Repair or HarbourAction.Sell));
         }

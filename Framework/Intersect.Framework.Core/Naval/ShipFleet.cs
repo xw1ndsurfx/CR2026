@@ -42,7 +42,7 @@ public static class HarbourAccessRules
 {
     public static bool Allows(HarbourView view, HarbourAction action) => view switch
     {
-        HarbourView.Fleet => action is HarbourAction.Open or HarbourAction.Launch or HarbourAction.Rename or HarbourAction.ClaimCargo or HarbourAction.DiscardCargo,
+        HarbourView.Fleet => action is HarbourAction.Open or HarbourAction.Launch or HarbourAction.Rename or HarbourAction.ClaimCargo or HarbourAction.DiscardCargo or HarbourAction.Repair,
         HarbourView.Crew => action is HarbourAction.Open or HarbourAction.JoinCrew or HarbourAction.LeaveCrew or HarbourAction.ToggleCrewBoarding or HarbourAction.ClaimCargo or HarbourAction.DiscardCargo,
         HarbourView.Shop => action is HarbourAction.Open or HarbourAction.Buy or HarbourAction.Repair or HarbourAction.Sell,
         _ => false,

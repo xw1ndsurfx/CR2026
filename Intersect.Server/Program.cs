@@ -19,6 +19,7 @@ internal static class Program
     public static void Main(string[] args)
     {
         StartupDiagnostics.Initialize();
+        StartupDiagnostics.Mark("Server build "+Intersect.Framework.Core.BuildIdentity.Label);
         CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-US");
 
         try
