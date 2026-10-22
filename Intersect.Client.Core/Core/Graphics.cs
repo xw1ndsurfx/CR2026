@@ -272,7 +272,7 @@ public static partial class Graphics
         if (GridSwitched)
         {
             //Brightness
-            var brightnessTarget = (byte)(currentMap.Brightness / 100f * 255);
+            var brightnessTarget = (byte)(currentMap.EffectiveBrightness / 100f * 255);
             BrightnessLevel = brightnessTarget;
             PlayerLightColor.R = currentMap.PlayerLightColor.R;
             PlayerLightColor.G = currentMap.PlayerLightColor.G;
@@ -535,6 +535,9 @@ public static partial class Graphics
                 }
             }
         }
+
+        // Emotes remain above player, event and NPC labels without changing ordinary spell layers.
+        foreach (var animation in animations) animation.DrawAboveLabels();
 
         //Draw action msg's
         for (var x = Math.Max(gridX - 1, 0); x <= Math.Min(gridX + 1, mapGridWidth - 1); x++)
@@ -1088,7 +1091,7 @@ public static partial class Graphics
             DrawGameTexture(
                 Renderer.WhitePixel, new FloatRect(0, 0, 1, 1),
                 destRect,
-                outdoorTint, sDarknessTexture, GameBlendModes.None
+                RainTint(map,outdoorTint), sDarknessTexture, GameBlendModes.None
             );
         }
 
@@ -1103,6 +1106,13 @@ public static partial class Graphics
 
         DrawLights();
         sDarknessTexture.End();
+    }
+
+    internal static Color RainTint(MapInstance map, Color normal)
+    {
+        var brightness=map.RainAdjustedBrightness(100,MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
+        if(brightness==100)return normal;
+        return new Color(255-(255-normal.A)*brightness/100,normal.R,normal.G,normal.B);
     }
 
     public static void DrawDarkness()
@@ -1189,7 +1199,7 @@ public static partial class Graphics
         {
             float ecTime = Timing.Global.MillisecondsUtc - sLightUpdate;
             var valChange = 255 * ecTime / 2000f;
-            var brightnessTarget = (byte)(map.Brightness / 100f * 255);
+            var brightnessTarget = (byte)(map.EffectiveBrightness / 100f * 255);
             if (BrightnessLevel < brightnessTarget)
             {
                 if (BrightnessLevel + valChange > brightnessTarget)

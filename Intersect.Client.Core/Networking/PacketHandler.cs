@@ -2083,6 +2083,7 @@ internal sealed partial class PacketHandler
     public void HandlePacket(IPacketSender packetSender, TimePacket packet)
     {
         Maps.MapWeatherClock.Synchronize(packet.ServerUtcMilliseconds);
+        Maps.MapWeatherClock.SetForcedRain(packet.ForcedRainStartedUtc,packet.ForcedRainUntilUtc);
         Time.LoadTime(
             packet.Time,
             Color.FromArgb(packet.Color.A, packet.Color.R, packet.Color.G, packet.Color.B),

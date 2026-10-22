@@ -18,6 +18,7 @@ public abstract partial class GameDatabase
     public bool ShowMyTitle { get; set; } = true;
     public bool ShowPlayerTitles { get; set; } = true;
     public bool ShowQuestHud { get; set; } = true;
+    public bool ShowPremiumHud { get; set; } = true;
     public bool ShowWorldBossHud { get; set; } = true;
     public bool ShowInvasionHud { get; set; } = true;
     public bool ShowMinimap { get; set; } = true;
@@ -177,6 +178,7 @@ public abstract partial class GameDatabase
         ShowMyTitle = LoadPreference(nameof(ShowMyTitle), true);
         ShowPlayerTitles = LoadPreference(nameof(ShowPlayerTitles), true);
         ShowQuestHud = LoadPreference(nameof(ShowQuestHud), true);
+        ShowPremiumHud = LoadPreference(nameof(ShowPremiumHud), true);
         ShowWorldBossHud = LoadPreference(nameof(ShowWorldBossHud), true);
         ShowInvasionHud = LoadPreference(nameof(ShowInvasionHud), true);
         ShowMinimap = LoadPreference(nameof(ShowMinimap), true);
@@ -236,6 +238,7 @@ public abstract partial class GameDatabase
         SavePreference(nameof(ShowMyTitle), ShowMyTitle);
         SavePreference(nameof(ShowPlayerTitles), ShowPlayerTitles);
         SavePreference(nameof(ShowQuestHud), ShowQuestHud);
+        SavePreference(nameof(ShowPremiumHud), ShowPremiumHud);
         SavePreference(nameof(ShowWorldBossHud), ShowWorldBossHud);
         SavePreference(nameof(ShowInvasionHud), ShowInvasionHud);
         SavePreference(nameof(ShowMinimap), ShowMinimap);

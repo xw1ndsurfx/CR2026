@@ -65,6 +65,7 @@ public partial class MenuContainer : Panel
     private readonly Button _escapeMenuButton;
 
     private readonly ImagePanel _menuToggleButtonContainer;
+    private int _expandedMenuToggleLeft;
     private readonly Button _menuToggleButton;
 
     private readonly MapItemWindow _mapItemWindow;
@@ -449,9 +450,10 @@ public partial class MenuContainer : Panel
         // the vertical stack taller, so the old fixed bottom-left position overlapped it.
         _menuToggleButtonContainer.Dock = Pos.None;
         _menuToggleButtonContainer.Alignment = [Alignments.Bottom, Alignments.Left];
+        _expandedMenuToggleLeft = buttonWidth + toggleGap;
         _menuToggleButtonContainer.AlignmentPadding = new Padding
         {
-            Left = buttonWidth + toggleGap,
+            Left = _expandedMenuToggleLeft,
             Bottom = 4,
         };
         _menuToggleButtonContainer.Margin = Margin.Zero;
@@ -802,7 +804,12 @@ public partial class MenuContainer : Panel
             child.IsHidden = setHidden;
         }
 
-        // Assure que le conteneur du bouton reste visible (sécurité)
+        _menuToggleButtonContainer.AlignmentPadding = new Padding
+        {
+            Left = setHidden ? 4 : _expandedMenuToggleLeft,
+            Bottom = 4,
+        };
+        _menuToggleButtonContainer.Invalidate();
         _menuToggleButtonContainer.IsHidden = false;
     }
 }

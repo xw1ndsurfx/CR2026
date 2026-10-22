@@ -16,8 +16,7 @@ public partial class MapInstance
     private string _rainFilename = "";
     private long _rainRetryAt;
 
-    internal bool RainIsConfigured => WeatherIntensity > 0 &&
-        (WeatherEffects.GeneratedRain || WeatherAnimationId != Guid.Empty);
+    internal bool RainIsConfigured => !IsIndoors && HasConfiguredRain;
 
     private void UpdateRainSound()
     {
@@ -43,10 +42,10 @@ public partial class MapInstance
 
     internal void DrawRainPuddles()
     {
-        if (Attributes == null) return;
+        if (Attributes == null || IsIndoors) return;
         var amount = _puddleState.Update(Id, MapWeatherClock.UtcMilliseconds,
             WeatherEffects.RandomWeather && RainIsConfigured, RainIsConfigured && WeatherIsActive,
-            WeatherEffects.PuddleDryMinutes);
+            WeatherEffects.PuddleDryMinutes, MapWeatherClock.ForcedRainStartedUtc, MapWeatherClock.ForcedRainUntilUtc);
         if (amount <= .01f) return;
         var tileWidth = Options.Instance.Map.TileWidth;
         var tileHeight = Options.Instance.Map.TileHeight;

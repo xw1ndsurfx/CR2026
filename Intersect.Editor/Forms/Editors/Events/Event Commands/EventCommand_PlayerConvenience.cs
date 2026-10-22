@@ -11,7 +11,14 @@ internal sealed class EventCommandPlayerConvenience:UserControl
         Size=new(520,230);
         var save=new Button {Text=T("Save"),Left=260,Top=170,Width=110};
         var cancel=new Button {Text=T("Cancel"),Left=380,Top=170,Width=110};
-        if(command is PlayerBonusCommand bonus)
+        if(command is ForceRainCommand rain)
+        {
+            var seconds=new NumericUpDown {Name="RainDuration",Left=250,Top=30,Width=230,Minimum=1,Maximum=604800,Value=Math.Clamp(rain.DurationSeconds,1,604800)};
+            Controls.AddRange([new Label {Text=T("Duration (seconds)"),Left=20,Top=30,Width=220},seconds,
+                new Label {Text=T("Starts rain on all configured outdoor maps. Indoor maps stay dry."),Left=20,Top=80,Width=460,Height=60}]);
+            save.Click+=(_,_)=>{rain.DurationSeconds=(int)seconds.Value;editor.FinishCommandEdit();};
+        }
+        else if(command is PlayerBonusCommand bonus)
         {
             var percent=new NumericUpDown {Left=250,Top=30,Width=230,Minimum=1,Maximum=1000,Value=Math.Clamp(bonus.Percent,1,1000)};
             var seconds=new NumericUpDown {Left=250,Top=80,Width=230,Minimum=1,Maximum=604800,Value=Math.Clamp(bonus.DurationSeconds,1,604800)};

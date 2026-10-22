@@ -34,13 +34,13 @@ internal static class QualityOfLifeEditorTests
         var map=new Intersect.Framework.Core.GameObjects.Maps.MapDescriptor(Guid.NewGuid());
         var mapProperties=Activator.CreateInstance(mapPropertiesType,map)!;
         var properties=System.ComponentModel.TypeDescriptor.GetProperties(mapProperties);
-        foreach(var name in new[]{"WeatherRainSound","WeatherThunderSound","WeatherPuddleDryMinutes","WeatherGeneratedRain","RandomWeather","WeatherFlashes","WeatherFlashOpacity","WeatherLightning","WeatherLightningAnimation","WeatherGroundSplashes","WeatherSplashAnimation"})
+        foreach(var name in new[]{"WeatherOverrideRainFog","WeatherRainFog","WeatherRainFogOpacity","WeatherRainFogXSpeed","WeatherRainFogYSpeed","WeatherOverrideRainBrightness","WeatherRainBrightness","WeatherRainSound","WeatherThunderSound","WeatherPuddleDryMinutes","WeatherGeneratedRain","RandomWeather","WeatherFlashes","WeatherFlashOpacity","WeatherLightning","WeatherLightningAnimation","WeatherGroundSplashes","WeatherSplashAnimation"})
         {
             var property=properties[name]??throw new Exception("Missing map weather property: "+name);
             if(property.Category!=properties["Weather"]!.Category)throw new Exception("Weather settings must stay in Map Properties > Weather.");
             if(property.DisplayName==name)throw new Exception("Weather property lacks a localized caption: "+name);
         }
-        if(map.WeatherEffects.GeneratedRain || map.WeatherEffects.RandomWeather || map.WeatherEffects.GroundSplashes)throw new Exception("Legacy maps must retain their existing continuous weather by default.");
+        if(!map.WeatherEffects.GeneratedRain || !map.WeatherEffects.RandomWeather || !map.WeatherEffects.GroundSplashes || map.WeatherIntensity!=50)throw new Exception("New maps must use the requested engine-rain defaults.");
         System.Console.WriteLine("PASS Map Properties exposes localized random weather, flashes, lightning and ground splash settings in Weather");
         System.Console.WriteLine("PASS item types, potion/marketplace layout, default presentation controls and en/fr/es convenience labels");
     }

@@ -3,6 +3,18 @@ using Newtonsoft.Json;
 namespace Intersect.Framework.Core.GameObjects.Maps;
 public sealed class MapWeatherEffects
 {
+    public static MapWeatherEffects NewMapDefaults() => new()
+    {
+        RandomWeather = true, GeneratedRain = true, Flashes = true, Lightning = true,
+        GroundSplashes = true, RainSound = "rain_medium.wav", ThunderSound = "thunder_crack_3.wav",
+    };
+    public bool OverrideRainFog {get;set;}
+    public string RainFog {get;set;} = "";
+    public int RainFogOpacity {get;set;} = 100;
+    public int RainFogXSpeed {get;set;}
+    public int RainFogYSpeed {get;set;}
+    public bool OverrideRainBrightness {get;set;}
+    public int RainBrightness {get;set;} = 70;
     public bool RandomWeather {get;set;}
     public bool GeneratedRain {get;set;}
     public string RainSound {get;set;} = "";
@@ -17,7 +29,21 @@ public sealed class MapWeatherEffects
 }
 public partial class MapDescriptor
 {
-    [NotMapped] public MapWeatherEffects WeatherEffects {get;set;}=new();
+    public override void Load(string json, bool keepCreationTime = false)
+    {
+        var source=Newtonsoft.Json.Linq.JObject.Parse(json);
+        if(source.GetValue(nameof(WeatherEffects),StringComparison.OrdinalIgnoreCase)==null &&
+            source.GetValue(nameof(WeatherEffectsJson),StringComparison.OrdinalIgnoreCase)==null)
+            WeatherEffects=new();
+        base.Load(json,keepCreationTime);
+    }
+    [NotMapped] public MapWeatherEffects WeatherEffects {get;set;}=MapWeatherEffects.NewMapDefaults();
+    [NotMapped,JsonIgnore] public bool HasConfiguredRain => WeatherIntensity > 0 && (WeatherEffects.GeneratedRain || WeatherAnimationId != Guid.Empty);
+    public bool WeatherActive(long utc, long forcedRainUntil = 0) => !IsIndoors &&
+        (!WeatherEffects.RandomWeather || HasConfiguredRain && forcedRainUntil > utc || MapWeatherCycle.IsActive(Id,utc));
+    public bool RainActive(long utc, long forcedRainUntil = 0) => HasConfiguredRain && WeatherActive(utc,forcedRainUntil);
+    public int RainAdjustedBrightness(int normal, long utc, long forcedRainUntil = 0) =>
+        RainActive(utc,forcedRainUntil) && WeatherEffects.OverrideRainBrightness ? Math.Clamp(WeatherEffects.RainBrightness,0,100) : normal;
     [Column("WeatherEffects"),JsonIgnore]
     public string WeatherEffectsJson
     {

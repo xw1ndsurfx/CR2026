@@ -1252,6 +1252,7 @@ public static partial class CommandPrinter
         return Strings.EventCommandList.openshop.ToString(ShopDescriptor.GetName(command.ShopId));
     }
 
+    private static string GetCommandText(ForceRainCommand command,MapInstance map)=>Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Start rain on configured maps",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)+$" / {command.DurationSeconds}s";
     private static string GetCommandText(GrantExperienceBonusCommand command,MapInstance map)=>Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Grant EXP bonus",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)+$" +{command.Percent}% / {command.DurationSeconds}s";
     private static string GetCommandText(GrantLootBonusCommand command,MapInstance map)=>Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Grant loot bonus",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)+$" +{command.Percent}% / {command.DurationSeconds}s";
     private static string GetCommandText(OpenAdventureLobbyCommand command,MapInstance map)=>Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Open adventure lobby",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);

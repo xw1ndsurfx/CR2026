@@ -17,7 +17,9 @@ partial class CustomCategory : CategoryAttribute
 
     public CustomCategory(string category) : base(category)
     {
+        Key = category;
     }
+    internal string Key {get;}
 
     protected override string GetLocalizedString(string value)
     {
@@ -476,7 +478,7 @@ partial class MapProperties
     }
 
     [CustomCategory("weather"), CustomDescription("weatherintensitydesc"), CustomDisplayName("weatherintensity"),
-     DefaultValue(0)]
+     DefaultValue(50)]
     public int WeatherAlpha
     {
         get => mMyMap.WeatherIntensity;

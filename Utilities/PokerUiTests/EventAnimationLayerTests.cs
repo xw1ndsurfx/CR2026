@@ -59,12 +59,29 @@ internal static class EventAnimationLayerTests
         anim.DrawEventOverlay(); Check(requests.Count == 0, "Map effects must not be promoted to the event foreground");
         anim.Draw(false, true); anim.Draw(true, false);
         Check(requests.SequenceEqual(new[] { "below-event", "above-event" }), "Ordinary map animations keep their configured rendering passes");
+        anim.Descriptor.Folder="[X] - Emotes";
+        foreach(var entityType in new[]{typeof(Player),typeof(Entity),typeof(Intersect.Client.Entities.Events.Event)})
+        {
+            var entity=(Entity)RuntimeHelpers.GetUninitializedObject(entityType);GC.SuppressFinalize(entity);
+            if(entityType==typeof(Entity))typeof(Entity).GetField("<Type>k__BackingField",flags)!.SetValue(entity,Intersect.Enums.EntityType.GlobalEntity);
+            typeof(Entity).GetProperty(nameof(Entity.Status))!.SetValue(entity,new List<Intersect.Client.Framework.Entities.IStatus>());
+            typeof(Animation).GetField("mParent",flags)!.SetValue(anim,entity);
+            requests.Clear();
+            foreach(var upper in new[]{false,true})foreach(var alternate in new[]{false,true})anim.Draw(upper,alternate);
+            anim.DrawEventOverlay();anim.DrawEventBehind();anim.DrawEventAtCharacter(false);anim.DrawEventAtCharacter(true);
+            Check(requests.Count==0,"Emotes must wait until after labels for "+entityType.Name);
+            anim.DrawAboveLabels();
+            Check(requests.SequenceEqual(new[]{"below-event","above-event"}),"Both emote layers render exactly once above labels for "+entityType.Name);
+            requests.Clear();entity.IsHidden=true;anim.DrawAboveLabels();
+            Check(requests.Count==0,"Hidden entities must not leak emotes in the final pass");
+        }
+        anim.Descriptor.Folder="";
         requests.Clear();
         typeof(Animation).GetField("mParent", flags)!.SetValue(anim, parent);
         typeof(Animation).GetField("_disposed", flags)!.SetValue(anim, true);
         anim.DrawEventOverlay(); Check(requests.Count == 0, "Disposed animations cannot reappear in the foreground snapshot");
         content.TextureRequested = null; Globals.ContentManager = previousContent; Globals.Database = previousPreferences;
-        System.Console.WriteLine("PASS event animation foreground: foreground routing, both layers, alternate layers, hidden/disposed guards and ordinary animation isolation");
+        System.Console.WriteLine("PASS event animation foreground: foreground routing, both layers, alternate layers, hidden/disposed guards and ordinary animation isolation and emotes above all entity labels");
     }
     private static void Check(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
 }

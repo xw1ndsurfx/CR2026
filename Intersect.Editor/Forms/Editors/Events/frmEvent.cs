@@ -790,6 +790,8 @@ public partial class FrmEvent : Form
                 tmpCommand = new StartDungeonCommand();
 
                 break;
+            case EventCommandType.ForceRain:
+                tmpCommand=new ForceRainCommand();break;
             case EventCommandType.GrantExperienceBonus:
                 tmpCommand=new GrantExperienceBonusCommand();break;
             case EventCommandType.GrantLootBonus:
@@ -881,6 +883,13 @@ public partial class FrmEvent : Form
 
     private void AddNavalShopCommand()
     {
+        if(!lstCommands.Nodes.Cast<TreeNode>().Any(n=>n.Name=="weather"))
+        {
+            string T(string text)=>Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(text,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+            var weather=new TreeNode(T("Weather")){Name="weather"};
+            weather.Nodes.Add(new TreeNode(T("Start rain on configured maps")){Name="ForceRain",Tag=(int)EventCommandType.ForceRain});
+            lstCommands.Nodes.Add(weather);
+        }
         var shops = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
         if(shops!=null)
         {
@@ -1705,6 +1714,7 @@ public partial class FrmEvent : Form
             case EventCommandType.StartDungeon:
                 cmdWindow = new EventCommand_StartDungeon((StartDungeonCommand)command, this);
                 break;
+            case EventCommandType.ForceRain:
             case EventCommandType.GrantExperienceBonus:
             case EventCommandType.GrantLootBonus:
             case EventCommandType.OpenAdventureLobby:

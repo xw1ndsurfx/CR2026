@@ -13,7 +13,9 @@ public partial class MapInstance
     private readonly List<(Animation Animation,long Started)> _stormAnimations=[];
     private long _nextStrike,_strikeAt;
     private float _strikeX,_strikeY;
-    internal bool WeatherIsActive=>!WeatherEffects.RandomWeather || MapWeatherCycle.IsActive(Id,MapWeatherClock.UtcMilliseconds);
+    internal bool WeatherIsActive=>WeatherActive(MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
+    internal bool IsRaining=>RainActive(MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
+    internal int EffectiveBrightness=>RainAdjustedBrightness(Brightness,MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
     private void SpawnRainSplash(float x,float y)
     {
         if(_rainSplashes.Count+_stormAnimations.Count>=96)return;
