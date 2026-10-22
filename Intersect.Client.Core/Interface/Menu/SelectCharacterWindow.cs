@@ -2,6 +2,7 @@ using Intersect.Client.Core;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Graphics;
+using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Gwen.Control.EventArguments;
@@ -49,6 +50,7 @@ public partial class SelectCharacterWindow : Window
     private readonly Panel _characterPreviewPanel;
     private readonly Panel _previewContainer;
     private readonly Panel _buttonsPanel;
+    private CharacterDetailsPanel? _characterDetailsPanel;
 
 
     public SelectCharacterWindow(Canvas parent, MainMenu mainMenu) : base(
@@ -228,8 +230,12 @@ public partial class SelectCharacterWindow : Window
         _previewContainer.SetBounds(78, 48, 112, 112);
         _preview.SetBounds(0, 0, 112, 112);
 
-        static void PlaceProfileLabel(Label label, int x, int y, int width, Color color)
+        _characterDetailsPanel??=new CharacterDetailsPanel(_characterPreviewPanel);
+        _characterDetailsPanel.SetBounds(181,37,360,142);
+
+        void PlaceProfileLabel(Label label, int x, int y, int width, Color color)
         {
+            label.Parent=_characterDetailsPanel;
             label.Dock = Pos.None;
             label.AutoSizeToContents = false;
             label.TextAlign = Pos.Left | Pos.CenterV;
@@ -239,11 +245,11 @@ public partial class SelectCharacterWindow : Window
 
         // Color uses ARGB ordering here. Keep CR accents warm gold/brown - never purple.
         var captionColor = new Color(255, 236, 210, 153);
-        const int captionX = 205;
-        const int valueX = 278;
+        const int captionX = 24;
+        const int valueX = 97;
         const int captionWidth = 68;
-        const int valueWidth = 285;
-        const int firstRowY = 55;
+        const int valueWidth = 247;
+        const int firstRowY = 18;
         const int rowGap = 24;
 
         PlaceProfileLabel(_infoLabel, captionX, firstRowY, captionWidth, captionColor);
@@ -322,6 +328,7 @@ public partial class SelectCharacterWindow : Window
             _buttonDelete.Hide();
             _buttonNew.Show();
 
+            _infoLabel.Width=_characterDetailsPanel!.Width-48;
             _infoLabel.Text = Strings.CharacterSelection.Empty;
             _nameLabel.Text = string.Empty;
             _levelCaptionLabel.Text = string.Empty;
@@ -333,6 +340,7 @@ public partial class SelectCharacterWindow : Window
             return;
         }
 
+        _infoLabel.Width=68;
         _infoLabel.Text = Intersect.Client.Localization.ClientLanguages.Text("Name:");
         _nameLabel.Text = selectedPreviewMetadata.Name;
         _levelCaptionLabel.Text = Intersect.Client.Localization.ClientLanguages.Text("Level:");
@@ -592,4 +600,17 @@ public partial class SelectCharacterWindow : Window
         _buttonDelete.Disable();
         _buttonLogout.Disable();
     }
+    private sealed class CharacterDetailsPanel:Panel
+    {
+        internal CharacterDetailsPanel(Base parent):base(parent,"CharacterDetailsPanel")
+        {ShouldDrawBackground=false;MouseInputEnabled=false;KeyboardInputEnabled=false;}
+        protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
+        {
+            skin.Renderer.DrawColor=new Color(255,176,151,98);
+            skin.Renderer.DrawFilledRect(new Rectangle(0,0,Width,Height));
+            skin.Renderer.DrawColor=new Color(255,17,20,10);
+            skin.Renderer.DrawFilledRect(new Rectangle(2,2,Math.Max(0,Width-4),Math.Max(0,Height-4)));
+        }
+    }
+
 }

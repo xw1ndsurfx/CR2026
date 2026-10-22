@@ -14,6 +14,10 @@ public sealed class WeatherEnvironmentTests
         var map=new MapDescriptor(Guid.NewGuid());var effects=map.WeatherEffects;
         Assert.That(effects.GeneratedRain && effects.RandomWeather && effects.Flashes && effects.Lightning && effects.GroundSplashes,Is.True);
         Assert.That(map.WeatherIntensity,Is.EqualTo(50));Assert.That(map.WeatherXSpeed,Is.Zero);Assert.That(map.WeatherYSpeed,Is.Zero);
+        Assert.That(effects.OverrideRainFog && effects.OverrideRainBrightness,Is.True);
+        Assert.That(effects.RainFog,Is.EqualTo("xyloop_cloud1_black.png"));
+        Assert.That(effects.RainFogOpacity,Is.EqualTo(150));Assert.That(effects.RainBrightness,Is.EqualTo(70));
+        Assert.That(effects.RainFogXSpeed,Is.EqualTo(3));Assert.That(effects.RainFogYSpeed,Is.EqualTo(-3));
         Assert.That(effects.FlashOpacity,Is.EqualTo(25));Assert.That(effects.PuddleDryMinutes,Is.EqualTo(3));
         Assert.That(effects.RainSound,Is.EqualTo("rain_medium.wav"));Assert.That(effects.ThunderSound,Is.EqualTo("thunder_crack_3.wav"));
         map.Load("{\"WeatherIntensity\":75,\"WeatherYSpeed\":4}");
@@ -57,6 +61,22 @@ public sealed class WeatherEnvironmentTests
         Assert.That(state.Update(map,start+15000,true,true,3,start,end),Is.EqualTo(.25f).Within(.001));
         Assert.That(new RainPuddleState().Update(map,end+45000,true,false,3,start,end),Is.EqualTo(.25f).Within(.001));
         Assert.That(state.Update(map,end+90000,true,false,3,start,end),Is.Zero);
+    }
+    [Test]
+    public void ChangingMapsDuringRainPreservesWeatherAndPuddleAgeWhileInteriorsStayDry()
+    {
+        var a=new MapDescriptor(Guid.NewGuid());var b=new MapDescriptor(Guid.NewGuid());
+        var storm=MapWeatherCycle.Window(a.Id,MapWeatherCycle.CycleMilliseconds*7);
+        Assert.That(MapWeatherCycle.Window(b.Id,storm.Start),Is.EqualTo(storm));
+        foreach(var now in new[]{storm.Start-1,storm.Start,storm.Start+30000,storm.End-1,storm.End})
+        {
+            Assert.That(a.RainActive(now),Is.EqualTo(b.RainActive(now)));
+            var first=new RainPuddleState().Update(a.Id,now,true,a.RainActive(now),3);
+            var second=new RainPuddleState().Update(b.Id,now,true,b.RainActive(now),3);
+            Assert.That(first,Is.EqualTo(second));
+        }
+        b.IsIndoors=true;Assert.That(b.RainActive(storm.Start),Is.False);
+        b.IsIndoors=false;b.WeatherIntensity=0;Assert.That(b.RainActive(storm.Start),Is.False);
     }
     [TestCase("[X] - Emotes",true)]
     [TestCase("[x] - emotes",true)]

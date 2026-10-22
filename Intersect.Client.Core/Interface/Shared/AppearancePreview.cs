@@ -12,6 +12,7 @@ namespace Intersect.Client.Interface.Shared;
 internal sealed class AppearancePreview : ImagePanel
 {
     private readonly ImagePanel _floor;
+    private readonly PreviewShadow _shadow;
     private readonly Button _zoomOut;
     private readonly Button _zoomIn;
     private readonly Label _zoomLabel;
@@ -21,6 +22,7 @@ internal sealed class AppearancePreview : ImagePanel
     public event Action? ZoomChanged;
     public int Zoom => _zoom;
     public int FeetY => Height * 2 / 3;
+    private int MaximumZoom=>Math.Clamp((int)Math.Ceiling(Math.Min((Width-20f)/_bodyWidth,(FeetY-16f)/_bodyHeight)),1,8);
     public float PreviewScale => Math.Min(_zoom, Math.Min((Width - 20f) / _bodyWidth, (FeetY - 16f) / _bodyHeight));
 
     public AppearancePreview(Base parent, string name) : base(parent, name)
@@ -30,9 +32,10 @@ internal sealed class AppearancePreview : ImagePanel
             TextureFilename = "character_preview_background.png", MouseInputEnabled = false,
             MaintainAspectRatio = false,
         };
+        _shadow=new PreviewShadow(this);
         _zoomOut = new Button(this, "PreviewZoomOut") { Text = "-", FontSize = 12 };
         _zoomIn = new Button(this, "PreviewZoomIn") { Text = "+", FontSize = 12 };
-        _zoomLabel = new Label(this, "PreviewZoom") { FontSize = 10, TextAlign = Pos.Center };
+        _zoomLabel = new Label(this, "PreviewZoom") { FontSize = 10, TextAlign = Pos.Center,AutoSizeToContents=false,MouseInputEnabled=false };
         _zoomOut.Clicked += (_, _) => ChangeZoom(-1);
         _zoomIn.Clicked += (_, _) => ChangeZoom(1);
         _zoomOut.SetToolTipText(ClientLanguages.Text("Zoom out"));
@@ -50,7 +53,7 @@ internal sealed class AppearancePreview : ImagePanel
 
     public void ChangeZoom(int delta)
     {
-        var zoom = Math.Clamp(_zoom + delta, 1, 8);
+        var zoom = Math.Clamp(_zoom + delta, 1, MaximumZoom);
         if (zoom == _zoom) return;
         _zoom = zoom; Arrange(); ZoomChanged?.Invoke();
     }
@@ -72,11 +75,13 @@ internal sealed class AppearancePreview : ImagePanel
 
     public void PlaceLayer(ImagePanel layer, int width, int height)
     {
+        layer.MouseInputEnabled=false;layer.KeyboardInputEnabled=false;layer.ShouldDrawBackground=false;
         var scale = Math.Max(0.1f, PreviewScale);
         var w = (int)Math.Round(width * scale); var h = (int)Math.Round(height * scale);
         layer.Alignment = [];
         layer.SetBounds((int)Math.Round((Width - w) / 2f - _centerOffset * scale),
             (int)Math.Round(FeetY - h + _bottomPadding * scale), w, h);
+        _zoomOut.BringToFront();_zoomIn.BringToFront();_zoomLabel.BringToFront();
     }
 
     protected override void OnSizeChanged(Point oldSize, Point newSize)
@@ -96,10 +101,28 @@ internal sealed class AppearancePreview : ImagePanel
         var width = Math.Clamp((int)(48 * Math.Max(0.1f, PreviewScale)), 64, Math.Max(64, Width - 16));
         var height = width / 2;
         _floor.SetBounds((Width - width) / 2, FeetY - height / 2, width, height);
+        _shadow.SetBounds((Width-width/2)/2,FeetY-5,width/2,10);
+        _floor.SendToBack();
         _zoomOut.SetBounds((Width - 152) / 2, Height - 36, 36, 28);
         _zoomLabel.SetBounds((Width - 152) / 2 + 38, Height - 36, 76, 28);
         _zoomIn.SetBounds((Width - 152) / 2 + 116, Height - 36, 36, 28);
         _zoomLabel.Text = ClientLanguages.Text("Zoom") + " x" + _zoom;
-        _zoomOut.IsDisabled = _zoom == 1; _zoomIn.IsDisabled = _zoom == 8;
+        _zoomOut.IsDisabled = _zoom == 1; _zoomIn.IsDisabled = _zoom >= MaximumZoom;
+        _zoomOut.BringToFront();_zoomIn.BringToFront();_zoomLabel.BringToFront();
     }
+    private sealed class PreviewShadow:Base
+    {
+        internal PreviewShadow(Base parent):base(parent,"PreviewShadow")
+        {MouseInputEnabled=false;KeyboardInputEnabled=false;}
+        protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
+        {
+            skin.Renderer.DrawColor=new Color(110,0,0,0);
+            for(var row=0;row<Height;row++)
+            {
+                var radius=Width*.5f*MathF.Sqrt(Math.Max(0,1-MathF.Pow((row-Height*.5f)/(Height*.5f),2)));
+                skin.Renderer.DrawFilledRect(new Rectangle((int)(Width*.5f-radius),row,(int)(radius*2),1));
+            }
+        }
+    }
+
 }

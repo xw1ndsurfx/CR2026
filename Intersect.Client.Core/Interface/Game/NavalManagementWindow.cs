@@ -11,6 +11,7 @@ namespace Intersect.Client.Interface.Game;
 internal class NavalManagementWindow:Window
 {
     private readonly ScrollControl _list;private readonly Label _status;private readonly Label _timer;
+    private CannonAmmoKind? _browsedAmmo;
     private NavalManagementState _state=new();private long _received;private bool _expiredRefresh;private bool _repairRotated;
     internal static string T(string text)=>NavalSetupText.Get(text,ClientLanguages.Current);
     internal static void Request(NavalManageAction action,CannonAmmoKind ammo=default,int quantity=1,NavalSkillKind skill=default,NavalRepairKind repair=default,Guid target=default,Guid token=default,int value=0)=>
@@ -51,8 +52,9 @@ internal class NavalManagementWindow:Window
     {
         if(state.Mode==NavalManageAction.CancelRepair){Hide();return;}
         if(_state.RepairToken!=state.RepairToken)_repairRotated=false;
+        if(state.Mode==NavalManageAction.Ammo)Naval.NavalWorld.SelectedAmmo=state.SelectedAmmo;
         _state=state;_received=Environment.TickCount64;_expiredRefresh=false;_list.DeleteAllChildren();
-        _status.Text=(string.IsNullOrEmpty(state.Message)?"":T(state.Message)+"\n")+(state.Mode==NavalManageAction.Ammo?T("Ammunition inventory"):string.Format(T("Sailing {0} - Gunnery {1} - Shipwright {2}"),state.SailingLevel,state.GunneryLevel,state.Shipwright.Level));
+        _status.Text=(string.IsNullOrEmpty(state.Message)?"":T(state.Message)+"\n")+(state.Mode==NavalManageAction.Ammo?string.Format(T("Ammunition: {0}/{1} - In use: {2}"),state.AmmoUsed,state.AmmoCapacity,T(CannonAmmunition.Caption(state.SelectedAmmo))):string.Format(T("Sailing {0} - Gunnery {1} - Shipwright {2}"),state.SailingLevel,state.GunneryLevel,state.Shipwright.Level));
         var width=_list.Width-24;var y=4;
         if(state.Mode==NavalManageAction.Repair)
         {
@@ -101,20 +103,27 @@ internal class NavalManagementWindow:Window
             {
                 var a=ammo;var x=8+index%columns*78;var row=index/columns;index++;
                 var slot=new Button(_list,"AmmoSlot"+a.Kind) {Text="",TooltipText=T(CannonAmmunition.Caption(a.Kind))};slot.SetBounds(x,8+row*80,70,72);
-                var icon=new ImagePanel(slot,"AmmoIcon") {MaintainAspectRatio=true,ShouldDrawBackground=false,MouseInputEnabled=false};icon.SetBounds(10,6,48,48);
+                var icon=new ImagePanel(slot,"AmmoIcon") {MaintainAspectRatio=true,ShouldDrawBackground=false,MouseInputEnabled=false};icon.SetBounds(16,18,36,34);
                 var item=Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(a.ItemId);
                 icon.Texture=!string.IsNullOrEmpty(a.Icon)?GameContentManager.Current.GetTexture(Intersect.Client.Framework.Content.TextureType.Spell,a.Icon):
                     item==null?null:GameContentManager.Current.GetTexture(item.UsesSpellIcon?Intersect.Client.Framework.Content.TextureType.Spell:Intersect.Client.Framework.Content.TextureType.Item,item.DisplayIcon);
+                if(a.Kind==state.SelectedAmmo)
+                {
+                    var active=Text(slot,"AmmoInUse",T("Active"),0,0,70,18,10);
+                    active.TextAlign=Pos.Center;active.ShouldDrawBackground=true;active.RenderColor=new Color(255,45,99,61);
+                    slot.TooltipText+=" - "+T("In use");
+                }
                 Text(slot,"AmmoQuantity",a.Quantity<0?T("Free"):a.Quantity.ToString(),4,52,62,18,10);
-                slot.Clicked+=(_,_)=>{state.SelectedAmmo=a.Kind;Apply(state);};
+                slot.Clicked+=(_,_)=>{_browsedAmmo=a.Kind;Apply(state);};
             }
             y=20+((index+columns-1)/columns)*80;
-            var selected=state.Ammo.FirstOrDefault(a=>a.Kind==state.SelectedAmmo)??state.Ammo.FirstOrDefault();
+            var selected=state.Ammo.FirstOrDefault(a=>a.Kind==(_browsedAmmo??state.SelectedAmmo))??state.Ammo.FirstOrDefault();
             if(selected!=null)
             {
                 Text(_list,"AmmoSelected",T(CannonAmmunition.Caption(selected.Kind)),8,y,width-16,28,14);y+=34;
                 Text(_list,"AmmoRequirements",string.Format(T("Ammo: {0} - Inventory: {1} - Sailing {2} / Gunnery {3}"),selected.Quantity<0?T("Free"):selected.Quantity.ToString(),selected.MainQuantity,selected.SailingLevel,selected.GunneryLevel),8,y,width-16,42,11);y+=50;
-                var use=Button(_list,"AmmoUse","Use",8,y,(width-28)/2,34,()=>{Naval.NavalWorld.SelectedAmmo=selected.Kind;Request(NavalManageAction.SelectAmmo,selected.Kind);});use.IsDisabled=!selected.Available || selected.Quantity==0 && selected.MainQuantity==0;
+                var inUse=selected.Kind==state.SelectedAmmo;
+                var use=Button(_list,"AmmoUse",inUse?"In use":"Use",8,y,(width-28)/2,34,()=>Request(NavalManageAction.SelectAmmo,selected.Kind));use.IsDisabled=inUse || !selected.Available || selected.Quantity==0 && selected.MainQuantity==0;
                 var withdraw=Button(_list,"AmmoWithdraw","Withdraw",16+(width-28)/2,y,(width-28)/2,34,()=>Request(NavalManageAction.Withdraw,selected.Kind,Math.Min(10,selected.Quantity)));withdraw.IsDisabled=selected.Quantity<=0;
             }
         }

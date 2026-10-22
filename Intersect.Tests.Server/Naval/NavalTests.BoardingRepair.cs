@@ -32,7 +32,7 @@ public sealed partial class NavalTests
         Assert.That(NavalRepairPuzzle.CanPlace(board,NavalRepairKind.Caulking,int.MaxValue,true),Is.False);
         Assert.That(NavalRepairPuzzle.CanPlace(board,(NavalRepairKind)255,0,false),Is.False);
     }
-    [Test] public void BoardingRequiresAConfiguredDisabledNearbyEnemyAndCannotReserveASunkOrBusyShip()
+    [Test] public void BoardingRequiresADisabledNearbyEnemyAndCannotReserveASunkOrBusyShip()
     {
         using var world=new EnemyTestWorld();var ship=world.Add(10.5,10.5,false);var enemy=world.Add(13.5,10.5,true);
         world.Set(ship,"OwnerId",world.State(ship).CaptainId);var patrol=world.Field<HerboniaPatrol>(enemy,"Enemy");
@@ -40,7 +40,7 @@ public sealed partial class NavalTests
         patrol.BoardingDungeonId=Guid.NewGuid();patrol.BoardingEntryMapId=Guid.NewGuid();world.Set(enemy,"Health",25);
         Assert.That(world.Invoke("CanBoardEnemy",ship,enemy),Is.True);
         world.Set(enemy,"Health",26);Assert.That(world.Invoke("CanBoardEnemy",ship,enemy),Is.False);world.Set(enemy,"Health",25);
-        world.State(ship).Speed=1.1;Assert.That(world.Invoke("CanBoardEnemy",ship,enemy),Is.False);world.State(ship).Speed=0;
+        world.State(ship).Speed=1.1;Assert.That(world.Invoke("CanBoardEnemy",ship,enemy),Is.True);world.State(ship).Speed=0;
         world.Set(enemy,"EnemyBoardingEncounter",Guid.NewGuid());Assert.That(world.Invoke("CanBoardEnemy",ship,enemy),Is.False);world.Set(enemy,"EnemyBoardingEncounter",Guid.Empty);
         world.State(enemy).X=30;Assert.That(world.Invoke("CanBoardEnemy",ship,enemy),Is.False);world.State(enemy).X=13.5;
         world.Set(enemy,"Health",0);Assert.That(world.Invoke("CanBoardEnemy",ship,enemy),Is.False);

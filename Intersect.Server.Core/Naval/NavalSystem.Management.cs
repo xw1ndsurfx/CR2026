@@ -43,6 +43,7 @@ internal static partial class NavalSystem
     {
         var stack=p.NavalCareer.Ammo.FirstOrDefault(a=>a.ItemId==item);
         var value=(long)(stack?.Quantity??0)+amount;
+        if(amount>0 && NavalAmmoInventorySettings.Used(p.NavalCareer)+amount>_settings.AmmoInventory.Capacity(p.NavalCareer.AmmoUpgradeLevel))return false;
         if(item==Guid.Empty || value<0 || value>1000000000 || stack==null && (amount<=0 || p.NavalCareer.Ammo.Count>=512)) return false;
         if(value==0) p.NavalCareer.Ammo.Remove(stack);
         else if(stack==null) p.NavalCareer.Ammo.Add(new(){ItemId=item,Quantity=(int)value});else stack.Quantity=(int)value;
@@ -92,6 +93,7 @@ internal static partial class NavalSystem
     {
         Ships.TryGetValue(p.NavalShipId,out var v);Repairs.TryGetValue(p.Id,out var round);
         var state=new NavalManagementState {Mode=mode,Message=message,SkillShop=SkillShopValid(p,now),Shop=mode==NavalManageAction.AmmoShop && p.NavalAmmoShop && ShopValid(p,now),
+            AmmoUsed=NavalAmmoInventorySettings.Used(p.NavalCareer),AmmoCapacity=_settings.AmmoInventory.Capacity(p.NavalCareer.AmmoUpgradeLevel),AmmoUpgrade=AmmoUpgrade(p),
             ShipId=v?.State.Id??Guid.Empty,OwnerId=v?.State.CaptainId??Guid.Empty,HelmsmanId=v==null?Guid.Empty:Driver(v),
             HelmOfferId=v?.HelmOfferTo==p.Id && v.HelmOfferUntil>now?v.HelmOfferToken:Guid.Empty,
             SailingLevel=_settings.Sailing.Progress(p.SailingExperience).Level,GunneryLevel=_settings.Gunnery.Curve().Progress(p.GunneryExperience).Level,
@@ -99,7 +101,9 @@ internal static partial class NavalSystem
         state.Ammo=_settings.Ammunition.Select(a=>new NavalAmmoOffer {Kind=a.Kind,ItemId=a.ItemId,Quantity=a.RequiresItem?AmmoCount(p,a.ItemId):-1,
             MainQuantity=a.RequiresItem && a.ItemId!=Guid.Empty?p.FindInventoryItemQuantity(a.ItemId):0,ForSale=AmmoTrade(p,a,false).Allowed,
             Price=AmmoTrade(p,a,false).Price,Currency=NavalCurrency(AmmoTrade(p,a,false).Currency,"Aureons")?.Name??"",
-            CanBuy=AmmoTrade(p,a,false).Allowed && NavalCurrency(AmmoTrade(p,a,false).Currency,"Aureons") is {} money && p.CountItems(money.Id)>=AmmoTrade(p,a,false).Price,
+            MaximumPurchase=AmmoTrade(p,a,false).Allowed && NavalCurrency(AmmoTrade(p,a,false).Currency,"Aureons") is {} money
+                ? _settings.AmmoInventory.MaximumPurchase(p.NavalCareer,InventoryBalance(p,money.Id),AmmoTrade(p,a,false).Price):0,
+            CanBuy=AmmoTrade(p,a,false).Allowed,
             SellPrice=AmmoTrade(p,a,true).Allowed?AmmoTrade(p,a,true).Price:-1,SellCurrency=NavalCurrency(AmmoTrade(p,a,true).Currency,"Aureons")?.Name??"",SailingLevel=a.RequiredSailingLevel,GunneryLevel=a.RequiredLevel,
             Icon=string.IsNullOrEmpty(a.Icon)?ItemDescriptor.Get(a.ItemId)?.Icon??"":a.Icon,
             Available=(v!=null && Driver(v)==p.Id?state.SailingLevel>=a.RequiredSailingLevel:state.GunneryLevel>=a.RequiredLevel)}).ToArray();
@@ -125,11 +129,19 @@ internal static partial class NavalSystem
             if(mode==NavalManageAction.AmmoShop){lock(Gate)if(!p.NavalAmmoShop || !ShopValid(p,now))return;}
             if(mode==NavalManageAction.RepairMenu){lock(Gate) {if(!Ships.TryGetValue(p.NavalShipId,out var repairShip) || Driver(repairShip)==p.Id)return;}lock(Gate)SendManagement(p,NavalManageAction.Repair,now);return;}
 
+            if(mode==NavalManageAction.UpgradeAmmoInventory)
+            {
+                bool access;lock(Gate)access=p.NavalAmmoShop && ShopValid(p,now);
+                var upgraded=access && CommitAmmoUpgrade(p,()=>SaveManagement(p));
+                PacketSender.SendInventory(p);
+                lock(Gate)SendManagement(p,NavalManageAction.AmmoShop,now,upgraded?"Ammunition inventory expanded.":"Upgrade unavailable. Check the level, quest and currency requirements.");
+                return;
+            }
             if(mode==NavalManageAction.Deposit)return;
             if(mode is NavalManageAction.Withdraw or NavalManageAction.BuyAmmo or NavalManageAction.SellAmmo)
             {
                 var a=_settings.Ammunition.FirstOrDefault(a=>a.Kind==packet.Ammo);var count=packet.Quantity;
-                if(a==null || !a.RequiresItem || count is <1 or >10000 || ItemDescriptor.Get(a.ItemId)?.IsStackable!=true)return;
+                if(a==null || !a.RequiresItem || count<1 || count>_settings.AmmoInventory.PurchaseLimit || ItemDescriptor.Get(a.ItemId)?.IsStackable!=true)return;
                 var json=p.NavalFleetJson;var inventory=SnapshotCargoInventory(p);var ok=false;
                 try
                 {
@@ -153,9 +165,9 @@ internal static partial class NavalSystem
                             ok=ok && planned!=null;
                             if(ok)for(var i=0;i<planned.Length;i++)p.Items[i].Set(planned[i]);
                         }
-                        else ok=ok && currency!=null && cost>=0 && cost<=int.MaxValue && (cost==0 || p.TryTakeItem(currency.Id,(int)cost,sendUpdate:false)) && AmmoAdd(p,a.ItemId,count);
+                        else ok=ok && currency!=null && CommitAmmoPurchase(p,a.ItemId,currency.Id,trade.Price,count,()=>SaveManagement(p));
                     }
-                    if(ok)ok=SaveManagement(p);
+                    if(ok && mode!=NavalManageAction.BuyAmmo)ok=SaveManagement(p);
                 }
                 finally {if(!ok){p.NavalFleetJson=json;for(var i=0;i<inventory.Length;i++)p.Items[i].Set(inventory[i]);}}
                 message=ok?"Ammunition updated.":"Transaction failed. Nothing was changed.";mode=mode is NavalManageAction.BuyAmmo or NavalManageAction.SellAmmo?NavalManageAction.AmmoShop:NavalManageAction.Ammo;PacketSender.SendInventory(p);if(ok)p.RefreshNavalCargoQuests([a.ItemId]);
@@ -164,12 +176,12 @@ internal static partial class NavalSystem
             {
                 var selected=_settings.Ammunition.FirstOrDefault(a=>a.Kind==packet.Ammo);
                 if(selected==null)return;
-                if(selected.RequiresItem && AmmoCount(p,selected.ItemId)<1000000000 && p.FindInventoryItemQuantity(selected.ItemId)>0)
+                if(selected.RequiresItem && AmmoCount(p,selected.ItemId)==0 && p.FindInventoryItemQuantity(selected.ItemId)>0)
                 {
-                    var json=p.NavalFleetJson;var items=SnapshotCargoInventory(p);var quantity=Math.Min(1000000000-AmmoCount(p,selected.ItemId),Math.Min(10000,p.FindInventoryItemQuantity(selected.ItemId)));var saved=false;
-                    try {saved=p.TryTakeItem(selected.ItemId,quantity,sendUpdate:false) && AmmoAdd(p,selected.ItemId,quantity) && SaveManagement(p);}
+                    var json=p.NavalFleetJson;var items=SnapshotCargoInventory(p);var quantity=(int)Math.Max(0,Math.Min(_settings.AmmoInventory.Capacity(p.NavalCareer.AmmoUpgradeLevel)-NavalAmmoInventorySettings.Used(p.NavalCareer),Math.Min(10000,p.FindInventoryItemQuantity(selected.ItemId))));var saved=false;
+                    try {saved=quantity>0 && p.TryTakeItem(selected.ItemId,quantity,sendUpdate:false) && AmmoAdd(p,selected.ItemId,quantity) && SaveManagement(p);}
                     finally {if(!saved){p.NavalFleetJson=json;for(var i=0;i<items.Length;i++)p.Items[i].Set(items[i]);}}
-                    PacketSender.SendInventory(p);if(!saved)return;
+                    PacketSender.SendInventory(p);if(!saved){lock(Gate)SendManagement(p,NavalManageAction.Ammo,now,"Transaction failed. Nothing was changed.");return;}
                 }
                 p.NavalSelectedAmmo=packet.Ammo;
                 if(packet.Value==1)return;

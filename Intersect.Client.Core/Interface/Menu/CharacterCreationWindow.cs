@@ -35,6 +35,8 @@ public partial class CharacterCreationWindow : Window
     private readonly Panel _buttonsPanel;
 
     private readonly TextBox _nameInput;
+    private readonly Label _nameCaption;
+    private bool _changingGender;
 
     private readonly LabeledComboBox _classCombobox;
 
@@ -135,6 +137,7 @@ public partial class CharacterCreationWindow : Window
             MinimumSize = new Point(240, 0),
             PlaceholderText = Strings.CharacterCreation.Name,
         };
+        _nameCaption=new Label(_propertiesPanel,"NameCaption"){Text=ClientLanguages.Text("Name"),Font=_defaultFont,FontSize=12,AutoSizeToContents=false,MouseInputEnabled=false};
         _nameInput.SubmitPressed += (sender, e) => TryCreateCharacter();
 
         _classCombobox = new LabeledComboBox(_propertiesPanel, name: nameof(_classCombobox))
@@ -144,17 +147,18 @@ public partial class CharacterCreationWindow : Window
             Font = _defaultFont,
             FontSize = 12,
             Label = Strings.CharacterCreation.Class,
+            LabelColumnWidth=184,
         };
         _classCombobox.ItemSelected += classCombobox_ItemSelected;
 
         _hairCombobox = CreateAppearanceCombo(nameof(_hairCombobox), "Hair");
         _hairColorCombobox = CreateAppearanceCombo(nameof(_hairColorCombobox), "Hair Color");
         _shirtCombobox = CreateAppearanceCombo(nameof(_shirtCombobox), "Shirt");
-        _shirtColorCombobox = CreateAppearanceCombo(nameof(_shirtColorCombobox), "Shirt Color");
+        _shirtColorCombobox = CreateAppearanceCombo(nameof(_shirtColorCombobox), "Shirt tint");
         _pantsCombobox = CreateAppearanceCombo(nameof(_pantsCombobox), "Pants");
-        _pantsColorCombobox = CreateAppearanceCombo(nameof(_pantsColorCombobox), "Pants Color");
+        _pantsColorCombobox = CreateAppearanceCombo(nameof(_pantsColorCombobox), "Pants tint");
         _bootsCombobox = CreateAppearanceCombo(nameof(_bootsCombobox), "Boots");
-        _bootsColorCombobox = CreateAppearanceCombo(nameof(_bootsColorCombobox), "Boots Color");
+        _bootsColorCombobox = CreateAppearanceCombo(nameof(_bootsColorCombobox), "Boots tint");
 
         _randomizeAppearanceButton = new Button(_propertiesPanel, name: nameof(_randomizeAppearanceButton))
         {
@@ -309,6 +313,7 @@ public partial class CharacterCreationWindow : Window
                 {
                     Alignment = [],
                     RestrictToParent = false,
+                    MouseInputEnabled=false,KeyboardInputEnabled=false,ShouldDrawBackground=false,
                 };
             }
         }
@@ -554,6 +559,8 @@ public partial class CharacterCreationWindow : Window
             fields[i].Dock = Pos.None; fields[i].Margin = Margin.Zero;
             fields[i].SetBounds(0, i * 39, 438, 31);
         }
+        _nameCaption.Dock=Pos.None;_nameCaption.SetBounds(0,0,184,31);
+        _nameInput.SetBounds(192,0,246,31);
         _previewContainer.Dock = _directionPanel.Dock = Pos.None;
         _previewContainer.SetBounds(32, 10, 288, 410);
         _preview.Dock = Pos.None;
@@ -565,6 +572,8 @@ public partial class CharacterCreationWindow : Window
         UpdateDisplay();
     }
 
+    private static string AppearanceText(string text)=>Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(ClientLanguages.Text(text),ClientLanguages.Current);
+
     private LabeledComboBox CreateAppearanceCombo(string name, string label)
     {
         var combo = new LabeledComboBox(_propertiesPanel, name: name)
@@ -573,9 +582,11 @@ public partial class CharacterCreationWindow : Window
             Dock = Pos.Top,
             Font = _defaultFont,
             FontSize = 11,
-            Label = ClientLanguages.Text(label),
+            Label = AppearanceText(label),
+            LabelColumnWidth=184,
             MinimumSize = new Point(240, 28),
         };
+        if(label.EndsWith(" tint"))combo.SetToolTipText(AppearanceText("Original colours preserves the artwork; other colours apply a tint."));
         combo.ItemSelected += (_, _) => UpdateDisplay();
         return combo;
     }
@@ -636,7 +647,7 @@ public partial class CharacterCreationWindow : Window
         var names = GameContentManager.Current.GetTextureNames(TextureType.Paperdoll) ?? [];
         foreach (var name in names
                      .Where(value => IsBaseAppearanceTexture(value, prefix) && CharacterAppearance.SupportsGender(value, _genderFemaleCheckbox.IsChecked))
-                     .OrderBy(value => value, StringComparer.OrdinalIgnoreCase))
+                     .OrderBy(value => value, AppearanceStyleComparer.Instance))
         {
             combo.AddItem(FriendlyAppearanceName(name, prefix), userData: name);
         }
@@ -645,7 +656,7 @@ public partial class CharacterCreationWindow : Window
         {
             var first = names
                 .Where(value => IsBaseAppearanceTexture(value, prefix) && CharacterAppearance.SupportsGender(value, _genderFemaleCheckbox.IsChecked))
-                .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(value => value, AppearanceStyleComparer.Instance)
                 .First();
             combo.SelectByUserData(first);
         }
@@ -668,6 +679,7 @@ public partial class CharacterCreationWindow : Window
             }
             : new (string, Color)[]
             {
+                ("Original colours",Color.White),
                 ("Navy", new Color(42, 63, 104)),
                 ("Burgundy", new Color(118, 48, 58)),
                 ("Forest", new Color(55, 99, 63)),
@@ -681,7 +693,7 @@ public partial class CharacterCreationWindow : Window
         MenuItem? first = null;
         foreach (var (label, color) in colors)
         {
-            var item = combo.AddItem(label, userData: color);
+            var item = combo.AddItem(AppearanceText(label), userData: color);
             first ??= item;
         }
 
@@ -794,22 +806,18 @@ public partial class CharacterCreationWindow : Window
         }
     }
 
-    void MaleCheckboxGenderChecked(ICheckbox sender, EventArgs arguments)
+    void MaleCheckboxGenderChecked(ICheckbox sender,EventArgs arguments)=>ChangeGender(false);
+    void FemaleCheckboxGenderChecked(ICheckbox sender,EventArgs arguments)=>ChangeGender(true);
+    private void ChangeGender(bool female)
     {
-        _genderMaleCheckbox.IsChecked = true;
-        _genderFemaleCheckbox.IsChecked = false;
-        RefreshGenderStyles();
-        ResetSprite();
-        UpdateDisplay();
-    }
-
-    void FemaleCheckboxGenderChecked(ICheckbox sender, EventArgs arguments)
-    {
-        _genderFemaleCheckbox.IsChecked = true;
-        _genderMaleCheckbox.IsChecked = false;
-        RefreshGenderStyles();
-        ResetSprite();
-        UpdateDisplay();
+        if(_changingGender)return;
+        _changingGender=true;
+        try
+        {
+            _genderFemaleCheckbox.IsChecked=female;_genderMaleCheckbox.IsChecked=!female;
+            RefreshGenderStyles();ResetSprite();UpdateDisplay();
+        }
+        finally{_changingGender=false;}
     }
 
     void CreateButton_Clicked(Base sender, MouseButtonState arguments)

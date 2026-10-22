@@ -678,6 +678,7 @@ public static partial class Graphics
             return;
         }
 
+        if(layer==0)map.DrawGeneratedBoardingDeck();
         map.Draw(layer);
         if (layer == 0) map.DrawRainPuddles();
 

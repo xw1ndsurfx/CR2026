@@ -47,6 +47,7 @@ public sealed class NavalConfiguration
     public GunnerySettings Gunnery {get;set;}=new();
     public CannonAmmunition[] Ammunition {get;set;}=CannonAmmunition.Defaults();
     public NavalRepairSettings Repair {get;set;}=new();
+    public NavalAmmoInventorySettings AmmoInventory {get;set;}=new();
     public NavalSkillDefinition[] Skills {get;set;}=NavalSkillDefinition.Defaults();
     public SailingSettings Sailing {get;set;}=new();
     public HerboniaPatrol[] Herbonia { get; set; } = [];
@@ -56,7 +57,7 @@ public sealed class NavalConfiguration
 
     public void Validate(int width, int height)
     {
-        if (Repair?.IsValid()!=true || Skills==null || Skills.Length>Enum.GetValues<NavalSkillKind>().Length || Skills.Any(s=>s?.IsValid()!=true) || Skills.Select(s=>s.Kind).Distinct().Count()!=Skills.Length || Gunnery?.IsValid()!=true || Ammunition==null || Ammunition.Length is <1 or >10 || Ammunition.Any(a=>a?.IsValid()!=true || (a.Kind==CannonAmmoKind.Standard?a.RequiresItem || a.RequiredLevel!=1:!a.RequiresItem)) ||
+        if (AmmoInventory?.IsValid()!=true || Repair?.IsValid()!=true || Skills==null || Skills.Length>Enum.GetValues<NavalSkillKind>().Length || Skills.Any(s=>s?.IsValid()!=true) || Skills.Select(s=>s.Kind).Distinct().Count()!=Skills.Length || Gunnery?.IsValid()!=true || Ammunition==null || Ammunition.Length is <1 or >10 || Ammunition.Any(a=>a?.IsValid()!=true || (a.Kind==CannonAmmoKind.Standard?a.RequiresItem || a.RequiredLevel!=1:!a.RequiresItem)) ||
             Ammunition.Select(a=>a.Kind).Distinct().Count()!=Ammunition.Length || !Ammunition.Any(a=>a.Kind==CannonAmmoKind.Standard) || CombatTimeoutSeconds is <3 or >120 || Herbonia==null || Herbonia.Length>32 || Herbonia.Any(p=>p?.IsValid()!=true || p.Ship.X>=width || p.Ship.Y>=height || p.BoardingDungeonId!=Guid.Empty && (p.BoardingEntryX>=width || p.BoardingEntryY>=height) || p.Ship.DockX>=width || p.Ship.DockY>=height) ||
             Herbonia.Select(p=>p.Ship.Id).Concat(Ships?.Where(p=>p!=null).Select(p=>p.Id)??[]).GroupBy(id=>id).Any(g=>g.Count()>1) || Presentation?.IsValid()!=true || Sailing?.IsValid()!=true || !double.IsFinite(DockInteractionRange) || DockInteractionRange is < 1 or > 5 ||
             LaunchSearchRadius is < 3 or > 10 || !double.IsFinite(ShopInteractionRange) ||

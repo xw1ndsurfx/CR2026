@@ -4,7 +4,7 @@ using NUnit.Framework;
 namespace Intersect.Tests.Server.Naval;
 public sealed partial class NavalTests
 {
-    [Test] public void RandomMapWeatherLastsFifteenMinutesAndHasClearWeatherBeforeAndAfter()
+    [Test] public void GlobalRandomWeatherLastsFifteenMinutesAndHasClearWeatherBeforeAndAfter()
     {
         var map=Guid.Parse("ee70bda6-e19f-4d7c-8336-16f802c261e1");
         var utc=new DateTimeOffset(2026,10,21,12,0,0,TimeSpan.Zero).ToUnixTimeMilliseconds();
@@ -18,7 +18,7 @@ public sealed partial class NavalTests
             Assert.That(MapWeatherCycle.IsActive(map,window.End),Is.False);
             Assert.That(MapWeatherCycle.Window(map,window.Start+60000),Is.EqualTo(window));
         }
-        Assert.That(MapWeatherCycle.Window(Guid.NewGuid(),utc),Is.Not.EqualTo(MapWeatherCycle.Window(map,utc)));
+        Assert.That(MapWeatherCycle.Window(Guid.NewGuid(),utc),Is.EqualTo(MapWeatherCycle.Window(map,utc)));
     }
     [Test] public void OldMapsKeepContinuousWeatherAndNewSettingsRoundTripWithoutChangingAnimation()
     {

@@ -18,6 +18,10 @@ internal static class MenuAnimationEditorTests
             var grid=All(editor).OfType<DataGridView>().Single(control=>control.Name=="MenuAnimationsGrid");
             var remove=All(editor).OfType<Button>().Single(control=>control.Name=="DeleteMenuAnimation");
             var entries=(BindingList<MenuAnimationDefinition>)grid.DataSource!;
+            var brightness=All(editor).OfType<NumericUpDown>().Single(c=>c.Name=="MenuBrightness");
+            if(brightness.Minimum!=0 || brightness.Maximum!=100 || brightness.Value!=Math.Clamp(ClientConfiguration.Instance.MenuWeather.Brightness,0,100))throw new Exception("Menu brightness must expose the saved value and a 0-100 range.");
+            var originalBrightness=ClientConfiguration.Instance.MenuWeather.Brightness;brightness.Value=30;
+            if(ClientConfiguration.Instance.MenuWeather.Brightness!=originalBrightness)throw new Exception("Changing the draft brightness must wait for Save.");
             grid.ClearSelection();grid.Rows[0].Selected=true;remove.PerformClick();Application.DoEvents();
             if(entries.Count!=1 || entries[0].AnimationId!=second.Id)throw new Exception("Remove must delete only the selected menu animation.");
             grid.ClearSelection();grid.Rows[0].Selected=true;remove.PerformClick();Application.DoEvents();

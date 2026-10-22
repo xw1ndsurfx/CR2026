@@ -21,7 +21,7 @@ internal sealed class PartyLobbyWindow : Window
     private long _nextRefresh;
     private static readonly Color Gold = new(255,231,199,135);
     private static readonly Color Cream = new(255,246,235,211);
-    internal static string ActivityName(LobbyActivity activity) => activity==LobbyActivity.Naval?NavalSetupText.Get("Naval crew",ClientLanguages.Current):ClientLanguages.Text(activity switch {
+    internal static string ActivityName(LobbyActivity activity) => activity==LobbyActivity.PvP?Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("PvP",ClientLanguages.Current):activity==LobbyActivity.Naval?NavalSetupText.Get("Naval crew",ClientLanguages.Current):ClientLanguages.Text(activity switch {
         LobbyActivity.Dungeon => "Dungeon", LobbyActivity.Invasion => "Invasion", LobbyActivity.WorldBoss => "World Boss",
         LobbyActivity.Alchemy => "Alchemy", LobbyActivity.Poker => "Poker", LobbyActivity.Blackjack => "Blackjack",
         LobbyActivity.Roulette => "Roulette", LobbyActivity.Lumberjack => "Lumberjack", LobbyActivity.HouseParty => "House Party",

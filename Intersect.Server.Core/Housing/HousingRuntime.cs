@@ -14,13 +14,13 @@ using Intersect.Server.Database;
 using Intersect.Server.Database.PlayerData;
 using Newtonsoft.Json;
 namespace Intersect.Server.Housing;
-internal static class HousingRuntime
+internal static partial class HousingRuntime
 {
     private static readonly ConcurrentDictionary<Guid, long> LastUse = new();
     private static readonly object Gate = new();
     private static readonly string FileName = Path.Combine("resources", "housing.json");
     private static HousingConfiguration? _config;
-    private sealed record Visit(Player Player, Guid Owner, Guid Instance, Guid Map);
+    private sealed record Visit(Player Player, Guid Owner, Guid Instance, Guid Map,bool Invited=false);
     private static readonly ConcurrentDictionary<Guid, Visit> Visits = new();
     private static readonly ConcurrentDictionary<Guid, byte> Evictions = new();
     private sealed record HouseSnapshot(string Json, bool Public);
@@ -74,6 +74,7 @@ internal static class HousingRuntime
                 if (request.Action == HouseAction.Open) { Snapshots[player.Id] = new(player.HousingJson, player.House.Public); Send(player, request.OwnerId, true); return; }
                 if (request.Action == HouseAction.Leave) { Leave(player); return; }
                 if (!Configuration.Enabled) { Send(player, player.Id, true, "Housing is not available yet."); return; }
+                if(request.Action is HouseAction.InviteFriend or HouseAction.AcceptInvitation or HouseAction.DeclineInvitation){HandleInvitation(player,request);return;}
                 if (request.Action == HouseAction.Visit) { Enter(player, request.OwnerId == Guid.Empty ? player.Id : request.OwnerId); return; }
                 if (request.Action == HouseAction.Interact) { Interact(player, request); return; }
                 if (request.OwnerId != Guid.Empty && request.OwnerId != player.Id) throw new InvalidOperationException("Only the owner can decorate this house.");
@@ -154,7 +155,7 @@ internal static class HousingRuntime
                 }
                 PacketSender.SendInventory(player); player.SendPetState();
                 if (!player.House.Public)
-                    foreach (var visitor in Visits.Values.Where(v => v.Owner == player.Id && v.Player.Id != player.Id).ToArray()) Evictions[visitor.Player.Id] = 1;
+                    foreach (var visitor in Visits.Values.Where(v => v.Owner == player.Id && v.Player.Id != player.Id && !v.Invited).ToArray()) Evictions[visitor.Player.Id] = 1;
                 BroadcastOwner(player);
                 Send(player, player.Id, request.Action != HouseAction.Place, "House saved.");
             }
@@ -175,16 +176,16 @@ internal static class HousingRuntime
         if (!Visits.TryGetValue(player.Id, out var visit) || visit.Owner != player.Id || player.MapInstanceId != visit.Instance || player.MapId != visit.Map)
             throw new InvalidOperationException("Enter your house before decorating.");
     }
-    private static void Enter(Player player, Guid ownerId)
+    private static void Enter(Player player, Guid ownerId,bool invited=false)
     {
         if (Intersect.Server.Dungeons.DungeonRunRuntime.IsPlayerInActiveRun(player)) throw new InvalidOperationException("Leave the dungeon before visiting a house.");
         var owner = Player.FindOnline(ownerId) ?? Player.Find(ownerId);
-        if (owner == null || ownerId != player.Id && !Snapshots.GetOrAdd(ownerId, _ => new(owner.HousingJson, owner.House.Public)).Public) throw new InvalidOperationException("This house is private.");
+        if (owner == null || ownerId != player.Id && !invited && !Snapshots.GetOrAdd(ownerId, _ => new(owner.HousingJson, owner.House.Public)).Public) throw new InvalidOperationException("This house is private.");
         if (Visits.ContainsKey(player.Id)) Leave(player);
         var back = new HouseReturnLocation { MapId = player.MapId, InstanceId = player.MapInstanceId, InstanceType = (int)player.InstanceType, X = player.X, Y = player.Y };
         var instance = Rooms.GetOrAdd(ownerId, _ => Guid.NewGuid());
         player.House.ReturnLocation = back;
-        Visits[player.Id] = new(player, ownerId, instance, Configuration.TemplateMapId);
+        Visits[player.Id] = new(player, ownerId, instance, Configuration.TemplateMapId,invited);
         player.AdminWarp(Configuration.TemplateMapId, Configuration.EntryX, Configuration.EntryY, instance, MapInstanceType.Shared, true);
         if (player.MapInstanceId != instance || player.MapId != Configuration.TemplateMapId) { Visits.TryRemove(player.Id, out _); player.House.ReturnLocation = null; throw new InvalidOperationException("The house could not be entered."); }
         player.User?.Save(force: true);
@@ -203,7 +204,7 @@ internal static class HousingRuntime
     {
         if (player.House.ReturnLocation == null) return;
         if (Evictions.TryRemove(player.Id, out _) || !Visits.TryGetValue(player.Id, out var visit) || !ReferenceEquals(visit.Player, player)) { Leave(player); return; }
-        if (visit.Owner != player.Id && Snapshots.TryGetValue(visit.Owner, out var snapshot) && !snapshot.Public) { Leave(player); return; }
+        if (visit.Owner != player.Id && (visit.Invited ? Player.FindOnline(visit.Owner) is not {} host || host.Blocks(player.Id) || player.Blocks(host.Id) : Snapshots.TryGetValue(visit.Owner,out var snapshot) && !snapshot.Public)) { Leave(player); return; }
         if (player.MapInstanceId != visit.Instance)
         {
             // An explicit warp/death has already selected a destination; do not override it.
@@ -222,6 +223,7 @@ internal static class HousingRuntime
     }
     internal static void Disconnect(Player player)
     {
+        RemoveHouseInvitations(player.Id);
         Visits.TryRemove(player.Id, out _);
         LastUse.TryRemove(player.Id, out _);
         Evictions.TryRemove(player.Id, out _);
@@ -288,7 +290,7 @@ internal static class HousingRuntime
     {
         if (ownerId == Guid.Empty) ownerId = Visits.TryGetValue(requester.Id, out var visiting) ? visiting.Owner : requester.Id;
         var owner = ownerId == requester.Id ? requester : Player.FindOnline(ownerId) ?? Player.Find(ownerId);
-        if (owner == null || ownerId != requester.Id && !Snapshots.GetOrAdd(ownerId, _ => new(owner.HousingJson, owner.House.Public)).Public) { requester.SendPacket(new HouseStatePacket { Message = "This house is private.", OpenWindow = true }); return; }
+        if (owner == null || ownerId != requester.Id && !(Visits.TryGetValue(requester.Id,out var invitationVisit) && invitationVisit.Owner==ownerId && invitationVisit.Invited) && !Snapshots.GetOrAdd(ownerId, _ => new(owner.HousingJson, owner.House.Public)).Public) { requester.SendPacket(new HouseStatePacket { Message = "This house is private.", OpenWindow = true }); return; }
         var inside = Visits.TryGetValue(requester.Id, out var visit) && visit.Owner == ownerId;
         var profile = HouseProfile.Read(ownerId == requester.Id ? owner.HousingJson : Snapshots.GetOrAdd(ownerId, _ => new(owner.HousingJson, owner.House.Public)).Json); profile.ReturnLocation = null; ApplyInteractionLinks(profile);
         if (ownerId != requester.Id)

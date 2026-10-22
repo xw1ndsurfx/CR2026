@@ -104,7 +104,7 @@ public static partial class PacketSender
         worldMap |= now < _worldMapActiveUntil;
         if (Globals.Me == null || now < _nextWorldMapStateRequest) return;
         _nextWorldMapStateRequest = now + (worldMap ? 250 : 1000);
-        Network.SendPacket(new RequestWorldMapPacket { StateOnly = true, IncludeShips = worldMap });
+        Network.SendPacket(new RequestWorldMapPacket { StateOnly = true, IncludeShips = true });
     }
 
     public static void SendNeedMapForGrid(MapInstance? mapInstance = default)

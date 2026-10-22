@@ -90,7 +90,7 @@ internal static partial class NavalSystem
     private static void Fire(Vessel vessel,bool starboard,long now)=>FireAmmunition(vessel,starboard,now,null,null);
     private static void FireAmmunition(Vessel vessel, bool starboard, long now,CannonAmmunition ammo,List<Cannonball> planned)
     {
-        if(vessel.EnemyBoardingEncounter!=Guid.Empty)return;
+        if(vessel.EnemyBoardingEncounter!=Guid.Empty || BoardingCeasefire(vessel))return;
         var ready = starboard ? vessel.StarboardReady : vessel.PortReady;
         if (!ShipActions.CanFire(_settings.CannonsEnabled,vessel.SunkUntil==0,false,now,ready) || Cannonballs.Count+PendingCrewShots > 509) return;
         if (starboard) vessel.StarboardReady = now + NavalSkillDefinition.Reload(_settings.CannonReloadMilliseconds,ammo?.ReloadPercent??100,SkillPower(vessel,NavalSkillKind.RapidReload,now));
@@ -137,7 +137,7 @@ internal static partial class NavalSystem
                 foreach(var tile in HullTiles(vessel,ocean,vessel.State.MapId,vessel.State.X,vessel.State.Y)) hulls.TryAdd(tile,vessel);
         foreach (var ball in Cannonballs.ToArray())
         {
-            if (!Ships.ContainsKey(ball.ShipId)) { Cannonballs.Remove(ball);continue; }
+            if (!Ships.TryGetValue(ball.ShipId,out var source) || source.Enemy!=null && BoardingCeasefire(source)) { Cannonballs.Remove(ball);continue; }
             var impact=NavalEffectKind.WaterImpact;
             var originMap=ball.MapId;var originX=ball.X;var originY=ball.Y;var stopped=false;
             var travelled=ShipCannonSweep.Travel(ball.Speed,seconds,ball.Remaining,distance=>

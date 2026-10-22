@@ -1,4 +1,5 @@
 ﻿using Intersect.Client.Framework.Content;
+using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -56,9 +57,34 @@ public partial class MainMenu
                     var y=(i*271.827+elapsed/1000d*Math.Clamp(settings.WeatherSpeedY,-500,500))%areaHeight;
                     tile.SetBounds((int)((x+areaWidth)%areaWidth)-width,(int)((y+areaHeight)%areaHeight)-height,width,height);
                 }
-                tile.RenderColor=new Color((byte)Math.Clamp(layer?.Opacity??settings.FogOpacity,0,255),255,255,255);
+                var brightness=settings.BrightnessChannel();
+                tile.RenderColor=new Color((byte)Math.Clamp(layer?.Opacity??settings.FogOpacity,0,255),brightness,brightness,brightness);
                 tile.SendToBack();
             }
         }
     }
+    private MenuBrightnessShade? _menuBrightnessShade;
+    private void UpdateMenuBrightness()
+    {
+        _menuBrightnessShade??=new MenuBrightnessShade(_menuCanvas);
+        var brightness=Math.Clamp(ClientConfiguration.Instance.MenuWeather?.Brightness??100,0,100);
+        _menuBrightnessShade.Opacity=(byte)(255*(100-brightness)/100);
+        _menuBrightnessShade.SetBounds(0,0,_menuCanvas.Width,_menuCanvas.Height);
+        _menuBrightnessShade.IsHidden=brightness==100;
+        // Background image is drawn before Gwen. Decorative animations above the shade use
+        // the same brightness tint, preserving their alpha and foreground/background order.
+        _menuBrightnessShade.SendToBack();
+    }
+    private sealed class MenuBrightnessShade:Base
+    {
+        internal byte Opacity;
+        internal MenuBrightnessShade(Base parent):base(parent,"MenuBrightness")
+        {MouseInputEnabled=false;KeyboardInputEnabled=false;}
+        protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
+        {
+            skin.Renderer.DrawColor=new Color(Opacity,0,0,0);
+            skin.Renderer.DrawFilledRect(new Rectangle(0,0,Width,Height));
+        }
+    }
+
 }

@@ -62,8 +62,8 @@ internal sealed class PetsWindow : Window
             OverflowY = OverflowBehavior.Scroll,
             AutoHideBars = true,
         };
-        _scroll.SetBounds(31, 108, 673, 403);
-        if(!readOnly)NavalManagementWindow.Button(this,"PetAccessories",PremiumConvenienceWindow.T("Pet accessories"),31,514,250,30,()=>PremiumConvenienceWindow.Request());
+        _scroll.SetBounds(31,108,673,readOnly?403:365);
+        if(!readOnly)NavalManagementWindow.Button(this,"PetAccessories",PremiumConvenienceWindow.T("Pet accessories"),31,486,673,30,()=>PremiumConvenienceWindow.Request());
         Hide();
     }
 

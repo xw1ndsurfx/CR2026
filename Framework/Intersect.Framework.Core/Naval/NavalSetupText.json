@@ -2164,6 +2164,161 @@
       "en": "Your cargo has been revealed. Collect your rewards.",
       "fr": "Votre cargaison est dévoilée. Récupérez vos récompenses.",
       "es": "Tu carga ha sido revelada. Recoge tus recompensas."
+    },
+    "In use": {
+      "en": "In use",
+      "fr": "En cours d’utilisation",
+      "es": "En uso"
+    },
+    "Ammunition: {0}/{1} - In use: {2}": {
+      "en": "Ammunition: {0}/{1} - In use: {2}",
+      "fr": "Munitions : {0}/{1} - Utilisé : {2}",
+      "es": "Munición: {0}/{1} - En uso: {2}"
+    },
+    "Ammunition: {0}/{1}": {
+      "en": "Ammunition: {0}/{1}",
+      "fr": "Munitions : {0}/{1}",
+      "es": "Munición: {0}/{1}"
+    },
+    "Expand ammunition inventory": {
+      "en": "Expand ammunition inventory",
+      "fr": "Agrandir l’inventaire de munitions",
+      "es": "Ampliar el inventario de munición"
+    },
+    "Expand to {0} - {1} {2}": {
+      "en": "Expand to {0} - {1} {2}",
+      "fr": "Capacité {0} - {1} {2}",
+      "es": "Capacidad {0} - {1} {2}"
+    },
+    "Gunnery level {0}": {
+      "en": "Gunnery level {0}",
+      "fr": "Canonnier niveau {0}",
+      "es": "Artillería nivel {0}"
+    },
+    "Complete quest: {0}": {
+      "en": "Complete quest: {0}",
+      "fr": "Terminer la quête : {0}",
+      "es": "Completar misión: {0}"
+    },
+    "{0} or {1}": {
+      "en": "{0} or {1}",
+      "fr": "{0} ou {1}",
+      "es": "{0} o {1}"
+    },
+    "Ammunition inventory capacity": {
+      "en": "Ammunition inventory capacity",
+      "fr": "Capacité de l’inventaire de munitions",
+      "es": "Capacidad del inventario de munición"
+    },
+    "BaseCapacity": {
+      "en": "Base Capacity",
+      "fr": "Capacité de base",
+      "es": "Capacidad inicial"
+    },
+    "CapacityPerUpgrade": {
+      "en": "Capacity Per Upgrade",
+      "fr": "Capacité par amélioration",
+      "es": "Capacidad por mejora"
+    },
+    "MaximumUpgrades": {
+      "en": "Maximum Upgrades",
+      "fr": "Nombre maximal d’améliorations",
+      "es": "Máximo de mejoras"
+    },
+    "PurchaseLimit": {
+      "en": "Purchase Limit",
+      "fr": "Quantité maximale par achat",
+      "es": "Cantidad máxima por compra"
+    },
+    "UpgradePrice": {
+      "en": "Upgrade Price",
+      "fr": "Prix de base des améliorations",
+      "es": "Precio inicial de las mejoras"
+    },
+    "UpgradeCurrencyItemId": {
+      "en": "Upgrade Currency item",
+      "fr": "Monnaie des améliorations",
+      "es": "Moneda de las mejoras"
+    },
+    "RequiredGunneryLevel": {
+      "en": "Required Gunnery Level",
+      "fr": "Niveau de canonnier requis",
+      "es": "Nivel de artillería requerido"
+    },
+    "GunneryLevelsPerUpgrade": {
+      "en": "Gunnery Levels Per Upgrade",
+      "fr": "Niveaux supplémentaires par amélioration",
+      "es": "Niveles adicionales por mejora"
+    },
+    "UnlockQuestId": {
+      "en": "Unlock quest",
+      "fr": "Quête de déblocage",
+      "es": "Misión de desbloqueo"
+    },
+    "UnlockRule": {
+      "en": "Unlock Rule",
+      "fr": "Condition de déblocage",
+      "es": "Condición de desbloqueo"
+    },
+    "Gunnery level": {
+      "en": "Gunnery level",
+      "fr": "Niveau de canonnier",
+      "es": "Nivel de artillería"
+    },
+    "Completed quest": {
+      "en": "Completed quest",
+      "fr": "Quête terminée",
+      "es": "Misión completada"
+    },
+    "Active": {
+      "en": "Active",
+      "fr": "Actif",
+      "es": "Activo"
+    },
+    "Ammunition inventory expanded.": {
+      "en": "Ammunition inventory expanded.",
+      "fr": "Inventaire de munitions agrandi.",
+      "es": "Inventario de munición ampliado."
+    },
+    "Upgrade unavailable. Check the level, quest and currency requirements.": {
+      "en": "Upgrade unavailable. Check the level, quest and currency requirements.",
+      "fr": "Amélioration indisponible. Vérifiez le niveau, la quête et la monnaie requis.",
+      "es": "Mejora no disponible. Comprueba el nivel, la misión y la moneda requeridos."
+    },
+    "Gunnery level or completed quest": {
+      "en": "Gunnery level or completed quest",
+      "fr": "Niveau de canonnier ou quête",
+      "es": "Nivel de artillería o misión"
+    },
+    "AutomaticBoardingDeck": {
+      "en": "Automatic Boarding Deck",
+      "fr": "Pont d’abordage automatique",
+      "es": "Cubierta de abordaje automática"
+    },
+    "BoardingCrewNpcId": {
+      "en": "Boarding Crew NPC",
+      "fr": "PNJ de l’équipage d’abordage",
+      "es": "PNJ de la tripulación de abordaje"
+    },
+    "BoardingCrewCount": {
+      "en": "Boarding Crew Count",
+      "fr": "Nombre d’ennemis sur le pont",
+      "es": "Enemigos en la cubierta"
+    },
+    "Choose a crew NPC with a sprite for the automatic boarding deck.": {
+      "en": "Choose a crew NPC with a sprite for the automatic boarding deck.",
+      "fr": "Choisissez un PNJ avec un sprite pour générer le pont d’abordage.",
+      "es": "Elige un PNJ con sprite para generar la cubierta de abordaje."
+    },
+    "Boardable": {
+      "en": "Boardable",
+      "fr": "Abordable",
+      "es": "Abordable"
+    },
+    "Board the enemy deck? You can board alone or with your crew.": {
+      "en": "Board the enemy deck? You can board alone or with your crew.",
+      "fr": "Aborder le navire ennemi ? Seul ou avec votre équipage.",
+      "es": "¿Abordar el navío enemigo? Puedes ir solo o con tu tripulación."
     }
   }
 }

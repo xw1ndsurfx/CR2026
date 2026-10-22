@@ -18,6 +18,7 @@ internal static partial class NavalSystem
     // No player locks, database writes or native map creation occur while holding Gate.
     internal static void WorldTick(long now)
     {
+        PruneGeneratedBoardingDecks(now);
         lock(Gate)
         {
             if(now-_lastEnemyStep<50) return;
@@ -98,7 +99,7 @@ internal static partial class NavalSystem
     private static void StepEnemy(Vessel enemy,HashSet<Guid> ocean,long now,double dt)
     {
         var config=enemy.Enemy;var s=enemy.State;var d=enemy.Definition;
-        if(enemy.EnemyBoardingEncounter!=Guid.Empty || enemy.SunkUntil==0 && config.BoardingDungeonId!=Guid.Empty && enemy.Health*100L<=enemy.MaximumHealth*(long)config.BoardingHealthPercent)
+        if(enemy.EnemyBoardingEncounter!=Guid.Empty || BoardingCeasefire(enemy))
         {s.Speed=s.Throttle=0;enemy.Controls.Reset();return;}
         if(enemy.SunkUntil>0)
         {

@@ -2,6 +2,8 @@
 namespace Intersect.Configuration;
 public sealed class MenuWeatherDefinition
 {
+    public int Brightness {get;set;}=100;
+    public byte BrightnessChannel()=>(byte)(255*Math.Clamp(Brightness,0,100)/100);
     public string Fog {get;set;}="";
     public int FogOpacity {get;set;}=64;
     public int FogSpeedX {get;set;}=8;

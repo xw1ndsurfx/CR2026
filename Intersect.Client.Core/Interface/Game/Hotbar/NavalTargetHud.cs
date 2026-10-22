@@ -35,7 +35,7 @@ internal sealed class NavalTargetHud : Base
         var columns=Math.Max(1,(width-24)/36);
         SetBounds(Math.Max(8,((Parent?.Width??800)-width)/2),22,width,76+46*((effects.Length+columns-1)/columns));
         _name.SetBounds(64,7,width-74,24);_health.SetBounds(64,47,width-74,21);_level.SetBounds(7,24,46,24);
-        EventPanelText.Fit(_name,NavalWorld.EnemyName(target),12);
+        EventPanelText.Fit(_name,NavalWorld.EnemyName(target)+(target.BoardingReady?" - "+NavalSetupText.Get("Boardable",ClientLanguages.Current):""),12);
         _level.Text=string.Format(NavalSetupText.Get("Lv. {0}",ClientLanguages.Current),target.Level);
         _health.Text=string.Format(NavalSetupText.Get("Hull: {0:N0} / {1:N0}",ClientLanguages.Current),target.Health,target.MaximumHealth);
         for(var index=0;index<effects.Length;index++)

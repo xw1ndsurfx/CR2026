@@ -22,6 +22,7 @@ public partial class NavalSnapshotPacket : IntersectPacket
 [MessagePackObject]
 public sealed class ShipSnapshot
 {
+    [Key(34)] public bool BoardingReady {get;set;}
     [Key(33)] public NavalCannonStatus[] CannonStatuses {get;set;}=[];
     [Key(32)] public Guid EnemyBoardingTargetId {get;set;}
     [Key(31)] public NavalActiveSkill[] ActiveSkills {get;set;}=[];

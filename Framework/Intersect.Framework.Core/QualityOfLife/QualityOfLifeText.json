@@ -649,6 +649,156 @@
       "en": "Weather",
       "fr": "Météo",
       "es": "Clima"
+    },
+    "Menu brightness (%)": {
+      "en": "Menu brightness (%)",
+      "fr": "Luminosité du menu (%)",
+      "es": "Brillo del menú (%)"
+    },
+    "PvP": {
+      "en": "PvP",
+      "fr": "PvP",
+      "es": "JcJ"
+    },
+    "Stats": {
+      "en": "Stats",
+      "fr": "Statistiques",
+      "es": "Estadísticas"
+    },
+    "Equipped items": {
+      "en": "Equipped items",
+      "fr": "Équipement",
+      "es": "Equipo"
+    },
+    "Professions": {
+      "en": "Professions",
+      "fr": "Professions",
+      "es": "Profesiones"
+    },
+    "Previous": {
+      "en": "Previous",
+      "fr": "Précédent",
+      "es": "Anterior"
+    },
+    "Next": {
+      "en": "Next",
+      "fr": "Suivant",
+      "es": "Siguiente"
+    },
+    "Shirt tint": {
+      "en": "Shirt tint",
+      "fr": "Teinte du haut",
+      "es": "Tinte de camisa"
+    },
+    "Pants tint": {
+      "en": "Pants tint",
+      "fr": "Teinte du pantalon",
+      "es": "Tinte de pantalón"
+    },
+    "Boots tint": {
+      "en": "Boots tint",
+      "fr": "Teinte des bottes",
+      "es": "Tinte de botas"
+    },
+    "Original colours": {
+      "en": "Original colours",
+      "fr": "Couleurs d’origine",
+      "es": "Colores originales"
+    },
+    "Original colours preserves the artwork; other colours apply a tint.": {
+      "en": "Original colours preserves the artwork; other colours apply a tint.",
+      "fr": "Couleurs d’origine conserve le dessin ; les autres couleurs ajoutent une teinte.",
+      "es": "Colores originales conserva el diseño; los demás colores aplican un tinte."
+    },
+    "Guild management": {
+      "en": "Guild management",
+      "fr": "Gestion de guilde",
+      "es": "Gestión del gremio"
+    },
+    "Manage member ranks and guild permissions.": {
+      "en": "Manage member ranks and guild permissions.",
+      "fr": "Gérer les rangs des membres et les permissions de guilde.",
+      "es": "Gestionar rangos y permisos del gremio."
+    },
+    "Select a member and the rank to assign.": {
+      "en": "Select a member and the rank to assign.",
+      "fr": "Choisissez un membre et le rang à attribuer.",
+      "es": "Elige un miembro y el rango que deseas asignar."
+    },
+    "Current rank: {0}": {
+      "en": "Current rank: {0}",
+      "fr": "Rang actuel : {0}",
+      "es": "Rango actual: {0}"
+    },
+    "Promote": {
+      "en": "Promote",
+      "fr": "Promouvoir",
+      "es": "Ascender"
+    },
+    "Demote": {
+      "en": "Demote",
+      "fr": "Rétrograder",
+      "es": "Degradar"
+    },
+    "Remove member": {
+      "en": "Remove member",
+      "fr": "Retirer le membre",
+      "es": "Expulsar miembro"
+    },
+    "Transfer leadership": {
+      "en": "Transfer leadership",
+      "fr": "Transférer la direction",
+      "es": "Transferir liderazgo"
+    },
+    "Back to members": {
+      "en": "Back to members",
+      "fr": "Retour aux membres",
+      "es": "Volver a miembros"
+    },
+    "Invite": {
+      "en": "Invite",
+      "fr": "Inviter",
+      "es": "Invitar"
+    },
+    "Text colour": {
+      "en": "Text colour",
+      "fr": "Couleur",
+      "es": "Color del texto"
+    },
+    "Invite home": {
+      "en": "Invite home",
+      "fr": "Inviter chez moi",
+      "es": "Invitar a casa"
+    },
+    "House invitation": {
+      "en": "House invitation",
+      "fr": "Invitation à la maison",
+      "es": "Invitación a casa"
+    },
+    "{0} invites you to visit their house. Join?": {
+      "en": "{0} invites you to visit their house. Join?",
+      "fr": "{0} vous invite à visiter sa maison. Accepter ?",
+      "es": "{0} te invita a visitar su casa. ¿Aceptar?"
+    },
+    "House invitation sent.": {
+      "en": "House invitation sent.",
+      "fr": "Invitation à la maison envoyée.",
+      "es": "Invitación a casa enviada."
+    },
+    "This house invitation has expired.": {
+      "en": "This house invitation has expired.",
+      "fr": "Cette invitation à la maison a expiré.",
+      "es": "Esta invitación a casa ha caducado."
+    },
+    "Your friend must be online and available for a house invitation.": {
+      "en": "Your friend must be online and available for a house invitation.",
+      "fr": "Votre ami doit être en ligne et disponible pour recevoir une invitation.",
+      "es": "Tu amigo debe estar conectado y disponible para recibir una invitación."
+    },
+    "Finish your current activity before visiting a house.": {
+      "en": "Finish your current activity before visiting a house.",
+      "fr": "Terminez votre activité avant de visiter une maison.",
+      "es": "Termina tu actividad antes de visitar una casa."
     }
   }
 }

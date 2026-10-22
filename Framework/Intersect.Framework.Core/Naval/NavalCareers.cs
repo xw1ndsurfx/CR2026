@@ -4,15 +4,16 @@ namespace Intersect.Framework.Core.Naval;
 public enum NavalSkillKind : byte { RammingSpeed, FullSail, TakeCover, OpenFire, RepairBonus, RapidReload, LongRange, AgileHelm }
 public enum NavalRepairKind : byte { Hammering, Caulking, Pumping }
 public enum NavalTaskKind : byte { ShipsSunk, CannonHits, HullDamage, Repairs, Dockings, CargoUnloaded, SailingLevel, GunneryLevel, ShipwrightLevel }
-public enum NavalManageAction : byte { Ammo, Deposit, Withdraw, BuyAmmo, SelectAmmo, Skills, BuySkill, UseSkill, Repair, RepairInput, CancelRepair, OfferHelm, AcceptHelm, ReclaimHelm, Dock, RepairMenu, SellAmmo, AmmoShop, BoardEnemy }
+public enum NavalManageAction : byte { Ammo, Deposit, Withdraw, BuyAmmo, SelectAmmo, Skills, BuySkill, UseSkill, Repair, RepairInput, CancelRepair, OfferHelm, AcceptHelm, ReclaimHelm, Dock, RepairMenu, SellAmmo, AmmoShop, BoardEnemy, UpgradeAmmoInventory }
 public sealed class NavalAmmoStack {public Guid ItemId {get;set;} public int Quantity {get;set;}}
 public sealed class NavalCareerData
 {
     public List<NavalAmmoStack> Ammo {get;set;}=[];
+    public int AmmoUpgradeLevel {get;set;}
     public HashSet<NavalSkillKind> Skills {get;set;}=[];
     public long RepairExperience {get;set;}
     public Dictionary<NavalTaskKind,long> Counters {get;set;}=[];
-    public bool IsValid()=>Ammo is {Count:<=512} && Ammo.All(a=>a!=null && a.ItemId!=Guid.Empty && a.Quantity is >0 and <=1000000000) &&
+    public bool IsValid()=>AmmoUpgradeLevel is >=0 and <=20 && Ammo is {Count:<=512} && Ammo.All(a=>a!=null && a.ItemId!=Guid.Empty && a.Quantity is >0 and <=1000000000) &&
         Ammo.Select(a=>a.ItemId).Distinct().Count()==Ammo.Count && Skills!=null && Skills.All(Enum.IsDefined) && RepairExperience is >=0 and <=200000000000000L &&
         Counters is {Count:<=32} && Counters.All(p=>Enum.IsDefined(p.Key) && p.Value is >=0 and <=200000000000000L);
 }
@@ -60,6 +61,7 @@ public sealed class NavalAmmoOffer
     public bool ForSale {get;set;}
     public int Price {get;set;}
     public int SellPrice {get;set;}=-1;
+    public int MaximumPurchase {get;set;}
     public bool CanBuy {get;set;}
     public string SellCurrency {get;set;}="";
     public string Currency {get;set;}="";
@@ -85,6 +87,9 @@ public sealed class NavalManagementState
     public bool SkillShop {get;set;}
     public bool Shop {get;set;}
     public NavalAmmoOffer[] Ammo {get;set;}=[];
+    public long AmmoUsed {get;set;}
+    public int AmmoCapacity {get;set;}
+    public NavalAmmoUpgradeOffer? AmmoUpgrade {get;set;}
     public NavalSkillView[] Skills {get;set;}=[];
     public Guid ShipId {get;set;}
     public Guid OwnerId {get;set;}

@@ -36,6 +36,7 @@ internal sealed partial class UserListWindow
             return;
         }
 
+        if(_guildManagementOpen){DrawGuildManagement();return;}
         GuildMember[] members = player.GuildMembers ?? [];
         var ranked = members
             .OrderBy(member => member.Rank)
@@ -102,9 +103,8 @@ internal sealed partial class UserListWindow
             canInvite ? InviteGuildMember : null,
             canInvite ? null : "Your guild rank cannot invite members.");
         var manage = AddAction(_footer, "GuildManage", "MANAGE", 119, 13, 126, 42,
-            _openGuildManagement, "Open the existing guild administration menu.");
-        // The artist's pen icon opens the already working guild administration
-        // panel. It is not a fake Edit button without a server-side action.
+            CanManageGuild ? ()=>{_guildManagementOpen=true;Refresh();} : null, GuildText("Manage member ranks and guild permissions."));
+        // Management stays in this window; member profiles remain in Member Info.
         AdmurinGuiArt.Add(manage, "GuildManagePencil", "userlist_3",
             6, 10, 22, 23, 0, 0, 20, 20);
         AddAction(_footer, "GuildLeave", "LEAVE", 254, 13, 112, 42,
