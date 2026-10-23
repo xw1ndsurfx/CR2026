@@ -30,14 +30,14 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
         /// </summary>
         private void InitializeComponent()
         {
-            this.grpGuildSlots = new DarkUI.Controls.DarkGroupBox();
-            this.cmbVariable = new DarkUI.Controls.DarkComboBox();
+            this.grpGuildSlots = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.cmbVariable = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.lblVariable = new System.Windows.Forms.Label();
-            this.rdoGlobalVariable = new DarkUI.Controls.DarkRadioButton();
-            this.rdoGuildVariable = new DarkUI.Controls.DarkRadioButton();
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.rdoPlayerVariable = new DarkUI.Controls.DarkRadioButton();
-            this.btnSave = new DarkUI.Controls.DarkButton();
+            this.rdoGlobalVariable = new Intersect.Editor.Forms.Styling.LogiklikRadioButton();
+            this.rdoGuildVariable = new Intersect.Editor.Forms.Styling.LogiklikRadioButton();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.rdoPlayerVariable = new Intersect.Editor.Forms.Styling.LogiklikRadioButton();
+            this.btnSave = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.grpGuildSlots.SuspendLayout();
             this.SuspendLayout();
             // 

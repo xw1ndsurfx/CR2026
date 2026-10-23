@@ -28,9 +28,9 @@ partial class ConditionControl_QuestCanStart
     /// </summary>
     private void InitializeComponent()
     {
-        grpStartQuest = new DarkUI.Controls.DarkGroupBox();
+        grpStartQuest = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
         lblStartQuest = new Label();
-        cmbStartQuest = new DarkUI.Controls.DarkComboBox();
+        cmbStartQuest = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         grpStartQuest.SuspendLayout();
         SuspendLayout();
         // 
@@ -96,7 +96,7 @@ partial class ConditionControl_QuestCanStart
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpStartQuest;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpStartQuest;
     private Label lblStartQuest;
-    private DarkUI.Controls.DarkComboBox cmbStartQuest;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbStartQuest;
 }

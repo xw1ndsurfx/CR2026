@@ -30,23 +30,23 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
         /// </summary>
         private void InitializeComponent()
         {
-            this.grpInput = new DarkUI.Controls.DarkGroupBox();
+            this.grpInput = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
             this.lblTitle = new System.Windows.Forms.Label();
             this.txtTitle = new DarkUI.Controls.DarkTextBox();
-            this.nudMaxVal = new DarkUI.Controls.DarkNumericUpDown();
+            this.nudMaxVal = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
             this.lblMaxVal = new System.Windows.Forms.Label();
-            this.nudMinVal = new DarkUI.Controls.DarkNumericUpDown();
+            this.nudMinVal = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
             this.lblMinVal = new System.Windows.Forms.Label();
-            this.cmbVariable = new DarkUI.Controls.DarkComboBox();
-            this.rdoGuildVariables = new DarkUI.Controls.DarkRadioButton();
-            this.rdoPlayerVariables = new DarkUI.Controls.DarkRadioButton();
+            this.cmbVariable = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
+            this.rdoGuildVariables = new Intersect.Editor.Forms.Styling.LogiklikRadioButton();
+            this.rdoPlayerVariables = new Intersect.Editor.Forms.Styling.LogiklikRadioButton();
             this.lblCommands = new System.Windows.Forms.Label();
             this.txtText = new DarkUI.Controls.DarkTextBox();
             this.lblText = new System.Windows.Forms.Label();
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.btnSave = new DarkUI.Controls.DarkButton();
-            this.rdoGlobalVariables = new DarkUI.Controls.DarkRadioButton();
-            this.rdoUserVariables = new DarkUI.Controls.DarkRadioButton();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnSave = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.rdoGlobalVariables = new Intersect.Editor.Forms.Styling.LogiklikRadioButton();
+            this.rdoUserVariables = new Intersect.Editor.Forms.Styling.LogiklikRadioButton();
             this.grpInput.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudMaxVal)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudMinVal)).BeginInit();

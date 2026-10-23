@@ -28,9 +28,9 @@ partial class ConditionControl_PlayerGuild
     /// </summary>
     private void InitializeComponent()
     {
-        grpInGuild = new DarkUI.Controls.DarkGroupBox();
+        grpInGuild = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
         lblRank = new Label();
-        cmbRank = new DarkUI.Controls.DarkComboBox();
+        cmbRank = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         grpInGuild.SuspendLayout();
         SuspendLayout();
         // 
@@ -96,7 +96,7 @@ partial class ConditionControl_PlayerGuild
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpInGuild;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpInGuild;
     private Label lblRank;
-    private DarkUI.Controls.DarkComboBox cmbRank;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbRank;
 }

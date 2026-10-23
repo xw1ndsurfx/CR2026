@@ -38,7 +38,7 @@ namespace Intersect.Editor.Forms
             this.lblStatus = new System.Windows.Forms.Label();
             this.picLogo = new System.Windows.Forms.PictureBox();
             this.lblVersion = new System.Windows.Forms.Label();
-            this.progressBar = new System.Windows.Forms.ProgressBar();
+            this.progressBar = new Intersect.Editor.Forms.Styling.LogiklikProgressBar();
             this.lblFiles = new System.Windows.Forms.Label();
             this.lblSize = new System.Windows.Forms.Label();
             this.tmrUpdate = new System.Windows.Forms.Timer(this.components);

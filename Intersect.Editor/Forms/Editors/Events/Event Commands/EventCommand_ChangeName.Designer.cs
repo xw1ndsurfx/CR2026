@@ -32,12 +32,12 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(EventCommandChangeName));
-            this.grpChangeLevel = new DarkUI.Controls.DarkGroupBox();
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.btnSave = new DarkUI.Controls.DarkButton();
+            this.grpChangeLevel = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnSave = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.colorDialog = new System.Windows.Forms.ColorDialog();
             this.lblVariable = new System.Windows.Forms.Label();
-            this.cmbVariable = new DarkUI.Controls.DarkComboBox();
+            this.cmbVariable = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.grpChangeLevel.SuspendLayout();
             this.SuspendLayout();
             // 

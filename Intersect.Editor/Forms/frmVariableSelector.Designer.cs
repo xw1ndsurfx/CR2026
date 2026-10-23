@@ -28,13 +28,13 @@ partial class FrmVariableSelector
     /// </summary>
     private void InitializeComponent()
     {
-        btnOk = new DarkUI.Controls.DarkButton();
-        btnCancel = new DarkUI.Controls.DarkButton();
-        grpSelection = new DarkUI.Controls.DarkGroupBox();
-        grpVariable = new DarkUI.Controls.DarkGroupBox();
-        cmbVariables = new DarkUI.Controls.DarkComboBox();
-        grpVariableType = new DarkUI.Controls.DarkGroupBox();
-        cmbVariableType = new DarkUI.Controls.DarkComboBox();
+        btnOk = new Intersect.Editor.Forms.Styling.LogiklikButton();
+        btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+        grpSelection = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        grpVariable = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        cmbVariables = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
+        grpVariableType = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        cmbVariableType = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         grpSelection.SuspendLayout();
         grpVariable.SuspendLayout();
         grpVariableType.SuspendLayout();
@@ -176,11 +176,11 @@ partial class FrmVariableSelector
     }
 
     #endregion
-    private DarkUI.Controls.DarkButton btnOk;
-    private DarkUI.Controls.DarkButton btnCancel;
-    private DarkUI.Controls.DarkGroupBox grpSelection;
-    private DarkUI.Controls.DarkGroupBox grpVariable;
-    private DarkUI.Controls.DarkComboBox cmbVariables;
-    private DarkUI.Controls.DarkGroupBox grpVariableType;
-    private DarkUI.Controls.DarkComboBox cmbVariableType;
+    private Intersect.Editor.Forms.Styling.LogiklikButton btnOk;
+    private Intersect.Editor.Forms.Styling.LogiklikButton btnCancel;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpSelection;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpVariable;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbVariables;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpVariableType;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbVariableType;
 }

@@ -1,5 +1,13 @@
 ﻿{
   "Entries": {
+    "OK": { "en": "OK", "fr": "OK", "es": "Aceptar" },
+    "Yes": { "en": "Yes", "fr": "Oui", "es": "Sí" },
+    "No": { "en": "No", "fr": "Non", "es": "No" },
+    "Abort": { "en": "Abort", "fr": "Abandonner", "es": "Anular" },
+    "Retry": { "en": "Retry", "fr": "Réessayer", "es": "Reintentar" },
+    "Ignore": { "en": "Ignore", "fr": "Ignorer", "es": "Omitir" },
+    "Try again": { "en": "Try again", "fr": "Réessayer", "es": "Intentar de nuevo" },
+    "Continue": { "en": "Continue", "fr": "Continuer", "es": "Continuar" },
     "Abandon dungeon": {
       "en": "Abandon dungeon",
       "fr": "Abandonner le donjon",

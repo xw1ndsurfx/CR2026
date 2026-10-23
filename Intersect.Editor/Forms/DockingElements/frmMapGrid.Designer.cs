@@ -34,7 +34,7 @@ namespace Intersect.Editor.Forms.DockingElements
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmMapGrid));
             this.pnlMapGrid = new System.Windows.Forms.Panel();
-            this.toolStrip1 = new DarkUI.Controls.DarkToolStrip();
+            this.toolStrip1 = new Intersect.Editor.Forms.Styling.LogiklikToolStrip();
             this.btnFetchPreview = new System.Windows.Forms.ToolStripDropDownButton();
             this.downloadMissingPreviewsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.reDownloadAllPreviewsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();

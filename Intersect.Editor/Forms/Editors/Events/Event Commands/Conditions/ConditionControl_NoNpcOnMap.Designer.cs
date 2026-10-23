@@ -28,9 +28,9 @@ partial class ConditionControl_NoNpcOnMap
     /// </summary>
     private void InitializeComponent()
     {
-        grpNpc = new DarkUI.Controls.DarkGroupBox();
-        chkNpc = new DarkUI.Controls.DarkCheckBox();
-        cmbNpcs = new DarkUI.Controls.DarkComboBox();
+        grpNpc = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        chkNpc = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
+        cmbNpcs = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblNpc = new Label();
         grpNpc.SuspendLayout();
         SuspendLayout();
@@ -108,8 +108,8 @@ partial class ConditionControl_NoNpcOnMap
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpNpc;
-    private DarkUI.Controls.DarkCheckBox chkNpc;
-    private DarkUI.Controls.DarkComboBox cmbNpcs;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpNpc;
+    private Intersect.Editor.Forms.Styling.LogiklikCheckBox chkNpc;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbNpcs;
     private Label lblNpc;
 }

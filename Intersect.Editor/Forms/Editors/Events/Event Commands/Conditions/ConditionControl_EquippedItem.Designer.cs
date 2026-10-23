@@ -28,8 +28,8 @@ partial class ConditionControl_EquippedItem
     /// </summary>
     private void InitializeComponent()
     {
-        grpEquippedItem = new DarkUI.Controls.DarkGroupBox();
-        cmbEquippedItem = new DarkUI.Controls.DarkComboBox();
+        grpEquippedItem = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        cmbEquippedItem = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblEquippedItem = new Label();
         grpEquippedItem.SuspendLayout();
         SuspendLayout();
@@ -96,7 +96,7 @@ partial class ConditionControl_EquippedItem
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpEquippedItem;
-    private DarkUI.Controls.DarkComboBox cmbEquippedItem;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpEquippedItem;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbEquippedItem;
     private Label lblEquippedItem;
 }

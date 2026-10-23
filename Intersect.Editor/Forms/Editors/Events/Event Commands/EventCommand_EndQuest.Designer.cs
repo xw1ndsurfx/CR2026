@@ -30,12 +30,12 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
         /// </summary>
         private void InitializeComponent()
         {
-            this.grpEndQuest = new DarkUI.Controls.DarkGroupBox();
-            this.chkSkipCompletionEvent = new DarkUI.Controls.DarkCheckBox();
-            this.cmbQuests = new DarkUI.Controls.DarkComboBox();
+            this.grpEndQuest = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.chkSkipCompletionEvent = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
+            this.cmbQuests = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.lblQuest = new System.Windows.Forms.Label();
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.btnSave = new DarkUI.Controls.DarkButton();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnSave = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.grpEndQuest.SuspendLayout();
             this.SuspendLayout();
             // 

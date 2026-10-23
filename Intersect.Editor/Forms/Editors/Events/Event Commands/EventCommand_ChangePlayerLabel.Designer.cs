@@ -31,17 +31,17 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
     private void InitializeComponent()
     {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(EventCommandChangePlayerLabel));
-            this.grpChangeLabel = new DarkUI.Controls.DarkGroupBox();
+            this.grpChangeLabel = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
             this.lblStringTextVariables = new System.Windows.Forms.Label();
             this.txtLabel = new DarkUI.Controls.DarkTextBox();
             this.lblValue = new System.Windows.Forms.Label();
             this.lblPosition = new System.Windows.Forms.Label();
-            this.cmbPosition = new DarkUI.Controls.DarkComboBox();
+            this.cmbPosition = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.chkPlayerNameColor = new System.Windows.Forms.CheckBox();
             this.pnlColor = new System.Windows.Forms.Panel();
-            this.btnSelectLightColor = new DarkUI.Controls.DarkButton();
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.btnSave = new DarkUI.Controls.DarkButton();
+            this.btnSelectLightColor = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnSave = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.colorDialog = new System.Windows.Forms.ColorDialog();
             this.grpChangeLabel.SuspendLayout();
             this.SuspendLayout();

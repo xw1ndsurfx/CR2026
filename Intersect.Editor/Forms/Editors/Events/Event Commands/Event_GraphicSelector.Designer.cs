@@ -30,14 +30,14 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
         /// </summary>
         private void InitializeComponent()
         {
-            this.grpSelector = new DarkUI.Controls.DarkGroupBox();
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.btnOk = new DarkUI.Controls.DarkButton();
-            this.cmbGraphic = new DarkUI.Controls.DarkComboBox();
+            this.grpSelector = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnOk = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.cmbGraphic = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.lblGraphic = new System.Windows.Forms.Label();
-            this.cmbGraphicType = new DarkUI.Controls.DarkComboBox();
+            this.cmbGraphicType = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.lblType = new System.Windows.Forms.Label();
-            this.grpPreview = new DarkUI.Controls.DarkGroupBox();
+            this.grpPreview = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
             this.pnlGraphicContainer = new System.Windows.Forms.Panel();
             this.pnlGraphic = new System.Windows.Forms.PictureBox();
             this.grpSelector.SuspendLayout();

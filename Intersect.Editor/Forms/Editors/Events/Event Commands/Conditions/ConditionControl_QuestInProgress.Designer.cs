@@ -28,13 +28,13 @@ partial class ConditionControl_QuestInProgress
     /// </summary>
     private void InitializeComponent()
     {
-        grpQuestInProgress = new DarkUI.Controls.DarkGroupBox();
+        grpQuestInProgress = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
         lblQuestTask = new Label();
-        cmbQuestTask = new DarkUI.Controls.DarkComboBox();
-        cmbTaskModifier = new DarkUI.Controls.DarkComboBox();
+        cmbQuestTask = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
+        cmbTaskModifier = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblQuestIs = new Label();
         lblQuestProgress = new Label();
-        cmbQuestInProgress = new DarkUI.Controls.DarkComboBox();
+        cmbQuestInProgress = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         grpQuestInProgress.SuspendLayout();
         SuspendLayout();
         // 
@@ -169,11 +169,11 @@ partial class ConditionControl_QuestInProgress
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpQuestInProgress;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpQuestInProgress;
     private Label lblQuestTask;
-    private DarkUI.Controls.DarkComboBox cmbQuestTask;
-    private DarkUI.Controls.DarkComboBox cmbTaskModifier;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbQuestTask;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbTaskModifier;
     private Label lblQuestIs;
     private Label lblQuestProgress;
-    private DarkUI.Controls.DarkComboBox cmbQuestInProgress;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbQuestInProgress;
 }

@@ -28,17 +28,17 @@ partial class EventCommand_CastSpellOn
     /// </summary>
     private void InitializeComponent()
     {
-        grpCastSpellOn = new DarkUI.Controls.DarkGroupBox();
-        grpTargets = new DarkUI.Controls.DarkGroupBox();
-        chkApplyToSelf = new DarkUI.Controls.DarkCheckBox();
-        darkButton1 = new DarkUI.Controls.DarkButton();
-        chkApplyToGuildies = new DarkUI.Controls.DarkCheckBox();
-        darkButton2 = new DarkUI.Controls.DarkButton();
-        chkApplyToParty = new DarkUI.Controls.DarkCheckBox();
-        cmbSpell = new DarkUI.Controls.DarkComboBox();
+        grpCastSpellOn = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        grpTargets = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        chkApplyToSelf = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
+        darkButton1 = new Intersect.Editor.Forms.Styling.LogiklikButton();
+        chkApplyToGuildies = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
+        darkButton2 = new Intersect.Editor.Forms.Styling.LogiklikButton();
+        chkApplyToParty = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
+        cmbSpell = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblSpell = new Label();
-        btnCancel = new DarkUI.Controls.DarkButton();
-        btnSave = new DarkUI.Controls.DarkButton();
+        btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+        btnSave = new Intersect.Editor.Forms.Styling.LogiklikButton();
         grpCastSpellOn.SuspendLayout();
         grpTargets.SuspendLayout();
         SuspendLayout();
@@ -204,15 +204,15 @@ partial class EventCommand_CastSpellOn
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpCastSpellOn;
-    private DarkUI.Controls.DarkCheckBox chkApplyToGuildies;
-    private DarkUI.Controls.DarkCheckBox chkApplyToParty;
-    private DarkUI.Controls.DarkComboBox cmbSpell;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpCastSpellOn;
+    private Intersect.Editor.Forms.Styling.LogiklikCheckBox chkApplyToGuildies;
+    private Intersect.Editor.Forms.Styling.LogiklikCheckBox chkApplyToParty;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbSpell;
     private Label lblSpell;
-    private DarkUI.Controls.DarkButton btnCancel;
-    private DarkUI.Controls.DarkButton btnSave;
-    private DarkUI.Controls.DarkGroupBox grpTargets;
-    private DarkUI.Controls.DarkCheckBox chkApplyToSelf;
-    private DarkUI.Controls.DarkButton darkButton1;
-    private DarkUI.Controls.DarkButton darkButton2;
+    private Intersect.Editor.Forms.Styling.LogiklikButton btnCancel;
+    private Intersect.Editor.Forms.Styling.LogiklikButton btnSave;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpTargets;
+    private Intersect.Editor.Forms.Styling.LogiklikCheckBox chkApplyToSelf;
+    private Intersect.Editor.Forms.Styling.LogiklikButton darkButton1;
+    private Intersect.Editor.Forms.Styling.LogiklikButton darkButton2;
 }

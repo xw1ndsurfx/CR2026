@@ -33,8 +33,8 @@ namespace Intersect.Editor.Forms
             this.components = new System.ComponentModel.Container();
             this.lblStatus = new System.Windows.Forms.Label();
             this.tmrUpdater = new System.Windows.Forms.Timer(this.components);
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.progressBar = new System.Windows.Forms.ProgressBar();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.progressBar = new Intersect.Editor.Forms.Styling.LogiklikProgressBar();
             this.SuspendLayout();
             // 
             // lblStatus
@@ -93,7 +93,7 @@ namespace Intersect.Editor.Forms
         #endregion
 
         private System.Windows.Forms.Label lblStatus;
-        private System.Windows.Forms.ProgressBar progressBar;
+        private Intersect.Editor.Forms.Styling.LogiklikProgressBar progressBar;
         private DarkButton btnCancel;
         private System.Windows.Forms.Timer tmrUpdater;
     }

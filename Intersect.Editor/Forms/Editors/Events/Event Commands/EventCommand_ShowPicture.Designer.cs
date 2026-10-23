@@ -28,17 +28,17 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.grpShowPicture = new DarkUI.Controls.DarkGroupBox();
-            this.chkClick = new DarkUI.Controls.DarkCheckBox();
+            this.grpShowPicture = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.chkClick = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
             this.lblSize = new System.Windows.Forms.Label();
             this.lblPicture = new System.Windows.Forms.Label();
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.btnSave = new DarkUI.Controls.DarkButton();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnSave = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.lblHide = new System.Windows.Forms.Label();
-            this.cmbSize = new DarkUI.Controls.DarkComboBox();
-            this.cmbPicture = new DarkUI.Controls.DarkComboBox();
-            this.nudHideTime = new DarkUI.Controls.DarkNumericUpDown();
-            this.chkWaitUntilClosed = new DarkUI.Controls.DarkCheckBox();
+            this.cmbSize = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
+            this.cmbPicture = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
+            this.nudHideTime = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
+            this.chkWaitUntilClosed = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
             this.grpShowPicture.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudHideTime)).BeginInit();
             this.SuspendLayout();
@@ -212,16 +212,16 @@
 
         #endregion
 
-        private DarkUI.Controls.DarkGroupBox grpShowPicture;
-        private DarkUI.Controls.DarkComboBox cmbPicture;
+        private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpShowPicture;
+        private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbPicture;
         private System.Windows.Forms.Label lblPicture;
-        private DarkUI.Controls.DarkButton btnCancel;
-        private DarkUI.Controls.DarkButton btnSave;
-        private DarkUI.Controls.DarkComboBox cmbSize;
+        private Intersect.Editor.Forms.Styling.LogiklikButton btnCancel;
+        private Intersect.Editor.Forms.Styling.LogiklikButton btnSave;
+        private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbSize;
         private System.Windows.Forms.Label lblSize;
-        private DarkUI.Controls.DarkCheckBox chkClick;
+        private Intersect.Editor.Forms.Styling.LogiklikCheckBox chkClick;
         private System.Windows.Forms.Label lblHide;
-        private DarkUI.Controls.DarkCheckBox chkWaitUntilClosed;
-        private DarkUI.Controls.DarkNumericUpDown nudHideTime;
+        private Intersect.Editor.Forms.Styling.LogiklikCheckBox chkWaitUntilClosed;
+        private Intersect.Editor.Forms.Styling.LogiklikNumericUpDown nudHideTime;
     }
 }

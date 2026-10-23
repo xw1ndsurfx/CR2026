@@ -16,6 +16,7 @@ internal static class EditorTheme
     internal static readonly DrawingColor Primary = DrawingColor.FromArgb(69, 111, 35);
     internal static readonly DrawingColor Selection = DrawingColor.FromArgb(40, 65, 43);
     internal static readonly Font BodyFont = new("Segoe UI", 9f);
+    internal static readonly Font ChoiceFont = new("Segoe UI", 8.25f);
     private static readonly ConditionalWeakTable<Control, object> Watched = new();
     private static bool _installed;
 
@@ -23,12 +24,13 @@ internal static class EditorTheme
     {
         if (_installed) return;
         _installed = true;
+        Application.AddMessageFilter(new FirstPaintFilter());
         // Legacy dialogs are created from many independent editors. Apply once,
         // after construction; no timer or per-frame repaint/style traversal.
         Application.Idle += (_, _) =>
         {
             foreach (var form in Application.OpenForms.Cast<Form>().ToArray())
-                if (form is not FrmLogin and not FrmAbout and not FrmUpdate && !Watched.TryGetValue(form, out _))
+                if (form is not FrmLogin && !Watched.TryGetValue(form, out _))
                     Apply(form);
         };
     }
@@ -45,10 +47,19 @@ internal static class EditorTheme
             Watched.Add(root, new object());
             if (root is not PropertyGrid)
                 root.ControlAdded += (_, args) => { if (args.Control != null) Apply(args.Control); };
+            if (root is Form window)
+            {
+                window.Shown += (_, _) => FitChoiceCaptions(window);
+                if (window.IsHandleCreated) window.BeginInvoke((Action)(() =>
+                {
+                    if (!window.IsDisposed) FitChoiceCaptions(window);
+                }));
+            }
         }
         root.SuspendLayout();
         try
         {
+            if (root is Form form) EditorWindowChrome.Apply(form);
             root.BackColor = root is Form ? Background : Surface;
             var foreground = root.ForeColor;
             root.ForeColor = foreground.R > 100 && foreground.R > foreground.G * 1.5 && foreground.R > foreground.B * 1.5
@@ -91,16 +102,49 @@ internal static class EditorTheme
                     break;
                 case TextBoxBase or ListBox or ComboBox or NumericUpDown:
                     root.BackColor = Input;
-                    if (root is ListBox list) { list.IntegralHeight = false; list.BorderStyle = BorderStyle.FixedSingle; }
+                    if (root is TextBoxBase textBox) textBox.BorderStyle = BorderStyle.FixedSingle;
+                    if (root is LogiklikNumericUpDown numeric) numeric.BorderStyle = BorderStyle.None;
+                    if (root is ListBox list)
+                    {
+                        list.IntegralHeight = false; list.BorderStyle = BorderStyle.FixedSingle;
+                        // Event command lists own their syntax coloring and drawing handlers.
+                        if (first && list.DrawMode == DrawMode.Normal)
+                        {
+                            list.DrawMode = DrawMode.OwnerDrawFixed;
+                            list.ItemHeight = Math.Max(list.ItemHeight, list.Font.Height + 6);
+                            list.DrawItem += DrawListItem;
+                        }
+                    }
                     break;
                 case Button button:
                     button.FlatStyle = FlatStyle.Flat; button.FlatAppearance.BorderColor = Border;
                     button.FlatAppearance.MouseOverBackColor = Selection; button.FlatAppearance.MouseDownBackColor = Primary;
-                    button.BackColor = Input; button.UseVisualStyleBackColor = false;
+                    button.BackColor = button.FindForm()?.AcceptButton == button || button.Name.Equals("btnSave", StringComparison.OrdinalIgnoreCase)
+                        ? Primary : Input;
+                    button.UseVisualStyleBackColor = false;
                     break;
-                case TabControl tabs:
+                case LinkLabel link:
+                    link.LinkColor = Accent; link.ActiveLinkColor = Text; link.VisitedLinkColor = Muted;
+                    break;
+                case GroupBox group when first && group is not LogiklikGroupBox:
+                    group.Paint += DrawGroupBox;
+                    break;
+                case CheckBox check:
+                    check.FlatStyle = FlatStyle.Flat; check.UseVisualStyleBackColor = false;
+                    FitChoiceCaption(check, first);
+                    break;
+                case RadioButton radio:
+                    radio.FlatStyle = FlatStyle.Flat; radio.UseVisualStyleBackColor = false;
+                    FitChoiceCaption(radio, first);
+                    break;
+                case System.Windows.Forms.TabControl tabs:
                     tabs.DrawMode = TabDrawMode.OwnerDrawFixed;
-                    tabs.ItemSize = new Size(140, 32);
+                    if (tabs.Alignment is TabAlignment.Top or TabAlignment.Bottom)
+                    {
+                        tabs.SizeMode = TabSizeMode.Normal;
+                        tabs.Padding = new System.Drawing.Point(12, 4);
+                        tabs.ItemSize = new Size(0, Math.Max(26, tabs.Font.Height + 10));
+                    }
                     if (first) tabs.DrawItem += (_, args) =>
                     {
                         var active = args.Index == tabs.SelectedIndex;
@@ -108,7 +152,7 @@ internal static class EditorTheme
                         args.Graphics.FillRectangle(fill, args.Bounds);
                         if (active) { using var line = new Pen(Accent, 2); args.Graphics.DrawLine(line, args.Bounds.Left + 4, args.Bounds.Bottom - 2, args.Bounds.Right - 4, args.Bounds.Bottom - 2); }
                         TextRenderer.DrawText(args.Graphics, tabs.TabPages[args.Index].Text, tabs.Font, args.Bounds, active ? Text : Muted,
-                            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
+                            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis);
                     };
                     break;
             }
@@ -117,6 +161,69 @@ internal static class EditorTheme
             if (root.ContextMenuStrip != null) Apply(root.ContextMenuStrip);
         }
         finally { root.ResumeLayout(); }
+    }
+
+    private sealed class FirstPaintFilter : IMessageFilter
+    {
+        public bool PreFilterMessage(ref Message message)
+        {
+            // Style each app window before its first paint, including modal dialogs.
+            // Subsequent paints do only this lookup, without traversing the controls.
+            if (message.Msg == 0x000F && Control.FromHandle(message.HWnd)?.FindForm() is { IsDisposed: false } form &&
+                form is not FrmLogin && !Watched.TryGetValue(form, out _)) Apply(form);
+            return false;
+        }
+    }
+
+    private static void DrawListItem(object? sender, DrawItemEventArgs args)
+    {
+        if (sender is not ListBox list || args.Index < 0 || args.Index >= list.Items.Count) return;
+        var selected = (args.State & DrawItemState.Selected) != 0;
+        using var fill = new SolidBrush(selected ? Selection : Input);
+        args.Graphics.FillRectangle(fill, args.Bounds);
+        var bounds = Rectangle.Inflate(args.Bounds, -4, 0);
+        TextRenderer.DrawText(args.Graphics, list.GetItemText(list.Items[args.Index]), list.Font, bounds,
+            !list.Enabled ? Muted : selected ? Accent : Text,
+            TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis);
+        if ((args.State & DrawItemState.Focus) != 0) args.DrawFocusRectangle();
+    }
+
+    private static void FitChoiceCaption(ButtonBase control, bool first)
+    {
+        if (control.Parent == null || control.AutoSize || string.IsNullOrEmpty(control.Text)) return;
+        var needed = TextRenderer.MeasureText(control.Text, control.Font).Width + 24;
+        if (needed <= control.Width) return;
+        var available = control.Parent.ClientSize.Width - control.Left - control.Parent.Padding.Right - 4;
+        foreach (Control sibling in control.Parent.Controls)
+            if (sibling != control && sibling.Left > control.Left && sibling.Top < control.Bottom && sibling.Bottom > control.Top)
+                available = Math.Min(available, sibling.Left - control.Left - 6);
+        if (control.Dock == DockStyle.None && control.Parent is not TableLayoutPanel)
+            control.Width = Math.Max(control.Width, Math.Min(needed, available));
+        if (!first || needed <= control.Width) return;
+        var hint = new ToolTip();
+        hint.SetToolTip(control, control.Text);
+        control.Disposed += (_, _) => hint.Dispose();
+    }
+
+    private static void FitChoiceCaptions(Control root)
+    {
+        foreach (Control child in root.Controls)
+        {
+            if (child is CheckBox or RadioButton) FitChoiceCaption((ButtonBase)child, false);
+            if (child is not PropertyGrid) FitChoiceCaptions(child);
+        }
+    }
+
+    private static void DrawGroupBox(object? sender, PaintEventArgs args)
+    {
+        if (sender is not GroupBox group) return;
+        args.Graphics.Clear(group.BackColor);
+        var size = TextRenderer.MeasureText(group.Text, group.Font);
+        using var border = new Pen(Border);
+        args.Graphics.DrawRectangle(border, 0, size.Height / 2, Math.Max(0, group.Width - 1), Math.Max(0, group.Height - size.Height / 2 - 1));
+        using var fill = new SolidBrush(group.BackColor);
+        args.Graphics.FillRectangle(fill, 8, 0, size.Width, size.Height);
+        TextRenderer.DrawText(args.Graphics, group.Text, group.Font, new System.Drawing.Point(8, 0), group.Enabled ? Accent : Muted);
     }
 
     private static void DrawTreeNode(object? sender, DrawTreeNodeEventArgs args)

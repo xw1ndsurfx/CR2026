@@ -30,13 +30,13 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
         /// </summary>
         private void InitializeComponent()
         {
-            this.grpSelfSwitch = new DarkUI.Controls.DarkGroupBox();
-            this.cmbSetSwitchVal = new DarkUI.Controls.DarkComboBox();
+            this.grpSelfSwitch = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.cmbSetSwitchVal = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.label15 = new System.Windows.Forms.Label();
-            this.cmbSetSwitch = new DarkUI.Controls.DarkComboBox();
+            this.cmbSetSwitch = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.lblSelfSwitch = new System.Windows.Forms.Label();
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.btnSave = new DarkUI.Controls.DarkButton();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnSave = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.grpSelfSwitch.SuspendLayout();
             this.SuspendLayout();
             // 

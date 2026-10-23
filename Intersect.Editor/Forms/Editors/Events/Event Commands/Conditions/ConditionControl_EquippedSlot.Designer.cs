@@ -28,8 +28,8 @@ partial class ConditionControl_EquippedSlot
     /// </summary>
     private void InitializeComponent()
     {
-        grpCheckEquippedSlot = new DarkUI.Controls.DarkGroupBox();
-        cmbCheckEquippedSlot = new DarkUI.Controls.DarkComboBox();
+        grpCheckEquippedSlot = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        cmbCheckEquippedSlot = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblCheckEquippedSlot = new Label();
         grpCheckEquippedSlot.SuspendLayout();
         SuspendLayout();
@@ -96,7 +96,7 @@ partial class ConditionControl_EquippedSlot
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpCheckEquippedSlot;
-    private DarkUI.Controls.DarkComboBox cmbCheckEquippedSlot;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpCheckEquippedSlot;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbCheckEquippedSlot;
     private Label lblCheckEquippedSlot;
 }

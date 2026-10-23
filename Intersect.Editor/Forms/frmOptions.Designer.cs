@@ -31,22 +31,22 @@ namespace Intersect.Editor.Forms
         private void InitializeComponent()
         {
             this.txtGamePath = new DarkUI.Controls.DarkTextBox();
-            this.btnBrowseClient = new DarkUI.Controls.DarkButton();
-            this.chkSuppressTilesetWarning = new DarkUI.Controls.DarkCheckBox();
-            this.btnGeneralOptions = new DarkUI.Controls.DarkButton();
+            this.btnBrowseClient = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.chkSuppressTilesetWarning = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
+            this.btnGeneralOptions = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.pnlGeneral = new System.Windows.Forms.Panel();
-            this.chkCursorSprites = new DarkUI.Controls.DarkCheckBox();
-            this.grpClientPath = new DarkUI.Controls.DarkGroupBox();
-            this.btnUpdateOptions = new DarkUI.Controls.DarkButton();
+            this.chkCursorSprites = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
+            this.grpClientPath = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.btnUpdateOptions = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.pnlUpdate = new System.Windows.Forms.Panel();
-            this.grpAssetPackingOptions = new DarkUI.Controls.DarkGroupBox();
-            this.cmbTextureSize = new DarkUI.Controls.DarkComboBox();
+            this.grpAssetPackingOptions = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.cmbTextureSize = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.lblTextureSize = new System.Windows.Forms.Label();
-            this.nudMusicBatch = new DarkUI.Controls.DarkNumericUpDown();
-            this.nudSoundBatch = new DarkUI.Controls.DarkNumericUpDown();
+            this.nudMusicBatch = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
+            this.nudSoundBatch = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
             this.lblMusicBatch = new System.Windows.Forms.Label();
             this.lblSoundBatch = new System.Windows.Forms.Label();
-            this.chkPackageAssets = new DarkUI.Controls.DarkCheckBox();
+            this.chkPackageAssets = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
             this.pnlGeneral.SuspendLayout();
             this.grpClientPath.SuspendLayout();
             this.pnlUpdate.SuspendLayout();
@@ -280,24 +280,24 @@ namespace Intersect.Editor.Forms
             this.ResumeLayout(false);
         }
 
-        private DarkUI.Controls.DarkCheckBox chkCursorSprites;
+        private Intersect.Editor.Forms.Styling.LogiklikCheckBox chkCursorSprites;
 
         #endregion
         private DarkTextBox txtGamePath;
         private DarkButton btnBrowseClient;
-        private DarkUI.Controls.DarkCheckBox chkSuppressTilesetWarning;
-        private DarkUI.Controls.DarkButton btnGeneralOptions;
+        private Intersect.Editor.Forms.Styling.LogiklikCheckBox chkSuppressTilesetWarning;
+        private Intersect.Editor.Forms.Styling.LogiklikButton btnGeneralOptions;
         private System.Windows.Forms.Panel pnlGeneral;
-        private DarkUI.Controls.DarkGroupBox grpClientPath;
+        private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpClientPath;
         private DarkButton btnUpdateOptions;
         private System.Windows.Forms.Panel pnlUpdate;
-        private DarkUI.Controls.DarkCheckBox chkPackageAssets;
-        private DarkUI.Controls.DarkGroupBox grpAssetPackingOptions;
+        private Intersect.Editor.Forms.Styling.LogiklikCheckBox chkPackageAssets;
+        private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpAssetPackingOptions;
         private System.Windows.Forms.Label lblMusicBatch;
         private System.Windows.Forms.Label lblSoundBatch;
-        private DarkUI.Controls.DarkNumericUpDown nudMusicBatch;
-        private DarkUI.Controls.DarkNumericUpDown nudSoundBatch;
+        private Intersect.Editor.Forms.Styling.LogiklikNumericUpDown nudMusicBatch;
+        private Intersect.Editor.Forms.Styling.LogiklikNumericUpDown nudSoundBatch;
         private System.Windows.Forms.Label lblTextureSize;
-        private DarkUI.Controls.DarkComboBox cmbTextureSize;
+        private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbTextureSize;
     }
 }

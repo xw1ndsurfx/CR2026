@@ -28,14 +28,14 @@ partial class EventCommand_ScreenFade
     /// </summary>
     private void InitializeComponent()
     {
-        grpFade = new DarkUI.Controls.DarkGroupBox();
-        nudFadeSpeed = new DarkUI.Controls.DarkNumericUpDown();
+        grpFade = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        nudFadeSpeed = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
         lblDuration = new Label();
-        chkWaitForCompletion = new DarkUI.Controls.DarkCheckBox();
-        cmbFadeTypes = new DarkUI.Controls.DarkComboBox();
+        chkWaitForCompletion = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
+        cmbFadeTypes = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblAction = new Label();
-        btnCancel = new DarkUI.Controls.DarkButton();
-        btnSave = new DarkUI.Controls.DarkButton();
+        btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+        btnSave = new Intersect.Editor.Forms.Styling.LogiklikButton();
         grpFade.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)nudFadeSpeed).BeginInit();
         SuspendLayout();
@@ -166,12 +166,12 @@ partial class EventCommand_ScreenFade
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpFade;
-    private DarkUI.Controls.DarkCheckBox chkWaitForCompletion;
-    private DarkUI.Controls.DarkComboBox cmbFadeTypes;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpFade;
+    private Intersect.Editor.Forms.Styling.LogiklikCheckBox chkWaitForCompletion;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbFadeTypes;
     private Label lblAction;
-    private DarkUI.Controls.DarkButton btnCancel;
-    private DarkUI.Controls.DarkButton btnSave;
+    private Intersect.Editor.Forms.Styling.LogiklikButton btnCancel;
+    private Intersect.Editor.Forms.Styling.LogiklikButton btnSave;
     private Label lblDuration;
-    private DarkUI.Controls.DarkNumericUpDown nudFadeSpeed;
+    private Intersect.Editor.Forms.Styling.LogiklikNumericUpDown nudFadeSpeed;
 }

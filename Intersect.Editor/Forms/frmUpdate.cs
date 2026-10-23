@@ -31,6 +31,30 @@ public partial class FrmUpdate : Form
         CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-US");
         InitializeComponent();
         Icon = Program.Icon;
+        ModernizeUpdate();
+    }
+
+    private void ModernizeUpdate()
+    {
+        SuspendLayout();
+        ClientSize = new Size(700, 360);
+        Font = Styling.EditorTheme.BodyFont;
+        BackColor = Styling.EditorTheme.Background;
+        picLogo.BackgroundImage = null;
+        using (var stream = typeof(FrmUpdate).Assembly.GetManifestResourceStream("Intersect.Editor.studio-logiklik.png"))
+            if (stream != null) { using var image = Image.FromStream(stream); picLogo.Image = new Bitmap(image); }
+        picLogo.BackColor = System.Drawing.Color.FromArgb(240, 244, 249);
+        picLogo.SizeMode = PictureBoxSizeMode.Zoom;
+        picLogo.SetBounds(24, 20, 170, 155);
+        var title = new Label { Text = "Logiklik 2D Engine", Font = new Font("Segoe UI", 22, FontStyle.Bold),
+            ForeColor = Styling.EditorTheme.Text, AutoSize = false, Bounds = new Rectangle(220, 64, 455, 52) };
+        Controls.Add(title);
+        lblStatus.SetBounds(24, 196, 652, 28);
+        progressBar.SetBounds(24, 236, 652, 16);
+        lblFiles.SetBounds(24, 266, 320, 25);
+        lblSize.SetBounds(356, 266, 320, 25);
+        Styling.EditorTheme.Apply(this);
+        ResumeLayout();
     }
 
     private void frmUpdate_Load(object sender, EventArgs e)

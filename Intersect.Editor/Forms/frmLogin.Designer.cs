@@ -39,13 +39,13 @@ namespace Intersect.Editor.Forms
             this.tmrSocket = new System.Windows.Forms.Timer(this.components);
             this.txtUsername = new DarkUI.Controls.DarkTextBox();
             this.txtPassword = new DarkUI.Controls.DarkTextBox();
-            this.btnLogin = new DarkUI.Controls.DarkButton();
+            this.btnLogin = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.picLogo = new System.Windows.Forms.PictureBox();
             this.lblVersion = new System.Windows.Forms.Label();
             this.lblUsername = new System.Windows.Forms.Label();
             this.lblPassword = new System.Windows.Forms.Label();
             this.lblGettingStarted = new System.Windows.Forms.Label();
-            this.chkRemember = new DarkUI.Controls.DarkCheckBox();
+            this.chkRemember = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.picLogo)).BeginInit();
             this.SuspendLayout();
             //
