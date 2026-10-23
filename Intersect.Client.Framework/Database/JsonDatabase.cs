@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Intersect.Client.Framework.Database;
 
-public class JsonDatabase : GameDatabase
+public partial class JsonDatabase : GameDatabase
 {
     private readonly string _instancePath;
     private JObject? _instance;
@@ -117,6 +117,7 @@ public class JsonDatabase : GameDatabase
     {
         _instance?.Remove(key);
         Persist();
+        if (IsPortablePreference(key)) PersistCloudPreferences();
     }
 
     public override bool HasPreference(string key) => _instance?.ContainsKey(key) ?? false;
@@ -131,6 +132,7 @@ public class JsonDatabase : GameDatabase
         var stringifiedValue = Convert.ToString(value);
         _instance[key] = JValue.CreateString(stringifiedValue);
         Persist();
+        if (IsPortablePreference(key)) PersistCloudPreferences();
     }
 
     public override string LoadPreference(string key)

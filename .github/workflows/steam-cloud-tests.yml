@@ -1,0 +1,27 @@
+name: Steam Cloud preferences
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Intersect.Client.Framework/Database/**'
+      - 'Intersect.Client.Core/ThirdParty/Steam.Cloud.cs'
+      - 'Intersect.Client.Core/MonoGame/IntersectGame.cs'
+      - 'Intersect.Tests.Client.Framework/**'
+      - '.github/workflows/steam-cloud-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  portable-preferences:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4.1.0
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore, resets, account isolation and credential exclusions
+        run: dotnet test Intersect.Tests.Client.Framework/Intersect.Tests.Client.Framework.csproj -c Debug --filter FullyQualifiedName~JsonDatabaseCloudTests --nologo

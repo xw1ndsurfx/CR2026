@@ -103,7 +103,12 @@ internal partial class IntersectGame : Game
         Content.RootDirectory = resolvedWorkingDirectory;
         IsMouseVisible = true;
         Globals.ContentManager = new MonoContentManager();
-        Globals.Database = new JsonDatabase();
+        var database = new JsonDatabase();
+        var cloudDirectory = Steam.SupportedAttribute.IsPresent() ? Steam.GetCloudPreferencesDirectory() : null;
+        if (cloudDirectory != null)
+            database.EnableCloudPreferences(Path.Combine(cloudDirectory,
+                $"{ClientConfiguration.Instance.Host}.{ClientConfiguration.Instance.Port}.json"));
+        Globals.Database = database;
 
         Globals.Database.LoadPreferences();
         Strings.Load();
