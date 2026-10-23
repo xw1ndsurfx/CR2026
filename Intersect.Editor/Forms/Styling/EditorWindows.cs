@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Intersect.Editor.Forms.Editors.Events;
 using Intersect.Framework.Core.QualityOfLife;
 using WeifenLuo.WinFormsUI.Docking;
 
@@ -19,6 +18,7 @@ internal static class EditorWindows
     private const int FullscreenCommand = 0x1FE0;
     private static readonly ConditionalWeakTable<Form, State> States = new();
     private static bool _filterInstalled;
+    private static WeakReference<Form>? _lastActive;
 
     internal static void Show(Form window, Form owner)
     {
@@ -35,29 +35,70 @@ internal static class EditorWindows
         if (window.WindowState == FormWindowState.Minimized) window.WindowState = FormWindowState.Normal;
         window.BringToFront();
         window.Activate();
+        _lastActive = new WeakReference<Form>(window);
     }
 
     internal static void Attach(Form window)
     {
         if (!window.TopLevel || window is DockContent || States.TryGetValue(window, out _)) return;
         States.Add(window, new State());
+        // Resolve the parent before changing chrome can recreate/activate a handle.
+        EnsureOwner(window);
+        window.Activated += (_, _) => _lastActive = new WeakReference<Form>(window);
+        // Older editors often declare a fixed border or disable maximization in
+        // their designer. Give every standalone workspace the same window controls.
+        if (window is not (FrmLogin or FrmMain))
+        {
+            window.AutoSize = false;
+            window.MaximumSize = Size.Empty;
+            window.MaximizeBox = true;
+            window.FormBorderStyle = FormBorderStyle.Sizable;
+            window.AutoScroll = true;
+        }
         if (!_filterInstalled)
         {
             Application.AddMessageFilter(new WindowKeys());
             _filterInstalled = true;
         }
-        window.HandleCreated += (_, _) => AddFullscreenCommand(window);
+        window.HandleCreated += (_, _) => { EnsureOwner(window); AddFullscreenCommand(window); };
         window.Shown += (_, _) =>
         {
+            EnsureOwner(window);
             ConstrainToScreen(window, window.Owner);
             AddFullscreenCommand(window);
         };
+        window.VisibleChanged += (_, _) => { if (window.Visible) EnsureOwner(window); };
+        // Theme application can happen at the first paint, after Shown has fired.
+        EnsureOwner(window);
         if (window.IsHandleCreated) AddFullscreenCommand(window);
     }
 
-    internal static bool SupportsFullscreen(Form window) => window is not FrmEvent && window is not DockContent &&
-        window.TopLevel && window.MaximizeBox &&
-        window.FormBorderStyle is FormBorderStyle.Sizable or FormBorderStyle.SizableToolWindow;
+    private static void EnsureOwner(Form window)
+    {
+        if (window is FrmMain or FrmLogin || !window.TopLevel || window.IsDisposed) return;
+        if (window.Owner == null)
+        {
+            var owner = Form.ActiveForm;
+            if (owner == window || owner is DockContent || owner == null || !owner.Visible)
+            {
+                owner = _lastActive != null && _lastActive.TryGetTarget(out var last) && last != window && !last.IsDisposed && last.Visible
+                    ? last : Intersect.Editor.General.Globals.MainForm;
+            }
+            // Never create a cycle when the active window is already our child.
+            for (var ancestor = owner; ancestor != null; ancestor = ancestor.Owner)
+                if (ancestor == window) return;
+            if (owner is { IsDisposed: false, Visible: true } && owner != window)
+                window.Owner = owner;
+        }
+        if (window.Visible && window.Owner != null)
+        {
+            window.BringToFront();
+            window.Activate();
+        }
+    }
+
+    internal static bool SupportsFullscreen(Form window) => window is not FrmLogin && window is not DockContent &&
+        window.TopLevel && window.MaximizeBox;
 
     internal static bool IsFullscreen(Form window) => States.TryGetValue(window, out var state) && state.Fullscreen;
 

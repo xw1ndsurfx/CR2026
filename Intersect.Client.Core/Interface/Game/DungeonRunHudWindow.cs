@@ -26,7 +26,7 @@ internal sealed class DungeonRunHudWindow : Base
 
     public DungeonRunHudWindow(Canvas parent) : base(parent, nameof(DungeonRunHudWindow))
     {
-        SetSize(430, 162);
+        SetSize(430, 170);
         MouseInputEnabled = false;
         KeyboardInputEnabled = false;
 
@@ -70,12 +70,14 @@ internal sealed class DungeonRunHudWindow : Base
         };
         _timer.SetBounds(10, 88, 410, 22);
 
-        _abandon = new Button(this, "DungeonRunAbandon")
+        _abandon = new AbandonButton(this)
         {
             Text = ClientLanguages.Text("Abandon dungeon"),
+            Font = GameContentManager.Current.GetFont("sourcesansproblack") ?? Skin.DefaultFont,
             FontSize = 10,
+            TextColorOverride = Color.White,
         };
-        _abandon.SetBounds(115, 122, 200, 28);
+        _abandon.SetBounds(85, 122, 260, 36);
         _abandon.Clicked += (_, _) => ConfirmAbandon();
 
         Hide();
@@ -87,7 +89,7 @@ internal sealed class DungeonRunHudWindow : Base
         _resultHideAt = 0;
         _abandon.IsHidden = state.Status != DungeonRunStatus.Active || state.RunId == Guid.Empty;
         _abandon.Text = ClientLanguages.Text("Abandon dungeon");
-        Height = _abandon.IsHidden ? 126 : 162;
+        Height = _abandon.IsHidden ? 126 : 170;
 
         _title.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"RANK {state.DungeonRank} • {state.DungeonName}");
         _objective.Text = state.Message;
@@ -173,6 +175,25 @@ internal sealed class DungeonRunHudWindow : Base
     {
         X = Math.Max(8, (Parent?.Width ?? Width) / 2 - Width / 2);
         Y = 142;
+    }
+
+    // This HUD has no external skin JSON. Draw an opaque, contrasting button
+    // rather than inheriting a skin's default foreground/background combination.
+    private sealed class AbandonButton(Base parent) : Button(parent, "DungeonRunAbandon")
+    {
+        protected override void Render(SkinBase skin)
+        {
+            ShouldDrawBackground = false;
+            var renderer = skin.Renderer;
+            var previous = renderer.DrawColor;
+            renderer.DrawColor = new Color(255, 194, 151, 72);
+            renderer.DrawFilledRect(RenderBounds);
+            renderer.DrawColor = IsActive ? new Color(255, 61, 28, 24)
+                : IsHovered ? new Color(255, 107, 50, 40) : new Color(255, 80, 37, 31);
+            renderer.DrawFilledRect(new Rectangle(1, 1, Width - 2, Height - 2));
+            renderer.DrawColor = previous;
+            base.Render(skin);
+        }
     }
 
     protected override void Render(SkinBase skin)

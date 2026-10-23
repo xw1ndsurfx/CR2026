@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Intersect.Editor.Forms;
 using Intersect.Editor.Forms.Editors;
 using Intersect.Editor.Forms.Editors.Events;
 using Intersect.Editor.Forms.Styling;
@@ -46,9 +47,38 @@ internal static class EditorWindowTests
         Check(Screen.FromControl(owner).WorkingArea.Contains(window.Bounds), "Offscreen editors return to their owner's monitor.");
         using var confirmation = new Form { FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false };
         EditorWindows.ToggleFullscreen(confirmation);
-        Check(!EditorWindows.IsFullscreen(confirmation), "Small fixed confirmation dialogs keep their native sizing.");
+        Check(EditorWindows.IsFullscreen(confirmation), "Standalone dialogs also support fullscreen.");
+        EditorWindows.ToggleFullscreen(confirmation);
         using var events = new FrmEvent(new MapDescriptor(Guid.NewGuid()));
-        Check(!EditorWindows.SupportsFullscreen(events), "The Event Editor retains its existing fullscreen handler.");
+        EditorTheme.Apply(events);
+        Check(EditorWindows.SupportsFullscreen(events), "The Event Editor shares fullscreen and Escape handling with other editors.");
+        using (var fixedEditor = new FrmOptions())
+        {
+            RemoveLoad(fixedEditor); fixedEditor.Opacity = 0; fixedEditor.ShowInTaskbar = false;
+            EditorTheme.Apply(fixedEditor);
+            fixedEditor.Show(); Application.DoEvents();
+            Check(fixedEditor.Owner == window && fixedEditor.MaximizeBox && EditorWindows.SupportsFullscreen(fixedEditor),
+                "A legacy editor opened without an owner adopts the active parent and supports fullscreen.");
+            var before = fixedEditor.Bounds;
+            EditorWindows.ToggleFullscreen(fixedEditor);
+            Check(fixedEditor.Bounds == Screen.FromControl(fixedEditor).Bounds, "Fixed editors fill the monitor in fullscreen.");
+            EditorWindows.ToggleFullscreen(fixedEditor);
+            Check(fixedEditor.Bounds == before, "Fixed editors restore their previous size.");
+            fixedEditor.Hide();
+        }
+        EditorWindows.Show(window, owner);
+        using (var lateEditor = new FrmOptions())
+        {
+            RemoveLoad(lateEditor); lateEditor.Opacity = 0; lateEditor.ShowInTaskbar = false;
+            lateEditor.Show();
+            var filterType = typeof(EditorTheme).GetNestedType("FirstPaintFilter", BindingFlags.NonPublic)!;
+            var filter = (IMessageFilter)Activator.CreateInstance(filterType, true)!;
+            var paint = Message.Create(lateEditor.Handle, 0x000F, IntPtr.Zero, IntPtr.Zero);
+            filter.PreFilterMessage(ref paint);
+            Check(lateEditor.Owner == window && EditorWindows.SupportsFullscreen(lateEditor),
+                "First-paint fallback repairs windows opened without theme or explicit ownership.");
+            lateEditor.Hide();
+        }
         window.Hide();
 
         foreach (var form in new Form[] { new FrmClass(), new FrmShop() })
