@@ -26,7 +26,7 @@
       <IntersectClientDirectoryPath>$(_IntersectRootPath)\client</IntersectClientDirectoryPath>
       <IntersectClientDirectoryPath Condition="'$(IntersectRepoPath)' == ''">$(_IntersectRootPath)</IntersectClientDirectoryPath>
       <IntersectClientExecutableName Condition="'$(IntersectClientExecutableName)' == '' AND '$(INTERSECT_CLIENT_EXECUTABLE_NAME)' == ''">$(INTERSECT_CLIENT_EXECUTABLE_NAME)</IntersectClientExecutableName>
-      <IntersectClientExecutableName Condition="'$(IntersectClientExecutableName)' == ''">Intersect Client</IntersectClientExecutableName>
+      <IntersectClientExecutableName Condition="'$(IntersectClientExecutableName)' == ''">Corps Royaux</IntersectClientExecutableName>
       <IntersectClientExecutablePath>$(IntersectClientDirectoryPath)\$(IntersectClientExecutableName).exe</IntersectClientExecutablePath>
 
       <IntersectEditorDirectoryPath>$(_IntersectRootPath)\editor</IntersectEditorDirectoryPath>
