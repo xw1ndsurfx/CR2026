@@ -2041,7 +2041,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        player.BuyItem(packet.Slot, packet.Quantity);
+        player.BuyItem(packet.Slot, packet.Quantity, packet.ExpectedUnitPrice);
     }
 
     //SellItemPacket

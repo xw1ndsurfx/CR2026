@@ -12,4 +12,5 @@ public partial class NavalManagePacket : IntersectPacket
     [Key(5)] public Guid TargetId {get;set;}
     [Key(6)] public Guid Token {get;set;}
     [Key(7)] public int Value {get;set;}
+    [Key(8)] public int? ExpectedUnitPrice {get;set;}
 }

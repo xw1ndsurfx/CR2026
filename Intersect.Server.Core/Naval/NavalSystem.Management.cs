@@ -85,7 +85,7 @@ internal static partial class NavalSystem
         var shop=Intersect.GameObjects.ShopDescriptor.Get(p.NavalShopId);
         if(shop?.ConfigurationKind!=Intersect.GameObjects.ShopConfigurationKind.NavalAmmunition)return(default,0,false);
         var entry=(sell?shop.BuyingItems:shop.SellingItems).FirstOrDefault(i=>i.ItemId==ammo.ItemId);
-        if(entry!=null)return (entry.CostItemId==Guid.Empty?shop.DefaultCurrencyId:entry.CostItemId,sell?shop.BuybackPrice(entry.CostItemQuantity):entry.CostItemQuantity,entry.CostItemQuantity>=0);
+        if(entry!=null)return (entry.CostItemId==Guid.Empty?shop.DefaultCurrencyId:entry.CostItemId,sell?shop.BuybackPrice(entry.CostItemQuantity):shop.SellingPrice(entry,DateTimeOffset.UtcNow),entry.CostItemQuantity>=0);
         if(sell && !shop.BuyingWhitelist && ItemDescriptor.Get(ammo.ItemId) is {} item)return(shop.DefaultCurrencyId,shop.BuybackPrice(item.Price),true);
         return(default,0,false);
     }
@@ -154,7 +154,8 @@ internal static partial class NavalSystem
                     else
                     {
                         var sell=mode==NavalManageAction.SellAmmo;var trade=AmmoTrade(p,a,sell);
-                        lock(Gate)ok=p.NavalAmmoShop && ShopValid(p,now) && trade.Allowed;
+                        lock(Gate)ok=p.NavalAmmoShop && ShopValid(p,now) && trade.Allowed &&
+                            (!packet.ExpectedUnitPrice.HasValue || packet.ExpectedUnitPrice==trade.Price);
                         var currency=NavalCurrency(trade.Currency,"Aureons");var cost=(long)trade.Price*count;
                         if(sell)
                         {

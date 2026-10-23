@@ -30,7 +30,7 @@ internal sealed class ShopProductRow : Base
         string action,
         bool enabled,
         Action onAction,
-        string? serviceName=null,string? serviceIcon=null,bool nativeButton=false
+        string? serviceName=null,string? serviceIcon=null,bool nativeButton=false,string? promotionNote=null
     ) : base(parent, name)
     {
         _item = item;
@@ -69,7 +69,8 @@ internal sealed class ShopProductRow : Base
 
         _price = Label("Price", 91, 49, 137, 20, 10, new Color(a: 255, r: 231, g: 194, b: 112));
         _price.Text = Shorten(price, 21);
-        SetToolTipText((serviceName??item?.Name) + "\n" + detail + "\n" + price);
+        SetToolTipText((serviceName??item?.Name) + "\n" + detail + "\n" + price +
+            (promotionNote == null ? "" : "\n" + promotionNote));
 
         _action = new Button(this, "Action")
         {
@@ -128,16 +129,17 @@ internal sealed class ShopProductRow : Base
         int price,
         string currency,
         bool canAfford,
-        Action action,bool nativeButton=false
+        Action action,bool nativeButton=false, int discountPercent=0, int originalPrice=0
     ) => new(
         parent,
         "ShopBuy" + shopSlot,
         item,
         canAfford ? Strings.Shop.Available.ToString() : Strings.Shop.NotEnoughCurrency.ToString(),
-        Price(price, currency),
+        discountPercent > 0 ? $"{Price(price, currency)} (-{discountPercent}%)" : Price(price, currency),
         Strings.Shop.BuyItem.ToString(),
         canAfford,
-        action,nativeButton:nativeButton
+        action,nativeButton:nativeButton, promotionNote:discountPercent > 0 ?
+            string.Format(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Original price: {0}", ClientLanguages.Current), Price(originalPrice, currency)) : null
     );
 
     public static ShopProductRow Sell(
