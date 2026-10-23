@@ -32,7 +32,6 @@ public partial class ConditionControl_Map : UserControl
         var frmWarpSelection = new FrmWarpSelection();
         frmWarpSelection.InitForm(false, null);
         frmWarpSelection.SelectTile(btnSelectMap.Tag as Guid? ?? Guid.Empty, 0, 0);
-        frmWarpSelection.TopMost = true;
         frmWarpSelection.ShowDialog(this);
         if (frmWarpSelection.GetResult())
         {
