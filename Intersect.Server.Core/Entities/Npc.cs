@@ -952,6 +952,11 @@ public partial class Npc : Entity
         return false;
     }
 
+    internal bool HasLiveInvasionCombatTarget(Entity? target) => target != null &&
+        !target.IsDead && !target.IsDisposed && target.MapInstanceId == MapInstanceId &&
+        (target is not Player player || player.InGame && !player.HasPendingDeath) &&
+        InRangeOf(target, Options.Instance.Map.MapWidth * 2) && CanTarget(target);
+
     // TODO: Improve NPC movement to be more fluid like a player
     //General Updating
     public override void Update(long timeMs)
@@ -970,6 +975,8 @@ public partial class Npc : Entity
                     return;
                 }
 
+                if (InvasionSessionId != Guid.Empty && Target != null && !HasLiveInvasionCombatTarget(Target))
+                    AssignTarget(null);
                 var tempTarget = Target;
 
                 foreach (var status in CachedStatuses)
@@ -2408,7 +2415,7 @@ public partial class Npc : Entity
                 }
 
                 // Is this entry dead?, if so skip it.
-                if (en.Key.IsDead)
+                if (en.Key.IsDead || InvasionSessionId != Guid.Empty && !HasLiveInvasionCombatTarget(en.Key))
                 {
                     continue;
                 }
@@ -2440,7 +2447,8 @@ public partial class Npc : Entity
         {
             foreach (var entity in instance.GetCachedEntities())
             {
-                if (entity != null && !entity.IsDead && entity != this && entity.Id != avoidId)
+                if (entity != null && !entity.IsDead && entity != this && entity.Id != avoidId &&
+                    (InvasionSessionId == Guid.Empty || HasLiveInvasionCombatTarget(entity)))
                 {
                     //TODO Check if NPC is allowed to attack player with new conditions
                     if (entity is Player player)

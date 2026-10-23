@@ -182,9 +182,12 @@ public partial class MapInstance : IMapInstance
         return (MapInstanceId != OverworldInstanceId && !ShouldBeActive());
     }
 
+    private bool InvasionNeedsSimulation => MapInstanceId == OverworldInstanceId &&
+        Intersect.Server.WorldEvents.Invasions.InvasionRuntime.RequiresSimulation(mMapController.Id);
+
     public bool ShouldBeActive()
     {
-        return (mIsProcessing || LastRequestedUpdateTime <= mLastUpdateTime + Options.Instance.Map.TimeUntilMapCleanup);
+        return (InvasionNeedsSimulation || mIsProcessing || LastRequestedUpdateTime <= mLastUpdateTime + Options.Instance.Map.TimeUntilMapCleanup);
     }
 
     public void RemoveLayerFromController()
@@ -263,7 +266,7 @@ public partial class MapInstance : IMapInstance
     {
         lock (GetLock())
         {
-            if (mIsProcessing)
+            if (mIsProcessing || InvasionNeedsSimulation)
             {
                 if (Options.Instance.Processing.MapUpdateInterval == Options.Instance.Processing.ProjectileUpdateInterval)
                 {
@@ -280,8 +283,8 @@ public partial class MapInstance : IMapInstance
                 mLastUpdateTime = timeMs;
             }
 
-            // If there are no players on this or surrounding processing layers, stop processing updates.
-            mIsProcessing = GetPlayers(true).Any();
+            // Active invasions continue simulating even when all defenders leave or die.
+            mIsProcessing = InvasionNeedsSimulation || GetPlayers(true).Any();
             LastRequestedUpdateTime = timeMs;
         }
     }
@@ -1274,7 +1277,8 @@ public partial class MapInstance : IMapInstance
         foreach (var en in mEntities)
         {
             //Let's see if and how long this map has been inactive, if longer than X seconds, regenerate everything on the map
-            if (timeMs > mLastUpdateTime + Options.Instance.Map.TimeUntilMapCleanup)
+            if (timeMs > mLastUpdateTime + Options.Instance.Map.TimeUntilMapCleanup &&
+                (en.Value is not Npc invader || invader.InvasionSessionId == Guid.Empty))
             {
                 //Regen Everything & Forget Targets
                 if (en.Value is Resource || en.Value is Npc)

@@ -15,7 +15,7 @@
 		<Description>Corps Royaux — Game Client</Description>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<RootNamespace>Intersect.Client</RootNamespace>
-		<AssemblyName>Intersect Client</AssemblyName>
+		<AssemblyName>Corps Royaux</AssemblyName>
 		<AppDesignerFolder>Properties</AppDesignerFolder>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<FileAlignment>512</FileAlignment>
@@ -58,7 +58,7 @@
 	</ItemGroup>
 
 	<ItemGroup Label="Project Embedded Resources">
-		<EmbeddedResource Include="$(IntersectRepoPath)\assets\intersect-logo-qu.bmp">
+		<EmbeddedResource Include="$(IntersectRepoPath)\assets\branding\corps-royaux.bmp">
 			<LogicalName>Icon.bmp</LogicalName>
 		</EmbeddedResource>
 	</ItemGroup>

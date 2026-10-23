@@ -58,7 +58,7 @@ jobs:
       - uses: actions/setup-dotnet@v4.1.0
         with:
           dotnet-version: 8.0.x
-      - run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Debug --filter "FullyQualifiedName~Intersect.Tests.Server.Naval|FullyQualifiedName~ClientConfigurationSafetyTests" --nologo
+      - run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Debug --filter "FullyQualifiedName~Intersect.Tests.Server.Naval|FullyQualifiedName~ClientConfigurationSafetyTests|FullyQualifiedName~InvasionSimulationTests" --nologo
       - run: dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug --filter "FullyQualifiedName~Naval|FullyQualifiedName~HarbourUiRulesTests|FullyQualifiedName~ClientLoopDiagnosticsTests|FullyQualifiedName~ClientNetworkPingTests" --nologo
       - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -- --naval-only
       - run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 --no-build -- --harbour-only

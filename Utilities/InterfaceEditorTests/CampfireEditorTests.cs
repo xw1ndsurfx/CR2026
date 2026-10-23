@@ -36,9 +36,21 @@ internal static class CampfireEditorTests
             foreach(var b in checks.Where(b => b != a))
                 if(a.Bounds.IntersectsWith(b.Bounds)) throw new Exception("Resource checkboxes must not overlap.");
         Console.WriteLine("PASS resource behavior checkboxes have separate rows in the modernized editor");
+        using var about = new Intersect.Editor.Forms.FrmAbout();
+        IEnumerable<Control> Descendants(Control control) => control.Controls.Cast<Control>().SelectMany(child => new[] { child }.Concat(Descendants(child)));
+        var notice = Descendants(about).OfType<TextBox>().Single(control => control.Name == "EngineLicenseNotice");
+        var originalNotice = new System.ComponentModel.ComponentResourceManager(typeof(Intersect.Editor.Forms.FrmAbout)).GetString("label1.Text")!;
+        if (!about.Text.Contains("Logiklik 2D Engine") || !notice.Text.StartsWith(originalNotice, StringComparison.Ordinal) ||
+            !notice.Text.Contains("GNU GENERAL PUBLIC LICENSE") || !notice.Text.Contains("WITHOUT ANY WARRANTY") || notice.Text.Length < 30000)
+            throw new Exception("About must identify Logiklik and retain the upstream copyright, warranty notice and complete unmodified GPL.");
+        Console.WriteLine("PASS Logiklik About preserves upstream attribution and embeds the full GPL license");
         if(Environment.GetEnvironmentVariable("CODEX_EDITOR_BATCH_PREVIEW") is {Length:>0} output)
         {
             Directory.CreateDirectory(output);
+            about.Opacity=0;about.ShowInTaskbar=false;about.Show();Application.DoEvents();about.PerformLayout();
+            using var aboutBitmap=new Bitmap(about.Width,about.Height);about.DrawToBitmap(aboutBitmap,new Rectangle(0,0,aboutBitmap.Width,aboutBitmap.Height));
+            aboutBitmap.Save(Path.Combine(output,"editor-about.png"));about.Hide();
+
             using var login=new Intersect.Editor.Forms.FrmLogin(false);
             typeof(Intersect.Editor.Forms.FrmLogin).GetMethod("ModernizeLogin",flags)!.Invoke(login,null);
             var load=(EventHandler)Delegate.CreateDelegate(typeof(EventHandler),login,typeof(Intersect.Editor.Forms.FrmLogin).GetMethod("frmLogin_Load",flags)!);

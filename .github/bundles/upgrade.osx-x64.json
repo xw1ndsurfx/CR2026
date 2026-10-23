@@ -12,7 +12,7 @@
 			"target": "Client and Editor/LICENSE.client.md"
 		},
 		{
-			"source": "Intersect.Client/bin/Release/**/osx-x64/publish/Intersect Client",
+			"source": "Intersect.Client/bin/Release/**/osx-x64/publish/Corps Royaux",
 			"target": "Client and Editor"
 		},
 		{
