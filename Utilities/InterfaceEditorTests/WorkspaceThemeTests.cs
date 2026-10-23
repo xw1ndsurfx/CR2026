@@ -71,6 +71,25 @@ internal static class WorkspaceThemeTests
         Application.DoEvents();
         Check(menu.Bottom <= dock.Top && dock.Bottom <= main.ClientSize.Height - 24,
             "Menu/toolbar/status chrome must leave an unobscured central map workspace.");
+        foreach (var size in new[] { new Size(1920, 1080), new Size(1024, 700), new Size(1440, 900) })
+        {
+            main.Size = size;
+            Globals.MapGridWindowNew.Activate();
+            Application.DoEvents();
+            CheckWorkspaceFill(Globals.MapGridWindowNew, "pnlMapGrid");
+            Globals.MapEditorWindow.Activate();
+            Globals.MapEditorWindow.picMap.Visible = true;
+            Application.DoEvents();
+            var container = Globals.MapEditorWindow.pnlMapContainer;
+            Check(container.Bounds == Globals.MapEditorWindow.ClientRectangle &&
+                Globals.MapEditorWindow.picMap.Bounds == container.ClientRectangle &&
+                !container.HorizontalScroll.Visible && !container.VerticalScroll.Visible,
+                $"Map editor canvas must fill its docked viewport without scrollbars at {size}.");
+            CheckWorkspaceFill(Globals.MapListWindow, "mapTreeList");
+            Check(Globals.MapListWindow.mapTreeList.list.Bounds == Globals.MapListWindow.mapTreeList.ClientRectangle,
+                $"Map tree must use the entire list viewport at {size}.");
+        }
+        Console.WriteLine("PASS map grid, editor canvas and map list fill their docked panes after resizing and tab switching");
         if (Environment.GetEnvironmentVariable("CODEX_EDITOR_THEME_PREVIEW") is { Length: > 0 } folder)
         {
             Directory.CreateDirectory(folder);
@@ -106,6 +125,13 @@ internal static class WorkspaceThemeTests
         }
         main.Hide();
         Console.WriteLine("PASS Logiklik workspace: docking palette, tool actions, editable properties, dynamic controls, preserved swatches/save warnings and unobscured map viewport");
+    }
+    private static void CheckWorkspaceFill(Form form, string field)
+    {
+        var content = (Control)form.GetType().GetField(field, Flags)!.GetValue(form)!;
+        var toolbar = form.Controls.OfType<ToolStrip>().Single();
+        Check(content.Bounds == new Rectangle(0, toolbar.Bottom, form.ClientSize.Width, form.ClientSize.Height - toolbar.Bottom),
+            $"{field} must fill the docked pane below its toolbar: {content.Bounds}, client {form.ClientSize}.");
     }
     private static void RemoveLoad(Form form, string method) => form.Load -= (EventHandler)Delegate.CreateDelegate(typeof(EventHandler), form, form.GetType().GetMethod(method, Flags)!);
     private sealed class SampleProperties

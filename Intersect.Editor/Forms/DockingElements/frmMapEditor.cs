@@ -87,11 +87,6 @@ public partial class FrmMapEditor : DockContent
     private void frmMapEditor_Load(object sender, EventArgs e)
     {
         PacketHandler.MapUpdatedDelegate += InitMapEditor;
-        picMap.Size = pnlMapContainer.ClientSize;
-        picMap.MinimumSize = new Size(
-            (Options.Instance.Map.MapWidth + 2) * Options.Instance.Map.TileWidth, (Options.Instance.Map.MapHeight + 2) * Options.Instance.Map.TileHeight
-        );
-
         ResetMapViewport();
 
         CreateSwapChain();
@@ -106,12 +101,6 @@ public partial class FrmMapEditor : DockContent
         }
         else
         {
-            pnlMapContainer.AutoScroll = true;
-            picMap.Size = pnlMapContainer.ClientSize;
-            picMap.MinimumSize = new Size(
-                (Options.Instance.Map.MapWidth + 2) * Options.Instance.Map.TileWidth, (Options.Instance.Map.MapHeight + 2) * Options.Instance.Map.TileHeight
-            );
-
             ResetMapViewport();
 
             CreateSwapChain();
@@ -2318,22 +2307,12 @@ public partial class FrmMapEditor : DockContent
         }
     }
 
-    private void pnlMapContainer_Scroll(object sender, ScrollEventArgs e)
-    {
-        Main.DrawFrame();
-    }
-
-    private void pnlMapContainer_Resize(object sender, EventArgs e)
+    private void picMap_SizeChanged(object sender, EventArgs e)
     {
         if (!Options.IsLoaded)
         {
             return;
         }
-
-        picMap.Size = pnlMapContainer.ClientSize;
-        picMap.MinimumSize = new Size(
-            (Options.Instance.Map.MapWidth + 2) * Options.Instance.Map.TileWidth, (Options.Instance.Map.MapHeight + 2) * Options.Instance.Map.TileHeight
-        );
 
         ResetMapViewport();
 
