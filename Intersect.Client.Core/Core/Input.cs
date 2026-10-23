@@ -286,6 +286,10 @@ public static partial class Input
                             }
                             continue;
 
+                        case Control.ToggleMount:
+                            Intersect.Client.Networking.Network.SendPacket(new Intersect.Network.Packets.Client.MountRequestPacket { Action = Intersect.Network.Packets.Client.MountAction.Toggle });
+                            break;
+
                         case Control.OpenInventory:
                             Interface.Interface.GameUi.GameMenu?.ToggleInventoryWindow();
                             break;

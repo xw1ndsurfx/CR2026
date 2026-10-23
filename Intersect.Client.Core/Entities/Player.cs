@@ -363,6 +363,7 @@ public partial class Player : Entity, IPlayer
         }
 
         IsAfk = playerPacket.IsAfk;
+        ApplyMountJson(playerPacket.MountJson ?? "");
         PendingDeath = playerPacket.PendingDeath;
         Gender = playerPacket.Gender;
         Class = playerPacket.ClassId;

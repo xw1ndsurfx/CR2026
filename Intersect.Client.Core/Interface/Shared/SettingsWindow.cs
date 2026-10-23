@@ -816,7 +816,7 @@ public partial class SettingsWindow : Window
             }
             else
             {
-                localizedControlName = $"ControlName:{controlName}";
+                localizedControlName = control == Control.ToggleMount ? Intersect.Client.Localization.ClientLanguages.Text("Ride favorite / Dismount") : $"ControlName:{controlName}";
             }
         }
 

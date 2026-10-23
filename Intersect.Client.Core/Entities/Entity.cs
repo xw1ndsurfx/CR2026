@@ -1358,8 +1358,11 @@ public partial class Entity : IEntity
             srcRectangle.Width, srcRectangle.Height, TileWidth, TileHeight);
         _spriteAnchorOffset = new Vector2(destRectangle.X - framePosition.X, destRectangle.Y - framePosition.Y);
 
-        WorldPos = destRectangle;
-        IncludeVisibleGraphicTop(texture, srcRectangle, destRectangle);
+        var mountBounds = BeginMountDraw(texture, srcRectangle, destRectangle, renderColor);
+        var riderBounds = MountedRiderRectangle(destRectangle);
+        WorldPos = _riderTransform == null ? destRectangle : new FloatRect(Math.Min(mountBounds.X, riderBounds.X), Math.Min(mountBounds.Y, riderBounds.Y),
+            Math.Max(mountBounds.Right, riderBounds.Right) - Math.Min(mountBounds.X, riderBounds.X), Math.Max(mountBounds.Bottom, riderBounds.Bottom) - Math.Min(mountBounds.Y, riderBounds.Y));
+        IncludeVisibleGraphicTop(texture, srcRectangle, riderBounds);
 
         //Order the layers of paperdolls and sprites
         for (var z = 0; z < Options.Instance.Equipment.Paperdoll.Directions[(int)_lastDirection].Count; z++)
@@ -1370,7 +1373,7 @@ public partial class Entity : IEntity
             //Check for player
             if (string.Equals("Player", paperdoll, StringComparison.Ordinal))
             {
-                Graphics.DrawGameTexture(texture, srcRectangle, destRectangle, renderColor);
+                DrawRiderLayer(texture, srcRectangle, destRectangle, renderColor);
             }
             else if (equipSlot > -1)
             {
@@ -1412,6 +1415,7 @@ public partial class Entity : IEntity
                 }
             }
         }
+        EndMountDraw(renderColor);
         if(_petDecoration is {} decoration && Intersect.Client.Framework.File_Management.GameContentManager.Current.GetTexture(TextureType.Item,decoration.Icon) is {} accessory)
             Graphics.DrawGameTexture(accessory,new FloatRect(0,0,accessory.Width,accessory.Height),
                 new FloatRect(destRectangle.X+destRectangle.Width/2-decoration.Size/2+decoration.OffsetX,
@@ -1422,7 +1426,7 @@ public partial class Entity : IEntity
     {
         get
         {
-            var frame = WalkFrame;
+            var frame = this is Player { ActiveMount: not null } && string.IsNullOrEmpty(TransformedSprite) ? Math.Min(1, SpriteFrames - 1) : WalkFrame;
 
             if (IsBlocking)
             {
@@ -1612,8 +1616,8 @@ public partial class Entity : IEntity
         var destRectangle = new FloatRect(position.X, position.Y, srcRectangle.Width, srcRectangle.Height);
 
         // Draw the paperdoll texture using: source and destination rectangles along with the render color.
-        Graphics.DrawGameTexture(paperdollTex, srcRectangle, destRectangle, renderColor);
-        IncludeEquipmentGraphicTop(paperdollTex, srcRectangle, destRectangle);
+        DrawRiderLayer(paperdollTex, srcRectangle, destRectangle, renderColor);
+        IncludeEquipmentGraphicTop(paperdollTex, srcRectangle, MountedRiderRectangle(destRectangle));
     }
 
     protected virtual FloatRect SpriteDestination(IGameTexture texture, FloatRect source)

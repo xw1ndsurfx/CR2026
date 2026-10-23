@@ -123,6 +123,7 @@ public partial class FrmMain : Form
         AddProfessionEditorMenu();
         PacketSender.SendRequestProfessionConfiguration(openEditor: false);
         AddAchievementEditorMenu();
+        AddMountEditorMenu();
         PacketSender.SendRequestAchievementConfiguration(openEditor: false);
         AddDungeonEditorMenu();
         PacketSender.SendRequestDungeonConfiguration(openEditor: false);
