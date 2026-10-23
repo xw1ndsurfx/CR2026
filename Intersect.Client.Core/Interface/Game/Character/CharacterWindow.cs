@@ -247,6 +247,14 @@ public partial class CharacterWindow
         petsCaption.BringToFront();
         achievementsCaption.SetBounds(0, 0, actionButtonWidth, actionButtonHeight);
         achievementsCaption.BringToFront();
+        var mounts = new Button(mCharacterWindow, "CharacterMounts") { Text = string.Empty };
+        mounts.SetBounds(actionButtonsX, actionButtonsY + actionButtonHeight + 5,
+            actionButtonWidth * 3 + actionButtonGap * 2, actionButtonHeight);
+        var mountCaption = new Label(mounts) { Text = ClientLanguages.Text("Mounts"), Font = _detailsButton.Font,
+            FontSize = 9, AutoSizeToContents = false, TextColorOverride = Color.White, TextAlign = Pos.Center, MouseInputEnabled = false };
+        mountCaption.SetBounds(0, 0, mounts.Width, mounts.Height);
+        mounts.Clicked += (_, _) => MountsWindow.Open();
+        mCharacterWindow.Height = Math.Max(mCharacterWindow.Height, mounts.Bottom + 10);
     }
 
     //Update Button Event Handlers

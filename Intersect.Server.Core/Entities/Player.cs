@@ -777,6 +777,7 @@ public partial class Player : Entity
             Monitor.TryEnter(EntityLock, ref lockObtained);
             if (lockObtained)
             {
+                UpdateMount();
                 // Detect inactivity from authoritative player position, including map changes.
                 if (_lastAfkMovementTime == 0 || _lastAfkX != X || _lastAfkY != Y || _lastAfkMapId != MapId)
                 {
@@ -1150,6 +1151,7 @@ public partial class Player : Entity
         packet = base.EntityPacket(packet, forPlayer);
 
         var pkt = (PlayerEntityPacket)packet;
+        pkt.MountJson = ActiveMount is { } riding ? new Intersect.Framework.Core.Mounts.MountConfiguration { Mounts = [riding] }.ToJson() : "";
         pkt.PvpGrade=Intersect.Server.Pvp.PvpRuntime.Grade(this);pkt.PvpPoints=Intersect.Server.Pvp.PvpRuntime.Points(this);pkt.PvpMatchId=Intersect.Server.Pvp.PvpRuntime.MatchId(this);pkt.PvpTeam=Intersect.Server.Pvp.PvpRuntime.Team(this);
         pkt.IsAfk = _isAfk;
         pkt.PendingDeath = HasPendingDeath;
@@ -2101,6 +2103,7 @@ public partial class Player : Entity
 
     public override bool CanAttack(Entity entity, SpellDescriptor spell)
     {
+        Dismount();
         if(entity is Player pvpTarget && (Intersect.Server.Pvp.PvpRuntime.InMatch(this) || Intersect.Server.Pvp.PvpRuntime.InMatch(pvpTarget)))
         {
             if(Intersect.Server.Pvp.PvpRuntime.Protected(this) || Intersect.Server.Pvp.PvpRuntime.Protected(pvpTarget))return false;
@@ -3742,6 +3745,7 @@ public partial class Player : Entity
             }
 
             var useEvent = itemBase.GetEventTrigger(ItemEventTrigger.OnUse);
+            if (TryActivateMountItem(itemBase.Id)) return;
             if (TryActivatePetItem(itemBase.Id)) return;
 
             switch (itemBase.ItemType)

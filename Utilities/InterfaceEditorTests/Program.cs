@@ -51,6 +51,8 @@ internal static class Program
         if (Environment.GetCommandLineArgs().Contains("--naval-only")) { NavalMapListTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--housing-picker-only")) { HousingPickerTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--achievement-icons-only")) { AchievementIconEditorTests.Run(); MonthlyNpcMissionEditorTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--mounts-only")) { MountEditorTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--mounts-preview")) { MountEditorTests.Preview(); return; }
         if (Environment.GetCommandLineArgs().Contains("--save-protection-only")) { SaveProtectionTests.Run(); return; }
         SaveProtectionTests.Run();
         SearchableChoiceTests.Run();
@@ -66,6 +68,7 @@ internal static class Program
         AchievementRewardEditorTests.Run();
         AchievementIconEditorTests.Run();
         MonthlyNpcMissionEditorTests.Run();
+        MountEditorTests.Run();
         BoosterEditorTests.Run();
         CharacterWeaponPaperdollTests.Run();
         EventToolsTests.Run();

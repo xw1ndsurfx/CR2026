@@ -234,3 +234,6 @@ Custom*.props
 
 # Local per-executable build counters
 /.build-versions/
+
+# Locally imported mount spritesheets
+/resources/images/mounts/

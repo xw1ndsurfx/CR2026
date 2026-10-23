@@ -55,4 +55,5 @@ public partial class PlayerEntityPacket : EntityPacket
     [Key(36)] public long PvpPoints {get;set;}
     [Key(37)] public Guid PvpMatchId {get;set;}
     [Key(38)] public int PvpTeam {get;set;}=-1;
+    [Key(39)] public string MountJson { get; set; } = "";
 }
