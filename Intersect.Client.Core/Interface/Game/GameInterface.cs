@@ -52,6 +52,7 @@ public partial class GameInterface : MutableInterface
     private MapItemWindow mMapItemWindow;
 
     private MinimapHud _minimapHud;
+    private Label? _componentBuildInfo;
 
     private WorldMapWindow? _worldMapWindow;
     public bool IsWorldMapVisible => _worldMapWindow is { IsHidden: false };
@@ -648,6 +649,14 @@ public partial class GameInterface : MutableInterface
             mChatBox.Focus();
             FocusChat = false;
         }
+
+        _componentBuildInfo??=ComponentBuilds.Create(GameCanvas,"ComponentBuildHud");
+        _componentBuildInfo.SetBounds(82,GameCanvas.Height-19,600,15);
+        ComponentBuilds.Update(_componentBuildInfo);
+        _componentBuildInfo.IsHidden=SuppressStatusHuds;
+        ZoneMusicPlayback.Update();
+        UpdateCampfires();
+        HudPlacement.Update(GameCanvas);
 
         if (UnfocusChat)
         {

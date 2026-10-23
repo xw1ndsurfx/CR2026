@@ -11,6 +11,9 @@ public partial class CraftingRecipeDescriptor : DatabaseObject<CraftingRecipeDes
     [NotMapped]
     public List<CraftingRecipeIngredient> Ingredients { get; set; } = [];
 
+    [NotMapped]
+    public CampfireRecipeResult? Campfire { get; set; }
+
     [JsonConstructor]
     public CraftingRecipeDescriptor(Guid id) : base(id)
     {
@@ -27,8 +30,13 @@ public partial class CraftingRecipeDescriptor : DatabaseObject<CraftingRecipeDes
     [Column("Ingredients")]
     public string IngredientsJson
     {
-        get => JsonConvert.SerializeObject(Ingredients, Formatting.None);
-        protected set => Ingredients = JsonConvert.DeserializeObject<List<CraftingRecipeIngredient>>(value);
+        get => Campfire == null ? JsonConvert.SerializeObject(Ingredients, Formatting.None) : JsonConvert.SerializeObject(new { Ingredients, Campfire }, Formatting.None);
+        protected set
+        {
+            var token = Newtonsoft.Json.Linq.JToken.Parse(string.IsNullOrWhiteSpace(value) ? "[]" : value);
+            Ingredients = (token is Newtonsoft.Json.Linq.JArray ? token : token["Ingredients"])?.ToObject<List<CraftingRecipeIngredient>>() ?? [];
+            Campfire = token is Newtonsoft.Json.Linq.JObject ? token["Campfire"]?.ToObject<CampfireRecipeResult>() : null;
+        }
     }
 
     [JsonProperty(Order = -6)]

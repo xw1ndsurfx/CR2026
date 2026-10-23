@@ -412,6 +412,8 @@ public abstract partial class GameContentManager : IContentManager
         return mMusicDict.TryGetValue(name.ToLower(), out var music) ? music as GameAudioSource : default;
     }
 
+    public IReadOnlyList<string> SoundNames => mSoundDict.Keys.OrderBy(name=>name,StringComparer.OrdinalIgnoreCase).ToArray();
+
     public virtual GameAudioSource? GetSound(string name)
     {
         if (string.IsNullOrEmpty(name))

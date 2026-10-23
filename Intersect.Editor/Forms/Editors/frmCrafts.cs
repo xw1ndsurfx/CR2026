@@ -31,6 +31,7 @@ public partial class FrmCrafts : EditorForm
         ApplyHooks();
         InitializeComponent();
         Icon = Program.Icon;
+        InitializeCampfireResult();
         _btnSave = btnSave;
         _btnCancel = btnCancel;
         lstGameObjects.LostFocus += itemList_FocusChanged;
@@ -76,6 +77,7 @@ public partial class FrmCrafts : EditorForm
 
             cmbFolder.Text = mEditorItem.Folder;
 
+            UpdateCampfireResultButton();
             //Populate ingredients and such
             nudSpeed.Value = mEditorItem.Time;
             nudFailureChance.Value = mEditorItem.FailureChance;

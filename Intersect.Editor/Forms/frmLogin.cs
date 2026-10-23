@@ -55,6 +55,7 @@ public partial class FrmLogin : Form
         }
 
         InitLocalization();
+        ModernizeLogin();
 
         if (Preferences.LoadPreference("username").Trim().Length > 0)
         {
@@ -80,7 +81,7 @@ public partial class FrmLogin : Form
 
     private void InitLocalization()
     {
-        Text = Strings.Login.title;
+        Text = "Logiklik 2D Engine";
         lblVersion.Text = Strings.Login.version.ToString(Application.ProductVersion);
         lblVersion.Location = new System.Drawing.Point(
             (lblVersion.Parent?.ClientRectangle.Right - (lblVersion.Parent?.Padding.Right + lblVersion.Width + 4)) ?? 0,

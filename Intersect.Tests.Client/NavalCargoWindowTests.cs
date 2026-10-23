@@ -166,7 +166,13 @@ public sealed class NavalCargoWindowTests
         typeof(ControlBase).GetMethod("RecurseLayout",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!.Invoke(canvas,[skin]);
         var ammo=Descendants(inventory).OfType<Button>().Single(button=>button.Name=="InventoryAmmo");
         Assert.That(items.Margin.Left,Is.EqualTo(3));Assert.That(items.Margin.Top,Is.EqualTo(5));Assert.That(items.Margin.Right,Is.EqualTo(7));
-        Assert.That(items.Margin.Bottom,Is.Zero);Assert.That(ammo.Y-items.Bottom,Is.InRange(0,6));
+        Assert.That(items.Margin.Bottom,Is.Zero);Assert.That(ammo.Parent!.Y + ammo.Y - items.Bottom,Is.InRange(0,6));
+        var campfire=Descendants(inventory).OfType<Button>().Single(button=>button.Name=="InventoryCampfire");
+        Assert.That(campfire.Parent,Is.SameAs(ammo.Parent));
+        Assert.That(campfire.Y,Is.EqualTo(ammo.Y));
+        Assert.That(campfire.Height,Is.EqualTo(ammo.Height));
+        Assert.That(campfire.X,Is.GreaterThanOrEqualTo(ammo.Right));
+        Assert.That(campfire.Right,Is.LessThanOrEqualTo(ammo.Parent.Width));
         Assert.That(ammo.Height,Is.EqualTo(28));
     }
 
@@ -259,6 +265,83 @@ public sealed class NavalCargoWindowTests
         finally {Intersect.Client.Naval.NavalWorld.Clear();Intersect.Client.General.Globals.Me=previous;}
     }
 
+    [Test]
+    public void CampfireAndGiftControlsDetachBeforeDisposalAndDoNotCrashCanvasShutdown()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(1000,700)};
+        var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Public;
+        var viewType=typeof(GameInterface).GetNestedType("FireView",System.Reflection.BindingFlags.NonPublic)!;
+        var view=Activator.CreateInstance(viewType,true)!;var button=new Button(canvas,"ExpiredFireButton");
+        viewType.GetField("Button",flags)!.SetValue(view,button);viewType.GetMethod("Dispose",flags)!.Invoke(view,null);
+        Assert.That(canvas.Children.Contains(button),Is.False);
+        var giftType=typeof(LogiCoinShopWindow).GetNestedType("GiftRecipientWindow",System.Reflection.BindingFlags.NonPublic)!;
+        var gift=(ControlBase)Activator.CreateInstance(giftType,flags,null,[canvas,new Intersect.Framework.Core.LogiCoins.LogiCoinShopOffer{Name="Gift"}],null)!;
+        giftType.GetMethod("Destroy",flags)!.Invoke(gift,null);giftType.GetMethod("Destroy",flags)!.Invoke(gift,null);
+        Assert.That(canvas.Children.Contains(gift),Is.False);
+    }
+
+    [Test]
+    public void LiveUiDesignerMovesActualControlsAndAppliesBoundsAndSoundProperties()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Name="DesignerFixture",Size=new Point(1000,700)};
+        var panel=new ControlBase(canvas,"EditablePanel");panel.SetBounds(400,40,200,160);
+        var image=new ImagePanel(panel,"EditableImage");image.SetBounds(20,20,40,40);
+        var type=typeof(Intersect.Client.Interface.Shared.UiDesignerRuntime);
+        var flags=System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static;
+        var document=type.GetField("_document",flags)!;var dirty=type.GetField("_dirty",flags)!;
+        var before=((Newtonsoft.Json.Linq.JObject)document.GetValue(null)!).DeepClone();var wasDirty=dirty.GetValue(null);
+        try
+        {
+            var designer=Intersect.Client.Interface.Shared.UiDesignerRuntime.CreateDesigner(canvas);
+            var methods=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            designer.GetType().GetMethod("OnMouseDown",methods)!.Invoke(designer,[Intersect.Client.Framework.Input.MouseButton.Left,new Point(430,70),true]);
+            designer.GetType().GetMethod("OnMouseMoved",methods)!.Invoke(designer,[450,80,20,10]);
+            designer.GetType().GetMethod("OnMouseUp",methods)!.Invoke(designer,[Intersect.Client.Framework.Input.MouseButton.Left,new Point(450,80),true]);
+            Assert.That(image.X,Is.EqualTo(40));Assert.That(image.Y,Is.EqualTo(30));
+            var properties=Newtonsoft.Json.Linq.JObject.Parse("{\"Bounds\":\"12,18,70,80\",\"HoverSound\":\"click.wav\"}");
+            Intersect.Client.Interface.Shared.UiDesignerRuntime.ApplyControl(image,properties);
+            Assert.That(image.Width,Is.EqualTo(70));Assert.That(image.HoverSound,Is.EqualTo("click.wav"));
+            properties["HoverSound"]="";Intersect.Client.Interface.Shared.UiDesignerRuntime.ApplyControl(image,properties);
+            Assert.That(image.HoverSound,Is.Empty);
+            Assert.That(Intersect.Client.Interface.Shared.UiDesignerRuntime.Resolve(canvas,Intersect.Client.Interface.Shared.UiDesignerRuntime.ControlPath(image)),Is.SameAs(image));
+            var sibling=new ImagePanel(panel,"EditableImage");
+            Assert.That(Intersect.Client.Interface.Shared.UiDesignerRuntime.ControlPath(image),Is.Not.EqualTo(Intersect.Client.Interface.Shared.UiDesignerRuntime.ControlPath(sibling)));
+        }
+        finally{document.SetValue(null,before);dirty.SetValue(null,wasDirty);Intersect.Client.Framework.Gwen.Input.InputHandler.MouseFocus=null;}
+    }
+    [Test]
+    public void ClothesGalleryFiltersAllowedStylesAndSelectionUpdatesTheExistingAppearanceControl()
+    {
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(1000,700)};
+        var combo=new LabeledComboBox(canvas,"AllowedHair");combo.AddItem("First hair",userData:"Hair_1.png");combo.AddItem("Second hair",userData:"Hair_2.png");
+        var gallery=new Intersect.Client.Interface.Shared.ClothesGallery(canvas,new(){["Hair"]=combo},()=>{});gallery.SetBounds(0,0,438,500);gallery.Refresh();
+        var search=Descendants(gallery).OfType<TextBox>().Single();search.Text="Second";
+        var card=Descendants(gallery).OfType<Button>().Single(button=>button.Name.StartsWith("ClothesCard"));
+        typeof(ControlBase).GetMethod("EmitVirtualClick",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!
+            .Invoke(card,[Intersect.Client.Framework.Gwen.Control.EventArguments.MouseButtonState.Empty]);
+        Assert.That(combo.SelectedItem!.UserData,Is.EqualTo("Hair_2.png"));
+        Assert.That(Descendants(gallery).OfType<ImagePanel>().Single().Height,Is.GreaterThanOrEqualTo(100));
+    }
+
+    [Test]
+    public void OrdinaryCargoRevealsOneLotThenUnlocksCollectionAfterTheSequence()
+    {
+        Intersect.Client.WorldEvents.PremiumState.Reset();
+        using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);
+        using var canvas=new Canvas(skin){Size=new Point(800,600)};
+        var window=new NavalCargoWindow(canvas);
+        var ship=new ShipSnapshot{Id=Guid.NewGuid(),Cargo=Enumerable.Range(0,5).Select(_=>new NavalCargoParcel{ItemId=Guid.NewGuid(),Quantity=1}).ToArray()};
+        window.Update(ship,true);
+        var manifest=Descendants(window).OfType<ScrollControl>().Single(c=>c.Name=="CargoManifest");
+        var collect=Descendants(window).OfType<Button>().Single(c=>c.Name=="TakeAll");
+        Assert.That(manifest.Children.Count,Is.EqualTo(1));Assert.That(collect.IsDisabled,Is.True);
+        typeof(NavalCargoWindow).GetField("_revealStarted",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!
+            .SetValue(window,Environment.TickCount64-10000);
+        window.Update(ship,true);
+        Assert.That(manifest.Children.Count,Is.EqualTo(5));Assert.That(collect.IsDisabled,Is.False);
+        Assert.That(ship.Cargo.Length,Is.EqualTo(5),"Revealing changes presentation and must not consume rewards.");
+    }
+
     [TestCase(1920,1080)]
     [TestCase(640,480)]
     [TestCase(800,600)]
@@ -327,6 +410,7 @@ public sealed class NavalCargoWindowTests
         using var canvas=new Canvas(skin) {Size=new Point(width,height)};
         var window=new NavalCargoWindow(canvas);
         var item=new ItemDescriptor(Guid.NewGuid()) {Name="Aureons",Icon="aureons.png"};ItemDescriptor.Lookup.Set(item.Id,item);
+        Intersect.Client.WorldEvents.PremiumState.Apply(new() { RemainingMilliseconds = 60000 });
         try
         {
             var ship=new ShipSnapshot {Id=Guid.NewGuid(),CargoCapacity=20,
@@ -354,7 +438,7 @@ public sealed class NavalCargoWindowTests
             ship.Id=Guid.NewGuid();window.Update(ship,true);Assert.That(scroll.VerticalScrollBar.ScrollAmount,Is.Zero);
             ship.Sinking=true;window.Update(ship,true);Assert.That(window.IsHidden,Is.True);
         }
-        finally {ItemDescriptor.Lookup.Delete(item);}
+        finally {ItemDescriptor.Lookup.Delete(item); Intersect.Client.WorldEvents.PremiumState.Reset();}
     }
     [Test]
     public void EmptyAndUnknownItemsRemainReadableWithoutBreakingTheManifest()

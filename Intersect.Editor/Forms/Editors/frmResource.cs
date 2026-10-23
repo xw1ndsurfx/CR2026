@@ -39,6 +39,7 @@ public partial class FrmResource : EditorForm
         _fallingTree.SetBounds(7,360,246,20);
         _fallingTree.CheckedChanged+=(_,_)=>{if(_editorItem!=null)_editorItem.FallingTree=_fallingTree.Checked;};
         grpGeneral.Controls.Add(_fallingTree);
+        ModernizeResourceEditor();
 
         _btnSave = btnSave;
         _btnCancel = btnCancel;

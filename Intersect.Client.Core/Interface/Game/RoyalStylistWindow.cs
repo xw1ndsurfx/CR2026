@@ -62,6 +62,7 @@ internal sealed class RoyalStylistWindow : Window
     private readonly Button _apply;
     private readonly Button _cancel;
 
+    private ClothesGallery? _clothesGallery;
     private readonly Random _random = new();
     private RoyalStylistStatePacket? _state;
     private CharacterAppearance _originalAppearance = new();
@@ -225,6 +226,12 @@ internal sealed class RoyalStylistWindow : Window
             FontSize = 9,
         };
         _reset.SetBounds(628, 477, 208, 34);
+        var browse=new Button(this,"BrowseClothes"){Text=Intersect.Client.Localization.ClientLanguages.Text("Browse clothes"),Font=titleFont,FontSize=10};
+        browse.SetBounds(398,435,438,30);browse.Clicked+=(_,_)=>
+        {
+            _clothesGallery??=new ClothesGallery(this,new(){["Hair"]=_hair,["Shirt"]=_shirt,["Pants"]=_pants,["Boots"]=_boots},()=>_clothesGallery?.Hide());
+            _clothesGallery.SetBounds(398,145,438,320);_clothesGallery.Refresh();
+        };
         _reset.Clicked += (_, _) =>
         {
             LoadAppearance(_originalAppearance);

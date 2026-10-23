@@ -823,13 +823,15 @@ public partial class Player : Entity
                     }
                 }
 
-                if (CraftingTableDescriptor.TryGet(OpenCraftingTableId, out var b) && CraftingState?.Id != default)
+                Intersect.Server.Campfires.CampfireRuntime.Update(this);
+                if (TryGetOpenCraftingTable(out var b) && CraftingState?.Id != default)
                 {
                     if (CraftingState != default && b.Crafts.Contains(CraftingState.Id))
                     {
                         while (CraftingState?.NextCraftCompletionTime < timeMs)
                         {
                             CraftItem();
+                            if (ShouldCancelCrafting()) CraftingState = default;
 
                             if (CraftingState != default)
                             {
@@ -870,6 +872,8 @@ public partial class Player : Entity
                 UpdateActivePet(timeMs);
                 UpdatePremiumStatus(timeMs);
                 Intersect.Server.Naval.NavalSystem.Update(this, timeMs);
+                if(User!=null && timeMs-IncomingGiftAt>=5000)
+                {IncomingGiftAt=timeMs;try{Intersect.Server.LogiCoins.LogiCoinPurchaseRuntime.TryResumePending(this);}catch(Exception error){ApplicationContext.Context.Value?.Logger.LogError(error,"Pending shop delivery failed for {PlayerId}",Id);}}
 
                 if (mAutorunCommonEventTimer < Timing.Global.Milliseconds)
                 {
@@ -4270,6 +4274,7 @@ public partial class Player : Entity
         }
 
         InShop = shop;
+        ServiceShopMap=MapId;ServiceShopX=X;ServiceShopY=Y;
         PacketSender.SendOpenShop(this, shop);
 
         return true;
@@ -4504,6 +4509,13 @@ public partial class Player : Entity
     }
 
     //Crafting
+    private bool TryGetOpenCraftingTable(out CraftingTableDescriptor table)
+    {
+        if (OpenCraftingTableId == Intersect.Server.Campfires.CampfireRuntime.TableId)
+        { table = Intersect.Server.Campfires.CampfireRuntime.Table(); return true; }
+        return CraftingTableDescriptor.TryGet(OpenCraftingTableId, out table);
+    }
+
     public bool OpenCraftingTable(CraftingTableDescriptor table, bool journalMode)
     {
         if (IsBusy())
@@ -4547,7 +4559,7 @@ public partial class Player : Entity
             backupItems.Add(backupItem.Clone());
         }
 
-        if (!ItemDescriptor.TryGet(craftDescriptor.ItemId, out var craftItem) && CraftingState != default)
+        if (!ItemDescriptor.TryGet(craftDescriptor.ItemId, out var craftItem) && craftDescriptor.Campfire == null && CraftingState != default)
         {
             CraftingState.RemainingCount--;
             return;
@@ -4555,13 +4567,13 @@ public partial class Player : Entity
 
         lock (EntityLock)
         {
-            var craftRoll = Randomization.Next(0, 101);
+            var craftRoll = Randomization.Next(0, 100);
             var failedCraft = craftRoll < craftDescriptor.FailureChance;
             if (failedCraft)
             {
                 var message = Strings.Crafting.CraftFailure;
 
-                var itemLossRoll = Randomization.Next(0, 101);
+                var itemLossRoll = Randomization.Next(0, 100);
                 var itemLost = itemLossRoll < craftDescriptor.ItemLossChance;
                 if (itemLost)
                 {
@@ -4591,7 +4603,7 @@ public partial class Player : Entity
                 }
 
                 PacketSender.SendInventory(this);
-                PacketSender.SendChatMsg(this, message.ToString(craftItem.Name), ChatMessageType.Crafting, CustomColors.Alerts.Error);
+                PacketSender.SendChatMsg(this, message.ToString(craftItem?.Name ?? craftDescriptor.Name), ChatMessageType.Crafting, CustomColors.Alerts.Error);
             }
             else
             {
@@ -4619,15 +4631,17 @@ public partial class Player : Entity
 
                 //Give them the craft
                 var quantity = Math.Max(craftDescriptor.Quantity, 1);
-                if (!craftItem.IsStackable)
+                if (craftItem != null && !craftItem.IsStackable)
                 {
                     quantity = 1;
                 }
 
-                if (TryGiveItem(craftItem.Id, quantity))
+                if (craftDescriptor.Campfire is {} campfire
+                    ? Intersect.Server.Campfires.CampfireRuntime.Place(this, campfire)
+                    : TryGiveItem(craftItem.Id, quantity))
                 {
                     PacketSender.SendChatMsg(
-                        this, Strings.Crafting.Crafted.ToString(craftItem.Name), ChatMessageType.Crafting,
+                        this, Strings.Crafting.Crafted.ToString(craftItem?.Name ?? craftDescriptor.Name), ChatMessageType.Crafting,
                         CustomColors.Alerts.Success
                     );
 
@@ -4645,7 +4659,7 @@ public partial class Player : Entity
 
                     PacketSender.SendInventory(this);
                     PacketSender.SendChatMsg(
-                        this, Strings.Crafting.NoSpace.ToString(craftItem.Name), ChatMessageType.Crafting,
+                        this, Strings.Crafting.NoSpace.ToString(craftItem?.Name ?? craftDescriptor.Name), ChatMessageType.Crafting,
                         CustomColors.Alerts.Error
                     );
                 }
@@ -4675,7 +4689,7 @@ public partial class Player : Entity
             return true;
         }
 
-        if (!CraftingTableDescriptor.TryGet(OpenCraftingTableId, out var table))
+        if (!TryGetOpenCraftingTable(out var table))
         {
             return true;
         }
@@ -4698,7 +4712,13 @@ public partial class Player : Entity
             return true;
         }
 
-        if (!ItemDescriptor.TryGet(craftDescriptor.ItemId, out var craftItem))
+        if (craftDescriptor.Campfire is {} campfire && !Intersect.Server.Campfires.CampfireRuntime.CanPlace(this, campfire))
+        {
+            CraftingState = default;
+            PacketSender.SendChatMsg(this, Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("A campfire cannot be placed here, or you already have one.", Client?.LanguageCode ?? "en"), ChatMessageType.Error);
+            return true;
+        }
+        if (!ItemDescriptor.TryGet(craftDescriptor.ItemId, out var craftItem) && craftDescriptor.Campfire == null)
         {
             PacketSender.SendChatMsg(this, Strings.Errors.UnknownErrorTryAgain, ChatMessageType.Error, CustomColors.Alerts.Error);
             ApplicationContext.Context.Value?.Logger.LogError($"Unable to find item descriptor {craftItem?.Id} for craft {craftDescriptor?.Id}.");

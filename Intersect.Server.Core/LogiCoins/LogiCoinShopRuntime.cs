@@ -232,6 +232,11 @@ internal sealed class LogiCoinPurchaseRecord
     public Guid PurchaseId { get; set; }
 
     public Guid UserId { get; set; }
+    public Guid RecipientUserId {get;set;}
+    public Guid RecipientCharacterId {get;set;}
+    public string RecipientName {get;set;}="";
+    public string OfferName {get;set;}="";
+    public string OfferJson {get;set;}="";
 
     public Guid OfferId { get; set; }
 
@@ -242,6 +247,7 @@ internal sealed class LogiCoinPurchaseRecord
     public HashSet<int> DeliveredEntries { get; set; } = [];
 
     public bool PremiumApplied { get; set; }
+    public int CharacterSlotsGranted {get;set;}
 
     public bool Completed { get; set; }
 
@@ -256,19 +262,19 @@ internal static class LogiCoinPurchaseJournal
     private static readonly string PathName = Path.Combine("resources", "logicoins-shop-purchases.json");
     private static Dictionary<Guid, LogiCoinPurchaseRecord>? _records;
 
-    internal static LogiCoinPurchaseRecord GetOrCreate(Guid purchaseId, Guid userId, Guid offerId, int price)
+    internal static LogiCoinPurchaseRecord GetOrCreate(Guid purchaseId, Guid userId, Guid offerId, int price, Guid recipientUser=default,Guid recipientCharacter=default,string recipientName="",LogiCoinShopOffer? offer=null)
     {
         lock (Gate)
         {
             var records = Records;
             if (records.TryGetValue(purchaseId, out var existing))
             {
-                if (existing.UserId != userId || existing.OfferId != offerId || existing.Price != price)
+                if (existing.UserId != userId || existing.OfferId != offerId || existing.Price != price || existing.RecipientUserId!=recipientUser || existing.RecipientCharacterId!=recipientCharacter)
                 {
                     throw new InvalidOperationException("Purchase id was reused for a different LogiCoin offer.");
                 }
 
-                return existing;
+                return Clone(existing);
             }
 
             var record = new LogiCoinPurchaseRecord
@@ -276,11 +282,11 @@ internal static class LogiCoinPurchaseJournal
                 PurchaseId = purchaseId,
                 UserId = userId,
                 OfferId = offerId,
-                Price = price,
+                Price = price,RecipientUserId=recipientUser,RecipientCharacterId=recipientCharacter,RecipientName=recipientName,OfferName=offer?.Name??"",OfferJson=offer==null?"":JsonSerializer.Serialize(offer),
             };
-            records[purchaseId] = record;
-            SaveCore();
-            return record;
+            records[purchaseId] = Clone(record);
+            try{SaveCore();}catch{records.Remove(purchaseId);throw;}
+            return Clone(record);
         }
     }
 
@@ -288,17 +294,28 @@ internal static class LogiCoinPurchaseJournal
     {
         lock (Gate)
         {
-            Records[record.PurchaseId] = record;
-            SaveCore();
+            var records=Records;var previous=records.GetValueOrDefault(record.PurchaseId);
+            records[record.PurchaseId] = Clone(record);
+            try{SaveCore();}catch{if(previous==null)records.Remove(record.PurchaseId);else records[record.PurchaseId]=previous;throw;}
         }
     }
 
+    internal static int ExtraCharacterSlots(Guid userId)
+    {
+        lock(Gate)return (int)Math.Min(100,Records.Values.Where(record=>(record.RecipientUserId==Guid.Empty?record.UserId:record.RecipientUserId)==userId && record.WalletDebited)
+            .Sum(record=>(long)Math.Clamp(record.CharacterSlotsGranted,0,20)));
+    }
+    internal static LogiCoinPurchaseHistoryRow[] History(Guid userId)
+    {
+        lock(Gate)return Records.Values.Where(record=>record.UserId==userId && record.WalletDebited).OrderByDescending(record=>record.CreatedAtUtc).Take(100)
+            .Select(record=>new LogiCoinPurchaseHistoryRow{Offer=record.OfferName,Recipient=record.RecipientName,Price=record.Price,Completed=record.Completed,CreatedUtc=record.CreatedAtUtc.ToUnixTimeMilliseconds()}).ToArray();
+    }
     internal static IEnumerable<LogiCoinPurchaseRecord> Pending(Guid userId)
     {
         lock (Gate)
         {
             return Records.Values
-                .Where(record => record.UserId == userId && !record.Completed && record.WalletDebited)
+                .Where(record => (record.RecipientUserId==Guid.Empty?record.UserId:record.RecipientUserId)==userId && !record.Completed && record.WalletDebited)
                 .Select(Clone)
                 .ToArray();
         }
@@ -319,9 +336,9 @@ internal static class LogiCoinPurchaseJournal
                     ? JsonSerializer.Deserialize<Dictionary<Guid, LogiCoinPurchaseRecord>>(File.ReadAllText(PathName)) ?? []
                     : [];
             }
-            catch
+            catch(Exception error)
             {
-                _records = [];
+                throw new InvalidDataException("The purchase journal cannot be read. Existing purchases were preserved.",error);
             }
 
             return _records;
@@ -332,12 +349,13 @@ internal static class LogiCoinPurchaseJournal
         new()
         {
             PurchaseId = source.PurchaseId,
-            UserId = source.UserId,
+            UserId = source.UserId,RecipientUserId=source.RecipientUserId,RecipientCharacterId=source.RecipientCharacterId,RecipientName=source.RecipientName,OfferName=source.OfferName,OfferJson=source.OfferJson,
             OfferId = source.OfferId,
             Price = source.Price,
             WalletDebited = source.WalletDebited,
             DeliveredEntries = new HashSet<int>(source.DeliveredEntries ?? []),
             PremiumApplied = source.PremiumApplied,
+            CharacterSlotsGranted=source.CharacterSlotsGranted,
             Completed = source.Completed,
             CreatedAtUtc = source.CreatedAtUtc,
             LastError = source.LastError,
@@ -352,7 +370,7 @@ internal static class LogiCoinPurchaseJournal
     }
 }
 
-internal static class LogiCoinPurchaseRuntime
+internal static partial class LogiCoinPurchaseRuntime
 {
     internal static LogiCoinShopStatePacket BuildState(Player player, bool purchaseSucceeded = false, string message = "")
     {
@@ -367,10 +385,22 @@ internal static class LogiCoinPurchaseRuntime
             premiumUntil,
             purchaseSucceeded,
             wallet.Ok ? message : (string.IsNullOrWhiteSpace(wallet.Error) ? "Unable to load LogiCoins." : wallet.Error)
-        );
+        ){History=LogiCoinPurchaseJournal.History(player.User.Id),CharacterLimit=CharacterLimit(player.User.Id)};
     }
 
-    internal static LogiCoinShopStatePacket Purchase(Player player, Guid offerId, Guid purchaseId)
+    internal static int CharacterLimit(Guid userId)
+    {
+        try{return Math.Clamp(Options.Instance.Player.MaxCharacters+LogiCoinPurchaseJournal.ExtraCharacterSlots(userId),1,1000);}
+        catch(InvalidDataException){return Math.Max(1,Options.Instance.Player.MaxCharacters);}
+    }
+
+    private static readonly object PurchaseGate=new();
+    internal static LogiCoinShopStatePacket Purchase(Player player, Guid offerId, Guid purchaseId,Guid recipientUserId=default,Guid recipientCharacterId=default)
+    {
+        lock(player.EntityLock)
+        lock(PurchaseGate)return PurchaseCore(player,offerId,purchaseId,recipientUserId,recipientCharacterId);
+    }
+    private static LogiCoinShopStatePacket PurchaseCore(Player player, Guid offerId, Guid purchaseId,Guid recipientUserId,Guid recipientCharacterId)
     {
         var configuration = LogiCoinShopRuntime.Current;
         if (!configuration.Enabled)
@@ -389,13 +419,33 @@ internal static class LogiCoinPurchaseRuntime
             return BuildState(player, false, "Invalid purchase request.");
         }
 
+        var gifting=recipientUserId!=Guid.Empty;
+        var recipientName=player.Name;
+        if(gifting)
+        {
+            if(!offer.AllowGifts)return BuildState(player,false,"This offer cannot be gifted.");
+            var recipient=Intersect.Server.Database.PlayerData.User.FindById(recipientUserId);
+            if(recipient==null)return BuildState(player,false,"Recipient account not found.");
+            recipientName=recipient.Name;
+            if(!offer.AccountDelivery)
+            {
+                using var context=Intersect.Server.Database.DbInterface.CreatePlayerContext(readOnly:true);
+                var character=context.Players.Where(character=>character.UserId==recipientUserId && character.Id==recipientCharacterId).Select(character=>new{character.Name}).FirstOrDefault();
+                if(character==null)return BuildState(player,false,"Choose a character belonging to the recipient account.");
+                recipientName+=" / "+character.Name;
+            }
+            else recipientCharacterId=Guid.Empty;
+        }
+        else recipientCharacterId=offer.AccountDelivery?Guid.Empty:player.Id;
         var now = DateTimeOffset.UtcNow;
         var price = offer.EffectivePrice(now);
-        var record = LogiCoinPurchaseJournal.GetOrCreate(purchaseId, player.User.Id, offer.Id, price);
+        var record = LogiCoinPurchaseJournal.GetOrCreate(purchaseId, player.User.Id, offer.Id, price,recipientUserId,recipientCharacterId,recipientName,offer);
         var spendReference = $"ingame:{player.User.Id:N}:{purchaseId:N}:{offer.Id:N}";
 
         if (!record.WalletDebited)
         {
+            if(offer.Type==LogiCoinOfferType.CharacterSlot && LogiCoinPurchaseJournal.ExtraCharacterSlots(gifting?recipientUserId:player.User.Id)+offer.CharacterSlots>configuration.MaximumExtraCharacterSlots)
+                return BuildState(player,false,"The account character slot limit has been reached.");
             if (price > 0)
             {
                 var spend = LogiCoinWalletService.Spend(player.User.Name, price, spendReference, offer.Name);
@@ -414,10 +464,13 @@ internal static class LogiCoinPurchaseRuntime
             }
 
             record.WalletDebited = true;
+            if(offer.Type==LogiCoinOfferType.CharacterSlot)
+            {record.CharacterSlotsGranted=offer.CharacterSlots;record.Completed=true;}
             record.LastError = string.Empty;
             LogiCoinPurchaseJournal.Save(record);
         }
 
+        if(gifting)return BuildState(player,true,record.Completed?"Gift delivered successfully.":"Gift purchased. Delivery is queued for the recipient.");
         if (!TryDeliver(player, offer, record, out var deliveryError))
         {
             record.LastError = deliveryError;
@@ -425,7 +478,7 @@ internal static class LogiCoinPurchaseRuntime
             return BuildState(
                 player,
                 false,
-                $"Payment received. Delivery is pending and will retry automatically. {deliveryError}"
+                "Payment received. Delivery will retry automatically."
             );
         }
 
@@ -433,14 +486,17 @@ internal static class LogiCoinPurchaseRuntime
         record.LastError = string.Empty;
         LogiCoinPurchaseJournal.Save(record);
 
-        return BuildState(player, true, $"{offer.Name} purchased successfully.");
+        return BuildState(player, true, "Purchase completed.");
     }
 
-    private static void TryResumePending(Player player)
+    internal static void TryResumePending(Player player)
     {
+        lock(player.EntityLock)
+        {
         foreach (var record in LogiCoinPurchaseJournal.Pending(player.User.Id))
         {
-            var offer = LogiCoinShopRuntime.FindOffer(record.OfferId);
+            if(record.RecipientCharacterId!=Guid.Empty && record.RecipientCharacterId!=player.Id)continue;
+            var offer = record.OfferJson.Length>0?JsonSerializer.Deserialize<LogiCoinShopOffer>(record.OfferJson):LogiCoinShopRuntime.FindOffer(record.OfferId);
             if (offer == null)
             {
                 continue;
@@ -457,6 +513,7 @@ internal static class LogiCoinPurchaseRuntime
             }
 
             LogiCoinPurchaseJournal.Save(record);
+        }
         }
     }
 
@@ -484,6 +541,13 @@ internal static class LogiCoinPurchaseRuntime
                 case LogiCoinOfferType.Bundle:
                     return DeliverItems(player, offer.Bundle ?? [], record, out error);
 
+                case LogiCoinOfferType.CharacterSlot:
+                    if(record.CharacterSlotsGranted==0)
+                    {
+                        record.CharacterSlotsGranted=offer.CharacterSlots;
+                        LogiCoinPurchaseJournal.Save(record);
+                    }
+                    return true;
                 case LogiCoinOfferType.Premium:
                     return DeliverPremium(player, offer, record, out error);
 
@@ -522,11 +586,7 @@ internal static class LogiCoinPurchaseRuntime
                 return false;
             }
 
-            if (!player.TryGiveItem(entry.ItemId, entry.Quantity, ItemHandling.Normal, bankOverflow: true))
-            {
-                error = $"No room for {entry.Quantity:N0} x {item.Name}.";
-                return false;
-            }
+            if(!HasDeliveryReceipt(player,record,index) && !CommitItemDelivery(player,record,index,entry,out error))return false;
 
             record.DeliveredEntries.Add(index);
             LogiCoinPurchaseJournal.Save(record);
@@ -544,8 +604,9 @@ internal static class LogiCoinPurchaseRuntime
     {
         error = string.Empty;
 
-        if (record.PremiumApplied)
+        if (record.PremiumApplied || HasDeliveryReceipt(player,record,-1))
         {
+            record.PremiumApplied=true;
             return true;
         }
 
@@ -561,7 +622,14 @@ internal static class LogiCoinPurchaseRuntime
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var start = Math.Max(now, value.Integer);
         var extension = checked((long)offer.PremiumDays * 24L * 60L * 60L * 1000L);
+        var previous=value.Integer;
         value.Integer = checked(start + extension);
+        var receipt=AddDeliveryReceipt(player,record,-1);
+        if(player.User.Save(force:true)!=Intersect.Server.Database.PlayerData.UserSaveResult.Completed)
+        {
+            value.Integer=previous;player.User.Variables.Remove(receipt);
+            error="Premium delivery could not be saved.";return false;
+        }
 
         player.User.UpdatedVariables.AddOrUpdate(variableId, descriptor, (_, _) => descriptor);
         player.User.StartCommonEventsWithTriggerForAll(CommonEventTrigger.UserVariableChange, string.Empty, variableId.ToString());

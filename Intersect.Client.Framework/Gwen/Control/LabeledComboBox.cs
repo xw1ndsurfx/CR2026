@@ -72,6 +72,8 @@ public partial class LabeledComboBox : Base, IAutoSizeToContents, ITextContainer
         set => _label.Text = value;
     }
 
+    public IReadOnlyList<MenuItem> Items => _comboBox.Items;
+
     public MenuItem? SelectedItem
     {
         get => _comboBox.SelectedItem;

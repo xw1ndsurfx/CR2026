@@ -74,6 +74,8 @@ public sealed class DungeonDefinition
     public Guid CompletionCommonEventId { get; set; }
     public Guid FailureCommonEventId { get; set; }
 
+    public DungeonCompletionChest Chest { get; set; } = new();
+
     // Exit / completion warp
     public Guid ExitMapId { get; set; }
     public byte ExitX { get; set; }
@@ -115,6 +117,7 @@ public sealed class DungeonDefinition
         MaximumPartySize is >= 1 and <= 100 &&
         MaximumPartySize >= MinimumPartySize &&
         TimeLimitMinutes is >= 0 and <= 24 * 60 &&
+        Chest is { IsValid: true } &&
         CompletionExperience is >= 0 and <= 2_000_000_000 &&
         CompletionItemQuantity is >= 0 and <= 1_000_000_000 &&
         StartMinuteOfDay is >= 0 and <= 1439 &&
@@ -163,6 +166,7 @@ public sealed class DungeonConfiguration
             dungeon.Location ??= string.Empty;
             dungeon.MapIds ??= [];
             dungeon.AvailabilityConditions ??= [];
+            dungeon.Chest ??= new();
         }
 
         if (!value.IsStructurallyValid)

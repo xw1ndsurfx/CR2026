@@ -21,6 +21,9 @@ internal sealed class NavalCargoWindow : Window
     private readonly ScrollControl _plunder;
     private readonly Button _takeAll;
     private bool _results;
+    private long _revealStarted;
+    private int _revealed=-1;
+    private readonly List<(Base Row,int Y,long Started)> _revealRows=[];
     private readonly NavalSailingBar _capacity;
     private readonly Button _close;
     private readonly Label _closeText;
@@ -100,9 +103,9 @@ internal sealed class NavalCargoWindow : Window
     {
         if(!open || ship==null || ship.Sinking) {Hide();return;}
         var results=Naval.NavalWorld.OwnShip==null;
-        if(results!=_results){_results=results;_layoutChanged=true;}
+        if(results!=_results){_results=results;_layoutChanged=true;_revealStarted=Environment.TickCount64;_revealed=-1;}
         LayoutManifest();
-        if(IsHidden) {Show();BringToFront();_layoutChanged=true;}
+        if(IsHidden) {Show();BringToFront();_layoutChanged=true;_revealStarted=Environment.TickCount64;_revealed=-1;}
         var languageChanged=_language!=ClientLanguages.Current;
         if(languageChanged || _layoutChanged)
         {
@@ -118,26 +121,37 @@ internal sealed class NavalCargoWindow : Window
         var cargo=ship.Cargo??[];
         _takeAll.IsDisabled=cargo.Length==0;
         var shipChanged=_shipId!=ship.Id;
+        if(shipChanged)_revealStarted=Environment.TickCount64;
+        var interval=Math.Clamp(6000/Math.Max(1,cargo.Length),120,650);
+        var revealCount=!_results || Intersect.Client.WorldEvents.PremiumState.Remaining>0?cargo.Length:
+            Math.Min(cargo.Length,(int)((Environment.TickCount64-_revealStarted)/interval)+1);
+        var revealChanged=_revealed!=revealCount;
+        _revealed=revealCount;
+        _takeAll.IsDisabled=cargo.Length==0 || revealCount<cargo.Length;
+        var displayed=cargo.OrderByDescending(c=>c.Quality).Take(revealCount).ToArray();
+        if(_results && revealCount<cargo.Length)_hint.Text=string.Format(T("Revealing cargo: {0}/{1}"),revealCount,cargo.Length);
+        foreach(var (row,baseY,started) in _revealRows)
+            row.Y=baseY+(int)(12*(1-Math.Clamp((Environment.TickCount64-started)/240d,0,1)));
         var changed=shipChanged || _contents.Length!=cargo.Length ||
             cargo.Where((parcel,index)=>index>=_contents.Length || _contents[index]!=new CargoStamp(parcel)).Any();
         _summary.Text=string.Format(T("Cargo: {0}/{1} lots"),cargo.Length,ship.CargoCapacity)+(ship.CargoCapacity>0 && cargo.Length>=ship.CargoCapacity?" - MAX":"");
         _summary.TextColorOverride=ship.CargoCapacity>0 && cargo.Length>=ship.CargoCapacity?new Color(255,240,180,108):Cream;
         _capacity.Value=ship.CargoCapacity<=0?0:Math.Clamp(cargo.Length/(float)ship.CargoCapacity,0,1);
         _empty.IsHidden=cargo.Length>0;
-        if(changed || languageChanged || _layoutChanged || _contentRevision!=ClientLanguages.ContentRevision)
+        if(changed || revealChanged || languageChanged || _layoutChanged || _contentRevision!=ClientLanguages.ContentRevision)
         {
             var scroll=_list.VerticalScrollBar.ScrollAmount;
-            _list.DeleteAll();
+            _list.DeleteAll();_revealRows.Clear();
             var width=Math.Max(180,_list.Width-26);var y=4;
-            foreach(var parcel in cargo.OrderByDescending(c=>c.Quality))
+            foreach(var parcel in displayed)
             {
-                var row=new CargoRow(_list,parcel,width,()=>Act(ship,parcel,HarbourAction.ClaimCargo),()=>new InputBox(T("Discard cargo"),T("Discard this cargo lot permanently?"),InputType.YesNo,(_,_)=>Act(ship,parcel,HarbourAction.DiscardCargo)));row.SetBounds(4,y,width,120);y+=128;
+                var row=new CargoRow(_list,parcel,width,()=>Act(ship,parcel,HarbourAction.ClaimCargo),()=>new InputBox(T("Discard cargo"),T("Discard this cargo lot permanently?"),InputType.YesNo,(_,_)=>Act(ship,parcel,HarbourAction.DiscardCargo)));row.SetBounds(4,y,width,120);if(_results && Intersect.Client.WorldEvents.PremiumState.Remaining<=0 && parcel.Id==displayed.LastOrDefault()?.Id)_revealRows.Add((row,y,Environment.TickCount64));y+=128;
             }
             _plunder.DeleteAll();
             if(_results)
             {
                 var totalY=4;
-                foreach(var group in cargo.GroupBy(parcel=>parcel.ItemId).OrderBy(group=>ItemDescriptor.Get(group.Key)?.Name))
+                foreach(var group in displayed.GroupBy(parcel=>parcel.ItemId).OrderBy(group=>ItemDescriptor.Get(group.Key)?.Name))
                 {
                     var item=ItemDescriptor.Get(group.Key);
                     var name=Text(_plunder,"RewardName"+group.Key,12,Cream,true);

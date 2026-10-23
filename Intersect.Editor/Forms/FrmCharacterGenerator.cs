@@ -220,21 +220,22 @@ public sealed partial class FrmCharacterGenerator : DarkForm
                 return;
             }
 
-            var scale = Math.Min((double)Width / _image.Width, (double)Height / _image.Height);
+            var source=FindOpaqueBounds(_image,new Rectangle(0,0,_image.Width,_image.Height));
+            var scale = Math.Min((double)Width / source.Width, (double)Height / source.Height);
             scale = Math.Max(1d, Math.Floor(scale));
-            if (_image.Width * scale > Width || _image.Height * scale > Height)
+            if (source.Width * scale > Width || source.Height * scale > Height)
             {
-                scale = Math.Min((double)Width / _image.Width, (double)Height / _image.Height);
+                scale = Math.Min((double)Width / source.Width, (double)Height / source.Height);
             }
 
-            var width = Math.Max(1, (int)Math.Round(_image.Width * scale));
-            var height = Math.Max(1, (int)Math.Round(_image.Height * scale));
+            var width = Math.Max(1, (int)Math.Round(source.Width * scale));
+            var height = Math.Max(1, (int)Math.Round(source.Height * scale));
             var xPos = (Width - width) / 2;
             var yPos = (Height - height) / 2;
 
             e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
             e.Graphics.PixelOffsetMode = PixelOffsetMode.Half;
-            e.Graphics.DrawImage(_image, new Rectangle(xPos, yPos, width, height));
+            e.Graphics.DrawImage(_image, new Rectangle(xPos, yPos, width, height),source,GraphicsUnit.Pixel);
         }
     }
 
@@ -945,7 +946,7 @@ public sealed partial class FrmCharacterGenerator : DarkForm
         categoriesPanel.Controls.Add(_categoryList, 0, 1);
         body.Controls.Add(categoriesPanel, 0, 0);
 
-        var partsPanel = CreateSection("PAPERDOLLS");
+        var partsPanel = CreateSection(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Clothes",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
         ConfigurePartThumbnailView();
         _partsView.SelectedIndexChanged += (_, _) =>
         {
@@ -974,7 +975,7 @@ public sealed partial class FrmCharacterGenerator : DarkForm
         _partSearch.BackColor = System.Drawing.Color.FromArgb(45, 38, 40);
         _partSearch.ForeColor = System.Drawing.Color.White;
         _partSearch.BorderStyle = BorderStyle.FixedSingle;
-        _partSearch.PlaceholderText = "Search paperdolls...";
+        _partSearch.PlaceholderText = Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Search clothes by name",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
         _partSearch.TextChanged += (_, _) => PopulatePartsList();
 
         _favoritePartButton.Text = "☆ FAVORITE";
@@ -1331,7 +1332,7 @@ public sealed partial class FrmCharacterGenerator : DarkForm
 
     private void ConfigurePartThumbnailView()
     {
-        _partImages.ImageSize = new Size(96, 96);
+        _partImages.ImageSize = new Size(128, 128);
         _partImages.ColorDepth = ColorDepth.Depth32Bit;
 
         _partsView.Dock = DockStyle.Fill;
@@ -1344,7 +1345,7 @@ public sealed partial class FrmCharacterGenerator : DarkForm
         _partsView.BackColor = System.Drawing.Color.FromArgb(38, 32, 34);
         _partsView.ForeColor = System.Drawing.Color.Gainsboro;
         _partsView.Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 9);
-        _partsView.TileSize = new Size(118, 124);
+        _partsView.TileSize = new Size(164, 170);
     }
 
     private void ToggleAdvancedMode()
@@ -1401,7 +1402,7 @@ public sealed partial class FrmCharacterGenerator : DarkForm
 
     private Bitmap CreatePartThumbnail(PartFamily part)
     {
-        const int thumbSize = 96;
+        const int thumbSize = 128;
         var thumbnail = new Bitmap(thumbSize, thumbSize, PixelFormat.Format32bppArgb);
 
         var file =
@@ -1417,7 +1418,7 @@ public sealed partial class FrmCharacterGenerator : DarkForm
         using var sheet = new Bitmap(file);
         var frameHeight = Math.Max(1, sheet.Height / 4);
         var frameWidth = Math.Min(frameHeight, sheet.Width);
-        var source = new Rectangle(0, 0, frameWidth, frameHeight);
+        var source = FindOpaqueBounds(sheet,new Rectangle(0, 0, frameWidth, frameHeight));
 
         using var graphics = Graphics.FromImage(thumbnail);
         graphics.Clear(System.Drawing.Color.Transparent);
@@ -1425,9 +1426,9 @@ public sealed partial class FrmCharacterGenerator : DarkForm
         graphics.PixelOffsetMode = PixelOffsetMode.Half;
         graphics.SmoothingMode = SmoothingMode.None;
 
-        var scale = Math.Min((double)(thumbSize - 8) / frameWidth, (double)(thumbSize - 8) / frameHeight);
-        var width = Math.Max(1, (int)Math.Round(frameWidth * scale));
-        var height = Math.Max(1, (int)Math.Round(frameHeight * scale));
+        var scale = Math.Min((double)(thumbSize - 8) / source.Width, (double)(thumbSize - 8) / source.Height);
+        var width = Math.Max(1, (int)Math.Round(source.Width * scale));
+        var height = Math.Max(1, (int)Math.Round(source.Height * scale));
         var destination = new Rectangle((thumbSize - width) / 2, (thumbSize - height) / 2, width, height);
 
         graphics.DrawImage(sheet, destination, source, GraphicsUnit.Pixel);

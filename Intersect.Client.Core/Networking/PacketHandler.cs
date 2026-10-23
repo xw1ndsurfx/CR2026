@@ -201,6 +201,8 @@ internal sealed partial class PacketHandler
     //JoinGamePacket
     public void HandlePacket(IPacketSender packetSender, JoinGamePacket packet)
     {
+        Interface.Game.ComponentBuilds.Server=packet.ServerBuild;
+        Interface.AccountCharacterSlots.Observe(packet.CharacterLimit);
         InvasionEnvironmentManager.Reset();
         Main.JoinGame();
         Globals.JoiningGame = true;
@@ -1816,6 +1818,7 @@ internal sealed partial class PacketHandler
     {
         if (InvasionEnvironmentManager.SuppressScriptedMusicChange())
             return;
+        Interface.Game.ZoneMusicPlayback.Observe(packet);
 
         Audio.PlayMusic(
             packet.BGM,
@@ -1831,6 +1834,7 @@ internal sealed partial class PacketHandler
         if (InvasionEnvironmentManager.SuppressScriptedMusicChange())
             return;
 
+        Interface.Game.ZoneMusicPlayback.Cancel();
         Audio.StopMusic(ClientConfiguration.Instance.MusicFadeTimer);
     }
 
@@ -2296,6 +2300,7 @@ internal sealed partial class PacketHandler
 
     public void HandlePacket(IPacketSender packetSender, LogiCoinShopStatePacket packet)
     {
+        Interface.AccountCharacterSlots.Observe(packet.CharacterLimit);
         global::Intersect.Client.Interface.Interface.GameUi.ApplyLogiCoinShopState(packet);
     }
 
@@ -2406,6 +2411,7 @@ internal sealed partial class PacketHandler
     //CharactersPacket
     public void HandlePacket(IPacketSender packetSender, CharactersPacket packet)
     {
+        Interface.AccountCharacterSlots.Observe(packet.CharacterLimit);
         List<CharacterSelectionPreviewMetadata> characterSelectionPreviews =
         [
             ..packet.Characters.Select(

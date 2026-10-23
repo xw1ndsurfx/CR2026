@@ -87,7 +87,7 @@ public static partial class PacketSender
         }
 
         client.TimedBufferPacketsRemaining = 5;
-        client.Send(new JoinGamePacket());
+        client.Send(new JoinGamePacket{ServerBuild=Intersect.Framework.Core.BuildIdentity.Label,CharacterLimit=client.User==null?Options.Instance.Player.MaxCharacters:Intersect.Server.LogiCoins.LogiCoinPurchaseRuntime.CharacterLimit(client.User.Id)});
         SendGameData(client);
 
         if (!client.IsEditor)
@@ -1375,9 +1375,10 @@ public static partial class PacketSender
             CharactersPacket emptyBulkCharactersPacket = new(
                 user.Name,
                 [],
-                client.Characters.Count < Options.Instance.Player.MaxCharacters
+                client.Characters.Count < Intersect.Server.LogiCoins.LogiCoinPurchaseRuntime.CharacterLimit(client.User.Id)
             );
 
+            emptyBulkCharactersPacket.CharacterLimit=Intersect.Server.LogiCoins.LogiCoinPurchaseRuntime.CharacterLimit(user.Id);
             if (!client.Send(emptyBulkCharactersPacket))
             {
                 ApplicationContext.Context.Value?.Logger.LogError($"Failed to send empty bulk characters packet to {client.Id}");
@@ -1449,9 +1450,10 @@ public static partial class PacketSender
         CharactersPacket bulkCharactersPacket = new(
             user.Name,
             characterPackets.ToArray(),
-            client.Characters.Count < Options.Instance.Player.MaxCharacters
+            client.Characters.Count < Intersect.Server.LogiCoins.LogiCoinPurchaseRuntime.CharacterLimit(client.User.Id)
         );
 
+        bulkCharactersPacket.CharacterLimit=Intersect.Server.LogiCoins.LogiCoinPurchaseRuntime.CharacterLimit(user.Id);
         if (!client.Send(bulkCharactersPacket))
         {
             ApplicationContext.Context.Value?.Logger.LogError($"Failed to send {bulkCharactersPacket.Characters.Length} characters to {client.Id}");
@@ -1754,6 +1756,8 @@ public static partial class PacketSender
             return;
         }
 
+        if(shop.ConfigurationKind is ShopConfigurationKind.Spells or ShopConfigurationKind.PremiumMusic)
+        {Intersect.Server.Shops.ServiceShopRuntime.Send(player);return;}
         player.SendPacket(new ShopPacket(shop.JsonData, false));
     }
 

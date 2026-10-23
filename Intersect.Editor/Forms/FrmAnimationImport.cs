@@ -384,8 +384,19 @@ public sealed class FrmAnimationImport : DarkForm
             _selectionCancellation = null;
 
             _previewTimer.Stop();
-            _assetImages.Dispose();
         };
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        // Dispose the ListView first: its ImageList subscription can recreate a handle
+        // if the image list is disposed while the window itself is closing.
+        base.Dispose(disposing);
+        if (disposing)
+        {
+            _previewTimer.Dispose();
+            _assetImages.Dispose();
+        }
     }
 
     private static string ResolveGameRoot()

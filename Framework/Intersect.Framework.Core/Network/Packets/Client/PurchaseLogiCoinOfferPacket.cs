@@ -15,6 +15,9 @@ public partial class PurchaseLogiCoinOfferPacket : IntersectPacket
         PurchaseId = purchaseId;
     }
 
+    [Key(2)] public Guid RecipientUserId {get;set;}
+    [Key(3)] public Guid RecipientCharacterId {get;set;}
+
     [Key(0)]
     public Guid OfferId { get; set; }
 

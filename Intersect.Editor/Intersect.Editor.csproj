@@ -17,10 +17,10 @@
 
   <PropertyGroup>
     <PackageId>AscensionGameDev.Intersect.Editor</PackageId>
-    <Description>Game Editor - Part of the Intersect 2D Game Creation Suite</Description>
+    <Description>Logiklik 2D Engine — Game Editor</Description>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <RootNamespace>Intersect.Editor</RootNamespace>
-    <AssemblyName>Intersect Editor</AssemblyName>
+    <AssemblyName>Logiklik 2D Engine</AssemblyName>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

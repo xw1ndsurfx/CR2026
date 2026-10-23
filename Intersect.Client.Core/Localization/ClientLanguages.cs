@@ -17,7 +17,11 @@ public static class ClientLanguages
     public static string Current { get; private set; } = "en";
     public static GameTextCatalog Content { get; private set; } = new();
     public static int ContentRevision { get; private set; }
-    public static string Text(string source) => BuiltIn.Value.Get(source, Current);
+    public static string Text(string source)
+    {
+        var value = BuiltIn.Value.Get(source, Current);
+        return value != source ? value : Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(source, Current);
+    }
     public static string Interpolated(FormattableString source) => string.Format(Text(source.Format), source.GetArguments());
     public static string Format(string source, params object[] values) => string.Format(Text(source), values);
     public static string Expanded(string source)

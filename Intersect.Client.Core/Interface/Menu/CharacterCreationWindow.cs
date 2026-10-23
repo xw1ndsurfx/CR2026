@@ -65,6 +65,7 @@ public partial class CharacterCreationWindow : Window
 
     private int _displaySpriteIndex = -1;
     private int _previewDirection;
+    private ClothesGallery? _clothesGallery;
     private readonly Random _random = new();
     private readonly List<KeyValuePair<int, ClassSprite>> _femaleSprites = [];
     private readonly List<KeyValuePair<int, ClassSprite>> _maleSprites = [];
@@ -232,6 +233,9 @@ public partial class CharacterCreationWindow : Window
 
         _preview = new AppearancePreview(_previewContainer, nameof(_preview));
         _preview.ZoomChanged += UpdateDisplay;
+        var resetPreview=new Button(_previewPanel,"ResetCharacterPreview"){Text=ClientLanguages.Text("Reset character"),Font=_defaultFont,FontSize=10};
+        resetPreview.SetBounds(8,402,336,30);
+        resetPreview.Clicked+=(_,_)=>{PopulateAppearanceControls();_previewDirection=0;ResetSprite();UpdateDisplay();};
 
         _directionPanel = new Panel(_previewPanel, name: nameof(_directionPanel))
         {
@@ -551,9 +555,9 @@ public partial class CharacterCreationWindow : Window
         _propertiesPanel.SetBounds(398, 38, 438, 500);
         _previewPanel.SetBounds(24, 38, 352, 500);
         _buttonsPanel.SetBounds(24, 570, 812, 34);
-        var fields = new Base[] { _nameInput, _classCombobox, _hairCombobox, _hairColorCombobox, _shirtCombobox,
+        var fields = new Base[] { _nameInput, _genderInputPanel, _classCombobox, _hairCombobox, _hairColorCombobox, _shirtCombobox,
             _shirtColorCombobox, _pantsCombobox, _pantsColorCombobox, _bootsCombobox, _bootsColorCombobox,
-            _randomizeAppearanceButton, _genderInputPanel };
+            _randomizeAppearanceButton };
         for (var i = 0; i < fields.Length; i++)
         {
             fields[i].Dock = Pos.None; fields[i].Margin = Margin.Zero;
@@ -568,6 +572,17 @@ public partial class CharacterCreationWindow : Window
         _directionPanel.Margin = Margin.Zero;
         _directionPanel.SetBounds(8, 440, 336, 36);
         _createButton.SetSize(360, 34); _backButton.SetSize(360, 34);
+        if(!_propertiesPanel.Children.Any(child=>child.Name=="BrowseClothes"))
+        {
+            var browse=new Button(_propertiesPanel,"BrowseClothes"){Text=ClientLanguages.Text("Browse clothes"),Font=_defaultFont,FontSize=10};
+            browse.SetBounds(0,470,438,28);browse.Clicked+=(_,_)=>
+            {
+                _clothesGallery??=new ClothesGallery(this,new(){["Hair"]=_hairCombobox,["Shirt"]=_shirtCombobox,["Pants"]=_pantsCombobox,["Boots"]=_bootsCombobox},
+                    ()=>{_clothesGallery?.Hide();_propertiesPanel.Show();});
+                _clothesGallery.SetBounds(_propertiesPanel.X,_propertiesPanel.Y,_propertiesPanel.Width,_propertiesPanel.Height);
+                _propertiesPanel.Hide();_clothesGallery.Refresh();
+            };
+        }
         Alignment = [Alignments.Center];
         UpdateDisplay();
     }
@@ -833,7 +848,7 @@ public partial class CharacterCreationWindow : Window
     private void BackButton_Clicked(Base sender, MouseButtonState arguments)
     {
         Hide();
-        if (Options.Instance.Player.MaxCharacters <= 1)
+        if (AccountCharacterSlots.Limit <= 1)
         {
             //Logout
             _mainMenu.Show();

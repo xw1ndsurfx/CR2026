@@ -170,6 +170,7 @@ internal static partial class NavalSystem
                     if(ok && mode!=NavalManageAction.BuyAmmo)ok=SaveManagement(p);
                 }
                 finally {if(!ok){p.NavalFleetJson=json;for(var i=0;i<inventory.Length;i++)p.Items[i].Set(inventory[i]);}}
+                if(ok && mode is NavalManageAction.BuyAmmo or NavalManageAction.SellAmmo)PlayShopTradeSound(p,mode==NavalManageAction.SellAmmo);
                 message=ok?"Ammunition updated.":"Transaction failed. Nothing was changed.";mode=mode is NavalManageAction.BuyAmmo or NavalManageAction.SellAmmo?NavalManageAction.AmmoShop:NavalManageAction.Ammo;PacketSender.SendInventory(p);if(ok)p.RefreshNavalCargoQuests([a.ItemId]);
             }
             else if(mode==NavalManageAction.SelectAmmo)
@@ -196,7 +197,7 @@ internal static partial class NavalSystem
                 var json=p.NavalFleetJson;var inventory=SnapshotCargoInventory(p);var ok=false;
                 try {ok=(d.Price==0 || p.TryTakeItem(currency.Id,d.Price,sendUpdate:false)) && p.NavalCareer.Skills.Add(d.Kind);if(ok)ok=SaveManagement(p);}
                 finally {if(!ok){p.NavalFleetJson=json;for(var i=0;i<inventory.Length;i++)p.Items[i].Set(inventory[i]);}}
-                message=ok?"Skill learned.":"Transaction failed. Nothing was changed.";PacketSender.SendInventory(p);SendHarbour(p,ShopCatalogue(p),message,Intersect.Server.LogiCoins.LogiCoinPurchaseRuntime.HasActivePremium(p),HarbourView.Shop);return;
+                if(ok)PlayShopTradeSound(p,false);message=ok?"Skill learned.":"Transaction failed. Nothing was changed.";PacketSender.SendInventory(p);SendHarbour(p,ShopCatalogue(p),message,Intersect.Server.LogiCoins.LogiCoinPurchaseRuntime.HasActivePremium(p),HarbourView.Shop);return;
             }
             else
             {

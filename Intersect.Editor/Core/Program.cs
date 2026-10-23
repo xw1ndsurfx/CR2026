@@ -19,7 +19,7 @@ namespace Intersect.Editor.Core;
 
 public static class Program
 {
-    private const string IconManifestResourceName = "Intersect.Editor.intersect-logo-qu.ico";
+    private const string IconManifestResourceName = "Intersect.Editor.studio-logiklik.ico";
     internal static readonly Icon? Icon;
 
     static Program()

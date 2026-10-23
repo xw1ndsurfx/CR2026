@@ -31,6 +31,8 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
     private readonly ComboBox _premiumVariable = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 360 };
     private readonly ListBox _offerList = new() { Dock = DockStyle.Fill };
 
+    private readonly NumericUpDown _extraSlots=new(){Minimum=0,Maximum=100,Width=90};
+
     public FrmLogiCoinShopConfiguration()
     {
         Text = "LogiCoin Shop";
@@ -44,6 +46,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
         _offers = (_working.Offers ?? []).Select(CloneOffer).ToList();
 
         _enabled.Checked = _working.Enabled;
+        _extraSlots.Value=_working.MaximumExtraCharacterSlots;
         _shopUrl.Text = _working.ShopUrl;
         FillPremiumVariables();
 
@@ -73,6 +76,8 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
             Margin = new Padding(20, 7, 4, 0),
         });
         settings.Controls.Add(_shopUrl);
+        settings.Controls.Add(new Label{Text=Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Maximum extra character slots",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),AutoSize=true,Margin=new Padding(12,7,4,0)});
+        settings.Controls.Add(_extraSlots);
 
         var premium = new FlowLayoutPanel
         {
@@ -232,6 +237,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
                 LogiCoinOfferType.Item => "Item",
                 LogiCoinOfferType.Bundle => $"Bundle ({offer.Bundle.Length})",
                 LogiCoinOfferType.Premium => $"Premium {offer.PremiumDays} days",
+                LogiCoinOfferType.CharacterSlot => $"+{offer.CharacterSlots} "+Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Additional character slots",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),
                 _ => offer.Type.ToString(),
             };
 
@@ -254,6 +260,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
         }
 
         _working.Enabled = _enabled.Checked;
+        _working.MaximumExtraCharacterSlots=(int)_extraSlots.Value;
         _working.ShopUrl = _shopUrl.Text.Trim();
         _working.PremiumUntilUserVariableId =
             _premiumVariable.SelectedItem is VariableChoice variable ? variable.Id : Guid.Empty;
@@ -291,6 +298,8 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
             ItemQuantity = source.ItemQuantity,
             Bundle = (source.Bundle ?? []).Select(entry => new LogiCoinBundleItem(entry.ItemId, entry.Quantity)).ToArray(),
             PremiumDays = source.PremiumDays,
+            CharacterSlots=source.CharacterSlots,
+            AllowGifts=source.AllowGifts,
             Enabled = source.Enabled,
             SortOrder = source.SortOrder,
             DiscountPercent = source.DiscountPercent,
@@ -330,6 +339,9 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
 
         public LogiCoinShopOffer? Result { get; private set; }
 
+        private readonly CheckBox _allowGifts=new(){Checked=true,AutoSize=true};
+        private readonly NumericUpDown _characterSlots=new(){Minimum=1,Maximum=20,Value=1,Width=100};
+
         public LogiCoinOfferDialog(LogiCoinShopOffer? source = null)
         {
             Text = source == null ? "Add LogiCoin Offer" : "Edit LogiCoin Offer";
@@ -340,7 +352,11 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
             MaximizeBox = false;
 
             _id = source?.Id ?? Guid.NewGuid();
+            _allowGifts.Text=Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Allow gifts",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+            _allowGifts.Checked=source?.AllowGifts??true;
             _type.Items.AddRange(Enum.GetValues<LogiCoinOfferType>().Cast<object>().ToArray());
+            _type.FormattingEnabled=true;
+            _type.Format+=(_,args)=>{if(args.ListItem is LogiCoinOfferType.CharacterSlot)args.Value=Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Additional character slots",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);};
             _category.Items.AddRange(Enum.GetValues<LogiCoinOfferCategory>().Cast<object>().ToArray());
             FillItems(_item);
             FillItems(_bundleItem);
@@ -358,6 +374,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
                 _enabled.Checked = source.Enabled;
                 _discount.Value = source.DiscountPercent;
                 _itemQuantity.Value = Math.Clamp(source.ItemQuantity, 1, 1_000_000_000);
+                _characterSlots.Value=Math.Clamp(source.CharacterSlots,1,20);
                 _premiumDays.Value = Math.Clamp(source.PremiumDays, 1, 3650);
                 SelectItem(_item, source.ItemId);
 
@@ -407,7 +424,7 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
             root.Controls.Add(Row("Name", _name), 0, 0);
             root.Controls.Add(Row("Description", _description), 0, 1);
             root.Controls.Add(Row("Image (resources/images)", _image), 0, 2);
-            root.Controls.Add(Row("Type", _type, "Category", _category, "Price (LogiCoins)", _price, "Sort", _sortOrder, _enabled), 0, 3);
+            root.Controls.Add(Row("Type", _type, "Category", _category, "Price (LogiCoins)", _price, "Sort", _sortOrder, _enabled, _allowGifts), 0, 3);
             root.Controls.Add(Row("Discount %", _discount, "Starts (local)", _promoStart, "Ends (local)", _promoEnd), 0, 4);
             root.Controls.Add(new Label
             {
@@ -458,6 +475,12 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
                 return;
             }
 
+            if(type==LogiCoinOfferType.CharacterSlot)
+            {
+                var panel=new FlowLayoutPanel{Dock=DockStyle.Fill,AutoSize=true};
+                panel.Controls.Add(new Label{Text=Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Additional character slots",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),AutoSize=true});
+                panel.Controls.Add(_characterSlots);_specificPanel.Controls.Add(panel);return;
+            }
             if (type == LogiCoinOfferType.Premium)
             {
                 var panel = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true };
@@ -548,6 +571,8 @@ public sealed class FrmLogiCoinShopConfiguration : DarkForm
                 ItemQuantity = (int)_itemQuantity.Value,
                 Bundle = _bundle.ToArray(),
                 PremiumDays = (int)_premiumDays.Value,
+                CharacterSlots=(int)_characterSlots.Value,
+                AllowGifts=_allowGifts.Checked,
                 Enabled = _enabled.Checked,
                 SortOrder = (int)_sortOrder.Value,
                 DiscountPercent = (int)_discount.Value,

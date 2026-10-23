@@ -13,6 +13,7 @@ public partial class FrmMapLayers
     private FlowLayoutPanel? _resourceBrushRow;
     private void InitializeResourceBrush()
     {
+        pnlAttributes.AutoScroll=true;
         var location = new System.Drawing.Point(8, Options.Instance.Map.ZDimensionVisible ? 116 : 70);
         if (_resourceBrushRow != null)
         {
@@ -27,6 +28,16 @@ public partial class FrmMapLayers
         grpResource.Controls.Add(row); grpResource.Height = row.Bottom + 8;
         _resourceBrushRow = row;
         new ToolTip(components).SetToolTip(_resourceBrush, "Paint scattered resources by clicking or dragging. Existing attributes and event tiles are preserved. Undo restores the stroke.");
+    }
+    public void ActivateResourceBrush()
+    {
+        InitializeResourceBrush();
+        btnAttributeHeader_Click(this,EventArgs.Empty);
+        var types=Enum.GetValues<MapAttributeType>().Where(type=>type!=MapAttributeType.Walkable).ToArray();
+        cmbAttributeType.SelectedIndex=Array.IndexOf(types,MapAttributeType.Resource);
+        _resourceBrush.Checked=true;
+        Globals.CurrentTool=Intersect.Editor.General.EditingTool.Brush;
+        pnlAttributes.ScrollControlIntoView(_resourceBrushRow!);
     }
     public void BeginResourceStroke() => _paintedResources.Clear();
     public void PaintAttribute(MapInstance map, int x, int y)

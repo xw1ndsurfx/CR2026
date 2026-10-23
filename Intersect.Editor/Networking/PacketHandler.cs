@@ -438,7 +438,7 @@ internal sealed partial class PacketHandler
     //ErrorMessagePacket
     public void HandlePacket(IPacketSender packetSender, ErrorMessagePacket packet)
     {
-        MessageBox.Show(packet.Error, packet.Header, MessageBoxButtons.OK, MessageBoxIcon.Error);
+        MessageBox.Show(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(packet.Error,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName), packet.Header, MessageBoxButtons.OK, MessageBoxIcon.Error);
     }
 
     //MapGridPacket

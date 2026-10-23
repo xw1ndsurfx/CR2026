@@ -7,6 +7,7 @@ public enum LogiCoinOfferType
     Item = 0,
     Bundle = 1,
     Premium = 2,
+    CharacterSlot = 3,
 }
 
 public sealed record LogiCoinBundleItem(Guid ItemId, int Quantity)
@@ -52,6 +53,9 @@ public sealed class LogiCoinShopOffer
     public LogiCoinBundleItem[] Bundle { get; set; } = [];
 
     public int PremiumDays { get; set; } = 30;
+    public int CharacterSlots {get;set;}=1;
+    public bool AllowGifts {get;set;}=true;
+    public bool AccountDelivery=>Type is LogiCoinOfferType.Premium or LogiCoinOfferType.CharacterSlot;
 
     public bool Enabled { get; set; } = true;
 
@@ -114,6 +118,7 @@ public sealed class LogiCoinShopOffer
             LogiCoinOfferType.Bundle =>
                 Bundle is { Length: >= 1 and <= 128 } &&
                 Bundle.All(entry => entry is { IsStructurallyValid: true }),
+            LogiCoinOfferType.CharacterSlot => CharacterSlots is >=1 and <=20,
             LogiCoinOfferType.Premium =>
                 PremiumDays is >= 1 and <= 3650,
             _ => false,
@@ -130,6 +135,7 @@ public sealed class LogiCoinShopConfiguration
 
     public static LogiCoinShopConfiguration Instance { get; private set; } = new();
 
+    public int MaximumExtraCharacterSlots {get;set;}=20;
     public bool Enabled { get; set; } = true;
 
     public string ShopUrl { get; set; } = "https://shop.logiklik.com/?category=currency";
@@ -142,7 +148,18 @@ public sealed class LogiCoinShopConfiguration
 
     public LogiCoinShopOffer[] Offers { get; set; } = [];
 
+    public string UrlForLanguage(string language)
+    {
+        if(!Uri.TryCreate(ShopUrl,UriKind.Absolute,out var uri))return ShopUrl;
+        language=(language??"en").Split('-','_')[0].ToLowerInvariant();
+        if(language is not ("en" or "fr" or "es"))language="en";
+        var builder=new UriBuilder(uri);
+        var query=builder.Query.TrimStart('?').Split('&',StringSplitOptions.RemoveEmptyEntries)
+            .Where(part=>!string.Equals(Uri.UnescapeDataString(part.Split('=')[0]),"lang",StringComparison.OrdinalIgnoreCase)).ToList();
+        query.Add("lang="+language);builder.Query=string.Join("&",query);return builder.Uri.AbsoluteUri;
+    }
     public bool IsStructurallyValid =>
+        MaximumExtraCharacterSlots is >=0 and <=100 &&
         Uri.TryCreate(ShopUrl, UriKind.Absolute, out var shopUri) &&
         shopUri.Scheme is "https" or "http" &&
         (Offers ?? []).Length <= 512 &&

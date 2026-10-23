@@ -27,6 +27,10 @@ internal static class WorldActivitiesRuntime
             merged.ApplySection(config, section);
             config = merged;
             if (!config.IsValid) throw new InvalidDataException("Check music, schedules, duration and XP percentages.");
+            if(section==WorldActivitiesSection.Teleports &&
+                (config.Teleports.AllowedMaps.Any(id=>Intersect.Server.Maps.MapController.Get(id)==null) ||
+                 config.Teleports.AnimationId!=Guid.Empty && Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor.Get(config.Teleports.AnimationId)==null))
+                throw new InvalidDataException("Choose existing maps and a valid teleport animation.");
             if (config.BankOpeningCurrencyId != Guid.Empty && Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(config.BankOpeningCurrencyId) == null)
                 throw new InvalidDataException("Choose an existing bank currency.");
             if(section==WorldActivitiesSection.Metalworking && config.Metalworking.Recipes.Where(r=>r.Enabled).Any(r=>Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(r.OutputItemId)==null || r.Ingredients.Any(i=>Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(i.ItemId)==null) || r.ProfessionId!=Guid.Empty && Intersect.Server.Professions.ProfessionConfigurationRuntime.Current.Find(r.ProfessionId)==null))

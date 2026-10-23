@@ -19,7 +19,7 @@ internal sealed partial class CookingWindow : Base
     private readonly Canvas _canvas;
     private readonly Action<CookingRequestKind, Guid, Guid, bool, CookingActionInput> _send;
     private readonly Dictionary<Base, Rectangle> _layout = [];
-    private readonly Label _recipe, _step, _help, _progress, _feedback, _partner, _result, _profession;
+    private readonly Label _heading, _recipe, _step, _help, _progress, _feedback, _partner, _result, _profession;
     private readonly Button _solo, _coop, _partnerNext, _accept, _decline, _again, _previous, _next;
     private readonly Button[] _cards = new Button[6];
     private readonly Label[] _cardLabels = new Label[6];
@@ -41,7 +41,7 @@ internal sealed partial class CookingWindow : Base
         : base(canvas, nameof(CookingWindow))
     {
         _canvas = canvas; _send = send; MouseInputEnabled = true;
-        Text("KitchenHeading", "ROYAL KITCHEN", 35, 22, 920, 40, 22);
+        _heading = Text("KitchenHeading", "ROYAL KITCHEN", 35, 22, 920, 40, 22);
         Text("RecipeBookHeading", "RECIPE BOOK", 35, 95, 255, 28, 13);
         _recipe = Text("RecipeName", "Choose your dish", 35, 128, 255, 65, 16);
         _ingredientScroll = Place(new ScrollControl(this, "RecipeIngredients"), 35, 207, 255, 298);
@@ -128,6 +128,7 @@ internal sealed partial class CookingWindow : Base
         ResizeToCanvas(); _model = model;
         if (model.Current is not { State: { } state } packet) return;
         var previous = _state; _state = state;
+        _heading.Text = Intersect.Client.Localization.ClientLanguages.Text(state.Campfire ? "CAMPFIRE COOKING" : "ROYAL KITCHEN");
         if (_packetSequence != packet.Sequence)
         {
             _packetSequence = packet.Sequence;
@@ -248,9 +249,10 @@ internal sealed partial class CookingWindow : Base
         var x = (int)((Width - 1024 * scale) / 2); var y = (int)((Height - 720 * scale) / 2);
         void Fill(int bx, int by, int width, int height, Color color) => CookingArt.Fill(skin.Renderer, color,
             x + (int)(bx * scale), y + (int)(by * scale), (int)(width * scale), (int)(height * scale));
-        DrawKitchenEnvironment(Fill, Environment.TickCount64);
-        Fill(20, 85, 285, 560, new Color(246, 58, 39, 29));
-        Fill(318, 85, 674, 560, new Color(242, 35, 28, 22));
+        if (_state?.Campfire == true) DrawCampfireEnvironment(Fill, Environment.TickCount64);
+        else DrawKitchenEnvironment(Fill, Environment.TickCount64);
+        Fill(20, 85, 285, 560, new Color(232, 58, 39, 29));
+        Fill(318, 85, 674, 560, new Color(_state?.Campfire == true ? 175 : 242, 35, 28, 22));
     }
 
     private sealed class IngredientList(Base parent) : Base(parent)

@@ -40,6 +40,7 @@ internal static class Program
         }
         System.Console.WriteLine("PASS editor login creates map layers before server options; resource brush initializes once after configuration");
         optionsProperty.SetValue(null, new Options());
+        if (Environment.GetCommandLineArgs().Contains("--campfire-only")) { CampfireEditorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--animation-import-only")) { AnimationImportNavigationTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--weather-only")) { WeatherEnvironmentEditorTests.Run();QualityOfLifeEditorTests.Run();return; }
         if (Environment.GetCommandLineArgs().Contains("--qol-only")) { WeatherEnvironmentEditorTests.Run(); BoosterEditorTests.Run();QualityOfLifeEditorTests.Run();MenuAnimationEditorTests.Run();AnimationImportNavigationTests.Run();AchievementRewardEditorTests.Run();NavalSystemEditorTests.Run();NavalPatrolCreatorEditorTests.Run();return; }

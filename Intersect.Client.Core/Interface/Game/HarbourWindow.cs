@@ -113,6 +113,11 @@ internal sealed partial class HarbourWindow : Window
                     title:ClientLanguages.Text("Rename ship"),prompt:ClientLanguages.Text("Enter your ship name (1 to 32 characters)."),inputType:InputType.TextInput,
                     onSubmit:(_,args)=>{if(args.Value is StringSubmissionValue name) Request(HarbourAction.Rename,entry.ModelId,name.Value??"");}));
                 rename.IsDisabled=!entry.Owned;
+                if(_state.Premium)
+                {
+                    var repair=Button(_cards,"DockRepair"+i,"Fully repair",128,y+49,474,()=>Request(HarbourAction.Repair,entry.ModelId));
+                    repair.IsDisabled=!HarbourUiRules.CanRepair(entry);
+                }
                 var unload=Button(_cards,"Unload"+i,"Unload cargo",128,y+110,232,()=>Request(HarbourAction.ClaimCargo,entry.ModelId));
                 unload.IsDisabled=!entry.Owned || entry.CargoCount==0;
                 Text(_cards,"Cargo"+i,string.Format(NavalSetupText.Get("Cargo: {0}",ClientLanguages.Current),entry.CargoCount),370,y+113,232,24);

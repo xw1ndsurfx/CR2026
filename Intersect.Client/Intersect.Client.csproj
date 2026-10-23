@@ -12,7 +12,7 @@
 
 	<PropertyGroup>
 		<PackageId>AscensionGameDev.Intersect.Client</PackageId>
-		<Description>Game Client - Part of the Intersect 2D Game Creation Suite</Description>
+		<Description>Corps Royaux — Game Client</Description>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<RootNamespace>Intersect.Client</RootNamespace>
 		<AssemblyName>Intersect Client</AssemblyName>

@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace Intersect.GameObjects;
 
-public enum ShopConfigurationKind { Normal, NavalAmmunition, NavalShipsAndSkills }
+public enum ShopConfigurationKind { Normal, NavalAmmunition, NavalShipsAndSkills, Spells, PremiumMusic }
 
 public partial class ShopDescriptor : DatabaseObject<ShopDescriptor>, IFolderable
 {
@@ -29,6 +29,7 @@ public partial class ShopDescriptor : DatabaseObject<ShopDescriptor>, IFolderabl
 
     [NotMapped] public Intersect.Framework.Core.Naval.HarbourCatalog NavalCatalogue {get;set;}=new();
     [NotMapped] public Intersect.Framework.Core.Naval.NavalSkillDefinition[] NavalSkills {get;set;}=[];
+    [NotMapped] public ShopServiceOffer[] ServiceOffers {get;set;}=[];
     [NotMapped] public ShopConfigurationKind ConfigurationKind {get;set;}
     public int BuybackDiscountPercent {get;set;}
     public int BuybackPrice(int price) => price<=0 ? 0 : Math.Max(1,(int)((decimal)price*(100-Math.Clamp(BuybackDiscountPercent,0,99))/100));
@@ -51,12 +52,12 @@ public partial class ShopDescriptor : DatabaseObject<ShopDescriptor>, IFolderabl
     [JsonIgnore]
     public string JsonBuyingItems
     {
-        get => ConfigurationKind==ShopConfigurationKind.Normal && !NavalCatalogue.Enabled && NavalSkills.Length==0?JsonConvert.SerializeObject(BuyingItems):JsonConvert.SerializeObject(new {ConfigurationKind,Items=BuyingItems,NavalCatalogue,NavalSkills});
+        get => ConfigurationKind==ShopConfigurationKind.Normal && !NavalCatalogue.Enabled && NavalSkills.Length==0?JsonConvert.SerializeObject(BuyingItems):JsonConvert.SerializeObject(new {ConfigurationKind,Items=BuyingItems,NavalCatalogue,NavalSkills,ServiceOffers});
         set
         {
             var token=Newtonsoft.Json.Linq.JToken.Parse(string.IsNullOrWhiteSpace(value)?"[]":value);
-            if(token is Newtonsoft.Json.Linq.JArray) {BuyingItems=token.ToObject<List<ShopItemDescriptor>>()??[];ConfigurationKind=ShopConfigurationKind.Normal;}
-            else {ConfigurationKind=token["ConfigurationKind"]?.ToObject<ShopConfigurationKind>()??ShopConfigurationKind.Normal;BuyingItems=token["Items"]?.ToObject<List<ShopItemDescriptor>>()??[];NavalCatalogue=token["NavalCatalogue"]?.ToObject<Intersect.Framework.Core.Naval.HarbourCatalog>()??new();NavalSkills=token["NavalSkills"]?.ToObject<Intersect.Framework.Core.Naval.NavalSkillDefinition[]>()??[];}
+            if(token is Newtonsoft.Json.Linq.JArray) {BuyingItems=token.ToObject<List<ShopItemDescriptor>>()??[];ConfigurationKind=ShopConfigurationKind.Normal;ServiceOffers=[];NavalSkills=[];NavalCatalogue=new();}
+            else {ServiceOffers=token["ServiceOffers"]?.ToObject<ShopServiceOffer[]>()??[];ConfigurationKind=token["ConfigurationKind"]?.ToObject<ShopConfigurationKind>()??ShopConfigurationKind.Normal;BuyingItems=token["Items"]?.ToObject<List<ShopItemDescriptor>>()??[];NavalCatalogue=token["NavalCatalogue"]?.ToObject<Intersect.Framework.Core.Naval.HarbourCatalog>()??new();NavalSkills=token["NavalSkills"]?.ToObject<Intersect.Framework.Core.Naval.NavalSkillDefinition[]>()??[];}
         }
     }
 

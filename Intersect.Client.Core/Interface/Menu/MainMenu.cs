@@ -18,6 +18,7 @@ namespace Intersect.Client.Interface.Menu;
 public partial class MainMenu : MutableInterface
 {
     private readonly Canvas _menuCanvas;
+    private readonly Label _buildInfo;
     private readonly MainMenuWindow _mainMenuWindow;
 
     private bool _shouldOpenCharacterCreation;
@@ -112,6 +113,7 @@ public partial class MainMenu : MutableInterface
     public MainMenu(Canvas menuCanvas) : base(menuCanvas)
     {
         _menuCanvas = menuCanvas;
+        _buildInfo=Game.ComponentBuilds.Create(menuCanvas,"MenuBuildInfo");
         _mainMenuWindow = new MainMenuWindow(_menuCanvas, this)
         {
             Alignment = [Alignments.CenterH],
@@ -231,6 +233,8 @@ public partial class MainMenu : MutableInterface
     //Methods
     public void Update(TimeSpan elapsed, TimeSpan total)
     {
+        _buildInfo.SetBounds(12,_menuCanvas.Height-22,600,16);
+        Game.ComponentBuilds.Update(_buildInfo);
         ClientLoopDiagnostics.Mark("UI/menu animations");
         UpdateMenuAnimations();
         ClientLoopDiagnostics.Mark("UI/menu windows");

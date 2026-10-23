@@ -1,0 +1,43 @@
+<Project>
+  <UsingTask TaskName="NextLogiklikBuild" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <CounterFile ParameterType="System.String" Required="true" />
+      <Number ParameterType="System.String" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System" /><Using Namespace="System.IO" /><Using Namespace="System.Threading" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        Directory.CreateDirectory(Path.GetDirectoryName(CounterFile));
+        for (var attempt=0; ;attempt++)
+        {
+          try
+          {
+            using(var file=new FileStream(CounterFile,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None))
+            {
+              long previous=0;
+              using(var reader=new StreamReader(file,System.Text.Encoding.UTF8,false,1024,true))long.TryParse(reader.ReadToEnd(),out previous);
+              Number=checked(previous+1).ToString(System.Globalization.CultureInfo.InvariantCulture);
+              file.Position=0;file.SetLength(0);
+              using(var writer=new StreamWriter(file,new System.Text.UTF8Encoding(false),1024,true)){writer.Write(Number);writer.Flush();}
+              file.Flush(true);
+            }
+            break;
+          }
+          catch(IOException){if(attempt>=100)throw;Thread.Sleep(50);}
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+  <Target Name="StampLogiklikBuild" BeforeTargets="GetAssemblyAttributes" Condition="('$(MSBuildProjectName)' == 'Intersect.Client' Or '$(MSBuildProjectName)' == 'Intersect.Server' Or '$(MSBuildProjectName)' == 'Intersect.Editor') And '$(DesignTimeBuild)' != 'true'">
+    <NextLogiklikBuild CounterFile="$(MSBuildThisFileDirectory).build-versions/$(MSBuildProjectName).txt" Condition="'$(LogiklikBuildNumber)' == '' And '$(GITHUB_RUN_NUMBER)' == ''">
+      <Output TaskParameter="Number" PropertyName="LogiklikBuildNumber" />
+    </NextLogiklikBuild>
+    <PropertyGroup>
+      <LogiklikBuildNumber Condition="'$(LogiklikBuildNumber)' == ''">$(GITHUB_RUN_NUMBER)</LogiklikBuildNumber>
+      <InformationalVersion>$(Version)-build.$(LogiklikBuildNumber)</InformationalVersion>
+    </PropertyGroup>
+    <ItemGroup>
+      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute"><_Parameter1>LogiklikBuild</_Parameter1><_Parameter2>$(LogiklikBuildNumber)</_Parameter2></AssemblyAttribute>
+    </ItemGroup>
+  </Target>
+</Project>
