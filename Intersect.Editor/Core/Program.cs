@@ -82,6 +82,7 @@ public static class Program
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.Automatic);
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
+        Forms.Styling.EditorTheme.Install();
 
         ApplicationContext.CurrentContext.Logger.LogTrace("Unpacking libraries...");
 

@@ -88,7 +88,7 @@ public partial class FrmMain : Form
         InitializeComponent();
         Icon = Program.Icon;
 
-        dockLeft.Theme = new VS2015DarkTheme();
+        dockLeft.Theme = new Styling.LogiklikDockTheme();
         Globals.MapListWindow = new FrmMapList();
         Globals.MapLayersWindow = new FrmMapLayers();
         Globals.MapGridWindowNew = new FrmMapGrid();
@@ -98,6 +98,7 @@ public partial class FrmMain : Form
         Globals.MapLayersWindow.Show(dockLeft, DockState.DockLeft);
         Globals.MapGridWindowNew.Show(dockLeft, DockState.Document);
         Globals.MapEditorWindow.Show(dockLeft, DockState.Document);
+        ModernizeWorkspace();
     }
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]

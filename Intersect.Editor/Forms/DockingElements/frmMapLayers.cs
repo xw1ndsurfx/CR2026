@@ -1172,11 +1172,11 @@ public partial class FrmMapLayers : DockContent
 
     private void ChangeTab()
     {
-        btnTileHeader.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
-        btnAttributeHeader.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
-        btnLightsHeader.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
-        btnEventsHeader.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
-        btnNpcsHeader.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+        btnTileHeader.BackColor = Styling.EditorTheme.Input;
+        btnAttributeHeader.BackColor = Styling.EditorTheme.Input;
+        btnLightsHeader.BackColor = Styling.EditorTheme.Input;
+        btnEventsHeader.BackColor = Styling.EditorTheme.Input;
+        btnNpcsHeader.BackColor = Styling.EditorTheme.Input;
         pnlTiles.Hide();
         pnlAttributes.Hide();
         pnlLights.Hide();
@@ -1202,7 +1202,7 @@ public partial class FrmMapLayers : DockContent
         ChangeTab();
         SetLayer(mLastTileLayer);
         Core.Graphics.TilePreviewUpdated = true;
-        btnTileHeader.BackColor = System.Drawing.Color.FromArgb(90, 90, 90);
+        btnTileHeader.BackColor = Styling.EditorTheme.Selection;
         CurrentTab = LayerTabs.Tiles;
         pnlTiles.Show();
     }
@@ -1213,7 +1213,7 @@ public partial class FrmMapLayers : DockContent
         ChangeTab();
         Globals.CurrentLayer = LayerOptions.Attributes;
         Core.Graphics.TilePreviewUpdated = true;
-        btnAttributeHeader.BackColor = System.Drawing.Color.FromArgb(90, 90, 90);
+        btnAttributeHeader.BackColor = Styling.EditorTheme.Selection;
         CurrentTab = LayerTabs.Attributes;
         pnlAttributes.Show();
     }
@@ -1228,7 +1228,7 @@ public partial class FrmMapLayers : DockContent
         ChangeTab();
         Globals.CurrentLayer = LayerOptions.Lights;
         Core.Graphics.TilePreviewUpdated = true;
-        btnLightsHeader.BackColor = System.Drawing.Color.FromArgb(90, 90, 90);
+        btnLightsHeader.BackColor = Styling.EditorTheme.Selection;
         CurrentTab = LayerTabs.Lights;
         pnlLights.Show();
     }
@@ -1243,7 +1243,7 @@ public partial class FrmMapLayers : DockContent
         ChangeTab();
         Globals.CurrentLayer = LayerOptions.Events;
         Core.Graphics.TilePreviewUpdated = true;
-        btnEventsHeader.BackColor = System.Drawing.Color.FromArgb(90, 90, 90);
+        btnEventsHeader.BackColor = Styling.EditorTheme.Selection;
         CurrentTab = LayerTabs.Events;
         pnlEvents.Show();
     }
@@ -1259,7 +1259,7 @@ public partial class FrmMapLayers : DockContent
         Globals.CurrentLayer = LayerOptions.Npcs;
         Core.Graphics.TilePreviewUpdated = true;
         RefreshNpcList();
-        btnNpcsHeader.BackColor = System.Drawing.Color.FromArgb(90, 90, 90);
+        btnNpcsHeader.BackColor = Styling.EditorTheme.Selection;
         CurrentTab = LayerTabs.Npcs;
         pnlNpcs.Show();
     }

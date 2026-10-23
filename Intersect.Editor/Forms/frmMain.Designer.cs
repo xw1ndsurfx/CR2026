@@ -35,7 +35,7 @@ namespace Intersect.Editor.Forms
 		private void InitializeComponent()
 		{
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmMain));
-            this.statusStrip1 = new DarkUI.Controls.DarkStatusStrip();
+            this.statusStrip1 = new Intersect.Editor.Forms.Styling.LogiklikStatusStrip();
             this.toolStripLabelCoords = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripLabelRevision = new System.Windows.Forms.ToolStripStatusLabel();

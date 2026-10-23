@@ -5,11 +5,12 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <AssemblyName>Intersect.Tests.PokerEditor</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../Framework/Intersect.Framework.Core/Intersect.Framework.Core.csproj" />
-    <Compile Include="../../Intersect.Editor/Forms/Editors/MiniGameEditorTheme.cs" Link="MiniGameEditorTheme.cs" />
-    <Compile Include="../../Intersect.Editor/Forms/Editors/Events/MiniGameCommandDialog.cs" Link="MiniGameCommandDialog.cs" />
-    <Compile Include="../../Intersect.Editor/Forms/Editors/Events/LockpickingLootDialog.cs" Link="LockpickingLootDialog.cs" />
+    <!-- Exercise the shipped dialogs and their shared theme, including its dependencies. -->
+    <ProjectReference Include="../../Intersect.Editor/Intersect.Editor.csproj" />
   </ItemGroup>
 </Project>
