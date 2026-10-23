@@ -7,7 +7,7 @@ public partial class FrmLogin
     {
         string T(string source)=>QualityOfLifeText.Get(source,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
         Text="Logiklik 2D Engine";
-        ClientSize=new Size(980,590);BackColor=System.Drawing.Color.FromArgb(15,19,27);
+        ClientSize=new Size(980,590);BackColor=Styling.EditorTheme.Background;
         StartPosition=FormStartPosition.CenterScreen;Font=new Font("Segoe UI",10f);
         var identity=new Panel{Dock=DockStyle.None,BackColor=System.Drawing.Color.FromArgb(240,244,249),Padding=new Padding(24)};
         var form=new Panel{Dock=DockStyle.None,Padding=new Padding(40),BackColor=BackColor};
@@ -27,7 +27,7 @@ public partial class FrmLogin
         lblUsername.SetBounds(40,206,400,24);txtUsername.SetBounds(40,236,400,32);
         lblPassword.SetBounds(40,290,400,24);txtPassword.SetBounds(40,320,400,32);
         chkRemember.SetBounds(40,372,400,26);btnLogin.SetBounds(40,420,400,44);
-        btnLogin.BackColor=System.Drawing.Color.FromArgb(69,111,35);btnLogin.ForeColor=System.Drawing.Color.White;
+        btnLogin.BackColor=Styling.EditorTheme.Primary;btnLogin.ForeColor=System.Drawing.Color.White;
         lblStatus.AutoSize=false;lblStatus.SetBounds(40,477,400,44);lblStatus.Font=new Font("Segoe UI",9);
         lblVersion.AutoSize=false;lblVersion.SetBounds(40,545,400,24);lblVersion.Text="Logiklik 2D Engine · "+BuildIdentity.Label;
         lblVersion.Font=new Font("Segoe UI",9);lblVersion.ForeColor=System.Drawing.Color.FromArgb(134,153,173);
