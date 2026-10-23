@@ -61,6 +61,7 @@ public sealed class AchievementDefinition
     public string Description { get; set; } = string.Empty;
     public string Category { get; set; } = "General";
     public string Icon { get; set; } = string.Empty;
+    public string LockedIcon { get; set; } = string.Empty;
     public AchievementObjectiveType ObjectiveType { get; set; } = AchievementObjectiveType.CustomCounter;
     public Guid TargetId { get; set; } = Guid.Empty;
     public string TargetKey { get; set; } = string.Empty;
@@ -88,6 +89,7 @@ public sealed class AchievementDefinition
         (Description?.Length ?? 0) <= 2_000 &&
         (Category?.Length ?? 0) <= 96 &&
         (Icon?.Length ?? 0) <= 255 &&
+        (LockedIcon?.Length ?? 0) <= 255 &&
         (TargetKey?.Length ?? 0) <= 128 &&
         TargetAmount is >= 1 and <= 2_000_000_000 &&
         (SteamApiName?.Length ?? 0) <= 128 &&
@@ -139,6 +141,7 @@ public sealed class AchievementConfiguration
             achievement.Description ??= string.Empty;
             achievement.Category ??= "General";
             achievement.Icon ??= string.Empty;
+            achievement.LockedIcon ??= string.Empty;
             achievement.TargetKey ??= string.Empty;
             achievement.SteamApiName ??= string.Empty;
             achievement.Reward ??= new AchievementRewardDefinition();
