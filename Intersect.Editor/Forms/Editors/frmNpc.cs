@@ -1498,7 +1498,7 @@ public partial class FrmNpc : EditorForm
     {
         var frm = new FrmDynamicRequirements(mEditorItem.PlayerFriendConditions, RequirementType.NpcFriend);
         frm.TopMost = true;
-        frm.ShowDialog();
+        frm.ShowDialog(this);
     }
 
     private void btnAttackOnSightCond_Click(object sender, EventArgs e)
@@ -1510,7 +1510,7 @@ public partial class FrmNpc : EditorForm
             );
 
             frm.TopMost = true;
-            frm.ShowDialog();
+            frm.ShowDialog(this);
         }
         else
         {
@@ -1519,7 +1519,7 @@ public partial class FrmNpc : EditorForm
             );
 
             frm.TopMost = true;
-            frm.ShowDialog();
+            frm.ShowDialog(this);
         }
     }
 
@@ -1530,7 +1530,7 @@ public partial class FrmNpc : EditorForm
         );
 
         frm.TopMost = true;
-        frm.ShowDialog();
+        frm.ShowDialog(this);
     }
 
     private void cmbOnDeathEventKiller_SelectedIndexChanged(object sender, EventArgs e)

@@ -478,7 +478,7 @@ public partial class FrmTime : Form
     private void pnlColor_DoubleClick(object sender, EventArgs e)
     {
         clrSelector.Color = pnlColor.BackColor;
-        if (clrSelector.ShowDialog() == DialogResult.OK)
+        if (clrSelector.ShowDialog(this) == DialogResult.OK)
         {
             pnlColor.BackColor = clrSelector.Color;
             mYTime.DaylightHues[lstTimes.SelectedIndex].R = pnlColor.BackColor.R;

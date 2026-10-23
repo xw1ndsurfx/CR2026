@@ -31,6 +31,7 @@ public partial class FrmShop : EditorForm
         InitializePriceSuggestions();
         InitializeBuybackDiscount();
         InitializeNavalShopType();
+        ModernizeShopWorkspace();
         _btnSave = btnSave;
         _btnCancel = btnCancel;
 

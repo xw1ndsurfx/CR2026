@@ -351,7 +351,7 @@ public partial class FrmQuest : EditorForm
     {
         var editor = new FrmEvent(null) {MyEvent = evt};
         editor.InitEditor(true, true, true);
-        editor.ShowDialog();
+        editor.ShowDialog(this);
         Globals.MainForm.BringToFront();
         BringToFront();
     }
@@ -395,7 +395,7 @@ public partial class FrmQuest : EditorForm
         frm.StartPosition = FormStartPosition.CenterParent;
         frm.BackColor = cmdWindow.BackColor;
         cmdWindow.BringToFront();
-        frm.ShowDialog();
+        frm.ShowDialog(this);
         if (!cmdWindow.Cancelled)
         {
             return true;
@@ -589,7 +589,7 @@ public partial class FrmQuest : EditorForm
     private void btnEditRequirements_Click(object sender, EventArgs e)
     {
         var frm = new FrmDynamicRequirements(mEditorItem.Requirements, RequirementType.Quest);
-        frm.ShowDialog();
+        frm.ShowDialog(this);
     }
 
     #region "Item List - Folders, Searching, Sorting, Etc"
