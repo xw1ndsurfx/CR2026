@@ -113,6 +113,38 @@ internal static class AppearanceAndAnimationTests
             Check(body.X >= 0 && body.Y >= 0 && body.Right <= preview.Width, "Maximum zoom fits the available viewport");
             Check(((Button)preview.Children.Single(c=>c.Name=="PreviewZoomIn")).IsDisabled,"Zoom in must stop at the actual viewport limit instead of showing ineffective levels");
 
+            var moving = DispatchProxy.Create<Intersect.Client.Framework.Graphics.IGameTexture, MovingPreviewTexture>();
+            body.Texture = moving;
+            var clothing = new ImagePanel(preview) { Texture = moving };
+            previewType.GetMethod("PlaceLayer")!.Invoke(preview, [clothing, 64, 64]);
+            foreach (var size in new[] { new Point(280, 380), new Point(220, 310) })
+            {
+                preview.Size = size;
+                foreach (var direction in Enumerable.Range(0, 4))
+                {
+                    previewType.GetMethod("SetBodyFrame")!.Invoke(preview, [moving, 64, 64, direction]);
+                    previewType.GetMethod("PlaceLayer")!.Invoke(preview, [body, 64, 64]);
+                    previewType.GetMethod("ChangeZoom")!.Invoke(preview, [-100]);
+                    for (var zoom = 1; zoom <= 8; zoom++)
+                    {
+                        foreach (var frameIndex in Enumerable.Range(0, 4))
+                        {
+                            previewType.GetMethod("UpdateAnimationFrame", flags)!.Invoke(preview, [frameIndex]);
+                            for (var pass = 0; pass < 3; pass++) layout.Invoke(window, [skin]);
+                            var scale = body.Width / 64f;
+                            var left = MovingPreviewTexture.LeftFor(frameIndex, direction);
+                            var bottom = MovingPreviewTexture.BottomFor(frameIndex);
+                            Check(Math.Abs(body.X + (left + 8) * scale - (floor.X + floor.Width / 2f)) <= 1,
+                                "Visible animated body stays centered over the floor at every zoom and direction");
+                            Check(Math.Abs(body.Y + bottom * scale - (int)previewType.GetProperty("FeetY")!.GetValue(preview)!) <= 1,
+                                "Animated feet stay on the floor despite asymmetric transparent frame padding");
+                            Check(body.Bounds == clothing.Bounds, "Clothes retain the same body anchor while zooming and animating");
+                        }
+                        previewType.GetMethod("ChangeZoom")!.Invoke(preview, [1]);
+                    }
+                }
+            }
+
             Check(Descendants(window).OfType<Button>().Where(b => b.Name?.StartsWith("PreviewDirection") == true)
                 .All(b => !b.Text.Contains('?') && !b.Text.Any(c => c > 127)), "Direction labels use font-compatible text");
         }
@@ -144,4 +176,24 @@ internal static class AppearanceAndAnimationTests
     }
     private static IEnumerable<Base> Descendants(Base root) { foreach (var child in root.Children) { yield return child; foreach (var nested in Descendants(child)) yield return nested; } }
     private static void Check(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
+}
+
+// Deliberately shift the opaque pixels between frames: static first-frame bounds
+// reproduce the real preview drift once the animation advances at a high zoom.
+public class MovingPreviewTexture : DispatchProxy
+{
+    public static int LeftFor(int frame, int direction) => 4 + (frame * 12 + direction * 7) % 42;
+    public static int BottomFor(int frame) => 46 + frame * 3;
+    protected override object? Invoke(MethodInfo? method, object?[]? args)
+    {
+        if (method?.Name is "get_Width" or "get_Height") return 256;
+        if (method?.Name == "GetPixel")
+        {
+            var x = (int)args![0]!; var y = (int)args[1]!;
+            var frame = x / 64; var direction = y / 64;
+            var left = LeftFor(frame, direction); var bottom = BottomFor(frame);
+            return new Color(x % 64 >= left && x % 64 < left + 16 && y % 64 >= bottom - 36 && y % 64 < bottom ? 255 : 0, 255, 255, 255);
+        }
+        return null;
+    }
 }

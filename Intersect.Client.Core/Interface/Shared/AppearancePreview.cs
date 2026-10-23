@@ -18,6 +18,8 @@ internal sealed class AppearancePreview : ImagePanel
     private readonly Label _zoomLabel;
     private int _zoom = 4;
     private int _direction;
+    private IGameTexture? _bodyTexture;
+    private int _animationFrame = -1;
     private readonly Dictionary<ImagePanel,(int Width,int Height)> _layers=[];
     public bool Animated {get;set;}=true;
     private int _bodyWidth = 32, _bodyHeight = 48;
@@ -64,6 +66,8 @@ internal sealed class AppearancePreview : ImagePanel
 
     public void SetBodySize(int width, int height)
     {
+        _bodyTexture = null;
+        _animationFrame = -1;
         _bodyWidth = Math.Max(1, width); _bodyHeight = Math.Max(1, height);
         _visibleWidth=_bodyWidth;_visibleHeight=_bodyHeight;
         _centerOffset = _bottomPadding = 0; Arrange();
@@ -73,20 +77,63 @@ internal sealed class AppearancePreview : ImagePanel
     {
         _direction=direction;
         SetBodySize(width, height);
-        var visible = SpriteVisibleBounds.Get(texture, new FloatRect(0, direction * height, width, height));
-        if (visible.IsEmpty) return;
-        _centerOffset = visible.X + visible.Width / 2f - width / 2f;
-        _bottomPadding = height - visible.Y - visible.Height;
-        _visibleWidth=Math.Max(1,visible.Width);_visibleHeight=Math.Max(1,visible.Height);Arrange();
+        _bodyTexture = texture;
+        // Keep the zoom limit stable while frames animate, even when their padding differs.
+        var frames = Math.Max(1, texture.Width / _bodyWidth);
+        var visibleWidth = 0;
+        var visibleHeight = 0;
+        for (var frame = 0; frame < frames; frame++)
+        {
+            var visible = SpriteVisibleBounds.Get(texture,
+                new FloatRect(frame * _bodyWidth, direction * _bodyHeight, _bodyWidth, _bodyHeight));
+            if (visible.IsEmpty) continue;
+            visibleWidth = Math.Max(visibleWidth, visible.Width);
+            visibleHeight = Math.Max(visibleHeight, visible.Height);
+        }
+        if (visibleWidth > 0 && visibleHeight > 0)
+        {
+            _visibleWidth = visibleWidth;
+            _visibleHeight = visibleHeight;
+        }
+        UpdateAnimationFrame(0);
+    }
+
+    private void UpdateAnimationFrame(int frameIndex)
+    {
+        if (_animationFrame == frameIndex) return;
+        _animationFrame = frameIndex;
+        if (_bodyTexture is { } body)
+        {
+            var count = Math.Max(1, body.Width / _bodyWidth);
+            var visible = SpriteVisibleBounds.Get(body,
+                new FloatRect(frameIndex % count * _bodyWidth, _direction * _bodyHeight, _bodyWidth, _bodyHeight));
+            if (!visible.IsEmpty)
+            {
+                _centerOffset = visible.X + visible.Width / 2f - _bodyWidth / 2f;
+                _bottomPadding = _bodyHeight - visible.Y - visible.Height;
+            }
+        }
+        foreach (var (layer, frame) in _layers)
+        {
+            if (!layer.IsVisibleInParent || layer.Texture is not { } texture) continue;
+            var count = Math.Max(1, texture.Width / Math.Max(1, frame.Width));
+            layer.SetTextureRect(frameIndex % count * frame.Width, _direction * frame.Height, frame.Width, frame.Height);
+        }
+        Arrange();
     }
 
     public void PlaceLayer(ImagePanel layer, int width, int height)
     {
-        _layers[layer]=(width,height);
+        if (!_layers.ContainsKey(layer)) layer.Disposed += (_, _) => _layers.Remove(layer);
+        if (!_layers.TryGetValue(layer, out var previous) || previous != (width, height))
+            _layers[layer] = (width, height);
         layer.MouseInputEnabled=false;layer.KeyboardInputEnabled=false;layer.ShouldDrawBackground=false;
         var scale = Math.Max(0.1f, PreviewScale);
         var w = (int)Math.Round(width * scale); var h = (int)Math.Round(height * scale);
         layer.Alignment = [];
+        layer.Dock = Pos.None;
+        layer.RestrictToParent = false;
+        layer.MaintainAspectRatio = false;
         layer.SetBounds((int)Math.Round((Width - w) / 2f - _centerOffset * scale),
             (int)Math.Round(FeetY - h + _bottomPadding * scale), w, h);
         _zoomOut.BringToFront();_zoomIn.BringToFront();_zoomLabel.BringToFront();
@@ -94,13 +141,9 @@ internal sealed class AppearancePreview : ImagePanel
 
     protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
     {
-        foreach(var (layer,frame) in _layers)
-        {
-            if(!layer.IsVisibleInParent || layer.Texture is not {} texture)continue;
-            var count=Math.Max(1,texture.Width/Math.Max(1,frame.Width));
-            var index=Animated?(int)(Environment.TickCount64/140%count):0;
-            layer.SetTextureRect(index*frame.Width,_direction*frame.Height,frame.Width,frame.Height);
-        }
+        var count = Math.Max(1, (_bodyTexture?.Width ?? _bodyWidth) / _bodyWidth);
+        var index = Animated ? (int)(Environment.TickCount64 / 140 % count) : 0;
+        UpdateAnimationFrame(index);
         base.Render(skin);
     }
 
@@ -123,6 +166,10 @@ internal sealed class AppearancePreview : ImagePanel
         _floor.SetBounds((Width - width) / 2, FeetY - height / 2, width, height);
         _shadow.SetBounds((Width-width/2)/2,FeetY-5,width/2,10);
         _floor.SendToBack();
+        foreach (var (layer, frame) in _layers)
+        {
+            PlaceLayer(layer, frame.Width, frame.Height);
+        }
         _zoomOut.SetBounds((Width - 152) / 2, Height - 36, 36, 28);
         _zoomLabel.SetBounds((Width - 152) / 2 + 38, Height - 36, 76, 28);
         _zoomIn.SetBounds((Width - 152) / 2 + 116, Height - 36, 36, 28);
