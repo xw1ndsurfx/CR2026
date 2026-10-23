@@ -39,10 +39,7 @@ namespace Intersect.Editor.Forms.DockingElements
             // 
             // pnlMapContainer
             // 
-            this.pnlMapContainer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.pnlMapContainer.AutoScroll = true;
+            this.pnlMapContainer.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlMapContainer.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(48)))));
             this.pnlMapContainer.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pnlMapContainer.Controls.Add(this.picMap);
@@ -50,18 +47,18 @@ namespace Intersect.Editor.Forms.DockingElements
             this.pnlMapContainer.Name = "pnlMapContainer";
             this.pnlMapContainer.Size = new System.Drawing.Size(204, 101);
             this.pnlMapContainer.TabIndex = 1;
-            this.pnlMapContainer.Scroll += new System.Windows.Forms.ScrollEventHandler(this.pnlMapContainer_Scroll);
-            this.pnlMapContainer.Resize += new System.EventHandler(this.pnlMapContainer_Resize);
             // 
             // picMap
             // 
             this.picMap.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(48)))));
+            this.picMap.Dock = System.Windows.Forms.DockStyle.Fill;
             this.picMap.Location = new System.Drawing.Point(0, 0);
             this.picMap.Name = "picMap";
             this.picMap.Size = new System.Drawing.Size(107, 62);
             this.picMap.TabIndex = 2;
             this.picMap.TabStop = false;
             this.picMap.Visible = false;
+            this.picMap.SizeChanged += new System.EventHandler(this.picMap_SizeChanged);
             this.picMap.DoubleClick += new System.EventHandler(this.picMap_DoubleClick);
             this.picMap.MouseDown += new System.Windows.Forms.MouseEventHandler(this.picMap_MouseDown);
             this.picMap.MouseEnter += new System.EventHandler(this.picMap_MouseEnter);

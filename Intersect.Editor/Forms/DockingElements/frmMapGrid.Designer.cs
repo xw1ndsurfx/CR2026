@@ -1,4 +1,4 @@
-﻿using DarkUI.Controls;
+using DarkUI.Controls;
 using DarkUI.Renderers;
 
 namespace Intersect.Editor.Forms.DockingElements
@@ -50,9 +50,7 @@ namespace Intersect.Editor.Forms.DockingElements
             // 
             // pnlMapGrid
             // 
-            this.pnlMapGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlMapGrid.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlMapGrid.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(45)))), ((int)(((byte)(48)))));
             this.pnlMapGrid.Location = new System.Drawing.Point(0, 25);
             this.pnlMapGrid.Name = "pnlMapGrid";
@@ -174,8 +172,8 @@ namespace Intersect.Editor.Forms.DockingElements
             this.ClientSize = new System.Drawing.Size(362, 171);
             this.CloseButton = false;
             this.CloseButtonVisible = false;
-            this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.pnlMapGrid);
+            this.Controls.Add(this.toolStrip1);
             this.DockAreas = WeifenLuo.WinFormsUI.Docking.DockAreas.Document;
             this.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.KeyPreview = true;
