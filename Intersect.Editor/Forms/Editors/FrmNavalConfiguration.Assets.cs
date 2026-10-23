@@ -12,6 +12,7 @@ public sealed partial class FrmNavalConfiguration
         var directory=Path.Combine("resources",folder);
         var panel=new Panel {Dock=DockStyle.Fill};
         var box=new ComboBox {Name=name,DropDownStyle=ComboBoxStyle.DropDownList,Anchor=AnchorStyles.Left|AnchorStyles.Right};
+        Styling.SearchableChoices.SetResourceDirectory(box, directory);
         var names=Directory.Exists(directory)?Directory.GetFiles(directory,sound?"*.wav":"*.png").Select(Path.GetFileName).Where(n=>NavalPresentation.SafeAsset(n)).Cast<string>().OrderBy(n=>n).ToList():[];
         if(crewArt) names=names.Where(n=>CompatibleCrewArtwork(Path.Combine(directory,n+".crew.json"))).ToList();
         else if(!icon && !sound) names=names.Where(n=>CompatibleEffect(Path.Combine(directory,n+".effects.json"),name)).ToList();

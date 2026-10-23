@@ -33,6 +33,8 @@ public class LogiklikButton : global::DarkUI.Controls.DarkButton
 
 public class LogiklikComboBox : global::DarkUI.Controls.DarkComboBox
 {
+    public LogiklikComboBox() => SearchableChoices.Attach(this);
+
     protected override void OnPaint(PaintEventArgs e)
     {
         using var fill = new SolidBrush(EditorTheme.Input);

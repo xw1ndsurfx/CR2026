@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Intersect.Editor.Content;
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
@@ -99,19 +99,10 @@ partial class MapProperties
     }
 
     [CustomCategory("audio"), CustomDescription("musicdesc"), CustomDisplayName("music"), DefaultValue("None"),
-     TypeConverter(typeof(MapMusicProperty)), Browsable(true)]
+     TypeConverter(typeof(MapMusicProperty)), Editor(typeof(Intersect.Editor.Forms.Styling.ResourcePropertyEditor), typeof(System.Drawing.Design.UITypeEditor)), Browsable(true)]
     public string Music
     {
-        get
-        {
-            var musicList = new List<string> { Strings.General.None };
-            musicList.AddRange(GameContentManager.SmartSortedMusicNames);
-            mMyMap.Music = musicList.Find(
-                item => string.Equals(item, mMyMap.Music, StringComparison.InvariantCultureIgnoreCase)
-            );
-
-            return TextUtils.NullToNone(mMyMap.Music);
-        }
+        get => TextUtils.NullToNone(mMyMap.Music);
         set
         {
             if (mMyMap.Music != value)
@@ -124,19 +115,10 @@ partial class MapProperties
     }
 
     [CustomCategory("audio"), CustomDescription("sounddesc"), CustomDisplayName("sound"), DefaultValue("None"),
-     TypeConverter(typeof(MapSoundProperty)), Browsable(true)]
+     TypeConverter(typeof(MapSoundProperty)), Editor(typeof(Intersect.Editor.Forms.Styling.ResourcePropertyEditor), typeof(System.Drawing.Design.UITypeEditor)), Browsable(true)]
     public string Sound
     {
-        get
-        {
-            var soundList = new List<string> { Strings.General.None };
-            soundList.AddRange(GameContentManager.SmartSortedSoundNames);
-            mMyMap.Sound = soundList.Find(
-                item => string.Equals(item, mMyMap.Sound, StringComparison.InvariantCultureIgnoreCase)
-            );
-
-            return TextUtils.NullToNone(mMyMap.Sound);
-        }
+        get => TextUtils.NullToNone(mMyMap.Sound);
         set
         {
             if (mMyMap.Sound != value)
@@ -326,24 +308,10 @@ partial class MapProperties
     }
 
     [CustomCategory("fog"), CustomDescription("fogdesc"), CustomDisplayName("fog"), DefaultValue("None"),
-     TypeConverter(typeof(MapFogProperty)), Browsable(true)]
+     TypeConverter(typeof(MapFogProperty)), Editor(typeof(Intersect.Editor.Forms.Styling.ResourcePropertyEditor), typeof(System.Drawing.Design.UITypeEditor)), Browsable(true)]
     public string Fog
     {
-        get
-        {
-            var fogList = new List<string>
-            {
-                Strings.General.None
-            };
-
-            fogList.AddRange(GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Fog));
-            if (fogList.IndexOf(mMyMap.Fog) <= -1)
-            {
-                mMyMap.Fog = null;
-            }
-
-            return TextUtils.NullToNone(mMyMap.Fog);
-        }
+        get => TextUtils.NullToNone(mMyMap.Fog);
         set
         {
             if (mMyMap.Fog != value)
@@ -405,7 +373,7 @@ partial class MapProperties
 
     //Weather
     [CustomCategory("weather"), CustomDescription("weatherdesc"), CustomDisplayName("weather"),
-     DefaultValue("None"), TypeConverter(typeof(MapWeatherProperty)), Browsable(true)]
+     DefaultValue("None"), TypeConverter(typeof(MapWeatherProperty)), Editor(typeof(Intersect.Editor.Forms.Styling.ResourcePropertyEditor), typeof(System.Drawing.Design.UITypeEditor)), Browsable(true)]
     public string Weather
     {
         get
@@ -495,24 +463,10 @@ partial class MapProperties
     }
 
     [CustomCategory("misc"), CustomDescription("panoramadesc"), CustomDisplayName("panorama"), DefaultValue("None"),
-     TypeConverter(typeof(MapImageProperty)), Browsable(true)]
+     TypeConverter(typeof(MapImageProperty)), Editor(typeof(Intersect.Editor.Forms.Styling.ResourcePropertyEditor), typeof(System.Drawing.Design.UITypeEditor)), Browsable(true)]
     public string Panorama
     {
-        get
-        {
-            var imageList = new List<string>
-            {
-                Strings.General.None
-            };
-
-            imageList.AddRange(GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Image));
-            if (imageList.IndexOf(mMyMap.Panorama) <= -1)
-            {
-                mMyMap.Panorama = null;
-            }
-
-            return TextUtils.NullToNone(mMyMap.Panorama);
-        }
+        get => TextUtils.NullToNone(mMyMap.Panorama);
         set
         {
             if (mMyMap.Panorama != value)
@@ -525,24 +479,10 @@ partial class MapProperties
     }
 
     [CustomCategory("misc"), CustomDescription("overlaygraphicdesc"), CustomDisplayName("overlaygraphic"),
-     DefaultValue("None"), TypeConverter(typeof(MapImageProperty)), Browsable(true)]
+     DefaultValue("None"), TypeConverter(typeof(MapImageProperty)), Editor(typeof(Intersect.Editor.Forms.Styling.ResourcePropertyEditor), typeof(System.Drawing.Design.UITypeEditor)), Browsable(true)]
     public string OverlayGraphic
     {
-        get
-        {
-            var imageList = new List<string>
-            {
-                Strings.General.None
-            };
-
-            imageList.AddRange(GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Image));
-            if (imageList.IndexOf(mMyMap.OverlayGraphic) <= -1)
-            {
-                mMyMap.OverlayGraphic = null;
-            }
-
-            return TextUtils.NullToNone(mMyMap.OverlayGraphic);
-        }
+        get => TextUtils.NullToNone(mMyMap.OverlayGraphic);
         set
         {
             if (mMyMap.OverlayGraphic != value)
