@@ -26,6 +26,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="LICENSE.md" LogicalName="Logiklik.Engine.License" />
+  </ItemGroup>
+
+  <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>Intersect.Tests.Editor</_Parameter1>
     </AssemblyAttribute>

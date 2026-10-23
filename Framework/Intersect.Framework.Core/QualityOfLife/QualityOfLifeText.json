@@ -1414,6 +1414,56 @@
       "en": "A dungeon chest animation no longer exists.",
       "fr": "Une animation du coffre de donjon n’existe plus.",
       "es": "Una animación del cofre de mazmorra ya no existe."
+    },
+    "About": {
+      "en": "About",
+      "fr": "À propos",
+      "es": "Acerca de"
+    },
+    "Credits": {
+      "en": "Credits",
+      "fr": "Crédits",
+      "es": "Créditos"
+    },
+    "License": {
+      "en": "License",
+      "fr": "Licence",
+      "es": "Licencia"
+    },
+    "Version": {
+      "en": "Version",
+      "fr": "Version",
+      "es": "Versión"
+    },
+    "Engine modifications by Studio Logiklik. Based on Intersect, created by Ascension Game Dev and its contributors.": {
+      "en": "Engine modifications by Studio Logiklik. Based on Intersect, created by Ascension Game Dev and its contributors.",
+      "fr": "Modifications du moteur par Studio Logiklik. Basé sur Intersect, créé par Ascension Game Dev et ses contributeurs.",
+      "es": "Modificaciones del motor por Studio Logiklik. Basado en Intersect, creado por Ascension Game Dev y sus colaboradores."
+    },
+    "Modifications: Copyright (c) 2026 Studio Logiklik": {
+      "en": "Modifications: Copyright (c) 2026 Studio Logiklik",
+      "fr": "Modifications : Copyright (c) 2026 Studio Logiklik",
+      "es": "Modificaciones: Copyright (c) 2026 Studio Logiklik"
+    },
+    "Modified engine source code": {
+      "en": "Modified engine source code",
+      "fr": "Code source du moteur modifié",
+      "es": "Código fuente del motor modificado"
+    },
+    "Original Intersect project and contributors": {
+      "en": "Original Intersect project and contributors",
+      "fr": "Projet Intersect d’origine et contributeurs",
+      "es": "Proyecto Intersect original y colaboradores"
+    },
+    "Ascension Game Dev community": {
+      "en": "Ascension Game Dev community",
+      "fr": "Communauté Ascension Game Dev",
+      "es": "Comunidad de Ascension Game Dev"
+    },
+    "GNU General Public License v3": {
+      "en": "GNU General Public License v3",
+      "fr": "Licence publique générale GNU v3",
+      "es": "Licencia pública general GNU v3"
     }
   }
 }
