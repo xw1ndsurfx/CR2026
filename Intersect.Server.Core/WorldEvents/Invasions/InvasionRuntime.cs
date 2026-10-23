@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Intersect.Server.WorldEvents.Invasions;
 
-internal static class InvasionRuntime
+internal static partial class InvasionRuntime
 {
     private readonly record struct ScalingSnapshot(
         bool Enabled,
@@ -133,6 +133,11 @@ internal static class InvasionRuntime
             {
                 if (Sessions.Remove(finished, out var session))
                     SessionsById.TryRemove(session.SessionId, out _);
+            }
+            if (nowMs >= _nextSimulationRefreshAt)
+            {
+                RefreshSimulationMaps();
+                _nextSimulationRefreshAt = nowMs + 250;
             }
         }
     }
@@ -512,6 +517,7 @@ internal static class InvasionRuntime
         };
         Sessions[definition.Id] = session;
         SessionsById[session.SessionId] = session;
+        RefreshSimulationMaps();
 
         BroadcastStatus(session, "Invasion starting...");
         var islandName = MapController.Get(session.TargetMapId)?.Name ?? "the island";
@@ -540,7 +546,7 @@ internal static class InvasionRuntime
             }
 
             var objective = AssignDefenseTarget(npc, session);
-            if (objective == null || npc.Target != null ||
+            if (objective == null || npc.HasLiveInvasionCombatTarget(npc.Target) ||
                 npc.MapId != objective.MapId ||
                 Math.Abs(npc.X - objective.X) > 1 ||
                 Math.Abs(npc.Y - objective.Y) > 1)
@@ -1063,7 +1069,7 @@ internal static class InvasionRuntime
         );
     }
 
-    private static MapInstance? GetOrCreateOverworldMap(Guid mapId)
+    internal static MapInstance? GetOrCreateOverworldMap(Guid mapId)
     {
         if (MapController.TryGetInstanceFromMap(mapId, MapInstance.OverworldInstanceId, out var existing))
             return existing;

@@ -160,6 +160,15 @@ internal sealed partial class LogicService
                             }
                         }
 
+                        // Invasions are world simulations, independent of online defenders.
+                        foreach (var mapId in InvasionRuntime.SimulationMapIds)
+                        {
+                            var instance = InvasionRuntime.GetOrCreateOverworldMap(mapId);
+                            if (instance == null || !processedMapInstances.Add(instance.Id)) continue;
+                            if (!ActiveMapInstances.ContainsKey(instance.Id)) AddToQueue(instance);
+                            globalEntities += instance.GetCachedEntities().Length;
+                        }
+
                         //Refresh list of active maps & their instances
                         foreach (var (instanceId, mapInstance) in ActiveMapInstances.ToArray())
                         {
