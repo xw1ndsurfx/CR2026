@@ -8,6 +8,7 @@ public enum DungeonRunStatus
     Active = 1,
     Completed = 2,
     Failed = 3,
+    Abandoned = 4,
 }
 
 [MessagePackObject]
@@ -49,4 +50,5 @@ public partial class DungeonRunStatePacket : IntersectPacket
     [Key(6)] public int LivesRemaining { get; set; }
     [Key(7)] public int MaxLives { get; set; }
     [Key(8)] public int MonstersRemaining { get; set; } = -1;
+    [Key(9)] public Guid RunId { get; set; }
 }

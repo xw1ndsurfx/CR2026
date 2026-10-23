@@ -1,6 +1,9 @@
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
+using Intersect.Client.Interface.Shared;
+using Intersect.Client.Localization;
+using Intersect.Client.Networking;
 using Intersect.Framework.Core;
 using Intersect.Network.Packets.Server;
 using Intersect.Utilities;
@@ -15,13 +18,15 @@ internal sealed class DungeonRunHudWindow : Base
     private readonly Label _objective;
     private readonly Label _lives;
     private readonly Label _timer;
+    private readonly Button _abandon;
+    private bool _confirmingAbandon;
 
     private DungeonRunStatePacket? _state;
     private long _resultHideAt;
 
     public DungeonRunHudWindow(Canvas parent) : base(parent, nameof(DungeonRunHudWindow))
     {
-        SetSize(430, 126);
+        SetSize(430, 162);
         MouseInputEnabled = false;
         KeyboardInputEnabled = false;
 
@@ -65,6 +70,14 @@ internal sealed class DungeonRunHudWindow : Base
         };
         _timer.SetBounds(10, 88, 410, 22);
 
+        _abandon = new Button(this, "DungeonRunAbandon")
+        {
+            Text = ClientLanguages.Text("Abandon dungeon"),
+            FontSize = 10,
+        };
+        _abandon.SetBounds(115, 122, 200, 28);
+        _abandon.Clicked += (_, _) => ConfirmAbandon();
+
         Hide();
     }
 
@@ -72,6 +85,9 @@ internal sealed class DungeonRunHudWindow : Base
     {
         _state = state;
         _resultHideAt = 0;
+        _abandon.IsHidden = state.Status != DungeonRunStatus.Active || state.RunId == Guid.Empty;
+        _abandon.Text = ClientLanguages.Text("Abandon dungeon");
+        Height = _abandon.IsHidden ? 126 : 162;
 
         _title.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"RANK {state.DungeonRank} • {state.DungeonName}");
         _objective.Text = state.Message;
@@ -87,7 +103,9 @@ internal sealed class DungeonRunHudWindow : Base
         {
             _timer.Text = state.Status == DungeonRunStatus.Completed
                 ? "DUNGEON CLEARED"
-                : "DUNGEON FAILED";
+                : state.Status == DungeonRunStatus.Abandoned
+                    ? ClientLanguages.Text("DUNGEON ABANDONED")
+                    : "DUNGEON FAILED";
             _resultHideAt = Timing.Global.Milliseconds + 6_000;
         }
 
@@ -113,6 +131,27 @@ internal sealed class DungeonRunHudWindow : Base
             _resultHideAt = 0;
             Hide();
         }
+    }
+
+    private void ConfirmAbandon()
+    {
+        if (_confirmingAbandon || _state is not { Status: DungeonRunStatus.Active } state || state.RunId == Guid.Empty)
+            return;
+
+        var runId = state.RunId;
+        _confirmingAbandon = true;
+        var confirmation = new InputBox(
+            ClientLanguages.Text("Abandon dungeon"),
+            ClientLanguages.Text("Leave this dungeon? You will return to the exit and forfeit unclaimed rewards. Other players can continue."),
+            InputType.YesNo,
+            onSubmit: (_, _) =>
+            {
+                _confirmingAbandon = false;
+                if (_state is { Status: DungeonRunStatus.Active } current && current.RunId == runId)
+                    PacketSender.SendAbandonDungeon(runId);
+            },
+            onCancel: (_, _) => _confirmingAbandon = false);
+        confirmation.Closed += (_, _) => _confirmingAbandon = false;
     }
 
     private static string BuildTimeText(long endTimeUnixMilliseconds)
