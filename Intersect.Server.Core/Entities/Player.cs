@@ -4410,7 +4410,7 @@ public partial class Player : Entity
         }
     }
 
-    public void BuyItem(int slot, int amount)
+    public void BuyItem(int slot, int amount, int? expectedUnitPrice = null)
     {
         if (InShop == default)
         {
@@ -4446,7 +4446,12 @@ public partial class Player : Entity
         }
 
         var currencyAmount = FindInventoryItemQuantity(currencyBase.Id);
-        var itemCostTotal = boughtItem.CostItemQuantity * boughtItemAmount;
+        if (amount <= 0 || !InShop.TryPurchaseTotal(boughtItem, boughtItemAmount, DateTimeOffset.UtcNow, expectedUnitPrice, out var itemCostTotal))
+        {
+            PacketSender.SendOpenShop(this, InShop);
+            PacketSender.SendChatMsg(this, Strings.Shops.TransactionFailed, ChatMessageType.Inventory, CustomColors.Alerts.Error, Name);
+            return;
+        }
         if (currencyAmount < itemCostTotal)
         {
             PacketSender.SendChatMsg(this, Strings.Shops.CannotAfford, ChatMessageType.Inventory, CustomColors.Alerts.Error, Name);

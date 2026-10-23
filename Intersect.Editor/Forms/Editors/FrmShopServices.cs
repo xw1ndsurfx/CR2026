@@ -40,6 +40,14 @@ internal sealed class FrmShopServices:DarkForm
             {MessageBox.Show(this,T("Check the shop offers and prices."));return;}
             shop.ServiceOffers=draft.ToArray();DialogResult=DialogResult.OK;Close();
         };
-        Controls.Add(grid);Controls.Add(save);
+        var promotion=new Button {Dock=DockStyle.Bottom,Height=36,Text=FrmShopPromotion.T("Special offer..."),Name="EditServicePromotion"};
+        promotion.Click+=(_,_)=>
+        {
+            grid.EndEdit();
+            if(grid.CurrentRow?.DataBoundItem is not ShopServiceOffer offer)return;
+            using var dialog=new FrmShopPromotion(offer.Name,offer.Price,offer.Promotion);
+            if(dialog.ShowDialog(this)==DialogResult.OK)offer.Promotion=dialog.Result;
+        };
+        Controls.Add(grid);Controls.Add(promotion);Controls.Add(save);
     }
 }

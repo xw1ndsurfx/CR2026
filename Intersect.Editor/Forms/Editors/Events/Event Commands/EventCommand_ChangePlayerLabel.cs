@@ -71,7 +71,7 @@ public partial class EventCommandChangePlayerLabel : UserControl
     private void btnSelectLightColor_Click(object sender, EventArgs e)
     {
         colorDialog.Color = pnlColor.BackColor;
-        if (colorDialog.ShowDialog() == DialogResult.OK)
+        if (colorDialog.ShowDialog(this) == DialogResult.OK)
         {
             pnlColor.BackColor = colorDialog.Color;
         }

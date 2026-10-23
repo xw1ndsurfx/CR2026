@@ -26,7 +26,8 @@ internal static class NavalShopEditorTests
             var flags=BindingFlags.NonPublic|BindingFlags.Instance;
             var panel=(Control)typeof(FrmShop).GetField("pnlContainer",flags)!.GetValue(editor)!;
             var general=(Control)typeof(FrmShop).GetField("grpGeneral",flags)!.GetValue(editor)!;
-            var bar=panel.Controls.OfType<FlowLayoutPanel>().Single();
+            var sections=(TableLayoutPanel)panel.Controls.Find("ShopEditorSections",true).Single();
+            var bar=(FlowLayoutPanel)sections.GetControlFromPosition(0,0)!;
             if(general.Top<bar.Bottom)throw new Exception("Shop type selector must not overlap native shop settings.");
             var preview=Environment.GetEnvironmentVariable("NAVAL_SHOP_EDITOR_PREVIEW");
             if(!string.IsNullOrEmpty(preview))

@@ -67,7 +67,8 @@ internal sealed class NavalAmmoShopWindow:Window
             onSubmit: (_, args) =>
             {
                 if (args.Value is NumericalSubmissionValue value && value.Value > 0 && value.Value <= maximum)
-                    NavalManagementWindow.Request(sell ? NavalManageAction.SellAmmo : NavalManageAction.BuyAmmo, ammo.Kind, (int)value.Value);
+                    NavalManagementWindow.Request(sell ? NavalManageAction.SellAmmo : NavalManageAction.BuyAmmo, ammo.Kind, (int)value.Value,
+                        expectedUnitPrice: sell ? ammo.SellPrice : ammo.Price);
             });
     }
 

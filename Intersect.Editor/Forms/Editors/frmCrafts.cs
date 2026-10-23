@@ -486,7 +486,7 @@ public partial class FrmCrafts : EditorForm
     private void btnCraftRequirements_Click(object sender, EventArgs e)
     {
         var frm = new FrmDynamicRequirements(mEditorItem.CraftingRequirements, RequirementType.Craft);
-        frm.ShowDialog();
+        frm.ShowDialog(this);
     }
 
     #region "Item List - Folders, Searching, Sorting, Etc"

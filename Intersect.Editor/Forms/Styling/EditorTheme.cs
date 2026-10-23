@@ -49,6 +49,7 @@ internal static class EditorTheme
                 root.ControlAdded += (_, args) => { if (args.Control != null) Apply(args.Control); };
             if (root is Form window)
             {
+                EditorWindows.Attach(window);
                 window.Shown += (_, _) => FitChoiceCaptions(window);
                 if (window.IsHandleCreated) window.BeginInvoke((Action)(() =>
                 {

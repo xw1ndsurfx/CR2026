@@ -834,8 +834,9 @@ public partial class Player : Entity, IPlayer
             return;
         }
 
+        var unitPrice = shop.SellingPrice(shopSlot, shop.PricingTime);
         var maxBuyAmount = 0;
-        if (shopSlot.CostItemQuantity < 1)
+        if (unitPrice < 1)
         {
             var emptySlots = Inventory.Count(inventorySlot => inventorySlot.ItemId == default);
             var slotsWithItem = Inventory.Count(inventorySlot => inventorySlot.ItemId == itemDescriptor.Id);
@@ -848,13 +849,13 @@ public partial class Player : Entity, IPlayer
         else
         {
             var currencyCount = GetQuantityOfItemInInventory(shopSlot.CostItemId);
-            maxBuyAmount = (int)Math.Floor(currencyCount / (float)shopSlot.CostItemQuantity);
+            maxBuyAmount = (int)Math.Min(int.MaxValue, currencyCount / (long)unitPrice);
         }
 
         // If our max buy amount is 0 or the item isn't stackable, let the server handle it
         if (!itemDescriptor.IsStackable || maxBuyAmount == 0)
         {
-            PacketSender.SendBuyItem(shopSlotIndex, 1);
+            PacketSender.SendBuyItem(shopSlotIndex, 1, unitPrice);
             return;
         }
 
@@ -864,14 +865,14 @@ public partial class Player : Entity, IPlayer
             inputType: InputType.NumericSliderInput,
             quantity: maxBuyAmount,
             maximumQuantity: maxBuyAmount,
-            userData: shopSlotIndex,
+            userData: (shopSlotIndex, unitPrice),
             onSubmit: TryBuyItemOnSubmit
         );
     }
 
     private static void TryBuyItemOnSubmit(Base sender, InputSubmissionEventArgs args)
     {
-        if (sender is not InputBox { UserData: int slotIndex })
+        if (sender is not InputBox { UserData: ValueTuple<int, int> quote })
         {
             return;
         }
@@ -884,7 +885,7 @@ public partial class Player : Entity, IPlayer
         var value = (int)Math.Round(submissionValue.Value);
         if (value > 0)
         {
-            PacketSender.SendBuyItem(slotIndex, value);
+            PacketSender.SendBuyItem(quote.Item1, value, quote.Item2);
         }
     }
 

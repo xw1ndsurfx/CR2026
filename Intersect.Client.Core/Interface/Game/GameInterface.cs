@@ -341,7 +341,8 @@ public partial class GameInterface : MutableInterface
 
     public void OpenShop()
     {
-        _shopWindow = new ShopWindow(GameCanvas) { DeleteOnClose = true };
+        if (_shopWindow is { IsVisibleInTree: true }) _shopWindow.ReloadPrices();
+        else _shopWindow = new ShopWindow(GameCanvas) { DeleteOnClose = true };
         mShouldOpenShop = false;
     }
 
@@ -471,6 +472,7 @@ public partial class GameInterface : MutableInterface
         _minimapHud?.Update();
         UpdateProfessionProgress();
         _shopWindow?.Update();
+        _serviceShop?.Update();
         UpdateInvasionUi();
         UpdateSoundSequence();
         UpdateHousing();

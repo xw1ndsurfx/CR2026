@@ -1,4 +1,4 @@
-﻿using Intersect.Editor.Localization;
+using Intersect.Editor.Localization;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 
 namespace Intersect.Editor.Forms.Editors.Events.Event_Commands;
@@ -58,7 +58,7 @@ public partial class EventCommandChangeNameColor : UserControl
     private void btnSelectLightColor_Click(object sender, EventArgs e)
     {
         colorDialog.Color = pnlColor.BackColor;
-        if (colorDialog.ShowDialog() == DialogResult.OK)
+        if (colorDialog.ShowDialog(this) == DialogResult.OK)
         {
             pnlColor.BackColor = colorDialog.Color;
         }

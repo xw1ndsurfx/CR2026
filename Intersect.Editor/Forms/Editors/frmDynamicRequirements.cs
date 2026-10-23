@@ -1,4 +1,4 @@
-﻿using Intersect.Editor.Core;
+using Intersect.Editor.Core;
 using Intersect.Editor.Forms.Editors.Events.Event_Commands;
 using Intersect.Editor.Localization;
 using Intersect.Framework.Core.GameObjects.Conditions;
@@ -222,8 +222,7 @@ public partial class FrmDynamicRequirements : Form
 
         frm.Controls.Add(cmdWindow);
         cmdWindow.BringToFront();
-        frm.TopMost = true;
-        frm.ShowDialog();
+        frm.ShowDialog(this);
         if (cmdWindow.Cancelled)
         {
             return null;

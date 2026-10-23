@@ -5,4 +5,5 @@ public partial class ServiceShopPurchasePacket:IntersectPacket
 {
     [Key(0)] public Guid OfferId {get;set;}
     [Key(1)] public bool Close {get;set;}
+    [Key(2)] public int? ExpectedUnitPrice {get;set;}
 }

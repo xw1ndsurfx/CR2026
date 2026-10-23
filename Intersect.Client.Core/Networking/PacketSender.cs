@@ -295,9 +295,9 @@ public static partial class PacketSender
         Network.SendPacket(new SellItemPacket(slot, amount));
     }
 
-    public static void SendBuyItem(int slot, int amount)
+    public static void SendBuyItem(int slot, int amount, int? expectedUnitPrice = null)
     {
-        Network.SendPacket(new BuyItemPacket(slot, amount));
+        Network.SendPacket(new BuyItemPacket(slot, amount) { ExpectedUnitPrice = expectedUnitPrice });
     }
 
     public static void SendCloseShop()

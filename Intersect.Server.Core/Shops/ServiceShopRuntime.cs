@@ -18,6 +18,7 @@ internal static class ServiceShopRuntime
         var premium=LogiCoinPurchaseRuntime.HasActivePremium(player);
         player.SendPacket(new ServiceShopPacket{Json=JsonConvert.SerializeObject(new ShopServiceState {
             Name=shop.Name,Music=shop.ConfigurationKind==ShopConfigurationKind.PremiumMusic,Premium=premium,Message=message,
+            ServerTimeUnixMilliseconds=DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             Rows=shop.ServiceOffers.Where(offer=>offer.IsValid).Take(256).Select(offer=>
             {
                 var currency=offer.CurrencyItemId==Guid.Empty?shop.DefaultCurrencyId:offer.CurrencyItemId;
@@ -38,6 +39,8 @@ internal static class ServiceShopRuntime
             player.ServiceShopRequestAt=Timing.Global.Milliseconds;
             var offer=shop.ServiceOffers.FirstOrDefault(offer=>offer.Id==packet.OfferId);
             if(offer?.IsValid!=true || player.Level<offer.RequiredLevel)return;
+            var price=shop.ServicePrice(offer,DateTimeOffset.UtcNow);
+            if(packet.ExpectedUnitPrice is {} expected && expected!=price){Send(player,"Shop prices changed. Please check the updated price and try again.");return;}
             var music=shop.ConfigurationKind==ShopConfigurationKind.PremiumMusic;
             if(music && !LogiCoinPurchaseRuntime.HasActivePremium(player)){Send(player,"Premium required");return;}
             if(!music && (SpellDescriptor.Get(offer.SpellId)==null || player.KnowsSpell(offer.SpellId) || !player.Spells.Any(slot=>slot.SpellId==Guid.Empty)))return;
@@ -53,7 +56,7 @@ internal static class ServiceShopRuntime
                 var spells=player.Spells.Select(slot=>new Spell(slot.SpellId)).ToArray();var saved=false;
                 try
                 {
-                    var payment=offer.Price==0?before.Select(item=>new Item(item)).ToArray():Naval.NavalSystem.PlanNavalPayment(before,currency,offer.Price);
+                    var payment=price==0?before.Select(item=>new Item(item)).ToArray():Naval.NavalSystem.PlanNavalPayment(before,currency,price);
                     if(payment==null){Send(player,"Not enough currency.");return;}
                     for(var i=0;i<payment.Length;i++)player.Items[i].Set(payment[i]);
                     if(!music && !player.TryTeachSpell(new Spell(offer.SpellId),sendUpdate:false))return;

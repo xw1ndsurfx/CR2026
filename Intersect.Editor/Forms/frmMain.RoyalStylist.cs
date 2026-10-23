@@ -34,7 +34,7 @@ public partial class FrmMain
     public void OpenRoyalStylistEditor()
     {
         var editor = new FrmRoyalStylistConfiguration();
-        editor.Show();
+        Styling.EditorWindows.Show(editor, this);
         editor.BringToFront();
     }
 }
