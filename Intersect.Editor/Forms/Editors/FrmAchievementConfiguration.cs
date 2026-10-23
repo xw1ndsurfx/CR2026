@@ -15,7 +15,7 @@ using DrawingColor = System.Drawing.Color;
 
 namespace Intersect.Editor.Forms.Editors;
 
-public sealed class FrmAchievementConfiguration : DarkForm
+public sealed partial class FrmAchievementConfiguration : DarkForm
 {
     private sealed record IdChoice(Guid Id, string Text)
     {
@@ -112,6 +112,7 @@ public sealed class FrmAchievementConfiguration : DarkForm
         _objective.Format+=(_,args)=>{if(args.ListItem is AchievementObjectiveType type && (int)type is >=19 and <=27)args.Value=Intersect.Framework.Core.Naval.NavalSetupText.Get("Naval - "+(Intersect.Framework.Core.Naval.NavalTaskKind)((int)type-19),System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);};
         FillRewardChoices();
         FillAchievementImages();
+        InitializeIconSelectors();
         BuildUi();
 
         _objective.SelectedIndexChanged += (_, _) => RefreshTargetChoices();
@@ -245,12 +246,15 @@ public sealed class FrmAchievementConfiguration : DarkForm
     private TabPage BuildGeneralTab()
     {
         var page = CreatePage("General");
+        page.AutoScroll = true;
         var table = CreateTable();
 
         AddRow(table, "Name", _name);
         AddRow(table, "Description", _description, 78);
         AddRow(table, "Category", _category);
-        AddRow(table, "Image / icon (resources/achievements)", _icon);
+        AddRow(table, IconText("Unlocked icon (resources/achievements)"), _icon);
+        AddRow(table, IconText("Locked icon (optional)"), _lockedIcon);
+        AddRow(table, IconText("Icon previews"), BuildIconPreviews(), 110);
         AddRow(table, "Objective type", _objective);
         AddRow(table, "Target", _target);
         AddRow(table, "Target key (CustomCounter/code)", _targetKey);
@@ -493,6 +497,8 @@ public sealed class FrmAchievementConfiguration : DarkForm
         _description.Text = _selected.Description;
         _category.Text = _selected.Category;
         SelectIcon(_selected.Icon);
+        SelectIcon(_selected.LockedIcon, _lockedIcon);
+        UpdateIconPreviews();
 
         _objective.SelectedItem = _selected.ObjectiveType;
         RefreshTargetChoices();
@@ -517,12 +523,19 @@ public sealed class FrmAchievementConfiguration : DarkForm
     {
         foreach (var control in new Control[]
                  {
-                     _name, _description, _category, _icon, _objective, _target, _targetKey,
+                     _name, _description, _category, _icon, _lockedIcon, _objective, _target, _targetKey,
                      _targetAmount, _sortOrder, _hidden, _monthly, _steamApi, _rewardItem,
                      _rewardItemQuantity, _rewardExperience, _rewardCurrency,
                      _rewardCurrencyQuantity, _rewardEvent,
+                     _unlockedPreview, _lockedPreview,
                  })
             control.Enabled = enabled;
+        if (!enabled)
+        {
+            _unlockedPreview.Image?.Dispose(); _unlockedPreview.Image = null;
+            _lockedPreview.Image?.Dispose(); _lockedPreview.Image = null;
+            _lockedPreviewFallback = false; _lockedPreview.Invalidate();
+        }
     }
 
     private void CommitSelected()
@@ -533,9 +546,8 @@ public sealed class FrmAchievementConfiguration : DarkForm
         _selected.Name = string.IsNullOrWhiteSpace(_name.Text) ? "Achievement" : _name.Text.Trim();
         _selected.Description = _description.Text ?? string.Empty;
         _selected.Category = string.IsNullOrWhiteSpace(_category.Text) ? "General" : _category.Text.Trim();
-        _selected.Icon = string.Equals(_icon.Text, "None", StringComparison.OrdinalIgnoreCase)
-            ? string.Empty
-            : _icon.Text?.Trim() ?? string.Empty;
+        _selected.Icon = SelectedIconName(_icon);
+        _selected.LockedIcon = SelectedIconName(_lockedIcon);
         _selected.ObjectiveType = _objective.SelectedItem is AchievementObjectiveType objective
             ? objective
             : AchievementObjectiveType.CustomCounter;
@@ -564,30 +576,35 @@ public sealed class FrmAchievementConfiguration : DarkForm
         var folder = Path.Combine("resources", "achievements");
         Directory.CreateDirectory(folder);
 
-        _icon.Items.Clear();
-        _icon.Items.Add("None");
+        _icon.Items.Clear(); _lockedIcon.Items.Clear();
+        _icon.Items.Add(IconText("None")); _lockedIcon.Items.Add(IconText("None"));
 
         foreach (var file in Directory.EnumerateFiles(folder, "*.png", SearchOption.AllDirectories)
                      .Select(file => Path.GetRelativePath(folder, file).Replace('\\', '/'))
                      .OrderBy(file => file, StringComparer.OrdinalIgnoreCase))
         {
             _icon.Items.Add(file);
+            _lockedIcon.Items.Add(file);
         }
 
         _icon.SelectedIndex = 0;
+        _lockedIcon.SelectedIndex = 0;
     }
 
-    private void SelectIcon(string? icon)
+    private void SelectIcon(string? icon, ComboBox? selector = null)
     {
-        var desired = string.IsNullOrWhiteSpace(icon) ? "None" : icon.Replace('\\', '/');
-        var index = _icon.FindStringExact(desired);
-        if (index < 0 && !string.Equals(desired, "None", StringComparison.OrdinalIgnoreCase))
+        selector ??= _icon;
+        if (string.IsNullOrWhiteSpace(icon) || string.Equals(icon, "None", StringComparison.OrdinalIgnoreCase))
+        { selector.SelectedIndex = 0; return; }
+        var desired = icon.Replace('\\', '/');
+        var index = selector.FindStringExact(desired);
+        if (index < 0)
         {
-            _icon.Items.Add(desired);
-            index = _icon.Items.Count - 1;
+            selector.Items.Add(desired);
+            index = selector.Items.Count - 1;
         }
 
-        _icon.SelectedIndex = Math.Max(0, index);
+        selector.SelectedIndex = Math.Max(0, index);
     }
 
     private void SaveConfiguration()

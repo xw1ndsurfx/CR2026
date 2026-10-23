@@ -1,5 +1,11 @@
 ﻿{
   "Entries": {
+    "Unlocked icon (resources/achievements)": { "en": "Unlocked icon (resources/achievements)", "fr": "Icône débloquée (resources/achievements)", "es": "Icono desbloqueado (resources/achievements)" },
+    "Locked icon (optional)": { "en": "Locked icon (optional)", "fr": "Icône verrouillée (facultative)", "es": "Icono bloqueado (opcional)" },
+    "Icon previews": { "en": "Icon previews", "fr": "Aperçu des icônes", "es": "Vista previa de los iconos" },
+    "Locked": { "en": "Locked", "fr": "Verrouillé", "es": "Bloqueado" },
+    "Unlocked": { "en": "Unlocked", "fr": "Débloqué", "es": "Desbloqueado" },
+    "Without a locked image, the normal icon is dimmed and marked with a lock.": { "en": "Without a locked image, the normal icon is dimmed and marked with a lock.", "fr": "Sans image verrouillée, l’icône normale est atténuée et marquée d’un cadenas.", "es": "Sin imagen bloqueada, el icono normal se atenúa y se marca con un candado." },
     "Missing sound: {0}": { "en": "Missing sound: {0}", "fr": "Son manquant : {0}", "es": "Sonido no encontrado: {0}" },
     "Choose an entry": { "en": "Choose an entry", "fr": "Choisir un élément", "es": "Elegir un elemento" },
     "Search by name or several words...": { "en": "Search by name or several words...", "fr": "Rechercher un nom ou plusieurs mots...", "es": "Buscar por nombre o varias palabras..." },
