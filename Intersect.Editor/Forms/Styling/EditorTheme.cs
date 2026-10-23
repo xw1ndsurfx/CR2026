@@ -103,6 +103,7 @@ internal static class EditorTheme
                 case TextBoxBase or ListBox or ComboBox or NumericUpDown:
                     root.BackColor = Input;
                     if (root is TextBoxBase textBox) textBox.BorderStyle = BorderStyle.FixedSingle;
+                    if (root is ComboBox combo) SearchableChoices.Attach(combo);
                     if (root is LogiklikNumericUpDown numeric) numeric.BorderStyle = BorderStyle.None;
                     if (root is ListBox list)
                     {

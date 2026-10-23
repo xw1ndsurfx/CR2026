@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Intersect.Editor.General;
 using Intersect.Editor.Localization;
 using Intersect.Framework.Core.GameObjects.Animations;
@@ -31,13 +31,13 @@ partial class MapProperties
             if(value && mMyMap.WeatherIntensity==0)mMyMap.WeatherIntensity=50;
         });
     }
-    [CustomCategory("weather"),WeatherLabel("Rain sound (loop)"),TypeConverter(typeof(MapSoundProperty))]
+    [CustomCategory("weather"),WeatherLabel("Rain sound (loop)"),TypeConverter(typeof(MapSoundProperty)), Editor(typeof(Intersect.Editor.Forms.Styling.ResourcePropertyEditor), typeof(System.Drawing.Design.UITypeEditor))]
     public string WeatherRainSound
     {
         get=>string.IsNullOrWhiteSpace(mMyMap.WeatherEffects.RainSound)?Strings.General.None:mMyMap.WeatherEffects.RainSound;
         set=>ChangeWeather(()=>mMyMap.WeatherEffects.RainSound=value==Strings.General.None?"":value);
     }
-    [CustomCategory("weather"),WeatherLabel("Thunder sound"),TypeConverter(typeof(MapSoundProperty))]
+    [CustomCategory("weather"),WeatherLabel("Thunder sound"),TypeConverter(typeof(MapSoundProperty)), Editor(typeof(Intersect.Editor.Forms.Styling.ResourcePropertyEditor), typeof(System.Drawing.Design.UITypeEditor))]
     public string WeatherThunderSound
     {
         get=>string.IsNullOrWhiteSpace(mMyMap.WeatherEffects.ThunderSound)?Strings.General.None:mMyMap.WeatherEffects.ThunderSound;
@@ -51,7 +51,7 @@ partial class MapProperties
     }
     [CustomCategory("weather"),WeatherLabel("Change fog during rain"),DefaultValue(false)]
     public bool WeatherOverrideRainFog {get=>mMyMap.WeatherEffects.OverrideRainFog;set=>ChangeWeather(()=>mMyMap.WeatherEffects.OverrideRainFog=value);}
-    [CustomCategory("weather"),WeatherLabel("Rain fog"),TypeConverter(typeof(MapFogProperty))]
+    [CustomCategory("weather"),WeatherLabel("Rain fog"),TypeConverter(typeof(MapFogProperty)), Editor(typeof(Intersect.Editor.Forms.Styling.ResourcePropertyEditor), typeof(System.Drawing.Design.UITypeEditor))]
     public string WeatherRainFog {get=>string.IsNullOrWhiteSpace(mMyMap.WeatherEffects.RainFog)?Strings.General.None:mMyMap.WeatherEffects.RainFog;set=>ChangeWeather(()=>mMyMap.WeatherEffects.RainFog=value==Strings.General.None?"":value);}
     [CustomCategory("weather"),WeatherLabel("Rain fog opacity (0-255)"),DefaultValue(100)]
     public int WeatherRainFogOpacity {get=>mMyMap.WeatherEffects.RainFogOpacity;set=>ChangeWeather(()=>mMyMap.WeatherEffects.RainFogOpacity=Math.Clamp(value,0,255));}
@@ -69,7 +69,7 @@ partial class MapProperties
     public int WeatherFlashOpacity {get=>mMyMap.WeatherEffects.FlashOpacity;set=>ChangeWeather(()=>mMyMap.WeatherEffects.FlashOpacity=Math.Clamp(value,0,80));}
     [CustomCategory("weather"),WeatherLabel("Lightning bolts"),DefaultValue(true)]
     public bool WeatherLightning {get=>mMyMap.WeatherEffects.Lightning;set=>ChangeWeather(()=>mMyMap.WeatherEffects.Lightning=value);}
-    [CustomCategory("weather"),WeatherLabel("Lightning animation"),TypeConverter(typeof(MapWeatherProperty))]
+    [CustomCategory("weather"),WeatherLabel("Lightning animation"),TypeConverter(typeof(MapWeatherProperty)), Editor(typeof(Intersect.Editor.Forms.Styling.ResourcePropertyEditor), typeof(System.Drawing.Design.UITypeEditor))]
     public string WeatherLightningAnimation
     {
         get=>AnimationDescriptor.Get(mMyMap.WeatherEffects.LightningAnimationId)?.Name??Strings.General.None;
@@ -77,7 +77,7 @@ partial class MapProperties
     }
     [CustomCategory("weather"),WeatherLabel("Ground splashes"),DefaultValue(true)]
     public bool WeatherGroundSplashes {get=>mMyMap.WeatherEffects.GroundSplashes;set=>ChangeWeather(()=>mMyMap.WeatherEffects.GroundSplashes=value);}
-    [CustomCategory("weather"),WeatherLabel("Splash animation"),TypeConverter(typeof(MapWeatherProperty))]
+    [CustomCategory("weather"),WeatherLabel("Splash animation"),TypeConverter(typeof(MapWeatherProperty)), Editor(typeof(Intersect.Editor.Forms.Styling.ResourcePropertyEditor), typeof(System.Drawing.Design.UITypeEditor))]
     public string WeatherSplashAnimation
     {
         get=>AnimationDescriptor.Get(mMyMap.WeatherEffects.SplashAnimationId)?.Name??Strings.General.None;
