@@ -28,7 +28,7 @@ public partial class FrmResource : EditorForm
     private Bitmap? _graphicBitmap;
     private Bitmap? _resourceGraphic;
     private bool _mouseDown;
-    private readonly DarkUI.Controls.DarkCheckBox _fallingTree=new();
+    private readonly Intersect.Editor.Forms.Styling.LogiklikCheckBox _fallingTree=new();
 
     public FrmResource()
     {

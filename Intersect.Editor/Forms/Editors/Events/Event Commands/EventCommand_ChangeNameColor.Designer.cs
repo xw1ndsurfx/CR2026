@@ -30,13 +30,13 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
         /// </summary>
         private void InitializeComponent()
         {
-            this.grpChangeLevel = new DarkUI.Controls.DarkGroupBox();
+            this.grpChangeLevel = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
             this.chkRemove = new System.Windows.Forms.CheckBox();
             this.chkOverride = new System.Windows.Forms.CheckBox();
             this.pnlColor = new System.Windows.Forms.Panel();
-            this.btnSelectLightColor = new DarkUI.Controls.DarkButton();
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.btnSave = new DarkUI.Controls.DarkButton();
+            this.btnSelectLightColor = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnSave = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.colorDialog = new System.Windows.Forms.ColorDialog();
             this.grpChangeLevel.SuspendLayout();
             this.SuspendLayout();

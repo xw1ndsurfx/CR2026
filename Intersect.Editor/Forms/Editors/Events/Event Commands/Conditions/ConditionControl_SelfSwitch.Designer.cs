@@ -28,10 +28,10 @@ partial class ConditionControl_SelfSwitch
     /// </summary>
     private void InitializeComponent()
     {
-        grpSelfSwitch = new DarkUI.Controls.DarkGroupBox();
-        cmbSelfSwitchVal = new DarkUI.Controls.DarkComboBox();
+        grpSelfSwitch = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        cmbSelfSwitchVal = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblSelfSwitchIs = new Label();
-        cmbSelfSwitch = new DarkUI.Controls.DarkComboBox();
+        cmbSelfSwitch = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblSelfSwitch = new Label();
         grpSelfSwitch.SuspendLayout();
         SuspendLayout();
@@ -131,9 +131,9 @@ partial class ConditionControl_SelfSwitch
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpSelfSwitch;
-    private DarkUI.Controls.DarkComboBox cmbSelfSwitchVal;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpSelfSwitch;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbSelfSwitchVal;
     private Label lblSelfSwitchIs;
-    private DarkUI.Controls.DarkComboBox cmbSelfSwitch;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbSelfSwitch;
     private Label lblSelfSwitch;
 }

@@ -28,8 +28,8 @@ partial class ConditionControl_PlayerPower
     /// </summary>
     private void InitializeComponent()
     {
-        grpPowerIs = new DarkUI.Controls.DarkGroupBox();
-        cmbPower = new DarkUI.Controls.DarkComboBox();
+        grpPowerIs = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        cmbPower = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblPower = new Label();
         grpPowerIs.SuspendLayout();
         SuspendLayout();
@@ -96,7 +96,7 @@ partial class ConditionControl_PlayerPower
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpPowerIs;
-    private DarkUI.Controls.DarkComboBox cmbPower;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpPowerIs;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbPower;
     private Label lblPower;
 }

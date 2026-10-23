@@ -73,7 +73,7 @@ namespace Intersect.Editor.Forms
             this.toolStripBtnFlipHorizontal = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator13 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripButtonQuestion = new System.Windows.Forms.ToolStripButton();
-            this.toolStrip1 = new DarkUI.Controls.DarkToolStrip();
+            this.toolStrip1 = new Intersect.Editor.Forms.Styling.LogiklikToolStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.newMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -120,7 +120,7 @@ namespace Intersect.Editor.Forms
             this.postQuestionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.reportBugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuStrip = new DarkUI.Controls.DarkMenuStrip();
+            this.menuStrip = new Intersect.Editor.Forms.Styling.LogiklikMenuStrip();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.packageUpdateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1.SuspendLayout();

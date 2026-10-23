@@ -30,29 +30,29 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
         /// </summary>
         private void InitializeComponent()
         {
-            this.grpSpawnNpc = new DarkUI.Controls.DarkGroupBox();
-            this.cmbNpc = new DarkUI.Controls.DarkComboBox();
+            this.grpSpawnNpc = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.cmbNpc = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.lblNpc = new System.Windows.Forms.Label();
-            this.cmbConditionType = new DarkUI.Controls.DarkComboBox();
+            this.cmbConditionType = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.lblSpawnType = new System.Windows.Forms.Label();
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.btnSave = new DarkUI.Controls.DarkButton();
-            this.grpTileSpawn = new DarkUI.Controls.DarkGroupBox();
-            this.btnVisual = new DarkUI.Controls.DarkButton();
-            this.cmbMap = new DarkUI.Controls.DarkComboBox();
-            this.cmbDirection = new DarkUI.Controls.DarkComboBox();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnSave = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.grpTileSpawn = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.btnVisual = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.cmbMap = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
+            this.cmbDirection = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.lblDir = new System.Windows.Forms.Label();
             this.lblY = new System.Windows.Forms.Label();
             this.lblMap = new System.Windows.Forms.Label();
             this.lblX = new System.Windows.Forms.Label();
-            this.grpEntitySpawn = new DarkUI.Controls.DarkGroupBox();
-            this.chkDirRelative = new DarkUI.Controls.DarkCheckBox();
+            this.grpEntitySpawn = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.chkDirRelative = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
             this.pnlSpawnLoc = new System.Windows.Forms.Panel();
             this.lblRelativeLocation = new System.Windows.Forms.Label();
-            this.cmbEntities = new DarkUI.Controls.DarkComboBox();
+            this.cmbEntities = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.lblEntity = new System.Windows.Forms.Label();
-            this.nudWarpY = new DarkUI.Controls.DarkNumericUpDown();
-            this.nudWarpX = new DarkUI.Controls.DarkNumericUpDown();
+            this.nudWarpY = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
+            this.nudWarpX = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
             this.grpSpawnNpc.SuspendLayout();
             this.grpTileSpawn.SuspendLayout();
             this.grpEntitySpawn.SuspendLayout();

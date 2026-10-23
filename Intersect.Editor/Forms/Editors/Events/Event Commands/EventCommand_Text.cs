@@ -20,7 +20,7 @@ public partial class EventCommandText : UserControl
         mEventEditor = editor;
         InitLocalization();
         string T(string text)=>Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(text,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
-        var colour=new DarkUI.Controls.DarkButton{Name="SelectionColor",Text=T("Text colour"),Left=48,Top=18,Width=102,Height=20,Enabled=false};
+        var colour=new Intersect.Editor.Forms.Styling.LogiklikButton{Name="SelectionColor",Text=T("Text colour"),Left=48,Top=18,Width=102,Height=20,Enabled=false};
         grpShowText.Controls.Add(colour);
         txtShowText.HideSelection=false;
         txtShowText.MouseUp+=(_,_)=>colour.Enabled=txtShowText.SelectionLength>0;

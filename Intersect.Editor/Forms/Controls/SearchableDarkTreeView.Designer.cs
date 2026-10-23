@@ -32,7 +32,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SearchableDarkTreeView));
             this.txtSearch = new DarkUI.Controls.DarkTextBox();
             this.picClear = new System.Windows.Forms.PictureBox();
-            this.toolStrip = new DarkUI.Controls.DarkToolStrip();
+            this.toolStrip = new Intersect.Editor.Forms.Styling.LogiklikToolStrip();
             this.toolStripCreate = new System.Windows.Forms.ToolStripButton();
             this.toolStripDelete = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
@@ -43,7 +43,7 @@
             this.toolStripRedo = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripSort = new System.Windows.Forms.ToolStripButton();
-            this.treeViewItems = new DarkUI.Controls.DarkTreeView();
+            this.treeViewItems = new Intersect.Editor.Forms.Styling.LogiklikTreeView();
             ((System.ComponentModel.ISupportInitialize)(this.picClear)).BeginInit();
             this.toolStrip.SuspendLayout();
             this.SuspendLayout();
@@ -225,7 +225,7 @@
 
         private DarkUI.Controls.DarkTextBox txtSearch;
         private System.Windows.Forms.PictureBox picClear;
-        private DarkUI.Controls.DarkToolStrip toolStrip;
+        private Intersect.Editor.Forms.Styling.LogiklikToolStrip toolStrip;
         private System.Windows.Forms.ToolStripButton toolStripCreate;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripButton toolStripDelete;
@@ -236,6 +236,6 @@
         private System.Windows.Forms.ToolStripButton toolStripRedo;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ToolStripButton toolStripSort;
-        private DarkUI.Controls.DarkTreeView treeViewItems;
+        private Intersect.Editor.Forms.Styling.LogiklikTreeView treeViewItems;
     }
 }

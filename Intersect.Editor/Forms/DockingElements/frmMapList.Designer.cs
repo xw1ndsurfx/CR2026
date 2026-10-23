@@ -34,7 +34,7 @@ namespace Intersect.Editor.Forms.DockingElements
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmMapList));
-            this.toolStrip1 = new DarkUI.Controls.DarkToolStrip();
+            this.toolStrip1 = new Intersect.Editor.Forms.Styling.LogiklikToolStrip();
             this.btnAlphabetical = new System.Windows.Forms.ToolStripButton();
             this.toolSelectMap = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();

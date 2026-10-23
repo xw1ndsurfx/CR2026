@@ -31,22 +31,22 @@ namespace Intersect.Editor.Forms.Editors.Quest
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(QuestTaskEditor));
-            this.grpEditor = new DarkUI.Controls.DarkGroupBox();
-            this.btnEditTaskEvent = new DarkUI.Controls.DarkButton();
+            this.grpEditor = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.btnEditTaskEvent = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.txtStartDesc = new DarkUI.Controls.DarkTextBox();
             this.lblDesc = new System.Windows.Forms.Label();
-            this.btnSave = new DarkUI.Controls.DarkButton();
-            this.cmbTaskType = new DarkUI.Controls.DarkComboBox();
+            this.btnSave = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.cmbTaskType = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.lblType = new System.Windows.Forms.Label();
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.grpKillNpcs = new DarkUI.Controls.DarkGroupBox();
-            this.nudNpcQuantity = new DarkUI.Controls.DarkNumericUpDown();
-            this.cmbNpc = new DarkUI.Controls.DarkComboBox();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.grpKillNpcs = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.nudNpcQuantity = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
+            this.cmbNpc = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.lblNpc = new System.Windows.Forms.Label();
             this.lblNpcQuantity = new System.Windows.Forms.Label();
-            this.grpGatherItems = new DarkUI.Controls.DarkGroupBox();
-            this.nudItemAmount = new DarkUI.Controls.DarkNumericUpDown();
-            this.cmbItem = new DarkUI.Controls.DarkComboBox();
+            this.grpGatherItems = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.nudItemAmount = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
+            this.cmbItem = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.lblItem = new System.Windows.Forms.Label();
             this.lblItemQuantity = new System.Windows.Forms.Label();
             this.lblEventDriven = new System.Windows.Forms.Label();

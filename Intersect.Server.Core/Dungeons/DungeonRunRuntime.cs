@@ -20,6 +20,7 @@ internal static partial class DungeonRunRuntime
 {
     private sealed class Run
     {
+        public Guid Id { get; } = Guid.NewGuid();
         public required DungeonDefinition Dungeon { get; init; }
         public required Guid MapInstanceId { get; init; }
         public required Guid EntryMapId { get; init; }
@@ -780,5 +781,5 @@ internal static partial class DungeonRunRuntime
             (run.Dungeon.CompletionRequirements & DungeonCompletionRequirement.DefeatAllMonsters) != 0
                 ? CountAliveMonsters(run)
                 : -1
-        );
+        ) { RunId = run.Id };
 }

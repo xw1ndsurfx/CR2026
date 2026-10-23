@@ -28,8 +28,8 @@ partial class ConditionControl_Map
     /// </summary>
     private void InitializeComponent()
     {
-        grpMapIs = new DarkUI.Controls.DarkGroupBox();
-        btnSelectMap = new DarkUI.Controls.DarkButton();
+        grpMapIs = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        btnSelectMap = new Intersect.Editor.Forms.Styling.LogiklikButton();
         grpMapIs.SuspendLayout();
         SuspendLayout();
         // 
@@ -73,6 +73,6 @@ partial class ConditionControl_Map
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpMapIs;
-    private DarkUI.Controls.DarkButton btnSelectMap;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpMapIs;
+    private Intersect.Editor.Forms.Styling.LogiklikButton btnSelectMap;
 }

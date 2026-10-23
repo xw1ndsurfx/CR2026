@@ -24,6 +24,27 @@ public sealed class NavalCargoWindowTests
     [TearDown] public void TearDown() {CurrentContent.SetValue(null,_previousContent);}
 
     [Test]
+    public void DungeonAbandonButtonFitsTheHudAndDisappearsWhenTheRunEnds()
+    {
+        using var renderer = new MetricsRenderer(); using var skin = new TestSkin(renderer);
+        using var canvas = new Canvas(skin) { Size = new Point(800, 600) };
+        var hud = new DungeonRunHudWindow(canvas);
+        var button = Descendants(hud).OfType<Button>().Single(b => b.Name == "DungeonRunAbandon");
+        hud.Apply(new DungeonRunStatePacket { RunId = Guid.NewGuid(), Status = DungeonRunStatus.Active });
+        Assert.That(button.IsHidden, Is.False);
+        Assert.That(button.Bottom, Is.LessThan(hud.Height));
+        Assert.That(button.X, Is.GreaterThanOrEqualTo(0));
+        Assert.That(button.Right, Is.LessThanOrEqualTo(hud.Width));
+        Assert.That(hud.GetComponentAt(button.X + 2, button.Y + 2), Is.SameAs(button),
+            "The HUD remains click-through while its abandon button receives input.");
+        foreach (var status in new[] { DungeonRunStatus.Completed, DungeonRunStatus.Failed, DungeonRunStatus.Abandoned })
+        {
+            hud.Apply(new DungeonRunStatePacket { Status = status });
+            Assert.That(button.IsHidden, Is.True);
+        }
+    }
+
+    [Test]
     public void FleetCardsShowEachShipAppearanceWithoutOverlappingTheirControls()
     {
         using var renderer=new MetricsRenderer();using var skin=new TestSkin(renderer);using var canvas=new Canvas(skin){Size=new Point(1024,768)};

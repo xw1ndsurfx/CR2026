@@ -28,9 +28,9 @@ partial class ConditionControl_QuestCompleted
     /// </summary>
     private void InitializeComponent()
     {
-        grpQuestCompleted = new DarkUI.Controls.DarkGroupBox();
+        grpQuestCompleted = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
         lblQuestCompleted = new Label();
-        cmbCompletedQuest = new DarkUI.Controls.DarkComboBox();
+        cmbCompletedQuest = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         grpQuestCompleted.SuspendLayout();
         SuspendLayout();
         // 
@@ -96,7 +96,7 @@ partial class ConditionControl_QuestCompleted
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpQuestCompleted;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpQuestCompleted;
     private Label lblQuestCompleted;
-    private DarkUI.Controls.DarkComboBox cmbCompletedQuest;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbCompletedQuest;
 }

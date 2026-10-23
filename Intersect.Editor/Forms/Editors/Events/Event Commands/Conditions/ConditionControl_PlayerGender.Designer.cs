@@ -28,8 +28,8 @@ partial class ConditionControl_PlayerGender
     /// </summary>
     private void InitializeComponent()
     {
-        grpGender = new DarkUI.Controls.DarkGroupBox();
-        cmbGender = new DarkUI.Controls.DarkComboBox();
+        grpGender = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        cmbGender = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblGender = new Label();
         grpGender.SuspendLayout();
         SuspendLayout();
@@ -96,7 +96,7 @@ partial class ConditionControl_PlayerGender
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpGender;
-    private DarkUI.Controls.DarkComboBox cmbGender;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpGender;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbGender;
     private Label lblGender;
 }

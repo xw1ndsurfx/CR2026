@@ -30,17 +30,17 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
         /// </summary>
         private void InitializeComponent()
         {
-            this.grpChangeColor = new DarkUI.Controls.DarkGroupBox();
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.btnSave = new DarkUI.Controls.DarkButton();
+            this.grpChangeColor = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnSave = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.lblAlpha = new System.Windows.Forms.Label();
             this.lblBlue = new System.Windows.Forms.Label();
             this.lblGreen = new System.Windows.Forms.Label();
             this.lblRed = new System.Windows.Forms.Label();
-            this.nudRgbaA = new DarkUI.Controls.DarkNumericUpDown();
-            this.nudRgbaB = new DarkUI.Controls.DarkNumericUpDown();
-            this.nudRgbaG = new DarkUI.Controls.DarkNumericUpDown();
-            this.nudRgbaR = new DarkUI.Controls.DarkNumericUpDown();
+            this.nudRgbaA = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
+            this.nudRgbaB = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
+            this.nudRgbaG = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
+            this.nudRgbaR = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
             this.grpChangeColor.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudRgbaA)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudRgbaB)).BeginInit();

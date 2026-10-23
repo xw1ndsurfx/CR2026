@@ -28,18 +28,18 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.grpConditionLists = new DarkUI.Controls.DarkGroupBox();
-            this.btnRemoveList = new DarkUI.Controls.DarkButton();
-            this.btnAddList = new DarkUI.Controls.DarkButton();
+            this.grpConditionLists = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.btnRemoveList = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnAddList = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.lstConditionLists = new System.Windows.Forms.ListBox();
             this.lblInstructions = new System.Windows.Forms.Label();
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.btnSave = new DarkUI.Controls.DarkButton();
-            this.grpConditionList = new DarkUI.Controls.DarkGroupBox();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnSave = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.grpConditionList = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
             this.txtListName = new DarkUI.Controls.DarkTextBox();
             this.lblListName = new System.Windows.Forms.Label();
-            this.btnRemoveCondition = new DarkUI.Controls.DarkButton();
-            this.btnAddCondition = new DarkUI.Controls.DarkButton();
+            this.btnRemoveCondition = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnAddCondition = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.lstConditions = new System.Windows.Forms.ListBox();
             this.grpConditionLists.SuspendLayout();
             this.grpConditionList.SuspendLayout();
@@ -218,16 +218,16 @@
 
         #endregion
 
-        private DarkUI.Controls.DarkGroupBox grpConditionLists;
-        private DarkUI.Controls.DarkButton btnCancel;
-        private DarkUI.Controls.DarkButton btnSave;
-        private DarkUI.Controls.DarkButton btnRemoveList;
-        private DarkUI.Controls.DarkButton btnAddList;
+        private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpConditionLists;
+        private Intersect.Editor.Forms.Styling.LogiklikButton btnCancel;
+        private Intersect.Editor.Forms.Styling.LogiklikButton btnSave;
+        private Intersect.Editor.Forms.Styling.LogiklikButton btnRemoveList;
+        private Intersect.Editor.Forms.Styling.LogiklikButton btnAddList;
         private System.Windows.Forms.ListBox lstConditionLists;
         private System.Windows.Forms.Label lblInstructions;
-        private DarkUI.Controls.DarkGroupBox grpConditionList;
-        private DarkUI.Controls.DarkButton btnRemoveCondition;
-        private DarkUI.Controls.DarkButton btnAddCondition;
+        private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpConditionList;
+        private Intersect.Editor.Forms.Styling.LogiklikButton btnRemoveCondition;
+        private Intersect.Editor.Forms.Styling.LogiklikButton btnAddCondition;
         private System.Windows.Forms.ListBox lstConditions;
         private DarkUI.Controls.DarkTextBox txtListName;
         private System.Windows.Forms.Label lblListName;

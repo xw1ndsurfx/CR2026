@@ -32,14 +32,14 @@ namespace Intersect.Editor.Forms.Editors
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmCommonEvent));
-            this.grpCommonEvents = new DarkUI.Controls.DarkGroupBox();
+            this.grpCommonEvents = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
             this.lstGameObjects = new Intersect.Editor.Forms.Controls.GameObjectList();
-            this.btnClearSearch = new DarkUI.Controls.DarkButton();
+            this.btnClearSearch = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.txtSearch = new DarkUI.Controls.DarkTextBox();
-            this.btnAddFolder = new DarkUI.Controls.DarkButton();
+            this.btnAddFolder = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.lblFolder = new System.Windows.Forms.Label();
-            this.cmbFolder = new DarkUI.Controls.DarkComboBox();
-            this.toolStrip = new DarkUI.Controls.DarkToolStrip();
+            this.cmbFolder = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
+            this.toolStrip = new Intersect.Editor.Forms.Styling.LogiklikToolStrip();
             this.toolStripItemNew = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripItemDelete = new System.Windows.Forms.ToolStripButton();

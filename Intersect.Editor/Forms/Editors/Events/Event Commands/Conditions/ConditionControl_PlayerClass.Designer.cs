@@ -28,8 +28,8 @@ partial class ConditionControl_PlayerClass
     /// </summary>
     private void InitializeComponent()
     {
-        grpClass = new DarkUI.Controls.DarkGroupBox();
-        cmbClass = new DarkUI.Controls.DarkComboBox();
+        grpClass = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        cmbClass = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblClass = new Label();
         grpClass.SuspendLayout();
         SuspendLayout();
@@ -96,7 +96,7 @@ partial class ConditionControl_PlayerClass
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpClass;
-    private DarkUI.Controls.DarkComboBox cmbClass;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpClass;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbClass;
     private Label lblClass;
 }

@@ -28,21 +28,21 @@ partial class ConditionControl_HasItemOrSlots
     /// </summary>
     private void InitializeComponent()
     {
-        grpInventoryConditions = new DarkUI.Controls.DarkGroupBox();
-        chkBank = new DarkUI.Controls.DarkCheckBox();
-        grpVariableAmount = new DarkUI.Controls.DarkGroupBox();
-        cmbInvVariable = new DarkUI.Controls.DarkComboBox();
+        grpInventoryConditions = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        chkBank = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
+        grpVariableAmount = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        cmbInvVariable = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblInvVariable = new Label();
-        rdoInvGuildVariable = new DarkUI.Controls.DarkRadioButton();
-        rdoInvGlobalVariable = new DarkUI.Controls.DarkRadioButton();
-        rdoInvPlayerVariable = new DarkUI.Controls.DarkRadioButton();
-        grpManualAmount = new DarkUI.Controls.DarkGroupBox();
-        nudItemAmount = new DarkUI.Controls.DarkNumericUpDown();
+        rdoInvGuildVariable = new Intersect.Editor.Forms.Styling.LogiklikRadioButton();
+        rdoInvGlobalVariable = new Intersect.Editor.Forms.Styling.LogiklikRadioButton();
+        rdoInvPlayerVariable = new Intersect.Editor.Forms.Styling.LogiklikRadioButton();
+        grpManualAmount = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        nudItemAmount = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
         lblItemQuantity = new Label();
-        grpAmountType = new DarkUI.Controls.DarkGroupBox();
-        rdoVariable = new DarkUI.Controls.DarkRadioButton();
-        rdoManual = new DarkUI.Controls.DarkRadioButton();
-        cmbItem = new DarkUI.Controls.DarkComboBox();
+        grpAmountType = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        rdoVariable = new Intersect.Editor.Forms.Styling.LogiklikRadioButton();
+        rdoManual = new Intersect.Editor.Forms.Styling.LogiklikRadioButton();
+        cmbItem = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblItem = new Label();
         grpInventoryConditions.SuspendLayout();
         grpVariableAmount.SuspendLayout();
@@ -298,20 +298,20 @@ partial class ConditionControl_HasItemOrSlots
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpInventoryConditions;
-    private DarkUI.Controls.DarkCheckBox chkBank;
-    private DarkUI.Controls.DarkGroupBox grpVariableAmount;
-    private DarkUI.Controls.DarkComboBox cmbInvVariable;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpInventoryConditions;
+    private Intersect.Editor.Forms.Styling.LogiklikCheckBox chkBank;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpVariableAmount;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbInvVariable;
     private Label lblInvVariable;
-    private DarkUI.Controls.DarkRadioButton rdoInvGuildVariable;
-    private DarkUI.Controls.DarkRadioButton rdoInvGlobalVariable;
-    private DarkUI.Controls.DarkRadioButton rdoInvPlayerVariable;
-    private DarkUI.Controls.DarkGroupBox grpManualAmount;
-    private DarkUI.Controls.DarkNumericUpDown nudItemAmount;
+    private Intersect.Editor.Forms.Styling.LogiklikRadioButton rdoInvGuildVariable;
+    private Intersect.Editor.Forms.Styling.LogiklikRadioButton rdoInvGlobalVariable;
+    private Intersect.Editor.Forms.Styling.LogiklikRadioButton rdoInvPlayerVariable;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpManualAmount;
+    private Intersect.Editor.Forms.Styling.LogiklikNumericUpDown nudItemAmount;
     private Label lblItemQuantity;
-    private DarkUI.Controls.DarkGroupBox grpAmountType;
-    private DarkUI.Controls.DarkRadioButton rdoVariable;
-    private DarkUI.Controls.DarkRadioButton rdoManual;
-    private DarkUI.Controls.DarkComboBox cmbItem;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpAmountType;
+    private Intersect.Editor.Forms.Styling.LogiklikRadioButton rdoVariable;
+    private Intersect.Editor.Forms.Styling.LogiklikRadioButton rdoManual;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbItem;
     private Label lblItem;
 }

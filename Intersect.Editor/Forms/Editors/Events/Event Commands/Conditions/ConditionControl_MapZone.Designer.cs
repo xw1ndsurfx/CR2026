@@ -28,9 +28,9 @@ partial class ConditionControl_MapZone
     /// </summary>
     private void InitializeComponent()
     {
-        grpMapZoneType = new DarkUI.Controls.DarkGroupBox();
+        grpMapZoneType = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
         lblMapZoneType = new Label();
-        cmbMapZoneType = new DarkUI.Controls.DarkComboBox();
+        cmbMapZoneType = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         grpMapZoneType.SuspendLayout();
         SuspendLayout();
         // 
@@ -96,7 +96,7 @@ partial class ConditionControl_MapZone
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpMapZoneType;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpMapZoneType;
     private Label lblMapZoneType;
-    private DarkUI.Controls.DarkComboBox cmbMapZoneType;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbMapZoneType;
 }

@@ -30,11 +30,11 @@ namespace Intersect.Editor.Forms.Editors.Events.Event_Commands
         /// </summary>
         private void InitializeComponent()
         {
-            this.grpSetClass = new DarkUI.Controls.DarkGroupBox();
-            this.cmbClass = new DarkUI.Controls.DarkComboBox();
+            this.grpSetClass = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.cmbClass = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
             this.lblClass = new System.Windows.Forms.Label();
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.btnSave = new DarkUI.Controls.DarkButton();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnSave = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.grpSetClass.SuspendLayout();
             this.SuspendLayout();
             // 

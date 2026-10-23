@@ -33,16 +33,16 @@ namespace Intersect.Editor.Forms
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmWarpSelection));
-            this.grpEverything = new DarkUI.Controls.DarkGroupBox();
+            this.grpEverything = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
             this.btnRefreshPreview = new System.Windows.Forms.Button();
-            this.grpMapPreview = new DarkUI.Controls.DarkGroupBox();
+            this.grpMapPreview = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
             this.pnlMapContainer = new System.Windows.Forms.Panel();
             this.pnlMap = new System.Windows.Forms.Panel();
-            this.grpMapList = new DarkUI.Controls.DarkGroupBox();
-            this.chkAlphabetical = new DarkUI.Controls.DarkCheckBox();
+            this.grpMapList = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+            this.chkAlphabetical = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
             this.mapTreeList1 = new Intersect.Editor.Forms.Controls.MapTreeList();
-            this.btnCancel = new DarkUI.Controls.DarkButton();
-            this.btnOk = new DarkUI.Controls.DarkButton();
+            this.btnCancel = new Intersect.Editor.Forms.Styling.LogiklikButton();
+            this.btnOk = new Intersect.Editor.Forms.Styling.LogiklikButton();
             this.tmrMapCheck = new System.Windows.Forms.Timer(this.components);
             this.grpEverything.SuspendLayout();
             this.grpMapPreview.SuspendLayout();

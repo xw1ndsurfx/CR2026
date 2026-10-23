@@ -28,8 +28,8 @@ partial class ConditionControl_PlayerSpell
     /// </summary>
     private void InitializeComponent()
     {
-        grpSpell = new DarkUI.Controls.DarkGroupBox();
-        cmbSpell = new DarkUI.Controls.DarkComboBox();
+        grpSpell = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        cmbSpell = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblSpell = new Label();
         grpSpell.SuspendLayout();
         SuspendLayout();
@@ -96,7 +96,7 @@ partial class ConditionControl_PlayerSpell
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpSpell;
-    private DarkUI.Controls.DarkComboBox cmbSpell;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpSpell;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbSpell;
     private Label lblSpell;
 }

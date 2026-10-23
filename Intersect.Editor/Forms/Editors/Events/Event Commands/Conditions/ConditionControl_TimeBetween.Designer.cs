@@ -28,11 +28,11 @@ partial class ConditionControl_TimeBetween
     /// </summary>
     private void InitializeComponent()
     {
-        grpTime = new DarkUI.Controls.DarkGroupBox();
+        grpTime = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
         lblEndRange = new Label();
         lblStartRange = new Label();
-        cmbTime2 = new DarkUI.Controls.DarkComboBox();
-        cmbTime1 = new DarkUI.Controls.DarkComboBox();
+        cmbTime2 = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
+        cmbTime1 = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblAnd = new Label();
         grpTime.SuspendLayout();
         SuspendLayout();
@@ -143,10 +143,10 @@ partial class ConditionControl_TimeBetween
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpTime;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpTime;
     private Label lblEndRange;
     private Label lblStartRange;
-    private DarkUI.Controls.DarkComboBox cmbTime2;
-    private DarkUI.Controls.DarkComboBox cmbTime1;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbTime2;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbTime1;
     private Label lblAnd;
 }

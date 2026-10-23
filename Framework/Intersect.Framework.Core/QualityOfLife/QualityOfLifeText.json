@@ -1,5 +1,33 @@
 ﻿{
   "Entries": {
+    "OK": { "en": "OK", "fr": "OK", "es": "Aceptar" },
+    "Yes": { "en": "Yes", "fr": "Oui", "es": "Sí" },
+    "No": { "en": "No", "fr": "Non", "es": "No" },
+    "Abort": { "en": "Abort", "fr": "Abandonner", "es": "Anular" },
+    "Retry": { "en": "Retry", "fr": "Réessayer", "es": "Reintentar" },
+    "Ignore": { "en": "Ignore", "fr": "Ignorer", "es": "Omitir" },
+    "Try again": { "en": "Try again", "fr": "Réessayer", "es": "Intentar de nuevo" },
+    "Continue": { "en": "Continue", "fr": "Continuer", "es": "Continuar" },
+    "Abandon dungeon": {
+      "en": "Abandon dungeon",
+      "fr": "Abandonner le donjon",
+      "es": "Abandonar la mazmorra"
+    },
+    "Leave this dungeon? You will return to the exit and forfeit unclaimed rewards. Other players can continue.": {
+      "en": "Leave this dungeon? You will return to the exit and forfeit unclaimed rewards. Other players can continue.",
+      "fr": "Quitter ce donjon ? Vous retournerez à la sortie et perdrez les récompenses non récupérées. Les autres joueurs pourront continuer.",
+      "es": "¿Salir de esta mazmorra? Volverás a la salida y perderás las recompensas no recogidas. Los demás jugadores podrán continuar."
+    },
+    "DUNGEON ABANDONED": {
+      "en": "DUNGEON ABANDONED",
+      "fr": "DONJON ABANDONNÉ",
+      "es": "MAZMORRA ABANDONADA"
+    },
+    "You abandoned the dungeon.": {
+      "en": "You abandoned the dungeon.",
+      "fr": "Vous avez abandonné le donjon.",
+      "es": "Has abandonado la mazmorra."
+    },
     "Generates rain without an animation. Uses weather intensity and wind; zero vertical speed uses the default fall speed. Ground splashes and random weather are optional.": {
       "en": "Generates rain without an animation. Uses weather intensity and wind; zero vertical speed uses the default fall speed. Ground splashes and random weather are optional.",
       "fr": "Produit la pluie sans animation. Utilise l'intensité et le vent de la météo ; une vitesse verticale nulle utilise la vitesse de chute par défaut. Les éclaboussures et la météo aléatoire sont facultatives.",

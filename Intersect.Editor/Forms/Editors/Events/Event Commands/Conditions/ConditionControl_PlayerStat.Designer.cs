@@ -28,13 +28,13 @@ partial class ConditionControl_PlayerStat
     /// </summary>
     private void InitializeComponent()
     {
-        grpLevelStat = new DarkUI.Controls.DarkGroupBox();
-        chkStatIgnoreBuffs = new DarkUI.Controls.DarkCheckBox();
-        nudLevelStatValue = new DarkUI.Controls.DarkNumericUpDown();
-        cmbLevelStat = new DarkUI.Controls.DarkComboBox();
+        grpLevelStat = new Intersect.Editor.Forms.Styling.LogiklikGroupBox();
+        chkStatIgnoreBuffs = new Intersect.Editor.Forms.Styling.LogiklikCheckBox();
+        nudLevelStatValue = new Intersect.Editor.Forms.Styling.LogiklikNumericUpDown();
+        cmbLevelStat = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblLevelOrStat = new Label();
         lblLvlStatValue = new Label();
-        cmbLevelComparator = new DarkUI.Controls.DarkComboBox();
+        cmbLevelComparator = new Intersect.Editor.Forms.Styling.LogiklikComboBox();
         lblLevelComparator = new Label();
         grpLevelStat.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)nudLevelStatValue).BeginInit();
@@ -171,12 +171,12 @@ partial class ConditionControl_PlayerStat
 
     #endregion
 
-    private DarkUI.Controls.DarkGroupBox grpLevelStat;
-    private DarkUI.Controls.DarkCheckBox chkStatIgnoreBuffs;
-    private DarkUI.Controls.DarkNumericUpDown nudLevelStatValue;
-    private DarkUI.Controls.DarkComboBox cmbLevelStat;
+    private Intersect.Editor.Forms.Styling.LogiklikGroupBox grpLevelStat;
+    private Intersect.Editor.Forms.Styling.LogiklikCheckBox chkStatIgnoreBuffs;
+    private Intersect.Editor.Forms.Styling.LogiklikNumericUpDown nudLevelStatValue;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbLevelStat;
     private Label lblLevelOrStat;
     private Label lblLvlStatValue;
-    private DarkUI.Controls.DarkComboBox cmbLevelComparator;
+    private Intersect.Editor.Forms.Styling.LogiklikComboBox cmbLevelComparator;
     private Label lblLevelComparator;
 }

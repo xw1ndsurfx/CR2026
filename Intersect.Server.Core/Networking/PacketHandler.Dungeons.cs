@@ -7,6 +7,14 @@ namespace Intersect.Server.Networking;
 
 internal sealed partial class PacketHandler
 {
+    public void HandlePacket(Client client, AbandonDungeonPacket packet)
+    {
+        if (client.IsEditor || client.Entity is not { InGame: true } player)
+            return;
+
+        DungeonRunRuntime.TryAbandon(player, packet.RunId);
+    }
+
     public void HandlePacket(Client client, RequestDungeonConfigurationPacket packet)
     {
         if (!client.IsEditor)
