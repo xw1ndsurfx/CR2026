@@ -1206,7 +1206,7 @@ public partial class FrmMapEditor : DockContent
                         };
 
                         tmpEventEditor.InitEditor(false, false, false);
-                        tmpEventEditor.ShowDialog();
+                        tmpEventEditor.ShowDialog(this);
                         mMapChanged = true;
                     }
                     else
@@ -1215,7 +1215,7 @@ public partial class FrmMapEditor : DockContent
                         { MyEvent = tmpEvent, MyMap = Globals.CurrentMap };
 
                         tmpEventEditor.InitEditor(false, false, false);
-                        tmpEventEditor.ShowDialog();
+                        tmpEventEditor.ShowDialog(this);
                     }
 
                     break;

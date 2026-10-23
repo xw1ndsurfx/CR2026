@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
@@ -816,7 +816,7 @@ public partial class FrmResource : EditorForm
         }
 
         var frm = new FrmDynamicRequirements(_editorItem.HarvestingRequirements, RequirementType.Resource);
-        frm.ShowDialog();
+        frm.ShowDialog(this);
     }
 
     private void txtCannotHarvest_TextChanged(object sender, EventArgs e)

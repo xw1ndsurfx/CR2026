@@ -194,6 +194,11 @@ public static partial class PacketSender
     {
         if (Globals.CurrentEditor != -1)
         {
+            if (Globals.CurrentEditor == (int)type && Globals.MainForm is { IsDisposed: false } main)
+            {
+                if (main.InvokeRequired) main.BeginInvoke((Action)(() => main.EditorDelegate(type)));
+                else main.EditorDelegate(type);
+            }
             return;
         }
 

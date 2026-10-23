@@ -1505,6 +1505,9 @@
       "fr": "Communauté Ascension Game Dev",
       "es": "Comunidad de Ascension Game Dev"
     },
+    "Full screen (F11)": { "en": "Full screen (F11)", "fr": "Plein écran (F11)", "es": "Pantalla completa (F11)" },
+    "Progression": { "en": "Progression", "fr": "Progression", "es": "Progresión" },
+    "Starting items and spells": { "en": "Starting items and spells", "fr": "Objets et sorts de départ", "es": "Objetos y hechizos iniciales" },
     "GNU General Public License v3": {
       "en": "GNU General Public License v3",
       "fr": "Licence publique générale GNU v3",

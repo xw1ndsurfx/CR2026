@@ -101,7 +101,7 @@ public partial class LightEditorCtrl : UserControl
     private void btnSelectLightColor_Click(object sender, EventArgs e)
     {
         colorDialog.Color = System.Drawing.Color.White;
-        colorDialog.ShowDialog();
+        colorDialog.ShowDialog(this);
         pnlLightColor.BackColor = colorDialog.Color;
         mEditingLight.Color = Color.FromArgb(
             colorDialog.Color.A, colorDialog.Color.R, colorDialog.Color.G, colorDialog.Color.B

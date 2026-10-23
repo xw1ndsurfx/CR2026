@@ -730,7 +730,7 @@ public partial class FrmSpell : EditorForm
     private void btnDynamicRequirements_Click(object sender, EventArgs e)
     {
         var frm = new FrmDynamicRequirements(mEditorItem.CastingRequirements, RequirementType.Spell);
-        frm.ShowDialog();
+        frm.ShowDialog(this);
     }
 
     private void cmbCastSprite_SelectedIndexChanged(object sender, EventArgs e)
@@ -765,7 +765,7 @@ public partial class FrmSpell : EditorForm
             MapList.OrderedMaps[cmbWarpMap.SelectedIndex].MapId, (int)nudWarpX.Value, (int)nudWarpY.Value
         );
 
-        frmWarpSelection.ShowDialog();
+        frmWarpSelection.ShowDialog(this);
         if (frmWarpSelection.GetResult())
         {
             for (var i = 0; i < MapList.OrderedMaps.Count; i++)

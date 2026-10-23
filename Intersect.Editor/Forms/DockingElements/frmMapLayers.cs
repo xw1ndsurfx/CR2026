@@ -962,7 +962,7 @@ public partial class FrmMapLayers : DockContent
             MapList.OrderedMaps[cmbWarpMap.SelectedIndex].MapId, (int) nudWarpX.Value, (int) nudWarpY.Value
         );
 
-        frmWarpSelection.ShowDialog();
+        frmWarpSelection.ShowDialog(this);
         if (frmWarpSelection.GetResult())
         {
             cmbWarpMap.Items.Clear();
@@ -1332,7 +1332,7 @@ public partial class FrmMapLayers : DockContent
         NpcPulseColor = ColorTranslator.FromHtml(Preferences.LoadPreference("NpcPulseColor"));
         npcColorPulseDialog.Color = NpcPulseColor == default ? System.Drawing.Color.Red : NpcPulseColor;
         npcColorPulseDialog.FullOpen = true;
-        npcColorPulseDialog.ShowDialog();
+        npcColorPulseDialog.ShowDialog(this);
         Preferences.SavePreference("NpcPulseColor", npcColorPulseDialog.Color.ToArgb().ToString());
         NpcPulseColor = ColorTranslator.FromHtml(Preferences.LoadPreference("NpcPulseColor"));
     }

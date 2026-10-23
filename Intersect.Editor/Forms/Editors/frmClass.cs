@@ -32,6 +32,7 @@ public partial class FrmClass : EditorForm
         ApplyHooks();
         InitializeComponent();
         Icon = Program.Icon;
+        ModernizeClassWorkspace();
 
         cmbWarpMap.Items.Clear();
         for (var i = 0; i < MapList.OrderedMaps.Count; i++)
@@ -720,7 +721,7 @@ public partial class FrmClass : EditorForm
             MapList.OrderedMaps[cmbWarpMap.SelectedIndex].MapId, (int) nudX.Value, (int) nudY.Value
         );
 
-        frmWarpSelection.ShowDialog();
+        frmWarpSelection.ShowDialog(this);
         if (frmWarpSelection.GetResult())
         {
             for (var i = 0; i < MapList.OrderedMaps.Count; i++)
