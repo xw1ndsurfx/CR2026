@@ -627,7 +627,7 @@ public partial class QuestTaskEditor : UserControl
         };
 
         editor.InitEditor(true, true, true);
-        editor.ShowDialog();
+        editor.ShowDialog(this);
         Globals.MainForm.BringToFront();
         BringToFront();
     }

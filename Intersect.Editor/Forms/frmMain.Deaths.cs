@@ -38,6 +38,6 @@ public partial class FrmMain
     {
         if (_deathEditor is { IsDisposed: false }) { _deathEditor.AcceptResponse(packet); return; }
         if (packet.Error.Length > 0) { MessageBox.Show(this, packet.Error, "Death Editor"); return; }
-        if (!packet.Saved) { _deathEditor = new FrmDeathConfiguration(packet.ConfigurationJson); _deathEditor.Show(this); }
+        if (!packet.Saved) { _deathEditor = new FrmDeathConfiguration(packet.ConfigurationJson); Styling.EditorWindows.Show(_deathEditor, this); }
     }
 }

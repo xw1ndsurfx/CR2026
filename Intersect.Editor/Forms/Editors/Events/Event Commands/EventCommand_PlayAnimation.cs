@@ -353,7 +353,7 @@ public partial class EventCommandPlayAnimation : UserControl
             MapList.OrderedMaps[cmbMap.SelectedIndex].MapId, (int) nudWarpX.Value, (int) nudWarpY.Value
         );
 
-        frmWarpSelection.ShowDialog();
+        frmWarpSelection.ShowDialog(this);
         if (frmWarpSelection.GetResult())
         {
             for (var i = 0; i < MapList.OrderedMaps.Count; i++)

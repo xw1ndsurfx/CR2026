@@ -1497,8 +1497,7 @@ public partial class FrmNpc : EditorForm
     private void btnPlayerFriendProtectorCond_Click(object sender, EventArgs e)
     {
         var frm = new FrmDynamicRequirements(mEditorItem.PlayerFriendConditions, RequirementType.NpcFriend);
-        frm.TopMost = true;
-        frm.ShowDialog();
+        frm.ShowDialog(this);
     }
 
     private void btnAttackOnSightCond_Click(object sender, EventArgs e)
@@ -1508,18 +1507,14 @@ public partial class FrmNpc : EditorForm
             var frm = new FrmDynamicRequirements(
                 mEditorItem.AttackOnSightConditions, RequirementType.NpcDontAttackOnSight
             );
-
-            frm.TopMost = true;
-            frm.ShowDialog();
+            frm.ShowDialog(this);
         }
         else
         {
             var frm = new FrmDynamicRequirements(
                 mEditorItem.AttackOnSightConditions, RequirementType.NpcAttackOnSight
             );
-
-            frm.TopMost = true;
-            frm.ShowDialog();
+            frm.ShowDialog(this);
         }
     }
 
@@ -1528,9 +1523,7 @@ public partial class FrmNpc : EditorForm
         var frm = new FrmDynamicRequirements(
             mEditorItem.PlayerCanAttackConditions, RequirementType.NpcCanBeAttacked
         );
-
-        frm.TopMost = true;
-        frm.ShowDialog();
+        frm.ShowDialog(this);
     }
 
     private void cmbOnDeathEventKiller_SelectedIndexChanged(object sender, EventArgs e)

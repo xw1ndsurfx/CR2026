@@ -40,6 +40,7 @@ internal static class Program
         }
         System.Console.WriteLine("PASS editor login creates map layers before server options; resource brush initializes once after configuration");
         optionsProperty.SetValue(null, new Options());
+        if (Environment.GetCommandLineArgs().Contains("--windows-only")) { EditorWindowTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--picker-only")) { SearchableChoiceTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--theme-only")) { WorkspaceThemeTests.Run(); EditorThemeCoverageTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--campfire-only")) { CampfireEditorTests.Run(); return; }
@@ -53,6 +54,7 @@ internal static class Program
         if (Environment.GetCommandLineArgs().Contains("--save-protection-only")) { SaveProtectionTests.Run(); return; }
         SaveProtectionTests.Run();
         SearchableChoiceTests.Run();
+        EditorWindowTests.Run();
         SoundImportTests.Run();
         NavalMapListTests.Run();
         HarbourDockEditorTests.Run();

@@ -27,7 +27,7 @@ public partial class FrmMain
     public void OpenDungeonEditor()
     {
         var editor = new FrmDungeonConfiguration();
-        editor.Show();
+        Styling.EditorWindows.Show(editor, this);
         editor.BringToFront();
     }
 }

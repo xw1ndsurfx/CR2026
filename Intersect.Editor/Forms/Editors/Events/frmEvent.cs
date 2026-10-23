@@ -1,4 +1,4 @@
-﻿using DarkUI.Controls;
+using DarkUI.Controls;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
@@ -836,7 +836,7 @@ public partial class FrmEvent : Form
     private void btnEditConditions_Click(object sender, EventArgs e)
     {
         var editForm = new FrmDynamicRequirements(CurrentPage.ConditionLists, RequirementType.Event);
-        editForm.ShowDialog();
+        editForm.ShowDialog(this);
     }
 
     private void txtCommand_TextChanged(object sender, EventArgs e)

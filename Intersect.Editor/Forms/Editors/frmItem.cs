@@ -1,4 +1,4 @@
-﻿using System.Drawing.Imaging;
+using System.Drawing.Imaging;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
@@ -997,7 +997,7 @@ public partial class FrmItem : EditorForm
     private void btnEditRequirements_Click(object sender, EventArgs e)
     {
         var frm = new FrmDynamicRequirements(mEditorItem.UsageRequirements, RequirementType.Item);
-        frm.ShowDialog();
+        frm.ShowDialog(this);
     }
 
     private void cmbAnimation_SelectedIndexChanged(object sender, EventArgs e)
