@@ -222,7 +222,6 @@ public partial class FrmDynamicRequirements : Form
 
         frm.Controls.Add(cmdWindow);
         cmdWindow.BringToFront();
-        frm.TopMost = true;
         frm.ShowDialog(this);
         if (cmdWindow.Cancelled)
         {
