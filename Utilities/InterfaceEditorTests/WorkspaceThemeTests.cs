@@ -19,6 +19,16 @@ internal static class WorkspaceThemeTests
         var selection = (DrawingColor)theme.GetField("Selection", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
         var menu = (MenuStrip)typeof(FrmMain).GetField("menuStrip", Flags)!.GetValue(main)!;
         var dock = (DockPanel)typeof(FrmMain).GetField("dockLeft", Flags)!.GetValue(main)!;
+        Check(menu.Items.OfType<ToolStripLabel>().Any(item => item.Name == "LogiklikWorkspaceIdentity"),
+            "Startup regression must include the non-command workspace identity.");
+        using (var separator = new ToolStripSeparator())
+        {
+            menu.Items.Add(separator);
+            // InitEditor runs this after login, independently of the GPU/network initialization.
+            typeof(FrmMain).GetMethod("GrabMouseDownEvents", Flags, null, Type.EmptyTypes, null)!.Invoke(main, null);
+            menu.Items.Remove(separator);
+        }
+        Console.WriteLine("PASS editor startup registers mouse handlers on menus with commands, labels and separators");
         Check(main.BackColor == background && dock.Theme.ColorPalette.TabSelectedActive.Background == selection,
             "Main window and docking chrome must use the Logiklik login palette.");
         var command = (ToolStripButton)typeof(FrmMain).GetField("toolStripBtnBrush", Flags)!.GetValue(main)!;

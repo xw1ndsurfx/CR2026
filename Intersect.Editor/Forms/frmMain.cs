@@ -1018,7 +1018,8 @@ public partial class FrmMain : Form
         {
             if (t is MenuStrip menuStrip)
             {
-                foreach (ToolStripMenuItem t1 in menuStrip.Items)
+                // Menus can also contain labels and separators (including the workspace identity).
+                foreach (ToolStripItem t1 in menuStrip.Items)
                 {
                     t1.MouseDown += MouseDownHandler;
                 }
