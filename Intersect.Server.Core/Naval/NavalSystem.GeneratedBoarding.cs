@@ -25,7 +25,10 @@ internal static partial class NavalSystem
                 .OrderByDescending(n=>n.Name.Contains("Herbonia",StringComparison.OrdinalIgnoreCase) || n.Name.Contains("Pirate",StringComparison.OrdinalIgnoreCase) || n.Name.Contains("Sailor",StringComparison.OrdinalIgnoreCase))
                 .ThenByDescending(n=>n.Aggressive).ThenBy(n=>Math.Abs(n.Level-patrol.Level)).FirstOrDefault();
         if(source==null || string.IsNullOrWhiteSpace(source.Sprite))return null;
-        var npc=new NPCDescriptor(Guid.NewGuid()){Name=source.Name,Sprite=source.Sprite,Aggressive=true,SightRange=12,
+        var sightRange = (int)Math.Ceiling(Math.Sqrt((double)layout.Width * layout.Width + (double)layout.Height * layout.Height));
+        var npc=new NPCDescriptor(Guid.NewGuid()){Name=source.Name,Sprite=source.Sprite,Aggressive=true,
+            // Wait at spawn between fights while keeping combat movement enabled.
+            Movement=(byte)NpcMovement.StandStill,SightRange=Math.Min(byte.MaxValue,sightRange),
             Level=patrol.Level,Damage=Math.Max(2,patrol.Level*2),AttackSpeedValue=1000,Experience=0,ExperienceMaximum=0};
         npc.MaxVitals[(int)Vital.Health]=40+patrol.Level*12;npc.MaxVitals[(int)Vital.Mana]=100;
         for(var i=0;i<npc.Stats.Length;i++)npc.Stats[i]=Math.Max(1,patrol.Level*2);

@@ -100,7 +100,10 @@ internal static class AchievementRuntime
             if (definition.TargetId != Guid.Empty && definition.TargetId != targetId)
                 continue;
 
-            if (!string.IsNullOrWhiteSpace(definition.TargetKey) &&
+            // NPC deaths supply a descriptor ID, never a custom counter key.
+            // A leftover editor key must not silently disable kill missions.
+            if (objectiveType != AchievementObjectiveType.NpcKills &&
+                !string.IsNullOrWhiteSpace(definition.TargetKey) &&
                 !string.Equals(definition.TargetKey, targetKey ?? string.Empty, StringComparison.OrdinalIgnoreCase))
                 continue;
 

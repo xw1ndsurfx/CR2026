@@ -16,7 +16,7 @@ public sealed partial class NavalTests
     public void AutomaticBoardingBuildsAnIsolatedPlayableDeckWithoutChangingAuthoredNpcs()
     {
         using var world = new EnemyTestWorld();
-        var source = new NPCDescriptor(Guid.NewGuid()) { Name = "Herbonia sailor", Sprite = "crew.png", Level = 2 };
+        var source = new NPCDescriptor(Guid.NewGuid()) { Name = "Herbonia sailor", Sprite = "crew.png", Level = 2, Movement = (byte)NpcMovement.Static };
         NPCDescriptor.Lookup.Set(source.Id, source);
         MapController? deck = null;
         Guid crewId = default;
@@ -45,7 +45,38 @@ public sealed partial class NavalTests
             Assert.That(crew.Level, Is.EqualTo(10));
             Assert.That(crew.Damage, Is.EqualTo(20));
             Assert.That(crew.MaxVitals[(int)Vital.Health], Is.EqualTo(160));
+            Assert.That(crew.Movement, Is.Not.EqualTo((byte)NpcMovement.Static), "Generated sailors must be able to pursue boarders.");
+            Assert.That(crew.Aggressive, Is.True);
+            var instanceId = Guid.NewGuid();
+            var instance = new MapInstance(deck, instanceId, null!);
+            var instances = (System.Collections.IDictionary)typeof(MapController)
+                .GetField("mInstances", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(deck)!;
+            instances.Add(instanceId, instance);
+            var boarder = new Intersect.Server.Entities.Player { Id = Guid.NewGuid(), MapId = deck.Id,
+                MapInstanceId = instanceId, InGame = true, X = (byte)generated.X, Y = (byte)generated.Y };
+            GC.SuppressFinalize(boarder);
+            instance.AddEntity(boarder);
+            instance.CacheMapBlocks();
+            try
+            {
+                foreach (var spawn in deck.Spawns)
+                {
+                    var sailor = new Intersect.Server.Entities.Npc(crew) { MapId = deck.Id, MapInstanceId = instanceId,
+                        X = (byte)spawn.X, Y = (byte)spawn.Y };
+                    GC.SuppressFinalize(sailor); instance.AddEntity(sailor);
+                    try
+                    {
+                        sailor.TryFindNewTarget(long.MaxValue);
+                        Assert.That(sailor.Target, Is.SameAs(boarder), "Every sailor detects the player at the boarding entry.");
+                        Assert.That(sailor.CanMoveInDirection(Direction.Down, out _, out _), Is.True,
+                            "Generated sailors can actually leave their spawn tile and pursue the boarder.");
+                    }
+                    finally { instance.RemoveEntity(sailor); }
+                }
+            }
+            finally { instance.RemoveEntity(boarder); }
             Assert.That(source.Level, Is.EqualTo(2));
+            Assert.That(source.Movement, Is.EqualTo((byte)NpcMovement.Static), "The authored NPC keeps its original movement behavior.");
             Assert.That(crew.Id, Is.Not.EqualTo(source.Id));
             var index = deck.MapGrid;
             Assert.That(index, Is.LessThan(0));

@@ -421,6 +421,7 @@ public sealed partial class FrmAchievementConfiguration : DarkForm
         }
 
         SelectId(_target, existingId);
+        _targetKey.Enabled = _selected != null && _objective.SelectedItem is not AchievementObjectiveType.NpcKills;
     }
 
     private static void Fill(ComboBox combo, IEnumerable<IdChoice> choices)
