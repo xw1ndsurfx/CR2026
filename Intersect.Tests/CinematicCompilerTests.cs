@@ -173,6 +173,13 @@ public sealed class CinematicCompilerTests
     [Test]
     public void CameraPacketRoundTripsThroughTheEnginePacketRegistry()
     {
+        // Use the same packet registry/bootstrap as the game, absent from the unit test host.
+        Options.EnsureCreated();
+        var registry = new Intersect.Network.PacketTypeRegistry(Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance,
+            typeof(Intersect.Network.IntersectPacket).Assembly);
+        Assert.That(registry.TryRegisterBuiltIn(), Is.True);
+        Assert.That(registry.Types, Does.Contain(typeof(Intersect.Network.Packets.Server.CinematicCameraPacket)));
+        Intersect.Network.PackedIntersectPacket.AddKnownTypes(registry.Types);
         var packet = new Intersect.Network.Packets.Server.CinematicCameraPacket
         { EventId = Guid.NewGuid(), MapId = Guid.NewGuid(), X = 4, Y = 5, Zoom = 2, DurationMs = 1500, Ease = CinematicEase.EaseOut };
         var bytes = Intersect.Network.MessagePacker.Instance.Serialize(packet);

@@ -9,11 +9,13 @@ public static partial class CommandProcessing
     private static void ProcessCommand(PlayCinematicCommand command, Player player, Event instance,
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
-        if (command.MapId != player.MapId || callStack.Count >= 32) return;
+        if (command.MapId != player.MapId || callStack.Count >= 32)
+        { RejectCinematic(player, callStack); return; }
         var map = Intersect.Server.Maps.MapController.Get(command.MapId);
         if (map == null || !map.LocalEvents.TryGetValue(command.SceneEventId, out var scene) || scene.Global ||
             scene.Pages.Count != 1 || scene.Pages[0].Cinematic == null ||
-            !Conditions.CanSpawnPage(scene.Pages[0], player, instance)) return;
+            !Conditions.CanSpawnPage(scene.Pages[0], player, instance))
+        { RejectCinematic(player, callStack); return; }
         callStack.Push(new CommandInstance(scene.Pages[0]));
     }
 
@@ -21,6 +23,11 @@ public static partial class CommandProcessing
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
         if (instance.TryBeginCinematic(command)) return;
+        RejectCinematic(player, callStack);
+    }
+
+    private static void RejectCinematic(Player player, Stack<CommandInstance> callStack)
+    {
         callStack.Clear();
         Intersect.Server.Networking.PacketSender.SendChatMsg(player,
             Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(

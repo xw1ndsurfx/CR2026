@@ -54,4 +54,6 @@ internal static class CinematicCamera
     { lock (Sync) { x = _pose?.X ?? 0; y = _pose?.Y ?? 0; return _pose != null; } }
     internal static void Release(Guid owner)
     { lock (Sync) if (_shot?.Owner == owner) { _shot = null; _pose = null; } }
+    internal static void Clear()
+    { lock (Sync) { _shot = null; _pose = null; } }
 }
