@@ -20,7 +20,7 @@ public partial class EventCommandOpenCraftingTable : UserControl
         mEventEditor = editor;
         InitLocalization();
         cmbTable.Items.Clear();
-        cmbTable.Items.AddRange(CraftingTableDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<CraftingTableDescriptor>(cmbTable);
         cmbTable.SelectedIndex = CraftingTableDescriptor.ListIndex(mMyCommand.CraftingTableId);
         chkJournalMode.Checked = mMyCommand.JournalMode;
     }

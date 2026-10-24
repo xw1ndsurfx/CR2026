@@ -70,7 +70,7 @@ public partial class EventCommandInput : UserControl
         cmbVariable.Items.Clear();
         if (rdoPlayerVariables.Checked)
         {
-            cmbVariable.Items.AddRange(PlayerVariableDescriptor.Names);
+            Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<PlayerVariableDescriptor>(cmbVariable);
             cmbVariable.SelectedIndex = PlayerVariableDescriptor.ListIndex(mMyCommand.VariableId);
 
             if (cmbVariable.SelectedIndex != -1)
@@ -82,7 +82,7 @@ public partial class EventCommandInput : UserControl
         }
         else if (rdoGlobalVariables.Checked)
         {
-            cmbVariable.Items.AddRange(ServerVariableDescriptor.Names);
+            Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ServerVariableDescriptor>(cmbVariable);
             cmbVariable.SelectedIndex = ServerVariableDescriptor.ListIndex(mMyCommand.VariableId);
 
             if (cmbVariable.SelectedIndex != -1)
@@ -94,7 +94,7 @@ public partial class EventCommandInput : UserControl
         }
         else if (rdoGuildVariables.Checked)
         {
-            cmbVariable.Items.AddRange(GuildVariableDescriptor.Names);
+            Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<GuildVariableDescriptor>(cmbVariable);
             cmbVariable.SelectedIndex = GuildVariableDescriptor.ListIndex(mMyCommand.VariableId);
             if (cmbVariable.SelectedIndex != -1)
             {
@@ -105,7 +105,7 @@ public partial class EventCommandInput : UserControl
         }
         else if (rdoUserVariables.Checked)
         {
-            cmbVariable.Items.AddRange(UserVariableDescriptor.Names);
+            Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<UserVariableDescriptor>(cmbVariable);
             cmbVariable.SelectedIndex = UserVariableDescriptor.ListIndex(mMyCommand.VariableId);
             if (cmbVariable.SelectedIndex != -1 && UserVariableDescriptor.TryGet(UserVariableDescriptor.IdFromList(cmbVariable.SelectedIndex), out var userVar))
             {

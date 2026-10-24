@@ -15,7 +15,11 @@ public partial class MapInstance
     private float _strikeX,_strikeY;
     internal bool WeatherIsActive=>WeatherActive(MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
     internal bool IsRaining=>RainActive(MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
-    internal int EffectiveBrightness=>RainAdjustedBrightness(Brightness,MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
+    private readonly WeatherTransition _weatherTransition = new();
+    internal float WeatherStrength => _weatherTransition.Update(WeatherIsActive, Environment.TickCount64);
+    internal int TransitionBrightness(int normal) => RainIsConfigured && WeatherEffects.OverrideRainBrightness
+        ? (int)Math.Round(normal + (Math.Clamp(WeatherEffects.RainBrightness, 0, 100) - normal) * WeatherStrength) : normal;
+    internal int EffectiveBrightness => TransitionBrightness(Brightness);
     private void SpawnRainSplash(float x,float y)
     {
         if(_rainSplashes.Count+_stormAnimations.Count>=96)return;
@@ -33,7 +37,7 @@ public partial class MapInstance
     {
         UpdateRainSound();
         var now=Environment.TickCount64;
-        if(WeatherEffects.Flashes || WeatherEffects.Lightning || !string.IsNullOrWhiteSpace(WeatherEffects.ThunderSound))
+        if(WeatherIsActive && WeatherStrength > .3f && (WeatherEffects.Flashes || WeatherEffects.Lightning || !string.IsNullOrWhiteSpace(WeatherEffects.ThunderSound)))
         {
             if(_nextStrike==0)_nextStrike=now+Globals.Random.Next(10000,30001);
             if(now>=_nextStrike)

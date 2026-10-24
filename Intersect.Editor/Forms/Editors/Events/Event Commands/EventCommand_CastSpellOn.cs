@@ -19,7 +19,7 @@ public partial class EventCommand_CastSpellOn : UserControl
         InitLocalization();
 
         cmbSpell.Items.Clear();
-        cmbSpell.Items.AddRange(SpellDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<SpellDescriptor>(cmbSpell);
 
         PopulateForm(mMyCommand);
     }

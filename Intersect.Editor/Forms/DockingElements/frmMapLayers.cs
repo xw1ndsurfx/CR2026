@@ -58,6 +58,12 @@ public partial class FrmMapLayers : DockContent
     public FrmMapLayers()
     {
         InitializeComponent();
+        // Scroll each page: the outer dock only sees the fill-sized panels.
+        foreach (var page in new[] { pnlNpcs, pnlAttributes, pnlLights, pnlEvents })
+        {
+            page.AutoScroll = true;
+            page.Padding = new Padding(0, 0, 12, 12);
+        }
         Icon = Program.Icon;
 
         mMapLayers.Add(picLayer1);
@@ -533,7 +539,7 @@ public partial class FrmMapLayers : DockContent
             case MapAttributeType.Item:
                 grpItem.Visible = true;
                 cmbItemAttribute.Items.Clear();
-                cmbItemAttribute.Items.AddRange(ItemDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbItemAttribute);
                 if (cmbItemAttribute.Items.Count > 0)
                 {
                     cmbItemAttribute.SelectedIndex = 0;
@@ -568,7 +574,7 @@ public partial class FrmMapLayers : DockContent
             case MapAttributeType.Resource:
                 grpResource.Visible = true;
                 cmbResourceAttribute.Items.Clear();
-                cmbResourceAttribute.Items.AddRange(ResourceDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ResourceDescriptor>(cmbResourceAttribute);
                 if (cmbResourceAttribute.Items.Count > 0)
                 {
                     cmbResourceAttribute.SelectedIndex = 0;
@@ -578,7 +584,7 @@ public partial class FrmMapLayers : DockContent
             case MapAttributeType.Animation:
                 grpAnimation.Visible = true;
                 cmbAnimationAttribute.Items.Clear();
-                cmbAnimationAttribute.Items.AddRange(AnimationDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbAnimationAttribute);
                 if (cmbAnimationAttribute.Items.Count > 0)
                 {
                     cmbAnimationAttribute.SelectedIndex = 0;
@@ -593,13 +599,11 @@ public partial class FrmMapLayers : DockContent
                 grpCritter.Visible = true;
                 cmbCritterAnimation.Items.Clear();
                 cmbCritterAnimation.Items.Add(Strings.General.None);
-                cmbCritterAnimation.Items.AddRange(AnimationDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbCritterAnimation);
                 cmbCritterAnimation.SelectedIndex = 0;
                 cmbCritterSprite.Items.Clear();
                 cmbCritterSprite.Items.Add(Strings.General.None);
-                cmbCritterSprite.Items.AddRange(
-                    GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
-                );
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbCritterSprite, GameContentManager.TextureType.Entity);
                 cmbCritterSprite.SelectedIndex = 0;
                 if (nudCritterMoveFrequency.Value == 0)
                 {
@@ -787,7 +791,7 @@ public partial class FrmMapLayers : DockContent
     {
         // Update the list incase npcs have been modified since form load.
         cmbNpc.Items.Clear();
-        cmbNpc.Items.AddRange(NPCDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<NPCDescriptor>(cmbNpc);
 
         // Add the map NPCs
         lstMapNpcs.Items.Clear();

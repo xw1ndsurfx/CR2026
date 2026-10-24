@@ -10,6 +10,7 @@ internal static class EditorWindows
     private sealed class State
     {
         internal bool Fullscreen;
+        internal bool ResolvingOwner;
         internal Rectangle Bounds;
         internal FormBorderStyle Border;
         internal FormWindowState WindowState;
@@ -76,25 +77,33 @@ internal static class EditorWindows
     private static void EnsureOwner(Form window)
     {
         if (window is FrmMain or FrmLogin || !window.TopLevel || window.IsDisposed) return;
-        if (window.Owner == null)
+        // Setting Owner can create handles and re-enter this method before the
+        // assignment completes. Never let that nested call reverse ownership.
+        if (!States.TryGetValue(window, out var state) || state.ResolvingOwner) return;
+        state.ResolvingOwner = true;
+        try
         {
-            var owner = Form.ActiveForm;
-            if (owner == window || owner is DockContent || owner == null || !owner.Visible)
+            if (window.Owner == null)
             {
-                owner = _lastActive != null && _lastActive.TryGetTarget(out var last) && last != window && !last.IsDisposed && last.Visible
-                    ? last : Intersect.Editor.General.Globals.MainForm;
+                var owner = Form.ActiveForm;
+                if (owner == window || owner is DockContent || owner == null || !owner.Visible)
+                {
+                    owner = _lastActive != null && _lastActive.TryGetTarget(out var last) && last != window && !last.IsDisposed && last.Visible
+                        ? last : Intersect.Editor.General.Globals.MainForm;
+                }
+                // Never create a cycle when the active window is already our child.
+                for (var ancestor = owner; ancestor != null; ancestor = ancestor.Owner)
+                    if (ancestor == window) return;
+                if (owner is { IsDisposed: false, Visible: true } && owner != window)
+                    window.Owner = owner;
             }
-            // Never create a cycle when the active window is already our child.
-            for (var ancestor = owner; ancestor != null; ancestor = ancestor.Owner)
-                if (ancestor == window) return;
-            if (owner is { IsDisposed: false, Visible: true } && owner != window)
-                window.Owner = owner;
+            if (window.Visible && window.Owner != null)
+            {
+                window.BringToFront();
+                window.Activate();
+            }
         }
-        if (window.Visible && window.Owner != null)
-        {
-            window.BringToFront();
-            window.Activate();
-        }
+        finally { state.ResolvingOwner = false; }
     }
 
     internal static bool SupportsFullscreen(Form window) => window is not FrmLogin && window is not DockContent &&

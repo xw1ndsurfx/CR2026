@@ -23,7 +23,7 @@ public partial class EventCommandChangeName : UserControl
         mEventEditor = editor;
 
         cmbVariable.Items.Clear();
-        cmbVariable.Items.AddRange(PlayerVariableDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<PlayerVariableDescriptor>(cmbVariable);
         
         InitLocalization();
     }

@@ -53,7 +53,7 @@ public partial class EventCommandPlayAnimation : UserControl
         mCurrentMap = currentMap;
         InitLocalization();
         cmbAnimation.Items.Clear();
-        cmbAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbAnimation);
         cmbAnimation.SelectedIndex = AnimationDescriptor.ListIndex(mMyCommand.AnimationId);
         if (mMyCommand.MapId != Guid.Empty)
         {

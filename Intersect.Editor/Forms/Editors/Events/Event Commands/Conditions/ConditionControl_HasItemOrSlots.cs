@@ -109,7 +109,7 @@ public partial class ConditionControl_HasItemOrSlots : UserControl
         cmbItem.Visible = true;
         chkBank.Visible = true;
         cmbItem.Items.Clear();
-        cmbItem.Items.AddRange(ItemDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbItem);
         SetupAmountInput();
         Show();
     }

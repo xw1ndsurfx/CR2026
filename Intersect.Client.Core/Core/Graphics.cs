@@ -1111,7 +1111,7 @@ public static partial class Graphics
 
     internal static Color RainTint(MapInstance map, Color normal)
     {
-        var brightness=map.RainAdjustedBrightness(100,MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
+        var brightness=map.TransitionBrightness(100);
         if(brightness==100)return normal;
         return new Color(255-(255-normal.A)*brightness/100,normal.R,normal.G,normal.B);
     }

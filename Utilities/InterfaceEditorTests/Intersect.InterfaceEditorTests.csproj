@@ -11,4 +11,5 @@
   </PropertyGroup>
   <ItemGroup><ProjectReference Include="../../Intersect.Editor/Intersect.Editor.csproj" /></ItemGroup>
   <ItemGroup><Reference Include="DarkUI"><HintPath>../../Intersect.Editor/DarkUI.dll</HintPath></Reference></ItemGroup>
+  <ItemGroup><Compile Include="../../Intersect.Client.Core/Maps/WeatherTransition.cs" Link="WeatherTransition.cs" /></ItemGroup>
 </Project>

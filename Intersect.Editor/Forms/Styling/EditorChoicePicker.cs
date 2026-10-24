@@ -29,6 +29,8 @@ internal sealed class EditorChoicePicker : Form
     private readonly LogiklikButton _select = new() { Width = 112, Height = 34 };
     private readonly System.Windows.Forms.Timer _searchDelay = new() { Interval = 120 };
     private readonly System.Windows.Forms.Timer _previewDelay = new() { Interval = 120 };
+    private readonly System.Windows.Forms.Timer _animation = new() { Interval = 50 };
+    private EditorObjectPreview? _objectPreview;
     private EditorChoice[] _visible = [];
     private bool _filtering;
     private string? _previewFile;
@@ -106,6 +108,7 @@ internal sealed class EditorChoicePicker : Form
         {
             if (args.KeyCode == Keys.Down && _visible.Length > 0) { _list.Focus(); args.Handled = args.SuppressKeyPress = true; }
         };
+        _animation.Tick += (_, _) => { var old = _image.Image; _image.Image = _objectPreview?.Render(); old?.Dispose(); };
         _play.Click += (_, _) => PlayAudio(); _stop.Click += (_, _) => StopAudio();
         Shown += (_, _) => { ApplyFilter(); _search.Focus(); };
         EditorTheme.Apply(this);
@@ -152,10 +155,27 @@ internal sealed class EditorChoicePicker : Form
 
     private void UpdatePreview()
     {
+        _animation.Stop(); _objectPreview?.Dispose(); _objectPreview = null;
         StopAudio(); _image.Image?.Dispose(); _image.Image = null; _previewFile = null; _play.Enabled = false;
         if (_list.CurrentCell?.RowIndex is not int row || row < 0 || row >= _visible.Length)
         { _details.Text = string.Empty; _previewStatus.Text = T("Select an entry to preview it."); return; }
         var choice = _visible[row]; _details.Text = choice.Text;
+        if (choice.Descriptor is { } descriptor)
+        {
+            _objectPreview = EditorObjectPreview.Create(descriptor);
+            _image.Image = _objectPreview.Render();
+            _previewStatus.Text = _image.Image == null ? T("This entry has no visual resource configured.") : descriptor.Name;
+            if (_objectPreview.Animated) _animation.Start();
+            return;
+        }
+        if (_directory != null && Path.GetFileName(_directory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)) == "entities")
+        {
+            _objectPreview = EditorObjectPreview.EntityFile(choice.Text);
+            _image.Image = _objectPreview.Render();
+            _previewStatus.Text = _image.Image == null ? T("The selected resource is unavailable.") : choice.Text;
+            if (_objectPreview.Animated) _animation.Start();
+            return;
+        }
         _previewFile = EditorResourcePreview.ResolveFile(choice.Text, _directory);
         _previewStatus.Text = T("Preview unavailable. You can still select this entry.");
         if (_previewFile == null) return;
@@ -199,6 +219,7 @@ internal sealed class EditorChoicePicker : Form
     {
         if (disposing)
         {
+            _animation.Dispose(); _objectPreview?.Dispose(); _objectPreview = null;
             _searchDelay.Dispose(); _previewDelay.Dispose(); StopAudio();
             _image.Image?.Dispose(); _image.Image = null;
         }

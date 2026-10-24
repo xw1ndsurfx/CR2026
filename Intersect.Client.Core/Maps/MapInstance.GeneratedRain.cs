@@ -14,7 +14,7 @@ public partial class MapInstance
         var elapsed = _generatedRainUpdated == 0 ? 0 : (now - _generatedRainUpdated) / 1000f;
         _generatedRainUpdated = now;
         var view = Graphics.CurrentView;
-        _generatedRain.Update(view.Left, view.Top, view.Width, view.Height, WeatherIntensity,
+        _generatedRain.Update(view.Left, view.Top, view.Width, view.Height, (int)Math.Round(WeatherIntensity * WeatherStrength),
             WeatherXSpeed, WeatherYSpeed, elapsed, WeatherEffects.GroundSplashes ? SpawnRainSplash : null);
 
         var wind = GeneratedRainSimulation.WindSpeed(WeatherXSpeed);
@@ -23,7 +23,7 @@ public partial class MapInstance
         foreach (var drop in _generatedRain.Drops)
         {
             var length = 12 + 8 * drop.Depth;
-            var alpha = (byte)(55 + 65 * drop.Depth);
+            var alpha = (byte)((55 + 65 * drop.Depth) * WeatherStrength);
             Graphics.DrawGameTexture(Graphics.Renderer.WhitePixel, new FloatRect(0, 0, 1, 1),
                 new FloatRect(drop.X, drop.Y, drop.Depth, length), new Color(alpha, 165, 205, 235),
                 rotationDegrees: angle);

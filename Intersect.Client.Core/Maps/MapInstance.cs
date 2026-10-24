@@ -1401,10 +1401,10 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
         var desiredFogAlpha = FogTransparency;
         var desiredFogXSpeed = FogXSpeed;
         var desiredFogYSpeed = FogYSpeed;
-        if (IsRaining && WeatherEffects.OverrideRainFog)
+        if (RainIsConfigured && WeatherStrength > 0 && WeatherEffects.OverrideRainFog)
         {
             desiredFogName = WeatherEffects.RainFog;
-            desiredFogAlpha = Math.Clamp(WeatherEffects.RainFogOpacity,0,255);
+            desiredFogAlpha = (int)Math.Round(Math.Clamp(WeatherEffects.RainFogOpacity,0,255) * WeatherStrength);
             desiredFogXSpeed = Math.Clamp(WeatherEffects.RainFogXSpeed,-5,5);
             desiredFogYSpeed = Math.Clamp(WeatherEffects.RainFogYSpeed,-5,5);
         }
@@ -1551,9 +1551,10 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
             _weatherSoundOwner?.StopWeatherSounds();
             _weatherSoundOwner = this;
         }
-        if (Globals.Me.MapInstance!=this || !WeatherIsActive)
+        var strength = WeatherStrength;
+        if (Globals.Me.MapInstance != this || (!WeatherIsActive && strength <= 0))
         {
-            ClearWeather();return;
+            ClearWeather(); return;
         }
         if (WeatherEffects.GeneratedRain)
         {
@@ -1577,12 +1578,12 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
         _removeParticles.Clear();
 
-        if ((WeatherXSpeed != 0 || WeatherYSpeed != 0) && Globals.Me.MapInstance == this)
+        if (strength > 0 && (WeatherXSpeed != 0 || WeatherYSpeed != 0) && Globals.Me.MapInstance == this)
         {
             if (Timing.Global.MillisecondsUtc > _weatherParticleSpawnTime && _weatherParticles.Count<256)
             {
                 _weatherParticles.Add(new WeatherParticle(_removeParticles, WeatherXSpeed, WeatherYSpeed, anim,WeatherEffects.GroundSplashes?SpawnRainSplash:null));
-                var spawnTime = 25 + (int)(475 * (1f - Math.Clamp(WeatherIntensity,0,100) / 100f));
+                var spawnTime = 25 + (int)(475 * (1f - Math.Clamp(WeatherIntensity * strength,0,100) / 100f));
                 spawnTime = (int)(spawnTime *
                                    (480000f /
                                     (Graphics.Renderer.ScreenWidth * Graphics.Renderer.ScreenHeight)));

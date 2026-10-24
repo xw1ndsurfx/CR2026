@@ -23,7 +23,7 @@ public partial class EventCommandChangeSpells : UserControl
         mCurrentPage = refPage;
         InitLocalization();
         cmbSpell.Items.Clear();
-        cmbSpell.Items.AddRange(SpellDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<SpellDescriptor>(cmbSpell);
         cmbAction.SelectedIndex = refCommand.Add ? 0 : 1;
         cmbSpell.SelectedIndex = SpellDescriptor.ListIndex(mMyCommand.SpellId);
         chkRemoveBound.Checked = mMyCommand.RemoveBoundSpell;

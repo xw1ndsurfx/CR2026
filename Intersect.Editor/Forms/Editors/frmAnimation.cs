@@ -334,16 +334,12 @@ public partial class FrmAnimation : EditorForm
         //Lower Animation Graphic
         cmbLowerGraphic.Items.Clear();
         cmbLowerGraphic.Items.Add(Strings.General.None);
-        cmbLowerGraphic.Items.AddRange(
-            GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Animation)
-        );
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbLowerGraphic, GameContentManager.TextureType.Animation);
 
         //Upper Animation Graphic
         cmbUpperGraphic.Items.Clear();
         cmbUpperGraphic.Items.Add(Strings.General.None);
-        cmbUpperGraphic.Items.AddRange(
-            GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Animation)
-        );
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbUpperGraphic, GameContentManager.TextureType.Animation);
 
         mLowerWindow = new SwapChainRenderTarget(
             Core.Graphics.GetGraphicsDevice(), picLowerAnimation.Handle, picLowerAnimation.Width,

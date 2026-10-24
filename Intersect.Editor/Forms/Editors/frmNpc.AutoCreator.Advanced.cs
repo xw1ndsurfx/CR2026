@@ -117,7 +117,7 @@ public partial class FrmNpc
                          item.UsageRequirements.Lists.All(list => list.Conditions.Count == 0))
                      .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase))
         {
-            options.LootItem.Items.Add(item.Name);
+            Intersect.Editor.Forms.Styling.SearchableChoices.SetDescriptor(options.LootItem, options.LootItem.Items.Add(item.Name), item);
             options.LootIds.Add(item.Id);
         }
         options.LootItem.SelectedIndex = 0;
@@ -129,7 +129,7 @@ public partial class FrmNpc
                      .Where(npc => npc.Id != mEditorItem?.Id)
                      .OrderBy(npc => npc.Name, StringComparer.OrdinalIgnoreCase))
         {
-            options.HostileNpc.Items.Add(npc.Name);
+            Intersect.Editor.Forms.Styling.SearchableChoices.SetDescriptor(options.HostileNpc, options.HostileNpc.Items.Add(npc.Name), npc);
             options.HostileIds.Add(npc.Id);
         }
         options.HostileNpc.SelectedIndex = 0;
