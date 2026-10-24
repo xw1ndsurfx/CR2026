@@ -1237,6 +1237,8 @@ public partial class FrmMapLayers : DockContent
         pnlLights.Show();
     }
 
+    public void ActivateEvents() => btnEventsHeader_Click(this, EventArgs.Empty);
+
     private void btnEventsHeader_Click(object sender, EventArgs e)
     {
         if (Globals.CurrentLayer != LayerOptions.Lights && Globals.CurrentLayer != LayerOptions.Events && Globals.CurrentLayer != LayerOptions.Npcs)

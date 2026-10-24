@@ -40,6 +40,7 @@ internal static class Program
         }
         System.Console.WriteLine("PASS editor login creates map layers before server options; resource brush initializes once after configuration");
         optionsProperty.SetValue(null, new Options());
+        if (Environment.GetCommandLineArgs().Contains("--hub-only")) { EditorHubTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--editor-fixes-only")) { EditorFixesTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--windows-only")) { EditorWindowTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--picker-only")) { SearchableChoiceTests.Run(); return; }
