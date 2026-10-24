@@ -1,0 +1,17 @@
+using Intersect.Framework.Core.Cinematics;
+using MessagePack;
+namespace Intersect.Network.Packets.Server;
+
+// Server-to-recipient only. No client completion/reward packet.
+[MessagePackObject]
+public sealed class CinematicCameraPacket : IntersectPacket
+{
+    [Key(0)] public Guid EventId { get; set; }
+    [Key(1)] public Guid MapId { get; set; }
+    [Key(2)] public float X { get; set; }
+    [Key(3)] public float Y { get; set; }
+    [Key(4)] public float Zoom { get; set; } = 1;
+    [Key(5)] public int DurationMs { get; set; }
+    [Key(6)] public CinematicEase Ease { get; set; }
+    [Key(7)] public bool Reset { get; set; }
+}

@@ -161,4 +161,7 @@ public enum EventCommandType
     GrantLootBonus = 1061,
     OpenAdventureLobby = 1062,
     ForceRain = 1063,
+    BeginCinematic = 1070,
+    CinematicCamera = 1071,
+    PlayCinematic = 1072,
 }
