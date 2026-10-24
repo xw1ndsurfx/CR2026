@@ -9,9 +9,11 @@ public partial class FrmMain
     private FrmMountConfiguration? _mountEditor;
     private void AddMountEditorMenu()
     {
-        var item = new ToolStripMenuItem(QualityOfLifeText.Get("Mount Editor", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
+        if (contentEditorsToolStripMenuItem.DropDownItems.Find("mountEditorToolStripMenuItem", false).Length > 0) return;
+        var item = new ToolStripMenuItem(QualityOfLifeText.Get("Mount Editor", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)) { Name = "mountEditorToolStripMenuItem" };
         item.Click += (_, _) => Networking.Network.SendPacket(new MountRequestPacket { Action = MountAction.GetConfiguration });
-        contentEditorsToolStripMenuItem.DropDownItems.Add(item);
+        contentEditorsToolStripMenuItem.DropDownItems.Insert(
+            contentEditorsToolStripMenuItem.DropDownItems.IndexOf(npcEditorToolStripMenuItem) + 1, item);
     }
     internal void ApplyMountConfiguration(MountStatePacket packet)
     {

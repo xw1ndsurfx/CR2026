@@ -641,9 +641,7 @@ public partial class FrmNpc : EditorForm
         {
             cmbSprite.Items.Clear();
             cmbSprite.Items.Add(Strings.General.None);
-            cmbSprite.Items.AddRange(
-                GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
-            );
+            Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbSprite, GameContentManager.TextureType.Entity);
 
             var index = cmbSprite.FindStringExact(selected);
             if (index >= 0)
@@ -663,35 +661,33 @@ public partial class FrmNpc : EditorForm
         // cmbSprite events before the rest of the NPC editor controls are initialized.
         cmbSprite.Items.Clear();
         cmbSprite.Items.Add(Strings.General.None);
-        cmbSprite.Items.AddRange(
-            GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Entity)
-        );
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbSprite, GameContentManager.TextureType.Entity);
 
         cmbSpell.Items.Clear();
-        cmbSpell.Items.AddRange(SpellDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<SpellDescriptor>(cmbSpell);
         cmbHostileNPC.Items.Clear();
-        cmbHostileNPC.Items.AddRange(NPCDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<NPCDescriptor>(cmbHostileNPC);
         cmbDropItem.Items.Clear();
         cmbDropItem.Items.Add(Strings.General.None);
-        cmbDropItem.Items.AddRange(ItemDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbDropItem);
         _cmbPetItem.Items.Clear();
         _cmbPetItem.Items.Add(Strings.General.None);
-        _cmbPetItem.Items.AddRange(ItemDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(_cmbPetItem);
         cmbAttackAnimation.Items.Clear();
         cmbAttackAnimation.Items.Add(Strings.General.None);
-        cmbAttackAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbAttackAnimation);
         _cmbBossAnimation.Items.Clear();
         _cmbBossAnimation.Items.Add(Strings.General.None);
-        _cmbBossAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(_cmbBossAnimation);
         _cmbBossDeathAnimation.Items.Clear();
         _cmbBossDeathAnimation.Items.Add(Strings.General.None);
-        _cmbBossDeathAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(_cmbBossDeathAnimation);
         cmbOnDeathEventKiller.Items.Clear();
         cmbOnDeathEventKiller.Items.Add(Strings.General.None);
-        cmbOnDeathEventKiller.Items.AddRange(EventDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<EventDescriptor>(cmbOnDeathEventKiller);
         cmbOnDeathEventParty.Items.Clear();
         cmbOnDeathEventParty.Items.Add(Strings.General.None);
-        cmbOnDeathEventParty.Items.AddRange(EventDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<EventDescriptor>(cmbOnDeathEventParty);
         cmbScalingStat.Items.Clear();
         for (var x = 0; x < Enum.GetValues<Stat>().Length; x++)
         {

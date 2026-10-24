@@ -36,7 +36,7 @@ public partial class ConditionControl_PlayerClass : UserControl
     public new void Show()
     {
         cmbClass.Items.Clear();
-        cmbClass.Items.AddRange(ClassDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ClassDescriptor>(cmbClass);
         base.Show();
     }
 }

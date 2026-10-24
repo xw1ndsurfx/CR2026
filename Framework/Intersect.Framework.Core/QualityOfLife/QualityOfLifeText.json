@@ -1,5 +1,8 @@
 ﻿{
   "Entries": {
+    "Use this table as the camp fire creator": { "en": "Use this table as the camp fire creator", "fr": "Utiliser cette table pour créer les feux de camp", "es": "Usar esta mesa para crear fogatas" },
+    "Adds existing campfire recipes to this table. Other recipes are kept.": { "en": "Adds existing campfire recipes to this table. Other recipes are kept.", "fr": "Ajoute les recettes de feu de camp existantes à cette table. Les autres recettes sont conservées.", "es": "Añade las recetas de fogata existentes a esta mesa. Se conservan las otras recetas." },
+    "This entry has no visual resource configured.": { "en": "This entry has no visual resource configured.", "fr": "Aucune ressource visuelle n’est configurée pour cet élément.", "es": "Esta entrada no tiene un recurso visual configurado." },
     "Duplicate": {"en":"Duplicate","fr":"Dupliquer","es":"Duplicar"},
     "Delete": {"en":"Delete","fr":"Supprimer","es":"Eliminar"},
     "Speed": {"en":"Speed","fr":"Vitesse","es":"Velocidad"},

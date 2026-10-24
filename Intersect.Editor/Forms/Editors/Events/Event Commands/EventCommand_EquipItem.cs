@@ -21,7 +21,7 @@ public partial class EventCommandEquipItems : UserControl
 
         InitLocalization();
         cmbItem.Items.Clear();
-        cmbItem.Items.AddRange(ItemDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbItem);
         cmbItem.SelectedIndex = ItemDescriptor.ListIndex(mMyCommand.ItemId);
         chkUnequip.Checked = mMyCommand.Unequip;
         optUnequipItem.Enabled = mMyCommand.Unequip;

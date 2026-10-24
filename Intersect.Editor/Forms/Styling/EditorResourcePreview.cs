@@ -31,7 +31,7 @@ internal static class EditorResourcePreview
         { return null; }
     }
 
-    internal static Bitmap? LoadImage(string path)
+    internal static Bitmap? LoadImage(string path, int maximumDimension = 2048)
     {
         try
         {
@@ -39,7 +39,7 @@ internal static class EditorResourcePreview
             using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
             using var source = Image.FromStream(stream);
             if ((long)source.Width * source.Height > 32_000_000) return null;
-            var scale = Math.Min(1d, 2048d / Math.Max(source.Width, source.Height));
+            var scale = Math.Min(1d, (double)maximumDimension / Math.Max(source.Width, source.Height));
             return new Bitmap(source, new Size(Math.Max(1, (int)(source.Width * scale)), Math.Max(1, (int)(source.Height * scale))));
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException or OutOfMemoryException or System.Runtime.InteropServices.ExternalException)

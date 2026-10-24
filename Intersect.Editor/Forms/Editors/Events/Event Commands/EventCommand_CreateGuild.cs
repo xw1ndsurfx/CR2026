@@ -24,7 +24,7 @@ public partial class EventCommandCreateGuild : UserControl
 
         InitLocalization();
         cmbVariable.Items.Clear();
-        cmbVariable.Items.AddRange(PlayerVariableDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<PlayerVariableDescriptor>(cmbVariable);
 
         if (mMyCommand.VariableId != null && mMyCommand.VariableId != Guid.Empty )
         {

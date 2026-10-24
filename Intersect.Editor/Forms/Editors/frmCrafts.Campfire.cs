@@ -46,7 +46,8 @@ public partial class FrmCrafts
             var combo = new ComboBox { Left = 230, Top = y, Width = 325, DropDownStyle = ComboBoxStyle.DropDownList };
             combo.Items.Add(new AnimationChoice(Guid.Empty, CampfireText("None")));
             foreach(var animation in AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().OrderBy(a => a.Name))
-                combo.Items.Add(new AnimationChoice(animation.Id, animation.Name));
+                Intersect.Editor.Forms.Styling.SearchableChoices.SetDescriptor(combo,
+                    combo.Items.Add(new AnimationChoice(animation.Id, animation.Name)), animation);
             combo.SelectedItem = combo.Items.Cast<AnimationChoice>().FirstOrDefault(a => a.Id == selected) ?? combo.Items[0];
             dialog.Controls.Add(combo); return combo;
         }

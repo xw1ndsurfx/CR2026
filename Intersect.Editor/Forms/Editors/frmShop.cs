@@ -95,11 +95,11 @@ public partial class FrmShop : EditorForm
         cmbBuyFor.Items.Clear();
         cmbSellFor.Items.Clear();
         cmbDefaultCurrency.Items.Clear();
-        cmbAddBoughtItem.Items.AddRange(ItemDescriptor.Names);
-        cmbAddSoldItem.Items.AddRange(ItemDescriptor.Names);
-        cmbBuyFor.Items.AddRange(ItemDescriptor.Names);
-        cmbSellFor.Items.AddRange(ItemDescriptor.Names);
-        cmbDefaultCurrency.Items.AddRange(ItemDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbAddBoughtItem);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbAddSoldItem);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbBuyFor);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbSellFor);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ItemDescriptor>(cmbDefaultCurrency);
         if (cmbAddBoughtItem.Items.Count > 0)
         {
             cmbAddBoughtItem.SelectedIndex = 0;

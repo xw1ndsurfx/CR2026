@@ -27,9 +27,11 @@ public partial class MapInstance
             _rainFilename = filename; _rainRetryAt = 0;
         }
         var now = Environment.TickCount64;
+        if (_rainLoop is { Loaded: true }) _rainLoop.Volume = 100 * WeatherStrength;
         if (filename.Length == 0 || _rainLoop is { Loaded: true } || now < _rainRetryAt) return;
         _rainRetryAt = now + 5000;
         _rainLoop = Audio.AddGameSound(filename, true);
+        if (_rainLoop != null) _rainLoop.Volume = 100 * WeatherStrength;
     }
 
     private void StopWeatherSounds()

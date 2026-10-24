@@ -13,12 +13,12 @@ public static class LogiklikMessageBox
     public static DialogResult Show(IWin32Window? owner, string text, string caption = "", MessageBoxButtons buttons = MessageBoxButtons.OK,
         MessageBoxIcon icon = MessageBoxIcon.None, MessageBoxDefaultButton defaultButton = MessageBoxDefaultButton.Button1)
     {
-        using var dialog = Create(text, caption, buttons, icon, defaultButton);
+        using var dialog = Create(text, caption, buttons, icon, defaultButton, owner);
         return owner == null ? dialog.ShowDialog() : dialog.ShowDialog(owner);
     }
 
     internal static Form Create(string text, string caption, MessageBoxButtons buttons, MessageBoxIcon icon,
-        MessageBoxDefaultButton defaultButton = MessageBoxDefaultButton.Button1)
+        MessageBoxDefaultButton defaultButton = MessageBoxDefaultButton.Button1, IWin32Window? owner = null)
     {
         var results = buttons switch
         {
@@ -82,6 +82,9 @@ public static class LogiklikMessageBox
             if (dialog.DialogResult == DialogResult.Cancel && !results.Contains(DialogResult.Cancel))
                 dialog.DialogResult = results.Contains(DialogResult.No) ? DialogResult.No : results[^1];
         };
+        // Set the intended modal owner before theme hooks can create a handle.
+        if (owner is Control control && control.FindForm() is { IsDisposed: false } parent)
+            dialog.Owner = parent;
         EditorTheme.Apply(dialog);
         message.BorderStyle = BorderStyle.None;
         return dialog;

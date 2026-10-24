@@ -51,7 +51,7 @@ public partial class FrmItem : EditorForm
 
         cmbProjectile.Items.Clear();
         cmbProjectile.Items.Add(Strings.General.None);
-        cmbProjectile.Items.AddRange(ProjectileDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ProjectileDescriptor>(cmbProjectile);
         _btnSave = btnSave;
         _btnCancel = btnCancel;
 
@@ -119,9 +119,7 @@ public partial class FrmItem : EditorForm
 
             cmbPic.Items.Clear();
             cmbPic.Items.Add(Strings.General.None);
-            cmbPic.Items.AddRange(
-                GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Item)
-            );
+            Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbPic, GameContentManager.TextureType.Item);
 
             var paperdolls =
                 GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Paperdoll);
@@ -301,7 +299,7 @@ public partial class FrmItem : EditorForm
         );
         cmbAttackAnimation.Items.Clear();
         cmbAttackAnimation.Items.Add(Strings.General.None);
-        cmbAttackAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbAttackAnimation);
         cmbScalingStat.Items.Clear();
         for (var x = 0; x < Enum.GetValues<Stat>().Length; x++)
         {
@@ -310,13 +308,13 @@ public partial class FrmItem : EditorForm
 
         cmbAnimation.Items.Clear();
         cmbAnimation.Items.Add(Strings.General.None);
-        cmbAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbAnimation);
         cmbEquipmentAnimation.Items.Clear();
         cmbEquipmentAnimation.Items.Add(Strings.General.None);
-        cmbEquipmentAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbEquipmentAnimation);
         cmbTeachSpell.Items.Clear();
         cmbTeachSpell.Items.Add(Strings.General.None);
-        cmbTeachSpell.Items.AddRange(SpellDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<SpellDescriptor>(cmbTeachSpell);
 
         var events = EventDescriptor.Names;
         var eventElements = new List<ComboBox>() { cmbEvent, cmbEventTriggers };

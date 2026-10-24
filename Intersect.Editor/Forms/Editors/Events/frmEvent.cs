@@ -1284,13 +1284,11 @@ public partial class FrmEvent : Form
 
         cmbPreviewFace.Items.Clear();
         cmbPreviewFace.Items.Add(Strings.General.None);
-        cmbPreviewFace.Items.AddRange(
-            GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Face)
-        );
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddTextureNames(cmbPreviewFace, GameContentManager.TextureType.Face);
 
         cmbAnimation.Items.Clear();
         cmbAnimation.Items.Add(Strings.General.None);
-        cmbAnimation.Items.AddRange(AnimationDescriptor.Names);
+        Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<AnimationDescriptor>(cmbAnimation);
         chkParallelRun.Checked = MyEvent.CanRunInParallel;
 
         _questArrowSupported = !MyEvent.CommonEvent && !questEvent;
@@ -1313,7 +1311,7 @@ public partial class FrmEvent : Form
 
             cmbTriggerVal.Items.Clear();
             cmbTriggerVal.Items.Add(Strings.General.None);
-            cmbTriggerVal.Items.AddRange(ProjectileDescriptor.Names);
+            Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ProjectileDescriptor>(cmbTriggerVal);
         }
 
         chkIsGlobal.Checked = Convert.ToBoolean(MyEvent.Global);
@@ -2191,7 +2189,7 @@ public partial class FrmEvent : Form
             {
                 cmbVariable.Show();
                 cmbVariable.Items.Add(Strings.General.None);
-                cmbVariable.Items.AddRange(PlayerVariableDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<PlayerVariableDescriptor>(cmbVariable);
                 cmbVariable.SelectedIndex = PlayerVariableDescriptor.ListIndex(CurrentPage.TriggerId) + 1;
                 lblVariableTrigger.Show();
                 lblVariableTrigger.Text = Strings.EventEditor.VariableTrigger;
@@ -2200,7 +2198,7 @@ public partial class FrmEvent : Form
             {
                 cmbVariable.Show();
                 cmbVariable.Items.Add(Strings.General.None);
-                cmbVariable.Items.AddRange(ServerVariableDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<ServerVariableDescriptor>(cmbVariable);
                 cmbVariable.SelectedIndex = ServerVariableDescriptor.ListIndex(CurrentPage.TriggerId) + 1;
                 lblVariableTrigger.Show();
                 lblVariableTrigger.Text = Strings.EventEditor.VariableTrigger;
@@ -2209,7 +2207,7 @@ public partial class FrmEvent : Form
             {
                 cmbVariable.Show();
                 cmbVariable.Items.Add(Strings.General.None);
-                cmbVariable.Items.AddRange(GuildVariableDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<GuildVariableDescriptor>(cmbVariable);
                 cmbVariable.SelectedIndex = GuildVariableDescriptor.ListIndex(CurrentPage.TriggerId) + 1;
                 lblVariableTrigger.Show();
                 lblVariableTrigger.Text = Strings.EventEditor.VariableTrigger;
@@ -2218,7 +2216,7 @@ public partial class FrmEvent : Form
             {
                 cmbVariable.Show();
                 cmbVariable.Items.Add(Strings.General.None);
-                cmbVariable.Items.AddRange(UserVariableDescriptor.Names);
+                Intersect.Editor.Forms.Styling.SearchableChoices.AddNames<UserVariableDescriptor>(cmbVariable);
                 cmbVariable.SelectedIndex = UserVariableDescriptor.ListIndex(CurrentPage.TriggerId) + 1;
                 lblVariableTrigger.Show();
                 lblVariableTrigger.Text = Strings.EventEditor.VariableTrigger;

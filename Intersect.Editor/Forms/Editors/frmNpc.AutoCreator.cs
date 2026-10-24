@@ -127,7 +127,7 @@ public partial class FrmNpc
             foreach (var spell in candidates)
             {
                 spellIds.Add(spell.Id);
-                spellPicker.Items.Add(spell.Name);
+                Intersect.Editor.Forms.Styling.SearchableChoices.SetDescriptor(spellPicker, spellPicker.Items.Add(spell.Name), spell);
             }
 
             // Mage offers three distinct offensive spells; archer offers two.
