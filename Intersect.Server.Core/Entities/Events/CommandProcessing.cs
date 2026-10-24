@@ -885,6 +885,8 @@ public static partial class CommandProcessing
         Stack<CommandInstance> callStack
     )
     {
+        stackInfo.CinematicRouteDeadline = instance.CinematicActive && command.TimeoutMs > 0
+            ? Environment.TickCount64 + Math.Clamp(command.TimeoutMs, 1000, 600000) : 0;
         if (command.TargetId == Guid.Empty)
         {
             stackInfo.WaitingForRoute = player.Id;

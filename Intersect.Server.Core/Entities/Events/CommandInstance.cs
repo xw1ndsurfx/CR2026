@@ -50,6 +50,7 @@ public partial class CommandInstance
     public Guid WaitingForRoute;
 
     public Guid WaitingForRouteMap;
+    public long CinematicRouteDeadline;
 
     public EventCommand WaitingOnCommand = null;
 

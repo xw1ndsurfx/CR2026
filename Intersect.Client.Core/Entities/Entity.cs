@@ -1838,7 +1838,7 @@ public partial class Entity : IEntity
          (Type == EntityType.GlobalEntity && Options.Instance.Npc.ShowLevelByName && (Globals.Database?.ShowNpcLevels ?? true)))
             ? Strings.GameWindow.EntityNameAndLevel.ToString(Name, Level) : Name;
 
-    protected float NameplateScale => 1f / Math.Clamp(Globals.Database?.WorldZoom ?? 1f, 0.25f, 16f);
+    protected float NameplateScale => 1f / Math.Clamp(Graphics.WorldScale, 0.25f, 16f);
 
     public float GetLabelLocation(LabelType type)
     {

@@ -1810,6 +1810,7 @@ internal sealed partial class PacketHandler
             {
                 Globals.EventHolds.Remove(eventId);
             }
+            Cinematics.CinematicCamera.Release(eventId);
         }
     }
 

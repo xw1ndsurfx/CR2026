@@ -89,6 +89,7 @@ public partial class Event
 
     public void Update(long timeMs, MapController map)
     {
+        CheckCinematicLifetime();
         var sendLeave = false;
         var originalPageInstance = PageInstance;
         if (PageInstance != null)
@@ -175,6 +176,8 @@ public partial class Event
                     {
                         if (curStack.WaitingForRoute != Guid.Empty)
                         {
+                            if (CinematicActive && curStack.CinematicRouteDeadline > 0 && Environment.TickCount64 > curStack.CinematicRouteDeadline)
+                            { CallStack.Clear(); FinishCinematic(interrupted: true); break; }
                             if (curStack.WaitingForRoute == Player.Id)
                             {
                                 if (Player.MoveRoute == null ||
