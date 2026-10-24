@@ -1,0 +1,1219 @@
+[
+  {
+    "id": "map",
+    "oldMenu": "Workspace",
+    "category": "Game",
+    "tags": [
+      "World"
+    ],
+    "title": {
+      "en": "Map Editor",
+      "fr": "Éditeur de cartes",
+      "es": "Editor de mapas"
+    },
+    "description": {
+      "en": "Build worlds with tiles and events.",
+      "fr": "Créez vos mondes avec des tuiles et des événements.",
+      "es": "Crea mundos con mosaicos y eventos."
+    },
+    "sign": "World_Map",
+    "art": "map.png",
+    "keywords": "map Map Editor Éditeur de cartes Editor de mapas",
+    "subcategory": "WorldAndProgression"
+  },
+  {
+    "id": "mapEvents",
+    "oldMenu": "Map Layers",
+    "category": "Events",
+    "tags": [
+      "Gameplay",
+      "Advanced"
+    ],
+    "title": {
+      "en": "Map Events",
+      "fr": "Événements de carte",
+      "es": "Eventos del mapa"
+    },
+    "description": {
+      "en": "Select a map tile to create or edit its event.",
+      "fr": "Sélectionnez une case pour créer ou modifier son événement.",
+      "es": "Selecciona una casilla para crear o editar su evento."
+    },
+    "sign": "Party",
+    "art": "mapEvents.png",
+    "keywords": "mapEvents Map Events Événements de carte Eventos del mapa",
+    "subcategory": "WorldEvents"
+  },
+  {
+    "id": "animationEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Gameplay",
+      "Interface"
+    ],
+    "title": {
+      "en": "Animation Editor",
+      "fr": "Éditeur d’animations",
+      "es": "Editor de animaciones"
+    },
+    "description": {
+      "en": "Compose animated effects and frame sequences.",
+      "fr": "Composez les effets et les séquences animées.",
+      "es": "Compón efectos y secuencias animadas."
+    },
+    "sign": "Spell",
+    "art": "animationEditorToolStripMenuItem.png",
+    "keywords": "animationEditorToolStripMenuItem Animation Editor Éditeur d’animations Editor de animaciones",
+    "subcategory": "CharactersAndCombat"
+  },
+  {
+    "id": "classEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Gameplay",
+      "Advanced"
+    ],
+    "title": {
+      "en": "Class Editor",
+      "fr": "Éditeur de classes",
+      "es": "Editor de clases"
+    },
+    "description": {
+      "en": "Configure classes, abilities and progression.",
+      "fr": "Configurez les classes, compétences et évolutions.",
+      "es": "Configura clases, habilidades y progresión."
+    },
+    "sign": "Armor",
+    "art": "classEditorToolStripMenuItem.png",
+    "keywords": "classEditorToolStripMenuItem Class Editor Éditeur de classes Editor de clases",
+    "subcategory": "CharactersAndCombat"
+  },
+  {
+    "id": "commonEventEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Events",
+    "tags": [
+      "Gameplay",
+      "Advanced"
+    ],
+    "title": {
+      "en": "Common Events",
+      "fr": "Événements communs",
+      "es": "Eventos comunes"
+    },
+    "description": {
+      "en": "Write reusable visual scripts and dialogues.",
+      "fr": "Créez des scripts visuels et dialogues réutilisables.",
+      "es": "Crea guiones visuales y diálogos reutilizables."
+    },
+    "sign": "Party",
+    "art": "commonEventEditorToolStripMenuItem.png",
+    "keywords": "commonEventEditorToolStripMenuItem Common Events Événements communs Eventos comunes",
+    "subcategory": "WorldEvents"
+  },
+  {
+    "id": "craftsEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Economy",
+      "Gameplay"
+    ],
+    "title": {
+      "en": "Crafts Editor",
+      "fr": "Éditeur de recettes",
+      "es": "Editor de recetas"
+    },
+    "description": {
+      "en": "Define ingredients, products and campfires.",
+      "fr": "Définissez les ingrédients, produits et feux de camp.",
+      "es": "Define ingredientes, productos y fogatas."
+    },
+    "sign": "Woodworker",
+    "art": "craftsEditorToolStripMenuItem.png",
+    "keywords": "craftsEditorToolStripMenuItem Crafts Editor Éditeur de recettes Editor de recetas",
+    "subcategory": "EconomyAndCommerce"
+  },
+  {
+    "id": "craftingTableEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Economy",
+      "Gameplay"
+    ],
+    "title": {
+      "en": "Crafting Tables",
+      "fr": "Tables de fabrication",
+      "es": "Mesas de fabricación"
+    },
+    "description": {
+      "en": "Organize the recipes available at each table.",
+      "fr": "Organisez les recettes proposées par chaque table.",
+      "es": "Organiza las recetas disponibles en cada mesa."
+    },
+    "sign": "Blacksmith",
+    "art": "craftingTableEditorToolStripMenuItem.png",
+    "keywords": "craftingTableEditorToolStripMenuItem Crafting Tables Tables de fabrication Mesas de fabricación",
+    "subcategory": "EconomyAndCommerce"
+  },
+  {
+    "id": "itemEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Economy",
+      "Gameplay"
+    ],
+    "title": {
+      "en": "Item Editor",
+      "fr": "Éditeur d’objets",
+      "es": "Editor de objetos"
+    },
+    "description": {
+      "en": "Create equipment, weapons and consumables.",
+      "fr": "Créez les équipements, armes et consommables.",
+      "es": "Crea equipo, armas y consumibles."
+    },
+    "sign": "Sword",
+    "art": "itemEditorToolStripMenuItem.png",
+    "keywords": "itemEditorToolStripMenuItem Item Editor Éditeur d’objets Editor de objetos",
+    "subcategory": "EconomyAndCommerce"
+  },
+  {
+    "id": "npcEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Gameplay",
+      "World"
+    ],
+    "title": {
+      "en": "NPC Editor",
+      "fr": "Éditeur de PNJ",
+      "es": "Editor de PNJ"
+    },
+    "description": {
+      "en": "Create characters and configure their behaviour.",
+      "fr": "Créez les personnages et leurs comportements.",
+      "es": "Crea personajes y configura su comportamiento."
+    },
+    "sign": "Party",
+    "art": "npcEditorToolStripMenuItem.png",
+    "keywords": "npcEditorToolStripMenuItem NPC Editor Éditeur de PNJ Editor de PNJ",
+    "subcategory": "WorldAndProgression"
+  },
+  {
+    "id": "projectileEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Gameplay",
+      "Advanced"
+    ],
+    "title": {
+      "en": "Projectile Editor",
+      "fr": "Éditeur de projectiles",
+      "es": "Editor de proyectiles"
+    },
+    "description": {
+      "en": "Configure projectiles and their effects.",
+      "fr": "Configurez les projectiles et leurs effets.",
+      "es": "Configura proyectiles y sus efectos."
+    },
+    "sign": "Sword",
+    "art": "projectileEditorToolStripMenuItem.png",
+    "keywords": "projectileEditorToolStripMenuItem Projectile Editor Éditeur de projectiles Editor de proyectiles",
+    "subcategory": "CharactersAndCombat"
+  },
+  {
+    "id": "questEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "title": {
+      "en": "Quest Editor",
+      "fr": "Éditeur de quêtes",
+      "es": "Editor de misiones"
+    },
+    "description": {
+      "en": "Define quests, objectives and rewards.",
+      "fr": "Définissez les quêtes, objectifs et récompenses.",
+      "es": "Define misiones, objetivos y recompensas."
+    },
+    "sign": "Voyage",
+    "art": "questEditorToolStripMenuItem.png",
+    "keywords": "questEditorToolStripMenuItem Quest Editor Éditeur de quêtes Editor de misiones",
+    "subcategory": "EconomyAndCommerce"
+  },
+  {
+    "id": "resourceEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "World",
+      "Economy"
+    ],
+    "title": {
+      "en": "Resource Editor",
+      "fr": "Éditeur de ressources",
+      "es": "Editor de recursos"
+    },
+    "description": {
+      "en": "Configure gathering nodes and their rewards.",
+      "fr": "Configurez les ressources récoltables et leurs gains.",
+      "es": "Configura recursos recolectables y sus recompensas."
+    },
+    "sign": "Lumberjack",
+    "art": "resourceEditorToolStripMenuItem.png",
+    "keywords": "resourceEditorToolStripMenuItem Resource Editor Éditeur de ressources Editor de recursos",
+    "subcategory": "EconomyAndCommerce"
+  },
+  {
+    "id": "shopEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Economy",
+      "Gameplay"
+    ],
+    "title": {
+      "en": "Shop Editor",
+      "fr": "Éditeur de boutiques",
+      "es": "Editor de tiendas"
+    },
+    "description": {
+      "en": "Manage shop inventories and prices.",
+      "fr": "Gérez les marchandises et les prix des boutiques.",
+      "es": "Gestiona productos y precios de las tiendas."
+    },
+    "sign": "Market",
+    "art": "shopEditorToolStripMenuItem.png",
+    "keywords": "shopEditorToolStripMenuItem Shop Editor Éditeur de boutiques Editor de tiendas",
+    "subcategory": "EconomyAndCommerce"
+  },
+  {
+    "id": "spellEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Gameplay",
+      "Advanced"
+    ],
+    "title": {
+      "en": "Spell Editor",
+      "fr": "Éditeur de sorts",
+      "es": "Editor de hechizos"
+    },
+    "description": {
+      "en": "Create spells, costs and combat effects.",
+      "fr": "Créez les sorts, coûts et effets de combat.",
+      "es": "Crea hechizos, costes y efectos de combate."
+    },
+    "sign": "Spell",
+    "art": "spellEditorToolStripMenuItem.png",
+    "keywords": "spellEditorToolStripMenuItem Spell Editor Éditeur de sorts Editor de hechizos",
+    "subcategory": "CharactersAndCombat"
+  },
+  {
+    "id": "variableEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "System",
+    "tags": [
+      "Advanced",
+      "Gameplay"
+    ],
+    "title": {
+      "en": "Variables",
+      "fr": "Variables",
+      "es": "Variables"
+    },
+    "description": {
+      "en": "Edit player, server and shared variables.",
+      "fr": "Modifiez les variables des joueurs et du serveur.",
+      "es": "Edita variables de jugadores y del servidor."
+    },
+    "sign": "Jewel",
+    "art": "variableEditorToolStripMenuItem.png",
+    "keywords": "variableEditorToolStripMenuItem Variables Variables Variables",
+    "subcategory": "Configuration"
+  },
+  {
+    "id": "timeEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "System",
+    "tags": [
+      "World",
+      "Advanced"
+    ],
+    "title": {
+      "en": "Time Editor",
+      "fr": "Éditeur du temps",
+      "es": "Editor del tiempo"
+    },
+    "description": {
+      "en": "Configure the world clock and lighting.",
+      "fr": "Configurez le temps du monde et son éclairage.",
+      "es": "Configura el reloj del mundo y la iluminación."
+    },
+    "sign": "Church",
+    "art": "timeEditorToolStripMenuItem.png",
+    "keywords": "timeEditorToolStripMenuItem Time Editor Éditeur du temps Editor del tiempo",
+    "subcategory": "Configuration"
+  },
+  {
+    "id": "rewardConfigurationEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Economy",
+      "Gameplay"
+    ],
+    "title": {
+      "en": "Daily Rewards",
+      "fr": "Récompenses quotidiennes",
+      "es": "Recompensas diarias"
+    },
+    "description": {
+      "en": "Configure recurring rewards and progression.",
+      "fr": "Configurez les récompenses et leur progression.",
+      "es": "Configura recompensas y su progresión."
+    },
+    "sign": "Gold",
+    "art": "rewardConfigurationEditorToolStripMenuItem.png",
+    "keywords": "rewardConfigurationEditorToolStripMenuItem Daily Rewards Récompenses quotidiennes Recompensas diarias",
+    "subcategory": "EconomyAndCommerce"
+  },
+  {
+    "id": "logiCoinShopEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Economy",
+      "Interface"
+    ],
+    "title": {
+      "en": "LogiCoin Shop",
+      "fr": "Boutique LogiCoin",
+      "es": "Tienda LogiCoin"
+    },
+    "description": {
+      "en": "Manage premium offers and their presentation.",
+      "fr": "Gérez les offres premium et leur présentation.",
+      "es": "Gestiona ofertas prémium y su presentación."
+    },
+    "sign": "Gold",
+    "art": "logiCoinShopEditorToolStripMenuItem.png",
+    "keywords": "logiCoinShopEditorToolStripMenuItem LogiCoin Shop Boutique LogiCoin Tienda LogiCoin",
+    "subcategory": "EconomyAndCommerce"
+  },
+  {
+    "id": "professionEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "title": {
+      "en": "Professions",
+      "fr": "Professions",
+      "es": "Profesiones"
+    },
+    "description": {
+      "en": "Configure professions and progression rewards.",
+      "fr": "Configurez les métiers et leurs récompenses.",
+      "es": "Configura profesiones y sus recompensas."
+    },
+    "sign": "Blacksmith",
+    "art": "professionEditorToolStripMenuItem.png",
+    "keywords": "professionEditorToolStripMenuItem Professions Professions Profesiones",
+    "subcategory": "EconomyAndCommerce"
+  },
+  {
+    "id": "achievementEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Gameplay",
+      "Interface"
+    ],
+    "title": {
+      "en": "Achievements",
+      "fr": "Succès",
+      "es": "Logros"
+    },
+    "description": {
+      "en": "Define objectives, icons and achievement rewards.",
+      "fr": "Définissez les objectifs, icônes et récompenses des succès.",
+      "es": "Define objetivos, iconos y recompensas de logros."
+    },
+    "sign": "Shield",
+    "art": "achievementEditorToolStripMenuItem.png",
+    "keywords": "achievementEditorToolStripMenuItem Achievements Succès Logros",
+    "subcategory": "CharactersAndCombat"
+  },
+  {
+    "id": "mountEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Gameplay",
+      "World"
+    ],
+    "title": {
+      "en": "Mount Editor",
+      "fr": "Éditeur de montures",
+      "es": "Editor de monturas"
+    },
+    "description": {
+      "en": "Configure mounts, sheets and rider placement.",
+      "fr": "Configurez les montures et le placement du cavalier.",
+      "es": "Configura monturas y la posición del jinete."
+    },
+    "sign": "Horse",
+    "art": "mountEditorToolStripMenuItem.png",
+    "keywords": "mountEditorToolStripMenuItem Mount Editor Éditeur de montures Editor de monturas",
+    "subcategory": "WorldAndProgression"
+  },
+  {
+    "id": "dungeonEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "World",
+      "Gameplay"
+    ],
+    "title": {
+      "en": "Dungeons",
+      "fr": "Donjons",
+      "es": "Mazmorras"
+    },
+    "description": {
+      "en": "Configure dungeon access, objectives and rewards.",
+      "fr": "Configurez les accès, objectifs et gains des donjons.",
+      "es": "Configura accesos, objetivos y premios de mazmorras."
+    },
+    "sign": "Dungeon",
+    "art": "dungeonEditorToolStripMenuItem.png",
+    "keywords": "dungeonEditorToolStripMenuItem Dungeons Donjons Mazmorras",
+    "subcategory": "WorldAndProgression"
+  },
+  {
+    "id": "questShopEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Economy",
+      "Gameplay"
+    ],
+    "title": {
+      "en": "Quest Shops",
+      "fr": "Boutiques de quêtes",
+      "es": "Tiendas de misiones"
+    },
+    "description": {
+      "en": "Configure shops linked to quests and missions.",
+      "fr": "Configurez les boutiques liées aux quêtes et missions.",
+      "es": "Configura tiendas vinculadas a misiones."
+    },
+    "sign": "Market",
+    "art": "questShopEditorToolStripMenuItem.png",
+    "keywords": "questShopEditorToolStripMenuItem Quest Shops Boutiques de quêtes Tiendas de misiones",
+    "subcategory": "EconomyAndCommerce"
+  },
+  {
+    "id": "housingEditor",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "World",
+      "Economy"
+    ],
+    "title": {
+      "en": "Housing & Furniture",
+      "fr": "Habitations et mobilier",
+      "es": "Viviendas y muebles"
+    },
+    "description": {
+      "en": "Manage furniture, offers and housing content.",
+      "fr": "Gérez le mobilier, les offres et les habitations.",
+      "es": "Gestiona muebles, ofertas y viviendas."
+    },
+    "sign": "Furniture",
+    "art": "housingEditor.png",
+    "keywords": "housingEditor Housing & Furniture Habitations et mobilier Viviendas y muebles",
+    "subcategory": "EconomyAndCommerce"
+  },
+  {
+    "id": "royalStylistEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "title": {
+      "en": "Royal Stylists",
+      "fr": "Stylistes royaux",
+      "es": "Estilistas reales"
+    },
+    "description": {
+      "en": "Configure appearances and cosmetic services.",
+      "fr": "Configurez les apparences et services cosmétiques.",
+      "es": "Configura apariencias y servicios cosméticos."
+    },
+    "sign": "Hair",
+    "art": "royalStylistEditorToolStripMenuItem.png",
+    "keywords": "royalStylistEditorToolStripMenuItem Royal Stylists Stylistes royaux Estilistas reales",
+    "subcategory": "EconomyAndCommerce"
+  },
+  {
+    "id": "characterGeneratorEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Tools",
+    "tags": [
+      "Gameplay",
+      "Interface"
+    ],
+    "title": {
+      "en": "Character Generator",
+      "fr": "Générateur de personnages",
+      "es": "Generador de personajes"
+    },
+    "description": {
+      "en": "Compose sprites and equipment layers.",
+      "fr": "Composez les sprites et les couches d’équipement.",
+      "es": "Combina sprites y capas de equipo."
+    },
+    "sign": "Armor",
+    "art": "characterGeneratorEditorToolStripMenuItem.png",
+    "keywords": "characterGeneratorEditorToolStripMenuItem Character Generator Générateur de personnages Generador de personajes",
+    "subcategory": "Production"
+  },
+  {
+    "id": "animationImportEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Tools",
+    "tags": [
+      "Interface",
+      "Advanced"
+    ],
+    "title": {
+      "en": "Animations Import",
+      "fr": "Importation d’animations",
+      "es": "Importación de animaciones"
+    },
+    "description": {
+      "en": "Import spritesheets and prepare effects.",
+      "fr": "Importez les spritesheets et préparez les effets.",
+      "es": "Importa hojas de sprites y prepara efectos."
+    },
+    "sign": "Export",
+    "art": "animationImportEditorToolStripMenuItem.png",
+    "keywords": "animationImportEditorToolStripMenuItem Animations Import Importation d’animations Importación de animaciones",
+    "subcategory": "Production"
+  },
+  {
+    "id": "soundImportEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Tools",
+    "tags": [
+      "Interface",
+      "Advanced"
+    ],
+    "title": {
+      "en": "Sound & Voice Import",
+      "fr": "Importation de sons et voix",
+      "es": "Importación de sonidos y voces"
+    },
+    "description": {
+      "en": "Preview and import sounds, music and voices.",
+      "fr": "Écoutez et importez les sons, musiques et voix.",
+      "es": "Escucha e importa sonidos, música y voces."
+    },
+    "sign": "Music",
+    "art": "soundImportEditorToolStripMenuItem.png",
+    "keywords": "soundImportEditorToolStripMenuItem Sound & Voice Import Importation de sons et voix Importación de sonidos y voces",
+    "subcategory": "Production"
+  },
+  {
+    "id": "gameTranslationsEditor",
+    "oldMenu": "Game Editors",
+    "category": "System",
+    "tags": [
+      "Interface",
+      "Advanced"
+    ],
+    "title": {
+      "en": "Game Translations",
+      "fr": "Traductions du jeu",
+      "es": "Traducciones del juego"
+    },
+    "description": {
+      "en": "Manage localized game content and translations.",
+      "fr": "Gérez les contenus localisés et les traductions.",
+      "es": "Gestiona contenidos localizados y traducciones."
+    },
+    "sign": "Voyage",
+    "art": "gameTranslationsEditor.png",
+    "keywords": "gameTranslationsEditor Game Translations Traductions du jeu Traducciones del juego",
+    "subcategory": "Configuration"
+  },
+  {
+    "id": "worldMapEditor",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "World",
+      "Interface"
+    ],
+    "title": {
+      "en": "World Map Editor",
+      "fr": "Éditeur de carte du monde",
+      "es": "Editor del mapa del mundo"
+    },
+    "description": {
+      "en": "Configure the world map and its legend.",
+      "fr": "Configurez la carte du monde et sa légende.",
+      "es": "Configura el mapa del mundo y su leyenda."
+    },
+    "sign": "World_Map",
+    "art": "worldMapEditor.png",
+    "keywords": "worldMapEditor World Map Editor Éditeur de carte du monde Editor del mapa del mundo",
+    "subcategory": "WorldAndProgression"
+  },
+  {
+    "id": "balanceLabEditorToolStripMenuItem",
+    "oldMenu": "Game Editors",
+    "category": "Game",
+    "tags": [
+      "Gameplay",
+      "Advanced"
+    ],
+    "title": {
+      "en": "Game Balance Lab",
+      "fr": "Laboratoire d’équilibrage",
+      "es": "Laboratorio de equilibrio"
+    },
+    "description": {
+      "en": "Compare enemies, equipment and combat balance.",
+      "fr": "Comparez les ennemis, équipements et combats.",
+      "es": "Compara enemigos, equipo y equilibrio de combate."
+    },
+    "sign": "PVP",
+    "art": "balanceLabEditorToolStripMenuItem.png",
+    "keywords": "balanceLabEditorToolStripMenuItem Game Balance Lab Laboratoire d’équilibrage Laboratorio de equilibrio",
+    "subcategory": "CharactersAndCombat"
+  },
+  {
+    "id": "invasionEditorToolStripMenuItem",
+    "oldMenu": "Events",
+    "category": "Events",
+    "tags": [
+      "World",
+      "Gameplay"
+    ],
+    "title": {
+      "en": "Invasions",
+      "fr": "Invasions",
+      "es": "Invasiones"
+    },
+    "description": {
+      "en": "Configure invasion waves and their rewards.",
+      "fr": "Configurez les vagues d’invasion et leurs gains.",
+      "es": "Configura oleadas de invasión y sus premios."
+    },
+    "sign": "Voodoo",
+    "art": "invasionEditorToolStripMenuItem.png",
+    "keywords": "invasionEditorToolStripMenuItem Invasions Invasions Invasiones",
+    "subcategory": "WorldEvents"
+  },
+  {
+    "id": "worldBossEditorToolStripMenuItem",
+    "oldMenu": "Events",
+    "category": "Events",
+    "tags": [
+      "World",
+      "Gameplay"
+    ],
+    "title": {
+      "en": "World Bosses",
+      "fr": "Boss mondiaux",
+      "es": "Jefes del mundo"
+    },
+    "description": {
+      "en": "Configure world bosses and their encounters.",
+      "fr": "Configurez les boss mondiaux et leurs rencontres.",
+      "es": "Configura jefes del mundo y sus encuentros."
+    },
+    "sign": "Death",
+    "art": "worldBossEditorToolStripMenuItem.png",
+    "keywords": "worldBossEditorToolStripMenuItem World Bosses Boss mondiaux Jefes del mundo",
+    "subcategory": "WorldEvents"
+  },
+  {
+    "id": "activityExperience",
+    "oldMenu": "Events",
+    "category": "Events",
+    "tags": [
+      "Gameplay",
+      "World"
+    ],
+    "title": {
+      "en": "Experience Events",
+      "fr": "Événements d’expérience",
+      "es": "Eventos de experiencia"
+    },
+    "description": {
+      "en": "Schedule experience bonuses and events.",
+      "fr": "Planifiez les événements et bonus d’expérience.",
+      "es": "Programa eventos y bonificaciones de experiencia."
+    },
+    "sign": "Jewel",
+    "art": "activityExperience.png",
+    "keywords": "activityExperience Experience Events Événements d’expérience Eventos de experiencia",
+    "subcategory": "WorldEvents"
+  },
+  {
+    "id": "activityLoot",
+    "oldMenu": "Events",
+    "category": "Events",
+    "tags": [
+      "Economy",
+      "World"
+    ],
+    "title": {
+      "en": "Loot Booster Events",
+      "fr": "Événements de butin",
+      "es": "Eventos de botín"
+    },
+    "description": {
+      "en": "Configure loot bonuses and event periods.",
+      "fr": "Configurez les bonus de butin et leurs périodes.",
+      "es": "Configura bonificaciones de botín y sus periodos."
+    },
+    "sign": "Gold",
+    "art": "activityLoot.png",
+    "keywords": "activityLoot Loot Booster Events Événements de butin Eventos de botín",
+    "subcategory": "WorldEvents"
+  },
+  {
+    "id": "deathEditor",
+    "oldMenu": "System Editor",
+    "category": "System",
+    "tags": [
+      "Gameplay",
+      "Advanced"
+    ],
+    "title": {
+      "en": "Death Editor",
+      "fr": "Éditeur de décès",
+      "es": "Editor de muerte"
+    },
+    "description": {
+      "en": "Configure death rules and penalties.",
+      "fr": "Configurez les règles et pénalités de décès.",
+      "es": "Configura reglas y penalizaciones de muerte."
+    },
+    "sign": "Death",
+    "art": "deathEditor.png",
+    "keywords": "deathEditor Death Editor Éditeur de décès Editor de muerte",
+    "subcategory": "Configuration"
+  },
+  {
+    "id": "navalSystemEditor",
+    "oldMenu": "System Editor",
+    "category": "System",
+    "tags": [
+      "World",
+      "Gameplay"
+    ],
+    "title": {
+      "en": "Naval System Editor",
+      "fr": "Système naval",
+      "es": "Sistema naval"
+    },
+    "description": {
+      "en": "Configure ships, harbours and naval gameplay.",
+      "fr": "Configurez les navires, ports et systèmes navals.",
+      "es": "Configura barcos, puertos y sistemas navales."
+    },
+    "sign": "Boat",
+    "art": "navalSystemEditor.png",
+    "keywords": "navalSystemEditor Naval System Editor Système naval Sistema naval",
+    "subcategory": "Configuration"
+  },
+  {
+    "id": "mainMenuAnimationsEditor",
+    "oldMenu": "System Editor",
+    "category": "System",
+    "tags": [
+      "Interface",
+      "Advanced"
+    ],
+    "title": {
+      "en": "Main Menu Animations",
+      "fr": "Animations du menu principal",
+      "es": "Animaciones del menú principal"
+    },
+    "description": {
+      "en": "Compose animated backgrounds for the main menu.",
+      "fr": "Composez les fonds animés du menu principal.",
+      "es": "Compón fondos animados para el menú principal."
+    },
+    "sign": "Spell",
+    "art": "mainMenuAnimationsEditor.png",
+    "keywords": "mainMenuAnimationsEditor Main Menu Animations Animations du menu principal Animaciones del menú principal",
+    "subcategory": "Configuration"
+  },
+  {
+    "id": "activityCombatMusic",
+    "oldMenu": "System Editor",
+    "category": "System",
+    "tags": [
+      "Interface",
+      "Gameplay"
+    ],
+    "title": {
+      "en": "Combat Music",
+      "fr": "Musique de combat",
+      "es": "Música de combate"
+    },
+    "description": {
+      "en": "Configure music for combat encounters.",
+      "fr": "Configurez la musique des rencontres de combat.",
+      "es": "Configura la música de los combates."
+    },
+    "sign": "Music",
+    "art": "activityCombatMusic.png",
+    "keywords": "activityCombatMusic Combat Music Musique de combat Música de combate",
+    "subcategory": "Configuration"
+  },
+  {
+    "id": "activityPvp",
+    "oldMenu": "System Editor",
+    "category": "System",
+    "tags": [
+      "Gameplay",
+      "Advanced"
+    ],
+    "title": {
+      "en": "PvP & Capture the Chest",
+      "fr": "JcJ et capture du coffre",
+      "es": "JcJ y captura del cofre"
+    },
+    "description": {
+      "en": "Configure competitive combat and chest capture.",
+      "fr": "Configurez les combats JcJ et la capture du coffre.",
+      "es": "Configura combates JcJ y captura del cofre."
+    },
+    "sign": "PVP",
+    "art": "activityPvp.png",
+    "keywords": "activityPvp PvP & Capture the Chest JcJ et capture du coffre JcJ y captura del cofre",
+    "subcategory": "Configuration"
+  },
+  {
+    "id": "activityTeleports",
+    "oldMenu": "System Editor",
+    "category": "System",
+    "tags": [
+      "World",
+      "Advanced"
+    ],
+    "title": {
+      "en": "Teleport Settings",
+      "fr": "Paramètres de téléportation",
+      "es": "Ajustes de teletransporte"
+    },
+    "description": {
+      "en": "Configure travel and teleport settings.",
+      "fr": "Configurez les voyages et téléportations.",
+      "es": "Configura viajes y teletransportes."
+    },
+    "sign": "Voyage",
+    "art": "activityTeleports.png",
+    "keywords": "activityTeleports Teleport Settings Paramètres de téléportation Ajustes de teletransporte",
+    "subcategory": "Configuration"
+  },
+  {
+    "id": "activityBank",
+    "oldMenu": "System Editor",
+    "category": "System",
+    "tags": [
+      "Economy",
+      "Advanced"
+    ],
+    "title": {
+      "en": "Bank Settings",
+      "fr": "Paramètres bancaires",
+      "es": "Ajustes bancarios"
+    },
+    "description": {
+      "en": "Configure storage and banking services.",
+      "fr": "Configurez les services bancaires et le stockage.",
+      "es": "Configura servicios bancarios y almacenamiento."
+    },
+    "sign": "Bank",
+    "art": "activityBank.png",
+    "keywords": "activityBank Bank Settings Paramètres bancaires Ajustes bancarios",
+    "subcategory": "Configuration"
+  },
+  {
+    "id": "packageUpdateToolStripMenuItem",
+    "oldMenu": "Tools",
+    "category": "Tools",
+    "tags": [
+      "Advanced"
+    ],
+    "title": {
+      "en": "Package Update",
+      "fr": "Créer une mise à jour",
+      "es": "Crear una actualización"
+    },
+    "description": {
+      "en": "Package a game update with the existing tool.",
+      "fr": "Préparez une mise à jour avec l’outil existant.",
+      "es": "Prepara una actualización con la herramienta existente."
+    },
+    "sign": "Export",
+    "art": "packageUpdateToolStripMenuItem.png",
+    "keywords": "packageUpdateToolStripMenuItem Package Update Créer une mise à jour Crear una actualización",
+    "subcategory": "Production"
+  },
+  {
+    "id": "ResourceBrushTool",
+    "oldMenu": "Tools",
+    "category": "Tools",
+    "tags": [
+      "World",
+      "Advanced"
+    ],
+    "title": {
+      "en": "Resource Brush",
+      "fr": "Pinceau de ressources",
+      "es": "Pincel de recursos"
+    },
+    "description": {
+      "en": "Paint gathering resources on the current map.",
+      "fr": "Placez les ressources récoltables sur la carte.",
+      "es": "Coloca recursos recolectables en el mapa."
+    },
+    "sign": "Lumberjack",
+    "art": "ResourceBrushTool.png",
+    "keywords": "ResourceBrushTool Resource Brush Pinceau de ressources Pincel de recursos",
+    "subcategory": "Production"
+  },
+  {
+    "id": "uiDesigner",
+    "oldMenu": "Tools",
+    "category": "Tools",
+    "tags": [
+      "Interface",
+      "Advanced"
+    ],
+    "title": {
+      "en": "UI Editor",
+      "fr": "Éditeur d’interface",
+      "es": "Editor de interfaz"
+    },
+    "description": {
+      "en": "Create menus, windows and game interfaces.",
+      "fr": "Créez les menus, fenêtres et interfaces du jeu.",
+      "es": "Crea menús, ventanas e interfaces del juego."
+    },
+    "sign": "Door",
+    "art": "uiDesigner.png",
+    "keywords": "uiDesigner UI Editor Éditeur d’interface Editor de interfaz",
+    "subcategory": "Production"
+  },
+  {
+    "id": "miniGame.Poker",
+    "oldMenu": "Mini-Game",
+    "category": "MiniGames",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "title": {
+      "en": "Poker",
+      "fr": "Poker",
+      "es": "Póquer"
+    },
+    "description": {
+      "en": "Configure rules, rewards and settings for this mini-game.",
+      "fr": "Configurez les règles, récompenses et paramètres de ce mini-jeu.",
+      "es": "Configura reglas, recompensas y ajustes de este minijuego."
+    },
+    "sign": "Dice",
+    "art": "miniGame.Poker.png",
+    "keywords": "Poker Poker Poker Póquer",
+    "subcategory": "MiniGameSettings"
+  },
+  {
+    "id": "miniGame.Blackjack",
+    "oldMenu": "Mini-Game",
+    "category": "MiniGames",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "title": {
+      "en": "Blackjack",
+      "fr": "Blackjack",
+      "es": "Blackjack"
+    },
+    "description": {
+      "en": "Configure rules, rewards and settings for this mini-game.",
+      "fr": "Configurez les règles, récompenses et paramètres de ce mini-jeu.",
+      "es": "Configura reglas, recompensas y ajustes de este minijuego."
+    },
+    "sign": "Dice",
+    "art": "miniGame.Blackjack.png",
+    "keywords": "Blackjack Blackjack Blackjack Blackjack",
+    "subcategory": "MiniGameSettings"
+  },
+  {
+    "id": "miniGame.Potions",
+    "oldMenu": "Mini-Game",
+    "category": "MiniGames",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "title": {
+      "en": "Royal Alchemy",
+      "fr": "Alchimie royale",
+      "es": "Alquimia real"
+    },
+    "description": {
+      "en": "Configure rules, rewards and settings for this mini-game.",
+      "fr": "Configurez les règles, récompenses et paramètres de ce mini-jeu.",
+      "es": "Configura reglas, recompensas y ajustes de este minijuego."
+    },
+    "sign": "Alchemy",
+    "art": "miniGame.Potions.png",
+    "keywords": "Potions Royal Alchemy Alchimie royale Alquimia real",
+    "subcategory": "MiniGameSettings"
+  },
+  {
+    "id": "miniGame.Roulette",
+    "oldMenu": "Mini-Game",
+    "category": "MiniGames",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "title": {
+      "en": "Roulette",
+      "fr": "Roulette",
+      "es": "Ruleta"
+    },
+    "description": {
+      "en": "Configure rules, rewards and settings for this mini-game.",
+      "fr": "Configurez les règles, récompenses et paramètres de ce mini-jeu.",
+      "es": "Configura reglas, recompensas y ajustes de este minijuego."
+    },
+    "sign": "WheelOfFortune",
+    "art": "miniGame.Roulette.png",
+    "keywords": "Roulette Roulette Roulette Ruleta",
+    "subcategory": "MiniGameSettings"
+  },
+  {
+    "id": "miniGame.Cooking",
+    "oldMenu": "Mini-Game",
+    "category": "MiniGames",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "title": {
+      "en": "Royal Kitchen",
+      "fr": "Cuisine royale",
+      "es": "Cocina real"
+    },
+    "description": {
+      "en": "Configure rules, rewards and settings for this mini-game.",
+      "fr": "Configurez les règles, récompenses et paramètres de ce mini-jeu.",
+      "es": "Configura reglas, recompensas y ajustes de este minijuego."
+    },
+    "sign": "Bar",
+    "art": "miniGame.Cooking.png",
+    "keywords": "Cooking Royal Kitchen Cuisine royale Cocina real",
+    "subcategory": "MiniGameSettings"
+  },
+  {
+    "id": "miniGame.Smelting",
+    "oldMenu": "Mini-Game",
+    "category": "MiniGames",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "title": {
+      "en": "Royal Foundry",
+      "fr": "Fonderie royale",
+      "es": "Fundición real"
+    },
+    "description": {
+      "en": "Configure rules, rewards and settings for this mini-game.",
+      "fr": "Configurez les règles, récompenses et paramètres de ce mini-jeu.",
+      "es": "Configura reglas, recompensas y ajustes de este minijuego."
+    },
+    "sign": "Mine",
+    "art": "miniGame.Smelting.png",
+    "keywords": "Smelting Royal Foundry Fonderie royale Fundición real",
+    "subcategory": "MiniGameSettings"
+  },
+  {
+    "id": "miniGame.Smithing",
+    "oldMenu": "Mini-Game",
+    "category": "MiniGames",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "title": {
+      "en": "Royal Forge",
+      "fr": "Forge royale",
+      "es": "Forja real"
+    },
+    "description": {
+      "en": "Configure rules, rewards and settings for this mini-game.",
+      "fr": "Configurez les règles, récompenses et paramètres de ce mini-jeu.",
+      "es": "Configura reglas, recompensas y ajustes de este minijuego."
+    },
+    "sign": "Blacksmith",
+    "art": "miniGame.Smithing.png",
+    "keywords": "Smithing Royal Forge Forge royale Forja real",
+    "subcategory": "MiniGameSettings"
+  },
+  {
+    "id": "miniGame.Lockpicking",
+    "oldMenu": "Mini-Game",
+    "category": "MiniGames",
+    "tags": [
+      "Gameplay",
+      "Economy"
+    ],
+    "title": {
+      "en": "Lockpicking",
+      "fr": "Crochetage",
+      "es": "Ganzúas"
+    },
+    "description": {
+      "en": "Configure rules, rewards and settings for this mini-game.",
+      "fr": "Configurez les règles, récompenses et paramètres de ce mini-jeu.",
+      "es": "Configura reglas, recompensas y ajustes de este minijuego."
+    },
+    "sign": "Door",
+    "art": "miniGame.Lockpicking.png",
+    "keywords": "Lockpicking Lockpicking Crochetage Ganzúas",
+    "subcategory": "MiniGameSettings"
+  }
+]

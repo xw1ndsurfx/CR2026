@@ -118,36 +118,9 @@ public partial class FrmMain : Form
         InitMapProperties();
         InitLocalization();
         InitExternalTools();
-        AddRewardConfigurationEditorMenu();
-        AddLogiCoinShopEditorMenu();
-        AddProfessionEditorMenu();
-        PacketSender.SendRequestProfessionConfiguration(openEditor: false);
-        AddAchievementEditorMenu();
-        AddMountEditorMenu();
-        PacketSender.SendRequestAchievementConfiguration(openEditor: false);
-        AddDungeonEditorMenu();
-        PacketSender.SendRequestDungeonConfiguration(openEditor: false);
-        AddQuestShopEditorMenu();
-        PacketSender.SendRequestQuestShopConfiguration(openEditor: false);
-        var housingEditor = new ToolStripMenuItem("Housing & Furniture Catalog");
-        housingEditor.Click += (_, _) => PacketSender.RequestHousingConfiguration();
-        contentEditorsToolStripMenuItem.DropDownItems.Add(housingEditor);
-        AddRoyalStylistEditorMenu();
-        PacketSender.SendRequestRoyalStylistConfiguration(openEditor: false);
-        AddCharacterGeneratorEditorMenu();
-        AddAnimationImportEditorMenu();
-        AddSoundImportEditorMenu();
-        AddBalanceLabEditorMenu();
-        AddWorldEventsEditorMenu();
-        AddSystemEditorMenu();
-        AddWorldMapEditorMenu();
-        var resourceBrush=new ToolStripMenuItem(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Resource brush",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)){Name="ResourceBrushTool"};
-        resourceBrush.Click+=(_,_)=>{Globals.MapLayersWindow.Show();Globals.MapLayersWindow.ActivateResourceBrush();};
-        toolsToolStripMenuItem.DropDownItems.Add(resourceBrush);
-        var uiDesigner=new ToolStripMenuItem(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("UI Editor",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
-        uiDesigner.Click+=(_,_)=>new Intersect.Editor.Forms.Editors.FrmUiDesigner().Show(this);
-        toolsToolStripMenuItem.DropDownItems.Add(uiDesigner);
+        InitializeEditorNavigation();
         InitializeSaveProtection();
+        InitializeEditorHub();
         Text="Logiklik 2D Engine · "+Intersect.Framework.Core.BuildIdentity.Label;
         Show();
 
@@ -258,7 +231,7 @@ public partial class FrmMain : Form
         var games = new ToolStripMenuItem("Mini-Game") { Name = "miniGameEditorsToolStripMenuItem" };
         foreach (var game in Intersect.Framework.Core.MiniGames.Configuration.MiniGameCatalog.All)
         {
-            var entry = new ToolStripMenuItem(game.DisplayName);
+            var entry = new ToolStripMenuItem(game.DisplayName) { Name = "miniGame." + game.Type };
             entry.Click += (_, _) => RequestMiniGameEditor(game.Type);
             games.DropDownItems.Add(entry);
         }
@@ -539,7 +512,7 @@ public partial class FrmMain : Form
         };
 
         contentEditorsToolStripMenuItem.DropDownItems.Add(soundImport);
-        var translations = new ToolStripMenuItem { Text = "Game Translations..." };
+        var translations = new ToolStripMenuItem { Name = "gameTranslationsEditor", Text = "Game Translations..." };
         translations.Click += (_, _) => new FrmTranslations().Show(this);
         contentEditorsToolStripMenuItem.DropDownItems.Add(translations);
     }
@@ -782,6 +755,7 @@ public partial class FrmMain : Form
 
     private void FrmMain_KeyDown(object sender, KeyEventArgs e)
     {
+        if (_editorHub is { Visible: true }) return;
         switch (e.KeyData)
         {
             case Keys.Control | Keys.Z:

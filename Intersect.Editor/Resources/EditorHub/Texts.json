@@ -1,0 +1,262 @@
+{
+  "Home": {
+    "en": "Home",
+    "fr": "Accueil",
+    "es": "Inicio"
+  },
+  "Game": {
+    "en": "Game",
+    "fr": "Game",
+    "es": "Juego"
+  },
+  "System": {
+    "en": "System",
+    "fr": "Système",
+    "es": "Sistema"
+  },
+  "MiniGames": {
+    "en": "Mini-Games",
+    "fr": "Mini-Jeux",
+    "es": "Minijuegos"
+  },
+  "Events": {
+    "en": "Events",
+    "fr": "Événements",
+    "es": "Eventos"
+  },
+  "Tools": {
+    "en": "Tools",
+    "fr": "Outils",
+    "es": "Herramientas"
+  },
+  "Favorites": {
+    "en": "Favorites",
+    "fr": "Favoris",
+    "es": "Favoritos"
+  },
+  "All": {
+    "en": "All",
+    "fr": "Tous",
+    "es": "Todos"
+  },
+  "Gameplay": {
+    "en": "Gameplay",
+    "fr": "Gameplay",
+    "es": "Jugabilidad"
+  },
+  "Interface": {
+    "en": "Interface",
+    "fr": "Interface",
+    "es": "Interfaz"
+  },
+  "Economy": {
+    "en": "Economy",
+    "fr": "Économie",
+    "es": "Economía"
+  },
+  "World": {
+    "en": "World",
+    "fr": "Monde",
+    "es": "Mundo"
+  },
+  "Advanced": {
+    "en": "Advanced",
+    "fr": "Avancé",
+    "es": "Avanzado"
+  },
+  "Welcome": {
+    "en": "Welcome to Logiklik 2D Engine",
+    "fr": "Bienvenue dans Logiklik 2D Engine",
+    "es": "Bienvenido a Logiklik 2D Engine"
+  },
+  "Subtitle": {
+    "en": "Create, edit and bring your 2D RPG to life with powerful, accessible tools.",
+    "fr": "Créez, éditez et donnez vie à votre RPG 2D avec des outils puissants et accessibles.",
+    "es": "Crea, edita y da vida a tu RPG 2D con herramientas potentes y accesibles."
+  },
+  "Search": {
+    "en": "Search for an editor, a tool or a feature…",
+    "fr": "Rechercher un éditeur, un outil ou une fonctionnalité…",
+    "es": "Buscar un editor, una herramienta o una función…"
+  },
+  "MainEditors": {
+    "en": "Main editors",
+    "fr": "Éditeurs principaux",
+    "es": "Editores principales"
+  },
+  "Results": {
+    "en": "Editors and tools",
+    "fr": "Éditeurs et outils",
+    "es": "Editores y herramientas"
+  },
+  "QuickActions": {
+    "en": "Quick actions",
+    "fr": "Actions rapides",
+    "es": "Acciones rápidas"
+  },
+  "Recent": {
+    "en": "Recently opened",
+    "fr": "Derniers éléments ouverts",
+    "es": "Abiertos recientemente"
+  },
+  "SeeAll": {
+    "en": "See all →",
+    "fr": "Voir tout →",
+    "es": "Ver todo →"
+  },
+  "BackToMap": {
+    "en": "Back to map",
+    "fr": "Retour à la carte",
+    "es": "Volver al mapa"
+  },
+  "NoResults": {
+    "en": "No matching editors. Try another term or filter.",
+    "fr": "Aucun éditeur correspondant. Essayez un autre terme ou filtre.",
+    "es": "No hay editores coincidentes. Prueba otro término o filtro."
+  },
+  "NoRecent": {
+    "en": "Open an editor to find it here.",
+    "fr": "Ouvrez un éditeur pour le retrouver ici.",
+    "es": "Abre un editor para encontrarlo aquí."
+  },
+  "NoFavorites": {
+    "en": "Use the star on a card to add a favorite.",
+    "fr": "Utilisez l’étoile d’une carte pour ajouter un favori.",
+    "es": "Usa la estrella de una tarjeta para añadir un favorito."
+  },
+  "JustNow": {
+    "en": "Just now",
+    "fr": "À l’instant",
+    "es": "Ahora"
+  },
+  "MinutesAgo": {
+    "en": "{0} min ago",
+    "fr": "Il y a {0} min",
+    "es": "Hace {0} min"
+  },
+  "HoursAgo": {
+    "en": "{0} h ago",
+    "fr": "Il y a {0} h",
+    "es": "Hace {0} h"
+  },
+  "NewMap": {
+    "en": "New map",
+    "fr": "Nouvelle carte",
+    "es": "Nuevo mapa"
+  },
+  "NewEvent": {
+    "en": "New map event",
+    "fr": "Nouvel événement",
+    "es": "Nuevo evento"
+  },
+  "SaveMap": {
+    "en": "Save map",
+    "fr": "Sauvegarder la carte",
+    "es": "Guardar mapa"
+  },
+  "CommonEvents": {
+    "en": "Common events",
+    "fr": "Événements communs",
+    "es": "Eventos comunes"
+  },
+  "Dashboard": {
+    "en": "Editor dashboard",
+    "fr": "Tableau de bord",
+    "es": "Panel de editores"
+  },
+  "GameHint": {
+    "en": "Heroes, items and worlds",
+    "fr": "Héros, objets et mondes",
+    "es": "Héroes, objetos y mundos"
+  },
+  "SystemHint": {
+    "en": "Rules, variables and settings",
+    "fr": "Règles, variables et paramètres",
+    "es": "Reglas, variables y ajustes"
+  },
+  "MiniGamesHint": {
+    "en": "Dedicated game settings",
+    "fr": "Configurations dédiées",
+    "es": "Configuraciones dedicadas"
+  },
+  "EventsHint": {
+    "en": "Visual scripts and world events",
+    "fr": "Scripts visuels et événements",
+    "es": "Guiones visuales y eventos"
+  },
+  "ToolsHint": {
+    "en": "Resources, sounds and production",
+    "fr": "Ressources, sons et production",
+    "es": "Recursos, sonidos y producción"
+  },
+  "Hub": {
+    "en": "Editor Hub",
+    "fr": "Centre des éditeurs",
+    "es": "Centro de editores"
+  },
+  "Collapse": {
+    "en": "Collapse navigation",
+    "fr": "Réduire la navigation",
+    "es": "Contraer navegación"
+  },
+  "Expand": {
+    "en": "Expand navigation",
+    "fr": "Développer la navigation",
+    "es": "Expandir navegación"
+  },
+  "Unavailable": {
+    "en": "This tool is currently unavailable.",
+    "fr": "Cet outil est actuellement indisponible.",
+    "es": "Esta herramienta no está disponible actualmente."
+  },
+  "MissingArt": {
+    "en": "Illustration unavailable",
+    "fr": "Illustration indisponible",
+    "es": "Ilustración no disponible"
+  },
+  "ViewTools": {
+    "en": "Explore all editors",
+    "fr": "Explorer tous les éditeurs",
+    "es": "Explorar todos los editores"
+  },
+  "MapEventHint": {
+    "en": "Choose a tile on the map to create or edit its event.",
+    "fr": "Choisissez une case sur la carte pour créer ou modifier son événement.",
+    "es": "Elige una casilla del mapa para crear o editar su evento."
+  },
+  "EconomyAndCommerce": {
+    "en": "Economy and commerce",
+    "fr": "Économie et commerces",
+    "es": "Economía y comercio"
+  },
+  "WorldAndProgression": {
+    "en": "World and progression",
+    "fr": "Monde et progression",
+    "es": "Mundo y progresión"
+  },
+  "CharactersAndCombat": {
+    "en": "Characters and combat",
+    "fr": "Personnages et combat",
+    "es": "Personajes y combate"
+  },
+  "Production": {
+    "en": "Production tools",
+    "fr": "Outils de production",
+    "es": "Herramientas de producción"
+  },
+  "WorldEvents": {
+    "en": "World events and scripts",
+    "fr": "Événements du monde et scripts",
+    "es": "Eventos del mundo y guiones"
+  },
+  "Configuration": {
+    "en": "Game configuration",
+    "fr": "Configuration du jeu",
+    "es": "Configuración del juego"
+  },
+  "MiniGameSettings": {
+    "en": "Mini-game settings",
+    "fr": "Paramètres des mini-jeux",
+    "es": "Ajustes de minijuegos"
+  }
+}

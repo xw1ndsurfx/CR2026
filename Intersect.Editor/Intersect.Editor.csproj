@@ -26,6 +26,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources/EditorHub/Catalog.json" LogicalName="EditorHub.Catalog.json" />
+    <EmbeddedResource Include="Resources/EditorHub/Texts.json" LogicalName="EditorHub.Texts.json" />
+    <EmbeddedResource Include="Resources/EditorHub/Art/*.png" LogicalName="EditorHub.Art.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="LICENSE.md" LogicalName="Logiklik.Engine.License" />
   </ItemGroup>
 
