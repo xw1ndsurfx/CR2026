@@ -1639,6 +1639,8 @@ public static partial class Graphics
                 Texture2D eventTex = null;
                 var destinationX = x * Options.Instance.Map.TileWidth + xoffset;
                 var destinationY = y * Options.Instance.Map.TileHeight + yoffset;
+                if (screenShotting && gridX == 0 && gridY == 0)
+                    CinematicEventPosition(tmpMap.Id, tmpEvent.Id, ref destinationX, ref destinationY);
                 var sourceX = 0;
                 var sourceY = 0;
                 var width = 0;
@@ -1852,6 +1854,7 @@ public static partial class Graphics
                 DrawMapAttributes(Globals.CurrentMap, 0, 0, true, sScreenShotRenderTexture, false, false);
                 DrawMapAttributes(Globals.CurrentMap, 0, 0, true, sScreenShotRenderTexture, false, true);
                 DrawMapAttributes(Globals.CurrentMap, 0, 0, true, sScreenShotRenderTexture, true, true);
+                if (_cinematicPreview != null) DrawMapEvents(Globals.CurrentMap, 0, 0, true, sScreenShotRenderTexture);
 
                 //Draw this map
                 DrawMap(Globals.CurrentMap, 0, 0, true, 1, sScreenShotRenderTexture);
@@ -1859,6 +1862,7 @@ public static partial class Graphics
             }
         }
 
+        DrawCinematicAnimations(sScreenShotRenderTexture);
         if (!Database.GridHideFog)
         {
             DrawFog(sScreenShotRenderTexture);

@@ -808,6 +808,9 @@ public partial class FrmEvent : Form
                 tmpCommand = new OpenQuestShopCommand();
 
                 break;
+            case EventCommandType.PlayCinematic:
+                tmpCommand = new PlayCinematicCommand();
+                break;
             case EventCommandType.OpenRoyalStylist:
                 tmpCommand = new OpenRoyalStylistCommand();
 
@@ -851,6 +854,7 @@ public partial class FrmEvent : Form
         InitializeComponent();
         AddMarketplaceCommand();
         AddQuestShopCommand();
+        AddCinematicCommands();
         AddNavalShopCommand();
         AddRoyalStylistCommand();
         AddDungeonCommands();
@@ -1476,6 +1480,11 @@ public partial class FrmEvent : Form
         switch (command.Type)
         {
             case EventCommandType.Null:
+                break;
+            case EventCommandType.PlayCinematic:
+            case EventCommandType.BeginCinematic:
+            case EventCommandType.CinematicCamera:
+                cmdWindow = new EventCommandCinematic(command, this);
                 break;
             case EventCommandType.ShowText:
                 cmdWindow = new EventCommandText((ShowTextCommand)command, this);

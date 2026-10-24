@@ -26,6 +26,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources/Cinematics/Texts.json" LogicalName="Cinematics.Texts.json" />
     <EmbeddedResource Include="Resources/EditorHub/Catalog.json" LogicalName="EditorHub.Catalog.json" />
     <EmbeddedResource Include="Resources/EditorHub/Texts.json" LogicalName="EditorHub.Texts.json" />
     <EmbeddedResource Include="Resources/EditorHub/Art/*.png" LogicalName="EditorHub.Art.%(Filename)%(Extension)" />

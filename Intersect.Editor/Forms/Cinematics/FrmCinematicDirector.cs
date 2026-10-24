@@ -1,0 +1,368 @@
+using System.Diagnostics;
+using DarkUI.Forms;
+using Intersect.Editor.Core;
+using Intersect.Editor.Content;
+using Intersect.Editor.Forms.Editors.Events;
+using Intersect.Editor.General;
+using Intersect.Editor.Maps;
+using Intersect.Editor.Networking;
+using Intersect.Framework.Core;
+using Intersect.Framework.Core.Cinematics;
+using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Maps.Attributes;
+using Newtonsoft.Json;
+using Render = Intersect.Editor.Core.Graphics;
+using DrawingColor = System.Drawing.Color;
+
+namespace Intersect.Editor.Forms.Cinematics;
+
+internal sealed class FrmCinematicDirector : DarkForm
+{
+    private CinematicScene _scene = new();
+    private Guid _eventId;
+    private readonly TreeView _explorer = new() { Dock = DockStyle.Fill, HideSelection = false };
+    private readonly PropertyGrid _properties = new() { Dock = DockStyle.Fill, ToolbarVisible = false };
+    private readonly ListBox _points = new() { Dock = DockStyle.Bottom, Height = 110 };
+    private readonly CinematicViewport _viewport = new() { Dock = DockStyle.Fill };
+    private readonly CinematicTimeline _timeline = new() { Dock = DockStyle.Fill };
+    private readonly Label _status = new() { Dock = DockStyle.Bottom, Height = 36, AutoEllipsis = true };
+    private readonly System.Windows.Forms.Timer _timer = new() { Interval = 50 };
+    private readonly Stack<string> _undo = new(), _redo = new();
+    private string _lastState = "", _savedState = "";
+    private long _lastTick, _lastRender;
+    private bool _playing, _updating;
+    private object? _selection;
+    private readonly HashSet<Guid> _previewBarriers = [];
+    private static string T(string key) => CinematicText.T(key);
+    private static string Explain(string error)
+    { var parts = error.Split(':', 2); return T(parts[0]) + (parts.Length == 2 ? ": " + parts[1] : ""); }
+    private string Snapshot() => JsonConvert.SerializeObject(_scene);
+    private sealed record Resource(Guid Id, string Name, bool Voice = false)
+    { public override string ToString() => Name; }
+
+    internal FrmCinematicDirector()
+    {
+        Text = T("Title"); Width = 1440; Height = 960; MinimumSize = new(1000, 700);
+        StartPosition = FormStartPosition.CenterParent; KeyPreview = true; Icon = Program.Icon;
+        var toolbar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, WrapContents = true, Padding = new(4) };
+        void Button(string key, Action action) => toolbar.Controls.Add(MakeButton(key, action));
+        Button("New", () => { if (CanDiscard()) NewScene(); });
+        Button("Open", Import); Button("Save", () => SaveScene()); Button("Export", Export);
+        Button("Undo", () => Restore(_undo, _redo)); Button("Redo", () => Restore(_redo, _undo));
+        Button("Play", () => { _playing = !_playing; _lastTick = Environment.TickCount64; });
+        Button("Stop", () => { _playing = false; _previewBarriers.Clear(); SetCursor(0); });
+        Button("Step", () => SetCursor(Math.Min(_scene.DurationMs, _timeline.CursorMs + 50)));
+        Button("Test", TestInGame);
+        var left = new SplitContainer { Size = new(1400, 780), Dock = DockStyle.Fill, SplitterDistance = 230, FixedPanel = FixedPanel.Panel1 };
+        var middle = new SplitContainer { Size = new(1170, 780), Dock = DockStyle.Fill, Orientation = Orientation.Horizontal, SplitterDistance = 460 };
+        var right = new SplitContainer { Size = new(1170, 460), Dock = DockStyle.Fill, SplitterDistance = 850, FixedPanel = FixedPanel.Panel2 };
+        left.Panel1.Controls.Add(_explorer); left.Panel1.Controls.Add(new Label { Text = T("Explorer"), Dock = DockStyle.Top, Height = 30 });
+        var explorerActions = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 110, AutoScroll = true };
+        explorerActions.Controls.Add(MakeButton("Scene", () => SelectObject(_scene)));
+        explorerActions.Controls.Add(MakeButton("Actor", AddActor));
+        explorerActions.Controls.Add(MakeButton("Advanced", Advanced));
+        left.Panel1.Controls.Add(explorerActions); left.Panel2.Controls.Add(middle);
+        void TogglePanel(string key, Action<bool> toggle)
+        {
+            var check = new CheckBox { Text = T(key), Checked = true, AutoSize = true };
+            check.CheckedChanged += (_, _) => toggle(check.Checked); toolbar.Controls.Add(check);
+        }
+        TogglePanel("ExplorerPanel", visible => left.Panel1Collapsed = !visible);
+        TogglePanel("Inspector", visible => right.Panel2Collapsed = !visible);
+        TogglePanel("TimelinePanel", visible => middle.Panel2Collapsed = !visible);
+        middle.Panel1.Controls.Add(right);
+        right.Panel1.Controls.Add(_viewport);
+        var viewTools = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true };
+        var grid = new CheckBox { Text = T("Grid"), Checked = true, AutoSize = true };
+        grid.CheckedChanged += (_, _) => { _viewport.ShowGrid = grid.Checked; _viewport.Invalidate(); };
+        var camera = new CheckBox { Text = T("CameraView"), AutoSize = true };
+        camera.CheckedChanged += (_, _) => { _viewport.CameraView = camera.Checked; _viewport.Invalidate(); };
+        viewTools.Controls.Add(grid); viewTools.Controls.Add(camera); viewTools.Controls.Add(MakeButton("Refresh", RenderMap));
+        right.Panel1.Controls.Add(viewTools);
+        right.Panel1.Controls.Add(new Label { Text = T("MapHint"), Dock = DockStyle.Bottom, Height = 40 });
+        right.Panel2.Controls.Add(_properties); right.Panel2.Controls.Add(_points);
+        right.Panel2.Controls.Add(new Label { Text = T("Inspector"), Dock = DockStyle.Top, Height = 25 });
+        var propertyActions = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 75, AutoScroll = true };
+        propertyActions.Controls.Add(MakeButton("Resources", ChooseResource)); propertyActions.Controls.Add(MakeButton("Duplicate", Duplicate));
+        propertyActions.Controls.Add(MakeButton("Delete", Delete)); right.Panel2.Controls.Add(propertyActions);
+        middle.Panel2.Controls.Add(_timeline);
+        middle.Panel2.Controls.Add(new Label { Text = T("Timeline"), Dock = DockStyle.Top, Height = 26 });
+        var commands = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, WrapContents = true };
+        foreach (var track in Enum.GetValues<CinematicTrack>())
+        { var type = track; commands.Controls.Add(MakeButton(track.ToString(), () => AddClip(type))); }
+        commands.Controls.Add(MakeButton("ImportAudio", () => new FrmSoundImport().ShowDialog(this)));
+        Controls.Add(left); Controls.Add(commands); Controls.Add(_status); Controls.Add(toolbar);
+        Intersect.Editor.Forms.Styling.EditorTheme.Apply(this);
+        _explorer.AfterSelect += (_, e) =>
+        {
+            if (_updating) return;
+            if (e.Node?.Tag is EventDescriptor evt && evt.Pages.FirstOrDefault()?.Cinematic is { } scene)
+            { if (evt.Id != _eventId && CanDiscard()) LoadScene(Clone(scene), evt.Id); }
+            else if (e.Node?.Tag is { } item)
+            {
+                if (item is CinematicClip clip) { _timeline.Selected = _viewport.Selected = clip; RefreshPoints(); }
+                SelectObject(item); _timeline.Invalidate(); _viewport.Invalidate();
+            }
+        };
+        _timeline.SelectionChanged += clip => { _viewport.Selected = clip; SelectObject(clip ?? (object)_scene); RefreshPoints(); _viewport.Invalidate(); };
+        _timeline.Edited += CommitEdit;
+        _timeline.Scrubbed += time => { _playing = false; SetCursor(time); };
+        _viewport.Edited += () => { CommitEdit(); RefreshPoints(); RenderMap(); };
+        _viewport.PointSelected += point => { if (point != null) { SelectObject(point); _points.SelectedItem = point; } };
+        _properties.PropertyValueChanged += (_, _) => { CommitEdit(); RenderMap(); };
+        _points.SelectedIndexChanged += (_, _) => { if (_points.SelectedItem is CinematicPoint p) SelectObject(p); };
+        _points.KeyDown += (_, e) =>
+        {
+            if (_timeline.Selected is not { } clip || _points.SelectedIndex < 0) return;
+            var i = _points.SelectedIndex;
+            if (e.KeyCode == Keys.Delete) { clip.Points.RemoveAt(i); CommitEdit(); RefreshPoints(); }
+            else if (e.Alt && e.KeyCode is Keys.Up or Keys.Down)
+            {
+                var next = Math.Clamp(i + (e.KeyCode == Keys.Up ? -1 : 1), 0, clip.Points.Count - 1);
+                (clip.Points[i], clip.Points[next]) = (clip.Points[next], clip.Points[i]); CommitEdit(); RefreshPoints(); _points.SelectedIndex = next;
+            }
+            _viewport.Invalidate();
+        };
+        _timer.Tick += (_, _) => TickPreview(); _timer.Start();
+        Shown += (_, _) => { NewScene(); RenderMap(); };
+        FormClosing += (_, e) => { if (!CanDiscard()) e.Cancel = true; };
+        Disposed += (_, _) => { _timer.Dispose(); _viewport.MapImage?.Dispose(); };
+    }
+
+    private static Button MakeButton(string key, Action action)
+    { var button = new Button { Text = T(key), AutoSize = true, Height = 30, FlatStyle = FlatStyle.Flat }; button.Click += (_, _) => action(); return button; }
+    private static void ApplyColors(Control root)
+    {
+        root.BackColor = DrawingColor.FromArgb(22, 31, 40); root.ForeColor = DrawingColor.Gainsboro;
+        foreach (Control child in root.Controls) ApplyColors(child);
+    }
+    private bool CanDiscard() => Snapshot() == _savedState || _savedState == "" ||
+        MessageBox.Show(this, T("Unsaved"), Text, MessageBoxButtons.OKCancel) == DialogResult.OK;
+    private static CinematicScene Clone(CinematicScene scene) => JsonConvert.DeserializeObject<CinematicScene>(JsonConvert.SerializeObject(scene))!;
+    private void NewScene()
+    {
+        if (Globals.CurrentMap is not { } map) { _status.Text = T("MapRequired"); return; }
+        var scene = new CinematicScene { Name = T("New"), MapId = map.Id };
+        scene.Actors.Add(new() { Name = T("Player"), StartX = Options.Instance.Map.MapWidth / 2, StartY = Options.Instance.Map.MapHeight / 2 });
+        LoadScene(scene, Guid.Empty);
+    }
+    private void LoadScene(CinematicScene scene, Guid eventId)
+    {
+        _playing = false; _scene = scene; _eventId = eventId; _undo.Clear(); _redo.Clear(); _previewBarriers.Clear();
+        _timeline.Scene = _viewport.Scene = scene; _timeline.Selected = _viewport.Selected = null;
+        _lastState = _savedState = Snapshot(); SelectObject(scene); SetCursor(0); RefreshTree(); RenderMap();
+    }
+    private void SelectObject(object value) { _selection = value; _properties.SelectedObject = new CinematicProperties(value); _properties.Refresh(); }
+    private void CommitEdit()
+    {
+        var state = Snapshot(); if (state != _lastState) { _undo.Push(_lastState); _redo.Clear(); _lastState = state; }
+        _properties.Refresh(); _timeline.Invalidate(); _viewport.Invalidate(); RefreshTree();
+        Text = T("Title") + " — " + _scene.Name + (state != _savedState ? " *" : "");
+    }
+    private void Restore(Stack<string> from, Stack<string> to)
+    {
+        if (from.Count == 0) return;
+        to.Push(Snapshot()); _scene = JsonConvert.DeserializeObject<CinematicScene>(from.Pop())!; _lastState = Snapshot();
+        _timeline.Scene = _viewport.Scene = _scene; _timeline.Selected = _viewport.Selected = null;
+        SelectObject(_scene); RefreshTree(); RefreshPoints(); RenderMap(); _timeline.Invalidate();
+    }
+    private void RefreshTree()
+    {
+        _updating = true; _explorer.BeginUpdate(); _explorer.Nodes.Clear();
+        var root = _explorer.Nodes.Add(_scene.Saga); var chapter = root.Nodes.Add(_scene.Chapter); var sequence = chapter.Nodes.Add(_scene.Sequence);
+        var current = sequence.Nodes.Add(_scene.Name); current.Tag = _scene;
+        foreach (var actor in _scene.Actors) { var node = current.Nodes.Add(actor.Name); node.Tag = actor; }
+        foreach (var clip in _scene.Clips.OrderBy(c => c.StartMs)) { var node = current.Nodes.Add($"{clip.StartMs / 1000f:0.##}s · {clip}"); node.Tag = clip; }
+        if (Globals.CurrentMap is { } map)
+            foreach (var evt in map.LocalEvents.Values.Where(e => e.Pages.FirstOrDefault()?.Cinematic != null && e.Id != _eventId))
+            { var node = _explorer.Nodes.Add(evt.Name); node.Tag = evt; }
+        _explorer.ExpandAll(); _explorer.EndUpdate(); _updating = false;
+    }
+    private Resource? Pick(IEnumerable<Resource> resources)
+    {
+        using var form = new DarkForm { Text = T("Resources"), Width = 520, Height = 440, StartPosition = FormStartPosition.CenterParent };
+        var list = new ListBox { Dock = DockStyle.Fill }; foreach (var resource in resources) list.Items.Add(resource);
+        var accept = new Button { Text = T("Accept"), Dock = DockStyle.Bottom, Height = 36, DialogResult = DialogResult.OK };
+        list.DoubleClick += (_, _) => { if (list.SelectedItem != null) { form.DialogResult = DialogResult.OK; form.Close(); } };
+        form.Controls.Add(list); form.Controls.Add(accept); ApplyColors(form);
+        return form.ShowDialog(this) == DialogResult.OK ? list.SelectedItem as Resource : null;
+    }
+    private void AddActor()
+    {
+        if (Globals.CurrentMap is not { } map || map.Id != _scene.MapId) return;
+        var choices = map.LocalEvents.Values.Where(e => !e.Global && e.Pages.Count > 0 && e.Id != _eventId && _scene.Actors.All(a => a.TargetId != e.Id))
+            .Select(e => new Resource(e.Id, e.Name)).ToList();
+        if (_scene.Actors.All(a => a.TargetId != Guid.Empty)) choices.Insert(0, new(Guid.Empty, T("Player")));
+        if (Pick(choices) is not { } picked) return;
+        var evt = map.LocalEvents.GetValueOrDefault(picked.Id);
+        var actor = new CinematicActor { Name = picked.Name, TargetId = picked.Id, StartX = evt?.SpawnX ?? 0, StartY = evt?.SpawnY ?? 0 };
+        _scene.Actors.Add(actor); SelectObject(actor); CommitEdit();
+    }
+    private void AddClip(CinematicTrack track)
+    {
+        var selectedActor = _selection as CinematicActor ?? _scene.Actors.FirstOrDefault();
+        var clip = new CinematicClip { Name = T(track.ToString()), Track = track, StartMs = Math.Min(_timeline.CursorMs, Math.Max(0, _scene.DurationMs - 1000)),
+            X = Options.Instance.Map.MapWidth / 2, Y = Options.Instance.Map.MapHeight / 2, ActorId = selectedActor?.TargetId ?? Guid.Empty };
+        if (track == CinematicTrack.Movement && selectedActor != null)
+        {
+            var previous = _scene.Clips.Where(c => c.Track == track && c.ActorId == clip.ActorId && c.StartMs <= clip.StartMs && c.Points.Count > 0).OrderBy(c => c.StartMs).LastOrDefault();
+            clip.Points.Add(new() { X = previous?.Points[^1].X ?? selectedActor.StartX, Y = previous?.Points[^1].Y ?? selectedActor.StartY });
+        }
+        _scene.Clips.Add(clip); _timeline.Selected = _viewport.Selected = clip; SelectObject(clip); CommitEdit(); RefreshPoints();
+        if (track is CinematicTrack.Animation or CinematicTrack.Sound or CinematicTrack.Music or CinematicTrack.Event) ChooseResource();
+    }
+    private void ChooseResource()
+    {
+        if (_selection is CinematicActor actor)
+        {
+            // Actor identity comes from the map selector; select an existing actor for a movement clip below.
+            SelectObject(actor); return;
+        }
+        if (_timeline.Selected is not { } clip) return;
+        if (clip.Track == CinematicTrack.Movement)
+        {
+            if (Pick(_scene.Actors.Select(a => new Resource(a.TargetId, a.Name))) is { } chosen)
+            { clip.ActorId = chosen.Id; CommitEdit(); }
+            return;
+        }
+        IEnumerable<Resource> choices = clip.Track switch
+        {
+            CinematicTrack.Animation => AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().Select(a => new Resource(a.Id, a.Name)),
+            CinematicTrack.Event or CinematicTrack.Choice => EventDescriptor.Lookup.Values.OfType<EventDescriptor>().Where(e => e.CommonEvent).Select(e => new Resource(e.Id, e.Name)),
+            CinematicTrack.Music => GameContentManager.SmartSortedMusicNames.Select(n => new Resource(Guid.Empty, n)),
+            CinematicTrack.Sound => GameContentManager.SmartSortedSoundNames.Select(n => new Resource(Guid.Empty, n))
+                .Concat(GameContentManager.SmartSortedVoiceSoundNames.Select(n => new Resource(Guid.Empty, n, true))),
+            _ => [],
+        };
+        if (Pick(choices) is not { } picked) return;
+        if (clip.Track == CinematicTrack.Choice)
+        {
+            var fields = new[] { "ChoiceEvent1", "ChoiceEvent2", "ChoiceEvent3", "ChoiceEvent4" };
+            if (Pick(fields.Select((f, i) => new Resource(new Guid(i + 1, 0, 0, new byte[8]), T(f)))) is { } branch)
+            {
+                var field = fields.First(f => T(f) == branch.Name);
+                typeof(CinematicClip).GetProperty(field)!.SetValue(clip, picked.Id);
+            }
+        }
+        else if (clip.Track is CinematicTrack.Sound or CinematicTrack.Music) { clip.AudioFile = picked.Name; clip.VoiceSound = picked.Voice; }
+        else clip.ResourceId = picked.Id;
+        CommitEdit();
+    }
+    private void Duplicate()
+    {
+        if (_timeline.Selected is not { } clip) return;
+        var copy = JsonConvert.DeserializeObject<CinematicClip>(JsonConvert.SerializeObject(clip))!; copy.Id = Guid.NewGuid();
+        copy.StartMs = Math.Min(clip.StartMs + clip.DurationMs, Math.Max(0, _scene.DurationMs - clip.DurationMs));
+        _scene.Clips.Add(copy); _timeline.Selected = _viewport.Selected = copy; SelectObject(copy); CommitEdit(); RefreshPoints();
+    }
+    private void Delete()
+    {
+        if (_selection is CinematicActor actor)
+        { _scene.Actors.Remove(actor); _scene.Clips.RemoveAll(c => c.Track == CinematicTrack.Movement && c.ActorId == actor.TargetId); }
+        else if (_timeline.Selected is { } clip) _scene.Clips.Remove(clip);
+        _timeline.Selected = _viewport.Selected = null; SelectObject(_scene); CommitEdit(); RefreshPoints();
+    }
+    private void RefreshPoints()
+    {
+        _points.Items.Clear(); if (_timeline.Selected is { Track: CinematicTrack.Movement } clip)
+            foreach (var point in clip.Points) _points.Items.Add(point);
+    }
+    private bool SaveScene()
+    {
+        if (Globals.CurrentMap is not { } map || map.Id != _scene.MapId) { _status.Text = T("MapRequired"); return false; }
+        try
+        {
+            var page = CinematicCompiler.Compile(_scene, Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight,
+                (x, y) => map.Attributes[x, y] is MapBlockedAttribute,
+                id => map.LocalEvents.TryGetValue(id, out var actor) && !actor.Global && actor.Pages.Count > 0,
+                id => AnimationDescriptor.Get(id) != null, id => EventDescriptor.Get(id)?.CommonEvent == true,
+                (file, music) => music ? GameContentManager.MusicNames.Contains(file) :
+                    GameContentManager.SoundNames.Contains(file) || GameContentManager.SmartSortedVoiceSoundNames.Contains(file));
+            if (_eventId == Guid.Empty) _eventId = Guid.NewGuid();
+            var evt = map.LocalEvents.GetValueOrDefault(_eventId) ?? new EventDescriptor(_eventId, map.Id, 0, 0);
+            if (evt.Pages.Count > 0)
+            {
+                // Preserve trigger, graphic, conditions and other native page metadata edited in the Event Editor.
+                var metadata = evt.Pages[0]; metadata.Cinematic = page.Cinematic; metadata.CommandLists = page.CommandLists; page = metadata;
+            }
+            evt.Name = _scene.Name; evt.Global = false; evt.Pages = [page]; map.LocalEvents[_eventId] = evt;
+            PacketSender.SendMap(map); _savedState = _lastState = Snapshot(); _status.Text = T("Saved"); CommitEdit(); return true;
+        }
+        catch (InvalidOperationException error) { MessageBox.Show(this, T("Validation") + ": " + Explain(error.Message), Text); return false; }
+    }
+    private void Advanced()
+    {
+        if (!SaveScene() || Globals.CurrentMap is not { } map) return;
+        using var editor = new FrmEvent(map) { MyEvent = map.LocalEvents[_eventId], MyMap = map };
+        editor.InitEditor(false, false, false); editor.ShowDialog(this);
+    }
+    private void Import()
+    {
+        if (!CanDiscard()) return;
+        using var dialog = new OpenFileDialog { Filter = "Cinematic JSON|*.cinematic.json|JSON|*.json" };
+        if (dialog.ShowDialog(this) != DialogResult.OK) return;
+        try
+        {
+            if (new FileInfo(dialog.FileName).Length > 2 * 1024 * 1024) throw new InvalidOperationException("scene-size");
+            var scene = JsonConvert.DeserializeObject<CinematicScene>(File.ReadAllText(dialog.FileName), new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None, MaxDepth = 32 });
+            if (scene == null || scene.Clips == null || scene.Actors == null || scene.Clips.Count > 512 || scene.Actors.Count > 64 || scene.Clips.Any(c => c == null || c.Points == null) || scene.Actors.Any(a => a == null))
+                throw new InvalidOperationException("scene-size");
+            LoadScene(scene, Guid.Empty);
+        }
+        catch (Exception error) when (error is IOException or JsonException or InvalidOperationException)
+        { MessageBox.Show(this, T("Validation") + ": " + Explain(error.Message), Text); }
+    }
+    private void Export()
+    {
+        using var dialog = new SaveFileDialog { Filter = "Cinematic JSON|*.cinematic.json", FileName = "scene.cinematic.json" };
+        if (dialog.ShowDialog(this) != DialogResult.OK) return;
+        try { File.WriteAllText(dialog.FileName, JsonConvert.SerializeObject(_scene, Formatting.Indented)); }
+        catch (IOException error) { MessageBox.Show(this, error.Message, Text); }
+    }
+    private void TestInGame()
+    {
+        if (!SaveScene()) return;
+        _status.Text = T("TestHint");
+        var path = Intersect.Editor.Core.Preferences.LoadPreference("ClientPath");
+        if (File.Exists(path)) Process.Start(new ProcessStartInfo(path) { WorkingDirectory = Path.GetDirectoryName(path)! });
+    }
+    private void SetCursor(int time)
+    {
+        _timeline.CursorMs = _viewport.CursorMs = Math.Clamp(time, 0, Math.Max(0, _scene.DurationMs));
+        _timeline.Invalidate(); _viewport.Invalidate(); RenderMap();
+    }
+    private void TickPreview()
+    {
+        if (Globals.CurrentMap?.Id != _scene.MapId)
+        {
+            _playing = false; _viewport.MapImage?.Dispose(); _viewport.MapImage = null;
+            _viewport.Invalidate(); _status.Text = T("MapRequired"); return;
+        }
+        if (!_playing) return;
+        var now = Environment.TickCount64; var next = Math.Min(_scene.DurationMs, _timeline.CursorMs + (int)Math.Clamp(now - _lastTick, 0, 250)); _lastTick = now;
+        var barrier = _scene.Clips.Where(c => c.Track is CinematicTrack.Dialogue or CinematicTrack.Choice or CinematicTrack.Event &&
+            c.StartMs >= _timeline.CursorMs && c.StartMs <= next && !_previewBarriers.Contains(c.Id)).OrderBy(c => c.StartMs).FirstOrDefault();
+        if (barrier != null) { next = barrier.StartMs; _previewBarriers.Add(barrier.Id); _playing = false; SelectObject(barrier); }
+        _timeline.CursorMs = _viewport.CursorMs = next; _timeline.Invalidate(); _viewport.Invalidate();
+        if (now - _lastRender >= 200) RenderMap();
+        if (next >= _scene.DurationMs) _playing = false;
+        _status.Text = $"{next / 1000f:0.00}s / {_scene.DurationMs / 1000f:0.00}s · " + T("PreviewStatus");
+    }
+    private void RenderMap()
+    {
+        if (Globals.CurrentMap?.Id != _scene.MapId || Render.GetGraphicsDevice() == null)
+        { _viewport.MapImage?.Dispose(); _viewport.MapImage = null; _viewport.Invalidate(); _status.Text = T("MapRequired"); return; }
+        var image = Render.RenderCinematicMap(_scene, _timeline.CursorMs);
+        var previous = _viewport.MapImage; _viewport.MapImage = image; previous?.Dispose();
+        _lastRender = Environment.TickCount64; _viewport.Invalidate();
+    }
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        if (keyData == Keys.F5) { TestInGame(); return true; }
+        if (keyData == (Keys.Control | Keys.S)) { SaveScene(); return true; }
+        if (keyData == (Keys.Control | Keys.Z)) { Restore(_undo, _redo); return true; }
+        if (keyData == (Keys.Control | Keys.Y)) { Restore(_redo, _undo); return true; }
+        return base.ProcessCmdKey(ref msg, keyData);
+    }
+}

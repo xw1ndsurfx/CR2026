@@ -1,0 +1,20 @@
+POINT DE REPRISE — Royal Cinematic Director — 2026-10-24
+Dépôt local : CR2026 (dans le dossier de cette conversation).
+Branche : feature/royal-cinematic-director ; base main a0aaf4efc3c7552fd086787c9b3beeb913e774a7.
+Le travail local nécessite que cet ordinateur soit allumé. Reprendre dans cette conversation.
+
+Réalisé : références image et cahier des charges conservées ; modèle et compilation vers Events/Move Routes natifs ; caméra client et cycle serveur ; éditeur sur rendu de vraie carte avec trajectoires souris, timeline, dialogues/choix interactifs et audio existant ; documentation en/fr ; aucun service audio externe.
+Vérifié : 21 tests cinématiques et 48 tests navals réussis. Builds Editor, Client et Server réussis à un stade antérieur ; dernier Server complet réussi. Les tests et journaux sont dans work/ à côté du dépôt.
+Limites : aucune validation connectée en jeu/multijoueur ; accès interface du serveur et automatisation locale indisponibles. Ne pas présenter la prévisualisation synthétique du test UI comme une vraie scène en jeu. Aucune installation de production modifiée.
+
+À reprendre avant PR :
+1. Corriger le projet Utilities/CinematicEditorSmoke : SelfContained ajouté, mais RuntimeIdentifiers hérités incluent Linux/macOS incompatibles WinForms (NETSDK1082). Limiter à win-x64 puis exécuter et inspecter le test UI.
+2. Recompiler le dernier changement client de nettoyage caméra à la déconnexion avec les chemins de clés Debug explicites ; dernière tentative échoue uniquement sur la clé publique recherchée dans Release (CS1566). Voir scripts/Verify-Cinematics.ps1.
+3. Vérifier/fixer le mouvement aléatoire des acteurs entre BeginCinematic et leur premier clip : sauvegarder puis figer leur mouvement natif, restaurer en fin. Inspecter EventMovementType et EventPageInstance avant modification.
+4. Refaire diff/checks ciblés, tester en conditions réelles avec la base de jeu fournie, documenter honnêtement les limites.
+5. Pousser la branche et créer une PR draft vers main sans fusion. Aucun push/PR confirmé à ce point de reprise.
+
+Installation réelle : C:\Users\Nicolas\OneDrive - Logiklik\[Studio Logiklik]\[JEUX]\[CORPS ROYAUX CHAPTER 2]\[ENGINE]\[CURRENT CLIENT & EDITOR]
+Serveur : https://panel.freemmorpgmaker.com/server/9b99d532
+Les ressources audio réelles ont été repérées. Le cache mapcache.db contient des images, pas la géométrie de carte.
+Fonctionnalités futures non terminées : scènes navales avancées, grandes batailles, règles de progression saga/chapitres, saut/reprise et synchronisation collective.
