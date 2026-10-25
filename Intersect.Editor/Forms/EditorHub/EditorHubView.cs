@@ -105,6 +105,7 @@ internal sealed class EditorHubView : UserControl
     }
     internal static void DrawText(DrawingGraphics g, string text, Font font, DrawingRectangle rect, DrawingColor color, bool wrap = false) =>
         TextRenderer.DrawText(g, text, font, rect, color, TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis |
+            TextFormatFlags.PreserveGraphicsTranslateTransform | TextFormatFlags.PreserveGraphicsClipping |
             (wrap ? TextFormatFlags.WordBreak : TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter));
     internal static void Box(DrawingGraphics g, DrawingRectangle rect, DrawingColor fill, DrawingColor border)
     {
@@ -125,7 +126,7 @@ internal sealed class EditorHubView : UserControl
                 var area = new DrawingRectangle(Math.Max(0, Width - 520), 9, 510, Height - 18); HubArt.Draw(g, art, area);
                 using var fade = new LinearGradientBrush(area, Surface, DrawingColor.FromArgb(15, Surface), 0f); g.FillRectangle(fade, area);
             }
-            if (Intersect.Editor.Core.Program.Icon is { } icon) g.DrawIcon(icon, new DrawingRectangle(22, 28, 48, 48));
+            if (hub.Art.Logo is { } logo) HubArt.DrawLogo(g, logo, new DrawingRectangle(18, 17, 60, 72));
             using var title = new Font("Segoe UI", Width < 800 ? 14 : 17, FontStyle.Bold);
             DrawText(g, HubText.T("Welcome"), title, new DrawingRectangle(80, 22, Math.Max(100, Width - 235), 34), Foreground);
             DrawText(g, HubText.T("Subtitle"), Body, new DrawingRectangle(81, 60, Math.Max(100, Width - 105), 36), Muted, true);

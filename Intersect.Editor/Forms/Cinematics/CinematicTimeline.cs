@@ -12,6 +12,8 @@ internal sealed class CinematicTimeline : ScrollableControl
     internal event Action? Edited;
     internal event Action<int>? Scrubbed;
     internal event Action<CinematicMarker>? MarkerSelected;
+    internal event Action<CinematicTrack, int, Guid?>? ActionDropped;
+    private (CinematicTrack Track, int Time, Guid? Actor)? _dropPreview;
     private const int LabelWidth = 160, RowHeight = 36, Header = 28;
     private float _pixelsPerSecond = 80;
     private CinematicClip? _drag;
@@ -27,7 +29,7 @@ internal sealed class CinematicTimeline : ScrollableControl
 
     internal CinematicTimeline()
     {
-        DoubleBuffered = true; AutoScroll = true; BackColor = DrawingColor.FromArgb(14, 22, 29); ForeColor = DrawingColor.Gainsboro;
+        DoubleBuffered = true; AutoScroll = true; AllowDrop = true; BackColor = DrawingColor.FromArgb(14, 22, 29); ForeColor = DrawingColor.Gainsboro;
         MouseWheel += (_, e) =>
         {
             if ((ModifierKeys & Keys.Control) == 0) return;
@@ -42,6 +44,16 @@ internal sealed class CinematicTimeline : ScrollableControl
         var row = rows.FindIndex(r => r.Track == clip.Track && (r.Track != CinematicTrack.Movement || r.Actor == clip.ActorId));
         return new(X(clip.StartMs), Header + row * RowHeight + 3 + AutoScrollPosition.Y,
             Math.Max(8, clip.DurationMs / 1000f * _pixelsPerSecond), RowHeight - 6);
+    }
+    internal void Reveal(CinematicClip clip)
+    {
+        var rect = BoundsOf(clip, Rows);
+        var x = -AutoScrollPosition.X; var y = -AutoScrollPosition.Y;
+        if (rect.Left < LabelWidth) x = Math.Max(0, x + (int)rect.Left - LabelWidth);
+        else if (rect.Right > ClientSize.Width) x += (int)Math.Min(rect.Width, rect.Right - ClientSize.Width) + 16;
+        if (rect.Top < Header) y = Math.Max(0, y + (int)rect.Top - Header);
+        else if (rect.Bottom > ClientSize.Height) y += (int)(rect.Bottom - ClientSize.Height) + 16;
+        AutoScrollPosition = new System.Drawing.Point(x, y); Invalidate();
     }
     protected override void OnPaint(PaintEventArgs e)
     {
@@ -71,6 +83,15 @@ internal sealed class CinematicTimeline : ScrollableControl
             g.DrawRectangle(clip == Selected ? Pens.Gold : Pens.SlateGray, rect.X, rect.Y, rect.Width, rect.Height);
             var state = g.Save(); g.SetClip(rect); g.DrawString(clip.ToString(), Font, Brushes.White, rect.X + 5, rect.Y + 6); g.Restore(state);
         }
+        if (_dropPreview is { } drop)
+        {
+            var row = rows.FindIndex(r => r.Track == drop.Track && (drop.Track != CinematicTrack.Movement || drop.Actor == null || r.Actor == drop.Actor));
+            if (row >= 0)
+            {
+                using var preview = new Pen(DrawingColor.DeepSkyBlue, 3) { DashStyle = DashStyle.Dash };
+                g.DrawRectangle(preview, X(drop.Time), Header + row * RowHeight + AutoScrollPosition.Y + 3, Math.Max(8, _pixelsPerSecond), RowHeight - 6);
+            }
+        }
         foreach (var marker in Scene.Markers)
         {
             var x = X(marker.TimeMs); if (x < LabelWidth || x > Width) continue;
@@ -84,6 +105,29 @@ internal sealed class CinematicTimeline : ScrollableControl
         g.FillRectangle(labelBackground, 0, Header, LabelWidth, Height);
         for (var i = 0; i < rows.Count; i++)
             g.DrawString(rows[i].Name, Font, Brushes.Gainsboro, new RectangleF(5, Header + i * RowHeight + 8 + AutoScrollPosition.Y, LabelWidth - 8, RowHeight - 8));
+    }
+    private void PreviewDrop(DragEventArgs e)
+    {
+        var point = PointToClient(new System.Drawing.Point(e.X, e.Y));
+        _dropPreview = null;
+        if (CinematicDragData.TryAction(e.Data, out var track) && point.X >= LabelWidth &&
+            ClientRectangle.Contains(point) && (e.AllowedEffect & DragDropEffects.Copy) != 0)
+        {
+            var rows = Rows; var row = (int)Math.Floor((point.Y - Header - AutoScrollPosition.Y) / (float)RowHeight);
+            Guid? actor = track == CinematicTrack.Movement && row >= 0 && row < rows.Count && rows[row].Track == CinematicTrack.Movement
+                ? rows[row].Actor : null;
+            _dropPreview = (track, Math.Min(TimeAt(point.X), Math.Max(0, SafeDuration - 1000)), actor);
+        }
+        e.Effect = _dropPreview != null ? DragDropEffects.Copy : DragDropEffects.None; Invalidate();
+    }
+    protected override void OnDragEnter(DragEventArgs e) { base.OnDragEnter(e); PreviewDrop(e); }
+    protected override void OnDragOver(DragEventArgs e) { base.OnDragOver(e); PreviewDrop(e); }
+    protected override void OnDragLeave(EventArgs e) { base.OnDragLeave(e); _dropPreview = null; Invalidate(); }
+    protected override void OnDragDrop(DragEventArgs e)
+    {
+        base.OnDragDrop(e); PreviewDrop(e);
+        var drop = _dropPreview; _dropPreview = null; Invalidate();
+        if (drop is { } action) ActionDropped?.Invoke(action.Track, action.Time, action.Actor);
     }
     protected override void OnMouseDown(MouseEventArgs e)
     {
