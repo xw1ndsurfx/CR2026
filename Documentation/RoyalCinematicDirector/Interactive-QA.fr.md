@@ -71,3 +71,15 @@ Lors de la lecture en mode SQLite strictement lecture seule de la copie locale, 
 Pour l'essai réel : terminer la scène, confirmer et fermer le dernier dialogue, quitter puis reconnecter le même personnage **sans relancer `/cinematicqa`**, qui réinitialise les indicateurs d'interaction et de fin. Comparer les valeurs avant/après avec une lecture seule, puis essayer deux comptes de test distincts appartenant au testeur. La validation de deux clients simultanés reste en attente.
 
 Le client Intel isolé conserve les DLL près de l'exécutable et utilise `work/runtime/editor` comme dossier de travail et `--working-directory`. Ses ressources résident dans `work/runtime/editor/resources`, pas dans le dossier de l'exécutable. Un lancement direct depuis ce dernier dossier n'est pas le lancement QA attendu ; utiliser `scripts/Start-CinematicQaClient.ps1` avec les chemins préparés.
+
+## Essai avec deux clients et sauvegarde observée — 2026-10-25
+
+Le propriétaire confirme la connexion de deux personnages, puis répond « tout fonctionne » au protocole croisé proposé (caméra/dialogues/contrôles personnels, passage du premier, attente d'action du second et reconnexion sans remise à zéro). Cette confirmation est un retour manuel, sans capture graphique automatisée.
+
+Les lectures SQLite en mode lecture seule ont ensuite constaté deux états distincts : interaction/fin vraies pour un personnage et fausses pour l'autre, puis interaction/fin vraies pour les deux. La sauvegarde effective des deux fins et la séparation des indicateurs sont donc observées. L'ancien relevé entièrement faux n'est plus le dernier état constaté. Aucun identifiant de compte ou de personnage n'est publié avec ces résultats.
+
+Les deux choix enregistrés sont faux (branche A) : la branche B reste non confirmée dans le client, malgré sa couverture par le test SQLite. Le journal consulté n'a pas permis de constater un nouveau cycle déconnexion/reconnexion pendant ce protocole ; la reconnexion récente ne bénéficie donc pas d'une validation instrumentée indépendante du retour manuel. La reprise d'une cinématique en cours reste non implémentée.
+
+Au début du test simultané, les journaux client indiquaient des blocages de rendu/presentation jusqu'à 90 secondes alors que le serveur restait actif. Une troisième instance ouverte en trop a disparu ; deux fenêtres restaient et le propriétaire a ensuite réussi à connecter les deux. Aucun réglage global Mesa/Windows, pilote, délai réseau ou mécanisme d'authentification n'a été modifié. Cela ne prouve pas la résolution générale des blocages de rendu Intel.
+
+Les 46 contrôles GitHub de `5ff0cea52e1452a66d80fa2227f5a8a3ce695363` ont tous réussi. Les résultats restent limités au bac local : quêtes réelles, interruptions graphiques, branche B dans le client et stabilité prolongée restent à tester. PR toujours draft, sans fusion ni déploiement hébergé.
