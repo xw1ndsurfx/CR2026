@@ -7,6 +7,7 @@ namespace Intersect.Network.Packets.Server;
 public partial class NpcEntityPacket : EntityPacket
 {
     [Key(26)] public string PetDecorationJson {get;set;}="";
+    [Key(27)] public string MountJson { get; set; } = "";
     //Parameterless Constructor for MessagePack
     public NpcEntityPacket()
     {

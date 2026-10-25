@@ -15,6 +15,8 @@ internal sealed class PartyLobbyWindow : Window
     private readonly ScrollControl _rows;
     private readonly Label _message, _summary, _dungeonLabel;
     private readonly Button _create, _closeListing, _leaveParty;
+    private readonly Button _joustTraining;
+    private readonly Label _joustHint;
     private PartyLobbyStatePacket _state = new();
     private bool _applying;
     private bool _titleRequired;
@@ -25,7 +27,7 @@ internal sealed class PartyLobbyWindow : Window
         LobbyActivity.Dungeon => "Dungeon", LobbyActivity.Invasion => "Invasion", LobbyActivity.WorldBoss => "World Boss",
         LobbyActivity.Alchemy => "Alchemy", LobbyActivity.Poker => "Poker", LobbyActivity.Blackjack => "Blackjack",
         LobbyActivity.Roulette => "Roulette", LobbyActivity.Lumberjack => "Lumberjack", LobbyActivity.HouseParty => "House Party",
-        LobbyActivity.Looting => "Looting", LobbyActivity.Cooking => "Cooking", _ => "All activities" });
+        LobbyActivity.Looting => "Looting", LobbyActivity.Cooking => "Cooking", LobbyActivity.Jousting => "Royal Jousting", _ => "All activities" });
     internal PartyLobbyWindow(Canvas canvas) : base(canvas,ClientLanguages.Text("Adventure lobbies"),false,nameof(PartyLobbyWindow))
     {
         SetSize(Math.Min(890,canvas.Width-20),Math.Min(650,canvas.Height-35));
@@ -50,6 +52,9 @@ internal sealed class PartyLobbyWindow : Window
         _title.SetBounds(199,baseY+29,width-183,28); _title.SetToolTipText(ClientLanguages.Text("Optional lobby title"));
         _dungeonLabel=Label(this,"DungeonCaption",16,baseY+65,175,26,Cream); _dungeonLabel.Text=ClientLanguages.Text("Dungeon");
         _dungeon=Combo(this,"DungeonChoice",199,baseY+65,width-183);
+        _joustTraining=Button(this,"Train against AI",16,baseY+65,175,()=>{Hide();JoustWindow.Open();});
+        _joustHint=Label(this,"JoustTrainingHint",199,baseY+65,width-183,30,Cream);
+        _joustHint.Text=ClientLanguages.Text("Stand at the arena start to train.");
         _create=Button(this,"Create lobby",16,baseY+101,175,Create);
         _title.TextChanged+=(_,_)=>{if(!_applying)UpdateCreation();};
         _closeListing=Button(this,"Close my lobby",199,baseY+101,175,()=>Request(LobbyAction.Close,_state.CurrentLobbyId));
@@ -83,6 +88,8 @@ internal sealed class PartyLobbyWindow : Window
     private void UpdateCreation()
     {
         var dungeon=(_activity.SelectedItem?.UserData as int? ?? 0)==(int)LobbyActivity.Dungeon;
+        var jousting=(_activity.SelectedItem?.UserData as int? ?? 0)==(int)LobbyActivity.Jousting;
+        _joustTraining.IsHidden=_joustHint.IsHidden=!jousting;
         _dungeon.IsHidden=_dungeonLabel.IsHidden=!dungeon;
         _create.IsDisabled=_state.CurrentLobbyId!=Guid.Empty || Globals.Me?.Party is {Count:>0} party && party[0].Id!=Globals.Me.Id || dungeon && _dungeon.SelectedItem==null;
         _create.IsDisabled|=_titleRequired && string.IsNullOrWhiteSpace(_title.Text);

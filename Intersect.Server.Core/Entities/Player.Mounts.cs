@@ -21,7 +21,8 @@ public partial class Player
     private long _lastMountAction;
     private long _lastMountList;
     internal MountDefinition? ActiveMount => ActiveMountId == Guid.Empty ? null : MountRuntime.Find(ActiveMountId);
-    public override float GetMovementTime() => base.GetMovementTime() / (float)(ActiveMount?.SpeedMultiplier ?? 1);
+    public override float GetMovementTime() => ScriptedMovementMilliseconds > 0 ? ScriptedMovementMilliseconds :
+        base.GetMovementTime() / (float)(ActiveMount?.SpeedMultiplier ?? 1);
     internal bool CanRide(MountDefinition definition) => !IsDead && !HasPendingDeath && !IsCasting && !IsBlocking &&
         !CachedStatuses.Any(s => s.Type == Intersect.Enums.SpellEffect.Transform) &&
         CombatTimer <= Timing.Global.Milliseconds && CaptainedShipId == Guid.Empty && BoardedShipId == Guid.Empty &&
@@ -33,7 +34,7 @@ public partial class Player
     }
     internal void UpdateMount()
     {
-        if (ActiveMountId != Guid.Empty && (ActiveMount is not { } mount || !MountRuntime.Owns(this, mount) || !CanRide(mount))) Dismount();
+        if (ActiveMountId != Guid.Empty && (ActiveMount is not { } mount || (!MountRuntime.Owns(this, mount) && !(_joust is { Done: false } && _joustArena?.MountId == mount.Id)) || !CanRide(mount))) Dismount();
     }
     internal void SendMountState(bool open = false, string message = "") => SendPacket(new MountStatePacket
     {

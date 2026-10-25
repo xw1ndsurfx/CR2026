@@ -91,7 +91,7 @@ public static class CinematicCompiler
         commands.Add(new BeginCinematicCommand { MapId = scene.MapId,AllowVisualSkip=scene.AllowVisualSkip,
             Actors = scene.Actors.Where(a => a.Kind != CinematicActorKind.PersonalEvent ||
                 scene.Clips.Any(c => c.Track == CinematicTrack.Movement && c.ActorId == a.TargetId)).ToList() });
-        commands.Add(new HoldPlayerCommand());
+        if (!scene.AllowPlayerControl) commands.Add(new HoldPlayerCommand());
         var scheduled = new List<(int Time, int Priority, int Order, EventCommand Command)>();
         var order = 0;
         var actorEnds = scene.Actors.ToDictionary(a => a.TargetId, a => (Time: -1, X: a.StartX, Y: a.StartY));
@@ -124,7 +124,7 @@ public static class CinematicCompiler
                     if (clip.AllowPlayerControl) Add(new ReleasePlayerCommand());
                     Add(new AwaitCinematicConditionCommand { ConditionKind=clip.ConditionKind,VariableId=clip.VariableId,
                         ExpectedValue=clip.ExpectedValue,QuestId=clip.QuestId,TaskId=clip.TaskId,ConditionTimeoutMs=clip.ConditionTimeoutMs });
-                    if (clip.AllowPlayerControl) Add(new HoldPlayerCommand());
+                    if (clip.AllowPlayerControl && !scene.AllowPlayerControl) Add(new HoldPlayerCommand());
                     break;
                 case CinematicTrack.Gameplay:
                     Require(Enum.IsDefined(clip.GameplayAction),"gameplay-action");
@@ -133,7 +133,7 @@ public static class CinematicCompiler
                         Require(clip.ResourceId != Guid.Empty && validEvent?.Invoke(clip.ResourceId) != false,"event-unavailable");
                         if (clip.AllowPlayerControl) Add(new ReleasePlayerCommand());
                         Add(new StartCommmonEventCommand { EventId=clip.ResourceId });
-                        if (clip.AllowPlayerControl) Add(new HoldPlayerCommand());
+                        if (clip.AllowPlayerControl && !scene.AllowPlayerControl) Add(new HoldPlayerCommand());
                     }
                     else
                     {
@@ -258,7 +258,7 @@ public static class CinematicCompiler
                     Require(clip.ResourceId != Guid.Empty && validEvent?.Invoke(clip.ResourceId) != false, "event-unavailable");
                     if (clip.AllowPlayerControl) Add(new ReleasePlayerCommand());
                     Add(new StartCommmonEventCommand { EventId = clip.ResourceId });
-                    if (clip.AllowPlayerControl) Add(new HoldPlayerCommand());
+                    if (clip.AllowPlayerControl && !scene.AllowPlayerControl) Add(new HoldPlayerCommand());
                     break;
                 case CinematicTrack.Naval:
                     Require(scene.Actors.Any(a=>a.TargetId == clip.ActorId && a.Kind == CinematicActorKind.TemporaryVessel),"vessel-required");

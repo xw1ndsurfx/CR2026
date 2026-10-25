@@ -65,6 +65,16 @@ internal static class PartyLobbyTests
             }
             Check(Call(host,LobbyAction.Create,activity:LobbyActivity.Naval).Lobbies.Length==0,"Naval recruiting requires the captain of an active personal ship stopped at a dock");
             Check(Call(host,LobbyAction.Create,activity:LobbyActivity.HouseParty).Lobbies.Length==0,"A private or unconfigured house cannot be advertised as a House Party");
+            var joustListing=Call(host,LobbyAction.Create,activity:LobbyActivity.Jousting);
+            var joustField=typeof(Player).GetField("_joust",BindingFlags.NonPublic|BindingFlags.Instance)!;
+            var joustMatch=new Intersect.Framework.Core.Jousting.JoustMatch(new(),0,Intersect.Framework.Core.Jousting.JoustDifficulty.Novice);
+            joustField.SetValue(host,joustMatch);
+            Check(Call(guest,LobbyAction.Browse).Lobbies.Single().Started,"An active joust locks its actual lobby listing");
+            Check(Call(guest,LobbyAction.Join,joustListing.CurrentLobbyId).Message=="A joust is in progress. Please wait.","Joining a live joust is rejected server-side");
+            Check(Call(host,LobbyAction.Travel,joustListing.CurrentLobbyId).Message=="A joust is in progress. Please wait.","Active joust lobby travel is rejected before teleporting");
+            joustMatch.Abandon(0);
+            Check(!Call(guest,LobbyAction.Browse).Lobbies.Single().Started,"Joust listings reopen after the duel ends");
+            Call(host,LobbyAction.Close,joustListing.CurrentLobbyId);joustField.SetValue(host,null);
             var leaveState=Call(host,LobbyAction.Create);Call(guest,LobbyAction.Join,leaveState.CurrentLobbyId);
             Check(Call(guest,LobbyAction.Leave).CurrentLobbyId==Guid.Empty && guest.Party.Count==0,"Leaving a lobby exits the actual party");
             Check(Call(host,LobbyAction.Leave).Lobbies.Length==0,"A departing solo host also removes its listing");

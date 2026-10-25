@@ -1221,5 +1221,26 @@
     "art": "miniGame.Lockpicking.png",
     "keywords": "Lockpicking Lockpicking Crochetage Ganzúas",
     "subcategory": "MiniGameSettings"
-  }
+  },
+{
+  "id": "miniGame.Jousting",
+  "oldMenu": "Mini-Game",
+  "category": "MiniGames",
+  "subcategory": "MiniGameSettings",
+  "tags": [
+    "Gameplay"
+  ],
+  "title": {
+    "en": "Jousting Editor",
+    "fr": "Éditeur de joutes",
+    "es": "Editor de justas"
+  },
+  "description": {
+    "en": "Place a training lane and configure AI rules and native cinematic Events.",
+    "fr": "Placez une lice et configurez les règles IA et les Events cinématiques natifs.",
+    "es": "Coloca una liza y configura reglas de IA y eventos cinemáticos nativos."
+  },
+  "art": "mountEditorToolStripMenuItem.png",
+  "keywords": "jousting joutes justas Herbonia William"
+}
 ]

@@ -430,6 +430,8 @@ public partial class Entity : IEntity
         }
 
         _petDecoration=null;
+        ApplyArenaMount(packet is NpcEntityPacket mounted ? mounted.MountJson : "");
+        ServerMovementMilliseconds = 0;
         if(packet is NpcEntityPacket {PetDecorationJson.Length:>0 and <=1024} npc)
         {
             try {_petDecoration=Newtonsoft.Json.JsonConvert.DeserializeObject<Intersect.Framework.Core.QualityOfLife.PetDecorationDefinition>(npc.PetDecorationJson);}
@@ -643,8 +645,10 @@ public partial class Entity : IEntity
     }
 
     //Returns the amount of time required to traverse 1 tile
+    internal int ServerMovementMilliseconds { get; set; }
     public virtual float GetMovementTime()
     {
+        if (ServerMovementMilliseconds > 0) return ServerMovementMilliseconds;
         var time = 1000f / (float)(1 + Math.Log(Stat[(int)Enums.Stat.Speed]));
         if (DirectionFacing > Direction.Right)
         {
@@ -1328,6 +1332,8 @@ public partial class Entity : IEntity
         }
 
         if (texture == default)
+            texture = RenderedMount is { IntegratedRider: true } mount ? Globals.ContentManager?.GetTexture(TextureType.Image, mount.Idle) : null;
+        if (texture == default)
         {
             // We don't have a texture to render, but we still want this to be targetable.
             WorldPos = new FloatRect(
@@ -1361,7 +1367,7 @@ public partial class Entity : IEntity
 
         var mountBounds = BeginMountDraw(texture, srcRectangle, destRectangle, renderColor);
         var riderBounds = MountedRiderRectangle(destRectangle);
-        WorldPos = _riderTransform == null ? destRectangle : new FloatRect(Math.Min(mountBounds.X, riderBounds.X), Math.Min(mountBounds.Y, riderBounds.Y),
+        WorldPos = _integratedMountRider ? mountBounds : _riderTransform == null ? destRectangle : new FloatRect(Math.Min(mountBounds.X, riderBounds.X), Math.Min(mountBounds.Y, riderBounds.Y),
             Math.Max(mountBounds.Right, riderBounds.Right) - Math.Min(mountBounds.X, riderBounds.X), Math.Max(mountBounds.Bottom, riderBounds.Bottom) - Math.Min(mountBounds.Y, riderBounds.Y));
         IncludeVisibleGraphicTop(texture, srcRectangle, riderBounds);
 

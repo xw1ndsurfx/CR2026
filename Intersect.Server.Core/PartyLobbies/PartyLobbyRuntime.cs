@@ -38,6 +38,7 @@ internal static class PartyLobbyRuntime
         {
             if (!Online(item.Host) || !Leader(item.Host) || item.Activity==LobbyActivity.Naval && NavalSystem.LobbyShip(item.Host)?.ShipId!=item.ShipId || item.Activity == LobbyActivity.HouseParty && !HousingRuntime.PublicHouse(item.Host)) { Lobbies.Remove(item.Id); continue; }
             if (Members(item.Host).Any(DungeonRunRuntime.IsPlayerInActiveRun)) item.Started = true;
+            if (item.Activity == LobbyActivity.Jousting) item.Started = item.Host.IsJousting || Members(item.Host).Any(DungeonRunRuntime.IsPlayerInActiveRun);
         }
         foreach (var id in LastRequest.Keys.Where(id => Player.FindOnline(id) == null).ToArray()) LastRequest.Remove(id);
     }
@@ -148,6 +149,7 @@ internal static class PartyLobbyRuntime
     {
         if (!Lobbies.TryGetValue(id, out var lobby)) return "This lobby is no longer available.";
         if (Members(lobby.Host).Contains(player)) return "You already belong to this lobby.";
+        if (lobby.Activity == LobbyActivity.Jousting && lobby.Started) return "A joust is in progress. Please wait.";
         if (lobby.Started || Members(lobby.Host).Any(DungeonRunRuntime.IsPlayerInActiveRun) || DungeonRunRuntime.IsPlayerInActiveRun(player))
             return "A dungeon has already started. Lobby travel is locked.";
         if (player.Party.Count > 0 || Lobbies.Values.Any(l => Members(l.Host).Contains(player))) return "Leave your current party or close your lobby first.";
@@ -176,7 +178,7 @@ internal static class PartyLobbyRuntime
         lock (Gate)
         {
             if (!Lobbies.ContainsKey(lobby.Id) || !Online(lobby.Host) || !Members(lobby.Host).Contains(player)) return "This lobby is no longer available.";
-            if (lobby.Started) return "A dungeon has already started. Lobby travel is locked.";
+            if (lobby.Started) return lobby.Activity == LobbyActivity.Jousting ? "A joust is in progress. Please wait." : "A dungeon has already started. Lobby travel is locked.";
         }
         if (DungeonRunRuntime.IsPlayerInActiveRun(player) || DungeonRunRuntime.IsPlayerInActiveRun(lobby.Host)) return "A dungeon has already started. Lobby travel is locked.";
         if(!Intersect.Server.WorldEvents.WorldActivitiesRuntime.Current.Teleports.Allows(player.MapId,lobby.Host.MapId,false))return "Lobby teleport is unavailable in this zone.";

@@ -49,6 +49,7 @@ public sealed class MountDefinition
     public double HipRatio { get; set; } = .65;
     public double Bob { get; set; } = 1.5;
     public bool ClipLegs { get; set; } = true;
+    public bool IntegratedRider { get; set; }
     public MountSeat[] Seats { get; set; } = [new() { Y = 54, ForegroundY = 40, ClipY = 62 }, new(), new(), new() { Y = 52, ForegroundY = 64 }];
     public MountFrameOffset[] FrameOffsets { get; set; } = [];
     public string Sheet(MountPhase phase) => phase switch { MountPhase.Start => Start, MountPhase.Loop => Loop, MountPhase.End => End, _ => Idle };

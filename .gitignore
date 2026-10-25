@@ -237,3 +237,14 @@ Custom*.props
 
 # Locally imported mount spritesheets
 /resources/images/mounts/
+
+# User-supplied jousting sprites and local generated derivatives
+/resources/images/jousting/
+
+# Local jousting atlas and licensed-reference derivatives
+/resources/tilesets/Jousting_Objects_16.*
+
+# Generated local databases and account data
+/resources/playerdata.db*
+/resources/gamedata.db*
+/resources/logging.db*
