@@ -74,6 +74,17 @@ internal static class MountClientTests
             state.Owned = []; type.GetMethod("Apply", Hidden)!.Invoke(window, [state]);
             Check(Descendants(window).Any(c => c.Name == "MountRide" + mount.Id && c.IsDisabled), "Locked cards cannot submit a ride action.");
             System.Console.WriteLine("PASS mounts client: authoritative snapshots, shared body/paperdoll geometry, padded layers, clipping, unmounted fallback and collection actions");
+            var joustType = typeof(GameInterface).Assembly.GetType("Intersect.Client.Interface.Game.JoustWindow", true)!;
+            var joust = (ControlBase)Activator.CreateInstance(joustType, Hidden, null, [canvas], null)!;
+            foreach (var phase in new[] { Intersect.Framework.Core.Jousting.JoustPhase.Charge, Intersect.Framework.Core.Jousting.JoustPhase.Aim,
+                Intersect.Framework.Core.Jousting.JoustPhase.Impact, Intersect.Framework.Core.Jousting.JoustPhase.Results })
+            {
+                var view = new Intersect.Framework.Core.Jousting.JoustView { MatchId = mount.Id, Phase = phase, Pass = 1, Passes = 3 };
+                joustType.GetMethod("Apply", Hidden)!.Invoke(joust, [new JoustStatePacket { ViewJson = System.Text.Json.JsonSerializer.Serialize(view) }]);
+                var viewport = (ControlBase)joustType.GetField("_view", Hidden)!.GetValue(joust)!;
+                Check(viewport.IsHidden == (phase == Intersect.Framework.Core.Jousting.JoustPhase.Charge),
+                    "The map remains visible during charge and the impact animation remains visible in the aim viewport.");
+            }
         }
         finally { ApplicationContext.Context.Value = context; Globals.ContentManager = oldContent; Intersect.Client.Core.Graphics.Renderer = renderer; }
     }

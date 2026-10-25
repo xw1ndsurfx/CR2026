@@ -148,7 +148,17 @@ public partial class Player
         if (_joust == null || _joustArena == null || _joustOpponent == null || _joustInstance == null) return false;
         var pose = JoustTrack.Sample(_joustArena, _joust, now);
         if (Y != _joustArena.StartY || _joustOpponent.Y != _joustArena.OpponentY) return false;
-        if (_joust.Phase == JoustPhase.Preparation) return X == pose.PlayerX && _joustOpponent.X == pose.OpponentX;
+        if (_joust.Phase == JoustPhase.Preparation)
+        {
+            if (_joustMoveMs != 0)
+            {
+                _joustMoveMs = _joustOpponent.StepMilliseconds = 0;
+                // Reliable snapshots end the scripted interpolation/galop between passes.
+                PacketSender.SendEntityDataToProximity(this);
+                PacketSender.SendEntityDataToProximity(_joustOpponent);
+            }
+            return X == pose.PlayerX && _joustOpponent.X == pose.OpponentX;
+        }
         _joustMoveMs = _joustOpponent.StepMilliseconds = pose.StepMilliseconds;
         _joustRouteThread = Environment.CurrentManagedThreadId;
         try { return MoveJoustActor(this, pose.PlayerX) && MoveJoustActor(_joustOpponent, pose.OpponentX); }

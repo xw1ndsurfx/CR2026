@@ -24,6 +24,7 @@ public partial class Entity
         catch (Exception) { }
     }
     private MountDefinition? RenderedMount => this is Player player ? player.ActiveMount : _arenaMount;
+    internal bool MountMovementActive => IsMoving || ServerMovementMilliseconds > 0;
     private bool _integratedMountRider;
     private MountRiderTransform? _riderTransform;
     private (IGameTexture Texture, FloatRect Source, FloatRect Destination)? _mountForeground;
@@ -35,7 +36,7 @@ public partial class Entity
         if (RenderedMount is not { } mount || !string.IsNullOrEmpty(TransformedSprite))
         { _mountClock = null; _drawnMount = Guid.Empty; return destination; }
         if (_drawnMount != mount.Id) { _mountClock = new(); _drawnMount = mount.Id; }
-        var (phase, frame) = (_mountClock ??= new()).Sample(mount, IsMoving, Timing.Global.Milliseconds);
+        var (phase, frame) = (_mountClock ??= new()).Sample(mount, MountMovementActive, Timing.Global.Milliseconds);
         var sheet = Globals.ContentManager?.GetTexture(TextureType.Image, mount.Sheet(phase));
         if (sheet == null)
         {

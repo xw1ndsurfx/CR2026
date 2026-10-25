@@ -73,6 +73,11 @@ public sealed class JoustWorldTests
         {
             Tick(world.Owner, t);
             if (world.Match.Done) break;
+            if (world.Match.Phase == JoustPhase.Preparation)
+            {
+                Assert.That(world.Owner.ScriptedMovementMilliseconds, Is.Zero);
+                Assert.That(actor.StepMilliseconds, Is.Zero, "Preparation ends scripted gallop for both observers and the participant.");
+            }
             Assert.Multiple(() => {
                 Assert.That(world.Owner.X + actor.X, Is.EqualTo(world.Arena.StartX + world.Arena.EndX));
                 Assert.That(world.Owner.Y, Is.EqualTo(world.Arena.StartY));

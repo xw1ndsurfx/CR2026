@@ -41,5 +41,11 @@ public sealed class JoustClientTests
         var actor = (Entity)RuntimeHelpers.GetUninitializedObject(typeof(Entity));
         actor.ServerMovementMilliseconds = 236;
         Assert.That(actor.GetMovementTime(), Is.EqualTo(236));
+        var clock = new MountAnimationClock(); var mount = MountConfiguration.Prototype().Mounts[0];
+        Assert.That(clock.Sample(mount, actor.MountMovementActive, 0).Phase, Is.EqualTo(MountPhase.Start));
+        actor.IsMoving = false; // A network interpolation gap must not restart the six-frame launch.
+        Assert.That(clock.Sample(mount, actor.MountMovementActive, 700).Phase, Is.EqualTo(MountPhase.Loop));
+        actor.ServerMovementMilliseconds = 0;
+        Assert.That(clock.Sample(mount, actor.MountMovementActive, 800).Phase, Is.EqualTo(MountPhase.End));
     }
 }

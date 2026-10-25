@@ -84,7 +84,7 @@ internal sealed class JoustWindow : Window
                     _status.Text += " · " + T(HitText(next.PlayerStrike.Hit));
                 if (next.Phase != JoustPhase.Aim) _view.AimY = .75;
                 var active = next.Phase is not (JoustPhase.Finished or JoustPhase.Abandoned);
-                var compact = active && next.Phase != JoustPhase.Aim;
+                var compact = active && next.Phase is JoustPhase.Preparation or JoustPhase.Charge;
                 SetSize(760, compact ? 175 : 600);
                 foreach (var control in _lobby) { if (active) control.Hide(); else control.Show(); }
                 if (compact) _view.Hide(); else _view.Show();
