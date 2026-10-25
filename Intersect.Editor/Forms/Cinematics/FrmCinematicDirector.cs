@@ -52,11 +52,13 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         var actors = new ToolStripDropDownButton(T("ActorsMenu"));
         var tools = new ToolStripDropDownButton(T("SceneToolsMenu"));
         var views = new ToolStripDropDownButton(T("ViewMenu"));
+        var creators = new ToolStripDropDownButton(T("CreatorMenu"));
         void Button(string key, Action action)
         {
             var menu = key switch
             {
                 "Open" or "Export" or "ChapterDirector" => files,
+                "AutoCreator" or "DescriptionCreator" or "Templates" => creators,
                 "TemporaryNpc" or "TemporaryVessel" or "Formation" or "FleetFormation" or "GroupPath" => actors,
                 "ShotPreset" or "Marker" or "NavalScene" or "BattlefieldScene" or "GroupAnimation" or "GroupCharge" or "Reinforcements" or "GameplayTransition" or "Step" => tools,
                 _ => null,
@@ -72,6 +74,8 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         Button("Step", () => SetCursor(Math.Min(_scene.DurationMs, _timeline.CursorMs + 50)));
         Button("Test", TestInGame);
         Button("Templates", ChooseTemplate);
+        Button("AutoCreator", () => OpenAutoCreator(false));
+        Button("DescriptionCreator", () => OpenAutoCreator(true));
         Button("ChapterDirector", () => { using var chapter = new FrmCinematicChapters(); chapter.ShowDialog(this); });
         Button("ShotPreset", ChooseShotPreset);
         Button("Marker", () => { var marker = new CinematicMarker { Name = T("Marker"), TimeMs = _timeline.CursorMs };
@@ -103,7 +107,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         TogglePanel("Inspector", visible => right.Panel2Collapsed = !visible);
         TogglePanel("TimelinePanel", visible => middle.Panel2Collapsed = !visible);
         toolbar.Items.Add(new ToolStripSeparator());
-        toolbar.Items.AddRange([files, actors, tools, views]);
+        toolbar.Items.AddRange([creators, files, actors, tools, views]);
         middle.Panel1.Controls.Add(left);
         right.Panel1.Controls.Add(_viewport);
         var viewTools = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true };
@@ -198,7 +202,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         root.BackColor = DrawingColor.FromArgb(22, 31, 40); root.ForeColor = DrawingColor.Gainsboro;
         foreach (Control child in root.Controls) ApplyColors(child);
     }
-    private bool CanDiscard() => Snapshot() == _savedState || _savedState == "" ||
+    private bool CanDiscard() => Snapshot() == _savedState || _savedState == "" && _scene.Clips.Count == 0 ||
         MessageBox.Show(this, T("Unsaved"), Text, MessageBoxButtons.OKCancel) == DialogResult.OK;
     private static CinematicScene Clone(CinematicScene scene) => JsonConvert.DeserializeObject<CinematicScene>(JsonConvert.SerializeObject(scene))!;
     private void NewScene()
