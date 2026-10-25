@@ -341,12 +341,19 @@
   "EssentialActions": {"en": "Camera, movement and audio", "fr": "Caméra, mouvement et audio", "es": "Cámara, movimiento y audio"},
   "WorldActions": {"en": "Appearance and interaction", "fr": "Apparence et interaction", "es": "Apariencia e interacción"},
   "AdvancedActions": {"en": "Gameplay and advanced actions", "fr": "Gameplay et actions avancées", "es": "Jugabilidad y acciones avanzadas"},
-  "QuickStart": {"en": "Drag a character onto the map → Drag an action onto the timeline → Play → Save", "fr": "Glisse un personnage sur la carte → Glisse une action sur la timeline → Lire → Enregistrer", "es": "Arrastra un personaje al mapa → Arrastra una acción a la línea de tiempo → Reproducir → Guardar"},
+  "QuickStart": {"en": "Choose an object on the left → Drop onto the timeline → Place on the map → Play", "fr": "Choisis un objet à gauche → Dépose-le sur la timeline → Place-le sur la carte → Lire", "es": "Elige un objeto a la izquierda → Suéltalo en la línea de tiempo → Colócalo en el mapa → Reproducir"},
   "EditingSelection": {"en": "Editing:", "fr": "Modifier :", "es": "Editar:"},
   "MissingActorChoice": {"en": "Choose a character…", "fr": "Choisir un personnage…", "es": "Elegir un personaje…"},
   "SelectionMode": {"en": "Select a character", "fr": "Sélectionner un personnage", "es": "Seleccionar un personaje"},
   "ActionsPalette": {"en": "Actions", "fr": "Actions", "es": "Acciones"},
   "CharactersPalette": {"en": "Characters", "fr": "Personnages", "es": "Personajes"},
   "DragActionsHint": {"en": "Drag onto the map or timeline.\nDouble-click to add.", "fr": "Glisse vers la carte ou la timeline.\nDouble-clic pour ajouter.", "es": "Arrastra al mapa o a la línea de tiempo.\nDoble clic para añadir."},
-  "DragCharactersHint": {"en": "Drag a character onto the map. Double-click to add at the center.", "fr": "Glisse un personnage sur la carte. Double-clic pour ajouter au centre.", "es": "Arrastra un personaje al mapa. Doble clic para añadirlo en el centro."}
+  "DragCharactersHint": {"en": "Drag a character onto the map. Double-click to add at the center.", "fr": "Glisse un personnage sur la carte. Double-clic pour ajouter au centre.", "es": "Arrastra un personaje al mapa. Doble clic para añadirlo en el centro."},
+  "MediaLibrary": {"en": "Object library", "fr": "Bibliothèque d’objets", "es": "Biblioteca de objetos"},
+  "SceneLibrary": {"en": "Scene", "fr": "Scène", "es": "Escena"},
+  "EffectsLibrary": {"en": "Effects", "fr": "Effets", "es": "Efectos"},
+  "AudioLibrary": {"en": "Audio", "fr": "Audio", "es": "Audio"},
+  "LibraryWorkflow": {"en": "1. Drop an object onto the timeline.\n2. Select it and place it on the map.", "fr": "1. Dépose l’objet sur la timeline.\n2. Sélectionne-le et place-le sur la carte.", "es": "1. Suelta el objeto en la línea de tiempo.\n2. Selecciónalo y colócalo en el mapa."},
+  "PlaceOnMap": {"en": "Now click or drag on the map to position the selected object.", "fr": "Clique ou glisse maintenant sur la carte pour placer l’objet sélectionné.", "es": "Haz clic o arrastra en el mapa para colocar el objeto seleccionado."},
+  "DragToTimeline": {"en": "Drag to timeline", "fr": "Glisser sur la timeline", "es": "Arrastrar a la línea de tiempo"}
 }

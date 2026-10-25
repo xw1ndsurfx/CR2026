@@ -15,14 +15,17 @@ internal sealed class CinematicViewport : Control
     internal bool PerspectiveRendered { get; set; }
     internal Bitmap? MapImage { get; set; }
     internal event Action? Edited;
+    internal event Action? PreviewChanged;
     internal event Action<CinematicPoint?>? PointSelected;
     internal event Action<CinematicActor>? ActorSelected;
     internal event Action<CinematicTrack, CinematicPoint>? ActionDropped;
     internal event Action<Guid, CinematicPoint>? NpcDropped;
+    internal event Action<CinematicLibraryItem, CinematicPoint>? ResourceDropped;
     private System.Drawing.Point? _dropPosition;
     private float _scale = 1, _left, _top;
     private CinematicPoint? _drag;
     private CinematicActor? _dragActor;
+    private CinematicClip? _dragVisual;
     internal CinematicViewport() { DoubleBuffered = true; AllowDrop = true; BackColor = DrawingColor.FromArgb(10, 17, 23); }
     private PointF Screen(float x, float y) => new(_left + (x + .5f) * Options.Instance.Map.TileWidth * _scale,
         _top + (y + .5f) * Options.Instance.Map.TileHeight * _scale);
@@ -139,7 +142,7 @@ internal sealed class CinematicViewport : Control
         var point = PointToClient(new System.Drawing.Point(e.X, e.Y));
         var valid = MapImage is { } image && !CameraView && point.X >= _left && point.Y >= _top &&
             point.X < _left + image.Width * _scale && point.Y < _top + image.Height * _scale &&
-            (CinematicDragData.TryAction(e.Data, out _) || CinematicDragData.TryNpc(e.Data, out _)) &&
+            (CinematicDragData.TryAction(e.Data, out _) || CinematicDragData.TryNpc(e.Data, out _) || CinematicDragData.TryResource(e.Data, out _)) &&
             (e.AllowedEffect & DragDropEffects.Copy) != 0;
         e.Effect = valid ? DragDropEffects.Copy : DragDropEffects.None;
         _dropPosition = valid ? point : null; Invalidate();
@@ -154,6 +157,7 @@ internal sealed class CinematicViewport : Control
         if (point == null) return;
         if (CinematicDragData.TryAction(e.Data, out var track)) ActionDropped?.Invoke(track, Tile(point.Value));
         else if (CinematicDragData.TryNpc(e.Data, out var npc)) NpcDropped?.Invoke(npc, Tile(point.Value));
+        else if (CinematicDragData.TryResource(e.Data, out var resource)) ResourceDropped?.Invoke(resource!, Tile(point.Value));
     }
     protected override void OnMouseDown(MouseEventArgs e)
     {
@@ -190,17 +194,22 @@ internal sealed class CinematicViewport : Control
             else { Selected.Points.Add(point); PointSelected?.Invoke(point); Edited?.Invoke(); }
         }
         else if (Selected.Track is CinematicTrack.Camera or CinematicTrack.Animation or CinematicTrack.Naval or CinematicTrack.Projectile)
-        { Selected.X = point.X; Selected.Y = point.Y; Edited?.Invoke(); }
+        {
+            if (e.Button != MouseButtons.Left) return;
+            Selected.X = point.X; Selected.Y = point.Y; _dragVisual = Selected; Capture = true; PreviewChanged?.Invoke();
+        }
         Invalidate();
     }
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e); if (!Capture) return;
-        if (_dragActor != null) { MoveActor(_dragActor, Tile(e.Location)); Invalidate(); return; }
+        if (_dragActor != null) { MoveActor(_dragActor, Tile(e.Location)); PreviewChanged?.Invoke(); Invalidate(); return; }
+        if (_dragVisual != null)
+        { var point = Tile(e.Location); _dragVisual.X = point.X; _dragVisual.Y = point.Y; PreviewChanged?.Invoke(); Invalidate(); return; }
         if (_drag == null) return; var p = Tile(e.Location); _drag.X = p.X; _drag.Y = p.Y; Invalidate();
     }
     protected override void OnMouseUp(MouseEventArgs e)
-    { base.OnMouseUp(e); if (_drag == null && _dragActor == null) return; _drag = null; _dragActor = null; Capture = false; Edited?.Invoke(); }
+    { base.OnMouseUp(e); if (_drag == null && _dragActor == null && _dragVisual == null) return; _drag = null; _dragActor = null; _dragVisual = null; Capture = false; Edited?.Invoke(); }
     private void MoveActor(CinematicActor actor, CinematicPoint target)
     {
         var dx = target.X - actor.StartX; var dy = target.Y - actor.StartY;

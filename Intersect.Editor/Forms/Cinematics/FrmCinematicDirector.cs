@@ -84,15 +84,15 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         Button("BattlefieldScene",()=>{ _scene.Mode=CinematicSceneMode.BattlefieldScene;SelectObject(_scene);CommitEdit(); });
         Button("GroupAnimation",GroupAnimation);Button("GroupCharge",GroupCharge);Button("Reinforcements",Reinforcements);
         Button("GameplayTransition",CreateGameplayTrigger);
-        var left = new SplitContainer { Size = new(1400, 780), Dock = DockStyle.Fill, SplitterDistance = 230, FixedPanel = FixedPanel.Panel1 };
-        var middle = new SplitContainer { Size = new(1170, 780), Dock = DockStyle.Fill, Orientation = Orientation.Horizontal, SplitterDistance = 460 };
-        var right = new SplitContainer { Size = new(1170, 460), Dock = DockStyle.Fill, SplitterDistance = 850, FixedPanel = FixedPanel.Panel2 };
+        var middle = new SplitContainer { Name = "EditingWorkspace", Size = new(1400, 780), Dock = DockStyle.Fill, Orientation = Orientation.Horizontal, SplitterDistance = 460, Panel1MinSize = 250, Panel2MinSize = 150 };
+        var left = new SplitContainer { Name = "MediaWorkspace", Size = new(1400, 460), Dock = DockStyle.Fill, SplitterDistance = 260, FixedPanel = FixedPanel.Panel1, Panel1MinSize = 210, Panel2MinSize = 600 };
+        var right = new SplitContainer { Name = "PreviewWorkspace", Size = new(1140, 460), Dock = DockStyle.Fill, SplitterDistance = 820, FixedPanel = FixedPanel.Panel2, Panel1MinSize = 300, Panel2MinSize = 260 };
         left.Panel1.Controls.Add(_explorer); left.Panel1.Controls.Add(new Label { Text = T("Explorer"), Dock = DockStyle.Top, Height = 30 });
         var explorerActions = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 110, AutoScroll = true };
         explorerActions.Controls.Add(MakeButton("Scene", () => SelectObject(_scene)));
         explorerActions.Controls.Add(MakeButton("Actor", AddActor));
         explorerActions.Controls.Add(MakeButton("Advanced", Advanced));
-        left.Panel1.Controls.Add(explorerActions); left.Panel2.Controls.Add(middle);
+        left.Panel1.Controls.Add(explorerActions); left.Panel2.Controls.Add(right);
         InitializeDragPalette(left.Panel1);
         void TogglePanel(string key, Action<bool> toggle)
         {
@@ -104,7 +104,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         TogglePanel("TimelinePanel", visible => middle.Panel2Collapsed = !visible);
         toolbar.Items.Add(new ToolStripSeparator());
         toolbar.Items.AddRange([files, actors, tools, views]);
-        middle.Panel1.Controls.Add(right);
+        middle.Panel1.Controls.Add(left);
         right.Panel1.Controls.Add(_viewport);
         var viewTools = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true };
         var grid = new CheckBox { Text = T("Grid"), Checked = true, AutoSize = true };
@@ -143,7 +143,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         }
         add.DropDownItems.AddRange([essential, world, advanced]); commands.Items.Add(add);
         commands.Items.Add(new ToolStripButton(T("ImportAudio"), null, (_, _) => new FrmSoundImport().ShowDialog(this)));
-        Controls.Add(left); Controls.Add(commands); Controls.Add(_status); Controls.Add(toolbar);
+        Controls.Add(middle); Controls.Add(commands); Controls.Add(_status); Controls.Add(toolbar);
         var guide = new Label { Text = T("QuickStart"), Dock = DockStyle.Top, Height = 36, Padding = new Padding(8, 6, 8, 0) };
         Controls.Add(guide); Controls.SetChildIndex(guide, 3); Controls.SetChildIndex(toolbar, 4);
         Intersect.Editor.Forms.Styling.EditorTheme.Apply(this);
@@ -158,11 +158,17 @@ internal sealed partial class FrmCinematicDirector : DarkForm
                 SelectObject(item); _timeline.Invalidate(); _viewport.Invalidate();
             }
         };
-        _timeline.SelectionChanged += clip => { _viewport.Selected = clip; SelectObject(clip ?? (object)_scene); RefreshPoints(); _viewport.Invalidate(); };
+        _timeline.SelectionChanged += clip =>
+        {
+            _viewport.Selected = clip;
+            if (clip != null) { _timeline.CursorMs = _viewport.CursorMs = clip.StartMs; RenderMap(); }
+            SelectObject(clip ?? (object)_scene); RefreshPoints(); _viewport.Invalidate();
+        };
         _timeline.Edited += CommitEdit;
         _timeline.MarkerSelected += marker => { _timeline.Selected = _viewport.Selected = null; SelectObject(marker); };
         _timeline.Scrubbed += time => { _playing = false; SetCursor(time); };
         _viewport.Edited += () => { CommitEdit(); RefreshPoints(); RenderMap(); };
+        _viewport.PreviewChanged += () => { if (Environment.TickCount64 - _lastRender >= 33) RenderMap(); };
         _viewport.PointSelected += point => { if (point != null) { SelectObject(point); _points.SelectedItem = point; } };
         _viewport.ActorSelected += actor => { SelectObject(actor); RefreshTree(); _timeline.Invalidate(); };
         _properties.PropertyValueChanged += (_, _) => { CommitEdit(); RenderMap(); };
@@ -210,7 +216,8 @@ internal sealed partial class FrmCinematicDirector : DarkForm
     }
     private void SelectObject(object value)
     {
-        _selection = value; _viewport.SelectedActor = value as CinematicActor;
+        _selection = value; _viewport.SelectedActor = value as CinematicActor ??
+            (value is CinematicClip { Track: CinematicTrack.Actors } actorClip ? _scene.Actors.FirstOrDefault(a => a.TargetId == actorClip.ActorId) : null);
         if (value is CinematicActor or CinematicScene)
         { _timeline.Selected = _viewport.Selected = null; RefreshPoints(); }
         var route=value as CinematicClip ?? _timeline.Selected;
@@ -361,14 +368,17 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         CinematicTemplates.ApplyShot(clip, kinds.Single(k => T(k.ToString()) == selected.Name));
         CommitEdit(); RenderMap();
     }
-    private void AddClip(CinematicTrack track, int? startMs = null, CinematicActor? dropActor = null, CinematicPoint? position = null)
+    private void AddClip(CinematicTrack track, int? startMs = null, CinematicActor? dropActor = null, CinematicPoint? position = null, CinematicLibraryItem? resource = null)
     {
-        var selectedActor = dropActor ?? _selection as CinematicActor ?? _scene.Actors.FirstOrDefault();
+        var selectedActor = dropActor ?? _selection as CinematicActor ??
+            (_selection is CinematicClip selectedClip ? _scene.Actors.FirstOrDefault(a => a.TargetId == selectedClip.ActorId) : null) ?? _scene.Actors.FirstOrDefault();
         if (track == CinematicTrack.Naval && selectedActor?.Kind != CinematicActorKind.TemporaryVessel)
             selectedActor=_scene.Actors.FirstOrDefault(a=>a.Kind == CinematicActorKind.TemporaryVessel);
         if (track == CinematicTrack.Naval && selectedActor == null) { _status.Text=T("vessel-required");return; }
         var clip = new CinematicClip { Name = T(track.ToString()), Track = track, StartMs = Math.Clamp(startMs ?? _timeline.CursorMs, 0, Math.Max(0, _scene.DurationMs - 1000)),
             X = position?.X ?? Options.Instance.Map.MapWidth / 2, Y = position?.Y ?? Options.Instance.Map.MapHeight / 2, ActorId = selectedActor?.TargetId ?? Guid.Empty };
+        if (resource != null)
+        { clip.Name = resource.Name; clip.ResourceId = resource.ResourceId; clip.AudioFile = resource.AudioFile; clip.VoiceSound = resource.Voice; }
         if (track == CinematicTrack.Movement && selectedActor != null)
         {
             var previous = _scene.Clips.Where(c => c.Track == track && c.ActorId == clip.ActorId && c.StartMs <= clip.StartMs && c.Points.Count > 0).OrderBy(c => c.StartMs).LastOrDefault();
@@ -377,7 +387,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         }
         _scene.Clips.Add(clip); _timeline.Selected = _viewport.Selected = clip; SelectObject(clip); CommitEdit(); RefreshPoints();
         _timeline.Reveal(clip);
-        if (track is CinematicTrack.Animation or CinematicTrack.Sound or CinematicTrack.Music or CinematicTrack.Event or CinematicTrack.Gameplay or CinematicTrack.Condition or CinematicTrack.Quest or CinematicTrack.Projectile) ChooseResource();
+        if (resource == null && track is (CinematicTrack.Animation or CinematicTrack.Sound or CinematicTrack.Music or CinematicTrack.Event or CinematicTrack.Gameplay or CinematicTrack.Condition or CinematicTrack.Quest or CinematicTrack.Projectile)) ChooseResource();
     }
     private void ChooseResource()
     {

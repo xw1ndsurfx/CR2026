@@ -10,6 +10,7 @@ using Intersect.Framework.Core.Cinematics;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.NPCs;
+using Intersect.Framework.Core.GameObjects.Animations;
 
 internal static class CinematicUsabilityTests
 {
@@ -28,7 +29,7 @@ internal static class CinematicUsabilityTests
     internal static void Run()
     {
         CultureInfo.CurrentUICulture = new("fr-FR");
-        TestTextTranslation(); TestPicker(); TestCommands(); TestDirector(); TestHub();
+        TestTextTranslation(); TestPicker(); TestCommands(); TestDirector(); TestMediaWorkflow(); TestHub();
         using var stream = typeof(CinematicText).Assembly.GetManifestResourceStream("Cinematics.Texts.json")!;
         var catalog = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(stream)!;
         foreach (var pair in catalog)
@@ -180,6 +181,8 @@ internal static class CinematicUsabilityTests
                 g.DrawString("APERÇU DE TEST — CARTE SYNTHÉTIQUE", SystemFonts.DefaultFont, Brushes.White, 100, 100);
             }
             Check(viewport.Width >= 300, "Map remains usable at " + size);
+            Check(timeline.Width >= director.ClientSize.Width - 24 && timeline.PointToScreen(Point.Empty).Y >= viewport.PointToScreen(Point.Empty).Y + viewport.Height,
+                "Timeline spans the full workspace below the library, map and inspector.");
             var toolbar = All(director).OfType<ToolStrip>().Single(t => t.Dock == DockStyle.Top);
             Check(toolbar.Visible && toolbar.Height > 15 && viewport.PointToScreen(Point.Empty).Y >= toolbar.PointToScreen(Point.Empty).Y + toolbar.Height,
                 "Dock order preserves the main toolbar above the map.");
@@ -199,6 +202,97 @@ internal static class CinematicUsabilityTests
         }
         finally { NPCDescriptor.Lookup.Delete(npc); }
         viewport.MapImage?.Dispose(); viewport.MapImage = null;
+    }
+    private static void TestMediaWorkflow()
+    {
+        var originalDirectory = Environment.CurrentDirectory;
+        var folder = Path.GetFullPath(Path.Combine(originalDirectory, "..", "media-fixture"));
+        Directory.CreateDirectory(Path.Combine(folder, "resources", "entities"));
+        Directory.CreateDirectory(Path.Combine(folder, "resources", "animations"));
+        using (var sprite = new Bitmap(96, 128))
+        using (var g = Graphics.FromImage(sprite))
+        {
+            g.FillEllipse(Brushes.Gold, 9, 1, 14, 14); g.FillRectangle(Brushes.RoyalBlue, 7, 15, 18, 16);
+            sprite.Save(Path.Combine(folder, "resources", "entities", "guard.png"));
+        }
+        using (var sprite = new Bitmap(64, 64))
+        using (var g = Graphics.FromImage(sprite))
+        { g.FillEllipse(Brushes.OrangeRed, 2, 2, 28, 28); sprite.Save(Path.Combine(folder, "resources", "animations", "fire.png")); }
+        var npc = new NPCDescriptor(Guid.NewGuid()) { Name = "Garde royal", Sprite = "guard.png" };
+        var animation = new AnimationDescriptor(Guid.NewGuid()) { Name = "Flamme" };
+        animation.Lower.Sprite = "fire.png"; animation.Lower.XFrames = animation.Lower.YFrames = 2;
+        NPCDescriptor.Lookup.Set(npc.Id, npc); AnimationDescriptor.Lookup.Set(animation.Id, animation);
+        Environment.CurrentDirectory = folder;
+        try
+        {
+            using var director = new FrmCinematicDirector { ShowInTaskbar = false, StartPosition = FormStartPosition.Manual, Location = new(-20000, -20000) };
+            director.Show(); ((System.Windows.Forms.Timer)typeof(FrmCinematicDirector).GetField("_timer", Hidden)!.GetValue(director)!).Stop();
+            var scene = new CinematicScene { Name = "Montage — démonstration" };
+            scene.Actors.Add(new() { Name = "Joueur", StartX = 1, StartY = 1 });
+            typeof(FrmCinematicDirector).GetMethod("LoadScene", Hidden)!.Invoke(director, [scene, Guid.Empty]);
+            var timeline = All(director).OfType<CinematicTimeline>().Single();
+            var viewport = All(director).OfType<CinematicViewport>().Single();
+            var library = All(director).OfType<System.Windows.Forms.TabControl>().Single(t => t.Name == "MediaLibrary");
+            Check(library.Dock == DockStyle.Fill && library.TabPages.Count == 5, "Full-height object library provides characters, effects, audio, actions and scene.");
+            void Drop(IDataObject data, int x = 320)
+            {
+                timeline.AutoScrollPosition = Point.Empty;
+                var point = timeline.PointToScreen(new Point(x, 80));
+                typeof(CinematicTimeline).GetMethod("OnDragDrop", Hidden)!.Invoke(timeline,
+                    [new DragEventArgs(data, 0, point.X, point.Y, DragDropEffects.Copy, DragDropEffects.None)]);
+            }
+            Drop(CinematicDragData.Npc(npc.Id));
+            var guard = scene.Actors.Last();
+            Check(scene.Clips.Single() is { Track: CinematicTrack.Actors, StartMs: 2000 } && viewport.SelectedActor == guard,
+                "Dropping a character onto the timeline creates and selects its appearance clip.");
+            Check(!CinematicPreview.ActorVisible(scene, guard, 1999) && CinematicPreview.ActorVisible(scene, guard, 2000),
+                "The actor appears at the dropped time rather than at the start of the scene.");
+            var undo = (Stack<string>)typeof(FrmCinematicDirector).GetField("_undo", Hidden)!.GetValue(director)!;
+            Check(undo.Count == 1, "One object drop is one undo operation, including actor creation.");
+            void FixtureMap()
+            {
+                viewport.MapImage?.Dispose(); viewport.MapImage = new Bitmap(1024, 768);
+                using var g = Graphics.FromImage(viewport.MapImage);
+                g.Clear(Color.FromArgb(38, 63, 54));
+                g.DrawString("CARTE SYNTHÉTIQUE — TEST D’INTERFACE", SystemFonts.DefaultFont, Brushes.White, 60, 60);
+                using var bitmap = new Bitmap(viewport.Width, viewport.Height);
+                viewport.DrawToBitmap(bitmap, new Rectangle(Point.Empty, bitmap.Size));
+            }
+            void Place(int x, int y)
+            {
+                FixtureMap();
+                var point = (PointF)typeof(CinematicViewport).GetMethod("Screen", Hidden)!.Invoke(viewport, [(float)x, (float)y])!;
+                var mouse = new MouseEventArgs(MouseButtons.Left, 1, (int)point.X, (int)point.Y, 0);
+                typeof(CinematicViewport).GetMethod("OnMouseDown", Hidden)!.Invoke(viewport, [mouse]);
+                typeof(CinematicViewport).GetMethod("OnMouseMove", Hidden)!.Invoke(viewport, [mouse]);
+                typeof(CinematicViewport).GetMethod("OnMouseUp", Hidden)!.Invoke(viewport, [mouse]);
+            }
+            Place(7, 6);
+            Check(guard.StartX == 7 && guard.StartY == 6 && undo.Count == 2, "Select timeline object, position it on the map and undo the placement independently.");
+            Drop(CinematicDragData.Resource(new(CinematicTrack.Animation, animation.Id, animation.Name)), 400);
+            var effect = scene.Clips.Last();
+            Check(effect is { Track: CinematicTrack.Animation, StartMs: 3000 } && effect.ResourceId == animation.Id,
+                "Dragging a named effect creates a configured clip without another resource dialog.");
+            Place(5, 4);
+            Check(effect.X == 5 && effect.Y == 4, "The selected effect can be placed directly in the map preview.");
+            Drop(CinematicDragData.Resource(new(CinematicTrack.Sound, Guid.Empty, "Voix", "voice.ogg", true)), 480);
+            Check(scene.Clips.Last() is { Track: CinematicTrack.Sound, StartMs: 4000, AudioFile: "voice.ogg", VoiceSound: true },
+                "Audio drag preserves the selected voice file and dropped time.");
+            // Re-select the character from the timeline as in a video editor.
+            timeline.Selected = scene.Clips.First(); viewport.Selected = timeline.Selected;
+            typeof(FrmCinematicDirector).GetMethod("SelectObject", Hidden)!.Invoke(director, [timeline.Selected]);
+            viewport.CursorMs = timeline.CursorMs = 2000;
+            director.PerformLayout(); Application.DoEvents(); FixtureMap();
+            Check(All(library).OfType<ListBox>().Any(l => l.DrawMode == DrawMode.OwnerDrawFixed && l.ItemHeight >= 60), "Library objects have visual thumbnail cards.");
+            Save(director, "cinematic-montage-library");
+            library.SelectedIndex = 1; Application.DoEvents(); FixtureMap(); Save(director, "cinematic-montage-effects");
+            viewport.MapImage?.Dispose(); viewport.MapImage = null;
+        }
+        finally
+        {
+            Environment.CurrentDirectory = originalDirectory;
+            NPCDescriptor.Lookup.Delete(npc); AnimationDescriptor.Lookup.Delete(animation);
+        }
     }
     private static void TestHub()
     {
