@@ -9,6 +9,8 @@ public static partial class CommandPrinter
         CinematicText.T("PlayCinematic") + ": " + command.SceneEventId;
     private static string GetCommandText(BeginCinematicCommand command, MapInstance map) => CinematicText.T("BeginCinematic");
     private static string GetCommandText(CinematicActorCommand command, MapInstance map) => CinematicText.T("Actor") + ": " + command.ActorId + " · " + command.Visible;
+    private static string GetCommandText(AwaitCinematicConditionCommand command, MapInstance map) => CinematicText.T("Condition") + ": " + CinematicText.T(command.ConditionKind.ToString()) + " · " + command.ConditionTimeoutMs + "ms";
+    private static string GetCommandText(CinematicQuestTaskCommand command, MapInstance map) => CinematicText.T("CompleteEventTask") + ": " + command.QuestId + " / " + command.TaskId;
     private static string GetCommandText(StopCinematicCommand command, MapInstance map) => CinematicText.T("StopCinematic") + ": " + command.SceneEventId;
     private static string GetCommandText(WaitForCinematicCommand command, MapInstance map) => CinematicText.T("WaitForCinematic") + ": " + command.SceneEventId;
     private static string GetCommandText(StartCinematicChapterCommand command, MapInstance map) => CinematicText.T("StartCinematicChapter") + ": " + command.ChapterEventId;

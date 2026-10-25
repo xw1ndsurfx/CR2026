@@ -18,7 +18,7 @@ using DrawingColor = System.Drawing.Color;
 
 namespace Intersect.Editor.Forms.Cinematics;
 
-internal sealed class FrmCinematicDirector : DarkForm
+internal sealed partial class FrmCinematicDirector : DarkForm
 {
     private CinematicScene _scene = new();
     private Guid _eventId;
@@ -296,7 +296,7 @@ internal sealed class FrmCinematicDirector : DarkForm
             clip.Points.Add(new() { X = previous?.Points[^1].X ?? selectedActor.StartX, Y = previous?.Points[^1].Y ?? selectedActor.StartY });
         }
         _scene.Clips.Add(clip); _timeline.Selected = _viewport.Selected = clip; SelectObject(clip); CommitEdit(); RefreshPoints();
-        if (track is CinematicTrack.Animation or CinematicTrack.Sound or CinematicTrack.Music or CinematicTrack.Event) ChooseResource();
+        if (track is CinematicTrack.Animation or CinematicTrack.Sound or CinematicTrack.Music or CinematicTrack.Event or CinematicTrack.Gameplay or CinematicTrack.Condition or CinematicTrack.Quest) ChooseResource();
     }
     private void ChooseResource()
     {
@@ -308,6 +308,7 @@ internal sealed class FrmCinematicDirector : DarkForm
             SelectObject(actor); return;
         }
         if (_timeline.Selected is not { } clip) return;
+        if (ChooseWorkflowResource(clip)) return;
         if (clip.Track == CinematicTrack.Movement || clip.Track == CinematicTrack.Camera && clip.FollowActor)
         {
             if (Pick(_scene.Actors.Select(a => new Resource(a.TargetId, a.Name))) is { } chosen)
@@ -317,7 +318,7 @@ internal sealed class FrmCinematicDirector : DarkForm
         IEnumerable<Resource> choices = clip.Track switch
         {
             CinematicTrack.Animation => AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().Select(a => new Resource(a.Id, a.Name)),
-            CinematicTrack.Event or CinematicTrack.Choice => EventDescriptor.Lookup.Values.OfType<EventDescriptor>().Where(e => e.CommonEvent).Select(e => new Resource(e.Id, e.Name)),
+            CinematicTrack.Event or CinematicTrack.Choice or CinematicTrack.Gameplay => EventDescriptor.Lookup.Values.OfType<EventDescriptor>().Where(e => e.CommonEvent).Select(e => new Resource(e.Id, e.Name)),
             CinematicTrack.Music => GameContentManager.SmartSortedMusicNames.Select(n => new Resource(Guid.Empty, n)),
             CinematicTrack.Sound => GameContentManager.SmartSortedSoundNames.Select(n => new Resource(Guid.Empty, n))
                 .Concat(GameContentManager.SmartSortedVoiceSoundNames.Select(n => new Resource(Guid.Empty, n, true))),
@@ -378,7 +379,8 @@ internal sealed class FrmCinematicDirector : DarkForm
                 id => AnimationDescriptor.Get(id) != null, id => EventDescriptor.Get(id)?.CommonEvent == true,
                 (file, music) => music ? GameContentManager.MusicNames.Contains(file) :
                     GameContentManager.SoundNames.Contains(file) || GameContentManager.SmartSortedVoiceSoundNames.Contains(file),
-                id => NPCDescriptor.Get(id) is { Sprite.Length: > 0 });
+                id => NPCDescriptor.Get(id) is { Sprite.Length: > 0 },
+                WorkflowBooleanAvailable,WorkflowQuestAvailable,WorkflowTaskAvailable);
             if (_eventId == Guid.Empty) _eventId = Guid.NewGuid();
             var evt = map.LocalEvents.GetValueOrDefault(_eventId) ?? new EventDescriptor(_eventId, map.Id, 0, 0);
             if (evt.Pages.Count > 0)
@@ -441,7 +443,7 @@ internal sealed class FrmCinematicDirector : DarkForm
         }
         if (!_playing) return;
         var now = Environment.TickCount64; var next = Math.Min(_scene.DurationMs, _timeline.CursorMs + (int)Math.Clamp(now - _lastTick, 0, 250)); _lastTick = now;
-        var barrier = _scene.Clips.Where(c => c.Track is CinematicTrack.Dialogue or CinematicTrack.Choice or CinematicTrack.Event &&
+        var barrier = _scene.Clips.Where(c => c.Track is CinematicTrack.Dialogue or CinematicTrack.Choice or CinematicTrack.Event or CinematicTrack.Gameplay or CinematicTrack.Condition or CinematicTrack.Quest &&
             c.StartMs >= _timeline.CursorMs && c.StartMs <= next && !_previewBarriers.Contains(c.Id)).OrderBy(c => c.StartMs).FirstOrDefault();
         if (barrier != null) { next = barrier.StartMs; _previewBarriers.Add(barrier.Id); _playing = false; SelectObject(barrier); }
         _timeline.CursorMs = _viewport.CursorMs = next; _timeline.Invalidate(); _viewport.Invalidate();

@@ -168,4 +168,6 @@ public enum EventCommandType
     WaitForCinematic = 1074,
     StartCinematicChapter = 1075,
     CinematicActor = 1076,
+    AwaitCinematicCondition = 1077,
+    CinematicQuestTask = 1078,
 }

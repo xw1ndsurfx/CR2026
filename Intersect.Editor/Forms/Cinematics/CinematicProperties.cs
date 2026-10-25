@@ -23,6 +23,15 @@ internal sealed class CinematicProperties(object value) : CustomTypeDescriptor
             CinematicTrack.Sound => ["AudioFile", "VoiceSound"],
             CinematicTrack.Music => ["AudioFile"],
             CinematicTrack.Event => ["ResourceId", "AllowPlayerControl"],
+            CinematicTrack.Gameplay => clip.GameplayAction == CinematicGameplayAction.CommonEvent
+                ? ["GameplayAction", "ResourceId", "AllowPlayerControl"] : ["GameplayAction", "VariableId", "ExpectedValue"],
+            CinematicTrack.Condition => clip.ConditionKind == CinematicConditionKind.PlayerFlag
+                ? ["ConditionKind", "VariableId", "ExpectedValue", "ConditionTimeoutMs", "AllowPlayerControl"]
+                : clip.ConditionKind is CinematicConditionKind.QuestTaskActive or CinematicConditionKind.QuestAfterTask
+                    ? ["ConditionKind", "QuestId", "TaskId", "ConditionTimeoutMs", "AllowPlayerControl"]
+                    : ["ConditionKind", "QuestId", "ConditionTimeoutMs", "AllowPlayerControl"],
+            CinematicTrack.Quest => clip.QuestAction == CinematicQuestAction.StartOrOffer
+                ? ["QuestAction", "QuestId", "OfferQuest"] : ["QuestAction", "QuestId", "TaskId"],
             _ => [],
         } : null;
         if (value is CinematicActor actor && actor.Kind == CinematicActorKind.PersonalEvent)
@@ -32,7 +41,7 @@ internal sealed class CinematicProperties(object value) : CustomTypeDescriptor
             .Select(p => (PropertyDescriptor)new LocalizedProperty(p, value)).ToArray();
         return new(descriptors, true);
     }
-    private sealed class LocalizedProperty(PropertyDescriptor inner, object value) : PropertyDescriptor(inner)
+    private sealed class LocalizedProperty(PropertyDescriptor inner, object value) : PropertyDescriptor(inner,[RefreshPropertiesAttribute.All])
     {
         public override Type ComponentType => inner.ComponentType;
         public override bool IsReadOnly => inner.IsReadOnly || Name is "MapId" or "Version" or "Track" or "TargetId" or "Kind";

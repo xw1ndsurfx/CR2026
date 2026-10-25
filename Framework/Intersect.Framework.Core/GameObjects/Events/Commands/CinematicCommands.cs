@@ -43,6 +43,24 @@ public sealed class CinematicActorCommand : EventCommand
     public bool Visible { get; set; } = true;
 }
 
+public sealed class AwaitCinematicConditionCommand : EventCommand
+{
+    public override EventCommandType Type => EventCommandType.AwaitCinematicCondition;
+    public CinematicConditionKind ConditionKind { get; set; }
+    public Guid VariableId { get; set; }
+    public bool ExpectedValue { get; set; } = true;
+    public Guid QuestId { get; set; }
+    public Guid TaskId { get; set; }
+    public int ConditionTimeoutMs { get; set; } = 60000;
+}
+
+public sealed class CinematicQuestTaskCommand : EventCommand
+{
+    public override EventCommandType Type => EventCommandType.CinematicQuestTask;
+    public Guid QuestId { get; set; }
+    public Guid TaskId { get; set; }
+}
+
 public sealed class CinematicCameraCommand : EventCommand
 {
     public override EventCommandType Type => EventCommandType.CinematicCamera;

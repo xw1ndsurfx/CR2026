@@ -53,7 +53,8 @@ public static class CinematicCompiler
     public static EventPage Compile(CinematicScene scene, int mapWidth, int mapHeight,
         Func<int, int, bool>? blocked = null, Func<Guid, bool>? validActor = null,
         Func<Guid, bool>? validAnimation = null, Func<Guid, bool>? validEvent = null,
-        Func<string, bool, bool>? validAudio = null, Func<Guid, bool>? validNpc = null)
+        Func<string, bool, bool>? validAudio = null, Func<Guid, bool>? validNpc = null,
+        Func<Guid,bool>? validBoolean = null, Func<Guid,bool>? validQuest = null, Func<Guid,Guid,bool,bool>? validQuestTask = null)
     {
         void Require(bool valid, string error) { if (!valid) throw new InvalidOperationException(error); }
         Require(scene != null && scene.Actors != null && scene.Clips != null && scene.Markers != null, "scene-data");
@@ -95,6 +96,39 @@ public static class CinematicCompiler
             void Add(EventCommand command, int? time = null, int priority = 1) => scheduled.Add((time ?? clip.StartMs, priority, order++, command));
             switch (clip.Track)
             {
+                case CinematicTrack.Condition:
+                    CinematicWorkflow.RequireResources(clip.ConditionKind,clip.VariableId,clip.QuestId,clip.TaskId,validBoolean,validQuest,validQuestTask);
+                    Require(clip.ConditionTimeoutMs is >= 100 and <= MaximumDurationMs,"condition-timeout");
+                    if (clip.AllowPlayerControl) Add(new ReleasePlayerCommand());
+                    Add(new AwaitCinematicConditionCommand { ConditionKind=clip.ConditionKind,VariableId=clip.VariableId,
+                        ExpectedValue=clip.ExpectedValue,QuestId=clip.QuestId,TaskId=clip.TaskId,ConditionTimeoutMs=clip.ConditionTimeoutMs });
+                    if (clip.AllowPlayerControl) Add(new HoldPlayerCommand());
+                    break;
+                case CinematicTrack.Gameplay:
+                    Require(Enum.IsDefined(clip.GameplayAction),"gameplay-action");
+                    if (clip.GameplayAction == CinematicGameplayAction.CommonEvent)
+                    {
+                        Require(clip.ResourceId != Guid.Empty && validEvent?.Invoke(clip.ResourceId) != false,"event-unavailable");
+                        if (clip.AllowPlayerControl) Add(new ReleasePlayerCommand());
+                        Add(new StartCommmonEventCommand { EventId=clip.ResourceId });
+                        if (clip.AllowPlayerControl) Add(new HoldPlayerCommand());
+                    }
+                    else
+                    {
+                        Require(clip.VariableId != Guid.Empty && validBoolean?.Invoke(clip.VariableId) != false,"condition-variable");
+                        Add(new SetVariableCommand { VariableId=clip.VariableId,SyncParty=false,Modification=new BooleanVariableMod { Value=clip.ExpectedValue } });
+                    }
+                    break;
+                case CinematicTrack.Quest:
+                    Require(Enum.IsDefined(clip.QuestAction),"quest-action");
+                    Require(clip.QuestId != Guid.Empty && validQuest?.Invoke(clip.QuestId) != false,"quest-unavailable");
+                    if (clip.QuestAction == CinematicQuestAction.StartOrOffer) Add(CinematicWorkflow.StartQuest(page,clip.QuestId,clip.OfferQuest));
+                    else
+                    {
+                        Require(clip.TaskId != Guid.Empty && validQuestTask?.Invoke(clip.QuestId,clip.TaskId,true) != false,"quest-event-task");
+                        Add(new CinematicQuestTaskCommand { QuestId=clip.QuestId,TaskId=clip.TaskId });
+                    }
+                    break;
                 case CinematicTrack.Actors:
                     Require(scene.Actors.Any(a => a.TargetId == clip.ActorId && a.Kind == CinematicActorKind.TemporaryNpc), "temporary-actor-required");
                     Add(new CinematicActorCommand { ActorId = clip.ActorId, Visible = clip.ActorVisible });

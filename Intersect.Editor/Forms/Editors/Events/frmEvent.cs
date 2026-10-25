@@ -1494,6 +1494,8 @@ public partial class FrmEvent : Form
             case EventCommandType.BeginCinematic:
             case EventCommandType.CinematicCamera:
             case EventCommandType.CinematicActor:
+            case EventCommandType.AwaitCinematicCondition:
+            case EventCommandType.CinematicQuestTask:
             case EventCommandType.StopCinematic:
             case EventCommandType.WaitForCinematic:
             case EventCommandType.StartCinematicChapter:
