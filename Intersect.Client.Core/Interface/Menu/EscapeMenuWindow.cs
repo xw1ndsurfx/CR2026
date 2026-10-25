@@ -12,6 +12,8 @@ namespace Intersect.Client.Interface.Menu;
 
 public partial class EscapeMenuWindow : Window
 {
+    private readonly Button _skipPresentation;
+    private bool _skipRowVisible;
     private readonly Button _openSettingsButton;
     private readonly Button _returnToCharacterSelectionButton;
     private readonly Button _logoutButton;
@@ -78,6 +80,10 @@ public partial class EscapeMenuWindow : Window
             _openSettingsButton.SetToolTipText(Strings.MainMenu.SettingsTooltip);
         }
 
+        _skipPresentation = new Button(this, "SkipCinematicPresentation") { Dock = Pos.Bottom, Height = 32, IsVisibleInParent = false, Text = Cinematics.CinematicControls.SkipLabel };
+        _skipPresentation.SetToolTipText(Cinematics.CinematicControls.SkipTooltip);
+        _skipPresentation.Clicked += (_, _) => { Cinematics.CinematicControls.RequestSkip(); Hide(); };
+
         _versionPanel = new VersionPanel(this, name: nameof(_versionPanel));
 
         Interface.InputBlockingComponents.Add(this);
@@ -130,6 +136,9 @@ public partial class EscapeMenuWindow : Window
 
     public void Update()
     {
+        var showSkip = Cinematics.CinematicControls.CanSkip;
+        if (_skipRowVisible != showSkip) { Height += showSkip ? 32 : -32; _skipRowVisible = showSkip; }
+        _skipPresentation.IsVisibleInParent = showSkip;
         _returnToCharacterSelectionButton.IsVisibleInParent = AccountCharacterSlots.Limit > 1;
         if (!IsHidden)
         {

@@ -45,7 +45,9 @@ public static partial class Graphics
         }
     }
 
-    public static FloatRect WorldViewport => new(CurrentView.Position, CurrentView.Size / (Globals.Database?.WorldZoom ?? 1));
+    public static float WorldScale => Cinematics.CinematicCamera.Zoom ?? Globals.Database?.WorldZoom ?? 1;
+    public static FloatRect WorldViewport => Cinematics.CinematicCamera.Zoom != null
+        ? CurrentView : new(CurrentView.Position, CurrentView.Size / WorldScale);
 
     public static GameShader? DefaultShader;
 
@@ -475,7 +477,7 @@ public static partial class Graphics
                     continue;
                 }
 
-                map.DrawWeather();
+                if (!Cinematics.CinematicCamera.PerspectiveRequested) map.DrawWeather();
                 map.DrawFog();
                 map.DrawOverlayGraphic();
                 map.DrawItemNames();
@@ -497,7 +499,7 @@ public static partial class Graphics
         // Draw lighting effects.
         GenerateLightMap();
         DrawDarkness();
-        (Globals.Me?.MapInstance as MapInstance)?.DrawStormFlash();
+        if (!Cinematics.CinematicCamera.PerspectiveRequested) (Globals.Me?.MapInstance as MapInstance)?.DrawStormFlash();
 
         for (var y = 0; y < mapHeight * 5; y++)
         {
@@ -581,7 +583,8 @@ public static partial class Graphics
 
         var gameState = Globals.GameState;
 
-        renderer.Scale = gameState == GameStates.InGame ? Globals.Database.WorldZoom : 1.0f;
+        Cinematics.CinematicCamera.Update();
+        renderer.Scale = gameState == GameStates.InGame ? WorldScale : 1.0f;
 
         if (!renderer.Begin())
         {
@@ -632,6 +635,10 @@ public static partial class Graphics
                 throw Exceptions.UnreachableInvalidEnum(gameState);
         }
 
+        Cinematics.CinematicCamera.DrawPerspective();
+        if (gameState == GameStates.InGame && Cinematics.CinematicCamera.PerspectiveRequested && Globals.Me?.MapInstance is MapInstance weatherMap)
+        { weatherMap.DrawWeather(); weatherMap.DrawStormFlash(); }
+        if (gameState == GameStates.InGame) Cinematics.CinematicCamera.DrawPresentation();
         renderer.Scale = Globals.Database.UIScale;
 
         Interface.Interface.DrawGui(deltaTime, totalTime);
@@ -967,6 +974,8 @@ public static partial class Graphics
         var h = y1 - y;
         var restrictView = new FloatRect(x, y, w, h );
         var navalCamera = Naval.NavalWorld.TryCamera(out var navalX, out var navalY);
+        if (Cinematics.CinematicCamera.TryPosition(out var cinematicX, out var cinematicY))
+        { navalCamera = true; navalX = cinematicX; navalY = cinematicY; }
         var newView = new FloatRect(
             (int)Math.Ceiling((navalCamera ? navalX : en.Center.X) - Renderer.ScreenWidth / scale / 2f),
             (int)Math.Ceiling((navalCamera ? navalY : en.Center.Y) - Renderer.ScreenHeight / scale / 2f),
@@ -1057,7 +1066,7 @@ public static partial class Graphics
             return;
         }
 
-        var destRect = new FloatRect(new Vector2(), sDarknessTexture.Dimensions / Globals.Database.WorldZoom);
+        var destRect = new FloatRect(new Vector2(), sDarknessTexture.Dimensions / WorldScale);
         if (map.IsIndoors)
         {
             DrawGameTexture(
@@ -1391,9 +1400,10 @@ public static partial class Graphics
     /// <returns>The converted point.</returns>
     public static Vector2 ConvertToWorldPoint(Vector2 windowPoint)
     {
+        if (Cinematics.CinematicCamera.TryWorldPoint(windowPoint,out var projected)) return projected;
         return new Vector2(
-            (int)Math.Floor(windowPoint.X / Globals.Database.WorldZoom + CurrentView.Left),
-            (int)Math.Floor(windowPoint.Y / Globals.Database.WorldZoom + CurrentView.Top)
+            (int)Math.Floor(windowPoint.X / WorldScale + CurrentView.Left),
+            (int)Math.Floor(windowPoint.Y / WorldScale + CurrentView.Top)
         );
     }
 
@@ -1532,6 +1542,8 @@ public static partial class Graphics
         {
             return;
         }
+
+        if (CollectCinematicSprite(tex, srcRectangle, targetRect, renderColor, renderTarget, rotationDegrees)) return;
 
         Renderer?.DrawTexture(
             tex, srcRectangle.X, srcRectangle.Y, srcRectangle.Width, srcRectangle.Height, targetRect.X,

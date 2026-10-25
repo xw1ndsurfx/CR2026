@@ -152,6 +152,8 @@ internal static partial class Network
 
     private static void OnDisconnected(INetworkLayerInterface sender, ConnectionEventArgs connectionEventArgs)
     {
+        Cinematics.CinematicControls.Clear();
+        Cinematics.CinematicCamera.Clear();
         var message = connectionEventArgs.EventId == default
             ? Strings.Errors.LostConnection.ToString()
             : Strings.Errors.DisconnectionEvent.ToString(connectionEventArgs.EventId);

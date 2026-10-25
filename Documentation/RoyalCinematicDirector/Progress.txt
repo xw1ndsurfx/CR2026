@@ -1,0 +1,24 @@
+Royal Cinematic Director — état de la première étape — 2026-10-24
+Branche : feature/royal-cinematic-director ; base main a0aaf4efc3c7552fd086787c9b3beeb913e774a7.
+
+Implémenté : éditeur intégré au Hub et aux menus ; rendu de la vraie carte par MonoGame ; trajectoires cardinales à la souris ; points éditables ; clips caméra avec zoom/interpolation ; timeline multi-pistes ; dialogues, choix natifs et événements communs avec contrôle joueur optionnel ; animations et audio existants ; source sauvegardé avec la page Event ; compilation vers les commandes natives ; appel depuis Events/événements de quêtes ; protections de cycle de vie côté serveur et caméra limitée au destinataire.
+
+Vérifications réussies :
+- Compilation Debug Editor, Client et Server ; chemins explicites des clés réseau Debug.
+- 21 tests de compilation, compatibilité, sérialisation et ordonnancement des cinématiques.
+- 3 tests serveur de réservation/restauration du mouvement des acteurs.
+- 48 régressions client de perspective et commandes navales.
+- Test WinForms : construction, hiérarchie/inspecteur, disposition, déplacement/redimensionnement timeline, ajout de points souris ; couverture en/fr/es et repli anglais.
+- Test GPU sur Polonya Port (027e3bf8-497e-42ff-b8a8-e766792dcd7b), export de données natives et textures existantes : tuiles, 2 Events et brouillard ; présence des textures référencées et du terrain ; cadrage complet indépendant de la vue de l'éditeur ; restauration de cette vue ; sérialisation de la scène. 2589 couleurs échantillonnées dans le rendu final.
+- Démarrage d'un serveur local séparé avec une copie de la base de contenu : 80 cartes, 300 Events, 0 comptes, 0 personnages. Aucun changement sur le serveur hébergé ni dans l'installation originale.
+
+Les vérifications locales utilisaient RunAnalyzers=false. Des avertissements existants de compilation et de dépendances restent présents ; aucune affirmation de build sans avertissement ou de passage complet des analyseurs.
+
+Non validé : parcours client connecté de bout en bout, réponses interactives et reprise réelle, quêtes/récompenses persistées, collisions dynamiques, déconnexion en cours de dialogue, contrôle simultané de plusieurs joueurs et performance en session prolongée. Voir Validation.md avant publication. Le test GPU n'est pas une preuve d'exécution en jeu.
+
+Hors de cette première étape : suivi naval, formations/canons cinématiques, grandes batailles, acteurs temporaires, synchronisation collective, skip/reprise persistante, masquage du HUD, modèles de production et règles de déblocage saga/chapitres. Saga/chapitre/séquence sont actuellement des métadonnées d'organisation.
+
+Les références originales sont dans References/. Les bases de test, exports de cartes, ressources graphiques/audio et comptes ne sont pas ajoutés au dépôt. Les voix et sons actuels sont réutilisés ; aucun Inworld, doublage IA ou service payant ajouté. La branche doit être proposée en PR draft vers main, sans fusion automatique et avec les limites ci-dessus.
+
+Étape interactive locale (2026-10-24) : scène QA générée et installée uniquement dans une copie marquée ; 17 tests serveur cinématiques réussis (86 tests ciblés cumulés avec compilation et naval). Deux régressions de saut natif vers une étiquette reproduites puis corrigées. Voir Interactive-QA.fr.md. Les 46 contrôles GitHub de 96abb1d93 ont réussi. Le client de test échoue avant la connexion sur son contexte OpenGL actuel ; le parcours connecté reste non validé.
+

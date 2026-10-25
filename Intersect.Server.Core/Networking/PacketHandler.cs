@@ -1549,7 +1549,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        player.RespondToEvent(packet.EventId, packet.Response);
+        player.RespondToEvent(packet.EventId, packet.Response, packet.DialogueToken);
     }
 
     //EventInputVariablePacket

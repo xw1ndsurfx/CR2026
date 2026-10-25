@@ -375,7 +375,7 @@ public static partial class Interface
         }
         else if (Globals.GameState == GameStates.InGame)
         {
-            if (HideUi && !forceShowUi)
+            if ((HideUi || Cinematics.CinematicCamera.HideHud) && !forceShowUi)
             {
                 if (_canvasInGame is { IsVisibleInTree: true })
                 {

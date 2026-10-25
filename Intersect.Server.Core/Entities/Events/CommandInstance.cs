@@ -50,6 +50,13 @@ public partial class CommandInstance
     public Guid WaitingForRoute;
 
     public Guid WaitingForRouteMap;
+    public long CinematicRouteDeadline;
+    public List<(Event Owner, long Version)>? WaitingForCinematics;
+    public long CinematicWaitDeadline;
+    public Intersect.Framework.Core.GameObjects.Conditions.Condition? CinematicCondition;
+    public long CinematicConditionDeadline;
+    public long CinematicConditionNextCheck;
+    public Guid CinematicDialogueToken;
 
     public EventCommand WaitingOnCommand = null;
 

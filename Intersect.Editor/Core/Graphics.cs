@@ -749,6 +749,7 @@ public static partial class Graphics
             {
                 foreach (var drawLayer in drawLayers)
                 {
+                    if (_cinematicQuads != null) _cinematicPerspectiveLayer = drawLayer;
                     if (screenShotting || Globals.MapLayersWindow.LayerVisibility[drawLayer])
                     {
                         if (new System.Drawing.Rectangle(
@@ -829,7 +830,7 @@ public static partial class Graphics
             }
         }
 
-        if (layer == 1)
+        if (layer == 1 && _cinematicQuads == null)
         {
             foreach (var light in tmpMap.Lights)
             {
@@ -1639,6 +1640,8 @@ public static partial class Graphics
                 Texture2D eventTex = null;
                 var destinationX = x * Options.Instance.Map.TileWidth + xoffset;
                 var destinationY = y * Options.Instance.Map.TileHeight + yoffset;
+                if (screenShotting && gridX == 0 && gridY == 0)
+                    CinematicEventPosition(tmpMap.Id, tmpEvent.Id, ref destinationX, ref destinationY);
                 var sourceX = 0;
                 var sourceY = 0;
                 var width = 0;
@@ -1656,7 +1659,7 @@ public static partial class Graphics
                         }
 
                         sourceX = (int)tmpGraphic.X * (eventTex.Width / Options.Instance.Sprites.NormalFrames);
-                        sourceY = (int)tmpGraphic.Y * (eventTex.Height / Options.Instance.Sprites.Directions);
+                        sourceY = (_cinematicQuads != null ? Intersect.Rendering.MapPerspectiveGeometry.SpriteRow((int)tmpGraphic.Y,_cinematicPerspectiveHeading) : (int)tmpGraphic.Y) * (eventTex.Height / Options.Instance.Sprites.Directions);
                         width = (eventTex.Width / Options.Instance.Sprites.NormalFrames);
                         height = (eventTex.Height / Options.Instance.Sprites.Directions);
 
@@ -1852,6 +1855,10 @@ public static partial class Graphics
                 DrawMapAttributes(Globals.CurrentMap, 0, 0, true, sScreenShotRenderTexture, false, false);
                 DrawMapAttributes(Globals.CurrentMap, 0, 0, true, sScreenShotRenderTexture, false, true);
                 DrawMapAttributes(Globals.CurrentMap, 0, 0, true, sScreenShotRenderTexture, true, true);
+                if (_cinematicPreview != null) DrawMapEvents(Globals.CurrentMap, 0, 0, true, sScreenShotRenderTexture);
+                DrawCinematicTemporaryActors(sScreenShotRenderTexture);
+                DrawCinematicVessels(sScreenShotRenderTexture);
+                DrawCinematicNavalEffects(sScreenShotRenderTexture);
 
                 //Draw this map
                 DrawMap(Globals.CurrentMap, 0, 0, true, 1, sScreenShotRenderTexture);
@@ -1859,20 +1866,25 @@ public static partial class Graphics
             }
         }
 
-        if (!Database.GridHideFog)
+        DrawCinematicAnimations(sScreenShotRenderTexture);
+        if (PreviewEnvironment != null) DrawCinematicEnvironment(sScreenShotRenderTexture);
+        else
         {
-            DrawFog(sScreenShotRenderTexture);
-        }
+            if (!Database.GridHideFog)
+            {
+                DrawFog(sScreenShotRenderTexture);
+            }
 
-        if (!Database.GridHideOverlay)
-        {
-            DrawMapOverlay(sScreenShotRenderTexture);
-        }
+            if (!Database.GridHideOverlay)
+            {
+                DrawMapOverlay(sScreenShotRenderTexture);
+            }
 
-        if (!Database.GridHideDarkness || Globals.CurrentLayer == LayerOptions.Lights)
-        {
-            ClearDarknessTexture(sScreenShotRenderTexture, true);
-            OverlayDarkness(sScreenShotRenderTexture, true);
+            if (!Database.GridHideDarkness || Globals.CurrentLayer == LayerOptions.Lights)
+            {
+                ClearDarknessTexture(sScreenShotRenderTexture, true);
+                OverlayDarkness(sScreenShotRenderTexture, true);
+            }
         }
 
         EndSpriteBatch();
@@ -1916,11 +1928,11 @@ public static partial class Graphics
     /// <summary>
     /// Draws the fog over the map editor view.
     /// </summary>
-    private static void DrawFog(RenderTarget2D target)
+    private static void DrawFog(RenderTarget2D target, Intersect.Framework.Core.Cinematics.CinematicEnvironmentSettings? environment = null)
     {
         // Exit early if the map has no fog or if the fog texture is not available.
         var currentMap = Globals.CurrentMap;
-        var fog = currentMap.Fog;
+        var fog = environment?.FogFile ?? currentMap.Fog;
         if (string.IsNullOrWhiteSpace(fog))
         {
             return;
@@ -1936,23 +1948,32 @@ public static partial class Graphics
         // Calculate elapsed time since the last update and set maximum value for elapsedTime to
         // prevent large jumps in fog intensity (1 second maximum).
         float elapsedTime = Math.Min(Timing.Global.MillisecondsUtc - sFogUpdateTime, 1000);
-        sFogUpdateTime = Timing.Global.MillisecondsUtc;
+        if (environment == null) sFogUpdateTime = Timing.Global.MillisecondsUtc;
 
         // Calculate the number of times the fog texture needs to be drawn to cover the map area.
-        var xCount = Globals.MapEditorWindow.picMap.Width * Options.Instance.Map.TileWidth / fogTex.Width;
-        var yCount = Globals.MapEditorWindow.picMap.Height * Options.Instance.Map.TileHeight / fogTex.Height;
+        // Offscreen cinematic/map renders have their own pixel bounds; they must
+        // also work while the docked map editor is closed or a different size.
+        var xCount = target != null
+            ? (int)Math.Ceiling((target.Width + Options.Instance.Map.MapWidth * Options.Instance.Map.TileWidth) / (double)fogTex.Width) + 1
+            : Globals.MapEditorWindow.picMap.Width * Options.Instance.Map.TileWidth / fogTex.Width;
+        var yCount = target != null
+            ? (int)Math.Ceiling((target.Height + Options.Instance.Map.MapHeight * Options.Instance.Map.TileHeight) / (double)fogTex.Height) + 1
+            : Globals.MapEditorWindow.picMap.Height * Options.Instance.Map.TileHeight / fogTex.Height;
 
         // Update the fog texture's position based on its speed and elapsed time.
-        sFogCurrentX += elapsedTime / 1000f * currentMap.FogXSpeed * 2;
-        sFogCurrentY += elapsedTime / 1000f * currentMap.FogYSpeed * 2;
+        if (environment == null)
+        {
+            sFogCurrentX += elapsedTime / 1000f * currentMap.FogXSpeed * 2;
+            sFogCurrentY += elapsedTime / 1000f * currentMap.FogYSpeed * 2;
+        }
 
         // Handle cases where the fog texture's position goes out of bounds.
         sFogCurrentX %= fogTex.Width;
         sFogCurrentY %= fogTex.Height;
 
         // Round the fog texture's position to the nearest integer value.
-        var drawX = (float)Math.Round(sFogCurrentX);
-        var drawY = (float)Math.Round(sFogCurrentY);
+        var drawX = environment == null ? (float)Math.Round(sFogCurrentX) : (_cinematicPreviewTime / 1000f * environment.FogXSpeed * 2) % fogTex.Width;
+        var drawY = environment == null ? (float)Math.Round(sFogCurrentY) : (_cinematicPreviewTime / 1000f * environment.FogYSpeed * 2) % fogTex.Height;
 
         for (var x = 0; x <= xCount; x++)
         {
@@ -1964,7 +1985,7 @@ public static partial class Graphics
                         0 - Options.Instance.Map.MapWidth * Options.Instance.Map.TileWidth * 1f + x * fogTex.Width + drawX,
                         0 - Options.Instance.Map.MapHeight * Options.Instance.Map.TileHeight * 1f + y * fogTex.Height + drawY, fogTex.Width,
                         fogTex.Height
-                    ), System.Drawing.Color.FromArgb(currentMap.FogTransparency, 255, 255, 255), target
+                    ), System.Drawing.Color.FromArgb(environment?.FogOpacity ?? currentMap.FogTransparency, 255, 255, 255), target
                 );
             }
         }
@@ -2291,13 +2312,16 @@ public static partial class Graphics
         RenderTarget2D renderTarget = null,
         BlendState blendMode = null,
         Effect shader = null,
-        float rotationDegrees = 0
+        float rotationDegrees = 0,
+        bool flipHorizontal = false
     )
     {
         if (tex == null)
         {
             return;
         }
+
+        if (CollectCinematicQuad(tex, srcRectangle, targetRect, renderColor, rotationDegrees, flipHorizontal)) return;
 
         if (blendMode == null)
         {
@@ -2312,7 +2336,7 @@ public static partial class Graphics
 				),
 				new Microsoft.Xna.Framework.Rectangle(
 					(int) srcRectangle.X, (int) srcRectangle.Y, (int) srcRectangle.Width, (int) srcRectangle.Height
-				), ConvertColor(renderColor), rotationDegrees, Vector2.Zero, SpriteEffects.None, 0
+				), ConvertColor(renderColor), rotationDegrees, Vector2.Zero, flipHorizontal ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0
 			);
     }
 

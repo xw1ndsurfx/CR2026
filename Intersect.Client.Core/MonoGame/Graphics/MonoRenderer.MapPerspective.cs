@@ -10,7 +10,10 @@ internal partial class MonoRenderer
     public override bool RenderMapPerspective(IGameRenderTexture target, MapPerspectiveScene scene)
     {
         if (_basicEffect is not {} effect || target.GetTexture() is not RenderTarget2D output ||
-            scene.TileWidth <= 0 || scene.TileHeight <= 0 || scene.Forward.LengthSquared() < .5f) return false;
+            scene.TileWidth <= 0 || scene.TileHeight <= 0 || scene.Forward.LengthSquared() < .5f ||
+            !float.IsFinite(scene.EyeHeight) || scene.EyeHeight is < .5f or > 24 ||
+            !float.IsFinite(scene.PitchDegrees) || scene.PitchDegrees is < -75 or > 30 ||
+            !float.IsFinite(scene.FieldOfView) || scene.FieldOfView is < 15 or > 110) return false;
         EndSpriteBatch();
         var device = GraphicsDevice;
         var targets = device.GetRenderTargets();
@@ -21,10 +24,11 @@ internal partial class MonoRenderer
         var indices = device.Indices;
         var active = ActiveShader;
         var world = effect.World; var view = effect.View; var projection = effect.Projection;
-        var texture = effect.Texture;var alpha=effect.Alpha;
+        var texture = effect.Texture;var alpha=effect.Alpha;var diffuse=effect.DiffuseColor;
         try
         {
             effect.Alpha=1;
+            effect.DiffuseColor=Vector3.One;
             device.SetRenderTarget(output);
             // A plain sky background; only received map geometry supplies geography.
             device.Clear(new Microsoft.Xna.Framework.Color(115, 166, 202));
@@ -33,10 +37,9 @@ internal partial class MonoRenderer
             device.DepthStencilState = DepthStencilState.None;
             device.SamplerStates[0] = SamplerState.PointClamp;
             var forward = new Vector3(scene.Forward.X, 0, scene.Forward.Y);
-            var eye = new Vector3(scene.Camera.X / scene.TileWidth, 1.6f, scene.Camera.Y / scene.TileHeight);
-            effect.View = Matrix.CreateLookAt(eye, eye + forward + new Vector3(0, -.12f, 0), Vector3.Up);
-            effect.Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(65),
-                output.Width / (float)output.Height, .15f, 96);
+            effect.View = Intersect.Rendering.MapPerspectiveGeometry.View(new(scene.Camera.X,scene.Camera.Y), new(scene.Forward.X,scene.Forward.Y),
+                scene.TileWidth,scene.TileHeight,scene.EyeHeight,scene.PitchDegrees);
+            effect.Projection = Intersect.Rendering.MapPerspectiveGeometry.Projection(scene.FieldOfView,output.Width/(float)output.Height);
             // Native map vertices use (pixel X, pixel Y, 0). Lift them onto the X/Z plane.
             effect.World = TerrainPlane(scene.TileWidth, scene.TileHeight);
             ActiveShader = BasicShader;
@@ -58,6 +61,7 @@ internal partial class MonoRenderer
                 if(entry.Decoration is {} decoration)
                 {
                     effect.Alpha=1;
+                    effect.DiffuseColor=Vector3.One;
                     effect.World=UprightPlane(decoration.Anchor,scene.Forward,scene.TileWidth,scene.TileHeight);
                     effect.Texture=decoration.Buffer.Texture?.GetTexture<Texture2D>();
                     if(effect.Texture!=null && decoration.Buffer.VertexBuffer.Count>0) DrawBuffer(decoration.Buffer.VertexBuffer,decoration.Buffer.IndexBuffer);
@@ -92,6 +96,7 @@ internal partial class MonoRenderer
                 quad[2] = new(center + horizontal*x1 + vertical*sprite.AnchorY, uv[2]);
                 quad[3] = new(center + horizontal*x1 + vertical*(sprite.AnchorY-sprite.Height), uv[3]);
                 effect.Alpha=Math.Clamp(sprite.Opacity,0,1);
+                effect.DiffuseColor=sprite.Tint is {} tint ? new Vector3(tint.R/255f,tint.G/255f,tint.B/255f) : Vector3.One;
                 effect.Texture = image;
                 foreach (var pass in effect.CurrentTechnique.Passes)
                 {
@@ -104,6 +109,7 @@ internal partial class MonoRenderer
         finally
         {
             effect.Alpha=alpha;
+            effect.DiffuseColor=diffuse;
             effect.World = world; effect.View = view; effect.Projection = projection; effect.Texture = texture;
             ActiveShader = active;
             device.SetRenderTargets(targets); device.Viewport = viewport; device.ScissorRectangle = scissor;
@@ -114,14 +120,8 @@ internal partial class MonoRenderer
 
     internal static Matrix UprightPlane(System.Numerics.Vector2 anchor,System.Numerics.Vector2 forward,float tw,float th)
     {
-        var right=new Vector3(-forward.Y,0,forward.X);
-        return new Matrix(right.X/tw,0,right.Z/tw,0, 0,-1/th,0,0, 0,0,0,0,
-            anchor.X/tw-right.X*anchor.X/tw,anchor.Y/th,anchor.Y/th-right.Z*anchor.X/tw,1);
+        return Intersect.Rendering.MapPerspectiveGeometry.UprightPlane(new(anchor.X,anchor.Y),new(forward.X,forward.Y),tw,th);
     }
 
-    internal static Matrix TerrainPlane(float tileWidth, float tileHeight) => new(
-        1/tileWidth, 0, 0, 0,
-        0, 0, 1/tileHeight, 0,
-        0, 1, 0, 0,
-        0, 0, 0, 1);
+    internal static Matrix TerrainPlane(float tileWidth, float tileHeight) => Intersect.Rendering.MapPerspectiveGeometry.TerrainPlane(tileWidth,tileHeight);
 }

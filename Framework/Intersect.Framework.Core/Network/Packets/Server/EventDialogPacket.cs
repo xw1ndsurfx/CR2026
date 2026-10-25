@@ -33,5 +33,6 @@ public partial class EventDialogPacket : IntersectPacket
 
     [Key(4)]
     public string[] Responses { get; set; }
+    [Key(5)] public Guid DialogueToken { get; set; }
 
 }

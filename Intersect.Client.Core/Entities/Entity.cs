@@ -1265,6 +1265,7 @@ public partial class Entity : IEntity
     //Rendering Functions
     public virtual void Draw()
     {
+        using var cinematicCapture = Graphics.CaptureCinematicEntity(this);
         if (Naval.NavalWorld.IsAboard(Id)) { WorldPos = InteractionBounds; return; }
         if (IsHidden)
         {
@@ -1365,9 +1366,10 @@ public partial class Entity : IEntity
         IncludeVisibleGraphicTop(texture, srcRectangle, riderBounds);
 
         //Order the layers of paperdolls and sprites
-        for (var z = 0; z < Options.Instance.Equipment.Paperdoll.Directions[(int)_lastDirection].Count; z++)
+        var cinematicDirection = Graphics.CinematicDrawDirection(_lastDirection);
+        for (var z = 0; z < Options.Instance.Equipment.Paperdoll.Directions[(int)cinematicDirection].Count; z++)
         {
-            var paperdoll = Options.Instance.Equipment.Paperdoll.Directions[(int)_lastDirection][z];
+            var paperdoll = Options.Instance.Equipment.Paperdoll.Directions[(int)cinematicDirection][z];
             var equipSlot = Options.Instance.Equipment.Slots.IndexOf(paperdoll);
 
             //Check for player
@@ -1453,7 +1455,8 @@ public partial class Entity : IEntity
         }
     }
 
-    private int PickSpriteRow(Direction direction)
+    private int PickSpriteRow(Direction direction) => Graphics.CinematicSpriteRow(PickWorldSpriteRow(direction));
+    private int PickWorldSpriteRow(Direction direction)
     {
         switch (direction)
         {
@@ -1838,7 +1841,7 @@ public partial class Entity : IEntity
          (Type == EntityType.GlobalEntity && Options.Instance.Npc.ShowLevelByName && (Globals.Database?.ShowNpcLevels ?? true)))
             ? Strings.GameWindow.EntityNameAndLevel.ToString(Name, Level) : Name;
 
-    protected float NameplateScale => 1f / Math.Clamp(Globals.Database?.WorldZoom ?? 1f, 0.25f, 16f);
+    protected float NameplateScale => 1f / Math.Clamp(Graphics.WorldScale, 0.25f, 16f);
 
     public float GetLabelLocation(LabelType type)
     {

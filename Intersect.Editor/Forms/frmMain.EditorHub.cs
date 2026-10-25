@@ -32,6 +32,7 @@ public partial class FrmMain
         AddCharacterGeneratorEditorMenu();
         AddAnimationImportEditorMenu();
         AddSoundImportEditorMenu();
+        AddCinematicDirectorMenu();
         AddBalanceLabEditorMenu();
         AddWorldEventsEditorMenu();
         AddSystemEditorMenu();

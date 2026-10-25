@@ -1,5 +1,11 @@
 [
   {
+    "id": "royalCinematicDirector", "oldMenu": "contentEditorsToolStripMenuItem", "category": "Game", "subcategory": "WorldAndProgression",
+    "tags": ["World"], "art": "commonEventEditorToolStripMenuItem.png", "keywords": "cinematic camera timeline actor story dialogue movement saga chapitre",
+    "title": {"en":"Royal Cinematic Director", "fr":"Royal Cinematic Director", "es":"Royal Cinematic Director"},
+    "description": {"en":"Author map cinematics with actor paths, camera shots and interactive Events.", "fr":"Créer des cinématiques sur carte avec trajectoires, caméra et Events interactifs.", "es":"Crear cinemáticas en mapas con rutas, cámara y Events interactivos."}
+  },
+  {
     "id": "map",
     "oldMenu": "Workspace",
     "category": "Game",

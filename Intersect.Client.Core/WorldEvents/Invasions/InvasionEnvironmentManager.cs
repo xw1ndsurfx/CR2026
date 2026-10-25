@@ -86,6 +86,7 @@ internal static class InvasionEnvironmentManager
         out InvasionEnvironmentState environment
     )
     {
+        if (Intersect.Client.Cinematics.CinematicEnvironment.TryGetEnvironment(map,out environment)) return true;
         environment = Current!;
         if (environment == null)
             return false;

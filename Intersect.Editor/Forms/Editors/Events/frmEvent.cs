@@ -808,6 +808,18 @@ public partial class FrmEvent : Form
                 tmpCommand = new OpenQuestShopCommand();
 
                 break;
+            case EventCommandType.PlayCinematic:
+                tmpCommand = new PlayCinematicCommand();
+                break;
+            case EventCommandType.StopCinematic:
+                tmpCommand = new StopCinematicCommand();
+                break;
+            case EventCommandType.WaitForCinematic:
+                tmpCommand = new WaitForCinematicCommand();
+                break;
+            case EventCommandType.StartCinematicChapter:
+                tmpCommand = new StartCinematicChapterCommand();
+                break;
             case EventCommandType.OpenRoyalStylist:
                 tmpCommand = new OpenRoyalStylistCommand();
 
@@ -851,6 +863,7 @@ public partial class FrmEvent : Form
         InitializeComponent();
         AddMarketplaceCommand();
         AddQuestShopCommand();
+        AddCinematicCommands();
         AddNavalShopCommand();
         AddRoyalStylistCommand();
         AddDungeonCommands();
@@ -1476,6 +1489,21 @@ public partial class FrmEvent : Form
         switch (command.Type)
         {
             case EventCommandType.Null:
+                break;
+            case EventCommandType.PlayCinematic:
+            case EventCommandType.BeginCinematic:
+            case EventCommandType.CinematicCamera:
+            case EventCommandType.CinematicActor:
+            case EventCommandType.AwaitCinematicCondition:
+            case EventCommandType.CinematicQuestTask:
+            case EventCommandType.CinematicEnvironment:
+            case EventCommandType.CinematicVesselMove:
+            case EventCommandType.CinematicVesselAction:
+            case EventCommandType.CinematicEffectPath:
+            case EventCommandType.StopCinematic:
+            case EventCommandType.WaitForCinematic:
+            case EventCommandType.StartCinematicChapter:
+                cmdWindow = new EventCommandCinematic(command, this);
                 break;
             case EventCommandType.ShowText:
                 cmdWindow = new EventCommandText((ShowTextCommand)command, this);

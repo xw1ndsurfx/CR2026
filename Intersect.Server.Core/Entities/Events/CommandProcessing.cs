@@ -32,6 +32,8 @@ public static partial class CommandProcessing
     public static void ProcessCommand(EventCommand command, Player player, Event instance)
     {
         var stackInfo = instance.CallStack.Peek();
+        if (instance.ShouldSkipCinematicCommand(command, stackInfo)) { stackInfo.CommandIndex++; return; }
+        stackInfo.CinematicDialogueToken = Guid.Empty;
         stackInfo.WaitingForResponse = CommandInstance.EventResponse.None;
         stackInfo.WaitingOnCommand = null;
         stackInfo.BranchIds = null;
@@ -50,8 +52,9 @@ public static partial class CommandProcessing
         Stack<CommandInstance> callStack
     )
     {
+        stackInfo.CinematicDialogueToken = instance.CinematicActive ? Guid.NewGuid() : Guid.Empty;
         PacketSender.SendEventDialog(
-            player, ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Text, player.Client?.LanguageCode ?? "en"), player, instance), command.Face, instance.PageInstance.Id
+            player, ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Text, player.Client?.LanguageCode ?? "en"), player, instance), command.Face, instance.PageInstance.Id, stackInfo.CinematicDialogueToken
         );
 
         stackInfo.WaitingForResponse = CommandInstance.EventResponse.Dialogue;
@@ -71,7 +74,8 @@ public static partial class CommandProcessing
         var opt2 = ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Options[1], player.Client?.LanguageCode ?? "en"), player, instance);
         var opt3 = ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Options[2], player.Client?.LanguageCode ?? "en"), player, instance);
         var opt4 = ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Options[3], player.Client?.LanguageCode ?? "en"), player, instance);
-        PacketSender.SendEventDialog(player, txt, opt1, opt2, opt3, opt4, command.Face, instance.PageInstance.Id);
+        stackInfo.CinematicDialogueToken = instance.CinematicActive ? Guid.NewGuid() : Guid.Empty;
+        PacketSender.SendEventDialog(player, txt, opt1, opt2, opt3, opt4, command.Face, instance.PageInstance.Id, stackInfo.CinematicDialogueToken);
         stackInfo.WaitingForResponse = CommandInstance.EventResponse.Dialogue;
         stackInfo.WaitingOnCommand = command;
         stackInfo.BranchIds = command.BranchIds;
@@ -310,15 +314,16 @@ public static partial class CommandProcessing
         var newCallStack = LoadLabelCallstack(command.Label, stackInfo.Page);
         if (newCallStack != null)
         {
-            newCallStack.Reverse();
-            while (callStack.Peek().CommandListId != Guid.Empty)
+            // Branch frames created by native commands do not populate
+            // CommandListId. Unwind by the actual page/root list instead so a
+            // polling common Event cannot accumulate copies or discard its caller.
+            var rootCommands = stackInfo.Page.CommandLists.Values.First();
+            while (callStack.Count > 0 && ReferenceEquals(callStack.Peek().Page, stackInfo.Page))
             {
-                callStack.Pop();
+                var frame = callStack.Pop();
+                if (ReferenceEquals(frame.CommandList, rootCommands)) break;
             }
-
-            //also pop the current event
-            callStack.Pop();
-            foreach (var itm in newCallStack)
+            foreach (var itm in newCallStack.Reverse())
             {
                 callStack.Push(itm);
             }
@@ -885,6 +890,8 @@ public static partial class CommandProcessing
         Stack<CommandInstance> callStack
     )
     {
+        stackInfo.CinematicRouteDeadline = instance.CinematicActive && command.TimeoutMs > 0
+            ? Environment.TickCount64 + Math.Clamp(command.TimeoutMs, 1000, 600000) : 0;
         if (command.TargetId == Guid.Empty)
         {
             stackInfo.WaitingForRoute = player.Id;
@@ -1047,7 +1054,7 @@ public static partial class CommandProcessing
             {
                 foreach (var evt in player.EventLookup)
                 {
-                    if (evt.Value.MapId != instance.MapId)
+                    if (evt.Value.MapId != (command.TargetMapId != Guid.Empty ? command.TargetMapId : instance.MapId))
                     {
                         continue;
                     }
@@ -1061,6 +1068,7 @@ public static partial class CommandProcessing
                 }
             }
 
+            if (command.TargetMapId != Guid.Empty && command.EntityId != Guid.Empty && ReferenceEquals(targetEntity, player)) return;
             if (targetEntity != null)
             {
                 if (command.X == 0 && command.Y == 0 && command.Dir == 0)

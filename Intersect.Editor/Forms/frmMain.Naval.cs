@@ -17,6 +17,7 @@ public partial class FrmMain
     }
     public void ReceiveNavalConfiguration(NavalConfigurationPacket packet)
     {
+        if(Cinematics.FrmCinematicDirector.ReceiveVesselModels(packet))return;
         if(FrmItem.ReceiveItemAmmoConfiguration(packet))return;
         if(FrmShop.ReceiveNavalShopConfiguration(packet))return;
         if (_navalEditor is { IsDisposed: false }) { _navalEditor.AcceptResponse(packet); return; }
