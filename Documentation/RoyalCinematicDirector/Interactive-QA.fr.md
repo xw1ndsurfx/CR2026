@@ -59,3 +59,15 @@ Les 35 tests serveur cinématiques réussissent, dont dix cas de trajet (progres
 Après redémarrage du serveur local corrigé, le propriétaire confirme le fonctionnement de la scène, puis répond explicitement oui à la vérification du choix A/B, de l'entrée sur le repère d'interaction et du dialogue final. Le parcours interactif complet de ce scénario est donc validé manuellement dans le client Intel sur la copie locale. Cette confirmation ne constitue pas une capture ou un test graphique automatisé.
 
 Restent à vérifier séparément : les deux branches individuellement, la persistance après reconnexion, les déclenchements de quête, les interruptions en conditions réelles et deux clients simultanés. Aucun résultat de ces essais supplémentaires n'est déduit de cette confirmation. La PR reste en draft, sans fusion ni déploiement hébergé.
+
+## Vérification SQLite et isolation des indicateurs
+
+Les 37 tests serveur cinématiques passent, dont deux nouveaux cas couvrant les choix A et B. Ils exécutent la modification booléenne native d'Event, enregistrent les trois indicateurs avec le modèle de colonne JSON et la clé propriétaire réels de `PlayerVariable` dans un fichier SQLite jetable, puis les relisent dans de nouveaux contextes. Les conditions natives restent vraies pour le joueur qui a terminé et fausses pour l'autre ; après la fin du second et la remise à zéro du premier, les valeurs du second restent intactes. Aucun compte ni aucune base de l'installation n'est utilisé par ces tests.
+
+Ce contrôle porte sur les variables persistées et leurs conditions, pas sur le chemin complet `User.Save`, une connexion réseau, le rendu ni la reprise d'une scène en cours. La scène active n'est pas restaurée par les indicateurs de progression.
+
+Lors de la lecture en mode SQLite strictement lecture seule de la copie locale, les indicateurs du scénario étaient encore faux, y compris après fermeture du client. Cela ne valide pas la persistance de la fin de scène observée ; une remise à zéro ou un problème du parcours de sauvegarde restent à départager. Le parcours visuel confirmé par le propriétaire demeure acquis, séparément de cette vérification de base.
+
+Pour l'essai réel : terminer la scène, confirmer et fermer le dernier dialogue, quitter puis reconnecter le même personnage **sans relancer `/cinematicqa`**, qui réinitialise les indicateurs d'interaction et de fin. Comparer les valeurs avant/après avec une lecture seule, puis essayer deux comptes de test distincts appartenant au testeur. La validation de deux clients simultanés reste en attente.
+
+Le client Intel isolé conserve les DLL près de l'exécutable et utilise `work/runtime/editor` comme dossier de travail et `--working-directory`. Ses ressources résident dans `work/runtime/editor/resources`, pas dans le dossier de l'exécutable. Un lancement direct depuis ce dernier dossier n'est pas le lancement QA attendu ; utiliser `scripts/Start-CinematicQaClient.ps1` avec les chemins préparés.
