@@ -8,6 +8,7 @@ public partial class EventPage
 {
     // Optional source for dedicated generated pages; absent in all historical Events.
     public Intersect.Framework.Core.Cinematics.CinematicScene? Cinematic { get; set; }
+    public Intersect.Framework.Core.Cinematics.CinematicChapter? CinematicChapter { get; set; }
 
     public EventPage()
     {

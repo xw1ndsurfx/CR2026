@@ -9,6 +9,26 @@ public sealed class PlayCinematicCommand : EventCommand
     public Guid SceneEventId { get; set; }
 }
 
+public sealed class StopCinematicCommand : EventCommand
+{
+    public override EventCommandType Type => EventCommandType.StopCinematic;
+    // Empty selects active personal scenes only; never another player's scene.
+    public Guid SceneEventId { get; set; }
+}
+
+public sealed class WaitForCinematicCommand : EventCommand
+{
+    public override EventCommandType Type => EventCommandType.WaitForCinematic;
+    public Guid SceneEventId { get; set; }
+    public int TimeoutMs { get; set; } = 60000;
+}
+
+public sealed class StartCinematicChapterCommand : EventCommand
+{
+    public override EventCommandType Type => EventCommandType.StartCinematicChapter;
+    public Guid ChapterEventId { get; set; }
+}
+
 public sealed class BeginCinematicCommand : EventCommand
 {
     public override EventCommandType Type => EventCommandType.BeginCinematic;

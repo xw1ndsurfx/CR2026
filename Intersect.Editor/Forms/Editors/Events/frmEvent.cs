@@ -811,6 +811,15 @@ public partial class FrmEvent : Form
             case EventCommandType.PlayCinematic:
                 tmpCommand = new PlayCinematicCommand();
                 break;
+            case EventCommandType.StopCinematic:
+                tmpCommand = new StopCinematicCommand();
+                break;
+            case EventCommandType.WaitForCinematic:
+                tmpCommand = new WaitForCinematicCommand();
+                break;
+            case EventCommandType.StartCinematicChapter:
+                tmpCommand = new StartCinematicChapterCommand();
+                break;
             case EventCommandType.OpenRoyalStylist:
                 tmpCommand = new OpenRoyalStylistCommand();
 
@@ -1484,6 +1493,9 @@ public partial class FrmEvent : Form
             case EventCommandType.PlayCinematic:
             case EventCommandType.BeginCinematic:
             case EventCommandType.CinematicCamera:
+            case EventCommandType.StopCinematic:
+            case EventCommandType.WaitForCinematic:
+            case EventCommandType.StartCinematicChapter:
                 cmdWindow = new EventCommandCinematic(command, this);
                 break;
             case EventCommandType.ShowText:

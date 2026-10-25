@@ -8,6 +8,34 @@ namespace Intersect.Server.Entities.Events;
 
 public static partial class CommandProcessing
 {
+    private static void ProcessCommand(StopCinematicCommand command, Player player, Event instance,
+        CommandInstance stackInfo, Stack<CommandInstance> callStack)
+    {
+        foreach (var scene in player.EventLookup.Values.Where(e => e.IsPlayingCinematic(command.SceneEventId)).ToArray())
+        { scene.CallStack.Clear(); scene.FinishCinematic(interrupted: true); }
+    }
+
+    private static void ProcessCommand(WaitForCinematicCommand command, Player player, Event instance,
+        CommandInstance stackInfo, Stack<CommandInstance> callStack)
+    {
+        if (command.TimeoutMs is < 100 or > CinematicCompiler.MaximumDurationMs) { RejectCinematic(player, callStack); return; }
+        var scenes = player.EventLookup.Values.Where(e => e != instance && e.IsPlayingCinematic(command.SceneEventId))
+            .Select(e => (e, e.CinematicRunVersion)).ToList();
+        if (scenes.Count == 0) return;
+        stackInfo.WaitingForCinematics = scenes;
+        stackInfo.CinematicWaitDeadline = Environment.TickCount64 + command.TimeoutMs;
+    }
+
+    private static void ProcessCommand(StartCinematicChapterCommand command, Player player, Event instance,
+        CommandInstance stackInfo, Stack<CommandInstance> callStack)
+    {
+        if (callStack.Count >= 32 || !EventDescriptor.TryGet(command.ChapterEventId, out var chapter) ||
+            !chapter.CommonEvent || chapter.Global || chapter.Pages.Count != 1 || chapter.Pages[0].CinematicChapter == null ||
+            !Conditions.CanSpawnPage(chapter.Pages[0], player, instance))
+        { RejectCinematic(player, callStack); return; }
+        callStack.Push(new CommandInstance(chapter.Pages[0]));
+    }
+
     private static void ProcessCommand(PlayCinematicCommand command, Player player, Event instance,
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {

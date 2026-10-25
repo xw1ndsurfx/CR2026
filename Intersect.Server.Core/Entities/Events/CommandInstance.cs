@@ -51,6 +51,8 @@ public partial class CommandInstance
 
     public Guid WaitingForRouteMap;
     public long CinematicRouteDeadline;
+    public List<(Event Owner, long Version)>? WaitingForCinematics;
+    public long CinematicWaitDeadline;
 
     public EventCommand WaitingOnCommand = null;
 

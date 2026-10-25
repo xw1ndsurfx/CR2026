@@ -7,6 +7,9 @@ namespace Intersect.Server.Entities.Events;
 public partial class Event
 {
     internal bool CinematicActive { get; private set; }
+    internal long CinematicRunVersion { get; private set; }
+    internal long CinematicFinishedVersion { get; private set; }
+    internal bool CinematicFinishedSuccessfully { get; private set; }
     private Guid _cinematicMap;
     private Guid _cinematicInstance;
     private long _cinematicDeadline;
@@ -19,6 +22,9 @@ public partial class Event
         player.MapId == _cinematicMap && player.MapInstanceId == _cinematicInstance &&
         page != null && ReferenceEquals(_cinematicOwnerPage, page) &&
         ReferenceEquals(PageInstance, page) && ReferenceEquals(page.MyEventIndex, this);
+
+    internal bool IsPlayingCinematic(Guid sceneId) => CinematicActive && (sceneId == Guid.Empty ||
+        EventDescriptor.TryGet(sceneId, out var scene) && CallStack.Any(frame => scene.Pages.Contains(frame.Page)));
 
     internal bool TryBeginCinematic(BeginCinematicCommand command)
     {
@@ -42,6 +48,7 @@ public partial class Event
         foreach (var actor in actors) _cinematicActors.Add((actor, actor.CaptureCinematicMovement()));
         _cinematicWasHolding = HoldingPlayer;
         _cinematicOwnerPage = PageInstance;
+        CinematicRunVersion++;
         CinematicActive = true; _cinematicMap = Player.MapId; _cinematicInstance = Player.MapInstanceId;
         _cinematicDeadline = Environment.TickCount64 + 30 * 60 * 1000;
         return true;
@@ -49,6 +56,8 @@ public partial class Event
     internal void FinishCinematic(bool interrupted = false)
     {
         if (!CinematicActive) return;
+        CinematicFinishedVersion = CinematicRunVersion;
+        CinematicFinishedSuccessfully = !interrupted;
         foreach (var actor in _cinematicActors)
         {
             actor.Restore();

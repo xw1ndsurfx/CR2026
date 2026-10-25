@@ -174,6 +174,16 @@ public partial class Event
                            !(PageInstance?.ShouldDespawn(map) ?? false) &&
                            commandsExecuted < Options.Instance.EventWatchdogKillThreshold)
                     {
+                        if (curStack.WaitingForCinematics is { } scenes)
+                        {
+                            // An aborted or superseded run must not let a waiting quest caller continue as success.
+                            if (Environment.TickCount64 > curStack.CinematicWaitDeadline || scenes.Any(s =>
+                                s.Owner.CinematicRunVersion != s.Version || !s.Owner.CinematicActive &&
+                                (s.Owner.CinematicFinishedVersion != s.Version || !s.Owner.CinematicFinishedSuccessfully)))
+                            { CallStack.Clear(); FinishCinematic(interrupted: true); break; }
+                            if (scenes.Any(s => s.Owner.CinematicActive)) break;
+                            curStack.WaitingForCinematics = null;
+                        }
                         if (curStack.WaitingForRoute != Guid.Empty)
                         {
                             if (CinematicActive && curStack.CinematicRouteDeadline > 0 && Environment.TickCount64 > curStack.CinematicRouteDeadline)

@@ -55,6 +55,7 @@ internal sealed class FrmCinematicDirector : DarkForm
         Button("Step", () => SetCursor(Math.Min(_scene.DurationMs, _timeline.CursorMs + 50)));
         Button("Test", TestInGame);
         Button("Templates", ChooseTemplate);
+        Button("ChapterDirector", () => { using var chapter = new FrmCinematicChapters(); chapter.ShowDialog(this); });
         Button("ShotPreset", ChooseShotPreset);
         Button("Marker", () => { var marker = new CinematicMarker { Name = T("Marker"), TimeMs = _timeline.CursorMs };
             _scene.Markers.Add(marker); SelectObject(marker); CommitEdit(); });

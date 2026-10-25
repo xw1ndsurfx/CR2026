@@ -8,6 +8,9 @@ public partial class FrmEvent
     {
         var root = new TreeNode(CinematicText.T("Title")) { Name = "cinematics" };
         root.Nodes.Add(new TreeNode(CinematicText.T("PlayCinematic")) { Tag = (int)EventCommandType.PlayCinematic });
+        root.Nodes.Add(new TreeNode(CinematicText.T("StopCinematic")) { Tag = (int)EventCommandType.StopCinematic });
+        root.Nodes.Add(new TreeNode(CinematicText.T("WaitForCinematic")) { Tag = (int)EventCommandType.WaitForCinematic });
+        root.Nodes.Add(new TreeNode(CinematicText.T("StartCinematicChapter")) { Tag = (int)EventCommandType.StartCinematicChapter });
         lstCommands.Nodes.Add(root);
     }
 }
