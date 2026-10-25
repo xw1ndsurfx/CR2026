@@ -7697,7 +7697,7 @@ public partial class Player : Entity
         }
 
         // ReSharper disable once InvertIf
-        if (EventLookup.Values.Any(@event => @event.HoldingPlayer))
+        if (HasBlockingEventHold)
         {
             blockerType = MovementBlockerType.OutOfBounds;
             return false;

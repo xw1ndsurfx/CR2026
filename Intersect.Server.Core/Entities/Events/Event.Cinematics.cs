@@ -14,6 +14,12 @@ public partial class Event
     private EventPageInstance? _cinematicOwnerPage;
     private readonly List<(EventPageInstance Page, Action Restore)> _cinematicActors = [];
 
+    internal bool OwnsActiveCinematicRoute(Player player, EventPageInstance? page) =>
+        CinematicActive && ReferenceEquals(Player, player) &&
+        player.MapId == _cinematicMap && player.MapInstanceId == _cinematicInstance &&
+        page != null && ReferenceEquals(_cinematicOwnerPage, page) &&
+        ReferenceEquals(PageInstance, page) && ReferenceEquals(page.MyEventIndex, this);
+
     internal bool TryBeginCinematic(BeginCinematicCommand command)
     {
         if (CinematicActive || command.MapId != Player.MapId || command.Actors.Count > 64 ||
