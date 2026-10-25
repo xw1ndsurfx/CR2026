@@ -39,12 +39,15 @@ internal sealed partial class FrmCinematicDirector : DarkForm
     private static string T(string key) => CinematicText.T(key);
     private static string Explain(string error)
     { var parts = error.Split(':', 2); return T(parts[0]) + (parts.Length == 2 ? ": " + parts[1] : ""); }
+    private Action<Guid>? _joustSceneSaved;
     private string Snapshot() => JsonConvert.SerializeObject(_scene);
     private sealed record Resource(Guid Id, string Name, bool Voice = false)
     { public override string ToString() => Name; }
 
-    internal FrmCinematicDirector()
+    internal FrmCinematicDirector() : this(null, null) { }
+    internal FrmCinematicDirector(CinematicScene? initialScene, Action<Guid>? onSaved = null)
     {
+        _joustSceneSaved = onSaved;
         Text = T("Title"); Width = 1440; Height = 960; MinimumSize = new(1000, 700);
         StartPosition = FormStartPosition.CenterParent; KeyPreview = true; Icon = Program.Icon;
         var toolbar = new ToolStrip { Dock = DockStyle.Top, GripStyle = ToolStripGripStyle.Hidden, AutoSize = true };
@@ -186,7 +189,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
             _viewport.Invalidate();
         };
         _timer.Tick += (_, _) => TickPreview(); _timer.Start();
-        Shown += (_, _) => { NewScene(); RenderMap();RequestVesselModels(false); };
+        Shown += (_, _) => { if (initialScene == null) NewScene(); else LoadScene(initialScene, Guid.Empty); RenderMap();RequestVesselModels(false); };
         FormClosing += (_, e) => { if (!CanDiscard()) e.Cancel = true; };
         Disposed += (_, _) => { _timer.Dispose(); _viewport.MapImage?.Dispose(); };
     }
@@ -494,7 +497,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
                 var metadata = evt.Pages[0]; metadata.Cinematic = page.Cinematic; metadata.CommandLists = page.CommandLists; page = metadata;
             }
             evt.Name = _scene.Name; evt.Global = false; evt.Pages = [page]; map.LocalEvents[_eventId] = evt;
-            PacketSender.SendMap(map); _savedState = _lastState = Snapshot(); _status.Text = T("Saved"); CommitEdit(); return true;
+            PacketSender.SendMap(map); _joustSceneSaved?.Invoke(_eventId); _savedState = _lastState = Snapshot(); _status.Text = T("Saved"); CommitEdit(); return true;
         }
         catch (InvalidOperationException error) { MessageBox.Show(this, T("Validation") + ": " + Explain(error.Message), Text); return false; }
     }

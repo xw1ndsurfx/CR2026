@@ -1,4 +1,4 @@
-﻿using Intersect.Client.Core;
+using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -254,7 +254,10 @@ public partial class CharacterWindow
             FontSize = 9, AutoSizeToContents = false, TextColorOverride = Color.White, TextAlign = Pos.Center, MouseInputEnabled = false };
         mountCaption.SetBounds(0, 0, mounts.Width, mounts.Height);
         mounts.Clicked += (_, _) => MountsWindow.Open();
-        mCharacterWindow.Height = Math.Max(mCharacterWindow.Height, mounts.Bottom + 10);
+        var joust = new Button(mCharacterWindow, "CharacterJoust") { Text = ClientLanguages.Text("Royal Jousting") };
+        joust.SetBounds(actionButtonsX, mounts.Bottom + 5, mounts.Width, actionButtonHeight);
+        joust.Clicked += (_, _) => JoustWindow.Open();
+        mCharacterWindow.Height = Math.Max(mCharacterWindow.Height, joust.Bottom + 10);
     }
 
     //Update Button Event Handlers

@@ -19,6 +19,7 @@ public partial class FrmMain
         if (requestConfigurations) PacketSender.SendRequestProfessionConfiguration(openEditor: false);
         AddAchievementEditorMenu();
         AddMountEditorMenu();
+        AddJoustEditorMenu();
         if (requestConfigurations) PacketSender.SendRequestAchievementConfiguration(openEditor: false);
         AddDungeonEditorMenu();
         if (requestConfigurations) PacketSender.SendRequestDungeonConfiguration(openEditor: false);

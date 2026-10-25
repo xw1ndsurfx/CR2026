@@ -50,6 +50,14 @@ internal static class PartyLobbyUiTests
                 state.OpenFromEvent=true;state.PromptCreation=false;state.ActivityFilter=-1;
                 type.GetMethod("Apply",flags)!.Invoke(window,[state]);state.OpenFromEvent=false;
                 activityControl.SelectByUserData((int)LobbyActivity.Dungeon);
+                activityControl.SelectByUserData((int)LobbyActivity.Jousting);
+                var train=(Button)type.GetField("_joustTraining",flags)!.GetValue(window)!;
+                var dungeonControl=(ComboBox)type.GetField("_dungeon",flags)!.GetValue(window)!;
+                if(train.IsHidden || !dungeonControl.IsHidden || train.Bottom>create.Y)
+                    throw new Exception("Jousting lobbies expose training without covering creation controls.");
+                var joust=state.Lobbies.Single(l=>l.Activity==LobbyActivity.Jousting);
+                if(!(bool)matches.Invoke(null,[joust,(int)LobbyActivity.Jousting,""])!)throw new Exception("Jousting has a dedicated lobby filter.");
+                activityControl.SelectByUserData((int)LobbyActivity.Dungeon);
                 foreach(var activity in Enum.GetValues<LobbyActivity>())
                 {
                     var title=(string)type.GetMethod("ActivityName",BindingFlags.Static|BindingFlags.NonPublic)!.Invoke(null,[activity])!;

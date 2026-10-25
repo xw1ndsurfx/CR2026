@@ -11,5 +11,6 @@ public partial class Player
         try { ActiveMount = string.IsNullOrEmpty(json) ? null : MountConfiguration.FromJson(json).Mounts.SingleOrDefault(); }
         catch { ActiveMount = null; }
     }
-    public override float GetMovementTime() => base.GetMovementTime() / (float)(ActiveMount?.SpeedMultiplier ?? 1);
+    public override float GetMovementTime() => ServerMovementMilliseconds > 0 ? ServerMovementMilliseconds :
+        base.GetMovementTime() / (float)(ActiveMount?.SpeedMultiplier ?? 1);
 }

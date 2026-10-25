@@ -797,6 +797,7 @@ internal sealed partial class PacketHandler
         }
 
         var entityMap = MapInstance.Get(en.MapId);
+        en.ServerMovementMilliseconds = packet.ScriptedDurationMs is >= 20 and <= 30000 ? packet.ScriptedDurationMs : 0;
         if (entityMap == null)
         {
             return;

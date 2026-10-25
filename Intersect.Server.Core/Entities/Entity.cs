@@ -1040,6 +1040,7 @@ public abstract partial class Entity : IEntity
     }
 
     //Returns the amount of time required to traverse 1 tile
+    [NotMapped, JsonIgnore] public virtual int ScriptedMovementMilliseconds => 0;
     public virtual float GetMovementTime()
     {
         var time = 1000f / (float)(1 + Math.Log(Stat[(int)Enums.Stat.Speed].Value()));
@@ -1771,7 +1772,7 @@ public abstract partial class Entity : IEntity
         bool trapTrigger = false
     )
     {
-        if (target is Resource || target is EventPageInstance)
+        if (target is Resource || target is EventPageInstance || target is JoustOpponent)
         {
             return;
         }
@@ -1991,6 +1992,7 @@ public abstract partial class Entity : IEntity
         List<KeyValuePair<Guid, Direction>> aliveAnimations = null,
         ItemDescriptor weapon = null)
     {
+        if (target is JoustOpponent) return;
         if (IsAttacking)
         {
             return;

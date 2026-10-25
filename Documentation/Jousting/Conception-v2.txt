@@ -1,0 +1,913 @@
+# CORPS ROYAUX
+# Les Joutes Royales d'Herbonia
+## Document de conception — Version 2.0
+
+**Nom anglais :** Royal Jousting Tournament
+**Projet :** Corps Royaux
+**Dépôt GitHub :** `xw1ndsurfx/CR2026`
+**Moteur :** Intersect 0.8.0.0 personnalisé
+**Type :** Mini-jeu de joute médiévale, PvE / PvP
+**Statut :** Futur projet à développer avec Work
+**Date :** 25 octobre 2026
+
+---
+
+## 1. Vision générale
+
+Développer un véritable système de joutes médiévales au sein de Corps Royaux, permettant aux joueurs d'affronter d'autres aventuriers ou des chevaliers contrôlés par l'intelligence artificielle.
+
+Les affrontements se dérouleront dans une grande arène royale du royaume d'Herbonia, devant le roi, la princesse Gisabelle, les gardes royaux et une foule composée de PNJ et de vrais joueurs.
+
+Le mini-jeu combinera deux systèmes :
+
+- **Une phase en 2D**, utilisant le système de montures existant pour les déplacements et les charges des chevaliers.
+- **Une phase en 2,5D**, présentant une vue rapprochée de l'adversaire à cheval. Le joueur devra contrôler sa lance, viser une zone valide et réussir son impact.
+
+L'objectif est de créer une activité immersive, spectaculaire et rejouable qui s'intègre naturellement à l'univers de Corps Royaux.
+
+Le système devra être extensible et entièrement configurable dans le Game Editor.
+
+## 2. Personnages et ressources existantes
+
+### 2.1. Le chevalier William
+
+Le personnage principal utilisé pendant les joutes sera **Tale Knight William**, représenté par les sprites fournis.
+
+Ressources de référence :
+
+- `Tales_Knight_William_Idle.png`
+- `Tales_Knight_William_Move_1_Start.png`
+- `Tales_Knight_William_Move_2_Loop.png`
+- `Tales_Knight_William_Move_3_End.png`
+- `Tales Knight William.gif`
+
+Ces ressources doivent être inspectées et réutilisées pour les séquences 2D.
+
+William sera le chevalier incarné par le joueur lorsqu'il participe à la joute. Il sera monté sur son cheval blanc et portera son équipement de chevalier avec sa lance.
+
+Le joueur conservera toutefois son identité, son nom et ses statistiques de joute.
+
+### 2.2. Apparence des adversaires
+
+Dans la première version, l'adversaire pourra utiliser les mêmes sprites que William.
+
+Cependant, Work devra tenter de créer plusieurs variantes visuelles originales et cohérentes avec le style pixel art existant.
+
+Variantes recommandées :
+
+- **Red Knight** : chevalier rouge avec ornements dorés.
+- **Blue Knight** : chevalier bleu avec armure argentée.
+- **Black Knight** : chevalier noir destiné aux adversaires avancés.
+- **Royal Champion** : chevalier d'élite aux couleurs d'Herbonia.
+
+Les variantes pourront conserver les mêmes bases d'animation et les mêmes dimensions de sprites.
+
+Les différences devront être principalement cosmétiques afin de simplifier leur intégration.
+
+### 2.3. Personnages royaux
+
+Le roi et la princesse Gisabelle seront présents dans la tribune royale.
+
+Ressources fournies :
+
+- `CR_King_Idle(20261025-022619).png`
+- `CR_King_Move(20261025-022619).png`
+- `CR_King_Attack(20261025-022619).png`
+- `Gisabelle_Idle.png`
+- `Gisabelle_Move.png`
+
+Ces personnages devront réagir visuellement aux affrontements.
+
+Animations recommandées :
+
+- Le roi observe le duel.
+- Gisabelle applaudit les participants.
+- Le roi se lève à l'occasion d'une victoire spectaculaire.
+- La famille royale accueille le vainqueur.
+- Le roi remet un trophée au champion lors d'une cinématique.
+
+Prévoir également un Héraut royal, chargé des inscriptions, des annonces et des cérémonies.
+
+---
+
+## 3. Modes de jeu
+
+### 3.1. Entraînement contre l'IA
+
+Le joueur pourra s'entraîner contre un chevalier contrôlé par l'intelligence artificielle.
+
+Ce mode permettra d'apprendre :
+
+- Le fonctionnement des charges.
+- Le maniement de la lance.
+- Les mécanismes de visée.
+- Les zones de frappe.
+- La défense.
+- Le système de score.
+
+L'entraînement doit rester accessible aux débutants.
+
+### 3.2. Joute PvE
+
+Un joueur affrontera un chevalier PNJ.
+
+Plusieurs difficultés seront proposées :
+
+| Difficulté | Comportement |
+|---|---|
+| Novice | Visée imprécise, réactions lentes |
+| Squire | Visée simple, défense occasionnelle |
+| Knight | Bonne précision, défense régulière |
+| Champion | Visée rapide et défensive |
+| Royal Champion | Adversaire d'élite et techniques avancées |
+
+L'IA devra simuler une vraie prise de décision.
+
+Elle devra choisir une zone de frappe, ajuster progressivement sa lance, adopter une posture défensive et éventuellement commettre des erreurs.
+
+Le résultat ne doit pas être prédéterminé. Les réactions et la précision devront évoluer selon la difficulté.
+
+Les paramètres de l'IA seront configurables dans le Game Editor.
+
+### 3.3. Duel PvP amical
+
+Deux joueurs pourront s'affronter dans une joute sans conséquence sur leur classement.
+
+Le duel pourra être lancé par une invitation directe ou auprès du Héraut.
+
+### 3.4. Joute PvP classée
+
+Les joueurs s'affronteront pour améliorer leur classement royal.
+
+Le système conservera leurs victoires, défaites, meilleurs scores, séries de victoires et éventuels désarçonnements.
+
+Les équipements payants ne devront offrir aucun avantage compétitif.
+
+### 3.5. Tournoi royal
+
+Des tournois pourront être organisés automatiquement ou manuellement par les administrateurs.
+
+Exemples :
+
+- Tournoi quotidien.
+- Championnat hebdomadaire.
+- Grand tournoi royal.
+- Événement spécial d'Herbonia.
+- Tournoi de guilde, dans une phase ultérieure.
+
+Les tournois pourront utiliser un tableau à élimination directe, avec une cérémonie finale.
+
+---
+
+## 4. Déroulement d'une joute
+
+### Phase 1 — Inscription
+
+Le joueur s'adresse au Héraut royal.
+
+Une fenêtre présente les modes disponibles, les conditions de participation et les récompenses possibles.
+
+Le joueur choisit son mode et confirme son inscription.
+
+### Phase 2 — Préparation
+
+Les deux chevaliers apparaissent aux extrémités opposées de la piste.
+
+Le système prépare leurs chevaux, leurs lances et leurs positions de départ.
+
+Une courte cinématique introduit les combattants.
+
+### Phase 3 — Présentation royale
+
+Le Héraut annonce les participants.
+
+La caméra peut montrer la tribune royale, les spectateurs et les deux chevaliers.
+
+### Phase 4 — Départ de la charge
+
+Un compte à rebours est lancé.
+
+Les chevaux commencent à avancer dans leurs couloirs respectifs.
+
+Le système réutilise les animations existantes du chevalier William et les mécanismes du système de montures.
+
+### Phase 5 — Transition vers le 2,5D
+
+Lorsque les chevaliers approchent de la zone de collision, une fenêtre de visée apparaît pour chacun des combattants.
+
+La perspective change afin de présenter l'adversaire de face ou de trois quarts, donnant l'impression qu'il charge directement vers le joueur.
+
+### Phase 6 — Visée et défense
+
+Le joueur contrôle un réticule associé à sa lance.
+
+Il doit viser une zone réglementaire de l'adversaire tout en adoptant une posture défensive.
+
+La séquence est limitée dans le temps, avec un indicateur de progression vers l'impact.
+
+### Phase 7 — Collision
+
+Au moment de l'impact, le serveur détermine simultanément les résultats des deux attaques.
+
+Les deux chevaliers peuvent :
+
+- Manquer leur cible.
+- Toucher le bouclier.
+- Réussir un coup précis.
+- Briser leur lance.
+- Perdre l'équilibre.
+- Être désarçonnés.
+
+Une animation d'impact est jouée dans l'arène.
+
+### Phase 8 — Résultat du passage
+
+Le résultat est affiché aux joueurs et aux spectateurs.
+
+Les chevaux poursuivent brièvement leur mouvement ou s'arrêtent selon l'animation disponible.
+
+### Phase 9 — Passage suivant
+
+Le duel comprend normalement trois passages, valeur configurable.
+
+Un désarçonnement réglementaire peut mettre immédiatement fin au combat.
+
+### Phase 10 — Cérémonie finale
+
+Le vainqueur est déclaré.
+
+Le Héraut annonce son nom, la foule applaudit et la famille royale réagit.
+
+Les récompenses et statistiques sont ensuite attribuées.
+
+---
+
+## 5. Système de visée 2,5D
+
+### 5.1. Présentation visuelle
+
+Une scène rapprochée montrera l'adversaire monté sur son cheval, avançant vers le joueur.
+
+L'interface comprendra :
+
+- Le chevalier adverse.
+- Son cheval et sa lance.
+- Un environnement d'arène en perspective.
+- La lance du joueur au premier plan.
+- Un réticule de visée.
+- Un indicateur de temps avant l'impact.
+- Des indicateurs de défense et de stabilité.
+- Des effets d'impact et d'éclats de bois.
+
+La séquence devra rester fidèle au style pixel art de Corps Royaux.
+
+### 5.2. Génération des ressources graphiques par Work
+
+**Work devra prendre en charge la création des nouvelles ressources graphiques nécessaires au mini-jeu**, et non simplement fournir des descriptions ou des espaces réservés.
+
+Les sprites du chevalier William constitueront les références artistiques principales.
+
+Ressources à produire :
+
+**Chevalier adverse en vue rapprochée :**
+- Vue de face.
+- Vue de trois quarts gauche.
+- Vue de trois quarts droite.
+- Position de lance levée.
+- Position d'attaque.
+- Position défensive.
+- Animation de réaction à l'impact.
+- Animation de désarçonnement.
+
+**Cheval :**
+- Tête et corps en perspective.
+- Animation d'approche.
+- Animation de galop.
+- Animation de réaction à une collision.
+- Variantes visuelles si nécessaire.
+
+**Premier plan :**
+- Lance du joueur.
+- Déplacement et orientation de la lance.
+- Préparation du coup.
+- Effet de collision.
+- Fragments de lance brisée.
+
+**Environnement :**
+- Sol de la piste.
+- Barrières en perspective.
+- Tribunes.
+- Spectateurs en arrière-plan.
+- Bannières et décorations royales.
+
+Les créations devront être des ressources originales en pixel art cohérentes avec les fichiers fournis.
+
+Les éléments destinés à être animés devront être livrés séparément, sur fond transparent, avec des dimensions et points d'ancrage documentés.
+
+Lorsque la génération d'une animation complète n'est pas suffisamment précise, Work devra privilégier des éléments découpés en couches, des transformations programmatiques ou des variantes d'images, avec une vérification visuelle du résultat.
+
+Work devra vérifier les capacités de génération d'images disponibles et signaler les limites éventuelles, plutôt que prétendre avoir créé des sprites ou animations non produits.
+
+### 5.3. Technique de rendu
+
+La perspective 2,5D sera simulée au moyen de sprites 2D, de changements d'échelle, de positions et de couches graphiques.
+
+La scène devra s'intégrer au client actuel sans nécessiter un moteur 3D externe.
+
+La fenêtre de visée devra fonctionner avec la souris et, si possible, la manette.
+
+### 5.4. Règles de score proposées
+
+| Action | Points |
+|---|---:|
+| Coup manqué | 0 |
+| Contact réglementaire avec le bouclier | 1 |
+| Frappe précise au torse | 2 |
+| Lance brisée sur frappe valide | +1 |
+| Désarçonnement réglementaire | Victoire immédiate |
+
+Les frappes à la tête ou sur des zones interdites doivent être exclues du score et ne jamais être récompensées.
+
+Ces règles seront ajustables dans l'éditeur.
+
+---
+
+## 6. Mode Spectateur — Spectator System
+
+Le système doit permettre à d'autres joueurs d'assister aux joutes.
+
+**La particularité essentielle est que les vrais personnages des joueurs devront être visibles et physiquement assis dans les gradins.**
+
+### 6.1. Accès aux gradins
+
+Les joueurs pourront entrer dans l'arène sans participer à un duel.
+
+Ils pourront sélectionner une place disponible en cliquant sur un siège ou un banc.
+
+Le personnage se déplacera automatiquement jusqu'à la position correspondante.
+
+Une animation le placera en position assise.
+
+### 6.2. Apparence du spectateur
+
+Le spectateur conservera son apparence normale :
+
+- Visage et coiffure.
+- Équipements visibles compatibles.
+- Tenue.
+- Couleurs.
+- Nom de personnage.
+
+Le système devra prendre en charge des animations assises correspondant à différentes orientations.
+
+Si le moteur ne dispose pas des animations nécessaires, Work devra examiner la possibilité de les créer et de les intégrer proprement.
+
+### 6.3. Fonctionnement des sièges
+
+Chaque siège aura :
+
+- Un identifiant unique.
+- Une position sur la carte.
+- Une orientation.
+- Un état libre, réservé ou occupé.
+- Un joueur occupant, s'il y a lieu.
+- Une animation de personnage associée.
+
+Le serveur empêchera deux personnages d'occuper la même place.
+
+Le siège sera libéré lorsque le joueur se lève, quitte la carte, se déconnecte ou entre dans un autre mode incompatible.
+
+### 6.4. Observation en direct
+
+Les spectateurs pourront regarder les chevaliers charger et s'affronter dans l'arène.
+
+Deux modes sont envisagés :
+
+**Vue normale :** caméra du joueur centrée sur sa position dans les gradins.
+
+**Vue cinématique :** caméra suivant automatiquement la charge et les collisions, sans déplacer réellement le personnage du siège.
+
+Les spectateurs devront voir les résultats des passages et le nom du vainqueur.
+
+### 6.5. Réactions de la foule
+
+Les spectateurs pourront :
+
+- Applaudir.
+- Encourager un chevalier.
+- Lever les bras.
+- Agiter un drapeau.
+- Effectuer des émotes compatibles.
+- Se lever lors d'une victoire spectaculaire.
+
+Lors d'une frappe particulièrement réussie, certains PNJ et joueurs pourront déclencher une animation d'applaudissement.
+
+Les animations automatiques imposées aux joueurs devront être limitées et configurables afin de ne pas leur retirer inutilement le contrôle.
+
+### 6.6. Spectateurs PNJ
+
+Les sièges inoccupés pourront accueillir des PNJ décoratifs.
+
+Les vrais joueurs auront priorité sur les PNJ de remplissage.
+
+La gestion de la foule devra éviter une charge excessive sur le serveur et le client.
+
+### 6.7. Spectator Seating Editor
+
+Le Game Editor proposera un outil permettant de placer et configurer visuellement les sièges des gradins.
+
+Fonctionnalités :
+
+- Placement des sièges sur la carte.
+- Orientation du personnage assis.
+- Groupement des sièges par tribune.
+- Prévisualisation de la position assise.
+- Capacité maximale.
+- Gestion du remplissage par PNJ.
+- Paramètres des réactions de foule.
+- Configuration des caméras spectateur.
+
+---
+
+## 7. Intelligence artificielle des adversaires
+
+Le système PvE utilisera une IA spécialisée dans la joute.
+
+Elle n'a pas besoin de simuler un joueur humain complet, mais elle doit donner l'impression d'un adversaire crédible.
+
+### 7.1. Comportement
+
+L'IA pourra :
+
+- Choisir une zone valide de frappe.
+- Ajuster progressivement sa visée.
+- Anticiper le temps restant.
+- Modifier sa posture défensive.
+- Commettre des erreurs selon sa difficulté.
+- Adapter légèrement son comportement au passage suivant.
+
+### 7.2. Paramètres configurables
+
+Dans le Jousting Editor :
+
+- Difficulté.
+- Précision.
+- Temps de réaction.
+- Vitesse de correction de visée.
+- Fréquence des erreurs.
+- Capacité défensive.
+- Variabilité du comportement.
+- Apparence du chevalier.
+- Récompenses et conditions d'accès.
+
+Les adversaires avancés devront être plus difficiles grâce à une meilleure prise de décision, et non par une connaissance parfaite et instantanée des actions du joueur.
+
+### 7.3. Progression PvE
+
+Une série d'adversaires pourra être proposée :
+
+1. Squire of Herbonia.
+2. Royal Knight.
+3. Veteran Lancer.
+4. Black Knight.
+5. Royal Champion.
+
+Une quête pourrait demander au joueur de vaincre successivement ces cinq adversaires pour devenir officiellement chevalier de joute d'Herbonia.
+
+---
+
+## 8. Création du tileset complet
+
+Work devra concevoir l'ensemble des ressources nécessaires à l'arène, en reprenant le style graphique du tileset `Overworld_Objects.png` fourni.
+
+Les éléments seront organisés en plusieurs planches.
+
+### 8.1. Terrain
+
+- Terre battue.
+- Sable.
+- Herbe.
+- Bordures et transitions.
+- Chemins.
+- Traces de sabots.
+- Zones poussiéreuses.
+
+### 8.2. Arène
+
+- Barrières de lice.
+- Séparateurs centraux.
+- Portails.
+- Poteaux.
+- Départ et fin de piste.
+- Panneaux de scores.
+
+### 8.3. Tribune royale
+
+- Plateforme surélevée.
+- Plancher.
+- Escaliers.
+- Trônes et sièges royaux.
+- Balustrades.
+- Rideaux.
+- Bannières d'Herbonia.
+- Braseros.
+- Décorations et couronnes.
+
+### 8.4. Gradins
+
+- Bancs individuels.
+- Bancs collectifs.
+- Plateformes en bois.
+- Escaliers.
+- Garde-corps.
+- Places interactives.
+- Passages entre les rangées.
+
+### 8.5. Décors
+
+- Tentes médiévales rouges et bleues.
+- Présentoirs de lances.
+- Râteliers d'équipement.
+- Bottes de foin.
+- Tonneaux.
+- Tables.
+- Draperies.
+- Fanions.
+- Boucliers.
+- Trophées.
+- Écuries.
+- Équipements pour chevaux.
+
+### 8.6. Assets et contraintes
+
+Les tuiles de base devront respecter les dimensions configurées dans le projet, avec une préférence pour la grille 16 × 16 pixels déjà utilisée dans les ressources de référence, après vérification.
+
+Les sprites, animations et grands objets pourront occuper plusieurs tuiles.
+
+Les fichiers devront être préparés pour une intégration réelle dans Intersect :
+
+- Transparence correcte.
+- Alignement régulier.
+- Pas de lignes parasites entre les tuiles.
+- Échelle pixel art homogène.
+- Animations correctement découpées.
+- Fichiers sources conservés.
+- Prévisualisation en jeu avant validation.
+
+L'arène devra disposer d'une carte d'exemple assemblée avec les ressources finales.
+
+---
+
+## 9. Interface et HUD
+
+### 9.1. Fenêtre d'inscription
+
+La fenêtre du Héraut présentera :
+
+- Joute contre l'IA.
+- Entraînement.
+- Duel PvP.
+- Tournoi.
+- Classements.
+- Règles et récompenses.
+- Annuler.
+
+### 9.2. HUD de combat
+
+Pendant une joute, les deux combattants verront :
+
+- Nom et portrait des participants.
+- Score actuel.
+- Numéro du passage.
+- Indicateur de stabilité.
+- Barre de progression avant collision.
+- Résultats des coups précédents.
+
+### 9.3. HUD des spectateurs
+
+Les spectateurs verront une version simplifiée :
+
+- Nom des chevaliers.
+- Scores.
+- Passage actuel.
+- Statut de la joute.
+- Bouton de caméra cinématique.
+- Bouton pour quitter l'observation.
+
+Les interfaces devront respecter la direction artistique actuelle de Corps Royaux.
+
+---
+
+## 10. Jousting Editor
+
+Ajouter un nouvel outil **Jousting Editor** dans le Game Editor.
+
+Il sera accessible depuis la catégorie Mini-games du lanceur d'éditeurs.
+
+### 10.1. Configuration des arènes
+
+- Identifiant et nom.
+- Carte.
+- Positions des chevaliers.
+- Trajectoires de charge.
+- Zones de collision.
+- Points de retour.
+- Positions des caméras.
+- Emplacements spectateurs.
+
+### 10.2. Configuration du gameplay
+
+- Nombre de passages.
+- Durée de la charge.
+- Temps de visée.
+- Zones valides.
+- Règles de score.
+- Conditions de victoire.
+- Désactivation des mouvements libres pendant la charge.
+- Équipements autorisés.
+
+### 10.3. Configuration PvE
+
+- Sélection de l'adversaire.
+- Niveau de difficulté.
+- Paramètres IA.
+- Apparence.
+- Récompenses.
+
+### 10.4. Configuration PvP
+
+- Invitations.
+- Conditions d'inscription.
+- Frais éventuels.
+- Classement.
+- Déconnexions.
+- Abandons.
+- Limites de récompenses.
+
+### 10.5. Configuration des spectateurs
+
+- Capacité des gradins.
+- Positions des sièges.
+- PNJ de remplissage.
+- Points de caméra.
+- Animations de foule.
+- Accès à l'arène.
+
+### 10.6. Configuration des cinématiques
+
+Permettre de sélectionner ou de créer les séquences :
+
+- Présentation des chevaliers.
+- Départ.
+- Collision.
+- Désarçonnement.
+- Victoire.
+- Cérémonie royale.
+
+Utiliser les capacités de l'éditeur cinématique existant lorsque celles-ci auront été vérifiées.
+
+### 10.7. Prévisualisation WYSIWYG
+
+L'éditeur proposera une vue de l'arène afin de placer les différents éléments directement sur la carte.
+
+Il devra être possible de tester une joute contre l'IA à partir de l'éditeur, sans devoir organiser un vrai duel PvP.
+
+---
+
+## 11. Intégration aux systèmes de Corps Royaux
+
+**Mount System :** gestion des chevaux, animations et déplacements.
+
+**Event System :** inscriptions, lancement de duel, déclenchement de tournois et conditions d'accès.
+
+**Quest System :** objectifs de participation, victoire et progression PvE.
+
+**Achievements :** récompenses liées aux victoires et performances.
+
+**Leaderboards :** classement des chevaliers et historique compétitif.
+
+**Character Information :** consultation des statistiques de joute.
+
+**Guild System :** tournois de guildes dans une évolution future.
+
+**Cinematic Editor :** séquences d'introduction, collisions et cérémonies.
+
+**Wiki :** documentation publique du système, des adversaires et des récompenses.
+
+Work devra vérifier les API et points d'intégration réellement présents dans CR2026 avant de modifier les systèmes existants.
+
+---
+
+## 12. Récompenses et progression
+
+### 12.1. Récompenses possibles
+
+- Aureons.
+- Expérience.
+- Titres.
+- Achievements.
+- Lances cosmétiques.
+- Armures décoratives.
+- Caparaçons pour chevaux.
+- Bannières de champion.
+- Trophées.
+
+### 12.2. Titres
+
+Exemples :
+
+- Royal Squire.
+- Knight of the Lists.
+- Royal Lancer.
+- Champion of Herbonia.
+- Grand Champion of the Royal Joust.
+
+### 12.3. Équilibrage
+
+Les récompenses devront être proportionnelles à la difficulté et au mode de jeu.
+
+Les récompenses répétables devront être protégées contre les abus.
+
+Les joutes classées devront conserver une égalité compétitive entre les participants.
+
+Aucun avantage lié à l'achat de LogiCoins ou à un abonnement Premium ne devra améliorer la précision, la puissance ou les chances de victoire.
+
+---
+
+## 13. Sécurité et synchronisation multijoueur
+
+Le serveur devra contrôler les états du duel et valider les résultats.
+
+Principales exigences :
+
+- Synchronisation des deux participants.
+- Départ et collisions déterminés par le serveur.
+- Validation de la visée et des actions défensives.
+- Gestion de la latence.
+- Protection contre les résultats impossibles.
+- Gestion des déconnexions.
+- Abandon volontaire.
+- Restauration des états normaux après la joute.
+- Attribution unique et sécurisée des récompenses.
+- Gestion des spectateurs sans interférence avec le duel.
+- Réservation atomique des sièges.
+- Nettoyage des sessions interrompues.
+
+Dans les phases PvE, l'IA sera exécutée ou validée du côté serveur.
+
+Un simple ralentissement du client ne devra pas prolonger artificiellement la période de visée.
+
+---
+
+## 14. Développement par phases
+
+### Phase 1 — Audit technique
+
+Work devra :
+
+- Examiner CR2026.
+- Étudier le système de montures.
+- Étudier les systèmes d'Events et de mini-jeux.
+- Vérifier le rendu graphique disponible.
+- Examiner les sprites fournis.
+- Identifier les mécanismes réutilisables.
+- Documenter les limites techniques.
+
+**Livrable :** plan d'architecture et liste des composants à développer.
+
+### Phase 2 — Prototype de joute PvE
+
+Créer un premier duel contre un chevalier IA.
+
+Le prototype comprendra :
+
+- William et son cheval.
+- Une piste de test.
+- Un adversaire IA.
+- Une charge.
+- La fenêtre 2,5D.
+- Un système de visée fonctionnel.
+- Une collision.
+- Un score.
+- Une victoire ou défaite.
+
+### Phase 3 — Production graphique par Work
+
+Créer et intégrer :
+
+- Les sprites 2,5D.
+- Les variantes de chevaliers.
+- Les animations de frappe et de désarçonnement.
+- Les effets visuels.
+- Les nouveaux tilesets.
+- Les objets de l'arène.
+- Les ressources de l'interface.
+
+Toutes les ressources devront être inspectées en jeu avant validation.
+
+### Phase 4 — PvP
+
+Ajouter :
+
+- Invitations.
+- Deux joueurs synchronisés.
+- Charges simultanées.
+- Résolution des frappes.
+- Gestion des déconnexions.
+- Statistiques.
+
+### Phase 5 — Spectateurs
+
+Développer :
+
+- Les places interactives.
+- Les animations assises.
+- La réservation des sièges.
+- Les caméras spectateurs.
+- Les réactions et émotes.
+- La foule de PNJ.
+
+### Phase 6 — Jousting Editor
+
+Créer les interfaces de configuration et les outils WYSIWYG.
+
+### Phase 7 — Présentation et intégration
+
+Terminer :
+
+- Tribune royale.
+- Animations du roi et de Gisabelle.
+- Héraut.
+- Cinématiques.
+- Sons.
+- Quêtes.
+- Récompenses.
+- Achievements.
+- Wiki.
+
+### Phase 8 — Tournois et progression compétitive
+
+Ajouter les championnats, les tournois organisés, les classements saisonniers et les récompenses de prestige.
+
+---
+
+## 15. Critères de validation
+
+Le système sera considéré fonctionnel lorsque les conditions suivantes seront respectées :
+
+- [ ] Le joueur peut participer à une joute en incarnant William.
+- [ ] Les animations du chevalier sont correctement intégrées.
+- [ ] Work a produit et intégré les ressources 2,5D requises.
+- [ ] La phase de visée est jouable et synchronisée.
+- [ ] L'adversaire IA peut réaliser un duel complet.
+- [ ] Plusieurs difficultés d'IA fonctionnent.
+- [ ] Deux joueurs peuvent effectuer un duel PvP.
+- [ ] Les scores et les collisions sont validés par le serveur.
+- [ ] Les animations d'impact fonctionnent.
+- [ ] Les spectateurs peuvent entrer dans l'arène.
+- [ ] Un joueur peut sélectionner une place dans les gradins.
+- [ ] Son personnage apparaît réellement assis.
+- [ ] Les autres joueurs voient le spectateur assis.
+- [ ] Un spectateur peut observer le duel en direct.
+- [ ] La caméra spectateur fonctionne.
+- [ ] Les PNJ peuvent occuper les places libres.
+- [ ] La foule réagit aux événements.
+- [ ] Le roi et Gisabelle apparaissent dans la tribune royale.
+- [ ] Le tileset de l'arène est complet et utilisable.
+- [ ] Les paramètres sont modifiables dans le Jousting Editor.
+- [ ] Les récompenses sont correctement distribuées.
+- [ ] Les déconnexions ne bloquent pas le système.
+- [ ] Le système ne perturbe pas les autres fonctionnalités de Corps Royaux.
+
+---
+
+## 16. Directives finales pour Work
+
+L'objectif est de développer une véritable fonctionnalité de jeu intégrée à Corps Royaux, et non une simple démonstration visuelle.
+
+Work doit prendre en charge la conception technique, le développement et la préparation des ressources graphiques nécessaires, selon les outils réellement disponibles.
+
+**Exigences prioritaires :**
+
+1. Réutiliser les ressources existantes de Tale Knight William et les personnages royaux.
+2. Produire les nouvelles ressources graphiques 2,5D nécessaires.
+3. Créer des variantes d'adversaires lorsque cela est réalisable.
+4. Permettre les duels PvE contre l'intelligence artificielle.
+5. Permettre les duels PvP entre deux joueurs.
+6. Intégrer un système de spectateurs visibles et assis dans les gradins.
+7. Concevoir un tileset complet compatible avec l'éditeur.
+8. Ajouter un outil de configuration dans le Game Editor.
+9. Réutiliser les systèmes existants plutôt que les dupliquer.
+10. Vérifier les fonctionnalités en conditions de jeu réelles.
+
+**Important :** la création des images 2,5D et des sprites fait partie du travail demandé à Work. Cette responsabilité ne doit pas être reportée automatiquement sur un artiste externe. Si certains éléments ne peuvent pas être produits correctement avec les outils disponibles, ils devront être identifiés précisément et présentés comme des limitations, sans les considérer comme livrés.
+
+L'implémentation doit être progressive. Le premier objectif est un duel jouable contre l'IA, suivi du PvP, du mode spectateur et de l'intégration complète dans l'univers d'Herbonia.
+
+Avant de modifier le dépôt, Work devra examiner l'architecture actuelle et préparer un plan d'implémentation. Aucun développement n'est demandé par ce document seul.
+
+---
+
+**Fin du document — Version 2.0**
+
+*Corps Royaux — Les Joutes Royales d'Herbonia*

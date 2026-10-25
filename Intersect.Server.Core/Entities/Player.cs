@@ -475,6 +475,7 @@ public partial class Player : Entity
 
     public override void Dispose()
     {
+        EndJoust(true);
         if (IsDisposed)
         {
             return;
@@ -519,6 +520,7 @@ public partial class Player : Entity
     private void Logout(bool softLogout = false, TaskCompletionSource? logoutCompletionSource = null)
     {
         CompleteConfiguredDeath();
+        EndJoust(true);
         Intersect.Server.Housing.HousingRuntime.Disconnect(this);
         lock (_savingLock)
         {
@@ -778,6 +780,7 @@ public partial class Player : Entity
             if (lockObtained)
             {
                 UpdateMount();
+                UpdateJoust();
                 // Detect inactivity from authoritative player position, including map changes.
                 if (_lastAfkMovementTime == 0 || _lastAfkX != X || _lastAfkY != Y || _lastAfkMapId != MapId)
                 {
@@ -2103,6 +2106,7 @@ public partial class Player : Entity
 
     public override bool CanAttack(Entity entity, SpellDescriptor spell)
     {
+        if (_joust is { Done: false } || entity is JoustOpponent) return false;
         Dismount();
         if(entity is Player pvpTarget && (Intersect.Server.Pvp.PvpRuntime.InMatch(this) || Intersect.Server.Pvp.PvpRuntime.InMatch(pvpTarget)))
         {
@@ -7692,7 +7696,7 @@ public partial class Player : Entity
     {
         entityType = default;
 
-        if (IsDead || HasPendingDeath || Intersect.Server.Pvp.PvpRuntime.Respawning(this) || Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Contains(Id))
+        if (JoustBlocksMovement || IsDead || HasPendingDeath || Intersect.Server.Pvp.PvpRuntime.Respawning(this) || Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Contains(Id))
         {
             blockerType = MovementBlockerType.OutOfBounds;
             return false;

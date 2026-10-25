@@ -909,7 +909,7 @@ public static partial class PacketSender
                 SendDataToProximityOnMapInstance(
                     en.MapId, en.MapInstanceId,
                     new EntityMovePacket(
-                        en.Id, en.GetEntityType(), en.MapId, (byte)en.X, (byte)en.Y, (byte)en.Dir, correction
+                        en.Id, en.GetEntityType(), en.MapId, (byte)en.X, (byte)en.Y, (byte)en.Dir, correction, en.ScriptedMovementMilliseconds
                     ), null, TransmissionMode.Any
                 );
                 return;
@@ -933,7 +933,7 @@ public static partial class PacketSender
             {
                 player.SendPacket(
                     new EntityMovePacket(
-                        en.Id, en.GetEntityType(), en.MapId, (byte)en.X, (byte)en.Y, (byte)en.Dir, correction
+                        en.Id, en.GetEntityType(), en.MapId, (byte)en.X, (byte)en.Y, (byte)en.Dir, correction, en.ScriptedMovementMilliseconds
                     )
                 );
                 return;

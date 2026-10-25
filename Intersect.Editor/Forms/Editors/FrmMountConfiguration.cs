@@ -61,6 +61,7 @@ public sealed partial class FrmMountConfiguration : Form
         Row(general, "Unlock item (reusable)", _unlockItem, 52);
         _unlockItem.SelectedIdChanged += (_, _) => Changed();
         CheckField(general, "AllowIndoors", "Allow indoors");
+        CheckField(general, "IntegratedRider", "Sprite already includes rider");
         Number(general, "SpeedMultiplier", "Speed multiplier", 1, 2, 2, .05m);
         var animation = Page("Animations");
         foreach (var (key, title) in new[] { ("Idle", "Idle"), ("Start", "Start"), ("Loop", "Movement loop"), ("End", "Stop") })

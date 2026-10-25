@@ -11,16 +11,32 @@ public partial class Entity
 {
     private MountAnimationClock? _mountClock;
     private Guid _drawnMount;
+    private MountDefinition? _arenaMount;
+    internal void ApplyArenaMount(string json)
+    {
+        _arenaMount = null;
+        if (string.IsNullOrEmpty(json) || json.Length > 20000) return;
+        try
+        {
+            var mount = MountConfiguration.FromJson(json).Mounts.SingleOrDefault();
+            if (mount is { IntegratedRider: true }) _arenaMount = mount;
+        }
+        catch (Exception) { }
+    }
+    private MountDefinition? RenderedMount => this is Player player ? player.ActiveMount : _arenaMount;
+    internal bool MountMovementActive => IsMoving || ServerMovementMilliseconds > 0;
+    private bool _integratedMountRider;
     private MountRiderTransform? _riderTransform;
     private (IGameTexture Texture, FloatRect Source, FloatRect Destination)? _mountForeground;
 
     private FloatRect BeginMountDraw(IGameTexture body, FloatRect source, FloatRect destination, Color color)
     {
         _riderTransform = null; _mountForeground = null;
-        if (this is not Player { ActiveMount: { } mount } || !string.IsNullOrEmpty(TransformedSprite))
+        _integratedMountRider = false;
+        if (RenderedMount is not { } mount || !string.IsNullOrEmpty(TransformedSprite))
         { _mountClock = null; _drawnMount = Guid.Empty; return destination; }
         if (_drawnMount != mount.Id) { _mountClock = new(); _drawnMount = mount.Id; }
-        var (phase, frame) = (_mountClock ??= new()).Sample(mount, IsMoving, Timing.Global.Milliseconds);
+        var (phase, frame) = (_mountClock ??= new()).Sample(mount, MountMovementActive, Timing.Global.Milliseconds);
         var sheet = Globals.ContentManager?.GetTexture(TextureType.Image, mount.Sheet(phase));
         if (sheet == null)
         {
@@ -38,6 +54,7 @@ public partial class Entity
         var y = Origin.Y - (float)(mount.GroundY * mount.Scale);
         var animal = new FloatRect(x, y, mount.FrameWidth * (float)mount.Scale, mount.FrameHeight * (float)mount.Scale);
         Graphics.DrawGameTexture(sheet, mountSource, animal, color);
+        if (mount.IntegratedRider) { _integratedMountRider = true; return animal; }
         var visible = SpriteVisibleBounds.Get(body, source);
         _riderTransform = MountRiderTransform.AtSeat(mount, row, phase, frame, x, y, destination.X, destination.Y,
             visible.IsEmpty ? 0 : visible.X, visible.IsEmpty ? 0 : visible.Y,
@@ -65,6 +82,7 @@ public partial class Entity
     }
     private void DrawRiderLayer(IGameTexture texture, FloatRect source, FloatRect destination, Color color)
     {
+        if (_integratedMountRider) return;
         var geometry = RiderLayerGeometry(source, destination);
         source = geometry.Source; var placed = geometry.Destination;
         if (placed.Height <= 0) return;

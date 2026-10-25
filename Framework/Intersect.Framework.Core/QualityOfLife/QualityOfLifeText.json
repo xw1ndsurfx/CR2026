@@ -1,5 +1,210 @@
-﻿{
+{
   "Entries": {
+    "A joust is in progress. Please wait.": {
+        "en": "A joust is in progress. Please wait.",
+        "fr": "Une joute est en cours. Veuillez patienter.",
+        "es": "Hay una justa en curso. Espera, por favor."
+    },
+    "Sprite already includes rider": {
+        "en": "Sprite already includes rider",
+        "fr": "Le sprite comprend déjà le cavalier",
+        "es": "El sprite ya incluye al jinete"
+    },
+    "Jousting": {
+        "en": "Jousting",
+        "fr": "Joutes royales",
+        "es": "Justas reales"
+    },
+    "Left click: start. Right click: end. Shift-click: opponent lane.": {
+        "en": "Left click: start. Right click: end. Shift-click: opponent lane.",
+        "fr": "Clic gauche : départ. Clic droit : arrivée. Maj-clic : couloir adverse.",
+        "es": "Clic izquierdo: inicio. Clic derecho: final. Mayús-clic: carril rival."
+    },
+    "Edit joust cinematic": {
+        "en": "Edit joust cinematic",
+        "fr": "Modifier la cinématique de joute",
+        "es": "Editar cinemática de justa"
+    },
+    "Joust introduction": {
+        "en": "Joust introduction",
+        "fr": "Présentation de la joute",
+        "es": "Presentación de la justa"
+    },
+    "Joust unhorsing": {
+        "en": "Joust unhorsing",
+        "fr": "Désarçonnement de la joute",
+        "es": "Derribo de la justa"
+    },
+    "Joust victory ceremony": {
+        "en": "Joust victory ceremony",
+        "fr": "Cérémonie de victoire de la joute",
+        "es": "Ceremonia de victoria de la justa"
+    },
+    "Royal Jousting": {
+        "en": "Royal Jousting",
+        "fr": "Les Joutes Royales",
+        "es": "Justas Reales"
+    },
+    "Train against AI": {
+        "en": "Train against AI",
+        "fr": "S’entraîner contre l’IA",
+        "es": "Entrenar contra la IA"
+    },
+    "Toggle defense": {
+        "en": "Toggle defense",
+        "fr": "Activer la défense",
+        "es": "Activar defensa"
+    },
+    "Leave joust": {
+        "en": "Leave joust",
+        "fr": "Quitter la joute",
+        "es": "Salir de la justa"
+    },
+    "Stand at the arena start to train.": {
+        "en": "Stand at the arena start to train.",
+        "fr": "Placez-vous au départ de la lice pour vous entraîner.",
+        "es": "Colócate al inicio de la liza para entrenar."
+    },
+    "This jousting lane is occupied.": {
+        "en": "This jousting lane is occupied.",
+        "fr": "Cette lice est déjà occupée.",
+        "es": "Esta liza ya está ocupada."
+    },
+    "No jousting arena is configured here.": {
+        "en": "No jousting arena is configured here.",
+        "fr": "Aucune arène de joute n’est configurée ici.",
+        "es": "No hay ninguna arena de justas configurada aquí."
+    },
+    "Pass {0}/{1} · You {2} : {3} AI": {
+        "en": "Pass {0}/{1} · You {2} : {3} AI",
+        "fr": "Passe {0}/{1} · Vous {2} : {3} IA",
+        "es": "Pasada {0}/{1} · Tú {2} : {3} IA"
+    },
+    "Joust won": {
+        "en": "Joust won",
+        "fr": "Joute remportée",
+        "es": "Justa ganada"
+    },
+    "Joust lost": {
+        "en": "Joust lost",
+        "fr": "Joute perdue",
+        "es": "Justa perdida"
+    },
+    "Joust drawn": {
+        "en": "Joust drawn",
+        "fr": "Joute à égalité",
+        "es": "Justa empatada"
+    },
+    "Joust preparation": {
+        "en": "Joust preparation",
+        "fr": "Préparation de la joute",
+        "es": "Preparación de la justa"
+    },
+    "Joust charge": {
+        "en": "Joust charge",
+        "fr": "Charge de la joute",
+        "es": "Carga de la justa"
+    },
+    "Aim at the shield or chest": {
+        "en": "Aim at the shield or chest",
+        "fr": "Visez le bouclier ou le plastron",
+        "es": "Apunta al escudo o al peto"
+    },
+    "Joust impact": {
+        "en": "Joust impact",
+        "fr": "Impact de la joute",
+        "es": "Impacto de la justa"
+    },
+    "Pass results": {
+        "en": "Pass results",
+        "fr": "Résultats de la passe",
+        "es": "Resultados de la pasada"
+    },
+    "Shield hit": {
+        "en": "Shield hit",
+        "fr": "Bouclier touché",
+        "es": "Impacto en el escudo"
+    },
+    "Body hit": {
+        "en": "Body hit",
+        "fr": "Plastron touché",
+        "es": "Impacto en el peto"
+    },
+    "Precise hit": {
+        "en": "Precise hit",
+        "fr": "Coup précis",
+        "es": "Golpe preciso"
+    },
+    "Unhorsed": {
+        "en": "Unhorsed",
+        "fr": "Désarçonnement",
+        "es": "Derribo"
+    },
+    "Miss": {
+        "en": "Miss",
+        "fr": "Coup manqué",
+        "es": "Fallo"
+    },
+    "Novice": {
+        "en": "Novice",
+        "fr": "Novice",
+        "es": "Principiante"
+    },
+    "Squire": {
+        "en": "Squire",
+        "fr": "Écuyer",
+        "es": "Escudero"
+    },
+    "Knight": {
+        "en": "Knight",
+        "fr": "Chevalier",
+        "es": "Caballero"
+    },
+    "Champion": {
+        "en": "Champion",
+        "fr": "Champion",
+        "es": "Campeón"
+    },
+    "Royal Champion": {
+        "en": "Royal Champion",
+        "fr": "Champion royal",
+        "es": "Campeón real"
+    },
+    "Jousting Editor": {
+        "en": "Jousting Editor",
+        "fr": "Éditeur de joutes",
+        "es": "Editor de justas"
+    },
+    "New arena on current map": {
+        "en": "New arena on current map",
+        "fr": "Nouvelle arène sur cette carte",
+        "es": "Nueva arena en este mapa"
+    },
+    "Arena rules": {
+        "en": "Arena rules",
+        "fr": "Règles de l’arène",
+        "es": "Reglas de la arena"
+    },
+    "Arena settings": {
+        "en": "Arena settings",
+        "fr": "Paramètres de l’arène",
+        "es": "Ajustes de la arena"
+    },
+    "Cinematic Director": {
+        "en": "Cinematic Director",
+        "fr": "Éditeur cinématique",
+        "es": "Director de cinemáticas"
+    },
+    "Left click: start. Right click: end. Both points share one lane.": {
+        "en": "Left click: start. Right click: end. Both points share one lane.",
+        "fr": "Clic gauche : départ. Clic droit : arrivée. Les deux points partagent un couloir.",
+        "es": "Clic izquierdo: inicio. Clic derecho: final. Ambos puntos comparten un carril."
+    },
+    "The jousting configuration is invalid.": {
+        "en": "The jousting configuration is invalid.",
+        "fr": "La configuration des joutes est invalide.",
+        "es": "La configuración de justas no es válida."
+    },
     "Skip presentation": {"en": "Skip presentation", "fr": "Passer la présentation", "es": "Omitir la presentación"},
     "Required choices, actions and quest objectives still apply.": {"en": "Required choices, actions and quest objectives still apply.", "fr": "Les choix, actions et objectifs de quête obligatoires restent nécessaires.", "es": "Las decisiones, acciones y objetivos de misión obligatorios siguen siendo necesarios."},
     "The cinematic could not start. Check the scene's map, starting positions and active actions.": {"en":"The cinematic could not start. Check the scene's map, starting positions and active actions.", "fr":"La cinématique n’a pas pu démarrer. Vérifiez sa carte, les positions de départ et les actions en cours.", "es":"La cinemática no pudo comenzar. Compruebe el mapa, las posiciones iniciales y las acciones en curso."},
