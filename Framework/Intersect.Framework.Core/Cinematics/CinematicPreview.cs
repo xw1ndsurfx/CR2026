@@ -65,4 +65,18 @@ public static class CinematicPreview
         }
         return (letterbox, fade, shake, hideHud);
     }
+
+    public static (CinematicProjection Projection, CinematicLensPose Lens) Lens(CinematicScene scene, int timeMs)
+    {
+        var projection = CinematicProjection.Flat2D; var lens = new CinematicLensPose(0, 1.6f, -6.8427734f, 65);
+        foreach (var clip in scene.Clips.Where(c => c.Track == CinematicTrack.Camera).OrderBy(c => c.StartMs))
+        {
+            if (timeMs < clip.StartMs) break;
+            var target = new CinematicLensPose(clip.Heading, clip.EyeHeight, clip.PitchDegrees, clip.FieldOfView);
+            if (projection != clip.Projection) lens = target;
+            projection = clip.Projection;
+            lens = CinematicInterpolation.LerpLens(lens, target, (timeMs - clip.StartMs) / (float)Math.Max(1, clip.DurationMs), clip.Ease);
+        }
+        return (projection, lens);
+    }
 }

@@ -23,4 +23,9 @@ public sealed class CinematicCameraPacket : IntersectPacket
     [Key(14)] public float Letterbox { get; set; }
     [Key(15)] public float FadeOpacity { get; set; }
     [Key(16)] public float ShakePixels { get; set; }
+    [Key(17)] public CinematicProjection Projection { get; set; }
+    [Key(18)] public float Heading { get; set; }
+    [Key(19)] public float EyeHeight { get; set; } = 1.6f;
+    [Key(20)] public float PitchDegrees { get; set; } = -6.8427734f;
+    [Key(21)] public float FieldOfView { get; set; } = 65;
 }

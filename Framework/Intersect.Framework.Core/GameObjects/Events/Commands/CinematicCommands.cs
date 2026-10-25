@@ -62,4 +62,9 @@ public sealed class CinematicCameraCommand : EventCommand
     public float Letterbox { get; set; }
     public float FadeOpacity { get; set; }
     public float ShakePixels { get; set; }
+    public CinematicProjection Projection { get; set; }
+    public float Heading { get; set; }
+    public float EyeHeight { get; set; } = 1.6f;
+    public float PitchDegrees { get; set; } = -6.8427734f;
+    public float FieldOfView { get; set; } = 65;
 }

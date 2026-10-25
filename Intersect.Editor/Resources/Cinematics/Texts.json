@@ -213,5 +213,14 @@
   "formation-position":{"en":"The entire formation must fit on valid tiles of this map.","fr":"La formation entière doit tenir sur des cases valides de cette carte.","es":"Toda la formación debe caber en casillas válidas de este mapa."},
   "group-path-required":{"en":"Select the movement clip of a group member.","fr":"Sélectionnez le clip de déplacement d’un membre du groupe.","es":"Seleccione el clip de movimiento de un miembro del grupo."},
   "GroupPathHint":{"en":"Select a group member’s movement clip first.","fr":"Sélectionnez d’abord le clip de déplacement d’un membre du groupe.","es":"Seleccione primero el clip de movimiento de un miembro del grupo."},
-  "temporary-actor-required":{"en":"Visibility clips require a temporary personal actor.","fr":"Les clips de visibilité nécessitent un acteur personnel temporaire.","es":"Los clips de visibilidad requieren un actor personal temporal."}
+  "temporary-actor-required":{"en":"Visibility clips require a temporary personal actor.","fr":"Les clips de visibilité nécessitent un acteur personnel temporaire.","es":"Los clips de visibilidad requieren un actor personal temporal."},
+  "Projection":{"en":"Camera projection","fr":"Projection de caméra","es":"Proyección de cámara"},
+  "Flat2D":{"en":"2D view","fr":"Vue 2D","es":"Vista 2D"},
+  "Perspective2_5D":{"en":"2.5D perspective","fr":"Perspective 2,5D","es":"Perspectiva 2,5D"},
+  "Heading":{"en":"View heading (0–360° clockwise)","fr":"Orientation du regard (0–360° horaire)","es":"Dirección de vista (0–360° horario)"},
+  "EyeHeight":{"en":"Camera height (0.5–24 tiles)","fr":"Hauteur de caméra (0,5–24 cases)","es":"Altura de cámara (0,5–24 casillas)"},
+  "PitchDegrees":{"en":"Pitch (-75° down to 30° up)","fr":"Inclinaison (-75° vers le bas à 30° vers le haut)","es":"Inclinación (-75° abajo a 30° arriba)"},
+  "FieldOfView":{"en":"Field of view (25–100°, before zoom)","fr":"Champ de vision (25–100°, avant zoom)","es":"Campo de visión (25–100°, antes del zoom)"},
+  "camera-projection":{"en":"Use a valid projection, heading 0–360°, height 0.5–24, pitch -75–30° and field of view 25–100°.","fr":"Utilisez une projection valide, une orientation de 0 à 360°, une hauteur de 0,5 à 24, une inclinaison de -75 à 30° et un champ de vision de 25 à 100°.","es":"Use proyección válida, dirección 0–360°, altura 0,5–24, inclinación -75–30° y campo de visión 25–100°."},
+  "PerspectiveFallback": {"en": "2.5D preview unavailable on this device; showing 2D.", "fr": "Aperçu 2,5D indisponible sur cet appareil ; affichage en 2D.", "es": "Vista previa 2,5D no disponible en este dispositivo; se muestra en 2D."}
 }

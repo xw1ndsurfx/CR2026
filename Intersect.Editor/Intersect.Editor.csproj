@@ -1,4 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Compile Include="../Shared/Rendering/MapPerspectiveGeometry.cs" Link="Rendering/MapPerspectiveGeometry.cs" />
+  </ItemGroup>
 
   <PropertyGroup>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>

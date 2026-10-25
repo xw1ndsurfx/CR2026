@@ -12,7 +12,8 @@ internal sealed class CinematicProperties(object value) : CustomTypeDescriptor
     {
         var visible = value is CinematicClip clip ? clip.Track switch
         {
-            CinematicTrack.Camera => new[] { "X", "Y", "Zoom", "Ease", "FollowActor", "ActorId", "OffsetX", "OffsetY" },
+            CinematicTrack.Camera => new[] { "X", "Y", "Zoom", "Ease", "FollowActor", "ActorId", "OffsetX", "OffsetY",
+                "Projection", "Heading", "EyeHeight", "PitchDegrees", "FieldOfView" },
             CinematicTrack.Presentation => ["HideHud", "Letterbox", "FadeOpacity", "ShakePixels", "Ease"],
             CinematicTrack.Actors => ["ActorId", "ActorVisible"],
             CinematicTrack.Movement => ["ActorId", "Speed"],

@@ -97,7 +97,8 @@ public static partial class CommandProcessing
             command.X < 0 || command.Y < 0 || command.X >= Options.Instance.Map.MapWidth || command.Y >= Options.Instance.Map.MapHeight ||
             command.Zoom is < .25f or > 4f || command.DurationMs is < 0 or > CinematicCompiler.MaximumDurationMs ||
             !Enum.IsDefined(command.Ease) || !float.IsFinite(command.OffsetX) || !float.IsFinite(command.OffsetY) ||
-            Math.Abs(command.OffsetX) > Options.Instance.Map.MapWidth || Math.Abs(command.OffsetY) > Options.Instance.Map.MapHeight) return;
+            Math.Abs(command.OffsetX) > Options.Instance.Map.MapWidth || Math.Abs(command.OffsetY) > Options.Instance.Map.MapHeight ||
+            !CinematicInterpolation.ValidLens(command.Projection, command.Heading, command.EyeHeight, command.PitchDegrees, command.FieldOfView)) return;
         var targetId = player.Id;
         if (command.FollowActor && command.ActorId != Guid.Empty)
         {
@@ -108,6 +109,8 @@ public static partial class CommandProcessing
         }
         player.SendPacket(new CinematicCameraPacket { EventId = instance.Descriptor.Id, MapId = command.MapId,
             X = command.X, Y = command.Y, Zoom = command.Zoom, DurationMs = command.DurationMs, Ease = command.Ease,
-            FollowActor = command.FollowActor, FollowEntityId = targetId, OffsetX = command.OffsetX, OffsetY = command.OffsetY });
+            FollowActor = command.FollowActor, FollowEntityId = targetId, OffsetX = command.OffsetX, OffsetY = command.OffsetY,
+            Projection = command.Projection, Heading = command.Heading, EyeHeight = command.EyeHeight,
+            PitchDegrees = command.PitchDegrees, FieldOfView = command.FieldOfView });
     }
 }

@@ -81,6 +81,14 @@ internal static partial class NavalWorld
             var offset=(float)GunneryAim.StationOffset(Gunner.Station,Gunner.CannonsPerSide,own.Length);
             camera+=new Vector2((float)Math.Sin(heading*Math.PI/180)*tw,-(float)Math.Cos(heading*Math.PI/180)*th)*offset;
         }
+        return WorldPerspectiveScene(camera,forward,beam,own.Id);
+    }
+
+    // Shared read-only scene builder: cinematic cameras do not acquire a cannon station
+    // or require the player to be aboard. Ordinary cannon behaviour keeps its own eye/beam.
+    internal static MapPerspectiveScene WorldPerspectiveScene(Vector2 camera,Vector2 forward,double beam,Guid excludedShip=default)
+    {
+        var tw=Options.Instance.Map.TileWidth;var th=Options.Instance.Map.TileHeight;
         var terrain=new List<GameTileBuffer>();var decorations=new List<MapPerspectiveDecoration>();
         // Only the actual grid received by this player. Do not fetch arbitrary maps or reveal distant enemies.
         var maps=Globals.GridMaps.Keys.Select(id=>MapInstance.TryGet(id,out var map)?map:null)
@@ -89,9 +97,9 @@ internal static partial class NavalWorld
                 map.Y+Options.Instance.Map.MapHeight*th/2f))).Take(25);
         foreach(var map in maps) {terrain.AddRange(map.PerspectiveBuffers());decorations.AddRange(map.PerspectiveDecorations());}
         var sprites=new List<MapPerspectiveSprite>();
-        foreach(var vessel in _ships.Values)
+        foreach(var vessel in Fresh?_ships.Values:Enumerable.Empty<View>())
         {
-            if(vessel.Current.Id==own.Id || !Position(vessel,out var sx,out var sy,out var sh)) continue;
+            if(vessel.Current.Id==excludedShip || !Position(vessel,out var sx,out var sy,out var sh)) continue;
             var s=vessel.Current;var filename=s.Graphics;
             var texture=Globals.ContentManager?.GetTexture(TextureType.Ocean,filename);
             if(texture==null)
@@ -115,7 +123,7 @@ internal static partial class NavalWorld
                     Y=ShipMovement.DirectionRow(relative)*h,Width=w,Height=h,AnchorX=w/2d,AnchorY=h/2d},tw,sx,sy);
             }
         }
-        foreach(var ball in _balls.Values)
+        foreach(var ball in _balls.Values.Where(_=>Fresh))
         {
             if(!MapInstance.TryGet(ball.Current.MapId,out var map) || !Globals.GridMaps.ContainsKey(map.Id)) continue;
             var t=Math.Clamp((Environment.TickCount64-ball.Received)/100f,0,1);

@@ -121,6 +121,15 @@ public partial class Animation : IAnimation
     public void DrawEventBehind() => DrawEventLayer(EventAnimationLayer.BehindCharacter);
     public void DrawEventAtCharacter(bool upper) => DrawEventLayer(EventAnimationLayer.SameAsCharacter, upper);
 
+    internal void DrawCinematicPerspective()
+    {
+        if (IsDisposed || Hidden || Descriptor == null || mParent is Entity entity && !entity.ShouldDraw) return;
+        var anchor = mParent is Entity parent ? parent.Origin : new System.Numerics.Vector2(mRenderX,mRenderY);
+        using var capture = Graphics.CaptureCinematicWorld(anchor);
+        Draw(false,Descriptor.Lower.AlternateRenderLayer,eventPass:true,aboveLabelsPass:DrawsAboveLabels);
+        Draw(true,Descriptor.Upper.AlternateRenderLayer,eventPass:true,aboveLabelsPass:DrawsAboveLabels);
+    }
+
     private void DrawEventLayer(EventAnimationLayer layer, bool? upper = null)
     {
         if (mParent is not Events.Event evt || evt.AnimationRenderLayer != layer || !evt.ShouldDraw || Descriptor == null || IsDisposed) return;
@@ -243,7 +252,7 @@ public partial class Animation : IAnimation
                 new Point(offsetX, offsetY), new Point(0, 0), rotationDegrees + 180
             );
 
-            Graphics.AddLight(
+            if (!Graphics.CapturingCinematicSprites) Graphics.AddLight(
                 (int)mRenderX + Descriptor.Lower.OffsetX - offset.X, (int)lightY + Descriptor.Lower.OffsetY - offset.Y, Descriptor.Lower.Lights[mLowerFrame].Size,
                 Descriptor.Lower.Lights[mLowerFrame].Intensity, Descriptor.Lower.Lights[mLowerFrame].Expand,
                 Descriptor.Lower.Lights[mLowerFrame].Color
@@ -296,7 +305,7 @@ public partial class Animation : IAnimation
                 new Point(offsetX, offsetY), new Point(0, 0), rotationDegrees + 180
             );
 
-            Graphics.AddLight(
+            if (!Graphics.CapturingCinematicSprites) Graphics.AddLight(
                 (int)mRenderX + Descriptor.Upper.OffsetX - offset.X, (int)lightY + Descriptor.Upper.OffsetY - offset.Y, Descriptor.Upper.Lights[mUpperFrame].Size,
                 Descriptor.Upper.Lights[mUpperFrame].Intensity, Descriptor.Upper.Lights[mUpperFrame].Expand,
                 Descriptor.Upper.Lights[mUpperFrame].Color

@@ -45,6 +45,7 @@ public sealed class CinematicActor
 public enum CinematicActorKind { PersonalEvent, TemporaryNpc }
 public enum CinematicTrack { Camera, Movement, Animation, Dialogue, Choice, Sound, Music, Event, Presentation, Actors }
 public enum CinematicEase { Linear, EaseIn, EaseOut, EaseInOut }
+public enum CinematicProjection { Flat2D, Perspective2_5D }
 public enum CinematicFacing { Unchanged, Up, Down, Left, Right, Player }
 
 public sealed class CinematicPoint
@@ -69,6 +70,11 @@ public sealed class CinematicClip
     public int Y { get; set; }
     public float Zoom { get; set; } = 1;
     public CinematicEase Ease { get; set; } = CinematicEase.EaseInOut;
+    public CinematicProjection Projection { get; set; }
+    public float Heading { get; set; }
+    public float EyeHeight { get; set; } = 1.6f;
+    public float PitchDegrees { get; set; } = -6.8427734f;
+    public float FieldOfView { get; set; } = 65;
     public bool FollowActor { get; set; }
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
@@ -102,9 +108,22 @@ public sealed class CinematicClip
 }
 
 public readonly record struct CinematicCameraPose(float X, float Y, float Zoom);
+public readonly record struct CinematicLensPose(float Heading, float EyeHeight, float PitchDegrees, float FieldOfView);
 
 public static class CinematicInterpolation
 {
+    public static bool ValidLens(CinematicProjection projection, float heading, float height, float pitch, float fov) =>
+        Enum.IsDefined(projection) && float.IsFinite(heading) && heading is >= 0 and <= 360 &&
+        float.IsFinite(height) && height is >= .5f and <= 24 && float.IsFinite(pitch) && pitch is >= -75 and <= 30 &&
+        float.IsFinite(fov) && fov is >= 25 and <= 100;
+
+    public static CinematicLensPose LerpLens(CinematicLensPose from, CinematicLensPose to, float t, CinematicEase ease)
+    {
+        t = Ease(t, ease);
+        var turn = (to.Heading - from.Heading + 540) % 360 - 180;
+        return new((from.Heading + turn * t + 360) % 360, from.EyeHeight + (to.EyeHeight - from.EyeHeight) * t,
+            from.PitchDegrees + (to.PitchDegrees - from.PitchDegrees) * t, from.FieldOfView + (to.FieldOfView - from.FieldOfView) * t);
+    }
     public static float Ease(float t, CinematicEase ease)
     {
         t = Math.Clamp(t, 0, 1);

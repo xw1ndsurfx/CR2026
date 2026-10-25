@@ -104,9 +104,11 @@ public static class CinematicCompiler
                     Require(InMap(clip.X, clip.Y) && float.IsFinite(clip.Zoom) && clip.Zoom is >= .25f and <= 4f && Enum.IsDefined(clip.Ease), "camera-position");
                     Require(float.IsFinite(clip.OffsetX) && float.IsFinite(clip.OffsetY) && Math.Abs(clip.OffsetX) <= mapWidth && Math.Abs(clip.OffsetY) <= mapHeight, "camera-position");
                     Require(!clip.FollowActor || scene.Actors.Any(a => a.TargetId == clip.ActorId), "actor-unavailable");
+                    Require(CinematicInterpolation.ValidLens(clip.Projection, clip.Heading, clip.EyeHeight, clip.PitchDegrees, clip.FieldOfView), "camera-projection");
                     Add(new CinematicCameraCommand { MapId = scene.MapId, X = clip.X, Y = clip.Y, Zoom = clip.Zoom,
                         DurationMs = clip.DurationMs, Ease = clip.Ease, FollowActor = clip.FollowActor,
-                        ActorId = clip.ActorId, OffsetX = clip.OffsetX, OffsetY = clip.OffsetY });
+                        ActorId = clip.ActorId, OffsetX = clip.OffsetX, OffsetY = clip.OffsetY, Projection = clip.Projection,
+                        Heading = clip.Heading, EyeHeight = clip.EyeHeight, PitchDegrees = clip.PitchDegrees, FieldOfView = clip.FieldOfView });
                     break;
                 case CinematicTrack.Presentation:
                     Require(clip.StartMs >= presentationEnd, "presentation-overlap"); presentationEnd = end;

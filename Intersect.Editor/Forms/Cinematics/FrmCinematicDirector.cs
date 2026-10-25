@@ -86,7 +86,7 @@ internal sealed class FrmCinematicDirector : DarkForm
         var grid = new CheckBox { Text = T("Grid"), Checked = true, AutoSize = true };
         grid.CheckedChanged += (_, _) => { _viewport.ShowGrid = grid.Checked; _viewport.Invalidate(); };
         var camera = new CheckBox { Text = T("CameraView"), AutoSize = true };
-        camera.CheckedChanged += (_, _) => { _viewport.CameraView = camera.Checked; _viewport.Invalidate(); };
+        camera.CheckedChanged += (_, _) => { _viewport.CameraView = camera.Checked; RenderMap(); };
         viewTools.Controls.Add(grid); viewTools.Controls.Add(camera); viewTools.Controls.Add(MakeButton("Refresh", RenderMap));
         right.Panel1.Controls.Add(viewTools);
         right.Panel1.Controls.Add(new Label { Text = T("MapHint"), Dock = DockStyle.Bottom, Height = 40 });
@@ -453,7 +453,10 @@ internal sealed class FrmCinematicDirector : DarkForm
     {
         if (Globals.CurrentMap?.Id != _scene.MapId || Render.GetGraphicsDevice() == null)
         { _viewport.MapImage?.Dispose(); _viewport.MapImage = null; _viewport.Invalidate(); _status.Text = T("MapRequired"); return; }
-        var image = Render.RenderCinematicMap(_scene, _timeline.CursorMs);
+        var image = Render.RenderCinematicMap(_scene, _timeline.CursorMs, _viewport.CameraView, out var perspective);
+        _viewport.PerspectiveRendered = perspective;
+        if (_viewport.CameraView && !perspective && CinematicPreview.Lens(_scene,_timeline.CursorMs).Projection == CinematicProjection.Perspective2_5D)
+            _status.Text = T("PerspectiveFallback");
         var previous = _viewport.MapImage; _viewport.MapImage = image; previous?.Dispose();
         _lastRender = Environment.TickCount64; _viewport.Invalidate();
     }

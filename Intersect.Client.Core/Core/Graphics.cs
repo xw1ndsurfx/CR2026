@@ -635,6 +635,7 @@ public static partial class Graphics
                 throw Exceptions.UnreachableInvalidEnum(gameState);
         }
 
+        Cinematics.CinematicCamera.DrawPerspective();
         if (gameState == GameStates.InGame) Cinematics.CinematicCamera.DrawPresentation();
         renderer.Scale = Globals.Database.UIScale;
 
@@ -1397,6 +1398,7 @@ public static partial class Graphics
     /// <returns>The converted point.</returns>
     public static Vector2 ConvertToWorldPoint(Vector2 windowPoint)
     {
+        if (Cinematics.CinematicCamera.TryWorldPoint(windowPoint,out var projected)) return projected;
         return new Vector2(
             (int)Math.Floor(windowPoint.X / WorldScale + CurrentView.Left),
             (int)Math.Floor(windowPoint.Y / WorldScale + CurrentView.Top)
@@ -1538,6 +1540,8 @@ public static partial class Graphics
         {
             return;
         }
+
+        if (CollectCinematicSprite(tex, srcRectangle, targetRect, renderColor, renderTarget, rotationDegrees)) return;
 
         Renderer?.DrawTexture(
             tex, srcRectangle.X, srcRectangle.Y, srcRectangle.Width, srcRectangle.Height, targetRect.X,

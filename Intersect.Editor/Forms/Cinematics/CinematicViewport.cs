@@ -12,6 +12,7 @@ internal sealed class CinematicViewport : Control
     internal int CursorMs { get; set; }
     internal bool ShowGrid { get; set; } = true;
     internal bool CameraView { get; set; }
+    internal bool PerspectiveRendered { get; set; }
     internal Bitmap? MapImage { get; set; }
     internal event Action? Edited;
     internal event Action<CinematicPoint?>? PointSelected;
@@ -32,7 +33,8 @@ internal sealed class CinematicViewport : Control
         _left = (Width - image.Width * _scale) / 2; _top = (Height - image.Height * _scale) / 2;
         var camera = CinematicPreview.Camera(Scene, CursorMs,
             new((Options.Instance.Map.MapWidth - 1) / 2f, (Options.Instance.Map.MapHeight - 1) / 2f, 1));
-        if (CameraView)
+        var perspective = CameraView && PerspectiveRendered;
+        if (CameraView && !perspective)
         {
             _scale = Math.Min(Width / 1280f, Height / 720f) * camera.Zoom;
             _left = Width / 2f - (camera.X + .5f) * Options.Instance.Map.TileWidth * _scale;
@@ -61,10 +63,26 @@ internal sealed class CinematicViewport : Control
                 { var p = Screen(clip.Points[i].X, clip.Points[i].Y); g.FillEllipse(Brushes.DodgerBlue, p.X - 8, p.Y - 8, 16, 16); g.DrawString((i + 1).ToString(), Font, Brushes.White, p.X - 4, p.Y - 7); }
             }
             var center = Screen(camera.X, camera.Y);
+            var (projection, lens) = CinematicPreview.Lens(Scene, CursorMs);
+            if (projection == CinematicProjection.Perspective2_5D)
+            {
+                var heading = lens.Heading * Math.PI / 180;
+                var halfFov = Math.Clamp(lens.FieldOfView / camera.Zoom, 15, 110) * Math.PI / 360;
+                var distance = 8 * Options.Instance.Map.TileWidth * _scale;
+                foreach (var side in new[] { -1, 1 })
+                {
+                    var angle = heading + halfFov * side;
+                    g.DrawLine(Pens.OrangeRed, center, new PointF(center.X + (float)Math.Sin(angle)*distance, center.Y - (float)Math.Cos(angle)*distance));
+                }
+                g.FillEllipse(Brushes.OrangeRed, center.X-4, center.Y-4, 8, 8);
+            }
+            else
+            {
             var frameWidth = 1280 / camera.Zoom * _scale; var frameHeight = 720 / camera.Zoom * _scale;
             g.DrawRectangle(Pens.OrangeRed, center.X - frameWidth / 2, center.Y - frameHeight / 2, frameWidth, frameHeight);
+            }
         }
-        foreach (var actor in Scene.Actors)
+        if (!perspective) foreach (var actor in Scene.Actors)
         {
             if (!CinematicPreview.ActorVisible(Scene, actor, CursorMs)) continue;
             var position = CinematicPreview.ActorPosition(Scene, actor, CursorMs); var p = Screen(position.X, position.Y);

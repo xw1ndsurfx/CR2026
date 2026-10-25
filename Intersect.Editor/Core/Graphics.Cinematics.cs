@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Intersect.Editor.General;
 using Intersect.Framework.Core.Cinematics;
 using Intersect.Framework.Core.GameObjects.Animations;
@@ -10,9 +11,13 @@ public static partial class Graphics
 {
     private static CinematicScene? _cinematicPreview;
     private static int _cinematicPreviewTime;
+    private static long _nextPerspectiveWarning;
 
-    public static Bitmap RenderCinematicMap(CinematicScene scene, int timeMs)
+    public static Bitmap RenderCinematicMap(CinematicScene scene, int timeMs) => RenderCinematicMap(scene,timeMs,false,out _);
+
+    public static Bitmap RenderCinematicMap(CinematicScene scene, int timeMs, bool cameraView, out bool perspectiveRendered)
     {
+        perspectiveRendered = false;
         lock (GraphicsLock)
         {
             if (Globals.CurrentMap?.Id != scene.MapId) throw new InvalidOperationException("scene-map");
@@ -27,7 +32,22 @@ public static partial class Graphics
                 Options.Instance.Map.MapWidth * Options.Instance.Map.TileWidth,
                 Options.Instance.Map.MapHeight * Options.Instance.Map.TileHeight);
             _cinematicPreview = scene; _cinematicPreviewTime = timeMs;
-            try { return ScreenShotMap(); }
+            try
+            {
+                if (cameraView && CinematicPreview.Lens(scene,timeMs).Projection == CinematicProjection.Perspective2_5D)
+                {
+                    try { var image = RenderCinematicPerspective(scene,timeMs); perspectiveRendered = true; return image; }
+                    catch (Exception error) when (error is InvalidOperationException or NotSupportedException or ArgumentException)
+                    {
+                        if (Environment.TickCount64 >= _nextPerspectiveWarning)
+                        {
+                            _nextPerspectiveWarning = Environment.TickCount64+60000;
+                            Intersect.Core.ApplicationContext.CurrentContext.Logger.LogWarning(error,"Editor cinematic perspective unavailable; using 2D preview");
+                        }
+                    }
+                }
+                return ScreenShotMap();
+            }
             finally { EndSpriteBatch(); _cinematicPreview = null; Database.GridHideEvents = hideEvents; CurrentView = previousView; SetRenderTarget(target); }
         }
     }
@@ -57,6 +77,7 @@ public static partial class Graphics
             var moving = Math.Abs(position.X - previous.X) + Math.Abs(position.Y - previous.Y) > .001f;
             var row = Math.Abs(position.X - previous.X) > Math.Abs(position.Y - previous.Y)
                 ? position.X > previous.X ? 2 : 1 : position.Y < previous.Y ? 3 : 0;
+            if (_cinematicQuads != null) row = Intersect.Rendering.MapPerspectiveGeometry.SpriteRow(row,_cinematicPerspectiveHeading);
             var frames = Math.Max(1, Options.Instance.Sprites.NormalFrames);
             var width = texture.Width / frames; var height = texture.Height / Math.Max(1, Options.Instance.Sprites.Directions);
             var frame = moving ? _cinematicPreviewTime / 160 % frames : 0;

@@ -23,6 +23,13 @@ public static class CinematicTemplates
         };
         if (preset is CinematicShotPreset.HeroShot or CinematicShotPreset.BossReveal)
         { clip.OffsetY = -1; clip.FollowActor = true; }
+        if (clip.Projection == CinematicProjection.Perspective2_5D)
+        {
+            clip.Heading = 0; clip.FieldOfView = 65; clip.EyeHeight = 2.5f; clip.PitchDegrees = -15;
+            clip.OffsetY = 4;
+            if (preset is CinematicShotPreset.BattleOverview or CinematicShotPreset.WideShot or CinematicShotPreset.EstablishingShot)
+            { clip.EyeHeight = 10; clip.PitchDegrees = -45; clip.OffsetY = 8; }
+        }
     }
 
     // Templates are editable native scenes, not movies or permanent lore. No asset IDs,

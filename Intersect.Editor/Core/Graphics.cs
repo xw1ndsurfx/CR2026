@@ -749,6 +749,7 @@ public static partial class Graphics
             {
                 foreach (var drawLayer in drawLayers)
                 {
+                    if (_cinematicQuads != null) _cinematicPerspectiveLayer = drawLayer;
                     if (screenShotting || Globals.MapLayersWindow.LayerVisibility[drawLayer])
                     {
                         if (new System.Drawing.Rectangle(
@@ -829,7 +830,7 @@ public static partial class Graphics
             }
         }
 
-        if (layer == 1)
+        if (layer == 1 && _cinematicQuads == null)
         {
             foreach (var light in tmpMap.Lights)
             {
@@ -1658,7 +1659,7 @@ public static partial class Graphics
                         }
 
                         sourceX = (int)tmpGraphic.X * (eventTex.Width / Options.Instance.Sprites.NormalFrames);
-                        sourceY = (int)tmpGraphic.Y * (eventTex.Height / Options.Instance.Sprites.Directions);
+                        sourceY = (_cinematicQuads != null ? Intersect.Rendering.MapPerspectiveGeometry.SpriteRow((int)tmpGraphic.Y,_cinematicPerspectiveHeading) : (int)tmpGraphic.Y) * (eventTex.Height / Options.Instance.Sprites.Directions);
                         width = (eventTex.Width / Options.Instance.Sprites.NormalFrames);
                         height = (eventTex.Height / Options.Instance.Sprites.Directions);
 
@@ -2309,6 +2310,8 @@ public static partial class Graphics
         {
             return;
         }
+
+        if (CollectCinematicQuad(tex, srcRectangle, targetRect, renderColor, rotationDegrees)) return;
 
         if (blendMode == null)
         {
