@@ -51,6 +51,14 @@ internal sealed class CinematicViewport : Control
         }
         if (!CameraView)
         {
+            foreach (var effect in Scene.Clips.Where(c=>c.Track == CinematicTrack.Projectile))
+            {
+                var actor=Scene.Actors.FirstOrDefault(a=>a.TargetId == effect.ActorId);if (actor == null) continue;
+                var start=CinematicPreview.ActorPosition(Scene,actor,effect.StartMs);
+                using var flight=new Pen(effect == Selected ? DrawingColor.Gold : DrawingColor.DarkGoldenrod,2)
+                    {DashStyle=DashStyle.Dash,EndCap=LineCap.ArrowAnchor};
+                g.DrawLine(flight,Screen(start.X,start.Y),Screen(effect.X,effect.Y));
+            }
             foreach (var clip in Scene.Clips.Where(c => c.Track == CinematicTrack.Movement))
             {
                 using var path = new Pen(clip == Selected ? DrawingColor.DeepSkyBlue : DrawingColor.FromArgb(120, DrawingColor.LightSkyBlue), 2) { DashStyle = DashStyle.Dash, EndCap = LineCap.ArrowAnchor };
@@ -125,7 +133,7 @@ internal sealed class CinematicViewport : Control
             if (existing != null) { _drag = existing; PointSelected?.Invoke(existing); Capture = true; }
             else { Selected.Points.Add(point); PointSelected?.Invoke(point); Edited?.Invoke(); }
         }
-        else if (Selected.Track is CinematicTrack.Camera or CinematicTrack.Animation or CinematicTrack.Naval)
+        else if (Selected.Track is CinematicTrack.Camera or CinematicTrack.Animation or CinematicTrack.Naval or CinematicTrack.Projectile)
         { Selected.X = point.X; Selected.Y = point.Y; Edited?.Invoke(); }
         Invalidate();
     }

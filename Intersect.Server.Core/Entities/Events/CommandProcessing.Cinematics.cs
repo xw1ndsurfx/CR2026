@@ -8,6 +8,9 @@ namespace Intersect.Server.Entities.Events;
 
 public static partial class CommandProcessing
 {
+    private static void ProcessCommand(CinematicEffectPathCommand command,Player player,Event instance,
+        CommandInstance stackInfo,Stack<CommandInstance> callStack)
+    { if (!instance.StartCinematicEffectPath(command)) RejectCinematic(player,callStack); }
     private static void ProcessCommand(CinematicVesselMoveCommand command,Player player,Event instance,
         CommandInstance stackInfo,Stack<CommandInstance> callStack)
     { if (!instance.MoveCinematicVessel(command)) RejectCinematic(player,callStack); }

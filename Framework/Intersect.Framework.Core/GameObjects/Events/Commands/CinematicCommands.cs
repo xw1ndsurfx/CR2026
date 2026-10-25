@@ -92,6 +92,20 @@ public sealed class CinematicVesselActionCommand : EventCommand
     public int AnimationOffsetY { get; set; }
 }
 
+public sealed class CinematicEffectPathCommand : EventCommand
+{
+    public override EventCommandType Type => EventCommandType.CinematicEffectPath;
+    public Guid ActorId { get; set; }
+    public Guid AnimationId { get; set; }
+    public Guid ImpactAnimationId { get; set; }
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int DurationMs { get; set; }
+    public CinematicEase Ease { get; set; }
+    public float ArcHeight { get; set; }
+    public bool RotateWithPath { get; set; }
+}
+
 public sealed class CinematicCameraCommand : EventCommand
 {
     public override EventCommandType Type => EventCommandType.CinematicCamera;

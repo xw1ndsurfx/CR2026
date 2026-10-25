@@ -91,16 +91,26 @@ public static partial class Graphics
     private static void DrawCinematicAnimations(Microsoft.Xna.Framework.Graphics.RenderTarget2D target)
     {
         if (_cinematicPreview is not { } scene) return;
+        DrawCinematicProjectiles(target);
         foreach (var clip in scene.Clips.Where(c=>c.Track == CinematicTrack.Animation && c.StartMs <= _cinematicPreviewTime))
         {
             var actor=clip.AttachToActor ? scene.Actors.FirstOrDefault(a=>a.TargetId == clip.ActorId) : null;
             var position=actor != null ? CinematicPreview.ActorPosition(scene,actor,_cinematicPreviewTime) : ((float)clip.X,(float)clip.Y);
-            DrawCinematicNativeAnimation(clip.ResourceId,(position.Item1+.5f)*Options.Instance.Map.TileWidth+(actor != null ? clip.AnimationOffsetX : 0),
-                (position.Item2+.5f)*Options.Instance.Map.TileHeight+(actor != null ? clip.AnimationOffsetY : 0),_cinematicPreviewTime-clip.StartMs,target);
+            var targets=clip.SynchronizedGroup && actor?.GroupId is { } group && group != Guid.Empty
+                ? scene.Actors.Where(a=>a.GroupId == group).ToArray() : actor != null ? [actor] : Array.Empty<CinematicActor>();
+            if (targets.Length == 0)
+                DrawCinematicNativeAnimation(clip.ResourceId,(position.Item1+.5f)*Options.Instance.Map.TileWidth,
+                    (position.Item2+.5f)*Options.Instance.Map.TileHeight,_cinematicPreviewTime-clip.StartMs,target);
+            else foreach (var member in targets)
+            {
+                var at=CinematicPreview.ActorPosition(scene,member,_cinematicPreviewTime);
+                DrawCinematicNativeAnimation(clip.ResourceId,(at.X+.5f)*Options.Instance.Map.TileWidth+clip.AnimationOffsetX,
+                    (at.Y+.5f)*Options.Instance.Map.TileHeight+clip.AnimationOffsetY,_cinematicPreviewTime-clip.StartMs,target);
+            }
         }
     }
 
-    private static void DrawCinematicNativeAnimation(Guid resource,float x,float y,long elapsed,Microsoft.Xna.Framework.Graphics.RenderTarget2D target)
+    private static void DrawCinematicNativeAnimation(Guid resource,float x,float y,long elapsed,Microsoft.Xna.Framework.Graphics.RenderTarget2D target, bool loop = false, float rotation = 0, float elevationPixels = 0)
     {
         if (AnimationDescriptor.Get(resource) is not { } animation) return;
         var previous=_cinematicActorAnchor;_cinematicActorAnchor=new Microsoft.Xna.Framework.Vector2(x,y);
@@ -112,15 +122,18 @@ public static partial class Graphics
                 var count=(int)Math.Min(layer.FrameCount,(long)layer.XFrames*layer.YFrames);
                 if (count <= 0) continue;
                 var frame=Math.Max(0,elapsed)/layer.FrameSpeed;
-                if (frame >= (long)count*(Math.Clamp(layer.LoopCount,0,100)+1)) continue;
+                if (!loop && frame >= (long)count*(Math.Clamp(layer.LoopCount,0,100)+1)) continue;
                 frame%=count;
                 var texture=GameContentManager.GetTexture(GameContentManager.TextureType.Animation,layer.Sprite);
                 if (texture == null) continue;
                 var width=texture.Width/layer.XFrames;var height=texture.Height/layer.YFrames;
                 var scale=Math.Clamp(layer.ScalePercent,1,1000)/100f;
+                var angle=layer.DisableRotations ? 0 : rotation*Math.PI/180;
+                var left=x+layer.OffsetX-(float)Math.Cos(angle)*width*scale/2+(float)Math.Sin(angle)*height*scale/2;
+                var top=y-elevationPixels+layer.OffsetY-(float)Math.Sin(angle)*width*scale/2-(float)Math.Cos(angle)*height*scale/2;
                 DrawTexture(texture,new RectangleF(frame%layer.XFrames*width,frame/layer.XFrames*height,width,height),
-                    new RectangleF(x+layer.OffsetX-width*scale/2,y+layer.OffsetY-height*scale/2,width*scale,height*scale),
-                    System.Drawing.Color.FromArgb(layer.Opacity,255,255,255),target,Microsoft.Xna.Framework.Graphics.BlendState.NonPremultiplied);
+                    new RectangleF(left,top,width*scale,height*scale),System.Drawing.Color.FromArgb(layer.Opacity,255,255,255),
+                    target,Microsoft.Xna.Framework.Graphics.BlendState.NonPremultiplied,rotationDegrees:(float)angle);
             }
         }
         finally { _cinematicActorAnchor=previous; }

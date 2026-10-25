@@ -75,10 +75,10 @@ internal static partial class NavalWorld
             if(row!=(int)Math.Floor((y-current.Y)/Options.Instance.Map.TileHeight)+Options.Instance.Map.MapHeight*2) continue;
             if(e.AnimationId!=Guid.Empty && AnimationDescriptor.Get(e.AnimationId)!=null)
             {
-                foreach(var frame in NativeImpactFrames(e.AnimationId,elapsed))
+                foreach(var frame in NativeImpactFrames(e.AnimationId,elapsed,e.LoopAnimation))
                     Graphics.DrawGameTexture(frame.Texture,frame.Source,
-                        new FloatRect(x-frame.Width/2+frame.Layer.OffsetX,y-frame.Height/2+frame.Layer.OffsetY,frame.Width,frame.Height),
-                        new Color(frame.Layer.Opacity,255,255,255));
+                        new FloatRect(x-frame.Width/2+frame.Layer.OffsetX,y-e.Elevation*Options.Instance.Map.TileHeight-frame.Height/2+frame.Layer.OffsetY,frame.Width,frame.Height),
+                        new Color(frame.Layer.Opacity,255,255,255),rotationDegrees:e.RotateAnimation && !frame.Layer.DisableRotations ? (float)e.Heading : 0);
                 continue;
             }
             switch(e.Kind)
@@ -97,7 +97,7 @@ internal static partial class NavalWorld
             .Select(l=>(long)Math.Clamp(l.FrameCount,1,10000)*Math.Clamp(l.FrameSpeed,1,60000)*(Math.Clamp(l.LoopCount,0,100)+1)).DefaultIfEmpty(minimum).Max(),minimum,20000);
     }
     private sealed record ImpactFrame(Intersect.Client.Framework.Graphics.IGameTexture Texture,FloatRect Source,float Width,float Height,AnimationLayer Layer);
-    private static IEnumerable<ImpactFrame> NativeImpactFrames(Guid animationId,long elapsed)
+    private static IEnumerable<ImpactFrame> NativeImpactFrames(Guid animationId,long elapsed,bool loop=false)
     {
         if(AnimationDescriptor.Get(animationId) is not {} descriptor) yield break;
         foreach(var layer in new[]{descriptor.Lower,descriptor.Upper})
@@ -106,7 +106,7 @@ internal static partial class NavalWorld
                 !NavalPresentation.SafeAsset(layer.Sprite) || Globals.ContentManager?.GetTexture(TextureType.Animation,layer.Sprite) is not {} texture) continue;
             var count=(int)Math.Min(layer.FrameCount,Math.Min(int.MaxValue,(long)layer.XFrames*layer.YFrames));
             var index=Math.Max(0,elapsed)/layer.FrameSpeed;
-            if(count<=0 || index>=(long)count*(Math.Clamp(layer.LoopCount,0,100)+1)) continue;
+            if(count<=0 || !loop && index>=(long)count*(Math.Clamp(layer.LoopCount,0,100)+1)) continue;
             var frame=(int)(index%count);var w=texture.Width/layer.XFrames;var h=texture.Height/layer.YFrames;
             if(w<=0 || h<=0 || layer.Opacity==0) continue;
             var scale=Math.Clamp(layer.ScalePercent,1,1000)/100f;

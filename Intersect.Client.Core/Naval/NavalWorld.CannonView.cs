@@ -140,10 +140,11 @@ internal static partial class NavalWorld
             if(!MapInstance.TryGet(e.MapId,out var map) || !Globals.GridMaps.ContainsKey(map.Id)) continue;
             if(e.AnimationId!=Guid.Empty && Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor.Get(e.AnimationId)!=null)
             {
-                foreach(var frame in NativeImpactFrames(e.AnimationId,Environment.TickCount64-effect.Born))
+                foreach(var frame in NativeImpactFrames(e.AnimationId,Environment.TickCount64-effect.Born,e.LoopAnimation))
                     sprites.Add(new(frame.Texture,frame.Source,new(map.X+(float)e.X*tw,map.Y+(float)e.Y*th),
                         frame.Width/tw,frame.Height/th,frame.Width/2/tw-frame.Layer.OffsetX/tw,
-                        frame.Height/2/th-frame.Layer.OffsetY/th,false,Opacity:frame.Layer.Opacity/255f));
+                        frame.Height/2/th-frame.Layer.OffsetY/th,false,Elevation:e.Elevation,Opacity:frame.Layer.Opacity/255f,
+                        RotationDegrees:e.RotateAnimation && !frame.Layer.DisableRotations ? (float)CannonViewRelativeHeading(e.Heading,beam) : 0));
                 continue;
             }
             var asset=!string.IsNullOrEmpty(e.Graphic)?e.Graphic:e.Kind switch {NavalEffectKind.Fire=>style.CannonFireGraphic,NavalEffectKind.WaterImpact=>style.WaterImpactGraphic,

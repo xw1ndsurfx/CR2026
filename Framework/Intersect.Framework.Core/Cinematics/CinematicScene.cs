@@ -47,7 +47,7 @@ public sealed class CinematicActor
 }
 
 public enum CinematicActorKind { PersonalEvent, TemporaryNpc, TemporaryVessel }
-public enum CinematicTrack { Camera, Movement, Animation, Dialogue, Choice, Sound, Music, Event, Presentation, Actors, Gameplay, Condition, Quest, Environment, Naval }
+public enum CinematicTrack { Camera, Movement, Animation, Dialogue, Choice, Sound, Music, Event, Presentation, Actors, Gameplay, Condition, Quest, Environment, Naval, Projectile }
 public enum CinematicGameplayAction { CommonEvent, SetPlayerFlag }
 public enum CinematicConditionKind { PlayerFlag, QuestActive, QuestCompleted, QuestTaskActive, QuestAfterTask }
 public enum CinematicQuestAction { StartOrOffer, CompleteEventTask }
@@ -125,6 +125,9 @@ public sealed class CinematicClip
     public CinematicVesselAction VesselAction { get; set; }
     public CinematicVesselAppearance VesselAppearance { get; set; }
     public bool SynchronizedGroup { get; set; }
+    public Guid ImpactAnimationId { get; set; }
+    public float ArcHeight { get; set; }
+    public bool RotateWithPath { get; set; }
     public override string ToString() => string.IsNullOrWhiteSpace(Name) ? Track.ToString() : Name;
 }
 

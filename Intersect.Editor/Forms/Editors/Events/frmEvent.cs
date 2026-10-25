@@ -1499,6 +1499,7 @@ public partial class FrmEvent : Form
             case EventCommandType.CinematicEnvironment:
             case EventCommandType.CinematicVesselMove:
             case EventCommandType.CinematicVesselAction:
+            case EventCommandType.CinematicEffectPath:
             case EventCommandType.StopCinematic:
             case EventCommandType.WaitForCinematic:
             case EventCommandType.StartCinematicChapter:

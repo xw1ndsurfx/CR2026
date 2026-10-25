@@ -75,6 +75,10 @@ public sealed class CannonballSnapshot
 [MessagePackObject]
 public sealed class NavalEffectSnapshot
 {
+    // Optional cinematic animation presentation. Native gameplay effects default to unchanged behaviour.
+    [Key(10)] public bool LoopAnimation { get; set; }
+    [Key(11)] public float Elevation { get; set; }
+    [Key(12)] public bool RotateAnimation { get; set; }
     [Key(0)] public Guid Id {get;set;}
     [Key(1)] public Guid MapId {get;set;}
     [Key(2)] public double X {get;set;}

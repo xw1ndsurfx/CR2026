@@ -44,7 +44,8 @@ internal static partial class NavalWorld
         foreach (var effect in packet.Effects)
         {
             if (effect == null || effect.Id == Guid.Empty || effect.MapId != packet.MapId || !Enum.IsDefined(effect.Kind) ||
-                !double.IsFinite(effect.X) || !double.IsFinite(effect.Y) || !double.IsFinite(effect.Heading)) continue;
+                !double.IsFinite(effect.X) || !double.IsFinite(effect.Y) || !double.IsFinite(effect.Heading) ||
+                !float.IsFinite(effect.Elevation) || effect.Elevation is < 0 or > 8) continue;
             var before=previous?.Effects.GetValueOrDefault(effect.Id);
             effects[effect.Id]=new(effect,before?.Born ?? now-Math.Clamp(effect.AgeMilliseconds,0,20000));
             if (before == null && effect.PlaySound && effect.AgeMilliseconds <= 350) PlayCinematicNavalSound(effect,packet.Presentation);

@@ -95,6 +95,14 @@ public static class CinematicCompiler
         var scheduled = new List<(int Time, int Priority, int Order, EventCommand Command)>();
         var order = 0;
         var actorEnds = scene.Actors.ToDictionary(a => a.TargetId, a => (Time: -1, X: a.StartX, Y: a.StartY));
+        CinematicActor[] GroupTargets(CinematicClip clip)
+        {
+            var root=scene.Actors.FirstOrDefault(a=>a.TargetId == clip.ActorId);
+            Require(root != null,"actor-unavailable");
+            if (!clip.SynchronizedGroup) return [root!];
+            Require(root!.GroupId != Guid.Empty,"group-path-required");
+            return scene.Actors.Where(a=>a.GroupId == root.GroupId).ToArray();
+        }
         var cameraEnd = -1;
         var presentationEnd = -1;
         foreach (var clip in scene.Clips.OrderBy(c => c.StartMs))
@@ -196,22 +204,31 @@ public static class CinematicCompiler
                         TimeoutMs = (int)Math.Min(MaximumDurationMs, Math.Max(30000L, actions.Count * 5000L)) }, end, 0);
                     actorEnds[clip.ActorId] = (end, clip.Points[^1].X, clip.Points[^1].Y);
                     break;
+                case CinematicTrack.Projectile:
+                    Require(clip.ResourceId != Guid.Empty && validAnimation?.Invoke(clip.ResourceId) != false,"animation-unavailable");
+                    Require(clip.ImpactAnimationId == Guid.Empty || validAnimation?.Invoke(clip.ImpactAnimationId) != false,"animation-unavailable");
+                    Require(InMap(clip.X,clip.Y) && clip.DurationMs <= 30000 && Enum.IsDefined(clip.Ease) &&
+                        float.IsFinite(clip.ArcHeight) && clip.ArcHeight is >= 0 and <= 8,"projectile-range");
+                    foreach (var actor in GroupTargets(clip))
+                        Add(new CinematicEffectPathCommand { ActorId=actor.TargetId,AnimationId=clip.ResourceId,ImpactAnimationId=clip.ImpactAnimationId,
+                            X=clip.X,Y=clip.Y,DurationMs=clip.DurationMs,Ease=clip.Ease,ArcHeight=clip.ArcHeight,RotateWithPath=clip.RotateWithPath });
+                    break;
                 case CinematicTrack.Animation:
                     Require(clip.ResourceId != Guid.Empty && validAnimation?.Invoke(clip.ResourceId) != false, "animation-unavailable");
-                    Require(clip.AttachToActor ? scene.Actors.Any(a => a.TargetId == clip.ActorId) &&
+                    Require(clip.AttachToActor ? scene.Actors.Any(a=>a.TargetId == clip.ActorId) &&
                         Math.Abs((long)clip.AnimationOffsetX) <= 1024 && Math.Abs((long)clip.AnimationOffsetY) <= 1024 :
-                        InMap(clip.X, clip.Y) && clip.X <= sbyte.MaxValue && clip.Y <= sbyte.MaxValue, "animation-position");
-                    if (clip.AttachToActor && scene.Actors.First(a=>a.TargetId == clip.ActorId).Kind == CinematicActorKind.TemporaryVessel)
+                        InMap(clip.X,clip.Y) && clip.X <= sbyte.MaxValue && clip.Y <= sbyte.MaxValue,"animation-position");
+                    Require(!clip.SynchronizedGroup || clip.AttachToActor,"group-path-required");
+                    if (!clip.AttachToActor)
+                        Add(new PlayAnimationCommand {AnimationId=clip.ResourceId,MapId=scene.MapId,X=(sbyte)clip.X,Y=(sbyte)clip.Y,InstanceToPlayer=true});
+                    else foreach (var actor in GroupTargets(clip))
                     {
-                        Add(new CinematicVesselActionCommand { ActorId=clip.ActorId,VesselAction=CinematicVesselAction.VesselHullImpact,
-                            AnimationId=clip.ResourceId,AnimationOffsetX=clip.AnimationOffsetX,AnimationOffsetY=clip.AnimationOffsetY,FollowActor=true });
-                        break;
+                        if (actor.Kind == CinematicActorKind.TemporaryVessel)
+                            Add(new CinematicVesselActionCommand {ActorId=actor.TargetId,VesselAction=CinematicVesselAction.VesselHullImpact,
+                                AnimationId=clip.ResourceId,AnimationOffsetX=clip.AnimationOffsetX,AnimationOffsetY=clip.AnimationOffsetY,FollowActor=true});
+                        else Add(new PlayAnimationCommand {AnimationId=clip.ResourceId,MapId=Guid.Empty,TargetMapId=scene.MapId,EntityId=actor.TargetId,
+                            OffsetX=clip.AnimationOffsetX,OffsetY=clip.AnimationOffsetY,InstanceToPlayer=true});
                     }
-                    Add(new PlayAnimationCommand { AnimationId = clip.ResourceId, MapId = clip.AttachToActor ? Guid.Empty : scene.MapId,
-                        TargetMapId = clip.AttachToActor ? scene.MapId : Guid.Empty, EntityId = clip.AttachToActor ? clip.ActorId : Guid.Empty,
-                        X = clip.AttachToActor ? (sbyte)0 : (sbyte)clip.X, Y = clip.AttachToActor ? (sbyte)0 : (sbyte)clip.Y,
-                        OffsetX = clip.AttachToActor ? clip.AnimationOffsetX : 0, OffsetY = clip.AttachToActor ? clip.AnimationOffsetY : 0,
-                        InstanceToPlayer = true });
                     break;
                 case CinematicTrack.Dialogue:
                     Require(!string.IsNullOrWhiteSpace(clip.Text), "dialogue-empty");
@@ -256,6 +273,7 @@ public static class CinematicCompiler
                     break;
             }
         }
+        Require(scheduled.Count <= 8192,"scene-command-budget");
         var cursor = 0;
         foreach (var item in scheduled.OrderBy(s => s.Time).ThenBy(s => s.Priority).ThenBy(s => s.Order))
         {

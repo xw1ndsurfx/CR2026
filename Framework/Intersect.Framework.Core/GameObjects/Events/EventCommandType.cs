@@ -173,4 +173,5 @@ public enum EventCommandType
     CinematicEnvironment = 1079,
     CinematicVesselMove = 1080,
     CinematicVesselAction = 1081,
+    CinematicEffectPath = 1082,
 }

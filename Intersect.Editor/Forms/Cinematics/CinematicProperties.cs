@@ -24,7 +24,8 @@ internal sealed class CinematicProperties(object value, bool vesselPoint = false
                     : clip.VesselAction == CinematicVesselAction.VesselHullImpact
                         ? ["ActorId", "VesselAction", "ResourceId", "AnimationOffsetX", "AnimationOffsetY", "SynchronizedGroup"]
                         : ["ActorId", "VesselAction", "X", "Y", "ResourceId"],
-            CinematicTrack.Animation => ["ResourceId", "X", "Y", "AttachToActor", "ActorId", "AnimationOffsetX", "AnimationOffsetY"],
+            CinematicTrack.Animation => ["ResourceId", "X", "Y", "AttachToActor", "ActorId", "AnimationOffsetX", "AnimationOffsetY", "SynchronizedGroup"],
+            CinematicTrack.Projectile => ["ResourceId", "ImpactAnimationId", "ActorId", "X", "Y", "Ease", "ArcHeight", "RotateWithPath", "SynchronizedGroup"],
             CinematicTrack.Dialogue => ["Text", "Face"],
             CinematicTrack.Choice => ["Text", "Face", "Option1", "Option2", "Option3", "Option4", "ChoiceEvent1", "ChoiceEvent2", "ChoiceEvent3", "ChoiceEvent4"],
             CinematicTrack.Sound => ["AudioFile", "VoiceSound"],

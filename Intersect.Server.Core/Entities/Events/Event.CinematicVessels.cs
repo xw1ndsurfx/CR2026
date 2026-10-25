@@ -21,7 +21,7 @@ public partial class Event
         internal CinematicVesselMoveCommand? Path;
         internal long PathStarted;
     }
-    private sealed record StageEffect(NavalEffectSnapshot Effect,long Born,Guid FollowActor,int OffsetX=0,int OffsetY=0);
+    private sealed record StageEffect(NavalEffectSnapshot Effect,long Born,Guid FollowActor,int OffsetX=0,int OffsetY=0,EffectMotion? Motion=null);
     private sealed class StageBall(double x,double y,double dx,double dy,double range,long now)
     {
         internal readonly Guid Id=Guid.NewGuid();
@@ -138,7 +138,7 @@ public partial class Event
 
     private void UpdateCinematicVessels()
     {
-        if (!CinematicActive || _cinematicVessels.Count == 0 || _cinematicNavigation == null) return;
+        if (!CinematicActive || _cinematicNavigation == null) return;
         var now=Environment.TickCount64;
         foreach (var vessel in _cinematicVessels.Values) SampleVessel(vessel,now);
         var seconds=Math.Max(0,(now-_cinematicBallUpdated)/1000d);_cinematicBallUpdated=now;
@@ -159,7 +159,8 @@ public partial class Event
             { ball.Active=false;AddStageEffect(NavalEffectKind.WaterImpact,ball.X,ball.Y,0,now); }
         }
         _cinematicVesselBalls.RemoveAll(b=>!b.Active);
-        _cinematicVesselEffects.RemoveAll(e=>now-e.Born > 20000);
+        FinishCinematicEffectPaths(now);
+        _cinematicVesselEffects.RemoveAll(e=>e.Motion == null && now-e.Born > 20000);
         PublishCinematicFleet(false);
     }
 
@@ -176,9 +177,17 @@ public partial class Event
             }).ToArray(),
             Effects=_cinematicVesselEffects.Select(e=>{
                 var x=e.Effect.X;var y=e.Effect.Y;
+                var elevation=0f;
+                if (e.Motion is { } motion)
+                {
+                    var t=CinematicInterpolation.Ease((now-e.Born)/(float)motion.Duration,motion.Ease);
+                    x=motion.FromX+(motion.ToX-motion.FromX)*t;y=motion.FromY+(motion.ToY-motion.FromY)*t;
+                    elevation=4*motion.ArcHeight*t*(1-t);
+                }
                 if (_cinematicVessels.TryGetValue(e.FollowActor,out var vessel)) { x=vessel.X;y=vessel.Y; }
                 return new NavalEffectSnapshot { Id=e.Effect.Id,MapId=_cinematicMap,X=x+e.OffsetX/(double)Options.Instance.Map.TileWidth,Y=y+e.OffsetY/(double)Options.Instance.Map.TileHeight,
-                    Heading=e.Effect.Heading,Kind=e.Effect.Kind,AnimationId=e.Effect.AnimationId,PlaySound=e.Effect.PlaySound,AgeMilliseconds=(int)(now-e.Born) };
+                    Heading=e.Effect.Heading,Kind=e.Effect.Kind,AnimationId=e.Effect.AnimationId,PlaySound=e.Effect.PlaySound,AgeMilliseconds=(int)(now-e.Born),
+                    Elevation=elevation,LoopAnimation=e.Effect.LoopAnimation,RotateAnimation=e.Effect.RotateAnimation };
             }).ToArray(),
             Cannonballs=_cinematicVesselBalls.Select(b=>new CannonballSnapshot { Id=b.Id,MapId=_cinematicMap,X=b.X,Y=b.Y,Heading=ShipMovement.Normalize(Math.Atan2(b.DX,-b.DY)*180/Math.PI),
                 AgeMilliseconds=(int)(now-b.Born),Graphic=_cinematicNavigation.Presentation.CannonProjectileGraphic }).ToArray() });

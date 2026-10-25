@@ -14,6 +14,7 @@ public static partial class CommandPrinter
     private static string GetCommandText(CinematicEnvironmentCommand command, MapInstance map) => CinematicText.T("Environment") + ": " + CinematicText.T(command.RestoreEnvironment ? "RestoreEnvironment" : "EnvironmentSettings");
     private static string GetCommandText(CinematicVesselMoveCommand command, MapInstance map) => CinematicText.T("TemporaryVessel") + ": " + command.ActorId + " · " + command.DurationMs + "ms";
     private static string GetCommandText(CinematicVesselActionCommand command, MapInstance map) => CinematicText.T(command.VesselAction.ToString()) + ": " + command.ActorId;
+    private static string GetCommandText(CinematicEffectPathCommand command, MapInstance map) => CinematicText.T("Projectile") + ": " + command.ActorId + " → " + command.X + ", " + command.Y;
     private static string GetCommandText(StopCinematicCommand command, MapInstance map) => CinematicText.T("StopCinematic") + ": " + command.SceneEventId;
     private static string GetCommandText(WaitForCinematicCommand command, MapInstance map) => CinematicText.T("WaitForCinematic") + ": " + command.SceneEventId;
     private static string GetCommandText(StartCinematicChapterCommand command, MapInstance map) => CinematicText.T("StartCinematicChapter") + ": " + command.ChapterEventId;

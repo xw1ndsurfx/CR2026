@@ -66,6 +66,8 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         Button("TemporaryVessel",AddVessel);Button("FleetFormation",AddFleetFormation);
         Button("NavalScene",()=>{ _scene.Mode=CinematicSceneMode.NavalScene;SelectObject(_scene);CommitEdit(); });
         Button("BattlefieldScene",()=>{ _scene.Mode=CinematicSceneMode.BattlefieldScene;SelectObject(_scene);CommitEdit(); });
+        Button("GroupAnimation",GroupAnimation);Button("GroupCharge",GroupCharge);Button("Reinforcements",Reinforcements);
+        Button("GameplayTransition",CreateGameplayTrigger);
         var left = new SplitContainer { Size = new(1400, 780), Dock = DockStyle.Fill, SplitterDistance = 230, FixedPanel = FixedPanel.Panel1 };
         var middle = new SplitContainer { Size = new(1170, 780), Dock = DockStyle.Fill, Orientation = Orientation.Horizontal, SplitterDistance = 460 };
         var right = new SplitContainer { Size = new(1170, 460), Dock = DockStyle.Fill, SplitterDistance = 850, FixedPanel = FixedPanel.Panel2 };
@@ -309,7 +311,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
             clip.Points.Add(new() { X = previous?.Points[^1].X ?? selectedActor.StartX, Y = previous?.Points[^1].Y ?? selectedActor.StartY });
         }
         _scene.Clips.Add(clip); _timeline.Selected = _viewport.Selected = clip; SelectObject(clip); CommitEdit(); RefreshPoints();
-        if (track is CinematicTrack.Animation or CinematicTrack.Sound or CinematicTrack.Music or CinematicTrack.Event or CinematicTrack.Gameplay or CinematicTrack.Condition or CinematicTrack.Quest) ChooseResource();
+        if (track is CinematicTrack.Animation or CinematicTrack.Sound or CinematicTrack.Music or CinematicTrack.Event or CinematicTrack.Gameplay or CinematicTrack.Condition or CinematicTrack.Quest or CinematicTrack.Projectile) ChooseResource();
     }
     private void ChooseResource()
     {
@@ -322,6 +324,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
             SelectObject(actor); return;
         }
         if (_timeline.Selected is not { } clip) return;
+        if (clip.Track == CinematicTrack.Projectile) { ChooseProjectileResource(clip);return; }
         if (clip.Track == CinematicTrack.Environment)
         {
             if (Pick(GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Fog).Select(f=>new Resource(Guid.Empty,f))) is { } fog)
@@ -361,7 +364,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
     }
     private void ChooseActorTarget()
     {
-        if (_timeline.Selected is not { } clip || clip.Track is not (CinematicTrack.Camera or CinematicTrack.Movement or CinematicTrack.Animation or CinematicTrack.Actors or CinematicTrack.Naval)) return;
+        if (_timeline.Selected is not { } clip || clip.Track is not (CinematicTrack.Camera or CinematicTrack.Movement or CinematicTrack.Animation or CinematicTrack.Actors or CinematicTrack.Naval or CinematicTrack.Projectile)) return;
         if (Pick(_scene.Actors.Where(a => (clip.Track != CinematicTrack.Actors || a.Kind != CinematicActorKind.PersonalEvent) &&
                 (clip.Track != CinematicTrack.Naval || a.Kind == CinematicActorKind.TemporaryVessel))
                 .Select(a => new Resource(a.TargetId, a.Name))) is not { } selected) return;
