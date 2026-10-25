@@ -68,6 +68,17 @@ internal sealed class CinematicViewport : Control
             g.DrawEllipse(Pens.LimeGreen, p.X - 10, p.Y - 6, 20, 12);
             if (!CameraView) g.DrawString(actor.Name, Font, Brushes.White, p.X + 10, p.Y);
         }
+        if (CameraView)
+        {
+            var style = CinematicPreview.Presentation(Scene, CursorMs);
+            var bar = Height * style.Letterbox;
+            if (bar > 0) { g.FillRectangle(Brushes.Black, 0, 0, Width, bar); g.FillRectangle(Brushes.Black, 0, Height - bar, Width, bar); }
+            if (style.FadeOpacity > 0)
+            {
+                using var fade = new SolidBrush(DrawingColor.FromArgb((int)(255 * style.FadeOpacity), 0, 0, 0));
+                g.FillRectangle(fade, ClientRectangle);
+            }
+        }
         var dialogue = Scene.Clips.FirstOrDefault(c => c.Track is CinematicTrack.Dialogue or CinematicTrack.Choice && CursorMs >= c.StartMs && CursorMs < c.StartMs + c.DurationMs);
         if (dialogue != null)
         {

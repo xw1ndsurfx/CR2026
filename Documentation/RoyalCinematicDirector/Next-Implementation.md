@@ -1,0 +1,21 @@
+# Remaining implementation work
+
+The owner requested completion of the remaining brief before another grouped test campaign (2026-10-25). Keep intermediate builds; defer new automated/manual runs until the implementation blocks are ready. Never describe an implemented feature as validated in-game solely because it builds. Existing tests and the completed two-client QA remain documented in Interactive-QA.fr.md.
+
+Source references: References/Brief.txt (all 19 sections) and References/FinalInterface.png. The image guides ergonomics; no general 3D renderer is implied. Preserve all native Event/Move Route compatibility, server progression and existing audio. No paid dependencies, Inworld or AI dubbing.
+
+Implementation order:
+
+1. Advanced cinema: live actor/boat-captain follow, framing offsets, camera presets, presentation track for fade/letterbox/shake/HUD restoration, attached animation, route point actions and historical command editing.
+2. Authoring/narration: templates, timeline markers and reusable scene organization; native dialogue/voice options; environment/gameplay/condition/quest tracks using existing commands.
+3. Story/chapter orchestration: native conditions and quest hooks, chapter transitions, persisted choices/completion through existing player variables and quest progression. Existing Saga/Chapter/Sequence strings alone do not satisfy this.
+4. Actors and mass scenes: recipient-only temporary actors/props and bounded lightweight formations; no personal scene may move shared live NPCs or grant client-authoritative damage/rewards.
+5. Naval/battlefield modes: select native ship definitions/state, paths/formations, camera composition, synchronized existing visual effects/cannon presentation and explicit authoritative transition to playable combat; optimize bounded groups and culling. Native naval locking/ownership/instance/combat rules remain authoritative.
+6. Recovery and production: native Stop/Wait/Chapter commands, authorized skip without bypassing mandatory gameplay, collective scene coordination when requested, interruption/restart policy, F5 workflow, examples using actual resources and lore provided only. Do not invent permanent lore/royal names.
+7. Final campaign: meaningful unit/integration tests for all additions, existing regressions, editor native smoke/GPU checks, two-client gameplay, quest progression, collisions/death/map/instance/disconnect/skip, persistence and long-session performance. Record real limits and CI results. Keep PR #180 draft without merging/deploying.
+
+Current development starts with item 1. The first additions extend existing camera commands/packets and compile a Presentation track to native Event scheduling; they require matching builds and are not deployed to the local QA installation yet. No new manual/automated tests run during this block at the owner's request.
+
+Advanced block implemented locally: personal actor follow (the player's native captain center also follows their ship), tile framing offsets, seven shot presets, Presentation clips for letterbox/black fade/shake/HUD, thirteen editable camera/presentation template starting points, native animations attached to actors with pixel offsets, draggable timeline markers, and native waypoint pauses/facing/Event-speed changes. These templates do not themselves implement the specialized naval/battlefield modes. Player speed changes and FacePlayer remain unavailable on player routes because the native player interpreter does not implement them. Historical Advanced Event editing remains available.
+
+Debug Editor, Server and Client builds succeeded for this block with explicit Debug handshake keys and RunAnalyzers=false; existing warnings remain. No new tests or gameplay campaign have been run. Local server and QA clients were stopped normally/closed after the previous campaign; source changes have not been copied to that installation. Continue with chapter/quest orchestration, then the remaining numbered blocks; do not stop at this first block.

@@ -15,6 +15,15 @@ public sealed class CinematicScene
     public int DurationMs { get; set; } = 10000;
     [Browsable(false)] public List<CinematicActor> Actors { get; set; } = [];
     [Browsable(false)] public List<CinematicClip> Clips { get; set; } = [];
+    [Browsable(false)] public List<CinematicMarker> Markers { get; set; } = [];
+}
+
+public sealed class CinematicMarker
+{
+    [Browsable(false)] public Guid Id { get; set; } = Guid.NewGuid();
+    public string Name { get; set; } = "";
+    public int TimeMs { get; set; }
+    public override string ToString() => Name;
 }
 
 public sealed class CinematicActor
@@ -27,13 +36,17 @@ public sealed class CinematicActor
     public override string ToString() => Name;
 }
 
-public enum CinematicTrack { Camera, Movement, Animation, Dialogue, Choice, Sound, Music, Event }
+public enum CinematicTrack { Camera, Movement, Animation, Dialogue, Choice, Sound, Music, Event, Presentation }
 public enum CinematicEase { Linear, EaseIn, EaseOut, EaseInOut }
+public enum CinematicFacing { Unchanged, Up, Down, Left, Right, Player }
 
 public sealed class CinematicPoint
 {
     public int X { get; set; }
     public int Y { get; set; }
+    public int PauseMs { get; set; }
+    public CinematicFacing Facing { get; set; }
+    public int SpeedOverride { get; set; } = -1;
     public override string ToString() => $"{X}, {Y}";
 }
 
@@ -49,6 +62,16 @@ public sealed class CinematicClip
     public int Y { get; set; }
     public float Zoom { get; set; } = 1;
     public CinematicEase Ease { get; set; } = CinematicEase.EaseInOut;
+    public bool FollowActor { get; set; }
+    public float OffsetX { get; set; }
+    public float OffsetY { get; set; }
+    public bool HideHud { get; set; }
+    public float Letterbox { get; set; }
+    public float FadeOpacity { get; set; }
+    public float ShakePixels { get; set; }
+    public bool AttachToActor { get; set; }
+    public int AnimationOffsetX { get; set; }
+    public int AnimationOffsetY { get; set; }
     public string Text { get; set; } = "";
     public string Face { get; set; } = "";
     public string AudioFile { get; set; } = "";

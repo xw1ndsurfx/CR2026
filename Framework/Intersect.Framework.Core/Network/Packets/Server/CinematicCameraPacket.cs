@@ -14,4 +14,13 @@ public sealed class CinematicCameraPacket : IntersectPacket
     [Key(5)] public int DurationMs { get; set; }
     [Key(6)] public CinematicEase Ease { get; set; }
     [Key(7)] public bool Reset { get; set; }
+    [Key(8)] public bool FollowActor { get; set; }
+    [Key(9)] public Guid FollowEntityId { get; set; }
+    [Key(10)] public float OffsetX { get; set; }
+    [Key(11)] public float OffsetY { get; set; }
+    [Key(12)] public bool PresentationOnly { get; set; }
+    [Key(13)] public bool HideHud { get; set; }
+    [Key(14)] public float Letterbox { get; set; }
+    [Key(15)] public float FadeOpacity { get; set; }
+    [Key(16)] public float ShakePixels { get; set; }
 }

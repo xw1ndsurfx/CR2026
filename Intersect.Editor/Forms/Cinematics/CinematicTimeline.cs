@@ -11,9 +11,11 @@ internal sealed class CinematicTimeline : ScrollableControl
     internal event Action<CinematicClip?>? SelectionChanged;
     internal event Action? Edited;
     internal event Action<int>? Scrubbed;
+    internal event Action<CinematicMarker>? MarkerSelected;
     private const int LabelWidth = 160, RowHeight = 36, Header = 28;
     private float _pixelsPerSecond = 80;
     private CinematicClip? _drag;
+    private CinematicMarker? _dragMarker;
     private int _downX, _start, _duration;
     private bool _resize;
     private int SafeDuration => Math.Clamp(Scene.DurationMs, 50, CinematicCompiler.MaximumDurationMs);
@@ -69,6 +71,14 @@ internal sealed class CinematicTimeline : ScrollableControl
             g.DrawRectangle(clip == Selected ? Pens.Gold : Pens.SlateGray, rect.X, rect.Y, rect.Width, rect.Height);
             var state = g.Save(); g.SetClip(rect); g.DrawString(clip.ToString(), Font, Brushes.White, rect.X + 5, rect.Y + 6); g.Restore(state);
         }
+        foreach (var marker in Scene.Markers)
+        {
+            var x = X(marker.TimeMs); if (x < LabelWidth || x > Width) continue;
+            using var markerPen = new Pen(DrawingColor.Orange) { DashStyle = DashStyle.Dot };
+            g.DrawLine(markerPen, x, Header, x, Height);
+            g.FillPolygon(Brushes.Orange, [new PointF(x - 5, Header - 8), new PointF(x + 5, Header - 8), new PointF(x, Header)]);
+            g.DrawString(marker.Name, Font, Brushes.Orange, x + 4, Header + 2);
+        }
         using var cursor = new Pen(DrawingColor.DeepSkyBlue, 2); g.DrawLine(cursor, X(CursorMs), Header, X(CursorMs), Height);
         using var labelBackground = new SolidBrush(BackColor);
         g.FillRectangle(labelBackground, 0, Header, LabelWidth, Height);
@@ -78,6 +88,8 @@ internal sealed class CinematicTimeline : ScrollableControl
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e); Focus();
+        _dragMarker = e.Y < Header ? Scene.Markers.LastOrDefault(m => Math.Abs(X(m.TimeMs) - e.X) <= 7) : null;
+        if (_dragMarker != null) { Capture = true; MarkerSelected?.Invoke(_dragMarker); Invalidate(); return; }
         _drag = Scene.Clips.LastOrDefault(c => BoundsOf(c, Rows).Contains(e.Location));
         Selected = _drag; SelectionChanged?.Invoke(_drag);
         if (_drag != null)
@@ -90,12 +102,14 @@ internal sealed class CinematicTimeline : ScrollableControl
     }
     protected override void OnMouseMove(MouseEventArgs e)
     {
-        base.OnMouseMove(e); if (_drag == null || !Capture) return;
+        base.OnMouseMove(e);
+        if (_dragMarker != null && Capture) { _dragMarker.TimeMs = TimeAt(e.X); Invalidate(); return; }
+        if (_drag == null || !Capture) return;
         var delta = (int)Math.Round((e.X - _downX) / _pixelsPerSecond * 20) * 50;
         if (_resize) _drag.DurationMs = Math.Clamp(_duration + delta, 50, Math.Max(50, Scene.DurationMs - _drag.StartMs));
         else _drag.StartMs = Math.Clamp(_start + delta, 0, Math.Max(0, Scene.DurationMs - _drag.DurationMs));
         Invalidate();
     }
     protected override void OnMouseUp(MouseEventArgs e)
-    { base.OnMouseUp(e); if (_drag == null) return; Capture = false; _drag = null; Edited?.Invoke(); }
+    { base.OnMouseUp(e); if (_drag == null && _dragMarker == null) return; Capture = false; _drag = null; _dragMarker = null; Edited?.Invoke(); }
 }

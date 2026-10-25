@@ -26,4 +26,13 @@ public sealed class CinematicCameraCommand : EventCommand
     public float Zoom { get; set; } = 1;
     public int DurationMs { get; set; }
     public CinematicEase Ease { get; set; }
+    public bool FollowActor { get; set; }
+    public Guid ActorId { get; set; }
+    public float OffsetX { get; set; }
+    public float OffsetY { get; set; }
+    public bool PresentationOnly { get; set; }
+    public bool HideHud { get; set; }
+    public float Letterbox { get; set; }
+    public float FadeOpacity { get; set; }
+    public float ShakePixels { get; set; }
 }

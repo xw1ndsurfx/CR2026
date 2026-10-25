@@ -30,13 +30,34 @@ public static class CinematicPreview
     public static CinematicCameraPose Camera(CinematicScene scene, int timeMs, CinematicCameraPose initial)
     {
         var pose = initial;
-        foreach (var clip in scene.Clips.Where(c => c.Track == CinematicTrack.Camera).OrderBy(c => c.StartMs))
+        var clips = scene.Clips.Where(c => c.Track == CinematicTrack.Camera).OrderBy(c => c.StartMs).ToList();
+        for (var i = 0; i < clips.Count; i++)
         {
+            var clip = clips[i];
             if (timeMs < clip.StartMs) break;
-            var to = new CinematicCameraPose(clip.X, clip.Y, float.IsFinite(clip.Zoom) ? Math.Clamp(clip.Zoom, .25f, 4f) : 1);
+            var sample = i + 1 < clips.Count ? Math.Min(timeMs, clips[i + 1].StartMs) : timeMs;
+            var target = clip.FollowActor ? scene.Actors.FirstOrDefault(a => a.TargetId == clip.ActorId) : null;
+            var position = target != null ? ActorPosition(scene, target, sample) : (clip.X, clip.Y);
+            var to = new CinematicCameraPose(position.Item1 + clip.OffsetX, position.Item2 + clip.OffsetY,
+                float.IsFinite(clip.Zoom) ? Math.Clamp(clip.Zoom, .25f, 4f) : 1);
             if (timeMs >= clip.StartMs + clip.DurationMs) pose = to;
             else return CinematicInterpolation.Lerp(pose, to, (timeMs - clip.StartMs) / (float)Math.Max(1, clip.DurationMs), clip.Ease);
         }
         return pose;
+    }
+
+    public static (float Letterbox, float FadeOpacity, float ShakePixels, bool HideHud) Presentation(CinematicScene scene, int timeMs)
+    {
+        float letterbox = 0, fade = 0, shake = 0; var hideHud = false;
+        foreach (var clip in scene.Clips.Where(c => c.Track == CinematicTrack.Presentation).OrderBy(c => c.StartMs))
+        {
+            if (timeMs < clip.StartMs) break;
+            var t = CinematicInterpolation.Ease((timeMs - clip.StartMs) / (float)Math.Max(1, clip.DurationMs), clip.Ease);
+            letterbox += (Math.Clamp(clip.Letterbox, 0, .25f) - letterbox) * t;
+            fade += (Math.Clamp(clip.FadeOpacity, 0, 1) - fade) * t;
+            shake += (Math.Clamp(clip.ShakePixels, 0, 32) - shake) * t;
+            hideHud = clip.HideHud;
+        }
+        return (letterbox, fade, shake, hideHud);
     }
 }

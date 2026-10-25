@@ -635,6 +635,7 @@ public static partial class Graphics
                 throw Exceptions.UnreachableInvalidEnum(gameState);
         }
 
+        if (gameState == GameStates.InGame) Cinematics.CinematicCamera.DrawPresentation();
         renderer.Scale = Globals.Database.UIScale;
 
         Interface.Interface.DrawGui(deltaTime, totalTime);

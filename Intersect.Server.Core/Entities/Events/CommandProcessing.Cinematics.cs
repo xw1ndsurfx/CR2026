@@ -50,11 +50,34 @@ public static partial class CommandProcessing
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
         if (command.Reset) { instance.FinishCinematic(); return; }
+        if (command.PresentationOnly)
+        {
+            if (!instance.CinematicActive || command.MapId != player.MapId ||
+                command.DurationMs is < 0 or > CinematicCompiler.MaximumDurationMs || !Enum.IsDefined(command.Ease) ||
+                !float.IsFinite(command.Letterbox) || command.Letterbox is < 0 or > .25f ||
+                !float.IsFinite(command.FadeOpacity) || command.FadeOpacity is < 0 or > 1 ||
+                !float.IsFinite(command.ShakePixels) || command.ShakePixels is < 0 or > 32) return;
+            player.SendPacket(new CinematicCameraPacket { EventId = instance.Descriptor.Id, MapId = command.MapId,
+                PresentationOnly = true, DurationMs = command.DurationMs, Ease = command.Ease, HideHud = command.HideHud,
+                Letterbox = command.Letterbox, FadeOpacity = command.FadeOpacity, ShakePixels = command.ShakePixels });
+            return;
+        }
         if (!instance.CinematicActive || command.MapId != player.MapId ||
             !float.IsFinite(command.X) || !float.IsFinite(command.Y) || !float.IsFinite(command.Zoom) ||
             command.X < 0 || command.Y < 0 || command.X >= Options.Instance.Map.MapWidth || command.Y >= Options.Instance.Map.MapHeight ||
-            command.Zoom is < .25f or > 4f || command.DurationMs is < 0 or > CinematicCompiler.MaximumDurationMs) return;
+            command.Zoom is < .25f or > 4f || command.DurationMs is < 0 or > CinematicCompiler.MaximumDurationMs ||
+            !Enum.IsDefined(command.Ease) || !float.IsFinite(command.OffsetX) || !float.IsFinite(command.OffsetY) ||
+            Math.Abs(command.OffsetX) > Options.Instance.Map.MapWidth || Math.Abs(command.OffsetY) > Options.Instance.Map.MapHeight) return;
+        var targetId = player.Id;
+        if (command.FollowActor && command.ActorId != Guid.Empty)
+        {
+            var actor = player.EventLookup.Values.FirstOrDefault(e => e.Descriptor.Id == command.ActorId && !e.Global &&
+                e.MapId == player.MapId && e.PageInstance is { GlobalClone: null });
+            if (actor?.PageInstance is not { } page) return;
+            targetId = page.Id;
+        }
         player.SendPacket(new CinematicCameraPacket { EventId = instance.Descriptor.Id, MapId = command.MapId,
-            X = command.X, Y = command.Y, Zoom = command.Zoom, DurationMs = command.DurationMs, Ease = command.Ease });
+            X = command.X, Y = command.Y, Zoom = command.Zoom, DurationMs = command.DurationMs, Ease = command.Ease,
+            FollowActor = command.FollowActor, FollowEntityId = targetId, OffsetX = command.OffsetX, OffsetY = command.OffsetY });
     }
 }

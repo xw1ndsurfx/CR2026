@@ -47,6 +47,8 @@ public static partial class Graphics
         foreach (var clip in scene.Clips.Where(c => c.Track == CinematicTrack.Animation && c.StartMs <= _cinematicPreviewTime))
         {
             if (AnimationDescriptor.Get(clip.ResourceId) is not { } animation) continue;
+            var actor = clip.AttachToActor ? scene.Actors.FirstOrDefault(a => a.TargetId == clip.ActorId) : null;
+            var position = actor != null ? CinematicPreview.ActorPosition(scene, actor, _cinematicPreviewTime) : ((float)clip.X, (float)clip.Y);
             foreach (var layer in new[] { animation.Lower, animation.Upper })
             {
                 if (layer.FrameSpeed <= 0 || layer.FrameCount <= 0 || layer.XFrames <= 0 || layer.YFrames <= 0) continue;
@@ -58,8 +60,8 @@ public static partial class Graphics
                 var width = texture.Width / layer.XFrames; var height = texture.Height / layer.YFrames;
                 var scale = Math.Clamp(layer.ScalePercent, 1, 1000) / 100f;
                 DrawTexture(texture, new RectangleF(frame % layer.XFrames * width, frame / layer.XFrames * height, width, height),
-                    new RectangleF((clip.X + .5f) * Options.Instance.Map.TileWidth + layer.OffsetX - width * scale / 2,
-                        (clip.Y + .5f) * Options.Instance.Map.TileHeight + layer.OffsetY - height * scale / 2, width * scale, height * scale),
+                    new RectangleF((position.Item1 + .5f) * Options.Instance.Map.TileWidth + layer.OffsetX + (actor != null ? clip.AnimationOffsetX : 0) - width * scale / 2,
+                        (position.Item2 + .5f) * Options.Instance.Map.TileHeight + layer.OffsetY + (actor != null ? clip.AnimationOffsetY : 0) - height * scale / 2, width * scale, height * scale),
                     System.Drawing.Color.FromArgb(layer.Opacity, 255, 255, 255), target, Microsoft.Xna.Framework.Graphics.BlendState.NonPremultiplied);
             }
         }

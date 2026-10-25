@@ -1050,7 +1050,7 @@ public static partial class CommandProcessing
             {
                 foreach (var evt in player.EventLookup)
                 {
-                    if (evt.Value.MapId != instance.MapId)
+                    if (evt.Value.MapId != (command.TargetMapId != Guid.Empty ? command.TargetMapId : instance.MapId))
                     {
                         continue;
                     }
@@ -1064,6 +1064,7 @@ public static partial class CommandProcessing
                 }
             }
 
+            if (command.TargetMapId != Guid.Empty && command.EntityId != Guid.Empty && ReferenceEquals(targetEntity, player)) return;
             if (targetEntity != null)
             {
                 if (command.X == 0 && command.Y == 0 && command.Dir == 0)

@@ -54,6 +54,10 @@ internal sealed class FrmCinematicDirector : DarkForm
         Button("Stop", () => { _playing = false; _previewBarriers.Clear(); SetCursor(0); });
         Button("Step", () => SetCursor(Math.Min(_scene.DurationMs, _timeline.CursorMs + 50)));
         Button("Test", TestInGame);
+        Button("Templates", ChooseTemplate);
+        Button("ShotPreset", ChooseShotPreset);
+        Button("Marker", () => { var marker = new CinematicMarker { Name = T("Marker"), TimeMs = _timeline.CursorMs };
+            _scene.Markers.Add(marker); SelectObject(marker); CommitEdit(); });
         var left = new SplitContainer { Size = new(1400, 780), Dock = DockStyle.Fill, SplitterDistance = 230, FixedPanel = FixedPanel.Panel1 };
         var middle = new SplitContainer { Size = new(1170, 780), Dock = DockStyle.Fill, Orientation = Orientation.Horizontal, SplitterDistance = 460 };
         var right = new SplitContainer { Size = new(1170, 460), Dock = DockStyle.Fill, SplitterDistance = 850, FixedPanel = FixedPanel.Panel2 };
@@ -85,6 +89,7 @@ internal sealed class FrmCinematicDirector : DarkForm
         right.Panel2.Controls.Add(new Label { Text = T("Inspector"), Dock = DockStyle.Top, Height = 25 });
         var propertyActions = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 75, AutoScroll = true };
         propertyActions.Controls.Add(MakeButton("Resources", ChooseResource)); propertyActions.Controls.Add(MakeButton("Duplicate", Duplicate));
+        propertyActions.Controls.Add(MakeButton("ActorTarget", ChooseActorTarget));
         propertyActions.Controls.Add(MakeButton("Delete", Delete)); right.Panel2.Controls.Add(propertyActions);
         middle.Panel2.Controls.Add(_timeline);
         middle.Panel2.Controls.Add(new Label { Text = T("Timeline"), Dock = DockStyle.Top, Height = 26 });
@@ -107,6 +112,7 @@ internal sealed class FrmCinematicDirector : DarkForm
         };
         _timeline.SelectionChanged += clip => { _viewport.Selected = clip; SelectObject(clip ?? (object)_scene); RefreshPoints(); _viewport.Invalidate(); };
         _timeline.Edited += CommitEdit;
+        _timeline.MarkerSelected += marker => { _timeline.Selected = _viewport.Selected = null; SelectObject(marker); };
         _timeline.Scrubbed += time => { _playing = false; SetCursor(time); };
         _viewport.Edited += () => { CommitEdit(); RefreshPoints(); RenderMap(); };
         _viewport.PointSelected += point => { if (point != null) { SelectObject(point); _points.SelectedItem = point; } };
@@ -174,6 +180,7 @@ internal sealed class FrmCinematicDirector : DarkForm
         var current = sequence.Nodes.Add(_scene.Name); current.Tag = _scene;
         foreach (var actor in _scene.Actors) { var node = current.Nodes.Add(actor.Name); node.Tag = actor; }
         foreach (var clip in _scene.Clips.OrderBy(c => c.StartMs)) { var node = current.Nodes.Add($"{clip.StartMs / 1000f:0.##}s · {clip}"); node.Tag = clip; }
+        foreach (var marker in _scene.Markers.OrderBy(m => m.TimeMs)) { var node = current.Nodes.Add($"{marker.TimeMs / 1000f:0.##}s · {marker.Name}"); node.Tag = marker; }
         if (Globals.CurrentMap is { } map)
             foreach (var evt in map.LocalEvents.Values.Where(e => e.Pages.FirstOrDefault()?.Cinematic != null && e.Id != _eventId))
             { var node = _explorer.Nodes.Add(evt.Name); node.Tag = evt; }
@@ -199,6 +206,22 @@ internal sealed class FrmCinematicDirector : DarkForm
         var actor = new CinematicActor { Name = picked.Name, TargetId = picked.Id, StartX = evt?.SpawnX ?? 0, StartY = evt?.SpawnY ?? 0 };
         _scene.Actors.Add(actor); SelectObject(actor); CommitEdit();
     }
+    private void ChooseTemplate()
+    {
+        if (Globals.CurrentMap is not { } map || !CanDiscard()) return;
+        var kinds = Enum.GetValues<CinematicTemplateKind>();
+        if (Pick(kinds.Select((kind, i) => new Resource(new Guid(i + 1, 0, 0, new byte[8]), T("Template" + kind)))) is not { } selected) return;
+        var chosenKind = kinds.Single(k => T("Template" + k) == selected.Name);
+        LoadScene(CinematicTemplates.Create(chosenKind, map.Id, Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight, T), Guid.Empty);
+    }
+    private void ChooseShotPreset()
+    {
+        if (_timeline.Selected is not { Track: CinematicTrack.Camera } clip) return;
+        var kinds = Enum.GetValues<CinematicShotPreset>();
+        if (Pick(kinds.Select((kind, i) => new Resource(new Guid(i + 1, 0, 0, new byte[8]), T(kind.ToString())))) is not { } selected) return;
+        CinematicTemplates.ApplyShot(clip, kinds.Single(k => T(k.ToString()) == selected.Name));
+        CommitEdit(); RenderMap();
+    }
     private void AddClip(CinematicTrack track)
     {
         var selectedActor = _selection as CinematicActor ?? _scene.Actors.FirstOrDefault();
@@ -220,7 +243,7 @@ internal sealed class FrmCinematicDirector : DarkForm
             SelectObject(actor); return;
         }
         if (_timeline.Selected is not { } clip) return;
-        if (clip.Track == CinematicTrack.Movement)
+        if (clip.Track == CinematicTrack.Movement || clip.Track == CinematicTrack.Camera && clip.FollowActor)
         {
             if (Pick(_scene.Actors.Select(a => new Resource(a.TargetId, a.Name))) is { } chosen)
             { clip.ActorId = chosen.Id; CommitEdit(); }
@@ -249,8 +272,17 @@ internal sealed class FrmCinematicDirector : DarkForm
         else clip.ResourceId = picked.Id;
         CommitEdit();
     }
+    private void ChooseActorTarget()
+    {
+        if (_timeline.Selected is not { } clip || clip.Track is not (CinematicTrack.Camera or CinematicTrack.Movement or CinematicTrack.Animation)) return;
+        if (Pick(_scene.Actors.Select(a => new Resource(a.TargetId, a.Name))) is not { } selected) return;
+        clip.ActorId = selected.Id; CommitEdit(); RenderMap();
+    }
     private void Duplicate()
     {
+        if (_selection is CinematicMarker marker)
+        { var markerCopy = new CinematicMarker { Name = marker.Name, TimeMs = Math.Min(_scene.DurationMs, marker.TimeMs + 1000) };
+            _scene.Markers.Add(markerCopy); SelectObject(markerCopy); CommitEdit(); return; }
         if (_timeline.Selected is not { } clip) return;
         var copy = JsonConvert.DeserializeObject<CinematicClip>(JsonConvert.SerializeObject(clip))!; copy.Id = Guid.NewGuid();
         copy.StartMs = Math.Min(clip.StartMs + clip.DurationMs, Math.Max(0, _scene.DurationMs - clip.DurationMs));
@@ -258,7 +290,8 @@ internal sealed class FrmCinematicDirector : DarkForm
     }
     private void Delete()
     {
-        if (_selection is CinematicActor actor)
+        if (_selection is CinematicMarker marker) _scene.Markers.Remove(marker);
+        else if (_selection is CinematicActor actor)
         { _scene.Actors.Remove(actor); _scene.Clips.RemoveAll(c => c.Track == CinematicTrack.Movement && c.ActorId == actor.TargetId); }
         else if (_timeline.Selected is { } clip) _scene.Clips.Remove(clip);
         _timeline.Selected = _viewport.Selected = null; SelectObject(_scene); CommitEdit(); RefreshPoints();
@@ -306,7 +339,7 @@ internal sealed class FrmCinematicDirector : DarkForm
         {
             if (new FileInfo(dialog.FileName).Length > 2 * 1024 * 1024) throw new InvalidOperationException("scene-size");
             var scene = JsonConvert.DeserializeObject<CinematicScene>(File.ReadAllText(dialog.FileName), new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None, MaxDepth = 32 });
-            if (scene == null || scene.Clips == null || scene.Actors == null || scene.Clips.Count > 512 || scene.Actors.Count > 64 || scene.Clips.Any(c => c == null || c.Points == null) || scene.Actors.Any(a => a == null))
+            if (scene == null || scene.Clips == null || scene.Actors == null || scene.Markers == null || scene.Markers.Count > 128 || scene.Markers.Any(m => m == null) || scene.Clips.Count > 512 || scene.Actors.Count > 64 || scene.Clips.Any(c => c == null || c.Points == null) || scene.Actors.Any(a => a == null))
                 throw new InvalidOperationException("scene-size");
             LoadScene(scene, Guid.Empty);
         }
