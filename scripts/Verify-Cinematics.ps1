@@ -1,9 +1,10 @@
-param([ValidateSet('Debug', 'Release')][string]$Configuration = 'Debug')
+param([ValidateSet('Debug', 'Release')][string]$Configuration = 'Debug', [switch]$SkipAnalyzers)
 $ErrorActionPreference = 'Stop'
 $cinematicRepo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 Push-Location $cinematicRepo
 try {
     function Invoke-CinematicCheck([string[]]$Arguments) {
+        if ($SkipAnalyzers) { $Arguments += '-p:RunAnalyzers=false' }
         & dotnet @Arguments
         if ($LASTEXITCODE -ne 0) { throw "Cinematic verification failed: dotnet $($Arguments -join ' ')" }
     }
@@ -18,7 +19,13 @@ try {
     }
     Invoke-CinematicCheck -Arguments @('test', 'Intersect.Tests/Intersect.Tests.csproj', '-c', $Configuration,
         '--filter', 'FullyQualifiedName~CinematicCompilerTests', '--logger', 'trx', '-m:1')
+    Invoke-CinematicCheck -Arguments @('test', 'Intersect.Tests.Server/Intersect.Tests.Server.csproj', '-c', $Configuration,
+        '--filter', 'FullyQualifiedName~CinematicActorTests', '--logger', 'trx', '-m:1',
+        "-p:NetworkHandshakePublicKey=$cinematicPublicKey", "-p:NetworkHandshakePrivateKey=$cinematicPrivateKey")
+    Invoke-CinematicCheck -Arguments @('test', 'Intersect.Tests.Client/Intersect.Tests.Client.csproj', '-c', $Configuration,
+        '--filter', 'FullyQualifiedName~NavalPerspectiveTests|FullyQualifiedName~NavalHelmRegressionTests', '--logger', 'trx', '-m:1',
+        "-p:NetworkHandshakePublicKey=$cinematicPublicKey", "-p:NetworkHandshakePrivateKey=$cinematicPrivateKey")
     Invoke-CinematicCheck -Arguments @('run', '--project', 'Utilities/CinematicEditorSmoke/CinematicEditorSmoke.csproj', '-c', $Configuration,
-        "-p:NetworkHandshakePublicKey=$cinematicPublicKey")
+        "-p:NetworkHandshakePublicKey=$cinematicPublicKey", "-p:NetworkHandshakePrivateKey=$cinematicPrivateKey")
 }
 finally { Pop-Location }

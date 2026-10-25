@@ -4,6 +4,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <SelfContained>true</SelfContained>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <AssemblyName>CinematicEditorSmoke</AssemblyName>
   </PropertyGroup>
   <ItemGroup>

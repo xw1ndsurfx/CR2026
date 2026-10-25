@@ -31,10 +31,12 @@ Le temps affiché après un dialogue, choix, événement commun ou attente de fi
 * Les scènes sont locales à une carte chargée. Les acteurs doivent partir des cases prévues. Les cases bloquées sont refusées à l’enregistrement ; collisions dynamiques, vitesses, délais et traversées de carte restent ceux du serveur. Un trajet bloqué finit par annuler la scène avec nettoyage, plutôt que retenir indéfiniment le joueur.
 * Le cadrage est temporaire, envoyé seulement au joueur concerné et ne modifie pas son zoom enregistré. Fin, libération native, changement de carte, interruption et délais de sécurité rétablissent le cadrage. La scène ne masque pas le HUD dans cette étape.
 * Les scènes ne disposent pas encore d’un système de skip, de reprise persistante de timeline, de synchronisation de groupe, d’acteurs temporaires, de formation navale/terrestre ou de cinématique de canon en perspective. Ne pas utiliser cette branche comme promesse de ces fonctions. Les choix, variables, conditions et récompenses restent gérés par les systèmes serveur existants ; aucune récompense n’est accordée par une déclaration de fin du client.
-* Les modèles de production et les démonstrations « L’Héritage d’Alector » devront être construits avec les vraies cartes, personnages et animations du jeu. Le dépôt ne contient pas la base de contenu jouable ni les voix complètes permettant de les fabriquer fidèlement. Aucun lore permanent ni nom royal définitif n’a été ajouté.
+* Les modèles de production et les démonstrations « L’Héritage d’Alector » restent à construire avec les cartes, personnages et animations choisis par l’équipe. La base jouable et les ressources audio sont externes au dépôt ; les copies locales de validation ne sont pas distribuées dans cette branche. Aucun lore permanent ni nom royal définitif n’a été ajouté.
 
 ## Vérification reproductible
 
 Exécuter `scripts/Verify-Cinematics.ps1` sur Windows avec le SDK .NET et les sous-modules initialisés. Le script compile les projets, lance les tests ciblés puis un test WinForms caché qui vérifie l’agencement et les entrées souris de la timeline/du viewport. Son éventuelle image est une **fixture synthétique d’interface**, pas une capture du jeu connecté.
 
 Avant publication, effectuer aussi le parcours connecté décrit dans `Validation.md`. Une compilation et des tests unitaires ne remplacent pas ce test moteur/GPU/multijoueur.
+
+Le test GPU optionnel utilise un export natif produit par `scripts/Export-CinematicMapFixture.py`, puis le mode `--native-map` de `CinematicEditorSmoke`. Il rend les tuiles et Events à partir des données de carte et des textures existantes, sans utiliser le cache d’images. Voir `Validation.md` pour les entrées et limites.

@@ -1943,8 +1943,14 @@ public static partial class Graphics
         sFogUpdateTime = Timing.Global.MillisecondsUtc;
 
         // Calculate the number of times the fog texture needs to be drawn to cover the map area.
-        var xCount = Globals.MapEditorWindow.picMap.Width * Options.Instance.Map.TileWidth / fogTex.Width;
-        var yCount = Globals.MapEditorWindow.picMap.Height * Options.Instance.Map.TileHeight / fogTex.Height;
+        // Offscreen cinematic/map renders have their own pixel bounds; they must
+        // also work while the docked map editor is closed or a different size.
+        var xCount = target != null
+            ? (int)Math.Ceiling((target.Width + Options.Instance.Map.MapWidth * Options.Instance.Map.TileWidth) / (double)fogTex.Width) + 1
+            : Globals.MapEditorWindow.picMap.Width * Options.Instance.Map.TileWidth / fogTex.Width;
+        var yCount = target != null
+            ? (int)Math.Ceiling((target.Height + Options.Instance.Map.MapHeight * Options.Instance.Map.TileHeight) / (double)fogTex.Height) + 1
+            : Globals.MapEditorWindow.picMap.Height * Options.Instance.Map.TileHeight / fogTex.Height;
 
         // Update the fog texture's position based on its speed and elapsed time.
         sFogCurrentX += elapsedTime / 1000f * currentMap.FogXSpeed * 2;

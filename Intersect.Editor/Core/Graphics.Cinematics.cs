@@ -17,11 +17,17 @@ public static partial class Graphics
             if (Globals.CurrentMap?.Id != scene.MapId) throw new InvalidOperationException("scene-map");
             EndSpriteBatch();
             var target = sCurrentTarget;
+            var previousView = CurrentView;
             var hideEvents = Database.GridHideEvents;
             Database.GridHideEvents = false;
+            // Native tile culling and overlays use CurrentView. Render the whole
+            // map independently of the docked editor's scroll, zoom and size.
+            CurrentView = new System.Drawing.Rectangle(0, 0,
+                Options.Instance.Map.MapWidth * Options.Instance.Map.TileWidth,
+                Options.Instance.Map.MapHeight * Options.Instance.Map.TileHeight);
             _cinematicPreview = scene; _cinematicPreviewTime = timeMs;
             try { return ScreenShotMap(); }
-            finally { EndSpriteBatch(); _cinematicPreview = null; Database.GridHideEvents = hideEvents; SetRenderTarget(target); }
+            finally { EndSpriteBatch(); _cinematicPreview = null; Database.GridHideEvents = hideEvents; CurrentView = previousView; SetRenderTarget(target); }
         }
     }
 

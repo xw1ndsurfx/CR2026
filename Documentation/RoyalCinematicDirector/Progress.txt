@@ -1,20 +1,21 @@
-POINT DE REPRISE — Royal Cinematic Director — 2026-10-24
-Dépôt local : CR2026 (dans le dossier de cette conversation).
+Royal Cinematic Director — état de la première étape — 2026-10-24
 Branche : feature/royal-cinematic-director ; base main a0aaf4efc3c7552fd086787c9b3beeb913e774a7.
-Le travail local nécessite que cet ordinateur soit allumé. Reprendre dans cette conversation.
 
-Réalisé : références image et cahier des charges conservées ; modèle et compilation vers Events/Move Routes natifs ; caméra client et cycle serveur ; éditeur sur rendu de vraie carte avec trajectoires souris, timeline, dialogues/choix interactifs et audio existant ; documentation en/fr ; aucun service audio externe.
-Vérifié : 21 tests cinématiques et 48 tests navals réussis. Builds Editor, Client et Server réussis à un stade antérieur ; dernier Server complet réussi. Les tests et journaux sont dans work/ à côté du dépôt.
-Limites : aucune validation connectée en jeu/multijoueur ; accès interface du serveur et automatisation locale indisponibles. Ne pas présenter la prévisualisation synthétique du test UI comme une vraie scène en jeu. Aucune installation de production modifiée.
+Implémenté : éditeur intégré au Hub et aux menus ; rendu de la vraie carte par MonoGame ; trajectoires cardinales à la souris ; points éditables ; clips caméra avec zoom/interpolation ; timeline multi-pistes ; dialogues, choix natifs et événements communs avec contrôle joueur optionnel ; animations et audio existants ; source sauvegardé avec la page Event ; compilation vers les commandes natives ; appel depuis Events/événements de quêtes ; protections de cycle de vie côté serveur et caméra limitée au destinataire.
 
-À reprendre avant PR :
-1. Corriger le projet Utilities/CinematicEditorSmoke : SelfContained ajouté, mais RuntimeIdentifiers hérités incluent Linux/macOS incompatibles WinForms (NETSDK1082). Limiter à win-x64 puis exécuter et inspecter le test UI.
-2. Recompiler le dernier changement client de nettoyage caméra à la déconnexion avec les chemins de clés Debug explicites ; dernière tentative échoue uniquement sur la clé publique recherchée dans Release (CS1566). Voir scripts/Verify-Cinematics.ps1.
-3. Vérifier/fixer le mouvement aléatoire des acteurs entre BeginCinematic et leur premier clip : sauvegarder puis figer leur mouvement natif, restaurer en fin. Inspecter EventMovementType et EventPageInstance avant modification.
-4. Refaire diff/checks ciblés, tester en conditions réelles avec la base de jeu fournie, documenter honnêtement les limites.
-5. Pousser la branche et créer une PR draft vers main sans fusion. Aucun push/PR confirmé à ce point de reprise.
+Vérifications réussies :
+- Compilation Debug Editor, Client et Server ; chemins explicites des clés réseau Debug.
+- 21 tests de compilation, compatibilité, sérialisation et ordonnancement des cinématiques.
+- 3 tests serveur de réservation/restauration du mouvement des acteurs.
+- 48 régressions client de perspective et commandes navales.
+- Test WinForms : construction, hiérarchie/inspecteur, disposition, déplacement/redimensionnement timeline, ajout de points souris ; couverture en/fr/es et repli anglais.
+- Test GPU sur Polonya Port (027e3bf8-497e-42ff-b8a8-e766792dcd7b), export de données natives et textures existantes : tuiles, 2 Events et brouillard ; présence des textures référencées et du terrain ; cadrage complet indépendant de la vue de l'éditeur ; restauration de cette vue ; sérialisation de la scène. 2589 couleurs échantillonnées dans le rendu final.
+- Démarrage d'un serveur local séparé avec une copie de la base de contenu : 80 cartes, 300 Events, 0 comptes, 0 personnages. Aucun changement sur le serveur hébergé ni dans l'installation originale.
 
-Installation réelle : C:\Users\Nicolas\OneDrive - Logiklik\[Studio Logiklik]\[JEUX]\[CORPS ROYAUX CHAPTER 2]\[ENGINE]\[CURRENT CLIENT & EDITOR]
-Serveur : https://panel.freemmorpgmaker.com/server/9b99d532
-Les ressources audio réelles ont été repérées. Le cache mapcache.db contient des images, pas la géométrie de carte.
-Fonctionnalités futures non terminées : scènes navales avancées, grandes batailles, règles de progression saga/chapitres, saut/reprise et synchronisation collective.
+Les vérifications locales utilisaient RunAnalyzers=false. Des avertissements existants de compilation et de dépendances restent présents ; aucune affirmation de build sans avertissement ou de passage complet des analyseurs.
+
+Non validé : parcours client connecté de bout en bout, réponses interactives et reprise réelle, quêtes/récompenses persistées, collisions dynamiques, déconnexion en cours de dialogue, contrôle simultané de plusieurs joueurs et performance en session prolongée. Voir Validation.md avant publication. Le test GPU n'est pas une preuve d'exécution en jeu.
+
+Hors de cette première étape : suivi naval, formations/canons cinématiques, grandes batailles, acteurs temporaires, synchronisation collective, skip/reprise persistante, masquage du HUD, modèles de production et règles de déblocage saga/chapitres. Saga/chapitre/séquence sont actuellement des métadonnées d'organisation.
+
+Les références originales sont dans References/. Les bases de test, exports de cartes, ressources graphiques/audio et comptes ne sont pas ajoutés au dépôt. Les voix et sons actuels sont réutilisés ; aucun Inworld, doublage IA ou service payant ajouté. La branche doit être proposée en PR draft vers main, sans fusion automatique et avec les limites ci-dessus.

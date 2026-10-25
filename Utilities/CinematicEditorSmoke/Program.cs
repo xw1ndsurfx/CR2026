@@ -21,6 +21,7 @@ internal static class Program
     {
         try
         {
+            if (args.FirstOrDefault() == "--native-map") return NativeMapSmoke.Run(args[1], args[2]);
             Intersect.Options.LoadFromServer("{}");
             var assembly = typeof(Intersect.Editor.Forms.FrmMain).Assembly;
             using (var textStream = assembly.GetManifestResourceStream("Cinematics.Texts.json")!)
@@ -37,6 +38,13 @@ internal static class Program
             using var form = (Form)Activator.CreateInstance(assembly.GetType("Intersect.Editor.Forms.Cinematics.FrmCinematicDirector")!, true)!;
             form.Text += " — SYNTHETIC UI TEST";
             form.ClientSize = new(1400, 900);
+            // WinForms omits invisible child controls from DrawToBitmap. Realize the
+            // form outside the desktop, then stop its game-dependent preview timer.
+            form.ShowInTaskbar = false;
+            form.StartPosition = FormStartPosition.Manual;
+            form.Location = new(-20000, -20000);
+            form.Show();
+            ((System.Windows.Forms.Timer)Field(form, "_timer")).Stop();
             var scene = new CinematicScene { Name = "UI fixture", Saga = "QA", Chapter = "Layout", Sequence = "Input", MapId = Guid.NewGuid() };
             scene.Actors.Add(new() { Name = "Player", StartX = 2, StartY = 3 });
             var movement = new CinematicClip { Track = CinematicTrack.Movement, Name = "Path fixture", StartMs = 2000, DurationMs = 1500,
@@ -59,12 +67,19 @@ internal static class Program
                 graphics.DrawString("SYNTHETIC LAYOUT FIXTURE", System.Drawing.SystemFonts.DefaultFont, System.Drawing.Brushes.White, 20, 20);
             }
             Set(viewport, "MapImage", fixture);
+            form.GetType().GetMethod("RefreshTree", Flags)!.Invoke(form, null);
+            form.GetType().GetMethod("SelectObject", Flags)!.Invoke(form, [movement]);
+            form.GetType().GetMethod("RefreshPoints", Flags)!.Invoke(form, null);
+            Set(timeline, "Selected", movement);
             form.CreateControl(); form.PerformLayout();
             using var screenshot = new System.Drawing.Bitmap(form.Width, form.Height);
             form.DrawToBitmap(screenshot, new DrawingRectangle(0, 0, form.Width, form.Height));
             if (args.Length > 0) screenshot.Save(Path.GetFullPath(args[0]), System.Drawing.Imaging.ImageFormat.Png);
             Require(viewport.Width >= 300 && viewport.Height >= 200, "Viewport collapsed.");
             Require(timeline.Height >= 150 && timeline.Width >= 600, "Timeline collapsed.");
+            Require(((TreeView)Field(form, "_explorer")).Nodes.Count > 0 &&
+                ((PropertyGrid)Field(form, "_properties")).SelectedObject != null,
+                "Scene hierarchy or selected-clip inspector did not populate.");
             Mouse(timeline, "OnMouseDown", 330, 80); Mouse(timeline, "OnMouseMove", 410, 80); Mouse(timeline, "OnMouseUp", 410, 80);
             Require(movement.StartMs == 3000, "Timeline drag did not move the clip by one second.");
             Mouse(timeline, "OnMouseDown", 518, 80); Mouse(timeline, "OnMouseMove", 558, 80); Mouse(timeline, "OnMouseUp", 558, 80);
