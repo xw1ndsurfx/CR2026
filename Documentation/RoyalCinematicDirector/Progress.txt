@@ -19,3 +19,6 @@ Non validé : parcours client connecté de bout en bout, réponses interactives 
 Hors de cette première étape : suivi naval, formations/canons cinématiques, grandes batailles, acteurs temporaires, synchronisation collective, skip/reprise persistante, masquage du HUD, modèles de production et règles de déblocage saga/chapitres. Saga/chapitre/séquence sont actuellement des métadonnées d'organisation.
 
 Les références originales sont dans References/. Les bases de test, exports de cartes, ressources graphiques/audio et comptes ne sont pas ajoutés au dépôt. Les voix et sons actuels sont réutilisés ; aucun Inworld, doublage IA ou service payant ajouté. La branche doit être proposée en PR draft vers main, sans fusion automatique et avec les limites ci-dessus.
+
+Étape interactive locale (2026-10-24) : scène QA générée et installée uniquement dans une copie marquée ; 17 tests serveur cinématiques réussis (86 tests ciblés cumulés avec compilation et naval). Deux régressions de saut natif vers une étiquette reproduites puis corrigées. Voir Interactive-QA.fr.md. Les 46 contrôles GitHub de 96abb1d93 ont réussi. Le client de test échoue avant la connexion sur son contexte OpenGL actuel ; le parcours connecté reste non validé.
+

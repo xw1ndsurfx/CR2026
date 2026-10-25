@@ -20,7 +20,7 @@ try {
     Invoke-CinematicCheck -Arguments @('test', 'Intersect.Tests/Intersect.Tests.csproj', '-c', $Configuration,
         '--filter', 'FullyQualifiedName~CinematicCompilerTests', '--logger', 'trx', '-m:1')
     Invoke-CinematicCheck -Arguments @('test', 'Intersect.Tests.Server/Intersect.Tests.Server.csproj', '-c', $Configuration,
-        '--filter', 'FullyQualifiedName~CinematicActorTests', '--logger', 'trx', '-m:1',
+        '--filter', 'FullyQualifiedName~Cinematic', '--logger', 'trx', '-m:1',
         "-p:NetworkHandshakePublicKey=$cinematicPublicKey", "-p:NetworkHandshakePrivateKey=$cinematicPrivateKey")
     Invoke-CinematicCheck -Arguments @('test', 'Intersect.Tests.Client/Intersect.Tests.Client.csproj', '-c', $Configuration,
         '--filter', 'FullyQualifiedName~NavalPerspectiveTests|FullyQualifiedName~NavalHelmRegressionTests', '--logger', 'trx', '-m:1',

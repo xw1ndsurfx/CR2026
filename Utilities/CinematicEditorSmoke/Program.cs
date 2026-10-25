@@ -22,6 +22,7 @@ internal static class Program
         try
         {
             if (args.FirstOrDefault() == "--native-map") return NativeMapSmoke.Run(args[1], args[2]);
+            if (args.FirstOrDefault() == "--interactive-scenario") return InteractiveScenario.Export(args[1], args[2]);
             Intersect.Options.LoadFromServer("{}");
             var assembly = typeof(Intersect.Editor.Forms.FrmMain).Assembly;
             using (var textStream = assembly.GetManifestResourceStream("Cinematics.Texts.json")!)
