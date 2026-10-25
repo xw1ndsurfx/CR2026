@@ -54,7 +54,8 @@ public static class CinematicCompiler
         Func<int, int, bool>? blocked = null, Func<Guid, bool>? validActor = null,
         Func<Guid, bool>? validAnimation = null, Func<Guid, bool>? validEvent = null,
         Func<string, bool, bool>? validAudio = null, Func<Guid, bool>? validNpc = null,
-        Func<Guid,bool>? validBoolean = null, Func<Guid,bool>? validQuest = null, Func<Guid,Guid,bool,bool>? validQuestTask = null)
+        Func<Guid,bool>? validBoolean = null, Func<Guid,bool>? validQuest = null, Func<Guid,Guid,bool,bool>? validQuestTask = null,
+        Func<string,bool>? validFog = null)
     {
         void Require(bool valid, string error) { if (!valid) throw new InvalidOperationException(error); }
         Require(scene != null && scene.Actors != null && scene.Clips != null && scene.Markers != null, "scene-data");
@@ -96,6 +97,11 @@ public static class CinematicCompiler
             void Add(EventCommand command, int? time = null, int priority = 1) => scheduled.Add((time ?? clip.StartMs, priority, order++, command));
             switch (clip.Track)
             {
+                case CinematicTrack.Environment:
+                    Require(clip.RestoreEnvironment || clip.EnvironmentSettings?.Valid() == true,"environment-range");
+                    Require(clip.RestoreEnvironment || clip.EnvironmentSettings!.FogFile.Length == 0 || validFog?.Invoke(clip.EnvironmentSettings.FogFile) != false,"fog-unavailable");
+                    Add(new CinematicEnvironmentCommand { RestoreEnvironment=clip.RestoreEnvironment, EnvironmentSettings=clip.EnvironmentSettings! });
+                    break;
                 case CinematicTrack.Condition:
                     CinematicWorkflow.RequireResources(clip.ConditionKind,clip.VariableId,clip.QuestId,clip.TaskId,validBoolean,validQuest,validQuestTask);
                     Require(clip.ConditionTimeoutMs is >= 100 and <= MaximumDurationMs,"condition-timeout");

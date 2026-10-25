@@ -1865,20 +1865,24 @@ public static partial class Graphics
         }
 
         DrawCinematicAnimations(sScreenShotRenderTexture);
-        if (!Database.GridHideFog)
+        if (PreviewEnvironment != null) DrawCinematicEnvironment(sScreenShotRenderTexture);
+        else
         {
-            DrawFog(sScreenShotRenderTexture);
-        }
+            if (!Database.GridHideFog)
+            {
+                DrawFog(sScreenShotRenderTexture);
+            }
 
-        if (!Database.GridHideOverlay)
-        {
-            DrawMapOverlay(sScreenShotRenderTexture);
-        }
+            if (!Database.GridHideOverlay)
+            {
+                DrawMapOverlay(sScreenShotRenderTexture);
+            }
 
-        if (!Database.GridHideDarkness || Globals.CurrentLayer == LayerOptions.Lights)
-        {
-            ClearDarknessTexture(sScreenShotRenderTexture, true);
-            OverlayDarkness(sScreenShotRenderTexture, true);
+            if (!Database.GridHideDarkness || Globals.CurrentLayer == LayerOptions.Lights)
+            {
+                ClearDarknessTexture(sScreenShotRenderTexture, true);
+                OverlayDarkness(sScreenShotRenderTexture, true);
+            }
         }
 
         EndSpriteBatch();
@@ -1922,11 +1926,11 @@ public static partial class Graphics
     /// <summary>
     /// Draws the fog over the map editor view.
     /// </summary>
-    private static void DrawFog(RenderTarget2D target)
+    private static void DrawFog(RenderTarget2D target, Intersect.Framework.Core.Cinematics.CinematicEnvironmentSettings? environment = null)
     {
         // Exit early if the map has no fog or if the fog texture is not available.
         var currentMap = Globals.CurrentMap;
-        var fog = currentMap.Fog;
+        var fog = environment?.FogFile ?? currentMap.Fog;
         if (string.IsNullOrWhiteSpace(fog))
         {
             return;
@@ -1942,7 +1946,7 @@ public static partial class Graphics
         // Calculate elapsed time since the last update and set maximum value for elapsedTime to
         // prevent large jumps in fog intensity (1 second maximum).
         float elapsedTime = Math.Min(Timing.Global.MillisecondsUtc - sFogUpdateTime, 1000);
-        sFogUpdateTime = Timing.Global.MillisecondsUtc;
+        if (environment == null) sFogUpdateTime = Timing.Global.MillisecondsUtc;
 
         // Calculate the number of times the fog texture needs to be drawn to cover the map area.
         // Offscreen cinematic/map renders have their own pixel bounds; they must
@@ -1955,16 +1959,19 @@ public static partial class Graphics
             : Globals.MapEditorWindow.picMap.Height * Options.Instance.Map.TileHeight / fogTex.Height;
 
         // Update the fog texture's position based on its speed and elapsed time.
-        sFogCurrentX += elapsedTime / 1000f * currentMap.FogXSpeed * 2;
-        sFogCurrentY += elapsedTime / 1000f * currentMap.FogYSpeed * 2;
+        if (environment == null)
+        {
+            sFogCurrentX += elapsedTime / 1000f * currentMap.FogXSpeed * 2;
+            sFogCurrentY += elapsedTime / 1000f * currentMap.FogYSpeed * 2;
+        }
 
         // Handle cases where the fog texture's position goes out of bounds.
         sFogCurrentX %= fogTex.Width;
         sFogCurrentY %= fogTex.Height;
 
         // Round the fog texture's position to the nearest integer value.
-        var drawX = (float)Math.Round(sFogCurrentX);
-        var drawY = (float)Math.Round(sFogCurrentY);
+        var drawX = environment == null ? (float)Math.Round(sFogCurrentX) : (_cinematicPreviewTime / 1000f * environment.FogXSpeed * 2) % fogTex.Width;
+        var drawY = environment == null ? (float)Math.Round(sFogCurrentY) : (_cinematicPreviewTime / 1000f * environment.FogYSpeed * 2) % fogTex.Height;
 
         for (var x = 0; x <= xCount; x++)
         {
@@ -1976,7 +1983,7 @@ public static partial class Graphics
                         0 - Options.Instance.Map.MapWidth * Options.Instance.Map.TileWidth * 1f + x * fogTex.Width + drawX,
                         0 - Options.Instance.Map.MapHeight * Options.Instance.Map.TileHeight * 1f + y * fogTex.Height + drawY, fogTex.Width,
                         fogTex.Height
-                    ), System.Drawing.Color.FromArgb(currentMap.FogTransparency, 255, 255, 255), target
+                    ), System.Drawing.Color.FromArgb(environment?.FogOpacity ?? currentMap.FogTransparency, 255, 255, 255), target
                 );
             }
         }

@@ -28,4 +28,7 @@ public sealed class CinematicCameraPacket : IntersectPacket
     [Key(19)] public float EyeHeight { get; set; } = 1.6f;
     [Key(20)] public float PitchDegrees { get; set; } = -6.8427734f;
     [Key(21)] public float FieldOfView { get; set; } = 65;
+    [Key(22)] public bool EnvironmentOnly { get; set; }
+    [Key(23)] public bool RestoreEnvironment { get; set; }
+    [Key(24)] public CinematicEnvironmentSettings? EnvironmentSettings { get; set; }
 }

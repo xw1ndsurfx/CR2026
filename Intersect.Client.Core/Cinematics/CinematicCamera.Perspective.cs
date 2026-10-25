@@ -20,6 +20,7 @@ internal static partial class CinematicCamera
     private static GameRenderer? _perspectiveRenderer;
     private sealed record PerspectivePick(Microsoft.Xna.Framework.Matrix View, Microsoft.Xna.Framework.Matrix Projection, int Width, int Height);
     private static PerspectivePick? _perspectivePick;
+    internal static bool PerspectiveRequested { get { lock (Sync) return _shot is { Projection: CinematicProjection.Perspective2_5D } && _pose != null; } }
 
     internal static bool TryWorldPoint(Vector2 screen, out Vector2 point)
     {
@@ -103,8 +104,11 @@ internal static partial class CinematicCamera
             if (_perspectiveFailed) { ReleasePerspectiveTexture(); return; }
         }
         if (_perspectiveTexture != null)
+        {
             Graphics.DrawGameTexture(_perspectiveTexture, new FloatRect(0, 0, _perspectiveTexture.Width, _perspectiveTexture.Height),
                 Graphics.CurrentView, Color.White);
+            CinematicEnvironment.DrawPerspectiveAtmosphere();
+        }
     }
 
     private static void ReleasePerspectiveTexture()

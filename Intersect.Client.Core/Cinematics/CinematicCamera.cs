@@ -23,6 +23,7 @@ internal static partial class CinematicCamera
         lock (Sync)
         {
             if (packet.Reset) { Release(packet.EventId); return; }
+            if (packet.EnvironmentOnly) { CinematicEnvironment.Receive(packet); return; }
             if (packet.PresentationOnly) { ReceivePresentation(packet); return; }
             if (Globals.Me is not { } me || packet.MapId != me.MapId ||
                 !MapInstance.TryGet(packet.MapId, out var map) || packet.EventId == Guid.Empty ||
@@ -78,7 +79,7 @@ internal static partial class CinematicCamera
         if (shake.X == 0 && shake.Y == 0) return false;
         var center = Globals.Me?.Center ?? default; x += center.X; y += center.Y; return true; } }
     internal static void Release(Guid owner)
-    { lock (Sync) { if (_shot?.Owner == owner) { _shot = null; _pose = null; } ReleasePresentation(owner); } }
+    { lock (Sync) { if (_shot?.Owner == owner) { _shot = null; _pose = null; } ReleasePresentation(owner); CinematicEnvironment.Release(owner); } }
     internal static void Clear()
-    { lock (Sync) { _shot = null; _pose = null; _presentation = null; } }
+    { lock (Sync) { _shot = null; _pose = null; _presentation = null; CinematicEnvironment.Clear(); } }
 }

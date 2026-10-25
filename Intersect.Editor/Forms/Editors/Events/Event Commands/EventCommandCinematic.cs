@@ -15,6 +15,12 @@ internal sealed class EventCommandCinematic : UserControl
         var choices = new ComboBox { Dock = DockStyle.Top, DropDownStyle = ComboBoxStyle.DropDownList };
         var properties = new PropertyGrid { Dock = DockStyle.Fill, SelectedObject = new CinematicProperties(command), ToolbarVisible = false };
         Controls.Add(properties);
+        if (command is CinematicEnvironmentCommand environment)
+        {
+            var settings = new Button { Text=CinematicText.T("EnvironmentSettings"),Dock=DockStyle.Top,Height=32 };
+            settings.Click += (_,_)=>properties.SelectedObject=new CinematicProperties(environment.EnvironmentSettings ??= new());
+            Controls.Add(settings);
+        }
         if (command is PlayCinematicCommand or StopCinematicCommand or WaitForCinematicCommand)
         {
             var selectedId = command switch { PlayCinematicCommand play => play.SceneEventId,

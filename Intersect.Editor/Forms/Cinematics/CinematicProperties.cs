@@ -23,6 +23,7 @@ internal sealed class CinematicProperties(object value) : CustomTypeDescriptor
             CinematicTrack.Sound => ["AudioFile", "VoiceSound"],
             CinematicTrack.Music => ["AudioFile"],
             CinematicTrack.Event => ["ResourceId", "AllowPlayerControl"],
+            CinematicTrack.Environment => ["RestoreEnvironment"],
             CinematicTrack.Gameplay => clip.GameplayAction == CinematicGameplayAction.CommonEvent
                 ? ["GameplayAction", "ResourceId", "AllowPlayerControl"] : ["GameplayAction", "VariableId", "ExpectedValue"],
             CinematicTrack.Condition => clip.ConditionKind == CinematicConditionKind.PlayerFlag

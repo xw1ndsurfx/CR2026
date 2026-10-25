@@ -114,6 +114,7 @@ public static partial class Graphics
                 foreach (var pass in effect.CurrentTechnique.Passes)
                 { pass.Apply(); device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,quad,0,4,triangles,0,2); }
             }
+            DrawCinematicEnvironment(target); EndSpriteBatch();
             var pixels = new Microsoft.Xna.Framework.Color[target.Width*target.Height]; target.GetData(pixels);
             var bitmap = new Bitmap(target.Width,target.Height);
             var bits = bitmap.LockBits(new System.Drawing.Rectangle(0,0,bitmap.Width,bitmap.Height),

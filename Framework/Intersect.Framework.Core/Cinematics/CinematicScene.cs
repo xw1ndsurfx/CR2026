@@ -43,7 +43,7 @@ public sealed class CinematicActor
 }
 
 public enum CinematicActorKind { PersonalEvent, TemporaryNpc }
-public enum CinematicTrack { Camera, Movement, Animation, Dialogue, Choice, Sound, Music, Event, Presentation, Actors, Gameplay, Condition, Quest }
+public enum CinematicTrack { Camera, Movement, Animation, Dialogue, Choice, Sound, Music, Event, Presentation, Actors, Gameplay, Condition, Quest, Environment }
 public enum CinematicGameplayAction { CommonEvent, SetPlayerFlag }
 public enum CinematicConditionKind { PlayerFlag, QuestActive, QuestCompleted, QuestTaskActive, QuestAfterTask }
 public enum CinematicQuestAction { StartOrOffer, CompleteEventTask }
@@ -116,6 +116,8 @@ public sealed class CinematicClip
     public Guid TaskId { get; set; }
     public bool OfferQuest { get; set; } = true;
     public int ConditionTimeoutMs { get; set; } = 60000;
+    public bool RestoreEnvironment { get; set; }
+    [Browsable(false)] public CinematicEnvironmentSettings EnvironmentSettings { get; set; } = new();
     public override string ToString() => string.IsNullOrWhiteSpace(Name) ? Track.ToString() : Name;
 }
 

@@ -13,13 +13,14 @@ public partial class MapInstance
     private readonly List<(Animation Animation,long Started)> _stormAnimations=[];
     private long _nextStrike,_strikeAt;
     private float _strikeX,_strikeY;
-    internal bool WeatherIsActive=>WeatherActive(MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
-    internal bool IsRaining=>RainActive(MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
+    internal bool WeatherIsActive=>Intersect.Client.Cinematics.CinematicEnvironment.WeatherActive(this) ?? WeatherActive(MapWeatherClock.UtcMilliseconds,MapWeatherClock.ForcedRainUntilUtc);
+    internal bool IsRaining=>RainIsConfigured && WeatherIsActive;
     private readonly WeatherTransition _weatherTransition = new();
     internal float WeatherStrength => _weatherTransition.Update(WeatherIsActive, Environment.TickCount64);
     internal int TransitionBrightness(int normal) => RainIsConfigured && WeatherEffects.OverrideRainBrightness
         ? (int)Math.Round(normal + (Math.Clamp(WeatherEffects.RainBrightness, 0, 100) - normal) * WeatherStrength) : normal;
-    internal int EffectiveBrightness => TransitionBrightness(Brightness);
+    internal int EffectiveBrightness => IsIndoors && Intersect.Client.Cinematics.CinematicEnvironment.TryGetEnvironment(this,out var cinematic)
+        ? cinematic.NightBrightness : TransitionBrightness(Brightness);
     private void SpawnRainSplash(float x,float y)
     {
         if(_rainSplashes.Count+_stormAnimations.Count>=96)return;

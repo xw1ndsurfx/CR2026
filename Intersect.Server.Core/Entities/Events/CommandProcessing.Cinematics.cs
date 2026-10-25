@@ -8,6 +8,14 @@ namespace Intersect.Server.Entities.Events;
 
 public static partial class CommandProcessing
 {
+    private static void ProcessCommand(CinematicEnvironmentCommand command,Player player,Event instance,
+        CommandInstance stackInfo,Stack<CommandInstance> callStack)
+    {
+        if (!instance.CinematicActive || !command.RestoreEnvironment && command.EnvironmentSettings?.Valid() != true)
+        { RejectCinematic(player,callStack); return; }
+        player.SendPacket(new CinematicCameraPacket { EventId=instance.Descriptor.Id,MapId=player.MapId,
+            EnvironmentOnly=true,RestoreEnvironment=command.RestoreEnvironment,EnvironmentSettings=command.EnvironmentSettings });
+    }
     private static void ProcessCommand(CinematicActorCommand command, Player player, Event instance,
         CommandInstance stackInfo, Stack<CommandInstance> callStack) => instance.SetCinematicActorVisibility(command.ActorId, command.Visible);
     private static void ProcessCommand(StopCinematicCommand command, Player player, Event instance,

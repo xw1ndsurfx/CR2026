@@ -2,6 +2,11 @@ namespace Intersect.Framework.Core.Cinematics;
 
 public static class CinematicPreview
 {
+    public static CinematicEnvironmentSettings? Environment(CinematicScene scene,int timeMs)
+    {
+        var clip=scene.Clips.Where(c=>c.Track == CinematicTrack.Environment && c.StartMs <= timeMs).OrderBy(c=>c.StartMs).LastOrDefault();
+        return clip?.RestoreEnvironment == false && clip.EnvironmentSettings?.Valid() == true ? clip.EnvironmentSettings : null;
+    }
     public static bool ActorVisible(CinematicScene scene, CinematicActor actor, int timeMs) =>
         actor.Kind != CinematicActorKind.TemporaryNpc || (scene.Clips
             .Where(c => c.Track == CinematicTrack.Actors && c.ActorId == actor.TargetId && c.StartMs <= timeMs)

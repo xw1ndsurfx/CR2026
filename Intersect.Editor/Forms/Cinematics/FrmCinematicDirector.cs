@@ -95,6 +95,8 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         var propertyActions = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 75, AutoScroll = true };
         propertyActions.Controls.Add(MakeButton("Resources", ChooseResource)); propertyActions.Controls.Add(MakeButton("Duplicate", Duplicate));
         propertyActions.Controls.Add(MakeButton("ActorTarget", ChooseActorTarget));
+        propertyActions.Controls.Add(MakeButton("EnvironmentSettings", () => {
+            if (_timeline.Selected is { Track: CinematicTrack.Environment } clip) SelectObject(clip.EnvironmentSettings ??= new()); }));
         propertyActions.Controls.Add(MakeButton("Delete", Delete)); right.Panel2.Controls.Add(propertyActions);
         middle.Panel2.Controls.Add(_timeline);
         middle.Panel2.Controls.Add(new Label { Text = T("Timeline"), Dock = DockStyle.Top, Height = 26 });
@@ -308,6 +310,12 @@ internal sealed partial class FrmCinematicDirector : DarkForm
             SelectObject(actor); return;
         }
         if (_timeline.Selected is not { } clip) return;
+        if (clip.Track == CinematicTrack.Environment)
+        {
+            if (Pick(GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Fog).Select(f=>new Resource(Guid.Empty,f))) is { } fog)
+            { (clip.EnvironmentSettings ??= new()).FogFile=fog.Name; CommitEdit(); SelectObject(clip.EnvironmentSettings); RenderMap(); }
+            return;
+        }
         if (ChooseWorkflowResource(clip)) return;
         if (clip.Track == CinematicTrack.Movement || clip.Track == CinematicTrack.Camera && clip.FollowActor)
         {
@@ -380,7 +388,8 @@ internal sealed partial class FrmCinematicDirector : DarkForm
                 (file, music) => music ? GameContentManager.MusicNames.Contains(file) :
                     GameContentManager.SoundNames.Contains(file) || GameContentManager.SmartSortedVoiceSoundNames.Contains(file),
                 id => NPCDescriptor.Get(id) is { Sprite.Length: > 0 },
-                WorkflowBooleanAvailable,WorkflowQuestAvailable,WorkflowTaskAvailable);
+                WorkflowBooleanAvailable,WorkflowQuestAvailable,WorkflowTaskAvailable,
+                file=>GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Fog).Contains(file));
             if (_eventId == Guid.Empty) _eventId = Guid.NewGuid();
             var evt = map.LocalEvents.GetValueOrDefault(_eventId) ?? new EventDescriptor(_eventId, map.Id, 0, 0);
             if (evt.Pages.Count > 0)

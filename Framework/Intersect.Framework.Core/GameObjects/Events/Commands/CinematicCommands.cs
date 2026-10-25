@@ -61,6 +61,13 @@ public sealed class CinematicQuestTaskCommand : EventCommand
     public Guid TaskId { get; set; }
 }
 
+public sealed class CinematicEnvironmentCommand : EventCommand
+{
+    public override EventCommandType Type => EventCommandType.CinematicEnvironment;
+    public bool RestoreEnvironment { get; set; }
+    public CinematicEnvironmentSettings EnvironmentSettings { get; set; } = new();
+}
+
 public sealed class CinematicCameraCommand : EventCommand
 {
     public override EventCommandType Type => EventCommandType.CinematicCamera;

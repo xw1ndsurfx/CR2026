@@ -170,4 +170,5 @@ public enum EventCommandType
     CinematicActor = 1076,
     AwaitCinematicCondition = 1077,
     CinematicQuestTask = 1078,
+    CinematicEnvironment = 1079,
 }

@@ -477,7 +477,7 @@ public static partial class Graphics
                     continue;
                 }
 
-                map.DrawWeather();
+                if (!Cinematics.CinematicCamera.PerspectiveRequested) map.DrawWeather();
                 map.DrawFog();
                 map.DrawOverlayGraphic();
                 map.DrawItemNames();
@@ -499,7 +499,7 @@ public static partial class Graphics
         // Draw lighting effects.
         GenerateLightMap();
         DrawDarkness();
-        (Globals.Me?.MapInstance as MapInstance)?.DrawStormFlash();
+        if (!Cinematics.CinematicCamera.PerspectiveRequested) (Globals.Me?.MapInstance as MapInstance)?.DrawStormFlash();
 
         for (var y = 0; y < mapHeight * 5; y++)
         {
@@ -636,6 +636,8 @@ public static partial class Graphics
         }
 
         Cinematics.CinematicCamera.DrawPerspective();
+        if (gameState == GameStates.InGame && Cinematics.CinematicCamera.PerspectiveRequested && Globals.Me?.MapInstance is MapInstance weatherMap)
+        { weatherMap.DrawWeather(); weatherMap.DrawStormFlash(); }
         if (gameState == GameStates.InGame) Cinematics.CinematicCamera.DrawPresentation();
         renderer.Scale = Globals.Database.UIScale;
 
