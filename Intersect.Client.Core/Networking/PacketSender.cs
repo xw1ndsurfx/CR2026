@@ -178,7 +178,7 @@ public static partial class PacketSender
     public static void SendEventResponse(byte response, Dialog ed)
     {
         Globals.EventDialogs.Remove(ed);
-        Network.SendPacket(new EventResponsePacket(ed.EventId, response));
+        Network.SendPacket(new EventResponsePacket(ed.EventId, response) { DialogueToken = ed.DialogueToken });
     }
 
     public static void SendEventInputVariable(Base sender, InputSubmissionEventArgs args)

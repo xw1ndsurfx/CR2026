@@ -88,7 +88,7 @@ public static class CinematicCompiler
         }
         var page = new EventPage { Cinematic = scene };
         var commands = page.CommandLists.Values.First();
-        commands.Add(new BeginCinematicCommand { MapId = scene.MapId,
+        commands.Add(new BeginCinematicCommand { MapId = scene.MapId,AllowVisualSkip=scene.AllowVisualSkip,
             Actors = scene.Actors.Where(a => a.Kind != CinematicActorKind.PersonalEvent ||
                 scene.Clips.Any(c => c.Track == CinematicTrack.Movement && c.ActorId == a.TargetId)).ToList() });
         commands.Add(new HoldPlayerCommand());

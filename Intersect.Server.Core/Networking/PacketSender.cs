@@ -1058,9 +1058,9 @@ public static partial class PacketSender
     }
 
     //EventDialogPacket
-    public static void SendEventDialog(Player player, string prompt, string face, Guid eventId)
+    public static void SendEventDialog(Player player, string prompt, string face, Guid eventId, Guid dialogueToken = default)
     {
-        player.SendPacket(new EventDialogPacket(eventId, prompt, face, 0, null));
+        player.SendPacket(new EventDialogPacket(eventId, prompt, face, 0, null) { DialogueToken = dialogueToken });
     }
 
     //EventDialogPacket
@@ -1072,10 +1072,11 @@ public static partial class PacketSender
         string opt3,
         string opt4,
         string face,
-        Guid eventId
+        Guid eventId,
+        Guid dialogueToken = default
     )
     {
-        player.SendPacket(new EventDialogPacket(eventId, prompt, face, 1, new string[4] { opt1, opt2, opt3, opt4 }));
+        player.SendPacket(new EventDialogPacket(eventId, prompt, face, 1, new string[4] { opt1, opt2, opt3, opt4 }) { DialogueToken = dialogueToken });
     }
 
     public static void SendInputVariableDialog(

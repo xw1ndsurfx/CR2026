@@ -7195,7 +7195,7 @@ public partial class Player : Entity
         }
     }
 
-    public void RespondToEvent(Guid eventId, int responseId)
+    public void RespondToEvent(Guid eventId, int responseId, Guid dialogueToken = default)
     {
         StartMiniGameCommand? lockpickingCommand = null;
 
@@ -7212,6 +7212,14 @@ public partial class Player : Entity
                 var stackInfo = evt.Value.CallStack.Peek();
                 if (stackInfo.WaitingForResponse != CommandInstance.EventResponse.Dialogue)
                     return;
+
+                if (stackInfo.CinematicDialogueToken != dialogueToken) return;
+                if (stackInfo.WaitingOnCommand is ShowOptionsCommand options &&
+                    (responseId < 1 || responseId > options.Options.Length ||
+                     string.IsNullOrEmpty(options.Options[responseId - 1]) || stackInfo.BranchIds == null ||
+                     responseId > stackInfo.BranchIds.Length ||
+                     !stackInfo.Page.CommandLists.ContainsKey(stackInfo.BranchIds[responseId - 1]))) return;
+                stackInfo.CinematicDialogueToken = Guid.Empty;
 
                 if (stackInfo.WaitingOnCommand is StartMiniGameCommand miniGameCommand &&
                     miniGameCommand.Game == MiniGameType.Lockpicking)

@@ -1289,6 +1289,7 @@ internal sealed partial class PacketHandler
         }
 
         ed.EventId = packet.EventId;
+        ed.DialogueToken = packet.DialogueToken;
         Globals.EventDialogs.Add(ed);
     }
 

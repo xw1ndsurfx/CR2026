@@ -33,6 +33,7 @@ public sealed class BeginCinematicCommand : EventCommand
 {
     public override EventCommandType Type => EventCommandType.BeginCinematic;
     public Guid MapId { get; set; }
+    public bool AllowVisualSkip { get; set; }
     public List<CinematicActor> Actors { get; set; } = [];
 }
 

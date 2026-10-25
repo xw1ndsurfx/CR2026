@@ -14,6 +14,7 @@ public sealed class CinematicScene
     public Guid MapId { get; set; }
     public int DurationMs { get; set; } = 10000;
     public CinematicSceneMode Mode { get; set; }
+    public bool AllowVisualSkip { get; set; }
     [Browsable(false)] public List<CinematicActor> Actors { get; set; } = [];
     [Browsable(false)] public List<CinematicClip> Clips { get; set; } = [];
     [Browsable(false)] public List<CinematicMarker> Markers { get; set; } = [];

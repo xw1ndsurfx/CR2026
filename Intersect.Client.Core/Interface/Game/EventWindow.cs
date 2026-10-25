@@ -35,6 +35,7 @@ public partial class EventWindow : Panel
     private bool _typewriting;
     private readonly long _typewriterResponseDelay = ClientConfiguration.Instance.TypewriterResponseDelay;
     private Typewriter? _writer;
+    private Button? _skipPresentation;
     private readonly Dialog _dialog;
     private static EventWindow? _instance;
 
@@ -240,10 +241,10 @@ public partial class EventWindow : Panel
         _optionButtons.Clear();
         _optionsScroller.ClearChildren();
 
-        var visibleOptions = _dialog.Options.Where(option => !string.IsNullOrEmpty(option)).ToArray();
+        var visibleOptions = _dialog.Options.Select((text, index) => (Text: text, Response: index + 1)).Where(option => !string.IsNullOrEmpty(option.Text)).ToArray();
         if (visibleOptions.Length < 1)
         {
-            visibleOptions = [Strings.EventWindow.Continue];
+            visibleOptions = [(Strings.EventWindow.Continue, 1)];
         }
 
         for (var optionIndex = 0; optionIndex < visibleOptions.Length; optionIndex++)
@@ -253,8 +254,8 @@ public partial class EventWindow : Panel
                 Dock = Pos.Top,
                 Font = _defaultFont,
                 FontSize = 12,
-                Text = visibleOptions[optionIndex],
-                UserData = (EventResponseType)(optionIndex + 1),
+                Text = visibleOptions[optionIndex].Text,
+                UserData = (EventResponseType)visibleOptions[optionIndex].Response,
             };
 
             optionButton.Clicked += (sender, _) =>
@@ -273,6 +274,14 @@ public partial class EventWindow : Panel
 
     private void Update()
     {
+        var canSkip = Cinematics.CinematicControls.CanSkipDialog(_dialog.EventId);
+        if (canSkip && _skipPresentation == null)
+        {
+            _skipPresentation = new Button(_optionsScroller, "SkipCinematicPresentation") { Dock = Pos.Bottom, Height = 30, Text = Cinematics.CinematicControls.SkipLabel };
+            _skipPresentation.SetToolTipText(Cinematics.CinematicControls.SkipTooltip);
+            _skipPresentation.Clicked += (_, _) => Cinematics.CinematicControls.RequestSkip();
+        }
+        if (_skipPresentation != null) _skipPresentation.IsVisibleInParent = canSkip;
         if (!IsVisibleInTree || !_typewriting || _writer is null)
         {
             return;
@@ -361,6 +370,16 @@ public partial class EventWindow : Panel
 
         _ = Interface.InputBlockingComponents.Remove(this);
         RemoveModal();
+    }
+
+    internal static void CloseCinematicText(Guid token)
+    {
+        ThreadQueue.Default.ThrowIfNotOnMainThread();
+        if (token == Guid.Empty) return;
+        foreach (var dialog in Globals.EventDialogs.Where(d => d.DialogueToken == token && d.Options.Length == 0).ToArray())
+        { dialog.ResponseSent = true; Globals.EventDialogs.Remove(dialog); }
+        if (_instance is { } window && window._dialog.DialogueToken == token && window._dialog.Options.Length == 0)
+        { window._dialog.ResponseSent = true; window.EnsureDestroyed(); }
     }
 
     private void EnsureDestroyed()

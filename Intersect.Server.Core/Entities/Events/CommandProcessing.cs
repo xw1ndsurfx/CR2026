@@ -32,6 +32,8 @@ public static partial class CommandProcessing
     public static void ProcessCommand(EventCommand command, Player player, Event instance)
     {
         var stackInfo = instance.CallStack.Peek();
+        if (instance.ShouldSkipCinematicCommand(command, stackInfo)) { stackInfo.CommandIndex++; return; }
+        stackInfo.CinematicDialogueToken = Guid.Empty;
         stackInfo.WaitingForResponse = CommandInstance.EventResponse.None;
         stackInfo.WaitingOnCommand = null;
         stackInfo.BranchIds = null;
@@ -50,8 +52,9 @@ public static partial class CommandProcessing
         Stack<CommandInstance> callStack
     )
     {
+        stackInfo.CinematicDialogueToken = instance.CinematicActive ? Guid.NewGuid() : Guid.Empty;
         PacketSender.SendEventDialog(
-            player, ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Text, player.Client?.LanguageCode ?? "en"), player, instance), command.Face, instance.PageInstance.Id
+            player, ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Text, player.Client?.LanguageCode ?? "en"), player, instance), command.Face, instance.PageInstance.Id, stackInfo.CinematicDialogueToken
         );
 
         stackInfo.WaitingForResponse = CommandInstance.EventResponse.Dialogue;
@@ -71,7 +74,8 @@ public static partial class CommandProcessing
         var opt2 = ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Options[1], player.Client?.LanguageCode ?? "en"), player, instance);
         var opt3 = ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Options[2], player.Client?.LanguageCode ?? "en"), player, instance);
         var opt4 = ParseEventText(Intersect.Server.Localization.ContentTranslationRuntime.Translate(command.Options[3], player.Client?.LanguageCode ?? "en"), player, instance);
-        PacketSender.SendEventDialog(player, txt, opt1, opt2, opt3, opt4, command.Face, instance.PageInstance.Id);
+        stackInfo.CinematicDialogueToken = instance.CinematicActive ? Guid.NewGuid() : Guid.Empty;
+        PacketSender.SendEventDialog(player, txt, opt1, opt2, opt3, opt4, command.Face, instance.PageInstance.Id, stackInfo.CinematicDialogueToken);
         stackInfo.WaitingForResponse = CommandInstance.EventResponse.Dialogue;
         stackInfo.WaitingOnCommand = command;
         stackInfo.BranchIds = command.BranchIds;

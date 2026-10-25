@@ -55,6 +55,7 @@ public partial class Event
         _cinematicWasHolding = HoldingPlayer;
         _cinematicOwnerPage = PageInstance;
         CinematicRunVersion++;
+        _allowCinematicVisualSkip = command.AllowVisualSkip; _cinematicSkipping = false;
         CinematicActive = true; _cinematicMap = Player.MapId; _cinematicInstance = Player.MapInstanceId;
         _cinematicDeadline = Environment.TickCount64 + 30 * 60 * 1000;
         try
@@ -65,6 +66,7 @@ public partial class Event
         }
         catch (Exception error) when (error is InvalidOperationException or ArgumentException)
         { FinishCinematic(interrupted: true); return false; }
+        SendCinematicControl(true);
         return true;
     }
     internal void FinishCinematic(bool interrupted = false)
@@ -88,7 +90,9 @@ public partial class Event
             Player.MoveRouteSetter = null;
             PacketSender.SendMoveRouteToggle(Player, false);
         }
+        SendCinematicControl(false);
         CinematicActive = false;
+        _allowCinematicVisualSkip = false; _cinematicSkipping = false;
         _cinematicOwnerPage = null;
         Player.SendPacket(new CinematicCameraPacket { EventId = Descriptor.Id, Reset = true });
         var restoreHold = _cinematicWasHolding && !interrupted;

@@ -3,6 +3,7 @@ namespace Intersect.Client.Entities.Events;
 public partial class Dialog
 {
     public Guid EventId;
+    public Guid DialogueToken;
 
     public string? Face;
 

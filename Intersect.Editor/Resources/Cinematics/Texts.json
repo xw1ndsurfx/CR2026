@@ -322,5 +322,6 @@
   "GameplayTriggerCreated": {"en": "Native common Event created; link it from an Event or quest:", "fr": "Event commun natif créé ; reliez-le depuis un Event ou une quête :", "es": "Evento común nativo creado; enlácelo desde un evento o misión:"},
   "CinematicEffectPath": {"en": "Moving cinematic animation", "fr": "Animation cinématique mobile", "es": "Animación cinemática móvil"},
   "projectile-range": {"en": "Choose a map target, duration up to 30000 ms, valid easing and an arc height of 0–8 tiles.", "fr": "Choisissez une cible sur la map, une durée de 30000 ms au plus, une interpolation valide et un arc de 0 à 8 cases.", "es": "Elija un destino en el mapa, duración de hasta 30000 ms, interpolación válida y arco de 0–8 casillas."},
-  "scene-command-budget": {"en": "Reduce grouped effects or split this scene; the compiled command limit is 8192.", "fr": "Réduisez les effets groupés ou scindez la scène ; la limite est de 8192 commandes compilées.", "es": "Reduzca efectos agrupados o divida la escena; el límite es de 8192 comandos compilados."}
+  "scene-command-budget": {"en": "Reduce grouped effects or split this scene; the compiled command limit is 8192.", "fr": "Réduisez les effets groupés ou scindez la scène ; la limite est de 8192 commandes compilées.", "es": "Reduzca efectos agrupados o divida la escena; el límite es de 8192 comandos compilados."},
+  "AllowVisualSkip": {"en": "Allow skipping the presentation", "fr": "Autoriser le passage de la présentation", "es": "Permitir omitir la presentación"}
 }

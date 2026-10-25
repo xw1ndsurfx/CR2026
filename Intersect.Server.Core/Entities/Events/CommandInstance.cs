@@ -56,6 +56,7 @@ public partial class CommandInstance
     public Intersect.Framework.Core.GameObjects.Conditions.Condition? CinematicCondition;
     public long CinematicConditionDeadline;
     public long CinematicConditionNextCheck;
+    public Guid CinematicDialogueToken;
 
     public EventCommand WaitingOnCommand = null;
 

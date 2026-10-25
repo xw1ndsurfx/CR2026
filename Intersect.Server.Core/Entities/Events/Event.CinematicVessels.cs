@@ -166,6 +166,7 @@ public partial class Event
 
     private void PublishCinematicFleet(bool force)
     {
+        if (_cinematicSkipping) return;
         if (_cinematicNavigation == null || !CinematicActive) return;
         var now=Environment.TickCount64;if (!force && now < _cinematicFleetNext) return;_cinematicFleetNext=now+100;
         Player.SendPacket(new CinematicFleetPacket { EventId=Descriptor.Id,MapId=_cinematicMap,Presentation=_cinematicNavigation.Presentation,
