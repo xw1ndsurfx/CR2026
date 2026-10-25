@@ -310,15 +310,16 @@ public static partial class CommandProcessing
         var newCallStack = LoadLabelCallstack(command.Label, stackInfo.Page);
         if (newCallStack != null)
         {
-            newCallStack.Reverse();
-            while (callStack.Peek().CommandListId != Guid.Empty)
+            // Branch frames created by native commands do not populate
+            // CommandListId. Unwind by the actual page/root list instead so a
+            // polling common Event cannot accumulate copies or discard its caller.
+            var rootCommands = stackInfo.Page.CommandLists.Values.First();
+            while (callStack.Count > 0 && ReferenceEquals(callStack.Peek().Page, stackInfo.Page))
             {
-                callStack.Pop();
+                var frame = callStack.Pop();
+                if (ReferenceEquals(frame.CommandList, rootCommands)) break;
             }
-
-            //also pop the current event
-            callStack.Pop();
-            foreach (var itm in newCallStack)
+            foreach (var itm in newCallStack.Reverse())
             {
                 callStack.Push(itm);
             }
