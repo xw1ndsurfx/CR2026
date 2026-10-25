@@ -6,12 +6,12 @@ Le générateur vérifie les cases de départ/trajet/interaction et compile les 
 
 ## Installer et lancer le scénario
 
-1. Arrêter le serveur local. Utiliser un dossier séparé contenant la copie de `gamedata.db` et une base joueur locale neuve. Ne pas copier les comptes du serveur hébergé.
+1. Arrêter le serveur local. Utiliser un dossier séparé contenant la copie de `gamedata.db`. Commencer avec une base joueur locale neuve ; si les inscriptions sont volontairement bloquées, une copie de comptes peut être utilisée uniquement après autorisation explicite du propriétaire. Sauvegarder la base locale et vérifier l'intégrité du snapshot avant le remplacement. Aucun import de comptes n'est effectué par l'installateur du scénario.
 2. Le dossier serveur doit avoir le marqueur `.cinematic-test-sandbox` contenant exactement `Royal Cinematic Director local QA only`, ainsi que le nom `CR2026 Cinematic Local Test` dans `resources/config.json`. L'installateur refuse les dossiers non marqués.
 3. Exécuter `python scripts/Install-CinematicQaSandbox.py <dossier-scenario> <dossier-serveur-local>`. Une sauvegarde de la base de contenu est conservée avant la première installation. Aucun accès au panneau hébergé n'est effectué.
 4. Dans cette copie jetable seulement, l'installateur suspend les déclencheurs automatiques des événements communs d'origine et place le départ des classes sur le site de test. Les Events historiques et leur contenu sont conservés dans la sauvegarde. Les nouvelles variables sont personnelles ; il n'y a aucune récompense.
 5. Démarrer les builds correspondants du serveur et du client, avec les ressources copiées et le client configuré sur `127.0.0.1:15463`. Aucun fichier de l'installation originale n'est remplacé.
-6. Créer/connecter un compte local de test, puis saisir `/cinematicqa`. Cette commande remet les indicateurs de test à zéro et place le joueur au départ prévu.
+6. Se connecter avec un compte du bac de test, puis saisir `/cinematicqa`. Cette commande remet les indicateurs de test à zéro et place le joueur au départ prévu. Conserver le blocage des inscriptions si l'équipe le demande ; les essais doivent rester limités à cette copie, sans synchronisation vers le serveur hébergé.
 
 ## Résultat attendu
 
@@ -31,3 +31,13 @@ Le scénario a été généré et installé dans la copie locale ; le serveur d�
 Deux échecs de régression ont été reproduits avant la correction du saut natif vers une étiquette : accumulation de cadres de pile et ordre incorrect pour une cible imbriquée. La correction conserve le cadre appelant et reconstruit la pile dans l'ordre d'exécution.
 
 Le lancement du client de test échoue avant la connexion avec `NoSuitableGraphicsDeviceException` / absence de `ARB_framebuffer_object` ou `EXT_framebuffer_object` dans le contexte OpenGL. L'éditeur a pu rendre la vraie carte avec son backend DirectX ; cela ne valide pas le backend OpenGL du client. Aucun résultat de parcours connecté, de persistance des indicateurs ou de multijoueur graphique n'est donc revendiqué. Aucune configuration graphique Windows ni aucun pilote n'a été modifié.
+
+## Reprise avec les bibliothèques de compatibilité existantes
+
+L'équipe a ensuite fourni son dossier de compatibilité Intel HD 3000. En copiant ses bibliothèques OpenGL existantes **à côté de l'exécutable de test**, le client dépasse l'erreur graphique et charge son interface. Il ne faut ni les installer dans Windows ni remplacer l'exécutable de la distribution existante.
+
+`scripts/Start-CinematicQaClient.ps1` prépare ce lancement reproductible à partir du build, du dossier de compatibilité fourni et des ressources de la copie locale. Il exige un nouveau dossier de sortie, ou un dossier de test déjà marqué, et une configuration locale sur le port 15463 sans URL de mise à jour. `-PrepareOnly` prépare les fichiers sans lancer le jeu. Aucun téléchargement de bibliothèque n'est effectué et ces binaires ne sont pas distribués dans le dépôt.
+
+La capture automatique de la fenêtre OpenGL a expiré à deux reprises. Le démarrage du processus et le chargement de l'interface sont constatés dans les journaux, mais ne prouvent pas encore le déroulement de la scène. La création/connexion d'un compte neuf et le parcours interactif restent à observer sur le client local.
+
+Pour cette session, le propriétaire a ensuite autorisé une copie des comptes existants afin de garder les inscriptions désactivées. Cette copie a été vérifiée et installée après sauvegarde locale ; elle reste hors du dépôt et des artefacts distribués. L'API REST de la copie locale est désactivée. Aucun compte, mot de passe, personnage ou progrès du serveur hébergé n'est modifié par les essais.
