@@ -41,3 +41,9 @@ L'équipe a ensuite fourni son dossier de compatibilité Intel HD 3000. En copia
 La capture automatique de la fenêtre OpenGL a expiré à deux reprises. Le démarrage du processus et le chargement de l'interface sont constatés dans les journaux, mais ne prouvent pas encore le déroulement de la scène. La création/connexion d'un compte neuf et le parcours interactif restent à observer sur le client local.
 
 Pour cette session, le propriétaire a ensuite autorisé une copie des comptes existants afin de garder les inscriptions désactivées. Cette copie a été vérifiée et installée après sauvegarde locale ; elle reste hors du dépôt et des artefacts distribués. L'API REST de la copie locale est désactivée. Aucun compte, mot de passe, personnage ou progrès du serveur hébergé n'est modifié par les essais.
+
+## Premier essai connecté : recherche de scène corrigée
+
+Le client a atteint Polonya Port et son départ prévu, mais le serveur refusait l'appel avant le démarrage. La commande consultait `MapDescriptor.LocalEvents`, une collection renseignée par l'éditeur et non par le chargement serveur. Elle utilise maintenant l'appartenance dans `EventIds` et le registre natif `EventDescriptor`, tout en vérifiant la carte du descripteur et du source, le caractère personnel de l'Event et l'unicité de sa page. Les conditions serveur de la page restent actives.
+
+Huit nouveaux cas reproduisent la structure d'une carte chargée côté serveur, avec `LocalEvents` vide, et refusent les références non déclarées, les Events d'une autre carte, communs ou globaux, les pages multiples et les sources manquants/incohérents. Les 25 tests serveur cinématiques passent après cette correction ; les builds Server.Core et Server passent également. Le déroulement complet doit encore être réessayé dans le client connecté.

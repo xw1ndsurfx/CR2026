@@ -1,5 +1,7 @@
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.Cinematics;
+using Intersect.Framework.Core.GameObjects.Events;
+using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Network.Packets.Server;
 namespace Intersect.Server.Entities.Events;
@@ -12,11 +14,20 @@ public static partial class CommandProcessing
         if (command.MapId != player.MapId || callStack.Count >= 32)
         { RejectCinematic(player, callStack); return; }
         var map = Intersect.Server.Maps.MapController.Get(command.MapId);
-        if (map == null || !map.LocalEvents.TryGetValue(command.SceneEventId, out var scene) || scene.Global ||
-            scene.Pages.Count != 1 || scene.Pages[0].Cinematic == null ||
+        if (!TryResolveCinematicScene(map, command.SceneEventId, out var scene) ||
             !Conditions.CanSpawnPage(scene.Pages[0], player, instance))
         { RejectCinematic(player, callStack); return; }
         callStack.Push(new CommandInstance(scene.Pages[0]));
+    }
+
+    internal static bool TryResolveCinematicScene(MapDescriptor? map, Guid eventId, out EventDescriptor scene)
+    {
+        scene = null!;
+        // LocalEvents is populated by the editor, not by the authoritative EF
+        // loader. The server resolves EventIds through the native descriptor registry.
+        return map != null && map.EventIds.Contains(eventId) && EventDescriptor.TryGet(eventId, out scene) &&
+            scene.MapId == map.Id && !scene.CommonEvent && !scene.Global && scene.Pages.Count == 1 &&
+            scene.Pages[0].Cinematic is { } source && source.MapId == map.Id;
     }
 
     private static void ProcessCommand(BeginCinematicCommand command, Player player, Event instance,
