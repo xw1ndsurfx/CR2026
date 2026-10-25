@@ -3,7 +3,7 @@ using System.Globalization;
 using Intersect.Framework.Core.Cinematics;
 namespace Intersect.Editor.Forms.Cinematics;
 
-internal sealed class CinematicProperties(object value, bool vesselPoint = false, bool vesselMovement = false) : CustomTypeDescriptor
+internal sealed class CinematicProperties(object value, bool vesselPoint = false, bool vesselMovement = false, CinematicScene? scene = null) : CustomTypeDescriptor
 {
     internal object Value => value;
     public override object GetPropertyOwner(PropertyDescriptor? pd) => value;
@@ -50,23 +50,50 @@ internal sealed class CinematicProperties(object value, bool vesselPoint = false
         else if (value is CinematicActor {Kind:CinematicActorKind.TemporaryVessel})
             visible = ["Name", "TargetId", "StartX", "StartY", "Kind", "ShipModelKey", "StartHeading", "VesselAppearance", "VisibleAtStart", "HideName", "GroupName"];
         else if (value is CinematicPoint && vesselPoint) visible=["X", "Y"];
+        if (value is CinematicClip { Track: CinematicTrack.Camera } camera)
+            visible = visible!.Where(name =>
+                (camera.FollowActor || name is not ("ActorId" or "OffsetX" or "OffsetY")) &&
+                (camera.Projection == CinematicProjection.Perspective2_5D || name is not ("Heading" or "EyeHeight" or "PitchDegrees" or "FieldOfView"))).ToArray();
         var descriptors = TypeDescriptor.GetProperties(value, attributes ?? []).Cast<PropertyDescriptor>()
-            .Where(p => p.IsBrowsable && (visible == null || visible.Contains(p.Name) || p.Name is "Name" or "Track" or "StartMs" or "DurationMs"))
-            .Select(p => (PropertyDescriptor)new LocalizedProperty(p, value)).ToArray();
+            .Where(p => p.IsBrowsable && p.Name is not ("Version" or "TargetId" or "Track") &&
+                (visible == null || visible.Contains(p.Name) || p.Name is "Name" or "StartMs" or "DurationMs"))
+            .Select(p => (PropertyDescriptor)new LocalizedProperty(p, value, scene)).ToArray();
         return new(descriptors, true);
     }
-    private sealed class LocalizedProperty(PropertyDescriptor inner, object value) : PropertyDescriptor(inner,[RefreshPropertiesAttribute.All])
+    private sealed class LocalizedProperty(PropertyDescriptor inner, object value, CinematicScene? scene) : PropertyDescriptor(inner,[RefreshPropertiesAttribute.All])
     {
         public override Type ComponentType => inner.ComponentType;
         public override bool IsReadOnly => inner.IsReadOnly || Name is "MapId" or "Version" or "Track" or "TargetId" or "Kind";
         public override Type PropertyType => inner.PropertyType;
-        public override TypeConverter Converter => PropertyType.IsEnum ? new LocalizedEnum(PropertyType) : base.Converter;
+        public override TypeConverter Converter => Name == "ActorId" && scene != null
+            ? new ActorChoices(scene, value as CinematicClip) : PropertyType.IsEnum ? new LocalizedEnum(PropertyType) : base.Converter;
         public override string DisplayName => CinematicText.T(Name);
         public override bool CanResetValue(object component) => inner.CanResetValue(value);
         public override object? GetValue(object? component) => inner.GetValue(value);
         public override void ResetValue(object component) => inner.ResetValue(value);
         public override void SetValue(object? component, object? newValue) => inner.SetValue(value, newValue);
         public override bool ShouldSerializeValue(object component) => inner.ShouldSerializeValue(value);
+    }
+    private sealed class ActorChoices(CinematicScene scene, CinematicClip? clip) : GuidConverter
+    {
+        private CinematicActor[] Actors => scene.Actors.Where(a =>
+            (clip?.Track != CinematicTrack.Actors || a.Kind != CinematicActorKind.PersonalEvent) &&
+            (clip?.Track != CinematicTrack.Naval || a.Kind == CinematicActorKind.TemporaryVessel)).ToArray();
+        private string Label(CinematicActor actor)
+        {
+            var label = string.IsNullOrWhiteSpace(actor.Name) ? CinematicText.T("Actor") : actor.Name;
+            return Actors.Count(a => a.Name == actor.Name) > 1 ? label + " (" + (Array.IndexOf(Actors, actor) + 1) + ")" : label;
+        }
+        public override bool GetStandardValuesSupported(ITypeDescriptorContext? context) => true;
+        public override bool GetStandardValuesExclusive(ITypeDescriptorContext? context) => true;
+        public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext? context) => new(Actors.Select(a => a.TargetId).ToArray());
+        public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType) =>
+            destinationType == typeof(string) && value is Guid id
+                ? Actors.FirstOrDefault(a => a.TargetId == id) is { } actor ? Label(actor) : CinematicText.T("MissingActorChoice")
+                : base.ConvertTo(context, culture, value, destinationType);
+        public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value) =>
+            value is string text && Actors.FirstOrDefault(a => Label(a) == text) is { } actor
+                ? actor.TargetId : base.ConvertFrom(context, culture, value);
     }
     private sealed class LocalizedEnum(Type type) : EnumConverter(type)
     {

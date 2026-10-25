@@ -15,11 +15,18 @@ internal sealed class CinematicViewport : Control
     internal bool PerspectiveRendered { get; set; }
     internal Bitmap? MapImage { get; set; }
     internal event Action? Edited;
+    internal event Action? PreviewChanged;
     internal event Action<CinematicPoint?>? PointSelected;
+    internal event Action<CinematicActor>? ActorSelected;
+    internal event Action<CinematicTrack, CinematicPoint>? ActionDropped;
+    internal event Action<Guid, CinematicPoint>? NpcDropped;
+    internal event Action<CinematicLibraryItem, CinematicPoint>? ResourceDropped;
+    private System.Drawing.Point? _dropPosition;
     private float _scale = 1, _left, _top;
     private CinematicPoint? _drag;
     private CinematicActor? _dragActor;
-    internal CinematicViewport() { DoubleBuffered = true; BackColor = DrawingColor.FromArgb(10, 17, 23); }
+    private CinematicClip? _dragVisual;
+    internal CinematicViewport() { DoubleBuffered = true; AllowDrop = true; BackColor = DrawingColor.FromArgb(10, 17, 23); }
     private PointF Screen(float x, float y) => new(_left + (x + .5f) * Options.Instance.Map.TileWidth * _scale,
         _top + (y + .5f) * Options.Instance.Map.TileHeight * _scale);
     private CinematicPoint Tile(System.Drawing.Point point) => new()
@@ -97,6 +104,11 @@ internal sealed class CinematicViewport : Control
             if (!CinematicPreview.ActorVisible(Scene, actor, CursorMs)) continue;
             var position = CinematicPreview.ActorPosition(Scene, actor, CursorMs); var p = Screen(position.X, position.Y);
             g.DrawEllipse(Pens.LimeGreen, p.X - 10, p.Y - 6, 20, 12);
+            if (!CameraView && actor == SelectedActor)
+            {
+                using var selection = new Pen(DrawingColor.DeepSkyBlue, 3);
+                g.DrawRectangle(selection, p.X - 16, p.Y - 22, 32, 36);
+            }
             if (!CameraView) g.DrawString(actor.Name, Font, Brushes.White, p.X + 10, p.Y);
         }
         if (CameraView)
@@ -117,11 +129,59 @@ internal sealed class CinematicViewport : Control
             g.FillRectangle(background, 15, Height - 90, Math.Max(1, Width - 30), 75);
             g.DrawString(dialogue.Text, Font, Brushes.White, new RectangleF(25, Height - 80, Math.Max(1, Width - 50), 65));
         }
+        if (_dropPosition is { } drop)
+        {
+            var point = Tile(drop); var screen = Screen(point.X, point.Y);
+            using var pen = new Pen(DrawingColor.DeepSkyBlue, 3);
+            var width = Options.Instance.Map.TileWidth * _scale; var height = Options.Instance.Map.TileHeight * _scale;
+            g.DrawRectangle(pen, screen.X - width / 2, screen.Y - height / 2, width, height);
+        }
+    }
+    private void PreviewDrop(DragEventArgs e)
+    {
+        var point = PointToClient(new System.Drawing.Point(e.X, e.Y));
+        var valid = MapImage is { } image && !CameraView && point.X >= _left && point.Y >= _top &&
+            point.X < _left + image.Width * _scale && point.Y < _top + image.Height * _scale &&
+            (CinematicDragData.TryAction(e.Data, out _) || CinematicDragData.TryNpc(e.Data, out _) || CinematicDragData.TryResource(e.Data, out _)) &&
+            (e.AllowedEffect & DragDropEffects.Copy) != 0;
+        e.Effect = valid ? DragDropEffects.Copy : DragDropEffects.None;
+        _dropPosition = valid ? point : null; Invalidate();
+    }
+    protected override void OnDragEnter(DragEventArgs e) { base.OnDragEnter(e); PreviewDrop(e); }
+    protected override void OnDragOver(DragEventArgs e) { base.OnDragOver(e); PreviewDrop(e); }
+    protected override void OnDragLeave(EventArgs e) { base.OnDragLeave(e); _dropPosition = null; Invalidate(); }
+    protected override void OnDragDrop(DragEventArgs e)
+    {
+        base.OnDragDrop(e); PreviewDrop(e);
+        var point = _dropPosition; _dropPosition = null; Invalidate();
+        if (point == null) return;
+        if (CinematicDragData.TryAction(e.Data, out var track)) ActionDropped?.Invoke(track, Tile(point.Value));
+        else if (CinematicDragData.TryNpc(e.Data, out var npc)) NpcDropped?.Invoke(npc, Tile(point.Value));
+        else if (CinematicDragData.TryResource(e.Data, out var resource)) ResourceDropped?.Invoke(resource!, Tile(point.Value));
     }
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e); Focus(); if (MapImage == null || CameraView) return;
         var point = Tile(e.Location);
+        // In selection mode a click chooses an actor; path/effect authoring retains its existing input.
+        if (e.Button == MouseButtons.Left && Selected == null)
+        {
+            var hit = Scene.Actors.Where(a => CinematicPreview.ActorVisible(Scene, a, CursorMs))
+                .Reverse().FirstOrDefault(a =>
+                {
+                    var position = CinematicPreview.ActorPosition(Scene, a, CursorMs);
+                    var screen = Screen(position.X, position.Y);
+                    return Math.Abs(screen.X - e.X) <= 18 && Math.Abs(screen.Y - e.Y) <= 24;
+                });
+            SelectedActor = hit;
+            if (hit != null)
+            {
+                ActorSelected?.Invoke(hit);
+                if (hit.Kind is CinematicActorKind.TemporaryNpc or CinematicActorKind.TemporaryVessel)
+                { _dragActor = hit; Capture = true; }
+            }
+            Invalidate(); return;
+        }
         if (e.Button == MouseButtons.Left && SelectedActor is { Kind: CinematicActorKind.TemporaryNpc or CinematicActorKind.TemporaryVessel } actor)
         { _dragActor = actor; Capture = true; MoveActor(actor, point); Invalidate(); return; }
         if (Selected == null) return;
@@ -134,17 +194,22 @@ internal sealed class CinematicViewport : Control
             else { Selected.Points.Add(point); PointSelected?.Invoke(point); Edited?.Invoke(); }
         }
         else if (Selected.Track is CinematicTrack.Camera or CinematicTrack.Animation or CinematicTrack.Naval or CinematicTrack.Projectile)
-        { Selected.X = point.X; Selected.Y = point.Y; Edited?.Invoke(); }
+        {
+            if (e.Button != MouseButtons.Left) return;
+            Selected.X = point.X; Selected.Y = point.Y; _dragVisual = Selected; Capture = true; PreviewChanged?.Invoke();
+        }
         Invalidate();
     }
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e); if (!Capture) return;
-        if (_dragActor != null) { MoveActor(_dragActor, Tile(e.Location)); Invalidate(); return; }
+        if (_dragActor != null) { MoveActor(_dragActor, Tile(e.Location)); PreviewChanged?.Invoke(); Invalidate(); return; }
+        if (_dragVisual != null)
+        { var point = Tile(e.Location); _dragVisual.X = point.X; _dragVisual.Y = point.Y; PreviewChanged?.Invoke(); Invalidate(); return; }
         if (_drag == null) return; var p = Tile(e.Location); _drag.X = p.X; _drag.Y = p.Y; Invalidate();
     }
     protected override void OnMouseUp(MouseEventArgs e)
-    { base.OnMouseUp(e); if (_drag == null && _dragActor == null) return; _drag = null; _dragActor = null; Capture = false; Edited?.Invoke(); }
+    { base.OnMouseUp(e); if (_drag == null && _dragActor == null && _dragVisual == null) return; _drag = null; _dragActor = null; _dragVisual = null; Capture = false; Edited?.Invoke(); }
     private void MoveActor(CinematicActor actor, CinematicPoint target)
     {
         var dx = target.X - actor.StartX; var dy = target.Y - actor.StartY;

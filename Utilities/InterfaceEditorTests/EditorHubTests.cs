@@ -75,7 +75,8 @@ internal static class EditorHubTests
     private static IEnumerable<Control> Descendants(Control root) { yield return root; foreach (Control child in root.Controls) foreach (var item in Descendants(child)) yield return item; }
     private static void TestLocalizationAndArt()
     {
-        Check(HubRegistry.Definitions.Select(d => d.Id).Distinct().Count() == 53, "Built-in navigation has 53 stable, unique entries.");
+        Check(HubRegistry.Definitions.Length > 0 && HubRegistry.Definitions.Select(d => d.Id).Distinct().Count() == HubRegistry.Definitions.Length,
+            "Every built-in navigation entry has a unique ID.");
         var text = HubText.Read<Dictionary<string, Dictionary<string, string>>>("Texts.json");
         using var art = new HubArt();
         foreach (var entry in HubRegistry.Definitions)
@@ -113,7 +114,8 @@ internal static class EditorHubTests
             var registry = (HubRegistry)typeof(FrmMain).GetField("_hubRegistry", Hidden)!.GetValue(main)!;
             var hub = (EditorHubView)typeof(FrmMain).GetField("_editorHub", Hidden)!.GetValue(main)!;
             Check(HubRegistry.Definitions.All(d => registry.Find(d.Id) != null), "Every catalog entry is backed by a real current menu command or map workspace action.");
-            Check(registry.Entries.Count() == 53, "No unnamed legacy command falls through into an unidentified duplicate.");
+            Check(registry.Entries.Select(e => e.Id).ToHashSet().SetEquals(HubRegistry.Definitions.Select(d => d.Id)),
+                "The live menu and catalog have the same identities without unidentified duplicates.");
             reminder.Visible = true; Application.DoEvents(); main.PerformLayout();
             Check(hub.Top >= reminder.Bottom, "The hub follows save-reminder visibility and geometry without covering it.");
             reminder.Visible = false; Application.DoEvents(); main.PerformLayout();

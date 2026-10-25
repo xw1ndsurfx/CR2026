@@ -9,6 +9,34 @@ namespace Intersect.Editor.Forms.EditorHub;
 internal sealed class HubArt : IDisposable
 {
     private readonly Dictionary<string, Bitmap?> _cache = [];
+    internal Bitmap? Logo
+    {
+        get
+        {
+            const string key = "studio-logo";
+            if (_cache.TryGetValue(key, out var cached)) return cached;
+            using var stream = typeof(HubArt).Assembly.GetManifestResourceStream("Intersect.Editor.studio-logiklik.png");
+            if (stream == null) { _cache[key] = null; return null; }
+            using var source = Image.FromStream(stream);
+            return _cache[key] = new Bitmap(source);
+        }
+    }
+    internal static void DrawLogo(DrawingGraphics graphics, Image image, DrawingRectangle bounds)
+    {
+        var state = graphics.Save();
+        try
+        {
+            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            graphics.CompositingQuality = CompositingQuality.HighQuality;
+            var scale = Math.Min(bounds.Width / (float)image.Width, bounds.Height / (float)image.Height);
+            var width = Math.Max(1, (int)(image.Width * scale));
+            var height = Math.Max(1, (int)(image.Height * scale));
+            graphics.DrawImage(image, new DrawingRectangle(bounds.X + (bounds.Width - width) / 2,
+                bounds.Y + (bounds.Height - height) / 2, width, height));
+        }
+        finally { graphics.Restore(state); }
+    }
     internal Bitmap? Get(string name)
     {
         if (_cache.TryGetValue(name, out var cached)) return cached;
