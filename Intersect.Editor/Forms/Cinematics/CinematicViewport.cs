@@ -8,6 +8,7 @@ internal sealed class CinematicViewport : Control
 {
     internal CinematicScene Scene { get; set; } = new();
     internal CinematicClip? Selected { get; set; }
+    internal CinematicActor? SelectedActor { get; set; }
     internal int CursorMs { get; set; }
     internal bool ShowGrid { get; set; } = true;
     internal bool CameraView { get; set; }
@@ -16,6 +17,7 @@ internal sealed class CinematicViewport : Control
     internal event Action<CinematicPoint?>? PointSelected;
     private float _scale = 1, _left, _top;
     private CinematicPoint? _drag;
+    private CinematicActor? _dragActor;
     internal CinematicViewport() { DoubleBuffered = true; BackColor = DrawingColor.FromArgb(10, 17, 23); }
     private PointF Screen(float x, float y) => new(_left + (x + .5f) * Options.Instance.Map.TileWidth * _scale,
         _top + (y + .5f) * Options.Instance.Map.TileHeight * _scale);
@@ -64,6 +66,7 @@ internal sealed class CinematicViewport : Control
         }
         foreach (var actor in Scene.Actors)
         {
+            if (!CinematicPreview.ActorVisible(Scene, actor, CursorMs)) continue;
             var position = CinematicPreview.ActorPosition(Scene, actor, CursorMs); var p = Screen(position.X, position.Y);
             g.DrawEllipse(Pens.LimeGreen, p.X - 10, p.Y - 6, 20, 12);
             if (!CameraView) g.DrawString(actor.Name, Font, Brushes.White, p.X + 10, p.Y);
@@ -89,8 +92,11 @@ internal sealed class CinematicViewport : Control
     }
     protected override void OnMouseDown(MouseEventArgs e)
     {
-        base.OnMouseDown(e); Focus(); if (Selected == null || MapImage == null || CameraView) return;
+        base.OnMouseDown(e); Focus(); if (MapImage == null || CameraView) return;
         var point = Tile(e.Location);
+        if (e.Button == MouseButtons.Left && SelectedActor is { Kind: CinematicActorKind.TemporaryNpc } actor)
+        { _dragActor = actor; Capture = true; MoveActor(actor, point); Invalidate(); return; }
+        if (Selected == null) return;
         if (Selected.Track == CinematicTrack.Movement)
         {
             var existing = Selected.Points.FirstOrDefault(p => { var s = Screen(p.X, p.Y); return Math.Abs(s.X - e.X) < 12 && Math.Abs(s.Y - e.Y) < 12; });
@@ -104,7 +110,20 @@ internal sealed class CinematicViewport : Control
         Invalidate();
     }
     protected override void OnMouseMove(MouseEventArgs e)
-    { base.OnMouseMove(e); if (_drag == null || !Capture) return; var p = Tile(e.Location); _drag.X = p.X; _drag.Y = p.Y; Invalidate(); }
+    {
+        base.OnMouseMove(e); if (!Capture) return;
+        if (_dragActor != null) { MoveActor(_dragActor, Tile(e.Location)); Invalidate(); return; }
+        if (_drag == null) return; var p = Tile(e.Location); _drag.X = p.X; _drag.Y = p.Y; Invalidate();
+    }
     protected override void OnMouseUp(MouseEventArgs e)
-    { base.OnMouseUp(e); if (_drag == null) return; _drag = null; Capture = false; Edited?.Invoke(); }
+    { base.OnMouseUp(e); if (_drag == null && _dragActor == null) return; _drag = null; _dragActor = null; Capture = false; Edited?.Invoke(); }
+    private void MoveActor(CinematicActor actor, CinematicPoint target)
+    {
+        var dx = target.X - actor.StartX; var dy = target.Y - actor.StartY;
+        var points = Scene.Clips.Where(c => c.Track == CinematicTrack.Movement && c.ActorId == actor.TargetId).SelectMany(c => c.Points).ToArray();
+        if (points.Any(p => (long)p.X + dx < 0 || (long)p.Y + dy < 0 ||
+                (long)p.X + dx >= Options.Instance.Map.MapWidth || (long)p.Y + dy >= Options.Instance.Map.MapHeight)) return;
+        actor.StartX = target.X; actor.StartY = target.Y;
+        foreach (var point in points) { point.X += dx; point.Y += dy; }
+    }
 }

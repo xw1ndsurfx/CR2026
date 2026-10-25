@@ -1,6 +1,7 @@
 using Intersect.Editor.General;
 using Intersect.Framework.Core.Cinematics;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Editor.Content;
 
 namespace Intersect.Editor.Core;
@@ -39,6 +40,31 @@ public static partial class Graphics
         var position = CinematicPreview.ActorPosition(scene, actor, _cinematicPreviewTime);
         x = (int)Math.Round(position.X * Options.Instance.Map.TileWidth);
         y = (int)Math.Round(position.Y * Options.Instance.Map.TileHeight);
+    }
+
+    private static void DrawCinematicTemporaryActors(Microsoft.Xna.Framework.Graphics.RenderTarget2D target)
+    {
+        if (_cinematicPreview is not { } scene) return;
+        foreach (var actor in scene.Actors.Where(a => a.Kind == CinematicActorKind.TemporaryNpc &&
+                     CinematicPreview.ActorVisible(scene, a, _cinematicPreviewTime))
+                     .OrderBy(a => CinematicPreview.ActorPosition(scene, a, _cinematicPreviewTime).Y))
+        {
+            if (NPCDescriptor.Get(actor.NPCId) is not { } npc) continue;
+            var texture = GameContentManager.GetTexture(GameContentManager.TextureType.Entity, npc.Sprite);
+            if (texture == null) continue;
+            var position = CinematicPreview.ActorPosition(scene, actor, _cinematicPreviewTime);
+            var previous = CinematicPreview.ActorPosition(scene, actor, Math.Max(0, _cinematicPreviewTime - 50));
+            var moving = Math.Abs(position.X - previous.X) + Math.Abs(position.Y - previous.Y) > .001f;
+            var row = Math.Abs(position.X - previous.X) > Math.Abs(position.Y - previous.Y)
+                ? position.X > previous.X ? 2 : 1 : position.Y < previous.Y ? 3 : 0;
+            var frames = Math.Max(1, Options.Instance.Sprites.NormalFrames);
+            var width = texture.Width / frames; var height = texture.Height / Math.Max(1, Options.Instance.Sprites.Directions);
+            var frame = moving ? _cinematicPreviewTime / 160 % frames : 0;
+            DrawTexture(texture, new RectangleF(frame * width, row * height, width, height),
+                new RectangleF((position.X + .5f) * Options.Instance.Map.TileWidth - width / 2f,
+                    (position.Y + 1) * Options.Instance.Map.TileHeight - height, width, height),
+                System.Drawing.Color.White, target, Microsoft.Xna.Framework.Graphics.BlendState.NonPremultiplied);
+        }
     }
 
     private static void DrawCinematicAnimations(Microsoft.Xna.Framework.Graphics.RenderTarget2D target)

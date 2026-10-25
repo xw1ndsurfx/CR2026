@@ -2,6 +2,11 @@ namespace Intersect.Framework.Core.Cinematics;
 
 public static class CinematicPreview
 {
+    public static bool ActorVisible(CinematicScene scene, CinematicActor actor, int timeMs) =>
+        actor.Kind != CinematicActorKind.TemporaryNpc || (scene.Clips
+            .Where(c => c.Track == CinematicTrack.Actors && c.ActorId == actor.TargetId && c.StartMs <= timeMs)
+            .OrderBy(c => c.StartMs).LastOrDefault()?.ActorVisible ?? actor.VisibleAtStart);
+
     // Scrubbing is an authoring estimate. Native collisions/speed and interactive waits are resolved in-game.
     public static (float X, float Y) ActorPosition(CinematicScene scene, CinematicActor actor, int timeMs)
     {

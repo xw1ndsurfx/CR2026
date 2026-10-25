@@ -53,7 +53,7 @@ public static class CinematicCompiler
     public static EventPage Compile(CinematicScene scene, int mapWidth, int mapHeight,
         Func<int, int, bool>? blocked = null, Func<Guid, bool>? validActor = null,
         Func<Guid, bool>? validAnimation = null, Func<Guid, bool>? validEvent = null,
-        Func<string, bool, bool>? validAudio = null)
+        Func<string, bool, bool>? validAudio = null, Func<Guid, bool>? validNpc = null)
     {
         void Require(bool valid, string error) { if (!valid) throw new InvalidOperationException(error); }
         Require(scene != null && scene.Actors != null && scene.Clips != null && scene.Markers != null, "scene-data");
@@ -71,12 +71,16 @@ public static class CinematicCompiler
         foreach (var actor in scene.Actors)
         {
             Require(InMap(actor.StartX, actor.StartY), "actor-position");
-            Require(actor.TargetId == Guid.Empty || validActor?.Invoke(actor.TargetId) != false, "actor-unavailable");
+            Require(Enum.IsDefined(actor.Kind), "actor-unavailable");
+            Require(actor.Kind == CinematicActorKind.TemporaryNpc
+                ? actor.TargetId != Guid.Empty && actor.NPCId != Guid.Empty && validNpc?.Invoke(actor.NPCId) != false && blocked?.Invoke(actor.StartX, actor.StartY) != true
+                : actor.TargetId == Guid.Empty || validActor?.Invoke(actor.TargetId) != false, "actor-unavailable");
         }
         var page = new EventPage { Cinematic = scene };
         var commands = page.CommandLists.Values.First();
         commands.Add(new BeginCinematicCommand { MapId = scene.MapId,
-            Actors = scene.Actors.Where(a => scene.Clips.Any(c => c.Track == CinematicTrack.Movement && c.ActorId == a.TargetId)).ToList() });
+            Actors = scene.Actors.Where(a => a.Kind == CinematicActorKind.TemporaryNpc ||
+                scene.Clips.Any(c => c.Track == CinematicTrack.Movement && c.ActorId == a.TargetId)).ToList() });
         commands.Add(new HoldPlayerCommand());
         var scheduled = new List<(int Time, int Priority, int Order, EventCommand Command)>();
         var order = 0;
@@ -91,6 +95,10 @@ public static class CinematicCompiler
             void Add(EventCommand command, int? time = null, int priority = 1) => scheduled.Add((time ?? clip.StartMs, priority, order++, command));
             switch (clip.Track)
             {
+                case CinematicTrack.Actors:
+                    Require(scene.Actors.Any(a => a.TargetId == clip.ActorId && a.Kind == CinematicActorKind.TemporaryNpc), "temporary-actor-required");
+                    Add(new CinematicActorCommand { ActorId = clip.ActorId, Visible = clip.ActorVisible });
+                    break;
                 case CinematicTrack.Camera:
                     Require(clip.StartMs >= cameraEnd, "camera-overlap"); cameraEnd = end;
                     Require(InMap(clip.X, clip.Y) && float.IsFinite(clip.Zoom) && clip.Zoom is >= .25f and <= 4f && Enum.IsDefined(clip.Ease), "camera-position");

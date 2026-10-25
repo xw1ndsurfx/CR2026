@@ -36,6 +36,13 @@ public sealed class BeginCinematicCommand : EventCommand
     public List<CinematicActor> Actors { get; set; } = [];
 }
 
+public sealed class CinematicActorCommand : EventCommand
+{
+    public override EventCommandType Type => EventCommandType.CinematicActor;
+    public Guid ActorId { get; set; }
+    public bool Visible { get; set; } = true;
+}
+
 public sealed class CinematicCameraCommand : EventCommand
 {
     public override EventCommandType Type => EventCommandType.CinematicCamera;

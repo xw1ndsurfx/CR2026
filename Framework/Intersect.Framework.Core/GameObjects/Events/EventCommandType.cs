@@ -167,4 +167,5 @@ public enum EventCommandType
     StopCinematic = 1073,
     WaitForCinematic = 1074,
     StartCinematicChapter = 1075,
+    CinematicActor = 1076,
 }

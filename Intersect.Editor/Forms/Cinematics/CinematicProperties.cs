@@ -14,6 +14,7 @@ internal sealed class CinematicProperties(object value) : CustomTypeDescriptor
         {
             CinematicTrack.Camera => new[] { "X", "Y", "Zoom", "Ease", "FollowActor", "ActorId", "OffsetX", "OffsetY" },
             CinematicTrack.Presentation => ["HideHud", "Letterbox", "FadeOpacity", "ShakePixels", "Ease"],
+            CinematicTrack.Actors => ["ActorId", "ActorVisible"],
             CinematicTrack.Movement => ["ActorId", "Speed"],
             CinematicTrack.Animation => ["ResourceId", "X", "Y", "AttachToActor", "ActorId", "AnimationOffsetX", "AnimationOffsetY"],
             CinematicTrack.Dialogue => ["Text", "Face"],
@@ -23,6 +24,8 @@ internal sealed class CinematicProperties(object value) : CustomTypeDescriptor
             CinematicTrack.Event => ["ResourceId", "AllowPlayerControl"],
             _ => [],
         } : null;
+        if (value is CinematicActor actor && actor.Kind == CinematicActorKind.PersonalEvent)
+            visible = ["Name", "TargetId", "StartX", "StartY", "Kind", "GroupName"];
         var descriptors = TypeDescriptor.GetProperties(value, attributes ?? []).Cast<PropertyDescriptor>()
             .Where(p => p.IsBrowsable && (visible == null || visible.Contains(p.Name) || p.Name is "Name" or "Track" or "StartMs" or "DurationMs"))
             .Select(p => (PropertyDescriptor)new LocalizedProperty(p, value)).ToArray();
@@ -31,7 +34,7 @@ internal sealed class CinematicProperties(object value) : CustomTypeDescriptor
     private sealed class LocalizedProperty(PropertyDescriptor inner, object value) : PropertyDescriptor(inner)
     {
         public override Type ComponentType => inner.ComponentType;
-        public override bool IsReadOnly => inner.IsReadOnly || Name is "MapId" or "Version" or "Track" or "TargetId";
+        public override bool IsReadOnly => inner.IsReadOnly || Name is "MapId" or "Version" or "Track" or "TargetId" or "Kind";
         public override Type PropertyType => inner.PropertyType;
         public override TypeConverter Converter => PropertyType.IsEnum ? new LocalizedEnum(PropertyType) : base.Converter;
         public override string DisplayName => CinematicText.T(Name);

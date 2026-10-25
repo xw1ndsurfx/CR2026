@@ -1855,6 +1855,7 @@ public static partial class Graphics
                 DrawMapAttributes(Globals.CurrentMap, 0, 0, true, sScreenShotRenderTexture, false, true);
                 DrawMapAttributes(Globals.CurrentMap, 0, 0, true, sScreenShotRenderTexture, true, true);
                 if (_cinematicPreview != null) DrawMapEvents(Globals.CurrentMap, 0, 0, true, sScreenShotRenderTexture);
+                DrawCinematicTemporaryActors(sScreenShotRenderTexture);
 
                 //Draw this map
                 DrawMap(Globals.CurrentMap, 0, 0, true, 1, sScreenShotRenderTexture);

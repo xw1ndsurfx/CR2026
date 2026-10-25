@@ -90,6 +90,7 @@ public partial class Event
     public void Update(long timeMs, MapController map)
     {
         CheckCinematicLifetime();
+        UpdateCinematicTemporaryActors(timeMs);
         var sendLeave = false;
         var originalPageInstance = PageInstance;
         if (PageInstance != null)

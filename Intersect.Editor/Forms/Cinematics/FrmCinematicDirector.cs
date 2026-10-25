@@ -11,6 +11,7 @@ using Intersect.Framework.Core.Cinematics;
 using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Maps.Attributes;
+using Intersect.Framework.Core.GameObjects.NPCs;
 using Newtonsoft.Json;
 using Render = Intersect.Editor.Core.Graphics;
 using DrawingColor = System.Drawing.Color;
@@ -59,6 +60,9 @@ internal sealed class FrmCinematicDirector : DarkForm
         Button("ShotPreset", ChooseShotPreset);
         Button("Marker", () => { var marker = new CinematicMarker { Name = T("Marker"), TimeMs = _timeline.CursorMs };
             _scene.Markers.Add(marker); SelectObject(marker); CommitEdit(); });
+        Button("TemporaryNpc", AddTemporaryActor);
+        Button("Formation", AddFormation);
+        Button("GroupPath", CopyGroupPath);
         var left = new SplitContainer { Size = new(1400, 780), Dock = DockStyle.Fill, SplitterDistance = 230, FixedPanel = FixedPanel.Panel1 };
         var middle = new SplitContainer { Size = new(1170, 780), Dock = DockStyle.Fill, Orientation = Orientation.Horizontal, SplitterDistance = 460 };
         var right = new SplitContainer { Size = new(1170, 460), Dock = DockStyle.Fill, SplitterDistance = 850, FixedPanel = FixedPanel.Panel2 };
@@ -160,7 +164,8 @@ internal sealed class FrmCinematicDirector : DarkForm
         _timeline.Scene = _viewport.Scene = scene; _timeline.Selected = _viewport.Selected = null;
         _lastState = _savedState = Snapshot(); SelectObject(scene); SetCursor(0); RefreshTree(); RenderMap();
     }
-    private void SelectObject(object value) { _selection = value; _properties.SelectedObject = new CinematicProperties(value); _properties.Refresh(); }
+    private void SelectObject(object value)
+    { _selection = value; _viewport.SelectedActor = value as CinematicActor; _properties.SelectedObject = new CinematicProperties(value); _properties.Refresh(); }
     private void CommitEdit()
     {
         var state = Snapshot(); if (state != _lastState) { _undo.Push(_lastState); _redo.Clear(); _lastState = state; }
@@ -179,7 +184,11 @@ internal sealed class FrmCinematicDirector : DarkForm
         _updating = true; _explorer.BeginUpdate(); _explorer.Nodes.Clear();
         var root = _explorer.Nodes.Add(_scene.Saga); var chapter = root.Nodes.Add(_scene.Chapter); var sequence = chapter.Nodes.Add(_scene.Sequence);
         var current = sequence.Nodes.Add(_scene.Name); current.Tag = _scene;
-        foreach (var actor in _scene.Actors) { var node = current.Nodes.Add(actor.Name); node.Tag = actor; }
+        foreach (var group in _scene.Actors.GroupBy(a => a.GroupId))
+        {
+            var parent = group.Key == Guid.Empty ? current : current.Nodes.Add(group.First().GroupName);
+            foreach (var actor in group) { var node = parent.Nodes.Add(actor.Name); node.Tag = actor; }
+        }
         foreach (var clip in _scene.Clips.OrderBy(c => c.StartMs)) { var node = current.Nodes.Add($"{clip.StartMs / 1000f:0.##}s · {clip}"); node.Tag = clip; }
         foreach (var marker in _scene.Markers.OrderBy(m => m.TimeMs)) { var node = current.Nodes.Add($"{marker.TimeMs / 1000f:0.##}s · {marker.Name}"); node.Tag = marker; }
         if (Globals.CurrentMap is { } map)
@@ -215,6 +224,59 @@ internal sealed class FrmCinematicDirector : DarkForm
         var chosenKind = kinds.Single(k => T("Template" + k) == selected.Name);
         LoadScene(CinematicTemplates.Create(chosenKind, map.Id, Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight, T), Guid.Empty);
     }
+    private void AddTemporaryActor()
+    {
+        if (_scene.Actors.Count >= 64) { _status.Text = T("scene-size"); return; }
+        if (Pick(NPCDescriptor.Lookup.Values.OfType<NPCDescriptor>().Where(n => !string.IsNullOrWhiteSpace(n.Sprite))
+                .Select(n => new Resource(n.Id, n.Name))) is not { } selected) return;
+        var actor = new CinematicActor { Name = selected.Name, TargetId = Guid.NewGuid(), Kind = CinematicActorKind.TemporaryNpc,
+            NPCId = selected.Id, StartX = Options.Instance.Map.MapWidth / 2, StartY = Options.Instance.Map.MapHeight / 2 };
+        _scene.Actors.Add(actor); SelectObject(actor); CommitEdit(); RenderMap();
+    }
+    private sealed class FormationSettings
+    {
+        public CinematicFormationKind Formation { get; set; }
+        public int Count { get; set; } = 8;
+        public int Spacing { get; set; } = 1;
+        public int StartX { get; set; }
+        public int StartY { get; set; }
+    }
+    private void AddFormation()
+    {
+        if (Globals.CurrentMap is not { } map || map.Id != _scene.MapId) return;
+        if (Pick(NPCDescriptor.Lookup.Values.OfType<NPCDescriptor>().Where(n => !string.IsNullOrWhiteSpace(n.Sprite))
+                .Select(n => new Resource(n.Id, n.Name))) is not { } npc) return;
+        var settings = new FormationSettings { StartX = Options.Instance.Map.MapWidth / 2, StartY = Options.Instance.Map.MapHeight / 2 };
+        using var form = new DarkForm { Text = T("Formation"), Width = 520, Height = 430, StartPosition = FormStartPosition.CenterParent };
+        form.Controls.Add(new PropertyGrid { Dock = DockStyle.Fill, SelectedObject = new CinematicProperties(settings), ToolbarVisible = false });
+        form.Controls.Add(new Button { Text = T("Accept"), Dock = DockStyle.Bottom, Height = 36, DialogResult = DialogResult.OK });
+        Intersect.Editor.Forms.Styling.EditorTheme.Apply(form);
+        if (form.ShowDialog(this) != DialogResult.OK) return;
+        try
+        {
+            var offsets = CinematicFormations.Offsets(settings.Formation, settings.Count, settings.Spacing);
+            if (_scene.Actors.Count + offsets.Count > 64) throw new InvalidOperationException("scene-size");
+            var group = Guid.NewGuid();
+            var actors = offsets.Select((p, i) => new CinematicActor { Name = npc.Name + " " + (i + 1), TargetId = Guid.NewGuid(),
+                Kind = CinematicActorKind.TemporaryNpc, NPCId = npc.Id, GroupId = group, GroupName = npc.Name,
+                StartX = checked(settings.StartX + p.X), StartY = checked(settings.StartY + p.Y) }).ToList();
+            if (actors.Any(a => a.StartX < 0 || a.StartY < 0 || a.StartX >= Options.Instance.Map.MapWidth || a.StartY >= Options.Instance.Map.MapHeight ||
+                    map.Attributes[a.StartX, a.StartY] is MapBlockedAttribute)) throw new InvalidOperationException("formation-position");
+            _scene.Actors.AddRange(actors); SelectObject(actors[0]); CommitEdit(); RenderMap();
+        }
+        catch (Exception error) when (error is InvalidOperationException or OverflowException)
+        { MessageBox.Show(this, T(error is OverflowException ? "formation-position" : error.Message), Text); }
+    }
+    private void CopyGroupPath()
+    {
+        if (_timeline.Selected is not { } source) return;
+        try
+        {
+            _scene.Clips.AddRange(CinematicFormations.CopyGroupPath(_scene, source, Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight));
+            CommitEdit(); RenderMap();
+        }
+        catch (InvalidOperationException error) { MessageBox.Show(this, T(error.Message), Text); }
+    }
     private void ChooseShotPreset()
     {
         if (_timeline.Selected is not { Track: CinematicTrack.Camera } clip) return;
@@ -240,7 +302,9 @@ internal sealed class FrmCinematicDirector : DarkForm
     {
         if (_selection is CinematicActor actor)
         {
-            // Actor identity comes from the map selector; select an existing actor for a movement clip below.
+            if (actor.Kind == CinematicActorKind.TemporaryNpc && Pick(NPCDescriptor.Lookup.Values.OfType<NPCDescriptor>()
+                    .Where(n => !string.IsNullOrWhiteSpace(n.Sprite)).Select(n => new Resource(n.Id, n.Name))) is { } selected)
+            { actor.NPCId = selected.Id; CommitEdit(); RenderMap(); }
             SelectObject(actor); return;
         }
         if (_timeline.Selected is not { } clip) return;
@@ -275,8 +339,9 @@ internal sealed class FrmCinematicDirector : DarkForm
     }
     private void ChooseActorTarget()
     {
-        if (_timeline.Selected is not { } clip || clip.Track is not (CinematicTrack.Camera or CinematicTrack.Movement or CinematicTrack.Animation)) return;
-        if (Pick(_scene.Actors.Select(a => new Resource(a.TargetId, a.Name))) is not { } selected) return;
+        if (_timeline.Selected is not { } clip || clip.Track is not (CinematicTrack.Camera or CinematicTrack.Movement or CinematicTrack.Animation or CinematicTrack.Actors)) return;
+        if (Pick(_scene.Actors.Where(a => clip.Track != CinematicTrack.Actors || a.Kind == CinematicActorKind.TemporaryNpc)
+                .Select(a => new Resource(a.TargetId, a.Name))) is not { } selected) return;
         clip.ActorId = selected.Id; CommitEdit(); RenderMap();
     }
     private void Duplicate()
@@ -312,7 +377,8 @@ internal sealed class FrmCinematicDirector : DarkForm
                 id => map.LocalEvents.TryGetValue(id, out var actor) && !actor.Global && actor.Pages.Count > 0,
                 id => AnimationDescriptor.Get(id) != null, id => EventDescriptor.Get(id)?.CommonEvent == true,
                 (file, music) => music ? GameContentManager.MusicNames.Contains(file) :
-                    GameContentManager.SoundNames.Contains(file) || GameContentManager.SmartSortedVoiceSoundNames.Contains(file));
+                    GameContentManager.SoundNames.Contains(file) || GameContentManager.SmartSortedVoiceSoundNames.Contains(file),
+                id => NPCDescriptor.Get(id) is { Sprite.Length: > 0 });
             if (_eventId == Guid.Empty) _eventId = Guid.NewGuid();
             var evt = map.LocalEvents.GetValueOrDefault(_eventId) ?? new EventDescriptor(_eventId, map.Id, 0, 0);
             if (evt.Pages.Count > 0)

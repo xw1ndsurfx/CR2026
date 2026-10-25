@@ -8,6 +8,8 @@ namespace Intersect.Server.Entities.Events;
 
 public static partial class CommandProcessing
 {
+    private static void ProcessCommand(CinematicActorCommand command, Player player, Event instance,
+        CommandInstance stackInfo, Stack<CommandInstance> callStack) => instance.SetCinematicActorVisibility(command.ActorId, command.Visible);
     private static void ProcessCommand(StopCinematicCommand command, Player player, Event instance,
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {

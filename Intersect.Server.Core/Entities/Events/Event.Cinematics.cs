@@ -2,6 +2,7 @@ using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Networking;
+using Intersect.Framework.Core.Cinematics;
 namespace Intersect.Server.Entities.Events;
 
 public partial class Event
@@ -28,12 +29,16 @@ public partial class Event
 
     internal bool TryBeginCinematic(BeginCinematicCommand command)
     {
-        if (CinematicActive || command.MapId != Player.MapId || command.Actors.Count > 64 ||
+        if (CinematicActive || command.MapId != Player.MapId || command.Actors == null || command.Actors.Count > 64 ||
+            command.Actors.Any(a => a == null) || command.Actors.Select(a => a.TargetId).Distinct().Count() != command.Actors.Count ||
             Player.EventLookup.Any(p => p.Value != this && (p.Value.CinematicActive || p.Value.HoldingPlayer)) ||
             Player.MoveRoute is { Complete: false }) return false;
         var actors = new List<EventPageInstance>();
         foreach (var actor in command.Actors)
         {
+            if (!Enum.IsDefined(actor.Kind)) return false;
+            if (actor.Kind == CinematicActorKind.TemporaryNpc)
+            { if (!CanCreateTemporaryActor(actor, command.MapId)) return false; continue; }
             if (actor.TargetId == Guid.Empty)
             {
                 if (Player.X != actor.StartX || Player.Y != actor.StartY) return false;
@@ -51,6 +56,13 @@ public partial class Event
         CinematicRunVersion++;
         CinematicActive = true; _cinematicMap = Player.MapId; _cinematicInstance = Player.MapInstanceId;
         _cinematicDeadline = Environment.TickCount64 + 30 * 60 * 1000;
+        try
+        {
+            foreach (var actor in command.Actors.Where(a => a.Kind == CinematicActorKind.TemporaryNpc))
+                if (!CreateTemporaryActor(actor)) { FinishCinematic(interrupted: true); return false; }
+        }
+        catch (Exception error) when (error is InvalidOperationException or ArgumentException)
+        { FinishCinematic(interrupted: true); return false; }
         return true;
     }
     internal void FinishCinematic(bool interrupted = false)
@@ -66,6 +78,7 @@ public partial class Event
                 PacketSender.SendEntityDataTo(Player, actor.Page);
         }
         _cinematicActors.Clear();
+        RemoveCinematicTemporaryActors();
         if (_cinematicOwnerPage != null && Player.MoveRouteSetter == _cinematicOwnerPage)
         {
             Player.MoveRoute = null;
@@ -84,7 +97,8 @@ public partial class Event
     {
         if (!CinematicActive) return;
         if (CallStack.Count == 0 || Player.MapId != _cinematicMap || Player.MapInstanceId != _cinematicInstance ||
-            Environment.TickCount64 > _cinematicDeadline || PlayerHasDied)
+            Environment.TickCount64 > _cinematicDeadline || PlayerHasDied || _cinematicTemporaryActors.Values.Any(a =>
+                a.Event.PageInstance == null || !Player.EventLookup.TryGetValue(a.Event.Id, out var current) || !ReferenceEquals(current, a.Event)))
         { CallStack.Clear(); FinishCinematic(interrupted: true); }
     }
 }

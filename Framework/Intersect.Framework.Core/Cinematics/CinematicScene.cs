@@ -33,10 +33,17 @@ public sealed class CinematicActor
     public Guid TargetId { get; set; }
     public int StartX { get; set; }
     public int StartY { get; set; }
+    public CinematicActorKind Kind { get; set; }
+    public Guid NPCId { get; set; }
+    public bool VisibleAtStart { get; set; } = true;
+    public bool HideName { get; set; } = true;
+    [Browsable(false)] public Guid GroupId { get; set; }
+    public string GroupName { get; set; } = "";
     public override string ToString() => Name;
 }
 
-public enum CinematicTrack { Camera, Movement, Animation, Dialogue, Choice, Sound, Music, Event, Presentation }
+public enum CinematicActorKind { PersonalEvent, TemporaryNpc }
+public enum CinematicTrack { Camera, Movement, Animation, Dialogue, Choice, Sound, Music, Event, Presentation, Actors }
 public enum CinematicEase { Linear, EaseIn, EaseOut, EaseInOut }
 public enum CinematicFacing { Unchanged, Up, Down, Left, Right, Player }
 
@@ -72,6 +79,7 @@ public sealed class CinematicClip
     public bool AttachToActor { get; set; }
     public int AnimationOffsetX { get; set; }
     public int AnimationOffsetY { get; set; }
+    public bool ActorVisible { get; set; } = true;
     public string Text { get; set; } = "";
     public string Face { get; set; } = "";
     public string AudioFile { get; set; } = "";
