@@ -80,6 +80,9 @@ public partial class EventPageInstance
     {
         var movement = MovementType; var speed = MovementSpeed; var actualSpeed = Speed; var freq = MovementFreq; var directionFix = mDirectionFix;
         var saved = new EventMoveRoute(); saved.CopyFrom(MoveRoute); saved.Complete = MoveRoute.Complete; saved.ActionIndex = MoveRoute.ActionIndex;
+        // Reserve personal actors immediately, including gaps before their first route.
+        // Otherwise a random-movement page can wander away from its validated anchor.
+        MovementType = EventMovementType.None;
         return () =>
         {
             MoveRoute.CopyFrom(saved); MoveRoute.Complete = saved.Complete; MoveRoute.ActionIndex = saved.ActionIndex;
