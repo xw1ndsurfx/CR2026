@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="../Shared/Rendering/MapPerspectiveGeometry.cs" Link="Rendering/MapPerspectiveGeometry.cs" />
+    <Compile Include="../Shared/Rendering/ShipAtlasResources.cs" Link="Rendering/ShipAtlasResources.cs" />
   </ItemGroup>
 
   <PropertyGroup>

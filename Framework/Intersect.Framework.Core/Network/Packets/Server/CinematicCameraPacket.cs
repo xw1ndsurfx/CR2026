@@ -31,4 +31,5 @@ public sealed class CinematicCameraPacket : IntersectPacket
     [Key(22)] public bool EnvironmentOnly { get; set; }
     [Key(23)] public bool RestoreEnvironment { get; set; }
     [Key(24)] public CinematicEnvironmentSettings? EnvironmentSettings { get; set; }
+    [Key(25)] public bool FollowVessel { get; set; }
 }

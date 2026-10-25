@@ -39,6 +39,8 @@ public partial class Event
 
     internal void SetCinematicActorVisibility(Guid actor, bool visible)
     {
+        if (CinematicActive && _cinematicVessels.TryGetValue(actor,out var vessel))
+        { vessel.Visible=visible;PublishCinematicFleet(true);return; }
         if (!CinematicActive || Player.MapId != _cinematicMap || Player.MapInstanceId != _cinematicInstance ||
             !_cinematicTemporaryActors.TryGetValue(actor, out var entry) || entry.Visible == visible ||
             entry.Event.PageInstance is not { } page) return;

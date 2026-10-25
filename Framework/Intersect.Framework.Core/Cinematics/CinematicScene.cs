@@ -13,6 +13,7 @@ public sealed class CinematicScene
     public string Sequence { get; set; } = "";
     public Guid MapId { get; set; }
     public int DurationMs { get; set; } = 10000;
+    public CinematicSceneMode Mode { get; set; }
     [Browsable(false)] public List<CinematicActor> Actors { get; set; } = [];
     [Browsable(false)] public List<CinematicClip> Clips { get; set; } = [];
     [Browsable(false)] public List<CinematicMarker> Markers { get; set; } = [];
@@ -39,11 +40,14 @@ public sealed class CinematicActor
     public bool HideName { get; set; } = true;
     [Browsable(false)] public Guid GroupId { get; set; }
     public string GroupName { get; set; } = "";
+    public string ShipModelKey { get; set; } = "";
+    public float StartHeading { get; set; }
+    public CinematicVesselAppearance VesselAppearance { get; set; }
     public override string ToString() => Name;
 }
 
-public enum CinematicActorKind { PersonalEvent, TemporaryNpc }
-public enum CinematicTrack { Camera, Movement, Animation, Dialogue, Choice, Sound, Music, Event, Presentation, Actors, Gameplay, Condition, Quest, Environment }
+public enum CinematicActorKind { PersonalEvent, TemporaryNpc, TemporaryVessel }
+public enum CinematicTrack { Camera, Movement, Animation, Dialogue, Choice, Sound, Music, Event, Presentation, Actors, Gameplay, Condition, Quest, Environment, Naval }
 public enum CinematicGameplayAction { CommonEvent, SetPlayerFlag }
 public enum CinematicConditionKind { PlayerFlag, QuestActive, QuestCompleted, QuestTaskActive, QuestAfterTask }
 public enum CinematicQuestAction { StartOrOffer, CompleteEventTask }
@@ -118,6 +122,9 @@ public sealed class CinematicClip
     public int ConditionTimeoutMs { get; set; } = 60000;
     public bool RestoreEnvironment { get; set; }
     [Browsable(false)] public CinematicEnvironmentSettings EnvironmentSettings { get; set; } = new();
+    public CinematicVesselAction VesselAction { get; set; }
+    public CinematicVesselAppearance VesselAppearance { get; set; }
+    public bool SynchronizedGroup { get; set; }
     public override string ToString() => string.IsNullOrWhiteSpace(Name) ? Track.ToString() : Name;
 }
 

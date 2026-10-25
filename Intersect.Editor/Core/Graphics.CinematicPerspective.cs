@@ -11,14 +11,15 @@ namespace Intersect.Editor.Core;
 public static partial class Graphics
 {
     private sealed record CinematicQuad(Texture2D Texture, RectangleF Source, RectangleF Destination,
-        DrawingColor Color, Vector2? Anchor, float Rotation);
+        DrawingColor Color, Vector2? Anchor, float Rotation, bool Flip);
     private static List<CinematicQuad>? _cinematicQuads;
     private static Dictionary<(string Layer, int X, int Y), Vector2>? _cinematicObjectAnchors;
     private static string? _cinematicPerspectiveLayer;
     private static float _cinematicPerspectiveHeading;
+    private static Vector2? _cinematicActorAnchor;
 
     private static bool CollectCinematicQuad(Texture2D texture, RectangleF source, RectangleF destination,
-        DrawingColor color, float rotation)
+        DrawingColor color, float rotation, bool flip)
     {
         if (_cinematicQuads is not { } quads) return false;
         Vector2? anchor = null;
@@ -28,9 +29,9 @@ public static partial class Graphics
             var y = (int)Math.Floor(destination.Y / Options.Instance.Map.TileHeight);
             if (_cinematicObjectAnchors!.TryGetValue((layer, x, y), out var objectAnchor)) anchor = objectAnchor;
         }
-        else anchor = new(destination.X + destination.Width / 2, destination.Bottom);
+        else anchor = _cinematicActorAnchor ?? new Vector2(destination.X + destination.Width / 2, destination.Bottom);
         if (quads.Count < 65536 && color.A > 0 && destination.Width > 0 && destination.Height > 0)
-            quads.Add(new(texture, source, destination, color, anchor, rotation));
+            quads.Add(new(texture, source, destination, color, anchor, rotation, flip));
         return true;
     }
 
@@ -77,6 +78,8 @@ public static partial class Graphics
                 _cinematicQuads = quads;
                 DrawMap(map,0,0,true,0,target); _cinematicPerspectiveLayer = null;
                 DrawMapEvents(map,0,0,true,target); DrawCinematicTemporaryActors(target);
+                DrawCinematicVessels(target);
+                DrawCinematicNavalEffects(target);
                 DrawMap(map,0,0,true,1,target); _cinematicPerspectiveLayer = null;
                 DrawCinematicAnimations(target);
                 _cinematicQuads = null;
@@ -105,6 +108,7 @@ public static partial class Graphics
                 var uv = new[] { new Vector2(src.Left/texture.Width,src.Top/texture.Height),new Vector2(src.Left/texture.Width,src.Bottom/texture.Height),
                     new Vector2(src.Right/texture.Width,src.Top/texture.Height),new Vector2(src.Right/texture.Width,src.Bottom/texture.Height) };
                 var angle = draw.Rotation; // Native editor SpriteBatch accepts radians.
+                if (draw.Flip) (uv[0],uv[2],uv[1],uv[3])=(uv[2],uv[0],uv[3],uv[1]);
                 for (var i=0;i<4;i++)
                 {
                     var point = points[i];

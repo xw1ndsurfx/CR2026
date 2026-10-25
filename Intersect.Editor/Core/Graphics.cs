@@ -1857,6 +1857,8 @@ public static partial class Graphics
                 DrawMapAttributes(Globals.CurrentMap, 0, 0, true, sScreenShotRenderTexture, true, true);
                 if (_cinematicPreview != null) DrawMapEvents(Globals.CurrentMap, 0, 0, true, sScreenShotRenderTexture);
                 DrawCinematicTemporaryActors(sScreenShotRenderTexture);
+                DrawCinematicVessels(sScreenShotRenderTexture);
+                DrawCinematicNavalEffects(sScreenShotRenderTexture);
 
                 //Draw this map
                 DrawMap(Globals.CurrentMap, 0, 0, true, 1, sScreenShotRenderTexture);
@@ -2310,7 +2312,8 @@ public static partial class Graphics
         RenderTarget2D renderTarget = null,
         BlendState blendMode = null,
         Effect shader = null,
-        float rotationDegrees = 0
+        float rotationDegrees = 0,
+        bool flipHorizontal = false
     )
     {
         if (tex == null)
@@ -2318,7 +2321,7 @@ public static partial class Graphics
             return;
         }
 
-        if (CollectCinematicQuad(tex, srcRectangle, targetRect, renderColor, rotationDegrees)) return;
+        if (CollectCinematicQuad(tex, srcRectangle, targetRect, renderColor, rotationDegrees, flipHorizontal)) return;
 
         if (blendMode == null)
         {
@@ -2333,7 +2336,7 @@ public static partial class Graphics
 				),
 				new Microsoft.Xna.Framework.Rectangle(
 					(int) srcRectangle.X, (int) srcRectangle.Y, (int) srcRectangle.Width, (int) srcRectangle.Height
-				), ConvertColor(renderColor), rotationDegrees, Vector2.Zero, SpriteEffects.None, 0
+				), ConvertColor(renderColor), rotationDegrees, Vector2.Zero, flipHorizontal ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0
 			);
     }
 

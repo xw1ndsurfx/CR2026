@@ -97,7 +97,7 @@ internal static partial class NavalWorld
                 map.Y+Options.Instance.Map.MapHeight*th/2f))).Take(25);
         foreach(var map in maps) {terrain.AddRange(map.PerspectiveBuffers());decorations.AddRange(map.PerspectiveDecorations());}
         var sprites=new List<MapPerspectiveSprite>();
-        foreach(var vessel in Fresh?_ships.Values:Enumerable.Empty<View>())
+        foreach(var vessel in RenderedShipViews())
         {
             if(vessel.Current.Id==excludedShip || !Position(vessel,out var sx,out var sy,out var sh)) continue;
             var s=vessel.Current;var filename=s.Graphics;
@@ -123,18 +123,18 @@ internal static partial class NavalWorld
                     Y=ShipMovement.DirectionRow(relative)*h,Width=w,Height=h,AnchorX=w/2d,AnchorY=h/2d},tw,sx,sy);
             }
         }
-        foreach(var ball in _balls.Values.Where(_=>Fresh))
+        foreach(var (ball,style) in RenderedCannonballs())
         {
             if(!MapInstance.TryGet(ball.Current.MapId,out var map) || !Globals.GridMaps.ContainsKey(map.Id)) continue;
             var t=Math.Clamp((Environment.TickCount64-ball.Received)/100f,0,1);
             var bx=ball.Current.X;var by=ball.Current.Y;
             if(ball.Previous.MapId==ball.Current.MapId)
             {bx=ball.Previous.X+(bx-ball.Previous.X)*t;by=ball.Previous.Y+(by-ball.Previous.Y)*t;}
-            Effect(string.IsNullOrEmpty(ball.Current.Graphic)?Presentation.CannonProjectileGraphic:ball.Current.Graphic,"Projectile"+ShipMovement.DirectionRow(CannonViewRelativeHeading(ball.Current.Heading,beam)),
+            Effect(string.IsNullOrEmpty(ball.Current.Graphic)?style.CannonProjectileGraphic:ball.Current.Graphic,"Projectile"+ShipMovement.DirectionRow(CannonViewRelativeHeading(ball.Current.Heading,beam)),
                 map.X+(float)bx*tw,map.Y+(float)by*th,ball.Current.AgeMilliseconds+Environment.TickCount64-ball.Received,true,
-                (float)Math.Max(0,ball.Previous.Height+(ball.Current.Height-ball.Previous.Height)*t));
+                (float)Math.Max(0,ball.Previous.Height+(ball.Current.Height-ball.Previous.Height)*t),style);
         }
-        foreach(var effect in _effects.Values)
+        foreach(var (effect,style) in RenderedNavalEffects())
         {
             var e=effect.Event;
             if(!MapInstance.TryGet(e.MapId,out var map) || !Globals.GridMaps.ContainsKey(map.Id)) continue;
@@ -146,10 +146,10 @@ internal static partial class NavalWorld
                         frame.Height/2/th-frame.Layer.OffsetY/th,false,Opacity:frame.Layer.Opacity/255f));
                 continue;
             }
-            var asset=!string.IsNullOrEmpty(e.Graphic)?e.Graphic:e.Kind switch {NavalEffectKind.Fire=>Presentation.CannonFireGraphic,NavalEffectKind.WaterImpact=>Presentation.WaterImpactGraphic,
-                NavalEffectKind.HullImpact or NavalEffectKind.ObstacleImpact=>Presentation.HullImpactGraphic,_=>""};
+            var asset=!string.IsNullOrEmpty(e.Graphic)?e.Graphic:e.Kind switch {NavalEffectKind.Fire=>style.CannonFireGraphic,NavalEffectKind.WaterImpact=>style.WaterImpactGraphic,
+                NavalEffectKind.HullImpact or NavalEffectKind.ObstacleImpact=>style.HullImpactGraphic,_=>""};
             var clip=e.Kind switch {NavalEffectKind.Fire=>"Fire",NavalEffectKind.WaterImpact=>"WaterImpact",_=>"HullImpact"};
-            Effect(asset,clip,map.X+(float)e.X*tw,map.Y+(float)e.Y*th,Environment.TickCount64-effect.Born,false);
+            Effect(asset,clip,map.X+(float)e.X*tw,map.Y+(float)e.Y*th,Environment.TickCount64-effect.Born,false,style:style);
         }
         return new(camera,forward,tw,th,terrain,sprites,AlignSceneryFragments(decorations).OrderBy(d=>Vector2.DistanceSquared(d.Anchor,camera)).Take(1024).ToArray());
 
@@ -160,13 +160,14 @@ internal static partial class NavalWorld
                 sprites.Add(new(texture,new FloatRect(part.X,part.Y,part.Width,part.Height),new(sx,sy),
                     part.Width*scale,part.Height*scale,(float)part.AnchorX*scale,(float)part.AnchorY*scale,part.FlipHorizontal,elevation,RotationDegrees:(float)part.RotationDegrees));
         }
-        void Effect(string filename,string clip,float sx,float sy,long age,bool hold,float elevation=0)
+        void Effect(string filename,string clip,float sx,float sy,long age,bool hold,float elevation=0,NavalPresentation? style=null)
         {
+            var settings=style??Presentation;
             if(!NavalPresentation.SafeAsset(filename) || filename.Length==0 ||
                 Globals.ContentManager?.GetTexture(TextureType.Ocean,filename) is not {} image) return;
             var atlas=EffectAtlas(filename,image.Width,image.Height);
-            if(atlas==null || !atlas.Clips.TryGetValue(clip,out var frames) || (!hold && age>=frames.Length*Presentation.EffectFrameMilliseconds)) return;
-            if(atlas.Frame(clip,age,Presentation.EffectFrameMilliseconds) is {} frame) Add(image,frame,Presentation.EffectPixelsPerTile,sx,sy,elevation);
+            if(atlas==null || !atlas.Clips.TryGetValue(clip,out var frames) || (!hold && age>=frames.Length*settings.EffectFrameMilliseconds)) return;
+            if(atlas.Frame(clip,age,settings.EffectFrameMilliseconds) is {} frame) Add(image,frame,settings.EffectPixelsPerTile,sx,sy,elevation);
         }
     }
 }

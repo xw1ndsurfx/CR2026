@@ -11,7 +11,7 @@ internal static partial class CinematicCamera
 {
     private static readonly object Sync = new();
     private sealed record Shot(Guid Owner, Guid Player, Guid Map, CinematicCameraPose From,
-        CinematicCameraPose To, long Started, int Duration, CinematicEase Ease, Guid FollowEntity, float OffsetX, float OffsetY,
+        CinematicCameraPose To, long Started, int Duration, CinematicEase Ease, Guid FollowEntity, bool FollowVessel, float OffsetX, float OffsetY,
         CinematicProjection Projection, CinematicLensPose FromLens, CinematicLensPose ToLens);
     private static Shot? _shot;
     private static CinematicCameraPose? _pose;
@@ -28,6 +28,7 @@ internal static partial class CinematicCamera
             if (Globals.Me is not { } me || packet.MapId != me.MapId ||
                 !MapInstance.TryGet(packet.MapId, out var map) || packet.EventId == Guid.Empty ||
                 !float.IsFinite(packet.X) || !float.IsFinite(packet.Y) || !float.IsFinite(packet.Zoom) ||
+                packet.FollowVessel && (!packet.FollowActor || packet.FollowEntityId == Guid.Empty) ||
                 packet.Zoom is < .25f or > 4f || packet.DurationMs is < 0 or > CinematicCompiler.MaximumDurationMs ||
                 !Enum.IsDefined(packet.Ease) || !float.IsFinite(packet.OffsetX) || !float.IsFinite(packet.OffsetY) ||
                 Math.Abs(packet.OffsetX) > Options.Instance.Map.MapWidth || Math.Abs(packet.OffsetY) > Options.Instance.Map.MapHeight ||
@@ -41,7 +42,7 @@ internal static partial class CinematicCamera
             var toLens = new CinematicLensPose(packet.Heading, packet.EyeHeight, packet.PitchDegrees, packet.FieldOfView);
             var fromLens = _shot?.Projection == packet.Projection ? _lens : toLens;
             _shot = new(packet.EventId, me.Id, packet.MapId, from, to, Environment.TickCount64, packet.DurationMs, packet.Ease,
-                packet.FollowActor ? packet.FollowEntityId : Guid.Empty, packet.OffsetX, packet.OffsetY, packet.Projection, fromLens, toLens);
+                packet.FollowActor ? packet.FollowEntityId : Guid.Empty, packet.FollowVessel, packet.OffsetX, packet.OffsetY, packet.Projection, fromLens, toLens);
             _pose = packet.DurationMs == 0 ? to : from;
             _lens = packet.DurationMs == 0 ? toLens : fromLens;
             _perspectiveFailed = false; _nextPerspectiveFrame = 0;
@@ -61,11 +62,19 @@ internal static partial class CinematicCamera
             var to = shot.To;
             if (shot.FollowEntity != Guid.Empty)
             {
+                if (shot.FollowVessel)
+                {
+                    if (Intersect.Client.Naval.NavalWorld.TryCinematicVesselCenter(shot.Owner,shot.FollowEntity,out var shipX,out var shipY))
+                        to=new(shipX+shot.OffsetX*Options.Instance.Map.TileWidth,shipY+shot.OffsetY*Options.Instance.Map.TileHeight,shot.To.Zoom);
+                }
+                else
+                {
                 Intersect.Client.Entities.Entity? target = shot.FollowEntity == Globals.Me.Id ? Globals.Me : null;
                 if (target == null && MapInstance.TryGet(shot.Map, out var targetMap)) targetMap.LocalEntities.TryGetValue(shot.FollowEntity, out target);
                 if (target != null && target.MapId == shot.Map)
                     to = new(target.Center.X + shot.OffsetX * Options.Instance.Map.TileWidth,
                         target.Center.Y + shot.OffsetY * Options.Instance.Map.TileHeight, shot.To.Zoom);
+                }
             }
             _pose = CinematicInterpolation.Lerp(shot.From, to,
                 shot.Duration == 0 ? 1 : elapsed / (float)shot.Duration, shot.Ease);
@@ -79,7 +88,7 @@ internal static partial class CinematicCamera
         if (shake.X == 0 && shake.Y == 0) return false;
         var center = Globals.Me?.Center ?? default; x += center.X; y += center.Y; return true; } }
     internal static void Release(Guid owner)
-    { lock (Sync) { if (_shot?.Owner == owner) { _shot = null; _pose = null; } ReleasePresentation(owner); CinematicEnvironment.Release(owner); } }
+    { lock (Sync) { if (_shot?.Owner == owner) { _shot = null; _pose = null; } ReleasePresentation(owner); CinematicEnvironment.Release(owner); Intersect.Client.Naval.NavalWorld.ClearCinematicFleet(owner); } }
     internal static void Clear()
-    { lock (Sync) { _shot = null; _pose = null; _presentation = null; CinematicEnvironment.Clear(); } }
+    { lock (Sync) { _shot = null; _pose = null; _presentation = null; CinematicEnvironment.Clear(); Intersect.Client.Naval.NavalWorld.ClearCinematicFleet(); } }
 }

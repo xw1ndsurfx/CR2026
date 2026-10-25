@@ -8,6 +8,12 @@ namespace Intersect.Server.Entities.Events;
 
 public static partial class CommandProcessing
 {
+    private static void ProcessCommand(CinematicVesselMoveCommand command,Player player,Event instance,
+        CommandInstance stackInfo,Stack<CommandInstance> callStack)
+    { if (!instance.MoveCinematicVessel(command)) RejectCinematic(player,callStack); }
+    private static void ProcessCommand(CinematicVesselActionCommand command,Player player,Event instance,
+        CommandInstance stackInfo,Stack<CommandInstance> callStack)
+    { if (!instance.ActOnCinematicVessels(command)) RejectCinematic(player,callStack); }
     private static void ProcessCommand(CinematicEnvironmentCommand command,Player player,Event instance,
         CommandInstance stackInfo,Stack<CommandInstance> callStack)
     {
@@ -108,7 +114,9 @@ public static partial class CommandProcessing
             Math.Abs(command.OffsetX) > Options.Instance.Map.MapWidth || Math.Abs(command.OffsetY) > Options.Instance.Map.MapHeight ||
             !CinematicInterpolation.ValidLens(command.Projection, command.Heading, command.EyeHeight, command.PitchDegrees, command.FieldOfView)) return;
         var targetId = player.Id;
-        if (command.FollowActor && command.ActorId != Guid.Empty)
+        var followVessel=command.FollowActor && instance.IsCinematicVessel(command.ActorId);
+        if (followVessel) targetId=command.ActorId;
+        else if (command.FollowActor && command.ActorId != Guid.Empty)
         {
             var actor = player.EventLookup.Values.FirstOrDefault(e => e.Descriptor.Id == command.ActorId && !e.Global &&
                 e.MapId == player.MapId && e.PageInstance is { GlobalClone: null });
@@ -117,7 +125,7 @@ public static partial class CommandProcessing
         }
         player.SendPacket(new CinematicCameraPacket { EventId = instance.Descriptor.Id, MapId = command.MapId,
             X = command.X, Y = command.Y, Zoom = command.Zoom, DurationMs = command.DurationMs, Ease = command.Ease,
-            FollowActor = command.FollowActor, FollowEntityId = targetId, OffsetX = command.OffsetX, OffsetY = command.OffsetY,
+            FollowActor = command.FollowActor, FollowEntityId = targetId,FollowVessel=followVessel, OffsetX = command.OffsetX, OffsetY = command.OffsetY,
             Projection = command.Projection, Heading = command.Heading, EyeHeight = command.EyeHeight,
             PitchDegrees = command.PitchDegrees, FieldOfView = command.FieldOfView });
     }

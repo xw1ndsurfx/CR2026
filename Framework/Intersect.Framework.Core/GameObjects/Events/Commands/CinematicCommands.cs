@@ -68,6 +68,30 @@ public sealed class CinematicEnvironmentCommand : EventCommand
     public CinematicEnvironmentSettings EnvironmentSettings { get; set; } = new();
 }
 
+public sealed class CinematicVesselMoveCommand : EventCommand
+{
+    public override EventCommandType Type => EventCommandType.CinematicVesselMove;
+    public Guid ActorId { get; set; }
+    public int DurationMs { get; set; }
+    public CinematicEase Ease { get; set; }
+    public List<CinematicPoint> Points { get; set; } = [];
+}
+
+public sealed class CinematicVesselActionCommand : EventCommand
+{
+    public override EventCommandType Type => EventCommandType.CinematicVesselAction;
+    public Guid ActorId { get; set; }
+    public CinematicVesselAction VesselAction { get; set; }
+    public CinematicVesselAppearance VesselAppearance { get; set; }
+    public bool SynchronizedGroup { get; set; }
+    public int X { get; set; }
+    public int Y { get; set; }
+    public Guid AnimationId { get; set; }
+    public bool FollowActor { get; set; }
+    public int AnimationOffsetX { get; set; }
+    public int AnimationOffsetY { get; set; }
+}
+
 public sealed class CinematicCameraCommand : EventCommand
 {
     public override EventCommandType Type => EventCommandType.CinematicCamera;

@@ -55,7 +55,7 @@ public static class CinematicCompiler
         Func<Guid, bool>? validAnimation = null, Func<Guid, bool>? validEvent = null,
         Func<string, bool, bool>? validAudio = null, Func<Guid, bool>? validNpc = null,
         Func<Guid,bool>? validBoolean = null, Func<Guid,bool>? validQuest = null, Func<Guid,Guid,bool,bool>? validQuestTask = null,
-        Func<string,bool>? validFog = null)
+        Func<string,bool>? validFog = null, Func<string,bool>? validVessel = null)
     {
         void Require(bool valid, string error) { if (!valid) throw new InvalidOperationException(error); }
         Require(scene != null && scene.Actors != null && scene.Clips != null && scene.Markers != null, "scene-data");
@@ -67,6 +67,7 @@ public static class CinematicCompiler
         Require(scene.MapId != Guid.Empty && mapWidth > 0 && mapHeight > 0, "scene-map");
         Require(scene.DurationMs is > 0 and <= MaximumDurationMs, "scene-duration");
         Require(scene.Clips.Count <= 512 && scene.Actors.Count <= 64, "scene-size");
+        Require(Enum.IsDefined(scene.Mode) && scene.Actors.Count(a=>a.Kind == CinematicActorKind.TemporaryVessel) <= CinematicVessels.MaximumVessels,"vessel-count");
         Require(scene.Markers.Count <= 128 && scene.Markers.All(m => m != null && m.TimeMs >= 0 && m.TimeMs <= scene.DurationMs), "marker-range");
         bool InMap(int x, int y) => x >= 0 && y >= 0 && x < mapWidth && y < mapHeight;
         Require(scene.Actors.Select(a => a.TargetId).Distinct().Count() == scene.Actors.Count, "actor-duplicate");
@@ -74,6 +75,13 @@ public static class CinematicCompiler
         {
             Require(InMap(actor.StartX, actor.StartY), "actor-position");
             Require(Enum.IsDefined(actor.Kind), "actor-unavailable");
+            if (actor.Kind == CinematicActorKind.TemporaryVessel)
+            {
+                Require(actor.TargetId != Guid.Empty && !string.IsNullOrWhiteSpace(actor.ShipModelKey) && actor.ShipModelKey.Length <= 128 &&
+                    validVessel?.Invoke(actor.ShipModelKey) != false && float.IsFinite(actor.StartHeading) && actor.StartHeading is >= 0 and <= 360 &&
+                    Enum.IsDefined(actor.VesselAppearance),"vessel-model");
+                continue;
+            }
             Require(actor.Kind == CinematicActorKind.TemporaryNpc
                 ? actor.TargetId != Guid.Empty && actor.NPCId != Guid.Empty && validNpc?.Invoke(actor.NPCId) != false && blocked?.Invoke(actor.StartX, actor.StartY) != true
                 : actor.TargetId == Guid.Empty || validActor?.Invoke(actor.TargetId) != false, "actor-unavailable");
@@ -81,7 +89,7 @@ public static class CinematicCompiler
         var page = new EventPage { Cinematic = scene };
         var commands = page.CommandLists.Values.First();
         commands.Add(new BeginCinematicCommand { MapId = scene.MapId,
-            Actors = scene.Actors.Where(a => a.Kind == CinematicActorKind.TemporaryNpc ||
+            Actors = scene.Actors.Where(a => a.Kind != CinematicActorKind.PersonalEvent ||
                 scene.Clips.Any(c => c.Track == CinematicTrack.Movement && c.ActorId == a.TargetId)).ToList() });
         commands.Add(new HoldPlayerCommand());
         var scheduled = new List<(int Time, int Priority, int Order, EventCommand Command)>();
@@ -136,7 +144,7 @@ public static class CinematicCompiler
                     }
                     break;
                 case CinematicTrack.Actors:
-                    Require(scene.Actors.Any(a => a.TargetId == clip.ActorId && a.Kind == CinematicActorKind.TemporaryNpc), "temporary-actor-required");
+                    Require(scene.Actors.Any(a => a.TargetId == clip.ActorId && a.Kind != CinematicActorKind.PersonalEvent), "temporary-actor-required");
                     Add(new CinematicActorCommand { ActorId = clip.ActorId, Visible = clip.ActorVisible });
                     break;
                 case CinematicTrack.Camera:
@@ -165,6 +173,14 @@ public static class CinematicCompiler
                     Require(clip.Speed is >= 0 and <= 4 && clip.Points.Count is >= 2 and <= 1024, "path-points");
                     Require(clip.Points[0].X == anchor.X && clip.Points[0].Y == anchor.Y, "path-anchor");
                     Require(clip.Points.All(p => InMap(p.X, p.Y)), "path-outside-map");
+                    if (scene.Actors.First(a=>a.TargetId == clip.ActorId).Kind == CinematicActorKind.TemporaryVessel)
+                    {
+                        Require(clip.Points.Count <= 256 && CinematicVessels.PathLength(clip.Points) is > 0 and <= 256 && Enum.IsDefined(clip.Ease) &&
+                            clip.Points.All(p=>p.PauseMs == 0 && p.SpeedOverride == -1 && p.Facing == CinematicFacing.Unchanged),"vessel-path");
+                        Add(new CinematicVesselMoveCommand { ActorId=clip.ActorId,DurationMs=clip.DurationMs,Ease=clip.Ease,Points=clip.Points });
+                        actorEnds[clip.ActorId]=(end,clip.Points[^1].X,clip.Points[^1].Y);
+                        break;
+                    }
                     Require(clip.ActorId != Guid.Empty || clip.Points.All(p => p.SpeedOverride == -1 && p.Facing != CinematicFacing.Player), "point-action-unavailable");
                     var actions = BuildPath(clip.Points, blocked);
                     Require(actions.Count > 0, "path-empty");
@@ -185,6 +201,12 @@ public static class CinematicCompiler
                     Require(clip.AttachToActor ? scene.Actors.Any(a => a.TargetId == clip.ActorId) &&
                         Math.Abs((long)clip.AnimationOffsetX) <= 1024 && Math.Abs((long)clip.AnimationOffsetY) <= 1024 :
                         InMap(clip.X, clip.Y) && clip.X <= sbyte.MaxValue && clip.Y <= sbyte.MaxValue, "animation-position");
+                    if (clip.AttachToActor && scene.Actors.First(a=>a.TargetId == clip.ActorId).Kind == CinematicActorKind.TemporaryVessel)
+                    {
+                        Add(new CinematicVesselActionCommand { ActorId=clip.ActorId,VesselAction=CinematicVesselAction.VesselHullImpact,
+                            AnimationId=clip.ResourceId,AnimationOffsetX=clip.AnimationOffsetX,AnimationOffsetY=clip.AnimationOffsetY,FollowActor=true });
+                        break;
+                    }
                     Add(new PlayAnimationCommand { AnimationId = clip.ResourceId, MapId = clip.AttachToActor ? Guid.Empty : scene.MapId,
                         TargetMapId = clip.AttachToActor ? scene.MapId : Guid.Empty, EntityId = clip.AttachToActor ? clip.ActorId : Guid.Empty,
                         X = clip.AttachToActor ? (sbyte)0 : (sbyte)clip.X, Y = clip.AttachToActor ? (sbyte)0 : (sbyte)clip.Y,
@@ -220,6 +242,17 @@ public static class CinematicCompiler
                     if (clip.AllowPlayerControl) Add(new ReleasePlayerCommand());
                     Add(new StartCommmonEventCommand { EventId = clip.ResourceId });
                     if (clip.AllowPlayerControl) Add(new HoldPlayerCommand());
+                    break;
+                case CinematicTrack.Naval:
+                    Require(scene.Actors.Any(a=>a.TargetId == clip.ActorId && a.Kind == CinematicActorKind.TemporaryVessel),"vessel-required");
+                    Require(Enum.IsDefined(clip.VesselAction) && Enum.IsDefined(clip.VesselAppearance) && InMap(clip.X,clip.Y),"vessel-action");
+                    Require(clip.ResourceId == Guid.Empty || validAnimation?.Invoke(clip.ResourceId) != false,"animation-unavailable");
+                    Require(Math.Abs((long)clip.AnimationOffsetX) <= 1024 && Math.Abs((long)clip.AnimationOffsetY) <= 1024,"animation-position");
+                    Require(!clip.SynchronizedGroup || scene.Actors.Any(a=>a.TargetId == clip.ActorId && a.GroupId != Guid.Empty),"vessel-group");
+                    Require(!clip.SynchronizedGroup || clip.VesselAction != CinematicVesselAction.VesselWaterImpact,"vessel-group");
+                    Add(new CinematicVesselActionCommand { ActorId=clip.ActorId,VesselAction=clip.VesselAction,VesselAppearance=clip.VesselAppearance,
+                        SynchronizedGroup=clip.SynchronizedGroup,X=clip.X,Y=clip.Y,AnimationId=clip.ResourceId,
+                        FollowActor=clip.VesselAction == CinematicVesselAction.VesselHullImpact,AnimationOffsetX=clip.AnimationOffsetX,AnimationOffsetY=clip.AnimationOffsetY });
                     break;
             }
         }

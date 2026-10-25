@@ -63,6 +63,9 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         Button("TemporaryNpc", AddTemporaryActor);
         Button("Formation", AddFormation);
         Button("GroupPath", CopyGroupPath);
+        Button("TemporaryVessel",AddVessel);Button("FleetFormation",AddFleetFormation);
+        Button("NavalScene",()=>{ _scene.Mode=CinematicSceneMode.NavalScene;SelectObject(_scene);CommitEdit(); });
+        Button("BattlefieldScene",()=>{ _scene.Mode=CinematicSceneMode.BattlefieldScene;SelectObject(_scene);CommitEdit(); });
         var left = new SplitContainer { Size = new(1400, 780), Dock = DockStyle.Fill, SplitterDistance = 230, FixedPanel = FixedPanel.Panel1 };
         var middle = new SplitContainer { Size = new(1170, 780), Dock = DockStyle.Fill, Orientation = Orientation.Horizontal, SplitterDistance = 460 };
         var right = new SplitContainer { Size = new(1170, 460), Dock = DockStyle.Fill, SplitterDistance = 850, FixedPanel = FixedPanel.Panel2 };
@@ -138,7 +141,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
             _viewport.Invalidate();
         };
         _timer.Tick += (_, _) => TickPreview(); _timer.Start();
-        Shown += (_, _) => { NewScene(); RenderMap(); };
+        Shown += (_, _) => { NewScene(); RenderMap();RequestVesselModels(false); };
         FormClosing += (_, e) => { if (!CanDiscard()) e.Cancel = true; };
         Disposed += (_, _) => { _timer.Dispose(); _viewport.MapImage?.Dispose(); };
     }
@@ -167,7 +170,12 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         _lastState = _savedState = Snapshot(); SelectObject(scene); SetCursor(0); RefreshTree(); RenderMap();
     }
     private void SelectObject(object value)
-    { _selection = value; _viewport.SelectedActor = value as CinematicActor; _properties.SelectedObject = new CinematicProperties(value); _properties.Refresh(); }
+    {
+        _selection = value; _viewport.SelectedActor = value as CinematicActor;
+        var route=value as CinematicClip ?? _timeline.Selected;
+        var vessel=route?.Track == CinematicTrack.Movement && _scene.Actors.Any(a=>a.TargetId == route.ActorId && a.Kind == CinematicActorKind.TemporaryVessel);
+        _properties.SelectedObject = new CinematicProperties(value,value is CinematicPoint && vessel,vessel);_properties.Refresh();
+    }
     private void CommitEdit()
     {
         var state = Snapshot(); if (state != _lastState) { _undo.Push(_lastState); _redo.Clear(); _lastState = state; }
@@ -290,6 +298,9 @@ internal sealed partial class FrmCinematicDirector : DarkForm
     private void AddClip(CinematicTrack track)
     {
         var selectedActor = _selection as CinematicActor ?? _scene.Actors.FirstOrDefault();
+        if (track == CinematicTrack.Naval && selectedActor?.Kind != CinematicActorKind.TemporaryVessel)
+            selectedActor=_scene.Actors.FirstOrDefault(a=>a.Kind == CinematicActorKind.TemporaryVessel);
+        if (track == CinematicTrack.Naval && selectedActor == null) { _status.Text=T("vessel-required");return; }
         var clip = new CinematicClip { Name = T(track.ToString()), Track = track, StartMs = Math.Min(_timeline.CursorMs, Math.Max(0, _scene.DurationMs - 1000)),
             X = Options.Instance.Map.MapWidth / 2, Y = Options.Instance.Map.MapHeight / 2, ActorId = selectedActor?.TargetId ?? Guid.Empty };
         if (track == CinematicTrack.Movement && selectedActor != null)
@@ -304,6 +315,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
     {
         if (_selection is CinematicActor actor)
         {
+            if (actor.Kind == CinematicActorKind.TemporaryVessel) { ChooseVesselModel(actor);return; }
             if (actor.Kind == CinematicActorKind.TemporaryNpc && Pick(NPCDescriptor.Lookup.Values.OfType<NPCDescriptor>()
                     .Where(n => !string.IsNullOrWhiteSpace(n.Sprite)).Select(n => new Resource(n.Id, n.Name))) is { } selected)
             { actor.NPCId = selected.Id; CommitEdit(); RenderMap(); }
@@ -326,6 +338,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         IEnumerable<Resource> choices = clip.Track switch
         {
             CinematicTrack.Animation => AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().Select(a => new Resource(a.Id, a.Name)),
+            CinematicTrack.Naval => AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().Select(a => new Resource(a.Id,a.Name)),
             CinematicTrack.Event or CinematicTrack.Choice or CinematicTrack.Gameplay => EventDescriptor.Lookup.Values.OfType<EventDescriptor>().Where(e => e.CommonEvent).Select(e => new Resource(e.Id, e.Name)),
             CinematicTrack.Music => GameContentManager.SmartSortedMusicNames.Select(n => new Resource(Guid.Empty, n)),
             CinematicTrack.Sound => GameContentManager.SmartSortedSoundNames.Select(n => new Resource(Guid.Empty, n))
@@ -348,8 +361,9 @@ internal sealed partial class FrmCinematicDirector : DarkForm
     }
     private void ChooseActorTarget()
     {
-        if (_timeline.Selected is not { } clip || clip.Track is not (CinematicTrack.Camera or CinematicTrack.Movement or CinematicTrack.Animation or CinematicTrack.Actors)) return;
-        if (Pick(_scene.Actors.Where(a => clip.Track != CinematicTrack.Actors || a.Kind == CinematicActorKind.TemporaryNpc)
+        if (_timeline.Selected is not { } clip || clip.Track is not (CinematicTrack.Camera or CinematicTrack.Movement or CinematicTrack.Animation or CinematicTrack.Actors or CinematicTrack.Naval)) return;
+        if (Pick(_scene.Actors.Where(a => (clip.Track != CinematicTrack.Actors || a.Kind != CinematicActorKind.PersonalEvent) &&
+                (clip.Track != CinematicTrack.Naval || a.Kind == CinematicActorKind.TemporaryVessel))
                 .Select(a => new Resource(a.TargetId, a.Name))) is not { } selected) return;
         clip.ActorId = selected.Id; CommitEdit(); RenderMap();
     }
@@ -381,6 +395,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         if (Globals.CurrentMap is not { } map || map.Id != _scene.MapId) { _status.Text = T("MapRequired"); return false; }
         try
         {
+            ValidateVesselPaths();
             var page = CinematicCompiler.Compile(_scene, Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight,
                 (x, y) => map.Attributes[x, y] is MapBlockedAttribute,
                 id => map.LocalEvents.TryGetValue(id, out var actor) && !actor.Global && actor.Pages.Count > 0,
@@ -389,7 +404,8 @@ internal sealed partial class FrmCinematicDirector : DarkForm
                     GameContentManager.SoundNames.Contains(file) || GameContentManager.SmartSortedVoiceSoundNames.Contains(file),
                 id => NPCDescriptor.Get(id) is { Sprite.Length: > 0 },
                 WorkflowBooleanAvailable,WorkflowQuestAvailable,WorkflowTaskAvailable,
-                file=>GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Fog).Contains(file));
+                file=>GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Fog).Contains(file),
+                key=>_vesselModelsReady && VesselModels.ContainsKey(key));
             if (_eventId == Guid.Empty) _eventId = Guid.NewGuid();
             var evt = map.LocalEvents.GetValueOrDefault(_eventId) ?? new EventDescriptor(_eventId, map.Id, 0, 0);
             if (evt.Pages.Count > 0)

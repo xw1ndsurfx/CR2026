@@ -91,6 +91,7 @@ public partial class Event
     {
         CheckCinematicLifetime();
         UpdateCinematicTemporaryActors(timeMs);
+        UpdateCinematicVessels();
         var sendLeave = false;
         var originalPageInstance = PageInstance;
         if (PageInstance != null)

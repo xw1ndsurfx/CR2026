@@ -91,26 +91,38 @@ public static partial class Graphics
     private static void DrawCinematicAnimations(Microsoft.Xna.Framework.Graphics.RenderTarget2D target)
     {
         if (_cinematicPreview is not { } scene) return;
-        foreach (var clip in scene.Clips.Where(c => c.Track == CinematicTrack.Animation && c.StartMs <= _cinematicPreviewTime))
+        foreach (var clip in scene.Clips.Where(c=>c.Track == CinematicTrack.Animation && c.StartMs <= _cinematicPreviewTime))
         {
-            if (AnimationDescriptor.Get(clip.ResourceId) is not { } animation) continue;
-            var actor = clip.AttachToActor ? scene.Actors.FirstOrDefault(a => a.TargetId == clip.ActorId) : null;
-            var position = actor != null ? CinematicPreview.ActorPosition(scene, actor, _cinematicPreviewTime) : ((float)clip.X, (float)clip.Y);
-            foreach (var layer in new[] { animation.Lower, animation.Upper })
+            var actor=clip.AttachToActor ? scene.Actors.FirstOrDefault(a=>a.TargetId == clip.ActorId) : null;
+            var position=actor != null ? CinematicPreview.ActorPosition(scene,actor,_cinematicPreviewTime) : ((float)clip.X,(float)clip.Y);
+            DrawCinematicNativeAnimation(clip.ResourceId,(position.Item1+.5f)*Options.Instance.Map.TileWidth+(actor != null ? clip.AnimationOffsetX : 0),
+                (position.Item2+.5f)*Options.Instance.Map.TileHeight+(actor != null ? clip.AnimationOffsetY : 0),_cinematicPreviewTime-clip.StartMs,target);
+        }
+    }
+
+    private static void DrawCinematicNativeAnimation(Guid resource,float x,float y,long elapsed,Microsoft.Xna.Framework.Graphics.RenderTarget2D target)
+    {
+        if (AnimationDescriptor.Get(resource) is not { } animation) return;
+        var previous=_cinematicActorAnchor;_cinematicActorAnchor=new Microsoft.Xna.Framework.Vector2(x,y);
+        try
+        {
+            foreach (var layer in new[] {animation.Lower,animation.Upper})
             {
-                if (layer.FrameSpeed <= 0 || layer.FrameCount <= 0 || layer.XFrames <= 0 || layer.YFrames <= 0) continue;
-                var frame = (_cinematicPreviewTime - clip.StartMs) / layer.FrameSpeed;
-                if (frame >= (long)layer.FrameCount * (layer.LoopCount + 1)) continue;
-                frame %= layer.FrameCount;
-                var texture = GameContentManager.GetTexture(GameContentManager.TextureType.Animation, layer.Sprite);
+                if (layer == null || layer.FrameSpeed <= 0 || layer.FrameCount <= 0 || layer.XFrames <= 0 || layer.YFrames <= 0) continue;
+                var count=(int)Math.Min(layer.FrameCount,(long)layer.XFrames*layer.YFrames);
+                if (count <= 0) continue;
+                var frame=Math.Max(0,elapsed)/layer.FrameSpeed;
+                if (frame >= (long)count*(Math.Clamp(layer.LoopCount,0,100)+1)) continue;
+                frame%=count;
+                var texture=GameContentManager.GetTexture(GameContentManager.TextureType.Animation,layer.Sprite);
                 if (texture == null) continue;
-                var width = texture.Width / layer.XFrames; var height = texture.Height / layer.YFrames;
-                var scale = Math.Clamp(layer.ScalePercent, 1, 1000) / 100f;
-                DrawTexture(texture, new RectangleF(frame % layer.XFrames * width, frame / layer.XFrames * height, width, height),
-                    new RectangleF((position.Item1 + .5f) * Options.Instance.Map.TileWidth + layer.OffsetX + (actor != null ? clip.AnimationOffsetX : 0) - width * scale / 2,
-                        (position.Item2 + .5f) * Options.Instance.Map.TileHeight + layer.OffsetY + (actor != null ? clip.AnimationOffsetY : 0) - height * scale / 2, width * scale, height * scale),
-                    System.Drawing.Color.FromArgb(layer.Opacity, 255, 255, 255), target, Microsoft.Xna.Framework.Graphics.BlendState.NonPremultiplied);
+                var width=texture.Width/layer.XFrames;var height=texture.Height/layer.YFrames;
+                var scale=Math.Clamp(layer.ScalePercent,1,1000)/100f;
+                DrawTexture(texture,new RectangleF(frame%layer.XFrames*width,frame/layer.XFrames*height,width,height),
+                    new RectangleF(x+layer.OffsetX-width*scale/2,y+layer.OffsetY-height*scale/2,width*scale,height*scale),
+                    System.Drawing.Color.FromArgb(layer.Opacity,255,255,255),target,Microsoft.Xna.Framework.Graphics.BlendState.NonPremultiplied);
             }
         }
+        finally { _cinematicActorAnchor=previous; }
     }
 }

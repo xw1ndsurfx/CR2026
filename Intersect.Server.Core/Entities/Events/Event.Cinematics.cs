@@ -37,6 +37,7 @@ public partial class Event
         foreach (var actor in command.Actors)
         {
             if (!Enum.IsDefined(actor.Kind)) return false;
+            if (actor.Kind == CinematicActorKind.TemporaryVessel) continue;
             if (actor.Kind == CinematicActorKind.TemporaryNpc)
             { if (!CanCreateTemporaryActor(actor, command.MapId)) return false; continue; }
             if (actor.TargetId == Guid.Empty)
@@ -58,6 +59,7 @@ public partial class Event
         _cinematicDeadline = Environment.TickCount64 + 30 * 60 * 1000;
         try
         {
+            if (!CreateCinematicVessels(command.Actors)) { FinishCinematic(interrupted: true); return false; }
             foreach (var actor in command.Actors.Where(a => a.Kind == CinematicActorKind.TemporaryNpc))
                 if (!CreateTemporaryActor(actor)) { FinishCinematic(interrupted: true); return false; }
         }
@@ -79,6 +81,7 @@ public partial class Event
         }
         _cinematicActors.Clear();
         RemoveCinematicTemporaryActors();
+        RemoveCinematicVessels();
         if (_cinematicOwnerPage != null && Player.MoveRouteSetter == _cinematicOwnerPage)
         {
             Player.MoveRoute = null;

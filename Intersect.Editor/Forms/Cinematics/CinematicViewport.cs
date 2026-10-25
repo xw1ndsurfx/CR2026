@@ -56,6 +56,8 @@ internal sealed class CinematicViewport : Control
                 using var path = new Pen(clip == Selected ? DrawingColor.DeepSkyBlue : DrawingColor.FromArgb(120, DrawingColor.LightSkyBlue), 2) { DashStyle = DashStyle.Dash, EndCap = LineCap.ArrowAnchor };
                 for (var i = 1; i < clip.Points.Count; i++)
                 {
+                    if (Scene.Actors.Any(a=>a.TargetId == clip.ActorId && a.Kind == CinematicActorKind.TemporaryVessel))
+                    { g.DrawLine(path,Screen(clip.Points[i-1].X,clip.Points[i-1].Y),Screen(clip.Points[i].X,clip.Points[i].Y));continue; }
                     var a = clip.Points[i - 1]; var b = clip.Points[i]; var corner = Screen(b.X, a.Y);
                     g.DrawLine(path, Screen(a.X, a.Y), corner); g.DrawLine(path, corner, Screen(b.X, b.Y));
                 }
@@ -112,7 +114,7 @@ internal sealed class CinematicViewport : Control
     {
         base.OnMouseDown(e); Focus(); if (MapImage == null || CameraView) return;
         var point = Tile(e.Location);
-        if (e.Button == MouseButtons.Left && SelectedActor is { Kind: CinematicActorKind.TemporaryNpc } actor)
+        if (e.Button == MouseButtons.Left && SelectedActor is { Kind: CinematicActorKind.TemporaryNpc or CinematicActorKind.TemporaryVessel } actor)
         { _dragActor = actor; Capture = true; MoveActor(actor, point); Invalidate(); return; }
         if (Selected == null) return;
         if (Selected.Track == CinematicTrack.Movement)
@@ -123,7 +125,7 @@ internal sealed class CinematicViewport : Control
             if (existing != null) { _drag = existing; PointSelected?.Invoke(existing); Capture = true; }
             else { Selected.Points.Add(point); PointSelected?.Invoke(point); Edited?.Invoke(); }
         }
-        else if (Selected.Track is CinematicTrack.Camera or CinematicTrack.Animation)
+        else if (Selected.Track is CinematicTrack.Camera or CinematicTrack.Animation or CinematicTrack.Naval)
         { Selected.X = point.X; Selected.Y = point.Y; Edited?.Invoke(); }
         Invalidate();
     }

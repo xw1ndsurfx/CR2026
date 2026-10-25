@@ -171,4 +171,6 @@ public enum EventCommandType
     AwaitCinematicCondition = 1077,
     CinematicQuestTask = 1078,
     CinematicEnvironment = 1079,
+    CinematicVesselMove = 1080,
+    CinematicVesselAction = 1081,
 }

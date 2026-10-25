@@ -3,7 +3,7 @@ using System.Globalization;
 using Intersect.Framework.Core.Cinematics;
 namespace Intersect.Editor.Forms.Cinematics;
 
-internal sealed class CinematicProperties(object value) : CustomTypeDescriptor
+internal sealed class CinematicProperties(object value, bool vesselPoint = false, bool vesselMovement = false) : CustomTypeDescriptor
 {
     internal object Value => value;
     public override object GetPropertyOwner(PropertyDescriptor? pd) => value;
@@ -16,7 +16,14 @@ internal sealed class CinematicProperties(object value) : CustomTypeDescriptor
                 "Projection", "Heading", "EyeHeight", "PitchDegrees", "FieldOfView" },
             CinematicTrack.Presentation => ["HideHud", "Letterbox", "FadeOpacity", "ShakePixels", "Ease"],
             CinematicTrack.Actors => ["ActorId", "ActorVisible"],
-            CinematicTrack.Movement => ["ActorId", "Speed"],
+            CinematicTrack.Movement => vesselMovement ? ["ActorId", "Ease"] : ["ActorId", "Speed"],
+            CinematicTrack.Naval => clip.VesselAction == CinematicVesselAction.VesselAppearance
+                ? ["ActorId", "VesselAction", "VesselAppearance", "SynchronizedGroup"]
+                : clip.VesselAction is CinematicVesselAction.FirePort or CinematicVesselAction.FireStarboard
+                    ? ["ActorId", "VesselAction", "SynchronizedGroup"]
+                    : clip.VesselAction == CinematicVesselAction.VesselHullImpact
+                        ? ["ActorId", "VesselAction", "ResourceId", "AnimationOffsetX", "AnimationOffsetY", "SynchronizedGroup"]
+                        : ["ActorId", "VesselAction", "X", "Y", "ResourceId"],
             CinematicTrack.Animation => ["ResourceId", "X", "Y", "AttachToActor", "ActorId", "AnimationOffsetX", "AnimationOffsetY"],
             CinematicTrack.Dialogue => ["Text", "Face"],
             CinematicTrack.Choice => ["Text", "Face", "Option1", "Option2", "Option3", "Option4", "ChoiceEvent1", "ChoiceEvent2", "ChoiceEvent3", "ChoiceEvent4"],
@@ -37,6 +44,11 @@ internal sealed class CinematicProperties(object value) : CustomTypeDescriptor
         } : null;
         if (value is CinematicActor actor && actor.Kind == CinematicActorKind.PersonalEvent)
             visible = ["Name", "TargetId", "StartX", "StartY", "Kind", "GroupName"];
+        else if (value is CinematicActor {Kind:CinematicActorKind.TemporaryNpc})
+            visible = ["Name", "TargetId", "StartX", "StartY", "Kind", "NPCId", "VisibleAtStart", "HideName", "GroupName"];
+        else if (value is CinematicActor {Kind:CinematicActorKind.TemporaryVessel})
+            visible = ["Name", "TargetId", "StartX", "StartY", "Kind", "ShipModelKey", "StartHeading", "VesselAppearance", "VisibleAtStart", "HideName", "GroupName"];
+        else if (value is CinematicPoint && vesselPoint) visible=["X", "Y"];
         var descriptors = TypeDescriptor.GetProperties(value, attributes ?? []).Cast<PropertyDescriptor>()
             .Where(p => p.IsBrowsable && (visible == null || visible.Contains(p.Name) || p.Name is "Name" or "Track" or "StartMs" or "DurationMs"))
             .Select(p => (PropertyDescriptor)new LocalizedProperty(p, value)).ToArray();

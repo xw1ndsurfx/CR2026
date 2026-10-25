@@ -8,13 +8,15 @@ public static class CinematicPreview
         return clip?.RestoreEnvironment == false && clip.EnvironmentSettings?.Valid() == true ? clip.EnvironmentSettings : null;
     }
     public static bool ActorVisible(CinematicScene scene, CinematicActor actor, int timeMs) =>
-        actor.Kind != CinematicActorKind.TemporaryNpc || (scene.Clips
+        actor.Kind == CinematicActorKind.PersonalEvent || (scene.Clips
             .Where(c => c.Track == CinematicTrack.Actors && c.ActorId == actor.TargetId && c.StartMs <= timeMs)
             .OrderBy(c => c.StartMs).LastOrDefault()?.ActorVisible ?? actor.VisibleAtStart);
 
     // Scrubbing is an authoring estimate. Native collisions/speed and interactive waits are resolved in-game.
     public static (float X, float Y) ActorPosition(CinematicScene scene, CinematicActor actor, int timeMs)
     {
+        if (actor.Kind == CinematicActorKind.TemporaryVessel)
+        { var pose=VesselPose(scene,actor,timeMs); return ((float)pose.X-.5f,(float)pose.Y-.5f); }
         float x = actor.StartX, y = actor.StartY;
         foreach (var clip in scene.Clips.Where(c => c.Track == CinematicTrack.Movement && c.ActorId == actor.TargetId)
                      .OrderBy(c => c.StartMs))
@@ -35,6 +37,14 @@ public static class CinematicPreview
             }
         }
         return (x, y);
+    }
+
+    public static (double X,double Y,double Heading) VesselPose(CinematicScene scene,CinematicActor actor,int timeMs)
+    {
+        var pose=(X:actor.StartX+.5,Y:actor.StartY+.5,Heading:(double)actor.StartHeading);
+        foreach (var clip in scene.Clips.Where(c=>c.Track == CinematicTrack.Movement && c.ActorId == actor.TargetId && c.StartMs <= timeMs).OrderBy(c=>c.StartMs))
+            if (clip.Points.Count >= 2) pose=CinematicVessels.Sample(clip.Points,(timeMs-clip.StartMs)/(float)Math.Max(1,clip.DurationMs),pose.Heading,clip.Ease);
+        return pose;
     }
 
     public static CinematicCameraPose Camera(CinematicScene scene, int timeMs, CinematicCameraPose initial)
