@@ -12,4 +12,6 @@ public sealed partial class JoustStatePacket : IntersectPacket
     [Key(6)] public Guid RequestId { get; set; }
     [Key(7)] public string MountsJson { get; set; } = "";
     [Key(8)] public string CareerJson { get; set; } = "";
+    [Key(9)] public string DuelJson { get; set; } = "";
+    [Key(10)] public bool OpenDuelWindow { get; set; }
 }

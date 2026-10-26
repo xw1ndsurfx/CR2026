@@ -1,5 +1,130 @@
 {
   "Entries": {
+    "Challenge a knight": {
+        "en": "Challenge a knight",
+        "fr": "Défier un chevalier",
+        "es": "Desafiar a un caballero"
+    },
+    "Refresh players": {
+        "en": "Refresh players",
+        "fr": "Actualiser les joueurs",
+        "es": "Actualizar jugadores"
+    },
+    "Challenge this player": {
+        "en": "Challenge this player",
+        "fr": "Défier ce joueur",
+        "es": "Desafiar a este jugador"
+    },
+    "Accept joust": {
+        "en": "Accept joust",
+        "fr": "Accepter la joute",
+        "es": "Aceptar justa"
+    },
+    "Decline joust": {
+        "en": "Decline joust",
+        "fr": "Refuser la joute",
+        "es": "Rechazar justa"
+    },
+    "Accept joust ({0}s)": {
+        "en": "Accept joust ({0}s)",
+        "fr": "Accepter la joute ({0}s)",
+        "es": "Aceptar justa ({0}s)"
+    },
+    "Gold start: ({0}, {1}) · Blue start: ({2}, {3})": {
+        "en": "Gold start: ({0}, {1}) · Blue start: ({2}, {3})",
+        "fr": "Départ doré : ({0}, {1}) · Départ bleu : ({2}, {3})",
+        "es": "Inicio dorado: ({0}, {1}) · Inicio azul: ({2}, {3})"
+    },
+    "Challenge from the gold start. Accept from the blue start.": {
+        "en": "Challenge from the gold start. Accept from the blue start.",
+        "fr": "Défie depuis le départ doré. Accepte depuis le départ bleu.",
+        "es": "Desafía desde el inicio dorado. Acepta desde el inicio azul."
+    },
+    "{0} challenges you to a joust.": {
+        "en": "{0} challenges you to a joust.",
+        "fr": "{0} te défie à la joute.",
+        "es": "{0} te desafía a una justa."
+    },
+    "No other knight is present on this map.": {
+        "en": "No other knight is present on this map.",
+        "fr": "Aucun autre chevalier n’est présent sur cette carte.",
+        "es": "No hay otro caballero en este mapa."
+    },
+    "Player duels are not enabled on this map.": {
+        "en": "Player duels are not enabled on this map.",
+        "fr": "Les duels entre joueurs ne sont pas activés sur cette carte.",
+        "es": "Los duelos entre jugadores no están activados en este mapa."
+    },
+    "Both knights must be ready on the same map.": {
+        "en": "Both knights must be ready on the same map.",
+        "fr": "Les deux chevaliers doivent être disponibles sur la même carte.",
+        "es": "Ambos caballeros deben estar disponibles en el mismo mapa."
+    },
+    "This player is unavailable. Try again.": {
+        "en": "This player is unavailable. Try again.",
+        "fr": "Ce joueur est indisponible. Réessaie.",
+        "es": "Este jugador no está disponible. Inténtalo de nuevo."
+    },
+    "A duel requires two different accounts.": {
+        "en": "A duel requires two different accounts.",
+        "fr": "Une joute nécessite deux comptes différents.",
+        "es": "Una justa requiere dos cuentas diferentes."
+    },
+    "Stand at the gold starting tile before challenging a player.": {
+        "en": "Stand at the gold starting tile before challenging a player.",
+        "fr": "Place-toi sur la case de départ dorée avant de défier un joueur.",
+        "es": "Sitúate en la casilla dorada de inicio antes de desafiar a un jugador."
+    },
+    "This player already has a pending joust invitation.": {
+        "en": "This player already has a pending joust invitation.",
+        "fr": "Ce joueur a déjà une invitation de joute en attente.",
+        "es": "Este jugador ya tiene una invitación de justa pendiente."
+    },
+    "Joust invitation sent. Your opponent has 30 seconds to accept.": {
+        "en": "Joust invitation sent. Your opponent has 30 seconds to accept.",
+        "fr": "Invitation envoyée. Ton adversaire a 30 secondes pour accepter.",
+        "es": "Invitación enviada. Tu rival tiene 30 segundos para aceptar."
+    },
+    "This joust invitation has expired.": {
+        "en": "This joust invitation has expired.",
+        "fr": "Cette invitation de joute a expiré.",
+        "es": "Esta invitación de justa ha caducado."
+    },
+    "Place the challenger on the gold start and the opponent on the blue start before accepting.": {
+        "en": "Place the challenger on the gold start and the opponent on the blue start before accepting.",
+        "fr": "Place le challenger au départ doré et l’adversaire au départ bleu avant d’accepter.",
+        "es": "Coloca al desafiante en el inicio dorado y al rival en el inicio azul antes de aceptar."
+    },
+    "Clear both jousting lanes before starting the duel.": {
+        "en": "Clear both jousting lanes before starting the duel.",
+        "fr": "Dégage les deux couloirs avant de lancer la joute.",
+        "es": "Despeja ambos carriles antes de iniciar la justa."
+    },
+    "Pass {0}/{1} · You {2} : {3} {4}": {
+        "en": "Pass {0}/{1} · You {2} : {3} {4}",
+        "fr": "Passe {0}/{1} · Toi {2} : {3} {4}",
+        "es": "Pasada {0}/{1} · Tú {2} : {3} {4}"
+    },
+    "Joust interrupted": {
+        "en": "Joust interrupted",
+        "fr": "Joute interrompue",
+        "es": "Justa interrumpida"
+    },
+    "Allow AI training": {
+        "en": "Allow AI training",
+        "fr": "Autoriser l’entraînement contre l’IA",
+        "es": "Permitir entrenamiento contra la IA"
+    },
+    "Allow player duels": {
+        "en": "Allow player duels",
+        "fr": "Autoriser les duels entre joueurs",
+        "es": "Permitir duelos entre jugadores"
+    },
+    "Enable at least one match mode for this arena.": {
+        "en": "Enable at least one match mode for this arena.",
+        "fr": "Active au moins un mode de joute pour cette arène.",
+        "es": "Activa al menos un modo de justa para esta arena."
+    },
     "Saved. Your newer changes still need saving.": {
         "en": "Saved. Your newer changes still need saving.",
         "fr": "Enregistré. Tes modifications plus récentes restent à enregistrer.",

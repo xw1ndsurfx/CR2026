@@ -3,6 +3,8 @@ namespace Intersect.Framework.Core.Jousting;
 // Versioned JSON payload inside an explicit server-only MessagePack envelope.
 public sealed class JoustView
 {
+    public bool IsPve { get; set; } = true;
+    public string OpponentName { get; set; } = "";
     public Guid MatchId { get; set; }
     public Guid ArenaId { get; set; }
     public JoustPhase Phase { get; set; }

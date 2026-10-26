@@ -2106,7 +2106,7 @@ public partial class Player : Entity
 
     public override bool CanAttack(Entity entity, SpellDescriptor spell)
     {
-        if (_joust is { Done: false } || entity is JoustOpponent) return false;
+        if (IsJousting || entity is JoustOpponent || entity is Player { IsJousting: true }) return false;
         Dismount();
         if(entity is Player pvpTarget && (Intersect.Server.Pvp.PvpRuntime.InMatch(this) || Intersect.Server.Pvp.PvpRuntime.InMatch(pvpTarget)))
         {
@@ -7776,7 +7776,7 @@ public partial class Player : Entity
     {
         lock (EntityLock)
         {
-            if (NavalShipId != Guid.Empty) return;
+            if (JoustBlocksMovement || NavalShipId != Guid.Empty) return;
             var oldMap = MapId;
             base.Move(moveDir, forPlayer, dontUpdate, correction);
 

@@ -22,3 +22,11 @@ L’économie en médailles est active par défaut. Résultats et reçus utilise
 Contrôles ajoutés : résultats terminaux, rejeu après rechargement, plafond quotidien UTC, délai entre versements, abandon/absence de touche, modèle William, achat atomique, inventaire plein, solde insuffisant, reçu d’achat et retour arrière après échec/exception. Les tests serveur ciblés passent avec 28 cas. Le parcours réel du formulaire est exercé en en/fr/es : noms, choix de monture, édition du brouillon, placement par boutons, confirmation de sauvegarde et réouverture d’une scène personnalisée. Les aperçus utilisent une carte synthétique explicitement indiquée.
 
 `scripts/Verify-Jousting.ps1` inclut maintenant ces contrôles. Le workflow `Royal Jousting` les relance sur GitHub avec le parcours de l’éditeur. L’expérience graphique sur un client connecté et les autres systèmes V2 restent des critères distincts.
+
+## Duels entre joueurs — 26 octobre 2026
+
+Le serveur dispose maintenant d’une simulation PvP partagée : invitations nominatives de 30 secondes, acceptation explicite, départs doré/bleu validés, deux comptes distincts, deux vrais personnages et leurs montures natives. Les règles et les scènes existantes sont réutilisées. Les côtés, scores et résultats sont présentés relativement au destinataire ; le deuxième côté reçoit sa propre progression et ses médailles. Une interruption n’est pas rémunérée.
+
+Vérification locale ciblée : 46 tests serveur réussis, comprenant les régressions PvE/montures/cinématiques/échanges et 18 scénarios PvP. La suite UI du client passe avec les nouveaux cas d’invitation, d’expiration et de résultats en en/fr/es ; le formulaire de l’éditeur vérifie aussi le mode PvP seul et l’interdiction d’une arène active sans mode. Les 33 tests partagés d’économie et de compilation cinématique passent.
+
+Les tests utilisent les entités et contrôles natifs, avec transports de test. Aucune recette graphique avec deux clients connectés n’est déclarée réalisée. Guide détaillé : `PVP.md`.

@@ -48,6 +48,8 @@ internal sealed class JoustWindow : Window
                 () => { _difficulty = choice; _status.Text = T(names[choice]); }));
         }
         _lobby.Add(NavalManagementWindow.Button(this, "JoustStart", T("Train against AI"), 24, 488, 336, 32, Start));
+        _lobby.Add(NavalManagementWindow.Button(this, "JoustPlayerDuel", T("Challenge a knight"), 376, 488, 356, 32,
+            () => Intersect.Client.Networking.Network.SendPacket(new JoustRequestPacket { Action = JoustAction.BrowseDuels })));
         _defense = NavalManagementWindow.Button(this, "JoustDefense", T("Toggle defense"), 376, 488, 356, 32,
             () => _defending = !_defending); _defense.IsToggle = true;
         _leave = NavalManagementWindow.Button(this, "JoustLeave", T("Leave joust"), 24, 534, 708, 30, () => { Send(JoustAction.Leave); Hide(); });
@@ -64,7 +66,7 @@ internal sealed class JoustWindow : Window
     internal static void Open() => Intersect.Client.Networking.Network.SendPacket(new JoustRequestPacket { Action = JoustAction.Open });
     private void Start()
     {
-        var arena = _config.Arenas.FirstOrDefault(a => a.Enabled && a.MapId == Globals.Me?.MapId);
+        var arena = _config.Arenas.FirstOrDefault(a => a.Enabled && a.AllowPve && a.MapId == Globals.Me?.MapId);
         if (arena == null) { _status.Text = T("No jousting arena is configured here."); return; }
         Intersect.Client.Networking.Network.SendPacket(new JoustRequestPacket { Action = JoustAction.StartPve,
             ArenaId = arena.Id, Difficulty = _difficulty });
@@ -79,7 +81,7 @@ internal sealed class JoustWindow : Window
             if (packet.ConfigurationJson.Length > 0)
             {
                 _config = JoustConfiguration.FromJson(packet.ConfigurationJson);
-                foreach (var button in _offers) button.Dispose(); _offers.Clear();
+                _shop.DeleteAll(); _offers.Clear();
                 if (_config.Economy.Enabled)
                 foreach (var offer in _config.Economy.Offers)
                 {
@@ -96,11 +98,12 @@ internal sealed class JoustWindow : Window
             {
                 var next = JsonSerializer.Deserialize<JoustView>(packet.ViewJson);
                 if (next == null) return;
-                if (_state?.MatchId != next.MatchId) { _sequence = 0; _defending = false; }
+                if (_state?.MatchId != next.MatchId) { _sequence = 0; _defending = false; _defense.ToggleState = false; }
                 _state = next; _view.State = next;
                 _view.Rules = _config.Arenas.FirstOrDefault(a => a.Id == next.ArenaId)?.Rules ?? new();
-                _score.Text = ClientLanguages.Format("Pass {0}/{1} · You {2} : {3} AI", next.Pass, next.Passes, next.PlayerScore, next.OpponentScore);
-                _status.Text = next.Phase is JoustPhase.Finished or JoustPhase.Abandoned
+                _score.Text = next.IsPve ? ClientLanguages.Format("Pass {0}/{1} · You {2} : {3} AI", next.Pass, next.Passes, next.PlayerScore, next.OpponentScore) :
+                    ClientLanguages.Format("Pass {0}/{1} · You {2} : {3} {4}", next.Pass, next.Passes, next.PlayerScore, next.OpponentScore, next.OpponentName);
+                _status.Text = next.Phase == JoustPhase.Abandoned ? T("Joust interrupted") : next.Phase == JoustPhase.Finished
                     ? T(next.Winner == 0 ? "Joust won" : next.Winner == 1 ? "Joust lost" : "Joust drawn")
                     : T(PhaseText(next.Phase));
                 if (next.Phase is JoustPhase.Impact or JoustPhase.Results)
