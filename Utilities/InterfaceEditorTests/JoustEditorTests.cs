@@ -77,7 +77,10 @@ internal static class JoustEditorTests
                 Check(arena.EndX == 24 && arena.EndY == arena.StartY && arena.OpponentY == 18, "Visible placement buttons and normal clicks place both tracks without modifier keys.");
                 var save = Field<Button>(form, "_save"); save.PerformClick();
                 var request = Field<Guid>(form, "_request"); Check(!save.Enabled && request != Guid.Empty, "Save waits for the server acknowledgement.");
+                Field<TextBox>(form, "_name").Text = "Arène royale";
                 form.Response(new() { RequestId = Guid.NewGuid(), Saved = true }); Check(!save.Enabled, "Unrelated acknowledgements cannot confirm this draft.");
+                form.Response(new() { RequestId = request, Saved = true }); Check(save.Enabled && Field<bool>(form, "_dirty"), "A save acknowledgement cannot mark newer edits as saved.");
+                save.PerformClick(); request = Field<Guid>(form, "_request");
                 form.Response(new() { RequestId = request, Saved = true }); Check(save.Enabled && !Field<bool>(form, "_dirty"), "Confirmed save retains the visible editable arena.");
                 if (Environment.GetEnvironmentVariable("CODEX_UI_PREVIEW") is { Length: > 0 } folder)
                 {

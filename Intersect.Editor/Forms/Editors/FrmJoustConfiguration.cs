@@ -31,6 +31,8 @@ public sealed partial class FrmJoustConfiguration : Form
     private JoustArena? Arena => (_list.SelectedItem as ArenaChoice)?.Arena;
     private bool _loading;
     private bool _dirty;
+    private long _revision;
+    private long _savingRevision;
     private Guid _request;
     private long _sent;
     private Placement _placement;
@@ -243,7 +245,7 @@ public sealed partial class FrmJoustConfiguration : Form
         else { a.StartX = x; a.StartY = a.EndY = y; }
         Changed(); Preview();
     }
-    private void Changed() { _dirty = true; ValidateSetup(); }
+    private void Changed() { _dirty = true; _revision++; ValidateSetup(); }
     private void ValidateSetup()
     {
         var a = Arena;
@@ -297,7 +299,7 @@ public sealed partial class FrmJoustConfiguration : Form
     {
         if (!_config.IsValid || _config.Arenas.Any(a => a.Enabled && (!_mounts.Enabled || !_mounts.Mounts.Any(m => m.Id == a.MountId && m.IntegratedRider))))
         { ValidateSetup(); _status.Text = T("Fix the setup checks before saving an enabled arena."); return; }
-        _request = Guid.NewGuid(); _sent = Environment.TickCount64; _save.Enabled = false;
+        _request = Guid.NewGuid(); _sent = Environment.TickCount64; _save.Enabled = false; _savingRevision = _revision;
         Networking.Network.SendPacket(new JoustRequestPacket { Action = JoustAction.SaveConfiguration, ConfigurationJson = _config.ToJson(), RequestId = _request });
         _status.Text = T("Saving arena on the server...");
     }
@@ -305,7 +307,7 @@ public sealed partial class FrmJoustConfiguration : Form
     {
         if (_request == Guid.Empty || packet.RequestId != _request) return;
         _request = Guid.Empty; _save.Enabled = true;
-        if (packet.Saved) _dirty = false;
-        _status.Text = T(packet.Saved ? "Saved" : "The server rejected the arena. Check map bounds, mount and scene selections; your changes are still here.");
+        if (packet.Saved && _revision == _savingRevision) _dirty = false;
+        _status.Text = T(packet.Saved ? (_dirty ? "Saved. Your newer changes still need saving." : "Saved") : "The server rejected the arena. Check map bounds, mount and scene selections; your changes are still here.");
     }
 }

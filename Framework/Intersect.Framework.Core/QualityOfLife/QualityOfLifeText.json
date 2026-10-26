@@ -1,5 +1,10 @@
 {
   "Entries": {
+    "Saved. Your newer changes still need saving.": {
+        "en": "Saved. Your newer changes still need saving.",
+        "fr": "Enregistré. Tes modifications plus récentes restent à enregistrer.",
+        "es": "Guardado. Los cambios más recientes aún deben guardarse."
+    },
     "1. Setup": {
         "en": "1. Setup",
         "fr": "1. Arène",
