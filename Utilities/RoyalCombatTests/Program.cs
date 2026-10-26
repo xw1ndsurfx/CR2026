@@ -80,4 +80,9 @@ config = new(); config.Ammunition = [new() { WeaponId = Guid.NewGuid(), Projecti
 var weapon = Guid.NewGuid(); config.Ammunition = [new() { WeaponId = weapon, ProjectileIds = [Guid.NewGuid()] }, new() { WeaponId = weapon, ProjectileIds = [Guid.NewGuid()] }];
 Check(!config.IsValid, "one ammo rule per weapon");
 ArcheryRuleChecks.Run(Check);
+config = new(); config.Ranges = [new() { CompetitionEnabled = true }];
+Check(config.IsValid, "default competition rules valid without invented world map");
+config.Ranges[0].MinimumPlayers = 1; Check(!config.IsValid, "competition requires two players");
+config.Ranges[0].MinimumPlayers = 2; config.Ranges[0].MaximumPlayers = 17; Check(!config.IsValid, "competition capacity sixteen");
+config.Ranges[0].MaximumPlayers = 2; config.Ranges[0].RegistrationSeconds = 0; Check(!config.IsValid, "registration cannot have zero deadline");
 Console.WriteLine($"PASS: {checks} checks (ballistics, moving targets, timers, zoom, authority, mastery and ammunition).");

@@ -48,12 +48,25 @@ internal static class RoyalArcheryUiTests
             var timerLabel = (Label)type.GetField("_timer", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(window)!;
             if (!scoreLabel.Text.Contains("240") || !scoreLabel.Text.Contains("2/4") || !timerLabel.Text.Contains("4"))
                 throw new Exception("Configured round/score maximum or zoom/time HUD still uses fixed values.");
+            var competition = new ArcheryCompetitionView { Id = Guid.NewGuid(), RegistrationRemainingMs = 20000, MinimumPlayers = 2, MaximumPlayers = 16,
+                Players = Enumerable.Range(0, 16).Select(i => new ArcheryCompetitorView { Id = Guid.NewGuid(), Name = "Archer " + i, Rank = i + 1, Score = i }).ToArray() };
+            apply.Invoke(window, [new ArcheryStatePacket { CompetitionJson = JsonSerializer.Serialize(competition) }]);
+            var board = (Intersect.Client.Framework.Gwen.Control.Base)type.GetField("_board", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(window)!;
+            if (board.IsHidden || All(board).OfType<Label>().Count(l => l.Text.Contains("Archer")) != 16 || timerLabel.Text.Length != 0)
+                throw new Exception("Registration lost entrants or retained the old solo countdown.");
+            competition.Started = true;
+            apply.Invoke(window, [new ArcheryStatePacket { CompetitionJson = JsonSerializer.Serialize(competition) }]);
+            if (!board.IsHidden) throw new Exception("Competition start left standings over the shooting viewport.");
+            competition.Finished = true;
+            apply.Invoke(window, [new ArcheryStatePacket { CompetitionJson = JsonSerializer.Serialize(competition) }]);
+            if (board.IsHidden) throw new Exception("Final competition results were not displayed.");
             window.Hide();
             apply.Invoke(window, [new ArcheryStatePacket { ViewJson = JsonSerializer.Serialize(new ArcheryView { Phase = ArcheryPhase.Abandoned }) }]);
+            apply.Invoke(window, [new ArcheryStatePacket { CompetitionJson = JsonSerializer.Serialize(competition) }]);
             if (window.IsVisibleInTree) throw new Exception("Late server snapshots reopened a closed training window.");
         }
         foreach (var source in new[] { "Royal Archery Training", "Weapon Masteries", "Stand at the royal shooting position outside combat.",
-            "Round {0}/3 · Score {1}/150 · Arrows {2} · Distance {3} m · Wind {4}", "Training complete", "Training ended" })
+            "Round {0}/3 · Score {1}/150 · Arrows {2} · Distance {3} m · Wind {4}", "Training complete", "Training ended", "Join competition", "Standings", "Competition cancelled: not enough participants." })
             foreach (var language in new[] { "fr", "es" })
                 if (QualityOfLifeText.Get(source, language) == source) throw new Exception("Untranslated archery text: " + source);
         TestProgressionWindows();

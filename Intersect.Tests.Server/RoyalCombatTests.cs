@@ -122,10 +122,15 @@ public sealed partial class RoyalCombatTests
         Assert.That(received.WeaponId, Is.EqualTo(packet.WeaponId));
         Assert.That(received.RequestId, Is.EqualTo(packet.RequestId));
         Assert.That(received.Round, Is.EqualTo(2)); Assert.That(received.Shot, Is.EqualTo(7));
-        var state = new ArcheryStatePacket { ViewJson = "{}", MasteriesJson = "{}", MasteryRanksJson = "{\"archery\":{}}", AmmunitionJson = "{\"Entries\":[]}" };
+        var state = new ArcheryStatePacket { ViewJson = "{}", MasteriesJson = "{}", MasteryRanksJson = "{\"archery\":{}}", AmmunitionJson = "{\"Entries\":[]}", CompetitionJson = "{\"Started\":true}" };
         var decoded = MessagePackSerializer.Deserialize<ArcheryStatePacket>(MessagePackSerializer.Serialize(state));
         Assert.That(decoded.MasteriesJson, Is.EqualTo(state.MasteriesJson));
         Assert.That(decoded.MasteryRanksJson, Is.EqualTo(state.MasteryRanksJson));
         Assert.That(decoded.AmmunitionJson, Is.EqualTo(state.AmmunitionJson));
+        Assert.That(decoded.CompetitionJson, Is.EqualTo(state.CompetitionJson));
+        var join = new ArcheryRequestPacket { Action = ArcheryAction.JoinCompetition, RangeId = Guid.NewGuid(), RequestId = Guid.NewGuid() };
+        var decodedJoin = MessagePackSerializer.Deserialize<ArcheryRequestPacket>(MessagePackSerializer.Serialize(join));
+        Assert.That((int)ArcheryAction.BuyTalent, Is.EqualTo(10)); Assert.That((int)decodedJoin.Action, Is.EqualTo(11));
+        Assert.That(decodedJoin.RangeId, Is.EqualTo(join.RangeId)); Assert.That(decodedJoin.RequestId, Is.EqualTo(join.RequestId));
     }
 }
