@@ -84,7 +84,7 @@ jobs:
     timeout-minutes: 15
     env:
       CODEX_GPU_TESTS: '1'
-      SDL_VIDEODRIVER: offscreen
+      SDL_VIDEODRIVER: x11
       LIBGL_ALWAYS_SOFTWARE: '1'
       ALSOFT_DRIVERS: 'null'
     steps:
@@ -97,12 +97,12 @@ jobs:
       - name: Install software OpenGL dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y libgl1-mesa-dri libsdl2-2.0-0 libopenal1
+          sudo apt-get install --no-install-recommends -y libgl1-mesa-dri libglx-mesa0 libsdl2-2.0-0 libopenal1 xvfb xauth
       - name: Render perspective atmosphere and verify actual pixels
         env:
           CODEX_GPU_PREVIEW: ${{ runner.temp }}/cinematic-gpu-preview
         run: |
-          dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug -p:RuntimeIdentifiers=linux-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$PWD" --filter TestCategory=GPU --nologo --logger 'trx;LogFileName=gpu.trx' --results-directory "$RUNNER_TEMP/cinematic-gpu-results"
+          xvfb-run -a --server-args='-screen 0 1280x1024x24 -nolisten tcp' dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug -p:RuntimeIdentifiers=linux-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$PWD" --filter TestCategory=GPU --nologo --logger 'trx;LogFileName=gpu.trx' --results-directory "$RUNNER_TEMP/cinematic-gpu-results"
           python3 - <<'PY'
           import os
           import xml.etree.ElementTree as ET
