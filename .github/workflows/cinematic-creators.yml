@@ -28,8 +28,6 @@ jobs:
   creators:
     runs-on: windows-latest
     timeout-minutes: 20
-    env:
-      CODEX_UI_PREVIEW: ${{ runner.temp }}/cinematic-ui-preview
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,12 +39,18 @@ jobs:
         shell: pwsh
         run: dotnet build Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd"
       - name: Test guided and description creators
+        env:
+          CODEX_UI_PREVIEW: ${{ runner.temp }}/cinematic-ui-preview
         shell: pwsh
         run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug --no-build -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" -- --cinematic-creators-only
       - name: Test existing montage workflow
+        env:
+          CODEX_UI_PREVIEW: ${{ runner.temp }}/cinematic-ui-preview
         shell: pwsh
         run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug --no-build -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" -- --cinematic-usability-only
       - name: Test chapter creation and acknowledged saves
+        env:
+          CODEX_UI_PREVIEW: ${{ runner.temp }}/cinematic-ui-preview
         shell: pwsh
         run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug --no-build -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" -- --cinematic-chapters-only
       - name: Test cinematic display and loaded-map framing
