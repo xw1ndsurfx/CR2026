@@ -55,11 +55,7 @@ public partial class Player
             {
                 if (now - _joustOpenAt < 500) return;
                 _joustOpenAt = now;
-                SendPacket(new JoustStatePacket { Open = true, ConfigurationJson = JoustRuntime.Current.ToJson() });
-                if (_joustPvp is { } duel) duel.Publish(this, now);
-                else if (_lastPvpJoustView is { } previous) PublishPvpJoust(previous, true);
-                else SendJoustView(now);
-                SendJoustCareer(); return;
+                OpenJoustPreparation(now); return;
             }
             if (packet.Action == JoustAction.BrowseDuels)
             { if (now - _pvpJoustBrowseAt >= 500) { _pvpJoustBrowseAt = now; JoustPvpRuntime.Browse(this); } return; }
@@ -125,6 +121,14 @@ public partial class Player
             }
         }
     }
+    private void OpenJoustPreparation(long now)
+    {
+        SendPacket(new JoustStatePacket { Open = true, ConfigurationJson = JoustRuntime.Current.ToJson() });
+        if (_joustPvp is { } duel) duel.Publish(this, now);
+        else if (_lastPvpJoustView is { } previous) PublishPvpJoust(previous, true);
+        else SendJoustView(now);
+        SendJoustCareer();
+    }
     private void RunJoustEvent(Guid id)
     {
         if (id == Guid.Empty) return;
@@ -150,6 +154,7 @@ public partial class Player
     private void UpdateJoust(long? suppliedNow = null)
     {
         CompleteJoustCareer();
+        UpdateJoustEntry(Environment.TickCount64);
         UpdateJoustSeat();
         if (_joustPvp is { } pvp) { pvp.Tick(this, suppliedNow ?? Environment.TickCount64); CompleteJoustCareer(); return; }
         if (_joust == null || _joust.Done || _joustArena == null) return;
@@ -265,6 +270,8 @@ public partial class Player
     {
         lock (EntityLock)
         {
+            // Characters are cached across selection/logins: dismissal belongs to this play session.
+            if (Client == null || !InGame) { _joustEntry = null; _joustEntryCheckAt = _joustEntryPromptAt = 0; }
             LeaveJoustSeat(true);
             CompleteJoustCareer();
             if (_joustPvp is { } pvp) { pvp.Leave(this); return; }

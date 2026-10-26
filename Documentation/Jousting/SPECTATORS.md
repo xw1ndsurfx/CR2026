@@ -12,7 +12,7 @@ Cette étape ajoute les places réservées côté serveur, les joueurs réels as
 
 ## Assister à une joute
 
-Dans le Lobby, ouvrir Joutes Royales puis **Gradins de la joute**. Choisir la place par son nom ; son accès est affiché. Se placer sur cet accès puis cliquer **S’asseoir à cette place**. La réservation et le déplacement sont contrôlés par le serveur. Le personnage réel, son apparence et ses équipements restent visibles pour les autres joueurs. Le PNJ qui occupait la place disparaît pendant la réservation.
+Marcher sur l’accès configuré d’un gradin : la fenêtre des places s’ouvre automatiquement. Le raccourci Lobby → Joutes Royales → Gradins de la joute reste également disponible. Choisir la place par son nom ; son accès est affiché. Se placer sur cet accès puis cliquer **S’asseoir à cette place**. La réservation et le déplacement sont contrôlés par le serveur. Le personnage réel, son apparence et ses équipements restent visibles pour les autres joueurs. Le PNJ qui occupait la place disparaît pendant la réservation.
 
 Les boutons proposent la vue de l’arène ou le suivi du chevalier doré/bleu. Ils utilisent la caméra cinématique native. Les scores et les passes viennent de la simulation serveur PvE/PvP ; la visée et la défense des chevaliers ne sont pas diffusées aux spectateurs. Le dernier résultat reste visible vingt secondes. Fermer la fenêtre ne quitte pas le siège ; la rouvrir par Joutes Royales. Utiliser **Se lever** pour libérer la place et revenir à un accès libre. Si la sortie est bloquée, attendre ou dégager les cases alentour. Une déconnexion, un déplacement externe ou le retrait de la place libère la réservation. Une nouvelle cinématique native conserve la propriété de sa caméra.
 

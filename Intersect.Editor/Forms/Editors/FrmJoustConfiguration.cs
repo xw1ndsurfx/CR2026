@@ -94,7 +94,7 @@ public sealed partial class FrmJoustConfiguration : Form
         var mounts = new Button { AutoSize = true, Text = T("Open Mount Editor") };
         mounts.Click += (_, _) => Networking.Network.SendPacket(new MountRequestPacket { Action = MountAction.GetConfiguration }); Row(setup, "", mounts);
         Row(setup, "Track positions", _coordinates); Row(setup, "Setup check", _check);
-        var help = new Label { AutoSize = true, MaximumSize = new(320, 0), Text = T("Your mount is William. Click Add William preset if required. Choose William or Tale Knight Night as the AI opponent. Place the gold start, finish and blue lane, enable the arena, then save. Launch the match in the game client, not in this editor.") };
+        var help = new Label { AutoSize = true, MaximumSize = new(320, 0), Text = T("William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.") };
         Row(setup, "How to play", help);
         var rules = Page(tabs, "2. Match rules");
         Number(rules, "Passes", "Number of passes", 1, 9);
@@ -317,7 +317,7 @@ public sealed partial class FrmJoustConfiguration : Form
         if (!a.IsValid && issues.Count == 0) issues.Add(T("The jousting configuration is invalid."));
         _check.Text = issues.Count == 0 ? T("Ready. Save, then enter the game at the gold start tile.") : string.Join("\n\n", issues);
         _setupProblems.Clear(); _setupProblems.AddRange(issues);
-        _problems.Text = issues.Count == 0 ? string.Format(T("In game: Character or Adventure lobbies → Royal Jousting. Walk to the gold start ({0}, {1}), choose an AI opponent and difficulty, then Start AI joust. Player duels use Challenge a knight."), a.StartX, a.StartY) : string.Join(Environment.NewLine + Environment.NewLine, issues);
+        _problems.Text = issues.Count == 0 ? string.Format(T("In the game, step onto the gold start ({0}, {1}): the jousting window opens automatically. The blue start opens duels and grandstand entrances open seat selection. After closing a window, leave the tile and return to reopen it."), a.StartX, a.StartY) : string.Join(Environment.NewLine + Environment.NewLine, issues);
         _check.ForeColor = issues.Count == 0 ? System.Drawing.Color.LightGreen : System.Drawing.Color.Gold;
     }
     private void Preview()

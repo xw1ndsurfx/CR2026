@@ -174,4 +174,53 @@ public sealed class JoustSpectatorTests
         w.Arena.Seats = [seat]; var lease = JoustAudienceRuntime.Reserve(w.A,w.Arena,seat);
         Assert.That(lease,Is.Not.Null); JoustAudienceRuntime.Release(lease!);
     }
+    [Test] public void GoldStartOpensOnceAndOnlyRearmsAfterLeavingTheTile()
+    {
+        using var w = new World(); const long now = 10000;
+        Assert.That(w.A.UpdateJoustEntry(now),Is.EqualTo(JoustAction.Open));
+        Assert.That(w.A.UpdateJoustEntry(now+1000),Is.Null,"Closing a window cannot make the server reopen it on the next tick.");
+        w.A.X++; Assert.That(w.A.UpdateJoustEntry(now+1050),Is.Null,"A departure between throttled checks still rearms the entrance.");
+        w.A.X--; Assert.That(w.A.UpdateJoustEntry(now+3000),Is.EqualTo(JoustAction.Open));
+        Assert.That(w.A.IsJousting,Is.False,"The automatic invitation never starts or mounts the player without a choice.");
+        Assert.That(w.A.ActiveMountId,Is.EqualTo(Guid.Empty));
+    }
+    [Test] public void BlueStartOffersDuelsOnlyWhenPvpIsEnabled()
+    {
+        using var w=new World();
+        Assert.That(w.B.UpdateJoustEntry(10000),Is.EqualTo(JoustAction.BrowseDuels));
+        w.B.X--;w.B.UpdateJoustEntry(11000);w.B.X++;w.Arena.AllowPvp=false;
+        Assert.That(w.B.UpdateJoustEntry(12000),Is.Null);
+    }
+    [Test] public void GrandstandEntranceOffersSeatsWithoutBookingAndDoesNotReopenAfterStanding()
+    {
+        using var w=new World();w.A.X=7;w.A.Y=7;
+        Assert.That(w.A.UpdateJoustEntry(10000),Is.EqualTo(JoustAction.BrowseSeats));
+        Assert.That(w.A.IsJoustSeated,Is.False);Assert.That((w.A.X,w.A.Y),Is.EqualTo((7,7)));
+        Request(w.A,JoustAction.ReserveSeat,w.Arena.Seats[0].Id);
+        Assert.That(w.A.UpdateJoustEntry(11000),Is.Null);
+        w.A.LeaveJoustSeat(false);Assert.That(w.A.UpdateJoustEntry(12000),Is.Null);
+    }
+    [Test] public void BusyPlayersWaitAndDisabledArenasNeverPrompt()
+    {
+        using var w=new World();w.A.CombatTimer=Intersect.Framework.Core.Timing.Global.Milliseconds+10000;
+        Assert.That(w.A.UpdateJoustEntry(10000),Is.Null);
+        w.A.CombatTimer=0;w.A.BoardedShipId=Guid.NewGuid();Assert.That(w.A.UpdateJoustEntry(11000),Is.Null,"A ship passenger keeps the naval interface.");
+        w.A.BoardedShipId=Guid.Empty;Assert.That(w.A.UpdateJoustEntry(12000),Is.EqualTo(JoustAction.Open));
+        w.A.X++;w.A.UpdateJoustEntry(13000);w.A.X--;w.Arena.Enabled=false;
+        Assert.That(w.A.UpdateJoustEntry(14000),Is.Null);
+    }
+    [Test] public void ARunningDuelDoesNotReopenPreparationDuringOrAfterItsOwnCleanup()
+    {
+        using var w=new World();Assert.That(w.A.UpdateJoustEntry(10000),Is.EqualTo(JoustAction.Open));
+        var duel=w.Start();Assert.That(w.A.UpdateJoustEntry(11000),Is.Null);
+        duel.Leave(w.A);Assert.That(w.A.UpdateJoustEntry(12000),Is.Null);
+    }
+    [Test] public void CachedCharacterGetsAFreshInvitationAfterLogout()
+    {
+        using var w=new World();var client=w.A.Client;
+        Assert.That(w.A.UpdateJoustEntry(10000),Is.EqualTo(JoustAction.Open));
+        w.A.Client=null;typeof(Player).GetMethod("EndJoust",Hidden)!.Invoke(w.A,[true]);
+        w.A.Client=client;
+        Assert.That(w.A.UpdateJoustEntry(11000),Is.EqualTo(JoustAction.Open));
+    }
 }
