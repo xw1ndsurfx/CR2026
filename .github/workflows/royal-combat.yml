@@ -1,0 +1,36 @@
+name: Royal combat integration
+on:
+  pull_request:
+    paths:
+      - 'Framework/Intersect.Framework.Core/Archery/**'
+      - '**/*Archery*.cs'
+      - '**/*RoyalCombat*'
+      - 'Intersect.Server.Core/Entities/Entity.cs'
+      - 'Intersect.Server.Core/Entities/Player.cs'
+      - 'Utilities/RoyalCombatTests/**'
+      - '.github/workflows/royal-combat.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Ballistics, session authority and mastery configuration
+        run: dotnet run --project Utilities/RoyalCombatTests/RoyalCombatTests.csproj -c Debug
+      - name: Server integration and jousting lifecycle regressions
+        run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Debug --filter "FullyQualifiedName~RoyalCombatTests|FullyQualifiedName~JoustWorldTests|FullyQualifiedName~Ammo"
+      - name: Compile actual client
+        run: dotnet build Intersect.Client/Intersect.Client.csproj -c Debug
+      - name: Client UI regressions and archery viewport
+        run: dotnet run --project Utilities/PokerUiTests/Intersect.PokerUiTests.csproj -c Debug
+      - name: Compile editor and exercise both royal editor views
+        run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -- --royal-combat-only
