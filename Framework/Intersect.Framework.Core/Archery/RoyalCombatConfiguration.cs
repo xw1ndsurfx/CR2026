@@ -37,6 +37,7 @@ public sealed class ArcheryRange
     public int StartY { get; set; }
     public bool Enabled { get; set; }
     public double Wind { get; set; }
+    [System.ComponentModel.Browsable(false)] public ArcheryRules Rules { get; set; } = new();
 }
 
 public sealed class RoyalCombatConfiguration
@@ -57,7 +58,7 @@ public sealed class RoyalCombatConfiguration
             a.ProjectileIds is { Length: > 0 and <= 16 } && a.ProjectileIds.All(id => id != Guid.Empty) && a.ProjectileIds.Distinct().Count() == a.ProjectileIds.Length) &&
         Ammunition.Select(a => a.WeaponId).Distinct().Count() == Ammunition.Length &&
         Ranges.All(r => r != null && r.Id != Guid.Empty && r.Name is { Length: > 0 and <= 80 } &&
-            r.StartX is >= 0 and < 1024 && r.StartY is >= 0 and < 1024 && double.IsFinite(r.Wind) && Math.Abs(r.Wind) <= 3 &&
+            r.StartX is >= 0 and < 1024 && r.StartY is >= 0 and < 1024 && double.IsFinite(r.Wind) && Math.Abs(r.Wind) <= 3 && r.Rules?.IsValid == true &&
             (!r.Enabled || r.MapId != Guid.Empty)) && Ranges.Select(r => r.Id).Distinct().Count() == Ranges.Length;
     public string ToJson() => JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
     public static RoyalCombatConfiguration FromJson(string json)

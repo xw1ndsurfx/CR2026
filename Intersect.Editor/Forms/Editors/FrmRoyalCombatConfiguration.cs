@@ -62,6 +62,12 @@ public sealed class FrmRoyalCombatConfiguration : Form
             Intersect.Editor.Forms.Styling.EditorTheme.Apply(dialog);
             if (dialog.ShowDialog(this) == DialogResult.OK) _config.Ammunition = dialog.Result;
         });
+        Button("Range rules and targets", () => {
+            if (_list.SelectedItem is not ArcheryRange range) return;
+            using var dialog = new FrmArcheryRangeRules(range.Rules) { StartPosition = FormStartPosition.CenterParent };
+            Intersect.Editor.Forms.Styling.EditorTheme.Apply(dialog);
+            if (dialog.ShowDialog(this) == DialogResult.OK) { range.Rules = dialog.Result; _properties.Refresh(); }
+        });
         _save.Text = T("Save"); toolbar.Controls.Add(_save); _save.Click += (_, _) => Save();
         var split = new SplitContainer { Dock = DockStyle.Fill, Size = new(960, 550), SplitterDistance = 200 };
         var right = new SplitContainer { Dock = DockStyle.Fill, Size = new(760, 550), SplitterDistance = 400 };

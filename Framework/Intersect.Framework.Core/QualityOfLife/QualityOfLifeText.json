@@ -2126,6 +2126,86 @@
       "en": "XP {0}/{1} · {2}% · Remaining {3}",
       "fr": "XP {0}/{1} · {2} % · Manque {3}",
       "es": "EXP {0}/{1} · {2}% · Faltan {3}"
+    },
+    "Hold left: draw · Release: shoot · Right click: zoom": {
+      "en": "Hold left: draw · Release: shoot · Right click: zoom",
+      "fr": "Maintenir le clic gauche : bander · Relâcher : tirer · Clic droit : zoom",
+      "es": "Mantén el clic izquierdo: tensar · Suelta: disparar · Clic derecho: zoom"
+    },
+    "Round {0}/{1} · Score {2}/{3} · Arrows {4} · Distance {5} m · Wind {6}": {
+      "en": "Round {0}/{1} · Score {2}/{3} · Arrows {4} · Distance {5} m · Wind {6}",
+      "fr": "Manche {0}/{1} · Score {2}/{3} · Flèches {4} · Distance {5} m · Vent {6}",
+      "es": "Ronda {0}/{1} · Puntos {2}/{3} · Flechas {4} · Distancia {5} m · Viento {6}"
+    },
+    "Time expired: unused arrows score zero.": {
+      "en": "Time expired: unused arrows score zero.",
+      "fr": "Temps écoulé : les flèches inutilisées valent zéro.",
+      "es": "Tiempo agotado: las flechas sin usar valen cero."
+    },
+    "Time {0} · Target {1}/{2} · Zoom ×{3}": {
+      "en": "Time {0} · Target {1}/{2} · Zoom ×{3}",
+      "fr": "Temps {0} · Cible {1}/{2} · Zoom ×{3}",
+      "es": "Tiempo {0} · Blanco {1}/{2} · Zoom ×{3}"
+    },
+    "Range rules and targets": {
+      "en": "Range rules and targets",
+      "fr": "Règles et cibles du stand",
+      "es": "Reglas y blancos del campo"
+    },
+    "New round": {
+      "en": "New round",
+      "fr": "Nouvelle manche",
+      "es": "Nueva ronda"
+    },
+    "Delete round": {
+      "en": "Delete round",
+      "fr": "Supprimer la manche",
+      "es": "Eliminar ronda"
+    },
+    "Round settings": {
+      "en": "Round settings",
+      "fr": "Réglages de la manche",
+      "es": "Ajustes de ronda"
+    },
+    "New target": {
+      "en": "New target",
+      "fr": "Nouvelle cible",
+      "es": "Nuevo blanco"
+    },
+    "Delete target": {
+      "en": "Delete target",
+      "fr": "Supprimer la cible",
+      "es": "Eliminar blanco"
+    },
+    "Target settings": {
+      "en": "Target settings",
+      "fr": "Réglages de la cible",
+      "es": "Ajustes del blanco"
+    },
+    "Animate preview": {
+      "en": "Animate preview",
+      "fr": "Animer l’aperçu",
+      "es": "Animar vista previa"
+    },
+    "Round {0}": {
+      "en": "Round {0}",
+      "fr": "Manche {0}",
+      "es": "Ronda {0}"
+    },
+    "Target {0}": {
+      "en": "Target {0}",
+      "fr": "Cible {0}",
+      "es": "Blanco {0}"
+    },
+    "Preview {0}s · Maximum {1} points · Drag the selected target. Wind is acceleration in m/s².": {
+      "en": "Preview {0}s · Maximum {1} points · Drag the selected target. Wind is acceleration in m/s².",
+      "fr": "Aperçu {0} s · Maximum {1} points · Déplacez la cible sélectionnée. Le vent est une accélération en m/s².",
+      "es": "Vista previa {0} s · Máximo {1} puntos · Arrastra el blanco seleccionado. El viento es aceleración en m/s²."
+    },
+    "Invalid range rules: check distances, timers and target motion bounds.": {
+      "en": "Invalid range rules: check distances, timers and target motion bounds.",
+      "fr": "Règles invalides : vérifiez les distances, les délais et les limites de déplacement des cibles.",
+      "es": "Reglas no válidas: revisa distancias, tiempos y límites de movimiento de los blancos."
     }
   }
 }

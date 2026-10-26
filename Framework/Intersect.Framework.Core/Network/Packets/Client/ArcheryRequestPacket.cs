@@ -16,4 +16,6 @@ public sealed partial class ArcheryRequestPacket : IntersectPacket
     [Key(9)] public Guid WeaponId { get; set; }
     [Key(10)] public string CategoryKey { get; set; } = "";
     [Key(11)] public string TalentKey { get; set; } = "";
+    [Key(12)] public int Round { get; set; }
+    [Key(13)] public int Shot { get; set; }
 }

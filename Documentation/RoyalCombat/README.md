@@ -1,10 +1,12 @@
-# Royal Weapon Mastery / Royal Archery — integration slices 1–2
+# Royal Weapon Mastery / Royal Archery — integration slices 1–3
 
 Status: **draft, not a production-complete Royal Archery Tournament**. Audited base:
 `aaab6f7ce8d23083ebc1ca9f697b2c68e5da2a51` on `main`.
 
 The second slice adds talent allocation, native spellbook unlocks and weapon ammunition
 selection. See [progression/ammunition setup and exact limits](ProgressionAndAmmunition.md).
+The third slice adds authored rounds, moving targets, countdowns, an aim-preserving zoom
+and a native perspective target editor. See [range authoring and timing](RangeAuthoring.md).
 
 ## Audit and source of truth
 
@@ -79,33 +81,38 @@ Inspecting those actual assets and their licensing remains required before produ
 * Native Gwen viewport backed by the MonoGame client: foreground bow geometry, pointer
   aim, timed draw/release, sway, a moving projectile, perspective ground and projected target.
   This is a live scene driven by trajectory data, not a static screenshot.
-* One physical target plane, radius 0.6 m; ballistic gravity 9.81 m/s². Initial speed
+* One physical target plane per round, configurable target positions and radii (default
+  0.6 m); ballistic gravity 9.81 m/s². Initial speed
   `20 + 35 * charge` m/s. Charge reaches full power after 1.2 seconds. Wind is a horizontal
   acceleration in m/s² and can be configured between -3 and +3.
-* Three rounds of five arrows at 10, 25 and 50 m; radial rings award 0–10, maximum 150.
-  Impacts become visible after the flight deadline, remain attached to that round's target,
+* Defaults: three rounds of five arrows at 10, 25 and 50 m, 100 seconds each; radial rings
+  award 0–10, maximum 150. Authors may configure 1–6 rounds, 1–10 arrows per round,
+  5–100 m, 15–300 seconds, round wind and up to eight static/periodically moving targets.
+  Impacts become visible after the flight deadline, remain attached to the moving target,
   and are scored exactly once. Zero-score misses are not drawn as arrows in the target.
 * No inventory call occurs in the training session. Arrows are virtual; no currency,
   inventory reward or mastery XP is granted. Player mastery never changes training physics.
-* The client submits only draw/release, bounded aim, session ID and sequence. The server
+* The client submits only draw/release, bounded aim, session ID, sequence and expected round/shot. The server
   computes charge, sway, flight time, collision and score; rejects stale/wrong-session inputs.
 * A short click cancels drawing without spending a virtual arrow. Draw expires after ten
-  seconds; session expires after five minutes. Leave, disconnect, death, combat, position,
+  seconds. Expired rounds forfeit unused arrows; accepted arrows can finish their flight
+  after the deadline. Leave, disconnect, death, combat, position,
   map and instance changes release the native player hold. World movement, attacks and
   lobby travel are blocked during active training.
-* HUD contains round, score, arrows, distance, wind, charge and last-shot/Bullseye feedback.
-  A visible countdown, audio, optical zoom and aim calibration remain to implement. The
-  50 m target is small at the current field of view and needs playtesting/zoom before release.
+* HUD contains round, score, arrows, distance, wind, charge, countdown, active target,
+  zoom and last-shot/Bullseye feedback. Right click cycles 1×/2×/4× while preserving the
+  world aim under the pointer. Audio and further playtesting remain required.
 
 ### First editor views
 
 Weapon Mastery Editor: categories, cap, curve, damage tuning, checked list of existing
 weapon items, talent/prerequisite editing and five native rank-spell pickers, plus a visual
 existing-weapon/projectile compatibility picker. Archery Mini-Game Editor: ranges, native map preview, click to place the
-shooting tile, enabled state and wind. Both views share one live draft so switching editor
+shooting tile, enabled state and wind. Its staged range-rules dialog provides round/target
+settings, draggable perspective target placement and animated motion preview. Both views share one live draft so switching editor
 menus cannot overwrite the other view's unsaved edits. Configuration saves are validated
 on the server and use a temporary file followed by atomic replacement. Property-grid fields
-are technical authoring controls; a node-graph layout and perspective target editor remain future work.
+are technical authoring controls; a talent node-graph layout and scenery-layer authoring remain future work.
 
 ## Run on a development copy
 
@@ -119,12 +126,14 @@ are technical authoring controls; a node-graph layout and perspective target edi
    equipment in the weapon slot and that an item belongs to only one category.
 4. Open the intended **existing** safe map. Mini-Games > Archery Mini-Game Editor > New range
    on current map. Click a passable shooting tile, set `Enabled = true`, choose wind and save.
-   No range is enabled by default because the repository supplies no authoritative world map.
+   Use Range rules and targets for rounds, target placement and motion. No range is enabled
+   by default because the repository supplies no authoritative world map.
 5. On an existing Master Archer NPC event, add Mini-Games > Start Royal Archery Training.
    Optionally precede it with a native Cinematic Director scene. Finish the event after the
    open command so its own movement hold is released. There is no new cinematic interpreter.
 6. Log in, walk to the configured tile, interact with the NPC, then choose Start training.
-   Move the mouse to aim above the target, hold left mouse to draw and release to fire.
+   Move the mouse to aim above the highlighted target, hold left mouse to draw and release
+   to fire. Right click cycles zoom without moving the aim under the pointer.
    Character > Royal Archery Training is an additional entry point for development checks.
 7. Check all fifteen arrows, misses, bullseyes, cancel/close, death/disconnect and return to
    world movement. Verify inventory quantities before and after. Use mapped weapons against
@@ -156,10 +165,11 @@ Client tests exercise the actual Gwen viewport through the existing headless met
 at 1280×720, 1366×768 and 1920×1080, plus late snapshots after close and FR/ES catalog resolution.
 **Headless metrics rendering is not a screenshot of a running production client.**
 
-Local second-slice validation: 108 rules checks and all 431 server tests passed;
+Local third-slice validation: 141 rules checks and all 433 executed server tests passed;
 the full existing client UI runner passed including archery, ammo compatibility, talent
-confirmation and late-refresh disposal checks; focused real editor controls and all eight
-existing mini-game editor test groups passed. Client, server and
+confirmation, custom moving-target rounds, zoom and late-refresh disposal checks; focused
+real editor controls passed, including target dragging and 760×520/1100×650 rendering.
+All eight existing mini-game editor test groups also passed in the second slice. Client, server and
 editor compile in Debug. The Windows editor runner needs `RuntimeIdentifiers=win-x64`, as
 in existing CI. Existing compiler/package warnings are not resolved by this feature.
 
@@ -199,8 +209,8 @@ validation and actual-client QA; the current code-native viewport does not yet l
    notifications, NPC tutorials, Aureons respec, milestone quests 10/20/30, level-30 titles
    (Royal Eagle Eye, Royal Blademaster, Master of the Royal Artillery), achievements/Steam.
 3. **Production archery presentation:** approved separated art above, layer rendering and
-   parallax, optional third person, bow animation, audio, zoom/calibration, visible timer,
-   moving targets and configurable target placement/paths/distances/arrows/rounds/time.
+   parallax, optional third person, bow animation, audio and further aim calibration.
+   Zoom, countdown, target placement, periodic target motion and round settings are implemented.
 4. **Competition:** 2–16 players subject to actual capacity tests, registrations, matchmaking,
    isolated sessions, rounds/finals, abandon/reconnect, spectators in 2D, server scores,
    daily/weekly/seasonal boards, normalized equipment/mastery/skills, Aureons/cosmetic rewards.
@@ -210,7 +220,7 @@ validation and actual-client QA; the current code-native viewport does not yet l
 5. **Native cinematic sequences:** introduction, view transition, finals, decisive shot,
    feasible slow motion, podium/Duke ceremony via existing Director and Events/Time tools.
    This slice only provides a native event entry point, not those finished sequences.
-6. **Advanced editors:** WYSIWYG perspective target/layer placement, talent graph,
+6. **Advanced editors:** scenery-layer placement, arbitrary target paths, talent graph,
    prerequisites/effects, rewards, scheduling, leaderboards/cinematic hooks, authored playable
    defaults on real game maps and verified layout at small resolutions.
 7. **Release QA/docs:** world combat/spells/crafting/naval/quest/dungeon/invasion regression,

@@ -113,14 +113,14 @@ public partial class Player
                 { SendPacket(new ArcheryStatePacket { Message = "Stand at the royal shooting position outside combat." }); return; }
                 _archeryRange = new() { Id = range.Id, MapId = range.MapId, StartX = range.StartX, StartY = range.StartY };
                 _archeryInstance = MapInstanceId;
-                Dismount(); _archery = new(now, range.Wind);
+                Dismount(); _archery = new(now, range.Wind, range.Rules);
                 SendPacket(new HoldPlayerPacket(_archery.Id, Guid.Empty, false)); SendArcheryView(now); return;
             }
             if (_archery == null || packet.MatchId != _archery.Id) return;
             if (packet.Action == ArcheryAction.Leave) { EndArchery(); return; }
             UpdateArchery(now);
-            if (packet.Action is ArcheryAction.Draw or ArcheryAction.Release &&
-                _archery.Input(packet.Action == ArcheryAction.Draw, packet.Sequence, packet.Yaw, packet.Pitch, now)) SendArcheryView(now);
+            if (packet.Action is ArcheryAction.Draw or ArcheryAction.Release && packet.Round == _archery.Round &&
+                _archery.Input(packet.Action == ArcheryAction.Draw, packet.Sequence, packet.Yaw, packet.Pitch, now, packet.Shot)) SendArcheryView(now);
         }
     }
     private void UpdateArchery(long? suppliedNow = null)
@@ -149,6 +149,9 @@ public partial class Player
         _archerySent = now;
         SendPacket(new ArcheryStatePacket { ViewJson = JsonSerializer.Serialize(new ArcheryView {
             MatchId = _archery.Id, Phase = _archery.Phase, Shot = _archery.Shot, Score = _archery.Score,
+            Round = _archery.Round, Rounds = _archery.Rounds, TotalArrows = _archery.TotalArrows, MaximumScore = _archery.MaximumScore,
+            ShotInRound = _archery.ShotInRound, TargetIndex = _archery.TargetIndex, Targets = _archery.RoundSettings.Targets,
+            RemainingMs = _archery.Done ? 0 : (int)Math.Max(0, _archery.RoundDeadline - now),
             Distance = _archery.Distance, Wind = _archery.Wind, ElapsedMs = (int)(now - _archery.Started),
             DrawMs = _archery.Phase == ArcheryPhase.Drawing ? (int)(now - _archery.DrawStarted) : 0,
             FlightMs = _archery.Phase == ArcheryPhase.Flying ? (int)(now - _archery.Released) : 0,
