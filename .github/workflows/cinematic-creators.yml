@@ -101,6 +101,7 @@ jobs:
       - name: Render perspective atmosphere and verify actual pixels
         env:
           CODEX_GPU_PREVIEW: ${{ runner.temp }}/cinematic-gpu-preview
+          CODEX_JOUST_RESOURCE_ROOT: ${{ github.workspace }}
         run: |
           xvfb-run -a --server-args='-screen 0 1280x1024x24 -nolisten tcp' dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug -p:RuntimeIdentifiers=linux-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$PWD" --filter TestCategory=GPU --nologo --logger 'trx;LogFileName=gpu.trx' --results-directory "$RUNNER_TEMP/cinematic-gpu-results"
           python3 - <<'PY'

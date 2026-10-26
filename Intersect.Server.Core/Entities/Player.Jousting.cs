@@ -238,7 +238,7 @@ public partial class Player
     private void SendJoustView(long now)
     {
         if (_joust == null || _joustArena == null) return;
-        JoustAudienceRuntime.Publish(_joustArena, MapInstanceId, _joust, Id, Name, _joustOpponent?.Id ?? Guid.Empty, JoustMountPreset.Opponent(_joustArena.AiOpponent).Name);
+        JoustAudienceRuntime.Publish(_joustArena, MapInstanceId, _joust, Id, Name, _joustOpponent?.Id ?? Guid.Empty, JoustMountPreset.Opponent(_joustArena.AiOpponent).Name, now);
         _joustSent = now;
         SendPacket(new JoustStatePacket { ViewJson = JsonSerializer.Serialize(new JoustView {
             AiOpponent = _joustArena.AiOpponent, OpponentName = JoustMountPreset.Opponent(_joustArena.AiOpponent).Name,

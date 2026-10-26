@@ -42,7 +42,7 @@ internal static class JoustAudienceRuntime
     private static readonly ConcurrentDictionary<Key, Context> Contexts = new();
     private static readonly ConcurrentDictionary<Guid, Lease> Members = new();
     private static readonly ConcurrentDictionary<Key, Broadcast> Matches = new();
-    private static readonly System.Threading.Timer Timer = new(_ => Sweep(), null, 200, 200);
+    private static readonly System.Threading.Timer Timer = new(_ => Sweep(), null, 100, 100);
     private static long _crowdAt;
     private static int _sweeping;
     internal static Context? Get(JoustArena arena, Guid instance)
@@ -90,21 +90,29 @@ internal static class JoustAudienceRuntime
         var arena = context.Arena;
         if (arena == null) return new();
         var own = Members.GetValueOrDefault(player.Id);
+        var seated = own != null && own.Context == context;
+        var match = CurrentMatch(context.Key);
+        var elapsed = Matches.TryGetValue(context.Key, out var broadcast) && broadcast.View.MatchId == match?.MatchId ?
+            (int)Math.Clamp(Environment.TickCount64 - broadcast.Published, 0, int.MaxValue) : 0;
         return new() { ArenaId = arena.Id, ArenaName = arena.Name,
             Seats = arena.Seats.Select(s => {
                 Lease? occupant = null;
                 if (context.Slots.TryGetValue(s.Id, out var slot)) lock (slot.Gate) occupant = slot.Member;
                 return new JoustSeatView(s.Id, s.Name, s.X, s.Y, s.ExitX, s.ExitY, occupant != null, occupant?.Player.Name ?? "");
-            }).ToArray(), CurrentSeat = own != null && own.Context == context ? own.Seat.Id : Guid.Empty,
-            Camera = own?.Camera ?? JoustSpectatorCamera.Arena, Match = CurrentMatch(context.Key) };
+            }).ToArray(), CurrentSeat = seated ? own!.Seat.Id : Guid.Empty,
+            Camera = seated ? own!.Camera : JoustSpectatorCamera.Arena, Match = match,
+            Presentation = seated ? match?.Presentation(arena.Id, own!.Camera, elapsed) : null };
     }
     internal static JoustBroadcast? CurrentMatch(Key key) => Matches.TryGetValue(key, out var value) && Environment.TickCount64 - value.Published < (value.View.Live ? 5000 : 20000) ? value.View : null;
-    internal static void Publish(JoustArena arena, Guid instance, JoustMatch match, Guid firstId, string firstName, Guid secondId, string secondName)
+    internal static void Publish(JoustArena arena, Guid instance, JoustMatch match, Guid firstId, string firstName, Guid secondId, string secondName, long? now = null)
     {
         if (!JoustRuntime.Owns(arena.Id, firstId, match.Id)) return;
         Matches[new(arena.Id, instance)] = new(new JoustBroadcast { MatchId = match.Id, FirstId = firstId, SecondId = secondId,
             FirstName = firstName, SecondName = secondName, IsPve = match.IsPve, Phase = match.Phase, Pass = match.Pass, Passes = match.Passes,
-            FirstScore = match.Scores[0], SecondScore = match.Scores[1], Winner = match.Winner }, Environment.TickCount64);
+            FirstScore = match.Scores[0], SecondScore = match.Scores[1], Winner = match.Winner,
+            AiOpponent = arena.AiOpponent, FirstStrike = match.Strikes[0], SecondStrike = match.Strikes[1],
+            RemainingMs = (int)Math.Clamp(match.Deadline - (now ?? Environment.TickCount64), 0, int.MaxValue),
+            PhaseDurationMs = (int)Math.Clamp(match.Deadline - match.PhaseStarted, 0, int.MaxValue) }, Environment.TickCount64);
         Get(arena, instance);
     }
     internal static void EnsureCrowd(Context context)

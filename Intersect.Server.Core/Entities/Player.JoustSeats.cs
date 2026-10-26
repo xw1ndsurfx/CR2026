@@ -72,7 +72,8 @@ public partial class Player
         { LeaveJoustSeat(true); return; }
         SendJoustSeatCamera(lease, false);
         var now = Environment.TickCount64;
-        if (now - lease.ViewSent >= 250) { lease.ViewSent = now; BrowseJoustSeats(false); }
+        var interval = JoustAudienceRuntime.CurrentMatch(lease.Context.Key) is { Phase: JoustPhase.Charge or JoustPhase.Aim or JoustPhase.Impact or JoustPhase.Results } ? 100 : 250;
+        if (now - lease.ViewSent >= interval) { lease.ViewSent = now; BrowseJoustSeats(false); }
     }
     private void SendJoustSeatCamera(JoustAudienceRuntime.Lease lease, bool force)
     {

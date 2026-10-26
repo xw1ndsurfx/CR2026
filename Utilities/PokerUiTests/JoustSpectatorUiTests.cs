@@ -33,7 +33,7 @@ internal static class JoustSpectatorUiTests
                 var update = type.GetMethod("Apply", Hidden)!;
                 var seat = new JoustSeatView(Guid.NewGuid(),"Tribune Gisabelle",7,6,7,7,false,"");
                 var view = new JoustSpectatorView { ArenaId=Guid.NewGuid(),Seats=[seat] };
-                void Show() => update.Invoke(popup,[new JoustStatePacket { OpenSpectatorWindow=true,SpectatorJson=JsonSerializer.Serialize(view) }]);
+                void Show(bool open = true) => update.Invoke(popup,[new JoustStatePacket { OpenSpectatorWindow=open,SpectatorJson=JsonSerializer.Serialize(view) }]);
                 Show();var choices=Field<ComboBox>(popup,"_seats");
                 Check(choices.SelectedItem?.UserData is Guid id && id==seat.Id,"The named seat picker binds its real identity.");
                 Check(Field<Label>(popup,"_entrance").Text.Contains("7"),"The entrance coordinates are visible.");
@@ -43,7 +43,26 @@ internal static class JoustSpectatorUiTests
                 view.Match=new JoustBroadcast { FirstName="William",SecondName="Gisabelle",Pass=2,Passes=3,FirstScore=4,SecondScore=7 };
                 Show();Check(Field<Button>(popup,"_sit").IsDisabled && !Field<Button>(popup,"_stand").IsDisabled,"Seated players can stand and cannot claim another seat.");
                 Check(Field<Label>(popup,"_score").Text.Contains("Gisabelle") && Field<Label>(popup,"_score").Text.Contains("7"),"The spectator sees live scores with real player names.");
+                view.Match.MatchId = Guid.NewGuid(); view.Match.Phase = JoustPhase.Charge;
+                view.Match.PhaseDurationMs = 1500; view.Match.RemainingMs = 1200;
+                view.Presentation = view.Match.Presentation(view.ArenaId, JoustSpectatorCamera.FirstKnight, 0);
+                popup.Hide(); Show(false);
+                var viewport = Field<Intersect.Client.Framework.Gwen.Control.Base>(popup, "_viewport");
+                Check(!popup.IsHidden && !viewport.IsHidden && popup.Height == 704, "The authoritative charge automatically opens the seated spectator's closeup.");
+                Check(Field<bool>(viewport, "ReadOnly") && !viewport.MouseInputEnabled && !viewport.KeyboardInputEnabled, "Spectators have no aim or keyboard input in the shared viewport.");
+                var aim = Field<double>(viewport, "AimX");
+                viewport.GetType().GetMethod("OnMouseMoved", Hidden)!.Invoke(viewport, [0, 0, 20, 20]);
+                Check(Field<double>(viewport, "AimX") == aim, "Even a delivered mouse event cannot change a spectator's aim.");
+                Check(Field<Button>(popup,"_stand").Y > viewport.Y + viewport.Height && Field<Label>(popup,"_message").Y + Field<Label>(popup,"_message").Height < popup.Height, "Stand-up and camera controls remain reachable below the closeup.");
+                popup.Hide(); view.Match.Phase = JoustPhase.Aim; view.Presentation.Phase = JoustPhase.Aim; Show(false);
+                Check(popup.IsHidden, "Closing a closeup is respected for the rest of the pass.");
+                view.Match.Pass++; view.Presentation.Pass++; Show(false);
+                Check(!popup.IsHidden, "A new pass automatically presents the next charge.");
+                view.Match.Phase = JoustPhase.Impact; view.Presentation.Phase = JoustPhase.Impact;
+                view.Presentation.PlayerStrike = new(JoustHit.Unhorsed, 5, true); Show(false);
+                Check(Field<JoustView>(viewport, "State").PlayerStrike.Hit == JoustHit.Unhorsed, "Resolved server impacts reach the same viewport as participant impacts.");
                 view.CurrentSeat=Guid.Empty;view.Seats=[];Show();Check(Field<Button>(popup,"_sit").IsDisabled,"An unconfigured arena cannot reserve a nonexistent seat.");
+                Check(viewport.IsHidden && popup.Height == 360 && Field<JoustView?>(viewport,"State") == null, "Standing up removes closeup playback even if a stale presentation remains in the payload.");
 
             }
             Console.WriteLine("PASS joust spectator UI: named seats, entrances, ownership, stable selectors and live scores in en/fr/es.");

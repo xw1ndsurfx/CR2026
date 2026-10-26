@@ -18,6 +18,16 @@ Les boutons proposent la vue de l’arène ou le suivi du chevalier doré/bleu. 
 
 Les émotes existantes restent celles du menu du chat et des common Events marqués comme émotes. Aucun système d’émotes parallèle n’est ajouté. Une émote qui lance une cinématique complète rend la place au système de scène.
 
+## Vue spectateur 2,5D
+
+Une fois assis, le spectateur voit automatiquement un gros plan frontal à partir de la charge, puis la visée, l’impact et les résultats de la passe. La fenêtre reprend le composant graphique des participants, sans réticule ni commande de visée. Pendant la charge, le chevalier approche par agrandissement du sprite ; les images d’impact, de lance brisée et de désarçonnement viennent des résultats autoritaires du duel. Les images de prototype existantes sont réutilisées ; cet ajout ne remplace pas les retouches artistiques finales.
+
+La position assise, la réservation et la visibilité sur la carte restent inchangées. Les caméras **chevalier doré / bleu** sélectionnent aussi le point de vue correspondant dans le gros plan, en PvE comme en PvP. La caméra **arène** reprend le point de vue doré dans le gros plan et le cadrage natif de la lice derrière la fenêtre. Les boutons de caméra et **Se lever** restent accessibles sous l’image. Fermer la fenêtre ne libère pas la place et elle reste fermée pour le reste de cette passe ; la suivante la rouvre. Se lever, changer de carte ou terminer le duel retire le gros plan.
+
+Le serveur publie phase, passe, durée, temps restant, scores et frappes résolues. Il ne diffuse ni les coordonnées de visée courantes ni l’état de défense des participants. Les instantanés destinés aux joueurs assis sont actualisés au plus toutes les 100 ms pendant le spectacle ; le client fait progresser le compteur entre deux messages sans calculer de résultat. Un visiteur non assis ne reçoit pas de présentation 2,5D. Aucune scène ou caméra cinématique parallèle n’est créée.
+
+Mettre à jour **le client et le serveur** pour activer cette présentation. Un client récent connecté à un ancien serveur conserve la fenêtre de places et les scores, mais ne reçoit pas le nouveau contenu de gros plan. La validation locale couvre les parcours serveur PvE/PvP, les deux perspectives, la sortie du siège, les contrôles en en/fr/es et le rendu GPU de William/Night avec les vrais PNG. La recette avec plusieurs clients connectés reste à effectuer.
+
 ## Posture et limites de validation
 
 La posture assise est composée à l’affichage à partir du sprite réel et des couches d’équipement, avec un léger mouvement de repos. Elle ne repose pas sur une nouvelle feuille d’animation dessinée par l’artiste. Une retouche artistique et une recette graphique sur une vraie carte restent nécessaires. Les images du décor existant restent sur la grille 16 × 16 ; cette étape n’ajoute pas le tileset final complet.

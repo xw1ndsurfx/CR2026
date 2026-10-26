@@ -1,5 +1,10 @@
 {
   "Entries": {
+    "Spectator view is read only. Use the gold or blue camera button to choose the knight's viewpoint.": {
+      "en": "Spectator view is read only. Use the gold or blue camera button to choose the knight's viewpoint.",
+      "fr": "Vue spectateur sans contrôle de visée. Les boutons de caméra dorée et bleue choisissent le point de vue du chevalier.",
+      "es": "Vista de espectador sin control de apuntado. Los botones de cámara dorada y azul eligen el punto de vista del caballero."
+    },
     "This arena is disabled. Check Enable this arena, then save to open jousting in the game.": {
       "en": "This arena is disabled. Check Enable this arena, then save to open jousting in the game.",
       "fr": "Cette arène est désactivée. Coche Activer cette arène, puis enregistre pour ouvrir les joutes en jeu.",
