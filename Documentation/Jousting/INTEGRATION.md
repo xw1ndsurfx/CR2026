@@ -54,3 +54,9 @@ Les duels entre deux comptes sont maintenant disponibles. Dans l’onglet **1. A
 ## Places et caméra spectateur
 
 Voir `SPECTATORS.md` : l’onglet 6 Places propose les bancs et accès par clic sur la carte, un choix de PNJ de foule nommé et le zoom. En jeu : Lobby → Joutes Royales → Gradins de la joute. Le joueur doit atteindre l’accès indiqué avant de demander une place. La pose utilise son personnage et ses équipements ; les scores et les caméras restent contrôlés par le serveur.
+
+## Simplification du démarrage et correction des diagnostics
+
+La monture proposée par l’éditeur de joutes est limitée à William. L’adversaire PvE peut être William ou Tale Knight Night, avec sélection au lancement et défaut enregistré par arène. Night réutilise ses feuilles fournies sur la piste et la variante sombre existante du gros plan de prototype.
+
+Les diagnostics sont visibles sous l’aperçu depuis tous les onglets ; une place dont l’accès est éloigné affiche son nom et ses coordonnées. Un bouton place automatiquement un accès adjacent libre. La fenêtre du client indique départ et position actuelle ; le Lobby expose un accès permanent aux joutes. Guide détaillé : `DEMARRER.md`.

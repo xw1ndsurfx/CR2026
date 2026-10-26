@@ -1,5 +1,135 @@
 {
   "Entries": {
+    "Your mount is William. Click Add William preset if required. Choose William or Tale Knight Night as the AI opponent. Place the gold start, finish and blue lane, enable the arena, then save. Launch the match in the game client, not in this editor.": {
+        "en": "Your mount is William. Click Add William preset if required. Choose William or Tale Knight Night as the AI opponent. Place the gold start, finish and blue lane, enable the arena, then save. Launch the match in the game client, not in this editor.",
+        "fr": "Ta monture est William. Clique sur Ajouter le préréglage William si nécessaire. Choisis William ou Tale Knight Night comme adversaire IA. Place le départ doré, l’arrivée et le couloir bleu, active l’arène puis enregistre. Lance la partie dans le client du jeu, pas dans cet éditeur.",
+        "es": "Tu montura es William. Pulsa Añadir preajuste de William si hace falta. Elige William o Tale Knight Night como rival IA. Coloca el inicio dorado, la meta y el carril azul, activa la arena y guarda. Inicia la partida en el cliente del juego, no en este editor."
+    },
+    "Reward settings are invalid. Check the medal limits, quantities, prices and item choices in Rewards.": {
+        "en": "Reward settings are invalid. Check the medal limits, quantities, prices and item choices in Rewards.",
+        "fr": "Les récompenses sont invalides. Vérifie les limites de médailles, les quantités, les prix et les objets dans Gains.",
+        "es": "Las recompensas no son válidas. Revisa los límites de medallas, las cantidades, los precios y los objetos en Recompensas."
+    },
+    "There are more than 512 seats across all arenas. Remove some seats before saving.": {
+        "en": "There are more than 512 seats across all arenas. Remove some seats before saving.",
+        "fr": "Il y a plus de 512 places dans l’ensemble des arènes. Supprime des places avant d’enregistrer.",
+        "es": "Hay más de 512 asientos entre todas las arenas. Elimina algunos antes de guardar."
+    },
+    "Only one enabled arena is allowed per map. Disable one of these arenas: {0}.": {
+        "en": "Only one enabled arena is allowed per map. Disable one of these arenas: {0}.",
+        "fr": "Une seule arène active est autorisée par carte. Désactive l’une de ces arènes : {0}.",
+        "es": "Solo se permite una arena activa por mapa. Desactiva una de estas arenas: {0}."
+    },
+    "You cannot start now. Finish combat, casting or the current activity, then try again on the overworld map.": {
+        "en": "You cannot start now. Finish combat, casting or the current activity, then try again on the overworld map.",
+        "fr": "Impossible de démarrer maintenant. Termine le combat, le sort ou l’activité en cours, puis réessaie sur la carte du monde.",
+        "es": "No puedes empezar ahora. Termina el combate, el lanzamiento o la actividad actual y vuelve a intentarlo en el mapa del mundo."
+    },
+    "Default AI opponent": {
+        "en": "Default AI opponent",
+        "fr": "Adversaire IA par défaut",
+        "es": "Rival IA predeterminado"
+    },
+    "William is required. Click Add William preset, then save the arena.": {
+        "en": "William is required. Click Add William preset, then save the arena.",
+        "fr": "William est requis. Clique sur Ajouter le préréglage William, puis enregistre l’arène.",
+        "es": "Se requiere William. Pulsa Añadir preajuste de William y guarda la arena."
+    },
+    "Seat {0}: entrance ({1}, {2}) must be one tile from bench ({3}, {4}).": {
+        "en": "Seat {0}: entrance ({1}, {2}) must be one tile from bench ({3}, {4}).",
+        "fr": "Place {0} : l’accès ({1}, {2}) doit être à une seule case du banc ({3}, {4}).",
+        "es": "Asiento {0}: la entrada ({1}, {2}) debe estar a una sola casilla del banco ({3}, {4})."
+    },
+    "Seat {0}: move the bench and entrance outside both jousting lanes.": {
+        "en": "Seat {0}: move the bench and entrance outside both jousting lanes.",
+        "fr": "Place {0} : déplace le banc et son accès hors des deux couloirs de joute.",
+        "es": "Asiento {0}: mueve el banco y su entrada fuera de ambos carriles de justa."
+    },
+    "Seat {0}: a bench overlaps another bench or an entrance.": {
+        "en": "Seat {0}: a bench overlaps another bench or an entrance.",
+        "fr": "Place {0} : un banc chevauche un autre banc ou un accès.",
+        "es": "Asiento {0}: un banco se superpone a otro banco o a una entrada."
+    },
+    "In game: Character or Adventure lobbies → Royal Jousting. Walk to the gold start ({0}, {1}), choose an AI opponent and difficulty, then Start AI joust. Player duels use Challenge a knight.": {
+        "en": "In game: Character or Adventure lobbies → Royal Jousting. Walk to the gold start ({0}, {1}), choose an AI opponent and difficulty, then Start AI joust. Player duels use Challenge a knight.",
+        "fr": "En jeu : Personnage ou Lobby des aventures → Joutes Royales. Marche jusqu’au départ doré ({0}, {1}), choisis un adversaire IA et une difficulté, puis Démarrer la joute IA. Pour le PvP : Défier un chevalier.",
+        "es": "En el juego: Personaje o Salas de aventuras → Justas Reales. Camina hasta el inicio dorado ({0}, {1}), elige rival IA y dificultad, y pulsa Iniciar justa IA. Para PvP: Desafiar a un caballero."
+    },
+    "Cannot save. The exact problems are listed below, on every tab.": {
+        "en": "Cannot save. The exact problems are listed below, on every tab.",
+        "fr": "Enregistrement impossible. Les problèmes précis sont affichés ci-dessous, dans tous les onglets.",
+        "es": "No se puede guardar. Los problemas exactos aparecen abajo, en todas las pestañas."
+    },
+    "The server could not save this arena.": {
+        "en": "The server could not save this arena.",
+        "fr": "Le serveur n’a pas pu enregistrer cette arène.",
+        "es": "El servidor no pudo guardar esta arena."
+    },
+    "Put entrance beside seat": {
+        "en": "Put entrance beside seat",
+        "fr": "Mettre l’accès à côté du banc",
+        "es": "Poner la entrada junto al banco"
+    },
+    "No adjacent entrance is free. Move the bench or clear a neighboring tile.": {
+        "en": "No adjacent entrance is free. Move the bench or clear a neighboring tile.",
+        "fr": "Aucune case adjacente n’est libre. Déplace le banc ou libère une case voisine.",
+        "es": "No hay una casilla adyacente libre. Mueve el banco o despeja una casilla vecina."
+    },
+    "AI opponent (your mount: William)": {
+        "en": "AI opponent (your mount: William)",
+        "fr": "Adversaire IA (ta monture : William)",
+        "es": "Rival IA (tu montura: William)"
+    },
+    "Start AI joust": {
+        "en": "Start AI joust",
+        "fr": "Démarrer la joute IA",
+        "es": "Iniciar justa IA"
+    },
+    "No active arena on this map. In Jousting Editor, enable and save an arena first.": {
+        "en": "No active arena on this map. In Jousting Editor, enable and save an arena first.",
+        "fr": "Aucune arène active sur cette carte. Active et enregistre d’abord une arène dans l’éditeur de joutes.",
+        "es": "No hay una arena activa en este mapa. Primero activa y guarda una arena en el editor de justas."
+    },
+    "AI training is disabled for this arena. Enable Allow AI training in Jousting Editor.": {
+        "en": "AI training is disabled for this arena. Enable Allow AI training in Jousting Editor.",
+        "fr": "L’entraînement IA est désactivé ici. Coche Autoriser l’entraînement contre l’IA dans l’éditeur de joutes.",
+        "es": "El entrenamiento IA está desactivado aquí. Activa Permitir entrenamiento contra la IA en el editor de justas."
+    },
+    "Walk to the gold start ({0}, {1}). Your position: ({2}, {3}). Then choose William or Tale Knight Night, choose a difficulty and click Start AI joust. No adventure lobby needs to be created.": {
+        "en": "Walk to the gold start ({0}, {1}). Your position: ({2}, {3}). Then choose William or Tale Knight Night, choose a difficulty and click Start AI joust. No adventure lobby needs to be created.",
+        "fr": "Marche jusqu’au départ doré ({0}, {1}). Ta position : ({2}, {3}). Choisis ensuite William ou Tale Knight Night, une difficulté, puis Démarrer la joute IA. Il n’est pas nécessaire de créer un lobby.",
+        "es": "Camina hasta el inicio dorado ({0}, {1}). Tu posición: ({2}, {3}). Elige William o Tale Knight Night, una dificultad y pulsa Iniciar justa IA. No es necesario crear una sala."
+    },
+    "The selected crowd NPC is missing or has no sprite. Choose another NPC or None.": {
+        "en": "The selected crowd NPC is missing or has no sprite. Choose another NPC or None.",
+        "fr": "Le PNJ de foule choisi est introuvable ou n’a pas de sprite. Choisis un autre PNJ ou Aucun.",
+        "es": "El PNJ de público seleccionado no existe o no tiene sprite. Elige otro PNJ o Ninguno."
+    },
+    "A seat or entrance is outside the map or has a forbidden map attribute. Check the green bench and white entrance markers.": {
+        "en": "A seat or entrance is outside the map or has a forbidden map attribute. Check the green bench and white entrance markers.",
+        "fr": "Un banc ou son accès est hors de la carte ou porte un attribut interdit. Vérifie le banc vert et l’accès blanc.",
+        "es": "Un banco o su entrada está fuera del mapa o tiene un atributo no permitido. Comprueba el banco verde y la entrada blanca."
+    },
+    "A selected cinematic is missing or is not on the arena map. Choose an existing scene or None.": {
+        "en": "A selected cinematic is missing or is not on the arena map. Choose an existing scene or None.",
+        "fr": "Une cinématique choisie est introuvable ou n’est pas sur la carte de l’arène. Choisis une scène existante ou Aucun.",
+        "es": "Una cinemática seleccionada no existe o no está en el mapa de la arena. Elige una escena existente o Ninguna."
+    },
+    "A reward item is missing or is not stackable. Fix the offers in Rewards.": {
+        "en": "A reward item is missing or is not stackable. Fix the offers in Rewards.",
+        "fr": "Un objet de récompense est introuvable ou n’est pas empilable. Corrige les offres dans Gains.",
+        "es": "Un objeto de recompensa no existe o no es apilable. Corrige las ofertas en Recompensas."
+    },
+    "The arena map or William mount is missing, or a track is outside the map. Check Arena setup.": {
+        "en": "The arena map or William mount is missing, or a track is outside the map. Check Arena setup.",
+        "fr": "La carte de l’arène ou la monture William est introuvable, ou un couloir est hors de la carte. Vérifie l’onglet Arène.",
+        "es": "No se encuentra el mapa de la arena o la montura William, o un carril está fuera del mapa. Revisa la pestaña Arena."
+    },
+    "The jousting configuration is invalid. Check the arena rules and the seats listed below.": {
+        "en": "The jousting configuration is invalid. Check the arena rules and the seats listed below.",
+        "fr": "La configuration de joute est invalide. Vérifie les règles et les places indiquées ci-dessous.",
+        "es": "La configuración de justa no es válida. Revisa las reglas y los asientos indicados abajo."
+    },
     "Keep all benches and entrances inside the map.": {
         "en": "Keep all benches and entrances inside the map.",
         "fr": "Garde tous les bancs et leurs accès à l’intérieur de la carte.",

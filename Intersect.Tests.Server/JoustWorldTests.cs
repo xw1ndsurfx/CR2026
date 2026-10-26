@@ -31,7 +31,7 @@ public sealed class JoustWorldTests
         private readonly object? _mounts, _arenas;
         private static readonly FieldInfo MountCache = typeof(MountRuntime).GetField("_current", BindingFlags.NonPublic | BindingFlags.Static)!;
         private static readonly FieldInfo ArenaCache = typeof(JoustRuntime).GetField("_current", BindingFlags.NonPublic | BindingFlags.Static)!;
-        internal World()
+        internal World(JoustAiOpponent opponent = JoustAiOpponent.William)
         {
             Options.EnsureCreated(); _mounts = MountCache.GetValue(null); _arenas = ArenaCache.GetValue(null);
             Map = new MapController(Guid.NewGuid()); MapController.Lookup.Set(Map.Id, Map);
@@ -48,7 +48,7 @@ public sealed class JoustWorldTests
             Arena = new() { MapId = Map.Id, Enabled = true, MountId = mount.Id };
             Arena.Rules.UnhorseEndsMatch = false;
             ArenaCache.SetValue(null, new JoustConfiguration { Arenas = [Arena] });
-            Owner.HandleJoustRequest(new() { Action = JoustAction.StartPve, ArenaId = Arena.Id, Difficulty = 2 });
+            Owner.HandleJoustRequest(new() { Action = JoustAction.StartPve, ArenaId = Arena.Id, Difficulty = 2, AiOpponent = (int)opponent });
             Assert.That(Match, Is.Not.Null, "Start request must reach the real server session handler.");
         }
         internal JoustMatch Match => (JoustMatch)Get(Owner, "_joust")!;
@@ -126,5 +126,15 @@ public sealed class JoustWorldTests
         Assert.That(MessagePackSerializer.Deserialize<EntityMovePacket>(MessagePackSerializer.Serialize(packet)).ScriptedDurationMs, Is.EqualTo(564));
         Assert.That(new EntityMovePacket().ScriptedDurationMs, Is.Zero);
         Assert.That(new NpcEntityPacket().MountJson, Is.Empty);
+    }
+    [TestCase(JoustAiOpponent.William),TestCase(JoustAiOpponent.Night)]
+    public void AiOpponentUsesTheSelectedNativeSpritesAndPublicName(JoustAiOpponent opponent)
+    {
+        using var world = new World(opponent);
+        Assert.That(world.Opponent!.Mount.Id, Is.EqualTo(opponent == JoustAiOpponent.Night ? JoustMountPreset.NightId : JoustMountPreset.WilliamId));
+        Assert.That(world.Opponent.Name, Is.EqualTo(opponent == JoustAiOpponent.Night ? "Tale Knight Night" : "William"));
+        var snapshot=MessagePackSerializer.Deserialize<NpcEntityPacket>(MessagePackSerializer.Serialize((NpcEntityPacket)world.Opponent.EntityPacket()));
+        Assert.That(snapshot.MountJson,Does.Contain(opponent == JoustAiOpponent.Night ? "Tales_Knight_Night" : "Tales_Knight_William"));
+        Assert.That(world.Owner.ActiveMountId,Is.EqualTo(world.Arena.MountId),"Choosing an opponent never changes the player's mount.");
     }
 }

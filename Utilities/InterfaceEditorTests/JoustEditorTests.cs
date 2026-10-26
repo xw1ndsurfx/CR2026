@@ -32,10 +32,10 @@ internal static class JoustEditorTests
                 var list = Field<ListBox>(form, "_list");
                 Check(list.Items[0].ToString() == "Herbonia", "Arena list must show its name, never the CLR type.");
                 Check(!All(form).OfType<PropertyGrid>().Any(), "No raw GUID property grid in the setup workflow.");
-                var mount = MountConfiguration.Prototype(); mount.Mounts[0].Name = "William"; mount.Mounts[0].IntegratedRider = true;
+                var mount = new MountConfiguration { Mounts = [JoustMountPreset.William(), MountConfiguration.Prototype().Mounts[0]] };
                 form.ApplyMounts(mount.ToJson());
-                var picker = Field<ComboBox>(form, "_mount"); Check(picker.Items.Count == 2 && picker.Items[1].ToString() == "William", "Named mount picker is populated by the server configuration.");
-                picker.SelectedIndex = 1; Check(arena.MountId == mount.Mounts[0].Id, "Choosing William writes his actual identity.");
+                var picker = Field<ComboBox>(form, "_mount"); Check(picker.Items.Count == 1 && picker.Items[0].ToString() == "William", "Named mount picker is populated by the server configuration.");
+                picker.SelectedIndex = 0; Check(arena.MountId == mount.Mounts[0].Id, "Choosing William writes his actual identity.");
                 Field<TextBox>(form, "_name").Text = "Lice royale";
                 Check(arena.Name == "Lice royale" && list.SelectedIndex == 0, "Renaming retains selection and updates the arena draft.");
                 Field<CheckBox>(form, "_enabled").Checked = true;
@@ -89,7 +89,18 @@ internal static class JoustEditorTests
                 map.Attributes[7,7] = new Intersect.Framework.Core.GameObjects.Maps.Attributes.MapBlockedAttribute(); Call(form,"ValidateSetup");
                 Check(Field<Label>(form,"_check").Text.Contains(QualityOfLifeText.Get("Seat entrances must have no map attributes. Benches may only have a blocking attribute.",lang)),"Blocked entrances explain how to fix the seat.");
                 map.Attributes[7,7] = null; Call(form,"ValidateSetup");
-                var save = Field<Button>(form, "_save"); save.PerformClick();
+                var seat = arena.Seats[0]; seat.X=20;seat.Y=9;seat.ExitX=4;seat.ExitY=9;Call(form,"LoadSeatFields");Call(form,"Preview");Call(form,"ValidateSetup");
+                var exact = Field<TextBox>(form,"_problems");
+                Check(exact.Visible && exact.Text.Contains("Tribune Gisabelle") && exact.Text.Contains("20") && exact.Text.Contains("4"),"The reported seat error is visible on the Seats tab and names its coordinates.");
+                var save = Field<Button>(form,"_save");save.PerformClick();Check(Field<Guid>(form,"_request")==Guid.Empty && exact.Text.Contains("Tribune Gisabelle"),"A blocked save preserves the exact seat diagnosis.");
+                if (Environment.GetEnvironmentVariable("CODEX_UI_PREVIEW") is { Length: > 0 } errorFolder)
+                {
+                    Directory.CreateDirectory(errorFolder); using var errorImage=new Bitmap(form.Width,form.Height);form.DrawToBitmap(errorImage,new Rectangle(Point.Empty,errorImage.Size));errorImage.Save(Path.Combine(errorFolder,"joust-errors-"+lang+".png"));
+                }
+                All(form).OfType<Button>().Single(b=>b.Text==QualityOfLifeText.Get("Put entrance beside seat",lang)).PerformClick();
+                Check(Math.Abs(seat.X-seat.ExitX)+Math.Abs(seat.Y-seat.ExitY)==1,"The repair button restores an adjacent free entrance.");
+                Field<ComboBox>(form,"_opponent").SelectedIndex=1;Check(arena.AiOpponent==JoustAiOpponent.Night,"The default AI opponent is selected by name.");
+                save.PerformClick();
                 var request = Field<Guid>(form, "_request"); Check(!save.Enabled && request != Guid.Empty, "Save waits for the server acknowledgement.");
                 Field<TextBox>(form, "_name").Text = "Arène royale";
                 form.Response(new() { RequestId = Guid.NewGuid(), Saved = true }); Check(!save.Enabled, "Unrelated acknowledgements cannot confirm this draft.");

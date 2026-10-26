@@ -4,6 +4,7 @@ namespace Intersect.Framework.Core.Jousting;
 public sealed class JoustView
 {
     public bool IsPve { get; set; } = true;
+    public JoustAiOpponent AiOpponent { get; set; }
     public string OpponentName { get; set; } = "";
     public Guid MatchId { get; set; }
     public Guid ArenaId { get; set; }

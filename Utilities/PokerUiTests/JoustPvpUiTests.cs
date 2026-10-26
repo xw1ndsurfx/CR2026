@@ -16,7 +16,7 @@ internal static class JoustPvpUiTests
     private static void Check(bool ok, string message) { if (!ok) throw new Exception(message); }
     private static void Verify()
     {
-        var preferences = Globals.Database; var context = ApplicationContext.Context.Value; var content = Globals.ContentManager;
+        var previousMe = Globals.Me; var preferences = Globals.Database; var context = ApplicationContext.Context.Value; var content = Globals.ContentManager;
         var restore = typeof(ClientLanguages).GetMethod("RestoreEnglish", BindingFlags.Static | BindingFlags.NonPublic)!;
         var apply = typeof(ClientLanguages).GetMethod("Apply", BindingFlags.Static | BindingFlags.NonPublic)!;
         try
@@ -51,9 +51,19 @@ internal static class JoustPvpUiTests
                 Check(!Field<bool>(main, "_defending") && !Field<Button>(main, "_defense").ToggleState, "A new duel resets both the defense input and its visible toggle.");
                 mainType.GetMethod("Apply", Hidden)!.Invoke(main, [new JoustStatePacket { ViewJson = JsonSerializer.Serialize(new JoustView { IsPve = false, Phase = JoustPhase.Abandoned, Winner = 0 }) }]);
                 Check(Field<Label>(main, "_status").Text == ClientLanguages.Text("Joust interrupted"), "An interrupted duel does not announce an earned victory.");
+                var me = (Intersect.Client.Entities.Player)RuntimeHelpers.GetUninitializedObject(typeof(Intersect.Client.Entities.Player)); GC.SuppressFinalize(me); me.MapId=Guid.NewGuid(); me.X=1;me.Y=2;Globals.Me=me;
+                var arena=new JoustArena { Enabled=true,MapId=me.MapId,MountId=JoustMountPreset.WilliamId,AiOpponent=JoustAiOpponent.Night };
+                mainType.GetMethod("Apply",Hidden)!.Invoke(main,[new JoustStatePacket { ConfigurationJson=new JoustConfiguration { Arenas=[arena] }.ToJson() }]);
+                var opponents=Field<ComboBox>(main,"_opponent");Check(opponents.SelectedItem?.UserData is int knight && knight==1,"An arena's default Night opponent is selected by name.");
+                Check(Field<Button>(main,"_start").IsDisabled,"The UI explains the start tile instead of allowing an impossible start from afar.");
+                Check(Field<Label>(main,"_setupHint").Text.Contains("4") && Field<Label>(main,"_setupHint").Text.Contains("14"),"The actual gold start is visible in every language.");
+                me.X=(byte)arena.StartX;me.Y=(byte)arena.StartY;mainType.GetMethod("RefreshSetupHint",Hidden)!.Invoke(main,null);
+                Check(!Field<Button>(main,"_start").IsDisabled,"Reaching the gold start enables the AI start button.");
+                opponents.SelectByUserData(0);Check(opponents.SelectedItem?.UserData is int william && william==0,"Both supported AI opponents can be selected.");
+
             }
             Console.WriteLine("PASS joust PvP UI: named players, invitation identity/expiry, handoff, personal scores and interruption in en/fr/es.");
         }
-        finally { restore.Invoke(null, null); Globals.Database = preferences; apply.Invoke(null, null); ApplicationContext.Context.Value = context; Globals.ContentManager = content; }
+        finally { Globals.Me = previousMe; restore.Invoke(null, null); Globals.Database = preferences; apply.Invoke(null, null); ApplicationContext.Context.Value = context; Globals.ContentManager = content; }
     }
 }

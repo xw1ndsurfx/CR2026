@@ -1,4 +1,4 @@
-﻿using Intersect.Framework.Core.Naval;
+using Intersect.Framework.Core.Naval;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -40,7 +40,8 @@ internal sealed class PartyLobbyWindow : Window
         _search.PlaceholderText=ClientLanguages.Text("Search host, lobby or dungeon");
         _search.SetBounds(199,14,width-295,28); _search.SetToolTipText(ClientLanguages.Text("Search host, lobby or dungeon"));
         Button(this,"Refresh",Width-110,14,94,()=>Request(LobbyAction.Browse));
-        _summary=Label(this,"LobbySummary",16,49,width,26,Gold);
+        _summary=Label(this,"LobbySummary",16,49,width-180,26,Gold);
+        Button(this,"Royal Jousting",Width-178,45,160,()=>{Hide();JoustWindow.Open();});
         _rows=new ScrollControl(this,"LobbyRows") {OverflowX=OverflowBehavior.Hidden,OverflowY=OverflowBehavior.Scroll,AutoHideBars=true};
         _rows.SetBounds(16,81,width,Height-328);
         var baseY=Height-238;

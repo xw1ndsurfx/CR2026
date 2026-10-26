@@ -24,7 +24,18 @@ internal sealed partial class PacketHandler
                     ConfigurationJson = JoustRuntime.Current.ToJson(), RequestId = packet.RequestId,
                     MountsJson = Intersect.Server.Mounts.MountRuntime.Current.ToJson() });
             }
-            catch (Exception) { client.Send(new JoustStatePacket { Editor = true, Message = "The jousting configuration is invalid.", RequestId = packet.RequestId }); }
+            catch (Exception error)
+            {
+                var message = error is InvalidDataException ? error.Message switch {
+                    "joust-william-required" => "William is required. Click Add William preset, then save the arena.",
+                    "joust-crowd-resource" => "The selected crowd NPC is missing or has no sprite. Choose another NPC or None.",
+                    "joust-seat-resources" => "A seat or entrance is outside the map or has a forbidden map attribute. Check the green bench and white entrance markers.",
+                    "joust-event-resource" => "A selected cinematic is missing or is not on the arena map. Choose an existing scene or None.",
+                    "joust-reward-item" => "A reward item is missing or is not stackable. Fix the offers in Rewards.",
+                    "joust-arena-resources" => "The arena map or William mount is missing, or a track is outside the map. Check Arena setup.",
+                    _ => "The jousting configuration is invalid. Check the arena rules and the seats listed below." } : "The server could not save this arena.";
+                client.Send(new JoustStatePacket { Editor = true, Message = message, RequestId = packet.RequestId });
+            }
             return;
         }
         if (client.Entity is { InGame: true } player) player.HandleJoustRequest(packet);

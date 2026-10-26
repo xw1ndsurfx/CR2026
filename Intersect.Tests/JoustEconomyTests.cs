@@ -62,4 +62,13 @@ public sealed class JoustEconomyTests
         Assert.That(mount.IdleFrames, Is.EqualTo(4)); Assert.That(mount.LoopFrames, Is.EqualTo(6));
         Assert.That(mount.FrameWidth, Is.EqualTo(128)); Assert.That(mount.GroundY, Is.EqualTo(80));
     }
+    [Test] public void NightUsesTheProvidedSheetsAndLegacyArenasDefaultToWilliam()
+    {
+        var night=JoustMountPreset.Opponent(JoustAiOpponent.Night);
+        Assert.That(new Intersect.Framework.Core.Mounts.MountConfiguration { Mounts=[night] }.IsValid,Is.True);
+        Assert.That(night.Idle,Does.Contain("Tales-Knight-Night"));Assert.That(night.LoopFrames,Is.EqualTo(6));
+        var old=JoustConfiguration.FromJson(new JoustConfiguration { Arenas=[new JoustArena()] }.ToJson());
+        Assert.That(old.Arenas[0].AiOpponent,Is.EqualTo(JoustAiOpponent.William));
+        old.Arenas[0].AiOpponent=(JoustAiOpponent)255;Assert.That(old.IsValid,Is.False);
+    }
 }

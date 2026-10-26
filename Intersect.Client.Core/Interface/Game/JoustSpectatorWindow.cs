@@ -64,7 +64,7 @@ internal sealed class JoustSpectatorWindow : Window
         }
         Selection();
         var match = _state.Match;
-        _score.Text = match == null ? ClientLanguages.Text("Waiting for the next joust.") : ClientLanguages.Format("Pass {0}/{1} · {2} {3} : {4} {5}", match.Pass, match.Passes, match.FirstName, match.FirstScore, match.SecondScore, match.IsPve ? ClientLanguages.Text("AI") : match.SecondName) + "\n" + ClientLanguages.Text(match.Live ? "Joust in progress" : "Joust finished");
+        _score.Text = match == null ? ClientLanguages.Text("Waiting for the next joust.") : ClientLanguages.Format("Pass {0}/{1} · {2} {3} : {4} {5}", match.Pass, match.Passes, match.FirstName, match.FirstScore, match.SecondScore, string.IsNullOrEmpty(match.SecondName) ? ClientLanguages.Text("AI") : match.SecondName) + "\n" + ClientLanguages.Text(match.Live ? "Joust in progress" : "Joust finished");
         if (packet.OpenSpectatorWindow) { Show(); BringToFront(); }
     }
 }
