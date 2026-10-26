@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Intersect (Core)\Intersect.Core.csproj" />
+    <Compile Include="..\Intersect.Editor\Forms\Cinematics\CinematicChapterSaveSession.cs" Link="Cinematics\CinematicChapterSaveSession.cs" />
   </ItemGroup>
 
   <ItemGroup>

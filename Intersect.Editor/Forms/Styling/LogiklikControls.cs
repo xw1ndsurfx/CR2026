@@ -134,7 +134,7 @@ internal static class EditorChoiceRenderer
             graphics.FillRectangle(fill, glyph); graphics.DrawRectangle(border, glyph);
             using var mark = new Pen(control.Enabled ? EditorTheme.Accent : EditorTheme.Muted, 2);
             if (indeterminate) graphics.DrawLine(mark, glyph.Left + 4, glyph.Top + size / 2, glyph.Right - 4, glyph.Top + size / 2);
-            else if (selected) graphics.DrawLines(mark, [new(glyph.Left + 3, glyph.Top + size / 2), new(glyph.Left + size / 2 - 1, glyph.Bottom - 4), new(glyph.Right - 3, glyph.Top + 4)]);
+            else if (selected) graphics.DrawLines(mark, new System.Drawing.Point[] { new(glyph.Left + 3, glyph.Top + size / 2), new(glyph.Left + size / 2 - 1, glyph.Bottom - 4), new(glyph.Right - 3, glyph.Top + 4) });
         }
         var textBounds = right ? new Rectangle(2, 0, Math.Max(0, glyph.Left - 4), control.Height)
             : new Rectangle(glyph.Right + 4, 0, Math.Max(0, control.Width - glyph.Right - 6), control.Height);
@@ -190,8 +190,8 @@ public class LogiklikTreeView : global::DarkUI.Controls.DarkTreeView
                 var box = node.ExpandArea;
                 var x = box.Left + box.Width / 2; var y = box.Top + box.Height / 2;
                 using var pen = new Pen(EditorTheme.Muted, 1.5f);
-                if (node.Expanded) graphics.DrawLines(pen, [new(x - 3, y - 2), new(x, y + 1), new(x + 3, y - 2)]);
-                else graphics.DrawLines(pen, [new(x - 2, y - 3), new(x + 1, y), new(x - 2, y + 3)]);
+                if (node.Expanded) graphics.DrawLines(pen, new System.Drawing.Point[] { new(x - 3, y - 2), new(x, y + 1), new(x + 3, y - 2) });
+                else graphics.DrawLines(pen, new System.Drawing.Point[] { new(x - 2, y - 3), new(x + 1, y), new(x - 2, y + 3) });
             }
             var icon = node.Expanded ? node.ExpandedIcon ?? node.Icon : node.Icon;
             if (ShowIcons && icon != null) graphics.DrawImage(icon, node.IconArea);

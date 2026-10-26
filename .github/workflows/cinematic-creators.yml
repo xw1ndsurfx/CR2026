@@ -6,6 +6,17 @@ on:
       - 'Intersect.Editor/Forms/Cinematics/**'
       - 'Intersect.Editor/Resources/Cinematics/**'
       - 'Framework/Intersect.Framework.Core/Cinematics/**'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/Editor/CreateGameObjectPacket.cs'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/Server/GameObjectPacket.cs'
+      - 'Intersect.Client.Core/Cinematics/**'
+      - 'Intersect.Client.Core/Core/Graphics*.cs'
+      - 'Intersect.Editor/Networking/PacketHandler.cs'
+      - 'Intersect.Editor/Networking/PacketSender.cs'
+      - 'Intersect.Server/Networking/NetworkedPacketHandler.cs'
+      - 'Intersect.Tests.Client/CinematicViewportTests.cs'
+      - 'Intersect.Tests/CinematicChapter*Tests.cs'
+      - 'Intersect.Tests/Intersect.Tests.csproj'
+      - 'Utilities/CinematicFramingTests/**'
       - 'Utilities/InterfaceEditorTests/**'
       - '.github/workflows/cinematic-creators.yml'
   workflow_dispatch:
@@ -28,8 +39,40 @@ jobs:
         shell: pwsh
         run: dotnet build Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd"
       - name: Test guided and description creators
+        env:
+          CODEX_UI_PREVIEW: ${{ runner.temp }}/cinematic-ui-preview
         shell: pwsh
         run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug --no-build -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" -- --cinematic-creators-only
       - name: Test existing montage workflow
+        env:
+          CODEX_UI_PREVIEW: ${{ runner.temp }}/cinematic-ui-preview
         shell: pwsh
         run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug --no-build -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" -- --cinematic-usability-only
+      - name: Test chapter creation and acknowledged saves
+        env:
+          CODEX_UI_PREVIEW: ${{ runner.temp }}/cinematic-ui-preview
+        shell: pwsh
+        run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug --no-build -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" -- --cinematic-chapters-only
+      - name: Test cinematic display and loaded-map framing
+        run: dotnet run --project Utilities/CinematicFramingTests/CinematicFramingTests.csproj -c Release
+      - name: Test actual client viewport and picking
+        shell: pwsh
+        run: |
+          dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" --filter FullyQualifiedName~CinematicViewportTests --nologo --logger "trx;LogFileName=client.trx" --results-directory "$env:RUNNER_TEMP/cinematic-test-results"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          [xml]$result = Get-Content "$env:RUNNER_TEMP/cinematic-test-results/client.trx" -Raw
+          if ([int]$result.TestRun.ResultSummary.Counters.total -lt 1) { throw 'No client cinematic tests were executed.' }
+      - name: Test cinematic compilation and packet compatibility
+        shell: pwsh
+        run: |
+          dotnet test Intersect.Tests/Intersect.Tests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" --filter FullyQualifiedName~Cinematic --nologo --logger "trx;LogFileName=core.trx" --results-directory "$env:RUNNER_TEMP/cinematic-test-results"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          [xml]$result = Get-Content "$env:RUNNER_TEMP/cinematic-test-results/core.trx" -Raw
+          if ([int]$result.TestRun.ResultSummary.Counters.total -lt 1) { throw 'No core cinematic tests were executed.' }
+      - name: Preserve native editor previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cinematic-editor-previews
+          path: ${{ runner.temp }}/cinematic-ui-preview/*.png
+          if-no-files-found: ignore

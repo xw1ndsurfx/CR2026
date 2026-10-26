@@ -8,11 +8,13 @@ namespace Intersect.Editor.Forms.Cinematics;
 internal sealed class FrmCinematicAutoCreator : DarkForm
 {
     private sealed record ScenarioChoice(CreatorScenario Value) { public override string ToString() => T("CreatorScenario" + Value); }
+    private sealed record ProjectionChoice(CinematicProjection Value) { public override string ToString() => T(Value.ToString()); }
     private readonly CinematicCreationContext _context;
     private readonly TabControl _modes = new() { Dock = DockStyle.Fill };
     private readonly TabControl _steps = new() { Dock = DockStyle.Fill, Multiline = true };
     private readonly TextBox _name = new() { Name = "CreatorName", Dock = DockStyle.Fill, MaxLength = 120 };
     private readonly ComboBox _scenario = new() { Name = "CreatorScenario", Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
+    private readonly ComboBox _projection = new() { Name = "CreatorProjection", Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
     private readonly NumericUpDown _duration = new() { Name = "CreatorDuration", Minimum = 6, Maximum = 600, DecimalPlaces = 2, Value = 12, Width = 120 };
     private readonly NumericUpDown _delay = new() { Name = "CreatorDelay", Minimum = 0, Maximum = 599, DecimalPlaces = 2, Width = 120 };
     private readonly CheckBox _move = new() { Text = T("CreatorMove"), AutoSize = true, Checked = true };
@@ -54,10 +56,12 @@ internal sealed class FrmCinematicAutoCreator : DarkForm
         var scenarioPage = Step("CreatorStepScenario");
         var scenarioFields = Fields();
         AddField(scenarioFields, "Name", _name); AddField(scenarioFields, "CreatorScenarioLabel", _scenario);
+        AddField(scenarioFields, "Projection", _projection);
         AddField(scenarioFields, "CreatorSeconds", _duration); AddField(scenarioFields, "CreatorDelaySeconds", _delay);
         AddField(scenarioFields, "CreatorMovement", _move);
         scenarioPage.Controls.Add(scenarioFields);
         foreach (var kind in Enum.GetValues<CreatorScenario>()) _scenario.Items.Add(new ScenarioChoice(kind));
+        foreach (var kind in Enum.GetValues<CinematicProjection>()) _projection.Items.Add(new ProjectionChoice(kind));
         var castPage = Step("CreatorStepCast"); castPage.Controls.Add(_cast);
         var castFields = Fields(); AddField(castFields, "CreatorChooseNpc", _npc); AddField(castFields, "CreatorCopies", _count);
         var castButtons = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true };
@@ -186,6 +190,7 @@ internal sealed class FrmCinematicAutoCreator : DarkForm
     private CinematicCreationPlan ReadPlan() => new()
     {
         Name = _name.Text, Scenario = (_scenario.SelectedItem as ScenarioChoice)?.Value ?? CreatorScenario.Arrival,
+        Projection = (_projection.SelectedItem as ProjectionChoice)?.Value ?? CinematicProjection.Flat2D,
         DurationMs = (int)(_duration.Value * 1000), DelayMs = (int)(_delay.Value * 1000), Move = _move.Checked,
         Entry = new((int)_coordinates[0].Value, (int)_coordinates[1].Value),
         Destination = new((int)_coordinates[2].Value, (int)_coordinates[3].Value),
@@ -203,6 +208,7 @@ internal sealed class FrmCinematicAutoCreator : DarkForm
         try
         {
             _name.Text = plan.Name; _scenario.SelectedIndex = (int)plan.Scenario; _duration.Value = plan.DurationMs / 1000m; _delay.Value = plan.DelayMs / 1000m;
+            _projection.SelectedIndex = (int)plan.Projection;
             _move.Checked = plan.Move; _cast.Items.Clear(); foreach (var cast in plan.Cast) _cast.Items.Add(cast);
             var points = new[] { plan.Entry, plan.Destination, plan.Camera };
             for (var i = 0; i < 3; i++) { _coordinates[i * 2].Value = points[i].X; _coordinates[i * 2 + 1].Value = points[i].Y; }

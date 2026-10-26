@@ -18,6 +18,8 @@ internal static partial class CinematicCamera
     private static bool _perspectiveFailed;
     private static long _nextPerspectiveFrame;
     private static GameRenderer? _perspectiveRenderer;
+    private static int _perspectiveScreenWidth;
+    private static int _perspectiveScreenHeight;
     private sealed record PerspectivePick(Microsoft.Xna.Framework.Matrix View, Microsoft.Xna.Framework.Matrix Projection, int Width, int Height);
     private static PerspectivePick? _perspectivePick;
     internal static bool PerspectiveRequested { get { lock (Sync) return _shot is { Projection: CinematicProjection.Perspective2_5D } && _pose != null; } }
@@ -28,13 +30,18 @@ internal static partial class CinematicCamera
         lock (Sync)
         {
             frame = _perspectivePick;
-            if (_shot is not { Projection: CinematicProjection.Perspective2_5D } || _perspectiveFailed || frame == null)
+            if (_shot is not { Projection: CinematicProjection.Perspective2_5D } || _perspectiveFailed)
             { point = default; return false; }
         }
         var tw = Options.Instance.Map.TileWidth; var th = Options.Instance.Map.TileHeight;
         // Sky and points beyond the rendered far plane must not target the 2D
         // world underneath. Reuse native click/range/visibility/server checks.
         point = new(float.MinValue,float.MinValue);
+        // A resize invalidates the last displayed projection until the next
+        // frame. Never reuse the old viewport or fall through to a 2D click.
+        if (frame == null || Graphics.Renderer is not { } renderer ||
+            !CinematicScreenGeometry.CanPick(screen.X, screen.Y, frame.Width, frame.Height,
+                renderer.ScreenWidth, renderer.ScreenHeight)) return true;
         if (Intersect.Rendering.MapPerspectiveGeometry.GroundPoint(new(screen.X,screen.Y),frame.Width,frame.Height,
                 frame.View,frame.Projection,out var ground))
         {
@@ -46,29 +53,40 @@ internal static partial class CinematicCamera
         return true;
     }
 
-    internal static void DrawPerspective()
+    internal static bool DrawPerspective()
     {
         CinematicCameraPose pose; CinematicLensPose lens;
         lock (Sync)
         {
             if (_shot is not { Projection: CinematicProjection.Perspective2_5D } || _pose is not { } current ||
                 Globals.GameState != GameStates.InGame)
-            { ReleasePerspectiveTexture(); return; }
+            { ReleasePerspectiveTexture(); return false; }
             var shake = PresentationShake(); pose = current with { X = current.X + shake.X, Y = current.Y + shake.Y }; lens = _lens;
         }
-        if (Graphics.Renderer is not { } renderer) return;
-        if (_perspectiveRenderer != renderer) { ReleasePerspectiveTexture(); _perspectiveRenderer = renderer; _perspectiveFailed = false; }
-        if (_perspectiveFailed) return;
+        if (Graphics.Renderer is not { } renderer) return false;
+        var screenWidth = renderer.ScreenWidth;
+        var screenHeight = renderer.ScreenHeight;
+        if (screenWidth <= 0 || screenHeight <= 0) { ReleasePerspectiveTexture(); return false; }
+        if (_perspectiveRenderer != renderer || _perspectiveScreenWidth != screenWidth ||
+            _perspectiveScreenHeight != screenHeight)
+        {
+            ReleasePerspectiveTexture();
+            _perspectiveRenderer = renderer;
+            _perspectiveScreenWidth = screenWidth;
+            _perspectiveScreenHeight = screenHeight;
+            _perspectiveFailed = false;
+            _nextPerspectiveFrame = 0;
+        }
+        if (_perspectiveFailed) return false;
         var now = Environment.TickCount64;
-        if (now >= _nextPerspectiveFrame)
+        if (_perspectiveTexture == null || now >= _nextPerspectiveFrame)
         {
             _nextPerspectiveFrame = now + 50;
             try
             {
                 // Same bounded GPU pass as the cannon viewport. No texture readback,
                 // camera-dependent map requests, cannon input or new scene graph.
-                var width = Math.Clamp(renderer.ScreenWidth, 160, 960);
-                var height = Math.Clamp((int)Math.Round(width * renderer.ScreenHeight / (double)Math.Max(1, renderer.ScreenWidth)), 90, 540);
+                var (width, height) = CinematicScreenGeometry.PerspectiveResolution(screenWidth, screenHeight);
                 if (_perspectiveTexture != null && (_perspectiveTexture.Width != width || _perspectiveTexture.Height != height)) ReleasePerspectiveTexture();
                 _perspectiveTexture ??= renderer.CreateRenderTexture(width, height);
                 MapPerspectiveScene scene;
@@ -92,7 +110,7 @@ internal static partial class CinematicCamera
                     var view = Intersect.Rendering.MapPerspectiveGeometry.View(new(scene.Camera.X,scene.Camera.Y),new(scene.Forward.X,scene.Forward.Y),
                         scene.TileWidth,scene.TileHeight,scene.EyeHeight,scene.PitchDegrees);
                     var projection = Intersect.Rendering.MapPerspectiveGeometry.Projection(scene.FieldOfView,width/(float)height);
-                    lock (Sync) _perspectivePick = new(view,projection,renderer.ScreenWidth,renderer.ScreenHeight);
+                    lock (Sync) _perspectivePick = new(view,projection,screenWidth,screenHeight);
                 }
             }
             catch (Exception error) when (error is InvalidOperationException or NotSupportedException or ArgumentException)
@@ -101,14 +119,17 @@ internal static partial class CinematicCamera
                 Intersect.Core.ApplicationContext.CurrentContext.Logger.LogWarning(error,
                     "Cinematic perspective unavailable; ordinary world rendering retained");
             }
-            if (_perspectiveFailed) { ReleasePerspectiveTexture(); return; }
+            if (_perspectiveFailed) { ReleasePerspectiveTexture(); return false; }
         }
         if (_perspectiveTexture != null)
         {
-            Graphics.DrawGameTexture(_perspectiveTexture, new FloatRect(0, 0, _perspectiveTexture.Width, _perspectiveTexture.Height),
-                Graphics.CurrentView, Color.White);
+            var screen = CinematicScreenGeometry.Fullscreen(screenWidth, screenHeight);
+            Graphics.DrawScreenTexture(_perspectiveTexture, new FloatRect(0, 0, _perspectiveTexture.Width, _perspectiveTexture.Height),
+                new FloatRect(screen.X, screen.Y, screen.Width, screen.Height), Color.White);
             CinematicEnvironment.DrawPerspectiveAtmosphere();
+            return true;
         }
+        return false;
     }
 
     private static void ReleasePerspectiveTexture()

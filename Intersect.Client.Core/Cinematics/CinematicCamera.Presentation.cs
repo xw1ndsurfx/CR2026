@@ -61,17 +61,17 @@ internal static partial class CinematicCamera
         Style style;
         lock (Sync) { style = _style; }
         if (Graphics.Renderer is not { } renderer) return;
-        var view = Graphics.CurrentView;
-        var height = view.Height * style.Letterbox;
-        if (height > 0)
+        var screen = CinematicScreenGeometry.Fullscreen(renderer.ScreenWidth, renderer.ScreenHeight);
+        var bars = CinematicScreenGeometry.Letterboxes(renderer.ScreenWidth, renderer.ScreenHeight, style.Letterbox);
+        void DrawMask(CinematicScreenRect bounds, Color color) =>
+            Graphics.DrawScreenTexture(renderer.WhitePixel, new FloatRect(0, 0, 1, 1),
+                new FloatRect(bounds.X, bounds.Y, bounds.Width, bounds.Height), color);
+        if (bars.Top.Height > 0)
         {
-            Graphics.DrawGameTexture(renderer.WhitePixel, new FloatRect(0, 0, 1, 1),
-                new FloatRect(view.X, view.Y, view.Width, height), Color.Black);
-            Graphics.DrawGameTexture(renderer.WhitePixel, new FloatRect(0, 0, 1, 1),
-                new FloatRect(view.X, view.Y + view.Height - height, view.Width, height), Color.Black);
+            DrawMask(bars.Top, Color.Black);
+            DrawMask(bars.Bottom, Color.Black);
         }
         if (style.Fade > 0)
-            Graphics.DrawGameTexture(renderer.WhitePixel, new FloatRect(0, 0, 1, 1), view,
-                new Color((int)(style.Fade * 255), 0, 0, 0));
+            DrawMask(screen, new Color((int)(style.Fade * 255), 0, 0, 0));
     }
 }
