@@ -315,10 +315,12 @@ public sealed partial class FrmJoustConfiguration : Form
         foreach (var group in _config.Arenas.Where(x => x.Enabled).GroupBy(x => x.MapId).Where(g => g.Count() > 1))
             issues.Add(string.Format(T("Only one enabled arena is allowed per map. Disable one of these arenas: {0}."), string.Join(", ", group.Select(x => x.Name))));
         if (!a.IsValid && issues.Count == 0) issues.Add(T("The jousting configuration is invalid."));
-        _check.Text = issues.Count == 0 ? T("Ready. Save, then enter the game at the gold start tile.") : string.Join("\n\n", issues);
+        var inactive = T("This arena is disabled. Check Enable this arena, then save to open jousting in the game.");
+        _check.Text = issues.Count == 0 ? !a.Enabled ? inactive : T("Ready. Save, then enter the game at the gold start tile.") : string.Join("\n\n", issues);
         _setupProblems.Clear(); _setupProblems.AddRange(issues);
         _problems.Text = issues.Count == 0 ? string.Format(T("In the game, step onto the gold start ({0}, {1}): the jousting window opens automatically. The blue start opens duels and grandstand entrances open seat selection. After closing a window, leave the tile and return to reopen it."), a.StartX, a.StartY) : string.Join(Environment.NewLine + Environment.NewLine, issues);
-        _check.ForeColor = issues.Count == 0 ? System.Drawing.Color.LightGreen : System.Drawing.Color.Gold;
+        if (!a.Enabled) _problems.Text = inactive + Environment.NewLine + Environment.NewLine + _problems.Text;
+        _check.ForeColor = issues.Count == 0 && a.Enabled ? System.Drawing.Color.LightGreen : System.Drawing.Color.Gold;
     }
     private void Preview()
     {

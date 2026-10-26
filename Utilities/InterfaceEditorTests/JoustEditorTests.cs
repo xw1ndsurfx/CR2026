@@ -49,6 +49,11 @@ internal static class JoustEditorTests
                     g.DrawString("TEST — SYNTHETIC MAP", SystemFonts.DefaultFont, Brushes.White, 20, 20); return b;
                 };
                 Globals.CurrentMap = map; Call(form, "LoadArena");
+                Field<CheckBox>(form, "_enabled").Checked = false;
+                var disabled = QualityOfLifeText.Get("This arena is disabled. Check Enable this arena, then save to open jousting in the game.", lang);
+                Check(Field<Label>(form, "_check").Text == disabled && Field<TextBox>(form, "_problems").Text.Contains(disabled), "A disabled arena explains activation instead of claiming it is ready, on every tab.");
+                Check(config.IsValid, "A valid inactive arena remains saveable as a draft.");
+                Field<CheckBox>(form, "_enabled").Checked = true;
                 var evt = new EventDescriptor(Guid.NewGuid(), map.Id, 0, 0) { Name = "Arrivée du roi", Pages = [new EventPage { Cinematic = JoustCinematics.Create(arena, JoustCinematicKind.Introduction, s => s) }] };
                 evt.Pages[0].Cinematic!.Name = "CUSTOM SCENE TO PRESERVE"; map.LocalEvents[evt.Id] = evt; arena.IntroductionEventId = evt.Id;
                 Call(form, "LoadArena");

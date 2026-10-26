@@ -1,5 +1,10 @@
 {
   "Entries": {
+    "This arena is disabled. Check Enable this arena, then save to open jousting in the game.": {
+      "en": "This arena is disabled. Check Enable this arena, then save to open jousting in the game.",
+      "fr": "Cette arène est désactivée. Coche Activer cette arène, puis enregistre pour ouvrir les joutes en jeu.",
+      "es": "Esta arena está desactivada. Marca Activar esta arena y guarda para abrir las justas en el juego."
+    },
     "William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.": {
         "en": "William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.",
         "fr": "William est la monture du joueur. Choisis un adversaire IA, place les deux pistes, active l’arène et enregistre. En jeu, marche sur le départ doré : la fenêtre de joute s’ouvre automatiquement. Le départ bleu propose le PvP et les accès aux gradins proposent les places.",
