@@ -60,6 +60,17 @@ internal static class JoustPvpUiTests
                 me.X=(byte)arena.StartX;me.Y=(byte)arena.StartY;mainType.GetMethod("RefreshSetupHint",Hidden)!.Invoke(main,null);
                 Check(!Field<Button>(main,"_start").IsDisabled,"Reaching the gold start enables the AI start button.");
                 opponents.SelectByUserData(0);Check(opponents.SelectedItem?.UserData is int william && william==0,"Both supported AI opponents can be selected.");
+                var game=(GameInterface)RuntimeHelpers.GetUninitializedObject(typeof(GameInterface));
+                typeof(GameInterface).GetField("<GameCanvas>k__BackingField",Hidden)!.SetValue(game,canvas);
+                var route=typeof(GameInterface).GetMethod("ApplyJoustState",Hidden)!;
+                route.Invoke(game,[new JoustStatePacket { Open=true,ConfigurationJson=new JoustConfiguration { Arenas=[arena] }.ToJson() }]);
+                var automatic=Field<Intersect.Client.Framework.Gwen.Control.Base>(game,"_joustWindow");
+                Check(!automatic.IsHidden,"A server proximity packet opens preparation without constructing or opening Character.");
+                route.Invoke(game,[new JoustStatePacket { OpenSpectatorWindow=true,SpectatorJson=JsonSerializer.Serialize(new JoustSpectatorView()) }]);
+                Check(automatic.IsHidden && !Field<Intersect.Client.Framework.Gwen.Control.Base>(game,"_joustSpectatorWindow").IsHidden,"A grandstand invitation replaces preparation instead of stacking the windows.");
+                route.Invoke(game,[new JoustStatePacket { OpenDuelWindow=true,DuelJson=JsonSerializer.Serialize(new JoustDuelView()) }]);
+                Check(Field<Intersect.Client.Framework.Gwen.Control.Base>(game,"_joustSpectatorWindow").IsHidden && !Field<Intersect.Client.Framework.Gwen.Control.Base>(game,"_joustDuelWindow").IsHidden,"The blue start opens the duel window on its own.");
+
 
             }
             Console.WriteLine("PASS joust PvP UI: named players, invitation identity/expiry, handoff, personal scores and interruption in en/fr/es.");

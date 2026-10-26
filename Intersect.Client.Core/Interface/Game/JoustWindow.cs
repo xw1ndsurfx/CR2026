@@ -149,7 +149,7 @@ internal sealed class JoustWindow : Window
         var me = Globals.Me;
         _start.IsDisabled = arena == null || !arena.AllowPve || me == null || me.X != arena.StartX || me.Y != arena.StartY;
         _setupHint.Text = arena == null ? T("No active arena on this map. In Jousting Editor, enable and save an arena first.") : !arena.AllowPve ? T("AI training is disabled for this arena. Enable Allow AI training in Jousting Editor.") :
-            ClientLanguages.Format("Walk to the gold start ({0}, {1}). Your position: ({2}, {3}). Then choose William or Tale Knight Night, choose a difficulty and click Start AI joust. No adventure lobby needs to be created.", arena.StartX, arena.StartY, me?.X ?? 0, me?.Y ?? 0);
+            ClientLanguages.Format("Gold start: ({0}, {1}). Your position: ({2}, {3}). This window opens automatically at the gold start. Choose the AI opponent and difficulty, then Start AI joust. For PvP, use Challenge a knight.", arena.StartX, arena.StartY, me?.X ?? 0, me?.Y ?? 0);
     }
     private static string PhaseText(JoustPhase phase) => phase switch {
         JoustPhase.Preparation => "Joust preparation", JoustPhase.Charge => "Joust charge", JoustPhase.Aim => "Aim at the shield or chest",

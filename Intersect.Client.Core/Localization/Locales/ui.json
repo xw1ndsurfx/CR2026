@@ -1,5 +1,20 @@
 {
   "Entries": {
+    "William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.": {
+        "en": "William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.",
+        "fr": "William est la monture du joueur. Choisis un adversaire IA, place les deux pistes, active l’arène et enregistre. En jeu, marche sur le départ doré : la fenêtre de joute s’ouvre automatiquement. Le départ bleu propose le PvP et les accès aux gradins proposent les places.",
+        "es": "William es la montura del jugador. Elige un rival IA, coloca ambas pistas, activa la arena y guarda. En el juego, pisa el inicio dorado: la ventana de justa se abre automáticamente. El inicio azul ofrece PvP y las entradas de las gradas ofrecen asientos."
+    },
+    "In the game, step onto the gold start ({0}, {1}): the jousting window opens automatically. The blue start opens duels and grandstand entrances open seat selection. After closing a window, leave the tile and return to reopen it.": {
+        "en": "In the game, step onto the gold start ({0}, {1}): the jousting window opens automatically. The blue start opens duels and grandstand entrances open seat selection. After closing a window, leave the tile and return to reopen it.",
+        "fr": "En jeu, marche sur le départ doré ({0}, {1}) : la fenêtre de joute s’ouvre automatiquement. Le départ bleu ouvre les duels et les accès aux gradins ouvrent les places. Après fermeture, quitte la case puis reviens pour rouvrir la fenêtre.",
+        "es": "En el juego, pisa el inicio dorado ({0}, {1}): la ventana de justa se abre automáticamente. El inicio azul abre los duelos y las entradas de las gradas abren los asientos. Tras cerrar una ventana, sal de la casilla y vuelve para abrirla de nuevo."
+    },
+    "Gold start: ({0}, {1}). Your position: ({2}, {3}). This window opens automatically at the gold start. Choose the AI opponent and difficulty, then Start AI joust. For PvP, use Challenge a knight.": {
+        "en": "Gold start: ({0}, {1}). Your position: ({2}, {3}). This window opens automatically at the gold start. Choose the AI opponent and difficulty, then Start AI joust. For PvP, use Challenge a knight.",
+        "fr": "Départ doré : ({0}, {1}). Ta position : ({2}, {3}). Cette fenêtre s’ouvre automatiquement au départ doré. Choisis l’adversaire IA et la difficulté, puis Démarrer la joute IA. Pour le PvP : Défier un chevalier.",
+        "es": "Inicio dorado: ({0}, {1}). Tu posición: ({2}, {3}). Esta ventana se abre automáticamente en el inicio dorado. Elige el rival IA y la dificultad, y pulsa Iniciar justa IA. Para PvP: Desafiar a un caballero."
+    },
     "Your mount is William. Click Add William preset if required. Choose William or Tale Knight Night as the AI opponent. Place the gold start, finish and blue lane, enable the arena, then save. Launch the match in the game client, not in this editor.": {
         "en": "Your mount is William. Click Add William preset if required. Choose William or Tale Knight Night as the AI opponent. Place the gold start, finish and blue lane, enable the arena, then save. Launch the match in the game client, not in this editor.",
         "fr": "Ta monture est William. Clique sur Ajouter le préréglage William si nécessaire. Choisis William ou Tale Knight Night comme adversaire IA. Place le départ doré, l’arrivée et le couloir bleu, active l’arène puis enregistre. Lance la partie dans le client du jeu, pas dans cet éditeur.",

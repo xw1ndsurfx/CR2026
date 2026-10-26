@@ -14,16 +14,17 @@ Les erreurs sont maintenant affichées dans une zone permanente sous l’aperçu
 4. Placer le départ doré, l’arrivée et le couloir bleu. Garder une distance horizontale paire, de 4 à 64 cases, et dégager les deux pistes. Cocher **Activer cette arène** et **Autoriser l’entraînement contre l’IA**.
 5. Pour les spectateurs, placer un banc et un accès adjacent hors des pistes. Enregistrer l’arène. Les cinématiques sont facultatives pour lancer un premier essai.
 
-## Lancer l’IA dans le client du jeu
+## Fenêtres automatiques dans le jeu
 
-1. Entrer sur la carte de l’arène avec son personnage. La partie se lance dans le client, pas dans l’éditeur.
-2. Ouvrir **Personnage → Joutes Royales**, ou le bouton **Joutes Royales** toujours visible dans le **Lobby des aventures**. Il n’est pas nécessaire de créer un lobby.
-3. La fenêtre indique les coordonnées du départ doré et la position actuelle du personnage. Marcher jusqu’à cette case : le bouton de démarrage devient disponible.
-4. Choisir **William** ou **Tale Knight Night**, choisir la difficulté, puis cliquer **Démarrer la joute IA**. Le serveur attribue temporairement William au joueur ; il n’est pas nécessaire de posséder ou d’équiper cette monture au préalable.
+Il n’est plus nécessaire d’ouvrir Personnage ou le Lobby. Les fenêtres de joute utilisent l’interface native du jeu et s’ouvrent directement à l’arrivée sur les cases configurées de l’arène active :
 
-## Lancer un duel entre joueurs
+- **Départ doré** : préparation de la joute, choix William / Tale Knight Night et difficulté, puis **Démarrer la joute IA**, ou **Défier un chevalier** pour le PvP.
+- **Départ bleu** : fenêtre des duels ; le deuxième joueur peut y accepter l’invitation reçue. Le PvP doit être autorisé dans l’arène et les deux joueurs doivent être sur la même carte et dans la même instance, avec deux comptes distincts.
+- **Accès d’un gradin** : fenêtre des places. L’ouverture ne réserve rien et n’assoit pas le joueur ; il choisit sa place et confirme.
 
-Deux comptes distincts doivent se trouver sur la même carte et dans la même instance, avec les duels autorisés dans l’arène. Le premier joueur se place au départ doré ; le second au départ bleu, à l’extrémité opposée. Ouvrir **Joutes Royales → Défier un chevalier**, choisir l’autre joueur et envoyer l’invitation. Le second dispose de trente secondes pour accepter. Les deux joueurs utilisent la monture de l’arène, William dans les arènes enregistrées par cet éditeur.
+Fermer une fenêtre la laisse fermée tant que le personnage reste sur cette case. Quitter la case puis revenir permet de la rouvrir. Les fenêtres des joutes se remplacent entre elles. Elles ne s’ouvrent pas au milieu d’une charge, d’une autre activité bloquante, d’un combat ou d’une cinématique. Le joueur conserve le contrôle de ses déplacements pendant la préparation ; la course ne démarre qu’après son choix. Les raccourcis du Personnage et du Lobby restent facultatifs.
+
+L’arène doit être activée et enregistrée. La partie se lance dans le client du jeu, pas dans l’éditeur. Au lancement, le serveur attribue temporairement William au joueur : aucune possession ou sélection préalable de monture n’est nécessaire.
 
 ## Ressources et vérification
 

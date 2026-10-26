@@ -60,3 +60,7 @@ Voir `SPECTATORS.md` : l’onglet 6 Places propose les bancs et accès par clic 
 La monture proposée par l’éditeur de joutes est limitée à William. L’adversaire PvE peut être William ou Tale Knight Night, avec sélection au lancement et défaut enregistré par arène. Night réutilise ses feuilles fournies sur la piste et la variante sombre existante du gros plan de prototype.
 
 Les diagnostics sont visibles sous l’aperçu depuis tous les onglets ; une place dont l’accès est éloigné affiche son nom et ses coordonnées. Un bouton place automatiquement un accès adjacent libre. La fenêtre du client indique départ et position actuelle ; le Lobby expose un accès permanent aux joutes. Guide détaillé : `DEMARRER.md`.
+
+## Ouverture automatique des fenêtres
+
+En jeu, le départ doré ouvre directement la préparation, le départ bleu ouvre les duels et les accès aux gradins ouvrent les places. Aucun passage par Personnage n’est requis. Le serveur détecte la position réelle et n’envoie qu’une invitation par arrivée ; après fermeture, il faut quitter la case puis revenir. Une activité bloquante, une joute en cours, une navigation ou une cinématique empêche l’ouverture. Les fenêtres se remplacent entre elles, sans démarrer une partie ni réserver une place automatiquement.

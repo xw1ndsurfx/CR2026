@@ -7,6 +7,9 @@ public partial class GameInterface
     private JoustSpectatorWindow? _joustSpectatorWindow;
     internal void ApplyJoustState(JoustStatePacket packet)
     {
+        if (packet.OpenSpectatorWindow) { _joustWindow?.Hide(); _joustDuelWindow?.Hide(); }
+        if (packet.OpenDuelWindow) { _joustWindow?.Hide(); _joustSpectatorWindow?.Hide(); }
+        if (packet.Open) { _joustDuelWindow?.Hide(); _joustSpectatorWindow?.Hide(); }
         if (packet.SpectatorJson.Length > 0 || packet.OpenSpectatorWindow)
             (_joustSpectatorWindow ??= new JoustSpectatorWindow(GameCanvas)).Apply(packet);
         else if (packet.Message.Length > 0) _joustSpectatorWindow?.Apply(packet);
