@@ -11,6 +11,7 @@ public partial class Player
 {
     private Dictionary<Guid, Guid> _selectedWeaponAmmo;
     private long _ammoRequestAt;
+    private long _ammoSelectionAt;
     private Dictionary<Guid, Guid> SelectedWeaponAmmo => _selectedWeaponAmmo ??= RoyalCombatRuntime.LoadAmmo(Id);
     internal bool CanFireWorldWeapon => !IsArcheryActive && InShop == default && !InBank &&
         OpenCraftingTableId == default && Trading.Counterparty == default;
@@ -53,8 +54,16 @@ public partial class Player
         lock (EntityLock)
         {
             var now = Environment.TickCount64;
-            if (now - _ammoRequestAt < 250) return;
-            _ammoRequestAt = now;
+            if (packet.Action == ArcheryAction.SelectAmmunition)
+            {
+                if (now - _ammoSelectionAt < 250) return;
+                _ammoSelectionAt = now;
+            }
+            else
+            {
+                if (now - _ammoRequestAt < 250) return;
+                _ammoRequestAt = now;
+            }
             var message = "";
             if (packet.Action == ArcheryAction.SelectAmmunition && !SelectWeaponAmmo(packet.WeaponId, packet.ItemId))
                 message = "This ammunition is unavailable or incompatible with your equipped weapon.";
@@ -62,8 +71,10 @@ public partial class Player
             var compatible = CompatibleAmmoProjectiles(weapon);
             var selected = SelectedWeaponProjectile(weapon)?.AmmoItemId ?? Guid.Empty;
             var knownAmmo = ProjectileDescriptor.Lookup.Values.OfType<ProjectileDescriptor>().Where(p => p.AmmoItemId != Guid.Empty).Select(p => p.AmmoItemId).ToHashSet();
-            var owned = Items.Where(i => i.ItemId != Guid.Empty && i.Quantity > 0 &&
-                    (i.Descriptor?.ItemType == ItemType.Ammo || knownAmmo.Contains(i.ItemId))).Select(i => i.ItemId);
+            // Quantity lookup materializes lazy inventory slots. Snapshot IDs before those
+            // lookups so a fresh/partially populated character cannot invalidate enumeration.
+            var owned = Items.ToArray().Where(i => i.ItemId != Guid.Empty && i.Quantity > 0 &&
+                    (i.Descriptor?.ItemType == ItemType.Ammo || knownAmmo.Contains(i.ItemId))).Select(i => i.ItemId).ToArray();
             var entries = owned.Concat(compatible.Select(p => p.AmmoItemId)).Distinct().Where(id => ItemDescriptor.Get(id) != null)
                 .Select(id => new AmmunitionEntry { ItemId = id, Quantity = FindInventoryItemQuantity(id),
                     Compatible = compatible.Any(p => p.AmmoItemId == id), Required = compatible.FirstOrDefault(p => p.AmmoItemId == id)?.AmmoRequired ?? 0 }).ToArray();

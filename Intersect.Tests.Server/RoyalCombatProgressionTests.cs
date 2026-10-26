@@ -97,7 +97,8 @@ public sealed partial class RoyalCombatTests
             p.Items[1].Set(new Item(fire.Id, 1)); p.Items[2].Set(new Item(wooden.Id, 10));
             Assert.That(p.SelectWeaponAmmo(Guid.NewGuid(), fire.Id), Is.False);
             Assert.That(p.SelectWeaponAmmo(bow.Id, Guid.NewGuid()), Is.False);
-            Assert.That(p.SelectWeaponAmmo(bow.Id, fire.Id), Is.True);
+            p.HandleArcheryRequest(new() { Action = ArcheryAction.Ammunition, RequestId = Guid.NewGuid() });
+            p.HandleArcheryRequest(new() { Action = ArcheryAction.SelectAmmunition, WeaponId = bow.Id, ItemId = fire.Id });
             Assert.That(RoyalCombatRuntime.LoadAmmo(p.Id)[bow.Id], Is.EqualTo(fire.Id));
             Assert.That(p.SelectedWeaponProjectile(bow), Is.SameAs(alternate));
             Assert.That(p.TryConsumeProjectileAmmunition(alternate), Is.True);
