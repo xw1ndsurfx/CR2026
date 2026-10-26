@@ -55,7 +55,21 @@ public sealed partial class FrmJoustConfiguration : Form
         AddButton(placements, "Place finish", () => SetPlacement(Placement.End));
         AddButton(placements, "Place opponent lane", () => SetPlacement(Placement.Opponent));
         mapPanel.Controls.Add(_map); mapPanel.Controls.Add(placements); right.Panel1.Controls.Add(mapPanel);
-        var tabs = new TabControl { Dock = DockStyle.Fill, Multiline = true };
+        var tabs = new TabControl { Dock = DockStyle.Fill, SizeMode = TabSizeMode.Fixed, ItemSize = new(72, 30), ShowToolTips = true };
+        var fittingTabs = false;
+        void FitTabs()
+        {
+            if (fittingTabs) return;
+            fittingTabs = true;
+            try
+            {
+                tabs.SizeMode = TabSizeMode.Fixed;
+                var size = new Size(Math.Max(50, (tabs.ClientSize.Width - 12) / 5), 30);
+                if (tabs.ItemSize != size) tabs.ItemSize = size;
+            }
+            finally { fittingTabs = false; }
+        }
+        Shown += (_, _) => FitTabs(); tabs.Resize += (_, _) => FitTabs();
         var setup = Page(tabs, "1. Arena setup");
         Row(setup, "Arena name", _name);
         _enabled.Text = T("Enable this arena"); Row(setup, "", _enabled);
@@ -116,7 +130,8 @@ public sealed partial class FrmJoustConfiguration : Form
     { var b = new Button { Text = T(text), AutoSize = true }; b.Click += (_, _) => action(); parent.Controls.Add(b); }
     private static TableLayoutPanel Page(TabControl tabs, string name)
     {
-        var page = new TabPage(T(name)) { AutoScroll = true };
+        var shortName = name switch { "1. Arena setup" => "1. Setup", "2. Match rules" => "2. Rules", "3. Cinematics" => "3. Scenes", "4. Rewards and economy" => "4. Rewards", "5. Aim target zones" => "5. Aim", _ => name };
+        var page = new TabPage(T(shortName)) { AutoScroll = true, ToolTipText = T(name) };
         var table = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, Padding = new(10) };
         table.ColumnStyles.Add(new(SizeType.Percent, 100)); page.Controls.Add(table); tabs.TabPages.Add(page); return table;
     }

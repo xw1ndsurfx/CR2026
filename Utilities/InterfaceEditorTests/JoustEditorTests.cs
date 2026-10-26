@@ -62,6 +62,8 @@ internal static class JoustEditorTests
                 arena.EndX = 26; Call(form, "LoadArena");
                 Check(JoustConfiguration.FromJson(config.ToJson()).Arenas[0].MountId == mount.Mounts[0].Id, "Resource selections survive save/reopen serialization.");
                 form.Size = new Size(1280, 820); EditorTheme.Apply(form); form.Show(); Application.DoEvents();
+                var tabs = All(form).OfType<System.Windows.Forms.TabControl>().Single();
+                Check(Enumerable.Range(0, 5).All(i => tabs.GetTabRect(i).Right <= tabs.ClientSize.Width && tabs.GetTabRect(i).Top == tabs.GetTabRect(0).Top), "All five steps stay visible in order on one row after theming.");
                 var picture = Field<PictureBox>(form, "_map");
                 void Place(string button, int x, int y)
                 {

@@ -1,5 +1,35 @@
 {
   "Entries": {
+    "1. Setup": {
+        "en": "1. Setup",
+        "fr": "1. Arène",
+        "es": "1. Arena"
+    },
+    "2. Rules": {
+        "en": "2. Rules",
+        "fr": "2. Règles",
+        "es": "2. Reglas"
+    },
+    "3. Scenes": {
+        "en": "3. Scenes",
+        "fr": "3. Scènes",
+        "es": "3. Escenas"
+    },
+    "4. Rewards": {
+        "en": "4. Rewards",
+        "fr": "4. Gains",
+        "es": "4. Premios"
+    },
+    "5. Aim": {
+        "en": "5. Aim",
+        "fr": "5. Visée",
+        "es": "5. Puntería"
+    },
+    "Saved": {
+        "en": "Saved",
+        "fr": "Enregistré",
+        "es": "Guardado"
+    },
     "Quantity": {
         "en": "Quantity",
         "fr": "Quantité",
