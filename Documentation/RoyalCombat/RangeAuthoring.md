@@ -1,7 +1,8 @@
 # Royal Archery: range authoring and timing
 
-This slice extends free solo training. It does not enable multiplayer tournaments, rewards
-or production artwork. Existing inventory arrows, bows and paperdolls remain unchanged.
+These rules extend free solo training and are also reused by the first
+[multiplayer score competition](Competitions.md). They do not add rewards or production
+artwork. Existing inventory arrows, bows and paperdolls remain unchanged.
 
 ## Author a range
 

@@ -20,6 +20,12 @@ internal sealed class ArcheryWindow : Window
     private readonly Label _timer;
     private readonly ArcheryViewport _view;
     private readonly Button _start;
+    private readonly Button _join;
+    private readonly Button _boardButton;
+    private readonly Base _board;
+    private readonly Label[] _competitors = new Label[16];
+    private ArcheryCompetitionView? _competition;
+    private Guid _startToken;
     private RoyalCombatConfiguration _config = new();
     private ArcheryView? _state;
     private long _sequence;
@@ -32,8 +38,17 @@ internal sealed class ArcheryWindow : Window
         _status = Label(16, 72, 656, 28);
         _timer = Label(16, 104, 656, 26);
         _view = new(this, Send); _view.SetBounds(16, 142, 640, 360);
-        _start = NavalManagementWindow.Button(this, "ArcheryStart", T("Start training"), 16, 516, 300, 30, Start);
-        NavalManagementWindow.Button(this, "ArcheryLeave", T("Leave training"), 332, 516, 324, 30, () => { Send(ArcheryAction.Leave); Hide(); });
+        _start = NavalManagementWindow.Button(this, "ArcheryStart", T("Start training"), 16, 516, 145, 30, () => Start(false));
+        _join = NavalManagementWindow.Button(this, "ArcheryJoin", T("Join competition"), 167, 516, 155, 30, () => Start(true));
+        NavalManagementWindow.Button(this, "ArcheryLeave", T("Leave training"), 328, 516, 155, 30, () => { Send(ArcheryAction.Leave); Hide(); });
+        _boardButton = NavalManagementWindow.Button(this, "ArcheryStandings", T("Standings"), 489, 516, 167, 30, () => ShowBoard(_board.IsHidden));
+        _board = new Base(this); _board.SetBounds(16, 142, 640, 360); _board.Hide();
+        for (var i = 0; i < _competitors.Length; i++)
+        {
+            _competitors[i] = new Label(_board) { Name = "ArcheryCompetitor" + i, Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont,
+                FontSize = 10, TextColorOverride = Color.White, AutoSizeToContents = false };
+            _competitors[i].SetBounds(i / 8 * 320 + 4, i % 8 * 42 + 4, 308, 38);
+        }
         _status.Text = T("Hold left: draw · Release: shoot · Right click: zoom"); Hide();
     }
     protected override void EnsureInitialized() { }
@@ -44,14 +59,18 @@ internal sealed class ArcheryWindow : Window
         label.SetBounds(x, y, width, height); return label;
     }
     internal static void Open() => Intersect.Client.Networking.Network.SendPacket(new ArcheryRequestPacket { Action = ArcheryAction.Open });
-    private void Start()
+    private void ShowBoard(bool show) { _board.IsHidden = !show; _view.IsHidden = show; }
+    private void Start(bool competition)
     {
-        var range = _config.Ranges.FirstOrDefault(r => r.Enabled && r.MapId == Globals.Me?.MapId && r.StartX == Globals.Me.X && r.StartY == Globals.Me.Y);
+        var range = _config.Ranges.FirstOrDefault(r => r.Enabled && r.MapId == Globals.Me?.MapId &&
+            (competition ? r.CompetitionEnabled && Math.Abs(r.StartX - Globals.Me.X) <= 2 && Math.Abs(r.StartY - Globals.Me.Y) <= 2 : r.StartX == Globals.Me.X && r.StartY == Globals.Me.Y));
         if (range == null) { _status.Text = T("Stand at the royal shooting position outside combat."); return; }
-        Intersect.Client.Networking.Network.SendPacket(new ArcheryRequestPacket { Action = ArcheryAction.Start, RangeId = range.Id });
+        _startToken = Guid.NewGuid(); _state = null; _competition = null; _view.State = null; ShowBoard(false);
+        _start.IsDisabled = _join.IsDisabled = true;
+        Intersect.Client.Networking.Network.SendPacket(new ArcheryRequestPacket { Action = competition ? ArcheryAction.JoinCompetition : ArcheryAction.Start, RangeId = range.Id, RequestId = _startToken });
     }
     private void Send(ArcheryAction action) => Intersect.Client.Networking.Network.SendPacket(new ArcheryRequestPacket {
-        Action = action, MatchId = _state?.MatchId ?? Guid.Empty, Sequence = ++_sequence, Yaw = _view.Yaw, Pitch = _view.Pitch,
+        Action = action, MatchId = _state?.MatchId ?? _competition?.Id ?? _startToken, Sequence = ++_sequence, Yaw = _view.Yaw, Pitch = _view.Pitch,
         Round = _state?.Round ?? 0, Shot = _state?.Shot ?? 0 });
     internal void Apply(ArcheryStatePacket packet)
     {
@@ -64,6 +83,8 @@ internal sealed class ArcheryWindow : Window
             _view.Apply(state); _state = state;
             var active = state.Phase is not (ArcheryPhase.Finished or ArcheryPhase.Abandoned);
             _start.IsDisabled = active;
+            _join.IsDisabled = active;
+            _boardButton.IsDisabled = state.Phase is ArcheryPhase.Drawing or ArcheryPhase.Flying;
             _score.Text = ClientLanguages.Format("Round {0}/{1} · Score {2}/{3} · Arrows {4} · Distance {5} m · Wind {6}",
                 state.Round, state.Rounds, state.Score, state.MaximumScore, Math.Max(0, state.TotalArrows - state.Shot), state.Distance, state.Wind);
             _status.Text = state.Phase == ArcheryPhase.Finished ? T("Training complete") : state.Phase == ArcheryPhase.Abandoned ? T("Training ended") :
@@ -72,7 +93,35 @@ internal sealed class ArcheryWindow : Window
             else if (state.Impacts.Length > 0) _status.Text += " · " + (state.Impacts[^1].Points == 10 ? T("Bullseye!") :
                 ClientLanguages.Format("Last shot: {0}", state.Impacts[^1].Points));
         }
-        if (packet.Message.Length > 0) _status.Text = T(packet.Message);
+        if (packet.CompetitionJson.Length > 0)
+        {
+            var previous = _competition;
+            _competition = JsonSerializer.Deserialize<ArcheryCompetitionView>(packet.CompetitionJson);
+            if (_competition is { } competition)
+            {
+                if (!competition.Started)
+                {
+                    _state = null; _view.State = null; ShowBoard(true); _start.IsDisabled = _join.IsDisabled = true;
+                    _score.Text = T("Royal Archery Championship"); _timer.Text = "";
+                }
+                else if (previous?.Started != true) ShowBoard(false);
+                for (var i = 0; i < _competitors.Length; i++)
+                {
+                    var player = competition.Players.ElementAtOrDefault(i);
+                    _competitors[i].Text = player == null ? "" : ClientLanguages.Format("{0}. {1} · {2} points · {3}", player.Rank == 0 ? "—" : player.Rank,
+                        player.Name, player.Score, T(player.Forfeited ? "Withdrawn" : player.Done ? "Finished" : "Competing"));
+                }
+                if (!competition.Started) _status.Text = ClientLanguages.Format("Registration: {0}/{1} · Minimum {2} · {3}s", competition.Players.Length,
+                    competition.MaximumPlayers, competition.MinimumPlayers, (competition.RegistrationRemainingMs + 999) / 1000);
+                if (competition.Finished) { _status.Text = T("Competition complete — tied scores share a place."); ShowBoard(true); }
+            }
+            else { _start.IsDisabled = _join.IsDisabled = false; ShowBoard(false); }
+        }
+        if (packet.Message.Length > 0)
+        {
+            _status.Text = T(packet.Message);
+            if (_state == null && _competition == null) _start.IsDisabled = _join.IsDisabled = false;
+        }
         if (packet.Open) { Show(); BringToFront(); }
         if (IsVisibleInTree) _wasVisible = true;
     }

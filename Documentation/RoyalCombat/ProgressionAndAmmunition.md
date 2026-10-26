@@ -93,4 +93,6 @@ load tests, broader transaction auditing of pre-existing inventory writers, actu
 game-data authoring, balancing and actual-client visual QA. The new tests exercise real server
 methods and native UI controls, not a running production world. No production screenshot or
 full anti-macro/exploit-proof claim is made. Production art, full cinematics, advanced target
-graph editing, public mastery inspection, respec and multiplayer tournaments remain follow-up.
+graph editing, public mastery inspection, respec and advanced multiplayer tournaments remain
+follow-up. A first local-range multiplayer score competition is now available;
+see [competition setup and limits](Competitions.md).

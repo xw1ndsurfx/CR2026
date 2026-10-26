@@ -2206,6 +2206,56 @@
       "en": "Invalid range rules: check distances, timers and target motion bounds.",
       "fr": "Règles invalides : vérifiez les distances, les délais et les limites de déplacement des cibles.",
       "es": "Reglas no válidas: revisa distancias, tiempos y límites de movimiento de los blancos."
+    },
+    "Join competition": {
+      "en": "Join competition",
+      "fr": "S’inscrire",
+      "es": "Inscribirse"
+    },
+    "Standings": {
+      "en": "Standings",
+      "fr": "Classement",
+      "es": "Clasificación"
+    },
+    "{0}. {1} · {2} points · {3}": {
+      "en": "{0}. {1} · {2} points · {3}",
+      "fr": "{0}. {1} · {2} points · {3}",
+      "es": "{0}. {1} · {2} puntos · {3}"
+    },
+    "Withdrawn": {
+      "en": "Withdrawn",
+      "fr": "Abandon",
+      "es": "Retirado"
+    },
+    "Finished": {
+      "en": "Finished",
+      "fr": "Terminé",
+      "es": "Finalizado"
+    },
+    "Competing": {
+      "en": "Competing",
+      "fr": "En cours",
+      "es": "En juego"
+    },
+    "Registration: {0}/{1} · Minimum {2} · {3}s": {
+      "en": "Registration: {0}/{1} · Minimum {2} · {3}s",
+      "fr": "Inscriptions : {0}/{1} · Minimum {2} · {3} s",
+      "es": "Inscripciones: {0}/{1} · Mínimo {2} · {3} s"
+    },
+    "Competition complete — tied scores share a place.": {
+      "en": "Competition complete — tied scores share a place.",
+      "fr": "Compétition terminée — les égalités partagent une place.",
+      "es": "Competición terminada — los empates comparten puesto."
+    },
+    "Competition cancelled: not enough participants.": {
+      "en": "Competition cancelled: not enough participants.",
+      "fr": "Compétition annulée : pas assez de participants.",
+      "es": "Competición cancelada: faltan participantes."
+    },
+    "Royal Archery Championship": {
+      "en": "Royal Archery Championship",
+      "fr": "Championnat royal de tir à l’arc",
+      "es": "Campeonato real de tiro con arco"
     }
   }
 }

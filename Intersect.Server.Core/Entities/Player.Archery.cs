@@ -19,12 +19,17 @@ public partial class Player
     private long _archerySent;
     private long _royalRequestAt;
     private long _archeryStartAt;
+    private Guid _archeryCompetition;
+    private bool _archeryWaiting;
+    private long _archeryCompetitionSent;
+    private long _archeryCompetitionPolled;
+    private Guid _archeryStartToken;
     private Dictionary<string, long> _masteryExperience;
     private readonly Dictionary<Guid, (Guid Weapon, long Time)> _masteryHits = new();
     private long _masteryAwardAt;
     private long _masteryWindow;
     private int _masteryAwards;
-    internal bool IsArcheryActive => _archery is { Done: false };
+    internal bool IsArcheryActive => _archeryWaiting || _archery is { Done: false };
 
     private Dictionary<string, long> MasteryExperience => _masteryExperience ??= RoyalCombatRuntime.Load(Id);
     internal void OpenArcheryFromEvent() => SendPacket(new ArcheryStatePacket { Open = true, ConfigurationJson = RoyalCombatRuntime.Current.ToJson() });
@@ -102,20 +107,35 @@ public partial class Player
                 SendPacket(new ArcheryStatePacket { Open = true, ConfigurationJson = RoyalCombatRuntime.Current.ToJson() });
                 if (_archery != null) SendArcheryView(now); return;
             }
-            if (packet.Action == ArcheryAction.Start)
+            if (packet.Action is ArcheryAction.Start or ArcheryAction.JoinCompetition)
             {
                 if (IsArcheryActive || now - _archeryStartAt < 500) return;
                 _archeryStartAt = now;
+                var competition = packet.Action == ArcheryAction.JoinCompetition;
                 var range = RoyalCombatRuntime.Current.Ranges.FirstOrDefault(r => r.Enabled && r.Id == packet.RangeId && r.MapId == MapId);
-                if (range == null || X != range.StartX || Y != range.StartY || IsDead || HasPendingDeath || IsCasting ||
+                if (range == null || (competition ? !range.CompetitionEnabled || Math.Abs(X - range.StartX) > 2 || Math.Abs(Y - range.StartY) > 2 : X != range.StartX || Y != range.StartY) || IsDead || HasPendingDeath || IsCasting ||
                     CombatTimer > Timing.Global.Milliseconds || HasBlockingEventHold || MoveRoute != null ||
                     !CanUseLobbyTravel || _joust is { Done: false } || EventLookup.Values.Any(e => e.CinematicActive))
                 { SendPacket(new ArcheryStatePacket { Message = "Stand at the royal shooting position outside combat." }); return; }
-                _archeryRange = new() { Id = range.Id, MapId = range.MapId, StartX = range.StartX, StartY = range.StartY };
+                EndArchery();
+                _archeryStartToken = packet.RequestId;
+                _archeryRange = new() { Id = range.Id, MapId = range.MapId, StartX = X, StartY = Y };
                 _archeryInstance = MapInstanceId;
+                if (competition)
+                {
+                    _archeryCompetition = ArcheryCompetitions.Join(range, MapInstanceId, Id, Name, now);
+                    if (_archeryCompetition == Guid.Empty) return;
+                    _archeryCompetitionPolled = _archeryCompetitionSent = 0;
+                    _archery = null; _archeryWaiting = true; Dismount();
+                    SendPacket(new HoldPlayerPacket(_archeryCompetition, Guid.Empty, false));
+                    UpdateArchery(now); return;
+                }
                 Dismount(); _archery = new(now, range.Wind, range.Rules);
                 SendPacket(new HoldPlayerPacket(_archery.Id, Guid.Empty, false)); SendArcheryView(now); return;
             }
+            if (packet.Action == ArcheryAction.Leave && _archeryStartToken != Guid.Empty && packet.MatchId == _archeryStartToken) { EndArchery(); return; }
+            if (packet.Action == ArcheryAction.Leave && _archeryCompetition != Guid.Empty &&
+                (packet.MatchId == _archeryCompetition || packet.MatchId == _archery?.Id)) { EndArchery(); return; }
             if (_archery == null || packet.MatchId != _archery.Id) return;
             if (packet.Action == ArcheryAction.Leave) { EndArchery(); return; }
             UpdateArchery(now);
@@ -125,12 +145,37 @@ public partial class Player
     }
     private void UpdateArchery(long? suppliedNow = null)
     {
-        if (!IsArcheryActive) return;
+        if (!IsArcheryActive && _archeryCompetition == Guid.Empty) return;
         if (!InGame || Client == null || IsDead || HasPendingDeath || MapId != _archeryRange.MapId ||
             MapInstanceId != _archeryInstance || X != _archeryRange.StartX || Y != _archeryRange.StartY ||
             CombatTimer > Timing.Global.Milliseconds)
         { EndArchery(); return; }
         var now = suppliedNow ?? Environment.TickCount64;
+        if (_archeryCompetition != Guid.Empty && now - _archeryCompetitionPolled >= 250)
+        {
+            _archeryCompetitionPolled = now;
+            var update = ArcheryCompetitions.Poll(_archeryCompetition, Id, now, _archery?.Score ?? 0,
+                _archery?.Phase == ArcheryPhase.Finished, _archery?.Phase == ArcheryPhase.Abandoned);
+            if (update == null || update.View.Cancelled) { EndArchery(); SendPacket(new ArcheryStatePacket { Message = "Competition cancelled: not enough participants." }); return; }
+            if (_archeryWaiting && update.View.Started)
+            {
+                SendPacket(new HoldPlayerPacket(_archeryCompetition, Guid.Empty, true));
+                _archeryWaiting = false; _archery = new(update.Started, update.Wind, update.Rules);
+                SendPacket(new HoldPlayerPacket(_archery.Id, Guid.Empty, false)); SendArcheryView(now);
+            }
+            if (update.View.Players.FirstOrDefault(p => p.Id == Id)?.Forfeited == true && _archery is { Done: false })
+            {
+                _archery.Abandon(); SendArcheryView(now);
+                SendPacket(new HoldPlayerPacket(_archery.Id, Guid.Empty, true));
+            }
+            if (now - _archeryCompetitionSent >= 250)
+            {
+                _archeryCompetitionSent = now;
+                SendPacket(new ArcheryStatePacket { CompetitionJson = JsonSerializer.Serialize(update.View) });
+            }
+        }
+        if (_archeryWaiting) return;
+        if (_archery == null || _archery.Done) return;
         var changed = _archery.Advance(now);
         if (changed || now - _archerySent >= 250) SendArcheryView(now);
         if (_archery.Done) SendPacket(new HoldPlayerPacket(_archery.Id, Guid.Empty, true));
@@ -139,9 +184,23 @@ public partial class Player
     {
         lock (EntityLock)
         {
-            if (!IsArcheryActive) return;
-            _archery.Abandon(); SendArcheryView(Environment.TickCount64);
-            SendPacket(new HoldPlayerPacket(_archery.Id, Guid.Empty, true));
+            var now = Environment.TickCount64;
+            _archeryStartToken = Guid.Empty;
+            if (_archery is { Done: false })
+            {
+                _archery.Abandon(); SendArcheryView(now);
+                SendPacket(new HoldPlayerPacket(_archery.Id, Guid.Empty, true));
+            }
+            if (_archeryCompetition != Guid.Empty)
+            {
+                // Publish the last authoritative score before recording a withdrawal.
+                ArcheryCompetitions.Poll(_archeryCompetition, Id, now, _archery?.Score ?? 0,
+                    _archery?.Phase == ArcheryPhase.Finished, !_archeryWaiting && _archery?.Phase != ArcheryPhase.Finished);
+                ArcheryCompetitions.Leave(_archeryCompetition, Id, now);
+                SendPacket(new HoldPlayerPacket(_archeryCompetition, Guid.Empty, true));
+                _archeryCompetition = Guid.Empty; _archeryWaiting = false;
+                SendPacket(new ArcheryStatePacket { CompetitionJson = "null" });
+            }
         }
     }
     private void SendArcheryView(long now)
