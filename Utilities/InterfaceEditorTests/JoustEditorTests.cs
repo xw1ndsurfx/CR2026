@@ -67,7 +67,7 @@ internal static class JoustEditorTests
                 Check(JoustConfiguration.FromJson(config.ToJson()).Arenas[0].MountId == mount.Mounts[0].Id, "Resource selections survive save/reopen serialization.");
                 form.Size = new Size(1280, 820); EditorTheme.Apply(form); form.Show(); Application.DoEvents();
                 var tabs = All(form).OfType<System.Windows.Forms.TabControl>().Single();
-                Check(Enumerable.Range(0, 5).All(i => tabs.GetTabRect(i).Right <= tabs.ClientSize.Width && tabs.GetTabRect(i).Top == tabs.GetTabRect(0).Top), "All five steps stay visible in order on one row after theming.");
+                Check(Enumerable.Range(0, 6).All(i => tabs.GetTabRect(i).Right <= tabs.ClientSize.Width && tabs.GetTabRect(i).Top == tabs.GetTabRect(0).Top), "All six steps stay visible in order on one row after theming.");
                 var picture = Field<PictureBox>(form, "_map");
                 void Place(string button, int x, int y)
                 {
@@ -79,6 +79,13 @@ internal static class JoustEditorTests
                 }
                 Place("Place finish", 24, 18); Place("Place opponent lane", 10, 18);
                 Check(arena.EndX == 24 && arena.EndY == arena.StartY && arena.OpponentY == 18, "Visible placement buttons and normal clicks place both tracks without modifier keys.");
+                tabs.SelectedIndex = 5; Application.DoEvents();
+                All(form).OfType<Button>().Single(b => b.Text == QualityOfLifeText.Get("Add seat", lang)).PerformClick();
+                Check(arena.Seats.Length == 1, "Add seat creates an editable server seat.");
+                Place("Place seat", 7, 6); Place("Place seat entrance", 7, 7);
+                Field<TextBox>(form, "_seatName").Text = "Tribune Gisabelle";
+                Check(arena.Seats[0].X == 7 && arena.Seats[0].Y == 6 && arena.Seats[0].ExitY == 7 && arena.Seats[0].Name == "Tribune Gisabelle", "Seat and entrance are placed by normal map clicks, not raw coordinate editing.");
+                Check(JoustConfiguration.FromJson(config.ToJson()).Arenas[0].Seats[0].Name == "Tribune Gisabelle", "Seats survive serialization.");
                 var save = Field<Button>(form, "_save"); save.PerformClick();
                 var request = Field<Guid>(form, "_request"); Check(!save.Enabled && request != Guid.Empty, "Save waits for the server acknowledgement.");
                 Field<TextBox>(form, "_name").Text = "Arène royale";

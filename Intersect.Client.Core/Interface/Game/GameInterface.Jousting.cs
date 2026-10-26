@@ -4,8 +4,12 @@ public partial class GameInterface
 {
     private JoustWindow? _joustWindow;
     private JoustDuelWindow? _joustDuelWindow;
+    private JoustSpectatorWindow? _joustSpectatorWindow;
     internal void ApplyJoustState(JoustStatePacket packet)
     {
+        if (packet.SpectatorJson.Length > 0 || packet.OpenSpectatorWindow)
+            (_joustSpectatorWindow ??= new JoustSpectatorWindow(GameCanvas)).Apply(packet);
+        else if (packet.Message.Length > 0) _joustSpectatorWindow?.Apply(packet);
         if (packet.DuelJson.Length > 0 || packet.OpenDuelWindow)
             (_joustDuelWindow ??= new JoustDuelWindow(GameCanvas)).Apply(packet);
         else if (packet.Message.Length > 0) _joustDuelWindow?.Apply(packet);

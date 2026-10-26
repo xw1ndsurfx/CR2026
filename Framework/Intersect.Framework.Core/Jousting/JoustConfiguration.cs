@@ -68,13 +68,21 @@ public sealed class JoustArena
     public Guid UnhorseEventId { get; set; }
     public Guid VictoryEventId { get; set; }
     public JoustRules Rules { get; set; } = new();
+    public JoustSeat[] Seats { get; set; } = [];
+    public Guid CrowdNpcId { get; set; }
+    public float SpectatorZoom { get; set; } = 1.25f;
+    public bool OnTrack(int x, int y) => x >= Math.Min(StartX, EndX) && x <= Math.Max(StartX, EndX) && (y == StartY || y == OpponentY);
     [JsonIgnore] public bool IsValid => Id != Guid.Empty && Name is { Length: > 0 and <= 128 } &&
         (!Enabled || MapId != Guid.Empty && (AllowPve || AllowPvp)) && StartX is >= 0 and <= 255 && StartY is >= 0 and <= 255 &&
         EndX is >= 0 and <= 255 && EndY is >= 0 and <= 255 && OpponentY is >= 0 and <= 255 &&
         StartY != OpponentY && StartY == EndY && Rules is { IsValid: true } &&
         Math.Abs(EndX - StartX) is >= 4 and <= 64 && Math.Abs(EndX - StartX) % 2 == 0 &&
         (Rules.ChargeMs + Rules.AimMs) / (Math.Abs(EndX - StartX) / 2) >= 50 &&
-        (Rules.ImpactMs + Rules.ResultsMs) / (Math.Abs(EndX - StartX) / 2) >= 50;
+        (Rules.ImpactMs + Rules.ResultsMs) / (Math.Abs(EndX - StartX) / 2) >= 50 &&
+        float.IsFinite(SpectatorZoom) && SpectatorZoom is >= .5f and <= 3f && Seats is { Length: <= 64 } &&
+        Seats.All(s => s is { IsValid: true } && !OnTrack(s.X, s.Y) && !OnTrack(s.ExitX, s.ExitY)) &&
+        Seats.Select(s => s.Id).Distinct().Count() == Seats.Length && Seats.Select(s => (s.X, s.Y)).Distinct().Count() == Seats.Length &&
+        !Seats.Any(s => Seats.Any(other => other.X == s.ExitX && other.Y == s.ExitY));
 }
 
 public sealed class JoustConfiguration
@@ -84,12 +92,12 @@ public sealed class JoustConfiguration
     private static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true,
         WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
     [JsonIgnore] public bool IsValid => Economy is { IsValid: true } && Arenas is { Length: <= 64 } && Arenas.All(a => a is { IsValid: true }) &&
-        Arenas.Select(a => a.Id).Distinct().Count() == Arenas.Length &&
+        Arenas.Sum(a => a.Seats.Length) <= 512 && Arenas.Select(a => a.Id).Distinct().Count() == Arenas.Length &&
         Arenas.Where(a => a.Enabled).Select(a => a.MapId).Distinct().Count() == Arenas.Count(a => a.Enabled);
     public string ToJson() => JsonSerializer.Serialize(this, Options);
     public static JoustConfiguration FromJson(string json)
     {
-        if (json == null || json.Length > 262144) throw new InvalidDataException("joust-config-size");
+        if (json == null || json.Length > 1048576) throw new InvalidDataException("joust-config-size");
         var result = JsonSerializer.Deserialize<JoustConfiguration>(json, Options);
         if (result is not { IsValid: true }) throw new InvalidDataException("joust-config-invalid");
         return result;

@@ -52,7 +52,7 @@ public partial class Player
                 _lastMountList = requested; SendMountState(true); return;
             }
             if (packet.Action is not (MountAction.Toggle or MountAction.Favorite)) return;
-            if (IsJousting && packet.Action == MountAction.Toggle) return;
+            if (IsJoustProtected && packet.Action == MountAction.Toggle) return;
             var now = Timing.Global.Milliseconds;
             if (_lastMountAction > 0 && now - _lastMountAction < 700) return;
             _lastMountAction = now;

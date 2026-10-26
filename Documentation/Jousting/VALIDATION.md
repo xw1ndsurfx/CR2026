@@ -30,3 +30,11 @@ Le serveur dispose maintenant d’une simulation PvP partagée : invitations nom
 Vérification locale ciblée : 46 tests serveur réussis, comprenant les régressions PvE/montures/cinématiques/échanges et 18 scénarios PvP. La suite UI du client passe avec les nouveaux cas d’invitation, d’expiration et de résultats en en/fr/es ; le formulaire de l’éditeur vérifie aussi le mode PvP seul et l’interdiction d’une arène active sans mode. Les 33 tests partagés d’économie et de compilation cinématique passent.
 
 Les tests utilisent les entités et contrôles natifs, avec transports de test. Aucune recette graphique avec deux clients connectés n’est déclarée réalisée. Guide détaillé : `PVP.md`.
+
+## Gradins — 26 octobre 2026
+
+Les places se configurent désormais dans l’onglet 6 Places : banc et accès posés sur la carte, orientation, PNJ de foule nommé et zoom. Le client propose une liste de places avec accès, réservation, libération et caméra native. Les réservations sont exclusives et éphémères. Les vrais joueurs conservent leur sprite et leurs équipements ; la posture assise est composée au rendu. Les PNJ de foule n’ont ni combat ni butin. Les scores publics ne contiennent pas la visée ou la défense. Guide et limites : `SPECTATORS.md`.
+
+Cette étape fait l’objet de tests natifs serveur, client et formulaires en trois langues. L’essai graphique avec deux clients connectés, les animations assises dessinées, le décor final, les cérémonies et les tournois restent à valider ou réaliser.
+
+Résultat local de cette étape : 55 tests serveur ciblés, 4 tests client, 33 tests partagés et parcours des interfaces en en/fr/es réussis. Les trois projets natifs ont compilé. Les aperçus de l’éditeur utilisent une carte synthétique explicitement indiquée.

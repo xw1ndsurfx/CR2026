@@ -1,5 +1,190 @@
 {
   "Entries": {
+    "Facing": {
+        "en": "Facing",
+        "fr": "Orientation",
+        "es": "Orientación"
+    },
+    "AI": {
+        "en": "AI",
+        "fr": "IA",
+        "es": "IA"
+    },
+    "Refresh": {
+        "en": "Refresh",
+        "fr": "Actualiser",
+        "es": "Actualizar"
+    },
+    "Spectator zoom": {
+        "en": "Spectator zoom",
+        "fr": "Zoom spectateur",
+        "es": "Zoom de espectador"
+    },
+    "Each seat needs its own bench and an adjacent entrance outside both tracks. Entrances cannot overlap a bench.": {
+        "en": "Each seat needs its own bench and an adjacent entrance outside both tracks. Entrances cannot overlap a bench.",
+        "fr": "Chaque place doit avoir son banc et un accès adjacent hors des deux couloirs. Aucun accès ne peut occuper un banc.",
+        "es": "Cada asiento necesita su banco y una entrada adyacente fuera de ambos carriles. Las entradas no pueden ocupar un banco."
+    },
+    "Joust grandstands": {
+        "en": "Joust grandstands",
+        "fr": "Gradins de la joute",
+        "es": "Gradas de la justa"
+    },
+    "Sit in this seat": {
+        "en": "Sit in this seat",
+        "fr": "S’asseoir à cette place",
+        "es": "Sentarse en este asiento"
+    },
+    "Stand up": {
+        "en": "Stand up",
+        "fr": "Se lever",
+        "es": "Levantarse"
+    },
+    "Arena camera": {
+        "en": "Arena camera",
+        "fr": "Vue de l’arène",
+        "es": "Vista de la arena"
+    },
+    "Follow gold knight": {
+        "en": "Follow gold knight",
+        "fr": "Suivre le chevalier doré",
+        "es": "Seguir al caballero dorado"
+    },
+    "Follow blue knight": {
+        "en": "Follow blue knight",
+        "fr": "Suivre le chevalier bleu",
+        "es": "Seguir al caballero azul"
+    },
+    "No grandstand seats are configured here.": {
+        "en": "No grandstand seats are configured here.",
+        "fr": "Aucune place de gradin n’est configurée ici.",
+        "es": "No hay asientos de grada configurados aquí."
+    },
+    "Seat entrance: ({0}, {1})": {
+        "en": "Seat entrance: ({0}, {1})",
+        "fr": "Accès à la place : ({0}, {1})",
+        "es": "Entrada del asiento: ({0}, {1})"
+    },
+    "Seat ({0}, {1})": {
+        "en": "Seat ({0}, {1})",
+        "fr": "Place ({0}, {1})",
+        "es": "Asiento ({0}, {1})"
+    },
+    "Waiting for the next joust.": {
+        "en": "Waiting for the next joust.",
+        "fr": "En attente de la prochaine joute.",
+        "es": "Esperando la próxima justa."
+    },
+    "Pass {0}/{1} · {2} {3} : {4} {5}": {
+        "en": "Pass {0}/{1} · {2} {3} : {4} {5}",
+        "fr": "Passe {0}/{1} · {2} {3} : {4} {5}",
+        "es": "Pasada {0}/{1} · {2} {3} : {4} {5}"
+    },
+    "Joust in progress": {
+        "en": "Joust in progress",
+        "fr": "Joute en cours",
+        "es": "Justa en curso"
+    },
+    "Joust finished": {
+        "en": "Joust finished",
+        "fr": "Joute terminée",
+        "es": "Justa terminada"
+    },
+    "6. Seats": {
+        "en": "6. Seats",
+        "fr": "6. Places",
+        "es": "6. Asientos"
+    },
+    "Grandstand seat": {
+        "en": "Grandstand seat",
+        "fr": "Place de gradin",
+        "es": "Asiento de grada"
+    },
+    "Seat name": {
+        "en": "Seat name",
+        "fr": "Nom de la place",
+        "es": "Nombre del asiento"
+    },
+    "Add seat": {
+        "en": "Add seat",
+        "fr": "Ajouter une place",
+        "es": "Añadir asiento"
+    },
+    "Remove seat": {
+        "en": "Remove seat",
+        "fr": "Supprimer la place",
+        "es": "Eliminar asiento"
+    },
+    "Place seat": {
+        "en": "Place seat",
+        "fr": "Placer la place",
+        "es": "Colocar asiento"
+    },
+    "Place seat entrance": {
+        "en": "Place seat entrance",
+        "fr": "Placer l’accès",
+        "es": "Colocar entrada"
+    },
+    "Seat entrance": {
+        "en": "Seat entrance",
+        "fr": "Accès à la place",
+        "es": "Entrada del asiento"
+    },
+    "Crowd NPC (optional)": {
+        "en": "Crowd NPC (optional)",
+        "fr": "PNJ de foule (facultatif)",
+        "es": "PNJ de público (opcional)"
+    },
+    "Missing crowd NPC": {
+        "en": "Missing crowd NPC",
+        "fr": "PNJ de foule introuvable",
+        "es": "PNJ de público no encontrado"
+    },
+    "Select a seat to place it.": {
+        "en": "Select a seat to place it.",
+        "fr": "Sélectionne une place à positionner.",
+        "es": "Selecciona un asiento para colocarlo."
+    },
+    "Click the bench tile for the selected seat.": {
+        "en": "Click the bench tile for the selected seat.",
+        "fr": "Clique sur la case du banc de la place choisie.",
+        "es": "Haz clic en la casilla del banco del asiento seleccionado."
+    },
+    "Click an adjacent free entrance tile for this seat.": {
+        "en": "Click an adjacent free entrance tile for this seat.",
+        "fr": "Clique sur une case libre adjacente pour l’accès à cette place.",
+        "es": "Haz clic en una casilla libre adyacente para la entrada de este asiento."
+    },
+    "Add a seat, then place its bench tile and an adjacent entrance on the map. Keep both outside the tracks. Players stand at the entrance and choose the seat in Royal Jousting. An optional NPC fills empty seats. Existing chat emotes remain available while seated.": {
+        "en": "Add a seat, then place its bench tile and an adjacent entrance on the map. Keep both outside the tracks. Players stand at the entrance and choose the seat in Royal Jousting. An optional NPC fills empty seats. Existing chat emotes remain available while seated.",
+        "fr": "Ajoute une place, puis positionne son banc et son accès adjacent sur la carte, hors des couloirs. Les joueurs se placent à l’accès et choisissent leur place dans Joutes Royales. Un PNJ facultatif remplit les places libres. Les émotes du chat restent disponibles une fois assis.",
+        "es": "Añade un asiento y coloca su banco y entrada adyacente en el mapa, fuera de los carriles. Los jugadores se sitúan en la entrada y eligen asiento en Justas Reales. Un PNJ opcional ocupa los asientos libres. Los gestos del chat siguen disponibles al sentarse."
+    },
+    "This grandstand seat is not configured here.": {
+        "en": "This grandstand seat is not configured here.",
+        "fr": "Cette place de gradin n’est pas configurée ici.",
+        "es": "Este asiento de grada no está configurado aquí."
+    },
+    "You cannot take a grandstand seat right now.": {
+        "en": "You cannot take a grandstand seat right now.",
+        "fr": "Tu ne peux pas t’asseoir dans les gradins pour le moment.",
+        "es": "No puedes sentarte en las gradas ahora mismo."
+    },
+    "Stand on the selected seat's entrance tile before sitting down.": {
+        "en": "Stand on the selected seat's entrance tile before sitting down.",
+        "fr": "Place-toi sur la case d’accès à la place choisie avant de t’asseoir.",
+        "es": "Sitúate en la casilla de entrada del asiento seleccionado antes de sentarte."
+    },
+    "This seat is occupied or blocked.": {
+        "en": "This seat is occupied or blocked.",
+        "fr": "Cette place est occupée ou bloquée.",
+        "es": "Este asiento está ocupado o bloqueado."
+    },
+    "The grandstand exit is blocked. Please wait or clear the entrance.": {
+        "en": "The grandstand exit is blocked. Please wait or clear the entrance.",
+        "fr": "La sortie des gradins est bloquée. Patiente ou dégage l’accès.",
+        "es": "La salida de las gradas está bloqueada. Espera o despeja la entrada."
+    },
     "Challenge a knight": {
         "en": "Challenge a knight",
         "fr": "Défier un chevalier",

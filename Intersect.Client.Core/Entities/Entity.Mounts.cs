@@ -33,6 +33,7 @@ public partial class Entity
     {
         _riderTransform = null; _mountForeground = null;
         _integratedMountRider = false;
+        if (JoustSeated) { BeginSeatedDraw(body, source, destination); return destination; }
         if (RenderedMount is not { } mount || !string.IsNullOrEmpty(TransformedSprite))
         { _mountClock = null; _drawnMount = Guid.Empty; return destination; }
         if (_drawnMount != mount.Id) { _mountClock = new(); _drawnMount = mount.Id; }
@@ -65,7 +66,7 @@ public partial class Entity
                 new FloatRect(x, y + foregroundY * (float)mount.Scale, animal.Width, (mount.FrameHeight - foregroundY) * (float)mount.Scale));
         return animal;
     }
-    private FloatRect MountedRiderRectangle(FloatRect rectangle) => _riderTransform is { } t
+    private FloatRect MountedRiderRectangle(FloatRect rectangle) => JoustSeated ? SeatedBounds(rectangle) : _riderTransform is { } t
         ? new FloatRect((float)(rectangle.X * t.Scale + t.OffsetX), (float)(rectangle.Y * t.Scale + t.OffsetY),
             (float)(rectangle.Width * t.Scale), (float)(rectangle.Height * t.Scale)) : rectangle;
 
@@ -83,6 +84,7 @@ public partial class Entity
     private void DrawRiderLayer(IGameTexture texture, FloatRect source, FloatRect destination, Color color)
     {
         if (_integratedMountRider) return;
+        if (JoustSeated && destination.Height > 0) { DrawSeatedLayer(texture, source, destination, color); return; }
         var geometry = RiderLayerGeometry(source, destination);
         source = geometry.Source; var placed = geometry.Destination;
         if (placed.Height <= 0) return;

@@ -50,3 +50,7 @@ Le cahier complet reste `Conception-v2.txt`. Aucun de ses critères restants n�
 ## Duels PvP
 
 Les duels entre deux comptes sont maintenant disponibles. Dans l’onglet **1. Arène**, activer les duels entre joueurs, placer les deux personnages aux départs doré et bleu, puis ouvrir **Défier un chevalier** depuis la fenêtre des Joutes du Lobby. Le détail des invitations, des résultats et des interruptions se trouve dans `PVP.md`. Le PvP doit encore être essayé visuellement sur deux clients connectés ; les tests de monde et d’interface sont réussis.
+
+## Places et caméra spectateur
+
+Voir `SPECTATORS.md` : l’onglet 6 Places propose les bancs et accès par clic sur la carte, un choix de PNJ de foule nommé et le zoom. En jeu : Lobby → Joutes Royales → Gradins de la joute. Le joueur doit atteindre l’accès indiqué avant de demander une place. La pose utilise son personnage et ses équipements ; les scores et les caméras restent contrôlés par le serveur.

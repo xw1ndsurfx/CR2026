@@ -21,6 +21,7 @@ internal static class JoustRuntime
     private static JoustConfiguration? _current;
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, Guid> Occupied = new();
     internal static bool Reserve(Guid arena, Guid player) => Occupied.TryAdd(arena, player);
+    internal static bool Owns(Guid arena, Guid owner, Guid match) => Occupied.TryGetValue(arena, out var current) && (current == owner || current == match);
     internal static void Release(Guid arena, Guid player) =>
         ((ICollection<KeyValuePair<Guid, Guid>>)Occupied).Remove(new(arena, player));
     internal static JoustConfiguration Current
@@ -48,6 +49,15 @@ internal static class JoustRuntime
                 arena.StartY >= Intersect.Options.Instance.Map.MapHeight || arena.OpponentY >= Intersect.Options.Instance.Map.MapHeight ||
                 Intersect.Server.Mounts.MountRuntime.Find(arena.MountId) is not { IntegratedRider: true })
                 throw new InvalidDataException("joust-arena-resources");
+            var seatMap = Intersect.Server.Maps.MapController.Get(arena.MapId)!;
+            if (arena.CrowdNpcId != Guid.Empty && Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor.Get(arena.CrowdNpcId) is not { Sprite.Length: > 0 })
+                throw new InvalidDataException("joust-crowd-resource");
+            foreach (var seat in arena.Seats)
+                if (seat.X >= Intersect.Options.Instance.Map.MapWidth || seat.ExitX >= Intersect.Options.Instance.Map.MapWidth ||
+                    seat.Y >= Intersect.Options.Instance.Map.MapHeight || seat.ExitY >= Intersect.Options.Instance.Map.MapHeight ||
+                    seatMap.Attributes[seat.ExitX, seat.ExitY] != null ||
+                    seatMap.Attributes[seat.X, seat.Y] is { } attribute && attribute is not Intersect.Framework.Core.GameObjects.Maps.Attributes.MapBlockedAttribute)
+                    throw new InvalidDataException("joust-seat-resources");
             foreach (var id in new[] { arena.IntroductionEventId, arena.ChargeEventId, arena.ImpactEventId, arena.UnhorseEventId, arena.VictoryEventId }.Where(i => i != Guid.Empty))
                 if (Intersect.Framework.Core.GameObjects.Events.EventDescriptor.Get(id) is not { CommonEvent: true } &&
                     !Intersect.Server.Entities.Events.CommandProcessing.TryResolveCinematicScene(Intersect.Server.Maps.MapController.Get(arena.MapId), id, out _))

@@ -31,13 +31,26 @@ public partial class Player
     internal bool IsJousting => _joust is { Done: false } || _joustPvp != null;
     [System.ComponentModel.DataAnnotations.Schema.NotMapped, Newtonsoft.Json.JsonIgnore]
     public override int ScriptedMovementMilliseconds => _joustPvp != null ? _pvpJoustMoveMs : _joust is { Done: false } ? _joustMoveMs : 0;
-    private bool JoustBlocksMovement => PvpJoustBlocksMovement || (_joust is { Done: false } && _joustRouteThread != Environment.CurrentManagedThreadId &&
+    private bool JoustBlocksMovement => IsJoustSeated || PvpJoustBlocksMovement || (_joust is { Done: false } && _joustRouteThread != Environment.CurrentManagedThreadId &&
         !(_joust.Phase == JoustPhase.Preparation && _cinematicRouteScope?.ThreadId == Environment.CurrentManagedThreadId));
     internal void HandleJoustRequest(JoustRequestPacket packet)
     {
         lock (EntityLock)
         {
             var now = Environment.TickCount64;
+            if (packet.Action is JoustAction.BrowseSeats or JoustAction.ReserveSeat or JoustAction.LeaveSeat or JoustAction.SpectatorCamera)
+            {
+                if (now - _joustSeatRequestAt < 250) return;
+                _joustSeatRequestAt = now;
+                if (packet.Action == JoustAction.BrowseSeats) BrowseJoustSeats();
+                else if (packet.Action == JoustAction.SpectatorCamera) ChangeJoustSeatCamera(packet.Camera);
+                else
+                {
+                    var error = packet.Action == JoustAction.ReserveSeat ? ReserveJoustSeat(packet.SeatId) : LeaveJoustSeat(false);
+                    if (error.Length > 0) SendPacket(new JoustStatePacket { Message = error });
+                }
+                return;
+            }
             if (packet.Action == JoustAction.Open)
             {
                 if (now - _joustOpenAt < 500) return;
@@ -129,6 +142,7 @@ public partial class Player
     private void UpdateJoust(long? suppliedNow = null)
     {
         CompleteJoustCareer();
+        UpdateJoustSeat();
         if (_joustPvp is { } pvp) { pvp.Tick(this, suppliedNow ?? Environment.TickCount64); CompleteJoustCareer(); return; }
         if (_joust == null || _joust.Done || _joustArena == null) return;
         if (!InGame || Client == null || MapId != _joustMap || _joustInstance?.MapInstanceId != MapInstanceId ||
@@ -211,6 +225,7 @@ public partial class Player
     private void SendJoustView(long now)
     {
         if (_joust == null || _joustArena == null) return;
+        JoustAudienceRuntime.Publish(_joustArena, MapInstanceId, _joust, Id, Name, _joustOpponent?.Id ?? Guid.Empty, "");
         _joustSent = now;
         SendPacket(new JoustStatePacket { ViewJson = JsonSerializer.Serialize(new JoustView {
             MatchId = _joust.Id, ArenaId = _joustArena.Id, Phase = _joust.Phase, Pass = _joust.Pass,
@@ -241,6 +256,7 @@ public partial class Player
     {
         lock (EntityLock)
         {
+            LeaveJoustSeat(true);
             CompleteJoustCareer();
             if (_joustPvp is { } pvp) { pvp.Leave(this); return; }
             if (_joust is not { Done: false }) return;
