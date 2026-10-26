@@ -35,9 +35,11 @@ internal static partial class CinematicCamera
                 !CinematicInterpolation.ValidLens(packet.Projection, packet.Heading, packet.EyeHeight, packet.PitchDegrees, packet.FieldOfView)) return;
             var tw = Options.Instance.Map.TileWidth; var th = Options.Instance.Map.TileHeight;
             if (packet.X < 0 || packet.Y < 0 || packet.X >= Options.Instance.Map.MapWidth || packet.Y >= Options.Instance.Map.MapHeight) return;
-            var view = Graphics.CurrentView;
+            // A non-default player zoom changes the visible world dimensions,
+            // not the display dimensions stored in CurrentView.
+            var view = Graphics.WorldViewport;
             var from = _pose ?? new CinematicCameraPose(view.X + view.Width / 2, view.Y + view.Height / 2,
-                Graphics.Renderer?.Scale ?? Globals.Database.WorldZoom);
+                Graphics.WorldScale);
             var to = new CinematicCameraPose(map.X + (packet.X + .5f + packet.OffsetX) * tw, map.Y + (packet.Y + .5f + packet.OffsetY) * th, packet.Zoom);
             var toLens = new CinematicLensPose(packet.Heading, packet.EyeHeight, packet.PitchDegrees, packet.FieldOfView);
             var fromLens = _shot?.Projection == packet.Projection ? _lens : toLens;

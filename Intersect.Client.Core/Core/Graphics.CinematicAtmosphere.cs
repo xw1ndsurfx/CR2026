@@ -20,6 +20,7 @@ public static partial class Graphics
             var time=Time.GetTintColor();
             tint=RainTint(map,new Color((int)time.A,(int)time.R,(int)time.G,(int)time.B));
         }
-        if (tint.A > 0) DrawGameTexture(Renderer.WhitePixel,new FloatRect(0,0,1,1),CurrentView,tint);
+        if (tint.A > 0) DrawScreenTexture(Renderer.WhitePixel, new FloatRect(0, 0, 1, 1),
+            new FloatRect(0, 0, Renderer.ScreenWidth, Renderer.ScreenHeight), tint);
     }
 }

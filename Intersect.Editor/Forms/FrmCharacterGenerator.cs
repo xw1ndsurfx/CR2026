@@ -2578,8 +2578,11 @@ public sealed partial class FrmCharacterGenerator : DarkForm
                     .Cast<ListViewItem>()
                     .FirstOrDefault(item =>
                         string.Equals(item.Tag?.ToString(), selected, StringComparison.OrdinalIgnoreCase));
-                selectedItem?.Selected = true;
-                selectedItem?.EnsureVisible();
+                if (selectedItem != null)
+                {
+                    selectedItem.Selected = true;
+                    selectedItem.EnsureVisible();
+                }
             }
             else
             {

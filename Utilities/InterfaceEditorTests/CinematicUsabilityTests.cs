@@ -6,11 +6,13 @@ using Intersect.Editor.Forms.EditorHub;
 using Intersect.Editor.Forms.Editors.Events;
 using Intersect.Editor.Forms.Editors.Events.Event_Commands;
 using Intersect.Editor.Maps;
+using Intersect.Editor.General;
 using Intersect.Framework.Core.Cinematics;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.NPCs;
 using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Framework.Core.GameObjects.Maps.MapList;
 
 internal static class CinematicUsabilityTests
 {
@@ -29,7 +31,7 @@ internal static class CinematicUsabilityTests
     internal static void Run()
     {
         CultureInfo.CurrentUICulture = new("fr-FR");
-        TestTextTranslation(); TestPicker(); TestCommands(); TestDirector(); TestMediaWorkflow(); TestHub();
+        TestTextTranslation(); TestPicker(); TestCommands(); TestAuthoringChoices(); TestSceneSetupDialog(); TestSavedSceneEditing(); TestDirector(); TestMediaWorkflow(); TestHub();
         using var stream = typeof(CinematicText).Assembly.GetManifestResourceStream("Cinematics.Texts.json")!;
         var catalog = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(stream)!;
         foreach (var pair in catalog)
@@ -37,7 +39,7 @@ internal static class CinematicUsabilityTests
                 Check(pair.Value.TryGetValue(lang, out var text) && !string.IsNullOrWhiteSpace(text), "Missing locale: " + pair.Key);
         CultureInfo.CurrentUICulture = new("de-DE");
         Check(CinematicText.T("SearchChoices") == catalog["SearchChoices"]["en"], "English fallback");
-        Console.WriteLine("PASS cinematic usability: scroll text, searchable scene/chapter choices, seconds, map selection, action drag-and-drop onto map/timeline, NPC drops, rejected targets, menus, locales and responsive previews.");
+        Console.WriteLine("PASS cinematic usability: scene reopening and stable event identity, independent scene type/projection, ordered authoring menus, scroll text, searchable choices, seconds, drag-and-drop, locales and responsive previews.");
     }
     private static void TestTextTranslation()
     {
@@ -123,6 +125,8 @@ internal static class CinematicUsabilityTests
         var clip = new CinematicClip { Name = "Entrée du roi", Track = CinematicTrack.Movement, ActorId = actor.TargetId };
         scene.Clips.Add(clip);
         typeof(FrmCinematicDirector).GetMethod("LoadScene", Hidden)!.Invoke(director, [scene, Guid.Empty]);
+        Check(new CinematicProperties(scene).GetProperties()["MapId"] == null,
+            "Scene properties keep the source map association without exposing its technical GUID.");
         var properties = new CinematicProperties(clip, scene: scene).GetProperties()["ActorId"]!;
         Check(properties.Converter.ConvertToString(clip.ActorId) == actor.Name && properties.Converter.GetStandardValuesExclusive(), "Actor property offers names rather than editable GUIDs.");
         var camera = new CinematicClip { Track = CinematicTrack.Camera };
@@ -184,6 +188,14 @@ internal static class CinematicUsabilityTests
             Check(timeline.Width >= director.ClientSize.Width - 24 && timeline.PointToScreen(Point.Empty).Y >= viewport.PointToScreen(Point.Empty).Y + viewport.Height,
                 "Timeline spans the full workspace below the library, map and inspector.");
             var toolbar = All(director).OfType<ToolStrip>().Single(t => t.Dock == DockStyle.Top);
+            Check(toolbar.Items.Cast<ToolStripItem>().Where(item => item is not ToolStripSeparator).Take(7).Select(item => item.Name)
+                    .SequenceEqual(["CreateSceneMenu", "OpenSavedScene", "ActorsRoutesMenu", "DirectionMenu", "PreviewMenu", "SaveScene", "EditingMenu"]),
+                "The primary workflow follows create/open, actors/routes, directing, preview and save.");
+            var create = (ToolStripDropDownButton)toolbar.Items["CreateSceneMenu"]!;
+            Check(create.DropDownItems.ContainsKey("CreateNavalScene") && create.DropDownItems.ContainsKey("CreateBattlefieldScene"),
+                "Naval and land battle starters are directly discoverable in Create.");
+            Check(((ToolStripDropDownButton)toolbar.Items["SceneFilesMenu"]!).DropDownItems.ContainsKey("ImportSceneJson"),
+                "JSON import is explicitly separate from reopening a saved map scene.");
             Check(toolbar.Visible && toolbar.Height > 15 && viewport.PointToScreen(Point.Empty).Y >= toolbar.PointToScreen(Point.Empty).Y + toolbar.Height,
                 "Dock order preserves the main toolbar above the map.");
             Save(director, "cinematic-director-" + size.Width);
@@ -202,6 +214,144 @@ internal static class CinematicUsabilityTests
         }
         finally { NPCDescriptor.Lookup.Delete(npc); }
         viewport.MapImage?.Dispose(); viewport.MapImage = null;
+    }
+    private static void TestAuthoringChoices()
+    {
+        foreach (var mode in Enum.GetValues<CinematicSceneMode>())
+        foreach (var projection in Enum.GetValues<CinematicProjection>())
+        {
+            var scene = CinematicAuthoring.Starter(Guid.NewGuid(), 20, 16, "Choix de création", mode, projection);
+            Check(scene.Mode == mode && scene.Clips.Any(c => c.Track == CinematicTrack.Camera) &&
+                    scene.Clips.Where(c => c.Track == CinematicTrack.Camera).All(c => c.Projection == projection),
+                "Every scene type independently supports both 2D and 2.5D at creation.");
+            Check(scene.Actors.All(a => a.Kind == CinematicActorKind.PersonalEvent) &&
+                    scene.Clips.All(c => c.Track is CinematicTrack.Camera or CinematicTrack.Presentation),
+                "Battle starters prepare shots without inventing fleet resources, NPCs or gameplay.");
+            CinematicCompiler.Compile(scene, 20, 16);
+        }
+        var context = new CinematicCreationContext { MapId = Guid.NewGuid(), Width = 20, Height = 16 };
+        using var creator = new FrmCinematicAutoCreator(context);
+        var projectionPicker = All(creator).OfType<ComboBox>().Single(c => c.Name == "CreatorProjection");
+        projectionPicker.SelectedIndex = (int)CinematicProjection.Perspective2_5D;
+        Check(creator.GeneratePreview() && creator.Result!.Clips.Where(c => c.Track == CinematicTrack.Camera)
+                .All(c => c.Projection == CinematicProjection.Perspective2_5D),
+            "The guided creator exposes and applies the selected 2.5D projection.");
+        foreach (var prompt in new[] { "Une scène en 2,5D.", "A 2.5D scene.", "Una escena en 2,5D." })
+            Check(CinematicAutoCreator.Describe(prompt, context).Plan.Projection == CinematicProjection.Perspective2_5D,
+                "Description input recognizes the requested projection independently of the scenario language.");
+    }
+    private static void TestSceneSetupDialog()
+    {
+        var previousMap = Globals.CurrentMap; var previousList = MapList.List;
+        var ocean = new MapInstance(Guid.NewGuid()) { Name = "Ocean — fixture de création" };
+        Globals.CurrentMap = ocean;
+        MapList.List = new()
+        {
+            Items = [new MapListFolder
+            {
+                Name = "Ocean",
+                Children = new() { Items = [new MapListMap { MapId = ocean.Id, Name = ocean.Name }] },
+            }],
+        };
+        try
+        {
+            using var director = new FrmCinematicDirector { ShowInTaskbar = false };
+            ((System.Windows.Forms.Timer)typeof(FrmCinematicDirector).GetField("_timer", Hidden)!.GetValue(director)!).Stop();
+            var snapshot = typeof(FrmCinematicDirector).GetMethod("Snapshot", Hidden)!;
+            var original = snapshot.Invoke(director, null);
+            Exception? failure = null; var inspected = false;
+            using var inspect = new System.Windows.Forms.Timer { Interval = 200 };
+            inspect.Tick += (_, _) =>
+            {
+                inspect.Stop();
+                var dialog = Application.OpenForms.Cast<Form>().FirstOrDefault(form => form.Name == "SceneSetup");
+                try
+                {
+                    Check(dialog != null && dialog.Visible, "The real scene creation dialog is visible.");
+                    var type = All(dialog!).OfType<ComboBox>().Single(c => c.Name == "SceneType");
+                    var projection = All(dialog!).OfType<ComboBox>().Single(c => c.Name == "SceneProjection");
+                    Check(type.Visible && projection.Visible && type.Items.Count == 3 && projection.Items.Count == 2,
+                        "Creation visibly exposes all three scene types and both camera projections.");
+                    Check(type.Items.Cast<object>().Select(item => item.ToString()).SequenceEqual(
+                            Enum.GetValues<CinematicSceneMode>().Select(mode => CinematicText.T(mode.ToString()))) &&
+                          projection.Items.Cast<object>().Select(item => item.ToString()).SequenceEqual(
+                            Enum.GetValues<CinematicProjection>().Select(mode => CinematicText.T(mode.ToString()))),
+                        "Creation choices use the localized scene and projection names.");
+                    foreach (var mode in Enum.GetValues<CinematicSceneMode>())
+                    {
+                        type.SelectedIndex = (int)mode;
+                        Check(type.Text == CinematicText.T(mode.ToString()), "Each scene type is selectable in the native dialog.");
+                    }
+                    type.SelectedIndex = (int)CinematicSceneMode.NavalScene;
+                    foreach (var mode in Enum.GetValues<CinematicProjection>())
+                    {
+                        projection.SelectedIndex = (int)mode;
+                        Check(projection.Text == CinematicText.T(mode.ToString()), "Both projections are selectable for a naval scene.");
+                    }
+                    var accept = All(dialog!).OfType<Button>().Single(button => button.Text == CinematicText.T("CreateScene"));
+                    Check(accept.Enabled, "A map under the native Ocean folder permits a naval scene starter.");
+                    dialog!.PerformLayout(); dialog.Refresh();
+                    foreach (var input in new Control[] { type, projection, accept })
+                        Check(input.Visible && dialog.ClientRectangle.Contains(dialog.RectangleToClient(input.RectangleToScreen(input.ClientRectangle))),
+                            "Creation choices and the action remain inside the visible dialog.");
+                    Save(dialog, "cinematic-scene-setup");
+                    inspected = true;
+                }
+                catch (Exception error) { failure = error; }
+                finally
+                {
+                    if (dialog != null) { dialog.DialogResult = DialogResult.Cancel; dialog.Close(); }
+                }
+            };
+            inspect.Start();
+            var result = typeof(FrmCinematicDirector).GetMethod("ChooseSceneSetup", Hidden)!
+                .Invoke(director, ["Bataille navale — test d’interface", CinematicSceneMode.NavalScene]);
+            inspect.Stop();
+            if (failure != null) throw failure;
+            Check(inspected && result == null && Equals(original, snapshot.Invoke(director, null)),
+                "Cancelling the inspected dialog leaves the authoring scene unchanged.");
+        }
+        finally { Globals.CurrentMap = previousMap; MapList.List = previousList; }
+    }
+    private static void TestSavedSceneEditing()
+    {
+        var previous = Globals.CurrentMap;
+        var map = new MapInstance(Guid.NewGuid()) { Name = "Carte de scènes" };
+        var first = new EventDescriptor(Guid.NewGuid(), map.Id, 2, 3) { Name = "Même nom" };
+        var second = new EventDescriptor(Guid.NewGuid(), map.Id, 5, 6) { Name = "Même nom" };
+        first.Pages[0].Cinematic = CinematicAuthoring.Starter(map.Id, 20, 16, first.Name, CinematicSceneMode.GeneralScene, CinematicProjection.Flat2D);
+        second.Pages[0].Cinematic = CinematicAuthoring.Starter(map.Id, 20, 16, second.Name, CinematicSceneMode.BattlefieldScene, CinematicProjection.Perspective2_5D);
+        second.Pages[0].TriggerCommand = "keep-this-native-trigger"; second.Pages[0].Description = "Keep native page metadata.";
+        var originalPage = second.Pages[0]; var originalConditions = originalPage.ConditionLists;
+        map.LocalEvents.Add(first.Id, first); map.LocalEvents.Add(second.Id, second);
+        try
+        {
+            Globals.CurrentMap = map;
+            using var director = new FrmCinematicDirector();
+            ((System.Windows.Forms.Timer)typeof(FrmCinematicDirector).GetField("_timer", Hidden)!.GetValue(director)!).Stop();
+            Check(FrmCinematicDirector.SavedScenes(map).Count() == 2 && director.LoadSavedScene(second.Id),
+                "Opening saved content preserves identity even when two scenes have the same name.");
+            var edited = (CinematicScene)typeof(FrmCinematicDirector).GetField("_scene", Hidden)!.GetValue(director)!;
+            Check((Guid)typeof(FrmCinematicDirector).GetField("_eventId", Hidden)!.GetValue(director)! == second.Id &&
+                    !ReferenceEquals(edited, second.Pages[0].Cinematic),
+                "The editor retains the Event ID and edits a detached source copy.");
+            edited.Name = "Scène renommée"; edited.Clips[0].Zoom = 2;
+            Check(second.Pages[0].Cinematic!.Name == "Même nom" && second.Pages[0].Cinematic!.Clips[0].Zoom != 2,
+                "Changes do not mutate saved content before saving.");
+            var stored = director.StoreScene(map, CinematicCompiler.Compile(edited, 20, 16));
+            Check(stored.Id == second.Id && ReferenceEquals(stored, second) && map.LocalEvents.Count == 2 &&
+                    stored.Name == "Scène renommée" && first.Name == "Même nom",
+                "Saving updates the selected Event instead of creating a duplicate or replacing a same-name scene.");
+            Check(ReferenceEquals(stored.Pages[0], originalPage) && ReferenceEquals(stored.Pages[0].ConditionLists, originalConditions) &&
+                    stored.Pages[0].TriggerCommand == "keep-this-native-trigger" && stored.Pages[0].Description == "Keep native page metadata." &&
+                    stored.SpawnX == 5 && stored.SpawnY == 6,
+                "Editing preserves native trigger, conditions, page metadata and Event placement.");
+            var eventId = stored.Id; map.LocalEvents.Remove(eventId);
+            try { director.StoreScene(map, CinematicCompiler.Compile(edited, 20, 16)); throw new Exception("Missing saved Event was silently recreated."); }
+            catch (InvalidOperationException error) { Check(error.Message == "SceneSourceUnavailable", "Deleted sources fail clearly."); }
+            Check(!director.LoadSavedScene(Guid.NewGuid()), "An unavailable reference cannot silently open a fresh scene.");
+        }
+        finally { Globals.CurrentMap = previous; }
     }
     private static void TestMediaWorkflow()
     {
