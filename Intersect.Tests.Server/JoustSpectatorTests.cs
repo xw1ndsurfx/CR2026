@@ -215,4 +215,12 @@ public sealed class JoustSpectatorTests
         var duel=w.Start();Assert.That(w.A.UpdateJoustEntry(11000),Is.Null);
         duel.Leave(w.A);Assert.That(w.A.UpdateJoustEntry(12000),Is.Null);
     }
+    [Test] public void CachedCharacterGetsAFreshInvitationAfterLogout()
+    {
+        using var w=new World();var client=w.A.Client;
+        Assert.That(w.A.UpdateJoustEntry(10000),Is.EqualTo(JoustAction.Open));
+        w.A.Client=null;typeof(Player).GetMethod("EndJoust",Hidden)!.Invoke(w.A,[true]);
+        w.A.Client=client;
+        Assert.That(w.A.UpdateJoustEntry(11000),Is.EqualTo(JoustAction.Open));
+    }
 }

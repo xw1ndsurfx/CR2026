@@ -270,6 +270,8 @@ public partial class Player
     {
         lock (EntityLock)
         {
+            // Characters are cached across selection/logins: dismissal belongs to this play session.
+            if (Client == null || !InGame) { _joustEntry = null; _joustEntryCheckAt = _joustEntryPromptAt = 0; }
             LeaveJoustSeat(true);
             CompleteJoustCareer();
             if (_joustPvp is { } pvp) { pvp.Leave(this); return; }
