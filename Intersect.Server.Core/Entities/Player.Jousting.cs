@@ -78,22 +78,30 @@ public partial class Player
                 if (now - _joustStartAt < 1500 || IsJousting || _joustPendingReward != null || !Enum.IsDefined((JoustDifficulty)packet.Difficulty)) return;
                 _joustStartAt = now;
                 var arena = JoustRuntime.Current.Arenas.FirstOrDefault(a => a.Id == packet.ArenaId && a.Enabled && a.AllowPve && a.MapId == MapId);
-                if (arena == null || X != arena.StartX || Y != arena.StartY || IsDead || HasPendingDeath ||
-                    Client == null || CombatTimer > Intersect.Framework.Core.Timing.Global.Milliseconds || HasBlockingEventHold ||
-                    MoveRoute != null || OpenCraftingTableId != Guid.Empty || !CanUseLobbyTravel || EventLookup.Values.Any(e => e.CinematicActive) ||
-                    !JoustRuntime.LanesClear(arena, MapInstanceId, this) ||
-                    !MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var instance) ||
-                    MountRuntime.Find(arena.MountId) is not { IntegratedRider: true } mount || !CanRide(mount))
+                var opponent = packet.AiOpponent == -1 ? arena?.AiOpponent ?? JoustAiOpponent.William : (JoustAiOpponent)packet.AiOpponent;
+                if (!Enum.IsDefined(opponent)) return;
+                if (arena == null)
+                { SendPacket(new JoustStatePacket { Message = "No active arena on this map. In Jousting Editor, enable and save an arena first." }); return; }
+                if (X != arena.StartX || Y != arena.StartY)
                 { SendPacket(new JoustStatePacket { Message = "Stand at the arena start to train." }); return; }
+                if (!JoustRuntime.LanesClear(arena, MapInstanceId, this))
+                { SendPacket(new JoustStatePacket { Message = "Clear both jousting lanes before starting the duel." }); return; }
+                if (MountRuntime.Find(arena.MountId) is not { IntegratedRider: true } mount)
+                { SendPacket(new JoustStatePacket { Message = "William is required. Click Add William preset, then save the arena." }); return; }
+                if (IsDead || HasPendingDeath || Client == null || CombatTimer > Intersect.Framework.Core.Timing.Global.Milliseconds || HasBlockingEventHold ||
+                    MoveRoute != null || OpenCraftingTableId != Guid.Empty || !CanUseLobbyTravel || EventLookup.Values.Any(e => e.CinematicActive) ||
+                    !MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var instance) || !CanRide(mount))
+                { SendPacket(new JoustStatePacket { Message = "You cannot start now. Finish combat, casting or the current activity, then try again on the overworld map." }); return; }
                 if (!JoustRuntime.Reserve(arena.Id, Id))
                 { SendPacket(new JoustStatePacket { Message = "This jousting lane is occupied." }); return; }
                 _lastPvpJoustView = null;
                 _mountBeforeJoust = ActiveMountId;
                 _joustArena = JoustConfiguration.FromJson(new JoustConfiguration { Arenas = [arena] }.ToJson()).Arenas[0];
+                _joustArena.AiOpponent = opponent;
                 _joustMap = MapId; _joust = new(arena.Rules, now, (JoustDifficulty)packet.Difficulty);
                 _joustBegan = now; _joustChargePresented = _joustImpactPresented = 0; _joustMoveMs = 0;
                 _joustInstance = instance;
-                _joustOpponent = new(mount, MapId, MapInstanceId, arena.EndX, arena.OpponentY);
+                _joustOpponent = new(JoustMountPreset.Opponent(opponent), MapId, MapInstanceId, arena.EndX, arena.OpponentY);
                 _joustOpponent.Dir = arena.StartX < arena.EndX ? Direction.Left : Direction.Right;
                 instance.AddEntity(_joustOpponent);
                 PacketSender.SendEntityDataToProximity(_joustOpponent);
@@ -225,9 +233,10 @@ public partial class Player
     private void SendJoustView(long now)
     {
         if (_joust == null || _joustArena == null) return;
-        JoustAudienceRuntime.Publish(_joustArena, MapInstanceId, _joust, Id, Name, _joustOpponent?.Id ?? Guid.Empty, "");
+        JoustAudienceRuntime.Publish(_joustArena, MapInstanceId, _joust, Id, Name, _joustOpponent?.Id ?? Guid.Empty, JoustMountPreset.Opponent(_joustArena.AiOpponent).Name);
         _joustSent = now;
         SendPacket(new JoustStatePacket { ViewJson = JsonSerializer.Serialize(new JoustView {
+            AiOpponent = _joustArena.AiOpponent, OpponentName = JoustMountPreset.Opponent(_joustArena.AiOpponent).Name,
             MatchId = _joust.Id, ArenaId = _joustArena.Id, Phase = _joust.Phase, Pass = _joust.Pass,
             Passes = _joust.Passes, RemainingMs = (int)Math.Max(0, _joust.Deadline - now),
             PhaseDurationMs = (int)(_joust.Deadline - _joust.PhaseStarted),

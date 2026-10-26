@@ -6,6 +6,7 @@ namespace Intersect.Framework.Core.Jousting;
 public enum JoustPhase { Preparation, Charge, Aim, Impact, Results, Finished, Abandoned }
 public enum JoustDifficulty { Novice, Squire, Knight, Champion, RoyalChampion }
 public enum JoustHit { Miss, Shield, Body, Precise, Unhorsed }
+public enum JoustAiOpponent { William, Night }
 
 [System.ComponentModel.TypeConverter(typeof(System.ComponentModel.ExpandableObjectConverter))]
 public sealed class JoustTarget
@@ -61,6 +62,7 @@ public sealed class JoustArena
     public int EndY { get; set; } = 14;
     public int OpponentY { get; set; } = 16;
     public Guid MountId { get; set; }
+    public JoustAiOpponent AiOpponent { get; set; }
     // These are native common Events authored with the Cinematic Director.
     public Guid IntroductionEventId { get; set; }
     public Guid ChargeEventId { get; set; }
@@ -79,7 +81,7 @@ public sealed class JoustArena
         Math.Abs(EndX - StartX) is >= 4 and <= 64 && Math.Abs(EndX - StartX) % 2 == 0 &&
         (Rules.ChargeMs + Rules.AimMs) / (Math.Abs(EndX - StartX) / 2) >= 50 &&
         (Rules.ImpactMs + Rules.ResultsMs) / (Math.Abs(EndX - StartX) / 2) >= 50 &&
-        float.IsFinite(SpectatorZoom) && SpectatorZoom is >= .5f and <= 3f && Seats is { Length: <= 64 } &&
+        Enum.IsDefined(AiOpponent) && float.IsFinite(SpectatorZoom) && SpectatorZoom is >= .5f and <= 3f && Seats is { Length: <= 64 } &&
         Seats.All(s => s is { IsValid: true } && !OnTrack(s.X, s.Y) && !OnTrack(s.ExitX, s.ExitY)) &&
         Seats.Select(s => s.Id).Distinct().Count() == Seats.Length && Seats.Select(s => (s.X, s.Y)).Distinct().Count() == Seats.Length &&
         !Seats.Any(s => Seats.Any(other => other.X == s.ExitX && other.Y == s.ExitY));

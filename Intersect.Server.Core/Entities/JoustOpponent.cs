@@ -14,7 +14,7 @@ internal sealed class JoustOpponent : Entity
     internal JoustOpponent(MountDefinition mount, Guid map, Guid instance, int x, int y)
     {
         Mount = mount; MapId = map; MapInstanceId = instance; X = x; Y = y;
-        Name = "William"; Sprite = ""; Face = ""; HideName = true; Passable = false;
+        Name = mount.Name; Sprite = ""; Face = ""; HideName = true; Passable = false;
         BaseStats[(int)Intersect.Enums.Stat.Speed] = 20;
         SetMaxVital(Vital.Health, 1); SetVital(Vital.Health, 1);
     }

@@ -49,6 +49,7 @@ internal static class JoustRuntime
                 arena.StartY >= Intersect.Options.Instance.Map.MapHeight || arena.OpponentY >= Intersect.Options.Instance.Map.MapHeight ||
                 Intersect.Server.Mounts.MountRuntime.Find(arena.MountId) is not { IntegratedRider: true })
                 throw new InvalidDataException("joust-arena-resources");
+            if (arena.MountId != JoustMountPreset.WilliamId) throw new InvalidDataException("joust-william-required");
             var seatMap = Intersect.Server.Maps.MapController.Get(arena.MapId)!;
             if (arena.CrowdNpcId != Guid.Empty && Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor.Get(arena.CrowdNpcId) is not { Sprite.Length: > 0 })
                 throw new InvalidDataException("joust-crowd-resource");

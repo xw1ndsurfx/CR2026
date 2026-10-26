@@ -20,4 +20,5 @@ public sealed partial class JoustRequestPacket : IntersectPacket
     [Key(13)] public Guid InvitationId { get; set; }
     [Key(14)] public Guid SeatId { get; set; }
     [Key(15)] public int Camera { get; set; }
+    [Key(16)] public int AiOpponent { get; set; } = -1;
 }

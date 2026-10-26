@@ -19,6 +19,9 @@ public sealed partial class FrmJoustConfiguration : Form
     private readonly PictureBox _map = new() { Dock = DockStyle.Fill, SizeMode = PictureBoxSizeMode.Zoom };
     private readonly Label _status = new() { Dock = DockStyle.Bottom, Height = 56, Padding = new(8) };
     private readonly Button _save = new() { AutoSize = true };
+    private readonly ComboBox _opponent = new() { Name = "JoustAiOpponent", Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
+    private readonly TextBox _problems = new() { Name = "JoustSetupProblems", Dock = DockStyle.Bottom, Height = 96, Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical };
+    private readonly List<string> _setupProblems = [];
     private readonly ComboBox _mount = new() { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
     private readonly TextBox _name = new() { Dock = DockStyle.Fill };
     private readonly CheckBox _enabled = new() { AutoSize = true };
@@ -82,13 +85,16 @@ public sealed partial class FrmJoustConfiguration : Form
         _allowPve.CheckedChanged += (_, _) => { if (!_loading && Arena is { } a) { a.AllowPve = _allowPve.Checked; Changed(); } };
         _allowPvp.CheckedChanged += (_, _) => { if (!_loading && Arena is { } a) { a.AllowPvp = _allowPvp.Checked; Changed(); } };
         Row(setup, "Knight mount", _mount);
+        _opponent.Items.AddRange(new object[] { "William", "Tale Knight Night" });
+        Row(setup, "Default AI opponent", _opponent);
+        _opponent.SelectedIndexChanged += (_, _) => { if (!_loading && Arena is { } a && _opponent.SelectedIndex >= 0) { a.AiOpponent = (JoustAiOpponent)_opponent.SelectedIndex; Changed(); } };
         var william = new Button { Text = T("Add William preset"), AutoSize = true };
         william.Click += (_, _) => { Networking.Network.SendPacket(new JoustRequestPacket { Action = JoustAction.PrepareWilliam }); _status.Text = T("William's preset uses the supplied sprite files in resources/images/jousting/William. Select William after the resource list refreshes."); };
         Row(setup, "", william);
         var mounts = new Button { AutoSize = true, Text = T("Open Mount Editor") };
         mounts.Click += (_, _) => Networking.Network.SendPacket(new MountRequestPacket { Action = MountAction.GetConfiguration }); Row(setup, "", mounts);
         Row(setup, "Track positions", _coordinates); Row(setup, "Setup check", _check);
-        var help = new Label { AutoSize = true, MaximumSize = new(320, 0), Text = T("Choose a mount with an integrated rider. Use the three placement buttons, then click the map. The finish stays on the player's row. Cinematics are optional. Save the arena, then stand at the gold start tile in game and open Royal Jousting in the Lobby.") };
+        var help = new Label { AutoSize = true, MaximumSize = new(320, 0), Text = T("Your mount is William. Click Add William preset if required. Choose William or Tale Knight Night as the AI opponent. Place the gold start, finish and blue lane, enable the arena, then save. Launch the match in the game client, not in this editor.") };
         Row(setup, "How to play", help);
         var rules = Page(tabs, "2. Match rules");
         Number(rules, "Passes", "Number of passes", 1, 9);
@@ -123,7 +129,7 @@ public sealed partial class FrmJoustConfiguration : Form
             foreach (var edge in new[] { "Left", "Top", "Right", "Bottom" }) Number(targets, target + "." + edge, edge, 0, 100, 1, .01m);
         }
         BuildSeats(tabs);
-        right.Panel2.Controls.Add(tabs); Controls.Add(split); Controls.Add(tools); Controls.Add(_status);
+        right.Panel2.Controls.Add(tabs); Controls.Add(split); Controls.Add(tools); Controls.Add(_status); Controls.Add(_problems);
         _list.SelectedIndexChanged += (_, _) => LoadArena();
         _name.TextChanged += (_, _) => { if (!_loading && Arena is { } a) { a.Name = _name.Text; var index = _list.SelectedIndex; _list.Items[index] = new ArenaChoice(a); Changed(); } };
         _enabled.CheckedChanged += (_, _) => { if (!_loading && Arena is { } a) { a.Enabled = _enabled.Checked; Changed(); } };
@@ -171,7 +177,7 @@ public sealed partial class FrmJoustConfiguration : Form
         if (_config.Arenas.Length >= 64) return;
         var width = Math.Min(22, (int)Intersect.Options.Instance.Map.MapWidth - 3); width -= width % 2;
         var y = Math.Min(14, (int)Intersect.Options.Instance.Map.MapHeight - 3);
-        var a = new JoustArena { MapId = map.Id, StartX = 1, EndX = 1 + width, StartY = y, EndY = y, OpponentY = y + 2 };
+        var a = new JoustArena { MountId = JoustMountPreset.WilliamId, MapId = map.Id, StartX = 1, EndX = 1 + width, StartY = y, EndY = y, OpponentY = y + 2 };
         _config.Arenas = [.._config.Arenas, a]; RefreshList(a); Changed();
     }
     private void RefreshList(JoustArena? selected)
@@ -186,7 +192,7 @@ public sealed partial class FrmJoustConfiguration : Form
         _loading = true;
         _name.Text = Arena?.Name ?? ""; _enabled.Checked = Arena?.Enabled == true;
         _allowPve.Checked = Arena?.AllowPve == true; _allowPvp.Checked = Arena?.AllowPvp == true;
-        PopulateMounts(); PopulateScenes(); LoadSeats();
+        PopulateMounts(); PopulateScenes(); LoadSeats(); _opponent.SelectedIndex = (int)(Arena?.AiOpponent ?? JoustAiOpponent.William);
         if (Arena is { } a)
         {
             foreach (var (key, number) in _numbers) { var (target, property) = RuleProperty(a.Rules, key); number.Value = Math.Clamp(Convert.ToDecimal(property.GetValue(target)) / (decimal)number.Tag!, number.Minimum, number.Maximum); }
@@ -199,13 +205,14 @@ public sealed partial class FrmJoustConfiguration : Form
     {
         if (string.IsNullOrEmpty(json)) return;
         try { _mounts = MountConfiguration.FromJson(json); } catch (Exception) { return; }
-        var loading = _loading; _loading = true; PopulateMounts(); _loading = loading; ValidateSetup();
+        var loading = _loading; _loading = true;
+        if (_mounts.Enabled && _mounts.Mounts.Any(m => m.Id == JoustMountPreset.WilliamId && m.IntegratedRider))
+            foreach (var arena in _config.Arenas.Where(a => a.MountId != JoustMountPreset.WilliamId)) { arena.MountId = JoustMountPreset.WilliamId; _dirty = true; _revision++; }
+        PopulateMounts(); _loading = loading; ValidateSetup();
     }
     private void PopulateMounts()
     {
-        _mount.Items.Clear(); _mount.Items.Add(new Choice(Guid.Empty, T("Choose a knight mount")));
-        if (_mounts.Enabled) _mount.Items.AddRange(_mounts.Mounts.Where(m => m.IntegratedRider).OrderBy(m => m.Name).Select(m => (object)new Choice(m.Id, m.Name)).ToArray());
-        _mount.SelectedIndex = Enumerable.Range(0, _mount.Items.Count).FirstOrDefault(i => ((Choice)_mount.Items[i]).Id == Arena?.MountId);
+        _mount.Items.Clear(); _mount.Items.Add(new Choice(JoustMountPreset.WilliamId, "William")); _mount.SelectedIndex = 0;
     }
     private IEnumerable<EventDescriptor> Scenes() => (Globals.CurrentMap?.LocalEvents.Values.AsEnumerable() ?? Enumerable.Empty<EventDescriptor>()).Concat(EventDescriptor.Lookup.Values.OfType<EventDescriptor>().Where(e => e.CommonEvent)).DistinctBy(e => e.Id);
     private void PopulateScenes()
@@ -263,18 +270,25 @@ public sealed partial class FrmJoustConfiguration : Form
     private void ValidateSetup()
     {
         var a = Arena;
-        if (a == null) { _check.Text = T("Create or select an arena."); return; }
+        if (a == null) { _check.Text = _problems.Text = T("Create or select an arena."); _setupProblems.Clear(); return; }
         var distance = Math.Abs(a.EndX - a.StartX);
         _coordinates.Text = $"{T("Player")}: ({a.StartX}, {a.StartY}) → ({a.EndX}, {a.StartY})\n{T("Opponent")}: ({a.EndX}, {a.OpponentY}) → ({a.StartX}, {a.OpponentY})\n{distance} {T("tiles")}";
         var issues = new List<string>();
         if (string.IsNullOrWhiteSpace(a.Name)) issues.Add(T("Enter an arena name."));
         if (a.Enabled && !a.AllowPve && !a.AllowPvp) issues.Add(T("Enable at least one match mode for this arena."));
-        if (!_mounts.Enabled || !_mounts.Mounts.Any(m => m.Id == a.MountId && m.IntegratedRider)) issues.Add(T("Select a compatible knight mount. Open Mount Editor to import William if the list is empty."));
+        if (a.MountId != JoustMountPreset.WilliamId || !_mounts.Enabled || !_mounts.Mounts.Any(m => m.Id == a.MountId && m.IntegratedRider)) issues.Add(T("William is required. Click Add William preset, then save the arena."));
         if (distance is < 4 or > 64 || distance % 2 != 0) issues.Add(T("The track needs an even distance of 4 to 64 tiles."));
         if (a.StartY == a.OpponentY) issues.Add(T("Place the opponent on a different row."));
-        if (a.Seats.Any(s => !s.IsValid || a.OnTrack(s.X, s.Y) || a.OnTrack(s.ExitX, s.ExitY)) ||
-            a.Seats.Select(s => (s.X, s.Y)).Distinct().Count() != a.Seats.Length || a.Seats.Any(s => a.Seats.Any(o => o.X == s.ExitX && o.Y == s.ExitY)))
-            issues.Add(T("Each seat needs its own bench and an adjacent entrance outside both tracks. Entrances cannot overlap a bench."));
+        foreach (var seat in a.Seats)
+        {
+            var label = string.IsNullOrWhiteSpace(seat.Name) ? (Array.IndexOf(a.Seats, seat) + 1).ToString() : seat.Name;
+            if (Math.Abs(seat.X - seat.ExitX) + Math.Abs(seat.Y - seat.ExitY) != 1)
+                issues.Add(string.Format(T("Seat {0}: entrance ({1}, {2}) must be one tile from bench ({3}, {4})."), label, seat.ExitX, seat.ExitY, seat.X, seat.Y));
+            if (a.OnTrack(seat.X, seat.Y) || a.OnTrack(seat.ExitX, seat.ExitY))
+                issues.Add(string.Format(T("Seat {0}: move the bench and entrance outside both jousting lanes."), label));
+            if (a.Seats.Any(o => o != seat && o.X == seat.X && o.Y == seat.Y) || a.Seats.Any(o => o.X == seat.ExitX && o.Y == seat.ExitY))
+                issues.Add(string.Format(T("Seat {0}: a bench overlaps another bench or an entrance."), label));
+        }
         var targetsValid = a.Rules.BodyTarget.IsValid && a.Rules.ShieldTarget.IsValid && a.Rules.PreciseTarget.IsValid &&
             a.Rules.PreciseTarget.Left >= a.Rules.BodyTarget.Left && a.Rules.PreciseTarget.Right <= a.Rules.BodyTarget.Right &&
             a.Rules.PreciseTarget.Top >= a.Rules.BodyTarget.Top && a.Rules.PreciseTarget.Bottom <= a.Rules.BodyTarget.Bottom;
@@ -296,8 +310,14 @@ public sealed partial class FrmJoustConfiguration : Form
                 if (Globals.CurrentMap.Attributes[x, a.StartY] != null || Globals.CurrentMap.Attributes[x, a.OpponentY] != null)
                 { issues.Add(T("Clear map attributes from both tracks before playing (blocks, warps, slides and traps).")); break; }
         }
+        if (!_config.Economy.IsValid) issues.Add(T("Reward settings are invalid. Check the medal limits, quantities, prices and item choices in Rewards."));
+        if (_config.Arenas.Sum(x => x.Seats.Length) > 512) issues.Add(T("There are more than 512 seats across all arenas. Remove some seats before saving."));
+        foreach (var group in _config.Arenas.Where(x => x.Enabled).GroupBy(x => x.MapId).Where(g => g.Count() > 1))
+            issues.Add(string.Format(T("Only one enabled arena is allowed per map. Disable one of these arenas: {0}."), string.Join(", ", group.Select(x => x.Name))));
         if (!a.IsValid && issues.Count == 0) issues.Add(T("The jousting configuration is invalid."));
         _check.Text = issues.Count == 0 ? T("Ready. Save, then enter the game at the gold start tile.") : string.Join("\n\n", issues);
+        _setupProblems.Clear(); _setupProblems.AddRange(issues);
+        _problems.Text = issues.Count == 0 ? string.Format(T("In game: Character or Adventure lobbies → Royal Jousting. Walk to the gold start ({0}, {1}), choose an AI opponent and difficulty, then Start AI joust. Player duels use Challenge a knight."), a.StartX, a.StartY) : string.Join(Environment.NewLine + Environment.NewLine, issues);
         _check.ForeColor = issues.Count == 0 ? System.Drawing.Color.LightGreen : System.Drawing.Color.Gold;
     }
     private void Preview()
@@ -317,9 +337,10 @@ public sealed partial class FrmJoustConfiguration : Form
             using var font = new Font(FontFamily.GenericSansSerif, 9, FontStyle.Bold);
             foreach (var seat in a.Seats)
             {
-                g.DrawRectangle(Pens.LimeGreen, seat.X * tw, seat.Y * th, tw, th);
+                var seatPen = seat.IsValid && !a.OnTrack(seat.X,seat.Y) && !a.OnTrack(seat.ExitX,seat.ExitY) ? Pens.LimeGreen : Pens.OrangeRed;
+                g.DrawRectangle(seatPen, seat.X * tw, seat.Y * th, tw, th);
                 g.DrawRectangle(Pens.White, seat.ExitX * tw, seat.ExitY * th, tw, th);
-                g.DrawLine(Pens.LimeGreen, (seat.X + .5f) * tw, (seat.Y + .5f) * th, (seat.ExitX + .5f) * tw, (seat.ExitY + .5f) * th);
+                g.DrawLine(seatPen, (seat.X + .5f) * tw, (seat.Y + .5f) * th, (seat.ExitX + .5f) * tw, (seat.ExitY + .5f) * th);
             }
             g.DrawString(T("Player start"), font, Brushes.Gold, a.StartX * tw, a.StartY * th - 20);
             g.DrawString(T("Opponent start"), font, Brushes.DeepSkyBlue, a.EndX * tw - 80, (a.OpponentY + 1) * th);
@@ -328,8 +349,11 @@ public sealed partial class FrmJoustConfiguration : Form
     }
     private void Save()
     {
-        if (!_config.IsValid || _config.Arenas.Any(a => a.Enabled && (!_mounts.Enabled || !_mounts.Mounts.Any(m => m.Id == a.MountId && m.IntegratedRider))))
-        { ValidateSetup(); _status.Text = T("Fix the setup checks before saving an enabled arena."); return; }
+        ValidateSetup();
+        var invalid = _config.Arenas.FirstOrDefault(a => !a.IsValid || a.Enabled && (a.MountId != JoustMountPreset.WilliamId || !_mounts.Enabled || !_mounts.Mounts.Any(m => m.Id == a.MountId && m.IntegratedRider)));
+        if (invalid != null && invalid != Arena) { RefreshList(invalid); ValidateSetup(); }
+        if (!_config.IsValid || invalid != null || _setupProblems.Count > 0 && Arena?.Enabled == true)
+        { _status.Text = T("Cannot save. The exact problems are listed below, on every tab."); _problems.Focus(); return; }
         _request = Guid.NewGuid(); _sent = Environment.TickCount64; _save.Enabled = false; _savingRevision = _revision;
         Networking.Network.SendPacket(new JoustRequestPacket { Action = JoustAction.SaveConfiguration, ConfigurationJson = _config.ToJson(), RequestId = _request });
         _status.Text = T("Saving arena on the server...");
@@ -339,6 +363,7 @@ public sealed partial class FrmJoustConfiguration : Form
         if (_request == Guid.Empty || packet.RequestId != _request) return;
         _request = Guid.Empty; _save.Enabled = true;
         if (packet.Saved && _revision == _savingRevision) _dirty = false;
+        if (!packet.Saved && !string.IsNullOrWhiteSpace(packet.Message)) { _status.Text = T("The server could not save this arena."); _problems.Text = T(packet.Message); _problems.Focus(); return; }
         _status.Text = T(packet.Saved ? (_dirty ? "Saved. Your newer changes still need saving." : "Saved") : "The server rejected the arena. Check map bounds, mount and scene selections; your changes are still here.");
     }
 }

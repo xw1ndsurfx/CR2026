@@ -15,6 +15,10 @@ namespace Intersect.Client.Interface.Game;
 internal sealed class JoustWindow : Window
 {
     private readonly Label _status;
+    private readonly Label _setupHint;
+    private readonly ComboBox _opponent;
+    private readonly Button _start;
+    private long _nextSetupHint;
     private readonly Label _score;
     private readonly JoustViewport _view;
     private readonly List<Base> _lobby = [];
@@ -39,7 +43,11 @@ internal sealed class JoustWindow : Window
         _view.Hide();
         _career = TextLabel(24, 112, 708, 30);
         _shop = new ScrollControl(this, "JoustShop") { OverflowX = OverflowBehavior.Hidden, OverflowY = OverflowBehavior.Scroll, AutoHideBars = true };
-        _shop.SetBounds(24, 154, 708, 260);
+        _shop.SetBounds(24, 302, 708, 122);
+        _setupHint = TextLabel(24, 154, 708, 66); _setupHint.WrappingBehavior = WrappingBehavior.Wrapped; _lobby.Add(_setupHint);
+        var opponentLabel = TextLabel(24, 228, 708, 26); opponentLabel.Text = T("AI opponent (your mount: William)"); _lobby.Add(opponentLabel);
+        _opponent = new ComboBox(this, "JoustAiOpponent") { Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 11 };
+        _opponent.SetBounds(24, 260, 708, 30); _opponent.AddItem("William", userData: 0); _opponent.AddItem("Tale Knight Night", userData: 1); _opponent.SelectByUserData(0); _lobby.Add(_opponent);
         var names = new[] { "Novice", "Squire", "Knight", "Champion", "Royal Champion" };
         for (var i = 0; i < names.Length; i++)
         {
@@ -47,7 +55,7 @@ internal sealed class JoustWindow : Window
             _lobby.Add(NavalManagementWindow.Button(this, "JoustDifficulty" + i, T(names[i]), 24 + i * 142, 446, 136, 28,
                 () => { _difficulty = choice; _status.Text = T(names[choice]); }));
         }
-        _lobby.Add(NavalManagementWindow.Button(this, "JoustStart", T("Train against AI"), 24, 488, 336, 32, Start));
+        _start = NavalManagementWindow.Button(this, "JoustStart", T("Start AI joust"), 24, 488, 336, 32, Start); _lobby.Add(_start);
         _lobby.Add(NavalManagementWindow.Button(this, "JoustPlayerDuel", T("Challenge a knight"), 376, 488, 356, 32,
             () => Intersect.Client.Networking.Network.SendPacket(new JoustRequestPacket { Action = JoustAction.BrowseDuels })));
         _defense = NavalManagementWindow.Button(this, "JoustDefense", T("Toggle defense"), 376, 488, 356, 32,
@@ -71,7 +79,7 @@ internal sealed class JoustWindow : Window
         var arena = _config.Arenas.FirstOrDefault(a => a.Enabled && a.AllowPve && a.MapId == Globals.Me?.MapId);
         if (arena == null) { _status.Text = T("No jousting arena is configured here."); return; }
         Intersect.Client.Networking.Network.SendPacket(new JoustRequestPacket { Action = JoustAction.StartPve,
-            ArenaId = arena.Id, Difficulty = _difficulty });
+            ArenaId = arena.Id, Difficulty = _difficulty, AiOpponent = _opponent.SelectedItem?.UserData as int? ?? (int)arena.AiOpponent });
     }
     private void Send(JoustAction action) => Intersect.Client.Networking.Network.SendPacket(new JoustRequestPacket {
         Action = action, MatchId = _state?.MatchId ?? Guid.Empty, Pass = _state?.Pass ?? 0, Sequence = ++_sequence,
@@ -83,6 +91,8 @@ internal sealed class JoustWindow : Window
             if (packet.ConfigurationJson.Length > 0)
             {
                 _config = JoustConfiguration.FromJson(packet.ConfigurationJson);
+                var configured = _config.Arenas.FirstOrDefault(a => a.Enabled && a.MapId == Globals.Me?.MapId);
+                _opponent.SelectByUserData((int)(configured?.AiOpponent ?? JoustAiOpponent.William)); RefreshSetupHint();
                 _shop.DeleteAll(); _offers.Clear();
                 if (_config.Economy.Enabled)
                 foreach (var offer in _config.Economy.Offers)
@@ -92,7 +102,7 @@ internal sealed class JoustWindow : Window
                     _offers.Add(NavalManagementWindow.Button(_shop, "Offer" + selected, caption, 4, _offers.Count * 38, 660, 32,
                         () => Intersect.Client.Networking.Network.SendPacket(new JoustRequestPacket { Action = JoustAction.Redeem, OfferId = selected, RequestId = Guid.NewGuid() })));
                 }
-                _shop.SetInnerSize(680, Math.Max(260, _offers.Count * 38));
+                _shop.SetInnerSize(680, Math.Max(122, _offers.Count * 38));
             }
             if (packet.CareerJson.Length > 0 && JsonSerializer.Deserialize<JoustCareer>(packet.CareerJson) is { } career)
                 _career.Text = ClientLanguages.Format("Royal medals: {0} · Level {1} · Wins {2}/{3}", career.Medals, career.Level, career.Wins, career.Matches);
@@ -103,8 +113,7 @@ internal sealed class JoustWindow : Window
                 if (_state?.MatchId != next.MatchId) { _sequence = 0; _defending = false; _defense.ToggleState = false; }
                 _state = next; _view.State = next;
                 _view.Rules = _config.Arenas.FirstOrDefault(a => a.Id == next.ArenaId)?.Rules ?? new();
-                _score.Text = next.IsPve ? ClientLanguages.Format("Pass {0}/{1} · You {2} : {3} AI", next.Pass, next.Passes, next.PlayerScore, next.OpponentScore) :
-                    ClientLanguages.Format("Pass {0}/{1} · You {2} : {3} {4}", next.Pass, next.Passes, next.PlayerScore, next.OpponentScore, next.OpponentName);
+                _score.Text = ClientLanguages.Format("Pass {0}/{1} · You {2} : {3} {4}", next.Pass, next.Passes, next.PlayerScore, next.OpponentScore, string.IsNullOrEmpty(next.OpponentName) ? T("AI") : next.OpponentName);
                 _status.Text = next.Phase == JoustPhase.Abandoned ? T("Joust interrupted") : next.Phase == JoustPhase.Finished
                     ? T(next.Winner == 0 ? "Joust won" : next.Winner == 1 ? "Joust lost" : "Joust drawn")
                     : T(PhaseText(next.Phase));
@@ -129,8 +138,18 @@ internal sealed class JoustWindow : Window
     public override void Think()
     {
         base.Think();
+        if ((_state == null || _state.Phase is JoustPhase.Finished or JoustPhase.Abandoned) && Environment.TickCount64 >= _nextSetupHint)
+        { _nextSetupHint = Environment.TickCount64 + 250; RefreshSetupHint(); }
         if (_state?.Phase == JoustPhase.Aim && Environment.TickCount64 - _lastSent >= 50)
         { _lastSent = Environment.TickCount64; Send(JoustAction.Aim); }
+    }
+    private void RefreshSetupHint()
+    {
+        var arena = _config.Arenas.FirstOrDefault(a => a.Enabled && a.MapId == Globals.Me?.MapId);
+        var me = Globals.Me;
+        _start.IsDisabled = arena == null || !arena.AllowPve || me == null || me.X != arena.StartX || me.Y != arena.StartY;
+        _setupHint.Text = arena == null ? T("No active arena on this map. In Jousting Editor, enable and save an arena first.") : !arena.AllowPve ? T("AI training is disabled for this arena. Enable Allow AI training in Jousting Editor.") :
+            ClientLanguages.Format("Walk to the gold start ({0}, {1}). Your position: ({2}, {3}). Then choose William or Tale Knight Night, choose a difficulty and click Start AI joust. No adventure lobby needs to be created.", arena.StartX, arena.StartY, me?.X ?? 0, me?.Y ?? 0);
     }
     private static string PhaseText(JoustPhase phase) => phase switch {
         JoustPhase.Preparation => "Joust preparation", JoustPhase.Charge => "Joust charge", JoustPhase.Aim => "Aim at the shield or chest",
@@ -158,7 +177,7 @@ internal sealed class JoustWindow : Window
             renderer.DrawColor = new Color(255, 28, 25, 35); renderer.DrawFilledRect(new Rect(0, 0, Width, Height));
             if (State == null) return;
             var aiming = State.Phase is JoustPhase.Aim or JoustPhase.Impact or JoustPhase.Results;
-            var sheet = Globals.ContentManager?.GetTexture(TextureType.Image, aiming ? "jousting/knight-closeup.png" : "jousting/William/Tales_Knight_William_Move_2_Loop.png");
+            var sheet = Globals.ContentManager?.GetTexture(TextureType.Image, aiming ? (State.IsPve && State.AiOpponent == JoustAiOpponent.Night ? "jousting/knight-closeup-black.png" : "jousting/knight-closeup.png") : JoustMountPreset.Opponent(State.AiOpponent).Loop);
             if (sheet != null)
             {
                 var frame = (int)(Environment.TickCount64 / 100 % 4);

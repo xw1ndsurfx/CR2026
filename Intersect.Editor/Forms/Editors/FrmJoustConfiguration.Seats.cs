@@ -33,6 +33,8 @@ public sealed partial class FrmJoustConfiguration
         var placement = new FlowLayoutPanel { AutoSize = true };
         AddButton(placement, "Place seat", () => SetPlacement(Placement.Seat));
         AddButton(placement, "Place seat entrance", () => SetPlacement(Placement.SeatExit)); Row(page, "", placement);
+        var adjacent = new FlowLayoutPanel { AutoSize = true };
+        AddButton(adjacent, "Put entrance beside seat", PutEntranceBesideSeat); Row(page, "", adjacent);
         Row(page, "Track positions", _seatCoordinates);
         _facing.Items.AddRange(new object[] { T("Up"), T("Down"), T("Left"), T("Right") }); Row(page, "Facing", _facing);
         Row(page, "Crowd NPC (optional)", _crowd);
@@ -43,6 +45,17 @@ public sealed partial class FrmJoustConfiguration
         _seatName.TextChanged += (_, _) => { if (_loading || SelectedSeat is not { } s) return; s.Name = _seatName.Text; var i = _seat.SelectedIndex; _seat.Items[i] = new SeatChoice(s); Changed(); };
         _facing.SelectedIndexChanged += (_, _) => { if (_loading || SelectedSeat is not { } s) return; s.Facing = _facing.SelectedIndex; Changed(); };
         _crowd.SelectedIndexChanged += (_, _) => { if (_loading || Arena is not { } a || _crowd.SelectedItem is not Choice c) return; a.CrowdNpcId = c.Id; Changed(); };
+    }
+    private void PutEntranceBesideSeat()
+    {
+        if (SelectedSeat is not { } seat || Arena is not { } a || General.Globals.CurrentMap is not { } map || map.Id != a.MapId) return;
+        foreach (var (dx, dy) in new[] { (0, 1), (0, -1), (1, 0), (-1, 0) })
+        {
+            var x = seat.X + dx; var y = seat.Y + dy;
+            if (x < 0 || y < 0 || x >= Intersect.Options.Instance.Map.MapWidth || y >= Intersect.Options.Instance.Map.MapHeight || a.OnTrack(x,y) || a.Seats.Any(s => s.X == x && s.Y == y) || map.Attributes[x,y] != null) continue;
+            seat.ExitX = x; seat.ExitY = y; LoadSeatFields(); Changed(); Preview(); return;
+        }
+        _status.Text = T("No adjacent entrance is free. Move the bench or clear a neighboring tile.");
     }
     private void LoadSeats(Guid selected = default)
     {
