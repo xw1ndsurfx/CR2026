@@ -74,7 +74,7 @@ public sealed partial class RoyalCombatTests
             case "position": world.Player.Y++; break;
         }
         Tick(world.Player, match.Started + (reason == "timeout" ? 300000 : 1));
-        Assert.That(match.Phase, Is.EqualTo(ArcheryPhase.Abandoned));
+        Assert.That(match.Phase, Is.EqualTo(reason == "timeout" ? ArcheryPhase.Finished : ArcheryPhase.Abandoned));
         Assert.That(world.Player.IsArcheryActive, Is.False);
     }
     [Test]
@@ -113,7 +113,7 @@ public sealed partial class RoyalCombatTests
     public void NewPacketsRoundTripWithoutClientScoreOrExperienceFields()
     {
         var packet = new ArcheryRequestPacket { Action = ArcheryAction.Release, MatchId = Guid.NewGuid(), Sequence = 3, Yaw = .02, Pitch = .1,
-            CategoryKey = "archery", TalentKey = "steady-aim", ItemId = Guid.NewGuid(), WeaponId = Guid.NewGuid(), RequestId = Guid.NewGuid() };
+            CategoryKey = "archery", TalentKey = "steady-aim", ItemId = Guid.NewGuid(), WeaponId = Guid.NewGuid(), RequestId = Guid.NewGuid(), Round = 2, Shot = 7 };
         var received = MessagePackSerializer.Deserialize<ArcheryRequestPacket>(MessagePackSerializer.Serialize(packet));
         Assert.That(received.MatchId, Is.EqualTo(packet.MatchId));
         Assert.That(received.Sequence, Is.EqualTo(3));
@@ -121,6 +121,7 @@ public sealed partial class RoyalCombatTests
         Assert.That(received.ItemId, Is.EqualTo(packet.ItemId));
         Assert.That(received.WeaponId, Is.EqualTo(packet.WeaponId));
         Assert.That(received.RequestId, Is.EqualTo(packet.RequestId));
+        Assert.That(received.Round, Is.EqualTo(2)); Assert.That(received.Shot, Is.EqualTo(7));
         var state = new ArcheryStatePacket { ViewJson = "{}", MasteriesJson = "{}", MasteryRanksJson = "{\"archery\":{}}", AmmunitionJson = "{\"Entries\":[]}" };
         var decoded = MessagePackSerializer.Deserialize<ArcheryStatePacket>(MessagePackSerializer.Serialize(state));
         Assert.That(decoded.MasteriesJson, Is.EqualTo(state.MasteriesJson));

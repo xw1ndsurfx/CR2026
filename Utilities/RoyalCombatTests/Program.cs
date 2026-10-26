@@ -79,4 +79,5 @@ Check(!MasteryRules.CanBuy(new MasteryCategory(), new MasteryTalent(), 1000, new
 config = new(); config.Ammunition = [new() { WeaponId = Guid.NewGuid(), ProjectileIds = [] }]; Check(!config.IsValid, "empty ammo mapping rejected");
 var weapon = Guid.NewGuid(); config.Ammunition = [new() { WeaponId = weapon, ProjectileIds = [Guid.NewGuid()] }, new() { WeaponId = weapon, ProjectileIds = [Guid.NewGuid()] }];
 Check(!config.IsValid, "one ammo rule per weapon");
-Console.WriteLine($"PASS: {checks} checks (ballistics, authority, replay, timeouts, rounds, mastery curves, talents, ammunition configuration).");
+ArcheryRuleChecks.Run(Check);
+Console.WriteLine($"PASS: {checks} checks (ballistics, moving targets, timers, zoom, authority, mastery and ammunition).");

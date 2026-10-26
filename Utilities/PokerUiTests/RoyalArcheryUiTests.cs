@@ -34,6 +34,20 @@ internal static class RoyalArcheryUiTests
                     Impacts = [new(0, 0, 10), new(.1, .1, 8)] }) }]);
                 render.Invoke(viewport, [skin]);
             }
+            apply.Invoke(window, [new ArcheryStatePacket { ViewJson = JsonSerializer.Serialize(new ArcheryView {
+                MatchId = Guid.NewGuid(), Phase = ArcheryPhase.Ready, Distance = 50, Round = 2, Rounds = 4, MaximumScore = 240,
+                TotalArrows = 24, RemainingMs = 65000, TargetIndex = 1, Targets = [new() { X = -2 }, new() { X = 2, MotionX = 1 }],
+                Impacts = [new(0, 0, 10, 2, 1)] }) }]);
+            var camera = (ArcheryAimCamera)viewport.GetType().GetField("_camera", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(viewport)!;
+            foreach (var zoom in new[] { 1, 2, 4 })
+            {
+                if (camera.Zoom != zoom) camera.CycleZoom(160, 84);
+                render.Invoke(viewport, [skin]); window.Think();
+            }
+            var scoreLabel = (Label)type.GetField("_score", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(window)!;
+            var timerLabel = (Label)type.GetField("_timer", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(window)!;
+            if (!scoreLabel.Text.Contains("240") || !scoreLabel.Text.Contains("2/4") || !timerLabel.Text.Contains("4"))
+                throw new Exception("Configured round/score maximum or zoom/time HUD still uses fixed values.");
             window.Hide();
             apply.Invoke(window, [new ArcheryStatePacket { ViewJson = JsonSerializer.Serialize(new ArcheryView { Phase = ArcheryPhase.Abandoned }) }]);
             if (window.IsVisibleInTree) throw new Exception("Late server snapshots reopened a closed training window.");
