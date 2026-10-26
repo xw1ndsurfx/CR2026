@@ -179,7 +179,7 @@ public sealed class JoustSpectatorTests
         using var w = new World(); const long now = 10000;
         Assert.That(w.A.UpdateJoustEntry(now),Is.EqualTo(JoustAction.Open));
         Assert.That(w.A.UpdateJoustEntry(now+1000),Is.Null,"Closing a window cannot make the server reopen it on the next tick.");
-        w.A.X++; Assert.That(w.A.UpdateJoustEntry(now+2000),Is.Null);
+        w.A.X++; Assert.That(w.A.UpdateJoustEntry(now+1050),Is.Null,"A departure between throttled checks still rearms the entrance.");
         w.A.X--; Assert.That(w.A.UpdateJoustEntry(now+3000),Is.EqualTo(JoustAction.Open));
         Assert.That(w.A.IsJousting,Is.False,"The automatic invitation never starts or mounts the player without a choice.");
         Assert.That(w.A.ActiveMountId,Is.EqualTo(Guid.Empty));
