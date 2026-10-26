@@ -1806,6 +1806,131 @@
       "en": "GNU General Public License v3",
       "fr": "Licence publique générale GNU v3",
       "es": "Licencia pública general GNU v3"
+    },
+    "Royal Archery Training": {
+      "en": "Royal Archery Training",
+      "fr": "Entraînement royal de tir à l’arc",
+      "es": "Entrenamiento real de tiro con arco"
+    },
+    "Weapon Masteries": {
+      "en": "Weapon Masteries",
+      "fr": "Maîtrises d’armes",
+      "es": "Maestrías de armas"
+    },
+    "Archery": {
+      "en": "Archery",
+      "fr": "Tir à l’arc",
+      "es": "Tiro con arco"
+    },
+    "Swordsmanship": {
+      "en": "Swordsmanship",
+      "fr": "Maîtrise de l’épée",
+      "es": "Esgrima"
+    },
+    "Daggers": {
+      "en": "Daggers",
+      "fr": "Dagues",
+      "es": "Dagas"
+    },
+    "Axes & Hammers": {
+      "en": "Axes & Hammers",
+      "fr": "Haches et marteaux",
+      "es": "Hachas y martillos"
+    },
+    "Staves & Magic": {
+      "en": "Staves & Magic",
+      "fr": "Bâtons et magie",
+      "es": "Bastones y magia"
+    },
+    "Start training": {
+      "en": "Start training",
+      "fr": "Commencer l’entraînement",
+      "es": "Iniciar entrenamiento"
+    },
+    "Leave training": {
+      "en": "Leave training",
+      "fr": "Quitter l’entraînement",
+      "es": "Salir del entrenamiento"
+    },
+    "Hold the left mouse button to draw. Release to shoot. Aim above the target.": {
+      "en": "Hold the left mouse button to draw. Release to shoot. Aim above the target.",
+      "fr": "Maintenez le clic gauche pour bander l’arc. Relâchez pour tirer. Visez au-dessus de la cible.",
+      "es": "Mantén el botón izquierdo para tensar. Suelta para disparar. Apunta por encima del blanco."
+    },
+    "Stand at the royal shooting position outside combat.": {
+      "en": "Stand at the royal shooting position outside combat.",
+      "fr": "Placez-vous au poste de tir royal, hors combat.",
+      "es": "Colócate en el puesto de tiro real, fuera de combate."
+    },
+    "Round {0}/3 · Score {1}/150 · Arrows {2} · Distance {3} m · Wind {4}": {
+      "en": "Round {0}/3 · Score {1}/150 · Arrows {2} · Distance {3} m · Wind {4}",
+      "fr": "Manche {0}/3 · Score {1}/150 · Flèches {2} · Distance {3} m · Vent {4}",
+      "es": "Ronda {0}/3 · Puntos {1}/150 · Flechas {2} · Distancia {3} m · Viento {4}"
+    },
+    "Training complete": {
+      "en": "Training complete",
+      "fr": "Entraînement terminé",
+      "es": "Entrenamiento completado"
+    },
+    "Training ended": {
+      "en": "Training ended",
+      "fr": "Entraînement interrompu",
+      "es": "Entrenamiento finalizado"
+    },
+    "Bullseye!": {
+      "en": "Bullseye!",
+      "fr": "En plein centre !",
+      "es": "¡Diana!"
+    },
+    "Last shot: {0}": {
+      "en": "Last shot: {0}",
+      "fr": "Dernier tir : {0}",
+      "es": "Último tiro: {0}"
+    },
+    "{0} · Level {1}/{2} · XP {3}/{4} · {5}%": {
+      "en": "{0} · Level {1}/{2} · XP {3}/{4} · {5}%",
+      "fr": "{0} · Niveau {1}/{2} · XP {3}/{4} · {5} %",
+      "es": "{0} · Nivel {1}/{2} · EXP {3}/{4} · {5}%"
+    },
+    "Weapon Mastery Editor": {
+      "en": "Weapon Mastery Editor",
+      "fr": "Éditeur des maîtrises d’armes",
+      "es": "Editor de maestrías de armas"
+    },
+    "Archery Mini-Game Editor": {
+      "en": "Archery Mini-Game Editor",
+      "fr": "Éditeur du mini-jeu de tir à l’arc",
+      "es": "Editor del minijuego de tiro con arco"
+    },
+    "New mastery category": {
+      "en": "New mastery category",
+      "fr": "Nouvelle catégorie de maîtrise",
+      "es": "Nueva categoría de maestría"
+    },
+    "New range on current map": {
+      "en": "New range on current map",
+      "fr": "Nouveau stand sur la carte actuelle",
+      "es": "Nuevo campo en el mapa actual"
+    },
+    "Select existing weapons for this mastery. A weapon belongs to one category.": {
+      "en": "Select existing weapons for this mastery. A weapon belongs to one category.",
+      "fr": "Sélectionnez les armes existantes. Chaque arme appartient à une seule maîtrise.",
+      "es": "Selecciona armas existentes. Cada arma pertenece a una sola maestría."
+    },
+    "Click the map to place the shooting position. Enable the range, then save.": {
+      "en": "Click the map to place the shooting position. Enable the range, then save.",
+      "fr": "Cliquez sur la carte pour placer le poste de tir. Activez le stand, puis enregistrez.",
+      "es": "Haz clic en el mapa para situar el puesto de tiro. Activa el campo y guarda."
+    },
+    "Invalid royal combat configuration.": {
+      "en": "Invalid royal combat configuration.",
+      "fr": "Configuration du combat royal invalide.",
+      "es": "Configuración de combate real no válida."
+    },
+    "Configure ranges in the Archery Mini-Game Editor. This event opens free training; no inventory ammunition is consumed.": {
+      "en": "Configure ranges in the Archery Mini-Game Editor. This event opens free training; no inventory ammunition is consumed.",
+      "fr": "Configurez les stands dans l’éditeur du mini-jeu de tir à l’arc. Cet événement ouvre un entraînement gratuit, sans consommer de munitions de l’inventaire.",
+      "es": "Configura los campos en el editor del minijuego de tiro con arco. Este evento abre el entrenamiento gratuito sin consumir munición del inventario."
     }
   }
 }

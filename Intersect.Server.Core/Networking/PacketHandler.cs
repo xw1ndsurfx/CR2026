@@ -1282,7 +1282,7 @@ internal sealed partial class PacketHandler
             return;
         }
 
-        if (player.IsDead || player.HasPendingDeath) return;
+        if (player.IsDead || player.HasPendingDeath || player.IsArcheryActive) return;
         var unequippedAttack = false;
         var target = packet.Target;
 
@@ -1441,6 +1441,7 @@ internal sealed partial class PacketHandler
                                     Strings.Get("items", "notenough", $"FAILED_TO_DEDUCT_AMMO {client.Entity.CountItems(projectileBase.Ammo)}"),
                                     ChatMessageType.Inventory, CustomColors.NoAmmo);
 #endif
+                        return; // A failed deduction must never create a free world projectile.
                     }
                 }
 #if INTERSECT_DIAGNOSTIC

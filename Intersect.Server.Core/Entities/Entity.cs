@@ -1652,7 +1652,7 @@ public abstract partial class Entity : IEntity
         {
             Attack(
                 target, parentItem.Damage, 0, (DamageType)parentItem.DamageType, (Stat)parentItem.ScalingStat,
-                parentItem.Scaling, parentItem.CritChance, parentItem.CritMultiplier, null, null, true
+                parentItem.Scaling, parentItem.CritChance, parentItem.CritMultiplier, null, null, true, parentItem
             );
         }
 
@@ -2056,7 +2056,7 @@ public abstract partial class Entity : IEntity
 
         Attack(
             target, baseDamage, 0, damageType, scalingStat, scaling, critChance, critMultiplier, deadAnimations,
-            aliveAnimations, true
+            aliveAnimations, true, weapon
         );
     }
 
@@ -2071,7 +2071,8 @@ public abstract partial class Entity : IEntity
         double critMultiplier,
         List<KeyValuePair<Guid, Direction>> deadAnimations = null,
         List<KeyValuePair<Guid, Direction>> aliveAnimations = null,
-        bool isAutoAttack = false
+        bool isAutoAttack = false,
+        ItemDescriptor masteryWeapon = null
     )
     {
         var damagingAttack = baseDamage > 0;
@@ -2085,6 +2086,9 @@ public abstract partial class Entity : IEntity
         //Let's save the entity's vitals before they takes damage to use in lifesteal/manasteal
         var enemyVitals = enemy.GetVitals();
         var invulnerable = enemy.CachedStatuses.Any(status => status.Type == SpellEffect.Invulnerable);
+
+        if (baseDamage > 0 && isAutoAttack && this is Player masteryPlayer && enemy is not Resource)
+            baseDamage = (long)Math.Min(long.MaxValue, Math.Ceiling(baseDamage * masteryPlayer.MasteryMultiplier(masteryWeapon)));
 
         bool isCrit = false;
         //Is this a critical hit?
@@ -2201,6 +2205,8 @@ public abstract partial class Entity : IEntity
                     PacketSender.SendActionMsg(enemy, Strings.Combat.Critical, CustomColors.Combat.Critical);
                 }
 
+                if (appliedHealthDamage > 0 && isAutoAttack && this is Player masteryAttacker && enemy is Npc masteryTarget)
+                    masteryAttacker.RecordMasteryHit(masteryTarget, masteryWeapon);
                 enemy.SubVital(Vital.Health, baseDamage);
                 switch (damageType)
                 {

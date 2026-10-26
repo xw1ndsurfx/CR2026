@@ -20,6 +20,7 @@ public partial class FrmMain
         AddAchievementEditorMenu();
         AddMountEditorMenu();
         AddJoustEditorMenu();
+        AddRoyalCombatEditorMenus();
         if (requestConfigurations) PacketSender.SendRequestAchievementConfiguration(openEditor: false);
         AddDungeonEditorMenu();
         if (requestConfigurations) PacketSender.SendRequestDungeonConfiguration(openEditor: false);

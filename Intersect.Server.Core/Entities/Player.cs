@@ -475,6 +475,7 @@ public partial class Player : Entity
 
     public override void Dispose()
     {
+        EndArchery();
         EndJoust(true);
         if (IsDisposed)
         {
@@ -520,6 +521,7 @@ public partial class Player : Entity
     private void Logout(bool softLogout = false, TaskCompletionSource? logoutCompletionSource = null)
     {
         CompleteConfiguredDeath();
+        EndArchery();
         EndJoust(true);
         Intersect.Server.Housing.HousingRuntime.Disconnect(this);
         lock (_savingLock)
@@ -781,6 +783,7 @@ public partial class Player : Entity
             {
                 UpdateMount();
                 UpdateJoust();
+                UpdateArchery();
                 // Detect inactivity from authoritative player position, including map changes.
                 if (_lastAfkMovementTime == 0 || _lastAfkX != X || _lastAfkY != Y || _lastAfkMapId != MapId)
                 {
@@ -1725,6 +1728,7 @@ public partial class Player : Entity
     //Combat
     public override void KilledEntity(Entity entity)
     {
+        if (entity is Npc masteryNpc) AwardWeaponMastery(masteryNpc);
         if(entity is Player victim)Intersect.Server.Pvp.PvpRuntime.RecordKill(this,victim);
         var rolledNpcExperience=entity is Npc killedNpc ? killedNpc.Descriptor.RollExperience() : 0L;
         if (entity is Npc { PetOwner: null })
@@ -2106,7 +2110,7 @@ public partial class Player : Entity
 
     public override bool CanAttack(Entity entity, SpellDescriptor spell)
     {
-        if (_joust is { Done: false } || entity is JoustOpponent) return false;
+        if (IsArcheryActive || _joust is { Done: false } || entity is JoustOpponent) return false;
         Dismount();
         if(entity is Player pvpTarget && (Intersect.Server.Pvp.PvpRuntime.InMatch(this) || Intersect.Server.Pvp.PvpRuntime.InMatch(pvpTarget)))
         {
@@ -7696,7 +7700,7 @@ public partial class Player : Entity
     {
         entityType = default;
 
-        if (JoustBlocksMovement || IsDead || HasPendingDeath || Intersect.Server.Pvp.PvpRuntime.Respawning(this) || Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Contains(Id))
+        if (IsArcheryActive || JoustBlocksMovement || IsDead || HasPendingDeath || Intersect.Server.Pvp.PvpRuntime.Respawning(this) || Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Contains(Id))
         {
             blockerType = MovementBlockerType.OutOfBounds;
             return false;

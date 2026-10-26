@@ -257,7 +257,13 @@ public partial class CharacterWindow
         var joust = new Button(mCharacterWindow, "CharacterJoust") { Text = ClientLanguages.Text("Royal Jousting") };
         joust.SetBounds(actionButtonsX, mounts.Bottom + 5, mounts.Width, actionButtonHeight);
         joust.Clicked += (_, _) => JoustWindow.Open();
-        mCharacterWindow.Height = Math.Max(mCharacterWindow.Height, joust.Bottom + 10);
+        var archery = new Button(mCharacterWindow, "CharacterArchery") { Text = ClientLanguages.Text("Royal Archery Training") };
+        archery.SetBounds(actionButtonsX, joust.Bottom + 5, mounts.Width, actionButtonHeight);
+        archery.Clicked += (_, _) => ArcheryWindow.Open();
+        var masteries = new Button(mCharacterWindow, "CharacterMasteries") { Text = ClientLanguages.Text("Weapon Masteries") };
+        masteries.SetBounds(actionButtonsX, archery.Bottom + 5, mounts.Width, actionButtonHeight);
+        masteries.Clicked += (_, _) => GameInterface.OpenWeaponMasteries();
+        mCharacterWindow.Height = Math.Max(mCharacterWindow.Height, masteries.Bottom + 10);
     }
 
     //Update Button Event Handlers

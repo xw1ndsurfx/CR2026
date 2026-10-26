@@ -1,0 +1,204 @@
+# Royal Weapon Mastery / Royal Archery — first integration slice
+
+Status: **draft, not a production-complete Royal Archery Tournament**. Audited base:
+`aaab6f7ce8d23083ebc1ca9f697b2c68e5da2a51` on `main`.
+
+## Audit and source of truth
+
+The supplied mandate covers weapon mastery, universal ammunition, immersive archery,
+production artwork, tournaments, cinematics and two editors. The referenced ChatGPT
+conversation was read. Its final answers are content-reference markers; no image attachment
+or usable ten-panel mockup was returned. The detailed mandate supplied with the task is the
+functional reference. No composite poster has been cut into supposed production sprites.
+
+The repository contains an Intersect/MonoGame client, server, WinForms editor, native
+combat/projectiles, professions, NPC events, mini-games, guild/party systems, achievements,
+naval ammunition, Cinematic Director, map-perspective helpers and EN/FR/ES localization.
+Relevant existing extension points:
+
+| Existing system | Source / decision |
+| --- | --- |
+| Weapon damage, actual health damage | `Intersect.Server.Core/Entities/Entity.cs`; attach mastery to native attacks |
+| Kill credit and AFK status | `Intersect.Server.Core/Entities/Player.cs`; award only server-credited NPC kills |
+| Projectile ammo | `ProjectileDescriptor.AmmoItemId` / `AmmoRequired`; existing item IDs remain authoritative |
+| World projectile consumption | `Intersect.Server.Core/Networking/PacketHandler.cs`; retain native items/consumption, stop firing if deduction fails |
+| Naval ammo inventory | `Intersect.Server.Core/Naval/NavalSystem.AmmoInventory.cs`; no migration or redesign |
+| Server mini-game sessions | `Player.Jousting.cs`, `Player.MiniGames.cs`; follow native packet/hold/lifecycle patterns |
+| Events and NPC entry | `StartMiniGameCommand`; append `Archery = 8`, preserve every existing serialized value |
+| Cinematics | `FrmCinematicDirector`, native cinematic commands; events may play an existing scene before opening training |
+| Editor navigation | `frmMain.EditorHub.cs`; register mastery under Content Editors and archery under Mini-Games |
+| Player language | `ClientLanguages` + shared `QualityOfLifeText` catalog; new captions have EN/FR/ES |
+
+Production asset directories contain `.gitkeep` files, not the game's Admurin tiles, bows,
+arrows, icons, paperdolls, maps or databases. No real item/map IDs are invented. No inventory
+icon, equipment sprite, paperdoll, naval ammo definition or account schema is replaced.
+Inspecting those actual assets and their licensing remains required before producing art.
+
+## Delivered code
+
+### Mastery foundation, with real combat effects
+
+* Configurable categories, explicit existing weapon-item IDs, independent character XP,
+  cap (default 30), base XP curve and damage percentage per level.
+* Defaults: Archery, Swordsmanship, Daggers, Axes & Hammers, Staves & Magic. Weapon mappings
+  start empty. Cannoneering must be integrated with the existing naval gunnery progression
+  in a later change, not approximated by mapping cannons to ordinary equipment.
+* Each level requires `BaseExperience * level²`; total XP is retained independently of RPG
+  level. Default damage bonus is `(masteryLevel - 1) * 0.5%`, applied to native weapon attack
+  base damage before the normal combat formula. Native rounding/formulas still apply.
+* Both melee and item projectiles pass the original source weapon into the damage routine.
+  Equipping another weapon while an arrow is in flight does not transfer that arrow's bonus.
+* Five mastery XP per eligible server-credited NPC kill with a recent actual weapon hit.
+  No XP from UI requests, target practice, resources, pets, player kills or maxed masteries.
+  Exclude NPCs with no configured base XP, targets over five RPG levels below the player,
+  hits older than 30 seconds, AFK players; at most one award per two seconds and twenty per
+  minute. Consume the per-NPC hit record once. These are farming limits, **not a complete
+  macro-detection system**. XP amount/limits are initial code defaults, not yet editor settings.
+* Transactional SQLite storage in `resources/weapon-masteries.db`, keyed by character and
+  category; commit before advertising the new bonus. Existing account/item tables are untouched.
+* Character window action displays categories, level, XP and percentage. It is currently
+  self-only, with scrollable rows; no public inspection, talent allocation or level-up animation.
+
+### Free solo archery training
+
+* NPC event and Character window entry; configured map and exact shooting tile validated
+  by the server. Combat, casting, incompatible activities and movement holds reject entry.
+* Native Gwen viewport backed by the MonoGame client: foreground bow geometry, pointer
+  aim, timed draw/release, sway, a moving projectile, perspective ground and projected target.
+  This is a live scene driven by trajectory data, not a static screenshot.
+* One physical target plane, radius 0.6 m; ballistic gravity 9.81 m/s². Initial speed
+  `20 + 35 * charge` m/s. Charge reaches full power after 1.2 seconds. Wind is a horizontal
+  acceleration in m/s² and can be configured between -3 and +3.
+* Three rounds of five arrows at 10, 25 and 50 m; radial rings award 0–10, maximum 150.
+  Impacts become visible after the flight deadline, remain attached to that round's target,
+  and are scored exactly once. Zero-score misses are not drawn as arrows in the target.
+* No inventory call occurs in the training session. Arrows are virtual; no currency,
+  inventory reward or mastery XP is granted. Player mastery never changes training physics.
+* The client submits only draw/release, bounded aim, session ID and sequence. The server
+  computes charge, sway, flight time, collision and score; rejects stale/wrong-session inputs.
+* A short click cancels drawing without spending a virtual arrow. Draw expires after ten
+  seconds; session expires after five minutes. Leave, disconnect, death, combat, position,
+  map and instance changes release the native player hold. World movement, attacks and
+  lobby travel are blocked during active training.
+* HUD contains round, score, arrows, distance, wind, charge and last-shot/Bullseye feedback.
+  A visible countdown, audio, optical zoom and aim calibration remain to implement. The
+  50 m target is small at the current field of view and needs playtesting/zoom before release.
+
+### First editor views
+
+Weapon Mastery Editor: categories, cap, curve, damage tuning, checked list of existing
+weapon items. Archery Mini-Game Editor: ranges, native map preview, click to place the
+shooting tile, enabled state and wind. Both views share one live draft so switching editor
+menus cannot overwrite the other view's unsaved edits. Configuration saves are validated
+on the server and use a temporary file followed by atomic replacement. Property-grid fields
+are technical authoring controls; a localized custom talent/target editor is still future work.
+
+## Run on a development copy
+
+1. Build/deploy matching **client, server and editor** from this branch. Do not mix old and
+   new network builds. Keep `main` and production data untouched until reviewed.
+2. Back up the development server's full `resources` directory. Include
+   `royal-combat.json` and `weapon-masteries.db` in future server backups. Stop the server
+   before copying the database; do not delete it to solve a read error.
+3. In Game Editor > Content Editors > Weapon Mastery Editor, select existing bow/sword/etc.
+   items for the correct category, then save. The server checks that mapped IDs resolve to
+   equipment in the weapon slot and that an item belongs to only one category.
+4. Open the intended **existing** safe map. Mini-Games > Archery Mini-Game Editor > New range
+   on current map. Click a passable shooting tile, set `Enabled = true`, choose wind and save.
+   No range is enabled by default because the repository supplies no authoritative world map.
+5. On an existing Master Archer NPC event, add Mini-Games > Start Royal Archery Training.
+   Optionally precede it with a native Cinematic Director scene. Finish the event after the
+   open command so its own movement hold is released. There is no new cinematic interpreter.
+6. Log in, walk to the configured tile, interact with the NPC, then choose Start training.
+   Move the mouse to aim above the target, hold left mouse to draw and release to fire.
+   Character > Royal Archery Training is an additional entry point for development checks.
+7. Check all fifteen arrows, misses, bullseyes, cancel/close, death/disconnect and return to
+   world movement. Verify inventory quantities before and after. Use mapped weapons against
+   eligible real NPCs and check that mastery XP persists after reconnect/restart.
+
+The XP curve and damage percentage need balance review before live enabling. There is no
+Premium multiplier or paid unlock. Rolling back binaries leaves the separate mastery database
+intact; older clients do not understand the appended mini-game type, so also restore authored
+events from backup when rolling back.
+
+## Verification
+
+```powershell
+git submodule update --init --recursive
+dotnet run --project Utilities/RoyalCombatTests/RoyalCombatTests.csproj -c Debug
+dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Debug --filter "FullyQualifiedName~RoyalCombatTests|FullyQualifiedName~JoustWorldTests|FullyQualifiedName~Ammo"
+dotnet run --project Utilities/PokerUiTests/Intersect.PokerUiTests.csproj -c Debug
+dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -- --royal-combat-only
+dotnet build Intersect.Client/Intersect.Client.csproj -c Debug
+dotnet build Intersect.Server/Intersect.Server.csproj -c Debug
+dotnet build Intersect.Editor/Intersect.Editor.csproj -c Debug
+```
+
+The independent rules harness covers timing, finite bounds, replay rejection, 150-point
+matches, collision/flight/wind, expiry and XP/configuration limits. Server tests enter the
+real player session handler, check interrupted sessions and packet serialization, reopen
+SQLite progression, separate categories/characters and verify source-weapon attribution.
+Client tests exercise the actual Gwen viewport through the existing headless metrics renderer
+at 1280×720, 1366×768 and 1920×1080, plus late snapshots after close and FR/ES catalog resolution.
+**Headless metrics rendering is not a screenshot of a running production client.**
+
+Local validation: 94 rules checks passed; the nine new server integration tests and eight
+jousting lifecycle regressions passed; the full existing client UI runner passed including
+the new archery checks; the focused real editor control tests passed. Client, server and
+editor compile in Debug. The Windows editor runner needs `RuntimeIdentifiers=win-x64`, as
+in existing CI. Existing compiler/package warnings are not resolved by this feature.
+
+## Artwork inventory and missing delivery
+
+**New graphic files: zero.** The current target, terrain, string, bow and projectile are
+code-native diagnostic shapes. They must not be advertised as Admurin production artwork.
+There is no delivered PNG pack, atlas, source layer file or production screenshot in this slice.
+No existing artwork has been recreated or blindly extracted from a poster.
+
+After the real assets and mockup are available, produce and validate:
+
+| Production group | Required separate assets / metadata |
+| --- | --- |
+| Perspective scenery | Sky, mountains, castle, trees, ground, fences, foreground; day/evening layers with independent parallax |
+| Native map terrain | Range tiles matched to actual editor tile size (16×16 only if confirmed), stands, hay, flags, tents, podium, Duke's dais |
+| Targets | Standard/royal/training/moving faces and separate supports; target-centre pivot, radius and hit-test hotspot; no baked arrows |
+| Foreground action | Bow/hands idle/draw/release, mapped to equipped appearance where possible; flight and planted arrows, impact frames |
+| UI/VFX | Reticle, charge/wind adornments, bullseye effect, confetti, ceremony; text remains localized UI, never baked into sprites |
+| Manifest | Per asset: path, width/height, alpha, pivot, frame rectangles, duration, atlas, physical scale and resource destination |
+
+Dimensions, palette, pixel density and animation conventions must follow the supplied game's
+actual resources. Use integer/nearest-neighbour presentation and transparent PNGs where useful.
+Do not substitute generic art to claim completion. Production art needs its own loader/manifest
+validation and actual-client QA; the current code-native viewport does not yet load such a pack.
+
+## Remaining mandate / ordered continuation
+
+1. **Universal ammunition:** native inventory Ammunition tab, compatible item selection,
+   atomic item consumption across equipment swaps/disconnects and integration with existing
+   naval inventory. Preserve native bows, arrows, cannonballs, stacks, crafting, shops and loot.
+   The existing world projectile-consumption path is audited but not redesigned by this PR.
+2. **Mastery abilities/UI:** points, ranks 0–5, prerequisites, active/passive trees; map
+   Steady Aim, Quick Shot, Piercing Arrow, Multi Shot, Rain of Arrows and Eagle Eye to existing
+   spells/projectiles. Other weapon trees, Cannoneering, public Character Information,
+   notifications, NPC tutorials, Aureons respec, milestone quests 10/20/30, level-30 titles
+   (Royal Eagle Eye, Royal Blademaster, Master of the Royal Artillery), achievements/Steam.
+3. **Production archery presentation:** approved separated art above, layer rendering and
+   parallax, optional third person, bow animation, audio, zoom/calibration, visible timer,
+   moving targets and configurable target placement/paths/distances/arrows/rounds/time.
+4. **Competition:** 2–16 players subject to actual capacity tests, registrations, matchmaking,
+   isolated sessions, rounds/finals, abandon/reconnect, spectators in 2D, server scores,
+   daily/weekly/seasonal boards, normalized equipment/mastery/skills, Aureons/cosmetic rewards.
+   Named modes: Royal Training Grounds, Royal Archery Championship, Marksman's Challenge,
+   Archery Survival, Archer Duel, Grand Duke Ansfroi's Tournament, Guild Tournament; future
+   Castle Defense/invasions. None of the multiplayer modes is implemented by this slice.
+5. **Native cinematic sequences:** introduction, view transition, finals, decisive shot,
+   feasible slow motion, podium/Duke ceremony via existing Director and Events/Time tools.
+   This slice only provides a native event entry point, not those finished sequences.
+6. **Advanced editors:** WYSIWYG perspective target/layer placement, talent graph,
+   prerequisites/effects, rewards, scheduling, leaderboards/cinematic hooks, authored playable
+   defaults on real game maps and verified layout at small resolutions.
+7. **Release QA/docs:** world combat/spells/crafting/naval/quest/dungeon/invasion regression,
+   Party/Guild/Steam support where available, player/developer FR/EN wiki (and ES player
+   captions), account/item migration tests if required later, load/performance tests and real
+   client screenshots/videos using the actual world data. No production-world E2E run or
+   multiplayer performance claim is made here.
