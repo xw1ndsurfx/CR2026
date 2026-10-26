@@ -45,6 +45,11 @@ internal sealed class CinematicTimeline : ScrollableControl
     }
     private float X(int ms) => LabelWidth + ms / 1000f * _pixelsPerSecond + AutoScrollPosition.X;
     private int TimeAt(int x) => Math.Clamp((int)Math.Round((x - LabelWidth - AutoScrollPosition.X) / _pixelsPerSecond * 20) * 50, 0, SafeDuration);
+    internal void FitScene()
+    {
+        _pixelsPerSecond = Math.Clamp(Math.Max(1, ClientSize.Width - LabelWidth - 48) / (SafeDuration / 1000f), .5f, 800);
+        AutoScrollPosition = System.Drawing.Point.Empty; Invalidate();
+    }
     private RectangleF BoundsOf(CinematicClip clip, List<(CinematicTrack Track, Guid Actor, string Name)> rows)
     {
         var row = rows.FindIndex(r => r.Track == clip.Track && (r.Track is not (CinematicTrack.Movement or CinematicTrack.Actors) || r.Actor == clip.ActorId));
@@ -66,7 +71,7 @@ internal sealed class CinematicTimeline : ScrollableControl
         base.OnPaint(e); var g = e.Graphics; var rows = Rows;
         AutoScrollMinSize = new((int)(LabelWidth + SafeDuration / 1000f * _pixelsPerSecond + 40), Header + rows.Count * RowHeight);
         using var line = new Pen(DrawingColor.FromArgb(40, 55, 65));
-        var step = _pixelsPerSecond < 30 ? 10000 : _pixelsPerSecond < 70 ? 5000 : 1000;
+        var step = _pixelsPerSecond < 2 ? 60000 : _pixelsPerSecond < 8 ? 30000 : _pixelsPerSecond < 30 ? 10000 : _pixelsPerSecond < 70 ? 5000 : 1000;
         for (var time = 0; time <= SafeDuration; time += step)
         {
             var x = X(time); if (x < LabelWidth || x > Width) continue;

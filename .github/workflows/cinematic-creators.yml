@@ -1,0 +1,35 @@
+name: Cinematic creators
+
+on:
+  pull_request:
+    paths:
+      - 'Intersect.Editor/Forms/Cinematics/**'
+      - 'Intersect.Editor/Resources/Cinematics/**'
+      - 'Framework/Intersect.Framework.Core/Cinematics/**'
+      - 'Utilities/InterfaceEditorTests/**'
+      - '.github/workflows/cinematic-creators.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  creators:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build editor test runner
+        shell: pwsh
+        run: dotnet build Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd"
+      - name: Test guided and description creators
+        shell: pwsh
+        run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug --no-build -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" -- --cinematic-creators-only
+      - name: Test existing montage workflow
+        shell: pwsh
+        run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug --no-build -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" -- --cinematic-usability-only
