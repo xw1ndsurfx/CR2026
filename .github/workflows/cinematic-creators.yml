@@ -103,14 +103,21 @@ jobs:
         env:
           CODEX_GPU_PREVIEW: ${{ runner.temp }}/cinematic-gpu-preview
         run: |
-          xvfb-run -a --server-args='-screen 0 1280x1024x24 -nolisten tcp' dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug -p:RuntimeIdentifiers=linux-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$PWD" --filter 'TestCategory=GPU&TestCategory!=LicensedAssets' --nologo --logger 'trx;LogFileName=gpu.trx' --results-directory "$RUNNER_TEMP/cinematic-gpu-results"
+          dotnet build Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug -p:RuntimeIdentifiers=linux-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$PWD" --nologo
+          # MonoGame/SDL's native video lifecycle must not be restarted in one Linux test host.
+          # Keep both real rendering checks, each with a fresh process and X11 context.
+          for gpu_test in RealPerspectiveAtmospherePreservesTerrainAndCompositesFogOnce ResourceDrawEntersThePerspectiveCollectorAndVisibleBillboardPass; do
+            xvfb-run -a --server-args='-screen 0 1280x1024x24 -nolisten tcp' dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug --no-build --no-restore -p:RuntimeIdentifiers=linux-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$PWD" --filter "FullyQualifiedName~$gpu_test" --nologo --logger "trx;LogFileName=$gpu_test.trx" --results-directory "$RUNNER_TEMP/cinematic-gpu-results"
+          done
           python3 - <<'PY'
-          import os
+          import os, glob
           import xml.etree.ElementTree as ET
-          root = ET.parse(os.path.join(os.environ['RUNNER_TEMP'], 'cinematic-gpu-results', 'gpu.trx')).getroot()
-          counters = root.find('.//{*}Counters')
-          assert counters is not None and int(counters.attrib['total']) > 0, 'No GPU tests were executed.'
-          assert int(counters.attrib['passed']) == int(counters.attrib['total']), 'Every selected GPU test must execute and pass.'
+          reports = glob.glob(os.path.join(os.environ['RUNNER_TEMP'], 'cinematic-gpu-results', '*.trx'))
+          assert len(reports) == 2, 'Both atmosphere and resource GPU reports are required.'
+          for report in reports:
+              counters = ET.parse(report).getroot().find('.//{*}Counters')
+              assert counters is not None and int(counters.attrib['total']) == 1, 'Each isolated GPU check must execute once.'
+              assert int(counters.attrib['passed']) == 1, 'Each isolated GPU check must pass without skipping.'
           PY
       - name: Preserve rendered atmosphere evidence
         if: always()
