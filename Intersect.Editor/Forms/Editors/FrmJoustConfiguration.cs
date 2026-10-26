@@ -129,6 +129,7 @@ public sealed partial class FrmJoustConfiguration : Form
             foreach (var edge in new[] { "Left", "Top", "Right", "Bottom" }) Number(targets, target + "." + edge, edge, 0, 100, 1, .01m);
         }
         BuildSeats(tabs);
+        BuildSounds(tabs);
         right.Panel2.Controls.Add(tabs); Controls.Add(split); Controls.Add(tools); Controls.Add(_status); Controls.Add(_problems);
         _list.SelectedIndexChanged += (_, _) => LoadArena();
         _name.TextChanged += (_, _) => { if (!_loading && Arena is { } a) { a.Name = _name.Text; var index = _list.SelectedIndex; _list.Items[index] = new ArenaChoice(a); Changed(); } };
@@ -192,7 +193,7 @@ public sealed partial class FrmJoustConfiguration : Form
         _loading = true;
         _name.Text = Arena?.Name ?? ""; _enabled.Checked = Arena?.Enabled == true;
         _allowPve.Checked = Arena?.AllowPve == true; _allowPvp.Checked = Arena?.AllowPvp == true;
-        PopulateMounts(); PopulateScenes(); LoadSeats(); _opponent.SelectedIndex = (int)(Arena?.AiOpponent ?? JoustAiOpponent.William);
+        PopulateMounts(); PopulateScenes(); LoadSeats(); LoadSounds(); _opponent.SelectedIndex = (int)(Arena?.AiOpponent ?? JoustAiOpponent.William);
         if (Arena is { } a)
         {
             foreach (var (key, number) in _numbers) { var (target, property) = RuleProperty(a.Rules, key); number.Value = Math.Clamp(Convert.ToDecimal(property.GetValue(target)) / (decimal)number.Tag!, number.Minimum, number.Maximum); }
@@ -315,10 +316,12 @@ public sealed partial class FrmJoustConfiguration : Form
         foreach (var group in _config.Arenas.Where(x => x.Enabled).GroupBy(x => x.MapId).Where(g => g.Count() > 1))
             issues.Add(string.Format(T("Only one enabled arena is allowed per map. Disable one of these arenas: {0}."), string.Join(", ", group.Select(x => x.Name))));
         if (!a.IsValid && issues.Count == 0) issues.Add(T("The jousting configuration is invalid."));
-        _check.Text = issues.Count == 0 ? T("Ready. Save, then enter the game at the gold start tile.") : string.Join("\n\n", issues);
+        var inactive = T("This arena is disabled. Check Enable this arena, then save to open jousting in the game.");
+        _check.Text = issues.Count == 0 ? !a.Enabled ? inactive : T("Ready. Save, then enter the game at the gold start tile.") : string.Join("\n\n", issues);
         _setupProblems.Clear(); _setupProblems.AddRange(issues);
         _problems.Text = issues.Count == 0 ? string.Format(T("In the game, step onto the gold start ({0}, {1}): the jousting window opens automatically. The blue start opens duels and grandstand entrances open seat selection. After closing a window, leave the tile and return to reopen it."), a.StartX, a.StartY) : string.Join(Environment.NewLine + Environment.NewLine, issues);
-        _check.ForeColor = issues.Count == 0 ? System.Drawing.Color.LightGreen : System.Drawing.Color.Gold;
+        if (!a.Enabled) _problems.Text = inactive + Environment.NewLine + Environment.NewLine + _problems.Text;
+        _check.ForeColor = issues.Count == 0 && a.Enabled ? System.Drawing.Color.LightGreen : System.Drawing.Color.Gold;
     }
     private void Preview()
     {

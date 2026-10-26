@@ -49,6 +49,11 @@ internal static class JoustEditorTests
                     g.DrawString("TEST — SYNTHETIC MAP", SystemFonts.DefaultFont, Brushes.White, 20, 20); return b;
                 };
                 Globals.CurrentMap = map; Call(form, "LoadArena");
+                Field<CheckBox>(form, "_enabled").Checked = false;
+                var disabled = QualityOfLifeText.Get("This arena is disabled. Check Enable this arena, then save to open jousting in the game.", lang);
+                Check(Field<Label>(form, "_check").Text == disabled && Field<TextBox>(form, "_problems").Text.Contains(disabled), "A disabled arena explains activation instead of claiming it is ready, on every tab.");
+                Check(config.IsValid, "A valid inactive arena remains saveable as a draft.");
+                Field<CheckBox>(form, "_enabled").Checked = true;
                 var evt = new EventDescriptor(Guid.NewGuid(), map.Id, 0, 0) { Name = "Arrivée du roi", Pages = [new EventPage { Cinematic = JoustCinematics.Create(arena, JoustCinematicKind.Introduction, s => s) }] };
                 evt.Pages[0].Cinematic!.Name = "CUSTOM SCENE TO PRESERVE"; map.LocalEvents[evt.Id] = evt; arena.IntroductionEventId = evt.Id;
                 Call(form, "LoadArena");
@@ -67,7 +72,13 @@ internal static class JoustEditorTests
                 Check(JoustConfiguration.FromJson(config.ToJson()).Arenas[0].MountId == mount.Mounts[0].Id, "Resource selections survive save/reopen serialization.");
                 form.Size = new Size(1280, 820); EditorTheme.Apply(form); form.Show(); Application.DoEvents();
                 var tabs = All(form).OfType<System.Windows.Forms.TabControl>().Single();
-                Check(Enumerable.Range(0, 6).All(i => tabs.GetTabRect(i).Right <= tabs.ClientSize.Width && tabs.GetTabRect(i).Top == tabs.GetTabRect(0).Top), "All six steps stay visible in order on one row after theming.");
+                Check(tabs.TabPages.Count == 7 && Enumerable.Range(0, 7).All(i => tabs.GetTabRect(i).Right <= tabs.ClientSize.Width && tabs.GetTabRect(i).Top == tabs.GetTabRect(0).Top), "All seven steps, including sounds, remain visible on one row after theming.");
+                var soundFiles = Field<Dictionary<JoustSoundCue, ComboBox>>(form, "_soundFiles");
+                var soundVolumes = Field<Dictionary<JoustSoundCue, NumericUpDown>>(form, "_soundVolumes");
+                arena.Sounds.Cues[JoustSoundCue.GroundFall] = new() { File = "joust-fall.ogg", Volume = 37 }; Call(form, "LoadArena");
+                Check(soundFiles.Count == 19 && soundFiles[JoustSoundCue.GroundFall].Text.Contains("joust-fall.ogg"), "Every cue has a named sound picker and missing assets retain their identity.");
+                soundVolumes[JoustSoundCue.GroundFall].Value = 42;
+                Check(JoustConfiguration.FromJson(config.ToJson()).Arenas[0].Sounds.Cues[JoustSoundCue.GroundFall].Volume == 42, "Sound changes survive the real arena save format.");
                 var picture = Field<PictureBox>(form, "_map");
                 void Place(string button, int x, int y)
                 {

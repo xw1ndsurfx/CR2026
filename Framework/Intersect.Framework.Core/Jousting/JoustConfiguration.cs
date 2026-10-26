@@ -70,6 +70,7 @@ public sealed class JoustArena
     public Guid UnhorseEventId { get; set; }
     public Guid VictoryEventId { get; set; }
     public JoustRules Rules { get; set; } = new();
+    public JoustSounds Sounds { get; set; } = new();
     public JoustSeat[] Seats { get; set; } = [];
     public Guid CrowdNpcId { get; set; }
     public float SpectatorZoom { get; set; } = 1.25f;
@@ -77,7 +78,7 @@ public sealed class JoustArena
     [JsonIgnore] public bool IsValid => Id != Guid.Empty && Name is { Length: > 0 and <= 128 } &&
         (!Enabled || MapId != Guid.Empty && (AllowPve || AllowPvp)) && StartX is >= 0 and <= 255 && StartY is >= 0 and <= 255 &&
         EndX is >= 0 and <= 255 && EndY is >= 0 and <= 255 && OpponentY is >= 0 and <= 255 &&
-        StartY != OpponentY && StartY == EndY && Rules is { IsValid: true } &&
+        StartY != OpponentY && StartY == EndY && Rules is { IsValid: true } && Sounds is { IsValid: true } &&
         Math.Abs(EndX - StartX) is >= 4 and <= 64 && Math.Abs(EndX - StartX) % 2 == 0 &&
         (Rules.ChargeMs + Rules.AimMs) / (Math.Abs(EndX - StartX) / 2) >= 50 &&
         (Rules.ImpactMs + Rules.ResultsMs) / (Math.Abs(EndX - StartX) / 2) >= 50 &&

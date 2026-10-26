@@ -27,7 +27,26 @@ public sealed class JoustBroadcast
     public int FirstScore { get; set; }
     public int SecondScore { get; set; }
     public int Winner { get; set; } = -1;
+    public int RemainingMs { get; set; }
+    public int PhaseDurationMs { get; set; }
+    public JoustAiOpponent AiOpponent { get; set; }
+    public JoustStrike FirstStrike { get; set; }
+    public JoustStrike SecondStrike { get; set; }
     public bool Live => Phase is not (JoustPhase.Finished or JoustPhase.Abandoned);
+
+    // A public replay of resolved actions, never either contestant's live aim or defense.
+    public JoustView Presentation(Guid arena, JoustSpectatorCamera camera, int elapsedMs)
+    {
+        var second = camera == JoustSpectatorCamera.SecondKnight;
+        return new() { MatchId = MatchId, ArenaId = arena, IsPve = IsPve,
+            SelfName = second ? SecondName : FirstName, SelfAppearance = second && IsPve ? AiOpponent : JoustAiOpponent.William,
+            AiOpponent = second ? JoustAiOpponent.William : AiOpponent,
+            OpponentName = second ? FirstName : SecondName, Phase = Phase, Pass = Pass, Passes = Passes,
+            RemainingMs = Math.Max(0, RemainingMs - Math.Max(0, elapsedMs)), PhaseDurationMs = PhaseDurationMs,
+            PlayerScore = second ? SecondScore : FirstScore, OpponentScore = second ? FirstScore : SecondScore,
+            PlayerStrike = second ? SecondStrike : FirstStrike, OpponentStrike = second ? FirstStrike : SecondStrike,
+            Winner = Winner < 0 ? -1 : second ? 1 - Winner : Winner };
+    }
 }
 public sealed record JoustSeatView(Guid Id, string Name, int X, int Y, int ExitX, int ExitY, bool Occupied, string Occupant);
 public sealed class JoustSpectatorView
@@ -38,4 +57,6 @@ public sealed class JoustSpectatorView
     public Guid CurrentSeat { get; set; }
     public JoustSpectatorCamera Camera { get; set; }
     public JoustBroadcast? Match { get; set; }
+    public JoustView? Presentation { get; set; }
+    public JoustSounds Sounds { get; set; } = new();
 }

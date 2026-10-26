@@ -31,7 +31,7 @@ namespace Intersect.Tests.Client;
 /// CODEX_GPU_PREVIEW optionally receives the actual framebuffer PNGs.
 /// </summary>
 [TestFixture, NonParallelizable, Category("GPU")]
-public sealed class CinematicAtmosphereGpuTests
+public sealed partial class CinematicAtmosphereGpuTests
 {
     private const int Width = 320;
     private const int Height = 240;

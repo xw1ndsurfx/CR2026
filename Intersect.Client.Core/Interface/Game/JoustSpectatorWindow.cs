@@ -14,6 +14,10 @@ internal sealed class JoustSpectatorWindow : Window
     private readonly Button _sit, _stand;
     private JoustSpectatorView _state = new();
     private JoustSeatView[] _displayedSeats = [];
+    private readonly JoustViewport _viewport;
+    private readonly JoustFullscreen _fullscreen;
+    private readonly JoustAudio _audio = new();
+    private (Guid Match, int Pass)? _presentationKey;
     internal JoustSpectatorWindow(Canvas canvas) : base(canvas, ClientLanguages.Text("Joust grandstands"), false, nameof(JoustSpectatorWindow))
     {
         SetSize(660, 360); Alignment = [Alignments.Center]; DisableResizing(); DeleteOnClose = false;
@@ -36,6 +40,13 @@ internal sealed class JoustSpectatorWindow : Window
             NavalManagementWindow.Button(this, "JoustCamera" + i, ClientLanguages.Text(cameraNames[i]), 20 + i * 210, 228, 200, 30, () => Send(JoustAction.SpectatorCamera, camera));
         }
         _message = Text(276, 56); Hide();
+        _message.WrappingBehavior = WrappingBehavior.Wrapped;
+        _fullscreen = new(canvas, true); _viewport = _fullscreen.Viewport;
+        _fullscreen.AddAction("Follow gold knight", () => Send(JoustAction.SpectatorCamera, 1));
+        _fullscreen.AddAction("Follow blue knight", () => Send(JoustAction.SpectatorCamera, 2));
+        _fullscreen.AddAction("Stand up", () => Send(JoustAction.LeaveSeat));
+        _fullscreen.AddAction("Grandstand controls", () => { _fullscreen.Hide(); Show(); BringToFront(); });
+        Disposed += (_, _) => { _audio.Dispose(); _fullscreen.Hide(); };
     }
     protected override void EnsureInitialized() { }
     private void Send(JoustAction action, int camera = 0) => Intersect.Client.Networking.Network.SendPacket(new JoustRequestPacket { Action = action, SeatId = _seats.SelectedItem?.UserData as Guid? ?? Guid.Empty, Camera = camera });
@@ -51,7 +62,9 @@ internal sealed class JoustSpectatorWindow : Window
     {
         if (packet.Message.Length > 0 && !IsHidden) _message.Text = ClientLanguages.Text(packet.Message);
         if (packet.SpectatorJson.Length == 0) return;
+        var previousSeat = _state.CurrentSeat;
         try { _state = JsonSerializer.Deserialize<JoustSpectatorView>(packet.SpectatorJson) ?? new(); } catch (JsonException) { return; }
+        if (previousSeat != _state.CurrentSeat) _message.Text = "";
         if (!_displayedSeats.SequenceEqual(_state.Seats))
         {
             var selected = _seats.SelectedItem?.UserData as Guid? ?? _state.CurrentSeat;
@@ -64,7 +77,27 @@ internal sealed class JoustSpectatorWindow : Window
         }
         Selection();
         var match = _state.Match;
+        _audio.Apply(_state.CurrentSeat != Guid.Empty ? _state.Presentation : null, _state.Sounds, true, _state.CurrentSeat);
         _score.Text = match == null ? ClientLanguages.Text("Waiting for the next joust.") : ClientLanguages.Format("Pass {0}/{1} · {2} {3} : {4} {5}", match.Pass, match.Passes, match.FirstName, match.FirstScore, match.SecondScore, string.IsNullOrEmpty(match.SecondName) ? ClientLanguages.Text("AI") : match.SecondName) + "\n" + ClientLanguages.Text(match.Live ? "Joust in progress" : "Joust finished");
-        if (packet.OpenSpectatorWindow) { Show(); BringToFront(); }
+        var presentation = _state.CurrentSeat != Guid.Empty && _state.Presentation is { } p && p.MatchId == match?.MatchId &&
+            p.Phase is JoustPhase.Charge or JoustPhase.Aim or JoustPhase.Impact or JoustPhase.Results ? p : null;
+        _viewport.Apply(presentation);
+        var showing = presentation != null;
+        SetSize(660, 360);
+        if (presentation != null)
+        {
+            _viewport.Show(); _fullscreen.Apply(presentation, _score.Text);
+            _message.Text = ClientLanguages.Text("Spectator view is read only. Use the gold or blue camera button to choose the knight's viewpoint.");
+            var key = (presentation.MatchId, presentation.Pass);
+            if (_presentationKey != key) { _presentationKey = key; _fullscreen.Show(); _fullscreen.BringToFront(); Hide(); }
+        }
+        else
+        {
+            var wasWatching = !_fullscreen.IsHidden;
+            _viewport.Hide(); _fullscreen.Hide();
+            if (wasWatching) { Show(); BringToFront(); }
+            if (_state.CurrentSeat == Guid.Empty || match == null || !match.Live) _presentationKey = null;
+        }
+        if (packet.OpenSpectatorWindow && _fullscreen.IsHidden) { Show(); BringToFront(); }
     }
 }
