@@ -1931,6 +1931,201 @@
       "en": "Configure ranges in the Archery Mini-Game Editor. This event opens free training; no inventory ammunition is consumed.",
       "fr": "Configurez les stands dans l’éditeur du mini-jeu de tir à l’arc. Cet événement ouvre un entraînement gratuit, sans consommer de munitions de l’inventaire.",
       "es": "Configura los campos en el editor del minijuego de tiro con arco. Este evento abre el entrenamiento gratuito sin consumir munición del inventario."
+    },
+    "Ammunition": {
+      "en": "Ammunition",
+      "fr": "Munitions",
+      "es": "Munición"
+    },
+    "Cannon ammunition": {
+      "en": "Cannon ammunition",
+      "fr": "Munitions de canon",
+      "es": "Munición de cañón"
+    },
+    "Refresh": {
+      "en": "Refresh",
+      "fr": "Actualiser",
+      "es": "Actualizar"
+    },
+    "Equip a ranged weapon to select compatible ammunition.": {
+      "en": "Equip a ranged weapon to select compatible ammunition.",
+      "fr": "Équipez une arme à distance pour sélectionner des munitions compatibles.",
+      "es": "Equipa un arma a distancia para seleccionar munición compatible."
+    },
+    "Weapon: {0}": {
+      "en": "Weapon: {0}",
+      "fr": "Arme : {0}",
+      "es": "Arma: {0}"
+    },
+    "Quantity {0} · Per shot {1} · {2}": {
+      "en": "Quantity {0} · Per shot {1} · {2}",
+      "fr": "Quantité {0} · Par tir {1} · {2}",
+      "es": "Cantidad {0} · Por disparo {1} · {2}"
+    },
+    "Select ammunition": {
+      "en": "Select ammunition",
+      "fr": "Choisir ces munitions",
+      "es": "Seleccionar munición"
+    },
+    "Incompatible": {
+      "en": "Incompatible",
+      "fr": "Incompatible",
+      "es": "Incompatible"
+    },
+    "In use": {
+      "en": "In use",
+      "fr": "En cours d’utilisation",
+      "es": "En uso"
+    },
+    "Steady Aim": {
+      "en": "Steady Aim",
+      "fr": "Visée stable",
+      "es": "Puntería firme"
+    },
+    "Quick Shot": {
+      "en": "Quick Shot",
+      "fr": "Tir rapide",
+      "es": "Disparo rápido"
+    },
+    "Piercing Arrow": {
+      "en": "Piercing Arrow",
+      "fr": "Flèche perforante",
+      "es": "Flecha perforante"
+    },
+    "Multi Shot": {
+      "en": "Multi Shot",
+      "fr": "Tir multiple",
+      "es": "Disparo múltiple"
+    },
+    "Rain of Arrows": {
+      "en": "Rain of Arrows",
+      "fr": "Pluie de flèches",
+      "es": "Lluvia de flechas"
+    },
+    "Eagle Eye": {
+      "en": "Eagle Eye",
+      "fr": "Œil d’aigle",
+      "es": "Ojo de águila"
+    },
+    "Confirm": {
+      "en": "Confirm",
+      "fr": "Confirmer",
+      "es": "Confirmar"
+    },
+    "{0} · Level {1}/{2} · XP {3}/{4} · Points {5}": {
+      "en": "{0} · Level {1}/{2} · XP {3}/{4} · Points {5}",
+      "fr": "{0} · Niveau {1}/{2} · XP {3}/{4} · Points {5}",
+      "es": "{0} · Nivel {1}/{2} · EXP {3}/{4} · Puntos {5}"
+    },
+    "{0} · Rank {1}/{2} · Level {3}": {
+      "en": "{0} · Rank {1}/{2} · Level {3}",
+      "fr": "{0} · Rang {1}/{2} · Niveau {3}",
+      "es": "{0} · Rango {1}/{2} · Nivel {3}"
+    },
+    "Damage +{0}% · Speed +{1}% · Critical +{2}": {
+      "en": "Damage +{0}% · Speed +{1}% · Critical +{2}",
+      "fr": "Dégâts +{0} % · Vitesse +{1} % · Critique +{2}",
+      "es": "Daño +{0}% · Velocidad +{1}% · Crítico +{2}"
+    },
+    "Map an existing spell in the editor to enable this talent.": {
+      "en": "Map an existing spell in the editor to enable this talent.",
+      "fr": "Associez un sort existant dans l’éditeur pour activer ce talent.",
+      "es": "Asocia un hechizo existente en el editor para activar este talento."
+    },
+    "Requires {0} rank {1}": {
+      "en": "Requires {0} rank {1}",
+      "fr": "Requiert {0} au rang {1}",
+      "es": "Requiere {0} de rango {1}"
+    },
+    "Spend 1 mastery point": {
+      "en": "Spend 1 mastery point",
+      "fr": "Dépenser 1 point de maîtrise",
+      "es": "Gastar 1 punto de maestría"
+    },
+    "Spend 1 point on {0}? This choice is saved on your character.": {
+      "en": "Spend 1 point on {0}? This choice is saved on your character.",
+      "fr": "Dépenser 1 point pour {0} ? Ce choix est enregistré sur votre personnage.",
+      "es": "¿Gastar 1 punto en {0}? Esta elección se guarda en tu personaje."
+    },
+    "This ammunition is unavailable or incompatible with your equipped weapon.": {
+      "en": "This ammunition is unavailable or incompatible with your equipped weapon.",
+      "fr": "Ces munitions sont indisponibles ou incompatibles avec l’arme équipée.",
+      "es": "Esta munición no está disponible o es incompatible con el arma equipada."
+    },
+    "This mastery talent is unavailable.": {
+      "en": "This mastery talent is unavailable.",
+      "fr": "Ce talent de maîtrise est indisponible.",
+      "es": "Este talento de maestría no está disponible."
+    },
+    "Free a spellbook slot before learning this talent.": {
+      "en": "Free a spellbook slot before learning this talent.",
+      "fr": "Libérez une place dans le livre de sorts avant d’apprendre ce talent.",
+      "es": "Libera un espacio en el libro de hechizos antes de aprender este talento."
+    },
+    "Talent requirements or available mastery points are not met.": {
+      "en": "Talent requirements or available mastery points are not met.",
+      "fr": "Les prérequis du talent ou les points de maîtrise disponibles ne suffisent pas.",
+      "es": "No se cumplen los requisitos del talento o faltan puntos de maestría."
+    },
+    "Mastery talent learned.": {
+      "en": "Mastery talent learned.",
+      "fr": "Talent de maîtrise appris.",
+      "es": "Talento de maestría aprendido."
+    },
+    "Mastery talent tree": {
+      "en": "Mastery talent tree",
+      "fr": "Arbre de talents de maîtrise",
+      "es": "Árbol de talentos de maestría"
+    },
+    "New talent": {
+      "en": "New talent",
+      "fr": "Nouveau talent",
+      "es": "Nuevo talento"
+    },
+    "Archery talent templates": {
+      "en": "Archery talent templates",
+      "fr": "Modèles de talents de tir à l’arc",
+      "es": "Plantillas de talentos de tiro con arco"
+    },
+    "Invalid talent ranks, prerequisites or spell mappings.": {
+      "en": "Invalid talent ranks, prerequisites or spell mappings.",
+      "fr": "Rangs, prérequis ou associations de sorts invalides.",
+      "es": "Rangos, requisitos o asociaciones de hechizos no válidos."
+    },
+    "No spell": {
+      "en": "No spell",
+      "fr": "Aucun sort",
+      "es": "Sin hechizo"
+    },
+    "Rank {0} spell": {
+      "en": "Rank {0} spell",
+      "fr": "Sort du rang {0}",
+      "es": "Hechizo del rango {0}"
+    },
+    "Mapped spells require this talent and a compatible equipped weapon. Leave all ranks empty for a passive talent.": {
+      "en": "Mapped spells require this talent and a compatible equipped weapon. Leave all ranks empty for a passive talent.",
+      "fr": "Les sorts associés requièrent ce talent et une arme équipée compatible. Laissez tous les rangs vides pour un talent passif.",
+      "es": "Los hechizos asociados requieren este talento y un arma equipada compatible. Deja todos los rangos vacíos para un talento pasivo."
+    },
+    "Ammunition compatibility": {
+      "en": "Ammunition compatibility",
+      "fr": "Compatibilité des munitions",
+      "es": "Compatibilidad de munición"
+    },
+    "Select existing alternate projectiles. The weapon's original ammunition remains available; effects and quantities come from each projectile.": {
+      "en": "Select existing alternate projectiles. The weapon's original ammunition remains available; effects and quantities come from each projectile.",
+      "fr": "Sélectionnez les projectiles alternatifs existants. Les munitions originales restent disponibles ; chaque projectile définit ses effets et sa quantité.",
+      "es": "Selecciona proyectiles alternativos existentes. La munición original sigue disponible; cada proyectil define sus efectos y su cantidad."
+    },
+    "{0} · Level {1}/{2} · Points {3}": {
+      "en": "{0} · Level {1}/{2} · Points {3}",
+      "fr": "{0} · Niveau {1}/{2} · Points {3}",
+      "es": "{0} · Nivel {1}/{2} · Puntos {3}"
+    },
+    "XP {0}/{1} · {2}% · Remaining {3}": {
+      "en": "XP {0}/{1} · {2}% · Remaining {3}",
+      "fr": "XP {0}/{1} · {2} % · Manque {3}",
+      "es": "EXP {0}/{1} · {2}% · Faltan {3}"
     }
   }
 }

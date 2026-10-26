@@ -1,7 +1,10 @@
-# Royal Weapon Mastery / Royal Archery — first integration slice
+# Royal Weapon Mastery / Royal Archery — integration slices 1–2
 
 Status: **draft, not a production-complete Royal Archery Tournament**. Audited base:
 `aaab6f7ce8d23083ebc1ca9f697b2c68e5da2a51` on `main`.
+
+The second slice adds talent allocation, native spellbook unlocks and weapon ammunition
+selection. See [progression/ammunition setup and exact limits](ProgressionAndAmmunition.md).
 
 ## Audit and source of truth
 
@@ -56,8 +59,18 @@ Inspecting those actual assets and their licensing remains required before produ
   macro-detection system**. XP amount/limits are initial code defaults, not yet editor settings.
 * Transactional SQLite storage in `resources/weapon-masteries.db`, keyed by character and
   category; commit before advertising the new bonus. Existing account/item tables are untouched.
-* Character window action displays categories, level, XP and percentage. It is currently
-  self-only, with scrollable rows; no public inspection, talent allocation or level-up animation.
+* Character window action displays categories, level, XP, percentage, remaining XP and
+  available points. It is self-only, with scrollable categories/talents, rank allocation and
+  confirmation. Public inspection and level-up animation remain future work.
+* Talent ranks 0–5, level/prerequisite gates, configurable points per level, transactionally
+  persisted purchases and request receipts. Default archery templates include passive damage,
+  speed and critical bonuses; active talents need real existing spell mappings before purchase.
+  Active abilities use the native spellbook, targeting, cooldowns and spell/projectile engine.
+* Inventory > Ammunition shows owned ammo and compatible options for the equipped weapon,
+  reuses existing icons, persists selection per weapon/character and links to native cannon
+  ammunition. Alternate ammo points to authored projectile definitions, retaining their effects
+  and quantities. World weapon firing resolves the server choice; shortages do not auto-switch
+  ammo. Native projectile spells retain their explicitly authored ammo IDs.
 
 ### Free solo archery training
 
@@ -87,11 +100,12 @@ Inspecting those actual assets and their licensing remains required before produ
 ### First editor views
 
 Weapon Mastery Editor: categories, cap, curve, damage tuning, checked list of existing
-weapon items. Archery Mini-Game Editor: ranges, native map preview, click to place the
+weapon items, talent/prerequisite editing and five native rank-spell pickers, plus a visual
+existing-weapon/projectile compatibility picker. Archery Mini-Game Editor: ranges, native map preview, click to place the
 shooting tile, enabled state and wind. Both views share one live draft so switching editor
 menus cannot overwrite the other view's unsaved edits. Configuration saves are validated
 on the server and use a temporary file followed by atomic replacement. Property-grid fields
-are technical authoring controls; a localized custom talent/target editor is still future work.
+are technical authoring controls; a node-graph layout and perspective target editor remain future work.
 
 ## Run on a development copy
 
@@ -142,9 +156,10 @@ Client tests exercise the actual Gwen viewport through the existing headless met
 at 1280×720, 1366×768 and 1920×1080, plus late snapshots after close and FR/ES catalog resolution.
 **Headless metrics rendering is not a screenshot of a running production client.**
 
-Local validation: 94 rules checks passed; the nine new server integration tests and eight
-jousting lifecycle regressions passed; the full existing client UI runner passed including
-the new archery checks; the focused real editor control tests passed. Client, server and
+Local second-slice validation: 108 rules checks and all 431 server tests passed;
+the full existing client UI runner passed including archery, ammo compatibility, talent
+confirmation and late-refresh disposal checks; focused real editor controls and all eight
+existing mini-game editor test groups passed. Client, server and
 editor compile in Debug. The Windows editor runner needs `RuntimeIdentifiers=win-x64`, as
 in existing CI. Existing compiler/package warnings are not resolved by this feature.
 
@@ -173,13 +188,14 @@ validation and actual-client QA; the current code-native viewport does not yet l
 
 ## Remaining mandate / ordered continuation
 
-1. **Universal ammunition:** native inventory Ammunition tab, compatible item selection,
-   atomic item consumption across equipment swaps/disconnects and integration with existing
-   naval inventory. Preserve native bows, arrows, cannonballs, stacks, crafting, shops and loot.
-   The existing world projectile-consumption path is audited but not redesigned by this PR.
-2. **Mastery abilities/UI:** points, ranks 0–5, prerequisites, active/passive trees; map
-   Steady Aim, Quick Shot, Piercing Arrow, Multi Shot, Rain of Arrows and Eagle Eye to existing
-   spells/projectiles. Other weapon trees, Cannoneering, public Character Information,
+1. **Ammunition hardening:** broader trade/bank/crafting/crash-recovery and real-world load
+   testing, native cannon progression integration and presentation polish. The base category,
+   compatible selection, existing-projectile mapping, cross-stack consumption, equipment
+   serialization and native naval entry point are implemented; naval storage is preserved.
+2. **Mastery abilities/UI:** author actual rank spell mappings for Piercing Arrow, Multi Shot
+   and Rain of Arrows using the connected game's existing spell data; no fictional spell IDs
+   are pre-enabled. Points, ranks, prerequisites, passives and native spell unlocks are implemented.
+   Other authored weapon trees, Cannoneering, public Character Information,
    notifications, NPC tutorials, Aureons respec, milestone quests 10/20/30, level-30 titles
    (Royal Eagle Eye, Royal Blademaster, Master of the Royal Artillery), achievements/Steam.
 3. **Production archery presentation:** approved separated art above, layer rendering and

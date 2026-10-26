@@ -2092,6 +2092,8 @@ public abstract partial class Entity : IEntity
 
         bool isCrit = false;
         //Is this a critical hit?
+        if (isAutoAttack && this is Player criticalMastery && masteryWeapon != null)
+            critChance = Math.Clamp(critChance + criticalMastery.MasteryPassives(masteryWeapon).Crit, 0, 100);
         if (Randomization.Next(1, 101) > critChance)
         {
             critMultiplier = 1;

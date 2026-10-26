@@ -38,7 +38,7 @@ public partial class Player
             {
                 var category = RoyalCombatRuntime.Current.Masteries.FirstOrDefault(m => m.WeaponIds.Contains(weapon.Id));
                 if (category == null) return 1;
-                return 1 + (category.Level(MasteryExperience.GetValueOrDefault(category.Key)) - 1) * category.DamagePercentPerLevel / 100;
+                return 1 + ((category.Level(MasteryExperience.GetValueOrDefault(category.Key)) - 1) * category.DamagePercentPerLevel + MasteryPassives(weapon).Damage) / 100;
             }
             catch (Exception e) when (e is IOException or Microsoft.Data.Sqlite.SqliteException or JsonException)
             { ApplicationContext.Context.Value?.Logger.LogError(e, "Weapon mastery could not be loaded for {CharacterId}", Id); return 1; }
@@ -76,11 +76,18 @@ public partial class Player
             { ApplicationContext.Context.Value?.Logger.LogError(e, "Weapon mastery could not be saved for {CharacterId}", Id); }
         }
     }
-    private void SendMasteries(bool open) => SendPacket(new ArcheryStatePacket { Open = open,
-        ConfigurationJson = RoyalCombatRuntime.Current.ToJson(), MasteriesJson = JsonSerializer.Serialize(MasteryExperience) });
+    private void SendMasteries(bool open, string message = "")
+    {
+        if (open) SynchronizeMasterySpells();
+        SendPacket(new ArcheryStatePacket { Open = open, Message = message,
+            ConfigurationJson = RoyalCombatRuntime.Current.ToJson(), MasteriesJson = JsonSerializer.Serialize(MasteryExperience),
+            MasteryRanksJson = JsonSerializer.Serialize(MasteryRanks) });
+    }
 
     internal void HandleArcheryRequest(ArcheryRequestPacket packet)
     {
+        if (packet.Action is ArcheryAction.Ammunition or ArcheryAction.SelectAmmunition) { HandleAmmunitionRequest(packet); return; }
+        if (packet.Action == ArcheryAction.BuyTalent) { HandleTalentPurchase(packet); return; }
         lock (EntityLock)
         {
             var now = Environment.TickCount64;

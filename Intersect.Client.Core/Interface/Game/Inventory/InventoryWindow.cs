@@ -56,10 +56,11 @@ public partial class InventoryWindow : Window
         _inventoryActions ??= new Base(this, "InventoryActions") { Dock = Pos.Bottom, Height = 32 };
         var width = Math.Max(70, (Width - 28) / 2);
         _ammoButton ??= NavalManagementWindow.Button(_inventoryActions, "InventoryAmmo", "Ammo", 0, 0, width, 28,
-            () => NavalManagementWindow.Request(Intersect.Framework.Core.Naval.NavalManageAction.Ammo));
+            () => UniversalAmmunitionWindow.Request());
         _campfireButton ??= NavalManagementWindow.Button(_inventoryActions, "InventoryCampfire", "Campfire", width + 4, 0, width, 28,
             () => Intersect.Client.Networking.Network.SendPacket(new Intersect.Network.Packets.Client.CampfireRequestPacket()));
         _ammoButton.SetBounds(0, 0, width, 28);
+        _ammoButton.Text = ClientLanguages.Text("Ammunition");
         _campfireButton.SetBounds(width + 4, 0, width, 28);
         _campfireButton.Text = Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Campfire", ClientLanguages.Current);
         _inventoryActions.BringToFront();

@@ -1,6 +1,6 @@
 using MessagePack;
 namespace Intersect.Network.Packets.Client;
-public enum ArcheryAction { Open, Start, Draw, Release, Leave, Masteries, GetConfiguration, SaveConfiguration }
+public enum ArcheryAction { Open, Start, Draw, Release, Leave, Masteries, GetConfiguration, SaveConfiguration, Ammunition, SelectAmmunition, BuyTalent }
 [MessagePackObject]
 public sealed partial class ArcheryRequestPacket : IntersectPacket
 {
@@ -12,4 +12,8 @@ public sealed partial class ArcheryRequestPacket : IntersectPacket
     [Key(5)] public double Pitch { get; set; }
     [Key(6)] public string ConfigurationJson { get; set; } = "";
     [Key(7)] public Guid RequestId { get; set; }
+    [Key(8)] public Guid ItemId { get; set; }
+    [Key(9)] public Guid WeaponId { get; set; }
+    [Key(10)] public string CategoryKey { get; set; } = "";
+    [Key(11)] public string TalentKey { get; set; } = "";
 }

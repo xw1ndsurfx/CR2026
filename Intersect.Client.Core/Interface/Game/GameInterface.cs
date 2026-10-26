@@ -718,7 +718,8 @@ public partial class GameInterface : MutableInterface
 
     public bool CloseAllWindows()
     {
-        var royalWasOpen = _archeryWindow is { IsVisibleInTree: true } || _masteriesWindow is { IsVisibleInTree: true };
+        var royalWasOpen = _archeryWindow is { IsVisibleInTree: true } || _masteriesWindow is { IsVisibleInTree: true } || _ammunitionWindow is { IsVisibleInTree: true };
+        if (_ammunitionWindow is { IsVisibleInTree: true }) _ammunitionWindow.Hide();
         if (_archeryWindow is { IsVisibleInTree: true }) _archeryWindow.Hide();
         if (_masteriesWindow is { IsVisibleInTree: true }) _masteriesWindow.Hide();
         var cannonWasOpen=Naval.NavalWorld.CannonViewOpen;

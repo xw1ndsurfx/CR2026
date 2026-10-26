@@ -5,7 +5,7 @@ using Microsoft.Data.Sqlite;
 
 namespace Intersect.Server.Archery;
 
-internal static class RoyalCombatRuntime
+internal static partial class RoyalCombatRuntime
 {
     private static readonly object Gate = new();
     private static RoyalCombatConfiguration _current;
@@ -22,6 +22,7 @@ internal static class RoyalCombatRuntime
     internal static void Save(string json)
     {
         var config = RoyalCombatConfiguration.FromJson(json);
+        ValidateProgressionMappings(config);
         foreach (var range in config.Ranges.Where(r => r.Enabled))
             if (MapController.Get(range.MapId) == null || range.StartX >= Intersect.Options.Instance.Map.MapWidth ||
                 range.StartY >= Intersect.Options.Instance.Map.MapHeight) throw new InvalidDataException("royal-map");
@@ -48,6 +49,14 @@ internal static class RoyalCombatRuntime
             schema.CommandText = """
                 CREATE TABLE IF NOT EXISTS WeaponMasteries(CharacterId TEXT NOT NULL, Category TEXT NOT NULL,
                     Experience INTEGER NOT NULL CHECK(Experience>=0), PRIMARY KEY(CharacterId,Category));
+                CREATE TABLE IF NOT EXISTS WeaponAmmoSelection(CharacterId TEXT NOT NULL, WeaponId TEXT NOT NULL,
+                    ItemId TEXT NOT NULL, PRIMARY KEY(CharacterId,WeaponId));
+                CREATE TABLE IF NOT EXISTS MasteryTalentRanks(CharacterId TEXT NOT NULL, Category TEXT NOT NULL,
+                    Talent TEXT NOT NULL, Rank INTEGER NOT NULL CHECK(Rank BETWEEN 1 AND 5), PRIMARY KEY(CharacterId,Category,Talent));
+                CREATE TABLE IF NOT EXISTS MasteryTalentPurchases(CharacterId TEXT NOT NULL, RequestId TEXT NOT NULL,
+                    Category TEXT NOT NULL, Talent TEXT NOT NULL, PRIMARY KEY(CharacterId,RequestId));
+                CREATE TABLE IF NOT EXISTS MasteryLearnedSpells(CharacterId TEXT NOT NULL, SpellId TEXT NOT NULL,
+                    PRIMARY KEY(CharacterId,SpellId));
                 """;
             schema.ExecuteNonQuery(); return connection;
         }

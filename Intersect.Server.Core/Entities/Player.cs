@@ -466,6 +466,7 @@ public partial class Player : Entity
         }
 
         CacheEquipmentTriggers();
+        SynchronizeMasterySpells();
     }
 
     public void SendPacket(IPacket packet, TransmissionMode mode = TransmissionMode.All)
@@ -2232,6 +2233,8 @@ public partial class Player : Entity
             }
         }
 
+        var masterySpeed = MasteryPassives(weapon).Speed;
+        if (masterySpeed > 0) attackTime = Math.Max(100, (int)Math.Round(attackTime * (1 - masterySpeed / 100)));
         return
             attackTime -
             60; //subtracting 60 to account for a moderate ping to the server so some attacks dont get cancelled.
@@ -3550,6 +3553,11 @@ public partial class Player : Entity
     /// <param name="fromSlotIndex">the slot index to swap from</param>
     /// <param name="toSlotIndex">the slot index to swap to</param>
     public void SwapItems(int fromSlotIndex, int toSlotIndex)
+    {
+        lock (EntityLock) SwapItemsCore(fromSlotIndex, toSlotIndex);
+    }
+
+    private void SwapItemsCore(int fromSlotIndex, int toSlotIndex)
     {
         TryGetSlot(fromSlotIndex, out var fromSlot, true);
         TryGetSlot(toSlotIndex, out var toSlot, true);
@@ -5965,6 +5973,8 @@ public partial class Player : Entity
         out SpellCastFailureReason reason
     )
     {
+        if (!CanFireWorldWeapon || spell != null && !CanUseMasterySpell(spell.Id))
+        { reason = SpellCastFailureReason.ConditionsNotMet; return false; }
         // Do we fail our base class check? If so cancel out with a reason!
         if (!base.CanCastSpell(spell, target, checkVitalReqs, softRetargetOnSelfCast, out reason))
         {
@@ -6043,7 +6053,7 @@ public partial class Player : Entity
 
             if (projectileBase.AmmoItemId != Guid.Empty)
             {
-                if (FindInventoryItemSlot(projectileBase.AmmoItemId, projectileBase.AmmoRequired) == null)
+                if (projectileBase.AmmoRequired <= 0 || !CanTakeItem(projectileBase.AmmoItemId, projectileBase.AmmoRequired))
                 {
                     if (Options.Instance.Combat.EnableCombatChatMessages)
                     {
@@ -6185,8 +6195,13 @@ public partial class Player : Entity
 
     public override void CastSpell(Guid spellId, int spellSlot = -1)
     {
+        lock (EntityLock) CastSpellWithAmmunition(spellId, spellSlot);
+    }
+
+    private void CastSpellWithAmmunition(Guid spellId, int spellSlot)
+    {
         var spellBase = SpellDescriptor.Get(spellId);
-        if (spellBase == null)
+        if (spellBase == null || !CanCastSpell(spellBase, CastTarget, false, SoftRetargetOnSelfCast, out _))
         {
             return;
         }
@@ -6311,6 +6326,11 @@ public partial class Player : Entity
     //Equipment
     public void EquipItem(ItemDescriptor itemDescriptor, int slot = -1, bool updateCooldown = false)
     {
+        lock (EntityLock) EquipItemCore(itemDescriptor, slot, updateCooldown);
+    }
+
+    private void EquipItemCore(ItemDescriptor itemDescriptor, int slot, bool updateCooldown)
+    {
         if (itemDescriptor == null || itemDescriptor.ItemType != ItemType.Equipment)
         {
             return;
@@ -6382,6 +6402,11 @@ public partial class Player : Entity
     }
 
     public void UnequipItem(int equipmentSlot, bool sendUpdate = true)
+    {
+        lock (EntityLock) UnequipItemCore(equipmentSlot, sendUpdate);
+    }
+
+    private void UnequipItemCore(int equipmentSlot, bool sendUpdate)
     {
         if (equipmentSlot < 0 || equipmentSlot > Equipment.Length)
         {

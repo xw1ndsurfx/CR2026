@@ -49,6 +49,19 @@ public sealed class FrmRoyalCombatConfiguration : Form
             if (_list.SelectedItem is ArcheryRange range) _config.Ranges = _config.Ranges.Where(r => r != range).ToArray();
             RefreshList();
         });
+        Button("Mastery talent tree", () => {
+            if (_list.SelectedItem is not MasteryCategory category) return;
+            using var dialog = new FrmMasteryTalents(category);
+            dialog.StartPosition = FormStartPosition.CenterParent;
+            Intersect.Editor.Forms.Styling.EditorTheme.Apply(dialog);
+            if (dialog.ShowDialog(this) == DialogResult.OK) { category.Talents = dialog.Result.Talents; _properties.Refresh(); }
+        });
+        Button("Ammunition compatibility", () => {
+            using var dialog = new FrmWeaponAmmunition(_config.Ammunition);
+            dialog.StartPosition = FormStartPosition.CenterParent;
+            Intersect.Editor.Forms.Styling.EditorTheme.Apply(dialog);
+            if (dialog.ShowDialog(this) == DialogResult.OK) _config.Ammunition = dialog.Result;
+        });
         _save.Text = T("Save"); toolbar.Controls.Add(_save); _save.Click += (_, _) => Save();
         var split = new SplitContainer { Dock = DockStyle.Fill, Size = new(960, 550), SplitterDistance = 200 };
         var right = new SplitContainer { Dock = DockStyle.Fill, Size = new(760, 550), SplitterDistance = 400 };

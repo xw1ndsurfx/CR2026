@@ -11,4 +11,6 @@ public sealed partial class ArcheryStatePacket : IntersectPacket
     [Key(5)] public bool Saved { get; set; }
     [Key(6)] public Guid RequestId { get; set; }
     [Key(7)] public string MasteriesJson { get; set; } = "";
+    [Key(8)] public string AmmunitionJson { get; set; } = "";
+    [Key(9)] public string MasteryRanksJson { get; set; } = "";
 }
