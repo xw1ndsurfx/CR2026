@@ -10,10 +10,12 @@ on:
       - 'Framework/Intersect.Framework.Core/Network/Packets/Server/GameObjectPacket.cs'
       - 'Intersect.Client.Core/Cinematics/**'
       - 'Intersect.Client.Core/Core/Graphics*.cs'
+      - 'Intersect.Client.Core/Maps/MapInstance.cs'
+      - 'Intersect.Client.Core/MonoGame/Graphics/MonoRenderer*.cs'
       - 'Intersect.Editor/Networking/PacketHandler.cs'
       - 'Intersect.Editor/Networking/PacketSender.cs'
       - 'Intersect.Server/Networking/NetworkedPacketHandler.cs'
-      - 'Intersect.Tests.Client/CinematicViewportTests.cs'
+      - 'Intersect.Tests.Client/Cinematic*Tests.cs'
       - 'Intersect.Tests/CinematicChapter*Tests.cs'
       - 'Intersect.Tests/Intersect.Tests.csproj'
       - 'Utilities/CinematicFramingTests/**'
@@ -55,10 +57,10 @@ jobs:
         run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug --no-build -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" -- --cinematic-chapters-only
       - name: Test cinematic display and loaded-map framing
         run: dotnet run --project Utilities/CinematicFramingTests/CinematicFramingTests.csproj -c Release
-      - name: Test actual client viewport and picking
+      - name: Test client viewport, picking and atmosphere
         shell: pwsh
         run: |
-          dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" --filter FullyQualifiedName~CinematicViewportTests --nologo --logger "trx;LogFileName=client.trx" --results-directory "$env:RUNNER_TEMP/cinematic-test-results"
+          dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" --filter 'FullyQualifiedName~Cinematic&TestCategory!=GPU' --nologo --logger "trx;LogFileName=client.trx" --results-directory "$env:RUNNER_TEMP/cinematic-test-results"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           [xml]$result = Get-Content "$env:RUNNER_TEMP/cinematic-test-results/client.trx" -Raw
           if ([int]$result.TestRun.ResultSummary.Counters.total -lt 1) { throw 'No client cinematic tests were executed.' }
@@ -76,3 +78,45 @@ jobs:
           name: cinematic-editor-previews
           path: ${{ runner.temp }}/cinematic-ui-preview/*.png
           if-no-files-found: ignore
+
+  perspective-atmosphere:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CODEX_GPU_TESTS: '1'
+      SDL_VIDEODRIVER: offscreen
+      LIBGL_ALWAYS_SOFTWARE: '1'
+      ALSOFT_DRIVERS: 'null'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install software OpenGL dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libgl1-mesa-dri libsdl2-2.0-0 libopenal1
+      - name: Render perspective atmosphere and verify actual pixels
+        env:
+          CODEX_GPU_PREVIEW: ${{ runner.temp }}/cinematic-gpu-preview
+        run: |
+          dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug -p:RuntimeIdentifiers=linux-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$PWD" --filter TestCategory=GPU --nologo --logger 'trx;LogFileName=gpu.trx' --results-directory "$RUNNER_TEMP/cinematic-gpu-results"
+          python3 - <<'PY'
+          import os
+          import xml.etree.ElementTree as ET
+          root = ET.parse(os.path.join(os.environ['RUNNER_TEMP'], 'cinematic-gpu-results', 'gpu.trx')).getroot()
+          counters = root.find('.//{*}Counters')
+          assert counters is not None and int(counters.attrib['total']) > 0, 'No GPU tests were executed.'
+          assert int(counters.attrib['passed']) == int(counters.attrib['total']), 'Every GPU test must execute and pass.'
+          PY
+      - name: Preserve rendered atmosphere evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cinematic-atmosphere-gpu
+          path: |
+            ${{ runner.temp }}/cinematic-gpu-preview/*.png
+            ${{ runner.temp }}/cinematic-gpu-results/*.trx
+          if-no-files-found: error
