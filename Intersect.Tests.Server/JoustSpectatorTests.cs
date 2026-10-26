@@ -84,6 +84,7 @@ public sealed class JoustSpectatorTests
         Request(w.A, JoustAction.ReserveSeat, seat.Id);
         Assert.That(w.A.IsJoustSeated, Is.True); Assert.That((w.A.X,w.A.Y), Is.EqualTo((seat.X,seat.Y)));
         Assert.That(((PlayerEntityPacket)w.A.EntityPacket()).JoustSeated, Is.True);
+        Assert.That(MessagePackSerializer.Deserialize<PlayerEntityPacket>(MessagePackSerializer.Serialize((PlayerEntityPacket)w.A.EntityPacket())).JoustSeated, Is.True);
         Assert.That(w.A.CanUseLobbyTravel, Is.False); Assert.That(w.A.CanAttack(w.B, null!), Is.False);
         w.A.Move(Direction.Right, null!); Assert.That(w.A.X, Is.EqualTo(seat.X));
         w.A.ChangeDir(Direction.Left); Assert.That((int)w.A.Dir, Is.EqualTo(seat.Facing));
@@ -116,6 +117,7 @@ public sealed class JoustSpectatorTests
             var c = JoustAudienceRuntime.Get(w.Arena,w.A.MapInstanceId)!; JoustAudienceRuntime.EnsureCrowd(c);
             var filler = w.Instance.GetEntities().OfType<JoustAudienceActor>().Single();
             Assert.That(((NpcEntityPacket)filler.EntityPacket()).JoustSeated, Is.True);
+            Assert.That(MessagePackSerializer.Deserialize<NpcEntityPacket>(MessagePackSerializer.Serialize((NpcEntityPacket)filler.EntityPacket())).JoustSeated, Is.True);
             Assert.That(filler.CanAttack(w.A,null!), Is.False); Assert.That(w.A.CanAttack(filler,null!), Is.False);
             w.A.X=7;w.A.Y=7; Request(w.A,JoustAction.ReserveSeat,w.Arena.Seats[0].Id);
             Assert.That(w.Instance.GetEntities().OfType<JoustAudienceActor>(), Is.Empty);
@@ -162,5 +164,14 @@ public sealed class JoustSpectatorTests
         var old=new JoustMatch(w.Arena.Rules,0,JoustDifficulty.Novice);
         old.Abandon(0);JoustAudienceRuntime.Publish(w.Arena,w.A.MapInstanceId,old,Guid.NewGuid(),"Old",Guid.Empty,"");
         Assert.That(JoustAudienceRuntime.CurrentMatch(key)!.MatchId,Is.EqualTo(session.Match.Id));
+    }
+    [Test] public void ConfigurationReplacementCannotReserveAnObsoleteSeat()
+    {
+        using var w = new World(); var seat = w.Arena.Seats[0];
+        var c = JoustAudienceRuntime.Get(w.Arena,w.A.MapInstanceId)!;
+        w.Arena.Seats = []; JoustAudienceRuntime.EnsureCrowd(c);
+        Assert.That(JoustAudienceRuntime.Reserve(w.A,w.Arena,seat),Is.Null);
+        w.Arena.Seats = [seat]; var lease = JoustAudienceRuntime.Reserve(w.A,w.Arena,seat);
+        Assert.That(lease,Is.Not.Null); JoustAudienceRuntime.Release(lease!);
     }
 }

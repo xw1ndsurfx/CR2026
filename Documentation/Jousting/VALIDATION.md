@@ -37,4 +37,4 @@ Les places se configurent désormais dans l’onglet 6 Places : banc et accès p
 
 Cette étape fait l’objet de tests natifs serveur, client et formulaires en trois langues. L’essai graphique avec deux clients connectés, les animations assises dessinées, le décor final, les cérémonies et les tournois restent à valider ou réaliser.
 
-Résultat local de cette étape : 55 tests serveur ciblés, 4 tests client, 33 tests partagés et parcours des interfaces en en/fr/es réussis. Les trois projets natifs ont compilé. Les aperçus de l’éditeur utilisent une carte synthétique explicitement indiquée.
+Résultat local de cette étape : 56 tests serveur ciblés, 10 tests client (dont 6 de cadrage cinématique), 33 tests partagés et parcours des interfaces en en/fr/es réussis. Les trois projets natifs ont compilé. Les aperçus de l’éditeur utilisent une carte synthétique explicitement indiquée.

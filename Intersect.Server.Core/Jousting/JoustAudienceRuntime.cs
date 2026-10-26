@@ -62,16 +62,21 @@ internal static class JoustAudienceRuntime
     internal static Lease? Reserve(Player player, JoustArena arena, JoustSeat seat)
     {
         var context = Get(arena, player.MapInstanceId); if (context == null) return null;
-        var slot = context.Slots.GetOrAdd(seat.Id, _ => new());
         lock (context.Lifecycle)
-        lock (slot.Gate)
         {
-            if (context.Retired || slot.Member != null || !SeatTileClear(context, seat, slot.Filler)) return null;
-            var lease = new Lease(player, context, seat);
-            if (!Members.TryAdd(player.Id, lease)) return null;
-            slot.Member = lease;
-            RemoveFiller(context, slot);
-            return lease;
+            var configured = context.Arena;
+            if (context.Retired || configured?.MapId != player.MapId || !configured.Seats.Any(s => s.Id == seat.Id && s.X == seat.X && s.Y == seat.Y && s.ExitX == seat.ExitX && s.ExitY == seat.ExitY && s.Facing == seat.Facing)) return null;
+            // Resolve the slot inside the lifecycle lock: a configuration refresh may remove obsolete slots.
+            var slot = context.Slots.GetOrAdd(seat.Id, _ => new());
+            lock (slot.Gate)
+            {
+                if (slot.Member != null || !SeatTileClear(context, seat, slot.Filler)) return null;
+                var lease = new Lease(player, context, seat);
+                if (!Members.TryAdd(player.Id, lease)) return null;
+                slot.Member = lease;
+                RemoveFiller(context, slot);
+                return lease;
+            }
         }
     }
     internal static void Release(Lease lease)
