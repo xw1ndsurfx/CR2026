@@ -1436,7 +1436,8 @@ public static partial class Graphics
         IGameTexture texture,
         FloatRect source,
         FloatRect screenTarget,
-        Color color
+        Color color,
+        GameBlendModes blendMode = GameBlendModes.None
     )
     {
         if (texture == null || Renderer is not { } renderer ||
@@ -1452,7 +1453,8 @@ public static partial class Graphics
         );
         renderer.DrawTexture(
             texture, source.X, source.Y, source.Width, source.Height,
-            target.X, target.Y, target.Width, target.Height, color
+            target.X, target.Y, target.Width, target.Height, color,
+            blendMode: blendMode
         );
     }
 
