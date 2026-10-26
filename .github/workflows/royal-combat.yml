@@ -34,3 +34,5 @@ jobs:
         run: dotnet run --project Utilities/PokerUiTests/Intersect.PokerUiTests.csproj -c Debug
       - name: Compile editor and exercise both royal editor views
         run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -- --royal-combat-only
+      - name: Existing mini-game editor and catalog regressions
+        run: dotnet run --project Utilities/PokerEditorTests/Intersect.PokerEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64

@@ -7,6 +7,7 @@ using Intersect.Client.Interface.Game;
 using Intersect.Framework.Core.Archery;
 using Intersect.Framework.Core.QualityOfLife;
 using Intersect.Network.Packets.Server;
+using Intersect.Framework.Core.GameObjects.Items;
 
 internal static class RoyalArcheryUiTests
 {
@@ -41,6 +42,39 @@ internal static class RoyalArcheryUiTests
             "Round {0}/3 · Score {1}/150 · Arrows {2} · Distance {3} m · Wind {4}", "Training complete", "Training ended" })
             foreach (var language in new[] { "fr", "es" })
                 if (QualityOfLifeText.Get(source, language) == source) throw new Exception("Untranslated archery text: " + source);
+        TestProgressionWindows();
         System.Console.WriteLine("PASS: royal archery client layout, phase rendering, close/late snapshot and FR/ES catalog checks.");
     }
+    private static void TestProgressionWindows()
+    {
+        using var renderer = new MetricsRenderer(); using var skin = new TestSkin(renderer);
+        using var canvas = new Canvas(skin) { Size = new Point(1280, 720) };
+        var assembly = typeof(GameInterface).Assembly;
+        var type = assembly.GetType("Intersect.Client.Interface.Game.WeaponMasteriesWindow", true)!;
+        var window = (WindowControl)Activator.CreateInstance(type, BindingFlags.NonPublic | BindingFlags.Instance, null, [canvas], null)!;
+        type.GetMethod("Apply", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, [new ArcheryStatePacket { Open = true,
+            ConfigurationJson = new RoyalCombatConfiguration().ToJson(), MasteriesJson = "{\"archery\":100}", MasteryRanksJson = "{}" }]);
+        var learn = All(window).OfType<Button>().Where(b => b.Name == "LearnTalent").ToArray();
+        if (learn.Length != 6 || learn.Count(b => !b.IsDisabled) != 1) throw new Exception("Mastery point/level/unconfigured talent gates are not reflected in the UI.");
+        typeof(Button).GetMethod("OnKeyReturn", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(learn.Single(b => !b.IsDisabled), [false]);
+        if (All(window).Single(b => b.Name == "ConfirmTalent").IsHidden) throw new Exception("Talent purchases skipped confirmation.");
+        var ammo = new ItemDescriptor(Guid.NewGuid()) { Name = "Existing arrow", ItemType = ItemType.Ammo };
+        ItemDescriptor.Lookup.Set(ammo.Id, ammo);
+        try
+        {
+            type = assembly.GetType("Intersect.Client.Interface.Game.UniversalAmmunitionWindow", true)!;
+            window = (WindowControl)Activator.CreateInstance(type, BindingFlags.NonPublic | BindingFlags.Instance, null, [canvas], null)!;
+            var apply = type.GetMethod("Apply", BindingFlags.NonPublic | BindingFlags.Instance)!;
+            apply.Invoke(window, [new ArcheryStatePacket { Open = true, AmmunitionJson = JsonSerializer.Serialize(new AmmunitionView {
+                Entries = [new() { ItemId = ammo.Id, Quantity = 3, Required = 1, Compatible = false }] }) }]);
+            if (!All(window).Single(b => b.Name == "AmmunitionItem" + ammo.Id).IsDisabled) throw new Exception("Incompatible ammo could be selected.");
+            if (!All(window).Any(b => b.Name == "CannonAmmunition")) throw new Exception("The native naval ammunition entry point disappeared.");
+            window.Hide(); apply.Invoke(window, [new ArcheryStatePacket { AmmunitionJson = "{}" }]);
+            if (window.IsVisibleInTree) throw new Exception("A late ammo refresh reopened a closed window.");
+        }
+        finally { ItemDescriptor.Lookup.DeleteAt(ammo.Id); }
+        System.Console.WriteLine("PASS: mastery confirmation, level/point gates, ammo compatibility, naval access and late-refresh closure.");
+    }
+    private static IEnumerable<Intersect.Client.Framework.Gwen.Control.Base> All(Intersect.Client.Framework.Gwen.Control.Base parent) =>
+        parent.Children.SelectMany(child => new[] { child }.Concat(All(child)));
 }

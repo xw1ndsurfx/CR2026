@@ -14,7 +14,7 @@ using NUnit.Framework;
 namespace Intersect.Tests.Server;
 
 [TestFixture, NonParallelizable]
-public sealed class RoyalCombatTests
+public sealed partial class RoyalCombatTests
 {
     private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.NonPublic;
     private static readonly FieldInfo Config = typeof(RoyalCombatRuntime).GetField("_current", BindingFlags.Static | BindingFlags.NonPublic)!;
@@ -112,11 +112,19 @@ public sealed class RoyalCombatTests
     [Test]
     public void NewPacketsRoundTripWithoutClientScoreOrExperienceFields()
     {
-        var packet = new ArcheryRequestPacket { Action = ArcheryAction.Release, MatchId = Guid.NewGuid(), Sequence = 3, Yaw = .02, Pitch = .1 };
+        var packet = new ArcheryRequestPacket { Action = ArcheryAction.Release, MatchId = Guid.NewGuid(), Sequence = 3, Yaw = .02, Pitch = .1,
+            CategoryKey = "archery", TalentKey = "steady-aim", ItemId = Guid.NewGuid(), WeaponId = Guid.NewGuid(), RequestId = Guid.NewGuid() };
         var received = MessagePackSerializer.Deserialize<ArcheryRequestPacket>(MessagePackSerializer.Serialize(packet));
         Assert.That(received.MatchId, Is.EqualTo(packet.MatchId));
         Assert.That(received.Sequence, Is.EqualTo(3));
-        var state = new ArcheryStatePacket { ViewJson = "{}", MasteriesJson = "{}" };
-        Assert.That(MessagePackSerializer.Deserialize<ArcheryStatePacket>(MessagePackSerializer.Serialize(state)).MasteriesJson, Is.EqualTo("{}"));
+        Assert.That(received.CategoryKey, Is.EqualTo(packet.CategoryKey));
+        Assert.That(received.ItemId, Is.EqualTo(packet.ItemId));
+        Assert.That(received.WeaponId, Is.EqualTo(packet.WeaponId));
+        Assert.That(received.RequestId, Is.EqualTo(packet.RequestId));
+        var state = new ArcheryStatePacket { ViewJson = "{}", MasteriesJson = "{}", MasteryRanksJson = "{\"archery\":{}}", AmmunitionJson = "{\"Entries\":[]}" };
+        var decoded = MessagePackSerializer.Deserialize<ArcheryStatePacket>(MessagePackSerializer.Serialize(state));
+        Assert.That(decoded.MasteriesJson, Is.EqualTo(state.MasteriesJson));
+        Assert.That(decoded.MasteryRanksJson, Is.EqualTo(state.MasteryRanksJson));
+        Assert.That(decoded.AmmunitionJson, Is.EqualTo(state.AmmunitionJson));
     }
 }

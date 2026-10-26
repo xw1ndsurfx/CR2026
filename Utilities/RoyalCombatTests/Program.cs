@@ -57,4 +57,26 @@ config = new(); config.Ranges = [new() { Enabled = true }]; Check(!config.IsVali
 config = new(); config.Masteries[0].DamagePercentPerLevel = double.NaN; Check(!config.IsValid, "finite bonus");
 config = new(); config.Masteries[0].Cap = 0; Check(!config.IsValid, "cap bounds");
 config = new(); config.Masteries = null!; Check(!config.IsValid, "malformed config fails closed");
-Console.WriteLine($"PASS: {checks} checks (ballistics, authority, replay, timeouts, rounds, mastery curves, configuration).");
+var tree = new MasteryCategory { Talents = [new() { DamagePercentPerRank = .5 },
+    new() { Key = "quick-shot", Prerequisite = "steady-aim", RequiredLevel = 3, AttackSpeedPercentPerRank = .5 }] };
+var ranks = new Dictionary<string, int>();
+Check(MasteryRules.ValidTree(tree), "valid talent tree");
+Check(!MasteryRules.CanBuy(tree, tree.Talents[0], 0, ranks), "no points at level one");
+Check(MasteryRules.CanBuy(tree, tree.Talents[0], 100, ranks), "level provides one point");
+ranks["steady-aim"] = 1;
+Check(!MasteryRules.CanBuy(tree, tree.Talents[0], 100, ranks), "spent points unavailable");
+Check(!MasteryRules.CanBuy(tree, tree.Talents[1], 100, ranks), "level gate");
+Check(MasteryRules.CanBuy(tree, tree.Talents[1], 500, ranks), "prerequisite and point available");
+tree.Talents[0].Prerequisite = "quick-shot"; Check(!MasteryRules.ValidTree(tree), "cycles rejected");
+tree.Talents[0].Prerequisite = "missing"; Check(!MasteryRules.ValidTree(tree), "dangling prerequisite");
+tree.Talents[0].Prerequisite = ""; tree.Talents[0].RankSpellIds = [Guid.NewGuid()];
+Check(!MasteryRules.ValidTree(tree), "active spell must map every rank");
+tree.Talents[0].RankSpellIds = [];
+tree.Talents[0].MaxRank = 6; Check(!MasteryRules.ValidTree(tree), "rank cap five");
+tree.Talents[0].MaxRank = 5; ranks["steady-aim"] = 5;
+Check(!MasteryRules.CanBuy(tree, tree.Talents[0], tree.Maximum, ranks), "max rank never charged");
+Check(!MasteryRules.CanBuy(new MasteryCategory(), new MasteryTalent(), 1000, new Dictionary<string, int>()), "unconfigured skill disabled");
+config = new(); config.Ammunition = [new() { WeaponId = Guid.NewGuid(), ProjectileIds = [] }]; Check(!config.IsValid, "empty ammo mapping rejected");
+var weapon = Guid.NewGuid(); config.Ammunition = [new() { WeaponId = weapon, ProjectileIds = [Guid.NewGuid()] }, new() { WeaponId = weapon, ProjectileIds = [Guid.NewGuid()] }];
+Check(!config.IsValid, "one ammo rule per weapon");
+Console.WriteLine($"PASS: {checks} checks (ballistics, authority, replay, timeouts, rounds, mastery curves, talents, ammunition configuration).");

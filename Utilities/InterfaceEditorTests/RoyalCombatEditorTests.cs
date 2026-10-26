@@ -23,6 +23,16 @@ internal static class RoyalCombatEditorTests
             throw new Exception("The archery NPC command exposed gambling controls or lost Save/Cancel.");
         if ((int)MiniGameType.Smithing != 7 || (int)MiniGameType.Archery != 8)
             throw new Exception("Existing mini-game serialization values changed.");
+        var originalDamage = mastery.Talents[0].DamagePercentPerRank;
+        using (var talents = new FrmMasteryTalents(mastery))
+        {
+            talents.Result.Talents[0].DamagePercentPerRank = 2;
+            if (mastery.Talents[0].DamagePercentPerRank != originalDamage ||
+                Descendants(talents).OfType<ComboBox>().Count(c => c.Name.StartsWith("TalentRankSpell")) != 5)
+                throw new Exception("Talent editing changed the source before Save or lost native rank-spell pickers.");
+        }
+        using var ammunition = new FrmWeaponAmmunition([]);
+        if (ammunition.Result.Length != 0) throw new Exception("Opening ammunition compatibility invented a weapon mapping.");
         System.Console.WriteLine("PASS: royal editor draft preservation, dedicated NPC command dialog and stable mini-game IDs.");
     }
     private static IEnumerable<Control> Descendants(Control parent)
