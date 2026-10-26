@@ -43,11 +43,12 @@ public partial class Player
                 if (now - _joustOpenAt < 500) return;
                 _joustOpenAt = now;
                 SendPacket(new JoustStatePacket { Open = true, ConfigurationJson = JoustRuntime.Current.ToJson() });
-                SendJoustView(now); return;
+                SendJoustView(now); SendJoustCareer(); return;
             }
+            if (packet.Action == JoustAction.Redeem) { RedeemJoustOffer(packet.OfferId, packet.RequestId); return; }
             if (packet.Action == JoustAction.StartPve)
             {
-                if (now - _joustStartAt < 1500 || _joust is { Done: false } || !Enum.IsDefined((JoustDifficulty)packet.Difficulty)) return;
+                if (now - _joustStartAt < 1500 || _joust is { Done: false } || _joustPendingReward != null || !Enum.IsDefined((JoustDifficulty)packet.Difficulty)) return;
                 _joustStartAt = now;
                 var arena = JoustRuntime.Current.Arenas.FirstOrDefault(a => a.Id == packet.ArenaId && a.Enabled && a.MapId == MapId);
                 if (arena == null || X != arena.StartX || Y != arena.StartY || IsDead || HasPendingDeath ||
@@ -105,6 +106,7 @@ public partial class Player
     }
     private void UpdateJoust(long? suppliedNow = null)
     {
+        CompleteJoustCareer();
         if (_joust == null || _joust.Done || _joustArena == null) return;
         if (!InGame || Client == null || MapId != _joustMap || _joustInstance?.MapInstanceId != MapInstanceId ||
             _joustInstance.IsDisposed || _joustOpponent is not { IsDisposed: false } || IsDead || HasPendingDeath ||
@@ -137,8 +139,10 @@ public partial class Player
         if (!_joust.Done && !MoveJoustTrack(now)) { EndJoust(true); return; }
         if (_joust.Done)
         {
+            _joustPendingReward = _joust;
             try { SendJoustView(now); }
             finally { RestoreJoustMount(); }
+            CompleteJoustCareer();
             if (_joust.Winner == 0) RunJoustEvent(_joustArena.VictoryEventId);
         }
         else if (before != _joust.Phase || now - _joustSent >= 100) SendJoustView(now);

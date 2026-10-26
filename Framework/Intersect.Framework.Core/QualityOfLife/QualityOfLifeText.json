@@ -1,5 +1,420 @@
 {
   "Entries": {
+    "Quantity": {
+        "en": "Quantity",
+        "fr": "Quantité",
+        "es": "Cantidad"
+    },
+    "Target rectangles need left < right and top < bottom. Keep the precise target inside the body target.": {
+        "en": "Target rectangles need left < right and top < bottom. Keep the precise target inside the body target.",
+        "fr": "Les zones doivent avoir gauche < droite et haut < bas. Garde la zone précise à l’intérieur du plastron.",
+        "es": "Las zonas necesitan izquierda < derecha y arriba < abajo. Mantén la zona precisa dentro del peto."
+    },
+    "Open this arena's map to check and place its tracks.": {
+        "en": "Open this arena's map to check and place its tracks.",
+        "fr": "Ouvre la carte de cette arène pour vérifier et placer ses couloirs.",
+        "es": "Abre el mapa de esta arena para revisar y colocar sus carriles."
+    },
+    "Keep both tracks inside the map.": {
+        "en": "Keep both tracks inside the map.",
+        "fr": "Garde les deux couloirs à l’intérieur de la carte.",
+        "es": "Mantén ambos carriles dentro del mapa."
+    },
+    "Clear map attributes from both tracks before playing (blocks, warps, slides and traps).": {
+        "en": "Clear map attributes from both tracks before playing (blocks, warps, slides and traps).",
+        "fr": "Enlève les attributs de carte des deux couloirs avant de jouer (blocages, téléportations, glissades et pièges).",
+        "es": "Elimina los atributos del mapa de ambos carriles antes de jugar (bloqueos, teletransportes, deslizamientos y trampas)."
+    },
+    "Add William preset": {
+        "en": "Add William preset",
+        "fr": "Ajouter le préréglage William",
+        "es": "Añadir preajuste William"
+    },
+    "William's preset uses the supplied sprite files in resources/images/jousting/William. Select William after the resource list refreshes.": {
+        "en": "William's preset uses the supplied sprite files in resources/images/jousting/William. Select William after the resource list refreshes.",
+        "fr": "Le préréglage William utilise les sprites fournis dans resources/images/jousting/William. Sélectionne William après l’actualisation de la liste.",
+        "es": "El preajuste William usa los sprites de resources/images/jousting/William. Selecciona William cuando se actualice la lista."
+    },
+    "5. Aim target zones": {
+        "en": "5. Aim target zones",
+        "fr": "5. Zones de visée",
+        "es": "5. Zonas de puntería"
+    },
+    "Body target": {
+        "en": "Body target",
+        "fr": "Zone du plastron",
+        "es": "Zona del peto"
+    },
+    "Shield target": {
+        "en": "Shield target",
+        "fr": "Zone du bouclier",
+        "es": "Zona del escudo"
+    },
+    "Precise target": {
+        "en": "Precise target",
+        "fr": "Zone de touche précise",
+        "es": "Zona de golpe preciso"
+    },
+    "Bounds as a percentage of the close-up sprite": {
+        "en": "Bounds as a percentage of the close-up sprite",
+        "fr": "Limites en pourcentage du sprite rapproché",
+        "es": "Límites como porcentaje del sprite de primer plano"
+    },
+    "Top": {
+        "en": "Top",
+        "fr": "Haut",
+        "es": "Arriba"
+    },
+    "Bottom": {
+        "en": "Bottom",
+        "fr": "Bas",
+        "es": "Abajo"
+    },
+    "4. Rewards and economy": {
+        "en": "4. Rewards and economy",
+        "fr": "4. Récompenses et économie",
+        "es": "4. Recompensas y economía"
+    },
+    "Enable royal medal rewards": {
+        "en": "Enable royal medal rewards",
+        "fr": "Activer les récompenses en médailles royales",
+        "es": "Activar recompensas en medallas reales"
+    },
+    "Daily medal limit (UTC)": {
+        "en": "Daily medal limit (UTC)",
+        "fr": "Plafond quotidien de médailles (UTC)",
+        "es": "Límite diario de medallas (UTC)"
+    },
+    "Reward cooldown (seconds)": {
+        "en": "Reward cooldown (seconds)",
+        "fr": "Délai entre récompenses (secondes)",
+        "es": "Espera entre recompensas (segundos)"
+    },
+    "A victory awards 5 to 25 medals depending on AI difficulty; a completed loss awards 1. At least one scored hit is required. Abandoned matches award nothing. Medals and items are saved together when exchanged.": {
+        "en": "A victory awards 5 to 25 medals depending on AI difficulty; a completed loss awards 1. At least one scored hit is required. Abandoned matches award nothing. Medals and items are saved together when exchanged.",
+        "fr": "Une victoire rapporte 5 à 25 médailles selon la difficulté de l’IA ; une défaite terminée rapporte 1 médaille. Au moins une touche réussie est nécessaire. Un abandon ne rapporte rien. Les médailles et objets sont enregistrés ensemble lors d’un échange.",
+        "es": "Una victoria otorga de 5 a 25 medallas según la dificultad; una derrota completada otorga 1. Se requiere al menos un golpe puntuado. Abandonar no otorga nada. Medallas y objetos se guardan juntos al intercambiar."
+    },
+    "Royal medals": {
+        "en": "Royal medals",
+        "fr": "Médailles royales",
+        "es": "Medallas reales"
+    },
+    "Medal shop offers": {
+        "en": "Medal shop offers",
+        "fr": "Offres de la boutique de médailles",
+        "es": "Ofertas de la tienda de medallas"
+    },
+    "Reward item": {
+        "en": "Reward item",
+        "fr": "Objet de récompense",
+        "es": "Objeto de recompensa"
+    },
+    "Price in royal medals": {
+        "en": "Price in royal medals",
+        "fr": "Prix en médailles royales",
+        "es": "Precio en medallas reales"
+    },
+    "Add shop offer": {
+        "en": "Add shop offer",
+        "fr": "Ajouter une offre",
+        "es": "Añadir oferta"
+    },
+    "Remove shop offer": {
+        "en": "Remove shop offer",
+        "fr": "Supprimer l’offre",
+        "es": "Eliminar oferta"
+    },
+    "Make room in your inventory before exchanging medals.": {
+        "en": "Make room in your inventory before exchanging medals.",
+        "fr": "Libère de la place dans ton inventaire avant d’échanger des médailles.",
+        "es": "Haz espacio en tu inventario antes de intercambiar medallas."
+    },
+    "{0} x{1} · {2} royal medals": {
+        "en": "{0} x{1} · {2} royal medals",
+        "fr": "{0} x{1} · {2} médailles royales",
+        "es": "{0} x{1} · {2} medallas reales"
+    },
+    "Royal medals: {0} · Level {1} · Wins {2}/{3}": {
+        "en": "Royal medals: {0} · Level {1} · Wins {2}/{3}",
+        "fr": "Médailles royales : {0} · Niveau {1} · Victoires {2}/{3}",
+        "es": "Medallas reales: {0} · Nivel {1} · Victorias {2}/{3}"
+    },
+    "Delete arena": {
+        "en": "Delete arena",
+        "fr": "Supprimer l’arène",
+        "es": "Eliminar arena"
+    },
+    "Refresh resources": {
+        "en": "Refresh resources",
+        "fr": "Actualiser les ressources",
+        "es": "Actualizar recursos"
+    },
+    "Place player start": {
+        "en": "Place player start",
+        "fr": "Placer le départ du joueur",
+        "es": "Colocar inicio del jugador"
+    },
+    "Place finish": {
+        "en": "Place finish",
+        "fr": "Placer l’arrivée",
+        "es": "Colocar llegada"
+    },
+    "Place opponent lane": {
+        "en": "Place opponent lane",
+        "fr": "Placer le couloir adverse",
+        "es": "Colocar carril rival"
+    },
+    "1. Arena setup": {
+        "en": "1. Arena setup",
+        "fr": "1. Préparer l’arène",
+        "es": "1. Preparar arena"
+    },
+    "2. Match rules": {
+        "en": "2. Match rules",
+        "fr": "2. Règles du match",
+        "es": "2. Reglas del duelo"
+    },
+    "3. Cinematics": {
+        "en": "3. Cinematics",
+        "fr": "3. Cinématiques",
+        "es": "3. Cinemáticas"
+    },
+    "Arena name": {
+        "en": "Arena name",
+        "fr": "Nom de l’arène",
+        "es": "Nombre de arena"
+    },
+    "Enable this arena": {
+        "en": "Enable this arena",
+        "fr": "Activer cette arène",
+        "es": "Activar esta arena"
+    },
+    "Knight mount": {
+        "en": "Knight mount",
+        "fr": "Monture du chevalier",
+        "es": "Montura del caballero"
+    },
+    "Open Mount Editor": {
+        "en": "Open Mount Editor",
+        "fr": "Ouvrir l’éditeur de montures",
+        "es": "Abrir editor de monturas"
+    },
+    "Track positions": {
+        "en": "Track positions",
+        "fr": "Positions de la lice",
+        "es": "Posiciones de la pista"
+    },
+    "Setup check": {
+        "en": "Setup check",
+        "fr": "Vérification de l’arène",
+        "es": "Revisión de arena"
+    },
+    "How to play": {
+        "en": "How to play",
+        "fr": "Comment jouer",
+        "es": "Cómo jugar"
+    },
+    "Choose a mount with an integrated rider. Use the three placement buttons, then click the map. The finish stays on the player's row. Cinematics are optional. Save the arena, then stand at the gold start tile in game and open Royal Jousting in the Lobby.": {
+        "en": "Choose a mount with an integrated rider. Use the three placement buttons, then click the map. The finish stays on the player's row. Cinematics are optional. Save the arena, then stand at the gold start tile in game and open Royal Jousting in the Lobby.",
+        "fr": "Choisis une monture avec cavalier intégré. Utilise les trois boutons de placement, puis clique sur la carte. L’arrivée reste sur la ligne du joueur. Les cinématiques sont facultatives. Enregistre l’arène, puis place-toi sur la case de départ dorée en jeu et ouvre les Joutes Royales dans le Lobby.",
+        "es": "Elige una montura con jinete integrado. Usa los tres botones y haz clic en el mapa. La llegada queda en la fila del jugador. Las cinemáticas son opcionales. Guarda la arena, sitúate en la casilla dorada en el juego y abre Justas reales en el Lobby."
+    },
+    "Number of passes": {
+        "en": "Number of passes",
+        "fr": "Nombre de passes",
+        "es": "Número de pasadas"
+    },
+    "Preparation (seconds)": {
+        "en": "Preparation (seconds)",
+        "fr": "Préparation (secondes)",
+        "es": "Preparación (segundos)"
+    },
+    "Charge (seconds)": {
+        "en": "Charge (seconds)",
+        "fr": "Charge (secondes)",
+        "es": "Carga (segundos)"
+    },
+    "Aiming (seconds)": {
+        "en": "Aiming (seconds)",
+        "fr": "Visée (secondes)",
+        "es": "Puntería (segundos)"
+    },
+    "Impact (seconds)": {
+        "en": "Impact (seconds)",
+        "fr": "Impact (secondes)",
+        "es": "Impacto (segundos)"
+    },
+    "Pass results (seconds)": {
+        "en": "Pass results (seconds)",
+        "fr": "Résultats de passe (secondes)",
+        "es": "Resultados de pasada (segundos)"
+    },
+    "Shield points": {
+        "en": "Shield points",
+        "fr": "Points du bouclier",
+        "es": "Puntos del escudo"
+    },
+    "Body points": {
+        "en": "Body points",
+        "fr": "Points du plastron",
+        "es": "Puntos del peto"
+    },
+    "Precise hit points": {
+        "en": "Precise hit points",
+        "fr": "Points de touche précise",
+        "es": "Puntos de golpe preciso"
+    },
+    "Broken lance bonus": {
+        "en": "Broken lance bonus",
+        "fr": "Bonus de lance brisée",
+        "es": "Bonificación de lanza rota"
+    },
+    "Aim speed": {
+        "en": "Aim speed",
+        "fr": "Vitesse de visée",
+        "es": "Velocidad de puntería"
+    },
+    "Unhorsing ends the match": {
+        "en": "Unhorsing ends the match",
+        "fr": "Le désarçonnement termine le match",
+        "es": "Derribar termina el duelo"
+    },
+    "Create or edit this cinematic": {
+        "en": "Create or edit this cinematic",
+        "fr": "Créer ou modifier cette cinématique",
+        "es": "Crear o editar esta cinemática"
+    },
+    "No server reply. Your changes are still here; try saving again.": {
+        "en": "No server reply. Your changes are still here; try saving again.",
+        "fr": "Le serveur ne répond pas. Tes modifications sont conservées ; réessaie d’enregistrer.",
+        "es": "El servidor no responde. Los cambios se conservan; vuelve a guardar."
+    },
+    "Close without saving the arena changes?": {
+        "en": "Close without saving the arena changes?",
+        "fr": "Fermer sans enregistrer les modifications de l’arène ?",
+        "es": "¿Cerrar sin guardar los cambios de arena?"
+    },
+    "Open a map before creating an arena.": {
+        "en": "Open a map before creating an arena.",
+        "fr": "Ouvre une carte avant de créer une arène.",
+        "es": "Abre un mapa antes de crear una arena."
+    },
+    "Choose a knight mount": {
+        "en": "Choose a knight mount",
+        "fr": "Choisir une monture de chevalier",
+        "es": "Elegir montura de caballero"
+    },
+    "None (optional)": {
+        "en": "None (optional)",
+        "fr": "Aucune (facultatif)",
+        "es": "Ninguna (opcional)"
+    },
+    "Missing scene: select another": {
+        "en": "Missing scene: select another",
+        "fr": "Scène introuvable : choisis-en une autre",
+        "es": "Escena no encontrada: elige otra"
+    },
+    "Open this arena's map to edit its cinematic.": {
+        "en": "Open this arena's map to edit its cinematic.",
+        "fr": "Ouvre la carte de cette arène pour modifier sa cinématique.",
+        "es": "Abre el mapa de esta arena para editar su cinemática."
+    },
+    "This selection is a common Event. Edit it in the Event Editor, or choose None to create a cinematic.": {
+        "en": "This selection is a common Event. Edit it in the Event Editor, or choose None to create a cinematic.",
+        "fr": "Cette sélection est un événement commun. Modifie-le dans l’éditeur d’événements, ou choisis Aucune pour créer une cinématique.",
+        "es": "La selección es un evento común. Edítalo en el editor de eventos o elige Ninguna para crear una cinemática."
+    },
+    "Click the gold starting tile for the player.": {
+        "en": "Click the gold starting tile for the player.",
+        "fr": "Clique sur la case de départ dorée du joueur.",
+        "es": "Haz clic en la casilla dorada de inicio del jugador."
+    },
+    "Click the finish column. Use an even distance of 4 to 64 tiles.": {
+        "en": "Click the finish column. Use an even distance of 4 to 64 tiles.",
+        "fr": "Clique sur la colonne d’arrivée. Choisis une distance paire de 4 à 64 cases.",
+        "es": "Haz clic en la columna de llegada. Elige una distancia par de 4 a 64 casillas."
+    },
+    "Click the row for the opposing knight (blue lane).": {
+        "en": "Click the row for the opposing knight (blue lane).",
+        "fr": "Clique sur la ligne du chevalier adverse (couloir bleu).",
+        "es": "Haz clic en la fila del caballero rival (carril azul)."
+    },
+    "Create or select an arena.": {
+        "en": "Create or select an arena.",
+        "fr": "Crée ou sélectionne une arène.",
+        "es": "Crea o selecciona una arena."
+    },
+    "Player": {
+        "en": "Player",
+        "fr": "Joueur",
+        "es": "Jugador"
+    },
+    "Opponent": {
+        "en": "Opponent",
+        "fr": "Adversaire",
+        "es": "Rival"
+    },
+    "tiles": {
+        "en": "tiles",
+        "fr": "cases",
+        "es": "casillas"
+    },
+    "Enter an arena name.": {
+        "en": "Enter an arena name.",
+        "fr": "Saisis un nom d’arène.",
+        "es": "Introduce un nombre de arena."
+    },
+    "Select a compatible knight mount. Open Mount Editor to import William if the list is empty.": {
+        "en": "Select a compatible knight mount. Open Mount Editor to import William if the list is empty.",
+        "fr": "Sélectionne une monture de chevalier compatible. Si la liste est vide, ouvre l’éditeur de montures pour importer William.",
+        "es": "Selecciona una montura de caballero compatible. Si la lista está vacía, abre el editor de monturas para importar William."
+    },
+    "The track needs an even distance of 4 to 64 tiles.": {
+        "en": "The track needs an even distance of 4 to 64 tiles.",
+        "fr": "La lice doit avoir une distance paire de 4 à 64 cases.",
+        "es": "La pista necesita una distancia par de 4 a 64 casillas."
+    },
+    "Place the opponent on a different row.": {
+        "en": "Place the opponent on a different row.",
+        "fr": "Place l’adversaire sur une autre ligne.",
+        "es": "Coloca al rival en otra fila."
+    },
+    "Check the match rules: precise points must be at least body points, and body points at least shield points.": {
+        "en": "Check the match rules: precise points must be at least body points, and body points at least shield points.",
+        "fr": "Vérifie les règles : les points de touche précise doivent être au moins égaux à ceux du plastron, et ceux du plastron à ceux du bouclier.",
+        "es": "Revisa las reglas: los puntos precisos deben ser al menos los del peto, y los del peto al menos los del escudo."
+    },
+    "Ready. Save, then enter the game at the gold start tile.": {
+        "en": "Ready. Save, then enter the game at the gold start tile.",
+        "fr": "Prêt. Enregistre, puis rejoins la case de départ dorée en jeu.",
+        "es": "Listo. Guarda y entra al juego en la casilla dorada de inicio."
+    },
+    "Player start": {
+        "en": "Player start",
+        "fr": "Départ du joueur",
+        "es": "Inicio del jugador"
+    },
+    "Opponent start": {
+        "en": "Opponent start",
+        "fr": "Départ adverse",
+        "es": "Inicio rival"
+    },
+    "Fix the setup checks before saving an enabled arena.": {
+        "en": "Fix the setup checks before saving an enabled arena.",
+        "fr": "Corrige les problèmes indiqués avant d’enregistrer une arène active.",
+        "es": "Corrige los problemas antes de guardar una arena activa."
+    },
+    "Saving arena on the server...": {
+        "en": "Saving arena on the server...",
+        "fr": "Enregistrement de l’arène sur le serveur…",
+        "es": "Guardando arena en el servidor…"
+    },
+    "The server rejected the arena. Check map bounds, mount and scene selections; your changes are still here.": {
+        "en": "The server rejected the arena. Check map bounds, mount and scene selections; your changes are still here.",
+        "fr": "Le serveur a refusé l’arène. Vérifie les limites de la carte, la monture et les scènes ; tes modifications sont conservées.",
+        "es": "El servidor rechazó la arena. Revisa los límites del mapa, la montura y las escenas; los cambios se conservan."
+    },
     "A joust is in progress. Please wait.": {
         "en": "A joust is in progress. Please wait.",
         "fr": "Une joute est en cours. Veuillez patienter.",

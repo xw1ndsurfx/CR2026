@@ -20,6 +20,9 @@ internal sealed class JoustWindow : Window
     private readonly List<Base> _lobby = [];
     private readonly Button _defense;
     private readonly Button _leave;
+    private readonly Label _career;
+    private readonly ScrollControl _shop;
+    private readonly List<Button> _offers = [];
     private JoustConfiguration _config = new();
     private JoustView? _state;
     private long _sequence;
@@ -33,6 +36,10 @@ internal sealed class JoustWindow : Window
         _score = TextLabel(24, 42, 708, 26);
         _status = TextLabel(24, 78, 708, 26);
         _view = new(this); _view.SetBounds(24, 112, 708, 320);
+        _view.Hide();
+        _career = TextLabel(24, 112, 708, 30);
+        _shop = new ScrollControl(this, "JoustShop") { OverflowX = OverflowBehavior.Hidden, OverflowY = OverflowBehavior.Scroll, AutoHideBars = true };
+        _shop.SetBounds(24, 154, 708, 260);
         var names = new[] { "Novice", "Squire", "Knight", "Champion", "Royal Champion" };
         for (var i = 0; i < names.Length; i++)
         {
@@ -44,6 +51,7 @@ internal sealed class JoustWindow : Window
         _defense = NavalManagementWindow.Button(this, "JoustDefense", T("Toggle defense"), 376, 488, 356, 32,
             () => _defending = !_defending); _defense.IsToggle = true;
         _leave = NavalManagementWindow.Button(this, "JoustLeave", T("Leave joust"), 24, 534, 708, 30, () => { Send(JoustAction.Leave); Hide(); });
+        _defense.Hide(); _leave.Hide();
         _status.Text = T("Stand at the arena start to train."); Hide();
     }
     protected override void EnsureInitialized() { }
@@ -68,7 +76,22 @@ internal sealed class JoustWindow : Window
     {
         try
         {
-            if (packet.ConfigurationJson.Length > 0) _config = JoustConfiguration.FromJson(packet.ConfigurationJson);
+            if (packet.ConfigurationJson.Length > 0)
+            {
+                _config = JoustConfiguration.FromJson(packet.ConfigurationJson);
+                foreach (var button in _offers) button.Dispose(); _offers.Clear();
+                if (_config.Economy.Enabled)
+                foreach (var offer in _config.Economy.Offers)
+                {
+                    var selected = offer.Id;
+                    var caption = ClientLanguages.Format("{0} x{1} · {2} royal medals", Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.GetName(offer.ItemId), offer.Quantity, offer.Medals);
+                    _offers.Add(NavalManagementWindow.Button(_shop, "Offer" + selected, caption, 4, _offers.Count * 38, 660, 32,
+                        () => Intersect.Client.Networking.Network.SendPacket(new JoustRequestPacket { Action = JoustAction.Redeem, OfferId = selected, RequestId = Guid.NewGuid() })));
+                }
+                _shop.SetInnerSize(680, Math.Max(260, _offers.Count * 38));
+            }
+            if (packet.CareerJson.Length > 0 && JsonSerializer.Deserialize<JoustCareer>(packet.CareerJson) is { } career)
+                _career.Text = ClientLanguages.Format("Royal medals: {0} · Level {1} · Wins {2}/{3}", career.Medals, career.Level, career.Wins, career.Matches);
             if (packet.ViewJson.Length > 0)
             {
                 var next = JsonSerializer.Deserialize<JoustView>(packet.ViewJson);
@@ -87,9 +110,11 @@ internal sealed class JoustWindow : Window
                 var compact = active && next.Phase is JoustPhase.Preparation or JoustPhase.Charge;
                 SetSize(760, compact ? 175 : 600);
                 foreach (var control in _lobby) { if (active) control.Hide(); else control.Show(); }
-                if (compact) _view.Hide(); else _view.Show();
+                if (active) { _career.Hide(); _shop.Hide(); } else { _career.Show(); _shop.Show(); }
+                if (compact || !active) _view.Hide(); else _view.Show();
                 if (next.Phase == JoustPhase.Aim) _defense.Show(); else _defense.Hide();
                 _leave.SetBounds(24, compact ? 118 : 534, 708, 30);
+                if (active) _leave.Show(); else _leave.Hide();
                 Show();
             }
         }

@@ -45,7 +45,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
     { public override string ToString() => Name; }
 
     internal FrmCinematicDirector() : this(null, null) { }
-    internal FrmCinematicDirector(CinematicScene? initialScene, Action<Guid>? onSaved = null)
+    internal FrmCinematicDirector(CinematicScene? initialScene, Action<Guid>? onSaved = null, Guid existingEventId = default)
     {
         _joustSceneSaved = onSaved;
         Text = T("Title"); Width = 1440; Height = 960; MinimumSize = new(1000, 700);
@@ -193,7 +193,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
             _viewport.Invalidate();
         };
         _timer.Tick += (_, _) => TickPreview(); _timer.Start();
-        Shown += (_, _) => { if (initialScene == null) NewScene(); else LoadScene(initialScene, Guid.Empty); RenderMap();RequestVesselModels(false); };
+        Shown += (_, _) => { if (initialScene == null) NewScene(); else LoadScene(initialScene, existingEventId); RenderMap();RequestVesselModels(false); };
         FormClosing += (_, e) => { if (!CanDiscard()) e.Cancel = true; };
         Disposed += (_, _) => { _timer.Dispose(); _viewport.MapImage?.Dispose(); };
     }

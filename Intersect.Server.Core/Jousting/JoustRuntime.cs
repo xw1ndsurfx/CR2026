@@ -39,6 +39,8 @@ internal static class JoustRuntime
     internal static void Save(string json)
     {
         var config = JoustConfiguration.FromJson(json);
+        if (config.Economy.Offers.Any(o => !Intersect.Framework.Core.MiniGames.MiniGameCurrency.IsCompatible(Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Get(o.ItemId))))
+            throw new InvalidDataException("joust-reward-item");
         foreach (var arena in config.Arenas.Where(a => a.Enabled))
         {
             if (Intersect.Server.Maps.MapController.Get(arena.MapId) == null ||
