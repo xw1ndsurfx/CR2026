@@ -129,6 +129,7 @@ public sealed partial class FrmJoustConfiguration : Form
             foreach (var edge in new[] { "Left", "Top", "Right", "Bottom" }) Number(targets, target + "." + edge, edge, 0, 100, 1, .01m);
         }
         BuildSeats(tabs);
+        BuildSounds(tabs);
         right.Panel2.Controls.Add(tabs); Controls.Add(split); Controls.Add(tools); Controls.Add(_status); Controls.Add(_problems);
         _list.SelectedIndexChanged += (_, _) => LoadArena();
         _name.TextChanged += (_, _) => { if (!_loading && Arena is { } a) { a.Name = _name.Text; var index = _list.SelectedIndex; _list.Items[index] = new ArenaChoice(a); Changed(); } };
@@ -192,7 +193,7 @@ public sealed partial class FrmJoustConfiguration : Form
         _loading = true;
         _name.Text = Arena?.Name ?? ""; _enabled.Checked = Arena?.Enabled == true;
         _allowPve.Checked = Arena?.AllowPve == true; _allowPvp.Checked = Arena?.AllowPvp == true;
-        PopulateMounts(); PopulateScenes(); LoadSeats(); _opponent.SelectedIndex = (int)(Arena?.AiOpponent ?? JoustAiOpponent.William);
+        PopulateMounts(); PopulateScenes(); LoadSeats(); LoadSounds(); _opponent.SelectedIndex = (int)(Arena?.AiOpponent ?? JoustAiOpponent.William);
         if (Arena is { } a)
         {
             foreach (var (key, number) in _numbers) { var (target, property) = RuleProperty(a.Rules, key); number.Value = Math.Clamp(Convert.ToDecimal(property.GetValue(target)) / (decimal)number.Tag!, number.Minimum, number.Maximum); }

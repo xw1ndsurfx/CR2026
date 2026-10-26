@@ -15,36 +15,38 @@ internal sealed class JoustSpectatorWindow : Window
     private JoustSpectatorView _state = new();
     private JoustSeatView[] _displayedSeats = [];
     private readonly JoustViewport _viewport;
-    private readonly List<(Base Control, int Y)> _layout = [];
+    private readonly JoustFullscreen _fullscreen;
+    private readonly JoustAudio _audio = new();
     private (Guid Match, int Pass)? _presentationKey;
     internal JoustSpectatorWindow(Canvas canvas) : base(canvas, ClientLanguages.Text("Joust grandstands"), false, nameof(JoustSpectatorWindow))
     {
         SetSize(660, 360); Alignment = [Alignments.Center]; DisableResizing(); DeleteOnClose = false;
-        T Track<T>(T control) where T : Base { _layout.Add((control, control.Y)); return control; }
         Label Text(int y, int height)
         {
             var label = new Label(this) { Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 11, TextColorOverride = Color.White, AutoSizeToContents = false };
-            label.SetBounds(20, y, 620, height); if (y >= 104) Track(label); return label;
+            label.SetBounds(20, y, 620, height); return label;
         }
         _score = Text(42, 54);
         _seats = new ComboBox(this, "JoustSeatChoice") { Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 11 };
         _seats.SetBounds(20, 104, 470, 30); _seats.ItemSelected += (_, _) => Selection();
-        Track(_seats);
-        Track(NavalManagementWindow.Button(this, "JoustSeatsRefresh", ClientLanguages.Text("Refresh"), 506, 104, 134, 30, () => Send(JoustAction.BrowseSeats)));
+        NavalManagementWindow.Button(this, "JoustSeatsRefresh", ClientLanguages.Text("Refresh"), 506, 104, 134, 30, () => Send(JoustAction.BrowseSeats));
         _entrance = Text(142, 34);
         _sit = NavalManagementWindow.Button(this, "JoustSit", ClientLanguages.Text("Sit in this seat"), 20, 182, 300, 30, () => Send(JoustAction.ReserveSeat));
         _stand = NavalManagementWindow.Button(this, "JoustStand", ClientLanguages.Text("Stand up"), 340, 182, 300, 30, () => Send(JoustAction.LeaveSeat));
-        Track(_sit); Track(_stand);
         var cameraNames = new[] { "Arena camera", "Follow gold knight", "Follow blue knight" };
         for (var i = 0; i < 3; i++)
         {
             var camera = i;
-            Track(NavalManagementWindow.Button(this, "JoustCamera" + i, ClientLanguages.Text(cameraNames[i]), 20 + i * 210, 228, 200, 30, () => Send(JoustAction.SpectatorCamera, camera)));
+            NavalManagementWindow.Button(this, "JoustCamera" + i, ClientLanguages.Text(cameraNames[i]), 20 + i * 210, 228, 200, 30, () => Send(JoustAction.SpectatorCamera, camera));
         }
         _message = Text(276, 56); Hide();
         _message.WrappingBehavior = WrappingBehavior.Wrapped;
-        _viewport = new JoustViewport(this) { ReadOnly = true, MouseInputEnabled = false, KeyboardInputEnabled = false };
-        _viewport.SetBounds(20, 104, 620, 320); _viewport.Hide();
+        _fullscreen = new(canvas, true); _viewport = _fullscreen.Viewport;
+        _fullscreen.AddAction("Follow gold knight", () => Send(JoustAction.SpectatorCamera, 1));
+        _fullscreen.AddAction("Follow blue knight", () => Send(JoustAction.SpectatorCamera, 2));
+        _fullscreen.AddAction("Stand up", () => Send(JoustAction.LeaveSeat));
+        _fullscreen.AddAction("Grandstand controls", () => { _fullscreen.Hide(); Show(); BringToFront(); });
+        Disposed += (_, _) => { _audio.Dispose(); _fullscreen.Hide(); };
     }
     protected override void EnsureInitialized() { }
     private void Send(JoustAction action, int camera = 0) => Intersect.Client.Networking.Network.SendPacket(new JoustRequestPacket { Action = action, SeatId = _seats.SelectedItem?.UserData as Guid? ?? Guid.Empty, Camera = camera });
@@ -75,21 +77,27 @@ internal sealed class JoustSpectatorWindow : Window
         }
         Selection();
         var match = _state.Match;
+        _audio.Apply(_state.CurrentSeat != Guid.Empty ? _state.Presentation : null, _state.Sounds, true, _state.CurrentSeat);
         _score.Text = match == null ? ClientLanguages.Text("Waiting for the next joust.") : ClientLanguages.Format("Pass {0}/{1} · {2} {3} : {4} {5}", match.Pass, match.Passes, match.FirstName, match.FirstScore, match.SecondScore, string.IsNullOrEmpty(match.SecondName) ? ClientLanguages.Text("AI") : match.SecondName) + "\n" + ClientLanguages.Text(match.Live ? "Joust in progress" : "Joust finished");
         var presentation = _state.CurrentSeat != Guid.Empty && _state.Presentation is { } p && p.MatchId == match?.MatchId &&
             p.Phase is JoustPhase.Charge or JoustPhase.Aim or JoustPhase.Impact or JoustPhase.Results ? p : null;
         _viewport.Apply(presentation);
         var showing = presentation != null;
-        SetSize(660, showing ? 704 : 360);
-        foreach (var (control, y) in _layout) control.SetPosition(control.X, y + (showing ? 344 : 0));
+        SetSize(660, 360);
         if (presentation != null)
         {
-            _viewport.Show();
+            _viewport.Show(); _fullscreen.Apply(presentation, _score.Text);
             _message.Text = ClientLanguages.Text("Spectator view is read only. Use the gold or blue camera button to choose the knight's viewpoint.");
             var key = (presentation.MatchId, presentation.Pass);
-            if (_presentationKey != key) { _presentationKey = key; Show(); BringToFront(); }
+            if (_presentationKey != key) { _presentationKey = key; _fullscreen.Show(); _fullscreen.BringToFront(); Hide(); }
         }
-        else { _viewport.Hide(); if (_state.CurrentSeat == Guid.Empty || match == null || !match.Live) _presentationKey = null; }
-        if (packet.OpenSpectatorWindow) { Show(); BringToFront(); }
+        else
+        {
+            var wasWatching = !_fullscreen.IsHidden;
+            _viewport.Hide(); _fullscreen.Hide();
+            if (wasWatching) { Show(); BringToFront(); }
+            if (_state.CurrentSeat == Guid.Empty || match == null || !match.Live) _presentationKey = null;
+        }
+        if (packet.OpenSpectatorWindow && _fullscreen.IsHidden) { Show(); BringToFront(); }
     }
 }

@@ -197,6 +197,7 @@ public sealed class JoustSpectatorTests
         w.C.HandleJoustRequest(new() { Action = JoustAction.SpectatorCamera, Camera = (int)JoustSpectatorCamera.SecondKnight });
         presentation = JoustAudienceRuntime.View(context, w.C).Presentation!;
         Assert.That(presentation.OpponentName, Is.EqualTo(w.A.Name));
+        Assert.That(presentation.SelfAppearance, Is.EqualTo(pvp ? JoustAiOpponent.William : JoustAiOpponent.Night));
         Assert.That(presentation.PlayerStrike, Is.EqualTo(match.Strikes[1]));
         Request(w.C, JoustAction.LeaveSeat);
         Assert.That(JoustAudienceRuntime.View(context, w.C).Presentation, Is.Null);

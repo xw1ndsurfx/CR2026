@@ -100,7 +100,7 @@ internal static class JoustAudienceRuntime
                 if (context.Slots.TryGetValue(s.Id, out var slot)) lock (slot.Gate) occupant = slot.Member;
                 return new JoustSeatView(s.Id, s.Name, s.X, s.Y, s.ExitX, s.ExitY, occupant != null, occupant?.Player.Name ?? "");
             }).ToArray(), CurrentSeat = seated ? own!.Seat.Id : Guid.Empty,
-            Camera = seated ? own!.Camera : JoustSpectatorCamera.Arena, Match = match,
+            Camera = seated ? own!.Camera : JoustSpectatorCamera.Arena, Match = match, Sounds = arena.Sounds,
             Presentation = seated ? match?.Presentation(arena.Id, own!.Camera, elapsed) : null };
     }
     internal static JoustBroadcast? CurrentMatch(Key key) => Matches.TryGetValue(key, out var value) && Environment.TickCount64 - value.Published < (value.View.Live ? 5000 : 20000) ? value.View : null;

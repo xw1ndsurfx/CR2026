@@ -16,9 +16,11 @@ public sealed partial class CinematicAtmosphereGpuTests
     private sealed class JoustViewportSkin(Intersect.Client.Framework.Gwen.Renderer.Base renderer)
         : Intersect.Client.Framework.Gwen.Skin.Base(renderer) { }
 
-    [TestCase(JoustAiOpponent.William)]
-    [TestCase(JoustAiOpponent.Night)]
-    public void ReadOnlySpectatorViewportRendersTheRealFrontSpriteAndResolvedImpact(JoustAiOpponent opponent)
+    [TestCase(JoustAiOpponent.William, false)]
+    [TestCase(JoustAiOpponent.Night, false)]
+    [TestCase(JoustAiOpponent.William, true)]
+    [Category("LicensedAssets")]
+    public void ReadOnlySpectatorViewportRendersTheRealFrontSpriteAndResolvedImpact(JoustAiOpponent opponent, bool selfFalls)
     {
         var root = Environment.GetEnvironmentVariable("CODEX_JOUST_RESOURCE_ROOT");
         if (Environment.GetEnvironmentVariable("CODEX_GPU_TESTS") != "1" || string.IsNullOrEmpty(root))
@@ -42,7 +44,8 @@ public sealed partial class CinematicAtmosphereGpuTests
                 {
                     target.Clear(Color.Black);
                     viewport.Apply(new JoustView { AiOpponent = opponent, Phase = phase, PhaseDurationMs = 1000,
-                        RemainingMs = 100, PlayerStrike = new(JoustHit.Unhorsed, 5, true) });
+                        RemainingMs = 100, PlayerStrike = selfFalls ? new(JoustHit.Miss, 0, false) : new(JoustHit.Unhorsed, 5, true),
+                        OpponentStrike = selfFalls ? new(JoustHit.Unhorsed, 5, true) : new(JoustHit.Miss, 0, false) });
                     typeof(JoustViewport).GetMethod("Render", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(viewport, [skin]);
                     renderer.EndSpriteBatch(); device.SetRenderTarget(null);
                     var texture = target.GetTexture<RenderTarget2D>()!;
@@ -51,7 +54,7 @@ public sealed partial class CinematicAtmosphereGpuTests
                     if (!string.IsNullOrEmpty(directory))
                     {
                         Directory.CreateDirectory(directory);
-                        using var stream = File.Create(Path.Combine(directory, $"joust-spectator-{opponent}-{phase}.png"));
+                        using var stream = File.Create(Path.Combine(directory, $"joust-spectator-{opponent}-{phase}-{(selfFalls ? "Self" : "Opponent")}.png"));
                         texture.SaveAsPng(stream, 620, 320);
                     }
                     return pixels;
@@ -65,7 +68,7 @@ public sealed partial class CinematicAtmosphereGpuTests
         finally { Environment.CurrentDirectory = previous; }
     }
 
-    [Test] public void RealJoustingMountDrawsProvidedWilliamAndSuppressesTheOrdinaryBody()
+    [Test, Category("LicensedAssets")] public void RealJoustingMountDrawsProvidedWilliamAndSuppressesTheOrdinaryBody()
     {
         var root=Environment.GetEnvironmentVariable("CODEX_JOUST_RESOURCE_ROOT");
         if(Environment.GetEnvironmentVariable("CODEX_GPU_TESTS")!="1" || string.IsNullOrEmpty(root))

@@ -18,6 +18,8 @@ internal sealed class JoustWindow : Window
     private long _nextSetupHint;
     private readonly Label _score;
     private readonly JoustViewport _view;
+    private readonly JoustFullscreen _fullscreen;
+    private readonly JoustAudio _audio = new();
     private readonly List<Base> _lobby = [];
     private readonly Button _defense;
     private readonly Button _leave;
@@ -36,7 +38,10 @@ internal sealed class JoustWindow : Window
         SetSize(760, 600); Alignment = [Alignments.Center]; DisableResizing(); DeleteOnClose = false;
         _score = TextLabel(24, 42, 708, 26);
         _status = TextLabel(24, 78, 708, 26);
-        _view = new(this); _view.SetBounds(24, 112, 708, 320);
+        _fullscreen = new(canvas, false); _view = _fullscreen.Viewport;
+        _fullscreen.Tick = UpdateAim;
+        _fullscreen.AddAction("Leave joust", () => { Send(JoustAction.Leave); _fullscreen.Hide(); _audio.Dispose(); Hide(); });
+        Disposed += (_, _) => { _audio.Dispose(); _fullscreen.Hide(); _fullscreen.Tick = null; };
         _view.Hide();
         _career = TextLabel(24, 112, 708, 30);
         _shop = new ScrollControl(this, "JoustShop") { OverflowX = OverflowBehavior.Hidden, OverflowY = OverflowBehavior.Scroll, AutoHideBars = true };
@@ -55,8 +60,7 @@ internal sealed class JoustWindow : Window
         _start = NavalManagementWindow.Button(this, "JoustStart", T("Start AI joust"), 24, 488, 336, 32, Start); _lobby.Add(_start);
         _lobby.Add(NavalManagementWindow.Button(this, "JoustPlayerDuel", T("Challenge a knight"), 376, 488, 356, 32,
             () => Intersect.Client.Networking.Network.SendPacket(new JoustRequestPacket { Action = JoustAction.BrowseDuels })));
-        _defense = NavalManagementWindow.Button(this, "JoustDefense", T("Toggle defense"), 376, 488, 356, 32,
-            () => _defending = !_defending); _defense.IsToggle = true;
+        _defense = _fullscreen.AddAction("Toggle defense", () => _defending = !_defending); _defense.IsToggle = true;
         _leave = NavalManagementWindow.Button(this, "JoustLeave", T("Leave joust"), 24, 534, 708, 30, () => { Send(JoustAction.Leave); Hide(); });
         _defense.Hide(); _leave.Hide();
         _lobby.Add(NavalManagementWindow.Button(this, "JoustGrandstands", T("Joust grandstands"), 24, 534, 708, 30,
@@ -108,7 +112,7 @@ internal sealed class JoustWindow : Window
                 var next = JsonSerializer.Deserialize<JoustView>(packet.ViewJson);
                 if (next == null) return;
                 if (_state?.MatchId != next.MatchId) { _sequence = 0; _defending = false; _defense.ToggleState = false; }
-                _state = next; _view.State = next;
+                _state = next; _view.Apply(next); _audio.Apply(next, next.Sounds, false);
                 _view.Rules = _config.Arenas.FirstOrDefault(a => a.Id == next.ArenaId)?.Rules ?? new();
                 _score.Text = ClientLanguages.Format("Pass {0}/{1} · You {2} : {3} {4}", next.Pass, next.Passes, next.PlayerScore, next.OpponentScore, string.IsNullOrEmpty(next.OpponentName) ? T("AI") : next.OpponentName);
                 _status.Text = next.Phase == JoustPhase.Abandoned ? T("Joust interrupted") : next.Phase == JoustPhase.Finished
@@ -126,7 +130,13 @@ internal sealed class JoustWindow : Window
                 if (next.Phase == JoustPhase.Aim) _defense.Show(); else _defense.Hide();
                 _leave.SetBounds(24, compact ? 118 : 534, 708, 30);
                 if (active) _leave.Show(); else _leave.Hide();
-                Show();
+                if (active && !compact)
+                {
+                    _fullscreen.Apply(next, _score.Text + " · " + _status.Text);
+                    if (_fullscreen.IsHidden) { _fullscreen.Show(); _fullscreen.BringToFront(); }
+                    Hide();
+                }
+                else { _fullscreen.Hide(); Show(); }
             }
         }
         catch (JsonException) { return; }
@@ -137,6 +147,10 @@ internal sealed class JoustWindow : Window
         base.Think();
         if ((_state == null || _state.Phase is JoustPhase.Finished or JoustPhase.Abandoned) && Environment.TickCount64 >= _nextSetupHint)
         { _nextSetupHint = Environment.TickCount64 + 250; RefreshSetupHint(); }
+        UpdateAim();
+    }
+    private void UpdateAim()
+    {
         if (_state?.Phase == JoustPhase.Aim && Environment.TickCount64 - _lastSent >= 50)
         { _lastSent = Environment.TickCount64; Send(JoustAction.Aim); }
     }

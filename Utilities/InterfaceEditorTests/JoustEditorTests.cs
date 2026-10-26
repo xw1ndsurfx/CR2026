@@ -72,7 +72,13 @@ internal static class JoustEditorTests
                 Check(JoustConfiguration.FromJson(config.ToJson()).Arenas[0].MountId == mount.Mounts[0].Id, "Resource selections survive save/reopen serialization.");
                 form.Size = new Size(1280, 820); EditorTheme.Apply(form); form.Show(); Application.DoEvents();
                 var tabs = All(form).OfType<System.Windows.Forms.TabControl>().Single();
-                Check(Enumerable.Range(0, 6).All(i => tabs.GetTabRect(i).Right <= tabs.ClientSize.Width && tabs.GetTabRect(i).Top == tabs.GetTabRect(0).Top), "All six steps stay visible in order on one row after theming.");
+                Check(tabs.TabPages.Count == 7 && Enumerable.Range(0, 7).All(i => tabs.GetTabRect(i).Right <= tabs.ClientSize.Width && tabs.GetTabRect(i).Top == tabs.GetTabRect(0).Top), "All seven steps, including sounds, remain visible on one row after theming.");
+                var soundFiles = Field<Dictionary<JoustSoundCue, ComboBox>>(form, "_soundFiles");
+                var soundVolumes = Field<Dictionary<JoustSoundCue, NumericUpDown>>(form, "_soundVolumes");
+                arena.Sounds.Cues[JoustSoundCue.GroundFall] = new() { File = "joust-fall.ogg", Volume = 37 }; Call(form, "LoadArena");
+                Check(soundFiles.Count == 19 && soundFiles[JoustSoundCue.GroundFall].Text.Contains("joust-fall.ogg"), "Every cue has a named sound picker and missing assets retain their identity.");
+                soundVolumes[JoustSoundCue.GroundFall].Value = 42;
+                Check(JoustConfiguration.FromJson(config.ToJson()).Arenas[0].Sounds.Cues[JoustSoundCue.GroundFall].Volume == 42, "Sound changes survive the real arena save format.");
                 var picture = Field<PictureBox>(form, "_map");
                 void Place(string button, int x, int y)
                 {

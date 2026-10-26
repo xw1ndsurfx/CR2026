@@ -241,7 +241,7 @@ public partial class Player
         JoustAudienceRuntime.Publish(_joustArena, MapInstanceId, _joust, Id, Name, _joustOpponent?.Id ?? Guid.Empty, JoustMountPreset.Opponent(_joustArena.AiOpponent).Name, now);
         _joustSent = now;
         SendPacket(new JoustStatePacket { ViewJson = JsonSerializer.Serialize(new JoustView {
-            AiOpponent = _joustArena.AiOpponent, OpponentName = JoustMountPreset.Opponent(_joustArena.AiOpponent).Name,
+            AiOpponent = _joustArena.AiOpponent, OpponentName = JoustMountPreset.Opponent(_joustArena.AiOpponent).Name, SelfName = Name, Sounds = _joustArena.Sounds,
             MatchId = _joust.Id, ArenaId = _joustArena.Id, Phase = _joust.Phase, Pass = _joust.Pass,
             Passes = _joust.Passes, RemainingMs = (int)Math.Max(0, _joust.Deadline - now),
             PhaseDurationMs = (int)(_joust.Deadline - _joust.PhaseStarted),

@@ -9,6 +9,7 @@ on:
       - 'Framework/Intersect.Framework.Core/Network/Packets/Editor/CreateGameObjectPacket.cs'
       - 'Framework/Intersect.Framework.Core/Network/Packets/Server/GameObjectPacket.cs'
       - 'Intersect.Client.Core/Cinematics/**'
+      - 'Intersect.Client.Core/Entities/Resource.cs'
       - 'Intersect.Client.Core/Core/Graphics*.cs'
       - 'Intersect.Client.Core/Maps/MapInstance.cs'
       - 'Intersect.Client.Core/MonoGame/Graphics/MonoRenderer*.cs'
@@ -101,16 +102,15 @@ jobs:
       - name: Render perspective atmosphere and verify actual pixels
         env:
           CODEX_GPU_PREVIEW: ${{ runner.temp }}/cinematic-gpu-preview
-          CODEX_JOUST_RESOURCE_ROOT: ${{ github.workspace }}
         run: |
-          xvfb-run -a --server-args='-screen 0 1280x1024x24 -nolisten tcp' dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug -p:RuntimeIdentifiers=linux-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$PWD" --filter TestCategory=GPU --nologo --logger 'trx;LogFileName=gpu.trx' --results-directory "$RUNNER_TEMP/cinematic-gpu-results"
+          xvfb-run -a --server-args='-screen 0 1280x1024x24 -nolisten tcp' dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug -p:RuntimeIdentifiers=linux-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$PWD" --filter 'TestCategory=GPU&TestCategory!=LicensedAssets' --nologo --logger 'trx;LogFileName=gpu.trx' --results-directory "$RUNNER_TEMP/cinematic-gpu-results"
           python3 - <<'PY'
           import os
           import xml.etree.ElementTree as ET
           root = ET.parse(os.path.join(os.environ['RUNNER_TEMP'], 'cinematic-gpu-results', 'gpu.trx')).getroot()
           counters = root.find('.//{*}Counters')
           assert counters is not None and int(counters.attrib['total']) > 0, 'No GPU tests were executed.'
-          assert int(counters.attrib['passed']) == int(counters.attrib['total']), 'Every GPU test must execute and pass.'
+          assert int(counters.attrib['passed']) == int(counters.attrib['total']), 'Every selected GPU test must execute and pass.'
           PY
       - name: Preserve rendered atmosphere evidence
         if: always()

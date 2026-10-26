@@ -60,7 +60,7 @@ internal sealed class JoustPvpSession
     internal JoustView ViewFor(Player player, long now)
     {
         var side = Side(player); if (side < 0) throw new ArgumentException(nameof(player));
-        return new() { IsPve = false, OpponentName = Opponent(player).Name, MatchId = Match.Id, ArenaId = Arena.Id,
+        return new() { IsPve = false, OpponentName = Opponent(player).Name, SelfName = player.Name, Sounds = Arena.Sounds, MatchId = Match.Id, ArenaId = Arena.Id,
             Phase = Match.Phase, Pass = Match.Pass, Passes = Match.Passes,
             RemainingMs = (int)Math.Max(0, Match.Deadline - now), PhaseDurationMs = (int)(Match.Deadline - Match.PhaseStarted),
             PlayerScore = Match.Scores[side], OpponentScore = Match.Scores[1 - side], Aim = Match.Aim(side),

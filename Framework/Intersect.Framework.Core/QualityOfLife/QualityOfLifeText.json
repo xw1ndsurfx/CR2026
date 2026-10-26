@@ -1,5 +1,125 @@
 {
   "Entries": {
+    "7. Sounds": {
+      "en": "7. Sounds",
+      "fr": "7. Sons",
+      "es": "7. Sonidos"
+    },
+    "Volume (%)": {
+      "en": "Volume (%)",
+      "fr": "Volume (%)",
+      "es": "Volumen (%)"
+    },
+    "Knocked down: {0}": {
+      "en": "Knocked down: {0}",
+      "fr": "Au sol : {0}",
+      "es": "En el suelo: {0}"
+    },
+    "Grandstand controls": {
+      "en": "Grandstand controls",
+      "fr": "Commandes des gradins",
+      "es": "Controles de las gradas"
+    },
+    "Choose sounds from the game's sound resources. Empty means silent. Gallop and crowd loop automatically and stop with the activity. Volume is a percentage.": {
+      "en": "Choose sounds from the game's sound resources. Empty means silent. Gallop and crowd loop automatically and stop with the activity. Volume is a percentage.",
+      "fr": "Choisis les fichiers parmi les sons du jeu. Aucun fichier signifie silence. Le galop et la foule tournent en boucle et s’arrêtent avec l’activité. Le volume est un pourcentage.",
+      "es": "Elige los archivos de los sonidos del juego. Vacío significa silencio. El galope y el público se repiten en bucle y se detienen con la actividad. El volumen es un porcentaje."
+    },
+    "Joust sound: Introduction": {
+      "en": "Introduction",
+      "fr": "Présentation",
+      "es": "Presentación"
+    },
+    "Joust sound: Countdown": {
+      "en": "Countdown",
+      "fr": "Compte à rebours",
+      "es": "Cuenta atrás"
+    },
+    "Joust sound: Charge": {
+      "en": "Charge start",
+      "fr": "Début de charge",
+      "es": "Inicio de carga"
+    },
+    "Joust sound: Gallop": {
+      "en": "Gallop (loop)",
+      "fr": "Galop (boucle)",
+      "es": "Galope (bucle)"
+    },
+    "Joust sound: Aim": {
+      "en": "Aiming begins",
+      "fr": "Entrée en visée",
+      "es": "Inicio del apuntado"
+    },
+    "Joust sound: Impact": {
+      "en": "General impact",
+      "fr": "Impact général",
+      "es": "Impacto general"
+    },
+    "Joust sound: ShieldHit": {
+      "en": "Shield hit",
+      "fr": "Impact sur le bouclier",
+      "es": "Impacto en el escudo"
+    },
+    "Joust sound: BodyHit": {
+      "en": "Armor hit",
+      "fr": "Impact sur le plastron",
+      "es": "Impacto en la armadura"
+    },
+    "Joust sound: Miss": {
+      "en": "Miss",
+      "fr": "Coup manqué",
+      "es": "Golpe fallido"
+    },
+    "Joust sound: LanceBreak": {
+      "en": "Broken lance",
+      "fr": "Bris de lance",
+      "es": "Rotura de lanza"
+    },
+    "Joust sound: Unhorse": {
+      "en": "Unhorsing",
+      "fr": "Désarçonnement",
+      "es": "Desmontar al rival"
+    },
+    "Joust sound: GroundFall": {
+      "en": "Landing on the ground",
+      "fr": "Chute au sol",
+      "es": "Caída al suelo"
+    },
+    "Joust sound: PassResults": {
+      "en": "Pass results",
+      "fr": "Résultats de la passe",
+      "es": "Resultados de la pasada"
+    },
+    "Joust sound: Victory": {
+      "en": "Victory",
+      "fr": "Victoire",
+      "es": "Victoria"
+    },
+    "Joust sound: Defeat": {
+      "en": "Defeat",
+      "fr": "Défaite",
+      "es": "Derrota"
+    },
+    "Joust sound: Draw": {
+      "en": "Draw",
+      "fr": "Égalité",
+      "es": "Empate"
+    },
+    "Joust sound: Abandon": {
+      "en": "Abandonment / interruption",
+      "fr": "Abandon / interruption",
+      "es": "Abandono / interrupción"
+    },
+    "Joust sound: Seat": {
+      "en": "Taking a grandstand seat",
+      "fr": "Installation dans les gradins",
+      "es": "Sentarse en las gradas"
+    },
+    "Joust sound: Crowd": {
+      "en": "Crowd ambience (loop)",
+      "fr": "Ambiance de foule (boucle)",
+      "es": "Ambiente del público (bucle)"
+    },
     "Spectator view is read only. Use the gold or blue camera button to choose the knight's viewpoint.": {
       "en": "Spectator view is read only. Use the gold or blue camera button to choose the knight's viewpoint.",
       "fr": "Vue spectateur sans contrôle de visée. Les boutons de caméra dorée et bleue choisissent le point de vue du chevalier.",

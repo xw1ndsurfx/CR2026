@@ -39,6 +39,7 @@ public sealed class JoustBroadcast
     {
         var second = camera == JoustSpectatorCamera.SecondKnight;
         return new() { MatchId = MatchId, ArenaId = arena, IsPve = IsPve,
+            SelfName = second ? SecondName : FirstName, SelfAppearance = second && IsPve ? AiOpponent : JoustAiOpponent.William,
             AiOpponent = second ? JoustAiOpponent.William : AiOpponent,
             OpponentName = second ? FirstName : SecondName, Phase = Phase, Pass = Pass, Passes = Passes,
             RemainingMs = Math.Max(0, RemainingMs - Math.Max(0, elapsedMs)), PhaseDurationMs = PhaseDurationMs,
@@ -57,4 +58,5 @@ public sealed class JoustSpectatorView
     public JoustSpectatorCamera Camera { get; set; }
     public JoustBroadcast? Match { get; set; }
     public JoustView? Presentation { get; set; }
+    public JoustSounds Sounds { get; set; } = new();
 }
