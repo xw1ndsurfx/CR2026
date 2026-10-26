@@ -52,6 +52,8 @@ public sealed class JoustArena
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = "Herbonia";
     public bool Enabled { get; set; }
+    public bool AllowPve { get; set; } = true;
+    public bool AllowPvp { get; set; } = true;
     public Guid MapId { get; set; }
     public int StartX { get; set; } = 4;
     public int StartY { get; set; } = 14;
@@ -67,7 +69,7 @@ public sealed class JoustArena
     public Guid VictoryEventId { get; set; }
     public JoustRules Rules { get; set; } = new();
     [JsonIgnore] public bool IsValid => Id != Guid.Empty && Name is { Length: > 0 and <= 128 } &&
-        (!Enabled || MapId != Guid.Empty) && StartX is >= 0 and <= 255 && StartY is >= 0 and <= 255 &&
+        (!Enabled || MapId != Guid.Empty && (AllowPve || AllowPvp)) && StartX is >= 0 and <= 255 && StartY is >= 0 and <= 255 &&
         EndX is >= 0 and <= 255 && EndY is >= 0 and <= 255 && OpponentY is >= 0 and <= 255 &&
         StartY != OpponentY && StartY == EndY && Rules is { IsValid: true } &&
         Math.Abs(EndX - StartX) is >= 4 and <= 64 && Math.Abs(EndX - StartX) % 2 == 0 &&

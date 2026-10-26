@@ -2,19 +2,19 @@ using Intersect.Framework.Core.Jousting;
 namespace Intersect.Server.Jousting;
 internal static class JoustRuntime
 {
-    internal static bool TileClear(Intersect.Server.Maps.MapInstance instance, int x, int y, Intersect.Server.Entities.Entity? actor)
+    internal static bool TileClear(Intersect.Server.Maps.MapInstance instance, int x, int y, Intersect.Server.Entities.Entity? actor, Intersect.Server.Entities.Entity? other = null)
     {
         if (x < 0 || y < 0 || x >= Intersect.Options.Instance.Map.MapWidth || y >= Intersect.Options.Instance.Map.MapHeight) return false;
         // A scripted lane must not trigger warps, slides, traps or story Events during a charge.
         var map = Intersect.Server.Maps.MapController.Get(actor?.MapId ?? Guid.Empty);
         if (map == null || map.Attributes[x, y] != null) return false;
-        return !instance.GetEntities().Any(e => e != actor && !e.IsDisposed && !e.IsDead && e.X == x && e.Y == y && !e.IsPassable());
+        return !instance.GetEntities().Any(e => e != actor && e != other && !e.IsDisposed && !e.IsDead && e.X == x && e.Y == y && !e.IsPassable());
     }
-    internal static bool LanesClear(Intersect.Framework.Core.Jousting.JoustArena arena, Guid instanceId, Intersect.Server.Entities.Player owner)
+    internal static bool LanesClear(Intersect.Framework.Core.Jousting.JoustArena arena, Guid instanceId, Intersect.Server.Entities.Player owner, Intersect.Server.Entities.Player? other = null)
     {
         if (!Intersect.Server.Maps.MapController.TryGetInstanceFromMap(arena.MapId, instanceId, out var instance)) return false;
         for (var x = Math.Min(arena.StartX, arena.EndX); x <= Math.Max(arena.StartX, arena.EndX); x++)
-            if (!TileClear(instance, x, arena.StartY, owner) || !TileClear(instance, x, arena.OpponentY, owner)) return false;
+            if (!TileClear(instance, x, arena.StartY, owner, other) || !TileClear(instance, x, arena.OpponentY, owner, other)) return false;
         return true;
     }
     private static readonly object Gate = new();

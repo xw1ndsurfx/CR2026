@@ -22,6 +22,8 @@ public sealed partial class FrmJoustConfiguration : Form
     private readonly ComboBox _mount = new() { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
     private readonly TextBox _name = new() { Dock = DockStyle.Fill };
     private readonly CheckBox _enabled = new() { AutoSize = true };
+    private readonly CheckBox _allowPve = new() { AutoSize = true };
+    private readonly CheckBox _allowPvp = new() { AutoSize = true };
     private readonly Label _check = new() { AutoSize = true, MaximumSize = new(320, 0) };
     private readonly Label _coordinates = new() { AutoSize = true, MaximumSize = new(320, 0) };
     private readonly Dictionary<string, NumericUpDown> _numbers = [];
@@ -75,6 +77,10 @@ public sealed partial class FrmJoustConfiguration : Form
         var setup = Page(tabs, "1. Arena setup");
         Row(setup, "Arena name", _name);
         _enabled.Text = T("Enable this arena"); Row(setup, "", _enabled);
+        _allowPve.Text = T("Allow AI training"); _allowPvp.Text = T("Allow player duels");
+        Row(setup, "", _allowPve); Row(setup, "", _allowPvp);
+        _allowPve.CheckedChanged += (_, _) => { if (!_loading && Arena is { } a) { a.AllowPve = _allowPve.Checked; Changed(); } };
+        _allowPvp.CheckedChanged += (_, _) => { if (!_loading && Arena is { } a) { a.AllowPvp = _allowPvp.Checked; Changed(); } };
         Row(setup, "Knight mount", _mount);
         var william = new Button { Text = T("Add William preset"), AutoSize = true };
         william.Click += (_, _) => { Networking.Network.SendPacket(new JoustRequestPacket { Action = JoustAction.PrepareWilliam }); _status.Text = T("William's preset uses the supplied sprite files in resources/images/jousting/William. Select William after the resource list refreshes."); };
@@ -178,6 +184,7 @@ public sealed partial class FrmJoustConfiguration : Form
     {
         _loading = true;
         _name.Text = Arena?.Name ?? ""; _enabled.Checked = Arena?.Enabled == true;
+        _allowPve.Checked = Arena?.AllowPve == true; _allowPvp.Checked = Arena?.AllowPvp == true;
         PopulateMounts(); PopulateScenes();
         if (Arena is { } a)
         {
@@ -254,6 +261,7 @@ public sealed partial class FrmJoustConfiguration : Form
         _coordinates.Text = $"{T("Player")}: ({a.StartX}, {a.StartY}) → ({a.EndX}, {a.StartY})\n{T("Opponent")}: ({a.EndX}, {a.OpponentY}) → ({a.StartX}, {a.OpponentY})\n{distance} {T("tiles")}";
         var issues = new List<string>();
         if (string.IsNullOrWhiteSpace(a.Name)) issues.Add(T("Enter an arena name."));
+        if (a.Enabled && !a.AllowPve && !a.AllowPvp) issues.Add(T("Enable at least one match mode for this arena."));
         if (!_mounts.Enabled || !_mounts.Mounts.Any(m => m.Id == a.MountId && m.IntegratedRider)) issues.Add(T("Select a compatible knight mount. Open Mount Editor to import William if the list is empty."));
         if (distance is < 4 or > 64 || distance % 2 != 0) issues.Add(T("The track needs an even distance of 4 to 64 tiles."));
         if (a.StartY == a.OpponentY) issues.Add(T("Place the opponent on a different row."));

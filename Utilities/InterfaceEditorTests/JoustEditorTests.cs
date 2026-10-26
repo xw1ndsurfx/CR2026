@@ -39,6 +39,10 @@ internal static class JoustEditorTests
                 Field<TextBox>(form, "_name").Text = "Lice royale";
                 Check(arena.Name == "Lice royale" && list.SelectedIndex == 0, "Renaming retains selection and updates the arena draft.");
                 Field<CheckBox>(form, "_enabled").Checked = true;
+                Field<CheckBox>(form, "_allowPve").Checked = false; Field<CheckBox>(form, "_allowPvp").Checked = false;
+                Check(!config.IsValid, "An active arena must allow at least one match mode.");
+                Field<CheckBox>(form, "_allowPvp").Checked = true;
+                Check(arena.AllowPvp && !arena.AllowPve && config.IsValid, "PvP-only arenas can be configured without enabling AI training.");
                 form.RenderPreview = _ => {
                     var b = new Bitmap(Intersect.Options.Instance.Map.MapWidth * Intersect.Options.Instance.Map.TileWidth, Intersect.Options.Instance.Map.MapHeight * Intersect.Options.Instance.Map.TileHeight);
                     using var g = Graphics.FromImage(b); g.Clear(Color.FromArgb(51, 74, 54));

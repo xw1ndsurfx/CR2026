@@ -34,7 +34,7 @@ public partial class Player
     }
     internal void UpdateMount()
     {
-        if (ActiveMountId != Guid.Empty && (ActiveMount is not { } mount || (!MountRuntime.Owns(this, mount) && !(_joust is { Done: false } && _joustArena?.MountId == mount.Id)) || !CanRide(mount))) Dismount();
+        if (ActiveMountId != Guid.Empty && (ActiveMount is not { } mount || (!MountRuntime.Owns(this, mount) && !(_joust is { Done: false } && _joustArena?.MountId == mount.Id) && _joustPvp?.Arena.MountId != mount.Id) || !CanRide(mount))) Dismount();
     }
     internal void SendMountState(bool open = false, string message = "") => SendPacket(new MountStatePacket
     {
@@ -52,6 +52,7 @@ public partial class Player
                 _lastMountList = requested; SendMountState(true); return;
             }
             if (packet.Action is not (MountAction.Toggle or MountAction.Favorite)) return;
+            if (IsJousting && packet.Action == MountAction.Toggle) return;
             var now = Timing.Global.Milliseconds;
             if (_lastMountAction > 0 && now - _lastMountAction < 700) return;
             _lastMountAction = now;

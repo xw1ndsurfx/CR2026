@@ -93,6 +93,8 @@ internal static class MountClientTests
             var shop = (ScrollControl)joustType.GetField("_shop", Hidden)!.GetValue(joust)!;
             var career = (Label)joustType.GetField("_career", Hidden)!.GetValue(joust)!;
             Check(!shop.IsHidden && career.Text.Contains("42") && Descendants(shop).Any(c => c.Name == "Offer" + offer.Id), "Finished duels show the authoritative career and configured medal shop.");
+            joustType.GetMethod("Apply", Hidden)!.Invoke(joust, [new JoustStatePacket { ConfigurationJson = joustConfig.ToJson() }]);
+            Check(Descendants(shop).Count(c => c.Name == "Offer" + offer.Id) == 1, "Refreshing an existing shop replaces its controls without leaving disposed children on the canvas.");
         }
         finally { ApplicationContext.Context.Value = context; Globals.ContentManager = oldContent; Intersect.Client.Core.Graphics.Renderer = renderer; }
     }

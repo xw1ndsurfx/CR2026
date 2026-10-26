@@ -1,6 +1,6 @@
 # Joutes Royales — installation et éditeur guidé
 
-Cette version corrige le parcours de création d’une arène et ajoute les médailles royales et leur boutique. Elle conserve la charge PvE, les collisions, les montures et le Cinematic Director natifs. Le projet V2 complet reste en développement.
+Cette version comprend l’éditeur guidé, les médailles royales et leur boutique, ainsi que les duels entre deux comptes. Elle conserve la charge PvE, les collisions, les montures et le Cinematic Director natifs. Le projet V2 complet reste en développement.
 
 ## Préparer les ressources
 
@@ -43,6 +43,10 @@ Le serveur réserve la lice, calcule les scores et nettoie l’adversaire partag
 
 ## État des autres demandes
 
-Les duels PvP, les sièges réservés et animations assises, la caméra spectateur, le décor final complet, les cérémonies royales finalisées en jeu, les classements, les quêtes/achievements dédiés et les tournois ne sont pas implémentés dans cette version. La recette visuelle avec un client connecté reste à effectuer. Les tests et aperçus de l’éditeur ne remplacent pas cette recette.
+Les sièges réservés et animations assises, la caméra spectateur, le décor final complet, les cérémonies royales finalisées en jeu, les classements, les quêtes/achievements dédiés et les tournois ne sont pas implémentés dans cette version. La recette visuelle avec un client connecté reste à effectuer. Les tests et aperçus de l’éditeur ne remplacent pas cette recette.
 
 Le cahier complet reste `Conception-v2.txt`. Aucun de ses critères restants n’est marqué comme validé par cette correction de l’éditeur.
+
+## Duels PvP
+
+Les duels entre deux comptes sont maintenant disponibles. Dans l’onglet **1. Arène**, activer les duels entre joueurs, placer les deux personnages aux départs doré et bleu, puis ouvrir **Défier un chevalier** depuis la fenêtre des Joutes du Lobby. Le détail des invitations, des résultats et des interruptions se trouve dans `PVP.md`. Le PvP doit encore être essayé visuellement sur deux clients connectés ; les tests de monde et d’interface sont réussis.

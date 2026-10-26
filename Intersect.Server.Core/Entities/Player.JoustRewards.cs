@@ -7,6 +7,7 @@ namespace Intersect.Server.Entities;
 public partial class Player
 {
     private JoustMatch? _joustPendingReward;
+    private int _joustRewardSide;
     private long _joustRewardRetry;
     private long _joustRedeemAt;
     private void SendJoustCareer() => SendPacket(new Intersect.Network.Packets.Server.JoustStatePacket {
@@ -19,7 +20,7 @@ public partial class Player
         {
             var before = PetCollection.Jousting ??= new();
             var next = JsonSerializer.Deserialize<JoustCareer>(JsonSerializer.Serialize(before))!;
-            next.Complete(match, Intersect.Server.Jousting.JoustRuntime.Current.Economy, DateTimeOffset.UtcNow);
+            next.Complete(match, Intersect.Server.Jousting.JoustRuntime.Current.Economy, DateTimeOffset.UtcNow, _joustRewardSide);
             PetCollection.Jousting = next;
             try
             {

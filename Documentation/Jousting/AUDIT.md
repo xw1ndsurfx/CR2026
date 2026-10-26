@@ -36,3 +36,9 @@ L’adversaire est maintenant une entité temporaire de la carte partagée utili
 La capture utilisateur a montré que la première interface demandait des GUID et exposait les types CLR. L’éditeur est remplacé par des sélections nommées, des étapes visibles, des diagnostics et des outils de placement explicites. La réouverture des cinématiques réutilise désormais l’événement et le contenu existants.
 
 Les médailles royales, la progression individuelle et une boutique d’objets empilables sont raccordées à la sauvegarde native. Le serveur décide du versement et des prix ; l’inventaire plein, les achats rejoués et les échecs de sauvegarde sont couverts. Cela remplace la restriction « entraînement sans économie » de la première livraison. Aucun PvP, siège, tournoi ou décor final supplémentaire n’est déclaré implémenté par cette tranche.
+
+## Suite PvP — 26 octobre 2026
+
+Le prototype comprend désormais des invitations et un duel entre deux véritables Player. La simulation unique est protégée par les deux verrous d’entité, acquis sans attente. Le calculateur JoustMatch existant résout les lances ; le Cinematic Director existant pilote les scènes. Les départs et la réservation sont revérifiés à l’acceptation. Le nettoyage périodique couvre aussi deux joueurs déconnectés. Les personnages adverses ne sont jamais disposés comme les anciens acteurs IA temporaires.
+
+Les gardes de déplacement, combat, voyage et changement de monture s’appliquent aux deux côtés. Le nettoyage et la progression distinguent le numéro de côté. Les tests couvrent les deux gagnants, les invitations invalides, les replays et les interruptions. Les sièges, tournois, décor final et intégrations de progression restent ouverts.
