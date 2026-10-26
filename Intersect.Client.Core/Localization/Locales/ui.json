@@ -1,5 +1,75 @@
 {
   "Entries": {
+    "4. Rewards and economy": {
+        "en": "4. Rewards and economy",
+        "fr": "4. Récompenses et économie",
+        "es": "4. Recompensas y economía"
+    },
+    "Enable royal medal rewards": {
+        "en": "Enable royal medal rewards",
+        "fr": "Activer les récompenses en médailles royales",
+        "es": "Activar recompensas en medallas reales"
+    },
+    "Daily medal limit (UTC)": {
+        "en": "Daily medal limit (UTC)",
+        "fr": "Plafond quotidien de médailles (UTC)",
+        "es": "Límite diario de medallas (UTC)"
+    },
+    "Reward cooldown (seconds)": {
+        "en": "Reward cooldown (seconds)",
+        "fr": "Délai entre récompenses (secondes)",
+        "es": "Espera entre recompensas (segundos)"
+    },
+    "A victory awards 5 to 25 medals depending on AI difficulty; a completed loss awards 1. At least one scored hit is required. Abandoned matches award nothing. Medals and items are saved together when exchanged.": {
+        "en": "A victory awards 5 to 25 medals depending on AI difficulty; a completed loss awards 1. At least one scored hit is required. Abandoned matches award nothing. Medals and items are saved together when exchanged.",
+        "fr": "Une victoire rapporte 5 à 25 médailles selon la difficulté de l’IA ; une défaite terminée rapporte 1 médaille. Au moins une touche réussie est nécessaire. Un abandon ne rapporte rien. Les médailles et objets sont enregistrés ensemble lors d’un échange.",
+        "es": "Una victoria otorga de 5 a 25 medallas según la dificultad; una derrota completada otorga 1. Se requiere al menos un golpe puntuado. Abandonar no otorga nada. Medallas y objetos se guardan juntos al intercambiar."
+    },
+    "Royal medals": {
+        "en": "Royal medals",
+        "fr": "Médailles royales",
+        "es": "Medallas reales"
+    },
+    "Medal shop offers": {
+        "en": "Medal shop offers",
+        "fr": "Offres de la boutique de médailles",
+        "es": "Ofertas de la tienda de medallas"
+    },
+    "Reward item": {
+        "en": "Reward item",
+        "fr": "Objet de récompense",
+        "es": "Objeto de recompensa"
+    },
+    "Price in royal medals": {
+        "en": "Price in royal medals",
+        "fr": "Prix en médailles royales",
+        "es": "Precio en medallas reales"
+    },
+    "Add shop offer": {
+        "en": "Add shop offer",
+        "fr": "Ajouter une offre",
+        "es": "Añadir oferta"
+    },
+    "Remove shop offer": {
+        "en": "Remove shop offer",
+        "fr": "Supprimer l’offre",
+        "es": "Eliminar oferta"
+    },
+    "Make room in your inventory before exchanging medals.": {
+        "en": "Make room in your inventory before exchanging medals.",
+        "fr": "Libère de la place dans ton inventaire avant d’échanger des médailles.",
+        "es": "Haz espacio en tu inventario antes de intercambiar medallas."
+    },
+    "{0} x{1} · {2} royal medals": {
+        "en": "{0} x{1} · {2} royal medals",
+        "fr": "{0} x{1} · {2} médailles royales",
+        "es": "{0} x{1} · {2} medallas reales"
+    },
+    "Royal medals: {0} · Level {1} · Wins {2}/{3}": {
+        "en": "Royal medals: {0} · Level {1} · Wins {2}/{3}",
+        "fr": "Médailles royales : {0} · Niveau {1} · Victoires {2}/{3}",
+        "es": "Medallas reales: {0} · Nivel {1} · Victorias {2}/{3}"
+    },
     "Premium - Remaining: {0}": {
       "en": "Premium - Remaining: {0}",
       "fr": "Premium - Temps restant : {0}",

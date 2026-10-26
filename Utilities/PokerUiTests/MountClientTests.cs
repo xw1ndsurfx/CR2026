@@ -85,6 +85,14 @@ internal static class MountClientTests
                 Check(viewport.IsHidden == (phase == Intersect.Framework.Core.Jousting.JoustPhase.Charge),
                     "The map remains visible during charge and the impact animation remains visible in the aim viewport.");
             }
+            var offer = new Intersect.Framework.Core.Jousting.JoustOffer { ItemId = Guid.NewGuid() };
+            var joustConfig = new Intersect.Framework.Core.Jousting.JoustConfiguration { Economy = new() { Offers = [offer] } };
+            joustType.GetMethod("Apply", Hidden)!.Invoke(joust, [new JoustStatePacket {
+                ConfigurationJson = joustConfig.ToJson(), CareerJson = System.Text.Json.JsonSerializer.Serialize(new Intersect.Framework.Core.Jousting.JoustCareer { Medals = 42, Wins = 2, Matches = 3 }),
+                ViewJson = System.Text.Json.JsonSerializer.Serialize(new Intersect.Framework.Core.Jousting.JoustView { Phase = Intersect.Framework.Core.Jousting.JoustPhase.Finished }) }]);
+            var shop = (ScrollControl)joustType.GetField("_shop", Hidden)!.GetValue(joust)!;
+            var career = (Label)joustType.GetField("_career", Hidden)!.GetValue(joust)!;
+            Check(!shop.IsHidden && career.Text.Contains("42") && Descendants(shop).Any(c => c.Name == "Offer" + offer.Id), "Finished duels show the authoritative career and configured medal shop.");
         }
         finally { ApplicationContext.Context.Value = context; Globals.ContentManager = oldContent; Intersect.Client.Core.Graphics.Renderer = renderer; }
     }

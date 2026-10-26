@@ -77,10 +77,11 @@ public sealed class JoustArena
 
 public sealed class JoustConfiguration
 {
+    public JoustEconomy Economy { get; set; } = new();
     public JoustArena[] Arenas { get; set; } = [];
     private static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true,
         WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
-    [JsonIgnore] public bool IsValid => Arenas is { Length: <= 64 } && Arenas.All(a => a is { IsValid: true }) &&
+    [JsonIgnore] public bool IsValid => Economy is { IsValid: true } && Arenas is { Length: <= 64 } && Arenas.All(a => a is { IsValid: true }) &&
         Arenas.Select(a => a.Id).Distinct().Count() == Arenas.Length &&
         Arenas.Where(a => a.Enabled).Select(a => a.MapId).Distinct().Count() == Arenas.Count(a => a.Enabled);
     public string ToJson() => JsonSerializer.Serialize(this, Options);

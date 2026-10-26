@@ -30,3 +30,9 @@ L’audit et le code ne constituent pas une validation en jeu. Les critères du 
 ## Avancement de la tranche PvE
 
 L’adversaire est maintenant une entité temporaire de la carte partagée utilisant le rendu des montures. Les deux trajectoires suivent la même horloge jusqu’au milieu de la lice et au retour. Le Director natif fournit les cinq sources de séquence avec raccordement depuis le Jousting Editor. Le Lobby propose la catégorie et l’entraînement. Voir VALIDATION.md pour distinguer tests exécutés et recette visuelle restant à réaliser ; le projet complet reste en cours.
+
+## 26 octobre — suite de l’éditeur et premières récompenses
+
+La capture utilisateur a montré que la première interface demandait des GUID et exposait les types CLR. L’éditeur est remplacé par des sélections nommées, des étapes visibles, des diagnostics et des outils de placement explicites. La réouverture des cinématiques réutilise désormais l’événement et le contenu existants.
+
+Les médailles royales, la progression individuelle et une boutique d’objets empilables sont raccordées à la sauvegarde native. Le serveur décide du versement et des prix ; l’inventaire plein, les achats rejoués et les échecs de sauvegarde sont couverts. Cela remplace la restriction « entraînement sans économie » de la première livraison. Aucun PvP, siège, tournoi ou décor final supplémentaire n’est déclaré implémenté par cette tranche.
