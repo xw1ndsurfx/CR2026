@@ -86,6 +86,9 @@ internal static class JoustEditorTests
                 Field<TextBox>(form, "_seatName").Text = "Tribune Gisabelle";
                 Check(arena.Seats[0].X == 7 && arena.Seats[0].Y == 6 && arena.Seats[0].ExitY == 7 && arena.Seats[0].Name == "Tribune Gisabelle", "Seat and entrance are placed by normal map clicks, not raw coordinate editing.");
                 Check(JoustConfiguration.FromJson(config.ToJson()).Arenas[0].Seats[0].Name == "Tribune Gisabelle", "Seats survive serialization.");
+                map.Attributes[7,7] = new Intersect.Framework.Core.GameObjects.Maps.Attributes.MapBlockedAttribute(); Call(form,"ValidateSetup");
+                Check(Field<Label>(form,"_check").Text.Contains(QualityOfLifeText.Get("Seat entrances must have no map attributes. Benches may only have a blocking attribute.",lang)),"Blocked entrances explain how to fix the seat.");
+                map.Attributes[7,7] = null; Call(form,"ValidateSetup");
                 var save = Field<Button>(form, "_save"); save.PerformClick();
                 var request = Field<Guid>(form, "_request"); Check(!save.Enabled && request != Guid.Empty, "Save waits for the server acknowledgement.");
                 Field<TextBox>(form, "_name").Text = "Arène royale";

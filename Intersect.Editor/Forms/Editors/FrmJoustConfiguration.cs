@@ -285,6 +285,13 @@ public sealed partial class FrmJoustConfiguration : Form
             issues.Add(T("Keep both tracks inside the map."));
         else
         {
+            foreach (var seat in a.Seats)
+            {
+                if (seat.X >= Intersect.Options.Instance.Map.MapWidth || seat.ExitX >= Intersect.Options.Instance.Map.MapWidth || seat.Y >= Intersect.Options.Instance.Map.MapHeight || seat.ExitY >= Intersect.Options.Instance.Map.MapHeight)
+                { issues.Add(T("Keep all benches and entrances inside the map.")); break; }
+                if (Globals.CurrentMap.Attributes[seat.ExitX, seat.ExitY] != null || Globals.CurrentMap.Attributes[seat.X, seat.Y] is { } attribute && attribute is not Intersect.Framework.Core.GameObjects.Maps.Attributes.MapBlockedAttribute)
+                { issues.Add(T("Seat entrances must have no map attributes. Benches may only have a blocking attribute.")); break; }
+            }
             for (var x = Math.Min(a.StartX, a.EndX); x <= Math.Max(a.StartX, a.EndX); x++)
                 if (Globals.CurrentMap.Attributes[x, a.StartY] != null || Globals.CurrentMap.Attributes[x, a.OpponentY] != null)
                 { issues.Add(T("Clear map attributes from both tracks before playing (blocks, warps, slides and traps).")); break; }

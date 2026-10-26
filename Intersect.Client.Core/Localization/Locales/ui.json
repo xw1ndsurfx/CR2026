@@ -1,5 +1,15 @@
 {
   "Entries": {
+    "Keep all benches and entrances inside the map.": {
+        "en": "Keep all benches and entrances inside the map.",
+        "fr": "Garde tous les bancs et leurs accès à l’intérieur de la carte.",
+        "es": "Mantén todos los bancos y sus entradas dentro del mapa."
+    },
+    "Seat entrances must have no map attributes. Benches may only have a blocking attribute.": {
+        "en": "Seat entrances must have no map attributes. Benches may only have a blocking attribute.",
+        "fr": "Les accès aux places ne doivent avoir aucun attribut de carte. Seul un attribut de blocage est permis sur les bancs.",
+        "es": "Las entradas de los asientos no deben tener atributos de mapa. Los bancos solo pueden tener un atributo de bloqueo."
+    },
     "Facing": {
         "en": "Facing",
         "fr": "Orientation",
