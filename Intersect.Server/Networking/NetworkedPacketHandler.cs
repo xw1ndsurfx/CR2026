@@ -951,31 +951,40 @@ internal sealed partial class NetworkedPacketHandler
             }
 
             var type = packet.Type;
-            var obj = DbInterface.AddGameObject(type);
-
-            var changed = false;
-            switch(type)
+            lock (ServerContext.Instance.LogicService.LogicLock)
             {
-                case GameObjectType.Event:
-                    ((EventDescriptor)obj).CommonEvent = true;
-                    changed = true;
+                if (packet.RequestedId != Guid.Empty &&
+                    (type is not (GameObjectType.Event or GameObjectType.PlayerVariable) ||
+                     Intersect.Collections.DatabaseObjectLookup.LookupMap.Values.Any(lookup => lookup.Get(packet.RequestedId) != null)))
+                {
+                    client.Send(new Network.Packets.Server.GameObjectPacket(packet.RequestedId, type, "", false, false)
+                    { CreationError = "ChapterObjectConflict" });
+                    return;
+                }
 
-                    break;
-                case GameObjectType.Item:
-                    ((ItemDescriptor)obj).DropChanceOnDeath = Options.Instance.Player.ItemDropChance;
-                    changed = true;
+                var obj = DbInterface.AddGameObject(type, packet.RequestedId);
+                var changed = false;
+                switch(type)
+                {
+                    case GameObjectType.Event:
+                        ((EventDescriptor)obj).CommonEvent = true;
+                        changed = true;
+                        break;
+                    case GameObjectType.Item:
+                        ((ItemDescriptor)obj).DropChanceOnDeath = Options.Instance.Player.ItemDropChance;
+                        changed = true;
+                        break;
+                }
 
-                    break;
+                if (changed) DbInterface.SaveGameObject(obj);
+                PacketSender.CacheGameDataPacket();
+                PacketSender.SendGameObjectToAll(obj);
+                if (packet.RequestedId != Guid.Empty)
+                {
+                    client.Send(new Network.Packets.Server.GameObjectPacket(obj.Id, obj.Type, obj.JsonData, false, false)
+                    { CreationSucceeded = true });
+                }
             }
-
-            if (changed)
-            {
-                DbInterface.SaveGameObject(obj);
-            }
-
-            PacketSender.CacheGameDataPacket();
-
-            PacketSender.SendGameObjectToAll(obj);
         }
 
         //RequestOpenEditorPacket

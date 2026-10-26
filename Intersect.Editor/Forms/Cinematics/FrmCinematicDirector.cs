@@ -50,47 +50,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         _joustSceneSaved = onSaved;
         Text = T("Title"); Width = 1440; Height = 960; MinimumSize = new(1000, 700);
         StartPosition = FormStartPosition.CenterParent; KeyPreview = true; Icon = Program.Icon;
-        var toolbar = new ToolStrip { Dock = DockStyle.Top, GripStyle = ToolStripGripStyle.Hidden, AutoSize = true };
-        var files = new ToolStripDropDownButton(T("FileMenu"));
-        var actors = new ToolStripDropDownButton(T("ActorsMenu"));
-        var tools = new ToolStripDropDownButton(T("SceneToolsMenu"));
-        var views = new ToolStripDropDownButton(T("ViewMenu"));
-        var creators = new ToolStripDropDownButton(T("CreatorMenu"));
-        void Button(string key, Action action)
-        {
-            var menu = key switch
-            {
-                "Open" or "Export" or "ChapterDirector" => files,
-                "AutoCreator" or "DescriptionCreator" or "Templates" => creators,
-                "TemporaryNpc" or "TemporaryVessel" or "Formation" or "FleetFormation" or "GroupPath" => actors,
-                "ShotPreset" or "Marker" or "NavalScene" or "BattlefieldScene" or "GroupAnimation" or "GroupCharge" or "Reinforcements" or "GameplayTransition" or "Step" => tools,
-                _ => null,
-            };
-            if (menu != null) menu.DropDownItems.Add(T(key), null, (_, _) => action());
-            else toolbar.Items.Add(new ToolStripButton(T(key == "Save" ? "SaveShort" : key == "Play" ? "PreviewShort" : key), null, (_, _) => action()));
-        }
-        Button("New", () => { if (CanDiscard()) NewScene(); });
-        Button("Open", Import); Button("Save", () => SaveScene()); Button("Export", Export);
-        Button("Undo", () => Restore(_undo, _redo)); Button("Redo", () => Restore(_redo, _undo));
-        Button("Play", () => { _playing = !_playing; _lastTick = Environment.TickCount64; });
-        Button("Stop", () => { _playing = false; _previewBarriers.Clear(); SetCursor(0); });
-        Button("Step", () => SetCursor(Math.Min(_scene.DurationMs, _timeline.CursorMs + 50)));
-        Button("Test", TestInGame);
-        Button("Templates", ChooseTemplate);
-        Button("AutoCreator", () => OpenAutoCreator(false));
-        Button("DescriptionCreator", () => OpenAutoCreator(true));
-        Button("ChapterDirector", () => { using var chapter = new FrmCinematicChapters(); chapter.ShowDialog(this); });
-        Button("ShotPreset", ChooseShotPreset);
-        Button("Marker", () => { var marker = new CinematicMarker { Name = T("Marker"), TimeMs = _timeline.CursorMs };
-            _scene.Markers.Add(marker); SelectObject(marker); CommitEdit(); });
-        Button("TemporaryNpc", AddTemporaryActor);
-        Button("Formation", AddFormation);
-        Button("GroupPath", CopyGroupPath);
-        Button("TemporaryVessel",AddVessel);Button("FleetFormation",AddFleetFormation);
-        Button("NavalScene",()=>{ _scene.Mode=CinematicSceneMode.NavalScene;SelectObject(_scene);CommitEdit(); });
-        Button("BattlefieldScene",()=>{ _scene.Mode=CinematicSceneMode.BattlefieldScene;SelectObject(_scene);CommitEdit(); });
-        Button("GroupAnimation",GroupAnimation);Button("GroupCharge",GroupCharge);Button("Reinforcements",Reinforcements);
-        Button("GameplayTransition",CreateGameplayTrigger);
+        var toolbar = CreateAuthoringToolbar(out var views);
         var middle = new SplitContainer { Name = "EditingWorkspace", Size = new(1400, 780), Dock = DockStyle.Fill, Orientation = Orientation.Horizontal, SplitterDistance = 460, Panel1MinSize = 250, Panel2MinSize = 150 };
         var left = new SplitContainer { Name = "MediaWorkspace", Size = new(1400, 460), Dock = DockStyle.Fill, SplitterDistance = 260, FixedPanel = FixedPanel.Panel1, Panel1MinSize = 210, Panel2MinSize = 600 };
         var right = new SplitContainer { Name = "PreviewWorkspace", Size = new(1140, 460), Dock = DockStyle.Fill, SplitterDistance = 820, FixedPanel = FixedPanel.Panel2, Panel1MinSize = 300, Panel2MinSize = 260 };
@@ -109,8 +69,6 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         TogglePanel("ExplorerPanel", visible => left.Panel1Collapsed = !visible);
         TogglePanel("Inspector", visible => right.Panel2Collapsed = !visible);
         TogglePanel("TimelinePanel", visible => middle.Panel2Collapsed = !visible);
-        toolbar.Items.Add(new ToolStripSeparator());
-        toolbar.Items.AddRange([creators, files, actors, tools, views]);
         middle.Panel1.Controls.Add(left);
         right.Panel1.Controls.Add(_viewport);
         var viewTools = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true };
@@ -157,8 +115,8 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         _explorer.AfterSelect += (_, e) =>
         {
             if (_updating) return;
-            if (e.Node?.Tag is EventDescriptor evt && evt.Pages.FirstOrDefault()?.Cinematic is { } scene)
-            { if (evt.Id != _eventId && CanDiscard()) LoadScene(Clone(scene), evt.Id); }
+            if (e.Node?.Tag is EventDescriptor evt && evt.Pages.FirstOrDefault()?.Cinematic != null)
+            { if (evt.Id != _eventId) LoadSavedScene(evt.Id); }
             else if (e.Node?.Tag is { } item)
             {
                 if (item is CinematicClip clip) { _timeline.Selected = _viewport.Selected = clip; RefreshPoints(); }
@@ -205,8 +163,17 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         root.BackColor = DrawingColor.FromArgb(22, 31, 40); root.ForeColor = DrawingColor.Gainsboro;
         foreach (Control child in root.Controls) ApplyColors(child);
     }
-    private bool CanDiscard() => Snapshot() == _savedState || _savedState == "" && _scene.Clips.Count == 0 ||
-        MessageBox.Show(this, T("Unsaved"), Text, MessageBoxButtons.OKCancel) == DialogResult.OK;
+    private bool CanDiscard()
+    {
+        if (Snapshot() == _savedState || _savedState.Length == 0 && _lastState.Length == 0) return true;
+        return MessageBox.Show(this, T("SaveChangesBeforeContinue"), Text, MessageBoxButtons.YesNoCancel,
+            MessageBoxIcon.Question, MessageBoxDefaultButton.Button3) switch
+        {
+            DialogResult.Yes => SaveScene(),
+            DialogResult.No => true,
+            _ => false,
+        };
+    }
     private static CinematicScene Clone(CinematicScene scene) => JsonConvert.DeserializeObject<CinematicScene>(JsonConvert.SerializeObject(scene))!;
     private void NewScene()
     {
@@ -220,6 +187,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         _playing = false; _scene = scene; _eventId = eventId; _undo.Clear(); _redo.Clear(); _previewBarriers.Clear();
         _timeline.Scene = _viewport.Scene = scene; _timeline.Selected = _viewport.Selected = null;
         _lastState = _savedState = Snapshot(); SelectObject(scene); SetCursor(0); RefreshTree(); RenderMap();
+        Text = T("Title") + " — " + _scene.Name;
     }
     private void SelectObject(object value)
     {
@@ -267,8 +235,11 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         foreach (var clip in _scene.Clips.OrderBy(c => c.StartMs)) { var node = current.Nodes.Add($"{clip.StartMs / 1000f:0.##}s · {clip}"); node.Tag = clip; }
         foreach (var marker in _scene.Markers.OrderBy(m => m.TimeMs)) { var node = current.Nodes.Add($"{marker.TimeMs / 1000f:0.##}s · {marker.Name}"); node.Tag = marker; }
         if (Globals.CurrentMap is { } map)
-            foreach (var evt in map.LocalEvents.Values.Where(e => e.Pages.FirstOrDefault()?.Cinematic != null && e.Id != _eventId))
-            { var node = _explorer.Nodes.Add(evt.Name); node.Tag = evt; }
+        {
+            var saved = _explorer.Nodes.Add(T("SavedScenes"));
+            foreach (var evt in SavedScenes(map).Where(e => e.Id != _eventId))
+            { var node = saved.Nodes.Add(evt.Name); node.Tag = evt; }
+        }
         _explorer.ExpandAll();
         TreeNode? FindSelection(TreeNodeCollection nodes)
         {
@@ -279,9 +250,9 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         _explorer.SelectedNode = FindSelection(_explorer.Nodes);
         _explorer.EndUpdate(); _updating = false;
     }
-    private Resource? Pick(IEnumerable<Resource> resources)
+    private Resource? Pick(IEnumerable<Resource> resources, string titleKey = "Resources")
     {
-        using var form = new DarkForm { Text = T("Resources"), Width = 520, Height = 440, StartPosition = FormStartPosition.CenterParent };
+        using var form = new DarkForm { Text = T(titleKey), Width = 520, Height = 440, StartPosition = FormStartPosition.CenterParent };
         var list = new CinematicPicker<Resource> { Dock = DockStyle.Fill };
         var accept = new Button { Text = T("Accept"), AutoSize = true, Enabled = false, DialogResult = DialogResult.OK };
         var cancel = new Button { Text = T("Cancel"), AutoSize = true, DialogResult = DialogResult.Cancel };
@@ -308,11 +279,21 @@ internal sealed partial class FrmCinematicDirector : DarkForm
     }
     private void ChooseTemplate()
     {
-        if (Globals.CurrentMap is not { } map || !CanDiscard()) return;
+        if (Globals.CurrentMap is not { } map) { _status.Text = T("MapRequired"); return; }
         var kinds = Enum.GetValues<CinematicTemplateKind>();
         if (Pick(kinds.Select((kind, i) => new Resource(new Guid(i + 1, 0, 0, new byte[8]), T("Template" + kind)))) is not { } selected) return;
-        var chosenKind = kinds.Single(k => T("Template" + k) == selected.Name);
-        LoadScene(CinematicTemplates.Create(chosenKind, map.Id, Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight, T), Guid.Empty);
+        var chosenKind = kinds.Single((kind) => new Guid((int)kind + 1, 0, 0, new byte[8]) == selected.Id);
+        var mode = chosenKind switch
+        {
+            CinematicTemplateKind.NavalBattle => CinematicSceneMode.NavalScene,
+            CinematicTemplateKind.Battlefield or CinematicTemplateKind.Invasion => CinematicSceneMode.BattlefieldScene,
+            _ => CinematicSceneMode.GeneralScene,
+        };
+        if (ChooseSceneSetup(selected.Name, mode) is not { } setup || !CanDiscard()) return;
+        var scene = CinematicTemplates.Create(chosenKind, map.Id, Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight, T);
+        scene.Name = setup.Name; scene.Mode = setup.Mode;
+        CinematicAuthoring.InitializeProjection(scene, setup.Projection);
+        LoadGeneratedScene(scene);
     }
     private void AddTemporaryActor()
     {
@@ -375,7 +356,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         CinematicTemplates.ApplyShot(clip, kinds.Single(k => T(k.ToString()) == selected.Name));
         CommitEdit(); RenderMap();
     }
-    private void AddClip(CinematicTrack track, int? startMs = null, CinematicActor? dropActor = null, CinematicPoint? position = null, CinematicLibraryItem? resource = null)
+    private void AddClip(CinematicTrack track, int? startMs = null, CinematicActor? dropActor = null, CinematicPoint? position = null, CinematicLibraryItem? resource = null, CinematicProjection? projection = null)
     {
         var selectedActor = dropActor ?? _selection as CinematicActor ??
             (_selection is CinematicClip selectedClip ? _scene.Actors.FirstOrDefault(a => a.TargetId == selectedClip.ActorId) : null) ?? _scene.Actors.FirstOrDefault();
@@ -384,6 +365,12 @@ internal sealed partial class FrmCinematicDirector : DarkForm
         if (track == CinematicTrack.Naval && selectedActor == null) { _status.Text=T("vessel-required");return; }
         var clip = new CinematicClip { Name = T(track.ToString()), Track = track, StartMs = Math.Clamp(startMs ?? _timeline.CursorMs, 0, Math.Max(0, _scene.DurationMs - 1000)),
             X = position?.X ?? Options.Instance.Map.MapWidth / 2, Y = position?.Y ?? Options.Instance.Map.MapHeight / 2, ActorId = selectedActor?.TargetId ?? Guid.Empty };
+        if (track == CinematicTrack.Camera)
+        {
+            var previousCamera = _scene.Clips.Where(c => c.Track == CinematicTrack.Camera).OrderBy(c => c.StartMs)
+                .LastOrDefault(c => c.StartMs <= clip.StartMs);
+            CinematicAuthoring.InitializeProjection(new() { Clips = [clip] }, projection ?? previousCamera?.Projection ?? CinematicProjection.Flat2D);
+        }
         if (resource != null)
         { clip.Name = resource.Name; clip.ResourceId = resource.ResourceId; clip.AudioFile = resource.AudioFile; clip.VoiceSound = resource.Voice; }
         if (track == CinematicTrack.Movement && selectedActor != null)
@@ -493,14 +480,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
                 WorkflowBooleanAvailable,WorkflowQuestAvailable,WorkflowTaskAvailable,
                 file=>GameContentManager.GetSmartSortedTextureNames(GameContentManager.TextureType.Fog).Contains(file),
                 key=>_vesselModelsReady && VesselModels.ContainsKey(key));
-            if (_eventId == Guid.Empty) _eventId = Guid.NewGuid();
-            var evt = map.LocalEvents.GetValueOrDefault(_eventId) ?? new EventDescriptor(_eventId, map.Id, 0, 0);
-            if (evt.Pages.Count > 0)
-            {
-                // Preserve trigger, graphic, conditions and other native page metadata edited in the Event Editor.
-                var metadata = evt.Pages[0]; metadata.Cinematic = page.Cinematic; metadata.CommandLists = page.CommandLists; page = metadata;
-            }
-            evt.Name = _scene.Name; evt.Global = false; evt.Pages = [page]; map.LocalEvents[_eventId] = evt;
+            StoreScene(map, page);
             PacketSender.SendMap(map); _joustSceneSaved?.Invoke(_eventId); _savedState = _lastState = Snapshot(); _status.Text = T("Saved"); CommitEdit(); return true;
         }
         catch (InvalidOperationException error) { MessageBox.Show(this, T("Validation") + ": " + Explain(error.Message), Text); return false; }
@@ -513,8 +493,7 @@ internal sealed partial class FrmCinematicDirector : DarkForm
     }
     private void Import()
     {
-        if (!CanDiscard()) return;
-        using var dialog = new OpenFileDialog { Filter = "Cinematic JSON|*.cinematic.json|JSON|*.json" };
+        using var dialog = new OpenFileDialog { Filter = T("SceneJsonImportFilter"), Title = T("ImportSceneJson") };
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
         try
         {
@@ -522,14 +501,14 @@ internal sealed partial class FrmCinematicDirector : DarkForm
             var scene = JsonConvert.DeserializeObject<CinematicScene>(File.ReadAllText(dialog.FileName), new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None, MaxDepth = 32 });
             if (scene == null || scene.Clips == null || scene.Actors == null || scene.Markers == null || scene.Markers.Count > 128 || scene.Markers.Any(m => m == null) || scene.Clips.Count > 512 || scene.Actors.Count > 64 || scene.Clips.Any(c => c == null || c.Points == null) || scene.Actors.Any(a => a == null))
                 throw new InvalidOperationException("scene-size");
-            LoadScene(scene, Guid.Empty);
+            if (CanDiscard()) LoadGeneratedScene(scene);
         }
         catch (Exception error) when (error is IOException or JsonException or InvalidOperationException)
         { MessageBox.Show(this, T("Validation") + ": " + Explain(error.Message), Text); }
     }
     private void Export()
     {
-        using var dialog = new SaveFileDialog { Filter = "Cinematic JSON|*.cinematic.json", FileName = "scene.cinematic.json" };
+        using var dialog = new SaveFileDialog { Filter = T("SceneJsonExportFilter"), Title = T("ExportSceneJson"), FileName = "scene.cinematic.json" };
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
         try { File.WriteAllText(dialog.FileName, JsonConvert.SerializeObject(_scene, Formatting.Indented)); }
         catch (IOException error) { MessageBox.Show(this, error.Message, Text); }

@@ -42,6 +42,7 @@ internal static class Program
         optionsProperty.SetValue(null, new Options());
         if (Environment.GetCommandLineArgs().Contains("--cinematic-creators-only")) { CinematicCreatorsTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--cinematic-usability-only")) { CinematicUsabilityTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--cinematic-chapters-only")) { CinematicChapterEditorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--hub-only")) { EditorHubTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--editor-fixes-only")) { EditorFixesTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--windows-only")) { EditorWindowTests.Run(); return; }
