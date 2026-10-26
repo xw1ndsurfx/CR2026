@@ -98,7 +98,7 @@ internal sealed class JoustWindow : Window
             {
                 var next = JsonSerializer.Deserialize<JoustView>(packet.ViewJson);
                 if (next == null) return;
-                if (_state?.MatchId != next.MatchId) { _sequence = 0; _defending = false; }
+                if (_state?.MatchId != next.MatchId) { _sequence = 0; _defending = false; _defense.ToggleState = false; }
                 _state = next; _view.State = next;
                 _view.Rules = _config.Arenas.FirstOrDefault(a => a.Id == next.ArenaId)?.Rules ?? new();
                 _score.Text = next.IsPve ? ClientLanguages.Format("Pass {0}/{1} · You {2} : {3} AI", next.Pass, next.Passes, next.PlayerScore, next.OpponentScore) :

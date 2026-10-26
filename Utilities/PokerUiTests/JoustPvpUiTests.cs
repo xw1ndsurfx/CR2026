@@ -46,6 +46,9 @@ internal static class JoustPvpUiTests
                 var main = (Intersect.Client.Framework.Gwen.Control.Base)Activator.CreateInstance(mainType, Hidden, null, [canvas], null)!;
                 mainType.GetMethod("Apply", Hidden)!.Invoke(main, [new JoustStatePacket { ViewJson = JsonSerializer.Serialize(new JoustView { IsPve = false, OpponentName = "Gisabelle", Phase = JoustPhase.Aim, Pass = 1, Passes = 3, PlayerScore = 2, OpponentScore = 3 }) }]);
                 Check(Field<Label>(main, "_score").Text.Contains("Gisabelle"), "PvP scoreboard identifies the real opponent instead of the AI label.");
+                mainType.GetField("_defending", Hidden)!.SetValue(main, true); Field<Button>(main, "_defense").ToggleState = true;
+                mainType.GetMethod("Apply", Hidden)!.Invoke(main, [new JoustStatePacket { ViewJson = JsonSerializer.Serialize(new JoustView { MatchId = Guid.NewGuid(), IsPve = false, Phase = JoustPhase.Aim }) }]);
+                Check(!Field<bool>(main, "_defending") && !Field<Button>(main, "_defense").ToggleState, "A new duel resets both the defense input and its visible toggle.");
                 mainType.GetMethod("Apply", Hidden)!.Invoke(main, [new JoustStatePacket { ViewJson = JsonSerializer.Serialize(new JoustView { IsPve = false, Phase = JoustPhase.Abandoned, Winner = 0 }) }]);
                 Check(Field<Label>(main, "_status").Text == ClientLanguages.Text("Joust interrupted"), "An interrupted duel does not announce an earned victory.");
             }
