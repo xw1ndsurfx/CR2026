@@ -1155,6 +1155,7 @@ public partial class Player : Entity
 
         var pkt = (PlayerEntityPacket)packet;
         pkt.MountJson = ActiveMount is { } riding ? new Intersect.Framework.Core.Mounts.MountConfiguration { Mounts = [riding] }.ToJson() : "";
+        pkt.JoustSeated = IsJoustSeated;
         pkt.PvpGrade=Intersect.Server.Pvp.PvpRuntime.Grade(this);pkt.PvpPoints=Intersect.Server.Pvp.PvpRuntime.Points(this);pkt.PvpMatchId=Intersect.Server.Pvp.PvpRuntime.MatchId(this);pkt.PvpTeam=Intersect.Server.Pvp.PvpRuntime.Team(this);
         pkt.IsAfk = _isAfk;
         pkt.PendingDeath = HasPendingDeath;
@@ -2106,7 +2107,7 @@ public partial class Player : Entity
 
     public override bool CanAttack(Entity entity, SpellDescriptor spell)
     {
-        if (IsJousting || entity is JoustOpponent || entity is Player { IsJousting: true }) return false;
+        if (IsJoustProtected || entity is JoustOpponent or JoustAudienceActor || entity is Player { IsJoustProtected: true }) return false;
         Dismount();
         if(entity is Player pvpTarget && (Intersect.Server.Pvp.PvpRuntime.InMatch(this) || Intersect.Server.Pvp.PvpRuntime.InMatch(pvpTarget)))
         {

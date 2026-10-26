@@ -39,7 +39,7 @@ public sealed partial class FrmJoustConfiguration : Form
     private long _sent;
     private Placement _placement;
     internal Func<CinematicScene, Bitmap> RenderPreview { get; set; } = scene => Render.RenderCinematicMap(scene, 0);
-    private enum Placement { Start, End, Opponent }
+    private enum Placement { Start, End, Opponent, Seat, SeatExit }
     private static string T(string text) => QualityOfLifeText.Get(text, System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
     public FrmJoustConfiguration(string json)
     {
@@ -68,7 +68,7 @@ public sealed partial class FrmJoustConfiguration : Form
             try
             {
                 tabs.SizeMode = TabSizeMode.Fixed;
-                var size = new Size(Math.Max(50, (tabs.ClientSize.Width - 12) / 5), 30);
+                var size = new Size(Math.Max(32, (tabs.ClientSize.Width - 12) / Math.Max(1, tabs.TabPages.Count)), 30);
                 if (tabs.ItemSize != size) tabs.ItemSize = size;
             }
             finally { fittingTabs = false; }
@@ -122,6 +122,7 @@ public sealed partial class FrmJoustConfiguration : Form
             Row(targets, caption, new Label { Text = T("Bounds as a percentage of the close-up sprite"), AutoSize = true, MaximumSize = new(320, 0) });
             foreach (var edge in new[] { "Left", "Top", "Right", "Bottom" }) Number(targets, target + "." + edge, edge, 0, 100, 1, .01m);
         }
+        BuildSeats(tabs);
         right.Panel2.Controls.Add(tabs); Controls.Add(split); Controls.Add(tools); Controls.Add(_status);
         _list.SelectedIndexChanged += (_, _) => LoadArena();
         _name.TextChanged += (_, _) => { if (!_loading && Arena is { } a) { a.Name = _name.Text; var index = _list.SelectedIndex; _list.Items[index] = new ArenaChoice(a); Changed(); } };
@@ -185,7 +186,7 @@ public sealed partial class FrmJoustConfiguration : Form
         _loading = true;
         _name.Text = Arena?.Name ?? ""; _enabled.Checked = Arena?.Enabled == true;
         _allowPve.Checked = Arena?.AllowPve == true; _allowPvp.Checked = Arena?.AllowPvp == true;
-        PopulateMounts(); PopulateScenes();
+        PopulateMounts(); PopulateScenes(); LoadSeats();
         if (Arena is { } a)
         {
             foreach (var (key, number) in _numbers) { var (target, property) = RuleProperty(a.Rules, key); number.Value = Math.Clamp(Convert.ToDecimal(property.GetValue(target)) / (decimal)number.Tag!, number.Minimum, number.Maximum); }
@@ -238,7 +239,7 @@ public sealed partial class FrmJoustConfiguration : Form
         var scene = source == null ? JoustCinematics.Create(a, kind, T) : System.Text.Json.JsonSerializer.Deserialize<CinematicScene>(System.Text.Json.JsonSerializer.Serialize(source))!;
         return new FrmCinematicDirector(scene, saved => { SetScene(a, kind, saved); var loading = _loading; _loading = true; PopulateScenes(); _loading = loading; Changed(); }, source == null ? Guid.Empty : id);
     }
-    private void SetPlacement(Placement placement) { _placement = placement; _status.Text = T(placement switch { Placement.Start => "Click the gold starting tile for the player.", Placement.End => "Click the finish column. Use an even distance of 4 to 64 tiles.", _ => "Click the row for the opposing knight (blue lane)." }); }
+    private void SetPlacement(Placement placement) { _placement = placement; _status.Text = T(placement switch { Placement.Seat => "Click the bench tile for the selected seat.", Placement.SeatExit => "Click an adjacent free entrance tile for this seat.", Placement.Start => "Click the gold starting tile for the player.", Placement.End => "Click the finish column. Use an even distance of 4 to 64 tiles.", _ => "Click the row for the opposing knight (blue lane)." }); }
     private void Place(MouseEventArgs e)
     {
         if (Arena is not { } a || Globals.CurrentMap?.Id != a.MapId || _map.Image is not { } image) return;
@@ -247,7 +248,13 @@ public sealed partial class FrmJoustConfiguration : Form
         if (px < 0 || py < 0 || px >= image.Width || py >= image.Height) return;
         var x = (int)(px / Intersect.Options.Instance.Map.TileWidth); var y = (int)(py / Intersect.Options.Instance.Map.TileHeight);
         var placement = (ModifierKeys & Keys.Shift) != 0 ? Placement.Opponent : e.Button == MouseButtons.Right ? Placement.End : _placement;
-        if (placement == Placement.Opponent) a.OpponentY = y;
+        if (placement is Placement.Seat or Placement.SeatExit)
+        {
+            if (SelectedSeat is not { } seat) { _status.Text = T("Select a seat to place it."); return; }
+            if (placement == Placement.Seat) { seat.X = x; seat.Y = y; } else { seat.ExitX = x; seat.ExitY = y; }
+            LoadSeatFields();
+        }
+        else if (placement == Placement.Opponent) a.OpponentY = y;
         else if (placement == Placement.End) a.EndX = x;
         else { a.StartX = x; a.StartY = a.EndY = y; }
         Changed(); Preview();
@@ -265,6 +272,9 @@ public sealed partial class FrmJoustConfiguration : Form
         if (!_mounts.Enabled || !_mounts.Mounts.Any(m => m.Id == a.MountId && m.IntegratedRider)) issues.Add(T("Select a compatible knight mount. Open Mount Editor to import William if the list is empty."));
         if (distance is < 4 or > 64 || distance % 2 != 0) issues.Add(T("The track needs an even distance of 4 to 64 tiles."));
         if (a.StartY == a.OpponentY) issues.Add(T("Place the opponent on a different row."));
+        if (a.Seats.Any(s => !s.IsValid || a.OnTrack(s.X, s.Y) || a.OnTrack(s.ExitX, s.ExitY)) ||
+            a.Seats.Select(s => (s.X, s.Y)).Distinct().Count() != a.Seats.Length || a.Seats.Any(s => a.Seats.Any(o => o.X == s.ExitX && o.Y == s.ExitY)))
+            issues.Add(T("Each seat needs its own bench and an adjacent entrance outside both tracks. Entrances cannot overlap a bench."));
         var targetsValid = a.Rules.BodyTarget.IsValid && a.Rules.ShieldTarget.IsValid && a.Rules.PreciseTarget.IsValid &&
             a.Rules.PreciseTarget.Left >= a.Rules.BodyTarget.Left && a.Rules.PreciseTarget.Right <= a.Rules.BodyTarget.Right &&
             a.Rules.PreciseTarget.Top >= a.Rules.BodyTarget.Top && a.Rules.PreciseTarget.Bottom <= a.Rules.BodyTarget.Bottom;
@@ -275,6 +285,13 @@ public sealed partial class FrmJoustConfiguration : Form
             issues.Add(T("Keep both tracks inside the map."));
         else
         {
+            foreach (var seat in a.Seats)
+            {
+                if (seat.X >= Intersect.Options.Instance.Map.MapWidth || seat.ExitX >= Intersect.Options.Instance.Map.MapWidth || seat.Y >= Intersect.Options.Instance.Map.MapHeight || seat.ExitY >= Intersect.Options.Instance.Map.MapHeight)
+                { issues.Add(T("Keep all benches and entrances inside the map.")); break; }
+                if (Globals.CurrentMap.Attributes[seat.ExitX, seat.ExitY] != null || Globals.CurrentMap.Attributes[seat.X, seat.Y] is { } attribute && attribute is not Intersect.Framework.Core.GameObjects.Maps.Attributes.MapBlockedAttribute)
+                { issues.Add(T("Seat entrances must have no map attributes. Benches may only have a blocking attribute.")); break; }
+            }
             for (var x = Math.Min(a.StartX, a.EndX); x <= Math.Max(a.StartX, a.EndX); x++)
                 if (Globals.CurrentMap.Attributes[x, a.StartY] != null || Globals.CurrentMap.Attributes[x, a.OpponentY] != null)
                 { issues.Add(T("Clear map attributes from both tracks before playing (blocks, warps, slides and traps).")); break; }
@@ -298,6 +315,12 @@ public sealed partial class FrmJoustConfiguration : Form
             var middle = (a.StartX + a.EndX + 1) / 2f * tw;
             g.DrawLine(Pens.OrangeRed, middle, (Math.Min(a.StartY, a.OpponentY) - .5f) * th, middle, (Math.Max(a.StartY, a.OpponentY) + 1.5f) * th);
             using var font = new Font(FontFamily.GenericSansSerif, 9, FontStyle.Bold);
+            foreach (var seat in a.Seats)
+            {
+                g.DrawRectangle(Pens.LimeGreen, seat.X * tw, seat.Y * th, tw, th);
+                g.DrawRectangle(Pens.White, seat.ExitX * tw, seat.ExitY * th, tw, th);
+                g.DrawLine(Pens.LimeGreen, (seat.X + .5f) * tw, (seat.Y + .5f) * th, (seat.ExitX + .5f) * tw, (seat.ExitY + .5f) * th);
+            }
             g.DrawString(T("Player start"), font, Brushes.Gold, a.StartX * tw, a.StartY * th - 20);
             g.DrawString(T("Opponent start"), font, Brushes.DeepSkyBlue, a.EndX * tw - 80, (a.OpponentY + 1) * th);
         }

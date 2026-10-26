@@ -1772,7 +1772,7 @@ public abstract partial class Entity : IEntity
         bool trapTrigger = false
     )
     {
-        if (target is Resource || target is EventPageInstance || target is JoustOpponent || target is Player { IsJousting: true } || this is Player { IsJousting: true })
+        if (target is Resource || target is EventPageInstance || target is JoustOpponent or JoustAudienceActor || target is Player { IsJoustProtected: true } || this is Player { IsJoustProtected: true })
         {
             return;
         }
@@ -1992,7 +1992,7 @@ public abstract partial class Entity : IEntity
         List<KeyValuePair<Guid, Direction>> aliveAnimations = null,
         ItemDescriptor weapon = null)
     {
-        if (target is JoustOpponent || target is Player { IsJousting: true } || this is Player { IsJousting: true }) return;
+        if (target is JoustOpponent or JoustAudienceActor || target is Player { IsJoustProtected: true } || this is Player { IsJoustProtected: true }) return;
         if (IsAttacking)
         {
             return;

@@ -1,6 +1,6 @@
 using MessagePack;
 namespace Intersect.Network.Packets.Client;
-public enum JoustAction { Open, StartPve, Aim, Leave, GetConfiguration, SaveConfiguration, Redeem, PrepareWilliam, InviteDuel, AcceptDuel, DeclineDuel, BrowseDuels }
+public enum JoustAction { Open, StartPve, Aim, Leave, GetConfiguration, SaveConfiguration, Redeem, PrepareWilliam, InviteDuel, AcceptDuel, DeclineDuel, BrowseDuels, BrowseSeats, ReserveSeat, LeaveSeat, SpectatorCamera }
 [MessagePackObject]
 public sealed partial class JoustRequestPacket : IntersectPacket
 {
@@ -18,4 +18,6 @@ public sealed partial class JoustRequestPacket : IntersectPacket
     [Key(11)] public Guid OfferId { get; set; }
     [Key(12)] public Guid TargetId { get; set; }
     [Key(13)] public Guid InvitationId { get; set; }
+    [Key(14)] public Guid SeatId { get; set; }
+    [Key(15)] public int Camera { get; set; }
 }

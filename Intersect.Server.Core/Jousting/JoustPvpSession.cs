@@ -90,10 +90,12 @@ internal sealed class JoustPvpSession
         PublishBoth(now);
     }
     private void PublishBoth(long now)
-    { First.PublishPvpJoust(ViewFor(First, now)); Second.PublishPvpJoust(ViewFor(Second, now)); }
+    { JoustAudienceRuntime.Publish(Arena, Instance.MapInstanceId, Match, First.Id, First.Name, Second.Id, Second.Name);
+      First.PublishPvpJoust(ViewFor(First, now)); Second.PublishPvpJoust(ViewFor(Second, now)); }
     private void Finish(long now)
     {
         if (Interlocked.Exchange(ref _closed, 1) != 0) return;
+        JoustAudienceRuntime.Publish(Arena, Instance.MapInstanceId, Match, First.Id, First.Name, Second.Id, Second.Name);
         try { First.FinishPvpJoust(this, ViewFor(First, now), 0); }
         finally
         {

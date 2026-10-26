@@ -14,4 +14,6 @@ public sealed partial class JoustStatePacket : IntersectPacket
     [Key(8)] public string CareerJson { get; set; } = "";
     [Key(9)] public string DuelJson { get; set; } = "";
     [Key(10)] public bool OpenDuelWindow { get; set; }
+    [Key(11)] public string SpectatorJson { get; set; } = "";
+    [Key(12)] public bool OpenSpectatorWindow { get; set; }
 }

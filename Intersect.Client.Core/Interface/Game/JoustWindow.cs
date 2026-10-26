@@ -54,6 +54,8 @@ internal sealed class JoustWindow : Window
             () => _defending = !_defending); _defense.IsToggle = true;
         _leave = NavalManagementWindow.Button(this, "JoustLeave", T("Leave joust"), 24, 534, 708, 30, () => { Send(JoustAction.Leave); Hide(); });
         _defense.Hide(); _leave.Hide();
+        _lobby.Add(NavalManagementWindow.Button(this, "JoustGrandstands", T("Joust grandstands"), 24, 534, 708, 30,
+            () => Intersect.Client.Networking.Network.SendPacket(new JoustRequestPacket { Action = JoustAction.BrowseSeats })));
         _status.Text = T("Stand at the arena start to train."); Hide();
     }
     protected override void EnsureInitialized() { }

@@ -431,6 +431,7 @@ public partial class Entity : IEntity
 
         _petDecoration=null;
         ApplyArenaMount(packet is NpcEntityPacket mounted ? mounted.MountJson : "");
+        JoustSeated = packet is PlayerEntityPacket { JoustSeated: true } or NpcEntityPacket { JoustSeated: true };
         ServerMovementMilliseconds = 0;
         if(packet is NpcEntityPacket {PetDecorationJson.Length:>0 and <=1024} npc)
         {
@@ -1367,7 +1368,7 @@ public partial class Entity : IEntity
 
         var mountBounds = BeginMountDraw(texture, srcRectangle, destRectangle, renderColor);
         var riderBounds = MountedRiderRectangle(destRectangle);
-        WorldPos = _integratedMountRider ? mountBounds : _riderTransform == null ? destRectangle : new FloatRect(Math.Min(mountBounds.X, riderBounds.X), Math.Min(mountBounds.Y, riderBounds.Y),
+        WorldPos = JoustSeated ? riderBounds : _integratedMountRider ? mountBounds : _riderTransform == null ? destRectangle : new FloatRect(Math.Min(mountBounds.X, riderBounds.X), Math.Min(mountBounds.Y, riderBounds.Y),
             Math.Max(mountBounds.Right, riderBounds.Right) - Math.Min(mountBounds.X, riderBounds.X), Math.Max(mountBounds.Bottom, riderBounds.Bottom) - Math.Min(mountBounds.Y, riderBounds.Y));
         IncludeVisibleGraphicTop(texture, srcRectangle, riderBounds);
 
