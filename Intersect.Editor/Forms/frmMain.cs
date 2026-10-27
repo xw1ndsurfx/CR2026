@@ -1829,7 +1829,9 @@ public partial class FrmMain : Form
 
     private void toolStripBtnUndo_Click(object sender, EventArgs e)
     {
+        Globals.MapEditorWindow.CancelSmartStroke();
         var tmpMap = Globals.CurrentMap;
+        if (tmpMap == null) return;
         if (Globals.MapEditorWindow.MapUndoStates.Count > 0)
         {
             tmpMap.LoadInternal(Globals.MapEditorWindow.MapUndoStates[Globals.MapEditorWindow.MapUndoStates.Count - 1]);
@@ -1840,13 +1842,16 @@ public partial class FrmMain : Form
 
             Globals.MapEditorWindow.MapUndoStates.RemoveAt(Globals.MapEditorWindow.MapUndoStates.Count - 1);
             Globals.MapPropertiesWindow.Update();
+            tmpMap.UpdateAdjacentAutotiles();
             Core.Graphics.TilePreviewUpdated = true;
         }
     }
 
     private void toolStripBtnRedo_Click(object sender, EventArgs e)
     {
+        Globals.MapEditorWindow.CancelSmartStroke();
         var tmpMap = Globals.CurrentMap;
+        if (tmpMap == null) return;
         if (Globals.MapEditorWindow.MapRedoStates.Count > 0)
         {
             tmpMap.LoadInternal(Globals.MapEditorWindow.MapRedoStates[Globals.MapEditorWindow.MapRedoStates.Count - 1]);
@@ -1857,6 +1862,7 @@ public partial class FrmMain : Form
 
             Globals.MapEditorWindow.MapRedoStates.RemoveAt(Globals.MapEditorWindow.MapRedoStates.Count - 1);
             Globals.MapPropertiesWindow.Update();
+            tmpMap.UpdateAdjacentAutotiles();
             Core.Graphics.TilePreviewUpdated = true;
         }
     }

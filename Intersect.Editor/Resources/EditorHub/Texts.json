@@ -258,5 +258,305 @@
     "en": "Mini-game settings",
     "fr": "Paramètres des mini-jeux",
     "es": "Ajustes de minijuegos"
+  },
+  "Smart.Title": {
+    "en": "Smart Map Builder",
+    "fr": "Smart Map Builder",
+    "es": "Smart Map Builder"
+  },
+  "Smart.Enable": {
+    "en": "Enable smart painting",
+    "fr": "Activer la peinture intelligente",
+    "es": "Activar pintura inteligente"
+  },
+  "Smart.Help": {
+    "en": "Choose a tileset, native mode and source in Map Layers, then capture it. Drag to preview; release to apply. Right button erases; Esc cancels. Switch tools to return to classic editing.",
+    "fr": "Choisissez le tileset, le mode natif et la source dans Calques, puis capturez. Tracez pour prévisualiser; relâchez pour appliquer. Bouton droit : gomme. Échap : annuler. Changez d’outil pour le mode classique.",
+    "es": "Elija tileset, modo nativo y origen en Capas; capture la selección. Arrastre para previsualizar y suelte para aplicar. Botón derecho: borrar. Esc: cancelar. Cambie de herramienta para volver al modo clásico."
+  },
+  "Smart.Preserve": {
+    "en": "Preserve existing graphics",
+    "fr": "Préserver les tuiles existantes",
+    "es": "Conservar mosaicos existentes"
+  },
+  "Smart.Round": {
+    "en": "Round footprint",
+    "fr": "Empreinte ronde",
+    "es": "Huella circular"
+  },
+  "Smart.Search": {
+    "en": "Search presets or categories",
+    "fr": "Rechercher des presets ou catégories",
+    "es": "Buscar presets o categorías"
+  },
+  "Smart.All": {
+    "en": "All presets",
+    "fr": "Tous les presets",
+    "es": "Todos los presets"
+  },
+  "Smart.Favorites": {
+    "en": "Favorites",
+    "fr": "Favoris",
+    "es": "Favoritos"
+  },
+  "Smart.Recent": {
+    "en": "Recently used",
+    "fr": "Récemment utilisés",
+    "es": "Usados recientemente"
+  },
+  "Smart.Name": {
+    "en": "Preset name",
+    "fr": "Nom du preset",
+    "es": "Nombre del preset"
+  },
+  "Smart.Category": {
+    "en": "Brush category",
+    "fr": "Catégorie de pinceau",
+    "es": "Categoría de pincel"
+  },
+  "Smart.Terrain": {
+    "en": "Terrain",
+    "fr": "Terrain",
+    "es": "Terreno"
+  },
+  "Smart.Road": {
+    "en": "Road",
+    "fr": "Route",
+    "es": "Camino"
+  },
+  "Smart.River": {
+    "en": "River",
+    "fr": "Rivière",
+    "es": "Río"
+  },
+  "Smart.Cliff": {
+    "en": "Cliff",
+    "fr": "Falaise",
+    "es": "Acantilado"
+  },
+  "Smart.Decoration": {
+    "en": "Decoration",
+    "fr": "Décoration",
+    "es": "Decoración"
+  },
+  "Smart.Building": {
+    "en": "Building",
+    "fr": "Bâtiment",
+    "es": "Edificio"
+  },
+  "Smart.Capture": {
+    "en": "Capture source",
+    "fr": "Capturer la source",
+    "es": "Capturar origen"
+  },
+  "Smart.Save": {
+    "en": "Save preset",
+    "fr": "Enregistrer",
+    "es": "Guardar preset"
+  },
+  "Smart.Duplicate": {
+    "en": "Duplicate",
+    "fr": "Dupliquer",
+    "es": "Duplicar"
+  },
+  "Smart.Favorite": {
+    "en": "Favorite ★",
+    "fr": "Favori ★",
+    "es": "Favorito ★"
+  },
+  "Smart.Delete": {
+    "en": "Delete preset",
+    "fr": "Supprimer le preset",
+    "es": "Eliminar preset"
+  },
+  "Smart.Import": {
+    "en": "Import presets",
+    "fr": "Importer des presets",
+    "es": "Importar presets"
+  },
+  "Smart.Export": {
+    "en": "Export preset",
+    "fr": "Exporter le preset",
+    "es": "Exportar preset"
+  },
+  "Smart.Shape": {
+    "en": "Painting tool",
+    "fr": "Outil de peinture",
+    "es": "Herramienta de pintura"
+  },
+  "Smart.Brush": {
+    "en": "Freehand path",
+    "fr": "Tracé libre",
+    "es": "Trazo libre"
+  },
+  "Smart.Line": {
+    "en": "Straight line",
+    "fr": "Ligne droite",
+    "es": "Línea recta"
+  },
+  "Smart.Rectangle": {
+    "en": "Rectangle",
+    "fr": "Rectangle",
+    "es": "Rectángulo"
+  },
+  "Smart.Ellipse": {
+    "en": "Circle / ellipse",
+    "fr": "Cercle / ellipse",
+    "es": "Círculo / elipse"
+  },
+  "Smart.Fill": {
+    "en": "Connected fill",
+    "fr": "Remplissage contigu",
+    "es": "Relleno contiguo"
+  },
+  "Smart.Replace": {
+    "en": "Replace matching terrain",
+    "fr": "Remplacer le terrain identique",
+    "es": "Reemplazar terreno coincidente"
+  },
+  "Smart.Stamp": {
+    "en": "Building stamp",
+    "fr": "Tampon de bâtiment",
+    "es": "Sello de edificio"
+  },
+  "Smart.Radius": {
+    "en": "Radius (tiles)",
+    "fr": "Rayon (tuiles)",
+    "es": "Radio (mosaicos)"
+  },
+  "Smart.Density": {
+    "en": "Decoration density (%)",
+    "fr": "Densité de décoration (%)",
+    "es": "Densidad de decoración (%)"
+  },
+  "Smart.StampLayers": {
+    "en": "Layers included in building capture",
+    "fr": "Calques inclus dans le bâtiment",
+    "es": "Capas incluidas en el edificio"
+  },
+  "Smart.AnchorX": {
+    "en": "Stamp anchor X (tiles)",
+    "fr": "Ancrage X du tampon (tuiles)",
+    "es": "Anclaje X del sello (mosaicos)"
+  },
+  "Smart.AnchorY": {
+    "en": "Stamp anchor Y (tiles)",
+    "fr": "Ancrage Y du tampon (tuiles)",
+    "es": "Anclaje Y del sello (mosaicos)"
+  },
+  "Smart.CaptureStamp": {
+    "en": "Capture map selection",
+    "fr": "Capturer la sélection de map",
+    "es": "Capturar selección del mapa"
+  },
+  "Smart.AddVariant": {
+    "en": "Add selected variant",
+    "fr": "Ajouter la variante sélectionnée",
+    "es": "Añadir variante seleccionada"
+  },
+  "Smart.Transition": {
+    "en": "Add overlay rule",
+    "fr": "Ajouter une règle de surcouche",
+    "es": "Añadir regla de superposición"
+  },
+  "Smart.ClearRules": {
+    "en": "Clear rules / variants",
+    "fr": "Effacer règles / variantes",
+    "es": "Borrar reglas / variantes"
+  },
+  "Smart.TransitionHelp": {
+    "en": "Overlay rule: capture your terrain brush first. Hover the existing terrain to match on its layer; select an overlay autotile on another graphic layer, then add the rule. The native overlay draws edges over that terrain. Missing edge artwork must be supplied; presets never invent it. Disable preservation explicitly to replace occupied cells. Rules and variants can also be edited by exporting and importing JSON.",
+    "fr": "Règle de surcouche : capturez votre pinceau de terrain. Survolez le terrain existant à reconnaître sur son calque; sélectionnez un autotile de bordure sur un autre calque graphique, puis ajoutez la règle. La surcouche native dessine les bordures sur le terrain. Les raccords graphiques manquants doivent être fournis. Désactivez explicitement la préservation pour remplacer des cellules occupées. Règles et variantes sont aussi modifiables par export et import JSON.",
+    "es": "Regla de superposición: capture el pincel de terreno. Sitúe el cursor sobre el terreno existente en su capa; seleccione un autotile de borde en otra capa gráfica y añada la regla. La superposición nativa dibuja los bordes. Debe proporcionar los gráficos de unión que falten. Desactive la conservación explícitamente para reemplazar celdas ocupadas. También puede editar reglas y variantes exportando e importando JSON."
+  },
+  "Smart.Undo": {
+    "en": "Undo",
+    "fr": "Annuler",
+    "es": "Deshacer"
+  },
+  "Smart.Redo": {
+    "en": "Redo",
+    "fr": "Rétablir",
+    "es": "Rehacer"
+  },
+  "Smart.Error": {
+    "en": "Unable to complete this operation.",
+    "fr": "Impossible de terminer cette opération.",
+    "es": "No se pudo completar esta operación."
+  },
+  "Smart.ChooseSource": {
+    "en": "Select a graphic layer and a valid tileset source, then capture it.",
+    "fr": "Sélectionnez un calque graphique et une source valide, puis capturez-la.",
+    "es": "Seleccione una capa gráfica y un origen válido; después captúrelo."
+  },
+  "Smart.Captured": {
+    "en": "Captured. Save to keep this preset.",
+    "fr": "Capturé. Enregistrez pour conserver ce preset.",
+    "es": "Capturado. Guarde para conservar el preset."
+  },
+  "Smart.InvalidResource": {
+    "en": "Missing tileset, invalid layer or source rectangle. Choose an available resource and the correct native format; no replacement art has been generated.",
+    "fr": "Tileset manquant, calque invalide ou découpage hors image. Choisissez une ressource disponible et le bon format natif; aucun raccord graphique n’a été inventé.",
+    "es": "Falta un tileset, la capa no es válida o el recorte excede la imagen. Elija un recurso disponible y el formato nativo correcto; no se han inventado gráficos."
+  },
+  "Smart.Ready": {
+    "en": "Ready. The map preview uses the native animation clock.",
+    "fr": "Prêt. L’aperçu suit le rythme d’animation natif.",
+    "es": "Listo. La vista previa usa el ritmo de animación nativo."
+  },
+  "Smart.NoChanges": {
+    "en": "No cells changed. Check preservation, destination layer and stamp bounds.",
+    "fr": "Aucune cellule modifiée. Vérifiez la préservation, le calque et les limites du tampon.",
+    "es": "No se modificaron celdas. Revise la conservación, la capa y los límites del sello."
+  },
+  "Smart.Changed": {
+    "en": "{0} graphic cells changed in one undo action.",
+    "fr": "{0} cellules graphiques modifiées en une seule action Annuler.",
+    "es": "{0} celdas gráficas modificadas en una acción de deshacer."
+  },
+  "Smart.SelectStamp": {
+    "en": "Use the classic selection tool to select a map area, check the layers, then capture it.",
+    "fr": "Sélectionnez une zone avec l’outil classique de sélection, cochez les calques, puis capturez-la.",
+    "es": "Seleccione un área con la herramienta clásica de selección, marque las capas y capture."
+  },
+  "Smart.Cleared": {
+    "en": "Rules and variants cleared from the working preset. Save to keep changes.",
+    "fr": "Règles et variantes effacées du preset de travail. Enregistrez pour conserver les changements.",
+    "es": "Reglas y variantes borradas del preset de trabajo. Guarde los cambios."
+  },
+  "Smart.Library": {
+    "en": "Library",
+    "fr": "Bibliothèque",
+    "es": "Biblioteca"
+  },
+  "Smart.Painting": {
+    "en": "Painting",
+    "fr": "Peinture",
+    "es": "Pintura"
+  },
+  "Smart.Assemblies": {
+    "en": "Rules",
+    "fr": "Règles",
+    "es": "Reglas"
+  },
+  "Smart.Destination": {
+    "en": "Destination layer",
+    "fr": "Calque de destination",
+    "es": "Capa de destino"
+  },
+  "Smart.RemoveVariant": {
+    "en": "Remove variant",
+    "fr": "Retirer la variante",
+    "es": "Quitar variante"
+  },
+  "Smart.EditRule": {
+    "en": "Replace selected rule",
+    "fr": "Modifier la règle",
+    "es": "Editar regla"
+  },
+  "Smart.RemoveRule": {
+    "en": "Remove rule",
+    "fr": "Retirer la règle",
+    "es": "Quitar regla"
   }
 }
