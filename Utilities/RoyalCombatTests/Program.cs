@@ -88,4 +88,8 @@ config.Ranges[0].MaximumPlayers = 2; config.Ranges[0].RegistrationSeconds = 0; C
 config = new(); config.Ranges = [new() { SeasonKey = "royal-2026_1" }]; Check(config.IsValid, "stable season key accepted");
 config.Ranges[0].SeasonKey = ""; Check(!config.IsValid, "empty season rejected");
 config.Ranges[0].SeasonKey = "season/other"; Check(!config.IsValid, "season identifiers cannot contain path syntax");
+config = new(); Check(!config.RespecEnabled && config.IsValid, "respec defaults preserve existing economy");
+config.RespecEnabled = true; Check(!config.IsValid, "paid resets require an authored existing currency id");
+config.RespecCurrencyId = Guid.NewGuid(); Check(config.IsValid, "authored reset price and currency accepted");
+config.RespecCost = 0; Check(!config.IsValid, "zero-price paid reset rejected");
 Console.WriteLine($"PASS: {checks} checks (ballistics, moving targets, timers, zoom, authority, mastery and ammunition).");
