@@ -48,4 +48,18 @@ public sealed class JoustClientTests
         actor.ServerMovementMilliseconds = 0;
         Assert.That(clock.Sample(mount, actor.MountMovementActive, 800).Phase, Is.EqualTo(MountPhase.End));
     }
+    [Test]
+    public void SeatedBodyAndPaddedEquipmentKeepTheSameHipAndAllSourcePixels()
+    {
+        var body = Entity.SeatedLayerParts(new(0,0,16,32),new(100,200,16,32),220,5,4).ToArray();
+        var clothing = Entity.SeatedLayerParts(new(0,0,24,48),new(96,192,24,48),220,5,4).ToArray();
+        Assert.That(body.Length,Is.EqualTo(2));Assert.That(clothing.Length,Is.EqualTo(2));
+        Assert.That(body[0].Destination.Bottom,Is.EqualTo(225));Assert.That(clothing[0].Destination.Bottom,Is.EqualTo(225));
+        Assert.That(body[1].Destination.Y,Is.EqualTo(225));Assert.That(clothing[1].Destination.Y,Is.EqualTo(225));
+        Assert.That(body.Sum(p=>p.Source.Height),Is.EqualTo(32));Assert.That(clothing.Sum(p=>p.Source.Height),Is.EqualTo(48));
+        Assert.That(body[1].Destination.Height,Is.EqualTo(12*.45f).Within(.001));
+        var boot = Entity.SeatedLayerParts(new(0,0,8,4),new(100,228,8,4),220,5,4).Single();
+        Assert.That(boot.Destination.Y,Is.EqualTo(228.6f).Within(.001),"A layer entirely below the hip uses the same compression as the body.");
+        Assert.That(Entity.SeatedLayerParts(new(),new(0,0,0,0),0,0,0),Is.Empty);
+    }
 }

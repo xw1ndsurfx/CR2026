@@ -1,37 +1,66 @@
-# Prototype PvE — Les Joutes Royales
+# Joutes Royales — installation et éditeur guidé
 
-Le serveur pilote maintenant un joueur et un adversaire temporaire dans deux couloirs réels de la carte partagée. La charge arrive au milieu de la lice à l’heure d’impact, puis les chevaux poursuivent leur course et repartent dans l’autre sens au passage suivant. Les tests serveur exécutent les trois passes avec les entités et collisions natives. Une recette visuelle avec un client connecté reste nécessaire avant de déclarer le prototype entièrement validé en jeu.
+Cette version comprend l’éditeur guidé, les médailles royales et leur boutique, ainsi que les duels entre deux comptes. Elle conserve la charge PvE, les collisions, les montures et le Cinematic Director natifs. Le projet V2 complet reste en développement.
 
-## Installation dans une copie de test
+## Préparer les ressources
 
-1. Copier les ressources locales du paquet dans les dossiers `resources/images/jousting` et `resources/tilesets` du client et de l’éditeur. Les sources utilisateur et leurs dérivés restent locaux. La grille du décor est de 16x16 pixels ; le code ne modifie pas les cartes de production.
-2. Ajouter William dans le Mount Editor, à partir de `resources/mounts-william.example.json`, sans remplacer les autres montures. Cocher **Le sprite comprend déjà le cavalier**. Cellules 128x128, quatre directions, idle 4 frames, start/loop/end 6 frames. Ces cellules incluent une marge transparente et ne sont pas des tuiles de terrain.
-3. Ouvrir **Mini-Games → Jousting Editor** sur une carte de test. Créer une arène, renseigner la monture William, puis placer le départ par clic gauche, l’arrivée par clic droit et le couloir adverse par Maj-clic. La lice horizontale doit mesurer un nombre pair de pas, entre 4 et 64. Les deux couloirs doivent rester dans la carte et sans attribut de carte ni entité bloquante.
-4. Dans la liste des séquences, choisir introduction, charge, impact, désarçonnement ou victoire, puis **Modifier la cinématique de joute**. Le Cinematic Director natif s’ouvre sur une source éditable. Sa sauvegarde crée un Event de scène natif sur la carte et renseigne son identifiant dans l’arène. Sauvegarder aussi l’arène côté serveur. Les common Events existants restent acceptés pour les anciens raccordements.
-5. Les sources de charge/impact utilisent le nouveau réglage de scène `AllowPlayerControl` : la caméra accompagne les chevaux sans les immobiliser. La joute conserve sa propre interdiction serveur des déplacements libres. L’introduction peut tenir le joueur ; le compte à rebours attend sa fin. L’annulation coupe uniquement les Events que la session a lancés. Les scènes ordinaires conservent leur verrouillage historique par défaut.
-6. Activer l’arène et se placer à son départ. Ouvrir Personnage → Joutes Royales, ou choisir **Joutes Royales** dans le Lobby des aventures puis **S’entraîner contre l’IA**. Choisir une difficulté et lancer l’entraînement.
+Copier les ressources du paquet local dans les dossiers `resources/images/jousting` et `resources/tilesets` du client et de l’éditeur utilisés pour les essais. Les sprites William doivent se trouver dans `resources/images/jousting/William`. Les fichiers graphiques restent locaux ; ils ne sont pas publiés dans le dépôt public.
 
-Pendant la course, le HUD compact laisse voir la carte. La fenêtre 2,5D s’ouvre pour la visée. Les contours indiquent les zones du plastron et du bouclier ; le réticule blanc montre la position autorisée par le serveur. Les zones sont réglables et correspondent par défaut aux pixels du sprite frontal fourni. Casque et cheval ne rapportent ni score ni bonus de lance. Les corrections de visée successives ne peuvent pas fabriquer artificiellement de la stabilité.
+Les éléments de décor sont découpés sur la grille 16 × 16. Les cellules d’animation William sont de 128 × 128 et contiennent une marge transparente ; elles ne représentent pas des tuiles de terrain.
 
-## Lobby
+## Créer une arène sans saisir d’identifiant
 
-L’activité **Joutes Royales** figure dans les filtres, la création des groupes et les ouvertures de Lobby par Event. Les identifiants réseau des activités existantes sont conservés. Le bouton d’entraînement utilise le même parcours PvE que l’entrée du personnage ; il ne téléporte pas directement dans un duel. Le rendez-vous avec l’hôte respecte les règles de voyage existantes. Une joute active verrouille temporairement son annonce et bloque le voyage ; l’annonce rouvre en fin de duel.
+1. Ouvrir une carte de test, puis **Mini-Games → Éditeur de joutes**.
+2. Cliquer **Nouvelle arène sur cette carte**. Son nom apparaît dans la liste de gauche ; le modifier dans **1. Préparer l’arène**.
+3. Choisir **William** dans **Monture du chevalier**. S’il est absent, cliquer **Ajouter le préréglage William**, attendre l’actualisation puis le sélectionner. Ce bouton ajoute la définition avec les bonnes dimensions et animations sans supprimer les autres montures. Il ne copie pas les images : les fichiers fournis doivent être installés comme indiqué ci-dessus.
+4. Cliquer **Placer le départ du joueur**, puis sur une case de la carte. Cliquer **Placer l’arrivée**, puis sur sa colonne. L’arrivée reste automatiquement sur la ligne du joueur. La distance doit être paire, de 4 à 64 cases.
+5. Cliquer **Placer le couloir adverse**, puis sur une autre ligne. Les départs et couloirs doré/bleu sont indiqués sur la carte ; les positions et les problèmes apparaissent à droite. Ces trois boutons fonctionnent avec un clic gauche ordinaire. Les anciens raccourcis restent disponibles.
+6. Cocher **Activer cette arène**, puis **Enregistrer**. Attendre la confirmation du serveur. Si elle échoue, les modifications restent dans la fenêtre ; les limites de carte et les ressources sont contrôlées de nouveau côté serveur.
 
-## Sécurité et nettoyage
+**2. Règles du match** présente les durées en secondes, les points et le nombre de passes. **5. Zones de visée** permet de modifier les rectangles en pourcentage du sprite rapproché. La zone précise doit rester dans le plastron ; le casque et le cheval ne sont pas des cibles valides par défaut.
 
-L’arène est réservée côté serveur. Les deux coups sont résolus ensemble sur l’horloge serveur. Le client ne transmet ni score ni heure d’impact. Les déplacements traversent les collisions natives et leur durée est transmise dans les paquets de mouvement existants. Déconnexion, changement de carte/instance, mort, obstacle ou suspension prolongée du serveur annulent la session et retirent l’acteur temporaire. La monture précédente n’est restaurée que si elle est encore autorisée. Aucun loot, XP ni compte de PNJ persistant n’est créé pour l’adversaire.
+## Raccorder les cinématiques
 
-## Recette restante
+Dans **3. Cinématiques**, chaque moment possède une liste de scènes nommées et un bouton **Créer ou modifier cette cinématique**. Choisir **Aucune (facultatif)** pour créer une base, ou choisir une scène existante pour la réutiliser.
 
-- Validation graphique et parcours souris complet sur une base de jeu de test avec client connecté.
-- Duels PvP, invitations et deux clients synchronisés.
-- Sièges réels, animations assises, réservations, caméras spectateur et foule.
-- Terrain/transitions et tileset final complet ; retouches artistiques et animations supplémentaires. Les premiers 16 objets ne constituent pas le décor final complet.
-- Contenu royal final : roi, Gisabelle, héraut, mouvements et cérémonies éprouvés en jeu. Les cinq sources cinématiques sont des bases éditables.
-- Récompenses idempotentes, statistiques, quêtes, achievements, classements et tournois.
+Le bouton ouvre le Cinematic Director natif. Une scène déjà liée se rouvre avec son contenu et son identité, au lieu de recréer une nouvelle base. Sa sauvegarde lie le résultat à l’arène ; enregistrer ensuite l’arène. Un événement commun classique se modifie dans l’éditeur d’événements.
 
-Le prototype est un entraînement sans économie. L’arène n’est pas activée automatiquement sur les cartes existantes. La checklist du chapitre 15 de `Conception-v2.txt` reste la recette du projet complet.
+Les sources de charge et d’impact laissent le mouvement au serveur. Aucun réglage interne `AllowPlayerControl` ni identifiant n’est à saisir dans l’éditeur de joutes. Les scènes ordinaires conservent leur comportement existant.
 
-## Vérification reproductible
+## Économie active
 
-`scripts/Verify-Jousting.ps1` compile réseau/client/serveur/éditeur et exécute les tests de règles, de monde, de client et de compilation cinématique. `scripts/Verify-JoustAssets.py <paquet-local>` contrôle le découpage et l’alpha des fichiers livrés. Les suites `Utilities/PokerUiTests` et `Utilities/PokerInventoryTests` couvrent également le Lobby.
+Les récompenses en **médailles royales** sont activées par défaut. Une victoire rapporte de 5 à 25 médailles selon la difficulté de l’IA ; une défaite terminée rapporte 1 médaille. Une touche rapportant des points est nécessaire. Un abandon ne rapporte rien. Le plafond par défaut est de 100 médailles par jour UTC, avec 60 secondes entre deux versements.
+
+L’onglet **4. Récompenses et économie** permet de désactiver les versements, régler le plafond et le délai, et ajouter des offres : choisir un objet empilable par son nom, sa quantité et son prix, puis **Ajouter une offre** et **Enregistrer**. Aucune monnaie ni aucun objet existant n’est choisi arbitrairement pour une boutique vide.
+
+Le solde, l’expérience de joute, les matchs et les victoires sont conservés dans la sauvegarde native du personnage. Chaque résultat serveur possède un reçu pour empêcher les doubles versements. Les achats enregistrent ensemble les médailles, les objets et le reçu ; un inventaire plein ou un échec de sauvegarde ne consomme pas les médailles. Les médailles n’améliorent pas la précision ou les scores.
+
+## Essai en jeu
+
+Recompiler et utiliser le client, le serveur et l’éditeur de la même version. Se placer sur la case de départ dorée de l’arène active. Dans **Lobby → Joutes Royales → S’entraîner contre l’IA**, choisir une difficulté puis lancer l’entraînement. La boutique et le bilan de carrière apparaissent dans la même fenêtre hors duel.
+
+Le serveur réserve la lice, calcule les scores et nettoie l’adversaire partagé en fin de partie ou en cas d’interruption. Les voyages du Lobby restent bloqués pendant la charge.
+
+## État des autres demandes
+
+Les sièges réservés et animations assises, la caméra spectateur, le décor final complet, les cérémonies royales finalisées en jeu, les classements, les quêtes/achievements dédiés et les tournois ne sont pas implémentés dans cette version. La recette visuelle avec un client connecté reste à effectuer. Les tests et aperçus de l’éditeur ne remplacent pas cette recette.
+
+Le cahier complet reste `Conception-v2.txt`. Aucun de ses critères restants n’est marqué comme validé par cette correction de l’éditeur.
+
+## Duels PvP
+
+Les duels entre deux comptes sont maintenant disponibles. Dans l’onglet **1. Arène**, activer les duels entre joueurs, placer les deux personnages aux départs doré et bleu, puis ouvrir **Défier un chevalier** depuis la fenêtre des Joutes du Lobby. Le détail des invitations, des résultats et des interruptions se trouve dans `PVP.md`. Le PvP doit encore être essayé visuellement sur deux clients connectés ; les tests de monde et d’interface sont réussis.
+
+## Places et caméra spectateur
+
+Voir `SPECTATORS.md` : l’onglet 6 Places propose les bancs et accès par clic sur la carte, un choix de PNJ de foule nommé et le zoom. En jeu : Lobby → Joutes Royales → Gradins de la joute. Le joueur doit atteindre l’accès indiqué avant de demander une place. La pose utilise son personnage et ses équipements ; les scores et les caméras restent contrôlés par le serveur.
+
+## Simplification du démarrage et correction des diagnostics
+
+La monture proposée par l’éditeur de joutes est limitée à William. L’adversaire PvE peut être William ou Tale Knight Night, avec sélection au lancement et défaut enregistré par arène. Night réutilise ses feuilles fournies sur la piste et la variante sombre existante du gros plan de prototype.
+
+Les diagnostics sont visibles sous l’aperçu depuis tous les onglets ; une place dont l’accès est éloigné affiche son nom et ses coordonnées. Un bouton place automatiquement un accès adjacent libre. La fenêtre du client indique départ et position actuelle ; le Lobby expose un accès permanent aux joutes. Guide détaillé : `DEMARRER.md`.
+
+## Ouverture automatique des fenêtres
+
+En jeu, le départ doré ouvre directement la préparation, le départ bleu ouvre les duels et les accès aux gradins ouvrent les places. Aucun passage par Personnage n’est requis. Le serveur détecte la position réelle et n’envoie qu’une invitation par arrivée ; après fermeture, il faut quitter la case puis revenir. Une activité bloquante, une joute en cours, une navigation ou une cinématique empêche l’ouverture. Les fenêtres se remplacent entre elles, sans démarrer une partie ni réserver une place automatiquement.

@@ -28,49 +28,89 @@ public partial class Player
     private int _joustImpactPresented;
     private long _joustBegan;
     private readonly HashSet<Guid> _joustNativeEvents = [];
-    internal bool IsJousting => _joust is { Done: false };
+    internal bool IsJousting => _joust is { Done: false } || _joustPvp != null;
     [System.ComponentModel.DataAnnotations.Schema.NotMapped, Newtonsoft.Json.JsonIgnore]
-    public override int ScriptedMovementMilliseconds => _joust is { Done: false } ? _joustMoveMs : 0;
-    private bool JoustBlocksMovement => _joust is { Done: false } && _joustRouteThread != Environment.CurrentManagedThreadId &&
-        !(_joust.Phase == JoustPhase.Preparation && _cinematicRouteScope?.ThreadId == Environment.CurrentManagedThreadId);
+    public override int ScriptedMovementMilliseconds => _joustPvp != null ? _pvpJoustMoveMs : _joust is { Done: false } ? _joustMoveMs : 0;
+    private bool JoustBlocksMovement => IsJoustSeated || PvpJoustBlocksMovement || (_joust is { Done: false } && _joustRouteThread != Environment.CurrentManagedThreadId &&
+        !(_joust.Phase == JoustPhase.Preparation && _cinematicRouteScope?.ThreadId == Environment.CurrentManagedThreadId));
     internal void HandleJoustRequest(JoustRequestPacket packet)
     {
         lock (EntityLock)
         {
             var now = Environment.TickCount64;
+            if (packet.Action is JoustAction.BrowseSeats or JoustAction.ReserveSeat or JoustAction.LeaveSeat or JoustAction.SpectatorCamera)
+            {
+                if (now - _joustSeatRequestAt < 250) return;
+                _joustSeatRequestAt = now;
+                if (packet.Action == JoustAction.BrowseSeats) BrowseJoustSeats();
+                else if (packet.Action == JoustAction.SpectatorCamera) ChangeJoustSeatCamera(packet.Camera);
+                else
+                {
+                    var error = packet.Action == JoustAction.ReserveSeat ? ReserveJoustSeat(packet.SeatId) : LeaveJoustSeat(false);
+                    if (error.Length > 0) SendPacket(new JoustStatePacket { Message = error });
+                }
+                return;
+            }
             if (packet.Action == JoustAction.Open)
             {
                 if (now - _joustOpenAt < 500) return;
                 _joustOpenAt = now;
-                SendPacket(new JoustStatePacket { Open = true, ConfigurationJson = JoustRuntime.Current.ToJson() });
-                SendJoustView(now); return;
+                OpenJoustPreparation(now); return;
             }
+            if (packet.Action == JoustAction.BrowseDuels)
+            { if (now - _pvpJoustBrowseAt >= 500) { _pvpJoustBrowseAt = now; JoustPvpRuntime.Browse(this); } return; }
+            if (packet.Action == JoustAction.InviteDuel)
+            {
+                if (now - _pvpJoustRequestAt < 5000) return;
+                _pvpJoustRequestAt = now;
+                SendPacket(new JoustStatePacket { Message = JoustPvpRuntime.Invite(this, packet.TargetId, now) }); return;
+            }
+            if (packet.Action == JoustAction.AcceptDuel)
+            { if (IsJousting || now - _pvpJoustAnswerAt < 500) return; _pvpJoustAnswerAt = now; var error = JoustPvpRuntime.Accept(this, packet.InvitationId, now); if (error.Length > 0) SendPacket(new JoustStatePacket { Message = error }); return; }
+            if (packet.Action == JoustAction.DeclineDuel) { if (now - _pvpJoustAnswerAt < 500) return; _pvpJoustAnswerAt = now; JoustPvpRuntime.Decline(this, packet.InvitationId); return; }
+            if (packet.Action == JoustAction.Redeem) { RedeemJoustOffer(packet.OfferId, packet.RequestId); return; }
             if (packet.Action == JoustAction.StartPve)
             {
-                if (now - _joustStartAt < 1500 || _joust is { Done: false } || !Enum.IsDefined((JoustDifficulty)packet.Difficulty)) return;
+                if (now - _joustStartAt < 1500 || IsJousting || _joustPendingReward != null || !Enum.IsDefined((JoustDifficulty)packet.Difficulty)) return;
                 _joustStartAt = now;
-                var arena = JoustRuntime.Current.Arenas.FirstOrDefault(a => a.Id == packet.ArenaId && a.Enabled && a.MapId == MapId);
-                if (arena == null || X != arena.StartX || Y != arena.StartY || IsDead || HasPendingDeath ||
-                    Client == null || CombatTimer > Intersect.Framework.Core.Timing.Global.Milliseconds || HasBlockingEventHold ||
-                    MoveRoute != null || OpenCraftingTableId != Guid.Empty || !CanUseLobbyTravel || EventLookup.Values.Any(e => e.CinematicActive) ||
-                    !JoustRuntime.LanesClear(arena, MapInstanceId, this) ||
-                    !MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var instance) ||
-                    MountRuntime.Find(arena.MountId) is not { IntegratedRider: true } mount || !CanRide(mount))
+                var arena = JoustRuntime.Current.Arenas.FirstOrDefault(a => a.Id == packet.ArenaId && a.Enabled && a.AllowPve && a.MapId == MapId);
+                var opponent = packet.AiOpponent == -1 ? arena?.AiOpponent ?? JoustAiOpponent.William : (JoustAiOpponent)packet.AiOpponent;
+                if (!Enum.IsDefined(opponent)) return;
+                if (arena == null)
+                { SendPacket(new JoustStatePacket { Message = "No active arena on this map. In Jousting Editor, enable and save an arena first." }); return; }
+                if (X != arena.StartX || Y != arena.StartY)
                 { SendPacket(new JoustStatePacket { Message = "Stand at the arena start to train." }); return; }
+                if (!JoustRuntime.LanesClear(arena, MapInstanceId, this))
+                { SendPacket(new JoustStatePacket { Message = "Clear both jousting lanes before starting the duel." }); return; }
+                if (MountRuntime.Find(arena.MountId) is not { IntegratedRider: true } mount)
+                { SendPacket(new JoustStatePacket { Message = "William is required. Click Add William preset, then save the arena." }); return; }
+                if (IsDead || HasPendingDeath || Client == null || CombatTimer > Intersect.Framework.Core.Timing.Global.Milliseconds || HasBlockingEventHold ||
+                    MoveRoute != null || OpenCraftingTableId != Guid.Empty || !CanUseLobbyTravel || EventLookup.Values.Any(e => e.CinematicActive) ||
+                    !MapController.TryGetInstanceFromMap(MapId, MapInstanceId, out var instance) || !CanRide(mount))
+                { SendPacket(new JoustStatePacket { Message = "You cannot start now. Finish combat, casting or the current activity, then try again on the overworld map." }); return; }
                 if (!JoustRuntime.Reserve(arena.Id, Id))
                 { SendPacket(new JoustStatePacket { Message = "This jousting lane is occupied." }); return; }
+                _lastPvpJoustView = null;
                 _mountBeforeJoust = ActiveMountId;
                 _joustArena = JoustConfiguration.FromJson(new JoustConfiguration { Arenas = [arena] }.ToJson()).Arenas[0];
+                _joustArena.AiOpponent = opponent;
                 _joustMap = MapId; _joust = new(arena.Rules, now, (JoustDifficulty)packet.Difficulty);
                 _joustBegan = now; _joustChargePresented = _joustImpactPresented = 0; _joustMoveMs = 0;
                 _joustInstance = instance;
-                _joustOpponent = new(mount, MapId, MapInstanceId, arena.EndX, arena.OpponentY);
+                _joustOpponent = new(JoustMountPreset.Opponent(opponent), MapId, MapInstanceId, arena.EndX, arena.OpponentY);
                 _joustOpponent.Dir = arena.StartX < arena.EndX ? Direction.Left : Direction.Right;
                 instance.AddEntity(_joustOpponent);
                 PacketSender.SendEntityDataToProximity(_joustOpponent);
                 ActiveMountId = mount.Id; PacketSender.SendEntityDataToProximity(this); SendMountState();
                 SendPacket(new HoldPlayerPacket(_joust.Id, Guid.Empty, false));
                 RunJoustEvent(arena.IntroductionEventId); SendJoustView(now); return;
+            }
+            if (_joustPvp is { } pvp)
+            {
+                if (packet.MatchId != pvp.Match.Id) return;
+                if (packet.Action == JoustAction.Leave) pvp.Leave(this);
+                else if (packet.Action == JoustAction.Aim) pvp.Input(this, packet.Pass, packet.Sequence, new(packet.X, packet.Y, packet.Defending), now);
+                return;
             }
             if (_joust == null || packet.MatchId != _joust.Id) return;
             if (packet.Action == JoustAction.Leave) { EndJoust(true); return; }
@@ -80,6 +120,14 @@ public partial class Player
                 _joust.Submit(0, packet.Pass, packet.Sequence, new(packet.X, packet.Y, packet.Defending), now);
             }
         }
+    }
+    private void OpenJoustPreparation(long now)
+    {
+        SendPacket(new JoustStatePacket { Open = true, ConfigurationJson = JoustRuntime.Current.ToJson() });
+        if (_joustPvp is { } duel) duel.Publish(this, now);
+        else if (_lastPvpJoustView is { } previous) PublishPvpJoust(previous, true);
+        else SendJoustView(now);
+        SendJoustCareer();
     }
     private void RunJoustEvent(Guid id)
     {
@@ -105,6 +153,10 @@ public partial class Player
     }
     private void UpdateJoust(long? suppliedNow = null)
     {
+        CompleteJoustCareer();
+        UpdateJoustEntry(Environment.TickCount64);
+        UpdateJoustSeat();
+        if (_joustPvp is { } pvp) { pvp.Tick(this, suppliedNow ?? Environment.TickCount64); CompleteJoustCareer(); return; }
         if (_joust == null || _joust.Done || _joustArena == null) return;
         if (!InGame || Client == null || MapId != _joustMap || _joustInstance?.MapInstanceId != MapInstanceId ||
             _joustInstance.IsDisposed || _joustOpponent is not { IsDisposed: false } || IsDead || HasPendingDeath ||
@@ -137,8 +189,11 @@ public partial class Player
         if (!_joust.Done && !MoveJoustTrack(now)) { EndJoust(true); return; }
         if (_joust.Done)
         {
+            _joustPendingReward = _joust;
+            _joustRewardSide = 0;
             try { SendJoustView(now); }
             finally { RestoreJoustMount(); }
+            CompleteJoustCareer();
             if (_joust.Winner == 0) RunJoustEvent(_joustArena.VictoryEventId);
         }
         else if (before != _joust.Phase || now - _joustSent >= 100) SendJoustView(now);
@@ -183,8 +238,10 @@ public partial class Player
     private void SendJoustView(long now)
     {
         if (_joust == null || _joustArena == null) return;
+        JoustAudienceRuntime.Publish(_joustArena, MapInstanceId, _joust, Id, Name, _joustOpponent?.Id ?? Guid.Empty, JoustMountPreset.Opponent(_joustArena.AiOpponent).Name, now);
         _joustSent = now;
         SendPacket(new JoustStatePacket { ViewJson = JsonSerializer.Serialize(new JoustView {
+            AiOpponent = _joustArena.AiOpponent, OpponentName = JoustMountPreset.Opponent(_joustArena.AiOpponent).Name, SelfName = Name, Sounds = _joustArena.Sounds,
             MatchId = _joust.Id, ArenaId = _joustArena.Id, Phase = _joust.Phase, Pass = _joust.Pass,
             Passes = _joust.Passes, RemainingMs = (int)Math.Max(0, _joust.Deadline - now),
             PhaseDurationMs = (int)(_joust.Deadline - _joust.PhaseStarted),
@@ -213,6 +270,11 @@ public partial class Player
     {
         lock (EntityLock)
         {
+            // Characters are cached across selection/logins: dismissal belongs to this play session.
+            if (Client == null || !InGame) { _joustEntry = null; _joustEntryCheckAt = _joustEntryPromptAt = 0; }
+            LeaveJoustSeat(true);
+            CompleteJoustCareer();
+            if (_joustPvp is { } pvp) { pvp.Leave(this); return; }
             if (_joust is not { Done: false }) return;
             if (abandon) _joust.Abandon(0);
             try { SendJoustView(Environment.TickCount64); }

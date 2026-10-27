@@ -45,9 +45,12 @@ public static partial class Graphics
         }
     }
 
-    public static float WorldScale => Cinematics.CinematicCamera.Zoom ?? Globals.Database?.WorldZoom ?? 1;
-    public static FloatRect WorldViewport => Cinematics.CinematicCamera.Zoom != null
-        ? CurrentView : new(CurrentView.Position, CurrentView.Size / WorldScale);
+    public static float WorldScale => Cinematics.CinematicCamera.Zoom is { } cinematicZoom
+        ? _cinematicWorldScale ?? cinematicZoom : Globals.Database?.WorldZoom ?? 1;
+    // UpdateView stores the display size alongside the world-space origin.
+    // Cinematic zoom uses the same renderer transform as ordinary world zoom:
+    // the visible world grows when zooming out, including neighbouring maps.
+    public static FloatRect WorldViewport => new(CurrentView.Position, CurrentView.Size / WorldScale);
 
     public static GameShader? DefaultShader;
 
@@ -584,12 +587,16 @@ public static partial class Graphics
         var gameState = Globals.GameState;
 
         Cinematics.CinematicCamera.Update();
-        renderer.Scale = gameState == GameStates.InGame ? WorldScale : 1.0f;
 
         if (!renderer.Begin())
         {
             return;
         }
+
+        // Begin may refresh the display dimensions. Fit the current frame only
+        // after that refresh, and retain the scale the renderer really accepted.
+        PrepareCinematicFraming();
+        ApplyPreparedWorldScale(gameState);
 
         if (renderer.ScreenWidth != sOldWidth ||
             renderer.ScreenHeight != sOldHeight ||
@@ -762,7 +769,8 @@ public static partial class Graphics
             OverlayColor.B = Approach(OverlayColor.B, target.B, change);
         }
 
-        DrawGameTexture(Renderer.WhitePixel, new FloatRect(0, 0, 1, 1), CurrentView, OverlayColor, null);
+        DrawScreenTexture(Renderer.WhitePixel, new FloatRect(0, 0, 1, 1),
+            new FloatRect(0, 0, Renderer.ScreenWidth, Renderer.ScreenHeight), OverlayColor);
         sOverlayUpdate = Timing.Global.MillisecondsUtc;
     }
 
@@ -972,7 +980,8 @@ public static partial class Graphics
 
         var w = x1 - x;
         var h = y1 - y;
-        var restrictView = new FloatRect(x, y, w, h );
+        var restrictView = Cinematics.CinematicCamera.Zoom != null && _cinematicWorldBounds is { } cinematicBounds
+            ? cinematicBounds : new FloatRect(x, y, w, h);
         var navalCamera = Naval.NavalWorld.TryCamera(out var navalX, out var navalY);
         if (Cinematics.CinematicCamera.TryPosition(out var cinematicX, out var cinematicY))
         { navalCamera = true; navalX = cinematicX; navalY = cinematicY; }
@@ -1418,6 +1427,36 @@ public static partial class Graphics
     }
 
     //Rendering Functions
+
+    /// <summary>
+    /// Draws an overlay in display pixels without inheriting world or UI zoom.
+    /// Keeps the renderer state intact for subsequent weather and UI drawing.
+    /// </summary>
+    internal static void DrawScreenTexture(
+        IGameTexture texture,
+        FloatRect source,
+        FloatRect screenTarget,
+        Color color,
+        GameBlendModes blendMode = GameBlendModes.None
+    )
+    {
+        if (texture == null || Renderer is not { } renderer ||
+            !float.IsFinite(renderer.Scale) || renderer.Scale <= 0)
+        {
+            return;
+        }
+
+        var view = renderer.CurrentView;
+        var target = Cinematics.CinematicScreenGeometry.ToWorld(
+            new(screenTarget.X, screenTarget.Y, screenTarget.Width, screenTarget.Height),
+            view.X, view.Y, renderer.Scale
+        );
+        renderer.DrawTexture(
+            texture, source.X, source.Y, source.Width, source.Height,
+            target.X, target.Y, target.Width, target.Height, color,
+            blendMode: blendMode
+        );
+    }
 
     /// <summary>
     ///     Renders a specified texture onto a RenderTexture or the GameScreen (if renderTarget is passed as null) at the

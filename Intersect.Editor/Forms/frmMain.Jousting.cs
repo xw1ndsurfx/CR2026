@@ -17,11 +17,12 @@ public partial class FrmMain
     {
         if (_joustEditor is { IsDisposed: false })
         {
+            _joustEditor.ApplyMounts(packet.MountsJson);
             if (packet.RequestId != Guid.Empty) _joustEditor.Response(packet);
             else EditorWindows.Show(_joustEditor, this);
             return;
         }
         if (packet.ConfigurationJson.Length == 0) return;
-        _joustEditor = new(packet.ConfigurationJson); EditorWindows.Show(_joustEditor, this);
+        _joustEditor = new(packet.ConfigurationJson); _joustEditor.ApplyMounts(packet.MountsJson); EditorWindows.Show(_joustEditor, this);
     }
 }

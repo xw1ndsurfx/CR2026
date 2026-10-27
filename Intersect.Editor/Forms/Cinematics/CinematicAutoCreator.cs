@@ -26,6 +26,7 @@ internal sealed class CinematicCreationPlan
 {
     internal string Name = "";
     internal CreatorScenario Scenario;
+    internal CinematicProjection Projection;
     internal int DurationMs = 12000, DelayMs;
     internal DrawingPoint Entry, Destination, Camera;
     internal bool Move = true;
@@ -55,6 +56,7 @@ internal static class CinematicAutoCreator
         Require(context.MapId != Guid.Empty && context.Width > 0 && context.Height > 0, "CreatorMapRequired");
         Require(!string.IsNullOrWhiteSpace(plan.Name) && plan.Name.Length <= 120, "CreatorNameRequired");
         Require(Enum.IsDefined(plan.Scenario), "CreatorScenarioRequired");
+        Require(Enum.IsDefined(plan.Projection), "CreatorProjectionRequired");
         Require(plan.DurationMs is >= 6000 and <= 600000 && plan.DelayMs >= 0 && plan.DelayMs < plan.DurationMs, "CreatorDurationRange");
         Require(plan.Cast.All(c => c.Count is > 0 and <= 8 && context.Npcs.Any(n => n.Id == c.Npc.Id)) &&
             plan.Cast.Sum(c => c.Count) <= 8, "CreatorCastLimit");
@@ -129,6 +131,7 @@ internal static class CinematicAutoCreator
             X = plan.Destination.X, Y = plan.Destination.Y, StartMs = movementEnd, DurationMs = 1000 });
         var focus = moving[0].Actor;
         foreach (var camera in scene.Clips.Where(c => c.Track == CinematicTrack.Camera && c.FollowActor)) camera.ActorId = focus.TargetId;
+        CinematicAuthoring.InitializeProjection(scene, plan.Projection);
         Validate(scene, context);
         return scene;
     }
@@ -207,6 +210,10 @@ internal static class CinematicAutoCreator
         foreach (Match request in Regex.Matches(instructions, @"(?<![\d.,])(?<n>-?\d+(?:[.,]\d+)?)\s+(?:" + nouns + @")\b", RegexOptions.IgnoreCase))
             if (!int.TryParse(request.Groups["n"].Value, out var count) || count is < 1 or > 8) errors.Add(T("CreatorCastLimit"));
         var recognized = quotes.Count > 0;
+        if (Regex.IsMatch(instructions, @"\b2[.,]5\s*d\b", RegexOptions.IgnoreCase))
+        { plan.Projection = CinematicProjection.Perspective2_5D; recognized = true; }
+        else if (Regex.IsMatch(instructions, @"\b2\s*d\b", RegexOptions.IgnoreCase))
+        { plan.Projection = CinematicProjection.Flat2D; recognized = true; }
         var scenarios = new (CreatorScenario Kind, string Words)[]
         {
             (CreatorScenario.Ambush,"embuscade|ambush|emboscada"),

@@ -43,6 +43,7 @@ internal static class Program
         if (Environment.GetCommandLineArgs().Contains("--royal-combat-only")) { RoyalCombatEditorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--cinematic-creators-only")) { CinematicCreatorsTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--cinematic-usability-only")) { CinematicUsabilityTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--cinematic-chapters-only")) { CinematicChapterEditorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--hub-only")) { EditorHubTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--editor-fixes-only")) { EditorFixesTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--windows-only")) { EditorWindowTests.Run(); return; }
@@ -56,6 +57,7 @@ internal static class Program
         if (Environment.GetCommandLineArgs().Contains("--naval-only")) { NavalMapListTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--housing-picker-only")) { HousingPickerTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--achievement-icons-only")) { AchievementIconEditorTests.Run(); MonthlyNpcMissionEditorTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--jousting-only")) { JoustEditorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--mounts-only")) { MountEditorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--mounts-preview")) { MountEditorTests.Preview(); return; }
         if (Environment.GetCommandLineArgs().Contains("--save-protection-only")) { SaveProtectionTests.Run(); return; }

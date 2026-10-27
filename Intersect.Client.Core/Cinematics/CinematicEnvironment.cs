@@ -65,9 +65,9 @@ internal static class CinematicEnvironment
     internal static void DrawPerspectiveAtmosphere()
     {
         if (Globals.Me?.MapInstance is not MapInstance map || Graphics.Renderer == null) return;
-        Graphics.DrawCinematicAmbient(map);
         map.DrawFog();
         map.DrawOverlayGraphic();
         Graphics.DrawOverlay();
+        Graphics.DrawCinematicAmbient(map);
     }
 }

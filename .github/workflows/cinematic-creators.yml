@@ -6,6 +6,20 @@ on:
       - 'Intersect.Editor/Forms/Cinematics/**'
       - 'Intersect.Editor/Resources/Cinematics/**'
       - 'Framework/Intersect.Framework.Core/Cinematics/**'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/Editor/CreateGameObjectPacket.cs'
+      - 'Framework/Intersect.Framework.Core/Network/Packets/Server/GameObjectPacket.cs'
+      - 'Intersect.Client.Core/Cinematics/**'
+      - 'Intersect.Client.Core/Entities/Resource.cs'
+      - 'Intersect.Client.Core/Core/Graphics*.cs'
+      - 'Intersect.Client.Core/Maps/MapInstance.cs'
+      - 'Intersect.Client.Core/MonoGame/Graphics/MonoRenderer*.cs'
+      - 'Intersect.Editor/Networking/PacketHandler.cs'
+      - 'Intersect.Editor/Networking/PacketSender.cs'
+      - 'Intersect.Server/Networking/NetworkedPacketHandler.cs'
+      - 'Intersect.Tests.Client/Cinematic*Tests.cs'
+      - 'Intersect.Tests/CinematicChapter*Tests.cs'
+      - 'Intersect.Tests/Intersect.Tests.csproj'
+      - 'Utilities/CinematicFramingTests/**'
       - 'Utilities/InterfaceEditorTests/**'
       - '.github/workflows/cinematic-creators.yml'
   workflow_dispatch:
@@ -28,8 +42,89 @@ jobs:
         shell: pwsh
         run: dotnet build Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd"
       - name: Test guided and description creators
+        env:
+          CODEX_UI_PREVIEW: ${{ runner.temp }}/cinematic-ui-preview
         shell: pwsh
         run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug --no-build -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" -- --cinematic-creators-only
       - name: Test existing montage workflow
+        env:
+          CODEX_UI_PREVIEW: ${{ runner.temp }}/cinematic-ui-preview
         shell: pwsh
         run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug --no-build -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" -- --cinematic-usability-only
+      - name: Test chapter creation and acknowledged saves
+        env:
+          CODEX_UI_PREVIEW: ${{ runner.temp }}/cinematic-ui-preview
+        shell: pwsh
+        run: dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug --no-build -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" -- --cinematic-chapters-only
+      - name: Test cinematic display and loaded-map framing
+        run: dotnet run --project Utilities/CinematicFramingTests/CinematicFramingTests.csproj -c Release
+      - name: Test client viewport, picking and atmosphere
+        shell: pwsh
+        run: |
+          dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" --filter 'FullyQualifiedName~Cinematic&TestCategory!=GPU' --nologo --logger "trx;LogFileName=client.trx" --results-directory "$env:RUNNER_TEMP/cinematic-test-results"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          [xml]$result = Get-Content "$env:RUNNER_TEMP/cinematic-test-results/client.trx" -Raw
+          if ([int]$result.TestRun.ResultSummary.Counters.total -lt 1) { throw 'No client cinematic tests were executed.' }
+      - name: Test cinematic compilation and packet compatibility
+        shell: pwsh
+        run: |
+          dotnet test Intersect.Tests/Intersect.Tests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$pwd" --filter FullyQualifiedName~Cinematic --nologo --logger "trx;LogFileName=core.trx" --results-directory "$env:RUNNER_TEMP/cinematic-test-results"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          [xml]$result = Get-Content "$env:RUNNER_TEMP/cinematic-test-results/core.trx" -Raw
+          if ([int]$result.TestRun.ResultSummary.Counters.total -lt 1) { throw 'No core cinematic tests were executed.' }
+      - name: Preserve native editor previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cinematic-editor-previews
+          path: ${{ runner.temp }}/cinematic-ui-preview/*.png
+          if-no-files-found: ignore
+
+  perspective-atmosphere:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CODEX_GPU_TESTS: '1'
+      SDL_VIDEODRIVER: x11
+      LIBGL_ALWAYS_SOFTWARE: '1'
+      ALSOFT_DRIVERS: 'null'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install software OpenGL dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libgl1-mesa-dri libglx-mesa0 libsdl2-2.0-0 libopenal1 xvfb xauth
+      - name: Render perspective atmosphere and verify actual pixels
+        env:
+          CODEX_GPU_PREVIEW: ${{ runner.temp }}/cinematic-gpu-preview
+        run: |
+          dotnet build Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug -p:RuntimeIdentifiers=linux-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$PWD" --nologo
+          # MonoGame/SDL's native video lifecycle must not be restarted in one Linux test host.
+          # Keep both real rendering checks, each with a fresh process and X11 context.
+          for gpu_test in RealPerspectiveAtmospherePreservesTerrainAndCompositesFogOnce ResourceDrawEntersThePerspectiveCollectorAndVisibleBillboardPass; do
+            xvfb-run -a --server-args='-screen 0 1280x1024x24 -nolisten tcp' dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug --no-build --no-restore -p:RuntimeIdentifiers=linux-x64 -p:IntersectConfiguration=Debug "-p:IntersectRepoPath=$PWD" --filter "FullyQualifiedName~$gpu_test" --nologo --logger "trx;LogFileName=$gpu_test.trx" --results-directory "$RUNNER_TEMP/cinematic-gpu-results"
+          done
+          python3 - <<'PY'
+          import os, glob
+          import xml.etree.ElementTree as ET
+          reports = glob.glob(os.path.join(os.environ['RUNNER_TEMP'], 'cinematic-gpu-results', '*.trx'))
+          assert len(reports) == 2, 'Both atmosphere and resource GPU reports are required.'
+          for report in reports:
+              counters = ET.parse(report).getroot().find('.//{*}Counters')
+              assert counters is not None and int(counters.attrib['total']) == 1, 'Each isolated GPU check must execute once.'
+              assert int(counters.attrib['passed']) == 1, 'Each isolated GPU check must pass without skipping.'
+          PY
+      - name: Preserve rendered atmosphere evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cinematic-atmosphere-gpu
+          path: |
+            ${{ runner.temp }}/cinematic-gpu-preview/*.png
+            ${{ runner.temp }}/cinematic-gpu-results/*.trx
+          if-no-files-found: error

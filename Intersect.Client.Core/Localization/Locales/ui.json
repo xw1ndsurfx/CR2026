@@ -1,5 +1,535 @@
 {
   "Entries": {
+    "William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.": {
+        "en": "William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.",
+        "fr": "William est la monture du joueur. Choisis un adversaire IA, place les deux pistes, active l’arène et enregistre. En jeu, marche sur le départ doré : la fenêtre de joute s’ouvre automatiquement. Le départ bleu propose le PvP et les accès aux gradins proposent les places.",
+        "es": "William es la montura del jugador. Elige un rival IA, coloca ambas pistas, activa la arena y guarda. En el juego, pisa el inicio dorado: la ventana de justa se abre automáticamente. El inicio azul ofrece PvP y las entradas de las gradas ofrecen asientos."
+    },
+    "In the game, step onto the gold start ({0}, {1}): the jousting window opens automatically. The blue start opens duels and grandstand entrances open seat selection. After closing a window, leave the tile and return to reopen it.": {
+        "en": "In the game, step onto the gold start ({0}, {1}): the jousting window opens automatically. The blue start opens duels and grandstand entrances open seat selection. After closing a window, leave the tile and return to reopen it.",
+        "fr": "En jeu, marche sur le départ doré ({0}, {1}) : la fenêtre de joute s’ouvre automatiquement. Le départ bleu ouvre les duels et les accès aux gradins ouvrent les places. Après fermeture, quitte la case puis reviens pour rouvrir la fenêtre.",
+        "es": "En el juego, pisa el inicio dorado ({0}, {1}): la ventana de justa se abre automáticamente. El inicio azul abre los duelos y las entradas de las gradas abren los asientos. Tras cerrar una ventana, sal de la casilla y vuelve para abrirla de nuevo."
+    },
+    "Gold start: ({0}, {1}). Your position: ({2}, {3}). This window opens automatically at the gold start. Choose the AI opponent and difficulty, then Start AI joust. For PvP, use Challenge a knight.": {
+        "en": "Gold start: ({0}, {1}). Your position: ({2}, {3}). This window opens automatically at the gold start. Choose the AI opponent and difficulty, then Start AI joust. For PvP, use Challenge a knight.",
+        "fr": "Départ doré : ({0}, {1}). Ta position : ({2}, {3}). Cette fenêtre s’ouvre automatiquement au départ doré. Choisis l’adversaire IA et la difficulté, puis Démarrer la joute IA. Pour le PvP : Défier un chevalier.",
+        "es": "Inicio dorado: ({0}, {1}). Tu posición: ({2}, {3}). Esta ventana se abre automáticamente en el inicio dorado. Elige el rival IA y la dificultad, y pulsa Iniciar justa IA. Para PvP: Desafiar a un caballero."
+    },
+    "Your mount is William. Click Add William preset if required. Choose William or Tale Knight Night as the AI opponent. Place the gold start, finish and blue lane, enable the arena, then save. Launch the match in the game client, not in this editor.": {
+        "en": "Your mount is William. Click Add William preset if required. Choose William or Tale Knight Night as the AI opponent. Place the gold start, finish and blue lane, enable the arena, then save. Launch the match in the game client, not in this editor.",
+        "fr": "Ta monture est William. Clique sur Ajouter le préréglage William si nécessaire. Choisis William ou Tale Knight Night comme adversaire IA. Place le départ doré, l’arrivée et le couloir bleu, active l’arène puis enregistre. Lance la partie dans le client du jeu, pas dans cet éditeur.",
+        "es": "Tu montura es William. Pulsa Añadir preajuste de William si hace falta. Elige William o Tale Knight Night como rival IA. Coloca el inicio dorado, la meta y el carril azul, activa la arena y guarda. Inicia la partida en el cliente del juego, no en este editor."
+    },
+    "Reward settings are invalid. Check the medal limits, quantities, prices and item choices in Rewards.": {
+        "en": "Reward settings are invalid. Check the medal limits, quantities, prices and item choices in Rewards.",
+        "fr": "Les récompenses sont invalides. Vérifie les limites de médailles, les quantités, les prix et les objets dans Gains.",
+        "es": "Las recompensas no son válidas. Revisa los límites de medallas, las cantidades, los precios y los objetos en Recompensas."
+    },
+    "There are more than 512 seats across all arenas. Remove some seats before saving.": {
+        "en": "There are more than 512 seats across all arenas. Remove some seats before saving.",
+        "fr": "Il y a plus de 512 places dans l’ensemble des arènes. Supprime des places avant d’enregistrer.",
+        "es": "Hay más de 512 asientos entre todas las arenas. Elimina algunos antes de guardar."
+    },
+    "Only one enabled arena is allowed per map. Disable one of these arenas: {0}.": {
+        "en": "Only one enabled arena is allowed per map. Disable one of these arenas: {0}.",
+        "fr": "Une seule arène active est autorisée par carte. Désactive l’une de ces arènes : {0}.",
+        "es": "Solo se permite una arena activa por mapa. Desactiva una de estas arenas: {0}."
+    },
+    "You cannot start now. Finish combat, casting or the current activity, then try again on the overworld map.": {
+        "en": "You cannot start now. Finish combat, casting or the current activity, then try again on the overworld map.",
+        "fr": "Impossible de démarrer maintenant. Termine le combat, le sort ou l’activité en cours, puis réessaie sur la carte du monde.",
+        "es": "No puedes empezar ahora. Termina el combate, el lanzamiento o la actividad actual y vuelve a intentarlo en el mapa del mundo."
+    },
+    "Default AI opponent": {
+        "en": "Default AI opponent",
+        "fr": "Adversaire IA par défaut",
+        "es": "Rival IA predeterminado"
+    },
+    "William is required. Click Add William preset, then save the arena.": {
+        "en": "William is required. Click Add William preset, then save the arena.",
+        "fr": "William est requis. Clique sur Ajouter le préréglage William, puis enregistre l’arène.",
+        "es": "Se requiere William. Pulsa Añadir preajuste de William y guarda la arena."
+    },
+    "Seat {0}: entrance ({1}, {2}) must be one tile from bench ({3}, {4}).": {
+        "en": "Seat {0}: entrance ({1}, {2}) must be one tile from bench ({3}, {4}).",
+        "fr": "Place {0} : l’accès ({1}, {2}) doit être à une seule case du banc ({3}, {4}).",
+        "es": "Asiento {0}: la entrada ({1}, {2}) debe estar a una sola casilla del banco ({3}, {4})."
+    },
+    "Seat {0}: move the bench and entrance outside both jousting lanes.": {
+        "en": "Seat {0}: move the bench and entrance outside both jousting lanes.",
+        "fr": "Place {0} : déplace le banc et son accès hors des deux couloirs de joute.",
+        "es": "Asiento {0}: mueve el banco y su entrada fuera de ambos carriles de justa."
+    },
+    "Seat {0}: a bench overlaps another bench or an entrance.": {
+        "en": "Seat {0}: a bench overlaps another bench or an entrance.",
+        "fr": "Place {0} : un banc chevauche un autre banc ou un accès.",
+        "es": "Asiento {0}: un banco se superpone a otro banco o a una entrada."
+    },
+    "In game: Character or Adventure lobbies → Royal Jousting. Walk to the gold start ({0}, {1}), choose an AI opponent and difficulty, then Start AI joust. Player duels use Challenge a knight.": {
+        "en": "In game: Character or Adventure lobbies → Royal Jousting. Walk to the gold start ({0}, {1}), choose an AI opponent and difficulty, then Start AI joust. Player duels use Challenge a knight.",
+        "fr": "En jeu : Personnage ou Lobby des aventures → Joutes Royales. Marche jusqu’au départ doré ({0}, {1}), choisis un adversaire IA et une difficulté, puis Démarrer la joute IA. Pour le PvP : Défier un chevalier.",
+        "es": "En el juego: Personaje o Salas de aventuras → Justas Reales. Camina hasta el inicio dorado ({0}, {1}), elige rival IA y dificultad, y pulsa Iniciar justa IA. Para PvP: Desafiar a un caballero."
+    },
+    "Cannot save. The exact problems are listed below, on every tab.": {
+        "en": "Cannot save. The exact problems are listed below, on every tab.",
+        "fr": "Enregistrement impossible. Les problèmes précis sont affichés ci-dessous, dans tous les onglets.",
+        "es": "No se puede guardar. Los problemas exactos aparecen abajo, en todas las pestañas."
+    },
+    "The server could not save this arena.": {
+        "en": "The server could not save this arena.",
+        "fr": "Le serveur n’a pas pu enregistrer cette arène.",
+        "es": "El servidor no pudo guardar esta arena."
+    },
+    "Put entrance beside seat": {
+        "en": "Put entrance beside seat",
+        "fr": "Mettre l’accès à côté du banc",
+        "es": "Poner la entrada junto al banco"
+    },
+    "No adjacent entrance is free. Move the bench or clear a neighboring tile.": {
+        "en": "No adjacent entrance is free. Move the bench or clear a neighboring tile.",
+        "fr": "Aucune case adjacente n’est libre. Déplace le banc ou libère une case voisine.",
+        "es": "No hay una casilla adyacente libre. Mueve el banco o despeja una casilla vecina."
+    },
+    "AI opponent (your mount: William)": {
+        "en": "AI opponent (your mount: William)",
+        "fr": "Adversaire IA (ta monture : William)",
+        "es": "Rival IA (tu montura: William)"
+    },
+    "Start AI joust": {
+        "en": "Start AI joust",
+        "fr": "Démarrer la joute IA",
+        "es": "Iniciar justa IA"
+    },
+    "No active arena on this map. In Jousting Editor, enable and save an arena first.": {
+        "en": "No active arena on this map. In Jousting Editor, enable and save an arena first.",
+        "fr": "Aucune arène active sur cette carte. Active et enregistre d’abord une arène dans l’éditeur de joutes.",
+        "es": "No hay una arena activa en este mapa. Primero activa y guarda una arena en el editor de justas."
+    },
+    "AI training is disabled for this arena. Enable Allow AI training in Jousting Editor.": {
+        "en": "AI training is disabled for this arena. Enable Allow AI training in Jousting Editor.",
+        "fr": "L’entraînement IA est désactivé ici. Coche Autoriser l’entraînement contre l’IA dans l’éditeur de joutes.",
+        "es": "El entrenamiento IA está desactivado aquí. Activa Permitir entrenamiento contra la IA en el editor de justas."
+    },
+    "Walk to the gold start ({0}, {1}). Your position: ({2}, {3}). Then choose William or Tale Knight Night, choose a difficulty and click Start AI joust. No adventure lobby needs to be created.": {
+        "en": "Walk to the gold start ({0}, {1}). Your position: ({2}, {3}). Then choose William or Tale Knight Night, choose a difficulty and click Start AI joust. No adventure lobby needs to be created.",
+        "fr": "Marche jusqu’au départ doré ({0}, {1}). Ta position : ({2}, {3}). Choisis ensuite William ou Tale Knight Night, une difficulté, puis Démarrer la joute IA. Il n’est pas nécessaire de créer un lobby.",
+        "es": "Camina hasta el inicio dorado ({0}, {1}). Tu posición: ({2}, {3}). Elige William o Tale Knight Night, una dificultad y pulsa Iniciar justa IA. No es necesario crear una sala."
+    },
+    "The selected crowd NPC is missing or has no sprite. Choose another NPC or None.": {
+        "en": "The selected crowd NPC is missing or has no sprite. Choose another NPC or None.",
+        "fr": "Le PNJ de foule choisi est introuvable ou n’a pas de sprite. Choisis un autre PNJ ou Aucun.",
+        "es": "El PNJ de público seleccionado no existe o no tiene sprite. Elige otro PNJ o Ninguno."
+    },
+    "A seat or entrance is outside the map or has a forbidden map attribute. Check the green bench and white entrance markers.": {
+        "en": "A seat or entrance is outside the map or has a forbidden map attribute. Check the green bench and white entrance markers.",
+        "fr": "Un banc ou son accès est hors de la carte ou porte un attribut interdit. Vérifie le banc vert et l’accès blanc.",
+        "es": "Un banco o su entrada está fuera del mapa o tiene un atributo no permitido. Comprueba el banco verde y la entrada blanca."
+    },
+    "A selected cinematic is missing or is not on the arena map. Choose an existing scene or None.": {
+        "en": "A selected cinematic is missing or is not on the arena map. Choose an existing scene or None.",
+        "fr": "Une cinématique choisie est introuvable ou n’est pas sur la carte de l’arène. Choisis une scène existante ou Aucun.",
+        "es": "Una cinemática seleccionada no existe o no está en el mapa de la arena. Elige una escena existente o Ninguna."
+    },
+    "A reward item is missing or is not stackable. Fix the offers in Rewards.": {
+        "en": "A reward item is missing or is not stackable. Fix the offers in Rewards.",
+        "fr": "Un objet de récompense est introuvable ou n’est pas empilable. Corrige les offres dans Gains.",
+        "es": "Un objeto de recompensa no existe o no es apilable. Corrige las ofertas en Recompensas."
+    },
+    "The arena map or William mount is missing, or a track is outside the map. Check Arena setup.": {
+        "en": "The arena map or William mount is missing, or a track is outside the map. Check Arena setup.",
+        "fr": "La carte de l’arène ou la monture William est introuvable, ou un couloir est hors de la carte. Vérifie l’onglet Arène.",
+        "es": "No se encuentra el mapa de la arena o la montura William, o un carril está fuera del mapa. Revisa la pestaña Arena."
+    },
+    "The jousting configuration is invalid. Check the arena rules and the seats listed below.": {
+        "en": "The jousting configuration is invalid. Check the arena rules and the seats listed below.",
+        "fr": "La configuration de joute est invalide. Vérifie les règles et les places indiquées ci-dessous.",
+        "es": "La configuración de justa no es válida. Revisa las reglas y los asientos indicados abajo."
+    },
+    "Keep all benches and entrances inside the map.": {
+        "en": "Keep all benches and entrances inside the map.",
+        "fr": "Garde tous les bancs et leurs accès à l’intérieur de la carte.",
+        "es": "Mantén todos los bancos y sus entradas dentro del mapa."
+    },
+    "Seat entrances must have no map attributes. Benches may only have a blocking attribute.": {
+        "en": "Seat entrances must have no map attributes. Benches may only have a blocking attribute.",
+        "fr": "Les accès aux places ne doivent avoir aucun attribut de carte. Seul un attribut de blocage est permis sur les bancs.",
+        "es": "Las entradas de los asientos no deben tener atributos de mapa. Los bancos solo pueden tener un atributo de bloqueo."
+    },
+    "Facing": {
+        "en": "Facing",
+        "fr": "Orientation",
+        "es": "Orientación"
+    },
+    "AI": {
+        "en": "AI",
+        "fr": "IA",
+        "es": "IA"
+    },
+    "Spectator zoom": {
+        "en": "Spectator zoom",
+        "fr": "Zoom spectateur",
+        "es": "Zoom de espectador"
+    },
+    "Each seat needs its own bench and an adjacent entrance outside both tracks. Entrances cannot overlap a bench.": {
+        "en": "Each seat needs its own bench and an adjacent entrance outside both tracks. Entrances cannot overlap a bench.",
+        "fr": "Chaque place doit avoir son banc et un accès adjacent hors des deux couloirs. Aucun accès ne peut occuper un banc.",
+        "es": "Cada asiento necesita su banco y una entrada adyacente fuera de ambos carriles. Las entradas no pueden ocupar un banco."
+    },
+    "Joust grandstands": {
+        "en": "Joust grandstands",
+        "fr": "Gradins de la joute",
+        "es": "Gradas de la justa"
+    },
+    "Sit in this seat": {
+        "en": "Sit in this seat",
+        "fr": "S’asseoir à cette place",
+        "es": "Sentarse en este asiento"
+    },
+    "Stand up": {
+        "en": "Stand up",
+        "fr": "Se lever",
+        "es": "Levantarse"
+    },
+    "Arena camera": {
+        "en": "Arena camera",
+        "fr": "Vue de l’arène",
+        "es": "Vista de la arena"
+    },
+    "Follow gold knight": {
+        "en": "Follow gold knight",
+        "fr": "Suivre le chevalier doré",
+        "es": "Seguir al caballero dorado"
+    },
+    "Follow blue knight": {
+        "en": "Follow blue knight",
+        "fr": "Suivre le chevalier bleu",
+        "es": "Seguir al caballero azul"
+    },
+    "No grandstand seats are configured here.": {
+        "en": "No grandstand seats are configured here.",
+        "fr": "Aucune place de gradin n’est configurée ici.",
+        "es": "No hay asientos de grada configurados aquí."
+    },
+    "Seat entrance: ({0}, {1})": {
+        "en": "Seat entrance: ({0}, {1})",
+        "fr": "Accès à la place : ({0}, {1})",
+        "es": "Entrada del asiento: ({0}, {1})"
+    },
+    "Seat ({0}, {1})": {
+        "en": "Seat ({0}, {1})",
+        "fr": "Place ({0}, {1})",
+        "es": "Asiento ({0}, {1})"
+    },
+    "Waiting for the next joust.": {
+        "en": "Waiting for the next joust.",
+        "fr": "En attente de la prochaine joute.",
+        "es": "Esperando la próxima justa."
+    },
+    "Pass {0}/{1} · {2} {3} : {4} {5}": {
+        "en": "Pass {0}/{1} · {2} {3} : {4} {5}",
+        "fr": "Passe {0}/{1} · {2} {3} : {4} {5}",
+        "es": "Pasada {0}/{1} · {2} {3} : {4} {5}"
+    },
+    "Joust in progress": {
+        "en": "Joust in progress",
+        "fr": "Joute en cours",
+        "es": "Justa en curso"
+    },
+    "Joust finished": {
+        "en": "Joust finished",
+        "fr": "Joute terminée",
+        "es": "Justa terminada"
+    },
+    "6. Seats": {
+        "en": "6. Seats",
+        "fr": "6. Places",
+        "es": "6. Asientos"
+    },
+    "Grandstand seat": {
+        "en": "Grandstand seat",
+        "fr": "Place de gradin",
+        "es": "Asiento de grada"
+    },
+    "Seat name": {
+        "en": "Seat name",
+        "fr": "Nom de la place",
+        "es": "Nombre del asiento"
+    },
+    "Add seat": {
+        "en": "Add seat",
+        "fr": "Ajouter une place",
+        "es": "Añadir asiento"
+    },
+    "Remove seat": {
+        "en": "Remove seat",
+        "fr": "Supprimer la place",
+        "es": "Eliminar asiento"
+    },
+    "Place seat": {
+        "en": "Place seat",
+        "fr": "Placer la place",
+        "es": "Colocar asiento"
+    },
+    "Place seat entrance": {
+        "en": "Place seat entrance",
+        "fr": "Placer l’accès",
+        "es": "Colocar entrada"
+    },
+    "Seat entrance": {
+        "en": "Seat entrance",
+        "fr": "Accès à la place",
+        "es": "Entrada del asiento"
+    },
+    "Crowd NPC (optional)": {
+        "en": "Crowd NPC (optional)",
+        "fr": "PNJ de foule (facultatif)",
+        "es": "PNJ de público (opcional)"
+    },
+    "Missing crowd NPC": {
+        "en": "Missing crowd NPC",
+        "fr": "PNJ de foule introuvable",
+        "es": "PNJ de público no encontrado"
+    },
+    "Select a seat to place it.": {
+        "en": "Select a seat to place it.",
+        "fr": "Sélectionne une place à positionner.",
+        "es": "Selecciona un asiento para colocarlo."
+    },
+    "Click the bench tile for the selected seat.": {
+        "en": "Click the bench tile for the selected seat.",
+        "fr": "Clique sur la case du banc de la place choisie.",
+        "es": "Haz clic en la casilla del banco del asiento seleccionado."
+    },
+    "Click an adjacent free entrance tile for this seat.": {
+        "en": "Click an adjacent free entrance tile for this seat.",
+        "fr": "Clique sur une case libre adjacente pour l’accès à cette place.",
+        "es": "Haz clic en una casilla libre adyacente para la entrada de este asiento."
+    },
+    "Add a seat, then place its bench tile and an adjacent entrance on the map. Keep both outside the tracks. Players stand at the entrance and choose the seat in Royal Jousting. An optional NPC fills empty seats. Existing chat emotes remain available while seated.": {
+        "en": "Add a seat, then place its bench tile and an adjacent entrance on the map. Keep both outside the tracks. Players stand at the entrance and choose the seat in Royal Jousting. An optional NPC fills empty seats. Existing chat emotes remain available while seated.",
+        "fr": "Ajoute une place, puis positionne son banc et son accès adjacent sur la carte, hors des couloirs. Les joueurs se placent à l’accès et choisissent leur place dans Joutes Royales. Un PNJ facultatif remplit les places libres. Les émotes du chat restent disponibles une fois assis.",
+        "es": "Añade un asiento y coloca su banco y entrada adyacente en el mapa, fuera de los carriles. Los jugadores se sitúan en la entrada y eligen asiento en Justas Reales. Un PNJ opcional ocupa los asientos libres. Los gestos del chat siguen disponibles al sentarse."
+    },
+    "This grandstand seat is not configured here.": {
+        "en": "This grandstand seat is not configured here.",
+        "fr": "Cette place de gradin n’est pas configurée ici.",
+        "es": "Este asiento de grada no está configurado aquí."
+    },
+    "You cannot take a grandstand seat right now.": {
+        "en": "You cannot take a grandstand seat right now.",
+        "fr": "Tu ne peux pas t’asseoir dans les gradins pour le moment.",
+        "es": "No puedes sentarte en las gradas ahora mismo."
+    },
+    "Stand on the selected seat's entrance tile before sitting down.": {
+        "en": "Stand on the selected seat's entrance tile before sitting down.",
+        "fr": "Place-toi sur la case d’accès à la place choisie avant de t’asseoir.",
+        "es": "Sitúate en la casilla de entrada del asiento seleccionado antes de sentarte."
+    },
+    "This seat is occupied or blocked.": {
+        "en": "This seat is occupied or blocked.",
+        "fr": "Cette place est occupée ou bloquée.",
+        "es": "Este asiento está ocupado o bloqueado."
+    },
+    "The grandstand exit is blocked. Please wait or clear the entrance.": {
+        "en": "The grandstand exit is blocked. Please wait or clear the entrance.",
+        "fr": "La sortie des gradins est bloquée. Patiente ou dégage l’accès.",
+        "es": "La salida de las gradas está bloqueada. Espera o despeja la entrada."
+    },
+    "Challenge a knight": {
+        "en": "Challenge a knight",
+        "fr": "Défier un chevalier",
+        "es": "Desafiar a un caballero"
+    },
+    "Refresh players": {
+        "en": "Refresh players",
+        "fr": "Actualiser les joueurs",
+        "es": "Actualizar jugadores"
+    },
+    "Challenge this player": {
+        "en": "Challenge this player",
+        "fr": "Défier ce joueur",
+        "es": "Desafiar a este jugador"
+    },
+    "Accept joust": {
+        "en": "Accept joust",
+        "fr": "Accepter la joute",
+        "es": "Aceptar justa"
+    },
+    "Decline joust": {
+        "en": "Decline joust",
+        "fr": "Refuser la joute",
+        "es": "Rechazar justa"
+    },
+    "Accept joust ({0}s)": {
+        "en": "Accept joust ({0}s)",
+        "fr": "Accepter la joute ({0}s)",
+        "es": "Aceptar justa ({0}s)"
+    },
+    "Gold start: ({0}, {1}) · Blue start: ({2}, {3})": {
+        "en": "Gold start: ({0}, {1}) · Blue start: ({2}, {3})",
+        "fr": "Départ doré : ({0}, {1}) · Départ bleu : ({2}, {3})",
+        "es": "Inicio dorado: ({0}, {1}) · Inicio azul: ({2}, {3})"
+    },
+    "Challenge from the gold start. Accept from the blue start.": {
+        "en": "Challenge from the gold start. Accept from the blue start.",
+        "fr": "Défie depuis le départ doré. Accepte depuis le départ bleu.",
+        "es": "Desafía desde el inicio dorado. Acepta desde el inicio azul."
+    },
+    "{0} challenges you to a joust.": {
+        "en": "{0} challenges you to a joust.",
+        "fr": "{0} te défie à la joute.",
+        "es": "{0} te desafía a una justa."
+    },
+    "No other knight is present on this map.": {
+        "en": "No other knight is present on this map.",
+        "fr": "Aucun autre chevalier n’est présent sur cette carte.",
+        "es": "No hay otro caballero en este mapa."
+    },
+    "Player duels are not enabled on this map.": {
+        "en": "Player duels are not enabled on this map.",
+        "fr": "Les duels entre joueurs ne sont pas activés sur cette carte.",
+        "es": "Los duelos entre jugadores no están activados en este mapa."
+    },
+    "Both knights must be ready on the same map.": {
+        "en": "Both knights must be ready on the same map.",
+        "fr": "Les deux chevaliers doivent être disponibles sur la même carte.",
+        "es": "Ambos caballeros deben estar disponibles en el mismo mapa."
+    },
+    "This player is unavailable. Try again.": {
+        "en": "This player is unavailable. Try again.",
+        "fr": "Ce joueur est indisponible. Réessaie.",
+        "es": "Este jugador no está disponible. Inténtalo de nuevo."
+    },
+    "A duel requires two different accounts.": {
+        "en": "A duel requires two different accounts.",
+        "fr": "Une joute nécessite deux comptes différents.",
+        "es": "Una justa requiere dos cuentas diferentes."
+    },
+    "Stand at the gold starting tile before challenging a player.": {
+        "en": "Stand at the gold starting tile before challenging a player.",
+        "fr": "Place-toi sur la case de départ dorée avant de défier un joueur.",
+        "es": "Sitúate en la casilla dorada de inicio antes de desafiar a un jugador."
+    },
+    "This player already has a pending joust invitation.": {
+        "en": "This player already has a pending joust invitation.",
+        "fr": "Ce joueur a déjà une invitation de joute en attente.",
+        "es": "Este jugador ya tiene una invitación de justa pendiente."
+    },
+    "Joust invitation sent. Your opponent has 30 seconds to accept.": {
+        "en": "Joust invitation sent. Your opponent has 30 seconds to accept.",
+        "fr": "Invitation envoyée. Ton adversaire a 30 secondes pour accepter.",
+        "es": "Invitación enviada. Tu rival tiene 30 segundos para aceptar."
+    },
+    "This joust invitation has expired.": {
+        "en": "This joust invitation has expired.",
+        "fr": "Cette invitation de joute a expiré.",
+        "es": "Esta invitación de justa ha caducado."
+    },
+    "Place the challenger on the gold start and the opponent on the blue start before accepting.": {
+        "en": "Place the challenger on the gold start and the opponent on the blue start before accepting.",
+        "fr": "Place le challenger au départ doré et l’adversaire au départ bleu avant d’accepter.",
+        "es": "Coloca al desafiante en el inicio dorado y al rival en el inicio azul antes de aceptar."
+    },
+    "Clear both jousting lanes before starting the duel.": {
+        "en": "Clear both jousting lanes before starting the duel.",
+        "fr": "Dégage les deux couloirs avant de lancer la joute.",
+        "es": "Despeja ambos carriles antes de iniciar la justa."
+    },
+    "Pass {0}/{1} · You {2} : {3} {4}": {
+        "en": "Pass {0}/{1} · You {2} : {3} {4}",
+        "fr": "Passe {0}/{1} · Toi {2} : {3} {4}",
+        "es": "Pasada {0}/{1} · Tú {2} : {3} {4}"
+    },
+    "Joust interrupted": {
+        "en": "Joust interrupted",
+        "fr": "Joute interrompue",
+        "es": "Justa interrumpida"
+    },
+    "Allow AI training": {
+        "en": "Allow AI training",
+        "fr": "Autoriser l’entraînement contre l’IA",
+        "es": "Permitir entrenamiento contra la IA"
+    },
+    "Allow player duels": {
+        "en": "Allow player duels",
+        "fr": "Autoriser les duels entre joueurs",
+        "es": "Permitir duelos entre jugadores"
+    },
+    "Enable at least one match mode for this arena.": {
+        "en": "Enable at least one match mode for this arena.",
+        "fr": "Active au moins un mode de joute pour cette arène.",
+        "es": "Activa al menos un modo de justa para esta arena."
+    },
+    "4. Rewards and economy": {
+        "en": "4. Rewards and economy",
+        "fr": "4. Récompenses et économie",
+        "es": "4. Recompensas y economía"
+    },
+    "Enable royal medal rewards": {
+        "en": "Enable royal medal rewards",
+        "fr": "Activer les récompenses en médailles royales",
+        "es": "Activar recompensas en medallas reales"
+    },
+    "Daily medal limit (UTC)": {
+        "en": "Daily medal limit (UTC)",
+        "fr": "Plafond quotidien de médailles (UTC)",
+        "es": "Límite diario de medallas (UTC)"
+    },
+    "Reward cooldown (seconds)": {
+        "en": "Reward cooldown (seconds)",
+        "fr": "Délai entre récompenses (secondes)",
+        "es": "Espera entre recompensas (segundos)"
+    },
+    "A victory awards 5 to 25 medals depending on AI difficulty; a completed loss awards 1. At least one scored hit is required. Abandoned matches award nothing. Medals and items are saved together when exchanged.": {
+        "en": "A victory awards 5 to 25 medals depending on AI difficulty; a completed loss awards 1. At least one scored hit is required. Abandoned matches award nothing. Medals and items are saved together when exchanged.",
+        "fr": "Une victoire rapporte 5 à 25 médailles selon la difficulté de l’IA ; une défaite terminée rapporte 1 médaille. Au moins une touche réussie est nécessaire. Un abandon ne rapporte rien. Les médailles et objets sont enregistrés ensemble lors d’un échange.",
+        "es": "Una victoria otorga de 5 a 25 medallas según la dificultad; una derrota completada otorga 1. Se requiere al menos un golpe puntuado. Abandonar no otorga nada. Medallas y objetos se guardan juntos al intercambiar."
+    },
+    "Royal medals": {
+        "en": "Royal medals",
+        "fr": "Médailles royales",
+        "es": "Medallas reales"
+    },
+    "Medal shop offers": {
+        "en": "Medal shop offers",
+        "fr": "Offres de la boutique de médailles",
+        "es": "Ofertas de la tienda de medallas"
+    },
+    "Reward item": {
+        "en": "Reward item",
+        "fr": "Objet de récompense",
+        "es": "Objeto de recompensa"
+    },
+    "Price in royal medals": {
+        "en": "Price in royal medals",
+        "fr": "Prix en médailles royales",
+        "es": "Precio en medallas reales"
+    },
+    "Add shop offer": {
+        "en": "Add shop offer",
+        "fr": "Ajouter une offre",
+        "es": "Añadir oferta"
+    },
+    "Remove shop offer": {
+        "en": "Remove shop offer",
+        "fr": "Supprimer l’offre",
+        "es": "Eliminar oferta"
+    },
+    "Make room in your inventory before exchanging medals.": {
+        "en": "Make room in your inventory before exchanging medals.",
+        "fr": "Libère de la place dans ton inventaire avant d’échanger des médailles.",
+        "es": "Haz espacio en tu inventario antes de intercambiar medallas."
+    },
+    "{0} x{1} · {2} royal medals": {
+        "en": "{0} x{1} · {2} royal medals",
+        "fr": "{0} x{1} · {2} médailles royales",
+        "es": "{0} x{1} · {2} medallas reales"
+    },
+    "Royal medals: {0} · Level {1} · Wins {2}/{3}": {
+        "en": "Royal medals: {0} · Level {1} · Wins {2}/{3}",
+        "fr": "Médailles royales : {0} · Niveau {1} · Victoires {2}/{3}",
+        "es": "Medallas reales: {0} · Nivel {1} · Victorias {2}/{3}"
+    },
     "Premium - Remaining: {0}": {
       "en": "Premium - Remaining: {0}",
       "fr": "Premium - Temps restant : {0}",

@@ -19,7 +19,7 @@ internal sealed class CinematicProperties(object value, bool vesselPoint = false
             CinematicTrack.Movement => vesselMovement ? ["ActorId", "Ease"] : ["ActorId", "Speed"],
             CinematicTrack.Naval => clip.VesselAction == CinematicVesselAction.VesselAppearance
                 ? ["ActorId", "VesselAction", "VesselAppearance", "SynchronizedGroup"]
-                : clip.VesselAction is CinematicVesselAction.FirePort or CinematicVesselAction.FireStarboard
+                : (clip.VesselAction is CinematicVesselAction.FirePort or CinematicVesselAction.FireStarboard)
                     ? ["ActorId", "VesselAction", "SynchronizedGroup"]
                     : clip.VesselAction == CinematicVesselAction.VesselHullImpact
                         ? ["ActorId", "VesselAction", "ResourceId", "AnimationOffsetX", "AnimationOffsetY", "SynchronizedGroup"]
@@ -36,7 +36,7 @@ internal sealed class CinematicProperties(object value, bool vesselPoint = false
                 ? ["GameplayAction", "ResourceId", "AllowPlayerControl"] : ["GameplayAction", "VariableId", "ExpectedValue"],
             CinematicTrack.Condition => clip.ConditionKind == CinematicConditionKind.PlayerFlag
                 ? ["ConditionKind", "VariableId", "ExpectedValue", "ConditionTimeoutMs", "AllowPlayerControl"]
-                : clip.ConditionKind is CinematicConditionKind.QuestTaskActive or CinematicConditionKind.QuestAfterTask
+                : (clip.ConditionKind is CinematicConditionKind.QuestTaskActive or CinematicConditionKind.QuestAfterTask)
                     ? ["ConditionKind", "QuestId", "TaskId", "ConditionTimeoutMs", "AllowPlayerControl"]
                     : ["ConditionKind", "QuestId", "ConditionTimeoutMs", "AllowPlayerControl"],
             CinematicTrack.Quest => clip.QuestAction == CinematicQuestAction.StartOrOffer
@@ -55,7 +55,7 @@ internal sealed class CinematicProperties(object value, bool vesselPoint = false
                 (camera.FollowActor || name is not ("ActorId" or "OffsetX" or "OffsetY")) &&
                 (camera.Projection == CinematicProjection.Perspective2_5D || name is not ("Heading" or "EyeHeight" or "PitchDegrees" or "FieldOfView"))).ToArray();
         var descriptors = TypeDescriptor.GetProperties(value, attributes ?? []).Cast<PropertyDescriptor>()
-            .Where(p => p.IsBrowsable && p.Name is not ("Version" or "TargetId" or "Track") &&
+            .Where(p => p.IsBrowsable && p.Name is not ("Version" or "TargetId" or "Track" or "MapId") &&
                 (visible == null || visible.Contains(p.Name) || p.Name is "Name" or "StartMs" or "DurationMs"))
             .Select(p => (PropertyDescriptor)new LocalizedProperty(p, value, scene)).ToArray();
         return new(descriptors, true);

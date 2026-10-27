@@ -636,6 +636,7 @@ public partial class Resource : Entity, IResource
     //Rendering Resources
     public override void Draw()
     {
+        using var cinematicCapture = Graphics.CaptureCinematicEntity(this);
         if (MapInstance == null)
         {
             return;

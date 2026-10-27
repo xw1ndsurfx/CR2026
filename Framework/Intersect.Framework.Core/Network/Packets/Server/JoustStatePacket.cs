@@ -10,4 +10,10 @@ public sealed partial class JoustStatePacket : IntersectPacket
     [Key(4)] public bool Editor { get; set; }
     [Key(5)] public bool Saved { get; set; }
     [Key(6)] public Guid RequestId { get; set; }
+    [Key(7)] public string MountsJson { get; set; } = "";
+    [Key(8)] public string CareerJson { get; set; } = "";
+    [Key(9)] public string DuelJson { get; set; } = "";
+    [Key(10)] public bool OpenDuelWindow { get; set; }
+    [Key(11)] public string SpectatorJson { get; set; } = "";
+    [Key(12)] public bool OpenSpectatorWindow { get; set; }
 }
