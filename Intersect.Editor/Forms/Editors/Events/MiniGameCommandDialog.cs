@@ -25,6 +25,20 @@ internal sealed class MiniGameCommandDialog : Form
     private sealed record EventChoice(Guid Id, string Name) { public override string ToString() => Name; }
     public MiniGameCommandDialog(StartMiniGameCommand command, MiniGameType? fixedGame = null)
     {
+        if ((fixedGame ?? command.Game) == MiniGameType.Archery)
+        {
+            string T(string value) => Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(value,
+                System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+            Text = T("Royal Archery Training"); StartPosition = FormStartPosition.CenterParent;
+            ClientSize = new Size(580, 170); MinimumSize = new Size(440, 190);
+            var info = new Label { Dock = DockStyle.Fill, Padding = new Padding(12), Text = T("Configure ranges in the Archery Mini-Game Editor. This event opens free training; no inventory ammunition is consumed.") };
+            var controls = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 42, FlowDirection = FlowDirection.RightToLeft };
+            var archerySave = new Button { Text = T("Save"), AutoSize = true };
+            archerySave.Click += (_, _) => { command.Game = MiniGameType.Archery; DialogResult = DialogResult.OK; Close(); };
+            var archeryCancel = new Button { Text = T("Cancel"), AutoSize = true, DialogResult = DialogResult.Cancel };
+            controls.Controls.Add(archerySave); controls.Controls.Add(archeryCancel); Controls.Add(info); Controls.Add(controls);
+            AcceptButton = archerySave; CancelButton = archeryCancel; return;
+        }
         Text = "Start " + MiniGameCatalog.Get(fixedGame ?? command.Game).DisplayName; StartPosition = FormStartPosition.CenterParent;
         FormBorderStyle = FormBorderStyle.Sizable; MaximizeBox = MinimizeBox = false;
         ShowInTaskbar = false; AutoScaleMode = AutoScaleMode.Font;

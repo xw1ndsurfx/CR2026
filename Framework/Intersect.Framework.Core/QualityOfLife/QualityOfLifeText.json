@@ -2851,6 +2851,521 @@
       "en": "GNU General Public License v3",
       "fr": "Licence publique générale GNU v3",
       "es": "Licencia pública general GNU v3"
+    },
+    "Royal Archery Training": {
+      "en": "Royal Archery Training",
+      "fr": "Entraînement royal de tir à l’arc",
+      "es": "Entrenamiento real de tiro con arco"
+    },
+    "Weapon Masteries": {
+      "en": "Weapon Masteries",
+      "fr": "Maîtrises d’armes",
+      "es": "Maestrías de armas"
+    },
+    "Archery": {
+      "en": "Archery",
+      "fr": "Tir à l’arc",
+      "es": "Tiro con arco"
+    },
+    "Swordsmanship": {
+      "en": "Swordsmanship",
+      "fr": "Maîtrise de l’épée",
+      "es": "Esgrima"
+    },
+    "Daggers": {
+      "en": "Daggers",
+      "fr": "Dagues",
+      "es": "Dagas"
+    },
+    "Axes & Hammers": {
+      "en": "Axes & Hammers",
+      "fr": "Haches et marteaux",
+      "es": "Hachas y martillos"
+    },
+    "Staves & Magic": {
+      "en": "Staves & Magic",
+      "fr": "Bâtons et magie",
+      "es": "Bastones y magia"
+    },
+    "Start training": {
+      "en": "Start training",
+      "fr": "Commencer l’entraînement",
+      "es": "Iniciar entrenamiento"
+    },
+    "Leave training": {
+      "en": "Leave training",
+      "fr": "Quitter l’entraînement",
+      "es": "Salir del entrenamiento"
+    },
+    "Hold the left mouse button to draw. Release to shoot. Aim above the target.": {
+      "en": "Hold the left mouse button to draw. Release to shoot. Aim above the target.",
+      "fr": "Maintenez le clic gauche pour bander l’arc. Relâchez pour tirer. Visez au-dessus de la cible.",
+      "es": "Mantén el botón izquierdo para tensar. Suelta para disparar. Apunta por encima del blanco."
+    },
+    "Stand at the royal shooting position outside combat.": {
+      "en": "Stand at the royal shooting position outside combat.",
+      "fr": "Placez-vous au poste de tir royal, hors combat.",
+      "es": "Colócate en el puesto de tiro real, fuera de combate."
+    },
+    "Round {0}/3 · Score {1}/150 · Arrows {2} · Distance {3} m · Wind {4}": {
+      "en": "Round {0}/3 · Score {1}/150 · Arrows {2} · Distance {3} m · Wind {4}",
+      "fr": "Manche {0}/3 · Score {1}/150 · Flèches {2} · Distance {3} m · Vent {4}",
+      "es": "Ronda {0}/3 · Puntos {1}/150 · Flechas {2} · Distancia {3} m · Viento {4}"
+    },
+    "Training complete": {
+      "en": "Training complete",
+      "fr": "Entraînement terminé",
+      "es": "Entrenamiento completado"
+    },
+    "Training ended": {
+      "en": "Training ended",
+      "fr": "Entraînement interrompu",
+      "es": "Entrenamiento finalizado"
+    },
+    "Bullseye!": {
+      "en": "Bullseye!",
+      "fr": "En plein centre !",
+      "es": "¡Diana!"
+    },
+    "Last shot: {0}": {
+      "en": "Last shot: {0}",
+      "fr": "Dernier tir : {0}",
+      "es": "Último tiro: {0}"
+    },
+    "{0} · Level {1}/{2} · XP {3}/{4} · {5}%": {
+      "en": "{0} · Level {1}/{2} · XP {3}/{4} · {5}%",
+      "fr": "{0} · Niveau {1}/{2} · XP {3}/{4} · {5} %",
+      "es": "{0} · Nivel {1}/{2} · EXP {3}/{4} · {5}%"
+    },
+    "Weapon Mastery Editor": {
+      "en": "Weapon Mastery Editor",
+      "fr": "Éditeur des maîtrises d’armes",
+      "es": "Editor de maestrías de armas"
+    },
+    "Archery Mini-Game Editor": {
+      "en": "Archery Mini-Game Editor",
+      "fr": "Éditeur du mini-jeu de tir à l’arc",
+      "es": "Editor del minijuego de tiro con arco"
+    },
+    "New mastery category": {
+      "en": "New mastery category",
+      "fr": "Nouvelle catégorie de maîtrise",
+      "es": "Nueva categoría de maestría"
+    },
+    "New range on current map": {
+      "en": "New range on current map",
+      "fr": "Nouveau stand sur la carte actuelle",
+      "es": "Nuevo campo en el mapa actual"
+    },
+    "Select existing weapons for this mastery. A weapon belongs to one category.": {
+      "en": "Select existing weapons for this mastery. A weapon belongs to one category.",
+      "fr": "Sélectionnez les armes existantes. Chaque arme appartient à une seule maîtrise.",
+      "es": "Selecciona armas existentes. Cada arma pertenece a una sola maestría."
+    },
+    "Click the map to place the shooting position. Enable the range, then save.": {
+      "en": "Click the map to place the shooting position. Enable the range, then save.",
+      "fr": "Cliquez sur la carte pour placer le poste de tir. Activez le stand, puis enregistrez.",
+      "es": "Haz clic en el mapa para situar el puesto de tiro. Activa el campo y guarda."
+    },
+    "Invalid royal combat configuration.": {
+      "en": "Invalid royal combat configuration.",
+      "fr": "Configuration du combat royal invalide.",
+      "es": "Configuración de combate real no válida."
+    },
+    "Configure ranges in the Archery Mini-Game Editor. This event opens free training; no inventory ammunition is consumed.": {
+      "en": "Configure ranges in the Archery Mini-Game Editor. This event opens free training; no inventory ammunition is consumed.",
+      "fr": "Configurez les stands dans l’éditeur du mini-jeu de tir à l’arc. Cet événement ouvre un entraînement gratuit, sans consommer de munitions de l’inventaire.",
+      "es": "Configura los campos en el editor del minijuego de tiro con arco. Este evento abre el entrenamiento gratuito sin consumir munición del inventario."
+    },
+    "Ammunition": {
+      "en": "Ammunition",
+      "fr": "Munitions",
+      "es": "Munición"
+    },
+    "Cannon ammunition": {
+      "en": "Cannon ammunition",
+      "fr": "Munitions de canon",
+      "es": "Munición de cañón"
+    },
+    "Refresh": {
+      "en": "Refresh",
+      "fr": "Actualiser",
+      "es": "Actualizar"
+    },
+    "Equip a ranged weapon to select compatible ammunition.": {
+      "en": "Equip a ranged weapon to select compatible ammunition.",
+      "fr": "Équipez une arme à distance pour sélectionner des munitions compatibles.",
+      "es": "Equipa un arma a distancia para seleccionar munición compatible."
+    },
+    "Weapon: {0}": {
+      "en": "Weapon: {0}",
+      "fr": "Arme : {0}",
+      "es": "Arma: {0}"
+    },
+    "Quantity {0} · Per shot {1} · {2}": {
+      "en": "Quantity {0} · Per shot {1} · {2}",
+      "fr": "Quantité {0} · Par tir {1} · {2}",
+      "es": "Cantidad {0} · Por disparo {1} · {2}"
+    },
+    "Select ammunition": {
+      "en": "Select ammunition",
+      "fr": "Choisir ces munitions",
+      "es": "Seleccionar munición"
+    },
+    "Incompatible": {
+      "en": "Incompatible",
+      "fr": "Incompatible",
+      "es": "Incompatible"
+    },
+    "In use": {
+      "en": "In use",
+      "fr": "En cours d’utilisation",
+      "es": "En uso"
+    },
+    "Steady Aim": {
+      "en": "Steady Aim",
+      "fr": "Visée stable",
+      "es": "Puntería firme"
+    },
+    "Quick Shot": {
+      "en": "Quick Shot",
+      "fr": "Tir rapide",
+      "es": "Disparo rápido"
+    },
+    "Piercing Arrow": {
+      "en": "Piercing Arrow",
+      "fr": "Flèche perforante",
+      "es": "Flecha perforante"
+    },
+    "Multi Shot": {
+      "en": "Multi Shot",
+      "fr": "Tir multiple",
+      "es": "Disparo múltiple"
+    },
+    "Rain of Arrows": {
+      "en": "Rain of Arrows",
+      "fr": "Pluie de flèches",
+      "es": "Lluvia de flechas"
+    },
+    "Eagle Eye": {
+      "en": "Eagle Eye",
+      "fr": "Œil d’aigle",
+      "es": "Ojo de águila"
+    },
+    "Confirm": {
+      "en": "Confirm",
+      "fr": "Confirmer",
+      "es": "Confirmar"
+    },
+    "{0} · Level {1}/{2} · XP {3}/{4} · Points {5}": {
+      "en": "{0} · Level {1}/{2} · XP {3}/{4} · Points {5}",
+      "fr": "{0} · Niveau {1}/{2} · XP {3}/{4} · Points {5}",
+      "es": "{0} · Nivel {1}/{2} · EXP {3}/{4} · Puntos {5}"
+    },
+    "{0} · Rank {1}/{2} · Level {3}": {
+      "en": "{0} · Rank {1}/{2} · Level {3}",
+      "fr": "{0} · Rang {1}/{2} · Niveau {3}",
+      "es": "{0} · Rango {1}/{2} · Nivel {3}"
+    },
+    "Damage +{0}% · Speed +{1}% · Critical +{2}": {
+      "en": "Damage +{0}% · Speed +{1}% · Critical +{2}",
+      "fr": "Dégâts +{0} % · Vitesse +{1} % · Critique +{2}",
+      "es": "Daño +{0}% · Velocidad +{1}% · Crítico +{2}"
+    },
+    "Map an existing spell in the editor to enable this talent.": {
+      "en": "Map an existing spell in the editor to enable this talent.",
+      "fr": "Associez un sort existant dans l’éditeur pour activer ce talent.",
+      "es": "Asocia un hechizo existente en el editor para activar este talento."
+    },
+    "Requires {0} rank {1}": {
+      "en": "Requires {0} rank {1}",
+      "fr": "Requiert {0} au rang {1}",
+      "es": "Requiere {0} de rango {1}"
+    },
+    "Spend 1 mastery point": {
+      "en": "Spend 1 mastery point",
+      "fr": "Dépenser 1 point de maîtrise",
+      "es": "Gastar 1 punto de maestría"
+    },
+    "Spend 1 point on {0}? This choice is saved on your character.": {
+      "en": "Spend 1 point on {0}? This choice is saved on your character.",
+      "fr": "Dépenser 1 point pour {0} ? Ce choix est enregistré sur votre personnage.",
+      "es": "¿Gastar 1 punto en {0}? Esta elección se guarda en tu personaje."
+    },
+    "This ammunition is unavailable or incompatible with your equipped weapon.": {
+      "en": "This ammunition is unavailable or incompatible with your equipped weapon.",
+      "fr": "Ces munitions sont indisponibles ou incompatibles avec l’arme équipée.",
+      "es": "Esta munición no está disponible o es incompatible con el arma equipada."
+    },
+    "This mastery talent is unavailable.": {
+      "en": "This mastery talent is unavailable.",
+      "fr": "Ce talent de maîtrise est indisponible.",
+      "es": "Este talento de maestría no está disponible."
+    },
+    "Free a spellbook slot before learning this talent.": {
+      "en": "Free a spellbook slot before learning this talent.",
+      "fr": "Libérez une place dans le livre de sorts avant d’apprendre ce talent.",
+      "es": "Libera un espacio en el libro de hechizos antes de aprender este talento."
+    },
+    "Talent requirements or available mastery points are not met.": {
+      "en": "Talent requirements or available mastery points are not met.",
+      "fr": "Les prérequis du talent ou les points de maîtrise disponibles ne suffisent pas.",
+      "es": "No se cumplen los requisitos del talento o faltan puntos de maestría."
+    },
+    "Mastery talent learned.": {
+      "en": "Mastery talent learned.",
+      "fr": "Talent de maîtrise appris.",
+      "es": "Talento de maestría aprendido."
+    },
+    "Mastery talent tree": {
+      "en": "Mastery talent tree",
+      "fr": "Arbre de talents de maîtrise",
+      "es": "Árbol de talentos de maestría"
+    },
+    "New talent": {
+      "en": "New talent",
+      "fr": "Nouveau talent",
+      "es": "Nuevo talento"
+    },
+    "Archery talent templates": {
+      "en": "Archery talent templates",
+      "fr": "Modèles de talents de tir à l’arc",
+      "es": "Plantillas de talentos de tiro con arco"
+    },
+    "Invalid talent ranks, prerequisites or spell mappings.": {
+      "en": "Invalid talent ranks, prerequisites or spell mappings.",
+      "fr": "Rangs, prérequis ou associations de sorts invalides.",
+      "es": "Rangos, requisitos o asociaciones de hechizos no válidos."
+    },
+    "No spell": {
+      "en": "No spell",
+      "fr": "Aucun sort",
+      "es": "Sin hechizo"
+    },
+    "Rank {0} spell": {
+      "en": "Rank {0} spell",
+      "fr": "Sort du rang {0}",
+      "es": "Hechizo del rango {0}"
+    },
+    "Mapped spells require this talent and a compatible equipped weapon. Leave all ranks empty for a passive talent.": {
+      "en": "Mapped spells require this talent and a compatible equipped weapon. Leave all ranks empty for a passive talent.",
+      "fr": "Les sorts associés requièrent ce talent et une arme équipée compatible. Laissez tous les rangs vides pour un talent passif.",
+      "es": "Los hechizos asociados requieren este talento y un arma equipada compatible. Deja todos los rangos vacíos para un talento pasivo."
+    },
+    "Ammunition compatibility": {
+      "en": "Ammunition compatibility",
+      "fr": "Compatibilité des munitions",
+      "es": "Compatibilidad de munición"
+    },
+    "Select existing alternate projectiles. The weapon's original ammunition remains available; effects and quantities come from each projectile.": {
+      "en": "Select existing alternate projectiles. The weapon's original ammunition remains available; effects and quantities come from each projectile.",
+      "fr": "Sélectionnez les projectiles alternatifs existants. Les munitions originales restent disponibles ; chaque projectile définit ses effets et sa quantité.",
+      "es": "Selecciona proyectiles alternativos existentes. La munición original sigue disponible; cada proyectil define sus efectos y su cantidad."
+    },
+    "{0} · Level {1}/{2} · Points {3}": {
+      "en": "{0} · Level {1}/{2} · Points {3}",
+      "fr": "{0} · Niveau {1}/{2} · Points {3}",
+      "es": "{0} · Nivel {1}/{2} · Puntos {3}"
+    },
+    "XP {0}/{1} · {2}% · Remaining {3}": {
+      "en": "XP {0}/{1} · {2}% · Remaining {3}",
+      "fr": "XP {0}/{1} · {2} % · Manque {3}",
+      "es": "EXP {0}/{1} · {2}% · Faltan {3}"
+    },
+    "Hold left: draw · Release: shoot · Right click: zoom": {
+      "en": "Hold left: draw · Release: shoot · Right click: zoom",
+      "fr": "Maintenir le clic gauche : bander · Relâcher : tirer · Clic droit : zoom",
+      "es": "Mantén el clic izquierdo: tensar · Suelta: disparar · Clic derecho: zoom"
+    },
+    "Round {0}/{1} · Score {2}/{3} · Arrows {4} · Distance {5} m · Wind {6}": {
+      "en": "Round {0}/{1} · Score {2}/{3} · Arrows {4} · Distance {5} m · Wind {6}",
+      "fr": "Manche {0}/{1} · Score {2}/{3} · Flèches {4} · Distance {5} m · Vent {6}",
+      "es": "Ronda {0}/{1} · Puntos {2}/{3} · Flechas {4} · Distancia {5} m · Viento {6}"
+    },
+    "Time expired: unused arrows score zero.": {
+      "en": "Time expired: unused arrows score zero.",
+      "fr": "Temps écoulé : les flèches inutilisées valent zéro.",
+      "es": "Tiempo agotado: las flechas sin usar valen cero."
+    },
+    "Time {0} · Target {1}/{2} · Zoom ×{3}": {
+      "en": "Time {0} · Target {1}/{2} · Zoom ×{3}",
+      "fr": "Temps {0} · Cible {1}/{2} · Zoom ×{3}",
+      "es": "Tiempo {0} · Blanco {1}/{2} · Zoom ×{3}"
+    },
+    "Range rules and targets": {
+      "en": "Range rules and targets",
+      "fr": "Règles et cibles du stand",
+      "es": "Reglas y blancos del campo"
+    },
+    "New round": {
+      "en": "New round",
+      "fr": "Nouvelle manche",
+      "es": "Nueva ronda"
+    },
+    "Delete round": {
+      "en": "Delete round",
+      "fr": "Supprimer la manche",
+      "es": "Eliminar ronda"
+    },
+    "Round settings": {
+      "en": "Round settings",
+      "fr": "Réglages de la manche",
+      "es": "Ajustes de ronda"
+    },
+    "New target": {
+      "en": "New target",
+      "fr": "Nouvelle cible",
+      "es": "Nuevo blanco"
+    },
+    "Delete target": {
+      "en": "Delete target",
+      "fr": "Supprimer la cible",
+      "es": "Eliminar blanco"
+    },
+    "Target settings": {
+      "en": "Target settings",
+      "fr": "Réglages de la cible",
+      "es": "Ajustes del blanco"
+    },
+    "Animate preview": {
+      "en": "Animate preview",
+      "fr": "Animer l’aperçu",
+      "es": "Animar vista previa"
+    },
+    "Round {0}": {
+      "en": "Round {0}",
+      "fr": "Manche {0}",
+      "es": "Ronda {0}"
+    },
+    "Target {0}": {
+      "en": "Target {0}",
+      "fr": "Cible {0}",
+      "es": "Blanco {0}"
+    },
+    "Preview {0}s · Maximum {1} points · Drag the selected target. Wind is acceleration in m/s².": {
+      "en": "Preview {0}s · Maximum {1} points · Drag the selected target. Wind is acceleration in m/s².",
+      "fr": "Aperçu {0} s · Maximum {1} points · Déplacez la cible sélectionnée. Le vent est une accélération en m/s².",
+      "es": "Vista previa {0} s · Máximo {1} puntos · Arrastra el blanco seleccionado. El viento es aceleración en m/s²."
+    },
+    "Invalid range rules: check distances, timers and target motion bounds.": {
+      "en": "Invalid range rules: check distances, timers and target motion bounds.",
+      "fr": "Règles invalides : vérifiez les distances, les délais et les limites de déplacement des cibles.",
+      "es": "Reglas no válidas: revisa distancias, tiempos y límites de movimiento de los blancos."
+    },
+    "Join competition": {
+      "en": "Join competition",
+      "fr": "S’inscrire",
+      "es": "Inscribirse"
+    },
+    "Standings": {
+      "en": "Standings",
+      "fr": "Classement",
+      "es": "Clasificación"
+    },
+    "{0}. {1} · {2} points · {3}": {
+      "en": "{0}. {1} · {2} points · {3}",
+      "fr": "{0}. {1} · {2} points · {3}",
+      "es": "{0}. {1} · {2} puntos · {3}"
+    },
+    "Withdrawn": {
+      "en": "Withdrawn",
+      "fr": "Abandon",
+      "es": "Retirado"
+    },
+    "Finished": {
+      "en": "Finished",
+      "fr": "Terminé",
+      "es": "Finalizado"
+    },
+    "Competing": {
+      "en": "Competing",
+      "fr": "En cours",
+      "es": "En juego"
+    },
+    "Registration: {0}/{1} · Minimum {2} · {3}s": {
+      "en": "Registration: {0}/{1} · Minimum {2} · {3}s",
+      "fr": "Inscriptions : {0}/{1} · Minimum {2} · {3} s",
+      "es": "Inscripciones: {0}/{1} · Mínimo {2} · {3} s"
+    },
+    "Competition complete — tied scores share a place.": {
+      "en": "Competition complete — tied scores share a place.",
+      "fr": "Compétition terminée — les égalités partagent une place.",
+      "es": "Competición terminada — los empates comparten puesto."
+    },
+    "Competition cancelled: not enough participants.": {
+      "en": "Competition cancelled: not enough participants.",
+      "fr": "Compétition annulée : pas assez de participants.",
+      "es": "Competición cancelada: faltan participantes."
+    },
+    "Royal Archery Championship": {
+      "en": "Royal Archery Championship",
+      "fr": "Championnat royal de tir à l’arc",
+      "es": "Campeonato real de tiro con arco"
+    },
+    "Today": {
+      "en": "Today",
+      "fr": "Aujourd’hui",
+      "es": "Hoy"
+    },
+    "This week": {
+      "en": "This week",
+      "fr": "Cette semaine",
+      "es": "Esta semana"
+    },
+    "Season": {
+      "en": "Season",
+      "fr": "Saison",
+      "es": "Temporada"
+    },
+    "Next range": {
+      "en": "Next range",
+      "fr": "Stand suivant",
+      "es": "Siguiente campo"
+    },
+    "Loading rankings...": {
+      "en": "Loading rankings...",
+      "fr": "Chargement du classement…",
+      "es": "Cargando clasificación…"
+    },
+    "Rankings · {0} · {1} · Season {2}": {
+      "en": "Rankings · {0} · {1} · Season {2}",
+      "fr": "Classement · {0} · {1} · Saison {2}",
+      "es": "Clasificación · {0} · {1} · Temporada {2}"
+    },
+    "{0}. {1} · {2}/{3} · {4} cards": {
+      "en": "{0}. {1} · {2}/{3} · {4} cards",
+      "fr": "{0}. {1} · {2}/{3} · {4} séries",
+      "es": "{0}. {1} · {2}/{3} · {4} series"
+    },
+    "No completed ranked cards in this period.": {
+      "en": "No completed ranked cards in this period.",
+      "fr": "Aucune série classée terminée sur cette période.",
+      "es": "No hay series clasificadas terminadas en este período."
+    },
+    "No ranked archery range is available.": {
+      "en": "No ranked archery range is available.",
+      "fr": "Aucun stand de tir à l’arc classé disponible.",
+      "es": "No hay campos de tiro con arco clasificados disponibles."
+    },
+    "Archery rankings are temporarily unavailable.": {
+      "en": "Archery rankings are temporarily unavailable.",
+      "fr": "Les classements de tir à l’arc sont temporairement indisponibles.",
+      "es": "Las clasificaciones de tiro con arco no están disponibles temporalmente."
+    },
+    "Please wait before refreshing rankings.": {
+      "en": "Please wait before refreshing rankings.",
+      "fr": "Veuillez patienter avant d’actualiser le classement.",
+      "es": "Espera antes de actualizar la clasificación."
+    },
+    "Results await saving. Rankings will update after confirmation.": {
+      "en": "Results await saving. Rankings will update after confirmation.",
+      "fr": "Résultats en attente de sauvegarde. Le classement sera mis à jour après confirmation.",
+      "es": "Resultados pendientes de guardar. La clasificación se actualizará tras la confirmación."
+    },
+    "Rankings (UTC) · {0} · {1} · Season {2}": {
+      "en": "Rankings (UTC) · {0} · {1} · Season {2}",
+      "fr": "Classement (UTC) · {0} · {1} · Saison {2}",
+      "es": "Clasificación (UTC) · {0} · {1} · Temporada {2}"
     }
   }
 }

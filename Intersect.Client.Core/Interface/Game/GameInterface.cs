@@ -456,6 +456,7 @@ public partial class GameInterface : MutableInterface
 
     public void Update(TimeSpan elapsed, TimeSpan total)
     {
+        _archeryWindow?.CheckClosed();
         if (Globals.Me != null && PlayerBox?.MyEntity != Globals.Me)
         {
             PlayerBox?.SetEntity(Globals.Me);
@@ -717,9 +718,13 @@ public partial class GameInterface : MutableInterface
 
     public bool CloseAllWindows()
     {
+        var royalWasOpen = _archeryWindow is { IsVisibleInTree: true } || _masteriesWindow is { IsVisibleInTree: true } || _ammunitionWindow is { IsVisibleInTree: true };
+        if (_ammunitionWindow is { IsVisibleInTree: true }) _ammunitionWindow.Hide();
+        if (_archeryWindow is { IsVisibleInTree: true }) _archeryWindow.Hide();
+        if (_masteriesWindow is { IsVisibleInTree: true }) _masteriesWindow.Hide();
         var cannonWasOpen=Naval.NavalWorld.CannonViewOpen;
         Naval.NavalWorld.CannonViewOpen=false;
-        var closedWindows = ClosePotionWindow() || cannonWasOpen;
+        var closedWindows = ClosePotionWindow() || cannonWasOpen || royalWasOpen;
         closedWindows = CloseCookingWindow() || closedWindows;
         closedWindows = CloseRouletteWindow() || closedWindows;
         closedWindows = CloseLockpickingWindow() || closedWindows;

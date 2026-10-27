@@ -511,6 +511,20 @@ public sealed class WikiController : IntersectController
         ));
     }
 
+    [HttpGet("leaderboard/archery")]
+    [ProducesResponseType(typeof(Intersect.Framework.Core.Archery.ArcheryLeaderboardView), (int)HttpStatusCode.OK, ContentTypes.Json)]
+    public IActionResult ArcheryLeaderboards([FromQuery] Guid rangeId, [FromQuery] string period = "day", [FromQuery] int limit = 50)
+    {
+        if (!Enum.TryParse<Intersect.Framework.Core.Archery.ArcheryLeaderboardPeriod>(period, true, out var selectedPeriod) || !Enum.IsDefined(selectedPeriod)) return BadRequest();
+        try
+        {
+            var board = LeaderboardDataRuntime.Archery(rangeId, selectedPeriod, limit);
+            return board == null ? NotFound() : Ok(board);
+        }
+        catch (Exception e) when (e is IOException or Microsoft.Data.Sqlite.SqliteException or UnauthorizedAccessException)
+        { return StatusCode((int)HttpStatusCode.ServiceUnavailable); }
+    }
+
     [HttpGet("leaderboard/minigames")]
     [ProducesResponseType(typeof(WikiMiniGameLeaderboardResponse), (int)HttpStatusCode.OK, ContentTypes.Json)]
     public IActionResult MiniGameLeaderboards([FromQuery] int limit = 50)

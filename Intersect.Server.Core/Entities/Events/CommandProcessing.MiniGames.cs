@@ -22,6 +22,8 @@ public static partial class CommandProcessing
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
         if (player == null) return;
+        if (command.Game == MiniGameType.Archery) { player.OpenArcheryFromEvent(); return; }
+        if (player.IsArcheryActive) return;
         if (!MiniGameCatalog.TryGet(command.Game, out _))
         {
             PacketSender.SendChatMsg(player, "[Mini-game] This mini-game type is not supported by this server build.",
@@ -156,6 +158,7 @@ public static partial class CommandProcessing
         CommandInstance stackInfo, Stack<CommandInstance> callStack)
     {
         if (player == null) return;
+        if (player.IsArcheryActive) { player.LeaveArcheryFromEvent(); return; }
         if(Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Leave(player))return;
         if (LockpickingRuntime.Leave(player)) return;
         if (PotionRuntime.Leave(player)) return;

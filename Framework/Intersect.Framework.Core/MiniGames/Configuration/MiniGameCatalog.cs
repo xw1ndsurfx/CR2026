@@ -25,6 +25,7 @@ public static class MiniGameCatalog
         new(MiniGameType.Smelting, "Royal Foundry - Smelting",1,1,"smelting-1"),
         new(MiniGameType.Smithing, "Royal Forge - Smithing",1,1,"smithing-1"),
         new(MiniGameType.Lockpicking, "Lockpicking - Dungeon Lock", 1, 1, "lock-1"),
+        new(MiniGameType.Archery, "Royal Archery Training", 1, 1, "archery-1"),
     ];
 
     public static IReadOnlyList<MiniGameDefinition> All => Definitions;

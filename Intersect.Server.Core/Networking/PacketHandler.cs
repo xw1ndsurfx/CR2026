@@ -1276,13 +1276,19 @@ internal sealed partial class PacketHandler
     //AttackPacket
     public void HandlePacket(Client client, AttackPacket packet)
     {
+        if (client?.Entity is not { } player) return;
+        lock (player.EntityLock) HandleWeaponAttack(client, packet);
+    }
+
+    private void HandleWeaponAttack(Client client, AttackPacket packet)
+    {
         var player = client?.Entity;
         if (player == null)
         {
             return;
         }
 
-        if (player.IsDead || player.HasPendingDeath) return;
+        if (player.IsDead || player.HasPendingDeath || !player.CanFireWorldWeapon) return;
         var unequippedAttack = false;
         var target = packet.Target;
 
@@ -1405,17 +1411,13 @@ internal sealed partial class PacketHandler
                 );
             }
 
-            var projectileBase = ProjectileDescriptor.Get(weaponItem?.ProjectileId ?? Guid.Empty);
+            var projectileBase = player.SelectedWeaponProjectile(weaponItem);
 
             if (projectileBase != null)
             {
                 if (projectileBase.AmmoItemId != Guid.Empty)
                 {
-                    var itemSlot = player.FindInventoryItemSlot(
-                        projectileBase.AmmoItemId, projectileBase.AmmoRequired
-                    );
-
-                    if (itemSlot == null)
+                    if (projectileBase.AmmoRequired <= 0 || !player.CanTakeItem(projectileBase.AmmoItemId, projectileBase.AmmoRequired))
                     {
                         PacketSender.SendChatMsg(
                             player,
@@ -1431,7 +1433,7 @@ internal sealed partial class PacketHandler
                                 Strings.Get("items", "notenough", $"REGISTERED_AMMO ({projectileBase.Ammo}:'{ItemBase.GetName(projectileBase.Ammo)}':{projectileBase.AmmoRequired})"),
                                 ChatMessageType.Inventory, CustomColors.NoAmmo);
 #endif
-                    if (!player.TryTakeItem(projectileBase.AmmoItemId, projectileBase.AmmoRequired))
+                    if (!player.TryConsumeProjectileAmmunition(projectileBase))
                     {
 #if INTERSECT_DIAGNOSTIC
                                 PacketSender.SendPlayerMsg(client,
@@ -1441,6 +1443,7 @@ internal sealed partial class PacketHandler
                                     Strings.Get("items", "notenough", $"FAILED_TO_DEDUCT_AMMO {client.Entity.CountItems(projectileBase.Ammo)}"),
                                     ChatMessageType.Inventory, CustomColors.NoAmmo);
 #endif
+                        return; // A failed deduction must never create a free world projectile.
                     }
                 }
 #if INTERSECT_DIAGNOSTIC
