@@ -28,6 +28,14 @@ internal static class ProfileSectionsTests
             Click("ProfileTab1");Check(Descendants(window).Count(c=>c.Name?.StartsWith("ProfileEquipmentCard")==true)==4,"Equipment must use a compact four-item page");
             Click("ProfileNextPage");Click("ProfileNextPage");Check(Descendants(window).Count(c=>c.Name?.StartsWith("ProfileEquipmentCard")==true)==1,"Final equipment page must retain the last item");
             Click("ProfileTab0");Check(Find("ProfileNextPage").IsHidden,"Stats must not retain item pagination");
+            profile.MasteriesAvailable = true; profile.Masteries = Enumerable.Range(1, 5).Select(i => new PlayerMasteryProfilePacket {
+                Key = "mastery-" + i, Name = "Mastery " + i, Level = 2, MaximumLevel = 30, LevelExperience = 50, RequiredExperience = 400, AvailablePoints = 1 }).ToArray();
+            Apply(); Click("ProfileTab3");
+            Check(Descendants(window).Count(c => c.Name == "MasteryExperienceBar") == 2, "Public mastery pages must show two complete XP bars");
+            Click("ProfileNextPage"); Click("ProfileNextPage");
+            Check(Descendants(window).Count(c => c.Name == "MasteryExperienceBar") == 1, "Final mastery page lost its last category");
+            profile.MasteriesAvailable = false; Apply();
+            Check(Descendants(window).Any(c => c.Name == "MasteriesUnavailable"), "Unavailable public masteries displayed invented progress");
             profile.IsSelf=true;Apply();Check(!Find("VisitProfileHouse").IsDisabled,"Self profile must retain house access");
             var petsType=assembly.GetType("Intersect.Client.Interface.Game.PetsWindow",true)!;
             var pets=(Base)Activator.CreateInstance(petsType,[canvas,false])!;

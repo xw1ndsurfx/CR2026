@@ -85,6 +85,7 @@ public partial class Player
     private void SendMasteries(bool open, string message = "")
     {
         if (open) SynchronizeMasterySpells();
+        if (PetCollection.MasteryRespec != null) message = "Your paid mastery reset is awaiting recovery. No further payment was taken.";
         SendPacket(new ArcheryStatePacket { Open = open, Message = message,
             ConfigurationJson = RoyalCombatRuntime.Current.ToJson(), MasteriesJson = JsonSerializer.Serialize(MasteryExperience),
             MasteryRanksJson = JsonSerializer.Serialize(MasteryRanks) });
@@ -94,9 +95,26 @@ public partial class Player
     {
         if (packet.Action is ArcheryAction.Ammunition or ArcheryAction.SelectAmmunition) { HandleAmmunitionRequest(packet); return; }
         if (packet.Action == ArcheryAction.BuyTalent) { HandleTalentPurchase(packet); return; }
+        if (packet.Action == ArcheryAction.Respec) { HandleMasteryRespec(packet); return; }
         lock (EntityLock)
         {
             var now = Environment.TickCount64;
+            if (packet.Action == ArcheryAction.InspectMasteries)
+            {
+                if (now - _royalRequestAt < 1000) return; _royalRequestAt = now;
+                var target = FindOnline(packet.TargetId);
+                if (target == null) return;
+                try
+                {
+                    var snapshot = RoyalCombatRuntime.MasterySnapshot(target.Id);
+                    SendPacket(new ArcheryStatePacket { Open = true, MasteriesReadOnly = true, MasteriesOwner = target.Name,
+                        ConfigurationJson = RoyalCombatRuntime.Current.ToJson(), MasteriesJson = JsonSerializer.Serialize(snapshot.Experience),
+                        MasteryRanksJson = JsonSerializer.Serialize(snapshot.Ranks) });
+                }
+                catch (Exception e) when (e is IOException or Microsoft.Data.Sqlite.SqliteException or UnauthorizedAccessException)
+                { SendPacket(new ArcheryStatePacket { Open = true, MasteriesReadOnly = true, MasteriesOwner = target.Name, Message = "Weapon mastery information is temporarily unavailable." }); }
+                return;
+            }
             if (packet.Action == ArcheryAction.Leaderboard)
             {
                 if (!Enum.IsDefined((ArcheryLeaderboardPeriod)packet.Period)) return;

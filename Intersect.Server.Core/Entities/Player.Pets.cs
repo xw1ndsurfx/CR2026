@@ -10,6 +10,7 @@ namespace Intersect.Server.Entities;
 
 public sealed class PetCollection
 {
+    public Intersect.Server.Archery.PaidMasteryRespec? MasteryRespec { get; set; }
     public Intersect.Framework.Core.Jousting.JoustCareer Jousting { get; set; } = new();
     public MountCollection Mounts { get; set; } = new();
     public Intersect.Framework.Core.QualityOfLife.PremiumConvenienceProfile Convenience {get;set;}=new();

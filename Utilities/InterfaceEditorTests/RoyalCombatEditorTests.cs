@@ -32,6 +32,10 @@ internal static class RoyalCombatEditorTests
                 throw new Exception("Talent editing changed the source before Save or lost native rank-spell pickers.");
         }
         using var ammunition = new FrmWeaponAmmunition([]);
+        var resetConfig = new RoyalCombatConfiguration { RespecCost = 2500 };
+        using (var reset = new FrmMasteryRespec(resetConfig))
+            if (reset.RespecEnabled || reset.Cost != 2500 || reset.CurrencyId != Guid.Empty || resetConfig.RespecEnabled)
+                throw new Exception("Reset settings invented a currency, enabled payments or changed the source without Save.");
         if (ammunition.Result.Length != 0) throw new Exception("Opening ammunition compatibility invented a weapon mapping.");
         CheckRangeEditor();
         System.Console.WriteLine("PASS: royal editor draft preservation, dedicated NPC command dialog and stable mini-game IDs.");

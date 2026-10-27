@@ -103,6 +103,25 @@ internal static class RoyalArcheryUiTests
         if (learn.Length != 6 || learn.Count(b => !b.IsDisabled) != 1) throw new Exception("Mastery point/level/unconfigured talent gates are not reflected in the UI.");
         typeof(Button).GetMethod("OnKeyReturn", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(learn.Single(b => !b.IsDisabled), [false]);
         if (All(window).Single(b => b.Name == "ConfirmTalent").IsHidden) throw new Exception("Talent purchases skipped confirmation.");
+        var masteryApply = type.GetMethod("Apply", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var respecConfig = new RoyalCombatConfiguration { RespecEnabled = true, RespecCurrencyId = Guid.NewGuid(), RespecCost = 1000 };
+        masteryApply.Invoke(window, [new ArcheryStatePacket { Open = true, ConfigurationJson = respecConfig.ToJson(),
+            MasteriesJson = "{\"archery\":100}", MasteryRanksJson = "{\"archery\":{\"steady-aim\":1}}" }]);
+        var reset = (Button)All(window).Single(b => b.Name == "ResetMastery");
+        if (reset.IsHidden || reset.IsDisabled) throw new Exception("Owned allocated talents cannot request a reset.");
+        typeof(Button).GetMethod("OnKeyReturn", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(reset, [false]);
+        if (All(window).Single(b => b.Name == "ConfirmTalent").IsHidden) throw new Exception("Paid reset skipped price confirmation.");
+        respecConfig.RespecCost = 2000;
+        masteryApply.Invoke(window, [new ArcheryStatePacket { Open = true, ConfigurationJson = respecConfig.ToJson(),
+            MasteriesJson = "{\"archery\":100}", MasteryRanksJson = "{\"archery\":{\"steady-aim\":1}}" }]);
+        if (!All(window).Single(b => b.Name == "ConfirmTalent").IsHidden) throw new Exception("A changed quote retained an old confirmation.");
+        masteryApply.Invoke(window, [new ArcheryStatePacket { Open = true, MasteriesReadOnly = true, MasteriesOwner = "Other archer", ConfigurationJson = respecConfig.ToJson(),
+            MasteriesJson = "{\"archery\":500}", MasteryRanksJson = "{\"archery\":{\"steady-aim\":1}}" }]);
+        if (!reset.IsHidden || All(window).OfType<Button>().Any(b => b.Name == "LearnTalent" && !b.IsDisabled)) throw new Exception("Public mastery inspection exposed write controls.");
+        masteryApply.Invoke(window, [new ArcheryStatePacket { ConfigurationJson = new RoyalCombatConfiguration().ToJson(), MasteriesJson = "{}" }]);
+        if (!All(window).OfType<Label>().Any(l => l.Text.Contains("Other archer"))) throw new Exception("A background own-XP update replaced the observed player.");
+        masteryApply.Invoke(window, [new ArcheryStatePacket { Open = true, MasteriesReadOnly = true, Message = "Weapon mastery information is temporarily unavailable." }]);
+        if (All(window).Any(b => b.Name == "LearnTalent")) throw new Exception("Unavailable inspection retained another player's talents.");
         var ammo = new ItemDescriptor(Guid.NewGuid()) { Name = "Existing arrow", ItemType = ItemType.Ammo };
         ItemDescriptor.Lookup.Set(ammo.Id, ammo);
         try

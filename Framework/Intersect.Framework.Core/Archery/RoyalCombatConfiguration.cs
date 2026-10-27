@@ -53,7 +53,11 @@ public sealed class RoyalCombatConfiguration
         new() { Key = "axes", Name = "Axes & Hammers" }, new() { Key = "magic", Name = "Staves & Magic" }];
     public ArcheryRange[] Ranges { get; set; } = [];
     public WeaponAmmunitionRule[] Ammunition { get; set; } = [];
-    public bool IsValid => Masteries is { Length: > 0 and <= 32 } && Ranges is { Length: <= 64 } &&
+    public bool RespecEnabled { get; set; }
+    public Guid RespecCurrencyId { get; set; }
+    public int RespecCost { get; set; } = 1000;
+    public bool IsValid => RespecCost is >= 1 and <= 100000000 && (!RespecEnabled || RespecCurrencyId != Guid.Empty) &&
+        Masteries is { Length: > 0 and <= 32 } && Ranges is { Length: <= 64 } &&
         Masteries.All(m => m != null && m.Key is { Length: > 0 and <= 32 } && m.Key.All(c => c is >= 'a' and <= 'z' or '-') &&
             m.Name is { Length: > 0 and <= 80 } && m.Cap is >= 2 and <= 100 && m.BaseExperience is >= 1 and <= 100000 &&
             double.IsFinite(m.DamagePercentPerLevel) && m.DamagePercentPerLevel is >= 0 and <= 2 &&

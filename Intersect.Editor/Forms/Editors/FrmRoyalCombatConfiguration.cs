@@ -56,6 +56,12 @@ public sealed class FrmRoyalCombatConfiguration : Form
             Intersect.Editor.Forms.Styling.EditorTheme.Apply(dialog);
             if (dialog.ShowDialog(this) == DialogResult.OK) { category.Talents = dialog.Result.Talents; _properties.Refresh(); }
         });
+        Button("Mastery reset settings", () => {
+            using var dialog = new FrmMasteryRespec(_config) { StartPosition = FormStartPosition.CenterParent };
+            Intersect.Editor.Forms.Styling.EditorTheme.Apply(dialog);
+            if (dialog.ShowDialog(this) == DialogResult.OK)
+            { _config.RespecEnabled = dialog.RespecEnabled; _config.RespecCurrencyId = dialog.CurrencyId; _config.RespecCost = dialog.Cost; }
+        });
         Button("Ammunition compatibility", () => {
             using var dialog = new FrmWeaponAmmunition(_config.Ammunition);
             dialog.StartPosition = FormStartPosition.CenterParent;
