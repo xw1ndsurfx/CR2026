@@ -585,14 +585,18 @@ public static partial class Graphics
                     {
                         lock (Globals.CurrentMap.MapLock)
                         {
-                            TilePreviewStruct = new MapInstance(Globals.CurrentMap);
+                            TilePreviewStruct = new MapInstance(Globals.CurrentMap, Globals.MapEditorWindow.SmartBuilderActive);
                         }
                     }
 
                     //Lets Create the Preview
                     //Mimic Mouse Down
                     tmpMap = TilePreviewStruct;
-                    if (Globals.CurrentTool == EditingTool.Selection && Globals.Dragging)
+                    if (Globals.MapEditorWindow.SmartBuilderActive)
+                    {
+                        Globals.MapEditorWindow.PreviewSmartBuilder(tmpMap);
+                    }
+                    else if (Globals.CurrentTool == EditingTool.Selection && Globals.Dragging)
                     {
                         Globals.MapEditorWindow.ProcessSelectionMovement(tmpMap, false, true);
                     }

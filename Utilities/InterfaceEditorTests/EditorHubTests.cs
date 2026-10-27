@@ -115,7 +115,7 @@ internal static class EditorHubTests
             var hub = (EditorHubView)typeof(FrmMain).GetField("_editorHub", Hidden)!.GetValue(main)!;
             Check(HubRegistry.Definitions.All(d => registry.Find(d.Id) != null), "Every catalog entry is backed by a real current menu command or map workspace action.");
             Check(registry.Entries.Select(e => e.Id).ToHashSet().SetEquals(HubRegistry.Definitions.Select(d => d.Id)),
-                "The live menu and catalog have the same identities without unidentified duplicates.");
+                "The live menu and catalog have the same identities without unidentified duplicates. Extra: " + string.Join(", ", registry.Entries.Select(e => e.Id).Except(HubRegistry.Definitions.Select(d => d.Id))));
             reminder.Visible = true; Application.DoEvents(); main.PerformLayout();
             Check(hub.Top >= reminder.Bottom, "The hub follows save-reminder visibility and geometry without covering it.");
             reminder.Visible = false; Application.DoEvents(); main.PerformLayout();
