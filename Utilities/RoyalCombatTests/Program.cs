@@ -85,4 +85,7 @@ Check(config.IsValid, "default competition rules valid without invented world ma
 config.Ranges[0].MinimumPlayers = 1; Check(!config.IsValid, "competition requires two players");
 config.Ranges[0].MinimumPlayers = 2; config.Ranges[0].MaximumPlayers = 17; Check(!config.IsValid, "competition capacity sixteen");
 config.Ranges[0].MaximumPlayers = 2; config.Ranges[0].RegistrationSeconds = 0; Check(!config.IsValid, "registration cannot have zero deadline");
+config = new(); config.Ranges = [new() { SeasonKey = "royal-2026_1" }]; Check(config.IsValid, "stable season key accepted");
+config.Ranges[0].SeasonKey = ""; Check(!config.IsValid, "empty season rejected");
+config.Ranges[0].SeasonKey = "season/other"; Check(!config.IsValid, "season identifiers cannot contain path syntax");
 Console.WriteLine($"PASS: {checks} checks (ballistics, moving targets, timers, zoom, authority, mastery and ammunition).");

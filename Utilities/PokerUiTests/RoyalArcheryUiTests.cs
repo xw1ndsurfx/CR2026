@@ -60,13 +60,31 @@ internal static class RoyalArcheryUiTests
             competition.Finished = true;
             apply.Invoke(window, [new ArcheryStatePacket { CompetitionJson = JsonSerializer.Serialize(competition) }]);
             if (board.IsHidden) throw new Exception("Final competition results were not displayed.");
+            var rankedRange = new ArcheryRange { Enabled = true, RankedCompetition = true, MapId = Guid.NewGuid(), Name = "Existing range" };
+            apply.Invoke(window, [new ArcheryStatePacket { ConfigurationJson = new RoyalCombatConfiguration { Ranges = [rankedRange] }.ToJson() }]);
+            var queueRankings = type.GetMethod("QueueRankings", BindingFlags.NonPublic | BindingFlags.Instance)!;
+            var requestField = type.GetField("_rankingRequest", BindingFlags.NonPublic | BindingFlags.Instance)!;
+            queueRankings.Invoke(window, [ArcheryLeaderboardPeriod.Day]); var oldRequest = (Guid)requestField.GetValue(window)!;
+            queueRankings.Invoke(window, [ArcheryLeaderboardPeriod.Week]); var request = (Guid)requestField.GetValue(window)!;
+            var rankings = new ArcheryLeaderboardView { RangeId = rankedRange.Id, Period = ArcheryLeaderboardPeriod.Week, SeasonKey = "royal-1", MaximumScore = 150,
+                Entries = Enumerable.Range(0, 16).Select(i => new ArcheryLeaderboardEntry { Name = "Ranked " + i, Rank = i + 1, BestScore = 100 - i, CompletedCards = 2 }).ToArray() };
+            apply.Invoke(window, [new ArcheryStatePacket { RequestId = oldRequest, LeaderboardJson = JsonSerializer.Serialize(rankings) }]);
+            var rankingRows = (Label[])type.GetField("_rankingRows", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(window)!;
+            if (rankingRows.Any(l => l.Text.Contains("Ranked"))) throw new Exception("Stale period response replaced the newly selected leaderboard.");
+            apply.Invoke(window, [new ArcheryStatePacket { RequestId = request, LeaderboardJson = JsonSerializer.Serialize(rankings) }]);
+            if (rankingRows.Count(l => l.Text.Contains("Ranked")) != 16) throw new Exception("Persistent rankings lost rows.");
+            apply.Invoke(window, [new ArcheryStatePacket { CompetitionJson = JsonSerializer.Serialize(competition) }]);
+            var rankingPanel = (Intersect.Client.Framework.Gwen.Control.Base)type.GetField("_rankings", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(window)!;
+            if (rankingPanel.IsHidden || !board.IsHidden) throw new Exception("Live competition updates replaced the historical leaderboard.");
             window.Hide();
             apply.Invoke(window, [new ArcheryStatePacket { ViewJson = JsonSerializer.Serialize(new ArcheryView { Phase = ArcheryPhase.Abandoned }) }]);
             apply.Invoke(window, [new ArcheryStatePacket { CompetitionJson = JsonSerializer.Serialize(competition) }]);
+            apply.Invoke(window, [new ArcheryStatePacket { RequestId = request, LeaderboardJson = JsonSerializer.Serialize(rankings) }]);
             if (window.IsVisibleInTree) throw new Exception("Late server snapshots reopened a closed training window.");
         }
         foreach (var source in new[] { "Royal Archery Training", "Weapon Masteries", "Stand at the royal shooting position outside combat.",
-            "Round {0}/3 · Score {1}/150 · Arrows {2} · Distance {3} m · Wind {4}", "Training complete", "Training ended", "Join competition", "Standings", "Competition cancelled: not enough participants." })
+            "Round {0}/3 · Score {1}/150 · Arrows {2} · Distance {3} m · Wind {4}", "Training complete", "Training ended", "Join competition", "Standings", "Competition cancelled: not enough participants.",
+            "Today", "This week", "Season", "Next range", "Archery rankings are temporarily unavailable." })
             foreach (var language in new[] { "fr", "es" })
                 if (QualityOfLifeText.Get(source, language) == source) throw new Exception("Untranslated archery text: " + source);
         TestProgressionWindows();

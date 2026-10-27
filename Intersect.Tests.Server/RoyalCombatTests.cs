@@ -122,12 +122,17 @@ public sealed partial class RoyalCombatTests
         Assert.That(received.WeaponId, Is.EqualTo(packet.WeaponId));
         Assert.That(received.RequestId, Is.EqualTo(packet.RequestId));
         Assert.That(received.Round, Is.EqualTo(2)); Assert.That(received.Shot, Is.EqualTo(7));
-        var state = new ArcheryStatePacket { ViewJson = "{}", MasteriesJson = "{}", MasteryRanksJson = "{\"archery\":{}}", AmmunitionJson = "{\"Entries\":[]}", CompetitionJson = "{\"Started\":true}" };
+        var state = new ArcheryStatePacket { ViewJson = "{}", MasteriesJson = "{}", MasteryRanksJson = "{\"archery\":{}}", AmmunitionJson = "{\"Entries\":[]}", CompetitionJson = "{\"Started\":true}", LeaderboardJson = "{\"Entries\":[]}" };
         var decoded = MessagePackSerializer.Deserialize<ArcheryStatePacket>(MessagePackSerializer.Serialize(state));
         Assert.That(decoded.MasteriesJson, Is.EqualTo(state.MasteriesJson));
         Assert.That(decoded.MasteryRanksJson, Is.EqualTo(state.MasteryRanksJson));
         Assert.That(decoded.AmmunitionJson, Is.EqualTo(state.AmmunitionJson));
         Assert.That(decoded.CompetitionJson, Is.EqualTo(state.CompetitionJson));
+        Assert.That(decoded.LeaderboardJson, Is.EqualTo(state.LeaderboardJson));
+        var rankings = new ArcheryRequestPacket { Action = ArcheryAction.Leaderboard, RangeId = Guid.NewGuid(), Period = 2, RequestId = Guid.NewGuid() };
+        var decodedRankings = MessagePackSerializer.Deserialize<ArcheryRequestPacket>(MessagePackSerializer.Serialize(rankings));
+        Assert.That((int)decodedRankings.Action, Is.EqualTo(12)); Assert.That(decodedRankings.Period, Is.EqualTo(2));
+        Assert.That(decodedRankings.RequestId, Is.EqualTo(rankings.RequestId));
         var join = new ArcheryRequestPacket { Action = ArcheryAction.JoinCompetition, RangeId = Guid.NewGuid(), RequestId = Guid.NewGuid() };
         var decodedJoin = MessagePackSerializer.Deserialize<ArcheryRequestPacket>(MessagePackSerializer.Serialize(join));
         Assert.That((int)ArcheryAction.BuyTalent, Is.EqualTo(10)); Assert.That((int)decodedJoin.Action, Is.EqualTo(11));
