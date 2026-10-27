@@ -13,7 +13,7 @@ using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.Maps.Attributes;
 using Intersect.Localization;
 
-internal static class SmartMapBuilderTests
+internal static partial class SmartMapBuilderTests
 {
     private static readonly Guid Tileset = Guid.NewGuid();
     private static readonly BindingFlags Hidden = BindingFlags.Instance | BindingFlags.NonPublic;
@@ -29,7 +29,7 @@ internal static class SmartMapBuilderTests
     internal static void Run()
     {
         Options.Instance.Map.Layers.Validate();
-        Geometry(); ResourceValidation(); PresetStorage(); Protection(); NativeFormats(); SoftWater(); GroundShore(); GroundPaint(); NeighborBorders(); InputTransaction(); RealGame(); LocalizationAndPanel();
+        Geometry(); ResourceValidation(); PresetStorage(); Protection(); NativeFormats(); SoftWater(); GroundShore(); WaterConnections(); GroundPaint(); NeighborBorders(); InputTransaction(); RealGame(); LocalizationAndPanel();
         Console.WriteLine($"PASS Smart Map Builder: {_checks} assertions; native formats 0–7, irregular areas, holes, erasure, cliffs, neighbors, staged input, undo/redo snapshots, preservation, stamps, transitions, presets and locales.");
         Console.WriteLine(string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SMART_MAP_GAME_FIXTURE"))
             ? "Real-game integration skipped: set SMART_MAP_GAME_FIXTURE to an isolated data export. Synthetic fixtures do not certify real artwork or connected-client acceptance."
@@ -461,6 +461,7 @@ internal static class SmartMapBuilderTests
         {
             Directory.CreateDirectory(output);
             RealGroundIsland(waterSource, water.Id, output);
+            RealWaterConnection(waterSource, water.Id, output);
             foreach (var (map, file) in new[] { (sample, "royal-river"), (maps.First(), "existing-map") })
                 for (var frame = 0; frame < 3; frame++)
                     using (var bitmap = RenderNativeTiles(map, frame)) bitmap.Save(Path.Combine(output, file + "-frame-" + frame + ".png"));
