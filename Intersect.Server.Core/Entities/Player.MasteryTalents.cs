@@ -32,6 +32,7 @@ public partial class Player
         lock (EntityLock)
         {
             if (weapon == null) return default;
+            if (!RecoverMasteryRespec()) return default;
             var category = RoyalCombatRuntime.Current.Masteries.FirstOrDefault(c => c.WeaponIds.Contains(weapon.Id));
             if (category == null || category.Talents.Length == 0) return default;
             try
@@ -54,12 +55,14 @@ public partial class Player
     {
         var categories = RoyalCombatRuntime.Current.Masteries.Where(c => c.Talents.Any(t => t.RankSpellIds.Contains(spell))).ToArray();
         if (categories.Length == 0) return !MasteryLearnedSpells.Contains(spell);
+        if (!RecoverMasteryRespec()) return false;
         if (!TryGetEquippedItem(Options.Instance.Equipment.WeaponSlot, out var weapon)) return false;
         return categories.Where(c => c.WeaponIds.Contains(weapon.ItemId)).Any(c =>
             EffectiveTalents(c).Any(n => n.Talent.RankSpellIds.Take(n.Rank).Contains(spell)));
     }
     private void SynchronizeMasterySpells()
     {
+        if (!RecoverMasteryRespec()) return;
         if (!RoyalCombatRuntime.Current.Masteries.Any(c => c.Talents.Any(t => t.RankSpellIds.Length > 0))) return;
         var spells = RoyalCombatRuntime.Current.Masteries.SelectMany(EffectiveTalents)
             .SelectMany(n => n.Talent.RankSpellIds.Take(n.Rank)).Distinct();
@@ -80,6 +83,7 @@ public partial class Player
             var now = Environment.TickCount64;
             if (now - _talentRequestAt < 300) return;
             _talentRequestAt = now;
+            if (!RecoverMasteryRespec()) { SendMasteries(true, "Your paid mastery reset is awaiting recovery. No further payment was taken."); return; }
             if (IsDead || HasPendingDeath || IsArcheryActive || CombatTimer > Intersect.Framework.Core.Timing.Global.Milliseconds) return;
             var category = RoyalCombatRuntime.Current.Masteries.FirstOrDefault(c => c.Key == packet.CategoryKey);
             var talent = category?.Talents.FirstOrDefault(t => t.Key == packet.TalentKey);

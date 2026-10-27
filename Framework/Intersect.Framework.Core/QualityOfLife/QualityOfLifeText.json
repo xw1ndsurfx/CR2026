@@ -3366,6 +3366,111 @@
       "en": "Rankings (UTC) · {0} · {1} · Season {2}",
       "fr": "Classement (UTC) · {0} · {1} · Saison {2}",
       "es": "Clasificación (UTC) · {0} · {1} · Temporada {2}"
+    },
+    "Reset talents": {
+      "en": "Reset talents",
+      "fr": "Réinitialiser les talents",
+      "es": "Restablecer talentos"
+    },
+    "Reset {0} for {1} {2}? Experience is preserved.": {
+      "en": "Reset {0} for {1} {2}? Experience is preserved.",
+      "fr": "Réinitialiser {0} pour {1} {2} ? L’expérience est conservée.",
+      "es": "¿Restablecer {0} por {1} {2}? La experiencia se conserva."
+    },
+    "Masteries of {0} · Read only": {
+      "en": "Masteries of {0} · Read only",
+      "fr": "Maîtrises de {0} · Consultation",
+      "es": "Maestrías de {0} · Solo lectura"
+    },
+    "Talent unavailable.": {
+      "en": "Talent unavailable.",
+      "fr": "Talent indisponible.",
+      "es": "Talento no disponible."
+    },
+    "View talents": {
+      "en": "View talents",
+      "fr": "Voir les talents",
+      "es": "Ver talentos"
+    },
+    "Weapon mastery information is temporarily unavailable.": {
+      "en": "Weapon mastery information is temporarily unavailable.",
+      "fr": "Les informations de maîtrise sont temporairement indisponibles.",
+      "es": "La información de maestrías no está disponible temporalmente."
+    },
+    "Your paid mastery reset is awaiting recovery. No further payment was taken.": {
+      "en": "Your paid mastery reset is awaiting recovery. No further payment was taken.",
+      "fr": "Votre réinitialisation payée est en attente de reprise. Aucun paiement supplémentaire n’a été prélevé.",
+      "es": "Tu restablecimiento pagado está pendiente de recuperación. No se ha cobrado ningún pago adicional."
+    },
+    "The mastery reset price changed. Review it before confirming again.": {
+      "en": "The mastery reset price changed. Review it before confirming again.",
+      "fr": "Le prix de réinitialisation a changé. Vérifiez-le avant de confirmer à nouveau.",
+      "es": "El precio de restablecimiento cambió. Revísalo antes de confirmar otra vez."
+    },
+    "Mastery talents reset. Your experience is unchanged.": {
+      "en": "Mastery talents reset. Your experience is unchanged.",
+      "fr": "Talents réinitialisés. Votre expérience est conservée.",
+      "es": "Talentos restablecidos. Tu experiencia se conserva."
+    },
+    "This reset request is invalid.": {
+      "en": "This reset request is invalid.",
+      "fr": "Cette demande de réinitialisation est invalide.",
+      "es": "Esta solicitud de restablecimiento no es válida."
+    },
+    "This mastery has no allocated talents to reset.": {
+      "en": "This mastery has no allocated talents to reset.",
+      "fr": "Cette maîtrise n’a aucun talent attribué à réinitialiser.",
+      "es": "Esta maestría no tiene talentos asignados que restablecer."
+    },
+    "Payment could not be saved or you lack the required currency. No reset was applied.": {
+      "en": "Payment could not be saved or you lack the required currency. No reset was applied.",
+      "fr": "Le paiement n’a pas pu être enregistré ou votre solde est insuffisant. Aucune réinitialisation n’a été appliquée.",
+      "es": "No se pudo guardar el pago o no tienes suficiente moneda. No se aplicó ningún restablecimiento."
+    },
+    "Mastery reset is temporarily unavailable.": {
+      "en": "Mastery reset is temporarily unavailable.",
+      "fr": "La réinitialisation des maîtrises est temporairement indisponible.",
+      "es": "El restablecimiento de maestrías no está disponible temporalmente."
+    },
+    "Wait for mastery spell effects to end before resetting talents.": {
+      "en": "Wait for mastery spell effects to end before resetting talents.",
+      "fr": "Attendez la fin des effets de sorts de maîtrise avant de réinitialiser vos talents.",
+      "es": "Espera a que terminen los efectos de hechizos de maestría antes de restablecer los talentos."
+    },
+    "Mastery reset settings": {
+      "en": "Mastery reset settings",
+      "fr": "Réglages de réinitialisation des maîtrises",
+      "es": "Ajustes de restablecimiento de maestrías"
+    },
+    "Enable paid mastery resets": {
+      "en": "Enable paid mastery resets",
+      "fr": "Activer la réinitialisation payante des maîtrises",
+      "es": "Activar el restablecimiento de maestrías de pago"
+    },
+    "Existing currency item": {
+      "en": "Existing currency item",
+      "fr": "Objet de monnaie existant",
+      "es": "Objeto de moneda existente"
+    },
+    "Cost per mastery category": {
+      "en": "Cost per mastery category",
+      "fr": "Coût par catégorie de maîtrise",
+      "es": "Coste por categoría de maestría"
+    },
+    "Reset cost: {0} {1}": {
+      "en": "Reset cost: {0} {1}",
+      "fr": "Coût de réinitialisation : {0} {1}",
+      "es": "Coste de restablecimiento: {0} {1}"
+    },
+    "Reset {0}? Experience is preserved.": {
+      "en": "Reset {0}? Experience is preserved.",
+      "fr": "Réinitialiser {0} ? L’expérience est conservée.",
+      "es": "¿Restablecer {0}? La experiencia se conserva."
+    },
+    "Choose a currency to enable resets.": {
+      "en": "Choose a currency to enable resets.",
+      "fr": "Choisissez une monnaie pour activer les réinitialisations.",
+      "es": "Elige una moneda para activar los restablecimientos."
     }
   }
 }

@@ -96,12 +96,12 @@ internal sealed class PlayerProfileWindow : Window
 
         _scroll = new Base(this,"ProfileContent");
         _scroll.SetBounds(27,284,645,244);
-        _sectionButtons=new Button[3];
-        var sections=new[]{"Stats","Equipped items","Professions"};
+        _sectionButtons=new Button[4];
+        var sections=new[]{"Stats","Equipped items","Professions","Weapon Masteries"};
         for(var i=0;i<sections.Length;i++)
         {
             var section=i;
-            _sectionButtons[i]=NavalManagementWindow.Button(this,"ProfileTab"+i,T(sections[i]),27+i*217,242,207,32,()=>{_section=section;_page=0;RenderSection();});
+            _sectionButtons[i]=NavalManagementWindow.Button(this,"ProfileTab"+i,T(sections[i]),27+i*161,242,155,32,()=>{_section=section;_page=0;RenderSection();});
         }
         _previousPage=NavalManagementWindow.Button(this,"ProfilePreviousPage",T("Previous"),39,531,130,28,()=>{_page--;RenderSection();});
         _nextPage=NavalManagementWindow.Button(this,"ProfileNextPage",T("Next"),526,531,130,28,()=>{_page++;RenderSection();});
@@ -238,14 +238,15 @@ internal sealed class PlayerProfileWindow : Window
         if(_profile is not {} profile)return;
         if(Interface.HasInGameUI)Interface.GameUi.ItemDescriptionWindow?.Hide();
         _scroll.DeleteAllChildren();
-        var count=_section==1?(profile.Equipment?.Length??0):_section==2?(profile.Professions?.Length??0):0;
-        var perPage=_section==1?4:3;var pages=Math.Max(1,(count+perPage-1)/perPage);
+        var count=_section==1?(profile.Equipment?.Length??0):_section==2?(profile.Professions?.Length??0):_section==3?(profile.Masteries?.Length??0):0;
+        var perPage=_section==1?4:_section==3?2:3;var pages=Math.Max(1,(count+perPage-1)/perPage);
         _page=Math.Clamp(_page,0,pages-1);
         for(var i=0;i<_sectionButtons.Length;i++){_sectionButtons[i].Show();_sectionButtons[i].IsDisabled=i==_section;}
         _previousPage.IsHidden=_nextPage.IsHidden=_pageLabel.IsHidden=pages<=1;
         _previousPage.IsDisabled=_page==0;_nextPage.IsDisabled=_page==pages-1;_pageLabel.Text=$"{_page+1} / {pages}";
         if(_section==1){AddEquipmentSection(profile,8);return;}
         if(_section==2){AddProfessionCards(profile,8);return;}
+        if(_section==3){AddMasteryCards(profile);return;}
         var stats=Enum.GetValues<Stat>();
         var fields=(profile.Stats??[]).Select((value,index)=>(value,index)).Where(item=>item.index<stats.Length)
             .Select(item=>(Strings.Combat.Stats[stats[item.index]].ToString(),item.value.ToString("N0")))
@@ -288,6 +289,28 @@ internal sealed class PlayerProfileWindow : Window
             y+=72;
         }
         return y+12;
+    }
+    private void AddMasteryCards(PlayerProfilePacket profile)
+    {
+        if (!profile.MasteriesAvailable)
+        { NavalManagementWindow.Text(_scroll, "MasteriesUnavailable", T("Weapon mastery information is temporarily unavailable."), 12, 12, 600, 60, 11); return; }
+        var y = 8;
+        foreach (var mastery in (profile.Masteries ?? []).Skip(_page * 2).Take(2))
+        {
+            var card = new ProfileFrame(_scroll, "Mastery" + mastery.Key); card.SetBounds(12, y, 600, 104);
+            NavalManagementWindow.Text(card, "MasteryName", ClientLanguages.Format("{0} · Level {1}/{2} · Points {3}",
+                ClientLanguages.ContentText(T(mastery.Name)), mastery.Level, mastery.MaximumLevel, mastery.AvailablePoints), 10, 2, 580, 26, 11);
+            var required = mastery.RequiredExperience; var percent = required <= 0 ? 100 : (int)Math.Clamp(mastery.LevelExperience * 100 / required, 0, 100);
+            var bar = new ProfileProgressBar(card, "MasteryExperienceBar") { Progress = percent / 100f }; bar.SetBounds(10, 32, 580, 26);
+            NavalManagementWindow.Text(card, "MasteryExperience", ClientLanguages.Format("XP {0}/{1} · {2}% · Remaining {3}",
+                mastery.LevelExperience, required, percent, Math.Max(0, required - mastery.LevelExperience)), 14, 32, 570, 26, 10);
+            NavalManagementWindow.Button(card, "MasteryDetails", T("View talents"), 10, 68, 580, 26, () => {
+                if (profile.IsSelf) GameInterface.OpenWeaponMasteries();
+                else Intersect.Client.Networking.Network.SendPacket(new Intersect.Network.Packets.Client.ArcheryRequestPacket {
+                    Action = Intersect.Network.Packets.Client.ArcheryAction.InspectMasteries, TargetId = profile.PlayerId });
+            });
+            y += 112;
+        }
     }
 
     internal sealed class ProfileProgressBar : Base

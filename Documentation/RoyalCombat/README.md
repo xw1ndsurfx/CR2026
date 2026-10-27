@@ -1,4 +1,4 @@
-# Royal Weapon Mastery / Royal Archery — integration slices 1–5
+# Royal Weapon Mastery / Royal Archery — integration slices 1–6
 
 Status: **draft, not a production-complete Royal Archery Tournament**. Audited base:
 `aaab6f7ce8d23083ebc1ca9f697b2c68e5da2a51` on `main`.
@@ -11,6 +11,8 @@ The fourth slice adds local-range multiplayer registration, normalized shooting 
 live/final session standings. See [competition setup and exact limits](Competitions.md).
 The fifth slice records completed ranked cards and adds day/week/season best-score boards
 in the client and native Wiki API. See [rankings, persistence and operational limits](Rankings.md).
+The sixth slice adds online public mastery profiles and an opt-in paid category talent reset
+with a saved recovery record. See [mastery management and recovery](MasteryManagement.md).
 
 ## Audit and source of truth
 
@@ -67,7 +69,8 @@ Inspecting those actual assets and their licensing remains required before produ
   category; commit before advertising the new bonus. Existing account/item tables are untouched.
 * Character window action displays categories, level, XP, percentage, remaining XP and
   available points. It is self-only, with scrollable categories/talents, rank allocation and
-  confirmation. Public inspection and level-up animation remain future work.
+  confirmation. Online Character Information also displays mastery progress and opens a
+  read-only talent tree for other characters. Level-up animation remains future work.
 * Talent ranks 0–5, level/prerequisite gates, configurable points per level, transactionally
   persisted purchases and request receipts. Default archery templates include passive damage,
   speed and critical bonuses; active talents need real existing spell mappings before purchase.
@@ -169,7 +172,7 @@ Client tests exercise the actual Gwen viewport through the existing headless met
 at 1280×720, 1366×768 and 1920×1080, plus late snapshots after close and FR/ES catalog resolution.
 **Headless metrics rendering is not a screenshot of a running production client.**
 
-Local fifth-slice validation: 148 rules checks and all 448 executed server tests passed;
+Local sixth-slice validation: 152 rules checks and all 498 executed server tests passed;
 the full existing client UI runner passed including archery, ammo compatibility, talent
 confirmation, custom moving-target rounds, zoom, sixteen-entry competition/ranking boards and
 late-refresh disposal checks; focused
@@ -210,8 +213,9 @@ validation and actual-client QA; the current code-native viewport does not yet l
 2. **Mastery abilities/UI:** author actual rank spell mappings for Piercing Arrow, Multi Shot
    and Rain of Arrows using the connected game's existing spell data; no fictional spell IDs
    are pre-enabled. Points, ranks, prerequisites, passives and native spell unlocks are implemented.
-   Other authored weapon trees, Cannoneering, public Character Information,
-   notifications, NPC tutorials, Aureons respec, milestone quests 10/20/30, level-30 titles
+   Online Character Information and configurable paid talent resets are implemented.
+   Other authored weapon trees, Cannoneering, notifications, NPC tutorials,
+   milestone quests 10/20/30, level-30 titles
    (Royal Eagle Eye, Royal Blademaster, Master of the Royal Artillery), achievements/Steam.
 3. **Production archery presentation:** approved separated art above, layer rendering and
    parallax, optional third person, bow animation, audio and further aim calibration.

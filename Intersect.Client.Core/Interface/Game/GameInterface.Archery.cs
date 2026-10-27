@@ -20,7 +20,7 @@ public partial class GameInterface
             if (_ammunitionWindow == null && !packet.Open) return;
             _ammunitionWindow ??= new UniversalAmmunitionWindow(GameCanvas); _ammunitionWindow.Apply(packet); return;
         }
-        if (packet.MasteriesJson.Length > 0)
+        if (packet.MasteriesJson.Length > 0 || packet.MasteriesReadOnly)
         {
             if (_masteriesWindow == null && !packet.Open) return;
             _masteriesWindow ??= new WeaponMasteriesWindow(GameCanvas); _masteriesWindow.Apply(packet); return;

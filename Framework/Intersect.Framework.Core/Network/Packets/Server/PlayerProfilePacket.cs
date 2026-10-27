@@ -68,6 +68,8 @@ public partial class PlayerEquipmentProfilePacket
 [MessagePackObject]
 public partial class PlayerProfilePacket : IntersectPacket
 {
+    [Key(26)] public PlayerMasteryProfilePacket[] Masteries { get; set; } = [];
+    [Key(27)] public bool MasteriesAvailable { get; set; }
     [Key(0)]
     public bool Found { get; set; }
 
@@ -137,4 +139,16 @@ public partial class PlayerProfilePacket : IntersectPacket
     [Key(23)] public bool OfflineHouseProfile { get; set; }
     [Key(24)] public string PvpGrade {get;set;}="";
     [Key(25)] public long PvpPoints {get;set;}
+}
+
+[MessagePackObject]
+public partial class PlayerMasteryProfilePacket
+{
+    [Key(0)] public string Key { get; set; } = "";
+    [Key(1)] public string Name { get; set; } = "";
+    [Key(2)] public int Level { get; set; }
+    [Key(3)] public int MaximumLevel { get; set; }
+    [Key(4)] public long LevelExperience { get; set; }
+    [Key(5)] public long RequiredExperience { get; set; }
+    [Key(6)] public int AvailablePoints { get; set; }
 }

@@ -23,6 +23,8 @@ internal static partial class RoyalCombatRuntime
     {
         var config = RoyalCombatConfiguration.FromJson(json);
         ValidateProgressionMappings(config);
+        if (config.RespecEnabled && !Intersect.Framework.Core.MiniGames.MiniGameCurrency.IsCompatible(ItemDescriptor.Get(config.RespecCurrencyId)))
+            throw new InvalidDataException("mastery-respec-currency");
         foreach (var range in config.Ranges.Where(r => r.Enabled))
             if (MapController.Get(range.MapId) == null || range.StartX >= Intersect.Options.Instance.Map.MapWidth ||
                 range.StartY >= Intersect.Options.Instance.Map.MapHeight) throw new InvalidDataException("royal-map");
@@ -57,6 +59,8 @@ internal static partial class RoyalCombatRuntime
                     Category TEXT NOT NULL, Talent TEXT NOT NULL, PRIMARY KEY(CharacterId,RequestId));
                 CREATE TABLE IF NOT EXISTS MasteryLearnedSpells(CharacterId TEXT NOT NULL, SpellId TEXT NOT NULL,
                     PRIMARY KEY(CharacterId,SpellId));
+                CREATE TABLE IF NOT EXISTS MasteryRespecReceipts(CharacterId TEXT NOT NULL,RequestId TEXT NOT NULL,
+                    Category TEXT NOT NULL, PRIMARY KEY(CharacterId,RequestId));
                 CREATE TABLE IF NOT EXISTS ArcheryResults(CompetitionId TEXT NOT NULL, CharacterId TEXT NOT NULL,
                     RangeId TEXT NOT NULL, SeasonKey TEXT NOT NULL, RulesKey TEXT NOT NULL, PlayerName TEXT NOT NULL,
                     Score INTEGER NOT NULL CHECK(Score>=0 AND Score<=MaximumScore), MaximumScore INTEGER NOT NULL CHECK(MaximumScore BETWEEN 10 AND 600),
