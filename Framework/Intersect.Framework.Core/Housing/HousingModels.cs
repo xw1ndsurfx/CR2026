@@ -25,6 +25,7 @@ public sealed class FurnitureDefinition
 }
 public sealed class HousingConfiguration
 {
+    public FarmConfiguration Farm { get; set; } = new();
     public bool Enabled { get; set; }
     public Guid TemplateMapId { get; set; }
     public int EntryX { get; set; } = 10;
@@ -32,7 +33,7 @@ public sealed class HousingConfiguration
     public int MaximumFurniture { get; set; } = 100;
     public int MaximumPets { get; set; } = 12;
     public List<FurnitureDefinition> Catalog { get; set; } = [];
-    public bool IsValid => (!Enabled || TemplateMapId != Guid.Empty) && EntryX is >= 0 and <= 255 && EntryY is >= 0 and <= 255 &&
+    public bool IsValid => Farm is { IsValid: true } && (!Enabled || TemplateMapId != Guid.Empty) && EntryX is >= 0 and <= 255 && EntryY is >= 0 and <= 255 &&
         MaximumFurniture is >= 1 and <= 500 && MaximumPets is >= 1 and <= 50 && Catalog.Count <= 2000 && Catalog.All(f => f.IsValid) && Catalog.Select(f => f.Id).Distinct().Count() == Catalog.Count;
 }
 public sealed class OwnedFurniture
@@ -72,6 +73,7 @@ public sealed class SavedHouseLayout
 }
 public sealed class HouseProfile
 {
+    public FarmProfile Farm { get; set; } = new();
     public List<SavedHouseLayout> SavedLayouts {get;set;}=[];
     public bool Public { get; set; }
     public Dictionary<Guid, OwnedFurniture> Furniture { get; set; } = [];
@@ -96,6 +98,8 @@ public sealed class HouseProfile
 }
 public sealed class HouseView
 {
+    public bool Outside { get; set; }
+    public FarmConfiguration FarmConfiguration { get; set; } = new();
     public Guid OwnerId { get; set; }
     public string OwnerName { get; set; } = string.Empty;
     public bool IsOwner { get; set; }

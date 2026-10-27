@@ -653,7 +653,7 @@ public partial class CharacterWindow
         {
             foreach (var profession in _professionDetails.OrderBy(entry => entry.Name))
             {
-                Row((Intersect.Framework.Core.Naval.NavalProfessions.IsNative(profession.ProfessionId)?Intersect.Framework.Core.Naval.NavalSetupText.Get(Intersect.Framework.Core.Naval.NavalProfessions.Caption(profession.ProfessionId),ClientLanguages.Current):profession.Name),
+                Row((Intersect.Framework.Core.Naval.NavalProfessions.IsNative(profession.ProfessionId)?Intersect.Framework.Core.Naval.NavalSetupText.Get(Intersect.Framework.Core.Naval.NavalProfessions.Caption(profession.ProfessionId),ClientLanguages.Current):profession.ProfessionId == Intersect.Framework.Core.Housing.FarmingProfession.Id ? ClientLanguages.Text("Farmer") : profession.Name),
                     $"Lv {profession.Level}/{profession.MaximumLevel}");
                 Row("Experience to next",
                     profession.ExperienceToNextLevel < 0 ? "MAX" :

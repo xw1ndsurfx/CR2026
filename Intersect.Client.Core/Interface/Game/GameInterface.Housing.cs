@@ -50,7 +50,7 @@ public partial class GameInterface
         var view = HousingWorld.View;
         var current = view is { Inside: true } && Globals.Me?.MapId == view.MapId && _housePlacement!.IsHidden;
         var ids = new HashSet<Guid>();
-        if (current && Globals.Me?.MapInstance is { } map)
+        if (current && view is { Outside: false } && Globals.Me?.MapInstance is { } map)
         {
             var tw = Options.Instance.Map.TileWidth; var th = Options.Instance.Map.TileHeight;
             var zoom = Globals.Database.WorldZoom;
@@ -96,7 +96,7 @@ public partial class GameInterface
         }
         public void Begin(Guid furniture, Guid placement, FurnitureDefinition definition)
         {
-            if (HousingWorld.View is not { Inside: true, IsOwner: true } view || definition.Id != furniture) { Cancel(); return; }
+            if (HousingWorld.View is not { Inside: true, IsOwner: true, Outside: false } view || definition.Id != furniture) { Cancel(); return; }
             _furniture = furniture; _placement = placement; _definition = definition;
             _rotation = view.House.Placements.FirstOrDefault(p => p.Id == placement)?.Rotation ?? 0;
             UpdatePreview(); IsHidden = false; BringToFront();

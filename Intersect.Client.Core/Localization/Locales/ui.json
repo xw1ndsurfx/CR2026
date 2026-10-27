@@ -1,5 +1,210 @@
 {
   "Entries": {
+  "Farm": {
+    "en": "Farm",
+    "fr": "Ferme",
+    "es": "Granja"
+  },
+  "Farmer": {
+    "en": "Farmer",
+    "fr": "Agriculteur",
+    "es": "Agricultor"
+  },
+  "Manage crops and hired farm workers.": {
+    "en": "Manage crops and hired farm workers.",
+    "fr": "Gérer les cultures et les ouvriers agricoles embauchés.",
+    "es": "Gestionar cultivos y trabajadores agrícolas contratados."
+  },
+  "Wheat": {
+    "en": "Wheat",
+    "fr": "Blé",
+    "es": "Trigo"
+  },
+  "Carrots": {
+    "en": "Carrots",
+    "fr": "Carottes",
+    "es": "Zanahorias"
+  },
+  "Potatoes": {
+    "en": "Potatoes",
+    "fr": "Pommes de terre",
+    "es": "Patatas"
+  },
+  "Visit farm": {
+    "en": "Visit farm",
+    "fr": "Visiter la ferme",
+    "es": "Visitar la granja"
+  },
+  "Deposit 100 for salaries": {
+    "en": "Deposit 100 for salaries",
+    "fr": "Déposer 100 pour les salaires",
+    "es": "Depositar 100 para salarios"
+  },
+  "Withdraw salary fund": {
+    "en": "Withdraw salary fund",
+    "fr": "Retirer la caisse de salaires",
+    "es": "Retirar el fondo de salarios"
+  },
+  "Hire novice ({0})": {
+    "en": "Hire novice ({0})",
+    "fr": "Embaucher un novice ({0})",
+    "es": "Contratar novato ({0})"
+  },
+  "Hire expert ({0})": {
+    "en": "Hire expert ({0})",
+    "fr": "Embaucher un expert ({0})",
+    "es": "Contratar experto ({0})"
+  },
+  "Deposit 10 seeds": {
+    "en": "Deposit 10 seeds",
+    "fr": "Déposer 10 graines",
+    "es": "Depositar 10 semillas"
+  },
+  "Pause after harvest": {
+    "en": "Pause after harvest",
+    "fr": "Pause après la récolte",
+    "es": "Pausar tras la cosecha"
+  },
+  "Dismiss worker": {
+    "en": "Dismiss worker",
+    "fr": "Congédier l’ouvrier",
+    "es": "Despedir trabajador"
+  },
+  "Collect harvest": {
+    "en": "Collect harvest",
+    "fr": "Récupérer la récolte",
+    "es": "Recoger cosecha"
+  },
+  "Expert": {
+    "en": "Expert",
+    "fr": "Expert",
+    "es": "Experto"
+  },
+  "Novice": {
+    "en": "Novice",
+    "fr": "Novice",
+    "es": "Novato"
+  },
+  "Working": {
+    "en": "Working",
+    "fr": "Au travail",
+    "es": "Trabajando"
+  },
+  "Paused": {
+    "en": "Paused",
+    "fr": "En pause",
+    "es": "En pausa"
+  },
+  "Choose a crop": {
+    "en": "Choose a crop",
+    "fr": "Choisir une culture",
+    "es": "Elegir un cultivo"
+  },
+  "Farming level too low": {
+    "en": "Farming level too low",
+    "fr": "Niveau agricole insuffisant",
+    "es": "Nivel agrícola insuficiente"
+  },
+  "Salary fund empty": {
+    "en": "Salary fund empty",
+    "fr": "Caisse de salaires insuffisante",
+    "es": "Fondo de salarios insuficiente"
+  },
+  "No seeds": {
+    "en": "No seeds",
+    "fr": "Graines épuisées",
+    "es": "Sin semillas"
+  },
+  "Granary full": {
+    "en": "Granary full",
+    "fr": "Grenier plein",
+    "es": "Granero lleno"
+  },
+  "Farmer level {0} - EXP {1}": {
+    "en": "Farmer level {0} - EXP {1}",
+    "fr": "Agriculteur niveau {0} - EXP {1}",
+    "es": "Agricultor nivel {0} - EXP {1}"
+  },
+  "Salary fund: {0} {1} - granary: {2}/{3}": {
+    "en": "Salary fund: {0} {1} - granary: {2}/{3}",
+    "fr": "Salaires : {0} {1} - grenier : {2}/{3}",
+    "es": "Salarios: {0} {1} - granero: {2}/{3}"
+  },
+  "Harvested: {0} - wages paid: {1}": {
+    "en": "Harvested: {0} - wages paid: {1}",
+    "fr": "Récolté : {0} - salaires versés : {1}",
+    "es": "Cosechado: {0} - salarios pagados: {1}"
+  },
+  "{0}: {1} seeds": {
+    "en": "{0}: {1} seeds",
+    "fr": "{0} : {1} graines",
+    "es": "{0}: {1} semillas"
+  },
+  "Worker {0} ({1}) - {2}": {
+    "en": "Worker {0} ({1}) - {2}",
+    "fr": "Ouvrier {0} ({1}) - {2}",
+    "es": "Trabajador {0} ({1}) - {2}"
+  },
+  "Crop: {0} - wage per cycle: {1}": {
+    "en": "Crop: {0} - wage per cycle: {1}",
+    "fr": "Culture : {0} - salaire par cycle : {1}",
+    "es": "Cultivo: {0} - salario por ciclo: {1}"
+  },
+  "Grow {0} (level {1}, {2} min)": {
+    "en": "Grow {0} (level {1}, {2} min)",
+    "fr": "Cultiver {0} (niveau {1}, {2} min)",
+    "es": "Cultivar {0} (nivel {1}, {2} min)"
+  },
+  "Farm saved.": {
+    "en": "Farm saved.",
+    "fr": "Ferme enregistrée.",
+    "es": "Granja guardada."
+  },
+  "Farming is not available yet.": {
+    "en": "Farming is not available yet.",
+    "fr": "L’agriculture n’est pas encore disponible.",
+    "es": "La agricultura aún no está disponible."
+  },
+  "Only the owner can manage this farm.": {
+    "en": "Only the owner can manage this farm.",
+    "fr": "Seul le propriétaire peut gérer cette ferme.",
+    "es": "Solo el propietario puede gestionar esta granja."
+  },
+  "Farm worker not found.": {
+    "en": "Farm worker not found.",
+    "fr": "Ouvrier agricole introuvable.",
+    "es": "Trabajador agrícola no encontrado."
+  },
+  "Not enough supplies.": {
+    "en": "Not enough supplies.",
+    "fr": "Réserves insuffisantes.",
+    "es": "Suministros insuficientes."
+  },
+  "Farm worker limit reached.": {
+    "en": "Farm worker limit reached.",
+    "fr": "Limite d’ouvriers agricoles atteinte.",
+    "es": "Límite de trabajadores agrícolas alcanzado."
+  },
+  "Pause the worker and wait for the current harvest.": {
+    "en": "Pause the worker and wait for the current harvest.",
+    "fr": "Mets l’ouvrier en pause et attends la récolte en cours.",
+    "es": "Pausa al trabajador y espera la cosecha actual."
+  },
+  "Invalid farm quantity.": {
+    "en": "Invalid farm quantity.",
+    "fr": "Quantité agricole invalide.",
+    "es": "Cantidad agrícola no válida."
+  },
+  "Wait for the current harvest before changing crops.": {
+    "en": "Wait for the current harvest before changing crops.",
+    "fr": "Attends la récolte en cours avant de changer de culture.",
+    "es": "Espera la cosecha actual antes de cambiar de cultivo."
+  },
+  "Withdraw the previous salary currency first.": {
+    "en": "Withdraw the previous salary currency first.",
+    "fr": "Retire d’abord l’ancienne monnaie de la caisse de salaires.",
+    "es": "Retira primero la moneda anterior del fondo de salarios."
+  },
     "William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.": {
         "en": "William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.",
         "fr": "William est la monture du joueur. Choisis un adversaire IA, place les deux pistes, active l’arène et enregistre. En jeu, marche sur le départ doré : la fenêtre de joute s’ouvre automatiquement. Le départ bleu propose le PvP et les accès aux gradins proposent les places.",

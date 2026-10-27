@@ -640,7 +640,7 @@ internal sealed class PlayerProfileWindow : Window
                 : $"{profession.ExperienceToNextLevel:N0} XP to next level";
 
             builder.Append(
-                $"{(Intersect.Framework.Core.Naval.NavalProfessions.IsNative(profession.ProfessionId)?Intersect.Framework.Core.Naval.NavalSetupText.Get(Intersect.Framework.Core.Naval.NavalProfessions.Caption(profession.ProfessionId),ClientLanguages.Current):profession.Name)}: Level {profession.Level}/{profession.MaximumLevel}  •  " +
+                $"{(Intersect.Framework.Core.Naval.NavalProfessions.IsNative(profession.ProfessionId)?Intersect.Framework.Core.Naval.NavalSetupText.Get(Intersect.Framework.Core.Naval.NavalProfessions.Caption(profession.ProfessionId),ClientLanguages.Current):profession.ProfessionId == Intersect.Framework.Core.Housing.FarmingProfession.Id ? ClientLanguages.Text("Farmer") : profession.Name)}: Level {profession.Level}/{profession.MaximumLevel}  •  " +
                 $"{profession.Experience:N0} total XP  •  {progress}"
             );
         }

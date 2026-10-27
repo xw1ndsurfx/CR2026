@@ -1,6 +1,6 @@
 ﻿using MessagePack;
 namespace Intersect.Network.Packets.Housing;
-public enum HouseAction { Open, Visit, Leave, SetPublic, Buy, Place, Remove, StorePet, CollectPet, Interact, SaveLayout, LoadLayout, DeleteLayout, InviteFriend, AcceptInvitation, DeclineInvitation }
+public enum HouseAction { Open, Visit, Leave, SetPublic, Buy, Place, Remove, StorePet, CollectPet, Interact, SaveLayout, LoadLayout, DeleteLayout, InviteFriend, AcceptInvitation, DeclineInvitation, VisitFarm, HireFarmWorker, DismissFarmWorker, SetFarmCrop, PauseFarmPlot, DepositFarmSalary, WithdrawFarmSalary, DepositFarmSeeds, CollectFarmHarvest }
 [MessagePackObject]
 public partial class HouseActionPacket : IntersectPacket
 {
