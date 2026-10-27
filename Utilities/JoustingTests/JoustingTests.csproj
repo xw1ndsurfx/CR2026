@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><RollForward>Major</RollForward></PropertyGroup>
-  <ItemGroup><Compile Include="../../Framework/Intersect.Framework.Core/Jousting/*.cs" Exclude="../../Framework/Intersect.Framework.Core/Jousting/JoustCinematics.cs;../../Framework/Intersect.Framework.Core/Jousting/JoustMountPreset.cs" Link="Core/%(Filename)%(Extension)" /></ItemGroup>
+  <!-- Standalone simulation excludes adapters that depend on other native systems. -->
+  <ItemGroup><Compile Include="../../Framework/Intersect.Framework.Core/Jousting/*.cs" Exclude="../../Framework/Intersect.Framework.Core/Jousting/JoustCinematics.cs;../../Framework/Intersect.Framework.Core/Jousting/JoustMountPreset.cs;../../Framework/Intersect.Framework.Core/Jousting/JoustProfession.cs" Link="Core/%(Filename)%(Extension)" /></ItemGroup>
 </Project>
