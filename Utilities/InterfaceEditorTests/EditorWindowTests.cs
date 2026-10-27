@@ -134,6 +134,44 @@ internal static class EditorWindowTests
                     "Window labels include compatible en/fr/es translations.");
             Check(QualityOfLifeText.Get(text, "unknown") == text, "Window labels fall back to English.");
         }
+        foreach (var factory in new Func<Form>[] { () => new FrmItem(), () => new FrmNpc(), () => new FrmSpell(), () => new FrmProjectile(),
+            () => new FrmResource(), () => new FrmCrafts(), () => new FrmAnimation(), () => new FrmSwitchVariable() })
+        using (var legacy = factory())
+        {
+            RemoveLoad(legacy); legacy.ShowInTaskbar = false; legacy.Opacity = 0;
+            foreach (var body in legacy.Controls.Find("pnlContainer", true)) body.Visible = true;
+            EditorWindows.Show(legacy, owner); Application.DoEvents();
+            var split = legacy.Controls.Find("EditorWorkspaceSplit", true).OfType<SplitContainer>().SingleOrDefault();
+            var footer = legacy.Controls.Find("EditorActions", true).SingleOrDefault();
+            foreach (var size in new[] { new Size(1100, 730), new Size(1600, 900), new Size(800, 580) })
+            {
+                legacy.Size = size; Application.DoEvents(); legacy.PerformLayout();
+                if (split != null && footer != null)
+                {
+                    Check(legacy.ClientRectangle.Contains(split.Bounds) && legacy.ClientRectangle.Contains(footer.Bounds), "Global workspace bounds escaped " + legacy.GetType().Name);
+                    Check(split.Width >= legacy.ClientSize.Width - 10 && split.Panel2.Width > 350, "Legacy content still has a narrow fixed width: " + legacy.GetType().Name);
+                    Check(footer.Top >= split.Bottom, "Save/Cancel overlay the global workspace: " + legacy.GetType().Name);
+                    Check(split.Panel2.Controls.Cast<Control>().All(c => split.Panel2.ClientRectangle.Contains(c.Bounds)), "Content viewport is clipped inside its split pane: " + legacy.GetType().Name);
+                }
+                else
+                {
+                    var content = legacy.Controls.Find("pnlContainer", true).Single();
+                    Check(legacy is FrmItem or FrmNpc or FrmSpell && legacy.ClientRectangle.Contains(content.Bounds), "Custom layout was replaced or clipped: " + legacy.GetType().Name);
+                    Check(content.Width > legacy.ClientSize.Width / 2, "Custom content failed to resize: " + legacy.GetType().Name);
+                }
+            }
+            legacy.Hide();
+        }
+        foreach (var factory in new Func<Form>[] { () => new FrmCommonEvent(), () => new FrmTime(),
+            () => new FrmDynamicRequirements(new Intersect.Framework.Core.GameObjects.Conditions.ConditionLists(), RequirementType.Item) })
+        using (var editor = factory())
+        {
+            RemoveLoad(editor); editor.ShowInTaskbar = false; editor.Opacity = 0;
+            EditorWindows.Show(editor, owner); Application.DoEvents();
+            editor.Size = new Size(1500, 850); Application.DoEvents(); editor.PerformLayout();
+            Check(editor.Controls.Cast<Control>().Where(c => c.Visible).All(c => editor.ClientRectangle.Contains(c.Bounds)), "Resizing clipped a selector, time editor or requirement workspace: " + editor.GetType().Name);
+            editor.Hide();
+        }
         owner.Hide();
         Console.WriteLine("PASS editor windows: native ownership, reopen/restore, F11/Escape, held keys, monitor bounds, class/shop responsive layouts and locales");
     }

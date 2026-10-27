@@ -69,4 +69,15 @@ public partial class PlayerTests
             }
         );
     }
+
+    [Test]
+    public void NpcAwardIsReturnedForWeaponTrainingWithoutBankingCharacterExperienceAtCap()
+    {
+        var player = new Player { Level = 1, MapId = _mapId }; GC.SuppressFinalize(player);
+        Assert.That(player.GiveExperienceAward(40, fromNpcKill: true, npcBaseExperience: 40), Is.EqualTo(40));
+        Assert.That(player.Exp, Is.EqualTo(40));
+        player.Level = Options.Instance.Player.MaxLevel; player.Exp = 0;
+        Assert.That(player.GiveExperienceAward(40, fromNpcKill: true, npcBaseExperience: 40, calculateAtLevelCap: true), Is.EqualTo(40));
+        Assert.That(player.Exp, Is.Zero);
+    }
 }

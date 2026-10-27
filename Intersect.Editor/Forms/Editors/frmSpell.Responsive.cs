@@ -156,7 +156,7 @@ public partial class FrmSpell
             ArrangeSpellGroupPanel(page, groups);
     }
 
-    private void ArrangeSpellEditor()
+    internal void ArrangeSpellEditor()
     {
         if (!_spellTabsReady || ClientSize.Width < 200) return;
         var footerY = Math.Max(230, ClientSize.Height - 44);

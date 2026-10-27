@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Content;
@@ -640,7 +640,7 @@ internal sealed class PlayerProfileWindow : Window
                 : $"{profession.ExperienceToNextLevel:N0} XP to next level";
 
             builder.Append(
-                $"{(Intersect.Framework.Core.Naval.NavalProfessions.IsNative(profession.ProfessionId)?Intersect.Framework.Core.Naval.NavalSetupText.Get(Intersect.Framework.Core.Naval.NavalProfessions.Caption(profession.ProfessionId),ClientLanguages.Current):profession.Name)}: Level {profession.Level}/{profession.MaximumLevel}  •  " +
+                $"{(Intersect.Framework.Core.Professions.NativeProfessions.IsNative(profession.ProfessionId)?Intersect.Framework.Core.Professions.NativeProfessions.Caption(profession.ProfessionId,ClientLanguages.Current):profession.Name)}: Level {profession.Level}/{profession.MaximumLevel}  •  " +
                 $"{profession.Experience:N0} total XP  •  {progress}"
             );
         }

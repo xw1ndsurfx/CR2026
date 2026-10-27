@@ -156,13 +156,13 @@
       "es": "Mesas de fabricación"
     },
     "description": {
-      "en": "Organize the recipes available at each table.",
-      "fr": "Organisez les recettes proposées par chaque table.",
-      "es": "Organiza las recetas disponibles en cada mesa."
+      "en": "Crafting tables, recipe lists and persistent campfire creators.",
+      "fr": "Tables de fabrication, recettes et créateurs de feux de camp.",
+      "es": "Mesas de fabricación, recetas y creadores de fogatas."
     },
     "sign": "Blacksmith",
     "art": "craftingTableEditorToolStripMenuItem.png",
-    "keywords": "craftingTableEditorToolStripMenuItem Crafting Tables Tables de fabrication Mesas de fabricación",
+    "keywords": "craftingTableEditorToolStripMenuItem Crafting Tables Tables de fabrication Mesas de fabricación craft table campfire feu camp recettes fabrication",
     "subcategory": "EconomyAndCommerce"
   },
   {
@@ -432,13 +432,13 @@
       "es": "Profesiones"
     },
     "description": {
-      "en": "Configure professions and progression rewards.",
-      "fr": "Configurez les métiers et leurs récompenses.",
-      "es": "Configura profesiones y sus recompensas."
+      "en": "Professions, resources, levels and native jousting progress.",
+      "fr": "Métiers, ressources, niveaux et progression de joute.",
+      "es": "Profesiones, recursos, niveles y progreso de justas."
     },
     "sign": "Blacksmith",
     "art": "professionEditorToolStripMenuItem.png",
-    "keywords": "professionEditorToolStripMenuItem Professions Professions Profesiones",
+    "keywords": "professionEditorToolStripMenuItem Professions Professions Profesiones profession joust joute justas xp level niveau",
     "subcategory": "EconomyAndCommerce"
   },
   {
@@ -1244,26 +1244,26 @@
   "keywords": "jousting joutes justas Herbonia William"
 },
 {
-  "id": "SmartMapBuilderTool",
-  "oldMenu": "toolsToolStripMenuItem",
-  "category": "Tools",
-  "subcategory": "WorldAndProgression",
-  "tags": [
-    "World"
-  ],
-  "art": "map.png",
-  "keywords": "smart map builder terrain road river cliff animated autotile VX XP pinceau rivière falaise",
-  "title": {
-    "en": "Smart Map Builder",
-    "fr": "Smart Map Builder",
-    "es": "Smart Map Builder"
+    "id": "SmartMapBuilderTool",
+    "oldMenu": "toolsToolStripMenuItem",
+    "category": "Tools",
+    "subcategory": "WorldAndProgression",
+    "tags": [
+      "World"
+    ],
+    "art": "map.png",
+    "keywords": "smart map builder terrain road river cliff animated autotile VX XP pinceau rivière falaise ground island shore water color pixels terrain ile rive couleur sable gazon",
+    "title": {
+      "en": "Smart Map Builder",
+      "fr": "Smart Map Builder",
+      "es": "Smart Map Builder"
+    },
+    "description": {
+      "en": "Ground islands, connected shores and built-in ground painting.",
+      "fr": "Îles sur Ground, rives raccordées et retouches du sol.",
+      "es": "Islas en Ground, orillas conectadas y edición del suelo."
+    }
   },
-  "description": {
-    "en": "Paint terrain, animated rivers and reusable buildings with native VX/XP autotiles.",
-    "fr": "Peignez terrains, rivières animées et bâtiments réutilisables avec les autotiles natifs VX/XP.",
-    "es": "Pinte terrenos, ríos animados y edificios reutilizables con autotiles nativos VX/XP."
-  }
-},
 {
   "id": "miniGame.Archery",
   "oldMenu": "miniGameEditorsToolStripMenuItem",
@@ -1286,24 +1286,24 @@
   "keywords": "archery tir arc weapon mastery armes munition"
 },
 {
-  "id": "weaponMasteryEditor",
-  "oldMenu": "contentEditorsToolStripMenuItem",
-  "category": "Game",
-  "subcategory": "WorldAndProgression",
-  "tags": [
-    "Gameplay"
-  ],
-  "art": "itemEditorToolStripMenuItem.png",
-  "title": {
-    "en": "Weapon Mastery Editor",
-    "fr": "Éditeur de maîtrise des armes",
-    "es": "Editor de dominio de armas"
-  },
-  "description": {
-    "en": "Configure weapon mastery progression and ammunition rules.",
-    "fr": "Configurez la progression de maîtrise des armes et les règles de munitions.",
-    "es": "Configure la progresión de dominio de armas y las reglas de munición."
-  },
-  "keywords": "archery tir arc weapon mastery armes munition"
-}
+    "id": "weaponMasteryEditor",
+    "oldMenu": "contentEditorsToolStripMenuItem",
+    "category": "Game",
+    "subcategory": "WorldAndProgression",
+    "tags": [
+      "Gameplay"
+    ],
+    "art": "itemEditorToolStripMenuItem.png",
+    "title": {
+      "en": "Weapon Mastery Editor",
+      "fr": "Éditeur de maîtrise des armes",
+      "es": "Editor de dominio de armas"
+    },
+    "description": {
+      "en": "Weapon XP, talents, reset settings and mastery requirements.",
+      "fr": "XP des armes, talents, réinitialisation et prérequis.",
+      "es": "XP de armas, talentos, reinicios y requisitos de dominio."
+    },
+    "keywords": "archery tir arc weapon mastery armes munition weapon sword epee maitrise mastery requirements prerequis niveau equiper event talents reset"
+  }
 ]

@@ -21,7 +21,7 @@ internal static class EditorWorkspaceLayout
         var split = new SplitContainer
         {
             Name = "EditorWorkspaceSplit", Dock = DockStyle.Fill, Size = new Size(1100, 650),
-            FixedPanel = FixedPanel.Panel1, SplitterWidth = 8, SplitterDistance = 230,
+            FixedPanel = FixedPanel.Panel1, SplitterWidth = 8, SplitterDistance = Math.Clamp(navigation.Width, 200, 400),
             Panel1MinSize = 200, Panel2MinSize = 400,
         };
         navigation.Dock = content.Dock = DockStyle.Fill;

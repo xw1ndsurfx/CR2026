@@ -128,12 +128,16 @@ internal static class EditorHubTests
                 Check(hub.Visible && main.ClientRectangle.Contains(hub.Bounds), "Hub fits the workspace at " + size);
                 Check(ReferenceEquals(parent, Globals.MapEditorWindow.picMap.Parent) && ReferenceEquals(map, Globals.CurrentMap) && Globals.MapEditorWindow.MapUndoStates.Count == undoCount,
                     "Opening/resizing the hub never reparents or reloads the map or resets its undo history.");
-                Check(hub.CurrentEntries().Length == 8, "The home page provides eight working primary cards.");
+                Check(hub.CurrentEntries().Length == 16 && EditorHubView.LatestIds.All(id => hub.CurrentEntries().Any(e => e.Id == id)), "The home page provides eight recent modules and eight working primary cards without duplicates.");
                 Capture(main, hub, size.Width + "x" + size.Height);
                 foreach (var category in new[] { "Game", "System", "MiniGames", "Events", "Tools" })
                 { hub.SetCategory(category); Application.DoEvents(); Check(hub.CurrentEntries().Length > 0, "Each category has real tools: " + category); }
                 hub.SetCategory("Home");
             }
+            var latestFilter = Descendants(hub).OfType<Button>().Single(b => Equals(b.Tag, "Latest"));
+            latestFilter.PerformClick();
+            Check(hub.CurrentEntries().Select(e => e.Id).ToHashSet().SetEquals(EditorHubView.LatestIds), "Latest filter exposes exactly the recent native modules.");
+            Descendants(hub).OfType<Button>().Single(b => Equals(b.Tag, "All")).PerformClick();
             hub.SetQuery("npc"); Check(hub.CurrentEntries().Any(e => e.Id == "npcEditorToolStripMenuItem"), "Search reaches actual integrated entries.");
             var key = Message.Create(hub.Handle, 0x100, (IntPtr)Keys.K, IntPtr.Zero);
             typeof(FrmMain).GetMethod("ProcessCmdKey", Hidden)!.Invoke(main, [key, Keys.Control | Keys.K]);

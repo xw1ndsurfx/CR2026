@@ -224,7 +224,7 @@ public partial class FrmNpc
         }
     }
 
-    private void ResizeResponsiveNpcEditor()
+    internal void ResizeResponsiveNpcEditor()
     {
         if (_npcTabs.IsDisposed || ClientSize.Width < 400)
         {

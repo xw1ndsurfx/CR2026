@@ -54,4 +54,5 @@ public enum ConditionType
     CalendarDate = 1004,
 
     Invasion = 1005,
+    WeaponMasteryLevel = 1006,
 }

@@ -83,9 +83,9 @@ internal static partial class RoyalCombatRuntime
             return result;
         }
     }
-    internal static long Award(Guid character, MasteryCategory category, int experience)
+    internal static long Award(Guid character, MasteryCategory category, long experience)
     {
-        if (character == Guid.Empty || experience is < 1 or > 5000) throw new ArgumentOutOfRangeException(nameof(experience));
+        if (character == Guid.Empty || experience < 1) throw new ArgumentOutOfRangeException(nameof(experience));
         lock (Gate)
         {
             using var connection = Open(); using var transaction = connection.BeginTransaction();
@@ -96,7 +96,7 @@ internal static partial class RoyalCombatRuntime
                 RETURNING Experience;
                 """;
             cmd.Parameters.AddWithValue("$id", character.ToString("N")); cmd.Parameters.AddWithValue("$key", category.Key);
-            cmd.Parameters.AddWithValue("$xp", experience); cmd.Parameters.AddWithValue("$cap", category.Maximum);
+            cmd.Parameters.AddWithValue("$xp", Math.Min(experience, category.Maximum)); cmd.Parameters.AddWithValue("$cap", category.Maximum);
             var result = (long)cmd.ExecuteScalar(); transaction.Commit(); return result;
         }
     }

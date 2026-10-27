@@ -1,4 +1,6 @@
 {
+  "Latest": { "en": "Recent additions", "fr": "Ajouts récents", "es": "Novedades" },
+  "LatestModules": { "en": "Recently added modules", "fr": "Derniers modules ajoutés", "es": "Módulos añadidos recientemente" },
   "Home": {
     "en": "Home",
     "fr": "Accueil",
