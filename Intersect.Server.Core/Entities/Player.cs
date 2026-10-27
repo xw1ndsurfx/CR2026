@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
@@ -834,7 +834,7 @@ public partial class Player : Entity
                 Intersect.Server.Campfires.CampfireRuntime.Update(this);
                 if (TryGetOpenCraftingTable(out var b) && CraftingState?.Id != default)
                 {
-                    if (CraftingState != default && b.Crafts.Contains(CraftingState.Id))
+                    if (CraftingState != default && b.AvailableCrafts().Contains(CraftingState.Id))
                     {
                         while (CraftingState?.NextCraftCompletionTime < timeMs)
                         {
@@ -1581,28 +1581,33 @@ public partial class Player : Entity
     [NotMapped, JsonIgnore]
     internal NpcExperienceGainBreakdown? PendingNpcExperienceGain { get; private set; }
 
-    public void GiveExperience(
+    public void GiveExperience(long amount, bool fromNpcKill = false, long npcBaseExperience = 0,
+        long npcPartyBonusExperience = 0, float npcPartyBonusPercent = 0f) =>
+        GiveExperienceAward(amount, fromNpcKill, npcBaseExperience, npcPartyBonusExperience, npcPartyBonusPercent);
+
+    internal long GiveExperienceAward(
         long amount,
         bool fromNpcKill = false,
         long npcBaseExperience = 0,
         long npcPartyBonusExperience = 0,
-        float npcPartyBonusPercent = 0f)
+        float npcPartyBonusPercent = 0f,
+        bool calculateAtLevelCap = false)
     {
         // ReSharper disable once ConvertIfStatementToSwitchStatement
         if (amount == 0)
         {
-            return;
+            return 0;
         }
 
         if (amount < 0)
         {
             TakeExperience(-amount);
-            return;
+            return 0;
         }
 
         // EXP from NPC kills, quests, items, and bonuses must never be
         // banked by a player who has already reached the configured cap.
-        if (Level >= Options.Instance.Player.MaxLevel)
+        if (Level >= Options.Instance.Player.MaxLevel && !calculateAtLevelCap)
         {
             if (ClearExperienceAtLevelCap())
             {
@@ -1610,7 +1615,7 @@ public partial class Player : Entity
                 LeaderboardTitleRuntime.MarkRankingDirty();
             }
 
-            return;
+            return 0;
         }
 
         var equipmentBonusPercent = GetEquipmentBonusEffect(ItemEffect.EXP);
@@ -1629,6 +1634,17 @@ public partial class Player : Entity
         var potionPercent=PersonalExperienceBonus;
         var potionBonus=Intersect.Framework.Core.WorldEvents.WorldActivitiesConfiguration.AwardBonus(amount,potionPercent);
         var totalAward = (long)Math.Min(long.MaxValue, (decimal)amount + equipmentBonus + rankingBonus + eventBonus+potionBonus);
+        // Weapon training still uses the NPC reward at the character cap;
+        // character EXP itself remains capped and never banks excess progress.
+        if (Level >= Options.Instance.Player.MaxLevel)
+        {
+            if (ClearExperienceAtLevelCap())
+            {
+                PacketSender.SendExperience(this);
+                LeaderboardTitleRuntime.MarkRankingDirty();
+            }
+            return totalAward;
+        }
         if (fromNpcKill || eventBonusPercent > 0 || potionPercent>0)
         {
             PendingNpcExperienceGain = new NpcExperienceGainBreakdown
@@ -1660,6 +1676,7 @@ public partial class Player : Entity
         {
             PendingNpcExperienceGain = null;
         }
+        return totalAward;
     }
 
     public void TakeExperience(long amount, bool enableLosingLevels = false, bool force = false)
@@ -1730,7 +1747,6 @@ public partial class Player : Entity
     //Combat
     public override void KilledEntity(Entity entity)
     {
-        if (entity is Npc masteryNpc) AwardWeaponMastery(masteryNpc);
         if(entity is Player victim)Intersect.Server.Pvp.PvpRuntime.RecordKill(this,victim);
         var rolledNpcExperience=entity is Npc killedNpc ? killedNpc.Descriptor.RollExperience() : 0L;
         if (entity is Npc { PetOwner: null })
@@ -1760,13 +1776,16 @@ public partial class Player : Entity
                             MidpointRounding.AwayFromZero)
                         : 0L;
 
-                    GiveExperience(
+                    var masteryExperience = GiveExperienceAward(
                         baseExperience + partyBonusExperience,
                         fromNpcKill: true,
                         npcBaseExperience: baseExperience,
                         npcPartyBonusExperience: partyBonusExperience,
-                        npcPartyBonusPercent: partyBonusPercent
+                        npcPartyBonusPercent: partyBonusPercent,
+                        calculateAtLevelCap: true
                     );
+
+                    AwardWeaponMastery(npc, masteryExperience);
 
                     // Credit kill tasks and achievements only to the killer.
                     UpdateQuestKillTasks(entity);
@@ -4717,7 +4736,7 @@ public partial class Player : Entity
 
         var craftingStateId = CraftingState?.Id;
 
-        if (craftingStateId == null || !table.Crafts.Contains(craftingStateId.Value))
+        if (craftingStateId == null || !table.AvailableCrafts().Contains(craftingStateId.Value))
         {
             return true;
         }
@@ -6336,6 +6355,10 @@ public partial class Player : Entity
         {
             return;
         }
+
+        // Event commands and direct equip requests must obey the same authored
+        // requirements as using the item from the inventory.
+        if (!Conditions.MeetsConditionLists(itemDescriptor.UsageRequirements, this, null)) return;
 
         // Find the appropriate slot if not passed in
         if (slot == -1)

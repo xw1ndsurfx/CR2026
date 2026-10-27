@@ -1060,6 +1060,24 @@
         "fr": "Joutes royales",
         "es": "Justas reales"
     },
+    "Jousting progression": {
+        "en": "Progression earned in jousting matches.",
+        "fr": "Progression gagnée pendant les matchs de joute.",
+        "es": "Progreso obtenido en los encuentros de justas."
+    },
+    "Weapon mastery level": { "en": "Weapon mastery level", "fr": "Niveau de maîtrise d’arme", "es": "Nivel de dominio de arma" },
+    "Missing mastery: {0}": { "en": "Missing mastery: {0}", "fr": "Maîtrise introuvable : {0}", "es": "Dominio no encontrado: {0}" },
+    "Weapon mastery {0} level {1} {2}": { "en": "Weapon mastery {0} level {1} {2}", "fr": "Maîtrise {0} de niveau {1} {2}", "es": "Dominio {0} de nivel {1} {2}" },
+    "{0}  •  Level {1}/{2}{3}": { "en": "{0}  •  Level {1}/{2}{3}", "fr": "{0}  •  Niveau {1}/{2}{3}", "es": "{0}  •  Nivel {1}/{2}{3}" },
+    "LEVEL UP!": { "en": "LEVEL UP!", "fr": "NIVEAU SUPÉRIEUR !", "es": "¡SUBIDA DE NIVEL!" },
+    "+{0:N0} XP  •  Maximum level reached": { "en": "+{0:N0} XP  •  Maximum level reached", "fr": "+{0:N0} XP  •  Niveau maximal atteint", "es": "+{0:N0} XP  •  Nivel máximo alcanzado" },
+    "Maximum level reached": { "en": "Maximum level reached", "fr": "Niveau maximal atteint", "es": "Nivel máximo alcanzado" },
+    "+{0:N0} XP  •  {1:N0} XP remaining": { "en": "+{0:N0} XP  •  {1:N0} XP remaining", "fr": "+{0:N0} XP  •  {1:N0} XP restants", "es": "+{0:N0} XP  •  {1:N0} XP restantes" },
+    "No valid campfire recipes exist yet. Configure one in the recipe editor.": {
+        "en": "No valid campfire recipes exist yet. Configure one in the recipe editor.",
+        "fr": "Aucune recette de feu de camp valide n’existe encore. Configurez-en une dans l’éditeur de recettes.",
+        "es": "Aún no hay recetas válidas de fogatas. Configure una en el editor de recetas."
+    },
     "Left click: start. Right click: end. Shift-click: opponent lane.": {
         "en": "Left click: start. Right click: end. Shift-click: opponent lane.",
         "fr": "Clic gauche : départ. Clic droit : arrivée. Maj-clic : couloir adverse.",

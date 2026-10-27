@@ -1773,22 +1773,32 @@ public static partial class PacketSender
     {
         if (table != null)
         {
-            //Use Json To Cheaply Clone The Table
-            var playerTable = JsonConvert.DeserializeObject<CraftingTableDescriptor>(table.JsonData);
-
-            //Strip our the items the player can't craft
-            foreach (var craft in table.Crafts)
-            {
-                var craftBase = CraftingRecipeDescriptor.Get(craft);
-                if (!(craftBase != null && Conditions.MeetsConditionLists(craftBase.CraftingRequirements, player, null)))
-                {
-                    playerTable.Crafts.Remove(craft);
-                }
-            }
-
-            //Send the modfied table
+            var playerTable = FilterCraftingTable(player, table);
             player.SendPacket(new CraftingTablePacket(playerTable.JsonData, false, journalMode));
         }
+    }
+
+    internal static CraftingTableDescriptor FilterCraftingTable(Player player, CraftingTableDescriptor table)
+    {
+        //Use Json To Cheaply Clone The Table
+        var playerTable = JsonConvert.DeserializeObject<CraftingTableDescriptor>(table.JsonData);
+        playerTable.Crafts.Clear();
+        playerTable.Crafts.AddRange(table.AvailableCrafts());
+        // Send a materialized, permission-filtered list. A client must not
+        // re-expand native creator recipes after requirements are filtered.
+        playerTable.CampfireCreator = false;
+
+        //Strip our the items the player can't craft
+        foreach (var craft in playerTable.Crafts.ToArray())
+        {
+            var craftBase = CraftingRecipeDescriptor.Get(craft);
+            if (!(craftBase != null && Conditions.MeetsConditionLists(craftBase.CraftingRequirements, player, null)))
+            {
+                playerTable.Crafts.Remove(craft);
+            }
+        }
+
+        return playerTable;
     }
 
     //CraftingTablePacket

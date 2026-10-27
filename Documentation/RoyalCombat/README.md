@@ -59,12 +59,19 @@ Inspecting those actual assets and their licensing remains required before produ
   base damage before the normal combat formula. Native rounding/formulas still apply.
 * Both melee and item projectiles pass the original source weapon into the damage routine.
   Equipping another weapon while an arrow is in flight does not transfer that arrow's bonus.
-* Five mastery XP per eligible server-credited NPC kill with a recent actual weapon hit.
-  No XP from UI requests, target practice, resources, pets, player kills or maxed masteries.
-  Exclude NPCs with no configured base XP, targets over five RPG levels below the player,
-  hits older than 30 seconds, AFK players; at most one award per two seconds and twenty per
-  minute. Consume the per-NPC hit record once. These are farming limits, **not a complete
-  macro-detection system**. XP amount/limits are initial code defaults, not yet editor settings.
+* Each server-credited NPC kill gives the mastery the same rolled NPC reward and
+  party/equipment/title/event/potion bonuses used for the character. The category
+  comes from the recorded source weapon, including projectiles fired before a
+  weapon swap. Consume the per-NPC hit record once. No two-second/minute/level-gap
+  limit discards rapid kills; the category's configured maximum still applies.
+  Characters at their RPG cap can keep training weapons without banking character XP.
+* The existing timed profession-progress HUD displays the category, actual clamped
+  XP gain and level progress, then disappears automatically after five seconds.
+* Weapon mastery level is a native condition (serialized id 1006) available in
+  Event branches/pages and item usage requirements. Select the configured mastery
+  category, comparison and level. Direct/event-driven equipping also checks the
+  item's requirements. Missing categories deny access, including negated conditions.
+
 * Transactional SQLite storage in `resources/weapon-masteries.db`, keyed by character and
   category; commit before advertising the new bonus. Existing account/item tables are untouched.
 * Character window action displays categories, level, XP, percentage, remaining XP and

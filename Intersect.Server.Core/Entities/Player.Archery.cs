@@ -27,12 +27,21 @@ public partial class Player
     private long _archeryLeaderboardAt;
     private Dictionary<string, long> _masteryExperience;
     private readonly Dictionary<Guid, (Guid Weapon, long Time)> _masteryHits = new();
-    private long _masteryAwardAt;
-    private long _masteryWindow;
-    private int _masteryAwards;
     internal bool IsArcheryActive => _archeryWaiting || _archery is { Done: false };
 
     private Dictionary<string, long> MasteryExperience => _masteryExperience ??= RoyalCombatRuntime.Load(Id);
+    internal bool TryGetWeaponMasteryLevel(string key, out int level)
+    {
+        level = 0;
+        try
+        {
+            var category = RoyalCombatRuntime.Current.Masteries.FirstOrDefault(m => m.Key == key);
+            if (category == null) return false;
+            lock (EntityLock) { level = category.Level(MasteryExperience.GetValueOrDefault(key)); return true; }
+        }
+        catch (Exception error) when (error is IOException or Microsoft.Data.Sqlite.SqliteException or JsonException)
+        { ApplicationContext.Context.Value?.Logger.LogError(error, "Weapon mastery requirement unavailable for {CharacterId}", Id); return false; }
+    }
     internal void OpenArcheryFromEvent() => SendPacket(new ArcheryStatePacket { Open = true, ConfigurationJson = RoyalCombatRuntime.Current.ToJson() });
     internal void LeaveArcheryFromEvent() => EndArchery();
     internal double MasteryMultiplier(ItemDescriptor weapon) // Use the projectile's source item, including after equipment changes.
@@ -59,23 +68,21 @@ public partial class Player
             _masteryHits[npc.Id] = (weapon.Id, Environment.TickCount64);
         }
     }
-    private void AwardWeaponMastery(Npc npc)
+    private void AwardWeaponMastery(Npc npc, long experience)
     {
         lock (EntityLock)
         {
             if (!_masteryHits.Remove(npc.Id, out var hit)) return;
-            var now = Environment.TickCount64;
-            if (npc.PetOwner != null || npc.Descriptor.Experience <= 0 || _isAfk || now - hit.Time > 30000 ||
-                now - _masteryAwardAt < 2000 || npc.Level + 5 < Level) return;
-            if (now - _masteryWindow >= 60000) { _masteryWindow = now; _masteryAwards = 0; }
-            if (_masteryAwards >= 20) return;
+            if (npc.PetOwner != null || experience <= 0) return;
             try
             {
                 var category = RoyalCombatRuntime.Current.Masteries.FirstOrDefault(m => m.WeaponIds.Contains(hit.Weapon));
                 if (category == null || MasteryExperience.GetValueOrDefault(category.Key) >= category.Maximum) return;
                 // Commit before publishing. A failed database write never grants a live damage bonus.
-                MasteryExperience[category.Key] = RoyalCombatRuntime.Award(Id, category, 5);
-                _masteryAwardAt = now; _masteryAwards++;
+                var before = MasteryExperience.GetValueOrDefault(category.Key);
+                var after = RoyalCombatRuntime.Award(Id, category, experience);
+                MasteryExperience[category.Key] = after;
+                if (after > before) SendPacket(MasteryProgress.Create(category, before, after));
                 SendMasteries(false);
             }
             catch (Exception e) when (e is IOException or Microsoft.Data.Sqlite.SqliteException or JsonException)

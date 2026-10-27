@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -149,7 +149,7 @@ public partial class FrmItem
         }
     }
 
-    private void ArrangeResponsiveItemEditor()
+    internal void ArrangeResponsiveItemEditor()
     {
         if (!_itemResponsiveReady || ClientSize.Width < 200) return;
 

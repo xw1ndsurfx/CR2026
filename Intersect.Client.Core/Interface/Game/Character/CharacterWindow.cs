@@ -182,88 +182,7 @@ public partial class CharacterWindow
         _detailsScroll.SetBounds(20, 48, 610, 445);
         _detailsWindow.IsHidden = true;
 
-        // Create Achievements after JSON layout is loaded. This prevents legacy
-        // CharacterWindow JSON/font data from leaving the dynamically-added button
-        // with stale text geometry (which could render as only a single glyph).
-        _achievementsButton = new Button(mCharacterWindow, nameof(_achievementsButton))
-        {
-            // The button's internal Text control can collapse to a single glyph with
-            // the global Empire 7 bitmap override. Keep the clickable button textless
-            // and render its caption with a normal Label child instead.
-            Text = string.Empty,
-        };
-        _achievementsButton.Clicked += (_, _) =>
-            PacketSender.SendRequestAchievementState(openWindow: true);
-
-        _petsButton = new Button(mCharacterWindow, nameof(_petsButton)) { Text = string.Empty };
-        _petsButton.Clicked += (_, _) => PacketSender.SendRequestPetState(openWindow: true);
-        var petsCaption = new Label(_petsButton, "PetsCaption")
-        {
-            AutoSizeToContents = false,
-            Font = _detailsButton.Font,
-            FontSize = _detailsButton.FontSize,
-            Text = Intersect.Client.Localization.ClientLanguages.Text("Pets"),
-            TextAlign = Pos.Center,
-            TextColorOverride = Color.White,
-            MouseInputEnabled = false,
-        };
-
-        var achievementsCaption = new Label(_achievementsButton, "AchievementsCaption")
-        {
-            AutoSizeToContents = false,
-            Font = _detailsButton.Font,
-            FontSize = _detailsButton.FontSize,
-            Text = Intersect.Client.Localization.ClientLanguages.Text("Achievements"),
-            TextAlign = Pos.Center,
-            TextColorOverride = Color.White,
-            MouseInputEnabled = false,
-        };
-
-        // Keep all three actions evenly spaced within the character window.
-        // Fixed 132px buttons exceeded the window width and clipped Pets.
-        const int actionButtonMargin = 12;
-        const int actionButtonGap = 6;
-        var actionButtonWidth = Math.Max(60, (mCharacterWindow.Width - actionButtonMargin * 2 - actionButtonGap * 2) / 3);
-        var actionButtonHeight = Math.Max(24, _detailsButton.Height);
-        var actionButtonsX = actionButtonMargin;
-        _detailsButton.FontSize = 9;
-        var actionButtonsY = _detailsButton.Y;
-
-        _detailsButton.SetBounds(
-            actionButtonsX,
-            actionButtonsY,
-            actionButtonWidth,
-            actionButtonHeight
-        );
-        _achievementsButton.SetBounds(
-            actionButtonsX + actionButtonWidth + actionButtonGap,
-            actionButtonsY,
-            actionButtonWidth,
-            actionButtonHeight
-        );
-        _petsButton.SetBounds(actionButtonsX + 2 * (actionButtonWidth + actionButtonGap),
-            actionButtonsY, actionButtonWidth, actionButtonHeight);
-        petsCaption.SetBounds(0, 0, actionButtonWidth, actionButtonHeight);
-        petsCaption.BringToFront();
-        achievementsCaption.SetBounds(0, 0, actionButtonWidth, actionButtonHeight);
-        achievementsCaption.BringToFront();
-        var mounts = new Button(mCharacterWindow, "CharacterMounts") { Text = string.Empty };
-        mounts.SetBounds(actionButtonsX, actionButtonsY + actionButtonHeight + 5,
-            actionButtonWidth * 3 + actionButtonGap * 2, actionButtonHeight);
-        var mountCaption = new Label(mounts) { Text = ClientLanguages.Text("Mounts"), Font = _detailsButton.Font,
-            FontSize = 9, AutoSizeToContents = false, TextColorOverride = Color.White, TextAlign = Pos.Center, MouseInputEnabled = false };
-        mountCaption.SetBounds(0, 0, mounts.Width, mounts.Height);
-        mounts.Clicked += (_, _) => MountsWindow.Open();
-        var joust = new Button(mCharacterWindow, "CharacterJoust") { Text = ClientLanguages.Text("Royal Jousting") };
-        joust.SetBounds(actionButtonsX, mounts.Bottom + 5, mounts.Width, actionButtonHeight);
-        joust.Clicked += (_, _) => JoustWindow.Open();
-        var archery = new Button(mCharacterWindow, "CharacterArchery") { Text = ClientLanguages.Text("Royal Archery Training") };
-        archery.SetBounds(actionButtonsX, joust.Bottom + 5, mounts.Width, actionButtonHeight);
-        archery.Clicked += (_, _) => ArcheryWindow.Open();
-        var masteries = new Button(mCharacterWindow, "CharacterMasteries") { Text = ClientLanguages.Text("Weapon Masteries") };
-        masteries.SetBounds(actionButtonsX, archery.Bottom + 5, mounts.Width, actionButtonHeight);
-        masteries.Clicked += (_, _) => GameInterface.OpenWeaponMasteries();
-        mCharacterWindow.Height = Math.Max(mCharacterWindow.Height, masteries.Bottom + 10);
+        BuildCharacterActions();
     }
 
     //Update Button Event Handlers
@@ -653,7 +572,7 @@ public partial class CharacterWindow
         {
             foreach (var profession in _professionDetails.OrderBy(entry => entry.Name))
             {
-                Row((Intersect.Framework.Core.Naval.NavalProfessions.IsNative(profession.ProfessionId)?Intersect.Framework.Core.Naval.NavalSetupText.Get(Intersect.Framework.Core.Naval.NavalProfessions.Caption(profession.ProfessionId),ClientLanguages.Current):profession.Name),
+                Row((Intersect.Framework.Core.Professions.NativeProfessions.IsNative(profession.ProfessionId)?Intersect.Framework.Core.Professions.NativeProfessions.Caption(profession.ProfessionId,ClientLanguages.Current):profession.Name),
                     $"Lv {profession.Level}/{profession.MaximumLevel}");
                 Row("Experience to next",
                     profession.ExperienceToNextLevel < 0 ? "MAX" :

@@ -38,6 +38,19 @@ internal static class RoyalCombatEditorTests
                 throw new Exception("Reset settings invented a currency, enabled payments or changed the source without Save.");
         if (ammunition.Result.Length != 0) throw new Exception("Opening ammunition compatibility invented a weapon mapping.");
         CheckRangeEditor();
+        RoyalCombatEditorState.Apply(new RoyalCombatConfiguration { Masteries = [new MasteryCategory { Key = "blades", Name = "Swordsmanship" }] }.ToJson());
+        using (var requirement = new Intersect.Editor.Forms.Editors.Events.Event_Commands.Conditions.ConditionControl_WeaponMastery())
+        {
+            var source = new Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata.WeaponMasteryLevelCondition { MasteryKey = "blades", Value = 7 };
+            requirement.SetupFormValues(source);
+            var saved = new Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata.WeaponMasteryLevelCondition();
+            requirement.SaveFormValues(saved);
+            if (saved.MasteryKey != "blades" || saved.Value != 7) throw new Exception("Mastery requirement picker lost its selected category or level.");
+            RoyalCombatEditorState.Apply(new RoyalCombatConfiguration().ToJson());
+            requirement.SaveFormValues(saved);
+            if (saved.MasteryKey != "blades") throw new Exception("A deleted mastery requirement was silently changed to a different category.");
+        }
+        System.Console.WriteLine("PASS mastery requirement category/level editing and preservation of missing category keys");
         System.Console.WriteLine("PASS: royal editor draft preservation, dedicated NPC command dialog and stable mini-game IDs.");
     }
     private static void CheckRangeEditor()

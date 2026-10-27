@@ -76,24 +76,24 @@ internal sealed class ProfessionProgressHud : Base
     {
         _progress = Math.Clamp(packet.Percentage / 100f, 0f, 1f);
 
-        var levelUpSuffix = packet.LeveledUp ? "  •  LEVEL UP!" : string.Empty;
+        var levelUpSuffix = packet.LeveledUp ? "  •  " + Intersect.Client.Localization.ClientLanguages.Text("LEVEL UP!") : string.Empty;
         _title.Text =
-            Intersect.Client.Localization.ClientLanguages.Interpolated($"{packet.ProfessionName}  •  Level {packet.Level}/{packet.MaximumLevel}{levelUpSuffix}");
+            Intersect.Client.Localization.ClientLanguages.Format("{0}  •  Level {1}/{2}{3}",
+                Intersect.Client.Localization.ClientLanguages.Text(Intersect.Client.Localization.ClientLanguages.ContentText(packet.ProfessionName)), packet.Level, packet.MaximumLevel, levelUpSuffix);
 
         if (packet.MaximumLevelReached)
         {
             _details.Text =
                 packet.ExperienceGained > 0
-                    ? $"+{packet.ExperienceGained:N0} XP  •  Maximum level reached"
-                    : "Maximum level reached";
+                    ? Intersect.Client.Localization.ClientLanguages.Format("+{0:N0} XP  •  Maximum level reached", packet.ExperienceGained)
+                    : Intersect.Client.Localization.ClientLanguages.Text("Maximum level reached");
             _barText.Text = Intersect.Client.Localization.ClientLanguages.Text("MAX LEVEL");
             _progress = 1f;
         }
         else
         {
             _details.Text =
-                $"+{packet.ExperienceGained:N0} XP  •  " +
-                $"{packet.ExperienceToNextLevel:N0} XP remaining";
+                Intersect.Client.Localization.ClientLanguages.Format("+{0:N0} XP  •  {1:N0} XP remaining", packet.ExperienceGained, packet.ExperienceToNextLevel);
 
             _barText.Text =
                 $"{packet.Percentage}%   " +

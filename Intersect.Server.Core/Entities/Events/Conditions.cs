@@ -97,6 +97,10 @@ public static partial class Conditions
         QuestDescriptor questDescriptor
     )
     {
+        // Missing/deleted mastery categories must never unlock an item or event,
+        // even if the old authored condition used negation.
+        if (condition is WeaponMasteryLevelCondition mastery &&
+            !player.TryGetWeaponMasteryLevel(mastery.MasteryKey, out _)) return false;
         var result = ConditionHandlerRegistry.CheckCondition(condition, player, eventInstance, questDescriptor);
         if (condition.Negated)
         {
@@ -267,6 +271,21 @@ public static partial class Conditions
         }
 
         return false;
+    }
+
+    public static bool MeetsCondition(WeaponMasteryLevelCondition condition, Player player, Event eventInstance, QuestDescriptor questDescriptor)
+    {
+        if (!player.TryGetWeaponMasteryLevel(condition.MasteryKey, out var level)) return false;
+        return condition.Comparator switch
+        {
+            VariableComparator.Equal => level == condition.Value,
+            VariableComparator.GreaterOrEqual => level >= condition.Value,
+            VariableComparator.LesserOrEqual => level <= condition.Value,
+            VariableComparator.Greater => level > condition.Value,
+            VariableComparator.Less => level < condition.Value,
+            VariableComparator.NotEqual => level != condition.Value,
+            _ => false,
+        };
     }
 
     public static bool MeetsCondition(

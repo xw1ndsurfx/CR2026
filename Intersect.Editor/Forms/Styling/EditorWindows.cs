@@ -55,6 +55,7 @@ internal static class EditorWindows
             window.MaximizeBox = true;
             window.FormBorderStyle = FormBorderStyle.Sizable;
             window.AutoScroll = true;
+            EditorResponsiveLayout.Apply(window);
         }
         if (!_filterInstalled)
         {

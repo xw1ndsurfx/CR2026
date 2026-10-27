@@ -27,6 +27,8 @@ internal sealed class EditorHubView : UserControl
     internal event Action? MapEventRequested;
     private static readonly string[] HomeIds = ["map", "mapEvents", "classEditorToolStripMenuItem", "itemEditorToolStripMenuItem",
         "npcEditorToolStripMenuItem", "uiDesigner", "questEditorToolStripMenuItem", "balanceLabEditorToolStripMenuItem"];
+    internal static readonly string[] LatestIds = ["SmartMapBuilderTool", "weaponMasteryEditor", "miniGame.Archery", "miniGame.Jousting",
+        "professionEditorToolStripMenuItem", "craftingTableEditorToolStripMenuItem", "navalSystemEditor", "royalCinematicDirector"];
     internal static readonly DrawingColor Background = DrawingColor.FromArgb(13, 21, 31), Surface = DrawingColor.FromArgb(22, 33, 46), Border = DrawingColor.FromArgb(43, 62, 79),
         Muted = DrawingColor.FromArgb(169, 185, 203), Accent = DrawingColor.FromArgb(150, 217, 65), Foreground = DrawingColor.FromArgb(238, 243, 249);
     internal static readonly Font Body = new("Segoe UI", 9f), Bold = new("Segoe UI", 9f, FontStyle.Bold), Heading = new("Segoe UI", 11f, FontStyle.Bold);
@@ -42,7 +44,7 @@ internal sealed class EditorHubView : UserControl
         _search.PlaceholderText = HubText.T("Search");
         _search.AccessibleName = HubText.T("Search");
         _searchRow.Controls.Add(_search); _searchRow.Controls.Add(_filters);
-        foreach (var tag in new[] { "All", "Gameplay", "Interface", "Economy", "World", "Advanced" })
+        foreach (var tag in new[] { "All", "Latest", "Gameplay", "Interface", "Economy", "World", "Advanced" })
         {
             var captured = tag;
             var button = new Button { Text = HubText.T(tag), Tag = tag, AutoSize = true, Height = 30, MinimumSize = new Size(58, 30),
@@ -70,17 +72,20 @@ internal sealed class EditorHubView : UserControl
     internal string Category => _category;
     internal HubEntry[] CurrentEntries()
     {
-        var entries = Registry.Search(_search.Text, _category, _tag, Preferences.Favorites);
+        var entries = Registry.Search(_search.Text, _category, _tag == "Latest" ? "All" : _tag, Preferences.Favorites);
+        if (_tag == "Latest") return entries.Where(e => LatestIds.Contains(e.Id)).ToArray();
         if (_category == "Home" && !ShowAll && string.IsNullOrWhiteSpace(_search.Text) && _tag == "All")
-            return HomeIds.Select(Registry.Find).OfType<HubEntry>().ToArray();
+            return LatestIds.Concat(HomeIds).Distinct().Select(Registry.Find).OfType<HubEntry>().ToArray();
         return entries;
     }
     private void LayoutSearch()
     {
-        var wide = _main.ClientSize.Width >= 960;
+        // Seven filters need enough height and width to stay fully clickable;
+        // otherwise use their own row below the search box.
+        var wide = _main.ClientSize.Width >= 1180;
         _searchRow.Height = wide ? 58 : 92;
-        _search.SetBounds(16, 14, Math.Max(180, wide ? _main.ClientSize.Width - 568 : _main.ClientSize.Width - 32), 28);
-        _filters.SetBounds(wide ? _main.ClientSize.Width - 538 : 16, wide ? 12 : 49, Math.Max(150, wide ? 522 : _main.ClientSize.Width - 32), 36);
+        _search.SetBounds(16, 14, Math.Max(180, wide ? _main.ClientSize.Width - 766 : _main.ClientSize.Width - 32), 28);
+        _filters.SetBounds(wide ? _main.ClientSize.Width - 736 : 16, wide ? 12 : 49, Math.Max(150, wide ? 720 : _main.ClientSize.Width - 32), 40);
     }
     private void OnPreferencesChanged()
     { _sidebar.Width = Preferences.Collapsed ? 66 : 214; _sidebar.Invalidate(); RefreshEntries(); }
@@ -218,7 +223,9 @@ internal sealed class EditorHubView : UserControl
             var g = e.Graphics; g.Clear(Background); g.TranslateTransform(AutoScrollPosition.X, AutoScrollPosition.Y);
             _hits.Clear(); _cards.Clear();
             var width = ClientSize.Width - 32;
-            var heading = _hub.Category == "Home" && !_hub.ShowAll && _hub._search.TextLength == 0 ? "MainEditors" : _hub.Category is not ("Home" or "All") ? _hub.Category : "Results";
+            var dashboard = _hub.Category == "Home" && !_hub.ShowAll && _hub._search.TextLength == 0 && _hub._tag == "All";
+            var latestCount = dashboard ? _entries.TakeWhile(e => LatestIds.Contains(e.Id)).Count() : 0;
+            var heading = _hub._tag == "Latest" ? "LatestModules" : dashboard ? latestCount > 0 ? "LatestModules" : "MainEditors" : _hub.Category is not ("Home" or "All") ? _hub.Category : "Results";
             DrawText(g, HubText.T(heading), Heading, new DrawingRectangle(16, 2, Math.Max(100, width - 120), 34), Foreground);
             var seeAll = new DrawingRectangle(Width - 130, 6, 105, 28); DrawText(g, HubText.T("SeeAll"), Body, seeAll, Muted);
             _hits.Add((seeAll, () => { _hub.ShowAll = true; _hub._category = "Home"; _hub.RefreshEntries(); }));
@@ -226,7 +233,11 @@ internal sealed class EditorHubView : UserControl
             const int cardHeight = 196;
             for (var i = 0; i < _entries.Length; i++)
             {
-                var entry = _entries[i]; var rect = new DrawingRectangle(16 + i % _columns * (cardWidth + 14), 43 + i / _columns * (cardHeight + 14), cardWidth, cardHeight);
+                var index = latestCount > 0 && i >= latestCount ? i - latestCount : i;
+                var sectionTop = latestCount > 0 && i >= latestCount ? 86 + (latestCount + _columns - 1) / _columns * (cardHeight + 14) : 43;
+                if (latestCount > 0 && i == latestCount)
+                    DrawText(g, HubText.T("MainEditors"), Heading, new DrawingRectangle(16, sectionTop - 40, width, 34), Foreground);
+                var entry = _entries[i]; var rect = new DrawingRectangle(16 + index % _columns * (cardWidth + 14), sectionTop + index / _columns * (cardHeight + 14), cardWidth, cardHeight);
                 _cards.Add(rect);
                 if (!rect.IntersectsWith(new DrawingRectangle(0, -AutoScrollPosition.Y, ClientSize.Width, ClientSize.Height))) continue;
                 DrawCard(g, entry, rect, i);
@@ -235,6 +246,8 @@ internal sealed class EditorHubView : UserControl
                 _hits.Add((rect, () => _hub.Open(captured)));
             }
             var y = 43 + (_entries.Length + _columns - 1) / _columns * (cardHeight + 14);
+            if (latestCount > 0 && _entries.Length > latestCount)
+                y = 86 + ((latestCount + _columns - 1) / _columns + (_entries.Length - latestCount + _columns - 1) / _columns) * (cardHeight + 14);
             if (_entries.Length == 0)
             { DrawText(g, HubText.T(_hub.Category == "Favorites" ? "NoFavorites" : "NoResults"), Body, new DrawingRectangle(20, 60, width - 10, 65), Muted, true); y = 150; }
             if (_hub.Category == "Home" && _hub._search.TextLength == 0 && _hub._tag == "All" && !_hub.ShowAll)
