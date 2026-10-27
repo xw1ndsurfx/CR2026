@@ -166,3 +166,38 @@ and explicit layers/rules. The map preview still copies the current native map
 for isolation, so unusually large configurations need a memory/performance
 review even though full autotile recalculation is avoided for ordinary strokes.
 No merge, deployment, game-resource replacement or live map save was performed.
+Ground islands and integrated ground editing
+-------------------------------------------
+In Painting, "Edit selected ground" opens a pixel editor for a normal or static
+VX/XP land fill. Tint preserves luminance detail; Solid color replaces the fill;
+dragging paints individual pixels. A stroke, tint, reset and fill can be undone.
+Cancel writes nothing. Accept generates and registers a new normal native PNG;
+the source atlas is never changed. "Paint this ground" uses it directly on Ground.
+
+For a one-layer island:
+1. Capture the EXISTING surrounding water autotile in Library (VX/XP, animated
+   or static). Capture its exact row, not a different brown-bank water row.
+2. Select a static opaque land fill in the palette, or edit its color/pixels in
+   Painting. An edited land selection is retained while capturing the water.
+3. Choose the blend width and "Prepare Ground island". Then draw a rectangle,
+   ellipse, brush stroke, or use a fill inside an existing bounded region.
+   The operation writes the land and a one-cell water-bank halo on Ground only.
+   Existing Mask/Fringe cells and distant shorelines are left untouched.
+   Preserve mode permits replacing the captured water, but protects other land.
+   Right-drag restores captured water; one Undo restores the whole operation.
+4. Save the preset. Regenerate the bank after changing the land or blend width.
+
+The generated opaque shore composites the selected native land fill under the
+water's per-frame shoreline mask. Connected interior water pixels are unchanged.
+Only the chosen water block changes; no source image is overwritten. Flat fill
+and pixel edits repeat as one native tile, rather than preserving a multi-tile
+land autotile's external edges. Animated/transparent land fills are rejected.
+
+IMPORTANT: deploy the updated editor AND client shared framework before using
+Ground variants. The new PNG uses the normal tileset registration/network path,
+but its smart_ground_<water-id>_<x>_<y>_<mode>_<hash>.png filename carries its
+connection identity. Keep this filename and distribute the PNG to clients.
+The shared resolver connects just that generated block to its original water
+on both sides of map borders. Unrelated atlas rows and ordinary tilesets retain
+their native matching rules. No map packet or database schema changes are made.
+Older clients can render the PNG but cannot resolve these border connections.

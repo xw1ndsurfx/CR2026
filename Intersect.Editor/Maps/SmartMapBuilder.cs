@@ -47,12 +47,17 @@ internal sealed class SmartPreset
     public SmartTile? SoftWaterTile { get; set; }
     public string SoftWaterLayer { get; set; } = "";
     public int WaterFeather { get; set; } = 2;
-    internal SmartTile PaintTile => SoftWater ? SoftWaterTile ?? throw new InvalidDataException("Smart.SoftWaterRequired") : Tile;
+    public bool GroundShore { get; set; }
+    public SmartTile? GroundLandTile { get; set; }
+    public SmartTile? GroundWaterTile { get; set; }
+    internal SmartTile PaintTile => GroundShore ? GroundLandTile ?? throw new InvalidDataException("Smart.GroundShoreRequired")
+        : SoftWater ? SoftWaterTile ?? throw new InvalidDataException("Smart.SoftWaterRequired") : Tile;
     internal string PaintLayer => SoftWater ? SoftWaterLayer : Layer;
     internal SmartPreset Copy() => JsonSerializer.Deserialize<SmartPreset>(JsonSerializer.Serialize(this))!;
     internal IEnumerable<SmartTile> Tiles => new[] { Tile }.Concat(Variants).Concat(Transitions.Select(t => t.Overlay))
         .Concat(Transitions.Select(t => t.Match).Where(t => t.TilesetId != Guid.Empty)).Concat(Stamp.Select(c => c.Tile))
-        .Concat(SoftWater && SoftWaterTile != null ? new[] { SoftWaterTile } : Array.Empty<SmartTile>());
+        .Concat(SoftWater && SoftWaterTile != null ? new[] { SoftWaterTile } : Array.Empty<SmartTile>())
+        .Concat(GroundShore && GroundLandTile != null && GroundWaterTile != null ? new[] { GroundLandTile, GroundWaterTile } : Array.Empty<SmartTile>());
     internal void Validate()
     {
         if (string.IsNullOrWhiteSpace(Name) || Name.Length > 128 || !SmartBrush.Categories.Contains(Category)
@@ -64,6 +69,9 @@ internal sealed class SmartPreset
             || StampWidth is < 0 or > 4096 || StampHeight is < 0 or > 4096
             || WaterFeather is < 0 or > 8 || SoftWater && (SoftWaterTile == null || string.IsNullOrWhiteSpace(SoftWaterLayer) || SoftWaterLayer == Layer
                 || Tile.Autotile is not (1 or 3 or 6 or 7) || SoftWaterTile.Autotile != Tile.Autotile || Category == "Decoration" || Stamp.Count > 0 || Transitions.Count > 0)
+            || GroundShore && (SoftWater || GroundLandTile == null || GroundWaterTile == null || GroundWaterTile.Autotile != Tile.Autotile
+                || Tile.Autotile is not (1 or 3 or 6 or 7) || GroundLandTile.Autotile != 0
+                || Layer != Options.Instance.Map.Layers.All[0] || Category != "Terrain" || Stamp.Count > 0 || Transitions.Count > 0 || Variants.Count > 0)
             || Tiles.Any(t => t.Autotile > 7 || t.X < 0 || t.Y < 0 || t.TilesetId == Guid.Empty))
             throw new InvalidDataException("InvalidPreset");
     }
@@ -181,13 +189,31 @@ internal static class SmartBrush
             }
             // Stamps and multi-layer transitions are atomic at each placement.
             if (placements.Count == 0 || placements.Any(p => !map.Layers.TryGetValue(p.Layer, out var layer) || p.X < 0 || p.Y < 0 || p.X >= layer.GetLength(0) || p.Y >= layer.GetLength(1)
-                || preserve && layer[p.X, p.Y].TilesetId != Guid.Empty && (!erase || SmartTile.From(layer[p.X, p.Y]) != p.Tile))) continue;
+                || preserve && layer[p.X, p.Y].TilesetId != Guid.Empty && (!erase || SmartTile.From(layer[p.X, p.Y]) != p.Tile)
+                    && !(preset.GroundShore && !erase && GroundShoreVariant.Connects(layer[p.X, p.Y], preset.Tile.Native)))) continue;
             foreach (var placement in placements)
             {
                 var before = map.Layers[placement.Layer][placement.X, placement.Y];
-                var after = erase ? default : placement.Tile.Native;
+                var after = erase ? preset.GroundShore ? preset.Tile.Native : default : placement.Tile.Native;
                 if (!Same(before, after)) edits[(placement.Layer, placement.X, placement.Y)] = new(placement.Layer, placement.X, placement.Y, before, after);
             }
+        }
+        if (preset.GroundShore && !erase && !stamp && preset.GroundWaterTile is { } water)
+        {
+            // Only water next to the new land needs a different bank. Keep distant
+            // shores and every other layer intact; planning and preview are read-only.
+            var shore = new Dictionary<(string Layer, int X, int Y), SmartEdit>();
+            foreach (var land in edits.Values)
+                foreach (var cell in Area(new(land.X, land.Y), new(land.X, land.Y), SmartShape.Brush, 1, false))
+                {
+                    var key = (land.Layer, cell.X, cell.Y);
+                    var layer = map.Layers[land.Layer];
+                    if (cell.X < 0 || cell.Y < 0 || cell.X >= layer.GetLength(0) || cell.Y >= layer.GetLength(1) || edits.ContainsKey(key)) continue;
+                    var before = layer[cell.X, cell.Y];
+                    if (before.Autotile == preset.Tile.Autotile && GroundShoreVariant.Connects(before, preset.Tile.Native) && !Same(before, water.Native))
+                        shore[key] = new(land.Layer, cell.X, cell.Y, before, water.Native);
+                }
+            foreach (var (key, edit) in shore) edits[key] = edit;
         }
         return edits.Values.ToList();
     }

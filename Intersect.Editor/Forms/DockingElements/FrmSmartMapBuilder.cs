@@ -17,6 +17,7 @@ internal sealed class FrmSmartMapBuilder : DockContent
     private readonly CheckBox _preserve = new() { Checked = true, AutoSize = true };
     private readonly CheckBox _round = new() { Checked = true, AutoSize = true };
     private readonly CheckBox _softWater = new() { AutoSize = true };
+    private readonly CheckBox _groundShore = new() { AutoSize = true };
     private readonly NumericUpDown _waterFeather = new() { Minimum = 0, Maximum = 8, Value = 2, Width = 90 };
     private readonly TextBox _search = new() { Width = 260 };
     private readonly TextBox _name = new() { Width = 260 };
@@ -49,6 +50,12 @@ internal sealed class FrmSmartMapBuilder : DockContent
     private string? _sheetPath;
     private SmartTile? _sampleTile;
     private (SmartTile Source, string Name)? _pendingWater;
+    private (SmartTile Source, SmartTile Land, string Name)? _pendingGround;
+    private string? _pendingLand;
+    private SmartTile? _resumeGround;
+    private SmartTile? _landTile;
+    private SmartTile? _landPaletteSource;
+    private readonly Label _landSource = new() { AutoSize = true, MaximumSize = new(266, 0) };
     internal bool EnabledForMap => Visible && _enabled.Checked && Globals.CurrentTool == EditingTool.Brush;
     internal bool Preserve => _preserve.Checked;
     internal SmartShape Shape => (SmartShape)Math.Max(0, _shape.SelectedIndex);
@@ -58,6 +65,7 @@ internal sealed class FrmSmartMapBuilder : DockContent
         Text = T("Title"); TabText = Text; HideOnClose = true; Width = 310; MinimumSize = new(290, 250);
         _enabled.Text = T("Enable"); _preserve.Text = T("Preserve"); _round.Text = T("Round");
         _softWater.Text = T("SoftWater");
+        _groundShore.Text = T("GroundShore");
         _search.PlaceholderText = T("Search");
         _category.Items.AddRange(SmartBrush.Categories.Select(T).Cast<object>().ToArray()); _category.SelectedIndex = 0;
         _shape.Items.AddRange(Enum.GetNames<SmartShape>().Select(T).Cast<object>().ToArray()); _shape.SelectedIndex = 0;
@@ -78,7 +86,10 @@ internal sealed class FrmSmartMapBuilder : DockContent
         painting.Controls.Add(_section);
         Add(_source); Add(_preview); AddLabel("Shape"); Add(_shape);
         AddLabel("Destination"); Add(_destination);
-        Add(_softWater); AddLabel("WaterFeather"); Add(_waterFeather);
+        AddLabel("WaterFeather"); Add(_waterFeather);
+        AddButtons(("EditGround", EditGround), ("PaintGround", PaintGround)); Add(_landSource);
+        Add(_groundShore); AddButtons(("CreateGroundShore", CreateGroundShore)); AddLabel("GroundShoreHelp");
+        Add(_softWater);
         AddButtons(("CreateSoftWater", CreateSoftWater)); AddLabel("SoftWaterHelp");
         AddLabel("Radius"); Add(_radius); Add(_round); AddLabel("Density"); Add(_density);
         AddButtons(("Undo", () => Globals.MainForm?.UndoSmartMap()), ("Redo", () => Globals.MainForm?.RedoSmartMap()));
@@ -103,13 +114,19 @@ internal sealed class FrmSmartMapBuilder : DockContent
         }
         VisibleChanged += (_, _) => { _timer.Enabled = Visible; if (Visible) RefreshLayers(); InvalidatePreview(); };
         _preview.Paint += DrawSample;
-        _timer.Tick += (_, _) => { ResolveSoftWater(); _preview.Invalidate(); };
+        _timer.Tick += (_, _) => { Try(() => { ResolveSoftWater(); ResolveGroundShore(); ResolveLand(); }); _preview.Invalidate(); };
+        _groundShore.CheckedChanged += (_, _) =>
+        {
+            if (_groundShore.Checked) { _softWater.Checked = false; _destination.SelectedItem = Options.Instance.Map.Layers.All[0]; }
+            LoadSample(); InvalidatePreview();
+        };
         _softWater.CheckedChanged += (_, _) =>
         {
             if (_working != null)
             {
                 if (_softWater.Checked)
                 {
+                    _groundShore.Checked = false;
                     var layers = Options.Instance.Map.Layers.All;
                     _destination.SelectedItem = string.IsNullOrEmpty(_working.SoftWaterLayer) ? layers.Skip(layers.IndexOf(_working.Layer) + 1).FirstOrDefault() : _working.SoftWaterLayer;
                 }
@@ -144,7 +161,7 @@ internal sealed class FrmSmartMapBuilder : DockContent
         if (CurrentTile() is not { } tile || !Options.Instance.Map.Layers.All.Contains(Globals.CurrentLayer)) { _status.Text = T("ChooseSource"); return; }
         _working = new() { Name = string.IsNullOrWhiteSpace(_name.Text) ? Globals.CurrentTileset.Name : _name.Text.Trim(), Tile = tile, Layer = Globals.CurrentLayer };
         _working.Category = SmartBrush.Categories[Math.Max(0, _category.SelectedIndex)];
-        _softWater.Checked = false; _pendingWater = null;
+        _softWater.Checked = false; _groundShore.Checked = false; _pendingWater = null; _pendingGround = null;
         if (!ValidateResources(_working)) return;
         _name.Text = _working.Name; LoadSample(); InvalidatePreview(); _status.Text = T("Captured");
         RefreshRules();
@@ -166,6 +183,14 @@ internal sealed class FrmSmartMapBuilder : DockContent
         preset.Density = (int)_density.Value; preset.Round = _round.Checked; preset.AnchorX = (int)_anchorX.Value; preset.AnchorY = (int)_anchorY.Value;
         preset.Layer = _destination.SelectedItem as string ?? preset.Layer;
         preset.SoftWater = _softWater.Checked; preset.WaterFeather = (int)_waterFeather.Value;
+        preset.GroundShore = _groundShore.Checked;
+        if (preset.GroundShore)
+        {
+            preset.Layer = Options.Instance.Map.Layers.All[0];
+            if (preset.GroundLandTile == null || preset.GroundWaterTile == null || preset.SoftWater || preset.Category != "Terrain"
+                || preset.Stamp.Count > 0 || preset.Transitions.Count > 0 || preset.Variants.Count > 0)
+            { if (report) _status.Text = T("GroundShoreRequired"); return null; }
+        }
         if (preset.SoftWater)
         {
             preset.Layer = _working.Layer;
@@ -188,6 +213,8 @@ internal sealed class FrmSmartMapBuilder : DockContent
             if (image == null || !tile.Fits(image.Width, image.Height, Options.Instance.Map.TileWidth, Options.Instance.Map.TileHeight)) { valid = false; break; }
         }
         if (!Options.Instance.Map.Layers.All.Contains(preset.Layer) || preset.Stamp.Any(c => !Options.Instance.Map.Layers.All.Contains(c.Layer))
+            || preset.GroundShore && (preset.Layer != Options.Instance.Map.Layers.All[0] || preset.GroundLandTile == null || preset.GroundWaterTile == null
+                || !GroundShoreVariant.Connects(preset.GroundWaterTile.Native, preset.Tile.Native))
             || preset.SoftWater && (Options.Instance.Map.Layers.All.IndexOf(preset.SoftWaterLayer) <= Options.Instance.Map.Layers.All.IndexOf(preset.Layer)
                 || preset.SoftWaterTile == null || preset.SoftWaterTile.Autotile != preset.Tile.Autotile)
             || preset.Transitions.Any(t => !Options.Instance.Map.Layers.All.Contains(t.TargetLayer) || !Options.Instance.Map.Layers.All.Contains(t.MatchLayer))) valid = false;
@@ -222,11 +249,13 @@ internal sealed class FrmSmartMapBuilder : DockContent
     private void SelectPreset()
     {
         if (_library.SelectedItems.Count != 1 || _library.SelectedItems[0].Tag is not SmartPreset preset) return;
+        _pendingGround = null; _pendingWater = null;
         _selected = preset; _working = preset.Copy(); _name.Text = preset.Name;
         _category.SelectedIndex = Array.IndexOf(SmartBrush.Categories, preset.Category); _radius.Value = preset.Radius;
         _density.Value = preset.Density; _round.Checked = preset.Round; _anchorX.Value = preset.AnchorX; _anchorY.Value = preset.AnchorY;
         _destination.SelectedItem = preset.Layer;
-        _softWater.Checked = preset.SoftWater; _waterFeather.Value = preset.WaterFeather;
+        _softWater.Checked = preset.SoftWater; _groundShore.Checked = preset.GroundShore; _waterFeather.Value = preset.WaterFeather;
+        if (preset.GroundLandTile is { } land) SetLand(land);
         _destination.SelectedItem = preset.PaintLayer;
         _status.Text = ValidateResources(preset) ? T("Ready") : T("InvalidResource");
         if (preset.Stamp.Count > 0) _shape.SelectedIndex = (int)SmartShape.Stamp;
@@ -319,6 +348,104 @@ internal sealed class FrmSmartMapBuilder : DockContent
     }
     private void ClearRules() { _working?.Transitions.Clear(); _working?.Variants.Clear(); _status.Text = T("Cleared"); RefreshRules(); InvalidatePreview(); }
     private static void InvalidatePreview() => Core.Graphics.TilePreviewUpdated = true;
+    private void EditGround()
+    {
+        if (CurrentTile() is not { } tile || tile.Autotile is not (0 or 1 or 6)) { _status.Text = T("GroundShoreRequired"); return; }
+        var paletteSource = tile;
+        if (tile == _landPaletteSource && _landTile != null) tile = _landTile;
+        var descriptor = TilesetDescriptor.Get(tile.TilesetId);
+        var path = descriptor == null ? null : EditorResourcePreview.ResolveFile(descriptor.Name, "resources/tilesets");
+        using var sheet = path == null ? null : EditorResourcePreview.LoadImage(path, int.MaxValue);
+        if (sheet == null) { _status.Text = T("InvalidResource"); return; }
+        using var fill = SmartWaterShore.LandFill(sheet, tile);
+        using var dialog = new FrmSmartGroundPaint(fill);
+        if (dialog.ShowDialog(this) != DialogResult.OK) return;
+        _landPaletteSource = paletteSource;
+        using var image = dialog.Result;
+        RegisterLand(image);
+    }
+    private void RegisterLand(Bitmap image, SmartTile? resumeGround = null)
+    {
+        using var bytes = new MemoryStream(); image.Save(bytes, Drawing.Imaging.ImageFormat.Png);
+        var name = "smart_land_" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes.ToArray()))[..20].ToLowerInvariant() + ".png";
+        var target = Path.Combine("resources", "tilesets", name);
+        if (!File.Exists(target))
+        {
+            var temporary = target + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try { File.WriteAllBytes(temporary, bytes.ToArray()); File.Move(temporary, target); }
+            finally { if (File.Exists(temporary)) File.Delete(temporary); }
+        }
+        _pendingLand = name; _resumeGround = resumeGround;
+        if (!ResolveLand()) { Intersect.Editor.Networking.PacketSender.SendNewTilesets(new[] { name }); _status.Text = T("SoftWaterRegistering"); }
+    }
+    private void SetLand(SmartTile tile)
+    {
+        _landTile = tile;
+        _landSource.Text = T("GroundSelected") + " " + TilesetDescriptor.Get(tile.TilesetId)?.Name;
+    }
+    private bool ResolveLand()
+    {
+        if (_pendingLand == null) return false;
+        var descriptor = TilesetDescriptor.Lookup.Values.OfType<TilesetDescriptor>().FirstOrDefault(t => t.Name == _pendingLand);
+        if (descriptor == null) return false;
+        SetLand(new(descriptor.Id, 0, 0, 0)); _pendingLand = null;
+        var resume = _resumeGround; _resumeGround = null;
+        if (resume != null && _working?.Tile == resume) CreateGroundShore();
+        else _status.Text = T("GroundEdited");
+        return true;
+    }
+    private void PaintGround()
+    {
+        if (_landTile == null) { _status.Text = T("GroundShoreRequired"); return; }
+        _working = new() { Name = T("GroundSelected"), Tile = _landTile, Layer = Options.Instance.Map.Layers.All[0] };
+        _selected = null; _pendingGround = null; _pendingWater = null;
+        _softWater.Checked = false; _groundShore.Checked = false; _category.SelectedIndex = 0;
+        _destination.SelectedItem = _working.Layer; _name.Text = _working.Name;
+        _enabled.Checked = true; Globals.CurrentTool = EditingTool.Brush; LoadSample(); InvalidatePreview();
+    }
+    private void CreateGroundShore()
+    {
+        if (_working == null || _working.Tile.Autotile is not (1 or 3 or 6 or 7) || (_landTile ?? CurrentTile()) is not { } land
+            || land.Autotile is not (0 or 1 or 6)) { _status.Text = T("GroundShoreRequired"); return; }
+        // The captured preset is water; the palette now holds the desired land fill.
+        var water = _working.Tile;
+        var waterName = TilesetDescriptor.Get(water.TilesetId)?.Name;
+        var landName = TilesetDescriptor.Get(land.TilesetId)?.Name;
+        using var source = waterName == null ? null : EditorResourcePreview.LoadImage(EditorResourcePreview.ResolveFile(waterName, "resources/tilesets"), int.MaxValue);
+        using var fill = landName == null ? null : EditorResourcePreview.LoadImage(EditorResourcePreview.ResolveFile(landName, "resources/tilesets"), int.MaxValue);
+        if (source == null || fill == null || GroundShoreVariant.ConnectionTile(water.Native).TilesetId != water.TilesetId)
+        { _status.Text = T("GroundShoreRequired"); return; }
+        if (land.Autotile != 0)
+        {
+            // Flatten the connected fill. A land autotile's original outer edges
+            // must not draw grass or transparent corners against the new bank.
+            using var nativeFill = SmartWaterShore.LandFill(fill, land);
+            _landPaletteSource = land; RegisterLand(nativeFill, water); return;
+        }
+        using var image = SmartWaterShore.CreateGround(source, water, fill, land, (int)_waterFeather.Value);
+        using var bytes = new MemoryStream(); image.Save(bytes, Drawing.Imaging.ImageFormat.Png);
+        var name = GroundShoreVariant.FileName(water.Native, Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes.ToArray()))[..20].ToLowerInvariant());
+        var target = Path.Combine("resources", "tilesets", name);
+        if (!File.Exists(target))
+        {
+            var temporary = target + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try { File.WriteAllBytes(temporary, bytes.ToArray()); File.Move(temporary, target); }
+            finally { if (File.Exists(temporary)) File.Delete(temporary); }
+        }
+        _pendingGround = (water, land, name); _working.WaterFeather = (int)_waterFeather.Value;
+        if (!ResolveGroundShore()) { Intersect.Editor.Networking.PacketSender.SendNewTilesets(new[] { name }); _status.Text = T("SoftWaterRegistering"); }
+    }
+    private bool ResolveGroundShore()
+    {
+        if (_pendingGround is not { } pending || _working?.Tile != pending.Source) return false;
+        var descriptor = TilesetDescriptor.Lookup.Values.OfType<TilesetDescriptor>().FirstOrDefault(t => t.Name == pending.Name);
+        if (descriptor == null) return false;
+        _working.GroundLandTile = pending.Land; _working.GroundWaterTile = pending.Source with { TilesetId = descriptor.Id };
+        SetLand(pending.Land);
+        _pendingGround = null; _category.SelectedIndex = 0; _softWater.Checked = false;
+        _groundShore.Checked = true; _destination.SelectedItem = Options.Instance.Map.Layers.All[0];
+        LoadSample(); InvalidatePreview(); _status.Text = T("GroundShoreReady"); return true;
+    }
     private void CreateSoftWater()
     {
         if (_working == null || _working.Tile.Autotile is not (1 or 3 or 6 or 7)) { _status.Text = T("SoftWaterRequired"); return; }
