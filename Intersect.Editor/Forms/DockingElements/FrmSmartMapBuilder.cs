@@ -10,7 +10,7 @@ using Drawing = System.Drawing;
 
 namespace Intersect.Editor.Forms.DockingElements;
 
-internal sealed class FrmSmartMapBuilder : DockContent
+internal sealed partial class FrmSmartMapBuilder : DockContent
 {
     internal static string T(string key) => HubText.T("Smart." + key);
     private readonly CheckBox _enabled = new() { AutoSize = true };
@@ -84,7 +84,9 @@ internal sealed class FrmSmartMapBuilder : DockContent
         AddButtons(("Import", Import), ("Export", Export));
         _section = new() { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true, Padding = new(10) };
         painting.Controls.Add(_section);
-        Add(_source); Add(_preview); AddLabel("Shape"); Add(_shape);
+        Add(_source); Add(_preview);
+        AddButtons(("CreateWaterConnection", CreateWaterConnection)); AddLabel("WaterConnectionHelp");
+        AddLabel("Shape"); Add(_shape);
         AddLabel("Destination"); Add(_destination);
         AddLabel("WaterFeather"); Add(_waterFeather);
         AddButtons(("EditGround", EditGround), ("PaintGround", PaintGround)); Add(_landSource);
@@ -114,7 +116,7 @@ internal sealed class FrmSmartMapBuilder : DockContent
         }
         VisibleChanged += (_, _) => { _timer.Enabled = Visible; if (Visible) RefreshLayers(); InvalidatePreview(); };
         _preview.Paint += DrawSample;
-        _timer.Tick += (_, _) => { Try(() => { ResolveSoftWater(); ResolveGroundShore(); ResolveLand(); }); _preview.Invalidate(); };
+        _timer.Tick += (_, _) => { Try(() => { ResolveSoftWater(); ResolveGroundShore(); ResolveLand(); ResolveWaterConnection(); }); _preview.Invalidate(); };
         _groundShore.CheckedChanged += (_, _) =>
         {
             if (_groundShore.Checked) { _softWater.Checked = false; _destination.SelectedItem = Options.Instance.Map.Layers.All[0]; }
@@ -184,6 +186,8 @@ internal sealed class FrmSmartMapBuilder : DockContent
         preset.Layer = _destination.SelectedItem as string ?? preset.Layer;
         preset.SoftWater = _softWater.Checked; preset.WaterFeather = (int)_waterFeather.Value;
         preset.GroundShore = _groundShore.Checked;
+        if (Shape == SmartShape.ConnectWater && preset.ConnectedWaterSource == null)
+        { if (report) _status.Text = T("WaterConnectionRequired"); return null; }
         if (preset.GroundShore)
         {
             preset.Layer = Options.Instance.Map.Layers.All[0];
@@ -258,7 +262,8 @@ internal sealed class FrmSmartMapBuilder : DockContent
         if (preset.GroundLandTile is { } land) SetLand(land);
         _destination.SelectedItem = preset.PaintLayer;
         _status.Text = ValidateResources(preset) ? T("Ready") : T("InvalidResource");
-        if (preset.Stamp.Count > 0) _shape.SelectedIndex = (int)SmartShape.Stamp;
+        if (preset.ConnectedWaterSource != null) _shape.SelectedIndex = (int)SmartShape.ConnectWater;
+        else if (preset.Stamp.Count > 0) _shape.SelectedIndex = (int)SmartShape.Stamp;
         LoadSample(); InvalidatePreview();
         RefreshRules();
     }

@@ -68,7 +68,8 @@ public partial class FrmMapEditor
         return SmartBrush.Area(start, end, shape, preset.Radius, preset.Round);
     }
     private List<SmartEdit> SmartPlan(MapInstance map, SmartPreset preset, SmartShape shape, SmartCell start, SmartCell end, bool preserve, bool erase, int seed) =>
-        SmartBrush.Plan(map, preset, SmartCells(map, preset, shape, start, end), preserve, erase, seed, shape == SmartShape.Stamp);
+        shape == SmartShape.ConnectWater ? SmartBrush.ConnectWater(map, preset, start, erase)
+        : SmartBrush.Plan(map, preset, SmartCells(map, preset, shape, start, end), preserve, erase, seed, shape == SmartShape.Stamp);
 
     internal void PreviewSmartBuilder(MapInstance preview)
     {

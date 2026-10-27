@@ -50,6 +50,7 @@ internal sealed class SmartPreset
     public bool GroundShore { get; set; }
     public SmartTile? GroundLandTile { get; set; }
     public SmartTile? GroundWaterTile { get; set; }
+    public SmartTile? ConnectedWaterSource { get; set; }
     internal SmartTile PaintTile => GroundShore ? GroundLandTile ?? throw new InvalidDataException("Smart.GroundShoreRequired")
         : SoftWater ? SoftWaterTile ?? throw new InvalidDataException("Smart.SoftWaterRequired") : Tile;
     internal string PaintLayer => SoftWater ? SoftWaterLayer : Layer;
@@ -57,7 +58,8 @@ internal sealed class SmartPreset
     internal IEnumerable<SmartTile> Tiles => new[] { Tile }.Concat(Variants).Concat(Transitions.Select(t => t.Overlay))
         .Concat(Transitions.Select(t => t.Match).Where(t => t.TilesetId != Guid.Empty)).Concat(Stamp.Select(c => c.Tile))
         .Concat(SoftWater && SoftWaterTile != null ? new[] { SoftWaterTile } : Array.Empty<SmartTile>())
-        .Concat(GroundShore && GroundLandTile != null && GroundWaterTile != null ? new[] { GroundLandTile, GroundWaterTile } : Array.Empty<SmartTile>());
+        .Concat(GroundShore && GroundLandTile != null && GroundWaterTile != null ? new[] { GroundLandTile, GroundWaterTile } : Array.Empty<SmartTile>())
+        .Concat(ConnectedWaterSource != null ? new[] { ConnectedWaterSource } : Array.Empty<SmartTile>());
     internal void Validate()
     {
         if (string.IsNullOrWhiteSpace(Name) || Name.Length > 128 || !SmartBrush.Categories.Contains(Category)
@@ -72,6 +74,8 @@ internal sealed class SmartPreset
             || GroundShore && (SoftWater || GroundLandTile == null || GroundWaterTile == null || GroundWaterTile.Autotile != Tile.Autotile
                 || Tile.Autotile is not (1 or 3 or 6 or 7) || GroundLandTile.Autotile != 0
                 || Layer != Options.Instance.Map.Layers.All[0] || Category != "Terrain" || Stamp.Count > 0 || Transitions.Count > 0 || Variants.Count > 0)
+            || ConnectedWaterSource != null && (ConnectedWaterSource.Autotile is not (1 or 3 or 6 or 7) || ConnectedWaterSource.Autotile != Tile.Autotile
+                || SoftWater || GroundShore || Category != "Terrain" || Stamp.Count > 0 || Transitions.Count > 0 || Variants.Count > 0 || Layer != Options.Instance.Map.Layers.All[0])
             || Tiles.Any(t => t.Autotile > 7 || t.X < 0 || t.Y < 0 || t.TilesetId == Guid.Empty))
             throw new InvalidDataException("InvalidPreset");
     }
@@ -99,12 +103,29 @@ internal static class SmartPresetStore
     }
 }
 
-internal enum SmartShape { Brush, Line, Rectangle, Ellipse, Fill, Replace, Stamp }
+internal enum SmartShape { Brush, Line, Rectangle, Ellipse, Fill, Replace, Stamp, ConnectWater }
 internal readonly record struct SmartCell(int X, int Y);
 internal sealed record SmartEdit(string Layer, int X, int Y, Tile Before, Tile After);
 
 internal static class SmartBrush
 {
+    internal static List<SmartEdit> ConnectWater(MapInstance map, SmartPreset preset, SmartCell clicked, bool erase)
+    {
+        // Explicit conversion is scoped to the selected native water identity,
+        // even when the clicked cell is land or another water family.
+        if (preset.ConnectedWaterSource is not { } source || source.Autotile is not (1 or 3 or 6 or 7)
+            || source.Autotile != preset.Tile.Autotile || preset.SoftWater || preset.GroundShore
+            || preset.Category != "Terrain" || preset.Stamp.Count > 0 || preset.Transitions.Count > 0
+            || preset.Layer != Options.Instance.Map.Layers.All[0]
+            || !map.Layers.TryGetValue(preset.Layer, out var layer)
+            || clicked.X < 0 || clicked.Y < 0 || clicked.X >= layer.GetLength(0) || clicked.Y >= layer.GetLength(1)) return [];
+        var match = erase ? preset.Tile : source;
+        var replacement = erase ? source : preset.Tile;
+        if (SmartTile.From(layer[clicked.X, clicked.Y]) != match) return [];
+        return Flood(layer, clicked, true).Select(cell => new SmartEdit(preset.Layer, cell.X, cell.Y,
+            layer[cell.X, cell.Y], replacement.Native)).Where(edit => !Same(edit.Before, edit.After)).ToList();
+    }
+
     internal static readonly string[] Categories = ["Terrain", "Road", "River", "Cliff", "Decoration", "Building"];
     internal static IEnumerable<SmartCell> Line(SmartCell start, SmartCell end)
     {

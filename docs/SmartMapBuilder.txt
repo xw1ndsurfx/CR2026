@@ -201,3 +201,25 @@ The shared resolver connects just that generated block to its original water
 on both sides of map borders. Unrelated atlas rows and ordinary tilesets retain
 their native matching rules. No map packet or database schema changes are made.
 Older clients can render the PNG but cannot resolve these border connections.
+
+CONNECT EXISTING WATER ROWS
+"Add selected variant" is random decoration, not a water connection rule.
+Use Painting > "Connect selected water" for two different water rows:
+1. Capture the surrounding/reference water in Library.
+2. Select the other water row in the tileset palette (the one already on the map).
+3. Choose "Connect selected water" in Painting, then click that water on the map.
+The dedicated Connect existing water mode replaces that exact native tile identity
+throughout the current Ground layer, even with Preserve enabled. It does not
+replace the reference water, other rows, land, Mask/Fringe, attributes or events.
+The preview is read-only. One Undo restores the entire operation; right-click on
+converted water restores the original source row. Save the preset to reuse it.
+
+The chosen appearance's complete block is relocated to the reference coordinates
+in a new PNG. VX/XP quarters, transparency and every animation frame are copied
+exactly. Both rows must use the same native format and animation mode. Only this
+explicit generated variant shares the reference identity; unrelated rows retain
+normal engine matching. The original atlases are never overwritten. Keep the
+generated smart_ground filename and distribute its PNG through normal resources.
+The shared connection resolver is the one already shipped for Ground shores;
+editor and client must include that resolver. This is a current-map conversion,
+not a rewrite of neighboring maps or a global merge of every water tileset.
