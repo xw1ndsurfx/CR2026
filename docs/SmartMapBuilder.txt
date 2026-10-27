@@ -59,6 +59,29 @@ favorites and recently used ordering. They reference real tileset IDs and
 source coordinates; images are never repacked. The editor-only preset file is
 resources/smart-map-builder/presets.json, written through an atomic replacement.
 
+OPTIONAL WATER-TO-GRASS SHORE
+The Painting tab now offers Water -> grass, no sand, OFF by default. Capture
+a native VX/XP water autotile, then Create soft water variant. This writes a
+separate content-addressed PNG and registers it through the existing native
+AddTilesets flow. Select a graphic layer ABOVE the preserved grass. The option
+stores the alternate native tile and destination layer in the preset; turning
+it off returns future strokes to the original source. Existing map cells are
+not retroactively rewritten by a checkbox change.
+
+The authoring operation learns the connected-interior palette separately for
+each animation frame, removes non-water pixels and feathers the shoreline's
+alpha (0-8 source pixels). Native interior template quarters remain opaque to
+prevent seams across connected cells. Original RGB/frame layout/dimensions are
+retained, and only the chosen source block is processed. The source atlas is
+never overwritten. Recreate the variant after changing the feather width.
+This is intended for water sources whose shoreline colors differ from their
+water interior; unusual foam/color art may need a separately authored variant.
+The generated PNG must be distributed through the normal client resource
+pipeline, like any other new tileset. No client shader or map-format extension
+is needed. Use a dedicated water preset without stamps, decoration variants
+or transition rules. The overlay is compatible with preservation, erasing,
+preview, fill/replacement and native undo.
+
 ARCHITECTURE
 SmartMapBuilder.cs contains editor-only preset data, geometry, deterministic
 decoration, fill/replacement traversal, non-mutating edit planning and native

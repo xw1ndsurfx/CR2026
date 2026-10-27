@@ -28,7 +28,7 @@ internal static class SmartMapBuilderTests
     internal static void Run()
     {
         Options.Instance.Map.Layers.Validate();
-        Geometry(); ResourceValidation(); PresetStorage(); Protection(); NativeFormats(); NeighborBorders(); InputTransaction(); RealGame(); LocalizationAndPanel();
+        Geometry(); ResourceValidation(); PresetStorage(); Protection(); NativeFormats(); SoftWater(); NeighborBorders(); InputTransaction(); RealGame(); LocalizationAndPanel();
         Console.WriteLine($"PASS Smart Map Builder: {_checks} assertions; native formats 0–7, irregular areas, holes, erasure, cliffs, neighbors, staged input, undo/redo snapshots, preservation, stamps, transitions, presets and locales.");
         Console.WriteLine(string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SMART_MAP_GAME_FIXTURE"))
             ? "Real-game integration skipped: set SMART_MAP_GAME_FIXTURE to an isolated data export. Synthetic fixtures do not certify real artwork or connected-client acceptance."
@@ -267,6 +267,36 @@ internal static class SmartMapBuilderTests
     }
 
     private static readonly List<SmartPreset> _realPresets = [];
+    private static void SoftWater()
+    {
+        foreach (byte mode in new byte[] { 1, 3, 6, 7 })
+        {
+            var preset = Preset(mode); var tile = preset.Tile;
+            int tw = Options.Instance.Map.TileWidth, th = Options.Instance.Map.TileHeight;
+            var size = tile.Footprint; using var source = new Bitmap(size.Width * tw, size.Height * th);
+            int frames = mode is 3 or 7 ? 3 : 1, fw = source.Width / frames;
+            using (var g = System.Drawing.Graphics.FromImage(source)) g.Clear(System.Drawing.Color.CornflowerBlue);
+            // The native interior is away from the upper-left outside-bank sample in VX and XP.
+            source.SetPixel(0, 0, System.Drawing.Color.Yellow);
+            using var variant = SmartWaterShore.Create(source, tile, 2);
+            Check(source.GetPixel(0, 0).A == 255 && variant.GetPixel(0, 0).A == 0, "Optional shore removes bank without editing source " + mode);
+            Check(variant.GetPixel(1, 0).A is > 0 and < 255, "Shore feathers water alpha " + mode);
+            Check(variant.GetPixel(fw - 1, source.Height - 1).A == 255, "Atlas edges do not introduce transparent seams " + mode);
+            if (frames == 3) Check(variant.GetPixel(fw, 0).A == 255, "Animation frames have independent masks " + mode);
+            using var hard = SmartWaterShore.Create(source, tile, 0);
+            Check(hard.GetPixel(1, 0).A == 255, "Zero width keeps a crisp transparent shore " + mode);
+            preset.SoftWater = true; preset.SoftWaterTile = tile with { TilesetId = Guid.NewGuid() }; preset.SoftWaterLayer = Options.Instance.Map.Layers.All[1];
+            preset.Validate(); var copy = preset.Copy();
+            Check(copy.SoftWater && copy.PaintTile == preset.SoftWaterTile && copy.PaintLayer == preset.SoftWaterLayer, "Optional shore settings persist " + mode);
+            var map = Map(); map.Layers[preset.Layer][3, 3] = Preset(0).Tile.Native;
+            var edits = SmartBrush.Plan(map, preset, new[] { new SmartCell(3, 3) }, true, false, 0);
+            Check(edits.Count == 1 && edits[0].Layer == preset.SoftWaterLayer && edits[0].After.Autotile == mode, "Soft water paints above preserved terrain " + mode);
+            SmartBrush.Apply(map, edits, false);
+            Check(SmartBrush.Plan(map, preset, new[] { new SmartCell(3, 3) }, true, true, 0).Single().Layer == preset.SoftWaterLayer, "Soft water eraser preserves grass " + mode);
+            preset.SoftWater = false;
+            Check(preset.PaintTile == tile && preset.PaintLayer == preset.Layer, "Unchecked option restores original source " + mode);
+        }
+    }
     private static void RealGame()
     {
         var fixture = Environment.GetEnvironmentVariable("SMART_MAP_GAME_FIXTURE");
@@ -310,6 +340,42 @@ internal static class SmartMapBuilderTests
         var riverCells = SmartBrush.Area(new(4, 0), new(12, 12), SmartShape.Line, 2, true).Concat(SmartBrush.Area(new(12, 12), new(25, 25), SmartShape.Line, 3, true));
         SmartBrush.Apply(sample, SmartBrush.Plan(sample, _realPresets[1], riverCells, false, false, 0), false);
         CompareFullRebuild(sample, "Real tileset river connections");
+        using var waterSource = Intersect.Editor.Forms.Styling.EditorResourcePreview.LoadImage(Path.Combine("resources/tilesets", water.Name), int.MaxValue)!;
+        using var softAtlas = SmartWaterShore.Create(waterSource, _realPresets[1].Tile, 2);
+        using var softBytes = new MemoryStream(); softAtlas.Save(softBytes, System.Drawing.Imaging.ImageFormat.Png);
+        var softName = "smart_water_" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(softBytes.ToArray()))[..20].ToLowerInvariant() + ".png";
+        File.WriteAllBytes(Path.Combine("resources/tilesets", softName), softBytes.ToArray());
+        var softId = Guid.NewGuid(); TilesetDescriptor.Lookup[softId] = new TilesetDescriptor(softId) { Name = softName };
+        var softPreset = _realPresets[1].Copy(); softPreset.SoftWater = true; softPreset.SoftWaterTile = softPreset.Tile with { TilesetId = softId }; softPreset.SoftWaterLayer = Options.Instance.Map.Layers.All[1];
+        using (var panel = new FrmSmartMapBuilder())
+        {
+            typeof(FrmSmartMapBuilder).GetField("_working", Hidden)!.SetValue(panel, _realPresets[1].Copy());
+            ((TextBox)typeof(FrmSmartMapBuilder).GetField("_name", Hidden)!.GetValue(panel)!).Text = "Royal River";
+            panel.Show(); Application.DoEvents();
+            var toggle = (CheckBox)typeof(FrmSmartMapBuilder).GetField("_softWater", Hidden)!.GetValue(panel)!;
+            Check(!toggle.Checked, "No-sand option is off by default");
+            typeof(FrmSmartMapBuilder).GetMethod("CreateSoftWater", Hidden)!.Invoke(panel, null);
+            var settings = panel.Settings(true)!;
+            Check(toggle.Checked && settings.SoftWater && settings.PaintTile.TilesetId == softId && settings.PaintLayer == softPreset.SoftWaterLayer, "Native variant registration resolves the optional brush and selects the upper layer");
+            toggle.Checked = false;
+            Check(panel.Settings(true)!.PaintTile == _realPresets[1].Tile, "Unchecking the UI restores the original water source");
+            panel.Hide();
+        }
+        var softMap = Map();
+        SmartBrush.Apply(softMap, SmartBrush.Plan(softMap, _realPresets[0], SmartBrush.Area(new(0, 0), new(31, 25), SmartShape.Rectangle, 0, false), false, false, 0), false);
+        var baseTiles = softMap.GenerateTileData();
+        SmartBrush.Apply(softMap, SmartBrush.Plan(softMap, softPreset, riverCells, true, false, 0), false);
+        Check(softMap.Layers[layerName].Cast<Tile>().All(t => SmartTile.From(t) == _realPresets[0].Tile), "Real grass under soft water remains intact");
+        CompareFullRebuild(softMap, "Soft water native connections");
+        var waterCells = riverCells.ToHashSet();
+        var interiorCell = waterCells.First(c => c.X > 0 && c.Y > 0 && c.X + 1 < Options.Instance.Map.MapWidth && c.Y + 1 < Options.Instance.Map.MapHeight
+            && SmartBrush.Area(c, c, SmartShape.Brush, 1, false).All(waterCells.Contains));
+        for (var frame = 0; frame < 3; frame++) for (var q = 1; q <= 4; q++)
+        {
+            var point = softMap.Autotiles.Layers[softPreset.SoftWaterLayer][interiorCell.X, interiorCell.Y].QuarterTile[q];
+            for (var y = 0; y < Options.Instance.Map.TileHeight / 2; y++) for (var x = 0; x < Options.Instance.Map.TileWidth / 2; x++)
+                Check(softAtlas.GetPixel(point.X + frame * Options.Instance.Map.TileWidth * 2 + x, point.Y + y).A == 255, "Connected water interiors remain opaque: no tile-grid seams");
+        }
         var output = Environment.GetEnvironmentVariable("EDITOR_TEST_SCREENSHOTS");
         if (!string.IsNullOrWhiteSpace(output))
         {
@@ -320,12 +386,13 @@ internal static class SmartMapBuilderTests
             if (Environment.GetEnvironmentVariable("SMART_MAP_GPU") == "1")
             {
                 using var renderer = new SmartMapGpuRenderer();
-                foreach (var (map, file) in new[] { (sample, "royal-river-gpu"), (maps.First(), "existing-map-gpu") })
+                foreach (var (map, file) in new[] { (sample, "royal-river-gpu"), (softMap, "royal-river-soft-gpu"), (maps.First(), "existing-map-gpu") })
                     for (var frame = 0; frame < 3; frame++) renderer.Render(map, frame, Path.Combine(output, file + "-frame-" + frame + ".png"));
                 Check(!File.ReadAllBytes(Path.Combine(output, "royal-river-gpu-frame-0.png")).SequenceEqual(File.ReadAllBytes(Path.Combine(output, "royal-river-gpu-frame-1.png"))), "Actual native GPU output changes with animation frame");
                 Console.WriteLine("PASS actual editor MonoGame renderer: real tilesets, native autotile draw routine and three moving water frames captured.");
             }
             SmartPresetStore.Write(Path.Combine(Path.GetDirectoryName(output)!, "royal-smart-presets.json"), _realPresets);
+            File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(output)!, softName), softBytes.ToArray());
         }
         Console.WriteLine($"PASS real game data: {maps.Count} legacy maps round-tripped; native tile modes present: {string.Join(", ", modes.OrderBy(p => p.Key).Select(p => p.Key + "=" + p.Value))}; originals opened read-only, no live server writes.");
     }

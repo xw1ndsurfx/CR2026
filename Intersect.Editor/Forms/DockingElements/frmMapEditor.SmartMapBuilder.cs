@@ -62,7 +62,7 @@ public partial class FrmMapEditor
     }
     private IEnumerable<SmartCell> SmartCells(MapInstance map, SmartPreset preset, SmartShape shape, SmartCell start, SmartCell end)
     {
-        if (shape is SmartShape.Fill or SmartShape.Replace) return SmartBrush.Flood(map.Layers[preset.Layer], start, shape == SmartShape.Replace);
+        if (shape is SmartShape.Fill or SmartShape.Replace) return SmartBrush.Flood(map.Layers[preset.PaintLayer], start, shape == SmartShape.Replace);
         if (shape == SmartShape.Stamp) return new[] { end };
         if (_smartMap != null && shape == SmartShape.Brush) return _smartPath;
         return SmartBrush.Area(start, end, shape, preset.Radius, preset.Round);

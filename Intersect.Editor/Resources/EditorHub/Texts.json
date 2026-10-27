@@ -558,5 +558,40 @@
     "en": "Remove rule",
     "fr": "Retirer la règle",
     "es": "Quitar regla"
+  },
+  "Smart.SoftWater": {
+    "en": "Water → grass, no sand (optional)",
+    "fr": "Eau → gazon sans sable (optionnel)",
+    "es": "Agua → césped sin arena (opcional)"
+  },
+  "Smart.WaterFeather": {
+    "en": "Soft edge width (pixels)",
+    "fr": "Largeur du dégradé (pixels)",
+    "es": "Ancho del degradado (píxeles)"
+  },
+  "Smart.CreateSoftWater": {
+    "en": "Create soft water variant",
+    "fr": "Créer la variante sans sable",
+    "es": "Crear variante sin arena"
+  },
+  "Smart.SoftWaterHelp": {
+    "en": "Create a transparent water variant, then choose an empty layer above the grass. The original atlas stays intact. Distribute the generated PNG with the client resources, like any tileset. Changing the edge width requires recreating the variant.",
+    "fr": "Créez une variante d’eau transparente, puis choisissez un calque libre au-dessus du gazon. L’image originale est conservée. Distribuez le PNG créé avec les ressources du client, comme tout tileset. Recréez la variante après un changement de largeur.",
+    "es": "Cree una variante de agua transparente y elija una capa libre sobre el césped. La imagen original se conserva. Distribuya el PNG generado con los recursos del cliente, como cualquier tileset. Recree la variante al cambiar el ancho."
+  },
+  "Smart.SoftWaterRequired": {
+    "en": "Capture a VX/XP water autotile, create its soft variant and choose a layer above the ground. Use a separate preset without stamps, decoration or overlay rules.",
+    "fr": "Capturez un autotile d’eau VX/XP, créez sa variante sans sable et choisissez un calque au-dessus du sol. Utilisez un preset distinct, sans tampon, décoration ni règle de surcouche.",
+    "es": "Capture un autotile de agua VX/XP, cree su variante sin arena y elija una capa sobre el suelo. Use un preset separado, sin sellos, decoración ni reglas de superposición."
+  },
+  "Smart.SoftWaterRegistering": {
+    "en": "Registering the new native tileset…",
+    "fr": "Enregistrement du nouveau tileset natif…",
+    "es": "Registrando el nuevo tileset nativo…"
+  },
+  "Smart.SoftWaterReady": {
+    "en": "Soft water ready. Paint above grass; save the preset and distribute its new PNG to clients.",
+    "fr": "Eau sans sable prête. Peignez au-dessus du gazon; enregistrez le preset et distribuez son nouveau PNG aux clients.",
+    "es": "Agua sin arena lista. Pinte sobre el césped; guarde el preset y distribuya el nuevo PNG a los clientes."
   }
 }

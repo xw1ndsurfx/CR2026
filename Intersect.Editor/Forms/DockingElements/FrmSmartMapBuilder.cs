@@ -16,6 +16,8 @@ internal sealed class FrmSmartMapBuilder : DockContent
     private readonly CheckBox _enabled = new() { AutoSize = true };
     private readonly CheckBox _preserve = new() { Checked = true, AutoSize = true };
     private readonly CheckBox _round = new() { Checked = true, AutoSize = true };
+    private readonly CheckBox _softWater = new() { AutoSize = true };
+    private readonly NumericUpDown _waterFeather = new() { Minimum = 0, Maximum = 8, Value = 2, Width = 90 };
     private readonly TextBox _search = new() { Width = 260 };
     private readonly TextBox _name = new() { Width = 260 };
     private readonly ComboBox _category = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 260 };
@@ -45,6 +47,8 @@ internal sealed class FrmSmartMapBuilder : DockContent
     private Bitmap? _sheet;
     private MapInstance? _sample;
     private string? _sheetPath;
+    private SmartTile? _sampleTile;
+    private (SmartTile Source, string Name)? _pendingWater;
     internal bool EnabledForMap => Visible && _enabled.Checked && Globals.CurrentTool == EditingTool.Brush;
     internal bool Preserve => _preserve.Checked;
     internal SmartShape Shape => (SmartShape)Math.Max(0, _shape.SelectedIndex);
@@ -53,6 +57,7 @@ internal sealed class FrmSmartMapBuilder : DockContent
     {
         Text = T("Title"); TabText = Text; HideOnClose = true; Width = 310; MinimumSize = new(290, 250);
         _enabled.Text = T("Enable"); _preserve.Text = T("Preserve"); _round.Text = T("Round");
+        _softWater.Text = T("SoftWater");
         _search.PlaceholderText = T("Search");
         _category.Items.AddRange(SmartBrush.Categories.Select(T).Cast<object>().ToArray()); _category.SelectedIndex = 0;
         _shape.Items.AddRange(Enum.GetNames<SmartShape>().Select(T).Cast<object>().ToArray()); _shape.SelectedIndex = 0;
@@ -73,6 +78,8 @@ internal sealed class FrmSmartMapBuilder : DockContent
         painting.Controls.Add(_section);
         Add(_source); Add(_preview); AddLabel("Shape"); Add(_shape);
         AddLabel("Destination"); Add(_destination);
+        Add(_softWater); AddLabel("WaterFeather"); Add(_waterFeather);
+        AddButtons(("CreateSoftWater", CreateSoftWater)); AddLabel("SoftWaterHelp");
         AddLabel("Radius"); Add(_radius); Add(_round); AddLabel("Density"); Add(_density);
         AddButtons(("Undo", () => Globals.MainForm?.UndoSmartMap()), ("Redo", () => Globals.MainForm?.RedoSmartMap()));
         AddLabel("Help");
@@ -96,7 +103,20 @@ internal sealed class FrmSmartMapBuilder : DockContent
         }
         VisibleChanged += (_, _) => { _timer.Enabled = Visible; if (Visible) RefreshLayers(); InvalidatePreview(); };
         _preview.Paint += DrawSample;
-        _timer.Tick += (_, _) => _preview.Invalidate();
+        _timer.Tick += (_, _) => { ResolveSoftWater(); _preview.Invalidate(); };
+        _softWater.CheckedChanged += (_, _) =>
+        {
+            if (_working != null)
+            {
+                if (_softWater.Checked)
+                {
+                    var layers = Options.Instance.Map.Layers.All;
+                    _destination.SelectedItem = string.IsNullOrEmpty(_working.SoftWaterLayer) ? layers.Skip(layers.IndexOf(_working.Layer) + 1).FirstOrDefault() : _working.SoftWaterLayer;
+                }
+                else _destination.SelectedItem = _working.Layer;
+            }
+            LoadSample(); InvalidatePreview();
+        };
         if (File.Exists(_path)) Try(() => _presets.AddRange(SmartPresetStore.Read(_path)));
         RefreshLibrary(); EditorTheme.Apply(this);
     }
@@ -116,7 +136,7 @@ internal sealed class FrmSmartMapBuilder : DockContent
     {
         try { action(); }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or ArgumentException or InvalidOperationException)
-        { _status.Text = T("Error") + Environment.NewLine + error.Message; }
+        { _status.Text = T("Error") + Environment.NewLine + (error.Message.StartsWith("Smart.", StringComparison.Ordinal) ? HubText.T(error.Message) : error.Message); }
     }
     private static SmartTile? CurrentTile() => Globals.CurrentTileset == null ? null : new(Globals.CurrentTileset.Id, Globals.CurSelX, Globals.CurSelY, (byte)Globals.Autotilemode);
     private void Capture()
@@ -124,6 +144,7 @@ internal sealed class FrmSmartMapBuilder : DockContent
         if (CurrentTile() is not { } tile || !Options.Instance.Map.Layers.All.Contains(Globals.CurrentLayer)) { _status.Text = T("ChooseSource"); return; }
         _working = new() { Name = string.IsNullOrWhiteSpace(_name.Text) ? Globals.CurrentTileset.Name : _name.Text.Trim(), Tile = tile, Layer = Globals.CurrentLayer };
         _working.Category = SmartBrush.Categories[Math.Max(0, _category.SelectedIndex)];
+        _softWater.Checked = false; _pendingWater = null;
         if (!ValidateResources(_working)) return;
         _name.Text = _working.Name; LoadSample(); InvalidatePreview(); _status.Text = T("Captured");
         RefreshRules();
@@ -144,6 +165,15 @@ internal sealed class FrmSmartMapBuilder : DockContent
         preset.Category = SmartBrush.Categories[Math.Max(0, _category.SelectedIndex)]; preset.Radius = (int)_radius.Value;
         preset.Density = (int)_density.Value; preset.Round = _round.Checked; preset.AnchorX = (int)_anchorX.Value; preset.AnchorY = (int)_anchorY.Value;
         preset.Layer = _destination.SelectedItem as string ?? preset.Layer;
+        preset.SoftWater = _softWater.Checked; preset.WaterFeather = (int)_waterFeather.Value;
+        if (preset.SoftWater)
+        {
+            preset.Layer = _working.Layer;
+            preset.SoftWaterLayer = _destination.SelectedItem as string ?? "";
+            if (preset.SoftWaterTile == null || preset.SoftWaterLayer == preset.Layer || string.IsNullOrEmpty(preset.SoftWaterLayer)
+                || preset.Category == "Decoration" || preset.Stamp.Count > 0 || preset.Transitions.Count > 0)
+            { if (report) _status.Text = T("SoftWaterRequired"); return null; }
+        }
         // Resource validation runs when capturing/loading and before beginning an action, never on every rendered frame.
         return !report || ValidateResources(preset) ? preset : null;
     }
@@ -158,6 +188,8 @@ internal sealed class FrmSmartMapBuilder : DockContent
             if (image == null || !tile.Fits(image.Width, image.Height, Options.Instance.Map.TileWidth, Options.Instance.Map.TileHeight)) { valid = false; break; }
         }
         if (!Options.Instance.Map.Layers.All.Contains(preset.Layer) || preset.Stamp.Any(c => !Options.Instance.Map.Layers.All.Contains(c.Layer))
+            || preset.SoftWater && (Options.Instance.Map.Layers.All.IndexOf(preset.SoftWaterLayer) <= Options.Instance.Map.Layers.All.IndexOf(preset.Layer)
+                || preset.SoftWaterTile == null || preset.SoftWaterTile.Autotile != preset.Tile.Autotile)
             || preset.Transitions.Any(t => !Options.Instance.Map.Layers.All.Contains(t.TargetLayer) || !Options.Instance.Map.Layers.All.Contains(t.MatchLayer))) valid = false;
         if (!valid) _status.Text = T("InvalidResource");
         return valid;
@@ -194,6 +226,8 @@ internal sealed class FrmSmartMapBuilder : DockContent
         _category.SelectedIndex = Array.IndexOf(SmartBrush.Categories, preset.Category); _radius.Value = preset.Radius;
         _density.Value = preset.Density; _round.Checked = preset.Round; _anchorX.Value = preset.AnchorX; _anchorY.Value = preset.AnchorY;
         _destination.SelectedItem = preset.Layer;
+        _softWater.Checked = preset.SoftWater; _waterFeather.Value = preset.WaterFeather;
+        _destination.SelectedItem = preset.PaintLayer;
         _status.Text = ValidateResources(preset) ? T("Ready") : T("InvalidResource");
         if (preset.Stamp.Count > 0) _shape.SelectedIndex = (int)SmartShape.Stamp;
         LoadSample(); InvalidatePreview();
@@ -285,26 +319,60 @@ internal sealed class FrmSmartMapBuilder : DockContent
     }
     private void ClearRules() { _working?.Transitions.Clear(); _working?.Variants.Clear(); _status.Text = T("Cleared"); RefreshRules(); InvalidatePreview(); }
     private static void InvalidatePreview() => Core.Graphics.TilePreviewUpdated = true;
+    private void CreateSoftWater()
+    {
+        if (_working == null || _working.Tile.Autotile is not (1 or 3 or 6 or 7)) { _status.Text = T("SoftWaterRequired"); return; }
+        var descriptor = TilesetDescriptor.Get(_working.Tile.TilesetId);
+        var path = descriptor == null ? null : EditorResourcePreview.ResolveFile(descriptor.Name, "resources/tilesets");
+        using var source = path == null ? null : EditorResourcePreview.LoadImage(path, int.MaxValue);
+        if (source == null) { _status.Text = T("InvalidResource"); return; }
+        using var image = SmartWaterShore.Create(source, _working.Tile, (int)_waterFeather.Value);
+        using var bytes = new MemoryStream(); image.Save(bytes, Drawing.Imaging.ImageFormat.Png);
+        var name = "smart_water_" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes.ToArray()))[..20].ToLowerInvariant() + ".png";
+        var target = Path.Combine("resources", "tilesets", name);
+        if (!File.Exists(target))
+        {
+            var temporary = target + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try { File.WriteAllBytes(temporary, bytes.ToArray()); File.Move(temporary, target); }
+            finally { if (File.Exists(temporary)) File.Delete(temporary); }
+        }
+        _pendingWater = (_working.Tile, name); _working.WaterFeather = (int)_waterFeather.Value;
+        if (!ResolveSoftWater())
+        {
+            // Native registration creates the standard descriptor; its existing reply loads the PNG.
+            Intersect.Editor.Networking.PacketSender.SendNewTilesets(new[] { name }); _status.Text = T("SoftWaterRegistering");
+        }
+    }
+    private bool ResolveSoftWater()
+    {
+        if (_pendingWater is not { } pending || _working?.Tile != pending.Source) return false;
+        var descriptor = TilesetDescriptor.Lookup.Values.OfType<TilesetDescriptor>().FirstOrDefault(t => t.Name == pending.Name);
+        if (descriptor == null) return false;
+        _working.SoftWaterTile = pending.Source with { TilesetId = descriptor.Id };
+        _pendingWater = null; _softWater.Checked = true; LoadSample(); InvalidatePreview(); _status.Text = T("SoftWaterReady");
+        return true;
+    }
     private void LoadSample()
     {
-        _sheet?.Dispose(); _sheet = null; _sample = null;
-        if (_working == null) return;
-        var descriptor = TilesetDescriptor.Get(_working.Tile.TilesetId);
+        _sheet?.Dispose(); _sheet = null; _sample = null; _sampleTile = null;
+        if (Settings() is not { } settings) return;
+        var tile = settings.PaintTile; _sampleTile = tile;
+        var descriptor = TilesetDescriptor.Get(tile.TilesetId);
         _sheetPath = descriptor == null ? null : EditorResourcePreview.ResolveFile(descriptor.Name, "resources/tilesets");
         _sheet = _sheetPath == null ? null : EditorResourcePreview.LoadImage(_sheetPath, int.MaxValue);
-        _source.Text = $"{descriptor?.Name} · {_working.Layer} · ({_working.Tile.X}, {_working.Tile.Y}) · {ModeName(_working.Tile.Autotile)}";
+        _source.Text = $"{descriptor?.Name} · {settings.PaintLayer} · ({tile.X}, {tile.Y}) · {ModeName(tile.Autotile)}";
         _sample = new MapInstance(Guid.NewGuid());
         foreach (var name in Options.Instance.Map.Layers.All) _sample.Layers[name] = new Tile[Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight];
         var layer = Options.Instance.Map.Layers.All[0];
-        for (var y = 0; y < Math.Min(3, Options.Instance.Map.MapHeight); y++) for (var x = 0; x < Math.Min(3, Options.Instance.Map.MapWidth); x++) _sample.Layers[layer][x, y] = _working.Tile.Native;
+        for (var y = 0; y < Math.Min(3, Options.Instance.Map.MapHeight); y++) for (var x = 0; x < Math.Min(3, Options.Instance.Map.MapWidth); x++) _sample.Layers[layer][x, y] = tile.Native;
         _sample.InitAutotiles();
     }
     private static string ModeName(int mode) => mode switch { 0 => Strings.Tiles.normal, 1 => Strings.Tiles.autotile, 2 => Strings.Tiles.fake, 3 => Strings.Tiles.animated, 4 => Strings.Tiles.cliff, 5 => Strings.Tiles.waterfall, 6 => Strings.Tiles.autotilexp, _ => Strings.Tiles.animatedxp };
     private void DrawSample(object? sender, PaintEventArgs args)
     {
         args.Graphics.Clear(EditorTheme.Input);
-        if (_working == null || _sample == null || _sheet == null) return;
-        var tile = _working.Tile; int tw = Options.Instance.Map.TileWidth, th = Options.Instance.Map.TileHeight;
+        if (_sampleTile is not { } tile || _sample == null || _sheet == null) return;
+        int tw = Options.Instance.Map.TileWidth, th = Options.Instance.Map.TileHeight;
         if (!tile.Fits(_sheet.Width, _sheet.Height, tw, th)) return;
         args.Graphics.InterpolationMode = Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
         args.Graphics.PixelOffsetMode = Drawing.Drawing2D.PixelOffsetMode.Half;

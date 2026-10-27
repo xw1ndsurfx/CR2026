@@ -43,9 +43,16 @@ internal sealed class SmartPreset
     public int AnchorY { get; set; }
     public int StampWidth { get; set; }
     public int StampHeight { get; set; }
+    public bool SoftWater { get; set; }
+    public SmartTile? SoftWaterTile { get; set; }
+    public string SoftWaterLayer { get; set; } = "";
+    public int WaterFeather { get; set; } = 2;
+    internal SmartTile PaintTile => SoftWater ? SoftWaterTile ?? throw new InvalidDataException("Smart.SoftWaterRequired") : Tile;
+    internal string PaintLayer => SoftWater ? SoftWaterLayer : Layer;
     internal SmartPreset Copy() => JsonSerializer.Deserialize<SmartPreset>(JsonSerializer.Serialize(this))!;
     internal IEnumerable<SmartTile> Tiles => new[] { Tile }.Concat(Variants).Concat(Transitions.Select(t => t.Overlay))
-        .Concat(Transitions.Select(t => t.Match).Where(t => t.TilesetId != Guid.Empty)).Concat(Stamp.Select(c => c.Tile));
+        .Concat(Transitions.Select(t => t.Match).Where(t => t.TilesetId != Guid.Empty)).Concat(Stamp.Select(c => c.Tile))
+        .Concat(SoftWater && SoftWaterTile != null ? new[] { SoftWaterTile } : Array.Empty<SmartTile>());
     internal void Validate()
     {
         if (string.IsNullOrWhiteSpace(Name) || Name.Length > 128 || !SmartBrush.Categories.Contains(Category)
@@ -55,6 +62,8 @@ internal sealed class SmartPreset
             || Stamp.Any(c => c == null || c.Tile == null || c.Layer == null || c.X is < 0 or > 4096 || c.Y is < 0 or > 4096)
             || AnchorX is < 0 or > 4096 || AnchorY is < 0 or > 4096
             || StampWidth is < 0 or > 4096 || StampHeight is < 0 or > 4096
+            || WaterFeather is < 0 or > 8 || SoftWater && (SoftWaterTile == null || string.IsNullOrWhiteSpace(SoftWaterLayer) || SoftWaterLayer == Layer
+                || Tile.Autotile is not (1 or 3 or 6 or 7) || SoftWaterTile.Autotile != Tile.Autotile || Category == "Decoration" || Stamp.Count > 0 || Transitions.Count > 0)
             || Tiles.Any(t => t.Autotile > 7 || t.X < 0 || t.Y < 0 || t.TilesetId == Guid.Empty))
             throw new InvalidDataException("InvalidPreset");
     }
@@ -156,7 +165,7 @@ internal static class SmartBrush
                     || cell.Y - preset.AnchorY + preset.StampHeight > Options.Instance.Map.MapHeight)) continue;
             var noise = Noise(cell, seed);
             if (!erase && preset.Category == "Decoration" && noise % 100 >= preset.Density) continue;
-            var tile = preset.Variants.Count > 0 && preset.Category == "Decoration" ? preset.Variants[(int)(noise % (uint)preset.Variants.Count)] : preset.Tile;
+            var tile = preset.Variants.Count > 0 && preset.Category == "Decoration" ? preset.Variants[(int)(noise % (uint)preset.Variants.Count)] : preset.PaintTile;
             var placements = new List<(string Layer, int X, int Y, SmartTile Tile)>();
             if (stamp)
                 placements.AddRange(preset.Stamp.Select(c => (c.Layer, cell.X + c.X - preset.AnchorX, cell.Y + c.Y - preset.AnchorY, c.Tile)));
@@ -168,7 +177,7 @@ internal static class SmartBrush
                         placements.Add((rule.TargetLayer, cell.X, cell.Y, rule.Overlay));
                 // A matching rule routes the brush onto its overlay layer(s), preserving
                 // the underlying terrain so transparent native borders have something to blend over.
-                if (placements.Count == 0) placements.Add((preset.Layer, cell.X, cell.Y, tile));
+                if (placements.Count == 0) placements.Add((preset.PaintLayer, cell.X, cell.Y, tile));
             }
             // Stamps and multi-layer transitions are atomic at each placement.
             if (placements.Count == 0 || placements.Any(p => !map.Layers.TryGetValue(p.Layer, out var layer) || p.X < 0 || p.Y < 0 || p.X >= layer.GetLength(0) || p.Y >= layer.GetLength(1)
