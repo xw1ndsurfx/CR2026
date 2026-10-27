@@ -57,6 +57,11 @@ internal static partial class RoyalCombatRuntime
                     Category TEXT NOT NULL, Talent TEXT NOT NULL, PRIMARY KEY(CharacterId,RequestId));
                 CREATE TABLE IF NOT EXISTS MasteryLearnedSpells(CharacterId TEXT NOT NULL, SpellId TEXT NOT NULL,
                     PRIMARY KEY(CharacterId,SpellId));
+                CREATE TABLE IF NOT EXISTS ArcheryResults(CompetitionId TEXT NOT NULL, CharacterId TEXT NOT NULL,
+                    RangeId TEXT NOT NULL, SeasonKey TEXT NOT NULL, RulesKey TEXT NOT NULL, PlayerName TEXT NOT NULL,
+                    Score INTEGER NOT NULL CHECK(Score>=0 AND Score<=MaximumScore), MaximumScore INTEGER NOT NULL CHECK(MaximumScore BETWEEN 10 AND 600),
+                    CompletedUtc INTEGER NOT NULL, PRIMARY KEY(CompetitionId,CharacterId));
+                CREATE INDEX IF NOT EXISTS IX_ArcheryResults_Board ON ArcheryResults(RangeId,SeasonKey,RulesKey,CompletedUtc,CharacterId);
                 """;
             schema.ExecuteNonQuery(); return connection;
         }

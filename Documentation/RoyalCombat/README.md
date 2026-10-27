@@ -1,4 +1,4 @@
-# Royal Weapon Mastery / Royal Archery — integration slices 1–4
+# Royal Weapon Mastery / Royal Archery — integration slices 1–5
 
 Status: **draft, not a production-complete Royal Archery Tournament**. Audited base:
 `aaab6f7ce8d23083ebc1ca9f697b2c68e5da2a51` on `main`.
@@ -9,6 +9,8 @@ The third slice adds authored rounds, moving targets, countdowns, an aim-preserv
 and a native perspective target editor. See [range authoring and timing](RangeAuthoring.md).
 The fourth slice adds local-range multiplayer registration, normalized shooting cards and
 live/final session standings. See [competition setup and exact limits](Competitions.md).
+The fifth slice records completed ranked cards and adds day/week/season best-score boards
+in the client and native Wiki API. See [rankings, persistence and operational limits](Rankings.md).
 
 ## Audit and source of truth
 
@@ -167,9 +169,9 @@ Client tests exercise the actual Gwen viewport through the existing headless met
 at 1280×720, 1366×768 and 1920×1080, plus late snapshots after close and FR/ES catalog resolution.
 **Headless metrics rendering is not a screenshot of a running production client.**
 
-Local fourth-slice validation: 145 rules checks and all 440 executed server tests passed;
+Local fifth-slice validation: 148 rules checks and all 448 executed server tests passed;
 the full existing client UI runner passed including archery, ammo compatibility, talent
-confirmation, custom moving-target rounds, zoom, sixteen-entry competition boards and
+confirmation, custom moving-target rounds, zoom, sixteen-entry competition/ranking boards and
 late-refresh disposal checks; focused
 real editor controls passed, including target dragging and 760×520/1100×650 rendering.
 All eight existing mini-game editor test groups also passed in the second slice. Client, server and
@@ -215,9 +217,10 @@ validation and actual-client QA; the current code-native viewport does not yet l
    parallax, optional third person, bow animation, audio and further aim calibration.
    Zoom, countdown, target placement, periodic target motion and round settings are implemented.
 4. **Competition:** local-range registration for 2–16, common rules/start, server scores,
-   withdrawals and live/final standings are implemented. Production capacity tests, broader
-   matchmaking, dedicated instances, rounds/finals, reconnect, spectator scoreboard,
-   daily/weekly/seasonal boards, normalized equipment/mastery/skills, Aureons/cosmetic rewards.
+   withdrawals, live/final standings, persistent day/week/season boards and normalized
+   equipment/mastery/skills are implemented. Production capacity tests, broader matchmaking,
+   dedicated instances, rounds/finals, reconnect, spectator scoreboard and Aureons/cosmetic
+   rewards remain future work.
    Named modes: Royal Training Grounds, Royal Archery Championship, Marksman's Challenge,
    Archery Survival, Archer Duel, Grand Duke Ansfroi's Tournament, Guild Tournament; future
    Castle Defense/invasions. The delivered competition is a simultaneous score card;

@@ -2256,6 +2256,71 @@
       "en": "Royal Archery Championship",
       "fr": "Championnat royal de tir à l’arc",
       "es": "Campeonato real de tiro con arco"
+    },
+    "Today": {
+      "en": "Today",
+      "fr": "Aujourd’hui",
+      "es": "Hoy"
+    },
+    "This week": {
+      "en": "This week",
+      "fr": "Cette semaine",
+      "es": "Esta semana"
+    },
+    "Season": {
+      "en": "Season",
+      "fr": "Saison",
+      "es": "Temporada"
+    },
+    "Next range": {
+      "en": "Next range",
+      "fr": "Stand suivant",
+      "es": "Siguiente campo"
+    },
+    "Loading rankings...": {
+      "en": "Loading rankings...",
+      "fr": "Chargement du classement…",
+      "es": "Cargando clasificación…"
+    },
+    "Rankings · {0} · {1} · Season {2}": {
+      "en": "Rankings · {0} · {1} · Season {2}",
+      "fr": "Classement · {0} · {1} · Saison {2}",
+      "es": "Clasificación · {0} · {1} · Temporada {2}"
+    },
+    "{0}. {1} · {2}/{3} · {4} cards": {
+      "en": "{0}. {1} · {2}/{3} · {4} cards",
+      "fr": "{0}. {1} · {2}/{3} · {4} séries",
+      "es": "{0}. {1} · {2}/{3} · {4} series"
+    },
+    "No completed ranked cards in this period.": {
+      "en": "No completed ranked cards in this period.",
+      "fr": "Aucune série classée terminée sur cette période.",
+      "es": "No hay series clasificadas terminadas en este período."
+    },
+    "No ranked archery range is available.": {
+      "en": "No ranked archery range is available.",
+      "fr": "Aucun stand de tir à l’arc classé disponible.",
+      "es": "No hay campos de tiro con arco clasificados disponibles."
+    },
+    "Archery rankings are temporarily unavailable.": {
+      "en": "Archery rankings are temporarily unavailable.",
+      "fr": "Les classements de tir à l’arc sont temporairement indisponibles.",
+      "es": "Las clasificaciones de tiro con arco no están disponibles temporalmente."
+    },
+    "Please wait before refreshing rankings.": {
+      "en": "Please wait before refreshing rankings.",
+      "fr": "Veuillez patienter avant d’actualiser le classement.",
+      "es": "Espera antes de actualizar la clasificación."
+    },
+    "Results await saving. Rankings will update after confirmation.": {
+      "en": "Results await saving. Rankings will update after confirmation.",
+      "fr": "Résultats en attente de sauvegarde. Le classement sera mis à jour après confirmation.",
+      "es": "Resultados pendientes de guardar. La clasificación se actualizará tras la confirmación."
+    },
+    "Rankings (UTC) · {0} · {1} · Season {2}": {
+      "en": "Rankings (UTC) · {0} · {1} · Season {2}",
+      "fr": "Classement (UTC) · {0} · {1} · Saison {2}",
+      "es": "Clasificación (UTC) · {0} · {1} · Temporada {2}"
     }
   }
 }

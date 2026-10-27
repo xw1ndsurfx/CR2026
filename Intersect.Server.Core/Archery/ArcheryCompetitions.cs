@@ -1,4 +1,6 @@
 using Intersect.Framework.Core.Archery;
+using Intersect.Core;
+using Microsoft.Extensions.Logging;
 
 namespace Intersect.Server.Archery;
 
@@ -7,6 +9,9 @@ internal static class ArcheryCompetitions
 {
     private static readonly object Gate = new();
     private static readonly Dictionary<Guid, Competition> Matches = new();
+    private static readonly Dictionary<(Guid Match, Guid Character), ArcheryResult> Pending = new();
+    private static bool _flushing;
+    private static long _retryAt;
     private sealed class Member(Guid id, string name, long now)
     {
         internal Guid Id = id;
@@ -20,6 +25,8 @@ internal static class ArcheryCompetitions
         internal Guid Id = Guid.NewGuid(), Range = range.Id, Instance = instance;
         internal ArcheryRules Rules = range.Rules.Snapshot();
         internal double Wind = range.Wind;
+        internal bool Ranked = range.RankedCompetition;
+        internal string Season = range.SeasonKey, RulesKey = RoyalCombatRuntime.ArcheryRulesKey(range.Rules, range.Wind);
         internal int Minimum = range.MinimumPlayers, Maximum = range.MaximumPlayers;
         internal long Created = now, Deadline = now + range.RegistrationSeconds * 1000L, Started;
         internal bool Cancelled;
@@ -51,6 +58,9 @@ internal static class ArcheryCompetitions
             {
                 member.Score = Math.Clamp(score, member.Score, match.Rules.MaximumScore);
                 member.Done = done || forfeited; member.Forfeited = forfeited;
+                if (member.Done && !member.Forfeited && match.Ranked)
+                    Pending.TryAdd((match.Id, member.Id), new(match.Id, member.Id, match.Range, match.Season,
+                        match.RulesKey, member.Name, member.Score, match.Rules.MaximumScore, DateTimeOffset.UtcNow));
             }
             Advance(match, now);
             var players = match.Members.OrderBy(m => m.Forfeited).ThenByDescending(m => m.Score).ThenBy(m => m.Id).Select(m => new ArcheryCompetitorView {
@@ -58,10 +68,36 @@ internal static class ArcheryCompetitions
                 Rank = m.Forfeited ? 0 : 1 + match.Members.Count(other => !other.Forfeited && other.Score > m.Score)
             }).ToArray();
             return new(new() { Id = id, Started = match.Started != 0, Cancelled = match.Cancelled,
+                Ranked = match.Ranked, SavePending = Pending.Keys.Any(k => k.Match == match.Id),
                 Finished = match.Started != 0 && match.Members.All(m => m.Done), Players = players,
                 MinimumPlayers = match.Minimum, MaximumPlayers = match.Maximum,
                 RegistrationRemainingMs = (int)Math.Max(0, match.Deadline - now) }, match.Started, match.Wind, match.Rules);
         }
+    }
+    /// <summary>Bounded retry batch; database I/O happens outside the registration lock.</summary>
+    internal static void FlushPending()
+    {
+        ArcheryResult[] batch;
+        lock (Gate)
+        {
+            if (_flushing || Environment.TickCount64 < _retryAt || Pending.Count == 0) return;
+            _flushing = true; batch = Pending.Values.Take(16).ToArray();
+        }
+        var failed = false;
+        try
+        {
+            foreach (var result in batch)
+            {
+                RoyalCombatRuntime.SaveArcheryResult(result);
+                lock (Gate) Pending.Remove((result.CompetitionId, result.CharacterId));
+            }
+        }
+        catch (Exception e) when (e is IOException or Microsoft.Data.Sqlite.SqliteException or InvalidDataException or UnauthorizedAccessException)
+        {
+            failed = true;
+            ApplicationContext.Context.Value?.Logger.LogError(e, "Archery results await persistence; retrying in five seconds");
+        }
+        finally { lock (Gate) { _flushing = false; _retryAt = Environment.TickCount64 + (failed ? 5000 : 0); } }
     }
     internal static void Leave(Guid id, Guid character, long now)
     {

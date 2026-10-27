@@ -24,6 +24,7 @@ public partial class Player
     private long _archeryCompetitionSent;
     private long _archeryCompetitionPolled;
     private Guid _archeryStartToken;
+    private long _archeryLeaderboardAt;
     private Dictionary<string, long> _masteryExperience;
     private readonly Dictionary<Guid, (Guid Weapon, long Time)> _masteryHits = new();
     private long _masteryAwardAt;
@@ -96,6 +97,25 @@ public partial class Player
         lock (EntityLock)
         {
             var now = Environment.TickCount64;
+            if (packet.Action == ArcheryAction.Leaderboard)
+            {
+                if (!Enum.IsDefined((ArcheryLeaderboardPeriod)packet.Period)) return;
+                if (now - _archeryLeaderboardAt < 1000)
+                { SendPacket(new ArcheryStatePacket { RequestId = packet.RequestId, Message = "Please wait before refreshing rankings." }); return; }
+                _archeryLeaderboardAt = now;
+                try
+                {
+                    var board = Intersect.Server.Leaderboards.LeaderboardDataRuntime.Archery(packet.RangeId, (ArcheryLeaderboardPeriod)packet.Period);
+                    SendPacket(new ArcheryStatePacket { RequestId = packet.RequestId, LeaderboardJson = board == null ? "" : JsonSerializer.Serialize(board),
+                        Message = board == null ? "No ranked archery range is available." : "" });
+                }
+                catch (Exception e) when (e is IOException or Microsoft.Data.Sqlite.SqliteException or UnauthorizedAccessException)
+                {
+                    ApplicationContext.Context.Value?.Logger.LogError(e, "Archery leaderboard unavailable");
+                    SendPacket(new ArcheryStatePacket { RequestId = packet.RequestId, Message = "Archery rankings are temporarily unavailable." });
+                }
+                return;
+            }
             if (packet.Action is ArcheryAction.Open or ArcheryAction.Masteries)
             {
                 if (now - _royalRequestAt < 500) return;
@@ -156,6 +176,7 @@ public partial class Player
             _archeryCompetitionPolled = now;
             var update = ArcheryCompetitions.Poll(_archeryCompetition, Id, now, _archery?.Score ?? 0,
                 _archery?.Phase == ArcheryPhase.Finished, _archery?.Phase == ArcheryPhase.Abandoned);
+            ArcheryCompetitions.FlushPending();
             if (update == null || update.View.Cancelled) { EndArchery(); SendPacket(new ArcheryStatePacket { Message = "Competition cancelled: not enough participants." }); return; }
             if (_archeryWaiting && update.View.Started)
             {
@@ -178,7 +199,16 @@ public partial class Player
         if (_archery == null || _archery.Done) return;
         var changed = _archery.Advance(now);
         if (changed || now - _archerySent >= 250) SendArcheryView(now);
-        if (_archery.Done) SendPacket(new HoldPlayerPacket(_archery.Id, Guid.Empty, true));
+        if (_archery.Done)
+        {
+            SendPacket(new HoldPlayerPacket(_archery.Id, Guid.Empty, true));
+            if (_archeryCompetition != Guid.Empty)
+            {
+                ArcheryCompetitions.Poll(_archeryCompetition, Id, now, _archery.Score,
+                    _archery.Phase == ArcheryPhase.Finished, _archery.Phase == ArcheryPhase.Abandoned);
+                ArcheryCompetitions.FlushPending();
+            }
+        }
     }
     private void EndArchery()
     {
@@ -197,6 +227,7 @@ public partial class Player
                 ArcheryCompetitions.Poll(_archeryCompetition, Id, now, _archery?.Score ?? 0,
                     _archery?.Phase == ArcheryPhase.Finished, !_archeryWaiting && _archery?.Phase != ArcheryPhase.Finished);
                 ArcheryCompetitions.Leave(_archeryCompetition, Id, now);
+                ArcheryCompetitions.FlushPending();
                 SendPacket(new HoldPlayerPacket(_archeryCompetition, Guid.Empty, true));
                 _archeryCompetition = Guid.Empty; _archeryWaiting = false;
                 SendPacket(new ArcheryStatePacket { CompetitionJson = "null" });

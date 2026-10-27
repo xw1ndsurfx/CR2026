@@ -6,6 +6,8 @@ public sealed class ArcheryCompetitionView
     public bool Started { get; set; }
     public bool Finished { get; set; }
     public bool Cancelled { get; set; }
+    public bool Ranked { get; set; }
+    public bool SavePending { get; set; }
     public int RegistrationRemainingMs { get; set; }
     public int MinimumPlayers { get; set; }
     public int MaximumPlayers { get; set; }

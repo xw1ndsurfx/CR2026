@@ -24,6 +24,16 @@ internal sealed class ArcheryWindow : Window
     private readonly Button _boardButton;
     private readonly Base _board;
     private readonly Label[] _competitors = new Label[16];
+    private readonly Base _rankings;
+    private readonly Label _rankingHeader;
+    private readonly Label[] _rankingRows = new Label[16];
+    private readonly List<Button> _rankingButtons = [];
+    private Guid _rankingRequest;
+    private Guid _rankingRange;
+    private int _rankingRangeIndex;
+    private ArcheryLeaderboardPeriod _rankingPeriod;
+    private bool _rankingPending;
+    private long _rankingSent;
     private ArcheryCompetitionView? _competition;
     private Guid _startToken;
     private RoyalCombatConfiguration _config = new();
@@ -49,6 +59,21 @@ internal sealed class ArcheryWindow : Window
                 FontSize = 10, TextColorOverride = Color.White, AutoSizeToContents = false };
             _competitors[i].SetBounds(i / 8 * 320 + 4, i % 8 * 42 + 4, 308, 38);
         }
+        _rankings = new Base(this); _rankings.SetBounds(16, 142, 640, 360); _rankings.Hide();
+        _rankingHeader = new Label(_rankings) { Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 10, TextColorOverride = Color.White, AutoSizeToContents = false };
+        _rankingHeader.SetBounds(4, 4, 632, 34);
+        for (var i = 0; i < _rankingRows.Length; i++)
+        {
+            _rankingRows[i] = new Label(_rankings) { Name = "ArcheryRanking" + i, Font = _rankingHeader.Font, FontSize = 10, TextColorOverride = Color.White, AutoSizeToContents = false };
+            _rankingRows[i].SetBounds(i / 8 * 320 + 4, i % 8 * 38 + 44, 308, 36);
+        }
+        var periods = new[] { "Today", "This week", "Season" };
+        for (var i = 0; i < periods.Length; i++)
+        {
+            var period = (ArcheryLeaderboardPeriod)i;
+            _rankingButtons.Add(NavalManagementWindow.Button(this, "ArcheryRankingPeriod" + i, T(periods[i]), 16 + i * 158, 552, 152, 30, () => QueueRankings(period)));
+        }
+        _rankingButtons.Add(NavalManagementWindow.Button(this, "ArcheryNextRange", T("Next range"), 490, 552, 166, 30, () => { _rankingRangeIndex++; QueueRankings(_rankingPeriod); }));
         _status.Text = T("Hold left: draw · Release: shoot · Right click: zoom"); Hide();
     }
     protected override void EnsureInitialized() { }
@@ -59,7 +84,21 @@ internal sealed class ArcheryWindow : Window
         label.SetBounds(x, y, width, height); return label;
     }
     internal static void Open() => Intersect.Client.Networking.Network.SendPacket(new ArcheryRequestPacket { Action = ArcheryAction.Open });
-    private void ShowBoard(bool show) { _board.IsHidden = !show; _view.IsHidden = show; }
+    private void ShowBoard(bool show)
+    {
+        _board.IsHidden = !show; _view.IsHidden = show;
+        if (_rankings != null) _rankings.Hide();
+        _rankingRequest = Guid.Empty; _rankingPending = false;
+    }
+    private void QueueRankings(ArcheryLeaderboardPeriod period)
+    {
+        var ranges = _config.Ranges.Where(r => r.Enabled && r.RankedCompetition).OrderByDescending(r => r.MapId == Globals.Me?.MapId).ToArray();
+        if (ranges.Length == 0) { _status.Text = T("No ranked archery range is available."); return; }
+        _rankingRangeIndex %= ranges.Length; _rankingRange = ranges[_rankingRangeIndex].Id;
+        _rankingPeriod = period; _rankingRequest = Guid.NewGuid(); _rankingPending = true;
+        _board.Hide(); _view.Hide(); _rankings.Show(); _rankingHeader.Text = T("Loading rankings...");
+        foreach (var row in _rankingRows) row.Text = "";
+    }
     private void Start(bool competition)
     {
         var range = _config.Ranges.FirstOrDefault(r => r.Enabled && r.MapId == Globals.Me?.MapId &&
@@ -79,12 +118,13 @@ internal sealed class ArcheryWindow : Window
         {
             var state = JsonSerializer.Deserialize<ArcheryView>(packet.ViewJson);
             if (state == null) return;
-            if (_state?.MatchId != state.MatchId) { _sequence = 0; _view.ResetSession(); }
+            if (_state?.MatchId != state.MatchId) { _sequence = 0; _view.ResetSession(); ShowBoard(false); }
             _view.Apply(state); _state = state;
             var active = state.Phase is not (ArcheryPhase.Finished or ArcheryPhase.Abandoned);
             _start.IsDisabled = active;
             _join.IsDisabled = active;
             _boardButton.IsDisabled = state.Phase is ArcheryPhase.Drawing or ArcheryPhase.Flying;
+            foreach (var button in _rankingButtons) button.IsDisabled = _boardButton.IsDisabled;
             _score.Text = ClientLanguages.Format("Round {0}/{1} · Score {2}/{3} · Arrows {4} · Distance {5} m · Wind {6}",
                 state.Round, state.Rounds, state.Score, state.MaximumScore, Math.Max(0, state.TotalArrows - state.Shot), state.Distance, state.Wind);
             _status.Text = state.Phase == ArcheryPhase.Finished ? T("Training complete") : state.Phase == ArcheryPhase.Abandoned ? T("Training ended") :
@@ -101,7 +141,7 @@ internal sealed class ArcheryWindow : Window
             {
                 if (!competition.Started)
                 {
-                    _state = null; _view.State = null; ShowBoard(true); _start.IsDisabled = _join.IsDisabled = true;
+                    _state = null; _view.State = null; if (_rankings.IsHidden) ShowBoard(true); _start.IsDisabled = _join.IsDisabled = true;
                     _score.Text = T("Royal Archery Championship"); _timer.Text = "";
                 }
                 else if (previous?.Started != true) ShowBoard(false);
@@ -113,25 +153,54 @@ internal sealed class ArcheryWindow : Window
                 }
                 if (!competition.Started) _status.Text = ClientLanguages.Format("Registration: {0}/{1} · Minimum {2} · {3}s", competition.Players.Length,
                     competition.MaximumPlayers, competition.MinimumPlayers, (competition.RegistrationRemainingMs + 999) / 1000);
-                if (competition.Finished) { _status.Text = T("Competition complete — tied scores share a place."); ShowBoard(true); }
+                if (competition.Finished)
+                {
+                    _status.Text = T("Competition complete — tied scores share a place."); if (_rankings.IsHidden) ShowBoard(true);
+                    if (competition.Ranked && competition.SavePending) _status.Text = T("Results await saving. Rankings will update after confirmation.");
+                }
             }
             else { _start.IsDisabled = _join.IsDisabled = false; ShowBoard(false); }
+        }
+        if (packet.LeaderboardJson.Length > 0 && packet.RequestId == _rankingRequest)
+        {
+            _rankingPending = false;
+            var board = JsonSerializer.Deserialize<ArcheryLeaderboardView>(packet.LeaderboardJson);
+            if (board != null)
+            {
+                var range = _config.Ranges.FirstOrDefault(r => r.Id == board.RangeId);
+                _rankingHeader.Text = ClientLanguages.Format("Rankings (UTC) · {0} · {1} · Season {2}", ClientLanguages.ContentText(range?.Name ?? ""), T(board.Period switch {
+                    ArcheryLeaderboardPeriod.Day => "Today", ArcheryLeaderboardPeriod.Week => "This week", _ => "Season" }), board.SeasonKey);
+                for (var i = 0; i < _rankingRows.Length; i++)
+                {
+                    var row = board.Entries.ElementAtOrDefault(i);
+                    _rankingRows[i].Text = row == null ? "" : ClientLanguages.Format("{0}. {1} · {2}/{3} · {4} cards", row.Rank, row.Name, row.BestScore, board.MaximumScore, row.CompletedCards);
+                }
+                if (board.Entries.Length == 0) _rankingRows[0].Text = T("No completed ranked cards in this period.");
+            }
         }
         if (packet.Message.Length > 0)
         {
             _status.Text = T(packet.Message);
             if (_state == null && _competition == null) _start.IsDisabled = _join.IsDisabled = false;
+            if (packet.RequestId == _rankingRequest && _rankingRequest != Guid.Empty) { _rankingHeader.Text = T(packet.Message); _rankingPending = false; }
         }
         if (packet.Open) { Show(); BringToFront(); }
         if (IsVisibleInTree) _wasVisible = true;
     }
     internal void CheckClosed()
     {
-        if (_wasVisible && !IsVisibleInTree) { _wasVisible = false; Send(ArcheryAction.Leave); }
+        if (_wasVisible && !IsVisibleInTree)
+        { _wasVisible = false; _rankingRequest = Guid.Empty; _rankingPending = false; Send(ArcheryAction.Leave); }
     }
     public override void Think()
     {
         base.Think();
+        if (_rankingPending && IsVisibleInTree && Environment.TickCount64 - _rankingSent >= 1100)
+        {
+            _rankingPending = false; _rankingSent = Environment.TickCount64;
+            Intersect.Client.Networking.Network.SendPacket(new ArcheryRequestPacket { Action = ArcheryAction.Leaderboard,
+                RangeId = _rankingRange, Period = (int)_rankingPeriod, RequestId = _rankingRequest });
+        }
         if (_state == null) return;
         var remaining = _state.Phase is ArcheryPhase.Finished or ArcheryPhase.Abandoned ? 0 :
             Math.Max(0, _state.RemainingMs - (Environment.TickCount64 - _view.Received));

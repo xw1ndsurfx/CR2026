@@ -3,6 +3,8 @@
 This delivery adds a server-owned registration pool and live/final standings to the existing
 archery range. It is a simultaneous score competition with separate shooting cards, not an
 elimination bracket or persistent ranked season. No rewards or mastery XP are awarded.
+Opt-in persistent best-score boards are now available through
+[RankedCompetition and SeasonKey](Rankings.md); the live competition structure remains the same.
 
 ## Configure and play
 
@@ -52,8 +54,9 @@ Server player updates maintain a ten-second participation lease. If updates stop
 entrants expire or active entrants forfeit. A server pause exceeding that lease may therefore
 cancel a competition; production load testing and lease tuning remain required. Completed
 boards are retained while participants inspect them, then cleaned after two minutes without
-polling, with a one-hour hard retention limit. Restart loses in-memory registrations/results;
-no entry fees or inventory changes require recovery. Persistent rankings/reconnect are future work.
+polling, with a one-hour hard retention limit. Restart loses in-memory registrations/live
+standings. Committed ranked cards survive in SQLite; reconnect into a live match remains
+future work. No entry fees or inventory changes require recovery.
 
 ## Verification and limits
 
@@ -65,5 +68,5 @@ updates after close, alongside existing viewport tests. These tests do not const
 16-client production load test or a production-world visual run.
 
 Still required: real multi-client network playtesting, sustained load/disconnect testing,
-persistent day/week/season boards, rewards, matchmaking beyond local range registration,
+rewards, matchmaking beyond local range registration,
 finals/brackets, guild competition, spectator UI, reconnect, cinematics and production art.
