@@ -1,4 +1,4 @@
-﻿using Intersect.Enums;
+using Intersect.Enums;
 using Intersect.Server.LogiCoins;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Maps;
@@ -52,6 +52,10 @@ internal static partial class HousingRuntime
             config.Catalog.Any(f => f.CommonEventId != Guid.Empty && EventDescriptor.Get(f.CommonEventId) is not { CommonEvent: true }) ||
             config.Catalog.Any(f => ItemDescriptor.Get(f.CurrencyItemId) is not { } currency || (!currency.Stackable && currency.ItemType != ItemType.Currency)))
             throw new InvalidDataException("Choose an existing map, valid coordinates and stackable catalog currencies.");
+        ValidateFarmConfiguration(config.Farm, config.TemplateMapId);
+        var previousConfiguration = Configuration;
+        config.Farm.ProductionEpochUtc = config.Enabled && config.Farm.Enabled && (!previousConfiguration.Enabled || !previousConfiguration.Farm.Enabled)
+            ? FarmNow : previousConfiguration.Farm.ProductionEpochUtc;
         lock (Gate)
         {
             Directory.CreateDirectory("resources");
@@ -59,7 +63,7 @@ internal static partial class HousingRuntime
             File.Move(FileName + ".tmp", FileName, true); _config = config;
         }
         foreach (var visit in Visits.Values)
-            if (!config.Enabled || visit.Map != config.TemplateMapId) Evictions[visit.Player.Id] = 1;
+            if (!config.Enabled || visit.Map != config.TemplateMapId && (!config.Farm.Enabled || visit.Map != config.Farm.ExteriorMapId)) Evictions[visit.Player.Id] = 1;
             else Send(visit.Player, visit.Owner, false);
         Intersect.Server.Localization.ContentTranslationRuntime.QueueJson(json);
     }
@@ -71,9 +75,10 @@ internal static partial class HousingRuntime
             try
             {
                 if (request.Action != HouseAction.Leave && (player.NavalShipId!=Guid.Empty || Intersect.Server.Dungeons.DungeonRunRuntime.IsPlayerInActiveRun(player))) return;
-                if (request.Action == HouseAction.Open) { Snapshots[player.Id] = new(player.HousingJson, player.House.Public); Send(player, request.OwnerId, true); return; }
+                if (request.Action == HouseAction.Open) { SettleFarm(player); Snapshots[player.Id] = new(player.HousingJson, player.House.Public); Send(player, request.OwnerId, true); return; }
                 if (request.Action == HouseAction.Leave) { Leave(player); return; }
                 if (!Configuration.Enabled) { Send(player, player.Id, true, "Housing is not available yet."); return; }
+                if (request.Action >= HouseAction.VisitFarm) { HandleFarm(player, request); return; }
                 if(request.Action is HouseAction.InviteFriend or HouseAction.AcceptInvitation or HouseAction.DeclineInvitation){HandleInvitation(player,request);return;}
                 if (request.Action == HouseAction.Visit) { Enter(player, request.OwnerId == Guid.Empty ? player.Id : request.OwnerId); return; }
                 if (request.Action == HouseAction.Interact) { Interact(player, request); return; }
@@ -175,8 +180,9 @@ internal static partial class HousingRuntime
     {
         if (!Visits.TryGetValue(player.Id, out var visit) || visit.Owner != player.Id || player.MapInstanceId != visit.Instance || player.MapId != visit.Map)
             throw new InvalidOperationException("Enter your house before decorating.");
+        if (visit.Map != Configuration.TemplateMapId) throw new InvalidOperationException("Enter your house before decorating.");
     }
-    private static void Enter(Player player, Guid ownerId,bool invited=false)
+    private static void Enter(Player player, Guid ownerId,bool invited=false, bool outside=false)
     {
         if (Intersect.Server.Dungeons.DungeonRunRuntime.IsPlayerInActiveRun(player)) throw new InvalidOperationException("Leave the dungeon before visiting a house.");
         var owner = Player.FindOnline(ownerId) ?? Player.Find(ownerId);
@@ -185,9 +191,12 @@ internal static partial class HousingRuntime
         var back = new HouseReturnLocation { MapId = player.MapId, InstanceId = player.MapInstanceId, InstanceType = (int)player.InstanceType, X = player.X, Y = player.Y };
         var instance = Rooms.GetOrAdd(ownerId, _ => Guid.NewGuid());
         player.House.ReturnLocation = back;
-        Visits[player.Id] = new(player, ownerId, instance, Configuration.TemplateMapId,invited);
-        player.AdminWarp(Configuration.TemplateMapId, Configuration.EntryX, Configuration.EntryY, instance, MapInstanceType.Shared, true);
-        if (player.MapInstanceId != instance || player.MapId != Configuration.TemplateMapId) { Visits.TryRemove(player.Id, out _); player.House.ReturnLocation = null; throw new InvalidOperationException("The house could not be entered."); }
+        var mapId = outside ? Configuration.Farm.ExteriorMapId : Configuration.TemplateMapId;
+        var entryX = outside ? Configuration.Farm.EntryX : Configuration.EntryX;
+        var entryY = outside ? Configuration.Farm.EntryY : Configuration.EntryY;
+        Visits[player.Id] = new(player, ownerId, instance, mapId,invited);
+        player.AdminWarp(mapId, entryX, entryY, instance, MapInstanceType.Shared, true);
+        if (player.MapInstanceId != instance || player.MapId != mapId) { Visits.TryRemove(player.Id, out _); player.House.ReturnLocation = null; throw new InvalidOperationException("The house could not be entered."); }
         player.User?.Save(force: true);
         Send(player, ownerId, true);
     }
@@ -202,6 +211,7 @@ internal static partial class HousingRuntime
     }
     internal static void Update(Player player)
     {
+        UpdateFarm(player);
         if (player.House.ReturnLocation == null) return;
         if (Evictions.TryRemove(player.Id, out _) || !Visits.TryGetValue(player.Id, out var visit) || !ReferenceEquals(visit.Player, player)) { Leave(player); return; }
         if (visit.Owner != player.Id && (visit.Invited ? Player.FindOnline(visit.Owner) is not {} host || host.Blocks(player.Id) || player.Blocks(host.Id) : Snapshots.TryGetValue(visit.Owner,out var snapshot) && !snapshot.Public)) { Leave(player); return; }
@@ -223,13 +233,14 @@ internal static partial class HousingRuntime
     }
     internal static void Disconnect(Player player)
     {
+        FarmUpdates.TryRemove(player.Id, out _);
         RemoveHouseInvitations(player.Id);
         Visits.TryRemove(player.Id, out _);
         LastUse.TryRemove(player.Id, out _);
         Evictions.TryRemove(player.Id, out _);
         // Keep the persisted return location for the next login.
     }
-    internal static bool IsInsideOwnHouse(Player player) => Visits.TryGetValue(player.Id, out var visit) && visit.Owner == player.Id && visit.Instance == player.MapInstanceId && visit.Map == player.MapId;
+    internal static bool IsInsideOwnHouse(Player player) => Visits.TryGetValue(player.Id, out var visit) && visit.Owner == player.Id && visit.Instance == player.MapInstanceId && visit.Map == player.MapId && visit.Map == Configuration.TemplateMapId;
     internal static bool PublicHouse(Player player) => Configuration.Enabled && player.House.Public;
     internal static void BroadcastOwner(Player owner)
     {
@@ -294,9 +305,13 @@ internal static partial class HousingRuntime
         var inside = Visits.TryGetValue(requester.Id, out var visit) && visit.Owner == ownerId;
         var profile = HouseProfile.Read(ownerId == requester.Id ? owner.HousingJson : Snapshots.GetOrAdd(ownerId, _ => new(owner.HousingJson, owner.House.Public)).Json); profile.ReturnLocation = null; ApplyInteractionLinks(profile);
         if (ownerId != requester.Id)
+        {
+            profile.Farm = new();
             profile.Furniture = profile.Furniture.Where(kv => profile.Placements.Any(p => p.FurnitureId == kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
+        }
         var view = new HouseView
         { OwnerId = ownerId, OwnerName = owner.Name, IsOwner = ownerId == requester.Id, PremiumActive = requester.User != null && LogiCoinPurchaseRuntime.HasActivePremium(requester), Inside = inside, Enabled = Configuration.Enabled,
+            Outside = inside && visit!.Map == Configuration.Farm.ExteriorMapId, FarmConfiguration = Configuration.Farm,
             MapId = inside ? visit!.Map : Configuration.TemplateMapId, Month = DateTime.UtcNow.ToString("yyyy-MM"), House = profile,
             Catalog = ownerId == requester.Id ? Configuration.Catalog.Where(f => f.Available(DateTime.UtcNow)).ToList() : [] };
         var world = "";
@@ -308,8 +323,9 @@ internal static partial class HousingRuntime
                 var house = HouseProfile.Read(Snapshots.GetOrAdd(host.Id, _ => new(host.HousingJson, host.House.Public)).Json); house.ReturnLocation = null;
                 if (host.Id == requester.Id) house = HouseProfile.Read(requester.HousingJson);
                 house.ReturnLocation = null; ApplyInteractionLinks(house);
+                if (host.Id != requester.Id) house.Farm = new();
                 house.Furniture = house.Furniture.Where(kv => house.Placements.Any(p => p.FurnitureId == kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
-                world = JsonConvert.SerializeObject(new HouseView { OwnerId = host.Id, OwnerName = host.Name, Inside = true, IsOwner = host.Id == requester.Id, Enabled = true, MapId = current.Map, House = house });
+                world = JsonConvert.SerializeObject(new HouseView { OwnerId = host.Id, OwnerName = host.Name, Inside = true, IsOwner = host.Id == requester.Id, Enabled = true, MapId = current.Map, Outside = current.Map == Configuration.Farm.ExteriorMapId, FarmConfiguration = Configuration.Farm, House = house });
             }
         }
         requester.SendPacket(new HouseStatePacket { OpenWindow = open, Message = message, Json = JsonConvert.SerializeObject(view), WorldJson = world });

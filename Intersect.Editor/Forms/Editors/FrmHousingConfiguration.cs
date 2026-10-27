@@ -36,6 +36,44 @@ public sealed class FrmHousingConfiguration : DarkForm
         var header = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 102, Padding = new Padding(12), AutoScroll = true };
         header.Controls.AddRange([_enabled, new Label { Text = "Interior map", AutoSize = true }, _map, new Label { Text = "Entry X / Y", AutoSize = true }, _x, _y,
             new Label { Text = "Furniture / pets", AutoSize = true }, _max, _pets]);
+        var farming = new Button { Text = "Farm & hired workers...", AutoSize = true };
+        farming.Click += (_, _) =>
+        {
+            using var dialog = new DarkForm { Text = "Farm configuration", Size = new Size(760, 700), StartPosition = FormStartPosition.CenterParent };
+            var grid = new PropertyGrid { Dock = DockStyle.Fill, SelectedObject = _draft.Farm, ToolbarVisible = false };
+            var tabs = new TabControl { Dock = DockStyle.Fill };
+            var settings = new TabPage("Settings"); settings.Controls.Add(grid);
+            var cropPage = new TabPage("Crops");
+            var crops = new BindingList<FarmCrop>(_draft.Farm.Crops);
+            var cropGrid = new DataGridView { Dock = DockStyle.Fill, AutoGenerateColumns = false, DataSource = crops, AllowUserToAddRows = true, AllowUserToDeleteRows = true };
+            void CropText(string name) => cropGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = name, HeaderText = name });
+            CropText("Name");
+            var farmItems = ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().Where(i => i.Stackable || i.ItemType == ItemType.Currency).OrderBy(i => i.Name).Select(i => new Choice(i.Id, i.Name)).ToList();
+            foreach (var property in new[] { "SeedItemId", "HarvestItemId" })
+                cropGrid.Columns.Add(new DataGridViewComboBoxColumn { DataPropertyName = property, HeaderText = property, DataSource = farmItems.ToList(), DisplayMember = "Name", ValueMember = "Id", Width = 180 });
+            foreach (var property in new[] { "Seconds", "Yield", "Experience", "RequiredLevel", "Tileset", "SourceX", "SourceY" }) CropText(property);
+            cropGrid.DataError += (_, e) => { e.ThrowException = false; };
+            dialog.FormClosing += (_, _) => { cropGrid.EndEdit(); dialog.BindingContext[crops].EndCurrentEdit(); };
+            cropPage.Controls.Add(cropGrid); tabs.TabPages.Add(settings); tabs.TabPages.Add(cropPage);
+            var selectors = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 70 };
+            var farmMap = new ComboBox { Width = 310, DropDownStyle = ComboBoxStyle.DropDownList };
+            farmMap.Items.AddRange(maps.Cast<object>().ToArray()); farmMap.SelectedItem = farmMap.Items.Cast<Choice>().FirstOrDefault(m => m.Id == _draft.Farm.ExteriorMapId);
+            farmMap.SelectedIndexChanged += (_, _) => { if (farmMap.SelectedItem is Choice choice) { _draft.Farm.ExteriorMapId = choice.Id; grid.Refresh(); } };
+            var farmCurrency = new ComboBox { Width = 250, DropDownStyle = ComboBoxStyle.DropDownList };
+            farmCurrency.Items.AddRange(farmItems.Cast<object>().ToArray()); farmCurrency.SelectedItem = farmCurrency.Items.Cast<Choice>().FirstOrDefault(i => i.Id == _draft.Farm.CurrencyItemId);
+            farmCurrency.SelectedIndexChanged += (_, _) => { if (farmCurrency.SelectedItem is Choice choice) { _draft.Farm.CurrencyItemId = choice.Id; grid.Refresh(); } };
+            selectors.Controls.AddRange([new Label { Text = "Exterior map", AutoSize = true }, farmMap, new Label { Text = "Salary currency", AutoSize = true }, farmCurrency]);
+            var help = new Label { Dock = DockStyle.Top, Height = 90, Text = "Select an isolated exterior map and a worker sprite filename. Each worker uses two walkable tiles at (FieldX + index * 2, FieldY) and the tile below. Crops need existing stackable seed and harvest item IDs. Optional crop tilesets use three adjacent growth frames. Close this window, then Save the housing configuration." };
+            var presets = new Button { Dock = DockStyle.Bottom, Height = 36, Text = "Add Wheat, Carrots and Potatoes (assign item IDs before enabling)" };
+            presets.Click += (_, _) =>
+            {
+                if (_draft.Farm.Crops.Count != 0) return;
+                foreach (var crop in new FarmCrop[] { new() { Name = "Wheat", Seconds = 1800, Yield = 10 }, new() { Name = "Carrots", Seconds = 2700, Yield = 15 }, new() { Name = "Potatoes", Seconds = 3600, Yield = 20 } }) crops.Add(crop);
+                grid.Refresh();
+            };
+            dialog.Controls.Add(tabs); dialog.Controls.Add(selectors); dialog.Controls.Add(help); dialog.Controls.Add(presets); dialog.ShowDialog(this);
+        };
+        header.Controls.Add(farming);
         header.Controls.Add(new Label { Text = "Use an isolated interior map. Months: yyyy-MM separated by commas (UTC). Keep expired offers to preserve furniture IDs. Source X/Y use pixels; width/height use tiles. Furniture may run an optional common event when used nearby. Pet recovery: server config Npc.PetRecoverySeconds (default 300).", AutoSize = true, MaximumSize = new Size(1080, 0) });
         void TextColumn(string property, string title, bool readOnly = false) => _catalog.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = property, HeaderText = title, ReadOnly = readOnly });
         _catalog.Columns.Add(new DataGridViewButtonColumn { Name = "ChooseGraphic", HeaderText = "Graphic", Text = "Select graphic...", UseColumnTextForButtonValue = true });
