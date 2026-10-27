@@ -56,6 +56,9 @@ recoverable two-step operation, not a claimed cross-database atomic commit:
    have an eligible talent grant, and save the native character with the pending record
    cleared. Other valid mastery spell grants and ordinary spells remain. Historical spell
    ownership is retained so deleting/remapping an old talent cannot free its stale spell.
+   Native equipment requirements are rechecked after spell removal; currency consumption
+   also updates the existing gather-item quest counters. Rank-mapped spell IDs are mastery-gated
+   and ownership is tracked per spell ID; use distinct definitions for unrestricted quest abilities.
 
 After a disconnect/restart between steps, the saved paid-operation record resumes on the
 next mastery consultation, talent purchase or relevant mastery-combat check. Recovery uses
@@ -82,6 +85,8 @@ category/XP isolation, public profile packet round trips and unauthenticated/for
 requests. Native client controls cover read-only inspection, price confirmation changes,
 unavailable profiles and public mastery paging. Native editor tests cover disabled defaults,
 currency selection setup and source-draft preservation.
+Recovery tests also revoke a historical mastery spell, preserve an ordinary spell and retry
+the final native acknowledgement after its first save fails.
 
 Save checkpoints are tested with deterministic callbacks plus real mastery SQLite and native
 Pets serialization. This is not a multi-client production-world or forced-process-crash test

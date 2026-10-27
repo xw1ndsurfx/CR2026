@@ -172,7 +172,7 @@ Client tests exercise the actual Gwen viewport through the existing headless met
 at 1280×720, 1366×768 and 1920×1080, plus late snapshots after close and FR/ES catalog resolution.
 **Headless metrics rendering is not a screenshot of a running production client.**
 
-Local sixth-slice validation: 152 rules checks and all 498 executed server tests passed;
+Local sixth-slice validation: 152 rules checks and all 499 executed server tests passed;
 the full existing client UI runner passed including archery, ammo compatibility, talent
 confirmation, custom moving-target rounds, zoom, sixteen-entry competition/ranking boards and
 late-refresh disposal checks; focused

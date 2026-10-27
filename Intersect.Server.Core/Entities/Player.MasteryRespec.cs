@@ -23,26 +23,36 @@ public partial class Player
         _respecRetryAt = Environment.TickCount64 + 10000;
         lock (user.PokerSaveGate)
         {
-            _respecRecovering = true;
             try
-            {
-                RoyalCombatRuntime.CompletePaidRespec(Id, pending.RequestId, pending.Category);
-                _masteryRanks = RoyalCombatRuntime.LoadRanks(Id);
-                var allowed = RoyalCombatRuntime.Current.Masteries.SelectMany(EffectiveTalents)
-                    .SelectMany(n => n.Talent.RankSpellIds.Take(n.Rank)).ToHashSet();
-                foreach (var slot in Spells)
-                    if (MasteryLearnedSpells.Contains(slot.SpellId) && !allowed.Contains(slot.SpellId)) slot.Set(Spell.None);
-                PetCollection.MasteryRespec = null;
-                if (user.Save(force: true) != UserSaveResult.Completed) { PetCollection.MasteryRespec = pending; return false; }
-                _respecRetryAt = 0; PacketSender.SendPlayerSpells(this); return true;
-            }
+            { return FinishPaidMasteryRespec(() => user.Save(force: true) == UserSaveResult.Completed); }
             catch (Exception e) when (e is IOException or Microsoft.Data.Sqlite.SqliteException or UnauthorizedAccessException or InvalidDataException)
             {
                 PetCollection.MasteryRespec = pending;
                 ApplicationContext.Context.Value?.Logger.LogError(e, "Paid mastery reset awaits recovery for {CharacterId}", Id); return false;
             }
-            finally { _respecRecovering = false; }
         }
+    }
+    // Caller owns EntityLock/account save gate; pending is the already-saved paid checkpoint.
+    internal bool FinishPaidMasteryRespec(Func<bool> save)
+    {
+        var pending = PetCollection.MasteryRespec;
+        if (pending == null) return true;
+        _respecRecovering = true;
+        try
+        {
+            RoyalCombatRuntime.CompletePaidRespec(Id, pending.RequestId, pending.Category);
+            _masteryRanks = RoyalCombatRuntime.LoadRanks(Id);
+            var allowed = RoyalCombatRuntime.Current.Masteries.SelectMany(EffectiveTalents)
+                .SelectMany(n => n.Talent.RankSpellIds.Take(n.Rank)).ToHashSet();
+            foreach (var slot in Spells)
+                if (MasteryLearnedSpells.Contains(slot.SpellId) && !allowed.Contains(slot.SpellId)) slot.Set(Spell.None);
+            UnequipInvalidItems();
+            PetCollection.MasteryRespec = null;
+            if (!save()) { PetCollection.MasteryRespec = pending; return false; }
+            _respecRetryAt = 0; PacketSender.SendPlayerSpells(this); return true;
+        }
+        catch { PetCollection.MasteryRespec = pending; throw; }
+        finally { _respecRecovering = false; }
     }
     private void HandleMasteryRespec(ArcheryRequestPacket packet)
     {
@@ -76,7 +86,7 @@ public partial class Player
                     try { paid = MasteryRespecPayment.Debit(Items, config.RespecCurrencyId, config.RespecCost, () => user.Save(force: true) == UserSaveResult.Completed); }
                     finally { if (!paid) PetCollection.MasteryRespec = null; }
                     if (!paid) { SendMasteries(true, "Payment could not be saved or you lack the required currency. No reset was applied."); return; }
-                    PacketSender.SendInventory(this); _respecRetryAt = 0;
+                    PacketSender.SendInventory(this); UpdateGatherItemQuests(config.RespecCurrencyId); _respecRetryAt = 0;
                     var complete = RecoverMasteryRespec();
                     SendMasteries(true, complete ? "Mastery talents reset. Your experience is unchanged." : "Your paid mastery reset is awaiting recovery. No further payment was taken.");
                 }
