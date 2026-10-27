@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Reflection;
 using Console = System.Console;
 using Point = System.Drawing.Point;
+using Color = System.Drawing.Color;
 using Intersect;
 using Intersect.Editor.Forms.DockingElements;
 using Intersect.Editor.Forms.EditorHub;
@@ -28,7 +29,7 @@ internal static class SmartMapBuilderTests
     internal static void Run()
     {
         Options.Instance.Map.Layers.Validate();
-        Geometry(); ResourceValidation(); PresetStorage(); Protection(); NativeFormats(); SoftWater(); NeighborBorders(); InputTransaction(); RealGame(); LocalizationAndPanel();
+        Geometry(); ResourceValidation(); PresetStorage(); Protection(); NativeFormats(); SoftWater(); GroundShore(); GroundPaint(); NeighborBorders(); InputTransaction(); RealGame(); LocalizationAndPanel();
         Console.WriteLine($"PASS Smart Map Builder: {_checks} assertions; native formats 0–7, irregular areas, holes, erasure, cliffs, neighbors, staged input, undo/redo snapshots, preservation, stamps, transitions, presets and locales.");
         Console.WriteLine(string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SMART_MAP_GAME_FIXTURE"))
             ? "Real-game integration skipped: set SMART_MAP_GAME_FIXTURE to an isolated data export. Synthetic fixtures do not certify real artwork or connected-client acceptance."
@@ -47,6 +48,85 @@ internal static class SmartMapBuilderTests
         for (var y = 0; y < 6; y++) tiles[3, y] = new() { TilesetId = Tileset };
         Check(SmartBrush.Flood(tiles, new(0, 0), false).Count() == 18, "Flood respects barrier");
         Check(SmartBrush.Flood(tiles, new(0, 0), true).Count() == 36, "Replace includes disconnected identical regions");
+    }
+    private static void GroundPaint()
+    {
+        using var original = new Bitmap(16, 16);
+        using (var graphics = System.Drawing.Graphics.FromImage(original)) graphics.Clear(Color.FromArgb(80, 100, 60));
+        original.SetPixel(3, 3, Color.FromArgb(160, 200, 120));
+        using var paint = new SmartGroundPaint(original);
+        paint.Colorize(Color.SaddleBrown, false);
+        Check(paint.Image.GetPixel(3, 3).R > paint.Image.GetPixel(4, 3).R, "Tint preserves texture luminance details");
+        Check(original.GetPixel(3, 3).G == 200, "Ground editing never changes the source atlas");
+        paint.Undo(); Check(paint.Image.GetPixel(3, 3) == original.GetPixel(3, 3), "Undo tint");
+        paint.Colorize(Color.Brown, true); Check(paint.Image.GetPixel(3, 3) == Color.FromArgb(255, Color.Brown), "Solid color replaces texture");
+        paint.Checkpoint(); paint.Stroke(new(0, 0), new(15, 15), Color.White);
+        Check(Enumerable.Range(0, 16).All(i => paint.Image.GetPixel(i, i).ToArgb() == Color.White.ToArgb()), "Fast pixel dragging leaves no gaps");
+        paint.Undo(); Check(paint.Image.GetPixel(0, 0) == Color.FromArgb(255, Color.Brown), "Whole pixel stroke undoes once");
+        paint.Reset(); Check(paint.Image.GetPixel(3, 3) == original.GetPixel(3, 3), "Restore original ground");
+        paint.Undo(); Check(paint.Image.GetPixel(3, 3) == Color.FromArgb(255, Color.Brown), "Restore itself is reversible");
+        using var dialog = new FrmSmartGroundPaint(original); dialog.Show(); Application.DoEvents();
+        var output = Environment.GetEnvironmentVariable("EDITOR_TEST_SCREENSHOTS");
+        if (!string.IsNullOrEmpty(output)) { Directory.CreateDirectory(output); using var image = new Bitmap(dialog.Width, dialog.Height); dialog.DrawToBitmap(image, new(Point.Empty, dialog.Size)); image.Save(Path.Combine(output, "smart-ground-paint.png")); }
+        dialog.Hide();
+    }
+    private static void GroundShore()
+    {
+        var originalId = Guid.NewGuid(); var variantId = Guid.NewGuid(); var landId = Guid.NewGuid();
+        TilesetDescriptor.Lookup[originalId] = new TilesetDescriptor(originalId) { Name = "fixture_water.png" };
+        var name = GroundShoreVariant.FileName(new Tile { TilesetId = originalId, Autotile = 3 }, "0123456789abcdefabcd");
+        TilesetDescriptor.Lookup[variantId] = new TilesetDescriptor(variantId) { Name = name };
+        TilesetDescriptor.Lookup[landId] = new TilesetDescriptor(landId) { Name = "fixture_land.png" };
+        try
+        {
+            var preset = Preset(3); preset.Tile = new(originalId, 0, 0, 3);
+            preset.GroundShore = true; preset.GroundLandTile = new(landId, 0, 0, 0); preset.GroundWaterTile = preset.Tile with { TilesetId = variantId };
+            preset.Validate(); var copy = preset.Copy(); Check(copy.GroundShore && copy.GroundLandTile == preset.GroundLandTile, "Ground recipe survives serialization");
+            Check(GroundShoreVariant.Connects(preset.Tile.Native, preset.GroundWaterTile.Native), "Generated bank and original water connect");
+            Check(!GroundShoreVariant.Connects(preset.Tile.Native, (preset.GroundWaterTile with { Y = 3 }).Native), "Unmodified atlas rows keep their independent identity");
+            var map = Map(); var ground = preset.Layer; var mask = Options.Instance.Map.Layers.All[1];
+            for (var y = 0; y < Options.Instance.Map.MapHeight; y++) for (var x = 0; x < Options.Instance.Map.MapWidth; x++) map.Layers[ground][x, y] = preset.Tile.Native;
+            map.Layers[mask][8, 8] = Preset(7).Tile.Native;
+            map.Layers[ground][9, 8] = Preset(0).Tile.Native;
+            var before = map.SaveInternal();
+            var edits = SmartBrush.Plan(map, preset, new[] { new SmartCell(8, 8) }, true, false, 0);
+            Check(edits.Count == 8 && edits.All(e => e.Layer == ground), "One land cell plus water halo, only on Ground");
+            Check(before.Matches(map.SaveInternal()), "Island planning leaves map and neighbor data untouched");
+            SmartBrush.Apply(map, edits, false);
+            Check(SmartTile.From(map.Layers[ground][8, 8]) == preset.GroundLandTile && map.Layers[mask][8, 8].Autotile == 7, "Island paints through water with preserve enabled and leaves Mask 1 intact");
+            Check(SmartTile.From(map.Layers[ground][9, 8]) == Preset(0).Tile, "Water halo preserves other terrain");
+            Check(SmartTile.From(map.Layers[ground][2, 2]) == preset.Tile, "Distant banks are unchanged");
+            var erase = SmartBrush.Plan(map, preset, new[] { new SmartCell(8, 8) }, true, true, 0); SmartBrush.Apply(map, erase, false);
+            Check(SmartTile.From(map.Layers[ground][8, 8]) == preset.Tile, "Erasing island restores water on Ground");
+            map.LoadInternal(before); Check(before.Matches(map.SaveInternal()), "Undo restores the complete island operation");
+            // Every map edge, both directions, uses exactly the native connected cache.
+            foreach (var direction in new[] { new SmartCell(-1, 0), new SmartCell(1, 0), new SmartCell(0, -1), new SmartCell(0, 1) })
+            {
+                var center = new NeighborMap(); var neighbor = new NeighborMap();
+                foreach (var layer in Options.Instance.Map.Layers.All)
+                { center.Layers[layer] = new Tile[Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight]; neighbor.Layers[layer] = new Tile[Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight]; }
+                center.Grid[direction.X + 1, direction.Y + 1] = neighbor; neighbor.Grid[1 - direction.X, 1 - direction.Y] = center;
+                int cx = direction.X < 0 ? 0 : direction.X > 0 ? Options.Instance.Map.MapWidth - 1 : 4;
+                int cy = direction.Y < 0 ? 0 : direction.Y > 0 ? Options.Instance.Map.MapHeight - 1 : 4;
+                int nx = direction.X < 0 ? Options.Instance.Map.MapWidth - 1 : direction.X > 0 ? 0 : 4;
+                int ny = direction.Y < 0 ? Options.Instance.Map.MapHeight - 1 : direction.Y > 0 ? 0 : 4;
+                center.Layers[ground][cx, cy] = preset.GroundWaterTile.Native; neighbor.Layers[ground][nx, ny] = preset.Tile.Native;
+                center.InitAutotiles(); neighbor.InitAutotiles(); var neighborBefore = neighbor.SaveInternal();
+                Check(center.Autotiles.CheckTileMatch(ground, cx, cy, cx + direction.X, cy + direction.Y, center.GenerateAutotileGrid()), "Ground water connects outward " + direction);
+                Check(neighbor.Autotiles.CheckTileMatch(ground, nx, ny, nx - direction.X, ny - direction.Y, neighbor.GenerateAutotileGrid()), "Ground water connects inward " + direction);
+                Check(neighborBefore.Matches(neighbor.SaveInternal()), "Connecting does not rewrite neighbor map " + direction);
+            }
+            int tw = Options.Instance.Map.TileWidth, th = Options.Instance.Map.TileHeight;
+            using var waterImage = new Bitmap(tw * 6, th * 3); using (var graphics = System.Drawing.Graphics.FromImage(waterImage)) graphics.Clear(Color.CornflowerBlue);
+            waterImage.SetPixel(0, 0, Color.Lime);
+            using var landImage = new Bitmap(tw, th); using (var graphics = System.Drawing.Graphics.FromImage(landImage)) graphics.Clear(Color.SaddleBrown);
+            using var shore = SmartWaterShore.CreateGround(waterImage, preset.Tile, landImage, preset.GroundLandTile, 2);
+            Check(shore.GetPixel(0, 0).ToArgb() == Color.SaddleBrown.ToArgb(), "Ground bank replaces green with chosen land color");
+            for (var y = 0; y < shore.Height; y++) for (var x = 0; x < shore.Width; x++) Check(shore.GetPixel(x, y).A == 255, "Ground shore is fully opaque");
+            Check(waterImage.GetPixel(0, 0).ToArgb() == Color.Lime.ToArgb(), "Generating Ground shore preserves source artwork");
+            for (var frame = 0; frame < 3; frame++) Check(shore.GetPixel(frame * tw * 2 + tw, th * 2).ToArgb() == waterImage.GetPixel(frame * tw * 2 + tw, th * 2).ToArgb(), "Water animation frame remains unchanged " + frame);
+        }
+        finally { foreach (var id in new[] { originalId, variantId, landId }) TilesetDescriptor.Lookup.Delete(TilesetDescriptor.Get(id)); }
     }
     private static void ResourceValidation()
     {
@@ -380,6 +460,7 @@ internal static class SmartMapBuilderTests
         if (!string.IsNullOrWhiteSpace(output))
         {
             Directory.CreateDirectory(output);
+            RealGroundIsland(waterSource, water.Id, output);
             foreach (var (map, file) in new[] { (sample, "royal-river"), (maps.First(), "existing-map") })
                 for (var frame = 0; frame < 3; frame++)
                     using (var bitmap = RenderNativeTiles(map, frame)) bitmap.Save(Path.Combine(output, file + "-frame-" + frame + ".png"));
@@ -395,6 +476,57 @@ internal static class SmartMapBuilderTests
             File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(output)!, softName), softBytes.ToArray());
         }
         Console.WriteLine($"PASS real game data: {maps.Count} legacy maps round-tripped; native tile modes present: {string.Join(", ", modes.OrderBy(p => p.Key).Select(p => p.Key + "=" + p.Value))}; originals opened read-only, no live server writes.");
+    }
+
+    private static void RealGroundIsland(Bitmap waterSource, Guid waterId, string output)
+    {
+        var ground = Options.Instance.Map.Layers.All[0];
+        var water = new SmartTile(waterId, 0, 0, 3);
+        using var land = new Bitmap(Options.Instance.Map.TileWidth, Options.Instance.Map.TileHeight);
+        using (var graphics = System.Drawing.Graphics.FromImage(land)) graphics.Clear(Color.FromArgb(129, 86, 60));
+        // This is what the built-in pixel editor writes, without a hand-authored external ground image.
+        using var paint = new SmartGroundPaint(land); paint.Checkpoint();
+        paint.Stroke(new(3, 5), new(5, 5), Color.FromArgb(116, 76, 52));
+        paint.Stroke(new(11, 10), new(12, 10), Color.FromArgb(142, 97, 68));
+        using var bytes = new MemoryStream(); paint.Image.Save(bytes, System.Drawing.Imaging.ImageFormat.Png);
+        var landName = "smart_land_" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes.ToArray()))[..20].ToLowerInvariant() + ".png";
+        File.WriteAllBytes(Path.Combine("resources/tilesets", landName), bytes.ToArray());
+        var landId = Guid.NewGuid(); TilesetDescriptor.Lookup[landId] = new TilesetDescriptor(landId) { Name = landName };
+        var landTile = new SmartTile(landId, 0, 0, 0);
+        using var atlas = SmartWaterShore.CreateGround(waterSource, water, paint.Image, landTile, 2);
+        using var atlasBytes = new MemoryStream(); atlas.Save(atlasBytes, System.Drawing.Imaging.ImageFormat.Png);
+        var name = GroundShoreVariant.FileName(water.Native, Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(atlasBytes.ToArray()))[..20].ToLowerInvariant());
+        File.WriteAllBytes(Path.Combine("resources/tilesets", name), atlasBytes.ToArray());
+        var variantId = Guid.NewGuid(); TilesetDescriptor.Lookup[variantId] = new TilesetDescriptor(variantId) { Name = name };
+        var preset = new SmartPreset { Name = "Brown Ground Island", Tile = water, Layer = ground, GroundShore = true, GroundLandTile = landTile, GroundWaterTile = water with { TilesetId = variantId } };
+        preset.Validate();
+        var map = Map();
+        for (var y = 0; y < Options.Instance.Map.MapHeight; y++) for (var x = 0; x < Options.Instance.Map.MapWidth; x++) map.Layers[ground][x, y] = water.Native;
+        map.InitAutotiles();
+        var cells = SmartBrush.Area(new(7, 5), new(25, 20), SmartShape.Ellipse, 0, false).ToArray();
+        SmartBrush.Apply(map, SmartBrush.Plan(map, preset, cells, true, false, 0), false);
+        Check(map.Layers.Where(p => p.Key != ground).All(p => p.Value.Cast<Tile>().All(t => t.TilesetId == Guid.Empty)), "Real Ground island leaves all Mask/Fringe layers empty");
+        CompareFullRebuild(map, "Real Ground island caches");
+        using (var panel = new FrmSmartMapBuilder())
+        {
+            typeof(FrmSmartMapBuilder).GetField("_working", Hidden)!.SetValue(panel, new SmartPreset { Name = "Ground recipe", Tile = water, Layer = ground });
+            typeof(FrmSmartMapBuilder).GetField("_landTile", Hidden)!.SetValue(panel, landTile);
+            panel.Show(); Application.DoEvents();
+            typeof(FrmSmartMapBuilder).GetMethod("CreateGroundShore", Hidden)!.Invoke(panel, null);
+            var settings = panel.Settings(true);
+            Check(settings is { GroundShore: true, SoftWater: false } && settings.PaintLayer == ground && settings.GroundWaterTile?.TilesetId == variantId, "Ground preparation resolves registered asset and configures one-layer island brush");
+            panel.Hide();
+        }
+        for (var frame = 0; frame < 3; frame++)
+            using (var image = RenderNativeTiles(map, frame)) image.Save(Path.Combine(output, $"brown-ground-island-frame-{frame}.png"));
+        if (Environment.GetEnvironmentVariable("SMART_MAP_GPU") == "1")
+        {
+            using var renderer = new SmartMapGpuRenderer();
+            for (var frame = 0; frame < 3; frame++) renderer.Render(map, frame, Path.Combine(output, $"brown-ground-island-gpu-frame-{frame}.png"));
+        }
+        var destination = Path.GetDirectoryName(output)!;
+        File.WriteAllBytes(Path.Combine(destination, landName), bytes.ToArray());
+        File.WriteAllBytes(Path.Combine(destination, name), atlasBytes.ToArray());
     }
 
     // Render the native cached subtiles using the same native frame offsets as the editor.

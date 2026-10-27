@@ -589,6 +589,58 @@
     "fr": "Enregistrement du nouveau tileset natif…",
     "es": "Registrando el nuevo tileset nativo…"
   },
+  "Smart.EditGround": {
+    "en": "Edit selected ground…", "fr": "Modifier le sol sélectionné…", "es": "Editar suelo seleccionado…"
+  },
+  "Smart.PaintGround": {
+    "en": "Paint this ground", "fr": "Peindre ce sol", "es": "Pintar este suelo"
+  },
+  "Smart.GroundSelected": {
+    "en": "Custom ground:", "fr": "Sol personnalisé :", "es": "Suelo personalizado:"
+  },
+  "Smart.GroundEdited": {
+    "en": "Ground saved as a new tile. Paint it directly, or capture the existing water and prepare its Ground shoreline. The original image is preserved.",
+    "fr": "Sol enregistré comme nouvelle tuile. Peignez-le directement, ou capturez l’eau existante puis préparez sa rive sur Ground. L’image originale est conservée.",
+    "es": "Suelo guardado como nueva tesela. Píntelo directamente o capture el agua existente y prepare su orilla en Ground. La imagen original se conserva."
+  },
+  "Smart.GroundPaintHelp": {
+    "en": "Choose a color. Tint keeps texture details; Solid color replaces them. Click or drag on the enlarged tile to edit individual pixels. Cancel leaves the tile unchanged.",
+    "fr": "Choisissez une couleur. Teinter garde les détails de la texture; Couleur unie les remplace. Cliquez ou glissez sur la tuile agrandie pour retoucher ses pixels. Annuler conserve la tuile actuelle.",
+    "es": "Elija un color. Teñir conserva los detalles; Color uniforme los reemplaza. Haga clic o arrastre sobre la tesela ampliada para retocar píxeles. Cancelar conserva la tesela actual."
+  },
+  "Smart.GroundColor": { "en": "Brush color…", "fr": "Couleur du pinceau…", "es": "Color del pincel…" },
+  "Smart.GroundTint": { "en": "Tint texture", "fr": "Teinter la texture", "es": "Teñir textura" },
+  "Smart.GroundSolid": { "en": "Solid color", "fr": "Couleur unie", "es": "Color uniforme" },
+  "Smart.GroundReset": { "en": "Restore original", "fr": "Restaurer l’original", "es": "Restaurar original" },
+  "Smart.GroundGrid": { "en": "Pixel grid", "fr": "Grille des pixels", "es": "Cuadrícula de píxeles" },
+  "Smart.GroundUndo": { "en": "Undo last edit", "fr": "Annuler la retouche", "es": "Deshacer retoque" },
+  "Smart.GroundAccept": { "en": "Use this ground", "fr": "Utiliser ce sol", "es": "Usar este suelo" },
+  "Smart.GroundCancel": { "en": "Cancel", "fr": "Annuler", "es": "Cancelar" },
+  "Smart.GroundShore": {
+    "en": "Island and shoreline on Ground",
+    "fr": "Île et rive sur Ground",
+    "es": "Isla y orilla en Ground"
+  },
+  "Smart.CreateGroundShore": {
+    "en": "Prepare Ground island",
+    "fr": "Préparer l’île sur Ground",
+    "es": "Preparar isla en Ground"
+  },
+  "Smart.GroundShoreHelp": {
+    "en": "Capture the existing water in Library. Select the land fill in the palette, then prepare the island. Draw or fill: the land and bank are placed together on Ground. Mask layers stay free. Regenerate after changing the land or blend width.",
+    "fr": "Capturez l’eau existante dans Bibliothèque. Sélectionnez le sol dans la palette, puis préparez l’île. Dessinez ou remplissez : sol et rive sont placés ensemble sur Ground. Les calques Mask restent libres. Recréez la rive après un changement de sol ou de dégradé.",
+    "es": "Capture el agua existente en Biblioteca. Seleccione el suelo en la paleta y prepare la isla. Dibuje o rellene: el suelo y la orilla se colocan juntos en Ground. Las capas Mask quedan libres. Regenere al cambiar el suelo o el degradado."
+  },
+  "Smart.GroundShoreRequired": {
+    "en": "Capture the original VX/XP water, then choose an opaque, non-animated land tile. Prepare a Terrain preset without stamps or overlay rules.",
+    "fr": "Capturez l’eau VX/XP d’origine, puis choisissez une tuile de sol opaque et non animée. Préparez un preset Terrain sans tampon ni règle de surcouche.",
+    "es": "Capture el agua VX/XP original y elija una tesela de suelo opaca y sin animación. Prepare un preset Terreno sin sellos ni reglas de superposición."
+  },
+  "Smart.GroundShoreReady": {
+    "en": "Ground island ready. Paint the land; its bank follows automatically. Distribute the generated PNG and use updated clients for water connections across maps.",
+    "fr": "Île sur Ground prête. Peignez le sol : sa rive suit automatiquement. Distribuez le PNG généré et utilisez les clients mis à jour pour les raccords entre maps.",
+    "es": "Isla en Ground lista. Pinte el suelo: la orilla se adapta automáticamente. Distribuya el PNG generado y use clientes actualizados para conectar el agua entre mapas."
+  },
   "Smart.SoftWaterReady": {
     "en": "Soft water ready. Paint above grass; save the preset and distribute its new PNG to clients.",
     "fr": "Eau sans sable prête. Peignez au-dessus du gazon; enregistrez le preset et distribuez son nouveau PNG aux clients.",
