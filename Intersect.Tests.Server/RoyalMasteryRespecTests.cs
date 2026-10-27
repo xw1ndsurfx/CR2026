@@ -2,6 +2,7 @@ using Intersect.Framework.Core.Archery;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
+using Intersect.GameObjects;
 using Intersect.Server.Archery;
 using Intersect.Server.Database;
 using Intersect.Server.Database.PlayerData.Players;
@@ -88,6 +89,31 @@ public sealed partial class RoyalCombatTests
         Assert.That(decoded.ExpectedCost, Is.EqualTo(1000)); Assert.That(decoded.TargetId, Is.EqualTo(request.TargetId));
         var readOnly = new ArcheryStatePacket { MasteriesReadOnly = true, MasteriesOwner = "Observer target" };
         Assert.That(MessagePackSerializer.Deserialize<ArcheryStatePacket>(MessagePackSerializer.Serialize(readOnly)).MasteriesReadOnly, Is.True);
+    }
+    [Test]
+    public void RecoveryRevokesOwnedSpellsKeepsOrdinarySpellsAndRetriesTheNativeAcknowledgement()
+    {
+        using var store = new ResultStore(); using var world = new World();
+        var category = RoyalCombatRuntime.Current.Masteries[0];
+        var owned = new SpellDescriptor(Guid.NewGuid()); var ordinary = new SpellDescriptor(Guid.NewGuid());
+        SpellDescriptor.Lookup.Set(owned.Id, owned); SpellDescriptor.Lookup.Set(ordinary.Id, ordinary);
+        try
+        {
+            RoyalCombatRuntime.Award(world.Player.Id, category, 100);
+            RoyalCombatRuntime.BuyTalent(world.Player.Id, category, "steady-aim", Guid.NewGuid());
+            RoyalCombatRuntime.RememberSpell(world.Player.Id, owned.Id);
+            world.Player.Spells[0].Set(new Spell(owned.Id)); world.Player.Spells[1].Set(new Spell(ordinary.Id));
+            var pending = new PaidMasteryRespec { RequestId = Guid.NewGuid(), Category = category.Key, CurrencyId = Guid.NewGuid(), Cost = 1000 };
+            world.Player.PetCollection.MasteryRespec = pending;
+            Assert.That(world.Player.FinishPaidMasteryRespec(() => false), Is.False);
+            Assert.That(world.Player.PetCollection.MasteryRespec, Is.SameAs(pending));
+            Assert.That(world.Player.Spells[0].SpellId, Is.EqualTo(Guid.Empty));
+            Assert.That(world.Player.Spells[1].SpellId, Is.EqualTo(ordinary.Id));
+            Assert.That(world.Player.FinishPaidMasteryRespec(() => true), Is.True);
+            Assert.That(world.Player.PetCollection.MasteryRespec, Is.Null);
+            Assert.That(RoyalCombatRuntime.Load(world.Player.Id)[category.Key], Is.EqualTo(100));
+        }
+        finally { SpellDescriptor.Lookup.DeleteAt(owned.Id); SpellDescriptor.Lookup.DeleteAt(ordinary.Id); }
     }
     [Test]
     public void UnauthenticatedRespecAndForeignTargetCannotChangeMasteryOrInventory()
