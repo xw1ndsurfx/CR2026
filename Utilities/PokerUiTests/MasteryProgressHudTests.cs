@@ -6,6 +6,7 @@ using Intersect.Client.Interface.Game;
 using Intersect.Client.Localization;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.Archery;
+using Intersect.Network.Packets.Server;
 
 internal static class MasteryProgressHudTests
 {

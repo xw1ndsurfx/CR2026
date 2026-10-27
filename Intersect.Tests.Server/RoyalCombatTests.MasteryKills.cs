@@ -5,6 +5,7 @@ using Intersect.Framework.Core.GameObjects.Conditions;
 using Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata;
 using Intersect.Framework.Core.GameObjects.Events;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Network.Packets.Server;
 using Intersect.Server.Archery;
 using Intersect.Server.Entities;
 using Intersect.Server.Entities.Events;

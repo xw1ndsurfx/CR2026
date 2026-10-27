@@ -1,6 +1,6 @@
-using Intersect.Network.Packets.Server;
+using Intersect.Framework.Core.Archery;
 
-namespace Intersect.Framework.Core.Archery;
+namespace Intersect.Network.Packets.Server;
 
 // Reuse the existing timed activity-progress HUD and its native packet.
 public static class MasteryProgress
