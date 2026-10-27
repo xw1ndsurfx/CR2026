@@ -1242,5 +1242,68 @@
   },
   "art": "mountEditorToolStripMenuItem.png",
   "keywords": "jousting joutes justas Herbonia William"
+},
+{
+  "id": "SmartMapBuilderTool",
+  "oldMenu": "toolsToolStripMenuItem",
+  "category": "Tools",
+  "subcategory": "WorldAndProgression",
+  "tags": [
+    "World"
+  ],
+  "art": "map.png",
+  "keywords": "smart map builder terrain road river cliff animated autotile VX XP pinceau rivière falaise",
+  "title": {
+    "en": "Smart Map Builder",
+    "fr": "Smart Map Builder",
+    "es": "Smart Map Builder"
+  },
+  "description": {
+    "en": "Paint terrain, animated rivers and reusable buildings with native VX/XP autotiles.",
+    "fr": "Peignez terrains, rivières animées et bâtiments réutilisables avec les autotiles natifs VX/XP.",
+    "es": "Pinte terrenos, ríos animados y edificios reutilizables con autotiles nativos VX/XP."
+  }
+},
+{
+  "id": "miniGame.Archery",
+  "oldMenu": "miniGameEditorsToolStripMenuItem",
+  "category": "MiniGames",
+  "subcategory": "MiniGameSettings",
+  "tags": [
+    "Gameplay"
+  ],
+  "art": "itemEditorToolStripMenuItem.png",
+  "title": {
+    "en": "Archery Editor",
+    "fr": "Éditeur de tir à l’arc",
+    "es": "Editor de tiro con arco"
+  },
+  "description": {
+    "en": "Configure archery training, targets and ranked challenges.",
+    "fr": "Configurez l’entraînement au tir à l’arc, les cibles et les épreuves classées.",
+    "es": "Configure el entrenamiento de tiro con arco, los blancos y los desafíos clasificatorios."
+  },
+  "keywords": "archery tir arc weapon mastery armes munition"
+},
+{
+  "id": "weaponMasteryEditor",
+  "oldMenu": "contentEditorsToolStripMenuItem",
+  "category": "Game",
+  "subcategory": "WorldAndProgression",
+  "tags": [
+    "Gameplay"
+  ],
+  "art": "itemEditorToolStripMenuItem.png",
+  "title": {
+    "en": "Weapon Mastery Editor",
+    "fr": "Éditeur de maîtrise des armes",
+    "es": "Editor de dominio de armas"
+  },
+  "description": {
+    "en": "Configure weapon mastery progression and ammunition rules.",
+    "fr": "Configurez la progression de maîtrise des armes et les règles de munitions.",
+    "es": "Configure la progresión de dominio de armas y las reglas de munición."
+  },
+  "keywords": "archery tir arc weapon mastery armes munition"
 }
 ]

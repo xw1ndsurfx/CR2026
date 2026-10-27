@@ -7,6 +7,8 @@ namespace Intersect.Editor.Forms;
 
 public partial class FrmMain
 {
+    internal void UndoSmartMap() => toolStripBtnUndo_Click(this, EventArgs.Empty);
+    internal void RedoSmartMap() => toolStripBtnRedo_Click(this, EventArgs.Empty);
     private EditorHubView? _editorHub;
     private HubRegistry? _hubRegistry;
     private HubPreferences? _hubPreferences;
@@ -39,6 +41,9 @@ public partial class FrmMain
         AddWorldEventsEditorMenu();
         AddSystemEditorMenu();
         AddWorldMapEditorMenu();
+        var smartMapBuilder = new ToolStripMenuItem(HubText.T("Smart.Title")) { Name = "SmartMapBuilderTool" };
+        smartMapBuilder.Click += (_, _) => { ReturnToMap(); Globals.MapEditorWindow.ShowSmartMapBuilder(); };
+        toolsToolStripMenuItem.DropDownItems.Add(smartMapBuilder);
         var resourceBrush=new ToolStripMenuItem(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Resource brush",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)){Name="ResourceBrushTool"};
         resourceBrush.Click+=(_,_)=>{Globals.MapLayersWindow.Show();Globals.MapLayersWindow.ActivateResourceBrush();};
         toolsToolStripMenuItem.DropDownItems.Add(resourceBrush);

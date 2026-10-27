@@ -1,0 +1,168 @@
+SMART MAP BUILDER — implementation and acceptance notes
+Base: main 924d26325ec70892b30ef903e862aa1462f24630
+
+HOW TO USE
+Open Tools > Smart Map Builder, or its Editor Hub card. The dockable panel has
+Library, Painting and Rules tabs. It can be floated or resized. Enable smart
+painting. Choose a tileset, native mode and source rectangle in the existing
+Map Layers panel, then Capture source. Name/category/save create a preset.
+
+Painting supports freehand paths, lines, rectangles, ellipses, connected fill,
+global replacement of the clicked terrain and building stamps. Radius is in
+map cells, not pixels. Round/square footprints and decoration density are
+configurable. The destination is an actual configured graphic layer.
+
+Hold left mouse to stage an action; the map displays a temporary native
+preview. Release to commit. Right mouse uses the same shape as an eraser.
+Escape cancels a pending action. One committed action creates one existing
+editor undo entry, regardless of cell count. The panel's Undo/Redo buttons
+dispatch to the existing editor handlers. Other classic tools remain usable;
+uncheck smart painting to use the classic brush. Selection/copy/paste remain
+the existing tools rather than a second, incompatible clipboard.
+
+Preserve existing graphics is ON by default. Occupied destination cells are
+skipped; preserving erasure removes only a matching selected source. Explicitly
+disable preservation to replace occupied graphics. No attributes, events, NPC
+spawns, resources, lights or neighboring tile data are painted by this tool.
+
+DECORATION, STAMPS AND TRANSITIONS
+Add selected variant captures the current tileset selection. Density and
+variant choice are deterministic within a stroke and identical in preview and
+commit. Variants can be removed individually. Different decoration stamps
+must currently be saved as separate building presets; density variants are
+single native cells, not randomly selected multi-cell buildings.
+
+To capture a building, select a map rectangle using the classic selection
+tool, check the graphic layers to include, and Capture map selection. The
+stamp stores nonempty native tiles, selection dimensions and an editable
+anchor. Placement is atomic across included layers and rejects out-of-map
+footprints. Transparent/empty cells do not erase existing content.
+
+A transition rule matches an existing native terrain cell on MatchLayer and
+routes painting/erasure to the configured TargetLayer overlay. Matching rules
+preserve the underlying terrain; the overlay's native autotile computes its
+own outer/inner corners. Several matching rules may target separate layers.
+Without a matching rule, the brush paints its default layer. Preservation is
+checked on every destination, atomically for a multi-layer placement.
+
+In the panel, capture the desired terrain brush, hover an existing terrain
+cell on its layer, then select an actual overlay autotile on a different
+graphic layer and add a rule. Rules can be inspected, replaced or removed.
+More detailed MatchLayer/Match definitions can be edited through JSON export
+and import. No algorithm can infer semantic terrain names, manufacture absent
+edge artwork, or guarantee a correct artistic combination from image size
+alone. Missing resources, layers and out-of-bounds source rectangles are
+reported. The source mode remains an explicit choice using native controls.
+
+Presets support save/edit/duplicate/delete/import/export, category search,
+favorites and recently used ordering. They reference real tileset IDs and
+source coordinates; images are never repacked. The editor-only preset file is
+resources/smart-map-builder/presets.json, written through an atomic replacement.
+
+OPTIONAL WATER-TO-GRASS SHORE
+The Painting tab now offers Water -> grass, no sand, OFF by default. Capture
+a native VX/XP water autotile, then Create soft water variant. This writes a
+separate content-addressed PNG and registers it through the existing native
+AddTilesets flow. Select a graphic layer ABOVE the preserved grass. The option
+stores the alternate native tile and destination layer in the preset; turning
+it off returns future strokes to the original source. Existing map cells are
+not retroactively rewritten by a checkbox change.
+
+The authoring operation learns the connected-interior palette separately for
+each animation frame, removes non-water pixels and feathers the shoreline's
+alpha (0-8 source pixels). Native interior template quarters remain opaque to
+prevent seams across connected cells. Original RGB/frame layout/dimensions are
+retained, and only the chosen source block is processed. The source atlas is
+never overwritten. Recreate the variant after changing the feather width.
+This is intended for water sources whose shoreline colors differ from their
+water interior; unusual foam/color art may need a separately authored variant.
+The generated PNG must be distributed through the normal client resource
+pipeline, like any other new tileset. No client shader or map-format extension
+is needed. Use a dedicated water preset without stamps, decoration variants
+or transition rules. The overlay is compatible with preservation, erasing,
+preview, fill/replacement and native undo.
+
+ARCHITECTURE
+SmartMapBuilder.cs contains editor-only preset data, geometry, deterministic
+decoration, fill/replacement traversal, non-mutating edit planning and native
+cache updates. Map serialization and network protocols are unchanged.
+
+frmMapEditor.SmartMapBuilder.cs owns the pending gesture. It freezes source,
+shape, protection and density settings until release. A fresh pre-action
+MapSaveState is saved only when a nonempty action commits. No autosave or server
+write is introduced. A changed tool, hidden panel or unloaded map cancels a
+pending action. A changed map cannot receive a stale action.
+
+Graphics.cs routes Smart previews through the existing map rendering pipeline.
+MapInstance can deep-copy the existing native cache for this preview, avoiding
+a full autotile recalculation on every pointer movement. Painting updates a
+deduplicated one-cell halo on affected layers. Cliff changes additionally
+recalculate native cliff cells on that layer because native cliff height
+depends on complete connected runs. Border/cliff commits refresh adjacent
+derived caches, without writing adjacent map content. Undo/redo also refresh
+adjacent caches. No native connection rules are altered, including fake tiles
+and the engine's behavior when neighboring maps are unavailable.
+
+Formats remain native values 0–7: Normal, VX, Fake VX, Animated VX, Cliff VX,
+Waterfall VX, XP, Animated XP. Frames, quarter templates, client tile data and
+the animation clock are retained. The resource validator uses configured
+TileWidth/TileHeight and each native source footprint; quarter tiles require
+even dimensions. The panel's sample and the map use native cached quarters
+and existing frame counters. The panel does not flatten animation to an image.
+
+FrmSmartMapBuilder.cs implements the dock, resource thumbnails and configuration.
+Texts are in EditorHub/Texts.json with en/fr/es coverage and English fallback.
+The Hub card dispatches the same menu command as Tools. Two existing archery
+commands missing from the main catalog were also catalogued, restoring the
+Hub's exhaustive menu/catalog regression test.
+
+VALIDATION
+Build the editor and client:
+  dotnet build Intersect.Editor/Intersect.Editor.csproj -c Debug -p:RuntimeIdentifiers=win-x64
+  dotnet build Intersect.Client/Intersect.Client.csproj -c Debug -p:RuntimeIdentifiers=win-x64
+
+Run deterministic, native-engine and UI tests:
+  dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -- --smart-map-only
+  dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -- --hub-only
+  dotnet run --project Utilities/InterfaceEditorTests/Intersect.InterfaceEditorTests.csproj -c Debug -p:RuntimeIdentifiers=win-x64 -- --save-protection-only
+
+The Windows save-protection workflow now runs all three groups. Its preference
+test writes only a uniquely named temporary registry key and removes it.
+
+For optional real-game checks, export isolated fixtures with:
+  python scripts/Export-SmartMapFixtures.py --server-resources SERVER/resources --client-resources CLIENT/resources --output work/real-game-fixture.json --tileset-output resources/tilesets
+Set SMART_MAP_GAME_FIXTURE to the exported file, EDITOR_TEST_SCREENSHOTS to a
+separate output folder, and optionally SMART_MAP_GPU=1. Run --smart-map-only.
+The GPU harness invokes the editor's actual MonoGame tile drawing functions
+with a dedicated GraphicsDevice and render target. It exports three native
+animation frames and verifies the output changes. The ordinary pixel renderer
+also checks real atlas coordinates remain in bounds. Originals and live server
+state are never written. Do not commit game fixtures or copied artwork.
+
+LOCAL ACCEPTANCE PERFORMED
+- Native modes 0–7, holes/irregular areas, erasure and full-rebuild equivalence.
+- Configured 32x32 and 48x32 dimensions, plus the game's actual 16x16 options.
+- Native cliff run recalculation and loaded-neighbor connections/cache refresh.
+- Source/preset validation, JSON round trips, deterministic decoration, stamps,
+  overlay transitions and their eraser, independent preview caches, staged
+  mouse input, one undo entry and native snapshot restoration.
+- 35 local legacy maps loaded from the supplied game's neighboring local
+  server database; small graphic edits, save/reopen and undo preservation.
+  The existing populated modes are Normal, VX and Animated VX.
+- Real autotiles_overworld.png and animatedautotiles.png, native editor GPU
+  frames, three-locale panel captures, Hub and save-protection regressions.
+- Editor and client compilation succeed. Existing repository/compiler warnings
+  remain; zero build errors were reported.
+
+REMAINING ACCEPTANCE / LIMITS
+This is a draft integration, not a production-readiness certificate.
+The connected game client has not been run through an authenticated play
+session. GPU captures exercise the actual editor renderer, not a live client.
+XP and Cliff modes pass native synthetic tests; matching authored XP/cliff
+assets were not identified in the examined legacy maps, so real-art acceptance
+for those formats remains pending. No artwork was invented to claim it passed.
+Cliff shapes and terrain blends still require correctly authored source art
+and explicit layers/rules. The map preview still copies the current native map
+for isolation, so unusually large configurations need a memory/performance
+review even though full autotile recalculation is avoided for ordinary strokes.
+No merge, deployment, game-resource replacement or live map save was performed.
