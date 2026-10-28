@@ -16,6 +16,56 @@ namespace Intersect.Tests.Server;
 public sealed partial class RoyalCombatTests
 {
     [Test]
+    public void MasteryLevelUpBroadcastsOneConfiguredAnimationOnThePlayerAfterCommittedExperience()
+    {
+        using var world = new World();
+        var oldPath = RoyalCombatRuntime.ProgressPath;
+        var oldBatch = Options.Instance.Packets.BatchAnimationPackets;
+        var path = Path.Combine(Path.GetTempPath(), "mastery-animation-" + Guid.NewGuid().ToString("N") + ".db");
+        RoyalCombatRuntime.ProgressPath = path; Options.Instance.Packets.BatchAnimationPackets = true;
+        var animation = new Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor(Guid.NewGuid());
+        Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor.Lookup.Set(animation.Id, animation);
+        var weapon = new ItemDescriptor(Guid.NewGuid());
+        var category = new MasteryCategory { Key = "swords", Cap = 4, WeaponIds = [weapon.Id], LevelUpAnimationId = animation.Id };
+        Config.SetValue(null, new RoyalCombatConfiguration { Masteries = [category] });
+        typeof(Player).GetField("_masteryExperience", Hidden)!.SetValue(world.Player, new Dictionary<string, long>());
+        var instance = (Intersect.Server.Maps.MapInstance)RuntimeHelpers.GetUninitializedObject(typeof(Intersect.Server.Maps.MapInstance));
+        GC.SuppressFinalize(instance);
+        var batch = new Intersect.Server.Maps.MapAnimations();
+        typeof(Intersect.Server.Maps.MapInstance).GetField("mMapAnimations", Hidden)!.SetValue(instance, batch);
+        var instances = (IDictionary<Guid, Intersect.Server.Maps.MapInstance>)typeof(Intersect.Server.Maps.MapController).GetField("mInstances", Hidden)!.GetValue(world.Map)!;
+        instances[world.Player.MapInstanceId] = instance;
+        var award = typeof(Player).GetMethod("AwardWeaponMastery", Hidden)!;
+        void Kill(long experience)
+        {
+            var npc = (Npc)RuntimeHelpers.GetUninitializedObject(typeof(Npc)); npc.Id = Guid.NewGuid(); GC.SuppressFinalize(npc);
+            world.Player.RecordMasteryHit(npc, weapon);
+            award.Invoke(world.Player, [npc, experience]);
+            award.Invoke(world.Player, [npc, experience]); // Duplicate notification must not replay it.
+        }
+        try
+        {
+            Kill(99); Assert.That(batch.mAnimations, Is.Empty);
+            Kill(1);
+            Assert.That(batch.mAnimations, Has.Count.EqualTo(1));
+            var packet = batch.mAnimations.Single();
+            Assert.That(packet.AnimationId, Is.EqualTo(animation.Id));
+            Assert.That(packet.EntityId, Is.EqualTo(world.Player.Id));
+            Assert.That(packet.MapId, Is.EqualTo(world.Player.MapId));
+            Assert.That(packet.TargetType, Is.EqualTo(1));
+            Assert.That(RoyalCombatRuntime.Load(world.Player.Id)[category.Key], Is.EqualTo(100));
+            Kill(1300); Assert.That(batch.mAnimations, Has.Count.EqualTo(2), "Multiple levels in one reward play once");
+            Kill(100); Assert.That(batch.mAnimations, Has.Count.EqualTo(2), "Capped mastery does not replay the animation");
+        }
+        finally
+        {
+            instances.Clear(); Options.Instance.Packets.BatchAnimationPackets = oldBatch;
+            Intersect.Framework.Core.GameObjects.Animations.AnimationDescriptor.Lookup.DeleteAt(animation.Id);
+            RoyalCombatRuntime.ProgressPath = oldPath; if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Test]
     public void ConsecutiveKillsGrantTheFullAwardToTheRecordedWeaponOnceEach()
     {
         using var world = new World();

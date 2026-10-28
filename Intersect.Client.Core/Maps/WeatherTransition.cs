@@ -15,4 +15,8 @@ internal sealed class WeatherTransition
         return Amount;
     }
     internal void Reset() { Amount = 0; _updated = null; }
+    internal void CopyFrom(WeatherTransition source) { Amount = source.Amount; _updated = source._updated; }
+
+    internal static float Approach(float current, float target, float maximumStep) =>
+        current < target ? Math.Min(target, current + maximumStep) : Math.Max(target, current - maximumStep);
 }

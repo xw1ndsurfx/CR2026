@@ -23,6 +23,8 @@ public partial class Animation : IAnimation
     private bool _disposed = false;
 
     public bool Hidden { get; set; }
+    /// <summary>Per-instance weather fade; the authored animation remains unchanged.</summary>
+    internal float OpacityMultiplier { get; set; } = 1f;
 
     public bool InfiniteLoop { get; set; }
 
@@ -237,7 +239,7 @@ public partial class Animation : IAnimation
                             frameWidth, frameHeight
                         ),
                         FrameBounds(Descriptor.Lower, drawWidth, drawHeight),
-                        new Color(Descriptor.Lower.Opacity, 255, 255, 255),
+                        new Color((byte)(Descriptor.Lower.Opacity * Math.Clamp(OpacityMultiplier, 0f, 1f)), 255, 255, 255),
                         null,
                         GameBlendModes.None,
                         null,
@@ -290,7 +292,7 @@ public partial class Animation : IAnimation
                             frameWidth, frameHeight
                         ),
                         FrameBounds(Descriptor.Upper, drawWidth, drawHeight),
-                        new Color(Descriptor.Upper.Opacity, 255, 255, 255),
+                        new Color((byte)(Descriptor.Upper.Opacity * Math.Clamp(OpacityMultiplier, 0f, 1f)), 255, 255, 255),
                         null,
                         GameBlendModes.None,
                         null,

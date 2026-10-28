@@ -12,10 +12,19 @@ internal static class RoyalCombatEditorTests
         var show = typeof(FrmRoyalCombatConfiguration).GetMethod("ShowMode", BindingFlags.NonPublic | BindingFlags.Instance)!;
         var grid = Descendants(editor).OfType<PropertyGrid>().Single();
         var mastery = (MasteryCategory)grid.SelectedObject!;
+        var animation = Descendants(editor).OfType<ComboBox>().Single(c => c.Name == "MasteryLevelUpAnimation");
+        if (mastery.LevelUpAnimationId != Guid.Empty || animation.SelectedIndex != 0)
+            throw new Exception("Existing masteries must default to no level-up animation.");
+        mastery.LevelUpAnimationId = Guid.NewGuid(); // Deleted assets must survive opening/switching editor views.
         mastery.BaseExperience = 150;
         show.Invoke(editor, [false]); show.Invoke(editor, [true]);
         if (!ReferenceEquals(grid.SelectedObject, mastery) || mastery.BaseExperience != 150)
             throw new Exception("Switching royal editor menus discarded unsaved mastery changes.");
+        var restoredMastery = System.Text.Json.JsonSerializer.Deserialize<MasteryCategory>(System.Text.Json.JsonSerializer.Serialize(mastery))!;
+        if (mastery.LevelUpAnimationId == Guid.Empty || restoredMastery.LevelUpAnimationId != mastery.LevelUpAnimationId || animation.SelectedIndex < 1)
+            throw new Exception("The mastery animation picker lost an unavailable saved animation.");
+        animation.SelectedIndex = 0;
+        if (mastery.LevelUpAnimationId != Guid.Empty) throw new Exception("Choosing no animation did not clear the mastery animation.");
         var dialog = typeof(FrmRoyalCombatConfiguration).Assembly.GetType("Intersect.Editor.Forms.Editors.Events.MiniGameCommandDialog", true)!;
         var command = new StartMiniGameCommand { Game = MiniGameType.Archery };
         using var form = (Form)Activator.CreateInstance(dialog, [command, (MiniGameType?)MiniGameType.Archery])!;
