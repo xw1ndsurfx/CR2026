@@ -104,7 +104,7 @@ internal static partial class NavalSystem
                 }
             }
             if(claim) message=ClaimCargo(player,player.NavalCrewPassage?.Ship);
-            if(leave) ReleaseCrew(player,true);
+            if(leave) ReleaseCrew(player,true,currentDock:true);
             if(anchor!=null)
             {
                 WarpAnchor(player,anchor);
@@ -160,9 +160,16 @@ internal static partial class NavalSystem
     {
         var source=NavalPlayerData.Parse(captainFleetJson).Ships.FirstOrDefault(s=>s.Id==passage.Ship.Id);
         if(source==null || source.SinkingSerial!=passage.CaptainSinkingSerial || source.Sunk)
-        {passage.Ship.Health=0;passage.Ship.Cargo.Clear();}
+        {passage.Ship.Health=0;passage.Ship.Cargo.Clear();return;}
+        // The captain can have completed docking while this passenger was
+        // disconnected. Recover at that persisted berth, not the trip's origin.
+        if(!source.AtSea && source.ReturnMapId!=Guid.Empty && source.ReturnX is {} x && source.ReturnY is {} y)
+        {
+            passage.Ship.ReturnMapId=source.ReturnMapId;passage.Ship.ReturnX=x;passage.Ship.ReturnY=y;
+            passage.Ship.ReturnDockX=source.ReturnDockX;passage.Ship.ReturnDockY=source.ReturnDockY;
+        }
     }
-    private static void ReleaseCrew(Player player,bool returnToHarbour)
+    private static void ReleaseCrew(Player player,bool returnToHarbour,bool currentDock=false)
     {
         lock(player.EntityLock)
         {
@@ -173,6 +180,16 @@ internal static partial class NavalSystem
             {
                 if(Ships.TryGetValue(player.BoardedShipId,out var ship))
                 {
+                    // Voluntary disembarking, or following a captain who just
+                    // moored, uses this island. Emergency releases keep rescue.
+                    if(returnToHarbour && passage!=null && (currentDock || ship.Mooring!=null && ship.Health>0 && ship.SunkUntil==0))
+                    {
+                        var landing=FindDockLanding(player,ship);
+                        if(landing==null)
+                        {Notice(player,"No free exit near this dock. Move the ship slightly and try again.");return;}
+                        if(!SaveDockingReturn(player,passage.Ship,landing))
+                        {Notice(player,"Docking could not be saved. Stay aboard and try again.");return;}
+                    }
                     if((ship.Health<=0 || ship.SunkUntil>0) && passage!=null) {passage.Ship.Health=0;passage.Ship.Cargo.Clear();}
                     foreach(var gun in ship.Guns.Values.Where(g=>g.Owner==player.Id)) gun.Owner=gun.Lease=Guid.Empty;
                     ship.Crew.Remove(player.Id);Repairs.Remove(player.Id);

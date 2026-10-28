@@ -1,5 +1,10 @@
 {
   "Entries": {
+    "Docking could not be saved. Stay aboard and try again.": {
+      "en": "Docking could not be saved. Stay aboard and try again.",
+      "fr": "L’accostage n’a pas pu être sauvegardé. Restez à bord et réessayez.",
+      "es": "No se pudo guardar el atraque. Permanece a bordo e inténtalo de nuevo."
+    },
     "William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.": {
         "en": "William is the player's mount. Choose an AI opponent, place both tracks, enable and save the arena. In the game, step onto the gold start: the jousting window opens automatically. The blue start offers PvP and grandstand entrances offer seats.",
         "fr": "William est la monture du joueur. Choisis un adversaire IA, place les deux pistes, active l’arène et enregistre. En jeu, marche sur le départ doré : la fenêtre de joute s’ouvre automatiquement. Le départ bleu propose le PvP et les accès aux gradins proposent les places.",
