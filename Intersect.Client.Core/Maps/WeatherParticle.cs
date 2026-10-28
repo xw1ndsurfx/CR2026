@@ -16,6 +16,7 @@ public partial class WeatherParticle : IWeatherParticle, IDisposable
     private readonly List<IWeatherParticle> _RemoveParticle;
 
     private readonly Animation animInstance;
+    internal float Opacity { set => animInstance.OpacityMultiplier = value; }
 
     private readonly Rectangle bounds;
 

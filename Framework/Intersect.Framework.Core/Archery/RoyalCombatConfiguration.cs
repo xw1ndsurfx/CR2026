@@ -7,6 +7,7 @@ public sealed class MasteryCategory
     public string Key { get; set; } = "archery";
     public string Name { get; set; } = "Archery";
     public Guid[] WeaponIds { get; set; } = [];
+    [System.ComponentModel.Browsable(false)] public Guid LevelUpAnimationId { get; set; }
     public int Cap { get; set; } = 30;
     public int BaseExperience { get; set; } = 100;
     public double DamagePercentPerLevel { get; set; } = .5;

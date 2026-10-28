@@ -2,6 +2,8 @@ using System.Text.Json;
 using Intersect.Framework.Core.Archery;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.GameObjects.Animations;
+using Intersect.Server.Networking;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
 using Intersect.Server.Archery;
@@ -82,7 +84,13 @@ public partial class Player
                 var before = MasteryExperience.GetValueOrDefault(category.Key);
                 var after = RoyalCombatRuntime.Award(Id, category, experience);
                 MasteryExperience[category.Key] = after;
-                if (after > before) SendPacket(MasteryProgress.Create(category, before, after));
+                if (after > before)
+                {
+                    var progress = MasteryProgress.Create(category, before, after);
+                    SendPacket(progress);
+                    if (progress.LeveledUp && AnimationDescriptor.Get(category.LevelUpAnimationId) != null)
+                        PacketSender.SendAnimationToProximity(category.LevelUpAnimationId, 1, Id, MapId, 0, 0, Dir, MapInstanceId);
+                }
                 SendMasteries(false);
             }
             catch (Exception e) when (e is IOException or Microsoft.Data.Sqlite.SqliteException or JsonException)

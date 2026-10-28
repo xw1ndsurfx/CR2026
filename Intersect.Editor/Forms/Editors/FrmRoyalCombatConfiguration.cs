@@ -2,6 +2,7 @@ using Intersect.Editor.General;
 using Intersect.Framework.Core.Archery;
 using Intersect.Framework.Core.Cinematics;
 using Intersect.Framework.Core.GameObjects.Items;
+using Intersect.Framework.Core.GameObjects.Animations;
 using Intersect.Framework.Core.QualityOfLife;
 using Intersect.Network.Packets.Client;
 using Intersect.Network.Packets.Server;
@@ -12,6 +13,9 @@ namespace Intersect.Editor.Forms.Editors;
 /// <summary>Two focused views over a single validated server configuration.</summary>
 public sealed class FrmRoyalCombatConfiguration : Form
 {
+    private sealed record AnimationChoice(Guid Id, string Name) { public override string ToString() => Name; }
+    private readonly Panel _animationPanel = new() { Dock = DockStyle.Bottom, Height = 66 };
+    private readonly ComboBox _levelUpAnimation = new() { Dock = DockStyle.Bottom, DropDownStyle = ComboBoxStyle.DropDownList, Name = "MasteryLevelUpAnimation" };
     private RoyalCombatConfiguration _config;
     private bool _masteries;
     private readonly Panel _previewPanel;
@@ -88,6 +92,12 @@ public sealed class FrmRoyalCombatConfiguration : Form
             if (_refreshing || _list.SelectedItem is not MasteryCategory category || _weapons.Items[e.Index] is not ItemDescriptor item) return;
             category.WeaponIds = e.NewValue == CheckState.Checked ? category.WeaponIds.Append(item.Id).Distinct().ToArray() : category.WeaponIds.Where(id => id != item.Id).ToArray();
         };
+        _animationPanel.Controls.Add(new Label { Text = T("Mastery level-up animation"), Dock = DockStyle.Top, AutoSize = true });
+        _animationPanel.Controls.Add(_levelUpAnimation);
+        _levelUpAnimation.SelectedIndexChanged += (_, _) => {
+            if (!_refreshing && _list.SelectedItem is MasteryCategory category && _levelUpAnimation.SelectedItem is AnimationChoice choice)
+                category.LevelUpAnimationId = choice.Id;
+        };
         _map.MouseClick += (_, e) => {
             if (_list.SelectedItem is not ArcheryRange range || _map.Image is not { } image) return;
             var scale = Math.Min(_map.Width / (float)image.Width, _map.Height / (float)image.Height);
@@ -105,6 +115,7 @@ public sealed class FrmRoyalCombatConfiguration : Form
         Text = T(masteries ? "Weapon Mastery Editor" : "Archery Mini-Game Editor");
         _new.Text = T(masteries ? "New mastery category" : "New range on current map");
         _previewPanel.Controls.Clear(); _previewPanel.Controls.Add(masteries ? _weapons : _map);
+        if (masteries) _previewPanel.Controls.Add(_animationPanel);
         _status.Text = T(masteries ? "Select existing weapons for this mastery. A weapon belongs to one category." : "Click the map to place the shooting position. Enable the range, then save.");
         RefreshList();
     }
@@ -118,6 +129,13 @@ public sealed class FrmRoyalCombatConfiguration : Form
             _refreshing = true; _weapons.Items.Clear();
             foreach (var item in ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().Where(i => i.ItemType == ItemType.Equipment &&
                 i.EquipmentSlot == Intersect.Options.Instance.Equipment.WeaponSlot).OrderBy(i => i.Name)) _weapons.Items.Add(item, category.WeaponIds.Contains(item.Id));
+            _levelUpAnimation.Items.Clear();
+            _levelUpAnimation.Items.Add(new AnimationChoice(Guid.Empty, T("No animation")));
+            foreach (var animation in AnimationDescriptor.Lookup.Values.OfType<AnimationDescriptor>().OrderBy(a => a.Name))
+                _levelUpAnimation.Items.Add(new AnimationChoice(animation.Id, animation.Name));
+            if (!_levelUpAnimation.Items.OfType<AnimationChoice>().Any(a => a.Id == category.LevelUpAnimationId))
+                _levelUpAnimation.Items.Add(new AnimationChoice(category.LevelUpAnimationId, T("Missing animation")));
+            _levelUpAnimation.SelectedItem = _levelUpAnimation.Items.OfType<AnimationChoice>().First(a => a.Id == category.LevelUpAnimationId);
             _refreshing = false;
         }
         Preview();

@@ -1,5 +1,20 @@
 {
   "Entries": {
+    "Mastery level-up animation": {
+      "en": "Mastery level-up animation",
+      "fr": "Animation de montée de maîtrise",
+      "es": "Animación al subir de dominio"
+    },
+    "No animation": {
+      "en": "No animation",
+      "fr": "Aucune animation",
+      "es": "Sin animación"
+    },
+    "Missing animation": {
+      "en": "Missing animation",
+      "fr": "Animation introuvable",
+      "es": "Animación no encontrada"
+    },
     "7. Sounds": {
       "en": "7. Sounds",
       "fr": "7. Sons",
