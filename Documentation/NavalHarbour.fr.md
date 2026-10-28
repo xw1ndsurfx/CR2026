@@ -1,5 +1,24 @@
 # Capitainerie, boutique PNJ et System Editor
 
+## Choisir le point de débarquement d’un quai
+
+Dans **Map Layers → Attributes → Q - Quai**, cocher **Choisir la case d’arrivée**.
+Renseigner X/Y ou cliquer **Choisir sur la map**, puis la case où le personnage
+doit apparaître. Ce clic choisit uniquement les coordonnées : il ne pose pas
+d’attribut et ne modifie pas la map. Clic droit ou Échap annule la sélection.
+
+Poser ensuite le Q, ou repeindre un Q existant, pour lui associer ces coordonnées,
+puis sauvegarder la map. Chaque Q peut avoir son propre point sur sa carte.
+Choisir une case **praticable du ponton**, sans Q ni Block : Q reste le repère
+solide avec lequel le bateau interagit. Le point peut être plus loin sur le
+ponton ; le navire doit toujours être proche du Q pour accoster. Le serveur
+refuse une arrivée hors map, bloquée, occupée ou recouverte par une coque, sans
+la remplacer silencieusement par une autre case.
+
+Décocher la case conserve le placement automatique. Les anciens Q restent dans
+ce mode ; leurs identifiants et leur sérialisation native sont conservés. Mettre
+à jour le serveur, l’éditeur et le client pour les nouveaux champs d’attribut.
+
 ## Accoster sur plusieurs îles
 
 Placer l’attribut **Quai (Q)** sur le bord de chaque île accessible par le réseau

@@ -21,8 +21,12 @@ internal static partial class NavalSystem
             !Ships.Values.Any(other => HullTiles(other, ocean, other.State.MapId,
                 other.State.X, other.State.Y).Contains((state.MapId, x, y)));
         var marked = ShipDock.Tiles(attributes).Any();
-        var exit = marked ? ShipDock.FindLanding(attributes, state.X, state.Y, 5, Clear)
-            : ShipDisembarkation.Find(state, vessel.Definition, Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight, Clear);
+        if (marked)
+        {
+            var point = ShipDock.FindLandingPoint(attributes, state.X, state.Y, 5, Clear);
+            return point is { } selected ? new(state.MapId, selected.X, selected.Y, selected.DockX, selected.DockY) : null;
+        }
+        var exit = ShipDisembarkation.Find(state, vessel.Definition, Options.Instance.Map.MapWidth, Options.Instance.Map.MapHeight, Clear);
         if (exit is not { } landing) return null;
         var quay = ShipDock.Nearest(attributes, landing.X + .5, landing.Y + .5, 1.01)
             ?? (vessel.Definition.DockX, vessel.Definition.DockY);

@@ -65,6 +65,7 @@ public partial class FrmMapLayers : DockContent
             page.Padding = new Padding(0, 0, 12, 12);
         }
         Icon = Program.Icon;
+        InitializeDockLandingEditor();
 
         mMapLayers.Add(picLayer1);
         mMapLayers.Add(picLayer2);
@@ -473,6 +474,8 @@ public partial class FrmMapLayers : DockContent
         grpAnimation.Visible = false;
         grpSlide.Visible = false;
         grpCritter.Visible = false;
+        if (_dockLandingGroup != null) _dockLandingGroup.Visible = false;
+        Globals.MapEditorWindow?.CancelDockLandingSelection();
     }
 
     // Used for returning an integer value depending on which radio button is selected on the forms. This is merely used to make PlaceAtrribute less messy.
@@ -536,6 +539,9 @@ public partial class FrmMapLayers : DockContent
 
         switch (selectedType)
         {
+            case MapAttributeType.Dock:
+                ShowDockLandingEditor();
+                break;
             case MapAttributeType.Item:
                 grpItem.Visible = true;
                 cmbItemAttribute.Items.Clear();
@@ -648,11 +654,14 @@ public partial class FrmMapLayers : DockContent
         {
             case MapAttributeType.Walkable:
             case MapAttributeType.RainPuddle:
-            case MapAttributeType.Dock:
             case MapAttributeType.Blocked:
             case MapAttributeType.GrappleStone:
             case MapAttributeType.NpcAvoid:
                 return MapAttribute.CreateAttribute(attributeType);
+
+            case MapAttributeType.Dock:
+                return new MapDockAttribute { HasLandingPoint = _dockCustomLanding.Checked,
+                    LandingX = (int)_dockLandingX.Value, LandingY = (int)_dockLandingY.Value };
 
             case MapAttributeType.Item:
                 return CreateItemAttribute();
@@ -1176,6 +1185,7 @@ public partial class FrmMapLayers : DockContent
 
     private void ChangeTab()
     {
+        Globals.MapEditorWindow?.CancelDockLandingSelection();
         btnTileHeader.BackColor = Styling.EditorTheme.Input;
         btnAttributeHeader.BackColor = Styling.EditorTheme.Input;
         btnLightsHeader.BackColor = Styling.EditorTheme.Input;

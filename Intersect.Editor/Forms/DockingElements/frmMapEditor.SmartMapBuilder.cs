@@ -73,6 +73,7 @@ public partial class FrmMapEditor
 
     internal void PreviewSmartBuilder(MapInstance preview)
     {
+        if (_dockLandingSelected != null || _dockLandingConsumeRelease) return;
         if (_smartMap != null && _smartMap == Globals.CurrentMap && _smartPreset != null)
         {
             _smartEdits ??= SmartPlan(_smartMap, _smartPreset, _smartShape, _smartStart, _smartEnd, _smartPreserve, _smartErase, _smartSeed);
@@ -114,6 +115,7 @@ public partial class FrmMapEditor
     }
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
+        if (_dockLandingSelected != null && keyData == Keys.Escape) { CancelDockLandingSelection(); return true; }
         if (_smartMap != null && keyData == Keys.Escape) { CancelSmartStroke(); return true; }
         return base.ProcessCmdKey(ref msg, keyData);
     }
