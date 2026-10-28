@@ -1,5 +1,24 @@
 # Capitainerie, boutique PNJ et System Editor
 
+## Accoster sur plusieurs îles
+
+Placer l’attribut **Quai (Q)** sur le bord de chaque île accessible par le réseau
+naval du dossier **Ocean**. Q est bloquant : laisser au moins une case cardinale
+libre à côté du quai, hors de la coque. Arrêter le navire près de Q, puis utiliser
+l’action de débarquement. Le capitaine et l’équipage débarquent sur **la carte du
+quai actuel**. Un quai sans sortie libre refuse le débarquement.
+
+Un accostage réussi mémorise ce nouveau quai dans la flotte et le passage de
+l’équipage. Le retour de secours d’un prochain voyage utilise ce nouveau port ;
+il n’est plus figé au port de départ précédent. Le bateau personnel reste dans
+la flotte : depuis un Q d’une autre île du réseau Ocean, le même bateau peut être
+remis à l’eau avec son identité, sa coque et son chargement conservés.
+
+La destination est sauvegardée avant de libérer la barre. En cas d’échec de
+sauvegarde, le personnage reste à bord et l’ancien point de secours est conservé.
+Un naufrage ou une déconnexion en pleine mer garde le mécanisme de secours ;
+une simple proximité avec un quai ne remplace pas le dernier accostage réussi.
+
 ## Installation et compatibilité
 
 Mettre à jour ensemble le serveur, le client, le Game Editor et les ressources Ocean issus de la même compilation. Les échanges de configuration navale et la commande d’événement `OpenNavalShop` sont nouveaux ; les fenêtres de flotte et de boutique échangent désormais un mode distinct. Aucun déploiement cloud n’est effectué par cette modification.

@@ -225,6 +225,7 @@ public sealed partial class NavalTests
         Assert.That(root, Is.Not.Null);
         var catalog = GameTextCatalog.FromJson(File.ReadAllText(Path.Combine(root!.FullName, "Intersect.Client.Core", "Localization", "Locales", "ui.json")));
         var messages = new[] { "Naval navigation is unavailable.", "Stop near the helm dock to disembark safely.",
+            "Docking could not be saved. Stay aboard and try again.",
             "You have left the helm.", "No available ship near this helm dock.",
             "Anchor with Space and stop the ship before disembarking.",
             "Return to the helm dock at ({0}, {1}) on its original map to disembark.",
