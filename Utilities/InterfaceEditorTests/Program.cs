@@ -55,6 +55,7 @@ internal static class Program
         if (Environment.GetCommandLineArgs().Contains("--weather-only")) { WeatherEnvironmentEditorTests.Run();QualityOfLifeEditorTests.Run();return; }
         if (Environment.GetCommandLineArgs().Contains("--qol-only")) { WeatherEnvironmentEditorTests.Run(); BoosterEditorTests.Run();QualityOfLifeEditorTests.Run();MenuAnimationEditorTests.Run();AnimationImportNavigationTests.Run();AchievementRewardEditorTests.Run();NavalSystemEditorTests.Run();NavalPatrolCreatorEditorTests.Run();return; }
         if (Environment.GetCommandLineArgs().Contains("--harbour-only")) { HarbourDockEditorTests.Run(); NavalShopEditorTests.Run(); NavalSystemEditorTests.Run(); NavalPatrolCreatorEditorTests.Run(); NavalCombatMusicEditorTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--dock-landing-only")) { HarbourDockEditorTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--naval-only")) { NavalMapListTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--housing-picker-only")) { HousingPickerTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--achievement-icons-only")) { AchievementIconEditorTests.Run(); MonthlyNpcMissionEditorTests.Run(); return; }

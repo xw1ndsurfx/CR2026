@@ -195,6 +195,7 @@ public partial class FrmMapEditor : DockContent
     private void picMap_MouseDown(object sender, MouseEventArgs e)
     {
         if (BeginMapPan(e)) return;
+        if (PickDockLanding(LogicalMapMouse(e))) return;
         if (BeginSmartStroke(LogicalMapMouse(e))) return;
         Globals.MapLayersWindow.BeginResourceStroke();
         e = LogicalMapMouse(e);
@@ -573,6 +574,7 @@ public partial class FrmMapEditor : DockContent
         }
 
         if (oldx != Globals.CurTileX || oldy != Globals.CurTileY) Core.Graphics.TilePreviewUpdated = true;
+        if (_dockLandingSelected != null || _dockLandingConsumeRelease) return;
         if (MoveSmartStroke()) return;
 
         if (Globals.CurrentLayer == LayerOptions.Attributes)
@@ -810,6 +812,7 @@ public partial class FrmMapEditor : DockContent
 
     public void picMap_MouseUp(object sender, MouseEventArgs e)
     {
+        if (_dockLandingConsumeRelease) { _dockLandingConsumeRelease = false; return; }
         if (EndSmartStroke(e)) return;
         if (_panReleaseButton != MouseButtons.None)
         {
