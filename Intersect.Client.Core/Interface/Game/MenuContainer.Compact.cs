@@ -118,6 +118,9 @@ public partial class MenuContainer
         private readonly Button _icon;
         private readonly string _caption;
         private readonly MenuGlyph _glyph;
+        internal Color IconColor => IsDisabledByTree || _icon.IsDisabledByTree || IsActive
+            ? new Color(255, 178, 149, 102)
+            : IsHovered ? new Color(255, 235, 255, 139) : Color.White;
         internal int CaptionWidth => Skin.Renderer.MeasureText(Font, FontSize, Text).X;
         private string _language = "";
         internal MenuRow(Base parent, string name, Button icon, string caption) : base(parent, name)
@@ -134,8 +137,8 @@ public partial class MenuContainer
         }
         internal void ConfigureIcon()
         {
-            // Legacy Btn_* images are framed action buttons, not compact menu icons.
-            var builtIn = _caption is "Dungeons" or "News" or "Daily Reward" or "LogiCoin Shop" || _icon.GetStateTexture(ComponentState.Normal) == null;
+            // Supplied foreground artwork is consistent across GUI packs and menu rows.
+            var builtIn = CompactMenuArtwork.ContainsKey(_caption) || _icon.GetStateTexture(ComponentState.Normal) == null;
             _icon.IsHidden = builtIn; _glyph.IsHidden = !builtIn;
         }
         internal void RefreshCaption()
