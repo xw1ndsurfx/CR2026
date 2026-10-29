@@ -48,8 +48,20 @@ public partial class FrmShop
             list.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             var scroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true, Margin = new Padding(4) };
             group.MinimumSize = new Size(258, group.Height);
-            group.Dock = DockStyle.Fill;
-            scroll.Controls.Add(group); layout.Controls.Add(scroll, column, 2);
+            // DockStyle.Fill prevents AutoScroll from measuring overflow. Keep a real
+            // content rectangle so the final fields remain reachable on short screens.
+            group.Dock = DockStyle.None;
+            group.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            var minimum = group.MinimumSize;
+            void FitOffers()
+            {
+                group.Size = new Size(Math.Max(minimum.Width, scroll.ClientSize.Width),
+                    Math.Max(minimum.Height, scroll.ClientSize.Height));
+            }
+            scroll.Controls.Add(group);
+            scroll.ClientSizeChanged += (_, _) => FitOffers();
+            FitOffers();
+            layout.Controls.Add(scroll, column, 2);
         }
         Offers(grpItemsSold, lstSoldItems, 0); Offers(grpItemsBought, lstBoughtItems, 1);
         pnlContainer.Controls.Add(layout);

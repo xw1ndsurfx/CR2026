@@ -185,7 +185,11 @@ internal static class Program
         Check(editor.CurrentPage.WorldMapOffsetX == -64 && editor.CurrentPage.WorldMapOffsetY == 32, "Page offsets must save");
         editor.Size = new Size(1500, 950); editor.PerformLayout();
         var split = editor.Controls.OfType<SplitContainer>().Single();
-        Check(split.Width > 1400 && split.Height > 700 && split.Panel2.Width > 800, "Event command area must grow with the window");
+        // Windows caps oversized requests to the monitor's tracking size on laptops.
+        var chromeHeight = editor.Controls.Cast<Control>()
+            .Where(control => control.Dock is DockStyle.Top or DockStyle.Bottom).Sum(control => control.Height);
+        Check(split.Width == editor.ClientSize.Width && split.Height == editor.ClientSize.Height - chromeHeight &&
+            split.Panel2.Width >= split.Panel2MinSize, "Event command area must fill the available window on every monitor");
         var save = (Control)typeof(FrmEvent).GetField("btnSave", flags)!.GetValue(editor)!;
         Check(save.Parent!.Bottom <= editor.ClientSize.Height && save.Parent.Height >= save.Bottom, "Save controls remain accessible");
         editor.ShowInTaskbar = false; editor.Opacity = 0; editor.StartPosition = FormStartPosition.Manual;
