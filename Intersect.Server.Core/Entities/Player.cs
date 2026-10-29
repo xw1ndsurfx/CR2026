@@ -4169,7 +4169,10 @@ public partial class Player : Entity
     /// <returns>The amount of the requested item the player has on them.</returns>
     public int FindInventoryItemQuantity(Guid itemId)
     {
-        if (Items == null)
+        var items = Items;
+        // A shop without a currency must not treat empty inventory slots as that currency.
+        // Deleted item definitions have no meaningful balance either.
+        if (items == null || itemId == Guid.Empty || ItemDescriptor.Get(itemId) is not { } descriptor)
         {
             return 0;
         }
@@ -4177,10 +4180,10 @@ public partial class Player : Entity
         long itemCount = 0;
         for (var i = 0; i < Options.Instance.Player.MaxInventory; i++)
         {
-            var item = Items[i];
-            if (item.ItemId == itemId)
+            var item = items[i];
+            if (item != null && item.ItemId == itemId)
             {
-                itemCount = item.Descriptor.Stackable ? itemCount += item.Quantity : itemCount += 1;
+                itemCount += descriptor.Stackable ? item.Quantity : 1;
             }
         }
 
