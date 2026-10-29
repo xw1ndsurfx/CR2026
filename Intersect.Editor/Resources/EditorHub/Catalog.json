@@ -1305,5 +1305,26 @@
       "es": "XP de armas, talentos, reinicios y requisitos de dominio."
     },
     "keywords": "archery tir arc weapon mastery armes munition weapon sword epee maitrise mastery requirements prerequis niveau equiper event talents reset"
+  },
+  {
+    "id": "royalTutorialEditor",
+    "oldMenu": "contentEditorsToolStripMenuItem",
+    "category": "Systems",
+    "subcategory": "Configuration",
+    "tags": [
+      "World"
+    ],
+    "title": {
+      "en": "Tutorial editor",
+      "fr": "Éditeur de tutoriel",
+      "es": "Editor de tutorial"
+    },
+    "description": {
+      "en": "Configure first-login guidance, objectives and cinematics.",
+      "fr": "Configurer le guide de première connexion, les objectifs et les cinématiques.",
+      "es": "Configurar la guía inicial, los objetivos y las cinemáticas."
+    },
+    "art": "commonEventEditorToolStripMenuItem.png",
+    "keywords": "tutorial onboarding guide introduction cinematic"
   }
 ]

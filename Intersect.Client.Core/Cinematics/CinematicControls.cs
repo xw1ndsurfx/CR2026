@@ -15,6 +15,8 @@ internal static class CinematicControls
     private static readonly object Gate = new();
     private static State? _state;
 
+    internal static bool Active { get { lock (Gate) return _state is { } state && Valid(state); } }
+
     internal static void Clear() { lock (Gate) _state = null; }
 
     internal static string SkipLabel => QualityOfLifeText.Get("Skip presentation", ClientLanguages.Current);
