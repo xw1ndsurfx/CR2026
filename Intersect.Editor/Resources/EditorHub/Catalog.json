@@ -1,5 +1,11 @@
 [
   {
+    "id": "royalContractsEditorToolStripMenuItem", "oldMenu": "Game Editors", "category": "Game", "subcategory": "WorldAndProgression",
+    "tags": ["Gameplay", "Economy"], "art": "questEditorToolStripMenuItem.png", "keywords": "royal contracts daily weekly mission contract contrat quotidien hebdomadaire collectif intendant",
+    "title": {"en":"Royal Contracts", "fr":"Contrats royaux", "es":"Contratos reales"},
+    "description": {"en":"Manage automatic daily and weekly commissions, deliveries and collective goals.", "fr":"Gérer les missions quotidiennes et hebdomadaires, les livraisons et les objectifs collectifs.", "es":"Gestiona misiones diarias y semanales, entregas y objetivos colectivos."}
+  },
+  {
     "id": "royalCinematicDirector", "oldMenu": "contentEditorsToolStripMenuItem", "category": "Game", "subcategory": "WorldAndProgression",
     "tags": ["World"], "art": "commonEventEditorToolStripMenuItem.png", "keywords": "cinematic camera timeline actor story dialogue movement saga chapitre",
     "title": {"en":"Royal Cinematic Director", "fr":"Royal Cinematic Director", "es":"Royal Cinematic Director"},

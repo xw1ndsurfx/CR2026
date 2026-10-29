@@ -381,6 +381,8 @@ public partial class MapInstance : IMapInstance
 
         AddEntity(player);
         player.LastMapEntered = mMapController.Id;
+        Intersect.Server.RoyalContracts.RoyalContractsRuntime.Observe(player,
+            Intersect.Framework.Core.RoyalContracts.RoyalContractObjective.ExploreMaps, mMapController.Id);
 
         // Send the entities/items of this current MapInstance to the player
         SendMapEntitiesTo(player);

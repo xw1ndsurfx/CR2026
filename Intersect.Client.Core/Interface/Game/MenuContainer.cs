@@ -419,6 +419,7 @@ public partial class MenuContainer : Panel
         _guildWindow.Hide();
         Interface.GameUi.HideLogiklikNews();
         Interface.GameUi.HideDailyReward();
+        Interface.GameUi.HideRoyalContracts();
         Interface.GameUi.HideLogiCoinShop();
         Interface.GameUi.HideHarbour();
         Interface.GameUi.HideMarketplace();

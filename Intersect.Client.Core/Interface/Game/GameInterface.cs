@@ -457,6 +457,7 @@ public partial class GameInterface : MutableInterface
     public void Update(TimeSpan elapsed, TimeSpan total)
     {
         UpdateTutorialGuide();
+        _royalContractsWindow?.Update();
         _archeryWindow?.CheckClosed();
         if (Globals.Me != null && PlayerBox?.MyEntity != Globals.Me)
         {

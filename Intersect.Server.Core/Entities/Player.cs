@@ -1790,6 +1790,9 @@ public partial class Player : Entity
 
                     // Credit kill tasks and achievements only to the killer.
                     UpdateQuestKillTasks(entity);
+                    if (!descriptor.IsPet)
+                        Intersect.Server.RoyalContracts.RoyalContractsRuntime.Observe(this,
+                            Intersect.Framework.Core.RoyalContracts.RoyalContractObjective.NpcKills, descriptor.Id);
                     AchievementRuntime.AddProgress(
                         this,
                         Intersect.Framework.Core.Achievements.AchievementObjectiveType.NpcKills,

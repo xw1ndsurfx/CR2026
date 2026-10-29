@@ -22,6 +22,7 @@ internal sealed class TestContentManager : GameContentManager
 
     internal void AddFaceTexture(string name, Intersect.Client.Framework.Graphics.IGameTexture texture) => mFaceDict[name.ToLowerInvariant()] = texture;
     internal void AddImageTexture(string name, Intersect.Client.Framework.Graphics.IGameTexture texture) => mImageDict[name.ToLowerInvariant()] = texture;
+    internal void AddGuiTexture(string name, Intersect.Client.Framework.Graphics.IGameTexture texture) => mGuiDict[name.ToLowerInvariant()] = texture;
     internal void AddAchievementTexture(string name, Intersect.Client.Framework.Graphics.IGameTexture texture) => mAchievementDict[name.ToLowerInvariant()] = texture;
     internal void AddAnimationTexture(string name, Intersect.Client.Framework.Graphics.IGameTexture texture) =>
         mAnimationDict[name.ToLowerInvariant()] = texture;
