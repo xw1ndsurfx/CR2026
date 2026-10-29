@@ -73,6 +73,7 @@ internal static class EditorWindows
         // Theme application can happen at the first paint, after Shown has fired.
         EnsureOwner(window);
         if (window.IsHandleCreated) AddFullscreenCommand(window);
+        if (window.Visible) ConstrainToScreen(window, window.Owner);
     }
 
     private static void EnsureOwner(Form window)
@@ -141,6 +142,8 @@ internal static class EditorWindows
     internal static void ConstrainToScreen(Form window, Form? owner)
     {
         if (!window.TopLevel || window is DockContent || IsFullscreen(window) || window.WindowState != FormWindowState.Normal) return;
+        // Capture the designed layout before monitor constraints shrink docked controls.
+        if (window is not (FrmMain or FrmLogin)) EditorScrollLayout.Attach(window);
         var area = Screen.FromControl(owner ?? window).WorkingArea;
         // A legacy minimum larger than the monitor must not hide the window's actions.
         window.MinimumSize = new Size(Math.Min(window.MinimumSize.Width, area.Width), Math.Min(window.MinimumSize.Height, area.Height));
