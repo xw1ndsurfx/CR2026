@@ -25,15 +25,23 @@ memory_evidence
 # A mini dump is optional because it can be large and contain private data.
 # To enable .NET dumps: set DOTNET_DbgEnableMiniDump=1 before launching this script.
 export DOTNET_DbgMiniDumpName="${DOTNET_DbgMiniDumpName:-$PWD/logs/server-dump-%p-%t.dmp}"
-"$@" <&0 &
-server_pid=$!
-record "Server pid=$server_pid"
+server_pid=""
+pending_signal=""
 forward_signal() {
     record "Supervisor received $1; forwarding to server."
-    kill -s "$1" "$server_pid" 2>/dev/null || true
+    if [[ -n "$server_pid" ]]; then
+        kill -s "$1" "$server_pid" 2>/dev/null || true
+    else
+        pending_signal="$1"
+    fi
 }
+# Install traps before spawning: a fast child can be ready before the parent resumes.
 trap 'forward_signal TERM' TERM
 trap 'forward_signal INT' INT
+"$@" <&0 &
+server_pid=$!
+if [[ -n "$pending_signal" ]]; then forward_signal "$pending_signal"; fi
+record "Server pid=$server_pid"
 # A trapped signal can interrupt wait while the server is still shutting down.
 while true; do
     wait "$server_pid"

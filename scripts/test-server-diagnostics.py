@@ -1,9 +1,9 @@
 """Integration checks for the Linux supervisor; no production server required."""
+import os
 import pathlib
 import signal
 import subprocess
 import tempfile
-import time
 import unittest
 
 
@@ -41,7 +41,7 @@ class SupervisorTests(unittest.TestCase):
             child = subprocess.Popen(
                 ["bash", str(SCRIPT), "bash", "-c",
                  "trap 'sleep 0.2; echo closed; exit 42' TERM; echo ready; while true; do sleep 0.05; done"],
-                cwd=directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                cwd=directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True,
             )
             try:
                 self.assertEqual(child.stdout.readline().strip(), "ready")
@@ -53,9 +53,11 @@ class SupervisorTests(unittest.TestCase):
                 self.assertIn("received TERM", log)
                 self.assertIn("shellExitCode=42", log)
             finally:
-                if child.poll() is None:
-                    child.kill()
-                    child.communicate()
+                try:
+                    os.killpg(child.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                child.communicate()
 
 
 if __name__ == "__main__":
