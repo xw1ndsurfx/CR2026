@@ -22,6 +22,8 @@ internal static class ServerCrashLog
             if (Interlocked.Exchange(ref _path, path) == path)
                 return;
 
+            PreviousSessionDiagnostics.Report(directory, FileName);
+
             var assembly = Assembly.GetEntryAssembly();
             var commit = assembly?.GetCustomAttributes<AssemblyMetadataAttribute>()
                 .FirstOrDefault(attribute => attribute.Key == "CommitSha")?.Value ?? "unknown";

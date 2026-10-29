@@ -29,8 +29,12 @@ internal static class StartupDiagnostics
     }
 
     // Bootstrapper can change the working directory after Main has installed the early handlers.
-    internal static void SetLogDirectory() =>
-        ServerCrashLog.SetDirectory(Path.Combine(Environment.CurrentDirectory, "logs"));
+    internal static void SetLogDirectory()
+    {
+        var directory = Path.Combine(Environment.CurrentDirectory, "logs");
+        ConsoleDiagnostics.Configure(directory);
+        ServerCrashLog.SetDirectory(directory);
+    }
 
     internal static void SetLogger(ILogger logger) => _logger = logger;
 
@@ -39,6 +43,8 @@ internal static class StartupDiagnostics
         Volatile.Write(ref _lastStage, $"FAILED {stage}");
         // Do not call application logging providers from this early exception handler.
         ServerCrashLog.Record($"FAILED {stage}", exception);
+        try { ServerCrashLog.Record(RuntimeDiagnostics.Snapshot()); }
+        catch { }
     }
 
     internal static void Mark(string stage)

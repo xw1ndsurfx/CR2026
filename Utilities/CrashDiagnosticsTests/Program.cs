@@ -42,6 +42,18 @@ if (args.Length > 0 && args[0] == "child")
             Console.Out.Flush();
             Thread.Sleep(Timeout.Infinite);
             break;
+        case "console":
+            Console.WriteLine("console stdout marker");
+            Console.Error.WriteLine("console stderr marker");
+            Parallel.For(0, 8, index => Console.WriteLine("concurrent-console-" + index));
+            Console.WriteLine(new string('x', ConsoleDiagnostics.FileLimit + 20000));
+            Console.Error.WriteLine("console final marker");
+            break;
+        case "blocked-console":
+            File.WriteAllText("blocked-console", "not a directory");
+            ConsoleDiagnostics.Configure(Path.Combine(Environment.CurrentDirectory, "blocked-console"));
+            Console.WriteLine("console survives broken disk sink");
+            break;
         case "directory":
             Directory.CreateDirectory("server-data");
             Directory.SetCurrentDirectory("server-data");
@@ -55,8 +67,10 @@ if (args.Length > 0 && args[0] == "child")
 var root = Path.Combine(Path.GetTempPath(), "cr-diagnostics-tests-" + Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(root);
 var failures = 0;
+var total = 0;
 void Test(string name, Action test)
 {
+    total++;
     try { test(); Console.WriteLine("PASS " + name); }
     catch (Exception error) { failures++; Console.Error.WriteLine("FAIL " + name + ": " + error); }
 }
@@ -171,7 +185,47 @@ Test("an unwritable journal does not replace the original failure", () =>
     finally { Console.SetError(oldError); }
     Check(fallback.ToString().Contains("original exception"), "Original exception was lost on journal failure");
 });
-Console.WriteLine($"{7 - failures}/7 crash diagnostic checks passed. Fixtures: {root}");
+Test("stdout and stderr are retained with bounded rotation", () =>
+{
+    var directory = Path.Combine(root, "console");
+    Check(RunChild("console", directory) == 0, "Console fixture failed");
+    var logs = Directory.GetFiles(Path.Combine(directory, "logs"), "server-console.log*");
+    Check(logs.Length >= 2 && logs.Length <= 4, "Rotation failed");
+    var text = string.Join("", logs.Select(File.ReadAllText));
+    Check(text.Contains("console stdout marker") && text.Contains("console stderr marker") &&
+          text.Contains("console final marker"), "Console output missing");
+    for (var i = 0; i < 8; i++) Check(text.Contains("concurrent-console-" + i), "Parallel console write lost");
+    Check(logs.All(path => new FileInfo(path).Length <= ConsoleDiagnostics.FileLimit + 16384), "Console exceeded size bound");
+});
+Test("an unavailable console sink leaves the server running", () =>
+{
+    Check(RunChild("blocked-console", Path.Combine(root, "blocked-console")) == 0, "Diagnostic I/O failure escaped");
+});
+Test("restart distinguishes missing exit evidence and recorded nonzero exit", () =>
+{
+    var directory = Path.Combine(root, "restart");
+    using (var child = StartChild("abrupt", directory))
+    {
+        var errors = child.StandardError.ReadToEndAsync();
+        try
+        {
+            Check(child.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult() == "durable", "Child not ready");
+        }
+        finally
+        {
+            if (!child.HasExited) child.Kill(entireProcessTree: true);
+            child.WaitForExit();
+            errors.GetAwaiter().GetResult();
+        }
+    }
+    Check(RunChild("exit", directory) == 23, "Restart failed");
+    var report = File.ReadAllText(Path.Combine(directory, "logs", "previous-session.txt"));
+    Check(report.Contains("No ProcessExit record") && report.Contains("not proof of OOM"), "Abrupt exit misclassified");
+    Check(RunChild("exit", directory) == 23, "Second restart failed");
+    report = File.ReadAllText(Path.Combine(directory, "logs", "previous-session.txt"));
+    Check(report.Contains("ProcessExit code=23") && !report.Contains("No ProcessExit record"), "Recorded exit lost");
+});
+Console.WriteLine($"{total - failures}/{total} crash diagnostic checks passed. Fixtures: {root}");
 return failures == 0 ? 0 : 1;
 
 [MethodImpl(MethodImplOptions.NoInlining)]
