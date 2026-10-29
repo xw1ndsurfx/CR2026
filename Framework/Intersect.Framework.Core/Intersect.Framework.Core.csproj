@@ -1,4 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup><EmbeddedResource Include="Tutorials/Text.json" LogicalName="Intersect.Tutorial.Text" /></ItemGroup>
 
     <PropertyGroup>
         <Nullable>warnings</Nullable>

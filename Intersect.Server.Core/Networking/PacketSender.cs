@@ -109,6 +109,7 @@ public static partial class PacketSender
             }
 
             player.LoginWarp();
+            player.ResetTutorialSession();
             client.Send(Intersect.Server.WorldEvents.WorldActivitiesRuntime.Snapshot(DateTimeOffset.Now, silent: true));
             client.Send(Intersect.Server.WorldEvents.WorldActivitiesRuntime.LootSnapshot(DateTimeOffset.Now,silent:true));
             player.SendExperienceBoostStatus();

@@ -782,6 +782,7 @@ public partial class Player : Entity
             Monitor.TryEnter(EntityLock, ref lockObtained);
             if (lockObtained)
             {
+                UpdateTutorial();
                 UpdateMount();
                 UpdateJoust();
                 UpdateArchery();
