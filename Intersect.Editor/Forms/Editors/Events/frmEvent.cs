@@ -824,6 +824,9 @@ public partial class FrmEvent : Form
                 tmpCommand = new OpenRoyalStylistCommand();
 
                 break;
+            case EventCommandType.OpenRoyalContracts:
+                tmpCommand = new OpenRoyalContractsCommand();
+                break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -866,6 +869,10 @@ public partial class FrmEvent : Form
         AddCinematicCommands();
         AddNavalShopCommand();
         AddRoyalStylistCommand();
+        var contractsNode = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
+        contractsNode?.Nodes.Add(new TreeNode(Intersect.Framework.Core.RoyalContracts.RoyalContractsText.Get("Open Royal Contracts",
+            System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName))
+            { Name = "openroyalcontracts", Tag = (int)EventCommandType.OpenRoyalContracts });
         AddDungeonCommands();
         AddProfessionCommands();
         InitializeQuestArrowControls();
@@ -1754,6 +1761,8 @@ public partial class FrmEvent : Form
                 break;
             case EventCommandType.OpenRoyalStylist:
                 cmdWindow = new EventCommand_OpenRoyalStylist((OpenRoyalStylistCommand)command, this);
+                break;
+            case EventCommandType.OpenRoyalContracts:
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

@@ -1,0 +1,384 @@
+{
+  "Entries": {
+    "Return to the board and open it again.": {
+      "en": "Return to the board and open it again.",
+      "fr": "Retourne au tableau et ouvre-le à nouveau.",
+      "es": "Vuelve al tablón y ábrelo de nuevo."
+    },
+    "Royal Contracts": {
+      "en": "Royal Contracts",
+      "fr": "Contrats royaux",
+      "es": "Contratos reales"
+    },
+    "Open Royal Contracts": {
+      "en": "Open Royal Contracts",
+      "fr": "Ouvrir les contrats royaux",
+      "es": "Abrir contratos reales"
+    },
+    "Royal Contracts management": {
+      "en": "Royal Contracts management",
+      "fr": "Gestion des contrats royaux",
+      "es": "Gestión de contratos reales"
+    },
+    "Daily": {
+      "en": "Daily",
+      "fr": "Quotidiens",
+      "es": "Diarios"
+    },
+    "Weekly": {
+      "en": "Weekly",
+      "fr": "Hebdomadaires",
+      "es": "Semanales"
+    },
+    "Collective": {
+      "en": "Collective",
+      "fr": "Collectif",
+      "es": "Colectivo"
+    },
+    "Personal": {
+      "en": "Personal",
+      "fr": "Personnel",
+      "es": "Personal"
+    },
+    "Accept contract": {
+      "en": "Accept contract",
+      "fr": "Accepter le contrat",
+      "es": "Aceptar contrato"
+    },
+    "Deliver resources": {
+      "en": "Deliver resources",
+      "fr": "Livrer les ressources",
+      "es": "Entregar recursos"
+    },
+    "Claim reward": {
+      "en": "Claim reward",
+      "fr": "Réclamer la récompense",
+      "es": "Reclamar recompensa"
+    },
+    "Claimed": {
+      "en": "Claimed",
+      "fr": "Réclamé",
+      "es": "Reclamado"
+    },
+    "In progress": {
+      "en": "In progress",
+      "fr": "En cours",
+      "es": "En curso"
+    },
+    "Refresh": {
+      "en": "Refresh",
+      "fr": "Actualiser",
+      "es": "Actualizar"
+    },
+    "Close": {
+      "en": "Close",
+      "fr": "Fermer",
+      "es": "Cerrar"
+    },
+    "Previous": {
+      "en": "Previous",
+      "fr": "Précédent",
+      "es": "Anterior"
+    },
+    "Next": {
+      "en": "Next",
+      "fr": "Suivant",
+      "es": "Siguiente"
+    },
+    "Royal seals: {0}": {
+      "en": "Royal seals: {0}",
+      "fr": "Sceaux royaux : {0}",
+      "es": "Sellos reales: {0}"
+    },
+    "Progress: {0} / {1}": {
+      "en": "Progress: {0} / {1}",
+      "fr": "Progression : {0} / {1}",
+      "es": "Progreso: {0} / {1}"
+    },
+    "Your contribution: {0}": {
+      "en": "Your contribution: {0}",
+      "fr": "Ta contribution : {0}",
+      "es": "Tu contribución: {0}"
+    },
+    "Reward: {0} seals": {
+      "en": "Reward: {0} seals",
+      "fr": "Récompense : {0} sceaux",
+      "es": "Recompensa: {0} sellos"
+    },
+    "Expires in {0}h {1}m": {
+      "en": "Expires in {0}h {1}m",
+      "fr": "Expire dans {0} h {1} min",
+      "es": "Caduca en {0} h {1} min"
+    },
+    "Level {0} required": {
+      "en": "Level {0} required",
+      "fr": "Niveau {0} requis",
+      "es": "Nivel {0} necesario"
+    },
+    "Eliminate enemies": {
+      "en": "Eliminate enemies",
+      "fr": "Éliminer des ennemis",
+      "es": "Eliminar enemigos"
+    },
+    "Explore distinct maps": {
+      "en": "Explore distinct maps",
+      "fr": "Explorer des cartes différentes",
+      "es": "Explorar mapas distintos"
+    },
+    "Any enemy": {
+      "en": "Any enemy",
+      "fr": "N’importe quel ennemi",
+      "es": "Cualquier enemigo"
+    },
+    "Distinct maps": {
+      "en": "Distinct maps",
+      "fr": "Cartes différentes",
+      "es": "Mapas distintos"
+    },
+    "No contracts are posted. Ask the royal steward to configure the board.": {
+      "en": "No contracts are posted. Ask the royal steward to configure the board.",
+      "fr": "Aucun contrat n’est affiché. Demande à l’intendant royal de configurer le tableau.",
+      "es": "No hay contratos publicados. Pide al administrador real que configure el tablón."
+    },
+    "The board is paused.": {
+      "en": "The board is paused.",
+      "fr": "Le tableau est en pause.",
+      "es": "El tablón está en pausa."
+    },
+    "This contract has expired. Refresh the board.": {
+      "en": "This contract has expired. Refresh the board.",
+      "fr": "Ce contrat a expiré. Actualise le tableau.",
+      "es": "Este contrato ha caducado. Actualiza el tablón."
+    },
+    "Contract accepted.": {
+      "en": "Contract accepted.",
+      "fr": "Contrat accepté.",
+      "es": "Contrato aceptado."
+    },
+    "Resources delivered.": {
+      "en": "Resources delivered.",
+      "fr": "Ressources livrées.",
+      "es": "Recursos entregados."
+    },
+    "Reward claimed.": {
+      "en": "Reward claimed.",
+      "fr": "Récompense réclamée.",
+      "es": "Recompensa reclamada."
+    },
+    "Not enough resources.": {
+      "en": "Not enough resources.",
+      "fr": "Ressources insuffisantes.",
+      "es": "No tienes suficientes recursos."
+    },
+    "Make room in your inventory.": {
+      "en": "Make room in your inventory.",
+      "fr": "Libère de la place dans ton inventaire.",
+      "es": "Libera espacio en tu inventario."
+    },
+    "Unable to save. Please try again.": {
+      "en": "Unable to save. Please try again.",
+      "fr": "Sauvegarde impossible. Réessaie.",
+      "es": "No se pudo guardar. Inténtalo de nuevo."
+    },
+    "The contract is not ready to claim.": {
+      "en": "The contract is not ready to claim.",
+      "fr": "Le contrat ne peut pas encore être réclamé.",
+      "es": "El contrato aún no está listo para reclamar."
+    },
+    "Contribute to this collective contract to earn its reward.": {
+      "en": "Contribute to this collective contract to earn its reward.",
+      "fr": "Contribue à ce contrat collectif pour obtenir sa récompense.",
+      "es": "Contribuye a este contrato colectivo para obtener su recompensa."
+    },
+    "Save": {
+      "en": "Save",
+      "fr": "Enregistrer",
+      "es": "Guardar"
+    },
+    "Cancel": {
+      "en": "Cancel",
+      "fr": "Annuler",
+      "es": "Cancelar"
+    },
+    "Add": {
+      "en": "Add",
+      "fr": "Ajouter",
+      "es": "Añadir"
+    },
+    "Remove": {
+      "en": "Remove",
+      "fr": "Supprimer",
+      "es": "Eliminar"
+    },
+    "Name": {
+      "en": "Name",
+      "fr": "Nom",
+      "es": "Nombre"
+    },
+    "Description": {
+      "en": "Description",
+      "fr": "Description",
+      "es": "Descripción"
+    },
+    "Enabled": {
+      "en": "Enabled",
+      "fr": "Activé",
+      "es": "Activado"
+    },
+    "Automatic rotation enabled": {
+      "en": "Automatic rotation enabled",
+      "fr": "Rotation automatique activée",
+      "es": "Rotación automática activada"
+    },
+    "Daily slots": {
+      "en": "Daily slots",
+      "fr": "Emplacements quotidiens",
+      "es": "Espacios diarios"
+    },
+    "Weekly slots": {
+      "en": "Weekly slots",
+      "fr": "Emplacements hebdomadaires",
+      "es": "Espacios semanales"
+    },
+    "Reset hour (UTC)": {
+      "en": "Reset hour (UTC)",
+      "fr": "Heure de renouvellement (UTC)",
+      "es": "Hora de renovación (UTC)"
+    },
+    "Period": {
+      "en": "Period",
+      "fr": "Période",
+      "es": "Período"
+    },
+    "Objective": {
+      "en": "Objective",
+      "fr": "Objectif",
+      "es": "Objetivo"
+    },
+    "Minimum level": {
+      "en": "Minimum level",
+      "fr": "Niveau minimum",
+      "es": "Nivel mínimo"
+    },
+    "Minimum quantity": {
+      "en": "Minimum quantity",
+      "fr": "Quantité minimum",
+      "es": "Cantidad mínima"
+    },
+    "Maximum quantity": {
+      "en": "Maximum quantity",
+      "fr": "Quantité maximum",
+      "es": "Cantidad máxima"
+    },
+    "Selection weight": {
+      "en": "Selection weight",
+      "fr": "Poids de sélection",
+      "es": "Peso de selección"
+    },
+    "Royal seals": {
+      "en": "Royal seals",
+      "fr": "Sceaux royaux",
+      "es": "Sellos reales"
+    },
+    "Reward item": {
+      "en": "Reward item",
+      "fr": "Objet récompense",
+      "es": "Objeto de recompensa"
+    },
+    "Reward quantity": {
+      "en": "Reward quantity",
+      "fr": "Quantité récompense",
+      "es": "Cantidad de recompensa"
+    },
+    "Target": {
+      "en": "Target",
+      "fr": "Cible",
+      "es": "Objetivo"
+    },
+    "None / any": {
+      "en": "None / any",
+      "fr": "Aucun / tous",
+      "es": "Ninguno / cualquiera"
+    },
+    "Templates are applied at the next daily or weekly rotation. Resets use UTC; weeks start on Monday. Delivery targets and item rewards must be stackable.": {
+      "en": "Templates are applied at the next daily or weekly rotation. Resets use UTC; weeks start on Monday. Delivery targets and item rewards must be stackable.",
+      "fr": "Les modèles s’appliquent au prochain renouvellement quotidien ou hebdomadaire. Heures en UTC ; début de semaine le lundi. Les ressources livrées et les récompenses doivent être empilables.",
+      "es": "Las plantillas se aplican en la próxima rotación diaria o semanal. Horas en UTC; la semana empieza el lunes. Los recursos entregados y las recompensas deben ser apilables."
+    },
+    "Configuration saved. Changes apply at the next rotation.": {
+      "en": "Configuration saved. Changes apply at the next rotation.",
+      "fr": "Configuration enregistrée. Les changements s’appliqueront au prochain renouvellement.",
+      "es": "Configuración guardada. Los cambios se aplicarán en la próxima rotación."
+    },
+    "Invalid contract configuration.": {
+      "en": "Invalid contract configuration.",
+      "fr": "Configuration des contrats invalide.",
+      "es": "Configuración de contratos no válida."
+    },
+    "Invalid contract template.": {
+      "en": "Invalid contract template.",
+      "fr": "Modèle de contrat invalide.",
+      "es": "Plantilla de contrato no válida."
+    },
+    "A contract references a missing or invalid target or reward item.": {
+      "en": "A contract references a missing or invalid target or reward item.",
+      "fr": "Un contrat fait référence à une cible ou à une récompense absente ou invalide.",
+      "es": "Un contrato hace referencia a un objetivo o recompensa inexistente o no válido."
+    },
+    "Royal commission": {
+      "en": "Royal commission",
+      "fr": "Mission royale",
+      "es": "Misión real"
+    },
+    "Serve the Crown and earn its favour.": {
+      "en": "Serve the Crown and earn its favour.",
+      "fr": "Sers la Couronne et gagne sa faveur.",
+      "es": "Sirve a la Corona y gana su favor."
+    },
+    "The Crown's hunt": {
+      "en": "The Crown's hunt",
+      "fr": "La chasse de la Couronne",
+      "es": "La cacería de la Corona"
+    },
+    "Beyond the horizon": {
+      "en": "Beyond the horizon",
+      "fr": "Au-delà de l’horizon",
+      "es": "Más allá del horizonte"
+    },
+    "The royal guard": {
+      "en": "The royal guard",
+      "fr": "La garde royale",
+      "es": "La guardia real"
+    },
+    "United for the kingdom": {
+      "en": "United for the kingdom",
+      "fr": "Unis pour le royaume",
+      "es": "Unidos por el reino"
+    },
+    "Royal cartographers": {
+      "en": "Royal cartographers",
+      "fr": "Cartographes royaux",
+      "es": "Cartógrafos reales"
+    },
+    "Choose a contract on the board.": {
+      "en": "Choose a contract on the board.",
+      "fr": "Choisis un contrat sur le tableau.",
+      "es": "Elige un contrato en el tablón."
+    },
+    "Page {0} / {1}": {
+      "en": "Page {0} / {1}",
+      "fr": "Page {0} / {1}",
+      "es": "Página {0} / {1}"
+    },
+    "This board opens through the Open Royal Contracts event command.": {
+      "en": "This board opens through the Open Royal Contracts event command.",
+      "fr": "Ce tableau s’ouvre avec la commande d’événement Ouvrir les contrats royaux.",
+      "es": "Este tablón se abre con el comando de evento Abrir contratos reales."
+    },
+    "Configuration could not be saved.": {
+      "en": "Configuration could not be saved.",
+      "fr": "La configuration n’a pas pu être enregistrée.",
+      "es": "No se pudo guardar la configuración."
+    }
+  }
+}

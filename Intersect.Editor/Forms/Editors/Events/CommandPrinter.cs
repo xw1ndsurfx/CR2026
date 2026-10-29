@@ -1273,6 +1273,10 @@ public static partial class CommandPrinter
         return $"Open Royal Stylist: {stylist?.Name ?? "Unknown"}";
     }
 
+    private static string GetCommandText(OpenRoyalContractsCommand command, MapInstance map) =>
+        Intersect.Framework.Core.RoyalContracts.RoyalContractsText.Get("Open Royal Contracts",
+            System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+
     private static string GetCommandText(OpenCraftingTableCommand command, MapInstance map)
     {
         return command.JournalMode ?

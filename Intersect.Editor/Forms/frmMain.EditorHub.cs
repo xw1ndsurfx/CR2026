@@ -32,6 +32,7 @@ public partial class FrmMain
         housingEditor.Click += (_, _) => PacketSender.RequestHousingConfiguration();
         contentEditorsToolStripMenuItem.DropDownItems.Add(housingEditor);
         AddRoyalStylistEditorMenu();
+        AddRoyalContractsEditorMenu();
         if (requestConfigurations) PacketSender.SendRequestRoyalStylistConfiguration(openEditor: false);
         AddCharacterGeneratorEditorMenu();
         AddAnimationImportEditorMenu();
