@@ -13,6 +13,7 @@ internal static class ServerCrashLog
     private static readonly string FileName =
         $"crash-Intersect Server-{DateTime.UtcNow:yyyy_MM_dd-HH_mm_ss_fff}-{Environment.ProcessId}.log";
     private static string? _path;
+    internal static string JournalFileName => FileName;
 
     internal static void SetDirectory(string directory)
     {
@@ -21,8 +22,6 @@ internal static class ServerCrashLog
             var path = Path.GetFullPath(Path.Combine(directory, FileName));
             if (Interlocked.Exchange(ref _path, path) == path)
                 return;
-
-            PreviousSessionDiagnostics.Report(directory, FileName);
 
             var assembly = Assembly.GetEntryAssembly();
             var commit = assembly?.GetCustomAttributes<AssemblyMetadataAttribute>()

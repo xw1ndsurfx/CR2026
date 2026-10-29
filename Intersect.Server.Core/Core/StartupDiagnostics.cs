@@ -11,6 +11,7 @@ internal static class StartupDiagnostics
     private static string _lastStage = "Main entered";
     private static ILogger? _logger;
     private static int _initialized;
+    private static string? _lastDirectory;
 
     internal static void Initialize()
     {
@@ -33,6 +34,8 @@ internal static class StartupDiagnostics
     {
         var directory = Path.Combine(Environment.CurrentDirectory, "logs");
         ConsoleDiagnostics.Configure(directory);
+        if (Interlocked.Exchange(ref _lastDirectory, directory) != directory)
+            PreviousSessionDiagnostics.Report(directory, ServerCrashLog.JournalFileName);
         ServerCrashLog.SetDirectory(directory);
     }
 
