@@ -11,6 +11,7 @@ public partial class MenuContainer
     private const int RowHeight = 27, FrameInset = 4, FooterHeight = 40;
     private ScrollControl? _compactMenuList;
     private bool _menuExpanded = true;
+    private MenuRow? _houseMenuRow;
     private int _compactCanvasHeight, _compactCanvasWidth;
     private string _compactLanguage = "";
     private readonly List<MenuRow> _compactRows = [];
@@ -27,17 +28,19 @@ public partial class MenuContainer
             OverflowX = OverflowBehavior.Hidden, OverflowY = OverflowBehavior.Scroll,
             AutoHideBars = true,
         };
+        var houseContainer = new ImagePanel(this, "MyHouseButtonContainer");
+        var houseButton = new Button(houseContainer, "MyHouseMenuIcon", disableText: true);
         var containers = new[] { _inventoryButtonContainer, _spellsButtonContainer, _characterButtonContainer,
             _questsButtonContainer, _dungeonsButtonContainer, _newsButtonContainer, _dailyRewardButtonContainer,
-            _logiCoinShopButtonContainer, _friendsButtonContainer, _partyButtonContainer, _guildButtonContainer, _escapeMenuButtonContainer };
+            _logiCoinShopButtonContainer, _friendsButtonContainer, _partyButtonContainer, _guildButtonContainer, houseContainer, _escapeMenuButtonContainer };
         var buttons = new[] { _inventoryButton, _spellsButton, _characterButton, _questsButton, _dungeonsButton,
-            _newsButton, _dailyRewardButton, _logiCoinShopButton, _friendsButton, _partyButton, _guildButton, _escapeMenuButton };
+            _newsButton, _dailyRewardButton, _logiCoinShopButton, _friendsButton, _partyButton, _guildButton, houseButton, _escapeMenuButton };
         // Full labels remain in tooltips; short localized labels keep the list readable.
         var captions = new[] { "Inventory", "Spell Book", "Character", "Quest Log", "Dungeons", "News",
-            "Daily Reward", "LogiCoin Shop", "Friends", "Party", "Guild", "Open Menu" };
+            "Daily Reward", "LogiCoin Shop", "Friends", "Party", "Guild", "My house", "Open Menu" };
         Base.GwenEventHandler<MouseButtonState>[] actions = [InventoryButton_Clicked, SpellsButton_Clicked,
             CharacterButton_Clicked, QuestBtn_Clicked, DungeonsButton_Clicked, NewsButton_Clicked,
-            DailyRewardButton_Clicked, LogiCoinShopButton_Clicked, FriendsBtn_Clicked, PartyBtn_Clicked, GuildBtn_Clicked, EscapeMenuButtonClicked];
+            DailyRewardButton_Clicked, LogiCoinShopButton_Clicked, FriendsBtn_Clicked, PartyBtn_Clicked, GuildBtn_Clicked, (_, _) => Interface.InGameUiOrNull?.OpenHouseFromMenu(), EscapeMenuButtonClicked];
         for (var i = 0; i < containers.Length; i++)
         {
             var container = containers[i];
@@ -50,6 +53,7 @@ public partial class MenuContainer
             var row = new MenuRow(container, "MenuEntry" + i, buttons[i], captions[i]);
             row.SetBounds(0, 0, container.Width, RowHeight); row.Clicked += actions[i];
             _compactRows.Add(row);
+            if (captions[i] == "My house") _houseMenuRow = row;
             var icon = buttons[i];
             icon.Parent = row; icon.Alignment = []; icon.Dock = Pos.None; icon.Margin = Margin.Zero;
             icon.MinimumSize = Point.Empty; icon.MaximumSize = new Point(24, 24);
@@ -66,10 +70,21 @@ public partial class MenuContainer
         UpdateCompactMenuLayout();
     }
 
+    internal void CollapseForWorldClick() => SetMenuExpanded(false);
+
+    private void SetMenuExpanded(bool expanded)
+    {
+        if (_menuExpanded == expanded) return;
+        _menuExpanded = expanded;
+        IsHidden = !expanded;
+        _menuToggleButton.SetToolTipText(ClientLanguages.Text(expanded ? "Hide menu" : "Show menu"));
+    }
+
     private void UpdateCompactMenuLayout()
     {
         if (_compactMenuList == null || Parent == null) return;
         foreach (var row in _compactRows) row.RefreshCaption();
+        if (_houseMenuRow != null) _houseMenuRow.IsDisabled = Interface.InGameUiOrNull?.CanOpenHouse != true;
         if (_compactCanvasHeight == Parent.Height && _compactCanvasWidth == Parent.Width && _compactLanguage == ClientLanguages.Current) return;
         _compactCanvasHeight = Parent.Height; _compactCanvasWidth = Parent.Width; _compactLanguage = ClientLanguages.Current;
         var naturalHeight = _compactRows.Count * RowHeight + FrameInset * 2;

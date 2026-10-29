@@ -20,7 +20,7 @@ internal static class CompactMenuIconTests
         try
         {
             foreach (var language in new[] { "en", "fr", "es" })
-            foreach (var caption in new[] { "Inventory", "Spell Book", "Character", "Quest Log", "Dungeons", "News", "Daily Reward", "LogiCoin Shop", "Friends", "Party", "Guild", "Open Menu" })
+            foreach (var caption in new[] { "Inventory", "Spell Book", "Character", "Quest Log", "Dungeons", "News", "Daily Reward", "LogiCoin Shop", "Friends", "Party", "Guild", "My house", "Open Menu" })
             {
                 current.SetValue(null, language);
                 using var renderer = new MetricsRenderer(); using var skin = new TestSkin(renderer);
@@ -37,7 +37,7 @@ internal static class CompactMenuIconTests
                 glyph.GetType().GetMethod("Render", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(glyph, [skin]);
                 if (renderer.Rectangles <= before) throw new InvalidOperationException("Empty fallback glyph: " + caption);
             }
-            System.Console.WriteLine("PASS compact menu: 36 native rows render nonempty fallback icons with EN/FR/ES captions without GUI textures.");
+            System.Console.WriteLine("PASS compact menu: 39 native rows render nonempty fallback icons with EN/FR/ES captions without GUI textures.");
         }
         finally { current.SetValue(null, originalLanguage); }
     }

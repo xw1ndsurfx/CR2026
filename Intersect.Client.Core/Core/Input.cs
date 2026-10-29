@@ -452,6 +452,11 @@ public static partial class Input
             return;
         }
 
+        // Only world clicks reach this point: interface clicks have already returned above.
+        // Collapse before targeting/pickup so those world actions keep their normal behavior.
+        if (mouseButton is MouseButton.Left or MouseButton.Right)
+            Interface.Interface.InGameUiOrNull?.GameMenu?.CollapseForWorldClick();
+
         if (modifier == Keys.None && mouseButton == MouseButton.Left && Globals.Me.TryTarget())
         {
             return;
