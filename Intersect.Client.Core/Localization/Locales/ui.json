@@ -6919,6 +6919,10 @@
       "en": "Use 1 to 32 letters, numbers, spaces, apostrophes, dots or hyphens for your ship name.",
       "fr": "Le nom du bateau doit contenir de 1 à 32 lettres, chiffres, espaces, apostrophes, points ou tirets.",
       "es": "El nombre debe tener de 1 a 32 letras, números, espacios, apóstrofos, puntos o guiones."
-    }
+    },
+    "Character": {"en": "Character", "fr": "Personnage", "es": "Personaje"},
+    "News": {"en": "News", "fr": "Actualités", "es": "Noticias"},
+    "Show menu": {"en": "Show menu", "fr": "Afficher le menu", "es": "Mostrar menú"},
+    "Hide menu": {"en": "Hide menu", "fr": "Masquer le menu", "es": "Ocultar menú"}
   }
 }
