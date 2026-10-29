@@ -43,11 +43,11 @@ world without guessing event IDs.
 ## Progress and rollout
 
 The guide starts after login once the player is available. Pause persists across
-sessions. The HUD Tutorial button resumes the guide or opens its completion screen,
+sessions. The Tutorial button under Game options > Interface resumes the guide or opens its completion screen,
 which offers Replay. Completed step IDs survive reordering and reconnections. New
 content is not automatically forced on characters that finished the guide. Restore
 default changes the editor draft, not player progress. Disabling the guide hides
-its HUD button; disabling first-login start leaves it available on demand. The
+its options button; disabling first-login start leaves it available on demand. The
 initial rollout also offers the guide to existing characters without progress.
 Configuration edits reach online players on their next tutorial update.
 
@@ -59,7 +59,7 @@ the protocol. No live server changes are performed by this branch.
 - `dotnet test Intersect.Tests/Intersect.Tests.csproj -c Debug --filter FullyQualifiedName~TutorialTests`
 - Build server, client and editor in Debug (editor requires Windows targeting).
 - In game: log in with a fresh character; read the welcome; move; pause; reconnect;
-  resume; complete; reconnect without automatic replay; replay from the HUD.
+  resume; complete; reconnect without automatic replay; replay from Game options > Interface.
 - Editor: reorder and translate steps; save and reopen; verify disabled/autostart
   options; try missing translations and save conflicts in two editor sessions.
 - Link an existing interactive cinematic; confirm presentation hides the guide,
