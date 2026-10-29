@@ -65,7 +65,6 @@ public partial class MenuContainer : Panel
     private readonly Button _escapeMenuButton;
 
     private readonly ImagePanel _menuToggleButtonContainer;
-    private int _expandedMenuToggleLeft;
     private readonly Button _menuToggleButton;
 
     private readonly MapItemWindow _mapItemWindow;
@@ -360,108 +359,10 @@ public partial class MenuContainer : Panel
         _userListWindow = new UserListWindow(gameCanvas, OpenGuildManagement);
     }
 
-    private void ApplyCorpsRoyauxVerticalMenuLayout()
-    {
-        const int buttonWidth = 71;
-        const int buttonHeight = 55;
-        const int buttonSpacing = 5;
-        const int toggleGap = 5;
-
-        Padding = Padding.Zero;
-
-        var containers = new[]
-        {
-            _inventoryButtonContainer,
-            _spellsButtonContainer,
-            _characterButtonContainer,
-            _questsButtonContainer,
-            _dungeonsButtonContainer,
-            _newsButtonContainer,
-            _dailyRewardButtonContainer,
-            _logiCoinShopButtonContainer,
-            _friendsButtonContainer,
-            _partyButtonContainer,
-            _guildButtonContainer,
-            _escapeMenuButtonContainer,
-        };
-
-        var buttons = new[]
-        {
-            _inventoryButton,
-            _spellsButton,
-            _characterButton,
-            _questsButton,
-            _dungeonsButton,
-            _newsButton,
-            _dailyRewardButton,
-            _logiCoinShopButton,
-            _friendsButton,
-            _partyButton,
-            _guildButton,
-            _escapeMenuButton,
-        };
-
-        for (var index = 0; index < containers.Length; ++index)
-        {
-            var container = containers[index];
-            container.Dock = Pos.None;
-            container.Margin = Margin.Zero;
-            container.Padding = new Padding(size: 0);
-            container.MinimumSize = new Point(buttonWidth, buttonHeight);
-            container.MaximumSize = new Point(buttonWidth, buttonHeight);
-            container.SetBounds(0, index * (buttonHeight + buttonSpacing), buttonWidth, buttonHeight);
-
-            var button = buttons[index];
-            button.Dock = Pos.None;
-            button.Margin = Margin.Zero;
-            button.SetBounds(0, 0, buttonWidth, buttonHeight);
-        }
-
-        // Dedicated Corps Royaux GUI art supplied with the client.
-        // Reapply after LoadJsonUi so layout overrides cannot replace the custom textures.
-        // These 71x55 pixel images already include their own frames.
-        _dungeonsButtonContainer.TextureFilename = null;
-        _logiCoinShopButtonContainer.TextureFilename = null;
-
-        _dungeonsButton.Text = string.Empty;
-        _dungeonsButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Dungeon.png");
-        _dungeonsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Dungeon_over.png");
-        _dungeonsButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_Dungeon_down.png");
-
-        _logiCoinShopButton.Text = string.Empty;
-        _logiCoinShopButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Shop.png");
-        _logiCoinShopButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Shop_over.png");
-        _logiCoinShopButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_Shop_down.png");
-
-        _newsButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_News.png");
-        _newsButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_News_over.png");
-        _newsButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_News_down.png");
-
-        _dailyRewardButton.SetStateTexture(componentState: ComponentState.Normal, textureName: "Btn_Daily.png");
-        _dailyRewardButton.SetStateTexture(componentState: ComponentState.Hovered, textureName: "Btn_Daily_over.png");
-        _dailyRewardButton.SetStateTexture(componentState: ComponentState.Active, textureName: "Btn_Daily_down.png");
-
-        SetSize(
-            buttonWidth,
-            containers.Length * buttonHeight + (containers.Length - 1) * buttonSpacing
-        );
-
-        // Keep Show / Hide beside the bottom Settings/Menu button. Adding News made
-        // the vertical stack taller, so the old fixed bottom-left position overlapped it.
-        _menuToggleButtonContainer.Dock = Pos.None;
-        _menuToggleButtonContainer.Alignment = [Alignments.Bottom, Alignments.Left];
-        _expandedMenuToggleLeft = buttonWidth + toggleGap;
-        _menuToggleButtonContainer.AlignmentPadding = new Padding
-        {
-            Left = _expandedMenuToggleLeft,
-            Bottom = 4,
-        };
-        _menuToggleButtonContainer.Margin = Margin.Zero;
-    }
-
     //Methods
     public void Update(bool updateQuestLog)
     {
+        UpdateCompactMenuLayout();
         _inventoryWindow.Update();
         _spellsWindow.Update();
         _characterWindow.Update();
@@ -774,42 +675,8 @@ public partial class MenuContainer : Panel
 
     private void MenuToggleButton_Clicked(Base sender, MouseButtonState arguments)
     {
-        // Détecte s'il y a au moins un enfant (hors bouton de toggling) visible
-        var anyVisible = false;
-        foreach (var child in Children)
-        {
-            if (child == _menuToggleButtonContainer)
-            {
-                continue;
-            }
-
-            if (!child.IsHidden)
-            {
-                anyVisible = true;
-                break;
-            }
-        }
-
-        // Si au moins un est visible -> on cache tous ; sinon on affiche tous
-        var setHidden = anyVisible;
-        foreach (var child in Children)
-        {
-            if (child == _menuToggleButtonContainer)
-            {
-                // le conteneur du bouton de toggling doit rester visible
-                child.IsHidden = false;
-                continue;
-            }
-
-            child.IsHidden = setHidden;
-        }
-
-        _menuToggleButtonContainer.AlignmentPadding = new Padding
-        {
-            Left = setHidden ? 4 : _expandedMenuToggleLeft,
-            Bottom = 4,
-        };
-        _menuToggleButtonContainer.Invalidate();
-        _menuToggleButtonContainer.IsHidden = false;
+        _menuExpanded = !_menuExpanded;
+        IsHidden = !_menuExpanded;
+        _menuToggleButton.SetToolTipText(ClientLanguages.Text(_menuExpanded ? "Hide menu" : "Show menu"));
     }
 }
