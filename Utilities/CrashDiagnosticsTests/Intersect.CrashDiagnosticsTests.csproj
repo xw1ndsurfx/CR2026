@@ -10,5 +10,8 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <Compile Include="../../Intersect.Server.Core/Core/ServerCrashLog.cs" Link="ServerCrashLog.cs" />
     <Compile Include="../../Intersect.Server.Core/Core/StartupDiagnostics.cs" Link="StartupDiagnostics.cs" />
+    <Compile Include="../../Intersect.Server.Core/Core/ConsoleDiagnostics.cs" Link="ConsoleDiagnostics.cs" />
+    <Compile Include="../../Intersect.Server.Core/Core/PreviousSessionDiagnostics.cs" Link="PreviousSessionDiagnostics.cs" />
+    <Compile Include="../../Intersect.Server.Core/Core/RuntimeDiagnostics.cs" Link="RuntimeDiagnostics.cs" />
   </ItemGroup>
 </Project>

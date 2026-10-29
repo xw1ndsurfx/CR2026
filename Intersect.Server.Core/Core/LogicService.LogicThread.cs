@@ -423,6 +423,7 @@ internal sealed partial class LogicService
             }
             catch (Exception exception)
             {
+                ServerCrashLog.Record($"Map update failed; instanceId={mapInstance?.Id}; projectilesOnly={onlyProjectiles}", exception);
                 ServerContext.DispatchUnhandledException(exception);
             }
         }

@@ -437,6 +437,18 @@ internal sealed partial class PacketHandler
 
     public bool ProcessPacket(IPacket packet, Client client)
     {
+        try { return ProcessPacketCore(packet, client); }
+        catch (Exception exception)
+        {
+            // Record identifiers and the operation only, never authentication/chat packet contents.
+            ServerCrashLog.Record($"Packet processing failed; packet={packet?.GetType().Name}; " +
+                $"clientId={client?.Id}; mapId={client?.Entity?.MapId}", exception);
+            throw;
+        }
+    }
+
+    private bool ProcessPacketCore(IPacket packet, Client client)
+    {
         if (client.Entity is { NavalShipId: var shipId } navalPlayer && shipId != Guid.Empty &&
             !(navalPlayer.InstanceType!=Intersect.Framework.Core.GameObjects.Maps.MapInstanceType.Overworld && Intersect.Server.Naval.NavalSystem.IsEnemyBoarding(navalPlayer)) &&
             packet is MovePacket or AttackPacket or BlockPacket or DirectionPacket or UseSpellPacket or UseItemPacket or ActivateEventPacket)
