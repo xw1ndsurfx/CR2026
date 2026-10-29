@@ -676,8 +676,6 @@ public partial class MenuContainer : Panel
 
     private void MenuToggleButton_Clicked(Base sender, MouseButtonState arguments)
     {
-        _menuExpanded = !_menuExpanded;
-        IsHidden = !_menuExpanded;
-        _menuToggleButton.SetToolTipText(ClientLanguages.Text(_menuExpanded ? "Hide menu" : "Show menu"));
+        SetMenuExpanded(!_menuExpanded);
     }
 }

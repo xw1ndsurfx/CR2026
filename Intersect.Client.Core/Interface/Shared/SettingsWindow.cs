@@ -258,6 +258,8 @@ public partial class SettingsWindow : Window
             Text = Strings.Settings.TypewriterText,
         };
 
+        InitializeTutorialSetting();
+
         // Game > Information
 
         _showPingCounterCheckbox = new LabeledCheckBox(parent: _informationSettings, name: nameof(_showPingCounterCheckbox))
@@ -1022,6 +1024,7 @@ public partial class SettingsWindow : Window
     // Methods.
     public void Update()
     {
+        UpdateTutorialSetting();
         if (!IsHidden &&
             _keybindingEditBtn != null &&
             _keybindingListeningTimer < Timing.Global.MillisecondsUtc)
@@ -1034,6 +1037,7 @@ public partial class SettingsWindow : Window
 
     public void Show(Base? returnTo)
     {
+        UpdateTutorialSetting();
         // Take over all input when we're in-game.
         if (Globals.GameState == GameStates.InGame)
         {
