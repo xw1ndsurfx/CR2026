@@ -1,0 +1,44 @@
+name: World map exploration
+on:
+  pull_request:
+    paths:
+      - '**/*WorldMap*'
+      - 'Intersect.Client.Core/Core/Main.cs'
+      - 'Intersect.Client.Core/Localization/Locales/ui.json'
+      - 'Intersect.Server.Core/Entities/Entity.cs'
+      - 'Intersect.Server.Core/Maps/MapInstance.cs'
+      - 'Intersect.Server.Core/Networking/PacketHandler.cs'
+      - 'Intersect.Server.Core/Networking/PacketSender.cs'
+      - 'docs/world-map-exploration.md'
+      - '.github/workflows/world-map-exploration.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Server discovery, native SQLite persistence and protocol
+        run: dotnet test Intersect.Tests.Server/Intersect.Tests.Server.csproj -c Debug -p:IntersectConfiguration=Debug --filter FullyQualifiedName~WorldMapExplorationTests --logger "trx;LogFileName=worldmap-server.trx" --results-directory artifacts/tests
+      - name: Client fog, cached terrain, markers, quest routes and languages
+        run: dotnet test Intersect.Tests.Client/Intersect.Tests.Client.csproj -c Debug -p:IntersectConfiguration=Debug --filter FullyQualifiedName~WorldMapExplorationTests --logger "trx;LogFileName=worldmap-client.trx" --results-directory artifacts/tests
+      - name: Compile desktop client and editor
+        shell: pwsh
+        run: |
+          dotnet build Intersect.Client/Intersect.Client.csproj -c Debug -p:IntersectConfiguration=Debug
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build Intersect.Editor/Intersect.Editor.csproj -c Debug -p:IntersectConfiguration=Debug
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: world-map-exploration-tests
+          path: artifacts/tests/*.trx

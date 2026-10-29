@@ -31,7 +31,7 @@ namespace Intersect.Client.Interface.Game;
 
 /// <summary>
 /// RuneScape-style world map that renders the actual map tiles in the same grid layout as the editor.
-/// Opening the window requests the complete grid from the server, then builds lightweight cached previews
+/// Opening the window requests discovered maps from the server, then builds lightweight cached previews
 /// one map at a time so the UI stays responsive.
 /// </summary>
 internal sealed class WorldMapWindow : Window
@@ -72,8 +72,16 @@ internal sealed class WorldMapWindow : Window
         zoomIn.SetBounds(60, 16, 34, 28);
         center.SetBounds(104, 16, 130, 28);
         _hint.SetBounds(250, 18, 640, 24);
-        _mapCanvas.SetBounds(20, 54, 660, 584);
+        _mapCanvas.SetBounds(20, 54, 660, 556);
         _legend.SetBounds(690, 54, 210, 584);
+
+        var explorationHint = new Label(this, "WorldMapExplorationHint")
+        {
+            Font = Skin.DefaultFont, FontSize = 9,
+            TextColorOverride = new Color(200, 200, 200),
+            Text = Intersect.Client.Localization.ClientLanguages.Text("Explore to reveal new regions. Discoveries are saved for this character."),
+        };
+        explorationHint.SetBounds(20, 616, 660, 22);
 
         SetSize(920, 680);
 
@@ -145,6 +153,7 @@ internal sealed class WorldMapWindow : Window
         private int _questRouteStartX = -1;
         private int _questRouteStartY = -1;
         private int _questRouteRefreshCounter;
+        private int _questRouteExplorationRevision = -1;
 
         private float _zoom = 0.78f;
         private float _panX;
@@ -289,7 +298,7 @@ internal sealed class WorldMapWindow : Window
                 _previewRevisions.Remove(id);
             }
 
-            // The full World Map preloads every cell. The minimap deliberately skips this
+            // The World Map preloads discovered cells. The minimap deliberately skips this
             // and only builds cells that are actually visible in its fixed local viewport.
             var previewsBuiltThisFrame = 0;
             if (_preloadWorld)
@@ -299,7 +308,7 @@ internal sealed class WorldMapWindow : Window
                     for (var preloadY = 0; preloadY < gridHeight && previewsBuiltThisFrame < PreviewBuildsPerFrame; ++preloadY)
                     {
                         var preloadId = grid[preloadX, preloadY];
-                        if (preloadId == Guid.Empty || _previews.ContainsKey(preloadId))
+                        if (preloadId == Guid.Empty || !IsMapVisible(preloadId) || _previews.ContainsKey(preloadId))
                         {
                             continue;
                         }
@@ -317,7 +326,7 @@ internal sealed class WorldMapWindow : Window
                 for (var gy = 0; gy < gridHeight; ++gy)
                 {
                     var mapId = grid[gx, gy];
-                    if (mapId == Guid.Empty)
+                    if (mapId == Guid.Empty || !IsMapVisible(mapId))
                     {
                         continue;
                     }
@@ -383,6 +392,33 @@ internal sealed class WorldMapWindow : Window
             DrawSocialMarkers(renderer);
             DrawPlayerMarker(renderer);
             DrawShipMarkers(renderer);
+            if (_interactive) DrawExplorationFog(renderer, grid, cellWidth, cellHeight);
+        }
+
+        // The HUD minimap retains its immediate surroundings; discovery applies to the world atlas.
+        private bool IsMapVisible(Guid mapId) => !_interactive || WorldMapExploration.IsDiscovered(mapId);
+
+        private void DrawExplorationFog(RendererBase renderer, Guid[,] grid, int cellWidth, int cellHeight)
+        {
+            for (var gx = 0; gx < grid.GetLength(0); gx++)
+                for (var gy = 0; gy < grid.GetLength(1); gy++)
+                {
+                    var mapId = grid[gx, gy];
+                    if (mapId == Guid.Empty || IsMapVisible(mapId)) continue;
+                    var x = (int)Math.Round(_panX + gx * cellWidth);
+                    var y = (int)Math.Round(_panY + gy * cellHeight);
+                    if (x > Width || y > Height || x + cellWidth < 0 || y + cellHeight < 0) continue;
+                    // Opaque and drawn last: even oversized labels/animations from known maps
+                    // cannot expose the terrain or markers in an undiscovered cell.
+                    Fill(renderer, new Color(255, 27, 31, 37), x, y, cellWidth + 1, cellHeight + 1);
+                    if (cellWidth < 110 || cellHeight < 50) continue;
+                    var text = Intersect.Client.Localization.ClientLanguages.Text("Unexplored region");
+                    var size = renderer.MeasureText(Skin.DefaultFont, 9, text);
+                    if (size.X + 12 > cellWidth) continue;
+                    renderer.DrawColor = new Color(160, 166, 175);
+                    renderer.RenderText(Skin.DefaultFont, 9,
+                        new Point(x + (cellWidth - size.X) / 2, y + (cellHeight - size.Y) / 2), text);
+                }
         }
 
         private void DrawQuestRoute(RendererBase renderer, int cellWidth, int cellHeight)
@@ -403,6 +439,7 @@ internal sealed class WorldMapWindow : Window
             {
                 var previous = _questRoute[index - 1];
                 var current = _questRoute[index];
+                if (!IsRouteTileVisible(previous.X, previous.Y) || !IsRouteTileVisible(current.X, current.Y)) continue;
 
                 var x1 = _panX + (previous.X + 0.5f) / mapWidth * cellWidth;
                 var y1 = _panY + (previous.Y + 0.5f) / mapHeight * cellHeight;
@@ -456,6 +493,7 @@ internal sealed class WorldMapWindow : Window
                 _questRouteStartMapId != player.MapId ||
                 _questRouteStartX != player.X ||
                 _questRouteStartY != player.Y;
+            changed |= _questRouteExplorationRevision != WorldMapExploration.Revision;
 
             if (!changed && ++_questRouteRefreshCounter < 30)
             {
@@ -467,6 +505,7 @@ internal sealed class WorldMapWindow : Window
             _questRouteStartMapId = player.MapId;
             _questRouteStartX = player.X;
             _questRouteStartY = player.Y;
+            _questRouteExplorationRevision = WorldMapExploration.Revision;
             _questRoute = BuildQuestRoute(player.MapId, player.X, player.Y, target.Value) ?? [];
         }
 
@@ -477,7 +516,7 @@ internal sealed class WorldMapWindow : Window
             QuestGuidanceTarget target
         )
         {
-            if (Globals.MapGrid == null ||
+            if (!IsMapVisible(startMapId) || !IsMapVisible(target.MapId) || Globals.MapGrid == null ||
                 !Globals.GridMaps.TryGetValue(startMapId, out var startGrid) ||
                 !Globals.GridMaps.TryGetValue(target.MapId, out var targetGrid))
             {
@@ -562,6 +601,7 @@ internal sealed class WorldMapWindow : Window
             int targetY
         )
         {
+            if (!IsRouteTileVisible(globalX, globalY)) return false;
             if (globalX == targetX && globalY == targetY)
             {
                 return true;
@@ -606,8 +646,19 @@ internal sealed class WorldMapWindow : Window
                    !blocked[localX, localY];
         }
 
+        private bool IsRouteTileVisible(int globalX, int globalY)
+        {
+            var grid = Globals.MapGrid;
+            if (grid == null || globalX < 0 || globalY < 0) return false;
+            var x = globalX / Math.Max(1, Options.Instance.Map.MapWidth);
+            var y = globalY / Math.Max(1, Options.Instance.Map.MapHeight);
+            return x < grid.GetLength(0) && y < grid.GetLength(1) &&
+                grid[x, y] != Guid.Empty && IsMapVisible(grid[x, y]);
+        }
+
         private bool[,]? GetBlockedTiles(Guid mapId)
         {
+            if (!IsMapVisible(mapId)) return null;
             WorldMapMapDataPacket? sourcePacket = null;
             lock (Globals.GameLock)
             {
@@ -697,6 +748,7 @@ internal sealed class WorldMapWindow : Window
             foreach (var entity in Globals.Entities.Values)
             {
                 if (entity == null ||
+                    !IsMapVisible(entity.MapId) ||
                     entity.Id == player.Id ||
                     entity.Type != EntityType.GlobalEntity ||
                     !entity.ShouldDraw ||
@@ -750,7 +802,7 @@ internal sealed class WorldMapWindow : Window
 
             foreach (var marker in Globals.WorldMapEventMarkers)
             {
-                if (marker.MapId == Guid.Empty ||
+                if (marker.MapId == Guid.Empty || !IsMapVisible(marker.MapId) ||
                     !Globals.GridMaps.TryGetValue(marker.MapId, out var gridPosition))
                 {
                     continue;
@@ -923,6 +975,7 @@ internal sealed class WorldMapWindow : Window
 
         private IGameRenderTexture? BuildPreviewForMap(Guid mapId, int previewWidth = PreviewWidth)
         {
+            if (!IsMapVisible(mapId)) return null;
             // Prefer the dedicated World Map source packet. It is not subject to the
             // gameplay 3x3 map lifecycle and therefore remains available for every cell.
             WorldMapMapDataPacket? sourcePacket = null;
@@ -1173,6 +1226,7 @@ internal sealed class WorldMapWindow : Window
         {
             foreach (var (ship, x, y) in WorldMapShips.Positions(Environment.TickCount64))
             {
+                if (!IsMapVisible(ship.MapId)) continue;
                 var px = (int)Math.Round(_panX + x * CellWidth);
                 var py = (int)Math.Round(_panY + y * CellHeight);
                 if (px < -10 || py < -10 || px > Width + 10 || py > Height + 10) continue;
@@ -1231,6 +1285,7 @@ internal sealed class WorldMapWindow : Window
                 var entity = Globals.Entities.GetValueOrDefault(marker.PlayerId);
                 if (entity != null && !entity.ShouldDraw) continue;
                 var mapId = entity?.MapId ?? marker.MapId;
+                if (!IsMapVisible(mapId)) continue;
                 if (!Globals.GridMaps.TryGetValue(mapId, out grid)) continue;
                 var x = entity?.X ?? marker.X;
                 var y = entity?.Y ?? marker.Y;

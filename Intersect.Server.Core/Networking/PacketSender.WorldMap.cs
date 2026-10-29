@@ -7,6 +7,13 @@ namespace Intersect.Server.Networking;
 
 public static partial class PacketSender
 {
+    internal static void SendDiscoveredWorldMapData(Client client, Guid mapId)
+    {
+        if (client.Entity is not { } player || !player.HasDiscoveredWorldMap(mapId) ||
+            !MapController.TryGet(mapId, out var map)) return;
+        client.Send(new WorldMapMapDataPacket(map.Id, map.JsonData, map.TileData, map.GetAttributeData(), map.Revision));
+    }
+
     public static void SendWorldMapState(Client client, IEnumerable<Guid> mapIds, bool includeShips = true)
     {
         if (client.Entity is not { } player) return;
