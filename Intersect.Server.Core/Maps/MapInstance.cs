@@ -381,6 +381,7 @@ public partial class MapInstance : IMapInstance
 
         AddEntity(player);
         player.LastMapEntered = mMapController.Id;
+        player.DiscoverWorldMap(mMapController.Id);
         Intersect.Server.RoyalContracts.RoyalContractsRuntime.Observe(player,
             Intersect.Framework.Core.RoyalContracts.RoyalContractObjective.ExploreMaps, mMapController.Id);
 

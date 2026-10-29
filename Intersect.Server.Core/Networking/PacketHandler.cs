@@ -772,23 +772,10 @@ internal sealed partial class PacketHandler
         PacketSender.SendMapGrid(client, grid, clearKnownMaps: false);
 
         // Send dedicated World Map data instead of normal gameplay MapPackets.
-        // This keeps the complete grid independent from the normal 3x3 gameplay map lifecycle.
+        // Discovered maps stay independent from the normal 3x3 gameplay map lifecycle.
         foreach (var mapId in grid.MapIds)
         {
-            if (!MapController.TryGet(mapId, out var map))
-            {
-                continue;
-            }
-
-            client.Send(
-                new WorldMapMapDataPacket(
-                    map.Id,
-                    map.JsonData,
-                    map.TileData,
-                    map.GetAttributeData(),
-                    map.Revision
-                )
-            );
+            PacketSender.SendDiscoveredWorldMapData(client, mapId);
         }
     }
 

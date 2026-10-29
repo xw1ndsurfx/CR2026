@@ -1162,6 +1162,7 @@ public abstract partial class Entity : IEntity
                     var newMaps = currentMap?.GetSurroundingMaps(true);
 
                     MapId = tile.GetMapId();
+                    if (this is Player exploringPlayer) exploringPlayer.DiscoverWorldMap(MapId);
 
                     if (oldMaps != null)
                     {

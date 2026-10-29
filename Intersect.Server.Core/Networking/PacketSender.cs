@@ -1506,6 +1506,9 @@ public static partial class PacketSender
             client.SentMaps.Clear();
         }
 
+        if (!client.IsEditor && client.Entity is { } exploringPlayer)
+            client.Send(exploringPlayer.WorldMapExplorationSnapshot());
+
         if (client.IsEditor)
         {
             client.Send(

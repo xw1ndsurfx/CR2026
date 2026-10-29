@@ -1,5 +1,15 @@
 {
   "Entries": {
+    "Explore to reveal new regions. Discoveries are saved for this character.": {
+      "en": "Explore to reveal new regions. Discoveries are saved for this character.",
+      "fr": "Explorez pour dévoiler de nouvelles régions. Les découvertes sont sauvegardées pour ce personnage.",
+      "es": "Explora para revelar nuevas regiones. Los descubrimientos se guardan para este personaje."
+    },
+    "Unexplored region": {
+      "en": "Unexplored region",
+      "fr": "Région inexplorée",
+      "es": "Región inexplorada"
+    },
     "Docking could not be saved. Stay aboard and try again.": {
       "en": "Docking could not be saved. Stay aboard and try again.",
       "fr": "L’accostage n’a pas pu être sauvegardé. Restez à bord et réessayez.",
