@@ -129,7 +129,7 @@ public partial class FrmItem
             "Replace existing usage requirements (otherwise preserve)", 421, false);
         var preserveArt = new Label
         {
-            Text = "Icons, animations, paperdolls and event links are always preserved.",
+            Text = AutoText("Animations, paperdolls and event links are preserved."),
             ForeColor = System.Drawing.Color.Gainsboro,
             Location = new System.Drawing.Point(18, 452),
             Size = new System.Drawing.Size(515, 25)
@@ -216,6 +216,8 @@ public partial class FrmItem
         dialog.FormClosed += (_, _) => RoyalCombatEditorState.Changed -= RefreshMasteries;
         dialog.Shown += (_, _) => Networking.Network.SendPacket(new ArcheryRequestPacket { Action = ArcheryAction.GetConfiguration });
         dialog.CancelButton = cancel;
+        var iconPicker = AutoCreatorAssetPicker.Insert(dialog, "ItemIconPicker", "Item icon", "items",
+            cmbPic.Items.Cast<object>().Skip(1).Select(asset => asset.ToString() ?? ""), mEditorItem.Icon);
 
         ItemType SelectedType() => supportedTypes[Math.Max(0, type.SelectedIndex)];
 
@@ -356,6 +358,7 @@ public partial class FrmItem
 
             cmbType.SelectedIndex = (int)itemType;
             txtName.Text = name.Text;
+            iconPicker.ApplyTo(cmbPic);
             chkCanSellMarketplace.Checked = autoMarketplace.Checked;
             cmbRarity.SelectedIndex = Math.Clamp(rarity.SelectedIndex,
                 0, Math.Max(0, cmbRarity.Items.Count - 1));

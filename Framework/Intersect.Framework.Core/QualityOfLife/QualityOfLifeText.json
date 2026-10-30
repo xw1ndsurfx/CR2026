@@ -3614,6 +3614,161 @@
         "en": "Requirements unchanged (existing custom conditions).",
         "fr": "Prérequis inchangés (conditions personnalisées existantes).",
         "es": "Requisitos sin cambios (condiciones personalizadas existentes)."
+    },
+    "NPC sprite": {
+        "en": "NPC sprite",
+        "fr": "Sprite du PNJ",
+        "es": "Sprite del PNJ"
+    },
+    "Item icon": {
+        "en": "Item icon",
+        "fr": "Icône de l’objet",
+        "es": "Icono del objeto"
+    },
+    "Spell icon": {
+        "en": "Spell icon",
+        "fr": "Icône du sort",
+        "es": "Icono del hechizo"
+    },
+    "Preview unavailable": {
+        "en": "Preview unavailable",
+        "fr": "Aperçu indisponible",
+        "es": "Vista previa no disponible"
+    },
+    "Animations, paperdolls and event links are preserved.": {
+        "en": "Animations, paperdolls and event links are preserved.",
+        "fr": "Les animations, les apparences équipées et les liens d’événements sont conservés.",
+        "es": "Se conservan las animaciones, las apariencias equipadas y los enlaces de eventos."
+    },
+    "Keep existing cast and hit animations": {
+        "en": "Keep existing cast and hit animations",
+        "fr": "Conserver les animations de lancement et d’impact",
+        "es": "Conservar las animaciones de lanzamiento e impacto"
+    },
+    "Auto Projectile Creator": {
+        "en": "Auto Projectile Creator",
+        "fr": "Créateur automatique de projectiles",
+        "es": "Creador automático de proyectiles"
+    },
+    "Straight shot": {
+        "en": "Straight shot",
+        "fr": "Tir droit",
+        "es": "Disparo recto"
+    },
+    "Three-way shot": {
+        "en": "Three-way shot",
+        "fr": "Tir à trois directions",
+        "es": "Disparo en tres direcciones"
+    },
+    "Five-way shot": {
+        "en": "Five-way shot",
+        "fr": "Tir à cinq directions",
+        "es": "Disparo en cinco direcciones"
+    },
+    "Radial burst": {
+        "en": "Radial burst",
+        "fr": "Salve circulaire",
+        "es": "Ráfaga radial"
+    },
+    "Directional": {
+        "en": "Directional",
+        "fr": "Direction du lanceur",
+        "es": "Dirección del lanzador"
+    },
+    "Direct shot": {
+        "en": "Direct shot",
+        "fr": "Tir direct",
+        "es": "Disparo directo"
+    },
+    "Homing": {
+        "en": "Homing",
+        "fr": "Tête chercheuse",
+        "es": "Teledirigido"
+    },
+    "Projectile name": {
+        "en": "Projectile name",
+        "fr": "Nom du projectile",
+        "es": "Nombre del proyectil"
+    },
+    "Shot pattern": {
+        "en": "Shot pattern",
+        "fr": "Forme du tir",
+        "es": "Patrón de disparo"
+    },
+    "Targeting behavior": {
+        "en": "Targeting behavior",
+        "fr": "Mode de ciblage",
+        "es": "Modo de apuntado"
+    },
+    "Projectile animation": {
+        "en": "Projectile animation",
+        "fr": "Animation du projectile",
+        "es": "Animación del proyectil"
+    },
+    "Range (tiles)": {
+        "en": "Range (tiles)",
+        "fr": "Portée (cases)",
+        "es": "Alcance (casillas)"
+    },
+    "Travel time (ms)": {
+        "en": "Travel time (ms)",
+        "fr": "Durée du trajet (ms)",
+        "es": "Duración del trayecto (ms)"
+    },
+    "Burst count": {
+        "en": "Burst count",
+        "fr": "Nombre de salves",
+        "es": "Número de ráfagas"
+    },
+    "Time between bursts (ms)": {
+        "en": "Time between bursts (ms)",
+        "fr": "Délai entre les salves (ms)",
+        "es": "Intervalo entre ráfagas (ms)"
+    },
+    "Knockback (tiles)": {
+        "en": "Knockback (tiles)",
+        "fr": "Recul (cases)",
+        "es": "Empuje (casillas)"
+    },
+    "Rotate animation with direction": {
+        "en": "Rotate animation with direction",
+        "fr": "Orienter l’animation selon la direction",
+        "es": "Orientar la animación según la dirección"
+    },
+    "Pierce targets": {
+        "en": "Pierce targets",
+        "fr": "Traverser les cibles",
+        "es": "Atravesar objetivos"
+    },
+    "Pass through map blocks": {
+        "en": "Pass through map blocks",
+        "fr": "Traverser les obstacles de la carte",
+        "es": "Atravesar los obstáculos del mapa"
+    },
+    "Damage comes from the weapon or spell using this projectile. Ammo, collision spells and grapple settings are preserved.": {
+        "en": "Damage comes from the weapon or spell using this projectile. Ammo, collision spells and grapple settings are preserved.",
+        "fr": "Les dégâts viennent de l’arme ou du sort qui utilise ce projectile. Les munitions, sorts de collision et réglages de grappin sont conservés.",
+        "es": "El daño proviene del arma o hechizo que utiliza este proyectil. Se conservan la munición, los hechizos de colisión y los ajustes de gancho."
+    },
+    "Apply to projectile": {
+        "en": "Apply to projectile",
+        "fr": "Appliquer au projectile",
+        "es": "Aplicar al proyectil"
+    },
+    "Enter a projectile name.": {
+        "en": "Enter a projectile name.",
+        "fr": "Saisissez un nom de projectile.",
+        "es": "Introduce un nombre de proyectil."
+    },
+    "Select or create a projectile first.": {
+        "en": "Select or create a projectile first.",
+        "fr": "Sélectionnez ou créez d’abord un projectile.",
+        "es": "Selecciona o crea un proyectil primero."
+    },
+    "{0} projectile(s) per burst × {1} burst(s) = {2} total\nRange: {3} tiles | Travel: {4} ms\nDelay: {5} ms | Total sequence: {6} ms\nReview the preview, then Apply and Save in the editor.": {
+        "en": "{0} projectile(s) per burst × {1} burst(s) = {2} total\nRange: {3} tiles | Travel: {4} ms\nDelay: {5} ms | Total sequence: {6} ms\nReview the preview, then Apply and Save in the editor.",
+        "fr": "{0} projectile(s) par salve × {1} salve(s) = {2} au total\nPortée : {3} cases | Trajet : {4} ms\nDélai : {5} ms | Séquence totale : {6} ms\nVérifiez l’aperçu, puis appliquez et sauvegardez dans l’éditeur.",
+        "es": "{0} proyectil(es) por ráfaga × {1} ráfaga(s) = {2} en total\nAlcance: {3} casillas | Trayecto: {4} ms\nIntervalo: {5} ms | Secuencia total: {6} ms\nRevisa la vista previa, aplica y guarda en el editor."
     }
   }
 }

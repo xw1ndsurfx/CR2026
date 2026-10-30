@@ -33,6 +33,7 @@ public partial class FrmProjectile : EditorForm
         Icon = Program.Icon;
         _btnSave = btnSave;
         _btnCancel = btnCancel;
+        BuildProjectileAutoCreator();
         lstGameObjects.Init(UpdateToolStripItems, AssignEditorItem, toolStripItemNew_Click, toolStripItemCopy_Click, toolStripItemUndo_Click, toolStripItemPaste_Click, toolStripItemDelete_Click);
     }
     private void AssignEditorItem(Guid id)
