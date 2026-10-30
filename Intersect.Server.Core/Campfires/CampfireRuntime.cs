@@ -12,9 +12,13 @@ internal static class CampfireRuntime
 {
     internal static readonly Guid TableId = new("aa2fe845-b958-4310-91ac-912156d16a36");
     private sealed record Fire(Guid Id, Guid Owner, Guid Map, Guid Instance, int X, int Y,
-        Guid Animation, Guid Ashes, DateTime BurnUntil, DateTime RemoveAt);
+        Guid Animation, Guid Ashes, DateTime BurnUntil, DateTime RemoveAt, int Z = 0);
     private static readonly object Gate = new();
     private static readonly Dictionary<Guid, Fire> Fires = [];
+    internal static bool Blocks(Guid map, Guid instance, int x, int y, int z = 0)
+    {
+        lock (Gate) { Prune(); return Fires.Values.Any(fire => fire.Map == map && fire.Instance == instance && fire.X == x && fire.Y == y && fire.Z == z); }
+    }
 
     internal static CraftingTableDescriptor Table()
     {
@@ -70,7 +74,7 @@ internal static class CampfireRuntime
             var now = DateTime.UtcNow;
             var fire = new Fire(Guid.NewGuid(), player.Id, player.MapId, player.MapInstanceId, player.X, player.Y,
                 result.FireAnimationId, result.AshesAnimationId, now.AddSeconds(result.FireSeconds),
-                now.AddSeconds(result.FireSeconds + result.AshesSeconds));
+                now.AddSeconds(result.FireSeconds + result.AshesSeconds), player.Z);
             Fires.Add(fire.Id, fire);
             return true;
         }
@@ -102,7 +106,7 @@ internal static class CampfireRuntime
             Prune(now);
             return Fires.Values.Where(fire => fire.Map == player.MapId && fire.Instance == player.MapInstanceId)
                 .Select(fire => new CampfireState { Id = fire.Id, MapId = fire.Map, X = fire.X, Y = fire.Y,
-                    AnimationId = fire.BurnUntil > now ? fire.Animation : fire.Ashes, Burning = fire.BurnUntil > now }).ToArray();
+                    AnimationId = fire.BurnUntil > now ? fire.Animation : fire.Ashes, Burning = fire.BurnUntil > now, Z = fire.Z }).ToArray();
         }
     }
 }

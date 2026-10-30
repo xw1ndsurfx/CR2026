@@ -38,6 +38,23 @@ public partial class Animation : IAnimation
 
     /// <summary>Quest markers sit above the visible head; ordinary effects remain body-centered.</summary>
     public bool AboveParent { get; set; }
+    public bool DrawAsWorldEntity { get; set; }
+    public bool AlignToTileBase { get; set; }
+    private bool _worldEntityPass;
+    public void DrawWorldEntity()
+    {
+        if (Descriptor == null || IsDisposed) return;
+        _worldEntityPass = true;
+        try { Draw(false, Descriptor.Lower.AlternateRenderLayer); Draw(true, Descriptor.Upper.AlternateRenderLayer); }
+        finally { _worldEntityPass = false; }
+    }
+    private long _expiresAt;
+    public void SetTimedLifetime(int milliseconds)
+    {
+        if (milliseconds <= 0) return;
+        InfiniteLoop = true;
+        _expiresAt = Environment.TickCount64 + Math.Clamp(milliseconds, 1, 600_000);
+    }
     internal const float OverheadGap = 4f;
 
     private bool mDisposeNextDraw;
@@ -128,6 +145,7 @@ public partial class Animation : IAnimation
         if (IsDisposed || Hidden || Descriptor == null || mParent is Entity entity && !entity.ShouldDraw) return;
         var anchor = mParent is Entity parent ? parent.Origin : new System.Numerics.Vector2(mRenderX,mRenderY);
         using var capture = Graphics.CaptureCinematicWorld(anchor);
+        if (DrawAsWorldEntity) { DrawWorldEntity(); return; }
         Draw(false,Descriptor.Lower.AlternateRenderLayer,eventPass:true,aboveLabelsPass:DrawsAboveLabels);
         Draw(true,Descriptor.Upper.AlternateRenderLayer,eventPass:true,aboveLabelsPass:DrawsAboveLabels);
     }
@@ -141,6 +159,7 @@ public partial class Animation : IAnimation
 
     public void Draw(bool upper = false, bool alternate = false, bool eventPass = false, bool aboveLabelsPass = false)
     {
+        if (DrawAsWorldEntity && !_worldEntityPass) return;
         if(DrawsAboveLabels && !aboveLabelsPass)return;
         // Attached event effects have their own foreground pass after the map decor.
         // Other animations retain their ordinary lower/upper layer behavior.
@@ -343,6 +362,9 @@ public partial class Animation : IAnimation
 
     private FloatRect FrameBounds(AnimationLayer layer, float width, float height)
     {
+        if (AlignToTileBase)
+            return new FloatRect(mRenderX - width / 2 + layer.OffsetX,
+                mRenderY + Options.Instance.Map.TileHeight / 2f - height + layer.OffsetY, width, height);
         // Entity.Center already follows the visible body. Only legacy map effects
         // retain a tile-specific vertical anchor; never shift attached spells again.
         var tileOffset = mParent == null ? -16f : 0f;
@@ -413,6 +435,7 @@ public partial class Animation : IAnimation
 
     public void Update()
     {
+        if (_expiresAt > 0 && Environment.TickCount64 >= _expiresAt) { Dispose(); return; }
         if (_disposed)
         {
             return;

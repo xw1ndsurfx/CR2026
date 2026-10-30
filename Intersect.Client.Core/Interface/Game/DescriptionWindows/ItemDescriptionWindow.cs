@@ -132,6 +132,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
             AddDivider();
             var rows = AddRowContainer();
             foreach (var (caption, value) in requirements) rows.AddKeyValueRow(caption, value);
+            rows.SizeToChildren(true, true);
         }
 
         // if we have a description, set that up.

@@ -1681,6 +1681,7 @@ internal sealed partial class PacketHandler
                 {
                     positionedAnimation.ParentOffsetX = packet.OffsetX;
                     positionedAnimation.ParentOffsetY = packet.OffsetY;
+                    positionedAnimation.SetTimedLifetime(packet.DurationMilliseconds);
                 }
 
                 break;

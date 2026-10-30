@@ -31,7 +31,7 @@ public static class ItemRequirementText
                             "archery" => "Archery", "swords" => "Swordsmanship", "daggers" => "Daggers",
                             "axes" => "Axes & Hammers", "magic" => "Staves & Magic", "whips" => "Whips", _ => mastery.MasteryKey,
                         } : mastery.MasteryName;
-                        caption = T("Weapon mastery") + " · " + T(name);
+                        caption = T(name);
                         value = Compare(mastery.Comparator) + " " + mastery.Value;
                         break;
                     default: other = true; continue;

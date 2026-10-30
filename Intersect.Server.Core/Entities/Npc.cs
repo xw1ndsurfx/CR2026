@@ -232,7 +232,7 @@ public partial class Npc : Entity
             AggroCenterY = 0;
             AggroCenterZ = 0;
 
-            if (Descriptor.IsBoss && Descriptor.DeathAnimationId != Guid.Empty)
+            if (Descriptor.DeathAnimationId != Guid.Empty)
             {
                 PacketSender.SendAnimationToProximity(
                     Descriptor.DeathAnimationId,
@@ -242,7 +242,8 @@ public partial class Npc : Entity
                     X,
                     Y,
                     Direction.None,
-                    MapInstanceId
+                    MapInstanceId,
+                    durationMilliseconds: Math.Clamp(Descriptor.DeathAnimationDurationSeconds, 0, 600) * 1000
                 );
             }
 

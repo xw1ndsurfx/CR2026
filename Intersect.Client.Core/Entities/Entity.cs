@@ -2516,6 +2516,8 @@ public partial class Entity : IEntity
             }
 
             tmpMapId = Globals.MapGrid[gridX, gridY];
+            if ((this is Player || GetType() == typeof(Entity)) &&
+                Intersect.Client.Interface.Interface.InGameUiOrNull?.CampfireBlocks(tmpMapId, tmpX, tmpY, z) == true) return -2;
 
             foreach (var en in Globals.Entities)
             {
