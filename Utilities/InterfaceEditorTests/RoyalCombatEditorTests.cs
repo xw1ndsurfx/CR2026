@@ -8,6 +8,15 @@ internal static class RoyalCombatEditorTests
 {
     internal static void Run()
     {
+        var generated = FrmItem.CreateAutoRequirements(25, new MasteryCategory { Key = "whips", Name = "Whips", Cap = 30 }, 12);
+        if (generated.Conditions.Count != 2 ||
+            generated.Conditions[0] is not Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata.LevelOrStatCondition { Value: 25 } ||
+            generated.Conditions[1] is not Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata.WeaponMasteryLevelCondition { MasteryKey: "whips", Value: 12 })
+            throw new Exception("Character and mastery levels must be required together in the same AND branch.");
+        var masteryOnly = FrmItem.CreateAutoRequirements(null, new MasteryCategory { Key = "daggers", Cap = 30 }, 100);
+        if (masteryOnly.Conditions.Count != 1 ||
+            masteryOnly.Conditions[0] is not Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata.WeaponMasteryLevelCondition { Value: 30 })
+            throw new Exception("Mastery-only requirements must respect the configured cap.");
         using var editor = new FrmRoyalCombatConfiguration(new RoyalCombatConfiguration().ToJson(), true);
         var show = typeof(FrmRoyalCombatConfiguration).GetMethod("ShowMode", BindingFlags.NonPublic | BindingFlags.Instance)!;
         var grid = Descendants(editor).OfType<PropertyGrid>().Single();

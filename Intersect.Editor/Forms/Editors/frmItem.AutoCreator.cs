@@ -1,8 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using Intersect.Enums;
+using Intersect.Framework.Core.Archery;
+using Intersect.Framework.Core.QualityOfLife;
+using Intersect.Network.Packets.Client;
 using Intersect.Framework.Core.GameObjects.Conditions;
 using Intersect.Framework.Core.GameObjects.Conditions.ConditionMetadata;
 using Intersect.Framework.Core.GameObjects.Events;
@@ -12,6 +15,10 @@ namespace Intersect.Editor.Forms.Editors;
 
 public partial class FrmItem
 {
+    private static string AutoText(string text) => QualityOfLifeText.Get(text, System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+    private sealed record MasteryChoice(MasteryCategory? Category)
+    { public override string ToString() => AutoText(Category?.Name ?? "No mastery requirement"); }
+
     private const string AutoLevelListName = "Auto Creator - Minimum Level";
     private readonly record struct GeneratedItemPreview(
         int Price, int Damage, int Crit, int AttackSpeedMs,
@@ -180,6 +187,34 @@ public partial class FrmItem
         };
         foreach (var control in new Control[] {preserveArt, warning, preview, apply, cancel}) control.Top+=72;
         dialog.Controls.AddRange([Label(Intersect.Editor.Localization.Strings.ItemEditor.InventoryStackLimit,483),stackLimit]);
+        var mastery = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 290 };
+        var masteryLevel = new NumericUpDown { Minimum = 1, Maximum = 100, Width = 290 };
+        var masteryTop = preview.Top;
+        mastery.Location = new System.Drawing.Point(242, masteryTop);
+        masteryLevel.Location = new System.Drawing.Point(242, masteryTop + 34);
+        var masteryHint = Label(AutoText("Assign this weapon to its category in Weapon Mastery Editor to earn mastery XP."), masteryTop + 66);
+        masteryHint.Size = new System.Drawing.Size(515, 46);
+        foreach (var control in new Control[] { preview, apply, cancel }) control.Top += 120;
+        dialog.AutoScrollMinSize = new System.Drawing.Size(558, apply.Bottom + 24);
+        dialog.Controls.AddRange([Label(AutoText("Weapon mastery requirement"), masteryTop), mastery,
+            Label(AutoText("Required mastery level"), masteryTop + 34), masteryLevel, masteryHint]);
+        void RefreshMasteries()
+        {
+            if (dialog.IsDisposed) return;
+            var previous = (mastery.SelectedItem as MasteryChoice)?.Category?.Key;
+            var existing = mEditorItem.UsageRequirements?.Lists.SelectMany(l => l.Conditions).OfType<WeaponMasteryLevelCondition>().FirstOrDefault();
+            var categories = RoyalCombatEditorState.Current?.Masteries ?? [];
+            var key = previous ?? existing?.MasteryKey ?? categories.FirstOrDefault(c => c.WeaponIds.Contains(mEditorItem.Id))?.Key;
+            mastery.Items.Clear(); mastery.Items.Add(new MasteryChoice(null));
+            foreach (var category in categories) mastery.Items.Add(new MasteryChoice(category));
+            mastery.SelectedItem = mastery.Items.Cast<MasteryChoice>().FirstOrDefault(c => c.Category?.Key == key) ?? mastery.Items[0];
+            masteryLevel.Maximum = (mastery.SelectedItem as MasteryChoice)?.Category?.Cap ?? 100;
+            masteryLevel.Value = Math.Clamp(existing?.Value ?? 1, 1, (int)masteryLevel.Maximum);
+        }
+        RefreshMasteries();
+        RoyalCombatEditorState.Changed += RefreshMasteries;
+        dialog.FormClosed += (_, _) => RoyalCombatEditorState.Changed -= RefreshMasteries;
+        dialog.Shown += (_, _) => Networking.Network.SendPacket(new ArcheryRequestPacket { Action = ArcheryAction.GetConfiguration });
         dialog.CancelButton = cancel;
 
         ItemType SelectedType() => supportedTypes[Math.Max(0, type.SelectedIndex)];
@@ -250,6 +285,9 @@ public partial class FrmItem
         {
             var p = Calculate();
             slot.Enabled = SelectedType() == ItemType.Equipment;
+            var isWeapon = SelectedType() == ItemType.Equipment && slot.SelectedIndex == Options.Instance.Equipment.WeaponSlot;
+            mastery.Enabled = isWeapon;
+            masteryLevel.Enabled = isWeapon && (mastery.SelectedItem as MasteryChoice)?.Category != null;
             var hasConditions = HasCustomItemRequirements();
             preview.Text =
                 $"{p.Summary}\n" +
@@ -268,8 +306,16 @@ public partial class FrmItem
                     hasConditions && !replaceRequirements.Checked
                     ? " (existing conditions preserved; level NOT installed)"
                     : " (will be installed)") +
+                "\n" + (masteryLevel.Enabled && mastery.SelectedItem is MasteryChoice { Category: { } category }
+                    ? hasConditions && !replaceRequirements.Checked ? AutoText("Requirements unchanged (existing custom conditions).")
+                        : string.Format(AutoText("Requires {0} level {1}."), AutoText(category.Name), (int)masteryLevel.Value) : "") +
                 "\nNo changes until Apply.";
         }
+        mastery.SelectedIndexChanged += (_, _) => {
+            masteryLevel.Maximum = (mastery.SelectedItem as MasteryChoice)?.Category?.Cap ?? 100;
+            UpdatePreview();
+        };
+        masteryLevel.ValueChanged += (_, _) => UpdatePreview();
         type.SelectedIndexChanged += (_, _) => UpdatePreview();
         slot.SelectedIndexChanged += (_, _) => UpdatePreview();
         level.ValueChanged += (_, _) => UpdatePreview();
@@ -289,15 +335,15 @@ public partial class FrmItem
             }
             var itemType = SelectedType();
             var p = Calculate();
-            var realRequirement = applyLevel.Checked &&
-                (replaceRequirements.Checked || !HasCustomItemRequirements());
+            var selectedMastery = itemType == ItemType.Equipment && slot.SelectedIndex == Options.Instance.Equipment.WeaponSlot
+                ? (mastery.SelectedItem as MasteryChoice)?.Category : null;
+            var wantsRequirements = applyLevel.Checked || selectedMastery != null;
+            var realRequirement = wantsRequirements && (replaceRequirements.Checked || !HasCustomItemRequirements());
 
-            if (applyLevel.Checked && !realRequirement)
+            if (wantsRequirements && !realRequirement)
             {
                 var answer = MessageBox.Show(dialog,
-                    "This item already has custom usage conditions. " +
-                    "Its existing conditions will be preserved, and no new level " +
-                    "requirement will be installed. Continue?",
+                    AutoText("Existing conditions will be preserved; new level and mastery requirements will not be installed. Continue?"),
                     "Existing Requirements", MessageBoxButtons.YesNo,
                     MessageBoxIcon.Warning);
                 if (answer != DialogResult.Yes) return;
@@ -387,20 +433,10 @@ public partial class FrmItem
                 else
                     mEditorItem.UsageRequirements.Lists.RemoveAll(
                         list => IsAutoGeneratedLevelList(list));
-                mEditorItem.UsageRequirements.Lists.Add(new ConditionList
-                {
-                    Name = AutoLevelListName,
-                    Conditions =
-                    [
-                        new LevelOrStatCondition
-                        {
-                            ComparingLevel = true,
-                            Comparator = VariableComparator.GreaterOrEqual,
-                            Value = (int)level.Value
-                        }
-                    ]
-                });
-                txtCannotUse.Text = $"Requires level {(int)level.Value}.";
+                var generated = CreateAutoRequirements(applyLevel.Checked ? (int)level.Value : null, selectedMastery, (int)masteryLevel.Value);
+                mEditorItem.UsageRequirements.Lists.Add(generated);
+                // The tooltip is generated from the real conditions in the player's language.
+                // Preserve any authored failure message rather than inserting a fixed-language one.
             }
 
             if (autoDescription.Checked)
@@ -421,8 +457,20 @@ public partial class FrmItem
     }
 
     private static bool IsAutoGeneratedLevelList(ConditionList list) =>
-        list.Name == AutoLevelListName && list.Conditions.Count == 1 &&
-        list.Conditions[0] is LevelOrStatCondition { ComparingLevel: true };
+        list.Name == AutoLevelListName && list.Conditions.Count > 0 &&
+        list.Conditions.All(c => c is LevelOrStatCondition { ComparingLevel: true, Comparator: VariableComparator.GreaterOrEqual, Negated: false }
+            or WeaponMasteryLevelCondition { Comparator: VariableComparator.GreaterOrEqual, Negated: false });
+
+    internal static ConditionList CreateAutoRequirements(int? playerLevel, MasteryCategory? mastery, int masteryLevel)
+    {
+        var list = new ConditionList { Name = AutoLevelListName };
+        if (playerLevel is { } level)
+            list.Conditions.Add(new LevelOrStatCondition { ComparingLevel = true, Comparator = VariableComparator.GreaterOrEqual, Value = level });
+        if (mastery != null)
+            list.Conditions.Add(new WeaponMasteryLevelCondition { MasteryKey = mastery.Key, MasteryName = mastery.Name,
+                Comparator = VariableComparator.GreaterOrEqual, Value = Math.Clamp(masteryLevel, 1, mastery.Cap) });
+        return list;
+    }
 
     private bool HasCustomItemRequirements() =>
         mEditorItem?.UsageRequirements?.Lists.Any(

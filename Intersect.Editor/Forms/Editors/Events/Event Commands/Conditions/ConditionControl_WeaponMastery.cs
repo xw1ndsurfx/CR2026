@@ -58,6 +58,7 @@ public sealed class ConditionControl_WeaponMastery : UserControl
     public void SaveFormValues(WeaponMasteryLevelCondition condition)
     {
         condition.MasteryKey = (_mastery.SelectedItem as Choice)?.Key ?? _key;
+        condition.MasteryName = RoyalCombatEditorState.Current?.Masteries.FirstOrDefault(m => m.Key == condition.MasteryKey)?.Name ?? condition.MasteryName;
         condition.Comparator = _comparison.SelectedItem is VariableComparator comparator ? comparator : VariableComparator.GreaterOrEqual;
         condition.Value = (int)_level.Value;
     }

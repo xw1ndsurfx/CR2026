@@ -49,9 +49,12 @@ public sealed class ArcheryRange
 
 public sealed class RoyalCombatConfiguration
 {
+    // Missing in older saved configurations: add the new category once, preserving mappings.
+    public int BuiltInMasteriesVersion { get; set; }
     public MasteryCategory[] Masteries { get; set; } = [new() { Talents = MasteryTalent.ArcheryDefaults() },
         new() { Key = "swords", Name = "Swordsmanship" }, new() { Key = "daggers", Name = "Daggers" },
-        new() { Key = "axes", Name = "Axes & Hammers" }, new() { Key = "magic", Name = "Staves & Magic" }];
+        new() { Key = "axes", Name = "Axes & Hammers" }, new() { Key = "magic", Name = "Staves & Magic" },
+        new() { Key = "whips", Name = "Whips" }];
     public ArcheryRange[] Ranges { get; set; } = [];
     public WeaponAmmunitionRule[] Ammunition { get; set; } = [];
     public bool RespecEnabled { get; set; }
@@ -78,6 +81,13 @@ public sealed class RoyalCombatConfiguration
     {
         if (json.Length > 262144) throw new InvalidDataException("royal-config-size");
         var result = JsonSerializer.Deserialize<RoyalCombatConfiguration>(json, new JsonSerializerOptions { MaxDepth = 12 });
-        return result?.IsValid == true ? result : throw new InvalidDataException("royal-config-invalid");
+        if (result?.IsValid != true) throw new InvalidDataException("royal-config-invalid");
+        if (result.BuiltInMasteriesVersion < 1)
+        {
+            if (!result.Masteries.Any(m => m.Key == "whips") && result.Masteries.Length < 32)
+                result.Masteries = [..result.Masteries, new() { Key = "whips", Name = "Whips" }];
+            result.BuiltInMasteriesVersion = 1;
+        }
+        return result;
     }
 }

@@ -98,6 +98,8 @@ public partial class CharacterWindow
     int ManaStealAmount = 0;
 
     private PlayerProfessionProfilePacket[] _professionDetails = [];
+    private PlayerMasteryProfilePacket[] _masteryDetails = [];
+    private bool _masteriesAvailable;
 
     //Init
     public CharacterWindow(Canvas gameCanvas)
@@ -563,6 +565,17 @@ public partial class CharacterWindow
         Row("Cooldown Reduction", $"{CooldownAmount}%");
 
         y += 10;
+        Heading(ClientLanguages.Text("Weapon Masteries"));
+        if (!_masteriesAvailable)
+            Row(ClientLanguages.Text("Weapon Masteries"), ClientLanguages.Text("Unavailable"));
+        foreach (var mastery in _masteryDetails)
+        {
+            Row(ClientLanguages.ContentText(ClientLanguages.Text(mastery.Name)), ClientLanguages.Format("Level {0}/{1}", mastery.Level, mastery.MaximumLevel));
+            Row(ClientLanguages.Text("Mastery damage bonus"), $"+{mastery.DamageBonusPercent:0.##}%");
+            Row(ClientLanguages.Text("Mastery attack speed bonus"), $"+{mastery.AttackSpeedBonusPercent:0.##}%");
+            Row(ClientLanguages.Text("Mastery critical chance bonus"), $"+{mastery.CritChanceBonus}%");
+        }
+        y += 10;
         Heading("Professions");
         if (_professionDetails.Length == 0)
         {
@@ -631,6 +644,8 @@ public partial class CharacterWindow
             return;
 
         _professionDetails = packet.Professions ?? [];
+        _masteryDetails = packet.Masteries ?? [];
+        _masteriesAvailable = packet.MasteriesAvailable;
         if (!_detailsWindow.IsHidden)
             RefreshDetails();
     }

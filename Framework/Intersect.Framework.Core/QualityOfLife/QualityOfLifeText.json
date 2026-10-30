@@ -3504,6 +3504,116 @@
       "en": "Choose a currency to enable resets.",
       "fr": "Choisissez une monnaie pour activer les réinitialisations.",
       "es": "Elige una moneda para activar los restablecimientos."
+    },
+    "Whips": {
+        "en": "Whips",
+        "fr": "Fouets",
+        "es": "Látigos"
+    },
+    "Weapon mastery requirement": {
+        "en": "Weapon mastery requirement",
+        "fr": "Prérequis de maîtrise d’arme",
+        "es": "Requisito de maestría de arma"
+    },
+    "Required mastery level": {
+        "en": "Required mastery level",
+        "fr": "Niveau de maîtrise requis",
+        "es": "Nivel de maestría requerido"
+    },
+    "No mastery requirement": {
+        "en": "No mastery requirement",
+        "fr": "Aucun prérequis de maîtrise",
+        "es": "Sin requisito de maestría"
+    },
+    "Mastery configuration is loading. Reopen the creator if no categories appear.": {
+        "en": "Mastery configuration is loading. Reopen the creator if no categories appear.",
+        "fr": "Chargement des maîtrises. Rouvrez le créateur si aucune catégorie ne s’affiche.",
+        "es": "Cargando maestrías. Vuelve a abrir el creador si no aparecen categorías."
+    },
+    "Requires {0} level {1}.": {
+        "en": "Requires {0} level {1}.",
+        "fr": "Maîtrise {0} de niveau {1} requise.",
+        "es": "Requiere {0} de nivel {1}."
+    },
+    "Character level": {
+        "en": "Character level",
+        "fr": "Niveau du personnage",
+        "es": "Nivel del personaje"
+    },
+    "Weapon mastery": {
+        "en": "Weapon mastery",
+        "fr": "Maîtrise d’arme",
+        "es": "Maestría de arma"
+    },
+    "Requirements (all)": {
+        "en": "Requirements (all)",
+        "fr": "Prérequis (tous)",
+        "es": "Requisitos (todos)"
+    },
+    "Requirements (alternative {0})": {
+        "en": "Requirements (alternative {0})",
+        "fr": "Prérequis (possibilité {0})",
+        "es": "Requisitos (alternativa {0})"
+    },
+    "Other conditions apply": {
+        "en": "Other conditions apply",
+        "fr": "D’autres conditions s’appliquent",
+        "es": "Se aplican otras condiciones"
+    },
+    "NOT {0}": {
+        "en": "NOT {0}",
+        "fr": "NON {0}",
+        "es": "NO {0}"
+    },
+    "Level {0}/{1}": {
+        "en": "Level {0}/{1}",
+        "fr": "Niveau {0}/{1}",
+        "es": "Nivel {0}/{1}"
+    },
+    "Mastery damage bonus": {
+        "en": "Mastery damage bonus",
+        "fr": "Bonus de dégâts de maîtrise",
+        "es": "Bonificación de daño de maestría"
+    },
+    "Mastery attack speed bonus": {
+        "en": "Mastery attack speed bonus",
+        "fr": "Bonus de vitesse de maîtrise",
+        "es": "Bonificación de velocidad de maestría"
+    },
+    "Mastery critical chance bonus": {
+        "en": "Mastery critical chance bonus",
+        "fr": "Bonus de critique de maîtrise",
+        "es": "Bonificación crítica de maestría"
+    },
+    "Damage +{0:0.##}% | Attack speed +{1:0.##}% | Critical chance +{2}%": {
+        "en": "Damage +{0:0.##}% | Attack speed +{1:0.##}% | Critical chance +{2}%",
+        "fr": "Dégâts +{0:0.##}% | Vitesse +{1:0.##}% | Critique +{2}%",
+        "es": "Daño +{0:0.##}% | Velocidad +{1:0.##}% | Crítico +{2}%"
+    },
+    "Unavailable": {
+        "en": "Unavailable",
+        "fr": "Indisponible",
+        "es": "No disponible"
+    },
+    "Assign this weapon to its category in Weapon Mastery Editor to earn mastery XP.": {
+        "en": "Assign this weapon to its category in Weapon Mastery Editor to earn mastery XP.",
+        "fr": "Associez cette arme à sa catégorie dans Weapon Mastery Editor pour gagner de l’XP de maîtrise.",
+        "es": "Asigna esta arma a su categoría en Weapon Mastery Editor para ganar XP de maestría."
+    },
+    "Mastery requirements will be installed together with the character level.": {
+        "en": "Mastery requirements will be installed together with the character level.",
+        "fr": "Les prérequis de maîtrise seront installés avec le niveau du personnage.",
+        "es": "Los requisitos de maestría se instalarán con el nivel del personaje."
+    },
+    "Existing conditions will be preserved; new level and mastery requirements will not be installed. Continue?": {
+        "en": "Existing conditions will be preserved; new level and mastery requirements will not be installed. Continue?",
+        "fr": "Les conditions existantes seront conservées ; les nouveaux prérequis de niveau et de maîtrise ne seront pas installés. Continuer ?",
+        "es": "Se conservarán las condiciones existentes; no se instalarán los nuevos requisitos de nivel y maestría. ¿Continuar?"
+    },
+    "Requirements unchanged (existing custom conditions).": {
+        "en": "Requirements unchanged (existing custom conditions).",
+        "fr": "Prérequis inchangés (conditions personnalisées existantes).",
+        "es": "Requisitos sin cambios (condiciones personalizadas existentes)."
     }
   }
 }

@@ -23,6 +23,7 @@ public partial class JsonDatabase
         nameof(SimplifiedEscapeMenu), nameof(ShowPvpGrades), nameof(ShowMyLevel), nameof(ShowPlayerLevels),
         nameof(ShowNpcLevels), nameof(ShowMyGuild), nameof(ShowPlayerGuilds), nameof(ShowMyTitle),
         nameof(ShowPlayerTitles), nameof(ShowQuestHud), nameof(ShowPremiumHud), nameof(ShowWorldBossHud),
+        nameof(ShowDungeonHud), nameof(DungeonHudCollapsed),
         nameof(ShowInvasionHud), nameof(ShowMinimap), nameof(MinimapCollapsed), nameof(WorldBossHudCollapsed),
         nameof(InvasionHudCollapsed), nameof(ShowQuestGuidanceArrow), nameof(TypewriterBehavior),
     };
