@@ -151,4 +151,7 @@ public partial class PlayerMasteryProfilePacket
     [Key(4)] public long LevelExperience { get; set; }
     [Key(5)] public long RequiredExperience { get; set; }
     [Key(6)] public int AvailablePoints { get; set; }
+    [Key(7)] public double DamageBonusPercent { get; set; }
+    [Key(8)] public double AttackSpeedBonusPercent { get; set; }
+    [Key(9)] public int CritChanceBonus { get; set; }
 }

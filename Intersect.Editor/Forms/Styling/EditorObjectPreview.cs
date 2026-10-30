@@ -53,6 +53,13 @@ internal sealed class EditorObjectPreview : IDisposable
         return preview;
     }
 
+    internal static EditorObjectPreview IconFile(string name, string folder)
+    {
+        var preview = new EditorObjectPreview();
+        preview.AddImage(name, folder);
+        return preview;
+    }
+
     private void AddAnimation(AnimationDescriptor? animation)
     {
         if (animation == null) return;

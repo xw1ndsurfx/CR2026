@@ -1025,14 +1025,13 @@ internal sealed class WorldMapWindow : Window
 
             var scaleX = previewWidth / (float)sourceWidth;
             var scaleY = previewHeight / (float)sourceHeight;
-            var drewAnyTile = false;
-
-            foreach (var layerName in mapOptions.Layers.All)
+            bool DrawLayer(string layerName)
             {
+                var drewLayer = false;
                 if (!map.Layers.TryGetValue(layerName, out var layerTiles) ||
                     !map.Autotiles.Layers.TryGetValue(layerName, out var layerAutotiles))
                 {
-                    continue;
+                    return false;
                 }
 
                 for (var tx = 0; tx < mapOptions.MapWidth; ++tx)
@@ -1074,7 +1073,7 @@ internal sealed class WorldMapWindow : Window
                                 mapOptions.TileWidth,
                                 mapOptions.TileHeight
                             );
-                            drewAnyTile = true;
+                            drewLayer = true;
                         }
                         else
                         {
@@ -1086,13 +1085,15 @@ internal sealed class WorldMapWindow : Window
                             );
                             var dst = new FloatRect(destX, destY, destW, destH);
                             CoreGraphics.DrawGameTexture(texture, src, dst, Color.White, preview);
-                            drewAnyTile = true;
+                            drewLayer = true;
                         }
                     }
                 }
+                return drewLayer;
             }
 
-            drewAnyTile |= DrawResourcePreviews(map, preview, scaleX, scaleY);
+            var drewAnyTile = RenderPreviewLayers(mapOptions.Layers, DrawLayer,
+                () => DrawResourcePreviews(map, preview, scaleX, scaleY));
             preview.End();
 
             // Cache any usable preview. A map may reference an old/missing texture on one
@@ -1111,6 +1112,18 @@ internal sealed class WorldMapWindow : Window
             _previews[map.Id] = preview;
             _previewRevisions[map.Id] = map.Revision;
             return preview;
+        }
+
+        // Use the configured render groups, including custom layer names. Resources
+        // occupy the entity pass: masks behind them, Fringe and roofs in front.
+        internal static bool RenderPreviewLayers(Intersect.Config.LayerOptions layers, Func<string, bool> drawLayer, Func<bool> drawResources)
+        {
+            var drewAny = false;
+            foreach (var layer in layers.LowerLayers) drewAny |= drawLayer(layer);
+            drewAny |= drawResources();
+            foreach (var layer in layers.MiddleLayers) drewAny |= drawLayer(layer);
+            foreach (var layer in layers.UpperLayers) drewAny |= drawLayer(layer);
+            return drewAny;
         }
 
         internal static IEnumerable<(IGameTexture Texture, FloatRect Source, float Scale)> ResourcePreviewGraphics(Guid resourceId)

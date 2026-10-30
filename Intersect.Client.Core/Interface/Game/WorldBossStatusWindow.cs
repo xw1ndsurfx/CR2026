@@ -13,6 +13,7 @@ namespace Intersect.Client.Interface.Game;
 internal sealed class WorldBossStatusWindow : Base
 {
     private readonly HudDisclosure _disclosure;
+    private readonly StatusHudPlacement _placement;
     private readonly Label _title;
     private readonly Label _health;
     private readonly Label _place;
@@ -37,6 +38,7 @@ internal sealed class WorldBossStatusWindow : Base
         _ranking = EventPanelText.CreateBody(_rankings, "WorldBossRanking", 10);
         _timer = Label("WorldBossTimer", 8, 211, 442, 19, 9);
         _disclosure = new HudDisclosure(this, _title, "WorldBossHudCollapsed");
+        _placement = new StatusHudPlacement(this, _title);
         Hide();
     }
 
@@ -92,8 +94,7 @@ internal sealed class WorldBossStatusWindow : Base
         var height = Math.Min(304, Math.Max(180, availableHeight - top - 8));
         var changed = Width != width || _rankings.Height != height - 160;
         Width = width; _disclosure.Resize(height);
-        X = Math.Max(8, (Parent?.Width ?? Width + 16) - Width - 8);
-        Y = Math.Max(8, Math.Min(top, availableHeight - Height - 8));
+        _placement.Arrange(Math.Max(8, (Parent?.Width ?? Width + 16) - Width - 8), top);
         _title.SetBounds(8, 8, width - 46, 26); _health.SetBounds(8, 43, width - 16, 24);
         _place.SetBounds(8, 92, width - 16, 26);
         _rankings.SetBounds(10, 124, width - 20, height - 160); _timer.SetBounds(8, height - 27, width - 16, 21);

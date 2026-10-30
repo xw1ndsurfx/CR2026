@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
@@ -192,6 +192,8 @@ public partial class FrmNpc
         var advanced = BuildNpcAutoAdvancedOptions(dialog);
         dialog.CancelButton = cancel;
         dialog.AcceptButton = apply;
+        var spritePicker = AutoCreatorAssetPicker.Insert(dialog, "NpcSpritePicker", "NPC sprite", "entities",
+            cmbSprite.Items.Cast<object>().Skip(1).Select(asset => asset.ToString() ?? ""), mEditorItem.Sprite);
 
         // Initial numbers supply a stable starting point. The actual HP and
         // damage calibration is delegated to the Balance Lab's combat simulator.
@@ -390,6 +392,7 @@ public partial class FrmNpc
         }
 
         txtName.Text = name.Text;
+        spritePicker.ApplyTo(cmbSprite);
         Assign(nudLevel, level.Value);
         Assign(nudHp, calibration!.Health);
         Assign(nudMana, result.mana);

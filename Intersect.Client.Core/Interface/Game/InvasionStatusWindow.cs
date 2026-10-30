@@ -14,6 +14,7 @@ namespace Intersect.Client.Interface.Game;
 internal sealed class InvasionStatusWindow : Base
 {
     private readonly HudDisclosure _disclosure;
+    private readonly StatusHudPlacement _placement;
     private readonly Label _title;
     private readonly Label _wave;
     private readonly Label _objective;
@@ -64,13 +65,14 @@ internal sealed class InvasionStatusWindow : Base
         _targetText = EventPanelText.CreateBody(_targets, "InvasionTargetDetails", 10);
         _targets.Hide();
         _disclosure = new HudDisclosure(this, _title, "InvasionHudCollapsed");
+        _placement = new StatusHudPlacement(this, _title);
         Hide();
     }
 
     public void Update()
     {
         IsHidden = (!_reminderMode && _state?.Active != true) || Globals.Database?.ShowInvasionHud == false || Interface.InGameUiOrNull?.SuppressStatusHuds == true;
-        _targets.IsHidden = _reminderMode || (_state?.Targets?.Length ?? 0) <= 1 || _disclosure.Collapsed;
+        _disclosure.SetContentVisible(_targets, !_reminderMode && (_state?.Targets?.Length ?? 0) > 1);
         PositionAtTop();
         if (!_reminderMode || _reminderHideAt <= 0 || Timing.Global.Milliseconds <= _reminderHideAt)
             return;
@@ -83,7 +85,7 @@ internal sealed class InvasionStatusWindow : Base
     public void ShowReminder(string announcementText, long displayTime)
     {
         _state = null;
-        _targets.Hide();
+        _disclosure.SetContentVisible(_targets, false);
         _disclosure.Resize(118);
         _reminderMode = true;
         _reminderHideAt = Timing.Global.Milliseconds + Math.Max(1_000L, displayTime);
@@ -101,7 +103,7 @@ internal sealed class InvasionStatusWindow : Base
         EventPanelText.Fit(_wave, _wave.Text, 10);
         EventPanelText.Fit(_objective, _objective.Text, 10);
         PositionAtTop();
-        Show();
+        Update();
         BringToFront();
     }
 
@@ -125,7 +127,7 @@ internal sealed class InvasionStatusWindow : Base
         _objective.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"Defense target: {state.ObjectiveHealth:N0} / {state.ObjectiveMaxHealth:N0} HP");
         var targets = state.Targets ?? [];
         _disclosure.Resize(targets.Length > 1 ? 242 : 118);
-        _targets.IsHidden = targets.Length <= 1 || _disclosure.Collapsed;
+        _disclosure.SetContentVisible(_targets, targets.Length > 1);
         if (targets.Length > 1)
         {
             _objective.Text = ClientLanguages.Format("Defense targets: {0}/{1} | {2:N0} / {3:N0} HP", targets.Count(t => t.Health > 0), targets.Length, state.ObjectiveHealth, state.ObjectiveMaxHealth);
@@ -137,14 +139,13 @@ internal sealed class InvasionStatusWindow : Base
         EventPanelText.Fit(_wave, _wave.Text, 10);
         EventPanelText.Fit(_objective, _objective.Text, 10);
         PositionAtTop();
-        Show();
+        Update();
         BringToFront();
     }
 
     private void PositionAtTop()
     {
-        X = Math.Max(8, (Parent?.Width ?? Width) / 2 - Width / 2);
-        Y = 16;
+        _placement.Arrange(Math.Max(8, (Parent?.Width ?? Width) / 2 - Width / 2), 16);
     }
 
     protected override void Render(SkinBase skin)

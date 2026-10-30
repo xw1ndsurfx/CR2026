@@ -290,6 +290,8 @@ public partial class SettingsWindow : Window
         { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Show Premium status",Intersect.Client.Localization.ClientLanguages.Current) };
         _displayOptions["ShowQuestHud"] = new LabeledCheckBox(_informationSettings, "ShowQuestHud")
         { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Show quest HUD") };
+        _displayOptions["ShowDungeonHud"] = new LabeledCheckBox(_informationSettings, "ShowDungeonHud")
+        { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Show dungeon HUD") };
         _displayOptions["ShowWorldBossHud"] = new LabeledCheckBox(_informationSettings, "ShowWorldBossHud")
         { Dock = Pos.Top, Font = _defaultFont, FontSize = 12, Text = Intersect.Client.Localization.ClientLanguages.Text("Show World Boss HUD") };
         _displayOptions["ShowInvasionHud"] = new LabeledCheckBox(_informationSettings, "ShowInvasionHud")

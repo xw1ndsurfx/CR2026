@@ -126,6 +126,14 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         // Set up our item limit information.
         SetupItemLimits();
 
+        var requirements = ItemRequirementText.Rows(_itemDescriptor.UsageRequirements, ClientLanguages.Current).ToArray();
+        if (requirements.Length > 0)
+        {
+            AddDivider();
+            var rows = AddRowContainer();
+            foreach (var (caption, value) in requirements) rows.AddKeyValueRow(caption, value);
+        }
+
         // if we have a description, set that up.
         if (!string.IsNullOrWhiteSpace(_itemDescriptor.Description))
         {

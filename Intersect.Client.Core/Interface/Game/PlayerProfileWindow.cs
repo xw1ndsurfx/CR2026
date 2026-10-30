@@ -297,19 +297,21 @@ internal sealed class PlayerProfileWindow : Window
         var y = 8;
         foreach (var mastery in (profile.Masteries ?? []).Skip(_page * 2).Take(2))
         {
-            var card = new ProfileFrame(_scroll, "Mastery" + mastery.Key); card.SetBounds(12, y, 600, 104);
+            var card = new ProfileFrame(_scroll, "Mastery" + mastery.Key); card.SetBounds(12, y, 600, 134);
             NavalManagementWindow.Text(card, "MasteryName", ClientLanguages.Format("{0} · Level {1}/{2} · Points {3}",
                 ClientLanguages.ContentText(T(mastery.Name)), mastery.Level, mastery.MaximumLevel, mastery.AvailablePoints), 10, 2, 580, 26, 11);
             var required = mastery.RequiredExperience; var percent = required <= 0 ? 100 : (int)Math.Clamp(mastery.LevelExperience * 100 / required, 0, 100);
             var bar = new ProfileProgressBar(card, "MasteryExperienceBar") { Progress = percent / 100f }; bar.SetBounds(10, 32, 580, 26);
             NavalManagementWindow.Text(card, "MasteryExperience", ClientLanguages.Format("XP {0}/{1} · {2}% · Remaining {3}",
                 mastery.LevelExperience, required, percent, Math.Max(0, required - mastery.LevelExperience)), 14, 32, 570, 26, 10);
-            NavalManagementWindow.Button(card, "MasteryDetails", T("View talents"), 10, 68, 580, 26, () => {
+            NavalManagementWindow.Text(card, "MasteryBonuses", ClientLanguages.Format("Damage +{0:0.##}% | Attack speed +{1:0.##}% | Critical chance +{2}%",
+                mastery.DamageBonusPercent, mastery.AttackSpeedBonusPercent, mastery.CritChanceBonus), 10, 64, 580, 24, 10);
+            NavalManagementWindow.Button(card, "MasteryDetails", T("View talents"), 10, 98, 580, 26, () => {
                 if (profile.IsSelf) GameInterface.OpenWeaponMasteries();
                 else Intersect.Client.Networking.Network.SendPacket(new Intersect.Network.Packets.Client.ArcheryRequestPacket {
                     Action = Intersect.Network.Packets.Client.ArcheryAction.InspectMasteries, TargetId = profile.PlayerId });
             });
-            y += 112;
+            y += 142;
         }
     }
 

@@ -1,4 +1,5 @@
 using Intersect.Client.Framework.File_Management;
+using Intersect.Client.General;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Interface.Shared;
@@ -14,6 +15,8 @@ namespace Intersect.Client.Interface.Game;
 
 internal sealed class DungeonRunHudWindow : Base
 {
+    private readonly HudDisclosure _disclosure;
+    private readonly StatusHudPlacement _placement;
     private readonly Label _title;
     private readonly Label _objective;
     private readonly Label _lives;
@@ -80,6 +83,8 @@ internal sealed class DungeonRunHudWindow : Base
         _abandon.SetBounds(85, 122, 260, 36);
         _abandon.Clicked += (_, _) => ConfirmAbandon();
 
+        _disclosure = new HudDisclosure(this, _title, "DungeonHudCollapsed");
+        _placement = new StatusHudPlacement(this, _title);
         Hide();
     }
 
@@ -87,9 +92,10 @@ internal sealed class DungeonRunHudWindow : Base
     {
         _state = state;
         _resultHideAt = 0;
-        _abandon.IsHidden = state.Status != DungeonRunStatus.Active || state.RunId == Guid.Empty;
+        var canAbandon = state.Status == DungeonRunStatus.Active && state.RunId != Guid.Empty;
+        _disclosure.SetContentVisible(_abandon, canAbandon);
         _abandon.Text = ClientLanguages.Text("Abandon dungeon");
-        Height = _abandon.IsHidden ? 126 : 170;
+        _disclosure.Resize(canAbandon ? 170 : 126);
 
         _title.Text = Intersect.Client.Localization.ClientLanguages.Interpolated($"RANK {state.DungeonRank} • {state.DungeonName}");
         _objective.Text = state.Message;
@@ -112,12 +118,14 @@ internal sealed class DungeonRunHudWindow : Base
         }
 
         PositionAtTop();
-        Show();
+        Update();
         BringToFront();
     }
 
     public void Update()
     {
+        IsHidden = _state == null || Globals.Database?.ShowDungeonHud == false || Interface.InGameUiOrNull?.SuppressStatusHuds == true;
+        PositionAtTop();
         if (_state == null)
             return;
 
@@ -173,8 +181,7 @@ internal sealed class DungeonRunHudWindow : Base
 
     private void PositionAtTop()
     {
-        X = Math.Max(8, (Parent?.Width ?? Width) / 2 - Width / 2);
-        Y = 142;
+        _placement.Arrange(Math.Max(8, (Parent?.Width ?? Width) / 2 - Width / 2), 142);
     }
 
     // This HUD has no external skin JSON. Draw an opaque, contrasting button
