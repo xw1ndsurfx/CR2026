@@ -92,6 +92,10 @@ public partial class Player
     {
         if (_pendingDeath is not { } pending) return;
         _pendingDeath = null;
+        if (pending.Rule.GroundAnimationId != Guid.Empty && AnimationDescriptor.Get(pending.Rule.GroundAnimationId) != null)
+            PacketSender.SendAnimationToProximity(pending.Rule.GroundAnimationId, -1, Guid.Empty, pending.DeathMapId,
+                pending.X, pending.Y, pending.Direction, pending.DeathInstanceId,
+                durationMilliseconds: Math.Clamp(pending.Rule.GroundAnimationSeconds, 1, 600) * 1000);
         if (pending.EventInstanceId != Guid.Empty) CancelDeathEvent(pending.EventInstanceId);
         HideEntity = pending.WasHidden;
         if (MapController.Get(pending.Rule.RespawnMapId) != null)

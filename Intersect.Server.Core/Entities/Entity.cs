@@ -534,6 +534,10 @@ public abstract partial class Entity : IEntity
 
         int tileX = tileHelper.GetX();
         int tileY = tileHelper.GetY();
+        if (this is Player or Npc && Intersect.Server.Campfires.CampfireRuntime.Blocks(tileHelper.GetMapId(), MapInstanceId, tileX, tileY, Z))
+        {
+            blockerType = MovementBlockerType.MapAttribute; blockingEntity = default; return false;
+        }
 
         if (IsBlockedByMapAttribute(direction, mapController.Attributes[tileX, tileY], out blockerType))
         {

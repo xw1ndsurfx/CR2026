@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using Intersect.Client.Entities;
 using Intersect.Client.Entities.Events;
 using Intersect.Client.Framework.Content;
@@ -380,6 +380,8 @@ public static partial class Graphics
                     EntitiesDrawn++;
                 }
 
+                if (x == 1) Intersect.Client.Interface.Interface.InGameUiOrNull?.DrawCampfiresRow(y);
+
                 if (x == 0 && y > 0 && y % mapHeight == 0)
                 {
                     for (var x1 = gridX - 1; x1 <= gridX + 1; x1++)
@@ -424,6 +426,7 @@ public static partial class Graphics
             for (var x = 3; x < 6; x++)
             {
                 if (x == 4) Intersect.Client.Interface.Game.HousingWorld.DrawRow(y, true);
+                if (x == 4) Intersect.Client.Interface.Interface.InGameUiOrNull?.DrawCampfiresRow(y, true);
                 foreach (var entity in RenderingEntities[x, y])
                 {
                     // Handle our plugin drawing.

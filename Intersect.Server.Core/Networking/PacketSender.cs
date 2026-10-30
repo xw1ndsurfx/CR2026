@@ -1635,7 +1635,8 @@ public static partial class PacketSender
         AnimationSourceType animationSourceType = AnimationSourceType.Any,
         Guid animationSourceId = default,
         int offsetX = 0,
-        int offsetY = 0
+        int offsetY = 0,
+        int durationMilliseconds = 0
     )
     {
         if (!MapController.TryGetInstanceFromMap(mapId, mapInstanceId, out var mapInstance))
@@ -1656,6 +1657,7 @@ public static partial class PacketSender
             offsetX,
             offsetY
         );
+        playAnimationPacket.DurationMilliseconds = Math.Clamp(durationMilliseconds, 0, 600_000);
         if (Options.Instance.Packets.BatchAnimationPackets)
         {
             mapInstance.AddBatchedAnimation(playAnimationPacket);

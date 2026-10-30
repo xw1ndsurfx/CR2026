@@ -18,7 +18,7 @@ public sealed class DeathConfiguration
             if (rule == null || rule.MapIds == null || rule.MapIds.Count == 0 || rule.RespawnMapId == Guid.Empty ||
                 rule.MapIds.Any(id => id == Guid.Empty || !maps.Add(id)) ||
                 rule.X < 0 || rule.Y < 0 || rule.X >= Options.Instance.Map.MapWidth || rule.Y >= Options.Instance.Map.MapHeight ||
-                !Enum.IsDefined(rule.Direction) || rule.EventTimeoutSeconds is < 1 or > 600)
+                !Enum.IsDefined(rule.Direction) || rule.EventTimeoutSeconds is < 1 or > 600 || rule.GroundAnimationSeconds is < 1 or > 600)
                 throw new InvalidDataException("Choose unique maps, a valid respawn location and a common-event timeout between 1 and 600 seconds.");
         }
         return value;
@@ -38,6 +38,8 @@ public sealed class DeathRule
     public List<Guid> MapIds { get; set; } = [];
     public Guid CommonEventId { get; set; }
     public Guid AnimationId { get; set; }
+    public Guid GroundAnimationId { get; set; }
+    public int GroundAnimationSeconds { get; set; } = 30;
     public Guid RespawnMapId { get; set; }
     public int X { get; set; }
     public int Y { get; set; }

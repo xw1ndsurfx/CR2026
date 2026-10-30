@@ -39,6 +39,8 @@ internal static class DeathConfigurationRuntime
                 throw new InvalidDataException("Choose a common event.");
             if (rule.AnimationId != Guid.Empty && AnimationDescriptor.Get(rule.AnimationId) == null)
                 throw new InvalidDataException("Choose an existing animation.");
+            if (rule.GroundAnimationId != Guid.Empty && AnimationDescriptor.Get(rule.GroundAnimationId) == null)
+                throw new InvalidDataException("Choose an existing animation.");
             if (DeathConfiguration.AnimationDuration(AnimationDescriptor.Get(rule.AnimationId)) > 60000)
                 throw new InvalidDataException("Death animations must last no longer than 60 seconds, including repeats.");
         }

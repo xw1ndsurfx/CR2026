@@ -3769,6 +3769,76 @@
         "en": "{0} projectile(s) per burst × {1} burst(s) = {2} total\nRange: {3} tiles | Travel: {4} ms\nDelay: {5} ms | Total sequence: {6} ms\nReview the preview, then Apply and Save in the editor.",
         "fr": "{0} projectile(s) par salve × {1} salve(s) = {2} au total\nPortée : {3} cases | Trajet : {4} ms\nDélai : {5} ms | Séquence totale : {6} ms\nVérifiez l’aperçu, puis appliquez et sauvegardez dans l’éditeur.",
         "es": "{0} proyectil(es) por ráfaga × {1} ráfaga(s) = {2} en total\nAlcance: {3} casillas | Trayecto: {4} ms\nIntervalo: {5} ms | Secuencia total: {6} ms\nRevisa la vista previa, aplica y guarda en el editor."
+    },
+    "Sell all copies": {
+        "en": "Sell all copies",
+        "fr": "Vendre tous les exemplaires",
+        "es": "Vender todos los ejemplares"
+    },
+    "Sell all copies ({0})": {
+        "en": "Sell all copies ({0})",
+        "fr": "Vendre tous les exemplaires ({0})",
+        "es": "Vender todos los ejemplares ({0})"
+    },
+    "Sell all {0} copies of {1} from your inventory?": {
+        "en": "Sell all {0} copies of {1} from your inventory?",
+        "fr": "Vendre les {0} exemplaires de {1} de votre inventaire ?",
+        "es": "¿Vender los {0} ejemplares de {1} de tu inventario?"
+    },
+    "Non-empty bags are kept.": {
+        "en": "Non-empty bags are kept.",
+        "fr": "Les sacs non vides sont conservés.",
+        "es": "Se conservan las bolsas que no están vacías."
+    },
+    "Boss and death effects": {
+        "en": "Boss and death effects",
+        "fr": "Boss et effets de mort",
+        "es": "Jefes y efectos de muerte"
+    },
+    "NPC death animation": {
+        "en": "NPC death animation",
+        "fr": "Animation de mort du PNJ",
+        "es": "Animación de muerte del PNJ"
+    },
+    "Duration in seconds (0 = natural)": {
+        "en": "Duration in seconds (0 = natural)",
+        "fr": "Durée en secondes (0 = naturelle)",
+        "es": "Duración en segundos (0 = natural)"
+    },
+    "Ground animation": {
+        "en": "Ground animation",
+        "fr": "Animation au sol",
+        "es": "Animación en el suelo"
+    },
+    "Ground duration (s)": {
+        "en": "Ground duration (s)",
+        "fr": "Durée au sol (s)",
+        "es": "Duración en el suelo (s)"
+    },
+    "Common event → hide player → death animation → respawn. The ground animation remains at the death location for its configured duration.": {
+        "en": "Common event → hide player → death animation → respawn. The ground animation remains at the death location for its configured duration.",
+        "fr": "Événement commun → masquer le joueur → animation de mort → réapparition. L’animation au sol reste à l’endroit de la mort pendant la durée configurée.",
+        "es": "Evento común → ocultar al jugador → animación de muerte → reaparición. La animación en el suelo permanece en el lugar de la muerte durante el tiempo configurado."
+    },
+    "Zoom in": {
+        "en": "Zoom in",
+        "fr": "Zoom avant",
+        "es": "Acercar"
+    },
+    "Zoom out": {
+        "en": "Zoom out",
+        "fr": "Zoom arrière",
+        "es": "Alejar"
+    },
+    "Fit preview": {
+        "en": "Fit preview",
+        "fr": "Ajuster l’aperçu",
+        "es": "Ajustar vista previa"
+    },
+    "Mouse wheel: zoom. Drag: move the preview.": {
+        "en": "Mouse wheel: zoom. Drag: move the preview.",
+        "fr": "Molette : zoom. Glisser : déplacer l’aperçu.",
+        "es": "Rueda: zoom. Arrastrar: mover la vista previa."
     }
   }
 }

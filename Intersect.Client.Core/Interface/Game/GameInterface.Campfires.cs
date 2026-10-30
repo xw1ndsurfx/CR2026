@@ -25,6 +25,19 @@ public partial class GameInterface
         }
     }
     private readonly Dictionary<Guid, FireView> _campfires = [];
+    internal bool CampfireBlocks(Guid mapId, int x, int y, int z = 0) => _campfires.Values.Any(view => view.State.MapId == mapId && view.State.X == x && view.State.Y == y && view.State.Z == z);
+
+    internal void DrawCampfiresRow(int row, bool upper = false)
+    {
+        if (Globals.Me?.MapInstance is not MapInstance current) return;
+        foreach (var view in _campfires.Values)
+        {
+            if ((view.State.Z > 0) != upper || view.Animation is not { IsDisposed: false, Descriptor: { } descriptor } animation ||
+                MapInstance.Get(view.State.MapId) is not { } map ||
+                row != (map.GridY - current.GridY + 2) * Options.Instance.Map.MapHeight + view.State.Y) continue;
+            animation.DrawWorldEntity();
+        }
+    }
 
     public void ApplyCampfires(CampfiresPacket packet)
     {
@@ -51,7 +64,12 @@ public partial class GameInterface
                 view.Animation?.Dispose();
                 view.Animation = map.AddTileAnimation(state.AnimationId, state.X, state.Y) as Animation;
                 view.DisplayedAnimation = state.AnimationId;
-                if (view.Animation != null) view.Animation.InfiniteLoop = true;
+                if (view.Animation != null)
+                {
+                    view.Animation.InfiniteLoop = true;
+                    view.Animation.DrawAsWorldEntity = true;
+                    view.Animation.AlignToTileBase = true;
+                }
             }
             if (view.Button == null)
             {
