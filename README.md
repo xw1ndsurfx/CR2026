@@ -109,6 +109,30 @@ Ces commandes décrivent une procédure, **pas une compilation validée pour la 
 
 **Important :** un Steam Playtest ne constitue ni la publication du jeu principal, ni la démo exigée pour Steam Next Fest. Les dates du jeu principal dans Steamworks sont distinctes. La présence de ce calendrier dans le dépôt **ne signifie pas que les événements Steamworks sont déjà créés**.
 
+## Calendrier marketing — novembre 2026 à mars 2027
+
+La promotion de Corps Royaux est maintenant **synchronisée avec les playtests, le Steam Next Fest et l'Open BETA envisagée**, plutôt qu'avec une sortie générale le 7 décembre. **La préparation initialement prévue pour octobre 2026 est reportée et concentrée à partir du 2 novembre.** Ce calendrier est un plan à exécuter, pas un historique de publications effectuées.
+
+| Période | Phase | Actions marketing essentielles |
+| --- | --- | --- |
+| **2–8 novembre 2026** | **Préparation accélérée** | Audit Steam et concurrence, press kit, vrais visuels de gameplay, présentation FR/EN, liste de créateurs, calendrier des publications |
+| **9–15 novembre 2026** | **Début de la promotion + Playtest #1** | Présenter le jeu et son univers, recruter **20–50 testeurs ciblés**, couvrir le test fermé des **14–15 novembre** |
+| **16–30 novembre 2026** | **Intensification** | Clips et articles sur donjons, invasions, combat, familiers, progression et naval **lorsque suffisamment stable**; partager les correctifs du premier test |
+| **1er–7 décembre 2026** | **Campagne du Playtest #2** | Teaser, bande-annonce, compte à rebours du **3 au 7 décembre**, instructions d'accès, suivi communautaire de l'événement du **7 décembre** |
+| **8–31 décembre 2026** | **Fidélisation** | Bilans joueurs, correctifs, contenu de développement, préparation du test de charge |
+| **Janvier 2027** | **Playtest #3 et Next Fest** | Recruter des testeurs, documenter la stabilité, préparer la démo et gérer l'inscription à Steam Next Fest selon admissibilité |
+| **1er–21 février 2027** | **Pré-campagne Next Fest** | Démo et visuels vérifiés, contacts presse/streamers approuvés, contenus programmés et FAQ |
+| **22 février–1er mars 2027** | **Steam Next Fest (si accepté)** | Mettre la démo publique à disposition, la présenter et analyser retours et wishlists |
+| **Mars 2027** | **Open BETA (si prête)** | Communiquer la date uniquement après décision de lancement, puis suivre les retours de la communauté |
+
+**Priorité :** développement des **wishlists Steam**; objectifs complémentaires : demandes d'accès aux playtests, participation effective, retours des joueurs et intérêt des créateurs de contenu. La campagne se prépare d'abord en **français et en anglais**, avec adaptation aux plateformes (Steam, Discord, YouTube, réseaux sociaux et communautés pertinentes).
+
+**ChatGPT Work** peut être chargé de l'audit, de la production de textes et visuels, de la prospection préparatoire et du suivi **si les outils et les données nécessaires sont accessibles**. Publications, prises de contact, dépenses, ouvertures de playtest et changements Steamworks nécessitent l'approbation du responsable Studio Logiklik.
+
+**Point à ne pas confondre :** le **7 décembre 2026** est un **playtest communautaire**, **pas le lancement de l'Open BETA**. Les dates restent prévisionnelles et dépendent de la qualité technique et des autorisations Steam.
+
+[**Voir les tâches détaillées, la cadence éditoriale, les indicateurs et les règles de validation dans ROADMAP.md**](ROADMAP.md#calendrier-marketing--novembre-2026-à-mars-2027).
+
 ## Contribuer et signaler un problème
 
 - Respecter [AGENTS.md](AGENTS.md) : toute nouvelle interface joueur doit disposer de ses versions **EN/FR/ES**.
