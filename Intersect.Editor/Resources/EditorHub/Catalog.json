@@ -1,5 +1,26 @@
 [
   {
+    "id": "lobbyEditor",
+    "oldMenu": "contentEditorsToolStripMenuItem",
+    "category": "Game",
+    "subcategory": "WorldAndProgression",
+    "tags": [
+      "Gameplay"
+    ],
+    "art": "housingEditor.png",
+    "keywords": "lobby party group image capacity maximum lobby groupe image limite sala grupo",
+    "title": {
+      "en": "Lobby Editor",
+      "fr": "Éditeur de lobbys",
+      "es": "Editor de salas"
+    },
+    "description": {
+      "en": "Choose activity images and maximum party sizes.",
+      "fr": "Choisir les images des activités et la taille maximale des groupes.",
+      "es": "Elige imágenes de actividades y tamaños máximos de grupo."
+    }
+  },
+  {
     "id": "royalContractsEditorToolStripMenuItem", "oldMenu": "Game Editors", "category": "Game", "subcategory": "WorldAndProgression",
     "tags": ["Gameplay", "Economy"], "art": "questEditorToolStripMenuItem.png", "keywords": "royal contracts daily weekly mission contract contrat quotidien hebdomadaire collectif intendant",
     "title": {"en":"Royal Contracts", "fr":"Contrats royaux", "es":"Contratos reales"},

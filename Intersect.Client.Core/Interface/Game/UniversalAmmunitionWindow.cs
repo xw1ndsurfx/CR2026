@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
@@ -51,7 +51,7 @@ internal sealed class UniversalAmmunitionWindow : Window
                 row.SetBounds(0, _rows.Count * 64, 502, 60); _rows.Add(row);
                 var icon = new ImagePanel(row) { MaintainAspectRatio = true, ShouldDrawBackground = false, MouseInputEnabled = false };
                 icon.SetBounds(8, 10, 36, 36);
-                icon.Texture = GameContentManager.Current.GetTexture(item.UsesSpellIcon ? TextureType.Spell : TextureType.Item, item.DisplayIcon);
+                icon.Texture = Intersect.Client.Interface.Game.ItemIconTexture.Get(item);
                 var selected = entry.ItemId == view.SelectedItemId;
                 NavalManagementWindow.Text(row, "AmmoItemName", ClientLanguages.ContentText(item.Name), 54, 3, 430, 24, 11);
                 NavalManagementWindow.Text(row, "AmmoItemCount", ClientLanguages.Format("Quantity {0} · Per shot {1} · {2}", entry.Quantity,

@@ -1,12 +1,12 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
 namespace Intersect.Framework.Core.RoyalContracts;
 
-public enum RoyalContractObjective { NpcKills, DeliverItems, ExploreMaps }
+public enum RoyalContractObjective { NpcKills, DeliverItems, ExploreMaps, ShipsSunk, DungeonsCompleted, QuestsCompleted, InvasionsCompleted, ShipsBoarded, WorldBossesDefeated }
 public enum RoyalContractPeriod { Daily, Weekly }
-public enum RoyalContractAction { Refresh, Accept, Deliver, Claim }
+public enum RoyalContractAction { Refresh, Accept, Deliver, Claim, Journal }
 
 public sealed class RoyalContractTemplate
 {
@@ -134,6 +134,19 @@ public sealed class RoyalContractRotation
 
 public static class RoyalContractRules
 {
+    public static string ObjectiveLabel(RoyalContractObjective objective) => objective switch
+    {
+        RoyalContractObjective.NpcKills => "Eliminate enemies",
+        RoyalContractObjective.DeliverItems => "Deliver resources",
+        RoyalContractObjective.ExploreMaps => "Explore distinct maps",
+        RoyalContractObjective.ShipsSunk => "Sink ships",
+        RoyalContractObjective.DungeonsCompleted => "Complete dungeons",
+        RoyalContractObjective.QuestsCompleted => "Complete quests",
+        RoyalContractObjective.InvasionsCompleted => "Win invasions",
+        RoyalContractObjective.ShipsBoarded => "Win ship boardings",
+        RoyalContractObjective.WorldBossesDefeated => "Defeat world bosses",
+        _ => "Objective",
+    };
     public static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true, MaxDepth = 24 };
     public static string Json<T>(T value) => JsonSerializer.Serialize(value, JsonOptions);
     public static T Read<T>(string json) where T : new() => JsonSerializer.Deserialize<T>(json, JsonOptions) ?? throw new InvalidDataException("Empty contract data.");

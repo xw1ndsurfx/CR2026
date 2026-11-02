@@ -1,4 +1,4 @@
-using Intersect.Core;
+﻿using Intersect.Core;
 using Intersect.Framework.Core.RoyalContracts;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
@@ -58,6 +58,7 @@ internal static class RoyalContractsRuntime
                 RoyalContractObjective.NpcKills => NPCDescriptor.Get(t.TargetId) is { IsPet: false },
                 RoyalContractObjective.DeliverItems => ItemDescriptor.Get(t.TargetId) is { IsStackable: true, MaxInventoryStack: > 0 },
                 RoyalContractObjective.ExploreMaps => MapDescriptor.Get(t.TargetId) != null,
+                RoyalContractObjective.QuestsCompleted => Intersect.GameObjects.QuestDescriptor.Get(t.TargetId) != null,
                 _ => false,
             };
             if (!validTarget || (t.RewardItemId != Guid.Empty && ItemDescriptor.Get(t.RewardItemId) is not { IsStackable: true, MaxInventoryStack: > 0 }))
@@ -120,9 +121,10 @@ internal static class RoyalContractsRuntime
         {
             var ticks = Environment.TickCount64;
             if (ticks - player.RoyalContractRequestAt < 500 || !Enum.IsDefined(action) ||
-                player.RoyalContractOpenUntil <= 0 || player.IsDead || player.User == null) return;
+                !player.InGame || player.IsDead || player.User == null) return;
             player.RoyalContractRequestAt = ticks;
-            if (ticks > player.RoyalContractOpenUntil || player.MapId != player.RoyalContractBoardMap ||
+            if (action == RoyalContractAction.Journal) { Send(player); return; }
+            if (player.RoyalContractOpenUntil <= 0 || ticks > player.RoyalContractOpenUntil || player.MapId != player.RoyalContractBoardMap ||
                 Math.Abs(player.X - player.RoyalContractBoardX) > 8 || Math.Abs(player.Y - player.RoyalContractBoardY) > 8)
             {
                 SendFailure(player, message: "Return to the board and open it again."); return;
@@ -195,7 +197,7 @@ internal static class RoyalContractsRuntime
         }
     }
 
-    internal static void Observe(Player player, RoyalContractObjective objective, Guid target)
+    internal static void Observe(Player player, RoyalContractObjective objective, Guid target, int amount = 1)
     {
         // Called only by authoritative NPC death/map-entry hooks, never a progress packet.
         lock (player.EntityLock)
@@ -208,11 +210,11 @@ internal static class RoyalContractsRuntime
                 foreach (var contract in Snapshot(now))
                 {
                     if (!profile.Contracts.TryGetValue(contract.Id, out var progress) || player.Level < contract.Template.MinimumLevel) continue;
-                    if (!RoyalContractRules.Advance(contract, progress, objective, target, 1, now)) continue;
+                    if (!RoyalContractRules.Advance(contract, progress, objective, target, amount, now)) continue;
                     changed = true;
                     if (contract.Template.Collective) SetContribution(player, contract.Id, progress.Quantity);
                 }
-                if (changed) player.User?.SaveWithDebounce();
+                if (changed) { player.User?.SaveWithDebounce(); Send(player); }
             }
             catch (Exception e) { ApplicationContext.Context.Value?.Logger.LogError(e, "Royal Contracts progress could not be updated"); }
         }
@@ -257,7 +259,7 @@ internal static class RoyalContractsRuntime
                     {
                         Contract = contract, Accepted = p.Accepted, Claimed = p.Claimed, Eligible = player.Level >= contract.Template.MinimumLevel,
                         Progress = (int)Math.Min(contract.Quantity, contract.Template.Collective ? CollectiveTotal(contract) : p.Quantity), Contribution = p.Quantity,
-                        TargetName = TargetName(contract.Template), RewardName = ItemDescriptor.GetName(contract.Template.RewardItemId) ?? "",
+                        TargetName = TargetName(contract.Template), RewardName = ItemDescriptor.Get(contract.Template.RewardItemId)?.Name ?? "",
                     });
                 }
             player.SendPacket(new RoyalContractBoardPacket { StateJson = RoyalContractRules.Json(state), OpenWindow = openWindow });
@@ -270,11 +272,12 @@ internal static class RoyalContractsRuntime
     }
 
     private static string TargetName(RoyalContractTemplate t) => t.TargetId == Guid.Empty
-        ? t.Objective == RoyalContractObjective.NpcKills ? "Any enemy" : "Distinct maps"
+        ? t.Objective == RoyalContractObjective.NpcKills ? "Any enemy" : t.Objective == RoyalContractObjective.ExploreMaps ? "Distinct maps" : RoyalContractRules.ObjectiveLabel(t.Objective)
         : t.Objective switch
         {
             RoyalContractObjective.NpcKills => NPCDescriptor.GetName(t.TargetId),
             RoyalContractObjective.DeliverItems => ItemDescriptor.GetName(t.TargetId),
+            RoyalContractObjective.QuestsCompleted => Intersect.GameObjects.QuestDescriptor.GetName(t.TargetId),
             _ => MapDescriptor.GetName(t.TargetId),
         };
     private static void SendFailure(Player player, bool openWindow = false, string message = "Unable to save. Please try again.") => player.SendPacket(new RoyalContractBoardPacket

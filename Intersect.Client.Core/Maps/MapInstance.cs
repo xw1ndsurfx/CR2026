@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Collections.Concurrent;
 using Intersect.Client.Core;
 using Intersect.Client.Entities;
@@ -979,9 +979,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                 }
 
                 // Set up all information we need to draw this name.
-                var itemTexture = GameContentManager.Current.GetTexture(
-                    itemDescriptor.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, itemDescriptor.DisplayIcon
-                );
+                var itemTexture = Intersect.Client.Interface.Game.ItemIconTexture.Get(itemDescriptor);
 
                 if (itemTexture == null)
                 {
@@ -1783,6 +1781,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
 
     public void DrawActionMsgs()
     {
+        var textScale=1f/Math.Clamp(Graphics.WorldScale,.25f,16f);
         for (var n = ActionMessages.Count - 1; n > -1; n--)
         {
             var actionMessage = ActionMessages[n];
@@ -1793,7 +1792,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                     actionMessage.Text,
                     Graphics.ActionMsgFont,
                     Graphics.ActionMsgFontSize,
-                    1
+                    textScale
                 )
                 .X;
 
@@ -1803,7 +1802,7 @@ public partial class MapInstance : MapDescriptor, IGameObject<Guid, MapInstance>
                 Graphics.ActionMsgFontSize,
                 x - textWidth / 2f,
                 y,
-                1,
+                textScale,
                 actionMessage.Color,
                 true,
                 null,

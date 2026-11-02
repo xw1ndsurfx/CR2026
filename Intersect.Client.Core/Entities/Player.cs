@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Core.Controls;
 using Intersect.Client.Entities.Events;
 using Intersect.Client.Entities.Projectiles;
@@ -2618,15 +2618,13 @@ public partial class Player : Entity, IPlayer
 
     private void DrawNameAndLabels(Color textColor, Color? borderColor, Color? backgroundColor)
     {
+        Intersect.Client.Interface.Game.IntoxicationVisuals.DrawVomit(Id, Origin);
         base.DrawName(textColor, borderColor, backgroundColor);
-        if (IsAfk)
-        {
-            DrawLabels("AFK", 2, new Color(255, 255, 215, 0), textColor, borderColor, backgroundColor);
-        }
         DrawBadge();
         DrawLabels(HeaderLabel.Text, 0, HeaderLabel.Color, textColor, borderColor, backgroundColor);
         DrawLabels(FooterLabel.Text, 1, FooterLabel.Color, textColor, borderColor, backgroundColor);
-        DrawGuildName(textColor, borderColor, backgroundColor);
+        DrawGuildName(new Color(255, 220, 202, 160), borderColor, backgroundColor);
+        if (IsAfk) DrawLabels("AFK", 2, new Color(255, 255, 215, 0), textColor, borderColor, backgroundColor);
     }
 
     private void DrawBadge()
@@ -2706,12 +2704,18 @@ public partial class Player : Entity, IPlayer
         var textSize = Graphics.Renderer.MeasureText(
             guildLabel,
             Graphics.EntityNameFont,
-            Graphics.EntityNameFontSize,
+            Math.Max(8, Graphics.EntityNameFontSize - 2),
             NameplateScale
         );
 
-        var x = (int)Math.Ceiling(Origin.X);
+        var emblem = Intersect.Client.Interface.Game.GuildEmblems.Get(guildLabel);
+        var emblemSize = textSize.Y;
+        var emblemWidth = emblem == null ? 0 : emblemSize + 4 * NameplateScale;
+        var x = (int)Math.Ceiling(Origin.X + emblemWidth / 2f);
         var y = GetLabelLocation(LabelType.Guild);
+        if (emblem != null)
+            Graphics.DrawGameTexture(emblem, new FloatRect(0, 0, emblem.Width, emblem.Height),
+                new FloatRect(x - textSize.X / 2f - emblemWidth, y, emblemSize, emblemSize), Color.White);
 
         backgroundColor ??= Color.Transparent;
         if (backgroundColor != Color.Transparent)
@@ -2728,7 +2732,7 @@ public partial class Player : Entity, IPlayer
         Graphics.Renderer.DrawString(
             guildLabel,
             Graphics.EntityNameFont,
-            Graphics.EntityNameFontSize,
+            Math.Max(8, Graphics.EntityNameFontSize - 2),
             x - (int)Math.Ceiling(textSize.X / 2f),
             (int)y,
             NameplateScale,

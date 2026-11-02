@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Gwen.Control;
+﻿using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
 using Intersect.Client.Interface.Game.Admin;
 using Intersect.Client.Interface.Game.Bag;
@@ -458,6 +458,9 @@ public partial class GameInterface : MutableInterface
     {
         UpdateTutorialGuide();
         _royalContractsWindow?.Update();
+        UpdateContractJournal();
+        GuildEmblems.Update();
+        UpdateIntoxicationOverlay();
         _archeryWindow?.CheckClosed();
         UpdateWeaponSkills();
         if (Globals.Me != null && PlayerBox?.MyEntity != Globals.Me)

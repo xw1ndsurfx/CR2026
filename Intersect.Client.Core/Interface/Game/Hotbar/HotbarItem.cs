@@ -403,9 +403,7 @@ public partial class HotbarItem : SlotItem
             if (_currentItem != null)
             {
                 Icon.IsVisibleInTree = !isDragging;
-                Icon.Texture = GameContentManager.Current.GetTexture(
-                    _currentItem.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, _currentItem.DisplayIcon
-                );
+                Icon.Texture = Intersect.Client.Interface.Game.ItemIconTexture.Get(_currentItem);
 
                 _equipLabel.IsHidden = true;
                 _quantityLabel.IsHidden = true;

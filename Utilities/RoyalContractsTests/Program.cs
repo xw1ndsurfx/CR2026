@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Intersect;
 using Intersect.Framework.Core.GameObjects.Events.Commands;
 using Intersect.Framework.Core.GameObjects.Items;
@@ -129,4 +129,55 @@ Check(RoyalContractsText.Get("Royal Contracts", "fr") == "Contrats royaux", "Fre
 Check(RoyalContractsText.Get("Royal Contracts", "es") == "Contratos reales", "Spanish catalog");
 Check(RoyalContractsText.Get("Royal Contracts", "unknown") == "Royal Contracts", "English fallback");
 Check(RoyalContractsText.Get("Custom author text", "fr") == "Custom author text", "Untranslated content preserves source");
+// Every new activity uses the same acceptance, activityTarget, expiry and quantity boundaries.
+foreach(var objective in Enum.GetValues<RoyalContractObjective>().Where(o => (int)o >= 3))
+{
+    var activityTarget=Guid.NewGuid();
+    var activity=new RoyalContract { Id=Guid.NewGuid(), Template=new() { Objective=objective,TargetId=activityTarget }, Quantity=3, ExpiresAt=now.AddHours(1) };
+    var activityProgress=new RoyalContractProgress();
+    Check(!RoyalContractRules.Advance(activity,activityProgress,objective,activityTarget,1,now),"Unaccepted activity cannot activityProgress: "+objective);
+    activityProgress.Accepted=true;
+    Check(!RoyalContractRules.Advance(activity,activityProgress,objective,Guid.NewGuid(),1,now),"Wrong activity activityTarget rejected: "+objective);
+    Check(RoyalContractRules.Advance(activity,activityProgress,objective,activityTarget,2,now) && activityProgress.Quantity==2,"Authoritative activity amount: "+objective);
+    Check(RoyalContractRules.Advance(activity,activityProgress,objective,activityTarget,int.MaxValue,now) && activityProgress.Quantity==3,"Overflow-safe activity cap: "+objective);
+    Check(!RoyalContractRules.Advance(activity,activityProgress,objective,activityTarget,1,now),"Completed activity cannot increment twice: "+objective);
+    Check(RoyalContractRules.CanClaim(activity,activityProgress,3,now),"Activity reward can be claimed: "+objective);
+    foreach(var language in GameTextCatalog.Languages)
+        Check(RoyalContractsText.Get(RoyalContractRules.ObjectiveLabel(objective),language).Length>0,"Localized activity: "+objective+"/"+language);
+}
+Check((int)RoyalContractAction.Claim==3 && (int)RoyalContractObjective.ExploreMaps==2,"Existing action and objective IDs preserved");
+Check((int)new OpenFurnitureShopCommand().Type==1092 && (int)new OpenHouseDirectoryCommand().Type==1093,"Housing command IDs are distinct and stable");
+var lobbyConfig=new Intersect.Framework.Core.LobbyConfiguration { Activities=[new() {Activity=Intersect.Network.Packets.PartyLobbies.LobbyActivity.Dungeon,MaximumMembers=4,Image="dungeon.png"}] };
+lobbyConfig.Validate();
+lobbyConfig.Activities[0].Image="../escape.png"; Reject(lobbyConfig.Validate,"Lobby image traversal rejected");
+lobbyConfig.Activities[0].Image="dungeon.png";lobbyConfig.Activities[0].MaximumMembers=0;Reject(lobbyConfig.Validate,"Zero lobby capacity rejected");
+lobbyConfig.Activities[0].MaximumMembers=101;Reject(lobbyConfig.Validate,"Excessive lobby capacity rejected");
+var validPng=TestPng(1,1,[0,255,0,0,255]);
+Check(Intersect.Framework.Core.GuildEmblemPng.Sanitize(validPng).SequenceEqual(validPng),"Valid RGBA logo accepted");
+Reject(()=>Intersect.Framework.Core.GuildEmblemPng.Sanitize(TestPng(129,1,[])),"Oversized logo rejected before decode");
+Reject(()=>Intersect.Framework.Core.GuildEmblemPng.Sanitize(TestPng(1,1,[0,0,0,0,0,0])),"PNG decompression overrun rejected");
+Reject(()=>Intersect.Framework.Core.GuildEmblemPng.Sanitize(validPng[..^1]),"Truncated logo rejected");
+var corrupt=validPng.ToArray();corrupt[20]^=1;Reject(()=>Intersect.Framework.Core.GuildEmblemPng.Sanitize(corrupt),"Bad logo CRC rejected");
+Reject(()=>Intersect.Framework.Core.GuildEmblemPng.Sanitize(new byte[65537]),"Oversized upload rejected");
+var emblem=new Intersect.Network.Packets.Guilds.GuildEmblemRequestPacket { Action=Intersect.Network.Packets.Guilds.GuildEmblemAction.Submit,Image=validPng,Revision=Guid.NewGuid() };
+var emblemCopy=MessagePackSerializer.Deserialize<Intersect.Network.Packets.Guilds.GuildEmblemRequestPacket>(MessagePackSerializer.Serialize(emblem));
+Check(emblemCopy.Image.SequenceEqual(validPng) && emblemCopy.Revision==emblem.Revision,"Emblem packet revision and image round trip");
+
+static byte[] TestPng(int width,int height,byte[] raw)
+{
+    using var output=new MemoryStream();output.Write(new byte[]{137,80,78,71,13,10,26,10});
+    void Chunk(string name,byte[] data)
+    {
+        var length=new byte[4];System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(length,data.Length);output.Write(length);
+        var tag=System.Text.Encoding.ASCII.GetBytes(name);output.Write(tag);output.Write(data);uint crc=uint.MaxValue;
+        foreach(var b in tag.Concat(data)){crc^=b;for(int bit=0;bit<8;bit++)crc=(crc>>1)^(0xedb88320u & (uint)-(int)(crc&1));}
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(length,~crc);output.Write(length);
+    }
+    var header=new byte[13];System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(header,width);System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(header.AsSpan(4),height);header[8]=8;header[9]=6;Chunk("IHDR",header);
+    using var compressed=new MemoryStream();using(var zlib=new System.IO.Compression.ZLibStream(compressed,System.IO.Compression.CompressionLevel.Fastest,true))zlib.Write(raw);
+    Chunk("IDAT",compressed.ToArray());Chunk("IEND",[]);return output.ToArray();
+}
+foreach(var (source,versions) in Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Catalog.Entries)
+    foreach(var language in GameTextCatalog.Languages)
+        if(!versions.TryGetValue(language,out var translated) || !GameTextTokens.Compatible(source,translated)) throw new Exception("QOL locale coverage/placeholder mismatch: "+source+"/"+language);
 Console.WriteLine($"Royal Contracts: {count} checks passed.");

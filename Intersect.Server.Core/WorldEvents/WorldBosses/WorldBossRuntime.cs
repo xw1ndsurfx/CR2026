@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Intersect.Core;
 using Intersect.Network.Packets.WorldEvents;
 using Intersect.Enums;
@@ -294,6 +294,8 @@ internal static class WorldBossRuntime
             var damage = ranking[index].Damage;
             var qualified = victory && average > 0 &&
                 eligible.Any(entry => entry.PlayerId == player.Id);
+            if (qualified) Intersect.Server.RoyalContracts.RoyalContractsRuntime.Observe(player,
+                Intersect.Framework.Core.RoyalContracts.RoyalContractObjective.WorldBossesDefeated, session.Definition.Id);
             var rewardPercent = qualified ? (int)Math.Clamp(
                 Math.Round(damage * 100m / average),
                 session.Definition.MinimumRewardPercent,

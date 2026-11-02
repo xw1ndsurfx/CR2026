@@ -19,9 +19,12 @@ internal sealed class HousingWindow : Window
     private readonly Button[] _tabs;
     private HouseView? _view;
     private int _tab;
+    private readonly bool _furnitureShop;
     public event Action<Guid, Guid, FurnitureDefinition>? PlaceRequested;
-    public HousingWindow(Canvas canvas) : base(canvas, ClientLanguages.Text("My house"), false, nameof(HousingWindow))
+    public HousingWindow(Canvas canvas) : this(canvas, false) { }
+    public HousingWindow(Canvas canvas, bool furnitureShop) : base(canvas, furnitureShop ? Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Furniture shop", ClientLanguages.Current) : ClientLanguages.Text("My house"), false, furnitureShop ? "FurnitureShop" : nameof(HousingWindow))
     {
+        _furnitureShop = furnitureShop; _tab = furnitureShop ? 0 : 1;
         SetSize(850, 670); Alignment = [Alignments.Center]; DeleteOnClose = false; DisableResizing();
         _heading = new Label(this, "HouseHeading") { Font = GameContentManager.Current.GetFont("sourcesanspro") ?? Skin.DefaultFont, FontSize = 14, TextColorOverride = Color.White };
         _heading.SetBounds(20, 38, 805, 28);
@@ -47,7 +50,11 @@ internal sealed class HousingWindow : Window
         _enter.Text = ClientLanguages.Text(view.Inside ? "Leave house" : "Go home"); _enter.IsDisabled = !view.Enabled;
         _privacy.IsHidden = !view.IsOwner; _privacy.Text = ClientLanguages.Text(view.House.Public ? "Make private" : "Open to public");
         _layouts.IsHidden=!view.IsOwner;
-        _tabs[0].IsHidden = _tabs[1].IsHidden = !view.IsOwner;
+        _tabs[0].IsHidden = !_furnitureShop;
+        _tabs[1].IsHidden = !view.IsOwner || _furnitureShop;
+        _tabs[2].IsHidden = _tabs[3].IsHidden = _furnitureShop;
+        if (_furnitureShop) { _enter.Hide(); _privacy.Hide(); _layouts.Hide(); _tab = 0; }
+        else if (_tab == 0) _tab = 1;
         if (!view.IsOwner && _tab < 2) _tab = 2;
         if (!view.Enabled) _message.Text = ClientLanguages.Text("Housing is not available yet.");
         RefreshRows();

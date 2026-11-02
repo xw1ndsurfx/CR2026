@@ -4159,6 +4159,180 @@
         "en": "Mouse wheel: zoom. Drag: move the preview.",
         "fr": "Molette : zoom. Glisser : déplacer l’aperçu.",
         "es": "Rueda: zoom. Arrastrar: mover la vista previa."
-    }
+    },
+    "Guild emblem": {
+      "en": "Guild emblem",
+      "fr": "Logo de guilde",
+      "es": "Emblema de hermandad"
+    },
+    "Browse PNG": {
+      "en": "Browse PNG",
+      "fr": "Choisir un PNG",
+      "es": "Elegir un PNG"
+    },
+    "Submit for approval": {
+      "en": "Submit for approval",
+      "fr": "Soumettre pour approbation",
+      "es": "Enviar para aprobaciÃ³n"
+    },
+    "Approve": {
+      "en": "Approve",
+      "fr": "Approuver",
+      "es": "Aprobar"
+    },
+    "Reject": {
+      "en": "Reject",
+      "fr": "Refuser",
+      "es": "Rechazar"
+    },
+    "Remove emblem": {
+      "en": "Remove emblem",
+      "fr": "Retirer le logo",
+      "es": "Eliminar emblema"
+    },
+    "Awaiting approval": {
+      "en": "Awaiting approval",
+      "fr": "En attente dâ€™approbation",
+      "es": "Pendiente de aprobaciÃ³n"
+    },
+    "Approved": {
+      "en": "Approved",
+      "fr": "ApprouvÃ©",
+      "es": "Aprobado"
+    },
+    "Only Premium Game Master staff may submit an emblem. An administrator must approve it before publication.": {
+      "en": "Only Premium Game Master staff may submit an emblem. An administrator must approve it before publication.",
+      "fr": "Seul le staff Game Master Premium peut proposer un logo. Un administrateur doit lâ€™approuver avant sa publication.",
+      "es": "Solo el personal Game Master Premium puede enviar un emblema. Un administrador debe aprobarlo antes de publicarlo."
+    },
+    "Choose a valid RGB or RGBA PNG, at most 128 x 128 pixels and 64 KB.": {
+      "en": "Choose a valid RGB or RGBA PNG, at most 128 x 128 pixels and 64 KB.",
+      "fr": "Choisis un PNG RGB ou RGBA valide, de 128 x 128 pixels et 64 Ko maximum.",
+      "es": "Elige un PNG RGB o RGBA vÃ¡lido, de 128 x 128 pÃ­xeles y 64 KB como mÃ¡ximo."
+    },
+    "Premium Game Master staff access is required.": {
+      "en": "Premium Game Master staff access is required.",
+      "fr": "Un accÃ¨s staff Game Master Premium est requis.",
+      "es": "Se requiere acceso de personal Game Master Premium."
+    },
+    "Guild emblem submitted for administrator approval.": {
+      "en": "Guild emblem submitted for administrator approval.",
+      "fr": "Logo envoyÃ© pour approbation par un administrateur.",
+      "es": "Emblema enviado para aprobaciÃ³n de un administrador."
+    },
+    "This submission has changed. Refresh the list.": {
+      "en": "This submission has changed. Refresh the list.",
+      "fr": "Cette proposition a changÃ©. Actualise la liste.",
+      "es": "Este envÃ­o ha cambiado. Actualiza la lista."
+    },
+    "This folder cannot be opened.": {
+      "en": "This folder cannot be opened.",
+      "fr": "Impossible dâ€™ouvrir ce dossier.",
+      "es": "No se puede abrir esta carpeta."
+    },
+    "Open furniture shop": {
+      "en": "Open furniture shop",
+      "fr": "Ouvrir le magasin de meubles",
+      "es": "Abrir tienda de muebles"
+    },
+    "Open house directory": {
+      "en": "Open house directory",
+      "fr": "Ouvrir le répertoire des maisons",
+      "es": "Abrir directorio de casas"
+    },
+    "Furniture shop": {
+      "en": "Furniture shop",
+      "fr": "Magasin de meubles",
+      "es": "Tienda de muebles"
+    },
+    "Accessible houses": {
+      "en": "Accessible houses",
+      "fr": "Maisons accessibles",
+      "es": "Casas accesibles"
+    },
+    "Visit house": {
+      "en": "Visit house",
+      "fr": "Visiter la maison",
+      "es": "Visitar casa"
+    },
+    "Return to the furniture merchant.": {
+      "en": "Return to the furniture merchant.",
+      "fr": "Retourne auprès du marchand de meubles.",
+      "es": "Vuelve al comerciante de muebles."
+    },
+    "Grog (green screen and vomiting)": {
+      "en": "Grog (green screen and vomiting)",
+      "fr": "Grog (écran vert et vomissement)",
+      "es": "Grog (pantalla verde y vómitos)"
+    },
+    "Duration in seconds (5-120)": {
+      "en": "Duration in seconds (5-120)",
+      "fr": "Durée en secondes (5-120)",
+      "es": "Duración en segundos (5-120)"
+    },
+    "Lobby Editor": {
+      "en": "Lobby Editor",
+      "fr": "Éditeur de lobbys",
+      "es": "Editor de salas"
+    },
+    "Image filename (GUI)": {
+      "en": "Image filename (GUI)",
+      "fr": "Nom du fichier image (GUI)",
+      "es": "Nombre del archivo de imagen (GUI)"
+    },
+    "Maximum party size": {
+      "en": "Maximum party size",
+      "fr": "Taille maximale du groupe",
+      "es": "Tamaño máximo del grupo"
+    },
+    "Invalid lobby settings.": {
+      "en": "Invalid lobby settings.",
+      "fr": "Paramètres de lobby invalides.",
+      "es": "Configuración de sala no válida."
+    },
+    "Place lobby images in the client GUI folder. The party limit also respects dungeon, ship and server limits.": {
+      "en": "Place lobby images in the client GUI folder. The party limit also respects dungeon, ship and server limits.",
+      "fr": "Place les images de lobby dans le dossier GUI du client. La limite du groupe respecte aussi les limites du donjon, du navire et du serveur.",
+      "es": "Coloca las imágenes de sala en la carpeta GUI del cliente. El límite del grupo también respeta los límites de mazmorra, barco y servidor."
+    },
+    "Grog": {
+      "en": "Grog",
+      "fr": "Grog",
+      "es": "Grog"
+    },
+    "Green screen and vomiting; splashes nearby players.": {
+      "en": "Green screen and vomiting; splashes nearby players.",
+      "fr": "Écran vert et vomissements ; éclabousse les joueurs proches.",
+      "es": "Pantalla verde y vómitos; salpica a los jugadores cercanos."
+    },
+    "Find an offer": {
+      "en": "Find an offer",
+      "fr": "Rechercher une offre",
+      "es": "Buscar una oferta"
+    },
+    "Activity": {
+      "en": "Activity",
+      "fr": "Activité",
+      "es": "Actividad"
+    },
+    "World Boss": {
+      "en": "World Boss",
+      "fr": "Boss mondial",
+      "es": "Jefe mundial"
+    },
+    "House Party": {
+      "en": "House Party",
+      "fr": "Fête à la maison",
+      "es": "Fiesta en casa"
+    },
+    "Naval crew": {
+      "en": "Naval crew",
+      "fr": "Équipage naval",
+      "es": "Tripulación naval"
+    },
+    "Open": { "en": "Open", "fr": "Ouvrir", "es": "Abrir" },
+    "Close": { "en": "Close", "fr": "Fermer", "es": "Cerrar" },
+    "Guild emblem could not be saved. Try again.": { "en": "Guild emblem could not be saved. Try again.", "fr": "Le logo de guilde n’a pas pu être enregistré. Réessaie.", "es": "No se pudo guardar el emblema de hermandad. Inténtalo de nuevo." }
+
   }
 }

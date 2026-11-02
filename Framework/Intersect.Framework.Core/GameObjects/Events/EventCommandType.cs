@@ -176,4 +176,6 @@ public enum EventCommandType
     CinematicEffectPath = 1082,
     OpenRoyalContracts = 1090,
     OpenStable = 1091,
+    OpenFurnitureShop = 1092,
+    OpenHouseDirectory = 1093,
 }

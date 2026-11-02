@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using Intersect;
 using Intersect.Client.Framework.Database;
@@ -160,8 +160,8 @@ internal static class InterfaceRefreshTests
             Check(Row(compact, "Name") == 84, "Names must sit four pixels above the graphic");
             var stacked = create.Invoke(null, [100f, 8, 12f, 10f, 11f, 9f, 10f, 1f])!;
             Check(Row(stacked, "Footer") + 10 <= 86 && Row(stacked, "Name") + 12 < Row(stacked, "Footer") &&
-                Row(stacked, "Header") + 11 < Row(stacked, "Name") && Row(stacked, "Afk") + 9 < Row(stacked, "Header") &&
-                Row(stacked, "Guild") + 10 < Row(stacked, "Afk"), "Visible labels and HP bar must form a compact non-overlapping stack");
+                Row(stacked, "Header") + 11 < Row(stacked, "Name") && Row(stacked, "Guild") + 10 < Row(stacked, "Header") &&
+                Row(stacked, "Afk") + 9 < Row(stacked, "Guild"), "Visible labels and HP bar must form a compact non-overlapping stack");
             TestNewsBanner(assembly, canvas);
             var texture = DispatchProxy.Create<Intersect.Client.Framework.Graphics.IGameTexture, CpuFrameTexture>();
             var paddingMethod = assembly.GetType("Intersect.Client.Entities.SpriteVisibleBounds", true)!

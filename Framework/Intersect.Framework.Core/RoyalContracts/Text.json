@@ -379,6 +379,56 @@
       "en": "Configuration could not be saved.",
       "fr": "La configuration n’a pas pu être enregistrée.",
       "es": "No se pudo guardar la configuración."
+    },
+    "Sink ships": {
+      "en": "Sink ships",
+      "fr": "Couler des navires",
+      "es": "Hundir barcos"
+    },
+    "Complete dungeons": {
+      "en": "Complete dungeons",
+      "fr": "Terminer des donjons",
+      "es": "Completar mazmorras"
+    },
+    "Complete quests": {
+      "en": "Complete quests",
+      "fr": "Terminer des quêtes",
+      "es": "Completar misiones"
+    },
+    "Win invasions": {
+      "en": "Win invasions",
+      "fr": "Remporter des invasions",
+      "es": "Ganar invasiones"
+    },
+    "Win ship boardings": {
+      "en": "Win ship boardings",
+      "fr": "Remporter des abordages",
+      "es": "Ganar abordajes"
+    },
+    "Defeat world bosses": {
+      "en": "Defeat world bosses",
+      "fr": "Vaincre des boss mondiaux",
+      "es": "Derrotar jefes mundiales"
+    },
+    "Contract completed!": {
+      "en": "Contract completed!",
+      "fr": "Contrat terminé !",
+      "es": "¡Contrato completado!"
+    },
+    "Track contract": {
+      "en": "Track contract",
+      "fr": "Suivre le contrat",
+      "es": "Seguir contrato"
+    },
+    "Stop tracking": {
+      "en": "Stop tracking",
+      "fr": "Arrêter le suivi",
+      "es": "Dejar de seguir"
+    },
+    "Unknown reward": {
+      "en": "Unknown reward",
+      "fr": "Récompense inconnue",
+      "es": "Recompensa desconocida"
     }
   }
 }

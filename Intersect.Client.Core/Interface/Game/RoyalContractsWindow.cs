@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Content;
+﻿using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -17,6 +17,7 @@ internal sealed class RoyalContractsWindow : Window
     private readonly Label _seals, _message, _pageLabel, _detailTitle, _heading;
     private readonly ScrollControl _details;
     private readonly RichLabel _detailText;
+    private readonly ImagePanel _rewardIcon;
     private readonly Button _action, _daily, _weekly, _previous, _next, _refresh, _close;
     private RoyalContractBoardState _state = new();
     private RoyalContractPeriod _period;
@@ -47,6 +48,8 @@ internal sealed class RoyalContractsWindow : Window
         _detailTitle = TextLabel(this, "DetailTitle", "", 44, 126, 264, 50, Ink, 14);
         _details = new ScrollControl(this, "ContractDetails") { ShouldDrawBackground = false };
         _details.SetBounds(40, 181, 270, 206);
+        _rewardIcon = new ImagePanel(this, "RewardIcon") { MouseInputEnabled = false, MaintainAspectRatio = false };
+        _rewardIcon.SetBounds(44,181,36,36);
         _detailText = EventPanelText.CreateBody(_details, "DetailText", 12);
         _action = Action("ContractAction", "", 43, 402, 264, 32, Execute);
         _cards = new Base(this, "ContractCards") { ShouldDrawBackground = false };
@@ -95,11 +98,12 @@ internal sealed class RoyalContractsWindow : Window
 
     private sealed class RoyalButton(Base parent, string name) : Button(parent, name)
     {
+        internal bool Selected { get; set; }
         protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
         {
             ShouldDrawBackground = false;
             var r = RenderBounds;
-            skin.Renderer.DrawColor = IsDisabled ? new Color(90, 80, 68) : Gold;
+            skin.Renderer.DrawColor = Selected ? Gold : IsDisabled ? new Color(90, 80, 68) : new Color(137, 106, 68);
             skin.Renderer.DrawFilledRect(r);
             skin.Renderer.DrawColor = new Color(43, 25, 48);
             skin.Renderer.DrawFilledRect(new UiRectangle(r.X + 1, r.Y + 1, r.Width - 2, r.Height - 2));
@@ -135,6 +139,8 @@ internal sealed class RoyalContractsWindow : Window
         _message.Text = T(_state.Message.Length > 0 ? _state.Message : !_state.Enabled ? "The board is paused." :
             _state.Contracts.Count == 0 ? "No contracts are posted. Ask the royal steward to configure the board." : "Choose a contract on the board.");
         _daily.Text = T("Daily"); _weekly.Text = T("Weekly");
+        ((RoyalButton)_daily).Selected = _period == RoyalContractPeriod.Daily;
+        ((RoyalButton)_weekly).Selected = _period == RoyalContractPeriod.Weekly;
         _daily.IsDisabled = _period == RoyalContractPeriod.Daily; _weekly.IsDisabled = _period == RoyalContractPeriod.Weekly;
         var entries = Filtered(); var pages = Math.Max(1, (entries.Count + 3) / 4);
         _page = Math.Clamp(_page, 0, pages - 1);
@@ -167,13 +173,16 @@ internal sealed class RoyalContractsWindow : Window
         _action.IsDisabled = true; _action.Text = "";
         _detailTitle.WrappingBehavior = WrappingBehavior.NoWrap;
         EventPanelText.Fit(_detailTitle, entry == null ? T("Royal Contracts") : Content(entry.Contract.Template.Name), 14, 10);
+        _rewardIcon.Texture = entry == null ? null : ContractRewardArt.Texture(entry.Contract.Template.RewardItemId);
+        _rewardIcon.IsHidden = _rewardIcon.Texture == null;
+        _details.SetBounds(40,_rewardIcon.IsHidden?181:225,270,_rewardIcon.IsHidden?206:162);
         if (entry == null) { _detailText.ClearText(); _lastDetail = ""; return; }
         var t = entry.Contract.Template;
-        var objective = t.Objective switch { RoyalContractObjective.NpcKills => "Eliminate enemies", RoyalContractObjective.DeliverItems => "Deliver resources", _ => "Explore distinct maps" };
+        var objective = RoyalContractRules.ObjectiveLabel(t.Objective);
         var body = Content(t.Name) + "\n" + Content(t.Description) + "\n\n" + T(objective) + "\n" + Content(entry.TargetName) + "\n" + F("Progress: {0} / {1}", entry.Progress, entry.Contract.Quantity);
         if (t.Collective) body += "\n" + F("Your contribution: {0}", entry.Contribution);
         body += "\n\n" + F("Reward: {0} seals", t.Seals);
-        if (t.RewardQuantity > 0) body += "\n" + t.RewardQuantity + " × " + Content(entry.RewardName);
+        if (t.RewardQuantity > 0) body += "\n" + t.RewardQuantity + " × " + Content(ContractRewardArt.Name(entry));
         if (!entry.Eligible) body += "\n\n" + F("Level {0} required", t.MinimumLevel);
         if (t.Collective && entry.Contribution == 0) body += "\n\n" + T("Contribute to this collective contract to earn its reward.");
         if (_lastDetail != body)

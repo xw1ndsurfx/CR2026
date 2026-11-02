@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -412,7 +412,7 @@ public partial class FrmItem
                     Set(nudAttackSpeedValue, p.AttackSpeedMs);
                 }
             }
-            if (autoStats.Checked && itemType == ItemType.Consumable && mEditorItem.Consumable.Type!=ConsumableType.ExperienceBoost)
+            if (autoStats.Checked && itemType == ItemType.Consumable && mEditorItem.Consumable.Type is not (ConsumableType.ExperienceBoost or ConsumableType.Grog))
             {
                 // Health by default; users can change to Mana or other types.
                 cmbConsume.SelectedIndex = (int)ConsumableType.Health;

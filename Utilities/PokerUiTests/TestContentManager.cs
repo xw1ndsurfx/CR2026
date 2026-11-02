@@ -1,4 +1,4 @@
-using Intersect.Client.Framework.Content;
+﻿using Intersect.Client.Framework.Content;
 using Intersect.Client.Framework.File_Management;
 
 // The real title bar resolves a named font through GameContentManager.Current during its
@@ -20,6 +20,7 @@ internal sealed class TestContentManager : GameContentManager
         return base.GetTexture(type, name);
     }
 
+    internal void AddItemTexture(string name, Intersect.Client.Framework.Graphics.IGameTexture texture) => mItemDict[name.ToLowerInvariant()] = texture;
     internal void AddFaceTexture(string name, Intersect.Client.Framework.Graphics.IGameTexture texture) => mFaceDict[name.ToLowerInvariant()] = texture;
     internal void AddImageTexture(string name, Intersect.Client.Framework.Graphics.IGameTexture texture) => mImageDict[name.ToLowerInvariant()] = texture;
     internal void AddGuiTexture(string name, Intersect.Client.Framework.Graphics.IGameTexture texture) => mGuiDict[name.ToLowerInvariant()] = texture;

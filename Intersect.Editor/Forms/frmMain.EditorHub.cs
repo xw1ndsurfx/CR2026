@@ -1,4 +1,4 @@
-using Intersect.Editor.Forms.EditorHub;
+﻿using Intersect.Editor.Forms.EditorHub;
 using Intersect.Editor.Networking;
 using Intersect.Editor.General;
 using Intersect.Editor.Forms.Styling;
@@ -33,6 +33,9 @@ public partial class FrmMain
         contentEditorsToolStripMenuItem.DropDownItems.Add(housingEditor);
         AddRoyalStylistEditorMenu();
         AddRoyalContractsEditorMenu();
+        var lobbyEditor = new ToolStripMenuItem(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Lobby Editor",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)) { Name = "lobbyEditor" };
+        lobbyEditor.Click += (_, _) => Networking.Network.SendPacket(new Intersect.Network.Packets.PartyLobbies.LobbyConfigurationRequestPacket());
+        contentEditorsToolStripMenuItem.DropDownItems.Add(lobbyEditor);
         if (requestConfigurations) PacketSender.SendRequestRoyalStylistConfiguration(openEditor: false);
         AddCharacterGeneratorEditorMenu();
         AddAnimationImportEditorMenu();

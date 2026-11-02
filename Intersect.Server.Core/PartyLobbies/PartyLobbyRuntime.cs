@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Intersect.Enums;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Maps;
@@ -22,6 +22,8 @@ internal static class PartyLobbyRuntime
         public Guid ShipId;
         public bool Started;
     }
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<Guid,int> HostCapacities = new();
+    internal static int MaximumMembersForHost(Guid id) => HostCapacities.GetValueOrDefault(id,100);
     private static readonly object Gate = new();
     private static readonly Dictionary<Guid, Lobby> Lobbies = [];
     private static readonly Dictionary<Guid, long> LastRequest = [];
@@ -40,6 +42,9 @@ internal static class PartyLobbyRuntime
             if (Members(item.Host).Any(DungeonRunRuntime.IsPlayerInActiveRun)) item.Started = true;
             if (item.Activity == LobbyActivity.Jousting) item.Started = item.Host.IsJousting || Members(item.Host).Any(DungeonRunRuntime.IsPlayerInActiveRun);
         }
+        var hosts=Lobbies.Values.Select(l=>l.Host.Id).ToHashSet();
+        foreach(var id in HostCapacities.Keys.Where(id=>!hosts.Contains(id))) HostCapacities.TryRemove(id,out _);
+        foreach(var lobby in Lobbies.Values) HostCapacities[lobby.Host.Id]=Capacity(lobby);
         foreach (var id in LastRequest.Keys.Where(id => Player.FindOnline(id) == null).ToArray()) LastRequest.Remove(id);
     }
     internal static void MarkDungeonStarted(IEnumerable<Guid> participants)
@@ -51,7 +56,7 @@ internal static class PartyLobbyRuntime
     }
     private static int Capacity(Lobby lobby)
     {
-        var maximum = Math.Clamp(Options.Instance.Party.MaximumMembers, 1, 100);
+        var maximum = Math.Min(Math.Clamp(Options.Instance.Party.MaximumMembers, 1, 100), LobbyConfigurationRuntime.Current.Activities.FirstOrDefault(a => a.Activity == lobby.Activity)?.MaximumMembers ?? 100);
         if(lobby.Activity==LobbyActivity.Naval) return Math.Min(maximum,NavalSystem.LobbyShip(lobby.Host)?.Capacity??1);
         var dungeon = DungeonConfigurationRuntime.Current.Dungeons.FirstOrDefault(d => d.Id == lobby.DungeonId);
         return lobby.Activity == LobbyActivity.Dungeon && dungeon != null ? Math.Min(maximum, dungeon.MaximumPartySize) : maximum;
@@ -143,6 +148,7 @@ internal static class PartyLobbyRuntime
         var lobby = new Lobby { ShipId=naval?.ShipId??Guid.Empty, Host=player, Title=title, Activity=request.Activity, DungeonId=request.Activity == LobbyActivity.Dungeon ? request.DungeonId : Guid.Empty };
         if (Members(player).Length > Capacity(lobby)) return "Your party is too large for this lobby.";
         Lobbies.Add(lobby.Id,lobby);
+        HostCapacities[lobby.Host.Id]=Capacity(lobby);
         return "Lobby created. Players can now find your party.";
     }
     private static string Join(Player player, Guid id)
@@ -215,7 +221,7 @@ internal static class PartyLobbyRuntime
             Dungeons=config.Dungeons.Where(d => DungeonConfigurationRuntime.IsAvailable(d,DateTimeOffset.Now)).Select(d => new LobbyDungeonChoice {Id=d.Id,Name=d.Name,MinimumLevel=d.MinimumLevel,MaximumLevel=d.MaximumLevel}).ToArray(),
             Lobbies=Lobbies.Values.Select(l => {
                 var members=Members(l.Host); var dungeon=config.Dungeons.FirstOrDefault(d => d.Id == l.DungeonId);
-                return new PartyLobbyEntry {Id=l.Id,HostId=l.Host.Id,HostName=l.Host.Name,Title=l.Title,Activity=l.Activity,DungeonId=l.DungeonId,DungeonName=dungeon?.Name ?? "",Players=members.Length,Capacity=Capacity(l),Started=l.Started,Members=members.Select(p=>p.Name).ToArray()};
+                return new PartyLobbyEntry {Id=l.Id,HostId=l.Host.Id,HostName=l.Host.Name,Title=l.Title,Activity=l.Activity,DungeonId=l.DungeonId,DungeonName=dungeon?.Name ?? "",Players=members.Length,Capacity=Capacity(l),Image=LobbyConfigurationRuntime.Current.Activities.FirstOrDefault(a=>a.Activity==l.Activity)?.Image??"",Started=l.Started,Members=members.Select(p=>p.Name).ToArray()};
             }).OrderBy(l => l.HostName,StringComparer.OrdinalIgnoreCase).ToArray(),
         };
     }

@@ -1,4 +1,4 @@
-using DarkUI.Forms;
+﻿using DarkUI.Forms;
 using Intersect.Framework.Core.GameObjects.Items;
 using Intersect.Framework.Core.GameObjects.Maps;
 using Intersect.Framework.Core.GameObjects.NPCs;
@@ -60,8 +60,8 @@ public sealed class FrmRoyalContracts : DarkForm
         _active.Text = T("Enabled"); Row("Enabled", _active);
         Row("Name", _name); Row("Description", _description, 80);
         foreach (var period in Enum.GetValues<RoyalContractPeriod>()) _period.Items.Add(new Choice<RoyalContractPeriod>(period, T(period.ToString())));
-        foreach (var (value, label) in new[] { (RoyalContractObjective.NpcKills, "Eliminate enemies"), (RoyalContractObjective.DeliverItems, "Deliver resources"), (RoyalContractObjective.ExploreMaps, "Explore distinct maps") })
-            _objective.Items.Add(new Choice<RoyalContractObjective>(value, T(label)));
+        foreach (var value in Enum.GetValues<RoyalContractObjective>())
+            _objective.Items.Add(new Choice<RoyalContractObjective>(value, T(RoyalContractRules.ObjectiveLabel(value))));
         Row("Period", _period); Row("Objective", _objective);
         _collective.Text = T("Collective"); Row("Collective", _collective); Row("Target", _target);
         AddNumber("Minimum level", 1, 100000); AddNumber("Minimum quantity", 1, 1000000); AddNumber("Maximum quantity", 1, 1000000);
@@ -121,6 +121,8 @@ public sealed class FrmRoyalContracts : DarkForm
                 foreach (var npc in NPCDescriptor.Lookup.Values.OfType<NPCDescriptor>().Where(n => !n.IsPet).OrderBy(n => n.Name)) _target.Items.Add(new Choice<Guid>(npc.Id, npc.Name)); break;
             case RoyalContractObjective.DeliverItems:
                 foreach (var item in ItemDescriptor.Lookup.Values.OfType<ItemDescriptor>().Where(i => i.IsStackable && i.MaxInventoryStack > 0).OrderBy(i => i.Name)) _target.Items.Add(new Choice<Guid>(item.Id, item.Name)); break;
+            case RoyalContractObjective.QuestsCompleted:
+                foreach (var quest in Intersect.GameObjects.QuestDescriptor.Lookup.Values.OfType<Intersect.GameObjects.QuestDescriptor>().OrderBy(q => q.Name)) _target.Items.Add(new Choice<Guid>(quest.Id, quest.Name)); break;
             case RoyalContractObjective.ExploreMaps:
                 foreach (var map in MapDescriptor.Lookup.Values.OfType<MapDescriptor>().OrderBy(m => m.Name)) _target.Items.Add(new Choice<Guid>(map.Id, map.Name)); break;
         }

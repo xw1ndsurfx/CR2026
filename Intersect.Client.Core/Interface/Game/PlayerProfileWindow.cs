@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Content;
@@ -595,9 +595,7 @@ internal sealed class PlayerProfileWindow : Window
                 continue;
             }
 
-            if (GameContentManager.Current.GetTexture(
-                    itemDescriptor.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, itemDescriptor.DisplayIcon
-                ) is { } itemTexture)
+            if (Intersect.Client.Interface.Game.ItemIconTexture.Get(itemDescriptor) is { } itemTexture)
             {
                 icon.Texture = itemTexture;
                 icon.RenderColor = itemDescriptor.Color;
