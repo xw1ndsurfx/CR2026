@@ -1,4 +1,4 @@
-﻿using Intersect.Client.Framework.Gwen.Control;
+using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.General;
 using Intersect.Client.Interface.Game.Admin;
 using Intersect.Client.Interface.Game.Bag;
@@ -493,6 +493,7 @@ public partial class GameInterface : MutableInterface
         UpdateCooking();
         UpdatePoker();
         UpdateRoulette();
+        UpdateDice();
         UpdateLockpicking();
         UpdateQuestGuidance();
 
@@ -733,6 +734,7 @@ public partial class GameInterface : MutableInterface
         var closedWindows = ClosePotionWindow() || cannonWasOpen || royalWasOpen;
         closedWindows = CloseCookingWindow() || closedWindows;
         closedWindows = CloseRouletteWindow() || closedWindows;
+        closedWindows = CloseDiceWindow() || closedWindows;
         closedWindows = CloseLockpickingWindow() || closedWindows;
         closedWindows = ClosePokerWindow() || closedWindows;
         if (_bagWindow != null && _bagWindow.IsVisibleInTree)
@@ -793,6 +795,7 @@ public partial class GameInterface : MutableInterface
         DisposeCooking();
         DisposePoker();
         DisposeRoulette();
+        DisposeDice();
         DisposeLockpicking();
         DisposeQuestGuidance();
         DisposeSoundSequence();

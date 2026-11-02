@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../Shared/RoyalContractsAssets.props" />
   <Import Project="../Shared/JoustingAssets.props" />
+  <Import Project="../Shared/DiceAssets.props" />
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>

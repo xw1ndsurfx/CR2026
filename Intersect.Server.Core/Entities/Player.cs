@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
@@ -7547,7 +7547,7 @@ public partial class Player : Entity
     {
         entityType = default;
 
-        if (IsArcheryActive || JoustBlocksMovement || IsDead || HasPendingDeath || Intersect.Server.Pvp.PvpRuntime.Respawning(this) || Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Contains(Id))
+        if (Intersect.Server.MiniGames.Dice.DiceRuntime.Contains(Id) || IsArcheryActive || JoustBlocksMovement || IsDead || HasPendingDeath || Intersect.Server.Pvp.PvpRuntime.Respawning(this) || Intersect.Server.MiniGames.Metalworking.MetalworkRuntime.Contains(Id))
         {
             blockerType = MovementBlockerType.OutOfBounds;
             return false;

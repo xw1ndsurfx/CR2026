@@ -7,7 +7,7 @@ using Intersect.Framework.Core.MiniGames.Roulette;
 
 namespace Intersect.Framework.Core.GameObjects.Events.Commands;
 
-public enum MiniGameType { Poker = 0, Blackjack = 1, Potions = 2, Roulette = 3, Cooking = 4, Lockpicking = 5, Smelting = 6, Smithing = 7, Archery = 8 }
+public enum MiniGameType { Poker = 0, Blackjack = 1, Potions = 2, Roulette = 3, Cooking = 4, Lockpicking = 5, Smelting = 6, Smithing = 7, Archery = 8, RollTheDice = 9 }
 
 /// <summary>Empty currency selects isolated test chips. A currency item selects inventory-backed play.</summary>
 public sealed class StartMiniGameCommand : EventCommand
@@ -61,6 +61,13 @@ public sealed class StartMiniGameCommand : EventCommand
     [DefaultValue(false)] public bool BlackjackHitSoft17 { get; set; }
     [DefaultValue(10L)] public long RouletteMinimumBet { get; set; } = 10;
     [DefaultValue(100L)] public long RouletteMaximumBet { get; set; } = 100;
+    [DefaultValue(25L)] public long DiceMinimumBet { get; set; } = 25;
+    [DefaultValue(1000L)] public long DiceMaximumBet { get; set; } = 1000;
+    [DefaultValue(25L)] public long DiceBetStep { get; set; } = 25;
+    [DefaultValue(2)] public int DiceOutsideReturn { get; set; } = 2;
+    [DefaultValue(5)] public int DiceSevenReturn { get; set; } = 5;
+    public Intersect.Framework.Core.MiniGames.Dice.DiceRules CreateDiceRules() =>
+        new(DiceMinimumBet, DiceMaximumBet, DiceBetStep, DiceOutsideReturn, DiceSevenReturn);
     [DefaultValue(2)] public int LockpickDifficulty { get; set; } = 2;
     [DefaultValue(4)] public int LockpickMaxMistakes { get; set; } = 4;
     [DefaultValue(30)] public int LockpickTimeSeconds { get; set; } = 30;
@@ -164,6 +171,9 @@ public sealed class StartMiniGameCommand : EventCommand
                 LockpickFailureCooldownSeconds is >= 0 and <= 86_400 &&
                 LockpickInvasionDifficultyBonus is >= 0 and <= 4 &&
                 (LockpickLootTable ?? []).All(entry => entry is { IsValid: true }),
+            MiniGameType.RollTheDice => MaxPlayers is >= 1 and <= 6 && NpcPlayers == 0 && !DealerPlays &&
+                CurrencyItemId != Guid.Empty && CreateDiceRules().IsValid && StartingChips >= DiceMinimumBet &&
+                NpcReserve >= DiceMaximumBet * (Math.Max(DiceOutsideReturn, DiceSevenReturn) - 1L),
             MiniGameType.Roulette =>
                 MaxPlayers == 1 &&
                 NpcPlayers == 0 &&

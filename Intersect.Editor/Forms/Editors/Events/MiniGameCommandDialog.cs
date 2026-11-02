@@ -25,6 +25,11 @@ internal sealed class MiniGameCommandDialog : Form
     private sealed record EventChoice(Guid Id, string Name) { public override string ToString() => Name; }
     public MiniGameCommandDialog(StartMiniGameCommand command, MiniGameType? fixedGame = null)
     {
+        if ((fixedGame ?? command.Game) == MiniGameType.RollTheDice)
+        {
+            DiceCommandDialog.Configure(this, command);
+            return;
+        }
         if ((fixedGame ?? command.Game) == MiniGameType.Archery)
         {
             string T(string value) => Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(value,
@@ -618,6 +623,13 @@ internal sealed class MiniGameCommandDialog : Form
         };
         reserve.ValueChanged += (_, _) => ShowCurrencyStatus();
         unlimitedNpcBankroll.CheckedChanged += (_, _) => ShowCurrencyStatus();
+        game.SelectedIndexChanged += (_, _) =>
+        {
+            if ((game.SelectedItem as GameChoice)?.Type != MiniGameType.RollTheDice) return;
+            using var dice = new DiceCommandDialog(command);
+            if (dice.ShowDialog(this) == DialogResult.OK) { DialogResult = DialogResult.OK; Close(); }
+            else game.SelectedItem = game.Items.Cast<GameChoice>().First(c => c.Type == command.Game);
+        };
         game.SelectedIndexChanged += (_, _) => { UpdateGameUi(); FilterGameRows(); EnsureRouletteReserve(); ShowCurrencyStatus(); ShowSummary(); };
         table.TextChanged += (_, _) => ShowSummary();
         seats.ValueChanged += (_, _) => ShowSummary();

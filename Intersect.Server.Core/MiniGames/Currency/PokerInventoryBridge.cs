@@ -125,7 +125,7 @@ internal static class PokerInventoryBridge
             // Both runtimes share escrow. Never orphan a live blackjack membership.
             if (!PokerCurrencyRuntime.Contains(player.Id) &&
                 !BlackjackRuntime.Contains(player.Id) &&
-                !RouletteRuntime.Contains(player.Id))
+                !RouletteRuntime.Contains(player.Id) && !Intersect.Server.MiniGames.Dice.DiceRuntime.Contains(player.Id))
             {
                 Ledger.ReleaseOrphanHuman(player.Id);
             }
@@ -133,7 +133,9 @@ internal static class PokerInventoryBridge
             {
                 var game = refund.House.StartsWith("blackjack:", StringComparison.Ordinal)
                     ? "Blackjack"
-                    : refund.House.StartsWith("roulette:", StringComparison.Ordinal)
+                    : refund.House.StartsWith("dice:", StringComparison.Ordinal)
+                        ? "Roll the Dice"
+                        : refund.House.StartsWith("roulette:", StringComparison.Ordinal)
                         ? "Roulette"
                         : "Poker";
                 try

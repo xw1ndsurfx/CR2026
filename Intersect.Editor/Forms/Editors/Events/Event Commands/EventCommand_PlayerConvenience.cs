@@ -29,7 +29,7 @@ internal sealed class EventCommandPlayerConvenience:UserControl
         {
             var filter=new ComboBox {Left=250,Top=30,Width=230,DropDownStyle=ComboBoxStyle.DropDownList};
             filter.Items.Add(T("All activities"));
-            foreach(var activity in Enum.GetValues<LobbyActivity>())filter.Items.Add(T(activity.ToString()));
+            foreach(var activity in Enum.GetValues<LobbyActivity>())filter.Items.Add(T(activity==LobbyActivity.RollTheDice?"Roll the Dice":activity.ToString()));
             filter.SelectedIndex=Math.Clamp(lobby.ActivityFilter+1,0,filter.Items.Count-1);
             var prompt=new CheckBox {Left=20,Top=80,Width=460,Text=T("Prompt room creation"),Checked=lobby.PromptCreation};
             Controls.AddRange([new Label {Text=T("Filter activity"),Left=20,Top=30,Width=220},filter,prompt]);

@@ -1,4 +1,4 @@
-﻿using Intersect.Framework.Core.Naval;
+using Intersect.Framework.Core.Naval;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -26,7 +26,7 @@ internal sealed class PartyLobbyWindow : Window
     internal static string ActivityName(LobbyActivity activity) => activity==LobbyActivity.PvP?Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("PvP",ClientLanguages.Current):activity==LobbyActivity.Naval?NavalSetupText.Get("Naval crew",ClientLanguages.Current):ClientLanguages.Text(activity switch {
         LobbyActivity.Dungeon => "Dungeon", LobbyActivity.Invasion => "Invasion", LobbyActivity.WorldBoss => "World Boss",
         LobbyActivity.Alchemy => "Alchemy", LobbyActivity.Poker => "Poker", LobbyActivity.Blackjack => "Blackjack",
-        LobbyActivity.Roulette => "Roulette", LobbyActivity.Lumberjack => "Lumberjack", LobbyActivity.HouseParty => "House Party",
+        LobbyActivity.RollTheDice => "Roll the Dice", LobbyActivity.Roulette => "Roulette", LobbyActivity.Lumberjack => "Lumberjack", LobbyActivity.HouseParty => "House Party",
         LobbyActivity.Looting => "Looting", LobbyActivity.Cooking => "Cooking", LobbyActivity.Jousting => "Royal Jousting", _ => "All activities" });
     internal PartyLobbyWindow(Canvas canvas) : base(canvas,ClientLanguages.Text("Adventure lobbies"),false,nameof(PartyLobbyWindow))
     {

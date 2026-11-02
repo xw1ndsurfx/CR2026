@@ -58,7 +58,7 @@ internal static class PokerRuntime
         var joinedPokerLevel = 1;
         lock (player.EntityLock)
         {
-            if (BlackjackRuntime.Contains(player.Id)) return new(PokerRegistryError.AlreadyAtAnotherTable);
+            if (Intersect.Server.MiniGames.Dice.DiceRuntime.Contains(player.Id) || BlackjackRuntime.Contains(player.Id)) return new(PokerRegistryError.AlreadyAtAnotherTable);
             if (command.CurrencyItemId != Guid.Empty)
             {
                 lock (Gate)

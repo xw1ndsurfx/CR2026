@@ -61,6 +61,7 @@ internal static class PartyLobbyTests
                 if(activity is LobbyActivity.HouseParty or LobbyActivity.Naval)continue;
                 var state=Call(host,LobbyAction.Create,activity:activity,dungeon:activity==LobbyActivity.Dungeon?dungeon.Id:Guid.Empty);
                 Check(state.CurrentLobbyId!=Guid.Empty,"Every supported activity can recruit a party: "+activity);
+                if(activity==LobbyActivity.RollTheDice)Check(state.Lobbies.Single().Capacity<=6,"Dice lobby respects six-seat table limit");
                 Call(host,LobbyAction.Close,state.CurrentLobbyId);
             }
             Check(Call(host,LobbyAction.Create,activity:LobbyActivity.Naval).Lobbies.Length==0,"Naval recruiting requires the captain of an active personal ship stopped at a dock");

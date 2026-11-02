@@ -58,6 +58,7 @@ internal static class PartyLobbyRuntime
     {
         var maximum = Math.Min(Math.Clamp(Options.Instance.Party.MaximumMembers, 1, 100), LobbyConfigurationRuntime.Current.Activities.FirstOrDefault(a => a.Activity == lobby.Activity)?.MaximumMembers ?? 100);
         if(lobby.Activity==LobbyActivity.Naval) return Math.Min(maximum,NavalSystem.LobbyShip(lobby.Host)?.Capacity??1);
+        if(lobby.Activity==LobbyActivity.RollTheDice) return Math.Min(maximum,6);
         var dungeon = DungeonConfigurationRuntime.Current.Dungeons.FirstOrDefault(d => d.Id == lobby.DungeonId);
         return lobby.Activity == LobbyActivity.Dungeon && dungeon != null ? Math.Min(maximum, dungeon.MaximumPartySize) : maximum;
     }

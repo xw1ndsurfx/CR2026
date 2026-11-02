@@ -1,5 +1,230 @@
 {
   "Entries": {
+    "Roll the Dice": {
+      "en": "Roll the Dice",
+      "fr": "Roll the Dice",
+      "es": "Roll the Dice"
+    },
+    "Less than 7": {
+      "en": "Less than 7",
+      "fr": "Moins de 7",
+      "es": "Menos de 7"
+    },
+    "Exactly 7": {
+      "en": "Exactly 7",
+      "fr": "Exactement 7",
+      "es": "Exactamente 7"
+    },
+    "More than 7": {
+      "en": "More than 7",
+      "fr": "Plus de 7",
+      "es": "Más de 7"
+    },
+    "Roll the dice": {
+      "en": "Roll the dice",
+      "fr": "Lancer les dés",
+      "es": "Lanzar los dados"
+    },
+    "Play again": {
+      "en": "Play again",
+      "fr": "Rejouer",
+      "es": "Volver a jugar"
+    },
+    "Rules": {
+      "en": "Rules",
+      "fr": "Règles",
+      "es": "Reglas"
+    },
+    "Your purse": {
+      "en": "Your purse",
+      "fr": "Votre bourse",
+      "es": "Tu bolsa"
+    },
+    "Last round": {
+      "en": "Last round",
+      "fr": "Dernière manche",
+      "es": "Última ronda"
+    },
+    "Next wager": {
+      "en": "Next wager",
+      "fr": "Prochaine mise",
+      "es": "Próxima apuesta"
+    },
+    "Level {0}": {
+      "en": "Level {0}",
+      "fr": "Niveau {0}",
+      "es": "Nivel {0}"
+    },
+    "MAX": {
+      "en": "MAX",
+      "fr": "MAX",
+      "es": "MÁX"
+    },
+    "{0:N0} / {1:N0} XP": {
+      "en": "{0:N0} / {1:N0} XP",
+      "fr": "{0:N0} / {1:N0} XP",
+      "es": "{0:N0} / {1:N0} XP"
+    },
+    "{0:N0} {1}": {
+      "en": "{0:N0} {1}",
+      "fr": "{0:N0} {1}",
+      "es": "{0:N0} {1}"
+    },
+    "{0} + {1} = {2}": {
+      "en": "{0} + {1} = {2}",
+      "fr": "{0} + {1} = {2}",
+      "es": "{0} + {1} = {2}"
+    },
+    "+{0:N0} XP": {
+      "en": "+{0:N0} XP",
+      "fr": "+{0:N0} XP",
+      "es": "+{0:N0} XP"
+    },
+    "Choose your bet and roll the two dice.": {
+      "en": "Choose your bet and roll the two dice.",
+      "fr": "Choisissez votre pari puis lancez les deux dés.",
+      "es": "Elige tu apuesta y lanza los dos dados."
+    },
+    "No completed round yet.": {
+      "en": "No completed round yet.",
+      "fr": "Aucune manche terminée.",
+      "es": "Aún no hay rondas terminadas."
+    },
+    "Wager: {0:N0}\nReturn: {1:N0}\nStake included\nNet gain: {2:+#,0;-#,0;0}": {
+      "en": "Wager: {0:N0}\nReturn: {1:N0}\nStake included\nNet gain: {2:+#,0;-#,0;0}",
+      "fr": "Mise : {0:N0}\nRetour : {1:N0}\nMise incluse\nGain net : {2:+#,0;-#,0;0}",
+      "es": "Apuesta: {0:N0}\nRetorno: {1:N0}\nApuesta incluida\nGanancia neta: {2:+#,0;-#,0;0}"
+    },
+    "Request pending…": {
+      "en": "Request pending…",
+      "fr": "Demande en cours…",
+      "es": "Solicitud en curso…"
+    },
+    "Rolling…": {
+      "en": "Rolling…",
+      "fr": "Lancer en cours…",
+      "es": "Lanzando…"
+    },
+    "You won!": {
+      "en": "You won!",
+      "fr": "Gagné !",
+      "es": "¡Has ganado!"
+    },
+    "You lost.": {
+      "en": "You lost.",
+      "fr": "Perdu.",
+      "es": "Has perdido."
+    },
+    "Invalid wager. Check the limits and step in Rules.": {
+      "en": "Invalid wager. Check the limits and step in Rules.",
+      "fr": "Mise invalide. Vérifiez les limites et le pas dans les règles.",
+      "es": "Apuesta no válida. Revisa los límites y el incremento en las reglas."
+    },
+    "Your purse cannot cover this wager.": {
+      "en": "Your purse cannot cover this wager.",
+      "fr": "Votre bourse ne permet pas cette mise.",
+      "es": "Tu bolsa no cubre esta apuesta."
+    },
+    "The house cannot cover this return.": {
+      "en": "The house cannot cover this return.",
+      "fr": "La banque ne peut pas couvrir ce retour.",
+      "es": "La banca no puede cubrir este retorno."
+    },
+    "The table changed. Please try again.": {
+      "en": "The table changed. Please try again.",
+      "fr": "La table a changé. Réessayez.",
+      "es": "La mesa ha cambiado. Inténtalo de nuevo."
+    },
+    "Settlement is being recovered. Reopen the table before playing again.": {
+      "en": "Settlement is being recovered. Reopen the table before playing again.",
+      "fr": "Le règlement est en cours de récupération. Rouvrez la table avant de rejouer.",
+      "es": "Se está recuperando la liquidación. Vuelve a abrir la mesa antes de jugar."
+    },
+    "Players at this table": {
+      "en": "Players at this table",
+      "fr": "Joueurs à cette table",
+      "es": "Jugadores en esta mesa"
+    },
+    "{0} — ready": {
+      "en": "{0} — ready",
+      "fr": "{0} — prêt",
+      "es": "{0} — listo"
+    },
+    "{0}: {1} + {2} = {3} · net {4:+#,0;-#,0;0}": {
+      "en": "{0}: {1} + {2} = {3} · net {4:+#,0;-#,0;0}",
+      "fr": "{0} : {1} + {2} = {3} · net {4:+#,0;-#,0;0}",
+      "es": "{0}: {1} + {2} = {3} · neto {4:+#,0;-#,0;0}"
+    },
+    "Unable to open Roll the Dice. Check the currency, buy-in and house reserve.": {
+      "en": "Unable to open Roll the Dice. Check the currency, buy-in and house reserve.",
+      "fr": "Impossible d’ouvrir Roll the Dice. Vérifiez la monnaie, le droit d’entrée et la réserve de la banque.",
+      "es": "No se puede abrir Roll the Dice. Revisa la moneda, la entrada y la reserva de la banca."
+    },
+    "Table ID": {
+      "en": "Table ID",
+      "fr": "Identifiant de table",
+      "es": "Identificador de mesa"
+    },
+    "Maximum players": {
+      "en": "Maximum players",
+      "fr": "Nombre maximal de joueurs",
+      "es": "Máximo de jugadores"
+    },
+    "Currency item (Aureons)": {
+      "en": "Currency item (Aureons)",
+      "fr": "Objet monnaie (Aureons)",
+      "es": "Objeto moneda (Aureons)"
+    },
+    "Buy-in reserved from inventory": {
+      "en": "Buy-in reserved from inventory",
+      "fr": "Droit d’entrée réservé depuis l’inventaire",
+      "es": "Entrada reservada del inventario"
+    },
+    "House reserve per player": {
+      "en": "House reserve per player",
+      "fr": "Réserve de la banque par joueur",
+      "es": "Reserva de la banca por jugador"
+    },
+    "Minimum wager": {
+      "en": "Minimum wager",
+      "fr": "Mise minimale",
+      "es": "Apuesta mínima"
+    },
+    "Maximum wager": {
+      "en": "Maximum wager",
+      "fr": "Mise maximale",
+      "es": "Apuesta máxima"
+    },
+    "Wager step": {
+      "en": "Wager step",
+      "fr": "Pas de mise",
+      "es": "Incremento de apuesta"
+    },
+    "Total return for less/more than 7": {
+      "en": "Total return for less/more than 7",
+      "fr": "Retour total pour moins/plus de 7",
+      "es": "Retorno total para menos/más de 7"
+    },
+    "Total return for exactly 7": {
+      "en": "Total return for exactly 7",
+      "fr": "Retour total pour exactement 7",
+      "es": "Retorno total para exactamente 7"
+    },
+    "Use the same table ID and settings on the same map instance. Each player rolls independently. The lobby recruits players; Meet host does not buy in automatically.": {
+      "en": "Use the same table ID and settings on the same map instance. Each player rolls independently. The lobby recruits players; Meet host does not buy in automatically.",
+      "fr": "Utilisez le même identifiant et les mêmes réglages dans la même instance de carte. Chacun lance ses dés. Le lobby recrute les joueurs ; rejoindre l’hôte ne prélève aucun droit d’entrée.",
+      "es": "Usa el mismo identificador y ajustes en la misma instancia del mapa. Cada jugador lanza sus dados. El lobby reúne jugadores; reunirse con el anfitrión no cobra la entrada."
+    },
+    "Choose a currency, valid wager limits divisible by the step, and a reserve covering the largest possible net win.": {
+      "en": "Choose a currency, valid wager limits divisible by the step, and a reserve covering the largest possible net win.",
+      "fr": "Choisissez une monnaie, des limites divisibles par le pas et une réserve couvrant le gain net maximal.",
+      "es": "Elige una moneda, límites divisibles por el incremento y una reserva que cubra la mayor ganancia neta posible."
+    },
+    "Two independent dice. Less than 7: totals 2–6. Exactly 7: total 7. More than 7: totals 8–12.\nTotal returns: {0}× for less/more, {1}× for seven, stake included.\nWagers: {2:N0}–{3:N0}, in steps of {4:N0}.\n25 XP per win before event bonuses. Levels do not change the odds.\nEveryone rolls independently; results are shared at this table.": {
+      "en": "Two independent dice. Less than 7: totals 2–6. Exactly 7: total 7. More than 7: totals 8–12.\nTotal returns: {0}× for less/more, {1}× for seven, stake included.\nWagers: {2:N0}–{3:N0}, in steps of {4:N0}.\n25 XP per win before event bonuses. Levels do not change the odds.\nEveryone rolls independently; results are shared at this table.",
+      "fr": "Deux dés indépendants. Moins de 7 : totaux 2–6. Exactement 7 : total 7. Plus de 7 : totaux 8–12.\nRetours : {0}× pour moins/plus, {1}× pour sept, mise incluse.\nMises : {2:N0}–{3:N0}, par pas de {4:N0}.\n25 XP par victoire avant bonus d’événement. Le niveau ne change pas les probabilités.\nChacun lance ses dés ; les résultats sont partagés à cette table.",
+      "es": "Dos dados independientes. Menos de 7: totales 2–6. Exactamente 7: total 7. Más de 7: totales 8–12.\nRetornos: {0}× para menos/más, {1}× para siete, apuesta incluida.\nApuestas: {2:N0}–{3:N0}, en incrementos de {4:N0}.\n25 XP por victoria antes de bonos de evento. El nivel no cambia las probabilidades.\nCada jugador lanza sus dados; los resultados se comparten en esta mesa."
+    },
     "Weapon skills": {
       "en": "Weapon skills",
       "fr": "Compétences d’armes",
