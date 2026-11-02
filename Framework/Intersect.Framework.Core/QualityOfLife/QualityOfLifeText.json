@@ -1,5 +1,220 @@
 {
   "Entries": {
+    "Weapon skills": {
+      "en": "Weapon skills",
+      "fr": "Compétences d’armes",
+      "es": "Habilidades de armas"
+    },
+    "Skill animation": {
+      "en": "Skill animation",
+      "fr": "Animation de compétence",
+      "es": "Animación de habilidad"
+    },
+    "Impact animation": {
+      "en": "Impact animation",
+      "fr": "Animation d’impact",
+      "es": "Animación de impacto"
+    },
+    "Weapon skills use animations and their own cooldowns, without learning a spell.": {
+      "en": "Weapon skills use animations and their own cooldowns, without learning a spell.",
+      "fr": "Les compétences d’armes utilisent des animations et leurs propres délais de recharge, sans apprendre de spell.",
+      "es": "Las habilidades de armas utilizan animaciones y sus propios tiempos de recarga, sin aprender hechizos."
+    },
+    "Passive talent bonuses apply while its weapon is equipped.": {
+      "en": "Passive talent bonuses apply while its weapon is equipped.",
+      "fr": "Les bonus du talent passif s’appliquent lorsque son arme est équipée.",
+      "es": "Las bonificaciones del talento pasivo se aplican al equipar su arma."
+    },
+    "Weapon skill · Damage {0}% · Range {1} · Cooldown {2}s": {
+      "en": "Weapon skill · Damage {0}% · Range {1} · Cooldown {2}s",
+      "fr": "Compétence d’arme · Dégâts {0}% · Portée {1} · Recharge {2}s",
+      "es": "Habilidad de arma · Daño {0}% · Alcance {1} · Recarga {2}s"
+    },
+    "{0} ({1}s)": {
+      "en": "{0} ({1}s)",
+      "fr": "{0} ({1}s)",
+      "es": "{0} ({1}s)"
+    },
+    "Select a hostile target first.": {
+      "en": "Select a hostile target first.",
+      "fr": "Sélectionnez d’abord une cible ennemie.",
+      "es": "Selecciona primero un objetivo enemigo."
+    },
+    "Skill unavailable: check your weapon, target and cooldown.": {
+      "en": "Skill unavailable: check your weapon, target and cooldown.",
+      "fr": "Compétence indisponible : vérifiez l’arme, la cible et la recharge.",
+      "es": "Habilidad no disponible: comprueba el arma, el objetivo y la recarga."
+    },
+    "Active": {
+      "en": "Active",
+      "fr": "Active",
+      "es": "Activa"
+    },
+    "Passive": {
+      "en": "Passive",
+      "fr": "Passive",
+      "es": "Pasiva"
+    },
+    "Weapon talent templates": {
+      "en": "Weapon talent templates",
+      "fr": "Modèles de talents d’arme",
+      "es": "Plantillas de talentos de armas"
+    },
+    "The mastery requirement applies to every usage requirement alternative.": {
+      "en": "The mastery requirement applies to every usage requirement alternative.",
+      "fr": "Le prérequis de maîtrise s’applique à chaque alternative des conditions d’utilisation.",
+      "es": "El requisito de maestría se aplica a cada alternativa de las condiciones de uso."
+    },
+    "Sword Training": {
+      "en": "Sword Training",
+      "fr": "Entraînement à l’épée",
+      "es": "Entrenamiento con espada"
+    },
+    "Quick Slashes": {
+      "en": "Quick Slashes",
+      "fr": "Taillades rapides",
+      "es": "Tajos rápidos"
+    },
+    "Blade Precision": {
+      "en": "Blade Precision",
+      "fr": "Précision de la lame",
+      "es": "Precisión de la hoja"
+    },
+    "Heavy Slashes": {
+      "en": "Heavy Slashes",
+      "fr": "Taillades puissantes",
+      "es": "Tajos potentes"
+    },
+    "Relentless Blade": {
+      "en": "Relentless Blade",
+      "fr": "Lame implacable",
+      "es": "Hoja implacable"
+    },
+    "Sword Expertise": {
+      "en": "Sword Expertise",
+      "fr": "Expertise à l’épée",
+      "es": "Pericia con espada"
+    },
+    "Dagger Training": {
+      "en": "Dagger Training",
+      "fr": "Entraînement à la dague",
+      "es": "Entrenamiento con daga"
+    },
+    "Quick Stabs": {
+      "en": "Quick Stabs",
+      "fr": "Estocades rapides",
+      "es": "Estocadas rápidas"
+    },
+    "Vital Strikes": {
+      "en": "Vital Strikes",
+      "fr": "Frappes vitales",
+      "es": "Golpes vitales"
+    },
+    "Deep Cuts": {
+      "en": "Deep Cuts",
+      "fr": "Entailles profondes",
+      "es": "Cortes profundos"
+    },
+    "Relentless Daggers": {
+      "en": "Relentless Daggers",
+      "fr": "Dagues implacables",
+      "es": "Dagas implacables"
+    },
+    "Dagger Expertise": {
+      "en": "Dagger Expertise",
+      "fr": "Expertise à la dague",
+      "es": "Pericia con daga"
+    },
+    "Heavy Weapon Training": {
+      "en": "Heavy Weapon Training",
+      "fr": "Entraînement aux armes lourdes",
+      "es": "Entrenamiento con armas pesadas"
+    },
+    "Swift Swings": {
+      "en": "Swift Swings",
+      "fr": "Balancements rapides",
+      "es": "Golpes rápidos"
+    },
+    "Crushing Precision": {
+      "en": "Crushing Precision",
+      "fr": "Précision écrasante",
+      "es": "Precisión aplastante"
+    },
+    "Heavy Blows": {
+      "en": "Heavy Blows",
+      "fr": "Coups puissants",
+      "es": "Golpes potentes"
+    },
+    "Relentless Swings": {
+      "en": "Relentless Swings",
+      "fr": "Balancements implacables",
+      "es": "Golpes implacables"
+    },
+    "Heavy Weapon Expertise": {
+      "en": "Heavy Weapon Expertise",
+      "fr": "Expertise aux armes lourdes",
+      "es": "Pericia con armas pesadas"
+    },
+    "Staff Training": {
+      "en": "Staff Training",
+      "fr": "Entraînement au bâton",
+      "es": "Entrenamiento con bastón"
+    },
+    "Quick Casting": {
+      "en": "Quick Casting",
+      "fr": "Incantations rapides",
+      "es": "Lanzamiento rápido"
+    },
+    "Arcane Precision": {
+      "en": "Arcane Precision",
+      "fr": "Précision arcanique",
+      "es": "Precisión arcana"
+    },
+    "Arcane Power": {
+      "en": "Arcane Power",
+      "fr": "Puissance arcanique",
+      "es": "Poder arcano"
+    },
+    "Arcane Rhythm": {
+      "en": "Arcane Rhythm",
+      "fr": "Rythme arcanique",
+      "es": "Ritmo arcano"
+    },
+    "Staff Expertise": {
+      "en": "Staff Expertise",
+      "fr": "Expertise au bâton",
+      "es": "Pericia con bastón"
+    },
+    "Whip Training": {
+      "en": "Whip Training",
+      "fr": "Entraînement au fouet",
+      "es": "Entrenamiento con látigo"
+    },
+    "Quick Lashes": {
+      "en": "Quick Lashes",
+      "fr": "Coups de fouet rapides",
+      "es": "Latigazos rápidos"
+    },
+    "Lash Precision": {
+      "en": "Lash Precision",
+      "fr": "Précision du fouet",
+      "es": "Precisión del látigo"
+    },
+    "Heavy Lashes": {
+      "en": "Heavy Lashes",
+      "fr": "Coups de fouet puissants",
+      "es": "Latigazos potentes"
+    },
+    "Relentless Lashes": {
+      "en": "Relentless Lashes",
+      "fr": "Coups de fouet implacables",
+      "es": "Latigazos implacables"
+    },
+    "Whip Expertise": {
+      "en": "Whip Expertise",
+      "fr": "Expertise au fouet",
+      "es": "Pericia con látigo"
+    },
     "Owned": {
       "en": "Owned",
       "fr": "Possédés",

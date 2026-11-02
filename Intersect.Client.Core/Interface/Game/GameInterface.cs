@@ -459,6 +459,7 @@ public partial class GameInterface : MutableInterface
         UpdateTutorialGuide();
         _royalContractsWindow?.Update();
         _archeryWindow?.CheckClosed();
+        UpdateWeaponSkills();
         if (Globals.Me != null && PlayerBox?.MyEntity != Globals.Me)
         {
             PlayerBox?.SetEntity(Globals.Me);

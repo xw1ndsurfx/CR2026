@@ -44,6 +44,7 @@ internal static class Program
         if (Environment.GetCommandLineArgs().Contains("--auto-creators-only")) { AutoCreatorsTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--smart-map-only")) { SmartMapBuilderTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--royal-combat-only")) { RoyalCombatEditorTests.Run(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--item-usability-only")) { ItemEditorUsabilityTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--cinematic-creators-only")) { CinematicCreatorsTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--cinematic-usability-only")) { CinematicUsabilityTests.Run(); return; }
         if (Environment.GetCommandLineArgs().Contains("--cinematic-chapters-only")) { CinematicChapterEditorTests.Run(); return; }

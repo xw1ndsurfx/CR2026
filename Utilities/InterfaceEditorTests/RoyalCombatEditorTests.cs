@@ -50,6 +50,18 @@ internal static class RoyalCombatEditorTests
                 throw new Exception("Talent editing changed the source before Save or lost native rank-spell pickers.");
         }
         using var ammunition = new FrmWeaponAmmunition([]);
+        var swordCategory=new RoyalCombatConfiguration().Masteries.Single(c=>c.Key=="swords");
+        using(var nativeTalents=new FrmMasteryTalents(swordCategory))
+        {
+            var list=Descendants(nativeTalents).OfType<ListBox>().Single();
+            list.SelectedIndex=Array.FindIndex(nativeTalents.Result.Talents,t=>t.Skill.Enabled);
+            if(Descendants(nativeTalents).OfType<ComboBox>().Count(c=>c.Name is "WeaponSkillAnimation" or "WeaponSkillImpactAnimation")!=2)
+                throw new Exception("Separate active weapon techniques need skill/impact animation selectors");
+            var native=nativeTalents.Result.Talents[list.SelectedIndex];
+            native.Skill.AnimationId=Guid.NewGuid();
+            if(swordCategory.Talents[list.SelectedIndex].Skill.AnimationId!=Guid.Empty || native.RankSpellIds.Length!=0)
+                throw new Exception("Native skills must remain separate from spells and edits must stay in the detached draft");
+        }
         var resetConfig = new RoyalCombatConfiguration { RespecCost = 2500 };
         using (var reset = new FrmMasteryRespec(resetConfig))
             if (reset.RespecEnabled || reset.Cost != 2500 || reset.CurrencyId != Guid.Empty || resetConfig.RespecEnabled)

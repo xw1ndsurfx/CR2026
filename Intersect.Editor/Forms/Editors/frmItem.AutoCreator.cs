@@ -359,6 +359,7 @@ public partial class FrmItem
             cmbType.SelectedIndex = (int)itemType;
             txtName.Text = name.Text;
             iconPicker.ApplyTo(cmbPic);
+            ApplyGeneratedItemTrading(mEditorItem,autoMarketplace.Checked);
             chkCanSellMarketplace.Checked = autoMarketplace.Checked;
             cmbRarity.SelectedIndex = Math.Clamp(rarity.SelectedIndex,
                 0, Math.Max(0, cmbRarity.Items.Count - 1));

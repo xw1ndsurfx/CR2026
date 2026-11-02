@@ -52,9 +52,11 @@ public sealed class RoyalCombatConfiguration
     // Missing in older saved configurations: add the new category once, preserving mappings.
     public int BuiltInMasteriesVersion { get; set; }
     public MasteryCategory[] Masteries { get; set; } = [new() { Talents = MasteryTalent.ArcheryDefaults() },
-        new() { Key = "swords", Name = "Swordsmanship" }, new() { Key = "daggers", Name = "Daggers" },
-        new() { Key = "axes", Name = "Axes & Hammers" }, new() { Key = "magic", Name = "Staves & Magic" },
-        new() { Key = "whips", Name = "Whips" }];
+        new() { Key = "swords", Name = "Swordsmanship", Talents = MasteryTalent.WeaponDefaults("swords") },
+        new() { Key = "daggers", Name = "Daggers", Talents = MasteryTalent.WeaponDefaults("daggers") },
+        new() { Key = "axes", Name = "Axes & Hammers", Talents = MasteryTalent.WeaponDefaults("axes") },
+        new() { Key = "magic", Name = "Staves & Magic", Talents = MasteryTalent.WeaponDefaults("magic") },
+        new() { Key = "whips", Name = "Whips", Talents = MasteryTalent.WeaponDefaults("whips") }];
     public ArcheryRange[] Ranges { get; set; } = [];
     public WeaponAmmunitionRule[] Ammunition { get; set; } = [];
     public bool RespecEnabled { get; set; }
@@ -87,6 +89,12 @@ public sealed class RoyalCombatConfiguration
             if (!result.Masteries.Any(m => m.Key == "whips") && result.Masteries.Length < 32)
                 result.Masteries = [..result.Masteries, new() { Key = "whips", Name = "Whips" }];
             result.BuiltInMasteriesVersion = 1;
+        }
+        if (result.BuiltInMasteriesVersion < 2)
+        {
+            foreach (var category in result.Masteries.Where(m => m.Key != "archery" && m.Talents.Length == 0))
+                category.Talents = MasteryTalent.WeaponDefaults(category.Key, category.Cap);
+            result.BuiltInMasteriesVersion = 2;
         }
         return result;
     }

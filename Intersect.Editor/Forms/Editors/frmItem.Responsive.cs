@@ -21,6 +21,7 @@ public partial class FrmItem
     private void BuildResponsiveItemEditor()
     {
         InitializePresentationControls();
+        InitializeItemMasteryControls();
         SuspendLayout();
         try
         {
@@ -40,7 +41,7 @@ public partial class FrmItem
             _itemEditorTabs.Multiline = true;
             pnlContainer.Controls.Add(_itemEditorTabs);
 
-            AddItemEditorTab("General / Trading", grpGeneral);
+            AddItemEditorTab("General / Trading", _masteryRequirementsGroup, grpGeneral);
             AddItemEditorTab(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Trading and display",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),_itemPresentationGroup);
             // Equipment controls are moved, not recreated: their existing event
             // handlers and item bindings are all preserved.
@@ -86,6 +87,7 @@ public partial class FrmItem
             _btnItemAuto.BringToFront();
 
             _itemResponsiveReady = true;
+            Shown += (_,_) => ArrangeResponsiveItemEditor();
             Resize += (_, _) => ArrangeResponsiveItemEditor();
             FormClosed += (_, _) =>
             {
@@ -152,6 +154,7 @@ public partial class FrmItem
     internal void ArrangeResponsiveItemEditor()
     {
         if (!_itemResponsiveReady || ClientSize.Width < 200) return;
+        FitItemEditorText();
 
         var footer = Math.Max(240, ClientSize.Height - 44);
         grpItems.SetBounds(4, 32, 233, Math.Max(128, footer - 39));
@@ -194,7 +197,10 @@ public partial class FrmItem
         if (newIds.Length != 1) return;
         _waitingForAutoItem = false;
         _beforeAutoItemIds.Clear();
-        if (lstGameObjects.SelectObject(newIds[0]) && IsHandleCreated && !IsDisposed)
-            BeginInvoke(new Action(ShowItemAutoCreator));
+        if (lstGameObjects.SelectObject(newIds[0]))
+        {
+            if(mEditorItem!=null) { ApplyGeneratedItemTrading(mEditorItem); UpdateEditor(); }
+            if(IsHandleCreated && !IsDisposed) BeginInvoke(new Action(ShowItemAutoCreator));
+        }
     }
 }
