@@ -20,6 +20,8 @@ public sealed class FrmMasteryTalents : Form
     private static string T(string text) => QualityOfLifeText.Get(text, System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
     public FrmMasteryTalents(MasteryCategory category)
     {
+        System.ComponentModel.TypeDescriptor.AddAttributes(typeof(WeaponSkillDefinition),
+            new System.ComponentModel.TypeConverterAttribute(typeof(WeaponSkillEditorConverter)));
         Result = JsonSerializer.Deserialize<MasteryCategory>(JsonSerializer.Serialize(category))!;
         Text = T("Mastery talent tree"); Size = new(900, 620); MinimumSize = new(760, 480);
         var tools = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true };
@@ -97,4 +99,12 @@ public sealed class FrmMasteryTalents : Form
         }
         _refreshing = false;
     }
+}
+
+public sealed class WeaponSkillEditorConverter : System.ComponentModel.ExpandableObjectConverter
+{
+    public override object? ConvertTo(System.ComponentModel.ITypeDescriptorContext? context, System.Globalization.CultureInfo? culture,
+        object? value, Type destinationType) => destinationType==typeof(string) && value is WeaponSkillDefinition skill
+        ? QualityOfLifeText.Get(skill.Enabled?"Active":"Passive",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)
+        : base.ConvertTo(context,culture,value,destinationType);
 }

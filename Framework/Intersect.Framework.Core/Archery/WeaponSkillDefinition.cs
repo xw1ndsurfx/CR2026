@@ -16,6 +16,4 @@ public sealed class WeaponSkillDefinition
     public int Power(int rank) => DamagePercent + Math.Clamp(rank-1,0,4)*DamagePercentPerRank;
     public bool IsValid => Range is >=1 and <=12 && CooldownMilliseconds is >=500 and <=120000 &&
         DamagePercent is >=1 and <=500 && DamagePercentPerRank is >=0 and <=100;
-    public override string ToString() => Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(
-        Enabled?"Active":"Passive",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
 }
