@@ -42,7 +42,7 @@ Le **Logiklik 2D Engine** s'appuie sur les fondations du moteur Intersect, tout 
 
 Ces systèmes sont représentés dans les sources client/serveur; leur niveau de maturité et leur disponibilité en jeu diffèrent :
 
-- **Progression et combat :** expérience, professions, artisanat, maîtises d'armes, PvE/PvP, récompenses, succès, quêtes et boutiques de quêtes.
+- **Progression et combat :** expérience, professions, artisanat, maîtrises d'armes, PvE/PvP, récompenses, succès, quêtes et boutiques de quêtes.
 - **Multijoueur :** groupes, guildes, donjons et instances, invasions, boss mondiaux et activités coopératives.
 - **Économie :** banques, marketplace joueur, magasins, services et intégration LogiCoins.
 - **Monde et personnages :** exploration et carte du monde, naval et canons, montures, familiers, maisons et mobilier.
