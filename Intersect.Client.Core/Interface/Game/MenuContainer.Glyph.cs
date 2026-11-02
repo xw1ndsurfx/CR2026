@@ -20,7 +20,7 @@ public partial class MenuContainer
 
         protected override void Render(Intersect.Client.Framework.Gwen.Skin.Base skin)
         {
-            if (CompactMenuArtwork.TryGetValue(_caption, out var artwork))
+            if (CompactMenuArtwork.TryGetValue(_caption == "Lobby" ? "Party" : _caption, out var artwork))
             {
                 var color = Parent is MenuRow row ? row.IconColor : Color.White;
                 DrawArtwork(skin, artwork.Width, artwork.Rows, color);

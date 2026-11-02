@@ -100,6 +100,8 @@ internal sealed class WeaponMasteriesWindow : Window
             var row = new Base(_talents, "Talent" + talent.Key); row.SetBounds(0, _talentRows.Count * 114, 502, 108); _talentRows.Add(row);
             NavalManagementWindow.Text(row, "TalentName", ClientLanguages.Format("{0} · Rank {1}/{2} · Level {3}", Name(talent.Name), rank, talent.MaxRank, talent.RequiredLevel), 0, 0, 500, 26, 11);
             var effect = ClientLanguages.Format("Damage +{0}% · Speed +{1}% · Critical +{2}", talent.DamagePercentPerRank, talent.AttackSpeedPercentPerRank, talent.CritChancePerRank);
+            if(talent.Skill.Enabled)effect=ClientLanguages.Format("Weapon skill · Damage {0}% · Range {1} · Cooldown {2}s",
+                talent.Skill.Power(Math.Max(1,rank)),talent.Skill.Range,talent.Skill.CooldownMilliseconds/1000f);
             if (talent.RankSpellIds.Length > 0) effect = Name(SpellDescriptor.GetName(talent.RankSpellIds[Math.Min(rank, talent.RankSpellIds.Length - 1)]));
             if (!talent.Configured) effect = T("Talent unavailable.");
             if (talent.Prerequisite.Length > 0) effect += " · " + ClientLanguages.Format("Requires {0} rank {1}",

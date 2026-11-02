@@ -104,10 +104,16 @@ public partial class Player
         SendPacket(new ArcheryStatePacket { Open = open, Message = message,
             ConfigurationJson = RoyalCombatRuntime.Current.ToJson(), MasteriesJson = JsonSerializer.Serialize(MasteryExperience),
             MasteryRanksJson = JsonSerializer.Serialize(MasteryRanks) });
+        SendWeaponSkillCooldowns();
     }
 
     internal void HandleArcheryRequest(ArcheryRequestPacket packet)
     {
+        if (packet.Action == ArcheryAction.UseWeaponSkill)
+        {
+            if(!HandleWeaponSkill(packet))SendWeaponSkillCooldowns("Skill unavailable: check your weapon, target and cooldown.");
+            return;
+        }
         if (packet.Action is ArcheryAction.Ammunition or ArcheryAction.SelectAmmunition) { HandleAmmunitionRequest(packet); return; }
         if (packet.Action == ArcheryAction.BuyTalent) { HandleTalentPurchase(packet); return; }
         if (packet.Action == ArcheryAction.Respec) { HandleMasteryRespec(packet); return; }
@@ -149,12 +155,13 @@ public partial class Player
                 }
                 return;
             }
-            if (packet.Action is ArcheryAction.Open or ArcheryAction.Masteries)
+            if (packet.Action is ArcheryAction.Open or ArcheryAction.Masteries or ArcheryAction.SyncMasteries)
             {
                 if (now - _royalRequestAt < 500) return;
                 _royalRequestAt = now;
             }
             if (packet.Action == ArcheryAction.Masteries) { SendMasteries(true); return; }
+            if (packet.Action == ArcheryAction.SyncMasteries) { SendMasteries(false); return; }
             if (packet.Action == ArcheryAction.Open)
             {
                 SendPacket(new ArcheryStatePacket { Open = true, ConfigurationJson = RoyalCombatRuntime.Current.ToJson() });

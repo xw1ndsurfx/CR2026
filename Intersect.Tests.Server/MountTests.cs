@@ -80,6 +80,8 @@ public sealed class MountTests
         try
         {
             player.BaseStats[(int)Stat.Speed] = 20;
+            Ride(); Assert.That(player.ActiveMountId, Is.EqualTo(Guid.Empty), "Mount selection requires a stable event.");
+            player.OpenStableFromEvent();
             var walking = player.GetMovementTime();
             Assert.That(player.CanRide(mount), Is.True);
             Ride(); Assert.That(player.ActiveMountId, Is.EqualTo(mount.Id));

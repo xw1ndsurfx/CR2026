@@ -175,4 +175,5 @@ public enum EventCommandType
     CinematicVesselAction = 1081,
     CinematicEffectPath = 1082,
     OpenRoyalContracts = 1090,
+    OpenStable = 1091,
 }

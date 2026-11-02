@@ -189,6 +189,7 @@ public partial class FrmItem : EditorForm
         UpdateEditor();
 
         mEditorItem.Name = request.ItemName;
+        ApplyGeneratedItemTrading(mEditorItem);
         mEditorItem.Icon = request.IconFile;
         mEditorItem.ItemType = ItemType.Equipment;
         mEditorItem.MalePaperdoll = request.MalePaperdollFile ?? (request.MaleCompatible ? request.PaperdollFile : string.Empty);
@@ -511,6 +512,7 @@ public partial class FrmItem : EditorForm
         btnCancel.Text = Strings.ItemEditor.cancel;
 
         grpEffects.Text = Strings.ItemEditor.BonusEffectGroup;
+        ArrangeResponsiveItemEditor();
     }
 
     private void UpdateEditor()
@@ -652,6 +654,7 @@ public partial class FrmItem : EditorForm
         }
 
         var hasItem = mEditorItem != null;
+        RefreshItemMasteryRequirement();
         
         UpdateEditorButtons(hasItem);
         UpdateToolStripItems();
@@ -996,6 +999,7 @@ public partial class FrmItem : EditorForm
     {
         var frm = new FrmDynamicRequirements(mEditorItem.UsageRequirements, RequirementType.Item);
         frm.ShowDialog(this);
+        RefreshItemMasteryRequirement();
     }
 
     private void cmbAnimation_SelectedIndexChanged(object sender, EventArgs e)

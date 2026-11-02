@@ -165,12 +165,7 @@ public partial class Resource : Entity, IResource
 
     public override void Load(EntityPacket? packet)
     {
-        if(packet is ResourceEntityPacket {IsDead:true} && !IsDead && Descriptor?.FallingTree==true && Texture!=null && _renderBoundsDest.Height>0)
-        {
-            ClearFallingSprite();
-            _fallTexture=Texture;_fallSource=_renderBoundsSrc;_fallDestination=_renderBoundsDest;
-            _fallStarted=Environment.TickCount64;
-        }
+        if(packet is ResourceEntityPacket {IsDead:true} && !IsDead) CaptureFallingTree();
         else if(packet is ResourceEntityPacket {IsDead:false}) { _fallTexture=null; ClearFallingSprite(); }
         base.Load(packet);
         _recalculateRenderBounds = true;
@@ -267,6 +262,10 @@ public partial class Resource : Entity, IResource
             s => currentHealthPercentage >= s.MinimumHealth && currentHealthPercentage <= s.MaximumHealth
         );
 
+        // The health packet can select the empty exhausted graphic before the
+        // death packet arrives. Preserve the standing sprite at that transition.
+        if (currentHealthPercentage <= 0 && _currentState is { MinimumHealth: > 0 }) CaptureFallingTree();
+
         // dispose animation if animation is not used in this current state,
         // but the previous state was an animation
         if (
@@ -328,7 +327,7 @@ public partial class Resource : Entity, IResource
             CalculateRenderBounds();
         }
 
-        if (!Graphics.WorldViewport.IntersectsWith(_renderBoundsDest))
+        if (!Graphics.WorldViewport.IntersectsWith(ResourceVisibilityBounds))
         {
             if (RenderList != null)
             {
@@ -352,7 +351,7 @@ public partial class Resource : Entity, IResource
 
     public override HashSet<Entity>? DetermineRenderOrder(HashSet<Entity>? renderList, IMapInstance? map)
     {
-        if (CurrentState is not { } graphicState || !graphicState.RenderBelowEntities)
+        if (_fallTexture != null || CurrentState is not { } graphicState || !graphicState.RenderBelowEntities)
         {
             return base.DetermineRenderOrder(renderList, map);
         }
@@ -642,11 +641,6 @@ public partial class Resource : Entity, IResource
             return;
         }
 
-        if (Texture == null)
-        {
-            return;
-        }
-
         if(_fallTexture is {} falling)
         {
             var elapsed=Environment.TickCount64-_fallStarted;
@@ -667,6 +661,7 @@ public partial class Resource : Entity, IResource
             _fallTexture=null;
             ClearFallingSprite();
         }
+        if (Texture == null) return;
         // TODO: Add an option to show the exhausted sprite until the exhaustion animation is finished, but this is not necessary if the graphics line up like Blinkuz' sample provided to fix #2572
         if (_activeAnimation != null)
         {

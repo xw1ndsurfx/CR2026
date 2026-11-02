@@ -41,7 +41,8 @@ internal static class CharacterActionsTests
                 Check(window.Height == 454 && window.Width == 351, "Action additions stretched the baked character background");
                 Check(actions.Y >= 350 && actions.Bottom <= window.Height - window.Titlebar.Height, "Actions overlap stats or extend below the inner panel");
                 var buttons = Descendants(actions).OfType<Button>().Where(b => b.Name is "_detailsButton" or "_achievementsButton" or "_petsButton" or "CharacterMounts" or "CharacterJoust" or "CharacterArchery" or "CharacterMasteries").ToArray();
-                Check(buttons.Length == 7, "A character action was lost");
+                Check(buttons.Length == 4, "Expected details, achievements, pets and masteries only");
+                Check(!buttons.Any(b => b.Name is "CharacterMounts" or "CharacterJoust" or "CharacterArchery"), "Location activities must not appear on the character sheet");
                 foreach (var button in buttons)
                 {
                     var label = button.Children.OfType<Label>().Single(l => l.Name == button.Name + "Caption");
@@ -54,7 +55,7 @@ internal static class CharacterActionsTests
                 }
                 foreach (var (name, y) in names.Zip(ys)) Check(((Label)typeof(CharacterWindow).GetField(name, hidden)!.GetValue(character)!).Y == y, "Stat row moved away from its background");
             }
-            System.Console.WriteLine("PASS character actions: seven readable captions, three rows, preserved 351x454 background and stats; en/fr/es at 640x480 and 1600x900");
+            System.Console.WriteLine("PASS character actions: four readable captions, two rows, location activities removed; en/fr/es at 640x480 and 1600x900");
         }
         catch (Exception error) { System.Console.Error.WriteLine(error); Environment.Exit(1); }
         finally { typeof(ClientLanguages).GetProperty("Current")!.SetValue(null, previous); }

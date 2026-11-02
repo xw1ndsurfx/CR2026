@@ -37,6 +37,8 @@ internal static partial class DungeonRunRuntime
         public ConcurrentDictionary<Guid, byte> Participants { get; } = [];
         public Guid NavalEncounterId {get;init;}
         public bool BossDefeated { get; set; }
+        public bool QuestCompleted { get; set; }
+        public bool QuestObjectiveDirty { get; set; }
         public bool Finished { get; set; }
         public bool CompletionStarted;
         public Guid ChestMap;
@@ -275,7 +277,7 @@ internal static partial class DungeonRunRuntime
             DungeonStatisticsRuntime.RecordAttempt(participant, run.Dungeon.Id);
         }
 
-        Broadcast(run, DungeonRunStatus.Active, BuildObjectiveText(run));
+        BroadcastObjectives(run);
         EvaluateCompletion(run);
         return true;
     }
@@ -309,7 +311,7 @@ internal static partial class DungeonRunRuntime
         {
             player.MapInstanceId=run.MapInstanceId;player.InstanceType=run.InstanceType;
             player.Warp(player.MapId,player.X,player.Y,player.Dir,fromLogin:true,forceInstanceChange:true);
-            player.SendPacket(CreatePacket(run,DungeonRunStatus.Active,BuildObjectiveText(run)));
+            player.SendPacket(CreatePacket(run,DungeonRunStatus.Active,BuildObjectiveText(run,player.Client?.LanguageCode??"en")));
             return true;
         }
         if(Naval.NavalSystem.RecoverFinishedEnemyBoarding(player))return true;
@@ -365,7 +367,7 @@ internal static partial class DungeonRunRuntime
         }
         EvaluateCompletion(run);
         if (!run.Finished && !run.CompletionStarted)
-            Broadcast(run, DungeonRunStatus.Active, BuildObjectiveText(run));
+            BroadcastObjectives(run);
     }
 
     internal static bool IsPlayerInActiveRun(Player player)
@@ -378,6 +380,23 @@ internal static partial class DungeonRunRuntime
             return RunsByInstance.TryGetValue(player.MapInstanceId, out var run) &&
                    !run.Finished &&
                    run.Participants.ContainsKey(player.Id);
+        }
+    }
+
+    // Only a completion occurring inside the run counts, including repeatable quests.
+    // Defer rewards/warps to Update rather than mutating a player's quest iteration.
+    internal static void OnQuestCompleted(Player player, Guid questId)
+    {
+        lock (Gate)
+        {
+            if (RunsByInstance.TryGetValue(player.MapInstanceId, out var run) && !run.Finished && !run.CompletionStarted &&
+                run.Participants.ContainsKey(player.Id) && IsDungeonMap(run, player.MapId) &&
+                run.Dungeon.CompletionRequirements.HasFlag(DungeonCompletionRequirement.CompleteQuest) &&
+                run.Dungeon.CompletionQuestId == questId && !run.QuestCompleted)
+            {
+                run.QuestCompleted = true;
+                run.QuestObjectiveDirty = true;
+            }
         }
     }
 
@@ -457,6 +476,18 @@ internal static partial class DungeonRunRuntime
 
         foreach (var run in expired)
             Fail(run, "TIME EXPIRED", reviveDeadPlayers: false, offerRetry: false);
+
+        Run[] questRuns;
+        lock (Gate)
+        {
+            questRuns = RunsByInstance.Values.Where(run => !run.Finished && !run.CompletionStarted && run.QuestObjectiveDirty).ToArray();
+            foreach (var run in questRuns) run.QuestObjectiveDirty = false;
+        }
+        foreach (var run in questRuns)
+        {
+            EvaluateCompletion(run);
+            if (!run.Finished && !run.CompletionStarted) BroadcastObjectives(run);
+        }
     }
 
     private static void EvaluateCompletion(Run run)
@@ -476,7 +507,8 @@ internal static partial class DungeonRunRuntime
             (requirements & DungeonCompletionRequirement.DefeatAllMonsters) == 0 ||
             CountAliveMonsters(run) == 0;
 
-        if (bossDone && allMonstersDone)
+        var questDone = !requirements.HasFlag(DungeonCompletionRequirement.CompleteQuest) || run.QuestCompleted;
+        if (bossDone && allMonstersDone && questDone)
             Complete(run);
     }
 
@@ -502,8 +534,9 @@ internal static partial class DungeonRunRuntime
         return count;
     }
 
-    private static string BuildObjectiveText(Run run)
+    private static string BuildObjectiveText(Run run, string language = "en")
     {
+        string T(string text) => Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(text,language);
         var requirements = run.Dungeon.CompletionRequirements;
         if (requirements == DungeonCompletionRequirement.None)
             requirements = DungeonCompletionRequirement.DefeatFinalBoss;
@@ -511,12 +544,25 @@ internal static partial class DungeonRunRuntime
         var parts = new List<string>();
 
         if ((requirements & DungeonCompletionRequirement.DefeatFinalBoss) != 0)
-            parts.Add(run.BossDefeated ? "Boss defeated" : "Defeat final boss");
+            parts.Add(T(run.BossDefeated ? "Boss defeated" : "Defeat final boss"));
 
         if ((requirements & DungeonCompletionRequirement.DefeatAllMonsters) != 0)
-            parts.Add($"{CountAliveMonsters(run)} monsters remaining");
+            parts.Add(string.Format(T("{0} monsters remaining"),CountAliveMonsters(run)));
 
-        return parts.Count == 0 ? "Complete the dungeon." : string.Join(" • ", parts);
+        if (requirements.HasFlag(DungeonCompletionRequirement.CompleteQuest))
+        {
+            var name = QuestDescriptor.Get(run.Dungeon.CompletionQuestId)?.Name ?? T("Quest");
+            name = Intersect.Server.Localization.ContentTranslationRuntime.Translate(name,language);
+            parts.Add(string.Format(T(run.QuestCompleted ? "Quest completed: {0}" : "Complete quest: {0}"),name));
+        }
+
+        return parts.Count == 0 ? T("Complete the dungeon.") : string.Join(" • ", parts);
+    }
+
+    private static void BroadcastObjectives(Run run)
+    {
+        foreach (var player in GetParticipants(run))
+            player.SendPacket(CreatePacket(run,DungeonRunStatus.Active,BuildObjectiveText(run,player.Client?.LanguageCode??"en")));
     }
 
     private static void FinishComplete(Run run)

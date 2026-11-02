@@ -6684,6 +6684,7 @@ public partial class Player : Entity
                                 questProgress.Completed = true;
                                 questProgress.TaskId = Guid.Empty;
                                 questProgress.TaskProgress = -1;
+                                Intersect.Server.Dungeons.DungeonRunRuntime.OnQuestCompleted(this,questId);
                                 if (quest.Tasks[i].CompletionEvent != null)
                                 {
                                     EnqueueStartCommonEvent(quest.Tasks[i].CompletionEvent);
@@ -6751,6 +6752,7 @@ public partial class Player : Entity
 
                 if (!wasAlreadyCompleted)
                 {
+                    Intersect.Server.Dungeons.DungeonRunRuntime.OnQuestCompleted(this,questId);
                     AchievementRuntime.AddProgress(
                         this,
                         Intersect.Framework.Core.Achievements.AchievementObjectiveType.QuestCompletions,
