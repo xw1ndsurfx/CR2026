@@ -1,6 +1,6 @@
-﻿using MessagePack;
+using MessagePack;
 namespace Intersect.Network.Packets.PartyLobbies;
-public enum LobbyActivity { Dungeon, Invasion, WorldBoss, Alchemy, Poker, Blackjack, Roulette, Lumberjack, HouseParty, Looting, Cooking, Naval, PvP, Jousting }
+public enum LobbyActivity { Dungeon, Invasion, WorldBoss, Alchemy, Poker, Blackjack, Roulette, Lumberjack, HouseParty, Looting, Cooking, Naval, PvP, Jousting, RollTheDice }
 public enum LobbyAction { Browse, Create, Join, Close, Travel, Leave }
 [MessagePackObject]
 public partial class PartyLobbyRequestPacket : IntersectPacket

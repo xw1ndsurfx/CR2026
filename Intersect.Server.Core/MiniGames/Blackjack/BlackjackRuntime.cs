@@ -43,7 +43,7 @@ internal static class BlackjackRuntime
             lock(player.EntityLock)
             lock(player.User.PokerSaveGate)
             {
-                if(PokerRuntime.HasSeat(player.Id))return new(PokerRegistryError.AlreadyAtAnotherTable);
+                if(Intersect.Server.MiniGames.Dice.DiceRuntime.Contains(player.Id) || PokerRuntime.HasSeat(player.Id))return new(PokerRegistryError.AlreadyAtAnotherTable);
                 if(player.Client is not {IsEditor:false} client || !player.TryCapturePokerPresence(out var presence))return new(PokerRegistryError.InvalidPresence);
                 if(command.CurrencyItemId!=Guid.Empty && !MiniGameCurrency.IsCompatible(ItemDescriptor.Get(command.CurrencyItemId)))
                     throw new MoneyRuleException("Invalid table currency.");

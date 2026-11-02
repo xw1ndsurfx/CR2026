@@ -18,7 +18,7 @@ public sealed class FrmLobbyConfiguration : DarkForm
         {
             var value=_working.Activities.FirstOrDefault(a=>a.Activity==activity);
             if(value==null)_working.Activities.Add(value=new(){Activity=activity});
-            var name=activity switch { LobbyActivity.WorldBoss=>"World Boss",LobbyActivity.HouseParty=>"House Party",LobbyActivity.Naval=>"Naval crew",LobbyActivity.Jousting=>"Royal Jousting",_=>activity.ToString()};
+            var name=activity switch { LobbyActivity.RollTheDice=>"Roll the Dice",LobbyActivity.WorldBoss=>"World Boss",LobbyActivity.HouseParty=>"House Party",LobbyActivity.Naval=>"Naval crew",LobbyActivity.Jousting=>"Royal Jousting",_=>activity.ToString()};
             grid.Controls.Add(new Label{Text=T(name),AutoSize=true,Anchor=AnchorStyles.Left});
             var image=new TextBox {Text=value.Image,Dock=DockStyle.Fill,MaxLength=160};grid.Controls.Add(image);
             var max=new NumericUpDown{Minimum=1,Maximum=100,Value=value.MaximumMembers,Dock=DockStyle.Fill};grid.Controls.Add(max);_rows.Add((value,image,max));

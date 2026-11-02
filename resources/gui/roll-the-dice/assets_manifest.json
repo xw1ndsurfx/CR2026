@@ -1,0 +1,112 @@
+{
+  "source": "Roll_the_Dice_Work_2026-11-02.zip",
+  "assets": [
+    {
+      "file": "resources/gui/roll-the-dice/dice_result_01.png",
+      "source_filename": "dice_result_01(1).png",
+      "width": 256,
+      "height": 256,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "sha256": "1ed55c9fca6db62ef320182507198d546d0b75675082d5afa67d7def69b69d1f",
+      "size_bytes": 7250,
+      "face_value": 1
+    },
+    {
+      "file": "resources/gui/roll-the-dice/dice_result_02.png",
+      "source_filename": "dice_result_02(1).png",
+      "width": 256,
+      "height": 256,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "sha256": "1a7de0ef50a74e7935412093dd9206d9de551c79af42528099bbcbe2d155e8dc",
+      "size_bytes": 8419,
+      "face_value": 2
+    },
+    {
+      "file": "resources/gui/roll-the-dice/dice_result_03.png",
+      "source_filename": "dice_result_03(1).png",
+      "width": 256,
+      "height": 256,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "sha256": "333eede6dd8896dff435ba43cfadfcaa463b359ad590f238caabaf779841cfd0",
+      "size_bytes": 9270,
+      "face_value": 3
+    },
+    {
+      "file": "resources/gui/roll-the-dice/dice_result_04.png",
+      "source_filename": "dice_result_04(1).png",
+      "width": 256,
+      "height": 256,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "sha256": "9dd0557ee014e28e074512ee1de667c0b53b906c46facee48688f92d50078ec4",
+      "size_bytes": 10200,
+      "face_value": 4
+    },
+    {
+      "file": "resources/gui/roll-the-dice/dice_result_05.png",
+      "source_filename": "dice_result_05(1).png",
+      "width": 256,
+      "height": 256,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "sha256": "4b19b9c148decc95f0d88bbc2aa7fa7b21b9d3b3841f668725170b87f3aa3bc9",
+      "size_bytes": 11178,
+      "face_value": 5
+    },
+    {
+      "file": "resources/gui/roll-the-dice/dice_result_06.png",
+      "source_filename": "dice_result_06(1).png",
+      "width": 256,
+      "height": 256,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "sha256": "ae8f33f1ee997445a12e0a30300ee10b92de34ef93ed46ac8758dd3e502085c7",
+      "size_bytes": 11185,
+      "face_value": 6
+    },
+    {
+      "file": "resources/gui/roll-the-dice/roll_the_dice.png",
+      "source_filename": "roll_the_dice(1).png",
+      "width": 256,
+      "height": 2048,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "sha256": "14d385e8e3f612cd1713fedbe348eb83253a0828c152974210dae156d65537cd",
+      "size_bytes": 197241,
+      "frames": 8,
+      "columns": 1,
+      "rows": 8,
+      "frame_width": 256,
+      "frame_height": 256,
+      "frame_order": "top_to_bottom",
+      "frame_origin": [
+        128,
+        128
+      ]
+    }
+  ]
+}
