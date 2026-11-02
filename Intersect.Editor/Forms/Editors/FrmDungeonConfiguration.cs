@@ -134,6 +134,15 @@ public sealed partial class FrmDungeonConfiguration : DarkForm
         Dock = DockStyle.Fill,
         DropDownStyle = ComboBoxStyle.DropDownList,
     };
+    private readonly DarkCheckBox _requireQuest = new()
+    {
+        Text = Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Complete the selected quest", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName),
+        AutoSize = true,
+    };
+    private readonly DarkComboBox _completionQuest = new()
+    {
+        Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList,
+    };
     private readonly DarkNumericUpDown _completionExperience = Numeric(0, 2_000_000_000);
     private readonly DarkComboBox _completionItem = new()
     {
@@ -457,6 +466,9 @@ public sealed partial class FrmDungeonConfiguration : DarkForm
         AddRow(table, "Objective", _requireFinalBoss);
         AddRow(table, "Objective", _requireAllMonsters);
         AddRow(table, "Final boss NPC", _finalBoss);
+        AddRow(table, Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Quest objective", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName), _requireQuest);
+        AddRow(table, Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Quest to complete", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName), _completionQuest);
+        AddRow(table, "", new Label { AutoSize=true, MaximumSize=new Size(700,0), Text=Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("A participant must complete this quest during the run. All selected objectives are required.", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName) });
         var chest = new Button { Text = ChestText("Configure completion chest"), Height = 32, Dock = DockStyle.Fill };
         chest.Click += (_,_) => ConfigureChest();
         AddRow(table, ChestText("Completion chest"), chest);
@@ -716,6 +728,8 @@ public sealed partial class FrmDungeonConfiguration : DarkForm
         _requireAllMonsters.Checked =
             (_selected.CompletionRequirements & DungeonCompletionRequirement.DefeatAllMonsters) != 0;
         SelectId(_finalBoss, _selected.FinalBossNpcId);
+        _requireQuest.Checked = _selected.CompletionRequirements.HasFlag(DungeonCompletionRequirement.CompleteQuest);
+        SelectId(_completionQuest, _selected.CompletionQuestId);
         _completionExperience.Value = Math.Clamp(_selected.CompletionExperience, 0, 2_000_000_000);
         SelectId(_completionItem, _selected.CompletionItemId);
         _completionItemQuantity.Value = Math.Clamp(_selected.CompletionItemQuantity, 0, 1_000_000_000);
@@ -763,7 +777,7 @@ public sealed partial class FrmDungeonConfiguration : DarkForm
                      _minimumLevel, _recommendedLevel, _maximumLevel,
                      _minimumParty, _maximumParty, _timeLimit, _premiumRequired, _sortOrder,
                      _maps, _npcRespawn, _maxLives,
-                     _requireFinalBoss, _requireAllMonsters, _finalBoss, _completionExperience, _completionItem,
+                     _requireFinalBoss, _requireAllMonsters, _finalBoss, _requireQuest, _completionQuest, _completionExperience, _completionItem,
                      _completionItemQuantity, _completionEvent, _failureEvent,
                      _exitMap, _exitX, _exitY, _exitDirection,
                      _availabilityMode, _manualAvailable, _days, _startTime, _endTime,
@@ -823,6 +837,9 @@ public sealed partial class FrmDungeonConfiguration : DarkForm
         if (_requireAllMonsters.Checked)
             _selected.CompletionRequirements |= DungeonCompletionRequirement.DefeatAllMonsters;
         _selected.FinalBossNpcId = (_finalBoss.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
+        if (_requireQuest.Checked)
+            _selected.CompletionRequirements |= DungeonCompletionRequirement.CompleteQuest;
+        _selected.CompletionQuestId = (_completionQuest.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
         _selected.CompletionExperience = (long)_completionExperience.Value;
         _selected.CompletionItemId = (_completionItem.SelectedItem as IdChoice)?.Id ?? Guid.Empty;
         _selected.CompletionItemQuantity = (int)_completionItemQuantity.Value;
@@ -927,6 +944,7 @@ public sealed partial class FrmDungeonConfiguration : DarkForm
 
         Fill(_associatedQuest, quests);
         Fill(_requiredQuestInProgress, quests);
+        Fill(_completionQuest, quests);
     }
 
     private void FillCompletionChoices()

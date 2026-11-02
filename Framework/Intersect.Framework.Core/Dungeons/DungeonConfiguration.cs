@@ -21,6 +21,7 @@ public enum DungeonCompletionRequirement
     None = 0,
     DefeatFinalBoss = 1 << 0,
     DefeatAllMonsters = 1 << 1,
+    CompleteQuest = 1 << 2,
 }
 
 public enum DungeonAvailabilityMode
@@ -68,6 +69,7 @@ public sealed class DungeonDefinition
     // Completion / objectives
     public DungeonCompletionRequirement CompletionRequirements { get; set; } = DungeonCompletionRequirement.DefeatFinalBoss;
     public Guid FinalBossNpcId { get; set; }
+    public Guid CompletionQuestId { get; set; }
     public long CompletionExperience { get; set; }
     public Guid CompletionItemId { get; set; }
     public int CompletionItemQuantity { get; set; }
@@ -116,6 +118,8 @@ public sealed class DungeonDefinition
         MinimumPartySize is >= 1 and <= 100 &&
         MaximumPartySize is >= 1 and <= 100 &&
         MaximumPartySize >= MinimumPartySize &&
+        (CompletionRequirements & ~(DungeonCompletionRequirement.DefeatFinalBoss | DungeonCompletionRequirement.DefeatAllMonsters | DungeonCompletionRequirement.CompleteQuest)) == 0 &&
+        (!CompletionRequirements.HasFlag(DungeonCompletionRequirement.CompleteQuest) || CompletionQuestId != Guid.Empty) &&
         TimeLimitMinutes is >= 0 and <= 24 * 60 &&
         Chest is { IsValid: true } &&
         CompletionExperience is >= 0 and <= 2_000_000_000 &&

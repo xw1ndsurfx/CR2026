@@ -1,5 +1,110 @@
 {
   "Entries": {
+    "Owned": {
+      "en": "Owned",
+      "fr": "Possédés",
+      "es": "Adquiridos"
+    },
+    "Lobby": {
+      "en": "Lobby",
+      "fr": "Lobby",
+      "es": "Salón"
+    },
+    "Search products...": {
+      "en": "Search products...",
+      "fr": "Rechercher des produits...",
+      "es": "Buscar productos..."
+    },
+    "Old": {
+      "en": "Old",
+      "fr": "Anciens",
+      "es": "Antiguos"
+    },
+    "Price: high to low": {
+      "en": "Price: high to low",
+      "fr": "Prix décroissant",
+      "es": "Precio descendente"
+    },
+    "All products": {
+      "en": "All products",
+      "fr": "Tous les produits",
+      "es": "Todos los productos"
+    },
+    "Not owned": {
+      "en": "Not owned",
+      "fr": "Non possédés",
+      "es": "No adquiridos"
+    },
+    "No products match your filters.": {
+      "en": "No products match your filters.",
+      "fr": "Aucun produit ne correspond aux filtres.",
+      "es": "Ningún producto coincide con los filtros."
+    },
+    "Products: {0} / {1}": {
+      "en": "Products: {0} / {1}",
+      "fr": "Produits : {0} / {1}",
+      "es": "Productos: {0} / {1}"
+    },
+    "Open Stable": {
+      "en": "Open Stable",
+      "fr": "Ouvrir l’écurie",
+      "es": "Abrir el establo"
+    },
+    "Complete the selected quest": {
+      "en": "Complete the selected quest",
+      "fr": "Terminer la quête sélectionnée",
+      "es": "Completar la misión seleccionada"
+    },
+    "Quest objective": {
+      "en": "Quest objective",
+      "fr": "Objectif de quête",
+      "es": "Objetivo de misión"
+    },
+    "Quest to complete": {
+      "en": "Quest to complete",
+      "fr": "Quête à terminer",
+      "es": "Misión por completar"
+    },
+    "A participant must complete this quest during the run. All selected objectives are required.": {
+      "en": "A participant must complete this quest during the run. All selected objectives are required.",
+      "fr": "Un participant doit terminer cette quête pendant le donjon. Tous les objectifs sélectionnés sont requis.",
+      "es": "Un participante debe completar esta misión durante la incursión. Se requieren todos los objetivos seleccionados."
+    },
+    "Quest completed: {0}": {
+      "en": "Quest completed: {0}",
+      "fr": "Quête terminée : {0}",
+      "es": "Misión completada: {0}"
+    },
+    "Complete quest: {0}": {
+      "en": "Complete quest: {0}",
+      "fr": "Terminer la quête : {0}",
+      "es": "Completar misión: {0}"
+    },
+    "Boss defeated": {
+      "en": "Boss defeated",
+      "fr": "Boss vaincu",
+      "es": "Jefe derrotado"
+    },
+    "Defeat final boss": {
+      "en": "Defeat final boss",
+      "fr": "Vaincre le boss final",
+      "es": "Derrotar al jefe final"
+    },
+    "{0} monsters remaining": {
+      "en": "{0} monsters remaining",
+      "fr": "{0} monstres restants",
+      "es": "{0} monstruos restantes"
+    },
+    "Complete the dungeon.": {
+      "en": "Complete the dungeon.",
+      "fr": "Terminer le donjon.",
+      "es": "Completar la mazmorra."
+    },
+    "Quest": {
+      "en": "Quest",
+      "fr": "Quête",
+      "es": "Misión"
+    },
     "Mastery level-up animation": {
       "en": "Mastery level-up animation",
       "fr": "Animation de montée de maîtrise",

@@ -798,6 +798,8 @@ public partial class FrmEvent : Form
                 tmpCommand=new GrantLootBonusCommand();break;
             case EventCommandType.OpenAdventureLobby:
                 tmpCommand=new OpenAdventureLobbyCommand();break;
+            case EventCommandType.OpenStable:
+                tmpCommand=new OpenStableCommand();break;
             case EventCommandType.OpenNavalAmmoShop:
                 tmpCommand=new OpenNavalAmmoShopCommand();
                 break;
@@ -913,7 +915,7 @@ public partial class FrmEvent : Form
         var shops = lstCommands.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == "shopandbank");
         if(shops!=null)
         {
-            foreach(var (id,caption) in new[]{(EventCommandType.GrantExperienceBonus,"Grant EXP bonus"),(EventCommandType.GrantLootBonus,"Grant loot bonus"),(EventCommandType.OpenAdventureLobby,"Open adventure lobby")})
+            foreach(var (id,caption) in new[]{(EventCommandType.GrantExperienceBonus,"Grant EXP bonus"),(EventCommandType.GrantLootBonus,"Grant loot bonus"),(EventCommandType.OpenAdventureLobby,"Open adventure lobby"),(EventCommandType.OpenStable,"Open Stable")})
                 if(!shops.Nodes.Cast<TreeNode>().Any(n=>n.Tag is int value && value==(int)id))
                     shops.Nodes.Add(new TreeNode(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(caption,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)){Name=id.ToString(),Tag=(int)id});
         }
@@ -1743,6 +1745,8 @@ public partial class FrmEvent : Form
             case EventCommandType.OpenLogiklikNews:
                 break;
             case EventCommandType.OpenMarketplace:
+                break;
+            case EventCommandType.OpenStable:
                 break;
             case EventCommandType.StartDungeon:
                 cmdWindow = new EventCommand_StartDungeon((StartDungeonCommand)command, this);

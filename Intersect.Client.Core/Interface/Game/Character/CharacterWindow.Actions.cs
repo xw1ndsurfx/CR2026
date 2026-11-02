@@ -12,12 +12,12 @@ public partial class CharacterWindow
     {
         // Keep the legacy character.png at its authored dimensions. Stretching
         // the whole window moves its painted stat/equipment backgrounds away
-        // from the JSON controls. Seven actions fit in three compact rows.
+        // from the JSON controls. Four actions fit in two compact rows.
         const int margin = 12, gap = 4, height = 22;
         var width = Math.Max(60, (mCharacterWindow.Width - 2 * margin - 2 * gap) / 3);
         var statsBottom = new[] { mAttackLabel, mDefenseLabel, mSpeedLabel, mAbilityPwrLabel, mMagicRstLabel }
             .Max(label => label.Bottom);
-        var footerHeight = 3 * height + 2 * gap;
+        var footerHeight = 2 * height + gap;
         var preferredTop = _detailsButton.Y;
         var actions = new ScrollControl(mCharacterWindow, "CharacterActions")
         {
@@ -47,10 +47,7 @@ public partial class CharacterWindow
             () => PacketSender.SendRequestAchievementState(openWindow: true));
         _petsButton = Action(nameof(_petsButton), ClientLanguages.Text("Pets"), ClientLanguages.Text("Pets"), 2, 0,
             () => PacketSender.SendRequestPetState(openWindow: true));
-        Action("CharacterMounts", ClientLanguages.Text("Mounts"), ClientLanguages.Text("Mounts"), 0, 1, () => MountsWindow.Open());
-        Action("CharacterJoust", ClientLanguages.Text("Jousting"), ClientLanguages.Text("Royal Jousting"), 1, 1, () => JoustWindow.Open());
-        Action("CharacterArchery", ClientLanguages.Text("Archery"), ClientLanguages.Text("Royal Archery Training"), 2, 1, () => ArcheryWindow.Open());
-        Action("CharacterMasteries", ClientLanguages.Text("Weapon Masteries"), ClientLanguages.Text("Weapon Masteries"), 0, 2,
+        Action("CharacterMasteries", ClientLanguages.Text("Weapon Masteries"), ClientLanguages.Text("Weapon Masteries"), 0, 1,
             () => GameInterface.OpenWeaponMasteries(), wide: true);
         void LayoutActions()
         {

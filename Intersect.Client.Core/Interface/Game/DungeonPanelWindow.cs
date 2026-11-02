@@ -316,6 +316,9 @@ internal sealed class DungeonPanelWindow : Window
             objectives.Add("Final Boss");
         if ((requirements & DungeonCompletionRequirement.DefeatAllMonsters) != 0)
             objectives.Add("All Monsters");
+        if (requirements.HasFlag(DungeonCompletionRequirement.CompleteQuest))
+            objectives.Add(Intersect.Client.Localization.ClientLanguages.Format("Complete quest: {0}",
+                Intersect.Client.Localization.ClientLanguages.ContentText(QuestDescriptor.Get(selected.CompletionQuestId)?.Name ?? Intersect.Client.Localization.ClientLanguages.Text("Quest"))));
 
         var rewardParts = new List<string>();
         if (selected.CompletionExperience > 0)

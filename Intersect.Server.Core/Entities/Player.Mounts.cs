@@ -20,6 +20,16 @@ public partial class Player
     [NotMapped, JsonIgnore] public Guid ActiveMountId { get; private set; }
     private long _lastMountAction;
     private long _lastMountList;
+    private Guid _stableMap, _stableInstance;
+    private int _stableX, _stableY;
+    private bool _stableOpened;
+    internal void OpenStableFromEvent()
+    {
+        _stableMap=MapId;_stableInstance=MapInstanceId;_stableX=X;_stableY=Y;_stableOpened=true;
+        SendMountState(true);
+    }
+    private bool IsAtStable => _stableOpened && MapId==_stableMap && MapInstanceId==_stableInstance &&
+        Math.Abs(X-_stableX)<=2 && Math.Abs(Y-_stableY)<=2;
     internal MountDefinition? ActiveMount => ActiveMountId == Guid.Empty ? null : MountRuntime.Find(ActiveMountId);
     public override float GetMovementTime() => ScriptedMovementMilliseconds > 0 ? ScriptedMovementMilliseconds :
         base.GetMovementTime() / (float)(ActiveMount?.SpeedMultiplier ?? 1);
@@ -47,6 +57,7 @@ public partial class Player
         {
             if (packet.Action == MountAction.List)
             {
+                if (!IsAtStable) return;
                 var requested = Timing.Global.Milliseconds;
                 if (_lastMountList > 0 && requested - _lastMountList < 300) return;
                 _lastMountList = requested; SendMountState(true); return;
@@ -58,6 +69,7 @@ public partial class Player
             _lastMountAction = now;
             if (packet.Action == MountAction.Toggle && ActiveMountId != Guid.Empty &&
                 (packet.MountId == Guid.Empty || packet.MountId == ActiveMountId)) { Dismount(); return; }
+            if (!IsAtStable) return;
             var id = packet.MountId == Guid.Empty ? PetCollection.Mounts.Favorite : packet.MountId;
             if (id == Guid.Empty) { SendMountState(message: "Choose a favorite mount first."); return; }
             var mount = MountRuntime.Find(id);
@@ -86,7 +98,7 @@ public partial class Player
                 foreach (var id in added) PetCollection.Mounts.Owned.Remove(id);
                 SendMountState(message: "Changes could not be saved."); return true;
             }
-            SendMountState(true, "Mount unlocked."); return true;
+            SendMountState(IsAtStable, "Mount unlocked."); return true;
         }
     }
     private bool PersistMountChange(Func<bool>? persist = null)
