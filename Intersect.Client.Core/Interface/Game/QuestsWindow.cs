@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.GenericClasses;
 using Intersect.Client.Framework.Gwen;
@@ -337,6 +337,7 @@ public partial class QuestsWindow
     private void _backButton_Clicked(Base sender, MouseButtonState arguments)
     {
         mSelectedQuest = null;
+        _selectedContract = Guid.Empty;
         UpdateSelectedQuest();
     }
 
@@ -347,6 +348,7 @@ public partial class QuestsWindow
         if (!mQuestsWindow.IsVisibleInTree)
         {
             _shouldUpdateList |= shouldUpdateList;
+            if (_selectedContract != Guid.Empty && Globals.Me != null) UpdateInternal(false);
             return;
         }
 
@@ -360,6 +362,7 @@ public partial class QuestsWindow
 
     private void UpdateInternal(bool shouldUpdateList)
     {
+        if (_contractVersion != RoyalContractJournal.Version) { _contractVersion = RoyalContractJournal.Version; shouldUpdateList = true; }
         if (shouldUpdateList)
         {
             UpdateQuestList();
@@ -381,6 +384,7 @@ public partial class QuestsWindow
         UpdateQuestTrackerPosition();
         mQuestTaskHudPanel.BringToFront();
 
+        if (UpdateContractTracker()) return;
         if (mSelectedQuest == null || !Globals.Me.QuestProgress.ContainsKey(mSelectedQuest.Id))
         {
             HideQuestTracker();
@@ -395,6 +399,7 @@ public partial class QuestsWindow
             return;
         }
 
+        mQuestTaskHudHeader.Text = ClientLanguages.Text("CURRENT QUEST");
         var mainText = currentTask.Description ?? string.Empty;
         if (mainText.Length > 600)
         {
@@ -676,6 +681,7 @@ public partial class QuestsWindow
     private void UpdateQuestList()
     {
         _questList.RemoveAllRows();
+        AddContractsToJournal();
         if (Globals.Me != null)
         {
             var quests = QuestDescriptor.Lookup.Values;
@@ -846,12 +852,14 @@ public partial class QuestsWindow
             return;
         }
 
+        _selectedContract = Guid.Empty;
         mSelectedQuest = questDescriptor;
         UpdateSelectedQuest();
     }
 
     private void UpdateSelectedQuest()
     {
+        if (ShowContractDetails()) return;
         var detail = mSelectedQuest != null;
         mQuestsWindow.Title = Strings.QuestLog.Title;
         mQuestJournalHeading.IsHidden = detail;
@@ -1180,6 +1188,8 @@ public partial class QuestsWindow
 
     public void Show()
     {
+        Intersect.Client.Networking.Network.SendPacket(new Intersect.Network.Packets.Client.RoyalContractRequestPacket { Action = Intersect.Framework.Core.RoyalContracts.RoyalContractAction.Journal });
+        UpdateQuestList();
         if (_shouldUpdateList)
         {
             UpdateInternal(_shouldUpdateList);

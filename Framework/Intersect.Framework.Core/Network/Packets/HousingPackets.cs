@@ -1,6 +1,6 @@
 ﻿using MessagePack;
 namespace Intersect.Network.Packets.Housing;
-public enum HouseAction { Open, Visit, Leave, SetPublic, Buy, Place, Remove, StorePet, CollectPet, Interact, SaveLayout, LoadLayout, DeleteLayout, InviteFriend, AcceptInvitation, DeclineInvitation }
+public enum HouseAction { Open, Visit, Leave, SetPublic, Buy, Place, Remove, StorePet, CollectPet, Interact, SaveLayout, LoadLayout, DeleteLayout, InviteFriend, AcceptInvitation, DeclineInvitation, Directory }
 [MessagePackObject]
 public partial class HouseActionPacket : IntersectPacket
 {
@@ -20,6 +20,7 @@ public partial class HouseStatePacket : IntersectPacket
     [Key(0)] public string Json { get; set; } = string.Empty;
     [Key(1)] public bool OpenWindow { get; set; }
     [Key(2)] public string Message { get; set; } = string.Empty;
+    [Key(4)] public bool FurnitureShop { get; set; }
     [Key(3)] public string WorldJson { get; set; } = string.Empty;
 }
 [MessagePackObject]

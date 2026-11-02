@@ -71,6 +71,7 @@ internal static partial class HousingRuntime
             try
             {
                 if (request.Action != HouseAction.Leave && (player.NavalShipId!=Guid.Empty || Intersect.Server.Dungeons.DungeonRunRuntime.IsPlayerInActiveRun(player))) return;
+                if (request.Action == HouseAction.Directory) { SendDirectory(player, request.X, request.Name); return; }
                 if (request.Action == HouseAction.Open) { Snapshots[player.Id] = new(player.HousingJson, player.House.Public); Send(player, request.OwnerId, true); return; }
                 if (request.Action == HouseAction.Leave) { Leave(player); return; }
                 if (!Configuration.Enabled) { Send(player, player.Id, true, "Housing is not available yet."); return; }
@@ -87,6 +88,7 @@ internal static partial class HousingRuntime
                     {
                         case HouseAction.SetPublic: house.Public = request.Public; break;
                         case HouseAction.Buy:
+                            if (!AtFurnitureShop(player)) throw new InvalidOperationException("Return to the furniture merchant.");
                             var offer = Configuration.Catalog.FirstOrDefault(f => f.Id == request.Id && f.Available(DateTime.UtcNow));
                             if (offer == null) throw new InvalidOperationException("This offer is unavailable or you do not have enough currency.");
                             RequireFurniturePremium(offer, player.User != null && LogiCoinPurchaseRuntime.HasActivePremium(player));
@@ -157,9 +159,9 @@ internal static partial class HousingRuntime
                 if (!player.House.Public)
                     foreach (var visitor in Visits.Values.Where(v => v.Owner == player.Id && v.Player.Id != player.Id && !v.Invited).ToArray()) Evictions[visitor.Player.Id] = 1;
                 BroadcastOwner(player);
-                Send(player, player.Id, request.Action != HouseAction.Place, "House saved.");
+                Send(player, player.Id, request.Action != HouseAction.Place, "House saved.", request.Action == HouseAction.Buy);
             }
-            catch (Exception exception) { Send(player, player.Id, true, exception is InvalidOperationException ? exception.Message : "Your house could not be saved. Please try again."); }
+            catch (Exception exception) { Send(player, player.Id, true, exception is InvalidOperationException ? exception.Message : "Your house could not be saved. Please try again.", request.Action == HouseAction.Buy); }
         }
     }
     private static void RequireFurniturePremium(FurnitureDefinition furniture, bool premiumActive)
@@ -286,7 +288,7 @@ internal static partial class HousingRuntime
                 owned.Definition.PremiumRequired = definition.PremiumRequired;
             }
     }
-    private static void Send(Player requester, Guid ownerId, bool open, string message = "")
+    private static void Send(Player requester, Guid ownerId, bool open, string message = "", bool furnitureShop = false)
     {
         if (ownerId == Guid.Empty) ownerId = Visits.TryGetValue(requester.Id, out var visiting) ? visiting.Owner : requester.Id;
         var owner = ownerId == requester.Id ? requester : Player.FindOnline(ownerId) ?? Player.Find(ownerId);
@@ -298,7 +300,7 @@ internal static partial class HousingRuntime
         var view = new HouseView
         { OwnerId = ownerId, OwnerName = owner.Name, IsOwner = ownerId == requester.Id, PremiumActive = requester.User != null && LogiCoinPurchaseRuntime.HasActivePremium(requester), Inside = inside, Enabled = Configuration.Enabled,
             MapId = inside ? visit!.Map : Configuration.TemplateMapId, Month = DateTime.UtcNow.ToString("yyyy-MM"), House = profile,
-            Catalog = ownerId == requester.Id ? Configuration.Catalog.Where(f => f.Available(DateTime.UtcNow)).ToList() : [] };
+            Catalog = ownerId == requester.Id && furnitureShop && AtFurnitureShop(requester) ? Configuration.Catalog.Where(f => f.Available(DateTime.UtcNow)).ToList() : [] };
         var world = "";
         if (Visits.TryGetValue(requester.Id, out var current))
         {
@@ -312,6 +314,6 @@ internal static partial class HousingRuntime
                 world = JsonConvert.SerializeObject(new HouseView { OwnerId = host.Id, OwnerName = host.Name, Inside = true, IsOwner = host.Id == requester.Id, Enabled = true, MapId = current.Map, House = house });
             }
         }
-        requester.SendPacket(new HouseStatePacket { OpenWindow = open, Message = message, Json = JsonConvert.SerializeObject(view), WorldJson = world });
+        requester.SendPacket(new HouseStatePacket { FurnitureShop = furnitureShop, OpenWindow = open, Message = message, Json = JsonConvert.SerializeObject(view), WorldJson = world });
     }
 }

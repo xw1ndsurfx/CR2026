@@ -469,7 +469,7 @@ internal sealed partial class LogiCoinShopWindow : Window
             for (var index = 0; index < valid.Length; index++)
             {
                 var item = valid[index]!;
-                var texture = GameContentManager.Current.GetTexture(item.UsesSpellIcon?TextureType.Spell:TextureType.Item, item.DisplayIcon);
+                var texture = Intersect.Client.Interface.Game.ItemIconTexture.Get(item);
                 if (texture == null)
                     continue;
                 var panel = new ImagePanel(this, "BundleItem" + index)

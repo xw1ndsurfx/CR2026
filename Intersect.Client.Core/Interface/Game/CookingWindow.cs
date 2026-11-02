@@ -275,7 +275,7 @@ internal sealed partial class CookingWindow : Base
 internal static class CookingArt
 {
     internal static IGameTexture? ItemTexture(Guid id) => ItemDescriptor.TryGet(id, out var item) && !string.IsNullOrWhiteSpace(item.Icon)
-        ? GameContentManager.Current.GetTexture(item.UsesSpellIcon?TextureType.Spell:TextureType.Item, item.DisplayIcon) : null;
+        ? Intersect.Client.Interface.Game.ItemIconTexture.Get(item) : null;
     internal static void Fill(RendererBase renderer, Color color, int x, int y, int w, int h)
     { if (w <= 0 || h <= 0) return; renderer.DrawColor = color; renderer.DrawFilledRect(new Rectangle(x, y, w, h)); }
     internal static void Disc(RendererBase renderer, Color color, int x, int y, int radius)

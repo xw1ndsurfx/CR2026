@@ -179,7 +179,7 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
         var header = AddHeader();
 
         // Set up the icon, if we can load it.
-        var tex = GameContentManager.Current.GetTexture(_itemDescriptor.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, _itemDescriptor.DisplayIcon);
+        var tex = Intersect.Client.Interface.Game.ItemIconTexture.Get(_itemDescriptor);
         if (tex != null)
         {
             header.SetIcon(tex, _itemDescriptor.Color);
@@ -517,6 +517,11 @@ public partial class ItemDescriptionWindow() : DescriptionWindowBase(Interface.G
             if(_itemDescriptor.Consumable.Type==Intersect.Framework.Core.GameObjects.Items.ConsumableType.ExperienceBoost)
             {
                 rows.AddKeyValueRow(Intersect.Client.Localization.ClientLanguages.Text("EXP boost"),Intersect.Client.Localization.ClientLanguages.Format("+{0}% EXP for {1} minutes",_itemDescriptor.Consumable.Percentage,(_itemDescriptor.Consumable.Value/60d).ToString("0.##")));
+            }
+            else if (_itemDescriptor.Consumable.Type == Intersect.Framework.Core.GameObjects.Items.ConsumableType.Grog)
+            {
+                rows.AddKeyValueRow(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Grog",ClientLanguages.Current),
+                    Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Green screen and vomiting; splashes nearby players.",ClientLanguages.Current));
             }
             else if (_itemDescriptor.Consumable.Value > 0 && _itemDescriptor.Consumable.Percentage > 0)
             {

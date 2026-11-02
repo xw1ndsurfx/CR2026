@@ -1737,7 +1737,7 @@ public partial class Entity : IEntity
 
         var x = (int)Math.Ceiling(Origin.X);
         var y = position == 2
-            ? GetLabelLocation(LabelType.Header) - textSize.Y - 2 * NameplateScale
+            ? GetLabelLocation(LabelType.Afk)
             : position == 0 ? GetLabelLocation(LabelType.Header) : GetLabelLocation(LabelType.Footer);
 
         if (backgroundColor != Color.Transparent)
@@ -1872,6 +1872,7 @@ public partial class Entity : IEntity
             LabelType.Name => layout.Name,
             LabelType.Header => layout.Header,
             LabelType.Guild => layout.Guild,
+            LabelType.Afk => layout.Afk,
             LabelType.ChatBubble => layout.ChatBubble,
             _ => layout.Name,
         };

@@ -110,7 +110,7 @@ internal sealed class DungeonRewardNotificationWindow : Base
 
         if (item != null && !string.IsNullOrWhiteSpace(item.Icon))
         {
-            var texture = GameContentManager.Current.GetTexture(item.UsesSpellIcon?TextureType.Spell:TextureType.Item, item.DisplayIcon);
+            var texture = Intersect.Client.Interface.Game.ItemIconTexture.Get(item);
             if (texture != null)
             {
                 _icon.Texture = texture;

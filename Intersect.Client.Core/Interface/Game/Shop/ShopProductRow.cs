@@ -54,7 +54,7 @@ internal sealed class ShopProductRow : Base
             MouseInputEnabled = true,
         };
         _icon.SetBounds(15, 12, 52, 52);
-        _icon.Texture = Globals.ContentManager?.GetTexture(item==null || item.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, item?.DisplayIcon??serviceIcon??"");
+        _icon.Texture = item==null ? Globals.ContentManager?.GetTexture(Framework.Content.TextureType.Spell,serviceIcon??"") : Intersect.Client.Interface.Game.ItemIconTexture.Get(item);
         _icon.RenderColor = item?.Color??Color.White;
         if(item!=null)_icon.HoverEnter += (_, _) => Interface.GameUi.ItemDescriptionWindow?.Show(item, 1);
         _icon.HoverLeave += (_, _) => Interface.GameUi.ItemDescriptionWindow?.Hide();

@@ -1,4 +1,4 @@
-using System.Drawing.Imaging;
+﻿using System.Drawing.Imaging;
 using DarkUI.Forms;
 using Intersect.Editor.Content;
 using Intersect.Editor.Core;
@@ -498,6 +498,7 @@ public partial class FrmItem : EditorForm
 
         cmbConsume.Items.Add(Strings.Combat.exp);
         cmbConsume.Items.Add("EXP boost potion");
+        cmbConsume.Items.Add(Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Grog (green screen and vomiting)",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
 
         grpRequirements.Text = Strings.ItemEditor.requirementsgroup;
         lblCannotUse.Text = Strings.ItemEditor.cannotuse;
@@ -818,10 +819,15 @@ public partial class FrmItem : EditorForm
     {
         mEditorItem.Consumable.Type = (ConsumableType)cmbConsume.SelectedIndex;
         var boost=mEditorItem.Consumable.Type==ConsumableType.ExperienceBoost;
+        var grog=mEditorItem.Consumable.Type==ConsumableType.Grog;
         lblVital.Text="Consumable effect:";
         lblPlus3.Text=boost?"/":"+";
-        lblInterval.Text=boost?"Seconds / EXP bonus (%)":"Interval:";
-        nudInterval.Maximum=boost?604800:Math.Max(10000,nudInterval.Value);
+        lblInterval.Text=mEditorItem.Consumable.Type==ConsumableType.Grog
+            ? Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Duration in seconds (5-120)",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName)
+            : boost?"Seconds / EXP bonus (%)":"Interval:";
+        nudInterval.Minimum=grog?5:-10000;
+        nudInterval.Maximum=grog?120:boost?604800:Math.Max(10000,nudInterval.Value);
+        nudIntervalPercentage.Enabled=!grog;lblPlus3.Visible=!grog;
         nudIntervalPercentage.Maximum=boost?1000:Math.Max(100,nudIntervalPercentage.Value);
     }
 
@@ -1356,7 +1362,19 @@ public partial class FrmItem : EditorForm
         var picItemBmp = new Bitmap(picItem.Width, picItem.Height);
         var gfx = Graphics.FromImage(picItemBmp);
         gfx.FillRectangle(Brushes.Black, new Rectangle(0, 0, picItem.Width, picItem.Height));
-        if (cmbPic.SelectedIndex > 0)
+        var pet=Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor.Lookup.Values.OfType<Intersect.Framework.Core.GameObjects.NPCs.NPCDescriptor>()
+            .FirstOrDefault(n=>n.IsPet && n.PetSummonItemId==mEditorItem?.Id && !string.IsNullOrWhiteSpace(n.Sprite));
+        var petPath=pet==null?null:Path.Combine("resources","entities",pet.Sprite);
+        if (petPath!=null && File.Exists(petPath))
+        {
+            using var sprite=Image.FromFile(petPath);
+            var width=sprite.Width/Math.Max(1,Options.Instance.Sprites.NormalFrames);
+            var height=sprite.Height/Math.Max(1,Options.Instance.Sprites.Directions);
+            var scale=Math.Min(picItem.Width/(float)Math.Max(1,width),picItem.Height/(float)Math.Max(1,height));
+            var target=new Rectangle((picItem.Width-(int)(width*scale))/2,(picItem.Height-(int)(height*scale))/2,(int)(width*scale),(int)(height*scale));
+            gfx.DrawImage(sprite,target,0,0,width,height,GraphicsUnit.Pixel);
+        }
+        else if (cmbPic.SelectedIndex > 0)
         {
             var img = Image.FromFile("resources/items/" + cmbPic.Text);
             var imgAttributes = new ImageAttributes();
@@ -1386,6 +1404,7 @@ public partial class FrmItem : EditorForm
 
         gfx.Dispose();
 
+        picItem.BackgroundImage?.Dispose();
         picItem.BackgroundImage = picItemBmp;
     }
 

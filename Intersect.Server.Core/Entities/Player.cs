@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
@@ -784,6 +784,7 @@ public partial class Player : Entity
             {
                 UpdateTutorial();
                 UpdateMount();
+                UpdateIntoxication();
                 UpdateJoust();
                 UpdateArchery();
                 // Detect inactivity from authoritative player position, including map changes.
@@ -3803,6 +3804,11 @@ public partial class Player : Entity
 
                     return;
                 case ItemType.Consumable:
+                    if (itemBase.Consumable.Type == ConsumableType.Grog)
+                    {
+                        if (TryTakeItem(Items[slot], 1)) { DrinkGrog(itemBase); if(useEvent != default) EnqueueStartCommonEvent(useEvent); }
+                        break;
+                    }
                     if(itemBase.Consumable.Type==ConsumableType.ExperienceBoost)
                     {
                         if(!ActivateExperienceBoost(slot,itemBase.Consumable.Percentage,itemBase.Consumable.Value))
@@ -5445,7 +5451,7 @@ public partial class Player : Entity
             }
         }
 
-        if (Party.Count >= Options.Instance.Party.MaximumMembers)
+        if (Party.Count >= Math.Min(Options.Instance.Party.MaximumMembers, Intersect.Server.PartyLobbies.PartyLobbyRuntime.MaximumMembersForHost(Id)))
         {
             PacketSender.SendChatMsg(this, Strings.Parties.LimitReached, ChatMessageType.Party, CustomColors.Alerts.Error);
             return false;
@@ -6680,8 +6686,10 @@ public partial class Player : Entity
                             PacketSender.SendChatMsg(this, Strings.Quests.TaskCompleted, ChatMessageType.Quest);
                             if (i == quest.Tasks.Count - 1)
                             {
-                                //Complete Quest
+                                // Complete the natural final task through the same authoritative achievement hook.
+                                var wasCompleted = questProgress.Completed;
                                 questProgress.Completed = true;
+                                if (!wasCompleted) AchievementRuntime.AddProgress(this, Intersect.Framework.Core.Achievements.AchievementObjectiveType.QuestCompletions, 1, questId);
                                 questProgress.TaskId = Guid.Empty;
                                 questProgress.TaskProgress = -1;
                                 Intersect.Server.Dungeons.DungeonRunRuntime.OnQuestCompleted(this,questId);

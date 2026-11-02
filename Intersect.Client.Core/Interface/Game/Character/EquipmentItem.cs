@@ -127,7 +127,7 @@ public partial class EquipmentItem
         mCurrentItemId = currentItemId;
         mItemProperties = itemProperties;
 
-        if (GameContentManager.Current.GetTexture(item.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, item.DisplayIcon) is not { } itemTexture)
+        if (Intersect.Client.Interface.Game.ItemIconTexture.Get(item) is not { } itemTexture)
         {
             ContentPanel.Hide();
             _loadedTexture = default;

@@ -10,8 +10,8 @@ internal readonly record struct NameplateLayout(float Footer, float Name, float 
         var footer = bottom - footerHeight;
         var name = footer - (footerHeight > 0 ? gap : 0) - nameHeight;
         var header = name - (headerHeight > 0 ? headerHeight + gap : 0);
-        var afk = header - (afkHeight > 0 ? afkHeight + gap : 0);
-        var guild = afk - (guildHeight > 0 ? guildHeight + gap : 0);
-        return new(footer, name, header, afk, guild, guild - 6 * spacingScale);
+        var guild = header - (guildHeight > 0 ? guildHeight + gap : 0);
+        var afk = guild - (afkHeight > 0 ? afkHeight + gap : 0);
+        return new(footer, name, header, afk, guild, afk - 6 * spacingScale);
     }
 }

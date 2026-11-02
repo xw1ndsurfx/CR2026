@@ -1,4 +1,4 @@
-using Intersect.Core;
+﻿using Intersect.Core;
 using Microsoft.Extensions.Logging;
 using Intersect.Framework.Core;
 using Intersect.Framework.Core.GameObjects.Items;
@@ -13,6 +13,7 @@ namespace Intersect.Server.Naval;
 internal static partial class NavalSystem
 {
     private static readonly Dictionary<Guid,Dictionary<NavalTaskKind,long>> QuestUpdates=[];
+    private static readonly Dictionary<Guid,int> BoardingContractUpdates=[];
     private static void QueueNavalTask(Guid actor,NavalTaskKind kind,long amount)
     {if(actor==Guid.Empty || amount<=0)return;if(!QuestUpdates.TryGetValue(actor,out var changes))QuestUpdates[actor]=changes=[];changes[kind]=Math.Min(200000000000000L,changes.GetValueOrDefault(kind)+amount);}
     private static bool SaveManagement(Player p)
@@ -312,6 +313,9 @@ internal static partial class NavalSystem
         }
         else if(p.NavalShipId==Guid.Empty)p.NavalPartyExitRequested=false;
 
+        int boardings;
+        lock(Gate) BoardingContractUpdates.Remove(p.Id,out boardings);
+        if(boardings>0) Intersect.Server.RoyalContracts.RoyalContractsRuntime.Observe(p,Intersect.Framework.Core.RoyalContracts.RoyalContractObjective.ShipsBoarded,Guid.Empty,boardings);
         Dictionary<NavalTaskKind,long> changes;lock(Gate){QuestUpdates.Remove(p.Id,out changes);}
         if(changes!=null)foreach(var pair in changes)p.UpdateNavalQuestTasks(pair.Key,pair.Value);
         if(p.Quests.Count>0){p.UpdateNavalQuestTasks(NavalTaskKind.SailingLevel,_settings.Sailing.Progress(p.SailingExperience).Level);

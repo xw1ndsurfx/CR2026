@@ -529,12 +529,12 @@ public partial class InventoryItem : SlotItem
             Icon.RenderColor.A = descriptor.Color.A;
         }
 
-        if (Icon.TextureFilename == descriptor.Icon)
+        if (Icon.Texture == Intersect.Client.Interface.Game.ItemIconTexture.Get(descriptor))
         {
             return;
         }
 
-        var itemTexture = GameContentManager.Current.GetTexture(descriptor.UsesSpellIcon?Framework.Content.TextureType.Spell:Framework.Content.TextureType.Item, descriptor.DisplayIcon);
+        var itemTexture = Intersect.Client.Interface.Game.ItemIconTexture.Get(descriptor);
         if (itemTexture != null)
         {
             Icon.Texture = itemTexture;

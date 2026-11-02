@@ -1,4 +1,4 @@
-using Intersect.Framework.Core.Naval;
+﻿using Intersect.Framework.Core.Naval;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen;
 using Intersect.Client.Framework.Gwen.Control;
@@ -132,10 +132,13 @@ internal sealed class PartyLobbyWindow : Window
         foreach(var lobby in entries)
         {
             var card=new LobbyCard(_rows,"Lobby"+lobby.Id,lobby.Id==_state.CurrentLobbyId); card.SetBounds(0,y,width,94);
-            var textWidth=actionX-20;
-            Label(card,"Host",10,5,textWidth,24,Gold).Text=lobby.HostName+"  -  "+lobby.Players+" / "+lobby.Capacity;
-            var title=Label(card,"Title",10,29,textWidth,24,Cream); title.Text=string.IsNullOrEmpty(lobby.Title)?ActivityName(lobby.Activity):lobby.Title;
-            var activity=Label(card,"Activity",10,54,textWidth,30,Cream);
+            var image = string.IsNullOrWhiteSpace(lobby.Image) ? null : GameContentManager.Current.GetTexture(Intersect.Client.Framework.Content.TextureType.Gui,lobby.Image);
+            var imageOffset = image == null ? 0 : 92;
+            if (image != null) { var portrait = new ImagePanel(card) { Texture=image, MaintainAspectRatio=true, MouseInputEnabled=false }; portrait.SetBounds(6,6,82,82); }
+            var textWidth=actionX-20-imageOffset;
+            Label(card,"Host",10+imageOffset,5,textWidth,24,Gold).Text=lobby.HostName+"  -  "+lobby.Players+" / "+lobby.Capacity;
+            var title=Label(card,"Title",10+imageOffset,29,textWidth,24,Cream); title.Text=string.IsNullOrEmpty(lobby.Title)?ActivityName(lobby.Activity):lobby.Title;
+            var activity=Label(card,"Activity",10+imageOffset,54,textWidth,30,Cream);
             activity.Text=ActivityName(lobby.Activity)+(string.IsNullOrEmpty(lobby.DungeonName)?"":" - "+ClientLanguages.ContentText(lobby.DungeonName));
             card.SetToolTipText(string.Join(", ",lobby.Members)+"\n"+lobby.Title+"\n"+activity.Text);
             var mine=lobby.Id==_state.CurrentLobbyId;

@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Reflection;
 using Intersect;
 using Intersect.Client.Framework.Gwen.Control;
@@ -26,11 +26,18 @@ internal static class Program
         typeof(Options).GetProperty(nameof(Options.Instance))!.SetValue(null, new Options());
         var content = new TestContentManager();
         foreach (var file in new[] { "board.png", "parchment.png" }) content.AddGuiTexture("royal-contracts/" + file, new BitmapTexture(Path.Combine(root, "resources", "gui", "royal-contracts", file)));
+        var reward = new Intersect.Framework.Core.GameObjects.Items.ItemDescriptor(Guid.NewGuid()) { Name="Royal coin", Icon="test-reward.png",Stackable=true };
+        Intersect.Framework.Core.GameObjects.Items.ItemDescriptor.Lookup.Set(reward.Id,reward);
+        var iconPath=Path.Combine(output,"test-reward.png");
+        using(var icon=new SD.Bitmap(32,32))
+        {using(var g=SD.Graphics.FromImage(icon)){g.Clear(SD.Color.Transparent);g.FillEllipse(SD.Brushes.Goldenrod,2,2,28,28);}icon.Save(iconPath);}
+        content.AddItemTexture(reward.Icon,new BitmapTexture(iconPath));
         var now = DateTimeOffset.UtcNow;
         var config = RoyalContractsConfiguration.CreateDefault(); var rotation = new RoyalContractRotation(); rotation.Refresh(config, now);
         var state = new RoyalContractBoardState { Enabled = true, Seals = 120, ServerTime = now };
         foreach (var c in rotation.Daily.Concat(rotation.Weekly))
             state.Contracts.Add(new() { Contract = c, Eligible = true, Accepted = true, Contribution = 2, Progress = c.Template.Collective ? 326 : 2, TargetName = c.Template.Objective == RoyalContractObjective.NpcKills ? "Any enemy" : "Distinct maps" });
+        foreach(var view in state.Contracts) { view.Contract.Template.RewardItemId=reward.Id;view.Contract.Template.RewardQuantity=2;view.RewardName="?Royal coin"; }
         var checks = 0;
         void Check(bool pass, string name) { if (!pass) throw new Exception(name); checks++; }
         var languageProperty = typeof(ClientLanguages).GetProperty(nameof(ClientLanguages.Current))!;
@@ -45,6 +52,15 @@ internal static class Program
                 var window = new RoyalContractsWindow(canvas); window.Apply(state); window.Show();
                 canvas.RenderCanvas(TimeSpan.FromMilliseconds(16), TimeSpan.Zero);
                 canvas.RenderCanvas(TimeSpan.FromMilliseconds(16), TimeSpan.Zero);
+                var daily=All(window).OfType<Button>().Single(b=>b.Name=="DailyTab");
+                var weekly=All(window).OfType<Button>().Single(b=>b.Name=="WeeklyTab");
+                bool IsGold(Button b)=>(bool)b.GetType().GetProperty("Selected",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(b)!;
+                Check(IsGold(daily) && !IsGold(weekly),"Only selected Daily tab is gold");
+                typeof(RoyalContractsWindow).GetMethod("ChangePeriod",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(window,[RoyalContractPeriod.Weekly]);
+                Check(IsGold(weekly) && !IsGold(daily),"Gold selection follows Weekly click");
+                typeof(RoyalContractsWindow).GetMethod("ChangePeriod",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(window,[RoyalContractPeriod.Daily]);
+                Check(All(window).OfType<ImagePanel>().Any(p=>p.Name=="RewardIcon" && p.Texture!=null && !p.IsHidden),"Contract offer shows its reward image");
+                Check(ContractRewardArt.Name(state.Contracts[0])=="Royal coin","Reward name has no question-mark prefix");
                 Check(window.Width <= resolution.X && window.Height <= resolution.Y, "Board fits " + resolution);
                 var all = All(window).ToArray();
                 Check(all.OfType<Label>().Any(l => l.Text == RoyalContractsText.Get("Royal Contracts", language)), "Localized heading " + language);

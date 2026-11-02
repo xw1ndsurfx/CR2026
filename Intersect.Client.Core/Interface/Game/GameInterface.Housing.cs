@@ -1,4 +1,4 @@
-using Intersect.Client.Core;
+﻿using Intersect.Client.Core;
 using Intersect.Client.Framework.File_Management;
 using Intersect.Client.Framework.Gwen.Control;
 using Intersect.Client.Framework.Input;
@@ -13,6 +13,7 @@ public partial class GameInterface
 {
     private readonly Dictionary<Guid, FurnitureUseHotspot> _furnitureUseTargets = [];
     private HousingWindow? _housingWindow;
+    private HousingWindow? _furnitureShopWindow;
     private HousePlacementOverlay? _housePlacement;
     private Button? _houseExit;
     internal bool CanOpenHouse => Globals.Me != null && !_houseBlockedByDungeon && Naval.NavalWorld.OwnShip == null;
@@ -27,6 +28,13 @@ public partial class GameInterface
         HouseView? view = string.IsNullOrWhiteSpace(packet.Json) ? null : JsonConvert.DeserializeObject<HouseView>(packet.Json);
         HousingWorld.View = string.IsNullOrWhiteSpace(packet.WorldJson) ? null : JsonConvert.DeserializeObject<HouseView>(packet.WorldJson);
         EnsureHousing();
+        if (packet.FurnitureShop)
+        {
+            _furnitureShopWindow ??= new HousingWindow(GameCanvas, true);
+            _furnitureShopWindow.Apply(view, packet.Message);
+            if (packet.OpenWindow) { _furnitureShopWindow.Show(); _furnitureShopWindow.BringToFront(); }
+            return;
+        }
         _housingWindow!.Apply(view, Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get(packet.Message,ClientLanguages.Current));
         if (packet.OpenWindow) { _housingWindow.Show(); _housingWindow.BringToFront(); }
         if (HousingWorld.View == null) { _housePlacement!.Cancel(); if (!packet.OpenWindow) _housingWindow.Hide(); }

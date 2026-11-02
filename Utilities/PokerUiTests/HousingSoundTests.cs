@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using Intersect;
 using Intersect.Client.Framework.Core.Sounds;
@@ -104,17 +104,21 @@ internal static class HousingSoundTests
             var point=button.ToCanvas(0,0)-origin;
             Check(point.X>=0&&point.Y>=0&&point.X+button.Width<=window.Width&&point.Y+button.Height<=window.Height,$"House action {button.Text} at {point.X},{point.Y} ({button.Width}x{button.Height}) must fit {window.Width}x{window.Height}");
         }
-        Check(Desc(window).OfType<Button>().Any(b=>b.Text=="Buy"),"Monthly catalog exposes the purchase action");
+        Check(!Desc(window).OfType<Button>().Any(b=>b.Text=="Buy"),"My House no longer exposes a furniture purchase action");
+        var shop=(WindowControl)Activator.CreateInstance(windowType,[canvas,true])!;
+        windowType.GetMethod("Apply")!.Invoke(shop,[view,""]);
+        Check(Desc(shop).OfType<Button>().Any(b=>b.Text=="Buy"),"Separate merchant shop exposes the purchase action");
         furniture.PremiumRequired = true; view.PremiumActive = false;
-        windowType.GetMethod("Apply")!.Invoke(window, [view, ""]);
-        Check(Desc(window).OfType<Button>().Any(b => b.Text == "Premium required" && b.IsDisabled), "Premium-only purchases are visibly locked");
+        windowType.GetMethod("Apply")!.Invoke(shop, [view, ""]);
+        Check(Desc(shop).OfType<Button>().Any(b => b.Text == "Premium required" && b.IsDisabled), "Premium-only merchant purchases are visibly locked");
         var tabField = windowType.GetField("_tab", flags)!;
         tabField.SetValue(window, 1); windowType.GetMethod("Apply")!.Invoke(window, [view, ""]);
         Check(Desc(window).OfType<Button>().Any(b => b.Text == "Premium required" && b.IsDisabled), "Premium-only stored furniture cannot start placement after expiry");
         tabField.SetValue(window, 2); windowType.GetMethod("Apply")!.Invoke(window, [view, ""]);
         Check(Desc(window).OfType<Button>().Any(b => b.Text == "Premium required" && b.IsDisabled) && Desc(window).OfType<Button>().Any(b => b.Text == "Store" && !b.IsDisabled), "Expired Premium locks moving while retaining the Store action");
         view.PremiumActive = true; tabField.SetValue(window, 0); windowType.GetMethod("Apply")!.Invoke(window, [view, ""]);
-        Check(Desc(window).OfType<Button>().Any(b => b.Text == "Buy" && !b.IsDisabled), "Renewed Premium restores the purchase action");
+        windowType.GetMethod("Apply")!.Invoke(shop, [view, ""]);
+        Check(Desc(shop).OfType<Button>().Any(b => b.Text == "Buy" && !b.IsDisabled), "Renewed Premium restores the merchant purchase action");
         furniture.PremiumRequired = false;
         view.IsOwner=false;view.Catalog=[];
         windowType.GetMethod("Apply")!.Invoke(window,[view,""]);
