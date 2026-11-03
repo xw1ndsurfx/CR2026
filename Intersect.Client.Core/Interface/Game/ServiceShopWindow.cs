@@ -12,6 +12,8 @@ internal sealed class ServiceShopWindow:Window
     private readonly Label _empty, _heading;
     private readonly ShopCatalogControls _catalog;
     private ShopServiceState? _state;
+    private readonly ShopDescriptor _pricing = new();
+    private DateTimeOffset _nextPromotionChange = DateTimeOffset.MaxValue;
     internal ServiceShopWindow(Canvas canvas):base(canvas,"",false,"ServiceShopWindow")
     {
         SetSize(780,620);Alignment=[Alignments.Center];DeleteOnClose=false;DisableResizing();
@@ -31,16 +33,24 @@ internal sealed class ServiceShopWindow:Window
     internal void Apply(ShopServiceState state)
     {
         _state=state;
+        _pricing.ServiceOffers=state.Rows.Select(row=>row.Offer).ToArray();
+        _pricing.SynchronizePricingTime(state.ServerTimeUnixMilliseconds);
         Title=ClientLanguages.ContentText(state.Name);
         _status.Text=T(state.Message);
         Rebuild();Show();BringToFront();
     }
+    internal void Update()
+    {
+        if (!IsHidden && _state != null && _pricing.PricingTime >= _nextPromotionChange) Rebuild();
+    }
     private void Rebuild()
     {
         if (_state is not {} state) return;
+        var now = _pricing.PricingTime;
+        _nextPromotionChange = _pricing.NextPromotionChange(now);
         _list.DeleteAll();
-        var entries=_catalog.Browse(state.Rows,e=>e.Offer.Name,e=>e.Offer.RequiredLevel,e=>e.Offer.Price,
-            e=>e.Available && (state.Music || !e.Owned) && e.Balance>=e.Offer.Price,e=>e.Owned).ToArray();
+        var entries=_catalog.Browse(state.Rows,e=>e.Offer.Name,e=>e.Offer.RequiredLevel,e=>_pricing.ServicePrice(e.Offer,now),
+            e=>e.Available && (state.Music || !e.Owned) && e.Balance>=_pricing.ServicePrice(e.Offer,now),e=>e.Owned).ToArray();
         _heading.Text=string.Format(T("Products: {0} / {1}"),entries.Length,state.Rows.Length);
         _empty.IsHidden=entries.Length>0;
         for(var index=0;index<entries.Length;index++)
@@ -49,11 +59,13 @@ internal sealed class ServiceShopWindow:Window
             var offer=entry.Offer;
             var detail=state.Music?T("Music for everyone in this zone")+" · "+T("Premium required"):
                 string.Format(T("Required level: {0}"),offer.RequiredLevel);
-            var enabled=entry.Available && !entry.Owned && entry.Balance>=offer.Price;
-            if(state.Music)enabled=entry.Available && entry.Balance>=offer.Price;
+            var price = _pricing.ServicePrice(offer,now);
+            var discount = ShopPromotion.EffectiveDiscount(now,offer.Promotion);
+            var enabled=entry.Available && !entry.Owned && entry.Balance>=price;
+            if(state.Music)enabled=entry.Available && entry.Balance>=price;
             var row=ShopProductRow.Service(_list,"Service"+offer.Id,ClientLanguages.ContentText(offer.Name),detail,
-                $"{offer.Price} {ClientLanguages.ContentText(entry.Currency)}",T(state.Music?"Play music":entry.Owned?"Owned":"Learn spell"),enabled,
-                ()=>Networking.Network.SendPacket(new ServiceShopPurchasePacket{OfferId=offer.Id}),string.IsNullOrWhiteSpace(offer.Icon) && !state.Music?SpellDescriptor.Get(offer.SpellId)?.Icon??"":offer.Icon,state.Music?Guid.Empty:offer.SpellId);
+                $"{price} {ClientLanguages.ContentText(entry.Currency)}"+(discount>0?$" (-{discount}%)":""),T(state.Music?"Play music":entry.Owned?"Owned":"Learn spell"),enabled,
+                ()=>Networking.Network.SendPacket(new ServiceShopPurchasePacket{OfferId=offer.Id,ExpectedUnitPrice=price}),string.IsNullOrWhiteSpace(offer.Icon) && !state.Music?SpellDescriptor.Get(offer.SpellId)?.Icon??"":offer.Icon,state.Music?Guid.Empty:offer.SpellId);
             row.SetBounds(index%2*360,index/2*84,332,75);
         }
         _list.SetInnerSize(700,(entries.Length+1)/2*84);_list.UpdateScrollBars();

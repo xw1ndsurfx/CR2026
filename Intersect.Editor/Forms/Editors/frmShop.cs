@@ -31,6 +31,7 @@ public partial class FrmShop : EditorForm
         InitializePriceSuggestions();
         InitializeBuybackDiscount();
         InitializeNavalShopType();
+        InitializeOfferPromotions();
         ModernizeShopWorkspace();
         _btnSave = btnSave;
         _btnCancel = btnCancel;
@@ -262,7 +263,8 @@ public partial class FrmShop : EditorForm
                     ItemDescriptor.GetName(mEditorItem.SellingItems[i].ItemId),
                     mEditorItem.SellingItems[i].CostItemQuantity,
                     mEditorItem.ConfigurationKind==ShopConfigurationKind.RoyalSeals?Intersect.Framework.Core.QualityOfLife.QualityOfLifeText.Get("Royal Seals",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName):ItemDescriptor.GetName(mEditorItem.SellingItems[i].CostItemId)
-                )
+                ) + (mEditorItem.SellingItems[i].Promotion is { Enabled: true } promotion ?
+                    " · " + FrmShopPromotion.T("Special offer") + $" -{promotion.DiscountPercent}%" : "")
             );
         }
 
@@ -303,6 +305,7 @@ public partial class FrmShop : EditorForm
         {
             if (mEditorItem.SellingItems[i].ItemId == newItem.ItemId)
             {
+                newItem.Promotion = mEditorItem.SellingItems[i].Promotion;
                 mEditorItem.SellingItems[i] = newItem;
                 addedItem = true;
 

@@ -6,6 +6,7 @@ namespace Intersect.GameObjects;
 
 public partial class ShopItemDescriptor
 {
+    public ShopPromotion? Promotion { get; set; }
     public Guid CostItemId { get; set; }
 
     public int CostItemQuantity { get; set; }

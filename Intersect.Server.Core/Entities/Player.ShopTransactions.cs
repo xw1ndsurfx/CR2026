@@ -13,15 +13,19 @@ namespace Intersect.Server.Entities;
 
 public partial class Player
 {
-    public void BuyItem(int slot, int amount)
+    public void BuyItem(int slot, int amount, int? expectedUnitPrice = null)
     {
         lock (EntityLock)
         {
             var shop = InShop;
             if (shop == null || shop.ConfigurationKind==Intersect.GameObjects.ShopConfigurationKind.RoyalSeals || slot < 0 || slot >= shop.SellingItems.Count || amount < 1) { ShopFailed(); return; }
             var offer = shop.SellingItems[slot];
+            var now = DateTimeOffset.UtcNow;
+            var unitPrice = shop.SellingPrice(offer, now);
+            if (!shop.TryPurchaseTotal(offer, amount, now, expectedUnitPrice, out _))
+            { PacketSender.SendOpenShop(this, shop); ShopFailed(); return; }
             var product = ItemDescriptor.Get(offer.ItemId); var currency = ItemDescriptor.Get(offer.CostItemId);
-            var error = ShopInventoryPlan.Purchase(Enumerable.Range(0, Options.Instance.Player.MaxInventory).Select(i => (Item)Items[i]).ToArray(), product, currency, offer.CostItemQuantity, amount, out var plan);
+            var error = ShopInventoryPlan.Purchase(Enumerable.Range(0, Options.Instance.Player.MaxInventory).Select(i => (Item)Items[i]).ToArray(), product, currency, unitPrice, amount, out var plan);
             if (error != ShopPlanError.None) { ShopFailed(error, true); return; }
             ApplyShopPlan(plan, product, amount, [product.Id, currency.Id]);
             if (!TextUtils.IsNone(shop.BuySound)) PacketSender.SendPlaySound(this, shop.BuySound);

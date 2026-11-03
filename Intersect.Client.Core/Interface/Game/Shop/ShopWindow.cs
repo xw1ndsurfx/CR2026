@@ -30,6 +30,7 @@ public partial class ShopWindow : Window
     private bool _shopInitialized;
     private bool _inventorySubscribed;
     private bool _refreshPending;
+    private DateTimeOffset _nextPromotionChange = DateTimeOffset.MaxValue;
 
     public ShopWindow(Canvas gameCanvas) : base(gameCanvas, Globals.GameShop?.Name ?? Strings.Shop.Title, false, nameof(ShopWindow))
     {
@@ -172,11 +173,13 @@ public partial class ShopWindow : Window
 
         if (Globals.GameShop is { } shop)
         {
+            var now = shop.PricingTime;
+            _nextPromotionChange = shop.NextPromotionChange(now);
             var slots=Enumerable.Range(0,shop.SellingItems.Count);
             slots=(_sort.SelectedItem?.UserData as string) switch
             {
                 "Level"=>slots.OrderBy(slot=>ItemDescriptor.Get(shop.SellingItems[slot].ItemId)?.MinimumLevel??1).ThenBy(slot=>slot),
-                "Price"=>slots.OrderBy(slot=>shop.SellingItems[slot].CostItemQuantity).ThenBy(slot=>slot),
+                "Price"=>slots.OrderBy(slot=>shop.SellingPrice(shop.SellingItems[slot], now)).ThenBy(slot=>slot),
                 "New"=>slots.OrderByDescending(slot=>slot),_=>slots
             };
             foreach (var slot in slots)
@@ -189,17 +192,20 @@ public partial class ShopWindow : Window
                     ? currency.Name
                     : Strings.Shop.CurrencyFallback.ToString();
                 var ownedCurrency = Globals.Me?.GetQuantityOfItemInInventory(offer.CostItemId) ?? 0;
-                var canAfford = offer.CostItemQuantity < 1 || ownedCurrency >= offer.CostItemQuantity;
+                var price = shop.SellingPrice(offer, now);
+                var discount = ShopPromotion.EffectiveDiscount(now, offer.Promotion);
+                var canAfford = price < 1 || ownedCurrency >= price;
 
                 var shopSlotIndex = slot;
                 var row = ShopProductRow.Buy(
                     _buyContainer,
                     shopSlotIndex,
                     item,
-                    offer.CostItemQuantity,
+                    price,
                     currencyName,
                     canAfford,
-                    () => Globals.Me?.TryBuyItem(shopSlotIndex)
+                    () => Globals.Me?.TryBuyItem(shopSlotIndex),
+                    discountPercent: discount, originalPrice: offer.CostItemQuantity
                 );
                 row.Dock = Pos.Top;
                 ++count;
@@ -384,6 +390,7 @@ public partial class ShopWindow : Window
 
     public void Update()
     {
+        if (Globals.GameShop is { } shop && shop.PricingTime >= _nextPromotionChange) _refreshPending = true;
         if (!_shopInitialized || !_refreshPending || IsHidden)
         {
             return;
@@ -392,6 +399,12 @@ public partial class ShopWindow : Window
         _refreshPending = false;
         RefreshBuyRows();
         RefreshSellRows();
+    }
+
+    internal void ReloadPrices()
+    {
+        Title = Globals.GameShop?.Name ?? Strings.Shop.Title;
+        _refreshPending = true;
     }
 
     public override void Hide()

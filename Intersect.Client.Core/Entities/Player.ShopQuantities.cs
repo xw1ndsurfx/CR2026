@@ -48,14 +48,15 @@ public partial class Player
         if (shop == null || shopSlotIndex < 0 || shopSlotIndex >= shop.SellingItems.Count) return;
         var offer = shop.SellingItems[shopSlotIndex];
         if (!ItemDescriptor.TryGet(offer.ItemId, out var item) || !ItemDescriptor.TryGet(offer.CostItemId, out var currency)) return;
-        var maximum = ShopQuantities.MaximumPurchase(Inventory.Select(slot => (slot?.ItemId ?? Guid.Empty, slot?.Quantity ?? 0)), item, currency, offer.CostItemQuantity);
-        if (maximum <= 1) { PacketSender.SendBuyItem(shopSlotIndex, 1); return; }
+        var unitPrice = shop.SellingPrice(offer, shop.PricingTime);
+        var maximum = ShopQuantities.MaximumPurchase(Inventory.Select(slot => (slot?.ItemId ?? Guid.Empty, slot?.Quantity ?? 0)), item, currency, unitPrice);
+        if (maximum <= 1) { PacketSender.SendBuyItem(shopSlotIndex, 1, unitPrice); return; }
         _ = new InputBox(Strings.Shop.BuyItem, Strings.Shop.BuyItemPrompt.ToString(item.Name), InputType.NumericSliderInput,
             quantity: 1, maximumQuantity: maximum, onSubmit: (_, args) => {
                 if (Globals.GameShop != shop || shopSlotIndex >= shop.SellingItems.Count || shop.SellingItems[shopSlotIndex].ItemId != item.Id ||
                     args.Value is not NumericalSubmissionValue number) return;
                 var value = Math.Round(number.Value);
-                if (value >= 1 && value <= maximum) PacketSender.SendBuyItem(shopSlotIndex, (int)value);
+                if (value >= 1 && value <= maximum) PacketSender.SendBuyItem(shopSlotIndex, (int)value, unitPrice);
             });
     }
 }

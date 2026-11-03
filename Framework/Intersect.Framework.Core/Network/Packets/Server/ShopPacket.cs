@@ -6,6 +6,7 @@ namespace Intersect.Network.Packets.Server;
 public partial class ShopPacket : IntersectPacket
 {
     //Parameterless Constructor for MessagePack
+    [SerializationConstructor]
     public ShopPacket()
     {
     }
@@ -14,6 +15,7 @@ public partial class ShopPacket : IntersectPacket
     {
         ShopData = shopData;
         Close = close;
+        ServerTimeUnixMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
     }
 
     [Key(0)]
@@ -21,5 +23,8 @@ public partial class ShopPacket : IntersectPacket
 
     [Key(1)]
     public bool Close { get; set; }
+
+    [Key(2)]
+    public long ServerTimeUnixMilliseconds { get; set; }
 
 }
